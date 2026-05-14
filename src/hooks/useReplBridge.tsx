@@ -200,17 +200,28 @@ export function useReplBridge(
 
               // 动态 import，使 bridge 代码不会出现在非 BRIDGE_MODE 构建中。
               const { resolveAndPrepend } = await import('../bridge/inboundAttachments.js')
-              let sanitized: string = typeof fields.content === 'string' ? fields.content : JSON.stringify(fields.content)
+              let sanitized: string =
+                typeof fields.content === 'string' ? fields.content : JSON.stringify(fields.content)
               if (feature('KAIROS_GITHUB_WEBHOOKS')) {
                 /* eslint-disable @typescript-eslint/no-require-imports */
                 const webhookModule =
                   require('../bridge/webhookSanitizer.js') as typeof import('../bridge/webhookSanitizer.js')
                 /* eslint-enable @typescript-eslint/no-require-imports */
-                const sanitizedResult = webhookModule.sanitizeInboundWebhookContent(typeof fields.content === 'string' ? fields.content : JSON.stringify(fields.content))
-                sanitized = typeof sanitizedResult === 'string' ? sanitizedResult : JSON.stringify(sanitizedResult)
+                const sanitizedResult = webhookModule.sanitizeInboundWebhookContent(
+                  typeof fields.content === 'string'
+                    ? fields.content
+                    : JSON.stringify(fields.content),
+                )
+                sanitized =
+                  typeof sanitizedResult === 'string'
+                    ? sanitizedResult
+                    : JSON.stringify(sanitizedResult)
               }
               const resolvedContent = await resolveAndPrepend(msg, sanitized)
-              const content = typeof resolvedContent === 'string' ? resolvedContent : JSON.stringify(resolvedContent)
+              const content =
+                typeof resolvedContent === 'string'
+                  ? resolvedContent
+                  : JSON.stringify(resolvedContent)
               const preview =
                 typeof resolvedContent === 'string'
                   ? resolvedContent.slice(0, 80)
@@ -496,7 +507,11 @@ export function useReplBridge(
               setAppState((prevState) => {
                 const current = prevState.toolPermissionContext.mode
                 if (current === mode) return prevState
-                const next = transitionPermissionMode(current, mode, prevState.toolPermissionContext)
+                const next = transitionPermissionMode(
+                  current,
+                  mode,
+                  prevState.toolPermissionContext,
+                )
                 return {
                   ...prevState,
                   toolPermissionContext: {
@@ -587,7 +602,9 @@ export function useReplBridge(
                 replBridgeError: undefined,
               }
             })
-            logForDebugging(`[bridge:repl] Mirror initialized, session=${bridgeHandle.bridgeSessionId}`)
+            logForDebugging(
+              `[bridge:repl] Mirror initialized, session=${bridgeHandle.bridgeSessionId}`,
+            )
           } else {
             // 构建 bridge 权限回调，使交互式权限 handler
             // 可以在 bridge 响应和本地用户交互之间进行竞态。
@@ -650,7 +667,10 @@ export function useReplBridge(
               ...prevState,
               replBridgePermissionCallbacks: permissionCallbacks,
             }))
-            const url = getRemoteSessionUrl(bridgeHandle.bridgeSessionId, bridgeHandle.sessionIngressUrl)
+            const url = getRemoteSessionUrl(
+              bridgeHandle.bridgeSessionId,
+              bridgeHandle.sessionIngressUrl,
+            )
             // environmentId === '' 表示 v2 无 env 路径。buildBridgeConnectUrl
             // 构建特定于 env 的连接 URL，没有 env 时不存在。
             const hasEnv = bridgeHandle.environmentId !== ''
@@ -689,7 +709,9 @@ export function useReplBridge(
                   : undefined,
               ),
             ])
-            logForDebugging(`[bridge:repl] Hook initialized, session=${bridgeHandle.bridgeSessionId}`)
+            logForDebugging(
+              `[bridge:repl] Hook initialized, session=${bridgeHandle.bridgeSessionId}`,
+            )
           }
         } catch (err) {
           // 绝不让 REPL 崩溃——在 UI 中暴露错误。

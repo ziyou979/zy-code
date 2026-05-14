@@ -7,7 +7,7 @@ import {
   setHasExitedPlanMode,
   setNeedsAutoModeExitAttachment,
 } from '../../bootstrap/state.js'
-import type { ToolPermissionContext, ToolPermissionRulesBySource } from '../../Tool.js'
+import type { ToolPermissionContext } from '../../Tool.js'
 import { getCwd } from '../cwd.js'
 import { isEnvTruthy } from '../envUtils.js'
 import { isInternalBuild } from '../envUtils.js'
@@ -62,6 +62,7 @@ import {
   permissionRuleValueFromString,
   permissionRuleValueToString,
 } from './permissionRuleParser.js'
+import { ToolPermissionRulesBySource } from 'src/types/permissions.ts'
 
 /**
  * 检查 Bash 权限规则在 auto 模式下是否危险。

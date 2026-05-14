@@ -331,7 +331,11 @@ function isTextBreaker(msg: RenderableMessage): boolean {
 function isNonCollapsibleToolUse(msg: RenderableMessage, tools: Tools): boolean {
   if (msg.type === 'assistant') {
     const content = msg.message.content[0]
-    if (content && content.type === 'tool_call' && !isToolSearchOrRead(content.name, content.input, tools)) {
+    if (
+      content &&
+      content.type === 'tool_call' &&
+      !isToolSearchOrRead(content.name, content.input, tools)
+    ) {
       return true
     }
   }
@@ -382,7 +386,11 @@ function shouldSkipMessage(msg: RenderableMessage): boolean {
 function isCollapsibleToolUse(msg: RenderableMessage, tools: Tools): msg is CollapsibleMessage {
   if (msg.type === 'assistant') {
     const content = msg.message.content[0]
-    return !!content && content.type === 'tool_call' && isToolSearchOrRead(content.name, content.input, tools)
+    return (
+      !!content &&
+      content.type === 'tool_call' &&
+      isToolSearchOrRead(content.name, content.input, tools)
+    )
   }
   if (msg.type === 'grouped_tool_use') {
     const firstContent = (msg as any).messages[0]?.message.content[0]

@@ -155,3 +155,7 @@ export const CronCreateTool = buildTool({
   renderToolUseMessage: renderCreateToolUseMessage,
   renderToolResultMessage: renderCreateResultMessage,
 } satisfies ToolDef<InputSchema, CreateOutput>)
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(CronCreateTool)

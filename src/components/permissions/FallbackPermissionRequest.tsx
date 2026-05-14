@@ -132,11 +132,18 @@ export function FallbackPermissionRequest({ toolUseConfirm, onDone, onReject, wo
     toolName: sanitizedToolName,
     isMcp: toolUseConfirm.tool.isMcp ?? false,
   }
-  const renderedToolUseMessage = toolUseConfirm.tool.renderToolUseMessage(toolUseConfirm.input as never, {
-    theme,
-    verbose: true,
-  })
-  const mcpSuffixElement = originalUserFacingName.endsWith(' (MCP)') ? <Text dimColor={true}> (MCP)</Text> : ''
+  const renderedToolUseMessage = toolUseConfirm.tool.renderToolUseMessage(
+    toolUseConfirm.input as never,
+    {
+      theme,
+      verbose: true,
+    },
+  )
+  const mcpSuffixElement = originalUserFacingName.endsWith(' (MCP)') ? (
+    <Text dimColor={true}> (MCP)</Text>
+  ) : (
+    ''
+  )
   const truncatedDescription = truncateToLines(toolUseConfirm.description, 3)
   // @ts-ignore
   return (

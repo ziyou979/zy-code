@@ -16,22 +16,13 @@ import { tmpdir } from 'os'
 import figures from 'figures'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- / n N Esc [ v are bare letters in transcript modal context, same class as g/G/j/k in ScrollKeybindingHandler
 import { useInput } from '../ink.js'
-import { useSearchInput } from '../hooks/useSearchInput.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { useSearchHighlight } from '../ink/hooks/use-search-highlight.js'
 import type { JumpHandle } from '../components/VirtualMessageList.js'
 import { renderMessagesToPlainText } from '../utils/exportRenderer.js'
 import { openFileInExternalEditor } from '../utils/editor.js'
 import { writeFile } from 'fs/promises'
-import {
-  Box,
-  Text,
-  useStdin,
-  useTheme,
-  useTerminalFocus,
-  useTerminalTitle,
-  useTabStatus,
-} from '../ink.js'
+import { Box, Text, useStdin, useTheme, useTerminalFocus, useTabStatus } from '../ink.js'
 import type { TabStatusKind } from '../ink/hooks/use-tab-status.js'
 import { IdleReturnDialog } from '../components/IdleReturnDialog.js'
 import * as React from 'react'
@@ -43,7 +34,6 @@ import {
   useCallback,
   useDeferredValue,
   useLayoutEffect,
-  type RefObject,
 } from 'react'
 import { useNotifications } from '../context/notifications.js'
 import { sendNotification } from '../services/notifier.js'
@@ -139,12 +129,7 @@ import { getSystemContext, getUserContext } from '../context.js'
 import { getSettingsForSource } from '../utils/settings/settings.js'
 import { getMemoryFiles } from '../utils/zymd.js'
 import { startBackgroundHousekeeping } from '../utils/backgroundHousekeeping.js'
-import {
-  getTotalCost,
-  saveCurrentSessionCosts,
-  resetCostState,
-  getStoredSessionCosts,
-} from '../cost-tracker.js'
+import { saveCurrentSessionCosts, resetCostState, getStoredSessionCosts } from '../cost-tracker.js'
 import { useCostSummary } from '../costHook.js'
 import { useFpsMetrics } from '../context/fpsMetrics.js'
 import { useAfterFirstRender } from '../hooks/useAfterFirstRender.js'
@@ -161,7 +146,10 @@ import { useApiKeyVerification } from '../hooks/useApiKeyVerification.js'
 import { GlobalKeybindingHandlers } from '../hooks/useGlobalKeybindings.js'
 import { CommandKeybindingHandlers } from '../hooks/useCommandKeybindings.js'
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js'
-import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
+import { TranscriptModeFooter } from '../components/TranscriptModeFooter.js'
+import { TranscriptSearchBar } from '../components/TranscriptSearchBar.js'
+import { AnimatedTerminalTitle } from '../components/AnimatedTerminalTitle.js'
+
 import { getShortcutDisplay } from '../keybindings/shortcutFormat.js'
 import { CancelRequestHandler } from '../hooks/useCancelRequest.js'
 import { useBackgroundTaskNavigation } from '../hooks/useBackgroundTaskNavigation.js'
@@ -439,7 +427,7 @@ import { useLspInitializationNotification } from 'src/hooks/notifs/useLspInitial
 import { useLspPluginRecommendation } from 'src/hooks/useLspPluginRecommendation.js'
 import { LspRecommendationMenu } from 'src/components/LspRecommendation/LspRecommendationMenu.js'
 import { useZyCodeHintRecommendation } from 'src/hooks/useZyCodeHintRecommendation.js'
-import { PluginHintMenu } from 'src/components/ZyCodeHint/PluginHintMenu.js'
+import { PluginHintMenu } from '../components/Hint/PluginHintMenu.js'
 import {
   DesktopUpsellStartup,
   shouldShowDesktopUpsellStartup,
@@ -517,230 +505,6 @@ const RECENT_SCROLL_REPIN_WINDOW_MS = 3000
 // 使用 LRU 缓存防止内存无限增长
 // 100 个文件对于大多数编码会话应该足够，同时防止
 // 在大型项目中跨多个文件工作时出现内存问题
-
-/**
- * Small component to display transcript mode footer with dynamic keybinding.
- * Must be rendered inside KeybindingSetup to access keybinding context.
- */
-function TranscriptModeFooter({
-  showAllInTranscript,
-  virtualScroll,
-  searchBadge,
-  suppressShowAll = false,
-  status,
-}) {
-  const toggleShortcut = useShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
-  const showAllShortcut = useShortcutDisplay('transcript:toggleShowAll', 'Transcript', 'ctrl+e')
-  const transcriptLabel = tSync('transcript.showingDetailedTranscript')
-  const toggleLabel = tSync('transcript.toToggle')
-  const navigateLabel = tSync('transcript.toNavigate')
-  const scrollLabel = tSync('transcript.scroll')
-  const topLabel = tSync('transcript.top')
-  const bottomLabel = tSync('transcript.bottom')
-  const collapseOrShowLabel = showAllInTranscript
-    ? tSync('transcript.toCollapse')
-    : tSync('transcript.toShowAll')
-  return (
-    <Box
-      noSelect={true}
-      alignItems="center"
-      alignSelf="center"
-      borderTopDimColor={true}
-      borderBottom={false}
-      borderLeft={false}
-      borderRight={false}
-      borderStyle="single"
-      marginTop={1}
-      paddingLeft={2}
-      width="100%"
-    >
-      {
-        <Text dimColor={true}>
-          {transcriptLabel}
-          {' \xB7 '}
-          {toggleShortcut} {toggleLabel}
-          {searchBadge
-            ? ` \xB7 n/N ${navigateLabel}`
-            : virtualScroll
-              ? ` \xB7 ${figures.arrowUp}${figures.arrowDown} ${scrollLabel} \xB7 home/end ${topLabel}/${bottomLabel}`
-              : suppressShowAll
-                ? ''
-                : ` \xB7 ${showAllShortcut} ${collapseOrShowLabel}`}
-        </Text>
-      }
-      {status ? (
-        <>
-          <Box flexGrow={1} />
-          <Text>{status} </Text>
-        </>
-      ) : searchBadge ? (
-        <>
-          <Box flexGrow={1} />
-          <Text dimColor={true}>
-            {searchBadge.current}/{searchBadge.count}
-            {'  '}
-          </Text>
-        </>
-      ) : null}
-    </Box>
-  )
-}
-
-/** less 风格 / bar。1 行，与 TranscriptModeFooter 相同的 border-top 样式
- *  所以在 bottom 插槽中交换它们不会改变 ScrollBox 高度。
- *  useSearchInput 处理 readline 编辑；我们报告查询变化并
- *  渲染计数器。增量 — 每次按键重新搜索 + 高亮。 */
-function TranscriptSearchBar({
-  jumpRef,
-  count,
-  current,
-  onClose,
-  onCancel,
-  setHighlight,
-  initialQuery,
-}: {
-  jumpRef: RefObject<JumpHandle | null>
-  count: number
-  current: number
-  /** Enter — 确认。查询保留以供 n/N 使用。 */
-  onClose: (lastQuery: string) => void
-  /** Esc/ctrl+c/ctrl+g — 撤销到搜索前状态。 */
-  onCancel: () => void
-  setHighlight: (query: string) => void
-  // 使用之前的查询作为种子（less 风格：/ 显示上次模式）。effect 挂载时
-  // 用相同查询重新扫描 — 幂等（相同匹配、最近指针、相同高亮）。用户可以编辑或清除。
-  initialQuery: string
-}): React.ReactNode {
-  const { query, cursorOffset } = useSearchInput({
-    isActive: true,
-    initialQuery,
-    onExit: () => onClose(query),
-    onCancel,
-  })
-  // 索引预热在查询 effect 之前运行，以便测量真实成本 —
-  // 否则 setSearchQuery 先填充缓存，warm 报告 ~0ms 而用户
-  // 实际感受到了延迟。
-  // 转录模式会话中第一次 / 需要支付 extractSearchText 成本。
-  // 后续 / 立即返回 0（VML 中的 indexWarmed ref）。
-  // 转录在 ctrl+o 时冻结，因此缓存保持有效。
-  // 初始 'building' 使 warmDone 在挂载时为 false — [query] effect
-  // 等待 warm effect 首次 resolve 而不是与之竞争。如果初始为 null，
-  // warmDone 会在挂载时为 true → [query] 触发 → setSearchQuery 填充
-  // 缓存 → warm 报告 ~0ms 而用户实际感受到了延迟。
-  const [indexStatus, setIndexStatus] = React.useState<
-    | 'building'
-    | {
-        ms: number
-      }
-    | null
-  >('building')
-  React.useEffect(() => {
-    let alive = true
-    const warm = jumpRef.current?.warmSearchIndex
-    if (!warm) {
-      setIndexStatus(null) // VML not mounted yet — rare, skip indicator
-      return
-    }
-    setIndexStatus('building')
-    warm().then((ms) => {
-      if (!alive) return
-      // <20ms = 无法察觉。没必要显示 "indexed in 3ms"。
-      if (ms < 20) {
-        setIndexStatus(null)
-      } else {
-        setIndexStatus({
-          ms,
-        })
-        setTimeout(() => alive && setIndexStatus(null), 2000)
-      }
-    })
-    return () => {
-      alive = false
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // mount-only: bar opens once per /
-  // 以 warm 完成为门控来控制 query effect。setHighlight 保持即时
-  // （屏幕空间叠加层，无需索引）。setSearchQuery（扫描）会等待。
-  const warmDone = indexStatus !== 'building'
-  useEffect(() => {
-    if (!warmDone) return
-    jumpRef.current?.setSearchQuery(query)
-    setHighlight(query)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, warmDone])
-  const off = cursorOffset
-  const cursorChar = off < query.length ? query[off] : ' '
-  return (
-    <Box
-      borderTopDimColor
-      borderBottom={false}
-      borderLeft={false}
-      borderRight={false}
-      borderStyle="single"
-      marginTop={1}
-      paddingLeft={2}
-      width="100%"
-      // applySearchHighlight 扫描整个屏幕缓冲区。此处渲染的查询
-      // 文本确实在屏幕上 — /foo 会匹配 bar 中的 'foo'。如果没有内容
-      // 匹配，这是唯一可见的匹配 → 被标记为 CURRENT → 加下划线。
-      // noSelect 使 searchHighlight.ts:76 跳过这些单元格（与边栏相同
-      // 排除）。你也无法文本选择 bar；它是临时控件，没问题。
-      noSelect
-    >
-      <Text>/</Text>
-      <Text>{query.slice(0, off)}</Text>
-      <Text inverse>{cursorChar}</Text>
-      {off < query.length && <Text>{query.slice(off + 1)}</Text>}
-      <Box flexGrow={1} />
-      {indexStatus === 'building' ? (
-        <Text dimColor>indexing… </Text>
-      ) : indexStatus ? (
-        <Text dimColor>indexed in {indexStatus.ms}ms </Text>
-      ) : count === 0 && query ? (
-        <Text color="error">no matches </Text>
-      ) : count > 0 ? (
-        // 引擎计数（extractSearchText 上的 indexOf）。可能与渲染计数
-        // 因幽灵/幻影消息而有偏差 — 徽章是粗略的位置提示。scanElement
-        // 给出每条消息的精确位置，但计算所有匹配的成本约为 ~1-3ms × 匹配消息数。
-        <Text dimColor>
-          {current}/{count}
-          {'  '}
-        </Text>
-      ) : null}
-    </Box>
-  )
-}
-const TITLE_ANIMATION_FRAMES = ['⠂', '⠐']
-const TITLE_STATIC_PREFIX = '✳'
-const TITLE_ANIMATION_INTERVAL_MS = 960
-
-/**
- * Sets the terminal tab title, with an animated prefix glyph while a query
- * is running. Isolated from REPL so the 960ms animation tick re-renders only
- * this leaf component (which returns null — pure side-effect) instead of the
- * entire REPL tree. Before extraction, the tick was ~1 REPL render/sec for
- * the duration of every turn, dragging PromptInput and friends along.
- */
-function AnimatedTerminalTitle({ isAnimating, title, disabled, noPrefix }) {
-  const terminalFocused = useTerminalFocus()
-  const [frame, setFrame] = useState(0)
-  useEffect(() => {
-    if (disabled || noPrefix || !isAnimating || !terminalFocused) {
-      return
-    }
-    const interval = setInterval(
-      (frameSetter) => frameSetter((f) => (f + 1) % TITLE_ANIMATION_FRAMES.length),
-      TITLE_ANIMATION_INTERVAL_MS,
-      setFrame,
-    )
-    return () => clearInterval(interval)
-  }, [disabled, noPrefix, isAnimating, terminalFocused])
-  const prefix = isAnimating
-    ? (TITLE_ANIMATION_FRAMES[frame] ?? TITLE_STATIC_PREFIX)
-    : TITLE_STATIC_PREFIX
-  useTerminalTitle(disabled ? null : noPrefix ? title : `${prefix} ${title}`)
-  return null
-}
 export type Props = {
   commands: Command[]
   debug: boolean
@@ -795,8 +559,6 @@ export function REPL({
   pendingHookMessages,
   initialFileHistorySnapshots,
   initialContentReplacements,
-  initialAgentName,
-  initialAgentColor,
   mcpClients: initialMcpClients,
   dynamicMcpConfig: initialDynamicMcpConfig,
   autoConnectIdeFlag,

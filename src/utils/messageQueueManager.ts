@@ -456,8 +456,6 @@ export function popAllEditable(
 // Backward-compatible aliases (deprecated — prefer new names)
 // ============================================================================
 
-
-
 /**
  * Get commands at or above a given priority level without removing them.
  * Useful for mid-chain draining where only urgent items should be processed.

@@ -25,7 +25,8 @@ type Props = {
 function CollapseLabel(props: Props) {
   const { upgradeMessage } = props as any
   const collapseModule = require('../services/contextCollapse/index.js')
-  const { getStats, subscribe } = collapseModule as typeof import('../services/contextCollapse/index.js')
+  const { getStats, subscribe } =
+    collapseModule as typeof import('../services/contextCollapse/index.js')
   const snapshot = useSyncExternalStore(subscribe, () => {
     const stats = getStats()
     const idleWarn = stats.health.emptySpawnWarningEmitted ? 1 : 0

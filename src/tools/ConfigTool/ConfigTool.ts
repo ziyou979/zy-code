@@ -421,3 +421,7 @@ function buildNestedObject(path: string[], value: unknown): Record<string, unkno
   }
   return { [key]: buildNestedObject(path.slice(1), value) }
 }
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(ConfigTool)

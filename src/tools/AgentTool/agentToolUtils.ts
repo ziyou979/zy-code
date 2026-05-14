@@ -279,7 +279,9 @@ export function finalizeAgentTool(
   // the most recent assistant message that has text content.
   const lastContent = lastAssistantMessage.message.content
   let content: AssistantContentBlock[] = Array.isArray(lastContent)
-    ? lastContent.filter((b): b is AssistantContentBlock => typeof b !== 'string' && b.type === 'text')
+    ? lastContent.filter(
+        (b): b is AssistantContentBlock => typeof b !== 'string' && b.type === 'text',
+      )
     : []
   if (content.length === 0) {
     for (let i = agentMessages.length - 1; i >= 0; i--) {
@@ -287,7 +289,9 @@ export function finalizeAgentTool(
       if (m.type !== 'assistant') continue
       const msgContent = m.message.content
       const textBlocks = Array.isArray(msgContent)
-        ? msgContent.filter((b): b is AssistantContentBlock => typeof b !== 'string' && b.type === 'text')
+        ? msgContent.filter(
+            (b): b is AssistantContentBlock => typeof b !== 'string' && b.type === 'text',
+          )
         : []
       if (textBlocks.length > 0) {
         content = textBlocks

@@ -148,11 +148,7 @@ function extractDuckDuckGoTargetUrl(href: string): string {
   return decodedHref
 }
 
-function isInvalidSearchResult(
-  title: string,
-  url: string,
-  blockedDomains?: string[],
-): boolean {
+function isInvalidSearchResult(title: string, url: string, blockedDomains?: string[]): boolean {
   if (!title || !url || title.includes('Sponsored') || title.toLowerCase().includes('ad ')) {
     return true
   }

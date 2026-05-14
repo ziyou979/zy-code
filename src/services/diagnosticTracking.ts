@@ -1,6 +1,6 @@
 import figures from 'figures'
 import { logError } from 'src/utils/log.js'
-import { callIdeRpc } from '../services/mcp/client.js'
+import { callIdeRpc } from './mcp/mcpToolCall.js'
 import type { MCPServerConnection } from '../services/mcp/types.js'
 import { ZyError } from '../utils/errors.js'
 import { normalizePathForComparison, pathsEqual } from '../utils/file.js'

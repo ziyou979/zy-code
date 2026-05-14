@@ -35,8 +35,8 @@ export function WorkspaceTab({
   useEffect(() => {
     onHeaderFocusChange?.(headerFocused)
   }, [headerFocused, onHeaderFocusChange])
-  const additionalDirectories: DirectoryItem[] = (
-    Array.from(toolPermissionContext.additionalWorkingDirectories.keys())
+  const additionalDirectories: DirectoryItem[] = Array.from(
+    toolPermissionContext.additionalWorkingDirectories.keys(),
   ).map((path) => ({
     path,
     isCurrent: false,

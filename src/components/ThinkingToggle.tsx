@@ -77,9 +77,7 @@ export function ThinkingToggle({ currentValue, onSelect, onCancel, isMidConversa
           }
           {confirmationPending !== null ? (
             <Box flexDirection="column" marginBottom={1} gap={1}>
-              <Text color="warning">
-                {tSync('thinkingToggle.midConversationWarning')}
-              </Text>
+              <Text color="warning">{tSync('thinkingToggle.midConversationWarning')}</Text>
               <Text color="warning">{tSync('thinkingToggle.confirmProceed')}</Text>
             </Box>
           ) : (

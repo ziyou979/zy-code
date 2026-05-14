@@ -1355,3 +1355,7 @@ async function* runShellCommand({
     TaskOutput.stopPolling(shellCommand.taskOutput.taskId)
   }
 }
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(BashTool)

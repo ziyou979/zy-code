@@ -2,10 +2,7 @@ import chalk from 'chalk'
 import { tSync } from 'src/i18n/index.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { fileHistoryEnabled } from 'src/utils/fileHistory.js'
-import {
-  getInitialSettings,
-  getSettingsForSource,
-} from 'src/utils/settings/settings.js'
+import { getInitialSettings, getSettingsForSource } from 'src/utils/settings/settings.js'
 import { shouldOfferTerminalSetup } from '../../commands/terminalSetup/terminalSetup.js'
 import { getDesktopUpsellConfig } from '../../components/DesktopUpsell/DesktopUpsellStartup.js'
 import { color } from '../../components/design-system/color.js'

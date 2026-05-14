@@ -55,7 +55,9 @@ export function BackgroundTask({ task, maxActivityWidth }: Props) {
       const doneLabel = task.status === 'completed' ? tSync('backgroundTasks.done') : undefined
       const unreadSuffix =
         task.status === 'completed' && !task.notified ? tSync('backgroundTasks.unread') : undefined
-      const statusElement = <TaskStatusText status={task.status} label={doneLabel} suffix={unreadSuffix} />
+      const statusElement = (
+        <TaskStatusText status={task.status} label={doneLabel} suffix={unreadSuffix} />
+      )
       return (
         <Text>
           {truncatedDescription} {statusElement}
@@ -91,7 +93,9 @@ export function BackgroundTask({ task, maxActivityWidth }: Props) {
             : undefined
       const unreadSuffix =
         task.status === 'completed' && !task.notified ? tSync('backgroundTasks.unread') : undefined
-      const statusElement = <TaskStatusText status={task.status} label={statusLabel} suffix={unreadSuffix} />
+      const statusElement = (
+        <TaskStatusText status={task.status} label={statusLabel} suffix={unreadSuffix} />
+      )
       return (
         <Text>
           {truncatedTitle} {statusElement}
@@ -103,7 +107,9 @@ export function BackgroundTask({ task, maxActivityWidth }: Props) {
       const doneLabel = task.status === 'completed' ? tSync('backgroundTasks.done') : undefined
       const unreadSuffix =
         task.status === 'completed' && !task.notified ? tSync('backgroundTasks.unread') : undefined
-      const statusElement = <TaskStatusText status={task.status} label={doneLabel} suffix={unreadSuffix} />
+      const statusElement = (
+        <TaskStatusText status={task.status} label={doneLabel} suffix={unreadSuffix} />
+      )
       return (
         <Text>
           {truncatedDescription} {statusElement}
@@ -124,7 +130,9 @@ export function BackgroundTask({ task, maxActivityWidth }: Props) {
       const doneLabel = task.status === 'completed' ? tSync('backgroundTasks.done') : undefined
       const unreadSuffix =
         task.status === 'completed' && !task.notified ? tSync('backgroundTasks.unread') : undefined
-      const statusElement = <TaskStatusText status={task.status} label={doneLabel} suffix={unreadSuffix} />
+      const statusElement = (
+        <TaskStatusText status={task.status} label={doneLabel} suffix={unreadSuffix} />
+      )
       return (
         <Text>
           {task.description} {detailElement} {statusElement}

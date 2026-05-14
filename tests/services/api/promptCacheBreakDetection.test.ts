@@ -53,7 +53,13 @@ describe('promptCacheBreakDetection', () => {
       )
       recordPromptState({
         system: [{ type: 'text' as const, text: 'You are helpful.' }],
-        toolSchemas: [{ name: 'search', description: 'Search', inputSchema: { type: 'object', properties: {} } }],
+        toolSchemas: [
+          {
+            name: 'search',
+            description: 'Search',
+            inputSchema: { type: 'object', properties: {} },
+          },
+        ],
         querySource: 'repl_main_thread' as any,
         model: 'claude-3',
       })
@@ -81,7 +87,13 @@ describe('promptCacheBreakDetection', () => {
       )
       const snapshot = {
         system: [{ type: 'text' as const, text: 'You are helpful.' }],
-        toolSchemas: [{ name: 'search', description: 'Search', inputSchema: { type: 'object' as const, properties: {} } }],
+        toolSchemas: [
+          {
+            name: 'search',
+            description: 'Search',
+            inputSchema: { type: 'object' as const, properties: {} },
+          },
+        ],
         querySource: 'repl_main_thread' as any,
         model: 'claude-3',
       }

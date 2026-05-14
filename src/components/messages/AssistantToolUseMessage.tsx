@@ -135,7 +135,8 @@ export function AssistantToolUseMessage({
     return null
   }
   const minBoxWidth = stringWidth(userFacingToolName) + (shouldShowDot ? 2 : 0)
-  const toolTagElement = input_0.success && tool_0.renderToolUseTag && tool_0.renderToolUseTag(input_0.data)
+  const toolTagElement =
+    input_0.success && tool_0.renderToolUseTag && tool_0.renderToolUseTag(input_0.data)
   const progressOrStatusElement =
     !isResolved &&
     !isQueued &&

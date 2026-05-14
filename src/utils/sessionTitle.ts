@@ -14,7 +14,7 @@
 import { z } from 'zod/v4'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { logEvent } from '../services/analytics/index.js'
-import { queryCompactModel } from '../services/api/zy.js'
+import { queryCompactModel } from '../services/api/llmOrchestrator.js'
 import type { Message } from '../types/message.js'
 import { logForDebugging } from './debug.js'
 import { safeParseJSON } from './json.js'

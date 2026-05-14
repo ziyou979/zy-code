@@ -431,3 +431,7 @@ export const ToolSearchTool = buildTool({
     } as unknown as ToolResultBlock
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(ToolSearchTool, () => isToolSearchEnabledOptimistic())

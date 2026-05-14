@@ -29,9 +29,7 @@ async function _temp() {
   if (!installed && !isRunningOnHomespace()) {
     return {
       key: 'chrome-extension-not-detected',
-      jsx: (
-        <Text color="warning">{tSync('notif.chromeNotDetected')}</Text>
-      ),
+      jsx: <Text color="warning">{tSync('notif.chromeNotDetected')}</Text>,
       priority: 'immediate',
       timeoutMs: 3000,
     }

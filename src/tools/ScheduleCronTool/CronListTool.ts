@@ -93,3 +93,7 @@ export const CronListTool = buildTool({
   renderToolUseMessage: renderListToolUseMessage,
   renderToolResultMessage: renderListResultMessage,
 } satisfies ToolDef<InputSchema, ListOutput>)
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(CronListTool)

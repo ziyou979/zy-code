@@ -83,7 +83,8 @@ export function AgentsMenu({ tools, onExit }: Props) {
       await deleteAgentFromFile(agentToDelete)
       setAppState((state) => {
         const filteredAgents = state.agentDefinitions.allAgents.filter(
-          (agent) => !(agent.agentType === agentToDelete.agentType && agent.source === agentToDelete.source),
+          (agent) =>
+            !(agent.agentType === agentToDelete.agentType && agent.source === agentToDelete.source),
         )
         return {
           ...state,
@@ -233,7 +234,9 @@ export function AgentsMenu({ tools, onExit }: Props) {
         }
       }
       const handleBack = () => setModeState(modeState.previousMode)
-      const selectComponent = <Select options={menuItems} onChange={handleMenuSelect} onCancel={handleBack} />
+      const selectComponent = (
+        <Select options={menuItems} onChange={handleMenuSelect} onCancel={handleBack} />
+      )
       const changeNotice = changes.length > 0 && (
         <Box marginTop={1}>
           <Text dimColor={true}>{changes[changes.length - 1]}</Text>
@@ -276,11 +279,7 @@ export function AgentsMenu({ tools, onExit }: Props) {
           previousMode: modeState.previousMode,
         })
       const agentDetail = (
-        <AgentDetail
-          agent={agentToDisplay}
-          tools={mergedTools}
-          onBack={handleBack}
-        />
+        <AgentDetail agent={agentToDisplay} tools={mergedTools} onBack={handleBack} />
       )
       const dialog = (
         <Dialog title={agentToDisplay.agentType} onCancel={handleCancel} hideInputGuide={true}>
@@ -363,7 +362,14 @@ export function AgentsMenu({ tools, onExit }: Props) {
         handleAgentCreated(message)
         setModeState(modeState.previousMode)
       }
-      const editor = <AgentEditor agent={agentToEdit} tools={mergedTools} onSaved={handleSaved} onBack={handleBack} />
+      const editor = (
+        <AgentEditor
+          agent={agentToEdit}
+          tools={mergedTools}
+          onSaved={handleSaved}
+          onBack={handleBack}
+        />
+      )
       const dialog = (
         <Dialog title={editTitle} onCancel={handleBack} hideInputGuide={true}>
           {editor}

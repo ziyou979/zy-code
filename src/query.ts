@@ -1,6 +1,11 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { isInternalBuild } from './utils/envUtils.js'
-import type { ToolResultBlock, ToolCallInlineBlock, AssistantContentBlock, TextBlock } from './types/llm.js'
+import type {
+  ToolResultBlock,
+  ToolCallInlineBlock,
+  AssistantContentBlock,
+  TextBlock,
+} from './types/llm.js'
 import type { CanUseToolFn } from './hooks/useCanUseTool.js'
 import { FallbackTriggeredError } from './services/api/withRetry.js'
 import {
@@ -126,7 +131,8 @@ function* yieldMissingToolResultBlocks(
     const content = assistantMessage.message.content
     if (!Array.isArray(content)) continue
     const toolUseBlocks = content.filter(
-      (block): block is ToolCallInlineBlock => typeof block !== 'string' && block.type === 'tool_call',
+      (block): block is ToolCallInlineBlock =>
+        typeof block !== 'string' && block.type === 'tool_call',
     )
 
     // 为每个工具使用发送中断消息
@@ -766,7 +772,10 @@ async function* queryLoop(
               // 类型守卫：确保 content 是数组
               const content = message.message.content
               const msgToolUseBlocks = Array.isArray(content)
-                ? content.filter((block): block is ToolCallInlineBlock => typeof block !== 'string' && block.type === 'tool_call')
+                ? content.filter(
+                    (block): block is ToolCallInlineBlock =>
+                      typeof block !== 'string' && block.type === 'tool_call',
+                  )
                 : []
               if (msgToolUseBlocks.length > 0) {
                 toolUseBlocks.push(...msgToolUseBlocks)
@@ -887,7 +896,10 @@ async function* queryLoop(
         toolUses: assistantMessages.flatMap((_) => {
           const content = _.message.content
           return Array.isArray(content)
-            ? content.filter((block): block is ToolCallInlineBlock => typeof block !== 'string' && block.type === 'tool_call')
+            ? content.filter(
+                (block): block is ToolCallInlineBlock =>
+                  typeof block !== 'string' && block.type === 'tool_call',
+              )
             : []
         }).length,
 
@@ -1324,7 +1336,9 @@ async function* queryLoop(
       if (lastAssistantMessage) {
         const content = lastAssistantMessage.message.content
         const textBlocks = Array.isArray(content)
-          ? content.filter((block): block is TextBlock => typeof block !== 'string' && block.type === 'text')
+          ? content.filter(
+              (block): block is TextBlock => typeof block !== 'string' && block.type === 'text',
+            )
           : []
         if (textBlocks.length > 0) {
           const lastTextBlock = textBlocks.at(-1)

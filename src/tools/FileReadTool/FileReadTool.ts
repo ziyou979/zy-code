@@ -1103,3 +1103,7 @@ export async function readImageWithTokenBudget(
 
   return result
 }
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(FileReadTool)

@@ -1761,3 +1761,7 @@ function resolveTeamName(
   if (!isAgentSwarmsEnabled()) return undefined
   return input.team_name || appState.teamContext?.teamName
 }
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(AgentTool)

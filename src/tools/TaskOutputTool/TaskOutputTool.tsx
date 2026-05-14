@@ -489,3 +489,7 @@ function TaskOutputResultDisplay({ content, verbose = false, theme }) {
   )
 }
 export default TaskOutputTool
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(TaskOutputTool)

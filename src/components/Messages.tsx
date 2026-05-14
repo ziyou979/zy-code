@@ -555,8 +555,7 @@ const MessagesImpl = ({
     const messagesToShowNotTruncated = reorderMessagesInUI(
       compactAwareMessages
         .filter(
-          (msg): msg is Exclude<NormalizedMessage, ProgressMessageType> =>
-            msg.type !== 'progress',
+          (msg): msg is Exclude<NormalizedMessage, ProgressMessageType> => msg.type !== 'progress',
         )
         // CC-724：丢弃 AttachmentMessage 渲染为 null 的 attachment 消息
         // （hook_success、hook_additional_context、hook_cancelled 等）
@@ -807,7 +806,11 @@ const MessagesImpl = ({
       // 如果这是 tool_result 消息且 tool 实现了
       // extractSearchText，优先使用它——比 renderableSearchText 的
       // 字段名启发式更精确（由 tool 拥有）。
-      if (message.type === 'user' && message.toolUseResult && Array.isArray(message.message.content)) {
+      if (
+        message.type === 'user' &&
+        message.toolUseResult &&
+        Array.isArray(message.message.content)
+      ) {
         const tr = message.message.content.find((block) => block.type === 'tool_result')
         if (tr && 'tool_use_id' in tr) {
           const tu = lookups.toolUseByToolUseID.get(tr.toolCallId)

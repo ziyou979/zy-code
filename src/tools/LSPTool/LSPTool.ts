@@ -785,3 +785,8 @@ function countUniqueFilesFromOutgoingCalls(calls: CallHierarchyOutgoingCall[]): 
   const validUris = calls.map((call) => call.to?.uri).filter((uri) => uri)
   return new Set(validUris).size
 }
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
+toolRegistry.register(LSPTool, () => isEnvTruthy(process.env.ENABLE_LSP_TOOL))

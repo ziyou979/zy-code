@@ -572,3 +572,7 @@ function readFileForEdit(absoluteFilePath: string): {
     throw e
   }
 }
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(FileEditTool)

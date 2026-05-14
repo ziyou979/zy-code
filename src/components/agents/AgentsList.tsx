@@ -242,59 +242,69 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
   const handleKeyDownCallback = handleKeyDown
   const boxElement2 = onCreateNew && <Box marginBottom={1}>{renderCreateNewOption()}</Box>
   const fragmentContent =
-      source === 'all' ? (
-        <>
-          {AGENT_SOURCE_GROUPS.filter((g_0) => g_0.source !== 'built-in').map((groupConfig) => {
-            const { label, source: groupSource_0 } = groupConfig
-            return (
-              <React.Fragment key={groupSource_0}>
-                {renderAgentGroup(
-                  label,
-                  sortedAgents.filter((a_7) => a_7.source === groupSource_0),
-                )}
-              </React.Fragment>
-            )
-            // @ts-ignore
-          })}
-          {builtInAgents_0.length > 0 && (
-            <Box flexDirection="column" marginBottom={1} paddingLeft={2}>
-              <Text dimColor={true}>
-                <Text bold={true}>{tSync('agents.builtInAgents')}</Text>{' '}
-                {tSync('agents.builtInAlwaysAvailable')}
-              </Text>
-              {builtInAgents_0.map(renderAgent)}
-            </Box>
-          )}
-        </>
-      ) : source === 'built-in' ? (
-        <>
-          <Text dimColor={true} italic={true}>
-            {tSync('agents.builtInAgentsDesc')}
-          </Text>
-          <Box marginTop={1} flexDirection="column">
-            {sortedAgents.map((agent_2) => renderAgent(agent_2))}
+    source === 'all' ? (
+      <>
+        {AGENT_SOURCE_GROUPS.filter((g_0) => g_0.source !== 'built-in').map((groupConfig) => {
+          const { label, source: groupSource_0 } = groupConfig
+          return (
+            <React.Fragment key={groupSource_0}>
+              {renderAgentGroup(
+                label,
+                sortedAgents.filter((a_7) => a_7.source === groupSource_0),
+              )}
+            </React.Fragment>
+          )
+          // @ts-ignore
+        })}
+        {builtInAgents_0.length > 0 && (
+          <Box flexDirection="column" marginBottom={1} paddingLeft={2}>
+            <Text dimColor={true}>
+              <Text bold={true}>{tSync('agents.builtInAgents')}</Text>{' '}
+              {tSync('agents.builtInAlwaysAvailable')}
+            </Text>
+            {builtInAgents_0.map(renderAgent)}
           </Box>
-        </>
-      ) : (
-        <>
-          {sortedAgents
-            .filter((a_8) => a_8.source !== 'built-in')
-            .map((agent_3) => renderAgent(agent_3))}
-          {sortedAgents.some((a_9) => a_9.source === 'built-in') && (
-            <>
-              <Divider />
-              {renderBuiltInAgentsSection(undefined)}
-            </>
-          )}
-        </>
-      )
+        )}
+      </>
+    ) : source === 'built-in' ? (
+      <>
+        <Text dimColor={true} italic={true}>
+          {tSync('agents.builtInAgentsDesc')}
+        </Text>
+        <Box marginTop={1} flexDirection="column">
+          {sortedAgents.map((agent_2) => renderAgent(agent_2))}
+        </Box>
+      </>
+    ) : (
+      <>
+        {sortedAgents
+          .filter((a_8) => a_8.source !== 'built-in')
+          .map((agent_3) => renderAgent(agent_3))}
+        {sortedAgents.some((a_9) => a_9.source === 'built-in') && (
+          <>
+            <Divider />
+            {renderBuiltInAgentsSection(undefined)}
+          </>
+        )}
+      </>
+    )
 
   // @ts-ignore
   return (
-    <DialogComponent title={dialogTitle} subtitle={agentsCountText} onCancel={handleBack} hideInputGuide={true}>
+    <DialogComponent
+      title={dialogTitle}
+      subtitle={agentsCountText}
+      onCancel={handleBack}
+      hideInputGuide={true}
+    >
       {boxElement}
       {
-        <BoxComponent flexDirection={'column'} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDownCallback}>
+        <BoxComponent
+          flexDirection={'column'}
+          tabIndex={0}
+          autoFocus={true}
+          onKeyDown={handleKeyDownCallback}
+        >
           {boxElement2}
           {fragmentContent}
         </BoxComponent>

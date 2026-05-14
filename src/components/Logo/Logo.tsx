@@ -114,7 +114,11 @@ export function Logo() {
     const debugInfoSection = isDebugMode() && (
       <Box paddingLeft={2} flexDirection="column">
         <Text color="warning">{tSync('logo.debugModeEnabled')}</Text>
-        <Text dimColor={true}>{tSync('logo.loggingTo', { path: isDebugToStdErr() ? tSync('logo.stderr') : getDebugLogPath() })}</Text>
+        <Text dimColor={true}>
+          {tSync('logo.loggingTo', {
+            path: isDebugToStdErr() ? tSync('logo.stderr') : getDebugLogPath(),
+          })}
+        </Text>
       </Box>
     )
     return (
@@ -233,7 +237,11 @@ export function Logo() {
   const debugInfoSection = isDebugMode() && (
     <Box paddingLeft={2} flexDirection="column">
       <Text color="warning">{tSync('logo.debugModeEnabled')}</Text>
-      <Text dimColor={true}>{tSync('logo.loggingTo', { path: isDebugToStdErr() ? tSync('logo.stderr') : getDebugLogPath() })}</Text>
+      <Text dimColor={true}>
+        {tSync('logo.loggingTo', {
+          path: isDebugToStdErr() ? tSync('logo.stderr') : getDebugLogPath(),
+        })}
+      </Text>
     </Box>
   )
   return (

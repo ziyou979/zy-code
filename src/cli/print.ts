@@ -2602,9 +2602,7 @@ function runHeadlessStreaming(
           sendControlResponseSuccess(message)
         } else if (requestSubtype === 'end_session') {
           const req = message.request as { reason?: string }
-          logForDebugging(
-            `[print.ts] end_session received, reason=${req.reason ?? 'unspecified'}`,
-          )
+          logForDebugging(`[print.ts] end_session received, reason=${req.reason ?? 'unspecified'}`)
           if (abortController) {
             // 会话被外部要求结束（SDK end_session 控制消息），
             // 用专门的 reason 区分于其他用户中断路径。

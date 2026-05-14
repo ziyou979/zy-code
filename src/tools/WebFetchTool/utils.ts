@@ -4,7 +4,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { queryCompactModel } from '../../services/api/zy.js'
+import { queryCompactModel } from '../../services/api/llmOrchestrator.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { tSync } from '../../i18n/index.js'
 import { AbortError } from '../../utils/errors.js'
@@ -95,7 +95,7 @@ function getTurndownService(): Promise<InstanceType<TurndownCtor>> {
     return new Turndown()
   }))
 }
-  // PSR 曾要求将 URL 长度限制为 250 以降低数据外泄风险，
+// PSR 曾要求将 URL 长度限制为 250 以降低数据外泄风险，
 // 但这对一些客户的合法用例（如 JWT 签名 URL）过于严格。
 // 我们已经要求用户对每个域名进行审批，这构成了主要安全边界。
 // 此外 ZY Code 还有其他数据外泄渠道，此渠道风险相对较低，

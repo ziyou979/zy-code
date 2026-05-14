@@ -14,7 +14,7 @@ import type { CommandResultDisplay } from '../commands.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { Box, Text, useInput } from '../ink.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
-import { queryCompactModel } from '../services/api/zy.js'
+import { queryCompactModel } from '../services/api/llmOrchestrator.js'
 import { startsWithApiErrorPrefix } from '../services/api/errors.js'
 import type { Message } from '../types/message.js'
 import { checkAndRefreshOAuthTokenIfNeeded } from '../utils/auth.js'
@@ -585,8 +585,7 @@ async function generateTitle(description: string, abortSignal: AbortSignal): Pro
       },
     })
     const firstBlock = response.message.content[0]
-    const title =
-      firstBlock && firstBlock.type === 'text' ? firstBlock.text : 'Bug Report'
+    const title = firstBlock && firstBlock.type === 'text' ? firstBlock.text : 'Bug Report'
 
     // Check if the title contains an API error message
     if (startsWithApiErrorPrefix(title)) {

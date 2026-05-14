@@ -760,7 +760,9 @@ export function ManagePlugins({
 
     // Find orphan errors (errors for plugins that failed to load entirely)
     const matchedPluginIds = new Set(pluginsWithChildren.map(({ item }) => item.id))
-    const matchedPluginNames = new Set(pluginsWithChildren.map(({ item: pluginItem }) => pluginItem.name))
+    const matchedPluginNames = new Set(
+      pluginsWithChildren.map(({ item: pluginItem }) => pluginItem.name),
+    )
     const orphanErrorsBySource = new Map<string, typeof pluginErrors>()
     for (const error of pluginErrors) {
       if (
@@ -835,7 +837,11 @@ export function ManagePlugins({
     const itemsByScope = new Map<string, UnifiedInstalledItem[]>()
 
     // Add plugins with their child MCPs
-    for (const { item: pluginItem, originalScope: pluginOriginalScope, childMcps } of pluginsWithChildren) {
+    for (const {
+      item: pluginItem,
+      originalScope: pluginOriginalScope,
+      childMcps,
+    } of pluginsWithChildren) {
       const itemScope = pluginItem.scope
       if (!itemsByScope.has(itemScope)) {
         itemsByScope.set(itemScope, [])
@@ -959,7 +965,9 @@ export function ManagePlugins({
   // After 48 hours from seenAt, they auto-clear on next load.
   const flaggedIds = useMemo(
     () =>
-      unifiedItems.filter((flaggedItem) => flaggedItem.type === 'flagged-plugin').map((flaggedItem) => flaggedItem.id),
+      unifiedItems
+        .filter((flaggedItem) => flaggedItem.type === 'flagged-plugin')
+        .map((flaggedItem) => flaggedItem.id),
     [unifiedItems],
   )
   useEffect(() => {
@@ -975,7 +983,8 @@ export function ManagePlugins({
     return unifiedItems.filter(
       (filteredItem) =>
         filteredItem.name.toLowerCase().includes(lowerQuery) ||
-        ('description' in filteredItem && filteredItem.description?.toLowerCase().includes(lowerQuery)),
+        ('description' in filteredItem &&
+          filteredItem.description?.toLowerCase().includes(lowerQuery)),
     )
   }, [unifiedItems, searchQuery])
 
@@ -1014,7 +1023,9 @@ export function ManagePlugins({
         hasMcpb =
           (typeof mcpServersSpec === 'string' && isMcpbSource(mcpServersSpec)) ||
           (Array.isArray(mcpServersSpec) &&
-            mcpServersSpec.some((serverSpec) => typeof serverSpec === 'string' && isMcpbSource(serverSpec)))
+            mcpServersSpec.some(
+              (serverSpec) => typeof serverSpec === 'string' && isMcpbSource(serverSpec),
+            ))
       }
 
       // If not in manifest, read raw marketplace.json directly (bypassing schema validation)
@@ -1033,7 +1044,10 @@ export function ManagePlugins({
             hasMcpb =
               (typeof spec === 'string' && isMcpbSource(spec)) ||
               (Array.isArray(spec) &&
-                spec.some((serverSpec: unknown) => typeof serverSpec === 'string' && isMcpbSource(serverSpec)))
+                spec.some(
+                  (serverSpec: unknown) =>
+                    typeof serverSpec === 'string' && isMcpbSource(serverSpec),
+                ))
           }
         } catch (err) {
           logForDebugging(`Failed to read raw marketplace.json: ${err}`)
@@ -1129,7 +1143,9 @@ export function ManagePlugins({
 
       // First check successfully loaded plugins
       for (const marketplaceItem of marketplacesToSearch) {
-        const plugin = marketplaceItem.installedPlugins.find((installedPlugin) => installedPlugin.name === targetName)
+        const plugin = marketplaceItem.installedPlugins.find(
+          (installedPlugin) => installedPlugin.name === targetName,
+        )
         if (plugin) {
           // Get scope from V2 data for proper operation handling
           const targetPluginId = `${plugin.name}@${marketplaceItem.name}`
@@ -1409,7 +1425,8 @@ export function ManagePlugins({
     const selectedItem = filteredItems[selectedIndex]
     if (selectedItem?.type === 'plugin') {
       const pluginState = pluginStates.find(
-        (s) => s.plugin.name === selectedItem.plugin.name && s.marketplace === selectedItem.marketplace,
+        (s) =>
+          s.plugin.name === selectedItem.plugin.name && s.marketplace === selectedItem.marketplace,
       )
       if (pluginState) {
         setSelectedPlugin(pluginState)
@@ -1546,9 +1563,7 @@ export function ManagePlugins({
             }
           } catch (error) {
             setProcessError(
-              error instanceof Error
-                ? error.message
-                : 'Failed to check plugin update availability',
+              error instanceof Error ? error.message : 'Failed to check plugin update availability',
             )
           }
         },
@@ -1799,8 +1814,7 @@ export function ManagePlugins({
       const pluginScope = selectedPlugin.scope
       // Dialog is only reachable from the uninstall case (which guards on
       // isBuiltin), but TS can't track that across viewState transitions.
-      if (!pluginScope || pluginScope === 'builtin' || !isInstallableScope(pluginScope))
-        return
+      if (!pluginScope || pluginScope === 'builtin' || !isInstallableScope(pluginScope)) return
       const doUninstall = async (deleteDataDir: boolean) => {
         setIsProcessing(true)
         setProcessError(null)

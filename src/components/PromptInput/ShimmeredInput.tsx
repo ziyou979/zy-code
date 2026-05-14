@@ -60,7 +60,9 @@ export function HighlightedInput({ text, highlights }: Props) {
     cycleLength,
   }
   const [ref, time] = useAnimationFrame(hasShimmerEffect ? 50 : null)
-  const glimmerIndex = hasShimmerEffect ? sweepStartPosition + (Math.floor(time / 50) % sweepCycleLength) : -100
+  const glimmerIndex = hasShimmerEffect
+    ? sweepStartPosition + (Math.floor(time / 50) % sweepCycleLength)
+    : -100
   const renderedLines = lineSegments.map((lineParts, lineIndex) => (
     <Box key={lineIndex}>
       {lineParts.length === 0 ? (

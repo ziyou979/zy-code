@@ -146,11 +146,13 @@ export function applyGrouping(
             uuid: `grouped-${firstMsg.uuid}`,
             timestamp: firstMsg.timestamp,
             messageId: info.messageId,
-            toolUses: group.map((m) => {
-              const blocks = m.message.content
-              const block = blocks[0]
-              return block && block.type === 'tool_call' ? block : null
-            }).filter((b): b is NonNullable<typeof b> => b !== null),
+            toolUses: group
+              .map((m) => {
+                const blocks = m.message.content
+                const block = blocks[0]
+                return block && block.type === 'tool_call' ? block : null
+              })
+              .filter((b): b is NonNullable<typeof b> => b !== null),
           }
           result.push(groupedMessage)
         }

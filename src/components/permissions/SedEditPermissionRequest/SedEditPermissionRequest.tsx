@@ -91,7 +91,9 @@ function SedEditPermissionRequestInner({
       onReject={props.onReject}
       title={tSync('permission.editFile')}
       subtitle={relativePath}
-      question={<Text>{tSync('permission.doYouWantToMakeThisEdit', { filename: baseFileName })}</Text>}
+      question={
+        <Text>{tSync('permission.doYouWantToMakeThisEdit', { filename: baseFileName })}</Text>
+      }
       content={
         edits.length > 0 ? (
           <FileEditToolDiff file_path={filePath} edits={edits} />

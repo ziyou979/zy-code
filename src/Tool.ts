@@ -100,9 +100,6 @@ export type SetToolJSXFn = (
 // 从集中位置导入工具权限类型以打破导入循环
 import type { ToolPermissionRulesBySource } from './types/permissions.js'
 
-// 重新导出以保持向后兼容
-export type { ToolPermissionRulesBySource }
-
 // 对导入的类型应用 DeepImmutable
 export type ToolPermissionContext = DeepImmutable<{
   mode: PermissionMode

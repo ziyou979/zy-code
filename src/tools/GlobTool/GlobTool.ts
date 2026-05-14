@@ -181,3 +181,8 @@ export const GlobTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
+toolRegistry.register(GlobTool, () => !hasEmbeddedSearchTools())

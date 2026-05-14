@@ -114,7 +114,8 @@ export function buildForkedMessages(
 
   // Collect all tool_use blocks from the assistant message
   const toolUseBlocks = contentBlocks.filter(
-    (block): block is ToolCallInlineBlock => typeof block !== 'string' && block.type === 'tool_call',
+    (block): block is ToolCallInlineBlock =>
+      typeof block !== 'string' && block.type === 'tool_call',
   )
 
   if (toolUseBlocks.length === 0) {

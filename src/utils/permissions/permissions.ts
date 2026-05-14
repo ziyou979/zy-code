@@ -763,12 +763,7 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
         // 当分类器不可用时（API 错误），行为取决于
         // zy_iron_gate_closed 门控。
         if (classifierResult.unavailable) {
-          if (
-            getFeatureValue_CACHED_MAY_BE_STALE(
-              'zy_iron_gate_closed',
-              true,
-            )
-          ) {
+          if (getFeatureValue_CACHED_MAY_BE_STALE('zy_iron_gate_closed', true)) {
             logForDebugging(
               'Auto mode classifier unavailable, denying with retry guidance (fail closed)',
               { level: 'warn' },

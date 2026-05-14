@@ -11,7 +11,7 @@ import type {
   SDKStatus,
   SDKUserMessageReplay,
 } from 'src/entrypoints/agentSdkTypes.js'
-import { accumulateUsage, updateUsage } from 'src/services/api/zy.js'
+import { accumulateUsage, updateUsage } from 'src/services/api/llmOrchestrator.js'
 import type { NonNullableUsage } from 'src/services/api/logging.js'
 import { EMPTY_USAGE } from 'src/services/api/logging.js'
 import stripAnsi from 'strip-ansi'
@@ -29,7 +29,13 @@ import type { AppState } from './state/AppState.js'
 import { type Tools, type ToolUseContext, toolMatchesName } from './Tool.js'
 import type { AgentDefinition } from './tools/AgentTool/loadAgentsDir.js'
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from './tools/SyntheticOutputTool/SyntheticOutputTool.js'
-import type { AssistantMessage, Message, StreamEvent, SystemMessage, ToolUseSummaryMessage } from './types/message.js'
+import type {
+  AssistantMessage,
+  Message,
+  StreamEvent,
+  SystemMessage,
+  ToolUseSummaryMessage,
+} from './types/message.js'
 import type { OrphanedPermission } from './types/textInputTypes.js'
 import { createAbortController } from './utils/abortController.js'
 import type { AttributionState } from './utils/commitAttribution.js'
@@ -735,15 +741,23 @@ export class QueryEngine {
           break
         case 'stream_event': {
           const streamMsg = message as StreamEvent
-          if (streamMsg.event.type === 'message_start' || streamMsg.event.type === 'response_start') {
+          if (
+            streamMsg.event.type === 'message_start' ||
+            streamMsg.event.type === 'response_start'
+          ) {
             // 重置新消息的当前 usage
             currentMessageUsage = EMPTY_USAGE
-            const startMsg = streamMsg.event.message as { usage?: import('./types/llm.js').DeltaUsage } | undefined
+            const startMsg = streamMsg.event.message as
+              | { usage?: import('./types/llm.js').DeltaUsage }
+              | undefined
             if (startMsg?.usage) {
               currentMessageUsage = updateUsage(currentMessageUsage, startMsg.usage)
             }
           }
-          if (streamMsg.event.type === 'message_delta' || streamMsg.event.type === 'response_delta') {
+          if (
+            streamMsg.event.type === 'message_delta' ||
+            streamMsg.event.type === 'response_delta'
+          ) {
             const evt = streamMsg.event as unknown as import('./types/llm.js').ResponseDeltaEvent
             // response_delta 的 usage 是标准格式（camelCase）
             const deltaUsage: import('./types/llm.js').DeltaUsage | undefined = evt.usage
@@ -859,7 +873,15 @@ export class QueryEngine {
           }
           this.mutableMessages.push(message)
           // 向 SDK 产生 compact boundary 消息
-          const sysMsg = message as unknown as { subtype?: string; compactMetadata?: unknown; retryAttempt?: number; maxRetries?: number; retryInMs?: number; error?: import('./types/llm.js').LLMError; uuid: string }
+          const sysMsg = message as unknown as {
+            subtype?: string
+            compactMetadata?: unknown
+            retryAttempt?: number
+            maxRetries?: number
+            retryInMs?: number
+            error?: import('./types/llm.js').LLMError
+            uuid: string
+          }
           if (sysMsg.subtype === 'compact_boundary' && sysMsg.compactMetadata) {
             // 释放压缩前的消息以供 GC。边界刚刚被推送，所以它是最后一个元素。
             // query.ts 内部已使用 getMessagesAfterCompactBoundary()，因此
@@ -878,7 +900,9 @@ export class QueryEngine {
               subtype: 'compact_boundary' as const,
               session_id: getSessionId(),
               uuid: message.uuid,
-              compact_metadata: toSDKCompactMetadata(sysMsg.compactMetadata as import('./types/message.js').CompactMetadata),
+              compact_metadata: toSDKCompactMetadata(
+                sysMsg.compactMetadata as import('./types/message.js').CompactMetadata,
+              ),
             }
           }
           if (sysMsg.subtype === 'api_error') {
@@ -991,9 +1015,7 @@ export class QueryEngine {
     // 这些访问无法通过类型检查。
     const edeResultType = result?.type ?? 'undefined'
     const edeLastContentType =
-      result?.type === 'assistant'
-        ? (result.message.content.at(-1)?.type ?? 'none')
-        : 'n/a'
+      result?.type === 'assistant' ? (result.message.content.at(-1)?.type ?? 'none') : 'n/a'
 
     // 在产生 result 之前刷新缓冲的 transcript 写入。
     // 桌面应用在收到 result 消息后会立即 kill CLI 进程，

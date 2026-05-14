@@ -1076,17 +1076,12 @@ export function LogSelector({
                   <KeyboardShortcutHint
                     shortcut="Ctrl+A"
                     action={
-                      showAllProjects
-                        ? 'logSelector:showCurrentDir'
-                        : 'logSelector:showAllProjects'
+                      showAllProjects ? 'logSelector:showCurrentDir' : 'logSelector:showAllProjects'
                     }
                   />
                 )}
                 {currentBranch && (
-                  <KeyboardShortcutHint
-                    shortcut="Ctrl+B"
-                    action="logSelector:toggleBranch"
-                  />
+                  <KeyboardShortcutHint shortcut="Ctrl+B" action="logSelector:toggleBranch" />
                 )}
                 {hasMultipleWorktrees && (
                   <KeyboardShortcutHint

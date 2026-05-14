@@ -295,3 +295,7 @@ function buildSuggestions(ruleContent: string): PermissionUpdate[] {
     },
   ]
 }
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(WebFetchTool)

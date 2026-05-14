@@ -1,4 +1,4 @@
-import { queryCompactModel } from '../../services/api/zy.js'
+import { queryCompactModel } from '../../services/api/llmOrchestrator.js'
 import { logError } from '../log.js'
 import { extractTextContent } from '../messages.js'
 import { asSystemPrompt } from '../systemPromptType.js'

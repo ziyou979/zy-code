@@ -74,3 +74,7 @@ export const SuggestBackgroundPRTool = buildTool({
     return { data: { title, description, branch_name } }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(SuggestBackgroundPRTool)

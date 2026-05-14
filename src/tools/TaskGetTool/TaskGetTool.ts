@@ -121,3 +121,7 @@ export const TaskGetTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(TaskGetTool, () => isTodoV2Enabled())

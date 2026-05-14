@@ -22,5 +22,9 @@ export function MessageTimestamp({ message, isTranscriptMode }: Props) {
     hour12: true,
   })
   const timestampWidth = stringWidth(formattedTimestamp)
-  return <TimestampBox minWidth={timestampWidth}>{<Text dimColor={true}>{formattedTimestamp}</Text>}</TimestampBox>
+  return (
+    <TimestampBox minWidth={timestampWidth}>
+      {<Text dimColor={true}>{formattedTimestamp}</Text>}
+    </TimestampBox>
+  )
 }

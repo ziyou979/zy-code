@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto'
 import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js'
-import { queryModelWithoutStreaming } from '../../services/api/zy.js'
+import { queryModelWithoutStreaming } from '../../services/api/llmOrchestrator.js'
 import type { ToolUseContext } from '../../Tool.js'
 import type { Message } from '../../types/message.js'
 import { createAttachmentMessage } from '../attachments.js'

@@ -203,7 +203,9 @@ export function BrowseMarketplace({
           for (const [marketplaceName] of Object.entries(config)) {
             const currentMarketplace = await getMarketplace(marketplaceName)
             if (currentMarketplace) {
-              const foundPluginEntry = currentMarketplace.plugins.find((p) => p.name === targetPlugin)
+              const foundPluginEntry = currentMarketplace.plugins.find(
+                (p) => p.name === targetPlugin,
+              )
               if (foundPluginEntry) {
                 const pluginId = createPluginId(foundPluginEntry.name, marketplaceName)
                 foundPlugin = {
@@ -244,7 +246,9 @@ export function BrowseMarketplace({
           }
         } else if (targetMarketplace) {
           // Navigate directly to the specified marketplace
-          const marketplaceExists = marketplaceInfos.some((marketplaceInfo) => marketplaceInfo.name === targetMarketplace)
+          const marketplaceExists = marketplaceInfos.some(
+            (marketplaceInfo) => marketplaceInfo.name === targetMarketplace,
+          )
           if (marketplaceExists) {
             setSelectedMarketplace(targetMarketplace)
             setViewState('plugin-list')
@@ -305,13 +309,17 @@ export function BrowseMarketplace({
             })
           } else {
             // No counts available - sort alphabetically
-            installablePlugins.sort((pluginA, pluginB) => pluginA.entry.name.localeCompare(pluginB.entry.name))
+            installablePlugins.sort((pluginA, pluginB) =>
+              pluginA.entry.name.localeCompare(pluginB.entry.name),
+            )
           }
         } catch (error) {
           if (cancelled) return
           // Log the error, then gracefully degrade to alphabetical sort
           logForDebugging(`Failed to fetch install counts: ${errorMessage(error)}`)
-          installablePlugins.sort((pluginA, pluginB) => pluginA.entry.name.localeCompare(pluginB.entry.name))
+          installablePlugins.sort((pluginA, pluginB) =>
+            pluginA.entry.name.localeCompare(pluginB.entry.name),
+          )
         }
         setAvailablePlugins(installablePlugins)
         setSelectedIndex(0)
@@ -332,7 +340,9 @@ export function BrowseMarketplace({
   // Install selected plugins
   const installSelectedPlugins = async () => {
     if (selectedForInstall.size === 0) return
-    const pluginsToInstall = availablePlugins.filter((pluginItem) => selectedForInstall.has(pluginItem.pluginId))
+    const pluginsToInstall = availablePlugins.filter((pluginItem) =>
+      selectedForInstall.has(pluginItem.pluginId),
+    )
     setInstallingPlugins(new Set(pluginsToInstall.map((installPlugin) => installPlugin.pluginId)))
     let successCount = 0
     let failureCount = 0
@@ -593,7 +603,9 @@ export function BrowseMarketplace({
         onDone={(outcome, detail) => {
           switch (outcome) {
             case 'configured':
-              finish(`✓ Installed and configured ${optionsPlugin.name}. Run /reload-plugins to apply.`)
+              finish(
+                `✓ Installed and configured ${optionsPlugin.name}. Run /reload-plugins to apply.`,
+              )
               break
             case 'skipped':
               finish(`✓ Installed ${optionsPlugin.name}. Run /reload-plugins to apply.`)

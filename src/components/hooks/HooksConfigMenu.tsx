@@ -275,7 +275,11 @@ export function HooksConfigMenu({ toolNames, onExit }: Props) {
     }
     case 'select-hook': {
       const eventMetadata_0 = hookEventMetadata[modeState.event]
-      const hooksForMatcher = getHooksForMatcher(hooksByEventAndMatcher, modeState.event, modeState.matcher)
+      const hooksForMatcher = getHooksForMatcher(
+        hooksByEventAndMatcher,
+        modeState.event,
+        modeState.matcher,
+      )
       const handleSelectHook = (hook) => {
         setModeState({
           mode: 'view-hook',

@@ -41,10 +41,13 @@ export function FilesystemPermissionRequest({
       />
     ) as any
   }
-  const renderedToolUseMessage = toolUseConfirm.tool.renderToolUseMessage(toolUseConfirm.input as never, {
-    theme,
-    verbose,
-  })
+  const renderedToolUseMessage = toolUseConfirm.tool.renderToolUseMessage(
+    toolUseConfirm.input as never,
+    {
+      theme,
+      verbose,
+    },
+  )
   const content = (
     <Box flexDirection="column" paddingX={2} paddingY={1}>
       <Text>

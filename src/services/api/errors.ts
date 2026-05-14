@@ -343,7 +343,9 @@ function logToolUseToolResultMismatch(
 /**
  * 类型守卫，检查值是否为来自 API 的有效 Message 响应
  */
-export function isValidAPIMessage(value: unknown): value is { content: unknown[]; model: string; usage: object } {
+export function isValidAPIMessage(
+  value: unknown,
+): value is { content: unknown[]; model: string; usage: object } {
   return (
     typeof value === 'object' &&
     value !== null &&

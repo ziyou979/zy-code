@@ -92,15 +92,14 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
   // 异步获取 git 分支名和仓库状态
   useEffect(() => {
     let cancelled = false
-    Promise.all([
-      getBranch().catch(() => null),
-      getIsClean().catch(() => null),
-    ]).then(([b, clean]) => {
-      if (!cancelled) {
-        setBranch(b)
-        setGitClean(clean)
-      }
-    })
+    Promise.all([getBranch().catch(() => null), getIsClean().catch(() => null)]).then(
+      ([b, clean]) => {
+        if (!cancelled) {
+          setBranch(b)
+          setGitClean(clean)
+        }
+      },
+    )
     return () => {
       cancelled = true
     }
@@ -126,7 +125,14 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
     return () => clearInterval(id)
   }, [isLoading])
 
-  type SegmentColor = 'ansi:yellow' | 'ansi:blue' | 'ansi:cyan' | 'ansi:magenta' | 'ansi:green' | 'ansi:red' | 'inactive'
+  type SegmentColor =
+    | 'ansi:yellow'
+    | 'ansi:blue'
+    | 'ansi:cyan'
+    | 'ansi:magenta'
+    | 'ansi:green'
+    | 'ansi:red'
+    | 'inactive'
   const segments: Array<{ text: string; color: SegmentColor }> = []
 
   // 强制引用 tick 以避免 unused variable 警告
@@ -188,7 +194,10 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
     const totalIn = getTotalInputTokens()
     const totalOut = getTotalOutputTokens()
     if (totalIn > 0 || totalOut > 0) {
-      segments.push({ text: `↑ ${formatTokens(totalIn)}  ↓ ${formatTokens(totalOut)}`, color: 'ansi:blue' })
+      segments.push({
+        text: `↑ ${formatTokens(totalIn)}  ↓ ${formatTokens(totalOut)}`,
+        color: 'ansi:blue',
+      })
     }
   }
 

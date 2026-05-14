@@ -154,9 +154,13 @@ export default function Text({
       inverse,
     }),
   }
-  const textNode = React.createElement('ink-text' as React.ElementType, {
-    style: memoizedStylesForWrap[wrap],
-    textStyles,
-  }, children)
+  const textNode = React.createElement(
+    'ink-text' as React.ElementType,
+    {
+      style: memoizedStylesForWrap[wrap],
+      textStyles,
+    },
+    children,
+  )
   return textNode
 }

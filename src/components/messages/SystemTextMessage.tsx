@@ -23,7 +23,11 @@ import type {
   SystemMemorySavedMessage,
 } from '../../types/message.js'
 import { SystemAPIErrorMessage } from './SystemAPIErrorMessage.js'
-import { formatDuration, formatSecondsShort, getLocalizedDurationFormatter } from '../../utils/format.js'
+import {
+  formatDuration,
+  formatSecondsShort,
+  getLocalizedDurationFormatter,
+} from '../../utils/format.js'
 import { getGlobalConfig } from '../../utils/config.js'
 import Link from '../../ink/components/Link.js'
 import ThemedText from '../design-system/ThemedText.js'

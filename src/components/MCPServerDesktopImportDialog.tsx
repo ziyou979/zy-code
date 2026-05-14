@@ -61,7 +61,9 @@ export function MCPServerDesktopImportDialog({ servers, scope, onDone }: Props) 
   const handleEscCancel = () => {
     done(0)
   }
-  const serverUnitLabel = tSync(serverNames.length === 1 ? 'mcp.importServer_one' : 'mcp.importServer_other')
+  const serverUnitLabel = tSync(
+    serverNames.length === 1 ? 'mcp.importServer_one' : 'mcp.importServer_other',
+  )
   const serverOptions = serverNames.map((server) => ({
     label: `${server}${collisions.includes(server) ? tSync('mcp.importAlreadyExists') : ''}`,
     value: server,
@@ -72,7 +74,10 @@ export function MCPServerDesktopImportDialog({ servers, scope, onDone }: Props) 
       {
         <Dialog
           title={tSync('mcp.importDesktopTitle')}
-          subtitle={tSync('mcp.importDesktopSubtitle', { count: serverNames.length, unit: serverUnitLabel })}
+          subtitle={tSync('mcp.importDesktopSubtitle', {
+            count: serverNames.length,
+            unit: serverUnitLabel,
+          })}
           color="success"
           onCancel={handleEscCancel}
           hideInputGuide={true}

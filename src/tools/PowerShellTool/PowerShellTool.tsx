@@ -1158,3 +1158,8 @@ async function* runPowerShellCommand({
     }
   }
 }
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+import { isPowerShellToolEnabled } from '../../utils/shell/shellToolUtils.js'
+toolRegistry.register(PowerShellTool, () => isPowerShellToolEnabled())

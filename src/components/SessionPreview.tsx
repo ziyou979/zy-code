@@ -89,7 +89,8 @@ export function SessionPreview({ log, onExit, onSelect }: Props) {
         >
           {
             <Text>
-              {relativeTimeText} · {tSync('sessionPreview.messages', { count: displayLog.messageCount })}
+              {relativeTimeText} ·{' '}
+              {tSync('sessionPreview.messages', { count: displayLog.messageCount })}
               {displayLog.gitBranch ? ` · ${displayLog.gitBranch}` : ''}
             </Text>
           }

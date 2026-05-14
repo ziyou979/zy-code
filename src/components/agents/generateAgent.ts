@@ -1,6 +1,6 @@
 import type { AssistantContentBlock, TextBlock } from '../../types/llm.js'
 import { getUserContext } from 'src/context.js'
-import { queryModelWithoutStreaming } from 'src/services/api/zy.js'
+import { queryModelWithoutStreaming } from 'src/services/api/llmOrchestrator.js'
 import { getEmptyToolPermissionContext } from 'src/Tool.js'
 import { AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
 import { prependUserContext } from 'src/utils/api.js'

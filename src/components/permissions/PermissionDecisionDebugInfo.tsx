@@ -277,7 +277,9 @@ export function PermissionDecisionDebugInfo({ permissionResult, toolName }) {
       ),
     )
   } else if (toolName) {
-    unreachableRules = all.filter((unreachableRule) => unreachableRule.rule.ruleValue.toolName === toolName)
+    unreachableRules = all.filter(
+      (unreachableRule) => unreachableRule.rule.ruleValue.toolName === toolName,
+    )
   } else {
     unreachableRules = all
   }
@@ -330,7 +332,9 @@ export function PermissionDecisionDebugInfo({ permissionResult, toolName }) {
           </Text>
           {unreachableRules.map((unreachableRule, i) => (
             <Box key={i} flexDirection="column" marginLeft={2}>
-              <Text color="warning">{permissionRuleValueToString(unreachableRule.rule.ruleValue)}</Text>
+              <Text color="warning">
+                {permissionRuleValueToString(unreachableRule.rule.ruleValue)}
+              </Text>
               <Text dimColor={true}>
                 {'  '}
                 {unreachableRule.reason}

@@ -273,7 +273,6 @@ export type GlobalConfig = {
     [tipId: string]: number // key 为 tipId，value 为上次展示该提示时的 numStartups
   }
 
-
   // 反馈调查追踪
   feedbackSurveyState?: {
     lastShownTime?: number

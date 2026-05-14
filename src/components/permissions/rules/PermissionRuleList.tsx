@@ -48,7 +48,9 @@ type RuleSourceTextProps = {
 }
 function RuleSourceText({ rule }: RuleSourceTextProps) {
   const sourceDisplay = permissionRuleSourceDisplayString(rule.source)
-  return <Text dimColor={true}>{tSync('permissionRules.fromSource', { source: sourceDisplay })}</Text>
+  return (
+    <Text dimColor={true}>{tSync('permissionRules.fromSource', { source: sourceDisplay })}</Text>
+  )
 }
 
 // Helper function to get the appropriate label for rule behavior
@@ -248,7 +250,13 @@ function PermissionRulesTab({
           }
         </Text>
       }
-      {<TabContentComponent options={rulesOptions.options} onSelect={(v) => handleToolSelect(v, tab)} {...rulesProps} />}
+      {
+        <TabContentComponent
+          options={rulesOptions.options}
+          onSelect={(v) => handleToolSelect(v, tab)}
+          {...rulesProps}
+        />
+      }
     </TabContainer>
   )
 }

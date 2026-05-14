@@ -473,7 +473,8 @@ export function ScrollKeybindingHandler({
         // scroll would be a no-op. Lets a child component's handler take
         // the wheel event instead (e.g. Settings Config's list navigation
         // inside the centered Modal, where the paginated slice always fits).
-        if (!scrollHandle || scrollHandle.getScrollHeight() <= scrollHandle.getViewportHeight()) return false
+        if (!scrollHandle || scrollHandle.getScrollHeight() <= scrollHandle.getViewportHeight())
+          return false
         wheelAccel.current ??= initAndLogWheelAccel()
         scrollUp(scrollHandle, computeWheelStep(wheelAccel.current, -1, performance.now()))
         onScroll?.(false, scrollHandle)
@@ -481,7 +482,8 @@ export function ScrollKeybindingHandler({
       'scroll:lineDown': () => {
         selection.clearSelection()
         const scrollHandle = scrollRef.current
-        if (!scrollHandle || scrollHandle.getScrollHeight() <= scrollHandle.getViewportHeight()) return false
+        if (!scrollHandle || scrollHandle.getScrollHeight() <= scrollHandle.getViewportHeight())
+          return false
         wheelAccel.current ??= initAndLogWheelAccel()
         const step = computeWheelStep(wheelAccel.current, 1, performance.now())
         const reachedBottom = scrollDown(scrollHandle, step)
@@ -490,15 +492,24 @@ export function ScrollKeybindingHandler({
       'scroll:top': () => {
         const scrollHandle = scrollRef.current
         if (!scrollHandle) return
-        translateSelectionForJump(scrollHandle, -(scrollHandle.getScrollTop() + scrollHandle.getPendingDelta()))
+        translateSelectionForJump(
+          scrollHandle,
+          -(scrollHandle.getScrollTop() + scrollHandle.getPendingDelta()),
+        )
         scrollHandle.scrollTo(0)
         onScroll?.(false, scrollHandle)
       },
       'scroll:bottom': () => {
         const scrollHandle = scrollRef.current
         if (!scrollHandle) return
-        const maxScrollTop = Math.max(0, scrollHandle.getScrollHeight() - scrollHandle.getViewportHeight())
-        translateSelectionForJump(scrollHandle, maxScrollTop - (scrollHandle.getScrollTop() + scrollHandle.getPendingDelta()))
+        const maxScrollTop = Math.max(
+          0,
+          scrollHandle.getScrollHeight() - scrollHandle.getViewportHeight(),
+        )
+        translateSelectionForJump(
+          scrollHandle,
+          maxScrollTop - (scrollHandle.getScrollTop() + scrollHandle.getPendingDelta()),
+        )
         // scrollTo(max) eager-writes scrollTop so the render-phase sticky
         // follow computes followDelta=0. Without this, scrollToBottom()
         // alone leaves scrollTop stale → followDelta=max-stale →
@@ -581,8 +592,10 @@ export function ScrollKeybindingHandler({
     (input, key, event) => {
       const scrollState = scrollRef.current
       if (!scrollState) return
-      const stickyResult = applyModalPagerAction(scrollState, modalPagerAction(input, key), (direction) =>
-        translateSelectionForJump(scrollState, direction),
+      const stickyResult = applyModalPagerAction(
+        scrollState,
+        modalPagerAction(input, key),
+        (direction) => translateSelectionForJump(scrollState, direction),
       )
       if (stickyResult === null) return
       onScroll?.(stickyResult, scrollState)

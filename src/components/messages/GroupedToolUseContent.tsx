@@ -40,24 +40,26 @@ export function GroupedToolUseContent({
       }
     }
   }
-  const toolUsesData = message.messages.map((msg) => {
-    const contentBlocks = Array.isArray(msg.message.content) ? msg.message.content : []
-    const content = contentBlocks[0]
-    if (!content || typeof content === 'string' || content.type !== 'tool_call') {
-      return null
-    }
-    const result = resultsByToolUseId.get(content.id)
-    return {
-      param: content,
-      isResolved: lookups.resolvedToolUseIDs.has(content.id),
-      isError: lookups.erroredToolUseIDs.has(content.id),
-      isInProgress: inProgressToolUseIDs.has(content.id),
-      progressMessages: filterToolProgressMessages(
-        lookups.progressMessagesByToolUseID.get(content.id) ?? [],
-      ),
-      result,
-    }
-  }).filter((d): d is NonNullable<typeof d> => d !== null)
+  const toolUsesData = message.messages
+    .map((msg) => {
+      const contentBlocks = Array.isArray(msg.message.content) ? msg.message.content : []
+      const content = contentBlocks[0]
+      if (!content || typeof content === 'string' || content.type !== 'tool_call') {
+        return null
+      }
+      const result = resultsByToolUseId.get(content.id)
+      return {
+        param: content,
+        isResolved: lookups.resolvedToolUseIDs.has(content.id),
+        isError: lookups.erroredToolUseIDs.has(content.id),
+        isInProgress: inProgressToolUseIDs.has(content.id),
+        progressMessages: filterToolProgressMessages(
+          lookups.progressMessagesByToolUseID.get(content.id) ?? [],
+        ),
+        result,
+      }
+    })
+    .filter((d): d is NonNullable<typeof d> => d !== null)
   const anyInProgress = toolUsesData.some((d) => d.isInProgress)
   return tool.renderGroupedToolUse(toolUsesData, {
     shouldAnimate: shouldAnimate && anyInProgress,

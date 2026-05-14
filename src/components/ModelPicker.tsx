@@ -64,7 +64,8 @@ export function ModelPicker({
   const [focusedValue, setFocusedValue] = useState(initialValue)
   const [hasToggledEffort, setHasToggledEffort] = useState(false)
   const effortValue = useAppState((s) => s.effortValue)
-  const initialEffort = effortValue !== undefined ? convertEffortValueToLevel(effortValue) : undefined
+  const initialEffort =
+    effortValue !== undefined ? convertEffortValueToLevel(effortValue) : undefined
   const [effort, setEffort] = useState(initialEffort)
   const modelOptions = getModelOptions()
   let optionsWithInitial

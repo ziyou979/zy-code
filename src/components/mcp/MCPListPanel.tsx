@@ -292,18 +292,16 @@ export function MCPListPanel({
                   <Box paddingLeft={2}>
                     <Text bold={true}>{tSync('mcp.agentMCPs')}</Text>
                   </Box>
-                  {[...new Set(agentServers.flatMap((s) => s.sourceAgents))].map(
-                    (agentName) => (
-                      <Box key={agentName} flexDirection="column" marginTop={1}>
-                        <Box paddingLeft={2}>
-                          <Text dimColor={true}>@{agentName}</Text>
-                        </Box>
-                        {agentServers
-                          .filter((s) => s.sourceAgents.includes(agentName))
-                          .map((agentServer) => renderAgentServerItem(agentServer))}
+                  {[...new Set(agentServers.flatMap((s) => s.sourceAgents))].map((agentName) => (
+                    <Box key={agentName} flexDirection="column" marginTop={1}>
+                      <Box paddingLeft={2}>
+                        <Text dimColor={true}>@{agentName}</Text>
                       </Box>
-                    ),
-                  )}
+                      {agentServers
+                        .filter((s) => s.sourceAgents.includes(agentName))
+                        .map((agentServer) => renderAgentServerItem(agentServer))}
+                    </Box>
+                  ))}
                 </Box>
               )}
               {dynamicServers.length > 0 && (

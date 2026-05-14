@@ -153,7 +153,9 @@ export function MarkdownTable({ token, highlight, forceWidth }: Props): React.Re
     // Shrink columns proportionally to fit, allowing word breaks
     needsHardWrap = true
     const scaleFactor = availableWidth / totalMin
-    columnWidths = minWidths.map((width) => Math.max(Math.floor(width * scaleFactor), MIN_COLUMN_WIDTH))
+    columnWidths = minWidths.map((width) =>
+      Math.max(Math.floor(width * scaleFactor), MIN_COLUMN_WIDTH),
+    )
   }
 
   // Step 4: Calculate max row lines to determine if vertical format is needed
@@ -205,9 +207,7 @@ export function MarkdownTable({ token, highlight, forceWidth }: Props): React.Re
     const maxCellLines = Math.max(...cellLines.map((lines) => lines.length), 1)
 
     // Calculate vertical offset for each cell (to center vertically)
-    const verticalOffsets = cellLines.map((lines) =>
-      Math.floor((maxCellLines - lines.length) / 2),
-    )
+    const verticalOffsets = cellLines.map((lines) => Math.floor((maxCellLines - lines.length) / 2))
 
     // Build each line of the row as a single string
     const result: string[] = []

@@ -20,7 +20,7 @@ type Props = {
   ) => void
   commands: Command[]
 }
-export function HelpV2({ onClose, commands }: Props) {
+export function Help({ onClose, commands }: Props) {
   const { rows, columns } = useTerminalSize()
   const maxHeight = Math.floor(rows / 2)
   const insideModal = useIsInsideModal()

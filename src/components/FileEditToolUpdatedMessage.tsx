@@ -31,7 +31,8 @@ export function FileEditToolUpdatedMessage({
     0,
   )
   const numRemovals = structuredPatch.reduce(
-    (removalCount, hunk) => removalCount + count(hunk.lines, (line) => (line as any).startsWith('-')),
+    (removalCount, hunk) =>
+      removalCount + count(hunk.lines, (line) => (line as any).startsWith('-')),
     0,
   )
   const text = (

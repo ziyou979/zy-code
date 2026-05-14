@@ -1,12 +1,12 @@
 import figures from 'figures'
 import React from 'react'
-import {Box, Text} from '../../ink.js'
-import type {AdvisorBlock} from '../../utils/advisor.js'
-import {renderModelName} from '../../utils/model/model.js'
-import {jsonStringify} from '../../utils/slowOperations.js'
-import {CtrlOToExpand} from '../CtrlOToExpand.js'
-import {MessageResponse} from '../MessageResponse.js'
-import {ToolUseLoader} from '../ToolUseLoader.js'
+import { Box, Text } from '../../ink.js'
+import type { AdvisorBlock } from '../../utils/advisor.js'
+import { renderModelName } from '../../utils/model/model.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
+import { CtrlOToExpand } from '../CtrlOToExpand.js'
+import { MessageResponse } from '../MessageResponse.js'
+import { ToolUseLoader } from '../ToolUseLoader.js'
 
 type Props = {
   block: AdvisorBlock
@@ -19,32 +19,32 @@ type Props = {
 }
 
 export function AdvisorMessage({
-                                 block,
-                                 addMargin,
-                                 resolvedToolUseIDs,
-                                 erroredToolUseIDs,
-                                 shouldAnimate,
-                                 verbose,
-                                 advisorModel,
-                               }: Props) {
+  block,
+  addMargin,
+  resolvedToolUseIDs,
+  erroredToolUseIDs,
+  shouldAnimate,
+  verbose,
+  advisorModel,
+}: Props) {
   if (block.type === 'server_tool_use') {
     const input =
-        block.input && Object.keys(block.input).length > 0 ? jsonStringify(block.input) : null
+      block.input && Object.keys(block.input).length > 0 ? jsonStringify(block.input) : null
     const hasResult = resolvedToolUseIDs.has(block.id)
     const hasResult2 = erroredToolUseIDs.has(block.id)
     return (
-        <Box marginTop={addMargin ? 1 : 0} paddingRight={2} flexDirection="row">
-          {
-            <ToolUseLoader
-                shouldAnimate={shouldAnimate}
-                isUnresolved={!hasResult}
-                isError={hasResult2}
-            />
-          }
-          {<Text bold={true}>Advising</Text>}
-          {advisorModel ? <Text dimColor={true}> using {renderModelName(advisorModel)}</Text> : null}
-          {input ? <Text dimColor={true}> · {input}</Text> : null}
-        </Box>
+      <Box marginTop={addMargin ? 1 : 0} paddingRight={2} flexDirection="row">
+        {
+          <ToolUseLoader
+            shouldAnimate={shouldAnimate}
+            isUnresolved={!hasResult}
+            isError={hasResult2}
+          />
+        }
+        {<Text bold={true}>Advising</Text>}
+        {advisorModel ? <Text dimColor={true}> using {renderModelName(advisorModel)}</Text> : null}
+        {input ? <Text dimColor={true}> · {input}</Text> : null}
+      </Box>
     )
   }
   let body
@@ -55,20 +55,20 @@ export function AdvisorMessage({
     }
     case 'advisor_result': {
       body = verbose ? (
-          <Text dimColor={true}>{block.content.text}</Text>
+        <Text dimColor={true}>{block.content.text}</Text>
       ) : (
-          <Text dimColor={true}>
-            {figures.tick} Advisor has reviewed the conversation and will apply the feedback{' '}
-            <CtrlOToExpand/>
-          </Text>
+        <Text dimColor={true}>
+          {figures.tick} Advisor has reviewed the conversation and will apply the feedback{' '}
+          <CtrlOToExpand />
+        </Text>
       )
       break
     }
     case 'advisor_redacted_result': {
       body = (
-          <Text dimColor={true}>
-            {figures.tick} Advisor has reviewed the conversation and will apply the feedback
-          </Text>
+        <Text dimColor={true}>
+          {figures.tick} Advisor has reviewed the conversation and will apply the feedback
+        </Text>
       )
     }
   }

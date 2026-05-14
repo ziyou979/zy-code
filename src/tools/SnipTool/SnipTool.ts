@@ -51,3 +51,7 @@ export const SnipTool = buildTool({
     return React.createElement(React.Fragment, null)
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(SnipTool)

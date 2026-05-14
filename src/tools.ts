@@ -1,146 +1,121 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+import { feature } from 'bun:bundle'
 import { toolMatchesName, type Tool, type Tools } from './Tool.js'
-import { AgentTool } from './tools/AgentTool/AgentTool.js'
-import { SkillTool } from './tools/SkillTool/SkillTool.js'
-import { BashTool } from './tools/BashTool/BashTool.js'
-import { FileEditTool } from './tools/FileEditTool/FileEditTool.js'
-import { FileReadTool } from './tools/FileReadTool/FileReadTool.js'
-import { FileWriteTool } from './tools/FileWriteTool/FileWriteTool.js'
-import { GlobTool } from './tools/GlobTool/GlobTool.js'
-import { NotebookEditTool } from './tools/NotebookEditTool/NotebookEditTool.js'
-import { WebFetchTool } from './tools/WebFetchTool/WebFetchTool.js'
-import { TaskStopTool } from './tools/TaskStopTool/TaskStopTool.js'
-import { BriefTool } from './tools/BriefTool/BriefTool.js'
+import type { ToolPermissionContext } from './Tool.js'
 import { isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
-
-// 死代码消除：仅 Ant 内部工具的条件导入
-/* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
-const REPLTool = isInternalBuild() ? require('./tools/REPLTool/REPLTool.js').REPLTool : null
-const SuggestBackgroundPRTool = isInternalBuild()
-  ? require('./tools/SuggestBackgroundPRTool/SuggestBackgroundPRTool.js').SuggestBackgroundPRTool
-  : null
-const SleepTool =
-  feature('PROACTIVE') || feature('KAIROS')
-    ? require('./tools/SleepTool/SleepTool.js').SleepTool
-    : null
-const cronTools = feature('AGENT_TRIGGERS')
-  ? [
-      require('./tools/ScheduleCronTool/CronCreateTool.js').CronCreateTool,
-      require('./tools/ScheduleCronTool/CronDeleteTool.js').CronDeleteTool,
-      require('./tools/ScheduleCronTool/CronListTool.js').CronListTool,
-    ]
-  : []
-const RemoteTriggerTool = feature('AGENT_TRIGGERS_REMOTE')
-  ? require('./tools/RemoteTriggerTool/RemoteTriggerTool.js').RemoteTriggerTool
-  : null
-const MonitorTool = feature('MONITOR_TOOL')
-  ? require('./tools/MonitorTool/MonitorTool.js').MonitorTool
-  : null
-const SendUserFileTool = feature('KAIROS')
-  ? require('./tools/SendUserFileTool/SendUserFileTool.js').SendUserFileTool
-  : null
-const PushNotificationTool =
-  feature('KAIROS') || feature('KAIROS_PUSH_NOTIFICATION')
-    ? require('./tools/PushNotificationTool/PushNotificationTool.js').PushNotificationTool
-    : null
-const SubscribePRTool = feature('KAIROS_GITHUB_WEBHOOKS')
-  ? require('./tools/SubscribePRTool/SubscribePRTool.js').SubscribePRTool
-  : null
-/* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
-import { TaskOutputTool } from './tools/TaskOutputTool/TaskOutputTool.js'
-import { WebSearchTool } from './tools/WebSearchTool/WebSearchTool.js'
-import { TodoWriteTool } from './tools/TodoWriteTool/TodoWriteTool.js'
-import { ExitPlanModeV2Tool } from './tools/ExitPlanModeTool/ExitPlanModeV2Tool.js'
-import { TestingPermissionTool } from './tools/testing/TestingPermissionTool.js'
-import { GrepTool } from './tools/GrepTool/GrepTool.js'
-import { TungstenTool } from './tools/TungstenTool/TungstenTool.js'
-// 延迟 require 以打破循环依赖：tools.ts -> TeamCreateTool/TeamDeleteTool -> ... -> tools.ts
-/* eslint-disable @typescript-eslint/no-require-imports */
-const getTeamCreateTool = () =>
-  require('./tools/TeamCreateTool/TeamCreateTool.js')
-    .TeamCreateTool as typeof import('./tools/TeamCreateTool/TeamCreateTool.js').TeamCreateTool
-const getTeamDeleteTool = () =>
-  require('./tools/TeamDeleteTool/TeamDeleteTool.js')
-    .TeamDeleteTool as typeof import('./tools/TeamDeleteTool/TeamDeleteTool.js').TeamDeleteTool
-const getSendMessageTool = () =>
-  require('./tools/SendMessageTool/SendMessageTool.js')
-    .SendMessageTool as typeof import('./tools/SendMessageTool/SendMessageTool.js').SendMessageTool
-/* eslint-enable @typescript-eslint/no-require-imports */
-import { AskUserQuestionTool } from './tools/AskUserQuestionTool/AskUserQuestionTool.js'
-import { LSPTool } from './tools/LSPTool/LSPTool.js'
-import { ListMcpResourcesTool } from './tools/ListMcpResourcesTool/ListMcpResourcesTool.js'
-import { ReadMcpResourceTool } from './tools/ReadMcpResourceTool/ReadMcpResourceTool.js'
-import { ToolSearchTool } from './tools/ToolSearchTool/ToolSearchTool.js'
-import { EnterPlanModeTool } from './tools/EnterPlanModeTool/EnterPlanModeTool.js'
-import { EnterWorktreeTool } from './tools/EnterWorktreeTool/EnterWorktreeTool.js'
-import { ExitWorktreeTool } from './tools/ExitWorktreeTool/ExitWorktreeTool.js'
-import { ConfigTool } from './tools/ConfigTool/ConfigTool.js'
-import { TaskCreateTool } from './tools/TaskCreateTool/TaskCreateTool.js'
-import { TaskGetTool } from './tools/TaskGetTool/TaskGetTool.js'
-import { TaskUpdateTool } from './tools/TaskUpdateTool/TaskUpdateTool.js'
-import { TaskListTool } from './tools/TaskListTool/TaskListTool.js'
+import { toolRegistry } from './tools/registry.js'
+export { loadExternalTools } from './tools/externalToolLoader.js'
 import uniqBy from 'lodash-es/uniqBy.js'
-import { isToolSearchEnabledOptimistic } from './utils/toolSearch.js'
-import { isTodoV2Enabled } from './utils/tasks.js'
-// 死代码消除：ZY_CODE_VERIFY_PLAN 的条件导入
-/* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
-const VerifyPlanExecutionTool =
-  process.env.ZY_CODE_VERIFY_PLAN === 'true'
-    ? require('./tools/VerifyPlanExecutionTool/VerifyPlanExecutionTool.js').VerifyPlanExecutionTool
-    : null
-/* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
+import { getDenyRuleForTool } from './utils/permissions/permissions.js'
+import { REPL_TOOL_NAME, REPL_ONLY_TOOLS, isReplModeEnabled } from './tools/REPLTool/constants.js'
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from './tools/SyntheticOutputTool/SyntheticOutputTool.js'
+export { REPL_ONLY_TOOLS }
 export {
   ALL_AGENT_DISALLOWED_TOOLS,
   CUSTOM_AGENT_DISALLOWED_TOOLS,
   ASYNC_AGENT_ALLOWED_TOOLS,
   COORDINATOR_MODE_ALLOWED_TOOLS,
 } from './constants/tools.js'
-import { feature } from 'bun:bundle'
-// 死代码消除：OVERFLOW_TEST_TOOL 的条件导入
+
+// ─── Value imports: getTools() 简单模式直接引用的工具 ───────────────
+import { AgentTool } from './tools/AgentTool/AgentTool.js'
+import { BashTool } from './tools/BashTool/BashTool.js'
+import { FileReadTool } from './tools/FileReadTool/FileReadTool.js'
+import { FileEditTool } from './tools/FileEditTool/FileEditTool.js'
+import { TaskStopTool } from './tools/TaskStopTool/TaskStopTool.js'
+
+// ─── Side-effect imports: 触发模块加载 → 自注册到 toolRegistry ──────
+import './tools/SkillTool/SkillTool.js'
+import './tools/FileWriteTool/FileWriteTool.js'
+import './tools/GlobTool/GlobTool.js'
+import './tools/GrepTool/GrepTool.js'
+import './tools/NotebookEditTool/NotebookEditTool.js'
+import './tools/WebFetchTool/WebFetchTool.js'
+import './tools/BriefTool/BriefTool.js'
+import './tools/TaskOutputTool/TaskOutputTool.js'
+import './tools/WebSearchTool/WebSearchTool.js'
+import './tools/TodoWriteTool/TodoWriteTool.js'
+import './tools/ExitPlanModeTool/ExitPlanModeV2Tool.js'
+import './tools/AskUserQuestionTool/AskUserQuestionTool.js'
+import './tools/EnterPlanModeTool/EnterPlanModeTool.js'
+import './tools/EnterWorktreeTool/EnterWorktreeTool.js'
+import './tools/ExitWorktreeTool/ExitWorktreeTool.js'
+import './tools/LSPTool/LSPTool.js'
+import './tools/ListMcpResourcesTool/ListMcpResourcesTool.js'
+import './tools/ReadMcpResourceTool/ReadMcpResourceTool.js'
+import './tools/ToolSearchTool/ToolSearchTool.js'
+import './tools/TaskCreateTool/TaskCreateTool.js'
+import './tools/TaskGetTool/TaskGetTool.js'
+import './tools/TaskUpdateTool/TaskUpdateTool.js'
+import './tools/TaskListTool/TaskListTool.js'
+import './tools/PowerShellTool/PowerShellTool.js'
+import './tools/testing/TestingPermissionTool.js'
+
+// ─── DCE 条件加载: 仅触发模块加载（自注册），不提取值 ─────────────
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
-const OverflowTestTool = feature('OVERFLOW_TEST_TOOL')
-  ? require('./tools/OverflowTestTool/OverflowTestTool.js').OverflowTestTool
-  : null
-const CtxInspectTool = feature('CONTEXT_COLLAPSE')
-  ? require('./tools/CtxInspectTool/CtxInspectTool.js').CtxInspectTool
-  : null
-const TerminalCaptureTool = feature('TERMINAL_PANEL')
-  ? require('./tools/TerminalCaptureTool/TerminalCaptureTool.js').TerminalCaptureTool
-  : null
-const WebBrowserTool = feature('WEB_BROWSER_TOOL')
-  ? require('./tools/WebBrowserTool/WebBrowserTool.js').WebBrowserTool
-  : null
+const REPLTool = isInternalBuild() ? require('./tools/REPLTool/REPLTool.js').REPLTool : null
+if (isInternalBuild()) {
+  require('./tools/SuggestBackgroundPRTool/SuggestBackgroundPRTool.js')
+  require('./tools/ConfigTool/ConfigTool.js')
+  require('./tools/TungstenTool/TungstenTool.js')
+}
+if (feature('PROACTIVE') || feature('KAIROS')) {
+  require('./tools/SleepTool/SleepTool.js')
+}
+if (feature('AGENT_TRIGGERS')) {
+  require('./tools/ScheduleCronTool/CronCreateTool.js')
+  require('./tools/ScheduleCronTool/CronDeleteTool.js')
+  require('./tools/ScheduleCronTool/CronListTool.js')
+}
+if (feature('AGENT_TRIGGERS_REMOTE')) {
+  require('./tools/RemoteTriggerTool/RemoteTriggerTool.js')
+}
+if (feature('MONITOR_TOOL')) {
+  require('./tools/MonitorTool/MonitorTool.js')
+}
+if (feature('KAIROS')) {
+  require('./tools/SendUserFileTool/SendUserFileTool.js')
+}
+if (feature('KAIROS') || feature('KAIROS_PUSH_NOTIFICATION')) {
+  require('./tools/PushNotificationTool/PushNotificationTool.js')
+}
+if (feature('KAIROS_GITHUB_WEBHOOKS')) {
+  require('./tools/SubscribePRTool/SubscribePRTool.js')
+}
+if (feature('OVERFLOW_TEST_TOOL')) {
+  require('./tools/OverflowTestTool/OverflowTestTool.js')
+}
+if (feature('CONTEXT_COLLAPSE')) {
+  require('./tools/CtxInspectTool/CtxInspectTool.js')
+}
+if (feature('TERMINAL_PANEL')) {
+  require('./tools/TerminalCaptureTool/TerminalCaptureTool.js')
+}
+if (feature('WEB_BROWSER_TOOL')) {
+  require('./tools/WebBrowserTool/WebBrowserTool.js')
+}
+if (feature('HISTORY_SNIP')) {
+  require('./tools/SnipTool/SnipTool.js')
+}
+if (feature('UDS_INBOX')) {
+  require('./tools/ListPeersTool/ListPeersTool.js')
+}
+if (feature('WORKFLOW_SCRIPTS')) {
+  require('./tools/WorkflowTool/bundled/index.js').initBundledWorkflows()
+  require('./tools/WorkflowTool/WorkflowTool.js')
+}
+if (process.env.ZY_CODE_VERIFY_PLAN === 'true') {
+  require('./tools/VerifyPlanExecutionTool/VerifyPlanExecutionTool.js')
+}
 const coordinatorModeModule = feature('COORDINATOR_MODE')
   ? (require('./coordinator/coordinatorMode.js') as typeof import('./coordinator/coordinatorMode.js'))
   : null
-const SnipTool = feature('HISTORY_SNIP') ? require('./tools/SnipTool/SnipTool.js').SnipTool : null
-const ListPeersTool = feature('UDS_INBOX')
-  ? require('./tools/ListPeersTool/ListPeersTool.js').ListPeersTool
-  : null
-const WorkflowTool = feature('WORKFLOW_SCRIPTS')
-  ? (() => {
-      require('./tools/WorkflowTool/bundled/index.js').initBundledWorkflows()
-      return require('./tools/WorkflowTool/WorkflowTool.js').WorkflowTool
-    })()
-  : null
+// 延迟 require 以打破循环依赖
+const getSendMessageTool = () =>
+  require('./tools/SendMessageTool/SendMessageTool.js')
+    .SendMessageTool as typeof import('./tools/SendMessageTool/SendMessageTool.js').SendMessageTool
+// TeamCreateTool/TeamDeleteTool 通过 side-effect import 触发 → 自注册带条件
 /* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
-import type { ToolPermissionContext } from './Tool.js'
-import { getDenyRuleForTool } from './utils/permissions/permissions.js'
-import { hasEmbeddedSearchTools } from './utils/embeddedTools.js'
-import { isPowerShellToolEnabled } from './utils/shell/shellToolUtils.js'
-import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js'
-import { isWorktreeModeEnabled } from './utils/worktreeModeEnabled.js'
-import { REPL_TOOL_NAME, REPL_ONLY_TOOLS, isReplModeEnabled } from './tools/REPLTool/constants.js'
-export { REPL_ONLY_TOOLS }
-/* eslint-disable @typescript-eslint/no-require-imports */
-const getPowerShellTool = () => {
-  if (!isPowerShellToolEnabled()) return null
-  return (
-    require('./tools/PowerShellTool/PowerShellTool.js') as typeof import('./tools/PowerShellTool/PowerShellTool.js')
-  ).PowerShellTool
-}
-/* eslint-enable @typescript-eslint/no-require-imports */
 
 /**
  * 可与 --tools 标志配合使用的预定义工具预设
@@ -170,65 +145,12 @@ export function getToolsForDefaultPreset(): string[] {
 
 /**
  * 获取当前环境中所有可用工具的完整列表（遵循 process.env 标志）。
- * 这是所有工具的真实来源。
- */
-/**
+ * 条件过滤由各工具注册时的 condition 函数控制。
+ *
  * NOTE: 此函数必须与 https://console.statsig.com/4aF3Ewatb6xPVpCwxb5nA3/dynamic_configs/zy_code_global_system_caching 保持同步，以便跨用户缓存系统提示词。
  */
 export function getAllBaseTools(): Tools {
-  return [
-    AgentTool,
-    TaskOutputTool,
-    BashTool,
-    // Ant 原生构建在 bun 二进制文件中嵌入了 bfs/ugrep（与 ripgrep 相同的 ARGV0
-    // 技巧）。当可用时，Zy shell 中的 find/grep 会被别名化到这些快速工具，
-    // 因此不需要专用的 Glob/Grep 工具。
-    ...(hasEmbeddedSearchTools() ? [] : [GlobTool, GrepTool]),
-    ExitPlanModeV2Tool,
-    FileReadTool,
-    FileEditTool,
-    FileWriteTool,
-    NotebookEditTool,
-    WebFetchTool,
-    TodoWriteTool,
-    WebSearchTool,
-    TaskStopTool,
-    AskUserQuestionTool,
-    SkillTool,
-    EnterPlanModeTool,
-    ...(isInternalBuild() ? [ConfigTool] : []),
-    ...(isInternalBuild() ? [TungstenTool] : []),
-    ...(SuggestBackgroundPRTool ? [SuggestBackgroundPRTool] : []),
-    ...(WebBrowserTool ? [WebBrowserTool] : []),
-    ...(isTodoV2Enabled() ? [TaskCreateTool, TaskGetTool, TaskUpdateTool, TaskListTool] : []),
-    ...(OverflowTestTool ? [OverflowTestTool] : []),
-    ...(CtxInspectTool ? [CtxInspectTool] : []),
-    ...(TerminalCaptureTool ? [TerminalCaptureTool] : []),
-    ...(isEnvTruthy(process.env.ENABLE_LSP_TOOL) ? [LSPTool] : []),
-    ...(isWorktreeModeEnabled() ? [EnterWorktreeTool, ExitWorktreeTool] : []),
-    getSendMessageTool(),
-    ...(ListPeersTool ? [ListPeersTool] : []),
-    ...(isAgentSwarmsEnabled() ? [getTeamCreateTool(), getTeamDeleteTool()] : []),
-    ...(VerifyPlanExecutionTool ? [VerifyPlanExecutionTool] : []),
-    ...(isInternalBuild() && REPLTool ? [REPLTool] : []),
-    ...(WorkflowTool ? [WorkflowTool] : []),
-    ...(SleepTool ? [SleepTool] : []),
-    ...cronTools,
-    ...(RemoteTriggerTool ? [RemoteTriggerTool] : []),
-    ...(MonitorTool ? [MonitorTool] : []),
-    BriefTool,
-    ...(SendUserFileTool ? [SendUserFileTool] : []),
-    ...(PushNotificationTool ? [PushNotificationTool] : []),
-    ...(SubscribePRTool ? [SubscribePRTool] : []),
-    ...(getPowerShellTool() ? [getPowerShellTool()] : []),
-    ...(SnipTool ? [SnipTool] : []),
-    ...(process.env.NODE_ENV === 'test' ? [TestingPermissionTool] : []),
-    ListMcpResourcesTool,
-    ReadMcpResourceTool,
-    // 当工具搜索可能启用时（乐观检查），包含 ToolSearchTool
-    // 实际的延迟工具决策发生在 zy.ts 的请求时
-    ...(isToolSearchEnabledOptimistic() ? [ToolSearchTool] : []),
-  ]
+  return toolRegistry.getAll()
 }
 
 /**
@@ -272,14 +194,10 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
     return filterToolsByDenyRules(simpleTools, permissionContext)
   }
 
-  // 获取所有基础工具并过滤掉有条件添加的特殊工具
-  const specialTools = new Set([
-    ListMcpResourcesTool.name,
-    ReadMcpResourceTool.name,
-    SYNTHETIC_OUTPUT_TOOL_NAME,
-  ])
-
-  const tools = getAllBaseTools().filter((tool) => !specialTools.has(tool.name))
+  // 获取非特殊工具（special 标记的工具 + SyntheticOutputTool 排除）
+  const tools = toolRegistry
+    .getAll({ excludeSpecial: true })
+    .filter((tool) => tool.name !== SYNTHETIC_OUTPUT_TOOL_NAME)
 
   // 过滤掉被拒绝规则禁止的工具
   let allowedTools = filterToolsByDenyRules(tools, permissionContext)

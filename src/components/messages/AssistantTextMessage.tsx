@@ -127,7 +127,9 @@ export function AssistantTextMessage({
       )
     }
     case CUSTOM_OFF_SWITCH_MESSAGE: {
-      const highDemandMessage = <Text color="error">We are experiencing high demand for Opus 4.</Text>
+      const highDemandMessage = (
+        <Text color="error">We are experiencing high demand for Opus 4.</Text>
+      )
       return (
         <MessageResponse>
           <Box flexDirection="column" gap={1}>

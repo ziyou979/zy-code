@@ -77,7 +77,10 @@ export function BaseTextInput({
   const filteredHighlights =
     cursorFiltered && viewportCharOffset > 0
       ? cursorFiltered
-          .filter((highlightItem) => highlightItem.end > viewportCharOffset && highlightItem.start < viewportCharEnd)
+          .filter(
+            (highlightItem) =>
+              highlightItem.end > viewportCharOffset && highlightItem.start < viewportCharEnd,
+          )
           .map((mappedHighlight) => ({
             ...mappedHighlight,
             start: Math.max(0, mappedHighlight.start - viewportCharOffset),

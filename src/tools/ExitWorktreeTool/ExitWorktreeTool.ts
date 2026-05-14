@@ -304,3 +304,8 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+import { isWorktreeModeEnabled } from '../../utils/worktreeModeEnabled.js'
+toolRegistry.register(ExitWorktreeTool, () => isWorktreeModeEnabled())

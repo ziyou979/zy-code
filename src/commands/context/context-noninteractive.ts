@@ -45,7 +45,10 @@ export async function collectContextData(context: CollectContextDataInput): Prom
     apiView = projectView(apiView, []) as any
   }
 
-  const { messages: compactedMessages } = (await microcompactMessages(apiView, undefined)) as any as {
+  const { messages: compactedMessages } = (await microcompactMessages(
+    apiView,
+    undefined,
+  )) as any as {
     messages: Message[]
   }
   const appState = getAppState()

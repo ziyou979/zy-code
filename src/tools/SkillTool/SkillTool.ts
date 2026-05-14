@@ -980,3 +980,7 @@ async function executeRemoteSkill(
     ),
   }
 }
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(SkillTool)

@@ -161,7 +161,11 @@ export async function toolToAPISchema(
     base = {
       name: tool.name,
       description,
-      inputSchema: inputSchema as { type: 'object'; properties: Record<string, unknown>; required?: string[] },
+      inputSchema: inputSchema as {
+        type: 'object'
+        properties: Record<string, unknown>
+        required?: string[]
+      },
     }
 
     // 仅在以下情况下添加 strict：

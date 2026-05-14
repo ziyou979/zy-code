@@ -31,7 +31,10 @@ export function isNavigableMessage(msg: NavigableMessage): boolean {
       // 文本回复（减去 AssistantTextMessage 的 return-null 情况——第一级
       // 错过未测量的虚拟项目），或具有可提取输入的工具调用。
       return (
-        (b && b.type === 'text' && !isEmptyMessageText(b.text) && !SYNTHETIC_MESSAGES.has(b.text)) ||
+        (b &&
+          b.type === 'text' &&
+          !isEmptyMessageText(b.text) &&
+          !SYNTHETIC_MESSAGES.has(b.text)) ||
         (b && b.type === 'tool_call' && b.name in PRIMARY_INPUT)
       )
     }
@@ -272,7 +275,9 @@ export function useMessageActions(
       h[`messageActions:${action}`] = () => {
         const currentCursor = cursorRef.current
         if (!currentCursor) return
-        const matchedAction = MESSAGE_ACTIONS.find((a) => a.key === action && isApplicable(a, currentCursor))
+        const matchedAction = MESSAGE_ACTIONS.find(
+          (a) => a.key === action && isApplicable(a, currentCursor),
+        )
         if (!matchedAction) return
         if (matchedAction.stays) {
           setCursor((prevCursor) =>
@@ -287,7 +292,10 @@ export function useMessageActions(
         }
         const selectedMessage = navRef.current?.getSelected()
         if (!selectedMessage) return
-        ;(matchedAction.run as (m: NavigableMessage, caps: MessageActionCaps) => void)(selectedMessage, capsRef.current)
+        ;(matchedAction.run as (m: NavigableMessage, caps: MessageActionCaps) => void)(
+          selectedMessage,
+          capsRef.current,
+        )
         setCursor(null)
       }
     }

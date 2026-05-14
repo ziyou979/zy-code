@@ -455,7 +455,9 @@ export function openAIUsageToStandard(
   if (usage && typeof usage === 'object' && 'cache_creation_input_tokens' in usage) {
     extras.cacheCreationInputTokens = (usage as any).cache_creation_input_tokens
   } else if ((usage?.prompt_tokens_details as any)?.cache_creation_input_tokens !== undefined) {
-    extras.cacheCreationInputTokens = (usage.prompt_tokens_details as any).cache_creation_input_tokens
+    extras.cacheCreationInputTokens = (
+      usage.prompt_tokens_details as any
+    ).cache_creation_input_tokens
   }
 
   return {
@@ -477,7 +479,9 @@ export function openAIDeltaUsageToStandard(
   if (usage && typeof usage === 'object' && 'cache_creation_input_tokens' in usage) {
     extras.cacheCreationInputTokens = (usage as any).cache_creation_input_tokens
   } else if ((usage?.prompt_tokens_details as any)?.cache_creation_input_tokens !== undefined) {
-    extras.cacheCreationInputTokens = (usage.prompt_tokens_details as any).cache_creation_input_tokens
+    extras.cacheCreationInputTokens = (
+      usage.prompt_tokens_details as any
+    ).cache_creation_input_tokens
   }
   return {
     inputTokens: usage?.prompt_tokens,

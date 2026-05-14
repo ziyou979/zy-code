@@ -5,7 +5,9 @@ import { WebSearchTool } from '../../../src/tools/WebSearchTool/WebSearchTool.js
 
 const realWebSearchTest = process.env.ZY_RUN_REAL_WEB_SEARCH_TEST === '1' ? test : test.skip
 
-function createDuckDuckGoHtml(results: Array<{ title: string; url: string; snippet: string }>): string {
+function createDuckDuckGoHtml(
+  results: Array<{ title: string; url: string; snippet: string }>,
+): string {
   return results
     .map(
       (result) => `
@@ -70,8 +72,7 @@ describe('WebSearchTool', () => {
       },
     ])
 
-    globalThis.fetch = (async () =>
-      new Response(html, { status: 200 })) as unknown as typeof fetch
+    globalThis.fetch = (async () => new Response(html, { status: 200 })) as unknown as typeof fetch
 
     try {
       const parsedInput = WebSearchTool.inputSchema.parse({
@@ -117,8 +118,7 @@ describe('WebSearchTool', () => {
 
     const linkResult = output.data.results.find(
       (result) =>
-        typeof result === 'object' &&
-        result.content.some((item) => /^https?:\/\//.test(item.url)),
+        typeof result === 'object' && result.content.some((item) => /^https?:\/\//.test(item.url)),
     )
 
     expect(output.data.query).toBe('OpenAI official website')

@@ -734,8 +734,7 @@ export function pruneCompletedTurnArtifacts(messages: readonly Message[]): Prune
     // 2. UI-only attachment：丢弃
     if (msgType === 'attachment') {
       const attachmentType =
-        (msg as AttachmentMessage).attachment &&
-        (msg as AttachmentMessage).attachment.type
+        (msg as AttachmentMessage).attachment && (msg as AttachmentMessage).attachment.type
       if (attachmentType && UI_ONLY_ATTACHMENT_SUBTYPES.has(attachmentType)) {
         freedBytes += estimateMessageBytes(msg)
         droppedCount++

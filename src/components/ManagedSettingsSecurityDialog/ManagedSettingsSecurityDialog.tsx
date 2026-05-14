@@ -35,7 +35,11 @@ export function ManagedSettingsSecurityDialog({ settings, onAccept, onReject }: 
     </Box>
   ))
   return (
-    <PermissionDialog color={'warning'} titleColor={'warning'} title={tSync('managedSettings.requireApproval')}>
+    <PermissionDialog
+      color={'warning'}
+      titleColor={'warning'}
+      title={tSync('managedSettings.requireApproval')}
+    >
       {
         <Box flexDirection={'column'} gap={1} paddingTop={1}>
           {<Text>{tSync('managedSettings.orgConfiguredWarning')}</Text>}

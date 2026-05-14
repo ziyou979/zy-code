@@ -18,11 +18,11 @@ const packageJson = await Bun.file(join(root, 'package.json')).json()
 const version: string = packageJson.version
 
 // 解析 --target 参数：cli | sdk | all（默认 all）
-const targetArg = Bun.argv.find(arg => arg.startsWith('--target'))
+const targetArg = Bun.argv.find((arg) => arg.startsWith('--target'))
 const targetValue = targetArg?.includes('=')
   ? targetArg.split('=')[1]
   : Bun.argv[Bun.argv.indexOf('--target') + 1]
-const target = (targetValue === 'cli' || targetValue === 'sdk') ? targetValue : 'all'
+const target = targetValue === 'cli' || targetValue === 'sdk' ? targetValue : 'all'
 
 // 根据 target 确定入口文件
 function resolveEntrypoints(): string[] {
@@ -33,8 +33,8 @@ function resolveEntrypoints(): string[] {
   if (target === 'sdk' || target === 'all') {
     const sdkDir = join(srcDir, 'entrypoints/sdk')
     const sdkFiles = readdirSync(sdkDir)
-      .filter(f => f.endsWith('.ts') && !f.endsWith('.d.ts'))
-      .map(f => join(sdkDir, f))
+      .filter((f) => f.endsWith('.ts') && !f.endsWith('.d.ts'))
+      .map((f) => join(sdkDir, f))
     entries.push(...sdkFiles)
   }
   return entries
@@ -45,7 +45,7 @@ const reactCompilerRuntime = resolve(root, 'node_modules/react-compiler-runtime/
 
 console.log(`Building target: ${target}`)
 const entrypoints = resolveEntrypoints()
-console.log(`Entrypoints: ${entrypoints.map(e => e.replace(root + '/', '')).join(', ')}`)
+console.log(`Entrypoints: ${entrypoints.map((e) => e.replace(root + '/', '')).join(', ')}`)
 
 const result = await Bun.build({
   entrypoints,

@@ -70,13 +70,17 @@ export function TeleportError({
   switch (currentError) {
     case 'needsGitStash': {
       let stashDialogContent
-      stashDialogContent = <TeleportStash onStashAndContinue={handleStashComplete} onCancel={onCancel} />
+      stashDialogContent = (
+        <TeleportStash onStashAndContinue={handleStashComplete} onCancel={onCancel} />
+      )
       return stashDialogContent
     }
     case 'needsLogin': {
       if (isLoggingIn) {
         let loginFlowContent
-        loginFlowContent = <ConsoleOAuthFlow onDone={handleLoginComplete} mode="login" forceLoginMethod="zyai" />
+        loginFlowContent = (
+          <ConsoleOAuthFlow onDone={handleLoginComplete} mode="login" forceLoginMethod="zyai" />
+        )
         return loginFlowContent
       }
       let dialogContent

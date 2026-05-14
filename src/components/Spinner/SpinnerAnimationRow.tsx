@@ -1,19 +1,19 @@
 import figures from 'figures'
 import * as React from 'react'
-import {useMemo, useRef} from 'react'
-import {stringWidth} from '../../ink/stringWidth.js'
-import {Box, Text, useAnimationFrame} from '../../ink.js'
-import type {InProcessTeammateTaskState} from '../../tasks/InProcessTeammateTask/types.js'
-import {formatNumber, getLocalizedDurationFormatter} from '../../utils/format.js'
-import {tSync} from '../../i18n/index.js'
-import {toInkColor} from '../../utils/ink.js'
-import type {Theme} from '../../utils/theme.js'
-import {Byline} from '../design-system/Byline.js'
-import {GlimmerMessage} from './GlimmerMessage.js'
-import {SpinnerGlyph} from './SpinnerGlyph.js'
-import type {SpinnerMode} from './types.js'
-import {useStalledAnimation} from './useStalledAnimation.js'
-import {interpolateColor, toRGBColor} from './utils.js'
+import { useMemo, useRef } from 'react'
+import { stringWidth } from '../../ink/stringWidth.js'
+import { Box, Text, useAnimationFrame } from '../../ink.js'
+import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js'
+import { formatNumber, getLocalizedDurationFormatter } from '../../utils/format.js'
+import { tSync } from '../../i18n/index.js'
+import { toInkColor } from '../../utils/ink.js'
+import type { Theme } from '../../utils/theme.js'
+import { Byline } from '../design-system/Byline.js'
+import { GlimmerMessage } from './GlimmerMessage.js'
+import { SpinnerGlyph } from './SpinnerGlyph.js'
+import type { SpinnerMode } from './types.js'
+import { useStalledAnimation } from './useStalledAnimation.js'
+import { interpolateColor, toRGBColor } from './utils.js'
 
 const SEP_WIDTH = stringWidth(' · ')
 const SHOW_TOKENS_AFTER_MS = 30_000
@@ -332,16 +332,16 @@ function SpinnerModeGlyph({ mode }: SpinnerAnimationRowProps) {
     case 'responding':
     case 'thinking': {
       return (
-          <Box width={2}>
-            <Text dimColor={true}>{figures.arrowDown}</Text>
-          </Box>
+        <Box width={2}>
+          <Text dimColor={true}>{figures.arrowDown}</Text>
+        </Box>
       )
     }
     case 'requesting': {
       return (
-          <Box width={2}>
-            <Text dimColor={true}>{figures.arrowUp}</Text>
-          </Box>
+        <Box width={2}>
+          <Text dimColor={true}>{figures.arrowUp}</Text>
+        </Box>
       )
     }
   }

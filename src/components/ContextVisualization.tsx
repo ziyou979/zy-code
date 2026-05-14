@@ -141,9 +141,7 @@ export function ContextVisualization({ data }: Props) {
       cat.name !== RESERVED_CATEGORY_NAME &&
       !cat.isDeferred,
   )
-  const hasDeferredMcpTools = categories.some(
-    (cat) => cat.isDeferred && cat.name.includes('MCP'),
-  )
+  const hasDeferredMcpTools = categories.some((cat) => cat.isDeferred && cat.name.includes('MCP'))
   const hasDeferredBuiltinTools = (deferredBuiltinTools ?? []).length > 0
   const autocompactCategory = categories.find((cat) => cat.name === RESERVED_CATEGORY_NAME)
   const gridRowElements = gridRows.map((row, rowIndex) => (
@@ -403,8 +401,7 @@ export function ContextVisualization({ data }: Props) {
                 <Box key={index} marginLeft={1}>
                   <Text>└ {tool.name}: </Text>
                   <Text dimColor={true}>
-                    calls {formatTokens(tool.callTokens)}, results{' '}
-                    {formatTokens(tool.resultTokens)}
+                    calls {formatTokens(tool.callTokens)}, results {formatTokens(tool.resultTokens)}
                   </Text>
                 </Box>
               ))}

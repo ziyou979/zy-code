@@ -91,9 +91,7 @@ function IDEScreen({
     )
   }
   const vscodeWarning = availableIDEs.length !== 0 &&
-    availableIDEs.some(
-      (ide) => ide.name === 'VS Code:' || ide.name === 'Visual Studio Code:',
-    ) && (
+    availableIDEs.some((ide) => ide.name === 'VS Code:' || ide.name === 'Visual Studio Code:') && (
       <Box marginTop={1}>
         <Text color="warning">{tSync('ide.vscodeSingleInstance')}</Text>
       </Box>

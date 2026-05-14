@@ -121,7 +121,9 @@ function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext) {
                   jsx: (
                     <>
                       <Text color="error">
-                        {tSync('notif.deniedByAutoMode', { tool: tool.userFacingName(input).toLowerCase() })}
+                        {tSync('notif.deniedByAutoMode', {
+                          tool: tool.userFacingName(input).toLowerCase(),
+                        })}
                       </Text>
                       <Text dimColor={true}> · /permissions</Text>
                     </>

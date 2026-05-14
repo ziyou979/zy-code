@@ -11,9 +11,7 @@ import type { LocalShellTaskState } from 'src/tasks/LocalShellTask/guards.js'
 import type { LocalWorkflowTaskState } from 'src/tasks/LocalWorkflowTask/LocalWorkflowTask.js'
 // @ts-ignore
 import type { MonitorMcpTaskState } from 'src/tasks/MonitorMcpTask/MonitorMcpTask.js'
-import {
-  type RemoteAgentTaskState,
-} from 'src/tasks/RemoteAgentTask/RemoteAgentTask.js'
+import { type RemoteAgentTaskState } from 'src/tasks/RemoteAgentTask/RemoteAgentTask.js'
 import { type BackgroundTaskState, isBackgroundTask, type TaskState } from 'src/tasks/types.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 

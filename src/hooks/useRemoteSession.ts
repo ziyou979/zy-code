@@ -266,7 +266,10 @@ export function useRemoteSession({
           // pre-built assistant messages without running local tool execution.
           if (setInProgressToolUseIDs && converted.message.type === 'assistant') {
             const toolUseIds = converted.message.message.content
-              .filter((block): block is import('../types/llm.js').ToolCallInlineBlock => block.type === 'tool_call')
+              .filter(
+                (block): block is import('../types/llm.js').ToolCallInlineBlock =>
+                  block.type === 'tool_call',
+              )
               .map((block) => block.id)
             if (toolUseIds.length > 0) {
               setInProgressToolUseIDs((prev) => {

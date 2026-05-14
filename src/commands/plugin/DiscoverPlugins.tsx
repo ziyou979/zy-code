@@ -185,7 +185,9 @@ export function DiscoverPlugins({
             })
           } else {
             // No counts available - sort alphabetically
-            uninstalledPlugins.sort((pluginA, pluginB) => pluginA.entry.name.localeCompare(pluginB.entry.name))
+            uninstalledPlugins.sort((pluginA, pluginB) =>
+              pluginA.entry.name.localeCompare(pluginB.entry.name),
+            )
           }
         } catch (error) {
           // Log the error, then gracefully degrade to alphabetical sort

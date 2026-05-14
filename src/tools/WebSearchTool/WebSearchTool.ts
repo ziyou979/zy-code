@@ -27,9 +27,9 @@ const DEFAULT_MAX_RESULTS = 8
 const MAX_ALLOWED_RESULTS = 20
 
 function maxResultsSchema() {
-  return semanticNumber(
-    z.number().int().min(1).max(MAX_ALLOWED_RESULTS).optional(),
-  ).describe('Maximum number of search results to return')
+  return semanticNumber(z.number().int().min(1).max(MAX_ALLOWED_RESULTS).optional()).describe(
+    'Maximum number of search results to return',
+  )
 }
 
 const inputSchema = lazySchema(() =>
@@ -259,10 +259,6 @@ export const WebSearchTool = buildTool({
   },
 } satisfies ToolDef<InputSchema, Output, WebSearchProgress>)
 
-
-
-
-
 // ---------------------------------------------------------------------------
 // 本地 DuckDuckGo 兜底搜索
 // ---------------------------------------------------------------------------
@@ -367,3 +363,7 @@ function parseResultsFromText(
 
   return results
 }
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(WebSearchTool)

@@ -337,7 +337,9 @@ export function Select({
                 onSubmit={(inputValue) => {
                   const hasImageAttachments =
                     pastedContents &&
-                    Object.values(pastedContents).some((content: any) => (content as any).type === 'image')
+                    Object.values(pastedContents).some(
+                      (content: any) => (content as any).type === 'image',
+                    )
                   if (inputValue.trim() || hasImageAttachments || option.allowEmptySubmitToCancel) {
                     onChange?.(option.value)
                   } else {
@@ -546,9 +548,7 @@ export function Select({
     const maxIndexWidth_1 = hideIndexes ? 0 : state.options.length.toString().length
     const hasInputOptions = state.visibleOptions.some((opt) => opt.type === 'input')
     const hasDescriptions =
-      !inlineDescriptions &&
-      !hasInputOptions &&
-      state.visibleOptions.some((opt) => opt.description)
+      !inlineDescriptions && !hasInputOptions && state.visibleOptions.some((opt) => opt.description)
     const optionData = state.visibleOptions.map((option, index) => {
       const isFirstVisibleOption = option.index === state.visibleFromIndex
       const isLastVisibleOption = option.index === state.visibleToIndex - 1
@@ -699,7 +699,9 @@ export function Select({
               onSubmit={(newValue) => {
                 const hasImageAttachments =
                   pastedContents &&
-                  Object.values(pastedContents).some((content: any) => (content as any).type === 'image')
+                  Object.values(pastedContents).some(
+                    (content: any) => (content as any).type === 'image',
+                  )
                 if (newValue.trim() || hasImageAttachments || option.allowEmptySubmitToCancel) {
                   onChange?.(option.value)
                 } else {
@@ -754,7 +756,9 @@ export function Select({
             shouldShowUpArrow={areMoreOptionsAbove && isFirstVisibleOption}
           >
             <Box flexDirection="row" flexShrink={0}>
-              {!hideIndexes && <Text dimColor={true}>{`${displayIndex}.`.padEnd(maxIndexWidth_1 + 2)}</Text>}
+              {!hideIndexes && (
+                <Text dimColor={true}>{`${displayIndex}.`.padEnd(maxIndexWidth_1 + 2)}</Text>
+              )}
               <Text
                 dimColor={isOptionDisabled}
                 color={

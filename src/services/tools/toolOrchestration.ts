@@ -123,7 +123,9 @@ async function* runToolsSerially(
     for await (const update of runToolUse(
       toolUse,
       assistantMessages.find((_) => {
-        return _.message.content.some((block) => block.type === 'tool_call' && block.id === toolUse.id)
+        return _.message.content.some(
+          (block) => block.type === 'tool_call' && block.id === toolUse.id,
+        )
       })!,
       canUseTool,
       currentContext,
@@ -152,7 +154,9 @@ async function* runToolsConcurrently(
       yield* runToolUse(
         toolUse,
         assistantMessages.find((_) => {
-          return _.message.content.some((block) => block.type === 'tool_call' && block.id === toolUse.id)
+          return _.message.content.some(
+            (block) => block.type === 'tool_call' && block.id === toolUse.id,
+          )
         })!,
         canUseTool,
         toolUseContext,

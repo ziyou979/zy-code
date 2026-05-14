@@ -550,7 +550,6 @@ function PromptInput({
         bagelFooterVisible && 'bagel',
         teamsFooterVisible && 'teams',
         bridgeFooterVisible && 'bridge',
-
       ].filter(Boolean) as FooterItem[],
     [
       tasksFooterVisible,
@@ -867,7 +866,6 @@ function PromptInput({
         })
       }
     }
-
 
     return highlights
   }, [

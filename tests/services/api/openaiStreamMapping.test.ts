@@ -261,6 +261,4 @@ describe('mapOpenAIStreamToStandard: 入站 OpenAI 流式映射', () => {
     const respDelta = events.find((e) => e.type === 'response_delta') as any
     expect(respDelta.usage.outputTokens).toBe(7)
   })
-
-
 })

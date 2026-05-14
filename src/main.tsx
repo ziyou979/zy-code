@@ -73,7 +73,7 @@ import {
   createSyntheticOutputTool,
   isSyntheticOutputToolEnabled,
 } from './tools/SyntheticOutputTool/SyntheticOutputTool.js'
-import { getTools } from './tools.js'
+import { getTools, loadExternalTools } from './tools.js'
 import {
   canUserConfigureAdvisor,
   getInitialAdvisorSetting,
@@ -2534,6 +2534,7 @@ async function run(): Promise<CommanderCommand> {
       //（返回 isProactiveActive()）通过并包含 Sleep。
       // 稍后 REPL 路径的 maybeActivateProactive() 调用是幂等的。
       maybeActivateProactive(options)
+      await loadExternalTools()
       let tools = getTools(toolPermissionContext)
 
       // 为无头路径应用协调器模式工具过滤

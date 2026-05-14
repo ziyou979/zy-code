@@ -72,3 +72,7 @@ export const TestingPermissionTool: Tool<InputSchema, string> = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, string>)
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(TestingPermissionTool, () => process.env.NODE_ENV === 'test')

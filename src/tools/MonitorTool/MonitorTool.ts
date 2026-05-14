@@ -64,3 +64,7 @@ export const MonitorTool: Tool = {
 
   maxResultSizeChars: 10000,
 }
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(MonitorTool)

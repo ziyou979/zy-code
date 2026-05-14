@@ -5,10 +5,7 @@ import { SandboxSettings } from '../../components/sandbox/SandboxSettings.js'
 import { color } from '../../ink.js'
 import { getPlatform } from '../../utils/platform.js'
 import { addToExcludedCommands, SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
-import {
-  getInitialSettings,
-  getSettingsFilePathForSource,
-} from '../../utils/settings/settings.js'
+import { getInitialSettings, getSettingsFilePathForSource } from '../../utils/settings/settings.js'
 import type { ThemeName } from '../../utils/theme.js'
 export async function call(
   onDone: (result?: string) => void,

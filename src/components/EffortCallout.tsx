@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { Box, Text } from '../ink.js'
-import {EffortLevel, EffortValue} from '../utils/effort.js'
+import { EffortLevel, EffortValue } from '../utils/effort.js'
 import {
   convertEffortValueToLevel,
   getDefaultEffortForModel,

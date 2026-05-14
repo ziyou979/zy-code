@@ -191,7 +191,7 @@ export async function applyCollapsesIfNeeded(
   // 动态导入以避免循环依赖
   const { tokenCountWithEstimation } = await import('../../utils/tokens.js')
   const { getContextWindowForModel } = await import('../../utils/context.js')
-  const { getMaxOutputTokensForModel } = await import('../api/zy.js')
+  const { getMaxOutputTokensForModel } = await import('../api/llmOrchestrator.js')
 
   // 获取当前模型
   const settings = getInitialSettings()

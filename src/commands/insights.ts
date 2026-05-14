@@ -5,7 +5,7 @@ import { copyFile, mkdir, mkdtemp, readdir, readFile, rm, unlink, writeFile } fr
 import { tmpdir } from 'os'
 import { extname, join } from 'path'
 import type { Command } from '../commands.js'
-import { queryWithModel } from '../services/api/zy.js'
+import { queryWithModel } from '../services/api/llmOrchestrator.js'
 import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js'
 import type { LogOption } from '../types/logs.js'
 import { getZyConfigHomeDir, isInternalBuild } from '../utils/envUtils.js'

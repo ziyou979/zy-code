@@ -265,7 +265,8 @@ export function useVoiceIntegration({
     const needsTrailingSpace = voiceSuffix.length > 0 && !/^\s/.test(voiceSuffix)
     const leadingSpace = needsSpace ? ' ' : ''
     const trailingSpace = needsTrailingSpace ? ' ' : ''
-    const newValue = voicePrefix + leadingSpace + voiceInterimTranscript + trailingSpace + voiceSuffix
+    const newValue =
+      voicePrefix + leadingSpace + voiceInterimTranscript + trailingSpace + voiceSuffix
     // Position cursor after the transcribed text (before suffix)
     const cursorPos = voicePrefix.length + leadingSpace.length + voiceInterimTranscript.length
     if (insertTextRef.current) {
@@ -290,7 +291,8 @@ export function useVoiceIntegration({
       // than the interim (ASR routinely adds punctuation/corrections).
       if (inputValueRef.current !== lastSetInputRef.current) return
       const needsSpace = finalPrefix.length > 0 && !/\s$/.test(finalPrefix) && text.length > 0
-      const needsTrailingSpace = finalSuffix.length > 0 && !/^\s/.test(finalSuffix) && text.length > 0
+      const needsTrailingSpace =
+        finalSuffix.length > 0 && !/^\s/.test(finalSuffix) && text.length > 0
       const leadingSpace = needsSpace ? ' ' : ''
       const trailingSpace = needsTrailingSpace ? ' ' : ''
       const newInput = finalPrefix + leadingSpace + text + trailingSpace + finalSuffix

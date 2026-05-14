@@ -134,3 +134,7 @@ export const TeamDeleteTool: Tool<InputSchema, Output> = buildTool({
   renderToolUseMessage,
   renderToolResultMessage,
 } satisfies ToolDef<InputSchema, Output>)
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(TeamDeleteTool, () => isAgentSwarmsEnabled())

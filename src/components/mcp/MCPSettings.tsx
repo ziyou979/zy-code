@@ -62,8 +62,7 @@ export function MCPSettings({ onComplete }: Props) {
             const hasSessionAuth =
               getSessionIngressAuthToken() !== null && client.type === 'connected'
             const hasToolsAndConnected =
-              client.type === 'connected' &&
-              filterToolsByServer(mcp.tools, client.name).length > 0
+              client.type === 'connected' && filterToolsByServer(mcp.tools, client.name).length > 0
             isAuthenticated = Boolean(tokens) || hasSessionAuth || hasToolsAndConnected
           }
           const baseInfo = {
@@ -219,7 +218,13 @@ export function MCPSettings({ onComplete }: Props) {
           server: (viewState as any).server,
         } as any)
       let toolListView
-      toolListView = <MCPToolListView server={(viewState as any).server} onSelectTool={handleBack} onBack={handleSelectTool} />
+      toolListView = (
+        <MCPToolListView
+          server={(viewState as any).server}
+          onSelectTool={handleBack}
+          onBack={handleSelectTool}
+        />
+      )
       return toolListView
     }
     case 'server-tool-detail': {
@@ -241,7 +246,9 @@ export function MCPSettings({ onComplete }: Props) {
           server: (viewState as any).server,
         } as any)
       let toolDetailView
-      toolDetailView = <MCPToolDetailView tool={tool} server={(viewState as any).server} onBack={handleBack} />
+      toolDetailView = (
+        <MCPToolDetailView tool={tool} server={(viewState as any).server} onBack={handleBack} />
+      )
       return toolDetailView
     }
     case 'agent-server-menu': {

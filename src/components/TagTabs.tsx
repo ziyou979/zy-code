@@ -134,9 +134,7 @@ export function TagTabs({
         const actualIndex = visibleIndices[tabIndex]!
         const isSelected = actualIndex === safeSelectedIndex
         const displayText =
-          tab === ALL_TAB_LABEL
-            ? tab
-            : `#${truncateTag(tab, maxSingleTabWidth - TAB_PADDING)}`
+          tab === ALL_TAB_LABEL ? tab : `#${truncateTag(tab, maxSingleTabWidth - TAB_PADDING)}`
         return (
           <Text
             key={tab}

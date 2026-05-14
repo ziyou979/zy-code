@@ -881,3 +881,7 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
   renderToolUseMessage,
   renderToolResultMessage,
 } satisfies ToolDef<InputSchema, SendMessageToolOutput>)
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(SendMessageTool)

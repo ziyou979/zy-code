@@ -89,3 +89,7 @@ export const CronDeleteTool = buildTool({
   renderToolUseMessage: renderDeleteToolUseMessage,
   renderToolResultMessage: renderDeleteResultMessage,
 } satisfies ToolDef<InputSchema, DeleteOutput>)
+
+// 插件化注册
+import { toolRegistry } from '../registry.js'
+toolRegistry.register(CronDeleteTool)

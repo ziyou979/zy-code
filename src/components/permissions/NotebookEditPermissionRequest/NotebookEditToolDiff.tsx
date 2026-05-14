@@ -71,7 +71,9 @@ function NotebookEditToolDiffInner({
       if (!targetCell) {
         oldSource = ''
       } else {
-        oldSource = Array.isArray(targetCell.source) ? targetCell.source.join('') : targetCell.source
+        oldSource = Array.isArray(targetCell.source)
+          ? targetCell.source.join('')
+          : targetCell.source
       }
     }
   }

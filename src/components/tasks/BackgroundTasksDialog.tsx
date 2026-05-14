@@ -41,6 +41,7 @@ import { Dialog } from '../design-system/Dialog.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { AsyncAgentDetailDialog } from './AsyncAgentDetailDialog.js'
 import { BackgroundTask as BackgroundTaskComponent } from './BackgroundTask.js'
+import { type ListItem, toListItem, Item, TeammateTaskGroups } from './taskListRenderers.js'
 import { DreamDetailDialog } from './DreamDetailDialog.js'
 import { InProcessTeammateDetailDialog } from './InProcessTeammateDetailDialog.js'
 import { RemoteSessionDetailDialog } from './RemoteSessionDetailDialog.js'
@@ -63,62 +64,6 @@ type Props = {
   toolUseContext: ToolUseContext
   initialDetailTaskId?: string
 }
-type ListItem =
-  | {
-      id: string
-      type: 'local_bash'
-      label: string
-      status: string
-      task: DeepImmutable<LocalShellTaskState>
-    }
-  | {
-      id: string
-      type: 'remote_agent'
-      label: string
-      status: string
-      task: DeepImmutable<RemoteAgentTaskState>
-    }
-  | {
-      id: string
-      type: 'local_agent'
-      label: string
-      status: string
-      task: DeepImmutable<LocalAgentTaskState>
-    }
-  | {
-      id: string
-      type: 'in_process_teammate'
-      label: string
-      status: string
-      task: DeepImmutable<InProcessTeammateTaskState>
-    }
-  | {
-      id: string
-      type: 'local_workflow'
-      label: string
-      status: string
-      task: DeepImmutable<LocalWorkflowTaskState>
-    }
-  | {
-      id: string
-      type: 'monitor_mcp'
-      label: string
-      status: string
-      task: DeepImmutable<MonitorMcpTaskState>
-    }
-  | {
-      id: string
-      type: 'dream'
-      label: string
-      status: string
-      task: DeepImmutable<DreamTaskState>
-    }
-  | {
-      id: string
-      type: 'leader'
-      label: string
-      status: 'running'
-    }
 
 // WORKFLOW_SCRIPTS 仅限 ant（build_flags.yaml）。静态导入会泄漏约 1.3K 行到外部构建中。
 // 使用 feature() + require 门控，这样打包器可以对分支进行死代码消除。
@@ -308,10 +253,7 @@ export function BackgroundTasksDialog({
       e.preventDefault()
       if (currentSelection.type === 'local_bash' && currentSelection.status === 'running') {
         void killShellTask(currentSelection.id)
-      } else if (
-        currentSelection.type === 'local_agent' &&
-        currentSelection.status === 'running'
-      ) {
+      } else if (currentSelection.type === 'local_agent' && currentSelection.status === 'running') {
         void killAgentTask(currentSelection.id)
       } else if (
         currentSelection.type === 'in_process_teammate' &&
@@ -473,9 +415,7 @@ export function BackgroundTasksDialog({
           <InProcessTeammateDetailDialog
             teammate={task}
             onDone={onDone}
-            onKill={
-              task.status === 'running' ? () => void killTeammateTask(task.id) : undefined
-            }
+            onKill={task.status === 'running' ? () => void killTeammateTask(task.id) : undefined}
             onBack={goBackToList}
             onForeground={
               task.status === 'running'
@@ -547,8 +487,10 @@ export function BackgroundTasksDialog({
   }
   const runningBashCount = count(bashTasks, (_) => _.status === 'running')
   const runningAgentCount =
-    count(remoteSessions, (session) => session.status === 'running' || session.status === 'pending') +
-    count(agentTasks, (agent) => agent.status === 'running')
+    count(
+      remoteSessions,
+      (session) => session.status === 'running' || session.status === 'pending',
+    ) + count(agentTasks, (agent) => agent.status === 'running')
   const runningTeammateCount = count(teammateTasks, (teammate) => teammate.status === 'running')
   const subtitle = intersperse(
     [
@@ -586,24 +528,10 @@ export function BackgroundTasksDialog({
     (index) => <Text key={`separator-${index}`}> · </Text>,
   )
   const actions = [
-    <KeyboardShortcutHint
-      key="upDown"
-      shortcut="↑/↓"
-      action="select"
-    />,
-    <KeyboardShortcutHint
-      key="enter"
-      shortcut="Enter"
-      action="view"
-    />,
+    <KeyboardShortcutHint key="upDown" shortcut="↑/↓" action="select" />,
+    <KeyboardShortcutHint key="enter" shortcut="Enter" action="view" />,
     ...(currentSelection?.type === 'in_process_teammate' && currentSelection.status === 'running'
-      ? [
-          <KeyboardShortcutHint
-            key="foreground"
-            shortcut="f"
-            action="foreground"
-          />,
-        ]
+      ? [<KeyboardShortcutHint key="foreground" shortcut="f" action="foreground" />]
       : []),
     ...((currentSelection?.type === 'local_bash' ||
       currentSelection?.type === 'local_agent' ||
@@ -613,28 +541,12 @@ export function BackgroundTasksDialog({
       currentSelection?.type === 'dream' ||
       currentSelection?.type === 'remote_agent') &&
     currentSelection.status === 'running'
-      ? [
-          <KeyboardShortcutHint
-            key="kill"
-            shortcut="x"
-            action="stop"
-          />,
-        ]
+      ? [<KeyboardShortcutHint key="kill" shortcut="x" action="stop" />]
       : []),
     ...(agentTasks.some((t) => t.status === 'running')
-      ? [
-          <KeyboardShortcutHint
-            key="kill-all"
-            shortcut={killAgentsShortcut}
-            action="stop agents"
-          />,
-        ]
+      ? [<KeyboardShortcutHint key="kill-all" shortcut={killAgentsShortcut} action="stop agents" />]
       : []),
-    <KeyboardShortcutHint
-      key="esc"
-      shortcut="←/Esc"
-      action="close"
-    />,
+    <KeyboardShortcutHint key="esc" shortcut="←/Esc" action="close" />,
   ]
   const handleCancel = () =>
     onDone(tSync('backgroundTasks.dismissed'), {
@@ -700,11 +612,7 @@ export function BackgroundTasksDialog({
                 )}
                 <Box flexDirection="column">
                   {bashTasks.map((item) => (
-                    <Item
-                      key={item.id}
-                      item={item}
-                      isSelected={item.id === currentSelection?.id}
-                    />
+                    <Item key={item.id} item={item} isSelected={item.id === currentSelection?.id} />
                   ))}
                 </Box>
               </Box>
@@ -724,11 +632,7 @@ export function BackgroundTasksDialog({
                 </Text>
                 <Box flexDirection="column">
                   {mcpMonitors.map((item) => (
-                    <Item
-                      key={item.id}
-                      item={item}
-                      isSelected={item.id === currentSelection?.id}
-                    />
+                    <Item key={item.id} item={item} isSelected={item.id === currentSelection?.id} />
                   ))}
                 </Box>
               </Box>
@@ -750,11 +654,7 @@ export function BackgroundTasksDialog({
                 </Text>
                 <Box flexDirection="column">
                   {remoteSessions.map((item) => (
-                    <Item
-                      key={item.id}
-                      item={item}
-                      isSelected={item.id === currentSelection?.id}
-                    />
+                    <Item key={item.id} item={item} isSelected={item.id === currentSelection?.id} />
                   ))}
                 </Box>
               </Box>
@@ -781,11 +681,7 @@ export function BackgroundTasksDialog({
                 </Text>
                 <Box flexDirection="column">
                   {agentTasks.map((item) => (
-                    <Item
-                      key={item.id}
-                      item={item}
-                      isSelected={item.id === currentSelection?.id}
-                    />
+                    <Item key={item.id} item={item} isSelected={item.id === currentSelection?.id} />
                   ))}
                 </Box>
               </Box>
@@ -813,11 +709,7 @@ export function BackgroundTasksDialog({
                 </Text>
                 <Box flexDirection="column">
                   {workflowTasks.map((item) => (
-                    <Item
-                      key={item.id}
-                      item={item}
-                      isSelected={item.id === currentSelection?.id}
-                    />
+                    <Item key={item.id} item={item} isSelected={item.id === currentSelection?.id} />
                   ))}
                 </Box>
               </Box>
@@ -839,11 +731,7 @@ export function BackgroundTasksDialog({
               >
                 <Box flexDirection="column">
                   {dreamTaskItems.map((item) => (
-                    <Item
-                      key={item.id}
-                      item={item}
-                      isSelected={item.id === currentSelection?.id}
-                    />
+                    <Item key={item.id} item={item} isSelected={item.id === currentSelection?.id} />
                   ))}
                 </Box>
               </Box>
@@ -852,129 +740,5 @@ export function BackgroundTasksDialog({
         )}
       </Dialog>
     </Box>
-  )
-}
-function toListItem(task: BackgroundTaskState): ListItem {
-  switch (task.type) {
-    case 'local_bash':
-      return {
-        id: task.id,
-        type: 'local_bash',
-        label: task.kind === 'monitor' ? task.description : task.command,
-        status: task.status,
-        task,
-      }
-    case 'remote_agent':
-      return {
-        id: task.id,
-        type: 'remote_agent',
-        label: task.title,
-        status: task.status,
-        task,
-      }
-    case 'local_agent':
-      return {
-        id: task.id,
-        type: 'local_agent',
-        label: task.description,
-        status: task.status,
-        task,
-      }
-    case 'in_process_teammate':
-      return {
-        id: task.id,
-        type: 'in_process_teammate',
-        label: `@${task.identity.agentName}`,
-        status: task.status,
-        task,
-      }
-    case 'local_workflow':
-      return {
-        id: task.id,
-        type: 'local_workflow',
-        label: task.summary ?? task.description,
-        status: task.status,
-        task,
-      }
-    case 'monitor_mcp':
-      return {
-        id: task.id,
-        type: 'monitor_mcp',
-        label: task.description,
-        status: task.status,
-        task,
-      }
-    case 'dream':
-      return {
-        id: task.id,
-        type: 'dream',
-        label: task.description,
-        status: task.status,
-        task,
-      }
-  }
-}
-function Item({ item, isSelected }) {
-  const { columns } = useTerminalSize()
-  const maxActivityWidth = Math.max(30, columns - 26)
-  const useGreyPointer = isCoordinatorMode()
-  return (
-    <Box flexDirection="row">
-      {
-        <Text dimColor={useGreyPointer && isSelected}>
-          {isSelected ? figures.pointer + ' ' : '  '}
-        </Text>
-      }
-      {
-        <Text color={isSelected && !useGreyPointer ? 'suggestion' : undefined}>
-          {item.type === 'leader' ? (
-            <Text>@{TEAM_LEAD_NAME}</Text>
-          ) : (
-            <BackgroundTaskComponent task={item.task} maxActivityWidth={maxActivityWidth} />
-          )}
-        </Text>
-      }
-    </Box>
-  )
-}
-function TeammateTaskGroups({ teammateTasks, currentSelectionId }) {
-  const leaderItems = teammateTasks.filter((i) => i.type === 'leader')
-  const teammateItems = teammateTasks.filter((i_0) => i_0.type === 'in_process_teammate')
-  const teams = new Map()
-  for (const item of teammateItems) {
-    const teamName = item.task.identity.teamName
-    const group = teams.get(teamName)
-    if (group) {
-      group.push(item)
-    } else {
-      teams.set(teamName, [item])
-    }
-  }
-  const teamEntries = [...teams.entries()]
-  return (
-    <>
-      {teamEntries.map((entry) => {
-        const [teamName_0, items] = entry
-        const memberCount = items.length + leaderItems.length
-        return (
-          <Box key={teamName_0} flexDirection="column">
-            <Text dimColor={true}>
-              {'  '}
-              {tSync('backgroundTasks.team')}: {teamName_0} ({memberCount})
-            </Text>
-            {leaderItems.map((item) => (
-              <Item
-                key={`${item.id}-${teamName_0}`}
-                item={item}
-                isSelected={item.id === currentSelectionId}
-              />
-            ))}
-            {items.map((item) => (
-              <Item key={item.id} item={item} isSelected={item.id === currentSelectionId} />
-            ))}
-          </Box>
-        )
-      })}
-    </>
   )
 }

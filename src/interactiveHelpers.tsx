@@ -219,13 +219,13 @@ export async function showSetupScreens(
       const { zyMdExternalIncludesDialog } = await import(
         './components/ZyMdExternalIncludesDialog.js'
       )
-      const DialogComponent = zyMdExternalIncludesDialog as React.ComponentType<{ onDone: () => void; isStandaloneDialog: boolean; externalIncludes: unknown }>
+      const DialogComponent = zyMdExternalIncludesDialog as React.ComponentType<{
+        onDone: () => void
+        isStandaloneDialog: boolean
+        externalIncludes: unknown
+      }>
       await showSetupDialog(root, (done) => (
-        <DialogComponent
-          onDone={done}
-          isStandaloneDialog
-          externalIncludes={externalIncludes}
-        />
+        <DialogComponent onDone={done} isStandaloneDialog externalIncludes={externalIncludes} />
       ))
     }
   }

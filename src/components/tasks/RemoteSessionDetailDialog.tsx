@@ -185,8 +185,9 @@ function UltraplanSessionDetail({ session, toolUseContext, onDone, onBack, onKil
           {
             <Text>
               {phase === 'plan_ready' && <Text color="success">{figures.tick} </Text>}
-              {agentsWorking} {agentLabel} {phase ? AGENT_VERB[phase] : tSync('backgroundTasks.working')} ·{' '}
-              {toolCalls} tool {toolCallLabel}
+              {agentsWorking} {agentLabel}{' '}
+              {phase ? AGENT_VERB[phase] : tSync('backgroundTasks.working')} · {toolCalls} tool{' '}
+              {toolCallLabel}
             </Text>
           }
           {lastToolCall && <Text dimColor={true}>{lastToolCall}</Text>}
@@ -471,7 +472,13 @@ export function RemoteSessionDetailDialog({
   }, [session])
   if (session.isUltraplan) {
     return (
-      <UltraplanSessionDetail session={session} toolUseContext={toolUseContext} onDone={onDone} onBack={onBack} onKill={onKill} />
+      <UltraplanSessionDetail
+        session={session}
+        toolUseContext={toolUseContext}
+        onDone={onDone}
+        onBack={onBack}
+        onKill={onKill}
+      />
     )
   }
 

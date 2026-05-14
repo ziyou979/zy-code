@@ -48,11 +48,7 @@ export function BackgroundHint(props) {
   return (
     <Box paddingLeft={5}>
       <Text dimColor={true}>
-        <KeyboardShortcutHint
-          shortcut={shortcut}
-          action="run in background"
-          parens={true}
-        />
+        <KeyboardShortcutHint shortcut={shortcut} action="run in background" parens={true} />
       </Text>
     </Box>
   )

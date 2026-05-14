@@ -122,9 +122,7 @@ ${question}`
  */
 function extractSideQuestionResponse(messages: Message[]): string | null {
   // 展平所有按块拆分的 assistant 消息中的内容块。
-  const assistantBlocks = messages.flatMap((m) =>
-    m.type === 'assistant' ? m.message.content : [],
-  )
+  const assistantBlocks = messages.flatMap((m) => (m.type === 'assistant' ? m.message.content : []))
 
   if (assistantBlocks.length > 0) {
     // 拼接所有 text block（通常最多一个，但为安全起见全部处理）。
