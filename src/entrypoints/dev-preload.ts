@@ -2,6 +2,7 @@
 // Loaded via `bun --preload` before cli.tsx — never shipped in production builds.
 
 process.env.USER_TYPE = 'external'
+process.env.ZY_DEV_TRANSCRIPT_CLASSIFIER = '1'
 
 // 注入 build features，使 feature('TRANSCRIPT_CLASSIFIER') 等在 dev 下为 true
 if (typeof Bun !== 'undefined') {

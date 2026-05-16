@@ -437,32 +437,45 @@ export function openAIFinishReasonToStandard(reason: string | null | undefined):
   return OPENAI_STOP_REASON_MAP[reason] ?? 'end_turn'
 }
 
-export function openAIUsageToStandard(
+/**
+ * 从 OpenAI usage 中提取缓存相关的扩展字段。
+ * 百炼/火山引擎等兼容端点可能返回 cache_read_input_tokens / prompt_cache_hit_tokens，
+ * 标准 OpenAI 则在 prompt_tokens_details.cached_tokens 下。
+ */
+function extractOpenAIUsageExtras(
   usage: OpenAI.CompletionUsage | undefined | null,
-): TokenUsage {
-  const inputTokens = usage?.prompt_tokens ?? 0
-  const outputTokens = usage?.completion_tokens ?? 0
+): Record<string, number> {
   const extras: Record<string, number> = {}
+  const rawUsage = usage as unknown as Record<string, unknown> | null | undefined
 
-  // 缓存命中 token（百炼/火山引擎等 OpenAI 兼容端点可能返回 cache_read_input_tokens，
-  // 或在 prompt_tokens_details.cached_tokens 下）
-  if (usage && typeof usage === 'object' && 'cache_read_input_tokens' in usage) {
-    extras.cacheReadInputTokens = (usage as any).cache_read_input_tokens
-  } else if (usage?.prompt_tokens_details?.cached_tokens !== undefined) {
-    extras.cacheReadInputTokens = usage.prompt_tokens_details.cached_tokens
+  // 缓存命中 token
+  if (rawUsage && typeof rawUsage.cache_read_input_tokens === 'number') {
+    extras.cacheReadInputTokens = rawUsage.cache_read_input_tokens as number
+  } else if (typeof usage?.prompt_tokens_details?.cached_tokens === 'number') {
+    extras.cacheReadInputTokens = usage!.prompt_tokens_details!.cached_tokens
+  } else if (rawUsage && typeof rawUsage.prompt_cache_hit_tokens === 'number') {
+    extras.cacheReadInputTokens = rawUsage.prompt_cache_hit_tokens as number
   }
+
   // 缓存写入 token
-  if (usage && typeof usage === 'object' && 'cache_creation_input_tokens' in usage) {
-    extras.cacheCreationInputTokens = (usage as any).cache_creation_input_tokens
-  } else if ((usage?.prompt_tokens_details as any)?.cache_creation_input_tokens !== undefined) {
+  if (rawUsage && typeof rawUsage.cache_creation_input_tokens === 'number') {
+    extras.cacheCreationInputTokens = rawUsage.cache_creation_input_tokens as number
+  } else if (typeof (usage?.prompt_tokens_details as any)?.cache_creation_input_tokens === 'number') {
     extras.cacheCreationInputTokens = (
-      usage.prompt_tokens_details as any
+      usage!.prompt_tokens_details as any
     ).cache_creation_input_tokens
   }
 
+  return extras
+}
+
+export function openAIUsageToStandard(
+  usage: OpenAI.CompletionUsage | undefined | null,
+): TokenUsage {
+  const extras = extractOpenAIUsageExtras(usage)
   return {
-    inputTokens,
-    outputTokens,
+    inputTokens: usage?.prompt_tokens ?? 0,
+    outputTokens: usage?.completion_tokens ?? 0,
     ...(Object.keys(extras).length > 0 && { extras }),
   }
 }
@@ -470,19 +483,7 @@ export function openAIUsageToStandard(
 export function openAIDeltaUsageToStandard(
   usage: OpenAI.CompletionUsage | undefined | null,
 ): DeltaUsage {
-  const extras: Record<string, number> = {}
-  if (usage && typeof usage === 'object' && 'cache_read_input_tokens' in usage) {
-    extras.cacheReadInputTokens = (usage as any).cache_read_input_tokens
-  } else if (usage?.prompt_tokens_details?.cached_tokens !== undefined) {
-    extras.cacheReadInputTokens = usage.prompt_tokens_details.cached_tokens
-  }
-  if (usage && typeof usage === 'object' && 'cache_creation_input_tokens' in usage) {
-    extras.cacheCreationInputTokens = (usage as any).cache_creation_input_tokens
-  } else if ((usage?.prompt_tokens_details as any)?.cache_creation_input_tokens !== undefined) {
-    extras.cacheCreationInputTokens = (
-      usage.prompt_tokens_details as any
-    ).cache_creation_input_tokens
-  }
+  const extras = extractOpenAIUsageExtras(usage)
   return {
     inputTokens: usage?.prompt_tokens,
     outputTokens: usage?.completion_tokens ?? 0,

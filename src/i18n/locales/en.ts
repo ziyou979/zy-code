@@ -1776,6 +1776,12 @@ export const en: TranslationResource = {
   'permissionRules.tabToSwitchQuestions': 'Tab to switch questions',
   'permissionRules.ctrlGToEditIn': 'ctrl+g to edit in {editorName}',
   'permissionRules.escToCancelHint': 'Esc to cancel',
+  'permissionRules.otherOption': 'Other',
+  'permissionRules.typeSomething': 'Type something.',
+  'permissionRules.typeSomethingMulti': 'Type something',
+  'permissionRules.submit': 'Submit',
+  'permissionRules.next': 'Next',
+  'permissionRules.tabArrowToNavigate': 'Tab/Arrow keys to navigate',
   'permissionRules.noRecentDenials':
     'No recent denials. Commands denied by the auto mode classifier will appear here.',
   'permissionRules.retrySuffix': ' (retry)',

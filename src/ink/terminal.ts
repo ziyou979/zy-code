@@ -234,5 +234,6 @@ export function writeDiffToTerminal(terminal: Terminal, diff: Diff, skipSyncMark
 
   // 添加同步更新结束标记并刷新缓冲区
   if (useSync) buffer += ESU
+
   terminal.stdout.write(buffer)
 }

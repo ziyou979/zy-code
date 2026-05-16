@@ -1,3 +1,4 @@
+import { tSync } from '../../../i18n/index.js'
 import figures from 'figures'
 import React, { useState } from 'react'
 import { Box, Text } from '../../../ink.js'
@@ -26,6 +27,7 @@ type Props = {
   pastedContents?: Record<number, PastedContent>
   minContentHeight?: number
   minContentWidth?: number
+  outerMinHeight?: number
   onUpdateQuestionState: (
     questionText: string,
     updates: Partial<QuestionState>,
@@ -63,6 +65,7 @@ export function QuestionView({
   planFilePath,
   minContentHeight,
   minContentWidth,
+  outerMinHeight,
   onUpdateQuestionState,
   onAnswer,
   onTextInputFocus,
@@ -152,8 +155,10 @@ export function QuestionView({
   const otherOption = {
     type: 'input' as const,
     value: '__other__',
-    label: 'Other',
-    placeholder: question.multiSelect ? 'Type something' : 'Type something.',
+    label: tSync('permissionRules.otherOption'),
+    placeholder: question.multiSelect
+      ? tSync('permissionRules.typeSomethingMulti')
+      : tSync('permissionRules.typeSomething'),
     initialValue: initialTextInputValue,
     onChange: (value_0) => {
       onUpdateQuestionState(
@@ -178,6 +183,7 @@ export function QuestionView({
         hideSubmitTab={hideSubmitTab}
         minContentHeight={minContentHeight}
         minContentWidth={minContentWidth}
+        outerMinHeight={outerMinHeight}
         onUpdateQuestionState={onUpdateQuestionState}
         onAnswer={onAnswer}
         onTextInputFocus={onTextInputFocus}
@@ -196,6 +202,7 @@ export function QuestionView({
       tabIndex={0}
       autoFocus={true}
       onKeyDown={handleKeyDown}
+      minHeight={outerMinHeight}
     >
       {isInPlanMode && planFilePath && (
         <Box flexDirection="column" gap={0}>
@@ -251,7 +258,9 @@ export function QuestionView({
                       onFocus={handleFocus}
                       onCancel={onCancel}
                       submitButtonText={
-                        currentQuestionIndex === questions.length - 1 ? 'Submit' : 'Next'
+                        currentQuestionIndex === questions.length - 1
+                          ? tSync('permissionRules.submit')
+                          : tSync('permissionRules.next')
                       }
                       onSubmit={onSubmit}
                       onDownFromLastItem={handleDownFromLastItem}
@@ -309,7 +318,7 @@ export function QuestionView({
                         <Text
                           color={isFooterFocused && footerIndex === 0 ? 'suggestion' : undefined}
                         >
-                          {options.length + 1}. Chat about this
+                          {options.length + 1}. {tSync('permissionRules.chatAboutThis')}
                         </Text>
                       }
                     </Box>
@@ -322,7 +331,7 @@ export function QuestionView({
                         <Text> </Text>
                       )}
                       <Text color={isFooterFocused && footerIndex === 1 ? 'suggestion' : undefined}>
-                        {options.length + 2}. Skip interview and plan immediately
+                        {options.length + 2}. {tSync('permissionRules.skipInterviewAndPlan')}
                       </Text>
                     </Box>
                   )}
@@ -331,16 +340,19 @@ export function QuestionView({
               {
                 <Box marginTop={1}>
                   <Text color="inactive" dimColor={true}>
-                    Enter to select ·{' '}
+                    {tSync('permissionRules.enterToSelect')} ·{' '}
                     {questions.length === 1 ? (
                       <>
-                        {figures.arrowUp}/{figures.arrowDown} to navigate
+                        {figures.arrowUp}/{figures.arrowDown}{' '}
+                        {tSync('permissionRules.arrowToNavigate')}
                       </>
                     ) : (
-                      'Tab/Arrow keys to navigate'
+                      tSync('permissionRules.tabArrowToNavigate')
                     )}
-                    {isOtherFocused && editorName && <> · ctrl+g to edit in {editorName}</>} · Esc
-                    to cancel
+                    {isOtherFocused && editorName && (
+                      <> · {tSync('permissionRules.ctrlGToEditIn', { editorName })}</>
+                    )}{' '}
+                    · {tSync('permissionRules.escToCancelHint')}
                   </Text>
                 </Box>
               }

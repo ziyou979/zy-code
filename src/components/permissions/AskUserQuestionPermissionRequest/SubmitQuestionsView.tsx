@@ -16,6 +16,7 @@ type Props = {
   allQuestionsAnswered: boolean
   permissionResult: PermissionDecision
   minContentHeight?: number
+  outerMinHeight?: number
   onFinalResponse: (value: 'submit' | 'cancel') => void
 }
 export function SubmitQuestionsView({
@@ -25,10 +26,11 @@ export function SubmitQuestionsView({
   allQuestionsAnswered,
   permissionResult,
   minContentHeight,
+  outerMinHeight,
   onFinalResponse,
 }: Props) {
   return (
-    <Box flexDirection="column" marginTop={1}>
+    <Box flexDirection="column" marginTop={1} minHeight={outerMinHeight}>
       {<Divider color="inactive" />}
       <Box flexDirection="column" borderTop={true} borderColor="inactive" paddingTop={0}>
         {

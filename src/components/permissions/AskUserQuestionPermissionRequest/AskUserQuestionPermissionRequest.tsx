@@ -84,6 +84,9 @@ function AskUserQuestionPermissionRequestBody({ toolUseConfirm, onDone, onReject
     globalContentHeight: contentHeight,
     globalContentWidth: contentWidth,
   }
+  // 外层容器的最小高度，确保切换 QuestionView/SubmitQuestionsView 时
+  // 不会出现渲染重叠（旧内容未被完全覆盖）
+  const globalOuterMinHeight = maxAllowedHeight
   const metadataSource = result.success ? result.data.metadata?.source : undefined
   const [pastedContentsByQuestion, setPastedContentsByQuestion] = useState({})
   const nextPasteIdRef = useRef(0)
@@ -345,6 +348,7 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
           hideSubmitTab={hideSubmitTab}
           minContentHeight={globalContentHeight}
           minContentWidth={globalContentWidth}
+          outerMinHeight={globalOuterMinHeight}
           planFilePath={planFilePath}
           onUpdateQuestionState={updateQuestionState}
           onAnswer={handleQuestionAnswer}
@@ -374,6 +378,7 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
           allQuestionsAnswered={allQuestionsAnswered}
           permissionResult={toolUseConfirm.permissionResult}
           minContentHeight={globalContentHeight}
+          outerMinHeight={globalOuterMinHeight}
           onFinalResponse={handleFinalResponse}
         />
       </>

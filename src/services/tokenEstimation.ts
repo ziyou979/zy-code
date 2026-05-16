@@ -1,111 +1,11 @@
-import type {
-  LLMMessage,
-  ToolDefinition,
-  ToolCallInlineBlock,
-  ToolResultBlock,
-} from '../types/llm.js'
+import type { LLMMessage, ToolDefinition } from '../types/llm.js'
 import type { Attachment } from '../utils/attachments.js'
 import { countTokensLocally } from '../utils/tokenizer/index.js'
 import { logError } from '../utils/log.js'
 import { normalizeAttachmentForAPI } from '../utils/messages.js'
-import {
-  getDefaultCompactModel,
-  getMainLoopModel,
-  normalizeModelStringForAPI,
-} from '../utils/model/model.js'
 import { jsonStringify } from '../utils/slowOperations.js'
-import { isToolReferenceBlock } from '../utils/toolSearch.js'
-import { getAPIMetadata, getExtraBodyParams } from './api/llmOrchestrator.js'
 import { getLLMAdapter } from './api/client.js'
 import { withTokenCountVCR } from './vcr.js'
-
-// 启用思考时的令牌计数最小值
-// API 约束：max_tokens 必须大于 thinking.budget_tokens
-const TOKEN_COUNT_THINKING_BUDGET = 1024
-const TOKEN_COUNT_MAX_TOKENS = 2048
-
-/**
- * 检查消息是否包含思考块
- */
-function hasThinkingBlocks(messages: LLMMessage[]): boolean {
-  for (const message of messages) {
-    if (message.role === 'assistant' && Array.isArray(message.content)) {
-      for (const block of message.content) {
-        if (
-          typeof block === 'object' &&
-          block !== null &&
-          'type' in block &&
-          (block.type === 'thinking' || block.type === 'redacted_thinking')
-        ) {
-          return true
-        }
-      }
-    }
-  }
-  return false
-}
-
-/**
- * 在发送进行令牌计数之前，从消息中剥离 tool search 专用字段。
- * 这会从 tool_use 块中移除 'caller'，从 tool_result 内容中移除 'tool_reference'。
- * 这些字段仅在使用 tool search beta 时有效，否则会导致错误。
- *
- * 注意：我们使用 'as unknown as' 转换，因为 SDK 类型不包含 tool search beta 字段，
- * 但在启用 tool search 时，这些字段可能在运行时从 API 响应中存在。
- */
-function stripToolSearchFieldsFromMessages(messages: LLMMessage[]): LLMMessage[] {
-  return messages.map((message) => {
-    if (!Array.isArray(message.content)) {
-      return message
-    }
-
-    const normalizedContent = message.content.map((block) => {
-      // 从 tool_use 块中剥离 'caller'（助手消息）
-      if (block.type === 'tool_call') {
-        // 解构以排除 'caller' 等额外字段
-        const toolUse = block as ToolCallInlineBlock & {
-          caller?: unknown
-        }
-        return {
-          type: 'tool_call' as const,
-          id: toolUse.id,
-          name: toolUse.name,
-          input: toolUse.input,
-        }
-      }
-
-      // 从 tool_result 内容中剥离 tool_reference 块（用户消息）
-      if (block.type === 'tool_result') {
-        const toolResult = block as ToolResultBlock
-        if (Array.isArray(toolResult.content)) {
-          const filteredContent = (toolResult.content as unknown[]).filter(
-            (c) => !isToolReferenceBlock(c),
-          ) as typeof toolResult.content
-
-          if (filteredContent.length === 0) {
-            return {
-              ...toolResult,
-              content: [{ type: 'text' as const, text: '[tool references]' }],
-            }
-          }
-          if (filteredContent.length !== toolResult.content.length) {
-            return {
-              ...toolResult,
-              content: filteredContent,
-            }
-          }
-        }
-      }
-
-      return block
-    })
-
-    return {
-      ...message,
-      content: normalizedContent,
-    } as LLMMessage
-  })
-}
 
 export async function countTokensWithAPI(content: string): Promise<number | null> {
   // 空内容的特殊情况 — API 不接受空消息
