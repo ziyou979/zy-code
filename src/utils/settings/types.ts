@@ -996,6 +996,12 @@ export const SettingsSchema = lazySchema(() =>
           }
         : {}),
       disableAutoMode: z.enum(['disable']).optional().describe('Disable auto mode'),
+      disableSkillShellExecution: z
+        .boolean()
+        .optional()
+        .describe(
+          'When true, inline shell execution in skills, custom slash commands and plugin commands is disabled',
+        ),
       sshConfigs: z
         .array(
           z.object({

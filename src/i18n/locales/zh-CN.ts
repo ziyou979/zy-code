@@ -639,6 +639,10 @@ export const zhCN: TranslationResource = {
   // Background task status
   'backgroundTaskStatus.toView': '查看',
 
+  // Skill shell 执行
+  'skillShell.disabledBySettings':
+    'Skill 内联 shell 执行已被设置禁用（disableSkillShellExecution=true）',
+
   // Shell progress
   'shellProgress.timeout': '执行超时',
   'shellProgress.lines': '行',

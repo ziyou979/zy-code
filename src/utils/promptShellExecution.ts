@@ -3,9 +3,11 @@ import type { Tool, ToolUseContext } from '../Tool.js'
 import { BashTool } from '../tools/BashTool/BashTool.js'
 import { logForDebugging } from './debug.js'
 import { errorMessage, MalformedCommandError, ShellError } from './errors.js'
+import { tSync } from '../i18n/index.js'
 import type { FrontmatterShell } from './frontmatterParser.js'
 import { createAssistantMessage } from './messages.js'
 import { hasPermissionsToUseTool } from './permissions/permissions.js'
+import { getInitialSettings } from './settings/settings.js'
 import { processToolResultBlock } from './toolResultStorage.js'
 
 // Narrow structural slice both BashTool and PowerShellTool satisfy.
@@ -66,6 +68,17 @@ export async function executeShellCommandsInPrompt(
   slashCommandName: string,
   shell?: FrontmatterShell,
 ): Promise<string> {
+  // 检查 disableSkillShellExecution 设置，为 true 时禁用 skill 内联 shell 执行
+  const settings = getInitialSettings()
+  if (settings.disableSkillShellExecution) {
+    logForDebugging(
+      `Skill shell execution disabled by settings, skipping shell commands in ${slashCommandName}`,
+    )
+    throw new MalformedCommandError(
+      tSync('skillShell.disabledBySettings'),
+    )
+  }
+
   let result = text
 
   // Resolve the tool once. `shell === undefined` and `shell === 'bash'` both

@@ -502,6 +502,10 @@ export const en: TranslationResource = {
   'fileWrite.updatedPlan': 'Updated plan',
   'fileWrite.write': 'Write',
 
+  // Skill shell execution
+  'skillShell.disabledBySettings':
+    'Skill shell execution is disabled by settings (disableSkillShellExecution=true)',
+
   // Shell progress
   'shellProgress.timeout': 'timeout',
   'shellProgress.lines': 'lines',
