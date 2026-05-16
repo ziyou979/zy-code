@@ -460,7 +460,9 @@ function extractOpenAIUsageExtras(
   // 缓存写入 token
   if (rawUsage && typeof rawUsage.cache_creation_input_tokens === 'number') {
     extras.cacheCreationInputTokens = rawUsage.cache_creation_input_tokens as number
-  } else if (typeof (usage?.prompt_tokens_details as any)?.cache_creation_input_tokens === 'number') {
+  } else if (
+    typeof (usage?.prompt_tokens_details as any)?.cache_creation_input_tokens === 'number'
+  ) {
     extras.cacheCreationInputTokens = (
       usage!.prompt_tokens_details as any
     ).cache_creation_input_tokens

@@ -1776,6 +1776,7 @@ export const en: TranslationResource = {
   'permissionRules.tabToSwitchQuestions': 'Tab to switch questions',
   'permissionRules.ctrlGToEditIn': 'ctrl+g to edit in {editorName}',
   'permissionRules.escToCancelHint': 'Esc to cancel',
+  'permissionRules.userAnsweredQuestions': "User answered ZY's questions:",
   'permissionRules.otherOption': 'Other',
   'permissionRules.typeSomething': 'Type something.',
   'permissionRules.typeSomethingMulti': 'Type something',

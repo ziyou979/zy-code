@@ -1763,6 +1763,7 @@ export const zhCN: TranslationResource = {
   'permissionRules.tabToSwitchQuestions': 'Tab 切换问题',
   'permissionRules.ctrlGToEditIn': 'ctrl+g 在 {editorName} 中编辑',
   'permissionRules.escToCancelHint': 'Esc 取消',
+  'permissionRules.userAnsweredQuestions': '用户回答了 ZY 的问题：',
   'permissionRules.otherOption': '其他',
   'permissionRules.typeSomething': '输入自定义内容',
   'permissionRules.typeSomethingMulti': '输入自定义内容',

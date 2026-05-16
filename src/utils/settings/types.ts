@@ -564,6 +564,18 @@ export const SettingsSchema = lazySchema(() =>
       builtInStatusBar: z
         .object({
           enabled: z.boolean().optional(),
+          modules: z
+            .object({
+              directory: z.boolean().optional().describe('Working directory and git branch'),
+              model: z.boolean().optional().describe('Model name and effort level'),
+              context: z.boolean().optional().describe('Context window usage bar'),
+              tokens: z.boolean().optional().describe('Token input/output counts'),
+              cost: z.boolean().optional().describe('Estimated cost in CNY'),
+              agents: z.boolean().optional().describe('Active sub-agents'),
+              memory: z.boolean().optional().describe('Memory (RSS) usage'),
+            })
+            .optional()
+            .describe('Fine-grained control over which modules appear in the status bar.'),
         })
         .optional()
         .describe(

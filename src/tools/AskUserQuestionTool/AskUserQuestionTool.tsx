@@ -5,6 +5,7 @@ import { MessageResponse } from 'src/components/MessageResponse.js'
 import { BLACK_CIRCLE } from 'src/constants/figures.js'
 import { getModeColor } from 'src/utils/permissions/PermissionMode.js'
 import { z } from 'zod/v4'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import type { Tool } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
@@ -160,7 +161,7 @@ function AskUserQuestionResultMessage({ answers }) {
       {
         <Box flexDirection="row">
           <Text color={getModeColor('default')}>{BLACK_CIRCLE} </Text>
-          <Text>User answered ZY's questions:</Text>
+          <Text>{tSync('permissionRules.userAnsweredQuestions')}</Text>
         </Box>
       }
       <MessageResponse>

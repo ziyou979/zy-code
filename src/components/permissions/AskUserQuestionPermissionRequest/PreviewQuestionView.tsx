@@ -305,7 +305,14 @@ export function PreviewQuestionView({
     return minContentHeight ? Math.max(1, minContentHeight - PREVIEW_OVERHEAD) : undefined
   }, [minContentHeight])
   return (
-    <Box flexDirection="column" marginTop={1} tabIndex={0} autoFocus onKeyDown={handleKeyDown} minHeight={outerMinHeight}>
+    <Box
+      flexDirection="column"
+      marginTop={1}
+      tabIndex={0}
+      autoFocus
+      onKeyDown={handleKeyDown}
+      minHeight={outerMinHeight}
+    >
       <Divider color="inactive" />
       <Box flexDirection="column" paddingTop={0}>
         <QuestionNavigationBar
