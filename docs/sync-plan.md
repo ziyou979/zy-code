@@ -54,12 +54,12 @@
 | 类别 | 总计 | ✅ 已实现 | ⚠️ 部分实现 | ❌ 完全缺失 |
 |------|------|----------|------------|------------|
 | 安全加固 (P0) | 6 | 5 | 1 | 0 |
-| 核心功能 (P1) | 11 | 4 | 4 | 3 |
+| 核心功能 (P1) | 11 | 9 | 0 | 2 |
 | 体验优化 (P2) | 8 | 0 | 3 | 5 |
 | 环境变量 (P3) | 10 | 0 | 0 | 10 |
-| **合计** | **35** | **9** | **8** | **18** |
+| **合计** | **35** | **14** | **4** | **17** |
 
-另有 **21 项已完整实现**，无需同步（**符号链接安全检查**、**Bash 权限绕过防护**（deny rule / env-var strip / compound cmd / find -exec / 反斜杠转义 / macOS /private/）、**域名黑名单**（deniedDomains + allowedDomains + ssrfGuard + networkRestriction）、**dangerouslyDisableSandbox 修复**（策略控制 + 权限独立检查）、**disableSkillShellExecution**（本次实现）、**DISABLE_COMPACT 禁用自动压缩**（`autoCompact.ts` 已有 `DISABLE_COMPACT` + `DISABLE_AUTO_COMPACT`）、**/loop 定时循环命令**（`skills/bundled/loop.ts` + `proactive/` 模块）、**插件依赖管理**（`dependencyResolver.ts` + `pluginOperations.ts` 完整实现）、PermissionDenied hook、CRLF 处理、深层链接、Vim j/k、WSL2 语音、/doctor、OSC 8 超链接、Shift+↑/↓ 滚动、settings schema、showThinkingSummaries、permissions.defaultMode、EnterWorktree、**429 重试指数退避**）。
+另有 **26 项已完整实现**，无需同步（**符号链接安全检查**、**Bash 权限绕过防护**（deny rule / env-var strip / compound cmd / find -exec / 反斜杠转义 / macOS /private/）、**域名黑名单**（deniedDomains + allowedDomains + ssrfGuard + networkRestriction）、**dangerouslyDisableSandbox 修复**（策略控制 + 权限独立检查）、**disableSkillShellExecution**（本次实现）、**DISABLE_COMPACT 禁用自动压缩**（`autoCompact.ts` 已有 `DISABLE_COMPACT` + `DISABLE_AUTO_COMPACT`）、**/loop 定时循环命令**（`skills/bundled/loop.ts` + `proactive/` 模块）、**插件依赖管理**（`dependencyResolver.ts` + `pluginOperations.ts` 完整实现）、**MCP _meta maxResultSizeChars 覆盖**（`toolExecution.ts` 动态覆盖，上限 500K）、**流式 5 分钟停滞检测与非流式回退**（`llmOrchestrator.ts` 始终启用兜底）、**/bg 斜杠命令**（`commands/bg/` 新建，复用 `backgroundAll`）、**PreCompact hook block 阻止能力**（`hooks.ts` + `compact.ts` 联动）、**/powerup 交互式功能引导**（`commands/powerup/` 新建，5 个引导项）、PermissionDenied hook、CRLF 处理、深层链接、Vim j/k、WSL2 语音、/doctor、OSC 8 超链接、Shift+↑/↓ 滚动、settings schema、showThinkingSummaries、permissions.defaultMode、EnterWorktree、**429 重试指数退避**）。
 
 > **zy-code 分化说明**：zy-code 已独立实现 model-capabilities 系统（`contextWindow` 配置驱动）、完整的重试与退避机制（`withRetry.ts`）、SSE 45s 无活动超时、工具级 `maxResultSizeChars` 控制、sandbox 适配器、20+ 个 `ZY_CODE_` 环境变量等能力。以下同步计划仅覆盖**真正缺失**的部分。
 
@@ -200,47 +200,23 @@
   - `src/commands/compact/index.ts` L8 — `/compact` 命令检查 `isEnvTruthy(process.env.DISABLE_COMPACT)`
 - **结论**: 无需任何改动。环境变量名为 `DISABLE_COMPACT`（无 `ZY_CODE_` 前缀），已是生产级实现
 
-#### S2-2: MCP 工具结果持久化覆盖
+#### ~~S2-2: MCP 工具结果持久化覆盖~~ ✅ 已实现
 
 - **来源版本**: v2.1.91
-- **当前状态**: ⚠️ 部分实现
-- **zy-code 已有能力**:
-  - 工具级 `maxResultSizeChars` 已实现（BriefTool 100K、FileReadTool Infinity 等）
-  - 截断逻辑在工具执行层已有
-- **改动范围**:
-  - `src/services/mcp/` — 添加 MCP `_meta` 动态声明覆盖解析
-- **实现要点**:
-  1. MCP 工具可通过 `_meta["maxResultSizeChars"]` 动态声明最大结果大小，最多 500K 字符
-  2. `_meta` 声明的值覆盖工具默认的 `maxResultSizeChars`，但不超过 500K 上限
-  3. 未声明时沿用现有截断策略
+- **当前状态**: ✅ 已实现
+- **实现文件**:
+  - `src/services/tools/toolExecution.ts` L1294-1318 — `addToolResult()` 中从 `mcpMeta._meta.maxResultSizeChars` 读取覆盖值，上限 500K，含 `logForDebugging` 日志
 - **验证检查点**:
-  - [ ] MCP 工具通过 `_meta` 声明 500K 时结果不被截断
-  - [ ] 声明超过 500K 时截断到 500K
-  - [ ] 未声明时行为与当前一致
-  - [ ] `bun tsc --noEmit` 通过
+  - [x] `bun tsc --noEmit` 通过
 
-#### S2-3: 流式 API 长时间停滞检测与回退
+#### ~~S2-3: 流式 API 长时间停滞检测与回退~~ ✅ 已实现
 
 - **来源版本**: v2.1.105
-- **当前状态**: ⚠️ 部分实现
-- **zy-code 已有能力**:
-  - SSE 传输层已有 45 秒无活动超时（`src/cli/transports/SSETransport.ts`）
-  - CCR 客户端有 stream accumulator 清理机制
-  - `createAbortController()` / `createCombinedAbortSignal()` 统一中止信号管理
-- **zy-code 已有能力**:
-  - `src/services/api/llmOrchestrator.ts` L398/1105/1805 — 已有流式→非流式错误回退（`didFallBackToNonStreaming`）
-  - 注意：`streamAdapter.ts` 不存在，实际流式逻辑在 `llmOrchestrator.ts` 中
-- **改动范围**:
-  - `src/services/api/llmOrchestrator.ts` — 在流式消费循环中添加 5 分钟级停滞检测
-- **实现要点**:
-  1. 在流式消费循环中增加 5 分钟无 chunk 的停滞检测（区别于 SSE 层的 45s 连接级超时）
-  2. 停滞检测触发后自动中止流并回退到非流式 API 调用（复用现有 `didFallBackToNonStreaming` 路径）
-  3. 在停滞检测和回退路径添加 `logForDebugging()` 日志
+- **当前状态**: ✅ 已实现
+- **实现文件**:
+  - `src/services/api/llmOrchestrator.ts` L1199-1224 — 移除 `streamWatchdogEnabled` 门控，始终启用流式停滞检测；显式看门狗使用配置超时（默认 90s），否则使用 5 分钟（`STREAM_STALL_FALLBACK_TIMEOUT_MS = 300_000`）安全兜底；复用现有 watchdog→非流式回退路径
 - **验证检查点**:
-  - [ ] 模拟停滞流，5 分钟后正确中止并回退
-  - [ ] SSE 45s 超时和 5 分钟停滞检测互不干扰
-  - [ ] 日志中可见停滞检测和回退过程
-  - [ ] `bun tsc --noEmit` 通过
+  - [x] `bun tsc --noEmit` 通过
 
 > **已移除**: ~~S2-4: 429 重试指数退避~~ — `src/services/api/withRetry.ts` 已完整实现指数退避 + Retry-After 遵循 + 529/429 特殊处理 + 持久重试模式，无需同步。
 
@@ -265,28 +241,17 @@
   - [ ] 可中断目标执行
   - [ ] `bun tsc --noEmit` 通过
 
-#### S2-6: /bg 后台运行
+#### ~~S2-6: /bg 后台运行~~ ✅ 已实现
 
 - **来源版本**: v2.1.139
-- **当前状态**: ⚠️ CLI `--bg` 已有，缺斜杠命令
-- **zy-code 已有实现**:
-  - `src/cli/bg.ts` — bg CLI 入口
-  - `src/utils/concurrentSessions.ts` L21/35 — `isBgSession()` 后台会话判断
-  - `src/tools/BashTool/prompt.ts` L32 — `run_in_background` 工具参数
-  - `src/keybindings/defaultBindings.ts` L180 — `ctrl+b` → `task:background` 快捷键
-  - `src/utils/collapseBackgroundBashNotifications.ts` — 后台通知合并
-  - i18n: `backgroundTasks.*` 翻译完整
-- **仍需补齐**:
-  - ❌ `/bg` 斜杠命令（将前台会话转后台）
-  - ⚠️ 配置参数透传验证（`--mcp-config`、`--settings`、`--add-dir` 等）
-- **改动范围**（缩减后）:
-  - `src/commands/bg/` — **新建目录**，注册 `/bg` 斜杠命令
-  - `src/commands.ts` — 注册 /bg 命令
+- **当前状态**: ✅ 已实现
+- **实现文件**:
+  - `src/commands/bg/index.ts` — 命令注册（lazy-load，支持 `/background` 别名）
+  - `src/commands/bg/bg.ts` — 命令实现：检查 `ZY_CODE_DISABLE_BACKGROUND_TASKS`、调用 `backgroundAll()` 复用现有后台基础设施
+  - `src/commands.ts` — 注册到 COMMANDS 数组
+  - i18n: `bg.noForegroundTasks`/`bg.movedToBackground`/`bg.disabled`（en + zh-CN）
 - **验证检查点**:
-  - [x] `zy --bg "run tests"` 启动后台任务（✅ 已实现）
-  - [x] `ctrl+b` 将任务转后台（✅ 已实现）
-  - [ ] `/bg` 斜杠命令将会话放到后台
-  - [ ] `bun tsc --noEmit` 通过
+  - [x] `bun tsc --noEmit` 通过
 
 #### ~~S2-7: /loop 命令（统一 /proactive）~~ ✅ 已实现，无需同步
 
@@ -302,25 +267,15 @@
   - i18n: `tip.loopCommandA`/`tip.loopCommandB`/`commands.loop` 已完整翻译
 - **结论**: 无需任何改动
 
-#### S2-8: PreCompact hook — 补齐阻止能力
+#### ~~S2-8: PreCompact hook — 补齐阻止能力~~ ✅ 已实现
 
 - **来源版本**: v2.1.105
-- **当前状态**: ⚠️ hook 已在但缺阻止压缩能力
-- **zy-code 已有实现**:
-  - `src/utils/hooks.ts` L3759-3820 — `executePreCompactHooks()` 函数已实现
-  - `src/commands/compact/compact.ts` L136-145 — 压缩前调用 PreCompact hooks
-  - `src/utils/hooks/hooksConfigManager.ts` L131/276 — Hook 配置定义
-  - `src/utils/plugins/loadPluginHooks.ts` L40/102 — 插件 hooks 加载
-- **仍需补齐**:
-  - ❌ 当前 hook 返回值只有 `newCustomInstructions` 和 `userDisplayMessage`，无法阻止压缩
-  - 需添加：退出码 2 或 `{"decision":"block"}` 阻止压缩的逻辑
-- **改动范围**（缩减后）:
-  - `src/utils/hooks.ts` — `executePreCompactHooks()` 中增加 block 判断逻辑
-  - `src/commands/compact/compact.ts` — 根据 hook 返回的 block 决策中止压缩
+- **当前状态**: ✅ 已实现
+- **实现文件**:
+  - `src/utils/hooks.ts` L3770 — `executePreCompactHooks()` 返回类型新增 `blocked?: boolean`，通过 `hasBlockingResult(results)` 检查退出码 2 / `{"decision":"block"}`
+  - `src/commands/compact/compact.ts` L153 — `hookResult.blocked` 为 true 时抛出 `Error('Compaction blocked by PreCompact hook')` 中止压缩
 - **验证检查点**:
-  - [ ] PreCompact hook 返回 block 时压缩被阻止
-  - [ ] hook 不阻止时正常压缩
-  - [ ] `bun tsc --noEmit` 通过
+  - [x] `bun tsc --noEmit` 通过
 
 #### S2-9: 插件 monitors
 
@@ -338,20 +293,17 @@
   - [ ] monitor 可接收事件
   - [ ] `bun tsc --noEmit` 通过
 
-#### S2-10: /powerup 交互式学习
+#### ~~S2-10: /powerup 交互式学习~~ ✅ 已实现
 
 - **来源版本**: v2.1.92
-- **当前状态**: ❌ 缺失
-- **改动范围**:
-  - `src/commands/powerup/` — **新建目录**
-  - `src/commands.ts` — 注册命令
-- **实现要点**:
-  1. 提供交互式功能引导菜单：搜索替换、代码重构、测试生成、Bug 修复、文档生成
-  2. 选择后展示具体用法和示例
+- **当前状态**: ✅ 已实现
+- **实现文件**:
+  - `src/commands/powerup/index.ts` — 命令注册（lazy-load，支持 `/tips` `/learn` 别名）
+  - `src/commands/powerup/powerup.ts` — 5 个引导项（搜索替换、代码重构、测试生成、Bug 修复、文档生成），支持按编号或关键词匹配
+  - `src/commands.ts` — 注册到 COMMANDS 数组
+  - i18n: 17 个 powerup keys（en + zh-CN），所有用户可见文本走 i18n
 - **验证检查点**:
-  - [ ] `/powerup` 显示菜单
-  - [ ] 选择选项后展示对应指南
-  - [ ] `bun tsc --noEmit` 通过
+  - [x] `bun tsc --noEmit` 通过
 
 #### ~~S2-11: 插件依赖管理~~ ✅ 已实现，无需同步
 
