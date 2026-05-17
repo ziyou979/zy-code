@@ -502,6 +502,15 @@ export const en: TranslationResource = {
   'fileWrite.updatedPlan': 'Updated plan',
   'fileWrite.write': 'Write',
 
+  // Goal mode
+  'goal.activated': 'Goal mode activated: {description}',
+  'goal.deactivated': 'Goal mode stopped — {turnCount} turns, {elapsed}, {tokens} tokens (${cost})',
+  'goal.notActive': 'No active goal. Use `/goal <description>` to set one.',
+  'goal.alreadyActive': 'A goal is already active. Use `/goal stop` to end it first.',
+  'goal.status': '🎯 **Goal**: {description}\n  Turns: {turnCount} | Elapsed: {elapsed} | Tokens: {tokens} | Cost: ${cost}',
+  'goal.nudgeMessage': 'Continue working toward the goal: "{description}" (turn {turnCount}). Assess progress and take the next step. If the goal is fully achieved, say so clearly.',
+  'goal.activatedPrompt': '🎯 Goal mode activated. I will autonomously work toward:\n\n> {description}\n\nI\'ll continue across turns until the goal is achieved. Use `/goal` to check progress or `/goal stop` to end.',
+
   // Background command
   'bg.noForegroundTasks': 'No foreground tasks to move to background',
   'bg.movedToBackground': 'Moved foreground tasks to background',

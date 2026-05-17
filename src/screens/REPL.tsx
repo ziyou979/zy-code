@@ -360,6 +360,7 @@ const useScheduledTasks = feature('AGENT_TRIGGERS')
   ? require('../hooks/useScheduledTasks.js').useScheduledTasks
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
+import { useGoalMode } from '../hooks/useGoalMode.js'
 import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js'
 import { useTaskListWatcher } from '../hooks/useTaskListWatcher.js'
 import type { SandboxAskCallback, NetworkHostPattern } from '../utils/sandbox/sandbox-adapter.js'
@@ -4547,6 +4548,19 @@ export function REPL({
         }),
     })
   }
+
+  // Goal mode: auto-continue when goal is active
+  useGoalMode({
+    isLoading: isLoading || initialMessage !== null,
+    queuedCommandsLength: queuedCommands.length,
+    hasActiveLocalJsxUI: isShowingLocalJSXCommand,
+    onQueueGoalNudge: (prompt: string) =>
+      enqueue({
+        mode: 'prompt',
+        value: prompt,
+        isMeta: true,
+      }),
+  })
 
   // 收到 'now' 优先级消息时中止当前操作
   // （例如来自通过 UDS 的聊天 UI 客户端）

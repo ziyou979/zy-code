@@ -639,6 +639,15 @@ export const zhCN: TranslationResource = {
   // Background task status
   'backgroundTaskStatus.toView': '查看',
 
+  // 目标模式
+  'goal.activated': '目标模式已激活：{description}',
+  'goal.deactivated': '目标模式已停止 — {turnCount} 轮，{elapsed}，{tokens} tokens（${cost}）',
+  'goal.notActive': '当前没有活跃目标。使用 `/goal <描述>` 设定目标。',
+  'goal.alreadyActive': '已有活跃目标。请先使用 `/goal stop` 结束当前目标。',
+  'goal.status': '🎯 **目标**: {description}\n  轮次: {turnCount} | 耗时: {elapsed} | Tokens: {tokens} | 费用: ${cost}',
+  'goal.nudgeMessage': '继续推进目标："{description}"（第 {turnCount} 轮）。评估进展并执行下一步。如果目标已完全达成，请明确说明。',
+  'goal.activatedPrompt': '🎯 目标模式已激活。我将自主推进以下目标：\n\n> {description}\n\n我会跨轮次持续工作直到目标达成。使用 `/goal` 查看进度，`/goal stop` 结束。',
+
   // 后台命令
   'bg.noForegroundTasks': '没有可转为后台的前台任务',
   'bg.movedToBackground': '已将前台任务转为后台运行',
