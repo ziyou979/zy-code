@@ -3767,6 +3767,7 @@ export async function executePreCompactHooks(
 ): Promise<{
   newCustomInstructions?: string
   userDisplayMessage?: string
+  blocked?: boolean
 }> {
   const hookInput: PreCompactHookInput = {
     ...createBaseHookInput(undefined),
@@ -3784,6 +3785,15 @@ export async function executePreCompactHooks(
 
   if (results.length === 0) {
     return {}
+  }
+
+  // 检查是否有 hook 请求阻止压缩（退出码 2 或 JSON {"decision":"block"}）
+  if (hasBlockingResult(results)) {
+    const blockingHook = results.find((r) => r.blocked)
+    logForDebugging(
+      `PreCompact hook blocked compaction: [${blockingHook?.command}] output=${blockingHook?.output}`,
+    )
+    return { blocked: true }
   }
 
   // 从输出非空的成功 hook 中提取自定义指令

@@ -1291,11 +1291,31 @@ async function checkPermissionsAndCallTool(
     const mcpMeta = result.mcpMeta
 
     async function addToolResult(toolUseResult: unknown, preMappedBlock?: ToolResultBlock) {
+      // MCP 工具可通过 _meta.maxResultSizeChars 动态覆盖结果大小上限（最多 500K）
+      const MCP_META_MAX_RESULT_SIZE_CAP = 500_000
+      const metaMaxSize =
+        typeof mcpMeta?._meta?.maxResultSizeChars === 'number' &&
+        mcpMeta._meta.maxResultSizeChars > 0
+          ? mcpMeta._meta.maxResultSizeChars
+          : undefined
+      const effectiveMaxResultSize = metaMaxSize
+        ? Math.min(metaMaxSize, MCP_META_MAX_RESULT_SIZE_CAP)
+        : tool.maxResultSizeChars
+      if (metaMaxSize) {
+        logForDebugging(
+          `MCP _meta maxResultSizeChars override: requested=${metaMaxSize}, effective=${effectiveMaxResultSize} (cap=${MCP_META_MAX_RESULT_SIZE_CAP})`,
+        )
+      }
+
       // Use the pre-mapped block when available (non-MCP tools where hooks
       // don't modify the output), otherwise map from scratch.
       const toolResultBlock = preMappedBlock
-        ? await processPreMappedToolResultBlock(preMappedBlock, tool.name, tool.maxResultSizeChars)
-        : await processToolResultBlock(tool, toolUseResult, toolUseID)
+        ? await processPreMappedToolResultBlock(preMappedBlock, tool.name, effectiveMaxResultSize)
+        : await processToolResultBlock(
+            { ...tool, maxResultSizeChars: effectiveMaxResultSize },
+            toolUseResult,
+            toolUseID,
+          )
 
       // Build content blocks - tool result first, then optional feedback
       const contentBlocks: ContentBlock[] = [toolResultBlock]

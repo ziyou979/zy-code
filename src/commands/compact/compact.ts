@@ -149,6 +149,11 @@ async function compactViaReactive(
       ),
       getCacheSharingParams(context, messages),
     ])
+    // PreCompact hook 请求阻止压缩时中止操作
+    if (hookResult.blocked) {
+      throw new Error('Compaction blocked by PreCompact hook')
+    }
+
     const mergedInstructions = mergeHookInstructions(
       customInstructions,
       hookResult.newCustomInstructions,

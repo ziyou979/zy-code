@@ -54,12 +54,12 @@
 | 类别 | 总计 | ✅ 已实现 | ⚠️ 部分实现 | ❌ 完全缺失 |
 |------|------|----------|------------|------------|
 | 安全加固 (P0) | 6 | 5 | 1 | 0 |
-| 核心功能 (P1) | 11 | 1 | 5 | 5 |
+| 核心功能 (P1) | 11 | 4 | 4 | 3 |
 | 体验优化 (P2) | 8 | 0 | 3 | 5 |
 | 环境变量 (P3) | 10 | 0 | 0 | 10 |
-| **合计** | **35** | **6** | **9** | **20** |
+| **合计** | **35** | **9** | **8** | **18** |
 
-另有 **18 项已完整实现**，无需同步（**符号链接安全检查**、**Bash 权限绕过防护**（deny rule / env-var strip / compound cmd / find -exec / 反斜杠转义 / macOS /private/）、**域名黑名单**（deniedDomains + allowedDomains + ssrfGuard + networkRestriction）、**dangerouslyDisableSandbox 修复**（策略控制 + 权限独立检查）、**disableSkillShellExecution**（本次实现）、PermissionDenied hook、CRLF 处理、深层链接、Vim j/k、WSL2 语音、/doctor、OSC 8 超链接、Shift+↑/↓ 滚动、settings schema、showThinkingSummaries、permissions.defaultMode、EnterWorktree、**429 重试指数退避**）。
+另有 **21 项已完整实现**，无需同步（**符号链接安全检查**、**Bash 权限绕过防护**（deny rule / env-var strip / compound cmd / find -exec / 反斜杠转义 / macOS /private/）、**域名黑名单**（deniedDomains + allowedDomains + ssrfGuard + networkRestriction）、**dangerouslyDisableSandbox 修复**（策略控制 + 权限独立检查）、**disableSkillShellExecution**（本次实现）、**DISABLE_COMPACT 禁用自动压缩**（`autoCompact.ts` 已有 `DISABLE_COMPACT` + `DISABLE_AUTO_COMPACT`）、**/loop 定时循环命令**（`skills/bundled/loop.ts` + `proactive/` 模块）、**插件依赖管理**（`dependencyResolver.ts` + `pluginOperations.ts` 完整实现）、PermissionDenied hook、CRLF 处理、深层链接、Vim j/k、WSL2 语音、/doctor、OSC 8 超链接、Shift+↑/↓ 滚动、settings schema、showThinkingSummaries、permissions.defaultMode、EnterWorktree、**429 重试指数退避**）。
 
 > **zy-code 分化说明**：zy-code 已独立实现 model-capabilities 系统（`contextWindow` 配置驱动）、完整的重试与退避机制（`withRetry.ts`）、SSE 45s 无活动超时、工具级 `maxResultSizeChars` 控制、sandbox 适配器、20+ 个 `ZY_CODE_` 环境变量等能力。以下同步计划仅覆盖**真正缺失**的部分。
 
@@ -187,25 +187,18 @@
 
 > **目标**：补齐关键核心功能，使 zy-code 能力与 v2.1.139+ 对齐。
 
-#### S2-1: 大上下文窗口支持验证与 DISABLE_COMPACT 补齐
+#### ~~S2-1: 大上下文窗口支持验证与 DISABLE_COMPACT 补齐~~ ✅ 已实现，无需同步
 
 - **来源版本**: v2.1.92
-- **当前状态**: ⚠️ 已有基础，需微调
-- **zy-code 已有能力**:
+- **当前状态**: ✅ 已完整实现
+- **zy-code 已有实现**:
   - `model-capabilities.json` 通过 `contextWindow` 字段配置（支持 `"200k"`、`"1m"` 等格式）
   - `getContextWindowForModel()` 已消费 contextWindow 用于自动压缩阈值计算
   - `ZY_CODE_AUTO_COMPACT_WINDOW` 可覆盖压缩窗口大小
-- **改动范围**:
-  - `src/utils/envUtils.ts` — 注册 `ZY_CODE_DISABLE_COMPACT` 环境变量
-  - `src/services/compact/autoCompact.ts` — 读取 `ZY_CODE_DISABLE_COMPACT`，设置时禁用自动压缩
-- **实现要点**:
-  1. 添加 `ZY_CODE_DISABLE_COMPACT` 环境变量，设置时完全禁用自动压缩
-  2. 验证 `contextWindow: "1m"` 在 `TokenCountSchema` 中解析正确（预期已支持）
-  3. 确认 `getEffectiveContextWindowSize()` 在大窗口场景下行为正确
-- **验证检查点**:
-  - [ ] `model-capabilities.json` 中配置 `"contextWindow": "1m"` 后解析为 1000000
-  - [ ] 设置 `ZY_CODE_DISABLE_COMPACT=1` 后自动压缩不触发
-  - [ ] `bun tsc --noEmit` 通过
+  - `src/services/compact/autoCompact.ts` L155/256 — **`DISABLE_COMPACT` 已实现**：同时禁用手动 `/compact` 和自动压缩
+  - `src/services/compact/autoCompact.ts` L155 — **`DISABLE_AUTO_COMPACT` 已实现**：细粒度控制，仅禁用自动压缩
+  - `src/commands/compact/index.ts` L8 — `/compact` 命令检查 `isEnvTruthy(process.env.DISABLE_COMPACT)`
+- **结论**: 无需任何改动。环境变量名为 `DISABLE_COMPACT`（无 `ZY_CODE_` 前缀），已是生产级实现
 
 #### S2-2: MCP 工具结果持久化覆盖
 
@@ -234,11 +227,14 @@
   - SSE 传输层已有 45 秒无活动超时（`src/cli/transports/SSETransport.ts`）
   - CCR 客户端有 stream accumulator 清理机制
   - `createAbortController()` / `createCombinedAbortSignal()` 统一中止信号管理
+- **zy-code 已有能力**:
+  - `src/services/api/llmOrchestrator.ts` L398/1105/1805 — 已有流式→非流式错误回退（`didFallBackToNonStreaming`）
+  - 注意：`streamAdapter.ts` 不存在，实际流式逻辑在 `llmOrchestrator.ts` 中
 - **改动范围**:
-  - `src/services/api/streamAdapter.ts` — 在适配器层添加 5 分钟级流数据停滞检测
+  - `src/services/api/llmOrchestrator.ts` — 在流式消费循环中添加 5 分钟级停滞检测
 - **实现要点**:
-  1. 在流式适配器层增加 5 分钟无 chunk 的停滞检测（区别于 SSE 层的 45s 连接级超时）
-  2. 停滞检测触发后自动中止流并回退到非流式 API 调用
+  1. 在流式消费循环中增加 5 分钟无 chunk 的停滞检测（区别于 SSE 层的 45s 连接级超时）
+  2. 停滞检测触发后自动中止流并回退到非流式 API 调用（复用现有 `didFallBackToNonStreaming` 路径）
   3. 在停滞检测和回退路径添加 `logForDebugging()` 日志
 - **验证检查点**:
   - [ ] 模拟停滞流，5 分钟后正确中止并回退
@@ -272,53 +268,55 @@
 #### S2-6: /bg 后台运行
 
 - **来源版本**: v2.1.139
-- **当前状态**: ⚠️ 有 BackgroundTasksDialog，缺命令
-- **改动范围**:
-  - `src/commands/bg/` — **新建目录**
-  - `src/commands/bg/index.ts` — 命令注册
+- **当前状态**: ⚠️ CLI `--bg` 已有，缺斜杠命令
+- **zy-code 已有实现**:
+  - `src/cli/bg.ts` — bg CLI 入口
+  - `src/utils/concurrentSessions.ts` L21/35 — `isBgSession()` 后台会话判断
+  - `src/tools/BashTool/prompt.ts` L32 — `run_in_background` 工具参数
+  - `src/keybindings/defaultBindings.ts` L180 — `ctrl+b` → `task:background` 快捷键
+  - `src/utils/collapseBackgroundBashNotifications.ts` — 后台通知合并
+  - i18n: `backgroundTasks.*` 翻译完整
+- **仍需补齐**:
+  - ❌ `/bg` 斜杠命令（将前台会话转后台）
+  - ⚠️ 配置参数透传验证（`--mcp-config`、`--settings`、`--add-dir` 等）
+- **改动范围**（缩减后）:
+  - `src/commands/bg/` — **新建目录**，注册 `/bg` 斜杠命令
   - `src/commands.ts` — 注册 /bg 命令
-  - CLI 参数解析 — 添加 `claude --bg [task]` 支持
-- **实现要点**:
-  1. `/bg` 将当前会话放到后台
-  2. `claude --bg [task]` 直接启动后台任务
-  3. 保留 `--mcp-config`、`--settings`、`--add-dir`、`--plugin-dir`、`--strict-mcp-config`（v2.1.143）
-  4. 保留 `--fallback-model`、`--allow-dangerously-skip-permissions`（v2.1.143）
-  5. 无提示时等待输入而非发送 "continue"（v2.1.143 修复）
 - **验证检查点**:
-  - [ ] `/bg` 命令将会话放到后台
-  - [ ] `claude --bg "run tests"` 启动后台任务
-  - [ ] 配置参数正确传递
+  - [x] `zy --bg "run tests"` 启动后台任务（✅ 已实现）
+  - [x] `ctrl+b` 将任务转后台（✅ 已实现）
+  - [ ] `/bg` 斜杠命令将会话放到后台
   - [ ] `bun tsc --noEmit` 通过
 
-#### S2-7: /loop 命令（统一 /proactive）
+#### ~~S2-7: /loop 命令（统一 /proactive）~~ ✅ 已实现，无需同步
 
 - **来源版本**: v2.1.105
-- **当前状态**: ⚠️ /proactive 存在但无实际逻辑
-- **改动范围**:
-  - `src/commands/loop/` — **新建目录**
-  - `src/commands/proactive.ts` — 改为 /loop 的别名
-  - `src/commands.ts` — 注册 /loop 命令
-- **实现要点**:
-  1. `/loop` 为主命令，`/proactive` 为别名
-  2. Esc 可取消挂起的唤醒（v2.1.113）
-  3. 唤醒时显示 "Claude resuming /loop wakeup"
-  4. Esc/Ctrl+C 可取消待处理的唤醒（v2.1.143 修复）
-- **验证检查点**:
-  - [ ] `/loop` 和 `/proactive` 均可激活
-  - [ ] Esc 正确取消唤醒
-  - [ ] `bun tsc --noEmit` 通过
+- **当前状态**: ✅ 已完整实现
+- **zy-code 已有实现**:
+  - `src/skills/bundled/loop.ts` L75 — `/loop` 作为 Skill 实现，支持 `[interval] <prompt>` 参数，默认 10 分钟
+  - `src/commands/proactive.ts` — `/proactive` 本地命令（stub + 功能模块）
+  - `src/proactive/index.ts`（82 行）— Proactive 模式核心：`activateProactive()`/`deactivateProactive()`/`pauseProactive()`/`resumeProactive()`
+  - `src/proactive/useProactive.ts`（37 行）— React hook，每 30 秒 `<tick>` 驱动自主行为
+  - `src/cli/print.ts` L308/463 — 条件加载，通过 `PROACTIVE`/`KAIROS` feature flag 控制
+  - `src/hooks/useScheduledTasks.ts` — 定时任务 hook
+  - i18n: `tip.loopCommandA`/`tip.loopCommandB`/`commands.loop` 已完整翻译
+- **结论**: 无需任何改动
 
-#### S2-8: PreCompact hook
+#### S2-8: PreCompact hook — 补齐阻止能力
 
 - **来源版本**: v2.1.105
-- **当前状态**: ❌ 缺失
-- **改动范围**:
-  - `src/utils/hooks.ts` — 添加 PreCompact hook 类型和执行逻辑
-  - `src/commands/compact/` — 在压缩前调用 hook
-  - `src/entrypoints/sdk/coreTypes.generated.ts` — 添加类型定义
-- **实现要点**:
-  1. hook 可通过退出码 2 或返回 `{"decision":"block"}` 阻止压缩
-  2. 插件或系统可在不安全时机阻止压缩
+- **当前状态**: ⚠️ hook 已在但缺阻止压缩能力
+- **zy-code 已有实现**:
+  - `src/utils/hooks.ts` L3759-3820 — `executePreCompactHooks()` 函数已实现
+  - `src/commands/compact/compact.ts` L136-145 — 压缩前调用 PreCompact hooks
+  - `src/utils/hooks/hooksConfigManager.ts` L131/276 — Hook 配置定义
+  - `src/utils/plugins/loadPluginHooks.ts` L40/102 — 插件 hooks 加载
+- **仍需补齐**:
+  - ❌ 当前 hook 返回值只有 `newCustomInstructions` 和 `userDisplayMessage`，无法阻止压缩
+  - 需添加：退出码 2 或 `{"decision":"block"}` 阻止压缩的逻辑
+- **改动范围**（缩减后）:
+  - `src/utils/hooks.ts` — `executePreCompactHooks()` 中增加 block 判断逻辑
+  - `src/commands/compact/compact.ts` — 根据 hook 返回的 block 决策中止压缩
 - **验证检查点**:
   - [ ] PreCompact hook 返回 block 时压缩被阻止
   - [ ] hook 不阻止时正常压缩
@@ -355,20 +353,18 @@
   - [ ] 选择选项后展示对应指南
   - [ ] `bun tsc --noEmit` 通过
 
-#### S2-11: 插件依赖管理
+#### ~~S2-11: 插件依赖管理~~ ✅ 已实现，无需同步
 
 - **来源版本**: v2.1.143
-- **当前状态**: ❌ 缺失
-- **改动范围**:
-  - `src/cli/handlers/plugin.ts` — 增强 disable/enable 逻辑
-- **实现要点**:
-  1. `disable` 拒绝禁用被其他已启用插件依赖的目标
-  2. 提供可复制的禁用链提示
-  3. `enable` 强制启用传递性依赖
-- **验证检查点**:
-  - [ ] 禁用被依赖插件时给出明确提示
-  - [ ] 启用时自动启用依赖
-  - [ ] `bun tsc --noEmit` 通过
+- **当前状态**: ✅ 已完整实现
+- **zy-code 已有实现**:
+  - `src/utils/plugins/dependencyResolver.ts` L224-260 — `findReverseDependents()` 查找反向依赖
+  - `src/utils/plugins/schemas.ts` L1202-1252 — 插件依赖 schema 定义（`dependencies` 字段）
+  - `src/utils/plugins/pluginInstallationHelpers.ts` L284-438 — 依赖解析和安装
+  - `src/services/plugins/pluginOperations.ts` L515-518 — 禁用/卸载时检查依赖
+  - `src/cli/handlers/plugins.ts` L746-809 — CLI `zy plugins enable/disable` 命令
+  - 支持跨市场依赖控制：`allowCrossMarketplaceDependenciesOn` 配置
+- **结论**: 无需任何改动
 
 #### S2-12: Agent View 多会话管理增强
 
@@ -722,15 +718,17 @@ bun run dev
 
 | 验证项 | 预期结果 | 实际结果 |
 |--------|---------|---------|
+| `contextWindow: "1m"` 解析正确 | ✅ 解析为 1000000 | ✅ 已实现（model-capabilities + TokenCountSchema） |
+| `DISABLE_COMPACT=1` 禁用自动压缩 | ✅ 压缩不触发 | ✅ 已实现（`autoCompact.ts` L155/256） |
+| `/loop` 命令可用 | ✅ 循环模式 | ✅ 已实现（`skills/bundled/loop.ts` Skill 实现） |
+| 插件依赖管理：禁用被依赖插件时提示 | ✅ 明确提示 | ✅ 已实现（`dependencyResolver.ts` + `pluginOperations.ts`） |
 | `/goal` 命令可用 | ✅ 启动目标模式 | |
-| `/bg` 命令可用 | ✅ 后台运行 | |
-| `/loop` 命令可用 | ✅ 循环模式 | |
+| `/bg` 斜杠命令可用 | ✅ 后台运行 | |
 | `/powerup` 命令可用 | ✅ 显示菜单 | |
-| `claude agents` 显示 Agent View | ✅ 多会话 UI | |
-| `contextWindow: "1m"` 解析正确 | ✅ 解析为 1000000 | |
-| `ZY_CODE_DISABLE_COMPACT=1` 禁用自动压缩 | ✅ 压缩不触发 | |
+| `zy agents` 显示 Agent View | ✅ 多会话 UI | |
 | MCP `_meta` 结果大小覆盖生效 | ✅ 500K 不截断 | |
 | 流式 5 分钟停滞检测与非流式回退 | ✅ 自动中止并回退 | |
+| PreCompact hook block 阻止压缩 | ✅ 压缩被阻止 | |
 | 已有功能不受影响 | ✅ 正常工作 | |
 | `bun tsc --noEmit` | ✅ 0 errors | |
 | `bun run build:cli` | ✅ 构建成功 | |

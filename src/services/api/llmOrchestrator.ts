@@ -1197,8 +1197,11 @@ async function* queryModel(
     // 连接会无限期挂起会话，因为 SDK 的请求超时仅覆盖初始 fetch()，
     // 不覆盖流式响应体。
     const streamWatchdogEnabled = isEnvTruthy(process.env.CLAUDE_ENABLE_STREAM_WATCHDOG)
-    const STREAM_IDLE_TIMEOUT_MS =
-      parseInt(process.env.CLAUDE_STREAM_IDLE_TIMEOUT_MS || '', 10) || 90_000
+    // 显式启用看门狗时使用配置的超时（默认 90s），否则使用 5 分钟安全兜底
+    const STREAM_STALL_FALLBACK_TIMEOUT_MS = 300_000
+    const STREAM_IDLE_TIMEOUT_MS = streamWatchdogEnabled
+      ? (parseInt(process.env.CLAUDE_STREAM_IDLE_TIMEOUT_MS || '', 10) || 90_000)
+      : STREAM_STALL_FALLBACK_TIMEOUT_MS
     const STREAM_IDLE_WARNING_MS = STREAM_IDLE_TIMEOUT_MS / 2
     let streamIdleAborted = false
     // 看门狗触发时的 performance.now() 快照，用于测量中止传播延迟
@@ -1217,9 +1220,7 @@ async function* queryModel(
     }
     function resetStreamIdleTimer(): void {
       clearStreamIdleTimers()
-      if (!streamWatchdogEnabled) {
-        return
-      }
+      // 始终启用流式停滞检测：显式看门狗模式使用配置超时，否则使用 5 分钟兜底
       streamIdleWarningTimer = setTimeout(
         (warnMs) => {
           logForDebugging(`Streaming idle warning: no chunks received for ${warnMs / 1000}s`, {
