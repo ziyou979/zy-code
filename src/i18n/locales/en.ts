@@ -1243,6 +1243,7 @@ export const en: TranslationResource = {
   'commands.tag': 'Toggle a searchable tag on the current session',
   'commands.theme': 'Change the theme',
   'commands.feedback': 'Submit feedback about ZY Code',
+  'commands.goal': 'Set a goal for autonomous multi-turn execution',
   'commands.review': 'Review a pull request',
   'commands.ultrareview': 'Finds and verifies bugs in your branch. Runs in ZY Code on the web.',
   'commands.rewind': 'Restore the code and/or conversation to a previous point',

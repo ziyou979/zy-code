@@ -1321,6 +1321,7 @@ export const zhCN: TranslationResource = {
   'commands.tag': '为当前会话切换可搜索标签',
   'commands.theme': '更换主题',
   'commands.feedback': '提交关于 ZY Code 的反馈',
+  'commands.goal': '设定目标，跨轮次自主执行',
   'commands.review': '审查拉取请求',
   'commands.ultrareview': '在分支中查找并验证 Bug，在 ZY Code Web 版中运行',
   'commands.rewind': '将代码和/或对话恢复到之前的时间点',
