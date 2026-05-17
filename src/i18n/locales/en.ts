@@ -502,6 +502,10 @@ export const en: TranslationResource = {
   'fileWrite.updatedPlan': 'Updated plan',
   'fileWrite.write': 'Write',
 
+  // Background command
+  'bg.noForegroundTasks': 'No foreground tasks to move to background',
+  'bg.movedToBackground': 'Moved foreground tasks to background',
+
   // Skill shell execution
   'skillShell.disabledBySettings':
     'Skill shell execution is disabled by settings (disableSkillShellExecution=true)',

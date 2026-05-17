@@ -639,6 +639,10 @@ export const zhCN: TranslationResource = {
   // Background task status
   'backgroundTaskStatus.toView': '查看',
 
+  // 后台命令
+  'bg.noForegroundTasks': '没有可转为后台的前台任务',
+  'bg.movedToBackground': '已将前台任务转为后台运行',
+
   // Skill shell 执行
   'skillShell.disabledBySettings':
     'Skill 内联 shell 执行已被设置禁用（disableSkillShellExecution=true）',
