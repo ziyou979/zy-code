@@ -648,6 +648,16 @@ export const zhCN: TranslationResource = {
   'goal.nudgeMessage': '继续推进目标："{description}"（第 {turnCount} 轮）。评估进展并执行下一步。如果目标已完全达成，请明确说明。',
   'goal.activatedPrompt': '🎯 目标模式已激活。我将自主推进以下目标：\n\n> {description}\n\n我会跨轮次持续工作直到目标达成。使用 `/goal` 查看进度，`/goal stop` 结束。',
 
+  // Agent View — 运行时会话概览
+  'agentView.title': '🤖 Agent 会话',
+  'agentView.noSessions': '没有活跃的 Agent 会话。使用 Agent 工具启动一个。',
+  'agentView.exitHint': '按 Esc 或 q 退出 · j/k 导航 · Enter 查看转录',
+  'agentView.navigationHint': 'j/k 导航 · Enter 查看转录 · Esc 退出',
+  'agentView.running': '运行中',
+  'agentView.pending': '等待中',
+  'agentView.completed': '已完成',
+  'agentView.awaitingApproval': '等待审批',
+
   // 插件 monitors
   'pluginMonitors.started': '已启动 {count} 个插件监控进程',
   'pluginMonitors.stopped': '已停止 {count} 个插件监控进程',

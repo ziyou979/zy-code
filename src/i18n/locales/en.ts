@@ -511,6 +511,16 @@ export const en: TranslationResource = {
   'goal.nudgeMessage': 'Continue working toward the goal: "{description}" (turn {turnCount}). Assess progress and take the next step. If the goal is fully achieved, say so clearly.',
   'goal.activatedPrompt': '🎯 Goal mode activated. I will autonomously work toward:\n\n> {description}\n\nI\'ll continue across turns until the goal is achieved. Use `/goal` to check progress or `/goal stop` to end.',
 
+  // Agent View — runtime session overview
+  'agentView.title': '🤖 Agent Sessions',
+  'agentView.noSessions': 'No agent sessions active. Use the Agent tool to start one.',
+  'agentView.exitHint': 'Press Esc or q to exit · j/k to navigate · Enter to peek',
+  'agentView.navigationHint': 'j/k navigate · Enter peek transcript · Esc exit',
+  'agentView.running': 'running',
+  'agentView.pending': 'pending',
+  'agentView.completed': 'completed',
+  'agentView.awaitingApproval': 'awaiting approval',
+
   // Plugin monitors
   'pluginMonitors.started': 'Started {count} plugin monitor(s)',
   'pluginMonitors.stopped': 'Stopped {count} plugin monitor(s)',
