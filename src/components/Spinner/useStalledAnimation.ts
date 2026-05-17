@@ -38,10 +38,12 @@ export function useStalledAnimation(
   }
 
   // Calculate stalled intensity based on time since last token
-  // Start showing red after 3 seconds of no new tokens (only when no tools are active)
-  const isStalled = timeSinceLastToken > 3000 && !hasActiveTools
+  // Start showing amber after 10 seconds of no new tokens (only when no tools are active)
+  const STALL_THRESHOLD_MS = 10000
+  const FADE_DURATION_MS = 3000
+  const isStalled = timeSinceLastToken > STALL_THRESHOLD_MS && !hasActiveTools
   const intensity = isStalled
-    ? Math.min((timeSinceLastToken - 3000) / 2000, 1) // Fade over 2 seconds
+    ? Math.min((timeSinceLastToken - STALL_THRESHOLD_MS) / FADE_DURATION_MS, 1)
     : 0
 
   // Smooth intensity transition driven by animation frame ticks

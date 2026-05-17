@@ -438,8 +438,22 @@ export const FileEditTool = buildTool({
       replaceAll: replace_all,
     })
 
-    // 5. Write to disk
-    writeTextContent(absoluteFilePath, updatedFile, encoding, endings)
+    // 5. Write to disk — Perforce 模式下文件可能只读，提示用户 p4 edit
+    try {
+      writeTextContent(absoluteFilePath, updatedFile, encoding, endings)
+    } catch (writeError: unknown) {
+      const code = (writeError as NodeJS.ErrnoException).code
+      if (code === 'EPERM' || code === 'EACCES') {
+        const { isPerforceMode } = await import('../../utils/envUtils.js')
+        const hint = isPerforceMode()
+          ? ` Perforce workspace detected — run \`p4 edit ${absoluteFilePath}\` first to make the file writable.`
+          : ''
+        throw new Error(
+          `Permission denied writing to ${absoluteFilePath} (${code}).${hint}`,
+        )
+      }
+      throw writeError
+    }
 
     // Notify LSP servers about file modification (didChange) and save (didSave)
     const lspManager = getLspServerManager()

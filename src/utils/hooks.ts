@@ -330,6 +330,8 @@ export type AggregatedHookResult = {
   blockingError?: HookBlockingError
   preventContinuation?: boolean
   stopReason?: string
+  /** 终端控制序列（如 OSC、光标移动等），hook 返回后立即写入 stdout */
+  terminalSequence?: string
   hookPermissionDecisionReason?: string
   hookSource?: string
   permissionBehavior?: PermissionResult['behavior']

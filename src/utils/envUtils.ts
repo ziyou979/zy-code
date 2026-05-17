@@ -151,3 +151,35 @@ export function isInProtectedNamespace(): boolean {
   }
   return false
 }
+
+// ─── P3: ZY_CODE_* 环境变量统一注册 ───
+
+/** 会话级脚本调用上限（0 或未设置表示不限制） */
+export function getScriptCaps(): number {
+  return parseInt(process.env.ZY_CODE_SCRIPT_CAPS || '', 10) || 0
+}
+
+/** stop hook 连续阻止上限（默认 8） */
+export function getStopHookBlockCap(): number {
+  return parseInt(process.env.ZY_CODE_STOP_HOOK_BLOCK_CAP || '', 10) || 8
+}
+
+/** 版本控制模式：'git'（默认）| 'perforce' */
+export function getVcsMode(): string {
+  return (process.env.ZY_CODE_VCS || 'git').toLowerCase()
+}
+
+/** 是否处于 Perforce 模式 */
+export function isPerforceMode(): boolean {
+  return getVcsMode() === 'perforce'
+}
+
+/** 自动模式最大轮次上限（0 或未设置表示不限制） */
+export function getMaxTurns(): number {
+  return parseInt(process.env.ZY_CODE_MAX_TURNS || '', 10) || 0
+}
+
+/** 终端模式：'auto'（默认）| 'dumb' | 'emacs' */
+export function getTerminalMode(): string {
+  return (process.env.ZY_CODE_TERMINAL || 'auto').toLowerCase()
+}

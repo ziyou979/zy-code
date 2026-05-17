@@ -275,7 +275,22 @@ export const FileWriteTool = buildTool({
     // the old file's line endings (or sampled the repo via ripgrep for new
     // files), which silently corrupted e.g. bash scripts with \r on Linux when
     // overwriting a CRLF file or when binaries in cwd poisoned the repo sample.
-    writeTextContent(fullFilePath, content, enc, 'LF')
+    // Perforce 模式下文件可能只读，提示用户 p4 edit
+    try {
+      writeTextContent(fullFilePath, content, enc, 'LF')
+    } catch (writeError: unknown) {
+      const code = (writeError as NodeJS.ErrnoException).code
+      if (code === 'EPERM' || code === 'EACCES') {
+        const { isPerforceMode } = await import('../../utils/envUtils.js')
+        const hint = isPerforceMode()
+          ? ` Perforce workspace detected — run \`p4 edit ${fullFilePath}\` first to make the file writable.`
+          : ''
+        throw new Error(
+          `Permission denied writing to ${fullFilePath} (${code}).${hint}`,
+        )
+      }
+      throw writeError
+    }
 
     // Notify LSP servers about file modification (didChange) and save (didSave)
     const lspManager = getLspServerManager()

@@ -388,8 +388,19 @@ async function addToPromptHistory(command: HistoryEntry | string): Promise<void>
     sessionId: getSessionId(),
   }
 
-  pendingEntries.push(logEntry)
-  lastAddedEntry = logEntry
+  // CJK 安全截断：防止 4KB 边界处截断多字节字符导致历史条目丢失
+  const MAX_DISPLAY_BYTES = 4000 // 留余量给 JSON 结构开销
+  let finalLogEntry: LogEntry = logEntry
+  if (Buffer.byteLength(logEntry.display, 'utf8') > MAX_DISPLAY_BYTES) {
+    let truncated = logEntry.display
+    while (Buffer.byteLength(truncated, 'utf8') > MAX_DISPLAY_BYTES) {
+      truncated = truncated.slice(0, -1)
+    }
+    finalLogEntry = { ...logEntry, display: truncated + '…' }
+  }
+
+  pendingEntries.push(finalLogEntry)
+  lastAddedEntry = finalLogEntry
   currentFlushPromise = flushPromptHistory(0)
   void currentFlushPromise
 }

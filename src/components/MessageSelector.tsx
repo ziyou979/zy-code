@@ -175,14 +175,12 @@ export function MessageSelector({
       ...summarizeInputProps,
       onChange: setSummarizeFromFeedback,
     })
-    if (isInternalBuild()) {
-      baseOptions.push({
-        value: 'summarize_up_to',
-        label: tSync('messageSelector.summarizeUpToHere'),
-        ...summarizeInputProps,
-        onChange: setSummarizeUpToFeedback,
-      })
-    }
+    baseOptions.push({
+      value: 'summarize_up_to',
+      label: tSync('messageSelector.summarizeUpToHere'),
+      ...summarizeInputProps,
+      onChange: setSummarizeUpToFeedback,
+    })
     baseOptions.push({
       value: 'nevermind',
       label: tSync('messageSelector.nevermind'),

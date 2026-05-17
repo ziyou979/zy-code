@@ -306,6 +306,15 @@ function getMcpServerBaseUrlFromToolName(
   return getLoggingSafeMcpBaseUrl(serverConnection.config)
 }
 
+// 会话级脚本调用计数器（ZY_CODE_SCRIPT_CAPS）
+let _sessionScriptCallCount = 0
+const SCRIPT_TOOL_NAMES = new Set(['Bash', 'PowerShell'])
+
+/** 重置脚本调用计数（用于测试或新会话） */
+export function resetScriptCallCount(): void {
+  _sessionScriptCallCount = 0
+}
+
 export async function* runToolUse(
   toolUse: ToolCallInlineBlock,
   assistantMessage: AssistantMessage,
@@ -313,6 +322,37 @@ export async function* runToolUse(
   toolUseContext: ToolUseContext,
 ): AsyncGenerator<MessageUpdateLazy, void> {
   const toolName = toolUse.name
+
+  // ZY_CODE_SCRIPT_CAPS: 会话级脚本调用次数限制
+  if (SCRIPT_TOOL_NAMES.has(toolName)) {
+    const capsStr = process.env.ZY_CODE_SCRIPT_CAPS
+    const scriptCap = capsStr ? parseInt(capsStr, 10) : 0
+    if (scriptCap > 0) {
+      _sessionScriptCallCount++
+      if (_sessionScriptCallCount > scriptCap) {
+        logForDebugging(
+          `Script call cap exceeded: ${_sessionScriptCallCount}/${scriptCap}, rejecting ${toolName}`,
+          { level: 'warn' },
+        )
+        yield {
+          message: createUserMessage({
+            content: [
+              {
+                type: 'tool_result',
+                content: `<tool_use_error>Error: Script call limit exceeded (${scriptCap} per session). Set ZY_CODE_SCRIPT_CAPS to increase or remove the limit.</tool_use_error>`,
+                isError: true,
+                toolCallId: toolUse.id,
+              },
+            ],
+            toolUseResult: `Error: Script call limit exceeded (${scriptCap} per session)`,
+            sourceToolAssistantUUID: assistantMessage.uuid as any,
+          }),
+        }
+        return
+      }
+    }
+  }
+
   // First try to find in the available tools (what the model sees)
   let tool = findToolByName(toolUseContext.options.tools, toolName)
 

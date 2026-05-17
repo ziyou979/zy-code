@@ -470,6 +470,13 @@ export const SettingsSchema = lazySchema(() =>
               'Directories to include when creating worktrees, via git sparse-checkout (cone mode). ' +
                 'Dramatically faster in large monorepos — only the listed paths are written to disk.',
             ),
+          bgIsolation: z
+            .enum(['none', 'full'])
+            .optional()
+            .describe(
+              'Background session isolation mode. "none" allows background sessions to edit the working copy directly. ' +
+                '"full" (default) creates a separate worktree for each background session.',
+            ),
         })
         .optional()
         .describe('Git worktree configuration for --worktree flag.'),

@@ -8,10 +8,10 @@ const REDUCED_MOTION_DOT = '●'
 const REDUCED_MOTION_CYCLE_MS = 2000 // 2-second cycle: 1s visible, 1s dim
 // 停滞状态颜色：蓝紫色，与天蓝色主题协调但有明显区分
 const STALLED_COLOR = {
-  r: 130,
-  g: 80,
-  b: 210,
-}
+  r: 255,
+  g: 193,
+  b: 7,
+} // 琥珀色（amber）— 深度思考超 10 秒时提示用户
 type Props = {
   frame: number
   messageColor: keyof Theme
