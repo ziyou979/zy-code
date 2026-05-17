@@ -54,12 +54,12 @@
 | 类别 | 总计 | ✅ 已实现 | ⚠️ 部分实现 | ❌ 完全缺失 |
 |------|------|----------|------------|------------|
 | 安全加固 (P0) | 6 | 5 | 1 | 0 |
-| 核心功能 (P1) | 11 | 9 | 0 | 2 |
-| 体验优化 (P2) | 8 | 0 | 3 | 5 |
+| 核心功能 (P1) | 11 | 11 | 0 | 0 |
+| 体验优化 (P2) | 8 | 0 | 4 | 4 |
 | 环境变量 (P3) | 10 | 0 | 0 | 10 |
-| **合计** | **35** | **14** | **4** | **17** |
+| **合计** | **35** | **16** | **5** | **14** |
 
-另有 **26 项已完整实现**，无需同步（**符号链接安全检查**、**Bash 权限绕过防护**（deny rule / env-var strip / compound cmd / find -exec / 反斜杠转义 / macOS /private/）、**域名黑名单**（deniedDomains + allowedDomains + ssrfGuard + networkRestriction）、**dangerouslyDisableSandbox 修复**（策略控制 + 权限独立检查）、**disableSkillShellExecution**（本次实现）、**DISABLE_COMPACT 禁用自动压缩**（`autoCompact.ts` 已有 `DISABLE_COMPACT` + `DISABLE_AUTO_COMPACT`）、**/loop 定时循环命令**（`skills/bundled/loop.ts` + `proactive/` 模块）、**插件依赖管理**（`dependencyResolver.ts` + `pluginOperations.ts` 完整实现）、**MCP _meta maxResultSizeChars 覆盖**（`toolExecution.ts` 动态覆盖，上限 500K）、**流式 5 分钟停滞检测与非流式回退**（`llmOrchestrator.ts` 始终启用兜底）、**/bg 斜杠命令**（`commands/bg/` 新建，复用 `backgroundAll`）、**PreCompact hook block 阻止能力**（`hooks.ts` + `compact.ts` 联动）、**/powerup 交互式功能引导**（`commands/powerup/` 新建，5 个引导项）、PermissionDenied hook、CRLF 处理、深层链接、Vim j/k、WSL2 语音、/doctor、OSC 8 超链接、Shift+↑/↓ 滚动、settings schema、showThinkingSummaries、permissions.defaultMode、EnterWorktree、**429 重试指数退避**）。
+另有 **26 项已完整实现**，无需同步（**符号链接安全检查**、**Bash 权限绕过防护**（deny rule / env-var strip / compound cmd / find -exec / 反斜杠转义 / macOS /private/）、**域名黑名单**（deniedDomains + allowedDomains + ssrfGuard + networkRestriction）、**dangerouslyDisableSandbox 修复**（策略控制 + 权限独立检查）、**disableSkillShellExecution**（本次实现）、**DISABLE_COMPACT 禁用自动压缩**（`autoCompact.ts` 已有 `DISABLE_COMPACT` + `DISABLE_AUTO_COMPACT`）、**/loop 定时循环命令**（`skills/bundled/loop.ts` + `proactive/` 模块）、**插件依赖管理**（`dependencyResolver.ts` + `pluginOperations.ts` 完整实现）、**MCP _meta maxResultSizeChars 覆盖**（`toolExecution.ts` 动态覆盖，上限 500K）、**流式 5 分钟停滞检测与非流式回退**（`llmOrchestrator.ts` 始终启用兜底）、**/bg 斜杠命令**（`commands/bg/` 新建，复用 `backgroundAll`）、**PreCompact hook block 阻止能力**（`hooks.ts` + `compact.ts` 联动）、**/powerup 交互式功能引导**（`commands/powerup/` 新建，5 个引导项）、**/goal 目标驱动模式**（`goal/goalState.ts` + `hooks/useGoalMode.ts` + `commands/goal/` + REPL 集成，跨轮次自主推进）、**插件 monitors 后台监控**（`schemas.ts` MonitorConfigSchema + `pluginLoader.ts` 步骤7解析 + `pluginMonitors.ts` 运行时 start/stop/trigger）、**Agent View 运行时会话概览**（`AgentSessionView.tsx` + `/agents view` 命令，状态可视化 + j/k 导航 + Peek 机制）、PermissionDenied hook、CRLF 处理、深层链接、Vim j/k、WSL2 语音、/doctor、OSC 8 超链接、Shift+↑/↓ 滚动、settings schema、showThinkingSummaries、permissions.defaultMode、EnterWorktree、**429 重试指数退避**）。
 
 > **zy-code 分化说明**：zy-code 已独立实现 model-capabilities 系统（`contextWindow` 配置驱动）、完整的重试与退避机制（`withRetry.ts`）、SSE 45s 无活动超时、工具级 `maxResultSizeChars` 控制、sandbox 适配器、20+ 个 `ZY_CODE_` 环境变量等能力。以下同步计划仅覆盖**真正缺失**的部分。
 
