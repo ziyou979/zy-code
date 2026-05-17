@@ -505,9 +505,11 @@ export const en: TranslationResource = {
   // Background command
   'bg.noForegroundTasks': 'No foreground tasks to move to background',
   'bg.movedToBackground': 'Moved foreground tasks to background',
+  'bg.disabled': 'Background tasks are disabled',
 
   // Powerup — interactive feature guide
   'powerup.menuHeader': '## ⚡ Power-ups — learn tips & tricks',
+  'powerup.examplesLabel': 'Examples',
   'powerup.menuFooter': 'Type `/powerup <number>` or `/powerup <keyword>` to see details.',
   'powerup.notFound': 'No power-up matched "{query}". Run `/powerup` to see all options.',
   'powerup.grep.title': 'Search & Replace',

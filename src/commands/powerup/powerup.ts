@@ -73,7 +73,7 @@ function formatPowerupDetail(entry: PowerupEntry): string {
     '',
     entry.description,
     '',
-    '**Examples:**',
+    `**${tSync('powerup.examplesLabel')}:**`,
     ...entry.examples.map((example) => `- \`${example}\``),
   ]
   return lines.join('\n')
