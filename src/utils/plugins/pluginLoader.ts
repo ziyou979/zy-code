@@ -1599,7 +1599,54 @@ export async function createPluginFromPath(
     plugin.settings = pluginSettings
   }
 
+  // 步骤 7：解析 monitors 配置
+  // monitors 在 session 启动或 skill 调用时自动启动后台进程
+  if (manifest.monitors) {
+    plugin.monitors = parseMonitorConfigs(manifest.monitors, manifest.name)
+  }
+
   return { plugin, errors }
+}
+
+/**
+ * 将 manifest 中的 monitors 配置规范化为统一的数组格式。
+ * 支持三种输入：字符串路径（暂忽略）、对象数组、对象映射。
+ */
+function parseMonitorConfigs(
+  monitors: unknown,
+  pluginName: string,
+): LoadedPlugin['monitors'] {
+  if (typeof monitors === 'string') {
+    // 路径格式：指向外部 JSON，后续可扩展
+    logForDebugging(
+      `Plugin "${pluginName}" monitors configured as path "${monitors}" — file-based loading not yet supported, skipping`,
+    )
+    return undefined
+  }
+
+  if (Array.isArray(monitors)) {
+    // 数组格式：直接使用已验证的 MonitorConfig 对象
+    return monitors.filter(
+      (m): m is NonNullable<LoadedPlugin['monitors']>[number] =>
+        typeof m === 'object' && m !== null && typeof m.command === 'string',
+    )
+  }
+
+  if (typeof monitors === 'object' && monitors !== null) {
+    // 对象映射格式：{ "monitorName": { command, trigger, ... } }
+    return Object.entries(monitors)
+      .filter(([, config]) => typeof config === 'object' && config !== null)
+      .map(([name, config]) => ({
+        name,
+        command: (config as Record<string, unknown>).command as string,
+        trigger: (config as Record<string, unknown>).trigger as 'session_start' | 'skill_invoke' | undefined,
+        cwd: (config as Record<string, unknown>).cwd as string | undefined,
+        env: (config as Record<string, unknown>).env as Record<string, string> | undefined,
+      }))
+      .filter((m) => typeof m.command === 'string' && m.command.length > 0)
+  }
+
+  return undefined
 }
 
 /**

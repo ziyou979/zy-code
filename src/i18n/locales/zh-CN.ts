@@ -648,6 +648,11 @@ export const zhCN: TranslationResource = {
   'goal.nudgeMessage': '继续推进目标："{description}"（第 {turnCount} 轮）。评估进展并执行下一步。如果目标已完全达成，请明确说明。',
   'goal.activatedPrompt': '🎯 目标模式已激活。我将自主推进以下目标：\n\n> {description}\n\n我会跨轮次持续工作直到目标达成。使用 `/goal` 查看进度，`/goal stop` 结束。',
 
+  // 插件 monitors
+  'pluginMonitors.started': '已启动 {count} 个插件监控进程',
+  'pluginMonitors.stopped': '已停止 {count} 个插件监控进程',
+  'pluginMonitors.error': '监控 {plugin}/{name} 失败：{error}',
+
   // 后台命令
   'bg.noForegroundTasks': '没有可转为后台的前台任务',
   'bg.movedToBackground': '已将前台任务转为后台运行',

@@ -63,6 +63,13 @@ export type LoadedPlugin = {
   mcpServers?: Record<string, McpServerConfig>
   lspServers?: Record<string, LspServerConfig>
   settings?: Record<string, unknown>
+  monitors?: Array<{
+    name: string
+    command: string
+    trigger?: 'session_start' | 'skill_invoke'
+    cwd?: string
+    env?: Record<string, string>
+  }>
 }
 
 export type PluginComponent = 'commands' | 'agents' | 'skills' | 'hooks' | 'output-styles'

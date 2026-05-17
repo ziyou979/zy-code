@@ -735,6 +735,55 @@ const PluginManifestLspServerSchema = lazySchema(() =>
 )
 
 /**
+ * 插件后台监控（monitors）的 Schema。
+ *
+ * monitors 在 session 启动或 skill 调用时自动启动，
+ * 持续监听事件和状态变化，类似守护进程（daemon）。
+ * 适合日志监控、资源监控、自动修复等场景。
+ *
+ * 支持多种格式：
+ * - 字符串：指向 monitor 脚本的相对路径
+ * - 对象数组：完整的 monitor 配置
+ * - 对象映射：{ "monitorName": { command, trigger, ... } }
+ */
+const MonitorConfigSchema = lazySchema(() =>
+  z.object({
+    name: z.string().min(1).describe('Monitor display name'),
+    command: z.string().min(1).describe('Shell command to execute'),
+    trigger: z
+      .enum(['session_start', 'skill_invoke'])
+      .optional()
+      .default('session_start')
+      .describe('When to start this monitor'),
+    cwd: z.string().optional().describe('Working directory for the command'),
+    env: z
+      .record(z.string(), z.string())
+      .optional()
+      .describe('Environment variables for the monitor process'),
+  }),
+)
+
+const PluginManifestMonitorsSchema = lazySchema(() =>
+  z.object({
+    monitors: z.union([
+      RelativePath().describe('Path to monitors configuration file'),
+      z.array(MonitorConfigSchema()).describe('Array of monitor configurations'),
+      z
+        .record(
+          z.string(),
+          z.object({
+            command: z.string().min(1),
+            trigger: z.enum(['session_start', 'skill_invoke']).optional(),
+            cwd: z.string().optional(),
+            env: z.record(z.string(), z.string()).optional(),
+          }),
+        )
+        .describe('Named monitor configurations (name inferred from key)'),
+    ]),
+  }),
+)
+
+/**
  * npm 包名称的 Schema
  *
  * 验证 npm 包名称，包括带作用域的包。
@@ -805,6 +854,7 @@ export const PluginManifestSchema = lazySchema(() =>
     ...PluginManifestChannelsSchema().partial().shape,
     ...PluginManifestMcpServerSchema().partial().shape,
     ...PluginManifestLspServerSchema().partial().shape,
+    ...PluginManifestMonitorsSchema().partial().shape,
     ...PluginManifestSettingsSchema().partial().shape,
     ...PluginManifestUserConfigSchema().partial().shape,
   }),

@@ -511,6 +511,11 @@ export const en: TranslationResource = {
   'goal.nudgeMessage': 'Continue working toward the goal: "{description}" (turn {turnCount}). Assess progress and take the next step. If the goal is fully achieved, say so clearly.',
   'goal.activatedPrompt': '🎯 Goal mode activated. I will autonomously work toward:\n\n> {description}\n\nI\'ll continue across turns until the goal is achieved. Use `/goal` to check progress or `/goal stop` to end.',
 
+  // Plugin monitors
+  'pluginMonitors.started': 'Started {count} plugin monitor(s)',
+  'pluginMonitors.stopped': 'Stopped {count} plugin monitor(s)',
+  'pluginMonitors.error': 'Monitor {plugin}/{name} failed: {error}',
+
   // Background command
   'bg.noForegroundTasks': 'No foreground tasks to move to background',
   'bg.movedToBackground': 'Moved foreground tasks to background',
