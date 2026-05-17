@@ -643,6 +643,21 @@ export const zhCN: TranslationResource = {
   'bg.noForegroundTasks': '没有可转为后台的前台任务',
   'bg.movedToBackground': '已将前台任务转为后台运行',
 
+  // Powerup — 交互式功能引导
+  'powerup.menuHeader': '## ⚡ 技能加速 — 学习技巧与窍门',
+  'powerup.menuFooter': '输入 `/powerup <编号>` 或 `/powerup <关键词>` 查看详情。',
+  'powerup.notFound': '未找到匹配 "{query}" 的技能加速项。输入 `/powerup` 查看所有选项。',
+  'powerup.grep.title': '搜索与替换',
+  'powerup.grep.description': '跨文件查找模式并批量编辑（grep + edit）。',
+  'powerup.refactor.title': '代码重构',
+  'powerup.refactor.description': '重构代码 — 提取函数、重命名符号、简化逻辑。',
+  'powerup.test.title': '测试生成',
+  'powerup.test.description': '生成单元测试、边界用例覆盖和测试数据。',
+  'powerup.debug.title': 'Bug 修复',
+  'powerup.debug.description': '诊断并修复 Bug — 追踪错误、检查状态、应用补丁。',
+  'powerup.docs.title': '文档生成',
+  'powerup.docs.description': '生成文档、JSDoc 注释、README 和架构概述。',
+
   // Skill shell 执行
   'skillShell.disabledBySettings':
     'Skill 内联 shell 执行已被设置禁用（disableSkillShellExecution=true）',

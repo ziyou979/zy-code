@@ -3,6 +3,7 @@ import { tSync } from './i18n/index.js'
 import { isInternalBuild } from './utils/envUtils.js'
 import addDir from './commands/add-dir/index.js'
 import bg from './commands/bg/index.js'
+import powerup from './commands/powerup/index.js'
 import autofixPr from './commands/autofix-pr/index.js'
 import backfillSessions from './commands/backfill-sessions/index.js'
 import btw from './commands/btw/index.js'
@@ -243,6 +244,7 @@ const COMMANDS = memoize((): Command[] => [
   outputStyle,
   remoteEnv,
   plugin,
+  powerup,
   pr_comments,
   releaseNotes,
   reloadPlugins,

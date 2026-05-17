@@ -506,6 +506,21 @@ export const en: TranslationResource = {
   'bg.noForegroundTasks': 'No foreground tasks to move to background',
   'bg.movedToBackground': 'Moved foreground tasks to background',
 
+  // Powerup — interactive feature guide
+  'powerup.menuHeader': '## ⚡ Power-ups — learn tips & tricks',
+  'powerup.menuFooter': 'Type `/powerup <number>` or `/powerup <keyword>` to see details.',
+  'powerup.notFound': 'No power-up matched "{query}". Run `/powerup` to see all options.',
+  'powerup.grep.title': 'Search & Replace',
+  'powerup.grep.description': 'Find patterns across files and apply bulk edits with grep + edit.',
+  'powerup.refactor.title': 'Code Refactoring',
+  'powerup.refactor.description': 'Restructure code — extract functions, rename symbols, simplify logic.',
+  'powerup.test.title': 'Test Generation',
+  'powerup.test.description': 'Generate unit tests, edge-case coverage, and test fixtures.',
+  'powerup.debug.title': 'Bug Fixing',
+  'powerup.debug.description': 'Diagnose and fix bugs — trace errors, inspect state, apply patches.',
+  'powerup.docs.title': 'Documentation',
+  'powerup.docs.description': 'Generate docs, JSDoc comments, READMEs, and architectural overviews.',
+
   // Skill shell execution
   'skillShell.disabledBySettings':
     'Skill shell execution is disabled by settings (disableSkillShellExecution=true)',
