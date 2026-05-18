@@ -27,8 +27,8 @@ import { createHash } from 'crypto'
 import { mkdir, readdir, readFile, stat, writeFile } from 'fs/promises'
 import { join, relative, sep } from 'path'
 import {
-  CLAUDE_AI_INFERENCE_SCOPE,
-  CLAUDE_AI_PROFILE_SCOPE,
+  ZY_CODE_INFERENCE_SCOPE,
+  ZY_CODE_PROFILE_SCOPE,
   getOauthConfig,
   OAUTH_BETA_HEADER,
 } from '../../constants/oauth.js'
@@ -146,8 +146,8 @@ function isUsingOAuth(): boolean {
   const tokens = getZyAIOAuthTokens()
   return Boolean(
     tokens?.accessToken &&
-      tokens.scopes?.includes(CLAUDE_AI_INFERENCE_SCOPE) &&
-      tokens.scopes.includes(CLAUDE_AI_PROFILE_SCOPE),
+      tokens.scopes?.includes(ZY_CODE_INFERENCE_SCOPE) &&
+      tokens.scopes.includes(ZY_CODE_PROFILE_SCOPE),
   )
 }
 

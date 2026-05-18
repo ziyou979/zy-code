@@ -195,7 +195,7 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
     const fragmentContent2 = source !== 'built-in' &&
       sortedAgents.some((a_5) => a_5.source === 'built-in') && (
         <>
-          <Divider />
+          <Divider padding={4} />
           {renderBuiltInAgentsSection(undefined)}
         </>
       )
@@ -249,7 +249,7 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
           return (
             <React.Fragment key={groupSource_0}>
               {renderAgentGroup(
-                label,
+                tSync(label),
                 sortedAgents.filter((a_7) => a_7.source === groupSource_0),
               )}
             </React.Fragment>
@@ -282,7 +282,7 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
           .map((agent_3) => renderAgent(agent_3))}
         {sortedAgents.some((a_9) => a_9.source === 'built-in') && (
           <>
-            <Divider />
+            <Divider padding={4} />
             {renderBuiltInAgentsSection(undefined)}
           </>
         )}

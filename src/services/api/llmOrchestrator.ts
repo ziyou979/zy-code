@@ -1200,7 +1200,7 @@ async function* queryModel(
     // 显式启用看门狗时使用配置的超时（默认 90s），否则使用 5 分钟安全兜底
     const STREAM_STALL_FALLBACK_TIMEOUT_MS = 300_000
     const STREAM_IDLE_TIMEOUT_MS = streamWatchdogEnabled
-      ? (parseInt(process.env.CLAUDE_STREAM_IDLE_TIMEOUT_MS || '', 10) || 90_000)
+      ? parseInt(process.env.CLAUDE_STREAM_IDLE_TIMEOUT_MS || '', 10) || 90_000
       : STREAM_STALL_FALLBACK_TIMEOUT_MS
     const STREAM_IDLE_WARNING_MS = STREAM_IDLE_TIMEOUT_MS / 2
     let streamIdleAborted = false

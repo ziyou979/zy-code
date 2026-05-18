@@ -1,12 +1,11 @@
 import * as React from 'react'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 type Props = {
   instructions?: string
 }
-export function AgentNavigationFooter({
-  instructions = 'Press \u2191\u2193 to navigate \xB7 Enter to select \xB7 Esc to go back',
-}: Props) {
+export function AgentNavigationFooter({ instructions = tSync('agents.navInstructions') }: Props) {
   const exitState = useExitOnCtrlCDWithKeybindings()
   return (
     <Box marginLeft={2}>

@@ -1612,10 +1612,7 @@ export async function createPluginFromPath(
  * 将 manifest 中的 monitors 配置规范化为统一的数组格式。
  * 支持三种输入：字符串路径（暂忽略）、对象数组、对象映射。
  */
-function parseMonitorConfigs(
-  monitors: unknown,
-  pluginName: string,
-): LoadedPlugin['monitors'] {
+function parseMonitorConfigs(monitors: unknown, pluginName: string): LoadedPlugin['monitors'] {
   if (typeof monitors === 'string') {
     // 路径格式：指向外部 JSON，后续可扩展
     logForDebugging(
@@ -1639,7 +1636,10 @@ function parseMonitorConfigs(
       .map(([name, config]) => ({
         name,
         command: (config as Record<string, unknown>).command as string,
-        trigger: (config as Record<string, unknown>).trigger as 'session_start' | 'skill_invoke' | undefined,
+        trigger: (config as Record<string, unknown>).trigger as
+          | 'session_start'
+          | 'skill_invoke'
+          | undefined,
         cwd: (config as Record<string, unknown>).cwd as string | undefined,
         env: (config as Record<string, unknown>).env as Record<string, string> | undefined,
       }))

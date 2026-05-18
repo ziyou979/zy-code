@@ -507,9 +507,12 @@ export const en: TranslationResource = {
   'goal.deactivated': 'Goal mode stopped — {turnCount} turns, {elapsed}, {tokens} tokens (${cost})',
   'goal.notActive': 'No active goal. Use `/goal <description>` to set one.',
   'goal.alreadyActive': 'A goal is already active. Use `/goal stop` to end it first.',
-  'goal.status': '🎯 **Goal**: {description}\n  Turns: {turnCount} | Elapsed: {elapsed} | Tokens: {tokens} | Cost: ${cost}',
-  'goal.nudgeMessage': 'Continue working toward the goal: "{description}" (turn {turnCount}). Assess progress and take the next step. If the goal is fully achieved, say so clearly.',
-  'goal.activatedPrompt': '🎯 Goal mode activated. I will autonomously work toward:\n\n> {description}\n\nI\'ll continue across turns until the goal is achieved. Use `/goal` to check progress or `/goal stop` to end.',
+  'goal.status':
+    '🎯 **Goal**: {description}\n  Turns: {turnCount} | Elapsed: {elapsed} | Tokens: {tokens} | Cost: ${cost}',
+  'goal.nudgeMessage':
+    'Continue working toward the goal: "{description}" (turn {turnCount}). Assess progress and take the next step. If the goal is fully achieved, say so clearly.',
+  'goal.activatedPrompt':
+    "🎯 Goal mode activated. I will autonomously work toward:\n\n> {description}\n\nI'll continue across turns until the goal is achieved. Use `/goal` to check progress or `/goal stop` to end.",
 
   // Agent View — runtime session overview
   'agentView.title': '🤖 Agent Sessions',
@@ -539,13 +542,16 @@ export const en: TranslationResource = {
   'powerup.grep.title': 'Search & Replace',
   'powerup.grep.description': 'Find patterns across files and apply bulk edits with grep + edit.',
   'powerup.refactor.title': 'Code Refactoring',
-  'powerup.refactor.description': 'Restructure code — extract functions, rename symbols, simplify logic.',
+  'powerup.refactor.description':
+    'Restructure code — extract functions, rename symbols, simplify logic.',
   'powerup.test.title': 'Test Generation',
   'powerup.test.description': 'Generate unit tests, edge-case coverage, and test fixtures.',
   'powerup.debug.title': 'Bug Fixing',
-  'powerup.debug.description': 'Diagnose and fix bugs — trace errors, inspect state, apply patches.',
+  'powerup.debug.description':
+    'Diagnose and fix bugs — trace errors, inspect state, apply patches.',
   'powerup.docs.title': 'Documentation',
-  'powerup.docs.description': 'Generate docs, JSDoc comments, READMEs, and architectural overviews.',
+  'powerup.docs.description':
+    'Generate docs, JSDoc comments, READMEs, and architectural overviews.',
 
   // Skill shell execution
   'skillShell.disabledBySettings':
@@ -1243,7 +1249,7 @@ export const en: TranslationResource = {
   'commands.tag': 'Toggle a searchable tag on the current session',
   'commands.theme': 'Change the theme',
   'commands.feedback': 'Submit feedback about ZY Code',
-  'commands.goal': 'Set a goal for autonomous multi-turn execution',
+  'commands.goal': 'Set a goal — keep working until the condition is met',
   'commands.review': 'Review a pull request',
   'commands.ultrareview': 'Finds and verifies bugs in your branch. Runs in ZY Code on the web.',
   'commands.rewind': 'Restore the code and/or conversation to a previous point',
@@ -2066,12 +2072,20 @@ export const en: TranslationResource = {
   'agents.builtInAlwaysAvailable': '(always available)',
   'agents.noAgentsFound': 'No agents found',
   'agents.noAgentsHelpLine1':
-    'No agents found. Create specialized subagents that Zy can delegate to.',
+    'No agents found. Create specialized subagents that ZY code can delegate to.',
   'agents.noAgentsHelpLine2':
     'Each subagent has its own context window, custom system prompt, and specific tools.',
   'agents.noAgentsTryCreating':
     'Try creating: Code Reviewer, Code Simplifier, Security Reviewer, Tech Lead, or UX Reviewer.',
   'agents.agentsCount': '{count} agents',
+  'agents.source.all': 'Agents',
+  'agents.source.builtIn': 'Built-in agents',
+  'agents.source.plugin': 'Plugin agents',
+  'agents.source.userSettings': 'User agents',
+  'agents.source.projectSettings': 'Project agents',
+  'agents.source.localSettings': 'Local agents',
+  'agents.source.policySettings': 'Managed agents',
+  'agents.source.flagSettings': 'CLI arg agents',
   'agents.shadowedBy': 'shadowed by {source}',
   'agents.memoryLabel': '{memory} memory',
   'agents.viewAgent': 'View agent',

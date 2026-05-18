@@ -6,7 +6,7 @@
  * 以及 resetSyncCache 包装器，用于同时清除叶子节点状态和本地资格镜像。
  */
 
-import { CLAUDE_AI_INFERENCE_SCOPE } from '../../constants/oauth.js'
+import { ZY_CODE_INFERENCE_SCOPE } from '../../constants/oauth.js'
 import { getApiKeyWithSource, getZyAIOAuthTokens } from '../../utils/auth.js'
 import { getAPIProvider, isAnthropicBaseUrl } from '../../utils/model/providers.js'
 
@@ -75,7 +75,7 @@ export function isRemoteManagedSettingsEligible(): boolean {
 
   if (
     tokens?.accessToken &&
-    tokens.scopes?.includes(CLAUDE_AI_INFERENCE_SCOPE) &&
+    tokens.scopes?.includes(ZY_CODE_INFERENCE_SCOPE) &&
     (tokens.subscriptionType === 'enterprise' || tokens.subscriptionType === 'team')
   ) {
     return (cached = setEligibility(true))

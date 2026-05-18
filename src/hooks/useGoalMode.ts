@@ -5,12 +5,7 @@
  * 参考 src/proactive/useProactive.ts 的实现模式。
  */
 import { useEffect, useRef } from 'react'
-import {
-  isGoalActive,
-  isGoalPaused,
-  incrementGoalTurn,
-  getGoalState,
-} from '../goal/goalState.js'
+import { isGoalActive, isGoalPaused, incrementGoalTurn, getGoalState } from '../goal/goalState.js'
 import { tSync } from '../i18n/index.js'
 import { logForDebugging } from '../utils/debug.js'
 

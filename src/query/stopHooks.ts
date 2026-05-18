@@ -269,7 +269,8 @@ export async function* handleStopHooks(
         stopReason = result.stopReason || 'Stop hook prevented continuation'
         // S3-2: stop hook block cap — 连续阻止次数超限后强制终止轮次
         _consecutiveBlockCount++
-        const blockCap = parseInt(process.env.ZY_CODE_STOP_HOOK_BLOCK_CAP || '', 10) || DEFAULT_STOP_HOOK_BLOCK_CAP
+        const blockCap =
+          parseInt(process.env.ZY_CODE_STOP_HOOK_BLOCK_CAP || '', 10) || DEFAULT_STOP_HOOK_BLOCK_CAP
         if (_consecutiveBlockCount >= blockCap) {
           logForDebugging(
             `Stop hook block cap reached: ${_consecutiveBlockCount}/${blockCap}, forcing end of turn`,

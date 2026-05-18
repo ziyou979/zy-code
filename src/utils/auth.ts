@@ -4,7 +4,7 @@ import { execa } from 'execa'
 import { mkdir, stat } from 'fs/promises'
 import memoize from 'lodash-es/memoize.js'
 import { join } from 'path'
-import { CLAUDE_AI_PROFILE_SCOPE } from 'src/constants/oauth.js'
+import { ZY_CODE_PROFILE_SCOPE } from 'src/constants/oauth.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -1085,7 +1085,7 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
     logEvent('zy_oauth_token_refresh_starting', {})
     const refreshedTokens = await refreshOAuthToken(lockedTokens.refreshToken, {
       // 对于 Zy.ai 订阅用户，省略 scopes 以使用默认的
-      // CLAUDE_AI_OAUTH_SCOPES——这允许在刷新时扩展 scope
+      // ZY_CODE_OAUTH_SCOPES——这允许在刷新时扩展 scope
       // （例如添加 user:file_upload）而无需重新登录。
       scopes: shouldUseZyAIAuth((lockedTokens as any).scopes)
         ? undefined
@@ -1125,7 +1125,7 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
  * 对 /api/oauth/profile、bootstrap 等产生 403 风暴。
  */
 export function hasProfileScope(): boolean {
-  return getZyAIOAuthTokens()?.scopes?.includes(CLAUDE_AI_PROFILE_SCOPE) ?? false
+  return getZyAIOAuthTokens()?.scopes?.includes(ZY_CODE_PROFILE_SCOPE) ?? false
 }
 
 export function isDirectApiClient(): boolean {

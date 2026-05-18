@@ -1,10 +1,5 @@
 import type { LocalCommandCall } from '../../types/command.js'
-import {
-  activateGoal,
-  deactivateGoal,
-  isGoalActive,
-  getGoalState,
-} from '../../goal/goalState.js'
+import { activateGoal, deactivateGoal, isGoalActive, getGoalState } from '../../goal/goalState.js'
 import { tSync } from '../../i18n/index.js'
 import { logForDebugging } from '../../utils/debug.js'
 

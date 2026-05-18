@@ -101,13 +101,12 @@ export const call: LocalCommandCall = async (args) => {
 
   // 支持按编号或关键词匹配
   const index = parseInt(trimmedArgs, 10)
-  const matched = !isNaN(index) && index >= 1 && index <= powerups.length
-    ? powerups[index - 1]
-    : powerups.find(
-        (entry) =>
-          entry.key === trimmedArgs ||
-          entry.title.toLowerCase().includes(trimmedArgs),
-      )
+  const matched =
+    !isNaN(index) && index >= 1 && index <= powerups.length
+      ? powerups[index - 1]
+      : powerups.find(
+          (entry) => entry.key === trimmedArgs || entry.title.toLowerCase().includes(trimmedArgs),
+        )
 
   if (!matched) {
     return {

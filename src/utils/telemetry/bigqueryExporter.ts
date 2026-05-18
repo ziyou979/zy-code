@@ -1,24 +1,22 @@
-import type { Attributes, HrTime } from '@opentelemetry/api'
-import { type ExportResult, ExportResultCode } from '@opentelemetry/core'
+import type {Attributes, HrTime} from '@opentelemetry/api'
+import {type ExportResult, ExportResultCode} from '@opentelemetry/core'
 import {
   AggregationTemporality,
-  type MetricData,
   type DataPoint as OTelDataPoint,
+  type MetricData,
   type PushMetricExporter,
   type ResourceMetrics,
 } from '@opentelemetry/sdk-metrics'
-import axios from 'axios'
-import { checkMetricsEnabled } from 'src/services/api/metricsOptOut.js'
-import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
-import { getOauthConfig } from '../../constants/oauth.js'
-import { checkHasTrustDialogAccepted } from '../config.js'
-import { logForDebugging } from '../debug.js'
-import { errorMessage, toError } from '../errors.js'
-import { getAuthHeaders } from '../http.js'
-import { logError } from '../log.js'
-import { isInternalBuild } from '../envUtils.js'
-import { jsonStringify } from '../slowOperations.js'
-import { getZyCodeUserAgent } from '../userAgent.js'
+import {checkMetricsEnabled} from 'src/services/api/metricsOptOut.js'
+import {getIsNonInteractiveSession} from '../../bootstrap/state.js'
+import {getOauthConfig} from '../../constants/oauth.js'
+import {checkHasTrustDialogAccepted} from '../config.js'
+import {logForDebugging} from '../debug.js'
+import {errorMessage, toError} from '../errors.js'
+import {getAuthHeaders} from '../http.js'
+import {logError} from '../log.js'
+import {isInternalBuild} from '../envUtils.js'
+import {getZyCodeUserAgent} from '../userAgent.js'
 
 type DataPoint = {
   attributes: Record<string, string>
@@ -45,8 +43,8 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
   private isShutdown = false
 
   constructor(options: { timeout?: number } = {}) {
-    // TODO: 替换为 ZY Code 自建服务端点（当前通过 getOauthConfig().BASE_API_URL 动态拼接，等待自建服务就绪）
-    const metricsPath = '/api/claude_code/metrics'
+    // TODO: 等待 ZY Code 自建服务就绪后启用
+    const metricsPath = '/api/zy_code/metrics'
 
     if (isInternalBuild() && process.env.ANT_ZY_CODE_METRICS_ENDPOINT) {
       this.endpoint = process.env.ANT_ZY_CODE_METRICS_ENDPOINT + metricsPath
@@ -121,13 +119,15 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
         ...authResult.headers,
       }
 
-      const response = await axios.post(this.endpoint, payload, {
-        timeout: this.timeout,
-        headers,
-      })
+      // TODO: 等待 ZY Code 自建服务就绪后启用
+      // const response = await axios.post(this.endpoint, payload, {
+      //   timeout: this.timeout,
+      //   headers,
+      // })
+      // logForDebugging('BigQuery metrics exported successfully')
+      // logForDebugging(`BigQuery API Response: ${jsonStringify(response.data, null, 2)}`)
 
-      logForDebugging('BigQuery metrics exported successfully')
-      logForDebugging(`BigQuery API Response: ${jsonStringify(response.data, null, 2)}`)
+      logForDebugging('BigQuery metrics export skipped (backend not ready)')
       resultCallback({ code: ExportResultCode.SUCCESS })
     } catch (error) {
       logForDebugging(`BigQuery metrics export failed: ${errorMessage(error)}`)
@@ -162,19 +162,17 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
     // Add customer type
     resourceAttributes['user.customer_type'] = 'api'
 
-    const transformed = {
+    return {
       resource_attributes: resourceAttributes,
       metrics: metrics.scopeMetrics.flatMap((scopeMetric) =>
-        scopeMetric.metrics.map((metric) => ({
-          name: metric.descriptor.name,
-          description: metric.descriptor.description,
-          unit: metric.descriptor.unit,
-          data_points: this.extractDataPoints(metric),
-        })),
+          scopeMetric.metrics.map((metric) => ({
+            name: metric.descriptor.name,
+            description: metric.descriptor.description,
+            unit: metric.descriptor.unit,
+            data_points: this.extractDataPoints(metric),
+          })),
       ),
     }
-
-    return transformed
   }
 
   private extractDataPoints(metric: MetricData): DataPoint[] {

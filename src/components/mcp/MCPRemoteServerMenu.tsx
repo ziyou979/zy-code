@@ -224,7 +224,7 @@ export function MCPRemoteServerMenu({
         void handleZyAIClearAuthComplete()
       } else {
         // First Enter: open the browser
-        const connectorsUrl = `${getOauthConfig().CLAUDE_AI_ORIGIN}/settings/connectors`
+        const connectorsUrl = `${getOauthConfig().ZY_CODE_ORIGIN}/settings/connectors`
         setZyAIClearAuthUrl(connectorsUrl)
         setZyAIClearAuthBrowserOpened(true)
         void openBrowser(connectorsUrl)
@@ -251,7 +251,7 @@ export function MCPRemoteServerMenu({
   const serverCommandsCount = filterMcpPromptsByServer(mcp.commands, server.name).length
   const toggleMcpServer = useMcpToggleEnabled()
   const handleZyAIAuth = React.useCallback(async () => {
-    const zyAiBaseUrl = getOauthConfig().CLAUDE_AI_ORIGIN
+    const zyAiBaseUrl = getOauthConfig().ZY_CODE_ORIGIN
     const accountInfo = getOauthAccountInfo()
     const orgUuid = accountInfo?.organizationUuid
     let authUrl: string

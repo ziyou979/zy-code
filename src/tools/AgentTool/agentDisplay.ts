@@ -19,13 +19,13 @@ export type AgentSourceGroup = {
  * Both the CLI and interactive UI should use this to ensure consistent ordering.
  */
 export const AGENT_SOURCE_GROUPS: AgentSourceGroup[] = [
-  { label: 'User agents', source: 'userSettings' },
-  { label: 'Project agents', source: 'projectSettings' },
-  { label: 'Local agents', source: 'localSettings' },
-  { label: 'Managed agents', source: 'policySettings' },
-  { label: 'Plugin agents', source: 'plugin' },
-  { label: 'CLI arg agents', source: 'flagSettings' },
-  { label: 'Built-in agents', source: 'built-in' },
+  { label: 'agents.source.userSettings', source: 'userSettings' },
+  { label: 'agents.source.projectSettings', source: 'projectSettings' },
+  { label: 'agents.source.localSettings', source: 'localSettings' },
+  { label: 'agents.source.policySettings', source: 'policySettings' },
+  { label: 'agents.source.plugin', source: 'plugin' },
+  { label: 'agents.source.flagSettings', source: 'flagSettings' },
+  { label: 'agents.source.builtIn', source: 'built-in' },
 ]
 
 export type ResolvedAgent = AgentDefinition & {

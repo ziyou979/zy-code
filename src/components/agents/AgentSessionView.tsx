@@ -137,9 +137,7 @@ export function AgentSessionView({
   return (
     <Box flexDirection="column" paddingX={1}>
       <Text bold>{tSync('agentView.title')}</Text>
-      <Text dimColor>
-        {tSync('agentView.navigationHint')}
-      </Text>
+      <Text dimColor>{tSync('agentView.navigationHint')}</Text>
       <Box flexDirection="column" marginTop={1}>
         {agentTasks.map(({ id, task }, index) => {
           const isSelected = index === selectedIndex

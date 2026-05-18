@@ -1,11 +1,61 @@
 # ZY Code 同步方案：基线 v2.1.88 → 最新特性同步
 
-> **文档版本**: v1.1  
+> **文档版本**: v2.0  
 > **创建时间**: 2026-05-16  
+> **最后更新**: 2026-05-18  
 > **维护者**: 远空 (朱鹏宇)  
 > **基线版本**: v2.1.88（fork 版本）  
 > **目标版本**: 对齐 v2.1.143+ 特性  
 > **数据来源**: `docs/Claude_Code_Changelog_2.1.88_to_Latest.md` + 代码库调研
+
+---
+
+## 📊 实施状态追踪
+
+### ✅ 已完成
+
+| # | 能力 | 完成时间 | 涉及文件 |
+|---|------|---------|---------|
+| P0 | **System Prompt 结构性重构** | 2026-05-18 | `src/constants/prompts.ts` |
+| | - `getSimpleIntroSection` 精简 | | |
+| | - `## System` → `# Harness`（5 bullets） | | |
+| | - 删除 `getSimpleDoingTasksSection` | | |
+| | - 删除 `getActionsSection` | | |
+| | - 删除 `getUsingYourToolsSection` | | |
+| | - 删除 `getSimpleToneAndStyleSection` | | |
+| | - `getOutputEfficiencySection` → `getTextOutputSection` | | |
+| | - `getSessionSpecificGuidanceSection` 精简为 3 条 | | |
+| | - 清理死代码和未使用导入 | | |
+
+### 🔴 高优先级（待实现）
+
+| # | 能力 | 来源版本 | 状态 | 涉及模块 |
+|---|------|---------|------|---------|
+| 1 | subagent_type 大小写不敏感匹配 | v2.1.140 | ✅ 完成 | `src/tools/AgentTool/constants.ts`, `AgentTool.tsx` |
+| 2 | Subagent 10 分钟超时 | v2.1.113 | ✅ 完成 | `src/tools/AgentTool/runAgent.ts` |
+| 3 | macOS `/private/{etc,var,tmp,home}` 路径保护 | v2.1.113 | ✅ 完成 | `src/utils/permissions/pathValidation.ts` |
+| 4 | 停止钩子死循环防护（8 次上限） | v2.1.143 | ✅ 已有 | `src/query/stopHooks.ts`（之前会话已实现） |
+
+### 🟡 中优先级（待实现）
+
+| # | 能力 | 来源版本 | 状态 | 涉及模块 |
+|---|------|---------|------|---------|
+| 5 | ToolSearch "schemas NOT loaded" 增强提示 | v2.1.143 | ✅ 已有 | `src/tools/ToolSearchTool/prompt.ts` |
+| 6 | `--exclude-dynamic-system-prompt-sections` 标志 | v2.1.98 | ✅ 完成 | `src/entrypoints/cli.tsx` |
+| 7 | OTEL `TRACEPARENT` 注入 Bash 子进程 | v2.1.98 | ⏭️ 跳过 | 缺前置依赖（无 OTEL tracing 基础设施） |
+| 8 | LSP `clientInfo` 标识 | v2.1.98 | ✅ 完成 | `src/services/lsp/LSPServerInstance.ts` |
+| 9 | PowerShell `-ExecutionPolicy Bypass` | v2.1.143 | ✅ 完成 | `src/utils/shell/powershellProvider.ts` |
+| 10 | loop skill "Omit interval" 精简 | v2.1.143 | ⬜ 待实现 | skill description |
+
+### 🟢 低优先级（待评估）
+
+| # | 能力 | 来源版本 | 状态 | 涉及模块 |
+|---|------|---------|------|---------|
+| 11 | `ZY_CODE_NO_FLICKER` 无闪烁渲染 | v2.1.89 | ⬜ 待评估 | ink/rendering |
+| 12 | 子代理 @ 提及建议 | v2.1.89 | ⬜ 待评估 | input autocomplete |
+| 13 | 新增 deferred tools: Monitor, PushNotification | v2.1.143 | ⬜ 待评估 | tools registry |
+| 14 | 新增 skills: less-permission-prompts, init, review, security-review | v2.1.143 | ⬜ 待评估 | skills |
+| 15 | update-config skill 增强描述 | v2.1.143 | ⬜ 待评估 | skill prompt |
 
 ---
 

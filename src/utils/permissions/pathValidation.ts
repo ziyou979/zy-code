@@ -328,6 +328,12 @@ export function isDangerousRemovalPath(resolvedPath: string): boolean {
     return true
   }
 
+  // macOS: /private/{etc,var,tmp,home} 是关键系统目录（/etc → /private/etc 等 symlink）
+  const MACOS_PRIVATE_PROTECTED = new Set(['/private/etc', '/private/var', '/private/tmp', '/private/home'])
+  if (MACOS_PRIVATE_PROTECTED.has(normalizedPath)) {
+    return true
+  }
+
   if (WINDOWS_DRIVE_CHILD_REGEX.test(normalizedPath)) {
     return true
   }

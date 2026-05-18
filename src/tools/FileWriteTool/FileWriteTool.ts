@@ -285,9 +285,7 @@ export const FileWriteTool = buildTool({
         const hint = isPerforceMode()
           ? ` Perforce workspace detected — run \`p4 edit ${fullFilePath}\` first to make the file writable.`
           : ''
-        throw new Error(
-          `Permission denied writing to ${fullFilePath} (${code}).${hint}`,
-        )
+        throw new Error(`Permission denied writing to ${fullFilePath} (${code}).${hint}`)
       }
       throw writeError
     }

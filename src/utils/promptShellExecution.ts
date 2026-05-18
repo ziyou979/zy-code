@@ -74,9 +74,7 @@ export async function executeShellCommandsInPrompt(
     logForDebugging(
       `Skill shell execution disabled by settings, skipping shell commands in ${slashCommandName}`,
     )
-    throw new MalformedCommandError(
-      tSync('skillShell.disabledBySettings'),
-    )
+    throw new MalformedCommandError(tSync('skillShell.disabledBySettings'))
   }
 
   let result = text

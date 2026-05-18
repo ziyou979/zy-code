@@ -522,58 +522,60 @@ const getGrowthBookClient = memoize(
       return { client: thisClient, initialized: Promise.resolve() }
     }
 
-    const initialized = thisClient
-      .init({ timeout: 5000 })
-      .then(async (result) => {
-        // Guard: if this client was replaced by a newer one, skip processing
-        if (client !== thisClient) {
-          if (isInternalBuild()) {
-            logForDebugging('GrowthBook: Skipping init callback for replaced client')
-          }
-          return
-        }
-
-        if (isInternalBuild()) {
-          logForDebugging(
-            `GrowthBook initialized successfully, source: ${result.source}, success: ${result.success}`,
-          )
-        }
-
-        const hadFeatures = await processRemoteEvalPayload(thisClient)
-        // Re-check: processRemoteEvalPayload yields at `await setPayload`.
-        // Microtask-only today (no encryption, no sticky-bucket service), but
-        // the guard at the top of this callback runs before that await;
-        // this runs after.
-        if (client !== thisClient) return
-
-        if (hadFeatures) {
-          for (const feature of pendingExposures) {
-            logExposureForFeature(feature)
-          }
-          pendingExposures.clear()
-          syncRemoteEvalToDisk()
-          // Notify subscribers: remoteEvalFeatureValues is populated and
-          // disk is freshly synced. _CACHED_MAY_BE_STALE reads memory first
-          // (#22295), so subscribers see fresh values immediately.
-          refreshed.emit()
-        }
-
-        // Log what features were loaded
-        if (isInternalBuild()) {
-          const features = thisClient.getFeatures()
-          if (features) {
-            const featureKeys = Object.keys(features)
-            logForDebugging(
-              `GrowthBook loaded ${featureKeys.length} features: ${featureKeys.slice(0, 10).join(', ')}${featureKeys.length > 10 ? '...' : ''}`,
-            )
-          }
-        }
-      })
-      .catch((error) => {
-        if (isInternalBuild()) {
-          logError(toError(error))
-        }
-      })
+    // TODO: 等待 ZY Code 自建 GrowthBook 服务就绪后启用
+    // const initialized = thisClient
+    //   .init({ timeout: 5000 })
+    //   .then(async (result) => {
+    //     // Guard: if this client was replaced by a newer one, skip processing
+    //     if (client !== thisClient) {
+    //       if (isInternalBuild()) {
+    //         logForDebugging('GrowthBook: Skipping init callback for replaced client')
+    //       }
+    //       return
+    //     }
+    //
+    //     if (isInternalBuild()) {
+    //       logForDebugging(
+    //         `GrowthBook initialized successfully, source: ${result.source}, success: ${result.success}`,
+    //       )
+    //     }
+    //
+    //     const hadFeatures = await processRemoteEvalPayload(thisClient)
+    //     // Re-check: processRemoteEvalPayload yields at `await setPayload`.
+    //     // Microtask-only today (no encryption, no sticky-bucket service), but
+    //     // the guard at the top of this callback runs before that await;
+    //     // this runs after.
+    //     if (client !== thisClient) return
+    //
+    //     if (hadFeatures) {
+    //       for (const feature of pendingExposures) {
+    //         logExposureForFeature(feature)
+    //       }
+    //       pendingExposures.clear()
+    //       syncRemoteEvalToDisk()
+    //       // Notify subscribers: remoteEvalFeatureValues is populated and
+    //       // disk is freshly synced. _CACHED_MAY_BE_STALE reads memory first
+    //       // (#22295), so subscribers see fresh values immediately.
+    //       refreshed.emit()
+    //     }
+    //
+    //     // Log what features were loaded
+    //     if (isInternalBuild()) {
+    //       const features = thisClient.getFeatures()
+    //       if (features) {
+    //         const featureKeys = Object.keys(features)
+    //         logForDebugging(
+    //           `GrowthBook loaded ${featureKeys.length} features: ${featureKeys.slice(0, 10).join(', ')}${featureKeys.length > 10 ? '...' : ''}`,
+    //         )
+    //       }
+    //     }
+    //   })
+    //   .catch((error) => {
+    //     if (isInternalBuild()) {
+    //       logError(toError(error))
+    //     }
+    //   })
+    const initialized = Promise.resolve()
 
     // Register cleanup handlers for graceful shutdown (named refs so resetGrowthBook can remove them)
     currentBeforeExitHandler = () => client?.destroy()
@@ -969,38 +971,40 @@ export async function refreshGrowthBookFeatures(): Promise<void> {
       return
     }
 
-    await growthBookClient.refreshFeatures()
-
-    // Guard: if this client was replaced during the in-flight refresh
-    // (e.g. refreshGrowthBookAfterAuthChange ran), skip processing the
-    // stale payload. Mirrors the init-callback guard above.
-    if (growthBookClient !== client) {
-      if (isInternalBuild()) {
-        logForDebugging('GrowthBook: Skipping refresh processing for replaced client')
-      }
-      return
-    }
-
-    // Rebuild remoteEvalFeatureValues from the refreshed payload so that
-    // _BLOCKS_ON_INIT callers (e.g. getMaxVersion for the auto-update kill
-    // switch) see fresh values, not the stale init-time snapshot.
-    const hadFeatures = await processRemoteEvalPayload(growthBookClient)
-    // Same re-check as init path: covers the setPayload yield inside
-    // processRemoteEvalPayload (the guard above only covers refreshFeatures).
-    if (growthBookClient !== client) return
-
-    if (isInternalBuild()) {
-      logForDebugging('GrowthBook: Light refresh completed')
-    }
-
-    // Gate on hadFeatures: if the payload was empty/malformed,
-    // remoteEvalFeatureValues wasn't rebuilt — skip both the no-op disk
-    // write and the spurious subscriber churn (clearCommandMemoizationCaches
-    // + getCommands + 4× model re-renders).
-    if (hadFeatures) {
-      syncRemoteEvalToDisk()
-      refreshed.emit()
-    }
+    // TODO: 等待 ZY Code 自建 GrowthBook 服务就绪后启用
+    // await growthBookClient.refreshFeatures()
+    //
+    // // Guard: if this client was replaced during the in-flight refresh
+    // // (e.g. refreshGrowthBookAfterAuthChange ran), skip processing the
+    // // stale payload. Mirrors the init-callback guard above.
+    // if (growthBookClient !== client) {
+    //   if (isInternalBuild()) {
+    //     logForDebugging('GrowthBook: Skipping refresh processing for replaced client')
+    //   }
+    //   return
+    // }
+    //
+    // // Rebuild remoteEvalFeatureValues from the refreshed payload so that
+    // // _BLOCKS_ON_INIT callers (e.g. getMaxVersion for the auto-update kill
+    // // switch) see fresh values, not the stale init-time snapshot.
+    // const hadFeatures = await processRemoteEvalPayload(growthBookClient)
+    // // Same re-check as init path: covers the setPayload yield inside
+    // // processRemoteEvalPayload (the guard above only covers refreshFeatures).
+    // if (growthBookClient !== client) return
+    //
+    // if (isInternalBuild()) {
+    //   logForDebugging('GrowthBook: Light refresh completed')
+    // }
+    //
+    // // Gate on hadFeatures: if the payload was empty/malformed,
+    // // remoteEvalFeatureValues wasn't rebuilt — skip both the no-op disk
+    // // write and the spurious subscriber churn (clearCommandMemoizationCaches
+    // // + getCommands + 4× model re-renders).
+    // if (hadFeatures) {
+    //   syncRemoteEvalToDisk()
+    //   refreshed.emit()
+    // }
+    return
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {
       throw error

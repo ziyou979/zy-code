@@ -693,7 +693,21 @@ export async function* runAgent({
   // Track the last recorded message UUID for parent chain continuity
   let lastRecordedUuid: UUID | null = (initialMessages.at(-1)?.uuid as any) ?? null
 
+  // 子代理空闲超时：10 分钟无任何消息则自动中止，防止挂起
+  const SUBAGENT_IDLE_TIMEOUT_MS = 10 * 60 * 1000
+  let idleTimedOut = false
+  let idleTimer: ReturnType<typeof setTimeout> | null = null
+
+  const resetIdleTimer = () => {
+    if (idleTimer) clearTimeout(idleTimer)
+    idleTimer = setTimeout(() => {
+      idleTimedOut = true
+      agentAbortController.abort()
+    }, SUBAGENT_IDLE_TIMEOUT_MS)
+  }
+
   try {
+    resetIdleTimer()
     for await (const message of query({
       messages: initialMessages,
       systemPrompt: agentSystemPrompt,
@@ -704,6 +718,7 @@ export async function* runAgent({
       querySource,
       maxTurns: maxTurns ?? agentDefinition.maxTurns,
     })) {
+      resetIdleTimer()
       onQueryProgress?.()
       // Forward subagent API request starts to parent's metrics display
       // so TTFT/OTPS update during subagent execution.
@@ -742,6 +757,11 @@ export async function* runAgent({
     }
 
     if (agentAbortController.signal.aborted) {
+      if (idleTimedOut) {
+        throw new Error(
+          `Agent '${agentDefinition.agentType}' timed out after 10 minutes of inactivity. The agent may be stuck or waiting for a response that will never arrive.`,
+        )
+      }
       throw new AbortError()
     }
 
@@ -750,6 +770,8 @@ export async function* runAgent({
       agentDefinition.callback()
     }
   } finally {
+    // 清理空闲超时计时器
+    if (idleTimer) clearTimeout(idleTimer)
     // Clean up agent-specific MCP servers (runs on normal completion, abort, or error)
     await mcpCleanup()
     // Clean up agent's session hooks

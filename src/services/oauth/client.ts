@@ -6,8 +6,8 @@ import {
 } from 'src/services/analytics/index.js'
 import {
   ALL_OAUTH_SCOPES,
-  CLAUDE_AI_INFERENCE_SCOPE,
-  CLAUDE_AI_OAUTH_SCOPES,
+  ZY_CODE_INFERENCE_SCOPE,
+  ZY_CODE_OAUTH_SCOPES,
   getOauthConfig,
 } from '../../constants/oauth.js'
 import {
@@ -33,7 +33,7 @@ type BillingType = any
  * @private Only call this if you're OAuth / auth related code!
  */
 export function shouldUseZyAIAuth(scopes: string[] | undefined): boolean {
-  return Boolean(scopes?.includes(CLAUDE_AI_INFERENCE_SCOPE))
+  return Boolean(scopes?.includes(ZY_CODE_INFERENCE_SCOPE))
 }
 
 export function parseScopes(scopeString?: string): string[] {
@@ -62,7 +62,7 @@ export function buildAuthUrl({
   loginMethod?: string
 }): string {
   const authUrlBase = loginWithZyAi
-    ? getOauthConfig().CLAUDE_AI_AUTHORIZE_URL
+    ? getOauthConfig().ZY_CODE_AUTHORIZE_URL
     : getOauthConfig().CONSOLE_AUTHORIZE_URL
 
   const authUrl = new URL(authUrlBase)
@@ -74,7 +74,7 @@ export function buildAuthUrl({
     isManual ? getOauthConfig().MANUAL_REDIRECT_URL : `http://localhost:${port}/callback`,
   )
   const scopesToUse = inferenceOnly
-    ? [CLAUDE_AI_INFERENCE_SCOPE] // Long-lived inference-only tokens
+    ? [ZY_CODE_INFERENCE_SCOPE] // Long-lived inference-only tokens
     : ALL_OAUTH_SCOPES
   authUrl.searchParams.append('scope', scopesToUse.join(' '))
   authUrl.searchParams.append('code_challenge', codeChallenge)
@@ -151,7 +151,7 @@ export async function refreshOAuthToken(
     // initial authorize granted (see ALLOWED_SCOPE_EXPANSIONS), so this is
     // safe even for tokens issued before scopes were added to the app's
     // registered oauth_scope.
-    scope: (requestedScopes?.length ? requestedScopes : CLAUDE_AI_OAUTH_SCOPES).join(' '),
+    scope: (requestedScopes?.length ? requestedScopes : ZY_CODE_OAUTH_SCOPES).join(' '),
   }
 
   try {

@@ -54,16 +54,14 @@ export function OutputLine({ content, verbose, isError, isWarning, linkifyUrls }
   const expandShellOutput = useExpandShellOutput()
   const inVirtualList = React.useContext(InVirtualListContext)
   const shouldShowFull = verbose || expandShellOutput
-  let formattedContent
+
   let formatted = tryJsonFormatContent(content)
   if (linkifyUrls) {
     formatted = linkifyUrlsInText(formatted)
   }
-  if (shouldShowFull) {
-    formattedContent = stripUnderlineAnsi(formatted)
-  } else {
-    formattedContent = stripUnderlineAnsi(renderTruncatedContent(formatted, columns, inVirtualList))
-  }
+  let formattedContent = shouldShowFull
+    ? stripUnderlineAnsi(formatted)
+    : stripUnderlineAnsi(renderTruncatedContent(formatted, columns, inVirtualList))
   const color = isError ? 'error' : isWarning ? 'warning' : undefined
   const finalContent = renderContentWithFileLinks(formattedContent, false)
   return (

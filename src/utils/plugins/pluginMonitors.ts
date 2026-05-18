@@ -110,17 +110,14 @@ function startMonitor(pluginName: string, config: MonitorConfig): void {
     })
 
     child.on('error', (error) => {
-      logForDebugging(
-        `Monitor ${pluginName}/${config.name} error: ${error.message}`,
-        { level: 'error' },
-      )
+      logForDebugging(`Monitor ${pluginName}/${config.name} error: ${error.message}`, {
+        level: 'error',
+      })
       removeRunningMonitor(pluginName, config.name)
     })
 
     child.on('exit', (code) => {
-      logForDebugging(
-        `Monitor ${pluginName}/${config.name} exited with code ${code}`,
-      )
+      logForDebugging(`Monitor ${pluginName}/${config.name} exited with code ${code}`)
       removeRunningMonitor(pluginName, config.name)
     })
 

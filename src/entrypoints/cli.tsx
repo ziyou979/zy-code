@@ -65,10 +65,23 @@ async function main(): Promise<void> {
     const { getMainLoopModel } = await import('../utils/model/model.js')
     const modelIdx = args.indexOf('--model')
     const model = (modelIdx !== -1 && args[modelIdx + 1]) || getMainLoopModel()
-    const { getSystemPrompt } = await import('../constants/prompts.js')
+    const { getSystemPrompt, SYSTEM_PROMPT_DYNAMIC_BOUNDARY } = await import(
+      '../constants/prompts.js'
+    )
     const prompt = await getSystemPrompt([], model)
-    // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(prompt.join('\n'))
+
+    // --exclude-dynamic-system-prompt-sections: 仅输出静态区（boundary 之前），
+    // 改进跨用户 prompt 缓存对比。
+    const excludeDynamic = args.includes('--exclude-dynamic-system-prompt-sections')
+    if (excludeDynamic) {
+      const boundaryIdx = prompt.indexOf(SYSTEM_PROMPT_DYNAMIC_BOUNDARY)
+      const staticSections = boundaryIdx !== -1 ? prompt.slice(0, boundaryIdx) : prompt
+      // biome-ignore lint/suspicious/noConsole:: intentional console output
+      console.log(staticSections.filter(Boolean).join('\n'))
+    } else {
+      // biome-ignore lint/suspicious/noConsole:: intentional console output
+      console.log(prompt.join('\n'))
+    }
     return
   }
   if (process.argv[2] === '--claude-in-chrome-mcp') {

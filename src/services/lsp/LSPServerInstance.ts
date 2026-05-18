@@ -168,6 +168,12 @@ export function createLSPServerInstance(
       const initParams: InitializeParams = {
         processId: process.pid,
 
+        // 向 LSP 服务器标识客户端身份（v2.1.98 同步）
+        clientInfo: {
+          name: 'zy-code',
+          version: MACRO.VERSION,
+        },
+
         // Pass server-specific initialization options from plugin config
         // Required by vue-language-server, optional for others
         // Provide empty object as default to avoid undefined errors in servers

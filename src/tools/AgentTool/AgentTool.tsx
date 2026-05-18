@@ -94,6 +94,7 @@ import {
   AGENT_TOOL_NAME,
   LEGACY_AGENT_TOOL_NAME,
   ONE_SHOT_BUILTIN_AGENT_TYPES,
+  normalizeAgentType,
 } from './constants.js'
 import {
   buildForkedMessages,
@@ -417,7 +418,7 @@ export const AgentTool = buildTool({
       // Set agent definition color for grouped UI display before spawning
       const agentDef = subagent_type
         ? toolUseContext.options.agentDefinitions.activeAgents.find(
-            (a) => a.agentType === subagent_type,
+            (a) => normalizeAgentType(a.agentType) === normalizeAgentType(subagent_type),
           )
         : undefined
       if (agentDef?.color) {
@@ -490,10 +491,13 @@ export const AgentTool = buildTool({
         appState.toolPermissionContext,
         AGENT_TOOL_NAME,
       )
-      const found = agents.find((agent) => agent.agentType === effectiveType)
+      const normalizedEffective = normalizeAgentType(effectiveType)
+      const found = agents.find((agent) => normalizeAgentType(agent.agentType) === normalizedEffective)
       if (!found) {
         // Check if the agent exists but is denied by permission rules
-        const agentExistsButDenied = allAgents.find((agent) => agent.agentType === effectiveType)
+        const agentExistsButDenied = allAgents.find(
+          (agent) => normalizeAgentType(agent.agentType) === normalizedEffective,
+        )
         if (agentExistsButDenied) {
           const denyRule = getDenyRuleForAgent(
             appState.toolPermissionContext,

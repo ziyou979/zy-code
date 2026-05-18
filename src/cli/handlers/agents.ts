@@ -3,6 +3,7 @@
  * Dynamically imported only when `zy agents` runs.
  */
 
+import { tSync } from '../../i18n/index.js'
 import {
   AGENT_SOURCE_GROUPS,
   compareAgentsByName,
@@ -43,7 +44,7 @@ export async function agentsHandler(): Promise<void> {
 
     if (groupAgents.length === 0) continue
 
-    lines.push(`${label}:`)
+    lines.push(`${tSync(label)}:`)
     for (const agent of groupAgents) {
       if (agent.overriddenBy) {
         const winnerSource = getOverrideSourceLabel(agent.overriddenBy)

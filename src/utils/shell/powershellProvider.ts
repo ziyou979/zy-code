@@ -1,15 +1,26 @@
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { join as posixJoin } from 'path/posix'
+import { isEnvTruthy } from '../envUtils.js'
 import { getSessionEnvVars } from '../sessionEnvVars.js'
 import type { ShellProvider } from './shellProvider.js'
 
 /**
  * PowerShell invocation flags + command. Shared by the provider's getSpawnArgs
  * and the hook spawn path in hooks.ts so the flag set stays in one place.
+ *
+ * 默认传递 -ExecutionPolicy Bypass 以避免脚本被阻止（v2.1.143 同步）。
+ * 通过 ZY_CODE_POWERSHELL_RESPECT_EXEC_POLICY=1 可 opt-out。
  */
 export function buildPowerShellArgs(cmd: string): string[] {
-  return ['-NoProfile', '-NonInteractive', '-Command', cmd]
+  const respectPolicy = isEnvTruthy(process.env.ZY_CODE_POWERSHELL_RESPECT_EXEC_POLICY)
+  return [
+    '-NoProfile',
+    '-NonInteractive',
+    ...(respectPolicy ? [] : ['-ExecutionPolicy', 'Bypass']),
+    '-Command',
+    cmd,
+  ]
 }
 
 /**

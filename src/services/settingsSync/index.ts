@@ -16,7 +16,7 @@ import pickBy from 'lodash-es/pickBy.js'
 import { dirname } from 'path'
 import { getIsInteractive } from '../../bootstrap/state.js'
 import {
-  CLAUDE_AI_INFERENCE_SCOPE,
+  ZY_CODE_INFERENCE_SCOPE,
   getOauthConfig,
   OAUTH_BETA_HEADER,
 } from '../../constants/oauth.js'
@@ -198,7 +198,7 @@ function isUsingOAuth(): boolean {
   }
 
   const tokens = getZyAIOAuthTokens()
-  return Boolean(tokens?.accessToken && tokens.scopes?.includes(CLAUDE_AI_INFERENCE_SCOPE))
+  return Boolean(tokens?.accessToken && tokens.scopes?.includes(ZY_CODE_INFERENCE_SCOPE))
 }
 
 function getSettingsSyncEndpoint(): string {

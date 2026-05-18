@@ -88,7 +88,7 @@ export class AuthCodeListener {
 
     // Default behavior: Choose success page based on granted permissions
     const successUrl = shouldUseZyAIAuth(scopes)
-      ? getOauthConfig().CLAUDEAI_SUCCESS_URL
+      ? getOauthConfig().ZY_CODE_SUCCESS_URL
       : getOauthConfig().CONSOLE_SUCCESS_URL
 
     // Send browser to success page
@@ -107,7 +107,7 @@ export class AuthCodeListener {
     if (!this.pendingResponse) return
 
     // TODO: swap to a different url once we have an error page
-    const errorUrl = getOauthConfig().CLAUDEAI_SUCCESS_URL
+    const errorUrl = getOauthConfig().ZY_CODE_SUCCESS_URL
 
     // Send browser to error page
     this.pendingResponse.writeHead(302, { Location: errorUrl })

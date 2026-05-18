@@ -644,9 +644,12 @@ export const zhCN: TranslationResource = {
   'goal.deactivated': '目标模式已停止 — {turnCount} 轮，{elapsed}，{tokens} tokens（${cost}）',
   'goal.notActive': '当前没有活跃目标。使用 `/goal <描述>` 设定目标。',
   'goal.alreadyActive': '已有活跃目标。请先使用 `/goal stop` 结束当前目标。',
-  'goal.status': '🎯 **目标**: {description}\n  轮次: {turnCount} | 耗时: {elapsed} | Tokens: {tokens} | 费用: ${cost}',
-  'goal.nudgeMessage': '继续推进目标："{description}"（第 {turnCount} 轮）。评估进展并执行下一步。如果目标已完全达成，请明确说明。',
-  'goal.activatedPrompt': '🎯 目标模式已激活。我将自主推进以下目标：\n\n> {description}\n\n我会跨轮次持续工作直到目标达成。使用 `/goal` 查看进度，`/goal stop` 结束。',
+  'goal.status':
+    '🎯 **目标**: {description}\n  轮次: {turnCount} | 耗时: {elapsed} | Tokens: {tokens} | 费用: ${cost}',
+  'goal.nudgeMessage':
+    '继续推进目标："{description}"（第 {turnCount} 轮）。评估进展并执行下一步。如果目标已完全达成，请明确说明。',
+  'goal.activatedPrompt':
+    '🎯 目标模式已激活。我将自主推进以下目标：\n\n> {description}\n\n我会跨轮次持续工作直到目标达成。使用 `/goal` 查看进度，`/goal stop` 结束。',
 
   // Agent View — 运行时会话概览
   'agentView.title': '🤖 Agent 会话',
@@ -1321,7 +1324,7 @@ export const zhCN: TranslationResource = {
   'commands.tag': '为当前会话切换可搜索标签',
   'commands.theme': '更换主题',
   'commands.feedback': '提交关于 ZY Code 的反馈',
-  'commands.goal': '设定目标，跨轮次自主执行',
+  'commands.goal': '设定目标，持续工作直到条件满足',
   'commands.review': '审查拉取请求',
   'commands.ultrareview': '在分支中查找并验证 Bug，在 ZY Code Web 版中运行',
   'commands.rewind': '将代码和/或对话恢复到之前的时间点',
@@ -2046,11 +2049,19 @@ export const zhCN: TranslationResource = {
   'agents.builtInAgentsDesc': '内置 agents 默认提供，无法修改。',
   'agents.builtInAlwaysAvailable': '（始终可用）',
   'agents.noAgentsFound': '未找到 agents',
-  'agents.noAgentsHelpLine1': '未找到 agents。创建 Zy 可以委托的专用子智能体。',
+  'agents.noAgentsHelpLine1': '未找到 agents。创建 ZY code 可以委托的专用子智能体。',
   'agents.noAgentsHelpLine2': '每个子智能体都有自己的上下文窗口、自定义系统提示和特定工具。',
   'agents.noAgentsTryCreating':
     '尝试创建：Code Reviewer、Code Simplifier、Security Reviewer、Tech Lead 或 UX Reviewer。',
   'agents.agentsCount': '{count} 个 agents',
+  'agents.source.all': 'Agents',
+  'agents.source.builtIn': '内置 agents',
+  'agents.source.plugin': '插件 agents',
+  'agents.source.userSettings': '用户 agents',
+  'agents.source.projectSettings': '项目 agents',
+  'agents.source.localSettings': '本地 agents',
+  'agents.source.policySettings': '管理 agents',
+  'agents.source.flagSettings': 'CLI 参数 agents',
   'agents.shadowedBy': '被 {source} 覆盖',
   'agents.memoryLabel': '{memory} 记忆',
   'agents.viewAgent': '查看 agent',
