@@ -26,8 +26,8 @@ import type { BuiltInAgentDefinition } from './loadAgentsDir.js'
 export function isForkSubagentEnabled(): boolean {
   if (feature('FORK_SUBAGENT')) {
     if (isCoordinatorMode()) return false
-    if (getIsNonInteractiveSession()) return false
-    return true
+    return !getIsNonInteractiveSession();
+
   }
   return false
 }

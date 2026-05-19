@@ -1,6 +1,9 @@
 import { basename } from 'path'
 import * as React from 'react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { getGlobalConfig } from '../utils/config.js'
+import { resolveThemeSetting } from '../utils/systemTheme.js'
+import { getTheme } from '../utils/theme.js'
 import {
   EFFORT_HIGH,
   EFFORT_LOW,
@@ -148,15 +151,8 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
     return () => clearInterval(id)
   }, [isLoading])
 
-  type SegmentColor =
-    | 'ansi:yellow'
-    | 'ansi:blue'
-    | 'ansi:cyan'
-    | 'ansi:magenta'
-    | 'ansi:green'
-    | 'ansi:red'
-    | 'inactive'
-  type Segment = { text: string; color: SegmentColor; priority: number }
+  const theme = getTheme(resolveThemeSetting(getGlobalConfig().theme))
+  type Segment = { text: string; color: string; priority: number }
   const segments: Segment[] = []
 
   // 强制引用 tick 以避免 unused variable 警告
@@ -175,7 +171,7 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
         dirStr += ' ●'
       }
     }
-    segments.push({ text: dirStr, color: 'ansi:blue', priority: MODULE_PRIORITY.directory })
+    segments.push({ text: dirStr, color: theme.rainbow_blue_shimmer, priority: MODULE_PRIORITY.directory })
   }
 
   // 2. 模型名 · Effort → cyan（核心智能）
@@ -183,17 +179,24 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
     const level = getDisplayedEffortLevel(mainLoopModel, effortValue)
     const i18nKey = EFFORT_I18N_KEYS[level] ?? 'effort.medium'
     const levelName = tSync(i18nKey)
+    const effortColors: Record<string, string> = {
+      low: theme.rainbow_indigo_shimmer,
+      medium: theme.rainbow_violet_shimmer,
+      high: theme.rainbow_orange_shimmer,
+      max: theme.rainbow_red_shimmer,
+    }
     if (thinkingEnabled) {
-      segments.push({
-        text: `${mainLoopModel} · ↻ ${levelName}`,
-        color: 'ansi:cyan',
-        priority: MODULE_PRIORITY.model,
-      })
-    } else {
+      const modelColor = effortColors[level] ?? theme.rainbow_violet_shimmer
       const icon = EFFORT_ICONS[level] ?? EFFORT_MEDIUM
       segments.push({
         text: `${mainLoopModel} · ${icon} ${levelName}`,
-        color: 'ansi:cyan',
+        color: modelColor,
+        priority: MODULE_PRIORITY.model,
+      })
+    } else {
+      segments.push({
+        text: `${mainLoopModel}`,
+        color: theme.rainbow_violet_shimmer,
         priority: MODULE_PRIORITY.model,
       })
     }
@@ -210,8 +213,8 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
         currentUsage.cacheCreationInputTokens +
         currentUsage.cacheReadInputTokens
       const bar = renderContextBar(percentages.used)
-      const contextColor: SegmentColor =
-        percentages.used >= 75 ? 'ansi:red' : percentages.used >= 50 ? 'ansi:yellow' : 'ansi:green'
+      const contextColor =
+        percentages.used >= 75 ? theme.error : percentages.used >= 50 ? theme.warning : theme.success
       segments.push({
         text: `⛁ ${formatTokens(usedTokens)}/${formatTokens(contextWindowSize)} ${bar}`,
         color: contextColor,
@@ -220,7 +223,7 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
     } else {
       segments.push({
         text: `⛁ ${formatTokens(contextWindowSize)}`,
-        color: 'ansi:green',
+        color: theme.success,
         priority: MODULE_PRIORITY.context,
       })
     }
@@ -233,7 +236,7 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
     if (totalIn > 0 || totalOut > 0) {
       segments.push({
         text: `↑ ${formatTokens(totalIn)}  ↓ ${formatTokens(totalOut)}`,
-        color: 'ansi:blue',
+        color: theme.suggestion,
         priority: MODULE_PRIORITY.tokens,
       })
     }
@@ -245,7 +248,7 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
     if (cost > 0) {
       segments.push({
         text: `💰 ￥${cost.toFixed(2)}`,
-        color: 'ansi:yellow',
+        color: theme.warning,
         priority: MODULE_PRIORITY.cost,
       })
     }
@@ -262,7 +265,7 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
       let taskInfo = `🛰 ${runningTasks.length}`
       if (completedTasks.length > 0) taskInfo += ` ✓${completedTasks.length}`
       if (failedTasks.length > 0) taskInfo += ` ✗${failedTasks.length}`
-      segments.push({ text: taskInfo, color: 'ansi:green', priority: MODULE_PRIORITY.agents })
+      segments.push({ text: taskInfo, color: theme.permission, priority: MODULE_PRIORITY.agents })
     }
   }
 
@@ -271,7 +274,7 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
     if (memoryRss > 0) {
       segments.push({
         text: `💾 ${formatMemory(memoryRss)}`,
-        color: 'inactive',
+        color: theme.inactive,
         priority: MODULE_PRIORITY.memory,
       })
     }
@@ -309,7 +312,7 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
         {visibleSegments.map((seg, i) => (
           <React.Fragment key={i}>
             {i > 0 && <Text dimColor> │ </Text>}
-            <Text color={seg.color}>{seg.text}</Text>
+            <Text color={seg.color as import('../ink/styles.js').Color}>{seg.text}</Text>
           </React.Fragment>
         ))}
       </Text>

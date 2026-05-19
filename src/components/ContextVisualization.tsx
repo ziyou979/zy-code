@@ -7,9 +7,9 @@ import { generateContextSuggestions } from '../utils/contextSuggestions.js'
 import { getDisplayPath } from '../utils/file.js'
 import { formatTokens } from '../utils/format.js'
 import { getSourceDisplayName, type SettingSource } from '../utils/settings/constants.js'
-import { plural } from '../utils/stringUtils.js'
 import { ContextSuggestions } from './ContextSuggestions.js'
 const RESERVED_CATEGORY_NAME = 'Autocompact buffer'
+const FREE_CATEGORY_NAME = 'Free space'
 
 /**
  * One-liner for the legend header showing what context-collapse has done.
@@ -137,7 +137,7 @@ export function ContextVisualization({ data }: Props) {
   const visibleCategories = categories.filter(
     (cat) =>
       cat.tokens > 0 &&
-      cat.name !== 'Free space' &&
+      cat.name !== FREE_CATEGORY_NAME &&
       cat.name !== RESERVED_CATEGORY_NAME &&
       !cat.isDeferred,
   )
@@ -147,14 +147,14 @@ export function ContextVisualization({ data }: Props) {
   const gridRowElements = gridRows.map((row, rowIndex) => (
     <Box key={rowIndex} flexDirection="row" marginLeft={-1}>
       {row.map((square, colIndex) => {
-        if (square.categoryName === 'Free space') {
+        if (square.categoryName === FREE_CATEGORY_NAME) {
           return (
             <Text key={colIndex} dimColor={true}>
               {'\u26F6 '}
             </Text>
           )
         }
-        if (square.categoryName === tSync('contextVis.autocompactBuffer')) {
+        if (square.categoryName === RESERVED_CATEGORY_NAME) {
           return (
             <Text key={colIndex} color={square.color}>
               {'\u26DD '}
@@ -201,14 +201,14 @@ export function ContextVisualization({ data }: Props) {
       </Box>
     )
   })
-  const freeSpaceItem = (categories.find((cat) => cat.name === 'Free space')?.tokens ?? 0) > 0 && (
+  const freeSpaceItem = (categories.find((cat) => cat.name === FREE_CATEGORY_NAME)?.tokens ?? 0) > 0 && (
     <Box>
       <Text dimColor={true}>⛶</Text>
       <Text> {tSync('contextVis.freeSpace')}: </Text>
       <Text dimColor={true}>
-        {formatTokens(categories.find((cat) => cat.name === 'Free space')?.tokens || 0)} (
+        {formatTokens(categories.find((cat) => cat.name === FREE_CATEGORY_NAME)?.tokens || 0)} (
         {(
-          ((categories.find((cat) => cat.name === 'Free space')?.tokens || 0) / rawMaxTokens) *
+          ((categories.find((cat) => cat.name === FREE_CATEGORY_NAME)?.tokens || 0) / rawMaxTokens) *
           100
         ).toFixed(1)}
         %)

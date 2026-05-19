@@ -1105,6 +1105,7 @@ export const en: TranslationResource = {
   'commands.addDir': 'Add a new working directory',
   'commands.advisor': 'Configure the advisor model',
   'commands.agents': 'Manage agent configurations',
+  'commands.bg': 'Send this session to the background and free the terminal',
   'commands.branch': 'Create a branch of the current conversation at this point',
   'commands.btw': 'Ask a quick side question without interrupting the main conversation',
   'commands.chrome': 'Claude in Chrome (Beta) settings',

@@ -391,6 +391,9 @@ export function convertThinkingForOpenAI(
  * - 已是 OpenAI 格式（含顶层 type）：原样返回
  * - 'json_object' 直接返回
  * - 'json_schema' 取 inner json_schema 或 schema 字段
+ *
+ * OpenAI 的 json_schema 字段必须是 {name, schema, strict}（不是裸 JSON Schema），
+ * 因此当输入为原始 JSON Schema 时需自动包装一层。
  */
 export function convertOutputFormatToResponseFormat(
   outputConfig: Record<string, unknown> | undefined,
@@ -403,13 +406,24 @@ export function convertOutputFormatToResponseFormat(
   if (format.type === 'json_object') return { type: 'json_object' }
 
   if (format.type === 'json_schema') {
-    const jsonSchema =
+    let jsonSchema =
       (format.json_schema as Record<string, unknown>) ?? (format.schema as Record<string, unknown>)
-    if (jsonSchema) {
-      return {
-        type: 'json_schema',
-        json_schema: jsonSchema as unknown as OpenAI.ResponseFormatJSONSchema['json_schema'],
+    if (!jsonSchema) return undefined
+
+    // 原始 JSON Schema 的顶层有 type 字段（如 "object"），却没有 schema 子字段；
+    // 已包装的格式（如 Anthropic/OpenAI 原生 wrapper）顶层有 name/schema/strict。
+    // 当输入为原始 JSON Schema 时，需包裹成 OpenAI 要求的 {name, schema, strict}。
+    if (!jsonSchema.schema) {
+      jsonSchema = {
+        name: 'response',
+        schema: jsonSchema,
+        strict: true,
       }
+    }
+
+    return {
+      type: 'json_schema',
+      json_schema: jsonSchema as unknown as OpenAI.ResponseFormatJSONSchema['json_schema'],
     }
   }
 

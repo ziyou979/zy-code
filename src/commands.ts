@@ -2,7 +2,7 @@
 import { tSync } from './i18n/index.js'
 import { isInternalBuild } from './utils/envUtils.js'
 import addDir from './commands/add-dir/index.js'
-import bg from './commands/bg/index.js'
+import background from 'src/commands/background/index.js'
 import goal from './commands/goal/index.js'
 import powerup from './commands/powerup/index.js'
 import autofixPr from './commands/autofix-pr/index.js'
@@ -213,7 +213,7 @@ const COMMANDS = memoize((): Command[] => [
   addDir,
   advisor,
   agents,
-  bg,
+  background,
   branch,
   btw,
   chrome,
@@ -650,6 +650,7 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   'add-dir': 'commands.addDir',
   advisor: 'commands.advisor',
   agents: 'commands.agents',
+  background: 'commands.bg',
   batch: 'commands.batch',
   branch: 'commands.branch',
   btw: 'commands.btw',

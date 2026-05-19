@@ -1,3 +1,4 @@
+import { resolve } from 'path'
 import React from 'react'
 import { pathToFileURL } from 'url'
 import { Ansi } from '../ink.js'
@@ -21,6 +22,17 @@ export function FilePathLink({ filePath, children }: Props) {
 
 // 匹配文件路径 + 行号模式，如 src/foo.ts:123 或 /abs/path.go:10-20
 const FILE_PATH_RE = /((?:\.\.\/|\.\/|\/)?(?:[\w.-]+\/)*[\w.-]+\.\w{1,10}):(\d+)(?:-(\d+))?/g
+
+/**
+ * 用 OSC 8 超链接序列包裹文件路径显示文本。
+ * 生成内联 ANSI 字符串，避免使用 Ink 组件导致块级换行。
+ * 终端支持 OSC 8 时可点击跳转，不支持时仅显示纯文本。
+ */
+function wrapWithFileLink(filePath: string, display: string): string {
+  const fileUrl = pathToFileURL(resolve(filePath)).href
+  // OSC 8 格式：\x1b]8;;URL\x07 显示文本 \x1b]8;;\x07
+  return `\x1b]8;;${fileUrl}\x07${display}\x1b]8;;\x07`
+}
 
 /**
  * 构建纯文本索引到原始文本索引的映射。
@@ -113,13 +125,14 @@ export function renderContentWithFileLinks(content: string, dimColor = false): R
       )
     }
 
-    // 渲染文件路径 + 行号为可点击超链接（用纯文本显示避免嵌套 Text）
+    // 将文件路径用 OSC 8 超链接包裹后拼入文本，整体用 <Ansi> 渲染避免换行
     const filePath = match[1]!
     const display = match[0]
+    const linked = wrapWithFileLink(filePath, display)
     parts.push(
-      <FilePathLink key={parts.length} filePath={filePath}>
-        {display}
-      </FilePathLink>,
+      <Ansi key={parts.length} dimColor={dimColor}>
+        {linked}
+      </Ansi>,
     )
     lastOriginalIndex = originalEnd
   }
@@ -153,13 +166,14 @@ function matchFileLinksSimple(content: string, dimColor: boolean): React.ReactNo
         </Ansi>,
       )
     }
-    // 渲染文件路径 + 行号为可点击超链接
+    // 将文件路径用 OSC 8 超链接包裹后拼入文本，整体用 <Ansi> 渲染避免换行
     const filePath = match[1]!
     const display = match[0]
+    const linked = wrapWithFileLink(filePath, display)
     parts.push(
-      <FilePathLink key={parts.length} filePath={filePath}>
-        {display}
-      </FilePathLink>,
+      <Ansi key={parts.length} dimColor={dimColor}>
+        {linked}
+      </Ansi>,
     )
     lastIndex = match.index + display.length
   }

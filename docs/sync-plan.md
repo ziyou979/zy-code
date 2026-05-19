@@ -45,17 +45,17 @@
 | 7 | OTEL `TRACEPARENT` 注入 Bash 子进程 | v2.1.98 | ⏭️ 跳过 | 缺前置依赖（无 OTEL tracing 基础设施） |
 | 8 | LSP `clientInfo` 标识 | v2.1.98 | ✅ 完成 | `src/services/lsp/LSPServerInstance.ts` |
 | 9 | PowerShell `-ExecutionPolicy Bypass` | v2.1.143 | ✅ 完成 | `src/utils/shell/powershellProvider.ts` |
-| 10 | loop skill "Omit interval" 精简 | v2.1.143 | ⬜ 待实现 | skill description |
+| 10 | loop skill "Omit interval" 精简 | v2.1.143 | ✅ 已有 | `src/skills/bundled/loop.ts`（默认 10m） |
 
-### 🟢 低优先级（待评估）
+### 🟢 低优先级（评估完成）
 
-| # | 能力 | 来源版本 | 状态 | 涉及模块 |
-|---|------|---------|------|---------|
-| 11 | `ZY_CODE_NO_FLICKER` 无闪烁渲染 | v2.1.89 | ⬜ 待评估 | ink/rendering |
-| 12 | 子代理 @ 提及建议 | v2.1.89 | ⬜ 待评估 | input autocomplete |
-| 13 | 新增 deferred tools: Monitor, PushNotification | v2.1.143 | ⬜ 待评估 | tools registry |
-| 14 | 新增 skills: less-permission-prompts, init, review, security-review | v2.1.143 | ⬜ 待评估 | skills |
-| 15 | update-config skill 增强描述 | v2.1.143 | ⬜ 待评估 | skill prompt |
+| # | 能力 | 来源版本 | 状态 | 备注 |
+|---|------|---------|------|------|
+| 11 | `ZY_CODE_NO_FLICKER` 无闪烁渲染 | v2.1.89 | ✅ 已有 | `src/utils/fullscreen.ts` |
+| 12 | 子代理 @ 提及建议 | v2.1.89 | ✅ 已有 | `src/hooks/unifiedSuggestions.ts` |
+| 13 | 新增 deferred tools: Monitor, PushNotification | v2.1.143 | ⬜ 待实现 | 需新建完整工具 |
+| 14 | 新增 skills: less-permission-prompts, review, security-review | v2.1.143 | ⬜ 待实现 | 需新建 skill 定义 |
+| 15 | update-config skill 增强描述 | v2.1.143 | ⬜ 待实现 | 已有实现，可增强触发说明 |
 
 ---
 
@@ -297,7 +297,7 @@
 - **当前状态**: ✅ 已实现
 - **实现文件**:
   - `src/commands/bg/index.ts` — 命令注册（lazy-load，支持 `/background` 别名）
-  - `src/commands/bg/bg.ts` — 命令实现：检查 `ZY_CODE_DISABLE_BACKGROUND_TASKS`、调用 `backgroundAll()` 复用现有后台基础设施
+  - `src/commands/bg/background.ts` — 命令实现：检查 `ZY_CODE_DISABLE_BACKGROUND_TASKS`、调用 `backgroundAll()` 复用现有后台基础设施
   - `src/commands.ts` — 注册到 COMMANDS 数组
   - i18n: `bg.noForegroundTasks`/`bg.movedToBackground`/`bg.disabled`（en + zh-CN）
 - **验证检查点**:

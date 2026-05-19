@@ -97,7 +97,7 @@ export function getLanguageSection(languagePreference: string | undefined): stri
   if (!languagePreference) return null
 
   return `# Language
-You MUST think, reason, and respond in ${languagePreference} natively, not by translating. All internal thinking, chain-of-thought reasoning, explanations, and tool-call narration must use ${languagePreference}. Prompt examples and tags like <reasoning> are in English for technical reasons only. Keep code, identifiers, file paths, and quoted text unchanged.`
+You MUST think, reason, and respond in ${languagePreference} natively, not by translating. All internal thinking, chain-of-thought reasoning, explanations, and tool-call narration must use ${languagePreference}. Examples and tags like <examples> are in English for technical reasons only. Keep code, identifiers, file paths, and quoted text unchanged.`
 }
 
 function getOutputStyleSection(outputStyleConfig: OutputStyleConfig | null): string | null {
@@ -221,7 +221,7 @@ export async function getSystemPrompt(
 ): Promise<string[]> {
   if (isEnvTruthy(process.env.ZY_CODE_SIMPLE)) {
     return [
-      `You are ZY Code, the official AI-powered CLI.\n\nCWD: ${getCwd()}\nDate: ${getSessionStartDate()}`,
+      `You are ZY Code, an AI-powered CLI.\n\nCWD: ${getCwd()}\nDate: ${getSessionStartDate()}`,
     ]
   }
 

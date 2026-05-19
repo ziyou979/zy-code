@@ -877,7 +877,8 @@ function generateTokenChart(
   }
 
   // Color palette for different models - use blue shades
-  const colors = [chalk.cyan, chalk.blue, chalk.blueBright]
+  const theme = getTheme(resolveThemeSetting(getGlobalConfig().theme))
+  const colors = [themeColorToAnsi(theme.suggestion), themeColorToAnsi(theme.success), themeColorToAnsi(theme.warning)]
 
   // Prepare series data for each model
   const series: number[][] = []

@@ -48,7 +48,7 @@ export type SideQueryOptions = {
   skipSystemPromptPrefix?: boolean
   /** 温度覆盖 */
   temperature?: number
-  /** 思考预算（启用思考），或 `false` 发送 `{ type: 'disabled' }`。 */
+  /** 启用思考， `false` 或 `{ type: 'disabled' }`。 */
   thinking?: number | false
   /** 停止序列 — 当输出任何这些字符串时停止生成 */
   stop_sequences?: string[]

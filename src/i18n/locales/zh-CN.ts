@@ -1279,6 +1279,7 @@ export const zhCN: TranslationResource = {
   'commands.addDir': '添加新的工作目录',
   'commands.advisor': '配置 advisor 模型',
   'commands.agents': '管理子智能体配置',
+  'commands.bg': '将当前会话转为后台运行并释放终端',
   'commands.branch': '在当前对话点创建分支',
   'commands.btw': '快速提问，不会打断当前工作',
   'commands.chrome': 'Claude in Chrome（Beta）设置',

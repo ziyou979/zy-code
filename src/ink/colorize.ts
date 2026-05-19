@@ -42,7 +42,7 @@ function boostChalkLevelForXtermJs(): boolean {
  * chalk 是单例，所以这会钳位整个应用的所有真彩色输出（fg+bg+hex）。
  */
 function clampChalkLevelForTmux(): boolean {
-  // bg.ts 在 attach 之前设置 terminal-overrides :Tc，所以真彩色可以
+  // background.ts 在 attach 之前设置 terminal-overrides :Tc，所以真彩色可以
   // 传递 — 跳过钳位。为正确配置 tmux 的用户提供的通用出口。
   if (process.env.ZY_CODE_TMUX_TRUECOLOR) return false
   if (process.env.TMUX && chalk.level > 2) {
