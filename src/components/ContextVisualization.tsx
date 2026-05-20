@@ -11,6 +11,49 @@ import { ContextSuggestions } from './ContextSuggestions.js'
 const RESERVED_CATEGORY_NAME = 'Autocompact buffer'
 const FREE_CATEGORY_NAME = 'Free space'
 
+/** 将类别名称映射到 i18n 翻译 */
+function translateCategoryName(name: string): string {
+  const normalized = name.replace('[INNER-ONLY] ', '')
+  switch (normalized) {
+    case 'System prompt':
+      return tSync('contextVis.systemPrompt')
+    case 'System tools':
+      return tSync('contextVis.systemTools')
+    case 'System tools (deferred)':
+      return tSync('contextVis.systemToolsDeferred')
+    case 'MCP tools':
+      return tSync('contextVis.mcpToolsCategory')
+    case 'MCP tools (deferred)':
+      return tSync('contextVis.mcpToolsDeferred')
+    case 'Memory files':
+      return tSync('contextVis.memoryFilesCategory')
+    default:
+      return name
+  }
+}
+
+/** 将来源名称映射到 i18n 翻译 */
+function translateSourceName(name: string): string {
+  switch (name) {
+    case 'User':
+      return tSync('contextVis.sourceUser')
+    case 'Project':
+      return tSync('contextVis.sourceProject')
+    case 'Local':
+      return tSync('contextVis.sourceLocal')
+    case 'Flag':
+      return tSync('contextVis.sourceFlag')
+    case 'Managed':
+      return tSync('contextVis.sourceManaged')
+    case 'Plugin':
+      return tSync('contextVis.sourcePlugin')
+    case 'Built-in':
+      return tSync('contextVis.sourceBuiltIn')
+    default:
+      return name
+  }
+}
+
 /**
  * One-liner for the legend header showing what context-collapse has done.
  * Returns null when nothing's summarized/staged so we don't add visual
@@ -189,7 +232,7 @@ export function ContextVisualization({ data }: Props) {
       ? 'N/A'
       : `${((cat.tokens / rawMaxTokens) * 100).toFixed(1)}%`
     const isReserved = cat.name === RESERVED_CATEGORY_NAME
-    const displayName = cat.name
+    const displayName = translateCategoryName(cat.name)
     const symbol = cat.isDeferred ? ' ' : isReserved ? '\u26DD' : '\u26C1'
     return (
       <Box key={index}>
@@ -332,7 +375,7 @@ export function ContextVisualization({ data }: Props) {
             const [sourceDisplay, sourceAgents] = groupEntry
             return (
               <Box key={sourceDisplay} flexDirection="column" marginTop={1}>
-                <Text dimColor={true}>{sourceDisplay}</Text>
+                <Text dimColor={true}>{translateSourceName(sourceDisplay)}</Text>
                 {sourceAgents.map((agent, index) => (
                   <Box key={index}>
                     <Text>└ {agent.agentType}: </Text>
@@ -355,7 +398,7 @@ export function ContextVisualization({ data }: Props) {
             const [sourceDisplay, sourceSkills] = groupEntry
             return (
               <Box key={sourceDisplay} flexDirection="column" marginTop={1}>
-                <Text dimColor={true}>{sourceDisplay}</Text>
+                <Text dimColor={true}>{translateSourceName(sourceDisplay)}</Text>
                 {sourceSkills.map((skill, index) => (
                   <Box key={index}>
                     <Text>└ {skill.name}: </Text>
@@ -424,38 +467,51 @@ export function ContextVisualization({ data }: Props) {
   )
   const contextSuggestions = generateContextSuggestions(data)
   const contextSuggestionsElement = <ContextSuggestions suggestions={contextSuggestions} />
+
+  // 逐行拼接网格（左）和信息（右），避免 Ink flex row 对齐产生空行
+  const infoRows: React.ReactNode[] = []
+  infoRows.push(modelInfoText)
+  if (collapseStatus) infoRows.push(collapseStatus)
+  infoRows.push(spacer)
+  infoRows.push(
+    <Text key="estimatedUsage" dimColor={true} italic={true}>
+      {tSync('contextVis.estimatedUsage')}
+    </Text>,
+  )
+  for (const item of categoryItems) infoRows.push(item)
+  if (freeSpaceItem) infoRows.push(freeSpaceItem)
+  if (autocompactCategory && autocompactCategory.tokens > 0) {
+    infoRows.push(
+      <Box key="autocompact">
+        <Text color={autocompactCategory.color}>⛝</Text>
+        <Text dimColor={true}> {tSync('contextVis.autocompactBuffer')}: </Text>
+        <Text dimColor={true}>
+          {formatTokens(autocompactCategory.tokens)} tokens (
+          {((autocompactCategory.tokens / rawMaxTokens) * 100).toFixed(1)}%)
+        </Text>
+      </Box>,
+    )
+  }
+
+  const maxRows = Math.max(gridRowElements.length, infoRows.length)
+  const alignedRows: React.ReactNode[] = []
+  for (let i = 0; i < maxRows; i++) {
+    alignedRows.push(
+      <Box key={i} flexDirection="row" gap={2}>
+        {i < gridRowElements.length ? (
+          gridRowElements[i]
+        ) : (
+          <Text>{' '.repeat(gridRowElements[0] ? 20 : 0)}</Text>
+        )}
+        {i < infoRows.length ? infoRows[i] : null}
+      </Box>,
+    )
+  }
+
   return (
     <Box flexDirection={'column'} paddingLeft={1}>
       {<Text bold={true}>{tSync('contextVis.title')}</Text>}
-      {
-        <Box flexDirection="row" gap={2}>
-          {gridBox}
-          {
-            <Box flexDirection="column" gap={0} flexShrink={0}>
-              {modelInfoText}
-              {collapseStatus}
-              {spacer}
-              {
-                <Text dimColor={true} italic={true}>
-                  {tSync('contextVis.estimatedUsage')}
-                </Text>
-              }
-              {categoryItems}
-              {freeSpaceItem}
-              {autocompactCategory && autocompactCategory.tokens > 0 && (
-                <Box>
-                  <Text color={autocompactCategory.color}>⛝</Text>
-                  <Text dimColor={true}> {tSync('contextVis.autocompactBuffer')}: </Text>
-                  <Text dimColor={true}>
-                    {formatTokens(autocompactCategory.tokens)} tokens (
-                    {((autocompactCategory.tokens / rawMaxTokens) * 100).toFixed(1)}%)
-                  </Text>
-                </Box>
-              )}
-            </Box>
-          }
-        </Box>
-      }
+      {alignedRows}
       {toolsSection}
       {contextSuggestionsElement}
     </Box>

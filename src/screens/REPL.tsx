@@ -285,7 +285,7 @@ import { resolveAgentTools } from '../tools/AgentTool/agentToolUtils.js'
 import { resumeAgentBackground } from '../tools/AgentTool/resumeAgent.js'
 import { useMainLoopModel } from '../hooks/useMainLoopModel.js'
 import { useAppState, useSetAppState, useAppStateStore } from '../state/AppState.js'
-import type { ContentBlock, ImageBlock } from '../types/llm.js'
+import type { ContentBlock, ImageBlock, UserContentBlock } from '../types/llm.js'
 import type { ProcessUserInputContext } from '../utils/processUserInput/processUserInput.js'
 import type { PastedContent } from '../utils/config.js'
 import { copyPlanForFork, copyPlanForResume, getPlanSlug, setPlanSlug } from '../utils/plans.js'
@@ -296,9 +296,11 @@ import {
   removeTranscriptMessage,
   restoreSessionMetadata,
   getCurrentSessionTitle,
+  cacheSessionTitle,
   isEphemeralToolProgress,
   isLoggableMessage,
   saveWorktreeState,
+  saveAiGeneratedTitle,
   getAgentTranscript,
 } from '../utils/sessionStorage.js'
 import { deserializeMessages } from '../utils/conversationRecovery.js'
@@ -1114,13 +1116,12 @@ export function REPL({
   // 所有都回退到产品名称。
   const terminalTitleFromRename = useAppState((s) => s.settings.terminalTitleFromRename) !== false
   const sessionTitle = terminalTitleFromRename ? getCurrentSessionTitle(getSessionId()) : undefined
-  const [haikuTitle, setHaikuTitle] = useState<string>()
-  // 门控单次 Haiku 调用生成标签标题。恢复时种子为 true
-  // （存在 initialMessages），所以我们不会从会话中间上下文
-  // 重新为恢复的会话设置标题。
-  const haikuTitleAttemptedRef = useRef((initialMessages?.length ?? 0) > 0)
+  // 门控单次标题生成调用。恢复时种子为 true（存在 initialMessages），
+  // 除非 restoreSessionMetadata 未能恢复标题（此时在 resume 路径中重置为 false）。
+  const titleGenerationAttemptedRef = useRef((initialMessages?.length ?? 0) > 0)
+  const [, forceRenderTitle] = useState(0)
   const agentTitle = mainThreadAgentDefinition?.agentType
-  const terminalTitle = sessionTitle ?? agentTitle ?? haikuTitle ?? 'ZY Code'
+  const terminalTitle = sessionTitle ?? agentTitle ?? 'ZY Code'
   const isWaitingForApproval =
     toolUseConfirmQueue.length > 0 ||
     promptQueue.length > 0 ||
@@ -1908,11 +1909,27 @@ export function REPL({
         // 缓存名称并在第一次消息时写入错误的转录。
         clearSessionMetadata()
         restoreSessionMetadata(log)
-        // 恢复的会话不应从会话中间上下文重新设置标题
-        // （与 useRef 种子相同的理由），前一个会话的
-        // Haiku 标题也不应继承。
-        haikuTitleAttemptedRef.current = true
-        setHaikuTitle(undefined)
+        // 如果恢复后有 title（custom-title 或 ai-title），标记已完成。
+        // 否则允许从恢复的消息中重新生成。
+        if (getCurrentSessionTitle(getSessionId())) {
+          titleGenerationAttemptedRef.current = true
+        } else {
+          titleGenerationAttemptedRef.current = false
+          // 从恢复的消息中异步生成 ai-title
+          const sid = getSessionId()
+          if (sid && log.messages.length > 0) {
+            const text = log.firstPrompt || ''
+            if (text) {
+              void generateSessionTitle(text, AbortSignal.timeout(15_000)).then((title) => {
+                if (title) {
+                  saveAiGeneratedTitle(sid as import('crypto').UUID, title)
+                  cacheSessionTitle(title)
+                  forceRenderTitle((n) => n + 1)
+                }
+              })
+            }
+          }
+        }
 
         // 退出之前 /resume 进入的任何 worktree，然后 cd 进入此
         // 会话所在的 worktree。没有退出，从 worktree B
@@ -2867,14 +2884,9 @@ export function REPL({
       // 向 ZY 发送任何用户消息时将 onboarding 标记为完成
       void maybeMarkProjectOnboardingComplete()
 
-      // 从第一个真实用户消息中提取会话标题。单次
-      // 通过 ref（曾是 zy_birch_mist 实验：仅第一条消息以节省
-      // Haiku 调用）。ref 替换了旧的 `messages.length <= 1` 检查，
-      // 该检查被 SessionStart hook 消息（通过
-      // useDeferredHookMessages 前置）和附件消息（通过
-      // processTextPrompt 追加）破坏 — 两者都在第一回合将长度推到 1 以上，所以标题
-      // 静默失败到 "Zy Code" 默认值。
-      if (!titleDisabled && !sessionTitle && !agentTitle && !haikuTitleAttemptedRef.current) {
+      // 从第一个真实用户消息中生成 AI 标题并持久化。
+      // 单次通过 ref 门控，避免重复调用。
+      if (!titleDisabled && !sessionTitle && !agentTitle && !titleGenerationAttemptedRef.current) {
         const firstUserMessage = newMessages.find((m) => m.type === 'user' && !m.isMeta)
         const text =
           firstUserMessage?.type === 'user'
@@ -2883,7 +2895,6 @@ export function REPL({
         // 跳过合成面包屑 — 斜杠命令输出、prompt-skill
         // 扩展（/commit → <command-message>）、local-command 头部
         // （/help → <command-name>）和 bash 模式（!cmd → <bash-input>）。
-        // 这些都不是用户的主题；等待真实散文。
         if (
           text &&
           !text.startsWith(`<${LOCAL_COMMAND_STDOUT_TAG}>`) &&
@@ -2891,14 +2902,22 @@ export function REPL({
           !text.startsWith(`<${COMMAND_NAME_TAG}>`) &&
           !text.startsWith(`<${BASH_INPUT_TAG}>`)
         ) {
-          haikuTitleAttemptedRef.current = true
+          titleGenerationAttemptedRef.current = true
           void generateSessionTitle(text, new AbortController().signal).then(
             (title) => {
-              if (title) setHaikuTitle(title)
-              else haikuTitleAttemptedRef.current = false
+              if (title) {
+                const sid = getSessionId()
+                if (sid) {
+                  saveAiGeneratedTitle(sid as import('crypto').UUID, title)
+                  cacheSessionTitle(title)
+                  forceRenderTitle((n) => n + 1)
+                }
+              } else {
+                titleGenerationAttemptedRef.current = false
+              }
             },
             () => {
-              haikuTitleAttemptedRef.current = false
+              titleGenerationAttemptedRef.current = false
             },
           )
         }
@@ -3298,8 +3317,7 @@ export function REPL({
           setAppState,
           setConversationId,
         })
-        haikuTitleAttemptedRef.current = false
-        setHaikuTitle(undefined)
+        titleGenerationAttemptedRef.current = false
         bashTools.current.clear()
         bashToolsProcessedIdx.current = 0
 
@@ -3728,14 +3746,11 @@ export function REPL({
       // 它们没有远程等效物。让它们回退到
       // handlePromptSubmit 以便在本地执行。提示命令和
       // 纯文本转到远程。
-      if (
-        activeRemote.isRemoteMode &&
-        !(
-          isSlashCommand &&
+      if (activeRemote.isRemoteMode &&
+        !(isSlashCommand &&
           commands.find((c) => {
             const name = input.trim().slice(1).split(/\s/)[0]
-            return (
-              isCommandEnabled(c) &&
+            return (isCommandEnabled(c) &&
               (c.name === name || c.aliases?.includes(name!) || getCommandName(c) === name)
             )
           })?.type === 'local-jsx'
@@ -3745,10 +3760,10 @@ export function REPL({
         const pastedValues = Object.values(pastedContents)
         const imageContents = pastedValues.filter((c) => c.type === 'image')
         const imagePasteIds = imageContents.length > 0 ? imageContents.map((c) => c.id) : undefined
-        let messageContent: string | ContentBlock[] = input.trim()
+        let messageContent: string | UserContentBlock[] = input.trim()
         let remoteContent: RemoteMessageContent = input.trim()
         if (pastedValues.length > 0) {
-          const contentBlocks: ContentBlock[] = []
+          const contentBlocks: UserContentBlock[] = []
           const remoteBlocks: Array<{
             type: string
             [key: string]: unknown
@@ -5530,8 +5545,7 @@ export function REPL({
                           setAppState,
                           setConversationId,
                         })
-                        haikuTitleAttemptedRef.current = false
-                        setHaikuTitle(undefined)
+                        titleGenerationAttemptedRef.current = false
                         bashTools.current.clear()
                         bashToolsProcessedIdx.current = 0
                       }

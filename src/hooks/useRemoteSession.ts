@@ -267,7 +267,7 @@ export function useRemoteSession({
           if (setInProgressToolUseIDs && converted.message.type === 'assistant') {
             const toolUseIds = converted.message.message.content
               .filter(
-                (block): block is import('../types/llm.js').ToolCallInlineBlock =>
+                (block): block is import('../types/llm.js').ToolCallBlock =>
                   block.type === 'tool_call',
               )
               .map((block) => block.id)

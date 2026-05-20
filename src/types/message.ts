@@ -8,7 +8,7 @@ import type {
   AssistantMessage as LLMAssistantMessage,
   ContentBlock,
   LLMError,
-  ToolCallInlineBlock,
+  ToolCallBlock, UserContentBlock,
 } from './llm.js'
 import type { UUID } from 'crypto'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
@@ -79,7 +79,7 @@ export interface UserMessage extends BaseMessage {
   type: 'user'
   message: {
     role: 'user'
-    content: string | ContentBlock[]
+    content: string | UserContentBlock[]
   }
   isVirtual?: true
   isVisibleInTranscriptOnly?: true
@@ -106,7 +106,7 @@ export interface NormalizedUserMessage extends BaseMessage {
   type: 'user'
   message: {
     role: 'user'
-    content: ContentBlock[]
+    content: UserContentBlock[]
   }
   isVirtual?: true
   isVisibleInTranscriptOnly?: true
@@ -396,7 +396,7 @@ export interface StopHookInfo {
 
 export interface GroupedToolUseMessage extends BaseMessage {
   type: 'grouped_tool_use'
-  toolUses: ToolCallInlineBlock[]
+  toolUses: ToolCallBlock[]
   toolName: string
   messages: NormalizedAssistantMessage[]
   results: NormalizedUserMessage[]

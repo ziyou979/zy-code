@@ -2,22 +2,14 @@
 // @ts-ignore - Some types not exported in current SDK version
 import type {
   ContentBlock,
-  ImageBlock,
   Response as LLMMessage,
-  TokenUsage,
   StopReason,
-  ToolResultBlock,
   ToolDefinition,
   ToolChoice,
-  TextBlock,
-  DocumentBlock,
+  JSONOutputFormat,
   ProviderExtras,
 } from '../../types/llm.js'
 import { isAPIError, isAbortError } from '../../types/llm.js'
-
-// 以下类型仅用于 Anthropic SDK 请求构建，保留为局部类型
-type BetaOutputConfig = Record<string, unknown>
-type BetaJSONOutputFormat = { type: 'json_schema'; json_schema?: unknown; schema?: unknown }
 
 import { randomUUID } from 'crypto'
 import { getAPIProvider, isAnthropicBaseUrl, isOpenAIProvider } from 'src/utils/model/providers.js'
@@ -267,7 +259,7 @@ export type Options = {
   hasPendingMcpServers?: boolean
   queryTracking?: QueryChainTracking
   agentId?: AgentId // 仅子代理设置
-  outputFormat?: BetaJSONOutputFormat
+  outputFormat?: JSONOutputFormat
   advisorModel?: string
   addNotification?: (notif: Notification) => void
   /** Provider 专属扩展参数，用于传递非标准参数（如百炼的 enable_search） */
@@ -925,22 +917,22 @@ async function* queryModel(
 
     const extraBodyParams = getExtraBodyParams([])
 
-    const outputConfig: BetaOutputConfig = {
-      ...((extraBodyParams.output_config as BetaOutputConfig) ?? {}),
+    const outputConfig: Record<string, unknown> = {
+      ...((extraBodyParams.output_config as Record<string, unknown>) ?? {}),
     }
 
     configureEffortParams(effort, outputConfig, extraBodyParams, betasParams, options.model)
 
     configureTaskBudgetParams(
       options.taskBudget,
-      outputConfig as BetaOutputConfig & { task_budget?: TaskBudgetParam },
+      outputConfig as Record<string, unknown> & { task_budget?: TaskBudgetParam },
       betasParams,
     )
 
     // 将 outputFormat 合并到 extraBodyParams.output_config 中，与 effort 并列
     // 需要 structured-outputs beta header（参见 SDK 中的 messages.mjs parse()）
     if (options.outputFormat && !('format' in outputConfig)) {
-      outputConfig.format = options.outputFormat as BetaJSONOutputFormat
+      outputConfig.format = options.outputFormat
       // 如果不存在且提供商支持，添加 beta header
       if (
         modelSupportsStructuredOutputs(options.model) &&

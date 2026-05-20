@@ -6,8 +6,7 @@ import { getEmptyToolPermissionContext } from '../../Tool.js'
 import { getDefaultCompactModel } from '../../utils/model/model.js'
 import { queryModelWithoutStreaming, type Options } from './llmOrchestrator.js'
 import type { AssistantMessage } from '../../types/message.js'
-
-type BetaJSONOutputFormat = { type: 'json_schema'; json_schema?: unknown; schema?: unknown }
+import type { JSONOutputFormat } from '../../types/llm.js'
 
 type CompactModelOptions = Omit<Options, 'model' | 'getToolPermissionContext'>
 
@@ -24,7 +23,7 @@ export async function queryCompactModel({
 }: {
   systemPrompt: SystemPrompt
   userPrompt: string
-  outputFormat?: BetaJSONOutputFormat
+  outputFormat?: JSONOutputFormat
   signal: AbortSignal
   options: CompactModelOptions
 }): Promise<AssistantMessage> {
@@ -83,7 +82,7 @@ export async function queryWithModel({
 }: {
   systemPrompt: SystemPrompt
   userPrompt: string
-  outputFormat?: BetaJSONOutputFormat
+  outputFormat?: JSONOutputFormat
   signal: AbortSignal
   options: QueryWithModelOptions
 }): Promise<AssistantMessage> {

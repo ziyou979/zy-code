@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import type { PartialCompactDirection } from '../../types/message.js'
 
-// Dead code elimination: conditional import for proactive mode
+// 死代码消除：条件导入 proactive 模式
 /* eslint-disable @typescript-eslint/no-require-imports */
 const proactiveModule =
   feature('PROACTIVE') || feature('KAIROS')
@@ -9,13 +9,11 @@ const proactiveModule =
     : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-// Aggressive no-tools preamble. The cache-sharing fork path inherits the
-// parent's full tool set (required for cache-key match), and on Sonnet 4.6+
-// adaptive-thinking models the model sometimes attempts a tool call despite
-// the weaker trailer instruction. With maxTurns: 1, a denied tool call means
-// no text output → falls through to the streaming fallback (2.79% on 4.6 vs
-// 0.01% on 4.5). Putting this FIRST and making it explicit about rejection
-// consequences prevents the wasted turn.
+// 强制禁止工具调用的前言。缓存共享 fork 路径继承了父级的完整工具集
+// （cache-key 匹配所需），而在 Sonnet 4.6+ adaptive-thinking 模型上，
+// 模型有时会无视较弱的 trailer 指令尝试工具调用。在 maxTurns: 1 时，
+// 被拒绝的工具调用意味着无文本输出 → 落入流式回退（4.6 上 2.79% vs
+// 4.5 上 0.01%）。将此放在最前并明确拒绝后果，以避免浪费轮次。
 const NO_TOOLS_PREAMBLE = `CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.
 
 - Do NOT use Read, Bash, Grep, Glob, Edit, Write, or ANY other tool.
@@ -25,9 +23,8 @@ const NO_TOOLS_PREAMBLE = `CRITICAL: Respond with TEXT ONLY. Do NOT call any too
 
 `
 
-// Two variants: BASE scopes to "the conversation", PARTIAL scopes to "the
-// recent messages". The <analysis> block is a drafting scratchpad that
-// formatCompactSummary() strips before the summary reaches context.
+// 两种变体：BASE 范围为「整个对话」，PARTIAL 范围为「最近的消息」。
+// <analysis> 块是草稿区，formatCompactSummary() 会在摘要进入上下文前将其剥离。
 const DETAILED_ANALYSIS_INSTRUCTION_BASE = `Before providing your final summary, wrap your analysis in <analysis> tags to organize your thoughts and ensure you've covered all necessary points. In your analysis process:
 
 1. Chronologically analyze each message and section of the conversation. For each section thoroughly identify:
@@ -203,8 +200,8 @@ Here's an example of how your output should be structured:
 Please provide your summary based on the RECENT messages only (after the retained earlier context), following this structure and ensuring precision and thoroughness in your response.
 `
 
-// 'up_to': model sees only the summarized prefix (cache hit). Summary will
-// precede kept recent messages, hence "Context for Continuing Work" section.
+// 'up_to'：模型仅看到被摘要的前缀（缓存命中）。摘要将位于保留的近期消息之前，
+// 因此包含「Context for Continuing Work」部分。
 const PARTIAL_COMPACT_UP_TO_PROMPT = `Your task is to create a detailed summary of this conversation. This summary will be placed at the start of a continuing session; newer messages that build on this context will follow after your summary (you do not see them here). Summarize thoroughly so that someone reading only your summary and then the newer messages can fully understand what happened and continue the work.
 
 ${DETAILED_ANALYSIS_INSTRUCTION_BASE}
@@ -303,19 +300,19 @@ export function getCompactPrompt(customInstructions?: string): string {
 }
 
 /**
- * Formats the compact summary by stripping the <analysis> drafting scratchpad
- * and replacing <summary> XML tags with readable section headers.
- * @param summary The raw summary string potentially containing <analysis> and <summary> XML tags
- * @returns The formatted summary with analysis stripped and summary tags replaced by headers
+ * 格式化压缩摘要：剥离 <analysis> 草稿区，
+ * 并将 <summary> XML 标签替换为可读的章节标题。
+ * @param summary 可能包含 <analysis> 和 <summary> XML 标签的原始摘要字符串
+ * @returns 去除 analysis 并将 summary 标签替换为标题后的格式化摘要
  */
 export function formatCompactSummary(summary: string): string {
   let formattedSummary = summary
 
-  // Strip analysis section — it's a drafting scratchpad that improves summary
-  // quality but has no informational value once the summary is written.
+  // 剥离 analysis 部分——它是提升摘要质量的草稿区，
+  // 但摘要写完后不再有信息价值。
   formattedSummary = formattedSummary.replace(/<analysis>[\s\S]*?<\/analysis>/, '')
 
-  // Extract and format summary section
+  // 提取并格式化 summary 部分
   const summaryMatch = formattedSummary.match(/<summary>([\s\S]*?)<\/summary>/)
   if (summaryMatch) {
     const content = summaryMatch[1] || ''
@@ -325,7 +322,7 @@ export function formatCompactSummary(summary: string): string {
     )
   }
 
-  // Clean up extra whitespace between sections
+  // 清理章节之间多余的空白
   formattedSummary = formattedSummary.replace(/\n\n+/g, '\n\n')
 
   return formattedSummary.trim()

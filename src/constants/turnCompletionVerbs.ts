@@ -16,13 +16,11 @@ const TURN_COMPLETION_VERBS_EN = [
 
 // Chinese versions
 const TURN_COMPLETION_VERBS_ZH = [
-  '搞定了',
-  '弄好了',
-  '完成了',
+  '搞定',
+  '完成',
   '处理完成',
-  '做好了',
-  '收工了',
-  '齐活了',
+  '收工',
+  '齐活',
   '大功告成',
 ]
 

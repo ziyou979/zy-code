@@ -59,8 +59,8 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
       toolUseContext.abortController.signal,
     )) {
       try {
-        // Check if we were aborted during hook execution
-        // IMPORTANT: We emit a cancelled event per hook
+        // 检查在 hook 执行期间是否被 abort
+        // 重要：每个 hook 发出一条 cancelled 事件
         if (
           (result.message as any)?.type === 'attachment' &&
           (result.message as any).attachment.type === 'hook_cancelled'
@@ -83,11 +83,10 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
           continue
         }
 
-        // For JSON {decision:"block"} hooks, executeHooks yields two results:
-        // {blockingError} and {message: hook_blocking_error attachment}. The
-        // blockingError path below creates that same attachment, so skip it
-        // here to avoid displaying the block reason twice (#31301). The
-        // exit-code-2 path only yields {blockingError}, so it's unaffected.
+        // 对于 JSON {decision:"block"} 类 hook，executeHooks 会产出两条结果：
+        // {blockingError} 和 {message: hook_blocking_error attachment}。下面 blockingError
+        // 分支会创建同样的 attachment，所以这里跳过以避免重复展示 block reason
+        // (#31301)。exit-code-2 路径只产出 {blockingError}，所以不受影响。
         if (
           result.message &&
           !(
@@ -110,7 +109,7 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
           }
         }
 
-        // If hook indicated to prevent continuation, yield a stop reason message
+        // 如果 hook 表示需要阻止继续执行，产出一条 stop reason 消息
         if (result.preventContinuation) {
           yield {
             message: createAttachmentMessage({
@@ -124,7 +123,7 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
           return
         }
 
-        // If hooks provided additional context, add it as a message
+        // 如果 hook 提供了额外的上下文，将其作为消息附加
         if (result.additionalContexts && result.additionalContexts.length > 0) {
           yield {
             message: createAttachmentMessage({
@@ -137,7 +136,7 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
           }
         }
 
-        // If hooks provided updatedMCPToolOutput, yield it if this is an MCP tool
+        // 如果 hook 提供了 updatedMCPToolOutput 且当前为 MCP 工具，产出该输出
         if (result.updatedMCPToolOutput && isMcpTool(tool)) {
           toolOutput = result.updatedMCPToolOutput as Output
           yield {
@@ -211,7 +210,7 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
       toolUseContext.abortController.signal,
     )) {
       try {
-        // Check if we were aborted during hook execution
+        // 检查在 hook 执行期间是否被 abort
         if (
           (result.message as any)?.type === 'attachment' &&
           (result.message as any).attachment.type === 'hook_cancelled'
@@ -233,8 +232,8 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
           continue
         }
 
-        // Skip hook_blocking_error in result.message — blockingError path
-        // below creates the same attachment (see #31301 / PostToolUse above).
+        // 跳过 result.message 中的 hook_blocking_error —— 下面 blockingError
+        // 路径会创建相同的 attachment（参见 #31301 与上面的 PostToolUse）。
         if (
           result.message &&
           !(
@@ -257,7 +256,7 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
           }
         }
 
-        // If hooks provided additional context, add it as a message
+        // 如果 hook 提供了额外的上下文，将其作为消息附加
         if (result.additionalContexts && result.additionalContexts.length > 0) {
           yield {
             message: createAttachmentMessage({
@@ -308,15 +307,15 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
 }
 
 /**
- * Resolve a PreToolUse hook's permission result into a final PermissionDecision.
+ * 将 PreToolUse hook 的权限结果解析为最终的 PermissionDecision。
  *
- * Encapsulates the invariant that hook 'allow' does NOT bypass settings.json
- * deny/ask rules — checkRuleBasedPermissions still applies (inc-4788 analog).
- * Also handles the requiresUserInteraction/requireCanUseTool guards and the
- * 'ask' forceDecision passthrough.
+ * 这里封装了一条不变式：hook 的 'allow' 并 不会 绕过 settings.json
+ * 中的 deny/ask 规则 —— checkRuleBasedPermissions 仍然生效 (类似 inc-4788)。
+ * 同时处理 requiresUserInteraction/requireCanUseTool 护栏，以及
+ * 'ask' 类 forceDecision 的透传。
  *
- * Shared by toolExecution.ts (main query loop) and REPLTool/toolWrappers.ts
- * (REPL inner calls) so the permission semantics stay in lockstep.
+ * toolExecution.ts (主查询循环) 与 REPLTool/toolWrappers.ts (REPL 内部调用) 共用本函数，
+ * 以保证权限语义严格一致。
  */
 export async function resolveHookPermissionDecision(
   hookPermissionResult: PermissionResult | undefined,
@@ -336,9 +335,9 @@ export async function resolveHookPermissionDecision(
   if (hookPermissionResult?.behavior === 'allow') {
     const hookInput = hookPermissionResult.updatedInput ?? input
 
-    // Hook provided updatedInput for an interactive tool — the hook IS the
-    // user interaction (e.g. headless wrapper that collected AskUserQuestion
-    // answers). Treat as non-interactive for the rule-check path.
+    // hook 为某个交互式工具提供了 updatedInput —— 则 hook 本身就是
+    // 那个“用户交互” (例如无头环境下采集 AskUserQuestion 答复的 wrapper)。
+    // 规则检查路径按非交互式处理。
     const interactionSatisfied =
       requiresInteraction && hookPermissionResult.updatedInput !== undefined
 
@@ -350,7 +349,7 @@ export async function resolveHookPermissionDecision(
       }
     }
 
-    // Hook allow skips the interactive prompt, but deny/ask rules still apply.
+    // hook 的 allow 可跳过交互式提示，但 deny/ask 规则仍然生效。
     const ruleCheck = await checkRuleBasedPermissions(tool, hookInput, toolUseContext)
     if (ruleCheck === null) {
       logForDebugging(
@@ -366,7 +365,7 @@ export async function resolveHookPermissionDecision(
       )
       return { decision: ruleCheck, input: hookInput }
     }
-    // ask rule — dialog required despite hook approval
+    // ask 规则 —— 即使 hook 同意也必须弹对话框
     logForDebugging(`Hook approved tool use for ${tool.name}, but ask rule requires prompt`)
     return {
       decision: await canUseTool(tool, hookInput, toolUseContext, assistantMessage, toolUseID),
@@ -379,8 +378,8 @@ export async function resolveHookPermissionDecision(
     return { decision: hookPermissionResult, input }
   }
 
-  // No hook decision or 'ask' — normal permission flow, possibly with
-  // forceDecision so the dialog shows the hook's ask message.
+  // 无 hook 决策或为 'ask' —— 走常规权限流，同时可能携带
+  // forceDecision，让对话框展示 hook 的 ask 文案。
   const forceDecision = hookPermissionResult?.behavior === 'ask' ? hookPermissionResult : undefined
   const askInput =
     hookPermissionResult?.behavior === 'ask' && hookPermissionResult.updatedInput
@@ -421,7 +420,7 @@ export async function* runPreToolUseHooks(
       type: 'additionalContext'
       message: MessageUpdateLazy<AttachmentMessage>
     }
-  // stop execution
+  // stop 表示停止执行
   | { type: 'stop' }
 > {
   const hookStartTime = Date.now()
@@ -461,7 +460,7 @@ export async function* runPreToolUseHooks(
             },
           }
         }
-        // Check if hook wants to prevent continuation
+        // 检查 hook 是否要求阻止继续执行
         if (result.preventContinuation) {
           yield {
             type: 'preventContinuation',
@@ -471,7 +470,7 @@ export async function* runPreToolUseHooks(
             yield { type: 'stopReason', stopReason: result.stopReason }
           }
         }
-        // Check for hook-defined permission behavior
+        // 检查 hook 自定义的权限行为
         if (result.permissionBehavior !== undefined) {
           logForDebugging(`Hook result has permissionBehavior=${result.permissionBehavior}`)
           const decisionReason: PermissionDecisionReason = {
@@ -502,7 +501,7 @@ export async function* runPreToolUseHooks(
               },
             }
           } else {
-            // deny - updatedInput is irrelevant since tool won't run
+            // deny - updatedInput 无意义，因为工具不会运行
             yield {
               type: 'hookPermissionResult',
               hookPermissionResult: {
@@ -516,8 +515,8 @@ export async function* runPreToolUseHooks(
           }
         }
 
-        // Yield updatedInput for passthrough case (no permission decision)
-        // This allows hooks to modify input while letting normal permission flow continue
+        // 在透传场景（未作出权限决策）下产出 updatedInput，
+        // 以便 hook 可以修改输入，同时让常规权限流程继续进行
         if (result.updatedInput && result.permissionBehavior === undefined) {
           yield {
             type: 'hookUpdatedInput',
@@ -525,7 +524,7 @@ export async function* runPreToolUseHooks(
           }
         }
 
-        // If hooks provided additional context, add it as a message
+        // 如果 hook 提供了额外的上下文，将其作为消息附加
         if (result.additionalContexts && result.additionalContexts.length > 0) {
           yield {
             type: 'additionalContext',
@@ -541,7 +540,7 @@ export async function* runPreToolUseHooks(
           }
         }
 
-        // Check if we were aborted during hook execution
+        // 检查在 hook 执行期间是否被 abort
         if (toolUseContext.abortController.signal.aborted) {
           logEvent('zy_pre_tool_hooks_cancelled', {
             toolName: sanitizeToolNameForAnalytics(tool.name),

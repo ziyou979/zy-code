@@ -24,6 +24,7 @@ CRITICAL REQUIREMENT - You MUST follow this:
     - [Source Title 2](https://example.com/2)
 
 Usage notes:
+  - If the search result snippets already contain the information needed to answer the user's question, use them directly. Do NOT call WebFetch merely to verify or expand on information already present in the snippets.
   - Domain filtering is supported to include or block specific websites via allowed_domains and blocked_domains parameters
   - Search results include title, URL, and optionally a snippet/summary
   - A single search returns up to 8 results

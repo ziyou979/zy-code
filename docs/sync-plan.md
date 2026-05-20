@@ -53,9 +53,9 @@
 |---|------|---------|------|------|
 | 11 | `ZY_CODE_NO_FLICKER` 无闪烁渲染 | v2.1.89 | ✅ 已有 | `src/utils/fullscreen.ts` |
 | 12 | 子代理 @ 提及建议 | v2.1.89 | ✅ 已有 | `src/hooks/unifiedSuggestions.ts` |
-| 13 | 新增 deferred tools: Monitor, PushNotification | v2.1.143 | ⬜ 待实现 | 需新建完整工具 |
-| 14 | 新增 skills: less-permission-prompts, review, security-review | v2.1.143 | ⬜ 待实现 | 需新建 skill 定义 |
-| 15 | update-config skill 增强描述 | v2.1.143 | ⬜ 待实现 | 已有实现，可增强触发说明 |
+| 13 | 新增 deferred tools: Monitor, PushNotification | v2.1.143 | ✅ 完成 | `src/tools/MonitorTool/`（重写 stub → 完整实现） |
+| 14 | 新增 skills: less-permission-prompts, review, security-review | v2.1.143 | ✅ 完成 | `src/skills/bundled/{fewerPermissionPrompts,review,securityReview}.ts` |
+| 15 | update-config skill 增强描述 | v2.1.143 | ✅ 完成 | 修正 `cleanupPeriodDays` 描述 + 添加 `whenToUse` 字段 |
 
 ---
 

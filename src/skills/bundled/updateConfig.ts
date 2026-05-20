@@ -96,7 +96,7 @@ Plugin syntax: \`plugin-name@source\` where source is \`zy-code-marketplace\`, \
 
 ### Other Settings
 - \`language\`: Preferred response language (e.g., "japanese")
-- \`cleanupPeriodDays\`: Days to keep transcripts (default: 30; 0 disables persistence entirely)
+- \`cleanupPeriodDays\`: Days to keep transcripts before automatic cleanup (default: 30; minimum 1)
 - \`respectGitignore\`: Whether to respect .gitignore (default: true)
 - \`spinnerTipsEnabled\`: Show tips in spinner
 - \`spinnerVerbs\`: Customize spinner verbs (\`{ "mode": "append" | "replace", "verbs": [...] }\`)
@@ -447,6 +447,8 @@ export function registerUpdateConfigSkill(): void {
   registerBundledSkill({
     name: 'update-config',
     description: tSync('commands.updateConfig'),
+    whenToUse:
+      'When the user wants to modify settings, configure hooks, update permissions, change environment variables, or adjust any .zy/settings.json configuration. Also when user wants something to happen automatically (hooks) or reduce permission prompts (allowlist rules).',
     allowedTools: ['Read'],
     userInvocable: true,
     async getPromptForCommand(args) {

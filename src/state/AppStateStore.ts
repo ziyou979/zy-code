@@ -201,6 +201,14 @@ export type AppState = DeepImmutable<{
   thinkingEnabled: boolean | undefined
   promptSuggestionEnabled: boolean
   sessionHooks: SessionHooksState
+  // /goal 命令的活跃目标状态（session-scoped Stop hook 驱动）
+  activeGoal?: {
+    condition: string
+    iterations: number
+    setAt: number
+    tokensAtStart: number
+    lastReason?: string
+  }
   tungstenActiveSession?: {
     sessionName: string
     socketName: string

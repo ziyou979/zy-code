@@ -89,6 +89,14 @@ function cleanupTerminalModes(): void {
         // so printResumeHint still hits the main buffer.
         writeSync(1, EXIT_ALT_SCREEN)
       }
+    } else if (inst) {
+      // Non-alt-screen: unmount Ink so its last frame (status bar, progress)
+      // is cleared before printResumeHint() writes to stdout.
+      try {
+        inst.unmount()
+      } catch {
+        // Ignore — process is exiting anyway
+      }
     }
     // Catches events that arrived during the unmount tree-walk.
     // detachForShutdown() below also drains.

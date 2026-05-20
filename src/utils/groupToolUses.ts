@@ -1,4 +1,4 @@
-import type { ToolCallInlineBlock, ToolResultBlock } from '../types/llm.js'
+import type { ToolCallBlock, ToolResultBlock } from '../types/llm.js'
 import type { Tools } from '../Tool.js'
 import type {
   GroupedToolUseMessage,

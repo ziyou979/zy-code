@@ -1,26 +1,28 @@
-import { feature } from 'bun:bundle'
-import type { TokenUsage as Usage, TokenUsage } from '../types/llm.js'
+import {feature} from 'bun:bundle'
 import type {
+  APIErrorLike,
   AssistantContentBlock,
   ContentBlock,
   RedactedThinkingBlock,
-  ThinkingBlock,
-  ToolResultBlock,
-  ToolCallInlineBlock,
   TextBlock,
+  ThinkingBlock,
+  TokenUsage as Usage,
+  TokenUsage,
+  ToolCallBlock,
+  ToolResultBlock, UserContentBlock
 } from '../types/llm.js'
-import { randomUUID, type UUID } from 'crypto'
+import {randomUUID, type UUID} from 'crypto'
 import isObject from 'lodash-es/isObject.js'
 import last from 'lodash-es/last.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js'
-import type { AgentId } from 'src/types/ids.js'
-import { NO_CONTENT_MESSAGE } from '../constants/messages.js'
-import { OUTPUT_STYLE_CONFIG } from '../constants/outputStyles.js'
-import { isAutoMemoryEnabled } from '../memdir/paths.js'
+import {sanitizeToolNameForAnalytics} from 'src/services/analytics/metadata.js'
+import type {AgentId} from 'src/types/ids.js'
+import {NO_CONTENT_MESSAGE} from '../constants/messages.js'
+import {OUTPUT_STYLE_CONFIG} from '../constants/outputStyles.js'
+import {isAutoMemoryEnabled} from '../memdir/paths.js'
 import {
   checkStatsigFeatureGate_CACHED_MAY_BE_STALE,
   getFeatureValue_CACHED_MAY_BE_STALE,
@@ -32,8 +34,9 @@ import {
   getPdfTooLargeErrorMessage,
   getRequestTooLargeErrorMessage,
 } from '../services/api/errors.js'
-import type { AnyObject, Progress } from '../Tool.js'
-import { isConnectorTextBlock } from '../types/connectorText.js'
+import type {AnyObject, Progress} from '../Tool.js'
+import {findToolByName, type Tool, toolMatchesName, type Tools} from '../Tool.js'
+import {isConnectorTextBlock} from '../types/connectorText.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -66,41 +69,41 @@ import type {
   ToolUseSummaryMessage,
   UserMessage,
 } from '../types/message.js'
-import { isAdvisorBlock } from './advisor.js'
-import { isAgentSwarmsEnabled } from './agentSwarmsEnabled.js'
-import { count } from './array.js'
+import {isAdvisorBlock} from './advisor.js'
+import {isAgentSwarmsEnabled} from './agentSwarmsEnabled.js'
+import {count} from './array.js'
 import {
   type Attachment,
   type HookAttachment,
   type HookPermissionDecisionAttachment,
   memoryHeader,
 } from './attachments.js'
-import { quote } from './bash/shellQuote.js'
-import { formatNumber, formatTokens } from './format.js'
-import { getPewterLedgerVariant } from './planModeV2.js'
-import { jsonStringify } from './slowOperations.js'
-import { isInternalBuild } from './envUtils.js'
-
-// 带有 hookName 字段的 Hook 附件（排除 HookPermissionDecisionAttachment）
-type HookAttachmentWithName = Exclude<HookAttachment, HookPermissionDecisionAttachment>
-
-import type { APIErrorLike } from '../types/llm.js'
-import type { HookEvent, SDKAssistantMessageError } from 'src/entrypoints/agentSdkTypes.js'
-import { EXPLORE_AGENT } from 'src/tools/AgentTool/built-in/exploreAgent.js'
-import { PLAN_AGENT } from 'src/tools/AgentTool/built-in/planAgent.js'
-import { areExplorePlanAgentsEnabled } from 'src/tools/AgentTool/builtInAgents.js'
-import { AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
-import { ASK_USER_QUESTION_TOOL_NAME } from 'src/tools/AskUserQuestionTool/prompt.js'
-import { BashTool } from 'src/tools/BashTool/BashTool.js'
-import { ExitPlanModeV2Tool } from 'src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.js'
-import { FileEditTool } from 'src/tools/FileEditTool/FileEditTool.js'
-import { FILE_READ_TOOL_NAME, MAX_LINES_TO_READ } from 'src/tools/FileReadTool/prompt.js'
-import { FileWriteTool } from 'src/tools/FileWriteTool/FileWriteTool.js'
-import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
-import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
-import type { DeepImmutable } from 'src/types/utils.js'
-import { getStrictToolResultPairing } from '../bootstrap/state.js'
-import type { SpinnerMode } from '../components/Spinner.js'
+import {quote} from './bash/shellQuote.js'
+import {formatFileSize, formatNumber, formatTokens} from './format.js'
+import {
+  getPewterLedgerVariant,
+  getPlanModeV2AgentCount,
+  getPlanModeV2ExploreAgentCount,
+  isPlanModeInterviewPhaseEnabled
+} from './planModeV2.js'
+import {jsonStringify} from './slowOperations.js'
+import {isInternalBuild} from './envUtils.js'
+import type {HookEvent, SDKAssistantMessageError} from 'src/entrypoints/agentSdkTypes.js'
+import {EXPLORE_AGENT} from 'src/tools/AgentTool/built-in/exploreAgent.js'
+import {PLAN_AGENT} from 'src/tools/AgentTool/built-in/planAgent.js'
+import {areExplorePlanAgentsEnabled} from 'src/tools/AgentTool/builtInAgents.js'
+import {AGENT_TOOL_NAME} from 'src/tools/AgentTool/constants.js'
+import {ASK_USER_QUESTION_TOOL_NAME} from 'src/tools/AskUserQuestionTool/prompt.js'
+import {BashTool} from 'src/tools/BashTool/BashTool.js'
+import {ExitPlanModeV2Tool} from 'src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.js'
+import {FileEditTool} from 'src/tools/FileEditTool/FileEditTool.js'
+import {FILE_READ_TOOL_NAME, MAX_LINES_TO_READ} from 'src/tools/FileReadTool/prompt.js'
+import {FileWriteTool} from 'src/tools/FileWriteTool/FileWriteTool.js'
+import {GLOB_TOOL_NAME} from 'src/tools/GlobTool/prompt.js'
+import {GREP_TOOL_NAME} from 'src/tools/GrepTool/prompt.js'
+import type {DeepImmutable} from 'src/types/utils.js'
+import {getStrictToolResultPairing} from '../bootstrap/state.js'
+import type {SpinnerMode} from '../components/Spinner.js'
 import {
   COMMAND_ARGS_TAG,
   COMMAND_MESSAGE_TAG,
@@ -108,42 +111,34 @@ import {
   LOCAL_COMMAND_CAVEAT_TAG,
   LOCAL_COMMAND_STDOUT_TAG,
 } from '../constants/xml.js'
-import { DiagnosticTrackingService } from '../services/diagnosticTracking.js'
-import { findToolByName, type Tool, type Tools, toolMatchesName } from '../Tool.js'
-import {
-  FileReadTool,
-  type Output as FileReadToolOutput,
-} from '../tools/FileReadTool/FileReadTool.js'
-import { SEND_MESSAGE_TOOL_NAME } from '../tools/SendMessageTool/constants.js'
-import { TASK_CREATE_TOOL_NAME } from '../tools/TaskCreateTool/constants.js'
-import { TASK_OUTPUT_TOOL_NAME } from '../tools/TaskOutputTool/constants.js'
-import { TASK_UPDATE_TOOL_NAME } from '../tools/TaskUpdateTool/constants.js'
-import type { PermissionMode } from '../types/permissions.js'
-import { normalizeToolInput, normalizeToolInputForAPI } from './api.js'
-import { getCurrentProjectConfig } from './config.js'
-import { logAntError, logForDebugging } from './debug.js'
-import { stripIdeContextTags } from './displayTags.js'
-import { hasEmbeddedSearchTools } from './embeddedTools.js'
-import { formatFileSize } from './format.js'
-import { validateImagesForAPI } from './imageValidation.js'
-import { safeParseJSON } from './json.js'
-import { logError, logMCPDebug } from './log.js'
-import { normalizeLegacyToolName } from './permissions/permissionRuleParser.js'
-import {
-  getPlanModeV2AgentCount,
-  getPlanModeV2ExploreAgentCount,
-  isPlanModeInterviewPhaseEnabled,
-} from './planModeV2.js'
-import { escapeRegExp } from './stringUtils.js'
-import { isTodoV2Enabled } from './tasks.js'
+import {DiagnosticTrackingService} from '../services/diagnosticTracking.js'
+import {FileReadTool, type Output as FileReadToolOutput,} from '../tools/FileReadTool/FileReadTool.js'
+import {SEND_MESSAGE_TOOL_NAME} from '../tools/SendMessageTool/constants.js'
+import {TASK_CREATE_TOOL_NAME} from '../tools/TaskCreateTool/constants.js'
+import {TASK_OUTPUT_TOOL_NAME} from '../tools/TaskOutputTool/constants.js'
+import {TASK_UPDATE_TOOL_NAME} from '../tools/TaskUpdateTool/constants.js'
+import type {PermissionMode} from '../types/permissions.js'
+import {normalizeToolInput, normalizeToolInputForAPI} from './api.js'
+import {getCurrentProjectConfig} from './config.js'
+import {logAntError, logForDebugging} from './debug.js'
+import {stripIdeContextTags} from './displayTags.js'
+import {hasEmbeddedSearchTools} from './embeddedTools.js'
+import {validateImagesForAPI} from './imageValidation.js'
+import {safeParseJSON} from './json.js'
+import {logError, logMCPDebug} from './log.js'
+import {normalizeLegacyToolName} from './permissions/permissionRuleParser.js'
+import {escapeRegExp} from './stringUtils.js'
+import {isTodoV2Enabled} from './tasks.js'
+import {isToolReferenceBlock, isToolSearchEnabledOptimistic} from './toolSearch.js'
+
+// 带有 hookName 字段的 Hook 附件（排除 HookPermissionDecisionAttachment）
+type HookAttachmentWithName = Exclude<HookAttachment, HookPermissionDecisionAttachment>
 
 // 延迟导入以避免循环依赖（teammateMailbox -> teammate -> ... -> messages）
 function getTeammateMailbox(): typeof import('./teammateMailbox.js') {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require('./teammateMailbox.js')
 }
-
-import { isToolReferenceBlock, isToolSearchEnabledOptimistic } from './toolSearch.js'
 
 const MEMORY_CORRECTION_HINT =
   "\n\nNote: The user's next message may contain a correction or preference. Pay close attention — if they explain what went wrong or how they'd prefer you to work, consider saving that to memory for future sessions."
@@ -443,7 +438,7 @@ export function createUserMessage({
   permissionMode,
   origin,
 }: {
-  content: string | ContentBlock[]
+  content: string | UserContentBlock[]
   isMeta?: true
   isVisibleInTranscriptOnly?: true
   isVirtual?: true
@@ -469,7 +464,7 @@ export function createUserMessage({
   // 此消息的来源。undefined = 人类（键盘）。
   origin?: MessageOrigin
 }): UserMessage {
-  const m: UserMessage = {
+  return {
     type: 'user',
     message: {
       role: 'user',
@@ -489,7 +484,6 @@ export function createUserMessage({
     permissionMode,
     origin,
   }
-  return m
 }
 
 export function prepareUserContent({
@@ -952,7 +946,7 @@ export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
 }
 
 type ToolUseRequestMessage = NormalizedAssistantMessage & {
-  message: { content: [ToolCallInlineBlock] }
+  message: { content: [ToolCallBlock] }
 }
 
 export function isToolUseRequestMessage(
@@ -1257,8 +1251,8 @@ export type MessageLookups = {
   resolvedHookCounts: Map<string, Map<HookEvent, number>>
   /** 将 tool_use_id 映射到包含其 tool_result 的用户消息 */
   toolResultByToolUseID: Map<string, NormalizedMessage>
-  /** 将 tool_use_id 映射到 ToolCallInlineBlock */
-  toolUseByToolUseID: Map<string, ToolCallInlineBlock>
+  /** 将 tool_use_id 映射到 ToolCallBlock */
+  toolUseByToolUseID: Map<string, ToolCallBlock>
   /** 标准化消息的总计数（用于截断指示文本） */
   normalizedMessageCount: number
   /** 有对应 tool_result 的工具使用 ID 集合 */
@@ -1281,7 +1275,7 @@ export function buildMessageLookups(
   // 第一遍：按 ID 分组 assistant 消息并收集每条消息的所有工具使用 ID
   const toolUseIDsByMessageID = new Map<string, Set<string>>()
   const toolUseIDToMessageID = new Map<string, string>()
-  const toolUseByToolUseID = new Map<string, ToolCallInlineBlock>()
+  const toolUseByToolUseID = new Map<string, ToolCallBlock>()
   for (const msg of messages) {
     if (msg.type === 'assistant') {
       const id = msg.message.id
@@ -1477,7 +1471,7 @@ export const EMPTY_STRING_SET: ReadonlySet<string> = Object.freeze(new Set<strin
 export function buildSubagentLookups(
   messages: { message: AssistantMessage | NormalizedAssistantMessage | NormalizedUserMessage }[],
 ): { lookups: MessageLookups; inProgressToolUseIDs: Set<string> } {
-  const toolUseByToolUseID = new Map<string, ToolCallInlineBlock>()
+  const toolUseByToolUseID = new Map<string, ToolCallBlock>()
   const resolvedToolUseIDs = new Set<string>()
   const toolResultByToolUseID = new Map<string, NormalizedUserMessage & { type: 'user' }>()
 
@@ -1486,7 +1480,7 @@ export function buildSubagentLookups(
       if (!Array.isArray(msg.message.content)) continue
       for (const content of msg.message.content) {
         if (content.type === 'tool_call') {
-          toolUseByToolUseID.set(content.id, content as ToolCallInlineBlock)
+          toolUseByToolUseID.set(content.id, content as ToolCallBlock)
         }
       }
     } else if (msg.type === 'user') {
@@ -1921,15 +1915,18 @@ function smooshSystemReminderSiblings(
   messages: (UserMessage | AssistantMessage)[],
 ): (UserMessage | AssistantMessage)[] {
   return messages.map((msg) => {
-    if (msg.type !== 'user') return msg
+    if (msg.type !== 'user')
+      return msg
     const content = msg.message.content
-    if (!Array.isArray(content)) return msg
+    if (!Array.isArray(content))
+      return msg
 
     const hasToolResult = content.some((b) => b.type === 'tool_result')
-    if (!hasToolResult) return msg
+    if (!hasToolResult)
+      return msg
 
     const srText: TextBlock[] = []
-    const kept: ContentBlock[] = []
+    const kept: UserContentBlock[] = []
     for (const b of content) {
       if (b.type === 'text' && b.text.startsWith('<system-reminder>')) {
         srText.push(b)
@@ -1937,13 +1934,16 @@ function smooshSystemReminderSiblings(
         kept.push(b)
       }
     }
-    if (srText.length === 0) return msg
+    if (srText.length === 0)
+      return msg
 
     // 合并到最后一个 tool_result（在渲染的 prompt 中位置相邻）
     const lastTrIdx = kept.findLastIndex((b) => b.type === 'tool_result')
     const lastTr = kept[lastTrIdx] as ToolResultBlock
     const smooshed = smooshIntoToolResult(lastTr, srText)
-    if (smooshed === null) return msg // tool_ref 约束 — 保持不动
+    // tool_ref 约束 — 保持不动
+    if (smooshed === null)
+      return msg
 
     const newContent = [...kept.slice(0, lastTrIdx), smooshed, ...kept.slice(lastTrIdx + 1)]
     return {
@@ -2050,7 +2050,7 @@ function relocateToolReferenceSiblings(
       ...target,
       message: {
         ...target.message,
-        content: [...(target.message.content as ContentBlock[]), ...textSiblings],
+        content: [...(target.message.content as UserContentBlock[]), ...textSiblings],
       },
     }
   }
@@ -2494,9 +2494,9 @@ function mergeAdjacentUserMessages(
  * 在 UserMessage 的 content[] 列表中，tool_result 块必须排在前面，
  * 以避免 "tool result must follow tool use" API 错误。
  */
-function hoistToolResults(content: ContentBlock[]): ContentBlock[] {
-  const toolResults: ContentBlock[] = []
-  const otherBlocks: ContentBlock[] = []
+function hoistToolResults(content: UserContentBlock[]): UserContentBlock[] {
+  const toolResults: UserContentBlock[] = []
+  const otherBlocks: UserContentBlock[] = []
 
   for (const block of content) {
     if (block.type === 'tool_result') {
@@ -2509,7 +2509,7 @@ function hoistToolResults(content: ContentBlock[]): ContentBlock[] {
   return [...toolResults, ...otherBlocks]
 }
 
-function normalizeUserTextContent(a: string | ContentBlock[]): ContentBlock[] {
+function normalizeUserTextContent(a: string | UserContentBlock[]): UserContentBlock[] {
   if (typeof a === 'string') {
     return [{ type: 'text', text: a }]
   }
@@ -2525,7 +2525,7 @@ function normalizeUserTextContent(a: string | ContentBlock[]): ContentBlock[] {
  * smooshSystemReminderSiblings 通过 `startsWith('<system-reminder>')` 分类，
  * 前缀到 b 侧会在 b 是 SR 包装的附件时破坏该判断。
  */
-function joinTextAtSeam(a: ContentBlock[], b: ContentBlock[]): ContentBlock[] {
+function joinTextAtSeam(a: UserContentBlock[], b: UserContentBlock[]): UserContentBlock[] {
   const lastA = a.at(-1)
   const firstB = b[0]
   if (lastA?.type === 'text' && firstB?.type === 'text') {
@@ -2609,7 +2609,7 @@ function smooshIntoToolResult(tr: ToolResultBlock, blocks: ContentBlock[]): Tool
   return { ...tr, content: merged }
 }
 
-export function mergeUserContentBlocks(a: ContentBlock[], b: ContentBlock[]): ContentBlock[] {
+export function mergeUserContentBlocks(a: UserContentBlock[], b: UserContentBlock[]): UserContentBlock[] {
   // 见 https://anthropic.slack.com/archives/C06FE2FP0Q2/p1747586370117479 和
   // https://anthropic.slack.com/archives/C0AHK9P0129/p1773159663856279：
   // tool_result 之后的任何兄弟节点在线上都会渲染为 </function_results>\n\nHuman:<...>。
@@ -2620,7 +2620,7 @@ export function mergeUserContentBlocks(a: ContentBlock[], b: ContentBlock[]): Co
     return [...a, ...b]
   }
 
-  if (!checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_sysreminder_smoosh')) {
+  if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_sysreminder_smoosh', false)) {
     // 旧版（非门控）smoosh：仅 string-content tool_result + 全 text 兄弟节点 → 连接字符串。
     // 与通用 smoosh 之前的 main 行为一致。
     // 前置条件保证 smooshIntoToolResult 命中其字符串路径
@@ -2913,7 +2913,7 @@ export function getContentText(
 
 export type StreamingToolUse = {
   index: number
-  contentBlock: ToolCallInlineBlock
+  contentBlock: ToolCallBlock
   unparsedToolInput: string
 }
 
@@ -3010,7 +3010,7 @@ export function handleMessageFromStream(
             ..._,
             {
               index: startEvent.index,
-              contentBlock: chunk as import('../types/llm.js').ToolCallInlineBlock,
+              contentBlock: chunk as import('../types/llm.js').ToolCallBlock,
               unparsedToolInput: '',
             },
           ])
@@ -3812,7 +3812,7 @@ Read the team config to discover your teammates' names. Check the task list peri
 
         return wrapMessagesInSystemReminder([
           createUserMessage({
-            content,
+            content: content as UserContentBlock[],
             ...metaProp,
             origin,
             uuid: attachment.source_uuid,
@@ -3948,7 +3948,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
       if (transformedBlocks.length > 0) {
         return wrapMessagesInSystemReminder([
           createUserMessage({
-            content: transformedBlocks,
+            content: transformedBlocks as UserContentBlock[],
             isMeta: true,
           }),
         ])
@@ -4294,7 +4294,7 @@ function createToolResultMessage<Output>(
     // 如果结果包含图片内容块，原样保留
     if (Array.isArray(result.content) && result.content.some((block) => block.type === 'image')) {
       return createUserMessage({
-        content: result.content as ContentBlock[],
+        content: result.content as UserContentBlock[],
         isMeta: true,
       })
     }
@@ -4643,7 +4643,7 @@ export function countToolCalls(messages: Message[], toolName: string, maxCount?:
     if (!msg) continue
     if (msg.type === 'assistant' && Array.isArray(msg.message.content)) {
       const hasToolUse = msg.message.content.some(
-        (block): block is ToolCallInlineBlock =>
+        (block): block is ToolCallBlock =>
           block.type === 'tool_call' && block.name === toolName,
       )
       if (hasToolUse) {
@@ -4669,7 +4669,7 @@ export function hasSuccessfulToolCall(messages: Message[], toolName: string): bo
     if (!msg) continue
     if (msg.type === 'assistant' && Array.isArray(msg.message.content)) {
       const toolUse = msg.message.content.find(
-        (block): block is ToolCallInlineBlock =>
+        (block): block is ToolCallBlock =>
           block.type === 'tool_call' && block.name === toolName,
       )
       if (toolUse) {
@@ -5248,7 +5248,7 @@ export function ensureToolResultPairing(
           ...nextMsg,
           message: {
             ...nextMsg.message,
-            content: patchedContent as ContentBlock[],
+            content: patchedContent as UserContentBlock[],
           },
         }
         i++
@@ -5293,7 +5293,7 @@ export function ensureToolResultPairing(
         const toolUses = Array.isArray(content)
           ? content
               .filter((b) => b.type === 'tool_call')
-              .map((b) => (b as ToolCallInlineBlock | ToolCallInlineBlock).id)
+              .map((b) => (b as ToolCallBlock | ToolCallBlock).id)
           : []
         const serverToolUses = Array.isArray(content)
           ? content

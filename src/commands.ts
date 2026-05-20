@@ -711,6 +711,7 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   'thinkback-play': 'commands.thinkbackPlay',
   permissions: 'commands.permissions',
   plan: 'commands.plan',
+  powerup: 'commands.powerup',
   hooks: 'commands.hooks',
   export: 'commands.export',
   sandbox: 'commands.sandbox',

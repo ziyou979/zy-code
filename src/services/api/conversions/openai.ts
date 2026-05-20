@@ -57,7 +57,7 @@ interface DashScopeChatCompletionDelta {
 // ============================================================================
 
 /**
- * 把 ToolCallInlineBlock.input（任意值，可能是对象/字符串/undefined）
+ * 把 ToolCallBlock.input（任意值，可能是对象/字符串/undefined）
  * 安全序列化为 OpenAI 协议要求的 arguments 字符串。
  *
  * DashScope/百炼对该字段格式校验非常严格：
@@ -204,17 +204,6 @@ export function messagesToOpenAI(
             role: 'assistant',
             content: msg.content,
           }
-          // 兼容标准 AssistantMessage.toolCalls 字段
-          if (msg.toolCalls?.length) {
-            am.tool_calls = msg.toolCalls.map((tc: any) => ({
-              id: tc.id,
-              type: 'function',
-              function: {
-                name: tc.name,
-                arguments: safeStringifyToolArguments(tc.arguments),
-              },
-            }))
-          }
           result.push(am)
           break
         }
@@ -263,17 +252,6 @@ export function messagesToOpenAI(
         }
         if (textParts.length > 0) am.content = textParts.join('\n\n')
         if (toolCalls.length > 0) am.tool_calls = toolCalls
-        // 也兼容 AssistantMessage.toolCalls 独立字段
-        if (msg.toolCalls?.length && !am.tool_calls) {
-          am.tool_calls = msg.toolCalls.map((tc: any) => ({
-            id: tc.id,
-            type: 'function',
-            function: {
-              name: tc.name,
-              arguments: safeStringifyToolArguments(tc.arguments),
-            },
-          }))
-        }
         result.push(am)
         break
       }
@@ -387,10 +365,10 @@ export function convertThinkingForOpenAI(
 // ============================================================================
 
 /**
- * 将 Anthropic 风格 outputConfig.format 转换为 OpenAI 的 response_format。
+ * 将 outputConfig.format 转换为 OpenAI 的 response_format。
  * - 已是 OpenAI 格式（含顶层 type）：原样返回
  * - 'json_object' 直接返回
- * - 'json_schema' 取 inner json_schema 或 schema 字段
+ * - 'json_schema' 取 format.schema（原始 JSON Schema），自动包裹为 {name, schema, strict}
  *
  * OpenAI 的 json_schema 字段必须是 {name, schema, strict}（不是裸 JSON Schema），
  * 因此当输入为原始 JSON Schema 时需自动包装一层。
@@ -406,19 +384,14 @@ export function convertOutputFormatToResponseFormat(
   if (format.type === 'json_object') return { type: 'json_object' }
 
   if (format.type === 'json_schema') {
-    let jsonSchema =
-      (format.json_schema as Record<string, unknown>) ?? (format.schema as Record<string, unknown>)
-    if (!jsonSchema) return undefined
+    const rawSchema = format.schema as Record<string, unknown> | undefined
+    if (!rawSchema) return undefined
 
-    // 原始 JSON Schema 的顶层有 type 字段（如 "object"），却没有 schema 子字段；
-    // 已包装的格式（如 Anthropic/OpenAI 原生 wrapper）顶层有 name/schema/strict。
-    // 当输入为原始 JSON Schema 时，需包裹成 OpenAI 要求的 {name, schema, strict}。
-    if (!jsonSchema.schema) {
-      jsonSchema = {
-        name: 'response',
-        schema: jsonSchema,
-        strict: true,
-      }
+    // 原始 JSON Schema 需包裹成 OpenAI 要求的 {name, schema, strict}
+    const jsonSchema: Record<string, unknown> = {
+      name: 'response',
+      schema: rawSchema,
+      strict: true,
     }
 
     return {

@@ -25,7 +25,6 @@ import { hasExactErrorMessage } from '../../utils/errors.js'
 import { executePreCompactHooks } from '../../utils/hooks.js'
 import { logError } from '../../utils/log.js'
 import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'
-import { getUpgradeMessage } from '../../utils/model/contextWindowUpgradeCheck.js'
 import { buildEffectiveSystemPrompt, type SystemPrompt } from '../../utils/systemPrompt.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -219,12 +218,10 @@ async function compactViaReactive(
 }
 
 function buildDisplayText(context: ToolUseContext, userDisplayMessage?: string): string {
-  const upgradeMessage = getUpgradeMessage('tip')
   const expandShortcut = getShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
   const dimmed = [
     ...(context.options.verbose ? [] : [`(${expandShortcut} to see full summary)`]),
     ...(userDisplayMessage ? [userDisplayMessage] : []),
-    ...(upgradeMessage ? [upgradeMessage] : []),
   ]
   return chalk.dim('Compacted ' + dimmed.join('\n'))
 }

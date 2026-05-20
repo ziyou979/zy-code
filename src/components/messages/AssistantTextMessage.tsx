@@ -18,7 +18,6 @@ import {
   TOKEN_REVOKED_ERROR_MESSAGE,
 } from '../../services/api/errors.js'
 import { isEmptyMessageText, NO_RESPONSE_REQUESTED } from '../../utils/messages.js'
-import { getUpgradeMessage } from '../../utils/model/contextWindowUpgradeCheck.js'
 import { getDefaultStandardModel, renderModelName } from '../../utils/model/model.js'
 import { isMacOsKeychainLocked } from '../../utils/secureStorage/macOsKeychainStorage.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
@@ -80,12 +79,10 @@ export function AssistantTextMessage({
       return null
     }
     case PROMPT_TOO_LONG_ERROR_MESSAGE: {
-      const upgradeHint = getUpgradeMessage('warning')
       return (
         <MessageResponse height={1}>
           <Text color="error">
             Context limit reached · /compact or /clear to continue
-            {upgradeHint ? ` · ${upgradeHint}` : ''}
           </Text>
         </MessageResponse>
       )

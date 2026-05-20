@@ -1,4 +1,4 @@
-import type { ToolResultBlock, ToolCallInlineBlock } from '../../types/llm.js'
+import type { ToolResultBlock, ToolCallBlock } from '../../types/llm.js'
 import * as React from 'react'
 import { filterToolProgressMessages, findToolByName, type Tools } from '../../Tool.js'
 import type { GroupedToolUseMessage } from '../../types/message.js'

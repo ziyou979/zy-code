@@ -284,6 +284,9 @@ export type GlobalConfig = {
   // 记忆使用追踪
   memoryUsageCount: number // 用户向记忆添加内容的次数
 
+  // Powerup 课程进度追踪
+  powerupsUnlocked?: string[] // 已完成的 powerup 课程 id 列表
+
   // 语音模式通知追踪
   voiceNoticeSeenCount?: number // 语音模式可用通知已展示的次数
   voiceLangHintShownCount?: number // /voice 听写语言提示已展示的次数

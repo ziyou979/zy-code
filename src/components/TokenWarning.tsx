@@ -9,7 +9,6 @@ import {
   isAutoCompactEnabled,
 } from '../services/compact/autoCompact.js'
 import { useCompactWarningSuppression } from '../services/compact/compactWarningHook.js'
-import { getUpgradeMessage } from '../utils/model/contextWindowUpgradeCheck.js'
 import { tSync } from '../i18n/index.js'
 type Props = {
   tokenUsage: number
@@ -22,8 +21,7 @@ type Props = {
  * （在条件中调用 hooks 会违反 React 规则）。父组件仅在
  * feature('CONTEXT_COLLAPSE') + isContextCollapseEnabled() 时渲染此组件。
  */
-function CollapseLabel(props: Props) {
-  const { upgradeMessage } = props as any
+function CollapseLabel() {
   const collapseModule = require('../services/contextCollapse/index.js')
   const { getStats, subscribe } =
     collapseModule as typeof import('../services/contextCollapse/index.js')
@@ -33,13 +31,7 @@ function CollapseLabel(props: Props) {
     return `${stats.collapsedSpans}|${stats.stagedSpans}|${stats.health.totalErrors}|${stats.health.totalEmptySpawns}|${idleWarn}`
   })
   const statsValues = snapshot.split('|').map(Number)
-  const [collapsed, staged, errors, emptySpawns, idleWarning] = statsValues as [
-    number,
-    number,
-    number,
-    number,
-    number,
-  ]
+  const [collapsed, staged, errors, emptySpawns, idleWarning] = statsValues
   const total = collapsed + staged
   if (errors > 0 || idleWarning) {
     const problem =
@@ -70,7 +62,7 @@ function CollapseLabel(props: Props) {
   })
   return (
     <Text dimColor={true} wrap="truncate">
-      {upgradeMessage ? `${label} \u00b7 ${upgradeMessage}` : label}
+      {label}
     </Text>
   )
 }
@@ -82,7 +74,6 @@ export function TokenWarning({ tokenUsage, model }: Props) {
     return null
   }
   const showAutoCompactWarning = isAutoCompactEnabled()
-  const upgradeMessage = getUpgradeMessage('warning')
   let displayPercentLeft = percentLeft
   let reactiveOnlyMode = false
   let collapseMode = false
@@ -104,14 +95,13 @@ export function TokenWarning({ tokenUsage, model }: Props) {
     displayPercentLeft = Math.max(0, remainingPercent)
   }
   if (collapseMode && feature('CONTEXT_COLLAPSE')) {
-    // @ts-ignore
     return (
       <Box flexDirection="row">
-        <CollapseLabel tokenUsage={tokenUsage} model={model} />
+        <CollapseLabel/>
       </Box>
     )
   }
-  const autocompactLabel = reactiveOnlyMode
+  const autoCompactLabel = reactiveOnlyMode
     ? tSync('tokenWarning.contextUsed', {
         pct: 100 - displayPercentLeft,
       })
@@ -126,13 +116,11 @@ export function TokenWarning({ tokenUsage, model }: Props) {
     <Box flexDirection="row">
       {showAutoCompactWarning ? (
         <Text dimColor={true} wrap="truncate">
-          {upgradeMessage ? `${autocompactLabel} \u00b7 ${upgradeMessage}` : autocompactLabel}
+          {autoCompactLabel}
         </Text>
       ) : (
         <Text color={isAboveErrorThreshold ? 'error' : 'warning'} wrap="truncate">
-          {upgradeMessage
-            ? `${contextLowText} \u00b7 ${upgradeMessage}`
-            : `${contextLowText} \u00b7 ${compactAction}`}
+          {`${contextLowText} \u00b7 ${compactAction}`}
         </Text>
       )}
     </Box>

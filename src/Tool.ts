@@ -1,4 +1,4 @@
-import type { ToolResultBlock, ToolCallInlineBlock } from './types/llm.js'
+import type { ToolResultBlock, ToolCallBlock } from './types/llm.js'
 import type { ElicitRequestURLParams, ElicitResult } from '@modelcontextprotocol/sdk/types.js'
 import type { UUID } from 'crypto'
 import type { z } from 'zod/v4'
@@ -616,7 +616,7 @@ export type Tool<
    */
   renderGroupedToolUse?(
     toolUses: Array<{
-      param: ToolCallInlineBlock
+      param: ToolCallBlock
       isResolved: boolean
       isError: boolean
       isInProgress: boolean

@@ -1,4 +1,4 @@
-import type { ToolCallInlineBlock } from '../../types/llm.js'
+import type { ToolCallBlock } from '../../types/llm.js'
 import { getRemoteSessionUrl } from '../../constants/product.js'
 import {
   OUTPUT_FILE_TAG,

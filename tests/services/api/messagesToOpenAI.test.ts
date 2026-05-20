@@ -402,18 +402,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     expect(a.tool_calls[0].function.arguments).toBe('{"q":"hi"}')
   })
 
-  test('assistant content 为 array 无 tool_call，但 msg.toolCalls 独立字段存在 → 走 fallback', () => {
-    const result = messagesToOpenAI([
-      {
-        role: 'assistant',
-        content: [{ type: 'text', text: 'answer' }],
-        toolCalls: [{ id: 'c1', name: 'search', arguments: '{}' }],
-      },
-    ] as any)
-    const a = result.find((m) => m.role === 'assistant') as any
-    expect(a.content).toBe('answer')
-    expect(a.tool_calls).toHaveLength(1)
-  })
+
 
   test('user content 为非 object（如 null）：兜底为空', () => {
     const result = messagesToOpenAI([{ role: 'user', content: null }] as any)

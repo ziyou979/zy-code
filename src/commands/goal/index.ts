@@ -1,16 +1,17 @@
 /**
- * /goal 命令 — 目标驱动模式。
- * 设定目标后模型跨轮次自主推进，实时显示统计。
+ * /goal 命令 — 设定目标，注入 session-scoped Stop hook 持续驱动模型直到条件满足。
+ * 类型为 local-jsx，通过 onDone 回调的 shouldQuery + metaMessages 触发模型。
  */
 import type { Command } from '../../commands.js'
 import { tSync } from '../../i18n/index.js'
 
 const goal = {
-  type: 'local',
+  type: 'local-jsx',
   name: 'goal',
   description: tSync('commands.goal'),
   aliases: [],
-  supportsNonInteractive: false,
+  argumentHint: '[<condition> | clear]',
+  immediate: true,
   load: () => import('./goal.js'),
 } satisfies Command
 

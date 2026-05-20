@@ -13,6 +13,7 @@
 
 import { z } from 'zod/v4'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
+import { getLanguageSection } from '../constants/prompts.js'
 import { logEvent } from '../services/analytics/index.js'
 import { queryCompactModel } from '../services/api/llmOrchestrator.js'
 import type { Message } from '../types/message.js'
@@ -20,6 +21,7 @@ import { logForDebugging } from './debug.js'
 import { safeParseJSON } from './json.js'
 import { lazySchema } from './lazySchema.js'
 import { extractTextContent } from './messages.js'
+import { getInitialSettings } from './settings/settings.js'
 import { asSystemPrompt } from './systemPromptType.js'
 
 const MAX_CONVERSATION_TEXT = 1000
@@ -81,8 +83,13 @@ export async function generateSessionTitle(
   if (!trimmed) return null
 
   try {
+    const languageSection = getLanguageSection(getInitialSettings().language)
+    const systemPrompt = languageSection
+      ? SESSION_TITLE_PROMPT + '\n\n' + languageSection
+      : SESSION_TITLE_PROMPT
+
     const result = await queryCompactModel({
-      systemPrompt: asSystemPrompt([SESSION_TITLE_PROMPT]),
+      systemPrompt: asSystemPrompt([systemPrompt]),
       userPrompt: trimmed,
       outputFormat: {
         type: 'json_schema',

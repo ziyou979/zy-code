@@ -4,7 +4,7 @@
 // Plan mode is set via set_permission_mode control_request in
 // teleportToRemote's CreateSession events array.
 
-import type { ToolResultBlock, ToolCallInlineBlock } from '../../types/llm.js'
+import type { ToolResultBlock, ToolCallBlock } from '../../types/llm.js'
 import type { SDKMessage } from '../../entrypoints/agentSdkTypes.js'
 import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
 import { logForDebugging } from '../debug.js'
@@ -97,7 +97,7 @@ export class ExitPlanModeScanner {
       if (m.type === 'assistant') {
         for (const block of (m.message as any).content) {
           if (block.type !== 'tool_call') continue
-          const tu = block as ToolCallInlineBlock
+          const tu = block as ToolCallBlock
           if (tu.name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
             this.exitPlanCalls.push(tu.id)
           }

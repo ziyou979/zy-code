@@ -92,7 +92,7 @@ export function messagesToAnthropic(messages: AnyMessage[]): any[] {
       }
       result.push({
         role: 'assistant',
-        content: assistantContentToAnthropic(msg.content, msg.toolCalls),
+        content: assistantContentToAnthropic(msg.content),
       })
     }
   }
@@ -115,32 +115,9 @@ function userContentToAnthropic(
 
 function assistantContentToAnthropic(
   content: string | AssistantContentBlock[] | undefined,
-  toolCalls?: Array<{ id: string; name: string; arguments: string }>,
 ): string | Array<Record<string, unknown>> {
-  if (content == null) {
-    if (toolCalls?.length) {
-      return toolCalls.map((tc) => ({
-        type: 'tool_use',
-        id: tc.id,
-        name: tc.name,
-        input: safeParseToolArguments(tc.arguments),
-      }))
-    }
-    return ''
-  }
-  if (typeof content === 'string') {
-    if (!toolCalls?.length) return content
-    const blocks: Array<Record<string, unknown>> = content ? [{ type: 'text', text: content }] : []
-    for (const tc of toolCalls) {
-      blocks.push({
-        type: 'tool_use',
-        id: tc.id,
-        name: tc.name,
-        input: safeParseToolArguments(tc.arguments),
-      })
-    }
-    return blocks
-  }
+  if (content == null) return ''
+  if (typeof content === 'string') return content
   if (!Array.isArray(content)) return ''
   return content.map(blockToAnthropic)
 }

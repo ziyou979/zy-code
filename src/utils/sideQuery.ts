@@ -4,6 +4,7 @@ import type {
   LLMMessage,
   TextBlock,
   ToolChoice,
+  JSONOutputFormat,
 } from '../types/llm.js'
 
 import { getLastApiCompletionTimestamp, setLastApiCompletionTimestamp } from '../bootstrap/state.js'
@@ -16,9 +17,6 @@ import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 
 import { getLLMAdapter } from '../services/api/client.js'
 import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
 import { normalizeModelStringForAPI } from './model/model.js'
-
-// BetaJSONOutputFormat 可内联为结构化输出格式的本地类型
-type BetaJSONOutputFormat = { type: 'json_schema'; json_schema?: unknown; schema?: unknown }
 
 export type SideQueryOptions = {
   /** 用于查询的模型 */
@@ -37,7 +35,7 @@ export type SideQueryOptions = {
   /** 可选的工具选择（使用 { type: 'tool', name: 'x' } 强制输出） */
   tool_choice?: ToolChoice
   /** 可选的 JSON 输出格式，用于结构化响应 */
-  output_format?: BetaJSONOutputFormat
+  outputFormat?: JSONOutputFormat
   /** 最大 token 数（默认：1024） */
   max_tokens?: number
   /** 最大重试次数（默认：2） */
@@ -89,7 +87,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
     messages,
     tools,
     tool_choice,
-    output_format,
+    outputFormat,
     max_tokens = 1024,
     maxRetries = 2,
     signal,
@@ -100,9 +98,9 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
   } = opts
 
   const betas = [...getModelBetas(model)]
-  // 如果使用了 output_format 且 provider 支持，则添加结构化输出 beta
+  // 如果使用了 outputFormat 且 provider 支持，则添加结构化输出 beta
   if (
-    output_format &&
+    outputFormat &&
     modelSupportsStructuredOutputs(model) &&
     !betas.includes(STRUCTURED_OUTPUTS_BETA_HEADER)
   ) {
@@ -164,7 +162,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
         anthropic: {
           thinking: thinkingConfig,
           betas: betas.length > 0 ? betas : undefined,
-          outputConfig: output_format ? { format: output_format } : undefined,
+          outputConfig: outputFormat ? { format: outputFormat } : undefined,
         },
       },
     },

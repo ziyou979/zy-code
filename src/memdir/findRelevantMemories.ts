@@ -96,7 +96,7 @@ async function selectRelevantMemories(
         },
       ],
       max_tokens: 256,
-      output_format: {
+      outputFormat: {
         type: 'json_schema',
         schema: {
           type: 'object',

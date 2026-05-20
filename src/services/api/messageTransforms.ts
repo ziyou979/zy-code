@@ -1,14 +1,14 @@
-// @ts-nocheck
 import type {
   ContentBlock,
   ImageBlock,
-  Response as LLMMessage,
   ToolResultBlock,
   DocumentBlock,
+  LLMMessage,
+
 } from '../../types/llm.js'
 import type { UserMessage, AssistantMessage } from '../../types/message.js'
 import type { QuerySource } from '../../constants/querySource.js'
-import { type ConnectorTextBlock, isConnectorTextBlock } from '../../types/connectorText.js'
+import { isConnectorTextBlock } from '../../types/connectorText.js'
 import { feature } from 'bun:bundle'
 import { getCacheControl } from './cacheControl.js'
 import { logEvent } from '../analytics/index.js'
@@ -55,9 +55,9 @@ export function userMessageToMessageParam(
   // addCacheBreakpoints 会共享同一数组，每次都在其中插入重复的 cache_edits。
   return {
     role: 'user',
-    content: Array.isArray(message.message.content)
+    content: (Array.isArray(message.message.content)
       ? [...message.message.content]
-      : message.message.content,
+      : message.message.content),
   }
 }
 

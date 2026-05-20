@@ -1,4 +1,4 @@
-import type { ToolCallInlineBlock } from '../../types/llm.js'
+import type { ToolCallBlock } from '../../types/llm.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { findToolByName, type ToolUseContext } from '../../Tool.js'
 import type { AssistantMessage, Message } from '../../types/message.js'
@@ -15,7 +15,7 @@ export type MessageUpdate = {
 }
 
 export async function* runTools(
-  toolUseMessages: ToolCallInlineBlock[],
+  toolUseMessages: ToolCallBlock[],
   assistantMessages: AssistantMessage[],
   canUseTool: CanUseToolFn,
   toolUseContext: ToolUseContext,
@@ -27,7 +27,7 @@ export async function* runTools(
         string,
         ((context: ToolUseContext) => ToolUseContext)[]
       > = {}
-      // Run read-only batch concurrently
+      // 并发执行只读批次
       for await (const update of runToolsConcurrently(
         blocks,
         assistantMessages,
@@ -57,7 +57,7 @@ export async function* runTools(
       }
       yield { newContext: currentContext }
     } else {
-      // Run non-read-only batch serially
+      // 串行执行非只读批次
       for await (const update of runToolsSerially(
         blocks,
         assistantMessages,
@@ -76,15 +76,15 @@ export async function* runTools(
   }
 }
 
-type Batch = { isConcurrencySafe: boolean; blocks: ToolCallInlineBlock[] }
+type Batch = { isConcurrencySafe: boolean; blocks: ToolCallBlock[] }
 
 /**
- * Partition tool calls into batches where each batch is either:
- * 1. A single non-read-only tool, or
- * 2. Multiple consecutive read-only tools
+ * 将工具调用切分为批次，每个批次满足以下任一形式：
+ * 1. 单个非只读工具；或
+ * 2. 多个连续的只读工具
  */
 function partitionToolCalls(
-  toolUseMessages: ToolCallInlineBlock[],
+  toolUseMessages: ToolCallBlock[],
   toolUseContext: ToolUseContext,
 ): Batch[] {
   return toolUseMessages.reduce((acc: Batch[], toolUse) => {
@@ -95,8 +95,8 @@ function partitionToolCalls(
           try {
             return Boolean(tool?.isConcurrencySafe(parsedInput.data))
           } catch {
-            // If isConcurrencySafe throws (e.g., due to shell-quote parse failure),
-            // treat as not concurrency-safe to be conservative
+            // 如果 isConcurrencySafe 抛错（例如 shell-quote 解析失败），
+            // 保守起见视为非并发安全
             return false
           }
         })()
@@ -111,7 +111,7 @@ function partitionToolCalls(
 }
 
 async function* runToolsSerially(
-  toolUseMessages: ToolCallInlineBlock[],
+  toolUseMessages: ToolCallBlock[],
   assistantMessages: AssistantMessage[],
   canUseTool: CanUseToolFn,
   toolUseContext: ToolUseContext,
@@ -143,7 +143,7 @@ async function* runToolsSerially(
 }
 
 async function* runToolsConcurrently(
-  toolUseMessages: ToolCallInlineBlock[],
+  toolUseMessages: ToolCallBlock[],
   assistantMessages: AssistantMessage[],
   canUseTool: CanUseToolFn,
   toolUseContext: ToolUseContext,

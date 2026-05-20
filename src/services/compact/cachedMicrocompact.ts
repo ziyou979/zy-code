@@ -3,8 +3,8 @@ export type CachedMCState = {
 }
 
 export type CacheEditsBlock = {
-  type: 'cache_edit'
-  content: string
+  type: 'cache_edits'
+  edits: { type: 'delete'; cache_reference: string }[]
 }
 
 export type PinnedCacheEdits = {

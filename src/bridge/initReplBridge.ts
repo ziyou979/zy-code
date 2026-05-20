@@ -41,7 +41,7 @@ import {
   isSyntheticMessage,
 } from '../utils/messages.js'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
-import { getCurrentSessionTitle } from '../utils/sessionStorage.js'
+import { getCurrentSessionTitle, saveAiGeneratedTitle } from '../utils/sessionStorage.js'
 import { extractConversationText, generateSessionTitle } from '../utils/sessionTitle.js'
 import { generateShortWordSlug } from '../utils/words.js'
 import { getBridgeAccessToken, getBridgeBaseUrl, getBridgeTokenOverride } from './bridgeConfig.js'
@@ -306,6 +306,13 @@ export async function initReplBridge(
       baseUrl,
       getAccessToken: getBridgeAccessToken,
     }).catch(() => {})
+    // Persist AI title locally so /resume can display it without regeneration
+    try {
+      const sid = getSessionId()
+      if (sid) saveAiGeneratedTitle(sid as import('crypto').UUID, derived)
+    } catch {
+      // Ignore — non-critical persistence
+    }
   }
   // Fire-and-forget Haiku generation with post-await guards. Re-checks /rename
   // (sessionStorage), v1 env-lost (lastBridgeSessionId), and same-session

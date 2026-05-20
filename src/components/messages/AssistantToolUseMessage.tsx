@@ -1,4 +1,4 @@
-import type { ToolCallInlineBlock } from '../../types/llm.js'
+import type { ToolCallBlock } from '../../types/llm.js'
 import React from 'react'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
 import type { ThemeName } from 'src/utils/theme.js'
@@ -18,7 +18,7 @@ import { SentryErrorBoundary } from '../SentryErrorBoundary.js'
 import { ToolUseLoader } from '../ToolUseLoader.js'
 import { HookProgressMessage } from './HookProgressMessage.js'
 type Props = {
-  param: ToolCallInlineBlock
+  param: ToolCallBlock
   addMargin: boolean
   tools: Tools
   commands: Command[]

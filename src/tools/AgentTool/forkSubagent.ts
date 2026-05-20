@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { ToolCallInlineBlock } from '../../types/llm.js'
+import type { ToolCallBlock } from '../../types/llm.js'
 import { randomUUID } from 'crypto'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import { FORK_BOILERPLATE_TAG, FORK_DIRECTIVE_PREFIX } from '../../constants/xml.js'
@@ -114,7 +114,7 @@ export function buildForkedMessages(
 
   // Collect all tool_use blocks from the assistant message
   const toolUseBlocks = contentBlocks.filter(
-    (block): block is ToolCallInlineBlock =>
+    (block): block is ToolCallBlock =>
       typeof block !== 'string' && block.type === 'tool_call',
   )
 

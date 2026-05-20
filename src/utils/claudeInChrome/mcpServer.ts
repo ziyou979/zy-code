@@ -183,7 +183,7 @@ export function createChromeContext(env?: Record<string, string>): ClaudeForChro
           tools: [],
           querySource: 'chrome_mcp' as any,
         })
-        // BetaContentBlock is TextBlock | ThinkingBlock | ToolCallInlineBlock | ...
+        // BetaContentBlock is TextBlock | ThinkingBlock | ToolCallBlock | ...
         // Only text blocks carry the model's command output.
         const textBlocks: Array<{ type: 'text'; text: string }> = []
         for (const b of response.content) {

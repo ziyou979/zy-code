@@ -1,13 +1,8 @@
 /**
  * Goal 模式 React hook。
- * 当 goal 模式激活时，在每轮查询结束后自动 enqueue 续接消息，
- * 驱动模型跨轮次自主推进目标。
- * 参考 src/proactive/useProactive.ts 的实现模式。
+ * 现在 /goal 通过 session-scoped Stop hook 驱动模型持续工作，
+ * 不再需要 nudge 续接机制。此 hook 保留签名以兼容 REPL.tsx 调用。
  */
-import { useEffect, useRef } from 'react'
-import { isGoalActive, isGoalPaused, incrementGoalTurn, getGoalState } from '../goal/goalState.js'
-import { tSync } from '../i18n/index.js'
-import { logForDebugging } from '../utils/debug.js'
 
 export type GoalModeProps = {
   /** 当前是否正在加载（查询进行中） */
@@ -21,40 +16,10 @@ export type GoalModeProps = {
 }
 
 /**
- * Goal 模式的核心 hook。
- * 监听 isLoading 从 true→false 的边沿，
- * goal 活跃且非暂停时自动 enqueue 续接消息。
+ * Goal 模式兼容 hook（no-op）。
+ * Stop hook 机制已取代 nudge 续接 — 模型停止时由 Stop hook 拦截并评估条件，
+ * 条件未满足则阻止停止，无需外部 nudge。
  */
-export function useGoalMode(props: GoalModeProps): void {
-  const propsRef = useRef(props)
-  propsRef.current = props
-  const wasLoadingRef = useRef(false)
-
-  useEffect(() => {
-    // 检测 isLoading 的 true→false 边沿（一轮查询结束）
-    if (wasLoadingRef.current && !props.isLoading) {
-      if (isGoalActive() && !isGoalPaused()) {
-        const currentProps = propsRef.current
-        // 有排队命令或活跃 UI 时跳过
-        if (currentProps.queuedCommandsLength > 0 || currentProps.hasActiveLocalJsxUI) {
-          logForDebugging('Goal mode: skipping nudge (queued commands or active UI)')
-        } else {
-          incrementGoalTurn()
-          const state = getGoalState()
-          const nudge = tSync('goal.nudgeMessage', {
-            description: state.description,
-            turnCount: String(state.turnCount),
-          })
-          logForDebugging(
-            `Goal mode: enqueuing nudge (turn ${state.turnCount}, elapsed ${(state.elapsedMs / 1000).toFixed(0)}s)`,
-          )
-          // 短延时避免与流式清理竞态
-          setTimeout(() => {
-            currentProps.onQueueGoalNudge(nudge)
-          }, 500)
-        }
-      }
-    }
-    wasLoadingRef.current = props.isLoading
-  }, [props.isLoading])
+export function useGoalMode(_props: GoalModeProps): void {
+  // Stop hook 机制完全取代了 nudge 续接，此处为空实现
 }

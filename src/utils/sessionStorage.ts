@@ -3396,6 +3396,11 @@ export async function loadTranscriptFile(
           summaries.set(entry.leafUuid, entry.summary)
         } else if (entry.type === 'custom-title' && entry.sessionId) {
           customTitles.set(entry.sessionId, entry.customTitle)
+        } else if (entry.type === 'ai-title' && entry.sessionId) {
+          // AI title 仅在无 custom-title 时回退使用
+          if (!customTitles.has(entry.sessionId)) {
+            customTitles.set(entry.sessionId, (entry as any).aiTitle)
+          }
         } else if (entry.type === 'tag' && entry.sessionId) {
           tags.set(entry.sessionId, entry.tag)
         } else if (entry.type === 'agent-name' && entry.sessionId) {
@@ -3459,6 +3464,11 @@ export async function loadTranscriptFile(
         summaries.set(entry.leafUuid, entry.summary)
       } else if (entry.type === 'custom-title' && entry.sessionId) {
         customTitles.set(entry.sessionId, entry.customTitle)
+      } else if (entry.type === 'ai-title' && entry.sessionId) {
+        // AI title 仅在无 custom-title 时回退使用
+        if (!customTitles.has(entry.sessionId)) {
+          customTitles.set(entry.sessionId, (entry as any).aiTitle)
+        }
       } else if (entry.type === 'tag' && entry.sessionId) {
         tags.set(entry.sessionId, entry.tag)
       } else if (entry.type === 'agent-name' && entry.sessionId) {

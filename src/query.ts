@@ -2,7 +2,7 @@
 import { isInternalBuild } from './utils/envUtils.js'
 import type {
   ToolResultBlock,
-  ToolCallInlineBlock,
+  ToolCallBlock,
   AssistantContentBlock,
   TextBlock,
 } from './types/llm.js'
@@ -131,7 +131,7 @@ function* yieldMissingToolResultBlocks(
     const content = assistantMessage.message.content
     if (!Array.isArray(content)) continue
     const toolUseBlocks = content.filter(
-      (block): block is ToolCallInlineBlock =>
+      (block): block is ToolCallBlock =>
         typeof block !== 'string' && block.type === 'tool_call',
     )
 
@@ -529,7 +529,7 @@ async function* queryLoop(
     // 注意：stop_reason === 'tool_call' 不可靠 — 它并不总是正确设置。
     // 流式传输期间每当 tool_use 块到达时设置 — 唯一的循环退出信号。
     // 流式传输后如果为 false，我们就完成了（除非 stop-hook 重试）。
-    const toolUseBlocks: ToolCallInlineBlock[] = []
+    const toolUseBlocks: ToolCallBlock[] = []
     let needsFollowUp = false
 
     queryCheckpoint('query_setup_start')
@@ -773,7 +773,7 @@ async function* queryLoop(
               const content = message.message.content
               const msgToolUseBlocks = Array.isArray(content)
                 ? content.filter(
-                    (block): block is ToolCallInlineBlock =>
+                    (block): block is ToolCallBlock =>
                       typeof block !== 'string' && block.type === 'tool_call',
                   )
                 : []
@@ -897,7 +897,7 @@ async function* queryLoop(
           const content = _.message.content
           return Array.isArray(content)
             ? content.filter(
-                (block): block is ToolCallInlineBlock =>
+                (block): block is ToolCallBlock =>
                   typeof block !== 'string' && block.type === 'tool_call',
               )
             : []
@@ -1502,7 +1502,7 @@ async function* queryLoop(
     // 发给它的内容 — 主线程排出 agentId===undefined，
     // 子 agent 排出它们自己的 agentId。用户提示（mode:'prompt'）
     // 仍然只去主线程；子 agent 永远不会看到提示流。
-    // eslint-disable-next-line custom-rules/require-tool-match-name -- ToolCallInlineBlock.name has no aliases
+    // eslint-disable-next-line custom-rules/require-tool-match-name -- ToolCallBlock.name has no aliases
     const sleepRan = toolUseBlocks.some((b) => b.name === SLEEP_TOOL_NAME)
     const isMainThread = querySource.startsWith('repl_main_thread') || querySource === 'sdk'
     const currentAgentId = toolUseContext.agentId

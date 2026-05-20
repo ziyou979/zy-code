@@ -1,4 +1,4 @@
-import type { ToolCallInlineBlock } from '../types/llm.js'
+import type { ToolCallBlock } from '../types/llm.js'
 import last from 'lodash-es/last.js'
 import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
 import type { SDKMessage } from 'src/entrypoints/agentSdkTypes.js'
@@ -215,11 +215,11 @@ export async function* handleOrphanedPermission(
   }
 
   const content = assistantMessage.message.content
-  let toolUseBlock: ToolCallInlineBlock | undefined
+  let toolUseBlock: ToolCallBlock | undefined
   if (Array.isArray(content)) {
     for (const block of content) {
       if (block.type === 'tool_call' && block.id === toolUseID) {
-        toolUseBlock = block as ToolCallInlineBlock
+        toolUseBlock = block as ToolCallBlock
         break
       }
     }
@@ -237,7 +237,7 @@ export async function* handleOrphanedPermission(
     return
   }
 
-  // 如果权限被允许，使用更新后的输入创建 ToolCallInlineBlock
+  // 如果权限被允许，使用更新后的输入创建 ToolCallBlock
   let finalInput = toolInput
   if (permissionResult.behavior === 'allow') {
     if (permissionResult.updatedInput !== undefined) {
@@ -249,7 +249,7 @@ export async function* handleOrphanedPermission(
       )
     }
   }
-  const finalToolCallInlineBlock: ToolCallInlineBlock = {
+  const finalToolCallInlineBlock: ToolCallBlock = {
     ...toolUseBlock,
     input: finalInput,
   }

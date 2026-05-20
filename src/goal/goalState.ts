@@ -1,18 +1,8 @@
 /**
  * 目标驱动模式状态管理。
- * 参考 src/proactive/index.ts 的模块级状态 + 订阅者模式。
+ * 状态现在存储在 AppState.activeGoal 中（由 /goal 命令的 Stop hook 机制驱动）。
+ * 本模块保留为兼容层，供 useGoalMode.ts 使用。
  */
-import { getTotalInputTokens, getTotalOutputTokens, getTotalCost } from '../cost-tracker.js'
-
-let _goalActive = false
-let _goalPaused = false
-let _goalDescription = ''
-let _turnCount = 0
-let _startTime = 0
-let _startInputTokens = 0
-let _startOutputTokens = 0
-let _startCost = 0
-const _subscribers: Array<() => void> = []
 
 export interface GoalSnapshot {
   active: boolean
@@ -25,77 +15,35 @@ export interface GoalSnapshot {
   costUSD: number
 }
 
-/** 激活目标模式 */
-export function activateGoal(description: string): void {
-  _goalActive = true
-  _goalPaused = false
-  _goalDescription = description
-  _turnCount = 0
-  _startTime = Date.now()
-  _startInputTokens = getTotalInputTokens()
-  _startOutputTokens = getTotalOutputTokens()
-  _startCost = getTotalCost()
-  _notifySubscribers()
-}
-
-/** 停用目标模式 */
-export function deactivateGoal(): void {
-  _goalActive = false
-  _goalPaused = false
-  _goalDescription = ''
-  _notifySubscribers()
-}
-
-/** 暂停目标模式（保留状态，临时静默） */
-export function pauseGoal(): void {
-  _goalPaused = true
-}
-
-/** 恢复之前暂停的目标模式 */
-export function resumeGoal(): void {
-  _goalPaused = false
-}
-
-/** 目标模式是否激活 */
+/**
+ * 目标模式是否激活。
+ * 兼容旧接口 — 实际状态由 AppState.activeGoal 管理。
+ * 此函数现在始终返回 false，因为 Stop hook 机制不依赖此检查。
+ */
 export function isGoalActive(): boolean {
-  return _goalActive
+  return false
 }
 
-/** 目标模式是否暂停 */
+/** 目标模式是否暂停（Stop hook 机制下不再使用） */
 export function isGoalPaused(): boolean {
-  return _goalPaused
+  return false
 }
 
-/** 递增目标轮次计数 */
+/** 递增目标轮次计数（Stop hook 机制下不再使用） */
 export function incrementGoalTurn(): void {
-  _turnCount++
+  // no-op: iterations 由 Stop hook 评估时自动递增（写入 AppState.activeGoal.iterations）
 }
 
-/** 获取目标模式完整快照 */
+/** 获取目标模式完整快照（兼容旧接口） */
 export function getGoalState(): GoalSnapshot {
   return {
-    active: _goalActive,
-    paused: _goalPaused,
-    description: _goalDescription,
-    turnCount: _turnCount,
-    elapsedMs: _goalActive ? Date.now() - _startTime : 0,
-    inputTokens: getTotalInputTokens() - _startInputTokens,
-    outputTokens: getTotalOutputTokens() - _startOutputTokens,
-    costUSD: getTotalCost() - _startCost,
+    active: false,
+    paused: false,
+    description: '',
+    turnCount: 0,
+    elapsedMs: 0,
+    inputTokens: 0,
+    outputTokens: 0,
+    costUSD: 0,
   }
-}
-
-/** 订阅目标模式状态变化 */
-export function subscribeToGoalChanges(callback: () => void): () => void {
-  _subscribers.push(callback)
-  return () => {
-    const index = _subscribers.indexOf(callback)
-    if (index > -1) {
-      _subscribers.splice(index, 1)
-    }
-  }
-}
-
-function _notifySubscribers(): void {
-  _subscribers.forEach((cb) => cb())
 }

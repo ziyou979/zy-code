@@ -16,14 +16,15 @@ import type { ConnectorTextBlock } from './connectorText.js'
 // ============================================================================
 
 /** 用户消息中可用的内容块 */
-export type UserContentBlock = TextBlock | ImageBlock
+export type UserContentBlock = TextBlock | ImageBlock | ToolCallBlock | ToolResultBlock | DocumentBlock | ConnectorTextBlock
 
 /** 助手消息中可用的内容块 */
 export type AssistantContentBlock =
   | TextBlock
-  | ToolCallInlineBlock
+  | ToolCallBlock
   | ThinkingBlock
   | RedactedThinkingBlock
+  | ToolResultBlock
 
 // ---- 通用内容块 ----
 
@@ -43,11 +44,11 @@ export interface ImageBlock {
 }
 
 /**
- * 内联工具调用块。
- * 用于 Anthropic 流式场景（tool_use 作为 content block 逐步输出）。
- * OpenAI 的 tool_calls 通过 AssistantMessage.toolCalls 独立字段传递。
+ * 工具调用块 — 统一表示所有 provider 的工具调用。
+ * Anthropic: 作为 content block 内联输出。
+ * OpenAI: 由适配层从 tool_calls 字段转换而来。
  */
-export interface ToolCallInlineBlock {
+export interface ToolCallBlock {
   type: 'tool_call'
   id: string
   name: string
@@ -80,8 +81,7 @@ export interface AssistantMessage {
   /** 停止原因 */
   stopReason?: StopReason | null
   content: AssistantContentBlock[]
-  /** 工具调用列表（OpenAI 风格独立字段，流式场景也可能使用 ToolCallInlineBlock） */
-  toolCalls?: ToolCall[]
+
   /** 模型使用的 token 用量 */
   usage?: TokenUsage
   /** 允许运行时附加额外属性（如 stop_reason 等兼容字段） */
@@ -120,16 +120,13 @@ export interface ToolDefinition {
 /** 工具选择策略 */
 export type ToolChoice = { type: 'auto' } | { type: 'none' } | { type: 'tool'; name: string }
 
-// ============================================================================
-// 工具调用
-// ============================================================================
-
-/** 工具调用（独立于消息内容） */
-export interface ToolCall {
-  id: string
-  name: string
-  arguments: string // JSON string
+/** 结构化 JSON 输出格式请求（provider 中立，仅含原始 JSON Schema） */
+export interface JSONOutputFormat {
+  type: 'json_schema'
+  schema: Record<string, unknown>
 }
+
+
 
 // ============================================================================
 // 流式事件 — 通用命名
@@ -558,7 +555,7 @@ export interface ImageSource {
 export type ContentBlock =
   | TextBlock
   | ImageBlock
-  | ToolCallInlineBlock
+  | ToolCallBlock
   | ToolResultBlock
   | DocumentBlock
   | ThinkingBlock

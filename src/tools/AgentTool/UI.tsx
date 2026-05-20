@@ -1,4 +1,4 @@
-import type { ToolResultBlock, ToolCallInlineBlock } from '../../types/llm.js'
+import type { ToolResultBlock, ToolCallBlock } from '../../types/llm.js'
 import * as React from 'react'
 import { ConfigurableShortcutHint } from 'src/components/ConfigurableShortcutHint.js'
 import { CtrlOToExpand, SubAgentProvider } from 'src/components/CtrlOToExpand.js'
@@ -67,7 +67,7 @@ function hasProgressMessage(data: Progress): data is AgentToolProgress {
 function getSearchOrReadInfo(
   progressMessage: ProgressMessage<Progress>,
   tools: Tools,
-  toolUseByID: Map<string, ToolCallInlineBlock>,
+  toolUseByID: Map<string, ToolCallBlock>,
 ): {
   isSearch: boolean
   isRead: boolean
@@ -161,14 +161,14 @@ function processProgressMessages(
   )
 
   // 在迭代过程中逐步构建 tool_use 查找表
-  const toolUseByID = new Map<string, ToolCallInlineBlock>()
+  const toolUseByID = new Map<string, ToolCallBlock>()
   for (const msg of agentMessages) {
     // 跟踪遇到的 tool_use 块
     // @ts-ignore -- message type is narrowed at runtime
     if (msg.data.message.type === 'assistant') {
       for (const c of (msg.data.message as any).message.content) {
         if (c.type === 'tool_call') {
-          toolUseByID.set(c.id, c as ToolCallInlineBlock)
+          toolUseByID.set(c.id, c as ToolCallBlock)
         }
       }
     }
@@ -771,7 +771,7 @@ function calculateAgentStats(progressMessages: ProgressMessage<Progress>[]): {
 }
 export function renderGroupedAgentToolUse(
   toolUses: Array<{
-    param: ToolCallInlineBlock
+    param: ToolCallBlock
     isResolved: boolean
     isError: boolean
     isInProgress: boolean
@@ -973,7 +973,7 @@ export function extractLastToolInfo(
   tools: Tools,
 ): string | null {
   // 从所有 progress 消息中构建 tool_use 查找表（反向迭代需要）
-  const toolUseByID = new Map<string, ToolCallInlineBlock>()
+  const toolUseByID = new Map<string, ToolCallBlock>()
   for (const pm of progressMessages) {
     if (!hasProgressMessage(pm.data)) {
       continue
@@ -982,7 +982,7 @@ export function extractLastToolInfo(
     if (pm.data.message.type === 'assistant') {
       for (const c of (pm.data.message as any).message.content) {
         if (c.type === 'tool_call') {
-          toolUseByID.set(c.id, c as ToolCallInlineBlock)
+          toolUseByID.set(c.id, c as ToolCallBlock)
         }
       }
     }
