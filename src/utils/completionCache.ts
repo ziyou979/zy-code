@@ -1,15 +1,16 @@
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import chalk from 'chalk'
-import { mkdir, readFile, writeFile } from 'fs/promises'
-import { dirname, join } from 'path'
-import { pathToFileURL } from 'url'
 import { color } from '../components/design-system/color.js'
 import { supportsHyperlinks } from '../ink/supports-hyperlinks.js'
 import { logForDebugging } from './debug.js'
-import { isENOENT } from './errors.js'
 import { getZyConfigHomeDir } from './envUtils.js'
+import { isENOENT } from './errors.js'
 import { execFileNoThrow } from './execFileNoThrow.js'
 import { logError } from './log.js'
 import type { ThemeName } from './theme.js'
+
 const EOL = '\n'
 type ShellInfo = {
   name: string
@@ -21,33 +22,33 @@ type ShellInfo = {
 function detectShell(): ShellInfo | null {
   const shell = process.env.SHELL || ''
   const ZyDir = getZyConfigHomeDir()
-  // @ts-ignore
+  // @ts-expect-error
   if (shell.endsWith('/zsh') || shell.endsWith('/zsh.exe')) {
     const cacheFile = join(ZyDir, 'completion.zsh')
     return {
       name: 'zsh',
-      // @ts-ignore
+      // @ts-expect-error
       rcFile: join(home, '.zshrc'),
       cacheFile,
       completionLine: `[[ -f "${cacheFile}" ]] && source "${cacheFile}"`,
       shellFlag: 'zsh',
     }
   }
-  // @ts-ignore
+  // @ts-expect-error
   if (shell.endsWith('/bash') || shell.endsWith('/bash.exe')) {
     const cacheFile = join(ZyDir, 'completion.bash')
     return {
       name: 'bash',
-      // @ts-ignore
+      // @ts-expect-error
       rcFile: join(home, '.bashrc'),
       cacheFile,
       completionLine: `[ -f "${cacheFile}" ] && source "${cacheFile}"`,
       shellFlag: 'bash',
     }
   }
-  // @ts-ignore
+  // @ts-expect-error
   if (shell.endsWith('/fish') || shell.endsWith('/fish.exe')) {
-    // @ts-ignore
+    // @ts-expect-error
     const xdg = process.env.XDG_CONFIG_HOME || join(home, '.config')
     const cacheFile = join(ZyDir, 'completion.fish')
     return {

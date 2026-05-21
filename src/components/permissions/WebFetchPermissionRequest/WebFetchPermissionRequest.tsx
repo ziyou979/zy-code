@@ -1,4 +1,4 @@
-import React from 'react'
+import { tSync } from 'src/i18n/index.js'
 import { Box, Text, useTheme } from '../../../ink.js'
 import { WebFetchTool } from '../../../tools/WebFetchTool/WebFetchTool.js'
 import { shouldShowAlwaysAllowOptions } from '../../../utils/permissions/permissionsLoader.js'
@@ -7,7 +7,7 @@ import { usePermissionRequestLogging } from '../hooks.js'
 import { PermissionDialog } from '../PermissionDialog.js'
 import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js'
 import { logUnaryPermissionEvent } from '../utils.js'
-import { tSync } from 'src/i18n/index.js'
+
 function inputToPermissionRuleContent(input: { [k: string]: unknown }): string {
   try {
     const parsedInput = WebFetchTool.inputSchema.safeParse(input)

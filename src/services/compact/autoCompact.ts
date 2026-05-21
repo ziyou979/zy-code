@@ -5,12 +5,12 @@ import type { ToolUseContext } from '../../Tool.js'
 import type { Message } from '../../types/message.js'
 import { getGlobalConfig } from '../../utils/config.js'
 import { getContextWindowForModel } from '../../utils/context.js'
-import { getLocalMaxInputTokens } from '../../utils/settings/localModelCapabilities.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
 import type { CacheSafeParams } from '../../utils/forkedAgent.js'
 import { logError } from '../../utils/log.js'
+import { getLocalMaxInputTokens } from '../../utils/settings/localModelCapabilities.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { getMaxOutputTokensForModel } from '../api/llmOrchestrator.js'
@@ -40,7 +40,7 @@ export function getEffectiveContextWindowSize(model: string): number {
   const autoCompactWindow = process.env.ZY_CODE_AUTO_COMPACT_WINDOW
   if (autoCompactWindow) {
     const parsed = parseInt(autoCompactWindow, 10)
-    if (!isNaN(parsed) && parsed > 0) {
+    if (!Number.isNaN(parsed) && parsed > 0) {
       contextWindow = Math.min(contextWindow, parsed)
     }
   }
@@ -93,7 +93,7 @@ export function getAutoCompactThreshold(model: string): number {
   const envPercent = process.env.AUTOCOMPACT_PCT_OVERRIDE
   if (envPercent) {
     const parsed = parseFloat(envPercent)
-    if (!isNaN(parsed) && parsed > 0 && parsed <= 100) {
+    if (!Number.isNaN(parsed) && parsed > 0 && parsed <= 100) {
       const percentageThreshold = Math.floor(effectiveContextWindow * (parsed / 100))
       autocompactThreshold = Math.min(autocompactThreshold, percentageThreshold)
     }
@@ -139,7 +139,7 @@ export function calculateTokenWarningState(
   const blockingLimitOverride = process.env.ZY_CODE_BLOCKING_LIMIT_OVERRIDE
   const parsedOverride = blockingLimitOverride ? parseInt(blockingLimitOverride, 10) : NaN
   const blockingLimit =
-    !isNaN(parsedOverride) && parsedOverride > 0 ? parsedOverride : defaultBlockingLimit
+    !Number.isNaN(parsedOverride) && parsedOverride > 0 ? parsedOverride : defaultBlockingLimit
 
   const isAtBlockingLimit = tokenUsage >= blockingLimit
 

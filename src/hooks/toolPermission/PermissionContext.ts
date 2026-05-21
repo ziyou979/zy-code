@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-import type { ContentBlock } from '../../types/llm.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -9,6 +8,7 @@ import type { ToolUseConfirm } from '../../components/permissions/PermissionRequ
 import type { ToolPermissionContext, Tool as ToolType, ToolUseContext } from '../../Tool.js'
 import { awaitClassifierAutoApproval } from '../../tools/BashTool/bashPermissions.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
+import type { ContentBlock } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
 import type {
   PendingClassifierCheck,
@@ -70,7 +70,9 @@ function createResolveOnce<T>(resolve: (value: T) => void): ResolveOnce<T> {
   let delivered = false
   return {
     resolve(value: T) {
-      if (delivered) return
+      if (delivered) {
+        return
+      }
       delivered = true
       claimed = true
       resolve(value)
@@ -79,7 +81,9 @@ function createResolveOnce<T>(resolve: (value: T) => void): ResolveOnce<T> {
       return claimed
     },
     claim() {
-      if (claimed) return false
+      if (claimed) {
+        return false
+      }
       claimed = true
       return true
     },
@@ -129,14 +133,18 @@ function createPermissionContext(
       })
     },
     async persistPermissions(updates: PermissionUpdate[]) {
-      if (updates.length === 0) return false
+      if (updates.length === 0) {
+        return false
+      }
       persistPermissionUpdates(updates)
       const appState = toolUseContext.getAppState()
       setToolPermissionContext(applyPermissionUpdates(appState.toolPermissionContext, updates))
       return updates.some((update) => supportsPersistence(update.destination))
     },
     resolveIfAborted(resolve: (decision: PermissionDecision) => void) {
-      if (!toolUseContext.abortController.signal.aborted) return false
+      if (!toolUseContext.abortController.signal.aborted) {
+        return false
+      }
       this.logCancelled()
       resolve(this.cancelAndAbort(undefined, true))
       return true
@@ -354,11 +362,11 @@ function createPermissionQueueOps(
   }
 }
 
-export { createPermissionContext, createPermissionQueueOps, createResolveOnce }
 export type {
-  PermissionContext,
   PermissionApprovalSource,
+  PermissionContext,
   PermissionQueueOps,
   PermissionRejectionSource,
   ResolveOnce,
 }
+export { createPermissionContext, createPermissionQueueOps, createResolveOnce }

@@ -3,6 +3,7 @@ import * as React from 'react'
 import { EnterPlanModeTool } from 'src/tools/EnterPlanModeTool/EnterPlanModeTool.js'
 import { ExitPlanModeV2Tool } from 'src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.js'
 import { useNotifyAfterTimeout } from '../../hooks/useNotifyAfterTimeout.js'
+import { tSync } from '../../i18n/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import type { AnyObject, Tool, ToolUseContext } from '../../Tool.js'
 import { AskUserQuestionTool } from '../../tools/AskUserQuestionTool/AskUserQuestionTool.js'
@@ -30,46 +31,47 @@ import { NotebookEditPermissionRequest } from './NotebookEditPermissionRequest/N
 import { PowerShellPermissionRequest } from './PowerShellPermissionRequest/PowerShellPermissionRequest.js'
 import { SkillPermissionRequest } from './SkillPermissionRequest/SkillPermissionRequest.js'
 import { WebFetchPermissionRequest } from './WebFetchPermissionRequest/WebFetchPermissionRequest.js'
-import { tSync } from '../../i18n/index.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-// @ts-ignore
+// @ts-expect-error
 const ReviewArtifactTool = feature('REVIEW_ARTIFACT')
   ? (
       require('../../tools/ReviewArtifactTool/ReviewArtifactTool.js') as typeof import('../../tools/ReviewArtifactTool/ReviewArtifactTool.js')
     ).ReviewArtifactTool
   : null
-// @ts-ignore
+// @ts-expect-error
 const ReviewArtifactPermissionRequest = feature('REVIEW_ARTIFACT')
   ? require('./ReviewArtifactPermissionRequest/ReviewArtifactPermissionRequest.js')
   : null
-// @ts-ignore
+// @ts-expect-error
 const WorkflowTool = feature('WORKFLOW_SCRIPTS')
   ? (
       require('../../tools/WorkflowTool/WorkflowTool.js') as typeof import('../../tools/WorkflowTool/WorkflowTool.js')
     ).WorkflowTool
   : null
-// @ts-ignore
+// @ts-expect-error
 const WorkflowPermissionRequest = feature('WORKFLOW_SCRIPTS')
   ? (
       require('../../tools/WorkflowTool/WorkflowPermissionRequest.js') as typeof import('../../tools/WorkflowTool/WorkflowPermissionRequest.js')
     ).WorkflowPermissionRequest
   : null
-// @ts-ignore
+// @ts-expect-error
 const MonitorTool = feature('MONITOR_TOOL')
   ? (
       require('../../tools/MonitorTool/MonitorTool.js') as typeof import('../../tools/MonitorTool/MonitorTool.js')
     ).MonitorTool
   : null
-// @ts-ignore
+// @ts-expect-error
 const MonitorPermissionRequest = feature('MONITOR_TOOL')
   ? require('./MonitorPermissionRequest/MonitorPermissionRequest.js')
   : null
-import type { ContentBlock } from '../../types/llm.js'
+
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { z } from 'zod/v4'
+import type { ContentBlock } from '../../types/llm.js'
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
 import type { WorkerBadgeProps } from './WorkerBadge.js'
+
 function permissionComponentForTool(tool: Tool): React.ComponentType<PermissionRequestProps> {
   switch (tool) {
     case FileEditTool:

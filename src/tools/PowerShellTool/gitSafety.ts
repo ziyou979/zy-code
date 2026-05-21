@@ -7,7 +7,7 @@
  *    malicious hooks.
  */
 
-import { basename, posix, resolve, sep } from 'path'
+import { basename, posix, resolve, sep } from 'node:path'
 import { getCwd } from '../../utils/cwd.js'
 import { PS_TOKENIZER_DASH_CHARS } from '../../utils/powershell/parser.js'
 
@@ -21,19 +21,25 @@ import { PS_TOKENIZER_DASH_CHARS } from '../../utils/powershell/parser.js'
  * resolves against cwd to `hooks`.
  */
 function resolveCwdReentry(normalized: string): string {
-  if (!normalized.startsWith('../')) return normalized
+  if (!normalized.startsWith('../')) {
+    return normalized
+  }
   const cwdBase = basename(getCwd()).toLowerCase()
-  if (!cwdBase) return normalized
+  if (!cwdBase) {
+    return normalized
+  }
   // Iteratively strip `../<cwd-basename>/` pairs (handles `../../p/p/hooks`
   // when cwd has repeated basename segments is unlikely, but one-level is
   // the common attack).
-  const prefix = '../' + cwdBase + '/'
+  const prefix = `../${cwdBase}/`
   let s = normalized
   while (s.startsWith(prefix)) {
     s = s.slice(prefix.length)
   }
   // Also handle exact `../<cwd-basename>` (no trailing slash)
-  if (s === '../' + cwdBase) return '.'
+  if (s === `../${cwdBase}`) {
+    return '.'
+  }
   return s
 }
 
@@ -51,7 +57,9 @@ function normalizeGitPathArg(arg: string): string {
   // (PS 5.1). /Path:hooks/pre-commit → extract colon-bound value. (bug #28)
   if (s.length > 0 && (PS_TOKENIZER_DASH_CHARS.has(s[0]!) || s[0] === '/')) {
     const c = s.indexOf(':', 1)
-    if (c > 0) s = s.slice(c + 1)
+    if (c > 0) {
+      s = s.slice(c + 1)
+    }
   }
   s = s.replace(/^['"]|['"]$/g, '')
   s = s.replace(/`/g, '')
@@ -70,19 +78,25 @@ function normalizeGitPathArg(arg: string): string {
   s = s
     .split('/')
     .map((c) => {
-      if (c === '') return c
+      if (c === '') {
+        return c
+      }
       let prev
       do {
         prev = c
         c = c.replace(/ +$/, '')
-        if (c === '.' || c === '..') return c
+        if (c === '.' || c === '..') {
+          return c
+        }
         c = c.replace(/\.+$/, '')
       } while (c !== prev)
       return c || '.'
     })
     .join('/')
   s = posix.normalize(s)
-  if (s.startsWith('./')) s = s.slice(2)
+  if (s.startsWith('./')) {
+    s = s.slice(2)
+  }
   return s.toLowerCase()
 }
 
@@ -116,17 +130,29 @@ function resolveEscapingPathToCwdRelative(n: string): string | null {
   const absLower = abs.toLowerCase()
   const cwdLower = cwd.toLowerCase()
   const cwdWithSepLower = cwdWithSep.toLowerCase()
-  if (absLower === cwdLower) return '.'
-  if (!absLower.startsWith(cwdWithSepLower)) return null
+  if (absLower === cwdLower) {
+    return '.'
+  }
+  if (!absLower.startsWith(cwdWithSepLower)) {
+    return null
+  }
   return abs.slice(cwdWithSep.length).replace(/\\/g, '/').toLowerCase()
 }
 
 function matchesGitInternalPrefix(n: string): boolean {
-  if (n === 'head' || n === '.git') return true
-  if (n.startsWith('.git/') || /^git~\d+($|\/)/.test(n)) return true
+  if (n === 'head' || n === '.git') {
+    return true
+  }
+  if (n.startsWith('.git/') || /^git~\d+($|\/)/.test(n)) {
+    return true
+  }
   for (const p of GIT_INTERNAL_PREFIXES) {
-    if (p === 'head') continue
-    if (n === p || n.startsWith(p + '/')) return true
+    if (p === 'head') {
+      continue
+    }
+    if (n === p || n.startsWith(`${p}/`)) {
+      return true
+    }
   }
   return false
 }
@@ -138,14 +164,18 @@ function matchesGitInternalPrefix(n: string): boolean {
  */
 export function isGitInternalPathPS(arg: string): boolean {
   const n = resolveCwdReentry(normalizeGitPathArg(arg))
-  if (matchesGitInternalPrefix(n)) return true
+  if (matchesGitInternalPrefix(n)) {
+    return true
+  }
   // SECURITY: leading `../` or absolute paths that resolveCwdReentry and
   // posix.normalize couldn't fully resolve. Resolve against actual cwd — if
   // the result lands back in cwd at a git-internal location, the guard must
   // still fire.
   if (n.startsWith('../') || n.startsWith('/') || /^[a-z]:/.test(n)) {
     const rel = resolveEscapingPathToCwdRelative(n)
-    if (rel !== null && matchesGitInternalPrefix(rel)) return true
+    if (rel !== null && matchesGitInternalPrefix(rel)) {
+      return true
+    }
   }
   return false
 }
@@ -157,18 +187,24 @@ export function isGitInternalPathPS(arg: string): boolean {
  */
 export function isDotGitPathPS(arg: string): boolean {
   const n = resolveCwdReentry(normalizeGitPathArg(arg))
-  if (matchesDotGitPrefix(n)) return true
+  if (matchesDotGitPrefix(n)) {
+    return true
+  }
   // SECURITY: same cwd-resolution as isGitInternalPathPS — catch
   // `..\<cwd-basename>\.git\hooks\pre-commit` that lands back in cwd.
   if (n.startsWith('../') || n.startsWith('/') || /^[a-z]:/.test(n)) {
     const rel = resolveEscapingPathToCwdRelative(n)
-    if (rel !== null && matchesDotGitPrefix(rel)) return true
+    if (rel !== null && matchesDotGitPrefix(rel)) {
+      return true
+    }
   }
   return false
 }
 
 function matchesDotGitPrefix(n: string): boolean {
-  if (n === '.git' || n.startsWith('.git/')) return true
+  if (n === '.git' || n.startsWith('.git/')) {
+    return true
+  }
   // NTFS 8.3 short names: .git becomes GIT~1 (or GIT~2, etc. if multiple
   // dotfiles start with "git"). normalizeGitPathArg lowercases, so check
   // for git~N as the first component.

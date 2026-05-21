@@ -34,7 +34,9 @@ export function detectDelistedPlugins(
 
   const delisted: string[] = []
   for (const pluginId of Object.keys(installedPlugins.plugins)) {
-    if (!pluginId.endsWith(suffix)) continue
+    if (!pluginId.endsWith(suffix)) {
+      continue
+    }
 
     const pluginName = pluginId.slice(0, -suffix.length)
     if (!marketplacePluginNames.has(pluginName)) {
@@ -69,19 +71,25 @@ export async function detectAndUninstallDelistedPlugins(): Promise<string[]> {
     try {
       const marketplace = await getMarketplace(marketplaceName)
 
-      if (!marketplace.forceRemoveDeletedPlugins) continue
+      if (!marketplace.forceRemoveDeletedPlugins) {
+        continue
+      }
 
       const delisted = detectDelistedPlugins(installedPlugins, marketplace, marketplaceName)
 
       for (const pluginId of delisted) {
-        if (pluginId in alreadyFlagged) continue
+        if (pluginId in alreadyFlagged) {
+          continue
+        }
 
         // Skip managed-only plugins — enterprise admin should handle those
         const installations = installedPlugins.plugins[pluginId] ?? []
         const hasUserInstall = installations.some(
           (i) => i.scope === 'user' || i.scope === 'project' || i.scope === 'local',
         )
-        if (!hasUserInstall) continue
+        if (!hasUserInstall) {
+          continue
+        }
 
         // Auto-uninstall the delisted plugin from all user-controllable scopes
         for (const installation of installations) {

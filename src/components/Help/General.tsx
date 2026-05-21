@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { Box, Text } from '../../ink.js'
 import { PromptInputHelpMenu } from '../PromptInput/PromptInputHelpMenu.js'
 export function General() {

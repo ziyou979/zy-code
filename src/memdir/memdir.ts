@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { join } from 'path'
+import { join } from 'node:path'
 import { getFsImplementation } from '../utils/fsOperations.js'
 import { getAutoMemPath, isAutoMemoryEnabled } from './paths.js'
 

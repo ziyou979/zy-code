@@ -83,9 +83,15 @@ export type SettingsWithErrors = {
  * 获取未知值的类型字符串（用于错误消息）
  */
 function getReceivedType(value: unknown): string {
-  if (value === null) return 'null'
-  if (value === undefined) return 'undefined'
-  if (Array.isArray(value)) return 'array'
+  if (value === null) {
+    return 'null'
+  }
+  if (value === undefined) {
+    return 'undefined'
+  }
+  if (Array.isArray(value)) {
+    return 'array'
+  }
   return typeof value
 }
 
@@ -213,15 +219,21 @@ export function validateSettingsFileContent(content: string):
  * 为每条被过滤的规则返回警告。
  */
 export function filterInvalidPermissionRules(data: unknown, filePath: string): ValidationError[] {
-  if (!data || typeof data !== 'object') return []
+  if (!data || typeof data !== 'object') {
+    return []
+  }
   const obj = data as Record<string, unknown>
-  if (!obj.permissions || typeof obj.permissions !== 'object') return []
+  if (!obj.permissions || typeof obj.permissions !== 'object') {
+    return []
+  }
   const perms = obj.permissions as Record<string, unknown>
 
   const warnings: ValidationError[] = []
   for (const key of ['allow', 'deny', 'ask']) {
     const rules = perms[key]
-    if (!Array.isArray(rules)) continue
+    if (!Array.isArray(rules)) {
+      continue
+    }
 
     perms[key] = rules.filter((rule) => {
       if (typeof rule !== 'string') {
@@ -236,8 +248,12 @@ export function filterInvalidPermissionRules(data: unknown, filePath: string): V
       const result = validatePermissionRule(rule)
       if (!result.valid) {
         let message = `Invalid permission rule "${rule}" was skipped`
-        if (result.error) message += `: ${result.error}`
-        if (result.suggestion) message += `. ${result.suggestion}`
+        if (result.error) {
+          message += `: ${result.error}`
+        }
+        if (result.suggestion) {
+          message += `. ${result.suggestion}`
+        }
         warnings.push({
           file: filePath,
           path: `permissions.${key}`,

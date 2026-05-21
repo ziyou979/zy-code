@@ -38,16 +38,24 @@ const TERM_PROGRAM_TO_APP: Record<string, string> = {
 export function updateDeepLinkTerminalPreference(): void {
   // Only detectMacosTerminal reads the stored value — skip the write on
   // other platforms.
-  if (process.platform !== 'darwin') return
+  if (process.platform !== 'darwin') {
+    return
+  }
 
   const termProgram = process.env.TERM_PROGRAM
-  if (!termProgram) return
+  if (!termProgram) {
+    return
+  }
 
   const app = TERM_PROGRAM_TO_APP[termProgram.toLowerCase()]
-  if (!app) return
+  if (!app) {
+    return
+  }
 
   const config = getGlobalConfig()
-  if (config.deepLinkTerminal === app) return
+  if (config.deepLinkTerminal === app) {
+    return
+  }
 
   saveGlobalConfig((current) => ({ ...current, deepLinkTerminal: app }))
   logForDebugging(`Stored deep link terminal preference: ${app}`)

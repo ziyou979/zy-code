@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-expect-error
 import type { McpbManifest } from '@anthropic-ai/mcpb'
 import { errorMessage } from '../errors.js'
 import { jsonParse } from '../slowOperations.js'
@@ -12,16 +12,16 @@ import { jsonParse } from '../slowOperations.js'
  * closures out of the startup heap for sessions that never touch .dxt/.mcpb.
  */
 export async function validateManifest(manifestJson: unknown): Promise<McpbManifest> {
-  // @ts-ignore
+  // @ts-expect-error
   const { McpbManifestSchema } = await import('@anthropic-ai/mcpb')
-  // @ts-ignore
+  // @ts-expect-error
   const parseResult = McpbManifestSchema.safeParse(manifestJson)
 
   if (!parseResult.success) {
-    // @ts-ignore
+    // @ts-expect-error
     const errors = parseResult.error.flatten()
     const errorMessages = [
-      // @ts-ignore
+      // @ts-expect-error
       ...Object.entries(errors.fieldErrors).map(
         ([field, errs]) => `${field}: ${(errs as any)?.join(', ')}`,
       ),

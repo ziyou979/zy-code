@@ -1,5 +1,5 @@
 import chalk from 'chalk'
-import React, { type ReactNode, useCallback, useState } from 'react'
+import { type ReactNode, useCallback, useState } from 'react'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -14,6 +14,7 @@ import { useWizard } from '../../../wizard/index.js'
 import { getNewAgentFilePath, saveAgentToFile } from '../../agentFileUtils.js'
 import type { AgentWizardData } from '../types.js'
 import { ConfirmStep } from './ConfirmStep.js'
+
 type Props = {
   tools: Tools
   existingAgents: AgentDefinition[]
@@ -25,7 +26,9 @@ export function ConfirmStepWrapper({ tools, existingAgents, onComplete }: Props)
   const setAppState = useSetAppState()
   const saveAgent = useCallback(
     async (openInEditor: boolean): Promise<void> => {
-      if (!wizardData?.finalAgent) return
+      if (!wizardData?.finalAgent) {
+        return
+      }
       try {
         await saveAgentToFile(
           wizardData.location!,
@@ -39,7 +42,9 @@ export function ConfirmStepWrapper({ tools, existingAgents, onComplete }: Props)
           wizardData.finalAgent.memory,
         )
         setAppState((state) => {
-          if (!wizardData.finalAgent) return state
+          if (!wizardData.finalAgent) {
+            return state
+          }
           const allAgents = state.agentDefinitions.allAgents.concat(wizardData.finalAgent)
           return {
             ...state,

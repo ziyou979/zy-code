@@ -70,8 +70,12 @@ export function calculateHorizontalScrollWindow(
   // Calculate effective available width based on whether we'll show arrows
   function getEffectiveWidth(start: number, end: number): number {
     let width = availableWidth
-    if (start > 0) width -= arrowWidth // left arrow
-    if (end < totalItems) width -= arrowWidth // right arrow
+    if (start > 0) {
+      width -= arrowWidth // left arrow
+    }
+    if (end < totalItems) {
+      width -= arrowWidth // right arrow
+    }
     return width
   }
 

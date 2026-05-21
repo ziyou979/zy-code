@@ -84,9 +84,15 @@ function getConfig(): AutoDreamConfig {
 }
 
 function isGateOpen(): boolean {
-  if (getKairosActive()) return false // KAIROS mode uses disk-skill dream
-  if (getIsRemoteMode()) return false
-  if (!isAutoMemoryEnabled()) return false
+  if (getKairosActive()) {
+    return false // KAIROS mode uses disk-skill dream
+  }
+  if (getIsRemoteMode()) {
+    return false
+  }
+  if (!isAutoMemoryEnabled()) {
+    return false
+  }
   return isAutoDreamEnabled()
 }
 
@@ -113,7 +119,9 @@ export function initAutoDream(): void {
   runner = async function runAutoDream(context, appendSystemMessage) {
     const cfg = getConfig()
     const force = isForced()
-    if (!force && !isGateOpen()) return
+    if (!force && !isGateOpen()) {
+      return
+    }
 
     // --- Time gate ---
     let lastAt: number
@@ -124,7 +132,9 @@ export function initAutoDream(): void {
       return
     }
     const hoursSince = (Date.now() - lastAt) / 3_600_000
-    if (!force && hoursSince < cfg.minHours) return
+    if (!force && hoursSince < cfg.minHours) {
+      return
+    }
 
     // --- Scan throttle ---
     const sinceScanMs = Date.now() - lastSessionScanAt
@@ -168,7 +178,9 @@ export function initAutoDream(): void {
         logForDebugging(`[autoDream] lock acquire failed: ${(e as Error).message}`)
         return
       }
-      if (priorMtime === null) return
+      if (priorMtime === null) {
+        return
+      }
     }
 
     logForDebugging(
@@ -220,7 +232,7 @@ ${sessionIds.map((id) => `- ${id}`).join('\n')}`
       if (appendSystemMessage && isDreamTask(dreamState) && dreamState.filesTouched.length > 0) {
         appendSystemMessage({
           ...createMemorySavedMessage(dreamState.filesTouched),
-          // @ts-ignore
+          // @ts-expect-error
           verb: 'Improved' as any,
         })
       }
@@ -261,7 +273,9 @@ function makeDreamProgressWatcher(
   setAppState: import('../../Task.js').SetAppState,
 ): (msg: Message) => void {
   return (msg) => {
-    if (msg.type !== 'assistant') return
+    if (msg.type !== 'assistant') {
+      return
+    }
     let text = ''
     let toolUseCount = 0
     const touchedPaths: string[] = []

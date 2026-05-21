@@ -286,7 +286,9 @@ export function finalizeAgentTool(
   if (content.length === 0) {
     for (let i = agentMessages.length - 1; i >= 0; i--) {
       const m = agentMessages[i]!
-      if (m.type !== 'assistant') continue
+      if (m.type !== 'assistant') {
+        continue
+      }
       const msgContent = m.message.content
       const textBlocks = Array.isArray(msgContent)
         ? msgContent.filter(
@@ -344,7 +346,9 @@ export function finalizeAgentTool(
  * or undefined if the message is not an assistant message with tool_use.
  */
 export function getLastToolUseName(message: MessageType): string | undefined {
-  if (message.type !== 'assistant') return undefined
+  if (message.type !== 'assistant') {
+    return undefined
+  }
   const content = message.message.content
   const block = content.findLast((b): b is AssistantContentBlock => b.type === 'tool_call')
   return block?.type === 'tool_call' ? block.name : undefined
@@ -386,10 +390,14 @@ export async function classifyHandoffIfNeeded({
   totalToolUseCount: number
 }): Promise<string | null> {
   if (feature('TRANSCRIPT_CLASSIFIER')) {
-    if (toolPermissionContext.mode !== 'auto') return null
+    if (toolPermissionContext.mode !== 'auto') {
+      return null
+    }
 
     const agentTranscript = buildTranscriptForClassifier(agentMessages, tools)
-    if (!agentTranscript) return null
+    if (!agentTranscript) {
+      return null
+    }
 
     const classifierResult = await classifyYoloAction(
       agentMessages,
@@ -468,9 +476,13 @@ export async function classifyHandoffIfNeeded({
 export function extractPartialResult(messages: MessageType[]): string | undefined {
   for (let i = messages.length - 1; i >= 0; i--) {
     const m = messages[i]!
-    if (m.type !== 'assistant') continue
+    if (m.type !== 'assistant') {
+      continue
+    }
     const content = m.message.content
-    if (!Array.isArray(content)) continue
+    if (!Array.isArray(content)) {
+      continue
+    }
     const text = extractTextContent(content, '\n')
     if (text) {
       return text
@@ -536,7 +548,9 @@ export async function runAsyncAgentLifecycle({
       // means live is always a suffix of disk, so merge is order-correct.
       rootSetAppState((prev) => {
         const t = prev.tasks[taskId]
-        if (!isLocalAgentTask(t) || !t.retain) return prev
+        if (!isLocalAgentTask(t) || !t.retain) {
+          return prev
+        }
         const base = t.messages ?? []
         return {
           ...prev,

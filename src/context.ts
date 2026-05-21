@@ -2,13 +2,13 @@ import { feature } from 'bun:bundle'
 import memoize from 'lodash-es/memoize.js'
 import { getAdditionalDirectoriesForzyMd, setCachedZyMdContent } from './bootstrap/state.js'
 import { getLocalISODate } from './constants/common.js'
-import { filterInjectedMemoryFiles, getzyMds, getMemoryFiles } from './utils/zymd.js'
 import { logForDiagnosticsNoPII } from './utils/diagLogs.js'
 import { isBareMode, isEnvTruthy } from './utils/envUtils.js'
 import { execFileNoThrow } from './utils/execFileNoThrow.js'
 import { getBranch, getDefaultBranch, getIsGit, gitExe } from './utils/git.js'
 import { shouldIncludeGitInstructions } from './utils/gitSettings.js'
 import { logError } from './utils/log.js'
+import { filterInjectedMemoryFiles, getMemoryFiles, getzyMds } from './utils/zymd.js'
 
 const MAX_STATUS_CHARS = 2000
 

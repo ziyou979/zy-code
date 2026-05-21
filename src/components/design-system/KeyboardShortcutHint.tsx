@@ -1,6 +1,6 @@
-import React from 'react'
-import Text from '../../ink/components/Text.js'
 import { tSync } from '../../i18n/index.js'
+import Text from '../../ink/components/Text.js'
+
 type Props = {
   /** The key or chord to display (e.g., "ctrl+o", "Enter", "↑/↓") */
   shortcut: string

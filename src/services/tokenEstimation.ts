@@ -1,9 +1,9 @@
 import type { LLMMessage, ToolDefinition } from '../types/llm.js'
 import type { Attachment } from '../utils/attachments.js'
-import { countTokensLocally } from '../utils/tokenizer/index.js'
 import { logError } from '../utils/log.js'
 import { normalizeAttachmentForAPI } from '../utils/messages.js'
 import { jsonStringify } from '../utils/slowOperations.js'
+import { countTokensLocally } from '../utils/tokenizer/index.js'
 import { getLLMAdapter } from './api/client.js'
 import { withTokenCountVCR } from './vcr.js'
 
@@ -57,7 +57,9 @@ export function roughTokenCountEstimation(content: string, bytesPerToken: number
  * @returns 适合该语言的 bytesPerToken 估算值
  */
 export function getBytesPerTokenForLanguage(language?: string): number {
-  if (!language) return 4
+  if (!language) {
+    return 4
+  }
   const lang = language.toLowerCase().trim()
   if (
     lang.includes('chinese') ||
@@ -115,7 +117,9 @@ export function countMessagesTokensLocally(
  * 使用本地 tokenizer 计算单个内容块的 token 数。
  */
 function countBlockTokensLocally(block: unknown, model: string): number {
-  if (typeof block !== 'object' || block === null) return 0
+  if (typeof block !== 'object' || block === null) {
+    return 0
+  }
 
   const typedBlock = block as Record<string, unknown>
 

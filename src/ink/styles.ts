@@ -400,10 +400,18 @@ const applyPositionStyles = (node: LayoutNode, style: Styles): void => {
       style.position === 'absolute' ? LayoutPositionType.Absolute : LayoutPositionType.Relative,
     )
   }
-  if ('top' in style) applyPositionEdge(node, 'top', style.top)
-  if ('bottom' in style) applyPositionEdge(node, 'bottom', style.bottom)
-  if ('left' in style) applyPositionEdge(node, 'left', style.left)
-  if ('right' in style) applyPositionEdge(node, 'right', style.right)
+  if ('top' in style) {
+    applyPositionEdge(node, 'top', style.top)
+  }
+  if ('bottom' in style) {
+    applyPositionEdge(node, 'bottom', style.bottom)
+  }
+  if ('left' in style) {
+    applyPositionEdge(node, 'left', style.left)
+  }
+  if ('right' in style) {
+    applyPositionEdge(node, 'right', style.right)
+  }
 }
 
 function applyPositionEdge(

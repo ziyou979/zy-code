@@ -69,7 +69,9 @@ export const SyntheticOutputTool = buildTool({
   // Minimal UI implementations - this tool is for non-interactive SDK/CLI use
   renderToolUseMessage(input: Record<string, unknown>) {
     const keys = Object.keys(input)
-    if (keys.length === 0) return null
+    if (keys.length === 0) {
+      return null
+    }
     if (keys.length <= 3) {
       return keys.map((k) => `${k}: ${jsonStringify(input[k])}`).join(', ')
     }
@@ -111,7 +113,9 @@ const toolCache = new WeakMap<object, CreateResult>()
  */
 export function createSyntheticOutputTool(jsonSchema: Record<string, unknown>): CreateResult {
   const cached = toolCache.get(jsonSchema)
-  if (cached) return cached
+  if (cached) {
+    return cached
+  }
 
   const result = buildSyntheticOutputTool(jsonSchema)
   toolCache.set(jsonSchema, result)

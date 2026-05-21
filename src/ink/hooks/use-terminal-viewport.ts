@@ -64,7 +64,9 @@ export function useTerminalViewport(): [
       }
       // scrollTop 仅在滚动容器上设置（由 ScrollBox + renderer 设置）。
       // 非滚动节点的 scrollTop 为 undefined → 快速路径跳过。
-      if (parent.scrollTop) absoluteTop -= parent.scrollTop
+      if (parent.scrollTop) {
+        absoluteTop -= parent.scrollTop
+      }
       parent = parent.parentNode
     }
 

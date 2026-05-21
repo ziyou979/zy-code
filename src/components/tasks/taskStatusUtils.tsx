@@ -8,8 +8,8 @@ import type { InProcessTeammateTaskState } from 'src/tasks/InProcessTeammateTask
 import { isPanelAgentTask } from 'src/tasks/LocalAgentTask/LocalAgentTask.js'
 import { isBackgroundTask, type TaskState } from 'src/tasks/types.js'
 import type { DeepImmutable } from 'src/types/utils.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { summarizeRecentActivities } from 'src/utils/collapseReadSearch.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 
 /**
  * Returns true if the given task status represents a terminal (finished) state.
@@ -31,15 +31,27 @@ export function getTaskStatusIcon(
   },
 ): string {
   const { isIdle, awaitingApproval, hasError, shutdownRequested } = options ?? {}
-  if (hasError) return figures.cross
-  if (awaitingApproval) return figures.questionMarkPrefix
-  if (shutdownRequested) return figures.warning
+  if (hasError) {
+    return figures.cross
+  }
+  if (awaitingApproval) {
+    return figures.questionMarkPrefix
+  }
+  if (shutdownRequested) {
+    return figures.warning
+  }
   if (status === 'running') {
-    if (isIdle) return figures.ellipsis
+    if (isIdle) {
+      return figures.ellipsis
+    }
     return figures.play
   }
-  if (status === 'completed') return figures.tick
-  if (status === 'failed' || status === 'killed') return figures.cross
+  if (status === 'completed') {
+    return figures.tick
+  }
+  if (status === 'failed' || status === 'killed') {
+    return figures.cross
+  }
   return figures.bullet
 }
 
@@ -56,13 +68,27 @@ export function getTaskStatusColor(
   },
 ): 'success' | 'error' | 'warning' | 'background' {
   const { isIdle, awaitingApproval, hasError, shutdownRequested } = options ?? {}
-  if (hasError) return 'error'
-  if (awaitingApproval) return 'warning'
-  if (shutdownRequested) return 'warning'
-  if (isIdle) return 'background'
-  if (status === 'completed') return 'success'
-  if (status === 'failed') return 'error'
-  if (status === 'killed') return 'warning'
+  if (hasError) {
+    return 'error'
+  }
+  if (awaitingApproval) {
+    return 'warning'
+  }
+  if (shutdownRequested) {
+    return 'warning'
+  }
+  if (isIdle) {
+    return 'background'
+  }
+  if (status === 'completed') {
+    return 'success'
+  }
+  if (status === 'failed') {
+    return 'error'
+  }
+  if (status === 'killed') {
+    return 'warning'
+  }
   return 'background'
 }
 
@@ -72,9 +98,15 @@ export function getTaskStatusColor(
  * recent-activity summary → last activity description → 'working'.
  */
 export function describeTeammateActivity(t: DeepImmutable<InProcessTeammateTaskState>): string {
-  if (t.shutdownRequested) return 'stopping'
-  if (t.awaitingPlanApproval) return 'awaiting approval'
-  if (t.isIdle) return 'idle'
+  if (t.shutdownRequested) {
+    return 'stopping'
+  }
+  if (t.awaitingPlanApproval) {
+    return 'awaiting approval'
+  }
+  if (t.isIdle) {
+    return 'idle'
+  }
   return (
     (t.progress?.recentActivities && summarizeRecentActivities(t.progress.recentActivities)) ??
     t.progress?.lastActivity?.activityDescription ??
@@ -97,14 +129,18 @@ export function shouldHideTasksFooter(
   },
   showSpinnerTree: boolean,
 ): boolean {
-  if (!showSpinnerTree) return false
+  if (!showSpinnerTree) {
+    return false
+  }
   let hasVisibleTask = false
   for (const t of Object.values(tasks) as TaskState[]) {
     if (!isBackgroundTask(t) || (isInternalBuild() && isPanelAgentTask(t))) {
       continue
     }
     hasVisibleTask = true
-    if (t.type !== 'in_process_teammate') return false
+    if (t.type !== 'in_process_teammate') {
+      return false
+    }
   }
   return hasVisibleTask
 }

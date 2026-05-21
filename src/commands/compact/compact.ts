@@ -223,7 +223,7 @@ function buildDisplayText(context: ToolUseContext, userDisplayMessage?: string):
     ...(context.options.verbose ? [] : [`(${expandShortcut} to see full summary)`]),
     ...(userDisplayMessage ? [userDisplayMessage] : []),
   ]
-  return chalk.dim('Compacted ' + dimmed.join('\n'))
+  return chalk.dim(`Compacted ${dimmed.join('\n')}`)
 }
 
 async function getCacheSharingParams(

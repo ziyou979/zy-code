@@ -1,4 +1,3 @@
-import { getOauthConfig } from '../../constants/oauth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -35,7 +34,7 @@ async function _fetchMetricsEnabled(): Promise<MetricsEnabledResponse> {
     throw new Error(`认证错误：${authResult.error}`)
   }
 
-  const headers = {
+  const _headers = {
     'Content-Type': 'application/json',
     'User-Agent': getZyCodeUserAgent(),
     ...authResult.headers,

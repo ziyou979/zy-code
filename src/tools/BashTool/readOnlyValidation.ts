@@ -1,9 +1,9 @@
 import type { z } from 'zod/v4'
 import { getOriginalCwd } from '../../bootstrap/state.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { extractOutputRedirections, splitCommand_DEPRECATED } from '../../utils/bash/commands.js'
 import { tryParseShellCommand } from '../../utils/bash/shellQuote.js'
 import { getCwd } from '../../utils/cwd.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { isCurrentDirectoryBareGitRepo } from '../../utils/git.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import { getPlatform } from '../../utils/platform.js'
@@ -1001,16 +1001,22 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
           i++
         } else if (!afterDoubleDash && token.startsWith('-')) {
           // Defense-in-depth: block -S even if it somehow passes validateFlags
-          if (token === '-S') return true
+          if (token === '-S') {
+            return true
+          }
           // Also check for -S bundled with other flags (e.g., -xS)
-          if (!token.startsWith('--') && token.length > 2 && token.includes('S')) return true
+          if (!token.startsWith('--') && token.length > 2 && token.includes('S')) {
+            return true
+          }
           if (flagsWithArgs.has(token)) {
             i += 2
           } else {
             i++
           }
         } else {
-          if (DANGEROUS_CAPABILITIES.has(token)) return true
+          if (DANGEROUS_CAPABILITIES.has(token)) {
+            return true
+          }
           i++
         }
       }
@@ -1221,7 +1227,9 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
   // Handle glob operators by converting them to strings, they don't matter from the perspective
   // of this function
   const parseResult = tryParseShellCommand(command, (env) => `$${env}`)
-  if (!parseResult.success) return false
+  if (!parseResult.success) {
+    return false
+  }
 
   const parsed = parseResult.tokens.map((token) => {
     if (typeof token !== 'string') {
@@ -1323,7 +1331,9 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
   // This check must run BEFORE validateFlags and BEFORE callbacks.
   for (let i = commandTokens; i < tokens.length; i++) {
     const token = tokens[i]
-    if (!token) continue
+    if (!token) {
+      continue
+    }
     // Reject any token containing $ (variable expansion)
     if (token.includes('$')) {
       return false
@@ -1366,10 +1376,7 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
   ) {
     return false
   }
-  if (
-    commandConfig.additionalCommandIsDangerousCallback &&
-    commandConfig.additionalCommandIsDangerousCallback(command, tokens.slice(commandTokens))
-  ) {
+  if (commandConfig.additionalCommandIsDangerousCallback?.(command, tokens.slice(commandTokens))) {
     return false
   }
 
@@ -1750,13 +1757,19 @@ const NON_CREATING_WRITE_COMMANDS = new Set(['rm', 'rmdir', 'sed'])
  */
 function extractWritePathsFromSubcommand(subcommand: string): string[] {
   const parseResult = tryParseShellCommand(subcommand, (env) => `$${env}`)
-  if (!parseResult.success) return []
+  if (!parseResult.success) {
+    return []
+  }
 
   const tokens = parseResult.tokens.filter((t): t is string => typeof t === 'string')
-  if (tokens.length === 0) return []
+  if (tokens.length === 0) {
+    return []
+  }
 
   const baseCmd = tokens[0]
-  if (!baseCmd) return []
+  if (!baseCmd) {
+    return []
+  }
 
   // Only consider commands that can create files at target paths
   if (!(baseCmd in COMMAND_OPERATION_TYPE)) {
@@ -1768,7 +1781,9 @@ function extractWritePathsFromSubcommand(subcommand: string): string[] {
   }
 
   const extractor = PATH_EXTRACTORS[baseCmd as PathCommand]
-  if (!extractor) return []
+  if (!extractor) {
+    return []
+  }
 
   return extractor(tokens.slice(1))
 }

@@ -1,4 +1,4 @@
-import { readdir } from 'fs/promises'
+import { readdir } from 'node:fs/promises'
 import { getCwd } from '../../utils/cwd.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 
@@ -32,12 +32,18 @@ async function detectLanguage(): Promise<DetectedLanguage | null> {
     DetectedLanguage,
     string[],
   ][]) {
-    if (indicators.length === 0) continue
+    if (indicators.length === 0) {
+      continue
+    }
     for (const indicator of indicators) {
       if (indicator.startsWith('.')) {
-        if (entries.some((e) => e.endsWith(indicator))) return lang
+        if (entries.some((e) => e.endsWith(indicator))) {
+          return lang
+        }
       } else {
-        if (entries.includes(indicator)) return lang
+        if (entries.includes(indicator)) {
+          return lang
+        }
       }
     }
   }
@@ -66,7 +72,9 @@ function buildInlineReference(filePaths: string[], content: SkillContent): strin
   const sections: string[] = []
   for (const filePath of filePaths.sort()) {
     const md = content.SKILL_FILES[filePath]
-    if (!md) continue
+    if (!md) {
+      continue
+    }
     sections.push(`<doc path="${filePath}">\n${processContent(md, content).trim()}\n</doc>`)
   }
   return sections.join('\n\n')
@@ -121,7 +129,7 @@ function buildPrompt(lang: DetectedLanguage | null, args: string, content: Skill
     const filePaths = getFilesForLanguage(lang, content)
     const readingGuide = INLINE_READING_GUIDE.replace(/\{lang\}/g, lang)
     parts.push(readingGuide)
-    parts.push('---\n\n## Included Documentation\n\n' + buildInlineReference(filePaths, content))
+    parts.push(`---\n\n## Included Documentation\n\n${buildInlineReference(filePaths, content)}`)
   } else {
     // No language detected — include all docs and let the model ask
     parts.push(INLINE_READING_GUIDE.replace(/\{lang\}/g, 'unknown'))

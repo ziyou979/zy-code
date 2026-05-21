@@ -96,7 +96,9 @@ export function stylesEqual(a: TextStyle, b: TextStyle): boolean {
 
 /** 判断两个颜色是否相等 */
 export function colorsEqual(a: Color, b: Color): boolean {
-  if (a.type !== b.type) return false
+  if (a.type !== b.type) {
+    return false
+  }
   switch (a.type) {
     case 'named':
       return a.name === (b as typeof a).name

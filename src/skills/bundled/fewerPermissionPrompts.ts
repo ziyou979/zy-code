@@ -70,8 +70,7 @@ Do not add anything to \`permissions.deny\` or \`permissions.ask\`. Do not touch
 export function registerFewerPermissionPromptsSkill(): void {
   registerBundledSkill({
     name: 'fewer-permission-prompts',
-    description:
-      'Analyze transcripts and add read-only permission patterns to reduce prompts',
+    description: 'Analyze transcripts and add read-only permission patterns to reduce prompts',
     whenToUse:
       'When the user wants to reduce permission prompts, optimize their allowlist, or says things like "too many permission popups" or "auto-allow my common commands".',
     userInvocable: true,

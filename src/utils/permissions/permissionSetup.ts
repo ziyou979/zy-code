@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { relative } from 'path'
+import { relative } from 'node:path'
 import {
   getOriginalCwd,
   handleAutoModeTransition,
@@ -9,8 +9,7 @@ import {
 } from '../../bootstrap/state.js'
 import type { ToolPermissionContext } from '../../Tool.js'
 import { getCwd } from '../cwd.js'
-import { isEnvTruthy } from '../envUtils.js'
-import { isInternalBuild } from '../envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../envUtils.js'
 import type { SettingSource } from '../settings/constants.js'
 import { SETTING_SOURCES } from '../settings/constants.js'
 import {
@@ -28,13 +27,14 @@ const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
   ? (require('./autoModeState.js') as typeof import('./autoModeState.js'))
   : null
 
-import { resolve } from 'path'
+import { resolve } from 'node:path'
 import {
   checkSecurityRestrictionGate,
   checkStatsigFeatureGate_CACHED_MAY_BE_STALE,
   getDynamicConfig_BLOCKS_ON_INIT,
   getFeatureValue_CACHED_MAY_BE_STALE,
 } from 'src/services/analytics/growthbook.js'
+import { ToolPermissionRulesBySource } from 'src/types/permissions.ts'
 import {
   addDirHelpMessage,
   validateDirectoryForWorkspace,
@@ -62,7 +62,6 @@ import {
   permissionRuleValueFromString,
   permissionRuleValueToString,
 } from './permissionRuleParser.js'
-import { ToolPermissionRulesBySource } from 'src/types/permissions.ts'
 
 /**
  * 检查 Bash 权限规则在 auto 模式下是否危险。
@@ -190,21 +189,41 @@ export function isDangerousPowerShellPermission(
 
   for (const pattern of patterns) {
     // patterns 存储为小写；content 已在上方转为小写
-    if (content === pattern) return true
-    if (content === `${pattern}:*`) return true
-    if (content === `${pattern}*`) return true
-    if (content === `${pattern} *`) return true
-    if (content.startsWith(`${pattern} -`) && content.endsWith('*')) return true
+    if (content === pattern) {
+      return true
+    }
+    if (content === `${pattern}:*`) {
+      return true
+    }
+    if (content === `${pattern}*`) {
+      return true
+    }
+    if (content === `${pattern} *`) {
+      return true
+    }
+    if (content.startsWith(`${pattern} -`) && content.endsWith('*')) {
+      return true
+    }
     // .exe 后缀加在第一个单词上。`python` → `python.exe`。
     // `npm run` → `npm.exe run`（npm.exe 才是 Windows 上的真实二进制名）。
     // 像 `PowerShell(npm.exe run:*)` 这样的规则需要匹配 `npm run`。
     const sp = pattern.indexOf(' ')
     const exe = sp === -1 ? `${pattern}.exe` : `${pattern.slice(0, sp)}.exe${pattern.slice(sp)}`
-    if (content === exe) return true
-    if (content === `${exe}:*`) return true
-    if (content === `${exe}*`) return true
-    if (content === `${exe} *`) return true
-    if (content.startsWith(`${exe} -`) && content.endsWith('*')) return true
+    if (content === exe) {
+      return true
+    }
+    if (content === `${exe}:*`) {
+      return true
+    }
+    if (content === `${exe}*`) {
+      return true
+    }
+    if (content === `${exe} *`) {
+      return true
+    }
+    if (content.startsWith(`${exe} -`) && content.endsWith('*')) {
+      return true
+    }
   }
   return false
 }
@@ -251,7 +270,9 @@ function isDangerousClassifierPermission(
 ): boolean {
   if (isInternalBuild()) {
     // Tmux send-keys 执行任意 shell，与 Bash(*) 一样绕过了分类器
-    if (toolName === 'Tmux') return true
+    if (toolName === 'Tmux') {
+      return true
+    }
   }
   return (
     isDangerousBashPermission(toolName, ruleContent) ||
@@ -485,7 +506,9 @@ export function stripDangerousPermissionsForAutoMode(
   // 与 removeDangerousPermissions 的来源过滤保持一致，确保暂存的确实是已移除的内容。
   const stripped: ToolPermissionRulesBySource = {}
   for (const perm of dangerousPermissions) {
-    if (!isPermissionUpdateDestination(perm.source)) continue
+    if (!isPermissionUpdateDestination(perm.source)) {
+      continue
+    }
     ;(stripped[perm.source] ??= []).push(permissionRuleValueToString(perm.ruleValue))
   }
   return {
@@ -506,7 +529,9 @@ export function restoreDangerousPermissions(context: ToolPermissionContext): Too
   }
   let result = context
   for (const [source, ruleStrings] of Object.entries(stash)) {
-    if (!ruleStrings || ruleStrings.length === 0) continue
+    if (!ruleStrings || ruleStrings.length === 0) {
+      continue
+    }
     result = applyPermissionUpdate(result, {
       type: 'addRules',
       rules: ruleStrings.map(permissionRuleValueFromString),
@@ -537,7 +562,9 @@ export function transitionPermissionMode(
   context: ToolPermissionContext,
 ): ToolPermissionContext {
   // plan→plan（SDK set_permission_mode）会错误地命中下方的 leave 分支
-  if (fromMode === toMode) return context
+  if (fromMode === toMode) {
+    return context
+  }
 
   handlePlanModeTransition(fromMode, toMode)
   handleAutoModeTransition(fromMode, toMode)
@@ -749,7 +776,9 @@ export function parseToolListFromCLI(tools: string[]): string[] {
 
   // 处理数组中的每个字符串
   for (const toolString of tools) {
-    if (!toolString) continue
+    if (!toolString) {
+      continue
+    }
 
     let current = ''
     let isInParens = false
@@ -1148,8 +1177,12 @@ function isAutoModeDisabledBySettings(): boolean {
  * 检查 auto 模式是否可以进入：熔断器未激活且设置未禁用它。同步。
  */
 export function isAutoModeGateEnabled(): boolean {
-  if (autoModeStateModule?.isAutoModeCircuitBroken() ?? false) return false
-  if (isAutoModeDisabledBySettings()) return false
+  if (autoModeStateModule?.isAutoModeCircuitBroken() ?? false) {
+    return false
+  }
+  if (isAutoModeDisabledBySettings()) {
+    return false
+  }
   return modelSupportsAutoMode(getMainLoopModel())
 }
 
@@ -1158,11 +1191,15 @@ export function isAutoModeGateEnabled(): boolean {
  * 同步 — 使用由 verifyAutoModeGateAccess 填充的状态。
  */
 export function getAutoModeUnavailableReason(): AutoModeUnavailableReason | null {
-  if (isAutoModeDisabledBySettings()) return 'settings'
+  if (isAutoModeDisabledBySettings()) {
+    return 'settings'
+  }
   if (autoModeStateModule?.isAutoModeCircuitBroken() ?? false) {
     return 'circuit-breaker'
   }
-  if (!modelSupportsAutoMode(getMainLoopModel())) return 'model'
+  if (!modelSupportsAutoMode(getMainLoopModel())) {
+    return 'model'
+  }
   return null
 }
 
@@ -1192,7 +1229,9 @@ function parseAutoModeEnabledState(value: unknown): AutoModeEnabledState {
  */
 export function getAutoModeEnabledState(): AutoModeEnabledState {
   // dev 模式下直接启用（绕过 GrowthBook 远程配置默认 disabled）
-  if (isEnvTruthy(process.env.ZY_CODE_DEV_AUTO_MODE)) return 'enabled'
+  if (isEnvTruthy(process.env.ZY_CODE_DEV_AUTO_MODE)) {
+    return 'enabled'
+  }
   const config = getFeatureValue_CACHED_MAY_BE_STALE<{
     enabled?: AutoModeEnabledState
   }>('zy_auto_mode_config', {})
@@ -1209,11 +1248,15 @@ const NO_CACHED_AUTO_MODE_CONFIG = Symbol('no-cached-auto-mode-config')
  */
 export function getAutoModeEnabledStateIfCached(): AutoModeEnabledState | undefined {
   // dev 模式下直接启用（绕过 GrowthBook 远程配置默认 disabled）
-  if (isEnvTruthy(process.env.ZY_CODE_DEV_AUTO_MODE)) return 'enabled'
+  if (isEnvTruthy(process.env.ZY_CODE_DEV_AUTO_MODE)) {
+    return 'enabled'
+  }
   const config = getFeatureValue_CACHED_MAY_BE_STALE<
     { enabled?: AutoModeEnabledState } | typeof NO_CACHED_AUTO_MODE_CONFIG
   >('zy_auto_mode_config', NO_CACHED_AUTO_MODE_CONFIG)
-  if (config === NO_CACHED_AUTO_MODE_CONFIG) return undefined
+  if (config === NO_CACHED_AUTO_MODE_CONFIG) {
+    return undefined
+  }
   return parseAutoModeEnabledState(config?.enabled)
 }
 
@@ -1225,7 +1268,9 @@ export function getAutoModeEnabledStateIfCached(): AutoModeEnabledState | undefi
  *   IDE/Desktop 设置切换来设置）
  */
 export function hasAutoModeOptInAnySource(): boolean {
-  if (autoModeStateModule?.getAutoModeFlagCli() ?? false) return true
+  if (autoModeStateModule?.getAutoModeFlagCli() ?? false) {
+    return true
+  }
   return hasAutoModeOptIn()
 }
 
@@ -1317,7 +1362,9 @@ export function shouldPlanUseAutoMode(): boolean {
  */
 export function prepareContextForPlanMode(context: ToolPermissionContext): ToolPermissionContext {
   const currentMode = context.mode
-  if (currentMode === 'plan') return context
+  if (currentMode === 'plan') {
+    return context
+  }
   if (feature('TRANSCRIPT_CLASSIFIER')) {
     const planAutoMode = shouldPlanUseAutoMode()
     if (currentMode === 'auto') {
@@ -1352,8 +1399,12 @@ export function prepareContextForPlanMode(context: ToolPermissionContext): ToolP
  * 从 applySettingsChange 调用，以便在 plan 中间切换 useAutoModeDuringPlan 立即生效。
  */
 export function transitionPlanAutoMode(context: ToolPermissionContext): ToolPermissionContext {
-  if (!feature('TRANSCRIPT_CLASSIFIER')) return context
-  if (context.mode !== 'plan') return context
+  if (!feature('TRANSCRIPT_CLASSIFIER')) {
+    return context
+  }
+  if (context.mode !== 'plan') {
+    return context
+  }
   // 与 prepareContextForPlanMode 的入口时排除条件保持一致 —
   // 当用户从危险模式进入时，永远不会在 plan 中间激活 auto。
   if (context.prePlanMode === 'bypassPermissions') {
@@ -1369,7 +1420,9 @@ export function transitionPlanAutoMode(context: ToolPermissionContext): ToolPerm
     // 重新剥离，以免分类器被前缀规则放行匹配所绕过。
     return stripDangerousPermissionsForAutoMode(context)
   }
-  if (!want && !have) return context
+  if (!want && !have) {
+    return context
+  }
 
   if (want) {
     autoModeStateModule?.setAutoModeActive(true)

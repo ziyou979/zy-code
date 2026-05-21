@@ -1,4 +1,4 @@
-import React, { Suspense, use } from 'react'
+import { Suspense, use } from 'react'
 import { useSettings } from '../../../hooks/useSettings.js'
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../../ink/stringWidth.js'
@@ -6,6 +6,7 @@ import { Ansi, Box, Text, useTheme } from '../../../ink.js'
 import { getCliHighlightPromise } from '../../../utils/cliHighlight.js'
 import { applyMarkdown } from '../../../utils/markdown.js'
 import sliceAnsi from '../../../utils/sliceAnsi.js'
+
 type PreviewBoxProps = {
   /** The preview content to display. Markdown is rendered with syntax highlighting
    * for code blocks (```ts, ```py, etc.). Also supports plain multi-line text. */

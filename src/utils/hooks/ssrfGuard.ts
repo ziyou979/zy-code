@@ -1,6 +1,6 @@
+import { lookup as dnsLookup } from 'node:dns'
+import { isIP } from 'node:net'
 import type { AddressFamily, LookupAddress as AxiosLookupAddress } from 'axios'
-import { lookup as dnsLookup } from 'dns'
-import { isIP } from 'net'
 
 /**
  * SSRF guard for HTTP hooks.
@@ -65,22 +65,36 @@ function isBlockedV4(address: string): boolean {
   }
 
   // Loopback explicitly allowed
-  if (a === 127) return false
+  if (a === 127) {
+    return false
+  }
 
   // 0.0.0.0/8
-  if (a === 0) return true
+  if (a === 0) {
+    return true
+  }
   // 10.0.0.0/8
-  if (a === 10) return true
+  if (a === 10) {
+    return true
+  }
   // 169.254.0.0/16 — link-local, cloud metadata
-  if (a === 169 && b === 254) return true
+  if (a === 169 && b === 254) {
+    return true
+  }
   // 172.16.0.0/12
-  if (a === 172 && b >= 16 && b <= 31) return true
+  if (a === 172 && b >= 16 && b <= 31) {
+    return true
+  }
   // 100.64.0.0/10 — shared address space (RFC 6598, CGNAT). Some cloud
   // providers use this range for metadata endpoints (e.g. Alibaba Cloud at
   // 100.100.100.200).
-  if (a === 100 && b >= 64 && b <= 127) return true
+  if (a === 100 && b >= 64 && b <= 127) {
+    return true
+  }
   // 192.168.0.0/16
-  if (a === 192 && b === 168) return true
+  if (a === 192 && b === 168) {
+    return true
+  }
 
   return false
 }
@@ -89,10 +103,14 @@ function isBlockedV6(address: string): boolean {
   const lower = address.toLowerCase()
 
   // ::1 loopback explicitly allowed
-  if (lower === '::1') return false
+  if (lower === '::1') {
+    return false
+  }
 
   // :: unspecified
-  if (lower === '::') return true
+  if (lower === '::') {
+    return true
+  }
 
   // IPv4-mapped IPv6 (0:0:0:0:0:ffff:X:Y in any representation — ::ffff:a.b.c.d,
   // ::ffff:XXXX:YYYY, expanded, or partially expanded). Extract the embedded
@@ -156,7 +174,9 @@ function expandIPv6Groups(addr: string): number[] | null {
 
   const target = 8 - tailHextets.length
   const fill = target - head.length - tail.length
-  if (fill < 0) return null
+  if (fill < 0) {
+    return null
+  }
 
   const hex = [...head, ...new Array<string>(fill).fill('0'), ...tail]
   const nums = hex.map((h) => parseInt(h, 16))
@@ -175,7 +195,9 @@ function expandIPv6Groups(addr: string): number[] | null {
  */
 function extractMappedIPv4(addr: string): string | null {
   const g = expandIPv6Groups(addr)
-  if (!g) return null
+  if (!g) {
+    return null
+  }
   // IPv4-mapped: first 80 bits zero, next 16 bits ffff, last 32 bits = IPv4
   if (g[0] === 0 && g[1] === 0 && g[2] === 0 && g[3] === 0 && g[4] === 0 && g[5] === 0xffff) {
     const hi = g[6]!

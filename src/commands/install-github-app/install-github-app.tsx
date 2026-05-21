@@ -28,6 +28,7 @@ import { SuccessStep } from './SuccessStep.js'
 import { setupGitHubActions } from './setupGitHubActions.js'
 import type { State, Warning, Workflow } from './types.js'
 import { WarningsStep } from './WarningsStep.js'
+
 const INITIAL_STATE: State = {
   step: 'check-gh',
   selectedRepoName: '',
@@ -561,7 +562,9 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
     }))
   }, [])
   const handleSecretNameChange = (value_1: string) => {
-    if (value_1 && !/^[a-zA-Z0-9_]+$/.test(value_1)) return
+    if (value_1 && !/^[a-zA-Z0-9_]+$/.test(value_1)) {
+      return
+    }
     setState((prev_25) => ({
       ...prev_25,
       secretName: value_1,

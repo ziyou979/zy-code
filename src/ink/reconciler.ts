@@ -1,6 +1,6 @@
 /* eslint-disable custom-rules/no-top-level-side-effects */
 
-import { appendFileSync } from 'fs'
+import { appendFileSync } from 'node:fs'
 import createReconciler from 'react-reconciler'
 import { getYogaCounters } from 'src/native-ts/yoga-layout/index.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
@@ -38,14 +38,14 @@ if (process.env.NODE_ENV === 'development') {
     if (error.code === 'ERR_MODULE_NOT_FOUND') {
       // biome-ignore lint/suspicious/noConsole: intentional warning
       console.warn(
-        `
+        `${`
 The environment variable DEV is set to true, so Ink tried to import \`react-devtools-core\`,
 but this failed as it was not installed. Debugging with React Devtools requires it.
 
 To install use this command:
 
 $ npm install --save-dev react-devtools-core
-				`.trim() + '\n',
+				`.trim()}\n`,
       )
     } else {
       // eslint-disable-next-line @typescript-eslint/only-throw-error
@@ -117,7 +117,9 @@ function setEventHandler(node: DOMElement, key: string, value: unknown): void {
 }
 
 function applyProp(node: DOMElement, key: string, value: unknown): void {
-  if (key === 'children') return
+  if (key === 'children') {
+    return
+  }
 
   if (key === 'style') {
     setStyle(node, value as Styles)
@@ -155,7 +157,9 @@ export function getOwnerChain(fiber: unknown): string[] {
   const seen = new Set<unknown>()
   let cur = fiber as FiberLike | null | undefined
   for (let i = 0; cur && i < 50; i++) {
-    if (seen.has(cur)) break
+    if (seen.has(cur)) {
+      break
+    }
     seen.add(cur)
     const t = cur.elementType
     const name =
@@ -165,7 +169,9 @@ export function getOwnerChain(fiber: unknown): string[] {
         : typeof t === 'string'
           ? undefined // 宿主元素（ink-box 等）—— 跳过
           : t?.displayName || t?.name
-    if (name && name !== chain[chain.length - 1]) chain.push(name)
+    if (name && name !== chain[chain.length - 1]) {
+      chain.push(name)
+    }
     cur = cur._debugOwner ?? cur.return
   }
   return chain
@@ -219,7 +225,9 @@ export function resetProfileCounters(): void {
 const reconciler = (createReconciler as any)({
   getRootHostContext: () => ({ isInsideText: false }),
   prepareForCommit: () => {
-    if (COMMIT_LOG) _prepareAt = performance.now()
+    if (COMMIT_LOG) {
+      _prepareAt = performance.now()
+    }
     return null
   },
   preparePortalMount: () => null,
@@ -231,7 +239,9 @@ const reconciler = (createReconciler as any)({
       const now = performance.now()
       _commits++
       const gap = _lastCommitAt > 0 ? now - _lastCommitAt : 0
-      if (gap > _maxGapMs) _maxGapMs = gap
+      if (gap > _maxGapMs) {
+        _maxGapMs = gap
+      }
       _lastCommitAt = now
       const reconcileMs = _prepareAt > 0 ? now - _prepareAt : 0
       if (gap > 30 || reconcileMs > 20 || _createCount > 50) {
@@ -316,7 +326,9 @@ const reconciler = (createReconciler as any)({
       originalType === 'ink-text' && hostContext.isInsideText ? 'ink-virtual-text' : originalType
 
     const node = createNode(type)
-    if (COMMIT_LOG) _createCount++
+    if (COMMIT_LOG) {
+      _createCount++
+    }
 
     for (const [key, value] of Object.entries(newProps)) {
       applyProp(node, key, value)
@@ -357,7 +369,7 @@ const reconciler = (createReconciler as any)({
   appendChild: appendChildNode,
   insertBefore: insertBeforeNode,
   finalizeInitialChildren(_node: DOMElement, _type: ElementNames, props: Props): boolean {
-    return props['autoFocus'] === true
+    return props.autoFocus === true
   },
   commitMount(node: DOMElement): void {
     getFocusManager(node).handleAutoFocus(node)
@@ -386,7 +398,7 @@ const reconciler = (createReconciler as any)({
   // React 19 的 commitUpdate 直接接收旧的和新的 props，而不是 updatePayload
   commitUpdate(node: DOMElement, _type: ElementNames, oldProps: Props, newProps: Props): void {
     const props = diff(oldProps, newProps)
-    const style = diff(oldProps['style'] as Styles, newProps['style'] as Styles)
+    const style = diff(oldProps.style as Styles, newProps.style as Styles)
 
     if (props) {
       for (const [key, value] of Object.entries(props)) {
@@ -410,7 +422,7 @@ const reconciler = (createReconciler as any)({
     }
 
     if (style && node.yogaNode) {
-      applyStyles(node.yogaNode, style, newProps['style'] as Styles)
+      applyStyles(node.yogaNode, style, newProps.style as Styles)
     }
   },
   commitTextUpdate(node: TextNode, _oldText: string, newText: string): void {

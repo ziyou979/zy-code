@@ -16,6 +16,7 @@ import { PermissionRequestTitle } from '../PermissionRequestTitle.js'
 import { PreviewBox } from './PreviewBox.js'
 import { QuestionNavigationBar } from './QuestionNavigationBar.js'
 import type { QuestionState } from './use-multiple-choice-state.js'
+
 type Props = {
   question: Question
   questions: Question[]
@@ -98,7 +99,9 @@ export function PreviewQuestionView({
   const handleSelectOption = useCallback(
     (index: number) => {
       const option = allOptions[index]
-      if (!option) return
+      if (!option) {
+        return
+      }
       setFocusedIndex(index)
       onUpdateQuestionState(
         questionText,
@@ -113,7 +116,9 @@ export function PreviewQuestionView({
   )
   const handleNavigate = useCallback(
     (direction: 'up' | 'down' | number) => {
-      if (isInNotesInput) return
+      if (isInNotesInput) {
+        return
+      }
       let newIndex: number
       if (typeof direction === 'number') {
         newIndex = direction

@@ -1,5 +1,4 @@
 import { useCallback, useRef } from 'react'
-import { isInternalBuild } from '../utils/envUtils.js'
 import { useTerminalFocus } from '../ink/hooks/use-terminal-focus.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -7,6 +6,7 @@ import {
 } from '../services/analytics/index.js'
 import { abortSpeculation } from '../services/PromptSuggestion/speculation.js'
 import { useAppState, useSetAppState } from '../state/AppState.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 
 type Props = {
   inputValue: string
@@ -69,7 +69,9 @@ export function usePromptSuggestion({ inputValue, isAssistantResponding }: Props
   }, [setAppState])
 
   const markAccepted = useCallback(() => {
-    if (!isValidSuggestion) return
+    if (!isValidSuggestion) {
+      return
+    }
     setAppState((prev) => ({
       ...prev,
       promptSuggestion: {
@@ -99,7 +101,9 @@ export function usePromptSuggestion({ inputValue, isAssistantResponding }: Props
 
   const logOutcomeAtSubmission = useCallback(
     (finalInput: string, opts?: { skipReset: boolean }) => {
-      if (!isValidSuggestion) return
+      if (!isValidSuggestion) {
+        return
+      }
 
       // Determine if accepted: either Tab was pressed (acceptedAt set) OR
       // final input matches suggestion (empty Enter case)
@@ -138,7 +142,9 @@ export function usePromptSuggestion({ inputValue, isAssistantResponding }: Props
           userInput: finalInput as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }),
       })
-      if (!opts?.skipReset) resetSuggestion()
+      if (!opts?.skipReset) {
+        resetSuggestion()
+      }
     },
     [
       isValidSuggestion,

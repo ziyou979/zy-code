@@ -1,7 +1,9 @@
-import type { ImageSource, ContentBlock } from '../../types/llm.js'
 import type { PromptMessage, ResourceLink } from '@modelcontextprotocol/sdk/types.js'
-import { normalizeNameForMCP } from './normalization.js'
+import type { ContentBlock, ImageSource } from '../../types/llm.js'
+import { isEnvDefinedFalsy } from '../../utils/envUtils.js'
+import { TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../utils/errors.js'
 import { maybeResizeAndDownsampleImageBuffer } from '../../utils/imageResizer.js'
+import { logMCPError } from '../../utils/log.js'
 import {
   getBinaryBlobSavedMessage,
   getFormatDescription,
@@ -15,14 +17,12 @@ import {
   truncateMcpContentIfNeeded,
 } from '../../utils/mcpValidation.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { logMCPError } from '../../utils/log.js'
-import { TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../utils/errors.js'
-import { isEnvDefinedFalsy } from '../../utils/envUtils.js'
+import { isPersistError, persistToolResult } from '../../utils/toolResultStorage.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { isPersistError, persistToolResult } from '../../utils/toolResultStorage.js'
+import { normalizeNameForMCP } from './normalization.js'
 
 const IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 
@@ -182,13 +182,19 @@ export type TransformedMCPResult = {
  * e.g. "{title: string, items: [{id: number, name: string}]}"
  */
 export function inferCompactSchema(value: unknown, depth = 2): string {
-  if (value === null) return 'null'
+  if (value === null) {
+    return 'null'
+  }
   if (Array.isArray(value)) {
-    if (value.length === 0) return '[]'
+    if (value.length === 0) {
+      return '[]'
+    }
     return `[${inferCompactSchema(value[0], depth - 1)}]`
   }
   if (typeof value === 'object') {
-    if (depth <= 0) return '{...}'
+    if (depth <= 0) {
+      return '{...}'
+    }
     const entries = Object.entries(value).slice(0, 10)
     const props = entries.map(([k, v]) => `${k}: ${inferCompactSchema(v, depth - 1)}`)
     const suffix = Object.keys(value).length > 10 ? ', ...' : ''

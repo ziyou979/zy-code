@@ -5,18 +5,21 @@
  * 当前支持 iTerm2 的 OSC 1337 File inline 协议。
  */
 
-import { readFileSync } from 'fs'
-import { supportsHyperlinks } from '../ink/supports-hyperlinks.js'
+import { readFileSync } from 'node:fs'
 
 /**
  * 检查终端是否支持内联图像。
  * iTerm2 支持 OSC 1337 内联图像协议。
  */
 export function supportsInlineImages(): boolean {
-  const termProgram = process.env['TERM_PROGRAM']
-  if (termProgram === 'iTerm.app' || termProgram === 'iTerm2') return true
-  const lcTerminal = process.env['LC_TERMINAL']
-  if (lcTerminal === 'iTerm.app' || lcTerminal === 'iTerm2') return true
+  const termProgram = process.env.TERM_PROGRAM
+  if (termProgram === 'iTerm.app' || termProgram === 'iTerm2') {
+    return true
+  }
+  const lcTerminal = process.env.LC_TERMINAL
+  if (lcTerminal === 'iTerm.app' || lcTerminal === 'iTerm2') {
+    return true
+  }
   return false
 }
 
@@ -30,7 +33,9 @@ export function supportsInlineImages(): boolean {
  * @returns OSC 1337 转义序列字符串，若不支持内联图像则返回 null
  */
 export function renderInlineImageFromFile(imagePath: string, maxWidth: number = 40): string | null {
-  if (!supportsInlineImages()) return null
+  if (!supportsInlineImages()) {
+    return null
+  }
 
   try {
     const data = readFileSync(imagePath)

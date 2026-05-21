@@ -37,9 +37,15 @@ export function useQueueProcessor({
   const queueSnapshot = useSyncExternalStore(subscribeToCommandQueue, getCommandQueueSnapshot)
 
   useEffect(() => {
-    if (isQueryActive) return
-    if (hasActiveLocalJsxUI) return
-    if (queueSnapshot.length === 0) return
+    if (isQueryActive) {
+      return
+    }
+    if (hasActiveLocalJsxUI) {
+      return
+    }
+    if (queueSnapshot.length === 0) {
+      return
+    }
 
     // Reservation is now owned by handlePromptSubmit (inside executeUserInput's
     // try block). The sync chain executeQueuedInput → handlePromptSubmit →
@@ -49,5 +55,5 @@ export function useQueueProcessor({
     // guard above returns early. handlePromptSubmit's finally releases the
     // reservation via cancelReservation() (no-op if onQuery already ran end()).
     processQueueIfReady({ executeInput: executeQueuedInput })
-  }, [queueSnapshot, isQueryActive, executeQueuedInput, hasActiveLocalJsxUI, queryGuard])
+  }, [queueSnapshot, isQueryActive, executeQueuedInput, hasActiveLocalJsxUI])
 }

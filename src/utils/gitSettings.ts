@@ -12,7 +12,11 @@ import { getInitialSettings } from './settings/settings.js'
 
 export function shouldIncludeGitInstructions(): boolean {
   const envVal = process.env.ZY_CODE_DISABLE_GIT_INSTRUCTIONS
-  if (isEnvTruthy(envVal)) return false
-  if (isEnvDefinedFalsy(envVal)) return true
+  if (isEnvTruthy(envVal)) {
+    return false
+  }
+  if (isEnvDefinedFalsy(envVal)) {
+    return true
+  }
   return getInitialSettings().includeGitInstructions ?? true
 }

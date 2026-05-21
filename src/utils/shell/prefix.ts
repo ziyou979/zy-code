@@ -13,8 +13,8 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { queryCompactModel } from '../../services/api/llmOrchestrator.js'
 import { startsWithApiErrorPrefix } from '../../services/api/errors.js'
+import { queryCompactModel } from '../../services/api/llmOrchestrator.js'
 import { memoizeWithLRU } from '../memoize.js'
 import { jsonStringify } from '../slowOperations.js'
 import { asSystemPrompt } from '../systemPromptType.js'
@@ -199,7 +199,7 @@ async function getCommandPrefixImpl(
       (tn, nonInteractive) => {
         const message = `[${tn}Tool] Pre-flight check is taking longer than expected. Run with ANTHROPIC_LOG=debug to check for failed or slow API requests.`
         if (nonInteractive) {
-          process.stderr.write(jsonStringify({ level: 'warn', message }) + '\n')
+          process.stderr.write(`${jsonStringify({ level: 'warn', message })}\n`)
         } else {
           // biome-ignore lint/suspicious/noConsole: intentional warning
           console.warn(chalk.yellow(`⚠️  ${message}`))

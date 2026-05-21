@@ -78,29 +78,37 @@ function isItemTypeParamAbbrev(p: string): boolean {
  */
 export function isSymlinkCreatingCommand(cmd: { name: string; args: string[] }): boolean {
   const canonical = resolveToCanonical(cmd.name)
-  if (canonical !== 'new-item') return false
+  if (canonical !== 'new-item') {
+    return false
+  }
   for (let i = 0; i < cmd.args.length; i++) {
     const raw = cmd.args[i] ?? ''
-    if (raw.length === 0) continue
+    if (raw.length === 0) {
+      continue
+    }
     // Normalize unicode dash prefixes (–, —, ―) and forward-slash (PS 5.1
     // parameter prefix) → ASCII `-` so prefix comparison works. PS tokenizer
     // treats all four dash chars plus `/` as parameter markers. (bug #26)
     const normalized =
-      PS_TOKENIZER_DASH_CHARS.has(raw[0]!) || raw[0] === '/' ? '-' + raw.slice(1) : raw
+      PS_TOKENIZER_DASH_CHARS.has(raw[0]!) || raw[0] === '/' ? `-${raw.slice(1)}` : raw
     const lower = normalized.toLowerCase()
     // Split colon-bound value: -it:SymbolicLink → param='-it', val='symboliclink'
     const colonIdx = lower.indexOf(':', 1)
     const paramRaw = colonIdx > 0 ? lower.slice(0, colonIdx) : lower
     // Strip backtick escapes: -Item`Type → -ItemType (bug #22)
     const param = paramRaw.replace(/`/g, '')
-    if (!isItemTypeParamAbbrev(param)) continue
+    if (!isItemTypeParamAbbrev(param)) {
+      continue
+    }
     const rawVal = colonIdx > 0 ? lower.slice(colonIdx + 1) : (cmd.args[i + 1]?.toLowerCase() ?? '')
     // Strip backtick escapes from colon-bound value: -it:Sym`bolicLink → symboliclink
     // Mirrors the param-name strip at L103. Space-separated args use .value
     // (backtick-resolved by .NET parser), but colon-bound uses .text (raw source).
     // Strip surrounding quotes: -it:'SymbolicLink' or -it:"Junction" (bug #6)
     const val = rawVal.replace(/`/g, '').replace(/^['"]|['"]$/g, '')
-    if (LINK_ITEM_TYPES.has(val)) return true
+    if (LINK_ITEM_TYPES.has(val)) {
+      return true
+    }
   }
   return false
 }
@@ -195,10 +203,18 @@ export function checkPermissionMode(
     let hasWriteCommand = false
     for (const seg of segments) {
       for (const cmd of seg.commands) {
-        if (cmd.elementType !== 'CommandAst') continue
-        if (isCwdChangingCmdlet(cmd.name)) hasCdCommand = true
-        if (isSymlinkCreatingCommand(cmd)) hasSymlinkCreate = true
-        if (isAcceptEditsAllowedCmdlet(cmd.name)) hasWriteCommand = true
+        if (cmd.elementType !== 'CommandAst') {
+          continue
+        }
+        if (isCwdChangingCmdlet(cmd.name)) {
+          hasCdCommand = true
+        }
+        if (isSymlinkCreatingCommand(cmd)) {
+          hasSymlinkCreate = true
+        }
+        if (isAcceptEditsAllowedCmdlet(cmd.name)) {
+          hasWriteCommand = true
+        }
       }
     }
     if (hasCdCommand && hasWriteCommand) {

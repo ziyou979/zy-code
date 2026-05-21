@@ -14,7 +14,7 @@
  */
 
 import { feature } from 'bun:bundle'
-import { basename } from 'path'
+import { basename } from 'node:path'
 import { getIsRemoteMode } from '../../bootstrap/state.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { ENTRYPOINT_NAME } from '../../memdir/memdir.js'
@@ -37,13 +37,13 @@ import type {
 import { createAbortController } from '../../utils/abortController.js'
 import { count, uniq } from '../../utils/array.js'
 import { logForDebugging } from '../../utils/debug.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { createCacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.js'
 import type { REPLHookContext } from '../../utils/hooks/postSamplingHooks.js'
 import { createMemorySavedMessage, createUserMessage } from '../../utils/messages.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { logEvent } from '../analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../analytics/metadata.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { buildExtractAutoOnlyPrompt, buildExtractCombinedPrompt } from './prompts.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -521,7 +521,9 @@ export function initExtractMemories(): void {
   }
 
   drainer = async (timeoutMs = 60_000) => {
-    if (inFlightExtractions.size === 0) return
+    if (inFlightExtractions.size === 0) {
+      return
+    }
     await Promise.race([
       Promise.all(inFlightExtractions).catch(() => {}),
       // eslint-disable-next-line no-restricted-syntax -- sleep() has no .unref(); timer must not block exit

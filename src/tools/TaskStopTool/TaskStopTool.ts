@@ -1,8 +1,8 @@
 import { z } from 'zod/v4'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import type { TaskStateBase } from '../../Task.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { stopTask } from '../../tasks/stopTask.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { DESCRIPTION, TASK_STOP_TOOL_NAME } from './prompt.js'
@@ -124,4 +124,5 @@ export const TaskStopTool = buildTool({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(TaskStopTool)

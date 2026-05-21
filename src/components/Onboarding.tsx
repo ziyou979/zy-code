@@ -1,21 +1,21 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { setupTerminal, shouldOfferTerminalSetup } from '../commands/terminalSetup/terminalSetup.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
+import { tSync, warmI18n } from '../i18n/index.js'
+import type { UiLanguage } from '../i18n/types.js'
 import { Box, Link, Newline, Text, useTheme } from '../ink.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { normalizeApiKeyForConfig } from '../utils/authPortable.js'
 import { saveGlobalConfig } from '../utils/config.js'
-import { warmI18n, tSync } from '../i18n/index.js'
-import type { UiLanguage } from '../i18n/types.js'
+import { toPersistableEffort } from '../utils/effort.js'
 import { PROVIDER_REGISTRY } from '../utils/model/providerRegistry.js'
 import { updateSettingsForSource } from '../utils/settings/settings.js'
 import { Select } from './CustomSelect/select.js'
+import { effortLevelToSymbol } from './EffortIndicator.js'
 import { Welcome } from './Logo/Welcome.js'
 import { PressEnterToContinue } from './PressEnterToContinue.js'
 import { ThemePicker } from './ThemePicker.js'
 import { OrderedList } from './ui/OrderedList.js'
-import { toPersistableEffort } from '../utils/effort.js'
-import { effortLevelToSymbol } from './EffortIndicator.js'
 
 type StepId =
   | 'language'
@@ -291,8 +291,12 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   function handleTierDone(tier: string) {
     // Build models object
     const models: Record<string, string> = { standard: tierModels.standard }
-    if (tierModels.advanced) models.advanced = tierModels.advanced
-    if (tierModels.compact) models.compact = tierModels.compact
+    if (tierModels.advanced) {
+      models.advanced = tierModels.advanced
+    }
+    if (tierModels.compact) {
+      models.compact = tierModels.compact
+    }
 
     const mainLoopModel = (['advanced', 'standard', 'compact'] as const).includes(
       tier as 'advanced' | 'standard' | 'compact',
@@ -448,11 +452,11 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
     } else {
       goToNextStep()
     }
-  }, [currentStepIndex, steps.length, onDone])
+  }, [currentStepIndex, steps.length, onDone, goToNextStep])
 
   const handleTerminalSetupSkip = useCallback(() => {
     goToNextStep()
-  }, [currentStepIndex, steps.length, onDone])
+  }, [goToNextStep])
 
   useKeybindings(
     { 'confirm:yes': handleSecurityContinue },

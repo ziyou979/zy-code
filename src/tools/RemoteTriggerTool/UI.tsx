@@ -1,6 +1,6 @@
 import React from 'react'
-import { tSync } from '../../i18n/index.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
+import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink.js'
 import { countCharInString } from '../../utils/stringUtils.js'
 import type { Input, Output } from './RemoteTriggerTool.js'

@@ -3,6 +3,7 @@ import Link from './components/Link.js'
 import Text from './components/Text.js'
 import type { Color } from './styles.js'
 import { type NamedColor, Parser, type Color as TermioColor, type TextStyle } from './termio.js'
+
 type Props = {
   children: string
   /** 为 true 时，强制所有文本以暗淡样式渲染 */
@@ -119,7 +120,9 @@ function parseToSpans(input: string): Span[] {
     }
     if (action.type === 'text') {
       const text = action.graphemes.map((g) => g.value).join('')
-      if (!text) continue
+      if (!text) {
+        continue
+      }
       const props = textStyleToSpanProps(action.style)
       if (currentHyperlink) {
         props.hyperlink = currentHyperlink
@@ -145,16 +148,32 @@ function parseToSpans(input: string): Span[] {
  */
 function textStyleToSpanProps(style: TextStyle): SpanProps {
   const props: SpanProps = {}
-  if (style.bold) props.bold = true
-  if (style.dim) props.dim = true
-  if (style.italic) props.italic = true
-  if (style.underline !== 'none') props.underline = true
-  if (style.strikethrough) props.strikethrough = true
-  if (style.inverse) props.inverse = true
+  if (style.bold) {
+    props.bold = true
+  }
+  if (style.dim) {
+    props.dim = true
+  }
+  if (style.italic) {
+    props.italic = true
+  }
+  if (style.underline !== 'none') {
+    props.underline = true
+  }
+  if (style.strikethrough) {
+    props.strikethrough = true
+  }
+  if (style.inverse) {
+    props.inverse = true
+  }
   const fgColor = colorToString(style.fg)
-  if (fgColor) props.color = fgColor
+  if (fgColor) {
+    props.color = fgColor
+  }
   const bgColor = colorToString(style.bg)
-  if (bgColor) props.backgroundColor = bgColor
+  if (bgColor) {
+    props.backgroundColor = bgColor
+  }
   return props
 }
 

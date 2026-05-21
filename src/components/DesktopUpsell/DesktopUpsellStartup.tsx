@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { Box, Text } from '../../ink.js'
 import { getDynamicConfig_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
@@ -7,6 +6,7 @@ import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { Select } from '../CustomSelect/select.js'
 import { DesktopHandoff } from '../DesktopHandoff.js'
 import { PermissionDialog } from '../permissions/PermissionDialog.js'
+
 type DesktopUpsellConfig = {
   enable_shortcut_tip: boolean
   enable_startup_dialog: boolean
@@ -22,11 +22,19 @@ function isSupportedPlatform(): boolean {
   return process.platform === 'darwin' || (process.platform === 'win32' && process.arch === 'x64')
 }
 export function shouldShowDesktopUpsellStartup(): boolean {
-  if (!isSupportedPlatform()) return false
-  if (!getDesktopUpsellConfig().enable_startup_dialog) return false
+  if (!isSupportedPlatform()) {
+    return false
+  }
+  if (!getDesktopUpsellConfig().enable_startup_dialog) {
+    return false
+  }
   const config = getGlobalConfig()
-  if (config.desktopUpsellDismissed) return false
-  if ((config.desktopUpsellSeenCount ?? 0) >= 3) return false
+  if (config.desktopUpsellDismissed) {
+    return false
+  }
+  if ((config.desktopUpsellSeenCount ?? 0) >= 3) {
+    return false
+  }
   return true
 }
 type DesktopUpsellSelection = 'try' | 'not-now' | 'never'

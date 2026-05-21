@@ -1,11 +1,11 @@
-import { createHash } from 'crypto'
-import { appendFileSync, mkdirSync } from 'fs'
-import { join } from 'path'
+import { createHash } from 'node:crypto'
+import { appendFileSync, mkdirSync } from 'node:fs'
+import { join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import { getOrCreateUserID } from '../../utils/config.js'
-import { getAPIProvider } from '../../utils/model/providers.js'
-import { getStaticPricingForModel } from '../../utils/model/modelCapabilities.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
+import { getStaticPricingForModel } from '../../utils/model/modelCapabilities.js'
+import { getAPIProvider } from '../../utils/model/providers.js'
 import { getEventMetadata } from './metadata.js'
 
 // All events that were previously sent to Datadog are now written to a local
@@ -104,7 +104,9 @@ let flushTimer: NodeJS.Timeout | null = null
 let datadogInitialized: boolean | null = null
 
 function flushLogs(): void {
-  if (logBatch.length === 0) return
+  if (logBatch.length === 0) {
+    return
+  }
 
   const logsToWrite = logBatch
   logBatch = []
@@ -112,14 +114,16 @@ function flushLogs(): void {
   try {
     mkdirSync(TELEMETRY_LOG_DIR, { recursive: true })
     const line = logsToWrite.map((entry) => JSON.stringify(entry)).join('\n')
-    appendFileSync(TELEMETRY_LOG_FILE, line + '\n', 'utf8')
+    appendFileSync(TELEMETRY_LOG_FILE, `${line}\n`, 'utf8')
   } catch {
     // If we can't write to the local file, silently drop the events.
   }
 }
 
 function scheduleFlush(): void {
-  if (flushTimer) return
+  if (flushTimer) {
+    return
+  }
 
   flushTimer = setTimeout(() => {
     flushTimer = null

@@ -1,5 +1,5 @@
+import type { UUID } from 'node:crypto'
 import axios, { type AxiosError } from 'axios'
-import type { UUID } from 'crypto'
 import { getOauthConfig } from '../../constants/oauth.js'
 import type { Entry, TranscriptMessage } from '../../types/logs.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -66,7 +66,7 @@ async function appendSessionLogImpl(
         requestHeaders['Last-Uuid'] = lastUuid
       }
 
-      // @ts-ignore
+      // @ts-expect-error
       const response = await axios.put(url, entry, {
         headers: requestHeaders,
         validateStatus: (status) => status < 500,
@@ -83,10 +83,10 @@ async function appendSessionLogImpl(
         // 处理条目已存储但客户端收到错误响应的场景，
         // 导致 lastUuidMap 过期
         const serverLastUuid = response.headers['x-last-uuid']
-        // @ts-ignore
+        // @ts-expect-error
         if (serverLastUuid === (entry.uuid as any)) {
           // 我们的条目就是服务器上的最后一条——之前已成功存储
-          // @ts-ignore
+          // @ts-expect-error
           lastUuidMap.set(sessionId, entry.uuid as any)
           logForDebugging(`会话条目 ${entry.uuid} 已存在于服务器，从过期状态恢复`)
           logForDiagnosticsNoPII('info', 'session_persist_recovered_from_409')
@@ -156,7 +156,7 @@ async function appendSessionLogImpl(
       return false
     }
 
-    const delayMs = Math.min(BASE_DELAY_MS * Math.pow(2, attempt - 1), 8000)
+    const delayMs = Math.min(BASE_DELAY_MS * 2 ** (attempt - 1), 8000)
     logForDebugging(`远程持久化第 ${attempt}/${MAX_RETRIES} 次尝试失败，${delayMs}ms 后重试…`)
     await sleep(delayMs)
   }
@@ -208,7 +208,7 @@ export async function getSessionLogs(sessionId: string, url: string): Promise<En
     // 更新 lastUuid 为最后一条的 UUID
     const lastEntry = logs.at(-1)
     if (lastEntry && 'uuid' in lastEntry && lastEntry.uuid) {
-      // @ts-ignore
+      // @ts-expect-error
       lastUuidMap.set(sessionId, lastEntry.uuid as any)
     }
   }

@@ -35,7 +35,9 @@ export function normalizeLegacyToolName(name: string): string {
 export function getLegacyToolNames(canonicalName: string): string[] {
   const result: string[] = []
   for (const [legacy, canonical] of Object.entries(LEGACY_TOOL_NAME_ALIASES)) {
-    if (canonical === canonicalName) result.push(legacy)
+    if (canonical === canonicalName) {
+      result.push(legacy)
+    }
   }
   return result
 }

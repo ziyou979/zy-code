@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from 'react'
-import { isInternalBuild } from '../utils/envUtils.js'
 import type { Command } from '../commands.js'
 import { useNotifications } from '../context/notifications.js'
 import {
@@ -12,6 +11,7 @@ import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import { count } from '../utils/array.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 import { toError } from '../utils/errors.js'
 import { logError } from '../utils/log.js'
 import { loadPluginAgents } from '../utils/plugins/loadPluginAgents.js'
@@ -113,9 +113,13 @@ export function useManagePlugins({ enabled = true }: { enabled?: boolean } = {})
       // into AppState.plugins.errors (Doctor UI), not just telemetry.
       const mcpServerCounts = await Promise.all(
         enabled.map(async (p) => {
-          if (p.mcpServers) return Object.keys(p.mcpServers).length
+          if (p.mcpServers) {
+            return Object.keys(p.mcpServers).length
+          }
           const servers = await loadPluginMcpServers(p, errors)
-          if (servers) p.mcpServers = servers
+          if (servers) {
+            p.mcpServers = servers
+          }
           return servers ? Object.keys(servers).length : 0
         }),
       )
@@ -129,9 +133,13 @@ export function useManagePlugins({ enabled = true }: { enabled?: boolean } = {})
       // seed marketplace registration or policySettings hot-reload).
       const lspServerCounts = await Promise.all(
         enabled.map(async (p) => {
-          if (p.lspServers) return Object.keys(p.lspServers).length
+          if (p.lspServers) {
+            return Object.keys(p.lspServers).length
+          }
           const servers = await loadPluginLspServers(p, errors)
-          if (servers) p.lspServers = servers
+          if (servers) {
+            p.lspServers = servers
+          }
           return servers ? Object.keys(servers).length : 0
         }),
       )
@@ -179,7 +187,9 @@ export function useManagePlugins({ enabled = true }: { enabled?: boolean } = {})
 
       // Count component types across enabled plugins
       const hook_count = enabled.reduce((sum, p) => {
-        if (!p.hooksConfig) return sum
+        if (!p.hooksConfig) {
+          return sum
+        }
         return (
           sum +
           Object.values(p.hooksConfig).reduce(
@@ -258,7 +268,9 @@ export function useManagePlugins({ enabled = true }: { enabled?: boolean } = {})
 
   // Load plugins on mount and emit telemetry
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled) {
+      return
+    }
     void initialPluginLoad().then((metrics) => {
       const { ant_enabled_names, ...baseMetrics } = metrics
       const allMetrics = {
@@ -282,7 +294,9 @@ export function useManagePlugins({ enabled = true }: { enabled?: boolean } = {})
   // and was incomplete (no MCP, no agentDefinitions). /reload-plugins
   // handles all of that correctly via refreshActivePlugins().
   useEffect(() => {
-    if (!enabled || !needsRefresh) return
+    if (!enabled || !needsRefresh) {
+      return
+    }
     addNotification({
       key: 'plugin-reload-pending',
       text: 'Plugins changed. Run /reload-plugins to activate.',

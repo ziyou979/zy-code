@@ -1,5 +1,5 @@
 import { oscColor, type TerminalQuerier } from '../ink/terminal-querier.js'
-import { setCachedSystemTheme, themeFromOscColor, type SystemTheme } from './systemTheme.js'
+import { type SystemTheme, setCachedSystemTheme, themeFromOscColor } from './systemTheme.js'
 
 /**
  * Poll the terminal for its background color via OSC 11 and update the
@@ -14,10 +14,14 @@ export function watchSystemTheme(
   let timerId: ReturnType<typeof setInterval> | undefined
 
   async function poll() {
-    if (stopped) return
+    if (stopped) {
+      return
+    }
     try {
       const [response] = await Promise.all([querier.send(oscColor(11)), querier.flush()])
-      if (stopped) return
+      if (stopped) {
+        return
+      }
       if (response) {
         const theme = themeFromOscColor(response.data)
         if (theme) {
@@ -37,6 +41,8 @@ export function watchSystemTheme(
 
   return () => {
     stopped = true
-    if (timerId !== undefined) clearInterval(timerId)
+    if (timerId !== undefined) {
+      clearInterval(timerId)
+    }
   }
 }

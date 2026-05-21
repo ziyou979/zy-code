@@ -1,4 +1,4 @@
-import { URL } from 'url'
+import { URL } from 'node:url'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { HybridTransport } from './HybridTransport.js'
 import { SSETransport } from './SSETransport.js'
@@ -29,7 +29,7 @@ export function getTransportForUrl(
     } else if (sseUrl.protocol === 'ws:') {
       sseUrl.protocol = 'http:'
     }
-    sseUrl.pathname = sseUrl.pathname.replace(/\/$/, '') + '/worker/events/stream'
+    sseUrl.pathname = `${sseUrl.pathname.replace(/\/$/, '')}/worker/events/stream`
     return new SSETransport(sseUrl, headers, sessionId, refreshHeaders) as any
   }
 

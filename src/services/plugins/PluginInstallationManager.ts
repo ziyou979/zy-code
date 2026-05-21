@@ -136,7 +136,9 @@ export async function performBackgroundPluginInstallations(
         })
         clearPluginCache('performBackgroundPluginInstallations: auto-refresh failed')
         setAppState((prev) => {
-          if (prev.plugins.needsRefresh) return prev
+          if (prev.plugins.needsRefresh) {
+            return prev
+          }
           return {
             ...prev,
             plugins: { ...prev.plugins, needsRefresh: true },
@@ -149,7 +151,9 @@ export async function performBackgroundPluginInstallations(
       clearMarketplacesCache()
       clearPluginCache('performBackgroundPluginInstallations: marketplaces reconciled')
       setAppState((prev) => {
-        if (prev.plugins.needsRefresh) return prev
+        if (prev.plugins.needsRefresh) {
+          return prev
+        }
         return {
           ...prev,
           plugins: { ...prev.plugins, needsRefresh: true },

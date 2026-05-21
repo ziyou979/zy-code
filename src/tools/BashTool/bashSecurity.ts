@@ -139,17 +139,29 @@ function extractQuotedContent(command: string, isJq = false): QuoteExtraction {
 
     if (escaped) {
       escaped = false
-      if (!inSingleQuote) withDoubleQuotes += char
-      if (!inSingleQuote && !inDoubleQuote) fullyUnquoted += char
-      if (!inSingleQuote && !inDoubleQuote) unquotedKeepQuoteChars += char
+      if (!inSingleQuote) {
+        withDoubleQuotes += char
+      }
+      if (!inSingleQuote && !inDoubleQuote) {
+        fullyUnquoted += char
+      }
+      if (!inSingleQuote && !inDoubleQuote) {
+        unquotedKeepQuoteChars += char
+      }
       continue
     }
 
     if (char === '\\' && !inSingleQuote) {
       escaped = true
-      if (!inSingleQuote) withDoubleQuotes += char
-      if (!inSingleQuote && !inDoubleQuote) fullyUnquoted += char
-      if (!inSingleQuote && !inDoubleQuote) unquotedKeepQuoteChars += char
+      if (!inSingleQuote) {
+        withDoubleQuotes += char
+      }
+      if (!inSingleQuote && !inDoubleQuote) {
+        fullyUnquoted += char
+      }
+      if (!inSingleQuote && !inDoubleQuote) {
+        unquotedKeepQuoteChars += char
+      }
       continue
     }
 
@@ -163,12 +175,20 @@ function extractQuotedContent(command: string, isJq = false): QuoteExtraction {
       inDoubleQuote = !inDoubleQuote
       unquotedKeepQuoteChars += char
       // For jq, include quotes in extraction to ensure content is properly analyzed
-      if (!isJq) continue
+      if (!isJq) {
+        continue
+      }
     }
 
-    if (!inSingleQuote) withDoubleQuotes += char
-    if (!inSingleQuote && !inDoubleQuote) fullyUnquoted += char
-    if (!inSingleQuote && !inDoubleQuote) unquotedKeepQuoteChars += char
+    if (!inSingleQuote) {
+      withDoubleQuotes += char
+    }
+    if (!inSingleQuote && !inDoubleQuote) {
+      fullyUnquoted += char
+    }
+    if (!inSingleQuote && !inDoubleQuote) {
+      unquotedKeepQuoteChars += char
+    }
   }
 
   return { withDoubleQuotes, fullyUnquoted, unquotedKeepQuoteChars }
@@ -312,7 +332,9 @@ function validateIncompleteCommands(context: ValidationContext): PermissionResul
  * precisely replicate bash's heredoc-closing behavior.
  */
 function isSafeHeredoc(command: string): boolean {
-  if (!HEREDOC_IN_SUBSTITUTION.test(command)) return false
+  if (!HEREDOC_IN_SUBSTITUTION.test(command)) {
+    return false
+  }
 
   // SECURITY: Use [ \t] (not \s) between << and the delimiter. \s matches
   // newlines, but bash requires the delimiter word on the same line as <<.
@@ -341,7 +363,9 @@ function isSafeHeredoc(command: string): boolean {
   }
 
   // If no safe heredoc patterns found, it's not safe
-  if (safeHeredocs.length === 0) return false
+  if (safeHeredocs.length === 0) {
+    return false
+  }
 
   // SECURITY: For each heredoc, find the closing delimiter using LINE-BASED
   // matching that exactly replicates bash's behavior. Bash closes a heredoc
@@ -358,9 +382,13 @@ function isSafeHeredoc(command: string): boolean {
     // content (like `; rm -rf /`), this is not a simple safe heredoc.
     const afterOperator = command.slice(operatorEnd)
     const openLineEnd = afterOperator.indexOf('\n')
-    if (openLineEnd === -1) return false // No content at all
+    if (openLineEnd === -1) {
+      return false // No content at all
+    }
     const openLineTail = afterOperator.slice(0, openLineEnd)
-    if (!/^[ \t]*$/.test(openLineTail)) return false // Extra content on open line
+    if (!/^[ \t]*$/.test(openLineTail)) {
+      return false // Extra content on open line
+    }
 
     // Body starts after the newline
     const bodyStart = operatorEnd + openLineEnd + 1
@@ -386,9 +414,13 @@ function isSafeHeredoc(command: string): boolean {
         closingLineIdx = i
         // The `)` must be on the NEXT line with only whitespace before it
         const nextLine = bodyLines[i + 1]
-        if (nextLine === undefined) return false // No closing `)`
+        if (nextLine === undefined) {
+          return false // No closing `)`
+        }
         const parenMatch = nextLine.match(/^([ \t]*)\)/)
-        if (!parenMatch) return false // `)` not at start of next line
+        if (!parenMatch) {
+          return false // `)` not at start of next line
+        }
         closeParenLineIdx = i + 1
         closeParenColIdx = parenMatch[1]!.length // Position of `)`
         break
@@ -419,7 +451,9 @@ function isSafeHeredoc(command: string): boolean {
       }
     }
 
-    if (closingLineIdx === -1) return false // No closing delimiter found
+    if (closingLineIdx === -1) {
+      return false // No closing delimiter found
+    }
 
     // Compute the absolute end position (one past the `)` character)
     let endPos = bodyStart
@@ -444,7 +478,9 @@ function isSafeHeredoc(command: string): boolean {
   // no legitimate user writes this pattern. Bail to safe fallback.
   for (const outer of verified) {
     for (const inner of verified) {
-      if (inner === outer) continue
+      if (inner === outer) {
+        continue
+      }
       if (inner.start > outer.start && inner.start < outer.end) {
         return false
       }
@@ -492,7 +528,9 @@ function isSafeHeredoc(command: string): boolean {
   // SECURITY: Use explicit ASCII space/tab only — \s matches unicode whitespace
   // like \u00A0 which can be used to hide content. Newlines are also blocked
   // (they would indicate multi-line commands outside the heredoc body).
-  if (!/^[a-zA-Z0-9 \t"'.\-/_@=,:+~]*$/.test(remaining)) return false
+  if (!/^[a-zA-Z0-9 \t"'.\-/_@=,:+~]*$/.test(remaining)) {
+    return false
+  }
 
   // SECURITY: The remaining text (command with heredocs stripped) must also
   // pass all security validators. Without this, appending a safe heredoc to a
@@ -502,7 +540,9 @@ function isSafeHeredoc(command: string): boolean {
   // main validator that checks allowlist-safe character patterns.
   // No recursion risk: `remaining` has no `$(... <<` pattern, so the recursive
   // call's validateSafeCommandSubstitution returns passthrough immediately.
-  if (bashCommandIsSafe_DEPRECATED(remaining).behavior !== 'passthrough') return false
+  if (bashCommandIsSafe_DEPRECATED(remaining).behavior !== 'passthrough') {
+    return false
+  }
 
   return true
 }
@@ -513,7 +553,9 @@ function isSafeHeredoc(command: string): boolean {
  * Used by the pre-split gate to strip safe heredocs and re-check the remainder.
  */
 export function stripSafeHeredocSubstitutions(command: string): string | null {
-  if (!HEREDOC_IN_SUBSTITUTION.test(command)) return null
+  if (!HEREDOC_IN_SUBSTITUTION.test(command)) {
+    return null
+  }
 
   const heredocPattern = /\$\(cat[ \t]*<<(-?)[ \t]*(?:'+([A-Za-z_]\w*)'+|\\([A-Za-z_]\w*))/g
   let result = command
@@ -521,16 +563,24 @@ export function stripSafeHeredocSubstitutions(command: string): string | null {
   let match
   const ranges: Array<{ start: number; end: number }> = []
   while ((match = heredocPattern.exec(command)) !== null) {
-    if (match.index > 0 && command[match.index - 1] === '\\') continue
+    if (match.index > 0 && command[match.index - 1] === '\\') {
+      continue
+    }
     const delimiter = match[2] || match[3]
-    if (!delimiter) continue
+    if (!delimiter) {
+      continue
+    }
     const isDash = match[1] === '-'
     const operatorEnd = match.index + match[0].length
 
     const afterOperator = command.slice(operatorEnd)
     const openLineEnd = afterOperator.indexOf('\n')
-    if (openLineEnd === -1) continue
-    if (!/^[ \t]*$/.test(afterOperator.slice(0, openLineEnd))) continue
+    if (openLineEnd === -1) {
+      continue
+    }
+    if (!/^[ \t]*$/.test(afterOperator.slice(0, openLineEnd))) {
+      continue
+    }
 
     const bodyStart = operatorEnd + openLineEnd + 1
     const bodyLines = command.slice(bodyStart).split('\n')
@@ -558,7 +608,9 @@ export function stripSafeHeredocSubstitutions(command: string): string | null {
       }
     }
   }
-  if (!found) return null
+  if (!found) {
+    return null
+  }
   for (let i = ranges.length - 1; i >= 0; i--) {
     const r = ranges[i]!
     result = result.slice(0, r.start) + result.slice(r.end)
@@ -689,7 +741,9 @@ function validateGitCommit(context: ValidationContext): PermissionResult {
           inDQ = !inDQ
           continue
         }
-        if (!inSQ && !inDQ) unquoted += c
+        if (!inSQ && !inDQ) {
+          unquoted += c
+        }
       }
       if (/[<>]/.test(unquoted)) {
         return {
@@ -701,7 +755,7 @@ function validateGitCommit(context: ValidationContext): PermissionResult {
 
     // Security hardening: block messages starting with dash
     // This catches potential obfuscation patterns like git commit -m "---"
-    if (messageContent && messageContent.startsWith('-')) {
+    if (messageContent?.startsWith('-')) {
       logEvent('zy_bash_security_check_triggered', {
         checkId: BASH_SECURITY_CHECK_IDS.OBFUSCATED_FLAGS,
         subId: 5,
@@ -1338,7 +1392,9 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
 
             // Check if combined content so far forms a flag pattern.
             // Include $ and ` for in-quote expansion: "-""$VAR" → -exec
-            if (/^-+[a-zA-Z0-9$`]/.test(combinedContent)) return true
+            if (/^-+[a-zA-Z0-9$`]/.test(combinedContent)) {
+              return true
+            }
 
             // If this segment has alphanumeric/expansion and we already have dashes,
             // it's a flag. Catches "-""$*" where segment='$*' has no alnum but
@@ -1347,10 +1403,14 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
             const priorContent =
               segment.length > 0 ? combinedContent.slice(0, -segment.length) : combinedContent
             if (/^-+$/.test(priorContent)) {
-              if (/[a-zA-Z0-9$`]/.test(segment)) return true
+              if (/[a-zA-Z0-9$`]/.test(segment)) {
+                return true
+              }
             }
 
-            if (end >= originalCommand.length) break // Unclosed quote
+            if (end >= originalCommand.length) {
+              break // Unclosed quote
+            }
             pos = end + 1 // Move past closing quote to check next segment
           }
           // Also check the unquoted char at the end of the chain
@@ -1399,7 +1459,9 @@ function validateObfuscatedFlags(context: ValidationContext): PermissionResult {
       // Collect flag content
       while (j < originalCommand.length) {
         const flagChar = originalCommand[j]
-        if (!flagChar) break
+        if (!flagChar) {
+          break
+        }
 
         // End flag content once we hit whitespace or an equals sign
         if (/[\s=]/.test(flagChar)) {
@@ -1511,7 +1573,6 @@ function hasBackslashEscapedWhitespace(command: string): boolean {
 
     if (char === "'" && !inDoubleQuote) {
       inSingleQuote = !inSingleQuote
-      continue
     }
   }
 
@@ -1621,7 +1682,6 @@ function hasBackslashEscapedOperator(command: string): boolean {
     }
     if (char === '"' && !inSingleQuote) {
       inDoubleQuote = !inDoubleQuote
-      continue
     }
   }
 
@@ -1761,8 +1821,12 @@ function validateBraceExpansion(context: ValidationContext): PermissionResult {
   // We use a manual scan rather than a simple regex lookbehind because
   // lookbehinds can't handle double-escaped backslashes (\\{ is unescaped `{`).
   for (let i = 0; i < content.length; i++) {
-    if (content[i] !== '{') continue
-    if (isEscapedAtPosition(content, i)) continue
+    if (content[i] !== '{') {
+      continue
+    }
+    if (isEscapedAtPosition(content, i)) {
+      continue
+    }
 
     // Find matching unescaped `}` by tracking nesting depth.
     // Previous approach broke on nested `{`, missing commas between the outer
@@ -1782,7 +1846,9 @@ function validateBraceExpansion(context: ValidationContext): PermissionResult {
       }
     }
 
-    if (matchingClose === -1) continue
+    if (matchingClose === -1) {
+      continue
+    }
 
     // Check for `,` or `..` at the outermost nesting level between this
     // `{` and its matching `}`. Only depth-0 triggers matter — bash splits
@@ -1940,7 +2006,9 @@ function validateCommentQuoteDesync(context: ValidationContext): PermissionResul
     }
 
     if (inSingleQuote) {
-      if (char === "'") inSingleQuote = false
+      if (char === "'") {
+        inSingleQuote = false
+      }
       continue
     }
 
@@ -1950,7 +2018,9 @@ function validateCommentQuoteDesync(context: ValidationContext): PermissionResul
     }
 
     if (inDoubleQuote) {
-      if (char === '"') inDoubleQuote = false
+      if (char === '"') {
+        inDoubleQuote = false
+      }
       // Single quotes inside double quotes are literal — no toggle
       continue
     }
@@ -1983,7 +2053,9 @@ function validateCommentQuoteDesync(context: ValidationContext): PermissionResul
         }
       }
       // Skip to end of line (rest is comment)
-      if (lineEnd === -1) break
+      if (lineEnd === -1) {
+        break
+      }
       i = lineEnd // Loop increment will move past newline
     }
   }
@@ -2112,9 +2184,13 @@ function validateZshDangerousCommands(context: ValidationContext): PermissionRes
   let baseCmd = ''
   for (const token of tokens) {
     // Skip env var assignments (VAR=value)
-    if (/^[A-Za-z_]\w*=/.test(token)) continue
+    if (/^[A-Za-z_]\w*=/.test(token)) {
+      continue
+    }
     // Skip Zsh precommand modifiers (they don't change what command runs)
-    if (ZSH_PRECOMMAND_MODIFIERS.has(token)) continue
+    if (ZSH_PRECOMMAND_MODIFIERS.has(token)) {
+      continue
+    }
     baseCmd = token
     break
   }

@@ -8,7 +8,7 @@
  * - _web_search_tool 剥离
  * - thinking / output_config 转换
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import { buildOpenAIRequestParams } from '../../../src/services/api/conversions/openai.js'
 
 describe('buildOpenAIRequestParams', () => {

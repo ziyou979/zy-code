@@ -1,4 +1,5 @@
 import { useContext, useEffect, useRef } from 'react'
+import { tSync } from '../../i18n/index.js'
 import {
   CLEAR_TAB_STATUS,
   supportsTabStatus,
@@ -7,7 +8,6 @@ import {
 } from '../termio/osc.js'
 import type { Color } from '../termio/types.js'
 import { TerminalWriteContext } from '../useTerminalNotification.js'
-import { tSync } from '../../i18n/index.js'
 
 export type TabStatusKind = 'idle' | 'busy' | 'waiting'
 
@@ -67,7 +67,9 @@ export function useTabStatus(kind: TabStatusKind | null): void {
     }
 
     prevKindRef.current = kind
-    if (!writeRaw || !supportsTabStatus()) return
+    if (!writeRaw || !supportsTabStatus()) {
+      return
+    }
     writeRaw(wrapForMultiplexer(tabStatus(TAB_STATUS_PRESETS[kind])))
   }, [kind, writeRaw])
 }

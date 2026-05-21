@@ -1,17 +1,18 @@
-// @ts-ignore
+// @ts-expect-error
+
+import { homedir } from 'node:os'
 import {
-  // @ts-ignore
+  // @ts-expect-error
   buildComputerUseTools,
-  // @ts-ignore
+  // @ts-expect-error
   createComputerUseMcpServer,
 } from '@ant/computer-use-mcp'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
-import { homedir } from 'os'
 
 import { shutdownDatadog } from '../../services/analytics/datadog.js'
-import { shutdownZyEventLogging } from '../../services/analytics/zyEventLogger.js'
 import { initializeAnalyticsSink } from '../../services/analytics/sink.js'
+import { shutdownZyEventLogging } from '../../services/analytics/zyEventLogger.js'
 import { enableConfigs } from '../config.js'
 import { logForDebugging } from '../debug.js'
 import { filterAppsForDescription } from './appNames.js'
@@ -90,7 +91,9 @@ export async function runComputerUseMcpServer(): Promise<void> {
 
   let exiting = false
   const shutdownAndExit = async (): Promise<void> => {
-    if (exiting) return
+    if (exiting) {
+      return
+    }
     exiting = true
     await Promise.all([shutdownZyEventLogging(), shutdownDatadog()])
     // eslint-disable-next-line custom-rules/no-process-exit

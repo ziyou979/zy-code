@@ -3,9 +3,11 @@
  * 仅在运行 `zy plugin *` 或 `zy plugin marketplace *` 时动态导入。
  */
 /* eslint-disable custom-rules/no-process-exit -- CLI subcommand handlers intentionally exit */
+
+import { basename, dirname } from 'node:path'
 import figures from 'figures'
-import { basename, dirname } from 'path'
 import { setUseCoworkPlugins } from '../../bootstrap/state.js'
+import { tSync } from '../../i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
@@ -56,9 +58,7 @@ import {
   validatePluginContents,
 } from '../../utils/plugins/validatePlugin.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { plural } from '../../utils/stringUtils.js'
 import { cliError, cliOk } from '../exit.js'
-import { tSync } from '../../i18n/index.js'
 
 // 重新导出，供 main.tsx 在选项定义中引用
 export { VALID_INSTALLABLE_SCOPES, VALID_UPDATE_SCOPES }
@@ -105,7 +105,9 @@ export async function pluginValidateHandler(
   manifestPath: string,
   options: { cowork?: boolean },
 ): Promise<void> {
-  if (options.cowork) setUseCoworkPlugins(true)
+  if (options.cowork) {
+    setUseCoworkPlugins(true)
+  }
   try {
     const result = await validateManifest(manifestPath)
 
@@ -164,7 +166,9 @@ export async function pluginListHandler(options: {
   available?: boolean
   cowork?: boolean
 }): Promise<void> {
-  if (options.cowork) setUseCoworkPlugins(true)
+  if (options.cowork) {
+    setUseCoworkPlugins(true)
+  }
   logEvent('zy_plugin_list_command', {})
 
   const installedData = loadInstalledPluginsV2()
@@ -212,7 +216,9 @@ export async function pluginListHandler(options: {
 
     for (const pluginId of pluginIds.sort()) {
       const installations = installedData.plugins[pluginId]
-      if (!installations || installations.length === 0) continue
+      if (!installations || installations.length === 0) {
+        continue
+      }
 
       // 查找此插件的加载错误
       const pluginName = parsePluginIdentifier(pluginId).name
@@ -348,7 +354,9 @@ export async function pluginListHandler(options: {
 
   for (const pluginId of pluginIds.sort()) {
     const installations = installedData.plugins[pluginId]
-    if (!installations || installations.length === 0) continue
+    if (!installations || installations.length === 0) {
+      continue
+    }
 
     // 查找此插件的加载错误
     const pluginName = parsePluginIdentifier(pluginId).name
@@ -434,7 +442,9 @@ export async function marketplaceAddHandler(
   source: string,
   options: { cowork?: boolean; sparse?: string[]; scope?: string },
 ): Promise<void> {
-  if (options.cowork) setUseCoworkPlugins(true)
+  if (options.cowork) {
+    setUseCoworkPlugins(true)
+  }
   try {
     const parsed = await parseMarketplaceInput(source)
 
@@ -508,7 +518,9 @@ export async function marketplaceListHandler(options: {
   json?: boolean
   cowork?: boolean
 }): Promise<void> {
-  if (options.cowork) setUseCoworkPlugins(true)
+  if (options.cowork) {
+    setUseCoworkPlugins(true)
+  }
   try {
     const config = await loadKnownMarketplacesConfig()
     const names = Object.keys(config)
@@ -576,7 +588,9 @@ export async function marketplaceRemoveHandler(
   name: string,
   options: { cowork?: boolean },
 ): Promise<void> {
-  if (options.cowork) setUseCoworkPlugins(true)
+  if (options.cowork) {
+    setUseCoworkPlugins(true)
+  }
   try {
     await removeMarketplaceSource(name)
     clearAllCaches()
@@ -596,7 +610,9 @@ export async function marketplaceUpdateHandler(
   name: string | undefined,
   options: { cowork?: boolean },
 ): Promise<void> {
-  if (options.cowork) setUseCoworkPlugins(true)
+  if (options.cowork) {
+    setUseCoworkPlugins(true)
+  }
   try {
     if (name) {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
@@ -647,7 +663,9 @@ export async function pluginInstallHandler(
   plugin: string,
   options: { scope?: string; cowork?: boolean },
 ): Promise<void> {
-  if (options.cowork) setUseCoworkPlugins(true)
+  if (options.cowork) {
+    setUseCoworkPlugins(true)
+  }
   const scope = options.scope || 'user'
   if (options.cowork && scope !== 'user') {
     cliError(tSync('plugins.common.coworkUserScopeOnly'))
@@ -681,7 +699,9 @@ export async function pluginUninstallHandler(
   plugin: string,
   options: { scope?: string; cowork?: boolean; keepData?: boolean },
 ): Promise<void> {
-  if (options.cowork) setUseCoworkPlugins(true)
+  if (options.cowork) {
+    setUseCoworkPlugins(true)
+  }
   const scope = options.scope || 'user'
   if (options.cowork && scope !== 'user') {
     cliError(tSync('plugins.common.coworkUserScopeOnly'))
@@ -711,7 +731,9 @@ export async function pluginEnableHandler(
   plugin: string,
   options: { scope?: string; cowork?: boolean },
 ): Promise<void> {
-  if (options.cowork) setUseCoworkPlugins(true)
+  if (options.cowork) {
+    setUseCoworkPlugins(true)
+  }
   let scope: (typeof VALID_INSTALLABLE_SCOPES)[number] | undefined
   if (options.scope) {
     if (
@@ -760,7 +782,9 @@ export async function pluginDisableHandler(
     cliError(tSync('plugins.disable.specifyPlugin'))
   }
 
-  if (options.cowork) setUseCoworkPlugins(true)
+  if (options.cowork) {
+    setUseCoworkPlugins(true)
+  }
 
   if (options.all) {
     if (options.scope) {
@@ -815,7 +839,9 @@ export async function pluginUpdateHandler(
   plugin: string,
   options: { scope?: string; cowork?: boolean },
 ): Promise<void> {
-  if (options.cowork) setUseCoworkPlugins(true)
+  if (options.cowork) {
+    setUseCoworkPlugins(true)
+  }
   const { name, marketplace } = parsePluginIdentifier(plugin)
   logEvent('zy_plugin_update_command', {
     _PROTO_plugin_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,

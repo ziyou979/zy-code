@@ -1,5 +1,6 @@
 import { feature } from 'bun:bundle'
-import type { UUID } from 'crypto'
+import type { UUID } from 'node:crypto'
+import { tSync } from '../i18n/index.js'
 import { findToolByName, type Tools } from '../Tool.js'
 import { extractBashCommentLabel } from '../tools/BashTool/commentLabel.js'
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
@@ -14,6 +15,7 @@ import {
   type PrAction,
 } from '../tools/shared/gitOperationTracking.js'
 import { TOOL_SEARCH_TOOL_NAME } from '../tools/ToolSearchTool/prompt.js'
+import type { ContentBlock } from '../types/llm.js'
 import type {
   CollapsedReadSearchGroup,
   CollapsibleMessage,
@@ -22,10 +24,8 @@ import type {
   StopHookInfo,
   SystemStopHookSummaryMessage,
 } from '../types/message.js'
-import type { ContentBlock } from '../types/llm.js'
 import { getDisplayPath } from './file.js'
 import { isFullscreenEnvEnabled } from './fullscreen.js'
-import { tSync } from '../i18n/index.js'
 import {
   isAutoManagedMemoryFile,
   isAutoManagedMemoryPattern,
@@ -131,7 +131,7 @@ function commandAsHint(command: string): string {
       .map((l) => l.replace(/\s+/g, ' ').trim())
       .filter((l) => l !== '')
       .join('\n')
-  return cleaned.length > MAX_HINT_CHARS ? cleaned.slice(0, MAX_HINT_CHARS - 1) + '…' : cleaned
+  return cleaned.length > MAX_HINT_CHARS ? `${cleaned.slice(0, MAX_HINT_CHARS - 1)}…` : cleaned
 }
 
 /**
@@ -525,20 +525,36 @@ function getFilePathsFromReadMessage(msg: RenderableMessage): string[] {
  * 仅对 tool_use_id 已记录在 bashCommands 中（非搜索/读取类 bash）的结果调用。
  */
 function scanBashResultForGitOps(msg: CollapsibleMessage, group: GroupAccumulator): void {
-  if ((msg as any).type !== 'user') return
+  if ((msg as any).type !== 'user') {
+    return
+  }
   const out = (msg as any).toolUseResult as { stdout?: string; stderr?: string } | undefined
-  if (!out?.stdout && !out?.stderr) return
+  if (!out?.stdout && !out?.stderr) {
+    return
+  }
   // git push 将 ref 更新写入 stderr — 两个输出流都需扫描。
-  const combined = (out.stdout ?? '') + '\n' + (out.stderr ?? '')
+  const combined = `${out.stdout ?? ''}\n${out.stderr ?? ''}`
   for (const c of (msg as any).message.content) {
-    if (c.type !== 'tool_result') continue
+    if (c.type !== 'tool_result') {
+      continue
+    }
     const command = group.bashCommands?.get(c.toolCallId)
-    if (!command) continue
+    if (!command) {
+      continue
+    }
     const { commit, push, branch, pr } = detectGitOperation(command, combined)
-    if (commit) group.commits?.push(commit)
-    if (push) group.pushes?.push(push)
-    if (branch) group.branches?.push(branch)
-    if (pr) group.prs?.push(pr)
+    if (commit) {
+      group.commits?.push(commit)
+    }
+    if (push) {
+      group.pushes?.push(push)
+    }
+    if (branch) {
+      group.branches?.push(branch)
+    }
+    if (pr) {
+      group.prs?.push(pr)
+    }
     if (commit || push || branch || pr) {
       group.gitOpBashCount = (group.gitOpBashCount ?? 0) + 1
     }
@@ -682,10 +698,18 @@ function createCollapsedGroup(group: GroupAccumulator): CollapsedReadSearchGroup
       ;(result as any).bashCount = group.bashCount
       ;(result as any).gitOpBashCount = group.gitOpBashCount
     }
-    if ((group.commits?.length ?? 0) > 0) (result as any).commits = group.commits
-    if ((group.pushes?.length ?? 0) > 0) (result as any).pushes = group.pushes
-    if ((group.branches?.length ?? 0) > 0) (result as any).branches = group.branches
-    if ((group.prs?.length ?? 0) > 0) (result as any).prs = group.prs
+    if ((group.commits?.length ?? 0) > 0) {
+      ;(result as any).commits = group.commits
+    }
+    if ((group.pushes?.length ?? 0) > 0) {
+      ;(result as any).pushes = group.pushes
+    }
+    if ((group.branches?.length ?? 0) > 0) {
+      ;(result as any).branches = group.branches
+    }
+    if ((group.prs?.length ?? 0) > 0) {
+      ;(result as any).prs = group.prs
+    }
   }
   if (group.hookCount > 0) {
     ;(result as any).hookTotalMs = group.hookTotalMs

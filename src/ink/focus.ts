@@ -23,16 +23,24 @@ export class FocusManager {
   }
 
   focus(node: DOMElement): void {
-    if (node === this.activeElement) return
-    if (!this.enabled) return
+    if (node === this.activeElement) {
+      return
+    }
+    if (!this.enabled) {
+      return
+    }
 
     const previous = this.activeElement
     if (previous) {
       // 去重后再推入，防止 Tab 循环导致无限增长
       const idx = this.focusStack.indexOf(previous)
-      if (idx !== -1) this.focusStack.splice(idx, 1)
+      if (idx !== -1) {
+        this.focusStack.splice(idx, 1)
+      }
       this.focusStack.push(previous)
-      if (this.focusStack.length > MAX_FOCUS_STACK) this.focusStack.shift()
+      if (this.focusStack.length > MAX_FOCUS_STACK) {
+        this.focusStack.shift()
+      }
       this.dispatchFocusEvent(previous, new FocusEvent('blur', node))
     }
     this.activeElement = node
@@ -40,7 +48,9 @@ export class FocusManager {
   }
 
   blur(): void {
-    if (!this.activeElement) return
+    if (!this.activeElement) {
+      return
+    }
 
     const previous = this.activeElement
     this.activeElement = null
@@ -57,7 +67,9 @@ export class FocusManager {
     this.focusStack = this.focusStack.filter((n) => n !== node && isInTree(n, root))
 
     // 检查 activeElement 是否是被移除的节点或是其后代
-    if (!this.activeElement) return
+    if (!this.activeElement) {
+      return
+    }
     if (this.activeElement !== node && isInTree(this.activeElement, root)) {
       return
     }
@@ -82,8 +94,10 @@ export class FocusManager {
   }
 
   handleClickFocus(node: DOMElement): void {
-    const tabIndex = node.attributes['tabIndex']
-    if (typeof tabIndex !== 'number') return
+    const tabIndex = node.attributes.tabIndex
+    if (typeof tabIndex !== 'number') {
+      return
+    }
     this.focus(node)
   }
 
@@ -104,10 +118,14 @@ export class FocusManager {
   }
 
   private moveFocus(direction: 1 | -1, root: DOMElement): void {
-    if (!this.enabled) return
+    if (!this.enabled) {
+      return
+    }
 
     const tabbable = collectTabbable(root)
-    if (tabbable.length === 0) return
+    if (tabbable.length === 0) {
+      return
+    }
 
     const currentIndex = this.activeElement ? tabbable.indexOf(this.activeElement) : -1
 
@@ -132,7 +150,7 @@ function collectTabbable(root: DOMElement): DOMElement[] {
 }
 
 function walkTree(node: DOMElement, result: DOMElement[]): void {
-  const tabIndex = node.attributes['tabIndex']
+  const tabIndex = node.attributes.tabIndex
   if (typeof tabIndex === 'number' && tabIndex >= 0) {
     result.push(node)
   }
@@ -147,7 +165,9 @@ function walkTree(node: DOMElement, result: DOMElement[]): void {
 function isInTree(node: DOMElement, root: DOMElement): boolean {
   let current: DOMElement | undefined = node
   while (current) {
-    if (current === root) return true
+    if (current === root) {
+      return true
+    }
     current = current.parentNode
   }
   return false
@@ -160,7 +180,9 @@ function isInTree(node: DOMElement, root: DOMElement): boolean {
 export function getRootNode(node: DOMElement): DOMElement {
   let current: DOMElement | undefined = node
   while (current) {
-    if (current.focusManager) return current
+    if (current.focusManager) {
+      return current
+    }
     current = current.parentNode
   }
   throw new Error('Node is not in a tree with a FocusManager')

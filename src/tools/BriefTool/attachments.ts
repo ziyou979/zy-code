@@ -6,7 +6,7 @@
  */
 
 import { feature } from 'bun:bundle'
-import { stat } from 'fs/promises'
+import { stat } from 'node:fs/promises'
 
 import type { ValidationResult } from '../../Tool.js'
 

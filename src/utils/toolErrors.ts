@@ -44,7 +44,9 @@ export function getErrorParts(error: Error): string[] {
  * e.g., ['todos', 0, 'activeForm'] => 'todos[0].activeForm'
  */
 function formatValidationPath(path: PropertyKey[]): string {
-  if (path.length === 0) return ''
+  if (path.length === 0) {
+    return ''
+  }
 
   return path.reduce((acc, segment, index) => {
     const segmentStr = String(segment)

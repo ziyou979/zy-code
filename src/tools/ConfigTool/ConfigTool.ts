@@ -137,7 +137,9 @@ export const ConfigTool = buildTool({
       value.toLowerCase().trim() === 'default'
     ) {
       saveGlobalConfig((prev) => {
-        if (prev.remoteControlAtStartup === undefined) return prev
+        if (prev.remoteControlAtStartup === undefined) {
+          return prev
+        }
         const next = { ...prev }
         delete next.remoteControlAtStartup
         return next
@@ -145,7 +147,9 @@ export const ConfigTool = buildTool({
       const resolved = getRemoteControlAtStartup()
       // Sync to AppState so useReplBridge reacts immediately
       context.setAppState((prev) => {
-        if (prev.replBridgeEnabled === resolved && !prev.replBridgeOutboundOnly) return prev
+        if (prev.replBridgeEnabled === resolved && !prev.replBridgeOutboundOnly) {
+          return prev
+        }
         return {
           ...prev,
           replBridgeEnabled: resolved,
@@ -168,8 +172,11 @@ export const ConfigTool = buildTool({
     if (config.type === 'boolean') {
       if (typeof value === 'string') {
         const lower = value.toLowerCase().trim()
-        if (lower === 'true') finalValue = true
-        else if (lower === 'false') finalValue = false
+        if (lower === 'true') {
+          finalValue = true
+        } else if (lower === 'false') {
+          finalValue = false
+        }
       }
       if (typeof finalValue !== 'boolean') {
         return {
@@ -292,7 +299,9 @@ export const ConfigTool = buildTool({
           }
         }
         saveGlobalConfig((prev) => {
-          if (prev[key as keyof GlobalConfig] === finalValue) return prev
+          if (prev[key as keyof GlobalConfig] === finalValue) {
+            return prev
+          }
           return { ...prev, [key]: finalValue }
         })
       } else {
@@ -322,7 +331,9 @@ export const ConfigTool = buildTool({
       if (config.appStateKey) {
         const appKey = config.appStateKey
         context.setAppState((prev) => {
-          if (prev[appKey] === finalValue) return prev
+          if (prev[appKey] === finalValue) {
+            return prev
+          }
           return { ...prev, [appKey]: finalValue }
         })
       }
@@ -333,7 +344,9 @@ export const ConfigTool = buildTool({
       if (setting === 'remoteControlAtStartup') {
         const resolved = getRemoteControlAtStartup()
         context.setAppState((prev) => {
-          if (prev.replBridgeEnabled === resolved && !prev.replBridgeOutboundOnly) return prev
+          if (prev.replBridgeEnabled === resolved && !prev.replBridgeOutboundOnly) {
+            return prev
+          }
           return {
             ...prev,
             replBridgeEnabled: resolved,
@@ -396,7 +409,9 @@ function getValue(source: 'global' | 'settings', path: string[]): unknown {
   if (source === 'global') {
     const config = getGlobalConfig()
     const key = path[0]
-    if (!key) return undefined
+    if (!key) {
+      return undefined
+    }
     return config[key as keyof GlobalConfig]
   }
   const settings = getInitialSettings()
@@ -424,4 +439,5 @@ function buildNestedObject(path: string[], value: unknown): Record<string, unkno
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(ConfigTool)

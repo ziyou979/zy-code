@@ -44,7 +44,9 @@ function boostChalkLevelForXtermJs(): boolean {
 function clampChalkLevelForTmux(): boolean {
   // background.ts 在 attach 之前设置 terminal-overrides :Tc，所以真彩色可以
   // 传递 — 跳过钳位。为正确配置 tmux 的用户提供的通用出口。
-  if (process.env.ZY_CODE_TMUX_TRUECOLOR) return false
+  if (process.env.ZY_CODE_TMUX_TRUECOLOR) {
+    return false
+  }
   if (process.env.TMUX && chalk.level > 2) {
     chalk.level = 2
     return true

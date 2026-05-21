@@ -1,6 +1,6 @@
-import { chmodSync, writeFileSync as fsWriteFileSync } from 'fs'
-import { realpath, stat } from 'fs/promises'
-import { homedir } from 'os'
+import { chmodSync, writeFileSync as fsWriteFileSync } from 'node:fs'
+import { realpath, stat } from 'node:fs/promises'
+import { homedir } from 'node:os'
 import {
   basename,
   dirname,
@@ -11,7 +11,7 @@ import {
   relative,
   resolve,
   sep,
-} from 'path'
+} from 'node:path'
 import { logEvent } from 'src/services/analytics/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { getCwd } from '../utils/cwd.js'
@@ -132,7 +132,9 @@ export function detectLineEndings(
 export function convertLeadingTabsToSpaces(content: string): string {
   // The /gm regex scans every line even on no-match; skip it entirely
   // for the common tab-free case.
-  if (!content.includes('\t')) return content
+  if (!content.includes('\t')) {
+    return content
+  }
   return content.replace(/^\t+/gm, (_) => '  '.repeat(_.length))
 }
 
@@ -155,7 +157,7 @@ export function getDisplayPath(filePath: string): string {
   // Use tilde notation for files in home directory
   const homeDir = homedir()
   if (filePath.startsWith(homeDir + sep)) {
-    return '~' + filePath.slice(homeDir.length)
+    return `~${filePath.slice(homeDir.length)}`
   }
 
   // Otherwise return the absolute path
@@ -377,7 +379,9 @@ export function writeFileSyncAndFlush_DEPRECATED(
     targetExists = true
     logForDebugging(`Preserving file permissions: ${targetMode.toString(8)}`)
   } catch (e) {
-    if (!isENOENT(e)) throw e
+    if (!isENOENT(e)) {
+      throw e
+    }
     if (options.mode !== undefined) {
       // Use provided mode for new files
       targetMode = options.mode

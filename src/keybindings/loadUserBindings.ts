@@ -9,10 +9,10 @@
  * use the default bindings.
  */
 
+import { readFileSync } from 'node:fs'
+import { readFile, stat } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import chokidar, { type FSWatcher } from 'chokidar'
-import { readFileSync } from 'fs'
-import { readFile, stat } from 'fs/promises'
-import { dirname, join } from 'path'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { logEvent } from '../services/analytics/index.js'
 import { registerCleanup } from '../utils/cleanupRegistry.js'
@@ -75,7 +75,9 @@ let lastCustomBindingsLogDate: string | null = null
  */
 function logCustomBindingsLoadedOncePerDay(userBindingCount: number): void {
   const today = new Date().toISOString().slice(0, 10)
-  if (lastCustomBindingsLogDate === today) return
+  if (lastCustomBindingsLogDate === today) {
+    return
+  }
   lastCustomBindingsLogDate = today
   logEvent('zy_custom_keybindings_loaded', {
     user_binding_count: userBindingCount,
@@ -86,7 +88,9 @@ function logCustomBindingsLoadedOncePerDay(userBindingCount: number): void {
  * Type guard to check if an object is a valid KeybindingBlock.
  */
 function isKeybindingBlock(obj: unknown): obj is KeybindingBlock {
-  if (typeof obj !== 'object' || obj === null) return false
+  if (typeof obj !== 'object' || obj === null) {
+    return false
+  }
   const b = obj as Record<string, unknown>
   return typeof b.context === 'string' && typeof b.bindings === 'object' && b.bindings !== null
 }
@@ -324,7 +328,9 @@ export function loadKeybindingsSyncWithWarnings(): KeybindingsLoadResult {
  * For external users, this is a no-op since user customization is disabled.
  */
 export async function initializeKeybindingWatcher(): Promise<void> {
-  if (initialized || disposed) return
+  if (initialized || disposed) {
+    return
+  }
 
   // Skip file watching for external users
   if (!isKeybindingCustomizationEnabled()) {

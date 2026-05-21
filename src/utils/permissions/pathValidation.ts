@@ -1,6 +1,6 @@
+import { homedir } from 'node:os'
+import { dirname, isAbsolute, resolve } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { homedir } from 'os'
-import { dirname, isAbsolute, resolve } from 'path'
 import type { ToolPermissionContext } from '../../Tool.js'
 import { getPlatform } from '../../utils/platform.js'
 import {
@@ -68,7 +68,9 @@ export function getGlobBaseDirectory(path: string): string {
     getPlatform() === 'windows'
       ? Math.max(beforeGlob.lastIndexOf('/'), beforeGlob.lastIndexOf('\\'))
       : beforeGlob.lastIndexOf('/')
-  if (lastSepIndex === -1) return '.'
+  if (lastSepIndex === -1) {
+    return '.'
+  }
 
   return beforeGlob.substring(0, lastSepIndex) || '/'
 }
@@ -116,7 +118,9 @@ export function isPathInSandboxWriteAllowlist(resolvedPath: string): boolean {
   const resolvedDeny = denyWithinAllow.flatMap(getResolvedSandboxConfigPath)
   return pathsToCheck.every((p) => {
     for (const denyPath of resolvedDeny) {
-      if (pathInWorkingPath(p as any, denyPath as any)) return false
+      if (pathInWorkingPath(p as any, denyPath as any)) {
+        return false
+      }
     }
     return resolvedAllow.some((allowPath) => pathInWorkingPath(p as any, allowPath as any))
   })
@@ -329,7 +333,12 @@ export function isDangerousRemovalPath(resolvedPath: string): boolean {
   }
 
   // macOS: /private/{etc,var,tmp,home} 是关键系统目录（/etc → /private/etc 等 symlink）
-  const MACOS_PRIVATE_PROTECTED = new Set(['/private/etc', '/private/var', '/private/tmp', '/private/home'])
+  const MACOS_PRIVATE_PROTECTED = new Set([
+    '/private/etc',
+    '/private/var',
+    '/private/tmp',
+    '/private/home',
+  ])
   if (MACOS_PRIVATE_PROTECTED.has(normalizedPath)) {
     return true
   }

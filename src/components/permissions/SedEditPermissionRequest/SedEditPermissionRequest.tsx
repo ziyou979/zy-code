@@ -1,16 +1,17 @@
-import { basename, relative } from 'path'
-import React, { Suspense, use } from 'react'
+import { basename, relative } from 'node:path'
+import { Suspense, use } from 'react'
 import { FileEditToolDiff } from 'src/components/FileEditToolDiff.js'
 import { getCwd } from 'src/utils/cwd.js'
 import { isENOENT } from 'src/utils/errors.js'
 import { detectEncodingForResolvedPath } from 'src/utils/fileRead.js'
 import { getFsImplementation } from 'src/utils/fsOperations.js'
-import { Text } from '../../../ink.js'
 import { tSync } from '../../../i18n/index.js'
+import { Text } from '../../../ink.js'
 import { BashTool } from '../../../tools/BashTool/BashTool.js'
 import { applySedSubstitution, type SedEditInfo } from '../../../tools/BashTool/sedEditParser.js'
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js'
 import type { PermissionRequestProps } from '../PermissionRequest.js'
+
 type SedEditPermissionRequestProps = PermissionRequestProps & {
   sedInfo: SedEditInfo
   contentPromise?: Promise<FileReadResult>

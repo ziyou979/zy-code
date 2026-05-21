@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { dirname } from 'path'
+import { dirname } from 'node:path'
 import React from 'react'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
 import { getOriginalCwd, switchSession } from '../bootstrap/state.js'
@@ -7,9 +7,9 @@ import type { Command } from '../commands.js'
 import { LogSelector } from '../components/LogSelector.js'
 import { Spinner } from '../components/Spinner.js'
 import { restoreCostStateForSession } from '../cost-tracker.js'
+import { tSync } from '../i18n/index.js'
 import { setClipboard } from '../ink/termio/osc.js'
 import { Box, Text } from '../ink.js'
-import { tSync } from '../i18n/index.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -50,9 +50,10 @@ import {
 import type { ThinkingConfig } from '../utils/thinking.js'
 import type { ContentReplacementRecord } from '../utils/toolResultStorage.js'
 import { REPL } from './REPL.js'
+
 function parsePrIdentifier(value: string): number | null {
   const directNumber = parseInt(value, 10)
-  if (!isNaN(directNumber) && directNumber > 0) {
+  if (!Number.isNaN(directNumber) && directNumber > 0) {
     return directNumber
   }
   const urlMatch = value.match(/github\.com\/[^/]+\/[^/]+\/pull\/(\d+)/)
@@ -153,7 +154,9 @@ export function ResumeConversation({
   }, [worktreePaths])
   const loadMoreLogs = React.useCallback((count: number) => {
     const ref = sessionLogResultRef.current
-    if (!ref || ref.nextIndex >= ref.allStatLogs.length) return
+    if (!ref || ref.nextIndex >= ref.allStatLogs.length) {
+      return
+    }
     void enrichLogs(ref.allStatLogs, ref.nextIndex, count).then((result_1) => {
       ref.nextIndex = result_1.nextIndex
       if (result_1.logs.length > 0) {
@@ -207,7 +210,9 @@ export function ResumeConversation({
     if (crossProjectCheck.isCrossProject) {
       if (!crossProjectCheck.isSameRepoWorktree) {
         const raw = await setClipboard((crossProjectCheck as any).command)
-        if (raw) process.stdout.write(raw)
+        if (raw) {
+          process.stdout.write(raw)
+        }
         setCrossProjectCommand((crossProjectCheck as any).command)
         return
       }
@@ -377,7 +382,7 @@ export function ResumeConversation({
   if (filteredLogs.length === 0) {
     return <NoConversationsMessage />
   }
-  // @ts-ignore
+  // @ts-expect-error
   return (
     <LogSelector
       logs={filteredLogs}

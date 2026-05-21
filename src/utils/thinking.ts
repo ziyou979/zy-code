@@ -86,7 +86,9 @@ export function getRainbowColor(charIndex: number, shimmer: boolean = false): ke
 // @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsThinking(model: string): boolean {
   // ~/.zy/model-capabilities.json 本地配置优先
-  if (localModelHasCapability(model, 'thinking')) return true
+  if (localModelHasCapability(model, 'thinking')) {
+    return true
+  }
   // 未知模型：根据 Provider 能力决定
   const provider = getAPIProvider()
   return providerHasCapability(provider, 'thinking')
@@ -95,7 +97,9 @@ export function modelSupportsThinking(model: string): boolean {
 // @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsAdaptiveThinking(model: string): boolean {
   // ~/.zy/model-capabilities.json 本地配置优先
-  if (localModelHasCapability(model, 'adaptive_thinking')) return true
+  if (localModelHasCapability(model, 'adaptive_thinking')) {
+    return true
+  }
   // 未知模型：根据 Provider 能力决定
   const provider = getAPIProvider()
   return providerHasCapability(provider, 'adaptive_thinking')

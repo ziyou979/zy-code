@@ -1,5 +1,4 @@
 import figures from 'figures'
-import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
 import { Byline } from '../../components/design-system/Byline.js'
@@ -29,6 +28,7 @@ import { formatErrorMessage, getErrorGuidance } from './PluginErrors.js'
 import { type ParsedCommand, parsePluginArgs } from './parseArgs.js'
 import type { ViewState } from './types.js'
 import { ValidatePlugin } from './ValidatePlugin.js'
+
 type TabId = 'discover' | 'installed' | 'marketplaces' | 'errors'
 function MarketplaceList({ onComplete }) {
   useEffect(() => {
@@ -179,10 +179,16 @@ function isTransientError(error: PluginError): boolean {
  * then falling back to the source field (format: "pluginName@marketplace").
  */
 function getPluginNameFromError(error: PluginError): string | undefined {
-  if ('pluginId' in error && error.pluginId) return error.pluginId
-  if ('plugin' in error && error.plugin) return error.plugin
+  if ('pluginId' in error && error.pluginId) {
+    return error.pluginId
+  }
+  if ('plugin' in error && error.plugin) {
+    return error.plugin
+  }
   // Fallback: source often contains "pluginName@marketplace"
-  if (error.source.includes('@')) return error.source.split('@')[0]
+  if (error.source.includes('@')) {
+    return error.source.split('@')[0]
+  }
   return undefined
 }
 function buildErrorRows(
@@ -237,7 +243,9 @@ function buildErrorRows(
   }
   for (const e of extraMarketplaceErrors) {
     const marketplace = 'marketplace' in e ? e.marketplace : e.source
-    if (shownMarketplaceNames.has(marketplace)) continue
+    if (shownMarketplaceNames.has(marketplace)) {
+      continue
+    }
     shownMarketplaceNames.add(marketplace)
     const action = buildMarketplaceAction(marketplace)
     const sourceInfo = getExtraMarketplaceSourceInfo(marketplace)
@@ -256,7 +264,9 @@ function buildErrorRows(
 
   // Installed marketplaces that fail to load data (from known_marketplaces.json)
   for (const m of brokenInstalledMarketplaces) {
-    if (shownMarketplaceNames.has(m.name)) continue
+    if (shownMarketplaceNames.has(m.name)) {
+      continue
+    }
     shownMarketplaceNames.add(m.name)
     rows.push({
       label: m.name,
@@ -272,8 +282,12 @@ function buildErrorRows(
   const shownPluginNames = new Set<string>()
   for (const error of pluginLoadingErrors) {
     const pluginName = getPluginNameFromError(error)
-    if (pluginName && shownPluginNames.has(pluginName)) continue
-    if (pluginName) shownPluginNames.add(pluginName)
+    if (pluginName && shownPluginNames.has(pluginName)) {
+      continue
+    }
+    if (pluginName) {
+      shownPluginNames.add(pluginName)
+    }
     const marketplace = 'marketplace' in error ? error.marketplace : undefined
     // Try pluginId@marketplace format first, then just pluginName
     const scope = pluginName
@@ -322,7 +336,9 @@ function removeExtraMarketplace(
 ): void {
   for (const { source } of sources) {
     const settings = getSettingsForSource(source)
-    if (!settings) continue
+    if (!settings) {
+      continue
+    }
     const updates: Record<string, unknown> = {}
 
     // Remove from extraKnownMarketplaces
@@ -671,7 +687,6 @@ function getInitialViewState(parsedCommand: ParsedCommand): ViewState {
       return {
         type: 'marketplace-menu',
       }
-    case 'menu':
     default:
       // Default to discover view showing all plugins
       return {
@@ -680,8 +695,12 @@ function getInitialViewState(parsedCommand: ParsedCommand): ViewState {
   }
 }
 function getInitialTab(viewState: ViewState): TabId {
-  if (viewState.type === 'manage-plugins') return 'installed'
-  if (viewState.type === 'manage-marketplaces') return 'marketplaces'
+  if (viewState.type === 'manage-plugins') {
+    return 'installed'
+  }
+  if (viewState.type === 'manage-marketplaces') {
+    return 'marketplaces'
+  }
   return 'discover'
 }
 export function PluginSettings({ onComplete, args, showMcpRedirectMessage }) {

@@ -1,5 +1,5 @@
-import React from 'react'
 import { Box, Text } from '../ink.js'
+
 type Props = {
   query: string
   placeholder?: string
@@ -34,26 +34,24 @@ export function SearchBox({
         <Text dimColor={!isFocused}>
           {prefix}{' '}
           {isFocused ? (
-            <>
-              {query ? (
-                isTerminalFocused ? (
-                  <>
-                    <Text>{query.slice(0, offset)}</Text>
-                    <Text inverse={true}>{offset < query.length ? query[offset] : ' '}</Text>
-                    {offset < query.length && <Text>{query.slice(offset + 1)}</Text>}
-                  </>
-                ) : (
-                  <Text>{query}</Text>
-                )
-              ) : isTerminalFocused ? (
+            query ? (
+              isTerminalFocused ? (
                 <>
-                  <Text inverse={true}>{placeholder.charAt(0)}</Text>
-                  <Text dimColor={true}>{placeholder.slice(1)}</Text>
+                  <Text>{query.slice(0, offset)}</Text>
+                  <Text inverse={true}>{offset < query.length ? query[offset] : ' '}</Text>
+                  {offset < query.length && <Text>{query.slice(offset + 1)}</Text>}
                 </>
               ) : (
-                <Text dimColor={true}>{placeholder}</Text>
-              )}
-            </>
+                <Text>{query}</Text>
+              )
+            ) : isTerminalFocused ? (
+              <>
+                <Text inverse={true}>{placeholder.charAt(0)}</Text>
+                <Text dimColor={true}>{placeholder.slice(1)}</Text>
+              </>
+            ) : (
+              <Text dimColor={true}>{placeholder}</Text>
+            )
           ) : query ? (
             <Text>{query}</Text>
           ) : (

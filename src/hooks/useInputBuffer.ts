@@ -111,7 +111,7 @@ export function useInputBuffer({
       clearTimeout(pendingPush.current)
       pendingPush.current = null
     }
-  }, [lastPushTime, pendingPush])
+  }, [])
 
   const canUndo = currentIndex > 0 && buffer.length > 1
 

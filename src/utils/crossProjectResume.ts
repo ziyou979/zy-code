@@ -1,4 +1,4 @@
-import { sep } from 'path'
+import { sep } from 'node:path'
 import { getOriginalCwd } from '../bootstrap/state.js'
 import type { LogOption } from '../types/logs.js'
 import { quote } from './bash/shellQuote.js'

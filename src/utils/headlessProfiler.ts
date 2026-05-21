@@ -18,8 +18,7 @@ import {
   logEvent,
 } from '../services/analytics/index.js'
 import { logForDebugging } from './debug.js'
-import { isEnvTruthy } from './envUtils.js'
-import { isInternalBuild } from './envUtils.js'
+import { isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { getPerformance } from './profilerBase.js'
 import { jsonStringify } from './slowOperations.js'
 
@@ -61,9 +60,13 @@ function clearHeadlessMarks(): void {
  */
 export function headlessProfilerStartTurn(): void {
   // Only profile in headless/non-interactive mode
-  if (!getIsNonInteractiveSession()) return
+  if (!getIsNonInteractiveSession()) {
+    return
+  }
   // Only profile if enabled
-  if (!SHOULD_PROFILE) return
+  if (!SHOULD_PROFILE) {
+    return
+  }
 
   currentTurnNumber++
   clearHeadlessMarks()
@@ -82,9 +85,13 @@ export function headlessProfilerStartTurn(): void {
  */
 export function headlessProfilerCheckpoint(name: string): void {
   // Only profile in headless/non-interactive mode
-  if (!getIsNonInteractiveSession()) return
+  if (!getIsNonInteractiveSession()) {
+    return
+  }
   // Only profile if enabled
-  if (!SHOULD_PROFILE) return
+  if (!SHOULD_PROFILE) {
+    return
+  }
 
   const perf = getPerformance()
   perf.mark(`${MARK_PREFIX}${name}`)
@@ -104,8 +111,12 @@ export function headlessProfilerCheckpoint(name: string): void {
 let lastMemorySample: NodeJS.MemoryUsage | null = null
 
 export function headlessProfilerMemorySample(): void {
-  if (!getIsNonInteractiveSession()) return
-  if (!SHOULD_PROFILE) return
+  if (!getIsNonInteractiveSession()) {
+    return
+  }
+  if (!SHOULD_PROFILE) {
+    return
+  }
   try {
     lastMemorySample = process.memoryUsage()
     if (DETAILED_PROFILING) {
@@ -126,16 +137,22 @@ export function headlessProfilerMemorySample(): void {
  */
 export function logHeadlessProfilerTurn(): void {
   // Only log in headless mode
-  if (!getIsNonInteractiveSession()) return
+  if (!getIsNonInteractiveSession()) {
+    return
+  }
   // Only log if enabled
-  if (!SHOULD_PROFILE) return
+  if (!SHOULD_PROFILE) {
+    return
+  }
 
   const perf = getPerformance()
   const allMarks = perf.getEntriesByType('mark')
 
   // Filter to only our headless marks
   const marks = allMarks.filter((mark) => mark.name.startsWith(MARK_PREFIX))
-  if (marks.length === 0) return
+  if (marks.length === 0) {
+    return
+  }
 
   // Build checkpoint lookup (strip prefix for easier access)
   const checkpointTimes = new Map<string, number>()
@@ -145,7 +162,9 @@ export function logHeadlessProfilerTurn(): void {
   }
 
   const turnStart = checkpointTimes.get('turn_start')
-  if (turnStart === undefined) return
+  if (turnStart === undefined) {
+    return
+  }
 
   // Compute phase durations relative to turn_start
   const metadata: Record<string, number | string | undefined> = {

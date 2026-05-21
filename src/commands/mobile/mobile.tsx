@@ -5,6 +5,7 @@ import { Pane } from '../../components/design-system/Pane.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
+
 type Platform = 'ios' | 'android'
 type Props = {
   onDone: () => void

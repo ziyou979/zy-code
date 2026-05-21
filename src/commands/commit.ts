@@ -11,7 +11,7 @@ function getPromptContent(): string {
 
   let prefix = ''
   if (isInternalBuild() && isUndercover()) {
-    prefix = getUndercoverInstructions() + '\n'
+    prefix = `${getUndercoverInstructions()}\n`
   }
 
   return `${prefix}## Context

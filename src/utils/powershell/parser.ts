@@ -206,7 +206,9 @@ function getParseTimeoutMs(): number {
   const env = process.env.ZY_CODE_PWSH_PARSE_TIMEOUT_MS
   if (env) {
     const parsed = parseInt(env, 10)
-    if (!isNaN(parsed) && parsed > 0) return parsed
+    if (!Number.isNaN(parsed) && parsed > 0) {
+      return parsed
+    }
   }
   return DEFAULT_PARSE_TIMEOUT_MS
 }
@@ -795,15 +797,18 @@ export function classifyCommandName(name: string): 'cmdlet' | 'application' | 'u
 // exported for testing
 export function stripModulePrefix(name: string): string {
   const idx = name.lastIndexOf('\\')
-  if (idx < 0) return name
+  if (idx < 0) {
+    return name
+  }
   // Don't strip file paths: drive letters (C:\...), UNC paths (\\server\...), or relative paths (.\, ..\)
   if (
     /^[A-Za-z]:/.test(name) ||
     name.startsWith('\\\\') ||
     name.startsWith('.\\') ||
     name.startsWith('..\\')
-  )
+  ) {
     return name
+  }
   return name.substring(idx + 1)
 }
 
@@ -1168,7 +1173,9 @@ async function parsePowerShellCommandImpl(command: string): Promise<ParsedPowerS
         'PwshSpawnError',
       )
     }
-    if (!timedOut) break
+    if (!timedOut) {
+      break
+    }
     logForDebugging(
       `PowerShell parser: pwsh timed out after ${parseTimeoutMs}ms (attempt ${attempt + 1})`,
     )
@@ -1230,6 +1237,7 @@ const parsePowerShellCommandCached = memoizeWithLRU(
   (command: string) => command,
   256,
 )
+
 export { parsePowerShellCommandCached as parsePowerShellCommand }
 
 // ---------------------------------------------------------------------------
@@ -1465,7 +1473,7 @@ export function getVariablesByScope(
   parsed: ParsedPowerShellCommand,
   scope: string,
 ): ParsedVariable[] {
-  const prefix = scope.toLowerCase() + ':'
+  const prefix = `${scope.toLowerCase()}:`
   return parsed.variables.filter((v) => v.path.toLowerCase().startsWith(prefix))
 }
 

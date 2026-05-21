@@ -42,7 +42,9 @@ const call: LocalCommandCall = async (args, context) => {
   if (arg === 'unset' || arg === 'off') {
     const prev = context.getAppState().advisorModel
     context.setAppState((s) => {
-      if (s.advisorModel === undefined) return s
+      if (s.advisorModel === undefined) {
+        return s
+      }
       return { ...s, advisorModel: undefined }
     })
     updateSettingsForSource('userSettings', { advisorModel: undefined })
@@ -70,7 +72,9 @@ const call: LocalCommandCall = async (args, context) => {
   }
 
   context.setAppState((s) => {
-    if (s.advisorModel === normalizedModel) return s
+    if (s.advisorModel === normalizedModel) {
+      return s
+    }
     return { ...s, advisorModel: normalizedModel }
   })
   updateSettingsForSource('userSettings', { advisorModel: normalizedModel })

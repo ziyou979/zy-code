@@ -12,9 +12,9 @@
  *   - Shallow: mere existence of `<commonDir>/shallow` means shallow (shallow.c)
  */
 
-import { unwatchFile, watchFile } from 'fs'
-import { readdir, readFile, stat } from 'fs/promises'
-import { join, resolve } from 'path'
+import { unwatchFile, watchFile } from 'node:fs'
+import { readdir, readFile, stat } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
 import { waitForScrollIdle } from '../../bootstrap/state.js'
 import { registerCleanup } from '../cleanupRegistry.js'
 import { getCwd } from '../cwd.js'

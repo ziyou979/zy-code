@@ -1,4 +1,3 @@
-import type { ToolCallBlock } from '../../types/llm.js'
 import React from 'react'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
 import type { ThemeName } from 'src/utils/theme.js'
@@ -8,6 +7,7 @@ import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text, useTheme } from '../../ink.js'
 import { useAppStateMaybeOutsideOfProvider } from '../../state/AppState.js'
 import { findToolByName, type Tool, type ToolProgressData, type Tools } from '../../Tool.js'
+import type { ToolCallBlock } from '../../types/llm.js'
 import type { ProgressMessage } from '../../types/message.js'
 import { useIsClassifierChecking } from '../../utils/classifierApprovalsHook.js'
 import { logError } from '../../utils/log.js'
@@ -17,6 +17,7 @@ import { useSelectedMessageBg } from '../messageActions.js'
 import { SentryErrorBoundary } from '../SentryErrorBoundary.js'
 import { ToolUseLoader } from '../ToolUseLoader.js'
 import { HookProgressMessage } from './HookProgressMessage.js'
+
 type Props = {
   param: ToolCallBlock
   addMargin: boolean
@@ -135,8 +136,7 @@ export function AssistantToolUseMessage({
     return null
   }
   const minBoxWidth = stringWidth(userFacingToolName) + (shouldShowDot ? 2 : 0)
-  const toolTagElement =
-    input_0.success && tool_0.renderToolUseTag && tool_0.renderToolUseTag(input_0.data)
+  const toolTagElement = input_0.success && tool_0.renderToolUseTag?.(input_0.data)
   const progressOrStatusElement =
     !isResolved &&
     !isQueued &&

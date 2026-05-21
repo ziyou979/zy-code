@@ -1,4 +1,4 @@
-import React from 'react'
+import { tSync } from '../../../../i18n/index.js'
 import { Box, Text } from '../../../../ink.js'
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js'
 import { isAutoMemoryEnabled } from '../../../../memdir/paths.js'
@@ -7,7 +7,6 @@ import { getMemoryScopeDisplay } from '../../../../tools/AgentTool/agentMemory.j
 import type { AgentDefinition } from '../../../../tools/AgentTool/loadAgentsDir.js'
 import { truncateToWidth } from '../../../../utils/format.js'
 import { getAgentModelDisplay } from '../../../../utils/model/agent.js'
-import { tSync } from '../../../../i18n/index.js'
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
 import { Byline } from '../../../design-system/Byline.js'
 import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js'
@@ -16,6 +15,7 @@ import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
 import { getNewRelativeAgentFilePath } from '../../agentFileUtils.js'
 import { validateAgent } from '../../validateAgent.js'
 import type { AgentWizardData } from '../types.js'
+
 type Props = {
   tools: Tools
   existingAgents: AgentDefinition[]

@@ -1,9 +1,9 @@
 import figures from 'figures'
-import * as React from 'react'
 import { Box, color, Text, useTheme } from '../../ink.js'
 import { plural } from '../../utils/stringUtils.js'
-// @ts-ignore
+// @ts-expect-error
 import type { UnifiedInstalledItem } from './unifiedTypes.js'
+
 type Props = {
   item: UnifiedInstalledItem
   isSelected: boolean

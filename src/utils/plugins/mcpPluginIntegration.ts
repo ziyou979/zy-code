@@ -1,4 +1,4 @@
-import { join } from 'path'
+import { join } from 'node:path'
 import { expandEnvVarsInString } from '../../services/mcp/envExpansion.js'
 import {
   type McpServerConfig,
@@ -348,10 +348,14 @@ export async function extractMcpServersFromPlugins(
 
   const scopedResults = await Promise.all(
     plugins.map(async (plugin) => {
-      if (!plugin.enabled) return null
+      if (!plugin.enabled) {
+        return null
+      }
 
       const servers = await loadPluginMcpServers(plugin, errors)
-      if (!servers) return null
+      if (!servers) {
+        return null
+      }
 
       // Resolve environment variables before scoping. When a saved channel
       // config is missing a key (plugin update added a required field, or a
@@ -426,7 +430,9 @@ function buildMcpUserConfig(
     : undefined
   const channelSpecific = loadChannelUserConfig(plugin, serverName)
 
-  if (!topLevel && !channelSpecific) return undefined
+  if (!topLevel && !channelSpecific) {
+    return undefined
+  }
   return { ...topLevel, ...channelSpecific }
 }
 

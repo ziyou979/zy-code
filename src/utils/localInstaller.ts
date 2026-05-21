@@ -2,8 +2,8 @@
  * Utilities for handling local installation
  */
 
-import { access, chmod, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { access, chmod, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { type ReleaseChannel, saveGlobalConfig } from './config.js'
 import { getZyConfigHomeDir } from './envUtils.js'
 import { getErrnoCode } from './errors.js'
@@ -40,7 +40,9 @@ async function writeIfMissing(path: string, content: string, mode?: number): Pro
     await writeFile(path, content, { encoding: 'utf8', flag: 'wx', mode })
     return true
   } catch (e) {
-    if (getErrnoCode(e) === 'EEXIST') return false
+    if (getErrnoCode(e) === 'EEXIST') {
+      return false
+    }
     throw e
   }
 }
@@ -145,8 +147,14 @@ export async function localInstallationExists(): Promise<boolean> {
  */
 export function getShellType(): string {
   const shellPath = process.env.SHELL || ''
-  if (shellPath.includes('zsh')) return 'zsh'
-  if (shellPath.includes('bash')) return 'bash'
-  if (shellPath.includes('fish')) return 'fish'
+  if (shellPath.includes('zsh')) {
+    return 'zsh'
+  }
+  if (shellPath.includes('bash')) {
+    return 'bash'
+  }
+  if (shellPath.includes('fish')) {
+    return 'fish'
+  }
   return 'unknown'
 }

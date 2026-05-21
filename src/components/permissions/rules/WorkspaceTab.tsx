@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useEffect } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { getOriginalCwd } from '../../../bootstrap/state.js'
@@ -7,6 +6,7 @@ import { Select } from '../../../components/CustomSelect/select.js'
 import { Box, Text } from '../../../ink.js'
 import type { ToolPermissionContext } from '../../../Tool.js'
 import { useTabHeaderFocus } from '../../design-system/Tabs.js'
+
 type Props = {
   onExit: (
     result?: string,
@@ -48,7 +48,7 @@ export function WorkspaceTab({
       return
     }
     const directory = additionalDirectories.find((d) => d.path === selectedValue)
-    if (directory && directory.isDeletable) {
+    if (directory?.isDeletable) {
       onRequestRemoveDirectory(directory.path)
     }
   }

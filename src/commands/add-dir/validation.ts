@@ -1,6 +1,6 @@
+import { stat } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
 import chalk from 'chalk'
-import { stat } from 'fs/promises'
-import { dirname, resolve } from 'path'
 import type { ToolPermissionContext } from '../../Tool.js'
 import { getErrnoCode } from '../../utils/errors.js'
 import { expandPath } from '../../utils/path.js'

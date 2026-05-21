@@ -15,7 +15,7 @@
  * Uses the same suspend-Ink pattern as the external editor (promptEditor.ts).
  */
 
-import { spawn, spawnSync } from 'child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import { getSessionId } from '../bootstrap/state.js'
 import instances from '../ink/instances.js'
 import { registerCleanup } from './cleanupRegistry.js'
@@ -60,7 +60,9 @@ class TerminalPanel {
   // ── tmux helpers ──────────────────────────────────────────────────
 
   private checkTmux(): boolean {
-    if (this.hasTmux !== undefined) return this.hasTmux
+    if (this.hasTmux !== undefined) {
+      return this.hasTmux
+    }
     const result = spawnSync('tmux', ['-V'], { encoding: 'utf-8' })
     this.hasTmux = result.status === 0
     if (!this.hasTmux) {
@@ -157,7 +159,9 @@ class TerminalPanel {
 
   /** Ensure a tmux session exists, creating one if needed. */
   private ensureSession(): boolean {
-    if (this.hasSession()) return true
+    if (this.hasSession()) {
+      return true
+    }
     return this.createSession()
   }
 

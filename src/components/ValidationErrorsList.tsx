@@ -1,5 +1,4 @@
 import setWith from 'lodash-es/setWith.js'
-import * as React from 'react'
 import { tSync } from '../i18n/index.js'
 import { Box, Text, useTheme } from '../ink.js'
 import type { ValidationError } from '../utils/settings/validation.js'
@@ -27,11 +26,13 @@ function buildNestedTree(errors: ValidationError[]): TreeNode {
       const newPathParts: string[] = []
       for (let i = 0; i < pathParts.length; i++) {
         const part = pathParts[i]
-        if (!part) continue
+        if (!part) {
+          continue
+        }
         const numericPart = parseInt(part, 10)
 
         // If this is a numeric index and it's the last part where we have the invalid value
-        if (!isNaN(numericPart) && i === pathParts.length - 1) {
+        if (!Number.isNaN(numericPart) && i === pathParts.length - 1) {
           // Format the value for display
           let displayValue: string
           if (typeof error.invalidValue === 'string') {

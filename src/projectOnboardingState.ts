@@ -1,5 +1,5 @@
+import { join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { join } from 'path'
 import { getCurrentProjectConfig, saveCurrentProjectConfig } from './utils/config.js'
 import { getCwd } from './utils/cwd.js'
 import { isDirEmpty } from './utils/file.js'

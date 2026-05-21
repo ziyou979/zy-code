@@ -1,40 +1,40 @@
+import { UnauthorizedError } from '@modelcontextprotocol/sdk/client/auth.js'
 import {
   CallToolResultSchema,
-  ErrorCode,
   type ElicitRequestURLParams,
   type ElicitResult,
+  ErrorCode,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js'
-import { UnauthorizedError } from '@modelcontextprotocol/sdk/client/auth.js'
-import type { ContentBlock } from '../../types/llm.js'
+import type { AssistantMessage } from 'src/types/message.js'
 import type { AppState } from '../../state/AppState.js'
 import type { MCPProgress } from '../../tools/MCPTool/MCPTool.js'
-import type { ConnectedMCPServer, MCPServerConnection } from './types.js'
-import type { MCPToolResult } from '../../utils/mcpValidation.js'
-import type { AssistantMessage } from 'src/types/message.js'
+import type { ContentBlock } from '../../types/llm.js'
 import { createAbortController } from '../../utils/abortController.js'
-import { logMCPDebug, logMCPError } from '../../utils/log.js'
-import { TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../utils/errors.js'
 import { detectCodeIndexingFromMcpServerName } from '../../utils/codeIndexing.js'
+import { TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../utils/errors.js'
+import { logMCPDebug, logMCPError } from '../../utils/log.js'
+import type { MCPToolResult } from '../../utils/mcpValidation.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { clearServerCache } from './client.js'
 import {
   type ElicitationWaitingState,
   runElicitationHooks,
   runElicitationResultHooks,
 } from './elicitationHandler.js'
+import { processMCPResult } from './mcpResults.js'
 import {
+  getMcpToolTimeoutMs,
+  isMcpSessionExpiredError,
   McpAuthError,
   McpSessionExpiredError,
   McpToolCallError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  isMcpSessionExpiredError,
-  getMcpToolTimeoutMs,
 } from './mcpShared.js'
-import { processMCPResult } from './mcpResults.js'
-import { clearServerCache } from './client.js'
+import type { ConnectedMCPServer, MCPServerConnection } from './types.js'
 
 export type MCPToolCallResult = {
   content: MCPToolResult
@@ -124,7 +124,9 @@ export async function callMCPToolWithUrlElicitationRetry({
           : []
 
       const elicitations = rawElicitations.filter((e): e is ElicitRequestURLParams => {
-        if (e == null || typeof e !== 'object') return false
+        if (e == null || typeof e !== 'object') {
+          return false
+        }
         const obj = e as Record<string, unknown>
         return (
           obj.mode === 'url' &&
@@ -160,7 +162,7 @@ export async function callMCPToolWithUrlElicitationRetry({
           )
           if (hookResponse.action !== 'accept') {
             return {
-              content: `URL elicitation was ${hookResponse.action === 'decline' ? 'declined' : hookResponse.action + 'ed'} by a hook. The tool "${tool}" could not complete because it requires the user to open a URL.`,
+              content: `URL elicitation was ${hookResponse.action === 'decline' ? 'declined' : `${hookResponse.action}ed`} by a hook. The tool "${tool}" could not complete because it requires the user to open a URL.`,
             }
           }
           continue
@@ -228,10 +230,10 @@ export async function callMCPToolWithUrlElicitationRetry({
         if (finalResult.action !== 'accept') {
           logMCPDebug(
             serverName,
-            `User ${finalResult.action === 'decline' ? 'declined' : finalResult.action + 'ed'} URL elicitation ${elicitationId}`,
+            `User ${finalResult.action === 'decline' ? 'declined' : `${finalResult.action}ed`} URL elicitation ${elicitationId}`,
           )
           return {
-            content: `URL elicitation was ${finalResult.action === 'decline' ? 'declined' : finalResult.action + 'ed'} by the user. The tool "${tool}" could not complete because it requires the user to open a URL.`,
+            content: `URL elicitation was ${finalResult.action === 'decline' ? 'declined' : `${finalResult.action}ed`} by the user. The tool "${tool}" could not complete because it requires the user to open a URL.`,
           }
         }
 

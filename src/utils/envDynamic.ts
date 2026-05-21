@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { stat } from 'fs/promises'
+import { stat } from 'node:fs/promises'
 import memoize from 'lodash-es/memoize.js'
 import { env, JETBRAINS_IDES } from './env.js'
 import { isEnvTruthy } from './envUtils.js'
@@ -9,7 +9,9 @@ import { getAncestorCommandsAsync } from './genericProcessUtils.js'
 // Functions that require execFileNoThrow and thus cannot be in env.ts
 
 const getIsDocker = memoize(async (): Promise<boolean> => {
-  if (process.platform !== 'linux') return false
+  if (process.platform !== 'linux') {
+    return false
+  }
   // Check for .dockerenv file
   const { code } = await execFileNoThrow('test', ['-f', '/.dockerenv'])
   return code === 0
@@ -47,11 +49,17 @@ if (process.platform === 'linux') {
  * whose result is cached at module load. If the cache isn't populated yet, returns false.
  */
 function isMuslEnvironment(): boolean {
-  if (feature('IS_LIBC_MUSL')) return true
-  if (feature('IS_LIBC_GLIBC')) return false
+  if (feature('IS_LIBC_MUSL')) {
+    return true
+  }
+  if (feature('IS_LIBC_GLIBC')) {
+    return false
+  }
 
   // Fallback for node: runtime detection via pre-populated cache
-  if (process.platform !== 'linux') return false
+  if (process.platform !== 'linux') {
+    return false
+  }
   return muslRuntimeCache ?? false
 }
 

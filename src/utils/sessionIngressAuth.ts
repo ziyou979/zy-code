@@ -104,7 +104,9 @@ export function getSessionIngressAuthToken(): string | null {
  */
 export function getSessionIngressAuthHeaders(): Record<string, string> {
   const token = getSessionIngressAuthToken()
-  if (!token) return {}
+  if (!token) {
+    return {}
+  }
   if (token.startsWith('sk-ant-sid')) {
     const headers: Record<string, string> = {
       Cookie: `sessionKey=${token}`,

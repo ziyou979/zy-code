@@ -66,10 +66,10 @@ import {
 const skillPrefetch = feature('EXPERIMENTAL_SKILL_SEARCH')
   ? (require('./services/skillSearch/prefetch.js') as typeof import('./services/skillSearch/prefetch.js'))
   : null
-// @ts-ignore
-// @ts-ignore
-// @ts-ignore
-const jobClassifier = feature('TEMPLATES')
+// @ts-expect-error
+// @ts-expect-error
+// @ts-expect-error
+const _jobClassifier = feature('TEMPLATES')
   ? (require('./jobs/classifier.js') as typeof import('./jobs/classifier.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -81,11 +81,7 @@ import {
 import { notifyCommandLifecycle } from './utils/commandLifecycle.js'
 import { headlessProfilerCheckpoint } from './utils/headlessProfiler.js'
 import { renderModelName } from './utils/model/model.js'
-import {
-  doesMostRecentAssistantMessageExceed200k,
-  finalContextTokensFromLastResponse,
-  tokenCountWithEstimation,
-} from './utils/tokens.js'
+import { finalContextTokensFromLastResponse, tokenCountWithEstimation } from './utils/tokens.js'
 import { ESCALATED_MAX_TOKENS } from './utils/context.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from './services/analytics/growthbook.js'
 import { SLEEP_TOOL_NAME } from './tools/SleepTool/prompt.js'
@@ -101,8 +97,8 @@ import { recordContentReplacement } from './utils/sessionStorage.js'
 import { handleStopHooks } from './query/stopHooks.js'
 import { buildQueryConfig } from './query/config.js'
 import { productionDeps, type QueryDeps } from './query/deps.js'
-// @ts-ignore
-// @ts-ignore
+// @ts-expect-error
+// @ts-expect-error
 import type { Terminal, Continue } from './query/transitions.js'
 import { feature } from 'bun:bundle'
 import {
@@ -129,10 +125,11 @@ function* yieldMissingToolResultBlocks(
   for (const assistantMessage of assistantMessages) {
     // 从此助手消息中提取所有工具使用块
     const content = assistantMessage.message.content
-    if (!Array.isArray(content)) continue
+    if (!Array.isArray(content)) {
+      continue
+    }
     const toolUseBlocks = content.filter(
-      (block): block is ToolCallBlock =>
-        typeof block !== 'string' && block.type === 'tool_call',
+      (block): block is ToolCallBlock => typeof block !== 'string' && block.type === 'tool_call',
     )
 
     // 为每个工具使用发送中断消息
@@ -279,7 +276,7 @@ async function* queryLoop(
   // api/api/sampling/prompt/renderer.py:292）。压缩后，服务器只看到摘要，会低估
   // 消耗；remaining 告诉它被摘要抹去的压缩前最终窗口。跨多次压缩累积：每次减去
   // 该压缩触发点的最终上下文。循环局部（不在 State 上）以避免触及 7 个继续点。
-  let taskBudgetRemaining: number | undefined = undefined
+  let taskBudgetRemaining: number | undefined
 
   // 在入口处一次性快照不可变的 env/statsig/session 状态。参见 QueryConfig
   // 了解包含内容以及为什么有意排除 feature() 门控。
@@ -539,7 +536,7 @@ async function* queryLoop(
       : null
 
     const appState = toolUseContext.getAppState()
-    const permissionMode = appState.toolPermissionContext.mode
+    const _permissionMode = appState.toolPermissionContext.mode
     let currentModel = toolUseContext.options.mainLoopModel
 
     queryCheckpoint('query_setup_end')
@@ -741,7 +738,7 @@ async function* queryLoop(
             let withheld = false
             if (feature('CONTEXT_COLLAPSE')) {
               if (
-                // @ts-ignore
+                // @ts-expect-error
                 (contextCollapse as any)?.isWithheldPromptTooLong(
                   message,
                   isPromptTooLongMessage,
@@ -1508,8 +1505,12 @@ async function* queryLoop(
     const currentAgentId = toolUseContext.agentId
     const queuedCommandsSnapshot = getCommandsByMaxPriority(sleepRan ? 'later' : 'next').filter(
       (cmd) => {
-        if (isSlashCommand(cmd)) return false
-        if (isMainThread) return cmd.agentId === undefined
+        if (isSlashCommand(cmd)) {
+          return false
+        }
+        if (isMainThread) {
+          return cmd.agentId === undefined
+        }
         // 子 agent 只排出发给它们的任务通知 — 永远不要
         // 用户提示，即使有人在上面盖了 agentId。
         return cmd.mode === 'task-notification' && cmd.agentId === currentAgentId

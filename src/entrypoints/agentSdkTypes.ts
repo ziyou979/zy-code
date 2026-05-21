@@ -17,10 +17,10 @@ export type {
   SDKControlRequest,
   SDKControlResponse,
 } from './sdk/controlTypes.js'
-// Re-export core types (common serializable types)
-export * from './sdk/coreTypes.js'
 // Explicitly export HookEvent to ensure it's available
 export type { HookEvent } from './sdk/coreTypes.js'
+// Re-export core types (common serializable types)
+export * from './sdk/coreTypes.js'
 // Re-export runtime types (callbacks, interfaces with methods)
 export * from './sdk/runtimeTypes.js'
 
@@ -61,12 +61,12 @@ import type {
 } from './sdk/runtimeTypes.js'
 
 export type {
-  ListSessionsOptions,
-  GetSessionInfoOptions,
-  SessionMutationOptions,
   ForkSessionOptions,
   ForkSessionResult,
+  GetSessionInfoOptions,
+  ListSessionsOptions,
   SDKSessionInfo,
+  SessionMutationOptions,
 }
 
 export function tool<Schema extends AnyZodRawShape>(

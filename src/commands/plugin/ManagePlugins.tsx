@@ -1,7 +1,7 @@
+import type { Dirent } from 'node:fs'
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
 import figures from 'figures'
-import type { Dirent } from 'fs'
-import * as fs from 'fs/promises'
-import * as path from 'path'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
@@ -11,11 +11,11 @@ import { MCPStdioServerMenu } from '../../components/mcp/MCPStdioServerMenu.js'
 import { MCPToolDetailView } from '../../components/mcp/MCPToolDetailView.js'
 import { MCPToolListView } from '../../components/mcp/MCPToolListView.js'
 import type {
-  ZyAIServerInfo,
   HTTPServerInfo,
+  ServerInfo,
   SSEServerInfo,
   StdioServerInfo,
-  ServerInfo,
+  ZyAIServerInfo,
 } from '../../components/mcp/types.js'
 import { SearchBox } from '../../components/SearchBox.js'
 import { useSearchInput } from '../../hooks/useSearchInput.js'
@@ -27,10 +27,10 @@ import { getBuiltinPluginDefinition } from '../../plugins/builtinPlugins.js'
 import { useMcpToggleEnabled } from '../../services/mcp/MCPConnectionManager.js'
 import type {
   MCPServerConnection,
-  McpZyAIProxyServerConfig,
   McpHTTPServerConfig,
   McpSSEServerConfig,
   McpStdioServerConfig,
+  McpZyAIProxyServerConfig,
 } from '../../services/mcp/types.js'
 import { filterToolsByServer } from '../../services/mcp/utils.js'
 import {
@@ -89,9 +89,10 @@ import { PluginOptionsDialog } from './PluginOptionsDialog.js'
 import { PluginOptionsFlow } from './PluginOptionsFlow.js'
 import type { ViewState as ParentViewState } from './types.js'
 import { UnifiedInstalledCell } from './UnifiedInstalledCell.js'
-// @ts-ignore
+// @ts-expect-error
 import type { UnifiedInstalledItem } from './unifiedTypes.js'
 import { usePagination } from './usePagination.js'
+
 type Props = {
   setViewState: (state: ParentViewState) => void
   setResult: (result: string | null) => void
@@ -658,7 +659,7 @@ export function ManagePlugins({
         type: 'menu',
       })
     }
-  }, [viewState, setParentViewState, pendingToggles, setResult])
+  }, [viewState, setParentViewState, pendingToggles, setResult, onManageComplete])
 
   // Escape when not in search mode - go back.
   // Excludes confirm-project-uninstall (has its own confirm:no handler in
@@ -677,10 +678,18 @@ export function ManagePlugins({
   const getMcpStatus = (
     client: MCPServerConnection,
   ): 'connected' | 'disabled' | 'pending' | 'needs-auth' | 'failed' => {
-    if (client.type === 'connected') return 'connected'
-    if (client.type === 'disabled') return 'disabled'
-    if (client.type === 'pending') return 'pending'
-    if (client.type === 'needs-auth') return 'needs-auth'
+    if (client.type === 'connected') {
+      return 'connected'
+    }
+    if (client.type === 'disabled') {
+      return 'disabled'
+    }
+    if (client.type === 'pending') {
+      return 'pending'
+    }
+    if (client.type === 'needs-auth') {
+      return 'needs-auth'
+    }
     return 'failed'
   }
 
@@ -781,7 +790,9 @@ export function ManagePlugins({
     const failedPluginItems: UnifiedInstalledItem[] = []
     for (const [orphanPluginId, orphanErrors] of orphanErrorsBySource) {
       // Skip plugins that are already shown in the flagged section
-      if (orphanPluginId in flaggedPlugins) continue
+      if (orphanPluginId in flaggedPlugins) {
+        continue
+      }
       const parsed = parsePluginIdentifier(orphanPluginId)
       const orphanPluginName = parsed.name || orphanPluginId
       const marketplace = parsed.marketplace || 'unknown'
@@ -804,8 +815,12 @@ export function ManagePlugins({
     // Build standalone MCP items
     const standaloneMcps: UnifiedInstalledItem[] = []
     for (const mcpClient of mcpClients) {
-      if (mcpClient.name === 'ide') continue
-      if (mcpClient.name.startsWith('plugin:')) continue
+      if (mcpClient.name === 'ide') {
+        continue
+      }
+      if (mcpClient.name.startsWith('plugin:')) {
+        continue
+      }
       standaloneMcps.push({
         type: 'mcp',
         id: `mcp:${mcpClient.name}`,
@@ -959,7 +974,7 @@ export function ManagePlugins({
       unified.push(...standaloneMcpsInScope)
     }
     return unified
-  }, [pluginStates, mcpClients, pluginErrors, pendingToggles, flaggedPlugins])
+  }, [pluginStates, mcpClients, pluginErrors, pendingToggles, flaggedPlugins, getMcpStatus])
 
   // Mark flagged plugins as seen when the Installed view renders them.
   // After 48 hours from seenAt, they auto-clear on next load.
@@ -978,7 +993,9 @@ export function ManagePlugins({
 
   // Filter items based on search query (matches name or description)
   const filteredItems = useMemo(() => {
-    if (!searchQuery) return unifiedItems
+    if (!searchQuery) {
+      return unifiedItems
+    }
     const lowerQuery = searchQuery.toLowerCase()
     return unifiedItems.filter(
       (filteredItem) =>
@@ -1096,8 +1113,12 @@ export function ManagePlugins({
 
         // Sort marketplaces: zy-plugin-directory first, then alphabetically
         marketplaceInfos.sort((a, b) => {
-          if (a.name === 'zy-plugin-directory') return -1
-          if (b.name === 'zy-plugin-directory') return 1
+          if (a.name === 'zy-plugin-directory') {
+            return -1
+          }
+          if (b.name === 'zy-plugin-directory') {
+            return 1
+          }
           return a.name.localeCompare(b.name)
         })
         setMarketplaces(marketplaceInfos)
@@ -1129,7 +1150,9 @@ export function ManagePlugins({
 
   // Auto-navigate to target plugin if specified (once only)
   useEffect(() => {
-    if (hasAutoNavigated.current) return
+    if (hasAutoNavigated.current) {
+      return
+    }
     if (targetPlugin && marketplaces.length > 0 && !loading) {
       // targetPlugin may be `name` or `name@marketplace` (parseArgs passes the
       // raw arg through). Parse it so p.name matching works either way.
@@ -1198,7 +1221,9 @@ export function ManagePlugins({
   const handleSingleOperation = async (
     operation: 'enable' | 'disable' | 'update' | 'uninstall',
   ) => {
-    if (!selectedPlugin) return
+    if (!selectedPlugin) {
+      return
+    }
     const pluginScope = selectedPlugin.scope || 'user'
     const isBuiltin = pluginScope === 'builtin'
 
@@ -1242,8 +1267,12 @@ export function ManagePlugins({
           break
         }
         case 'uninstall': {
-          if (isBuiltin) break // guarded above; narrows pluginScope
-          if (!isInstallableScope(pluginScope)) break
+          if (isBuiltin) {
+            break // guarded above; narrows pluginScope
+          }
+          if (!isInstallableScope(pluginScope)) {
+            break
+          }
           // If the plugin is enabled in .zy/settings.json (shared with the
           // team), divert to a confirmation dialog that offers to disable in
           // settings.local.json instead. Check the settings file directly —
@@ -1279,7 +1308,9 @@ export function ManagePlugins({
           break
         }
         case 'update': {
-          if (isBuiltin) break // guarded above; narrows pluginScope
+          if (isBuiltin) {
+            break // guarded above; narrows pluginScope
+          }
           const result = await updatePluginOp(selectedPluginId, pluginScope)
           if (!result.success) {
             throw new Error(result.message)
@@ -1369,9 +1400,13 @@ export function ManagePlugins({
 
   // Handle toggle enable/disable
   const handleToggle = React.useCallback(() => {
-    if (selectedIndex >= filteredItems.length) return
+    if (selectedIndex >= filteredItems.length) {
+      return
+    }
     const selectedItem = filteredItems[selectedIndex]
-    if (selectedItem?.type === 'flagged-plugin') return
+    if (selectedItem?.type === 'flagged-plugin') {
+      return
+    }
     if (selectedItem?.type === 'plugin') {
       const pluginId = `${selectedItem.plugin.name}@${selectedItem.marketplace}`
       const mergedSettings = getInitialSettings()
@@ -1417,11 +1452,13 @@ export function ManagePlugins({
     } else if (selectedItem?.type === 'mcp') {
       void toggleMcpServer(selectedItem.client.name)
     }
-  }, [selectedIndex, filteredItems, pendingToggles, pluginStates, toggleMcpServer])
+  }, [selectedIndex, filteredItems, pendingToggles, toggleMcpServer])
 
   // Handle accept (Enter) in plugin-list
   const handleAccept = React.useCallback(() => {
-    if (selectedIndex >= filteredItems.length) return
+    if (selectedIndex >= filteredItems.length) {
+      return
+    }
     const selectedItem = filteredItems[selectedIndex]
     if (selectedItem?.type === 'plugin') {
       const pluginState = pluginStates.find(
@@ -1503,7 +1540,9 @@ export function ManagePlugins({
 
   // Handle dismiss action in flagged-detail view
   const handleFlaggedDismiss = React.useCallback(() => {
-    if (typeof viewState !== 'object' || viewState.type !== 'flagged-detail') return
+    if (typeof viewState !== 'object' || viewState.type !== 'flagged-detail') {
+      return
+    }
     void removeFlaggedPlugin(viewState.plugin.id)
     setViewState('plugin-list')
   }, [viewState])
@@ -1519,7 +1558,9 @@ export function ManagePlugins({
 
   // Build details menu items (needed for navigation)
   const detailsMenuItems = React.useMemo(() => {
-    if (viewState !== 'plugin-details' || !selectedPlugin) return []
+    if (viewState !== 'plugin-details' || !selectedPlugin) {
+      return []
+    }
     const mergedSettings = getInitialSettings()
     const pluginId = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
     const isEnabled = mergedSettings?.enabledPlugins?.[pluginId] !== false
@@ -1662,7 +1703,7 @@ export function ManagePlugins({
       },
     })
     return menuItems
-  }, [viewState, selectedPlugin, selectedPluginHasMcpb, pluginStates])
+  }, [viewState, selectedPlugin, selectedPluginHasMcpb, pluginStates, handleSingleOperation])
 
   // Plugin-details navigation
   useKeybindings(
@@ -1761,7 +1802,9 @@ export function ManagePlugins({
   useKeybindings(
     {
       'confirm:yes': () => {
-        if (!selectedPlugin) return
+        if (!selectedPlugin) {
+          return
+        }
         setIsProcessing(true)
         setProcessError(null)
         const pluginId = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
@@ -1783,7 +1826,9 @@ export function ManagePlugins({
         setResult(
           `✓ Disabled ${selectedPlugin.plugin.name} in .zy/settings.local.json. Run /reload-plugins to apply.`,
         )
-        if (onManageComplete) void onManageComplete()
+        if (onManageComplete) {
+          void onManageComplete()
+        }
         setParentViewState({
           type: 'menu',
         })
@@ -1809,22 +1854,30 @@ export function ManagePlugins({
   // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw y/n/esc; Enter must not trigger destructive delete
   useInput(
     (input, key) => {
-      if (!selectedPlugin) return
+      if (!selectedPlugin) {
+        return
+      }
       const pluginId = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
       const pluginScope = selectedPlugin.scope
       // Dialog is only reachable from the uninstall case (which guards on
       // isBuiltin), but TS can't track that across viewState transitions.
-      if (!pluginScope || pluginScope === 'builtin' || !isInstallableScope(pluginScope)) return
+      if (!pluginScope || pluginScope === 'builtin' || !isInstallableScope(pluginScope)) {
+        return
+      }
       const doUninstall = async (deleteDataDir: boolean) => {
         setIsProcessing(true)
         setProcessError(null)
         try {
           const uninstallResult = await uninstallPluginOp(pluginId, pluginScope, deleteDataDir)
-          if (!uninstallResult.success) throw new Error(uninstallResult.message)
+          if (!uninstallResult.success) {
+            throw new Error(uninstallResult.message)
+          }
           clearAllCaches()
           const suffix = deleteDataDir ? '' : ' · data preserved'
           setResult(`${figures.tick} ${uninstallResult.message}${suffix}`)
-          if (onManageComplete) void onManageComplete()
+          if (onManageComplete) {
+            void onManageComplete()
+          }
           setParentViewState({
             type: 'menu',
           })
@@ -1854,7 +1907,7 @@ export function ManagePlugins({
   // Reset selection when search query changes
   React.useEffect(() => {
     setSelectedIndex(0)
-  }, [searchQuery])
+  }, [])
 
   // Handle input for entering search mode (text input handled by useSearchInput hook)
   // eslint-disable-next-line custom-rules/prefer-use-keybindings -- useInput needed for raw search mode text input
@@ -1973,7 +2026,9 @@ export function ManagePlugins({
   if (viewState === 'configuring' && configNeeded && selectedPlugin) {
     const pluginId_12 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`
     async function handleSave(config: UserConfigValues) {
-      if (!configNeeded || !selectedPlugin) return
+      if (!configNeeded || !selectedPlugin) {
+        return
+      }
       try {
         // Find MCPB path again
         const mcpServersSpec_1 = selectedPlugin.plugin.manifest.mcpServers

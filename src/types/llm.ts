@@ -16,7 +16,13 @@ import type { ConnectorTextBlock } from './connectorText.js'
 // ============================================================================
 
 /** 用户消息中可用的内容块 */
-export type UserContentBlock = TextBlock | ImageBlock | ToolCallBlock | ToolResultBlock | DocumentBlock | ConnectorTextBlock
+export type UserContentBlock =
+  | TextBlock
+  | ImageBlock
+  | ToolCallBlock
+  | ToolResultBlock
+  | DocumentBlock
+  | ConnectorTextBlock
 
 /** 助手消息中可用的内容块 */
 export type AssistantContentBlock =
@@ -125,8 +131,6 @@ export interface JSONOutputFormat {
   type: 'json_schema'
   schema: Record<string, unknown>
 }
-
-
 
 // ============================================================================
 // 流式事件 — 通用命名
@@ -449,7 +453,9 @@ export type HeadersLike =
 /** 从 APIErrorLike 的 headers 中安全获取 header 值 */
 export function getHeader(error: APIErrorLike, name: string): string | null {
   const headers = error.headers
-  if (!headers) return null
+  if (!headers) {
+    return null
+  }
   if (typeof (headers as any).get === 'function') {
     return (headers as any).get(name) ?? null
   }
@@ -566,7 +572,9 @@ export type ContentBlock =
  * 安全地获取错误的 status 码。
  */
 export function getErrorStatus(error: unknown): number | undefined {
-  if (error instanceof LLMError) return error.status
+  if (error instanceof LLMError) {
+    return error.status
+  }
   if (error instanceof Error && 'status' in error) {
     return (error as any).status
   }
@@ -577,7 +585,9 @@ export function getErrorStatus(error: unknown): number | undefined {
  * 安全地获取错误的 message。
  */
 export function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message
+  if (error instanceof Error) {
+    return error.message
+  }
   return String(error)
 }
 
@@ -590,7 +600,9 @@ export function getErrorHeader(error: unknown, name: string): string | null {
   }
   if (error instanceof Error && 'headers' in error) {
     const headers = (error as any).headers
-    if (!headers) return null
+    if (!headers) {
+      return null
+    }
     if (typeof headers.get === 'function') {
       return headers.get(name) ?? null
     }

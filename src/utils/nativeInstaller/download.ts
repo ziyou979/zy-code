@@ -7,17 +7,16 @@
  */
 
 import { feature } from 'bun:bundle'
+import { createHash } from 'node:crypto'
+import { chmod, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import axios from 'axios'
-import { createHash } from 'crypto'
-import { chmod, writeFile } from 'fs/promises'
-import { join } from 'path'
 import { logEvent } from 'src/services/analytics/index.js'
 import type { ReleaseChannel } from '../config.js'
 import { logForDebugging } from '../debug.js'
 import { toError } from '../errors.js'
 import { execFileNoThrowWithCwd } from '../execFileNoThrow.js'
 import { getFsImplementation } from '../fsOperations.js'
-import { isInternalBuild } from '../envUtils.js'
 import { logError } from '../log.js'
 import { sleep } from '../sleep.js'
 import { jsonStringify, writeFileSync_DEPRECATED } from '../slowOperations.js'
@@ -481,6 +480,6 @@ export async function downloadVersion(
 }
 
 // Exported for testing
-export { StallTimeoutError, MAX_DOWNLOAD_RETRIES }
+export { MAX_DOWNLOAD_RETRIES, StallTimeoutError }
 export const STALL_TIMEOUT_MS = DEFAULT_STALL_TIMEOUT_MS
 export const _downloadAndVerifyBinaryForTesting = downloadAndVerifyBinary

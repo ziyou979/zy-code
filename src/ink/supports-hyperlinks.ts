@@ -32,20 +32,20 @@ export function supportsHyperlinks(options?: SupportsHyperlinksOptions): boolean
   const env = options?.env ?? process.env
 
   // 检查 supports-hyperlinks 未检测到的额外终端
-  const termProgram = env['TERM_PROGRAM']
+  const termProgram = env.TERM_PROGRAM
   if (termProgram && ADDITIONAL_HYPERLINK_TERMINALS.includes(termProgram)) {
     return true
   }
 
   // LC_TERMINAL 由某些终端（如 iTerm2）设置，并在 tmux 内保留，
   // 此时 TERM_PROGRAM 会被覆盖为 'tmux'。
-  const lcTerminal = env['LC_TERMINAL']
+  const lcTerminal = env.LC_TERMINAL
   if (lcTerminal && ADDITIONAL_HYPERLINK_TERMINALS.includes(lcTerminal)) {
     return true
   }
 
   // Kitty 设置 TERM=xterm-kitty
-  const term = env['TERM']
+  const term = env.TERM
   if (term?.includes('kitty')) {
     return true
   }

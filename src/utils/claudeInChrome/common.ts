@@ -1,7 +1,7 @@
-import { readdirSync } from 'fs'
-import { stat } from 'fs/promises'
-import { homedir, platform, tmpdir, userInfo } from 'os'
-import { join } from 'path'
+import { readdirSync } from 'node:fs'
+import { stat } from 'node:fs/promises'
+import { homedir, platform, tmpdir, userInfo } from 'node:os'
+import { join } from 'node:path'
 import { normalizeNameForMCP } from '../../services/mcp/normalization.js'
 import { logForDebugging } from '../debug.js'
 import { isFsInaccessible } from '../errors.js'
@@ -12,7 +12,7 @@ import { which } from '../which.js'
 export const CLAUDE_IN_CHROME_MCP_SERVER_NAME = 'claude-in-chrome'
 
 // Re-export ChromiumBrowser type for setup.ts
-// @ts-ignore
+// @ts-expect-error
 export type { ChromiumBrowser } from './setupPortable.js'
 
 // Import for local use
@@ -334,7 +334,9 @@ export async function detectAvailableBrowser(): Promise<ChromiumBrowser | null> 
             return browserId
           }
         } catch (e) {
-          if (!isFsInaccessible(e)) throw e
+          if (!isFsInaccessible(e)) {
+            throw e
+          }
           // App not found, continue checking
         }
         break
@@ -365,7 +367,9 @@ export async function detectAvailableBrowser(): Promise<ChromiumBrowser | null> 
               return browserId
             }
           } catch (e) {
-            if (!isFsInaccessible(e)) throw e
+            if (!isFsInaccessible(e)) {
+              throw e
+            }
             // Browser not found, continue checking
           }
         }

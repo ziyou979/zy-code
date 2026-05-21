@@ -83,4 +83,5 @@ export const PushNotificationTool = buildTool({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(PushNotificationTool)

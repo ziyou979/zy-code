@@ -1,14 +1,11 @@
-import { isInternalBuild } from '../utils/envUtils.js'
-
-import type { CreateParams } from '../types/llm.js'
+import { realpathSync } from 'node:fs'
+import { cwd } from 'node:process'
 import type { Attributes, Meter, MetricOptions } from '@opentelemetry/api'
 import type { logs } from '@opentelemetry/api-logs'
 import type { LoggerProvider } from '@opentelemetry/sdk-logs'
 import type { MeterProvider } from '@opentelemetry/sdk-metrics'
 import type { BasicTracerProvider } from '@opentelemetry/sdk-trace-base'
-import { realpathSync } from 'fs'
 import sumBy from 'lodash-es/sumBy.js'
-import { cwd } from 'process'
 import type { HookEvent, ModelUsage } from 'src/entrypoints/agentSdkTypes.js'
 import type { AgentColorName } from 'src/tools/AgentTool/agentColorManager.js'
 import type { HookCallbackMatcher } from 'src/types/hooks.js'
@@ -24,6 +21,8 @@ import type { SettingSource } from 'src/utils/settings/constants.js'
 import { resetSettingsCache } from 'src/utils/settings/settingsCache.js'
 import type { PluginHookMatcher } from 'src/utils/settings/types.js'
 import { createSignal } from 'src/utils/signal.js'
+import type { CreateParams } from '../types/llm.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 
 // 已注册钩子的联合类型 — 可以是 SDK 回调或原生插件钩子
 type RegisteredHookMatcher = HookCallbackMatcher | PluginHookMatcher
@@ -779,7 +778,9 @@ const SCROLL_DRAIN_IDLE_MS = 150
  *  getIsScrollDraining() 门控，在防抖清除前跳过工作。 */
 export function markScrollActivity(): void {
   scrollDraining = true
-  if (scrollDrainTimer) clearTimeout(scrollDrainTimer)
+  if (scrollDrainTimer) {
+    clearTimeout(scrollDrainTimer)
+  }
   scrollDrainTimer = setTimeout(() => {
     scrollDraining = false
     scrollDrainTimer = undefined
@@ -1266,11 +1267,15 @@ export function addSessionCronTask(task: SessionCronTask): void {
  * 都已在此处理时。
  */
 export function removeSessionCronTasks(ids: readonly string[]): number {
-  if (ids.length === 0) return 0
+  if (ids.length === 0) {
+    return 0
+  }
   const idSet = new Set(ids)
   const remaining = STATE.sessionCronTasks.filter((t) => !idSet.has(t.id))
   const removed = STATE.sessionCronTasks.length - remaining.length
-  if (removed === 0) return 0
+  if (removed === 0) {
+    return 0
+  }
   STATE.sessionCronTasks = remaining
   return removed
 }
@@ -1514,7 +1519,9 @@ const MAX_SLOW_OPERATIONS = 10
 const SLOW_OPERATION_TTL_MS = 10000
 
 export function addSlowOperation(operation: string, durationMs: number): void {
-  if (!isInternalBuild()) return
+  if (!isInternalBuild()) {
+    return
+  }
   // 跳过编辑器会话的追踪（用户在 $EDITOR 中编辑提示文件）
   // 这些是有意慢速的，因为用户在起草文本
   if (operation.includes('exec') && operation.includes('zy-prompt-')) {

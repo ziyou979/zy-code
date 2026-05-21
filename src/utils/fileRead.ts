@@ -29,7 +29,9 @@ export function detectEncodingForResolvedPath(resolvedPath: string): BufferEncod
   }
 
   if (bytesRead >= 2) {
-    if (buffer[0] === 0xff && buffer[1] === 0xfe) return 'utf16le'
+    if (buffer[0] === 0xff && buffer[1] === 0xfe) {
+      return 'utf16le'
+    }
   }
 
   if (bytesRead >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) {

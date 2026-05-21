@@ -39,7 +39,9 @@ export function createBufferedWriter({
       writeFn(pendingOverflow.join(''))
       pendingOverflow = null
     }
-    if (buffer.length === 0) return
+    if (buffer.length === 0) {
+      return
+    }
     writeFn(buffer.join(''))
     buffer = []
     bufferBytes = 0
@@ -75,7 +77,9 @@ export function createBufferedWriter({
     setImmediate(() => {
       const toWrite = pendingOverflow
       pendingOverflow = null
-      if (toWrite) writeFn(toWrite.join(''))
+      if (toWrite) {
+        writeFn(toWrite.join(''))
+      }
     })
   }
 

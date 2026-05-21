@@ -8,10 +8,10 @@
  * - 写入转录片段（供压缩流程使用）
  */
 
-import { appendFileSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'fs'
-import { join } from 'path'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { appendFileSync, existsSync, mkdirSync, readFileSync, unlinkSync } from 'node:fs'
+import { join } from 'node:path'
 import { getSessionId } from '../../bootstrap/state.js'
+import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 
 function getTranscriptDir(): string {
   const dir = join(getZyConfigHomeDir(), 'transcripts')
@@ -33,7 +33,7 @@ export function getSessionTranscriptPath(): string | null {
 
 export function saveTranscriptEntry(entry: unknown): void {
   try {
-    const line = JSON.stringify(entry) + '\n'
+    const line = `${JSON.stringify(entry)}\n`
     appendFileSync(getTranscriptPath(), line, 'utf-8')
   } catch {
     // 持久化失败不阻塞主流程
@@ -43,7 +43,9 @@ export function saveTranscriptEntry(entry: unknown): void {
 export function loadTranscriptEntries(): unknown[] {
   try {
     const path = getTranscriptPath()
-    if (!existsSync(path)) return []
+    if (!existsSync(path)) {
+      return []
+    }
     const content = readFileSync(path, 'utf-8')
     return content
       .split('\n')
@@ -64,7 +66,9 @@ export function loadTranscriptEntries(): unknown[] {
 export function clearTranscript(): void {
   try {
     const path = getTranscriptPath()
-    if (existsSync(path)) unlinkSync(path)
+    if (existsSync(path)) {
+      unlinkSync(path)
+    }
   } catch {
     // 清除失败不阻塞
   }

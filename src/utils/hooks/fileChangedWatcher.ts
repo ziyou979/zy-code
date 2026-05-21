@@ -1,5 +1,5 @@
+import { isAbsolute, join } from 'node:path'
 import chokidar, { type FSWatcher } from 'chokidar'
-import { isAbsolute, join } from 'path'
 import { registerCleanup } from '../cleanupRegistry.js'
 import { logForDebugging } from '../debug.js'
 import { errorMessage } from '../errors.js'
@@ -24,7 +24,9 @@ export function setEnvHookNotifier(cb: ((text: string, isError: boolean) => void
 }
 
 export function initializeFileChangedWatcher(cwd: string): void {
-  if (initialized) return
+  if (initialized) {
+    return
+  }
   initialized = true
   currentCwd = cwd
 
@@ -36,7 +38,9 @@ export function initializeFileChangedWatcher(cwd: string): void {
   }
 
   const paths = resolveWatchPaths(config)
-  if (paths.length === 0) return
+  if (paths.length === 0) {
+    return
+  }
 
   startWatching(paths)
 }
@@ -47,9 +51,13 @@ function resolveWatchPaths(config?: ReturnType<typeof getHooksConfigFromSnapshot
   // Matcher field: filenames to watch in cwd, pipe-separated (e.g. ".envrc|.env")
   const staticPaths: string[] = []
   for (const m of matchers) {
-    if (!m.matcher) continue
+    if (!m.matcher) {
+      continue
+    }
     for (const name of m.matcher.split('|').map((s) => s.trim())) {
-      if (!name) continue
+      if (!name) {
+        continue
+      }
       staticPaths.push(isAbsolute(name) ? name : join(currentCwd, name))
     }
   }
@@ -97,7 +105,9 @@ function handleFileEvent(path: string, event: 'change' | 'add' | 'unlink'): void
 }
 
 export function updateWatchPaths(paths: string[]): void {
-  if (!initialized) return
+  if (!initialized) {
+    return
+  }
   const sorted = paths.slice().sort()
   if (
     sorted.length === dynamicWatchPathsSorted.length &&
@@ -122,13 +132,17 @@ function restartWatching(): void {
 }
 
 export async function onCwdChangedForHooks(oldCwd: string, newCwd: string): Promise<void> {
-  if (oldCwd === newCwd) return
+  if (oldCwd === newCwd) {
+    return
+  }
 
   // Re-evaluate from the current snapshot so mid-session hook changes are picked up
   const config = getHooksConfigFromSnapshot()
   const currentHasEnvHooks =
     (config?.CwdChanged?.length ?? 0) > 0 || (config?.FileChanged?.length ?? 0) > 0
-  if (!currentHasEnvHooks) return
+  if (!currentHasEnvHooks) {
+    return
+  }
   currentCwd = newCwd
 
   await clearCwdEnvFiles()

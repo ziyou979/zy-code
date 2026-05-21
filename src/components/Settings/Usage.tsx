@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { formatCost } from 'src/cost-tracker.js'
 import { getSubscriptionType } from 'src/utils/auth.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import {
@@ -17,7 +18,7 @@ import { jsonStringify } from '../../utils/slowOperations.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Byline } from '../design-system/Byline.js'
 import { ProgressBar } from '../design-system/ProgressBar.js'
-import { tSync } from '../../i18n/index.js'
+
 type LimitBarProps = {
   title: string
   limit: RateLimit

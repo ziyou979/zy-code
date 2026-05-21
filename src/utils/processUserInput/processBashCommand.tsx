@@ -1,5 +1,4 @@
-import type { ContentBlock } from '../../types/llm.js'
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import * as React from 'react'
 import { BashModeProgress } from 'src/components/BashModeProgress.js'
 import type { SetToolJSXFn } from 'src/Tool.js'
@@ -7,6 +6,7 @@ import { BashTool } from 'src/tools/BashTool/BashTool.js'
 import type { AttachmentMessage, SystemMessage, UserMessage } from 'src/types/message.js'
 import type { ShellProgress } from 'src/types/tools.js'
 import { logEvent } from '../../services/analytics/index.js'
+import type { ContentBlock } from '../../types/llm.js'
 import { errorMessage, ShellError } from '../errors.js'
 import {
   createSyntheticUserCaveatMessage,

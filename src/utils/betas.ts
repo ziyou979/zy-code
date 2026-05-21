@@ -6,7 +6,6 @@ import {
 } from 'src/services/analytics/growthbook.js'
 import { getIsNonInteractiveSession, getSdkBetas } from '../bootstrap/state.js'
 import {
-  ZY_CODE_,
   CLI_INTERNAL_BETA_HEADER,
   CONTEXT_MANAGEMENT_BETA_HEADER,
   INTERLEAVED_THINKING_BETA_HEADER,
@@ -16,12 +15,11 @@ import {
   SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER,
   TOKEN_EFFICIENT_TOOLS_BETA_HEADER,
   TOOL_SEARCH_BETA_HEADER_1P,
-  TOOL_SEARCH_BETA_HEADER_3P,
   WEB_SEARCH_BETA_HEADER,
+  ZY_CODE_,
 } from '../constants/betas.js'
-import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
-import { isInternalBuild } from './envUtils.js'
-import { modelHasCapability, getAPIProvider, providerHasCapability } from './model/providers.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
+import { getAPIProvider, modelHasCapability, providerHasCapability } from './model/providers.js'
 import { getInitialSettings } from './settings/settings.js'
 
 /**
@@ -77,7 +75,9 @@ export function filterAllowedSdkBetas(sdkBetas: string[] | undefined): string[] 
 
 export function modelSupportsISP(model: string): boolean {
   // 模型能力配置优先
-  if (modelHasCapability(model, 'interleaved_thinking')) return true
+  if (modelHasCapability(model, 'interleaved_thinking')) {
+    return true
+  }
   const provider = getAPIProvider()
   // Foundry supports interleaved thinking for all models
   if (provider === 'foundry') {
@@ -89,13 +89,17 @@ export function modelSupportsISP(model: string): boolean {
   return false
 }
 function vertexModelSupportsWebSearch(model: string): boolean {
-  if (modelHasCapability(model, 'web_search')) return true
+  if (modelHasCapability(model, 'web_search')) {
+    return true
+  }
   return false
 }
 
 // Context management is supported on providers that declare the capability
 export function modelSupportsContextManagement(model: string): boolean {
-  if (modelHasCapability(model, 'context_management')) return true
+  if (modelHasCapability(model, 'context_management')) {
+    return true
+  }
   const provider = getAPIProvider()
   if (provider === 'foundry') {
     return true
@@ -108,7 +112,9 @@ export function modelSupportsContextManagement(model: string): boolean {
 
 // @[MODEL LAUNCH]: Add the new model ID to this list if it supports structured outputs.
 export function modelSupportsStructuredOutputs(model: string): boolean {
-  if (modelHasCapability(model, 'structured_outputs')) return true
+  if (modelHasCapability(model, 'structured_outputs')) {
+    return true
+  }
   const provider = getAPIProvider()
   // Structured outputs only supported on providers that declare the capability
   if (!providerHasCapability(provider, 'structured_outputs')) {
@@ -121,7 +127,9 @@ export function modelSupportsStructuredOutputs(model: string): boolean {
 export function modelSupportsAutoMode(model: string): boolean {
   if (feature('TRANSCRIPT_CLASSIFIER')) {
     // Check settings-based auto_mode capability
-    if (modelHasCapability(model, 'auto_mode')) return true
+    if (modelHasCapability(model, 'auto_mode')) {
+      return true
+    }
     // GrowthBook override: zy_auto_mode_config.allowModels force-enables
     // auto mode for listed models, bypassing the denylist/allowlist below.
     const config = getFeatureValue_CACHED_MAY_BE_STALE<{

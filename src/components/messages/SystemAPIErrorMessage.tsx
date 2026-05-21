@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useState } from 'react'
 import { Box, Text } from 'src/ink.js'
 import { formatAPIError } from 'src/services/api/errorUtils.js'
@@ -6,6 +5,7 @@ import type { SystemAPIErrorMessage } from 'src/types/message.js'
 import { useInterval } from 'usehooks-ts'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
 import { MessageResponse } from '../MessageResponse.js'
+
 const MAX_API_ERROR_CHARS = 1000
 type Props = {
   message: SystemAPIErrorMessage
@@ -23,8 +23,8 @@ export function SystemAPIErrorMessage({ message, verbose }: Props) {
   const second = Math.round((retryInMs - countdownMs) / 1000)
   const retryInSecondsLive = Math.max(0, second)
   const formatted = formatAPIError(error)
-  let truncated = !verbose && formatted.length > MAX_API_ERROR_CHARS
-  const text = truncated ? formatted.slice(0, MAX_API_ERROR_CHARS) + '\u2026' : formatted
+  const truncated = !verbose && formatted.length > MAX_API_ERROR_CHARS
+  const text = truncated ? `${formatted.slice(0, MAX_API_ERROR_CHARS)}\u2026` : formatted
   return (
     <MessageResponse>
       {

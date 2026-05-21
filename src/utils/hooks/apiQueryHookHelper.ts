@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import type { QuerySource } from '../../constants/querySource.js'
 import { queryModelWithoutStreaming } from '../../services/api/llmOrchestrator.js'
 import type { Message } from '../../types/message.js'

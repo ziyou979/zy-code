@@ -121,4 +121,5 @@ Remember: DO NOT write or edit any files yet. This is a read-only exploration an
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(EnterPlanModeTool)

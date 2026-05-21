@@ -11,8 +11,8 @@
  *   Windows — Windows Terminal (wt.exe), PowerShell, cmd.exe
  */
 
-import { spawn } from 'child_process'
-import { basename } from 'path'
+import { spawn } from 'node:child_process'
+import { basename } from 'node:path'
 import { getGlobalConfig } from '../config.js'
 import { logForDebugging } from '../debug.js'
 import { execFileNoThrow } from '../execFileNoThrow.js'
@@ -278,7 +278,9 @@ end tell`
       const { code } = await execFileNoThrow('osascript', ['-e', script], {
         useCwd: false,
       })
-      if (code === 0) return true
+      if (code === 0) {
+        return true
+      }
       break
     }
 
@@ -300,37 +302,53 @@ end tell`
 
     case 'Ghostty': {
       const args = ['-na', terminal.command, '--args', '--window-save-state=never']
-      if (cwd) args.push(`--working-directory=${cwd}`)
+      if (cwd) {
+        args.push(`--working-directory=${cwd}`)
+      }
       args.push('-e', ZyPath, ...ZyArgs)
       const { code } = await execFileNoThrow('open', args, { useCwd: false })
-      if (code === 0) return true
+      if (code === 0) {
+        return true
+      }
       break
     }
 
     case 'Alacritty': {
       const args = ['-na', terminal.command, '--args']
-      if (cwd) args.push('--working-directory', cwd)
+      if (cwd) {
+        args.push('--working-directory', cwd)
+      }
       args.push('-e', ZyPath, ...ZyArgs)
       const { code } = await execFileNoThrow('open', args, { useCwd: false })
-      if (code === 0) return true
+      if (code === 0) {
+        return true
+      }
       break
     }
 
     case 'kitty': {
       const args = ['-na', terminal.command, '--args']
-      if (cwd) args.push('--directory', cwd)
+      if (cwd) {
+        args.push('--directory', cwd)
+      }
       args.push(ZyPath, ...ZyArgs)
       const { code } = await execFileNoThrow('open', args, { useCwd: false })
-      if (code === 0) return true
+      if (code === 0) {
+        return true
+      }
       break
     }
 
     case 'WezTerm': {
       const args = ['-na', terminal.command, '--args', 'start']
-      if (cwd) args.push('--cwd', cwd)
+      if (cwd) {
+        args.push('--cwd', cwd)
+      }
       args.push('--', ZyPath, ...ZyArgs)
       const { code } = await execFileNoThrow('open', args, { useCwd: false })
-      if (code === 0) return true
+      if (code === 0) {
+        return true
+      }
       break
     }
   }
@@ -410,7 +428,9 @@ async function launchWindowsTerminal(
   switch (terminal.name) {
     // --- PURE ARGV PATH ---
     case 'Windows Terminal':
-      if (cwd) args.push('-d', cwd)
+      if (cwd) {
+        args.push('-d', cwd)
+      }
       args.push('--', ZyPath, ...ZyArgs)
       break
 

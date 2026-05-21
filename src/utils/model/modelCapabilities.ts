@@ -1,8 +1,8 @@
-import { readFileSync } from 'fs'
-import { mkdir, writeFile } from 'fs/promises'
+import { readFileSync } from 'node:fs'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import isEqual from 'lodash-es/isEqual.js'
 import memoize from 'lodash-es/memoize.js'
-import { join } from 'path'
 import { z } from 'zod/v4'
 import { getLLMAdapter } from '../../services/api/client.js'
 import { logForDebugging } from '../debug.js'
@@ -14,9 +14,9 @@ import { jsonStringify } from '../slowOperations.js'
 import { ALL_MODEL_CONFIGS_WITH_COSTS } from './configs.js'
 import {
   getAPIProvider,
-  providerHasCapability,
-  isAnthropicBaseUrl,
   getModelCostsFromSettings,
+  isAnthropicBaseUrl,
+  providerHasCapability,
 } from './providers.js'
 
 // .strip() —— 不将内部专用字段（mycro_deployments 等）持久化到磁盘
@@ -54,9 +54,15 @@ function getCachePath(): string {
 }
 
 function isModelCapabilitiesEligible(): boolean {
-  if (!isInternalBuild()) return false
-  if (!providerHasCapability(getAPIProvider(), 'prompt_caching')) return false
-  if (!isAnthropicBaseUrl()) return false
+  if (!isInternalBuild()) {
+    return false
+  }
+  if (!providerHasCapability(getAPIProvider(), 'prompt_caching')) {
+    return false
+  }
+  if (!isAnthropicBaseUrl()) {
+    return false
+  }
   return true
 }
 
@@ -158,20 +164,32 @@ export function getModelCapability(model: string): ModelCapability | undefined {
 }
 
 export async function refreshModelCapabilities(): Promise<void> {
-  if (!isModelCapabilitiesEligible()) return
-  if (isEssentialTrafficOnly()) return
+  if (!isModelCapabilitiesEligible()) {
+    return
+  }
+  if (isEssentialTrafficOnly()) {
+    return
+  }
 
   try {
     const adapter = getLLMAdapter()
-    if (!adapter.listModels) return
+    if (!adapter.listModels) {
+      return
+    }
     const rawModels = await adapter.listModels()
-    if (!rawModels || rawModels.length === 0) return
+    if (!rawModels || rawModels.length === 0) {
+      return
+    }
     const parsed: ModelCapability[] = []
     for (const entry of rawModels) {
       const result = ModelCapabilitySchema().safeParse(entry)
-      if (result.success) parsed.push(result.data)
+      if (result.success) {
+        parsed.push(result.data)
+      }
     }
-    if (parsed.length === 0) return
+    if (parsed.length === 0) {
+      return
+    }
 
     const path = getCachePath()
     const models = sortForMatching(parsed)

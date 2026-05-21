@@ -28,7 +28,9 @@ export function AssistantSessionChooser({
     }
     if (key.return) {
       const s = sessions[safeSelected]
-      if (s) onSelect(s.id)
+      if (s) {
+        onSelect(s.id)
+      }
       return
     }
     if (key.upArrow) {
@@ -40,10 +42,14 @@ export function AssistantSessionChooser({
 
   // 若无会话直接取消
   useEffect(() => {
-    if (sessions.length === 0) onCancel()
+    if (sessions.length === 0) {
+      onCancel()
+    }
   }, [sessions.length, onCancel])
 
-  if (sessions.length === 0) return <Text>No sessions available.</Text>
+  if (sessions.length === 0) {
+    return <Text>No sessions available.</Text>
+  }
 
   return (
     <Box flexDirection="column" paddingY={1}>

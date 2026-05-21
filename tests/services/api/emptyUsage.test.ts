@@ -6,7 +6,7 @@
  * - 所有数值字段为 0
  * - 不可变（Readonly）
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import { EMPTY_USAGE } from '../../../src/services/api/emptyUsage.js'
 
 describe('EMPTY_USAGE', () => {

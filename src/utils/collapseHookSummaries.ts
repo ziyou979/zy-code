@@ -20,7 +20,9 @@ export function collapseHookSummaries(messages: RenderableMessage[]): Renderable
       const group: SystemStopHookSummaryMessage[] = []
       while (i < messages.length) {
         const next = messages[i]!
-        if (!isLabeledHookSummary(next) || next.hookLabel !== label) break
+        if (!isLabeledHookSummary(next) || next.hookLabel !== label) {
+          break
+        }
         group.push(next)
         i++
       }

@@ -1,4 +1,4 @@
-import { sep } from 'path'
+import { sep } from 'node:path'
 import { logEvent } from '../services/analytics/index.js'
 import { execFileNoThrowWithCwd } from './execFileNoThrow.js'
 import { gitExe } from './git.js'

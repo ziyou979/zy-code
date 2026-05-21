@@ -10,7 +10,9 @@ export function widestLine(string: string): number {
 
     maxWidth = Math.max(maxWidth, lineWidth(line))
 
-    if (end === -1) break
+    if (end === -1) {
+      break
+    }
     start = end + 1
   }
 

@@ -99,25 +99,35 @@ export const RemoteTriggerTool = buildTool({
         url = base
         break
       case 'get':
-        if (!trigger_id) throw new Error('get requires trigger_id')
+        if (!trigger_id) {
+          throw new Error('get requires trigger_id')
+        }
         method = 'GET'
         url = `${base}/${trigger_id}`
         break
       case 'create':
-        if (!body) throw new Error('create requires body')
+        if (!body) {
+          throw new Error('create requires body')
+        }
         method = 'POST'
         url = base
         data = body
         break
       case 'update':
-        if (!trigger_id) throw new Error('update requires trigger_id')
-        if (!body) throw new Error('update requires body')
+        if (!trigger_id) {
+          throw new Error('update requires trigger_id')
+        }
+        if (!body) {
+          throw new Error('update requires body')
+        }
         method = 'POST'
         url = `${base}/${trigger_id}`
         data = body
         break
       case 'run':
-        if (!trigger_id) throw new Error('run requires trigger_id')
+        if (!trigger_id) {
+          throw new Error('run requires trigger_id')
+        }
         method = 'POST'
         url = `${base}/${trigger_id}/run`
         data = {}
@@ -154,4 +164,5 @@ export const RemoteTriggerTool = buildTool({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(RemoteTriggerTool)

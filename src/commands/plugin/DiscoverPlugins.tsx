@@ -40,6 +40,7 @@ import {
 } from './pluginDetailsHelpers.js'
 import type { ViewState as ParentViewState } from './types.js'
 import { usePagination } from './usePagination.js'
+
 type Props = {
   error: string | null
   setError: (error: string | null) => void
@@ -101,7 +102,9 @@ export function DiscoverPlugins({
 
   // Filter plugins based on search query
   const filteredPlugins = useMemo(() => {
-    if (!searchQuery) return availablePlugins
+    if (!searchQuery) {
+      return availablePlugins
+    }
     const lowerQuery = searchQuery.toLowerCase()
     return availablePlugins.filter(
       (plugin) =>
@@ -125,7 +128,7 @@ export function DiscoverPlugins({
   // Reset selection when search query changes
   useEffect(() => {
     setSelectedIndex(0)
-  }, [searchQuery])
+  }, [])
 
   // Details view state
   const [detailsMenuIndex, setDetailsMenuIndex] = useState(0)
@@ -180,7 +183,9 @@ export function DiscoverPlugins({
             uninstalledPlugins.sort((pluginA, pluginB) => {
               const countA = counts.get(pluginA.pluginId) ?? 0
               const countB = counts.get(pluginB.pluginId) ?? 0
-              if (countA !== countB) return countB - countA
+              if (countA !== countB) {
+                return countB - countA
+              }
               return pluginA.entry.name.localeCompare(pluginB.entry.name)
             })
           } else {
@@ -211,7 +216,7 @@ export function DiscoverPlugins({
         const errorResult = formatMarketplaceLoadingErrors(failures, successCount)
         if (errorResult) {
           if (errorResult.type === 'warning') {
-            setWarning(errorResult.message + '. Showing available plugins.')
+            setWarning(`${errorResult.message}. Showing available plugins.`)
           } else {
             throw new Error(errorResult.message)
           }
@@ -245,7 +250,9 @@ export function DiscoverPlugins({
 
   // Install selected plugins
   const installSelectedPlugins = async () => {
-    if (selectedForInstall.size === 0) return
+    if (selectedForInstall.size === 0) {
+      return
+    }
     const pluginsToInstall = availablePlugins.filter((p_1) => selectedForInstall.has(p_1.pluginId))
     setInstallingPlugins(new Set(pluginsToInstall.map((p_2) => p_2.pluginId)))
     let successCount_0 = 0
@@ -471,7 +478,9 @@ export function DiscoverPlugins({
 
   // Plugin-details navigation
   const detailsMenuOptions = React.useMemo(() => {
-    if (!selectedPlugin) return []
+    if (!selectedPlugin) {
+      return []
+    }
     const hasHomepage = selectedPlugin.entry.homepage
     const githubRepo = extractGitHubRepo(selectedPlugin)
     return buildPluginDetailsMenuOptions(hasHomepage, githubRepo)
@@ -489,7 +498,9 @@ export function DiscoverPlugins({
         }
       },
       'select:accept': () => {
-        if (!selectedPlugin) return
+        if (!selectedPlugin) {
+          return
+        }
         const action = detailsMenuOptions[detailsMenuIndex]?.action
         const hasHomepage_0 = selectedPlugin.entry.homepage
         const githubRepo_0 = extractGitHubRepo(selectedPlugin)
@@ -770,7 +781,7 @@ export function DiscoverPlugins({
     </Box>
   )
 }
-// @ts-ignore
+// @ts-expect-error
 function DiscoverPluginsKeyHint({ hasSelection, canToggle }: any) {
   return (
     <Box marginTop={1}>
@@ -858,7 +869,6 @@ function EmptyStateMessage({ reason }) {
           <Text dimColor={true}>Check for new plugins later or add more marketplaces.</Text>
         </>
       )
-    case 'no-marketplaces-configured':
     default:
       return (
         <>

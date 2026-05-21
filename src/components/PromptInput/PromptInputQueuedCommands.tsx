@@ -11,6 +11,7 @@ import { isQueuedCommandVisible } from '../../utils/messageQueueManager.js'
 import { createUserMessage, EMPTY_LOOKUPS, normalizeMessages } from '../../utils/messages.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { Message } from '../Message.js'
+
 const EMPTY_SET = new Set<string>()
 
 /**
@@ -86,13 +87,17 @@ function PromptInputQueuedCommandsImpl(): React.ReactNode {
   // createUserMessage mints a fresh UUID per call; without memoization, streaming
   // re-renders defeat Message's areMessagePropsEqual (compares uuid) → flicker.
   const messages = useMemo(() => {
-    if (queuedCommands.length === 0) return null
+    if (queuedCommands.length === 0) {
+      return null
+    }
     // task-notification is shown via useInboxNotification; most isMeta commands
     // (scheduled tasks, proactive ticks) are system-generated and hidden.
     // Channel messages are the exception — isMeta but shown so the keyboard
     // user sees what arrived.
     const visibleCommands = queuedCommands.filter(isQueuedCommandVisible)
-    if (visibleCommands.length === 0) return null
+    if (visibleCommands.length === 0) {
+      return null
+    }
     const processedCommands = processQueuedCommands(visibleCommands)
     return normalizeMessages(
       processedCommands.map((cmd) => {

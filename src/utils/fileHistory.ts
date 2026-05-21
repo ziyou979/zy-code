@@ -1,13 +1,13 @@
-import { createHash, type UUID } from 'crypto'
+import { createHash, type UUID } from 'node:crypto'
+import type { Stats } from 'node:fs'
+import { chmod, copyFile, link, mkdir, readFile, stat, unlink } from 'node:fs/promises'
+import { dirname, isAbsolute, join, relative } from 'node:path'
+import { inspect } from 'node:util'
 import { diffLines } from 'diff'
-import type { Stats } from 'fs'
-import { chmod, copyFile, link, mkdir, readFile, stat, unlink } from 'fs/promises'
-import { dirname, isAbsolute, join, relative } from 'path'
 import { getIsNonInteractiveSession, getOriginalCwd, getSessionId } from 'src/bootstrap/state.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { notifyVscodeFileUpdated } from 'src/services/mcp/vscodeSdkMcp.js'
 import type { LogOption } from 'src/types/logs.js'
-import { inspect } from 'util'
 import { getGlobalConfig } from './config.js'
 import { logForDebugging } from './debug.js'
 import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
@@ -90,7 +90,9 @@ export async function fileHistoryTrackEdit(
     captured = state
     return state
   })
-  if (!captured) return
+  if (!captured) {
+    return
+  }
   const mostRecent = captured.snapshots.at(-1)
   if (!mostRecent) {
     logError(new Error('FileHistory: Missing most recent snapshot'))
@@ -196,7 +198,9 @@ export async function fileHistoryMakeSnapshot(
     captured = state
     return state
   })
-  if (!captured) return // updateFileHistoryState was a no-op stub (e.g. mcp.ts)
+  if (!captured) {
+    return // updateFileHistoryState was a no-op stub (e.g. mcp.ts)
+  }
 
   // Phase 2: do all IO async, outside the updater.
   const trackedFileBackups: Record<string, FileHistoryBackup> = {}
@@ -215,7 +219,9 @@ export async function fileHistoryMakeSnapshot(
           try {
             fileStats = await stat(filePath)
           } catch (e: unknown) {
-            if (!isENOENT(e)) throw e
+            if (!isENOENT(e)) {
+              throw e
+            }
           }
 
           if (!fileStats) {
@@ -261,9 +267,13 @@ export async function fileHistoryMakeSnapshot(
       const lastSnapshot = state.snapshots.at(-1)
       if (lastSnapshot) {
         for (const trackingPath of state.trackedFiles) {
-          if (trackingPath in trackedFileBackups) continue
+          if (trackingPath in trackedFileBackups) {
+            continue
+          }
           const inherited = lastSnapshot.trackedFileBackups[trackingPath]
-          if (inherited) trackedFileBackups[trackingPath] = inherited
+          if (inherited) {
+            trackedFileBackups[trackingPath] = inherited
+          }
         }
       }
       const now = new Date()
@@ -328,7 +338,9 @@ export async function fileHistoryRewind(
     captured = state
     return state
   })
-  if (!captured) return
+  if (!captured) {
+    return
+  }
 
   const targetSnapshot = captured.snapshots.findLast((snapshot) => snapshot.messageId === messageId)
   if (!targetSnapshot) {
@@ -431,7 +443,9 @@ export async function fileHistoryGetDiffStats(
   let insertions = 0
   let deletions = 0
   for (const r of results) {
-    if (!r) continue
+    if (!r) {
+      continue
+    }
     filesChanged.push(r.filePath)
     insertions += r.stats?.insertions || 0
     deletions += r.stats?.deletions || 0
@@ -473,10 +487,14 @@ export async function fileHistoryHasAnyChanges(
       }
       if (backupFileName === null) {
         // Backup says file did not exist; probe via stat (operate-then-catch).
-        if (await pathExists(filePath)) return true
+        if (await pathExists(filePath)) {
+          return true
+        }
         continue
       }
-      if (await checkOriginFileChanged(filePath, backupFileName)) return true
+      if (await checkOriginFileChanged(filePath, backupFileName)) {
+        return true
+      }
     } catch (error) {
       logError(error)
     }
@@ -518,7 +536,9 @@ async function applySnapshot(
           logForDebugging(`FileHistory: [Rewind] Deleted ${filePath}`)
           filesChanged.push(filePath)
         } catch (e: unknown) {
-          if (!isENOENT(e)) throw e
+          if (!isENOENT(e)) {
+            throw e
+          }
           // Already absent; nothing to do.
         }
         continue
@@ -559,14 +579,18 @@ export async function checkOriginFileChanged(
     try {
       originalStats = await stat(originalFile)
     } catch (e: unknown) {
-      if (!isENOENT(e)) return true
+      if (!isENOENT(e)) {
+        return true
+      }
     }
   }
   let backupStats: Stats | null = null
   try {
     backupStats = await stat(backupPath)
   } catch (e: unknown) {
-    if (!isENOENT(e)) return true
+    if (!isENOENT(e)) {
+      return true
+    }
   }
 
   return compareStatsAndContent(originalStats, backupStats, async () => {
@@ -711,7 +735,9 @@ async function createBackup(filePath: string | null, version: number): Promise<F
   try {
     await copyFile(filePath, backupPath)
   } catch (e: unknown) {
-    if (!isENOENT(e)) throw e
+    if (!isENOENT(e)) {
+      throw e
+    }
     await mkdir(dirname(backupPath), { recursive: true })
     await copyFile(filePath, backupPath)
   }
@@ -756,7 +782,9 @@ async function restoreBackup(filePath: string, backupFileName: string): Promise<
   try {
     await copyFile(backupPath, filePath)
   } catch (e: unknown) {
-    if (!isENOENT(e)) throw e
+    if (!isENOENT(e)) {
+      throw e
+    }
     await mkdir(dirname(filePath), { recursive: true })
     await copyFile(backupPath, filePath)
   }

@@ -1,4 +1,3 @@
-import React from 'react'
 import { handlePlanModeTransition } from '../../../bootstrap/state.js'
 import { tSync } from '../../../i18n/index.js'
 import { Box, Text } from '../../../ink.js'

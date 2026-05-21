@@ -1,5 +1,6 @@
 import React, { createContext, useContext } from 'react'
 import { Mailbox } from '../utils/mailbox.js'
+
 const MailboxContext = createContext<Mailbox | undefined>(undefined)
 type Props = {
   children: React.ReactNode

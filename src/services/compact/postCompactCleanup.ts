@@ -4,9 +4,9 @@ import { clearSystemPromptSections } from '../../constants/systemPromptSections.
 import { getUserContext } from '../../context.js'
 import { clearSpeculativeChecks } from '../../tools/BashTool/bashPermissions.js'
 import { clearClassifierApprovals } from '../../utils/classifierApprovals.js'
-import { resetGetMemoryFilesCache } from '../../utils/zymd.js'
 import { clearSessionMessagesCache } from '../../utils/sessionStorage.js'
 import { clearBetaTracingState } from '../../utils/telemetry/betaSessionTracing.js'
+import { resetGetMemoryFilesCache } from '../../utils/zymd.js'
 import { resetMicrocompactState } from './microCompact.js'
 
 /**

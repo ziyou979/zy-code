@@ -33,7 +33,9 @@ import { getTeammateContext } from './teammateContext.js'
  */
 export function getParentSessionId(): string | undefined {
   const inProcessCtx = getTeammateContext()
-  if (inProcessCtx) return inProcessCtx.parentSessionId
+  if (inProcessCtx) {
+    return inProcessCtx.parentSessionId
+  }
   return dynamicTeamContext?.parentSessionId
 }
 
@@ -87,7 +89,9 @@ export function getDynamicTeamContext(): typeof dynamicTeamContext {
  */
 export function getAgentId(): string | undefined {
   const inProcessCtx = getTeammateContext()
-  if (inProcessCtx) return inProcessCtx.agentId
+  if (inProcessCtx) {
+    return inProcessCtx.agentId
+  }
   return dynamicTeamContext?.agentId
 }
 
@@ -97,7 +101,9 @@ export function getAgentId(): string | undefined {
  */
 export function getAgentName(): string | undefined {
   const inProcessCtx = getTeammateContext()
-  if (inProcessCtx) return inProcessCtx.agentName
+  if (inProcessCtx) {
+    return inProcessCtx.agentName
+  }
   return dynamicTeamContext?.agentName
 }
 
@@ -110,8 +116,12 @@ export function getAgentName(): string | undefined {
  */
 export function getTeamName(teamContext?: { teamName: string }): string | undefined {
   const inProcessCtx = getTeammateContext()
-  if (inProcessCtx) return inProcessCtx.teamName
-  if (dynamicTeamContext?.teamName) return dynamicTeamContext.teamName
+  if (inProcessCtx) {
+    return inProcessCtx.teamName
+  }
+  if (dynamicTeamContext?.teamName) {
+    return dynamicTeamContext.teamName
+  }
   return teamContext?.teamName
 }
 
@@ -123,7 +133,9 @@ export function getTeamName(teamContext?: { teamName: string }): string | undefi
 export function isTeammate(): boolean {
   // In-process teammates run within the same process
   const inProcessCtx = getTeammateContext()
-  if (inProcessCtx) return true
+  if (inProcessCtx) {
+    return true
+  }
   // Tmux teammates require both agent ID and team name
   return !!(dynamicTeamContext?.agentId && dynamicTeamContext?.teamName)
 }
@@ -135,7 +147,9 @@ export function isTeammate(): boolean {
  */
 export function getTeammateColor(): string | undefined {
   const inProcessCtx = getTeammateContext()
-  if (inProcessCtx) return inProcessCtx.color
+  if (inProcessCtx) {
+    return inProcessCtx.color
+  }
   return dynamicTeamContext?.color
 }
 
@@ -146,7 +160,9 @@ export function getTeammateColor(): string | undefined {
  */
 export function isPlanModeRequired(): boolean {
   const inProcessCtx = getTeammateContext()
-  if (inProcessCtx) return inProcessCtx.planModeRequired
+  if (inProcessCtx) {
+    return inProcessCtx.planModeRequired
+  }
   if (dynamicTeamContext !== null) {
     return dynamicTeamContext.planModeRequired
   }

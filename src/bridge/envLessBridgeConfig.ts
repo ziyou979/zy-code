@@ -144,7 +144,9 @@ export async function checkEnvLessBridgeMinVersion(): Promise<string | null> {
  * roll the v2 bridge before the app ships the new session-list query.
  */
 export async function shouldShowAppUpgradeMessage(): Promise<boolean> {
-  if (!isEnvLessBridgeEnabled()) return false
+  if (!isEnvLessBridgeEnabled()) {
+    return false
+  }
   const cfg = await getEnvLessBridgeConfig()
   return cfg.should_show_app_upgrade_message
 }

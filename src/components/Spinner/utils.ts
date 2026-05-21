@@ -69,7 +69,9 @@ const RGB_CACHE = new Map<string, RGBColorType | null>()
 
 export function parseRGB(colorStr: string): RGBColorType | null {
   const cached = RGB_CACHE.get(colorStr)
-  if (cached !== undefined) return cached
+  if (cached !== undefined) {
+    return cached
+  }
 
   const match = colorStr.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/)
   const result = match

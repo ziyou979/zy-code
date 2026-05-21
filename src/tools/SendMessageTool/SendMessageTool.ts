@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
-// @ts-ignore
+// @ts-expect-error
 import { isReplBridgeActive } from '../../bootstrap/state.js'
 import { getReplBridgeHandle } from '../../bridge/replBridgeHandle.js'
 import type { Tool, ToolUseContext } from '../../Tool.js'
@@ -128,7 +128,9 @@ function findTeammateColor(
   name: string,
 ): string | undefined {
   const teammates = appState.teamContext?.teammates
-  if (!teammates) return undefined
+  if (!teammates) {
+    return undefined
+  }
   for (const teammate of Object.values(teammates)) {
     if ('name' in teammate && (teammate as { name: string }).name === name) {
       return teammate.color
@@ -525,12 +527,18 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
   },
 
   backfillObservableInput(input) {
-    if ('type' in input) return
-    if (typeof input.to !== 'string') return
+    if ('type' in input) {
+      return
+    }
+    if (typeof input.to !== 'string') {
+      return
+    }
 
     if (input.to === '*') {
       input.type = 'broadcast'
-      if (typeof input.message === 'string') input.content = input.message
+      if (typeof input.message === 'string') {
+        input.content = input.message
+      }
     } else if (typeof input.message === 'string') {
       input.type = 'message'
       input.recipient = input.to
@@ -545,10 +553,16 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
       }
       input.type = msg.type
       input.recipient = input.to
-      if (msg.request_id !== undefined) input.request_id = msg.request_id
-      if (msg.approve !== undefined) input.approve = msg.approve
+      if (msg.request_id !== undefined) {
+        input.request_id = msg.request_id
+      }
+      if (msg.approve !== undefined) {
+        input.approve = msg.approve
+      }
       const content = msg.reason ?? msg.feedback
-      if (content !== undefined) input.content = content
+      if (content !== undefined) {
+        input.content = content
+      }
     }
   },
 
@@ -729,10 +743,10 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
           }
         }
         /* eslint-disable @typescript-eslint/no-require-imports */
-        // @ts-ignore
+        // @ts-expect-error
         const { postInterZyMessage } = require('../../bridge/peerSessions.js')
         /* eslint-enable @typescript-eslint/no-require-imports */
-        // @ts-ignore
+        // @ts-expect-error
         const result = await (postInterZyMessage as any)(addr.target, input.message)
         const preview = input.summary || truncate(input.message, 50)
         return {
@@ -746,11 +760,11 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
       }
       if (addr.scheme === 'uds') {
         /* eslint-disable @typescript-eslint/no-require-imports */
-        // @ts-ignore
+        // @ts-expect-error
         const { sendToUdsSocket } = require('../../utils/udsClient.js')
         /* eslint-enable @typescript-eslint/no-require-imports */
         try {
-          // @ts-ignore
+          // @ts-expect-error
           await (sendToUdsSocket as any)(addr.target, input.message)
           const preview = input.summary || truncate(input.message, 50)
           return {
@@ -884,4 +898,5 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(SendMessageTool)

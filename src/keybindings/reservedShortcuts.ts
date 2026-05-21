@@ -102,10 +102,15 @@ function normalizeStep(step: string): string {
       ['ctrl', 'control', 'alt', 'opt', 'option', 'meta', 'cmd', 'command', 'shift'].includes(lower)
     ) {
       // Normalize modifier names
-      if (lower === 'control') modifiers.push('ctrl')
-      else if (lower === 'option' || lower === 'opt') modifiers.push('alt')
-      else if (lower === 'command' || lower === 'cmd') modifiers.push('cmd')
-      else modifiers.push(lower)
+      if (lower === 'control') {
+        modifiers.push('ctrl')
+      } else if (lower === 'option' || lower === 'opt') {
+        modifiers.push('alt')
+      } else if (lower === 'command' || lower === 'cmd') {
+        modifiers.push('cmd')
+      } else {
+        modifiers.push(lower)
+      }
     } else {
       mainKey = lower
     }

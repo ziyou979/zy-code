@@ -42,6 +42,7 @@ import {
 } from './pluginDetailsHelpers.js'
 import type { ViewState as ParentViewState } from './types.js'
 import { usePagination } from './usePagination.js'
+
 type Props = {
   error: string | null
   setError: (error: string | null) => void
@@ -169,8 +170,12 @@ export function BrowseMarketplace({
 
         // Sort so zy-plugin-directory is always first
         marketplaceInfos.sort((a, b) => {
-          if (a.name === 'zy-plugin-directory') return -1
-          if (b.name === 'zy-plugin-directory') return 1
+          if (a.name === 'zy-plugin-directory') {
+            return -1
+          }
+          if (b.name === 'zy-plugin-directory') {
+            return 1
+          }
           return 0
         })
         setMarketplaces(marketplaceInfos)
@@ -180,7 +185,7 @@ export function BrowseMarketplace({
         const errorResult = formatMarketplaceLoadingErrors(failures, successCount)
         if (errorResult) {
           if (errorResult.type === 'warning') {
-            setWarning(errorResult.message + '. Showing available marketplaces.')
+            setWarning(`${errorResult.message}. Showing available marketplaces.`)
           } else {
             throw new Error(errorResult.message)
           }
@@ -267,13 +272,17 @@ export function BrowseMarketplace({
 
   // Load plugins when a marketplace is selected
   useEffect(() => {
-    if (!selectedMarketplace) return
+    if (!selectedMarketplace) {
+      return
+    }
     let cancelled = false
     async function loadPluginsForMarketplace(marketplaceName: string) {
       setLoading(true)
       try {
         const targetMarketplaceData = await getMarketplace(marketplaceName)
-        if (cancelled) return
+        if (cancelled) {
+          return
+        }
         if (!targetMarketplaceData) {
           throw new Error(`Failed to load marketplace: ${marketplaceName}`)
         }
@@ -282,7 +291,9 @@ export function BrowseMarketplace({
         const installablePlugins: InstallablePlugin[] = []
         for (const entry of targetMarketplaceData.plugins) {
           const currentPluginId = createPluginId(entry.name, marketplaceName)
-          if (isPluginBlockedByPolicy(currentPluginId)) continue
+          if (isPluginBlockedByPolicy(currentPluginId)) {
+            continue
+          }
           installablePlugins.push({
             entry,
             marketplaceName: marketplaceName,
@@ -297,14 +308,18 @@ export function BrowseMarketplace({
         // Fetch install counts and sort by popularity
         try {
           const counts = await getInstallCounts()
-          if (cancelled) return
+          if (cancelled) {
+            return
+          }
           setInstallCounts(counts)
           if (counts) {
             // Sort by install count (descending), then alphabetically
             installablePlugins.sort((pluginA, pluginB) => {
               const countA = counts.get(pluginA.pluginId) ?? 0
               const countB = counts.get(pluginB.pluginId) ?? 0
-              if (countA !== countB) return countB - countA
+              if (countA !== countB) {
+                return countB - countA
+              }
               return pluginA.entry.name.localeCompare(pluginB.entry.name)
             })
           } else {
@@ -314,7 +329,9 @@ export function BrowseMarketplace({
             )
           }
         } catch (error) {
-          if (cancelled) return
+          if (cancelled) {
+            return
+          }
           // Log the error, then gracefully degrade to alphabetical sort
           logForDebugging(`Failed to fetch install counts: ${errorMessage(error)}`)
           installablePlugins.sort((pluginA, pluginB) =>
@@ -325,7 +342,9 @@ export function BrowseMarketplace({
         setSelectedIndex(0)
         setSelectedForInstall(new Set())
       } catch (error) {
-        if (cancelled) return
+        if (cancelled) {
+          return
+        }
         setError(error instanceof Error ? error.message : 'Failed to load plugins')
       } finally {
         setLoading(false)
@@ -339,7 +358,9 @@ export function BrowseMarketplace({
 
   // Install selected plugins
   const installSelectedPlugins = async () => {
-    if (selectedForInstall.size === 0) return
+    if (selectedForInstall.size === 0) {
+      return
+    }
     const pluginsToInstall = availablePlugins.filter((pluginItem) =>
       selectedForInstall.has(pluginItem.pluginId),
     )
@@ -542,7 +563,9 @@ export function BrowseMarketplace({
 
   // Plugin-details navigation
   const detailsMenuOptions = React.useMemo(() => {
-    if (!selectedPlugin) return []
+    if (!selectedPlugin) {
+      return []
+    }
     const hasHomepage = selectedPlugin.entry.homepage
     const githubRepo = extractGitHubRepo(selectedPlugin)
     return buildPluginDetailsMenuOptions(hasHomepage, githubRepo)
@@ -560,7 +583,9 @@ export function BrowseMarketplace({
         }
       },
       'select:accept': () => {
-        if (!selectedPlugin) return
+        if (!selectedPlugin) {
+          return
+        }
         const action = detailsMenuOptions[detailsMenuIndex]?.action
         const hasHomepage_0 = selectedPlugin.entry.homepage
         const githubRepo_0 = extractGitHubRepo(selectedPlugin)
@@ -780,26 +805,23 @@ export function BrowseMarketplace({
           {!selectedPlugin.entry.commands &&
             !selectedPlugin.entry.agents &&
             !selectedPlugin.entry.hooks &&
-            !selectedPlugin.entry.mcpServers && (
-              <>
-                {typeof selectedPlugin.entry.source === 'object' &&
-                'source' in selectedPlugin.entry.source &&
-                (selectedPlugin.entry.source.source === 'github' ||
-                  selectedPlugin.entry.source.source === 'url' ||
-                  selectedPlugin.entry.source.source === 'npm' ||
-                  selectedPlugin.entry.source.source === 'pip') ? (
-                  <Text dimColor>· Component summary not available for remote plugin</Text>
-                ) : (
-                  // TODO: Actually scan local plugin directories to show real components
-                  // This would require accessing the filesystem to check for:
-                  // - commands/ directory and list files
-                  // - agents/ directory and list files
-                  // - hooks/ directory and list files
-                  // - .mcp.json or mcp-servers.json files
-                  <Text dimColor>· Components will be discovered at installation</Text>
-                )}
-              </>
-            )}
+            !selectedPlugin.entry.mcpServers &&
+            (typeof selectedPlugin.entry.source === 'object' &&
+            'source' in selectedPlugin.entry.source &&
+            (selectedPlugin.entry.source.source === 'github' ||
+              selectedPlugin.entry.source.source === 'url' ||
+              selectedPlugin.entry.source.source === 'npm' ||
+              selectedPlugin.entry.source.source === 'pip') ? (
+              <Text dimColor>· Component summary not available for remote plugin</Text>
+            ) : (
+              // TODO: Actually scan local plugin directories to show real components
+              // This would require accessing the filesystem to check for:
+              // - commands/ directory and list files
+              // - agents/ directory and list files
+              // - hooks/ directory and list files
+              // - .mcp.json or mcp-servers.json files
+              <Text dimColor>· Components will be discovered at installation</Text>
+            ))}
         </Box>
 
         <PluginTrustWarning />

@@ -15,6 +15,7 @@ import {
   installLatest,
 } from '../utils/nativeInstaller/index.js'
 import { getInitialSettings, updateSettingsForSource } from '../utils/settings/settings.js'
+
 interface InstallProps {
   onDone: (
     result: string,

@@ -1,5 +1,5 @@
-import * as path from 'path'
-import { pathToFileURL } from 'url'
+import * as path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import type { InitializeParams } from 'vscode-languageserver-protocol'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -7,7 +7,7 @@ import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { sleep } from '../../utils/sleep.js'
 import type { createLSPClient as createLSPClientType } from './LSPClient.js'
-// @ts-ignore
+// @ts-expect-error
 import type { LspServerState, ScopedLspServerConfig } from './types.js'
 
 /**
@@ -384,7 +384,7 @@ export function createLSPServerInstance(
           typeof errorCode === 'number' && errorCode === LSP_ERROR_CONTENT_MODIFIED
 
         if (isContentModifiedError && attempt < MAX_RETRIES_FOR_TRANSIENT_ERRORS) {
-          const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt)
+          const delay = RETRY_BASE_DELAY_MS * 2 ** attempt
           logForDebugging(
             `LSP request '${method}' to '${name}' got ContentModified error, ` +
               `retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES_FOR_TRANSIENT_ERRORS})…`,

@@ -20,11 +20,17 @@ function parseBudgetMatch(value: string, suffix: string): number {
 
 export function parseTokenBudget(text: string): number | null {
   const startMatch = text.match(SHORTHAND_START_RE)
-  if (startMatch) return parseBudgetMatch(startMatch[1]!, startMatch[2]!)
+  if (startMatch) {
+    return parseBudgetMatch(startMatch[1]!, startMatch[2]!)
+  }
   const endMatch = text.match(SHORTHAND_END_RE)
-  if (endMatch) return parseBudgetMatch(endMatch[1]!, endMatch[2]!)
+  if (endMatch) {
+    return parseBudgetMatch(endMatch[1]!, endMatch[2]!)
+  }
   const verboseMatch = text.match(VERBOSE_RE)
-  if (verboseMatch) return parseBudgetMatch(verboseMatch[1]!, verboseMatch[2]!)
+  if (verboseMatch) {
+    return parseBudgetMatch(verboseMatch[1]!, verboseMatch[2]!)
+  }
   return null
 }
 

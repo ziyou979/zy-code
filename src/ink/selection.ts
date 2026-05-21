@@ -94,13 +94,17 @@ export function startSelection(s: SelectionState, col: number, row: number): voi
 }
 
 export function updateSelection(s: SelectionState, col: number, row: number): void {
-  if (!s.isDragging) return
+  if (!s.isDragging) {
+    return
+  }
   // First motion at the same cell as anchor is a no-op. Terminals in mode
   // 1002 can fire a drag event at the anchor cell (sub-pixel tremor, or a
   // motion-release pair). Setting focus here would turn a bare click into
   // a 1-cell selection and clobber the clipboard via useCopyOnSelect. Once
   // focus is set (real drag), we track normally including back to anchor.
-  if (!s.focus && s.anchor && s.anchor.col === col && s.anchor.row === row) return
+  if (!s.focus && s.anchor && s.anchor.col === col && s.anchor.row === row) {
+    return
+  }
   s.focus = { col, row }
 }
 
@@ -140,8 +144,12 @@ const WORD_CHAR = /[\p{L}\p{N}_/.\-+~\\]/u
  * selects the whitespace run.
  */
 function charClass(c: string): 0 | 1 | 2 {
-  if (c === ' ' || c === '') return 0
-  if (WORD_CHAR.test(c)) return 1
+  if (c === ' ' || c === '') {
+    return 0
+  }
+  if (WORD_CHAR.test(c)) {
+    return 1
+  }
   return 2
 }
 
@@ -151,7 +159,9 @@ function charClass(c: string): 0 | 1 | 2 {
  * selectWordAt（初始双击）和 extendWordSelection（拖拽）使用。
  */
 function wordBoundsAt(screen: Screen, col: number, row: number): { lo: number; hi: number } | null {
-  if (row < 0 || row >= screen.height) return null
+  if (row < 0 || row >= screen.height) {
+    return null
+  }
   const width = screen.width
   const noSelect = screen.noSelect
   const rowOff = row * width
@@ -161,12 +171,18 @@ function wordBoundsAt(screen: Screen, col: number, row: number): { lo: number; h
   let c = col
   if (c > 0) {
     const cell = cellAt(screen, c, row)
-    if (cell && cell.width === CellWidth.SpacerTail) c -= 1
+    if (cell && cell.width === CellWidth.SpacerTail) {
+      c -= 1
+    }
   }
-  if (c < 0 || c >= width || noSelect[rowOff + c] === 1) return null
+  if (c < 0 || c >= width || noSelect[rowOff + c] === 1) {
+    return null
+  }
 
   const startCell = cellAt(screen, c, row)
-  if (!startCell) return null
+  if (!startCell) {
+    return null
+  }
   const cls = charClass(startCell.char)
 
   // 向左扩展：包含相同类别的单元格，在 noSelect 或
@@ -175,18 +191,28 @@ function wordBoundsAt(screen: Screen, col: number, row: number): { lo: number; h
   let lo = c
   while (lo > 0) {
     const prev = lo - 1
-    if (noSelect[rowOff + prev] === 1) break
+    if (noSelect[rowOff + prev] === 1) {
+      break
+    }
     const pc = cellAt(screen, prev, row)
-    if (!pc) break
+    if (!pc) {
+      break
+    }
     if (pc.width === CellWidth.SpacerTail) {
       // 跳过 spacer 到宽字符 head
-      if (prev === 0 || noSelect[rowOff + prev - 1] === 1) break
+      if (prev === 0 || noSelect[rowOff + prev - 1] === 1) {
+        break
+      }
       const head = cellAt(screen, prev - 1, row)
-      if (!head || charClass(head.char) !== cls) break
+      if (!head || charClass(head.char) !== cls) {
+        break
+      }
       lo = prev - 1
       continue
     }
-    if (charClass(pc.char) !== cls) break
+    if (charClass(pc.char) !== cls) {
+      break
+    }
     lo = prev
   }
 
@@ -194,16 +220,22 @@ function wordBoundsAt(screen: Screen, col: number, row: number): { lo: number; h
   let hi = c
   while (hi < width - 1) {
     const next = hi + 1
-    if (noSelect[rowOff + next] === 1) break
+    if (noSelect[rowOff + next] === 1) {
+      break
+    }
     const nc = cellAt(screen, next, row)
-    if (!nc) break
+    if (!nc) {
+      break
+    }
     if (nc.width === CellWidth.SpacerTail) {
       // 将 spacer tail 包含在选择范围内（它属于
       // hi 处的宽字符）并继续越过它。
       hi = next
       continue
     }
-    if (charClass(nc.char) !== cls) break
+    if (charClass(nc.char) !== cls) {
+      break
+    }
     hi = next
   }
 
@@ -212,8 +244,12 @@ function wordBoundsAt(screen: Screen, col: number, row: number): { lo: number; h
 
 /** -1 如果 a < b，1 如果 a > b，0 如果相等（阅读顺序：先行后列）。 */
 function comparePoints(a: Point, b: Point): number {
-  if (a.row !== b.row) return a.row < b.row ? -1 : 1
-  if (a.col !== b.col) return a.col < b.col ? -1 : 1
+  if (a.row !== b.row) {
+    return a.row < b.row ? -1 : 1
+  }
+  if (a.col !== b.col) {
+    return a.col < b.col ? -1 : 1
+  }
   return 0
 }
 
@@ -226,7 +262,9 @@ function comparePoints(a: Point, b: Point): number {
  */
 export function selectWordAt(s: SelectionState, screen: Screen, col: number, row: number): void {
   const b = wordBoundsAt(screen, col, row)
-  if (!b) return
+  if (!b) {
+    return
+  }
   const lo = { col: b.lo, row }
   const hi = { col: b.hi, row }
   s.anchor = lo
@@ -240,7 +278,9 @@ export function selectWordAt(s: SelectionState, screen: Screen, col: number, row
 // 检查是精确的（无宽字符/字素偏移）。
 const URL_BOUNDARY = new Set([...'<>"\'` '])
 function isUrlChar(c: string): boolean {
-  if (c.length !== 1) return false
+  if (c.length !== 1) {
+    return false
+  }
   const code = c.charCodeAt(0)
   return code >= 0x21 && code <= 0x7e && !URL_BOUNDARY.has(c)
 }
@@ -252,7 +292,9 @@ function isUrlChar(c: string): boolean {
  * 当单元格没有 OSC 8 hyperlink 时。
  */
 export function findPlainTextUrlAt(screen: Screen, col: number, row: number): string | undefined {
-  if (row < 0 || row >= screen.height) return undefined
+  if (row < 0 || row >= screen.height) {
+    return undefined
+  }
   const width = screen.width
   const noSelect = screen.noSelect
   const rowOff = row * width
@@ -260,12 +302,18 @@ export function findPlainTextUrlAt(screen: Screen, col: number, row: number): st
   let c = col
   if (c > 0) {
     const cell = cellAt(screen, c, row)
-    if (cell && cell.width === CellWidth.SpacerTail) c -= 1
+    if (cell && cell.width === CellWidth.SpacerTail) {
+      c -= 1
+    }
   }
-  if (c < 0 || c >= width || noSelect[rowOff + c] === 1) return undefined
+  if (c < 0 || c >= width || noSelect[rowOff + c] === 1) {
+    return undefined
+  }
 
   const startCell = cellAt(screen, c, row)
-  if (!startCell || !isUrlChar(startCell.char)) return undefined
+  if (!startCell || !isUrlChar(startCell.char)) {
+    return undefined
+  }
 
   // 向左/向右扩展到 URL 字符运行的边界。URL 是 ASCII
   //（CellWidth.Narrow，1 代码单元），所以遇到非 ASCII/宽/spacer
@@ -273,22 +321,32 @@ export function findPlainTextUrlAt(screen: Screen, col: number, row: number): st
   let lo = c
   while (lo > 0) {
     const prev = lo - 1
-    if (noSelect[rowOff + prev] === 1) break
+    if (noSelect[rowOff + prev] === 1) {
+      break
+    }
     const pc = cellAt(screen, prev, row)
-    if (!pc || pc.width !== CellWidth.Narrow || !isUrlChar(pc.char)) break
+    if (!pc || pc.width !== CellWidth.Narrow || !isUrlChar(pc.char)) {
+      break
+    }
     lo = prev
   }
   let hi = c
   while (hi < width - 1) {
     const next = hi + 1
-    if (noSelect[rowOff + next] === 1) break
+    if (noSelect[rowOff + next] === 1) {
+      break
+    }
     const nc = cellAt(screen, next, row)
-    if (!nc || nc.width !== CellWidth.Narrow || !isUrlChar(nc.char)) break
+    if (!nc || nc.width !== CellWidth.Narrow || !isUrlChar(nc.char)) {
+      break
+    }
     hi = next
   }
 
   let token = ''
-  for (let i = lo; i <= hi; i++) token += cellAt(screen, i, row)!.char
+  for (let i = lo; i <= hi; i++) {
+    token += cellAt(screen, i, row)!.char
+  }
 
   // 1 单元格 = 1 字符在 [lo, hi] 范围内（仅 ASCII 运行），所以字符串索引 =
   // 列偏移。查找点击处或之前的最后一个 scheme 锚点 —
@@ -305,7 +363,9 @@ export function findPlainTextUrlAt(screen: Screen, col: number, row: number): st
     }
     urlStart = m.index
   }
-  if (urlStart < 0) return undefined
+  if (urlStart < 0) {
+    return undefined
+  }
   let url = token.slice(urlStart, urlEnd)
 
   // 去除尾部句子标点。对于闭合符 () ] }，仅在不平衡时去除
@@ -318,20 +378,30 @@ export function findPlainTextUrlAt(screen: Screen, col: number, row: number): st
       continue
     }
     const opener = OPENER[last]
-    if (!opener) break
+    if (!opener) {
+      break
+    }
     let opens = 0
     let closes = 0
     for (let i = 0; i < url.length; i++) {
       const ch = url.charAt(i)
-      if (ch === opener) opens++
-      else if (ch === last) closes++
+      if (ch === opener) {
+        opens++
+      } else if (ch === last) {
+        closes++
+      }
     }
-    if (closes > opens) url = url.slice(0, -1)
-    else break
+    if (closes > opens) {
+      url = url.slice(0, -1)
+    } else {
+      break
+    }
   }
 
   // urlStart 已经保证点击 >= URL 起始；检查右边缘。
-  if (clickIdx >= urlStart + url.length) return undefined
+  if (clickIdx >= urlStart + url.length) {
+    return undefined
+  }
 
   return url
 }
@@ -344,7 +414,9 @@ export function findPlainTextUrlAt(screen: Screen, col: number, row: number): st
  * 行内容。
  */
 export function selectLineAt(s: SelectionState, screen: Screen, row: number): void {
-  if (row < 0 || row >= screen.height) return
+  if (row < 0 || row >= screen.height) {
+    return
+  }
   const lo = { col: 0, row }
   const hi = { col: screen.width - 1, row }
   s.anchor = lo
@@ -361,7 +433,9 @@ export function selectLineAt(s: SelectionState, screen: Screen, row: number): vo
  * 所以拖拽到装订线仍然扩展。
  */
 export function extendSelection(s: SelectionState, screen: Screen, col: number, row: number): void {
-  if (!s.isDragging || !s.anchorSpan) return
+  if (!s.isDragging || !s.anchorSpan) {
+    return
+  }
   const span = s.anchorSpan
   let mLo: Point
   let mHi: Point
@@ -403,7 +477,9 @@ export type FocusMove = 'left' | 'right' | 'up' | 'down' | 'lineStart' | 'lineEn
  * 保留屏幕外的行。调用者提供已钳位/换行的坐标。
  */
 export function moveFocus(s: SelectionState, col: number, row: number): void {
-  if (!s.focus) return
+  if (!s.focus) {
+    return
+  }
   s.anchorSpan = null
   s.focus = { col, row }
   // 显式用户重新定位 — 任何陈旧的虚拟焦点（来自之前的
@@ -437,7 +513,9 @@ export function shiftSelection(
   maxRow: number,
   width: number,
 ): void {
-  if (!s.anchor || !s.focus) return
+  if (!s.anchor || !s.focus) {
+    return
+  }
   // Virtual rows track pre-clamp positions so reverse scrolls restore
   // correctly. Without this, clamp(5→0) + shift(+10) = 10, not the true 5,
   // and scrolledOffAbove stays stale (highlight ≠ copy).
@@ -490,8 +568,12 @@ export function shiftSelection(
   // means a top-clamped point can stay top-clamped during a dRow>0 reverse
   // shift — dRow-based clampCol would give it the bottom col.
   const shift = (p: Point, vRow: number): Point => {
-    if (vRow < minRow) return { col: 0, row: minRow }
-    if (vRow > maxRow) return { col: width - 1, row: maxRow }
+    if (vRow < minRow) {
+      return { col: 0, row: minRow }
+    }
+    if (vRow > maxRow) {
+      return { col: width - 1, row: maxRow }
+    }
     return { col: p.col, row: vRow }
   }
   s.anchor = shift(s.anchor, vAnchor)
@@ -503,8 +585,12 @@ export function shiftSelection(
   if (s.anchorSpan) {
     const sp = (p: Point): Point => {
       const r = p.row + dRow
-      if (r < minRow) return { col: 0, row: minRow }
-      if (r > maxRow) return { col: width - 1, row: maxRow }
+      if (r < minRow) {
+        return { col: 0, row: minRow }
+      }
+      if (r > maxRow) {
+        return { col: width - 1, row: maxRow }
+      }
       return { col: p.col, row: r }
     }
     s.anchorSpan = {
@@ -522,7 +608,9 @@ export function shiftSelection(
  * 必须跟随它。Focus 保持不变（保持在鼠标位置）。
  */
 export function shiftAnchor(s: SelectionState, dRow: number, minRow: number, maxRow: number): void {
-  if (!s.anchor) return
+  if (!s.anchor) {
+    return
+  }
   // 与 shiftSelection/shiftSelectionForFollow 相同的虚拟行跟踪：
   // 拖拽→跟随转换交给 shiftSelectionForFollow，它读取
   // (virtualAnchorRow ?? anchor.row)。没有这个，拖拽阶段钳位
@@ -573,7 +661,9 @@ export function shiftSelectionForFollow(
   minRow: number,
   maxRow: number,
 ): boolean {
-  if (!s.anchor) return false
+  if (!s.anchor) {
+    return false
+  }
   // 镜像 shiftSelection：从虚拟位置计算原始（未钳位）位置
   //（如果已设置），否则从当前位置计算。这处理更新路径
   //（虚拟已从之前的键盘滚动设置）和初始化路径
@@ -625,7 +715,9 @@ export function selectionBounds(s: SelectionState): {
   start: { col: number; row: number }
   end: { col: number; row: number }
 } | null {
-  if (!s.anchor || !s.focus) return null
+  if (!s.anchor || !s.focus) {
+    return null
+  }
   return comparePoints(s.anchor, s.focus) <= 0
     ? { start: s.anchor, end: s.focus }
     : { start: s.focus, end: s.anchor }
@@ -637,11 +729,19 @@ export function selectionBounds(s: SelectionState): {
  */
 export function isCellSelected(s: SelectionState, col: number, row: number): boolean {
   const b = selectionBounds(s)
-  if (!b) return false
+  if (!b) {
+    return false
+  }
   const { start, end } = b
-  if (row < start.row || row > end.row) return false
-  if (row === start.row && col < start.col) return false
-  if (row === end.row && col > end.col) return false
+  if (row < start.row || row > end.row) {
+    return false
+  }
+  if (row === start.row && col < start.col) {
+    return false
+  }
+  if (row === end.row && col > end.col) {
+    return false
+  }
   return true
 }
 
@@ -658,9 +758,13 @@ function extractRowText(screen: Screen, row: number, colStart: number, colEnd: n
   for (let col = colStart; col <= lastCol; col++) {
     // 跳过标记为 noSelect 的单元格（装订线、行号、差异符号）。
     // 在 cellAt 之前检查以避免对被排除单元格的解码开销。
-    if (noSelect[rowOff + col] === 1) continue
+    if (noSelect[rowOff + col] === 1) {
+      continue
+    }
     const cell = cellAt(screen, col, row)
-    if (!cell) continue
+    if (!cell) {
+      continue
+    }
     // 跳过 spacer tail（宽字符的后半部分）— head 已包含
     // 完整的字素。SpacerHead 是行尾的空白。
     if (cell.width === CellWidth.SpacerTail || cell.width === CellWidth.SpacerHead) {
@@ -696,7 +800,9 @@ function joinRows(lines: string[], text: string, sw: boolean | undefined): void 
  */
 export function getSelectedText(s: SelectionState, screen: Screen): string {
   const b = selectionBounds(s)
-  if (!b) return ''
+  if (!b) {
+    return ''
+  }
   const { start, end } = b
   const sw = screen.softWrap
   const lines: string[] = []
@@ -740,13 +846,17 @@ export function captureScrolledRows(
   side: 'above' | 'below',
 ): void {
   const b = selectionBounds(s)
-  if (!b || firstRow > lastRow) return
+  if (!b || firstRow > lastRow) {
+    return
+  }
   const { start, end } = b
   // 将 [firstRow, lastRow] 与 [start.row, end.row] 相交。
   // 选择外的行不被捕获 — 它们未被选中。
   const lo = Math.max(firstRow, start.row)
   const hi = Math.min(lastRow, end.row)
-  if (lo > hi) return
+  if (lo > hi) {
+    return
+  }
 
   const width = screen.width
   const sw = screen.softWrap
@@ -818,7 +928,9 @@ export function applySelectionOverlay(
   stylePool: StylePool,
 ): void {
   const b = selectionBounds(selection)
-  if (!b) return
+  if (!b) {
+    return
+  }
   const { start, end } = b
   const width = screen.width
   const noSelect = screen.noSelect
@@ -831,7 +943,9 @@ export function applySelectionOverlay(
       // 跳过 noSelect 单元格 — 装订线保持视觉不变，所以很清楚
       // 它们不属于复制的一部分。周围的可选择单元格
       // 仍然高亮，所以选择范围保持可见。
-      if (noSelect[idx] === 1) continue
+      if (noSelect[idx] === 1) {
+        continue
+      }
       const cell = cellAtIndex(screen, idx)
       setCellStyleId(screen, col, row, stylePool.withSelectionBg(cell.styleId))
     }

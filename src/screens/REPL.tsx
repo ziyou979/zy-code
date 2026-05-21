@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { tSync } from '../i18n/index.js'
 import { feature } from 'bun:bundle'
-import { spawnSync } from 'child_process'
+import { spawnSync } from 'node:child_process'
 import {
   snapshotOutputTokensForTurn,
   getCurrentTurnTokenBudget,
@@ -11,9 +11,8 @@ import {
 } from '../bootstrap/state.js'
 import { parseTokenBudget } from '../utils/tokenBudget.js'
 import { count } from '../utils/array.js'
-import { dirname, join } from 'path'
-import { tmpdir } from 'os'
-import figures from 'figures'
+import { dirname, join } from 'node:path'
+import { tmpdir } from 'node:os'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- / n N Esc [ v are bare letters in transcript modal context, same class as g/G/j/k in ScrollKeybindingHandler
 import { useInput } from '../ink.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
@@ -21,7 +20,7 @@ import { useSearchHighlight } from '../ink/hooks/use-search-highlight.js'
 import type { JumpHandle } from '../components/VirtualMessageList.js'
 import { renderMessagesToPlainText } from '../utils/exportRenderer.js'
 import { openFileInExternalEditor } from '../utils/editor.js'
-import { writeFile } from 'fs/promises'
+import { writeFile } from 'node:fs/promises'
 import { Box, Text, useStdin, useTheme, useTerminalFocus, useTabStatus } from '../ink.js'
 import type { TabStatusKind } from '../ink/hooks/use-tab-status.js'
 import { IdleReturnDialog } from '../components/IdleReturnDialog.js'
@@ -117,7 +116,6 @@ import { useDirectConnect } from '../hooks/useDirectConnect.js'
 import type { DirectConnectConfig } from '../server/directConnectManager.js'
 import { useSSHSession } from '../hooks/useSSHSession.js'
 import { useAssistantHistory } from '../hooks/useAssistantHistory.js'
-// @ts-ignore -- SSHSession export may be missing in some builds
 import type { SSHSession } from '../ssh/createSSHSession.js'
 import { SkillImprovementSurvey } from '../components/SkillImprovementSurvey.js'
 import { useSkillImprovementSurvey } from '../hooks/useSkillImprovementSurvey.js'
@@ -175,7 +173,6 @@ const VoiceKeybindingHandler: typeof import('../hooks/useVoiceIntegration.js').V
 // 挫败感检测仅限 ant 内部使用（dogfooding）。条件 require 以便外部
 // 构建完全消除该模块（包括其两个 O(n) useMemo，每次 messages 变化时运行，
 // 以及 GrowthBook 获取）。
-// @ts-ignore -- ant-only: module exports are empty stubs in external builds
 const useFrustrationDetection: typeof import('../components/FeedbackSurvey/useFrustrationDetection.js').useFrustrationDetection =
   isInternalBuild()
     ? require('../components/FeedbackSurvey/useFrustrationDetection.js').useFrustrationDetection
@@ -185,7 +182,6 @@ const useFrustrationDetection: typeof import('../components/FeedbackSurvey/useFr
       })
 // Ant 专属组织警告。条件 require 以便从外部构建中消除组织 UUID 列表
 // （其中一个 UUID 在 excluded-strings 上）。
-// @ts-ignore -- ant-only: module exports are empty stubs in external builds
 const useAntOrgWarningNotification: typeof import('../hooks/notifs/useAntOrgWarningNotification.js').useAntOrgWarningNotification =
   isInternalBuild()
     ? require('../hooks/notifs/useAntOrgWarningNotification.js').useAntOrgWarningNotification
@@ -217,7 +213,6 @@ import { SLEEP_TOOL_NAME } from '../tools/SleepTool/prompt.js'
 import { clearSpeculativeChecks } from '../tools/BashTool/bashPermissions.js'
 import type { AutoUpdaterResult } from '../utils/autoUpdater.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
-import { hasConsoleBillingAccess } from '../utils/billing.js'
 import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -275,7 +270,7 @@ import { useTasksV2WithCollapseEffect } from '../hooks/useTasksV2.js'
 import { maybeMarkProjectOnboardingComplete } from '../projectOnboardingState.js'
 import type { MCPServerConnection } from '../services/mcp/types.js'
 import type { ScopedMcpServerConfig } from '../services/mcp/types.js'
-import { randomUUID, type UUID } from 'crypto'
+import { randomUUID, type UUID } from 'node:crypto'
 import { processSessionStartHooks } from '../utils/sessionStart.js'
 import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../utils/hooks.js'
 import { type IDESelection, useIdeSelection } from '../hooks/useIdeSelection.js'
@@ -285,7 +280,7 @@ import { resolveAgentTools } from '../tools/AgentTool/agentToolUtils.js'
 import { resumeAgentBackground } from '../tools/AgentTool/resumeAgent.js'
 import { useMainLoopModel } from '../hooks/useMainLoopModel.js'
 import { useAppState, useSetAppState, useAppStateStore } from '../state/AppState.js'
-import type { ContentBlock, ImageBlock, UserContentBlock } from '../types/llm.js'
+import type { ImageBlock, UserContentBlock } from '../types/llm.js'
 import type { ProcessUserInputContext } from '../utils/processUserInput/processUserInput.js'
 import type { PastedContent } from '../utils/config.js'
 import { copyPlanForFork, copyPlanForResume, getPlanSlug, setPlanSlug } from '../utils/plans.js'
@@ -639,12 +634,16 @@ export function REPL({
   const needsBootstrap =
     isLocalAgentTask(viewedLocalAgent) && viewedLocalAgent.retain && !viewedLocalAgent.diskLoaded
   useEffect(() => {
-    if (!viewingAgentTaskId || !needsBootstrap) return
+    if (!viewingAgentTaskId || !needsBootstrap) {
+      return
+    }
     const taskId = viewingAgentTaskId
     void getAgentTranscript(asAgentId(taskId)).then((result) => {
       setAppState((prev) => {
         const t = prev.tasks[taskId]
-        if (!isLocalAgentTask(t) || t.diskLoaded || !t.retain) return prev
+        if (!isLocalAgentTask(t) || t.diskLoaded || !t.retain) {
+          return prev
+        }
         const live = t.messages ?? []
         const liveUuids = new Set(live.map((m) => m.uuid))
         const diskOnly = result ? result.messages.filter((m) => !liveUuids.has(m.uuid)) : []
@@ -689,21 +688,15 @@ export function REPL({
   // /brief 会留下过时的工具列表（没有 SendUserMessage），
   // 模型会发出被 brief 过滤器隐藏的纯文本。
   const isBriefOnly = useAppState((s) => s.isBriefOnly)
-  const localTools = useMemo(
-    () => getTools(toolPermissionContext),
-    [toolPermissionContext, proactiveActive, isBriefOnly],
-  )
+  const localTools = useMemo(() => getTools(toolPermissionContext), [toolPermissionContext])
   useKickOffCheckAndDisableBypassPermissionsIfNeeded()
   useKickOffCheckAndDisableAutoModeIfNeeded()
   const [dynamicMcpConfig, setDynamicMcpConfig] = useState<
     Record<string, ScopedMcpServerConfig> | undefined
   >(initialDynamicMcpConfig)
-  const onChangeDynamicMcpConfig = useCallback(
-    (config: Record<string, ScopedMcpServerConfig>) => {
-      setDynamicMcpConfig(config)
-    },
-    [setDynamicMcpConfig],
-  )
+  const onChangeDynamicMcpConfig = useCallback((config: Record<string, ScopedMcpServerConfig>) => {
+    setDynamicMcpConfig(config)
+  }, [])
   const [screen, setScreen] = useState<Screen>('prompt')
   const [showAllInTranscript, setShowAllInTranscript] = useState(false)
   // [ 强制在转录模式内走 dump-to-scrollback 路径。与
@@ -724,7 +717,7 @@ export function REPL({
   const { addNotification, removeNotification } = useNotifications()
 
   // eslint-disable-next-line prefer-const
-  let trySuggestBgPRIntercept = SUGGEST_BG_PR_NOOP
+  const trySuggestBgPRIntercept = SUGGEST_BG_PR_NOOP
   const mcpClients = useMergedClients(initialMcpClients, mcp.clients)
 
   // IDE 集成
@@ -787,7 +780,9 @@ export function REPL({
   // 对话框会阻塞执行直到用户接受，然后 REPL 组件才会挂载并执行此 effect。
   // 这确保来自仓库和用户设置的插件安装仅在用户明确同意信任当前工作目录后进行。
   useEffect(() => {
-    if (isRemoteSession) return
+    if (isRemoteSession) {
+      return
+    }
     void performStartupChecks(setAppState)
   }, [setAppState, isRemoteSession])
 
@@ -957,7 +952,9 @@ export function REPL({
   const setIsExternalLoading = React.useCallback(
     (value: boolean) => {
       setIsExternalLoadingRaw(value)
-      if (value) resetTimingRefs()
+      if (value) {
+        resetTimingRefs()
+      }
     },
     [resetTimingRefs],
   )
@@ -1012,7 +1009,7 @@ export function REPL({
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [addNotification])
   const [toolJSX, setToolJSXInternal] = useState<{
     jsx: React.ReactNode | null
     shouldHidePromptInput: boolean
@@ -1183,7 +1180,7 @@ export function REPL({
   useEffect(() => {
     registerLeaderToolUseConfirmQueue(setToolUseConfirmQueue)
     return () => unregisterLeaderToolUseConfirmQueue()
-  }, [setToolUseConfirmQueue])
+  }, [])
   const [messages, rawSetMessages] = useState<MessageType[]>(initialMessages ?? [])
   const messagesRef = useRef(messages)
   // 存储已显示（如果未显示提示则为 false）的 willowMode 变体。
@@ -1252,7 +1249,7 @@ export function REPL({
   const unseenDivider = useMemo(
     () => computeUnseenDivider(messages, dividerIndex),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- length change covers appends; useUnseenDivider's count-drop guard clears dividerIndex on replace/rewind
-    [dividerIndex, messages.length],
+    [dividerIndex, messages.length, messages],
   )
   // 重新固定滚动到底部并清除未见消息基线。调用
   // 在任何用户驱动的回实时操作（提交、打字到空、
@@ -1261,7 +1258,7 @@ export function REPL({
     scrollRef.current?.scrollToBottom()
     onRepin()
     setCursor(null)
-  }, [onRepin, setCursor])
+  }, [onRepin])
   // onSubmit 提交处理器重新固定的后备。如果缓冲的 stdin
   // 事件（滚轮/拖拽）在处理器触发和 state 提交之间竞争，
   // 处理器的 scrollToBottom 可能被撤销。此 effect 在
@@ -1274,7 +1271,7 @@ export function REPL({
     if (lastMsgIsHuman) {
       repinScroll()
     }
-  }, [lastMsgIsHuman, lastMsg, repinScroll])
+  }, [lastMsgIsHuman, repinScroll])
   // 助手聊天：向上滚动时懒加载远程历史。无操作除非
   // KAIROS 构建 + config.viewerOnly。feature() 是构建时常量所以
   // 分支在非 KAIROS 构建中被死代码消除（与上面
@@ -1296,10 +1293,12 @@ export function REPL({
         onRepin()
       } else {
         onScrollAway(handle)
-        if (feature('KAIROS')) maybeLoadOlder(handle)
+        if (feature('KAIROS')) {
+          maybeLoadOlder(handle)
+        }
       }
     },
-    [onRepin, onScrollAway, maybeLoadOlder, setAppState],
+    [onRepin, onScrollAway, maybeLoadOlder],
   )
   // 延迟的 SessionStart hook 消息 — REPL 立即渲染并且
   // hook 消息在它们解析时注入。awaitPendingHooks()
@@ -1339,7 +1338,9 @@ export function REPL({
   // 模式导致的额外渲染。
   const setInputValue = useCallback(
     (value: string) => {
-      if (trySuggestBgPRIntercept(inputValueRef.current, value)) return
+      if (trySuggestBgPRIntercept(inputValueRef.current, value)) {
+        return
+      }
       // 全屏模式下，向空提示打字会重新固定滚动到
       // 底部。仅在空→非空时触发，所以向上滚动参考
       // 内容同时编写消息不会在每个按键时把视图拉回。
@@ -1361,13 +1362,15 @@ export function REPL({
       setInputValueRaw(value)
       setIsPromptInputActive(value.trim().length > 0)
     },
-    [setIsPromptInputActive, repinScroll, trySuggestBgPRIntercept],
+    [repinScroll],
   )
 
   // 调度超时以在用户停止打字后停止抑制对话框。
   // 仅管理超时 — 立即激活由上面的 setInputValue 处理。
   useEffect(() => {
-    if (inputValue.trim().length === 0) return
+    if (inputValue.trim().length === 0) {
+      return
+    }
     const timer = setTimeout(setIsPromptInputActive, PROMPT_SUPPRESSION_MS, false)
     return () => clearTimeout(timer)
   }, [inputValue])
@@ -1382,16 +1385,13 @@ export function REPL({
   >()
 
   // 根据 CCR 可用斜杠命令过滤命令的回调
-  const handleRemoteInit = useCallback(
-    (remoteSlashCommands: string[]) => {
-      const remoteCommandSet = new Set(remoteSlashCommands)
-      // Keep 列出 CCR 包含的命令或在本地安全集合中的命令
-      setLocalCommands((prev) =>
-        prev.filter((cmd) => remoteCommandSet.has(cmd.name) || REMOTE_SAFE_COMMANDS.has(cmd)),
-      )
-    },
-    [setLocalCommands],
-  )
+  const handleRemoteInit = useCallback((remoteSlashCommands: string[]) => {
+    const remoteCommandSet = new Set(remoteSlashCommands)
+    // Keep 列出 CCR 包含的命令或在本地安全集合中的命令
+    setLocalCommands((prev) =>
+      prev.filter((cmd) => remoteCommandSet.has(cmd.name) || REMOTE_SAFE_COMMANDS.has(cmd)),
+    )
+  }, [])
   const [inProgressToolUseIDs, setInProgressToolUseIDs] = useState<Set<string>>(new Set())
   const hasInterruptibleToolInProgressRef = useRef(false)
 
@@ -1450,7 +1450,9 @@ export function REPL({
   const showStreamingText = !reducedMotion && !hasCursorUpViewportYankBug()
   const onStreamingText = useCallback(
     (f: (current: string | null) => string | null) => {
-      if (!showStreamingText) return
+      if (!showStreamingText) {
+        return
+      }
       setStreamingText(f)
     },
     [showStreamingText],
@@ -1517,12 +1519,45 @@ export function REPL({
   terminalFocusRef.current = isTerminalFocused
   const [theme] = useTheme()
 
+  // 懒初始化：useRef(createX()) 会在每次渲染调用 createX 并
+  // 丢弃结果。LRUCache 构建在 FileStateCache 内部
+  // 很昂贵（~170ms），所以我们使用 useState 的懒初始化器来
+  // 精确创建一次，然后将稳定引用送入 useRef。
+  const [initialReadFileState] = useState(() =>
+    createFileStateCacheWithSizeLimit(READ_FILE_STATE_CACHE_SIZE),
+  )
+  const readFileState = useRef(initialReadFileState)
+  const bashTools = useRef(new Set<string>())
+  const bashToolsProcessedIdx = useRef(0)
+  // 会话级 skill 发现跟踪（为 zy_skill_tool_invocation 提供
+  // was_discovered）。必须在 getToolUseContext 重建之间跨会话持久：
+  // turn-0 发现在 onQuery 构建自己的上下文之前通过 processUserInput
+  // 写入，turn N 的发现仍必须在 turn N+k 时归属于 SkillTool 调用。
+  // 在 clearConversation 中清除。
+  const discoveredSkillNamesRef = useRef(new Set<string>())
+  // 会话级去重嵌套记忆 CLAUDE.md 附件。
+  // readFileState 是 100 条目 LRU；一旦它驱逐 CLAUDE.md 路径，
+  // 下一个发现周期会重新注入它。在 clearConversation 中清除。
+  const loadedNestedMemoryPathsRef = useRef(new Set<string>())
+
+  // 从消息中恢复读取文件状态的辅助函数（用于 resume 流程）
+  // 这使 Zy 能够编辑在之前会话中读取的文件
+  const restoreReadFileState = useCallback((messages: MessageType[], cwd: string) => {
+    const extracted = extractReadFilesFromMessages(messages, cwd, READ_FILE_STATE_CACHE_SIZE)
+    readFileState.current = mergeFileStateCaches(readFileState.current, extracted)
+    for (const tool of extractBashToolsFromMessages(messages)) {
+      bashTools.current.add(tool)
+    }
+  }, [])
+
   // resetLoadingState 每个回合运行两次（onQueryImpl 尾部 + onQuery finally）。
   // 没有这个守卫，两次调用都会选择提示 → 两次 recordShownTip → 两次
   // saveGlobalConfig 背靠背写入。在 onSubmit 中的提交时重置。
   const tipPickedThisTurnRef = React.useRef(false)
   const pickNewSpinnerTip = useCallback(() => {
-    if (tipPickedThisTurnRef.current) return
+    if (tipPickedThisTurnRef.current) {
+      return
+    }
     tipPickedThisTurnRef.current = true
     const newMessages = messagesRef.current.slice(bashToolsProcessedIdx.current)
     for (const tool of extractBashToolsFromMessages(newMessages)) {
@@ -1545,7 +1580,9 @@ export function REPL({
         recordShownTip(tip)
       } else {
         setAppState((prev) => {
-          if (prev.spinnerTip === undefined) return prev
+          if (prev.spinnerTip === undefined) {
+            return prev
+          }
           return {
             ...prev,
             spinnerTip: undefined,
@@ -1576,7 +1613,14 @@ export function REPL({
     // 回合的命令有效 — 每个回合后清除以避免累积
     // 未消耗检查（拒绝/中止路径）的 Promise 链。
     clearSpeculativeChecks()
-  }, [pickNewSpinnerTip])
+  }, [
+    pickNewSpinnerTip,
+    setUserInputOnProcessing, // isLoading 现在从 queryGuard 派生 — 无需 setter 调用。
+    // queryGuard.end()（onQuery finally）或 cancelReservation()（executeUserInput
+    // finally）在运行时已经将 guard 转换为空闲。
+    // 外部 loading（远程/后台）由那些 hooks 单独重置。
+    setIsExternalLoading,
+  ])
 
   // 会话后台 — hook 在 getToolUseContext 之后定义
 
@@ -1619,16 +1663,22 @@ export function REPL({
         safeYoloMessageShownRef.current = false
         return
       }
-      if (safeYoloMessageShownRef.current) return
+      if (safeYoloMessageShownRef.current) {
+        return
+      }
       const config = getGlobalConfig()
       const count = config.autoPermissionsNotificationCount ?? 0
-      if (count >= 3) return
+      if (count >= 3) {
+        return
+      }
       const timer = setTimeout(
         (ref, setMessages) => {
           ref.current = true
           saveGlobalConfig((prev) => {
             const prevCount = prev.autoPermissionsNotificationCount ?? 0
-            if (prevCount >= 3) return prev
+            if (prevCount >= 3) {
+              return prev
+            }
             return {
               ...prev,
               autoPermissionsNotificationCount: prevCount + 1,
@@ -1648,10 +1698,16 @@ export function REPL({
   // 提示用户考虑设置 settings.worktree.sparsePaths。
   const worktreeTipShownRef = useRef(false)
   useEffect(() => {
-    if (worktreeTipShownRef.current) return
+    if (worktreeTipShownRef.current) {
+      return
+    }
     const wt = getCurrentWorktreeSession()
-    if (!wt?.creationDurationMs || wt.usedSparsePaths) return
-    if (wt.creationDurationMs < 15_000) return
+    if (!wt?.creationDurationMs || wt.usedSparsePaths) {
+      return
+    }
+    if (wt.creationDurationMs < 15_000) {
+      return
+    }
     worktreeTipShownRef.current = true
     const secs = Math.round(wt.creationDurationMs / 1000)
     setMessages((prev) => [
@@ -1666,9 +1722,13 @@ export function REPL({
   // 唯一活动工具是 Sleep 时隐藏 spinner
   const onlySleepToolActive = useMemo(() => {
     const lastAssistant = messages.findLast((m) => m.type === 'assistant')
-    if (lastAssistant?.type !== 'assistant') return false
+    if (lastAssistant?.type !== 'assistant') {
+      return false
+    }
     const content = lastAssistant.message.content
-    if (!Array.isArray(content)) return false
+    if (!Array.isArray(content)) {
+      return false
+    }
     const inProgressToolUses = content.filter(
       (b) => b.type === 'tool_call' && inProgressToolUseIDs.has(b.id),
     )
@@ -1955,7 +2015,9 @@ export function REPL({
           // clear 清除了 currentSessionWorktree，forkLog 不携带它，
           // 且进程仍在相同的 worktree 中
           const ws = getCurrentWorktreeSession()
-          if (ws) saveWorktreeState(ws)
+          if (ws) {
+            saveWorktreeState(ws)
+          }
         }
 
         // 持久化当前模式以便未来 resume 知道此会话的模式
@@ -2012,39 +2074,22 @@ export function REPL({
         throw error
       }
     },
-    [resetLoadingState, setAppState],
+    [
+      resetLoadingState,
+      setAppState, // 清除任何活动的工具 JSX
+      setToolJSX,
+      contentReplacementStateRef.current,
+      initialMainThreadAgentDefinition, // 将消息重置为提供的初始消息
+      // 使用回调以确保不依赖于过时 state
+      setMessages,
+      agentDefinitions,
+      contentReplacementStateRef,
+      store.getState, // 清除输入以确保没有残留状态
+      setInputValue,
+      mainThreadAgentDefinition?.agentType,
+      mainLoopModel,
+    ],
   )
-
-  // 懒初始化：useRef(createX()) 会在每次渲染调用 createX 并
-  // 丢弃结果。LRUCache 构建在 FileStateCache 内部
-  // 很昂贵（~170ms），所以我们使用 useState 的懒初始化器来
-  // 精确创建一次，然后将稳定引用送入 useRef。
-  const [initialReadFileState] = useState(() =>
-    createFileStateCacheWithSizeLimit(READ_FILE_STATE_CACHE_SIZE),
-  )
-  const readFileState = useRef(initialReadFileState)
-  const bashTools = useRef(new Set<string>())
-  const bashToolsProcessedIdx = useRef(0)
-  // 会话级 skill 发现跟踪（为 zy_skill_tool_invocation 提供
-  // was_discovered）。必须在 getToolUseContext 重建之间跨会话持久：
-  // turn-0 发现在 onQuery 构建自己的上下文之前通过 processUserInput
-  // 写入，turn N 的发现仍必须在 turn N+k 时归属于 SkillTool 调用。
-  // 在 clearConversation 中清除。
-  const discoveredSkillNamesRef = useRef(new Set<string>())
-  // 会话级去重嵌套记忆 CLAUDE.md 附件。
-  // readFileState 是 100 条目 LRU；一旦它驱逐 CLAUDE.md 路径，
-  // 下一个发现周期会重新注入它。在 clearConversation 中清除。
-  const loadedNestedMemoryPathsRef = useRef(new Set<string>())
-
-  // 从消息中恢复读取文件状态的辅助函数（用于 resume 流程）
-  // 这使 Zy 能够编辑在之前会话中读取的文件
-  const restoreReadFileState = useCallback((messages: MessageType[], cwd: string) => {
-    const extracted = extractReadFilesFromMessages(messages, cwd, READ_FILE_STATE_CACHE_SIZE)
-    readFileState.current = mergeFileStateCaches(readFileState.current, extracted)
-    for (const tool of extractBashToolsFromMessages(messages)) {
-      bashTools.current.add(tool)
-    }
-  }, [])
 
   // 挂载时从 initialMessages 中提取读取文件状态
   // 这处理 CLI 标志 resume（--resume-session）和 ResumeConversation 屏幕
@@ -2060,7 +2105,7 @@ export function REPL({
     }
     // 仅在挂载时运行 - initialMessages 不应在组件生命周期中更改
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [initialMessages?.length, store.getState, setAppState, restoreReadFileState, initialMessages])
   const { status: apiKeyStatus, reverify } = useApiKeyVerification()
 
   // 自动运行 /issue state
@@ -2098,46 +2143,77 @@ export function REPL({
     | 'ultraplan-launch'
     | undefined {
     // 退出状态始终优先
-    if (isExiting || exitFlow) return undefined
+    if (isExiting || exitFlow) {
+      return undefined
+    }
 
     // 高优先级对话框（无论打字与否始终显示）
-    if (isMessageSelectorVisible) return 'message-selector'
+    if (isMessageSelectorVisible) {
+      return 'message-selector'
+    }
 
     // 用户打字时抑制中断对话框
-    if (isPromptInputActive) return undefined
-    if (sandboxPermissionRequestQueue[0]) return 'sandbox-permission'
+    if (isPromptInputActive) {
+      return undefined
+    }
+    if (sandboxPermissionRequestQueue[0]) {
+      return 'sandbox-permission'
+    }
 
     // 权限/交互式对话框（除非被 toolJSX 阻止否则显示）
     const allowDialogsWithAnimation = !toolJSX || toolJSX.shouldContinueAnimation
-    if (allowDialogsWithAnimation && toolUseConfirmQueue[0]) return 'tool-permission'
-    if (allowDialogsWithAnimation && promptQueue[0]) return 'prompt'
+    if (allowDialogsWithAnimation && toolUseConfirmQueue[0]) {
+      return 'tool-permission'
+    }
+    if (allowDialogsWithAnimation && promptQueue[0]) {
+      return 'prompt'
+    }
     // 来自 swarm worker 的 worker 沙盒权限提示（网络访问）
-    if (allowDialogsWithAnimation && workerSandboxPermissions.queue[0])
+    if (allowDialogsWithAnimation && workerSandboxPermissions.queue[0]) {
       return 'worker-sandbox-permission'
-    if (allowDialogsWithAnimation && elicitation.queue[0]) return 'elicitation'
-    if (allowDialogsWithAnimation && idleReturnPending) return 'idle-return'
-    if (feature('ULTRAPLAN') && allowDialogsWithAnimation && !isLoading && ultraplanPendingChoice)
+    }
+    if (allowDialogsWithAnimation && elicitation.queue[0]) {
+      return 'elicitation'
+    }
+    if (allowDialogsWithAnimation && idleReturnPending) {
+      return 'idle-return'
+    }
+    if (feature('ULTRAPLAN') && allowDialogsWithAnimation && !isLoading && ultraplanPendingChoice) {
       return 'ultraplan-choice'
-    if (feature('ULTRAPLAN') && allowDialogsWithAnimation && !isLoading && ultraplanLaunchPending)
+    }
+    if (feature('ULTRAPLAN') && allowDialogsWithAnimation && !isLoading && ultraplanLaunchPending) {
       return 'ultraplan-launch'
+    }
 
     // Onboarding 对话框（特殊条件）
-    if (allowDialogsWithAnimation && showIdeOnboarding) return 'ide-onboarding'
+    if (allowDialogsWithAnimation && showIdeOnboarding) {
+      return 'ide-onboarding'
+    }
 
     // Effort callout（启用 effort 时为 Opus 4.6 用户显示一次）
-    if (allowDialogsWithAnimation && showEffortCallout) return 'effort-callout'
+    if (allowDialogsWithAnimation && showEffortCallout) {
+      return 'effort-callout'
+    }
 
     // 远程 callout（首次启用桥之前显示一次）
-    if (allowDialogsWithAnimation && showRemoteCallout) return 'remote-callout'
+    if (allowDialogsWithAnimation && showRemoteCallout) {
+      return 'remote-callout'
+    }
 
     // LSP 插件推荐（最低优先级 - 非阻塞建议）
-    if (allowDialogsWithAnimation && lspRecommendation) return 'lsp-recommendation'
+    if (allowDialogsWithAnimation && lspRecommendation) {
+      return 'lsp-recommendation'
+    }
 
     // 来自 CLI/SDK stderr 的插件提示（与 LSP 推荐相同优先级）
-    if (allowDialogsWithAnimation && hintRecommendation) return 'plugin-hint'
+    if (allowDialogsWithAnimation && hintRecommendation) {
+      return 'plugin-hint'
+    }
 
     // 桌面应用推荐（最多 3 次启动，最低优先级）
-    if (allowDialogsWithAnimation && showDesktopUpsellStartup) return 'desktop-upsell'
+    if (allowDialogsWithAnimation && showDesktopUpsellStartup) {
+      return 'desktop-upsell'
+    }
     return undefined
   }
   const focusedInputDialog = getFocusedInputDialog()
@@ -2158,7 +2234,9 @@ export function REPL({
   // 这确保准确计时即使在系统高负载下，而不是
   // 依赖 100ms 轮询间隔来检测状态变化
   useEffect(() => {
-    if (!isLoading) return
+    if (!isLoading) {
+      return
+    }
     const isPaused = focusedInputDialog === 'tool-permission'
     const now = Date.now()
     if (isPaused && pauseStartTimeRef.current === null) {
@@ -2184,7 +2262,9 @@ export function REPL({
   useLayoutEffect(() => {
     const was = prevDialogRef.current === 'tool-permission'
     const now = focusedInputDialog === 'tool-permission'
-    if (was !== now) repinScroll()
+    if (was !== now) {
+      repinScroll()
+    }
     prevDialogRef.current = focusedInputDialog
   }, [focusedInputDialog, repinScroll])
   function onCancel() {
@@ -2252,7 +2332,9 @@ export function REPL({
   // 取消权限请求时处理排队命令的函数
   const handleQueuedCommandOnCancel = useCallback(() => {
     const result = popAllEditable(inputValue, 0)
-    if (!result) return
+    if (!result) {
+      return
+    }
     setInputValue(result.text)
     setInputMode('prompt')
 
@@ -2268,7 +2350,7 @@ export function REPL({
         return newContents
       })
     }
-  }, [setInputValue, setInputMode, inputValue, setPastedContents])
+  }, [setInputValue, inputValue])
 
   // CancelRequestHandler 属性 - 在 KeybindingSetup 内渲染
   const cancelRequestProps = {
@@ -2331,7 +2413,9 @@ export function REPL({
       return new Promise((resolveShouldAllowHost) => {
         let resolved = false
         function resolveOnce(allow: boolean): void {
-          if (resolved) return
+          if (resolved) {
+            return
+          }
           resolved = true
           resolveShouldAllowHost(allow)
         }
@@ -2406,7 +2490,9 @@ export function REPL({
   // addNotification 稳定（useCallback）所以 effect 仅触发一次。
   useEffect(() => {
     const reason = SandboxManager.getSandboxUnavailableReason()
-    if (!reason) return
+    if (!reason) {
+      return
+    }
     if (SandboxManager.isSandboxRequired()) {
       process.stderr.write(
         `\nError: sandbox required but unavailable: ${reason}\n` +
@@ -2472,7 +2558,7 @@ export function REPL({
         })
       }, setToolUseConfirmQueue)
     },
-    [setAppState, setToolUseConfirmQueue],
+    [setAppState],
   )
 
   // 为进程内 teammate 注册 leader 的 setToolPermissionContext
@@ -2501,7 +2587,7 @@ export function REPL({
   const getToolUseContext = useCallback(
     (
       messages: MessageType[],
-      newMessages: MessageType[],
+      _newMessages: MessageType[],
       abortController: AbortController,
       mainLoopModel: string,
     ): ProcessUserInputContext => {
@@ -2524,7 +2610,9 @@ export function REPL({
           assembled,
           state.toolPermissionContext.mode,
         )
-        if (!mainThreadAgentDefinition) return merged
+        if (!mainThreadAgentDefinition) {
+          return merged
+        }
         return resolveAgentTools(mainThreadAgentDefinition, merged, false, true).resolvedTools
       }
       return {
@@ -2569,7 +2657,9 @@ export function REPL({
           // 跟踪时返回 `state`）。否则每次无操作调用都会通知所有 store 监听器。
           setAppState((prev) => {
             const updated = updater(prev.fileHistory)
-            if (updated === prev.fileHistory) return prev
+            if (updated === prev.fileHistory) {
+              return prev
+            }
             return {
               ...prev,
               fileHistory: updated,
@@ -2579,7 +2669,9 @@ export function REPL({
         updateAttributionState(updater: (prev: AttributionState) => AttributionState) {
           setAppState((prev) => {
             const updated = updater(prev.attribution)
-            if (updated === prev.attribution) return prev
+            if (updated === prev.attribution) {
+              return prev
+            }
             return {
               ...prev,
               attribution: updated,
@@ -2664,7 +2756,11 @@ export function REPL({
       disabled,
       customSystemPrompt,
       appendSystemPrompt,
-      setConversationId,
+      setResponseLength,
+      thinkingConfig,
+      terminal,
+      setToolJSX,
+      contentReplacementStateRef.current,
     ],
   )
 
@@ -2753,6 +2849,7 @@ export function REPL({
     appendSystemPrompt,
     canUseTool,
     setAppState,
+    terminalTitle,
   ])
   const { handleBackgroundSession } = useSessionBackgrounding({
     setMessages,
@@ -2850,14 +2947,7 @@ export function REPL({
         onStreamingText,
       )
     },
-    [
-      setMessages,
-      setResponseLength,
-      setStreamMode,
-      setStreamingToolUses,
-      setStreamingThinking,
-      onStreamingText,
-    ],
+    [setMessages, setResponseLength, onStreamingText],
   )
   const onQueryImpl = useCallback(
     async (
@@ -3070,7 +3160,19 @@ export function REPL({
       mainThreadAgentDefinition,
       onQueryEvent,
       sessionTitle,
-      titleDisabled,
+      titleDisabled, // 将斜杠命令范围的 allowedTools（来自 skill frontmatter）应用到
+      // store，每个回合一次。这也覆盖重置：下一个非 skill 回合
+      // 传递 [] 并清除它。必须在 !shouldQuery 门控之前运行：forked
+      // 命令（executeForkedSlashCommand）返回 shouldQuery=false，且
+      // forkedAgent.ts 中的 createGetAppStateWithAllowedTools 读取此字段，所以
+      // 过时 skill 工具否则可能泄漏到 forked agent 权限。
+      // 之前此写入隐藏在 getToolUseContext 的 getAppState 内部
+      // （约 85 次调用/回合）；提升到此使 getAppState 成为纯读取并停止
+      // 临时上下文（权限对话框、BackgroundTasksDialog）在
+      // 回合中间意外清除它。
+      store.setState,
+      agentTitle,
+      store.getState,
     ],
   )
   const onQuery = useCallback(
@@ -3183,8 +3285,12 @@ export function REPL({
           // 保持打开以供检查（匹配下面的回合持续时间守卫）。
           if (isInternalBuild() && !abortController.signal.aborted) {
             setAppState((prev) => {
-              if (prev.tungstenActiveSession === undefined) return prev
-              if (prev.tungstenPanelAutoHidden === true) return prev
+              if (prev.tungstenActiveSession === undefined) {
+                return prev
+              }
+              if (prev.tungstenPanelAutoHidden === true) {
+                return prev
+              }
               return {
                 ...prev,
                 tungstenPanelAutoHidden: true,
@@ -3289,7 +3395,19 @@ export function REPL({
         }
       }
     },
-    [onQueryImpl, setAppState, resetLoadingState, queryGuard, mrOnBeforeQuery, mrOnTurnComplete],
+    [
+      onQueryImpl,
+      setAppState,
+      resetLoadingState,
+      queryGuard,
+      mrOnBeforeQuery,
+      mrOnTurnComplete,
+      store.getState,
+      setMessages, // isLoading 从 queryGuard 派生 — tryStart() 已经
+      // 转换 dispatching→running，所以这里无需 setter 调用。
+      resetTimingRefs,
+      proactiveActive,
+    ],
   )
 
   // 处理初始消息（来自 CLI 参数或带上下文清除的 plan mode 退出）
@@ -3297,7 +3415,9 @@ export function REPL({
   const initialMessageRef = useRef(false)
   useEffect(() => {
     const pending = initialMessage
-    if (!pending || isLoading || initialMessageRef.current) return
+    if (!pending || isLoading || initialMessageRef.current) {
+      return
+    }
 
     // 标记为处理中以防止重入
     initialMessageRef.current = true
@@ -3417,7 +3537,19 @@ export function REPL({
       )
     }
     void processInitialMessage(pending)
-  }, [initialMessage, isLoading, setMessages, setAppState, onQuery, mainLoopModel, tools])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    initialMessage,
+    isLoading,
+    setMessages,
+    setAppState,
+    onQuery,
+    mainLoopModel,
+    awaitPendingHooks,
+    store.getState,
+    // onSubmit 故意省略：依赖数组在渲染期同步求值会触发 TDZ，
+    // 但 processInitialMessage 在 useEffect 回调中异步调用时 onSubmit 已初始化。
+  ])
   const onSubmit = useCallback(
     async (
       input: string,
@@ -3746,11 +3878,14 @@ export function REPL({
       // 它们没有远程等效物。让它们回退到
       // handlePromptSubmit 以便在本地执行。提示命令和
       // 纯文本转到远程。
-      if (activeRemote.isRemoteMode &&
-        !(isSlashCommand &&
+      if (
+        activeRemote.isRemoteMode &&
+        !(
+          isSlashCommand &&
           commands.find((c) => {
             const name = input.trim().slice(1).split(/\s/)[0]
-            return (isCommandEnabled(c) &&
+            return (
+              isCommandEnabled(c) &&
               (c.name === name || c.aliases?.includes(name!) || getCommandName(c) === name)
             )
           })?.type === 'local-jsx'
@@ -3886,10 +4021,6 @@ export function REPL({
       inputMode,
       commands,
       setInputValue,
-      setInputMode,
-      setPastedContents,
-      setSubmitCount,
-      setIDESelection,
       setToolJSX,
       getToolUseContext,
       // messages 在回调中通过 messagesRef.current 读取以
@@ -3903,18 +4034,22 @@ export function REPL({
       pastedContents,
       ideSelection,
       setUserInputOnProcessing,
-      setAbortController,
       addNotification,
       onQuery,
       stashedPrompt,
-      setStashedPrompt,
       setAppState,
       onBeforeQuery,
       canUseTool,
-      remoteSession,
       setMessages,
       awaitPendingHooks,
-      repinScroll,
+      repinScroll, // showSpinner 包括 userInputOnProcessing，所以 spinner 出现在
+      // 此渲染上。现在重置计时 refs（在 queryGuard.reserve()
+      // 之前）以便已过时间不会读作 Date.now() - 0。上面的
+      // isQueryActive 转换做相同的重置 — 幂等。
+      resetTimingRefs,
+      activeRemote.isRemoteMode,
+      activeRemote.sendMessage,
+      abortController,
     ],
   )
 
@@ -4057,7 +4192,9 @@ export function REPL({
     (message: UserMessage) => {
       const prev = messagesRef.current
       const messageIndex = prev.lastIndexOf(message)
-      if (messageIndex === -1) return
+      if (messageIndex === -1) {
+        return
+      }
       logEvent('zy_conversation_rewind', {
         preRewindMessageCount: prev.length,
         postRewindMessageCount: messageIndex,
@@ -4165,7 +4302,9 @@ export function REPL({
     copy: (text) =>
       // setClipboard 返回 OSC 52 —— 调用者必须 stdout.write（tmux 副作用 load-buffer，但仅限 tmux）
       void setClipboard(text).then((raw) => {
-        if (raw) process.stdout.write(raw)
+        if (raw) {
+          process.stdout.write(raw)
+        }
         addNotification({
           // 与文本选择复制相同的 key —— 重复复制替换 toast，不排队
           key: 'selection-copied',
@@ -4179,7 +4318,9 @@ export function REPL({
       // 与 /rewind 相同的 skip-confirm 检查：无损 → 直接，否则确认对话框
       const rawIdx = findRawIndex(msg.uuid)
       const raw = rawIdx >= 0 ? messages[rawIdx] : undefined
-      if (!raw || !selectableUserMessagesFilter(raw)) return
+      if (!raw || !selectableUserMessagesFilter(raw)) {
+        return
+      }
       const noFileChanges = !(await fileHistoryHasAnyChanges(fileHistory, raw.uuid as any))
       const onlySynthetic = messagesAfterAreOnlySynthetic(messages, rawIdx)
       if (noFileChanges && onlySynthetic) {
@@ -4265,7 +4406,9 @@ export function REPL({
       hasCountedQueueUseRef.current = false
       return
     }
-    if (hasCountedQueueUseRef.current) return
+    if (hasCountedQueueUseRef.current) {
+      return
+    }
     hasCountedQueueUseRef.current = true
     saveGlobalConfig((current) => ({
       ...current,
@@ -4314,11 +4457,11 @@ export function REPL({
       ideSelection,
       setUserInputOnProcessing,
       canUseTool,
-      setAbortController,
       onQuery,
       addNotification,
       setAppState,
       onBeforeQuery,
+      setMessages,
     ],
   )
   useQueueProcessor({
@@ -4334,7 +4477,7 @@ export function REPL({
   useEffect(() => {
     activityManager.recordUserActivity()
     updateLastInteractionTime(true)
-  }, [inputValue, submitCount])
+  }, [])
   useEffect(() => {
     if (submitCount === 1) {
       startBackgroundHousekeeping()
@@ -4344,13 +4487,19 @@ export function REPL({
   // Zy 完成响应且用户空闲时显示通知
   useEffect(() => {
     // Zy 忙时不显示通知
-    if (isLoading) return
+    if (isLoading) {
+      return
+    }
 
     // 仅在此会话中第一次新交互后启用通知
-    if (submitCount === 0) return
+    if (submitCount === 0) {
+      return
+    }
 
     // 尚未有查询完成
-    if (lastQueryCompletionTime === 0) return
+    if (lastQueryCompletionTime === 0) {
+      return
+    }
 
     // 设置超时以检查空闲状态
     const timer = setTimeout(
@@ -4394,19 +4543,31 @@ export function REPL({
   // 定时器在配置的空闲期后触发；通知持续直到
   // 被取消或用户提交
   useEffect(() => {
-    if (lastQueryCompletionTime === 0) return
-    if (isLoading) return
+    if (lastQueryCompletionTime === 0) {
+      return
+    }
+    if (isLoading) {
+      return
+    }
     const willowMode: string = getFeatureValue_CACHED_MAY_BE_STALE('zy_willow_mode', 'off')
-    if (willowMode !== 'hint' && willowMode !== 'hint_v2') return
-    if (getGlobalConfig().idleReturnDismissed) return
+    if (willowMode !== 'hint' && willowMode !== 'hint_v2') {
+      return
+    }
+    if (getGlobalConfig().idleReturnDismissed) {
+      return
+    }
     const tokenThreshold = Number(process.env.ZY_CODE_IDLE_TOKEN_THRESHOLD ?? 100_000)
-    if (getTotalInputTokens() < tokenThreshold) return
+    if (getTotalInputTokens() < tokenThreshold) {
+      return
+    }
     const idleThresholdMs = Number(process.env.ZY_CODE_IDLE_THRESHOLD_MINUTES ?? 75) * 60_000
     const elapsed = Date.now() - lastQueryCompletionTime
     const remaining = idleThresholdMs - elapsed
     const timer = setTimeout(
       (lqct, addNotif, msgsRef, mode, hintRef) => {
-        if (msgsRef.current.length === 0) return
+        if (msgsRef.current.length === 0) {
+          return
+        }
         const totalTokens = getTotalInputTokens()
         const formattedTokens = formatTokens(totalTokens)
         const idleMinutes = (Date.now() - lqct) / 60_000
@@ -4461,7 +4622,9 @@ export function REPL({
         isMeta?: boolean
       },
     ): boolean => {
-      if (queryGuard.isActive) return false
+      if (queryGuard.isActive) {
+        return false
+      }
 
       // 延迟到用户排队命令 —— 用户输入始终优先于
       // 系统消息（teammate 消息、任务列表项等）
@@ -4481,7 +4644,7 @@ export function REPL({
       void onQuery([userMessage], newAbortController, true, [], mainLoopModel)
       return true
     },
-    [onQuery, mainLoopModel, store],
+    [onQuery, mainLoopModel, queryGuard.isActive],
   )
 
   // 语音输入集成（仅 VOICE_MODE 构建）
@@ -4595,7 +4758,7 @@ export function REPL({
     }
     // TODO: fix this
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [onInit])
 
   // 监听 suspend/resume 事件
   const { internal_eventEmitter } = useStdin()
@@ -4622,7 +4785,9 @@ export function REPL({
 
   // 从消息状态派生停止 hook spinner 后缀
   const stopHookSpinnerSuffix = useMemo(() => {
-    if (!isLoading) return null
+    if (!isLoading) {
+      return null
+    }
 
     // 查找停止 hook 进度消息
     const progressMsgs = messages.filter(
@@ -4631,11 +4796,15 @@ export function REPL({
         m.data.type === 'hook_progress' &&
         (m.data.hookEvent === 'Stop' || m.data.hookEvent === 'SubagentStop'),
     )
-    if (progressMsgs.length === 0) return null
+    if (progressMsgs.length === 0) {
+      return null
+    }
 
     // 获取最近的停止 hook 执行
     const currentToolUseID = progressMsgs.at(-1)?.toolUseID
-    if (!currentToolUseID) return null
+    if (!currentToolUseID) {
+      return null
+    }
 
     // 检查此执行是否已有摘要消息（hooks 已完成）
     const hasSummaryForCurrentExecution = messages.some(
@@ -4644,13 +4813,17 @@ export function REPL({
         m.subtype === 'stop_hook_summary' &&
         m.toolUseID === currentToolUseID,
     )
-    if (hasSummaryForCurrentExecution) return null
+    if (hasSummaryForCurrentExecution) {
+      return null
+    }
     const currentHooks = progressMsgs.filter((p) => p.toolUseID === currentToolUseID)
     const total = currentHooks.length
 
     // 统计已完成的 hooks
     const completedCount = count(messages, (m) => {
-      if (m.type !== 'attachment') return false
+      if (m.type !== 'attachment') {
+        return false
+      }
       const attachment = m.attachment
       return (
         'hookEvent' in attachment &&
@@ -4712,7 +4885,9 @@ export function REPL({
   }, [])
   useInput(
     (input, key, event) => {
-      if (key.ctrl || key.meta) return
+      if (key.ctrl || key.meta) {
+        return
+      }
       // No Esc handling here — less has no navigating mode. Search state
       // (highlights, n/N) is just state. Esc/q/ctrl+c → transcript:exit
       // (ungated). Highlights clear on exit via the screen-change effect.
@@ -4729,7 +4904,11 @@ export function REPL({
       const c = input[0]
       if ((c === 'n' || c === 'N') && input === c.repeat(input.length) && searchCount > 0) {
         const fn = c === 'n' ? jumpRef.current?.nextMatch : jumpRef.current?.prevMatch
-        if (fn) for (let i = 0; i < input.length; i++) fn()
+        if (fn) {
+          for (let i = 0; i < input.length; i++) {
+            fn()
+          }
+        }
         event.stopImmediatePropagation()
       }
     },
@@ -4765,7 +4944,9 @@ export function REPL({
   // —— 与 ScrollKeybindingHandler 中的 g/G/j/k 相同类别
   useInput(
     (input, key, event) => {
-      if (key.ctrl || key.meta) return
+      if (key.ctrl || key.meta) {
+        return
+      }
       if (input === 'q') {
         // less: q 退出 pager。ctrl+o 切换；q 是 lineage 退出
         handleExitTranscript()
@@ -4789,13 +4970,17 @@ export function REPL({
         // 防止双击：渲染是异步的，在完成前的第二次按下会运行
         // 第二个并行渲染（双倍内存、两个临时文件、两次编辑器生成）。
         // editorGenRef 仅守卫转录退出过时的情况，不守卫同会话并发
-        if (editorRenderingRef.current) return
+        if (editorRenderingRef.current) {
+          return
+        }
         editorRenderingRef.current = true
         // 捕获 generation + 创建防过时 setter。每次写入检查 gen
         // （转录退出增加它 —— 来自异步渲染的迟写入静默失败）
         const gen = editorGenRef.current
         const setStatus = (s: string): void => {
-          if (gen !== editorGenRef.current) return
+          if (gen !== editorGenRef.current) {
+            return
+          }
           clearTimeout(editorTimerRef.current)
           setEditorStatus(s)
         }
@@ -4818,7 +5003,9 @@ export function REPL({
             setStatus(`render failed: ${e instanceof Error ? e.message : String(e)}`)
           }
           editorRenderingRef.current = false
-          if (gen !== editorGenRef.current) return
+          if (gen !== editorGenRef.current) {
+            return
+          }
           editorTimerRef.current = setTimeout((s) => s(''), 4000, setEditorStatus)
         })()
       }
@@ -4853,7 +5040,9 @@ export function REPL({
     // Clear the position-based CURRENT (yellow) overlay too. setHighlight
     // only clears the scan-based inverse. Without this, the yellow box
     // persists at its last screen coords after ctrl-c exits transcript.
-    if (!inTranscript) setPositions(null)
+    if (!inTranscript) {
+      setPositions(null)
+    }
   }, [inTranscript, searchQuery, setHighlight, setPositions])
   const globalKeybindingProps = {
     screen,
@@ -5320,7 +5509,9 @@ export function REPL({
                     onUserResponse={(response: { allow: boolean; persistToSettings: boolean }) => {
                       const { allow, persistToSettings } = response
                       const currentRequest = sandboxPermissionRequestQueue[0]
-                      if (!currentRequest) return
+                      if (!currentRequest) {
+                        return
+                      }
                       const approvedHost = currentRequest.hostPattern.host
                       if (persistToSettings) {
                         const update = {
@@ -5377,7 +5568,9 @@ export function REPL({
                     request={promptQueue[0]!.request}
                     onRespond={(selectedKey) => {
                       const item = promptQueue[0]
-                      if (!item) return
+                      if (!item) {
+                        return
+                      }
                       item.resolve({
                         prompt_response: item.request.prompt,
                         selected: selectedKey,
@@ -5386,7 +5579,9 @@ export function REPL({
                     }}
                     onAbort={() => {
                       const item = promptQueue[0]
-                      if (!item) return
+                      if (!item) {
+                        return
+                      }
                       item.reject(new Error('Prompt cancelled by user'))
                       setPromptQueue(([, ...tail]) => tail)
                     }}
@@ -5419,7 +5614,9 @@ export function REPL({
                     onUserResponse={(response: { allow: boolean; persistToSettings: boolean }) => {
                       const { allow, persistToSettings } = response
                       const currentRequest = workerSandboxPermissions.queue[0]
-                      if (!currentRequest) return
+                      if (!currentRequest) {
+                        return
+                      }
                       const approvedHost = currentRequest.host
 
                       // 通过邮箱向 worker 发送响应
@@ -5474,7 +5671,9 @@ export function REPL({
                     event={elicitation.queue[0]!}
                     onResponse={(action, content) => {
                       const currentRequest = elicitation.queue[0]
-                      if (!currentRequest) return
+                      if (!currentRequest) {
+                        return
+                      }
                       // 调用 respond 回调以解析 Promise
                       currentRequest.respond({
                         action,
@@ -5525,7 +5724,9 @@ export function REPL({
                       }
                       if (action === 'never') {
                         saveGlobalConfig((current) => {
-                          if (current.idleReturnDismissed) return current
+                          if (current.idleReturnDismissed) {
+                            return current
+                          }
                           return {
                             ...current,
                             idleReturnDismissed: true,
@@ -5582,7 +5783,9 @@ export function REPL({
                   <RemoteCallout
                     onDone={(selection) => {
                       setAppState((prev) => {
-                        if (!prev.showRemoteCallout) return prev
+                        if (!prev.showRemoteCallout) {
+                          return prev
+                        }
                         return {
                           ...prev,
                           showRemoteCallout: false,
@@ -5625,7 +5828,6 @@ export function REPL({
                 {feature('ULTRAPLAN')
                   ? focusedInputDialog === 'ultraplan-choice' &&
                     ultraplanPendingChoice && (
-                      // @ts-ignore -- ant-only: UltraplanChoiceDialog is conditionally imported
                       <UltraplanChoiceDialog
                         plan={ultraplanPendingChoice.plan}
                         sessionId={ultraplanPendingChoice.sessionId}
@@ -5641,7 +5843,6 @@ export function REPL({
                 {feature('ULTRAPLAN')
                   ? focusedInputDialog === 'ultraplan-launch' &&
                     ultraplanLaunchPending && (
-                      // @ts-ignore -- ant-only: UltraplanLaunchDialog is conditionally imported
                       <UltraplanLaunchDialog
                         onChoice={(choice, opts) => {
                           const blurb = ultraplanLaunchPending.blurb
@@ -5653,7 +5854,9 @@ export function REPL({
                                 }
                               : prev,
                           )
-                          if (choice === 'cancel') return
+                          if (choice === 'cancel') {
+                            return
+                          }
                           // 使用命令的 onDone，显示 display:'skip'，在此处
                           // 添加回显 —— 在 ~5s teleportToRemote 解析前提供即时反馈
                           setMessages((prev) => [
@@ -5676,16 +5879,20 @@ export function REPL({
                               return
                             }
                             const unsub = queryGuard.subscribe(() => {
-                              if (queryGuard.isActive) return
+                              if (queryGuard.isActive) {
+                                return
+                              }
                               unsub()
                               // 如果在等待期间用户停止了 ultraplan，则跳过
                               // ——避免为已消失的会话显示过时的 "Monitoring
                               // <url>" 消息
-                              if (!store.getState().ultraplanSessionUrl) return
+                              if (!store.getState().ultraplanSessionUrl) {
+                                return
+                              }
                               appendStdout(msg)
                             })
                           }
-                          // @ts-ignore -- ant-only: launchUltraplan is conditionally imported
+                          // @ts-expect-error -- ant-only: launchUltraplan is conditionally imported
                           void launchUltraplan({
                             blurb,
                             getAppState: () => store.getState(),

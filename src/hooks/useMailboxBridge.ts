@@ -11,11 +11,15 @@ export function useMailboxBridge({ isLoading, onSubmitMessage }: Props): void {
 
   const subscribe = useMemo(() => mailbox.subscribe.bind(mailbox), [mailbox])
   const getSnapshot = useCallback(() => mailbox.revision, [mailbox])
-  const revision = useSyncExternalStore(subscribe, getSnapshot)
+  const _revision = useSyncExternalStore(subscribe, getSnapshot)
 
   useEffect(() => {
-    if (isLoading) return
+    if (isLoading) {
+      return
+    }
     const msg = mailbox.poll()
-    if (msg) onSubmitMessage(msg.content)
-  }, [isLoading, revision, mailbox, onSubmitMessage])
+    if (msg) {
+      onSubmitMessage(msg.content)
+    }
+  }, [isLoading, mailbox, onSubmitMessage])
 }

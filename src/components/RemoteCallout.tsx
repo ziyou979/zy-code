@@ -6,6 +6,7 @@ import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
 import type { OptionWithDescription } from './CustomSelect/select.js'
 import { Select } from './CustomSelect/select.js'
 import { PermissionDialog } from './permissions/PermissionDialog.js'
+
 type RemoteCalloutSelection = 'enable' | 'dismiss'
 type Props = {
   onDone: (selection: RemoteCalloutSelection) => void
@@ -20,7 +21,9 @@ export function RemoteCallout({ onDone }: Props): React.ReactNode {
   // Permanently mark as seen on mount so it only shows once
   useEffect(() => {
     saveGlobalConfig((current) => {
-      if (current.remoteDialogSeen) return current
+      if (current.remoteDialogSeen) {
+        return current
+      }
       return {
         ...current,
         remoteDialogSeen: true,
@@ -66,9 +69,15 @@ export function RemoteCallout({ onDone }: Props): React.ReactNode {
  */
 export function shouldShowRemoteCallout(): boolean {
   const config = getGlobalConfig()
-  if (config.remoteDialogSeen) return false
-  if (!isBridgeEnabled()) return false
+  if (config.remoteDialogSeen) {
+    return false
+  }
+  if (!isBridgeEnabled()) {
+    return false
+  }
   const tokens = getZyAIOAuthTokens()
-  if (!tokens?.accessToken) return false
+  if (!tokens?.accessToken) {
+    return false
+  }
   return true
 }

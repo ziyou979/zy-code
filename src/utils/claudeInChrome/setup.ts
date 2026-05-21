@@ -1,8 +1,8 @@
+import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { BROWSER_TOOLS } from '@ant/claude-for-chrome-mcp'
-import { chmod, mkdir, readFile, writeFile } from 'fs/promises'
-import { homedir } from 'os'
-import { join } from 'path'
-import { fileURLToPath } from 'url'
 import {
   getIsInteractive,
   getIsNonInteractiveSession,
@@ -13,21 +13,20 @@ import type { ScopedMcpServerConfig } from '../../services/mcp/types.js'
 import { isInBundledMode } from '../bundledMode.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config.js'
 import { logForDebugging } from '../debug.js'
-import { getZyConfigHomeDir, isEnvDefinedFalsy, isEnvTruthy } from '../envUtils.js'
+import { getZyConfigHomeDir, isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../envUtils.js'
 import { execFileNoThrowWithCwd } from '../execFileNoThrow.js'
-import { isInternalBuild } from '../envUtils.js'
 import { getPlatform } from '../platform.js'
 import { jsonStringify } from '../slowOperations.js'
-// @ts-ignore
+// @ts-expect-error
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   getAllBrowserDataPaths,
   getAllNativeMessagingHostsDirs,
   getAllWindowsRegistryKeys,
   openInChrome,
-  // @ts-ignore
+  // @ts-expect-error
 } from './common.js'
-// @ts-ignore
+// @ts-expect-error
 import { getChromeSystemPrompt } from './prompt.js'
 import { isChromeExtensionInstalledPortable } from './setupPortable.js'
 
@@ -67,7 +66,7 @@ export function shouldEnableClaudeInChrome(chromeFlag?: boolean): boolean {
   return false
 }
 
-let shouldAutoEnable: boolean | undefined = undefined
+let shouldAutoEnable: boolean | undefined
 
 export function shouldAutoEnableClaudeInChrome(): boolean {
   if (shouldAutoEnable !== undefined) {
@@ -93,9 +92,9 @@ export function setupClaudeInChrome(): {
   systemPrompt: string
 } {
   const isNativeBuild = isInBundledMode()
-  // @ts-ignore
+  // @ts-expect-error
   const allowedTools = BROWSER_TOOLS.map(
-    // @ts-ignore
+    // @ts-expect-error
     (tool) => `mcp__claude-in-chrome__${(tool as any).name}`,
   )
 

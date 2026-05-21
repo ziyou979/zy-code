@@ -1,5 +1,5 @@
-import { openSync } from 'fs'
-import { ReadStream } from 'tty'
+import { openSync } from 'node:fs'
+import { ReadStream } from 'node:tty'
 import type { RenderOptions } from '../ink.js'
 import { isEnvTruthy } from './envUtils.js'
 import { logError } from './log.js'

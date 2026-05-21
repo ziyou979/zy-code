@@ -1,4 +1,4 @@
-import React from 'react'
+import { tSync } from '../../../../i18n/index.js'
 import { Box } from '../../../../ink.js'
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js'
 import { isAutoMemoryEnabled } from '../../../../memdir/paths.js'
@@ -6,13 +6,13 @@ import {
   type AgentMemoryScope,
   loadAgentMemoryPrompt,
 } from '../../../../tools/AgentTool/agentMemory.js'
-import { tSync } from '../../../../i18n/index.js'
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
 import { Select } from '../../../CustomSelect/select.js'
 import { Byline } from '../../../design-system/Byline.js'
 import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js'
 import { useWizard } from '../../../wizard/index.js'
 import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
+
 type MemoryOption = {
   label: string
   value: AgentMemoryScope | 'none'
@@ -71,7 +71,7 @@ export function MemoryStep() {
             memory,
             getSystemPrompt:
               isAutoMemoryEnabled() && memory && agentType
-                ? () => wizardData.systemPrompt + '\n\n' + loadAgentMemoryPrompt(agentType, memory)
+                ? () => `${wizardData.systemPrompt}\n\n${loadAgentMemoryPrompt(agentType, memory)}`
                 : () => wizardData.systemPrompt,
           }
         : undefined,

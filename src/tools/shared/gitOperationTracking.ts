@@ -100,10 +100,16 @@ function parsePrNumberFromText(stdout: string): number | undefined {
  */
 function parseRefFromCommand(command: string, verb: string): string | undefined {
   const after = command.split(gitCmdRe(verb))[1]
-  if (!after) return undefined
+  if (!after) {
+    return undefined
+  }
   for (const t of after.trim().split(/\s+/)) {
-    if (/^[&|;><]/.test(t)) break
-    if (t.startsWith('-')) continue
+    if (/^[&|;><]/.test(t)) {
+      break
+    }
+    if (t.startsWith('-')) {
+      continue
+    }
     return t
   }
   return undefined
@@ -140,15 +146,21 @@ export function detectGitOperation(
   }
   if (GIT_PUSH_RE.test(command)) {
     const branch = parseGitPushBranch(output)
-    if (branch) result.push = { branch }
+    if (branch) {
+      result.push = { branch }
+    }
   }
   if (GIT_MERGE_RE.test(command) && /(Fast-forward|Merge made by)/.test(output)) {
     const ref = parseRefFromCommand(command, 'merge')
-    if (ref) result.branch = { ref, action: 'merged' }
+    if (ref) {
+      result.branch = { ref, action: 'merged' }
+    }
   }
   if (GIT_REBASE_RE.test(command) && /Successfully rebased/.test(output)) {
     const ref = parseRefFromCommand(command, 'rebase')
-    if (ref) result.branch = { ref, action: 'rebased' }
+    if (ref) {
+      result.branch = { ref, action: 'rebased' }
+    }
   }
   const prAction = GH_PR_ACTIONS.find((a) => a.re.test(command))?.action
   if (prAction) {
@@ -157,7 +169,9 @@ export function detectGitOperation(
       result.pr = { number: pr.prNumber, url: pr.prUrl, action: prAction }
     } else {
       const num = parsePrNumberFromText(output)
-      if (num) result.pr = { number: num, action: prAction }
+      if (num) {
+        result.pr = { number: num, action: prAction }
+      }
     }
   }
   return result

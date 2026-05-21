@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { appendFileSync } from 'fs'
+import { appendFileSync } from 'node:fs'
 import React from 'react'
 import { logEvent } from 'src/services/analytics/index.js'
 import { gracefulShutdown, gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
@@ -29,22 +29,17 @@ import { AppStateProvider } from './state/AppState.js'
 import { onChangeAppState } from './state/onChangeAppState.js'
 import { normalizeApiKeyForConfig } from './utils/authPortable.js'
 import {
-  getExternalzyMdIncludes,
-  getMemoryFiles,
-  shouldShowzyMdExternalIncludesWarning,
-} from './utils/zymd.js'
-import {
   checkHasTrustDialogAccepted,
   getApiKeyStatus,
   getGlobalConfig,
   saveGlobalConfig,
 } from './utils/config.js'
 import { updateDeepLinkTerminalPreference } from './utils/deepLink/terminalPreference.js'
-import { getDefaultStandardModel } from './utils/model/model.js'
 import { isEnvTruthy, isRunningOnHomespace, isTestEnv } from './utils/envUtils.js'
 import { type FpsMetrics, FpsTracker } from './utils/fpsTracker.js'
 import { updateGithubRepoPathMapping } from './utils/githubRepoPathMapping.js'
 import { applyConfigEnvironmentVariables } from './utils/managedEnv.js'
+import { getDefaultStandardModel } from './utils/model/model.js'
 import type { PermissionMode } from './utils/permissions/PermissionMode.js'
 import { getBaseRenderOptions } from './utils/renderOptions.js'
 import { getSettingsWithAllErrors } from './utils/settings/allErrors.js'
@@ -52,6 +47,11 @@ import {
   hasAutoModeOptIn,
   hasSkipDangerousModePermissionPrompt,
 } from './utils/settings/settings.js'
+import {
+  getExternalzyMdIncludes,
+  getMemoryFiles,
+  shouldShowzyMdExternalIncludesWarning,
+} from './utils/zymd.js'
 export function completeOnboarding(): void {
   saveGlobalConfig((current) => ({
     ...current,
@@ -395,12 +395,12 @@ export function getRenderContext(exitOnCtrlC: boolean): {
           // single syscalls; cpu is cumulative — bench side computes delta.
           const line =
             // eslint-disable-next-line custom-rules/no-direct-json-operations -- tiny object, hot bench path
-            JSON.stringify({
+            `${JSON.stringify({
               total: event.durationMs,
               ...event.phases,
               rss: process.memoryUsage.rss(),
               cpu: process.cpuUsage(),
-            }) + '\n'
+            })}\n`
           // eslint-disable-next-line custom-rules/no-sync-fs -- bench-only, sync so no frames dropped on exit
           appendFileSync(frameTimingLogPath, line)
         }

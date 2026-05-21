@@ -41,7 +41,7 @@ export async function createDirectConnectSession({
     'content-type': 'application/json',
   }
   if (authToken) {
-    headers['authorization'] = `Bearer ${authToken}`
+    headers.authorization = `Bearer ${authToken}`
   }
 
   let resp: Response

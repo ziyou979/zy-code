@@ -1,20 +1,19 @@
-import type {
-  ContentBlock,
-  ImageBlock,
-  ToolResultBlock,
-  DocumentBlock,
-  LLMMessage,
-
-} from '../../types/llm.js'
-import type { UserMessage, AssistantMessage } from '../../types/message.js'
+import { feature } from 'bun:bundle'
 import type { QuerySource } from '../../constants/querySource.js'
 import { isConnectorTextBlock } from '../../types/connectorText.js'
-import { feature } from 'bun:bundle'
-import { getCacheControl } from './cacheControl.js'
-import { logEvent } from '../analytics/index.js'
-import { logForDebugging } from '../../utils/debug.js'
+import type {
+  ContentBlock,
+  DocumentBlock,
+  ImageBlock,
+  LLMMessage,
+  ToolResultBlock,
+} from '../../types/llm.js'
+import type { AssistantMessage, UserMessage } from '../../types/message.js'
 import { insertBlockAfterToolResults } from '../../utils/contentArray.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { logEvent } from '../analytics/index.js'
 import { pinCacheEdits } from '../compact/microCompact.js'
+import { getCacheControl } from './cacheControl.js'
 
 export function userMessageToMessageParam(
   message: UserMessage,
@@ -55,9 +54,9 @@ export function userMessageToMessageParam(
   // addCacheBreakpoints 会共享同一数组，每次都在其中插入重复的 cache_edits。
   return {
     role: 'user',
-    content: (Array.isArray(message.message.content)
+    content: Array.isArray(message.message.content)
       ? [...message.message.content]
-      : message.message.content),
+      : message.message.content,
   }
 }
 
@@ -122,28 +121,42 @@ export function stripExcessMediaItems(
 ): (UserMessage | AssistantMessage)[] {
   let toRemove = 0
   for (const msg of messages) {
-    if (!Array.isArray(msg.message.content)) continue
+    if (!Array.isArray(msg.message.content)) {
+      continue
+    }
     for (const block of msg.message.content) {
-      if (isMedia(block)) toRemove++
+      if (isMedia(block)) {
+        toRemove++
+      }
       if (isToolResult(block) && Array.isArray(block.content)) {
         for (const nested of block.content) {
-          if (isMedia(nested)) toRemove++
+          if (isMedia(nested)) {
+            toRemove++
+          }
         }
       }
     }
   }
   toRemove -= limit
-  if (toRemove <= 0) return messages
+  if (toRemove <= 0) {
+    return messages
+  }
 
   return messages.map((msg) => {
-    if (toRemove <= 0) return msg
+    if (toRemove <= 0) {
+      return msg
+    }
     const content = msg.message.content
-    if (!Array.isArray(content)) return msg
+    if (!Array.isArray(content)) {
+      return msg
+    }
 
     const before = toRemove
     const stripped = content
       .map((block) => {
-        if (toRemove <= 0 || !isToolResult(block) || !Array.isArray(block.content)) return block
+        if (toRemove <= 0 || !isToolResult(block) || !Array.isArray(block.content)) {
+          return block
+        }
         const filtered = block.content.filter((n) => {
           if (toRemove > 0 && isMedia(n)) {
             toRemove--

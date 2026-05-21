@@ -1,4 +1,4 @@
-import { relative } from 'path'
+import { relative } from 'node:path'
 import React from 'react'
 import { getCwdState } from '../../bootstrap/state.js'
 import { SandboxSettings } from '../../components/sandbox/SandboxSettings.js'

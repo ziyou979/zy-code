@@ -34,9 +34,15 @@ const MAX_CONVERSATION_TEXT = 1000
 export function extractConversationText(messages: Message[]): string {
   const parts: string[] = []
   for (const msg of messages) {
-    if (msg.type !== 'user' && msg.type !== 'assistant') continue
-    if ('isMeta' in msg && msg.isMeta) continue
-    if ('origin' in msg && msg.origin && msg.origin.kind !== 'human') continue
+    if (msg.type !== 'user' && msg.type !== 'assistant') {
+      continue
+    }
+    if ('isMeta' in msg && msg.isMeta) {
+      continue
+    }
+    if ('origin' in msg && msg.origin && msg.origin.kind !== 'human') {
+      continue
+    }
     const content = msg.message.content
     if (typeof content === 'string') {
       parts.push(content)
@@ -80,12 +86,14 @@ export async function generateSessionTitle(
   signal: AbortSignal,
 ): Promise<string | null> {
   const trimmed = description.trim()
-  if (!trimmed) return null
+  if (!trimmed) {
+    return null
+  }
 
   try {
     const languageSection = getLanguageSection(getInitialSettings().language)
     const systemPrompt = languageSection
-      ? SESSION_TITLE_PROMPT + '\n\n' + languageSection
+      ? `${SESSION_TITLE_PROMPT}\n\n${languageSection}`
       : SESSION_TITLE_PROMPT
 
     const result = await queryCompactModel({

@@ -1,12 +1,12 @@
-// @ts-ignore
+// @ts-expect-error
 import type { StructuredPatchHunk } from 'diff'
-import * as React from 'react'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { count } from '../utils/array.js'
 import { MessageResponse } from './MessageResponse.js'
 import { StructuredDiffList } from './StructuredDiffList.js'
+
 type Props = {
   filePath: string
   structuredPatch: StructuredPatchHunk[]
@@ -37,17 +37,14 @@ export function FileEditToolUpdatedMessage({
   )
   const text = (
     <Text>
-      {numAdditions > 0 ? (
-        <>
-          {tSync(numAdditions > 1 ? 'fileEdit.addedLines' : 'fileEdit.addedLine', {
+      {numAdditions > 0
+        ? tSync(numAdditions > 1 ? 'fileEdit.addedLines' : 'fileEdit.addedLine', {
             count: numAdditions,
-          })}
-        </>
-      ) : null}
+          })
+        : null}
       {numAdditions > 0 && numRemovals > 0 ? ', ' : null}
-      {numRemovals > 0 ? (
-        <>
-          {tSync(
+      {numRemovals > 0
+        ? tSync(
             numAdditions === 0
               ? numRemovals > 1
                 ? 'fileEdit.removedLinesOnly'
@@ -56,9 +53,8 @@ export function FileEditToolUpdatedMessage({
                 ? 'fileEdit.removedLines'
                 : 'fileEdit.removedLine',
             { count: numRemovals },
-          )}
-        </>
-      ) : null}
+          )
+        : null}
     </Text>
   )
   if (previewHint) {

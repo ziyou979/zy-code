@@ -24,7 +24,9 @@ const GH_TIMEOUT_MS = 5000
  * reviewDecision can be: APPROVED, CHANGES_REQUESTED, REVIEW_REQUIRED, or empty string.
  */
 export function deriveReviewState(isDraft: boolean, reviewDecision: string): PrReviewState {
-  if (isDraft) return 'draft'
+  if (isDraft) {
+    return 'draft'
+  }
   switch (reviewDecision) {
     case 'APPROVED':
       return 'approved'
@@ -42,12 +44,16 @@ export function deriveReviewState(isDraft: boolean, reviewDecision: string): PrR
  */
 export async function fetchPrStatus(): Promise<PrStatus | null> {
   const isGit = await getIsGit()
-  if (!isGit) return null
+  if (!isGit) {
+    return null
+  }
 
   // Skip on the default branch — `gh pr view` returns the most recently
   // merged PR there, which is misleading.
   const [branch, defaultBranch] = await Promise.all([getBranch(), getDefaultBranch()])
-  if (branch === defaultBranch) return null
+  if (branch === defaultBranch) {
+    return null
+  }
 
   const { stdout, code } = await execFileNoThrow(
     'gh',
@@ -55,7 +61,9 @@ export async function fetchPrStatus(): Promise<PrStatus | null> {
     { timeout: GH_TIMEOUT_MS, preserveOutputOnError: false },
   )
 
-  if (code !== 0 || !stdout.trim()) return null
+  if (code !== 0 || !stdout.trim()) {
+    return null
+  }
 
   try {
     const data = jsonParse(stdout) as {

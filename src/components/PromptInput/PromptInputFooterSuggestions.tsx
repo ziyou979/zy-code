@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { memo } from 'react'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../ink/stringWidth.js'
@@ -29,9 +28,15 @@ export const OVERLAY_MAX_ITEMS = 5
  * Icons: + for files, ◇ for MCP resources, * for agents
  */
 function getIcon(itemId: string): string {
-  if (itemId.startsWith('file-')) return '+'
-  if (itemId.startsWith('mcp-resource-')) return '◇'
-  if (itemId.startsWith('agent-')) return '*'
+  if (itemId.startsWith('file-')) {
+    return '+'
+  }
+  if (itemId.startsWith('mcp-resource-')) {
+    return '◇'
+  }
+  if (itemId.startsWith('agent-')) {
+    return '*'
+  }
   return '+'
 }
 

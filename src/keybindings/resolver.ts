@@ -37,8 +37,12 @@ export function resolveKey(
 
   for (const binding of bindings) {
     // Phase 1: Only single-keystroke bindings
-    if (binding.chord.length !== 1) continue
-    if (!ctxSet.has(binding.context)) continue
+    if (binding.chord.length !== 1) {
+      continue
+    }
+    if (!ctxSet.has(binding.context)) {
+      continue
+    }
 
     if (matchesBinding(input, key, binding)) {
       match = binding
@@ -75,7 +79,9 @@ export function getBindingDisplayText(
  */
 function buildKeystroke(input: string, key: Key): ParsedKeystroke | null {
   const keyName = getKeyName(input, key)
-  if (!keyName) return null
+  if (!keyName) {
+    return null
+  }
 
   // QUIRK: Ink sets key.meta=true when escape is pressed (see input-event.ts).
   // This is legacy terminal behavior - we should NOT record this as a modifier
@@ -112,12 +118,18 @@ export function keystrokesEqual(a: ParsedKeystroke, b: ParsedKeystroke): boolean
  * Check if a chord prefix matches the beginning of a binding's chord.
  */
 function chordPrefixMatches(prefix: ParsedKeystroke[], binding: ParsedBinding): boolean {
-  if (prefix.length >= binding.chord.length) return false
+  if (prefix.length >= binding.chord.length) {
+    return false
+  }
   for (let i = 0; i < prefix.length; i++) {
     const prefixKey = prefix[i]
     const bindingKey = binding.chord[i]
-    if (!prefixKey || !bindingKey) return false
-    if (!keystrokesEqual(prefixKey, bindingKey)) return false
+    if (!prefixKey || !bindingKey) {
+      return false
+    }
+    if (!keystrokesEqual(prefixKey, bindingKey)) {
+      return false
+    }
   }
   return true
 }
@@ -126,12 +138,18 @@ function chordPrefixMatches(prefix: ParsedKeystroke[], binding: ParsedBinding): 
  * Check if a full chord matches a binding's chord.
  */
 function chordExactlyMatches(chord: ParsedKeystroke[], binding: ParsedBinding): boolean {
-  if (chord.length !== binding.chord.length) return false
+  if (chord.length !== binding.chord.length) {
+    return false
+  }
   for (let i = 0; i < chord.length; i++) {
     const chordKey = chord[i]
     const bindingKey = binding.chord[i]
-    if (!chordKey || !bindingKey) return false
-    if (!keystrokesEqual(chordKey, bindingKey)) return false
+    if (!chordKey || !bindingKey) {
+      return false
+    }
+    if (!keystrokesEqual(chordKey, bindingKey)) {
+      return false
+    }
   }
   return true
 }

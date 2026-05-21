@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
-import type { UUID } from 'crypto'
-import { relative } from 'path'
+import type { UUID } from 'node:crypto'
+import { relative } from 'node:path'
 import { getCwd } from 'src/utils/cwd.js'
 import { addInvokedSkill } from '../bootstrap/state.js'
 import { asSessionId } from '../types/ids.js'
@@ -318,14 +318,20 @@ function isTerminalToolResult(
   resultIdx: number,
 ): boolean {
   const content = result.message.content
-  if (!Array.isArray(content)) return false
+  if (!Array.isArray(content)) {
+    return false
+  }
   const block = content[0]
-  if (block?.type !== 'tool_result') return false
+  if (block?.type !== 'tool_result') {
+    return false
+  }
   const toolUseId = block.toolCallId
 
   for (let i = resultIdx - 1; i >= 0; i--) {
     const msg = messages[i]!
-    if (msg.type !== 'assistant') continue
+    if (msg.type !== 'assistant') {
+      continue
+    }
     for (const b of msg.message.content) {
       if (b.type === 'tool_call' && b.id === toolUseId) {
         return (
@@ -385,14 +391,18 @@ export async function loadMessagesFromJsonlPath(path: string): Promise<{
   let tip: (typeof byUuid extends Map<UUID, infer T> ? T : never) | null = null
   let tipTs = 0
   for (const m of byUuid.values()) {
-    if (m.isSidechain || !leafUuids.has(m.uuid as any)) continue
+    if (m.isSidechain || !leafUuids.has(m.uuid as any)) {
+      continue
+    }
     const ts = new Date(m.timestamp).getTime()
     if (ts > tipTs) {
       tipTs = ts
       tip = m
     }
   }
-  if (!tip) return { messages: [], sessionId: undefined }
+  if (!tip) {
+    return { messages: [], sessionId: undefined }
+  }
   const chain = buildConversationChain(byUuid, tip)
   return {
     messages: removeExtraFields(chain),

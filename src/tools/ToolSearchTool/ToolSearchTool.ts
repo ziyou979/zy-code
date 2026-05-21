@@ -1,4 +1,3 @@
-import type { ToolResultBlock } from '../../types/llm.js'
 import memoize from 'lodash-es/memoize.js'
 import { z } from 'zod/v4'
 import {
@@ -6,6 +5,7 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { buildTool, findToolByName, type Tool, type ToolDef, type Tools } from '../../Tool.js'
+import type { ToolResultBlock } from '../../types/llm.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { escapeRegExp } from '../../utils/stringUtils.js'
@@ -359,7 +359,9 @@ export const ToolSearchTool = buildTool({
       for (const toolName of requested) {
         const tool = findToolByName(deferredTools, toolName) ?? findToolByName(tools, toolName)
         if (tool) {
-          if (!found.includes(tool.name)) found.push(tool.name)
+          if (!found.includes(tool.name)) {
+            found.push(tool.name)
+          }
         } else {
           missing.push(toolName)
         }
@@ -434,4 +436,5 @@ export const ToolSearchTool = buildTool({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(ToolSearchTool, () => isToolSearchEnabledOptimistic())

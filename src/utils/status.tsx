@@ -3,7 +3,6 @@ import * as React from 'react'
 import { color, Text } from '../ink.js'
 import type { MCPServerConnection } from '../services/mcp/types.js'
 import { getAccountInformation } from './auth.js'
-import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './zymd.js'
 import { getDoctorDiagnostic } from './doctorDiagnostic.js'
 import { isInternalBuild } from './envUtils.js'
 import { getDisplayPath } from './file.js'
@@ -31,6 +30,7 @@ import {
   getSettingsForSource,
 } from './settings/settings.js'
 import type { ThemeName } from './theme.js'
+import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './zymd.js'
 export type Property = {
   label?: string
   value: React.ReactNode | Array<string>
@@ -135,16 +135,29 @@ export function buildMcpProperties(
     failed: 0,
   }
   for (const s of servers) {
-    if (s.type === 'connected') byState.connected++
-    else if (s.type === 'pending') byState.pending++
-    else if (s.type === 'needs-auth') byState.needsAuth++
-    else byState.failed++
+    if (s.type === 'connected') {
+      byState.connected++
+    } else if (s.type === 'pending') {
+      byState.pending++
+    } else if (s.type === 'needs-auth') {
+      byState.needsAuth++
+    } else {
+      byState.failed++
+    }
   }
   const parts: string[] = []
-  if (byState.connected) parts.push(color('success', theme)(`${byState.connected} connected`))
-  if (byState.needsAuth) parts.push(color('warning', theme)(`${byState.needsAuth} need auth`))
-  if (byState.pending) parts.push(color('inactive', theme)(`${byState.pending} pending`))
-  if (byState.failed) parts.push(color('error', theme)(`${byState.failed} failed`))
+  if (byState.connected) {
+    parts.push(color('success', theme)(`${byState.connected} connected`))
+  }
+  if (byState.needsAuth) {
+    parts.push(color('warning', theme)(`${byState.needsAuth} need auth`))
+  }
+  if (byState.pending) {
+    parts.push(color('inactive', theme)(`${byState.pending} pending`))
+  }
+  if (byState.failed) {
+    parts.push(color('error', theme)(`${byState.failed} failed`))
+  }
   return [
     {
       label: 'MCP servers',

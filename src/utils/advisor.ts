@@ -1,8 +1,7 @@
-import type { TokenUsage } from '../types/llm.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import type { TokenUsage } from '../types/llm.js'
 import { shouldIncludeExperimentalBetas } from './betas.js'
-import { isEnvTruthy } from './envUtils.js'
-import { isInternalBuild } from './envUtils.js'
+import { isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { modelHasCapability } from './model/providers.js'
 import { localModelHasCapability } from './settings/localModelCapabilities.js'
 import { getInitialSettings } from './settings/settings.js'
@@ -114,7 +113,7 @@ export function getInitialAdvisorSetting(): string | undefined {
 }
 
 export function getAdvisorUsage(usage: TokenUsage): Array<TokenUsage & { model: string }> {
-  // @ts-ignore
+  // @ts-expect-error
   const iterations = usage.iterations as Array<{ type: string }> | null | undefined
   if (!iterations) {
     return []

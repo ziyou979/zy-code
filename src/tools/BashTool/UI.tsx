@@ -1,16 +1,16 @@
-import type { ToolResultBlock } from '../../types/llm.js'
 import * as React from 'react'
 import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js'
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { ShellProgressMessage } from '../../components/shell/ShellProgressMessage.js'
-import { Box, Text } from '../../ink.js'
 import { tSync } from '../../i18n/index.js'
+import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
 import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
 import type { Tool } from '../../Tool.js'
 import { backgroundAll } from '../../tasks/LocalShellTask/LocalShellTask.js'
+import type { ToolResultBlock } from '../../types/llm.js'
 import type { ProgressMessage } from '../../types/message.js'
 import { env } from '../../utils/env.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
@@ -79,7 +79,7 @@ export function renderToolUseMessage(
       const label = extractBashCommentLabel(command)
       if (label) {
         return label.length > MAX_COMMAND_DISPLAY_CHARS
-          ? label.slice(0, MAX_COMMAND_DISPLAY_CHARS) + '…'
+          ? `${label.slice(0, MAX_COMMAND_DISPLAY_CHARS)}…`
           : label
       }
     }
@@ -120,7 +120,7 @@ export function renderToolUseProgressMessage(
   },
 ): React.ReactNode {
   const lastProgress = progressMessagesForMessage.at(-1)
-  if (!lastProgress || !lastProgress.data) {
+  if (!lastProgress?.data) {
     return (
       <MessageResponse height={1}>
         <Text dimColor>{tSync('bash.running')}</Text>
@@ -165,7 +165,7 @@ export function renderToolResultMessage(
 ): React.ReactNode {
   const lastProgress = progressMessagesForMessage.at(-1)
   const timeoutMs = lastProgress?.data?.timeoutMs
-  // @ts-ignore
+  // @ts-expect-error
   return <BashToolResultMessage content={content} verbose={verbose} timeoutMs={timeoutMs} />
 }
 export function renderToolUseErrorMessage(

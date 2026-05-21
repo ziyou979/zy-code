@@ -91,7 +91,9 @@ type Input = ReturnType<typeof requireComputerUseInput>
  * 接受这两种拼写，所以 tap 也必须同时识别。
  */
 function isBareEscape(parts: readonly string[]): boolean {
-  if (parts.length !== 1) return false
+  if (parts.length !== 1) {
+    return false
+  }
   const lower = parts[0]!.toLowerCase()
   return lower === 'escape' || lower === 'esc'
 }
@@ -209,7 +211,9 @@ async function animatedMove(
   const deltaX = targetX - start.x
   const deltaY = targetY - start.y
   const distance = Math.hypot(deltaX, deltaY)
-  if (distance < 1) return
+  if (distance < 1) {
+    return
+  }
   const durationSec = Math.min(distance / 2000, 0.5)
   if (durationSec < 0.03) {
     await moveAndSettle(input, targetX, targetY)
@@ -220,7 +224,7 @@ async function animatedMove(
   const totalFrames = Math.floor(durationSec * frameRate)
   for (let frame = 1; frame <= totalFrames; frame++) {
     const t = frame / totalFrames
-    const eased = 1 - Math.pow(1 - t, 3)
+    const eased = 1 - (1 - t) ** 3
     await input.moveMouse(
       Math.round(start.x + deltaX * eased),
       Math.round(start.y + deltaY * eased),
@@ -438,7 +442,9 @@ export function createCliExecutor(opts: {
       try {
         await drainRunLoop(async () => {
           for (const k of keyNames) {
-            if (orphaned) return
+            if (orphaned) {
+              return
+            }
             // 裸 Escape：通知 CGEventTap 不要为模型合成的 press 触发
             // 中止回调。与 key() 逻辑相同。
             if (isBareEscape([k])) {
@@ -557,7 +563,9 @@ export function createCliExecutor(opts: {
 
     async getFrontmostApp(): Promise<FrontmostApp | null> {
       const info = requireComputerUseInput().getFrontmostAppInfo()
-      if (!info || !info.bundleId) return null
+      if (!info?.bundleId) {
+        return null
+      }
       return { bundleId: info.bundleId, displayName: info.appName }
     },
 
@@ -595,7 +603,9 @@ export function createCliExecutor(opts: {
  * 调用者通过 `.catch()` 处理错误。
  */
 export async function unhideComputerUseApps(bundleIds: readonly string[]): Promise<void> {
-  if (bundleIds.length === 0) return
+  if (bundleIds.length === 0) {
+    return
+  }
   const cu = requireComputerUseSwift()
   await cu.apps.unhide([...bundleIds])
 }

@@ -87,7 +87,9 @@ async function handleSwarmWorkerPermission(
           feedback?: string,
           contentBlocks?: ContentBlock[],
         ) {
-          if (!claim()) return // atomic check-and-mark before await
+          if (!claim()) {
+            return // atomic check-and-mark before await
+          }
           clearPendingRequest()
 
           // Merge the updated input with the original input
@@ -105,7 +107,9 @@ async function handleSwarmWorkerPermission(
           )
         },
         onReject(feedback?: string, contentBlocks?: ContentBlock[]) {
-          if (!claim()) return
+          if (!claim()) {
+            return
+          }
           clearPendingRequest()
 
           ctx.logDecision({
@@ -135,7 +139,9 @@ async function handleSwarmWorkerPermission(
       ctx.toolUseContext.abortController.signal.addEventListener(
         'abort',
         () => {
-          if (!claim()) return
+          if (!claim()) {
+            return
+          }
           clearPendingRequest()
           ctx.logCancelled()
           resolveOnce(ctx.cancelAndAbort(undefined, true))
@@ -153,5 +159,5 @@ async function handleSwarmWorkerPermission(
   }
 }
 
-export { handleSwarmWorkerPermission }
 export type { SwarmWorkerPermissionParams }
+export { handleSwarmWorkerPermission }

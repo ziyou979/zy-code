@@ -1,10 +1,10 @@
+import { randomBytes } from 'node:crypto'
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { homedir, platform } from 'node:os'
+import { dirname, join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import chalk from 'chalk'
-import { randomBytes } from 'crypto'
-import { copyFile, mkdir, readFile, writeFile } from 'fs/promises'
-import { homedir, platform } from 'os'
-import { dirname, join } from 'path'
 import type { ThemeName } from 'src/utils/theme.js'
-import { pathToFileURL } from 'url'
 import { supportsHyperlinks } from '../../ink/supports-hyperlinks.js'
 import { color } from '../../ink.js'
 import { maybeMarkProjectOnboardingComplete } from '../../projectOnboardingState.js'
@@ -19,13 +19,14 @@ import {
 import { setupShellCompletion } from '../../utils/completionCache.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { env } from '../../utils/env.js'
-import { isFsInaccessible } from '../../utils/errors.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
+import { isFsInaccessible } from '../../utils/errors.js'
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
 import { addItemToJSONCArray, safeParseJSONC } from '../../utils/json.js'
 import { logError } from '../../utils/log.js'
 import { getPlatform } from '../../utils/platform.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+
 const EOL = '\n'
 
 // Terminals that natively support CSI u / Kitty keyboard protocol
@@ -122,13 +123,17 @@ export async function setupTerminal(theme: ThemeName): Promise<string> {
   }
   saveGlobalConfig((current) => {
     if (['vscode', 'cursor', 'windsurf', 'alacritty', 'zed'].includes(env.terminal ?? '')) {
-      if (current.shiftEnterKeyBindingInstalled === true) return current
+      if (current.shiftEnterKeyBindingInstalled === true) {
+        return current
+      }
       return {
         ...current,
         shiftEnterKeyBindingInstalled: true,
       }
     } else if (env.terminal === 'Apple_Terminal') {
-      if (current.optionAsMetaKeyInstalled === true) return current
+      if (current.optionAsMetaKeyInstalled === true) {
+        return current
+      }
       return {
         ...current,
         optionAsMetaKeyInstalled: true,
@@ -258,7 +263,9 @@ async function installBindingsForVSCodeTerminal(
       fileExists = true
       keybindings = (safeParseJSONC(content) as VSCodeKeybinding[]) ?? []
     } catch (e: unknown) {
-      if (!isFsInaccessible(e)) throw e
+      if (!isFsInaccessible(e)) {
+        throw e
+      }
     }
 
     // Backup the existing file before modifying it
@@ -463,7 +470,9 @@ chars = "\\u001B\\r"`
       configExists = true
       break
     } catch (e: unknown) {
-      if (!isFsInaccessible(e)) throw e
+      if (!isFsInaccessible(e)) {
+        throw e
+      }
       // File missing or inaccessible — try next config path
     }
   }
@@ -502,7 +511,7 @@ chars = "\\u001B\\r"`
     if (configContent && !configContent.endsWith('\n')) {
       updatedContent += '\n'
     }
-    updatedContent += '\n' + ALACRITTY_KEYBINDING + '\n'
+    updatedContent += `\n${ALACRITTY_KEYBINDING}\n`
 
     // Write the updated config
     await writeFile(configPath, updatedContent, {
@@ -533,7 +542,9 @@ async function installBindingsForZed(theme: ThemeName): Promise<string> {
       })
       fileExists = true
     } catch (e: unknown) {
-      if (!isFsInaccessible(e)) throw e
+      if (!isFsInaccessible(e)) {
+        throw e
+      }
     }
     if (fileExists) {
       // Check if keybinding already exists
@@ -574,7 +585,7 @@ async function installBindingsForZed(theme: ThemeName): Promise<string> {
     })
 
     // Write the updated keymap
-    await writeFile(keymapPath, jsonStringify(keymap, null, 2) + '\n', {
+    await writeFile(keymapPath, `${jsonStringify(keymap, null, 2)}\n`, {
       encoding: 'utf-8',
     })
     return `${color('success', theme)('Installed Zed Shift+Enter key binding')}${EOL}${chalk.dim(`See ${formatPathLink(keymapPath)}`)}${EOL}`

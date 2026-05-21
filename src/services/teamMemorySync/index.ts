@@ -22,15 +22,15 @@
  *   SyncState 对象中。这避免了模块级可变状态，并为测试提供天然的隔离性。
  */
 
+import { createHash } from 'node:crypto'
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { join, relative, sep } from 'node:path'
 import axios from 'axios'
-import { createHash } from 'crypto'
-import { mkdir, readdir, readFile, stat, writeFile } from 'fs/promises'
-import { join, relative, sep } from 'path'
 import {
-  ZY_CODE_INFERENCE_SCOPE,
-  ZY_CODE_PROFILE_SCOPE,
   getOauthConfig,
   OAUTH_BETA_HEADER,
+  ZY_CODE_INFERENCE_SCOPE,
+  ZY_CODE_PROFILE_SCOPE,
 } from '../../constants/oauth.js'
 import {
   getTeamMemPath,
@@ -123,7 +123,7 @@ export function createSyncState(): SyncState {
  * 因此本地与服务器的比较可以通过直接字符串相等来完成。
  */
 export function hashContent(content: string): string {
-  return 'sha256:' + createHash('sha256').update(content, 'utf8').digest('hex')
+  return `sha256:${createHash('sha256').update(content, 'utf8').digest('hex')}`
 }
 
 /**
@@ -235,7 +235,7 @@ async function fetchTeamMemoryOnce(
 
     // 从响应数据或 ETag 头中提取校验和
     const responseChecksum =
-      parsed.data.checksum || response.headers['etag']?.replace(/^"|"$/g, '') || undefined
+      parsed.data.checksum || response.headers.etag?.replace(/^"|"$/g, '') || undefined
     if (responseChecksum) {
       state.lastKnownChecksum = responseChecksum
     }
@@ -308,7 +308,7 @@ async function fetchTeamMemoryHashes(
       return { success: false, error: auth.error, errorType: 'auth' }
     }
 
-    const endpoint = getTeamMemorySyncEndpoint(repoSlug) + '&view=hashes'
+    const endpoint = `${getTeamMemorySyncEndpoint(repoSlug)}&view=hashes`
     const response = await axios.get(endpoint, {
       headers: auth.headers,
       timeout: TEAM_MEMORY_SYNC_TIMEOUT_MS,
@@ -320,7 +320,7 @@ async function fetchTeamMemoryHashes(
       return { success: true, entryChecksums: {} }
     }
 
-    const checksum = response.data?.checksum || response.headers['etag']?.replace(/^"|"$/g, '')
+    const checksum = response.data?.checksum || response.headers.etag?.replace(/^"|"$/g, '')
     const entryChecksums = response.data?.entryChecksums
 
     // 需要 anthropic/anthropic#283027。如果缺少 entryChecksums，
@@ -408,7 +408,9 @@ async function fetchTeamMemory(
  */
 export function batchDeltaByBytes(delta: Record<string, string>): Array<Record<string, string>> {
   const keys = Object.keys(delta).sort()
-  if (keys.length === 0) return []
+  if (keys.length === 0) {
+    return []
+  }
 
   // `{"entries":{}}` 的固定开销 —— 每个条目然后增加其边际
   // 字节数。jsonStringify（底层等价于 JSON.stringify）处理原始
@@ -948,7 +950,9 @@ export async function pushTeamMemory(state: SyncState): Promise<TeamMemorySyncPu
 
     for (const batch of batches) {
       result = await uploadTeamMemory(state, repoSlug, batch, state.lastKnownChecksum)
-      if (!result.success) break
+      if (!result.success) {
+        break
+      }
 
       for (const key of Object.keys(batch)) {
         state.serverChecksums.set(key, localHashes.get(key)!)

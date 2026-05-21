@@ -1,5 +1,5 @@
-import React from 'react'
 import Box, { type Props as BoxProps } from './Box.js'
+
 type Props = Omit<BoxProps, 'noSelect'> & {
   /**
    * 将排除区域从第 0 列扩展到此 box 的右边缘，

@@ -37,7 +37,9 @@ export function executeOperatorMotion(
   ctx: OperatorContext,
 ): void {
   const target = resolveMotion(motion, ctx.cursor, count)
-  if (target.equals(ctx.cursor)) return
+  if (target.equals(ctx.cursor)) {
+    return
+  }
 
   const range = getOperatorRange(ctx.cursor, target, motion, op, count)
   applyOperator(op, range.from, range.to, ctx, range.linewise)
@@ -55,7 +57,9 @@ export function executeOperatorFind(
   ctx: OperatorContext,
 ): void {
   const targetOffset = ctx.cursor.findCharacter(char, findType, count)
-  if (targetOffset === null) return
+  if (targetOffset === null) {
+    return
+  }
 
   const target = new Cursor(ctx.cursor.measuredText, targetOffset)
   const range = getOperatorRangeForFind(ctx.cursor, target, findType)
@@ -76,7 +80,9 @@ export function executeOperatorTextObj(
   ctx: OperatorContext,
 ): void {
   const range = findTextObject(ctx.text, ctx.cursor.offset, objType, scope === 'inner')
-  if (!range) return
+  if (!range) {
+    return
+  }
 
   applyOperator(op, range.start, range.end, ctx)
   ctx.recordChange({ type: 'operatorTextObj', op, objType, scope, count })
@@ -102,7 +108,7 @@ export function executeLineOp(op: Operator, count: number, ctx: OperatorContext)
   let content = text.slice(lineStart, lineEnd)
   // Ensure linewise content ends with newline for paste detection
   if (!content.endsWith('\n')) {
-    content = content + '\n'
+    content = `${content}\n`
   }
   ctx.setRegister(content, true)
 
@@ -146,7 +152,9 @@ export function executeLineOp(op: Operator, count: number, ctx: OperatorContext)
 export function executeX(count: number, ctx: OperatorContext): void {
   const from = ctx.cursor.offset
 
-  if (from >= ctx.text.length) return
+  if (from >= ctx.text.length) {
+    return
+  }
 
   // Advance by graphemes, not code units
   let endCursor = ctx.cursor
@@ -189,7 +197,9 @@ export function executeReplace(char: string, count: number, ctx: OperatorContext
 export function executeToggleCase(count: number, ctx: OperatorContext): void {
   const startOffset = ctx.cursor.offset
 
-  if (startOffset >= ctx.text.length) return
+  if (startOffset >= ctx.text.length) {
+    return
+  }
 
   let newText = ctx.text
   let offset = startOffset
@@ -222,7 +232,9 @@ export function executeJoin(count: number, ctx: OperatorContext): void {
   const lines = text.split('\n')
   const { line: currentLine } = ctx.cursor.getPosition()
 
-  if (currentLine >= lines.length - 1) return
+  if (currentLine >= lines.length - 1) {
+    return
+  }
 
   const linesToJoin = Math.min(count, lines.length - currentLine - 1)
   let joinedLine = lines[currentLine]!
@@ -255,7 +267,9 @@ export function executeJoin(count: number, ctx: OperatorContext): void {
  */
 export function executePaste(after: boolean, count: number, ctx: OperatorContext): void {
   const register = ctx.getRegister()
-  if (!register) return
+  if (!register) {
+    return
+  }
 
   const isLinewise = register.endsWith('\n')
   const content = isLinewise ? register.slice(0, -1) : register
@@ -434,7 +448,7 @@ function applyOperator(
   let content = ctx.text.slice(from, to)
   // Ensure linewise content ends with newline for paste detection
   if (linewise && !content.endsWith('\n')) {
-    content = content + '\n'
+    content = `${content}\n`
   }
   ctx.setRegister(content, linewise)
 
@@ -462,7 +476,9 @@ export function executeVisualOperator(
   cursorOffset: number,
   ctx: OperatorContext,
 ): void {
-  if (anchor === cursorOffset) return
+  if (anchor === cursorOffset) {
+    return
+  }
 
   const from = Math.min(anchor, cursorOffset)
   const to = Math.max(anchor, cursorOffset)
@@ -485,10 +501,14 @@ export function executeVisualIndent(
   const to = Math.max(anchor, cursorOffset)
 
   let lineStart = from
-  while (lineStart > 0 && ctx.text[lineStart - 1] !== '\n') lineStart--
+  while (lineStart > 0 && ctx.text[lineStart - 1] !== '\n') {
+    lineStart--
+  }
 
   let lineEnd = to
-  while (lineEnd < ctx.text.length && ctx.text[lineEnd] !== '\n') lineEnd++
+  while (lineEnd < ctx.text.length && ctx.text[lineEnd] !== '\n') {
+    lineEnd++
+  }
 
   const affectedText = ctx.text.slice(lineStart, lineEnd)
   const lines = affectedText.split('\n')
@@ -553,7 +573,9 @@ export function executeOperatorG(op: Operator, count: number, ctx: OperatorConte
   // otherwise target = line N
   const target = count === 1 ? ctx.cursor.startOfLastLine() : ctx.cursor.goToLine(count)
 
-  if (target.equals(ctx.cursor)) return
+  if (target.equals(ctx.cursor)) {
+    return
+  }
 
   const range = getOperatorRange(ctx.cursor, target, 'G', op, count)
   applyOperator(op, range.from, range.to, ctx, range.linewise)
@@ -565,7 +587,9 @@ export function executeOperatorGg(op: Operator, count: number, ctx: OperatorCont
   // otherwise target = line N
   const target = count === 1 ? ctx.cursor.startOfFirstLine() : ctx.cursor.goToLine(count)
 
-  if (target.equals(ctx.cursor)) return
+  if (target.equals(ctx.cursor)) {
+    return
+  }
 
   const range = getOperatorRange(ctx.cursor, target, 'gg', op, count)
   applyOperator(op, range.from, range.to, ctx, range.linewise)

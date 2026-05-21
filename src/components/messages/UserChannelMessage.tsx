@@ -1,9 +1,9 @@
-import type { TextBlock } from '../../types/llm.js'
-import * as React from 'react'
 import { CHANNEL_ARROW } from '../../constants/figures.js'
 import { CHANNEL_TAG } from '../../constants/xml.js'
 import { Box, Text } from '../../ink.js'
+import type { TextBlock } from '../../types/llm.js'
 import { truncateToWidth } from '../../utils/format.js'
+
 type Props = {
   addMargin: boolean
   param: TextBlock

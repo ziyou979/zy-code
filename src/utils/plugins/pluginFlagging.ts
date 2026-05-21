@@ -12,9 +12,9 @@
  * with writes.
  */
 
-import { randomBytes } from 'crypto'
-import { readFile, rename, unlink, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { randomBytes } from 'node:crypto'
+import { readFile, rename, unlink, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { logForDebugging } from '../debug.js'
 import { getFsImplementation } from '../fsOperations.js'
 import { logError } from '../log.js'
@@ -190,7 +190,9 @@ export async function removeFlaggedPlugin(pluginId: string): Promise<void> {
   if (cache === null) {
     cache = await readFromDisk()
   }
-  if (!(pluginId in cache)) return
+  if (!(pluginId in cache)) {
+    return
+  }
 
   const { [pluginId]: _, ...rest } = cache
   cache = rest

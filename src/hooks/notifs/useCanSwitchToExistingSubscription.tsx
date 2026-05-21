@@ -1,16 +1,16 @@
-import * as React from 'react'
 import { getOauthProfileFromApiKey } from 'src/services/oauth/getOauthProfile.js'
 import { Text } from '../../ink.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { useStartupNotification } from './useStartupNotification.js'
+
 const MAX_SHOW_COUNT = 3
 
 /**
  * Hook to check if the user has a subscription on Console but isn't logged into it.
  */
 export function useCanSwitchToExistingSubscription() {
-  // @ts-ignore
+  // @ts-expect-error
   useStartupNotification(_temp2)
 }
 

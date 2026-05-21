@@ -1,5 +1,5 @@
-// @ts-ignore
-import { type StructuredPatchHunk, structuredPatch } from 'diff'
+// @ts-expect-error
+import { type StructuredPatchHunk } from 'diff'
 import { logError } from 'src/utils/log.js'
 import { expandPath } from 'src/utils/path.js'
 import { countCharInString } from 'src/utils/stringUtils.js'
@@ -201,10 +201,10 @@ export function applyEditToFile(
   }
 
   const stripTrailingNewline =
-    !oldString.endsWith('\n') && originalContent.includes(oldString + '\n')
+    !oldString.endsWith('\n') && originalContent.includes(`${oldString}\n`)
 
   return stripTrailingNewline
-    ? f(originalContent, oldString + '\n', newString)
+    ? f(originalContent, `${oldString}\n`, newString)
     : f(originalContent, oldString, newString)
 }
 
@@ -329,7 +329,7 @@ const DIFF_SNIPPET_MAX_BYTES = 8192
  * TODO: Unify this with the other snippet logic.
  */
 export function getSnippetForTwoFileDiff(fileAContents: string, fileBContents: string): string {
-  // @ts-ignore
+  // @ts-expect-error
   const { patch } = createTwoFilesPatch(fileAContents, fileBContents, undefined, undefined, {
     context: 8,
     timeout: DIFF_TIMEOUT_MS,
@@ -339,7 +339,7 @@ export function getSnippetForTwoFileDiff(fileAContents: string, fileBContents: s
     return ''
   }
 
-  // @ts-ignore
+  // @ts-expect-error
   const full = (patch as any).hunks
     .map((_) => ({
       startLine: _.oldStart,

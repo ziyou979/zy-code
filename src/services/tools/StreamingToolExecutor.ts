@@ -1,8 +1,8 @@
-import type { ToolCallBlock } from '../../types/llm.js'
 import { createUserMessage, REJECT_MESSAGE, withMemoryCorrectionHint } from 'src/utils/messages.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { findToolByName, type Tools, type ToolUseContext } from '../../Tool.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
+import type { ToolCallBlock } from '../../types/llm.js'
 import type { AssistantMessage, Message } from '../../types/message.js'
 import { createChildAbortController } from '../../utils/abortController.js'
 import { runToolUse } from './toolExecution.js'
@@ -133,13 +133,17 @@ export class StreamingToolExecutor {
    */
   private async processQueue(): Promise<void> {
     for (const tool of this.tools) {
-      if (tool.status !== 'queued') continue
+      if (tool.status !== 'queued') {
+        continue
+      }
 
       if (this.canExecuteTool(tool.isConcurrencySafe)) {
         await this.executeTool(tool)
       } else {
         // 当前还不能执行这个工具；由于需保证非并发工具的执行顺序，这里直接停止
-        if (!tool.isConcurrencySafe) break
+        if (!tool.isConcurrencySafe) {
+          break
+        }
       }
     }
   }
@@ -224,7 +228,9 @@ export class StreamingToolExecutor {
 
   private getToolInterruptBehavior(tool: TrackedTool): 'cancel' | 'block' {
     const definition = findToolByName(this.toolDefinitions, tool.block.name)
-    if (!definition?.interruptBehavior) return 'block'
+    if (!definition?.interruptBehavior) {
+      return 'block'
+    }
     try {
       return definition.interruptBehavior()
     } catch {
@@ -236,7 +242,7 @@ export class StreamingToolExecutor {
     const input = tool.block.input as Record<string, unknown> | undefined
     const summary = input?.command ?? input?.file_path ?? input?.pattern ?? ''
     if (typeof summary === 'string' && summary.length > 0) {
-      const truncated = summary.length > 40 ? summary.slice(0, 40) + '\u2026' : summary
+      const truncated = summary.length > 40 ? `${summary.slice(0, 40)}\u2026` : summary
       return `${tool.block.name}(${truncated})`
     }
     return tool.block.name

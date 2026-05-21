@@ -1,5 +1,5 @@
+import { basename } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { basename } from 'path'
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
 import type { AgentColorName } from '../../tools/AgentTool/agentColorManager.js'
 import { type AgentMemoryScope, loadAgentMemoryPrompt } from '../../tools/AgentTool/agentMemory.js'
@@ -52,7 +52,9 @@ async function loadAgentsFromDirectory(
         pluginManifest,
         loadedPaths,
       )
-      if (agent) agents.push(agent)
+      if (agent) {
+        agents.push(agent)
+      }
     },
     { logLabel: 'agents' },
   )
@@ -191,7 +193,7 @@ async function loadAgentFromFile(
       getSystemPrompt: () => {
         if (isAutoMemoryEnabled() && memory) {
           const memoryPrompt = loadAgentMemoryPrompt(agentType, memory)
-          return systemPrompt + '\n\n' + memoryPrompt
+          return `${systemPrompt}\n\n${memoryPrompt}`
         }
         return systemPrompt
       },

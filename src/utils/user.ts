@@ -74,7 +74,7 @@ export function resetUserCache(): void {
 export let getCoreUserData
 getCoreUserData = memoize((includeAnalyticsMetadata?: boolean): CoreUserData => {
   const deviceId = getOrCreateUserID()
-  const config = getGlobalConfig()
+  const _config = getGlobalConfig()
 
   let rateLimitTier: string | undefined
   let firstTokenTime: number | undefined

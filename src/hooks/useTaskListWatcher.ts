@@ -1,4 +1,4 @@
-import { type FSWatcher, watch } from 'fs'
+import { type FSWatcher, watch } from 'node:fs'
 import { useEffect, useRef } from 'react'
 import { logForDebugging } from '../utils/debug.js'
 import {
@@ -125,7 +125,9 @@ export function useTaskListWatcher({ taskListId, isLoading, onSubmitTask }: Prop
   const scheduleCheckRef = useRef<() => void>(() => {})
 
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled) {
+      return
+    }
 
     void ensureTasksDir(taskListId)
     const tasksDir = getTasksDir(taskListId)
@@ -176,8 +178,12 @@ export function useTaskListWatcher({ taskListId, isLoading, onSubmitTask }: Prop
   // would pick up the next task. Preserve that behavior explicitly: when
   // isLoading drops, schedule a check.
   useEffect(() => {
-    if (!enabled) return
-    if (isLoading) return
+    if (!enabled) {
+      return
+    }
+    if (isLoading) {
+      return
+    }
     scheduleCheckRef.current()
   }, [enabled, isLoading])
 }
@@ -192,8 +198,12 @@ function findAvailableTask(tasks: Task[]): Task | undefined {
   const unresolvedTaskIds = new Set(tasks.filter((t) => t.status !== 'completed').map((t) => t.id))
 
   return tasks.find((task) => {
-    if (task.status !== 'pending') return false
-    if (task.owner) return false
+    if (task.status !== 'pending') {
+      return false
+    }
+    if (task.owner) {
+      return false
+    }
     // Check all blockers are completed
     return task.blockedBy.every((id) => !unresolvedTaskIds.has(id))
   })

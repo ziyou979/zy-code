@@ -4,6 +4,7 @@ import useStdin from '../../ink/hooks/use-stdin.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { getSystemThemeName, type SystemTheme } from '../../utils/systemTheme.js'
 import type { ThemeName, ThemeSetting } from '../../utils/theme.js'
+
 type ThemeContextValue = {
   /** The saved user preference. May be 'auto'. */
   themeSetting: ThemeSetting
@@ -58,13 +59,19 @@ export function ThemeProvider({ children, initialState, onThemeSave = defaultSav
   // in external builds.
   useEffect(() => {
     if (feature('AUTO_THEME')) {
-      if (activeSetting !== 'auto' || !internal_querier) return
+      if (activeSetting !== 'auto' || !internal_querier) {
+        return
+      }
       let cleanup: (() => void) | undefined
       let cancelled = false
       void import('../../utils/systemThemeWatcher.js').then((mod) => {
         const { watchSystemTheme } = mod as typeof import('../../utils/systemThemeWatcher.js')
-        if (!watchSystemTheme) return
-        if (cancelled) return
+        if (!watchSystemTheme) {
+          return
+        }
+        if (cancelled) {
+          return
+        }
         cleanup = watchSystemTheme(internal_querier, setSystemTheme)
       })
       return () => {

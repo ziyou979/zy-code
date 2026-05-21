@@ -9,8 +9,8 @@
  * This reuses the LocalAgentTask state structure since the behavior is similar.
  */
 
-import type { UUID } from 'crypto'
-import { randomBytes } from 'crypto'
+import type { UUID } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
 import {
   OUTPUT_FILE_TAG,
   STATUS_TAG,
@@ -407,7 +407,9 @@ export function startBackgroundSession({
 
         setAppState((prev) => {
           const task = prev.tasks[taskId]
-          if (!task || task.type !== 'local_agent') return prev
+          if (!task || task.type !== 'local_agent') {
+            return prev
+          }
           const prevProgress = task.progress
           if (
             prevProgress?.tokenCount === tokenCount &&

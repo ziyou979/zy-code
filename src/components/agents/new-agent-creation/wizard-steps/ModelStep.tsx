@@ -1,4 +1,3 @@
-import React from 'react'
 import { tSync } from '../../../../i18n/index.js'
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
 import { Byline } from '../../../design-system/Byline.js'

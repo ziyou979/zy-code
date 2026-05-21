@@ -1,4 +1,4 @@
-import React from 'react'
+import { tSync } from 'src/i18n/index.js'
 import { getOriginalCwd } from '../../bootstrap/state.js'
 import { Box, Text, useTheme } from '../../ink.js'
 import { sanitizeToolNameForAnalytics } from '../../services/analytics/metadata.js'
@@ -10,7 +10,7 @@ import { usePermissionRequestLogging } from './hooks.js'
 import { PermissionDialog } from './PermissionDialog.js'
 import { PermissionPrompt } from './PermissionPrompt.js'
 import { PermissionRuleExplanation } from './PermissionRuleExplanation.js'
-import { tSync } from 'src/i18n/index.js'
+
 type FallbackOptionValue = 'yes' | 'yes-dont-ask-again' | 'no'
 export function FallbackPermissionRequest({ toolUseConfirm, onDone, onReject, workerBadge }) {
   const [theme] = useTheme()
@@ -145,7 +145,7 @@ export function FallbackPermissionRequest({ toolUseConfirm, onDone, onReject, wo
     ''
   )
   const truncatedDescription = truncateToLines(toolUseConfirm.description, 3)
-  // @ts-ignore
+  // @ts-expect-error
   return (
     <PermissionDialog title={tSync('permissionRules.toolUse')} workerBadge={workerBadge}>
       {

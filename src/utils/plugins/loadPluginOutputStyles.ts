@@ -1,5 +1,5 @@
+import { basename } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { basename } from 'path'
 import type { OutputStyleConfig } from '../../constants/outputStyles.js'
 import { getPluginErrorMessage } from '../../types/plugin.js'
 import { logForDebugging } from '../debug.js'
@@ -19,7 +19,9 @@ async function loadOutputStylesFromDirectory(
     outputStylesPath,
     async (fullPath) => {
       const style = await loadOutputStyleFromFile(fullPath, pluginName, loadedPaths)
-      if (style) styles.push(style)
+      if (style) {
+        styles.push(style)
+      }
     },
     { logLabel: 'output-styles' },
   )

@@ -1,6 +1,5 @@
-// @ts-ignore
+// @ts-expect-error
 import type { StructuredPatchHunk } from 'diff'
-import * as React from 'react'
 import { memo } from 'react'
 import { useSettings } from '../hooks/useSettings.js'
 import { Box, NoSelect, RawAnsi, useTheme } from '../ink.js'
@@ -8,6 +7,7 @@ import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
 import sliceAnsi from '../utils/sliceAnsi.js'
 import { expectColorDiff } from './StructuredDiff/colorDiff.js'
 import { StructuredDiffFallback } from './StructuredDiff/Fallback.js'
+
 type Props = {
   patch: StructuredPatchHunk
   dim: boolean
@@ -62,7 +62,9 @@ function renderColorDiff(
   splitGutter: boolean,
 ): CachedRender | null {
   const ColorDiff = expectColorDiff()
-  if (!ColorDiff) return null
+  if (!ColorDiff) {
+    return null
+  }
 
   // Defensive: if the gutter would eat the whole render width (narrow
   // terminal), skip the split. Rust already wraps to `width` so the
@@ -74,9 +76,13 @@ function renderColorDiff(
   const key = `${theme}|${width}|${dim ? 1 : 0}|${gutterWidth}|${firstLine ?? ''}|${filePath}`
   let perHunk = RENDER_CACHE.get(patch)
   const hit = perHunk?.get(key)
-  if (hit) return hit
+  if (hit) {
+    return hit
+  }
   const lines = new ColorDiff(patch, firstLine, filePath, fileContent).render(theme, width, dim)
-  if (lines === null) return null
+  if (lines === null) {
+    return null
+  }
 
   // Pre-split the gutter column once (cold-cache). sliceAnsi preserves
   // styles across the cut; the Rust module already pads the gutter to
@@ -101,7 +107,9 @@ function renderColorDiff(
   // diff is visible accumulates a full render copy per distinct width. Four
   // variants (two widths × dim on/off) covers the steady state; beyond that
   // the user is actively resizing and old widths are stale.
-  if (perHunk.size >= 4) perHunk.clear()
+  if (perHunk.size >= 4) {
+    perHunk.clear()
+  }
   perHunk.set(key, entry)
   return entry
 }

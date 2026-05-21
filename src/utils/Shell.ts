@@ -1,17 +1,17 @@
-import { execFileSync, spawn } from 'child_process'
-import { constants as fsConstants, readFileSync, unlinkSync } from 'fs'
-import { type FileHandle, mkdir, open, realpath } from 'fs/promises'
+import { execFileSync, spawn } from 'node:child_process'
+import { constants as fsConstants, readFileSync, unlinkSync } from 'node:fs'
+import { type FileHandle, mkdir, open, realpath } from 'node:fs/promises'
+import { isAbsolute, resolve } from 'node:path'
+import { join as posixJoin } from 'node:path/posix'
 import memoize from 'lodash-es/memoize.js'
-import { isAbsolute, resolve } from 'path'
-import { join as posixJoin } from 'path/posix'
 import { logEvent } from 'src/services/analytics/index.js'
 import { getOriginalCwd, getSessionId, setCwdState } from '../bootstrap/state.js'
 import { generateTaskId } from '../Task.js'
 import { pwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
+import { isInternalBuild } from './envUtils.js'
 import { errorMessage, isENOENT } from './errors.js'
 import { getFsImplementation } from './fsOperations.js'
-import { isInternalBuild } from './envUtils.js'
 import { logError } from './log.js'
 import {
   createAbortedCommand,
@@ -25,7 +25,7 @@ import { which } from './which.js'
 
 export type { ExecResult } from './ShellCommand.js'
 
-import { accessSync } from 'fs'
+import { accessSync } from 'node:fs'
 import { onCwdChangedForHooks } from './hooks/fileChangedWatcher.js'
 import { getZyTempDirName } from './permissions/filesystem.js'
 import { getPlatform } from './platform.js'
@@ -105,11 +105,19 @@ export async function findSuitableShell(): Promise<string> {
   // Add discovered paths to the beginning of our search list
   // Put the user's preferred shell type first
   if (preferBash) {
-    if (bashPath) supportedShells.unshift(bashPath)
-    if (zshPath) supportedShells.push(zshPath)
+    if (bashPath) {
+      supportedShells.unshift(bashPath)
+    }
+    if (zshPath) {
+      supportedShells.push(zshPath)
+    }
   } else {
-    if (zshPath) supportedShells.unshift(zshPath)
-    if (bashPath) supportedShells.push(bashPath)
+    if (zshPath) {
+      supportedShells.unshift(zshPath)
+    }
+    if (bashPath) {
+      supportedShells.push(bashPath)
+    }
   }
 
   // Always prioritize SHELL env variable if it's a supported shell type

@@ -3,14 +3,15 @@ import {
   type ExitState,
   useExitOnCtrlCDWithKeybindings,
 } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
-import { Box, Text } from '../../ink.js'
 import { tSync } from '../../i18n/index.js'
+import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import type { Theme } from '../../utils/theme.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Byline } from './Byline.js'
 import { KeyboardShortcutHint } from './KeyboardShortcutHint.js'
 import { Pane } from './Pane.js'
+
 type DialogProps = {
   title: React.ReactNode
   subtitle?: React.ReactNode

@@ -32,7 +32,9 @@ const UNDERLINE_STYLES: UnderlineStyle[] = ['none', 'single', 'double', 'curly',
 type Param = { value: number | null; subparams: number[]; colon: boolean }
 
 function parseParams(str: string): Param[] {
-  if (str === '') return [{ value: 0, subparams: [], colon: false }]
+  if (str === '') {
+    return [{ value: 0, subparams: [], colon: false }]
+  }
 
   const result: Param[] = []
   let current: Param = { value: null, subparams: [], colon: false }
@@ -44,7 +46,9 @@ function parseParams(str: string): Param[] {
     if (c === ';' || c === undefined) {
       const n = num === '' ? null : parseInt(num, 10)
       if (inSub) {
-        if (n !== null) current.subparams.push(n)
+        if (n !== null) {
+          current.subparams.push(n)
+        }
       } else {
         current.value = n
       }
@@ -59,7 +63,9 @@ function parseParams(str: string): Param[] {
         current.colon = true
         inSub = true
       } else {
-        if (n !== null) current.subparams.push(n)
+        if (n !== null) {
+          current.subparams.push(n)
+        }
       }
       num = ''
     } else if (c >= '0' && c <= '9') {
@@ -74,7 +80,9 @@ function parseExtendedColor(
   idx: number,
 ): { r: number; g: number; b: number } | { index: number } | null {
   const p = params[idx]
-  if (!p) return null
+  if (!p) {
+    return null
+  }
 
   if (p.colon && p.subparams.length >= 1) {
     if (p.subparams[0] === 5 && p.subparams.length >= 2) {
@@ -91,7 +99,9 @@ function parseExtendedColor(
   }
 
   const next = params[idx + 1]
-  if (!next) return null
+  if (!next) {
+    return null
+  }
   if (next.value === 5 && params[idx + 2]?.value !== null && params[idx + 2]?.value !== undefined) {
     return { index: params[idx + 2]!.value! }
   }

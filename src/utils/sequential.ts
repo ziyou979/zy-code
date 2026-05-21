@@ -23,8 +23,12 @@ export function sequential<T extends unknown[], R>(
   let processing = false
 
   async function processQueue(): Promise<void> {
-    if (processing) return
-    if (queue.length === 0) return
+    if (processing) {
+      return
+    }
+    if (queue.length === 0) {
+      return
+    }
 
     processing = true
 

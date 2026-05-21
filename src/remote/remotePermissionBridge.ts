@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import type { SDKControlPermissionRequest } from '../entrypoints/sdk/controlTypes.js'
 import type { Tool } from '../Tool.js'
 import type { AssistantMessage } from '../types/message.js'
@@ -55,7 +55,9 @@ export function createToolStub(toolName: string): Tool {
     userFacingName: () => toolName,
     renderToolUseMessage: (input: Record<string, unknown>) => {
       const entries = Object.entries(input)
-      if (entries.length === 0) return ''
+      if (entries.length === 0) {
+        return ''
+      }
       return entries
         .slice(0, 3)
         .map(([key, value]) => {

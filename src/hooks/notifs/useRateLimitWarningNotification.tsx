@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
 import { Text } from 'src/ink.js'
@@ -41,7 +40,6 @@ export function useRateLimitWarningNotification(model) {
     hasShownOverageNotification,
     addNotification,
     hasBillingAccess,
-    isTeamOrEnterprise,
   ])
   useEffect(() => {
     if (getIsRemoteMode()) {

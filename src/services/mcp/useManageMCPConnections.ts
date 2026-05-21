@@ -1,10 +1,10 @@
 import { feature } from 'bun:bundle'
-import { basename } from 'path'
+import { basename } from 'node:path'
 import { useCallback, useEffect, useRef } from 'react'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { getSessionId } from '../../bootstrap/state.js'
 import type { Command } from '../../commands.js'
 import type { Tool } from '../../Tool.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   clearServerCache,
   fetchCommandsForClient,
@@ -67,10 +67,10 @@ import {
   createChannelPermissionCallbacks,
   isChannelPermissionRelayEnabled,
 } from './channelPermissions.js'
-import { clearZyAIMcpConfigsCache, fetchZyAIMcpConfigsIfEligible } from './zyai.js'
 import { registerElicitationHandler } from './elicitationHandler.js'
 import { getMcpPrefix } from './mcpStringUtils.js'
 import { commandBelongsToServer, excludeStalePluginClients } from './utils.js'
+import { clearZyAIMcpConfigsCache, fetchZyAIMcpConfigsIfEligible } from './zyai.js'
 
 // Constants for reconnection with exponential backoff
 const MAX_RECONNECT_ATTEMPTS = 5
@@ -92,7 +92,9 @@ function addErrorsToAppState(
   setAppState: (updater: (prev: AppState) => AppState) => void,
   newErrors: PluginError[],
 ): void {
-  if (newErrors.length === 0) return
+  if (newErrors.length === 0) {
+    return
+  }
 
   setAppState((prevState) => {
     // Build set of existing error keys
@@ -161,20 +163,28 @@ export function useManageMCPConnections(
   useEffect(() => {
     if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
       const callbacks = channelPermCallbacksRef.current
-      if (!callbacks) return
+      if (!callbacks) {
+        return
+      }
       // GrowthBook runtime gate — separate from channels so channels can
       // ship without this. Checked at mount; mid-session flips need restart.
       // If off, callbacks never go into AppState → interactiveHandler sees
       // undefined → never sends → intercept has nothing pending → "yes tbxkq"
       // flows to Zy as normal chat. One gate, full disable.
-      if (!isChannelPermissionRelayEnabled()) return
+      if (!isChannelPermissionRelayEnabled()) {
+        return
+      }
       setAppState((prev) => {
-        if (prev.channelPermissionCallbacks === callbacks) return prev
+        if (prev.channelPermissionCallbacks === callbacks) {
+          return prev
+        }
         return { ...prev, channelPermissionCallbacks: callbacks }
       })
       return () => {
         setAppState((prev) => {
-          if (prev.channelPermissionCallbacks === undefined) return prev
+          if (prev.channelPermissionCallbacks === undefined) {
+            return prev
+          }
           return { ...prev, channelPermissionCallbacks: undefined }
         })
       }
@@ -198,7 +208,9 @@ export function useManageMCPConnections(
   const flushPendingUpdates = useCallback(() => {
     flushTimerRef.current = null
     const updates = pendingUpdatesRef.current
-    if (updates.length === 0) return
+    if (updates.length === 0) {
+      return
+    }
     pendingUpdatesRef.current = []
 
     setAppState((prevState) => {
@@ -391,7 +403,7 @@ export function useManageMCPConnections(
 
                   // Schedule next retry with exponential backoff
                   const backoffMs = Math.min(
-                    INITIAL_BACKOFF_MS * Math.pow(2, attempt - 1),
+                    INITIAL_BACKOFF_MS * 2 ** (attempt - 1),
                     MAX_BACKOFF_MS,
                   )
                   logMCPDebug(
@@ -468,7 +480,7 @@ export function useManageMCPConnections(
                       value: wrapChannelMessage(client.name, content, meta),
                       priority: 'next',
                       isMeta: true,
-                      // @ts-ignore
+                      // @ts-expect-error
                       origin: { kind: 'channel', server: client.name } as any,
                       skipSlashCommands: true,
                     })
@@ -676,7 +688,7 @@ export function useManageMCPConnections(
           break
       }
     },
-    [updateServer],
+    [updateServer, setAppState, addNotification],
   )
 
   // Initialize all servers to pending state if they don't exist in appState.
@@ -685,7 +697,7 @@ export function useManageMCPConnections(
   // that no longer appear in configs — prevents ghost tools from disabled plugins.
   // Skip zy.ai dedup here to avoid blocking on the network fetch; the connect
   // useEffect below runs immediately after and dedups before connecting.
-  const sessionId = getSessionId()
+  const _sessionId = getSessionId()
   useEffect(() => {
     async function initializeServersAsPending() {
       const { servers: existingConfigs, errors: mcpErrors } = isStrictMcpConfig
@@ -755,7 +767,7 @@ export function useManageMCPConnections(
         `Failed to initialize servers as pending: ${errorMessage(error)}`,
       )
     })
-  }, [isStrictMcpConfig, dynamicMcpConfig, setAppState, sessionId, _pluginReconnectKey])
+  }, [isStrictMcpConfig, dynamicMcpConfig, setAppState])
 
   // Load MCP configs and connect to servers
   // Two-phase loading: ZY Code configs first (fast), then zy.ai configs (may be slow)
@@ -782,7 +794,9 @@ export function useManageMCPConnections(
       const { servers: ZyCodeConfigs, errors: mcpErrors } = isStrictMcpConfig
         ? { servers: {}, errors: [] }
         : await getZyCodeMcpConfigs(dynamicMcpConfig, zyaiPromise)
-      if (cancelled) return
+      if (cancelled) {
+        return
+      }
 
       // Add MCP errors to plugin errors for UI visibility (deduplicated)
       addErrorsToAppState(setAppState, mcpErrors)
@@ -805,7 +819,9 @@ export function useManageMCPConnections(
       let zyaiConfigs: Record<string, ScopedMcpServerConfig> = {}
       if (!isStrictMcpConfig) {
         zyaiConfigs = filterMcpServersByPolicy(await zyaiPromise).allowed
-        if (cancelled) return
+        if (cancelled) {
+          return
+        }
 
         // Suppress zy.ai connectors that duplicate an enabled manual server.
         // Keys never collide (`slack` vs `zy.ai Slack`) so the merge below
@@ -826,7 +842,9 @@ export function useManageMCPConnections(
                 type: isMcpServerDisabled(name) ? ('disabled' as const) : ('pending' as const),
                 config,
               }))
-            if (newClients.length === 0) return prevState
+            if (newClients.length === 0) {
+              return prevState
+            }
             return {
               ...prevState,
               mcp: {
@@ -866,12 +884,19 @@ export function useManageMCPConnections(
       // know which ones correlate with poor session performance.
       const stdioCommands: string[] = []
       for (const [name, serverConfig] of Object.entries(allConfigs)) {
-        if (serverConfig.scope === 'enterprise') counts.enterprise++
-        else if (serverConfig.scope === 'user') counts.global++
-        else if (serverConfig.scope === 'project') counts.project++
-        else if (serverConfig.scope === 'local') counts.user++
-        else if (serverConfig.scope === 'dynamic') counts.plugin++
-        else if (serverConfig.scope === 'zyai') counts.zyai++
+        if (serverConfig.scope === 'enterprise') {
+          counts.enterprise++
+        } else if (serverConfig.scope === 'user') {
+          counts.global++
+        } else if (serverConfig.scope === 'project') {
+          counts.project++
+        } else if (serverConfig.scope === 'local') {
+          counts.user++
+        } else if (serverConfig.scope === 'dynamic') {
+          counts.plugin++
+        } else if (serverConfig.scope === 'zyai') {
+          counts.zyai++
+        }
 
         if (
           isInternalBuild() &&
@@ -899,15 +924,7 @@ export function useManageMCPConnections(
     return () => {
       cancelled = true
     }
-  }, [
-    isStrictMcpConfig,
-    dynamicMcpConfig,
-    onConnectionAttempt,
-    setAppState,
-    _authVersion,
-    sessionId,
-    _pluginReconnectKey,
-  ])
+  }, [isStrictMcpConfig, dynamicMcpConfig, onConnectionAttempt, setAppState])
 
   // Cleanup all timers on unmount
   useEffect(() => {

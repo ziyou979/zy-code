@@ -4,7 +4,7 @@ import { Dialog } from '../../components/design-system/Dialog.js'
 import { Box, Text } from '../../ink.js'
 import { useAppState } from '../../state/AppState.js'
 import { openBrowser } from '../../utils/browser.js'
-// @ts-ignore
+// @ts-expect-error
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   openInChrome,
@@ -13,6 +13,7 @@ import { isChromeExtensionInstalled } from '../../utils/claudeInChrome/setup.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { env } from '../../utils/env.js'
 import { isRunningOnHomespace } from '../../utils/envUtils.js'
+
 const CHROME_EXTENSION_URL = 'https://zy.ai/chrome'
 const CHROME_PERMISSIONS_URL = 'https://clau.de/chrome/permissions'
 const CHROME_RECONNECT_URL = 'https://clau.de/chrome/reconnect'
@@ -178,7 +179,7 @@ function ClaudeInChromeMenu({
     </Dialog>
   )
 }
-export const call = async function (onDone: (result?: string) => void): Promise<React.ReactNode> {
+export const call = async (onDone: (result?: string) => void): Promise<React.ReactNode> => {
   const isExtensionInstalled = await isChromeExtensionInstalled()
   const config = getGlobalConfig()
   const isWSL = env.isWslEnvironment()

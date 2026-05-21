@@ -26,11 +26,17 @@ export function optimize(diff: Diff): Diff {
 
     // 跳过无操作
     if (type === 'stdout') {
-      if (patch.content === '') continue
+      if (patch.content === '') {
+        continue
+      }
     } else if (type === 'cursorMove') {
-      if (patch.x === 0 && patch.y === 0) continue
+      if (patch.x === 0 && patch.y === 0) {
+        continue
+      }
     } else if (type === 'clear') {
-      if (patch.count === 0) continue
+      if (patch.count === 0) {
+        continue
+      }
     }
 
     // 尝试与前一个 patch 合并

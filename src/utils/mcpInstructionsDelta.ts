@@ -2,8 +2,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growt
 import { logEvent } from '../services/analytics/index.js'
 import type { ConnectedMCPServer, MCPServerConnection } from '../services/mcp/types.js'
 import type { Message } from '../types/message.js'
-import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
-import { isInternalBuild } from './envUtils.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
 
 export type McpInstructionsDelta = {
   /** Server names — for stateless-scan reconstruction. */
@@ -33,8 +32,12 @@ export type ClientSideInstruction = {
  * wins over both ant bypass and the GrowthBook gate.
  */
 export function isMcpInstructionsDeltaEnabled(): boolean {
-  if (isEnvTruthy(process.env.ZY_CODE_MCP_INSTR_DELTA)) return true
-  if (isEnvDefinedFalsy(process.env.ZY_CODE_MCP_INSTR_DELTA)) return false
+  if (isEnvTruthy(process.env.ZY_CODE_MCP_INSTR_DELTA)) {
+    return true
+  }
+  if (isEnvDefinedFalsy(process.env.ZY_CODE_MCP_INSTR_DELTA)) {
+    return false
+  }
   return isInternalBuild() || getFeatureValue_CACHED_MAY_BE_STALE('zy_basalt_3kr', false)
 }
 
@@ -56,12 +59,20 @@ export function getMcpInstructionsDelta(
   let attachmentCount = 0
   let midCount = 0
   for (const msg of messages) {
-    if (msg.type !== 'attachment') continue
+    if (msg.type !== 'attachment') {
+      continue
+    }
     attachmentCount++
-    if (msg.attachment.type !== 'mcp_instructions_delta') continue
+    if (msg.attachment.type !== 'mcp_instructions_delta') {
+      continue
+    }
     midCount++
-    for (const n of (msg.attachment as any).addedNames) announced.add(n)
-    for (const n of (msg.attachment as any).removedNames) announced.delete(n)
+    for (const n of (msg.attachment as any).addedNames) {
+      announced.add(n)
+    }
+    for (const n of (msg.attachment as any).removedNames) {
+      announced.delete(n)
+    }
   }
 
   const connected = mcpClients.filter((c): c is ConnectedMCPServer => c.type === 'connected')
@@ -71,10 +82,14 @@ export function getMcpInstructionsDelta(
   // have both: server-authored instructions + a client-side block appended.
   const blocks = new Map<string, string>()
   for (const c of connected) {
-    if (c.instructions) blocks.set(c.name, `## ${c.name}\n${c.instructions}`)
+    if (c.instructions) {
+      blocks.set(c.name, `## ${c.name}\n${c.instructions}`)
+    }
   }
   for (const ci of clientSideInstructions) {
-    if (!connectedNames.has(ci.serverName)) continue
+    if (!connectedNames.has(ci.serverName)) {
+      continue
+    }
     const existing = blocks.get(ci.serverName)
     blocks.set(
       ci.serverName,
@@ -84,7 +99,9 @@ export function getMcpInstructionsDelta(
 
   const added: Array<{ name: string; block: string }> = []
   for (const [name, block] of blocks) {
-    if (!announced.has(name)) added.push({ name, block })
+    if (!announced.has(name)) {
+      added.push({ name, block })
+    }
   }
 
   // A previously-announced server that is no longer connected → removed.
@@ -95,10 +112,14 @@ export function getMcpInstructionsDelta(
   // we treat history as historical — no retroactive retractions.)
   const removed: string[] = []
   for (const n of announced) {
-    if (!connectedNames.has(n)) removed.push(n)
+    if (!connectedNames.has(n)) {
+      removed.push(n)
+    }
   }
 
-  if (added.length === 0 && removed.length === 0) return null
+  if (added.length === 0 && removed.length === 0) {
+    return null
+  }
 
   // Same diagnostic fields as zy_deferred_tools_pool_change — same
   // scan-fails-in-prod bug, same attachment persistence path.

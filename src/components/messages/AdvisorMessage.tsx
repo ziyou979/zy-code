@@ -1,5 +1,4 @@
 import figures from 'figures'
-import React from 'react'
 import { Box, Text } from '../../ink.js'
 import type { AdvisorBlock } from '../../utils/advisor.js'
 import { renderModelName } from '../../utils/model/model.js'

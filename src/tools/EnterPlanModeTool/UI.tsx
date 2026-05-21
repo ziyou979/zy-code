@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { BLACK_CIRCLE } from 'src/constants/figures.js'
-import { tSync } from '../../i18n/index.js'
 import { getModeColor } from 'src/utils/permissions/PermissionMode.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import type { ToolProgressData } from '../../Tool.js'
 import type { ProgressMessage } from '../../types/message.js'

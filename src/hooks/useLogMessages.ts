@@ -1,4 +1,4 @@
-import type { UUID } from 'crypto'
+import type { UUID } from 'node:crypto'
 import { useEffect, useRef } from 'react'
 import { useAppState } from '../state/AppState.js'
 import type { Message } from '../types/message.js'
@@ -32,7 +32,9 @@ export function useLogMessages(messages: Message[], ignore: boolean = false) {
   const callSeqRef = useRef(0)
 
   useEffect(() => {
-    if (ignore) return
+    if (ignore) {
+      return
+    }
 
     const currentFirstUuid = messages[0]?.uuid as UUID | undefined
     const prevLength = lastRecordedLengthRef.current
@@ -57,7 +59,9 @@ export function useLogMessages(messages: Message[], ignore: boolean = false) {
       prevLength > messages.length
 
     const startIndex = isIncremental ? prevLength : 0
-    if (startIndex === messages.length) return
+    if (startIndex === messages.length) {
+      return
+    }
 
     // Full array on first call + after compaction: recordTranscript's own
     // O(n) dedup loop handles messagesToKeep interleaving correctly there.
@@ -82,7 +86,9 @@ export function useLogMessages(messages: Message[], ignore: boolean = false) {
       // (already in transcript), so the sync loop would find a wrong UUID.
       // Skip if a newer effect already ran (stale closure would overwrite the
       // fresher sync update from the subsequent incremental render).
-      if (seq !== callSeqRef.current) return
+      if (seq !== callSeqRef.current) {
+        return
+      }
       if (lastRecordedUuid && !isIncremental) {
         lastParentUuidRef.current = lastRecordedUuid
       }
@@ -108,7 +114,9 @@ export function useLogMessages(messages: Message[], ignore: boolean = false) {
       // replId context — REPL tool_use and its tool_result land in separate
       // render cycles, so the slice alone can't pair them.
       const last = cleanMessagesForLogging(slice, messages).findLast(isChainParticipant)
-      if (last) lastParentUuidRef.current = last.uuid as UUID
+      if (last) {
+        lastParentUuidRef.current = last.uuid as UUID
+      }
     }
 
     lastRecordedLengthRef.current = messages.length

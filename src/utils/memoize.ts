@@ -135,7 +135,9 @@ export function memoizeWithTTLAsync<Args extends unknown[], Result>(
     // Populate cache - if this throws, nothing gets cached
     if (!cached) {
       const pending = inFlight.get(key)
-      if (pending) return pending
+      if (pending) {
+        return pending
+      }
       const promise = f(...args)
       inFlight.set(key, promise)
       try {

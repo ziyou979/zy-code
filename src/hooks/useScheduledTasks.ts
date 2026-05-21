@@ -54,7 +54,9 @@ export function useScheduledTasks({ isLoading, assistantMode = false, setMessage
     // effect won't re-run on value flip (assistantMode is the only dep),
     // so this guard alone is launch-grain. The mid-session killswitch is
     // the isKilled option below — check() polls it every tick.
-    if (!isKairosCronEnabled()) return
+    if (!isKairosCronEnabled()) {
+      return
+    }
 
     // System-generated — hidden from queue preview and transcript UI.
     // In brief mode, executeForkedSlashCommand runs as a background
@@ -116,7 +118,7 @@ export function useScheduledTasks({ isLoading, assistantMode = false, setMessage
     // assistantMode is stable for the session lifetime; store/setAppState are
     // stable refs from useSyncExternalStore; setMessages is a stable useCallback.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assistantMode])
+  }, [assistantMode, store.getState, setMessages, setAppState])
 }
 
 function formatCronFireTime(d: Date): string {

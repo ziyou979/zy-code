@@ -60,7 +60,9 @@ function extractMessageText(message: SerializedMessage): string {
   }
 
   const content = 'message' in message ? message.message?.content : undefined
-  if (!content) return ''
+  if (!content) {
+    return ''
+  }
 
   if (typeof content === 'string') {
     return content
@@ -69,8 +71,12 @@ function extractMessageText(message: SerializedMessage): string {
   if (Array.isArray(content)) {
     return content
       .map((block) => {
-        if (typeof block === 'string') return block
-        if ('text' in block && typeof block.text === 'string') return block.text
+        if (typeof block === 'string') {
+          return block
+        }
+        if ('text' in block && typeof block.text === 'string') {
+          return block.text
+        }
         return ''
       })
       .filter(Boolean)
@@ -84,7 +90,9 @@ function extractMessageText(message: SerializedMessage): string {
  * Extracts a truncated transcript from session messages.
  */
 function extractTranscript(messages: SerializedMessage[]): string {
-  if (messages.length === 0) return ''
+  if (messages.length === 0) {
+    return ''
+  }
 
   // Take messages from start and end to get context
   const messagesToScan =
@@ -102,7 +110,7 @@ function extractTranscript(messages: SerializedMessage[]): string {
     .replace(/\s+/g, ' ')
     .trim()
 
-  return text.length > MAX_TRANSCRIPT_CHARS ? text.slice(0, MAX_TRANSCRIPT_CHARS) + '…' : text
+  return text.length > MAX_TRANSCRIPT_CHARS ? `${text.slice(0, MAX_TRANSCRIPT_CHARS)}…` : text
 }
 
 /**
@@ -111,27 +119,41 @@ function extractTranscript(messages: SerializedMessage[]): string {
 function logContainsQuery(log: LogOption, queryLower: string): boolean {
   // Check title
   const title = getLogDisplayTitle(log).toLowerCase()
-  if (title.includes(queryLower)) return true
+  if (title.includes(queryLower)) {
+    return true
+  }
 
   // Check custom title
-  if (log.customTitle?.toLowerCase().includes(queryLower)) return true
+  if (log.customTitle?.toLowerCase().includes(queryLower)) {
+    return true
+  }
 
   // Check tag
-  if (log.tag?.toLowerCase().includes(queryLower)) return true
+  if (log.tag?.toLowerCase().includes(queryLower)) {
+    return true
+  }
 
   // Check branch
-  if (log.gitBranch?.toLowerCase().includes(queryLower)) return true
+  if (log.gitBranch?.toLowerCase().includes(queryLower)) {
+    return true
+  }
 
   // Check summary
-  if (log.summary?.toLowerCase().includes(queryLower)) return true
+  if (log.summary?.toLowerCase().includes(queryLower)) {
+    return true
+  }
 
   // Check first prompt
-  if (log.firstPrompt?.toLowerCase().includes(queryLower)) return true
+  if (log.firstPrompt?.toLowerCase().includes(queryLower)) {
+    return true
+  }
 
   // Check transcript (more expensive, do last)
   if (log.messages && log.messages.length > 0) {
     const transcript = extractTranscript(log.messages).toLowerCase()
-    if (transcript.includes(queryLower)) return true
+    if (transcript.includes(queryLower)) {
+      return true
+    }
   }
 
   return false

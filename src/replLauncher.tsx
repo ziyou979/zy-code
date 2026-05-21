@@ -4,6 +4,7 @@ import type { Root } from './ink.js'
 import type { Props as REPLProps } from './screens/REPL.js'
 import type { AppState } from './state/AppStateStore.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
+
 type AppWrapperProps = {
   getFpsMetrics: () => FpsMetrics | undefined
   stats?: StatsStore

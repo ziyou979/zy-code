@@ -1,4 +1,4 @@
-import { type ChildProcess, spawn } from 'child_process'
+import { type ChildProcess, spawn } from 'node:child_process'
 import {
   createMessageConnection,
   type MessageConnection,

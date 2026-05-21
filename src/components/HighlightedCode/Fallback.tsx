@@ -1,10 +1,11 @@
-import { extname } from 'path'
-import React, { Suspense, use } from 'react'
+import { extname } from 'node:path'
+import { Suspense, use } from 'react'
 import { Ansi, Text } from '../../ink.js'
 import { getCliHighlightPromise } from '../../utils/cliHighlight.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { convertLeadingTabsToSpaces } from '../../utils/file.js'
 import { hashPair } from '../../utils/hash.js'
+
 type Props = {
   code: string
   filePath: string
@@ -34,7 +35,9 @@ function cachedHighlight(
   })
   if (hlCache.size >= HL_CACHE_MAX) {
     const first = hlCache.keys().next().value
-    if (first !== undefined) hlCache.delete(first)
+    if (first !== undefined) {
+      hlCache.delete(first)
+    }
   }
   hlCache.set(key, out)
   return out

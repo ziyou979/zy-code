@@ -1,10 +1,10 @@
-import type { TokenUsage as Usage } from '../types/llm.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { setHasUnknownModelCost } from '../bootstrap/state.js'
 import { getUiLanguage } from '../i18n/index.js'
-import { getStaticPricingForModel } from './model/modelCapabilities.js'
+import type { TokenUsage as Usage } from '../types/llm.js'
 import { getDefaultMainLoopModelSetting } from './model/model.js'
+import { getStaticPricingForModel } from './model/modelCapabilities.js'
 
 export type ModelCosts = {
   inputTokens: number

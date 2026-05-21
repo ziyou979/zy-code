@@ -19,9 +19,9 @@
  * Design doc: api-go/ccr/docs/plans/CCR_AUTH_DESIGN.md § "Week-1 pilot scope".
  */
 
-import { mkdir, readFile, unlink, writeFile } from 'fs/promises'
-import { homedir } from 'os'
-import { join } from 'path'
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 import { registerCleanup } from '../utils/cleanupRegistry.js'
 import { logForDebugging } from '../utils/debug.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
@@ -118,10 +118,12 @@ export async function initUpstreamProxy(opts?: {
   const caBundlePath = opts?.caBundlePath ?? join(homedir(), '.ccr', 'ca-bundle.crt')
 
   const caOk = await downloadCaBundle(baseUrl, opts?.systemCaPath ?? SYSTEM_CA_BUNDLE, caBundlePath)
-  if (!caOk) return state
+  if (!caOk) {
+    return state
+  }
 
   try {
-    const wsUrl = baseUrl.replace(/^http/, 'ws') + '/v1/code/upstreamproxy/ws'
+    const wsUrl = `${baseUrl.replace(/^http/, 'ws')}/v1/code/upstreamproxy/ws`
     const relay = await startUpstreamProxyRelay({ wsUrl, sessionId, token })
     registerCleanup(async () => relay.stop())
     state = { enabled: true, port: relay.port, caBundlePath }
@@ -167,7 +169,9 @@ export function getUpstreamProxyEnv(): Record<string, string> {
         'REQUESTS_CA_BUNDLE',
         'CURL_CA_BUNDLE',
       ]) {
-        if (process.env[key]) inherited[key] = process.env[key]
+        if (process.env[key]) {
+          inherited[key] = process.env[key]
+        }
       }
       return inherited
     }
@@ -199,7 +203,9 @@ async function readToken(path: string): Promise<string | null> {
     const raw = await readFile(path, 'utf8')
     return raw.trim() || null
   } catch (err) {
-    if (isENOENT(err)) return null
+    if (isENOENT(err)) {
+      return null
+    }
     logForDebugging(
       `[upstreamproxy] token read failed: ${err instanceof Error ? err.message : String(err)}`,
       { level: 'warn' },
@@ -214,7 +220,9 @@ async function readToken(path: string): Promise<string | null> {
  * the heap. Linux-only; silently no-ops elsewhere.
  */
 function setNonDumpable(): void {
-  if (process.platform !== 'linux' || typeof Bun === 'undefined') return
+  if (process.platform !== 'linux' || typeof Bun === 'undefined') {
+    return
+  }
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const ffi = require('bun:ffi') as typeof import('bun:ffi')
@@ -260,7 +268,7 @@ async function downloadCaBundle(
     const ccrCa = await resp.text()
     const systemCa = await readFile(systemCaPath, 'utf8').catch(() => '')
     await mkdir(join(outPath, '..'), { recursive: true })
-    await writeFile(outPath, systemCa + '\n' + ccrCa, 'utf8')
+    await writeFile(outPath, `${systemCa}\n${ccrCa}`, 'utf8')
     return true
   } catch (err) {
     logForDebugging(

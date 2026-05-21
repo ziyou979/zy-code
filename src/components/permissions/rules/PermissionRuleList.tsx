@@ -1,6 +1,5 @@
 import chalk from 'chalk'
 import figures from 'figures'
-import * as React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { useAppState, useSetAppState } from 'src/state/AppState.js'
@@ -31,7 +30,7 @@ import { jsonStringify } from '../../../utils/slowOperations.js'
 import { Pane } from '../../design-system/Pane.js'
 import { Tab, Tabs, useTabHeaderFocus, useTabsWidth } from '../../design-system/Tabs.js'
 import { SearchBox } from '../../SearchBox.js'
-// @ts-ignore
+// @ts-expect-error
 import type { Option } from '../../ui/option.js'
 import { AddPermissionRules } from './AddPermissionRules.js'
 import { AddWorkspaceDirectory } from './AddWorkspaceDirectory.js'
@@ -40,6 +39,7 @@ import { PermissionRuleInput } from './PermissionRuleInput.js'
 import { RecentDenialsTab } from './RecentDenialsTab.js'
 import { RemoveWorkspaceDirectory } from './RemoveWorkspaceDirectory.js'
 import { WorkspaceTab } from './WorkspaceTab.js'
+
 type TabType = 'recent' | 'allow' | 'ask' | 'deny' | 'workspace'
 type RuleSourceTextProps = {
   rule: PermissionRule
@@ -113,7 +113,7 @@ function RuleDetails({ rule, onDelete, onCancel }: RuleSourceTextProps) {
       </>
     )
   }
-  const behaviorLabel = getRuleBehaviorLabel(rule.ruleBehavior)
+  const _behaviorLabel = getRuleBehaviorLabel(rule.ruleBehavior)
   const deleteTitle =
     rule.ruleBehavior === 'allow'
       ? tSync('permission.deleteAllowedTool')
@@ -419,7 +419,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
   const handleToolSelect = (selectedValue, tab) => {
     const {
       rulesByKey,
-      // @ts-ignore
+      // @ts-expect-error
     } = getRulesOptions(tab)
     if (selectedValue === 'add-new-rule') {
       setAddingRuleToTab(tab)
@@ -507,7 +507,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
     }
     const {
       options: options_0,
-      // @ts-ignore
+      // @ts-expect-error
     } = getRulesOptions((selectedRule as any).ruleBehavior as TabType)
     const selectedKey = jsonStringify(selectedRule)
     const ruleKeys = options_0
@@ -704,7 +704,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
             <Box marginTop={1} paddingLeft={1}>
               <Text dimColor={true}>
                 {exitState.pending ? (
-                  <>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</>
+                  tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })
                 ) : headerFocused ? (
                   <>←/→ tab switch · ↓ return · Esc cancel</>
                 ) : isSearchMode ? (

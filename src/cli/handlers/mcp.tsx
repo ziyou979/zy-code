@@ -3,10 +3,9 @@
  * These are dynamically imported only when the corresponding `zy mcp *` command runs.
  */
 
-import { stat } from 'fs/promises'
+import { stat } from 'node:fs/promises'
+import { cwd } from 'node:process'
 import pMap from 'p-map'
-import { cwd } from 'process'
-import React from 'react'
 import { MCPServerDesktopImportDialog } from '../../components/MCPServerDesktopImportDialog.js'
 import { render } from '../../ink.js'
 import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js'
@@ -46,6 +45,7 @@ import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { getPlatform } from '../../utils/platform.js'
 import { cliError, cliOk } from '../exit.js'
+
 async function checkMcpServerHealth(name: string, server: ScopedMcpServerConfig): Promise<string> {
   try {
     const result = await connectToServer(name, server)
@@ -130,9 +130,15 @@ export async function mcpRemoveHandler(
 
     // Count how many scopes contain this server
     const scopes: Array<Exclude<ConfigScope, 'dynamic'>> = []
-    if (projectConfig.mcpServers?.[name]) scopes.push('local')
-    if (mcpJsonExists) scopes.push('project')
-    if (globalConfig.mcpServers?.[name]) scopes.push('user')
+    if (projectConfig.mcpServers?.[name]) {
+      scopes.push('local')
+    }
+    if (mcpJsonExists) {
+      scopes.push('project')
+    }
+    if (globalConfig.mcpServers?.[name]) {
+      scopes.push('user')
+    }
     if (scopes.length === 0) {
       cliError(`No MCP server found with name: "${name}"`)
     } else if (scopes.length === 1) {
@@ -249,9 +255,13 @@ export async function mcpGetHandler(name: string): Promise<void> {
       if (server.oauth.clientId) {
         parts.push('client_id configured')
         const clientConfig = getMcpClientConfig(name, server)
-        if (clientConfig?.clientSecret) parts.push('client_secret configured')
+        if (clientConfig?.clientSecret) {
+          parts.push('client_secret configured')
+        }
       }
-      if (server.oauth.callbackPort) parts.push(`callback_port ${server.oauth.callbackPort}`)
+      if (server.oauth.callbackPort) {
+        parts.push(`callback_port ${server.oauth.callbackPort}`)
+      }
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(`  OAuth: ${parts.join(', ')}`)
     }
@@ -273,9 +283,13 @@ export async function mcpGetHandler(name: string): Promise<void> {
       if (server.oauth.clientId) {
         parts.push('client_id configured')
         const clientConfig = getMcpClientConfig(name, server)
-        if (clientConfig?.clientSecret) parts.push('client_secret configured')
+        if (clientConfig?.clientSecret) {
+          parts.push('client_secret configured')
+        }
       }
-      if (server.oauth.callbackPort) parts.push(`callback_port ${server.oauth.callbackPort}`)
+      if (server.oauth.callbackPort) {
+        parts.push(`callback_port ${server.oauth.callbackPort}`)
+      }
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(`  OAuth: ${parts.join(', ')}`)
     }

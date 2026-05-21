@@ -1,4 +1,3 @@
-import React from 'react'
 import { Box, color, Link, Text, useTheme } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import type { CommandResultDisplay } from '../../types/command.js'
@@ -11,6 +10,7 @@ import { Tab, Tabs, useTabHeaderFocus } from '../design-system/Tabs.js'
 import { SandboxConfigTab } from './SandboxConfigTab.js'
 import { SandboxDependenciesTab } from './SandboxDependenciesTab.js'
 import { SandboxOverridesTab } from './SandboxOverridesTab.js'
+
 type Props = {
   onComplete: (
     result?: string,

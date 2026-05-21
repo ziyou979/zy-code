@@ -1,10 +1,10 @@
 import { feature } from 'bun:bundle'
-// @ts-ignore
+// @ts-expect-error
 import { isReplBridgeActive } from '../../bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import type { Tool } from '../../Tool.js'
-import { AGENT_TOOL_NAME } from '../AgentTool/constants.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
+import { AGENT_TOOL_NAME } from '../AgentTool/constants.js'
 
 // Dead code elimination: Brief tool name only needed when KAIROS or KAIROS_BRIEF is on
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -60,13 +60,19 @@ Query forms:
 export function isDeferredTool(tool: Tool): boolean {
   // Explicit opt-out via _meta['anthropic/alwaysLoad'] — tool appears in the
   // initial prompt with full schema. Checked first so MCP tools can opt out.
-  if (tool.alwaysLoad === true) return false
+  if (tool.alwaysLoad === true) {
+    return false
+  }
 
   // MCP tools are always deferred (workflow-specific)
-  if (tool.isMcp === true) return true
+  if (tool.isMcp === true) {
+    return true
+  }
 
   // Never defer ToolSearch itself — the model needs it to load everything else
-  if (tool.name === TOOL_SEARCH_TOOL_NAME) return false
+  if (tool.name === TOOL_SEARCH_TOOL_NAME) {
+    return false
+  }
 
   // Fork-first experiment: Agent must be available turn 1, not behind ToolSearch.
   // Lazy require: static import of forkSubagent → coordinatorMode creates a cycle
@@ -75,7 +81,9 @@ export function isDeferredTool(tool: Tool): boolean {
     type ForkMod = typeof import('../AgentTool/forkSubagent.js')
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const m = require('../AgentTool/forkSubagent.js') as ForkMod
-    if (m.isForkSubagentEnabled()) return false
+    if (m.isForkSubagentEnabled()) {
+      return false
+    }
   }
 
   // Brief is the primary communication channel whenever the tool is present.

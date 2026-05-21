@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-import { isAPIError, type TokenUsage as Usage } from '../../types/llm.js'
 import {
   addToTotalDurationState,
   consumePostCompaction,
@@ -25,6 +24,7 @@ import {
   type Span,
 } from 'src/utils/telemetry/sessionTracing.js'
 import type { NonNullableUsage } from '../../entrypoints/sdk/sdkUtilityTypes.js'
+import { isAPIError, type TokenUsage as Usage } from '../../types/llm.js'
 import { consumeInvokingRequestId } from '../../utils/agentContext.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import {
@@ -158,9 +158,13 @@ function getAnthropicEnvMetadata() {
 }
 
 function getBuildAgeMinutes(): number | undefined {
-  if (!MACRO.BUILD_TIME) return undefined
+  if (!MACRO.BUILD_TIME) {
+    return undefined
+  }
   const buildTime = new Date(MACRO.BUILD_TIME).getTime()
-  if (isNaN(buildTime)) return undefined
+  if (Number.isNaN(buildTime)) {
+    return undefined
+  }
   return Math.floor((Date.now() - buildTime) / 60000)
 }
 
@@ -353,7 +357,7 @@ export function logAPIError({
   // 传递 span 以在启用 beta tracing 时正确匹配请求和响应
   endLLMRequestSpan(llmSpan, {
     success: false,
-    statusCode: status ? parseInt(status) : undefined,
+    statusCode: status ? parseInt(status, 10) : undefined,
     error: errStr,
     attempt,
   })
@@ -406,7 +410,7 @@ function logAPISuccess({
   attempt: number
   ttftMs: number | null
   requestId: string | null
-  // @ts-ignore
+  // @ts-expect-error
   stopReason: BetaStopReason | null
   costUSD: number
   didFallBackToNonStreaming: boolean
@@ -583,7 +587,7 @@ export function logAPISuccessAndDuration({
   messageCount: number
   messageTokens: number
   requestId: string | null
-  // @ts-ignore
+  // @ts-expect-error
   stopReason: BetaStopReason | null
   didFallBackToNonStreaming: boolean
   querySource: string

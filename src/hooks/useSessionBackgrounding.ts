@@ -43,7 +43,9 @@ export function useSessionBackgrounding({
       // Re-background the foregrounded task
       setAppState((prev) => {
         const taskId = prev.foregroundedTaskId
-        if (!taskId) return prev
+        if (!taskId) {
+          return prev
+        }
         const task = prev.tasks[taskId]
         if (!task) {
           return { ...prev, foregroundedTaskId: undefined }
@@ -102,9 +104,13 @@ export function useSessionBackgrounding({
       if (taskAbortController?.signal.aborted) {
         // Task was aborted - clear foregrounded state immediately
         setAppState((prev) => {
-          if (!prev.foregroundedTaskId) return prev
+          if (!prev.foregroundedTaskId) {
+            return prev
+          }
           const task = prev.tasks[prev.foregroundedTaskId]
-          if (!task) return { ...prev, foregroundedTaskId: undefined }
+          if (!task) {
+            return { ...prev, foregroundedTaskId: undefined }
+          }
           return {
             ...prev,
             foregroundedTaskId: undefined,
@@ -129,9 +135,13 @@ export function useSessionBackgrounding({
       // Task completed - restore to background and clear foregrounded view
       setAppState((prev) => {
         const taskId = prev.foregroundedTaskId
-        if (!taskId) return prev
+        if (!taskId) {
+          return prev
+        }
         const task = prev.tasks[taskId]
-        if (!task) return { ...prev, foregroundedTaskId: undefined }
+        if (!task) {
+          return { ...prev, foregroundedTaskId: undefined }
+        }
         return {
           ...prev,
           foregroundedTaskId: undefined,

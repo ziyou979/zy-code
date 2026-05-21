@@ -1,7 +1,6 @@
+import { randomUUID } from 'node:crypto'
 import axios from 'axios'
 import chalk from 'chalk'
-import { randomUUID } from 'crypto'
-import React from 'react'
 import { getOriginalCwd, getSessionId } from 'src/bootstrap/state.js'
 import { checkGate_CACHED_OR_BLOCKING } from 'src/services/analytics/growthbook.js'
 import {
@@ -830,9 +829,13 @@ export async function pollRemoteSessionEvents(
         }
       }
     }
-    if (!eventsData.last_id) break
+    if (!eventsData.last_id) {
+      break
+    }
     cursor = eventsData.last_id
-    if (!eventsData.has_more) break
+    if (!eventsData.has_more) {
+      break
+    }
   }
   if (opts?.skipMetadata) {
     return {
@@ -1258,7 +1261,9 @@ export async function teleportToRemote(options: {
         )
         return null
       }
-      if (retried) environments = retried
+      if (retried) {
+        environments = retried
+      }
     }
     const selectedEnvironment =
       (defaultEnvironmentId &&
@@ -1396,9 +1401,13 @@ export async function teleportToRemote(options: {
  */
 export async function archiveRemoteSession(sessionId: string): Promise<void> {
   const accessToken = getZyAIOAuthTokens()?.accessToken
-  if (!accessToken) return
+  if (!accessToken) {
+    return
+  }
   const orgUUID = await getOrganizationUUID()
-  if (!orgUUID) return
+  if (!orgUUID) {
+    return
+  }
   const headers = {
     ...getOAuthHeaders(accessToken),
     'anthropic-beta': 'ccr-byoc-2025-07-29',

@@ -14,6 +14,7 @@ import {
 import type { buildMessageLookups } from '../../../utils/messages.js'
 import { MessageResponse } from '../../MessageResponse.js'
 import { HookProgressMessage } from '../HookProgressMessage.js'
+
 type Props = {
   message: NormalizedUserMessage
   lookups: ReturnType<typeof buildMessageLookups>

@@ -10,7 +10,7 @@ import {
 import { feature } from 'bun:bundle'
 import { getKairosActive, getUserMsgOptIn } from '../bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
+import { isEnvTruthy } from '../utils/envUtils.js'
 import { count } from '../utils/array.js'
 import sample from 'lodash-es/sample.js'
 import { formatDuration, formatNumber } from '../utils/format.js'
@@ -164,8 +164,12 @@ function SpinnerWithVerbInner({
       }
     }
     return () => {
-      if (showDurationTimer) clearTimeout(showDurationTimer)
-      if (clearStatusTimer) clearTimeout(clearStatusTimer)
+      if (showDurationTimer) {
+        clearTimeout(showDurationTimer)
+      }
+      if (clearStatusTimer) {
+        clearTimeout(clearStatusTimer)
+      }
     }
   }, [mode])
 
@@ -185,11 +189,11 @@ function SpinnerWithVerbInner({
     foregroundedTeammate && !foregroundedTeammate.isIdle
       ? (foregroundedTeammate.spinnerVerb ?? randomVerb)
       : leaderVerb
-  const message = effectiveVerb + '…'
+  const message = `${effectiveVerb}…`
 
   // spinner 活跃时追踪 CLI 活动
   useEffect(() => {
-    const operationId = 'spinner-' + mode
+    const operationId = `spinner-${mode}`
     activityManager.startCLIActivity(operationId)
     return () => {
       activityManager.endCLIActivity(operationId)
@@ -235,7 +239,7 @@ function SpinnerWithVerbInner({
   // 在此处计算 TTFT 字符串（不在 50ms 动画时钟上）并传递给
   // 我们在父组件约 25 次/turn 的重新渲染节奏上获取更新，
   // 与旧的 ApiMetricsLine 相同。
-  let ttftText: string | null = null
+  const _ttftText: string | null = null
 
   // 当 leader 空闲但 teammates 在运行（且我们正在查看 leader）时，
   // 显示静态的暗色空闲显示而不是动画 spinner——否则
@@ -294,7 +298,7 @@ function SpinnerWithVerbInner({
 
   // 基于时间的 tip 覆盖：粗略的阈值，因此陈旧的 ref 读取（我们不在 50ms 时钟上）没问题。
   // 其他触发器（mode 变化、setMessages）实际上会导致重新渲染来刷新这个。
-  let contextTipsActive = false
+  const contextTipsActive = false
   const tipsEnabled = settings.spinnerTipsEnabled !== false
   const showClearTip = tipsEnabled && elapsedSnapshot > 1_800_000
   const showBtwTip = tipsEnabled && elapsedSnapshot > 30_000 && !getGlobalConfig().btwUseCount
@@ -428,7 +432,7 @@ function BriefSpinner({ mode, overrideMessage }: BriefSpinnerProps) {
   const verb = overrideMessage ?? randomVerb
   const connStatus = useAppState((s) => s.remoteConnectionStatus)
   useEffect(() => {
-    const operationId = 'spinner-' + mode
+    const operationId = `spinner-${mode}`
     activityManager.startCLIActivity(operationId)
     return () => {
       activityManager.endCLIActivity(operationId)
@@ -494,7 +498,7 @@ export function BriefIdleStatus() {
   const showConnWarning = connStatus === 'reconnecting' || connStatus === 'disconnected'
   const connText =
     connStatus === 'reconnecting'
-      ? tSync('spinner.reconnecting') + '\u2026'
+      ? `${tSync('spinner.reconnecting')}\u2026`
       : tSync('spinner.disconnected')
   const leftText = showConnWarning ? connText : ''
   const rightText =

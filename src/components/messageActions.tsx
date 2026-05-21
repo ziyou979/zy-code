@@ -6,6 +6,7 @@ import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { NormalizedUserMessage, RenderableMessage } from '../types/message.js'
 import { isEmptyMessageText, SYNTHETIC_MESSAGES } from '../utils/messages.js'
+
 const NAVIGABLE_TYPES = [
   'user',
   'assistant',
@@ -39,11 +40,17 @@ export function isNavigableMessage(msg: NavigableMessage): boolean {
       )
     }
     case 'user': {
-      if (msg.isMeta || msg.isCompactSummary) return false
+      if (msg.isMeta || msg.isCompactSummary) {
+        return false
+      }
       const b = msg.message.content[0] as any
-      if (b?.type !== 'text') return false
+      if (b?.type !== 'text') {
+        return false
+      }
       // 中断等——合成的，不是用户创作的。
-      if (SYNTHETIC_MESSAGES.has((b as any).text)) return false
+      if (SYNTHETIC_MESSAGES.has((b as any).text)) {
+        return false
+      }
       // 与 VirtualMessageList sticky-prompt 相同的过滤器：XML 包装的
       //（命令扩展、bash 输出等）不是真正的提示。
       return !stripSystemReminders((b as any).text).startsWith('<')
@@ -140,19 +147,21 @@ export function toolCallOf(msg: NavigableMessage):
   | undefined {
   if (msg.type === 'assistant') {
     const b = msg.message.content[0]
-    if (b && b.type === 'tool_call')
+    if (b && b.type === 'tool_call') {
       return {
         name: b.name,
         input: b.input as Record<string, unknown>,
       }
+    }
   }
   if (msg.type === 'grouped_tool_use') {
     const b = (msg as any).messages[0]?.message.content[0]
-    if (b?.type === 'tool_call')
+    if (b?.type === 'tool_call') {
       return {
         name: (msg as any).toolName,
         input: b.input as Record<string, unknown>,
       }
+    }
   }
   return undefined
 }
@@ -201,14 +210,20 @@ export const MESSAGE_ACTIONS = [
     applies: (s) => s.toolName != null && s.toolName in PRIMARY_INPUT,
     run: (m, c) => {
       const tc = toolCallOf(m)
-      if (!tc) return
+      if (!tc) {
+        return
+      }
       const val = PRIMARY_INPUT[tc.name]?.extract(tc.input)
-      if (val) c.copy(val)
+      if (val) {
+        c.copy(val)
+      }
     },
   }),
 ] as const
 function isApplicable(a: (typeof MESSAGE_ACTIONS)[number], c: MessageActionsState): boolean {
-  if (!(a.types as readonly string[]).includes(c.msgType)) return false
+  if (!(a.types as readonly string[]).includes(c.msgType)) {
+    return false
+  }
   return !a.applies || a.applies(c)
 }
 export type MessageActionsState = {
@@ -274,11 +289,15 @@ export function useMessageActions(
     for (const action of new Set(MESSAGE_ACTIONS.map((action) => action.key))) {
       h[`messageActions:${action}`] = () => {
         const currentCursor = cursorRef.current
-        if (!currentCursor) return
+        if (!currentCursor) {
+          return
+        }
         const matchedAction = MESSAGE_ACTIONS.find(
           (a) => a.key === action && isApplicable(a, currentCursor),
         )
-        if (!matchedAction) return
+        if (!matchedAction) {
+          return
+        }
         if (matchedAction.stays) {
           setCursor((prevCursor) =>
             prevCursor
@@ -291,7 +310,9 @@ export function useMessageActions(
           return
         }
         const selectedMessage = navRef.current?.getSelected()
-        if (!selectedMessage) return
+        if (!selectedMessage) {
+          return
+        }
         ;(matchedAction.run as (m: NavigableMessage, caps: MessageActionCaps) => void)(
           selectedMessage,
           capsRef.current,
@@ -374,7 +395,9 @@ export function stripSystemReminders(text: string): string {
   let textWithoutReminders = text.trimStart()
   while (textWithoutReminders.startsWith('<system-reminder>')) {
     const end = textWithoutReminders.indexOf(CLOSE)
-    if (end < 0) break
+    if (end < 0) {
+      break
+    }
     textWithoutReminders = textWithoutReminders.slice(end + CLOSE.length).trimStart()
   }
   return textWithoutReminders
@@ -387,7 +410,9 @@ export function copyTextOf(msg: NavigableMessage): string {
     }
     case 'assistant': {
       const b = msg.message.content[0] as any
-      if ((b as any)?.type === 'text') return (b as any).text
+      if ((b as any)?.type === 'text') {
+        return (b as any).text
+      }
       const tc = toolCallOf(msg)
       return tc ? (PRIMARY_INPUT[tc.name]?.extract(tc.input) ?? '') : ''
     }
@@ -405,8 +430,12 @@ export function copyTextOf(msg: NavigableMessage): string {
         .filter(Boolean)
         .join('\n\n')
     case 'system':
-      if ('content' in msg) return msg.content
-      if ('error' in msg) return String(msg.error)
+      if ('content' in msg) {
+        return msg.content
+      }
+      if ('error' in msg) {
+        return String(msg.error)
+      }
       return msg.subtype
     case 'attachment': {
       const a = msg.attachment
@@ -422,9 +451,15 @@ export function copyTextOf(msg: NavigableMessage): string {
 }
 function toolResultText(r: NormalizedUserMessage): string {
   const b = r.message.content[0]
-  if (b?.type !== 'tool_result') return ''
+  if (b?.type !== 'tool_result') {
+    return ''
+  }
   const c = b.content
-  if (typeof c === 'string') return c
-  if (!c) return ''
+  if (typeof c === 'string') {
+    return c
+  }
+  if (!c) {
+    return ''
+  }
   return c.flatMap((x) => (x.type === 'text' ? [x.text] : [])).join('\n')
 }

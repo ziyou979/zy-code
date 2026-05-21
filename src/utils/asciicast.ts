@@ -1,5 +1,5 @@
-import { appendFile, rename } from 'fs/promises'
-import { basename, dirname, join } from 'path'
+import { appendFile, rename } from 'node:fs/promises'
+import { basename, dirname, join } from 'node:path'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
 import { createBufferedWriter } from './bufferedWriter.js'
 import { registerCleanup } from './cleanupRegistry.js'
@@ -153,7 +153,7 @@ export function installAsciicastRecorder(): void {
     // Directory may already exist
   }
   // eslint-disable-next-line custom-rules/no-sync-fs -- one-time init before Ink mounts
-  getFsImplementation().appendFileSync(filePath, header + '\n', { mode: 0o600 })
+  getFsImplementation().appendFileSync(filePath, `${header}\n`, { mode: 0o600 })
 
   let pendingWrite: Promise<void> = Promise.resolve()
 
@@ -177,28 +177,28 @@ export function installAsciicastRecorder(): void {
 
   // Wrap process.stdout.write to capture output
   const originalWrite = process.stdout.write.bind(process.stdout) as typeof process.stdout.write
-  process.stdout.write = function (
+  process.stdout.write = ((
     chunk: string | Uint8Array,
     encodingOrCb?: BufferEncoding | ((err?: Error) => void),
     cb?: (err?: Error) => void,
-  ): boolean {
+  ): boolean => {
     // Record the output event
     const elapsed = (performance.now() - startTime) / 1000
     const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf-8')
-    writer.write(jsonStringify([elapsed, 'o', text]) + '\n')
+    writer.write(`${jsonStringify([elapsed, 'o', text])}\n`)
 
     // Pass through to the real stdout
     if (typeof encodingOrCb === 'function') {
       return originalWrite(chunk, encodingOrCb)
     }
     return originalWrite(chunk, encodingOrCb, cb)
-  } as typeof process.stdout.write
+  }) as typeof process.stdout.write
 
   // Handle terminal resize events
   function onResize(): void {
     const elapsed = (performance.now() - startTime) / 1000
     const { cols: newCols, rows: newRows } = getTerminalSize()
-    writer.write(jsonStringify([elapsed, 'r', `${newCols}x${newRows}`]) + '\n')
+    writer.write(`${jsonStringify([elapsed, 'r', `${newCols}x${newRows}`])}\n`)
   }
   process.stdout.on('resize', onResize)
 

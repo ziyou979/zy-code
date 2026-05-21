@@ -1,11 +1,10 @@
-import { posix, win32 } from 'path'
+import { posix, win32 } from 'node:path'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
 import { logForDebugging } from './debug.js'
-import { isEnvTruthy } from './envUtils.js'
-import { isInternalBuild } from './envUtils.js'
+import { isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { getPlatform } from './platform.js'
 
 // Track warnings to avoid spam — bounded to prevent unbounded memory growth

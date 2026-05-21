@@ -18,10 +18,10 @@ export class SSHSessionError extends Error {
   }
 }
 
-export async function createSSHSession(options: any, callbacks?: any): Promise<SSHSession> {
+export async function createSSHSession(_options: any, _callbacks?: any): Promise<SSHSession> {
   throw new Error('createSSHSession not implemented')
 }
 
-export async function createLocalSSHSession(options: any): Promise<SSHSession> {
+export async function createLocalSSHSession(_options: any): Promise<SSHSession> {
   throw new Error('createLocalSSHSession not implemented')
 }

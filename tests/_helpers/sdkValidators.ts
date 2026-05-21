@@ -7,8 +7,9 @@
  * - 任何不符合 SDK 协议的产物（如 tool_call.function.arguments 不是合法 JSON 字符串）
  *   都必须在这里被拦截
  */
-import type OpenAI from 'openai'
+
 import type Anthropic from '@anthropic-ai/sdk'
+import type OpenAI from 'openai'
 
 // ============================================================================
 // OpenAI ChatCompletionMessageParam 校验
@@ -131,11 +132,17 @@ export function assertValidOpenAIChatMessages(
 export function assertValidOpenAIChatCompletion(
   completion: OpenAI.Chat.Completions.ChatCompletion,
 ): void {
-  if (typeof completion.id !== 'string') throw new Error('completion.id missing')
-  if (!Array.isArray(completion.choices)) throw new Error('completion.choices not array')
+  if (typeof completion.id !== 'string') {
+    throw new Error('completion.id missing')
+  }
+  if (!Array.isArray(completion.choices)) {
+    throw new Error('completion.choices not array')
+  }
   for (let i = 0; i < completion.choices.length; i++) {
     const ch = completion.choices[i]!
-    if (typeof ch.index !== 'number') throw new Error(`choices[${i}].index missing`)
+    if (typeof ch.index !== 'number') {
+      throw new Error(`choices[${i}].index missing`)
+    }
     if (!ch.message || ch.message.role !== 'assistant') {
       throw new Error(`choices[${i}].message: must be assistant`)
     }
@@ -181,7 +188,9 @@ export function assertValidAnthropicCreateParams(params: Record<string, any>): v
         `${ctx}.role: Anthropic messages only support user/assistant, got ${msg.role}`,
       )
     }
-    if (typeof msg.content === 'string') continue
+    if (typeof msg.content === 'string') {
+      continue
+    }
     if (!Array.isArray(msg.content)) {
       throw new Error(`${ctx}.content: must be string or array`)
     }
@@ -232,8 +241,16 @@ export function assertValidAnthropicCreateParams(params: Record<string, any>): v
  * 校验 Anthropic 非流式响应是否合法。
  */
 export function assertValidAnthropicResponse(resp: Anthropic.Message): void {
-  if (typeof resp.id !== 'string') throw new Error('response.id missing')
-  if (resp.type !== 'message') throw new Error('response.type must be "message"')
-  if (resp.role !== 'assistant') throw new Error('response.role must be "assistant"')
-  if (!Array.isArray(resp.content)) throw new Error('response.content must be array')
+  if (typeof resp.id !== 'string') {
+    throw new Error('response.id missing')
+  }
+  if (resp.type !== 'message') {
+    throw new Error('response.type must be "message"')
+  }
+  if (resp.role !== 'assistant') {
+    throw new Error('response.role must be "assistant"')
+  }
+  if (!Array.isArray(resp.content)) {
+    throw new Error('response.content must be array')
+  }
 }

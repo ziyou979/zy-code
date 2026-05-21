@@ -7,17 +7,17 @@
  * API 参考：https://docs.anthropic.com/en/api/files-content
  */
 
+import { randomUUID } from 'node:crypto'
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
 import axios from 'axios'
-import { randomUUID } from 'crypto'
-import * as fs from 'fs/promises'
-import * as path from 'path'
+import { tSync } from '../../i18n/index.js'
 import { count } from '../../utils/array.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { sleep } from '../../utils/sleep.js'
-import { tSync } from '../../i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -114,7 +114,7 @@ async function retryWithBackoff<T>(
     logDebug(`${operation} 第 ${attempt}/${MAX_RETRIES} 次尝试失败：${lastError}`)
 
     if (attempt < MAX_RETRIES) {
-      const delayMs = BASE_DELAY_MS * Math.pow(2, attempt - 1)
+      const delayMs = BASE_DELAY_MS * 2 ** (attempt - 1)
       logDebug(`${delayMs}ms 后重试 ${operation}...`)
       await sleep(delayMs)
     }
@@ -196,7 +196,7 @@ export function buildDownloadPath(
   const uploadsBase = path.join(basePath, sessionId, 'uploads')
   const redundantPrefixes = [
     path.join(basePath, sessionId, 'uploads') + path.sep,
-    path.sep + 'uploads' + path.sep,
+    `${path.sep}uploads${path.sep}`,
   ]
   const matchedPrefix = redundantPrefixes.find((p) => normalized.startsWith(p))
   const cleanPath = matchedPrefix ? normalized.slice(matchedPrefix.length) : normalized

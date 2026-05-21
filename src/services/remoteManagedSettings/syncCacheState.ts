@@ -19,7 +19,7 @@
  * 缓存的布尔值，而不是重新运行 auth 链。
  */
 
-import { join } from 'path'
+import { join } from 'node:path'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { readFileSync } from '../../utils/fileRead.js'
 import { stripBOM } from '../../utils/jsonRead.js'
@@ -66,8 +66,12 @@ function loadSettings(): SettingsJson | null {
 }
 
 export function getRemoteManagedSettingsSyncFromCache(): SettingsJson | null {
-  if (eligible !== true) return null
-  if (sessionCache) return sessionCache
+  if (eligible !== true) {
+    return null
+  }
+  if (sessionCache) {
+    return sessionCache
+  }
   const cachedSettings = loadSettings()
   if (cachedSettings) {
     sessionCache = cachedSettings

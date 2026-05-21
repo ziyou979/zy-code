@@ -38,7 +38,9 @@ const toArray = <T>(val: T | T[]): T[] => (Array.isArray(val) ? val : [val])
 // Check if an argument matches a known subcommand (case-insensitive: PS
 // callers pass original-cased args; fig spec names are lowercase)
 function isKnownSubcommand(arg: string, spec: CommandSpec | null): boolean {
-  if (!spec?.subcommands?.length) return false
+  if (!spec?.subcommands?.length) {
+    return false
+  }
   const argLower = arg.toLowerCase()
   return spec.subcommands.some((sub) =>
     Array.isArray(sub.name)
@@ -58,7 +60,9 @@ function flagTakesArg(
     const option = spec.options.find((opt) =>
       Array.isArray(opt.name) ? opt.name.includes(flag) : opt.name === flag,
     )
-    if (option) return !!option.args
+    if (option) {
+      return !!option.args
+    }
   }
   // Heuristic: if next arg isn't a flag and isn't a known subcommand, assume it's a flag value
   if (spec?.subcommands?.length && nextArg && !nextArg.startsWith('-')) {
@@ -71,13 +75,21 @@ function flagTakesArg(
 function findFirstSubcommand(args: string[], spec: CommandSpec | null): string | undefined {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
-    if (!arg) continue
-    if (arg.startsWith('-')) {
-      if (flagTakesArg(arg, args[i + 1], spec)) i++
+    if (!arg) {
       continue
     }
-    if (!spec?.subcommands?.length) return arg
-    if (isKnownSubcommand(arg, spec)) return arg
+    if (arg.startsWith('-')) {
+      if (flagTakesArg(arg, args[i + 1], spec)) {
+        i++
+      }
+      continue
+    }
+    if (!spec?.subcommands?.length) {
+      return arg
+    }
+    if (isKnownSubcommand(arg, spec)) {
+      return arg
+    }
   }
   return undefined
 }
@@ -94,11 +106,15 @@ export async function buildPrefix(
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
-    if (!arg || parts.length >= maxDepth) break
+    if (!arg || parts.length >= maxDepth) {
+      break
+    }
 
     if (arg.startsWith('-')) {
       // Special case: python -c should stop after -c
-      if (arg === '-c' && ['python', 'python3'].includes(command.toLowerCase())) break
+      if (arg === '-c' && ['python', 'python3'].includes(command.toLowerCase())) {
+        break
+      }
 
       // Check for isCommand/isModule flags that should be included in prefix
       if (spec?.options) {
@@ -113,13 +129,17 @@ export async function buildPrefix(
 
       // For commands with subcommands, skip global flags to find the subcommand
       if (hasSubcommands && !foundSubcommand) {
-        if (flagTakesArg(arg, args[i + 1], spec)) i++
+        if (flagTakesArg(arg, args[i + 1], spec)) {
+          i++
+        }
         continue
       }
       break // Stop at flags (original behavior)
     }
 
-    if (await shouldStopAtArg(arg, args.slice(0, i), spec)) break
+    if (await shouldStopAtArg(arg, args.slice(0, i), spec)) {
+      break
+    }
     if (hasSubcommands && !foundSubcommand) {
       foundSubcommand = isKnownSubcommand(arg, spec)
     }
@@ -138,18 +158,27 @@ async function calculateDepth(
   const firstSubcommand = findFirstSubcommand(args, spec)
   const commandLower = command.toLowerCase()
   const key = firstSubcommand ? `${commandLower} ${firstSubcommand.toLowerCase()}` : commandLower
-  if (DEPTH_RULES[key]) return DEPTH_RULES[key]
-  if (DEPTH_RULES[commandLower]) return DEPTH_RULES[commandLower]
-  if (!spec) return 2
+  if (DEPTH_RULES[key]) {
+    return DEPTH_RULES[key]
+  }
+  if (DEPTH_RULES[commandLower]) {
+    return DEPTH_RULES[commandLower]
+  }
+  if (!spec) {
+    return 2
+  }
 
   if (spec.options && args.some((arg) => arg?.startsWith('-'))) {
     for (const arg of args) {
-      if (!arg?.startsWith('-')) continue
+      if (!arg?.startsWith('-')) {
+        continue
+      }
       const option = spec.options.find((opt) =>
         Array.isArray(opt.name) ? opt.name.includes(arg) : opt.name === arg,
       )
-      if (option?.args && toArray(option.args).some((arg) => arg?.isCommand || arg?.isModule))
+      if (option?.args && toArray(option.args).some((arg) => arg?.isCommand || arg?.isModule)) {
         return 3
+      }
     }
   }
 
@@ -164,16 +193,24 @@ async function calculateDepth(
     if (subcommand) {
       if (subcommand.args) {
         const subArgs = toArray(subcommand.args)
-        if (subArgs.some((arg) => arg?.isCommand)) return 3
-        if (subArgs.some((arg) => arg?.isVariadic)) return 2
+        if (subArgs.some((arg) => arg?.isCommand)) {
+          return 3
+        }
+        if (subArgs.some((arg) => arg?.isVariadic)) {
+          return 2
+        }
       }
-      if (subcommand.subcommands?.length) return 4
+      if (subcommand.subcommands?.length) {
+        return 4
+      }
       // Leaf subcommand with NO args declared (git show, git log, git tag):
       // the 3rd word is transient (SHA, ref, tag name) → dead over-specific
       // rule like PowerShell(git show 81210f8:*). NOT the isOptional case —
       // `git fetch` declares optional remote/branch and `git fetch origin`
       // is tested (bash/prefix.test.ts:912) as intentional remote scoping.
-      if (!subcommand.args) return 2
+      if (!subcommand.args) {
+        return 2
+      }
       return 3
     }
   }
@@ -188,8 +225,12 @@ async function calculateDepth(
     }
 
     if (!spec.subcommands?.length) {
-      if (argsArray.some((arg) => arg?.isVariadic)) return 1
-      if (argsArray[0] && !argsArray[0].isOptional) return 2
+      if (argsArray.some((arg) => arg?.isVariadic)) {
+        return 1
+      }
+      if (argsArray[0] && !argsArray[0].isOptional) {
+        return 2
+      }
     }
   }
 
@@ -201,7 +242,9 @@ async function shouldStopAtArg(
   args: string[],
   spec: CommandSpec | null,
 ): Promise<boolean> {
-  if (arg.startsWith('-')) return true
+  if (arg.startsWith('-')) {
+    return true
+  }
 
   const dotIndex = arg.lastIndexOf('.')
   const hasExtension =
@@ -210,7 +253,9 @@ async function shouldStopAtArg(
   const hasFile = arg.includes('/') || hasExtension
   const hasUrl = URL_PROTOCOLS.some((proto) => arg.startsWith(proto))
 
-  if (!hasFile && !hasUrl) return false
+  if (!hasFile && !hasUrl) {
+    return false
+  }
 
   // Check if we're after a -m flag for python modules
   if (spec?.options && args.length > 0 && args[args.length - 1] === '-m') {

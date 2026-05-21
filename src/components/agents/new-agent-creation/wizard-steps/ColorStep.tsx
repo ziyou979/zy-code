@@ -1,8 +1,8 @@
 import React from 'react'
+import { tSync } from '../../../../i18n/index.js'
 import { Box } from '../../../../ink.js'
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js'
 import type { AgentColorName } from '../../../../tools/AgentTool/agentColorManager.js'
-import { tSync } from '../../../../i18n/index.js'
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
 import { Byline } from '../../../design-system/Byline.js'
 import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js'
@@ -37,7 +37,7 @@ export function ColorStep() {
     })
     goNext()
   }
-  // @ts-ignore
+  // @ts-expect-error
   return (
     <WizardDialogLayout
       subtitle={tSync('wizard.chooseColor') as any}

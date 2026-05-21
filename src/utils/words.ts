@@ -3,7 +3,7 @@
  * Inspired by https://github.com/nas5w/random-word-slugs
  * with Zy-flavored words
  */
-import { randomBytes } from 'crypto'
+import { randomBytes } from 'node:crypto'
 
 // Adjectives for slug generation - whimsical and delightful
 const ADJECTIVES = [

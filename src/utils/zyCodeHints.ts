@@ -147,7 +147,9 @@ const notify = pendingHintChanged.emit
 
 /** Raw store write. Callers should gate first (see module comment). */
 export function setPendingHint(hint: ZyCodeHint): void {
-  if (shownThisSession) return
+  if (shownThisSession) {
+    return
+  }
   pendingHint = hint
   notify()
 }

@@ -44,7 +44,7 @@ function hasBashPermission(rules: PermissionRule[]): boolean {
     (rule) =>
       rule.ruleBehavior === 'allow' &&
       (rule.ruleValue.toolName === BASH_TOOL_NAME ||
-        rule.ruleValue.toolName.startsWith(BASH_TOOL_NAME + '(')),
+        rule.ruleValue.toolName.startsWith(`${BASH_TOOL_NAME}(`)),
   )
 }
 
@@ -74,15 +74,21 @@ export function getBashPermissionSources(): string[] {
  * @param limit - Optional limit for how many items to show before summarizing (ignored if 0)
  */
 export function formatListWithAnd(items: string[], limit?: number): string {
-  if (items.length === 0) return ''
+  if (items.length === 0) {
+    return ''
+  }
 
   // Ignore limit if it's 0
   const effectiveLimit = limit === 0 ? undefined : limit
 
   // If no limit or items are within limit, use normal formatting
   if (!effectiveLimit || items.length <= effectiveLimit) {
-    if (items.length === 1) return items[0]!
-    if (items.length === 2) return `${items[0]} and ${items[1]}`
+    if (items.length === 1) {
+      return items[0]!
+    }
+    if (items.length === 2) {
+      return `${items[0]} and ${items[1]}`
+    }
 
     const lastItem = items[items.length - 1]!
     const allButLast = items.slice(0, -1)

@@ -22,7 +22,7 @@ function toApiView(messages: Message[]): Message[] {
     const { projectView } =
       require('../../services/contextCollapse/operations.js') as typeof import('../../services/contextCollapse/operations.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
-    // @ts-ignore
+    // @ts-expect-error
     view = projectView(view)
   }
   return view

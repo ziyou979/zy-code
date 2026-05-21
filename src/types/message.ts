@@ -3,16 +3,16 @@
  * Derived from usage patterns across the codebase.
  */
 
+import type { UUID } from 'node:crypto'
+import type { Progress } from '../Tool.js'
+import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
 import type {
   AssistantContentBlock,
   AssistantMessage as LLMAssistantMessage,
-  ContentBlock,
   LLMError,
-  ToolCallBlock, UserContentBlock,
+  ToolCallBlock,
+  UserContentBlock,
 } from './llm.js'
-import type { UUID } from 'crypto'
-import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
-import type { Progress } from '../Tool.js'
 
 // ============================================================
 // Core Message Types

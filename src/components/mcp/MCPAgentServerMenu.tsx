@@ -13,6 +13,7 @@ import { Dialog } from '../design-system/Dialog.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { Spinner } from '../Spinner.js'
 import type { AgentMcpServerInfo } from './types.js'
+
 type Props = {
   agentServer: AgentMcpServerInfo
   onCancel: () => void

@@ -1,5 +1,5 @@
-import * as path from 'path'
-import { pathToFileURL } from 'url'
+import * as path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
@@ -189,7 +189,9 @@ export function createLSPServerManager(): LSPServerManager {
    */
   async function ensureServerStarted(filePath: string): Promise<LSPServerInstance | undefined> {
     const server = getServerForFile(filePath)
-    if (!server) return undefined
+    if (!server) {
+      return undefined
+    }
 
     if (server.state === 'stopped' || server.state === 'error') {
       try {
@@ -216,7 +218,9 @@ export function createLSPServerManager(): LSPServerManager {
     params: unknown,
   ): Promise<T | undefined> {
     const server = await ensureServerStarted(filePath)
-    if (!server) return undefined
+    if (!server) {
+      return undefined
+    }
 
     try {
       return await server.sendRequest<T>(method, params)
@@ -236,7 +240,9 @@ export function createLSPServerManager(): LSPServerManager {
 
   async function openFile(filePath: string, content: string): Promise<void> {
     const server = await ensureServerStarted(filePath)
-    if (!server) return
+    if (!server) {
+      return
+    }
 
     const fileUri = pathToFileURL(path.resolve(filePath)).href
 
@@ -307,7 +313,9 @@ export function createLSPServerManager(): LSPServerManager {
    */
   async function saveFile(filePath: string): Promise<void> {
     const server = getServerForFile(filePath)
-    if (!server || server.state !== 'running') return
+    if (!server || server.state !== 'running') {
+      return
+    }
 
     try {
       await server.sendNotification('textDocument/didSave', {
@@ -333,7 +341,9 @@ export function createLSPServerManager(): LSPServerManager {
    */
   async function closeFile(filePath: string): Promise<void> {
     const server = getServerForFile(filePath)
-    if (!server || server.state !== 'running') return
+    if (!server || server.state !== 'running') {
+      return
+    }
 
     const fileUri = pathToFileURL(path.resolve(filePath)).href
 

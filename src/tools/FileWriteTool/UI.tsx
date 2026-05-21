@@ -1,11 +1,12 @@
 import type { ToolResultBlock } from '../../types/llm.js'
+
 type StructuredPatchHunk = any
-import { isAbsolute, relative, resolve } from 'path'
+
+import { isAbsolute, relative, resolve } from 'node:path'
 import * as React from 'react'
 import { Suspense, use, useState } from 'react'
 import { MessageResponse } from 'src/components/MessageResponse.js'
 import { extractTag } from 'src/utils/messages.js'
-import { tSync } from '../../i18n/index.js'
 import { CtrlOToExpand } from '../../components/CtrlOToExpand.js'
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js'
 import { FileEditToolUpdatedMessage } from '../../components/FileEditToolUpdatedMessage.js'
@@ -13,6 +14,7 @@ import { FileEditToolUseRejectedMessage } from '../../components/FileEditToolUse
 import { FilePathLink } from '../../components/FilePathLink.js'
 import { HighlightedCode } from '../../components/HighlightedCode.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import type { ToolProgressData } from '../../Tool.js'
 import type { ProgressMessage } from '../../types/message.js'
@@ -23,6 +25,7 @@ import { logError } from '../../utils/log.js'
 import { getPlansDirectory } from '../../utils/plans.js'
 import { openForScan, readCapped } from '../../utils/readEditContext.js'
 import type { Output } from './FileWriteTool.js'
+
 const MAX_LINES_TO_RENDER = 10
 // 模型输出始终使用 \n，与平台无关，因此始终按 \n 分割。
 // Windows 上 os.EOL 为 \r\n，这会导致所有文件的 numLines=1。
@@ -90,11 +93,15 @@ export function userFacingName(
 
 /** 控制全屏点击展开。只有 `create` 会截断（至 MAX_LINES_TO_RENDER）；`update` 无论 verbose 如何都渲染完整 diff。在悬停/滚动时对每个可见消息调用，因此找到第 (MAX+1) 行后即提前退出，而不是拆分整个（可能很大的）内容。 */
 export function isResultTruncated({ type, content }: Output): boolean {
-  if (type !== 'create') return false
+  if (type !== 'create') {
+    return false
+  }
   let pos = 0
   for (let i = 0; i < MAX_LINES_TO_RENDER; i++) {
     pos = content.indexOf(EOL, pos)
-    if (pos === -1) return false
+    if (pos === -1) {
+      return false
+    }
     pos++
   }
   // countLines treats a trailing EOL as a terminator, not a new line
@@ -224,10 +231,11 @@ async function loadRejectionDiff(filePath: string, content: string): Promise<Rej
   try {
     const fullFilePath = isAbsolute(filePath) ? filePath : resolve(getCwd(), filePath)
     const handle = await openForScan(fullFilePath)
-    if (handle === null)
+    if (handle === null) {
       return {
         type: 'create',
       }
+    }
     let oldContent: string | null
     try {
       oldContent = await readCapped(handle)
@@ -235,10 +243,11 @@ async function loadRejectionDiff(filePath: string, content: string): Promise<Rej
       await handle.close()
     }
     // 文件超过 MAX_SCAN_BYTES — 回退到创建视图，避免对多 GB 文件做 diff 导致内存溢出。
-    if (oldContent === null)
+    if (oldContent === null) {
       return {
         type: 'create',
       }
+    }
     const patch = getPatchForDisplay({
       filePath,
       fileContents: oldContent,

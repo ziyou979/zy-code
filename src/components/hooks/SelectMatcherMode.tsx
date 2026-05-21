@@ -1,12 +1,5 @@
-/**
- * SelectMatcherMode shows the configured matchers for a selected hook event.
- *
- * The /hooks menu is read-only: this view no longer offers "add new matcher"
- * and simply lets the user drill into each matcher to see its hooks.
- */
-import * as React from 'react'
-import { tSync } from 'src/i18n/index.js'
 import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js'
+import { tSync } from 'src/i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import {
   type HookSource,
@@ -16,6 +9,7 @@ import {
 import { plural } from '../../utils/stringUtils.js'
 import { Select } from '../CustomSelect/select.js'
 import { Dialog } from '../design-system/Dialog.js'
+
 type MatcherWithSource = {
   matcher: string
   sources: HookSource[]

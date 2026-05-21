@@ -1,8 +1,8 @@
-import type { ContentBlock } from '../../types/llm.js'
-import React from 'react'
 import type { LocalJSXCommandCall, LocalJSXCommandOnDone } from '../../types/command.js'
+import type { ContentBlock } from '../../types/llm.js'
 import { checkOverageGate, confirmOverage, launchRemoteReview } from './reviewRemote.js'
 import { UltrareviewOverageDialog } from './UltrareviewOverageDialog.js'
+
 function contentBlocksToString(blocks: ContentBlock[]): string {
   return blocks
     .map((b) => (b.type === 'text' ? b.text : ''))
@@ -20,7 +20,9 @@ async function launchAndDone(
   // User hit Escape during the ~5s launch — the dialog already showed
   // "cancelled" and unmounted, so skip onDone (would write to a dead
   // transcript slot) and let the caller skip confirmOverage.
-  if (signal?.aborted) return
+  if (signal?.aborted) {
+    return
+  }
   if (result) {
     onDone(contentBlocksToString(result), {
       shouldQuery: true,
@@ -65,7 +67,9 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
           // Only persist the confirmation flag after a non-aborted launch —
           // otherwise Escape-during-launch would leave the flag set and
           // skip this dialog on the next attempt.
-          if (!signal.aborted) confirmOverage()
+          if (!signal.aborted) {
+            confirmOverage()
+          }
         }}
         onCancel={() =>
           onDone('Ultrareview cancelled.', {

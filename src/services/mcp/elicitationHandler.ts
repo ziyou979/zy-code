@@ -170,7 +170,9 @@ export function registerElicitationHandler(
       let found = false
       setAppState((prev) => {
         const idx = findElicitationInQueue(prev.elicitation.queue, serverName, elicitationId)
-        if (idx === -1) return prev
+        if (idx === -1) {
+          return prev
+        }
         found = true
         const queue = [...prev.elicitation.queue]
         queue[idx] = { ...queue[idx]!, completed: true }

@@ -35,7 +35,9 @@ export function useAnimationFrame(
   const active = isVisible && intervalMs !== null
 
   useEffect(() => {
-    if (!clock || !active) return
+    if (!clock || !active) {
+      return
+    }
 
     let lastUpdate = clock.now()
 

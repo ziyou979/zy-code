@@ -8,8 +8,8 @@
 // Pattern mirrors computerUseLock.ts: O_EXCL atomic create, PID liveness
 // probe, stale-lock recovery, cleanup-on-exit.
 
-import { mkdir, readFile, unlink, writeFile } from 'fs/promises'
-import { dirname, join } from 'path'
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { z } from 'zod/v4'
 import { getProjectRoot, getSessionId } from '../bootstrap/state.js'
 import { registerCleanup } from './cleanupRegistry.js'
@@ -69,7 +69,9 @@ async function tryCreateExclusive(lock: SchedulerLock, dir?: string): Promise<bo
     return true
   } catch (e: unknown) {
     const code = getErrnoCode(e)
-    if (code === 'EEXIST') return false
+    if (code === 'EEXIST') {
+      return false
+    }
     if (code === 'ENOENT') {
       // .zy/ doesn't exist yet — create it and retry once. In steady
       // state the dir already exists (scheduled_tasks.json lives there),
@@ -79,7 +81,9 @@ async function tryCreateExclusive(lock: SchedulerLock, dir?: string): Promise<bo
         await writeFile(path, body, { flag: 'wx' })
         return true
       } catch (retryErr: unknown) {
-        if (getErrnoCode(retryErr) === 'EEXIST') return false
+        if (getErrnoCode(retryErr) === 'EEXIST') {
+          return false
+        }
         throw retryErr
       }
     }
@@ -174,7 +178,9 @@ export async function releaseSchedulerLock(opts?: SchedulerLockOptions): Promise
   const dir = opts?.dir
   const sessionId = opts?.lockIdentity ?? getSessionId()
   const existing = await readLock(dir)
-  if (!existing || existing.sessionId !== sessionId) return
+  if (!existing || existing.sessionId !== sessionId) {
+    return
+  }
   try {
     await unlink(getLockPath(dir))
     logForDebugging('[ScheduledTasks] released scheduler lock')

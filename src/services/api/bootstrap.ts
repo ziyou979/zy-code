@@ -40,7 +40,9 @@ async function fetchBootstrapAPI(): Promise<BootstrapResponse | null> {
 export async function fetchBootstrapData(): Promise<void> {
   try {
     const response = await fetchBootstrapAPI()
-    if (!response) return
+    if (!response) {
+      return
+    }
 
     const clientData = response.client_data ?? null
     const additionalModelOptions = response.additional_model_options ?? []

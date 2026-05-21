@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
-import type { WriteFileOptions } from 'fs'
-import { closeSync, writeFileSync as fsWriteFileSync, fsyncSync, openSync } from 'fs'
+import type { WriteFileOptions } from 'node:fs'
+import { closeSync, writeFileSync as fsWriteFileSync, fsyncSync, openSync } from 'node:fs'
 // biome-ignore lint: This file IS the cloneDeep wrapper - it must import the original
 import lodashCloneDeep from 'lodash-es/cloneDeep.js'
 import { addSlowOperation } from '../bootstrap/state.js'
@@ -51,11 +51,17 @@ let isLogging = false
  * Only called when an operation was actually slow — never on the fast path.
  */
 export function callerFrame(stack: string | undefined): string {
-  if (!stack) return ''
+  if (!stack) {
+    return ''
+  }
   for (const line of stack.split('\n')) {
-    if (line.includes('slowOperations')) continue
+    if (line.includes('slowOperations')) {
+      continue
+    }
     const m = line.match(/([^/\\]+?):(\d+):\d+\)?$/)
-    if (m) return ` @ ${m[1]}:${m[2]}`
+    if (m) {
+      return ` @ ${m[1]}:${m[2]}`
+    }
   }
   return ''
 }
@@ -140,9 +146,8 @@ function slowLoggingExternal(): Disposable {
  * using _ = slowLogging`structuredClone(${value})`
  * const result = structuredClone(value)
  */
-export const slowLogging: {
-  (strings: TemplateStringsArray, ...values: unknown[]): Disposable
-} = feature('SLOW_OPERATION_LOGGING') ? slowLoggingAnt : slowLoggingExternal
+export const slowLogging: (strings: TemplateStringsArray, ...values: unknown[]) => Disposable =
+  feature('SLOW_OPERATION_LOGGING') ? slowLoggingAnt : slowLoggingExternal
 
 // --- Wrapped operations ---
 

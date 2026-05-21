@@ -1,8 +1,7 @@
 import type { CoordinateMode, CuSubGates } from '@ant/computer-use-mcp/types'
 
 import { getDynamicConfig_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import { isEnvTruthy } from '../envUtils.js'
-import { isInternalBuild } from '../envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../envUtils.js'
 
 type ChicagoConfig = CuSubGates & {
   enabled: boolean
@@ -35,7 +34,9 @@ function readConfig(): ChicagoConfig {
 // CLAUDE.md:281, USER_TYPE !== 'zy-super' branches get zero antfooding.
 // No subscription context for external users, so always false.
 function hasRequiredSubscription(): boolean {
-  if (isInternalBuild()) return true
+  if (isInternalBuild()) {
+    return true
+  }
   return false
 }
 

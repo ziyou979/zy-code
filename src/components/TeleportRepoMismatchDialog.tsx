@@ -1,11 +1,12 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import { tSync } from 'src/i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { getDisplayPath } from '../utils/file.js'
 import { removePathFromRepo, validateRepoAtPath } from '../utils/githubRepoPathMapping.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
 import { Spinner } from './Spinner.js'
-import { tSync } from 'src/i18n/index.js'
+
 type Props = {
   targetRepo: string
   initialPaths: string[]

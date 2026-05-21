@@ -117,8 +117,12 @@ function handleNormalInput(
     return { next: { type: 'find', find: input as FindType, count } }
   }
 
-  if (input === 'g') return { next: { type: 'g', count } }
-  if (input === 'r') return { next: { type: 'replace', count } }
+  if (input === 'g') {
+    return { next: { type: 'g', count } }
+  }
+  if (input === 'r') {
+    return { next: { type: 'replace', count } }
+  }
   if (input === '>' || input === '<') {
     return { next: { type: 'indent', dir: input, count } }
   }
@@ -254,7 +258,9 @@ function fromIdle(input: string, ctx: TransitionContext): TransitionResult {
   }
 
   const result = handleNormalInput(input, 1, ctx)
-  if (result) return result
+  if (result) {
+    return result
+  }
 
   return {}
 }
@@ -272,7 +278,9 @@ function fromCount(
 
   const count = parseInt(state.digits, 10)
   const result = handleNormalInput(input, count, ctx)
-  if (result) return result
+  if (result) {
+    return result
+  }
 
   return { next: { type: 'idle' } }
 }
@@ -299,7 +307,9 @@ function fromOperator(
   }
 
   const result = handleOperatorInput(state.op, state.count, input, ctx)
-  if (result) return result
+  if (result) {
+    return result
+  }
 
   return { next: { type: 'idle' } }
 }
@@ -323,7 +333,9 @@ function fromOperatorCount(
   const motionCount = parseInt(state.digits, 10)
   const effectiveCount = state.count * motionCount
   const result = handleOperatorInput(state.op, effectiveCount, input, ctx)
-  if (result) return result
+  if (result) {
+    return result
+  }
 
   return { next: { type: 'idle' } }
 }
@@ -437,7 +449,9 @@ function fromReplace(
   // Backspace/Delete arrive as empty input in literal-char states. In vim,
   // r<BS> cancels the replace; without this guard, executeReplace("") would
   // delete the character under the cursor instead.
-  if (input === '') return { next: { type: 'idle' } }
+  if (input === '') {
+    return { next: { type: 'idle' } }
+  }
   return { execute: () => executeReplace(input, state.count, ctx) }
 }
 
@@ -458,7 +472,9 @@ function fromIndent(
 
 function executeRepeatFind(reverse: boolean, count: number, ctx: TransitionContext): void {
   const lastFind = ctx.getLastFind()
-  if (!lastFind) return
+  if (!lastFind) {
+    return
+  }
 
   // Determine the effective find type based on reverse
   let findType = lastFind.type

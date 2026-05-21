@@ -3,13 +3,13 @@
  *
  * 这些函数是纯函数或接近纯函数，测试成本低、价值高。
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import {
-  toolsToOpenAI,
-  toolChoiceToOpenAI,
   convertOutputFormatToResponseFormat,
   openAIDeltaUsageToStandard,
   openAIFinishReasonToStandard,
+  toolChoiceToOpenAI,
+  toolsToOpenAI,
 } from '../../../src/services/api/conversions/openai.js'
 
 describe('toolsToOpenAI', () => {

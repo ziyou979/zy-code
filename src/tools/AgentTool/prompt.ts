@@ -56,8 +56,12 @@ export function formatAgentLine(agent: AgentDefinition): string {
  * Override with ZY_CODE_AGENT_LIST_IN_MESSAGES=true/false for testing.
  */
 export function shouldInjectAgentListInMessages(): boolean {
-  if (isEnvTruthy(process.env.ZY_CODE_AGENT_LIST_IN_MESSAGES)) return true
-  if (isEnvDefinedFalsy(process.env.ZY_CODE_AGENT_LIST_IN_MESSAGES)) return false
+  if (isEnvTruthy(process.env.ZY_CODE_AGENT_LIST_IN_MESSAGES)) {
+    return true
+  }
+  if (isEnvDefinedFalsy(process.env.ZY_CODE_AGENT_LIST_IN_MESSAGES)) {
+    return false
+  }
   return getFeatureValue_CACHED_MAY_BE_STALE('zy_agent_list_attach', false)
 }
 

@@ -13,7 +13,7 @@
  * plugins active).
  */
 
-import { dirname, join } from 'path'
+import { dirname, join } from 'node:path'
 import { logForDebugging } from '../debug.js'
 import { errorMessage, isENOENT, toError } from '../errors.js'
 import { getFsImplementation } from '../fsOperations.js'
@@ -122,7 +122,9 @@ export function migrateToSinglePluginFile(): void {
       migrationCompleted = true
       return
     } catch (e) {
-      if (!isENOENT(e)) throw e
+      if (!isENOENT(e)) {
+        throw e
+      }
     }
 
     // Case 2: v2 absent — try reading main; ENOENT = neither exists (case 3)
@@ -130,7 +132,9 @@ export function migrateToSinglePluginFile(): void {
     try {
       mainContent = fs.readFileSync(mainFilePath, { encoding: 'utf-8' })
     } catch (e) {
-      if (!isENOENT(e)) throw e
+      if (!isENOENT(e)) {
+        throw e
+      }
       // Case 3: No file exists - nothing to migrate
       migrationCompleted = true
       return
@@ -204,7 +208,9 @@ function cleanupLegacyCache(v2Data: InstalledPluginsFileV2): void {
       // or a legacy cache (flat plugin directory)
       const subEntries = fs.readdirSync(entryPath)
       const hasVersionedStructure = subEntries.some((subDirent) => {
-        if (!subDirent.isDirectory()) return false
+        if (!subDirent.isDirectory()) {
+          return false
+        }
         const subPath = join(entryPath, subDirent.name)
         // Check if subdir contains version directories (semver-like or hash)
         const versionEntries = fs.readdirSync(subPath)
@@ -574,7 +580,9 @@ export function hasPendingUpdates(): boolean {
 
   for (const [pluginId, diskInstallations] of Object.entries(diskState.plugins)) {
     const memoryInstallations = memoryState.plugins[pluginId]
-    if (!memoryInstallations) continue
+    if (!memoryInstallations) {
+      continue
+    }
 
     for (const diskEntry of diskInstallations) {
       const memoryEntry = memoryInstallations.find(
@@ -601,7 +609,9 @@ export function getPendingUpdateCount(): number {
 
   for (const [pluginId, diskInstallations] of Object.entries(diskState.plugins)) {
     const memoryInstallations = memoryState.plugins[pluginId]
-    if (!memoryInstallations) continue
+    if (!memoryInstallations) {
+      continue
+    }
 
     for (const diskEntry of diskInstallations) {
       const memoryEntry = memoryInstallations.find(
@@ -639,7 +649,9 @@ export function getPendingUpdatesDetails(): Array<{
 
   for (const [pluginId, diskInstallations] of Object.entries(diskState.plugins)) {
     const memoryInstallations = memoryState.plugins[pluginId]
-    if (!memoryInstallations) continue
+    if (!memoryInstallations) {
+      continue
+    }
 
     for (const diskEntry of diskInstallations) {
       const memoryEntry = memoryInstallations.find(
@@ -811,7 +823,9 @@ export function isPluginGloballyInstalled(pluginId: string): boolean {
   const hasGlobalEntry = installations.some(
     (entry) => entry.scope === 'user' || entry.scope === 'managed',
   )
-  if (!hasGlobalEntry) return false
+  if (!hasGlobalEntry) {
+    return false
+  }
   // Same settings divergence guard as isPluginInstalled — if enabledPlugins
   // was clobbered, treat as not-installed so the user can re-enable.
   return getInitialSettings().enabledPlugins?.[pluginId] !== undefined
@@ -1063,7 +1077,9 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
 
     for (const pluginId of Object.keys(sourceEnabledPlugins)) {
       // Skip non-standard plugin IDs
-      if (!pluginId.includes('@')) continue
+      if (!pluginId.includes('@')) {
+        continue
+      }
 
       // Settings.json is source of truth - always update scope
       // Use the most specific scope (last one wins: local > project > user)
@@ -1131,7 +1147,7 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
 
         let installPath: string
         let version = 'unknown'
-        let gitCommitSha: string | undefined = undefined
+        let gitCommitSha: string | undefined
 
         if (typeof entry.source === 'string') {
           installPath = join(marketplaceInstallLocation, entry.source)
@@ -1154,7 +1170,9 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
               typeof e === 'string' ? e : e.name,
             )
           } catch (e) {
-            if (!isENOENT(e)) throw e
+            if (!isENOENT(e)) {
+              throw e
+            }
             logForDebugging(`External plugin ${pluginId} not in cache, skipping`)
             continue
           }

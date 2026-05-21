@@ -54,11 +54,11 @@ export function installStreamJsonStdoutGuard(): void {
 
   originalWrite = process.stdout.write.bind(process.stdout) as typeof process.stdout.write
 
-  process.stdout.write = function (
+  process.stdout.write = ((
     chunk: string | Uint8Array,
     encodingOrCb?: BufferEncoding | ((err?: Error) => void),
     cb?: (err?: Error) => void,
-  ): boolean {
+  ): boolean => {
     const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf-8')
 
     buffer += text
@@ -68,7 +68,7 @@ export function installStreamJsonStdoutGuard(): void {
       const line = buffer.slice(0, newlineIdx)
       buffer = buffer.slice(newlineIdx + 1)
       if (isJsonLine(line)) {
-        wrote = originalWrite!(line + '\n')
+        wrote = originalWrite!(`${line}\n`)
       } else {
         process.stderr.write(`${STDOUT_GUARD_MARKER} ${line}\n`)
         logForDebugging(
@@ -85,14 +85,14 @@ export function installStreamJsonStdoutGuard(): void {
       queueMicrotask(() => callback())
     }
     return wrote
-  } as typeof process.stdout.write
+  }) as typeof process.stdout.write
 
   registerCleanup(async () => {
     // Flush any partial line left in the buffer at shutdown. If it's a JSON
     // fragment it won't parse — divert it rather than drop it silently.
     if (buffer.length > 0) {
       if (originalWrite && isJsonLine(buffer)) {
-        originalWrite(buffer + '\n')
+        originalWrite(`${buffer}\n`)
       } else {
         process.stderr.write(`${STDOUT_GUARD_MARKER} ${buffer}\n`)
       }

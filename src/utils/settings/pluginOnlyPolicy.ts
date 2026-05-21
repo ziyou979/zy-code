@@ -18,8 +18,12 @@ export type CustomizationSurface = (typeof CUSTOMIZATION_SURFACES)[number]
  */
 export function isRestrictedToPluginOnly(surface: CustomizationSurface): boolean {
   const policy = getSettingsForSource('policySettings')?.strictPluginOnlyCustomization
-  if (policy === true) return true
-  if (Array.isArray(policy)) return policy.includes(surface)
+  if (policy === true) {
+    return true
+  }
+  if (Array.isArray(policy)) {
+    return policy.includes(surface)
+  }
   return false
 }
 

@@ -1,5 +1,4 @@
-import type { ImageSource, ImageBlock } from '../../../types/llm.js'
-import React, { Suspense, use, useRef, useState } from 'react'
+import { Suspense, use, useRef, useState } from 'react'
 import { useSettings } from '../../../hooks/useSettings.js'
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../../ink/stringWidth.js'
@@ -11,6 +10,7 @@ import {
 } from '../../../services/analytics/index.js'
 import { useAppState } from '../../../state/AppState.js'
 import { AskUserQuestionTool } from '../../../tools/AskUserQuestionTool/AskUserQuestionTool.js'
+import type { ImageBlock } from '../../../types/llm.js'
 import { getCliHighlightPromise } from '../../../utils/cliHighlight.js'
 import type { PastedContent } from '../../../utils/config.js'
 import { maybeResizeAndDownsampleImageBlock } from '../../../utils/imageResizer.js'
@@ -22,6 +22,7 @@ import { getPlanFilePath } from '../../../utils/plans.js'
 import { QuestionView } from './QuestionView.js'
 import { SubmitQuestionsView } from './SubmitQuestionsView.js'
 import { useMultipleChoiceState } from './use-multiple-choice-state.js'
+
 const MIN_CONTENT_HEIGHT = 12
 const MIN_CONTENT_WIDTH = 40
 // Lines used by chrome around the content area (nav bar, title, footer, help text, etc.)
@@ -273,7 +274,7 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
     )
   }
   const handleQuestionAnswer = (questionText_1, label, textInput, shouldAdvance) => {
-    const advanceToNext = shouldAdvance === undefined ? true : shouldAdvance
+    const _advanceToNext = shouldAdvance === undefined ? true : shouldAdvance
     let answer_2
     const isMultiSelect = Array.isArray(label)
     if (isMultiSelect) {
@@ -338,56 +339,54 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
   )
   if (currentQuestion) {
     return (
-      <>
-        <QuestionView
-          question={currentQuestion}
-          questions={questions}
-          currentQuestionIndex={currentQuestionIndex}
-          answers={answers}
-          questionStates={questionStates}
-          hideSubmitTab={hideSubmitTab}
-          minContentHeight={globalContentHeight}
-          minContentWidth={globalContentWidth}
-          outerMinHeight={globalOuterMinHeight}
-          planFilePath={planFilePath}
-          onUpdateQuestionState={updateQuestionState}
-          onAnswer={handleQuestionAnswer}
-          onTextInputFocus={setTextInputMode}
-          onCancel={handleCancel}
-          onSubmit={nextQuestion}
-          onTabPrev={handleTabPrev}
-          onTabNext={handleTabNext}
-          onRespondToZy={handleRespondToZy}
-          onFinishPlanInterview={handleFinishPlanInterview}
-          onImagePaste={(base64, mediaType_0, filename_0, dims, path) =>
-            onImagePaste(currentQuestion.question, base64, mediaType_0, filename_0, dims, path)
-          }
-          pastedContents={pastedContentsByQuestion[currentQuestion.question] ?? {}}
-          onRemoveImage={(id_0) => onRemoveImage(currentQuestion.question, id_0)}
-        />
-      </>
+      <QuestionView
+        question={currentQuestion}
+        questions={questions}
+        currentQuestionIndex={currentQuestionIndex}
+        answers={answers}
+        questionStates={questionStates}
+        hideSubmitTab={hideSubmitTab}
+        minContentHeight={globalContentHeight}
+        minContentWidth={globalContentWidth}
+        outerMinHeight={globalOuterMinHeight}
+        planFilePath={planFilePath}
+        onUpdateQuestionState={updateQuestionState}
+        onAnswer={handleQuestionAnswer}
+        onTextInputFocus={setTextInputMode}
+        onCancel={handleCancel}
+        onSubmit={nextQuestion}
+        onTabPrev={handleTabPrev}
+        onTabNext={handleTabNext}
+        onRespondToZy={handleRespondToZy}
+        onFinishPlanInterview={handleFinishPlanInterview}
+        onImagePaste={(base64, mediaType_0, filename_0, dims, path) =>
+          onImagePaste(currentQuestion.question, base64, mediaType_0, filename_0, dims, path)
+        }
+        pastedContents={pastedContentsByQuestion[currentQuestion.question] ?? {}}
+        onRemoveImage={(id_0) => onRemoveImage(currentQuestion.question, id_0)}
+      />
     )
   }
   if (isInSubmitView) {
     return (
-      <>
-        <SubmitQuestionsView
-          questions={questions}
-          currentQuestionIndex={currentQuestionIndex}
-          answers={answers}
-          allQuestionsAnswered={allQuestionsAnswered}
-          permissionResult={toolUseConfirm.permissionResult}
-          minContentHeight={globalContentHeight}
-          outerMinHeight={globalOuterMinHeight}
-          onFinalResponse={handleFinalResponse}
-        />
-      </>
+      <SubmitQuestionsView
+        questions={questions}
+        currentQuestionIndex={currentQuestionIndex}
+        answers={answers}
+        allQuestionsAnswered={allQuestionsAnswered}
+        permissionResult={toolUseConfirm.permissionResult}
+        minContentHeight={globalContentHeight}
+        outerMinHeight={globalOuterMinHeight}
+        onFinalResponse={handleFinalResponse}
+      />
     )
   }
   return null
 }
 async function convertImagesToBlocks(images: PastedContent[]): Promise<ImageBlock[] | undefined> {
-  if (images.length === 0) return undefined
+  if (images.length === 0) {
+    return undefined
+  }
   return Promise.all(
     images.map(async (img) => {
       const block: ImageBlock = {

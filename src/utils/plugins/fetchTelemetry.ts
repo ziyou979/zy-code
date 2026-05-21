@@ -110,13 +110,21 @@ export function classifyFetchError(error: unknown): string {
   if (/ENOTFOUND|ECONNREFUSED|EAI_AGAIN|Could not resolve host|Connection refused/i.test(msg)) {
     return 'dns_or_refused'
   }
-  if (/ETIMEDOUT|timed out|timeout/i.test(msg)) return 'timeout'
+  if (/ETIMEDOUT|timed out|timeout/i.test(msg)) {
+    return 'timeout'
+  }
   if (/ECONNRESET|socket hang up|Connection reset by peer|remote end hung up/i.test(msg)) {
     return 'conn_reset'
   }
-  if (/403|401|authentication|permission denied/i.test(msg)) return 'auth'
-  if (/404|not found|repository not found/i.test(msg)) return 'not_found'
-  if (/certificate|SSL|TLS|unable to get local issuer/i.test(msg)) return 'tls'
+  if (/403|401|authentication|permission denied/i.test(msg)) {
+    return 'auth'
+  }
+  if (/404|not found|repository not found/i.test(msg)) {
+    return 'not_found'
+  }
+  if (/certificate|SSL|TLS|unable to get local issuer/i.test(msg)) {
+    return 'tls'
+  }
   // Schema validation throws "Invalid response format" (install_counts) —
   // distinguish from true unknowns so the dashboard can
   // see "server sent garbage" separately.

@@ -10,8 +10,8 @@
  */
 
 import type { Message, SystemSnipBoundaryMessage } from '../../types/message.js'
-import { tokenCountWithEstimation } from '../../utils/tokens.js'
 import { getDefaultStandardModel } from '../../utils/model/model.js'
+import { tokenCountWithEstimation } from '../../utils/tokens.js'
 import { getEffectiveContextWindowSize } from './autoCompact.js'
 import { groupMessagesByApiRound } from './grouping.js'
 
@@ -52,7 +52,9 @@ function createSnipBoundaryMessage(content: string): SystemSnipBoundaryMessage {
  * 当 token 使用量超过 60% 阈值时触发 nudging。
  */
 export function shouldNudgeForSnips(messages: Message[]): boolean {
-  if (messages.length === 0) return false
+  if (messages.length === 0) {
+    return false
+  }
   const model = getDefaultStandardModel()
   const contextWindow = getEffectiveContextWindowSize(model)
   const currentTokens = tokenCountWithEstimation(messages)
@@ -63,7 +65,9 @@ export function shouldNudgeForSnips(messages: Message[]): boolean {
  * 判断消息列表是否应触发裁剪。
  */
 export function shouldSnip(messages: Message[]): boolean {
-  if (messages.length === 0) return false
+  if (messages.length === 0) {
+    return false
+  }
   const model = getDefaultStandardModel()
   const contextWindow = getEffectiveContextWindowSize(model)
   const currentTokens = tokenCountWithEstimation(messages)
@@ -76,7 +80,9 @@ export function shouldSnip(messages: Message[]): boolean {
  */
 export function snipMessages(messages: Message[]): Message[] {
   const groups = groupMessagesByApiRound(messages)
-  if (groups.length <= MIN_KEEP_GROUPS) return messages
+  if (groups.length <= MIN_KEEP_GROUPS) {
+    return messages
+  }
 
   // 保留最近 MIN_KEEP_GROUPS 个 round
   const keepFromIndex = groups.length - MIN_KEEP_GROUPS

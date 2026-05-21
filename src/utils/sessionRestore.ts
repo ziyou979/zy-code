@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
-import type { UUID } from 'crypto'
-import { dirname } from 'path'
+import type { UUID } from 'node:crypto'
+import { dirname } from 'node:path'
 import {
   getMainLoopModelOverride,
   getSessionId,
@@ -29,7 +29,6 @@ import type {
 } from '../types/logs.js'
 import type { Message } from '../types/message.js'
 import { renameRecordingForSession } from './asciicast.js'
-import { clearMemoryFileCaches } from './zymd.js'
 import {
   type AttributionState,
   attributionRestoreStateFromLog,
@@ -57,6 +56,7 @@ import type { TodoList } from './todo/types.js'
 import { TodoListSchema } from './todo/types.js'
 import type { ContentReplacementRecord } from './toolResultStorage.js'
 import { getCurrentWorktreeSession, restoreWorktreeSession } from './worktree.js'
+import { clearMemoryFileCaches } from './zymd.js'
 
 type ResumeResult = {
   messages?: Message[]
@@ -74,14 +74,20 @@ type ResumeResult = {
 function extractTodosFromTranscript(messages: Message[]): TodoList {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i]
-    if (msg?.type !== 'assistant') continue
+    if (msg?.type !== 'assistant') {
+      continue
+    }
     const content = Array.isArray(msg.message.content) ? msg.message.content : []
     const toolUse = content.find(
       (block) => block.type === 'tool_call' && block.name === TODO_WRITE_TOOL_NAME,
     )
-    if (!toolUse || toolUse.type !== 'tool_call') continue
+    if (!toolUse || toolUse.type !== 'tool_call') {
+      continue
+    }
     const input = toolUse.input
-    if (input === null || typeof input !== 'object') return []
+    if (input === null || typeof input !== 'object') {
+      return []
+    }
     const parsed = TodoListSchema().safeParse((input as Record<string, unknown>).todos)
     return parsed.success ? parsed.data : []
   }
@@ -319,7 +325,9 @@ export function restoreWorktreeForResume(
     saveWorktreeState(fresh)
     return
   }
-  if (!worktreeSession) return
+  if (!worktreeSession) {
+    return
+  }
 
   try {
     process.chdir(worktreeSession.worktreePath)
@@ -357,7 +365,9 @@ export function restoreWorktreeForResume(
  */
 export function exitRestoredWorktree(): void {
   const current = getCurrentWorktreeSession()
-  if (!current) return
+  if (!current) {
+    return
+  }
 
   restoreWorktreeSession(null)
   // worktree 状态已更改，因此引用它的缓存提示词片段已过期，
@@ -405,7 +415,7 @@ export async function processResumedConversation(
   if (feature('COORDINATOR_MODE')) {
     modeWarning = context.modeApi?.matchSessionMode(result.mode)
     if (modeWarning) {
-      // @ts-ignore
+      // @ts-expect-error
       result.messages.push(createSystemMessage(modeWarning, 'warning'))
     }
   }

@@ -1,6 +1,5 @@
 import { feature } from 'bun:bundle'
 import chalk from 'chalk'
-import React from 'react'
 import { Ansi, Box, Text } from '../../ink.js'
 import { useAppState } from '../../state/AppState.js'
 import type {

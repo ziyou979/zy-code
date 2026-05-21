@@ -1,4 +1,3 @@
-import React from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { Text } from '../../ink.js'
 import { extractMcpToolDisplayName, getMcpDisplayName } from '../../services/mcp/mcpStringUtils.js'
@@ -12,6 +11,7 @@ import { Byline } from '../design-system/Byline.js'
 import { Dialog } from '../design-system/Dialog.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import type { ServerInfo } from './types.js'
+
 type Props = {
   server: ServerInfo
   onSelectTool: (tool: Tool, index: number) => void
@@ -78,7 +78,7 @@ export function MCPToolListView({ server, onSelectTool, onBack }: Props) {
         <Select
           options={toolOptions}
           onChange={(value) => {
-            const index_0 = parseInt(value)
+            const index_0 = parseInt(value, 10)
             const tool_0 = serverTools[index_0]
             if (tool_0) {
               onSelectTool(tool_0, index_0)

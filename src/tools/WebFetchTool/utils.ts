@@ -1,12 +1,13 @@
 import axios, { type AxiosResponse } from 'axios'
 import { LRUCache } from 'lru-cache'
+import { getOauthConfig } from '../../constants/oauth.js'
+import { tSync } from '../../i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
 import { queryCompactModel } from '../../services/api/llmOrchestrator.js'
-import { getOauthConfig } from '../../constants/oauth.js'
-import { tSync } from '../../i18n/index.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { AbortError } from '../../utils/errors.js'
 import { getWebFetchUserAgent } from '../../utils/http.js'
 import { logError } from '../../utils/log.js'
@@ -15,7 +16,6 @@ import { getInitialSettings } from '../../utils/settings/settings.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 import { isPreapprovedHost } from './preapproved.js'
 import { makeSecondaryModelPrompt } from './prompt.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 
 // 域名拦截相关的自定义错误类
 class DomainBlockedError extends Error {
@@ -85,11 +85,11 @@ export function clearWebFetchCache(): void {
 //（构造时会创建 15 个规则对象；.turndown() 是无状态的）。
 // @types/turndown 只提供 `export =`（没有 .d.mts），所以 TS 将导入类型视为类本身，
 // 而 Bun 将 CJS 包装为 { default } —— 因此需要类型断言。
-// @ts-ignore
+// @ts-expect-error
 type TurndownCtor = typeof import('turndown')
 let turndownServicePromise: Promise<InstanceType<TurndownCtor>> | undefined
 function getTurndownService(): Promise<InstanceType<TurndownCtor>> {
-  // @ts-ignore
+  // @ts-expect-error
   return (turndownServicePromise ??= import('turndown').then((m) => {
     const Turndown = (m as unknown as { default: TurndownCtor }).default
     return new Turndown()
@@ -467,7 +467,7 @@ export async function applyPromptToMarkdown(
   // 截断内容以避免副模型返回 "Prompt is too long" 错误
   const truncatedContent =
     markdownContent.length > MAX_MARKDOWN_LENGTH
-      ? markdownContent.slice(0, MAX_MARKDOWN_LENGTH) + '\n\n[Content truncated due to length...]'
+      ? `${markdownContent.slice(0, MAX_MARKDOWN_LENGTH)}\n\n[Content truncated due to length...]`
       : markdownContent
 
   const modelPrompt = makeSecondaryModelPrompt(truncatedContent, prompt, isPreapprovedDomain)
@@ -476,7 +476,7 @@ export async function applyPromptToMarkdown(
     userPrompt: modelPrompt,
     signal,
     options: {
-      // @ts-ignore
+      // @ts-expect-error
       querySource: 'web_fetch_apply',
       agents: [],
       isNonInteractiveSession,

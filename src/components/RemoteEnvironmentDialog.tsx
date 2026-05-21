@@ -1,6 +1,5 @@
 import chalk from 'chalk'
 import figures from 'figures'
-import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
@@ -16,6 +15,7 @@ import { Byline } from './design-system/Byline.js'
 import { Dialog } from './design-system/Dialog.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 import { LoadingState } from './design-system/LoadingState.js'
+
 type Props = {
   onDone: (message?: string) => void
 }
@@ -124,7 +124,7 @@ function SingleEnvironmentContent({ environment, onDone }) {
   useKeybinding('confirm:yes', onDone, {
     context: 'Confirmation',
   })
-  // @ts-ignore
+  // @ts-expect-error
   return (
     <Dialog
       title={tSync('remoteEnv.title')}

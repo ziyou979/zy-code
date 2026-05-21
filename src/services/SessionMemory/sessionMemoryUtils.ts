@@ -118,7 +118,9 @@ export async function getSessionMemoryContent(): Promise<string | null> {
 
     return content
   } catch (e: unknown) {
-    if (isFsInaccessible(e)) return null
+    if (isFsInaccessible(e)) {
+      return null
+    }
     throw e
   }
 }

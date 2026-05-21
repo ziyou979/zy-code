@@ -35,13 +35,17 @@ function keyFromParsed(parsed: ParsedKey): string {
 
   // Ctrl combos: sequence is a control byte (\x03 for ctrl+c), name is the
   // letter. Browsers report e.key === 'c' with e.ctrlKey === true.
-  if (parsed.ctrl) return name
+  if (parsed.ctrl) {
+    return name
+  }
 
   // Single printable char (space through ~, plus anything above ASCII):
   // use the literal char. Browsers report e.key === '3', not 'Digit3'.
   if (seq.length === 1) {
     const code = seq.charCodeAt(0)
-    if (code >= 0x20 && code !== 0x7f) return seq
+    if (code >= 0x20 && code !== 0x7f) {
+      return seq
+    }
   }
 
   // Special keys (arrows, F-keys, return, tab, escape, etc.): sequence is

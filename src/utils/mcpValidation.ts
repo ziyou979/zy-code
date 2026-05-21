@@ -1,9 +1,9 @@
-import type { ContentBlock, ImageBlock, LLMMessage, TextBlock } from '../types/llm.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import {
   countMessagesTokensWithAPI,
   roughTokenCountEstimation,
 } from '../services/tokenEstimation.js'
+import type { ContentBlock, ImageBlock, LLMMessage, TextBlock } from '../types/llm.js'
 import { compressImageBlock } from './imageResizer.js'
 import { logError } from './log.js'
 
@@ -31,7 +31,7 @@ export function getMaxMcpOutputTokens(): number {
     'zy_satin_quoll',
     {},
   )
-  const override = overrides?.['mcp_tool']
+  const override = overrides?.mcp_tool
   if (typeof override === 'number' && Number.isFinite(override) && override > 0) {
     return override
   }
@@ -49,7 +49,9 @@ function isImageBlock(block: ContentBlock): block is ImageBlock {
 }
 
 export function getContentSizeEstimate(content: MCPToolResult): number {
-  if (!content) return 0
+  if (!content) {
+    return 0
+  }
 
   if (typeof content === 'string') {
     return roughTokenCountEstimation(content)
@@ -93,7 +95,9 @@ async function truncateContentBlocks(
   for (const block of blocks) {
     if (isTextBlock(block)) {
       const remainingChars = maxChars - currentChars
-      if (remainingChars <= 0) break
+      if (remainingChars <= 0) {
+        break
+      }
 
       if (block.text.length <= remainingChars) {
         result.push(block)
@@ -134,7 +138,9 @@ async function truncateContentBlocks(
 }
 
 export async function mcpContentNeedsTruncation(content: MCPToolResult): Promise<boolean> {
-  if (!content) return false
+  if (!content) {
+    return false
+  }
 
   // 使用大小检查作为启发式方法，避免不必要的 token 计数 API 调用
   const contentSizeEstimate = getContentSizeEstimate(content)
@@ -158,7 +164,9 @@ export async function mcpContentNeedsTruncation(content: MCPToolResult): Promise
 }
 
 export async function truncateMcpContent(content: MCPToolResult): Promise<MCPToolResult> {
-  if (!content) return content
+  if (!content) {
+    return content
+  }
 
   const maxChars = getMaxMcpOutputChars()
   const truncationMsg = getTruncationMessage()

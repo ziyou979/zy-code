@@ -11,21 +11,21 @@
  *
  * 这条路径就是真实生产链路。任何环节出问题都会被本测试拦截。
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import {
   mapOpenAIStreamToStandard,
   messagesToOpenAI,
 } from '../../../src/services/api/conversions/openai.js'
 import { normalizeContentFromAPI } from '../../../src/utils/messages.js'
 import {
-  toolCallStartChunk,
-  toolCallArgFragmentChunk,
-  finishChunk,
   chunksToStream,
+  finishChunk,
   textChunk,
+  toolCallArgFragmentChunk,
+  toolCallStartChunk,
 } from '../../_helpers/openaiStreamFixtures.js'
-import { accumulateStream } from '../../_helpers/streamAccumulator.js'
 import { assertValidOpenAIChatMessages } from '../../_helpers/sdkValidators.js'
+import { accumulateStream } from '../../_helpers/streamAccumulator.js'
 
 // 给 normalizeContentFromAPI 喂一个空 tools 集合即可（它只会查 findToolByName，找不到就跳过 normalize）
 const EMPTY_TOOLS: any[] = []
@@ -49,7 +49,9 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
     expect(accumulated.contentBlocks).toHaveLength(1)
     const toolBlock = accumulated.contentBlocks[0]!
     expect(toolBlock.type).toBe('tool_call')
-    if (toolBlock.type !== 'tool_call') throw new Error('type narrow')
+    if (toolBlock.type !== 'tool_call') {
+      throw new Error('type narrow')
+    }
     expect(typeof toolBlock.input).toBe('string')
     expect(toolBlock.input).toBe('{"city":"Hangzhou"}')
 
@@ -96,7 +98,9 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
     )
     expect(accumulated.contentBlocks).toHaveLength(1)
     const toolBlock = accumulated.contentBlocks[0]!
-    if (toolBlock.type !== 'tool_call') throw new Error('type narrow')
+    if (toolBlock.type !== 'tool_call') {
+      throw new Error('type narrow')
+    }
     expect(toolBlock.input).toBe('{"q":"hello world"}')
 
     const normalized = normalizeContentFromAPI(accumulated.contentBlocks as any, EMPTY_TOOLS as any)

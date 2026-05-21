@@ -1,5 +1,5 @@
+import type { UUID } from 'node:crypto'
 import chalk from 'chalk'
-import type { UUID } from 'crypto'
 import figures from 'figures'
 import * as React from 'react'
 import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js'
@@ -28,6 +28,7 @@ import {
   searchSessionsByCustomTitle,
 } from '../../utils/sessionStorage.js'
 import { validateUuid } from '../../utils/uuid.js'
+
 type ResumeResult =
   | {
       resultType: 'sessionNotFound'
@@ -141,7 +142,9 @@ function ResumeCommand({
 
       // Different project - show command instead of resuming
       const raw = await setClipboard((crossProjectCheck as any).command)
-      if (raw) process.stdout.write(raw)
+      if (raw) {
+        process.stdout.write(raw)
+      }
 
       // Format the output message
       const message = [

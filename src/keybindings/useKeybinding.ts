@@ -40,14 +40,18 @@ export function useKeybinding(
 
   // Register handler with the context for ChordInterceptor to invoke
   useEffect(() => {
-    if (!keybindingContext || !isActive) return
+    if (!keybindingContext || !isActive) {
+      return
+    }
     return keybindingContext.registerHandler({ action, context, handler })
   }, [action, context, handler, keybindingContext, isActive])
 
   const handleInput = useCallback(
     (input: string, key: Key, event: InputEvent) => {
       // If no keybinding context available, skip resolution
-      if (!keybindingContext) return
+      if (!keybindingContext) {
+        return
+      }
 
       // Build context list: registered active contexts + this context + Global
       // More specific contexts (registered ones) take precedence over Global
@@ -126,7 +130,9 @@ export function useKeybindings(
 
   // Register all handlers with the context for ChordInterceptor to invoke
   useEffect(() => {
-    if (!keybindingContext || !isActive) return
+    if (!keybindingContext || !isActive) {
+      return
+    }
 
     const unregisterFns: Array<() => void> = []
     for (const [action, handler] of Object.entries(handlers)) {
@@ -143,7 +149,9 @@ export function useKeybindings(
   const handleInput = useCallback(
     (input: string, key: Key, event: InputEvent) => {
       // If no keybinding context available, skip resolution
-      if (!keybindingContext) return
+      if (!keybindingContext) {
+        return
+      }
 
       // Build context list: registered active contexts + this context + Global
       // More specific contexts (registered ones) take precedence over Global

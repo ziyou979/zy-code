@@ -1,12 +1,11 @@
+import { join } from 'node:path'
 import figures from 'figures'
-import { join } from 'path'
-import React, { Suspense, use, useEffect, useState } from 'react'
+import { Suspense, use, useEffect, useState } from 'react'
 import { KeybindingWarnings } from 'src/components/KeybindingWarnings.js'
 import { McpParsingWarnings } from 'src/components/mcp/McpParsingWarnings.js'
 import { getModelMaxOutputTokens } from 'src/utils/context.js'
 import { getZyConfigHomeDir } from 'src/utils/envUtils.js'
 import type { SettingSource } from 'src/utils/settings/constants.js'
-import { tSync } from '../i18n/index.js'
 import { getOriginalCwd } from '../bootstrap/state.js'
 import type { CommandResultDisplay } from '../commands.js'
 import { Pane } from '../components/design-system/Pane.js'
@@ -15,6 +14,7 @@ import { SandboxDoctorSection } from '../components/sandbox/SandboxDoctorSection
 import { ValidationErrorsList } from '../components/ValidationErrorsList.js'
 import { useSettingsErrors } from '../hooks/notifs/useSettingsErrors.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
+import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { useAppState } from '../state/AppState.js'
@@ -40,6 +40,7 @@ import {
   TASK_MAX_OUTPUT_UPPER_LIMIT,
 } from '../utils/task/outputFormatting.js'
 import { getXDGStateHome } from '../utils/xdg.js'
+
 type Props = {
   onDone: (
     result?: string,

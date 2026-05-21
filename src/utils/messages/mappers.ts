@@ -1,5 +1,4 @@
-import type { AssistantContentBlock } from '../../types/llm.js'
-import { randomUUID, type UUID } from 'crypto'
+import { randomUUID, type UUID } from 'node:crypto'
 import { getSessionId } from 'src/bootstrap/state.js'
 import { LOCAL_COMMAND_STDERR_TAG, LOCAL_COMMAND_STDOUT_TAG } from 'src/constants/xml.js'
 import type {
@@ -13,6 +12,7 @@ import { EXIT_PLAN_MODE_V2_TOOL_NAME } from 'src/tools/ExitPlanModeTool/constant
 import type { AssistantMessage, CompactMetadata, Message } from 'src/types/message.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 import stripAnsi from 'strip-ansi'
+import type { AssistantContentBlock } from '../../types/llm.js'
 import { createAssistantMessage } from '../messages.js'
 import { getPlan } from '../plans.js'
 
@@ -108,7 +108,7 @@ export function toSDKMessages(messages: Message[]): SDKMessage[] {
             session_id: getSessionId(),
             parent_tool_use_id: null,
             uuid: message.uuid,
-            // @ts-ignore
+            // @ts-expect-error
             error: _.error as any,
           },
         ]

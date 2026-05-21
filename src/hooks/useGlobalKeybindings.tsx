@@ -17,6 +17,7 @@ import {
 import { useAppState, useSetAppState } from '../state/AppState.js'
 import { count } from '../utils/array.js'
 import { getTerminalPanel } from '../utils/terminalPanel.js'
+
 type Props = {
   screen: Screen
   setScreen: React.Dispatch<React.SetStateAction<Screen>>
@@ -109,7 +110,9 @@ export function GlobalKeybindingHandlers({
       /* eslint-enable @typescript-eslint/no-require-imports */
       if (!isBriefEnabled() && isBriefOnly && screen !== 'transcript') {
         setAppState((prev) => {
-          if (!prev.isBriefOnly) return prev
+          if (!prev.isBriefOnly) {
+            return prev
+          }
           return {
             ...prev,
             isBriefOnly: false,
@@ -176,7 +179,9 @@ export function GlobalKeybindingHandlers({
       const { isBriefEnabled: checkBriefEnabled } =
         require('../tools/BriefTool/BriefTool.js') as typeof import('../tools/BriefTool/BriefTool.js')
       /* eslint-enable @typescript-eslint/no-require-imports */
-      if (!checkBriefEnabled() && !isBriefOnly) return
+      if (!checkBriefEnabled() && !isBriefOnly) {
+        return
+      }
       const next = !isBriefOnly
       logEvent('zy_brief_mode_toggled', {
         enabled: next,
@@ -184,7 +189,9 @@ export function GlobalKeybindingHandlers({
         source: 'keybinding' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
       setAppState((prev) => {
-        if (prev.isBriefOnly === next) return prev
+        if (prev.isBriefOnly === next) {
+          return prev
+        }
         return {
           ...prev,
           isBriefOnly: next,

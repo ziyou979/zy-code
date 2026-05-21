@@ -13,13 +13,12 @@
  * - postCompactCleanup.ts: resetContextCollapse() 手动压缩后重置
  */
 
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import type { QuerySource } from '../../constants/querySource.js'
 import type { ToolUseContext } from '../../Tool.js'
 import type { Message } from '../../types/message.js'
 import { createUserMessage } from '../../utils/messages.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
-import { getBytesPerTokenForLanguage } from '../tokenEstimation.js'
 import { projectView } from './operations.js'
 
 // ============================================================================
@@ -111,7 +110,9 @@ function generateLightSummary(msgs: readonly Message[]): string {
         }
       }
     }
-    if (textParts.length >= 3) break
+    if (textParts.length >= 3) {
+      break
+    }
   }
   return textParts.join(' | ') || '(empty span)'
 }
@@ -339,7 +340,9 @@ export function isWithheldPromptTooLong(
   isPromptTooLongFn: (msg: unknown) => boolean,
   _querySource?: QuerySource,
 ): boolean {
-  if (!isPromptTooLongFn(message)) return false
+  if (!isPromptTooLongFn(message)) {
+    return false
+  }
   return staged.length > 0
 }
 

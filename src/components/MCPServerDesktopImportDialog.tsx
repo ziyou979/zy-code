@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { gracefulShutdown } from 'src/utils/gracefulShutdown.js'
 import { writeToStdout } from 'src/utils/process.js'
 import { Box, color, Text, useTheme } from '../ink.js'
 import { addMcpConfig, getAllMcpConfigs } from '../services/mcp/config.js'
 import type { ConfigScope, McpServerConfig } from '../services/mcp/types.js'
-import { plural } from '../utils/stringUtils.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
 import { SelectMulti } from './CustomSelect/SelectMulti.js'
 import { Byline } from './design-system/Byline.js'
 import { Dialog } from './design-system/Dialog.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
+
 type Props = {
   servers: Record<string, McpServerConfig>
   scope: ConfigScope

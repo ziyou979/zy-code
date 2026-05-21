@@ -1,6 +1,6 @@
+import * as path from 'node:path'
+import * as pathWin32 from 'node:path/win32'
 import memoize from 'lodash-es/memoize.js'
-import * as path from 'path'
-import * as pathWin32 from 'path/win32'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { execSync_DEPRECATED } from './execSyncWrapper.js'
@@ -136,7 +136,7 @@ export const windowsPathToPosixPath = memoizeWithLRU(
     const match = windowsPath.match(/^([A-Za-z]):[/\\]/)
     if (match) {
       const driveLetter = match[1]!.toLowerCase()
-      return '/' + driveLetter + windowsPath.slice(2).replace(/\\/g, '/')
+      return `/${driveLetter}${windowsPath.slice(2).replace(/\\/g, '/')}`
     }
     // Already POSIX or relative — just flip slashes
     return windowsPath.replace(/\\/g, '/')
@@ -156,15 +156,15 @@ export const posixPathToWindowsPath = memoizeWithLRU(
     const cygdriveMatch = posixPath.match(/^\/cygdrive\/([A-Za-z])(\/|$)/)
     if (cygdriveMatch) {
       const driveLetter = cygdriveMatch[1]!.toUpperCase()
-      const rest = posixPath.slice(('/cygdrive/' + cygdriveMatch[1]).length)
-      return driveLetter + ':' + (rest || '\\').replace(/\//g, '\\')
+      const rest = posixPath.slice(`/cygdrive/${cygdriveMatch[1]}`.length)
+      return `${driveLetter}:${(rest || '\\').replace(/\//g, '\\')}`
     }
     // Handle /c/... format (MSYS2/Git Bash)
     const driveMatch = posixPath.match(/^\/([A-Za-z])(\/|$)/)
     if (driveMatch) {
       const driveLetter = driveMatch[1]!.toUpperCase()
       const rest = posixPath.slice(2)
-      return driveLetter + ':' + (rest || '\\').replace(/\//g, '\\')
+      return `${driveLetter}:${(rest || '\\').replace(/\//g, '\\')}`
     }
     // Already Windows or relative — just flip slashes
     return posixPath.replace(/\//g, '\\')

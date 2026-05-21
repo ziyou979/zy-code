@@ -153,7 +153,7 @@ export function shortRequestId(toolUseID: string): string {
 export function truncateForPreview(input: unknown): string {
   try {
     const s = jsonStringify(input)
-    return s.length > 200 ? s.slice(0, 200) + '…' : s
+    return s.length > 200 ? `${s.slice(0, 200)}…` : s
   } catch {
     return '(unserializable)'
   }
@@ -215,7 +215,9 @@ export function createChannelPermissionCallbacks(): ChannelPermissionCallbacks {
     resolve(requestId, behavior, fromServer) {
       const key = requestId.toLowerCase()
       const resolver = pending.get(key)
-      if (!resolver) return false
+      if (!resolver) {
+        return false
+      }
       // Delete BEFORE calling — if resolver throws or re-enters, the
       // entry is already gone. Also handles duplicate events (second
       // emission falls through — server bug or network dup, ignore).

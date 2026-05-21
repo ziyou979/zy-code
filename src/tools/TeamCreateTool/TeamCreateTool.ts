@@ -230,4 +230,5 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(TeamCreateTool, () => isAgentSwarmsEnabled())

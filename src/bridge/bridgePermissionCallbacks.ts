@@ -27,9 +27,11 @@ type BridgePermissionCallbacks = {
  *  as a BridgePermissionResponse. Checks the required `behavior`
  *  discriminant rather than using an unsafe `as` cast. */
 function isBridgePermissionResponse(value: unknown): value is BridgePermissionResponse {
-  if (!value || typeof value !== 'object') return false
+  if (!value || typeof value !== 'object') {
+    return false
+  }
   return 'behavior' in value && (value.behavior === 'allow' || value.behavior === 'deny')
 }
 
-export { isBridgePermissionResponse }
 export type { BridgePermissionCallbacks, BridgePermissionResponse }
+export { isBridgePermissionResponse }

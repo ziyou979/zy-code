@@ -1,21 +1,19 @@
 import { feature } from 'bun:bundle'
 import type { QuerySource } from 'src/constants/querySource.js'
 import type { SystemAPIErrorMessage } from 'src/types/message.js'
-import {
-  isAPIError,
-  isConnectionError,
-  isAbortError,
-  createAbortError,
-  getErrorStatus,
-  getErrorMessage as getLLMErrorMessage,
-  getErrorHeader,
-  type APIErrorLike,
-} from '../../types/llm.js'
-
 import { logForDebugging } from 'src/utils/debug.js'
 import { logError } from 'src/utils/log.js'
 import { createSystemAPIErrorMessage } from 'src/utils/messages.js'
 import { getAPIProviderForStatsig } from 'src/utils/model/providers.js'
+import {
+  type APIErrorLike,
+  createAbortError,
+  getErrorHeader,
+  getErrorStatus,
+  getErrorMessage as getLLMErrorMessage,
+  isAPIError,
+  isConnectionError,
+} from '../../types/llm.js'
 import {
   clearApiKeyHelperCache,
   getZyAIOAuthTokens,
@@ -355,7 +353,9 @@ export async function* withRetry<T, TClient = unknown>(
         // 以 {type:'system', subtype:'api_retry'} 的形式出现在 stdout 上。
         let remaining = delayMs
         while (remaining > 0) {
-          if (options.signal?.aborted) throw createAbortError()
+          if (options.signal?.aborted) {
+            throw createAbortError()
+          }
           if (isAPIError(error)) {
             yield createSystemAPIErrorMessage(error as any, remaining, reportedAttempt, maxRetries)
           }
@@ -365,7 +365,9 @@ export async function* withRetry<T, TClient = unknown>(
         }
         // 封顶，确保 for 循环不会终止。退避使用单独的
         // persistentAttempt 计数器，持续增长到 5 分钟上限。
-        if (attempt >= maxRetries) attempt = maxRetries
+        if (attempt >= maxRetries) {
+          attempt = maxRetries
+        }
       } else {
         if (isAPIError(error)) {
           yield createSystemAPIErrorMessage(error as any, delayMs, attempt, maxRetries)
@@ -394,12 +396,12 @@ export function getRetryDelay(
 ): number {
   if (retryAfterHeader) {
     const seconds = parseInt(retryAfterHeader, 10)
-    if (!isNaN(seconds)) {
+    if (!Number.isNaN(seconds)) {
       return seconds * 1000
     }
   }
 
-  const baseDelay = Math.min(BASE_DELAY_MS * Math.pow(2, attempt - 1), maxDelayMs)
+  const baseDelay = Math.min(BASE_DELAY_MS * 2 ** (attempt - 1), maxDelayMs)
   const jitter = Math.random() * 0.25 * baseDelay
   return baseDelay + jitter
 }
@@ -437,7 +439,7 @@ export function parseMaxTokensContextOverflowError(error: APIErrorLike):
   const maxTokens = parseInt(match[2], 10)
   const contextLimit = parseInt(match[3], 10)
 
-  if (isNaN(inputTokens) || isNaN(maxTokens) || isNaN(contextLimit)) {
+  if (Number.isNaN(inputTokens) || Number.isNaN(maxTokens) || Number.isNaN(contextLimit)) {
     return undefined
   }
 
@@ -518,13 +520,19 @@ function shouldRetry(error: APIErrorLike): boolean {
     return true
   }
 
-  if (!error.status) return false
+  if (!error.status) {
+    return false
+  }
 
   // 重试请求超时。
-  if (error.status === 408) return true
+  if (error.status === 408) {
+    return true
+  }
 
   // 重试锁超时。
-  if (error.status === 409) return true
+  if (error.status === 409) {
+    return true
+  }
 
   // 重试限速。
   if (error.status === 429) {
@@ -544,7 +552,9 @@ function shouldRetry(error: APIErrorLike): boolean {
   }
 
   // 重试内部错误。
-  if (error.status && error.status >= 500) return true
+  if (error.status && error.status >= 500) {
+    return true
+  }
 
   return false
 }
@@ -559,18 +569,18 @@ function getMaxRetries(options: RetryOptions): number {
   return options.maxRetries ?? getDefaultMaxRetries()
 }
 
-let DEFAULT_FAST_MODE_FALLBACK_HOLD_MS
-DEFAULT_FAST_MODE_FALLBACK_HOLD_MS = 30 * 60 * 1000 // 30 minutes
-let SHORT_RETRY_THRESHOLD_MS
-SHORT_RETRY_THRESHOLD_MS = 20 * 1000 // 20 seconds
-let MIN_COOLDOWN_MS
-MIN_COOLDOWN_MS = 10 * 60 * 1000 // 10 minutes
+let _DEFAULT_FAST_MODE_FALLBACK_HOLD_MS
+_DEFAULT_FAST_MODE_FALLBACK_HOLD_MS = 30 * 60 * 1000 // 30 minutes
+let _SHORT_RETRY_THRESHOLD_MS
+_SHORT_RETRY_THRESHOLD_MS = 20 * 1000 // 20 seconds
+let _MIN_COOLDOWN_MS
+_MIN_COOLDOWN_MS = 10 * 60 * 1000 // 10 minutes
 
-function getRetryAfterMs(error: APIErrorLike): number | null {
+function _getRetryAfterMs(error: APIErrorLike): number | null {
   const retryAfter = getRetryAfter(error)
   if (retryAfter) {
     const seconds = parseInt(retryAfter, 10)
-    if (!isNaN(seconds)) {
+    if (!Number.isNaN(seconds)) {
       return seconds * 1000
     }
   }
@@ -579,10 +589,16 @@ function getRetryAfterMs(error: APIErrorLike): number | null {
 
 function getRateLimitResetDelayMs(error: APIErrorLike): number | null {
   const resetHeader = getErrorHeader(error, 'anthropic-ratelimit-unified-reset')
-  if (!resetHeader) return null
+  if (!resetHeader) {
+    return null
+  }
   const resetUnixSec = Number(resetHeader)
-  if (!Number.isFinite(resetUnixSec)) return null
+  if (!Number.isFinite(resetUnixSec)) {
+    return null
+  }
   const delayMs = resetUnixSec * 1000 - Date.now()
-  if (delayMs <= 0) return null
+  if (delayMs <= 0) {
+    return null
+  }
   return Math.min(delayMs, PERSISTENT_RESET_CAP_MS)
 }

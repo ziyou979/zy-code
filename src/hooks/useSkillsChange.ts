@@ -22,7 +22,9 @@ export function useSkillsChange(
   onCommandsChange: (commands: Command[]) => void,
 ): void {
   const handleChange = useCallback(async () => {
-    if (!cwd) return
+    if (!cwd) {
+      return
+    }
     try {
       // Clear all command caches to ensure fresh load
       clearCommandsCache()
@@ -39,7 +41,9 @@ export function useSkillsChange(
   useEffect(() => skillChangeDetector.subscribe(handleChange), [handleChange])
 
   const handleGrowthBookRefresh = useCallback(async () => {
-    if (!cwd) return
+    if (!cwd) {
+      return
+    }
     try {
       clearCommandMemoizationCaches()
       const commands = await getCommands(cwd)

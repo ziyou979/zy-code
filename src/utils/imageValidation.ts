@@ -36,9 +36,13 @@ export class ImageSizeError extends Error {
  * Type guard to check if a block is a base64 image block.
  */
 function isBase64ImageBlock(block: unknown): block is { type: 'image'; data: string } {
-  if (typeof block !== 'object' || block === null) return false
+  if (typeof block !== 'object' || block === null) {
+    return false
+  }
   const b = block as Record<string, unknown>
-  if (b.type !== 'image') return false
+  if (b.type !== 'image') {
+    return false
+  }
   return typeof b.data === 'string'
 }
 
@@ -61,19 +65,27 @@ export function validateImagesForAPI(messages: unknown[]): void {
   let imageIndex = 0
 
   for (const msg of messages) {
-    if (typeof msg !== 'object' || msg === null) continue
+    if (typeof msg !== 'object' || msg === null) {
+      continue
+    }
 
     const m = msg as Record<string, unknown>
 
     // Handle wrapped message format { type: 'user', message: { role, content } }
     // Only check user messages
-    if (m.type !== 'user') continue
+    if (m.type !== 'user') {
+      continue
+    }
 
     const innerMessage = m.message as Record<string, unknown> | undefined
-    if (!innerMessage) continue
+    if (!innerMessage) {
+      continue
+    }
 
     const content = innerMessage.content
-    if (typeof content === 'string' || !Array.isArray(content)) continue
+    if (typeof content === 'string' || !Array.isArray(content)) {
+      continue
+    }
 
     for (const block of content) {
       if (isBase64ImageBlock(block)) {

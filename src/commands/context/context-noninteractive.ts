@@ -5,11 +5,11 @@ import type { Tools, ToolUseContext } from '../../Tool.js'
 import type { AgentDefinitionsResult } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Message } from '../../types/message.js'
 import { analyzeContextUsage, type ContextData } from '../../utils/analyzeContext.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { formatTokens } from '../../utils/format.js'
 import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'
 import { getSourceDisplayName } from '../../utils/settings/constants.js'
 import { plural } from '../../utils/stringUtils.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 
 /**
  * Shared data-collection path for `/context` (slash command) and the SDK
@@ -117,7 +117,9 @@ function formatContextAsMarkdownTable(data: ContextData): string {
           `${s.collapsedSpans} ${plural(s.collapsedSpans, 'span')} summarized (${s.collapsedMessages} messages)`,
         )
       }
-      if (s.stagedSpans > 0) parts.push(`${s.stagedSpans} staged`)
+      if (s.stagedSpans > 0) {
+        parts.push(`${s.stagedSpans} staged`)
+      }
       const summary =
         parts.length > 0
           ? parts.join(', ')

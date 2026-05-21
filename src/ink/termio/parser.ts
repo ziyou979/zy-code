@@ -55,16 +55,24 @@ function hasMultipleCodepoints(str: string): boolean {
   let count = 0
   for (const _ of str) {
     count++
-    if (count > 1) return true
+    if (count > 1) {
+      return true
+    }
   }
   return false
 }
 
 function graphemeWidth(grapheme: string): 1 | 2 {
-  if (hasMultipleCodepoints(grapheme)) return 2
+  if (hasMultipleCodepoints(grapheme)) {
+    return 2
+  }
   const codePoint = grapheme.codePointAt(0)
-  if (codePoint === undefined) return 1
-  if (isEmoji(codePoint) || isEastAsianWide(codePoint)) return 2
+  if (codePoint === undefined) {
+    return 1
+  }
+  if (isEmoji(codePoint) || isEastAsianWide(codePoint)) {
+    return 2
+  }
   return 1
 }
 
@@ -79,14 +87,18 @@ function* segmentGraphemes(str: string): Generator<Grapheme> {
 // =============================================================================
 
 function parseCSIParams(paramStr: string): number[] {
-  if (paramStr === '') return []
+  if (paramStr === '') {
+    return []
+  }
   return paramStr.split(/[;:]/).map((s) => (s === '' ? 0 : parseInt(s, 10)))
 }
 
 /** 解析原始 CSI 序列（例如 "\x1b[31m"）为动作 */
 function parseCSI(rawSequence: string): Action | null {
   const inner = rawSequence.slice(2)
-  if (inner.length === 0) return null
+  if (inner.length === 0) {
+    return null
+  }
 
   const finalByte = inner.charCodeAt(inner.length - 1)
   const beforeFinal = inner.slice(0, -1)
@@ -243,13 +255,23 @@ function parseCSI(rawSequence: string): Action | null {
  * 从原始形式识别转义序列类型。
  */
 function identifySequence(seq: string): 'csi' | 'osc' | 'esc' | 'ss3' | 'unknown' {
-  if (seq.length < 2) return 'unknown'
-  if (seq.charCodeAt(0) !== C0.ESC) return 'unknown'
+  if (seq.length < 2) {
+    return 'unknown'
+  }
+  if (seq.charCodeAt(0) !== C0.ESC) {
+    return 'unknown'
+  }
 
   const second = seq.charCodeAt(1)
-  if (second === 0x5b) return 'csi' // [
-  if (second === 0x5d) return 'osc' // ]
-  if (second === 0x4f) return 'ss3' // O
+  if (second === 0x5b) {
+    return 'csi' // [
+  }
+  if (second === 0x5d) {
+    return 'osc' // ]
+  }
+  if (second === 0x4f) {
+    return 'ss3' // O
+  }
   return 'esc'
 }
 
@@ -340,7 +362,9 @@ export class Parser {
     switch (seqType) {
       case 'csi': {
         const action = parseCSI(seq)
-        if (!action) return []
+        if (!action) {
+          return []
+        }
         if (action.type === 'sgr') {
           this.style = applySGR(action.params, this.style)
           return []

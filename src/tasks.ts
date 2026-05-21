@@ -21,8 +21,12 @@ const MonitorMcpTask: Task | null = feature('MONITOR_TOOL')
  */
 export function getAllTasks(): Task[] {
   const tasks: Task[] = [LocalShellTask, LocalAgentTask, RemoteAgentTask, DreamTask]
-  if (LocalWorkflowTask) tasks.push(LocalWorkflowTask)
-  if (MonitorMcpTask) tasks.push(MonitorMcpTask)
+  if (LocalWorkflowTask) {
+    tasks.push(LocalWorkflowTask)
+  }
+  if (MonitorMcpTask) {
+    tasks.push(MonitorMcpTask)
+  }
   return tasks
 }
 

@@ -6,7 +6,7 @@
  * event metadata across all analytics systems (Datadog, direct API).
  */
 
-import { extname } from 'path'
+import { extname } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import { env, getHostPlatformForAnalytics } from '../../utils/env.js'
 import { envDynamic } from '../../utils/envDynamic.js'
@@ -288,7 +288,7 @@ export function extractToolInputForTelemetry(input: unknown): string | undefined
   const truncated = truncateToolInputValue(input)
   let json = jsonStringify(truncated)
   if (json.length > TOOL_INPUT_MAX_JSON_CHARS) {
-    json = json.slice(0, TOOL_INPUT_MAX_JSON_CHARS) + '…[truncated]'
+    json = `${json.slice(0, TOOL_INPUT_MAX_JSON_CHARS)}…[truncated]`
   }
   return json
 }
@@ -364,7 +364,9 @@ export function getFileExtensionsFromBashCommand(
   command: string,
   simulatedSedEditFilePath?: string,
 ): AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS | undefined {
-  if (!command.includes('.') && !simulatedSedEditFilePath) return undefined
+  if (!command.includes('.') && !simulatedSedEditFilePath) {
+    return undefined
+  }
 
   let result: string | undefined
   const seen = new Set<string>()
@@ -378,27 +380,37 @@ export function getFileExtensionsFromBashCommand(
   }
 
   for (const subcmd of command.split(COMPOUND_OPERATOR_REGEX)) {
-    if (!subcmd) continue
+    if (!subcmd) {
+      continue
+    }
     const tokens = subcmd.split(WHITESPACE_REGEX)
-    if (tokens.length < 2) continue
+    if (tokens.length < 2) {
+      continue
+    }
 
     const firstToken = tokens[0]!
     const slashIdx = firstToken.lastIndexOf('/')
     const baseCmd = slashIdx >= 0 ? firstToken.slice(slashIdx + 1) : firstToken
-    if (!FILE_COMMANDS.has(baseCmd)) continue
+    if (!FILE_COMMANDS.has(baseCmd)) {
+      continue
+    }
 
     for (let i = 1; i < tokens.length; i++) {
       const arg = tokens[i]!
-      if (arg.charCodeAt(0) === 45 /* - */) continue
+      if (arg.charCodeAt(0) === 45 /* - */) {
+        continue
+      }
       const ext = getFileExtensionForAnalytics(arg)
       if (ext && !seen.has(ext)) {
         seen.add(ext)
-        result = result ? result + ',' + ext : ext
+        result = result ? `${result},${ext}` : ext
       }
     }
   }
 
-  if (!result) return undefined
+  if (!result) {
+    return undefined
+  }
   return result as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
 }
 

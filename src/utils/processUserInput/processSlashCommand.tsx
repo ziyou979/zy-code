@@ -1,6 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { ContentBlock, TextBlock } from '../../types/llm.js'
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import { setPromptId } from 'src/bootstrap/state.js'
 import {
   builtInCommandNames,
@@ -37,6 +36,7 @@ import type { Progress as AgentProgress } from '../../tools/AgentTool/AgentTool.
 import { runAgent } from '../../tools/AgentTool/runAgent.js'
 import { renderToolUseProgressMessage } from '../../tools/AgentTool/UI.js'
 import type { CommandResultDisplay } from '../../types/command.js'
+import type { ContentBlock, TextBlock } from '../../types/llm.js'
 import { createAbortController } from '../abortController.js'
 import { getAgentContext } from '../agentContext.js'
 import { createAttachmentMessage, getAttachmentMessages } from '../attachments.js'
@@ -78,6 +78,7 @@ import { getAssistantMessageContentLength } from '../tokens.js'
 import { createAgentId } from '../uuid.js'
 import { getWorkload } from '../workloadContext.js'
 import type { ProcessUserInputBaseResult, ProcessUserInputContext } from './processUserInput.js'
+
 type SlashCommandResult = ProcessUserInputBaseResult & {
   command: Command
 }
@@ -186,7 +187,9 @@ async function executeForkedSlashCommand(
       const deadline = Date.now() + MCP_SETTLE_TIMEOUT_MS
       while (Date.now() < deadline) {
         const s = context.getAppState()
-        if (!s.mcp.clients.some((c) => c.type === 'pending')) break
+        if (!s.mcp.clients.some((c) => c.type === 'pending')) {
+          break
+        }
         await sleep(MCP_SETTLE_POLL_MS)
       }
       const freshTools = context.options.refreshTools?.() ?? context.options.tools
@@ -769,7 +772,9 @@ async function getMessagesForSlashCommand(
               ),
             )
             .then((jsx) => {
-              if (jsx == null) return
+              if (jsx == null) {
+                return
+              }
               if (context.options.isNonInteractiveSession) {
                 void resolve({
                   messages: [],
@@ -785,7 +790,9 @@ async function getMessagesForSlashCommand(
               // its setToolJSX({clearLocalJSX: true}) before we get here.
               // Setting isLocalJSXCommand after clear leaves it stuck true,
               // blocking useQueueProcessor and TextInput focus.
-              if (doneWasCalled) return
+              if (doneWasCalled) {
+                return
+              }
               setToolJSX({
                 jsx,
                 shouldHidePromptInput: true,
@@ -799,7 +806,9 @@ async function getMessagesForSlashCommand(
               // Promise hangs forever, leaving queryGuard stuck in
               // 'dispatching' and deadlocking the queue processor.
               logError(e)
-              if (doneWasCalled) return
+              if (doneWasCalled) {
+                return
+              }
               doneWasCalled = true
               setToolJSX({
                 jsx: null,

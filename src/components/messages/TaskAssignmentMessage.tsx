@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Box, Text } from '../../ink.js'
 import { isTaskAssignment, type TaskAssignmentMessage } from '../../utils/teammateMailbox.js'
+
 type Props = {
   assignment: TaskAssignmentMessage
 }

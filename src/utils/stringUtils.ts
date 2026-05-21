@@ -29,7 +29,7 @@ export function capitalize(str: string): string {
  * @example plural(3, 'file') → 'files'
  * @example plural(2, 'entry', 'entries') → 'entries'
  */
-export function plural(n: number, word: string, pluralWord = word + 's'): string {
+export function plural(n: number, word: string, pluralWord = `${word}s`): string {
   return n === 1 ? word : pluralWord
 }
 
@@ -175,7 +175,7 @@ export class EndTruncatingAccumulator {
 
     const truncatedBytes = this.totalBytesReceived - this.maxSize
     const truncatedKB = Math.round(truncatedBytes / 1024)
-    return this.content + `\n... [output truncated - ${truncatedKB}KB removed]`
+    return `${this.content}\n... [output truncated - ${truncatedKB}KB removed]`
   }
 
   /**
@@ -221,5 +221,5 @@ export function truncateToLines(text: string, maxLines: number): string {
   if (lines.length <= maxLines) {
     return text
   }
-  return lines.slice(0, maxLines).join('\n') + '…'
+  return `${lines.slice(0, maxLines).join('\n')}…`
 }

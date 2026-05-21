@@ -22,7 +22,9 @@ function calculatePercentiles(dailyActivity: DailyActivity[]): Percentiles | nul
     .filter((c) => c > 0)
     .sort((a, b) => a - b)
 
-  if (counts.length === 0) return null
+  if (counts.length === 0) {
+    return null
+  }
 
   return {
     p25: counts[Math.floor(counts.length * 0.25)]!,
@@ -129,7 +131,7 @@ export function generateHeatmap(
     const monthLabels = uniqueMonths.map((month) => monthNames[month]!.padEnd(labelWidth)).join('')
 
     // 4 spaces for day label column prefix
-    lines.push('    ' + monthLabels)
+    lines.push(`    ${monthLabels}`)
   }
 
   // Day labels
@@ -139,23 +141,31 @@ export function generateHeatmap(
   for (let day = 0; day < 7; day++) {
     // Only show labels for Mon, Wed, Fri
     const label = [1, 3, 5].includes(day) ? dayLabels[day]!.padEnd(3) : '   '
-    const row = label + ' ' + grid[day]!.join('')
+    const row = `${label} ${grid[day]!.join('')}`
     lines.push(row)
   }
 
   // Legend
   lines.push('')
-  lines.push('    Less ' + [ZyBlue('░'), ZyBlue('▒'), ZyBlue('▓'), ZyBlue('█')].join(' ') + ' More')
+  lines.push(`    Less ${[ZyBlue('░'), ZyBlue('▒'), ZyBlue('▓'), ZyBlue('█')].join(' ')} More`)
 
   return lines.join('\n')
 }
 
 function getIntensity(messageCount: number, percentiles: Percentiles | null): number {
-  if (messageCount === 0 || !percentiles) return 0
+  if (messageCount === 0 || !percentiles) {
+    return 0
+  }
 
-  if (messageCount >= percentiles.p75) return 4
-  if (messageCount >= percentiles.p50) return 3
-  if (messageCount >= percentiles.p25) return 2
+  if (messageCount >= percentiles.p75) {
+    return 4
+  }
+  if (messageCount >= percentiles.p50) {
+    return 3
+  }
+  if (messageCount >= percentiles.p25) {
+    return 2
+  }
   return 1
 }
 

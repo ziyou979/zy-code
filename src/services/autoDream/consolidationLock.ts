@@ -4,8 +4,8 @@
 // like memory does, and so it's writable even when the memory path comes
 // from an env/settings override whose parent may not be.
 
-import { mkdir, readFile, stat, unlink, utimes, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { mkdir, readFile, stat, unlink, utimes, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { getOriginalCwd } from '../../bootstrap/state.js'
 import { getAutoMemPath } from '../../memdir/paths.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -78,7 +78,9 @@ export async function tryAcquireConsolidationLock(): Promise<number | null> {
   } catch {
     return null
   }
-  if (parseInt(verify.trim(), 10) !== process.pid) return null
+  if (parseInt(verify.trim(), 10) !== process.pid) {
+    return null
+  }
 
   return mtimeMs ?? 0
 }

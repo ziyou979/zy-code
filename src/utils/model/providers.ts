@@ -1,13 +1,12 @@
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/index.js'
-import { isEnvTruthy } from '../envUtils.js'
-import { isInternalBuild } from '../envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../envUtils.js'
 import {
-  localModelHasCapability,
   getLocalModelCapability,
   getLocalModelCosts,
+  localModelHasCapability,
   parseTokenCount,
 } from '../settings/localModelCapabilities.js'
-import { PROVIDER_REGISTRY, getProviderEntry } from './providerRegistry.js'
+import { getProviderEntry, PROVIDER_REGISTRY } from './providerRegistry.js'
 
 /**
  * 所有已注册的 provider ID 的联合类型。
@@ -131,7 +130,9 @@ export function isAnthropicBaseUrl(): boolean {
  */
 export function isCompatibleProvider(provider: APIProvider): boolean {
   const entry = getProviderEntry(provider)
-  if (!entry) return false
+  if (!entry) {
+    return false
+  }
   return entry.endpointType !== 'hardcoded' || !['bedrock', 'vertex', 'foundry'].includes(entry.id)
 }
 
@@ -181,13 +182,17 @@ export function modelHasCapability(
   model: string,
   capability: ProviderCapability | 'auto_mode',
 ): boolean {
-  if (localModelHasCapability(model, capability)) return true
+  if (localModelHasCapability(model, capability)) {
+    return true
+  }
   return providerHasCapability(getAPIProvider(), capability as ProviderCapability)
 }
 
 export function getModelMaxInputTokens(model: string): number | undefined {
   const entry = getLocalModelCapability(model)
-  if (!entry?.maxInputTokens) return undefined
+  if (!entry?.maxInputTokens) {
+    return undefined
+  }
   return parseTokenCount(entry.maxInputTokens)
 }
 

@@ -24,7 +24,9 @@ export type McpAuthOutput = {
 }
 
 function getConfigUrl(config: ScopedMcpServerConfig): string | undefined {
-  if ('url' in config) return config.url
+  if ('url' in config) {
+    return config.url
+  }
   return undefined
 }
 

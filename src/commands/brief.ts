@@ -82,7 +82,9 @@ const brief = {
         setUserMsgOptIn(newState)
 
         context.setAppState((prev) => {
-          if (prev.isBriefOnly === newState) return prev
+          if (prev.isBriefOnly === newState) {
+            return prev
+          }
           return { ...prev, isBriefOnly: newState }
         })
 

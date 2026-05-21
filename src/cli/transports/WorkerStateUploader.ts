@@ -41,7 +41,9 @@ export class WorkerStateUploader {
    * patch. Fire-and-forget — callers don't need to await.
    */
   enqueue(patch: Record<string, unknown>): void {
-    if (this.closed) return
+    if (this.closed) {
+      return
+    }
     this.pending = this.pending ? coalescePatches(this.pending, patch) : patch
     void this.drain()
   }
@@ -52,8 +54,12 @@ export class WorkerStateUploader {
   }
 
   private async drain(): Promise<void> {
-    if (this.inflight || this.closed) return
-    if (!this.pending) return
+    if (this.inflight || this.closed) {
+      return
+    }
+    if (!this.pending) {
+      return
+    }
 
     const payload = this.pending
     this.pending = null
@@ -72,7 +78,9 @@ export class WorkerStateUploader {
     let failures = 0
     while (!this.closed) {
       const ok = await this.config.send(current)
-      if (ok) return
+      if (ok) {
+        return
+      }
 
       failures++
       await sleep(this.retryDelay(failures))

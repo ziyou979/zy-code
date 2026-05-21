@@ -11,9 +11,9 @@
  * - API 对没有托管设置的用户返回空设置
  */
 
+import { createHash } from 'node:crypto'
+import { open, unlink } from 'node:fs/promises'
 import axios from 'axios'
-import { createHash } from 'crypto'
-import { open, unlink } from 'fs/promises'
 import { getOauthConfig, OAUTH_BETA_HEADER } from '../../constants/oauth.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,

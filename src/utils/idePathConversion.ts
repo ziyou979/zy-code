@@ -3,7 +3,7 @@
  * Handles conversions between Zy's environment and the IDE's environment
  */
 
-import { execFileSync } from 'child_process'
+import { execFileSync } from 'node:child_process'
 
 export interface IDEPathConverter {
   /**
@@ -26,7 +26,9 @@ export class WindowsToWSLConverter implements IDEPathConverter {
   constructor(private wslDistroName: string | undefined) {}
 
   toLocalPath(windowsPath: string): string {
-    if (!windowsPath) return windowsPath
+    if (!windowsPath) {
+      return windowsPath
+    }
 
     // Check if this is a path from a different WSL distro
     if (this.wslDistroName) {
@@ -54,7 +56,9 @@ export class WindowsToWSLConverter implements IDEPathConverter {
   }
 
   toIDEPath(wslPath: string): string {
-    if (!wslPath) return wslPath
+    if (!wslPath) {
+      return wslPath
+    }
 
     try {
       // Use wslpath to convert WSL paths to Windows paths

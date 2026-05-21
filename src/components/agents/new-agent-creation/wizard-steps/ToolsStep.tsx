@@ -1,6 +1,5 @@
-import React from 'react'
-import type { Tools } from '../../../../Tool.js'
 import { tSync } from '../../../../i18n/index.js'
+import type { Tools } from '../../../../Tool.js'
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
 import { Byline } from '../../../design-system/Byline.js'
 import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js'
@@ -8,6 +7,7 @@ import { useWizard } from '../../../wizard/index.js'
 import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
 import { ToolSelector } from '../../ToolSelector.js'
 import type { AgentWizardData } from '../types.js'
+
 type Props = {
   tools: Tools
 }

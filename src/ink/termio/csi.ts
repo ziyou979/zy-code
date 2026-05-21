@@ -41,8 +41,12 @@ export function isCSIFinal(byte: number): boolean {
  * 多个参数：最后一个是结束字节，其余是用 ; 连接的参数
  */
 export function csi(...args: (string | number)[]): string {
-  if (args.length === 0) return CSI_PREFIX
-  if (args.length === 1) return `${CSI_PREFIX}${args[0]}`
+  if (args.length === 0) {
+    return CSI_PREFIX
+  }
+  if (args.length === 1) {
+    return `${CSI_PREFIX}${args[0]}`
+  }
   const params = args.slice(0, -1)
   const final = args[args.length - 1]
   return `${CSI_PREFIX}${params.join(SEP)}${final}`
@@ -235,7 +239,9 @@ export const ERASE_SCROLLBACK = csi(3, 'J')
  * 这会擦除每一行并上移，最终停留在第 1 列
  */
 export function eraseLines(n: number): string {
-  if (n <= 0) return ''
+  if (n <= 0) {
+    return ''
+  }
   let result = ''
   for (let i = 0; i < n; i++) {
     result += ERASE_LINE

@@ -1,5 +1,5 @@
-import { homedir, platform } from 'os'
-import { join } from 'path'
+import { homedir, platform } from 'node:os'
+import { join } from 'node:path'
 import { getFsImplementation } from '../utils/fsOperations.js'
 import type { IdeType } from './ide.js'
 
@@ -61,7 +61,7 @@ function buildCommonPluginDirectoryPaths(ideName: string): string[] {
         join(homeDir, '.local', 'share', 'JetBrains'),
       )
       for (const pattern of idePatterns) {
-        directories.push(join(homeDir, '.' + pattern))
+        directories.push(join(homeDir, `.${pattern}`))
       }
       if (ideName.toLowerCase() === 'androidstudio') {
         directories.push(join(homeDir, '.config', 'Google'))
@@ -86,18 +86,22 @@ async function detectPluginDirectories(ideName: string): Promise<string[]> {
   }
 
   // Precompile once — idePatterns is invariant across baseDirs
-  const regexes = idePatterns.map((p) => new RegExp('^' + p))
+  const regexes = idePatterns.map((p) => new RegExp(`^${p}`))
 
   for (const baseDir of pluginDirPaths) {
     try {
       const entries = await fs.readdir(baseDir)
       for (const regex of regexes) {
         for (const entry of entries) {
-          if (!regex.test(entry.name)) continue
+          if (!regex.test(entry.name)) {
+            continue
+          }
           // Accept symlinks too — dirent.isDirectory() is false for symlinks,
           // but GNU stow users symlink their JetBrains config dirs. Downstream
           // fs.stat() calls will filter out symlinks that don't point to dirs.
-          if (!entry.isDirectory() && !entry.isSymbolicLink()) continue
+          if (!entry.isDirectory() && !entry.isSymbolicLink()) {
+            continue
+          }
           const dir = join(baseDir, entry.name)
           // Linux is the only OS to not have a plugins directory
           if (platform() === 'linux') {
@@ -113,10 +117,7 @@ async function detectPluginDirectories(ideName: string): Promise<string[]> {
           }
         }
       }
-    } catch {
-      // Ignore errors from stale IDE directories (ENOENT, EACCES, etc.)
-      continue
-    }
+    } catch {}
   }
 
   return foundDirectories.filter((dir, index) => foundDirectories.indexOf(dir) === index)

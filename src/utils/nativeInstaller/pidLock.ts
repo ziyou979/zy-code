@@ -9,7 +9,7 @@
  * by checking if the process is still alive.
  */
 
-import { basename, join } from 'path'
+import { basename, join } from 'node:path'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { logForDebugging } from '../debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from '../envUtils.js'

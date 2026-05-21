@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useState } from 'react'
 import { useExitOnCtrlCDWithKeybindings } from 'src/hooks/useExitOnCtrlCDWithKeybindings.js'
 import { tSync } from '../i18n/index.js'
@@ -97,7 +96,7 @@ export function ThinkingToggle({ currentValue, onSelect, onCancel, isMidConversa
       {
         <Text dimColor={true} italic={true}>
           {exitState.pending ? (
-            <>{tSync('thinkingToggle.pressAgainToExit', { key: exitState.keyName })}</>
+            tSync('thinkingToggle.pressAgainToExit', { key: exitState.keyName })
           ) : confirmationPending !== null ? (
             <Byline>
               <KeyboardShortcutHint shortcut="Enter" action="confirm" />

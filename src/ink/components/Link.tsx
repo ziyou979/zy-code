@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import React from 'react'
 import { supportsHyperlinks } from '../supports-hyperlinks.js'
 import Text from './Text.js'
 export type Props = {
@@ -10,7 +9,7 @@ export type Props = {
 export default function Link({ children, url, fallback }: Props) {
   const content = children ?? url
   if (supportsHyperlinks()) {
-    // @ts-ignore
+    // @ts-expect-error
     return (
       <Text>
         {/* @ts-ignore */}

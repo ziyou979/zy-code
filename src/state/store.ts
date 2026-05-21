@@ -17,10 +17,14 @@ export function createStore<T>(initialState: T, onChange?: OnChange<T>): Store<T
     setState: (updater: (prev: T) => T) => {
       const prev = state
       const next = updater(prev)
-      if (Object.is(next, prev)) return
+      if (Object.is(next, prev)) {
+        return
+      }
       state = next
       onChange?.({ newState: next, oldState: prev })
-      for (const listener of listeners) listener()
+      for (const listener of listeners) {
+        listener()
+      }
     },
 
     subscribe: (listener: Listener) => {

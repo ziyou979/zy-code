@@ -1,5 +1,5 @@
-import type { ToolCallBlock, ToolResultBlock } from '../types/llm.js'
 import type { Tools } from '../Tool.js'
+import type { ToolResultBlock } from '../types/llm.js'
 import type {
   GroupedToolUseMessage,
   NormalizedAssistantMessage,
@@ -32,7 +32,9 @@ function getToolsWithGrouping(tools: Tools): Set<string> {
 function getToolUseInfo(
   msg: MessageWithoutProgress,
 ): { messageId: string; toolUseId: string; toolName: string } | null {
-  if (!('message' in msg) || !msg.message) return null
+  if (!('message' in msg) || !msg.message) {
+    return null
+  }
   const assistantMsg = msg as import('../types/message.js').NormalizedAssistantMessage
   const firstBlock = assistantMsg.message.content[0]
   if (firstBlock && firstBlock.type === 'tool_call') {

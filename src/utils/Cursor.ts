@@ -46,7 +46,9 @@ export function getLastKill(): string {
 }
 
 export function getKillRingItem(index: number): string {
-  if (killRing.length === 0) return ''
+  if (killRing.length === 0) {
+    return ''
+  }
   const normalizedIndex = ((index % killRing.length) + killRing.length) % killRing.length
   return killRing[normalizedIndex] ?? ''
 }
@@ -160,10 +162,14 @@ export class Cursor {
   }
 
   getViewportStartLine(maxVisibleLines?: number): number {
-    if (maxVisibleLines === undefined || maxVisibleLines <= 0) return 0
+    if (maxVisibleLines === undefined || maxVisibleLines <= 0) {
+      return 0
+    }
     const { line } = this.getPosition()
     const allLines = this.measuredText.getWrappedText()
-    if (allLines.length <= maxVisibleLines) return 0
+    if (allLines.length <= maxVisibleLines) {
+      return 0
+    }
     const half = Math.floor(maxVisibleLines / 2)
     let startLine = Math.max(0, line - half)
     const endLine = Math.min(allLines.length, startLine + maxVisibleLines)
@@ -175,7 +181,9 @@ export class Cursor {
 
   getViewportCharOffset(maxVisibleLines?: number): number {
     const startLine = this.getViewportStartLine(maxVisibleLines)
-    if (startLine === 0) return 0
+    if (startLine === 0) {
+      return 0
+    }
     const wrappedLines = this.measuredText.getWrappedLines()
     return wrappedLines[startLine]?.startOffset ?? 0
   }
@@ -183,9 +191,13 @@ export class Cursor {
   getViewportCharEnd(maxVisibleLines?: number): number {
     const startLine = this.getViewportStartLine(maxVisibleLines)
     const allLines = this.measuredText.getWrappedLines()
-    if (maxVisibleLines === undefined || maxVisibleLines <= 0) return this.text.length
+    if (maxVisibleLines === undefined || maxVisibleLines <= 0) {
+      return this.text.length
+    }
     const endLine = Math.min(allLines.length, startLine + maxVisibleLines)
-    if (endLine >= allLines.length) return this.text.length
+    if (endLine >= allLines.length) {
+      return this.text.length
+    }
     return allLines[endLine]?.startOffset ?? this.text.length
   }
 
@@ -227,7 +239,9 @@ export class Cursor {
           }
         }
         // looking for the line with the cursor
-        if (line !== currentLine) return displayText.trimEnd()
+        if (line !== currentLine) {
+          return displayText.trimEnd()
+        }
 
         // Split the line into before/at/after cursor in a single pass over the
         // graphemes, accumulating display width until we reach the cursor column.
@@ -284,20 +298,28 @@ export class Cursor {
   }
 
   left(): Cursor {
-    if (this.offset === 0) return this
+    if (this.offset === 0) {
+      return this
+    }
 
     const chip = this.imageRefEndingAt(this.offset)
-    if (chip) return new Cursor(this.measuredText, chip.start)
+    if (chip) {
+      return new Cursor(this.measuredText, chip.start)
+    }
 
     const prevOffset = this.measuredText.prevOffset(this.offset)
     return new Cursor(this.measuredText, prevOffset)
   }
 
   right(): Cursor {
-    if (this.offset >= this.text.length) return this
+    if (this.offset >= this.text.length) {
+      return this
+    }
 
     const chip = this.imageRefStartingAt(this.offset)
-    if (chip) return new Cursor(this.measuredText, chip.end)
+    if (chip) {
+      return new Cursor(this.measuredText, chip.end)
+    }
 
     const nextOffset = this.measuredText.nextOffset(this.offset)
     return new Cursor(this.measuredText, Math.min(nextOffset, this.text.length))
@@ -560,7 +582,9 @@ export class Cursor {
 
     // Find the current word boundary we're in
     for (const boundary of wordBoundaries) {
-      if (!boundary.isWordLike) continue
+      if (!boundary.isWordLike) {
+        continue
+      }
 
       // If we're inside this word but NOT at the last character
       if (this.offset >= boundary.start && this.offset < boundary.end - 1) {
@@ -603,7 +627,9 @@ export class Cursor {
     let prevWordStart: number | null = null
 
     for (const boundary of wordBoundaries) {
-      if (!boundary.isWordLike) continue
+      if (!boundary.isWordLike) {
+        continue
+      }
 
       // If we're at or after the start of this word, but this word starts before us
       if (boundary.start < this.offset) {
@@ -685,13 +711,17 @@ export class Cursor {
     if (isVimWordChar(charAtPos)) {
       while (pos < text.length) {
         const nextPos = advance(pos)
-        if (nextPos >= text.length || !isVimWordChar(this.graphemeAt(nextPos))) break
+        if (nextPos >= text.length || !isVimWordChar(this.graphemeAt(nextPos))) {
+          break
+        }
         pos = nextPos
       }
     } else if (isVimPunctuation(charAtPos)) {
       while (pos < text.length) {
         const nextPos = advance(pos)
-        if (nextPos >= text.length || !isVimPunctuation(this.graphemeAt(nextPos))) break
+        if (nextPos >= text.length || !isVimPunctuation(this.graphemeAt(nextPos))) {
+          break
+        }
         pos = nextPos
       }
     }
@@ -722,13 +752,17 @@ export class Cursor {
     if (isVimWordChar(charAtPos)) {
       while (pos > 0) {
         const prevPos = retreat(pos)
-        if (!isVimWordChar(this.graphemeAt(prevPos))) break
+        if (!isVimWordChar(this.graphemeAt(prevPos))) {
+          break
+        }
         pos = prevPos
       }
     } else if (isVimPunctuation(charAtPos)) {
       while (pos > 0) {
         const prevPos = retreat(pos)
-        if (!isVimPunctuation(this.graphemeAt(prevPos))) break
+        if (!isVimPunctuation(this.graphemeAt(prevPos))) {
+          break
+        }
         pos = prevPos
       }
     }
@@ -938,7 +972,9 @@ export class Cursor {
   }
 
   private graphemeAt(pos: number): string {
-    if (pos >= this.text.length) return ''
+    if (pos >= this.text.length) {
+      return ''
+    }
     const nextOff = this.measuredText.nextOffset(pos)
     return this.text.slice(pos, nextOff)
   }
@@ -1036,7 +1072,9 @@ export class Cursor {
         pos = this.measuredText.nextOffset(pos)
       }
     } else {
-      if (this.offset === 0) return null
+      if (this.offset === 0) {
+        return null
+      }
       let pos = this.measuredText.prevOffset(this.offset)
       while (pos >= 0) {
         const grapheme = this.graphemeAt(pos)
@@ -1046,7 +1084,9 @@ export class Cursor {
             return till ? Math.min(this.offset, this.measuredText.nextOffset(pos)) : pos
           }
         }
-        if (pos === 0) break
+        if (pos === 0) {
+          break
+        }
         pos = this.measuredText.prevOffset(pos)
       }
     }
@@ -1153,7 +1193,9 @@ export class MeasuredText {
     while (left <= right) {
       const mid = Math.floor((left + right) / 2)
       const boundary = boundaries[mid]
-      if (boundary === undefined) break
+      if (boundary === undefined) {
+        break
+      }
 
       if (findNext) {
         if (boundary > target) {
@@ -1177,15 +1219,23 @@ export class MeasuredText {
 
   // Convert string index to display width
   public stringIndexToDisplayWidth(text: string, index: number): number {
-    if (index <= 0) return 0
-    if (index >= text.length) return stringWidth(text)
+    if (index <= 0) {
+      return 0
+    }
+    if (index >= text.length) {
+      return stringWidth(text)
+    }
     return stringWidth(text.substring(0, index))
   }
 
   // Convert display width to string index
   public displayWidthToStringIndex(text: string, targetWidth: number): number {
-    if (targetWidth <= 0) return 0
-    if (!text) return 0
+    if (targetWidth <= 0) {
+      return 0
+    }
+    if (!text) {
+      return 0
+    }
 
     // If the text matches our text, use the precomputed graphemes
     if (text === this.text) {
@@ -1214,7 +1264,9 @@ export class MeasuredText {
    * Find the string offset that corresponds to a target display width.
    */
   private offsetAtDisplayWidth(targetWidth: number): number {
-    if (targetWidth <= 0) return 0
+    if (targetWidth <= 0) {
+      return 0
+    }
 
     let currentWidth = 0
     const boundaries = this.getGraphemeBoundaries()
@@ -1223,7 +1275,9 @@ export class MeasuredText {
     for (let i = 0; i < boundaries.length - 1; i++) {
       const start = boundaries[i]
       const end = boundaries[i + 1]
-      if (start === undefined || end === undefined) continue
+      if (start === undefined || end === undefined) {
+        continue
+      }
       const segment = this.text.substring(start, end)
       const segmentWidth = stringWidth(segment)
 
@@ -1403,7 +1457,9 @@ export class MeasuredText {
 
   private withCache<T>(key: string, compute: () => T): T {
     const cached = this.navigationCache.get(key)
-    if (cached !== undefined) return cached as T
+    if (cached !== undefined) {
+      return cached as T
+    }
 
     const result = compute()
     this.navigationCache.set(key, result as number)
@@ -1418,7 +1474,9 @@ export class MeasuredText {
   }
 
   prevOffset(offset: number): number {
-    if (offset <= 0) return 0
+    if (offset <= 0) {
+      return 0
+    }
 
     return this.withCache(`prev:${offset}`, () => {
       const boundaries = this.getGraphemeBoundaries()
@@ -1431,16 +1489,23 @@ export class MeasuredText {
    * If offset is already on a boundary, returns it unchanged.
    */
   snapToGraphemeBoundary(offset: number): number {
-    if (offset <= 0) return 0
-    if (offset >= this.text.length) return this.text.length
+    if (offset <= 0) {
+      return 0
+    }
+    if (offset >= this.text.length) {
+      return this.text.length
+    }
     const boundaries = this.getGraphemeBoundaries()
     // Binary search for largest boundary <= offset
     let lo = 0
     let hi = boundaries.length - 1
     while (lo < hi) {
       const mid = (lo + hi + 1) >> 1
-      if (boundaries[mid]! <= offset) lo = mid
-      else hi = mid - 1
+      if (boundaries[mid]! <= offset) {
+        lo = mid
+      } else {
+        hi = mid - 1
+      }
     }
     return boundaries[lo]!
   }

@@ -1,10 +1,10 @@
-import React from 'react'
 import type { ChannelEntry } from '../bootstrap/state.js'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { gracefulShutdownSync } from '../utils/gracefulShutdown.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
+
 type Props = {
   channels: ChannelEntry[]
   onAccept(): void

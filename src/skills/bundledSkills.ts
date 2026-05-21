@@ -1,9 +1,9 @@
-import type { ContentBlock } from '../types/llm.js'
-import { constants as fsConstants } from 'fs'
-import { mkdir, open } from 'fs/promises'
-import { dirname, isAbsolute, join, normalize, sep as pathSep } from 'path'
+import { constants as fsConstants } from 'node:fs'
+import { mkdir, open } from 'node:fs/promises'
+import { dirname, isAbsolute, join, normalize, sep as pathSep } from 'node:path'
 import type { ToolUseContext } from '../Tool.js'
 import type { Command } from '../types/command.js'
+import type { ContentBlock } from '../types/llm.js'
 import { logForDebugging } from '../utils/debug.js'
 import { getBundledSkillsRoot } from '../utils/permissions/filesystem.js'
 import type { HooksSettings } from '../utils/settings/types.js'
@@ -64,7 +64,9 @@ export function registerBundledSkill(definition: BundledSkillDefinition): void {
       extractionPromise ??= extractBundledSkillFiles(definition.name, files)
       const extractedDir = await extractionPromise
       const blocks = await inner(args, ctx)
-      if (extractedDir === null) return blocks
+      if (extractedDir === null) {
+        return blocks
+      }
       return prependBaseDir(blocks, extractedDir)
     }
   }
@@ -149,8 +151,11 @@ async function writeSkillFiles(dir: string, files: Record<string, string>): Prom
     const parent = dirname(target)
     const entry: [string, string] = [target, content]
     const group = byParent.get(parent)
-    if (group) group.push(entry)
-    else byParent.set(parent, [entry])
+    if (group) {
+      group.push(entry)
+    } else {
+      byParent.set(parent, [entry])
+    }
   }
   await Promise.all(
     [...byParent].map(async ([parent, entries]) => {

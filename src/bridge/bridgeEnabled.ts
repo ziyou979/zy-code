@@ -44,14 +44,14 @@ export async function getBridgeDisabledReason(): Promise<string | null> {
 // try/catch: main.tsx:5698 calls isBridgeEnabled() while defining the Commander
 // program, before enableConfigs() runs. Pre-config, no OAuth token can
 // exist anyway — false is correct.
-function hasProfileScope(): boolean {
+function _hasProfileScope(): boolean {
   try {
     return authModule.hasProfileScope()
   } catch {
     return false
   }
 }
-function getOauthAccountInfo(): ReturnType<typeof authModule.getOauthAccountInfo> {
+function _getOauthAccountInfo(): ReturnType<typeof authModule.getOauthAccountInfo> {
   try {
     return authModule.getOauthAccountInfo()
   } catch {

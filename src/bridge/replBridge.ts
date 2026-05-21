@@ -1,5 +1,5 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import {
   createBridgeApiClient,
   BridgeFatalError,
@@ -773,7 +773,9 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
   // are sent in order after the historical messages.
   function drainFlushGate(): void {
     const msgs = flushGate.end()
-    if (msgs.length === 0) return
+    if (msgs.length === 0) {
+      return
+    }
     if (!transport) {
       logForDebugging(`[bridge:repl] Cannot drain ${msgs.length} pending message(s): no transport`)
       return
@@ -854,10 +856,14 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       `[bridge:repl] Transport reconnect budget exhausted (code=${closeCode}), attempting env reconnect`,
     )
     void reconnectEnvironmentWithSession().then((success) => {
-      if (success) return
+      if (success) {
+        return
+      }
       // doReconnect 有四个中止检查返回 false 的站点用于进行中的清理。
       // 当用户只是退出时，不要污染 BQ 失败信号或双重清理。
-      if (pollController.signal.aborted) return
+      if (pollController.signal.aborted) {
+        return
+      }
       // doReconnect returns false (never throws) on genuine failure.
       // The dangerous case: registerBridgeEnvironment succeeded (so
       // environmentId now points at a fresh valid env) but
@@ -1091,7 +1097,9 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
         newTransport.setOnConnect(() => {
           // 守卫：如果传输在 WS 连接期间被更新的 onWorkReceived 调用替换，
           // 忽略这个旧回调。
-          if (transport !== newTransport) return
+          if (transport !== newTransport) {
+            return
+          }
 
           logForDebugging('[bridge:repl] Ingress transport connected')
           logEvent('zy_bridge_repl_ws_connected', {})
@@ -1173,7 +1181,9 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
                 .finally(() => {
                   // 守卫：如果传输在刷新期间被替换，不要发送 connected 信号或排空——
                   // 新传输现在拥有生命周期。
-                  if (transport !== newTransport) return
+                  if (transport !== newTransport) {
+                    return
+                  }
                   drainFlushGate()
                   onStateChange?.('connected')
                 })
@@ -1213,7 +1223,9 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
         debugFireClose = handleTransportPermanentClose
         newTransport.setOnClose((closeCode) => {
           // 守卫：如果传输被替换，忽略旧关闭。
-          if (transport !== newTransport) return
+          if (transport !== newTransport) {
+            return
+          }
           handleTransportPermanentClose(closeCode)
         })
 
@@ -1275,7 +1287,9 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
             )
             logEvent('zy_bridge_repl_ccr_v2_init_failed', {})
             // 如果有更新的尝试正在进行或已成功的，不要触碰它的工作项——我们的失败无关紧要。
-            if (thisGen !== v2Generation) return
+            if (thisGen !== v2Generation) {
+              return
+            }
             // 释放工作项使服务器立即重新分发，而不是等待自己的超时。
             // currentWorkId 已在上方设置；没有这个的话，会话对用户来说像是卡住了。
             if (currentWorkId) {
@@ -1354,7 +1368,9 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
         // 与 doReconnect 在 ~:740 自己的指针写入竞态（并覆盖它），
         // 使指针停留在已归档的旧会话。doReconnect 写入指针本身，
         // 所以在这里跳过是免费的。
-        if (reconnectPromise) return
+        if (reconnectPromise) {
+          return
+        }
         void writeBridgePointer(dir, {
           sessionId: currentSessionId,
           environmentId,
@@ -1374,7 +1390,9 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
   const keepAliveTimer =
     keepAliveIntervalMs > 0
       ? setInterval(() => {
-          if (!transport) return
+          if (!transport) {
+            return
+          }
           logForDebugging('[bridge:repl] keep_alive sent')
           void transport.write({ type: 'keep_alive' }).catch((err: unknown) => {
             logForDebugging(`[bridge:repl] keep_alive write failed: ${errorMessage(err)}`)
@@ -1525,7 +1543,9 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
           !initialMessageUUIDs.has(m.uuid) &&
           !recentPostedUUIDs.has(m.uuid),
       )
-      if (filtered.length === 0) return
+      if (filtered.length === 0) {
+        return
+      }
 
       // 触发 onUserMessage 用于标题派生。在 flushGate 检查之前扫描——
       // 提示值得作为标题，即使它们在初始历史刷新之后排队。
@@ -1577,7 +1597,9 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       // 没有 initialMessageUUIDs 过滤——daemon 没有初始消息。
       // 没有 flushGate——daemon 永远不会启动它（没有初始刷新）。
       const filtered = messages.filter((m) => !m.uuid || !recentPostedUUIDs.has(m.uuid))
-      if (filtered.length === 0) return
+      if (filtered.length === 0) {
+        return
+      }
       if (!transport) {
         logForDebugging(
           `[bridge:repl] Transport not configured, dropping ${filtered.length} SDK message(s) for session=${currentSessionId}`,
@@ -1586,7 +1608,9 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
         return
       }
       for (const msg of filtered) {
-        if (msg.uuid) recentPostedUUIDs.add(msg.uuid)
+        if (msg.uuid) {
+          recentPostedUUIDs.add(msg.uuid)
+        }
       }
       const events = filtered.map((m) => ({ ...m, session_id: currentSessionId }))
       void transport.writeBatch(events)
@@ -1787,10 +1811,14 @@ async function startWorkPollLoop({
               (pollDeadline === null || Date.now() < pollDeadline)
             ) {
               const hbConfig = getPollIntervalConfig()
-              if (hbConfig.non_exclusive_heartbeat_interval_ms <= 0) break
+              if (hbConfig.non_exclusive_heartbeat_interval_ms <= 0) {
+                break
+              }
 
               const info = getHeartbeatInfo()
-              if (!info) break
+              if (!info) {
+                break
+              }
 
               // 在异步心跳调用之前捕获容量信号，以便
               // HTTP 请求期间的传输丢失被随后的睡眠捕获。
@@ -1940,7 +1968,9 @@ async function startWorkPollLoop({
         logForDebugging('[bridge:repl] Work accepted, continuing poll loop')
       }
     } catch (err) {
-      if (signal.aborted) break
+      if (signal.aborted) {
+        break
+      }
 
       // 检测永久的"环境已删除"错误——无论重试多少次都无法恢复。
       // 改为重新注册新环境。
@@ -1988,7 +2018,9 @@ async function startWorkPollLoop({
         // 如果用户在该窗口内触发了清理，它的内部中止检查返回 false——
         // 但我们在这里需要重新检查，以避免在正常关闭期间发出虚假的
         // 'failed' + onFatalError()。
-        if (signal.aborted) break
+        if (signal.aborted) {
+          break
+        }
         if (newCreds) {
           // 凭证通过 reconnectEnvironmentWithSession 在外层作用域更新——
           // getCredentials() 将在下次轮询迭代返回新值。

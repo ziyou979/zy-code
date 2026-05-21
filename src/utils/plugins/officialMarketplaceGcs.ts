@@ -8,9 +8,9 @@
  * when there's a new SHA. Callers decide fallback behavior on failure.
  */
 
+import { chmod, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { dirname, join, resolve, sep } from 'node:path'
 import axios from 'axios'
-import { chmod, mkdir, readFile, rename, rm, writeFile } from 'fs/promises'
-import { dirname, join, resolve, sep } from 'path'
 import { waitForScrollIdle } from '../../bootstrap/state.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/index.js'
 import { logEvent } from '../../services/analytics/index.js'
@@ -120,9 +120,13 @@ export async function fetchOfficialMarketplaceFromGcs(
     await rm(staging, { recursive: true, force: true })
     await mkdir(staging, { recursive: true })
     for (const [arcPath, data] of Object.entries(files)) {
-      if (!arcPath.startsWith(ARC_PREFIX)) continue
+      if (!arcPath.startsWith(ARC_PREFIX)) {
+        continue
+      }
       const rel = arcPath.slice(ARC_PREFIX.length)
-      if (!rel || rel.endsWith('/')) continue // prefix dir entry or subdir entry
+      if (!rel || rel.endsWith('/')) {
+        continue // prefix dir entry or subdir entry
+      }
       const dest = join(staging, rel)
       await mkdir(dirname(dest), { recursive: true })
       await writeFile(dest, data)
@@ -191,8 +195,12 @@ const KNOWN_FS_CODES = new Set([
  */
 export function classifyGcsError(e: unknown): string {
   if (axios.isAxiosError(e)) {
-    if (e.code === 'ECONNABORTED') return 'timeout'
-    if (e.response) return `http_${e.response.status}`
+    if (e.code === 'ECONNABORTED') {
+      return 'timeout'
+    }
+    if (e.response) {
+      return `http_${e.response.status}`
+    }
     return 'network'
   }
   const code = getErrnoCode(e)
@@ -204,9 +212,15 @@ export function classifyGcsError(e: unknown): string {
   // fflate sets numeric .code (0-14) on inflate/unzip errors — catches
   // deflate-level corruption ("unexpected EOF", "invalid block type") that
   // the message regex misses.
-  if (typeof (e as { code?: unknown })?.code === 'number') return 'zip_parse'
+  if (typeof (e as { code?: unknown })?.code === 'number') {
+    return 'zip_parse'
+  }
   const msg = errorMessage(e)
-  if (/unzip|invalid zip|central directory/i.test(msg)) return 'zip_parse'
-  if (/empty body/.test(msg)) return 'empty_latest'
+  if (/unzip|invalid zip|central directory/i.test(msg)) {
+    return 'zip_parse'
+  }
+  if (/empty body/.test(msg)) {
+    return 'empty_latest'
+  }
   return 'other'
 }

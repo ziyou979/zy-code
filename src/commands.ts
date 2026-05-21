@@ -156,7 +156,9 @@ const usageReport: Command = {
   source: 'builtin',
   async getPromptForCommand(args, context) {
     const real = (await import('./commands/insights.js')).default
-    if (real.type !== 'prompt') throw new Error('unreachable')
+    if (real.type !== 'prompt') {
+      throw new Error('unreachable')
+    }
     return real.getPromptForCommand(args, context)
   },
 }
@@ -361,7 +363,9 @@ const getWorkflowCommands = feature('WORKFLOW_SCRIPTS')
  * 因此每次 getCommands() 调用都必须重新评估。
  */
 export function meetsAvailabilityRequirement(cmd: Command): boolean {
-  if (!cmd.availability) return true
+  if (!cmd.availability) {
+    return true
+  }
   for (const a of cmd.availability) {
     switch (a) {
       case 'zy-ai':
@@ -370,7 +374,9 @@ export function meetsAvailabilityRequirement(cmd: Command): boolean {
         // Console API key user = direct API customer (not 3P, not zy.ai).
         // Excludes 3P (Bedrock/Vertex/Foundry) who don't set ANTHROPIC_BASE_URL
         // and gateway users who proxy through a custom base URL.
-        if (isAnthropicBaseUrl()) return true
+        if (isAnthropicBaseUrl()) {
+          return true
+        }
         break
       default: {
         const _exhaustive: never = a
@@ -598,8 +604,12 @@ export const BRIDGE_SAFE_COMMANDS: Set<Command> = new Set(
  * 'local-jsx' 命令渲染 Ink UI，保持阻止。
  */
 export function isBridgeSafeCommand(cmd: Command): boolean {
-  if (cmd.type === 'local-jsx') return false
-  if (cmd.type === 'prompt') return true
+  if (cmd.type === 'local-jsx') {
+    return false
+  }
+  if (cmd.type === 'prompt') {
+    return true
+  }
   return BRIDGE_SAFE_COMMANDS.has(cmd)
 }
 
@@ -739,7 +749,9 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
  */
 export function translateCommandDescription(cmd: Command): string {
   const key = COMMAND_DESCRIPTION_I18N_KEYS[cmd.name]
-  if (key) return tSync(key)
+  if (key) {
+    return tSync(key)
+  }
   return cmd.description
 }
 

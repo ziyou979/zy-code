@@ -8,10 +8,10 @@
  */
 
 import { trackDatadogEvent } from './datadog.js'
-import { logEventToZy, shouldSampleEvent } from './zyEventLogger.js'
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from './growthbook.js'
 import { attachAnalyticsSink, stripProtoFields } from './index.js'
 import { isSinkKilled } from './sinkKillswitch.js'
+import { logEventToZy, shouldSampleEvent } from './zyEventLogger.js'
 
 // 匹配 logEvent 元数据签名的本地类型
 type LogEventMetadata = { [key: string]: boolean | number | undefined }
@@ -19,7 +19,7 @@ type LogEventMetadata = { [key: string]: boolean | number | undefined }
 const DATADOG_GATE_NAME = 'zy_log_datadog_events'
 
 // 模块级开关状态 - 初始为 undefined，在启动时初始化
-let isDatadogGateEnabled: boolean | undefined = undefined
+let isDatadogGateEnabled: boolean | undefined
 
 /**
  * 检查 Datadog 追踪是否启用。

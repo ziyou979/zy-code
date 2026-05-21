@@ -1,13 +1,6 @@
 import { feature } from 'bun:bundle'
-import type {
-  ToolDefinition,
-  LLMResponse,
-  LLMMessage,
-  TextBlock,
-  ImageBlock,
-} from '../../types/llm.js'
-import { mkdir, writeFile } from 'fs/promises'
-import { dirname, join } from 'path'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { z } from 'zod/v4'
 import {
   getCachedZyMdContent,
@@ -21,11 +14,17 @@ import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 
 import { parsePromptTooLongTokenCounts } from '../../services/api/errors.js'
 import { getDefaultMaxRetries } from '../../services/api/withRetry.js'
 import type { Tool, ToolPermissionContext, Tools } from '../../Tool.js'
+import type {
+  ImageBlock,
+  LLMMessage,
+  LLMResponse,
+  TextBlock,
+  ToolDefinition,
+} from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import type { ClassifierUsage, YoloClassifierResult } from '../../types/permissions.js'
 import { isDebugMode, logForDebugging } from '../debug.js'
-import { isInternalBuild } from '../envUtils.js'
-import { isEnvDefinedFalsy, isEnvTruthy } from '../envUtils.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../envUtils.js'
 import { errorMessage } from '../errors.js'
 import { lazySchema } from '../lazySchema.js'
 import { extractTextContent } from '../messages.js'
@@ -64,7 +63,9 @@ const INTERNAL_PERMISSIONS_TEMPLATE: string =
 /* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
 
 function isUsingExternalPermissions(): boolean {
-  if (!isInternalBuild()) return true
+  if (!isInternalBuild()) {
+    return true
+  }
   const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_auto_mode_config', {} as AutoModeConfig)
   return config?.forceExternalPermissions === true
 }
@@ -101,7 +102,9 @@ function extractTaggedBullets(tagName: string): string[] {
   const match = EXTERNAL_PERMISSIONS_TEMPLATE.match(
     new RegExp(`<${tagName}>([\\s\\S]*?)</${tagName}>`),
   )
-  if (!match) return []
+  if (!match) {
+    return []
+  }
   return (match[1] ?? '')
     .split('\n')
     .map((line) => line.trim())
@@ -144,8 +147,12 @@ async function maybeDumpAutoMode(
   timestamp: number,
   suffix?: string,
 ): Promise<void> {
-  if (!isInternalBuild()) return
-  if (!isEnvTruthy(process.env.ZY_CODE_DUMP_AUTO_MODE)) return
+  if (!isInternalBuild()) {
+    return
+  }
+  if (!isEnvTruthy(process.env.ZY_CODE_DUMP_AUTO_MODE)) {
+    return
+  }
   const base = suffix ? `${timestamp}.${suffix}` : `${timestamp}`
   try {
     await mkdir(getAutoModeDumpDir(), { recursive: true })
@@ -180,7 +187,9 @@ export function getAutoModeClassifierErrorDumpPath(): string {
  */
 export function getAutoModeClassifierTranscript(): string | null {
   const requests = getLastClassifierRequests()
-  if (requests === null) return null
+  if (requests === null) {
+    return null
+  }
   return jsonStringify(requests, null, 2)
 }
 
@@ -364,7 +373,9 @@ function toCompactBlock(
 ): string {
   if (block.type === 'tool_call') {
     const tool = lookup.get(block.name)
-    if (!tool) return ''
+    if (!tool) {
+      return ''
+    }
     const input = (block.input ?? {}) as Record<string, unknown>
     // block.input 是来自历史记录的未验证模型输出 — 因参数错误
     // 被拒绝的 tool_use（例如作为 JSON 字符串发出的数组）仍会进入
@@ -381,16 +392,18 @@ function toCompactBlock(
       })
       encoded = input
     }
-    if (encoded === '') return ''
+    if (encoded === '') {
+      return ''
+    }
     if (isJsonlTranscriptEnabled()) {
-      return jsonStringify({ [block.name]: encoded }) + '\n'
+      return `${jsonStringify({ [block.name]: encoded })}\n`
     }
     const s = typeof encoded === 'string' ? encoded : jsonStringify(encoded)
     return `${block.name} ${s}\n`
   }
   if (block.type === 'text' && role === 'user') {
     return isJsonlTranscriptEnabled()
-      ? jsonStringify({ user: block.text }) + '\n'
+      ? `${jsonStringify({ user: block.text })}\n`
       : `User: ${block.text}\n`
   }
   return ''
@@ -428,7 +441,9 @@ export function buildTranscriptForClassifier(messages: Message[], tools: Tools):
  */
 function buildzyMdMessage(): LLMMessage | null {
   const zyMd = getCachedZyMdContent()
-  if (zyMd === null) return null
+  if (zyMd === null) {
+    return null
+  }
   return {
     role: 'user',
     content: [
@@ -535,7 +550,9 @@ function stripThinking(text: string): string {
  */
 function parseXmlBlock(text: string): boolean | null {
   const matches = [...stripThinking(text).matchAll(/<block>(yes|no)\b(<\/block>)?/gi)]
-  if (matches.length === 0) return null
+  if (matches.length === 0) {
+    return null
+  }
   return matches[0]![1]!.toLowerCase() === 'yes'
 }
 
@@ -545,7 +562,9 @@ function parseXmlBlock(text: string): boolean | null {
  */
 function parseXmlReason(text: string): string | null {
   const matches = [...stripThinking(text).matchAll(/<reason>([\s\S]*?)<\/reason>/g)]
-  if (matches.length === 0) return null
+  if (matches.length === 0) {
+    return null
+  }
   return matches[0]![1]!.trim()
 }
 
@@ -628,7 +647,7 @@ function replaceOutputFormatWithXml(systemPrompt: string): string {
  * 返回 [disableThinking, headroom] — 使用元组而非命名对象，
  * 以便属性名字符串不会在缩减后存活到外部构建中。
  */
-function getClassifierThinkingConfig(model: string): [false | undefined, number] {
+function getClassifierThinkingConfig(_model: string): [false | undefined, number] {
   return [false, 0]
 }
 
@@ -950,7 +969,9 @@ export async function classifyYoloAction(
   for (const entry of transcriptEntries) {
     for (const block of entry.content) {
       const serialized = toCompactBlock(block, entry.role, lookup)
-      if (serialized === '') continue
+      if (serialized === '') {
+        continue
+      }
       switch (entry.role) {
         case 'user':
           userPromptsLength += serialized.length
@@ -996,7 +1017,7 @@ export async function classifyYoloAction(
     )
     logForDebugging(
       `[auto-mode] new action being classified: ` +
-        `${actionCompact.length > 500 ? actionCompact.slice(0, 500) + '…' : actionCompact}`,
+        `${actionCompact.length > 500 ? `${actionCompact.slice(0, 500)}…` : actionCompact}`,
     )
   }
 
@@ -1228,7 +1249,9 @@ type AutoModeConfig = {
 function getClassifierModel(): string {
   if (isInternalBuild()) {
     const envModel = process.env.ZY_CODE_AUTO_MODE_MODEL
-    if (envModel) return envModel
+    if (envModel) {
+      return envModel
+    }
   }
   const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_auto_mode_config', {} as AutoModeConfig)
   if (config?.model) {
@@ -1244,9 +1267,15 @@ function getClassifierModel(): string {
 function resolveTwoStageClassifier(): boolean | 'fast' | 'thinking' | undefined {
   if (isInternalBuild()) {
     const env = process.env.ZY_CODE_TWO_STAGE_CLASSIFIER
-    if (env === 'fast' || env === 'thinking') return env
-    if (isEnvTruthy(env)) return true
-    if (isEnvDefinedFalsy(env)) return false
+    if (env === 'fast' || env === 'thinking') {
+      return env
+    }
+    if (isEnvTruthy(env)) {
+      return true
+    }
+    if (isEnvDefinedFalsy(env)) {
+      return false
+    }
   }
   const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_auto_mode_config', {} as AutoModeConfig)
   return config?.twoStageClassifier
@@ -1263,8 +1292,12 @@ function isTwoStageClassifierEnabled(): boolean {
 function isJsonlTranscriptEnabled(): boolean {
   if (isInternalBuild()) {
     const env = process.env.ZY_CODE_JSONL_TRANSCRIPT
-    if (isEnvTruthy(env)) return true
-    if (isEnvDefinedFalsy(env)) return false
+    if (isEnvTruthy(env)) {
+      return true
+    }
+    if (isEnvDefinedFalsy(env)) {
+      return false
+    }
   }
   const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_auto_mode_config', {} as AutoModeConfig)
   return config?.jsonlTranscript === true
@@ -1334,7 +1367,9 @@ function logAutoModeOutcome(
 function detectPromptTooLong(
   error: unknown,
 ): ReturnType<typeof parsePromptTooLongTokenCounts> | undefined {
-  if (!(error instanceof Error)) return undefined
+  if (!(error instanceof Error)) {
+    return undefined
+  }
   if (!error.message.toLowerCase().includes('prompt is too long')) {
     return undefined
   }

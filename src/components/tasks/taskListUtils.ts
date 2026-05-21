@@ -7,9 +7,9 @@ import type { DreamTaskState } from 'src/tasks/DreamTask/DreamTask.js'
 import type { InProcessTeammateTaskState } from 'src/tasks/InProcessTeammateTask/types.js'
 import type { LocalAgentTaskState } from 'src/tasks/LocalAgentTask/LocalAgentTask.js'
 import type { LocalShellTaskState } from 'src/tasks/LocalShellTask/guards.js'
-// @ts-ignore — 类型导入，构建时擦除，模块可能不存在
+// @ts-expect-error — 类型导入，构建时擦除，模块可能不存在
 import type { LocalWorkflowTaskState } from 'src/tasks/LocalWorkflowTask/LocalWorkflowTask.js'
-// @ts-ignore
+// @ts-expect-error
 import type { MonitorMcpTaskState } from 'src/tasks/MonitorMcpTask/MonitorMcpTask.js'
 import { type RemoteAgentTaskState } from 'src/tasks/RemoteAgentTask/RemoteAgentTask.js'
 import { type BackgroundTaskState, isBackgroundTask, type TaskState } from 'src/tasks/types.js'

@@ -97,9 +97,13 @@ function collectQuoteSpans(node: TreeSitterNode, out: QuoteSpans, inDouble: bool
       // Only collect the outermost string (matches old per-type walk
       // which stops at first match). Recurse regardless — a nested
       // $(cmd 'x') inside "..." has a real inner raw_string.
-      if (!inDouble) out.double.push([node.startIndex, node.endIndex])
+      if (!inDouble) {
+        out.double.push([node.startIndex, node.endIndex])
+      }
       for (const child of node.children) {
-        if (child) collectQuoteSpans(child, out, true)
+        if (child) {
+          collectQuoteSpans(child, out, true)
+        }
       }
       return
     case 'heredoc_redirect': {
@@ -128,7 +132,9 @@ function collectQuoteSpans(node: TreeSitterNode, out: QuoteSpans, inDouble: bool
   }
 
   for (const child of node.children) {
-    if (child) collectQuoteSpans(child, out, inDouble)
+    if (child) {
+      collectQuoteSpans(child, out, inDouble)
+    }
   }
 }
 
@@ -167,7 +173,9 @@ function dropContainedSpans<T extends readonly [number, number, ...unknown[]]>(s
  * ranges removed.
  */
 function removeSpans(command: string, spans: Array<[number, number]>): string {
-  if (spans.length === 0) return command
+  if (spans.length === 0) {
+    return command
+  }
 
   // Drop inner spans that are fully contained in an outer one, then sort by
   // start index descending so we can splice without offset shifts.
@@ -186,7 +194,9 @@ function replaceSpansKeepQuotes(
   command: string,
   spans: Array<[number, number, string, string]>,
 ): string {
-  if (spans.length === 0) return command
+  if (spans.length === 0) {
+    return command
+  }
 
   const sorted = dropContainedSpans(spans).sort((a, b) => b[0] - a[0])
   let result = command
@@ -244,8 +254,12 @@ export function extractQuoteContext(rootNode: unknown, command: string): QuoteCo
   }
   let withDoubleQuotes = ''
   for (let i = 0; i < command.length; i++) {
-    if (singleQuoteSet.has(i)) continue
-    if (doubleQuoteDelimSet.has(i)) continue
+    if (singleQuoteSet.has(i)) {
+      continue
+    }
+    if (doubleQuoteDelimSet.has(i)) {
+      continue
+    }
     withDoubleQuotes += command[i]
   }
 
@@ -289,12 +303,16 @@ export function extractCompoundStructure(rootNode: unknown, command: string): Co
   // Walk top-level children of the program node
   function walkTopLevel(node: TreeSitterNode): void {
     for (const child of node.children) {
-      if (!child) continue
+      if (!child) {
+        continue
+      }
 
       if (child.type === 'list') {
         // list nodes contain && and || operators
         for (const listChild of child.children) {
-          if (!listChild) continue
+          if (!listChild) {
+            continue
+          }
           if (listChild.type === '&&' || listChild.type === '||') {
             operators.push(listChild.type)
           } else if (listChild.type === 'list' || listChild.type === 'redirected_statement') {
@@ -343,7 +361,9 @@ export function extractCompoundStructure(rootNode: unknown, command: string): Co
         // don't affect compound/pipeline classification).
         let foundInner = false
         for (const inner of child.children) {
-          if (!inner || inner.type === 'file_redirect') continue
+          if (!inner || inner.type === 'file_redirect') {
+            continue
+          }
           foundInner = true
           walkTopLevel({ ...child, children: [inner] } as TreeSitterNode)
         }
@@ -413,7 +433,9 @@ export function hasActualOperatorNodes(rootNode: unknown): boolean {
     }
 
     for (const child of node.children) {
-      if (child && walk(child)) return true
+      if (child && walk(child)) {
+        return true
+      }
     }
     return false
   }
@@ -452,7 +474,9 @@ export function extractDangerousPatterns(rootNode: unknown): DangerousPatterns {
     }
 
     for (const child of node.children) {
-      if (child) walk(child)
+      if (child) {
+        walk(child)
+      }
     }
   }
 

@@ -4,7 +4,7 @@
  * calculateCostFromTokens 是纯计算函数（内部拼 Usage 对象后委托 calculateUSDCost）。
  * getCurrencySymbol 依赖 i18n，用 mock 测试多语言分支。
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 
 describe('modelCost', () => {
   describe('calculateCostFromTokens', () => {

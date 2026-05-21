@@ -1,5 +1,5 @@
-import type { ToolPermissionContext } from '../../Tool.js'
 import { tSync } from '../../i18n/index.js'
+import type { ToolPermissionContext } from '../../Tool.js'
 import { splitCommand_DEPRECATED } from '../../utils/bash/commands.js'
 import { tryParseShellCommand } from '../../utils/bash/shellQuote.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
@@ -16,7 +16,7 @@ function validateFlagsAgainstAllowlist(flags: string[], allowedFlags: string[]):
     if (flag.startsWith('-') && !flag.startsWith('--') && flag.length > 2) {
       // Check each character in combined flag
       for (let i = 1; i < flag.length; i++) {
-        const singleFlag = '-' + flag[i]
+        const singleFlag = `-${flag[i]}`
         if (!allowedFlags.includes(singleFlag)) {
           return false
         }
@@ -37,11 +37,15 @@ function validateFlagsAgainstAllowlist(flags: string[], allowedFlags: string[]):
  */
 export function isLinePrintingCommand(command: string, expressions: string[]): boolean {
   const sedMatch = command.match(/^\s*sed\s+/)
-  if (!sedMatch) return false
+  if (!sedMatch) {
+    return false
+  }
 
   const withoutSed = command.slice(sedMatch[0].length)
   const parseResult = tryParseShellCommand(withoutSed)
-  if (!parseResult.success) return false
+  if (!parseResult.success) {
+    return false
+  }
   const parsed = parseResult.tokens
 
   // Extract all flags
@@ -112,7 +116,9 @@ export function isLinePrintingCommand(command: string, expressions: string[]): b
  * @internal 导出用于测试
  */
 export function isPrintCommand(cmd: string): boolean {
-  if (!cmd) return false
+  if (!cmd) {
+    return false
+  }
   // Single strict regex that only matches allowed print commands
   // ^(?:\d+|\d+,\d+)?p$ matches: p, 1p, 123p, 1,5p, 10,200p
   return /^(?:\d+|\d+,\d+)?p$/.test(cmd)
@@ -136,11 +142,15 @@ function isSubstitutionCommand(
   }
 
   const sedMatch = command.match(/^\s*sed\s+/)
-  if (!sedMatch) return false
+  if (!sedMatch) {
+    return false
+  }
 
   const withoutSed = command.slice(sedMatch[0].length)
   const parseResult = tryParseShellCommand(withoutSed)
-  if (!parseResult.success) return false
+  if (!parseResult.success) {
+    return false
+  }
   const parsed = parseResult.tokens
 
   // Extract all flags
@@ -288,11 +298,15 @@ export function sedCommandIsAllowedByAllowlist(
  */
 export function hasFileArgs(command: string): boolean {
   const sedMatch = command.match(/^\s*sed\s+/)
-  if (!sedMatch) return false
+  if (!sedMatch) {
+    return false
+  }
 
   const withoutSed = command.slice(sedMatch[0].length)
   const parseResult = tryParseShellCommand(withoutSed)
-  if (!parseResult.success) return true
+  if (!parseResult.success) {
+    return true
+  }
   const parsed = parseResult.tokens
 
   try {
@@ -303,7 +317,9 @@ export function hasFileArgs(command: string): boolean {
       const arg = parsed[i]
 
       // Handle both string arguments and glob patterns (like *.log)
-      if (typeof arg !== 'string' && typeof arg !== 'object') continue
+      if (typeof arg !== 'string' && typeof arg !== 'object') {
+        continue
+      }
 
       // If it's a glob pattern, it counts as a file argument
       if (typeof arg === 'object' && arg !== null && 'op' in arg && arg.op === 'glob') {
@@ -311,7 +327,9 @@ export function hasFileArgs(command: string): boolean {
       }
 
       // Skip non-string arguments that aren't glob patterns
-      if (typeof arg !== 'string') continue
+      if (typeof arg !== 'string') {
+        continue
+      }
 
       // Handle -e flag followed by expression
       if ((arg === '-e' || arg === '--expression') && i + 1 < parsed.length) {
@@ -333,7 +351,9 @@ export function hasFileArgs(command: string): boolean {
       }
 
       // Skip other flags
-      if (arg.startsWith('-')) continue
+      if (arg.startsWith('-')) {
+        continue
+      }
 
       argCount++
 
@@ -367,7 +387,9 @@ export function extractSedExpressions(command: string): string[] {
 
   // Calculate withoutSed by trimming off the first N characters (removing 'sed ')
   const sedMatch = command.match(/^\s*sed\s+/)
-  if (!sedMatch) return expressions
+  if (!sedMatch) {
+    return expressions
+  }
 
   const withoutSed = command.slice(sedMatch[0].length)
 
@@ -391,7 +413,9 @@ export function extractSedExpressions(command: string): string[] {
       const arg = parsed[i]
 
       // Skip non-string arguments (like control operators)
-      if (typeof arg !== 'string') continue
+      if (typeof arg !== 'string') {
+        continue
+      }
 
       // Handle -e flag followed by expression
       if ((arg === '-e' || arg === '--expression') && i + 1 < parsed.length) {
@@ -419,7 +443,9 @@ export function extractSedExpressions(command: string): string[] {
       }
 
       // Skip other flags
-      if (arg.startsWith('-')) continue
+      if (arg.startsWith('-')) {
+        continue
+      }
 
       // If we haven't found any -e flags, the first non-flag argument is the sed expression
       if (!foundEFlag && !foundExpression) {
@@ -449,7 +475,9 @@ export function extractSedExpressions(command: string): string[] {
  */
 function containsDangerousOperations(expression: string): boolean {
   const cmd = expression.trim()
-  if (!cmd) return false
+  if (!cmd) {
+    return false
+  }
 
   // CONSERVATIVE REJECTIONS: Broadly reject patterns that could be dangerous
   // When in doubt, treat as unsafe

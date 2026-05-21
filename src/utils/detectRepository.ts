@@ -16,11 +16,15 @@ export function clearRepositoryCaches(): void {
 
 export async function detectCurrentRepository(): Promise<string | null> {
   const result = await detectCurrentRepositoryWithHost()
-  if (!result) return null
+  if (!result) {
+    return null
+  }
   // Only return results for github.com to avoid breaking downstream consumers
   // that assume the result is a github.com repository.
   // Use detectCurrentRepositoryWithHost() for GHE support.
-  if (result.host !== 'github.com') return null
+  if (result.host !== 'github.com') {
+    return null
+  }
   return `${result.owner}/${result.name}`
 }
 
@@ -67,7 +71,9 @@ export async function detectCurrentRepositoryWithHost(): Promise<ParsedRepositor
  */
 export function getCachedRepository(): string | null {
   const parsed = repositoryWithHostCache.get(getCwd())
-  if (!parsed || parsed.host !== 'github.com') return null
+  if (!parsed || parsed.host !== 'github.com') {
+    return null
+  }
   return `${parsed.owner}/${parsed.name}`
 }
 
@@ -90,7 +96,9 @@ export function parseGitRemote(input: string): ParsedRepository | null {
   // SSH format: git@host:owner/repo.git
   const sshMatch = trimmed.match(/^git@([^:]+):([^/]+)\/([^/]+?)(?:\.git)?$/)
   if (sshMatch?.[1] && sshMatch[2] && sshMatch[3]) {
-    if (!looksLikeRealHostname(sshMatch[1])) return null
+    if (!looksLikeRealHostname(sshMatch[1])) {
+      return null
+    }
     return {
       host: sshMatch[1],
       owner: sshMatch[2],
@@ -106,7 +114,9 @@ export function parseGitRemote(input: string): ParsedRepository | null {
     const protocol = urlMatch[1]
     const hostWithPort = urlMatch[2]
     const hostWithoutPort = hostWithPort.split(':')[0] ?? ''
-    if (!looksLikeRealHostname(hostWithoutPort)) return null
+    if (!looksLikeRealHostname(hostWithoutPort)) {
+      return null
+    }
     // Only preserve port for HTTPS — SSH/git ports are not usable for constructing
     // web URLs (e.g. ssh://git@ghe.corp.com:2222 → port 2222 is SSH, not HTTPS).
     const host = protocol === 'https' || protocol === 'http' ? hostWithPort : hostWithoutPort
@@ -135,7 +145,9 @@ export function parseGitHubRepository(input: string): string | null {
   // for GHE support.
   const parsed = parseGitRemote(trimmed)
   if (parsed) {
-    if (parsed.host !== 'github.com') return null
+    if (parsed.host !== 'github.com') {
+      return null
+    }
     return `${parsed.owner}/${parsed.name}`
   }
 
@@ -161,9 +173,13 @@ export function parseGitHubRepository(input: string): string | null {
  * never contain hyphens or digits.
  */
 function looksLikeRealHostname(host: string): boolean {
-  if (!host.includes('.')) return false
+  if (!host.includes('.')) {
+    return false
+  }
   const lastSegment = host.split('.').pop()
-  if (!lastSegment) return false
+  if (!lastSegment) {
+    return false
+  }
   // Real TLDs are purely alphabetic (e.g., "com", "org", "io").
   // SSH aliases like "github.com-work" have a last segment "com-work" which
   // contains a hyphen.

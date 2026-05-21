@@ -10,7 +10,6 @@
  */
 
 import { feature } from 'bun:bundle'
-import type { ContentBlock } from '../../types/llm.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
 import { TEAMMATE_MESSAGE_TAG } from '../../constants/xml.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
@@ -55,6 +54,7 @@ import { TASK_LIST_TOOL_NAME } from '../../tools/TaskListTool/constants.js'
 import { TASK_UPDATE_TOOL_NAME } from '../../tools/TaskUpdateTool/constants.js'
 import { TEAM_CREATE_TOOL_NAME } from '../../tools/TeamCreateTool/constants.js'
 import { TEAM_DELETE_TOOL_NAME } from '../../tools/TeamDeleteTool/constants.js'
+import type { ContentBlock } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import type { PermissionDecision } from '../../types/permissions.js'
 import { createAssistantAPIErrorMessage, createUserMessage } from '../../utils/messages.js'
@@ -65,6 +65,7 @@ import { createAbortController } from '../abortController.js'
 import { type AgentContext, runWithAgentContext } from '../agentContext.js'
 import { count } from '../array.js'
 import { logForDebugging } from '../debug.js'
+import { isInternalBuild } from '../envUtils.js'
 import { cloneFileStateCache } from '../fileStateCache.js'
 import { SUBAGENT_REJECT_MESSAGE, SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX } from '../messages.js'
 import type { ModelAlias } from '../model/aliases.js'
@@ -77,7 +78,6 @@ import { hasPermissionsToUseTool } from '../permissions/permissions.js'
 import { emitTaskTerminatedSdk } from '../sdkEventQueue.js'
 import { sleep } from '../sleep.js'
 import { jsonStringify } from '../slowOperations.js'
-import { isInternalBuild } from '../envUtils.js'
 import { asSystemPrompt } from '../systemPromptType.js'
 import { claimTask, listTasks, type Task, updateTask } from '../tasks.js'
 import type { TeammateContext } from '../teammateContext.js'
@@ -186,7 +186,9 @@ function createInProcessCanUseTool(
         }
 
         const onAbortListener = () => {
-          if (decisionMade) return
+          if (decisionMade) {
+            return
+          }
           decisionMade = true
           reportPermissionWait()
           resolve({ behavior: 'ask', message: SUBAGENT_REJECT_MESSAGE })
@@ -215,7 +217,9 @@ function createInProcessCanUseTool(
               // 队友无操作（无分类器自动审批）
             },
             onAbort() {
-              if (decisionMade) return
+              if (decisionMade) {
+                return
+              }
               decisionMade = true
               abortController.signal.removeEventListener('abort', onAbortListener)
               reportPermissionWait()
@@ -227,7 +231,9 @@ function createInProcessCanUseTool(
               feedback?: string,
               contentBlocks?: ContentBlock[],
             ) {
-              if (decisionMade) return
+              if (decisionMade) {
+                return
+              }
               decisionMade = true
               abortController.signal.removeEventListener('abort', onAbortListener)
               reportPermissionWait()
@@ -258,7 +264,9 @@ function createInProcessCanUseTool(
               })
             },
             onReject(feedback?: string, contentBlocks?: ContentBlock[]) {
-              if (decisionMade) return
+              if (decisionMade) {
+                return
+              }
               decisionMade = true
               abortController.signal.removeEventListener('abort', onAbortListener)
               reportPermissionWait()
@@ -268,7 +276,9 @@ function createInProcessCanUseTool(
               resolve({ behavior: 'ask', message, contentBlocks })
             },
             async recheckPermission() {
-              if (decisionMade) return
+              if (decisionMade) {
+                return
+              }
               const freshResult = await hasPermissionsToUseTool(
                 tool,
                 input,
@@ -544,8 +554,12 @@ function findAvailableTask(tasks: Task[]): Task | undefined {
   const unresolvedTaskIds = new Set(tasks.filter((t) => t.status !== 'completed').map((t) => t.id))
 
   return tasks.find((task) => {
-    if (task.status !== 'pending') return false
-    if (task.owner) return false
+    if (task.status !== 'pending') {
+      return false
+    }
+    if (task.owner) {
+      return false
+    }
     return task.blockedBy.every((id) => !unresolvedTaskIds.has(id))
   })
 }

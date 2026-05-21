@@ -207,7 +207,9 @@ removeChildNode = (node: DOMElement, removeNode: DOMNode): void => {
 }
 
 function collectRemovedRects(parent: DOMElement, removed: DOMNode, underAbsolute = false): void {
-  if (removed.nodeName === '#text') return
+  if (removed.nodeName === '#text') {
+    return
+  }
   const elem = removed as DOMElement
   // 如果此节点或被移除子树中的任何祖先节点是 absolute，
   // 其绘制的像素可能与非兄弟节点重叠 — 标记为全局 blit
@@ -266,19 +268,27 @@ function stylesEqual(a: Styles, b: Styles): boolean {
 
 function shallowEqual<T extends object>(a: T | undefined, b: T | undefined): boolean {
   // 快速路径：相同对象引用（或两者都是 undefined）
-  if (a === b) return true
-  if (a === undefined || b === undefined) return false
+  if (a === b) {
+    return true
+  }
+  if (a === undefined || b === undefined) {
+    return false
+  }
 
   // 获取两个对象的所有键
   const aKeys = Object.keys(a) as (keyof T)[]
   const bKeys = Object.keys(b) as (keyof T)[]
 
   // 属性数量不同
-  if (aKeys.length !== bKeys.length) return false
+  if (aKeys.length !== bKeys.length) {
+    return false
+  }
 
   // 比较每个属性
   for (const key of aKeys) {
-    if (a[key] !== b[key]) return false
+    if (a[key] !== b[key]) {
+      return false
+    }
   }
 
   return true
@@ -299,11 +309,11 @@ export const createTextNode = (text: string): TextNode => {
 }
 
 let measureTextNode
-measureTextNode = function (
+measureTextNode = (
   node: DOMNode,
   width: number,
   widthMode: LayoutMeasureMode,
-): { width: number; height: number } {
+): { width: number; height: number } => {
   const rawText = node.nodeName === '#text' ? node.nodeValue : squashTextNodes(node)
 
   // 展开制表符用于测量（最坏情况：每个 8 个空格）。
@@ -346,15 +356,15 @@ measureTextNode = function (
 // 无需 stringWidth、无需换行、无需制表符展开 — 生产者（例如 ColorDiff）
 // 已经以目标宽度包裹，每行正好是一个终端行。
 let measureRawAnsiNode
-measureRawAnsiNode = function (node: DOMElement): {
+measureRawAnsiNode = (
+  node: DOMElement,
+): {
   width: number
   height: number
-} {
-  return {
-    width: node.attributes['rawWidth'] as number,
-    height: node.attributes['rawHeight'] as number,
-  }
-}
+} => ({
+  width: node.attributes.rawWidth as number,
+  height: node.attributes.rawHeight as number,
+})
 
 /**
  * 将节点及其所有祖先节点标记为 dirty 以进行重新渲染。
@@ -388,8 +398,12 @@ markDirty = (node?: DOMNode): void => {
 // 渲染器知道要重新评估哪个子树。
 export const scheduleRenderFrom = (node?: DOMNode): void => {
   let cur: DOMNode | undefined = node
-  while (cur?.parentNode) cur = cur.parentNode
-  if (cur && cur.nodeName !== '#text') (cur as DOMElement).onRender?.()
+  while (cur?.parentNode) {
+    cur = cur.parentNode
+  }
+  if (cur && cur.nodeName !== '#text') {
+    ;(cur as DOMElement).onRender?.()
+  }
 }
 
 export let setTextNodeValue
@@ -440,16 +454,24 @@ export function findOwnerChainAtRow(root: DOMElement, y: number): string[] {
 
   function walk(node: DOMElement, offsetY: number): void {
     const yoga = node.yogaNode
-    if (!yoga || yoga.getDisplay() === LayoutDisplay.None) return
+    if (!yoga || yoga.getDisplay() === LayoutDisplay.None) {
+      return
+    }
 
     const top = offsetY + yoga.getComputedTop()
     const height = yoga.getComputedHeight()
-    if (y < top || y >= top + height) return
+    if (y < top || y >= top + height) {
+      return
+    }
 
-    if (node.debugOwnerChain) best = node.debugOwnerChain
+    if (node.debugOwnerChain) {
+      best = node.debugOwnerChain
+    }
 
     for (const child of node.childNodes) {
-      if (isDOMElement(child)) walk(child, top)
+      if (isDOMElement(child)) {
+        walk(child, top)
+      }
     }
   }
 }

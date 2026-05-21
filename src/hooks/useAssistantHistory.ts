@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import { type RefObject, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import {
   createHistoryAuthCtx,
@@ -47,7 +47,9 @@ function pageToMessages(page: HistoryPage): Message[] {
       convertUserTextMessages: true,
       convertToolResults: true,
     })
-    if (c.type === 'message') out.push(c.message)
+    if (c.type === 'message') {
+      out.push(c.message)
+    }
   }
   return out
 }
@@ -124,19 +126,25 @@ export function useAssistantHistory({ config, setMessages, scrollRef, onPrepend 
       )
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- scrollRef is a stable ref; mkSentinel reads refs only
-    [setMessages],
+    [setMessages, scrollRef.current, mkSentinel],
   )
 
   // Initial fetch on mount — best-effort.
   useEffect(() => {
-    if (!enabled || !config) return
+    if (!enabled || !config) {
+      return
+    }
     let cancelled = false
     void (async () => {
       const ctx = await createHistoryAuthCtx(config.sessionId).catch(() => null)
-      if (!ctx || cancelled) return
+      if (!ctx || cancelled) {
+        return
+      }
       ctxRef.current = ctx
       const page = await fetchLatestEvents(ctx)
-      if (cancelled || !page) return
+      if (cancelled || !page) {
+        return
+      }
       fillBudgetRef.current = MAX_FILL_PAGES
       prepend(page, true)
     })()
@@ -145,13 +153,17 @@ export function useAssistantHistory({ config, setMessages, scrollRef, onPrepend 
     }
     // config identity is stable (created once in main.tsx, never recreated)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled])
+  }, [enabled, config.sessionId, config, prepend])
 
   const loadOlder = useCallback(async () => {
-    if (!enabled || inflightRef.current) return
+    if (!enabled || inflightRef.current) {
+      return
+    }
     const cursor = cursorRef.current
     const ctx = ctxRef.current
-    if (!cursor || !ctx) return // null=exhausted, undefined=initial pending
+    if (!cursor || !ctx) {
+      return // null=exhausted, undefined=initial pending
+    }
     inflightRef.current = true
     // Swap sentinel to "loading…" — O(1) slice since sentinel is at index 0.
     setMessages((prev) => {
@@ -174,7 +186,7 @@ export function useAssistantHistory({ config, setMessages, scrollRef, onPrepend 
       inflightRef.current = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mkSentinel reads refs only
-  }, [enabled, prepend, setMessages])
+  }, [enabled, prepend, setMessages, mkSentinel])
 
   // Scroll-anchor compensation — after React commits the prepended items,
   // shift scrollTop by the height delta so the viewport stays put. Also
@@ -183,12 +195,18 @@ export function useAssistantHistory({ config, setMessages, scrollRef, onPrepend 
   // No deps: runs every render; cheap no-op when anchorRef is null.
   useLayoutEffect(() => {
     const anchor = anchorRef.current
-    if (anchor === null) return
+    if (anchor === null) {
+      return
+    }
     anchorRef.current = null
     const s = scrollRef.current
-    if (!s || s.isSticky()) return // sticky = pinned bottom; prepend is invisible
+    if (!s || s.isSticky()) {
+      return // sticky = pinned bottom; prepend is invisible
+    }
     const delta = s.getFreshScrollHeight() - anchor.beforeHeight
-    if (delta > 0) s.scrollBy(delta)
+    if (delta > 0) {
+      s.scrollBy(delta)
+    }
     onPrepend?.(anchor.count, delta)
   })
 
@@ -205,7 +223,9 @@ export function useAssistantHistory({ config, setMessages, scrollRef, onPrepend 
       return
     }
     const s = scrollRef.current
-    if (!s) return
+    if (!s) {
+      return
+    }
     const contentH = s.getFreshScrollHeight()
     const viewH = s.getViewportHeight()
     logForDebugging(
@@ -222,7 +242,9 @@ export function useAssistantHistory({ config, setMessages, scrollRef, onPrepend 
   // Trigger wrapper for onScroll composition in REPL.
   const maybeLoadOlder = useCallback(
     (handle: ScrollBoxHandle) => {
-      if (handle.getScrollTop() < PREFETCH_THRESHOLD_ROWS) void loadOlder()
+      if (handle.getScrollTop() < PREFETCH_THRESHOLD_ROWS) {
+        void loadOlder()
+      }
     },
     [loadOlder],
   )

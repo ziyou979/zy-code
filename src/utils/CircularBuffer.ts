@@ -53,7 +53,9 @@ export class CircularBuffer<T> {
    * Get all items currently in the buffer, in order from oldest to newest.
    */
   toArray(): T[] {
-    if (this.size === 0) return []
+    if (this.size === 0) {
+      return []
+    }
 
     const result: T[] = []
     const start = this.size < this.capacity ? 0 : this.head

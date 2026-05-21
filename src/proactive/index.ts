@@ -17,7 +17,7 @@ export function isProactiveActive(): boolean {
  * Activate proactive mode
  * @param source - The source that triggered activation (e.g., 'command')
  */
-export function activateProactive(source: string): void {
+export function activateProactive(_source: string): void {
   _proactiveActive = true
   _proactivePaused = false
   _notifySubscribers()

@@ -16,7 +16,7 @@
  * pattern as agentContext.ts.
  */
 
-import { AsyncLocalStorage } from 'async_hooks'
+import { AsyncLocalStorage } from 'node:async_hooks'
 
 /**
  * Server-side sanitizer (_sanitize_entrypoint in zy_code.py) accepts

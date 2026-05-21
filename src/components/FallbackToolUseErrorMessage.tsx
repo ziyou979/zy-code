@@ -1,13 +1,13 @@
-import type { ToolResultBlock } from '../types/llm.js'
-import * as React from 'react'
 import { stripUnderlineAnsi } from 'src/components/shell/OutputLine.js'
 import { extractTag } from 'src/utils/messages.js'
 import { removeSandboxViolationTags } from 'src/utils/sandbox/sandbox-ui-utils.js'
-import { Box, Text } from '../ink.js'
 import { tSync } from '../i18n/index.js'
+import { Box, Text } from '../ink.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
+import type { ToolResultBlock } from '../types/llm.js'
 import { countCharInString } from '../utils/stringUtils.js'
 import { MessageResponse } from './MessageResponse.js'
+
 const MAX_RENDERED_LINES = 10
 type Props = {
   result: ToolResultBlock['content']

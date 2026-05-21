@@ -55,9 +55,15 @@ function taskStatusIcon(status: Task['status']): string {
  * 判断某个任务是否为活跃的 Agent（非终止状态的 local_agent 或 in_process_teammate）
  */
 function isActiveAgentTask(t: TaskState): boolean {
-  if (!isBackgroundTask(t)) return false
-  if (isInternalBuild() && isPanelAgentTask(t)) return false
-  if (isTerminalStatus(t.status)) return false
+  if (!isBackgroundTask(t)) {
+    return false
+  }
+  if (isInternalBuild() && isPanelAgentTask(t)) {
+    return false
+  }
+  if (isTerminalStatus(t.status)) {
+    return false
+  }
   return t.type === 'local_agent' || t.type === 'in_process_teammate'
 }
 
@@ -89,9 +95,15 @@ function buildTaskParts(tasksV2: Task[], columns: number): string[] {
   } else {
     // 中屏：仅显示状态计数摘要
     const statusParts: string[] = []
-    if (inProgress.length > 0) statusParts.push(`${inProgress.length}▶`)
-    if (pending.length > 0) statusParts.push(`${pending.length}☐`)
-    if (completed.length > 0) statusParts.push(`${completed.length}✓`)
+    if (inProgress.length > 0) {
+      statusParts.push(`${inProgress.length}▶`)
+    }
+    if (pending.length > 0) {
+      statusParts.push(`${pending.length}☐`)
+    }
+    if (completed.length > 0) {
+      statusParts.push(`${completed.length}✓`)
+    }
     const summary = statusParts.length > 0 ? statusParts.join(' ') : '0'
     parts.push(`📋 ${summary} /${total}`)
   }
@@ -151,7 +163,9 @@ function TaskStatusLineInner(): React.ReactNode {
   const [tick, setTick] = useState(0)
   const hasActiveAgents = Object.values(appStateTasks ?? {}).some(isActiveAgentTask)
   useEffect(() => {
-    if (!hasActiveAgents) return
+    if (!hasActiveAgents) {
+      return
+    }
     const id = setInterval(() => setTick((n) => n + 1), AGENT_TICK_S * 1000)
     return () => clearInterval(id)
   }, [hasActiveAgents])

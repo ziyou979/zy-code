@@ -10,24 +10,26 @@
  * - input_json_delta → partialJson（驼峰）
  * - usage 字段映射：inputTokens/outputTokens 驼峰，cache_creation/cache_read 进 extras
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import {
+  anthropicDeltaUsageToStandard,
+  anthropicResponseToStandard,
+  anthropicStopReasonToStandard,
   anthropicStreamEventToStandard,
   anthropicStreamToStandard,
-  anthropicResponseToStandard,
+  anthropicUsageToStandard,
+  buildAnthropicCreateParams,
   messagesToAnthropic,
   toolChoiceToAnthropic,
-  anthropicStopReasonToStandard,
-  anthropicUsageToStandard,
-  anthropicDeltaUsageToStandard,
-  buildAnthropicCreateParams,
   toolsToAnthropic,
 } from '../../../src/services/api/conversions/anthropic.js'
 import type { StreamEvent } from '../../../src/types/llm.js'
 
 async function collect(stream: AsyncIterable<StreamEvent>): Promise<StreamEvent[]> {
   const out: StreamEvent[] = []
-  for await (const e of stream) out.push(e)
+  for await (const e of stream) {
+    out.push(e)
+  }
   return out
 }
 

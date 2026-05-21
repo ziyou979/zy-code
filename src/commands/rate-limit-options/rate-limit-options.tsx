@@ -2,16 +2,16 @@ import React, { useState } from 'react'
 import type { CommandResultDisplay, LocalJSXCommandContext } from '../../commands.js'
 import { Select } from '../../components/CustomSelect/select.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
+import { tSync } from '../../i18n/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { useZyAiLimits } from '../../services/zyAiLimitsHook.js'
 import type { ToolUseContext } from '../../Tool.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
 import { getOauthAccountInfo, getRateLimitTier } from '../../utils/auth.js'
-import { hasZyAiBillingAccess } from '../../utils/billing.js'
-import { tSync } from '../../i18n/index.js'
 import upgrade from '../upgrade/index.js'
 import { call as upgradeCall } from '../upgrade/upgrade.js'
+
 type RateLimitOptionsMenuOptionType = 'upgrade' | 'cancel'
 type RateLimitOptionsMenuProps = {
   onDone: (
@@ -26,9 +26,9 @@ type RateLimitOptionsMenuProps = {
 }
 function RateLimitOptionsMenu({ onDone, context }: RateLimitOptionsMenuProps) {
   const [subCommandJSX, setSubCommandJSX] = useState(null)
-  const zyAiLimits = useZyAiLimits()
-  const rateLimitTier = getRateLimitTier()
-  const hasExtraUsageEnabled = getOauthAccountInfo()?.hasExtraUsageEnabled === true
+  const _zyAiLimits = useZyAiLimits()
+  const _rateLimitTier = getRateLimitTier()
+  const _hasExtraUsageEnabled = getOauthAccountInfo()?.hasExtraUsageEnabled === true
   const isMax20x = false
   const isTeamOrEnterprise = false
   const buyFirst = getFeatureValue_CACHED_MAY_BE_STALE('zy_jade_anvil_4', false)

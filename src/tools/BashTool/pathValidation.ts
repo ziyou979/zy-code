@@ -1,5 +1,5 @@
-import { homedir } from 'os'
-import { isAbsolute, resolve } from 'path'
+import { homedir } from 'node:os'
+import { isAbsolute, resolve } from 'node:path'
 import type { z } from 'zod/v4'
 import { tSync } from '../../i18n/index.js'
 import type { ToolPermissionContext } from '../../Tool.js'
@@ -151,7 +151,9 @@ function parsePatternCommand(
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
-    if (arg === undefined || arg === null) continue
+    if (arg === undefined || arg === null) {
+      continue
+    }
 
     if (!afterDoubleDash && arg === '--') {
       afterDoubleDash = true
@@ -226,7 +228,9 @@ PATH_EXTRACTORS = {
 
     for (let i = 0; i < args.length; i++) {
       const arg = args[i]
-      if (!arg) continue
+      if (!arg) {
+        continue
+      }
 
       if (afterDoubleDash) {
         paths.push(arg)
@@ -241,7 +245,9 @@ PATH_EXTRACTORS = {
       // Handle flags
       if (arg.startsWith('-')) {
         // Global options don't stop collection
-        if (['-H', '-L', '-P'].includes(arg)) continue
+        if (['-H', '-L', '-P'].includes(arg)) {
+          continue
+        }
 
         // Mark that we've seen a non-global flag
         foundNonGlobalFlag = true
@@ -375,7 +381,9 @@ PATH_EXTRACTORS = {
       }
 
       const arg = args[i]
-      if (!arg) continue
+      if (!arg) {
+        continue
+      }
 
       if (!afterDoubleDash && arg === '--') {
         afterDoubleDash = true
@@ -446,7 +454,9 @@ PATH_EXTRACTORS = {
 
     for (let i = 0; i < args.length; i++) {
       const arg = args[i]
-      if (arg === undefined || arg === null) continue
+      if (arg === undefined || arg === null) {
+        continue
+      }
 
       if (!afterDoubleDash && arg === '--') {
         afterDoubleDash = true
@@ -1158,24 +1168,33 @@ function skipTimeoutFlags(a: readonly string[]): number {
   while (i < a.length) {
     const arg = a[i]!
     const next = a[i + 1]
-    if (arg === '--foreground' || arg === '--preserve-status' || arg === '--verbose') i++
-    else if (/^--(?:kill-after|signal)=[A-Za-z0-9_.+-]+$/.test(arg)) i++
-    else if (
+    if (arg === '--foreground' || arg === '--preserve-status' || arg === '--verbose') {
+      i++
+    } else if (/^--(?:kill-after|signal)=[A-Za-z0-9_.+-]+$/.test(arg)) {
+      i++
+    } else if (
       (arg === '--kill-after' || arg === '--signal') &&
       next &&
       TIMEOUT_FLAG_VALUE_RE.test(next)
-    )
+    ) {
       i += 2
-    else if (arg === '--') {
+    } else if (arg === '--') {
       i++
       break
     } // end-of-options marker
-    else if (arg.startsWith('--')) return -1
-    else if (arg === '-v') i++
-    else if ((arg === '-k' || arg === '-s') && next && TIMEOUT_FLAG_VALUE_RE.test(next)) i += 2
-    else if (/^-[ks][A-Za-z0-9_.+-]+$/.test(arg)) i++
-    else if (arg.startsWith('-')) return -1
-    else break
+    else if (arg.startsWith('--')) {
+      return -1
+    } else if (arg === '-v') {
+      i++
+    } else if ((arg === '-k' || arg === '-s') && next && TIMEOUT_FLAG_VALUE_RE.test(next)) {
+      i += 2
+    } else if (/^-[ks][A-Za-z0-9_.+-]+$/.test(arg)) {
+      i++
+    } else if (arg.startsWith('-')) {
+      return -1
+    } else {
+      break
+    }
   }
   return i
 }
@@ -1189,12 +1208,17 @@ function skipStdbufFlags(a: readonly string[]): number {
   let i = 1
   while (i < a.length) {
     const arg = a[i]!
-    if (/^-[ioe]$/.test(arg) && a[i + 1]) i += 2
-    else if (/^-[ioe]./.test(arg)) i++
-    else if (/^--(input|output|error)=/.test(arg)) i++
-    else if (arg.startsWith('-'))
+    if (/^-[ioe]$/.test(arg) && a[i + 1]) {
+      i += 2
+    } else if (/^-[ioe]./.test(arg)) {
+      i++
+    } else if (/^--(input|output|error)=/.test(arg)) {
+      i++
+    } else if (arg.startsWith('-')) {
       return -1 // unknown flag: fail closed
-    else break
+    } else {
+      break
+    }
   }
   return i > 1 && i < a.length ? i : -1
 }
@@ -1208,12 +1232,17 @@ function skipEnvFlags(a: readonly string[]): number {
   let i = 1
   while (i < a.length) {
     const arg = a[i]!
-    if (arg.includes('=') && !arg.startsWith('-')) i++
-    else if (arg === '-i' || arg === '-0' || arg === '-v') i++
-    else if (arg === '-u' && a[i + 1]) i += 2
-    else if (arg.startsWith('-'))
+    if (arg.includes('=') && !arg.startsWith('-')) {
+      i++
+    } else if (arg === '-i' || arg === '-0' || arg === '-v') {
+      i++
+    } else if (arg === '-u' && a[i + 1]) {
+      i += 2
+    } else if (arg.startsWith('-')) {
       return -1 // -S/-C/-P/unknown: fail closed
-    else break
+    } else {
+      break
+    }
   }
   return i < a.length ? i : -1
 }
@@ -1234,16 +1263,22 @@ export function stripWrappersFromArgv(argv: string[]): string[] {
       // `inf` — strtod formats GNU timeout accepts) → return a unchanged.
       // Safe because checkSemantics (ast.ts) fails CLOSED on the same input
       // and runs first in bashToolHasPermission, so we never reach here.
-      if (i < 0 || !a[i] || !/^\d+(?:\.\d+)?[smhd]?$/.test(a[i]!)) return a
+      if (i < 0 || !a[i] || !/^\d+(?:\.\d+)?[smhd]?$/.test(a[i]!)) {
+        return a
+      }
       a = a.slice(i + 1)
     } else if (a[0] === 'nice') {
       // SECURITY (PR #21503 round 3): mirror checkSemantics — handle bare
       // `nice cmd` and legacy `nice -N cmd`, not just `nice -n N cmd`.
       // Previously only `-n N` was stripped: `nice rm /outside` →
       // baseCmd='nice' → passthrough → /outside never path-validated.
-      if (a[1] === '-n' && a[2] && /^-?\d+$/.test(a[2])) a = a.slice(a[3] === '--' ? 4 : 3)
-      else if (a[1] && /^-\d+$/.test(a[1])) a = a.slice(a[2] === '--' ? 3 : 2)
-      else a = a.slice(a[1] === '--' ? 2 : 1)
+      if (a[1] === '-n' && a[2] && /^-?\d+$/.test(a[2])) {
+        a = a.slice(a[3] === '--' ? 4 : 3)
+      } else if (a[1] && /^-\d+$/.test(a[1])) {
+        a = a.slice(a[2] === '--' ? 3 : 2)
+      } else {
+        a = a.slice(a[1] === '--' ? 2 : 1)
+      }
     } else if (a[0] === 'stdbuf') {
       // SECURITY (PR #21503 round 3): PR-WIDENED. Pre-PR, `stdbuf -o0 -eL rm`
       // was rejected by fragment check (old checkSemantics slice(2) left
@@ -1251,12 +1286,16 @@ export function stripWrappersFromArgv(argv: string[]): string[] {
       // → passes. But stripWrappersFromArgv returned unchanged →
       // baseCmd='stdbuf' → not in SUPPORTED_PATH_COMMANDS → passthrough.
       const i = skipStdbufFlags(a)
-      if (i < 0) return a
+      if (i < 0) {
+        return a
+      }
       a = a.slice(i)
     } else if (a[0] === 'env') {
       // Same asymmetry: checkSemantics strips env, we didn't.
       const i = skipEnvFlags(a)
-      if (i < 0) return a
+      if (i < 0) {
+        return a
+      }
       a = a.slice(i)
     } else {
       return a

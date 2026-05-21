@@ -1,7 +1,7 @@
 import React, { type RefObject, useEffect } from 'react'
-import type { JumpHandle } from './VirtualMessageList.js'
 import { useSearchInput } from '../hooks/useSearchInput.js'
 import { Box, Text } from '../ink.js'
+import type { JumpHandle } from './VirtualMessageList.js'
 
 /** less 风格 / bar。1 行，与 TranscriptModeFooter 相同的 border-top 样式
  *  所以在 bottom 插槽中交换它们不会改变 ScrollBox 高度。
@@ -60,7 +60,9 @@ export function TranscriptSearchBar({
     }
     setIndexStatus('building')
     warm().then((ms) => {
-      if (!alive) return
+      if (!alive) {
+        return
+      }
       // <20ms = 无法察觉。没必要显示 "indexed in 3ms"。
       if (ms < 20) {
         setIndexStatus(null)
@@ -75,16 +77,18 @@ export function TranscriptSearchBar({
       alive = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // mount-only: bar opens once per /
+  }, [jumpRef.current?.warmSearchIndex]) // mount-only: bar opens once per /
   // 以 warm 完成为门控来控制 query effect。setHighlight 保持即时
   // （屏幕空间叠加层，无需索引）。setSearchQuery（扫描）会等待。
   const warmDone = indexStatus !== 'building'
   useEffect(() => {
-    if (!warmDone) return
+    if (!warmDone) {
+      return
+    }
     jumpRef.current?.setSearchQuery(query)
     setHighlight(query)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, warmDone])
+  }, [query, warmDone, setHighlight, jumpRef.current?.setSearchQuery])
   const off = cursorOffset
   const cursorChar = off < query.length ? query[off] : ' '
   return (

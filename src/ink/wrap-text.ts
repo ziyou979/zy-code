@@ -14,11 +14,17 @@ function sliceFit(text: string, start: number, end: number): string {
 }
 
 function truncate(text: string, columns: number, position: 'start' | 'middle' | 'end'): string {
-  if (columns < 1) return ''
-  if (columns === 1) return ELLIPSIS
+  if (columns < 1) {
+    return ''
+  }
+  if (columns === 1) {
+    return ELLIPSIS
+  }
 
   const length = stringWidth(text)
-  if (length <= columns) return text
+  if (length <= columns) {
+    return text
+  }
 
   if (position === 'start') {
     return ELLIPSIS + sliceFit(text, length - columns + 1, length)

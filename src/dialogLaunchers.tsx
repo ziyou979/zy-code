@@ -7,7 +7,7 @@
  * perf/extract-interactive-helpers and perf/launch-repl.
  */
 import React from 'react'
-// @ts-ignore
+// @ts-expect-error
 import type { AssistantSession } from './assistant/sessionDiscovery.js'
 import type { StatsStore } from './context/stats.js'
 import type { Root } from './ink.js'

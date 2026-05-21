@@ -1,3 +1,8 @@
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
+import { mkdir } from 'node:fs/promises'
+import { createServer, type Server } from 'node:http'
+import { join } from 'node:path'
+import { parse } from 'node:url'
 import {
   discoverAuthorizationServerMetadata,
   discoverOAuthServerInfo,
@@ -25,11 +30,6 @@ import {
 } from '@modelcontextprotocol/sdk/shared/auth.js'
 import type { FetchLike } from '@modelcontextprotocol/sdk/shared/transport.js'
 import axios from 'axios'
-import { createHash, randomBytes, randomUUID } from 'crypto'
-import { mkdir } from 'fs/promises'
-import { createServer, type Server } from 'http'
-import { join } from 'path'
-import { parse } from 'url'
 import xss from 'xss'
 import { MCP_CLIENT_METADATA_URL } from '../../constants/oauth.js'
 import { openBrowser } from '../../utils/browser.js'
@@ -440,7 +440,9 @@ export async function revokeServerTokens(
 ): Promise<void> {
   const storage = getSecureStorage() as any
   const existingData = storage.read()
-  if (!existingData?.mcpOAuth) return
+  if (!existingData?.mcpOAuth) {
+    return
+  }
 
   const serverKey = getServerKey(serverName, serverConfig)
   const tokenData = existingData.mcpOAuth[serverKey]
@@ -572,7 +574,9 @@ export function clearServerTokensFromLocalStorage(
 ): void {
   const storage = getSecureStorage() as any
   const existingData = storage.read()
-  if (!existingData?.mcpOAuth) return
+  if (!existingData?.mcpOAuth) {
+    return
+  }
 
   const serverKey = getServerKey(serverName, serverConfig)
   if (existingData.mcpOAuth[serverKey]) {
@@ -676,7 +680,9 @@ async function performMCPXaaAuth(
         abortSignal,
       })
     } catch (e) {
-      if (abortSignal?.aborted) throw new AuthenticationCancelledError()
+      if (abortSignal?.aborted) {
+        throw new AuthenticationCancelledError()
+      }
       throw e
     }
 
@@ -703,7 +709,9 @@ async function performMCPXaaAuth(
         abortSignal,
       )
     } catch (e) {
-      if (abortSignal?.aborted) throw new AuthenticationCancelledError()
+      if (abortSignal?.aborted) {
+        throw new AuthenticationCancelledError()
+      }
       const msg = errorMessage(e)
       // 如果 IdP 说 id_token 无效，从缓存中删除以便
       // 下次尝试进行全新的 IdP 登录。XaaTokenExchangeError 携带
@@ -954,12 +962,16 @@ export async function performMCPOAuthFlow(
     const authorizationCode = await new Promise<string>((resolve, reject) => {
       let resolved = false
       const resolveOnce = (code: string) => {
-        if (resolved) return
+        if (resolved) {
+          return
+        }
         resolved = true
         resolve(code)
       }
       const rejectOnce = (error: Error) => {
-        if (resolved) return
+        if (resolved) {
+          return
+        }
         resolved = true
         reject(error)
       }
@@ -1159,7 +1171,7 @@ export async function performMCPOAuthFlow(
           : {}),
       })
     } else {
-      throw new Error('Unexpected auth result: ' + result)
+      throw new Error(`Unexpected auth result: ${result}`)
     }
   } catch (error) {
     logMCPDebug(serverName, `Error during auth completion: ${error}`)
@@ -1491,7 +1503,9 @@ export class ZyAuthProvider implements OAuthClientProvider {
       }
       try {
         const refreshed = await this._refreshInProgress
-        if (refreshed) return refreshed
+        if (refreshed) {
+          return refreshed
+        }
       } catch (e) {
         logMCPDebug(this.serverName, `XAA silent exchange failed: ${errorMessage(e)}`)
       }
@@ -1512,9 +1526,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
     // token 没有请求的 scope，在下方省略 refresh_token，使
     // SDK 跳过刷新并走 PKCE 流程。
     const currentScopes = tokenData.scope?.split(' ') ?? []
-    const needsStepUp =
-      this._pendingStepUpScope !== undefined &&
-      this._pendingStepUpScope.split(' ').some((s) => !currentScopes.includes(s))
+    const needsStepUp = this._pendingStepUpScope?.split(' ').some((s) => !currentScopes.includes(s))
     if (needsStepUp) {
       logMCPDebug(
         this.serverName,
@@ -1625,7 +1637,9 @@ export class ZyAuthProvider implements OAuthClientProvider {
    */
   private async xaaRefresh(): Promise<OAuthTokens | undefined> {
     const idp = getXaaIdpSettings()
-    if (!idp) return undefined // 配置在会话中被移除
+    if (!idp) {
+      return undefined // 配置在会话中被移除
+    }
 
     const idToken = getCachedIdpIdToken(idp.issuer)
     if (!idToken) {
@@ -1817,11 +1831,15 @@ export class ZyAuthProvider implements OAuthClientProvider {
   ): Promise<void> {
     const storage = getSecureStorage() as any
     const existingData = storage.read()
-    if (!existingData?.mcpOAuth) return
+    if (!existingData?.mcpOAuth) {
+      return
+    }
 
     const serverKey = getServerKey(this.serverName, this.serverConfig)
     const tokenData = existingData.mcpOAuth[serverKey]
-    if (!tokenData) return
+    if (!tokenData) {
+      return
+    }
 
     switch (scope) {
       case 'all':
@@ -2167,7 +2185,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
           return undefined
         }
 
-        const delayMs = 1000 * Math.pow(2, attempt - 1) // 1s, 2s, 4s
+        const delayMs = 1000 * 2 ** (attempt - 1) // 1s, 2s, 4s
         logMCPDebug(
           this.serverName,
           `Token refresh failed, retrying in ${delayMs}ms (attempt ${attempt}/${MAX_ATTEMPTS})`,
@@ -2240,7 +2258,9 @@ export function clearMcpClientConfig(
 ): void {
   const storage = getSecureStorage() as any
   const existingData = storage.read()
-  if (!existingData?.mcpOAuthClientConfig) return
+  if (!existingData?.mcpOAuthClientConfig) {
+    return
+  }
   const serverKey = getServerKey(serverName, serverConfig)
   if (existingData.mcpOAuthClientConfig[serverKey]) {
     delete existingData.mcpOAuthClientConfig[serverKey]
@@ -2266,7 +2286,9 @@ export function getMcpClientConfig(
 function getScopeFromMetadata(
   metadata: AuthorizationServerMetadata | undefined,
 ): string | undefined {
-  if (!metadata) return undefined
+  if (!metadata) {
+    return undefined
+  }
   // 先尝试 'scope'（非标准但某些提供者使用）
   if ('scope' in metadata && typeof metadata.scope === 'string') {
     return metadata.scope

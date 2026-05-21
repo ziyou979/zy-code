@@ -13,7 +13,7 @@
  * dynamicTeamContext, then env vars.
  */
 
-import { AsyncLocalStorage } from 'async_hooks'
+import { AsyncLocalStorage } from 'node:async_hooks'
 
 /**
  * Runtime context for in-process teammates.

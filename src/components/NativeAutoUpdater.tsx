@@ -9,10 +9,10 @@ import { Box, Text } from '../ink.js'
 import type { AutoUpdaterResult } from '../utils/autoUpdater.js'
 import { getMaxVersion, getMaxVersionMessage } from '../utils/autoUpdater.js'
 import { isAutoUpdaterDisabled } from '../utils/config.js'
+import { isDevEnv, isInternalBuild, isTestEnv } from '../utils/envUtils.js'
 import { installLatest } from '../utils/nativeInstaller/index.js'
 import { gt } from '../utils/semver.js'
 import { getInitialSettings } from '../utils/settings/settings.js'
-import { isTestEnv, isDevEnv, isInternalBuild } from '../utils/envUtils.js'
 
 /**
  * Categorize error messages for analytics
@@ -156,7 +156,7 @@ export function NativeAutoUpdater({
     // identity (which would re-trigger the initial-check useEffect below).
     // eslint-disable-next-line react-hooks/exhaustive-deps
     // biome-ignore lint/correctness/useExhaustiveDependencies: isUpdating read via ref
-  }, [onAutoUpdaterResult, channel])
+  }, [onAutoUpdaterResult, channel, onChangeIsUpdating])
 
   // Initial check
   useEffect(() => {

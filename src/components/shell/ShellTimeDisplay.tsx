@@ -1,7 +1,7 @@
-import React from 'react'
+import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink.js'
 import { formatDuration } from '../../utils/format.js'
-import { tSync } from '../../i18n/index.js'
+
 type Props = {
   elapsedTimeSeconds?: number
   timeoutMs?: number

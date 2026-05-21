@@ -1,12 +1,10 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { Box, Text } from '../../ink.js'
 import { feature } from 'bun:bundle'
-import * as React from 'react'
 import { useState } from 'react'
 import sample from 'lodash-es/sample.js'
 import { BLACK_CIRCLE, REFERENCE_MARK, TEARDROP_ASTERISK } from '../../constants/figures.js'
-import figures from 'figures'
-import { basename } from 'path'
+import { basename } from 'node:path'
 import { MessageResponse } from '../MessageResponse.js'
 import { FilePathLink } from '../FilePathLink.js'
 import { openPath } from '../../utils/browser.js'
@@ -23,11 +21,7 @@ import type {
   SystemMemorySavedMessage,
 } from '../../types/message.js'
 import { SystemAPIErrorMessage } from './SystemAPIErrorMessage.js'
-import {
-  formatDuration,
-  formatSecondsShort,
-  getLocalizedDurationFormatter,
-} from '../../utils/format.js'
+import { formatSecondsShort, getLocalizedDurationFormatter } from '../../utils/format.js'
 import { getGlobalConfig } from '../../utils/config.js'
 import Link from '../../ink/components/Link.js'
 import ThemedText from '../design-system/ThemedText.js'
@@ -388,7 +382,7 @@ function MemoryFileRow({ path }) {
     </MessageResponse>
   )
 }
-function ThinkingMessage({ message, addMargin }) {
+function _ThinkingMessage({ message, addMargin }) {
   const bg = useSelectedMessageBg()
   return (
     <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">

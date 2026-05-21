@@ -8,17 +8,17 @@
 import { Box, Text, useInput } from 'ink'
 import * as React from 'react'
 import { useMemo, useState } from 'react'
+import { tSync } from '../../i18n/index.js'
+import type { AppState } from '../../state/AppState.js'
 import { enterTeammateView } from '../../state/teammateViewHelpers.js'
-import {
-  isLocalAgentTask,
-  type LocalAgentTaskState,
-} from '../../tasks/LocalAgentTask/LocalAgentTask.js'
 import {
   type InProcessTeammateTaskState,
   isInProcessTeammateTask,
 } from '../../tasks/InProcessTeammateTask/types.js'
-import type { AppState } from '../../state/AppState.js'
-import { tSync } from '../../i18n/index.js'
+import {
+  isLocalAgentTask,
+  type LocalAgentTaskState,
+} from '../../tasks/LocalAgentTask/LocalAgentTask.js'
 
 type AgentTask = LocalAgentTaskState | InProcessTeammateTaskState
 
@@ -41,9 +41,15 @@ function getAgentDisplayName(task: AgentTask): string {
 
 /** 获取状态图标 */
 function getStatusIcon(task: AgentTask): string {
-  if (task.status === 'running') return '🟢'
-  if (task.status === 'pending') return '🟡'
-  if (task.error) return '🔴'
+  if (task.status === 'running') {
+    return '🟢'
+  }
+  if (task.status === 'pending') {
+    return '🟡'
+  }
+  if (task.error) {
+    return '🔴'
+  }
   return '⬜'
 }
 
@@ -52,15 +58,21 @@ function getStatusLabel(task: AgentTask): string {
   if (isInProcessTeammateTask(task) && task.awaitingPlanApproval) {
     return tSync('agentView.awaitingApproval')
   }
-  if (task.status === 'running') return tSync('agentView.running')
-  if (task.status === 'pending') return tSync('agentView.pending')
+  if (task.status === 'running') {
+    return tSync('agentView.running')
+  }
+  if (task.status === 'pending') {
+    return tSync('agentView.pending')
+  }
   return tSync('agentView.completed')
 }
 
 /** 获取进度摘要 */
 function getProgressSummary(task: AgentTask): string {
   const progress = task.progress
-  if (!progress) return ''
+  if (!progress) {
+    return ''
+  }
   const parts: string[] = []
   if (progress.toolUseCount > 0) {
     parts.push(`${progress.toolUseCount} tools`)

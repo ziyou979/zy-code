@@ -1,23 +1,22 @@
-import React from 'react'
 import { z } from 'zod/v4'
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js'
 import { FallbackToolUseRejectedMessage } from '../../components/FallbackToolUseRejectedMessage.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
 import type { TaskType } from '../../Task.js'
 import type { Tool } from '../../Tool.js'
-import { tSync } from '../../i18n/index.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import type { LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
 import type { LocalShellTaskState } from '../../tasks/LocalShellTask/guards.js'
 import type { RemoteAgentTaskState } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js'
 import type { TaskState } from '../../tasks/types.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { AbortError } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { extractTextContent } from '../../utils/messages.js'
 import { semanticBoolean } from '../../utils/semanticBoolean.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { countCharInString } from '../../utils/stringUtils.js'
@@ -27,6 +26,7 @@ import { formatTaskOutput } from '../../utils/task/outputFormatting.js'
 import { AgentPromptDisplay, AgentResponseDisplay } from '../AgentTool/UI.js'
 import BashToolResultMessage from '../BashTool/BashToolResultMessage.js'
 import { TASK_OUTPUT_TOOL_NAME } from './constants.js'
+
 const inputSchema = lazySchema(() =>
   z.strictObject({
     task_id: z.string().describe('The task ID to get output from'),
@@ -370,7 +370,7 @@ function TaskOutputResultDisplay({ content, verbose = false, theme }) {
       dangerouslyDisableSandbox: true,
       returnCodeInterpretation: task.error,
     }
-    // @ts-ignore
+    // @ts-expect-error
     return <BashToolResultMessage content={bashOut} verbose={verbose} />
   }
   if (task.task_type === 'local_agent') {
@@ -492,4 +492,5 @@ export default TaskOutputTool
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(TaskOutputTool)

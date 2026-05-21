@@ -1,7 +1,6 @@
 import partition from 'lodash-es/partition.js'
-import React from 'react'
-import { tSync } from '../i18n/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
+import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { getInitialSettings, updateSettingsForSource } from '../utils/settings/settings.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
@@ -10,6 +9,7 @@ import { Byline } from './design-system/Byline.js'
 import { Dialog } from './design-system/Dialog.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 import { MCPServerDialogCopy } from './MCPServerDialogCopy.js'
+
 type Props = {
   serverNames: string[]
   onDone(): void

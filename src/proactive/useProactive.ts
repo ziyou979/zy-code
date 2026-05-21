@@ -19,7 +19,9 @@ export function useProactive(props: ProactiveProps): void {
   propsRef.current = props
 
   useEffect(() => {
-    if (!isProactiveActive()) return
+    if (!isProactiveActive()) {
+      return
+    }
 
     const TICK_INTERVAL = 30000 // 30 秒
     const interval = setInterval(() => {

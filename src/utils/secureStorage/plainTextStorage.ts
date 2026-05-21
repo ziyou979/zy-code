@@ -1,5 +1,5 @@
-import { chmodSync } from 'fs'
-import { join } from 'path'
+import { chmodSync } from 'node:fs'
+import { join } from 'node:path'
 import { getZyConfigHomeDir } from '../envUtils.js'
 import { getErrnoCode } from '../errors.js'
 import { getFsImplementation } from '../fsOperations.js'
@@ -13,7 +13,7 @@ function getStoragePath(): { storageDir: string; storagePath: string } {
 }
 
 export const plainTextStorage = {
-  // @ts-ignore
+  // @ts-expect-error
   name: 'plaintext',
   read(): SecureStorageData | null {
     // sync IO: called from sync context (SecureStorage interface)

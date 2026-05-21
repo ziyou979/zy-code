@@ -62,7 +62,7 @@ export class LogUpdate {
     const { screen } = frame
     const lines: string[] = []
     let currentStyles: AnsiCode[] = []
-    let currentHyperlink: Hyperlink = undefined
+    let currentHyperlink: Hyperlink
     for (let y = 0; y < screen.height; y++) {
       let line = ''
       for (let x = 0; x < screen.width; x++) {
@@ -286,7 +286,7 @@ export class LogUpdate {
         cursorRestoreScroll
 
     let currentStyleId = stylePool.none
-    let currentHyperlink: Hyperlink = undefined
+    let currentHyperlink: Hyperlink
 
     // 第一遍：渲染对已有行的改动（行号 < prev.screen.height）
     let needsFullReset = false
@@ -480,7 +480,7 @@ function renderFrameSlice(
   stylePool: StylePool,
 ): VirtualScreen {
   let currentStyleId = stylePool.none
-  let currentHyperlink: Hyperlink = undefined
+  let currentHyperlink: Hyperlink
   // 跟踪此行上最后一个已渲染单元格的 styleId（-1 表示无）。
   // 传给 visibleCellAtIndex 以启用仅前景色的空格优化。
   let lastRenderedStyleId = -1
@@ -644,7 +644,9 @@ function moveCursorTo(screen: VirtualScreen, targetX: number, targetY: number) {
  */
 function needsWidthCompensation(char: string): boolean {
   const cp = char.codePointAt(0)
-  if (cp === undefined) return false
+  if (cp === undefined) {
+    return false
+  }
   // U+1FA70-U+1FAFF：Symbols and Pictographs Extended-A（Unicode 12.0-15.0）
   // U+1FB00-U+1FBFF：Symbols for Legacy Computing（Unicode 13.0）
   if ((cp >= 0x1fa70 && cp <= 0x1faff) || (cp >= 0x1fb00 && cp <= 0x1fbff)) {
@@ -655,7 +657,9 @@ function needsWidthCompensation(char: string): boolean {
   // VS16（0xFE0F）不会与代理对（0xD800-0xDFFF）冲突。
   if (char.length >= 2) {
     for (let i = 0; i < char.length; i++) {
-      if (char.charCodeAt(i) === 0xfe0f) return true
+      if (char.charCodeAt(i) === 0xfe0f) {
+        return true
+      }
     }
   }
   return false

@@ -295,12 +295,10 @@ function formatLessonDetail(lesson: PowerupLesson, isUnlocked: boolean): string 
  */
 function findLesson(query: string): PowerupLesson | undefined {
   const index = parseInt(query, 10)
-  if (!isNaN(index) && index >= 1 && index <= LESSONS.length) {
+  if (!Number.isNaN(index) && index >= 1 && index <= LESSONS.length) {
     return LESSONS[index - 1]
   }
-  return LESSONS.find(
-    (lesson) => lesson.id === query || lesson.title.toLowerCase().includes(query),
-  )
+  return LESSONS.find((lesson) => lesson.id === query || lesson.title.toLowerCase().includes(query))
 }
 
 export const call: LocalCommandCall = async (args) => {
@@ -348,7 +346,10 @@ export const call: LocalCommandCall = async (args) => {
   // 按编号或关键词查看课程详情
   const lesson = findLesson(trimmedArgs)
   if (!lesson) {
-    return { type: 'text', value: `⚠️ 未找到课程: "${trimmedArgs}"。运行 \`/powerup\` 查看全部课程。` }
+    return {
+      type: 'text',
+      value: `⚠️ 未找到课程: "${trimmedArgs}"。运行 \`/powerup\` 查看全部课程。`,
+    }
   }
 
   return { type: 'text', value: formatLessonDetail(lesson, unlocked.has(lesson.id)) }

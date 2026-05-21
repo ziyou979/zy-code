@@ -8,13 +8,13 @@ import {
   saveGlobalConfig,
 } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { toError } from '../../utils/errors.js'
 import { getAuthHeaders } from '../../utils/http.js'
 import { logError } from '../../utils/log.js'
 import { createSignal } from '../../utils/signal.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { type GitHubActionsMetadata, getUserForGrowthBook } from '../../utils/user.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { isZyEventLoggingEnabled, logGrowthBookExperimentToZy } from './zyEventLogger.js'
 
 /**
@@ -195,7 +195,9 @@ export function hasGrowthBookEnvOverride(feature: string): boolean {
  * until the next saveGlobalConfig() invalidates it.
  */
 function getConfigOverrides(): Record<string, unknown> | undefined {
-  if (!isInternalBuild()) return undefined
+  if (!isInternalBuild()) {
+    return undefined
+  }
   try {
     return getGlobalConfig().growthBookOverrides
   } catch {
@@ -229,12 +231,16 @@ export function getGrowthBookConfigOverrides(): Record<string, unknown> {
  * change the model until the next periodic refresh.
  */
 export function setGrowthBookConfigOverride(feature: string, value: unknown): void {
-  if (!isInternalBuild()) return
+  if (!isInternalBuild()) {
+    return
+  }
   try {
     saveGlobalConfig((c) => {
       const current = c.growthBookOverrides ?? {}
       if (value === undefined) {
-        if (!(feature in current)) return c
+        if (!(feature in current)) {
+          return c
+        }
         const { [feature]: _, ...rest } = current
         if (Object.keys(rest).length === 0) {
           const { growthBookOverrides: __, ...configWithout } = c
@@ -242,7 +248,9 @@ export function setGrowthBookConfigOverride(feature: string, value: unknown): vo
         }
         return { ...c, growthBookOverrides: rest }
       }
-      if (isEqual(current[feature], value)) return c
+      if (isEqual(current[feature], value)) {
+        return c
+      }
       return { ...c, growthBookOverrides: { ...current, [feature]: value } }
     })
     // Subscribers do their own change detection (see onGrowthBookRefresh docs),
@@ -254,7 +262,9 @@ export function setGrowthBookConfigOverride(feature: string, value: unknown): vo
 }
 
 export function clearGrowthBookConfigOverrides(): void {
-  if (!isInternalBuild()) return
+  if (!isInternalBuild()) {
+    return
+  }
   try {
     saveGlobalConfig((c) => {
       if (!c.growthBookOverrides || Object.keys(c.growthBookOverrides).length === 0) {
@@ -304,7 +314,7 @@ function logExposureForFeature(feature: string): void {
  * for the entire process lifetime — which broke the zy_max_version_config
  * kill switch for long-running sessions.
  */
-async function processRemoteEvalPayload(gbClient: GrowthBook): Promise<boolean> {
+async function _processRemoteEvalPayload(gbClient: GrowthBook): Promise<boolean> {
   // WORKAROUND: Transform remote eval response format
   // The API returns { "value": ... } but SDK expects { "defaultValue": ... }
   // TODO: Remove this once the API is fixed to return correct format
@@ -382,7 +392,7 @@ async function processRemoteEvalPayload(gbClient: GrowthBook): Promise<boolean> 
  * switching builds is safe — the write is always a complete answer for this
  * process's SDK key.
  */
-function syncRemoteEvalToDisk(): void {
+function _syncRemoteEvalToDisk(): void {
   const fresh = Object.fromEntries(remoteEvalFeatureValues)
   const config = getGlobalConfig()
   if (isEqual(config.cachedGrowthBookFeatures, fresh)) {
@@ -416,10 +426,14 @@ function isGrowthBookEnabled(): boolean {
  */
 export function getApiBaseUrlHost(): string | undefined {
   const baseUrl = process.env.ANTHROPIC_BASE_URL
-  if (!baseUrl) return undefined
+  if (!baseUrl) {
+    return undefined
+  }
   try {
     const host = new URL(baseUrl).host
-    if (host === 'api.anthropic.com') return undefined
+    if (host === 'api.anthropic.com') {
+      return undefined
+    }
     return host
   } catch {
     return undefined

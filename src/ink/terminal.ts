@@ -1,5 +1,5 @@
+import type { Writable } from 'node:stream'
 import { coerce } from 'semver'
-import type { Writable } from 'stream'
 import { env } from '../utils/env.js'
 import { gte } from '../utils/semver.js'
 import { getClearTerminalSequence } from './clearTerminal.js'
@@ -67,7 +67,9 @@ export function isSynchronizedOutputSupported(): boolean {
   // tmux 会解析并转发每个字节，但不实现 DEC 2026。
   // BSU/ESU 会透传到外部终端，但 tmux 已经通过分块
   // 破坏了原子性。跳过以节省每帧 16 字节 + 解析器开销。
-  if (process.env.TMUX) return false
+  if (process.env.TMUX) {
+    return false
+  }
 
   const termProgram = process.env.TERM_PROGRAM
   const term = process.env.TERM
@@ -86,28 +88,42 @@ export function isSynchronizedOutputSupported(): boolean {
   }
 
   // kitty 会设置 TERM=xterm-kitty 或 KITTY_WINDOW_ID
-  if (term?.includes('kitty') || process.env.KITTY_WINDOW_ID) return true
+  if (term?.includes('kitty') || process.env.KITTY_WINDOW_ID) {
+    return true
+  }
 
   // Ghostty 可能设置 TERM=xterm-ghostty 而不设置 TERM_PROGRAM
-  if (term === 'xterm-ghostty') return true
+  if (term === 'xterm-ghostty') {
+    return true
+  }
 
   // foot 会设置 TERM=foot 或 TERM=foot-extra
-  if (term?.startsWith('foot')) return true
+  if (term?.startsWith('foot')) {
+    return true
+  }
 
   // Alacritty 可能设置包含 'alacritty' 的 TERM
-  if (term?.includes('alacritty')) return true
+  if (term?.includes('alacritty')) {
+    return true
+  }
 
   // Zed 使用 alacritty_terminal crate，支持 DEC 2026
-  if (process.env.ZED_TERM) return true
+  if (process.env.ZED_TERM) {
+    return true
+  }
 
   // Windows Terminal
-  if (process.env.WT_SESSION) return true
+  if (process.env.WT_SESSION) {
+    return true
+  }
 
   // VTE 终端（GNOME Terminal、Tilix 等），自 VTE 0.68 起支持
   const vteVersion = process.env.VTE_VERSION
   if (vteVersion) {
     const version = parseInt(vteVersion, 10)
-    if (version >= 6800) return true
+    if (version >= 6800) {
+      return true
+    }
   }
 
   return false
@@ -128,7 +144,9 @@ let xtversionName: string | undefined
 /** 记录 XTVERSION 响应。从 App.tsx 调用，当 stdin 收到回复时触发。
  *  如果已设置则不操作（防止重复探测）。 */
 export function setXtversionName(name: string): void {
-  if (xtversionName === undefined) xtversionName = name
+  if (xtversionName === undefined) {
+    xtversionName = name
+  }
 }
 
 /** 判断是否在 xterm.js 终端中运行（VS Code、Cursor、Windsurf
@@ -137,7 +155,9 @@ export function setXtversionName(name: string): void {
  *  查询/回复通过 pty 传输）。早期调用可能错过探测回复——如果需要
  *  SSH 检测，请延迟调用（例如在事件处理程序中）。 */
 export function isXtermJs(): boolean {
-  if (process.env.TERM_PROGRAM === 'vscode') return true
+  if (process.env.TERM_PROGRAM === 'vscode') {
+    return true
+  }
   return xtversionName?.startsWith('xterm.js') ?? false
 }
 
@@ -233,7 +253,9 @@ export function writeDiffToTerminal(terminal: Terminal, diff: Diff, skipSyncMark
   }
 
   // 添加同步更新结束标记并刷新缓冲区
-  if (useSync) buffer += ESU
+  if (useSync) {
+    buffer += ESU
+  }
 
   terminal.stdout.write(buffer)
 }

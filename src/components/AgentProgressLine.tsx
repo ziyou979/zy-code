@@ -1,8 +1,8 @@
-import * as React from 'react'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { formatNumber } from '../utils/format.js'
 import type { Theme } from '../utils/theme.js'
+
 type Props = {
   agentType: string
   description?: string

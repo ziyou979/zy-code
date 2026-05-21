@@ -1,13 +1,12 @@
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { getRateLimitTier } from './auth.js'
-import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
-import { isInternalBuild } from './envUtils.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
 
 export function getPlanModeV2AgentCount(): number {
   // Environment variable override takes precedence
   if (process.env.ZY_CODE_) {
     const count = parseInt(process.env.ZY_CODE_, 10)
-    if (!isNaN(count) && count > 0 && count <= 10) {
+    if (!Number.isNaN(count) && count > 0 && count <= 10) {
       return count
     }
   }
@@ -24,7 +23,7 @@ export function getPlanModeV2AgentCount(): number {
 export function getPlanModeV2ExploreAgentCount(): number {
   if (process.env.ZY_CODE_) {
     const count = parseInt(process.env.ZY_CODE_, 10)
-    if (!isNaN(count) && count > 0 && count <= 10) {
+    if (!Number.isNaN(count) && count > 0 && count <= 10) {
       return count
     }
   }
@@ -39,11 +38,17 @@ export function getPlanModeV2ExploreAgentCount(): number {
  */
 export function isPlanModeInterviewPhaseEnabled(): boolean {
   // Always on for ants
-  if (isInternalBuild()) return true
+  if (isInternalBuild()) {
+    return true
+  }
 
   const env = process.env.ZY_CODE_PLAN_MODE_INTERVIEW_PHASE
-  if (isEnvTruthy(env)) return true
-  if (isEnvDefinedFalsy(env)) return false
+  if (isEnvTruthy(env)) {
+    return true
+  }
+  if (isEnvDefinedFalsy(env)) {
+    return false
+  }
 
   return getFeatureValue_CACHED_MAY_BE_STALE('zy_plan_mode_interview_phase', false)
 }
@@ -74,6 +79,8 @@ export type PewterLedgerVariant = 'trim' | 'cut' | 'cap' | null
  */
 export function getPewterLedgerVariant(): PewterLedgerVariant {
   const raw = getFeatureValue_CACHED_MAY_BE_STALE<string | null>('zy_pewter_ledger', null)
-  if (raw === 'trim' || raw === 'cut' || raw === 'cap') return raw
+  if (raw === 'trim' || raw === 'cut' || raw === 'cap') {
+    return raw
+  }
   return null
 }

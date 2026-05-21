@@ -39,7 +39,9 @@ export function useCopyOnSelect(
   onCopiedRef.current = onCopied
 
   useEffect(() => {
-    if (!isActive) return
+    if (!isActive) {
+      return
+    }
 
     const unsubscribe = selection.subscribe(() => {
       const sel = selection.getState()
@@ -58,7 +60,9 @@ export function useCopyOnSelect(
       // Selection settled (drag finished OR multi-click). Already copied
       // this one — the only way to get here again without going through
       // isDragging or !has is a spurious notify (shouldn't happen, but safe).
-      if (copiedRef.current) return
+      if (copiedRef.current) {
+        return
+      }
 
       // Default true: macOS users expect cmd+c to work. It can't — the
       // terminal's Edit > Copy intercepts it before the pty sees it, and
@@ -66,12 +70,14 @@ export function useCopyOnSelect(
       // on mouse-up makes cmd+c a no-op that leaves the clipboard intact
       // with the right content, so paste works as expected.
       const enabled = getGlobalConfig().copyOnSelect ?? true
-      if (!enabled) return
+      if (!enabled) {
+        return
+      }
 
       const text = selection.copySelectionNoClear()
       // Whitespace-only (e.g., blank-line multi-click) — not worth a
       // clipboard write or toast. Still set copiedRef so we don't retry.
-      if (!text || !text.trim()) {
+      if (!text?.trim()) {
         copiedRef.current = true
         return
       }

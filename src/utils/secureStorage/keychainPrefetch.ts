@@ -21,7 +21,7 @@
  * startupProfiler.ts at main.tsx:5, so no new module-init cost lands here.
  */
 
-import { execFile } from 'child_process'
+import { execFile } from 'node:child_process'
 import { isBareMode } from '../envUtils.js'
 import {
   CREDENTIALS_SERVICE_SUFFIX,
@@ -67,7 +67,9 @@ function spawnSecurity(serviceName: string): Promise<SpawnResult> {
  * immediately after startMdmRawRead(). Non-darwin is a no-op.
  */
 export function startKeychainPrefetch(): void {
-  if (process.platform !== 'darwin' || prefetchPromise || isBareMode()) return
+  if (process.platform !== 'darwin' || prefetchPromise || isBareMode()) {
+    return
+  }
 
   // Fire both subprocesses immediately (non-blocking). They run in parallel
   // with each other AND with main.tsx imports. The await in Promise.all
@@ -79,8 +81,12 @@ export function startKeychainPrefetch(): void {
     // Timed-out prefetch: don't prime. Sync read/spawn will retry with its
     // own (longer) timeout. Priming null here would shadow a key that the
     // sync path might successfully fetch.
-    if (!oauth.timedOut) primeKeychainCacheFromPrefetch(oauth.stdout)
-    if (!legacy.timedOut) legacyApiKeyPrefetch = { stdout: legacy.stdout }
+    if (!oauth.timedOut) {
+      primeKeychainCacheFromPrefetch(oauth.stdout)
+    }
+    if (!legacy.timedOut) {
+      legacyApiKeyPrefetch = { stdout: legacy.stdout }
+    }
   })
 }
 
@@ -90,7 +96,9 @@ export function startKeychainPrefetch(): void {
  * the ~65ms of main.tsx imports. Resolves immediately on non-darwin.
  */
 export async function ensureKeychainPrefetchCompleted(): Promise<void> {
-  if (prefetchPromise) await prefetchPromise
+  if (prefetchPromise) {
+    await prefetchPromise
+  }
 }
 
 /**

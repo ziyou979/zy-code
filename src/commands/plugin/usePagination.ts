@@ -55,7 +55,9 @@ export function usePagination<T>({
   // Compute the scroll offset based on selectedIndex
   // This ensures the selected item is always visible
   const scrollOffset = useMemo(() => {
-    if (!needsPagination) return 0
+    if (!needsPagination) {
+      return 0
+    }
 
     const prevOffset = scrollOffsetRef.current
 
@@ -85,7 +87,9 @@ export function usePagination<T>({
 
   const getVisibleItems = useCallback(
     (items: T[]): T[] => {
-      if (!needsPagination) return items
+      if (!needsPagination) {
+        return items
+      }
       return items.slice(startIndex, endIndex)
     },
     [needsPagination, startIndex, endIndex],

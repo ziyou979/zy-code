@@ -24,7 +24,9 @@ export function getGraphemeSegmenter(): Intl.Segmenter {
  * Returns '' for empty strings.
  */
 export function firstGrapheme(text: string): string {
-  if (!text) return ''
+  if (!text) {
+    return ''
+  }
   const segments = getGraphemeSegmenter().segment(text)
   const first = segments[Symbol.iterator]().next().value
   return first?.segment ?? ''
@@ -35,7 +37,9 @@ export function firstGrapheme(text: string): string {
  * Returns '' for empty strings.
  */
 export function lastGrapheme(text: string): string {
-  if (!text) return ''
+  if (!text) {
+    return ''
+  }
   let last = ''
   for (const { segment } of getGraphemeSegmenter().segment(text)) {
     last = segment

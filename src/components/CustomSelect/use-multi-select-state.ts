@@ -1,5 +1,5 @@
+import { isDeepStrictEqual } from 'node:util'
 import { useCallback, useState } from 'react'
-import { isDeepStrictEqual } from 'util'
 import { useRegisterOverlay } from '../../context/overlayContext.js'
 import type { InputEvent } from '../../ink/events/input-event.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw space/arrow multiselect input
@@ -206,7 +206,7 @@ export function useMultiSelectState<T>({
 
   // Automatically register as an overlay.
   // This ensures CancelRequestHandler won't intercept Escape when the multi-select is active.
-  // @ts-ignore
+  // @ts-expect-error
   useRegisterOverlay('multi-select')
 
   const updateInputValue = useCallback(
@@ -254,7 +254,9 @@ export function useMultiSelectState<T>({
           key.tab ||
           key.return ||
           (key.ctrl && (input === 'n' || input === 'p' || key.return))
-        if (!isAllowedKey) return
+        if (!isAllowedKey) {
+          return
+        }
       }
 
       const lastOptionValue = options[options.length - 1]?.value
@@ -373,7 +375,7 @@ export function useMultiSelectState<T>({
 
       // Handle numeric keys (1-9) for direct selection
       if (!hideIndexes && /^[0-9]+$/.test(normalizedInput)) {
-        const index = parseInt(normalizedInput) - 1
+        const index = parseInt(normalizedInput, 10) - 1
         if (index >= 0 && index < options.length) {
           const value = options[index]!.value
           const newValues = selectedValues.includes(value)

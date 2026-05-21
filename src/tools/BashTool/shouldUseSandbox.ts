@@ -1,6 +1,6 @@
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { splitCommand_DEPRECATED } from '../../utils/bash/commands.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import {
@@ -106,7 +106,7 @@ function containsExcludedCommand(command: string): boolean {
       for (const cand of candidates) {
         switch (rule.type) {
           case 'prefix':
-            if (cand === rule.prefix || cand.startsWith(rule.prefix + ' ')) {
+            if (cand === rule.prefix || cand.startsWith(`${rule.prefix} `)) {
               return true
             }
             break

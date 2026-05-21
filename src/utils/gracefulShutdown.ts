@@ -1,5 +1,5 @@
+import { writeSync } from 'node:fs'
 import chalk from 'chalk'
-import { writeSync } from 'fs'
 import memoize from 'lodash-es/memoize.js'
 import { onExit } from 'signal-exit'
 import type { ExitReason } from 'src/entrypoints/agentSdkTypes.js'
@@ -27,11 +27,11 @@ import {
   wrapForMultiplexer,
 } from '../ink/termio/osc.js'
 import { shutdownDatadog } from '../services/analytics/datadog.js'
-import { shutdownZyEventLogging } from '../services/analytics/zyEventLogger.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../services/analytics/index.js'
+import { shutdownZyEventLogging } from '../services/analytics/zyEventLogger.js'
 import type { AppState } from '../state/AppState.js'
 import { runCleanupFunctions } from './cleanupRegistry.js'
 import { logForDebugging } from './debug.js'
@@ -123,7 +123,9 @@ function cleanupTerminalModes(): void {
     // that can cause bell sounds when returning to the terminal tab
     writeSync(1, CLEAR_ITERM2_PROGRESS)
     // Clear tab status (OSC 21337) so a stale dot doesn't linger
-    if (supportsTabStatus()) writeSync(1, wrapForMultiplexer(CLEAR_TAB_STATUS))
+    if (supportsTabStatus()) {
+      writeSync(1, wrapForMultiplexer(CLEAR_TAB_STATUS))
+    }
     // Clear terminal title so the tab doesn't show stale session info.
     // Respect ZY_CODE_DISABLE_TERMINAL_TITLE — if the user opted out of
     // title changes, don't clear their existing title on exit either.
@@ -278,7 +280,9 @@ export const setupGracefulShutdown = memoize(() => {
       orphanCheckInterval = setInterval(() => {
         // Skip during scroll drain — even a cheap check consumes an event
         // loop tick that scroll frames need. 30s interval → missing one is fine.
-        if (getIsScrollDraining()) return
+        if (getIsScrollDraining()) {
+          return
+        }
         // process.stdout.writable becomes false when the TTY is revoked
         if (!process.stdout.writable || !process.stdin.readable) {
           clearInterval(orphanCheckInterval)
@@ -492,7 +496,7 @@ export async function gracefulShutdown(
   if (options?.finalMessage) {
     try {
       // eslint-disable-next-line custom-rules/no-sync-fs -- must flush before forceExit
-      writeSync(2, options.finalMessage + '\n')
+      writeSync(2, `${options.finalMessage}\n`)
     } catch {
       // stderr may be closed (e.g., SSH disconnect). Ignore write errors.
     }

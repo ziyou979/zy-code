@@ -1,5 +1,5 @@
+import { basename, dirname, join, sep } from 'node:path'
 import { LRUCache } from 'lru-cache'
-import { basename, dirname, join, sep } from 'path'
 import type { SuggestionItem } from 'src/components/PromptInput/PromptInputFooterSuggestions.js'
 import { getCwd } from 'src/utils/cwd.js'
 import { getFsImplementation } from 'src/utils/fsOperations.js'
@@ -128,7 +128,7 @@ export async function getDirectoryCompletions(
 
   return matches.map((entry) => ({
     id: entry.path,
-    displayText: entry.name + '/',
+    displayText: `${entry.name}/`,
     description: 'directory',
     metadata: { type: 'directory' as const },
   }))
@@ -183,8 +183,12 @@ export async function scanDirectoryForPaths(
       }))
       .sort((a, b) => {
         // Sort directories first, then alphabetically
-        if (a.type === 'directory' && b.type !== 'directory') return -1
-        if (a.type !== 'directory' && b.type === 'directory') return 1
+        if (a.type === 'directory' && b.type !== 'directory') {
+          return -1
+        }
+        if (a.type !== 'directory' && b.type === 'directory') {
+          return 1
+        }
         return a.name.localeCompare(b.name)
       })
       .slice(0, 100)
@@ -217,7 +221,9 @@ export async function getPathCompletions(
 
   const matches = entries
     .filter((entry) => {
-      if (!includeFiles && entry.type === 'file') return false
+      if (!includeFiles && entry.type === 'file') {
+        return false
+      }
       return entry.name.toLowerCase().startsWith(prefixLower)
     })
     .slice(0, maxResults)
@@ -235,7 +241,7 @@ export async function getPathCompletions(
     const lastSeparatorPos = Math.max(lastSlash, lastSep)
     dirPortion = partialPath.substring(0, lastSeparatorPos + 1)
   }
-  if (dirPortion.startsWith('./') || dirPortion.startsWith('.' + sep)) {
+  if (dirPortion.startsWith('./') || dirPortion.startsWith(`.${sep}`)) {
     dirPortion = dirPortion.slice(2)
   }
 
@@ -243,7 +249,7 @@ export async function getPathCompletions(
     const fullPath = dirPortion + entry.name
     return {
       id: fullPath,
-      displayText: entry.type === 'directory' ? fullPath + '/' : fullPath,
+      displayText: entry.type === 'directory' ? `${fullPath}/` : fullPath,
       metadata: { type: entry.type },
     }
   })

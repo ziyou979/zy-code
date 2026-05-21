@@ -1,5 +1,5 @@
-import { mkdir, readdir, readFile, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { getSessionId } from '../bootstrap/state.js'
 import { logForDebugging } from './debug.js'
 import { getZyConfigHomeDir } from './envUtils.js'
@@ -10,7 +10,7 @@ import { getPlatform } from './platform.js'
 // undefined = not yet loaded (need to check disk)
 // null = checked disk, no files exist (don't check again)
 // string = loaded and cached (use cached value)
-let sessionEnvScript: string | null | undefined = undefined
+let sessionEnvScript: string | null | undefined
 
 export async function getSessionEnvDirPath(): Promise<string> {
   const sessionEnvDir = join(getZyConfigHomeDir(), 'session-env', getSessionId())

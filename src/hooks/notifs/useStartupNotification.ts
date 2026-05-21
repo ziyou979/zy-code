@@ -20,13 +20,17 @@ export function useStartupNotification(compute: () => Result | Promise<Result>):
   computeRef.current = compute
 
   useEffect(() => {
-    if (getIsRemoteMode() || hasRunRef.current) return
+    if (getIsRemoteMode() || hasRunRef.current) {
+      return
+    }
     hasRunRef.current = true
 
     void Promise.resolve()
       .then(() => computeRef.current())
       .then((result) => {
-        if (!result) return
+        if (!result) {
+          return
+        }
         for (const n of Array.isArray(result) ? result : [result]) {
           addNotification(n)
         }

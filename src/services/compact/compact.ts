@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { UUID } from 'crypto'
+import type { UUID } from 'node:crypto'
 import uniqBy from 'lodash-es/uniqBy.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -7,7 +7,6 @@ const sessionTranscriptModule = feature('KAIROS')
   ? (require('../sessionTranscript/sessionTranscript.js') as typeof import('../sessionTranscript/sessionTranscript.js'))
   : null
 
-import { createAbortError } from '../../types/llm.js'
 import { markPostCompaction } from 'src/bootstrap/state.js'
 import { getInvokedSkillsForAgent } from '../../bootstrap/state.js'
 import type { QuerySource } from '../../constants/querySource.js'
@@ -18,6 +17,7 @@ import { FileReadTool } from '../../tools/FileReadTool/FileReadTool.js'
 import { FILE_READ_TOOL_NAME, FILE_UNCHANGED_STUB } from '../../tools/FileReadTool/prompt.js'
 import { ToolSearchTool } from '../../tools/ToolSearchTool/ToolSearchTool.js'
 import type { AgentId } from '../../types/ids.js'
+import { createAbortError } from '../../types/llm.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -78,12 +78,12 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { getMaxOutputTokensForModel, queryModelWithStreaming } from '../api/llmOrchestrator.js'
 import {
   getPromptTooLongTokenGap,
   PROMPT_TOO_LONG_ERROR_MESSAGE,
   startsWithApiErrorPrefix,
 } from '../api/errors.js'
+import { getMaxOutputTokensForModel, queryModelWithStreaming } from '../api/llmOrchestrator.js'
 import { notifyCompaction } from '../api/promptCacheBreakDetection.js'
 import { getRetryDelay } from '../api/withRetry.js'
 import { logPermissionContextForAnts } from '../internalLogging.js'
@@ -225,7 +225,9 @@ export function truncateHeadForPTLRetry(
       : messages
 
   const groups = groupMessagesByApiRound(input)
-  if (groups.length < 2) return null
+  if (groups.length < 2) {
+    return null
+  }
 
   const tokenGap = getPromptTooLongTokenGap(ptlResponse)
   let dropCount: number
@@ -235,7 +237,9 @@ export function truncateHeadForPTLRetry(
     for (const g of groups) {
       acc += roughTokenCountEstimationForMessages(g as any)
       dropCount++
-      if (acc >= tokenGap) break
+      if (acc >= tokenGap) {
+        break
+      }
     }
   } else {
     dropCount = Math.max(1, Math.floor(groups.length * 0.2))
@@ -243,7 +247,9 @@ export function truncateHeadForPTLRetry(
 
   // 至少保留一个分组，这样还有内容可摘要。
   dropCount = Math.min(dropCount, groups.length - 1)
-  if (dropCount < 1) return null
+  if (dropCount < 1) {
+    return null
+  }
 
   const sliced = groups.slice(dropCount).flat()
   // groupMessagesByApiRound 将 preamble 放在 group 0，且每个后续分组都以
@@ -318,7 +324,9 @@ export function annotateBoundaryWithPreservedSegment(
   messagesToKeep: readonly Message[] | undefined,
 ): SystemCompactBoundaryMessage {
   const keep = messagesToKeep ?? []
-  if (keep.length === 0) return boundary
+  if (keep.length === 0) {
+    return boundary
+  }
   return {
     ...boundary,
     compactMetadata: {
@@ -341,8 +349,12 @@ export function mergeHookInstructions(
   userInstructions: string | undefined,
   hookInstructions: string | undefined,
 ): string | undefined {
-  if (!hookInstructions) return userInstructions || undefined
-  if (!userInstructions) return hookInstructions
+  if (!hookInstructions) {
+    return userInstructions || undefined
+  }
+  if (!userInstructions) {
+    return hookInstructions
+  }
   return `${userInstructions}\n\n${hookInstructions}`
 }
 
@@ -419,7 +431,9 @@ export async function compactConversation(
         cacheSafeParams: retryCacheSafeParams,
       })
       summary = getAssistantMessageText(summaryResponse)
-      if (!summary?.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE)) break
+      if (!summary?.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE)) {
+        break
+      }
 
       // CC-1180：压缩请求本身触发了 prompt-too-long。截断最旧的
       // API-round 分组并重试，而不是让用户卡住。
@@ -811,7 +825,9 @@ export async function partialCompactConversation(
         cacheSafeParams: retryCacheSafeParams,
       })
       summary = getAssistantMessageText(summaryResponse)
-      if (!summary?.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE)) break
+      if (!summary?.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE)) {
+        break
+      }
 
       ptlAttempts++
       const truncated =

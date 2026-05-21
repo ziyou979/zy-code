@@ -3,14 +3,14 @@
  * 运行: bun test tests/utils/snipCompact.test.ts
  */
 
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import {
-  isSnipRuntimeEnabled,
   isSnipMarkerMessage,
+  isSnipRuntimeEnabled,
   shouldNudgeForSnips,
   shouldSnip,
-  snipMessages,
   snipCompactIfNeeded,
+  snipMessages,
 } from '../../src/services/compact/snipCompact.js'
 import {
   isSnipBoundaryMessage,

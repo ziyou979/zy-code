@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-import type { ImageSource, ContentBlock, LLMMessage } from '../../types/llm.js'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import {
   SSEClientTransport,
@@ -16,11 +15,7 @@ import {
   type Transport,
 } from '@modelcontextprotocol/sdk/shared/transport.js'
 import {
-  CallToolResultSchema,
   ElicitRequestSchema,
-  type ElicitRequestURLParams,
-  type ElicitResult,
-  ErrorCode,
   type JSONRPCMessage,
   type ListPromptsResult,
   ListPromptsResultSchema,
@@ -28,9 +23,6 @@ import {
   ListRootsRequestSchema,
   type ListToolsResult,
   ListToolsResultSchema,
-  McpError,
-  type PromptMessage,
-  type ResourceLink,
 } from '@modelcontextprotocol/sdk/types.js'
 import mapValues from 'lodash-es/mapValues.js'
 import memoize from 'lodash-es/memoize.js'
@@ -40,13 +32,11 @@ import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js'
 import type { Command } from '../../commands.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { PRODUCT_URL } from '../../constants/product.js'
-import type { AppState } from '../../state/AppState.js'
 import { type Tool, type ToolCallProgress, toolMatchesName } from '../../Tool.js'
 import { ListMcpResourcesTool } from '../../tools/ListMcpResourcesTool/ListMcpResourcesTool.js'
 import { type MCPProgress, MCPTool } from '../../tools/MCPTool/MCPTool.js'
 import { createMcpAuthTool } from '../../tools/McpAuthTool/McpAuthTool.js'
 import { ReadMcpResourceTool } from '../../tools/ReadMcpResourceTool/ReadMcpResourceTool.js'
-import { createAbortController } from '../../utils/abortController.js'
 import { count } from '../../utils/array.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
@@ -54,29 +44,15 @@ import {
   handleOAuth401Error,
 } from '../../utils/auth.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
-import { detectCodeIndexingFromMcpServerName } from '../../utils/codeIndexing.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { isEnvDefinedFalsy, isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
 import {
   errorMessage,
   TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from '../../utils/errors.js'
 import { getMCPUserAgent } from '../../utils/http.js'
 import { maybeNotifyIDEConnected } from '../../utils/ide.js'
-import { maybeResizeAndDownsampleImageBuffer } from '../../utils/imageResizer.js'
 import { logMCPDebug, logMCPError } from '../../utils/log.js'
-import {
-  getBinaryBlobSavedMessage,
-  getFormatDescription,
-  getLargeOutputInstructions,
-  persistBinaryContent,
-} from '../../utils/mcpOutputStorage.js'
-import {
-  getContentSizeEstimate,
-  type MCPToolResult,
-  mcpContentNeedsTruncation,
-  truncateMcpContentIfNeeded,
-} from '../../utils/mcpValidation.js'
 import { WebSocketTransport } from '../../utils/mcpWebSocketTransport.js'
 import { memoizeWithLRU } from '../../utils/memoize.js'
 import { getWebSocketTLSOptions } from '../../utils/mtls.js'
@@ -88,28 +64,19 @@ import {
 import { recursivelySanitizeUnicode } from '../../utils/sanitization.js'
 import { getSessionIngressAuthToken } from '../../utils/sessionIngressAuth.js'
 import { subprocessEnv } from '../../utils/subprocessEnv.js'
-import { isPersistError, persistToolResult } from '../../utils/toolResultStorage.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import {
-  type ElicitationWaitingState,
-  runElicitationHooks,
-  runElicitationResultHooks,
-} from './elicitationHandler.js'
-import { buildMcpToolName } from './mcpStringUtils.js'
-import { normalizeNameForMCP } from './normalization.js'
 import { transformResultContent } from './mcpResults.js'
-import { callMCPToolWithUrlElicitationRetry, extractToolUseId } from './mcpToolCall.js'
 import {
-  McpAuthError,
-  McpSessionExpiredError,
-  McpToolCallError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   isMcpSessionExpiredError,
   MAX_MCP_DESCRIPTION_LENGTH,
-  getMcpToolTimeoutMs,
+  McpSessionExpiredError,
 } from './mcpShared.js'
+import { buildMcpToolName } from './mcpStringUtils.js'
+import { callMCPToolWithUrlElicitationRetry, extractToolUseId } from './mcpToolCall.js'
+import { normalizeNameForMCP } from './normalization.js'
 import { getLoggingSafeMcpBaseUrl } from './utils.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -119,13 +86,11 @@ const fetchMcpSkillsForClient = feature('MCP_SKILLS')
   : null
 
 import { UnauthorizedError } from '@modelcontextprotocol/sdk/client/auth.js'
-import type { AssistantMessage } from 'src/types/message.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { classifyMcpToolForCollapse } from '../../tools/MCPTool/classifyForCollapse.js'
 import { clearKeychainCache } from '../../utils/secureStorage/macOsKeychainHelpers.js'
 import { sleep } from '../../utils/sleep.js'
-import { ZyAuthProvider, hasMcpDiscoveryButNoToken, wrapFetchWithStepUpDetection } from './auth.js'
-import { markZyAiMcpConnected } from './zyai.js'
+import { hasMcpDiscoveryButNoToken, wrapFetchWithStepUpDetection, ZyAuthProvider } from './auth.js'
 import { getAllMcpConfigs, isMcpServerDisabled } from './config.js'
 import { getMcpServerHeaders } from './headersHelper.js'
 import { SdkControlClientTransport } from './SdkControlTransport.js'
@@ -136,6 +101,7 @@ import type {
   ScopedMcpServerConfig,
   ServerResource,
 } from './types.js'
+import { markZyAiMcpConnected } from './zyai.js'
 
 /**
  * 自定义错误类，表示 MCP 工具调用因认证问题失败
@@ -143,7 +109,7 @@ import type {
  * 此错误应在工具执行层被捕获，以将客户端状态更新为 'needs-auth'。
  */
 
-// @ts-ignore
+// @ts-expect-error
 import { isClaudeInChromeMCPServer } from '../../utils/ClaudeInChrome/common.js'
 
 // 惰性加载：toolRendering.tsx 引入 React/ink；仅在 Zy-in-Chrome MCP 服务器连接时需要
@@ -164,8 +130,8 @@ const isComputerUseMCPServer = feature('CHICAGO_MCP')
     ).isComputerUseMCPServer
   : undefined
 
-import { mkdir, readFile, unlink, writeFile } from 'fs/promises'
-import { dirname, join } from 'path'
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
@@ -1003,7 +969,7 @@ export const connectToServer = memoize(
       const rawInstructions = client.getInstructions()
       let instructions = rawInstructions
       if (rawInstructions && rawInstructions.length > MAX_MCP_DESCRIPTION_LENGTH) {
-        instructions = rawInstructions.slice(0, MAX_MCP_DESCRIPTION_LENGTH) + '… [truncated]'
+        instructions = `${rawInstructions.slice(0, MAX_MCP_DESCRIPTION_LENGTH)}… [truncated]`
         logMCPDebug(
           name,
           `Server instructions truncated from ${rawInstructions.length} to ${MAX_MCP_DESCRIPTION_LENGTH} chars`,
@@ -1075,7 +1041,9 @@ export const connectToServer = memoize(
       // Calling client.onclose?.() directly would only clear the cache — pending
       // tool calls would stay hung.
       const closeTransportAndRejectPending = (reason: string) => {
-        if (hasTriggeredClose) return
+        if (hasTriggeredClose) {
+          return
+        }
         hasTriggeredClose = true
         logMCPDebug(name, `Closing transport (${reason})`)
         void client.close().catch((e) => {
@@ -1509,7 +1477,9 @@ export async function ensureConnectedClient(
  */
 export function areMcpConfigsEqual(a: ScopedMcpServerConfig, b: ScopedMcpServerConfig): boolean {
   // Quick type check first
-  if (a.type !== b.type) return false
+  if (a.type !== b.type) {
+    return false
+  }
 
   // Compare by serializing - this handles all config variations
   // We exclude 'scope' from comparison since it's metadata, not connection config
@@ -1538,7 +1508,9 @@ export function mcpToolInputToAutoClassifierInput(
 export let fetchToolsForClient
 fetchToolsForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<Tool[]> => {
-    if (client.type !== 'connected') return []
+    if (client.type !== 'connected') {
+      return []
+    }
 
     try {
       if (!client.capabilities?.tools) {
@@ -1582,7 +1554,7 @@ fetchToolsForClient = memoizeWithLRU(
             async prompt() {
               const desc = tool.description ?? ''
               return desc.length > MAX_MCP_DESCRIPTION_LENGTH
-                ? desc.slice(0, MAX_MCP_DESCRIPTION_LENGTH) + '… [truncated]'
+                ? `${desc.slice(0, MAX_MCP_DESCRIPTION_LENGTH)}… [truncated]`
                 : desc
             },
             isConcurrencySafe() {
@@ -1776,7 +1748,9 @@ fetchToolsForClient = memoizeWithLRU(
 export let fetchResourcesForClient
 fetchResourcesForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<ServerResource[]> => {
-    if (client.type !== 'connected') return []
+    if (client.type !== 'connected') {
+      return []
+    }
 
     try {
       if (!client.capabilities?.resources) {
@@ -1788,7 +1762,9 @@ fetchResourcesForClient = memoizeWithLRU(
         ListResourcesResultSchema,
       )
 
-      if (!result.resources) return []
+      if (!result.resources) {
+        return []
+      }
 
       // Add server name to each resource
       return result.resources.map((resource) => ({
@@ -1807,7 +1783,9 @@ fetchResourcesForClient = memoizeWithLRU(
 export let fetchCommandsForClient
 fetchCommandsForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<Command[]> => {
-    if (client.type !== 'connected') return []
+    if (client.type !== 'connected') {
+      return []
+    }
 
     try {
       if (!client.capabilities?.prompts) {
@@ -1820,7 +1798,9 @@ fetchCommandsForClient = memoizeWithLRU(
         ListPromptsResultSchema,
       )) as ListPromptsResult
 
-      if (!result.prompts) return []
+      if (!result.prompts) {
+        return []
+      }
 
       // Sanitize prompt data from MCP server
       const promptsToProcess = recursivelySanitizeUnicode(result.prompts)
@@ -1830,7 +1810,7 @@ fetchCommandsForClient = memoizeWithLRU(
         const argNames = Object.values(prompt.arguments ?? {}).map((k) => k.name)
         return {
           type: 'prompt' as const,
-          name: 'mcp__' + normalizeNameForMCP(client.name) + '__' + prompt.name,
+          name: `mcp__${normalizeNameForMCP(client.name)}__${prompt.name}`,
           description: prompt.description ?? '',
           hasUserSpecifiedDescription: !!prompt.description,
           contentLength: 0, // Dynamic MCP content

@@ -1,5 +1,5 @@
-import { mkdir, readFile, stat, unlink, writeFile } from 'fs/promises'
-import { dirname, join } from 'path'
+import { mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { z } from 'zod/v4'
 import { logForDebugging } from '../utils/debug.js'
 import { isENOENT } from '../utils/errors.js'
@@ -133,7 +133,9 @@ export async function readBridgePointerAcrossWorktrees(
   // Fanout: scan worktree siblings. getWorktreePathsPortable has a 5s
   // timeout and returns [] on any error (not a git repo, git not installed).
   const worktrees = await getWorktreePathsPortable(dir)
-  if (worktrees.length <= 1) return null
+  if (worktrees.length <= 1) {
+    return null
+  }
   if (worktrees.length > MAX_WORKTREE_FANOUT) {
     logForDebugging(
       `[bridge:pointer] ${worktrees.length} worktrees exceeds fanout cap ${MAX_WORKTREE_FANOUT}, skipping`,

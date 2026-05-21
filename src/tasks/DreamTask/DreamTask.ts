@@ -122,7 +122,9 @@ export const DreamTask: Task = {
   async kill(taskId, setAppState) {
     let priorMtime: number | undefined
     updateTaskState<DreamTaskState>(taskId, setAppState, (task) => {
-      if (task.status !== 'running') return task
+      if (task.status !== 'running') {
+        return task
+      }
       task.abortController?.abort()
       priorMtime = task.priorMtime
       return {

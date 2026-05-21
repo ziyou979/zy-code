@@ -45,7 +45,6 @@ import { ThemePicker } from '../ThemePicker.js'
 import { useAppState, useSetAppState, useAppStateStore } from '../../state/AppState.js'
 import { ModelPicker } from '../ModelPicker.js'
 import { modelDisplayString } from '../../utils/model/model.js'
-import { zyMdExternalIncludesDialog } from '../ZyMdExternalIncludesDialog.js'
 import { ChannelDowngradeDialog, type ChannelDowngradeChoice } from '../ChannelDowngradeDialog.js'
 import { Dialog } from '../design-system/Dialog.js'
 import { Select } from '../CustomSelect/index.js'
@@ -418,7 +417,9 @@ export function Config({
             type: 'boolean' as const,
             onChange(enabled_2: boolean) {
               saveGlobalConfig((current_1) => {
-                if (current_1.speculationEnabled === enabled_2) return current_1
+                if (current_1.speculationEnabled === enabled_2) {
+                  return current_1
+                }
                 return {
                   ...current_1,
                   speculationEnabled: enabled_2,
@@ -612,7 +613,9 @@ export function Config({
               // mid-plan toggles take effect immediately.
               setAppState((prev_15) => {
                 const next = transitionPlanAutoMode(prev_15.toolPermissionContext)
-                if (next === prev_15.toolPermissionContext) return prev_15
+                if (next === prev_15.toolPermissionContext) {
+                  return prev_15
+                }
                 return {
                   ...prev_15,
                   toolPermissionContext: next,
@@ -834,7 +837,9 @@ export function Config({
               }))
               const nextBrief = defaultView === 'chat'
               setAppState((prev_18) => {
-                if (prev_18.isBriefOnly === nextBrief) return prev_18
+                if (prev_18.isBriefOnly === nextBrief) {
+                  return prev_18
+                }
                 return {
                   ...prev_18,
                   isBriefOnly: nextBrief,
@@ -893,7 +898,9 @@ export function Config({
       type: 'boolean' as const,
       onChange(enabled_4: boolean) {
         saveGlobalConfig((current_14) => {
-          if (current_14.prStatusFooterEnabled === enabled_4) return current_14
+          if (current_14.prStatusFooterEnabled === enabled_4) {
+            return current_14
+          }
           return {
             ...current_14,
             prStatusFooterEnabled: enabled_4,
@@ -1067,7 +1074,9 @@ export function Config({
               if (selected_0 === 'default') {
                 // Unset the config key so it falls back to the platform default
                 saveGlobalConfig((current_20) => {
-                  if (current_20.remoteControlAtStartup === undefined) return current_20
+                  if (current_20.remoteControlAtStartup === undefined) {
+                    return current_20
+                  }
                   const next_0 = {
                     ...current_20,
                   }
@@ -1081,7 +1090,9 @@ export function Config({
               } else {
                 const enabled_6 = selected_0 === 'true'
                 saveGlobalConfig((current_21) => {
-                  if (current_21.remoteControlAtStartup === enabled_6) return current_21
+                  if (current_21.remoteControlAtStartup === enabled_6) {
+                    return current_21
+                  }
                   return {
                     ...current_21,
                     remoteControlAtStartup: enabled_6,
@@ -1095,8 +1106,9 @@ export function Config({
               // Sync to AppState so useReplBridge reacts immediately
               const resolved = getRemoteControlAtStartup()
               setAppState((prev_20) => {
-                if (prev_20.replBridgeEnabled === resolved && !prev_20.replBridgeOutboundOnly)
+                if (prev_20.replBridgeEnabled === resolved && !prev_20.replBridgeOutboundOnly) {
                   return prev_20
+                }
                 return {
                   ...prev_20,
                   replBridgeEnabled: resolved,
@@ -1208,10 +1220,14 @@ export function Config({
 
   // Filter settings based on search query
   const filteredSettingsItems = React.useMemo(() => {
-    if (!searchQuery) return settingsItems
+    if (!searchQuery) {
+      return settingsItems
+    }
     const lowerQuery = searchQuery.toLowerCase()
     return settingsItems.filter((setting) => {
-      if (setting.id.toLowerCase().includes(lowerQuery)) return true
+      if (setting.id.toLowerCase().includes(lowerQuery)) {
+        return true
+      }
       const searchableText = 'searchText' in setting ? setting.searchText : setting.label
       return searchableText.toLowerCase().includes(lowerQuery)
     })
@@ -1227,8 +1243,12 @@ export function Config({
       return
     }
     setScrollOffset((prev_21) => {
-      if (selectedIndex < prev_21) return selectedIndex
-      if (selectedIndex >= prev_21 + maxVisible) return selectedIndex - maxVisible + 1
+      if (selectedIndex < prev_21) {
+        return selectedIndex
+      }
+      if (selectedIndex >= prev_21 + maxVisible) {
+        return selectedIndex - maxVisible + 1
+      }
       return prev_21
     })
   }, [filteredSettingsItems.length, selectedIndex, maxVisible])
@@ -1239,8 +1259,12 @@ export function Config({
   const adjustScrollOffset = useCallback(
     (newIndex_0: number) => {
       setScrollOffset((prev_22) => {
-        if (newIndex_0 < prev_22) return newIndex_0
-        if (newIndex_0 >= prev_22 + maxVisible) return newIndex_0 - maxVisible + 1
+        if (newIndex_0 < prev_22) {
+          return newIndex_0
+        }
+        if (newIndex_0 >= prev_22 + maxVisible) {
+          return newIndex_0 - maxVisible + 1
+        }
         return prev_22
       })
     },
@@ -1375,7 +1399,6 @@ export function Config({
     showSubmenu,
     changes,
     globalConfig,
-    mainLoopModel,
     currentOutputStyle,
     currentLanguage,
     settingsData?.autoUpdatesChannel,
@@ -1504,7 +1527,7 @@ export function Config({
   // Only active when not in search mode and no submenu is open.
   const toggleSetting = useCallback(() => {
     const setting_0 = filteredSettingsItems[selectedIndex]
-    if (!setting_0 || !setting_0.onChange) {
+    if (!setting_0?.onChange) {
       return
     }
     if (setting_0.type === 'boolean') {
@@ -1601,6 +1624,7 @@ export function Config({
     selectedIndex,
     settingsData?.autoUpdatesChannel,
     setTabsHidden,
+    context.messages.some,
   ])
   const moveSelection = (delta: -1 | 1): void => {
     setShowThinkingWarning(false)
@@ -1649,8 +1673,12 @@ export function Config({
   // first (their own handlers own input), then search vs. list.
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (showSubmenu !== null) return
-      if (headerFocused) return
+      if (showSubmenu !== null) {
+        return
+      }
+      if (headerFocused) {
+        return
+      }
       // Search mode: Esc clears then exits, Enter/↓ moves to the list.
       if (isSearchMode) {
         if (e.key === 'escape') {
@@ -1682,8 +1710,12 @@ export function Config({
       // enter search mode. Carve out j/k// — useKeybindings (still on the
       // useInput path) consumes these via stopImmediatePropagation, but
       // onKeyDown dispatches independently so we must skip them explicitly.
-      if (e.ctrl || e.meta) return
-      if (e.key === 'j' || e.key === 'k' || e.key === '/') return
+      if (e.ctrl || e.meta) {
+        return
+      }
+      if (e.key === 'j' || e.key === 'k' || e.key === '/') {
+        return
+      }
       if (e.key.length === 1 && e.key !== ' ') {
         e.preventDefault()
         setIsSearchMode(true)
@@ -2159,10 +2191,12 @@ function teammateModelDisplayString(value: string | null | undefined): string {
   if (value === undefined) {
     return modelDisplayString(getHardcodedTeammateModelFallback())
   }
-  if (value === null) return "Default (leader's model)"
+  if (value === null) {
+    return "Default (leader's model)"
+  }
   return modelDisplayString(value)
 }
-let THEME_LABELS = {
+const THEME_LABELS = {
   auto: 'Auto (match terminal)',
   dark: 'Dark mode',
   light: 'Light mode',

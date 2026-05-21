@@ -9,8 +9,8 @@ import { isPanelAgentTask } from 'src/tasks/LocalAgentTask/LocalAgentTask.js'
 import { getPillLabel, pillNeedsCta } from 'src/tasks/pillLabel.js'
 import { isBackgroundTask, type TaskState } from 'src/tasks/types.js'
 import { calculateHorizontalScrollWindow } from 'src/utils/horizontalScroll.js'
-import { Box, Text } from '../../ink.js'
 import { tSync } from '../../i18n/index.js'
+import { Box, Text } from '../../ink.js'
 import {
   AGENT_COLOR_TO_THEME_COLOR,
   AGENT_COLORS,
@@ -19,6 +19,7 @@ import {
 import type { Theme } from '../../utils/theme.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { shouldHideTasksFooter } from './taskStatusUtils.js'
+
 type Props = {
   tasksSelected: boolean
   isViewingTeammate?: boolean
@@ -220,7 +221,9 @@ function SummaryPill({ selected, onClick, children }: any) {
   )
 }
 function getAgentThemeColor(colorName: string | undefined): keyof Theme | undefined {
-  if (!colorName) return undefined
+  if (!colorName) {
+    return undefined
+  }
   if (AGENT_COLORS.includes(colorName as AgentColorName)) {
     return AGENT_COLOR_TO_THEME_COLOR[colorName as AgentColorName]
   }

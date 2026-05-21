@@ -101,7 +101,9 @@ function ScrollBox({
   const listenersRef = useRef(new Set<() => void>())
   const renderQueuedRef = useRef(false)
   const notify = () => {
-    for (const l of listenersRef.current) l()
+    for (const l of listenersRef.current) {
+      l()
+    }
   }
   function scrollMutated(el: DOMElement): void {
     // 通知后台间隔（IDE 轮询、LSP 轮询、GCS 请求、孤立检查）
@@ -111,7 +113,9 @@ function ScrollBox({
     markDirty(el)
     markCommitStart()
     notify()
-    if (renderQueuedRef.current) return
+    if (renderQueuedRef.current) {
+      return
+    }
     renderQueuedRef.current = true
     queueMicrotask(() => {
       renderQueuedRef.current = false
@@ -123,7 +127,9 @@ function ScrollBox({
     (): ScrollBoxHandle => ({
       scrollTo(y: number) {
         const el = domRef.current
-        if (!el) return
+        if (!el) {
+          return
+        }
         // 显式 false 会覆盖 DOM 属性，使手动滚动解除粘性。
         // 渲染代码通过 ?? 优先级检查。
         el.stickyScroll = false
@@ -134,7 +140,9 @@ function ScrollBox({
       },
       scrollToElement(el: DOMElement, offset = 0) {
         const box = domRef.current
-        if (!box) return
+        if (!box) {
+          return
+        }
         box.stickyScroll = false
         box.pendingScrollDelta = undefined
         box.scrollAnchor = {
@@ -145,7 +153,9 @@ function ScrollBox({
       },
       scrollBy(dy: number) {
         const el = domRef.current
-        if (!el) return
+        if (!el) {
+          return
+        }
         el.stickyScroll = false
         // 滚轮输入取消任何进行中的锚点寻址 —— 用户覆盖。
         el.scrollAnchor = undefined
@@ -156,7 +166,9 @@ function ScrollBox({
       },
       scrollToBottom() {
         const el = domRef.current
-        if (!el) return
+        if (!el) {
+          return
+        }
         el.pendingScrollDelta = undefined
         el.stickyScroll = true
         markDirty(el)
@@ -187,8 +199,10 @@ function ScrollBox({
       },
       isSticky() {
         const el = domRef.current
-        if (!el) return false
-        return el.stickyScroll ?? Boolean(el.attributes['stickyScroll'])
+        if (!el) {
+          return false
+        }
+        return el.stickyScroll ?? Boolean(el.attributes.stickyScroll)
       },
       subscribe(listener: () => void) {
         listenersRef.current.add(listener)
@@ -196,7 +210,9 @@ function ScrollBox({
       },
       setClampBounds(min, max) {
         const el = domRef.current
-        if (!el) return
+        if (!el) {
+          return
+        }
         el.scrollClampMin = min
         el.scrollClampMax = max
       },
@@ -205,7 +221,7 @@ function ScrollBox({
     // 引用 ref 和导入 —— 保持稳定。空依赖数组避免每次渲染时
     // 重建 handle（会重新注册 ref = 额外开销）。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [scrollMutated, notify],
   )
 
   // 结构：外层视口（overflow:scroll，受限高度）>
@@ -221,7 +237,9 @@ function ScrollBox({
   const inkBoxProps: Record<string, unknown> = {
     ref: (el: unknown) => {
       domRef.current = el as typeof domRef.current
-      if (el) (el as { scrollTop?: number }).scrollTop ??= 0
+      if (el) {
+        ;(el as { scrollTop?: number }).scrollTop ??= 0
+      }
     },
     style: {
       flexWrap: 'nowrap',

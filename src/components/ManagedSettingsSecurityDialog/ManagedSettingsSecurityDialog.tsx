@@ -1,4 +1,3 @@
-import React from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { Box, Text } from '../../ink.js'
@@ -7,6 +6,7 @@ import type { SettingsJson } from '../../utils/settings/types.js'
 import { Select } from '../CustomSelect/index.js'
 import { PermissionDialog } from '../permissions/PermissionDialog.js'
 import { extractDangerousSettings, formatDangerousSettingsList } from './utils.js'
+
 type Props = {
   settings: SettingsJson
   onAccept: () => void
@@ -68,11 +68,9 @@ export function ManagedSettingsSecurityDialog({ settings, onAccept, onReject }: 
           }
           {
             <Text dimColor={true}>
-              {exitState.pending ? (
-                <>{tSync('managedSettings.pressAgainToExit', { keyName: exitState.keyName })}</>
-              ) : (
-                <>{tSync('managedSettings.enterConfirmEscExit')}</>
-              )}
+              {exitState.pending
+                ? tSync('managedSettings.pressAgainToExit', { keyName: exitState.keyName })
+                : tSync('managedSettings.enterConfirmEscExit')}
             </Text>
           }
         </Box>

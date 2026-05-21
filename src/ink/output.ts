@@ -103,7 +103,9 @@ export type Clip = {
  *（x1 >= x2 或 y1 >= y2），被其裁剪的写入将被丢弃。
  */
 function intersectClip(parent: Clip | undefined, child: Clip): Clip {
-  if (!parent) return child
+  if (!parent) {
+    return child
+  }
   return {
     x1: maxDefined(parent.x1, child.x1),
     x2: minDefined(parent.x2, child.x2),
@@ -113,14 +115,22 @@ function intersectClip(parent: Clip | undefined, child: Clip): Clip {
 }
 
 function maxDefined(a: number | undefined, b: number | undefined): number | undefined {
-  if (a === undefined) return b
-  if (b === undefined) return a
+  if (a === undefined) {
+    return b
+  }
+  if (b === undefined) {
+    return a
+  }
   return Math.max(a, b)
 }
 
 function minDefined(a: number | undefined, b: number | undefined): number | undefined {
-  if (a === undefined) return b
-  if (b === undefined) return a
+  if (a === undefined) {
+    return b
+  }
+  if (b === undefined) {
+    return a
+  }
   return Math.min(a, b)
 }
 
@@ -196,7 +206,9 @@ export default class Output {
     this.screen = screen
     this.operations.length = 0
     resetScreen(screen, width, height)
-    if (this.charCache.size > 16384) this.charCache.clear()
+    if (this.charCache.size > 16384) {
+      this.charCache.clear()
+    }
   }
 
   /**
@@ -283,13 +295,17 @@ export default class Output {
     // 不可能被绘制在兄弟节点当前位置的上方。
     const absoluteClears: Rectangle[] = []
     for (const operation of this.operations) {
-      if (operation.type !== 'clear') continue
+      if (operation.type !== 'clear') {
+        continue
+      }
       const { x, y, width, height } = operation.region
       const startX = Math.max(0, x)
       const startY = Math.max(0, y)
       const maxX = Math.min(x + width, screenWidth)
       const maxY = Math.min(y + height, screenHeight)
-      if (startX >= maxX || startY >= maxY) continue
+      if (startX >= maxX || startY >= maxY) {
+        continue
+      }
       const rect = {
         x: startX,
         y: startY,
@@ -298,7 +314,9 @@ export default class Output {
       }
       screen.damage = screen.damage ? unionRect(screen.damage, rect) : rect
       clearRegion(screen, startX, startY, maxX - startX, maxY - startY)
-      if (operation.fromAbsolute) absoluteClears.push(rect)
+      if (operation.fromAbsolute) {
+        absoluteClears.push(rect)
+      }
     }
 
     const clips: Clip[] = []
@@ -349,7 +367,9 @@ export default class Output {
             clip?.y2 ?? Infinity,
           )
           const maxX = Math.min(regionX + regionWidth, screenWidth, src.width, clip?.x2 ?? Infinity)
-          if (startX >= maxX || startY >= maxY) continue
+          if (startX >= maxX || startY >= maxY) {
+            continue
+          }
           // 跳过被绝对定位节点清除覆盖的行。
           // 绝对节点覆盖普通流兄弟节点，所以 prevScreen 在
           // 该区域保存绝对节点的陈旧绘制 — blit
@@ -515,12 +535,20 @@ export default class Output {
 }
 
 function stylesEqual(a: AnsiCode[], b: AnsiCode[]): boolean {
-  if (a === b) return true // Reference equality fast path
+  if (a === b) {
+    return true // Reference equality fast path
+  }
   const len = a.length
-  if (len !== b.length) return false
-  if (len === 0) return true // Both empty
+  if (len !== b.length) {
+    return false
+  }
+  if (len === 0) {
+    return true // Both empty
+  }
   for (let i = 0; i < len; i++) {
-    if (a[i]!.code !== b[i]!.code) return false
+    if (a[i]!.code !== b[i]!.code) {
+      return false
+    }
   }
   return true
 }
@@ -538,7 +566,9 @@ function styledCharsWithGraphemeClustering(
   stylePool: StylePool,
 ): ClusteredChar[] {
   const charCount = chars.length
-  if (charCount === 0) return []
+  if (charCount === 0) {
+    return []
+  }
 
   const result: ClusteredChar[] = []
   const bufferChars: string[] = []

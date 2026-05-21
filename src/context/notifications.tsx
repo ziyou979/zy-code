@@ -2,6 +2,7 @@ import type * as React from 'react'
 import { useCallback, useEffect } from 'react'
 import { useAppStateStore, useSetAppState } from 'src/state/AppState.js'
 import type { Theme } from '../utils/theme.js'
+
 type Priority = 'low' | 'medium' | 'high' | 'immediate'
 type BaseNotification = {
   key: string
@@ -197,7 +198,9 @@ export function useNotifications(): {
         const queuedKeys = new Set(prev.notifications.queue.map((_) => _.key))
         const shouldAdd =
           !queuedKeys.has(notif.key) && prev.notifications.current?.key !== notif.key
-        if (!shouldAdd) return prev
+        if (!shouldAdd) {
+          return prev
+        }
         const invalidatesCurrent =
           prev.notifications.current !== null &&
           notif.invalidates?.includes(prev.notifications.current.key)
@@ -271,6 +274,8 @@ const PRIORITIES: Record<Priority, number> = {
   low: 3,
 }
 export function getNext(queue: Notification[]): Notification | undefined {
-  if (queue.length === 0) return undefined
+  if (queue.length === 0) {
+    return undefined
+  }
   return queue.reduce((min, n) => (PRIORITIES[n.priority] < PRIORITIES[min.priority] ? n : min))
 }

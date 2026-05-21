@@ -1,4 +1,3 @@
-import React from 'react'
 import { removeSandboxViolationTags } from 'src/utils/sandbox/sandbox-ui-utils.js'
 import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
@@ -7,6 +6,7 @@ import { ShellTimeDisplay } from '../../components/shell/ShellTimeDisplay.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import type { Out as BashOut } from './BashTool.js'
+
 type Props = {
   content: Omit<BashOut, 'interrupted'>
   verbose: boolean
@@ -84,7 +84,7 @@ export default function BashToolResultMessage({ content, verbose, timeoutMs }: P
   ;({ cleanedStderr: stderr, cwdResetWarning } = extractCwdResetWarning(stderrWithoutViolations))
   let outputLineElement2
   if (isImage) {
-    // @ts-ignore
+    // @ts-expect-error
     earlyReturn = (
       <MessageResponse height={1}>
         <Text dimColor={true}>{tSync('bash.imageDetected')}</Text>

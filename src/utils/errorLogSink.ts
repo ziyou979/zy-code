@@ -10,8 +10,8 @@
  * log.ts has NO heavy dependencies - events are queued until this sink is attached.
  */
 
+import { dirname, join } from 'node:path'
 import axios from 'axios'
-import { dirname, join } from 'path'
 import { getSessionId } from '../bootstrap/state.js'
 import { createBufferedWriter } from './bufferedWriter.js'
 import { CACHE_PATHS } from './cachePaths.js'
@@ -28,14 +28,14 @@ const DATE = dateToFilename(new Date())
  * Gets the path to the errors log file.
  */
 export function getErrorsPath(): string {
-  return join(CACHE_PATHS.errors(), DATE + '.jsonl')
+  return join(CACHE_PATHS.errors(), `${DATE}.jsonl`)
 }
 
 /**
  * Gets the path to MCP logs for a server.
  */
 export function getMCPLogsPath(serverName: string): string {
-  return join(CACHE_PATHS.mcpLogs(serverName), DATE + '.jsonl')
+  return join(CACHE_PATHS.mcpLogs(serverName), `${DATE}.jsonl`)
 }
 
 type JsonlWriter = {
@@ -52,7 +52,7 @@ function createJsonlWriter(options: {
   const writer = createBufferedWriter(options)
   return {
     write(obj: object): void {
-      writer.write(jsonStringify(obj) + '\n')
+      writer.write(`${jsonStringify(obj)}\n`)
     },
     flush: writer.flush,
     dispose: writer.dispose,

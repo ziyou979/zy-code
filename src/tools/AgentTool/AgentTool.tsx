@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-import * as React from 'react'
 import { buildTool, type ToolDef, toolMatchesName } from 'src/Tool.js'
 import type { Message as MessageType, NormalizedUserMessage } from 'src/types/message.js'
 import { getQuerySourceForAgent } from 'src/utils/promptCategory.js'
@@ -93,8 +92,8 @@ import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js'
 import {
   AGENT_TOOL_NAME,
   LEGACY_AGENT_TOOL_NAME,
-  ONE_SHOT_BUILTIN_AGENT_TYPES,
   normalizeAgentType,
+  ONE_SHOT_BUILTIN_AGENT_TYPES,
 } from './constants.js'
 import {
   buildForkedMessages,
@@ -308,6 +307,7 @@ export type RemoteLaunchedOutput = {
   outputFile: string
 }
 type InternalOutput = Output | TeammateSpawnedOutput | RemoteLaunchedOutput
+
 import type { AgentToolProgress, ShellProgress } from '../../types/tools.js'
 // AgentTool forwards both its own progress events and shell progress
 // events from the sub-agent so the SDK receives tool_progress updates during bash/powershell runs.
@@ -492,7 +492,9 @@ export const AgentTool = buildTool({
         AGENT_TOOL_NAME,
       )
       const normalizedEffective = normalizeAgentType(effectiveType)
-      const found = agents.find((agent) => normalizeAgentType(agent.agentType) === normalizedEffective)
+      const found = agents.find(
+        (agent) => normalizeAgentType(agent.agentType) === normalizedEffective,
+      )
       if (!found) {
         // Check if the agent exists but is denied by permission rules
         const agentExistsButDenied = allAgents.find(
@@ -559,7 +561,9 @@ export const AgentTool = buildTool({
                 c.name.toLowerCase().includes(pattern.toLowerCase()),
               ),
           )
-          if (hasFailedRequiredServer) break
+          if (hasFailedRequiredServer) {
+            break
+          }
           const stillPending = currentAppState.mcp.clients.some(
             (c) =>
               c.type === 'pending' &&
@@ -567,7 +571,9 @@ export const AgentTool = buildTool({
                 c.name.toLowerCase().includes(pattern.toLowerCase()),
               ),
           )
-          if (!stillPending) break
+          if (!stillPending) {
+            break
+          }
         }
       }
 
@@ -881,7 +887,9 @@ export const AgentTool = buildTool({
       worktreePath?: string
       worktreeBranch?: string
     }> => {
-      if (!worktreeInfo) return {}
+      if (!worktreeInfo) {
+        return {}
+      }
       const { worktreePath, worktreeBranch, headCommit, gitRoot, hookBased } = worktreeInfo
       // Null out to make idempotent — guards against double-call if code
       // between cleanup and end of try throws into catch
@@ -1360,9 +1368,13 @@ export const AgentTool = buildTool({
                 continue
               }
               const { result } = raceResult
-              if (result.done) break
+              if (result.done) {
+                break
+              }
               const message = result.value
-              if (!message) continue
+              if (!message) {
+                continue
+              }
               agentMessages.push(message)
 
               // Emit task_progress for the VS Code subagent panel
@@ -1762,10 +1774,13 @@ function resolveTeamName(
     }
   },
 ): string | undefined {
-  if (!isAgentSwarmsEnabled()) return undefined
+  if (!isAgentSwarmsEnabled()) {
+    return undefined
+  }
   return input.team_name || appState.teamContext?.teamName
 }
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(AgentTool)

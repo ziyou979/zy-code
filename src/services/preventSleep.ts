@@ -12,7 +12,7 @@
  *
  * Only runs on macOS - no-op on other platforms.
  */
-import { type ChildProcess, spawn } from 'child_process'
+import { type ChildProcess, spawn } from 'node:child_process'
 import { registerCleanup } from '../utils/cleanupRegistry.js'
 import { logForDebugging } from '../utils/debug.js'
 
@@ -132,11 +132,15 @@ function spawnCaffeinate(): void {
     const thisProc = caffeinateProcess
     caffeinateProcess.on('error', (err) => {
       logForDebugging(`caffeinate spawn error: ${err.message}`)
-      if (caffeinateProcess === thisProc) caffeinateProcess = null
+      if (caffeinateProcess === thisProc) {
+        caffeinateProcess = null
+      }
     })
 
     caffeinateProcess.on('exit', () => {
-      if (caffeinateProcess === thisProc) caffeinateProcess = null
+      if (caffeinateProcess === thisProc) {
+        caffeinateProcess = null
+      }
     })
 
     logForDebugging('Started caffeinate to prevent sleep')

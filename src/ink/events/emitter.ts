@@ -1,4 +1,4 @@
-import { EventEmitter as NodeEventEmitter } from 'events'
+import { EventEmitter as NodeEventEmitter } from 'node:events'
 import { Event } from './event.js'
 
 // 类似于 node 内置的 EventEmitter，但也感知我们的 `Event`

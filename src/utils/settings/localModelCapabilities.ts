@@ -9,8 +9,8 @@
  * TODO: 后续由自建能力平台替代此本地配置，改为运行时查询。
  */
 
-import { readFileSync } from 'fs'
-import { join } from 'path'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { z } from 'zod/v4'
 import { getZyConfigHomeDir } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
@@ -30,7 +30,9 @@ export function parseTokenCount(value: string | number): number {
     return Number.isFinite(value) ? value : NaN
   }
   const trimmed = value.trim().toLowerCase()
-  if (!trimmed) return NaN
+  if (!trimmed) {
+    return NaN
+  }
 
   const multipliers: Record<string, number> = { k: 1024, m: 1024 * 1024 }
   const suffix = trimmed.at(-1)
@@ -155,7 +157,9 @@ export function loadLocalModelCapabilities(): ModelCapabilitiesFile | null {
  */
 export function getLocalModelCapability(model: string): ModelCapabilityEntry | undefined {
   const config = loadLocalModelCapabilities()
-  if (!config) return undefined
+  if (!config) {
+    return undefined
+  }
   const m = model.toLowerCase()
   return config.models.find((entry) => m.includes(entry.pattern.toLowerCase()))
 }
@@ -175,7 +179,9 @@ export function localModelHasCapability(model: string, capability: ModelCapabili
  */
 export function getLocalMaxOutputTokens(model: string): number {
   const entry = getLocalModelCapability(model)
-  if (!entry?.maxOutputTokens) return NaN
+  if (!entry?.maxOutputTokens) {
+    return NaN
+  }
   return parseTokenCount(entry.maxOutputTokens)
 }
 
@@ -186,7 +192,9 @@ export function getLocalMaxOutputTokens(model: string): number {
  */
 export function getLocalMaxInputTokens(model: string): number {
   const entry = getLocalModelCapability(model)
-  if (!entry?.maxInputTokens) return NaN
+  if (!entry?.maxInputTokens) {
+    return NaN
+  }
   return parseTokenCount(entry.maxInputTokens)
 }
 
@@ -197,7 +205,9 @@ export function getLocalMaxInputTokens(model: string): number {
  */
 export function getLocalContextWindow(model: string): number {
   const entry = getLocalModelCapability(model)
-  if (!entry?.contextWindow) return NaN
+  if (!entry?.contextWindow) {
+    return NaN
+  }
   return parseTokenCount(entry.contextWindow)
 }
 
@@ -208,7 +218,9 @@ export function getLocalContextWindow(model: string): number {
  */
 export function getLocalMaxThinkingTokens(model: string): number {
   const entry = getLocalModelCapability(model)
-  if (!entry?.maxThinkingTokens) return NaN
+  if (!entry?.maxThinkingTokens) {
+    return NaN
+  }
   return parseTokenCount(entry.maxThinkingTokens)
 }
 
@@ -233,13 +245,17 @@ export function getLocalModelCosts(
     }
   | undefined {
   const entry = getLocalModelCapability(model)
-  if (!entry?.costs) return undefined
+  if (!entry?.costs) {
+    return undefined
+  }
 
   // 判断是固定单价还是阶梯费用
   if ('tiers' in entry.costs) {
     // 阶梯费用模式
     const tiers = entry.costs.tiers
-    if (!tiers || tiers.length === 0) return undefined
+    if (!tiers || tiers.length === 0) {
+      return undefined
+    }
 
     const usage = currentInputTokens ?? 0
 

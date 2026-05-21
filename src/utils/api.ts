@@ -1,6 +1,5 @@
-import type { ToolDefinition } from '../types/llm.js'
-import { createHash } from 'crypto'
-import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY, getLanguageSection } from 'src/constants/prompts.js'
+import { createHash } from 'node:crypto'
+import { getLanguageSection, SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from 'src/constants/prompts.js'
 import { getSystemContext, getUserContext } from 'src/context.js'
 import { isAnalyticsDisabled } from 'src/services/analytics/config.js'
 import {
@@ -27,6 +26,7 @@ import { AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../tools/ExitPlanModeTool/constants.js'
 import { TASK_OUTPUT_TOOL_NAME } from '../tools/TaskOutputTool/constants.js'
+import type { ToolDefinition } from '../types/llm.js'
 import type { Message } from '../types/message.js'
 import { isAgentSwarmsEnabled } from './agentSwarmsEnabled.js'
 import { modelSupportsStructuredOutputs, shouldUseGlobalCacheScope } from './betas.js'
@@ -39,12 +39,12 @@ import { getFileReadIgnorePatterns, normalizePatternsToPath } from './permission
 import { getPlan, getPlanFilePath, persistFileSnapshotIfRemote } from './plans.js'
 import { getPlatform } from './platform.js'
 import { countFilesRoundedRg } from './ripgrep.js'
+import { getInitialSettings } from './settings/settings.js'
 import { jsonStringify } from './slowOperations.js'
 import type { SystemPrompt } from './systemPromptType.js'
-import { getToolSchemaCache, type CachedSchema } from './toolSchemaCache.js'
+import { type CachedSchema, getToolSchemaCache } from './toolSchemaCache.js'
 import { windowsPathToPosixPath } from './windowsPaths.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
-import { getInitialSettings } from './settings/settings.js'
 
 // 扩展的 ToolDefinition 类型，支持 strict 模式和 defer_loading
 type ToolDefinitionWithExtras = ToolDefinition & {
@@ -253,7 +253,9 @@ export async function toolToAPISchema(
 
 let loggedStrip = false
 function logStripOnce(stripped: string[]): void {
-  if (loggedStrip) return
+  if (loggedStrip) {
+    return
+  }
   loggedStrip = true
   logForDebugging(
     `[betas] Stripped from tool schemas: [${stripped.join(', ')}] (ZY_CODE_DISABLE_EXPERIMENTAL_BETAS=1)`,
@@ -320,8 +322,12 @@ export function splitSysPromptPrefix(
     const rest: string[] = []
 
     for (const prompt of systemPrompt) {
-      if (!prompt) continue
-      if (prompt === SYSTEM_PROMPT_DYNAMIC_BOUNDARY) continue // Skip boundary
+      if (!prompt) {
+        continue
+      }
+      if (prompt === SYSTEM_PROMPT_DYNAMIC_BOUNDARY) {
+        continue // Skip boundary
+      }
       if (prompt.startsWith('x-anthropic-billing-header')) {
         attributionHeader = prompt
       } else if (CLI_SYSPROMPT_PREFIXES.has(prompt)) {
@@ -346,7 +352,7 @@ export function splitSysPromptPrefix(
   }
 
   if (useGlobalCacheFeature) {
-    const boundaryIndex = systemPrompt.findIndex((s) => s === SYSTEM_PROMPT_DYNAMIC_BOUNDARY)
+    const boundaryIndex = systemPrompt.indexOf(SYSTEM_PROMPT_DYNAMIC_BOUNDARY)
     if (boundaryIndex !== -1) {
       let attributionHeader: string | undefined
       let systemPromptPrefix: string | undefined
@@ -355,7 +361,9 @@ export function splitSysPromptPrefix(
 
       for (let i = 0; i < systemPrompt.length; i++) {
         const block = systemPrompt[i]
-        if (!block || block === SYSTEM_PROMPT_DYNAMIC_BOUNDARY) continue
+        if (!block || block === SYSTEM_PROMPT_DYNAMIC_BOUNDARY) {
+          continue
+        }
 
         if (block.startsWith('x-anthropic-billing-header')) {
           attributionHeader = block
@@ -369,12 +377,20 @@ export function splitSysPromptPrefix(
       }
 
       const result: SystemPromptBlock[] = []
-      if (attributionHeader) result.push({ text: attributionHeader, cacheScope: null })
-      if (systemPromptPrefix) result.push({ text: systemPromptPrefix, cacheScope: null })
+      if (attributionHeader) {
+        result.push({ text: attributionHeader, cacheScope: null })
+      }
+      if (systemPromptPrefix) {
+        result.push({ text: systemPromptPrefix, cacheScope: null })
+      }
       const staticJoined = staticBlocks.join('\n\n')
-      if (staticJoined) result.push({ text: staticJoined, cacheScope: 'global' })
+      if (staticJoined) {
+        result.push({ text: staticJoined, cacheScope: 'global' })
+      }
       const dynamicJoined = dynamicBlocks.join('\n\n')
-      if (dynamicJoined) result.push({ text: dynamicJoined, cacheScope: null })
+      if (dynamicJoined) {
+        result.push({ text: dynamicJoined, cacheScope: null })
+      }
 
       logEvent('zy_sysprompt_boundary_found', {
         blockCount: result.length,
@@ -394,7 +410,9 @@ export function splitSysPromptPrefix(
   const rest: string[] = []
 
   for (const block of systemPrompt) {
-    if (!block) continue
+    if (!block) {
+      continue
+    }
 
     if (block.startsWith('x-anthropic-billing-header')) {
       attributionHeader = block
@@ -406,10 +424,16 @@ export function splitSysPromptPrefix(
   }
 
   const result: SystemPromptBlock[] = []
-  if (attributionHeader) result.push({ text: attributionHeader, cacheScope: null })
-  if (systemPromptPrefix) result.push({ text: systemPromptPrefix, cacheScope: 'org' })
+  if (attributionHeader) {
+    result.push({ text: attributionHeader, cacheScope: null })
+  }
+  if (systemPromptPrefix) {
+    result.push({ text: systemPromptPrefix, cacheScope: 'org' })
+  }
   const restJoined = rest.join('\n\n')
-  if (restJoined) result.push({ text: restJoined, cacheScope: 'org' })
+  if (restJoined) {
+    result.push({ text: restJoined, cacheScope: 'org' })
+  }
   return result
 }
 

@@ -1,8 +1,8 @@
-import { mkdir, writeFile } from 'fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { marked, type Tokens } from 'marked'
-import { tmpdir } from 'os'
-import { join } from 'path'
-import React, { useRef } from 'react'
+import { useRef } from 'react'
 import type { CommandResultDisplay } from '../../commands.js'
 import { Select } from '../../components/CustomSelect/select.js'
 import { Byline } from '../../components/design-system/Byline.js'
@@ -18,6 +18,7 @@ import type { AssistantMessage, Message } from '../../types/message.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { extractTextContent, stripPromptXMLTags } from '../../utils/messages.js'
 import { countCharInString } from '../../utils/stringUtils.js'
+
 const COPY_DIR = join(tmpdir(), 'zy')
 const RESPONSE_FILENAME = 'response.md'
 const MAX_LOOKBACK = 20
@@ -49,11 +50,17 @@ export function collectRecentAssistantTexts(messages: Message[]): string[] {
   const texts: string[] = []
   for (let i = messages.length - 1; i >= 0 && texts.length < MAX_LOOKBACK; i--) {
     const msg = messages[i]
-    if (msg?.type !== 'assistant' || msg.isApiErrorMessage) continue
+    if (msg?.type !== 'assistant' || msg.isApiErrorMessage) {
+      continue
+    }
     const content = (msg as AssistantMessage).message.content
-    if (!Array.isArray(content)) continue
+    if (!Array.isArray(content)) {
+      continue
+    }
     const text = extractTextContent(content, '\n\n')
-    if (text) texts.push(text)
+    if (text) {
+      texts.push(text)
+    }
   }
   return texts
 }
@@ -78,7 +85,9 @@ async function writeToFile(text: string, filename: string): Promise<string> {
 }
 async function copyOrWriteToFile(text: string, filename: string): Promise<string> {
   const raw = await setClipboard(text)
-  if (raw) process.stdout.write(raw)
+  if (raw) {
+    process.stdout.write(raw)
+  }
   const lineCount = countCharInString(text, '\n') + 1
   const charCount = text.length
   // Also write to a temp file — clipboard paths are best-effort (OSC 52 needs
@@ -104,11 +113,13 @@ function truncateLine(text: string, maxLen: number): string {
   const targetWidth = maxLen - 1
   for (const char of firstLine) {
     const charWidth = stringWidth(char)
-    if (width + charWidth > targetWidth) break
+    if (width + charWidth > targetWidth) {
+      break
+    }
     result += char
     width += charWidth
   }
-  return result + '\u2026'
+  return `${result}\u2026`
 }
 type PickerProps = {
   fullText: string
@@ -179,7 +190,7 @@ function CopyPicker({ fullText, codeBlocks, messageAge, onDone }: PickerProps) {
         message_age: messageAge,
       })
       const result = await copyOrWriteToFile(content.text, content.filename)
-      onDone(result + '\n' + tSync('copy.preferenceSaved'))
+      onDone(`${result}\n${tSync('copy.preferenceSaved')}`)
       return
     }
     logEvent('zy_copy', {

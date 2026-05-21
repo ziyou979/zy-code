@@ -1,8 +1,8 @@
-import type { ContentBlock, TextBlock } from '../types/llm.js'
-import { randomUUID, type UUID } from 'crypto'
+import { randomUUID, type UUID } from 'node:crypto'
 import figures from 'figures'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { tSync } from 'src/i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -18,6 +18,7 @@ import { logError } from 'src/utils/log.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { Box, Text } from '../ink.js'
 import { useKeybinding, useKeybindings } from '../keybindings/useKeybinding.js'
+import type { ContentBlock, TextBlock } from '../types/llm.js'
 import type { Message, PartialCompactDirection, UserMessage } from '../types/message.js'
 import { stripDisplayTags } from '../utils/displayTags.js'
 import {
@@ -29,11 +30,12 @@ import {
 } from '../utils/messages.js'
 import { type OptionWithDescription, Select } from './CustomSelect/select.js'
 import { Spinner } from './Spinner.js'
-import { tSync } from 'src/i18n/index.js'
+
 function isTextBlock(block: ContentBlock): block is TextBlock {
   return block.type === 'text'
 }
-import * as path from 'path'
+
+import * as path from 'node:path'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
 import type { FileEditOutput } from 'src/tools/FileEditTool/types.js'
 import type { Output as FileWriteToolOutput } from 'src/tools/FileWriteTool/FileWriteTool.js'
@@ -49,8 +51,8 @@ import {
 } from '../constants/xml.js'
 import { count } from '../utils/array.js'
 import { formatRelativeTimeAgo, truncate } from '../utils/format.js'
-import { isInternalBuild } from '../utils/envUtils.js'
 import { Divider } from './design-system/Divider.js'
+
 type RestoreOption =
   | 'both'
   | 'conversation'
@@ -121,10 +123,14 @@ export function MessageSelector({
   )
   const [diffStatsForRestore, setDiffStatsForRestore] = useState<DiffStats | undefined>(undefined)
   useEffect(() => {
-    if (!preselectedMessage || !isFileHistoryEnabled) return
+    if (!preselectedMessage || !isFileHistoryEnabled) {
+      return
+    }
     let cancelled = false
     void fileHistoryGetDiffStats(fileHistory, preselectedMessage.uuid as any).then((stats) => {
-      if (!cancelled) setDiffStatsForRestore(stats)
+      if (!cancelled) {
+        setDiffStatsForRestore(stats)
+      }
     })
     return () => {
       cancelled = true
@@ -238,8 +244,11 @@ export function MessageSelector({
       return
     }
     if (option === 'nevermind') {
-      if (preselectedMessage) onClose()
-      else setMessageToRestore(undefined)
+      if (preselectedMessage) {
+        onClose()
+      } else {
+        setMessageToRestore(undefined)
+      }
       return
     }
     if (isSummarizeOption(option)) {
@@ -401,17 +410,11 @@ export function MessageSelector({
         </Text>
 
         {error && (
-          <>
-            <Text color="error">
-              {tSync('messageSelector.errorPrefix')} {error}
-            </Text>
-          </>
+          <Text color="error">
+            {tSync('messageSelector.errorPrefix')} {error}
+          </Text>
         )}
-        {!hasMessagesToSelect && (
-          <>
-            <Text>{tSync('messageSelector.nothingToRewind')}</Text>
-          </>
-        )}
+        {!hasMessagesToSelect && <Text>{tSync('messageSelector.nothingToRewind')}</Text>}
         {!error && messageToRestore && hasMessagesToSelect && (
           <>
             <Text>
@@ -478,7 +481,7 @@ export function MessageSelector({
                   const isCurrent = msg.uuid === currentUUID
                   const metadataLoaded = optionIndex in fileHistoryMetadata
                   const metadata = fileHistoryMetadata[optionIndex]
-                  const numFilesChanged = metadata?.filesChanged && metadata.filesChanged.length
+                  const numFilesChanged = metadata?.filesChanged?.length
                   return (
                     <Box
                       key={msg.uuid}
@@ -509,20 +512,18 @@ export function MessageSelector({
                         {isFileHistoryEnabled && metadataLoaded && (
                           <Box height={1} flexDirection="row">
                             {metadata ? (
-                              <>
-                                <Text dimColor={!isSelected} color="inactive">
-                                  {numFilesChanged ? (
-                                    <>
-                                      {numFilesChanged === 1 && metadata.filesChanged![0]
-                                        ? `${path.basename(metadata.filesChanged![0])} `
-                                        : `${numFilesChanged} files changed `}
-                                      <DiffStatsText diffStats={metadata} />
-                                    </>
-                                  ) : (
-                                    <>{tSync('messageSelector.noCodeChanges')}</>
-                                  )}
-                                </Text>
-                              </>
+                              <Text dimColor={!isSelected} color="inactive">
+                                {numFilesChanged ? (
+                                  <>
+                                    {numFilesChanged === 1 && metadata.filesChanged![0]
+                                      ? `${path.basename(metadata.filesChanged![0])} `
+                                      : `${numFilesChanged} files changed `}
+                                    <DiffStatsText diffStats={metadata} />
+                                  </>
+                                ) : (
+                                  tSync('messageSelector.noCodeChanges')
+                                )}
+                              </Text>
                             ) : (
                               <Text dimColor color="warning">
                                 {figures.warning} {tSync('messageSelector.noCodeRestore')}
@@ -540,7 +541,7 @@ export function MessageSelector({
         {!messageToRestore && (
           <Text dimColor italic>
             {exitState.pending ? (
-              <>{tSync('messageSelector.pressAgainToExit', { keyName: exitState.keyName })}</>
+              tSync('messageSelector.pressAgainToExit', { keyName: exitState.keyName })
             ) : (
               <>
                 {!error && hasMessagesToSelect && <>{tSync('messageSelector.enterToContinue')} </>}
@@ -590,7 +591,7 @@ function RestoreCodeConfirmation({ diffStatsForRestore }) {
   if (diffStatsForRestore === undefined) {
     return
   }
-  if (!diffStatsForRestore.filesChanged || !diffStatsForRestore.filesChanged[0]) {
+  if (!diffStatsForRestore.filesChanged?.[0]) {
     return <Text dimColor={true}>{tSync('messageSelector.codeNotChanged')}</Text>
   }
   const numFilesChanged = diffStatsForRestore.filesChanged.length
@@ -611,17 +612,15 @@ function RestoreCodeConfirmation({ diffStatsForRestore }) {
     }
   }
   return (
-    <>
-      <Text dimColor={true}>
-        {tSync('messageSelector.codeWillBeRestored')}{' '}
-        {<DiffStatsText diffStats={diffStatsForRestore} />}{' '}
-        {tSync('messageSelector.inFiles', { fileLabel })}
-      </Text>
-    </>
+    <Text dimColor={true}>
+      {tSync('messageSelector.codeWillBeRestored')}{' '}
+      {<DiffStatsText diffStats={diffStatsForRestore} />}{' '}
+      {tSync('messageSelector.inFiles', { fileLabel })}
+    </Text>
   )
 }
 function DiffStatsText({ diffStats }) {
-  if (!diffStats || !diffStats.filesChanged) {
+  if (!diffStats?.filesChanged) {
     return
   }
   return (
@@ -659,7 +658,7 @@ function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRig
         : '(no prompt)'
   const messageText = stripDisplayTags(rawMessageText)
   if (isEmptyMessageText(messageText)) {
-    // @ts-ignore
+    // @ts-expect-error
     earlyReturn = (
       <Box flexDirection="row" width="100%">
         <Text italic={true} color={color} dimColor={dimColor}>
@@ -671,7 +670,7 @@ function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRig
     if (messageText.includes('<bash-input>')) {
       const input = extractTag(messageText, 'bash-input')
       if (input) {
-        // @ts-ignore
+        // @ts-expect-error
         earlyReturn = (
           <Box flexDirection="row" width="100%">
             {<Text color="bashBorder">!</Text>}
@@ -689,7 +688,7 @@ function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRig
       const isSkillFormat = extractTag(messageText, 'skill-format') === 'true'
       if (commandMessage) {
         if (isSkillFormat) {
-          // @ts-ignore
+          // @ts-expect-error
           earlyReturn = (
             <Box flexDirection="row" width="100%">
               <Text color={color} dimColor={dimColor}>
@@ -698,7 +697,7 @@ function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRig
             </Box>
           )
         } else {
-          // @ts-ignore
+          // @ts-expect-error
           earlyReturn = (
             <Box flexDirection="row" width="100%">
               <Text color={color} dimColor={dimColor}>
@@ -759,7 +758,7 @@ function computeDiffStatsBetweenMessages(
       continue
     }
     const result = msg.toolUseResult as FileEditOutput | FileWriteToolOutput
-    if (!result || !result.filePath || !result.structuredPatch) {
+    if (!result?.filePath || !result.structuredPatch) {
       continue
     }
     if (!filesChanged.includes(result.filePath)) {
@@ -776,9 +775,7 @@ function computeDiffStatsBetweenMessages(
           deletions += removals
         }
       }
-    } catch {
-      continue
-    }
+    } catch {}
   }
   return {
     filesChanged,
@@ -837,15 +834,29 @@ export function selectableUserMessagesFilter(message: Message): message is UserM
 export function messagesAfterAreOnlySynthetic(messages: Message[], fromIndex: number): boolean {
   for (let i = fromIndex + 1; i < messages.length; i++) {
     const msg = messages[i]
-    if (!msg) continue
+    if (!msg) {
+      continue
+    }
 
     // Skip known non-meaningful message types
-    if (isSyntheticMessage(msg)) continue
-    if (isToolUseResultMessage(msg)) continue
-    if (msg.type === 'progress') continue
-    if (msg.type === 'system') continue
-    if (msg.type === 'attachment') continue
-    if (msg.type === 'user' && msg.isMeta) continue
+    if (isSyntheticMessage(msg)) {
+      continue
+    }
+    if (isToolUseResultMessage(msg)) {
+      continue
+    }
+    if (msg.type === 'progress') {
+      continue
+    }
+    if (msg.type === 'system') {
+      continue
+    }
+    if (msg.type === 'attachment') {
+      continue
+    }
+    if (msg.type === 'user' && msg.isMeta) {
+      continue
+    }
 
     // Assistant with actual content = meaningful
     if (msg.type === 'assistant') {
@@ -854,7 +865,9 @@ export function messagesAfterAreOnlySynthetic(messages: Message[], fromIndex: nu
         const hasMeaningfulContent = content.some(
           (block) => (block.type === 'text' && block.text.trim()) || block.type === 'tool_call',
         )
-        if (hasMeaningfulContent) return false
+        if (hasMeaningfulContent) {
+          return false
+        }
       }
       continue
     }

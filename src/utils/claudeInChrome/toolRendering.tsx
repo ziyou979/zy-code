@@ -5,8 +5,9 @@ import { Link, Text } from '../../ink.js'
 import { renderToolResultMessage as renderDefaultMCPToolResultMessage } from '../../tools/MCPTool/UI.js'
 import type { MCPToolResult } from '../../utils/mcpValidation.js'
 import { truncateToWidth } from '../format.js'
-// @ts-ignore
+// @ts-expect-error
 import { trackClaudeInChromeTabId } from './common.js'
+
 export type { Tool } from '@modelcontextprotocol/sdk/types.js'
 
 /**
@@ -161,7 +162,7 @@ function renderChromeViewTabLink(input: unknown): React.ReactNode {
       : typeof input.tabId === 'string'
         ? parseInt(input.tabId, 10)
         : NaN
-  if (isNaN(tabId)) {
+  if (Number.isNaN(tabId)) {
     return null
   }
   const linkUrl = `${CHROME_EXTENSION_FOCUS_TAB_URL_BASE}${tabId}`

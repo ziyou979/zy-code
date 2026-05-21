@@ -74,7 +74,9 @@ function cachedLexer(content: string): Token[] {
   if (tokenCache.size >= TOKEN_CACHE_MAX) {
     // 类 LRU：丢弃最老的。Map 保留插入顺序。
     const first = tokenCache.keys().next().value
-    if (first !== undefined) tokenCache.delete(first)
+    if (first !== undefined) {
+      tokenCache.delete(first)
+    }
   }
   tokenCache.set(key, tokens)
   return tokens

@@ -59,13 +59,23 @@ function matchesKeyboardEvent(e: KeyboardEvent, target: ParsedKeystroke): boolea
   // KeyboardEvent stores key names; ParsedKeystroke stores ' ' for space
   // and 'enter' for return (see parser.ts case 'space'/'return').
   const key = e.key === 'space' ? ' ' : e.key === 'return' ? 'enter' : e.key.toLowerCase()
-  if (key !== target.key) return false
-  if (e.ctrl !== target.ctrl) return false
-  if (e.shift !== target.shift) return false
+  if (key !== target.key) {
+    return false
+  }
+  if (e.ctrl !== target.ctrl) {
+    return false
+  }
+  if (e.shift !== target.shift) {
+    return false
+  }
   // KeyboardEvent.meta folds alt|option (terminal limitation — esc-prefix);
   // ParsedKeystroke has both alt and meta as aliases for the same thing.
-  if (e.meta !== (target.alt || target.meta)) return false
-  if (e.superKey !== target.super) return false
+  if (e.meta !== (target.alt || target.meta)) {
+    return false
+  }
+  if (e.superKey !== target.super) {
+    return false
+  }
   return true
 }
 
@@ -179,8 +189,12 @@ export function useVoiceIntegration({
         }
       }
       const newValue = stripped + gap + afterCursor
-      if (anchor) lastSetInputRef.current = newValue
-      if (newValue === prev && stripCount === 0) return remaining
+      if (anchor) {
+        lastSetInputRef.current = newValue
+      }
+      if (newValue === prev && stripCount === 0) {
+        return remaining
+      }
       if (insertTextRef.current) {
         insertTextRef.current.setInputWithCursor(newValue, stripped.length)
       } else {
@@ -199,7 +213,9 @@ export function useVoiceIntegration({
   // persist in the input.
   const resetAnchor = useCallback(() => {
     const prefix = voicePrefixRef.current
-    if (prefix === null) return
+    if (prefix === null) {
+      return
+    }
     const suffix = voiceSuffixRef.current
     voicePrefixRef.current = null
     voiceSuffixRef.current = ''
@@ -228,7 +244,9 @@ export function useVoiceIntegration({
   // Set the voice anchor for focus mode (where recording starts via terminal
   // focus, not key hold). Key-hold sets the anchor in stripTrailing.
   useEffect(() => {
-    if (!feature('VOICE_MODE')) return
+    if (!feature('VOICE_MODE')) {
+      return
+    }
     if (voiceState === 'recording' && voicePrefixRef.current === null) {
       const input = inputValueRef.current
       const offset_0 = insertTextRef.current?.cursorOffset ?? input.length
@@ -247,8 +265,12 @@ export function useVoiceIntegration({
   // transcribes speech. The prefix (user-typed text before the cursor) is
   // preserved and the transcript is inserted between prefix and suffix.
   useEffect(() => {
-    if (!feature('VOICE_MODE')) return
-    if (voicePrefixRef.current === null) return
+    if (!feature('VOICE_MODE')) {
+      return
+    }
+    if (voicePrefixRef.current === null) {
+      return
+    }
     const voicePrefix = voicePrefixRef.current
     const voiceSuffix = voiceSuffixRef.current
     // Submit race: if the input isn't what this hook last set it to, the
@@ -256,7 +278,9 @@ export function useVoiceIntegration({
     // cleared on voiceState→idle, so it's still set during the 'processing'
     // window between CloseStream and WS close — this catches refined
     // TranscriptText arriving then and re-filling a cleared input.
-    if (inputValueRef.current !== lastSetInputRef.current) return
+    if (inputValueRef.current !== lastSetInputRef.current) {
+      return
+    }
     const needsSpace =
       voicePrefix.length > 0 && !/\s$/.test(voicePrefix) && voiceInterimTranscript.length > 0
     // Don't gate on voiceInterimTranscript.length -- when interim clears to ''
@@ -278,10 +302,14 @@ export function useVoiceIntegration({
   }, [voiceInterimTranscript, setInputValueRaw, inputValueRef, insertTextRef])
   const handleVoiceTranscript = useCallback(
     (text: string) => {
-      if (!feature('VOICE_MODE')) return
+      if (!feature('VOICE_MODE')) {
+        return
+      }
       const finalPrefix = voicePrefixRef.current
       // No voice anchor — voice was reset (or never started). Nothing to do.
-      if (finalPrefix === null) return
+      if (finalPrefix === null) {
+        return
+      }
       const finalSuffix = voiceSuffixRef.current
       // Submit race: finishRecording() → user presses Enter (input cleared)
       // → WebSocket close → this callback fires with stale prefix/suffix.
@@ -289,7 +317,9 @@ export function useVoiceIntegration({
       // or anchor), the user submitted or edited — don't re-fill. Comparing
       // against `text.length` would false-positive when the final is longer
       // than the interim (ASR routinely adds punctuation/corrections).
-      if (inputValueRef.current !== lastSetInputRef.current) return
+      if (inputValueRef.current !== lastSetInputRef.current) {
+        return
+      }
       const needsSpace = finalPrefix.length > 0 && !/\s$/.test(finalPrefix) && text.length > 0
       const needsTrailingSpace =
         finalSuffix.length > 0 && !/^\s/.test(finalSuffix) && text.length > 0
@@ -328,9 +358,15 @@ export function useVoiceIntegration({
   // Compute the character range of interim (not-yet-finalized) transcript
   // text in the input value, so the UI can dim it.
   const interimRange = useMemo((): InterimRange | null => {
-    if (!feature('VOICE_MODE')) return null
-    if (voicePrefixRef.current === null) return null
-    if (voiceInterimTranscript.length === 0) return null
+    if (!feature('VOICE_MODE')) {
+      return null
+    }
+    if (voicePrefixRef.current === null) {
+      return null
+    }
+    if (voiceInterimTranscript.length === 0) {
+      return null
+    }
     const prefix_2 = voicePrefixRef.current
     const needsSpace_1 =
       prefix_2.length > 0 && !/\s$/.test(prefix_2) && voiceInterimTranscript.length > 0
@@ -407,13 +443,21 @@ export function useVoiceKeybindingHandler({
   // is also bound in Settings/Confirmation/Plugin (select:accept etc.);
   // without the filter those would null out the default.
   const voiceKeystroke = useMemo((): ParsedKeystroke | null => {
-    if (!keybindingContext) return DEFAULT_VOICE_KEYSTROKE
+    if (!keybindingContext) {
+      return DEFAULT_VOICE_KEYSTROKE
+    }
     let result: ParsedKeystroke | null = null
     for (const binding of keybindingContext.bindings) {
-      if (binding.context !== 'Chat') continue
-      if (binding.chord.length !== 1) continue
+      if (binding.context !== 'Chat') {
+        continue
+      }
+      if (binding.chord.length !== 1) {
+        continue
+      }
       const ks = binding.chord[0]
-      if (!ks) continue
+      if (!ks) {
+        continue
+      }
       if (binding.action === 'voice:pushToTalk') {
         result = ks
       } else if (result !== null && keystrokesEqual(ks, result)) {
@@ -470,7 +514,9 @@ export function useVoiceKeybindingHandler({
       charsInInputRef.current = 0
       recordingFloorRef.current = 0
       setVoiceState((prev) => {
-        if (!prev.voiceWarmingUp) return prev
+        if (!prev.voiceWarmingUp) {
+          return prev
+        }
         return {
           ...prev,
           voiceWarmingUp: false,
@@ -479,7 +525,9 @@ export function useVoiceKeybindingHandler({
     }
   }, [voiceState, setVoiceState])
   const handleKeyDown = (e: KeyboardEvent): void => {
-    if (!voiceEnabled) return
+    if (!voiceEnabled) {
+      return
+    }
 
     // PromptInput is not a valid transcript target — let the hold key
     // flow through instead of swallowing it into stale refs (#33556).
@@ -489,12 +537,16 @@ export function useVoiceKeybindingHandler({
     //     /plugin. Mirrors CommandKeybindingHandlers' isActive gate.
     //   - isModalOverlayActive: overlay (permission dialog, Select with
     //     onCancel) has focus; PromptInput is mounted but focus=false.
-    if (!isActive || isModalOverlayActive) return
+    if (!isActive || isModalOverlayActive) {
+      return
+    }
 
     // null means the user overrode the default (null-unbind/reassign) —
     // hold-to-talk is disabled via binding. To toggle the feature
     // itself, use /voice.
-    if (voiceKeystroke === null) return
+    if (voiceKeystroke === null) {
+      return
+    }
 
     // Match the configured key. Bare chars match by content (handles
     // batched auto-repeat like "vvv") with a modifier reject so e.g.
@@ -502,18 +554,26 @@ export function useVoiceKeybindingHandler({
     // matchesKeyboardEvent (one event per repeat, no batching).
     let repeatCount: number
     if (bareChar !== null) {
-      if (e.ctrl || e.meta || e.shift) return
+      if (e.ctrl || e.meta || e.shift) {
+        return
+      }
       // When bound to space, also accept U+3000 (full-width space) —
       // CJK IMEs emit it for the same physical key.
       const normalized = bareChar === ' ' ? normalizeFullWidthSpace(e.key) : e.key
       // Fast-path: normal typing (any char that isn't the bound one)
       // bails here without allocating. The repeat() check only matters
       // for batched auto-repeat (input.length > 1) which is rare.
-      if (normalized[0] !== bareChar) return
-      if (normalized.length > 1 && normalized !== bareChar.repeat(normalized.length)) return
+      if (normalized[0] !== bareChar) {
+        return
+      }
+      if (normalized.length > 1 && normalized !== bareChar.repeat(normalized.length)) {
+        return
+      }
       repeatCount = normalized.length
     } else {
-      if (!matchesKeyboardEvent(e, voiceKeystroke)) return
+      if (!matchesKeyboardEvent(e, voiceKeystroke)) {
+        return
+      }
       repeatCount = 1
     }
 
@@ -549,7 +609,9 @@ export function useVoiceKeybindingHandler({
     // hit the warmup else-branch (swallow only). Bare chars flow through
     // unconditionally — user may be typing during focus-recording.
     if (currentVoiceState !== 'idle') {
-      if (bareChar === null) e.stopImmediatePropagation()
+      if (bareChar === null) {
+        e.stopImmediatePropagation()
+      }
       return
     }
     const countBefore = rapidCountRef.current
@@ -571,7 +633,9 @@ export function useVoiceKeybindingHandler({
       rapidCountRef.current = 0
       isHoldActiveRef.current = true
       setVoiceState((prevState) => {
-        if (!prevState.voiceWarmingUp) return prevState
+        if (!prevState.voiceWarmingUp) {
+          return prevState
+        }
         return {
           ...prevState,
           voiceWarmingUp: false,
@@ -635,7 +699,9 @@ export function useVoiceKeybindingHandler({
     // Show warmup feedback once we detect a hold pattern
     if (rapidCountRef.current >= WARMUP_THRESHOLD) {
       setVoiceState((prevState) => {
-        if (prevState.voiceWarmingUp) return prevState
+        if (prevState.voiceWarmingUp) {
+          return prevState
+        }
         return {
           ...prevState,
           voiceWarmingUp: true,
@@ -651,7 +717,9 @@ export function useVoiceKeybindingHandler({
         countRef.current = 0
         charsRef.current = 0
         setVoiceStateRef((prevState) => {
-          if (!prevState.voiceWarmingUp) return prevState
+          if (!prevState.voiceWarmingUp) {
+            return prevState
+          }
           return {
             ...prevState,
             voiceWarmingUp: false,

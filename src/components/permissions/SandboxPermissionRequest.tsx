@@ -1,4 +1,4 @@
-import * as React from 'react'
+import { tSync } from 'src/i18n/index.js'
 import { Box, Text } from 'src/ink.js'
 import {
   type NetworkHostPattern,
@@ -6,7 +6,6 @@ import {
 } from 'src/utils/sandbox/sandbox-adapter.js'
 import { Select } from '../CustomSelect/select.js'
 import { PermissionDialog } from './PermissionDialog.js'
-import { tSync } from 'src/i18n/index.js'
 export type SandboxPermissionRequestProps = {
   hostPattern: NetworkHostPattern
   onUserResponse: (response: { allow: boolean; persistToSettings: boolean }) => void

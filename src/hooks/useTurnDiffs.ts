@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-expect-error
 import type { StructuredPatchHunk } from 'diff'
 import { useMemo, useRef } from 'react'
 import type { FileEditOutput } from '../tools/FileEditTool/types.js'
@@ -35,7 +35,9 @@ type TurnDiffCache = {
 }
 
 function isFileEditResult(result: unknown): result is FileEditResult {
-  if (!result || typeof result !== 'object') return false
+  if (!result || typeof result !== 'object') {
+    return false
+  }
   const r = result as Record<string, unknown>
   // FileEditTool: has structuredPatch with content
   // FileWriteTool (update): has structuredPatch with content
@@ -58,20 +60,27 @@ function countHunkLines(hunks: StructuredPatchHunk[]): {
   let removed = 0
   for (const hunk of hunks) {
     for (const line of hunk.lines) {
-      if (line.startsWith('+')) added++
-      else if (line.startsWith('-')) removed++
+      if (line.startsWith('+')) {
+        added++
+      } else if (line.startsWith('-')) {
+        removed++
+      }
     }
   }
   return { added, removed }
 }
 
 function getUserPromptPreview(message: Message): string {
-  if (message.type !== 'user') return ''
+  if (message.type !== 'user') {
+    return ''
+  }
   const content = message.message.content
   const text = typeof content === 'string' ? content : ''
   // Truncate to ~30 chars
-  if (text.length <= 30) return text
-  return text.slice(0, 29) + '…'
+  if (text.length <= 30) {
+    return text
+  }
+  return `${text.slice(0, 29)}…`
 }
 
 function computeTurnStats(turn: TurnDiff): void {
@@ -117,7 +126,9 @@ export function useTurnDiffs(messages: Message[]): TurnDiff[] {
     // Process only new messages
     for (let i = c.lastProcessedIndex; i < messages.length; i++) {
       const message = messages[i]
-      if (!message || message.type !== 'user') continue
+      if (!message || message.type !== 'user') {
+        continue
+      }
 
       // Check if this is a user prompt (not a tool result)
       const isToolResult =
@@ -169,7 +180,7 @@ export function useTurnDiffs(messages: Message[]): TurnDiff[] {
               oldLines: 0,
               newStart: 1,
               newLines: lines.length,
-              lines: lines.map((l) => '+' + l),
+              lines: lines.map((l) => `+${l}`),
             }
             fileEntry.hunks.push(syntheticHunk)
             fileEntry.linesAdded += lines.length

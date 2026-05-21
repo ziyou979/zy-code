@@ -41,7 +41,9 @@ export function getAssistantSystemPromptAddendum(): string {
 
 /** 获取 assistant mode 的激活路径（用于日志和诊断） */
 export function getAssistantActivationPath(): string {
-  if (_assistantForced) return 'cli:--assistant'
+  if (_assistantForced) {
+    return 'cli:--assistant'
+  }
   return 'settings:kairosEnabled'
 }
 

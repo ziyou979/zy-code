@@ -1,5 +1,5 @@
-import { appendFile, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { appendFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { getProjectRoot, getSessionId } from './bootstrap/state.js'
 import { registerCleanup } from './utils/cleanupRegistry.js'
 import type { HistoryEntry, PastedContent } from './utils/config.js'
@@ -62,7 +62,7 @@ export function parseReferences(
   const matches = [...input.matchAll(referencePattern)]
   return matches
     .map((match) => ({
-      id: parseInt(match[2] || '0'),
+      id: parseInt(match[2] || '0', 10),
       match: match[0],
       index: match.index,
     }))
@@ -85,7 +85,9 @@ export function expandPastedTextRefs(
   for (let i = refs.length - 1; i >= 0; i--) {
     const ref = refs[i]!
     const content = pastedContents[ref.id]
-    if (content?.type !== 'text') continue
+    if (content?.type !== 'text') {
+      continue
+    }
     expanded =
       expanded.slice(0, ref.index) + content.content + expanded.slice(ref.index + ref.match.length)
   }
@@ -154,9 +156,15 @@ export async function* getTimestampedHistory(): AsyncGenerator<TimestampedHistor
   const seen = new Set<string>()
 
   for await (const entry of makeLogEntryReader()) {
-    if (!entry || typeof entry.project !== 'string') continue
-    if (entry.project !== currentProject) continue
-    if (seen.has(entry.display)) continue
+    if (!entry || typeof entry.project !== 'string') {
+      continue
+    }
+    if (entry.project !== currentProject) {
+      continue
+    }
+    if (seen.has(entry.display)) {
+      continue
+    }
     seen.add(entry.display)
 
     yield {
@@ -165,7 +173,9 @@ export async function* getTimestampedHistory(): AsyncGenerator<TimestampedHistor
       resolve: () => logEntryToHistoryEntry(entry),
     }
 
-    if (seen.size >= MAX_HISTORY_ITEMS) return
+    if (seen.size >= MAX_HISTORY_ITEMS) {
+      return
+    }
   }
 }
 
@@ -185,8 +195,12 @@ export async function* getHistory(): AsyncGenerator<HistoryEntry> {
 
   for await (const entry of makeLogEntryReader()) {
     // Skip malformed entries (corrupted file, old format, or invalid JSON structure)
-    if (!entry || typeof entry.project !== 'string') continue
-    if (entry.project !== currentProject) continue
+    if (!entry || typeof entry.project !== 'string') {
+      continue
+    }
+    if (entry.project !== currentProject) {
+      continue
+    }
 
     if (entry.sessionId === currentSession) {
       yield await logEntryToHistoryEntry(entry)
@@ -196,11 +210,15 @@ export async function* getHistory(): AsyncGenerator<HistoryEntry> {
     }
 
     // Same MAX_HISTORY_ITEMS window as before — just reordered within it.
-    if (yielded + otherSessionEntries.length >= MAX_HISTORY_ITEMS) break
+    if (yielded + otherSessionEntries.length >= MAX_HISTORY_ITEMS) {
+      break
+    }
   }
 
   for (const entry of otherSessionEntries) {
-    if (yielded >= MAX_HISTORY_ITEMS) return
+    if (yielded >= MAX_HISTORY_ITEMS) {
+      return
+    }
     yield await logEntryToHistoryEntry(entry)
     yielded++
   }
@@ -304,7 +322,7 @@ async function immediateFlushHistory(): Promise<void> {
       },
     })
 
-    const jsonLines = pendingEntries.map((entry) => jsonStringify(entry) + '\n')
+    const jsonLines = pendingEntries.map((entry) => `${jsonStringify(entry)}\n`)
     pendingEntries = []
 
     await appendFile(historyPath, jsonLines.join(''), { mode: 0o600 })
@@ -396,7 +414,7 @@ async function addToPromptHistory(command: HistoryEntry | string): Promise<void>
     while (Buffer.byteLength(truncated, 'utf8') > MAX_DISPLAY_BYTES) {
       truncated = truncated.slice(0, -1)
     }
-    finalLogEntry = { ...logEntry, display: truncated + '…' }
+    finalLogEntry = { ...logEntry, display: `${truncated}…` }
   }
 
   pendingEntries.push(finalLogEntry)
@@ -448,7 +466,9 @@ export function clearPendingHistoryEntries(): void {
  * entry so a second call is a no-op.
  */
 export function removeLastFromHistory(): void {
-  if (!lastAddedEntry) return
+  if (!lastAddedEntry) {
+    return
+  }
   const entry = lastAddedEntry
   lastAddedEntry = null
 

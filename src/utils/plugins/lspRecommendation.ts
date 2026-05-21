@@ -10,7 +10,7 @@
  * are not detectable until after installation.
  */
 
-import { extname } from 'path'
+import { extname } from 'node:path'
 import { isBinaryInstalled } from '../binaryCheck.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config.js'
 import { logForDebugging } from '../debug.js'
@@ -271,8 +271,12 @@ export async function getMatchingLspPlugins(filePath: string): Promise<LspPlugin
 
   // Sort: official marketplaces first
   pluginsWithBinary.sort((a, b) => {
-    if (a.info.isOfficial && !b.info.isOfficial) return -1
-    if (!a.info.isOfficial && b.info.isOfficial) return 1
+    if (a.info.isOfficial && !b.info.isOfficial) {
+      return -1
+    }
+    if (!a.info.isOfficial && b.info.isOfficial) {
+      return 1
+    }
     return 0
   })
 

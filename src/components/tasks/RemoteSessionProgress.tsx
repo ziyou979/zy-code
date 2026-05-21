@@ -1,10 +1,11 @@
-import React, { useRef } from 'react'
+import { useRef } from 'react'
 import type { RemoteAgentTaskState } from 'src/tasks/RemoteAgentTask/RemoteAgentTask.js'
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js'
 import { useSettings } from '../../hooks/useSettings.js'
 import { Text, useAnimationFrame } from '../../ink.js'
 import { count } from '../../utils/array.js'
 import { getRainbowColor } from '../../utils/thinking.js'
+
 const TICK_MS = 80
 type ReviewStage = NonNullable<NonNullable<RemoteAgentTaskState['reviewProgress']>['stage']>
 
@@ -24,16 +25,22 @@ export function formatReviewStageCounts(
   refuted: number,
 ): string {
   // Pre-stage orchestrator images don't write the stage field.
-  if (!stage) return `${found} found · ${verified} verified`
+  if (!stage) {
+    return `${found} found · ${verified} verified`
+  }
   if (stage === 'synthesizing') {
     const parts = [`${verified} verified`]
-    if (refuted > 0) parts.push(`${refuted} refuted`)
+    if (refuted > 0) {
+      parts.push(`${refuted} refuted`)
+    }
     parts.push('deduping')
     return parts.join(' · ')
   }
   if (stage === 'verifying') {
     const parts = [`${found} found`, `${verified} verified`]
-    if (refuted > 0) parts.push(`${refuted} refuted`)
+    if (refuted > 0) {
+      parts.push(`${refuted} refuted`)
+    }
     return parts.join(' · ')
   }
   // stage === 'finding'

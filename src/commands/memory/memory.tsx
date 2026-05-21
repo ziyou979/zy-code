@@ -1,17 +1,18 @@
-import { mkdir, writeFile } from 'fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 import * as React from 'react'
 import type { CommandResultDisplay } from '../../commands.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { MemoryFileSelector } from '../../components/memory/MemoryFileSelector.js'
 import { getRelativeMemoryPath } from '../../components/memory/MemoryUpdateNotification.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Link, Text } from '../../ink.js'
+import { Box, Text } from '../../ink.js'
 import type { LocalJSXCommandCall } from '../../types/command.js'
-import { clearMemoryFileCaches, getMemoryFiles } from '../../utils/zymd.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { editFileInEditor } from '../../utils/promptEditor.js'
+import { clearMemoryFileCaches, getMemoryFiles } from '../../utils/zymd.js'
+
 function MemoryCommand({
   onDone,
 }: {
@@ -61,7 +62,7 @@ function MemoryCommand({
         ? `> ${tSync('memory.usingEditorHint', { editorSource, editorValue })}`
         : `> ${tSync('memory.editorHint')}`
       onDone(
-        tSync('memory.openedAt', { path: getRelativeMemoryPath(memoryPath) }) + `\n\n${editorHint}`,
+        `${tSync('memory.openedAt', { path: getRelativeMemoryPath(memoryPath) })}\n\n${editorHint}`,
         {
           display: 'system',
         },

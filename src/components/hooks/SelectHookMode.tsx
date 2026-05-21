@@ -1,13 +1,5 @@
-/**
- * SelectHookMode shows all hooks configured for a given event+matcher pair.
- *
- * The /hooks menu is read-only: this view no longer offers "add new hook"
- * and selecting a hook shows its read-only details instead of a delete
- * confirmation.
- */
-import * as React from 'react'
-import { tSync } from 'src/i18n/index.js'
 import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js'
+import { tSync } from 'src/i18n/index.js'
 import type { HookEventMetadata } from 'src/utils/hooks/hooksConfigManager.js'
 import { Box, Text } from '../../ink.js'
 import {
@@ -17,6 +9,7 @@ import {
 } from '../../utils/hooks/hooksSettings.js'
 import { Select } from '../CustomSelect/select.js'
 import { Dialog } from '../design-system/Dialog.js'
+
 type Props = {
   selectedEvent: HookEvent
   selectedMatcher: string | null

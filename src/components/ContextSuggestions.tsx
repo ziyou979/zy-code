@@ -1,10 +1,10 @@
 import figures from 'figures'
-import * as React from 'react'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import type { ContextSuggestion } from '../utils/contextSuggestions.js'
 import { formatTokens } from '../utils/format.js'
 import { StatusIcon } from './design-system/StatusIcon.js'
+
 type Props = {
   suggestions: ContextSuggestion[]
 }

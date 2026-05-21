@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import { useCallback, useEffect, useRef } from 'react'
 import { useInterval } from 'usehooks-ts'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
@@ -117,20 +117,26 @@ export function useInboxPoller({
   const onSubmitTeammateMessage = onSubmitMessage
   const store = useAppStateStore()
   const setAppState = useSetAppState()
-  const inboxMessageCount = useAppState((s) => s.inbox.messages.length)
+  const _inboxMessageCount = useAppState((s) => s.inbox.messages.length)
   const terminal = useTerminalNotification()
 
   const poll = useCallback(async () => {
-    if (!enabled) return
+    if (!enabled) {
+      return
+    }
 
     // Use ref to avoid dependency on appState object (prevents infinite loop)
     const currentAppState = store.getState()
     const agentName = getAgentNameToPoll(currentAppState)
-    if (!agentName) return
+    if (!agentName) {
+      return
+    }
 
     const unread = await readUnreadMessages(agentName, currentAppState.teamContext?.teamName)
 
-    if (unread.length === 0) return
+    if (unread.length === 0) {
+      return
+    }
 
     logForDebugging(`[InboxPoller] Found ${unread.length} unread message(s)`)
 
@@ -234,7 +240,9 @@ export function useInboxPoller({
 
       for (const m of permissionRequests) {
         const parsed = isPermissionRequest(m.text)
-        if (!parsed) continue
+        if (!parsed) {
+          continue
+        }
 
         if (setToolUseConfirmQueue) {
           // Route through the standard ToolUseConfirmQueue so tmux workers
@@ -339,7 +347,9 @@ export function useInboxPoller({
 
       for (const m of permissionResponses) {
         const parsed = isPermissionResponse(m.text)
-        if (!parsed) continue
+        if (!parsed) {
+          continue
+        }
 
         if (hasPermissionCallback(parsed.request_id)) {
           logForDebugging(
@@ -381,7 +391,9 @@ export function useInboxPoller({
 
       for (const m of sandboxPermissionRequests) {
         const parsed = isSandboxPermissionRequest(m.text)
-        if (!parsed) continue
+        if (!parsed) {
+          continue
+        }
 
         // Validate required nested fields to prevent crashes from malformed messages
         if (!parsed.hostPattern?.host) {
@@ -432,7 +444,9 @@ export function useInboxPoller({
 
       for (const m of sandboxPermissionResponses) {
         const parsed = isSandboxPermissionResponse(m.text)
-        if (!parsed) continue
+        if (!parsed) {
+          continue
+        }
 
         // Check if we have a registered callback for this request
         if (hasSandboxPermissionCallback(parsed.requestId)) {
@@ -560,7 +574,9 @@ export function useInboxPoller({
 
       for (const m of planApprovalRequests) {
         const parsed = isPlanApprovalRequest(m.text)
-        if (!parsed) continue
+        if (!parsed) {
+          continue
+        }
 
         // Write approval response to teammate's inbox
         const approvalResponse = {
@@ -624,7 +640,9 @@ export function useInboxPoller({
 
       for (const m of shutdownApprovals) {
         const parsed = isShutdownApproved(m.text)
-        if (!parsed) continue
+        if (!parsed) {
+          continue
+        }
 
         // Kill the pane if we have the info (pane-based teammates)
         if (parsed.paneId && parsed.backendType) {
@@ -668,8 +686,12 @@ export function useInboxPoller({
               : { notificationMessage: `${teammateToRemove} has shut down.` }
 
             setAppState((prev) => {
-              if (!prev.teamContext?.teammates) return prev
-              if (!(teammateId in prev.teamContext.teammates)) return prev
+              if (!prev.teamContext?.teammates) {
+                return prev
+              }
+              if (!(teammateId in prev.teamContext.teammates)) {
+                return prev
+              }
               const { [teammateId]: _, ...remainingTeammates } = prev.teamContext.teammates
 
               // Mark the teammate's task as completed so hasRunningTeammates
@@ -795,7 +817,9 @@ export function useInboxPoller({
 
   // When session becomes idle, deliver any pending messages and clean up processed ones
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled) {
+      return
+    }
 
     // Skip if busy or in a dialog
     if (isLoading || focusedInputDialog) {
@@ -805,7 +829,9 @@ export function useInboxPoller({
     // Use ref to avoid dependency on appState object (prevents infinite loop)
     const currentAppState = store.getState()
     const agentName = getAgentNameToPoll(currentAppState)
-    if (!agentName) return
+    if (!agentName) {
+      return
+    }
 
     const pendingMessages = currentAppState.inbox.messages.filter((m) => m.status === 'pending')
     const processedMessages = currentAppState.inbox.messages.filter((m) => m.status === 'processed')
@@ -825,7 +851,9 @@ export function useInboxPoller({
     }
 
     // No pending messages to deliver
-    if (pendingMessages.length === 0) return
+    if (pendingMessages.length === 0) {
+      return
+    }
 
     logForDebugging(
       `[InboxPoller] Session idle, delivering ${pendingMessages.length} pending message(s)`,
@@ -854,15 +882,7 @@ export function useInboxPoller({
     } else {
       logForDebugging(`[InboxPoller] Submission rejected, keeping messages queued`)
     }
-  }, [
-    enabled,
-    isLoading,
-    focusedInputDialog,
-    onSubmitTeammateMessage,
-    setAppState,
-    inboxMessageCount,
-    store,
-  ])
+  }, [enabled, isLoading, focusedInputDialog, onSubmitTeammateMessage, setAppState, store])
 
   // Poll if running as a teammate or as a team lead
   const shouldPoll = enabled && !!getAgentNameToPoll(store.getState())
@@ -871,8 +891,12 @@ export function useInboxPoller({
   // Initial poll on mount (only once)
   const hasDoneInitialPollRef = useRef(false)
   useEffect(() => {
-    if (!enabled) return
-    if (hasDoneInitialPollRef.current) return
+    if (!enabled) {
+      return
+    }
+    if (hasDoneInitialPollRef.current) {
+      return
+    }
     // Use store.getState() to avoid dependency on appState object
     if (getAgentNameToPoll(store.getState())) {
       hasDoneInitialPollRef.current = true

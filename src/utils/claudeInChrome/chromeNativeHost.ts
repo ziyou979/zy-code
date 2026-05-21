@@ -6,15 +6,15 @@
  * previously implemented as a Rust NAPI binding but now in pure TypeScript.
  */
 
-import { appendFile, chmod, mkdir, readdir, rmdir, stat, unlink } from 'fs/promises'
-import { createServer, type Server, type Socket } from 'net'
-import { homedir, platform } from 'os'
-import { join } from 'path'
+import { appendFile, chmod, mkdir, readdir, rmdir, stat, unlink } from 'node:fs/promises'
+import { createServer, type Server, type Socket } from 'node:net'
+import { homedir, platform } from 'node:os'
+import { join } from 'node:path'
 import { z } from 'zod'
 import { isInternalBuild } from '../envUtils.js'
 import { lazySchema } from '../lazySchema.js'
 import { jsonParse, jsonStringify } from '../slowOperations.js'
-// @ts-ignore
+// @ts-expect-error
 import { getSecureSocketPath, getSocketDir } from './common.js'
 
 const VERSION = '1.0.0'
@@ -27,7 +27,7 @@ const LOG_FILE = isInternalBuild()
 function log(message: string, ...args: unknown[]): void {
   if (LOG_FILE) {
     const timestamp = new Date().toISOString()
-    const formattedArgs = args.length > 0 ? ' ' + jsonStringify(args) : ''
+    const formattedArgs = args.length > 0 ? ` ${jsonStringify(args)}` : ''
     const logLine = `[${timestamp}] [Zy Chrome Native Host] ${message}${formattedArgs}\n`
     // Fire-and-forget: logging is best-effort and callers (including event
     // handlers) don't await
@@ -136,7 +136,7 @@ class ChromeNativeHost {
             continue
           }
           const pid = parseInt(file.replace('.sock', ''), 10)
-          if (isNaN(pid)) {
+          if (Number.isNaN(pid)) {
             continue
           }
           try {

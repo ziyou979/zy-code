@@ -1,15 +1,14 @@
+import { exec } from 'node:child_process'
+import { mkdir, stat } from 'node:fs/promises'
+import { join } from 'node:path'
 import chalk from 'chalk'
-import { exec } from 'child_process'
 import { execa } from 'execa'
-import { mkdir, stat } from 'fs/promises'
 import memoize from 'lodash-es/memoize.js'
-import { join } from 'path'
 import { ZY_CODE_PROFILE_SCOPE } from 'src/constants/oauth.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { getModelStrings } from 'src/utils/model/modelStrings.js'
 import { getAPIProvider, isOpenAIProvider } from 'src/utils/model/providers.js'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { getMockSubscriptionType, shouldUseMockSubscription } from '../services/mockRateLimits.js'
@@ -28,7 +27,7 @@ import {
   maybeRemoveApiKeyFromMacOSKeychainThrows,
   normalizeApiKeyForConfig,
 } from './authPortable.js'
-import { checkStsCallerIdentity, clearAwsIniCache, isValidAwsStsOutput } from './aws.js'
+import { checkStsCallerIdentity, isValidAwsStsOutput } from './aws.js'
 import { AwsAuthStatusManager } from './awsAuthStatusManager.js'
 import { clearBetasCaches } from './betas.js'
 import {
@@ -352,7 +351,9 @@ export function getApiKeyHelperElapsedMs(): number {
 export async function getApiKeyFromApiKeyHelper(
   isNonInteractiveSession: boolean,
 ): Promise<string | null> {
-  if (!getConfiguredApiKeyHelper()) return null
+  if (!getConfiguredApiKeyHelper()) {
+    return null
+  }
   const ttl = calculateApiKeyHelperTTL()
   if (_apiKeyHelperCache) {
     if (Date.now() - _apiKeyHelperCache.timestamp < ttl) {
@@ -369,7 +370,9 @@ export async function getApiKeyFromApiKeyHelper(
     return _apiKeyHelperCache.value
   }
   // 冷缓存——去重并发调用
-  if (_apiKeyHelperInflight) return _apiKeyHelperInflight.promise
+  if (_apiKeyHelperInflight) {
+    return _apiKeyHelperInflight.promise
+  }
   _apiKeyHelperInflight = {
     promise: _runAndCache(isNonInteractiveSession, true, _apiKeyHelperEpoch),
     startedAt: Date.now(),
@@ -384,13 +387,17 @@ async function _runAndCache(
 ): Promise<string | null> {
   try {
     const value = await _executeApiKeyHelper(isNonInteractiveSession)
-    if (epoch !== _apiKeyHelperEpoch) return value
+    if (epoch !== _apiKeyHelperEpoch) {
+      return value
+    }
     if (value !== null) {
       _apiKeyHelperCache = { value, timestamp: Date.now() }
     }
     return value
   } catch (e) {
-    if (epoch !== _apiKeyHelperEpoch) return ' '
+    if (epoch !== _apiKeyHelperEpoch) {
+      return ' '
+    }
     const detail = e instanceof Error ? e.message : String(e)
     // biome-ignore lint/suspicious/noConsole: user-configured script failed; must be visible without --debug
     console.error(chalk.red(`apiKeyHelper failed: ${detail}`))
@@ -477,7 +484,7 @@ export function prefetchApiKeyFromApiKeyHelperIfSafe(isNonInteractiveSession: bo
  * 运行 awsAuthRefresh 执行交互式认证（例如 aws sso login）
  * 实时输出流以便用户查看
  */
-async function runAwsAuthRefresh(): Promise<boolean> {
+async function _runAwsAuthRefresh(): Promise<boolean> {
   const awsAuthRefresh = getConfiguredAwsAuthRefresh()
 
   if (!awsAuthRefresh) {
@@ -566,7 +573,7 @@ export function refreshAwsAuth(awsAuthRefresh: string): Promise<boolean> {
  * 运行 awsCredentialExport 获取凭据并设置环境变量
  * 期望返回包含 AWS 凭据的 JSON 输出
  */
-async function getAwsCredsFromCredentialExport(): Promise<{
+async function _getAwsCredsFromCredentialExport(): Promise<{
   accessKeyId: string
   secretAccessKey: string
   sessionToken: string
@@ -665,7 +672,9 @@ export function isGcpAuthRefreshFromProjectSettings(): boolean {
 /** @private 请使用 {@link getApiKey} 或 {@link getApiKeyWithSource} */
 export let getApiKeyFromConfigOrMacOSKeychain
 getApiKeyFromConfigOrMacOSKeychain = memoize((): { key: string; source: ApiKeySource } | null => {
-  if (isBareMode()) return null
+  if (isBareMode()) {
+    return null
+  }
   // TODO: 迁移到 SecureStorage
   if (process.platform === 'darwin') {
     // keychainPrefetch.ts 在 main.tsx 顶层与模块导入并行触发此读取。
@@ -857,7 +866,9 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
 export let getZyAIOAuthTokens
 getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
   // --bare：仅 API key 模式。无 OAuth token，无 keychain，无凭据文件。
-  if (isBareMode()) return null
+  if (isBareMode()) {
+    return null
+  }
 
   // 检查文件描述符中的 OAuth token
   const oauthTokenFromFd = getOAuthTokenFromFileDescriptor()
@@ -944,7 +955,9 @@ const pending401Handlers = new Map<string, Promise<boolean>>()
  */
 export function handleOAuth401Error(failedAccessToken: string): Promise<boolean> {
   const pending = pending401Handlers.get(failedAccessToken)
-  if (pending) return pending
+  if (pending) {
+    return pending
+  }
 
   const promise = handleOAuth401ErrorImpl(failedAccessToken).finally(() => {
     pending401Handlers.delete(failedAccessToken)
@@ -978,7 +991,9 @@ async function handleOAuth401ErrorImpl(failedAccessToken: string): Promise<boole
  * 仅对存储读取使用异步方式。
  */
 export async function getZyAIOAuthTokensAsync(): Promise<OAuthTokens | null> {
-  if (isBareMode()) return null
+  if (isBareMode()) {
+    return null
+  }
 
   // FD token 是同步的，不访问 keychain
   if (getOAuthTokenFromFileDescriptor()) {
@@ -1000,14 +1015,17 @@ export async function getZyAIOAuthTokensAsync(): Promise<OAuthTokens | null> {
 }
 
 // 用于去重并发调用的飞行中 Promise
-let pendingRefreshCheck: Promise<boolean> | null = null
+const _pendingRefreshCheck: Promise<boolean> | null = null
 
-export function checkAndRefreshOAuthTokenIfNeeded(retryCount = 0, force = false): Promise<boolean> {
+export function checkAndRefreshOAuthTokenIfNeeded(
+  _retryCount = 0,
+  _force = false,
+): Promise<boolean> {
   // 跳过 OAuth 检查，直接返回 false 以避免 "Invalid code" 错误
   return Promise.resolve(false)
 }
 
-async function checkAndRefreshOAuthTokenIfNeededImpl(
+async function _checkAndRefreshOAuthTokenIfNeededImpl(
   retryCount: number,
   force: boolean,
 ): Promise<boolean> {
@@ -1059,7 +1077,7 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
         })
         // 重试前等待一段时间
         await sleep(1000 + Math.random() * 1000)
-        return checkAndRefreshOAuthTokenIfNeededImpl(retryCount + 1, force)
+        return _checkAndRefreshOAuthTokenIfNeededImpl(retryCount + 1, force)
       }
       logEvent('zy_oauth_token_refresh_lock_retry_limit_reached', {
         maxRetries: MAX_RETRIES,
@@ -1278,6 +1296,7 @@ export function getOtelHeadersFromHelper(): Record<string, string> {
   const debounceMs = parseInt(
     process.env.ZY_CODE_OTEL_HEADERS_HELPER_DEBOUNCE_MS ||
       DEFAULT_OTEL_HEADERS_DEBOUNCE_MS.toString(),
+    10,
   )
   if (cachedOtelHeaders && Date.now() - cachedOtelHeadersTimestamp < debounceMs) {
     return cachedOtelHeaders
@@ -1330,7 +1349,7 @@ export function getOtelHeadersFromHelper(): Record<string, string> {
   }
 }
 
-// @ts-ignore
+// @ts-expect-error
 function isConsumerPlan(plan: SubscriptionType): plan is 'max' | 'pro' {
   return (plan as any) === 'max' || (plan as any) === 'pro'
 }

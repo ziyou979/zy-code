@@ -182,7 +182,9 @@ export function getPluginTrustMessage(): string | undefined {
  * Sources are equal if they have the same type and all relevant fields match.
  */
 function areSourcesEqual(a: MarketplaceSource, b: MarketplaceSource): boolean {
-  if (a.source !== b.source) return false
+  if (a.source !== b.source) {
+    return false
+  }
 
   switch (a.source) {
     case 'url':
@@ -314,7 +316,9 @@ function doesSourceMatchPathPattern(
  */
 export function getHostPatternsFromAllowlist(): string[] {
   const allowlist = getStrictKnownMarketplaces()
-  if (!allowlist) return []
+  if (!allowlist) {
+    return []
+  }
 
   return allowlist
     .filter(
@@ -336,13 +340,13 @@ export function getHostPatternsFromAllowlist(): string[] {
 function extractGitHubRepoFromGitUrl(url: string): string | null {
   // SSH format: git@github.com:owner/repo.git
   const sshMatch = url.match(/^git@github\.com:([^/]+\/[^/]+?)(?:\.git)?$/)
-  if (sshMatch && sshMatch[1]) {
+  if (sshMatch?.[1]) {
     return sshMatch[1]
   }
 
   // HTTPS format: https://github.com/owner/repo.git or https://github.com/owner/repo
   const httpsMatch = url.match(/^https?:\/\/github\.com\/([^/]+\/[^/]+?)(?:\.git)?$/)
-  if (httpsMatch && httpsMatch[1]) {
+  if (httpsMatch?.[1]) {
     return httpsMatch[1]
   }
 
@@ -383,7 +387,9 @@ function areSourcesEquivalentForBlocklist(
     switch (source.source) {
       case 'github': {
         const b = blocked as typeof source
-        if (source.repo !== b.repo) return false
+        if (source.repo !== b.repo) {
+          return false
+        }
         return (
           blockedConstraintMatches(b.ref, source.ref) &&
           blockedConstraintMatches(b.path, source.path)
@@ -391,7 +397,9 @@ function areSourcesEquivalentForBlocklist(
       }
       case 'git': {
         const b = blocked as typeof source
-        if (source.url !== b.url) return false
+        if (source.url !== b.url) {
+          return false
+        }
         return (
           blockedConstraintMatches(b.ref, source.ref) &&
           blockedConstraintMatches(b.path, source.path)

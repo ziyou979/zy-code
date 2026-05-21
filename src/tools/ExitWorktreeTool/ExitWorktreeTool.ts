@@ -10,7 +10,6 @@ import { logEvent } from '../../services/analytics/index.js'
 import type { Tool } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { count } from '../../utils/array.js'
-import { clearMemoryFileCaches } from '../../utils/zymd.js'
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
 import { updateHooksConfigSnapshot } from '../../utils/hooks/hooksConfigSnapshot.js'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -23,6 +22,7 @@ import {
   keepWorktree,
   killTmuxSession,
 } from '../../utils/worktree.js'
+import { clearMemoryFileCaches } from '../../utils/zymd.js'
 import { EXIT_WORKTREE_TOOL_NAME } from './constants.js'
 import { getExitWorktreeToolPrompt } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
@@ -305,7 +305,8 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
   },
 } satisfies ToolDef<InputSchema, Output>)
 
+import { isWorktreeModeEnabled } from '../../utils/worktreeModeEnabled.js'
 // 插件化注册
 import { toolRegistry } from '../registry.js'
-import { isWorktreeModeEnabled } from '../../utils/worktreeModeEnabled.js'
+
 toolRegistry.register(ExitWorktreeTool, () => isWorktreeModeEnabled())

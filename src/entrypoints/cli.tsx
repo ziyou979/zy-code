@@ -91,7 +91,7 @@ async function main(): Promise<void> {
     return
   } else if (process.argv[2] === '--chrome-native-host') {
     profileCheckpoint('cli_chrome_native_host_path')
-    // @ts-ignore
+    // @ts-expect-error
     const { runChromeNativeHost } = await import('../utils/claudeInChrome/chromeNativeHost.js')
     await runChromeNativeHost()
     return

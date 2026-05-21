@@ -34,6 +34,7 @@ import { isMarketplaceAutoUpdate } from '../../utils/plugins/schemas.js'
 import { getSettingsForSource, updateSettingsForSource } from '../../utils/settings/settings.js'
 import { plural } from '../../utils/stringUtils.js'
 import type { ViewState } from './types.js'
+
 type Props = {
   setViewState: (state: ViewState) => void
   error?: string | null
@@ -110,8 +111,12 @@ export function ManageMarketplaces({
 
         // Sort: zy-plugin-directory first, then alphabetically
         states.sort((a, b) => {
-          if (a.name === 'zy-plugin-directory') return -1
-          if (b.name === 'zy-plugin-directory') return 1
+          if (a.name === 'zy-plugin-directory') {
+            return -1
+          }
+          if (b.name === 'zy-plugin-directory') {
+            return 1
+          }
           return a.name.localeCompare(b.name)
         })
         setMarketplaceStates(states)
@@ -167,7 +172,7 @@ export function ManageMarketplaces({
     void loadMarketplaces()
     // eslint-disable-next-line react-hooks/exhaustive-deps
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
-  }, [targetMarketplace, action, error])
+  }, [targetMarketplace, action, error, setError, applyChanges])
 
   // Check if there are any pending changes
   const hasPendingChanges = () => {
@@ -287,8 +292,12 @@ export function ManageMarketplaces({
 
       // Sort: zy-plugin-directory first, then alphabetically
       newStates.sort((a, b) => {
-        if (a.name === 'zy-plugin-directory') return -1
-        if (b.name === 'zy-plugin-directory') return 1
+        if (a.name === 'zy-plugin-directory') {
+          return -1
+        }
+        if (b.name === 'zy-plugin-directory') {
+          return 1
+        }
         return a.name.localeCompare(b.name)
       })
       setMarketplaceStates(newStates)
@@ -344,7 +353,9 @@ export function ManageMarketplaces({
 
   // Handle confirming marketplace removal
   const confirmRemove = async () => {
-    if (!selectedMarketplace) return
+    if (!selectedMarketplace) {
+      return
+    }
 
     // Mark for removal and apply
     const newStates = marketplaceStates.map((state) =>
@@ -367,7 +378,9 @@ export function ManageMarketplaces({
     secondaryLabel?: string
     value: string
   }> => {
-    if (!marketplace) return []
+    if (!marketplace) {
+      return []
+    }
     const options: Array<{
       label: string
       secondaryLabel?: string
@@ -548,7 +561,9 @@ export function ManageMarketplaces({
         setDetailsMenuIndex((prev) => Math.min(menuOptions.length - 1, prev + 1))
       },
       'select:accept': () => {
-        if (!selectedMarketplace) return
+        if (!selectedMarketplace) {
+          return
+        }
         const menuOptions = buildDetailsMenuOptions(selectedMarketplace)
         const selectedOption = menuOptions[detailsMenuIndex]
         if (selectedOption?.value === 'browse') {
@@ -740,7 +755,9 @@ export function ManageMarketplaces({
         {!isUpdating && (
           <Box flexDirection="column" marginTop={1}>
             {menuOptions.map((option, idx) => {
-              if (!option) return null
+              if (!option) {
+                return null
+              }
               const isSelected = idx === detailsMenuIndex
               return (
                 <Box key={option.value}>
@@ -815,8 +832,12 @@ export function ManageMarketplaces({
 
           // Build status indicators
           const indicators: string[] = []
-          if (state.pendingUpdate) indicators.push('UPDATE')
-          if (state.pendingRemove) indicators.push('REMOVE')
+          if (state.pendingUpdate) {
+            indicators.push('UPDATE')
+          }
+          if (state.pendingRemove) {
+            indicators.push('REMOVE')
+          }
           return (
             <Box key={state.name} flexDirection="row" gap={1} marginBottom={1}>
               <Text color={isSelected ? 'suggestion' : undefined}>

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { tSync } from 'src/i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -19,7 +20,7 @@ import { Select } from './CustomSelect/select.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 import { Spinner } from './Spinner.js'
 import TextInput from './TextInput.js'
-import { tSync } from 'src/i18n/index.js'
+
 type Props = {
   onDone(): void
   startingMessage?: string
@@ -173,7 +174,9 @@ export function ConsoleOAuthFlow({
       !urlCopied
     ) {
       void setClipboard(oauthStatus.url).then((raw) => {
-        if (raw) process.stdout.write(raw)
+        if (raw) {
+          process.stdout.write(raw)
+        }
         setUrlCopied(true)
         setTimeout(setUrlCopied, 2000, false)
       })
@@ -303,7 +306,7 @@ export function ConsoleOAuthFlow({
         ssl_error: sslHint !== null,
       })
     }
-  }, [oauthService, setShowPastePrompt, loginWithZyAi, mode, orgUUID])
+  }, [oauthService, loginWithZyAi, mode, orgUUID, terminal])
   const pendingOAuthStartRef = useRef(false)
   useEffect(() => {
     if (oauthStatus.state === 'ready_to_start' && !pendingOAuthStartRef.current) {

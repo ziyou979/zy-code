@@ -1,5 +1,5 @@
-import { mkdir, writeFile } from 'fs/promises'
-import { dirname } from 'path'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { dirname } from 'node:path'
 import {
   getKeybindingsPath,
   isKeybindingCustomizationEnabled,

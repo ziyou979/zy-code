@@ -1,15 +1,15 @@
 import { feature } from 'bun:bundle'
-import { randomBytes } from 'crypto'
-import { unwatchFile, watchFile } from 'fs'
+import { randomBytes } from 'node:crypto'
+import { unwatchFile, watchFile } from 'node:fs'
+import { basename, dirname, join, resolve } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import pickBy from 'lodash-es/pickBy.js'
-import { basename, dirname, join, resolve } from 'path'
 import { getOriginalCwd, getSessionTrustAccepted } from '../bootstrap/state.js'
 import { getAutoMemEntrypoint } from '../memdir/paths.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { McpServerConfig } from '../services/mcp/types.js'
 import type {
-  // @ts-ignore
+  // @ts-expect-error
   BillingType,
 } from '../services/oauth/types.js'
 import { getCwd } from '../utils/cwd.js'
@@ -675,9 +675,13 @@ export function isPathTrusted(dir: string): boolean {
   const config = getGlobalConfig()
   let currentPath = normalizePathForConfigKey(resolve(dir))
   while (true) {
-    if (config.projects?.[currentPath]?.hasTrustDialogAccepted) return true
+    if (config.projects?.[currentPath]?.hasTrustDialogAccepted) {
+      return true
+    }
     const parentPath = normalizePathForConfigKey(resolve(currentPath, '..'))
-    if (parentPath === currentPath) return false
+    if (parentPath === currentPath) {
+      return false
+    }
     currentPath = parentPath
   }
 }
@@ -705,7 +709,9 @@ function wouldLoseAuthState(fresh: {
   hasCompletedOnboarding?: boolean
 }): boolean {
   const cached = globalConfigCache.config
-  if (!cached) return false
+  if (!cached) {
+    return false
+  }
   const lostOauth = cached.oauthAccount !== undefined && fresh.oauthAccount === undefined
   const lostOnboarding =
     cached.hasCompletedOnboarding === true && fresh.hasCompletedOnboarding !== true
@@ -904,7 +910,9 @@ let freshnessWatcherStarted = false
 // fs.watchFile 在 libuv 线程池上轮询 stat，仅在 mtime
 // 变更时回调 — 挂起的 stat 不会阻塞主线程。
 function startGlobalConfigFreshnessWatcher(): void {
-  if (freshnessWatcherStarted || process.env.NODE_ENV === 'test') return
+  if (freshnessWatcherStarted || process.env.NODE_ENV === 'test') {
+    return
+  }
   freshnessWatcherStarted = true
   const file = getGlobalZyFile()
   watchFile(file, { interval: CONFIG_FRESHNESS_POLL_MS, persistent: false }, (curr) => {
@@ -912,15 +920,21 @@ function startGlobalConfigFreshnessWatcher(): void {
     // 超调使 cache.mtime > 文件 mtime，因此我们跳过重读。
     // Bun/Node 在文件不存在时（初始回调或删除）也会触发 curr.mtimeMs=0 —
     // <= 也处理了这种情况。
-    if (curr.mtimeMs <= globalConfigCache.mtime) return
+    if (curr.mtimeMs <= globalConfigCache.mtime) {
+      return
+    }
     void getFsImplementation()
       .readFile(file, { encoding: 'utf-8' })
       .then((content) => {
         // write-through 可能在我们读取前推进了缓存；
         // 不要回退到 watchFile stat 的过时快照。
-        if (curr.mtimeMs <= globalConfigCache.mtime) return
+        if (curr.mtimeMs <= globalConfigCache.mtime) {
+          return
+        }
         const parsed = safeParseJSON(stripBOM(content))
-        if (parsed === null || typeof parsed !== 'object') return
+        if (parsed === null || typeof parsed !== 'object') {
+          return
+        }
         globalConfigCache = {
           config: migrateConfigFields({
             ...createDefaultGlobalConfig(),
@@ -991,9 +1005,13 @@ export function getGlobalConfig(): GlobalConfig {
  */
 export function getRemoteControlAtStartup(): boolean {
   const explicit = getGlobalConfig().remoteControlAtStartup
-  if (explicit !== undefined) return explicit
+  if (explicit !== undefined) {
+    return explicit
+  }
   if (feature('CCR_AUTO_CONNECT')) {
-    if (ccrAutoConnect?.getCcrAutoConnectDefault()) return true
+    if (ccrAutoConnect?.getCcrAutoConnectDefault()) {
+      return true
+    }
   }
   return false
 }

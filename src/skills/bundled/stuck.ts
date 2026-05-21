@@ -1,5 +1,5 @@
-import { registerBundledSkill } from '../bundledSkills.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
+import { registerBundledSkill } from '../bundledSkills.js'
 
 // Prompt text contains `ps` commands as instructions for Zy to run,
 // not commands this file executes.

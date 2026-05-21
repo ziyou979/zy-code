@@ -37,8 +37,12 @@ export function findTextObject(
   objectType: string,
   isInner: boolean,
 ): TextObjectRange {
-  if (objectType === 'w') return findWordObject(text, offset, isInner, isVimWordChar)
-  if (objectType === 'W') return findWordObject(text, offset, isInner, (ch) => !isVimWhitespace(ch))
+  if (objectType === 'w') {
+    return findWordObject(text, offset, isInner, isVimWordChar)
+  }
+  if (objectType === 'W') {
+    return findWordObject(text, offset, isInner, (ch) => !isVimWhitespace(ch))
+  }
 
   const pair = PAIRS[objectType]
   if (pair) {
@@ -85,23 +89,39 @@ function findWordObject(
   let endIdx = graphemeIdx
 
   if (isWord(graphemeIdx)) {
-    while (startIdx > 0 && isWord(startIdx - 1)) startIdx--
-    while (endIdx < graphemes.length && isWord(endIdx)) endIdx++
+    while (startIdx > 0 && isWord(startIdx - 1)) {
+      startIdx--
+    }
+    while (endIdx < graphemes.length && isWord(endIdx)) {
+      endIdx++
+    }
   } else if (isWs(graphemeIdx)) {
-    while (startIdx > 0 && isWs(startIdx - 1)) startIdx--
-    while (endIdx < graphemes.length && isWs(endIdx)) endIdx++
+    while (startIdx > 0 && isWs(startIdx - 1)) {
+      startIdx--
+    }
+    while (endIdx < graphemes.length && isWs(endIdx)) {
+      endIdx++
+    }
     return { start: offsetAt(startIdx), end: offsetAt(endIdx) }
   } else if (isPunct(graphemeIdx)) {
-    while (startIdx > 0 && isPunct(startIdx - 1)) startIdx--
-    while (endIdx < graphemes.length && isPunct(endIdx)) endIdx++
+    while (startIdx > 0 && isPunct(startIdx - 1)) {
+      startIdx--
+    }
+    while (endIdx < graphemes.length && isPunct(endIdx)) {
+      endIdx++
+    }
   }
 
   if (!isInner) {
     // Include surrounding whitespace
     if (endIdx < graphemes.length && isWs(endIdx)) {
-      while (endIdx < graphemes.length && isWs(endIdx)) endIdx++
+      while (endIdx < graphemes.length && isWs(endIdx)) {
+        endIdx++
+      }
     } else if (startIdx > 0 && isWs(startIdx - 1)) {
-      while (startIdx > 0 && isWs(startIdx - 1)) startIdx--
+      while (startIdx > 0 && isWs(startIdx - 1)) {
+        startIdx--
+      }
     }
   }
 
@@ -122,7 +142,9 @@ function findQuoteObject(
 
   const positions: number[] = []
   for (let i = 0; i < line.length; i++) {
-    if (line[i] === quote) positions.push(i)
+    if (line[i] === quote) {
+      positions.push(i)
+    }
   }
 
   // Pair quotes correctly: 0-1, 2-3, 4-5, etc.
@@ -150,8 +172,9 @@ function findBracketObject(
   let start = -1
 
   for (let i = offset; i >= 0; i--) {
-    if (text[i] === close && i !== offset) depth++
-    else if (text[i] === open) {
+    if (text[i] === close && i !== offset) {
+      depth++
+    } else if (text[i] === open) {
       if (depth === 0) {
         start = i
         break
@@ -159,13 +182,16 @@ function findBracketObject(
       depth--
     }
   }
-  if (start === -1) return null
+  if (start === -1) {
+    return null
+  }
 
   depth = 0
   let end = -1
   for (let i = start + 1; i < text.length; i++) {
-    if (text[i] === open) depth++
-    else if (text[i] === close) {
+    if (text[i] === open) {
+      depth++
+    } else if (text[i] === close) {
       if (depth === 0) {
         end = i
         break
@@ -173,7 +199,9 @@ function findBracketObject(
       depth--
     }
   }
-  if (end === -1) return null
+  if (end === -1) {
+    return null
+  }
 
   return isInner ? { start: start + 1, end } : { start, end: end + 1 }
 }

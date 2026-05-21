@@ -1,4 +1,4 @@
-import { join } from 'path'
+import { join } from 'node:path'
 import React from 'react'
 import { ExportDialog } from '../../components/ExportDialog.js'
 import type { ToolUseContext } from '../../Tool.js'
@@ -7,6 +7,7 @@ import type { Message } from '../../types/message.js'
 import { getCwd } from '../../utils/cwd.js'
 import { renderMessagesToPlainText } from '../../utils/exportRenderer.js'
 import { writeFileSync_DEPRECATED } from '../../utils/slowOperations.js'
+
 function formatTimestamp(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -35,7 +36,7 @@ export function extractFirstPrompt(messages: Message[]): string {
   // Take first line only and limit length
   result = result.split('\n')[0] || ''
   if (result.length > 50) {
-    result = result.substring(0, 49) + '…'
+    result = `${result.substring(0, 49)}…`
   }
   return result
 }
@@ -65,7 +66,7 @@ export async function call(
   if (filename) {
     const finalFilename = filename.endsWith('.txt')
       ? filename
-      : filename.replace(/\.[^.]+$/, '') + '.txt'
+      : `${filename.replace(/\.[^.]+$/, '')}.txt`
     const filepath = join(getCwd(), finalFilename)
     try {
       writeFileSync_DEPRECATED(filepath, content, {

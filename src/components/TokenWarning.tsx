@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
-import * as React from 'react'
 import { useSyncExternalStore } from 'react'
+import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import {
@@ -9,7 +9,7 @@ import {
   isAutoCompactEnabled,
 } from '../services/compact/autoCompact.js'
 import { useCompactWarningSuppression } from '../services/compact/compactWarningHook.js'
-import { tSync } from '../i18n/index.js'
+
 type Props = {
   tokenUsage: number
   model: string
@@ -97,7 +97,7 @@ export function TokenWarning({ tokenUsage, model }: Props) {
   if (collapseMode && feature('CONTEXT_COLLAPSE')) {
     return (
       <Box flexDirection="row">
-        <CollapseLabel/>
+        <CollapseLabel />
       </Box>
     )
   }

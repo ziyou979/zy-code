@@ -3,10 +3,7 @@ import { isUltrathinkEnabled } from './thinking.js'
 import { getInitialSettings } from './settings/settings.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { getAPIProvider, providerHasCapability } from './model/providers.js'
-import {
-  localModelHasCapability,
-  getLocalModelCapability,
-} from './settings/localModelCapabilities.js'
+import { localModelHasCapability } from './settings/localModelCapabilities.js'
 import { isEnvTruthy } from './envUtils.js'
 import { isInternalBuild } from './envUtils.js'
 import type { EffortLevel } from 'src/entrypoints/sdk/runtimeTypes.js'
@@ -38,7 +35,7 @@ export function modelSupportsMaxEffort(model: string): boolean {
   if (localModelHasCapability(model, 'max_effort')) {
     return true
   }
-  // @ts-ignore
+  // @ts-expect-error
   if (isInternalBuild() && resolveAntModel(model)) {
     return true
   }
@@ -61,7 +58,7 @@ export function parseEffortValue(value: unknown): EffortValue | undefined {
     return str
   }
   const numericValue = parseInt(str, 10)
-  if (!isNaN(numericValue) && isValidNumericEffort(numericValue)) {
+  if (!Number.isNaN(numericValue) && isValidNumericEffort(numericValue)) {
     return numericValue
   }
   return undefined
@@ -164,9 +161,15 @@ export function convertEffortValueToLevel(value: EffortValue): EffortLevel {
     return isEffortLevel(value) ? value : 'high'
   }
   if (isInternalBuild() && typeof value === 'number') {
-    if (value <= 50) return 'low'
-    if (value <= 85) return 'medium'
-    if (value <= 100) return 'high'
+    if (value <= 50) {
+      return 'low'
+    }
+    if (value <= 85) {
+      return 'medium'
+    }
+    if (value <= 100) {
+      return 'high'
+    }
     return 'max' as any
   }
   return 'high'

@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-import type { ToolResultBlock } from '../../types/llm.js'
 import type { QuerySource } from '../../constants/querySource.js'
 import type { ToolUseContext } from '../../Tool.js'
 import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
@@ -9,6 +8,7 @@ import { GLOB_TOOL_NAME } from '../../tools/GlobTool/prompt.js'
 import { GREP_TOOL_NAME } from '../../tools/GrepTool/prompt.js'
 import { WEB_FETCH_TOOL_NAME } from '../../tools/WebFetchTool/prompt.js'
 import { WEB_SEARCH_TOOL_NAME } from '../../tools/WebSearchTool/prompt.js'
+import type { ToolResultBlock } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getMainLoopModel } from '../../utils/model/model.js'
@@ -453,7 +453,9 @@ function maybeTimeBasedMicrocompact(
       }
       return block
     })
-    if (!touched) return message
+    if (!touched) {
+      return message
+    }
     return {
       ...message,
       message: { ...message.message, content: newContent },

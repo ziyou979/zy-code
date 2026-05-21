@@ -1,5 +1,5 @@
-import { randomUUID } from 'crypto'
-import { basename } from 'path'
+import { randomUUID } from 'node:crypto'
+import { basename } from 'node:path'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { logEvent } from 'src/services/analytics/index.js'
 import { readFileSync } from 'src/utils/fileRead.js'
@@ -125,7 +125,7 @@ export function useDiffInIDE({ onChange, toolUseContext, filePath, edits, editMo
       isUnmounted.current = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [showDiff])
 
   return {
     closeTabInIDE() {

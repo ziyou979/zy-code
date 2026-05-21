@@ -1,9 +1,17 @@
-import { execFileSync } from 'child_process'
+import { constants as fsConstants } from 'node:fs'
+import {
+  copyFile,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  unlink,
+  writeFile,
+} from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { extname, join } from 'node:path'
 import { diffLines } from 'diff'
-import { constants as fsConstants } from 'fs'
-import { copyFile, mkdir, mkdtemp, readdir, readFile, rm, unlink, writeFile } from 'fs/promises'
-import { tmpdir } from 'os'
-import { extname, join } from 'path'
 import type { Command } from '../commands.js'
 import { queryWithModel } from '../services/api/llmOrchestrator.js'
 import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js'
@@ -50,7 +58,9 @@ const getRunningRemoteHosts: () => Promise<string[]> = isInternalBuild()
       const { stdout, code } = await execFileNoThrow('coder', ['list', '-o', 'json'], {
         timeout: 30000,
       })
-      if (code !== 0) return []
+      if (code !== 0) {
+        return []
+      }
       try {
         const workspaces = jsonParse(stdout) as Array<{
           name: string
@@ -70,7 +80,9 @@ const getRemoteHostSessionCount: (hs: string) => Promise<number> = isInternalBui
         [`${homespace}.coder`, 'find /root/.zy/projects -name "*.jsonl" 2>/dev/null | wc -l'],
         { timeout: 30000 },
       )
-      if (code !== 0) return 0
+      if (code !== 0) {
+        return 0
+      }
       return parseInt(stdout.trim(), 10) || 0
     }
   : async () => 0
@@ -112,7 +124,9 @@ const collectFromRemoteHost: (
             const projectPath = join(projectsDir, projectName)
 
             // Skip if not a directory
-            if (!dirent.isDirectory()) return
+            if (!dirent.isDirectory()) {
+              return
+            }
 
             const destProjectName = `${projectName}__${homespace}`
             const destProjectPath = join(destDir, destProjectName)
@@ -133,7 +147,9 @@ const collectFromRemoteHost: (
             await Promise.all(
               files.map(async (fileDirent) => {
                 const fileName = (fileDirent as any).name
-                if (!(fileName as any).endsWith('.jsonl')) return
+                if (!(fileName as any).endsWith('.jsonl')) {
+                  return
+                }
 
                 const srcFile = join(projectPath, fileName as any)
                 const destFile = join(destProjectPath, fileName as any)
@@ -514,11 +530,18 @@ function extractToolStats(log: LogOption): {
             toolCounts[toolName] = (toolCounts[toolName] || 0) + 1
 
             // Check for special tool usage
-            if (toolName === AGENT_TOOL_NAME || toolName === LEGACY_AGENT_TOOL_NAME)
+            if (toolName === AGENT_TOOL_NAME || toolName === LEGACY_AGENT_TOOL_NAME) {
               usesTaskAgent = true
-            if (toolName.startsWith('mcp__')) usesMcp = true
-            if (toolName === 'WebSearch') usesWebSearch = true
-            if (toolName === 'WebFetch') usesWebFetch = true
+            }
+            if (toolName.startsWith('mcp__')) {
+              usesMcp = true
+            }
+            if (toolName === 'WebSearch') {
+              usesWebSearch = true
+            }
+            if (toolName === 'WebFetch') {
+              usesWebFetch = true
+            }
 
             const input = (block as { input?: Record<string, unknown> }).input
 
@@ -539,8 +562,12 @@ function extractToolStats(log: LogOption): {
                 const oldString = (input.old_string as string) || ''
                 const newString = (input.new_string as string) || ''
                 for (const change of diffLines(oldString, newString)) {
-                  if (change.added) linesAdded += change.count || 0
-                  if (change.removed) linesRemoved += change.count || 0
+                  if (change.added) {
+                    linesAdded += change.count || 0
+                  }
+                  if (change.removed) {
+                    linesRemoved += change.count || 0
+                  }
                 }
               }
 
@@ -553,8 +580,12 @@ function extractToolStats(log: LogOption): {
               }
 
               const command = (input.command as string) || ''
-              if (command.includes('git commit')) gitCommits++
-              if (command.includes('git push')) gitPushes++
+              if (command.includes('git commit')) {
+                gitCommits++
+              }
+              if (command.includes('git push')) {
+                gitPushes++
+              }
             }
           }
         }
@@ -710,7 +741,9 @@ function logToSessionMeta(log: LogOption): SessionMeta {
   let userMessageCount = 0
   let assistantMessageCount = 0
   for (const msg of log.messages) {
-    if (msg.type === 'assistant') assistantMessageCount++
+    if (msg.type === 'assistant') {
+      assistantMessageCount++
+    }
     // Only count user messages that have actual text content (human messages)
     // not just tool_result messages (matching Python reference)
     if (msg.type === 'user' && msg.message) {
@@ -1003,10 +1036,14 @@ RESPOND WITH ONLY A VALID JSON OBJECT matching this schema:
 
     // Parse JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) return null
+    if (!jsonMatch) {
+      return null
+    }
 
     const parsed: unknown = jsonParse(jsonMatch[0])
-    if (!isValidSessionFacets(parsed)) return null
+    if (!isValidSessionFacets(parsed)) {
+      return null
+    }
     const facets: SessionFacets = { ...parsed, session_id: sessionId }
     return facets
   } catch (err) {
@@ -1087,8 +1124,12 @@ export function detectMultiClauding(
   const sessionsWithOverlaps = new Set<string>()
   for (const pair of multiZySessionPairs) {
     const [s1, s2] = pair.split(':')
-    if (s1) sessionsWithOverlaps.add(s1)
-    if (s2) sessionsWithOverlaps.add(s2)
+    if (s1) {
+      sessionsWithOverlaps.add(s1)
+    }
+    if (s2) {
+      sessionsWithOverlaps.add(s2)
+    }
   }
 
   return {
@@ -1169,10 +1210,18 @@ function aggregateData(
       result.tool_error_categories[cat] = (result.tool_error_categories[cat] || 0) + count
     }
     allResponseTimes.push(...session.user_response_times)
-    if (session.uses_task_agent) result.sessions_using_task_agent++
-    if (session.uses_mcp) result.sessions_using_mcp++
-    if (session.uses_web_search) result.sessions_using_web_search++
-    if (session.uses_web_fetch) result.sessions_using_web_fetch++
+    if (session.uses_task_agent) {
+      result.sessions_using_task_agent++
+    }
+    if (session.uses_mcp) {
+      result.sessions_using_mcp++
+    }
+    if (session.uses_web_search) {
+      result.sessions_using_web_search++
+    }
+    if (session.uses_web_fetch) {
+      result.sessions_using_web_fetch++
+    }
 
     // Additional stats aggregation
     result.total_lines_added += session.lines_added
@@ -1523,7 +1572,7 @@ async function generateSectionInsight(
   try {
     const result = await queryWithModel({
       systemPrompt: asSystemPrompt([]),
-      userPrompt: section.prompt + '\n\nDATA:\n' + dataContext,
+      userPrompt: `${section.prompt}\n\nDATA:\n${dataContext}`,
       signal: new AbortController().signal,
       options: {
         model: getInsightsModel(),
@@ -1787,7 +1836,9 @@ function generateBarChart(
       .slice(0, maxItems)
   }
 
-  if (entries.length === 0) return '<p class="empty">No data</p>'
+  if (entries.length === 0) {
+    return '<p class="empty">No data</p>'
+  }
 
   const maxVal = Math.max(...entries.map((e) => e[1]))
   return entries
@@ -1806,7 +1857,9 @@ function generateBarChart(
 }
 
 function generateResponseTimeHistogram(times: number[]): string {
-  if (times.length === 0) return '<p class="empty">No response time data</p>'
+  if (times.length === 0) {
+    return '<p class="empty">No response time data</p>'
+  }
 
   // Create buckets (matching Python reference)
   const buckets: Record<string, number> = {
@@ -1820,17 +1873,27 @@ function generateResponseTimeHistogram(times: number[]): string {
   }
 
   for (const t of times) {
-    if (t < 10) buckets['2-10s'] = (buckets['2-10s'] ?? 0) + 1
-    else if (t < 30) buckets['10-30s'] = (buckets['10-30s'] ?? 0) + 1
-    else if (t < 60) buckets['30s-1m'] = (buckets['30s-1m'] ?? 0) + 1
-    else if (t < 120) buckets['1-2m'] = (buckets['1-2m'] ?? 0) + 1
-    else if (t < 300) buckets['2-5m'] = (buckets['2-5m'] ?? 0) + 1
-    else if (t < 900) buckets['5-15m'] = (buckets['5-15m'] ?? 0) + 1
-    else buckets['>15m'] = (buckets['>15m'] ?? 0) + 1
+    if (t < 10) {
+      buckets['2-10s'] = (buckets['2-10s'] ?? 0) + 1
+    } else if (t < 30) {
+      buckets['10-30s'] = (buckets['10-30s'] ?? 0) + 1
+    } else if (t < 60) {
+      buckets['30s-1m'] = (buckets['30s-1m'] ?? 0) + 1
+    } else if (t < 120) {
+      buckets['1-2m'] = (buckets['1-2m'] ?? 0) + 1
+    } else if (t < 300) {
+      buckets['2-5m'] = (buckets['2-5m'] ?? 0) + 1
+    } else if (t < 900) {
+      buckets['5-15m'] = (buckets['5-15m'] ?? 0) + 1
+    } else {
+      buckets['>15m'] = (buckets['>15m'] ?? 0) + 1
+    }
   }
 
   const maxVal = Math.max(...Object.values(buckets))
-  if (maxVal === 0) return '<p class="empty">No response time data</p>'
+  if (maxVal === 0) {
+    return '<p class="empty">No response time data</p>'
+  }
 
   return Object.entries(buckets)
     .map(([label, count]) => {
@@ -1845,7 +1908,9 @@ function generateResponseTimeHistogram(times: number[]): string {
 }
 
 function generateTimeOfDayChart(messageHours: number[]): string {
-  if (messageHours.length === 0) return '<p class="empty">No time data</p>'
+  if (messageHours.length === 0) {
+    return '<p class="empty">No time data</p>'
+  }
 
   // Group into time periods
   const periods = [
@@ -1891,7 +1956,9 @@ function getHourCountsJson(messageHours: number[]): string {
 
 function generateHtmlReport(data: AggregatedData, insights: InsightResults): string {
   const markdownToHtml = (md: string): string => {
-    if (!md) return ''
+    if (!md) {
+      return ''
+    }
     return md
       .split('\n\n')
       .map((p) => {
@@ -2808,7 +2875,9 @@ export async function generateUsageReport(options?: { collectRemote?: boolean })
     const metasToSave: SessionMeta[] = []
     for (const logs of batchResults) {
       for (const log of logs) {
-        if (isMetaSession(log) || !hasValidDates(log)) continue
+        if (isMetaSession(log) || !hasValidDates(log)) {
+          continue
+        }
         const meta = logToSessionMeta(log)
         allMetas.push(meta)
         metasToSave.push(meta)
@@ -2849,9 +2918,13 @@ export async function generateUsageReport(options?: { collectRemote?: boolean })
   // (matching Python's substantive filtering concept)
   const isSubstantiveSession = (meta: SessionMeta): boolean => {
     // Skip sessions with very few user messages
-    if (meta.user_message_count < 2) return false
+    if (meta.user_message_count < 2) {
+      return false
+    }
     // Skip very short sessions (< 1 minute)
-    if (meta.duration_minutes < 1) return false
+    if (meta.duration_minutes < 1) {
+      return false
+    }
     return true
   }
 
@@ -2905,7 +2978,9 @@ export async function generateUsageReport(options?: { collectRemote?: boolean })
   // A session is minimal if warmup_minimal is the ONLY goal category
   const isMinimalSession = (sessionId: string): boolean => {
     const sessionFacets = facets.get(sessionId)
-    if (!sessionFacets) return false
+    if (!sessionFacets) {
+      return false
+    }
     const cats = sessionFacets.goal_categories
     const catKeys = safeKeys(cats).filter((k) => (cats[k] ?? 0) > 0)
     return catKeys.length === 1 && catKeys[0] === 'warmup_minimal'
@@ -2994,8 +3069,8 @@ const usageReport: Command = {
 
     const { insights, htmlPath, data, remoteStats } = await generateUsageReport({ collectRemote })
 
-    let reportUrl = `file://${htmlPath}`
-    let uploadHint = ''
+    const reportUrl = `file://${htmlPath}`
+    const uploadHint = ''
 
     // TODO: 自建报告存储服务后恢复内部上传逻辑（原 ant.dev S3 不可访问）
     // if (isInternalBuild()) {
@@ -3104,7 +3179,9 @@ Want to dig into any section or try one of the suggestions?
 }
 
 function isValidSessionFacets(obj: unknown): obj is SessionFacets {
-  if (!obj || typeof obj !== 'object') return false
+  if (!obj || typeof obj !== 'object') {
+    return false
+  }
   const o = obj as Record<string, unknown>
   return (
     typeof o.underlying_goal === 'string' &&

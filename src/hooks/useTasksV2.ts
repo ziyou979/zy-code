@@ -1,4 +1,4 @@
-import { type FSWatcher, watch } from 'fs'
+import { type FSWatcher, watch } from 'node:fs'
 import { useEffect, useSyncExternalStore } from 'react'
 import { useAppState, useSetAppState } from '../state/AppState.js'
 import { createSignal } from '../utils/signal.js'
@@ -70,11 +70,15 @@ class TasksV2Store {
     }
     let unsubscribed = false
     return () => {
-      if (unsubscribed) return
+      if (unsubscribed) {
+        return
+      }
       unsubscribed = true
       unsubscribe()
       this.#subscriberCount--
-      if (this.#subscriberCount === 0) this.#stop()
+      if (this.#subscriberCount === 0) {
+        this.#stop()
+      }
     }
   }
 
@@ -90,7 +94,9 @@ class TasksV2Store {
   #rewatch(dir: string): void {
     // Retry even on same dir if the previous watch attempt failed (dir
     // didn't exist yet). Once the watcher is established, same-dir is a no-op.
-    if (dir === this.#watchedDir && this.#watcher !== null) return
+    if (dir === this.#watchedDir && this.#watcher !== null) {
+      return
+    }
     this.#watcher?.close()
     this.#watcher = null
     this.#watchedDir = dir
@@ -105,7 +111,9 @@ class TasksV2Store {
   }
 
   #debouncedFetch = (): void => {
-    if (this.#debounceTimer) clearTimeout(this.#debounceTimer)
+    if (this.#debounceTimer) {
+      clearTimeout(this.#debounceTimer)
+    }
     this.#debounceTimer = setTimeout(() => void this.#fetch(), DEBOUNCE_MS)
     this.#debounceTimer.unref()
   }
@@ -151,7 +159,9 @@ class TasksV2Store {
     // Bail if the task list ID changed since scheduling (team created/deleted
     // during the 5s window) — don't reset the wrong list.
     const currentId = getTaskListId()
-    if (currentId !== scheduledForTaskListId) return
+    if (currentId !== scheduledForTaskListId) {
+      return
+    }
     // Verify all tasks are still completed before clearing
     void listTasks(currentId).then(async (tasksToCheck) => {
       const allStillCompleted =
@@ -184,8 +194,12 @@ class TasksV2Store {
     this.#unsubscribeTasksUpdated?.()
     this.#unsubscribeTasksUpdated = null
     this.#clearHideTimer()
-    if (this.#debounceTimer) clearTimeout(this.#debounceTimer)
-    if (this.#pollTimer) clearTimeout(this.#pollTimer)
+    if (this.#debounceTimer) {
+      clearTimeout(this.#debounceTimer)
+    }
+    if (this.#pollTimer) {
+      clearTimeout(this.#pollTimer)
+    }
     this.#debounceTimer = null
     this.#pollTimer = null
     this.#started = false
@@ -233,9 +247,13 @@ export function useTasksV2WithCollapseEffect(): Task[] | undefined {
 
   const hidden = tasks === undefined
   useEffect(() => {
-    if (!hidden) return
+    if (!hidden) {
+      return
+    }
     setAppState((prev) => {
-      if (prev.expandedView !== 'tasks') return prev
+      if (prev.expandedView !== 'tasks') {
+        return prev
+      }
       return { ...prev, expandedView: 'none' as const }
     })
   }, [hidden, setAppState])

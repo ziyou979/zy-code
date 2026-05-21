@@ -196,7 +196,9 @@ class TreeSitterParsedCommand implements IParsedCommand {
   }
 
   withoutOutputRedirections(): string {
-    if (this.redirectionNodes.length === 0) return this.originalCommand
+    if (this.redirectionNodes.length === 0) {
+      return this.originalCommand
+    }
 
     const sorted = [...this.redirectionNodes].sort((a, b) => b.startIndex - a.startIndex)
 
@@ -245,7 +247,9 @@ export function buildParsedCommandFromRoot(command: string, root: Node): IParsed
 }
 
 async function doParse(command: string): Promise<IParsedCommand | null> {
-  if (!command) return null
+  if (!command) {
+    return null
+  }
 
   const treeSitterAvailable = await getTreeSitterAvailable()
   if (treeSitterAvailable) {

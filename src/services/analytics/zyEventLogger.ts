@@ -1,21 +1,21 @@
+import { randomUUID } from 'node:crypto'
 import type { AnyValueMap, Logger, logs } from '@opentelemetry/api-logs'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import { BatchLogRecordProcessor, LoggerProvider } from '@opentelemetry/sdk-logs'
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions'
-import { randomUUID } from 'crypto'
 import { isEqual } from 'lodash-es'
 import { getOrCreateUserID } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { logError } from '../../utils/log.js'
 import { getPlatform, getWslVersion } from '../../utils/platform.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { profileCheckpoint } from '../../utils/startupProfiler.js'
 import { getCoreUserData } from '../../utils/user.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { isAnalyticsDisabled } from './config.js'
-import { LocalFileExporter } from './localFileExporter.js'
 import type { GrowthBookUserAttributes } from './growthbook.js'
 import { getDynamicConfig_CACHED_MAY_BE_STALE } from './growthbook.js'
+import { LocalFileExporter } from './localFileExporter.js'
 import { getEventMetadata } from './metadata.js'
 import { isSinkKilled } from './sinkKillswitch.js'
 
@@ -208,7 +208,7 @@ export function logEventToZy(
     return
   }
 
-  // @ts-ignore
+  // @ts-expect-error
   if (!zyEventLogger || isSinkKilled('zyEvent' as any)) {
     return
   }
@@ -314,7 +314,10 @@ export function initializeZyEventLogging(): void {
 
   const scheduledDelayMillis =
     batchConfig.scheduledDelayMillis ||
-    parseInt(process.env.OTEL_LOGS_EXPORT_INTERVAL || DEFAULT_LOGS_EXPORT_INTERVAL_MS.toString())
+    parseInt(
+      process.env.OTEL_LOGS_EXPORT_INTERVAL || DEFAULT_LOGS_EXPORT_INTERVAL_MS.toString(),
+      10,
+    )
 
   const maxExportBatchSize = batchConfig.maxExportBatchSize || DEFAULT_MAX_EXPORT_BATCH_SIZE
 

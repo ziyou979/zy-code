@@ -21,6 +21,7 @@ import { ColorPicker } from './ColorPicker.js'
 import { ModelSelector } from './ModelSelector.js'
 import { ToolSelector } from './ToolSelector.js'
 import { getAgentSourceDisplayName } from './utils.js'
+
 type Props = {
   agent: AgentDefinition
   tools: Tools

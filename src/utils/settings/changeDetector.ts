@@ -1,6 +1,6 @@
+import { stat } from 'node:fs/promises'
+import * as platformPath from 'node:path'
 import chokidar, { type FSWatcher } from 'chokidar'
-import { stat } from 'fs/promises'
-import * as platformPath from 'path'
 import { getIsRemoteMode } from '../../bootstrap/state.js'
 import { registerCleanup } from '../cleanupRegistry.js'
 import { logForDebugging } from '../debug.js'
@@ -77,8 +77,12 @@ let testOverrides: {
  * Initialize file watching
  */
 export async function initialize(): Promise<void> {
-  if (getIsRemoteMode()) return
-  if (initialized || disposed) return
+  if (getIsRemoteMode()) {
+    return
+  }
+  if (initialized || disposed) {
+    return
+  }
   initialized = true
 
   // Start MDM poll for registry/plist changes (independent of filesystem watching)
@@ -88,8 +92,12 @@ export async function initialize(): Promise<void> {
   registerCleanup(dispose)
 
   const { dirs, settingsFiles, dropInDir } = await getWatchTargets()
-  if (disposed) return // dispose() ran during the await
-  if (dirs.length === 0) return
+  if (disposed) {
+    return // dispose() ran during the await
+  }
+  if (dirs.length === 0) {
+    return
+  }
 
   logForDebugging(
     `Watching for changes in setting files ${[...settingsFiles].join(', ')}...${dropInDir ? ` and drop-in directory ${dropInDir}` : ''}`,
@@ -106,17 +114,25 @@ export async function initialize(): Promise<void> {
     ignored: (path, stats) => {
       // Ignore special file types (sockets, FIFOs, devices) - they cannot be watched
       // and will error with EOPNOTSUPP on macOS.
-      if (stats && !stats.isFile() && !stats.isDirectory()) return true
+      if (stats && !stats.isFile() && !stats.isDirectory()) {
+        return true
+      }
       // Ignore .git directories
-      if (path.split(platformPath.sep).some((dir) => dir === '.git')) return true
+      if (path.split(platformPath.sep).some((dir) => dir === '.git')) {
+        return true
+      }
       // Allow directories (chokidar needs them for directory-level watching)
       // and paths without stats (chokidar's initial check before stat)
-      if (!stats || stats.isDirectory()) return false
+      if (!stats || stats.isDirectory()) {
+        return false
+      }
       // Only watch known settings files, ignore everything else in the directory
       // Note: chokidar normalizes paths to forward slashes on Windows, so we
       // normalize back to native format for comparison
       const normalized = platformPath.normalize(path)
-      if (settingsFiles.has(normalized)) return false
+      if (settingsFiles.has(normalized)) {
+        return false
+      }
       // Also accept .json files inside the managed-settings.d/ drop-in directory
       if (
         dropInDir &&
@@ -150,7 +166,9 @@ export function dispose(): Promise<void> {
     clearInterval(mdmPollTimer)
     mdmPollTimer = null
   }
-  for (const timer of pendingDeletions.values()) clearTimeout(timer)
+  for (const timer of pendingDeletions.values()) {
+    clearTimeout(timer)
+  }
   pendingDeletions.clear()
   lastMdmSnapshot = null
   clearInternalWrites()
@@ -258,7 +276,9 @@ function settingSourceToConfigChangeSource(source: SettingSource): ConfigChangeS
 
 function handleChange(path: string): void {
   const source = getSourceForPath(path)
-  if (!source) return
+  if (!source) {
+    return
+  }
 
   // If a deletion was pending for this path (delete-and-recreate pattern),
   // cancel the deletion — we'll process this as a change instead.
@@ -293,7 +313,9 @@ function handleChange(path: string): void {
  */
 function handleAdd(path: string): void {
   const source = getSourceForPath(path)
-  if (!source) return
+  if (!source) {
+    return
+  }
 
   // Cancel any pending deletion — the file is back
   const pendingTimer = pendingDeletions.get(path)
@@ -315,12 +337,16 @@ function handleAdd(path: string): void {
  */
 function handleDelete(path: string): void {
   const source = getSourceForPath(path)
-  if (!source) return
+  if (!source) {
+    return
+  }
 
   logForDebugging(`Detected deletion of ${path}`)
 
   // If there's already a pending deletion for this path, let it run
-  if (pendingDeletions.has(path)) return
+  if (pendingDeletions.has(path)) {
+    return
+  }
 
   const timer = setTimeout(
     (p, src) => {
@@ -369,12 +395,16 @@ function startMdmPoll(): void {
   })
 
   mdmPollTimer = setInterval(() => {
-    if (disposed) return
+    if (disposed) {
+      return
+    }
 
     void (async () => {
       try {
         const { mdm: current, hkcu: currentHkcu } = await refreshMdmSettings()
-        if (disposed) return
+        if (disposed) {
+          return
+        }
 
         const currentSnapshot = jsonStringify({
           mdm: current.settings,
@@ -449,7 +479,9 @@ export function resetForTesting(overrides?: {
     clearInterval(mdmPollTimer)
     mdmPollTimer = null
   }
-  for (const timer of pendingDeletions.values()) clearTimeout(timer)
+  for (const timer of pendingDeletions.values()) {
+    clearTimeout(timer)
+  }
   pendingDeletions.clear()
   lastMdmSnapshot = null
   initialized = false

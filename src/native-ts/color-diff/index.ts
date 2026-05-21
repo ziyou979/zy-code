@@ -17,9 +17,9 @@
  *   getSyntaxTheme always returns the default for the given Zy theme.
  */
 
+import { basename, extname } from 'node:path'
 import { diffArrays } from 'diff'
 import type * as hljsNamespace from 'highlight.js'
-import { basename, extname } from 'path'
 
 // Lazy: defers loading highlight.js until first render. The full bundle
 // registers 190+ language grammars at require time (~50MB, 100-200ms on
@@ -33,7 +33,9 @@ import { basename, extname } from 'path'
 type HLJSApi = typeof hljsNamespace
 let cachedHljs: HLJSApi | null = null
 function hljs(): HLJSApi {
-  if (cachedHljs) return cachedHljs
+  if (cachedHljs) {
+    return cachedHljs
+  }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const mod = require('highlight.js')
   // highlight.js uses `export =` (CJS). Under bun/ESM the interop wraps it
@@ -93,7 +95,9 @@ function ansiIdx(index: number): Color {
 const DEFAULT_BG: Color = { r: 0, g: 0, b: 0, a: 1 }
 
 function detectColorMode(theme: string): ColorMode {
-  if (theme.includes('ansi')) return 'ansi'
+  if (theme.includes('ansi')) {
+    return 'ansi'
+  }
   const ct = process.env.COLORTERM ?? ''
   return ct === 'truecolor' || ct === '24bit' ? 'truecolor' : 'color256'
 }
@@ -112,8 +116,12 @@ function ansi256FromRgb(r: number, g: number, b: number): number {
   // range the cube corner is the only option — ansi_colours snaps 248,248,242
   // to 231 (cube white), not 255 (ramp top).
   const grey = Math.round((r + g + b) / 3)
-  if (grey < 5) return 16
-  if (grey > 244 && qr === qg && qg === qb) return cubeIdx
+  if (grey < 5) {
+    return 16
+  }
+  if (grey > 244 && qr === qg && qg === qb) {
+    return cubeIdx
+  }
   const greyLevel = Math.max(0, Math.min(23, Math.round((grey - 8) / 10)))
   const greyIdx = 232 + greyLevel
   const greyRgb = 8 + greyLevel * 10
@@ -129,12 +137,18 @@ function colorToEscape(c: Color, fg: boolean, mode: ColorMode): string {
   // alpha=0: palette index encoded in .r (bat's ansi-theme convention)
   if (c.a === 0) {
     const idx = c.r
-    if (idx < 8) return `\x1b[${(fg ? 30 : 40) + idx}m`
-    if (idx < 16) return `\x1b[${(fg ? 90 : 100) + (idx - 8)}m`
+    if (idx < 8) {
+      return `\x1b[${(fg ? 30 : 40) + idx}m`
+    }
+    if (idx < 16) {
+      return `\x1b[${(fg ? 90 : 100) + (idx - 8)}m`
+    }
     return `\x1b[${fg ? 38 : 48};5;${idx}m`
   }
   // alpha=1: terminal default
-  if (c.a === 1) return fg ? '\x1b[39m' : '\x1b[49m'
+  if (c.a === 1) {
+    return fg ? '\x1b[39m' : '\x1b[49m'
+  }
 
   const codeType = fg ? 38 : 48
   if (mode === 'truecolor') {
@@ -179,8 +193,12 @@ type Theme = {
 }
 
 function defaultSyntaxThemeName(themeName: string): string {
-  if (themeName.includes('ansi')) return 'ansi'
-  if (themeName.includes('dark')) return 'Monokai Extended'
+  if (themeName.includes('ansi')) {
+    return 'ansi'
+  }
+  if (themeName.includes('dark')) {
+    return 'Monokai Extended'
+  }
   return 'GitHub'
 }
 
@@ -425,33 +443,53 @@ function detectLanguage(filePath: string, firstLine: string | null): string | nu
   // Filename-based lookup (handles Dockerfile, Makefile, CMakeLists.txt, etc.)
   const stem = base.split('.')[0] ?? ''
   const byName = FILENAME_LANGS[base] ?? FILENAME_LANGS[stem]
-  // @ts-ignore
-  if (byName && (hljs() as any).getLanguage(byName)) return byName
+  // @ts-expect-error
+  if (byName && (hljs() as any).getLanguage(byName)) {
+    return byName
+  }
   if (ext) {
-    // @ts-ignore
+    // @ts-expect-error
     const lang = (hljs() as any).getLanguage(ext)
-    if (lang) return ext
+    if (lang) {
+      return ext
+    }
   }
   // Shebang / first-line detection (strip UTF-8 BOM)
   if (firstLine) {
     const line = firstLine.startsWith('\ufeff') ? firstLine.slice(1) : firstLine
     if (line.startsWith('#!')) {
-      if (line.includes('bash') || line.includes('/sh')) return 'bash'
-      if (line.includes('python')) return 'python'
-      if (line.includes('node')) return 'javascript'
-      if (line.includes('ruby')) return 'ruby'
-      if (line.includes('perl')) return 'perl'
+      if (line.includes('bash') || line.includes('/sh')) {
+        return 'bash'
+      }
+      if (line.includes('python')) {
+        return 'python'
+      }
+      if (line.includes('node')) {
+        return 'javascript'
+      }
+      if (line.includes('ruby')) {
+        return 'ruby'
+      }
+      if (line.includes('perl')) {
+        return 'perl'
+      }
     }
-    if (line.startsWith('<?php')) return 'php'
-    if (line.startsWith('<?xml')) return 'xml'
+    if (line.startsWith('<?php')) {
+      return 'php'
+    }
+    if (line.startsWith('<?xml')) {
+      return 'xml'
+    }
   }
   return null
 }
 
 function scopeColor(scope: string | undefined, text: string, theme: Theme): Color {
-  if (!scope) return theme.foreground
+  if (!scope) {
+    return theme.foreground
+  }
   if (scope === 'keyword' && STORAGE_KEYWORDS.has(text.trim())) {
-    return theme.scopes['_storage'] ?? theme.foreground
+    return theme.scopes._storage ?? theme.foreground
   }
   return theme.scopes[scope] ?? theme.scopes[scope.split('.')[0]!] ?? theme.foreground
 }
@@ -497,13 +535,13 @@ function highlightLine(
   theme: Theme,
 ): Block[] {
   // syntect-parity: feed a trailing \n so line comments terminate, then strip
-  const code = line + '\n'
+  const code = `${line}\n`
   if (!state.lang) {
     return [[defaultStyle(theme), code]]
   }
   let result
   try {
-    // @ts-ignore
+    // @ts-expect-error
     result = (hljs() as any).highlight(code, {
       language: state.lang,
       ignoreIllegals: true,
@@ -545,12 +583,16 @@ function tokenize(text: string): string[] {
     const ch = text[i]!
     if (/[\p{L}\p{N}_]/u.test(ch)) {
       let j = i + 1
-      while (j < text.length && /[\p{L}\p{N}_]/u.test(text[j]!)) j++
+      while (j < text.length && /[\p{L}\p{N}_]/u.test(text[j]!)) {
+        j++
+      }
       tokens.push(text.slice(i, j))
       i = j
     } else if (/\s/.test(ch)) {
       let j = i + 1
-      while (j < text.length && /\s/.test(text[j]!)) j++
+      while (j < text.length && /\s/.test(text[j]!)) {
+        j++
+      }
       tokens.push(text.slice(i, j))
       i = j
     } else {
@@ -571,9 +613,13 @@ function findAdjacentPairs(markers: Marker[]): [number, number][] {
     if (markers[i] === '-') {
       const delStart = i
       let delEnd = i
-      while (delEnd < markers.length && markers[delEnd] === '-') delEnd++
+      while (delEnd < markers.length && markers[delEnd] === '-') {
+        delEnd++
+      }
       let addEnd = delEnd
-      while (addEnd < markers.length && markers[addEnd] === '+') addEnd++
+      while (addEnd < markers.length && markers[addEnd] === '+') {
+        addEnd++
+      }
       const delCount = delEnd - delStart
       const addCount = addEnd - delEnd
       if (delCount > 0 && addCount > 0) {
@@ -670,7 +716,9 @@ function wrapText(h: Highlight, width: number, theme: Theme): void {
         // iterate by codepoint
         for (const ch of text) {
           const cw = charWidth(ch)
-          if (accW + cw > remaining) break
+          if (accW + cw > remaining) {
+            break
+          }
           accW += cw
           bytePos += ch.length
         }
@@ -729,7 +777,9 @@ function addLineNumber(h: Highlight, theme: Theme, maxDigits: number, fullDim: b
 }
 
 function addMarker(h: Highlight, theme: Theme): void {
-  if (!h.marker) return
+  if (!h.marker) {
+    return
+  }
   const style: Style = {
     foreground: decorationColor(h.marker, theme),
     background: lineBackground(h.marker, theme),
@@ -750,7 +800,9 @@ function dimContent(h: Highlight): void {
 }
 
 function applyBackground(h: Highlight, theme: Theme, ranges: Range[]): void {
-  if (!h.marker) return
+  if (!h.marker) {
+    return
+  }
   const lineBg = lineBackground(h.marker, theme)
   const wordBg = wordBackground(h.marker, theme)
 
@@ -789,7 +841,9 @@ function applyBackground(h: Highlight, theme: Theme, ranges: Range[]): void {
         newLine.push([{ ...style, background: inRange ? wordBg : lineBg }, seg])
         remaining = remaining.slice(segLen)
         pos = next
-        if (pos >= r.end) rangeIdx++
+        if (pos >= r.end) {
+          rangeIdx++
+        }
       }
       if (remaining.length > 0) {
         newLine.push([{ ...style, background: lineBg }, remaining])
@@ -920,7 +974,9 @@ export class ColorFile {
     const theme = buildTheme(themeName, mode)
     const lines = this.code.split('\n')
     // Rust .lines() drops trailing empty line from trailing \n
-    if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop()
+    if (lines.length > 0 && lines[lines.length - 1] === '') {
+      lines.pop()
+    }
     const firstLine = lines[0] ?? null
     const lang = detectLanguage(this.filePath, firstLine)
     const hlState = { lang, stack: null }
@@ -953,7 +1009,9 @@ export function getSyntaxTheme(themeName: string): SyntaxTheme {
 let cachedModule: NativeModule | null = null
 
 export function getNativeModule(): NativeModule | null {
-  if (cachedModule) return cachedModule
+  if (cachedModule) {
+    return cachedModule
+  }
   cachedModule = { ColorDiff, ColorFile, getSyntaxTheme }
   return cachedModule
 }

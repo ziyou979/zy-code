@@ -17,6 +17,7 @@ import { submitTranscriptShare, type TranscriptShareTrigger } from './submitTran
 import type { TranscriptShareResponse } from './TranscriptSharePrompt.js'
 import { useSurveyState } from './useSurveyState.js'
 import type { FeedbackSurveyResponse, FeedbackSurveyType } from './utils.js'
+
 type FeedbackSurveyConfig = {
   minTimeBeforeFeedbackMs: number
   minTimeBetweenFeedbackMs: number

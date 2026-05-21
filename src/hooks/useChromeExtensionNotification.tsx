@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
 import {
@@ -7,6 +6,7 @@ import {
 } from '../utils/claudeInChrome/setup.js'
 import { isRunningOnHomespace } from '../utils/envUtils.js'
 import { useStartupNotification } from './notifs/useStartupNotification.js'
+
 function getChromeFlag(): boolean | undefined {
   if (process.argv.includes('--chrome')) {
     return true

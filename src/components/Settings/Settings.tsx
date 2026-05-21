@@ -26,7 +26,7 @@ export function Settings({ onClose, context, defaultTab }: Props) {
   const [selectedTab, setSelectedTab] = useState(defaultTab)
   const [tabsHidden, setTabsHidden] = useState(false)
   const [configOwnsEsc, setConfigOwnsEsc] = useState(false)
-  const [gatesOwnsEsc, setGatesOwnsEsc] = useState(false)
+  const [gatesOwnsEsc, _setGatesOwnsEsc] = useState(false)
   const insideModal = useIsInsideModal()
   const { rows } = useModalOrTerminalSize(useTerminalSize())
   const contentHeight = insideModal ? rows + 1 : Math.max(15, Math.min(Math.floor(rows * 0.8), 30))
@@ -47,7 +47,7 @@ export function Settings({ onClose, context, defaultTab }: Props) {
       !(selectedTab === 'Config' && configOwnsEsc) &&
       !(selectedTab === 'Gates' && gatesOwnsEsc),
   })
-  // @ts-ignore - Gates is internal-only and may not be available
+  // @ts-expect-error - Gates is internal-only and may not be available
   const tabs = [
     <Tab key="status" title={tSync('settings.statusTab')}>
       <Status context={context as any} diagnosticsPromise={diagnosticsPromise} />

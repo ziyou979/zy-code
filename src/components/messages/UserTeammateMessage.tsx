@@ -1,8 +1,8 @@
-import type { TextBlock } from '../../types/llm.js'
 import figures from 'figures'
 import * as React from 'react'
 import { TEAMMATE_MESSAGE_TAG } from '../../constants/xml.js'
 import { Ansi, Box, Text, type TextProps } from '../../ink.js'
+import type { TextBlock } from '../../types/llm.js'
 import { toInkColor } from '../../utils/ink.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { isShutdownApproved } from '../../utils/teammateMailbox.js'
@@ -10,6 +10,7 @@ import { MessageResponse } from '../MessageResponse.js'
 import { tryRenderPlanApprovalMessage } from './PlanApprovalMessage.js'
 import { tryRenderShutdownMessage } from './ShutdownMessage.js'
 import { tryRenderTaskAssignmentMessage } from './TaskAssignmentMessage.js'
+
 type Props = {
   addMargin: boolean
   param: TextBlock
@@ -67,7 +68,9 @@ export function UserTeammateMessage({
     }
     try {
       const parsed = jsonParse(msg.content)
-      if (parsed?.type === 'teammate_terminated') return false
+      if (parsed?.type === 'teammate_terminated') {
+        return false
+      }
     } catch {
       // Not JSON, keep the message
     }

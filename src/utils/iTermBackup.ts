@@ -1,6 +1,6 @@
-import { copyFile, stat } from 'fs/promises'
-import { homedir } from 'os'
-import { join } from 'path'
+import { copyFile, stat } from 'node:fs/promises'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 import { getGlobalConfig, saveGlobalConfig } from './config.js'
 import { logError } from './log.js'
 

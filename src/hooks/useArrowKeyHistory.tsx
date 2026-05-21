@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { getModeFromInput } from 'src/components/PromptInput/inputModes.js'
 import { useNotifications } from 'src/context/notifications.js'
 import { ConfigurableShortcutHint } from '../components/ConfigurableShortcutHint.js'
@@ -16,7 +16,7 @@ const HISTORY_CHUNK_SIZE = 10
 // Mode filter is included to ensure we don't mix filtered and unfiltered caches
 let pendingLoad: Promise<HistoryEntry[]> | null = null
 let pendingLoadTarget = 0
-let pendingLoadModeFilter: HistoryMode | undefined = undefined
+let pendingLoadModeFilter: HistoryMode | undefined
 async function loadHistoryEntries(
   minCount: number,
   modeFilter?: HistoryMode,
@@ -51,7 +51,9 @@ async function loadHistoryEntries(
       }
       entries.push(entry)
       loaded++
-      if (loaded >= pendingLoadTarget) break
+      if (loaded >= pendingLoadTarget) {
+        break
+      }
     }
     return entries
   })()
@@ -128,7 +130,9 @@ export function useArrowKeyHistory(
   )
   const updateInput = useCallback(
     (input: HistoryEntry | undefined, cursorToStart = false): void => {
-      if (!input || !input.display) return
+      if (!input?.display) {
+        return
+      }
       const mode = getModeFromInput(input.display)
       const value = mode === 'bash' ? input.display.slice(1) : input.display
       setInputWithCursor(value, mode, input.pastedContents ?? {}, cursorToStart)

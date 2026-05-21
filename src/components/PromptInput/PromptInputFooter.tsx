@@ -16,12 +16,12 @@ import type { ToolPermissionContext } from '../../Tool.js'
 import type { Message } from '../../types/message.js'
 import type { PromptInputMode, VimMode } from '../../types/textInputTypes.js'
 import type { AutoUpdaterResult } from '../../utils/autoUpdater.js'
-import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
+import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import { isUndercover } from '../../utils/undercover.js'
 import { BuiltInStatusBar } from '../BuiltInStatusBar.js'
-import { TaskStatusLine } from '../TaskStatusLine.js'
 import { CoordinatorTaskPanel, useCoordinatorTaskCount } from '../CoordinatorAgentStatus.js'
+import { TaskStatusLine } from '../TaskStatusLine.js'
 import { Notifications } from './Notifications.js'
 import { PromptInputFooterLeftSide } from './PromptInputFooterLeftSide.js'
 import {
@@ -29,6 +29,7 @@ import {
   type SuggestionItem,
 } from './PromptInputFooterSuggestions.js'
 import { PromptInputHelpMenu } from './PromptInputHelpMenu.js'
+
 type Props = {
   apiKeyStatus: VerificationStatus
   debug: boolean
@@ -223,7 +224,9 @@ type BridgeStatusProps = {
   bridgeSelected: boolean
 }
 function BridgeStatusIndicator({ bridgeSelected }: BridgeStatusProps): React.ReactNode {
-  if (!feature('BRIDGE_MODE')) return null
+  if (!feature('BRIDGE_MODE')) {
+    return null
+  }
 
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
   const enabled = useAppState((s) => s.replBridgeEnabled)
@@ -237,7 +240,9 @@ function BridgeStatusIndicator({ bridgeSelected }: BridgeStatusProps): React.Rea
   const explicit = useAppState((s_3) => s_3.replBridgeExplicit)
 
   // Failed state is surfaced via notification (useReplBridge), not a footer pill.
-  if (!isBridgeEnabled() || !enabled) return null
+  if (!isBridgeEnabled() || !enabled) {
+    return null
+  }
   const status = getBridgeStatus({
     error: undefined,
     connected,

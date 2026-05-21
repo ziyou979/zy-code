@@ -33,7 +33,9 @@ export function useSwarmInitialization(
   { enabled = true }: { enabled?: boolean } = {},
 ): void {
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled) {
+      return
+    }
     if (isAgentSwarmsEnabled()) {
       // Check if this is a resumed agent session (from --resume or /resume)
       // Resumed sessions have teamName/agentName stored in transcript messages

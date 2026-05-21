@@ -1,15 +1,15 @@
 import { feature } from 'bun:bundle'
-import type { UUID } from 'crypto'
+import type { UUID } from 'node:crypto'
 import figures from 'figures'
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
+import { tSync } from 'src/i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
 import { useAppState, useAppStateStore, useSetAppState } from 'src/state/AppState.js'
 import {
-  getSdkBetas,
   getSessionId,
   isSessionPersistenceDisabled,
   setHasExitedPlanMode,
@@ -65,18 +65,19 @@ import { Markdown } from '../../Markdown.js'
 import { PermissionDialog } from '../PermissionDialog.js'
 import type { PermissionRequestProps } from '../PermissionRequest.js'
 import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js'
-import { tSync } from 'src/i18n/index.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
   ? (require('../../../utils/permissions/autoModeState.js') as typeof import('../../../utils/permissions/autoModeState.js'))
   : null
-import type { ImageSource, ImageBlock, TokenUsage } from '../../../types/llm.js'
+
+import type { ImageBlock, ImageSource, TokenUsage } from '../../../types/llm.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { PastedContent } from '../../../utils/config.js'
 import type { ImageDimensions } from '../../../utils/imageResizer.js'
 import { maybeResizeAndDownsampleImageBlock } from '../../../utils/imageResizer.js'
 import { cacheImagePath, storeImage } from '../../../utils/imageStore.js'
+
 type ResponseValue =
   | 'yes-bypass-permissions'
   | 'yes-accept-edits'
@@ -133,7 +134,9 @@ export function autoNameSessionFromPlan(
   // On clear-context, the current session is about to be abandoned — its
   // title (which may have been set by a PRIOR auto-name) is irrelevant.
   // Checking it would make the feature self-defeating after first use.
-  if (!isClearContext && getCurrentSessionTitle(getSessionId())) return
+  if (!isClearContext && getCurrentSessionTitle(getSessionId())) {
+    return
+  }
   void generateSessionName(
     // generateSessionName tail-slices to the last 1000 chars (correct for
     // conversations, where recency matters). Plans front-load the goal and
@@ -149,13 +152,17 @@ export function autoNameSessionFromPlan(
       // On clear-context acceptance, regenerateSessionId() has run by now —
       // this intentionally names the NEW execution session. Do not "fix" by
       // capturing sessionId once; that would name the abandoned planning session.
-      if (!name || getCurrentSessionTitle(getSessionId())) return
+      if (!name || getCurrentSessionTitle(getSessionId())) {
+        return
+      }
       const sessionId = getSessionId() as UUID
       const fullPath = getTranscriptPath()
       await saveCustomTitle(sessionId, name, fullPath, 'auto')
       await saveAgentName(sessionId, name, fullPath, 'auto')
       setAppState((prev) => {
-        if (prev.standaloneAgentContext?.name === name) return prev
+        if (prev.standaloneAgentContext?.name === name) {
+          return prev
+        }
         return {
           ...prev,
           standaloneAgentContext: {
@@ -176,7 +183,7 @@ export function ExitPlanModePermissionRequest({
 }: PermissionRequestProps): React.ReactNode {
   const toolPermissionContext = useAppState((s) => s.toolPermissionContext)
   const setAppState = useSetAppState()
-  const store = useAppStateStore()
+  const _store = useAppStateStore()
   const { addNotification } = useNotifications()
   // Feedback text from the 'No' option's input. Threaded through onAllow as
   // acceptFeedback when the user approves — lets users annotate the plan
@@ -258,7 +265,9 @@ export function ExitPlanModePermissionRequest({
         undefined) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   )
   const [currentPlan, setCurrentPlan] = useState(() => {
-    if (inputPlan) return inputPlan
+    if (inputPlan) {
+      return inputPlan
+    }
     const plan = getPlan()
     return plan ?? tSync('planMode.noPlanFound')
   })
@@ -293,7 +302,9 @@ export function ExitPlanModePermissionRequest({
             })
           }
           if (result.content !== null) {
-            if (result.content !== currentPlan) setPlanEditedLocally(true)
+            if (result.content !== currentPlan) {
+              setPlanEditedLocally(true)
+            }
             setCurrentPlan(result.content)
             setShowSaveMessage(true)
           }
@@ -596,7 +607,9 @@ export function ExitPlanModePermissionRequest({
   }
   const useStickyFooter = !isEmpty && !!setStickyFooter
   useLayoutEffect(() => {
-    if (!useStickyFooter) return
+    if (!useStickyFooter) {
+      return
+    }
     setStickyFooter(
       <Box
         flexDirection="column"
@@ -650,6 +663,8 @@ export function ExitPlanModePermissionRequest({
     isV2,
     planFilePath,
     showSaveMessage,
+    onRemoveImage,
+    onImagePaste,
   ])
 
   // Simplified UI for empty plans
@@ -886,9 +901,11 @@ export function buildPlanApprovalOptions({
 }
 function getContextUsedPercent(
   usage: TokenUsage | undefined,
-  permissionMode: PermissionMode,
+  _permissionMode: PermissionMode,
 ): number | null {
-  if (!usage) return null
+  if (!usage) {
+    return null
+  }
   const runtimeModel = getMainLoopModel()
   const contextWindowSize = getContextWindowForModel(runtimeModel)
   const { used } = calculateContextPercentages(

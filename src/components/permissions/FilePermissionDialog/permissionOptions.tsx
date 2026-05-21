@@ -1,6 +1,7 @@
-import { homedir } from 'os'
-import { basename, join, sep } from 'path'
-import React, { type ReactNode } from 'react'
+import { homedir } from 'node:os'
+import { basename, join, sep } from 'node:path'
+import { type ReactNode } from 'react'
+import { tSync } from 'src/i18n/index.js'
 import { getOriginalCwd } from '../../../bootstrap/state.js'
 import { Text } from '../../../ink.js'
 import { getShortcutDisplay } from '../../../keybindings/shortcutFormat.js'
@@ -11,7 +12,6 @@ import {
   pathInAllowedWorkingPath,
 } from '../../../utils/permissions/filesystem.js'
 import type { OptionWithDescription } from '../../CustomSelect/select.js'
-import { tSync } from 'src/i18n/index.js'
 /**
  * Check if a path is within the project's .zy/ folder.
  * This is used to determine whether to show the special ".zy folder" permission option.
@@ -28,7 +28,7 @@ export function isInZyFolder(filePath: string): boolean {
   return (
     normalizedAbsolutePath.startsWith(normalizedZyFolderPath + sep.toLowerCase()) ||
     // Also match case where sep is / on posix systems
-    normalizedAbsolutePath.startsWith(normalizedZyFolderPath + '/')
+    normalizedAbsolutePath.startsWith(`${normalizedZyFolderPath}/`)
   )
 }
 
@@ -44,7 +44,7 @@ export function isInGlobalZyFolder(filePath: string): boolean {
   const normalizedGlobalZyFolderPath = normalizeCaseForComparison(globalZyFolderPath)
   return (
     normalizedAbsolutePath.startsWith(normalizedGlobalZyFolderPath + sep.toLowerCase()) ||
-    normalizedAbsolutePath.startsWith(normalizedGlobalZyFolderPath + '/')
+    normalizedAbsolutePath.startsWith(`${normalizedGlobalZyFolderPath}/`)
   )
 }
 export type PermissionOption =

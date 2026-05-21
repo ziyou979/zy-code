@@ -270,11 +270,11 @@ const NO_TOOLS_TRAILER =
 
 export function getPartialCompactPrompt(
   customInstructions?: string,
-  // @ts-ignore
+  // @ts-expect-error
   direction: PartialCompactDirection = 'from',
 ): string {
   const template =
-    // @ts-ignore
+    // @ts-expect-error
     direction === 'up_to' ? PARTIAL_COMPACT_UP_TO_PROMPT : PARTIAL_COMPACT_PROMPT
   let prompt = NO_TOOLS_PREAMBLE + template
 
@@ -354,7 +354,7 @@ Continue the conversation from where it left off without asking the user any fur
 
     if (
       (feature('PROACTIVE') || feature('KAIROS')) &&
-      // @ts-ignore
+      // @ts-expect-error
       proactiveModule?.isProactiveActive()
     ) {
       continuation += `

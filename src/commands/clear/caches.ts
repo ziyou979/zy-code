@@ -23,12 +23,12 @@ import { clearTrackedMagicDocs } from '../../services/MagicDocs/magicDocs.js'
 import { clearDynamicSkills } from '../../skills/loadSkillsDir.js'
 import { resetSentSkillNames } from '../../utils/attachments.js'
 import { clearCommandPrefixCaches } from '../../utils/bash/commands.js'
-import { resetGetMemoryFilesCache } from '../../utils/zymd.js'
 import { clearRepositoryCaches } from '../../utils/detectRepository.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { clearResolveGitDirCache } from '../../utils/git/gitFilesystem.js'
 import { clearStoredImagePaths } from '../../utils/imageStore.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { clearSessionEnvVars } from '../../utils/sessionEnvVars.js'
+import { resetGetMemoryFilesCache } from '../../utils/zymd.js'
 
 /**
  * Clear all session-related caches.
@@ -56,7 +56,9 @@ export function clearSessionCaches(preservedAgentIds: ReadonlySet<string> = new 
   clearCommandsCache()
 
   // Clear prompt cache break detection state
-  if (!hasPreserved) resetPromptCacheBreakDetection()
+  if (!hasPreserved) {
+    resetPromptCacheBreakDetection()
+  }
 
   // Clear system prompt injection (cache breaker)
   setSystemPromptInjection(null)
@@ -85,7 +87,9 @@ export function clearSessionCaches(preservedAgentIds: ReadonlySet<string> = new 
   // Clear all session ingress caches (lastUuidMap, sequentialAppendBySession)
   clearAllSessions()
   // Clear swarm permission pending callbacks
-  if (!hasPreserved) clearAllPendingCallbacks()
+  if (!hasPreserved) {
+    clearAllPendingCallbacks()
+  }
 
   // Clear tungsten session usage tracking
   if (isInternalBuild()) {
@@ -106,7 +110,9 @@ export function clearSessionCaches(preservedAgentIds: ReadonlySet<string> = new 
   // Clear bash command prefix caches (Haiku-extracted prefixes)
   clearCommandPrefixCaches()
   // Clear dump prompts state
-  if (!hasPreserved) clearAllDumpState()
+  if (!hasPreserved) {
+    clearAllDumpState()
+  }
   // Clear invoked skills cache (each entry holds full skill file content)
   clearInvokedSkills(preservedAgentIds)
   // Clear git dir resolution cache

@@ -1,10 +1,10 @@
-// @ts-ignore
+// @ts-expect-error
 import { diffWordsWithSpace, type StructuredPatchHunk } from 'diff'
 import * as React from 'react'
 import type { ThemeName } from 'src/utils/theme.js'
 import { stringWidth } from '../../ink/stringWidth.js'
-import sliceAnsi from '../../utils/sliceAnsi.js'
 import { Box, NoSelect, Text, useTheme, wrapText } from '../../ink.js'
+import sliceAnsi from '../../utils/sliceAnsi.js'
 
 /*
  * StructuredDiffFallback Component: Word-Level Diff Highlighting Example
@@ -259,13 +259,17 @@ function generateWordDiffElements(
         shouldShow = true
       }
     }
-    if (!shouldShow) return
+    if (!shouldShow) {
+      return
+    }
 
     // Use wrapText to wrap this individual part if it's long
     const partWrapped = wrapText(part.value, availableContentWidth, 'wrap')
     const partLines = partWrapped.split('\n')
     partLines.forEach((partLine, lineIdx) => {
-      if (!partLine) return
+      if (!partLine) {
+        return
+      }
 
       // Check if we need to start a new line
       if (lineIdx > 0 || currentLineWidth + stringWidth(partLine) > availableContentWidth) {
@@ -305,8 +309,7 @@ function generateWordDiffElements(
           ? 'diffRemovedDimmed'
           : 'diffRemoved'
     const lineNum = lineIndex === 0 ? i : undefined
-    const lineNumStr =
-      (lineNum !== undefined ? lineNum.toString().padStart(maxWidth) : ' '.repeat(maxWidth)) + ' '
+    const lineNumStr = `${lineNum !== undefined ? lineNum.toString().padStart(maxWidth) : ' '.repeat(maxWidth)} `
     // Calculate padding to fill the entire terminal width (clamp contentWidth to prevent overflow)
     const usedWidth =
       lineNumStr.length + diffPrefixWidth + Math.min(contentWidth, availableContentWidth)
@@ -388,8 +391,7 @@ function formatDiff(
     return wrappedLines.map((line, lineIndex) => {
       const key = `${type}-${i}-${lineIndex}`
       const lineNum = lineIndex === 0 ? i : undefined
-      const lineNumStr =
-        (lineNum !== undefined ? lineNum.toString().padStart(maxWidth) : ' '.repeat(maxWidth)) + ' '
+      const lineNumStr = `${lineNum !== undefined ? lineNum.toString().padStart(maxWidth) : ' '.repeat(maxWidth)} `
       const sigil = type === 'add' ? '+' : type === 'remove' ? '-' : ' '
       // wrapAnsi 在边界处可能产生比 availableContentWidth 宽 1-2 个字符的行
       //（特别是 ANSI 转义序列干扰宽度计算时）。强制截断以防止 Yoga 布局溢出，

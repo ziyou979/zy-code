@@ -48,7 +48,9 @@ let firstTokenTime: number | null = null
  * Start profiling a new query session
  */
 export function startQueryProfile(): void {
-  if (!ENABLED) return
+  if (!ENABLED) {
+    return
+  }
 
   const perf = getPerformance()
 
@@ -67,7 +69,9 @@ export function startQueryProfile(): void {
  * Record a checkpoint with the given name
  */
 export function queryCheckpoint(name: string): void {
-  if (!ENABLED) return
+  if (!ENABLED) {
+    return
+  }
 
   const perf = getPerformance()
   perf.mark(name)
@@ -87,7 +91,9 @@ export function queryCheckpoint(name: string): void {
  * End the current query profiling session
  */
 export function endQueryProfile(): void {
-  if (!ENABLED) return
+  if (!ENABLED) {
+    return
+  }
 
   queryCheckpoint('query_profile_end')
 }
@@ -289,6 +295,8 @@ function getPhaseSummary(
  * Log the query profile report to debug output
  */
 export function logQueryProfileReport(): void {
-  if (!ENABLED) return
+  if (!ENABLED) {
+    return
+  }
   logForDebugging(getQueryProfileReport())
 }

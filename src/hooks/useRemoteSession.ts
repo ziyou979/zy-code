@@ -142,7 +142,9 @@ export function useRemoteSession({
     const manager = new RemoteSessionManager(config, {
       onMessage: (sdkMessage) => {
         const parts = [`type=${sdkMessage.type}`]
-        if ('subtype' in sdkMessage) parts.push(`subtype=${sdkMessage.subtype}`)
+        if ('subtype' in sdkMessage) {
+          parts.push(`subtype=${sdkMessage.subtype}`)
+        }
         if (sdkMessage.type === 'user') {
           const c = (sdkMessage.message as any)?.content
           parts.push(`content=${Array.isArray(c) ? c.map((b) => b.type).join(',') : typeof c}`)
@@ -237,7 +239,9 @@ export function useRemoteSession({
             if (resultIds.length > 0) {
               setInProgressToolUseIDs((prev) => {
                 const next = new Set(prev)
-                for (const id of resultIds) next.delete(id)
+                for (const id of resultIds) {
+                  next.delete(id)
+                }
                 return next.size === prev.size ? prev : next
               })
             }
@@ -453,7 +457,9 @@ export function useRemoteSession({
       // Track locally-added message UUIDs so the WS echo can be filtered.
       // Must record BEFORE the POST to close the race where the echo arrives
       // before the POST promise resolves.
-      if (opts?.uuid) sentUUIDsRef.current.add(opts.uuid)
+      if (opts?.uuid) {
+        sentUUIDsRef.current.add(opts.uuid)
+      }
 
       const success = await manager.sendMessage(content, opts)
 

@@ -13,10 +13,10 @@ import type {
   StreamResult,
   ToolDefinition,
 } from '../../types/llm.js'
-import { getAnthropicClient } from './client.js'
-import { getMainLoopModel, normalizeModelStringForAPI } from '../../utils/model/model.js'
 import { getModelBetas } from '../../utils/betas.js'
 import { logError } from '../../utils/log.js'
+import { getMainLoopModel, normalizeModelStringForAPI } from '../../utils/model/model.js'
+import { getAnthropicClient } from './client.js'
 import {
   anthropicResponseToStandard,
   anthropicStreamToStandard,
@@ -39,7 +39,9 @@ export class AnthropicProviderAdapter implements LLMAdapter {
   }
 
   private async getClient(model?: string): Promise<Anthropic> {
-    if (this.injectedClient) return this.injectedClient
+    if (this.injectedClient) {
+      return this.injectedClient
+    }
     return getAnthropicClient({ maxRetries: 0, model, source: 'standard_provider' })
   }
 
@@ -52,7 +54,9 @@ export class AnthropicProviderAdapter implements LLMAdapter {
     const anthropicParams = buildAnthropicCreateParams(params)
 
     const headers: Record<string, string> = {}
-    if (clientRequestId) headers['anthropic-client-request-id'] = clientRequestId
+    if (clientRequestId) {
+      headers['anthropic-client-request-id'] = clientRequestId
+    }
 
     const result = await client.beta.messages
       .create(

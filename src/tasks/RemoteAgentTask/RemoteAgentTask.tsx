@@ -1,4 +1,3 @@
-import type { ToolCallBlock } from '../../types/llm.js'
 import { getRemoteSessionUrl } from '../../constants/product.js'
 import {
   OUTPUT_FILE_TAG,
@@ -208,7 +207,9 @@ function enqueueRemoteNotification(
   toolUseId?: string,
 ): void {
   // Atomically check and set notified flag to prevent duplicate notifications.
-  if (!markTaskNotified(taskId, setAppState)) return
+  if (!markTaskNotified(taskId, setAppState)) {
+    return
+  }
   const statusText =
     status === 'completed'
       ? 'completed successfully'
@@ -257,10 +258,14 @@ export function extractPlanFromLog(log: SDKMessage[]): string | null {
   // Walk backwards through assistant messages to find <ultraplan> content
   for (let i = log.length - 1; i >= 0; i--) {
     const msg = log[i]
-    if (msg?.type !== 'assistant') continue
+    if (msg?.type !== 'assistant') {
+      continue
+    }
     const fullText = extractTextContent((msg.message as any).content, '\n')
     const plan = extractTag(fullText, ULTRAPLAN_TAG)
-    if (plan?.trim()) return plan.trim()
+    if (plan?.trim()) {
+      return plan.trim()
+    }
   }
   return null
 }
@@ -276,7 +281,9 @@ export function enqueueUltraplanFailureNotification(
   reason: string,
   setAppState: SetAppState,
 ): void {
-  if (!markTaskNotified(taskId, setAppState)) return
+  if (!markTaskNotified(taskId, setAppState)) {
+    return
+  }
   const sessionUrl = getRemoteTaskSessionUrl(sessionId)
   const message = `<${TASK_NOTIFICATION_TAG}>
 <${TASK_ID_TAG}>${taskId}</${TASK_ID_TAG}>
@@ -315,15 +322,21 @@ function extractReviewFromLog(log: SDKMessage[]): string | null {
       (msg.subtype === 'hook_progress' || msg.subtype === 'hook_response')
     ) {
       const tagged = extractTag(msg.stdout, REMOTE_REVIEW_TAG)
-      if (tagged?.trim()) return tagged.trim()
+      if (tagged?.trim()) {
+        return tagged.trim()
+      }
     }
   }
   for (let i = log.length - 1; i >= 0; i--) {
     const msg = log[i]
-    if (msg?.type !== 'assistant') continue
+    if (msg?.type !== 'assistant') {
+      continue
+    }
     const fullText = extractTextContent((msg.message as any).content, '\n')
     const tagged = extractTag(fullText, REMOTE_REVIEW_TAG)
-    if (tagged?.trim()) return tagged.trim()
+    if (tagged?.trim()) {
+      return tagged.trim()
+    }
   }
 
   // Hook-stdout concat fallback: a single echo should land in one event, but
@@ -338,7 +351,9 @@ function extractReviewFromLog(log: SDKMessage[]): string | null {
     .map((msg) => msg.stdout)
     .join('')
   const hookTagged = extractTag(hookStdout, REMOTE_REVIEW_TAG)
-  if (hookTagged?.trim()) return hookTagged.trim()
+  if (hookTagged?.trim()) {
+    return hookTagged.trim()
+  }
 
   // Fallback: concatenate all assistant text in chronological order.
   const allText = log
@@ -368,17 +383,23 @@ function extractReviewTagFromLog(log: SDKMessage[]): string | null {
       (msg.subtype === 'hook_progress' || msg.subtype === 'hook_response')
     ) {
       const tagged = extractTag(msg.stdout, REMOTE_REVIEW_TAG)
-      if (tagged?.trim()) return tagged.trim()
+      if (tagged?.trim()) {
+        return tagged.trim()
+      }
     }
   }
 
   // assistant text per-message scan (prompt mode)
   for (let i = log.length - 1; i >= 0; i--) {
     const msg = log[i]
-    if (msg?.type !== 'assistant') continue
+    if (msg?.type !== 'assistant') {
+      continue
+    }
     const fullText = extractTextContent((msg.message as any).content, '\n')
     const tagged = extractTag(fullText, REMOTE_REVIEW_TAG)
-    if (tagged?.trim()) return tagged.trim()
+    if (tagged?.trim()) {
+      return tagged.trim()
+    }
   }
 
   // Hook-stdout concat fallback for split tags
@@ -391,7 +412,9 @@ function extractReviewTagFromLog(log: SDKMessage[]): string | null {
     .map((msg) => msg.stdout)
     .join('')
   const hookTagged = extractTag(hookStdout, REMOTE_REVIEW_TAG)
-  if (hookTagged?.trim()) return hookTagged.trim()
+  if (hookTagged?.trim()) {
+    return hookTagged.trim()
+  }
   return null
 }
 
@@ -406,7 +429,9 @@ function enqueueRemoteReviewNotification(
   reviewContent: string,
   setAppState: SetAppState,
 ): void {
-  if (!markTaskNotified(taskId, setAppState)) return
+  if (!markTaskNotified(taskId, setAppState)) {
+    return
+  }
   const message = `<${TASK_NOTIFICATION_TAG}>
 <${TASK_ID_TAG}>${taskId}</${TASK_ID_TAG}>
 <${TASK_TYPE_TAG}>remote_agent</${TASK_TYPE_TAG}>
@@ -430,7 +455,9 @@ function enqueueRemoteReviewFailureNotification(
   reason: string,
   setAppState: SetAppState,
 ): void {
-  if (!markTaskNotified(taskId, setAppState)) return
+  if (!markTaskNotified(taskId, setAppState)) {
+    return
+  }
   const message = `<${TASK_NOTIFICATION_TAG}>
 <${TASK_ID_TAG}>${taskId}</${TASK_ID_TAG}>
 <${TASK_TYPE_TAG}>remote_agent</${TASK_TYPE_TAG}>
@@ -576,7 +603,9 @@ export async function restoreRemoteAgentTasks(context: TaskContext): Promise<voi
 }
 async function restoreRemoteAgentTasksImpl(context: TaskContext): Promise<void> {
   const persisted = await listRemoteAgentMetadata()
-  if (persisted.length === 0) return
+  if (persisted.length === 0) {
+    return
+  }
   for (const meta of persisted) {
     let remoteStatus: string
     try {
@@ -645,7 +674,9 @@ function startRemoteSessionPolling(taskId: string, context: TaskContext): () => 
   // at end of run; scanning only the delta (response.newEvents) is O(new).
   let cachedReviewContent: string | null = null
   const poll = async (): Promise<void> => {
-    if (!isRunning) return
+    if (!isRunning) {
+      return
+    }
     try {
       const appState = context.getAppState()
       const task = appState.tasks?.[taskId] as RemoteAgentTaskState | undefined
@@ -673,7 +704,7 @@ function startRemoteSessionPolling(taskId: string, context: TaskContext): () => 
           })
           .join('\n')
         if (deltaText) {
-          appendTaskOutput(taskId, deltaText + '\n')
+          appendTaskOutput(taskId, `${deltaText}\n`)
         }
       }
       if (response.sessionStatus === 'archived') {
@@ -869,7 +900,9 @@ function startRemoteSessionPolling(taskId: string, context: TaskContext): () => 
           endTime: result || sessionDone || reviewTimedOut ? Date.now() : undefined,
         }
       })
-      if (raceTerminated) return
+      if (raceTerminated) {
+        return
+      }
 
       // Send notification if task completed or timed out
       if (result || sessionDone || reviewTimedOut) {

@@ -1,5 +1,5 @@
-import { mkdir, readFile, unlink, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { getSessionId } from '../../bootstrap/state.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -32,7 +32,9 @@ const FRESH: AcquireResult = { kind: 'acquired', fresh: true }
 const REENTRANT: AcquireResult = { kind: 'acquired', fresh: false }
 
 function isComputerUseLock(value: unknown): value is ComputerUseLock {
-  if (typeof value !== 'object' || value === null) return false
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
   return (
     'sessionId' in value &&
     typeof value.sessionId === 'string' &&
@@ -81,7 +83,9 @@ async function tryCreateExclusive(lock: ComputerUseLock): Promise<boolean> {
     await writeFile(getLockPath(), jsonStringify(lock), { flag: 'wx' })
     return true
   } catch (e: unknown) {
-    if (getErrnoCode(e) === 'EEXIST') return false
+    if (getErrnoCode(e) === 'EEXIST') {
+      return false
+    }
     throw e
   }
 }
@@ -109,8 +113,12 @@ function registerLockCleanup(): void {
  */
 export async function checkComputerUseLock(): Promise<CheckResult> {
   const existing = await readLock()
-  if (!existing) return { kind: 'free' }
-  if (existing.sessionId === getSessionId()) return { kind: 'held_by_self' }
+  if (!existing) {
+    return { kind: 'free' }
+  }
+  if (existing.sessionId === getSessionId()) {
+    return { kind: 'held_by_self' }
+  }
   if (isProcessRunning(existing.pid)) {
     return { kind: 'blocked', by: existing.sessionId }
   }
@@ -174,7 +182,9 @@ export async function tryAcquireComputerUseLock(): Promise<AcquireResult> {
   }
 
   // Already held by this session.
-  if (existing.sessionId === sessionId) return REENTRANT
+  if (existing.sessionId === sessionId) {
+    return REENTRANT
+  }
 
   // Another live session holds it — blocked.
   if (isProcessRunning(existing.pid)) {
@@ -204,7 +214,9 @@ export async function releaseComputerUseLock(): Promise<boolean> {
   unregisterCleanup = undefined
 
   const existing = await readLock()
-  if (!existing || existing.sessionId !== getSessionId()) return false
+  if (!existing || existing.sessionId !== getSessionId()) {
+    return false
+  }
   try {
     await unlink(getLockPath())
     logForDebugging('Released computer-use lock')

@@ -19,7 +19,7 @@ export type LocalWorkflowTaskState = TaskStateBase & {
 export const LocalWorkflowTask: Task = {
   name: 'LocalWorkflowTask',
   type: 'local_workflow',
-  async kill(taskId: string, setAppState: SetAppState): Promise<void> {
+  async kill(_taskId: string, _setAppState: SetAppState): Promise<void> {
     // Stub implementation - update task status to killed
     // In real implementation, this would terminate the workflow process
   },
@@ -30,7 +30,7 @@ export const LocalWorkflowTask: Task = {
  * @param taskId - The task ID to kill
  * @param setAppState - State setter function
  */
-export async function killWorkflowTask(taskId: string, setAppState: SetAppState): Promise<void> {
+export async function killWorkflowTask(_taskId: string, _setAppState: SetAppState): Promise<void> {
   // Stub implementation
 }
 
@@ -39,7 +39,7 @@ export async function killWorkflowTask(taskId: string, setAppState: SetAppState)
  * @param taskId - The task ID to skip
  * @param setAppState - State setter function
  */
-export function skipWorkflowAgent(taskId: string, setAppState: SetAppState): void {
+export function skipWorkflowAgent(_taskId: string, _setAppState: SetAppState): void {
   // Stub implementation
 }
 
@@ -48,6 +48,6 @@ export function skipWorkflowAgent(taskId: string, setAppState: SetAppState): voi
  * @param taskId - The task ID to retry
  * @param setAppState - State setter function
  */
-export function retryWorkflowAgent(taskId: string, setAppState: SetAppState): void {
+export function retryWorkflowAgent(_taskId: string, _setAppState: SetAppState): void {
   // Stub implementation
 }

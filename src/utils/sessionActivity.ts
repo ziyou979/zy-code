@@ -123,8 +123,11 @@ export function stopSessionActivity(reason: SessionActivityReason): void {
     refcount--
   }
   const n = (activeReasons.get(reason) ?? 0) - 1
-  if (n > 0) activeReasons.set(reason, n)
-  else activeReasons.delete(reason)
+  if (n > 0) {
+    activeReasons.set(reason, n)
+  } else {
+    activeReasons.delete(reason)
+  }
   if (refcount === 0 && heartbeatTimer !== null) {
     clearInterval(heartbeatTimer)
     heartbeatTimer = null

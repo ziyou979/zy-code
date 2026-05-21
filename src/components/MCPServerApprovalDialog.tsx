@@ -1,4 +1,3 @@
-import React from 'react'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -7,6 +6,7 @@ import { getInitialSettings, updateSettingsForSource } from '../utils/settings/s
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
 import { MCPServerDialogCopy } from './MCPServerDialogCopy.js'
+
 type Props = {
   serverName: string
   onDone(): void

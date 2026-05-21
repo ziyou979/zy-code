@@ -22,7 +22,7 @@ import { tryParseShellCommand } from './bash/shellQuote.js'
  * - "foo 'hello world' baz" => ["foo", "hello world", "baz"]
  */
 export function parseArguments(args: string): string[] {
-  if (!args || !args.trim()) {
+  if (!args?.trim()) {
     return []
   }
 
@@ -74,7 +74,9 @@ export function generateProgressiveArgumentHint(
   typedArgs: string[],
 ): string | undefined {
   const remaining = argNames.slice(typedArgs.length)
-  if (remaining.length === 0) return undefined
+  if (remaining.length === 0) {
+    return undefined
+  }
   return remaining.map((name) => `[${name}]`).join(' ')
 }
 
@@ -106,7 +108,9 @@ export function substituteArguments(
   // Named arguments map to positions: argumentNames[0] -> parsedArgs[0], etc.
   for (let i = 0; i < argumentNames.length; i++) {
     const name = argumentNames[i]
-    if (!name) continue
+    if (!name) {
+      continue
+    }
 
     // Match $name but not $name[...] or $nameXxx (word chars)
     // Also ensure we match word boundaries to avoid partial matches
@@ -131,7 +135,7 @@ export function substituteArguments(
   // If no placeholders were found and appendIfNoPlaceholder is true, append
   // But only if args is non-empty (empty string means command invoked with no args)
   if (content === originalContent && appendIfNoPlaceholder && args) {
-    content = content + `\n\nARGUMENTS: ${args}`
+    content = `${content}\n\nARGUMENTS: ${args}`
   }
 
   return content

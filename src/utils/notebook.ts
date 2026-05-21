@@ -1,6 +1,6 @@
-import type { ImageBlock, TextBlock, ToolResultBlock } from '../types/llm.js'
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
 import { formatOutput } from '../tools/BashTool/utils.js'
+import type { ImageBlock, TextBlock, ToolResultBlock } from '../types/llm.js'
 import type { NotebookCell, NotebookContent } from '../types/notebook.js'
 
 // Local type declarations for missing exports
@@ -8,6 +8,7 @@ type NotebookCellOutput = any
 type NotebookCellSource = any
 type NotebookCellSourceOutput = any
 type NotebookOutputImage = any
+
 import { getFsImplementation } from './fsOperations.js'
 import { expandPath } from './path.js'
 import { jsonParse } from './slowOperations.js'
@@ -17,15 +18,21 @@ const LARGE_OUTPUT_THRESHOLD = 10000
 function isLargeOutputs(outputs: (NotebookCellSourceOutput | undefined)[]): boolean {
   let size = 0
   for (const o of outputs) {
-    if (!o) continue
+    if (!o) {
+      continue
+    }
     size += (o.text?.length ?? 0) + (o.image?.image_data.length ?? 0)
-    if (size > LARGE_OUTPUT_THRESHOLD) return true
+    if (size > LARGE_OUTPUT_THRESHOLD) {
+      return true
+    }
   }
   return false
 }
 
 function processOutputText(text: string | string[] | undefined): string {
-  if (!text) return ''
+  if (!text) {
+    return ''
+  }
   const rawText = Array.isArray(text) ? text.join('') : text
   const { truncatedContent } = formatOutput(rawText)
   return truncatedContent
@@ -182,12 +189,14 @@ export function mapNotebookCellsToToolResult(
     toolCallId: toolUseID,
     type: 'tool_result' as const,
     content: allResults.reduce<(TextBlock | ImageBlock)[]>((acc, curr) => {
-      if (acc.length === 0) return [curr]
+      if (acc.length === 0) {
+        return [curr]
+      }
 
       const prev = acc[acc.length - 1]
       if (prev && prev.type === 'text' && curr.type === 'text') {
         // Merge the text blocks
-        prev.text += '\n' + curr.text
+        prev.text += `\n${curr.text}`
         return acc
       }
 
@@ -199,9 +208,9 @@ export function mapNotebookCellsToToolResult(
 
 export function parseCellId(cellId: string): number | undefined {
   const match = cellId.match(/^cell-(\d+)$/)
-  if (match && match[1]) {
+  if (match?.[1]) {
     const index = parseInt(match[1], 10)
-    return isNaN(index) ? undefined : index
+    return Number.isNaN(index) ? undefined : index
   }
   return undefined
 }

@@ -7,7 +7,7 @@
  * 注意：使用 Lite 版而非标准版，因为 Lite 版返回纯 HTML，
  * 更适合程序化解析，且不容易触发反爬机制。
  */
-import type { SearchProvider, SearchResult, SearchOptions } from './types.js'
+import type { SearchOptions, SearchProvider, SearchResult } from './types.js'
 
 export class DuckDuckGoProvider implements SearchProvider {
   readonly id = 'duckduckgo'

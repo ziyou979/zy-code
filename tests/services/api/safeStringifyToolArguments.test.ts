@@ -9,7 +9,7 @@
  * - 对象输入 → JSON.stringify
  * - 数组/数字/boolean 输入 → 包装 {raw: ...}
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import {
   messagesToOpenAI,
   safeStringifyToolArguments,

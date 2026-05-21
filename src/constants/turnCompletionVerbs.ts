@@ -15,14 +15,7 @@ const TURN_COMPLETION_VERBS_EN = [
 ]
 
 // Chinese versions
-const TURN_COMPLETION_VERBS_ZH = [
-  '搞定',
-  '完成',
-  '处理完成',
-  '收工',
-  '齐活',
-  '大功告成',
-]
+const TURN_COMPLETION_VERBS_ZH = ['搞定', '完成', '处理完成', '收工', '齐活', '大功告成']
 
 export function getTurnCompletionVerbs(): string[] {
   const language = getUiLanguage()

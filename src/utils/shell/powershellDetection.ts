@@ -1,4 +1,4 @@
-import { realpath, stat } from 'fs/promises'
+import { realpath, stat } from 'node:fs/promises'
 import { getPlatform } from '../platform.js'
 import { which } from '../which.js'
 
@@ -83,7 +83,9 @@ export type PowerShellEdition = 'core' | 'desktop'
  */
 export async function getPowerShellEdition(): Promise<PowerShellEdition | null> {
   const p = await getCachedPowerShellPath()
-  if (!p) return null
+  if (!p) {
+    return null
+  }
   // basename without extension, case-insensitive. Covers:
   //   C:\Program Files\PowerShell\7\pwsh.exe
   //   /opt/microsoft/powershell/7/pwsh

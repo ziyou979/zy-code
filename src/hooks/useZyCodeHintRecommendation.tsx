@@ -15,12 +15,6 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
   logEvent,
 } from '../services/analytics/index.js'
-import {
-  clearPendingHint,
-  getPendingHintSnapshot,
-  markShownThisSession,
-  subscribeToPendingHint,
-} from '../utils/zyCodeHints.js'
 import { logForDebugging } from '../utils/debug.js'
 import {
   disableHintRecommendations,
@@ -30,9 +24,16 @@ import {
 } from '../utils/plugins/hintRecommendation.js'
 import { installPluginFromMarketplace } from '../utils/plugins/pluginInstallationHelpers.js'
 import {
+  clearPendingHint,
+  getPendingHintSnapshot,
+  markShownThisSession,
+  subscribeToPendingHint,
+} from '../utils/zyCodeHints.js'
+import {
   installPluginAndNotify,
   usePluginRecommendationBase,
 } from './usePluginRecommendationBase.js'
+
 type UseZyCodeHintRecommendationResult = {
   recommendation: PluginHintRecommendation | null
   handleResponse: (response: 'yes' | 'no' | 'disable') => void

@@ -1,7 +1,8 @@
-// @ts-ignore
+// @ts-expect-error
+
+import { access, readFile } from 'node:fs/promises'
+import { dirname, join, relative, sep } from 'node:path'
 import type { StructuredPatchHunk } from 'diff'
-import { access, readFile } from 'fs/promises'
-import { dirname, join, relative, sep } from 'path'
 import { getCwd } from './cwd.js'
 import { getCachedRepository } from './detectRepository.js'
 import { execFileNoThrow, execFileNoThrowWithCwd } from './execFileNoThrow.js'
@@ -42,7 +43,9 @@ const MAX_FILES_FOR_DETAILS = 500 // 文件数超过此值时跳过逐文件详�
  */
 export async function fetchGitDiff(): Promise<GitDiffResult | null> {
   const isGit = await getIsGit()
-  if (!isGit) return null
+  if (!isGit) {
+    return null
+  }
 
   // 在临时 git 状态期间跳过 diff 计算，因为工作树包含的是
   // 传入的变更，而非用户有意的编辑
@@ -78,7 +81,9 @@ export async function fetchGitDiff(): Promise<GitDiffResult | null> {
     { timeout: GIT_TIMEOUT_MS, preserveOutputOnError: false },
   )
 
-  if (numstatCode !== 0) return null
+  if (numstatCode !== 0) {
+    return null
+  }
 
   const { stats, perFileStats } = parseGitNumstat(numstatOut)
 
@@ -106,7 +111,9 @@ export async function fetchGitDiff(): Promise<GitDiffResult | null> {
  */
 export async function fetchGitDiffHunks(): Promise<Map<string, StructuredPatchHunk[]>> {
   const isGit = await getIsGit()
-  if (!isGit) return new Map()
+  if (!isGit) {
+    return new Map()
+  }
 
   if (await isInTransientGitState()) {
     return new Map()
@@ -146,7 +153,9 @@ export function parseGitNumstat(stdout: string): NumstatResult {
   for (const line of lines) {
     const parts = line.split('\t')
     // 有效的 numstat 行恰好有 3 个 tab 分隔的部分：added、removed、filename
-    if (parts.length < 3) continue
+    if (parts.length < 3) {
+      continue
+    }
 
     validFileCount++
     const addStr = parts[0]
@@ -190,14 +199,18 @@ export function parseGitNumstat(stdout: string): NumstatResult {
  */
 export function parseGitDiff(stdout: string): Map<string, StructuredPatchHunk[]> {
   const result = new Map<string, StructuredPatchHunk[]>()
-  if (!stdout.trim()) return result
+  if (!stdout.trim()) {
+    return result
+  }
 
   // 按文件 diff 分割
   const fileDiffs = stdout.split(/^diff --git /m).filter(Boolean)
 
   for (const fileDiff of fileDiffs) {
     // 达到 MAX_FILES 后停止
-    if (result.size >= MAX_FILES) break
+    if (result.size >= MAX_FILES) {
+      break
+    }
 
     // 跳过大于 1MB 的文件
     if (fileDiff.length > MAX_DIFF_SIZE_BYTES) {
@@ -208,7 +221,9 @@ export function parseGitDiff(stdout: string): Map<string, StructuredPatchHunk[]>
 
     // 从第一行提取文件名："a/path/to/file b/path/to/file"
     const headerMatch = lines[0]?.match(/^a\/(.+?) b\/(.+)$/)
-    if (!headerMatch) continue
+    if (!headerMatch) {
+      continue
+    }
     const filePath = headerMatch[2] ?? headerMatch[1] ?? ''
 
     // 查找并解析 hunk
@@ -263,7 +278,7 @@ export function parseGitDiff(stdout: string): Map<string, StructuredPatchHunk[]>
         // 这会使整个父字符串（约数 MB）在任何行被保留时一直存活。
         // 使用 '' + line 强制新的平坦字符串分配，
         // 不像 slice(0) 那样 V8 可能优化为返回相同引用。
-        currentHunk.lines.push('' + line)
+        currentHunk.lines.push(`${line}`)
         lineCount++
       }
     }
@@ -290,7 +305,9 @@ export function parseGitDiff(stdout: string): Map<string, StructuredPatchHunk[]>
  */
 async function isInTransientGitState(): Promise<boolean> {
   const gitDir = await getGitDir(getCwd())
-  if (!gitDir) return false
+  if (!gitDir) {
+    return false
+  }
 
   const transientFiles = ['MERGE_HEAD', 'REBASE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD']
 
@@ -318,10 +335,14 @@ async function fetchUntrackedFiles(maxFiles: number): Promise<Map<string, PerFil
     { timeout: GIT_TIMEOUT_MS, preserveOutputOnError: false },
   )
 
-  if (code !== 0 || !stdout.trim()) return null
+  if (code !== 0 || !stdout.trim()) {
+    return null
+  }
 
   const untrackedPaths = stdout.trim().split('\n').filter(Boolean)
-  if (untrackedPaths.length === 0) return null
+  if (untrackedPaths.length === 0) {
+    return null
+  }
 
   const perFileStats = new Map<string, PerFileStats>()
 
@@ -350,7 +371,9 @@ export function parseShortstat(stdout: string): GitDiffStats | null {
   const match = stdout.match(
     /(\d+)\s+files?\s+changed(?:,\s+(\d+)\s+insertions?\(\+\))?(?:,\s+(\d+)\s+deletions?\(-\))?/,
   )
-  if (!match) return null
+  if (!match) {
+    return null
+  }
   return {
     filesCount: parseInt(match[1] ?? '0', 10),
     linesAdded: parseInt(match[2] ?? '0', 10),
@@ -382,7 +405,9 @@ export async function fetchSingleFileGitDiff(
   absoluteFilePath: string,
 ): Promise<ToolUseDiff | null> {
   const gitRoot = findGitRoot(dirname(absoluteFilePath))
-  if (!gitRoot) return null
+  if (!gitRoot) {
+    return null
+  }
 
   const gitPath = relative(gitRoot, absoluteFilePath).split(sep).join('/')
   const repository = getCachedRepository()
@@ -402,8 +427,12 @@ export async function fetchSingleFileGitDiff(
       ['--no-optional-locks', 'diff', diffRef, '--', gitPath],
       { cwd: gitRoot, timeout: SINGLE_FILE_DIFF_TIMEOUT_MS },
     )
-    if (code !== 0) return null
-    if (!stdout) return null
+    if (code !== 0) {
+      return null
+    }
+    if (!stdout) {
+      return null
+    }
     return {
       ...parseRawDiffToToolUseDiff(gitPath, stdout, 'modified'),
       repository,
@@ -412,7 +441,9 @@ export async function fetchSingleFileGitDiff(
 
   // 文件未跟踪——生成合成 diff
   const syntheticDiff = await generateSyntheticDiff(gitPath, absoluteFilePath)
-  if (!syntheticDiff) return null
+  if (!syntheticDiff) {
+    return null
+  }
   return { ...syntheticDiff, repository }
 }
 

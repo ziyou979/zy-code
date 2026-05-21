@@ -7,7 +7,7 @@ import inkRender, {
   type Root,
 } from './ink/root.js'
 
-export type { RenderOptions, Instance, Root }
+export type { Instance, RenderOptions, Root }
 
 // Wrap all CC render calls with ThemeProvider so ThemedBox/ThemedText work
 // without every call site having to mount it. Ink itself is theme-agnostic.

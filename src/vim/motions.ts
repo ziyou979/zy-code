@@ -14,7 +14,9 @@ export function resolveMotion(key: string, cursor: Cursor, count: number): Curso
   let result = cursor
   for (let i = 0; i < count; i++) {
     const next = applySingleMotion(key, result)
-    if (next.equals(result)) break
+    if (next.equals(result)) {
+      break
+    }
     result = next
   }
   return result

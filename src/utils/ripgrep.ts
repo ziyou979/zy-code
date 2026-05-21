@@ -1,10 +1,10 @@
-import type { ChildProcess, ExecFileException } from 'child_process'
-import { execFile, spawn } from 'child_process'
+import type { ChildProcess, ExecFileException } from 'node:child_process'
+import { execFile, spawn } from 'node:child_process'
+import { homedir } from 'node:os'
+import * as path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import memoize from 'lodash-es/memoize.js'
-import { homedir } from 'os'
-import * as path from 'path'
 import { logEvent } from 'src/services/analytics/index.js'
-import { fileURLToPath } from 'url'
 import { isInBundledMode } from './bundledMode.js'
 import { logForDebugging } from './debug.js'
 import { isEnvDefinedFalsy } from './envUtils.js'
@@ -172,7 +172,9 @@ function ripGrepRaw(
     // (e.g. when AbortSignal kills the child). Guard against double-callback.
     let settled = false
     child.on('close', (code, signal) => {
-      if (settled) return
+      if (settled) {
+        return
+      }
       settled = true
       clearTimeout(timeoutId)
       clearTimeout(killTimeoutId)
@@ -188,7 +190,9 @@ function ripGrepRaw(
     })
 
     child.on('error', (err: NodeJS.ErrnoException) => {
-      if (settled) return
+      if (settled) {
+        return
+      }
       settled = true
       clearTimeout(timeoutId)
       clearTimeout(killTimeoutId)
@@ -252,13 +256,20 @@ async function ripGrepFileCount(
     // On Windows, both 'close' and 'error' can fire for the same process.
     let settled = false
     child.on('close', (code) => {
-      if (settled) return
+      if (settled) {
+        return
+      }
       settled = true
-      if (code === 0 || code === 1) resolve(lines)
-      else reject(new Error(`rg --files exited ${code}`))
+      if (code === 0 || code === 1) {
+        resolve(lines)
+      } else {
+        reject(new Error(`rg --files exited ${code}`))
+      }
     })
     child.on('error', (err) => {
-      if (settled) return
+      if (settled) {
+        return
+      }
       settled = true
       reject(err)
     })
@@ -300,27 +311,37 @@ export async function ripGrepStream(
       const data = remainder + chunk.toString()
       const lines = data.split('\n')
       remainder = lines.pop() ?? ''
-      if (lines.length) onLines(lines.map(stripCR))
+      if (lines.length) {
+        onLines(lines.map(stripCR))
+      }
     })
 
     // On Windows, both 'close' and 'error' can fire for the same process.
     let settled = false
     child.on('close', (code) => {
-      if (settled) return
+      if (settled) {
+        return
+      }
       // Abort races close — don't flush a torn tail from a killed process.
       // Promise still settles: spawn's signal option fires 'error' with
       // AbortError → reject below.
-      if (abortSignal.aborted) return
+      if (abortSignal.aborted) {
+        return
+      }
       settled = true
       if (code === 0 || code === 1) {
-        if (remainder) onLines([stripCR(remainder)])
+        if (remainder) {
+          onLines([stripCR(remainder)])
+        }
         resolve()
       } else {
         reject(new Error(`ripgrep exited with code ${code}`))
       }
     })
     child.on('error', (err) => {
-      if (settled) return
+      if (settled) {
+        return
+      }
       settled = true
       reject(err)
     })
@@ -481,17 +502,21 @@ export const countFilesRoundedRg = memoize(
       const count = await ripGrepFileCount(args, dirPath, abortSignal)
 
       // Round to nearest power of 10 for privacy
-      if (count === 0) return 0
+      if (count === 0) {
+        return 0
+      }
 
       const magnitude = Math.floor(Math.log10(count))
-      const power = Math.pow(10, magnitude)
+      const power = 10 ** magnitude
 
       // Round to nearest power of 10
       // e.g., 8 -> 10, 42 -> 100, 350 -> 100, 750 -> 1000
       return Math.round(count / power) * power
     } catch (error) {
       // AbortSignal.timeout firing is expected on large/slow repos, not an error.
-      if ((error as Error)?.name !== 'AbortError') logError(error)
+      if ((error as Error)?.name !== 'AbortError') {
+        logError(error)
+      }
     }
   },
   // lodash memoize's default resolver only uses the first argument.

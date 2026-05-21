@@ -206,8 +206,12 @@ const DANGEROUS_TYPES = new Set([
  */
 const DANGEROUS_TYPE_IDS = [...DANGEROUS_TYPES]
 export function nodeTypeId(nodeType: string | undefined): number {
-  if (!nodeType) return -2
-  if (nodeType === 'ERROR') return -1
+  if (!nodeType) {
+    return -2
+  }
+  if (nodeType === 'ERROR') {
+    return -1
+  }
   const i = DANGEROUS_TYPE_IDS.indexOf(nodeType)
   return i >= 0 ? i + 1 : 0
 }
@@ -325,7 +329,9 @@ const BRACE_WITH_QUOTE_RE = /\{[^}]*['"]/
 function maskBracesInQuotedContexts(cmd: string): string {
   // Fast path: no `{` → nothing to mask. Skips the char-by-char scan for
   // the >90% of commands with no braces (`ls -la`, `git status`, etc).
-  if (!cmd.includes('{')) return cmd
+  if (!cmd.includes('{')) {
+    return cmd
+  }
   const out: string[] = []
   let inSingle = false
   let inDouble = false
@@ -334,7 +340,9 @@ function maskBracesInQuotedContexts(cmd: string): string {
     const c = cmd[i]!
     if (inSingle) {
       // Bash single quotes: no escapes, `'` always terminates.
-      if (c === "'") inSingle = false
+      if (c === "'") {
+        inSingle = false
+      }
       out.push(c === '{' ? ' ' : c)
       i++
     } else if (inDouble) {
@@ -344,7 +352,9 @@ function maskBracesInQuotedContexts(cmd: string): string {
         out.push(c, cmd[i + 1]!)
         i += 2
       } else {
-        if (c === '"') inDouble = false
+        if (c === '"') {
+          inDouble = false
+        }
         out.push(c === '{' ? ' ' : c)
         i++
       }
@@ -354,8 +364,11 @@ function maskBracesInQuotedContexts(cmd: string): string {
         out.push(c, cmd[i + 1]!)
         i += 2
       } else {
-        if (c === "'") inSingle = true
-        else if (c === '"') inDouble = true
+        if (c === "'") {
+          inSingle = true
+        } else if (c === '"') {
+          inDouble = true
+        }
         out.push(c)
         i++
       }
@@ -376,7 +389,9 @@ export async function parseForSecurity(cmd: string): Promise<ParseForSecurityRes
   // parseCommandRaw('') returns null (falsy check), so short-circuit here.
   // Don't use .trim() — it strips Unicode whitespace (\u00a0 etc.) which the
   // pre-checks in parseForSecurityFromAst need to see and reject.
-  if (cmd === '') return { kind: 'simple', commands: [] }
+  if (cmd === '') {
+    return { kind: 'simple', commands: [] }
+  }
   const root = await parseCommandRaw(cmd)
   return root === null ? { kind: 'parse-unavailable' } : parseForSecurityFromAst(cmd, root)
 }
@@ -460,7 +475,9 @@ function walkProgram(root: Node): ParseForSecurityResult {
   // $(date) output (already extracted as inner command).
   const varScope = new Map<string, string>()
   const err = collectCommands(root, commands, varScope)
-  if (err) return err
+  if (err) {
+    return err
+  }
   return { kind: 'simple', commands }
 }
 
@@ -477,7 +494,9 @@ function collectCommands(
     // Pass `commands` as the innerCommands accumulator — any $() extracted
     // during walkCommand gets appended alongside the outer command.
     const result = walkCommand(node, [], commands, varScope)
-    if (result.kind !== 'simple') return result
+    if (result.kind !== 'simple') {
+      return result
+    }
     commands.push(...result.commands)
     return null
   }
@@ -532,7 +551,9 @@ function collectCommands(
     // chain mutates caller's scope (sequential); fork only on `||`/`&`.
     let scope = isPipeline ? new Map(varScope) : varScope
     for (const child of node.children) {
-      if (!child) continue
+      if (!child) {
+        continue
+      }
       if (SEPARATOR_TYPES.has(child.type)) {
         if (
           child.type === '||' ||
@@ -548,7 +569,9 @@ function collectCommands(
         continue
       }
       const err = collectCommands(child, commands, scope)
-      if (err) return err
+      if (err) {
+        return err
+      }
     }
     return null
   }
@@ -558,8 +581,12 @@ function collectCommands(
     // argv. Recurse into the wrapped command. Common in CI: `! grep err`,
     // `! test -f lock`, `! git diff --quiet`.
     for (const child of node.children) {
-      if (!child) continue
-      if (child.type === '!') continue
+      if (!child) {
+        continue
+      }
+      if (child.type === '!') {
+        continue
+      }
       return collectCommands(child, commands, varScope)
     }
     return null
@@ -575,7 +602,9 @@ function collectCommands(
     // `Bash(export:*)` rules match.
     const argv: string[] = []
     for (const child of node.children) {
-      if (!child) continue
+      if (!child) {
+        continue
+      }
       switch (child.type) {
         case 'export':
         case 'local':
@@ -594,7 +623,9 @@ function collectCommands(
           // this, `export "FOO=bar"` hit tooComplex on the `string` child.
           // walkArgument validates each (expansions still reject).
           const arg = walkArgument(child, commands, varScope)
-          if (typeof arg !== 'string') return arg
+          if (typeof arg !== 'string') {
+            return arg
+          }
           // SECURITY: declare/typeset/local flags that change assignment
           // semantics break our static model. -n (nameref): `declare -n X=Y`
           // then `$X` dereferences to $Y's VALUE — varScope stores 'Y'
@@ -642,7 +673,9 @@ function collectCommands(
         }
         case 'variable_assignment': {
           const ev = walkVariableAssignment(child, commands, varScope)
-          if ('kind' in ev) return ev
+          if ('kind' in ev) {
+            return ev
+          }
           // export/declare assignments populate the scope so later $VAR refs resolve.
           applyVarToScope(varScope, ev)
           argv.push(`${ev.name}=${ev.value}`)
@@ -669,7 +702,9 @@ function collectCommands(
     // no permission rule (it's inert). Common pattern: `VAR=x && cmd`
     // where cmd references $VAR. ~35% of too-complex in top-5k ant cmds.
     const ev = walkVariableAssignment(node, commands, varScope)
-    if ('kind' in ev) return ev
+    if ('kind' in ev) {
+      return ev
+    }
     // Populate scope so later `$VAR` references resolve.
     applyVarToScope(varScope, ev)
     return null
@@ -694,7 +729,9 @@ function collectCommands(
     let loopVar: string | null = null
     let doGroup: Node | null = null
     for (const child of node.children) {
-      if (!child) continue
+      if (!child) {
+        continue
+      }
       if (child.type === 'variable_name') {
         loopVar = child.text
       } else if (child.type === 'do_group') {
@@ -705,11 +742,12 @@ function collectCommands(
         child.type === 'select' ||
         child.type === ';'
       ) {
-        continue // structural tokens
       } else if (child.type === 'command_substitution') {
         // `for i in $(seq 1 3)` — inner cmd IS extracted and rule-checked.
         const err = collectCommandSubstitution(child, commands, varScope)
-        if (err) return err
+        if (err) {
+          return err
+        }
       } else {
         // Iteration values — validated via walkArgument. Value discarded:
         // body argv gets VAR_PLACEHOLDER regardless of the iteration words,
@@ -717,10 +755,14 @@ function collectCommands(
         // We still validate to reject e.g. `for i in $(cmd); do ...; done`
         // where the iteration word itself is a disallowed expansion.
         const arg = walkArgument(child, commands, varScope)
-        if (typeof arg !== 'string') return arg
+        if (typeof arg !== 'string') {
+          return arg
+        }
       }
     }
-    if (loopVar === null || doGroup === null) return tooComplex(node)
+    if (loopVar === null || doGroup === null) {
+      return tooComplex(node)
+    }
     // SECURITY: `for PS4 in '$(id)'; do set -x; :; done` sets PS4 directly
     // via varScope.set below — walkVariableAssignment's PS4/IFS checks never
     // fire. Trace-time RCE (PS4) or word-split bypass (IFS). No legit use.
@@ -738,10 +780,16 @@ function collectCommands(
     varScope.set(loopVar, VAR_PLACEHOLDER)
     const bodyScope = new Map(varScope)
     for (const c of doGroup.children) {
-      if (!c) continue
-      if (c.type === 'do' || c.type === 'done' || c.type === ';') continue
+      if (!c) {
+        continue
+      }
+      if (c.type === 'do' || c.type === 'done' || c.type === ';') {
+        continue
+      }
       const err = collectCommands(c, commands, bodyScope)
-      if (err) return err
+      if (err) {
+        return err
+      }
     }
     return null
   }
@@ -765,7 +813,9 @@ function collectCommands(
     // then-body by tracking whether we've seen the `then` token.
     let seenThen = false
     for (const child of node.children) {
-      if (!child) continue
+      if (!child) {
+        continue
+      }
       if (
         child.type === 'if' ||
         child.type === 'fi' ||
@@ -787,10 +837,16 @@ function collectCommands(
         // condition (already in real varScope at this point).
         const bodyScope = new Map(varScope)
         for (const c of child.children) {
-          if (!c) continue
-          if (c.type === 'do' || c.type === 'done' || c.type === ';') continue
+          if (!c) {
+            continue
+          }
+          if (c.type === 'do' || c.type === 'done' || c.type === ';') {
+            continue
+          }
           const err = collectCommands(c, commands, bodyScope)
-          if (err) return err
+          if (err) {
+            return err
+          }
         }
         continue
       }
@@ -799,12 +855,16 @@ function collectCommands(
         // Scope COPY — elif/else branch assignments don't leak past fi.
         const branchScope = new Map(varScope)
         for (const c of child.children) {
-          if (!c) continue
+          if (!c) {
+            continue
+          }
           if (c.type === 'elif' || c.type === 'else' || c.type === 'then' || c.type === ';') {
             continue
           }
           const err = collectCommands(c, commands, branchScope)
-          if (err) return err
+          if (err) {
+            return err
+          }
         }
         continue
       }
@@ -815,7 +875,9 @@ function collectCommands(
       const targetScope = seenThen ? new Map(varScope) : varScope
       const before = commands.length
       const err = collectCommands(child, commands, targetScope)
-      if (err) return err
+      if (err) {
+        return err
+      }
       // If condition included `read VAR...`, track vars in REAL scope.
       // read var value is UNKNOWN (stdin input) → use VAR_PLACEHOLDER
       // (unknown-value sentinel, string-only).
@@ -863,10 +925,16 @@ function collectCommands(
     // varScope (outer vars visible, inner changes discarded).
     const innerScope = new Map(varScope)
     for (const child of node.children) {
-      if (!child) continue
-      if (child.type === '(' || child.type === ')') continue
+      if (!child) {
+        continue
+      }
+      if (child.type === '(' || child.type === ')') {
+        continue
+      }
       const err = collectCommands(child, commands, innerScope)
-      if (err) return err
+      if (err) {
+        return err
+      }
     }
     return null
   }
@@ -881,14 +949,22 @@ function collectCommands(
     // Walk arguments to validate (no cmdsub/expansion inside operands).
     const argv: string[] = ['[[']
     for (const child of node.children) {
-      if (!child) continue
-      if (child.type === '[[' || child.type === ']]') continue
-      if (child.type === '[' || child.type === ']') continue
+      if (!child) {
+        continue
+      }
+      if (child.type === '[[' || child.type === ']]') {
+        continue
+      }
+      if (child.type === '[' || child.type === ']') {
+        continue
+      }
       // Recurse into test expression structure: unary_expression,
       // binary_expression, parenthesized_expression, negated_expression.
       // The leaves are test_operator (-f, -d, ==) and operand words.
       const err = walkTestExpr(child, argv, commands, varScope)
-      if (err) return err
+      if (err) {
+        return err
+      }
     }
     commands.push({ argv, envVars: [], redirects: [], text: node.text })
     return null
@@ -902,7 +978,9 @@ function collectCommands(
     // `variable_name` for each name, `word` for flags like `-f`/`-v`.
     const argv: string[] = []
     for (const child of node.children) {
-      if (!child) continue
+      if (!child) {
+        continue
+      }
       switch (child.type) {
         case 'unset':
           argv.push(child.text)
@@ -916,7 +994,9 @@ function collectCommands(
           break
         case 'word': {
           const arg = walkArgument(child, commands, varScope)
-          if (typeof arg !== 'string') return arg
+          if (typeof arg !== 'string') {
+            return arg
+          }
           argv.push(arg)
           break
         }
@@ -948,9 +1028,13 @@ function walkTestExpr(
     case 'negated_expression':
     case 'parenthesized_expression': {
       for (const c of node.children) {
-        if (!c) continue
+        if (!c) {
+          continue
+        }
         const err = walkTestExpr(c, argv, innerCommands, varScope)
-        if (err) return err
+        if (err) {
+          return err
+        }
       }
       return null
     }
@@ -978,7 +1062,9 @@ function walkTestExpr(
     default: {
       // Operand — word, string, number, etc. Validate via walkArgument.
       const arg = walkArgument(node, innerCommands, varScope)
-      if (typeof arg !== 'string') return arg
+      if (typeof arg !== 'string') {
+        return arg
+      }
       argv.push(arg)
       return null
     }
@@ -1000,16 +1086,22 @@ function walkRedirectedStatement(
   let innerCommand: Node | null = null
 
   for (const child of node.children) {
-    if (!child) continue
+    if (!child) {
+      continue
+    }
     if (child.type === 'file_redirect') {
       // Thread `commands` so $() in redirect targets (e.g., `> $(mktemp)`)
       // extracts the inner command for permission checking.
       const r = walkFileRedirect(child, commands, varScope)
-      if ('kind' in r) return r
+      if ('kind' in r) {
+        return r
+      }
       redirects.push(r)
     } else if (child.type === 'heredoc_redirect') {
       const r = walkHeredocRedirect(child)
-      if (r) return r
+      if (r) {
+        return r
+      }
     } else if (
       child.type === 'command' ||
       child.type === 'pipeline' ||
@@ -1033,10 +1125,14 @@ function walkRedirectedStatement(
 
   const before = commands.length
   const err = collectCommands(innerCommand, commands, varScope)
-  if (err) return err
+  if (err) {
+    return err
+  }
   if (commands.length > before && redirects.length > 0) {
     const last = commands[commands.length - 1]
-    if (last) last.redirects.push(...redirects)
+    if (last) {
+      last.redirects.push(...redirects)
+    }
   }
   return null
 }
@@ -1055,7 +1151,9 @@ function walkFileRedirect(
   let fd: number | undefined
 
   for (const child of node.children) {
-    if (!child) continue
+    if (!child) {
+      continue
+    }
     if (child.type === 'file_descriptor') {
       fd = Number(child.text)
     } else if (child.type in REDIRECT_OPS) {
@@ -1065,12 +1163,16 @@ function walkFileRedirect(
       // `NN#<expansion>` arithmetic-base grammar quirk — same issue as
       // walkArgument's number case. `> 10#$(cmd)` runs cmd at runtime.
       // Plain word/number nodes have zero children.
-      if (child.children.length > 0) return tooComplex(child)
+      if (child.children.length > 0) {
+        return tooComplex(child)
+      }
       // Symmetry with walkArgument (~608): `echo foo > {a,b}` is an
       // ambiguous redirect in bash. tree-sitter actually emits a
       // `concatenation` node for brace targets (caught by the default
       // branch below), but check `word` text too for defense-in-depth.
-      if (BRACE_EXPANSION_RE.test(child.text)) return tooComplex(child)
+      if (BRACE_EXPANSION_RE.test(child.text)) {
+        return tooComplex(child)
+      }
       // Unescape backslash sequences — same as walkArgument. Bash quote
       // removal turns `\X` → `X`. Without this, `cat < /proc/self/\environ`
       // stores target `/proc/self/\environ` which evades PROC_ENVIRON_RE,
@@ -1080,14 +1182,18 @@ function walkFileRedirect(
       target = stripRawString(child.text)
     } else if (child.type === 'string') {
       const s = walkString(child, innerCommands, varScope)
-      if (typeof s !== 'string') return s
+      if (typeof s !== 'string') {
+        return s
+      }
       target = s
     } else if (child.type === 'concatenation') {
       // `echo > "foo"bar` — tree-sitter produces a concatenation of string +
       // word children. walkArgument already validates concatenation (rejects
       // expansions, checks brace syntax) and returns the joined text.
       const s = walkArgument(child, innerCommands, varScope)
-      if (typeof s !== 'string') return s
+      if (typeof s !== 'string') {
+        return s
+      }
       target = s
     } else {
       return tooComplex(child)
@@ -1122,10 +1228,14 @@ function walkHeredocRedirect(node: Node): ParseForSecurityResult | null {
   let body: Node | null = null
 
   for (const child of node.children) {
-    if (!child) continue
-    if (child.type === 'heredoc_start') startText = child.text
-    else if (child.type === 'heredoc_body') body = child
-    else if (
+    if (!child) {
+      continue
+    }
+    if (child.type === 'heredoc_start') {
+      startText = child.text
+    } else if (child.type === 'heredoc_body') {
+      body = child
+    } else if (
       child.type === '<<' ||
       child.type === '<<-' ||
       child.type === 'heredoc_end' ||
@@ -1160,7 +1270,9 @@ function walkHeredocRedirect(node: Node): ParseForSecurityResult | null {
 
   if (body) {
     for (const child of body.children) {
-      if (!child) continue
+      if (!child) {
+        continue
+      }
       if (child.type !== 'heredoc_content') {
         return tooComplex(child)
       }
@@ -1191,17 +1303,25 @@ function walkHerestringRedirect(
   varScope: Map<string, string>,
 ): ParseForSecurityResult | null {
   for (const child of node.children) {
-    if (!child) continue
-    if (child.type === '<<<') continue
+    if (!child) {
+      continue
+    }
+    if (child.type === '<<<') {
+      continue
+    }
     // Content node: reuse walkArgument. It returns a string on success
     // (which we discard — content is stdin, irrelevant to permissions) or
     // a too-complex result on failure (expansion found, unresolvable var).
     const content = walkArgument(child, innerCommands, varScope)
-    if (typeof content !== 'string') return content
+    if (typeof content !== 'string') {
+      return content
+    }
     // Herestring content is discarded (not in argv/envVars/redirects) but
     // remains in .text via raw node.text. Scan it here so checkSemantics's
     // NEWLINE_HASH invariant (bashPermissions.ts relies on it) still holds.
-    if (NEWLINE_HASH_RE.test(content)) return tooComplex(child)
+    if (NEWLINE_HASH_RE.test(content)) {
+      return tooComplex(child)
+    }
   }
   return null
 }
@@ -1222,12 +1342,16 @@ function walkCommand(
   const redirects: Redirect[] = [...extraRedirects]
 
   for (const child of node.children) {
-    if (!child) continue
+    if (!child) {
+      continue
+    }
 
     switch (child.type) {
       case 'variable_assignment': {
         const ev = walkVariableAssignment(child, innerCommands, varScope)
-        if ('kind' in ev) return ev
+        if ('kind' in ev) {
+          return ev
+        }
         // SECURITY: Env-prefix assignments (`VAR=x cmd`) are command-local in
         // bash — VAR is only visible to `cmd` as an env var, NOT to
         // subsequent commands. Do NOT add to global varScope — that would
@@ -1237,7 +1361,9 @@ function walkCommand(
       }
       case 'command_name': {
         const arg = walkArgument(child.children[0] ?? child, innerCommands, varScope)
-        if (typeof arg !== 'string') return arg
+        if (typeof arg !== 'string') {
+          return arg
+        }
         argv.push(arg)
         break
       }
@@ -1248,7 +1374,9 @@ function walkCommand(
       case 'concatenation':
       case 'arithmetic_expansion': {
         const arg = walkArgument(child, innerCommands, varScope)
-        if (typeof arg !== 'string') return arg
+        if (typeof arg !== 'string') {
+          return arg
+        }
         argv.push(arg)
         break
       }
@@ -1264,13 +1392,17 @@ function walkCommand(
         // value (e.g. VAR=/etc → '/etc'). Values with IFS/glob chars or
         // placeholders reject. See resolveSimpleExpansion.
         const v = resolveSimpleExpansion(child, varScope, false)
-        if (typeof v !== 'string') return v
+        if (typeof v !== 'string') {
+          return v
+        }
         argv.push(v)
         break
       }
       case 'file_redirect': {
         const r = walkFileRedirect(child, innerCommands, varScope)
-        if ('kind' in r) return r
+        if ('kind' in r) {
+          return r
+        }
         redirects.push(r)
         break
       }
@@ -1278,7 +1410,9 @@ function walkCommand(
         // `cmd <<< "content"` — content is stdin, not argv. Validate it's
         // literal (no expansion); discard the content string.
         const err = walkHerestringRedirect(child, innerCommands, varScope)
-        if (err) return err
+        if (err) {
+          return err
+        }
         break
       }
       default:
@@ -1355,12 +1489,16 @@ function collectCommandSubstitution(
   const innerScope = new Map(varScope)
   // command_substitution children: `$(` or `` ` ``, inner statement(s), `)`
   for (const child of csNode.children) {
-    if (!child) continue
+    if (!child) {
+      continue
+    }
     if (child.type === '$(' || child.type === '`' || child.type === ')') {
       continue
     }
     const err = collectCommands(child, innerCommands, innerScope)
-    if (err) return err
+    if (err) {
+      return err
+    }
   }
   return null
 }
@@ -1430,9 +1568,13 @@ function walkArgument(
       }
       let result = ''
       for (const child of node.children) {
-        if (!child) continue
+        if (!child) {
+          continue
+        }
         const part = walkArgument(child, innerCommands, varScope)
-        if (typeof part !== 'string') return part
+        if (typeof part !== 'string') {
+          return part
+        }
         result += part
       }
       return result
@@ -1440,7 +1582,9 @@ function walkArgument(
 
     case 'arithmetic_expansion': {
       const err = walkArithmetic(node)
-      if (err) return err
+      if (err) {
+        return err
+      }
       return node.text
     }
 
@@ -1497,7 +1641,9 @@ function walkString(
   let sawDynamicPlaceholder = false
   let sawLiteralContent = false
   for (const child of node.children) {
-    if (!child) continue
+    if (!child) {
+      continue
+    }
     // Index gap between this child and the previous one = dropped newline(s).
     // Ignore the gap before the first non-delimiter child (cursor === -1).
     // Skip gap-fill for `"` delimiters: a gap before the closing `"` is the
@@ -1540,7 +1686,9 @@ function walkString(
         // placeholder argv value — the actual content doesn't matter for
         // permission checking, only that it IS static.
         const heredocBody = extractSafeCatHeredoc(child)
-        if (heredocBody === 'DANGEROUS') return tooComplex(child)
+        if (heredocBody === 'DANGEROUS') {
+          return tooComplex(child)
+        }
         if (heredocBody !== null) {
           // SECURITY: the body IS the substitution result. Previously we
           // dropped it → `rm "$(cat <<'EOF'\n/etc/passwd\nEOF)"` produced
@@ -1571,7 +1719,9 @@ function walkString(
         // `echo "SHA: $(...)"` AND `git rev-parse HEAD` — both must match
         // permission rules. ~27% of too-complex in top-5k ant cmds.
         const err = collectCommandSubstitution(child, innerCommands, varScope)
-        if (err) return err
+        if (err) {
+          return err
+        }
         result += CMDSUB_PLACEHOLDER
         sawDynamicPlaceholder = true
         break
@@ -1579,18 +1729,25 @@ function walkString(
       case 'simple_expansion': {
         // `$VAR` inside "...". Tracked/safe vars resolve; untracked reject.
         const v = resolveSimpleExpansion(child, varScope, true)
-        if (typeof v !== 'string') return v
+        if (typeof v !== 'string') {
+          return v
+        }
         // VAR_PLACEHOLDER = runtime-unknown (loop var, read var, $() output,
         // SAFE_ENV_VARS, special vars). Any other string = actual literal
         // value from a tracked static var (e.g. VAR=/tmp → v='/tmp').
-        if (v === VAR_PLACEHOLDER) sawDynamicPlaceholder = true
-        else sawLiteralContent = true
+        if (v === VAR_PLACEHOLDER) {
+          sawDynamicPlaceholder = true
+        } else {
+          sawLiteralContent = true
+        }
         result += v
         break
       }
       case 'arithmetic_expansion': {
         const err = walkArithmetic(child)
-        if (err) return err
+        if (err) {
+          return err
+        }
         result += child.text
         // Validated to be literal-numeric — static content.
         sawLiteralContent = true
@@ -1647,7 +1804,9 @@ const ARITH_LEAF_RE =
  */
 function walkArithmetic(node: Node): ParseForSecurityResult | null {
   for (const child of node.children) {
-    if (!child) continue
+    if (!child) {
+      continue
+    }
     if (child.children.length === 0) {
       if (!ARITH_LEAF_RE.test(child.text)) {
         return {
@@ -1664,7 +1823,9 @@ function walkArithmetic(node: Node): ParseForSecurityResult | null {
       case 'ternary_expression':
       case 'parenthesized_expression': {
         const err = walkArithmetic(child)
-        if (err) return err
+        if (err) {
+          return err
+        }
         break
       }
       default:
@@ -1695,25 +1856,35 @@ function extractSafeCatHeredoc(subNode: Node): string | 'DANGEROUS' | null {
   // Expect exactly: $( + one redirected_statement + )
   let stmt: Node | null = null
   for (const child of subNode.children) {
-    if (!child) continue
-    if (child.type === '$(' || child.type === ')') continue
+    if (!child) {
+      continue
+    }
+    if (child.type === '$(' || child.type === ')') {
+      continue
+    }
     if (child.type === 'redirected_statement' && stmt === null) {
       stmt = child
     } else {
       return null
     }
   }
-  if (!stmt) return null
+  if (!stmt) {
+    return null
+  }
 
   // redirected_statement must be: command(cat) + heredoc_redirect (quoted)
   let sawCat = false
   let body: string | null = null
   for (const child of stmt.children) {
-    if (!child) continue
+    if (!child) {
+      continue
+    }
     if (child.type === 'command') {
       // Must be bare `cat` — no args, no env vars
       const cmdChildren = child.children.filter((c) => c)
-      if (cmdChildren.length !== 1) return null
+      if (cmdChildren.length !== 1) {
+        return null
+      }
       const nameNode = cmdChildren[0]
       if (nameNode?.type !== 'command_name' || nameNode.text !== 'cat') {
         return null
@@ -1722,16 +1893,22 @@ function extractSafeCatHeredoc(subNode: Node): string | 'DANGEROUS' | null {
     } else if (child.type === 'heredoc_redirect') {
       // Reuse the existing validator: quoted delimiter, body is pure text.
       // walkHeredocRedirect returns null on success, non-null on rejection.
-      if (walkHeredocRedirect(child) !== null) return null
+      if (walkHeredocRedirect(child) !== null) {
+        return null
+      }
       for (const hc of child.children) {
-        if (hc?.type === 'heredoc_body') body = hc.text
+        if (hc?.type === 'heredoc_body') {
+          body = hc.text
+        }
       }
     } else {
       return null
     }
   }
 
-  if (!sawCat || body === null) return null
+  if (!sawCat || body === null) {
+    return null
+  }
   // SECURITY: the heredoc body becomes the outer command's argv value via
   // substitution, so a body like `/proc/self/environ` is semantically
   // `cat /proc/self/environ`. checkSemantics never sees the body (we drop it
@@ -1740,10 +1917,14 @@ function extractSafeCatHeredoc(subNode: Node): string | 'DANGEROUS' | null {
   // which would extract the inner `cat` via walkHeredocRedirect (body text
   // not inspected there) — effectively bypassing this check. Return a
   // distinct sentinel so the caller can reject instead of falling through.
-  if (PROC_ENVIRON_RE.test(body)) return 'DANGEROUS'
+  if (PROC_ENVIRON_RE.test(body)) {
+    return 'DANGEROUS'
+  }
   // Same for jq system(): checkSemantics checks argv but never sees the
   // heredoc body. Check unconditionally (we don't know the outer command).
-  if (/\bsystem\s*\(/.test(body)) return 'DANGEROUS'
+  if (/\bsystem\s*\(/.test(body)) {
+    return 'DANGEROUS'
+  }
   return body
 }
 
@@ -1757,7 +1938,9 @@ function walkVariableAssignment(
   let isAppend = false
 
   for (const child of node.children) {
-    if (!child) continue
+    if (!child) {
+      continue
+    }
     if (child.type === 'variable_name') {
       name = child.text
     } else if (child.type === '=' || child.type === '+=') {
@@ -1765,7 +1948,6 @@ function walkVariableAssignment(
       // node. Without this case it falls through to walkArgument below
       // → tooComplex on unknown type `+=`.
       isAppend = child.type === '+='
-      continue
     } else if (child.type === 'command_substitution') {
       // $() as the variable's value. The output becomes a STRING stored in
       // the variable — it's NOT a positional argument (no path/flag concern).
@@ -1773,7 +1955,9 @@ function walkVariableAssignment(
       // `rm` — the inner command IS checked against permission rules, so
       // `rm` must match a rule. The variable just holds whatever `rm` prints.
       const err = collectCommandSubstitution(child, innerCommands, varScope)
-      if (err) return err
+      if (err) {
+        return err
+      }
       value = CMDSUB_PLACEHOLDER
     } else if (child.type === 'simple_expansion') {
       // `VAR=$OTHER` — assignment RHS does NOT word-split or glob-expand
@@ -1783,13 +1967,17 @@ function walkVariableAssignment(
       // contain spaces/globs — if B is later used as a bare arg, THAT use
       // will correctly reject via BARE_VAR_UNSAFE_RE.
       const v = resolveSimpleExpansion(child, varScope, true)
-      if (typeof v !== 'string') return v
+      if (typeof v !== 'string') {
+        return v
+      }
       // If v is VAR_PLACEHOLDER (OTHER holds unknown), store it — combined
       // with containsAnyPlaceholder in the caller to treat as unknown.
       value = v
     } else {
       const v = walkArgument(child, innerCommands, varScope)
-      if (typeof v !== 'string') return v
+      if (typeof v !== 'string') {
+        return v
+      }
       value = v
     }
   }
@@ -1920,7 +2108,9 @@ function resolveSimpleExpansion(
       break
     }
   }
-  if (varName === null) return tooComplex(node)
+  if (varName === null) {
+    return tooComplex(node)
+  }
   // Tracked vars: check stored value. Literal strings (VAR=/tmp) are
   // returned DIRECTLY so downstream path validation sees the real path.
   // Non-literal values (containing any placeholder — loop vars, $() output,
@@ -1936,7 +2126,9 @@ function resolveSimpleExpansion(
     if (containsAnyPlaceholder(trackedValue)) {
       // Non-literal: bare → reject, inside string → VAR_PLACEHOLDER
       // (walkString's solo-placeholder gate rejects `"$VAR"` alone).
-      if (!insideString) return tooComplex(node)
+      if (!insideString) {
+        return tooComplex(node)
+      }
       return VAR_PLACEHOLDER
     }
     // Pure literal (e.g. '/tmp', 'foo') — return it directly. Downstream
@@ -1955,8 +2147,12 @@ function resolveSimpleExpansion(
     // Inside "...": `"$V"` → bash produces one empty-string arg → our ""
     // is correct, keep allowing.
     if (!insideString) {
-      if (trackedValue === '') return tooComplex(node)
-      if (BARE_VAR_UNSAFE_RE.test(trackedValue)) return tooComplex(node)
+      if (trackedValue === '') {
+        return tooComplex(node)
+      }
+      if (BARE_VAR_UNSAFE_RE.test(trackedValue)) {
+        return tooComplex(node)
+      }
     }
     return trackedValue
   }
@@ -1964,7 +2160,9 @@ function resolveSimpleExpansion(
   // (shell-controlled). Only safe when embedded in a string, NOT as a
   // bare argument to a path-sensitive command.
   if (insideString) {
-    if (SAFE_ENV_VARS.has(varName)) return VAR_PLACEHOLDER
+    if (SAFE_ENV_VARS.has(varName)) {
+      return VAR_PLACEHOLDER
+    }
     if (isSpecial && (SPECIAL_VAR_NAMES.has(varName) || /^[0-9]+$/.test(varName))) {
       return VAR_PLACEHOLDER
     }
@@ -2343,7 +2541,9 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
       }
     }
     const name = a[0]
-    if (name === undefined) continue
+    if (name === undefined) {
+      continue
+    }
 
     // SECURITY: Empty command name. Quoted empty (`"" cmd`) is harmless —
     // bash tries to exec "" and fails with "command not found". But an
@@ -2435,7 +2635,9 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
       // i starts at 2: a[0]='[[' (contains '['), a[1] is the first real
       // operand. A binary op can't appear before index 2.
       for (let i = 2; i < a.length; i++) {
-        if (!TEST_ARITH_CMP_OPS.has(a[i]!)) continue
+        if (!TEST_ARITH_CMP_OPS.has(a[i]!)) {
+          continue
+        }
         if (a[i - 1]?.includes('[') || a[i + 1]?.includes('[')) {
           return {
             ok: false,
@@ -2471,8 +2673,10 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
               // data-flag char appears at the END after only no-arg
               // flags like `-r`/`-s`.
               for (let j = 1; j < arg.length; j++) {
-                if (READ_DATA_FLAGS.has('-' + arg[j])) {
-                  if (j === arg.length - 1) skipNext = true
+                if (READ_DATA_FLAGS.has(`-${arg[j]}`)) {
+                  if (j === arg.length - 1) {
+                    skipNext = true
+                  }
                   break
                 }
               }

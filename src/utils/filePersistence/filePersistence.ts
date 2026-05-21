@@ -8,7 +8,7 @@
  */
 
 import { feature } from 'bun:bundle'
-import { join, relative } from 'path'
+import { join, relative } from 'node:path'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

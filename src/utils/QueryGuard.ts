@@ -36,7 +36,9 @@ export class QueryGuard {
    * Returns false if not idle (another query or dispatch in progress).
    */
   reserve(): boolean {
-    if (this._status !== 'idle') return false
+    if (this._status !== 'idle') {
+      return false
+    }
     this._status = 'dispatching'
     this._notify()
     return true
@@ -47,7 +49,9 @@ export class QueryGuard {
    * Transitions dispatching → idle.
    */
   cancelReservation(): void {
-    if (this._status !== 'dispatching') return
+    if (this._status !== 'dispatching') {
+      return
+    }
     this._status = 'idle'
     this._notify()
   }
@@ -59,7 +63,9 @@ export class QueryGuard {
    * and dispatching (queue processor path).
    */
   tryStart(): number | null {
-    if (this._status === 'running') return null
+    if (this._status === 'running') {
+      return null
+    }
     this._status = 'running'
     ++this._generation
     this._notify()
@@ -72,8 +78,12 @@ export class QueryGuard {
    * newer query has started (stale finally block from a cancelled query).
    */
   end(generation: number): boolean {
-    if (this._generation !== generation) return false
-    if (this._status !== 'running') return false
+    if (this._generation !== generation) {
+      return false
+    }
+    if (this._status !== 'running') {
+      return false
+    }
     this._status = 'idle'
     this._notify()
     return true
@@ -86,7 +96,9 @@ export class QueryGuard {
    * query's promise rejection will see a mismatch and skip cleanup.
    */
   forceEnd(): void {
-    if (this._status === 'idle') return
+    if (this._status === 'idle') {
+      return
+    }
     this._status = 'idle'
     ++this._generation
     this._notify()

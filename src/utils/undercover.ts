@@ -23,11 +23,13 @@
 
 import { getRepoClassCached } from './commitAttribution.js'
 import { getGlobalConfig } from './config.js'
-import { isInternalBuild, isEnvTruthy } from './envUtils.js'
+import { isEnvTruthy, isInternalBuild } from './envUtils.js'
 
 export function isUndercover(): boolean {
   if (isInternalBuild()) {
-    if (isEnvTruthy(process.env.ZY_CODE_UNDERCOVER)) return true
+    if (isEnvTruthy(process.env.ZY_CODE_UNDERCOVER)) {
+      return true
+    }
     // Auto: active unless we've positively confirmed we're in an allowlisted
     // internal repo. 'external', 'none', and null (check not yet run) all
     // resolve to ON. The check is primed in setup.ts; only 'internal' → OFF.
@@ -80,9 +82,15 @@ BAD (never write these):
 export function shouldShowUndercoverAutoNotice(): boolean {
   if (isInternalBuild()) {
     // If forced via env, user already knows; don't nag.
-    if (isEnvTruthy(process.env.ZY_CODE_UNDERCOVER)) return false
-    if (!isUndercover()) return false
-    if (getGlobalConfig().hasSeenUndercoverAutoNotice) return false
+    if (isEnvTruthy(process.env.ZY_CODE_UNDERCOVER)) {
+      return false
+    }
+    if (!isUndercover()) {
+      return false
+    }
+    if (getGlobalConfig().hasSeenUndercoverAutoNotice) {
+      return false
+    }
     return true
   }
   return false

@@ -1,8 +1,8 @@
 // Review Artifact Tool module stub implementation
 // This module provides artifact review functionality for REVIEW_ARTIFACT feature
 
-import type { Tool } from '../../Tool.js'
 import { z } from 'zod/v4'
+import type { Tool } from '../../Tool.js'
 
 const inputSchema = z.object({}).passthrough()
 
@@ -13,16 +13,16 @@ export const ReviewArtifactTool: Tool = {
   name: 'review_artifact',
   inputSchema,
 
-  async call(input, context, canUseTool, parentMessage, onProgress) {
+  async call(_input, _context, _canUseTool, _parentMessage, _onProgress) {
     // Stub implementation
     return { data: { success: true, message: 'Artifact review completed' } }
   },
 
-  async description(input, options) {
+  async description(_input, _options) {
     return 'Review and provide feedback on generated artifacts'
   },
 
-  isConcurrencySafe(input) {
+  isConcurrencySafe(_input) {
     return true
   },
 
@@ -30,23 +30,23 @@ export const ReviewArtifactTool: Tool = {
     return true
   },
 
-  isReadOnly(input) {
+  isReadOnly(_input) {
     return true
   },
 
-  async checkPermissions(input, context) {
+  async checkPermissions(_input, _context) {
     return { behavior: 'allow' as const }
   },
 
-  prompt(options) {
+  prompt(_options) {
     return Promise.resolve('Review artifact tool')
   },
 
-  userFacingName(input) {
+  userFacingName(_input) {
     return 'Review Artifact'
   },
 
-  renderToolUseMessage(input, options) {
+  renderToolUseMessage(_input, _options) {
     return null
   },
 

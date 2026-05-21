@@ -14,8 +14,8 @@
  * cost when keychainPrefetch.ts pulls this file in.
  */
 
-import { createHash } from 'crypto'
-import { userInfo } from 'os'
+import { createHash } from 'node:crypto'
+import { userInfo } from 'node:os'
 import { getOauthConfig } from 'src/constants/oauth.js'
 import { getZyConfigHomeDir } from '../envUtils.js'
 import type { SecureStorageData } from './types.js'
@@ -94,7 +94,9 @@ export function clearKeychainCache(): void {
  * update() already ran, their result is authoritative and we discard this.
  */
 export function primeKeychainCacheFromPrefetch(stdout: string | null): void {
-  if (keychainCacheState.cache.cachedAt !== 0) return
+  if (keychainCacheState.cache.cachedAt !== 0) {
+    return
+  }
   let data: SecureStorageData | null = null
   if (stdout) {
     try {

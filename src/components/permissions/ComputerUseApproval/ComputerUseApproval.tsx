@@ -2,7 +2,6 @@ import { getSentinelCategory } from '@ant/computer-use-mcp/sentinelApps'
 import type { CuPermissionRequest, CuPermissionResponse } from '@ant/computer-use-mcp/types'
 import { DEFAULT_GRANT_FLAGS } from '@ant/computer-use-mcp/types'
 import figures from 'figures'
-import * as React from 'react'
 import { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { Box, Text } from '../../../ink.js'
@@ -10,6 +9,7 @@ import { execFileNoThrow } from '../../../utils/execFileNoThrow.js'
 import { plural } from '../../../utils/stringUtils.js'
 import { Select } from '../../CustomSelect/select.js'
 import { Dialog } from '../../design-system/Dialog.js'
+
 type ComputerUseApprovalProps = {
   request: CuPermissionRequest
   onDone: (response: CuPermissionResponse) => void

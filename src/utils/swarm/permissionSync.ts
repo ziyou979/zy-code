@@ -18,8 +18,8 @@
  * 6. Worker polls mailbox for responses and continues execution
  */
 
-import { mkdir, readdir, readFile, unlink, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { z } from 'zod/v4'
 import { logForDebugging } from '../debug.js'
 import { getErrnoCode } from '../errors.js'

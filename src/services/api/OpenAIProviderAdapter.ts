@@ -5,8 +5,9 @@
  * 客户端创建统一走 client.ts 的 getOpenAIClient()，与 Anthropic 路径共享
  * headers/baseUrl/proxy/debug 等基础设施。
  */
+
+import { randomUUID } from 'node:crypto'
 import OpenAI from 'openai'
-import { randomUUID } from 'crypto'
 import type {
   CreateParams,
   LLMAdapter,
@@ -16,10 +17,10 @@ import type {
   ToolDefinition,
 } from '../../types/llm.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { getOpenAIClient } from './client.js'
 import { getMainLoopModel, normalizeModelStringForAPI } from '../../utils/model/model.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { countMessagesTokensLocally } from '../tokenEstimation.js'
+import { getOpenAIClient } from './client.js'
 import {
   buildOpenAIRequestParams,
   mapOpenAIStreamToStandard,
@@ -40,7 +41,9 @@ export class OpenAIProviderAdapter implements LLMAdapter {
   }
 
   private async getClient(): Promise<OpenAI> {
-    if (this.injectedClient) return this.injectedClient
+    if (this.injectedClient) {
+      return this.injectedClient
+    }
     return getOpenAIClient()
   }
 

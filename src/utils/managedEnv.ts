@@ -15,7 +15,9 @@ import { getInitialSettings, getSettingsForSource } from './settings/settings.js
  * isAuthEnabled). Strip them from any settings-sourced env object.
  */
 function withoutSSHTunnelVars(env: Record<string, string> | undefined): Record<string, string> {
-  if (!env || !process.env.ANTHROPIC_UNIX_SOCKET) return env || {}
+  if (!env || !process.env.ANTHROPIC_UNIX_SOCKET) {
+    return env || {}
+  }
   const {
     ANTHROPIC_UNIX_SOCKET: _1,
     ANTHROPIC_BASE_URL: _2,
@@ -37,7 +39,9 @@ function withoutSSHTunnelVars(env: Record<string, string> | undefined): Record<s
 function withoutHostManagedProviderVars(
   env: Record<string, string> | undefined,
 ): Record<string, string> {
-  if (!env) return {}
+  if (!env) {
+    return {}
+  }
   if (!isEnvTruthy(process.env.ZY_CODE_PROVIDER_MANAGED_BY_HOST)) {
     return env
   }
@@ -61,10 +65,14 @@ function withoutHostManagedProviderVars(
 let ccdSpawnEnvKeys: Set<string> | null | undefined
 
 function withoutCcdSpawnEnvKeys(env: Record<string, string> | undefined): Record<string, string> {
-  if (!env || !ccdSpawnEnvKeys) return env || {}
+  if (!env || !ccdSpawnEnvKeys) {
+    return env || {}
+  }
   const out: Record<string, string> = {}
   for (const [key, value] of Object.entries(env)) {
-    if (!ccdSpawnEnvKeys.has(key)) out[key] = value
+    if (!ccdSpawnEnvKeys.has(key)) {
+      out[key] = value
+    }
   }
   return out
 }
@@ -120,8 +128,12 @@ export function applySafeConfigEnvironmentVariables(): void {
   // doesn't get clobbered by ~/.zy/settings.json env (gh#217). policy/flag
   // sources are always enabled, so this only ever filters userSettings.
   for (const source of TRUSTED_SETTING_SOURCES) {
-    if (source === 'policySettings') continue
-    if (!isSettingSourceEnabled(source)) continue
+    if (source === 'policySettings') {
+      continue
+    }
+    if (!isSettingSourceEnabled(source)) {
+      continue
+    }
     Object.assign(process.env, filterSettingsEnv(getSettingsForSource(source)?.env))
   }
 

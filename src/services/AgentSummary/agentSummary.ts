@@ -52,7 +52,9 @@ export function startAgentSummarization(
   let previousSummary: string | null = null
 
   async function runSummary(): Promise<void> {
-    if (stopped) return
+    if (stopped) {
+      return
+    }
 
     logForDebugging(`[AgentSummary] Timer fired for agent ${agentId}`)
 
@@ -108,11 +110,15 @@ export function startAgentSummarization(
         skipTranscript: true,
       })
 
-      if (stopped) return
+      if (stopped) {
+        return
+      }
 
       // 从结果中提取摘要文本
       for (const msg of result.messages) {
-        if (msg.type !== 'assistant') continue
+        if (msg.type !== 'assistant') {
+          continue
+        }
         // 跳过 API 错误消息
         if (msg.isApiErrorMessage) {
           logForDebugging(`[AgentSummary] Skipping API error message for ${taskId}`)
@@ -142,7 +148,9 @@ export function startAgentSummarization(
   }
 
   function scheduleNext(): void {
-    if (stopped) return
+    if (stopped) {
+      return
+    }
     timeoutId = setTimeout(runSummary, SUMMARY_INTERVAL_MS)
   }
 

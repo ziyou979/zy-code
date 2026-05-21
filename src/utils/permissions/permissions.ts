@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-import { isAbortError } from '../../types/llm.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import {
   getToolNameForPermissionCheck,
@@ -11,6 +10,7 @@ import { shouldUseSandbox } from '../../tools/BashTool/shouldUseSandbox.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
 import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
+import { isAbortError } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
 import { extractOutputRedirections } from '../bash/commands.js'
 import { logForDebugging } from '../debug.js'
@@ -878,7 +878,9 @@ function persistDenialState(context: ToolUseContext, newState: DenialTrackingSta
       // recordSuccess 在状态未变化时返回相同的引用。
       // 这里返回 prev 让 store.setState 的 Object.is 检查
       // 完全跳过监听器循环。
-      if (prev.denialTracking === newState) return prev
+      if (prev.denialTracking === newState) {
+        return prev
+      }
       return { ...prev, denialTracking: newState }
     })
   }

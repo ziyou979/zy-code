@@ -10,7 +10,7 @@
  * - 多模态：image 块 → image_url
  * - 异常 input：非对象/字符串 input 时的行为（这是 DashScope 400 关键防线）
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import { messagesToOpenAI } from '../../../src/services/api/conversions/openai.js'
 import { assertValidOpenAIChatMessages } from '../../_helpers/sdkValidators.js'
 
@@ -401,8 +401,6 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     expect(a.tool_calls).toHaveLength(1)
     expect(a.tool_calls[0].function.arguments).toBe('{"q":"hi"}')
   })
-
-
 
   test('user content 为非 object（如 null）：兜底为空', () => {
     const result = messagesToOpenAI([{ role: 'user', content: null }] as any)

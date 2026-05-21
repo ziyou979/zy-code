@@ -1,4 +1,4 @@
-import { relative } from 'path'
+import { relative } from 'node:path'
 import React from 'react'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
@@ -7,6 +7,7 @@ import type { Attachment } from '../utils/attachments.js'
 import { getCwd } from '../utils/cwd.js'
 import { CtrlOToExpand } from './CtrlOToExpand.js'
 import { MessageResponse } from './MessageResponse.js'
+
 type DiagnosticsAttachment = Extract<
   Attachment,
   {

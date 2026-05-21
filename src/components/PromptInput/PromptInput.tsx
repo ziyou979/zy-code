@@ -1,6 +1,5 @@
 import { feature } from 'bun:bundle'
-import chalk from 'chalk'
-import * as path from 'path'
+import * as path from 'node:path'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
@@ -36,7 +35,6 @@ import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { usePromptSuggestion } from '../../hooks/usePromptSuggestion.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { useTypeahead } from '../../hooks/useTypeahead.js'
-import type { BorderTextOptions } from '../../ink/render-border.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, type ClickEvent, type Key, Text, useInput } from '../../ink.js'
 import { useOptionalKeybindingContext } from '../../keybindings/KeybindingContext.js'
@@ -158,6 +156,7 @@ import { useMaybeTruncateInput } from './useMaybeTruncateInput.js'
 import { usePromptInputPlaceholder } from './usePromptInputPlaceholder.js'
 import { useSwarmBanner } from './useSwarmBanner.js'
 import { isNonSpacePrintable, isVimModeEnabled } from './utils.js'
+
 type Props = {
   debug: boolean
   ideSelection: IDESelection | undefined
@@ -330,7 +329,7 @@ function PromptInput({
       cursorOffset,
       insert: (text: string) => {
         const needsSpace = cursorOffset === input.length && input.length > 0 && !/\s$/.test(input)
-        const insertText = needsSpace ? ' ' + text : text
+        const insertText = needsSpace ? ` ${text}` : text
         const newValue = input.slice(0, cursorOffset) + insertText + input.slice(cursorOffset)
         lastInternalInputRef.current = newValue
         onInputChange(newValue)
@@ -359,7 +358,7 @@ function PromptInput({
   )
   const tmuxFooterVisible = isInternalBuild() && hasTungstenSession
   // WebBrowser pill — visible when a browser is open
-  const bagelFooterVisible = useAppState((s) => false)
+  const bagelFooterVisible = useAppState((_s) => false)
   const teamContext = useAppState((s) => s.teamContext)
   const queuedCommands = useCommandQueue()
   const promptSuggestionState = useAppState((s) => s.promptSuggestion)
@@ -449,7 +448,9 @@ function PromptInput({
     (v: number | ((prev: number) => number)) =>
       setAppState((prev) => {
         const next = typeof v === 'function' ? v(prev.coordinatorTaskIndex) : v
-        if (next === prev.coordinatorTaskIndex) return prev
+        if (next === prev.coordinatorTaskIndex) {
+          return prev
+        }
         return {
           ...prev,
           coordinatorTaskIndex: next,
@@ -477,7 +478,7 @@ function PromptInput({
     } else if (coordinatorTaskIndex < minCoordinatorIndex) {
       setCoordinatorTaskIndex(minCoordinatorIndex)
     }
-  }, [coordinatorTaskCount, coordinatorTaskIndex, minCoordinatorIndex])
+  }, [coordinatorTaskCount, coordinatorTaskIndex, minCoordinatorIndex, setCoordinatorTaskIndex])
   const [isPasting, setIsPasting] = useState(false)
   const [isExternalEditorActive, setIsExternalEditorActive] = useState(false)
   const [showModelPicker, setShowModelPicker] = useState(false)
@@ -508,9 +509,13 @@ function PromptInput({
   // Derive team info from teamContext (no filesystem I/O needed)
   // A session can only lead one team at a time
   const cachedTeams: TeamSummary[] = useMemo(() => {
-    if (!isAgentSwarmsEnabled()) return []
+    if (!isAgentSwarmsEnabled()) {
+      return []
+    }
     // In-process mode uses Shift+Down/Up navigation instead of footer menu
-    if (isInProcessEnabled()) return []
+    if (isInProcessEnabled()) {
+      return []
+    }
     if (!teamContext) {
       return []
     }
@@ -581,7 +586,7 @@ function PromptInput({
   }, [rawFooterSelection, footerItemSelected, setAppState])
   const tasksSelected = footerItemSelected === 'tasks'
   const tmuxSelected = footerItemSelected === 'tmux'
-  const bagelSelected = footerItemSelected === 'bagel'
+  const _bagelSelected = footerItemSelected === 'bagel'
   const teamsSelected = footerItemSelected === 'teams'
   const bridgeSelected = footerItemSelected === 'bridge'
   function selectFooterItem(item: FooterItem | null): void {
@@ -663,14 +668,17 @@ function PromptInput({
     () => (feature('TOKEN_BUDGET') ? findTokenBudgetPositions(displayedValue) : []),
     [displayedValue],
   )
-  const knownChannelsVersion = useSyncExternalStore(subscribeKnownChannels, getKnownChannelsVersion)
+  const _knownChannelsVersion = useSyncExternalStore(
+    subscribeKnownChannels,
+    getKnownChannelsVersion,
+  )
   const slackChannelTriggers = useMemo(
     () =>
       hasSlackMcpServer(store.getState().mcp.clients)
         ? findSlackChannelPositions(displayedValue)
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable ref
-    [displayedValue, knownChannelsVersion],
+    [displayedValue, store.getState],
   )
 
   // Find @name mentions and highlight with team member's color
@@ -679,15 +687,21 @@ function PromptInput({
     end: number
     themeColor: keyof Theme
   }> => {
-    if (!isAgentSwarmsEnabled()) return []
-    if (!teamContext?.teammates) return []
+    if (!isAgentSwarmsEnabled()) {
+      return []
+    }
+    if (!teamContext?.teammates) {
+      return []
+    }
     const highlights: Array<{
       start: number
       end: number
       themeColor: keyof Theme
     }> = []
     const members = teamContext.teammates
-    if (!members) return highlights
+    if (!members) {
+      return highlights
+    }
 
     // Find all @name patterns in the input
     const regex = /(^|\s)@([\w-]+)/g
@@ -739,7 +753,7 @@ function PromptInput({
       const mid = (inside.start + inside.end) / 2
       setCursorOffset(cursorOffset < mid ? inside.start : inside.end)
     }
-  }, [cursorOffset, imageRefPositions, setCursorOffset])
+  }, [cursorOffset, imageRefPositions])
   const combinedHighlights = useMemo((): TextHighlight[] => {
     const highlights: TextHighlight[] = []
 
@@ -880,7 +894,6 @@ function PromptInput({
     slashCommandTriggers,
     tokenBudgetTriggers,
     slackChannelTriggers,
-    displayedValue,
     voiceInterimRange,
     thinkTriggers,
     ultraplanTriggers,
@@ -1059,6 +1072,7 @@ function PromptInput({
       pastedContents,
       dismissStashHint,
       setAppState,
+      setHelpOpen,
     ],
   )
   const { resetHistory, onHistoryUp, onHistoryDown, dismissSearchHint, historyIndex } =
@@ -1313,6 +1327,8 @@ function PromptInput({
       markAccepted,
       pastedContents,
       removeNotification,
+      trackAndSetInput,
+      addNotification,
     ],
   )
   const { suggestions, selectedSuggestion, commandArgumentHint, inlineGhostText, maxColumnWidth } =
@@ -1411,11 +1427,15 @@ function PromptInput({
       const orphaned = Object.values(prev).filter(
         (c) => c.type === 'image' && !referencedIds.has(c.id),
       )
-      if (orphaned.length === 0) return prev
+      if (orphaned.length === 0) {
+        return prev
+      }
       const next = {
         ...prev,
       }
-      for (const img of orphaned) delete next[img.id]
+      for (const img of orphaned) {
+        delete next[img.id]
+      }
       return next
     })
   }, [input, setPastedContents])
@@ -1460,9 +1480,13 @@ function PromptInput({
     }
   }
   const lazySpaceInputFilter = useCallback((input: string, key: Key): string => {
-    if (!pendingSpaceAfterPillRef.current) return input
+    if (!pendingSpaceAfterPillRef.current) {
+      return input
+    }
     pendingSpaceAfterPillRef.current = false
-    if (isNonSpacePrintable(input, key)) return ' ' + input
+    if (isNonSpacePrintable(input, key)) {
+      return ` ${input}`
+    }
     return input
   }, [])
   function insertTextAtCursor(text: string) {
@@ -1505,7 +1529,7 @@ function PromptInput({
 
   // Insert the at-mentioned reference (the file and, optionally, a line range) when
   // we receive an at-mentioned notification the IDE.
-  const onIdeAtMentioned = function (atMentioned: IDEAtMentioned) {
+  const onIdeAtMentioned = (atMentioned: IDEAtMentioned) => {
     logEvent('zy_ext_at_mentioned', {})
     let atMentionedText: string
     const relativePath = path.relative(getCwd(), atMentioned.filePath)
@@ -1540,10 +1564,10 @@ function PromptInput({
   // Handler for chat:newline - insert a newline at the cursor position
   const handleNewline = useCallback(() => {
     pushToBuffer(input, cursorOffset, pastedContents)
-    const newInput = input.slice(0, cursorOffset) + '\n' + input.slice(cursorOffset)
+    const newInput = `${input.slice(0, cursorOffset)}\n${input.slice(cursorOffset)}`
     trackAndSetInput(newInput)
     setCursorOffset(cursorOffset + 1)
-  }, [input, cursorOffset, trackAndSetInput, setCursorOffset, pushToBuffer, pastedContents])
+  }, [input, cursorOffset, trackAndSetInput, pushToBuffer, pastedContents])
 
   // Handler for chat:externalEditor - edit in $EDITOR
   const handleExternalEditor = useCallback(async () => {
@@ -1601,7 +1625,9 @@ function PromptInput({
       setPastedContents({})
       // Track usage for /discover and stop showing hint
       saveGlobalConfig((c) => {
-        if (c.hasUsedStash) return c
+        if (c.hasUsedStash) {
+          return c
+        }
         return {
           ...c,
           hasUsedStash: true,
@@ -1624,7 +1650,7 @@ function PromptInput({
     if (helpOpen) {
       setHelpOpen(false)
     }
-  }, [helpOpen])
+  }, [helpOpen, setHelpOpen])
 
   // Handler for chat:thinkingToggle - toggle thinking mode
   const handleThinkingToggle = useCallback(() => {
@@ -1632,7 +1658,7 @@ function PromptInput({
     if (helpOpen) {
       setHelpOpen(false)
     }
-  }, [helpOpen])
+  }, [helpOpen, setHelpOpen])
 
   // Handler for chat:cycleMode - cycle through permission modes
   const handleCycleMode = useCallback(() => {
@@ -1799,6 +1825,7 @@ function PromptInput({
     setToolPermissionContext,
     helpOpen,
     showAutoModeOptIn,
+    setHelpOpen,
   ])
 
   // Handler for auto mode opt-in dialog acceptance
@@ -1903,7 +1930,9 @@ function PromptInput({
   // stopImmediatePropagation on Enter, blocking autocomplete from seeing the key.
   const keybindingContext = useOptionalKeybindingContext()
   useEffect(() => {
-    if (!keybindingContext || isModalOverlayActive) return
+    if (!keybindingContext || isModalOverlayActive) {
+      return
+    }
     return keybindingContext.registerHandler({
       action: 'chat:submit',
       context: 'Chat',
@@ -2085,7 +2114,9 @@ function PromptInput({
                 exitTeammateView(setAppState)
               } else {
                 const teammate = inProcessTeammates[teammateFooterIndex - 1]
-                if (teammate) enterTeammateView(teammate.id, setAppState)
+                if (teammate) {
+                  enterTeammateView(teammate.id, setAppState)
+                }
               }
             } else if (coordinatorTaskIndex === 0 && coordinatorTaskCount > 0) {
               exitTeammateView(setAppState)
@@ -2132,11 +2163,13 @@ function PromptInput({
       'footer:close': () => {
         if (tasksSelected && coordinatorTaskIndex >= 1) {
           const task = getVisibleAgentTasks(tasks)[coordinatorTaskIndex - 1]
-          if (!task) return false
+          if (!task) {
+            return false
+          }
           // When the selected row IS the viewed agent, 'x' types into the
           // steering input. Any other row — dismiss it.
           if (viewSelectionMode === 'viewing-agent' && task.id === viewingAgentTaskId) {
-            onChange(input.slice(0, cursorOffset) + 'x' + input.slice(cursorOffset))
+            onChange(`${input.slice(0, cursorOffset)}x${input.slice(cursorOffset)}`)
             setCursorOffset(cursorOffset + 1)
             return
           }
@@ -2296,7 +2329,9 @@ function PromptInput({
       // During history search the displayed text is historyMatch, not
       // input, and showCursor is false anyway — skip rather than
       // compute an offset against the wrong string.
-      if (!input || isSearchingHistory) return
+      if (!input || isSearchingHistory) {
+        return
+      }
       const c = Cursor.fromText(input, textInputColumns, cursorOffset)
       const viewportStart = c.getViewportStartLine(maxVisibleLines)
       const offset = c.measuredText.getOffsetFromPosition({
@@ -2328,7 +2363,7 @@ function PromptInput({
         mainLoopModelForSession: null,
       }))
       setShowModelPicker(false)
-      let message = `Model set to ${modelDisplayString(model)}`
+      const message = `Model set to ${modelDisplayString(model)}`
       addNotification({
         key: 'model-switched',
         jsx: <Text>{message}</Text>,
@@ -2348,7 +2383,9 @@ function PromptInput({
   // Memoize the model picker element to prevent unnecessary re-renders
   // when AppState changes for unrelated reasons (e.g., notifications arriving)
   const modelPickerElement = useMemo(() => {
-    if (!showModelPicker) return null
+    if (!showModelPicker) {
+      return null
+    }
     return (
       <Box flexDirection="column" marginTop={1}>
         <ModelPicker
@@ -2398,7 +2435,9 @@ function PromptInput({
 
   // Memoize the thinking toggle element
   const thinkingToggleElement = useMemo(() => {
-    if (!showThinkingToggle) return null
+    if (!showThinkingToggle) {
+      return null
+    }
     return (
       <Box flexDirection="column" marginTop={1}>
         <ThinkingToggle
@@ -2414,7 +2453,7 @@ function PromptInput({
     thinkingEnabled,
     handleThinkingSelect,
     handleThinkingCancel,
-    messages.length,
+    messages.some,
   ])
 
   // Portal dialog to DialogOverlay in fullscreen so it escapes the bottom
@@ -2752,7 +2791,9 @@ function getInitialPasteId(messages: Message[]): number {
       // Check image paste IDs
       if (message.imagePasteIds) {
         for (const id of message.imagePasteIds) {
-          if (id > maxId) maxId = id
+          if (id > maxId) {
+            maxId = id
+          }
         }
       }
       // Check text paste references in message content
@@ -2761,7 +2802,9 @@ function getInitialPasteId(messages: Message[]): number {
           if (block.type === 'text') {
             const refs = parseReferences(block.text)
             for (const ref of refs) {
-              if (ref.id > maxId) maxId = ref.id
+              if (ref.id > maxId) {
+                maxId = ref.id
+              }
             }
           }
         }

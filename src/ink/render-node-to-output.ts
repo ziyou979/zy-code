@@ -514,7 +514,7 @@ function renderNodeToOutput(
       // 预渲染的 ANSI 内容。生产者已按宽度换行并
       // 输出了终端就绪的转义码。跳过 squash、measure、wrap 和
       // 样式重新应用 — output.write() 直接将 ANSI 解析为单元格。
-      const text = node.attributes['rawText'] as string
+      const text = node.attributes.rawText as string
       if (text) {
         output.write(x, y, text)
       }
@@ -713,7 +713,7 @@ function renderNodeToOutput(
         // 活跃文本选择（原生终端行为：
         // 视图继续滚动，高亮随文本上移）。
         const scrollTopBeforeFollow = node.scrollTop ?? 0
-        const sticky = node.stickyScroll ?? Boolean(node.attributes['stickyScroll'])
+        const sticky = node.stickyScroll ?? Boolean(node.attributes.stickyScroll)
         const prevMaxScroll = Math.max(0, prevScrollHeight - prevInnerHeight)
         // 位置检查仅在内容增长时有效 — 虚拟化可能
         // 短暂缩小 scrollHeight（尾部卸载 + 陈旧的 heightCache
@@ -795,8 +795,12 @@ function renderNodeToOutput(
         node.scrollTop = scrollTop
         // Clamp 触及顶部/底部消耗任何余量。仅在
         // clamp 之后设置 drainPending，避免调度浪费的无操作帧。
-        if (scrollTop !== cur) node.pendingScrollDelta = undefined
-        if (node.pendingScrollDelta !== undefined) scrollDrainNode = node
+        if (scrollTop !== cur) {
+          node.pendingScrollDelta = undefined
+        }
+        if (node.pendingScrollDelta !== undefined) {
+          scrollDrainNode = node
+        }
         scrollTop = clamped
 
         if (content && contentYoga) {
@@ -861,7 +865,9 @@ function renderNodeToOutput(
           // 为 false，完整路径渲染的 next.screen 与
           // DECSTBM 偏移不匹配 — 发出 DECSTBM 会留下陈旧行（表现为
           // 向上滚动 + 流式时内容渗出）。清除它。
-          if (!safeForFastPath) scrollHint = null
+          if (!safeForFastPath) {
+            scrollHint = null
+          }
           if (hint && prevScreen && safeForFastPath) {
             const { top, bottom, delta } = hint
             const w = Math.floor(width)
@@ -940,13 +946,17 @@ function renderNodeToOutput(
                 const childElem = childNode as DOMElement
                 const isDirty = dirtyChildren.has(childNode)
                 if (!isDirty && cumHeightShift === 0) {
-                  if (nodeCache.has(childElem)) continue
+                  if (nodeCache.has(childElem)) {
+                    continue
+                  }
                   // 未缓存 = 上一帧被裁剪，现在重新进入。blit
                   // 从未绘制它 → 落入 yoga + 渲染。
                   // 高度不变（干净），因此 cumHeightShift 保持 0。
                 }
                 const cy = childElem.yogaNode
-                if (!cy) continue
+                if (!cy) {
+                  continue
+                }
                 const childTop = cy.getComputedTop()
                 const childH = cy.getComputedHeight()
                 const childBottom = childTop + childH
@@ -955,9 +965,13 @@ function renderNodeToOutput(
                   cumHeightShift += childH - (prev ? prev.height : 0)
                 }
                 // 跳过被裁剪的子节点（在视口外）
-                if (childBottom <= scrollTop || childTop >= scrollTop + innerHeight) continue
+                if (childBottom <= scrollTop || childTop >= scrollTop + innerHeight) {
+                  continue
+                }
                 // 跳过完全在边缘行内的子节点（已渲染）
-                if (childTop >= edgeTopLocal && childBottom <= edgeBottomLocal) continue
+                if (childTop >= edgeTopLocal && childBottom <= edgeBottomLocal) {
+                  continue
+                }
                 const screenY = Math.floor(contentY + childTop)
                 // 到达此处的干净子节点有 cumHeightShift ≠ 0 或
                 // 无缓存。精确重新检查：cached.y − delta 是
@@ -1009,12 +1023,18 @@ function renderNodeToOutput(
             // ScrollBox 内容，使 diff 写入正确的单元格。
             const spaces = absoluteRectsPrev.length ? ' '.repeat(w) : ''
             for (const r of absoluteRectsPrev) {
-              if (r.y >= bottom + 1 || r.y + r.height <= top) continue
+              if (r.y >= bottom + 1 || r.y + r.height <= top) {
+                continue
+              }
               const shiftedTop = Math.max(top, Math.floor(r.y) - delta)
               const shiftedBottom = Math.min(bottom + 1, Math.floor(r.y + r.height) - delta)
               // 如果完全在边缘行内则跳过（已渲染）。
-              if (shiftedTop >= edgeTop && shiftedBottom <= edgeBottom + 1) continue
-              if (shiftedTop >= shiftedBottom) continue
+              if (shiftedTop >= edgeTop && shiftedBottom <= edgeBottom + 1) {
+                continue
+              }
+              if (shiftedTop >= shiftedBottom) {
+                continue
+              }
               const fill = Array(shiftedBottom - shiftedTop)
                 .fill(spaces)
                 .join('\n')
@@ -1233,20 +1253,26 @@ function clipsBothAxes(node: DOMElement): boolean {
 //（HelpV2 的第三个快捷键列），因此仅 h=0 不够。
 function siblingSharesY(node: DOMElement, yogaNode: LayoutNode): boolean {
   const parent = node.parentNode
-  if (!parent) return false
+  if (!parent) {
+    return false
+  }
   const myTop = yogaNode.getComputedTop()
   const siblings = parent.childNodes
   const idx = siblings.indexOf(node)
   for (let i = idx + 1; i < siblings.length; i++) {
     const sib = (siblings[i] as DOMElement).yogaNode
-    if (!sib) continue
+    if (!sib) {
+      continue
+    }
     return sib.getComputedTop() === myTop
   }
   // 没有下一个带 yoga 节点的兄弟节点 — 检查前一个。尾部
   // 一连串 h=0 的盒子会彼此共享 y。
   for (let i = idx - 1; i >= 0; i--) {
     const sib = (siblings[i] as DOMElement).yogaNode
-    if (!sib) continue
+    if (!sib) {
+      continue
+    }
     return sib.getComputedTop() === myTop
   }
   return false
@@ -1271,7 +1297,9 @@ function blitEscapingAbsoluteDescendants(
   const pr = px + pw
   const pb = py + ph
   for (const child of node.childNodes) {
-    if (child.nodeName === '#text') continue
+    if (child.nodeName === '#text') {
+      continue
+    }
     const elem = child as DOMElement
     if (elem.style.position === 'absolute') {
       const cached = nodeCache.get(elem)
@@ -1342,7 +1370,9 @@ function renderScrolledChildren(
         // 正确。对于 preserveCulledCache=true 的被裁剪子节点，这是
         // 唯一的刷新点 — 没有它，中间增长帧
         // 会留下陈旧的 tops，在下帧误触发。
-        if (cached) cached.top = top
+        if (cached) {
+          cached.top = top
+        }
       }
       const bottom = top + height
       if (bottom <= scrollTopY || top >= scrollBottomY) {
@@ -1350,7 +1380,9 @@ function renderScrolledChildren(
         // 的陈旧缓存条目，使此子节点重新进入时不会在
         // 现在被兄弟节点占用的位置触发清除。滚动变化时的
         // 视口清除处理可见区域重绘。
-        if (!preserveCulledCache) dropSubtreeCache(childElem)
+        if (!preserveCulledCache) {
+          dropSubtreeCache(childElem)
+        }
         continue
       }
     }
@@ -1377,6 +1409,6 @@ function dropSubtreeCache(node: DOMElement): void {
 }
 
 // 导出用于测试
-export { buildCharToSegmentMap, applyStylesToWrappedText }
+export { applyStylesToWrappedText, buildCharToSegmentMap }
 
 export default renderNodeToOutput

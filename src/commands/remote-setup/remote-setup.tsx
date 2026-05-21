@@ -20,6 +20,7 @@ import {
   isSignedIn,
   RedactedGithubToken,
 } from './api.js'
+
 type CheckResult =
   | {
       status: 'not_signed_in'
@@ -131,7 +132,7 @@ function Web({ onDone }: { onDone: LocalJSXCommandOnDone }) {
     })
     // onDone is stable across renders; intentionally not in deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [onDone])
   const handleCancel = () => {
     logEvent('zy_remote_setup_result', {
       result: 'cancelled' as SafeString,

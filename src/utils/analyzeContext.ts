@@ -1,8 +1,6 @@
 import { feature } from 'bun:bundle'
-import type { LLMMessage, ToolDefinition } from '../types/llm.js'
 import { getSystemPrompt, SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from 'src/constants/prompts.js'
 import { microcompactMessages } from 'src/services/compact/microCompact.js'
-import { getSdkBetas } from '../bootstrap/state.js'
 import { getCommandName } from '../commands.js'
 import { getSystemContext } from '../context.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
@@ -32,6 +30,7 @@ import {
   getLimitedSkillToolCommands,
   getSkillToolInfo as getSlashCommandInfo,
 } from '../tools/SkillTool/prompt.js'
+import type { LLMMessage, ToolDefinition } from '../types/llm.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -41,12 +40,10 @@ import type {
   UserMessage,
 } from '../types/message.js'
 import { toolToAPISchema } from './api.js'
-import { filterInjectedMemoryFiles, getMemoryFiles } from './zymd.js'
 import { getContextWindowForModel } from './context.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
-import { isEnvTruthy } from './envUtils.js'
-import { isInternalBuild } from './envUtils.js'
+import { isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { errorMessage, toError } from './errors.js'
 import { logError } from './log.js'
 import { normalizeMessagesForAPI } from './messages.js'
@@ -55,6 +52,7 @@ import { jsonStringify } from './slowOperations.js'
 import { buildEffectiveSystemPrompt } from './systemPrompt.js'
 import type { Theme } from './theme.js'
 import { getCurrentUsage } from './tokens.js'
+import { filterInjectedMemoryFiles, getMemoryFiles } from './zymd.js'
 
 const RESERVED_CATEGORY_NAME = 'Autocompact buffer'
 const MANUAL_COMPACT_BUFFER_NAME = 'Compact buffer'
@@ -258,7 +256,7 @@ function extractSectionName(content: string): string {
   }
   // 回退为第一个非空行的截断预览
   const firstLine = content.split('\n').find((l) => l.trim().length > 0) ?? ''
-  return firstLine.length > 40 ? firstLine.slice(0, 40) + '…' : firstLine
+  return firstLine.length > 40 ? `${firstLine.slice(0, 40)}…` : firstLine
 }
 
 async function countSystemTokens(effectiveSystemPrompt: readonly string[]): Promise<{
@@ -270,12 +268,12 @@ async function countSystemTokens(effectiveSystemPrompt: readonly string[]): Prom
 
   // 构建命名条目：system prompt 各部分 + 系统上下文值
   // 跳过空字符串和全局缓存边界标记
-  // @ts-ignore
+  // @ts-expect-error
   const namedEntries: Array<{ name: string; content: string }> = [
     ...effectiveSystemPrompt
       .filter(
         (content) =>
-          // @ts-ignore
+          // @ts-expect-error
           (content as any).length > 0 && content !== SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
       )
       .map((content) => ({ name: extractSectionName(content), content })),

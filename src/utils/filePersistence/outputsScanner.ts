@@ -7,8 +7,8 @@
  * - Find modified files by comparing file mtimes against turn start time
  */
 
-import * as fs from 'fs/promises'
-import * as path from 'path'
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
 import { logForDebugging } from '../debug.js'
 import type { EnvironmentKind } from '../teleport/environments.js'
 import type { TurnStartTime } from './types.js'
@@ -62,10 +62,10 @@ export async function findModifiedFiles(
   outputsDir: string,
 ): Promise<string[]> {
   // Use recursive flag to get all entries in one call
-  // @ts-ignore
+  // @ts-expect-error
   let entries: Awaited<ReturnType<typeof fs.readdir>>
   try {
-    // @ts-ignore
+    // @ts-expect-error
     entries = await fs.readdir(outputsDir, {
       withFileTypes: true,
       recursive: true,
@@ -113,7 +113,7 @@ export async function findModifiedFiles(
   // Filter to files modified since turn start
   const modifiedFiles: string[] = []
   for (const result of statResults) {
-    // @ts-ignore
+    // @ts-expect-error
     if (result && result.mtimeMs >= (turnStartTime as any)) {
       modifiedFiles.push(result.filePath)
     }

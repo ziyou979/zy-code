@@ -109,7 +109,9 @@ function processChunk(str: string): void {
       while (i < str.length && !(str.charCodeAt(i) >= 64 && str.charCodeAt(i) <= 126)) {
         i++
       }
-      if (i < str.length) i++ // Skip the terminating byte
+      if (i < str.length) {
+        i++ // Skip the terminating byte
+      }
       continue
     }
 

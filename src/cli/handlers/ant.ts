@@ -2,38 +2,38 @@
  * ANT-only CLI handlers
  */
 
-export async function logHandler(logId: string | number | undefined): Promise<void> {
+export async function logHandler(_logId: string | number | undefined): Promise<void> {
   throw new Error('logHandler not implemented')
 }
 
-export async function errorHandler(number: number | undefined): Promise<void> {
+export async function errorHandler(_number: number | undefined): Promise<void> {
   throw new Error('errorHandler not implemented')
 }
 
-export async function exportHandler(source: string, outputFile: string): Promise<void> {
+export async function exportHandler(_source: string, _outputFile: string): Promise<void> {
   throw new Error('exportHandler not implemented')
 }
 
-export async function taskCreateHandler(subject: string, opts: any): Promise<void> {
+export async function taskCreateHandler(_subject: string, _opts: any): Promise<void> {
   throw new Error('taskCreateHandler not implemented')
 }
 
-export async function taskListHandler(opts: any): Promise<void> {
+export async function taskListHandler(_opts: any): Promise<void> {
   throw new Error('taskListHandler not implemented')
 }
 
-export async function taskGetHandler(id: string, opts: any): Promise<void> {
+export async function taskGetHandler(_id: string, _opts: any): Promise<void> {
   throw new Error('taskGetHandler not implemented')
 }
 
-export async function taskUpdateHandler(id: string, opts: any): Promise<void> {
+export async function taskUpdateHandler(_id: string, _opts: any): Promise<void> {
   throw new Error('taskUpdateHandler not implemented')
 }
 
-export async function taskDirHandler(opts: any): Promise<void> {
+export async function taskDirHandler(_opts: any): Promise<void> {
   throw new Error('taskDirHandler not implemented')
 }
 
-export async function completionHandler(shell: string, opts: any, program: any): Promise<void> {
+export async function completionHandler(_shell: string, _opts: any, _program: any): Promise<void> {
   throw new Error('completionHandler not implemented')
 }

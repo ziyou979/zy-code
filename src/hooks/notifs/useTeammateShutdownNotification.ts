@@ -52,7 +52,9 @@ export function useTeammateLifecycleNotification(): void {
   const seenCompletedRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    if (getIsRemoteMode()) return
+    if (getIsRemoteMode()) {
+      return
+    }
     for (const [id, task] of Object.entries(tasks)) {
       if (!isInProcessTeammateTask(task)) {
         continue

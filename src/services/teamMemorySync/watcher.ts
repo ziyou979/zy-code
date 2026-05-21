@@ -8,9 +8,9 @@
  */
 
 import { feature } from 'bun:bundle'
-import { type FSWatcher, watch } from 'fs'
-import { mkdir, stat } from 'fs/promises'
-import { join } from 'path'
+import { type FSWatcher, watch } from 'node:fs'
+import { mkdir, stat } from 'node:fs/promises'
+import { join } from 'node:path'
 import { getTeamMemPath, isTeamMemoryEnabled } from '../../memdir/teamMemPaths.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -56,7 +56,9 @@ let pushSuppressedReason: string | null = null
  *   rate limit — watcher-driven backoff is fine.
  */
 export function isPermanentFailure(r: TeamMemorySyncPushResult): boolean {
-  if (r.errorType === 'no_oauth' || r.errorType === 'no_repo') return true
+  if (r.errorType === 'no_oauth' || r.errorType === 'no_repo') {
+    return true
+  }
   if (
     r.httpStatus !== undefined &&
     r.httpStatus >= 400 &&
@@ -126,7 +128,9 @@ async function executePush(): Promise<void> {
  * Debounced push: waits for writes to settle, then pushes once.
  */
 function schedulePush(): void {
-  if (pushSuppressedReason !== null) return
+  if (pushSuppressedReason !== null) {
+    return
+  }
   hasPendingChanges = true
   if (debounceTimer) {
     clearTimeout(debounceTimer)
@@ -182,7 +186,9 @@ async function startFileWatcher(teamDir: string): Promise<void> {
         // too-many-entries). fs.watch doesn't distinguish unlink from
         // add/write — stat to disambiguate. ENOENT → file gone → clear.
         void stat(join(teamDir, filename)).catch((err: NodeJS.ErrnoException) => {
-          if (err.code !== 'ENOENT') return
+          if (err.code !== 'ENOENT') {
+            return
+          }
           if (pushSuppressedReason !== null) {
             logForDebugging(
               `team-memory-watcher: unlink cleared suppression (was: ${pushSuppressedReason})`,

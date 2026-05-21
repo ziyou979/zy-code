@@ -1,9 +1,9 @@
-import React from 'react'
-import { Box, Text } from '../ink.js'
 import { tSync } from '../i18n/index.js'
+import { Box, Text } from '../ink.js'
 import { formatTokens } from '../utils/format.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
+
 type IdleReturnAction = 'continue' | 'clear' | 'dismiss' | 'never'
 type Props = {
   idleMinutes: number

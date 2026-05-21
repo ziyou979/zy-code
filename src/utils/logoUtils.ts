@@ -1,16 +1,16 @@
 import { getDirectConnectServerUrl, getSessionId } from '../bootstrap/state.js'
+import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import type { LogOption } from '../types/logs.js'
 import { getCwd } from './cwd.js'
+import { isInternalBuild } from './envUtils.js'
 import { getDisplayPath } from './file.js'
 import { truncate, truncateToWidth, truncateToWidthNoEllipsis } from './format.js'
-import { tSync } from '../i18n/index.js'
+import { getAPIProvider } from './model/providers.js'
 import { getStoredChangelogFromMemory, parseChangelog } from './releaseNotes.js'
 import { gt } from './semver.js'
-import { isInternalBuild } from './envUtils.js'
 import { loadMessageLogs } from './sessionStorage.js'
 import { getInitialSettings } from './settings/settings.js'
-import { getAPIProvider } from './model/providers.js'
 
 // Layout constants
 const MAX_LEFT_WIDTH = 50
@@ -31,7 +31,9 @@ export type LayoutDimensions = {
  * Determines the layout mode based on terminal width
  */
 export function getLayoutMode(columns: number): LayoutMode {
-  if (columns >= 70) return 'horizontal'
+  if (columns >= 70) {
+    return 'horizontal'
+  }
   return 'compact'
 }
 
@@ -103,7 +105,9 @@ export function formatWelcomeMessage(username: string | null): string {
  * Width-aware: uses stringWidth() for correct CJK/emoji measurement.
  */
 export function truncatePath(path: string, maxLength: number): string {
-  if (stringWidth(path) <= maxLength) return path
+  if (stringWidth(path) <= maxLength) {
+    return path
+  }
 
   const separator = '/'
   const ellipsis = '…'
@@ -189,9 +193,15 @@ export async function getRecentActivity(): Promise<LogOption[]> {
     .then((logs) => {
       cachedActivity = logs
         .filter((log) => {
-          if (log.isSidechain) return false
-          if (log.sessionId === currentSessionId) return false
-          if (log.summary?.includes('I apologize')) return false
+          if (log.isSidechain) {
+            return false
+          }
+          if (log.sessionId === currentSessionId) {
+            return false
+          }
+          if (log.summary?.includes('I apologize')) {
+            return false
+          }
 
           // Filter out sessions where both summary and firstPrompt are "No prompt" or missing
           const hasSummary = log.summary && log.summary !== 'No prompt'

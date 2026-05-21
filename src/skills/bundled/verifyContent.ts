@@ -1,11 +1,11 @@
 // Content for the verify bundled skill.
 // Each .md file is inlined as a string at build time via Bun's text loader.
 
-// @ts-ignore
+// @ts-expect-error
 import cliMd from './verify/examples/cli.md'
-// @ts-ignore
+// @ts-expect-error
 import serverMd from './verify/examples/server.md'
-// @ts-ignore
+// @ts-expect-error
 import skillMd from './verify/SKILL.md'
 
 export const SKILL_MD: string = skillMd

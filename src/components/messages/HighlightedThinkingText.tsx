@@ -1,5 +1,4 @@
 import figures from 'figures'
-import * as React from 'react'
 import { useContext } from 'react'
 import { useQueuedMessage } from '../../context/QueuedMessageContext.js'
 import { Box, Text } from '../../ink.js'
@@ -10,6 +9,7 @@ import {
   isUltrathinkEnabled,
 } from '../../utils/thinking.js'
 import { MessageActionsSelectedContext } from '../messageActions.js'
+
 type Props = {
   text: string
   useBriefLayout?: boolean

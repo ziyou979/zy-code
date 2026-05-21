@@ -46,8 +46,12 @@ export function getTelemetryAttributes(): Attributes {
     const email = oauthAccount.emailAddress
     const accountUuid = oauthAccount.accountUuid
 
-    if (orgId) attributes['organization.id'] = orgId
-    if (email) attributes['user.email'] = email
+    if (orgId) {
+      attributes['organization.id'] = orgId
+    }
+    if (email) {
+      attributes['user.email'] = email
+    }
 
     if (accountUuid && shouldIncludeAttribute('OTEL_METRICS_INCLUDE_ACCOUNT_UUID')) {
       attributes['user.account_uuid'] = accountUuid

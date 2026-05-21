@@ -44,7 +44,9 @@ export class FlushGate<T> {
    * If flush is not active, return false (caller should send directly).
    */
   enqueue(...items: T[]): boolean {
-    if (!this._active) return false
+    if (!this._active) {
+      return false
+    }
     this._pending.push(...items)
     return true
   }

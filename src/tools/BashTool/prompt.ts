@@ -40,9 +40,11 @@ function getCommitAndPRInstructions(): string {
   // your cover" instructions are the last line of defense against the model
   // volunteering an internal codename in a commit message.
   const undercoverSection =
-    isInternalBuild() && isUndercover() ? getUndercoverInstructions() + '\n' : ''
+    isInternalBuild() && isUndercover() ? `${getUndercoverInstructions()}\n` : ''
 
-  if (!shouldIncludeGitInstructions()) return undercoverSection
+  if (!shouldIncludeGitInstructions()) {
+    return undercoverSection
+  }
 
   // For ant users, use the short version pointing to skills
   if (isInternalBuild()) {
@@ -157,7 +159,9 @@ Important:
 // Dedup here before inlining into the prompt — affects only what the model sees,
 // not sandbox enforcement. Saves ~150-200 tokens/request when sandbox is enabled.
 function dedup<T>(arr: T[] | undefined): T[] | undefined {
-  if (!arr || arr.length === 0) return arr
+  if (!arr || arr.length === 0) {
+    return arr
+  }
   return [...new Set(arr)]
 }
 

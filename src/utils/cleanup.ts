@@ -1,12 +1,11 @@
-import * as fs from 'fs/promises'
-import { homedir } from 'os'
-import { join } from 'path'
+import * as fs from 'node:fs/promises'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 import { logEvent } from '../services/analytics/index.js'
 import { CACHE_PATHS } from './cachePaths.js'
 import { logForDebugging } from './debug.js'
-import { getZyConfigHomeDir } from './envUtils.js'
+import { getZyConfigHomeDir, isInternalBuild } from './envUtils.js'
 import { type FsOperations, getFsImplementation } from './fsOperations.js'
-import { isInternalBuild } from './envUtils.js'
 import { cleanupOldImageCaches } from './imageStore.js'
 import * as lockfile from './lockfile.js'
 import { logError } from './log.js'
@@ -158,7 +157,9 @@ export async function cleanupOldSessionFiles(): Promise<CleanupResult> {
   }
 
   for (const projectDirent of projectDirents) {
-    if (!projectDirent.isDirectory()) continue
+    if (!projectDirent.isDirectory()) {
+      continue
+    }
     const projectDir = join(projectsDir, projectDirent.name)
 
     // Single readdir per project directory — partition into files and session dirs
@@ -212,7 +213,9 @@ export async function cleanupOldSessionFiles(): Promise<CleanupResult> {
               continue
             }
             for (const tf of toolFiles) {
-              if (!tf.isFile()) continue
+              if (!tf.isFile()) {
+                continue
+              }
               try {
                 if (await unlinkIfOld(join(toolDirPath, tf.name), cutoffDate, fsImpl)) {
                   result.messages++
@@ -258,7 +261,9 @@ async function cleanupSingleDirectory(
   }
 
   for (const dirent of dirents) {
-    if (!dirent.isFile() || !dirent.name.endsWith(extension)) continue
+    if (!dirent.isFile() || !dirent.name.endsWith(extension)) {
+      continue
+    }
     try {
       if (await unlinkIfOld(join(dirPath, dirent.name), cutoffDate, fsImpl)) {
         result.messages++
@@ -437,7 +442,7 @@ export async function cleanupNpmCacheForAnthropicPackages(): Promise<void> {
 
   const startTime = Date.now()
   try {
-    // @ts-ignore
+    // @ts-expect-error
     const cacache = await import('cacache')
     const cutoff = startTime - ONE_DAY_MS
 

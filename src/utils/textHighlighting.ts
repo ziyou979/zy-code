@@ -30,7 +30,9 @@ export function segmentTextByHighlights(text: string, highlights: TextHighlight[
   }
 
   const sortedHighlights = [...highlights].sort((a, b) => {
-    if (a.start !== b.start) return a.start - b.start
+    if (a.start !== b.start) {
+      return a.start - b.start
+    }
     return b.priority - a.priority
   })
 
@@ -38,7 +40,9 @@ export function segmentTextByHighlights(text: string, highlights: TextHighlight[
   const usedRanges: Array<{ start: number; end: number }> = []
 
   for (const highlight of sortedHighlights) {
-    if (highlight.start === highlight.end) continue
+    if (highlight.start === highlight.end) {
+      continue
+    }
 
     const overlaps = usedRanges.some(
       (range) =>
@@ -75,7 +79,9 @@ class HighlightSegmenter {
 
     for (const highlight of highlights) {
       const before = this.segmentTo(highlight.start)
-      if (before) segments.push(before)
+      if (before) {
+        segments.push(before)
+      }
 
       const highlighted = this.segmentTo(highlight.end)
       if (highlighted) {
@@ -85,7 +91,9 @@ class HighlightSegmenter {
     }
 
     const after = this.segmentTo(Infinity)
-    if (after) segments.push(after)
+    if (after) {
+      segments.push(after)
+    }
 
     return segments
   }
@@ -100,7 +108,9 @@ class HighlightSegmenter {
     // Consume leading ANSI codes before first visible char
     while (this.tokenIdx < this.tokens.length) {
       const token = this.tokens[this.tokenIdx]!
-      if (token.type !== 'ansi') break
+      if (token.type !== 'ansi') {
+        break
+      }
       this.codes.push(token)
       this.stringPos += token.code.length
       this.tokenIdx++

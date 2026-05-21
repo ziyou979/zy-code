@@ -11,12 +11,11 @@
  */
 
 import { feature } from 'bun:bundle'
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { context as otelContext, type Span, trace } from '@opentelemetry/api'
-import { AsyncLocalStorage } from 'async_hooks'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import type { AssistantMessage, UserMessage } from '../../types/message.js'
-import { isEnvDefinedFalsy, isEnvTruthy } from '../envUtils.js'
-import { isInternalBuild } from '../envUtils.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../envUtils.js'
 import { getTelemetryAttributes } from '../telemetryAttributes.js'
 import {
   addBetaInteractionAttributes,
@@ -99,7 +98,9 @@ function getSpanId(span: Span): string {
  * work is done.
  */
 function ensureCleanupInterval(): void {
-  if (_cleanupIntervalStarted) return
+  if (_cleanupIntervalStarted) {
+    return
+  }
   _cleanupIntervalStarted = true
   const interval = setInterval(() => {
     const cutoff = Date.now() - SPAN_TTL_MS
@@ -109,7 +110,9 @@ function ensureCleanupInterval(): void {
         activeSpans.delete(spanId)
         strongSpans.delete(spanId)
       } else if (ctx.startTime < cutoff) {
-        if (!ctx.ended) ctx.span.end() // flush any recorded attributes to the exporter
+        if (!ctx.ended) {
+          ctx.span.end() // flush any recorded attributes to the exporter
+        }
         activeSpans.delete(spanId)
         strongSpans.delete(spanId)
       }
@@ -383,7 +386,7 @@ export function endLLMRequestSpan(
     llmSpanContext = Array.from(activeSpans.values())
       .findLast((r) => {
         const ctx = r.deref()
-        return ctx?.attributes['span.type'] === 'llm_request' || ctx?.attributes['model']
+        return ctx?.attributes['span.type'] === 'llm_request' || ctx?.attributes.model
       })
       ?.deref()
   }
@@ -423,19 +426,36 @@ export function endLLMRequestSpan(
   }
 
   if (metadata) {
-    if (metadata.inputTokens !== undefined) endAttributes['input_tokens'] = metadata.inputTokens
-    if (metadata.outputTokens !== undefined) endAttributes['output_tokens'] = metadata.outputTokens
-    if (metadata.cacheReadTokens !== undefined)
-      endAttributes['cache_read_tokens'] = metadata.cacheReadTokens
-    if (metadata.cacheCreationTokens !== undefined)
-      endAttributes['cache_creation_tokens'] = metadata.cacheCreationTokens
-    if (metadata.success !== undefined) endAttributes['success'] = metadata.success
-    if (metadata.statusCode !== undefined) endAttributes['status_code'] = metadata.statusCode
-    if (metadata.error !== undefined) endAttributes['error'] = metadata.error
-    if (metadata.attempt !== undefined) endAttributes['attempt'] = metadata.attempt
-    if (metadata.hasToolCall !== undefined)
+    if (metadata.inputTokens !== undefined) {
+      endAttributes.input_tokens = metadata.inputTokens
+    }
+    if (metadata.outputTokens !== undefined) {
+      endAttributes.output_tokens = metadata.outputTokens
+    }
+    if (metadata.cacheReadTokens !== undefined) {
+      endAttributes.cache_read_tokens = metadata.cacheReadTokens
+    }
+    if (metadata.cacheCreationTokens !== undefined) {
+      endAttributes.cache_creation_tokens = metadata.cacheCreationTokens
+    }
+    if (metadata.success !== undefined) {
+      endAttributes.success = metadata.success
+    }
+    if (metadata.statusCode !== undefined) {
+      endAttributes.status_code = metadata.statusCode
+    }
+    if (metadata.error !== undefined) {
+      endAttributes.error = metadata.error
+    }
+    if (metadata.attempt !== undefined) {
+      endAttributes.attempt = metadata.attempt
+    }
+    if (metadata.hasToolCall !== undefined) {
       endAttributes['response.has_tool_call'] = metadata.hasToolCall
-    if (metadata.ttftMs !== undefined) endAttributes['ttft_ms'] = metadata.ttftMs
+    }
+    if (metadata.ttftMs !== undefined) {
+      endAttributes.ttft_ms = metadata.ttftMs
+    }
 
     // Add experimental response attributes (model_output, thinking_output)
     addBetaLLMResponseAttributes(endAttributes, metadata)
@@ -586,10 +606,10 @@ export function endToolBlockedOnUserSpan(decision?: string, source?: string): vo
   }
 
   if (decision) {
-    attributes['decision'] = decision
+    attributes.decision = decision
   }
   if (source) {
-    attributes['source'] = source
+    attributes.source = source
   }
 
   blockedSpanContext.span.setAttributes(attributes)
@@ -646,8 +666,12 @@ export function endToolExecutionSpan(metadata?: { success?: boolean; error?: str
   }
 
   if (metadata) {
-    if (metadata.success !== undefined) attributes['success'] = metadata.success
-    if (metadata.error !== undefined) attributes['error'] = metadata.error
+    if (metadata.success !== undefined) {
+      attributes.success = metadata.success
+    }
+    if (metadata.error !== undefined) {
+      attributes.error = metadata.error
+    }
   }
 
   executionSpanContext.span.setAttributes(attributes)
@@ -689,12 +713,12 @@ export function endToolSpan(toolResult?: string, resultTokens?: number): void {
 
   // Add experimental tool result attributes (new_context)
   if (toolResult) {
-    const toolName = toolSpanContext.attributes['tool_name'] || 'unknown'
+    const toolName = toolSpanContext.attributes.tool_name || 'unknown'
     addBetaToolResultAttributes(endAttributes, toolName, toolResult)
   }
 
   if (resultTokens !== undefined) {
-    endAttributes['result_tokens'] = resultTokens
+    endAttributes.result_tokens = resultTokens
   }
 
   toolSpanContext.span.setAttributes(endAttributes)
@@ -878,11 +902,18 @@ export function endHookSpan(
   }
 
   if (metadata) {
-    if (metadata.numSuccess !== undefined) endAttributes['num_success'] = metadata.numSuccess
-    if (metadata.numBlocking !== undefined) endAttributes['num_blocking'] = metadata.numBlocking
-    if (metadata.numNonBlockingError !== undefined)
-      endAttributes['num_non_blocking_error'] = metadata.numNonBlockingError
-    if (metadata.numCancelled !== undefined) endAttributes['num_cancelled'] = metadata.numCancelled
+    if (metadata.numSuccess !== undefined) {
+      endAttributes.num_success = metadata.numSuccess
+    }
+    if (metadata.numBlocking !== undefined) {
+      endAttributes.num_blocking = metadata.numBlocking
+    }
+    if (metadata.numNonBlockingError !== undefined) {
+      endAttributes.num_non_blocking_error = metadata.numNonBlockingError
+    }
+    if (metadata.numCancelled !== undefined) {
+      endAttributes.num_cancelled = metadata.numCancelled
+    }
   }
 
   spanContext.span.setAttributes(endAttributes)

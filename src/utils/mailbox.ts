@@ -47,7 +47,9 @@ export class Mailbox {
 
   poll(fn: (msg: Message) => boolean = () => true): Message | undefined {
     const idx = this.queue.findIndex(fn)
-    if (idx === -1) return undefined
+    if (idx === -1) {
+      return undefined
+    }
     return this.queue.splice(idx, 1)[0]
   }
 

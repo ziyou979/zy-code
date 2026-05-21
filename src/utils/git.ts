@@ -1,8 +1,8 @@
-import { createHash } from 'crypto'
-import { readFileSync, realpathSync, statSync } from 'fs'
-import { open, readFile, realpath, stat } from 'fs/promises'
+import { createHash } from 'node:crypto'
+import { readFileSync, realpathSync, statSync } from 'node:fs'
+import { open, readFile, realpath, stat } from 'node:fs/promises'
+import { basename, dirname, join, resolve, sep } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { basename, dirname, join, resolve, sep } from 'path'
 import { hasBinaryExtension, isBinaryContent } from '../constants/files.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
@@ -270,17 +270,19 @@ export const getRemoteUrl = async (): Promise<string | null> => {
  */
 export function normalizeGitRemoteUrl(url: string): string | null {
   const trimmed = url.trim()
-  if (!trimmed) return null
+  if (!trimmed) {
+    return null
+  }
 
   // 处理 SSH 格式：git@host:owner/repo.git
   const sshMatch = trimmed.match(/^git@([^:]+):(.+?)(?:\.git)?$/)
-  if (sshMatch && sshMatch[1] && sshMatch[2]) {
+  if (sshMatch?.[1] && sshMatch[2]) {
     return `${sshMatch[1]}/${sshMatch[2]}`.toLowerCase()
   }
 
   // 处理 HTTPS/SSH URL 格式：https://host/owner/repo.git 或 ssh://git@host/owner/repo
   const urlMatch = trimmed.match(/^(?:https?|ssh):\/\/(?:[^@]+@)?([^/]+)\/(.+?)(?:\.git)?$/)
-  if (urlMatch && urlMatch[1] && urlMatch[2]) {
+  if (urlMatch?.[1] && urlMatch[2]) {
     const host = urlMatch[1]
     const path = urlMatch[2]
 
@@ -314,10 +316,14 @@ export function normalizeGitRemoteUrl(url: string): string | null {
  */
 export async function getRepoRemoteHash(): Promise<string | null> {
   const remoteUrl = await getRemoteUrl()
-  if (!remoteUrl) return null
+  if (!remoteUrl) {
+    return null
+  }
 
   const normalized = normalizeGitRemoteUrl(remoteUrl)
-  if (!normalized) return null
+  if (!normalized) {
+    return null
+  }
 
   const hash = createHash('sha256').update(normalized).digest('hex')
   return hash.substring(0, 16)
@@ -551,7 +557,7 @@ export async function findRemoteBase(): Promise<string | null> {
   if (remoteCode === 0) {
     // 从 remote show 输出中解析默认分支
     const match = remoteRefs.match(/HEAD branch: (\S+)/)
-    if (match && match[1]) {
+    if (match?.[1]) {
       return `origin/${match[1]}`
     }
   }
@@ -862,17 +868,23 @@ export function isCurrentDirectoryBareGitRepo(): boolean {
   // 谨慎处理——如果在没有有效 .git 引用的情况下存在任何一个指标就标记。
   // 每个指标单独 try/catch，避免一个错误遮蔽另一个。
   try {
-    if (fs.statSync(join(cwd, 'HEAD')).isFile()) return true
+    if (fs.statSync(join(cwd, 'HEAD')).isFile()) {
+      return true
+    }
   } catch {
     // 无 HEAD
   }
   try {
-    if (fs.statSync(join(cwd, 'objects')).isDirectory()) return true
+    if (fs.statSync(join(cwd, 'objects')).isDirectory()) {
+      return true
+    }
   } catch {
     // 无 objects/
   }
   try {
-    if (fs.statSync(join(cwd, 'refs')).isDirectory()) return true
+    if (fs.statSync(join(cwd, 'refs')).isDirectory()) {
+      return true
+    }
   } catch {
     // 无 refs/
   }

@@ -1,8 +1,9 @@
+import { closeSync, constants as fsConstants, openSync, readSync, writeSync } from 'node:fs'
+import { format } from 'node:util'
 import autoBind from 'auto-bind'
-import { closeSync, constants as fsConstants, openSync, readSync, writeSync } from 'fs'
 import noop from 'lodash-es/noop.js'
 import throttle from 'lodash-es/throttle.js'
-import React, { type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import type { FiberRoot } from 'react-reconciler'
 import { ConcurrentRoot } from 'react-reconciler/constants.js'
 import { onExit } from 'signal-exit'
@@ -10,7 +11,7 @@ import { flushInteractionTime } from 'src/bootstrap/state.js'
 import { getYogaCounters } from 'src/native-ts/yoga-layout/index.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logError } from 'src/utils/log.js'
-import { format } from 'util'
+import { isDevEnv } from '../utils/envUtils.js'
 import { colorize } from './colorize.js'
 import App from './components/App.js'
 import type {
@@ -38,7 +39,6 @@ import reconciler, {
   resetProfileCounters,
 } from './reconciler.js'
 import renderNodeToOutput, { consumeFollowScroll, didLayoutShift } from './render-node-to-output.js'
-import { isDevEnv } from '../utils/envUtils.js'
 import { applyPositionedHighlight, type MatchPosition, scanPositions } from './render-to-screen.js'
 import createRenderer, { type Renderer } from './renderer.js'
 import {
@@ -411,7 +411,9 @@ export default class Ink {
     // Terminals often emit 2+ resize events for one user action (window
     // settling). Same-dimension events are no-ops; skip to avoid redundant
     // frame resets and renders.
-    if (cols === this.terminalColumns && rows === this.terminalRows) return
+    if (cols === this.terminalColumns && rows === this.terminalRows) {
+      return
+    }
     this.terminalColumns = cols
     this.terminalRows = rows
     this.altScreenParkPatch = makeAltScreenParkPatch(this.terminalRows)
@@ -629,7 +631,11 @@ export default class Ink {
         // disappears. notifySelectionChange() would recurse into onRender;
         // fire the listeners directly — they schedule a React update for
         // LATER, they don't re-enter this frame.
-        if (cleared) for (const cb of this.selectionListeners) cb()
+        if (cleared) {
+          for (const cb of this.selectionListeners) {
+            cb()
+          }
+        }
       }
     }
 
@@ -978,7 +984,9 @@ export default class Ink {
    * unchanged cells don't need repainting. Scrollback is preserved.
    */
   forceRedraw(): void {
-    if (!this.options.stdout.isTTY || this.isUnmounted || this.isPaused) return
+    if (!this.options.stdout.isTTY || this.isUnmounted || this.isPaused) {
+      return
+    }
     this.options.stdout.write(ERASE_SCREEN + CURSOR_HOME)
     if (this.altScreenActive) {
       this.resetFramesForAltScreen()
@@ -1014,7 +1022,9 @@ export default class Ink {
    * a full redraw with no stale diff state.
    */
   setAltScreenActive(active: boolean, mouseTracking = false): void {
-    if (this.altScreenActive === active) return
+    if (this.altScreenActive === active) {
+      return
+    }
     this.altScreenActive = active
     this.altScreenMouseTracking = active && mouseTracking
     if (active) {
@@ -1049,11 +1059,15 @@ export default class Ink {
    * handleResize.
    */
   reassertTerminalModes = (includeAltScreen = false): void => {
-    if (!this.options.stdout.isTTY) return
+    if (!this.options.stdout.isTTY) {
+      return
+    }
     // Don't touch the terminal during an editor handoff — re-enabling kitty
     // keyboard here would undo enterAlternateScreen's disable and nano would
     // start seeing CSI-u sequences again.
-    if (this.isPaused) return
+    if (this.isPaused) {
+      return
+    }
     // Extended keys — re-assert if enabled (App.tsx enables these on
     // allowlisted terminals at raw-mode entry; a terminal reset clears them).
     // Pop-before-push keeps Kitty stack depth at 1 instead of accumulating
@@ -1063,7 +1077,9 @@ export default class Ink {
         DISABLE_KITTY_KEYBOARD + ENABLE_KITTY_KEYBOARD + ENABLE_MODIFY_OTHER_KEYS,
       )
     }
-    if (!this.altScreenActive) return
+    if (!this.altScreenActive) {
+      return
+    }
     // Mouse tracking — idempotent, safe to re-assert on every stdin gap.
     if (this.altScreenMouseTracking) {
       this.options.stdout.write(ENABLE_MOUSE_TRACKING)
@@ -1176,13 +1192,17 @@ export default class Ink {
    * region stays visible after the automatic copy.
    */
   copySelectionNoClear(): string {
-    if (!hasSelection(this.selection)) return ''
+    if (!hasSelection(this.selection)) {
+      return ''
+    }
     const text = getSelectedText(this.selection, this.frontFrame.screen)
     if (text) {
       // Raw OSC 52, or DCS-passthrough-wrapped OSC 52 inside tmux (tmux
       // drops it silently unless allow-passthrough is on — no regression).
       void setClipboard(text).then((raw) => {
-        if (raw) this.options.stdout.write(raw)
+        if (raw) {
+          this.options.stdout.write(raw)
+        }
       })
     }
     return text
@@ -1193,7 +1213,9 @@ export default class Ink {
    * and clear the selection. Returns the copied text (empty if no selection).
    */
   copySelection(): string {
-    if (!hasSelection(this.selection)) return ''
+    if (!hasSelection(this.selection)) {
+      return ''
+    }
     const text = this.copySelectionNoClear()
     clearSelection(this.selection)
     this.notifySelectionChange()
@@ -1202,7 +1224,9 @@ export default class Ink {
 
   /** Clear the current text selection without copying. */
   clearTextSelection(): void {
-    if (!hasSelection(this.selection)) return
+    if (!hasSelection(this.selection)) {
+      return
+    }
     clearSelection(this.selection)
     this.notifySelectionChange()
   }
@@ -1215,7 +1239,9 @@ export default class Ink {
    * damage, so the overlay forces full-frame damage while active.
    */
   setSearchHighlight(query: string): void {
-    if (this.searchHighlightQuery === query) return
+    if (this.searchHighlightQuery === query) {
+      return
+    }
     this.searchHighlightQuery = query
     this.scheduleRender()
   }
@@ -1231,10 +1257,14 @@ export default class Ink {
    *
    *  ~1-2ms (paint only, no reconcile — the DOM is already built). */
   scanElementSubtree(el: dom.DOMElement): MatchPosition[] {
-    if (!this.searchHighlightQuery || !el.yogaNode) return []
+    if (!this.searchHighlightQuery || !el.yogaNode) {
+      return []
+    }
     const width = Math.ceil(el.yogaNode.getComputedWidth())
     const height = Math.ceil(el.yogaNode.getComputedHeight())
-    if (width <= 0 || height <= 0) return []
+    if (width <= 0 || height <= 0) {
+      return []
+    }
     // renderNodeToOutput adds el's OWN computedLeft/Top to offsetX/Y.
     // Passing -elLeft/-elTop nets to 0 → paints at (0,0) in our buffer.
     const elLeft = el.yogaNode.getComputedLeft()
@@ -1358,33 +1388,43 @@ export default class Ink {
    * char mode. No-op outside alt-screen or without an active selection.
    */
   moveSelectionFocus(move: FocusMove): void {
-    if (!this.altScreenActive) return
+    if (!this.altScreenActive) {
+      return
+    }
     const { focus } = this.selection
-    if (!focus) return
+    if (!focus) {
+      return
+    }
     const { width, height } = this.frontFrame.screen
     const maxCol = width - 1
     const maxRow = height - 1
     let { col, row } = focus
     switch (move) {
       case 'left':
-        if (col > 0) col--
-        else if (row > 0) {
+        if (col > 0) {
+          col--
+        } else if (row > 0) {
           col = maxCol
           row--
         }
         break
       case 'right':
-        if (col < maxCol) col++
-        else if (row < maxRow) {
+        if (col < maxCol) {
+          col++
+        } else if (row < maxRow) {
           col = 0
           row++
         }
         break
       case 'up':
-        if (row > 0) row--
+        if (row > 0) {
+          row--
+        }
         break
       case 'down':
-        if (row < maxRow) row++
+        if (row < maxRow) {
+          row++
+        }
         break
       case 'lineStart':
         col = 0
@@ -1393,7 +1433,9 @@ export default class Ink {
         col = maxCol
         break
     }
-    if (col === focus.col && row === focus.row) return
+    if (col === focus.col && row === focus.row) {
+      return
+    }
     moveFocus(this.selection, col, row)
     this.notifySelectionChange()
   }
@@ -1413,7 +1455,9 @@ export default class Ink {
   }
   private notifySelectionChange(): void {
     this.onRender()
-    for (const cb of this.selectionListeners) cb()
+    for (const cb of this.selectionListeners) {
+      cb()
+    }
   }
 
   /**
@@ -1424,12 +1468,16 @@ export default class Ink {
    * nodeCache rects map 1:1 to terminal cells (no scrollback offset).
    */
   dispatchClick(col: number, row: number): boolean {
-    if (!this.altScreenActive) return false
+    if (!this.altScreenActive) {
+      return false
+    }
     const blank = isEmptyCellAt(this.frontFrame.screen, col, row)
     return dispatchClick(this.rootNode, col, row, blank)
   }
   dispatchHover(col: number, row: number): void {
-    if (!this.altScreenActive) return
+    if (!this.altScreenActive) {
+      return
+    }
     dispatchHover(this.rootNode, col, row, this.hoveredNodes)
   }
   dispatchKeyboardEvent(parsedKey: ParsedKey): void {
@@ -1457,7 +1505,9 @@ export default class Ink {
    * the browser-open action via a timer.
    */
   getHyperlinkAt(col: number, row: number): string | undefined {
-    if (!this.altScreenActive) return undefined
+    if (!this.altScreenActive) {
+      return undefined
+    }
     const screen = this.frontFrame.screen
     const cell = cellAt(screen, col, row)
     let url = cell?.hyperlink
@@ -1492,17 +1542,24 @@ export default class Ink {
    * char-mode startSelection if the click lands on a noSelect cell.
    */
   handleMultiClick(col: number, row: number, count: 2 | 3): void {
-    if (!this.altScreenActive) return
+    if (!this.altScreenActive) {
+      return
+    }
     const screen = this.frontFrame.screen
     // selectWordAt/selectLineAt no-op on noSelect/out-of-bounds. Seed with
     // a char-mode selection so the press still starts a drag even if the
     // word/line scan finds nothing selectable.
     startSelection(this.selection, col, row)
-    if (count === 2) selectWordAt(this.selection, screen, col, row)
-    else selectLineAt(this.selection, screen, row)
+    if (count === 2) {
+      selectWordAt(this.selection, screen, col, row)
+    } else {
+      selectLineAt(this.selection, screen, row)
+    }
     // Ensure hasSelection is true so release doesn't re-dispatch onClickAt.
     // selectWordAt no-ops on noSelect; selectLineAt no-ops out-of-bounds.
-    if (!this.selection.focus) this.selection.focus = this.selection.anchor
+    if (!this.selection.focus) {
+      this.selection.focus = this.selection.anchor
+    }
     this.notifySelectionChange()
   }
 
@@ -1513,7 +1570,9 @@ export default class Ink {
    * altScreenActive for the same reason as dispatchClick.
    */
   handleSelectionDrag(col: number, row: number): void {
-    if (!this.altScreenActive) return
+    if (!this.altScreenActive) {
+      return
+    }
     const sel = this.selection
     if (sel.anchorSpan) {
       extendSelection(sel, this.frontFrame.screen, col, row)
@@ -1697,7 +1756,9 @@ export default class Ink {
       // Clear iTerm2 progress bar
       writeSync(1, CLEAR_ITERM2_PROGRESS)
       // Clear tab status (OSC 21337) so a stale dot doesn't linger
-      if (supportsTabStatus()) writeSync(1, wrapForMultiplexer(CLEAR_TAB_STATUS))
+      if (supportsTabStatus()) {
+        writeSync(1, wrapForMultiplexer(CLEAR_TAB_STATUS))
+      }
     }
     /* eslint-enable custom-rules/no-sync-fs */
 
@@ -1784,7 +1845,9 @@ export default class Ink {
     }
     originals.assert = con.assert
     con.assert = (condition: unknown, ...args: unknown[]) => {
-      if (!condition) toError(...args)
+      if (!condition) {
+        toError(...args)
+      }
     }
     return () => Object.assign(con, originals)
   }
@@ -1866,7 +1929,9 @@ export default class Ink {
  */
 /* eslint-disable custom-rules/no-sync-fs -- must be sync; called from signal handler / unmount */
 export function drainStdin(stdin: NodeJS.ReadStream = process.stdin): void {
-  if (!stdin.isTTY) return
+  if (!stdin.isTTY) {
+    return
+  }
   // Drain Node's stream buffer (bytes libuv already pulled in). read()
   // returns null when empty — never blocks.
   try {
@@ -1878,7 +1943,9 @@ export function drainStdin(stdin: NodeJS.ReadStream = process.stdin): void {
   }
   // No /dev/tty on Windows; CONIN$ doesn't support O_NONBLOCK semantics.
   // Windows Terminal also doesn't buffer mouse reports the same way.
-  if (process.platform === 'win32') return
+  if (process.platform === 'win32') {
+    return
+  }
   // termios is per-device: flip stdin to raw so canonical-mode line
   // buffering doesn't hide partial input from the non-blocking read.
   // Restored in the finally block.
@@ -1894,11 +1961,15 @@ export function drainStdin(stdin: NodeJS.ReadStream = process.stdin): void {
   try {
     // setRawMode inside try: on revoked TTY (SIGHUP/SSH disconnect) the
     // ioctl throws EBADF — same recovery path as openSync/readSync below.
-    if (!wasRaw) tty.setRawMode?.(true)
+    if (!wasRaw) {
+      tty.setRawMode?.(true)
+    }
     fd = openSync('/dev/tty', fsConstants.O_RDONLY | fsConstants.O_NONBLOCK)
     const buf = Buffer.alloc(1024)
     for (let i = 0; i < 64; i++) {
-      if (readSync(fd, buf, 0, buf.length, null) <= 0) break
+      if (readSync(fd, buf, 0, buf.length, null) <= 0) {
+        break
+      }
     }
   } catch {
     // EAGAIN (buffer empty — expected), ENXIO/ENOENT (no controlling tty),

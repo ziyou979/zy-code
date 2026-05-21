@@ -1,5 +1,5 @@
+import { basename, dirname, join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { basename, dirname, join } from 'path'
 import { getInlinePlugins, getSessionId } from '../../bootstrap/state.js'
 import type { Command } from '../../types/command.js'
 import { getPluginErrorMessage } from '../../types/plugin.js'
@@ -103,7 +103,9 @@ async function collectMarkdownFiles(
   await walkPluginMarkdown(
     dirPath,
     async (fullPath) => {
-      if (isDuplicatePath(fs, fullPath, loadedPaths)) return
+      if (isDuplicatePath(fs, fullPath, loadedPaths)) {
+        return
+      }
       const content = await fs.readFile(fullPath, { encoding: 'utf-8' })
       const { frontmatter, content: markdownContent } = parseFrontmatter(content, fullPath)
       files.push({
@@ -246,7 +248,7 @@ function createPluginCommand(
           ? parseUserSpecifiedModel(frontmatter.model as string)
           : undefined
 
-    const effortRaw = frontmatter['effort']
+    const effortRaw = frontmatter.effort
     const effort = effortRaw !== undefined ? parseEffortValue(effortRaw) : undefined
     if (effortRaw !== undefined && effort === undefined) {
       logForDebugging(

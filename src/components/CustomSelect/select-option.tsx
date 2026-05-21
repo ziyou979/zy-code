@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { ListItem } from '../design-system/ListItem.js'
 export type SelectOptionProps = {
   /**

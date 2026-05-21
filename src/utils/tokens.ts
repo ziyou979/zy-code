@@ -1,12 +1,12 @@
-import type { TokenUsage as Usage } from '../types/llm.js'
 import {
-  roughTokenCountEstimationForMessages,
   getBytesPerTokenForLanguage,
+  roughTokenCountEstimationForMessages,
 } from '../services/tokenEstimation.js'
+import type { TokenUsage as Usage } from '../types/llm.js'
 import type { AssistantMessage, Message } from '../types/message.js'
 import { SYNTHETIC_MESSAGES, SYNTHETIC_MODEL } from './messages.js'
-import { jsonStringify } from './slowOperations.js'
 import { getInitialSettings } from './settings/settings.js'
+import { jsonStringify } from './slowOperations.js'
 
 export function getTokenUsage(message: Message): Usage | undefined {
   if (
@@ -162,7 +162,9 @@ export function doesMostRecentAssistantMessageExceed200k(messages: Message[]): b
   const THRESHOLD = 200_000
 
   const lastAsst = messages.findLast((m) => m.type === 'assistant')
-  if (!lastAsst) return false
+  if (!lastAsst) {
+    return false
+  }
   const usage = getTokenUsage(lastAsst)
   return usage ? getTokenCountFromUsage(usage) > THRESHOLD : false
 }

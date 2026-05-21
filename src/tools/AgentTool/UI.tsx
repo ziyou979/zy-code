@@ -1,4 +1,3 @@
-import type { ToolResultBlock, ToolCallBlock } from '../../types/llm.js'
 import * as React from 'react'
 import { ConfigurableShortcutHint } from 'src/components/ConfigurableShortcutHint.js'
 import { CtrlOToExpand, SubAgentProvider } from 'src/components/CtrlOToExpand.js'
@@ -12,10 +11,11 @@ import { Markdown } from '../../components/Markdown.js'
 import { Message as MessageComponent } from '../../components/Message.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { ToolUseLoader } from '../../components/ToolUseLoader.js'
-import { Box, Text } from '../../ink.js'
 import { tSync } from '../../i18n/index.js'
+import { Box, Text } from '../../ink.js'
 import { getDumpPromptsPath } from '../../services/api/dumpPrompts.js'
 import { findToolByName, type Tools } from '../../Tool.js'
+import type { ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
 import type { Message, ProgressMessage } from '../../types/message.js'
 import type { AgentToolProgress } from '../../types/tools.js'
 import { count } from '../../utils/array.js'
@@ -42,6 +42,7 @@ import type { outputSchema, Progress, RemoteLaunchedOutput } from './AgentTool.j
 import { inputSchema } from './AgentTool.js'
 import { getAgentColor } from './agentColorManager.js'
 import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js'
+
 const MAX_PROGRESS_MESSAGES_TO_SHOW = 3
 
 /**
@@ -79,7 +80,7 @@ function getSearchOrReadInfo(
   const message = progressMessage.data.message
 
   // 检查 tool_use（助手消息）
-  // @ts-ignore -- message type is narrowed at runtime; AgentToolProgress.message may be assistant after build-time transforms
+  // @ts-expect-error -- message type is narrowed at runtime; AgentToolProgress.message may be assistant after build-time transforms
   if (message.type === 'assistant') {
     return getSearchOrReadFromContent(message.message.content[0], tools)
   }
@@ -164,7 +165,7 @@ function processProgressMessages(
   const toolUseByID = new Map<string, ToolCallBlock>()
   for (const msg of agentMessages) {
     // 跟踪遇到的 tool_use 块
-    // @ts-ignore -- message type is narrowed at runtime
+    // @ts-expect-error -- message type is narrowed at runtime
     if (msg.data.message.type === 'assistant') {
       for (const c of (msg.data.message as any).message.content) {
         if (c.type === 'tool_call') {
@@ -978,7 +979,7 @@ export function extractLastToolInfo(
     if (!hasProgressMessage(pm.data)) {
       continue
     }
-    // @ts-ignore -- message type is narrowed at runtime
+    // @ts-expect-error -- message type is narrowed at runtime
     if (pm.data.message.type === 'assistant') {
       for (const c of (pm.data.message as any).message.content) {
         if (c.type === 'tool_call') {

@@ -4,8 +4,8 @@
  * the API-client chain (which closed a cycle through memdir.ts — #25372).
  */
 
-import { readdir } from 'fs/promises'
-import { basename, join } from 'path'
+import { readdir } from 'node:fs/promises'
+import { basename, join } from 'node:path'
 import { parseFrontmatter } from '../utils/frontmatterParser.js'
 import { readFileInRange } from '../utils/readFileInRange.js'
 import { type MemoryType, parseMemoryType } from './memoryTypes.js'

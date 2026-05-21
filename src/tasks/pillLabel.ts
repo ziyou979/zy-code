@@ -1,7 +1,7 @@
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../constants/figures.js'
+import { tSync } from '../i18n/index.js'
 import { count } from '../utils/array.js'
 import type { BackgroundTaskState } from './types.js'
-import { tSync } from '../i18n/index.js'
 
 /**
  * Produces the compact footer-pill label for a set of background tasks.
@@ -18,12 +18,14 @@ export function getPillLabel(tasks: BackgroundTaskState[]): string {
         const monitors = count(tasks, (t) => t.type === 'local_bash' && t.kind === 'monitor')
         const shells = n - monitors
         const parts: string[] = []
-        if (shells > 0)
+        if (shells > 0) {
           parts.push(tSync(shells === 1 ? 'pill.shell_one' : 'pill.shell_other', { count: shells }))
-        if (monitors > 0)
+        }
+        if (monitors > 0) {
           parts.push(
             tSync(monitors === 1 ? 'pill.monitor_one' : 'pill.monitor_other', { count: monitors }),
           )
+        }
         return parts.join(', ')
       }
       case 'in_process_teammate': {
@@ -68,7 +70,9 @@ export function getPillLabel(tasks: BackgroundTaskState[]): string {
  * plan_ready) surface the CTA; plain running shows just the diamond + label.
  */
 export function pillNeedsCta(tasks: BackgroundTaskState[]): boolean {
-  if (tasks.length !== 1) return false
+  if (tasks.length !== 1) {
+    return false
+  }
   const t = tasks[0]!
   return t.type === 'remote_agent' && t.isUltraplan === true && t.ultraplanPhase !== undefined
 }

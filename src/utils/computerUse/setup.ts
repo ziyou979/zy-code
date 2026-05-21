@@ -1,6 +1,6 @@
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { buildComputerUseTools } from '@ant/computer-use-mcp'
-import { join } from 'path'
-import { fileURLToPath } from 'url'
 import { buildMcpToolName } from '../../services/mcp/mcpStringUtils.js'
 import type { ScopedMcpServerConfig } from '../../services/mcp/types.js'
 

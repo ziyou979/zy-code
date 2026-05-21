@@ -231,7 +231,9 @@ export function useVirtualScroll(
   )
   useSyncExternalStore(subscribe, () => {
     const s = scrollRef.current
-    if (!s) return NaN
+    if (!s) {
+      return NaN
+    }
     // Snapshot uses the TARGET (scrollTop + pendingDelta), not committed
     // scrollTop. scrollBy only mutates pendingDelta (renderer drains it
     // across frames); committed scrollTop lags. Using target means
@@ -278,9 +280,13 @@ export function useVirtualScroll(
       }
     }
     for (const k of refCache.current.keys()) {
-      if (!live.has(k)) refCache.current.delete(k)
+      if (!live.has(k)) {
+        refCache.current.delete(k)
+      }
     }
-    if (dirty) offsetVersionRef.current++
+    if (dirty) {
+      offsetVersionRef.current++
+    }
   }, [itemKeys])
 
   // Offsets cached across renders, invalidated by offsetVersion ref bump.
@@ -397,8 +403,11 @@ export function useVirtualScroll(
         let r = n
         while (l < r) {
           const m = (l + r) >> 1
-          if (offsets[m + 1]! <= lo) l = m + 1
-          else r = m
+          if (offsets[m + 1]! <= lo) {
+            l = m + 1
+          } else {
+            r = m
+          }
         }
         start = l
       }
@@ -457,13 +466,19 @@ export function useVirtualScroll(
     const scrollVelocity = Math.abs(scrollTop - lastScrollTopRef.current) + Math.abs(pendingDelta)
     if (prev && scrollVelocity > viewportH * 2) {
       const [pS, pE] = prev
-      if (start < pS - SLIDE_STEP) start = pS - SLIDE_STEP
-      if (end > pE + SLIDE_STEP) end = pE + SLIDE_STEP
+      if (start < pS - SLIDE_STEP) {
+        start = pS - SLIDE_STEP
+      }
+      if (end > pE + SLIDE_STEP) {
+        end = pE + SLIDE_STEP
+      }
       // A large forward jump can push start past the capped end (start
       // advances via binary search while end is capped at pE + SLIDE_STEP).
       // Mount SLIDE_STEP items from the new start so the viewport isn't
       // blank during catch-up.
-      if (start > end) end = Math.min(start + SLIDE_STEP, n)
+      if (start > end) {
+        end = Math.min(start + SLIDE_STEP, n)
+      }
     }
     lastScrollTopRef.current = scrollTop
   }
@@ -616,7 +631,9 @@ export function useVirtualScroll(
     let anyChanged = false
     for (const [key, el] of itemRefs.current) {
       const yoga = el.yogaNode
-      if (!yoga) continue
+      if (!yoga) {
+        continue
+      }
       const h = yoga.getComputedHeight()
       const prev = heightCache.current.get(key)
       if (h > 0) {
@@ -629,7 +646,9 @@ export function useVirtualScroll(
         anyChanged = true
       }
     }
-    if (anyChanged) offsetVersionRef.current++
+    if (anyChanged) {
+      offsetVersionRef.current++
+    }
   })
 
   // Stable per-key callback refs. React's ref-swap dance (old(null) then
@@ -664,7 +683,9 @@ export function useVirtualScroll(
   const getItemTop = useCallback(
     (index: number) => {
       const yoga = itemRefs.current.get(itemKeys[index]!)?.yogaNode
-      if (!yoga || yoga.getComputedWidth() === 0) return -1
+      if (!yoga || yoga.getComputedWidth() === 0) {
+        return -1
+      }
       return yoga.getComputedTop()
     },
     [itemKeys],
@@ -683,7 +704,9 @@ export function useVirtualScroll(
       // offsetsRef.current holds latest cached offsets (event handlers run
       // between renders; a render-time closure would be stale).
       const o = offsetsRef.current
-      if (i < 0 || i >= o.n) return
+      if (i < 0 || i >= o.n) {
+        return
+      }
       scrollRef.current?.scrollTo(o.arr[i]! + listOriginRef.current)
     },
     [scrollRef],

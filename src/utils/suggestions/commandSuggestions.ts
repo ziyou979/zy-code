@@ -147,7 +147,7 @@ export function findMidInputSlashCommand(
   }
 
   return {
-    token: '/' + fullCommand,
+    token: `/${fullCommand}`,
     startPos: slashPos,
     partialCommand: fullCommand,
   }
@@ -170,7 +170,7 @@ export function getBestCommandMatch(
   }
 
   // Use existing suggestion logic
-  const suggestions = generateCommandSuggestions('/' + partialCommand, commands)
+  const suggestions = generateCommandSuggestions(`/${partialCommand}`, commands)
   if (suggestions.length === 0) {
     return null
   }
@@ -206,11 +206,17 @@ export function isCommandInput(input: string): boolean {
  * A command with just a trailing space is considered to have no arguments
  */
 export function hasCommandArgs(input: string): boolean {
-  if (!isCommandInput(input)) return false
+  if (!isCommandInput(input)) {
+    return false
+  }
 
-  if (!input.includes(' ')) return false
+  if (!input.includes(' ')) {
+    return false
+  }
 
-  if (input.endsWith(' ')) return false
+  if (input.endsWith(' ')) {
+    return false
+  }
 
   return true
 }
@@ -417,20 +423,32 @@ export function generateCommandSuggestions(input: string, commands: Command[]): 
     // Check for exact name match (highest priority)
     const aExactName = aName === query
     const bExactName = bName === query
-    if (aExactName && !bExactName) return -1
-    if (bExactName && !aExactName) return 1
+    if (aExactName && !bExactName) {
+      return -1
+    }
+    if (bExactName && !aExactName) {
+      return 1
+    }
 
     // Check for exact alias match
     const aExactAlias = aAliases.some((alias) => alias === query)
     const bExactAlias = bAliases.some((alias) => alias === query)
-    if (aExactAlias && !bExactAlias) return -1
-    if (bExactAlias && !aExactAlias) return 1
+    if (aExactAlias && !bExactAlias) {
+      return -1
+    }
+    if (bExactAlias && !aExactAlias) {
+      return 1
+    }
 
     // Check for prefix name match
     const aPrefixName = aName.startsWith(query)
     const bPrefixName = bName.startsWith(query)
-    if (aPrefixName && !bPrefixName) return -1
-    if (bPrefixName && !aPrefixName) return 1
+    if (aPrefixName && !bPrefixName) {
+      return -1
+    }
+    if (bPrefixName && !aPrefixName) {
+      return 1
+    }
     // Among prefix name matches, prefer the shorter name (closer to exact)
     if (aPrefixName && bPrefixName && aName.length !== bName.length) {
       return aName.length - bName.length
@@ -439,8 +457,12 @@ export function generateCommandSuggestions(input: string, commands: Command[]): 
     // Check for prefix alias match
     const aPrefixAlias = aAliases.find((alias) => alias.startsWith(query))
     const bPrefixAlias = bAliases.find((alias) => alias.startsWith(query))
-    if (aPrefixAlias && !bPrefixAlias) return -1
-    if (bPrefixAlias && !aPrefixAlias) return 1
+    if (aPrefixAlias && !bPrefixAlias) {
+      return -1
+    }
+    if (bPrefixAlias && !aPrefixAlias) {
+      return 1
+    }
     // Among prefix alias matches, prefer the shorter alias
     if (aPrefixAlias && bPrefixAlias && aPrefixAlias.length !== bPrefixAlias.length) {
       return aPrefixAlias.length - bPrefixAlias.length

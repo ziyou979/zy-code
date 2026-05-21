@@ -62,8 +62,12 @@ export function isChannelsEnabled(): boolean {
  * (builtin/inline — same reason).
  */
 export function isChannelAllowlisted(pluginSource: string | undefined): boolean {
-  if (!pluginSource) return false
+  if (!pluginSource) {
+    return false
+  }
   const { name, marketplace } = parsePluginIdentifier(pluginSource)
-  if (!marketplace) return false
+  if (!marketplace) {
+    return false
+  }
   return getChannelAllowlist().some((e) => e.plugin === name && e.marketplace === marketplace)
 }

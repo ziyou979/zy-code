@@ -1,5 +1,4 @@
-import { basename } from 'path'
-import * as React from 'react'
+import { basename } from 'node:path'
 import { useEffect, useState } from 'react'
 import { getOriginalCwd } from '../bootstrap/state.js'
 import {
@@ -18,11 +17,12 @@ import { saveGlobalConfig } from '../utils/config.js'
 import { getBranch } from '../utils/git.js'
 import { Dialog } from './design-system/Dialog.js'
 import { QRCodeDisplay } from './QRCodeDisplay.js'
+
 type Props = {
   onDone: () => void
 }
 export function BridgeDialog({ onDone }: Props) {
-  // @ts-ignore
+  // @ts-expect-error
   useRegisterOverlay('bridge-dialog')
   const connected = useAppState((state) => state.replBridgeConnected)
   const sessionActive = useAppState((state) => state.replBridgeSessionActive)
@@ -98,7 +98,7 @@ export function BridgeDialog({ onDone }: Props) {
   if (branchName) {
     contextParts.push(branchName)
   }
-  const contextSuffix = contextParts.length > 0 ? ' \xB7 ' + contextParts.join(' \xB7 ') : ''
+  const contextSuffix = contextParts.length > 0 ? ` \xB7 ${contextParts.join(' \xB7 ')}` : ''
   footerText = error
     ? FAILED_FOOTER_TEXT
     : displayUrl

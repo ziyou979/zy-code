@@ -1,24 +1,24 @@
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { execa } from 'execa'
-import { readFile } from 'fs/promises'
-import { join } from 'path'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import type { CommandResultDisplay } from '../../commands.js'
 import { Select } from '../../components/CustomSelect/select.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { Spinner } from '../../components/Spinner.js'
+import { tSync } from '../../i18n/index.js'
 import instances from '../../ink/instances.js'
 import { Box, Text } from '../../ink.js'
 import { enablePluginOp } from '../../services/plugins/pluginOperations.js'
-import { tSync } from '../../i18n/index.js'
 import { logForDebugging } from '../../utils/debug.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { isENOENT, toError } from '../../utils/errors.js'
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
 import { pathExists } from '../../utils/file.js'
 import { logError } from '../../utils/log.js'
 import { getPlatform } from '../../utils/platform.js'
 import { clearAllCaches } from '../../utils/plugins/cacheUtils.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { isPluginInstalled } from '../../utils/plugins/installedPluginsManager.js'
 import {
   addMarketplaceSource,
@@ -51,7 +51,7 @@ const SKILL_NAME = 'thinkback'
 async function getThinkbackSkillDir(): Promise<string | null> {
   const { enabled } = await loadAllPlugins()
   const thinkbackPlugin = enabled.find(
-    (p) => p.name === 'thinkback' || (p.source && p.source.includes(getPluginId())),
+    (p) => p.name === 'thinkback' || p.source?.includes(getPluginId()),
   )
   if (!thinkbackPlugin) {
     return null

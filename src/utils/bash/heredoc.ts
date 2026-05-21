@@ -24,7 +24,7 @@
  * @module
  */
 
-import { randomBytes } from 'crypto'
+import { randomBytes } from 'node:crypto'
 
 const HEREDOC_PLACEHOLDER_PREFIX = '__HEREDOC_'
 const HEREDOC_PLACEHOLDER_SUFFIX = '__'
@@ -236,10 +236,14 @@ export function extractHeredocs(
       // used `lineStart = lastIndexOf('\n', pos-1)+1` (quote-blind), so a
       // `\n` inside quotes still advanced lineStart. Match that here by
       // clearing BEFORE the quote branches.
-      if (ch === '\n') scanInComment = false
+      if (ch === '\n') {
+        scanInComment = false
+      }
 
       if (scanInSingleQuote) {
-        if (ch === "'") scanInSingleQuote = false
+        if (ch === "'") {
+          scanInSingleQuote = false
+        }
         continue
       }
 
@@ -252,7 +256,9 @@ export function extractHeredocs(
           scanDqEscapeNext = true
           continue
         }
-        if (ch === '"') scanInDoubleQuote = false
+        if (ch === '"') {
+          scanInDoubleQuote = false
+        }
         continue
       }
 
@@ -265,11 +271,17 @@ export function extractHeredocs(
       }
       const escaped = scanPendingBackslashes % 2 === 1
       scanPendingBackslashes = 0
-      if (escaped) continue
+      if (escaped) {
+        continue
+      }
 
-      if (ch === "'") scanInSingleQuote = true
-      else if (ch === '"') scanInDoubleQuote = true
-      else if (!scanInComment && ch === '#') scanInComment = true
+      if (ch === "'") {
+        scanInSingleQuote = true
+      } else if (ch === '"') {
+        scanInDoubleQuote = true
+      } else if (!scanInComment && ch === '#') {
+        scanInComment = true
+      }
     }
     scanPos = target
   }
@@ -402,7 +414,9 @@ export function extractHeredocs(
       for (let k = operatorEndIndex; k < command.length; k++) {
         const ch = command[k]
         if (inSingleQuote) {
-          if (ch === "'") inSingleQuote = false
+          if (ch === "'") {
+            inSingleQuote = false
+          }
           continue
         }
         if (inDoubleQuote) {
@@ -410,7 +424,9 @@ export function extractHeredocs(
             k++ // skip escaped char inside double quotes
             continue
           }
-          if (ch === '"') inDoubleQuote = false
+          if (ch === '"') {
+            inDoubleQuote = false
+          }
           continue
         }
         // Unquoted context
@@ -423,9 +439,14 @@ export function extractHeredocs(
         for (let j = k - 1; j >= operatorEndIndex && command[j] === '\\'; j--) {
           backslashCount++
         }
-        if (backslashCount % 2 === 1) continue // escaped char
-        if (ch === "'") inSingleQuote = true
-        else if (ch === '"') inDoubleQuote = true
+        if (backslashCount % 2 === 1) {
+          continue // escaped char
+        }
+        if (ch === "'") {
+          inSingleQuote = true
+        } else if (ch === '"') {
+          inDoubleQuote = true
+        }
       }
       // If we ended while still inside a quote, the logical line never ends —
       // there is no heredoc body. Leave firstNewlineOffset as -1 (handled below).
@@ -615,7 +636,9 @@ export function extractHeredocs(
   const topLevelHeredocs = heredocMatches.filter((candidate, _i, all) => {
     // Check if this candidate's operator is inside any other heredoc's content
     for (const other of all) {
-      if (candidate === other) continue
+      if (candidate === other) {
+        continue
+      }
       // Check if candidate's operator starts within other's content range
       if (
         candidate.operatorStartIndex > other.contentStartIndex &&

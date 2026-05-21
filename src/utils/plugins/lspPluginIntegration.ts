@@ -1,5 +1,5 @@
-import { readFile } from 'fs/promises'
-import { join, relative, resolve } from 'path'
+import { readFile } from 'node:fs/promises'
+import { join, relative, resolve } from 'node:path'
 import { z } from 'zod/v4'
 import type { LspServerConfig, ScopedLspServerConfig } from '../../services/lsp/types.js'
 import { expandEnvVarsInString } from '../../services/mcp/envExpansion.js'
@@ -350,7 +350,9 @@ export async function extractLspServersFromPlugins(
   const allServers: Record<string, ScopedLspServerConfig> = {}
 
   for (const plugin of plugins) {
-    if (!plugin.enabled) continue
+    if (!plugin.enabled) {
+      continue
+    }
 
     const servers = await loadPluginLspServers(plugin, errors)
     if (servers) {

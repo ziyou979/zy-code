@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react'
-import { tSync } from '../../i18n/index.js'
 import type { CommandResultDisplay } from '../../commands.js'
+import { tSync } from '../../i18n/index.js'
 import { ZyAuthProvider } from '../../services/mcp/auth.js'
 import type {
-  McpZyAIProxyServerConfig,
   McpHTTPServerConfig,
   McpSSEServerConfig,
   McpStdioServerConfig,
+  McpZyAIProxyServerConfig,
 } from '../../services/mcp/types.js'
 import { extractAgentMcpServers, filterToolsByServer } from '../../services/mcp/utils.js'
 import { useAppState } from '../../state/AppState.js'
@@ -17,6 +17,7 @@ import { MCPRemoteServerMenu } from './MCPRemoteServerMenu.js'
 import { MCPStdioServerMenu } from './MCPStdioServerMenu.js'
 import { MCPToolDetailView } from './MCPToolDetailView.js'
 import { MCPToolListView } from './MCPToolListView.js'
+
 type Props = {
   onComplete: (
     result?: string,
@@ -52,7 +53,7 @@ export function MCPSettings({ onComplete }: Props) {
           const isSSE = client.config.type === 'sse'
           const isHTTP = client.config.type === 'http'
           const isZyAIProxy = client.config.type === 'zyai-proxy'
-          let isAuthenticated = undefined
+          let isAuthenticated
           if (isSSE || isHTTP) {
             const authProvider = new ZyAuthProvider(
               client.name,

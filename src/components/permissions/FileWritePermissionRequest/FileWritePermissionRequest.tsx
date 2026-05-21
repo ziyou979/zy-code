@@ -1,8 +1,7 @@
-import { basename, relative } from 'path'
-import React from 'react'
+import { basename, relative } from 'node:path'
 import type { z } from 'zod/v4'
-import { Text } from '../../../ink.js'
 import { tSync } from '../../../i18n/index.js'
+import { Text } from '../../../ink.js'
 import { FileWriteTool } from '../../../tools/FileWriteTool/FileWriteTool.js'
 import { getCwd } from '../../../utils/cwd.js'
 import { isENOENT } from '../../../utils/errors.js'
@@ -14,6 +13,7 @@ import {
   type IDEDiffSupport,
 } from '../FilePermissionDialog/ideDiffConfig.js'
 import { FileWriteToolDiff } from './FileWriteToolDiff.js'
+
 type FileWriteToolInput = z.infer<typeof FileWriteTool.inputSchema>
 const ideDiffSupport: IDEDiffSupport<FileWriteToolInput> = {
   getConfig: (input: FileWriteToolInput) => {
@@ -21,7 +21,9 @@ const ideDiffSupport: IDEDiffSupport<FileWriteToolInput> = {
     try {
       oldContent = readFileSync(input.file_path)
     } catch (e) {
-      if (!isENOENT(e)) throw e
+      if (!isENOENT(e)) {
+        throw e
+      }
       oldContent = ''
     }
     return createSingleEditDiffConfig(

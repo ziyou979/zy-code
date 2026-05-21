@@ -85,7 +85,7 @@ function settingsJsonToRules(
   data: SettingsJson | null,
   source: PermissionRuleSource,
 ): PermissionRule[] {
-  if (!data || !data.permissions) {
+  if (!data?.permissions) {
     return []
   }
 
@@ -163,7 +163,7 @@ export function deletePermissionRuleFromSettings(
   const settingsData = getSettingsForSource(rule.source)
 
   // If there's no settings data or permissions, nothing to do
-  if (!settingsData || !settingsData.permissions) {
+  if (!settingsData?.permissions) {
     return false
   }
 

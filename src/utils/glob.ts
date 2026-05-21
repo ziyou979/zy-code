@@ -1,4 +1,4 @@
-import { basename, dirname, isAbsolute, join, sep } from 'path'
+import { basename, dirname, isAbsolute, join, sep } from 'node:path'
 import type { ToolPermissionContext } from '../Tool.js'
 import { isEnvTruthy } from './envUtils.js'
 import { getFileReadIgnorePatterns, normalizePatternsToPath } from './permissions/filesystem.js'

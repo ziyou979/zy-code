@@ -1,5 +1,5 @@
 import axios from 'axios'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { logEvent } from 'src/services/analytics/index.js'
 import { Spinner } from '../components/Spinner.js'
 import { useTimeout } from '../hooks/useTimeout.js'

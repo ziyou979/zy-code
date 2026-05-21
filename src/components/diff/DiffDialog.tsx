@@ -1,20 +1,21 @@
-// @ts-ignore
+// @ts-expect-error
 import type { StructuredPatchHunk } from 'diff'
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CommandResultDisplay } from '../../commands.js'
 import { useRegisterOverlay } from '../../context/overlayContext.js'
 import { type DiffData, useDiffData } from '../../hooks/useDiffData.js'
 import { type TurnDiff, useTurnDiffs } from '../../hooks/useTurnDiffs.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
 import type { Message } from '../../types/message.js'
-import { tSync } from '../../i18n/index.js'
 import { plural } from '../../utils/stringUtils.js'
 import { Byline } from '../design-system/Byline.js'
 import { Dialog } from '../design-system/Dialog.js'
 import { DiffDetailView } from './DiffDetailView.js'
 import { DiffFileList } from './DiffFileList.js'
+
 type Props = {
   messages: Message[]
   onDone: (
@@ -92,9 +93,9 @@ export function DiffDialog({ messages, onDone }: Props) {
       prevSourceIndex.current = sourceIndex
     }
   }, [sourceIndex])
-  // @ts-ignore
+  // @ts-expect-error
   useRegisterOverlay('diff-dialog')
-  // @ts-ignore
+  // @ts-expect-error
   useKeybindings(
     {
       'diff:previousSource': () => {

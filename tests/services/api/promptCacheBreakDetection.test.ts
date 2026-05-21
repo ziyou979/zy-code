@@ -8,12 +8,12 @@
  * - resetPromptCacheBreakDetection → 清空所有跟踪状态
  * - notifyCacheDeletion / notifyCompaction → 标记预期的缓存下降
  */
-import { describe, test, expect, beforeEach } from 'bun:test'
+import { beforeEach, describe, expect, test } from 'bun:test'
 import {
-  resetPromptCacheBreakDetection,
+  cleanupAgentTracking,
   notifyCacheDeletion,
   notifyCompaction,
-  cleanupAgentTracking,
+  resetPromptCacheBreakDetection,
 } from '../../../src/services/api/promptCacheBreakDetection.js'
 
 describe('promptCacheBreakDetection', () => {

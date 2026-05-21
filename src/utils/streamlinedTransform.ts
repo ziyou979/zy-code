@@ -41,10 +41,18 @@ const WRITE_TOOLS = [FILE_WRITE_TOOL_NAME, FILE_EDIT_TOOL_NAME, NOTEBOOK_EDIT_TO
 const COMMAND_TOOLS = [...SHELL_TOOL_NAMES, 'Tmux', TASK_STOP_TOOL_NAME]
 
 function categorizeToolName(toolName: string): keyof ToolCounts {
-  if (SEARCH_TOOLS.some((t) => toolName.startsWith(t))) return 'searches'
-  if (READ_TOOLS.some((t) => toolName.startsWith(t))) return 'reads'
-  if (WRITE_TOOLS.some((t) => toolName.startsWith(t))) return 'writes'
-  if (COMMAND_TOOLS.some((t) => toolName.startsWith(t))) return 'commands'
+  if (SEARCH_TOOLS.some((t) => toolName.startsWith(t))) {
+    return 'searches'
+  }
+  if (READ_TOOLS.some((t) => toolName.startsWith(t))) {
+    return 'reads'
+  }
+  if (WRITE_TOOLS.some((t) => toolName.startsWith(t))) {
+    return 'writes'
+  }
+  if (COMMAND_TOOLS.some((t) => toolName.startsWith(t))) {
+    return 'commands'
+  }
   return 'other'
 }
 

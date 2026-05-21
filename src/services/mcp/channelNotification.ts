@@ -258,7 +258,7 @@ export function gateChannelServer(
     // not the session-wide bit) bypasses — so accepting the dev dialog for
     // one entry doesn't leak allowlist-bypass to --channels entries.
     if (!entry.dev) {
-      // @ts-ignore
+      // @ts-expect-error
       const { entries, source } = getEffectiveChannelAllowlist(
         undefined as any,
         policy?.allowedChannelPlugins,

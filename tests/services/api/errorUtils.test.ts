@@ -7,7 +7,7 @@
  * - formatAPIError 多分支
  * - sanitizeMessageHTML HTML 检测与 title 提取
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import {
   extractConnectionErrorDetails,
   formatAPIError,

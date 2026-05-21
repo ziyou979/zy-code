@@ -10,8 +10,8 @@ import type {
 } from '../../types/message.js'
 import {
   createAttachmentMessage,
-  getDeferredToolsDeltaAttachment,
   getAgentListingDeltaAttachment,
+  getDeferredToolsDeltaAttachment,
   getMcpInstructionsDeltaAttachment,
 } from '../../utils/attachments.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -26,26 +26,25 @@ import {
   getLastAssistantMessage,
 } from '../../utils/messages.js'
 import {
-  tokenCountWithEstimation,
-  tokenCountFromLastAPIResponse,
   getTokenUsage,
+  tokenCountFromLastAPIResponse,
+  tokenCountWithEstimation,
 } from '../../utils/tokens.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { notifyCompaction } from '../api/promptCacheBreakDetection.js'
 import {
-  isPromptTooLongMessage,
-  isMediaSizeErrorMessage,
   getPromptTooLongTokenGap,
+  isMediaSizeErrorMessage,
+  isPromptTooLongMessage,
   PROMPT_TOO_LONG_ERROR_MESSAGE,
 } from '../api/errors.js'
+import { notifyCompaction } from '../api/promptCacheBreakDetection.js'
 import { isAutoCompactEnabled } from './autoCompact.js'
 import type { CompactionResult } from './compact.js'
 import {
-  buildPostCompactMessages,
   createCompactCanUseTool,
   stripImagesFromMessages,
   stripReinjectedAttachments,
@@ -87,7 +86,9 @@ export function isReactiveOnlyMode(): boolean {
  * can attempt reactive recovery before surfacing the error.
  */
 export function isWithheldPromptTooLong(message: Message): boolean {
-  if (message.type !== 'assistant') return false
+  if (message.type !== 'assistant') {
+    return false
+  }
   const assistantMsg = message as AssistantMessage
   return assistantMsg.isApiErrorMessage === true && isPromptTooLongMessage(assistantMsg)
 }
@@ -98,7 +99,9 @@ export function isWithheldPromptTooLong(message: Message): boolean {
  * can recover from by stripping media and retrying.
  */
 export function isWithheldMediaSizeError(message: Message): boolean {
-  if (message.type !== 'assistant') return false
+  if (message.type !== 'assistant') {
+    return false
+  }
   const assistantMsg = message as AssistantMessage
   return assistantMsg.isApiErrorMessage === true && isMediaSizeErrorMessage(assistantMsg)
 }
@@ -356,7 +359,9 @@ function estimateGroupsToDrop(
   for (let i = alreadyDropped; i < groups.length - 1; i++) {
     accumulated += tokenCountWithEstimation(groups[i]!)
     groupsToDrop++
-    if (accumulated >= targetTokens) break
+    if (accumulated >= targetTokens) {
+      break
+    }
   }
 
   return Math.max(1, groupsToDrop)

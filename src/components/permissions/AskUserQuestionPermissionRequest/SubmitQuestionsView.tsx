@@ -1,5 +1,4 @@
 import figures from 'figures'
-import React from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { Box, Text } from '../../../ink.js'
 import type { Question } from '../../../tools/AskUserQuestionTool/AskUserQuestionTool.js'
@@ -9,6 +8,7 @@ import { Divider } from '../../design-system/Divider.js'
 import { PermissionRequestTitle } from '../PermissionRequestTitle.js'
 import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js'
 import { QuestionNavigationBar } from './QuestionNavigationBar.js'
+
 type Props = {
   questions: Question[]
   currentQuestionIndex: number

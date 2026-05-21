@@ -6,6 +6,7 @@ import { Box, Text } from '../../ink.js'
 import type { ProgressMessage } from '../../types/message.js'
 import { truncate } from '../../utils/format.js'
 import type { Output, SearchResult, WebSearchProgress } from './WebSearchTool.js'
+
 function getSearchSummary(results: (SearchResult | string | null | undefined)[]): {
   searchCount: number
   totalResultCount: number

@@ -24,6 +24,7 @@ import {
 } from './loadUserBindings.js'
 import { resolveKeyWithChordState } from './resolver.js'
 import type { KeybindingContextName, ParsedKeystroke } from './types.js'
+
 /**
  * Timeout for chord sequences in milliseconds.
  * If the user doesn't complete the chord within this time, it's cancelled.
@@ -57,7 +58,7 @@ type Props = {
  * Display keybinding warnings to the user via notifications.
  * Shows a brief message pointing to /doctor for details.
  */
-function useKeybindingWarnings(warnings, isReload) {
+function useKeybindingWarnings(warnings, _isReload) {
   const { addNotification, removeNotification } = useNotifications()
   useEffect(() => {
     if (warnings.length === 0) {
@@ -76,7 +77,7 @@ function useKeybindingWarnings(warnings, isReload) {
         message = `Found ${warnCount} keybinding ${plural(warnCount, 'warning')}`
       }
     }
-    message = message + ' \xB7 /doctor for details'
+    message = `${message} \xB7 /doctor for details`
     addNotification({
       key: 'keybinding-config-warning',
       text: message,
@@ -84,7 +85,7 @@ function useKeybindingWarnings(warnings, isReload) {
       priority: errorCount > 0 ? 'immediate' : 'high',
       timeoutMs: 60000,
     })
-  }, [warnings, isReload, addNotification, removeNotification])
+  }, [warnings, addNotification, removeNotification])
 }
 export function KeybindingSetup({ children }: Props): React.ReactNode {
   // Load bindings synchronously for initial render

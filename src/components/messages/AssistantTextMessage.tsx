@@ -1,5 +1,4 @@
-import type { TextBlock } from '../../types/llm.js'
-import React, { useContext } from 'react'
+import { useContext } from 'react'
 import { ERROR_MESSAGE_USER_ABORT } from 'src/services/compact/compact.js'
 import { isRateLimitErrorMessage } from 'src/services/rateLimitMessages.js'
 import { BLACK_CIRCLE } from '../../constants/figures.js'
@@ -17,6 +16,7 @@ import {
   startsWithApiErrorPrefix,
   TOKEN_REVOKED_ERROR_MESSAGE,
 } from '../../services/api/errors.js'
+import type { TextBlock } from '../../types/llm.js'
 import { isEmptyMessageText, NO_RESPONSE_REQUESTED } from '../../utils/messages.js'
 import { getDefaultStandardModel, renderModelName } from '../../utils/model/model.js'
 import { isMacOsKeychainLocked } from '../../utils/secureStorage/macOsKeychainStorage.js'
@@ -26,6 +26,7 @@ import { Markdown } from '../Markdown.js'
 import { MessageResponse } from '../MessageResponse.js'
 import { MessageActionsSelectedContext } from '../messageActions.js'
 import { RateLimitMessage } from './RateLimitMessage.js'
+
 const MAX_API_ERROR_CHARS = 1000
 type Props = {
   param: TextBlock
@@ -81,9 +82,7 @@ export function AssistantTextMessage({
     case PROMPT_TOO_LONG_ERROR_MESSAGE: {
       return (
         <MessageResponse height={1}>
-          <Text color="error">
-            Context limit reached · /compact or /clear to continue
-          </Text>
+          <Text color="error">Context limit reached · /compact or /clear to continue</Text>
         </MessageResponse>
       )
     }
@@ -153,7 +152,7 @@ export function AssistantTextMessage({
           text === API_ERROR_MESSAGE_PREFIX
             ? `${API_ERROR_MESSAGE_PREFIX}: Please wait a moment and try again.`
             : truncated
-              ? text.slice(0, MAX_API_ERROR_CHARS) + '\u2026'
+              ? `${text.slice(0, MAX_API_ERROR_CHARS)}\u2026`
               : text
         const errorTextElement = <Text color="error">{errorMessage}</Text>
         const expandHint = truncated && <CtrlOToExpand />

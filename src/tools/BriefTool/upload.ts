@@ -13,10 +13,10 @@
  */
 
 import { feature } from 'bun:bundle'
+import { randomUUID } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
+import { basename, extname } from 'node:path'
 import axios from 'axios'
-import { randomUUID } from 'crypto'
-import { readFile } from 'fs/promises'
-import { basename, extname } from 'path'
 import { z } from 'zod/v4'
 
 import { getBridgeAccessToken, getBridgeBaseUrlOverride } from '../../bridge/bridgeConfig.js'
@@ -90,7 +90,9 @@ export async function uploadBriefAttachment(
   // Positive pattern so bun:bundle eliminates the entire body from
   // non-BRIDGE_MODE builds (negative `if (!feature(...)) return` does not).
   if (feature('BRIDGE_MODE')) {
-    if (!ctx.replBridgeEnabled) return undefined
+    if (!ctx.replBridgeEnabled) {
+      return undefined
+    }
 
     if (size > MAX_UPLOAD_BYTES) {
       debug(`skip ${fullPath}: ${size} bytes exceeds ${MAX_UPLOAD_BYTES} limit`)

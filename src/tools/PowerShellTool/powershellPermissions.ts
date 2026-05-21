@@ -3,7 +3,7 @@
  * for case-insensitive cmdlet matching.
  */
 
-import { resolve } from 'path'
+import { resolve } from 'node:path'
 import type { ToolPermissionContext, ToolUseContext } from '../../Tool.js'
 import type { PermissionDecisionReason, PermissionResult } from '../../types/permissions.js'
 import { getCwd } from '../../utils/cwd.js'
@@ -224,7 +224,7 @@ function filterRulesByContentsMatchingInput(
                 if (strEquals(cmd, rule.prefix)) {
                   return true
                 }
-                return strStartsWith(cmd, rule.prefix + ' ')
+                return strStartsWith(cmd, `${rule.prefix} `)
               }
             }
             break
@@ -282,7 +282,7 @@ function filterRulesByContentsMatchingInput(
           } else {
             if (
               strEquals(canonicalCommand, canonicalPrefix) ||
-              strStartsWith(canonicalCommand, canonicalPrefix + ' ')
+              strStartsWith(canonicalCommand, `${canonicalPrefix} `)
             ) {
               return true
             }
@@ -752,7 +752,9 @@ export async function powershellToolHasPermission(
     const backtickStripped = command.replace(/`[\r\n]+\s*/g, '').replace(/`/g, '')
     for (const fragment of backtickStripped.split(/[;|\n\r{}()&]+/)) {
       const trimmedFrag = fragment.trim()
-      if (!trimmedFrag) continue // skip empty fragments
+      if (!trimmedFrag) {
+        continue // skip empty fragments
+      }
       // Skip the full command ONLY if it starts with a cmdlet name (no
       // assignment prefix). The full command was already checked at 2a, but
       // 2a uses the raw text — $x %= iex as first token `$x` misses the
@@ -798,7 +800,9 @@ export async function powershellToolHasPermission(
       // (same deny-downgrade rationale as the sub-command scan above).
       if (resolveToCanonical(firstTok) === 'remove-item') {
         for (const arg of normalized.split(/\s+/).slice(1)) {
-          if (PS_TOKENIZER_DASH_CHARS.has(arg[0] ?? '')) continue
+          if (PS_TOKENIZER_DASH_CHARS.has(arg[0] ?? '')) {
+            continue
+          }
           if (isDangerousRemovalRawPath(arg)) {
             return dangerousRemovalDeny(arg)
           }
@@ -971,7 +975,9 @@ export async function powershellToolHasPermission(
   }
   providerScan: for (const statement of parsed.statements) {
     for (const cmd of statement.commands) {
-      if (cmd.elementType !== 'CommandAst') continue
+      if (cmd.elementType !== 'CommandAst') {
+        continue
+      }
       for (const arg of cmd.args) {
         const decision = providerOrUncDecisionForArg(arg)
         if (decision !== null) {
@@ -1121,11 +1127,15 @@ export async function powershellToolHasPermission(
       // Redirection targets on this sub-command (raw Extent.Text — quotes
       // and ./ intact; normalizer handles both)
       for (const r of element.redirections ?? []) {
-        if (isGitInternalPathPS(r.target)) return true
+        if (isGitInternalPathPS(r.target)) {
+          return true
+        }
       }
       // Write cmdlet args (new-item HEAD; mkdir hooks; set-content hooks/pre-commit)
       const canonical = resolveToCanonical(element.name)
-      if (!GIT_SAFETY_WRITE_CMDLETS.has(canonical)) return false
+      if (!GIT_SAFETY_WRITE_CMDLETS.has(canonical)) {
+        return false
+      }
       // Raw arg text — normalizer strips colon-bound params, quotes, ./, case.
       // PS ArrayLiteralAst (`New-Item a,hooks/pre-commit`) surfaces as a single
       // comma-joined arg — split before checking.
@@ -1139,8 +1149,12 @@ export async function powershellToolHasPermission(
       // warning text.
       if (statement !== null) {
         for (const c of statement.commands) {
-          if (c.elementType === 'CommandAst') continue
-          if (isGitInternalPathPS(c.text)) return true
+          if (c.elementType === 'CommandAst') {
+            continue
+          }
+          if (isGitInternalPathPS(c.text)) {
+            return true
+          }
         }
       }
       return false
@@ -1181,10 +1195,14 @@ export async function powershellToolHasPermission(
     const found =
       allSubCommands.some(({ element }) => {
         for (const r of element.redirections ?? []) {
-          if (isDotGitPathPS(r.target)) return true
+          if (isDotGitPathPS(r.target)) {
+            return true
+          }
         }
         const canonical = resolveToCanonical(element.name)
-        if (!GIT_SAFETY_WRITE_CMDLETS.has(canonical)) return false
+        if (!GIT_SAFETY_WRITE_CMDLETS.has(canonical)) {
+          return false
+        }
         return element.args.flatMap((a) => a.split(',')).some(isDotGitPathPS)
       }) || getFileRedirections(parsed).some((r) => isDotGitPathPS(r.target))
     if (found) {

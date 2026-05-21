@@ -1,4 +1,4 @@
-import type { UUID } from 'crypto'
+import type { UUID } from 'node:crypto'
 import { logEvent } from 'src/services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/metadata.js'
 import { type Command, getCommandName, isCommandEnabled } from '../commands.js'
@@ -481,7 +481,9 @@ async function executeUserInput(params: ExecuteUserInputParams): Promise<void> {
           (cmd.mode === 'task-notification' ? ({ kind: 'task-notification' } as const) : undefined)
         if (origin) {
           for (const m of result.messages) {
-            if (m.type === 'user') m.origin = origin
+            if (m.type === 'user') {
+              m.origin = origin
+            }
           }
         }
         newMessages.push(...result.messages)

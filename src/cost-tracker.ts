@@ -1,4 +1,3 @@
-import type { TokenUsage as Usage } from './types/llm.js'
 import chalk from 'chalk'
 import {
   addToTotalCostState,
@@ -26,38 +25,40 @@ import {
   setCostStateForRestore,
   setHasUnknownModelCost,
 } from './bootstrap/state.js'
-import { tSync } from './i18n/index.js'
 import type { ModelUsage } from './entrypoints/agentSdkTypes.js'
+import { tSync } from './i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from './services/analytics/index.js'
+import type { TokenUsage as Usage } from './types/llm.js'
 import { getAdvisorUsage } from './utils/advisor.js'
 import { getCurrentProjectConfig, saveCurrentProjectConfig } from './utils/config.js'
 import { getContextWindowForModel, getModelMaxOutputTokens } from './utils/context.js'
 import { formatDuration, formatNumber } from './utils/format.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
 import { calculateUSDCost, getCurrencySymbol } from './utils/modelCost.js'
+
 export {
-  getTotalCostUSD as getTotalCost,
-  getTotalDuration,
+  addToTotalLinesChanged,
+  formatCost,
+  getModelUsage,
   getTotalAPIDuration,
   getTotalAPIDurationWithoutRetries,
-  addToTotalLinesChanged,
+  getTotalCacheCreationInputTokens,
+  getTotalCacheReadInputTokens,
+  getTotalCostUSD as getTotalCost,
+  getTotalDuration,
+  getTotalInputTokens,
   getTotalLinesAdded,
   getTotalLinesRemoved,
-  getTotalInputTokens,
   getTotalOutputTokens,
-  getTotalCacheReadInputTokens,
-  getTotalCacheCreationInputTokens,
   getTotalWebSearchRequests,
-  formatCost,
-  hasUnknownModelCost,
-  resetStateForTests,
-  resetCostState,
-  setHasUnknownModelCost,
-  getModelUsage,
   getUsageForModel,
+  hasUnknownModelCost,
+  resetCostState,
+  resetStateForTests,
+  setHasUnknownModelCost,
 }
 
 type StoredCostState = {
@@ -210,7 +211,7 @@ function formatModelUsage(): string {
         ? `, ${formatNumber(usage.webSearchRequests)} ${tSync('costTracker.webSearch')}`
         : '') +
       ` (${formatCost(usage.costUSD)})`
-    result += `\n` + `${shortName}:`.padStart(21) + usageString
+    result += `\n${`${shortName}:`.padStart(21)}${usageString}`
   }
   return result
 }
@@ -218,7 +219,7 @@ function formatModelUsage(): string {
 export function formatTotalCost(): string {
   const costDisplay =
     formatCost(getTotalCostUSD()) +
-    (hasUnknownModelCost() ? ' ' + tSync('costTracker.costsMayBeInaccurate') : '')
+    (hasUnknownModelCost() ? ` ${tSync('costTracker.costsMayBeInaccurate')}` : '')
 
   const modelUsageDisplay = formatModelUsage()
 

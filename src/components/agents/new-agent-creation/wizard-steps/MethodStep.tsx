@@ -1,6 +1,5 @@
-import React from 'react'
-import { Box } from '../../../../ink.js'
 import { tSync } from '../../../../i18n/index.js'
+import { Box } from '../../../../ink.js'
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
 import { Select } from '../../../CustomSelect/select.js'
 import { Byline } from '../../../design-system/Byline.js'

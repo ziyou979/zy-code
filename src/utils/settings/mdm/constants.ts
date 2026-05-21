@@ -5,8 +5,8 @@
  * Both mdmRawRead.ts and mdmSettings.ts import from here to avoid duplication.
  */
 
-import { homedir, userInfo } from 'os'
-import { join } from 'path'
+import { homedir, userInfo } from 'node:os'
+import { join } from 'node:path'
 import { isInternalBuild } from '../../envUtils.js'
 
 /** macOS preference domain for ZY Code MDM profiles. */

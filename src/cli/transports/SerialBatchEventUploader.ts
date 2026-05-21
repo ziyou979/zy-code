@@ -99,9 +99,13 @@ export class SerialBatchEventUploader<T> {
    * until drain frees space.
    */
   async enqueue(events: T | T[]): Promise<void> {
-    if (this.closed) return
+    if (this.closed) {
+      return
+    }
     const items = Array.isArray(events) ? events : [events]
-    if (items.length === 0) return
+    if (items.length === 0) {
+      return
+    }
 
     // Backpressure: wait until there's space
     while (this.pending.length + items.length > this.config.maxQueueSize && !this.closed) {
@@ -110,7 +114,9 @@ export class SerialBatchEventUploader<T> {
       })
     }
 
-    if (this.closed) return
+    if (this.closed) {
+      return
+    }
     this.pending.push(...items)
     void this.drain()
   }
@@ -134,15 +140,21 @@ export class SerialBatchEventUploader<T> {
    * Resolves any blocked enqueue() and flush() callers.
    */
   close(): void {
-    if (this.closed) return
+    if (this.closed) {
+      return
+    }
     this.closed = true
     this.pendingAtClose = this.pending.length
     this.pending = []
     this.sleepResolve?.()
     this.sleepResolve = null
-    for (const resolve of this.backpressureResolvers) resolve()
+    for (const resolve of this.backpressureResolvers) {
+      resolve()
+    }
     this.backpressureResolvers = []
-    for (const resolve of this.flushResolvers) resolve()
+    for (const resolve of this.flushResolvers) {
+      resolve()
+    }
     this.flushResolvers = []
   }
 
@@ -151,14 +163,18 @@ export class SerialBatchEventUploader<T> {
    * Sends batches serially. On failure, backs off and retries indefinitely.
    */
   private async drain(): Promise<void> {
-    if (this.draining || this.closed) return
+    if (this.draining || this.closed) {
+      return
+    }
     this.draining = true
     let failures = 0
 
     try {
       while (this.pending.length > 0 && !this.closed) {
         const batch = this.takeBatch()
-        if (batch.length === 0) continue
+        if (batch.length === 0) {
+          continue
+        }
 
         try {
           await this.config.send(batch)
@@ -191,7 +207,9 @@ export class SerialBatchEventUploader<T> {
       this.draining = false
       // Notify flush waiters if queue is empty
       if (this.pending.length === 0) {
-        for (const resolve of this.flushResolvers) resolve()
+        for (const resolve of this.flushResolvers) {
+          resolve()
+        }
         this.flushResolvers = []
       }
     }
@@ -221,7 +239,9 @@ export class SerialBatchEventUploader<T> {
         this.pending.splice(count, 1)
         continue
       }
-      if (count > 0 && bytes + itemBytes > maxBatchBytes) break
+      if (count > 0 && bytes + itemBytes > maxBatchBytes) {
+        break
+      }
       bytes += itemBytes
       count++
     }
@@ -251,7 +271,9 @@ export class SerialBatchEventUploader<T> {
   private releaseBackpressure(): void {
     const resolvers = this.backpressureResolvers
     this.backpressureResolvers = []
-    for (const resolve of resolvers) resolve()
+    for (const resolve of resolvers) {
+      resolve()
+    }
   }
 
   private sleep(ms: number): Promise<void> {

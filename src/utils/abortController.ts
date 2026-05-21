@@ -1,4 +1,4 @@
-import { setMaxListeners } from 'events'
+import { setMaxListeners } from 'node:events'
 
 /**
  * Default max listeners for standard operations

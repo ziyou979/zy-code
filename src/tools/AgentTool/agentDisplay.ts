@@ -56,7 +56,9 @@ export function resolveAgentOverrides(
   // Deduplicate by (agentType, source) to handle git worktree duplicates.
   for (const agent of allAgents) {
     const key = `${agent.agentType}:${agent.source}`
-    if (seen.has(key)) continue
+    if (seen.has(key)) {
+      continue
+    }
     seen.add(key)
 
     const active = activeMap.get(agent.agentType)
@@ -73,7 +75,9 @@ export function resolveAgentOverrides(
  */
 export function resolveAgentModelDisplay(agent: AgentDefinition): string | undefined {
   const model = agent.model || getDefaultSubagentModel()
-  if (!model) return undefined
+  if (!model) {
+    return undefined
+  }
   return model === 'inherit' ? 'inherit' : model
 }
 

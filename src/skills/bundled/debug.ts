@@ -1,11 +1,11 @@
-// @ts-ignore
-import { open, stat } from 'fs/promises'
-// @ts-ignore
+// @ts-expect-error
+import { open, stat } from 'node:fs/promises'
+// @ts-expect-error
 import { ZY_CODE_GUIDE_AGENT_TYPE } from 'src/tools/AgentTool/built-in/ZyCodeGuideAgent.js'
 import { getSettingsFilePathForSource } from 'src/utils/settings/settings.js'
 import { enableDebugLogging, getDebugLogPath } from '../../utils/debug.js'
-import { errorMessage, isENOENT } from '../../utils/errors.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
+import { errorMessage, isENOENT } from '../../utils/errors.js'
 import { formatFileSize } from '../../utils/format.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 

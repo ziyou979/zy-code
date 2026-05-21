@@ -27,7 +27,7 @@ export function getAgentModel(
   agentModel: string | undefined,
   parentModel: string,
   toolSpecifiedModel?: ModelAlias,
-  permissionMode?: PermissionMode,
+  _permissionMode?: PermissionMode,
 ): string {
   if (process.env.ZY_CODE_SUBAGENT_MODEL) {
     return parseUserSpecifiedModel(process.env.ZY_CODE_SUBAGENT_MODEL)
@@ -82,8 +82,12 @@ function aliasMatchesParentTier(alias: string, parentModel: string): boolean {
 
 export function getAgentModelDisplay(model: string | undefined): string {
   // When model is omitted, getDefaultSubagentModel() returns 'inherit' at runtime
-  if (!model) return 'Inherit from parent (default)'
-  if (model === 'inherit') return 'Inherit from parent'
+  if (!model) {
+    return 'Inherit from parent (default)'
+  }
+  if (model === 'inherit') {
+    return 'Inherit from parent'
+  }
   return capitalize(model)
 }
 

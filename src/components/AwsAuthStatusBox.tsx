@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Box, Link, Text } from '../ink.js'
 import { AwsAuthStatusManager } from '../utils/awsAuthStatusManager.js'
+
 const URL_RE = /https?:\/\/\S+/
 export function AwsAuthStatusBox() {
   const initialStatus = AwsAuthStatusManager.getInstance().getStatus()

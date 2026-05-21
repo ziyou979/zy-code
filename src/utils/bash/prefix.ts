@@ -19,7 +19,9 @@ function isKnownSubcommand(
   arg: string,
   spec: { subcommands?: { name: string | string[] }[] } | null,
 ): boolean {
-  if (!spec?.subcommands?.length) return false
+  if (!spec?.subcommands?.length) {
+    return false
+  }
   return spec.subcommands.some((sub) =>
     Array.isArray(sub.name) ? sub.name.includes(arg) : sub.name === arg,
   )
@@ -30,10 +32,14 @@ export async function getCommandPrefixStatic(
   recursionDepth = 0,
   wrapperCount = 0,
 ): Promise<{ commandPrefix: string | null } | null> {
-  if (wrapperCount > 2 || recursionDepth > 10) return null
+  if (wrapperCount > 2 || recursionDepth > 10) {
+    return null
+  }
 
   const parsed = await parseCommand(command)
-  if (!parsed) return null
+  if (!parsed) {
+    return null
+  }
   if (!parsed.commandNode) {
     return { commandPrefix: null }
   }
@@ -42,7 +48,9 @@ export async function getCommandPrefixStatic(
   const cmdArgs = extractCommandArguments(commandNode)
 
   const [cmd, ...args] = cmdArgs
-  if (!cmd) return { commandPrefix: null }
+  if (!cmd) {
+    return { commandPrefix: null }
+  }
 
   // Check if this is a wrapper command by looking at its spec
   const spec = await getCommandSpec(cmd)
@@ -104,7 +112,9 @@ async function handleWrapper(
   const wrapped = args.find(
     (arg) => !arg.startsWith('-') && !NUMERIC.test(arg) && !ENV_VAR.test(arg),
   )
-  if (!wrapped) return command
+  if (!wrapped) {
+    return command
+  }
 
   const result = await getCommandPrefixStatic(
     args.slice(args.indexOf(wrapped)).join(' '),
@@ -140,14 +150,18 @@ export async function getCompoundCommandPrefixesStatic(
   const prefixes: string[] = []
   for (const subcmd of subcommands) {
     const trimmed = subcmd.trim()
-    if (excludeSubcommand?.(trimmed)) continue
+    if (excludeSubcommand?.(trimmed)) {
+      continue
+    }
     const result = await getCommandPrefixStatic(trimmed)
     if (result?.commandPrefix) {
       prefixes.push(result.commandPrefix)
     }
   }
 
-  if (prefixes.length === 0) return []
+  if (prefixes.length === 0) {
+    return []
+  }
 
   // Group prefixes by their first word (root command)
   const groups = new Map<string, string[]>()
@@ -175,8 +189,12 @@ export async function getCompoundCommandPrefixesStatic(
  *      ["npm run test", "npm run lint"] → "npm run"
  */
 function longestCommonPrefix(strings: string[]): string {
-  if (strings.length === 0) return ''
-  if (strings.length === 1) return strings[0]!
+  if (strings.length === 0) {
+    return ''
+  }
+  if (strings.length === 1) {
+    return strings[0]!
+  }
 
   const first = strings[0]!
   const words = first.split(' ')

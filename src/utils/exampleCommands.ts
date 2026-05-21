@@ -64,13 +64,21 @@ export function pickDiverseCoreFiles(sortedPaths: string[], want: number): strin
   // repo is narrow.
   for (let cap = 1; picked.length < want && cap <= want; cap++) {
     for (const p of sortedPaths) {
-      if (picked.length >= want) break
-      if (!isCoreFile(p)) continue
+      if (picked.length >= want) {
+        break
+      }
+      if (!isCoreFile(p)) {
+        continue
+      }
       const lastSep = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'))
       const base = lastSep >= 0 ? p.slice(lastSep + 1) : p
-      if (!base || seenBasenames.has(base)) continue
+      if (!base || seenBasenames.has(base)) {
+        continue
+      }
       const dir = lastSep >= 0 ? p.slice(0, lastSep) : '.'
-      if ((dirTally.get(dir) ?? 0) >= cap) continue
+      if ((dirTally.get(dir) ?? 0) >= cap) {
+        continue
+      }
       picked.push(base)
       seenBasenames.add(base)
       dirTally.set(dir, (dirTally.get(dir) ?? 0) + 1)
@@ -81,9 +89,15 @@ export function pickDiverseCoreFiles(sortedPaths: string[], want: number): strin
 }
 
 async function getFrequentlyModifiedFiles(): Promise<string[]> {
-  if (process.env.NODE_ENV === 'test') return []
-  if (env.platform === 'win32') return []
-  if (!(await getIsGit())) return []
+  if (process.env.NODE_ENV === 'test') {
+    return []
+  }
+  if (env.platform === 'win32') {
+    return []
+  }
+  if (!(await getIsGit())) {
+    return []
+  }
 
   try {
     // Collect frequently-modified files, preferring the user's own commits.
@@ -95,7 +109,9 @@ async function getFrequentlyModifiedFiles(): Promise<string[]> {
     const tallyInto = (stdout: string) => {
       for (const line of stdout.split('\n')) {
         const f = line.trim()
-        if (f) counts.set(f, (counts.get(f) ?? 0) + 1)
+        if (f) {
+          counts.set(f, (counts.get(f) ?? 0) + 1)
+        }
       }
     }
 

@@ -1,15 +1,16 @@
-// @ts-ignore
+// @ts-expect-error
+
+import { createHash } from 'node:crypto'
+import { chmod, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import type {
-  // @ts-ignore
+  // @ts-expect-error
   McpbManifest,
-  // @ts-ignore
+  // @ts-expect-error
   McpbUserConfigurationOption,
-  // @ts-ignore
+  // @ts-expect-error
 } from '@anthropic-ai/mcpb'
 import axios from 'axios'
-import { createHash } from 'crypto'
-import { chmod, writeFile } from 'fs/promises'
-import { dirname, join } from 'path'
 import type { McpServerConfig } from '../../services/mcp/types.js'
 import { logForDebugging } from '../debug.js'
 import { parseAndValidateManifestFromBytes } from '../dxt/helpers.js'
@@ -392,7 +393,7 @@ async function generateMcpConfig(
 ): Promise<McpServerConfig> {
   // Lazy import: @anthropic-ai/mcpb barrel pulls in zod v3 schemas (~700KB of
   // bound closures). See dxt/helpers.ts for details.
-  // @ts-ignore
+  // @ts-expect-error
   const { getMcpConfigForManifest } = await import('@anthropic-ai/mcpb')
   const mcpConfig = await getMcpConfigForManifest({
     manifest,
@@ -428,7 +429,9 @@ async function loadCacheMetadata(
     return jsonParse(content) as McpbCacheMetadata
   } catch (error) {
     const code = getErrnoCode(error)
-    if (code === 'ENOENT') return null
+    if (code === 'ENOENT') {
+      return null
+    }
     const errorObj = toError(error)
     logError(errorObj)
     logForDebugging(`Failed to load MCPB cache metadata: ${error}`, {

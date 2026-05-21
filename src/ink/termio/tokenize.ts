@@ -292,7 +292,9 @@ function tokenize(
   } else if (flush) {
     // 强制输出不完整序列
     const remaining = data.slice(seqStart)
-    if (remaining) tokens.push({ type: 'sequence', value: remaining })
+    if (remaining) {
+      tokens.push({ type: 'sequence', value: remaining })
+    }
     result.state = 'ground'
   } else {
     // 缓冲不完整序列供下次调用

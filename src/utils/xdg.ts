@@ -7,8 +7,8 @@
  * @see https://specifications.freedesktop.org/basedir-spec/latest/
  */
 
-import { homedir as osHomedir } from 'os'
-import { join } from 'path'
+import { homedir as osHomedir } from 'node:os'
+import { join } from 'node:path'
 
 type EnvLike = Record<string, string | undefined>
 

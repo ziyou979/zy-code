@@ -7,7 +7,6 @@
 
 import { formatAPIError } from '../services/api/errorUtils.js'
 import type { NonNullableUsage } from '../services/api/logging.js'
-import type { AssistantContentBlock } from '../types/llm.js'
 import type { Message, SystemAPIErrorMessage } from '../types/message.js'
 import { type CacheSafeParams, runForkedAgent } from './forkedAgent.js'
 import { createUserMessage, extractTextContent } from './messages.js'
@@ -127,7 +126,9 @@ function extractSideQuestionResponse(messages: Message[]): string | null {
   if (assistantBlocks.length > 0) {
     // 拼接所有 text block（通常最多一个，但为安全起见全部处理）。
     const text = extractTextContent(assistantBlocks, '\n\n').trim()
-    if (text) return text
+    if (text) {
+      return text
+    }
 
     // 无 text — 检查模型是否无视指令尝试调用了工具。
     const toolUse = assistantBlocks.find((b) => b.type === 'tool_call')

@@ -1,4 +1,4 @@
-import type { Buffer } from 'buffer'
+import type { Buffer } from 'node:buffer'
 import { isInBundledMode } from '../../utils/bundledMode.js'
 
 export type SharpInstance = {
@@ -39,7 +39,7 @@ export async function getImageProcessor(): Promise<SharpFunction> {
     // Try to load the native image processor first
     try {
       // Use the native image processor module
-      // @ts-ignore
+      // @ts-expect-error
       const imageProcessor = await import('image-processor-napi')
       const sharp = imageProcessor.sharp || imageProcessor.default
       imageProcessorModule = { default: sharp }
@@ -53,9 +53,9 @@ export async function getImageProcessor(): Promise<SharpFunction> {
 
   // Use sharp for non-bundled builds or as fallback.
   // Single structural cast: our SharpFunction is a subset of sharp's actual type surface.
-  // @ts-ignore
+  // @ts-expect-error
   const imported = (await import(
-    // @ts-ignore
+    // @ts-expect-error
     'sharp'
   )) as unknown as MaybeDefault<SharpFunction>
   const sharp = unwrapDefault(imported)
@@ -73,9 +73,9 @@ export async function getImageCreator(): Promise<SharpCreator> {
     return imageCreatorModule.default
   }
 
-  // @ts-ignore
+  // @ts-expect-error
   const imported = (await import(
-    // @ts-ignore
+    // @ts-expect-error
     'sharp'
   )) as unknown as MaybeDefault<SharpCreator>
   const sharp = unwrapDefault(imported)

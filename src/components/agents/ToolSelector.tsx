@@ -27,6 +27,7 @@ import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { count } from '../../utils/array.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { Divider } from '../design-system/Divider.js'
+
 type Props = {
   tools: Tools
   initialTools: string[] | undefined

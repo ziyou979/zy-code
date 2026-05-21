@@ -95,13 +95,21 @@ export function getInitializationStatus():
  * Backs LSPTool.isEnabled().
  */
 export function isLspConnected(): boolean {
-  if (initializationState === 'failed') return false
+  if (initializationState === 'failed') {
+    return false
+  }
   const manager = getLspServerManager()
-  if (!manager) return false
+  if (!manager) {
+    return false
+  }
   const servers = manager.getAllServers()
-  if (servers.size === 0) return false
+  if (servers.size === 0) {
+    return false
+  }
   for (const server of servers.values()) {
-    if (server.state !== 'error') return true
+    if (server.state !== 'error') {
+      return true
+    }
   }
   return false
 }

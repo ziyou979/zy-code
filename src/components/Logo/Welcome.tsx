@@ -1,6 +1,6 @@
-import React from 'react'
 import { Box, Text, useTheme } from 'src/ink.js'
 import { env } from '../../utils/env.js'
+
 const WELCOME_V2_WIDTH = 58
 
 /**
@@ -25,12 +25,12 @@ function WelcomeContent({ separator }: { separator: string }) {
       <Text>
         {'       '}
         <Text bold={true}>*</Text>
-        {'        ░░░░░░' + ' '.repeat(36)}
+        {`        ░░░░░░${' '.repeat(36)}`}
       </Text>
-      <Text>{'    ░░░░░░░░░░' + ' '.repeat(22) + '███▓▓░░░░░░' + ' '.repeat(11)}</Text>
+      <Text>{`    ░░░░░░░░░░${' '.repeat(22)}███▓▓░░░░░░${' '.repeat(11)}`}</Text>
       <Text>
         {'   ░░░░░░░░░░░░░░░░░░      *        '}
-        <Text dimColor={true}>{'███▓▓░' + ' '.repeat(16)}</Text>
+        <Text dimColor={true}>{`███▓▓░${' '.repeat(16)}`}</Text>
       </Text>
       <Text>{'                                                          '}</Text>
       <Text>

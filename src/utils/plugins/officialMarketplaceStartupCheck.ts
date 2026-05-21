@@ -8,7 +8,7 @@
  * - Previous installation attempts
  */
 
-import { join } from 'path'
+import { join } from 'node:path'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config.js'
@@ -59,8 +59,7 @@ export const RETRY_CONFIG = {
  * Calculate next retry delay using exponential backoff
  */
 function calculateNextRetryDelay(retryCount: number): number {
-  const delay =
-    RETRY_CONFIG.INITIAL_DELAY_MS * Math.pow(RETRY_CONFIG.BACKOFF_MULTIPLIER, retryCount)
+  const delay = RETRY_CONFIG.INITIAL_DELAY_MS * RETRY_CONFIG.BACKOFF_MULTIPLIER ** retryCount
   return Math.min(delay, RETRY_CONFIG.MAX_DELAY_MS)
 }
 

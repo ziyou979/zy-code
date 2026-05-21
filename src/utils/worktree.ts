@@ -1,12 +1,13 @@
 import { feature } from 'bun:bundle'
+import { spawnSync } from 'node:child_process'
+import { copyFile, mkdir, readdir, readFile, stat, symlink, utimes } from 'node:fs/promises'
+import { basename, dirname, join } from 'node:path'
 import chalk from 'chalk'
-import { spawnSync } from 'child_process'
-import { copyFile, mkdir, readdir, readFile, stat, symlink, utimes } from 'fs/promises'
 import ignore from 'ignore'
-import { basename, dirname, join } from 'path'
 import { saveCurrentProjectConfig } from './config.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
+import { isInternalBuild } from './envUtils.js'
 import { errorMessage, getErrnoCode } from './errors.js'
 import { execFileNoThrow, execFileNoThrowWithCwd } from './execFileNoThrow.js'
 import { parseGitConfigValue } from './git/gitConfigParser.js'
@@ -24,7 +25,6 @@ import {
 } from './hooks.js'
 import { containsPathTraversal } from './path.js'
 import { getPlatform } from './platform.js'
-import { isInternalBuild } from './envUtils.js'
 import { getInitialSettings, getRelativeSettingsFilePathForSource } from './settings/settings.js'
 import { sleep } from './sleep.js'
 import { isInITerm2 } from './swarm/backends/detection.js'
@@ -408,19 +408,26 @@ export async function copyWorktreeIncludeFiles(
       patterns.some((p) => {
         const normalized = p.startsWith('/') ? p.slice(1) : p
         // Literal prefix match: pattern starts with the collapsed dir path
-        if (normalized.startsWith(dir)) return true
+        if (normalized.startsWith(dir)) {
+          return true
+        }
         // Anchored glob: dir falls under the pattern's literal (non-glob) prefix
         // e.g. `config/**/*.key` has literal prefix `config/` → expand `config/secrets/`
         const globIdx = normalized.search(/[*?[]/)
         if (globIdx > 0) {
           const literalPrefix = normalized.slice(0, globIdx)
-          if (dir.startsWith(literalPrefix)) return true
+          if (dir.startsWith(literalPrefix)) {
+            return true
+          }
         }
         return false
       })
-    )
+    ) {
       return true
-    if (matcher.ignores(dir.slice(0, -1))) return true
+    }
+    if (matcher.ignores(dir.slice(0, -1))) {
+      return true
+    }
     return false
   })
   if (dirsToExpand.length > 0) {
@@ -1128,7 +1135,9 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
   let forceClassicTmux = false
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
-    if (!arg) continue
+    if (!arg) {
+      continue
+    }
     if (arg === '-w' || arg === '--worktree') {
       // Check if next arg exists and isn't another flag
       const next = args[i + 1]
@@ -1231,8 +1240,12 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
   const newArgs: string[] = []
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
-    if (!arg) continue
-    if (arg === '--tmux' || arg === '--tmux=classic') continue
+    if (!arg) {
+      continue
+    }
+    if (arg === '--tmux' || arg === '--tmux=classic') {
+      continue
+    }
     if (arg === '-w' || arg === '--worktree') {
       // Skip the flag and its value if present
       const next = args[i + 1]
@@ -1241,7 +1254,9 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
       }
       continue
     }
-    if (arg.startsWith('--worktree=')) continue
+    if (arg.startsWith('--worktree=')) {
+      continue
+    }
     newArgs.push(arg)
   }
 

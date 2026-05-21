@@ -2,6 +2,7 @@ import type {} from '@ant/computer-use-mcp/types'
 
 type ComputerUseHostAdapter = any
 type Logger = any
+
 import { DebugLogger } from '../debug.js'
 import { COMPUTER_USE_MCP_SERVER_NAME } from './common.js'
 import { createCliExecutor } from './executor.js'
@@ -17,7 +18,9 @@ let cached: ComputerUseHostAdapter | undefined
  * degraded mode.
  */
 export function getComputerUseHostAdapter(): ComputerUseHostAdapter {
-  if (cached) return cached
+  if (cached) {
+    return cached
+  }
   cached = {
     serverName: COMPUTER_USE_MCP_SERVER_NAME,
     logger: new DebugLogger(),

@@ -9,21 +9,23 @@
  * - finish_reason → stopReason 映射
  * - usage 透传
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import { mapOpenAIStreamToStandard } from '../../../src/services/api/conversions/openai.js'
-import {
-  textChunk,
-  reasoningChunk,
-  toolCallStartChunk,
-  toolCallArgFragmentChunk,
-  finishChunk,
-  chunksToStream,
-} from '../../_helpers/openaiStreamFixtures.js'
 import type { StreamEvent } from '../../../src/types/llm.js'
+import {
+  chunksToStream,
+  finishChunk,
+  reasoningChunk,
+  textChunk,
+  toolCallArgFragmentChunk,
+  toolCallStartChunk,
+} from '../../_helpers/openaiStreamFixtures.js'
 
 async function collect(stream: AsyncIterable<StreamEvent>): Promise<StreamEvent[]> {
   const out: StreamEvent[] = []
-  for await (const e of stream) out.push(e)
+  for await (const e of stream) {
+    out.push(e)
+  }
   return out
 }
 
@@ -218,7 +220,9 @@ describe('mapOpenAIStreamToStandard: 入站 OpenAI 流式映射', () => {
     )
     const starts = events.filter((e) => e.type === 'chunk_start') as any[]
     const idxByType = new Map<string, number>()
-    for (const s of starts) idxByType.set(s.chunk.type, s.index)
+    for (const s of starts) {
+      idxByType.set(s.chunk.type, s.index)
+    }
     expect(idxByType.get('thinking')).toBe(0)
     expect(idxByType.get('text')).toBe(1)
     expect(idxByType.get('tool_call')).toBe(2)

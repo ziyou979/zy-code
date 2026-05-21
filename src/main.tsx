@@ -9,10 +9,12 @@ import { profileCheckpoint, profileReport } from './utils/startupProfiler.js'
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 profileCheckpoint('main_tsx_entry')
+
 import { startMdmRawRead } from './utils/settings/mdm/rawRead.js'
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 startMdmRawRead()
+
 import {
   ensureKeychainPrefetchCompleted,
   startKeychainPrefetch,
@@ -20,23 +22,24 @@ import {
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 startKeychainPrefetch()
+
 import { feature } from 'bun:bundle'
+import { readFileSync } from 'node:fs'
 import {
   Command as CommanderCommand,
   InvalidArgumentError,
   Option,
 } from '@commander-js/extra-typings'
 import chalk from 'chalk'
-import { readFileSync } from 'fs'
 import mapValues from 'lodash-es/mapValues.js'
 import pickBy from 'lodash-es/pickBy.js'
 import uniqBy from 'lodash-es/uniqBy.js'
-import React from 'react'
 import { getOauthConfig } from './constants/oauth.js'
 import { getRemoteSessionUrl } from './constants/product.js'
 import { getSystemContext, getUserContext } from './context.js'
 import { init, initializeTelemetryAfterTrust } from './entrypoints/init.js'
 import { addToHistory } from './history.js'
+import { warmI18n } from './i18n/index.js'
 import type { Root } from './ink.js'
 import { launchRepl } from './replLauncher.js'
 import {
@@ -51,7 +54,6 @@ import {
   type FilesApiConfig,
   parseFileSpecs,
 } from './services/api/filesApi.js'
-import { warmI18n } from './i18n/index.js'
 import { prefetchOfficialMcpUrls } from './services/mcp/officialRegistry.js'
 import type {
   McpSdkServerConfig,
@@ -94,6 +96,7 @@ import {
 } from './utils/config.js'
 import { seedEarlyInput, stopCapturingEarlyInput } from './utils/earlyInput.js'
 import { getInitialEffortSetting, parseEffortValue } from './utils/effort.js'
+import { isInternalBuild } from './utils/envUtils.js'
 import { applyConfigEnvironmentVariables } from './utils/managedEnv.js'
 import { createSystemMessage, createUserMessage } from './utils/messages.js'
 import { getPlatform } from './utils/platform.js'
@@ -104,7 +107,6 @@ import { skillChangeDetector } from './utils/skills/skillChangeDetector.js'
 import { jsonParse, writeFileSync_DEPRECATED } from './utils/slowOperations.js'
 import { computeInitialTeamContext } from './utils/swarm/reconnection.js'
 import { initializeWarningHandler } from './utils/warningHandler.js'
-import { isInternalBuild } from './utils/envUtils.js'
 import { isWorktreeModeEnabled } from './utils/worktreeModeEnabled.js'
 
 // 延迟加载以避免循环依赖：teammate.ts -> AppState.tsx -> ... -> main.tsx
@@ -135,7 +137,8 @@ function getAssistant() {
 const kairosGate = feature('KAIROS')
   ? (require('./assistant/gate.js') as typeof import('./assistant/gate.js'))
   : null
-import { relative, resolve } from 'path'
+
+import { relative, resolve } from 'node:path'
 import { isAnalyticsDisabled } from 'src/services/analytics/config.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import {
@@ -171,13 +174,13 @@ import {
   showSetupScreens,
 } from './interactiveHelpers.js'
 import { initBuiltinPlugins } from './plugins/bundled/index.js'
-/* eslint-enable @typescript-eslint/no-require-imports */
-import { checkQuotaStatus } from './services/zyAiLimits.js'
 import { getMcpToolsCommandsAndResources, prefetchAllMcpResources } from './services/mcp/client.js'
 import {
   VALID_INSTALLABLE_SCOPES,
   VALID_UPDATE_SCOPES,
 } from './services/plugins/pluginCliCommands.js'
+/* eslint-enable @typescript-eslint/no-require-imports */
+import { checkQuotaStatus } from './services/zyAiLimits.js'
 import { initBundledSkills } from './skills/bundled/index.js'
 import type { AgentColorName } from './tools/AgentTool/agentColorManager.js'
 import {
@@ -190,12 +193,12 @@ import {
 import type { LogOption } from './types/logs.js'
 import type { Message as MessageType } from './types/message.js'
 import { assertMinVersion } from './utils/autoUpdater.js'
-// @ts-ignore
+// @ts-expect-error
 import {
   CLAUDE_IN_CHROME_SKILL_HINT,
   CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER,
 } from './utils/claudeInChrome/prompt.js'
-// @ts-ignore
+// @ts-expect-error
 import {
   setupClaudeInChrome,
   shouldAutoEnableClaudeInChrome,
@@ -216,9 +219,9 @@ import {
   getDefaultMainLoopModel,
   getDefaultMainLoopModelSetting,
   getUserSpecifiedModelSetting,
+  type ModelSetting,
   normalizeModelStringForAPI,
   parseUserSpecifiedModel,
-  type ModelSetting,
 } from './utils/model/model.js'
 import { ensureModelStringsInitialized } from './utils/model/modelStrings.js'
 import { PERMISSION_MODES } from './utils/permissions/PermissionMode.js'
@@ -271,23 +274,23 @@ import { validateUuid } from './utils/uuid.js'
 import { registerMcpAddCommand } from 'src/commands/mcp/addCommand.js'
 import { registerMcpXaaIdpCommand } from 'src/commands/mcp/xaaIdpCommand.js'
 import { logPermissionContextForAnts } from 'src/services/internalLogging.js'
-import { fetchZyAIMcpConfigsIfEligible } from 'src/services/mcp/zyai.js'
 import { clearServerCache } from 'src/services/mcp/client.js'
 import {
   areMcpConfigsAllowedWithEnterpriseMcpConfig,
   dedupZyAIMcpServers,
   doesEnterpriseMcpConfigExist,
   filterMcpServersByPolicy,
-  getZyCodeMcpConfigs,
   getMcpServerSignature,
+  getZyCodeMcpConfigs,
   parseMcpConfig,
   parseMcpConfigFromFilePath,
 } from 'src/services/mcp/config.js'
 import { excludeCommandsByServer, excludeResourcesByServer } from 'src/services/mcp/utils.js'
 import { isXaaEnabled } from 'src/services/mcp/xaaIdpLogin.js'
+import { fetchZyAIMcpConfigsIfEligible } from 'src/services/mcp/zyai.js'
 import { getRelevantTips } from 'src/services/tips/tipRegistry.js'
 import { logContextMetrics } from 'src/utils/api.js'
-// @ts-ignore
+// @ts-expect-error
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   isClaudeInChromeMCPServer,
@@ -322,7 +325,6 @@ import {
   type ChannelEntry,
   getInitialMainLoopModel,
   getIsNonInteractiveSession,
-  getSdkBetas,
   getSessionId,
   getUserMsgOptIn,
   setAllowedChannels,
@@ -461,7 +463,9 @@ if (!isInternalBuild() && isBeingDebugged()) {
  */
 function logSessionTelemetry(): void {
   const fallbackModel = getInitialMainLoopModel() ?? getDefaultMainLoopModel()
-  if (!fallbackModel) return // 模型未配置时跳过遥测
+  if (!fallbackModel) {
+    return // 模型未配置时跳过遥测
+  }
   const model = parseUserSpecifiedModel(fallbackModel)
   void logSkillsLoaded(getCwd(), getContextWindowForModel(model))
   void loadAllPluginsCacheOnly()
@@ -489,7 +493,9 @@ function getCertEnvVarTelemetry(): Record<string, boolean> {
   return result
 }
 async function logStartupTelemetry(): Promise<void> {
-  if (isAnalyticsDisabled()) return
+  if (isAnalyticsDisabled()) {
+    return
+  }
   const [isGit, worktreeCount, ghAuthStatus] = await Promise.all([
     getIsGit(),
     getWorktreeCount(),
@@ -796,7 +802,7 @@ export async function main() {
     if (ccIdx !== -1 && _pendingConnect) {
       const ccUrl = rawCliArgs[ccIdx]!
       const {
-        // @ts-ignore
+        // @ts-expect-error
         parseConnectUrl,
       } = await import('./server/parseConnectUrl.js')
       const parsed = (parseConnectUrl as any)(ccUrl)
@@ -997,13 +1003,27 @@ export async function main() {
 
   // 确定客户端类型
   const clientType = (() => {
-    if (isEnvTruthy(process.env.GITHUB_ACTIONS)) return 'github-action'
-    if (process.env.ZY_CODE_ENTRYPOINT === 'sdk-ts') return 'sdk-typescript'
-    if (process.env.ZY_CODE_ENTRYPOINT === 'sdk-py') return 'sdk-python'
-    if (process.env.ZY_CODE_ENTRYPOINT === 'sdk-cli') return 'sdk-cli'
-    if (process.env.ZY_CODE_ENTRYPOINT === 'zy-vscode') return 'zy-vscode'
-    if (process.env.ZY_CODE_ENTRYPOINT === 'local-agent') return 'local-agent'
-    if (process.env.ZY_CODE_ENTRYPOINT === 'zy-desktop') return 'zy-desktop'
+    if (isEnvTruthy(process.env.GITHUB_ACTIONS)) {
+      return 'github-action'
+    }
+    if (process.env.ZY_CODE_ENTRYPOINT === 'sdk-ts') {
+      return 'sdk-typescript'
+    }
+    if (process.env.ZY_CODE_ENTRYPOINT === 'sdk-py') {
+      return 'sdk-python'
+    }
+    if (process.env.ZY_CODE_ENTRYPOINT === 'sdk-cli') {
+      return 'sdk-cli'
+    }
+    if (process.env.ZY_CODE_ENTRYPOINT === 'zy-vscode') {
+      return 'zy-vscode'
+    }
+    if (process.env.ZY_CODE_ENTRYPOINT === 'local-agent') {
+      return 'local-agent'
+    }
+    if (process.env.ZY_CODE_ENTRYPOINT === 'zy-desktop') {
+      return 'zy-desktop'
+    }
 
     // 检查是否提供了会话入口令牌（表示远程会话）
     const hasSessionIngressToken =
@@ -1293,7 +1313,7 @@ async function run(): Promise<CommanderCommand> {
         'Maximum dollar amount to spend on API calls (only works with --print)',
       ).argParser((value) => {
         const amount = Number(value)
-        if (isNaN(amount) || amount <= 0) {
+        if (Number.isNaN(amount) || amount <= 0) {
           throw new Error('--max-budget-usd must be a positive number greater than 0')
         }
         return amount
@@ -1306,7 +1326,7 @@ async function run(): Promise<CommanderCommand> {
       )
         .argParser((value) => {
           const tokens = Number(value)
-          if (isNaN(tokens) || tokens <= 0 || !Number.isInteger(tokens)) {
+          if (Number.isNaN(tokens) || tokens <= 0 || !Number.isInteger(tokens)) {
             throw new Error('--task-budget must be a positive integer')
           }
           return tokens
@@ -2092,7 +2112,7 @@ async function run(): Promise<CommanderCommand> {
         }
         if (allErrors.length > 0) {
           const formattedErrors = allErrors
-            .map((err) => `${err.path ? err.path + ': ' : ''}${err.message}`)
+            .map((err) => `${err.path ? `${err.path}: ` : ''}${err.message}`)
             .join('\n')
           logForDebugging(
             `--mcp-config validation failed (${allErrors.length} errors): ${formattedErrors}`,
@@ -2705,7 +2725,7 @@ async function run(): Promise<CommanderCommand> {
         explicitModel &&
         explicitModel !== 'default' &&
         !hasGrowthBookEnvOverride('zy_ant_model_override') &&
-        getGlobalConfig().cachedGrowthBookFeatures?.['zy_ant_model_override'] == null
+        getGlobalConfig().cachedGrowthBookFeatures?.zy_ant_model_override == null
       ) {
         await initializeGrowthBook()
       }
@@ -3054,7 +3074,7 @@ async function run(): Promise<CommanderCommand> {
           })
           if (choice === 'merge') {
             const {
-              // @ts-ignore
+              // @ts-expect-error
               buildMergePrompt,
             } = await import('./components/agents/SnapshotUpdateDialog.js')
             const mergePrompt = (buildMergePrompt as any)(agentDef.agentType, agentDef.memory!)
@@ -3343,7 +3363,9 @@ async function run(): Promise<CommanderCommand> {
       // REPL 路径注册 —— 不是 `zy doctor` 等子命令。链式：
       // count 必须在 register 的写入完成后运行，否则它会错过我们自己的文件。
       void registerSession().then((registered) => {
-        if (!registered) return
+        if (!registered) {
+          return
+        }
         if (sessionNameArg) {
           void updateSessionName(sessionNameArg)
         }
@@ -3433,7 +3455,7 @@ async function run(): Promise<CommanderCommand> {
         // 验证非交互会话的 org 限制
         const orgValidation = await validateForceLoginOrg()
         if (!orgValidation.valid) {
-          process.stderr.write((orgValidation as any).message + '\n')
+          process.stderr.write(`${(orgValidation as any).message}\n`)
           process.exit(1)
         }
 
@@ -3489,7 +3511,9 @@ async function run(): Promise<CommanderCommand> {
           void verifyAutoModeGateAccess(toolPermissionContext).then(({ updateContext }) => {
             headlessStore.setState((prev) => {
               const nextCtx = updateContext(prev.toolPermissionContext)
-              if (nextCtx === prev.toolPermissionContext) return prev
+              if (nextCtx === prev.toolPermissionContext) {
+                return prev
+              }
               return {
                 ...prev,
                 toolPermissionContext: nextCtx,
@@ -3515,7 +3539,9 @@ async function run(): Promise<CommanderCommand> {
           configs: Record<string, ScopedMcpServerConfig>,
           label: string,
         ): Promise<void> => {
-          if (Object.keys(configs).length === 0) return Promise.resolve()
+          if (Object.keys(configs).length === 0) {
+            return Promise.resolve()
+          }
           headlessStore.setState((prev) => ({
             ...prev,
             mcp: {
@@ -3568,13 +3594,19 @@ async function run(): Promise<CommanderCommand> {
             const zyaiSigs = new Set<string>()
             for (const config of Object.values(zyaiConfigs)) {
               const sig = getMcpServerSignature(config)
-              if (sig) zyaiSigs.add(sig)
+              if (sig) {
+                zyaiSigs.add(sig)
+              }
             }
             const suppressed = new Set<string>()
             for (const [name, config] of Object.entries(regularMcpConfigs)) {
-              if (!name.startsWith('plugin:')) continue
+              if (!name.startsWith('plugin:')) {
+                continue
+              }
               const sig = getMcpServerSignature(config)
-              if (sig && zyaiSigs.has(sig)) suppressed.add(name)
+              if (sig && zyaiSigs.has(sig)) {
+                suppressed.add(name)
+              }
             }
             if (suppressed.size > 0) {
               logForDebugging(
@@ -3585,7 +3617,9 @@ async function run(): Promise<CommanderCommand> {
               // server triggers a real connect just to kill it (memoize
               // cache-miss path, see useManageMCPConnections.ts:870).
               for (const c of headlessStore.getState().mcp.clients) {
-                if (!suppressed.has(c.name) || c.type !== 'connected') continue
+                if (!suppressed.has(c.name) || c.type !== 'connected') {
+                  continue
+                }
                 c.client.onclose = undefined
                 void clearServerCache(c.name, c.config).catch(() => {})
               }
@@ -3626,7 +3660,9 @@ async function run(): Promise<CommanderCommand> {
             zyaiTimer = setTimeout((r) => r(true), ZY_AI_MCP_TIMEOUT_MS, resolve)
           }),
         ])
-        if (zyaiTimer) clearTimeout(zyaiTimer)
+        if (zyaiTimer) {
+          clearTimeout(zyaiTimer)
+        }
         if (zyaiTimedOut) {
           logForDebugging(
             `[MCP] zy.ai connectors not ready after ${ZY_AI_MCP_TIMEOUT_MS}ms — proceeding; background connection continues`,
@@ -3702,8 +3738,8 @@ async function run(): Promise<CommanderCommand> {
         cli_flag: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         env_var: process.env
           .ZY_CODE_MODEL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        settings_file: (getInitialSettings() || {})
-          .model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        settings_file: getInitialSettings()
+          ?.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         agent: agentSetting as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
 
@@ -4060,11 +4096,11 @@ async function run(): Promise<CommanderCommand> {
         // `--local` 跳过探测/部署/ssh 并直接生成当前二进制文件
         // 使用相同的环境 —— 代理/认证管道的 e2e 测试。
         const {
-          // @ts-ignore
+          // @ts-expect-error
           createSSHSession,
-          // @ts-ignore
+          // @ts-expect-error
           createLocalSSHSession,
-          // @ts-ignore
+          // @ts-expect-error
           SSHSessionError,
         } = await import('./ssh/createSSHSession.js')
         let sshSession
@@ -4101,7 +4137,9 @@ async function run(): Promise<CommanderCommand> {
                   }
                 : {},
             )
-            if (hadProgress) process.stderr.write('\n')
+            if (hadProgress) {
+              process.stderr.write('\n')
+            }
           }
           setOriginalCwd(sshSession.remoteCwd)
           setCwdState(sshSession.remoteCwd)
@@ -4276,13 +4314,13 @@ async function run(): Promise<CommanderCommand> {
         const { clearSessionCaches } = await import('./commands/clear/caches.js')
         clearSessionCaches()
         let messages: MessageType[] | null = null
-        let processedResume: ProcessedResume | undefined = undefined
+        let processedResume: ProcessedResume | undefined
         let maybeSessionId = validateUuid(options.resume)
-        let searchTerm: string | undefined = undefined
+        let searchTerm: string | undefined
         // 按自定义标题找到时存储完整的 LogOption（用于跨 worktree 恢复）
         let matchedLog: LogOption | null = null
         // --from-pr 标志的 PR 过滤
-        let filterByPr: boolean | number | string | undefined = undefined
+        let filterByPr: boolean | number | string | undefined
 
         // 处理 --from-pr 标志
         if (options.fromPr) {
@@ -4529,7 +4567,7 @@ async function run(): Promise<CommanderCommand> {
               messages = result.messages
             } catch (error) {
               if (error instanceof TeleportOperationError) {
-                process.stderr.write(error.formattedMessage + '\n')
+                process.stderr.write(`${error.formattedMessage}\n`)
               } else {
                 logError(error)
                 process.stderr.write(chalk.red(`Error: ${errorMessage(error)}\n`))
@@ -4542,9 +4580,9 @@ async function run(): Promise<CommanderCommand> {
           if (options.resume && typeof options.resume === 'string' && !maybeSessionId) {
             // Check for ccshare URL (e.g. https://go/ccshare/boris-20260311-211036)
             const {
-              // @ts-ignore
+              // @ts-expect-error
               parseCcshareId,
-              // @ts-ignore
+              // @ts-expect-error
               loadCcshare,
             } = await import('./utils/ccshareResume.js')
             const ccshareId = parseCcshareId(options.resume)
@@ -4600,7 +4638,9 @@ async function run(): Promise<CommanderCommand> {
                   // Attempt to load as a transcript file; ENOENT falls through to session-ID handling
                   logOption = await loadTranscriptFromFile(resolvedPath)
                 } catch (error) {
-                  if (!isENOENT(error)) throw error
+                  if (!isENOENT(error)) {
+                    throw error
+                  }
                   // ENOENT: not a file path — fall through to session-ID handling
                 }
                 if (logOption) {
@@ -5143,33 +5183,33 @@ async function run(): Promise<CommanderCommand> {
           idleTimeout: string
           maxSessions: string
         }) => {
-          const { randomBytes } = await import('crypto')
+          const { randomBytes } = await import('node:crypto')
           const {
-            // @ts-ignore
+            // @ts-expect-error
             startServer,
           } = await import('./server/server.js')
           const {
-            // @ts-ignore
+            // @ts-expect-error
             SessionManager,
           } = await import('./server/sessionManager.js')
           const {
-            // @ts-ignore
+            // @ts-expect-error
             DangerousBackend,
           } = await import('./server/backends/dangerousBackend.js')
           const {
-            // @ts-ignore
+            // @ts-expect-error
             printBanner,
           } = await import('./server/serverBanner.js')
           const {
-            // @ts-ignore
+            // @ts-expect-error
             createServerLogger,
           } = await import('./server/serverLog.js')
           const {
-            // @ts-ignore
+            // @ts-expect-error
             writeServerLock,
-            // @ts-ignore
+            // @ts-expect-error
             removeServerLock,
-            // @ts-ignore
+            // @ts-expect-error
             probeRunningServer,
           } = await import('./server/lockfile.js')
           const existing = await probeRunningServer()
@@ -5207,7 +5247,9 @@ async function run(): Promise<CommanderCommand> {
           })
           let shuttingDown = false
           const shutdown = async () => {
-            if (shuttingDown) return
+            if (shuttingDown) {
+              return
+            }
             shuttingDown = true
             // 在拆除会话之前停止接受新连接。
             server.stop(true)
@@ -5261,7 +5303,7 @@ async function run(): Promise<CommanderCommand> {
   // 交互模式（不带 -p）由 main() 中的早期 argv 重写处理
   // 重定向到主命令，具有完整 TUI 支持。
   if (feature('DIRECT_CONNECT')) {
-    // @ts-ignore
+    // @ts-expect-error
     program
       .command('open <cc-url>')
       .description('Connect to a ZY Code server (internal — use cc:// URLs)')
@@ -5276,7 +5318,7 @@ async function run(): Promise<CommanderCommand> {
           },
         ) => {
           const {
-            // @ts-ignore
+            // @ts-expect-error
             parseConnectUrl,
           } = await import('./server/parseConnectUrl.js')
           const { serverUrl, authToken } = (parseConnectUrl as any)(ccUrl)
@@ -5300,7 +5342,7 @@ async function run(): Promise<CommanderCommand> {
             process.exit(1)
           }
           const {
-            // @ts-ignore
+            // @ts-expect-error
             runConnectHeadless,
           } = await import('./server/connectHeadless.js')
           const prompt = typeof opts.print === 'string' ? opts.print : ''
@@ -5736,7 +5778,7 @@ async function run(): Promise<CommanderCommand> {
       )
       .action(async () => {
         const {
-          // @ts-ignore
+          // @ts-expect-error
           up,
         } = await import('src/cli/up.js')
         await up()
@@ -5767,7 +5809,7 @@ async function run(): Promise<CommanderCommand> {
           },
         ) => {
           const {
-            // @ts-ignore
+            // @ts-expect-error
             rollback,
           } = await import('src/cli/rollback.js')
           await rollback(target, options)
@@ -5798,7 +5840,9 @@ async function run(): Promise<CommanderCommand> {
   if (isInternalBuild()) {
     const validateLogId = (value: string) => {
       const maybeSessionId = validateUuid(value)
-      if (maybeSessionId) return maybeSessionId
+      if (maybeSessionId) {
+        return maybeSessionId
+      }
       return Number(value)
     }
     // zy log
@@ -5812,7 +5856,7 @@ async function run(): Promise<CommanderCommand> {
       )
       .action(async (logId: string | number | undefined) => {
         const {
-          // @ts-ignore
+          // @ts-expect-error
           logHandler,
         } = await import('./cli/handlers/ant.js')
         await logHandler(logId)
@@ -5827,7 +5871,7 @@ async function run(): Promise<CommanderCommand> {
       .argument('[number]', 'A number (0, 1, 2, etc.) to display a specific log', parseInt)
       .action(async (number: number | undefined) => {
         const {
-          // @ts-ignore
+          // @ts-expect-error
           errorHandler,
         } = await import('./cli/handlers/ant.js')
         await errorHandler(number)
@@ -5854,7 +5898,7 @@ Examples:
       )
       .action(async (source: string, outputFile: string) => {
         const {
-          // @ts-ignore
+          // @ts-expect-error
           exportHandler,
         } = await import('./cli/handlers/ant.js')
         await exportHandler(source, outputFile)
@@ -5875,7 +5919,7 @@ Examples:
             },
           ) => {
             const {
-              // @ts-ignore
+              // @ts-expect-error
               taskCreateHandler,
             } = await import('./cli/handlers/ant.js')
             await taskCreateHandler(subject, opts)
@@ -5889,7 +5933,7 @@ Examples:
         .option('--json', 'Output as JSON')
         .action(async (opts: { list?: string; pending?: boolean; json?: boolean }) => {
           const {
-            // @ts-ignore
+            // @ts-expect-error
             taskListHandler,
           } = await import('./cli/handlers/ant.js')
           await taskListHandler(opts)
@@ -5906,7 +5950,7 @@ Examples:
             },
           ) => {
             const {
-              // @ts-ignore
+              // @ts-expect-error
               taskGetHandler,
             } = await import('./cli/handlers/ant.js')
             await taskGetHandler(id, opts)
@@ -5934,7 +5978,7 @@ Examples:
             },
           ) => {
             const {
-              // @ts-ignore
+              // @ts-expect-error
               taskUpdateHandler,
             } = await import('./cli/handlers/ant.js')
             await taskUpdateHandler(id, opts)
@@ -5946,7 +5990,7 @@ Examples:
         .option('-l, --list <id>', 'Task list ID (defaults to "tasklist")')
         .action(async (opts: { list?: string }) => {
           const {
-            // @ts-ignore
+            // @ts-expect-error
             taskDirHandler,
           } = await import('./cli/handlers/ant.js')
           await taskDirHandler(opts)
@@ -5968,7 +6012,7 @@ Examples:
           },
         ) => {
           const {
-            // @ts-ignore
+            // @ts-expect-error
             completionHandler,
           } = await import('./cli/handlers/ant.js')
           await completionHandler(shell, opts, program)
@@ -6117,14 +6161,18 @@ function maybeActivateProactive(options: unknown): void {
   }
 }
 function maybeActivateBrief(options: unknown): void {
-  if (!(feature('KAIROS') || feature('KAIROS_BRIEF'))) return
+  if (!(feature('KAIROS') || feature('KAIROS_BRIEF'))) {
+    return
+  }
   const briefFlag = (
     options as {
       brief?: boolean
     }
   ).brief
   const briefEnv = isEnvTruthy(process.env.ZY_CODE_BRIEF)
-  if (!briefFlag && !briefEnv) return
+  if (!briefFlag && !briefEnv) {
+    return
+  }
   // --brief / ZY_CODE_BRIEF 是显式选择加入：检查授权，
   // 然后设置 userMsgOptIn 以激活工具 + 提示部分。env
   // 变量也授予授权（isBriefEntitled() 读取它），所以设置

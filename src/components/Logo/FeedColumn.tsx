@@ -3,6 +3,7 @@ import { Box } from '../../ink.js'
 import { Divider } from '../design-system/Divider.js'
 import type { FeedConfig } from './Feed.js'
 import { calculateFeedWidth, Feed } from './Feed.js'
+
 type FeedColumnProps = {
   feeds: FeedConfig[]
   maxWidth: number

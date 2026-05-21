@@ -18,9 +18,9 @@ import {
 import { FileTooLargeError, readFileInRange } from './readFileInRange.js'
 import { expandPath } from './path.js'
 import { countCharInString } from './stringUtils.js'
-import { count, uniq } from './array.js'
+import { uniq } from './array.js'
 import { getFsImplementation } from './fsOperations.js'
-import { readdir, stat } from 'fs/promises'
+import { readdir, stat } from 'node:fs/promises'
 import type { IDESelection } from '../hooks/useIdeSelection.js'
 import { TODO_WRITE_TOOL_NAME } from '../tools/TodoWriteTool/constants.js'
 import { TASK_CREATE_TOOL_NAME } from '../tools/TaskCreateTool/constants.js'
@@ -37,7 +37,7 @@ import {
   getConditionalRulesForCwdLevelDirectory,
   type MemoryFileInfo,
 } from './zymd.js'
-import { dirname, parse, relative, resolve } from 'path'
+import { dirname, parse, relative, resolve } from 'node:path'
 import { getCwd } from 'src/utils/cwd.js'
 import { getViewedTeammateTask } from '../state/selectors.js'
 import { logError } from './log.js'
@@ -51,7 +51,7 @@ import {
   getImagePasteIds,
   isValidImagePaste,
 } from 'src/types/textInputTypes.js'
-import { randomUUID, type UUID } from 'crypto'
+import { randomUUID, type UUID } from 'node:crypto'
 import { getInitialSettings } from './settings/settings.js'
 import { getSnippetForTwoFileDiff } from 'src/tools/FileEditTool/utils.js'
 import type { ContentBlock, ImageBlock, ImageSource } from '../types/llm.js'
@@ -64,7 +64,7 @@ import uniqBy from 'lodash-es/uniqBy.js'
 import { getProjectRoot } from '../bootstrap/state.js'
 import { formatCommandsWithinBudget } from '../tools/SkillTool/prompt.js'
 import { getContextWindowForModel } from './context.js'
-// @ts-ignore
+// @ts-expect-error
 import type { DiscoverySignal } from '../services/skillSearch/signals.js'
 // DCE 条件加载。所有技能搜索字符串字面量，
 // 否则会泄露到外部构建中，都放在这些模块内。
@@ -104,7 +104,6 @@ import type { TaskType, TaskStatus } from '../Task.js'
 import {
   getOriginalCwd,
   getSessionId,
-  getSdkBetas,
   getTotalCostUSD,
   getTotalOutputTokens,
   getCurrentTurnTokenBudget,
@@ -946,7 +945,9 @@ export async function getQueuedCommandAttachments(
 }
 export function getAgentPendingMessageAttachments(toolUseContext: ToolUseContext): Attachment[] {
   const agentId = toolUseContext.agentId
-  if (!agentId) return []
+  if (!agentId) {
+    return []
+  }
   const drained = drainPendingMessages(
     agentId,
     toolUseContext.getAppState,
@@ -1301,18 +1302,28 @@ export function getDeferredToolsDeltaAttachment(
   messages: Message[] | undefined,
   scanContext?: DeferredToolsDeltaScanContext,
 ): Attachment[] {
-  if (!isDeferredToolsDeltaEnabled()) return []
+  if (!isDeferredToolsDeltaEnabled()) {
+    return []
+  }
   // 这三个检查与 isToolSearchEnabled 的同步部分镜像 —
   // 附件文本说 "available via ToolSearch"，因此 ToolSearch
   // 必须实际存在于请求中。异步 auto-threshold 检查不复制
   //（会重复触发 zy_tool_search_mode_decision）；
   // 在 tst-auto 低于阈值时，附件可能在 ToolSearch 被过滤后触发，
   // 但这是窄情况，且宣布的工具无论如何都是可直接调用的。
-  if (!isToolSearchEnabledOptimistic()) return []
-  if (!modelSupportsToolReference(model)) return []
-  if (!isToolSearchToolAvailable(tools)) return []
+  if (!isToolSearchEnabledOptimistic()) {
+    return []
+  }
+  if (!modelSupportsToolReference(model)) {
+    return []
+  }
+  if (!isToolSearchToolAvailable(tools)) {
+    return []
+  }
   const delta = getDeferredToolsDelta(tools, messages ?? [], scanContext)
-  if (!delta) return []
+  if (!delta) {
+    return []
+  }
   return [
     {
       type: 'deferred_tools_delta',
@@ -1336,7 +1347,9 @@ export function getAgentListingDeltaAttachment(
   toolUseContext: ToolUseContext,
   messages: Message[] | undefined,
 ): Attachment[] {
-  if (!shouldInjectAgentListInMessages()) return []
+  if (!shouldInjectAgentListInMessages()) {
+    return []
+  }
 
   // 如果 AgentTool 不在池中则跳过 — 列表将无法操作。
   if (!toolUseContext.options.tools.some((t) => toolMatchesName(t, AGENT_TOOL_NAME))) {
@@ -1349,7 +1362,9 @@ export function getAgentListingDeltaAttachment(
   const mcpServers = new Set<string>()
   for (const tool of toolUseContext.options.tools) {
     const info = mcpInfoFromString(tool.name)
-    if (info) mcpServers.add(info.serverName)
+    if (info) {
+      mcpServers.add(info.serverName)
+    }
   }
   const permissionContext = toolUseContext.getAppState().toolPermissionContext
   let filtered = filterDeniedAgents(
@@ -1364,18 +1379,30 @@ export function getAgentListingDeltaAttachment(
   // 从 transcript 中的先前增量重建已宣布集合。
   const announced = new Set<string>()
   for (const msg of messages ?? []) {
-    if (msg.type !== 'attachment') continue
-    if (msg.attachment.type !== 'agent_listing_delta') continue
-    for (const t of (msg.attachment as any).addedTypes) announced.add(t)
-    for (const t of (msg.attachment as any).removedTypes) announced.delete(t)
+    if (msg.type !== 'attachment') {
+      continue
+    }
+    if (msg.attachment.type !== 'agent_listing_delta') {
+      continue
+    }
+    for (const t of (msg.attachment as any).addedTypes) {
+      announced.add(t)
+    }
+    for (const t of (msg.attachment as any).removedTypes) {
+      announced.delete(t)
+    }
   }
   const currentTypes = new Set(filtered.map((a) => a.agentType))
   const added = filtered.filter((a) => !announced.has(a.agentType))
   const removed: string[] = []
   for (const t of announced) {
-    if (!currentTypes.has(t)) removed.push(t)
+    if (!currentTypes.has(t)) {
+      removed.push(t)
+    }
   }
-  if (added.length === 0 && removed.length === 0) return []
+  if (added.length === 0 && removed.length === 0) {
+    return []
+  }
 
   // 排序以获得确定性输出 — agent 加载顺序是非确定性的
   //（插件加载竞争、MCP 异步连接）。
@@ -1400,7 +1427,9 @@ export function getMcpInstructionsDeltaAttachment(
   model: string,
   messages: Message[] | undefined,
 ): Attachment[] {
-  if (!isMcpInstructionsDeltaEnabled()) return []
+  if (!isMcpInstructionsDeltaEnabled()) {
+    return []
+  }
 
   // chrome ToolSearch 提示是客户端编写且 ToolSearch 条件性的；
   // 实际服务器 `instructions` 是无条件的。在此决定 chrome 部分，
@@ -1417,7 +1446,9 @@ export function getMcpInstructionsDeltaAttachment(
     })
   }
   const delta = getMcpInstructionsDelta(mcpClients, messages ?? [], clientSide)
-  if (!delta) return []
+  if (!delta) {
+    return []
+  }
   return [
     {
       type: 'mcp_instructions_delta',
@@ -1695,7 +1726,9 @@ async function processAtMentionedFiles(
   toolUseContext: ToolUseContext,
 ): Promise<Attachment[]> {
   const files = extractAtMentionedFiles(input)
-  if (files.length === 0) return []
+  if (files.length === 0) {
+    return []
+  }
   const appState = toolUseContext.getAppState()
   const results = await Promise.all(
     files.map(async (file) => {
@@ -1755,7 +1788,9 @@ async function processAtMentionedFiles(
 }
 function processAgentMentions(input: string, agents: AgentDefinition[]): Attachment[] {
   const agentMentions = extractAgentMentions(input)
-  if (agentMentions.length === 0) return []
+  if (agentMentions.length === 0) {
+    return []
+  }
   const results = agentMentions.map((mention) => {
     const agentType = mention.replace('agent-', '')
     const agentDef = agents.find((def) => def.agentType === agentType)
@@ -1776,7 +1811,9 @@ async function processMcpResourceAttachments(
   toolUseContext: ToolUseContext,
 ): Promise<Attachment[]> {
   const resourceMentions = extractMcpResourceMentions(input)
-  if (resourceMentions.length === 0) return []
+  if (resourceMentions.length === 0) {
+    return []
+  }
   const mcpClients = toolUseContext.options.mcpClients || []
   const results = await Promise.all(
     resourceMentions.map(async (mention) => {
@@ -1833,12 +1870,16 @@ async function processMcpResourceAttachments(
 }
 export async function getChangedFiles(toolUseContext: ToolUseContext): Promise<Attachment[]> {
   const filePaths = cacheKeys(toolUseContext.readFileState)
-  if (filePaths.length === 0) return []
+  if (filePaths.length === 0) {
+    return []
+  }
   const appState = toolUseContext.getAppState()
   const results = await Promise.all(
     filePaths.map(async (filePath) => {
       const fileState = toolUseContext.readFileState.get(filePath)
-      if (!fileState) return null
+      if (!fileState) {
+        return null
+      }
 
       // TODO：实现 changed files 的 offset/limit 支持
       if (fileState.offset !== undefined || fileState.limit !== undefined) {
@@ -2208,11 +2249,17 @@ export function collectRecentSuccessfulTools(
   const resultByUseId = new Map<string, boolean>()
   for (let i = messages.length - 1; i >= 0; i--) {
     const m = messages[i]
-    if (!m) continue
-    if (isHumanTurn(m) && m !== lastUserMessage) break
+    if (!m) {
+      continue
+    }
+    if (isHumanTurn(m) && m !== lastUserMessage) {
+      break
+    }
     if (m.type === 'assistant' && typeof m.message.content !== 'string') {
       for (const block of m.message.content) {
-        if (block.type === 'tool_call') useIdToName.set(block.id, block.name)
+        if (block.type === 'tool_call') {
+          useIdToName.set(block.id, block.name)
+        }
       }
     } else if (m.type === 'user' && 'message' in m && Array.isArray(m.message.content)) {
       for (const block of m.message.content) {
@@ -2226,7 +2273,9 @@ export function collectRecentSuccessfulTools(
   const succeeded = new Set<string>()
   for (const [id, name] of useIdToName) {
     const errored = resultByUseId.get(id)
-    if (errored === undefined) continue
+    if (errored === undefined) {
+      continue
+    }
     if (errored) {
       failed.add(name)
     } else {
@@ -2253,7 +2302,9 @@ export function filterDuplicateMemoryAttachments(
 ): Attachment[] {
   return attachments
     .map((attachment) => {
-      if (attachment.type !== 'relevant_memories') return attachment
+      if (attachment.type !== 'relevant_memories') {
+        return attachment
+      }
       const filtered = attachment.memories.filter((m) => !readFileState.has(m.path))
       for (const m of filtered) {
         readFileState.set(m.path, {
@@ -2897,8 +2948,12 @@ function getTodoReminderTurnCounts(messages: Message[]): {
       }
 
       // 在找到事件之前递增 assistant 轮次计数
-      if (lastTodoWriteIndex === -1) assistantTurnsSinceWrite++
-      if (lastReminderIndex === -1) assistantTurnsSinceReminder++
+      if (lastTodoWriteIndex === -1) {
+        assistantTurnsSinceWrite++
+      }
+      if (lastReminderIndex === -1) {
+        assistantTurnsSinceReminder++
+      }
     } else if (
       lastReminderIndex === -1 &&
       message?.type === 'attachment' &&
@@ -2992,8 +3047,12 @@ function getTaskReminderTurnCounts(messages: Message[]): {
       }
 
       // 在找到事件之前递增 assistant 轮次计数
-      if (lastTaskManagementIndex === -1) assistantTurnsSinceTaskManagement++
-      if (lastReminderIndex === -1) assistantTurnsSinceReminder++
+      if (lastTaskManagementIndex === -1) {
+        assistantTurnsSinceTaskManagement++
+      }
+      if (lastReminderIndex === -1) {
+        assistantTurnsSinceReminder++
+      }
     } else if (
       lastReminderIndex === -1 &&
       message?.type === 'attachment' &&
@@ -3261,7 +3320,9 @@ async function getTeammateMailboxAttachments(
     const beforeCount = allMessages.length
     allMessages = allMessages.filter((_m, i) => {
       const agent = idleAgentByIndex.get(i)
-      if (agent === undefined) return true
+      if (agent === undefined) {
+        return true
+      }
       return latestIdleByAgent.get(agent) === i
     })
     logForDebugging(
@@ -3327,8 +3388,12 @@ async function getTeammateMailboxAttachments(
 
           // 从 AppState 的 teamContext 中移除
           toolUseContext.setAppState((prev) => {
-            if (!prev.teamContext?.teammates) return prev
-            if (!(teammateId in prev.teamContext.teammates)) return prev
+            if (!prev.teamContext?.teammates) {
+              return prev
+            }
+            if (!(teammateId in prev.teamContext.teammates)) {
+              return prev
+            }
             const { [teammateId]: _, ...remainingTeammates } = prev.teamContext.teammates
             return {
               ...prev,
@@ -3537,7 +3602,7 @@ export function getContextEfficiencyAttachment(messages: Message[]): Attachment[
   // 延迟 require 使此文件不包含 snip 字符串。
   const {
     isSnipRuntimeEnabled,
-    // @ts-ignore
+    // @ts-expect-error
     shouldNudgeForSnips,
   } =
     // eslint-disable-next-line @typescript-eslint/no-require-imports

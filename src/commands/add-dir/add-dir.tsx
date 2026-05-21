@@ -17,6 +17,7 @@ import {
 import type { PermissionUpdateDestination } from '../../utils/permissions/PermissionUpdateSchema.js'
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
 import { addDirHelpMessage, validateDirectoryForWorkspace } from './validation.js'
+
 function AddDirError({ message, args, onDone }) {
   useEffect(() => {
     const timer = setTimeout(onDone, 0)

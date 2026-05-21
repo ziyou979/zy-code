@@ -1,5 +1,3 @@
-import figures from 'figures'
-import * as React from 'react'
 import { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import TextInput from '../../../components/TextInput.js'

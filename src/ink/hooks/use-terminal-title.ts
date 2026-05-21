@@ -17,7 +17,9 @@ export function useTerminalTitle(title: string | null): void {
   const writeRaw = useContext(TerminalWriteContext)
 
   useEffect(() => {
-    if (title === null || !writeRaw) return
+    if (title === null || !writeRaw) {
+      return
+    }
 
     const clean = stripAnsi(title)
 

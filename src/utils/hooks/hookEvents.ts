@@ -83,7 +83,9 @@ function shouldEmit(hookEvent: string): boolean {
 }
 
 export function emitHookStarted(hookId: string, hookName: string, hookEvent: string): void {
-  if (!shouldEmit(hookEvent)) return
+  if (!shouldEmit(hookEvent)) {
+    return
+  }
 
   emit({
     type: 'started',
@@ -101,7 +103,9 @@ export function emitHookProgress(data: {
   stderr: string
   output: string
 }): void {
-  if (!shouldEmit(data.hookEvent)) return
+  if (!shouldEmit(data.hookEvent)) {
+    return
+  }
 
   emit({
     type: 'progress',
@@ -116,12 +120,16 @@ export function startHookProgressInterval(params: {
   getOutput: () => Promise<{ stdout: string; stderr: string; output: string }>
   intervalMs?: number
 }): () => void {
-  if (!shouldEmit(params.hookEvent)) return () => {}
+  if (!shouldEmit(params.hookEvent)) {
+    return () => {}
+  }
 
   let lastEmittedOutput = ''
   const interval = setInterval(() => {
     void params.getOutput().then(({ stdout, stderr, output }) => {
-      if (output === lastEmittedOutput) return
+      if (output === lastEmittedOutput) {
+        return
+      }
       lastEmittedOutput = output
       emitHookProgress({
         hookId: params.hookId,
@@ -154,7 +162,9 @@ export function emitHookResponse(data: {
     logForDebugging(`Hook ${data.hookName} (${data.hookEvent}) ${data.outcome}:\n${outputToLog}`)
   }
 
-  if (!shouldEmit(data.hookEvent)) return
+  if (!shouldEmit(data.hookEvent)) {
+    return
+  }
 
   emit({
     type: 'response',

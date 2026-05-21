@@ -1,9 +1,9 @@
-import type { ThinkingBlock } from '../../types/llm.js'
-import React from 'react'
-import { Box, Text } from '../../ink.js'
 import { tSync } from '../../i18n/index.js'
+import { Box, Text } from '../../ink.js'
+import type { ThinkingBlock } from '../../types/llm.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
 import { Markdown } from '../Markdown.js'
+
 type Props = {
   // Accept either full ThinkingBlock/ThinkingBlock or a minimal shape with just type and thinking
   param:

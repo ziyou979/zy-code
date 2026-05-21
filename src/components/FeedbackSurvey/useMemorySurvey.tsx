@@ -18,6 +18,7 @@ import { submitTranscriptShare } from './submitTranscriptShare.js'
 import type { TranscriptShareResponse } from './TranscriptSharePrompt.js'
 import { useSurveyState } from './useSurveyState.js'
 import type { FeedbackSurveyResponse } from './utils.js'
+
 const HIDE_THANKS_AFTER_MS = 3000
 const MEMORY_SURVEY_GATE = 'zy_dunwich_bell'
 const MEMORY_SURVEY_EVENT = 'zy_memory_survey_event'
@@ -98,7 +99,7 @@ export function useMemorySurvey(
     if (!isInternalBuild()) {
       return false
     }
-    // @ts-ignore -- FeedbackSurveyResponse enum comparison works at runtime
+    // @ts-expect-error -- FeedbackSurveyResponse enum comparison works at runtime
     if (selected_0 !== 'bad' && selected_0 !== 'good') {
       return false
     }
@@ -170,7 +171,9 @@ export function useMemorySurvey(
   })
   const lastAssistant = useMemo(() => getLastAssistantMessage(messages), [messages])
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled) {
+      return
+    }
 
     // /clear resets messages but REPL stays mounted — reset refs so a memory
     // read from the previous conversation doesn't leak into the new one.

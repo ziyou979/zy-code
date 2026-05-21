@@ -74,7 +74,9 @@ export function parseKeystroke(input: string): ParsedKeystroke {
  */
 export function parseChord(input: string): Chord {
   // A lone space character IS the space key binding, not a separator
-  if (input === ' ') return [parseKeystroke('space')]
+  if (input === ' ') {
+    return [parseKeystroke('space')]
+  }
   return input.trim().split(/\s+/).map(parseKeystroke)
 }
 
@@ -83,11 +85,21 @@ export function parseChord(input: string): Chord {
  */
 export function keystrokeToString(ks: ParsedKeystroke): string {
   const parts: string[] = []
-  if (ks.ctrl) parts.push('ctrl')
-  if (ks.alt) parts.push('alt')
-  if (ks.shift) parts.push('shift')
-  if (ks.meta) parts.push('meta')
-  if (ks.super) parts.push('cmd')
+  if (ks.ctrl) {
+    parts.push('ctrl')
+  }
+  if (ks.alt) {
+    parts.push('alt')
+  }
+  if (ks.shift) {
+    parts.push('shift')
+  }
+  if (ks.meta) {
+    parts.push('meta')
+  }
+  if (ks.super) {
+    parts.push('cmd')
+  }
   // Use readable names for display
   const displayKey = keyToDisplayName(ks.key)
   parts.push(displayKey)
@@ -154,13 +166,17 @@ export function keystrokeToDisplayString(
   platform: DisplayPlatform = 'linux',
 ): string {
   const parts: string[] = []
-  if (ks.ctrl) parts.push('ctrl')
+  if (ks.ctrl) {
+    parts.push('ctrl')
+  }
   // Alt/meta are equivalent in terminals, show platform-appropriate name
   if (ks.alt || ks.meta) {
     // Only macOS uses "opt", all other platforms use "alt"
     parts.push(platform === 'macos' ? 'opt' : 'alt')
   }
-  if (ks.shift) parts.push('shift')
+  if (ks.shift) {
+    parts.push('shift')
+  }
   if (ks.super) {
     parts.push(platform === 'macos' ? 'cmd' : 'super')
   }

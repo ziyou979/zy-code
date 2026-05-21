@@ -1,7 +1,6 @@
-import type { ToolDefinition, TextBlock } from '../../types/llm.js'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { createPatch } from 'diff'
-import { mkdir, writeFile } from 'fs/promises'
-import { join } from 'path'
 import type { AgentId } from 'src/types/ids.js'
 import type { Message } from 'src/types/message.js'
 import { logForDebugging } from 'src/utils/debug.js'
@@ -10,6 +9,7 @@ import { logError } from 'src/utils/log.js'
 import { getZyTempDir } from 'src/utils/permissions/filesystem.js'
 import { jsonStringify } from 'src/utils/slowOperations.js'
 import type { QuerySource } from '../../constants/querySource.js'
+import type { TextBlock, ToolDefinition } from '../../types/llm.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -144,16 +144,22 @@ function isExcludedModel(model: string): boolean {
  * logged via zy_api_success for analytics.
  */
 function getTrackingKey(querySource: QuerySource, agentId?: AgentId): string | null {
-  if ((querySource as any) === 'compact') return 'repl_main_thread'
+  if ((querySource as any) === 'compact') {
+    return 'repl_main_thread'
+  }
   for (const prefix of TRACKED_SOURCE_PREFIXES) {
-    if (querySource.startsWith(prefix)) return agentId || querySource
+    if (querySource.startsWith(prefix)) {
+      return agentId || querySource
+    }
   }
   return null
 }
 
 function stripCacheControl(items: ReadonlyArray<Record<string, unknown>>): unknown[] {
   return items.map((item) => {
-    if (!('cache_control' in item)) return item
+    if (!('cache_control' in item)) {
+      return item
+    }
     const { cache_control: _, ...rest } = item
     return rest
   })
@@ -199,7 +205,9 @@ function buildDiffableContent(system: TextBlock[], tools: ToolDefinition[], mode
   const systemText = system.map((b) => b.text).join('\n\n')
   const toolDetails = tools
     .map((t) => {
-      if (!('name' in t)) return 'unknown'
+      if (!('name' in t)) {
+        return 'unknown'
+      }
       const desc = 'description' in t ? t.description : ''
       const schema = 'inputSchema' in t ? jsonStringify(t.inputSchema) : ''
       return `${t.name}\n  description: ${desc}\n  inputSchema: ${schema}`
@@ -248,7 +256,9 @@ export function recordPromptState(snapshot: PromptStateSnapshot): void {
       extraBodyParams,
     } = snapshot
     const key = getTrackingKey(querySource, agentId)
-    if (!key) return
+    if (!key) {
+      return
+    }
 
     const strippedSystem = stripCacheControl(
       system as unknown as ReadonlyArray<Record<string, unknown>>,
@@ -281,7 +291,9 @@ export function recordPromptState(snapshot: PromptStateSnapshot): void {
       // Evict oldest entries if map is at capacity
       while (previousStateBySource.size >= MAX_TRACKED_SOURCES) {
         const oldest = previousStateBySource.keys().next().value
-        if (oldest !== undefined) previousStateBySource.delete(oldest)
+        if (oldest !== undefined) {
+          previousStateBySource.delete(oldest)
+        }
       }
 
       previousStateBySource.set(key, {
@@ -346,7 +358,9 @@ export function recordPromptState(snapshot: PromptStateSnapshot): void {
       if (toolSchemasChanged) {
         const newHashes = computeToolHashes()
         for (const name of toolNames) {
-          if (!prevToolSet.has(name)) continue
+          if (!prevToolSet.has(name)) {
+            continue
+          }
           if (newHashes[name] !== prev.perToolHashes[name]) {
             changedToolSchemas.push(name)
           }
@@ -419,13 +433,19 @@ export async function checkResponseForCacheBreak(
 ): Promise<void> {
   try {
     const key = getTrackingKey(querySource, agentId)
-    if (!key) return
+    if (!key) {
+      return
+    }
 
     const state = previousStateBySource.get(key)
-    if (!state) return
+    if (!state) {
+      return
+    }
 
     // Skip excluded models (e.g., haiku has different caching behavior)
-    if (isExcludedModel(state.model)) return
+    if (isExcludedModel(state.model)) {
+      return
+    }
 
     const prevCacheRead = state.prevCacheReadTokens
     state.prevCacheReadTokens = cacheReadTokens
@@ -438,7 +458,9 @@ export async function checkResponseForCacheBreak(
       : null
 
     // Skip the first call — no previous value to compare against
-    if (prevCacheRead === null) return
+    if (prevCacheRead === null) {
+      return
+    }
 
     const changes = state.pendingChanges
 

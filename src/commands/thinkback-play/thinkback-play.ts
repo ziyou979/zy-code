@@ -1,4 +1,4 @@
-import { join } from 'path'
+import { join } from 'node:path'
 import type { LocalCommandResult } from '../../commands.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { loadInstalledPluginsV2 } from '../../utils/plugins/installedPluginsManager.js'

@@ -1,4 +1,4 @@
-import { basename } from 'path'
+import { basename } from 'node:path'
 import React from 'react'
 import { logError } from 'src/utils/log.js'
 import { useDebounceCallback } from 'usehooks-ts'
@@ -57,7 +57,9 @@ export function usePasteHandler({ onPaste, onInput, onImagePaste }: PasteHandler
   }, [])
 
   const checkClipboardForImageImpl = React.useCallback(() => {
-    if (!onImagePaste || !isMountedRef.current) return
+    if (!onImagePaste || !isMountedRef.current) {
+      return
+    }
 
     void getImageFromClipboard()
       .then((imageData) => {

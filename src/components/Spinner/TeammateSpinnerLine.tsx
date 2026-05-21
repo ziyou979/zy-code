@@ -6,14 +6,15 @@ import { getSpinnerVerbs } from '../../constants/spinnerVerbs.js'
 import { getTurnCompletionVerbs } from '../../constants/turnCompletionVerbs.js'
 import { useElapsedTime } from '../../hooks/useElapsedTime.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text } from '../../ink.js'
 import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js'
 import { summarizeRecentActivities } from '../../utils/collapseReadSearch.js'
 import { getLocalizedDurationFormatter, truncateToWidth } from '../../utils/format.js'
-import { tSync } from '../../i18n/index.js'
 import { toInkColor } from '../../utils/ink.js'
 import { TEAMMATE_SELECT_HINT } from './teammateSelectHint.js'
+
 function formatToolUseCount(count: number): string {
   return tSync('teammate.toolUseCount', {
     count,
@@ -40,7 +41,9 @@ type Props = {
  * Shows recent activity from any message type (user or assistant).
  */
 function getMessagePreview(messages: InProcessTeammateTaskState['messages']): string[] {
-  if (!messages?.length) return []
+  if (!messages?.length) {
+    return []
+  }
   const allLines: string[] = []
   const maxLineLength = 80
 
@@ -57,8 +60,12 @@ function getMessagePreview(messages: InProcessTeammateTaskState['messages']): st
     }
     const content = msg.message.content
     for (const block of content) {
-      if (allLines.length >= 3) break
-      if (!block || typeof block !== 'object') continue
+      if (allLines.length >= 3) {
+        break
+      }
+      if (!block || typeof block !== 'object') {
+        continue
+      }
       if ('type' in block && block.type === 'tool_call' && 'name' in block) {
         // Try to show meaningful info from tool input
         const input = 'input' in block ? (block.input as Record<string, unknown>) : null
@@ -81,7 +88,9 @@ function getMessagePreview(messages: InProcessTeammateTaskState['messages']): st
         // Take from end of text (most recent lines)
         for (let j = textLines.length - 1; j >= 0 && allLines.length < 3; j--) {
           const line = textLines[j]
-          if (!line) continue
+          if (!line) {
+            continue
+          }
           allLines.push(truncateToWidth(line, maxLineLength))
         }
       }
@@ -201,13 +210,19 @@ export function TeammateSpinnerLine({
     const activities = teammate.progress?.recentActivities
     if (activities && activities.length > 0) {
       const summary = summarizeRecentActivities(activities)
-      if (summary) return truncateToWidth(summary, activityMaxWidth)
+      if (summary) {
+        return truncateToWidth(summary, activityMaxWidth)
+      }
     }
     const desc = teammate.progress?.lastActivity?.activityDescription
-    if (desc) return truncateToWidth(desc, activityMaxWidth)
+    if (desc) {
+      return truncateToWidth(desc, activityMaxWidth)
+    }
     // 当 leader 在前台时，主 spinner 已显示 leader 的 verb，
     // 子 agent 行不应再用自己的 randomVerb 抢占视觉焦点。
-    if (leaderIsForegrounded) return null
+    if (leaderIsForegrounded) {
+      return null
+    }
     return randomVerb
   })()
 

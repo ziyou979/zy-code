@@ -26,7 +26,9 @@ export function useBlink(
   const focused = useTerminalFocus()
   const [ref, time] = useAnimationFrame(enabled && focused ? intervalMs : null)
 
-  if (!enabled || !focused) return [ref, true]
+  if (!enabled || !focused) {
+    return [ref, true]
+  }
 
   // Derive blink state from time - all instances see the same time so they sync
   const isVisible = Math.floor(time / intervalMs) % 2 === 0

@@ -1,5 +1,5 @@
 import figures from 'figures'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw text input for config dialog
@@ -39,7 +39,9 @@ export function buildFinalValues(
     if (schema?.type === 'number') {
       // Number('') returns 0, not NaN — omit blank number inputs so
       // validateUserConfig's required check actually catches them.
-      if (value.trim() === '') continue
+      if (value.trim() === '') {
+        continue
+      }
       const num = Number(value)
       finalValues[fieldKey] = Number.isNaN(num) ? value : num
     } else if (schema?.type === 'boolean') {

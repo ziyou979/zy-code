@@ -18,7 +18,7 @@
  *   bun scripts/generate-bitmap-font.ts
  */
 
-import { deflateSync } from 'zlib'
+import { deflateSync } from 'node:zlib'
 import { stringWidth } from '../ink/stringWidth.js'
 import { type AnsiColor, DEFAULT_BG, type ParsedLine, parseAnsi } from './ansiToSvg.js'
 
@@ -43,7 +43,9 @@ function makeFallbackGlyph(): Uint8Array {
   for (let y = 2; y < GLYPH_H - 4; y++) {
     for (let x = 1; x < GLYPH_W - 1; x++) {
       const onBorder = y === 2 || y === GLYPH_H - 5 || x === 1 || x === GLYPH_W - 2
-      if (onBorder && (x + y) % 2 === 0) g[y * GLYPH_W + x] = 255
+      if (onBorder && (x + y) % 2 === 0) {
+        g[y * GLYPH_W + x] = 255
+      }
     }
   }
   return g
@@ -122,7 +124,9 @@ export function ansiToPng(ansiText: string, options: AnsiToPngOptions = {}): Buf
       for (const ch of span.text) {
         const cp = ch.codePointAt(0)!
         const cellW = stringWidth(ch)
-        if (cellW === 0) continue // zero-width (combining marks, etc.)
+        if (cellW === 0) {
+          continue // zero-width (combining marks, etc.)
+        }
         const x = padX + col * GLYPH_W * scale
         const y = padY + row * GLYPH_H * scale
         const shade = SHADE_ALPHA[cp]
@@ -143,7 +147,9 @@ export function ansiToPng(ansiText: string, options: AnsiToPngOptions = {}): Buf
 /** Terminal column width of a parsed line. */
 function lineWidthCells(line: ParsedLine): number {
   let w = 0
-  for (const span of line) w += stringWidth(span.text)
+  for (const span of line) {
+    w += stringWidth(span.text)
+  }
   return w
 }
 
@@ -161,10 +167,10 @@ function fillBackground(px: Uint8Array, bg: AnsiColor): void {
 // same look.
 let SHADE_ALPHA
 SHADE_ALPHA = {
-  0x2591: 0.25, // ░
-  0x2592: 0.5, // ▒
-  0x2593: 0.75, // ▓
-  0x2588: 1.0, // █
+  9617: 0.25, // ░
+  9618: 0.5, // ▒
+  9619: 0.75, // ▓
+  9608: 1.0, // █
 }
 
 function blitShade(
@@ -212,8 +218,12 @@ function blitGlyph(
   for (let gy = 0; gy < GLYPH_H; gy++) {
     for (let gx = 0; gx < GLYPH_W; gx++) {
       let a = glyph[gy * GLYPH_W + gx]!
-      if (a === 0) continue
-      if (bold) a = Math.min(255, a * 1.4)
+      if (a === 0) {
+        continue
+      }
+      if (bold) {
+        a = Math.min(255, a * 1.4)
+      }
       const inv = 255 - a
       for (let sy = 0; sy < scale; sy++) {
         const rowBase = ((y + gy * scale + sy) * width + x + gx * scale) * 4
@@ -238,7 +248,9 @@ function roundCorners(px: Uint8Array, width: number, height: number, r: number):
     for (let dx = 0; dx < r; dx++) {
       const ox = r - dx - 0.5
       const oy = r - dy - 0.5
-      if (ox * ox + oy * oy <= rSquared) continue
+      if (ox * ox + oy * oy <= rSquared) {
+        continue
+      }
       // Top-left, top-right, bottom-left, bottom-right.
       px[(dy * width + dx) * 4 + 3] = 0
       px[(dy * width + (width - 1 - dx)) * 4 + 3] = 0

@@ -1,8 +1,7 @@
 import { feature } from 'bun:bundle'
-import type { ContentBlock } from '../types/llm.js'
-import type { Permutations } from 'src/types/utils.js'
 import { getSessionId } from '../bootstrap/state.js'
 import type { AppState } from '../state/AppState.js'
+import type { ContentBlock } from '../types/llm.js'
 import type { QueueOperation, QueueOperationMessage } from '../types/messageQueueTypes.js'
 import type {
   EditablePromptInputMode,
@@ -165,7 +164,9 @@ export function dequeue(filter?: (cmd: QueuedCommand) => boolean): QueuedCommand
   let bestPriority = Infinity
   for (let i = 0; i < commandQueue.length; i++) {
     const cmd = commandQueue[i]!
-    if (filter && !filter(cmd)) continue
+    if (filter && !filter(cmd)) {
+      continue
+    }
     const priority = PRIORITY_ORDER[cmd.priority ?? 'next']
     if (priority < bestPriority) {
       bestIdx = i
@@ -173,7 +174,9 @@ export function dequeue(filter?: (cmd: QueuedCommand) => boolean): QueuedCommand
     }
   }
 
-  if (bestIdx === -1) return undefined
+  if (bestIdx === -1) {
+    return undefined
+  }
 
   const [dequeued] = commandQueue.splice(bestIdx, 1)
   notifySubscribers()
@@ -213,14 +216,18 @@ export function peek(filter?: (cmd: QueuedCommand) => boolean): QueuedCommand | 
   let bestPriority = Infinity
   for (let i = 0; i < commandQueue.length; i++) {
     const cmd = commandQueue[i]!
-    if (filter && !filter(cmd)) continue
+    if (filter && !filter(cmd)) {
+      continue
+    }
     const priority = PRIORITY_ORDER[cmd.priority ?? 'next']
     if (priority < bestPriority) {
       bestIdx = i
       bestPriority = priority
     }
   }
-  if (bestIdx === -1) return undefined
+  if (bestIdx === -1) {
+    return undefined
+  }
   return commandQueue[bestIdx]
 }
 
@@ -345,8 +352,9 @@ export function isQueuedCommandEditable(cmd: QueuedCommand): boolean {
  * sees what arrived) but stay non-editable (raw XML).
  */
 export function isQueuedCommandVisible(cmd: QueuedCommand): boolean {
-  if ((feature('KAIROS') || feature('KAIROS_CHANNELS')) && cmd.origin?.kind === 'channel')
+  if ((feature('KAIROS') || feature('KAIROS_CHANNELS')) && cmd.origin?.kind === 'channel') {
     return true
+  }
   return isQueuedCommandEditable(cmd)
 }
 

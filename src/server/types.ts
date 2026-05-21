@@ -1,4 +1,4 @@
-import type { ChildProcess } from 'child_process'
+import type { ChildProcess } from 'node:child_process'
 import { z } from 'zod/v4'
 import { lazySchema } from '../utils/lazySchema.js'
 

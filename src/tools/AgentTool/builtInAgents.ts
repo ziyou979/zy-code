@@ -2,11 +2,11 @@ import { feature } from 'bun:bundle'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
-import { ZY_CODE_GUIDE_AGENT } from './built-in/zyCodeGuideAgent.js'
 import { EXPLORE_AGENT } from './built-in/exploreAgent.js'
 import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js'
 import { PLAN_AGENT } from './built-in/planAgent.js'
 import { VERIFICATION_AGENT } from './built-in/verificationAgent.js'
+import { ZY_CODE_GUIDE_AGENT } from './built-in/zyCodeGuideAgent.js'
 import type { AgentDefinition } from './loadAgentsDir.js'
 
 export function areExplorePlanAgentsEnabled(): boolean {
@@ -34,7 +34,7 @@ export function getBuiltInAgents(): AgentDefinition[] {
   if (feature('COORDINATOR_MODE')) {
     if (isEnvTruthy(process.env.ZY_CODE_COORDINATOR_MODE)) {
       /* eslint-disable @typescript-eslint/no-require-imports */
-      // @ts-ignore
+      // @ts-expect-error
       const { getCoordinatorAgents } = require('../../coordinator/workerAgent.js')
       /* eslint-enable @typescript-eslint/no-require-imports */
       return getCoordinatorAgents()

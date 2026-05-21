@@ -3,6 +3,7 @@ import { Box } from '../../ink.js'
 import type { Theme } from '../../utils/theme.js'
 import { PermissionRequestTitle } from './PermissionRequestTitle.js'
 import type { WorkerBadgeProps } from './WorkerBadge.js'
+
 type Props = {
   title: string
   subtitle?: React.ReactNode

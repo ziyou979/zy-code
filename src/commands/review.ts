@@ -1,5 +1,5 @@
-import type { ContentBlock } from '../types/llm.js'
 import type { Command } from '../commands.js'
+import type { ContentBlock } from '../types/llm.js'
 import { isUltrareviewEnabled } from './review/ultrareviewEnabled.js'
 
 // Legal wants the explicit surface name plus a docs link visible before the

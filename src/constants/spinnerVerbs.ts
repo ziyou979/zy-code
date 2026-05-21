@@ -1,5 +1,5 @@
-import { getInitialSettings } from '../utils/settings/settings.js'
 import { getUiLanguage } from '../i18n/index.js'
+import { getInitialSettings } from '../utils/settings/settings.js'
 
 // Chinese spinner verbs — playful, idiomatic "正在XX中" style
 // Not a 1:1 translation of English verbs, but captures the same whimsical spirit

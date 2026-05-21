@@ -1,6 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { ImageSource, ContentBlock, ImageBlock } from '../../types/llm.js'
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import type { QuerySource } from 'src/constants/querySource.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { getContentText } from 'src/utils/messages.js'
@@ -13,6 +12,7 @@ import {
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
 import type { SetToolJSXFn, ToolUseContext } from '../../Tool.js'
+import type { ContentBlock, ImageBlock, ImageSource } from '../../types/llm.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -377,7 +377,7 @@ async function processUserInputBase(
   // known-but-unsafe command (local-jsx UI or terminal-only), short-circuit
   // with a helpful message rather than letting the model see raw "/config".
   let effectiveSkipSlash = skipSlashCommands
-  if (bridgeOrigin && inputString !== null && inputString.startsWith('/')) {
+  if (bridgeOrigin && inputString?.startsWith('/')) {
     const parsed = parseSlashCommand(inputString)
     const cmd = parsed ? findCommand(parsed.commandName, context.options.commands) : undefined
     if (cmd) {

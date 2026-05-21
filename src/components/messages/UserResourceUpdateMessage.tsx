@@ -1,7 +1,7 @@
-import type { TextBlock } from '../../types/llm.js'
-import * as React from 'react'
 import { REFRESH_ARROW } from '../../constants/figures.js'
 import { Box, Text } from '../../ink.js'
+import type { TextBlock } from '../../types/llm.js'
+
 type Props = {
   addMargin: boolean
   param: TextBlock
@@ -55,7 +55,7 @@ function formatUri(uri: string): string {
   }
   // 对于其他 URI，显示完整内容但进行截断
   if (uri.length > 40) {
-    return uri.slice(0, 39) + '\u2026'
+    return `${uri.slice(0, 39)}\u2026`
   }
   return uri
 }

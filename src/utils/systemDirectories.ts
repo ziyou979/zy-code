@@ -1,5 +1,5 @@
-import { homedir } from 'os'
-import { join } from 'path'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 import { logForDebugging } from './debug.js'
 import { getPlatform, type Platform } from './platform.js'
 
@@ -59,8 +59,6 @@ export function getSystemDirectories(options?: SystemDirectoriesOptions): System
         DOWNLOADS: env.XDG_DOWNLOAD_DIR || defaults.DOWNLOADS,
       }
     }
-
-    case 'macos':
     default: {
       // macOS and unknown platforms use standard paths
       if (platform === 'unknown') {

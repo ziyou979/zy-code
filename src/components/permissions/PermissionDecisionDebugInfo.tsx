@@ -1,7 +1,6 @@
 import { feature } from 'bun:bundle'
 import chalk from 'chalk'
 import figures from 'figures'
-import React from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { Ansi, Box, color, Text, useTheme } from '../../ink.js'
 import { useAppState } from '../../state/AppState.js'
@@ -17,6 +16,7 @@ import { permissionRuleValueToString } from '../../utils/permissions/permissionR
 import { detectUnreachableRules } from '../../utils/permissions/shadowedRuleDetection.js'
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
 import { getSettingSourceDisplayNameLowercase } from '../../utils/settings/constants.js'
+
 type PermissionDecisionInfoItemProps = {
   title?: string
   decisionReason: PermissionDecisionReason
@@ -153,7 +153,9 @@ type Props = {
 
 // Helper function to extract directories from permission updates
 function extractDirectories(updates: PermissionUpdate[] | undefined): string[] {
-  if (!updates) return []
+  if (!updates) {
+    return []
+  }
   return updates.flatMap((update) => {
     switch (update.type) {
       case 'addDirectories':
@@ -166,7 +168,9 @@ function extractDirectories(updates: PermissionUpdate[] | undefined): string[] {
 
 // Helper function to extract mode from permission updates
 function extractMode(updates: PermissionUpdate[] | undefined): PermissionMode | undefined {
-  if (!updates) return undefined
+  if (!updates) {
+    return undefined
+  }
   const update = updates.findLast((u) => u.type === 'setMode')
   return update?.type === 'setMode' ? update.mode : undefined
 }

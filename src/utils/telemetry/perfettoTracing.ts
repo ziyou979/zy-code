@@ -23,9 +23,9 @@
  */
 
 import { feature } from 'bun:bundle'
-import { mkdirSync, writeFileSync } from 'fs'
-import { mkdir, writeFile } from 'fs/promises'
-import { dirname, join } from 'path'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { getSessionId } from '../../bootstrap/state.js'
 import { registerCleanup } from '../cleanupRegistry.js'
 import { logForDebugging } from '../debug.js'
@@ -130,7 +130,9 @@ function stringToNumericHash(str: string): number {
  */
 function getProcessIdForAgent(agentId: string): number {
   const existing = agentIdToProcessId.get(agentId)
-  if (existing !== undefined) return existing
+  if (existing !== undefined) {
+    return existing
+  }
 
   processIdCounter++
   agentIdToProcessId.set(agentId, processIdCounter)
@@ -147,7 +149,9 @@ function getCurrentAgentInfo(): AgentInfo {
 
   // Check if we've already registered this agent
   const existing = agentRegistry.get(agentId)
-  if (existing) return existing
+  if (existing) {
+    return existing
+  }
 
   const info: AgentInfo = {
     agentId,
@@ -226,7 +230,9 @@ function buildTraceDocument(): string {
  * is inserted so the gap is visible in ui.perfetto.dev.
  */
 function evictOldestEvents(): void {
-  if (events.length < MAX_EVENTS) return
+  if (events.length < MAX_EVENTS) {
+    return
+  }
   const dropped = events.splice(0, MAX_EVENTS / 2)
   events.unshift({
     name: 'trace_truncated',
@@ -278,7 +284,9 @@ export function initializePerfettoTracing(): void {
         void periodicWrite()
       }, intervalSec * 1000)
       // Don't let the interval keep the process alive on its own
-      if (writeIntervalId.unref) writeIntervalId.unref()
+      if (writeIntervalId.unref) {
+        writeIntervalId.unref()
+      }
       logForDebugging(`[Perfetto] Periodic write enabled, interval: ${intervalSec}s`)
     }
 
@@ -287,7 +295,9 @@ export function initializePerfettoTracing(): void {
       evictStaleSpans()
       evictOldestEvents()
     }, STALE_SPAN_CLEANUP_INTERVAL_MS)
-    if (staleSpanCleanupId.unref) staleSpanCleanupId.unref()
+    if (staleSpanCleanupId.unref) {
+      staleSpanCleanupId.unref()
+    }
 
     // Register cleanup to write final trace on exit
     registerCleanup(async () => {
@@ -321,7 +331,9 @@ export function initializePerfettoTracing(): void {
  * Emit metadata events for a process/agent
  */
 function emitProcessMetadata(agentInfo: AgentInfo): void {
-  if (!isEnabled) return
+  if (!isEnabled) {
+    return
+  }
 
   // Process name
   metadataEvents.push({
@@ -373,7 +385,9 @@ export function isPerfettoTracingEnabled(): boolean {
  * Call this when a subagent/teammate is spawned
  */
 export function registerAgent(agentId: string, agentName: string, parentAgentId?: string): void {
-  if (!isEnabled) return
+  if (!isEnabled) {
+    return
+  }
 
   const info: AgentInfo = {
     agentId,
@@ -393,7 +407,9 @@ export function registerAgent(agentId: string, agentName: string, parentAgentId?
  * Call this when an agent completes, fails, or is aborted to free memory.
  */
 export function unregisterAgent(agentId: string): void {
-  if (!isEnabled) return
+  if (!isEnabled) {
+    return
+  }
   agentRegistry.delete(agentId)
   agentIdToProcessId.delete(agentId)
 }
@@ -408,7 +424,9 @@ export function startLLMRequestPerfettoSpan(args: {
   isSpeculative?: boolean
   querySource?: string
 }): string {
-  if (!isEnabled) return ''
+  if (!isEnabled) {
+    return ''
+  }
 
   const spanId = generateSpanId()
   const agentInfo = getCurrentAgentInfo()
@@ -462,10 +480,14 @@ export function endLLMRequestPerfettoSpan(
     attemptStartTimes?: number[]
   },
 ): void {
-  if (!isEnabled || !spanId) return
+  if (!isEnabled || !spanId) {
+    return
+  }
 
   const pending = pendingSpans.get(spanId)
-  if (!pending) return
+  if (!pending) {
+    return
+  }
 
   const endTime = getTimestamp()
   const duration = endTime - pending.startTime
@@ -657,7 +679,9 @@ export function endLLMRequestPerfettoSpan(
  * Start a tool execution span
  */
 export function startToolPerfettoSpan(toolName: string, args?: Record<string, unknown>): string {
-  if (!isEnabled) return ''
+  if (!isEnabled) {
+    return ''
+  }
 
   const spanId = generateSpanId()
   const agentInfo = getCurrentAgentInfo()
@@ -698,10 +722,14 @@ export function endToolPerfettoSpan(
     resultTokens?: number
   },
 ): void {
-  if (!isEnabled || !spanId) return
+  if (!isEnabled || !spanId) {
+    return
+  }
 
   const pending = pendingSpans.get(spanId)
-  if (!pending) return
+  if (!pending) {
+    return
+  }
 
   const endTime = getTimestamp()
   const duration = endTime - pending.startTime
@@ -732,7 +760,9 @@ export function endToolPerfettoSpan(
  * Start a user input waiting span
  */
 export function startUserInputPerfettoSpan(context?: string): string {
-  if (!isEnabled) return ''
+  if (!isEnabled) {
+    return ''
+  }
 
   const spanId = generateSpanId()
   const agentInfo = getCurrentAgentInfo()
@@ -771,10 +801,14 @@ export function endUserInputPerfettoSpan(
     source?: string
   },
 ): void {
-  if (!isEnabled || !spanId) return
+  if (!isEnabled || !spanId) {
+    return
+  }
 
   const pending = pendingSpans.get(spanId)
-  if (!pending) return
+  if (!pending) {
+    return
+  }
 
   const endTime = getTimestamp()
   const duration = endTime - pending.startTime
@@ -808,7 +842,9 @@ export function emitPerfettoInstant(
   category: string,
   args?: Record<string, unknown>,
 ): void {
-  if (!isEnabled) return
+  if (!isEnabled) {
+    return
+  }
 
   const agentInfo = getCurrentAgentInfo()
 
@@ -827,7 +863,9 @@ export function emitPerfettoInstant(
  * Emit a counter event for tracking metrics over time
  */
 export function emitPerfettoCounter(name: string, values: Record<string, number>): void {
-  if (!isEnabled) return
+  if (!isEnabled) {
+    return
+  }
 
   const agentInfo = getCurrentAgentInfo()
 
@@ -846,7 +884,9 @@ export function emitPerfettoCounter(name: string, values: Record<string, number>
  * Start an interaction span (wraps a full user request cycle)
  */
 export function startInteractionPerfettoSpan(userPrompt?: string): string {
-  if (!isEnabled) return ''
+  if (!isEnabled) {
+    return ''
+  }
 
   const spanId = generateSpanId()
   const agentInfo = getCurrentAgentInfo()
@@ -879,10 +919,14 @@ export function startInteractionPerfettoSpan(userPrompt?: string): string {
  * End an interaction span
  */
 export function endInteractionPerfettoSpan(spanId: string): void {
-  if (!isEnabled || !spanId) return
+  if (!isEnabled || !spanId) {
+    return
+  }
 
   const pending = pendingSpans.get(spanId)
-  if (!pending) return
+  if (!pending) {
+    return
+  }
 
   const endTime = getTimestamp()
   const duration = endTime - pending.startTime
@@ -951,7 +995,9 @@ function closeOpenSpans(): void {
  * (or the final exit write) will retry with a complete snapshot.
  */
 async function periodicWrite(): Promise<void> {
-  if (!isEnabled || !tracePath || traceWritten) return
+  if (!isEnabled || !tracePath || traceWritten) {
+    return
+  }
 
   try {
     await mkdir(dirname(tracePath), { recursive: true })

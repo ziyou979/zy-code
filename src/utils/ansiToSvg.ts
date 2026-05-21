@@ -248,7 +248,9 @@ export function ansiToSvg(ansiText: string, options: AnsiToSvgOptions = {}): str
     svg += `  <text x="${paddingX}" y="${y}" xml:space="preserve">`
 
     for (const span of spans) {
-      if (!span.text) continue
+      if (!span.text) {
+        continue
+      }
 
       const colorStr = `rgb(${span.color.r}, ${span.color.g}, ${span.color.b})`
       const boldClass = span.bold ? ' class="b"' : ''

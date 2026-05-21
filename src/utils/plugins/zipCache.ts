@@ -29,10 +29,10 @@
  *               └── 2.1.3.zip
  */
 
-import { randomBytes } from 'crypto'
-import { chmod, lstat, readdir, readFile, rename, rm, stat, writeFile } from 'fs/promises'
-import { tmpdir } from 'os'
-import { basename, dirname, join } from 'path'
+import { randomBytes } from 'node:crypto'
+import { chmod, lstat, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { basename, dirname, join } from 'node:path'
 import { logForDebugging } from '../debug.js'
 import { parseZipModes, unzipFile } from '../dxt/zip.js'
 import { isEnvTruthy } from '../envUtils.js'
@@ -207,7 +207,7 @@ export async function createZipFromDirectory(sourceDir: string): Promise<Uint8Ar
   const visited = new Set<string>()
   await collectFilesForZip(sourceDir, '', files, visited)
 
-  // @ts-ignore
+  // @ts-expect-error
   const { zipSync } = (await import('fflate')) as any
   const zipData = zipSync(files, { level: 6 })
   logForDebugging(

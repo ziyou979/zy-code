@@ -1,5 +1,4 @@
-import type { ToolResultBlock } from '../../types/llm.js'
-// @ts-ignore TS2724
+// @ts-expect-error TS2724
 import type { StructuredPatchHunk } from 'diff'
 import * as React from 'react'
 import { Suspense, use, useState } from 'react'
@@ -9,9 +8,10 @@ import { extractTag } from 'src/utils/messages.js'
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js'
 import { FileEditToolUpdatedMessage } from '../../components/FileEditToolUpdatedMessage.js'
 import { FilePathLink } from '../../components/FilePathLink.js'
-import { Text } from '../../ink.js'
 import { tSync } from '../../i18n/index.js'
+import { Text } from '../../ink.js'
 import type { Tools } from '../../Tool.js'
+import type { ToolResultBlock } from '../../types/llm.js'
 import type { Message, ProgressMessage } from '../../types/message.js'
 import { adjustHunkLineNumbers, CONTEXT_LINES } from '../../utils/diff.js'
 import { FILE_NOT_FOUND_CWD_NOTE, getDisplayPath } from '../../utils/file.js'

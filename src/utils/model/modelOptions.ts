@@ -1,16 +1,15 @@
 import { getInitialMainLoopModel } from '../../bootstrap/state.js'
-import { getInitialSettings } from '../settings/settings.js'
+import { getGlobalConfig } from '../config.js'
 import { getLocalModelCapability } from '../settings/localModelCapabilities.js'
-import { getAPIProvider } from './providers.js'
-import { isModelAllowed } from './modelAllowlist.js'
+import { getInitialSettings } from '../settings/settings.js'
 import {
   getDefaultMainLoopModelSetting,
   getMarketingNameForModel,
   getUserSpecifiedModelSetting,
-  renderDefaultModelSetting,
   type ModelSetting,
+  renderDefaultModelSetting,
 } from './model.js'
-import { getGlobalConfig } from '../config.js'
+import { isModelAllowed } from './modelAllowlist.js'
 
 export type ModelOption = {
   value: ModelSetting
@@ -35,7 +34,9 @@ export function getDefaultOptionForUser(): ModelOption {
 function getTierOption(tier: string): ModelOption | undefined {
   const settings = getInitialSettings()
   const tierModel = settings?.models?.[tier]
-  if (!tierModel) return undefined
+  if (!tierModel) {
+    return undefined
+  }
 
   const cap = getLocalModelCapability(tierModel)
 
@@ -104,7 +105,9 @@ function getModelOptionsBase(): ModelOption[] {
  */
 function getKnownModelOption(model: string): ModelOption | null {
   const marketingName = getMarketingNameForModel(model)
-  if (!marketingName) return null
+  if (!marketingName) {
+    return null
+  }
   return {
     value: model,
     label: marketingName,

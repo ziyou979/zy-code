@@ -1,5 +1,4 @@
 import figures from 'figures'
-import React from 'react'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'

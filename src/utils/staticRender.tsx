@@ -1,6 +1,6 @@
+import { PassThrough } from 'node:stream'
 import * as React from 'react'
 import { useLayoutEffect } from 'react'
-import { PassThrough } from 'stream'
 import stripAnsi from 'strip-ansi'
 import { render, useApp } from '../ink.js'
 
@@ -34,10 +34,14 @@ const SYNC_END = '\x1B[?2026l'
  */
 function extractFirstFrame(output: string): string {
   const startIndex = output.indexOf(SYNC_START)
-  if (startIndex === -1) return output
+  if (startIndex === -1) {
+    return output
+  }
   const contentStart = startIndex + SYNC_START.length
   const endIndex = output.indexOf(SYNC_END, contentStart)
-  if (endIndex === -1) return output
+  if (endIndex === -1) {
+    return output
+  }
   return output.slice(contentStart, endIndex)
 }
 

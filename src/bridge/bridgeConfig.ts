@@ -12,8 +12,8 @@
  */
 
 import { getOauthConfig } from '../constants/oauth.js'
-import { isInternalBuild } from '../utils/envUtils.js'
 import { getZyAIOAuthTokens } from '../utils/auth.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 
 /** Ant-only dev override: CLAUDE_BRIDGE_OAUTH_TOKEN, else undefined. */
 export function getBridgeTokenOverride(): string | undefined {

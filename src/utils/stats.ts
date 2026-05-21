@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
-import { open } from 'fs/promises'
-import { basename, dirname, join, sep } from 'path'
+import { open } from 'node:fs/promises'
+import { basename, dirname, join, sep } from 'node:path'
 import type { ModelUsage } from 'src/entrypoints/agentSdkTypes.js'
 import type { Entry, TranscriptMessage } from '../types/logs.js'
 import { logForDebugging } from './debug.js'
@@ -181,7 +181,9 @@ async function processSessionFiles(
     )
 
     for (const { sessionFile, entries, error, skipped } of results) {
-      if (skipped) continue
+      if (skipped) {
+        continue
+      }
       if (error || !entries) {
         logForDebugging(`Failed to read session file ${sessionFile}: ${errorMessage(error)}`)
         continue
@@ -198,7 +200,9 @@ async function processSessionFiles(
         }
       }
 
-      if (messages.length === 0) continue
+      if (messages.length === 0) {
+        continue
+      }
 
       // Subagent transcripts mark all messages as sidechain. We still want
       // their token usage counted, but not as separate sessions.
@@ -222,7 +226,9 @@ async function processSessionFiles(
       // Filter out sidechain messages for session metadata (duration, counts).
       // For subagent files, use all messages since they're all sidechain.
       const mainMessages = isSubagentFile ? messages : messages.filter((m) => !m.isSidechain)
-      if (mainMessages.length === 0) continue
+      if (mainMessages.length === 0) {
+        continue
+      }
 
       const firstMessage = mainMessages[0]!
       const lastMessage = mainMessages.at(-1)!
@@ -234,7 +240,7 @@ async function processSessionFiles(
       // have entries missing the timestamp field (e.g. partial/remote writes).
       // new Date(undefined) produces an Invalid Date, and toDateString() would
       // throw RangeError: Invalid Date on .toISOString().
-      if (isNaN(firstTimestamp.getTime()) || isNaN(lastTimestamp.getTime())) {
+      if (Number.isNaN(firstTimestamp.getTime()) || Number.isNaN(lastTimestamp.getTime())) {
         logForDebugging(`Skipping session with invalid timestamp: ${sessionFile}`)
         continue
       }
@@ -242,8 +248,12 @@ async function processSessionFiles(
       const dateKey = toDateString(firstTimestamp)
 
       // Apply date filters
-      if (fromDate && isDateBefore(dateKey, fromDate)) continue
-      if (toDate && isDateBefore(toDate, dateKey)) continue
+      if (fromDate && isDateBefore(dateKey, fromDate)) {
+        continue
+      }
+      if (toDate && isDateBefore(toDate, dateKey)) {
+        continue
+      }
 
       // Track daily activity (use first message date as session date)
       const existing = dailyActivityMap.get(dateKey) || {
@@ -365,7 +375,9 @@ async function getAllSessionFiles(): Promise<string[]> {
   try {
     allEntries = await fs.readdir(projectsDir)
   } catch (e) {
-    if (isENOENT(e)) return []
+    if (isENOENT(e)) {
+      return []
+    }
     throw e
   }
   const projectDirs = allEntries
@@ -740,7 +752,7 @@ function processedStatsToZyCodeStats(stats: ProcessedStats): ZyCodeStats {
     hourEntries.length > 0
       ? parseInt(
           hourEntries.reduce((max, [hour, count]) =>
-            count > parseInt(max[1].toString()) ? [hour, count] : max,
+            count > parseInt(max[1].toString(), 10) ? [hour, count] : max,
           )[0],
           10,
         )
@@ -878,9 +890,13 @@ const SHOT_COUNT_REGEX = /(\d+)-shotted by/
  */
 function extractShotCountFromMessages(messages: TranscriptMessage[]): number | null {
   for (const m of messages) {
-    if (m.type !== 'assistant') continue
+    if (m.type !== 'assistant') {
+      continue
+    }
     const content = m.message?.content
-    if (!Array.isArray(content)) continue
+    if (!Array.isArray(content)) {
+      continue
+    }
     for (const block of content) {
       if (
         block.type !== 'tool_call' ||
@@ -928,15 +944,21 @@ export async function readSessionStartDate(filePath: string): Promise<string | n
     try {
       const buf = Buffer.allocUnsafe(4096)
       const { bytesRead } = await fd.read(buf, 0, buf.length, 0)
-      if (bytesRead === 0) return null
+      if (bytesRead === 0) {
+        return null
+      }
       const head = buf.toString('utf8', 0, bytesRead)
 
       // Only trust complete lines — the 4KB boundary may bisect a JSON entry.
       const lastNewline = head.lastIndexOf('\n')
-      if (lastNewline < 0) return null
+      if (lastNewline < 0) {
+        return null
+      }
 
       for (const line of head.slice(0, lastNewline).split('\n')) {
-        if (!line) continue
+        if (!line) {
+          continue
+        }
         let entry: {
           type?: unknown
           timestamp?: unknown
@@ -947,12 +969,22 @@ export async function readSessionStartDate(filePath: string): Promise<string | n
         } catch {
           continue
         }
-        if (typeof entry.type !== 'string') continue
-        if (!TRANSCRIPT_MESSAGE_TYPES.has(entry.type)) continue
-        if (entry.isSidechain === true) continue
-        if (typeof entry.timestamp !== 'string') return null
+        if (typeof entry.type !== 'string') {
+          continue
+        }
+        if (!TRANSCRIPT_MESSAGE_TYPES.has(entry.type)) {
+          continue
+        }
+        if (entry.isSidechain === true) {
+          continue
+        }
+        if (typeof entry.timestamp !== 'string') {
+          return null
+        }
         const date = new Date(entry.timestamp)
-        if (Number.isNaN(date.getTime())) return null
+        if (Number.isNaN(date.getTime())) {
+          return null
+        }
         return toDateString(date)
       }
       return null

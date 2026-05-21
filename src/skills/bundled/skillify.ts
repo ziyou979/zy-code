@@ -1,15 +1,17 @@
 import { getSessionMemoryContent } from '../../services/SessionMemory/sessionMemoryUtils.js'
 import type { Message } from '../../types/message.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'
 import { registerBundledSkill } from '../bundledSkills.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 
 function extractUserMessages(messages: Message[]): string[] {
   return messages
     .filter((m): m is Extract<typeof m, { type: 'user' }> => m.type === 'user')
     .map((m) => {
       const content = m.message.content
-      if (typeof content === 'string') return content
+      if (typeof content === 'string') {
+        return content
+      }
       return content
         .filter((b): b is Extract<typeof b, { type: 'text' }> => b.type === 'text')
         .map((b) => b.text)

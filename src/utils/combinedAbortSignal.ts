@@ -26,7 +26,9 @@ export function createCombinedAbortSignal(
 
   let timer: ReturnType<typeof setTimeout> | undefined
   const abortCombined = () => {
-    if (timer !== undefined) clearTimeout(timer)
+    if (timer !== undefined) {
+      clearTimeout(timer)
+    }
     combined.abort()
   }
 
@@ -38,7 +40,9 @@ export function createCombinedAbortSignal(
   signalB?.addEventListener('abort', abortCombined)
 
   const cleanup = () => {
-    if (timer !== undefined) clearTimeout(timer)
+    if (timer !== undefined) {
+      clearTimeout(timer)
+    }
     signal?.removeEventListener('abort', abortCombined)
     signalB?.removeEventListener('abort', abortCombined)
   }

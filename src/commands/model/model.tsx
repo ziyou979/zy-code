@@ -17,6 +17,7 @@ import {
 } from '../../utils/model/model.js'
 import { isModelAllowed } from '../../utils/model/modelAllowlist.js'
 import { validateModel } from '../../utils/model/validateModel.js'
+
 function ModelPickerWrapper({ onDone }) {
   const mainLoopModel = useAppState((s) => s.mainLoopModel)
   const mainLoopModelForSession = useAppState((state) => state.mainLoopModelForSession)
@@ -43,7 +44,7 @@ function ModelPickerWrapper({ onDone }) {
     }))
     let message = `Set model to ${chalk.bold(renderModelLabel(model))}`
     if (effort !== undefined) {
-      message = message + ` with ${chalk.bold(effort)} effort`
+      message = `${message} with ${chalk.bold(effort)} effort`
     }
     onDone(message)
   }
@@ -116,7 +117,7 @@ function SetModelAndClose({
         mainLoopModel: modelValue,
         mainLoopModelForSession: null,
       }))
-      let message = `Set model to ${chalk.bold(renderModelLabel(modelValue))}`
+      const message = `Set model to ${chalk.bold(renderModelLabel(modelValue))}`
       onDone(message)
     }
     void handleModelChange()

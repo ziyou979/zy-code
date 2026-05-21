@@ -1,6 +1,5 @@
-import * as React from 'react'
-import { tSync } from 'src/i18n/index.js'
 import { useExitOnCtrlCDWithKeybindings } from 'src/hooks/useExitOnCtrlCDWithKeybindings.js'
+import { tSync } from 'src/i18n/index.js'
 import { useShortcutDisplay } from 'src/keybindings/useShortcutDisplay.js'
 import { builtInCommandNames, type Command, type CommandResultDisplay } from '../../commands.js'
 import { useIsInsideModal } from '../../context/modalContext.js'
@@ -11,6 +10,7 @@ import { Pane } from '../design-system/Pane.js'
 import { Tab, Tabs } from '../design-system/Tabs.js'
 import { Commands } from './Commands.js'
 import { General } from './General.js'
+
 type Props = {
   onClose: (
     result?: string,
@@ -84,7 +84,7 @@ export function Help({ onClose, commands }: Props) {
             <Box marginTop={1}>
               <Text dimColor={true}>
                 {exitState.pending ? (
-                  <>{tSync('help.pressAgainToExit', { keyName: exitState.keyName })}</>
+                  tSync('help.pressAgainToExit', { keyName: exitState.keyName })
                 ) : (
                   <Text italic={true}>
                     {dismissShortcut} {tSync('help.toCancel')}

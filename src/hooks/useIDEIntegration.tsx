@@ -8,6 +8,7 @@ import {
   initializeIdeIntegration,
   isSupportedTerminal,
 } from '../utils/ide.js'
+
 type UseIDEIntegrationProps = {
   autoConnectIdeFlag?: boolean
   ideToInstallExtension: IdeType | null

@@ -2,15 +2,16 @@ import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { useSearchInput } from '../../hooks/useSearchInput.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { tSync } from '../../i18n/index.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { clamp } from '../../ink/layout/geometry.js'
 import { Box, Text, useTerminalFocus } from '../../ink.js'
-import { tSync } from '../../i18n/index.js'
 import { SearchBox } from '../SearchBox.js'
 import { Byline } from './Byline.js'
 import { KeyboardShortcutHint } from './KeyboardShortcutHint.js'
 import { ListItem } from './ListItem.js'
 import { Pane } from './Pane.js'
+
 type PickerAction<T> = {
   /** Hint label shown in the byline, e.g. "mention" → "Tab to mention". */
   action: string
@@ -134,14 +135,18 @@ export function FuzzyPicker<T>({
       e.preventDefault()
       e.stopImmediatePropagation()
       const selected = items[focusedIndex]
-      if (selected) onSelect(selected)
+      if (selected) {
+        onSelect(selected)
+      }
       return
     }
     if (e.key === 'tab') {
       e.preventDefault()
       e.stopImmediatePropagation()
       const selected = items[focusedIndex]
-      if (!selected) return
+      if (!selected) {
+        return
+      }
       const tabAction = e.shift ? (onShiftTab ?? onTab) : onTab
       if (tabAction) {
         tabAction.handler(selected)
@@ -154,7 +159,7 @@ export function FuzzyPicker<T>({
     onQueryChange(query)
     setFocusedIndex(0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query])
+  }, [query, onQueryChange])
   useEffect(() => {
     setFocusedIndex((i) => clamp(i, 0, items.length - 1))
   }, [items.length])
@@ -162,7 +167,7 @@ export function FuzzyPicker<T>({
   useEffect(() => {
     onFocus?.(focused)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focused])
+  }, [focused, onFocus])
   const windowStart = clamp(focusedIndex - visibleCount + 1, 0, items.length - visibleCount)
   const visible = items.slice(windowStart, windowStart + visibleCount)
   const emptyText = typeof emptyMessage === 'function' ? emptyMessage(query) : emptyMessage

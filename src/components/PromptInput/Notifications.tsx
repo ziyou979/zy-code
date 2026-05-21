@@ -10,10 +10,11 @@ import { useIdeConnectionStatus } from '../../hooks/useIdeConnectionStatus.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useVoiceEnabled } from '../../hooks/useVoiceEnabled.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
-import { useZyAiLimits } from '../../services/zyAiLimitsHook.js'
 import { calculateTokenWarningState } from '../../services/compact/autoCompact.js'
 import type { MCPServerConnection } from '../../services/mcp/types.js'
+import { useZyAiLimits } from '../../services/zyAiLimitsHook.js'
 import type { Message } from '../../types/message.js'
 import {
   getApiKeyHelperElapsedMs,
@@ -35,7 +36,6 @@ import { MemoryUsageIndicator } from '../MemoryUsageIndicator.js'
 import { SentryErrorBoundary } from '../SentryErrorBoundary.js'
 import { TokenWarning } from '../TokenWarning.js'
 import { SandboxPromptFooterHint } from './SandboxPromptFooterHint.js'
-import { tSync } from '../../i18n/index.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const VoiceIndicator: typeof import('./VoiceIndicator.js').VoiceIndicator = feature('VOICE_MODE')
@@ -206,7 +206,9 @@ function NotificationContent({
   // effect is a no-op for them (no interval allocated).
   const [apiKeyHelperSlow, setApiKeyHelperSlow] = useState<string | null>(null)
   useEffect(() => {
-    if (!getConfiguredApiKeyHelper()) return
+    if (!getConfiguredApiKeyHelper()) {
+      return
+    }
     const interval = setInterval(
       (setSlow: React.Dispatch<React.SetStateAction<string | null>>) => {
         const ms = getApiKeyHelperElapsedMs()

@@ -1,4 +1,4 @@
-import { open, readFile, stat } from 'fs/promises'
+import { open, readFile, stat } from 'node:fs/promises'
 import { applyEdits, modify, parse as parseJsonc } from 'jsonc-parser/lib/esm/main.js'
 import { stripBOM } from './jsonRead.js'
 import { logError } from './log.js'
@@ -40,7 +40,9 @@ const parseJSONCached = memoizeWithLRU(parseJSONUncached, (json) => json, 50)
 // Important: memoized for performance (LRU-bounded to 50 entries, small inputs only).
 export const safeParseJSON = Object.assign(
   function safeParseJSON(json: string | null | undefined, shouldLogError: boolean = true): unknown {
-    if (!json) return null
+    if (!json) {
+      return null
+    }
     const result =
       json.length > PARSE_CACHE_MAX_KEY_BYTES
         ? parseJSONUncached(json, shouldLogError)
@@ -85,10 +87,14 @@ type BunJSONLParseChunk = (
 ) => { values: unknown[]; error: null | Error; read: number; done: boolean }
 
 const bunJSONLParse: BunJSONLParseChunk | false = (() => {
-  if (typeof Bun === 'undefined') return false
+  if (typeof Bun === 'undefined') {
+    return false
+  }
   const b = Bun as Record<string, unknown>
   const jsonl = b.JSONL as Record<string, unknown> | undefined
-  if (!jsonl?.parseChunk) return false
+  if (!jsonl?.parseChunk) {
+    return false
+  }
   return jsonl.parseChunk as BunJSONLParseChunk
 })()
 
@@ -105,13 +111,17 @@ function parseJSONLBun<T>(data: string | Buffer): T[] {
   while (offset < len) {
     const newlineIndex =
       typeof data === 'string' ? data.indexOf('\n', offset) : data.indexOf(0x0a, offset)
-    if (newlineIndex === -1) break
+    if (newlineIndex === -1) {
+      break
+    }
     offset = newlineIndex + 1
     const next = parse(data, offset)
     if (next.values.length > 0) {
       values = values.concat(next.values as T[])
     }
-    if (!next.error || next.done || next.read >= len) break
+    if (!next.error || next.done || next.read >= len) {
+      break
+    }
     offset = next.read
   }
   return values
@@ -129,11 +139,15 @@ function parseJSONLBuffer<T>(buf: Buffer): T[] {
   const results: T[] = []
   while (start < bufLen) {
     let end = buf.indexOf(0x0a, start)
-    if (end === -1) end = bufLen
+    if (end === -1) {
+      end = bufLen
+    }
 
     const line = buf.toString('utf8', start, end).trim()
     start = end + 1
-    if (!line) continue
+    if (!line) {
+      continue
+    }
     try {
       results.push(JSON.parse(line) as T)
     } catch {
@@ -151,11 +165,15 @@ function parseJSONLString<T>(data: string): T[] {
   const results: T[] = []
   while (start < len) {
     let end = stripped.indexOf('\n', start)
-    if (end === -1) end = len
+    if (end === -1) {
+      end = len
+    }
 
     const line = stripped.substring(start, end).trim()
     start = end + 1
-    if (!line) continue
+    if (!line) {
+      continue
+    }
     try {
       results.push(JSON.parse(line) as T)
     } catch {
@@ -205,7 +223,9 @@ export async function readJSONLFile<T>(filePath: string): Promise<T[]> {
       MAX_JSONL_READ_BYTES - totalRead,
       fileOffset + totalRead,
     )
-    if (bytesRead === 0) break
+    if (bytesRead === 0) {
+      break
+    }
     totalRead += bytesRead
   }
   // Skip the first partial line

@@ -1,11 +1,11 @@
-import { type ChildProcess, spawn } from 'child_process'
-import { createWriteStream, type WriteStream } from 'fs'
-import { tmpdir } from 'os'
-import { dirname, join } from 'path'
-import { createInterface } from 'readline'
+import { type ChildProcess, spawn } from 'node:child_process'
+import { createWriteStream, type WriteStream } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
+import { createInterface } from 'node:readline'
+import { isInternalBuild } from '../utils/envUtils.js'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
 import { debugTruncate } from './debugUtils.js'
-import { isInternalBuild } from '../utils/envUtils.js'
 import type {
   SessionActivity,
   SessionDoneStatus,
@@ -124,12 +124,18 @@ function extractActivities(
   switch (msg.type) {
     case 'assistant': {
       const message = msg.message as Record<string, unknown> | undefined
-      if (!message) break
+      if (!message) {
+        break
+      }
       const content = message.content
-      if (!Array.isArray(content)) break
+      if (!Array.isArray(content)) {
+        break
+      }
 
       for (const block of content) {
-        if (!block || typeof block !== 'object') continue
+        if (!block || typeof block !== 'object') {
+          continue
+        }
         const b = block as Record<string, unknown>
 
         if (b.type === 'tool_call') {
@@ -198,7 +204,9 @@ function extractActivities(
 function extractUserMessageText(msg: Record<string, unknown>): string | undefined {
   // Skip tool-result user messages (wrapped subagent results) and synthetic
   // caveat messages — neither is human-authored.
-  if (msg.parent_tool_use_id != null || msg.isSynthetic || msg.isReplay) return undefined
+  if (msg.parent_tool_use_id != null || msg.isSynthetic || msg.isReplay) {
+    return undefined
+  }
 
   const message = msg.message as Record<string, unknown> | undefined
   const content = message?.content
@@ -228,7 +236,9 @@ function inputPreview(input: Record<string, unknown>): string {
     if (typeof val === 'string') {
       parts.push(`${key}="${val.slice(0, 100)}"`)
     }
-    if (parts.length >= 3) break
+    if (parts.length >= 3) {
+      break
+    }
   }
   return parts.join(' ')
 }
@@ -334,7 +344,7 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
         stderrRl.on('line', (line) => {
           // Forward stderr to bridge's stderr in verbose mode
           if (deps.verbose) {
-            process.stderr.write(line + '\n')
+            process.stderr.write(`${line}\n`)
           }
           // Ring buffer of last N lines
           if (lastStderr.length >= MAX_STDERR_LINES) {
@@ -350,7 +360,7 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
         rl.on('line', (line) => {
           // Write raw NDJSON to transcript file
           if (transcriptStream) {
-            transcriptStream.write(line + '\n')
+            transcriptStream.write(`${line}\n`)
           }
 
           // Log all messages flowing from the child CLI to the bridge
@@ -358,7 +368,7 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
 
           // In verbose mode, forward raw output to stderr
           if (deps.verbose) {
-            process.stderr.write(line + '\n')
+            process.stderr.write(`${line}\n`)
           }
 
           const extracted = extractActivities(line, opts.sessionId, deps.onDebug)
@@ -491,10 +501,10 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
           // setting process.env directly, so getSessionIngressAuthToken()
           // picks up the new token on the next refreshHeaders call.
           handle.writeStdin(
-            jsonStringify({
+            `${jsonStringify({
               type: 'update_environment_variables',
               variables: { ZY_CODE_SESSION_ACCESS_TOKEN: token },
-            }) + '\n',
+            })}\n`,
           )
           deps.onDebug(
             `[bridge:session] Sent token refresh via stdin for sessionId=${opts.sessionId}`,

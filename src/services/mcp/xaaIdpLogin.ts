@@ -6,15 +6,15 @@
  * MCP server auths. The id_token is cached in the keychain and reused until expiry.
  */
 
+import { randomBytes } from 'node:crypto'
+import { createServer, type Server } from 'node:http'
+import { parse } from 'node:url'
 import { exchangeAuthorization, startAuthorization } from '@modelcontextprotocol/sdk/client/auth.js'
 import {
   type OAuthClientInformation,
   type OpenIdProviderDiscoveryMetadata,
   OpenIdProviderDiscoveryMetadataSchema,
 } from '@modelcontextprotocol/sdk/shared/auth.js'
-import { randomBytes } from 'crypto'
-import { createServer, type Server } from 'http'
-import { parse } from 'url'
 import xss from 'xss'
 import { openBrowser } from '../../utils/browser.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
@@ -97,9 +97,13 @@ export function getCachedIdpIdToken(idpIssuer: string): string | undefined {
   const storage = getSecureStorage()
   const data = (storage as any).read()
   const entry = data?.mcpXaaIdp?.[issuerKey(idpIssuer)]
-  if (!entry) return undefined
+  if (!entry) {
+    return undefined
+  }
   const remainingMs = entry.expiresAt - Date.now()
-  if (remainingMs <= ID_TOKEN_EXPIRY_BUFFER_S * 1000) return undefined
+  if (remainingMs <= ID_TOKEN_EXPIRY_BUFFER_S * 1000) {
+    return undefined
+  }
   return entry.idToken
 }
 
@@ -134,7 +138,9 @@ export function clearIdpIdToken(idpIssuer: string): void {
   const storage = getSecureStorage()
   const existing = (storage as any).read()
   const key = issuerKey(idpIssuer)
-  if (!existing?.mcpXaaIdp?.[key]) return
+  if (!existing?.mcpXaaIdp?.[key]) {
+    return
+  }
   delete (existing as any).mcpXaaIdp[key]
   ;(storage as any).update(existing)
 }
@@ -178,7 +184,9 @@ export function clearIdpClientSecret(idpIssuer: string): void {
   const storage = getSecureStorage()
   const existing = (storage as any).read()
   const key = issuerKey(idpIssuer)
-  if (!existing?.mcpXaaIdpConfig?.[key]) return
+  if (!existing?.mcpXaaIdpConfig?.[key]) {
+    return
+  }
   delete (existing as any).mcpXaaIdpConfig[key]
   ;(storage as any).update(existing)
 }
@@ -190,7 +198,7 @@ export function clearIdpClientSecret(idpIssuer: string): void {
 // auth servers, and Keycloak realms. Trailing-slash base + relative path is
 // the fix. Exported because auth.ts needs the same discovery.
 export async function discoverOidc(idpIssuer: string): Promise<OpenIdProviderDiscoveryMetadata> {
-  const base = idpIssuer.endsWith('/') ? idpIssuer : idpIssuer + '/'
+  const base = idpIssuer.endsWith('/') ? idpIssuer : `${idpIssuer}/`
   const url = new URL('.well-known/openid-configuration', base)
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
   const res = await fetch(url, {
@@ -235,7 +243,9 @@ export async function discoverOidc(idpIssuer: string): Promise<OpenIdProviderDis
  */
 function jwtExp(jwt: string): number | undefined {
   const parts = jwt.split('.')
-  if (parts.length !== 3) return undefined
+  if (parts.length !== 3) {
+    return undefined
+  }
   try {
     const payload = jsonParse(Buffer.from(parts[1]!, 'base64url').toString('utf-8')) as {
       exp?: number
@@ -280,13 +290,17 @@ function waitForCallback(
   return new Promise<string>((resolve, reject) => {
     let resolved = false
     const resolveOnce = (v: string) => {
-      if (resolved) return
+      if (resolved) {
+        return
+      }
       resolved = true
       cleanup()
       resolve(v)
     }
     const rejectOnce = (e: Error) => {
-      if (resolved) return
+      if (resolved) {
+        return
+      }
       resolved = true
       cleanup()
       reject(e)

@@ -28,9 +28,15 @@ export type Option = {
 }
 
 export async function loadFigSpec(command: string): Promise<CommandSpec | null> {
-  if (!command || command.includes('/') || command.includes('\\')) return null
-  if (command.includes('..')) return null
-  if (command.startsWith('-') && command !== '-') return null
+  if (!command || command.includes('/') || command.includes('\\')) {
+    return null
+  }
+  if (command.includes('..')) {
+    return null
+  }
+  if (command.startsWith('-') && command !== '-') {
+    return null
+  }
 
   try {
     const module = await import(`@withfig/autocomplete/build/${command}.js`)

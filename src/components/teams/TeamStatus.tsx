@@ -1,6 +1,6 @@
-import * as React from 'react'
 import { Text } from '../../ink.js'
 import { useAppState } from '../../state/AppState.js'
+
 type Props = {
   teamsSelected: boolean
   showHint: boolean

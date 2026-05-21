@@ -3,14 +3,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRegisterOverlay } from '../context/overlayContext.js'
 import { getTimestampedHistory, type TimestampedHistoryEntry } from '../history.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
+import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { wrapAnsi } from '../ink/wrapAnsi.js'
 import { Box, Text } from '../ink.js'
-import { tSync } from '../i18n/index.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { HistoryEntry } from '../utils/config.js'
 import { formatRelativeTimeAgo, truncateToWidth } from '../utils/format.js'
 import { FuzzyPicker } from './design-system/FuzzyPicker.js'
+
 type Props = {
   initialQuery?: string
   onSelect: (entry: HistoryEntry) => void
@@ -25,9 +26,9 @@ type Item = {
   firstLine: string
   age: string
 }
-// @ts-ignore
+// @ts-expect-error
 export function HistorySearchDialog({ initialQuery, onSelect, onCancel }: Props): React.ReactNode {
-  // @ts-ignore
+  // @ts-expect-error
   useRegisterOverlay('history-search')
   const { columns } = useTerminalSize()
   const [items, setItems] = useState<Item[] | null>(null)
@@ -53,16 +54,22 @@ export function HistorySearchDialog({ initialQuery, onSelect, onCancel }: Props)
           age: age + ' '.repeat(Math.max(0, AGE_WIDTH - stringWidth(age))),
         })
       }
-      if (!cancelled) setItems(loaded)
+      if (!cancelled) {
+        setItems(loaded)
+      }
     })()
     return () => {
       cancelled = true
     }
   }, [])
   const filtered = useMemo(() => {
-    if (!items) return []
+    if (!items) {
+      return []
+    }
     const q = query.trim().toLowerCase()
-    if (!q) return items
+    if (!q) {
+      return items
+    }
     const exact: Item[] = []
     const fuzzy: Item[] = []
     for (const item of items) {
@@ -147,7 +154,9 @@ export function HistorySearchDialog({ initialQuery, onSelect, onCancel }: Props)
 function isSubsequence(text: string, query: string): boolean {
   let j = 0
   for (let i = 0; i < text.length && j < query.length; i++) {
-    if (text[i] === query[j]) j++
+    if (text[i] === query[j]) {
+      j++
+    }
   }
   return j === query.length
 }

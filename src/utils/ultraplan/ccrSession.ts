@@ -4,9 +4,9 @@
 // Plan mode is set via set_permission_mode control_request in
 // teleportToRemote's CreateSession events array.
 
-import type { ToolResultBlock, ToolCallBlock } from '../../types/llm.js'
 import type { SDKMessage } from '../../entrypoints/agentSdkTypes.js'
 import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
+import type { ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
 import { logForDebugging } from '../debug.js'
 import { sleep } from '../sleep.js'
 import { isTransientNetworkError } from '../teleport/api.js'
@@ -96,7 +96,9 @@ export class ExitPlanModeScanner {
     for (const m of newEvents) {
       if (m.type === 'assistant') {
         for (const block of (m.message as any).content) {
-          if (block.type !== 'tool_call') continue
+          if (block.type !== 'tool_call') {
+            continue
+          }
           const tu = block as ToolCallBlock
           if (tu.name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
             this.exitPlanCalls.push(tu.id)
@@ -104,7 +106,9 @@ export class ExitPlanModeScanner {
         }
       } else if (m.type === 'user') {
         const content = (m.message as any).content
-        if (!Array.isArray(content)) continue
+        if (!Array.isArray(content)) {
+          continue
+        }
         for (const block of content) {
           if (block.type === 'tool_result') {
             this.results.set(block.toolCallId, block)
@@ -135,7 +139,9 @@ export class ExitPlanModeScanner {
     if (shouldScan) {
       for (let i = this.exitPlanCalls.length - 1; i >= 0; i--) {
         const id = this.exitPlanCalls[i]!
-        if (this.rejectedIds.has(id)) continue
+        if (this.rejectedIds.has(id)) {
+          continue
+        }
         const tr = this.results.get(id)
         if (!tr) {
           found = { kind: 'pending' }
@@ -150,7 +156,9 @@ export class ExitPlanModeScanner {
         }
         break
       }
-      if (found?.kind === 'approved' || found?.kind === 'teleport') return found
+      if (found?.kind === 'approved' || found?.kind === 'teleport') {
+        return found
+      }
     }
 
     // Bookkeeping before the terminated check — a batch can contain BOTH a
@@ -311,7 +319,9 @@ function extractTeleportPlan(content: ToolResultBlock['content']): string | null
   const text = contentToText(content)
   const marker = `${ULTRAPLAN_TELEPORT_SENTINEL}\n`
   const idx = text.indexOf(marker)
-  if (idx === -1) return null
+  if (idx === -1) {
+    return null
+  }
   return text.slice(idx + marker.length).trimEnd()
 }
 

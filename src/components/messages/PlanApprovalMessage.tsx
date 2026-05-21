@@ -1,7 +1,7 @@
 import * as React from 'react'
+import { tSync } from 'src/i18n/index.js'
 import { Markdown } from '../../components/Markdown.js'
 import { Box, Text } from '../../ink.js'
-import { tSync } from 'src/i18n/index.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import {
   type IdleNotificationMessage,
@@ -13,6 +13,7 @@ import {
 } from '../../utils/teammateMailbox.js'
 import { getShutdownMessageSummary } from './ShutdownMessage.js'
 import { getTaskAssignmentSummary } from './TaskAssignmentMessage.js'
+
 type PlanApprovalRequestProps = {
   request: PlanApprovalRequestMessage
 }

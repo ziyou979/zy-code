@@ -16,14 +16,14 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
   logEvent,
 } from '../../services/analytics/index.js'
-import {
-  type ZyCodeHint,
-  hasShownHintThisSession,
-  setPendingHint,
-  // @ts-ignore
-} from '../ZyCodeHints.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config.js'
 import { logForDebugging } from '../debug.js'
+import {
+  hasShownHintThisSession,
+  setPendingHint,
+  type ZyCodeHint,
+  // @ts-expect-error
+} from '../ZyCodeHints.js'
 import { isPluginInstalled } from './installedPluginsManager.js'
 import { getPluginById } from './marketplaceManager.js'
 import { isOfficialMarketplaceName, parsePluginIdentifier } from './pluginIdentifier.js'
@@ -61,26 +61,46 @@ export type PluginHintRecommendation = {
  * later in resolvePluginHint (hook side).
  */
 export function maybeRecordPluginHint(hint: ZyCodeHint): void {
-  if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_lapis_finch', false)) return
-  if (hasShownHintThisSession()) return
+  if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_lapis_finch', false)) {
+    return
+  }
+  if (hasShownHintThisSession()) {
+    return
+  }
 
   const state = getGlobalConfig().ZyCodeHints
-  if (state?.disabled) return
+  if (state?.disabled) {
+    return
+  }
 
   const shown = state?.plugin ?? []
-  if (shown.length >= MAX_SHOWN_PLUGINS) return
+  if (shown.length >= MAX_SHOWN_PLUGINS) {
+    return
+  }
 
   const pluginId = hint.value
   const { name, marketplace } = parsePluginIdentifier(pluginId)
-  if (!name || !marketplace) return
-  if (!isOfficialMarketplaceName(marketplace)) return
-  if (shown.includes(pluginId)) return
-  if (isPluginInstalled(pluginId)) return
-  if (isPluginBlockedByPolicy(pluginId)) return
+  if (!name || !marketplace) {
+    return
+  }
+  if (!isOfficialMarketplaceName(marketplace)) {
+    return
+  }
+  if (shown.includes(pluginId)) {
+    return
+  }
+  if (isPluginInstalled(pluginId)) {
+    return
+  }
+  if (isPluginBlockedByPolicy(pluginId)) {
+    return
+  }
 
   // Bound repeat lookups on the same slug — a CLI that emits on every
   // invocation shouldn't trigger N resolve cycles for the same plugin.
-  if (triedThisSession.has(pluginId)) return
+  if (triedThisSession.has(pluginId)) {
+    return
+  }
   triedThisSession.add(pluginId)
 
   setPendingHint(hint)
@@ -136,7 +156,9 @@ export async function resolvePluginHint(
 export function markHintPluginShown(pluginId: string): void {
   saveGlobalConfig((current) => {
     const existing = current.ZyCodeHints?.plugin ?? []
-    if (existing.includes(pluginId)) return current
+    if (existing.includes(pluginId)) {
+      return current
+    }
     return {
       ...current,
       ZyCodeHints: {
@@ -150,7 +172,9 @@ export function markHintPluginShown(pluginId: string): void {
 /** Called when the user picks "don't show plugin installation hints again". */
 export function disableHintRecommendations(): void {
   saveGlobalConfig((current) => {
-    if (current.ZyCodeHints?.disabled) return current
+    if (current.ZyCodeHints?.disabled) {
+      return current
+    }
     return {
       ...current,
       ZyCodeHints: { ...current.ZyCodeHints, disabled: true },

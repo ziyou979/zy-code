@@ -36,7 +36,7 @@ export function debugTruncate(s: string): string {
   if (flat.length <= DEBUG_MSG_LIMIT) {
     return flat
   }
-  return flat.slice(0, DEBUG_MSG_LIMIT) + `... (${flat.length} chars)`
+  return `${flat.slice(0, DEBUG_MSG_LIMIT)}... (${flat.length} chars)`
 }
 
 /** Truncate a JSON-serializable value for debug logging. */
@@ -46,7 +46,7 @@ export function debugBody(data: unknown): string {
   if (s.length <= DEBUG_MSG_LIMIT) {
     return s
   }
-  return s.slice(0, DEBUG_MSG_LIMIT) + `... (${s.length} chars)`
+  return `${s.slice(0, DEBUG_MSG_LIMIT)}... (${s.length} chars)`
 }
 
 /**
@@ -99,7 +99,9 @@ export function extractHttpStatus(err: unknown): number | undefined {
  * Checks `data.message` first, then `data.error.message`.
  */
 export function extractErrorDetail(data: unknown): string | undefined {
-  if (!data || typeof data !== 'object') return undefined
+  if (!data || typeof data !== 'object') {
+    return undefined
+  }
   if ('message' in data && typeof data.message === 'string') {
     return data.message
   }

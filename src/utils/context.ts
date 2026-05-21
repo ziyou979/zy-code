@@ -3,7 +3,6 @@ import { getModelCapability } from './model/modelCapabilities.js'
 import { getInitialSettings } from './settings/settings.js'
 import {
   getLocalMaxOutputTokens,
-  getLocalMaxInputTokens,
   getLocalContextWindow,
   getLocalMaxThinkingTokens,
 } from './settings/localModelCapabilities.js'
@@ -15,7 +14,7 @@ export const MODEL_CONTEXT_WINDOW_DEFAULT = 200_000
 export const COMPACT_MAX_OUTPUT_TOKENS = 20_000
 
 // 通用默认值（当模型未配置 maxOutputTokens 时）
-const MAX_OUTPUT_TOKENS_DEFAULT = 32_000
+const _MAX_OUTPUT_TOKENS_DEFAULT = 32_000
 const MAX_OUTPUT_TOKENS_UPPER_LIMIT = 64_000
 
 // 默认 max output token 计算公式中的默认参数
@@ -128,6 +127,8 @@ export function getModelMaxOutputTokens(model: string): {
  */
 export function getMaxThinkingTokensForModel(model: string): number {
   const localThinkingTokens = getLocalMaxThinkingTokens(model)
-  if (Number.isFinite(localThinkingTokens)) return localThinkingTokens
+  if (Number.isFinite(localThinkingTokens)) {
+    return localThinkingTokens
+  }
   return getModelMaxOutputTokens(model).upperLimit - 1
 }

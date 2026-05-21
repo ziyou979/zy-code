@@ -1,19 +1,6 @@
-/**
- * HooksConfigMenu is a read-only browser for configured hooks.
- *
- * Users can drill into each hook event, see configured matchers and hooks
- * (of any type: command, prompt, agent, http), and view individual hook
- * details. To add or modify hooks, users should edit settings.json directly
- * or ask Zy — the menu directs them there.
- *
- * The menu is read-only because the old editing UI only supported
- * command-type hooks and duplicating the settings.json editing surface
- * in-menu for all four types would be a maintenance burden.
- */
-import * as React from 'react'
 import { useState } from 'react'
-import { tSync } from 'src/i18n/index.js'
 import type { HookEvent } from 'src/entrypoints/agentSdkTypes'
+import { tSync } from 'src/i18n/index.js'
 import { useAppState, useAppStateStore } from 'src/state/AppState.js'
 import type { CommandResultDisplay } from '../../commands.js'
 import { useSettingsChange } from '../../hooks/useSettingsChange.js'
@@ -34,6 +21,7 @@ import { SelectEventMode } from './SelectEventMode.js'
 import { SelectHookMode } from './SelectHookMode.js'
 import { SelectMatcherMode } from './SelectMatcherMode.js'
 import { ViewHookMode } from './ViewHookMode.js'
+
 type Props = {
   toolNames: string[]
   onExit: (
@@ -97,7 +85,7 @@ export function HooksConfigMenu({ toolNames, onExit }: Props) {
     hooksByEventAndMatcher,
     selectedEvent,
   )
-  const hooksForSelectedMatcher = getHooksForMatcher(
+  const _hooksForSelectedMatcher = getHooksForMatcher(
     hooksByEventAndMatcher,
     selectedEvent,
     selectedMatcher,

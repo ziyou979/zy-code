@@ -40,7 +40,9 @@ function StaticKeybindingProvider({ children }: { children: React.ReactNode }): 
 // NormalizedMessages — 1:1 with block count. String content = 1 block.
 // AttachmentMessage etc. have no .message and normalize to ≤1.
 function normalizedUpperBound(m: Message): number {
-  if (!('message' in m)) return 1
+  if (!('message' in m)) {
+    return 1
+  }
   const c = (m.message as any).content
   return Array.isArray(c) ? c.length : 1
 }
@@ -104,10 +106,14 @@ export async function streamRenderedMessages(
   // Ceiling is the exact normalize output count + chunkSize so the loop
   // always reaches the empty slice where break fires (collapse only shrinks).
   let ceiling = chunkSize
-  for (const m of messages) ceiling += normalizedUpperBound(m)
+  for (const m of messages) {
+    ceiling += normalizedUpperBound(m)
+  }
   for (let offset = 0; offset < ceiling; offset += chunkSize) {
     const ansi = await renderChunk([offset, offset + chunkSize])
-    if (stripAnsi(ansi).trim() === '') break
+    if (stripAnsi(ansi).trim() === '') {
+      break
+    }
     await sink(ansi)
     onProgress?.(offset + chunkSize)
   }

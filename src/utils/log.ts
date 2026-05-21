@@ -1,15 +1,14 @@
 import { feature } from 'bun:bundle'
-import type { CreateParams } from '../types/llm.js'
-import { readdir, readFile, stat } from 'fs/promises'
+import { readdir, readFile, stat } from 'node:fs/promises'
+import { join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { join } from 'path'
 import type { QuerySource } from 'src/constants/querySource.js'
 import { setLastAPIRequest, setLastAPIRequestMessages } from '../bootstrap/state.js'
 import { TICK_TAG } from '../constants/xml.js'
+import type { CreateParams } from '../types/llm.js'
 import { type LogOption, type SerializedMessage, sortLogs } from '../types/logs.js'
 import { CACHE_PATHS } from './cachePaths.js'
 import { stripDisplayTags, stripDisplayTagsAllowEmpty } from './displayTags.js'
-import { isEnvTruthy } from './envUtils.js'
 import { isInternalBuild } from './envUtils.js'
 import { toError } from './errors.js'
 import { isEssentialTrafficOnly } from './privacyLevel.js'
@@ -208,7 +207,7 @@ export async function getErrorLogByIndex(index: number): Promise<LogOption | nul
 async function loadLogList(path: string): Promise<LogOption[]> {
   let files: Awaited<ReturnType<typeof readdir>>
   try {
-    // @ts-ignore
+    // @ts-expect-error
     files = await readdir(path, { withFileTypes: true })
   } catch {
     logError(new Error(`No logs found at ${path}`))
@@ -308,7 +307,7 @@ export function logMCPDebug(serverName: string, message: string): void {
 export function captureAPIRequest(params: CreateParams, querySource?: QuerySource): void {
   // startsWith, not exact match — users with non-default output styles get
   // variants like 'repl_main_thread:outputStyle:Explanatory' (querySource.ts).
-  if (!querySource || !querySource.startsWith('repl_main_thread')) {
+  if (!querySource?.startsWith('repl_main_thread')) {
     return
   }
 

@@ -1,9 +1,9 @@
 import { feature } from 'bun:bundle'
-import { statSync } from 'fs'
-import { lstat, readdir, readFile, realpath, stat } from 'fs/promises'
+import { statSync } from 'node:fs'
+import { lstat, readdir, readFile, realpath, stat } from 'node:fs/promises'
+import { homedir } from 'node:os'
+import { dirname, join, resolve, sep } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { homedir } from 'os'
-import { dirname, join, resolve, sep } from 'path'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -59,7 +59,7 @@ export function extractDescriptionFromMarkdown(
       const text = headerMatch?.[1] ?? trimmed
 
       // Return the text, limited to reasonable length
-      return text.length > 100 ? text.substring(0, 97) + '...' : text
+      return text.length > 100 ? `${text.substring(0, 97)}...` : text
     }
   }
   return defaultDescription
@@ -243,7 +243,9 @@ export function getProjectDirsUpToHome(subdir: ZyConfigDirectory, cwd: string): 
       statSync(ZySubdir)
       dirs.push(ZySubdir)
     } catch (e: unknown) {
-      if (!isFsInaccessible(e)) throw e
+      if (!isFsInaccessible(e)) {
+        throw e
+      }
     }
 
     // Stop after processing the git root directory - this prevents commands from parent
@@ -273,7 +275,7 @@ export function getProjectDirsUpToHome(subdir: ZyConfigDirectory, cwd: string): 
  * @returns Array of parsed markdown files with metadata
  */
 export const loadMarkdownFilesForSubdir = memoize(
-  async function (subdir: ZyConfigDirectory, cwd: string): Promise<MarkdownFile[]> {
+  async (subdir: ZyConfigDirectory, cwd: string): Promise<MarkdownFile[]> => {
     const searchStartTime = Date.now()
     const userDir = join(getZyConfigHomeDir(), subdir)
     const managedDir = join(getManagedFilePath(), '.zy', subdir)
@@ -529,7 +531,9 @@ async function loadMarkdownFiles(dir: string): Promise<
     // Handle missing/inaccessible dir directly instead of pre-checking
     // existence (TOCTOU). findMarkdownFilesNative already catches internally;
     // ripGrep rejects on inaccessible target paths.
-    if (isFsInaccessible(e)) return []
+    if (isFsInaccessible(e)) {
+      return []
+    }
     throw e
   }
 

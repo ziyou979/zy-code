@@ -6,6 +6,7 @@ import { Ansi, Box, Text, useInput } from '../ink.js'
 import type { BaseInputState, BaseTextInputProps } from '../types/textInputTypes.js'
 import type { TextHighlight } from '../utils/textHighlighting.js'
 import { HighlightedInput } from './PromptInput/ShimmeredInput.js'
+
 type BaseTextInputComponentProps = BaseTextInputProps & {
   inputState: BaseInputState
   children?: React.ReactNode
@@ -62,8 +63,7 @@ export function BaseTextInput({
     isActive: props.focus,
   })
   const commandWithoutArgs =
-    (props.value && props.value.trim().indexOf(' ') === -1) ||
-    (props.value && props.value.endsWith(' '))
+    (props.value && props.value.trim().indexOf(' ') === -1) || props.value?.endsWith(' ')
   const showArgumentHint = Boolean(
     props.argumentHint && props.value && commandWithoutArgs && props.value.startsWith('/'),
   )

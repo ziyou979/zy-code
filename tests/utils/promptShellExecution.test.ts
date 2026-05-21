@@ -5,7 +5,7 @@
  * - disableSkillShellExecution 设置为 true 时阻止执行
  * - 设置未定义或为 false 时不阻止
  */
-import { describe, test, expect, afterEach } from 'bun:test'
+import { afterEach, describe, expect, test } from 'bun:test'
 
 /**
  * 统一注册所有传递依赖模块的 mock，阻断重依赖链加载。

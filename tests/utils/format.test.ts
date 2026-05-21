@@ -8,16 +8,16 @@
  * - formatNumber / formatTokens 紧凑格式
  * - formatRelativeTime 正/负差值
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import {
   formatDuration,
   formatDurationZh,
   formatFileSize,
-  formatSecondsShort,
   formatNumber,
-  formatTokens,
   formatRelativeTime,
   formatRelativeTimeAgo,
+  formatSecondsShort,
+  formatTokens,
 } from '../../src/utils/format.js'
 
 describe('format', () => {

@@ -1,11 +1,11 @@
 import chalk from 'chalk'
 import React, { useContext } from 'react'
+import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
 import { getShortcutDisplay } from '../keybindings/shortcutFormat.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 import { InVirtualListContext } from './messageActions.js'
-import { tSync } from '../i18n/index.js'
 
 // 上下文跟踪我们是否在子 agent 内
 // 类似于 MessageResponseContext，这帮助我们避免在子 agent 输出中显示

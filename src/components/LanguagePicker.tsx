@@ -1,9 +1,10 @@
 import figures from 'figures'
-import React, { useState } from 'react'
-import { Box, Text } from '../ink.js'
+import { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
+import { Box, Text } from '../ink.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import TextInput from './TextInput.js'
+
 type Props = {
   initialLanguage: string | undefined
   onComplete: (language: string | undefined) => void

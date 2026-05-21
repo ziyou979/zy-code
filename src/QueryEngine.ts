@@ -1,7 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { ContentBlock } from './types/llm.js'
-import { randomUUID } from 'crypto'
-import last from 'lodash-es/last.js'
+import { randomUUID } from 'node:crypto'
 import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
 import type {
   PermissionMode,
@@ -29,11 +27,11 @@ import type { AppState } from './state/AppState.js'
 import { type Tools, type ToolUseContext, toolMatchesName } from './Tool.js'
 import type { AgentDefinition } from './tools/AgentTool/loadAgentsDir.js'
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from './tools/SyntheticOutputTool/SyntheticOutputTool.js'
+import type { ContentBlock } from './types/llm.js'
 import type {
   AssistantMessage,
   Message,
   StreamEvent,
-  SystemMessage,
   ToolUseSummaryMessage,
 } from './types/message.js'
 import type { OrphanedPermission } from './types/textInputTypes.js'
@@ -350,14 +348,18 @@ export class QueryEngine {
       updateFileHistoryState: (updater: (prev: FileHistoryState) => FileHistoryState) => {
         setAppState((prev) => {
           const updated = updater(prev.fileHistory)
-          if (updated === prev.fileHistory) return prev
+          if (updated === prev.fileHistory) {
+            return prev
+          }
           return { ...prev, fileHistory: updated }
         })
       },
       updateAttributionState: (updater: (prev: AttributionState) => AttributionState) => {
         setAppState((prev) => {
           const updated = updater(prev.attribution)
-          if (updated === prev.attribution) return prev
+          if (updated === prev.attribution) {
+            return prev
+          }
           return { ...prev, attribution: updated }
         })
       },
@@ -1250,7 +1252,9 @@ export async function* ask({
     ...(feature('HISTORY_SNIP')
       ? {
           snipReplay: (yielded: Message, store: Message[]) => {
-            if (!snipProjection!.isSnipBoundaryMessage(yielded)) return undefined
+            if (!snipProjection!.isSnipBoundaryMessage(yielded)) {
+              return undefined
+            }
             const result = snipModule!.snipCompactIfNeeded(store, { force: true })
             return { messages: result.messages, executed: true }
           },

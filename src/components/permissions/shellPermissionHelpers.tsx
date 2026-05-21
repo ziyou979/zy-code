@@ -1,10 +1,11 @@
-import { basename, sep } from 'path'
-import React, { type ReactNode } from 'react'
+import { basename, sep } from 'node:path'
+import { type ReactNode } from 'react'
 import { getOriginalCwd } from '../../bootstrap/state.js'
-import { Text } from '../../ink.js'
 import { tSync } from '../../i18n/index.js'
+import { Text } from '../../ink.js'
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
 import { permissionRuleExtractPrefix } from '../../utils/permissions/shellRuleMatching.js'
+
 function commandListDisplay(commands: string[]): ReactNode {
   switch (commands.length) {
     case 0:
@@ -26,7 +27,7 @@ function commandListDisplay(commands: string[]): ReactNode {
       )
   }
 }
-function commandListDisplayTruncated(commands: string[]): ReactNode {
+function _commandListDisplayTruncated(commands: string[]): ReactNode {
   // Check if the plain text representation would be too long
   const plainText = commands.join(', ')
   if (plainText.length > 50) {
@@ -35,7 +36,9 @@ function commandListDisplayTruncated(commands: string[]): ReactNode {
   return commandListDisplay(commands)
 }
 function formatPathList(paths: string[]): ReactNode {
-  if (paths.length === 0) return ''
+  if (paths.length === 0) {
+    return ''
+  }
 
   // Extract directory names from paths
   const names = paths.map((p) => basename(p) || p)
@@ -73,20 +76,32 @@ function formatPathListPlain(paths: string[]): string {
   const andWord = tSync('permission.and')
   const commaAnd = tSync('permission.commaAnd')
   const morePaths = tSync('permission.morePaths')
-  if (names.length === 1) return `${names[0]}${sep}`
-  if (names.length === 2) return `${names[0]}${sep} ${andWord} ${names[1]}${sep}`
+  if (names.length === 1) {
+    return `${names[0]}${sep}`
+  }
+  if (names.length === 2) {
+    return `${names[0]}${sep} ${andWord} ${names[1]}${sep}`
+  }
   return `${names[0]}${sep}${commaAnd} ${names[1]}${sep} ${andWord} ${paths.length - 2} ${morePaths}`
 }
 
 /** Plain-text command list for i18n interpolation */
 function formatCommandsPlain(commands: string[]): string {
-  if (commands.length === 0) return ''
+  if (commands.length === 0) {
+    return ''
+  }
   const plainText = commands.join(', ')
-  if (plainText.length > 50) return tSync('permission.similar')
+  if (plainText.length > 50) {
+    return tSync('permission.similar')
+  }
   const andWord = tSync('permission.and')
   const commaAnd = tSync('permission.commaAnd')
-  if (commands.length === 1) return commands[0]!
-  if (commands.length === 2) return `${commands[0]} ${andWord} ${commands[1]}`
+  if (commands.length === 1) {
+    return commands[0]!
+  }
+  if (commands.length === 2) {
+    return `${commands[0]} ${andWord} ${commands[1]}`
+  }
   return `${commands.slice(0, -1).join(', ')}${commaAnd} ${commands[commands.length - 1]}`
 }
 
@@ -120,7 +135,9 @@ export function generateShellSuggestionsLabel(
   const shellCommands = [
     ...new Set(
       shellRules.flatMap((rule) => {
-        if (!rule.ruleContent) return []
+        if (!rule.ruleContent) {
+          return []
+        }
         const command = permissionRuleExtractPrefix(rule.ruleContent) ?? rule.ruleContent
         return commandTransform ? commandTransform(command) : command
       }),

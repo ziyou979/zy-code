@@ -4,7 +4,7 @@ import type { BundledSkillDefinition } from '../skills/bundledSkills.js'
 import type { CommandMetadata, PluginAuthor, PluginManifest } from '../utils/plugins/schemas.js'
 import type { HooksSettings } from '../utils/settings/types.js'
 
-export type { PluginAuthor, PluginManifest, CommandMetadata }
+export type { CommandMetadata, PluginAuthor, PluginManifest }
 
 /**
  * Definition for a built-in plugin that ships with the CLI.

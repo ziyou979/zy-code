@@ -1,5 +1,5 @@
-import { mkdir, open, unlink } from 'fs/promises'
-import { join } from 'path'
+import { mkdir, open, unlink } from 'node:fs/promises'
+import { join } from 'node:path'
 import type { SettingSource } from 'src/utils/settings/constants.js'
 import { getManagedFilePath } from 'src/utils/settings/managedPath.js'
 import type { AgentMemoryScope } from '../../tools/AgentTool/agentMemory.js'

@@ -5,10 +5,10 @@ import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useSearchInput } from '../hooks/useSearchInput.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
+import { tSync } from '../i18n/index.js'
 import { applyColor } from '../ink/colorize.js'
 import type { Color } from '../ink/styles.js'
 import { Box, Text, useInput, useTerminalFocus, useTheme } from '../ink.js'
-import { tSync } from '../i18n/index.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { LogOption, SerializedMessage } from '../types/logs.js'
@@ -34,6 +34,7 @@ import { Spinner } from './Spinner.js'
 import { TagTabs } from './TagTabs.js'
 import TextInput from './TextInput.js'
 import { type TreeNode, TreeSelect } from './ui/TreeSelect.js'
+
 type AgenticSearchState =
   | {
       status: 'idle'
@@ -80,7 +81,7 @@ const CHILD_PREFIX_WIDTH = 4 // '  ▸ '
 const DEEP_SEARCH_MAX_MESSAGES = 2000
 const DEEP_SEARCH_CROP_SIZE = 1000
 const DEEP_SEARCH_MAX_TEXT_LENGTH = 50000 // Cap searchable text per session
-const FUSE_THRESHOLD = 0.3
+const _FUSE_THRESHOLD = 0.3
 const DATE_TIE_THRESHOLD_MS = 60 * 1000 // 1 minute - use relevance as tie-breaker within this window
 const SNIPPET_CONTEXT_CHARS = 50 // Characters to show before/after match
 
@@ -101,7 +102,9 @@ function extractSnippet(text: string, query: string, contextChars: number): Snip
   // This is acceptable for now - in the future we could use Fuse's includeMatches
   // option and work with the match indices directly.
   const matchIndex = text.toLowerCase().indexOf(query.toLowerCase())
-  if (matchIndex === -1) return null
+  if (matchIndex === -1) {
+    return null
+  }
   const matchEnd = matchIndex + query.length
   const snippetStart = Math.max(0, matchIndex - contextChars)
   const snippetEnd = Math.min(text.length, matchEnd + contextChars)
@@ -170,11 +173,11 @@ export function LogSelector({
   const exitState = useExitOnCtrlCDWithKeybindings(onCancel)
   const isTerminalFocused = useTerminalFocus()
   const isResumeWithRenameEnabled = isCustomTitleEnabled()
-  const isDeepSearchEnabled = false
+  const _isDeepSearchEnabled = false
   const [themeName] = useTheme()
   const theme = getTheme(themeName)
   const highlightColor = (text) => applyColor(text, theme.warning as Color)
-  const isAgenticSearchEnabled = false
+  const _isAgenticSearchEnabled = false
   const [currentBranch, setCurrentBranch] = React.useState(null)
   const [branchFilterEnabled, setBranchFilterEnabled] = React.useState(false)
   const [showAllWorktrees, setShowAllWorktrees] = React.useState(false)
@@ -234,7 +237,7 @@ export function LogSelector({
       setHasMultipleWorktrees(paths.length > 1)
     })
   }, [currentCwd])
-  const searchableTextByLog = new Map(logs.map((log) => [log, buildSearchableText(log)]))
+  const _searchableTextByLog = new Map(logs.map((log) => [log, buildSearchableText(log)]))
 
   const uniqueTags = getUniqueTags(logs)
   const hasTags = uniqueTags.length > 0
@@ -300,7 +303,7 @@ export function LogSelector({
     if (false && deferredSearchQuery && deferredSearchQuery !== debouncedDeepSearchQuery) {
       setIsSearching(true)
     }
-  }, [deferredSearchQuery, debouncedDeepSearchQuery, false])
+  }, [deferredSearchQuery, debouncedDeepSearchQuery])
   React.useEffect(() => {
     if (true || !debouncedDeepSearchQuery || true) {
       setDeepSearchResults(null)
@@ -338,7 +341,7 @@ export function LogSelector({
     return () => {
       clearTimeout(timeoutId_0)
     }
-  }, [debouncedDeepSearchQuery, null, false])
+  }, [debouncedDeepSearchQuery])
   let filtered_0 = titleFilteredLogs
   const snippetMap = new Map()
   if (
@@ -1123,7 +1126,9 @@ function extractSearchableText(message: SerializedMessage): string {
     return ''
   }
   const content = 'message' in message ? message.message?.content : undefined
-  if (!content) return ''
+  if (!content) {
+    return ''
+  }
 
   // Handle string content (simple messages)
   if (typeof content === 'string') {
@@ -1134,8 +1139,12 @@ function extractSearchableText(message: SerializedMessage): string {
   if (Array.isArray(content)) {
     return content
       .map((block) => {
-        if (typeof block === 'string') return block
-        if ('text' in block && typeof block.text === 'string') return block.text
+        if (typeof block === 'string') {
+          return block
+        }
+        if ('text' in block && typeof block.text === 'string') {
+          return block.text
+        }
         return ''
         // we don't return thinking blocks and tool names here;
         // they're not useful for search, as they can add noise to the fuzzy matching

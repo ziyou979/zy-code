@@ -1,8 +1,8 @@
-import * as React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { Box } from '../../ink.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import { Zy, type ZyPose } from './Zy.js'
+
 type Frame = {
   pose: ZyPose
   offset: number
@@ -84,12 +84,16 @@ function useZyAnimation(): {
   const [frameIndex, setFrameIndex] = useState(-1)
   const sequenceRef = useRef<readonly Frame[]>(JUMP_WAVE)
   const onClick = () => {
-    if (reducedMotion || frameIndex !== -1) return
+    if (reducedMotion || frameIndex !== -1) {
+      return
+    }
     sequenceRef.current = CLICK_ANIMATIONS[Math.floor(Math.random() * CLICK_ANIMATIONS.length)]!
     setFrameIndex(0)
   }
   useEffect(() => {
-    if (frameIndex === -1) return
+    if (frameIndex === -1) {
+      return
+    }
     if (frameIndex >= sequenceRef.current.length) {
       setFrameIndex(-1)
       return

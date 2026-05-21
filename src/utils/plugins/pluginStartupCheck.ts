@@ -1,4 +1,4 @@
-import { join } from 'path'
+import { join } from 'node:path'
 import { getCwd } from '../cwd.js'
 import { logForDebugging } from '../debug.js'
 import { logError } from '../log.js'
@@ -269,7 +269,9 @@ export async function installSelectedPlugins(
 
   for (let i = 0; i < pluginsToInstall.length; i++) {
     const pluginId = pluginsToInstall[i]
-    if (!pluginId) continue
+    if (!pluginId) {
+      continue
+    }
 
     if (onProgress) {
       onProgress(pluginId, i + 1, pluginsToInstall.length)

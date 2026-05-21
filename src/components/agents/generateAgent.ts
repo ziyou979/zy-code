@@ -1,4 +1,3 @@
-import type { AssistantContentBlock, TextBlock } from '../../types/llm.js'
 import { getUserContext } from 'src/context.js'
 import { queryModelWithoutStreaming } from 'src/services/api/llmOrchestrator.js'
 import { getEmptyToolPermissionContext } from 'src/Tool.js'
@@ -6,15 +5,16 @@ import { AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
 import { prependUserContext } from 'src/utils/api.js'
 import { createUserMessage, normalizeMessagesForAPI } from 'src/utils/messages.js'
 import type { ModelName } from 'src/utils/model/model.js'
+import { getLanguageSection } from '../../constants/prompts.js'
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
+import type { AssistantContentBlock, TextBlock } from '../../types/llm.js'
+import { getInitialSettings } from '../../utils/settings/settings.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
-import { getLanguageSection } from '../../constants/prompts.js'
 
 type GeneratedAgent = {
   identifier: string
@@ -149,7 +149,7 @@ export async function generateAgent(
   // 使用用户配置的语言，避免输出 "Now let me check..." 等英文描述
   const languageSection = getLanguageSection(getInitialSettings().language)
   const systemPrompt = languageSection
-    ? baseSystemPrompt + '\n\n' + languageSection
+    ? `${baseSystemPrompt}\n\n${languageSection}`
     : baseSystemPrompt
 
   const response = await queryModelWithoutStreaming({

@@ -54,7 +54,9 @@ export function CoordinatorTaskPanel(): React.ReactNode {
   tasksRef.current = tasks
   const [, setTick] = React.useState(0)
   React.useEffect(() => {
-    if (!hasTasks) return
+    if (!hasTasks) {
+      return
+    }
     const interval = setInterval(
       (tasksRef_0, setAppState_0, setTick_0) => {
         const now = Date.now()
@@ -74,7 +76,9 @@ export function CoordinatorTaskPanel(): React.ReactNode {
   }, [hasTasks, setAppState])
   const nameByAgentId = React.useMemo(() => {
     const inv = new Map<string, string>()
-    for (const [n, id] of agentNameRegistry) inv.set(id, n)
+    for (const [n, id] of agentNameRegistry) {
+      inv.set(id, n)
+    }
     return inv
   }, [agentNameRegistry])
   if (visibleTasks.length === 0) {
@@ -107,13 +111,13 @@ export function CoordinatorTaskPanel(): React.ReactNode {
  * stays accurate without needing its own tick.
  */
 export function useCoordinatorTaskCount() {
-  const tasks = useAppState((s) => s.tasks)
+  const _tasks = useAppState((s) => s.tasks)
 
   return 0
 }
 function MainLine({ isSelected, isViewed, onClick }) {
   const [hover, setHover] = React.useState(false)
-  const prefix = isSelected || hover ? figures.pointer + ' ' : '  '
+  const prefix = isSelected || hover ? `${figures.pointer} ` : '  '
   const bullet = isViewed ? BLACK_CIRCLE : figures.circle
   return (
     <Box onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
@@ -156,7 +160,7 @@ function AgentLine({ task, name, isSelected, isViewed, onClick }: AgentLineProps
   const queuedText = queuedCount > 0 ? tSync('coordinator.queued', { count: queuedCount }) : ''
   const displayDescription = task.progress?.summary || task.description
   const highlighted = isSelected || hover
-  const prefix = highlighted ? figures.pointer + ' ' : '  '
+  const prefix = highlighted ? `${figures.pointer} ` : '  '
   const bullet = isViewed ? BLACK_CIRCLE : figures.circle
   const dim = !highlighted && !isViewed
   const sep = isRunning ? PLAY_ICON : PAUSE_ICON

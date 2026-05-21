@@ -174,7 +174,9 @@ export function clearPluginHookCache(): void {
 export async function pruneRemovedPluginHooks(): Promise<void> {
   // Early return when nothing to prune — avoids seeding the loadAllPluginsCacheOnly
   // memoize in test/preload.ts beforeEach (which clears registeredHooks).
-  if (!getRegisteredHooks()) return
+  if (!getRegisteredHooks()) {
+    return
+  }
   const { enabled } = await loadAllPluginsCacheOnly()
   const enabledRoots = new Set(enabled.map((p) => p.path))
 
@@ -182,7 +184,9 @@ export async function pruneRemovedPluginHooks(): Promise<void> {
   // could have swapped STATE.registeredHooks during the gap. Holding the
   // pre-await reference would compute survivors from stale data.
   const current = getRegisteredHooks()
-  if (!current) return
+  if (!current) {
+    return
+  }
 
   // Collect plugin hooks whose pluginRoot is still enabled, then swap via
   // the existing clear+register pair (same atomic-pair pattern as
@@ -193,7 +197,9 @@ export async function pruneRemovedPluginHooks(): Promise<void> {
     const kept = matchers.filter(
       (m): m is PluginHookMatcher => 'pluginRoot' in m && enabledRoots.has(m.pluginRoot),
     )
-    if (kept.length > 0) survivors[event as HookEvent] = kept
+    if (kept.length > 0) {
+      survivors[event as HookEvent] = kept
+    }
   }
 
   clearRegisteredPluginHooks()

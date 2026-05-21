@@ -1,7 +1,8 @@
-import React, { Suspense, use, useDeferredValue, useEffect, useState } from 'react'
+import { Suspense, use, useDeferredValue, useEffect, useState } from 'react'
 import type { DeepImmutable } from 'src/types/utils.js'
 import type { CommandResultDisplay } from '../../commands.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import type { LocalShellTaskState } from '../../tasks/LocalShellTask/guards.js'
@@ -11,7 +12,7 @@ import { getTaskOutputPath } from '../../utils/task/diskOutput.js'
 import { Byline } from '../design-system/Byline.js'
 import { Dialog } from '../design-system/Dialog.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
-import { tSync } from '../../i18n/index.js'
+
 type Props = {
   shell: DeepImmutable<LocalShellTaskState>
   onDone: (
@@ -63,7 +64,7 @@ export function ShellDetailDialog({ shell, onDone, onKillShell, onBack }: Props)
       shell,
     )
     return () => clearInterval(timer)
-  }, [shell.id, shell.status])
+  }, [shell.id, shell.status, shell])
   const handleClose = () =>
     onDone('Shell details dismissed', {
       display: 'system',

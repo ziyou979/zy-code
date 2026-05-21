@@ -1,5 +1,4 @@
-import type { ContentBlock } from './llm.js'
-import type { UUID } from 'crypto'
+import type { UUID } from 'node:crypto'
 import type React from 'react'
 import type { PermissionResult } from '../entrypoints/agentSdkTypes.js'
 import type { Key } from '../ink.js'
@@ -7,6 +6,7 @@ import type { PastedContent } from '../utils/config.js'
 import type { ImageDimensions } from '../utils/imageResizer.js'
 import type { TextHighlight } from '../utils/textHighlighting.js'
 import type { AgentId } from './ids.js'
+import type { ContentBlock } from './llm.js'
 import type { AssistantMessage, MessageOrigin } from './message.js'
 
 /**

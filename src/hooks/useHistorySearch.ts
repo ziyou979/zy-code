@@ -238,7 +238,9 @@ export function useHistorySearch(
   // This is a conditional behavior that doesn't fit the keybinding model
   // well (backspace only cancels when query is empty)
   const handleKeyDown = (e: KeyboardEvent): void => {
-    if (!isSearching) return
+    if (!isSearching) {
+      return
+    }
     if (e.key === 'backspace' && historyQuery === '') {
       e.preventDefault()
       handleCancel()
@@ -269,7 +271,7 @@ export function useHistorySearch(
     return () => {
       controller.abort()
     }
-  }, [historyQuery])
+  }, [])
 
   return {
     historyQuery,

@@ -1,22 +1,10 @@
 // @ts-nocheck
-// @ts-ignore - Some types not exported in current SDK version
-import type {
-  ContentBlock,
-  Response as LLMMessage,
-  StopReason,
-  ToolDefinition,
-  ToolChoice,
-  JSONOutputFormat,
-  ProviderExtras,
-} from '../../types/llm.js'
-import { isAPIError, isAbortError } from '../../types/llm.js'
+// @ts-expect-error - Some types not exported in current SDK version
 
-import { randomUUID } from 'crypto'
-import { getAPIProvider, isAnthropicBaseUrl, isOpenAIProvider } from 'src/utils/model/providers.js'
-import { getLLMAdapter } from './client.js'
+import { randomUUID } from 'node:crypto'
+import { getAPIProvider, isAnthropicBaseUrl } from 'src/utils/model/providers.js'
 import { getCLISyspromptPrefix } from '../../constants/system.js'
 import {
-  getEmptyToolPermissionContext,
   type QueryChainTracking,
   type Tool,
   type ToolPermissionContext,
@@ -24,33 +12,30 @@ import {
   toolMatchesName,
 } from '../../Tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-// @ts-ignore - ConnectorTextDelta may not be exported
-import {
-  type ConnectorTextBlock,
-  type ConnectorTextDelta,
-  isConnectorTextBlock,
-} from '../../types/connectorText.js'
+// @ts-expect-error - ConnectorTextDelta may not be exported
+import { type ConnectorTextBlock, type ConnectorTextDelta } from '../../types/connectorText.js'
+import type {
+  ContentBlock,
+  JSONOutputFormat,
+  Response as LLMMessage,
+  ProviderExtras,
+  StopReason,
+  ToolChoice,
+  ToolDefinition,
+} from '../../types/llm.js'
+import { isAbortError, isAPIError } from '../../types/llm.js'
 import type {
   AssistantMessage,
   Message,
   StreamEvent,
   SystemAPIErrorMessage,
-  UserMessage,
 } from '../../types/message.js'
-import {
-  type CacheScope,
-  logAPIPrefix,
-  splitSysPromptPrefix,
-  toolToAPISchema,
-} from '../../utils/api.js'
-import { getOauthAccountInfo } from '../../utils/auth.js'
-import { getMergedBetas, getModelBetas } from '../../utils/betas.js'
-import { getOrCreateUserID } from '../../utils/config.js'
-import { getModelMaxOutputTokens } from '../../utils/context.js'
+import { logAPIPrefix, toolToAPISchema } from '../../utils/api.js'
+import { getMergedBetas } from '../../utils/betas.js'
 import { resolveAppliedEffort } from '../../utils/effort.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import { captureAPIRequest, logError } from '../../utils/log.js'
+import { captureAPIRequest } from '../../utils/log.js'
 import {
   createAssistantAPIErrorMessage,
   createUserMessage,
@@ -61,20 +46,15 @@ import {
   stripCallerFieldFromAssistantMessage,
   stripToolReferenceBlocksFromUserMessage,
 } from '../../utils/messages.js'
-import {
-  getDefaultAdvancedModel,
-  getDefaultStandardModel,
-  getDefaultCompactModel,
-} from '../../utils/model/model.js'
 import { asSystemPrompt, type SystemPrompt } from '../../utils/systemPromptType.js'
 import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
-import { getDynamicConfig_BLOCKS_ON_INIT } from '../analytics/growthbook.js'
+import { getAPIContextManagement } from '../compact/apiMicrocompact.js'
 import {
   currentLimits,
   extractQuotaStatusFromError,
   extractQuotaStatusFromHeaders,
 } from '../zyAiLimits.js'
-import { getAPIContextManagement } from '../compact/apiMicrocompact.js'
+import { getLLMAdapter } from './client.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
@@ -83,57 +63,23 @@ const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
 
 import { feature } from 'bun:bundle'
 import type { ClientOptions } from '@anthropic-ai/sdk'
-// LLMConnectionError 用于流式超时回退时创建错误实例
-import { LLMConnectionError } from '../../types/llm.js'
 import {
   getAfkModeHeaderLatched,
   getCacheEditingHeaderLatched,
   getLastApiCompletionTimestamp,
-  getPromptCache1hAllowlist,
-  getPromptCache1hEligible,
-  getSessionId,
   getThinkingClearLatched,
   setAfkModeHeaderLatched,
   setCacheEditingHeaderLatched,
   setLastMainRequestId,
-  setPromptCache1hAllowlist,
-  setPromptCache1hEligible,
   setThinkingClearLatched,
 } from 'src/bootstrap/state.js'
 import {
   AFK_MODE_BETA_HEADER,
-  CONTEXT_1M_BETA_HEADER,
   CONTEXT_MANAGEMENT_BETA_HEADER,
-  EFFORT_BETA_HEADER,
   PROMPT_CACHING_SCOPE_BETA_HEADER,
   REDACT_THINKING_BETA_HEADER,
   STRUCTURED_OUTPUTS_BETA_HEADER,
-  TASK_BUDGETS_BETA_HEADER,
 } from 'src/constants/betas.js'
-
-// Sub-module imports (用于 queryModel/executeNonStreamingRequest 内部调用)
-import {
-  getExtraBodyParams,
-  configureEffortParams,
-  configureTaskBudgetParams,
-  getMaxOutputTokensForModel,
-  adjustParamsForNonStreaming,
-  MAX_NON_STREAMING_TOKENS,
-  getAPIMetadata,
-  verifyApiKey,
-} from './apiHelpers.js'
-import {
-  getPromptCachingEnabled,
-  getCacheControl,
-  buildSystemPromptBlocks,
-} from './cacheControl.js'
-import {
-  userMessageToMessageParam,
-  assistantMessageToMessageParam,
-  stripExcessMediaItems,
-  addCacheBreakpoints,
-} from './messageTransforms.js'
-import { updateUsage, cleanupStream } from './usageTracker.js'
 import type { QuerySource } from 'src/constants/querySource.js'
 import type { Notification } from 'src/context/notifications.js'
 import { addToTotalSessionCost } from 'src/cost-tracker.js'
@@ -153,15 +99,14 @@ import {
   shouldIncludeExperimentalBetas,
   shouldUseGlobalCacheScope,
 } from 'src/utils/betas.js'
-// @ts-ignore
+// @ts-expect-error
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/utils/claudeInChrome/common.js'
-// @ts-ignore
+// @ts-expect-error
 import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/utils/claudeInChrome/prompt.js'
 import { getMaxThinkingTokensForModel } from 'src/utils/context.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
-import { type EffortValue, modelSupportsEffort } from 'src/utils/effort.js'
-import { returnValue } from 'src/utils/generators.js'
+import { type EffortValue } from 'src/utils/effort.js'
 import { headlessProfilerCheckpoint } from 'src/utils/headlessProfiler.js'
 import { isMcpInstructionsDeltaEnabled } from 'src/utils/mcpInstructionsDelta.js'
 import { calculateUSDCost } from 'src/utils/modelCost.js'
@@ -183,11 +128,9 @@ import {
   isDeferredTool,
   TOOL_SEARCH_TOOL_NAME,
 } from '../../tools/ToolSearchTool/prompt.js'
+// LLMConnectionError 用于流式超时回退时创建错误实例
+import { LLMConnectionError } from '../../types/llm.js'
 import { count } from '../../utils/array.js'
-import { insertBlockAfterToolResults } from '../../utils/contentArray.js'
-import { validateBoundedIntEnvVar } from '../../utils/envValidation.js'
-import { safeParseJSON } from '../../utils/json.js'
-
 import { normalizeModelStringForAPI, parseUserSpecifiedModel } from '../../utils/model/model.js'
 import { startSessionActivity, stopSessionActivity } from '../../utils/sessionActivity.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
@@ -205,11 +148,21 @@ import {
   consumePendingCacheEdits,
   getPinnedCacheEdits,
   markToolsSentToAPIState,
-  pinCacheEdits,
 } from '../compact/microCompact.js'
 import { getInitializationStatus } from '../lsp/manager.js'
 import { isToolFromMcpServer } from '../mcp/utils.js'
-import { withStreamingVCR, withVCR } from '../vcr.js'
+import { withStreamingVCR } from '../vcr.js'
+// Sub-module imports (用于 queryModel/executeNonStreamingRequest 内部调用)
+import {
+  adjustParamsForNonStreaming,
+  configureEffortParams,
+  configureTaskBudgetParams,
+  getAPIMetadata,
+  getExtraBodyParams,
+  getMaxOutputTokensForModel,
+  MAX_NON_STREAMING_TOKENS,
+} from './apiHelpers.js'
+import { buildSystemPromptBlocks, getPromptCachingEnabled } from './cacheControl.js'
 import { getAnthropicClient } from './client.js'
 import {
   API_ERROR_MESSAGE_PREFIX,
@@ -224,11 +177,13 @@ import {
   logAPISuccessAndDuration,
   type NonNullableUsage,
 } from './logging.js'
+import { addCacheBreakpoints, stripExcessMediaItems } from './messageTransforms.js'
 import {
   CACHE_TTL_1HOUR_MS,
   checkResponseForCacheBreak,
   recordPromptState,
 } from './promptCacheBreakDetection.js'
+import { cleanupStream, updateUsage } from './usageTracker.js'
 import {
   CannotRetryError,
   FallbackTriggeredError,
@@ -356,7 +311,9 @@ function shouldDeferLspTool(tool: Tool): boolean {
  */
 function getNonstreamingFallbackTimeoutMs(): number {
   const override = parseInt(process.env.API_TIMEOUT_MS || '', 10)
-  if (override) return override
+  if (override) {
+    return override
+  }
   return isEnvTruthy(process.env.ZY_CODE_REMOTE) ? 120_000 : 300_000
 }
 
@@ -412,7 +369,9 @@ export async function* executeNonStreamingRequest(
         return await adapter.createMessage(adjustedParams, retryOptions.signal, fallbackTimeoutMs)
       } catch (err) {
         // 用户中止不是错误 — 立即重新抛出，不记录日志
-        if (isAbortError(err)) throw err
+        if (isAbortError(err)) {
+          throw err
+        }
 
         //  instrumentation：记录非流式请求出错（包括超时）的情况。
         // 让我们区分"回退卡在容器杀除之后"（无事件）
@@ -555,7 +514,9 @@ async function* queryModel(
   const deferredToolNames = new Set<string>()
   if (useToolSearch) {
     for (const t of tools) {
-      if (isDeferredTool(t)) deferredToolNames.add(t.name)
+      if (isDeferredTool(t)) {
+        deferredToolNames.add(t.name)
+      }
     }
   }
 
@@ -579,9 +540,13 @@ async function* queryModel(
 
     filteredTools = tools.filter((tool) => {
       // 始终包含非延迟工具
-      if (!deferredToolNames.has(tool.name)) return true
+      if (!deferredToolNames.has(tool.name)) {
+        return true
+      }
       // 始终包含 ToolSearchTool（以便它能发现更多工具）
-      if (toolMatchesName(tool, TOOL_SEARCH_TOOL_NAME)) return true
+      if (toolMatchesName(tool, TOOL_SEARCH_TOOL_NAME)) {
+        return true
+      }
       // 仅包含已发现的延迟工具
       return discoveredToolNames.has(tool.name)
     })
@@ -883,11 +848,11 @@ async function* queryModel(
   let start = Date.now()
   let attemptNumber = 0
   const attemptStartTimes: number[] = []
-  let stream: AsyncIterable<StreamEvent> | undefined = undefined
-  let streamRequestId: string | null | undefined = undefined
-  let clientRequestId: string | undefined = undefined
+  let stream: AsyncIterable<StreamEvent> | undefined
+  let streamRequestId: string | null | undefined
+  let clientRequestId: string | undefined
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins -- Response is available in Node 18+ and is used by the SDK
-  let streamResponse: Response | undefined = undefined
+  let streamResponse: Response | undefined
 
   // 释放所有流资源以防止原生内存泄漏。
   // Response 对象持有 V8 堆外的原生 TLS/socket 缓冲区
@@ -950,7 +915,7 @@ async function* queryModel(
 
     const hasThinking =
       thinkingConfig.type !== 'disabled' && !isEnvTruthy(process.env.ZY_CODE_DISABLE_THINKING)
-    let thinking: any | undefined = undefined
+    let thinking: any | undefined
 
     // 重要：不要更改下面的自适应与预算 thinking 选择，
     // 除非通知模型发布 DRI 和研究团队。这是一个敏感的
@@ -1090,7 +1055,7 @@ async function* queryModel(
 
   const newMessages: AssistantMessage[] = []
   let ttftMs = 0
-  let partialMessage: LLMMessage | undefined = undefined
+  let partialMessage: LLMMessage | undefined
   const contentBlocks: (ContentBlock | ConnectorTextBlock)[] = []
   let usage: NonNullableUsage = EMPTY_USAGE
   let costUSD = 0
@@ -1098,8 +1063,8 @@ async function* queryModel(
   let didFallBackToNonStreaming = false
   let fallbackMessage: AssistantMessage | undefined
   let maxOutputTokens = 0
-  let responseHeaders: globalThis.Headers | undefined = undefined
-  let research: unknown = undefined
+  let responseHeaders: globalThis.Headers | undefined
+  let research: unknown
   let isAdvisorInProgress = false
 
   try {
@@ -2182,25 +2147,25 @@ async function* queryModel(
 
 // Barrel re-exports (保持向后兼容，外部依赖方无需修改 import 路径)
 export {
-  getExtraBodyParams,
+  adjustParamsForNonStreaming,
   configureEffortParams,
   configureTaskBudgetParams,
-  getMaxOutputTokensForModel,
-  adjustParamsForNonStreaming,
-  MAX_NON_STREAMING_TOKENS,
   getAPIMetadata,
+  getExtraBodyParams,
+  getMaxOutputTokensForModel,
+  MAX_NON_STREAMING_TOKENS,
   verifyApiKey,
 } from './apiHelpers.js'
 export {
-  getPromptCachingEnabled,
-  getCacheControl,
   buildSystemPromptBlocks,
+  getCacheControl,
+  getPromptCachingEnabled,
 } from './cacheControl.js'
+export { queryCompactModel, queryWithModel } from './compactQueries.js'
 export {
-  userMessageToMessageParam,
+  addCacheBreakpoints,
   assistantMessageToMessageParam,
   stripExcessMediaItems,
-  addCacheBreakpoints,
+  userMessageToMessageParam,
 } from './messageTransforms.js'
-export { updateUsage, cleanupStream, accumulateUsage } from './usageTracker.js'
-export { queryCompactModel, queryWithModel } from './compactQueries.js'
+export { accumulateUsage, cleanupStream, updateUsage } from './usageTracker.js'

@@ -6,8 +6,8 @@
  * - reconcileMarketplaces()：捆绑的 diff + 安装（I/O，幂等，仅追加）
  */
 
+import { isAbsolute, resolve } from 'node:path'
 import isEqual from 'lodash-es/isEqual.js'
-import { isAbsolute, resolve } from 'path'
 import { getOriginalCwd } from '../../bootstrap/state.js'
 import { logForDebugging } from '../debug.js'
 import { errorMessage } from '../errors.js'
@@ -212,8 +212,11 @@ export async function reconcileMarketplaces(opts?: ReconcileOptions): Promise<Re
       // 并覆写旧的 JSON 条目。
       const result = await addMarketplaceSource(source)
 
-      if (action === 'install') installed.push(name)
-      else updated.push(name)
+      if (action === 'install') {
+        installed.push(name)
+      } else {
+        updated.push(name)
+      }
       opts?.onProgress?.({
         type: 'installed',
         name,

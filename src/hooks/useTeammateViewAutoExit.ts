@@ -37,7 +37,9 @@ export function useTeammateViewAutoExit(): void {
     }
     // Status checks below are teammate-only (viewedTask is teammate-narrowed).
     // For local_agent, viewedStatus is undefined → all checks falsy → no eject.
-    if (!viewedTask) return
+    if (!viewedTask) {
+      return
+    }
 
     // Auto-exit if teammate is killed, stopped, has error, or is no longer running
     // This handles shutdown scenarios where teammate becomes inactive

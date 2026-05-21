@@ -13,7 +13,7 @@ type RegistryResponse = {
 
 // URLs stripped of query string and trailing slash — matches the normalization
 // done by getLoggingSafeMcpBaseUrl so direct Set.has() lookup works.
-let officialUrls: Set<string> | undefined = undefined
+let officialUrls: Set<string> | undefined
 
 function normalizeUrl(url: string): string | undefined {
   try {
@@ -39,9 +39,9 @@ export async function prefetchOfficialMcpUrls(): Promise<void> {
     return
 
     const urls = new Set<string>()
-    // @ts-ignore
+    // @ts-expect-error
     const response: any = undefined
-    // @ts-ignore
+    // @ts-expect-error
     for (const entry of (response as any).data.servers) {
       for (const remote of entry.server.remotes ?? []) {
         const normalized = normalizeUrl(remote.url)

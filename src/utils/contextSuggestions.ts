@@ -63,7 +63,9 @@ function checkNearCapacity(data: ContextData, suggestions: ContextSuggestion[]):
 }
 
 function checkLargeToolResults(data: ContextData, suggestions: ContextSuggestion[]): void {
-  if (!data.messageBreakdown) return
+  if (!data.messageBreakdown) {
+    return
+  }
 
   for (const tool of data.messageBreakdown.toolCallsByType) {
     const totalToolTokens = tool.callTokens + tool.resultTokens
@@ -134,11 +136,15 @@ function getLargeToolSuggestion(
 }
 
 function checkReadResultBloat(data: ContextData, suggestions: ContextSuggestion[]): void {
-  if (!data.messageBreakdown) return
+  if (!data.messageBreakdown) {
+    return
+  }
 
   const callsByType = data.messageBreakdown.toolCallsByType
   const readTool = callsByType.find((t) => t.name === FILE_READ_TOOL_NAME)
-  if (!readTool) return
+  if (!readTool) {
+    return
+  }
 
   const totalReadTokens = readTool.callTokens + readTool.resultTokens
   const totalReadPercent = (totalReadTokens / data.rawMaxTokens) * 100

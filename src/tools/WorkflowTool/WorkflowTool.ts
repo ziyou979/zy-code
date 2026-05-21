@@ -1,5 +1,5 @@
-import type { Tool } from '../../Tool.js'
 import { z } from 'zod/v4'
+import type { Tool } from '../../Tool.js'
 
 export const WorkflowTool: Tool = {
   name: 'workflow',
@@ -46,4 +46,5 @@ export const WorkflowTool: Tool = {
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(WorkflowTool)

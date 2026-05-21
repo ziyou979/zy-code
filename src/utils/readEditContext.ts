@@ -1,4 +1,4 @@
-import { type FileHandle, open } from 'fs/promises'
+import { type FileHandle, open } from 'node:fs/promises'
 import { isENOENT } from './errors.js'
 
 export const CHUNK_SIZE = 8 * 1024
@@ -34,7 +34,9 @@ export async function readEditContext(
   contextLines = 3,
 ): Promise<EditContext | null> {
   const handle = await openForScan(path)
-  if (handle === null) return null
+  if (handle === null) {
+    return null
+  }
   try {
     return await scanForContext(handle, needle, contextLines)
   } finally {
@@ -49,7 +51,9 @@ export async function openForScan(path: string): Promise<FileHandle | null> {
   try {
     return await open(path, 'r')
   } catch (e) {
-    if (isENOENT(e)) return null
+    if (isENOENT(e)) {
+      return null
+    }
     throw e
   }
 }
@@ -62,12 +66,18 @@ export async function scanForContext(
   needle: string,
   contextLines: number,
 ): Promise<EditContext> {
-  if (needle === '') return { content: '', lineOffset: 1, truncated: false }
+  if (needle === '') {
+    return { content: '', lineOffset: 1, truncated: false }
+  }
   const needleLF = Buffer.from(needle, 'utf8')
   // Model sends LF; files may be CRLF. Count newlines to size the overlap for
   // the longer CRLF form; defer encoding the CRLF buffer until LF scan misses.
   let nlCount = 0
-  for (let i = 0; i < needleLF.length; i++) if (needleLF[i] === NL) nlCount++
+  for (let i = 0; i < needleLF.length; i++) {
+    if (needleLF[i] === NL) {
+      nlCount++
+    }
+  }
   let needleCRLF: Buffer | undefined
   const overlap = needleLF.length + nlCount - 1
 
@@ -78,7 +88,9 @@ export async function scanForContext(
 
   while (pos < MAX_SCAN_BYTES) {
     const { bytesRead } = await handle.read(buf, prevTail, CHUNK_SIZE, pos)
-    if (bytesRead === 0) break
+    if (bytesRead === 0) {
+      break
+    }
     const viewLen = prevTail + bytesRead
 
     let matchAt = indexOfWithin(buf, needleLF, viewLen)
@@ -130,9 +142,13 @@ export async function readCapped(handle: FileHandle): Promise<string | null> {
       buf = grown
     }
     const { bytesRead } = await handle.read(buf, total, buf.length - total, total)
-    if (bytesRead === 0) break
+    if (bytesRead === 0) {
+      break
+    }
     total += bytesRead
-    if (total > MAX_SCAN_BYTES) return null
+    if (total > MAX_SCAN_BYTES) {
+      return null
+    }
   }
   return normalizeCRLF(buf, total)
 }
@@ -145,7 +161,11 @@ function indexOfWithin(buf: Buffer, needle: Buffer, end: number): number {
 
 function countNewlines(buf: Buffer, start: number, end: number): number {
   let n = 0
-  for (let i = start; i < end; i++) if (buf[i] === NL) n++
+  for (let i = start; i < end; i++) {
+    if (buf[i] === NL) {
+      n++
+    }
+  }
   return n
 }
 
@@ -177,7 +197,9 @@ async function sliceContext(
   for (let i = backRead - 1; i >= 0 && nlSeen <= contextLines; i--) {
     if (scratch[i] === NL) {
       nlSeen++
-      if (nlSeen > contextLines) break
+      if (nlSeen > contextLines) {
+        break
+      }
     }
     ctxStart--
   }
@@ -194,7 +216,9 @@ async function sliceContext(
     ctxEnd++
     if (scratch[i] === NL) {
       nlSeen++
-      if (nlSeen >= contextLines + 1) break
+      if (nlSeen >= contextLines + 1) {
+        break
+      }
     }
   }
 

@@ -19,18 +19,17 @@ import {
   switchSession,
 } from './bootstrap/state.js'
 import { getCommands } from './commands.js'
+import { tSync } from './i18n/index.js'
 import { initSessionMemory } from './services/SessionMemory/sessionMemory.js'
 import { asSessionId } from './types/ids.js'
 import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js'
 import { checkAndRestoreTerminalBackup } from './utils/appleTerminalBackup.js'
 import { prefetchApiKeyFromApiKeyHelperIfSafe } from './utils/auth.js'
-import { clearMemoryFileCaches } from './utils/zymd.js'
 import { getCurrentProjectConfig, getGlobalConfig } from './utils/config.js'
 import { logForDiagnosticsNoPII } from './utils/diagLogs.js'
 import { env } from './utils/env.js'
 import { envDynamic } from './utils/envDynamic.js'
 import { isBareMode, isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
-import { tSync } from './i18n/index.js'
 import { errorMessage } from './utils/errors.js'
 import { findCanonicalGitRoot, findGitRoot, getIsGit } from './utils/git.js'
 import { initializeFileChangedWatcher } from './utils/hooks/fileChangedWatcher.js'
@@ -53,6 +52,7 @@ import {
   generateTmuxSessionName,
   worktreeBranchName,
 } from './utils/worktree.js'
+import { clearMemoryFileCaches } from './utils/zymd.js'
 
 export async function setup(
   cwd: string,
@@ -69,7 +69,7 @@ export async function setup(
 
   // 检查 Node.js 版本是否低于 18
   const nodeVersion = process.version.match(/^v(\d+)\./)?.[1]
-  if (!nodeVersion || parseInt(nodeVersion) < 18) {
+  if (!nodeVersion || parseInt(nodeVersion, 10) < 18) {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.error(chalk.bold.red(tSync('setup.errorNodeVersion')))
     process.exit(1)
@@ -91,7 +91,7 @@ export async function setup(
     // （特别是 SessionStart）才能派生并快照 process.env。
     if (feature('UDS_INBOX')) {
       const m = await import('./utils/udsMessaging.js')
-      // @ts-ignore
+      // @ts-expect-error
       await (m as any).startUdsMessaging(
         messagingSocketPath ?? (m as any).getDefaultUdsSocketPath(),
         { isExplicit: messagingSocketPath !== undefined },
@@ -169,7 +169,7 @@ export async function setup(
     const inGit = await getIsGit()
     if (!hasHook && !inGit) {
       process.stderr.write(
-        chalk.red(tSync('setup.errorWorktreeNotGitRepo', { cwd: chalk.bold(cwd) }) + '\n'),
+        chalk.red(`${tSync('setup.errorWorktreeNotGitRepo', { cwd: chalk.bold(cwd) })}\n`),
       )
       process.exit(1)
     }
@@ -186,7 +186,7 @@ export async function setup(
       // findGitRoot 缓存已由上方 getIsGit() 预热，所以此处几乎无开销。
       const mainRepoRoot = findCanonicalGitRoot(getCwd())
       if (!mainRepoRoot) {
-        process.stderr.write(chalk.red(tSync('setup.errorCannotDetermineGitRoot') + '\n'))
+        process.stderr.write(chalk.red(`${tSync('setup.errorCannotDetermineGitRoot')}\n`))
         process.exit(1)
       }
 
@@ -218,7 +218,7 @@ export async function setup(
       )
     } catch (error) {
       process.stderr.write(
-        chalk.red(tSync('setup.errorCreatingWorktree', { error: errorMessage(error) }) + '\n'),
+        chalk.red(`${tSync('setup.errorCreatingWorktree', { error: errorMessage(error) })}\n`),
       )
       process.exit(1)
     }

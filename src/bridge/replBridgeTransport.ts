@@ -162,7 +162,9 @@ export async function createV2ReplTransport(opts: {
   if (getAuthToken) {
     getAuthHeaders = (): Record<string, string> => {
       const token = getAuthToken()
-      if (!token) return {}
+      if (!token) {
+        return {}
+      }
       return { Authorization: `Bearer ${token}` }
     }
   } else {
@@ -180,7 +182,7 @@ export async function createV2ReplTransport(opts: {
   // Derive SSE stream URL. Same logic as transportUtils.ts:26-33 but
   // starting from an http(s) base instead of a --sdk-url that might be ws://.
   const sseUrl = new URL(sessionUrl)
-  sseUrl.pathname = sseUrl.pathname.replace(/\/$/, '') + '/worker/events/stream'
+  sseUrl.pathname = `${sseUrl.pathname.replace(/\/$/, '')}/worker/events/stream`
 
   const sse = new SSETransport(sseUrl, {}, sessionId, undefined, initialSequenceNum, getAuthHeaders)
   let onCloseCb: ((closeCode?: number) => void) | undefined
@@ -262,7 +264,9 @@ export async function createV2ReplTransport(opts: {
       // Check closed between writes to avoid sending partial batches after
       // transport teardown (epoch mismatch, SSE drop).
       for (const m of msgs) {
-        if (closed) break
+        if (closed) {
+          break
+        }
         await ccr.writeEvent(m)
       }
     },
@@ -279,8 +283,12 @@ export async function createV2ReplTransport(opts: {
     getStateLabel() {
       // SSETransport doesn't expose its state string; synthesize from
       // what we can observe. replBridge only uses this for debug logging.
-      if (sse.isClosedStatus()) return 'closed'
-      if (sse.isConnectedStatus()) return ccrInitialized ? 'connected' : 'init'
+      if (sse.isClosedStatus()) {
+        return 'closed'
+      }
+      if (sse.isConnectedStatus()) {
+        return ccrInitialized ? 'connected' : 'init'
+      }
       return 'connecting'
     },
     setOnData(cb) {

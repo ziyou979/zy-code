@@ -10,18 +10,17 @@
  */
 
 import { feature } from 'bun:bundle'
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { dirname } from 'node:path'
 import axios from 'axios'
-import { mkdir, readFile, stat, writeFile } from 'fs/promises'
 import pickBy from 'lodash-es/pickBy.js'
-import { dirname } from 'path'
 import { getIsInteractive } from '../../bootstrap/state.js'
 import {
-  ZY_CODE_INFERENCE_SCOPE,
   getOauthConfig,
   OAUTH_BETA_HEADER,
+  ZY_CODE_INFERENCE_SCOPE,
 } from '../../constants/oauth.js'
 import { checkAndRefreshOAuthTokenIfNeeded, getZyAIOAuthTokens } from '../../utils/auth.js'
-import { clearMemoryFileCaches } from '../../utils/zymd.js'
 import { getMemoryPath } from '../../utils/config.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { classifyAxiosError } from '../../utils/errors.js'
@@ -32,6 +31,7 @@ import { getSettingsFilePathForSource } from '../../utils/settings/settings.js'
 import { resetSettingsCache } from '../../utils/settings/settingsCache.js'
 import { sleep } from '../../utils/sleep.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
+import { clearMemoryFileCaches } from '../../utils/zymd.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { logEvent } from '../analytics/index.js'
 import { getRetryDelay } from '../api/withRetry.js'

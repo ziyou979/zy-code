@@ -1,5 +1,5 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import { type as osType, version as osVersion, release as osRelease } from 'os'
+import { type as osType, version as osVersion, release as osRelease } from 'node:os'
 import { env } from '../utils/env.js'
 import { getIsGit } from '../utils/git.js'
 import { getCwd } from '../utils/cwd.js'
@@ -94,21 +94,27 @@ function getSystemRemindersSection(): string {
 }
 
 export function getLanguageSection(languagePreference: string | undefined): string | null {
-  if (!languagePreference) return null
+  if (!languagePreference) {
+    return null
+  }
 
   return `# Language
 Reason and respond in ${languagePreference} natively. Prompts may be written in English, but actual outputs must be applied in ${languagePreference}. Keep code, identifiers, file paths, and quoted text unchanged.`
 }
 
 function getOutputStyleSection(outputStyleConfig: OutputStyleConfig | null): string | null {
-  if (outputStyleConfig === null) return null
+  if (outputStyleConfig === null) {
+    return null
+  }
 
   return `# Output Style: ${outputStyleConfig.name}
 ${outputStyleConfig.prompt}`
 }
 
 function getMcpInstructionsSection(mcpClients: MCPServerConnection[] | undefined): string | null {
-  if (!mcpClients || mcpClients.length === 0) return null
+  if (!mcpClients || mcpClients.length === 0) {
+    return null
+  }
   return getMcpInstructions(mcpClients)
 }
 
@@ -131,13 +137,11 @@ function getHarnessSection(): string {
     `Tools run behind a user-selected permission mode; a denied call means the user declined it — adjust, don't retry verbatim.`,
     `<system-reminder> tags in messages and tool results are injected by the harness, not the user. Hooks may intercept tool calls; treat hook output as user feedback.`,
     `Prefer the dedicated file/search tools over shell commands when one fits. Independent tool calls can run in parallel in one response.`,
-    'Reference code as `file_path:line_number` — it\'s clickable.',
+    "Reference code as `file_path:line_number` — it's clickable.",
   ]
 
   return ['# Harness', ...prependBullets(items)].join(`\n`)
 }
-
-
 
 function getAgentToolSection(): string {
   return isForkSubagentEnabled()
@@ -192,7 +196,9 @@ function getSessionSpecificGuidanceSection(
       : null,
   ].filter((item) => item !== null)
 
-  if (items.length === 0) return null
+  if (items.length === 0) {
+    return null
+  }
   return ['## Session-specific guidance', ...prependBullets(items)].join('\n')
 }
 
@@ -210,8 +216,6 @@ Match responses to the task: a simple question gets a direct answer, not headers
 
 In code: default to writing no comments. Never write multi-paragraph docstrings or multi-line comment blocks — one short line max. Don't create planning, decision, or analysis documents unless the user asks for them — work from conversation context, not intermediate files.`
 }
-
-
 
 export async function getSystemPrompt(
   tools: Tools,
@@ -538,25 +542,36 @@ function getFunctionResultClearingSection(model: string): string | null {
 Old tool results will be automatically cleared from context to free up space. The ${config.keepRecent} most recent results are always kept.`
 }
 
-let SUMMARIZE_TOOL_RESULTS_SECTION = `When working with tool results, write down any important information you might need later in your response, as the original tool result may be cleared later.`
+const SUMMARIZE_TOOL_RESULTS_SECTION = `When working with tool results, write down any important information you might need later in your response, as the original tool result may be cleared later.`
 
 function getBriefSection(): string | null {
-  if (!(feature('KAIROS') || feature('KAIROS_BRIEF'))) return null
-  if (!BRIEF_PROACTIVE_SECTION) return null
+  if (!(feature('KAIROS') || feature('KAIROS_BRIEF'))) {
+    return null
+  }
+  if (!BRIEF_PROACTIVE_SECTION) {
+    return null
+  }
   // Whenever the tool is available, the model is told to use it. The
   // /brief toggle and --brief flag now only control the isBriefOnly
   // display filter — they no longer gate model-facing behavior.
-  if (!briefToolModule?.isBriefEnabled()) return null
+  if (!briefToolModule?.isBriefEnabled()) {
+    return null
+  }
   // When proactive is active, getProactiveSection() already appends the
   // section inline. Skip here to avoid duplicating it in the system prompt.
-  if ((feature('PROACTIVE') || feature('KAIROS')) && proactiveModule?.isProactiveActive())
+  if ((feature('PROACTIVE') || feature('KAIROS')) && proactiveModule?.isProactiveActive()) {
     return null
+  }
   return BRIEF_PROACTIVE_SECTION
 }
 
 function getProactiveSection(): string | null {
-  if (!(feature('PROACTIVE') || feature('KAIROS'))) return null
-  if (!proactiveModule?.isProactiveActive()) return null
+  if (!(feature('PROACTIVE') || feature('KAIROS'))) {
+    return null
+  }
+  if (!proactiveModule?.isProactiveActive()) {
+    return null
+  }
 
   return `# Autonomous work
 

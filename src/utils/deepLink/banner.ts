@@ -12,9 +12,9 @@
  * notice which directory — and therefore which CLAUDE.md — was loaded.
  */
 
-import { stat } from 'fs/promises'
-import { homedir } from 'os'
-import { join, sep } from 'path'
+import { stat } from 'node:fs/promises'
+import { homedir } from 'node:os'
+import { join, sep } from 'node:path'
 import { formatNumber, formatRelativeTimeAgo } from '../format.js'
 import { getCommonDir } from '../git/gitFilesystem.js'
 import { getGitDir } from '../git.js'
@@ -83,13 +83,17 @@ export function buildDeepLinkBanner(info: DeepLinkBannerInfo): string {
  */
 export async function readLastFetchTime(cwd: string): Promise<Date | undefined> {
   const gitDir = await getGitDir(cwd)
-  if (!gitDir) return undefined
+  if (!gitDir) {
+    return undefined
+  }
   const commonDir = await getCommonDir(gitDir)
   const [local, common] = await Promise.all([
     mtimeOrUndefined(join(gitDir, 'FETCH_HEAD')),
     commonDir ? mtimeOrUndefined(join(commonDir, 'FETCH_HEAD')) : Promise.resolve(undefined),
   ])
-  if (local && common) return local > common ? local : common
+  if (local && common) {
+    return local > common ? local : common
+  }
   return local ?? common
 }
 
@@ -109,7 +113,11 @@ async function mtimeOrUndefined(p: string): Promise<Date | undefined> {
  */
 function tildify(p: string): string {
   const home = homedir()
-  if (p === home) return '~'
-  if (p.startsWith(home + sep)) return '~' + p.slice(home.length)
+  if (p === home) {
+    return '~'
+  }
+  if (p.startsWith(home + sep)) {
+    return `~${p.slice(home.length)}`
+  }
   return p
 }

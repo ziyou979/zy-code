@@ -102,7 +102,7 @@ export const init = memoize(async (): Promise<void> => {
     // 如果 OAuth 账号信息尚未缓存到配置中，则填充它。这是必要的，因为
     // 通过 VSCode 扩展登录时可能未填充 OAuth 账号信息。
     // 包裹在 try-catch 中以防止 OAuth 错误阻塞初始化过程
-    void populateOAuthAccountInfoIfNeeded().catch((error) => {
+    void populateOAuthAccountInfoIfNeeded().catch((_error) => {
       logForDebugging('OAuth account info population failed during init', {
         level: 'warn',
       } as any)

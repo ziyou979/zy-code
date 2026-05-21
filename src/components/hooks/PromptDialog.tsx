@@ -1,9 +1,9 @@
-import * as React from 'react'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import type { PromptRequest } from '../../types/hooks.js'
 import { Select } from '../CustomSelect/select.js'
 import { PermissionDialog } from '../permissions/PermissionDialog.js'
+
 type Props = {
   title: string
   toolInputSummary?: string | null

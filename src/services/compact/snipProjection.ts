@@ -18,6 +18,8 @@ export function isSnipBoundaryMessage(message: { type: string; subtype?: string 
  */
 export function projectSnippedView(messages: Message[]): Message[] {
   const boundaryIndex = messages.findIndex(isSnipBoundaryMessage)
-  if (boundaryIndex === -1) return messages
+  if (boundaryIndex === -1) {
+    return messages
+  }
   return messages.slice(boundaryIndex)
 }

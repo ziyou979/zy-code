@@ -9,8 +9,8 @@ import { z } from 'zod/v4'
 import { Box, Text } from '../ink.js'
 import { buildTool, type ToolInputJSONSchema } from '../Tool.js'
 import type { PermissionResult } from '../types/permissions.js'
-import { lazySchema } from '../utils/lazySchema.js'
 import { errorMessage } from '../utils/errors.js'
+import { lazySchema } from '../utils/lazySchema.js'
 import { jsonStringify } from '../utils/slowOperations.js'
 import { isOutputLineTruncated } from '../utils/terminal.js'
 
@@ -103,7 +103,7 @@ export function adaptExternalTool(def: ExternalToolDefinition) {
       return React.createElement(
         Text,
         { dimColor: true },
-        `${def.name}(${argsPreview.length > 120 ? argsPreview.slice(0, 117) + '...' : argsPreview})`,
+        `${def.name}(${argsPreview.length > 120 ? `${argsPreview.slice(0, 117)}...` : argsPreview})`,
       )
     },
 
@@ -112,8 +112,10 @@ export function adaptExternalTool(def: ExternalToolDefinition) {
       _progressMessages: unknown[],
       { verbose }: { verbose: boolean },
     ) {
-      if (!output) return null
-      const displayText = !verbose && output.length > 500 ? output.slice(0, 497) + '...' : output
+      if (!output) {
+        return null
+      }
+      const displayText = !verbose && output.length > 500 ? `${output.slice(0, 497)}...` : output
       return React.createElement(
         Box,
         { flexDirection: 'column' },

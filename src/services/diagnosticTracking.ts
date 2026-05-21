@@ -1,11 +1,11 @@
 import figures from 'figures'
 import { logError } from 'src/utils/log.js'
-import { callIdeRpc } from './mcp/mcpToolCall.js'
 import type { MCPServerConnection } from '../services/mcp/types.js'
 import { ZyError } from '../utils/errors.js'
 import { normalizePathForComparison, pathsEqual } from '../utils/file.js'
 import { getConnectedIdeClient } from '../utils/ide.js'
 import { jsonParse } from '../utils/slowOperations.js'
+import { callIdeRpc } from './mcp/mcpToolCall.js'
 
 class DiagnosticsTrackingError extends ZyError {}
 
@@ -274,7 +274,9 @@ export class DiagnosticTrackingService {
   }
 
   private areDiagnosticArraysEqual(a: Diagnostic[], b: Diagnostic[]): boolean {
-    if (a.length !== b.length) return false
+    if (a.length !== b.length) {
+      return false
+    }
 
     // Check if every diagnostic in 'a' exists in 'b'
     return (

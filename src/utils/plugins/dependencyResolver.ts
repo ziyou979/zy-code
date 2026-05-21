@@ -36,9 +36,13 @@ const INLINE_MARKETPLACE = 'inline'
  * verifyAndDemote handles bare deps via name-only matching.
  */
 export function qualifyDependency(dep: string, declaringPluginId: string): string {
-  if (parsePluginIdentifier(dep).marketplace) return dep
+  if (parsePluginIdentifier(dep).marketplace) {
+    return dep
+  }
   const mkt = parsePluginIdentifier(declaringPluginId).marketplace
-  if (!mkt || mkt === INLINE_MARKETPLACE) return dep
+  if (!mkt || mkt === INLINE_MARKETPLACE) {
+    return dep
+  }
   return `${dep}@${mkt}`
 }
 
@@ -108,7 +112,9 @@ export async function resolveDependencyClosure(
     // installed_plugins.json stale) would return an empty closure and
     // `cacheAndRegisterPlugin` would never fire — user sees
     // "✔ Successfully installed" but nothing materializes.
-    if (id !== rootId && alreadyEnabled.has(id)) return null
+    if (id !== rootId && alreadyEnabled.has(id)) {
+      return null
+    }
     // Security: block auto-install across marketplace boundaries. Runs AFTER
     // the alreadyEnabled check — if the user manually installed a cross-mkt
     // dep, it's in alreadyEnabled and we never reach this.
@@ -127,7 +133,9 @@ export async function resolveDependencyClosure(
     if (stack.includes(id)) {
       return { ok: false, reason: 'cycle', chain: [...stack, id] }
     }
-    if (visited.has(id)) return null
+    if (visited.has(id)) {
+      return null
+    }
     visited.add(id)
 
     const entry = await lookup(id)
@@ -139,7 +147,9 @@ export async function resolveDependencyClosure(
     for (const rawDep of entry.dependencies ?? []) {
       const dep = qualifyDependency(rawDep, id)
       const err = await walk(dep, id)
-      if (err) return err
+      if (err) {
+        return err
+      }
     }
     stack.pop()
 
@@ -148,7 +158,9 @@ export async function resolveDependencyClosure(
   }
 
   const err = await walk(rootId, rootId)
-  if (err) return err
+  if (err) {
+    return err
+  }
   return { ok: true, closure }
 }
 
@@ -190,7 +202,9 @@ export function verifyAndDemote(plugins: readonly LoadedPlugin[]): {
   while (changed) {
     changed = false
     for (const p of plugins) {
-      if (!enabled.has(p.source)) continue
+      if (!enabled.has(p.source)) {
+        continue
+      }
       for (const rawDep of p.manifest.dependencies ?? []) {
         const dep = qualifyDependency(rawDep, p.source)
         // Bare dep ← @inline plugin: match by name only (see enabledByName)
@@ -199,8 +213,11 @@ export function verifyAndDemote(plugins: readonly LoadedPlugin[]): {
         if (!satisfied) {
           enabled.delete(p.source)
           const count = enabledByName.get(p.name) ?? 0
-          if (count <= 1) enabledByName.delete(p.name)
-          else enabledByName.set(p.name, count - 1)
+          if (count <= 1) {
+            enabledByName.delete(p.name)
+          } else {
+            enabledByName.set(p.name, count - 1)
+          }
           errors.push({
             type: 'dependency-unsatisfied',
             source: p.source,
@@ -273,7 +290,9 @@ export function getEnabledPluginIdsForScope(settingSource: EditableSettingSource
  * Returns empty string when `installedDeps` is empty.
  */
 export function formatDependencyCountSuffix(installedDeps: string[]): string {
-  if (installedDeps.length === 0) return ''
+  if (installedDeps.length === 0) {
+    return ''
+  }
   const n = installedDeps.length
   return ` (+ ${n} ${n === 1 ? 'dependency' : 'dependencies'})`
 }
@@ -284,6 +303,8 @@ export function formatDependencyCountSuffix(installedDeps: string[]): string {
  * used in the notification UI). Returns empty string when no dependents.
  */
 export function formatReverseDependentsSuffix(rdeps: string[] | undefined): string {
-  if (!rdeps || rdeps.length === 0) return ''
+  if (!rdeps || rdeps.length === 0) {
+    return ''
+  }
   return ` — warning: required by ${rdeps.join(', ')}`
 }

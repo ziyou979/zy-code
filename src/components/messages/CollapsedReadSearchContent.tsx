@@ -1,7 +1,8 @@
 import { feature } from 'bun:bundle'
-import { basename } from 'path'
+import { basename } from 'node:path'
 import React, { useRef } from 'react'
 import { useMinDisplayTime } from '../../hooks/useMinDisplayTime.js'
+import { tSync } from '../../i18n/index.js'
 import { Ansi, Box, Text, useTheme } from '../../ink.js'
 import { findToolByName, type Tools } from '../../Tool.js'
 import { getReplPrimitiveTools } from '../../tools/REPLTool/primitiveTools.js'
@@ -12,7 +13,6 @@ import { getDisplayPath } from '../../utils/file.js'
 import { formatDuration, formatSecondsShort } from '../../utils/format.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import type { buildMessageLookups } from '../../utils/messages.js'
-import { tSync } from '../../i18n/index.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
 import { useSelectedMessageBg } from '../messageActions.js'
 import { PrBadge } from '../PrBadge.js'
@@ -185,7 +185,9 @@ export function CollapsedReadSearchContent({
   // 因此这是执行期间实时提示的唯一来源。
   if (isActiveGroup) {
     for (const id_0 of toolUseIds) {
-      if (!inProgressToolUseIDs.has(id_0)) continue
+      if (!inProgressToolUseIDs.has(id_0)) {
+        continue
+      }
       const latest = lookups.progressMessagesByToolUseID.get(id_0)?.at(-1)?.data
       if ((latest as any)?.type === 'repl_tool_call' && (latest as any).phase === 'start') {
         const input = (latest as any).toolInput as {
@@ -217,7 +219,9 @@ export function CollapsedReadSearchContent({
       <Box flexDirection="column">
         {toolUses.map((msg_0) => {
           const content = msg_0.message.content[0]
-          if (content?.type !== 'tool_call') return null
+          if (content?.type !== 'tool_call') {
+            return null
+          }
           return (
             <VerboseToolUse
               key={content.id}
@@ -281,7 +285,9 @@ export function CollapsedReadSearchContent({
     let elapsed: number | undefined
     let lines = 0
     for (const id_1 of toolUseIds) {
-      if (!inProgressToolUseIDs.has(id_1)) continue
+      if (!inProgressToolUseIDs.has(id_1)) {
+        continue
+      }
       const data = lookups.progressMessagesByToolUseID.get(id_1)?.at(-1)?.data
       if (data?.type !== 'bash_progress' && data?.type !== 'powershell_progress') {
         continue
@@ -307,7 +313,9 @@ export function CollapsedReadSearchContent({
   // Git 操作引领行首——它们是关键的产出结果。
   function pushPart(key: string, verbKey: string, body: React.ReactNode): void {
     const isFirst = nonMemParts.length === 0
-    if (!isFirst) nonMemParts.push(<Text key={`comma-${key}`}>, </Text>)
+    if (!isFirst) {
+      nonMemParts.push(<Text key={`comma-${key}`}>, </Text>)
+    }
     const verb = tSync(`summary.git.${verbKey}`)
     nonMemParts.push(
       <Text key={key}>

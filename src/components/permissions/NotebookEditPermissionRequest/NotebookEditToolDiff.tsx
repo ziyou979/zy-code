@@ -1,5 +1,4 @@
-import { relative } from 'path'
-import * as React from 'react'
+import { relative } from 'node:path'
 import { Suspense, use } from 'react'
 import { Box, NoSelect, Text } from '../../../ink.js'
 import type { NotebookCellType, NotebookContent } from '../../../types/notebook.js'
@@ -11,6 +10,7 @@ import { safeParseJSON } from '../../../utils/json.js'
 import { parseCellId } from '../../../utils/notebook.js'
 import { HighlightedCode } from '../../HighlightedCode.js'
 import { StructuredDiff } from '../../StructuredDiff.js'
+
 type Props = {
   notebook_path: string
   cell_id: string | undefined

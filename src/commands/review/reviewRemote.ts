@@ -9,7 +9,6 @@
  * pushed branches on repos with the Zy GitHub app installed.
  */
 
-import type { ContentBlock } from '../../types/llm.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -24,6 +23,7 @@ import {
   getRemoteTaskSessionUrl,
   registerRemoteAgentTask,
 } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js'
+import type { ContentBlock } from '../../types/llm.js'
 import { detectCurrentRepositoryWithHost } from '../../utils/detectRepository.js'
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
 import { getDefaultBranch, gitExe } from '../../utils/git.js'
@@ -165,9 +165,13 @@ export async function launchRemoteReview(
     null,
   )
   const posInt = (v: unknown, fallback: number, max?: number): number => {
-    if (typeof v !== 'number' || !Number.isFinite(v)) return fallback
+    if (typeof v !== 'number' || !Number.isFinite(v)) {
+      return fallback
+    }
     const n = Math.floor(v)
-    if (n <= 0) return fallback
+    if (n <= 0) {
+      return fallback
+    }
     return max !== undefined && n > max ? fallback : n
   }
   // Upper bounds: 27min on wallclock leaves ~3min for finalization under

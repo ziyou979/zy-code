@@ -1,10 +1,9 @@
-import { basename, relative } from 'path'
-import React from 'react'
+import { basename, relative } from 'node:path'
 import { FileEditToolDiff } from 'src/components/FileEditToolDiff.js'
 import { getCwd } from 'src/utils/cwd.js'
 import type { z } from 'zod/v4'
-import { Text } from '../../../ink.js'
 import { tSync } from '../../../i18n/index.js'
+import { Text } from '../../../ink.js'
 import { FileEditTool } from '../../../tools/FileEditTool/FileEditTool.js'
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js'
 import {
@@ -12,6 +11,7 @@ import {
   type FileEdit,
   type IDEDiffSupport,
 } from '../FilePermissionDialog/ideDiffConfig.js'
+
 type FileEditInput = z.infer<typeof FileEditTool.inputSchema>
 const ideDiffSupport: IDEDiffSupport<FileEditInput> = {
   getConfig: (input: FileEditInput) =>
@@ -36,7 +36,7 @@ const ideDiffSupport: IDEDiffSupport<FileEditInput> = {
 }
 export function FileEditPermissionRequest(props) {
   const parseInput = (input) => FileEditTool.inputSchema.parse(input)
-  let TextComponent
+  let _TextComponent
   let TextComponent2
   let FilePermissionDialogComponent
 
@@ -65,7 +65,7 @@ export function FileEditPermissionRequest(props) {
   relativeResult = relative(getCwd(), file_path)
   TextComponent2 = Text
 
-  TextComponent = Text
+  _TextComponent = Text
 
   basenameResult = basename(file_path)
   return (

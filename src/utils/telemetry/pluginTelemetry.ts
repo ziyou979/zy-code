@@ -11,8 +11,8 @@
  * redacted column can't, without exposing user-defined names.
  */
 
-import { createHash } from 'crypto'
-import { sep } from 'path'
+import { createHash } from 'node:crypto'
+import { sep } from 'node:path'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
@@ -63,9 +63,15 @@ export function getTelemetryPluginScope(
   marketplace: string | undefined,
   managedNames: Set<string> | null,
 ): TelemetryPluginScope {
-  if (marketplace === BUILTIN_MARKETPLACE_NAME) return 'default-bundle'
-  if (isOfficialMarketplaceName(marketplace)) return 'official'
-  if (managedNames?.has(name)) return 'org'
+  if (marketplace === BUILTIN_MARKETPLACE_NAME) {
+    return 'default-bundle'
+  }
+  if (isOfficialMarketplaceName(marketplace)) {
+    return 'official'
+  }
+  if (managedNames?.has(name)) {
+    return 'org'
+  }
   return 'user-local'
 }
 
@@ -90,8 +96,12 @@ export function getEnabledVia(
   managedNames: Set<string> | null,
   seedDirs: string[],
 ): EnabledVia {
-  if (plugin.isBuiltin) return 'default-enable'
-  if (managedNames?.has(plugin.name)) return 'org-policy'
+  if (plugin.isBuiltin) {
+    return 'default-enable'
+  }
+  if (managedNames?.has(plugin.name)) {
+    return 'org-policy'
+  }
   // Trailing sep: /opt/plugins must not match /opt/plugins-extra
   if (seedDirs.some((dir) => plugin.path.startsWith(dir.endsWith(sep) ? dir : dir + sep))) {
     return 'seed-mount'

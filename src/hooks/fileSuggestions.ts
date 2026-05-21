@@ -1,14 +1,14 @@
-import { statSync } from 'fs'
+import { statSync } from 'node:fs'
+import * as path from 'node:path'
 import ignore from 'ignore'
-import * as path from 'path'
 import {
-  ZY_CONFIG_DIRECTORIES,
   loadMarkdownFilesForSubdir,
+  ZY_CONFIG_DIRECTORIES,
 } from 'src/utils/markdownConfigLoader.js'
 import type { SuggestionItem } from '../components/PromptInput/PromptInputFooterSuggestions.js'
 import { CHUNK_MS, FileIndex, yieldToEventLoop } from '../native-ts/file-index/index.js'
 import { logEvent } from '../services/analytics/index.js'
-// @ts-ignore
+// @ts-expect-error
 import type { FileSuggestionCommandInput } from '../types/fileSuggestion.js'
 import { getGlobalConfig } from '../utils/config.js'
 import { getCwd } from '../utils/cwd.js'
@@ -130,7 +130,9 @@ export function pathListSignature(paths: string[]): string {
  */
 function getGitIndexMtime(): number | null {
   const repoRoot = findGitRoot(getCwd())
-  if (!repoRoot) return null
+  if (!repoRoot) {
+    return null
+  }
   try {
     // eslint-disable-next-line custom-rules/no-sync-fs -- mtimeMs is the operation here, not a pre-check. findGitRoot above already stat-walks synchronously; one more stat is marginal vs spawning git ls-files on every keystroke. Async would force startBackgroundCacheRefresh to become async, breaking the synchronous fileListRefreshPromise contract at the cold-start await site.
     return statSync(path.join(repoRoot, '.git', 'index')).mtimeMs
@@ -156,8 +158,12 @@ function normalizeGitPaths(files: string[], repoRoot: string, originalCwd: strin
  * 将已归一化的未跟踪文件合并到缓存中
  */
 async function mergeUntrackedIntoNormalizedCache(normalizedUntracked: string[]): Promise<void> {
-  if (normalizedUntracked.length === 0) return
-  if (!fileIndex || cachedTrackedFiles.length === 0) return
+  if (normalizedUntracked.length === 0) {
+    return
+  }
+  if (!fileIndex || cachedTrackedFiles.length === 0) {
+    return
+  }
 
   const untrackedDirs = await getDirectoryNamesAsync(normalizedUntracked)
   const allPaths = [
@@ -207,7 +213,9 @@ async function loadRipgrepIgnorePatterns(
     paths.map((p) => fs.readFile(p, { encoding: 'utf8' }).catch(() => null)),
   )
   for (const [i, content] of contents.entries()) {
-    if (content === null) continue
+    if (content === null) {
+      continue
+    }
     ig.add(content)
     hasPatterns = true
     logForDebugging(`[FileIndex] 已从 ${paths[i]} 加载忽略模式`)
@@ -391,7 +399,9 @@ function collectDirectoryNames(
     // 这避免了 path.parse()，后者会为每个文件分配一个 5 字段对象。
     while (currentDir !== '.' && !out.has(currentDir)) {
       const parent = path.dirname(currentDir)
-      if (parent === currentDir) break
+      if (parent === currentDir) {
+        break
+      }
       out.add(currentDir)
       currentDir = parent
     }
@@ -530,14 +540,18 @@ function findCommonPrefix(a: string, b: string): string {
  * 查找建议项数组中的最长公共前缀
  */
 export function findLongestCommonPrefix(suggestions: SuggestionItem[]): string {
-  if (suggestions.length === 0) return ''
+  if (suggestions.length === 0) {
+    return ''
+  }
 
   const strings = suggestions.map((item) => item.displayText)
   let prefix = strings[0]!
   for (let i = 1; i < strings.length; i++) {
     const currentString = strings[i]!
     prefix = findCommonPrefix(prefix, currentString)
-    if (prefix === '') return ''
+    if (prefix === '') {
+      return ''
+    }
   }
   return prefix
 }
@@ -571,7 +585,9 @@ function findMatchingFiles(fileIndex: FileIndex, partialPath: string): Suggestio
  */
 const REFRESH_THROTTLE_MS = 5_000
 export function startBackgroundCacheRefresh(): void {
-  if (fileListRefreshPromise) return
+  if (fileListRefreshPromise) {
+    return
+  }
 
   // 仅在缓存已存在时节流——冷启动必须始终填充。
   // 当 .git/index mtime 变更（已跟踪文件）时立即刷新。
@@ -683,7 +699,7 @@ export async function generateFileSuggestions(
 
     // 处理 './' 和 '.\' 两种情况
     let normalizedPath = partialPath
-    const currentDirPrefix = '.' + path.sep
+    const currentDirPrefix = `.${path.sep}`
     if (partialPath.startsWith(currentDirPrefix)) {
       normalizedPath = partialPath.substring(2)
     }

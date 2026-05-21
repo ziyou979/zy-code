@@ -1,6 +1,6 @@
-import { tSync } from '../../../i18n/index.js'
 import figures from 'figures'
-import React, { useState } from 'react'
+import { useState } from 'react'
+import { tSync } from '../../../i18n/index.js'
 import { Box, Text } from '../../../ink.js'
 import { useAppState } from '../../../state/AppState.js'
 import type { Question } from '../../../tools/AskUserQuestionTool/AskUserQuestionTool.js'
@@ -16,6 +16,7 @@ import { PermissionRequestTitle } from '../PermissionRequestTitle.js'
 import { PreviewQuestionView } from './PreviewQuestionView.js'
 import { QuestionNavigationBar } from './QuestionNavigationBar.js'
 import type { QuestionState } from './use-multiple-choice-state.js'
+
 type Props = {
   question: Question
   questions: Question[]

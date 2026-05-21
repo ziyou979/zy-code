@@ -1,7 +1,7 @@
-import { realpath } from 'fs/promises'
+import { realpath } from 'node:fs/promises'
+import { basename, dirname, isAbsolute, join, sep as pathSep, relative } from 'node:path'
 import ignore from 'ignore'
 import memoize from 'lodash-es/memoize.js'
-import { basename, dirname, isAbsolute, join, sep as pathSep, relative } from 'path'
 import { getAdditionalDirectoriesForzyMd, getSessionId } from '../bootstrap/state.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -191,7 +191,7 @@ export function parseSkillFrontmatterFields(
         ? parseUserSpecifiedModel(frontmatter.model as string)
         : undefined
 
-  const effortRaw = frontmatter['effort']
+  const effortRaw = frontmatter.effort
   const effort = effortRaw !== undefined ? parseEffortValue(effortRaw) : undefined
   if (effortRaw !== undefined && effort === undefined) {
     logForDebugging(
@@ -361,7 +361,9 @@ async function loadSkillsFromSkillsDir(
   try {
     entries = await fs.readdir(basePath)
   } catch (e: unknown) {
-    if (!isFsInaccessible(e)) logError(e)
+    if (!isFsInaccessible(e)) {
+      logError(e)
+    }
     return []
   }
 
@@ -646,7 +648,9 @@ export const getSkillDirCommands = memoize(async (cwd: string): Promise<Command[
 
   for (let i = 0; i < allSkillsWithPaths.length; i++) {
     const entry = allSkillsWithPaths[i]
-    if (entry === undefined || entry.skill.type !== 'prompt') continue
+    if (entry === undefined || entry.skill.type !== 'prompt') {
+      continue
+    }
     const { skill } = entry
 
     const fileId = fileIds[i]
@@ -714,9 +718,11 @@ export function clearSkillCaches() {
 }
 
 // Backwards-compatible aliases for tests
-export { getSkillDirCommands as getCommandDirCommands }
-export { clearSkillCaches as clearCommandCaches }
-export { transformSkillFiles }
+export {
+  clearSkillCaches as clearCommandCaches,
+  getSkillDirCommands as getCommandDirCommands,
+  transformSkillFiles,
+}
 
 // --- Dynamic skill discovery ---
 
@@ -806,7 +812,9 @@ export async function discoverSkillDirsForPaths(
 
       // Move to parent
       const parent = dirname(currentDir)
-      if (parent === currentDir) break // Reached root
+      if (parent === currentDir) {
+        break // Reached root
+      }
       currentDir = parent
     }
   }

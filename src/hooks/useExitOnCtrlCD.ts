@@ -71,7 +71,9 @@ export function useExitOnCtrlCD(
   // Handler for app:interrupt (ctrl+c by default)
   // Let features handle interrupt first via callback
   const handleInterrupt = useCallback(() => {
-    if (onInterrupt?.()) return // Feature handled it
+    if (onInterrupt?.()) {
+      return // Feature handled it
+    }
     handleCtrlCDoublePress()
   }, [handleCtrlCDoublePress, onInterrupt])
 

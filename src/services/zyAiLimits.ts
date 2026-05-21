@@ -1,7 +1,7 @@
-import { isAPIError, type APIErrorLike } from '../types/llm.js'
-import type { LLMMessage } from '../types/llm.js'
 import isEqual from 'lodash-es/isEqual.js'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
+import type { LLMMessage } from '../types/llm.js'
+import { type APIErrorLike, isAPIError } from '../types/llm.js'
 import { getModelBetas } from '../utils/betas.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
 import { logError } from '../utils/log.js'
@@ -219,7 +219,9 @@ async function makeTestQuery() {
         },
       },
     })
-    if (rawResponse) return rawResponse
+    if (rawResponse) {
+      return rawResponse
+    }
   }
 
   // 回退路径（OpenAI 等不支持 createRawRequest 的 provider）

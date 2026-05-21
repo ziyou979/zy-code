@@ -1,4 +1,4 @@
-import { dirname, isAbsolute, sep } from 'path'
+import { dirname, isAbsolute, sep } from 'node:path'
 import { logEvent } from 'src/services/analytics/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { diagnosticTracker } from '../../services/diagnosticTracking.js'
@@ -510,7 +510,9 @@ export const FileEditTool = buildTool({
     ) {
       const startTime = Date.now()
       const diff = await fetchSingleFileGitDiff(absoluteFilePath)
-      if (diff) gitDiff = diff
+      if (diff) {
+        gitDiff = diff
+      }
       logEvent('zy_tool_use_diff_computed', {
         isEditTool: true,
         durationMs: Date.now() - startTime,
@@ -587,4 +589,5 @@ function readFileForEdit(absoluteFilePath: string): {
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(FileEditTool)

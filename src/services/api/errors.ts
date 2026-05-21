@@ -1,17 +1,16 @@
-import type { APIErrorLike, StopReason } from '../../types/llm.js'
-import { isAPIError, isConnectionError, getErrorHeader } from '../../types/llm.js'
 import { AFK_MODE_BETA_HEADER } from 'src/constants/betas.js'
 import type { SDKAssistantMessageError } from 'src/entrypoints/agentSdkTypes.js'
 import type { AssistantMessage, Message, UserMessage } from 'src/types/message.js'
-import { getApiKeyWithSource, getZyAIOAuthTokens, getOauthAccountInfo } from 'src/utils/auth.js'
+import { getApiKeyWithSource, getOauthAccountInfo, getZyAIOAuthTokens } from 'src/utils/auth.js'
 import { createAssistantAPIErrorMessage, NO_RESPONSE_REQUESTED } from 'src/utils/messages.js'
 import { getDefaultMainLoopModelSetting } from 'src/utils/model/model.js'
 import { getModelStrings } from 'src/utils/model/modelStrings.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { getAPIProvider, isOpenAIProvider } from 'src/utils/model/providers.js'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import { API_PDF_MAX_PAGES, PDF_TARGET_RAW_SIZE } from '../../constants/apiLimits.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import type { APIErrorLike, StopReason } from '../../types/llm.js'
+import { getErrorHeader, isAPIError, isConnectionError } from '../../types/llm.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { formatFileSize } from '../../utils/format.js'
 import { ImageResizeError } from '../../utils/imageResizer.js'
 import { ImageSizeError } from '../../utils/imageValidation.js'
@@ -19,12 +18,12 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
+import { shouldProcessRateLimits } from '../rateLimitMocking.js' // Used for /mock-limits command
 import {
-  type ZyAILimits,
   getRateLimitErrorMessage,
   type OverageDisabledReason,
+  type ZyAILimits,
 } from '../zyAiLimits.js'
-import { shouldProcessRateLimits } from '../rateLimitMocking.js' // Used for /mock-limits command
 import { extractConnectionErrorDetails, formatAPIError } from './errorUtils.js'
 
 export const API_ERROR_MESSAGE_PREFIX = 'API Error'
@@ -202,7 +201,9 @@ function logToolUseToolResultMismatch(
     let normalizedIndex = -1
     for (let i = 0; i < messagesForAPI.length; i++) {
       const msg = messagesForAPI[i]
-      if (!msg) continue
+      if (!msg) {
+        continue
+      }
       const content = msg.message.content
       if (Array.isArray(content)) {
         for (const block of content) {
@@ -212,14 +213,18 @@ function logToolUseToolResultMismatch(
           }
         }
       }
-      if (normalizedIndex !== -1) break
+      if (normalizedIndex !== -1) {
+        break
+      }
     }
 
     // 在原始消息中查找 tool_use
     let originalIndex = -1
     for (let i = 0; i < messages.length; i++) {
       const msg = messages[i]
-      if (!msg) continue
+      if (!msg) {
+        continue
+      }
       if (msg.type === 'assistant' && 'message' in msg) {
         const content = msg.message.content
         if (Array.isArray(content)) {
@@ -231,14 +236,18 @@ function logToolUseToolResultMismatch(
           }
         }
       }
-      if (originalIndex !== -1) break
+      if (originalIndex !== -1) {
+        break
+      }
     }
 
     // 构建规范化序列
     const normalizedSeq: string[] = []
     for (let i = normalizedIndex + 1; i < messagesForAPI.length; i++) {
       const msg = messagesForAPI[i]
-      if (!msg) continue
+      if (!msg) {
+        continue
+      }
       const content = msg.message.content
       if (Array.isArray(content)) {
         for (const block of content) {
@@ -266,7 +275,9 @@ function logToolUseToolResultMismatch(
     const preNormalizedSeq: string[] = []
     for (let i = originalIndex + 1; i < messages.length; i++) {
       const msg = messages[i]
-      if (!msg) continue
+      if (!msg) {
+        continue
+      }
 
       switch (msg.type) {
         case 'user':
@@ -992,8 +1003,12 @@ export function classifyAPIError(error: unknown): string {
   // 基于状态码的回退
   if (isAPIError(error)) {
     const status = error.status
-    if (status >= 500) return 'server_error'
-    if (status >= 400) return 'client_error'
+    if (status >= 500) {
+      return 'server_error'
+    }
+    if (status >= 400) {
+      return 'client_error'
+    }
   }
 
   // 连接错误——优先检查 SSL/TLS 问题
@@ -1026,7 +1041,7 @@ export function categorizeRetryableAPIError(error: APIErrorLike): SDKAssistantMe
 
 export function getErrorMessageIfRefusal(
   stopReason: StopReason | null,
-  model: string,
+  _model: string,
 ): AssistantMessage | undefined {
   if (stopReason !== 'refusal') {
     return

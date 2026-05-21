@@ -1,4 +1,4 @@
-import { posix } from 'path'
+import { posix } from 'node:path'
 import type { ToolPermissionContext } from '../../Tool.js'
 // Types extracted to src/types/permissions.ts to break import cycles
 import type { AdditionalWorkingDirectory, WorkingDirectorySource } from '../../types/permissions.js'
@@ -19,7 +19,9 @@ import { addPermissionRulesToSettings } from './permissionsLoader.js'
 export type { AdditionalWorkingDirectory, WorkingDirectorySource }
 
 export function extractRules(updates: PermissionUpdate[] | undefined): PermissionRuleValue[] {
-  if (!updates) return []
+  if (!updates) {
+    return []
+  }
 
   return updates.flatMap((update) => {
     switch (update.type) {
@@ -103,7 +105,7 @@ export function applyPermissionUpdate(
       logForDebugging(
         `Applying permission update: Adding ${update.directories.length} director${update.directories.length === 1 ? 'y' : 'ies'} with destination '${update.destination}': ${jsonStringify(update.directories)}`,
       )
-      // @ts-ignore
+      // @ts-expect-error
       const newAdditionalDirs = new Map(context.additionalWorkingDirectories)
       for (const directory of update.directories) {
         newAdditionalDirs.set(directory, {
@@ -149,7 +151,7 @@ export function applyPermissionUpdate(
       logForDebugging(
         `Applying permission update: Removing ${update.directories.length} director${update.directories.length === 1 ? 'y' : 'ies'}: ${jsonStringify(update.directories)}`,
       )
-      // @ts-ignore
+      // @ts-expect-error
       const newAdditionalDirs = new Map(context.additionalWorkingDirectories)
       for (const directory of update.directories) {
         newAdditionalDirs.delete(directory)
@@ -198,7 +200,9 @@ export function supportsPersistence(
  * @param update The permission update to persist
  */
 export function persistPermissionUpdate(update: PermissionUpdate): void {
-  if (!supportsPersistence(update.destination)) return
+  if (!supportsPersistence(update.destination)) {
+    return
+  }
 
   logForDebugging(`Persisting permission update: ${update.type} to source '${update.destination}'`)
 

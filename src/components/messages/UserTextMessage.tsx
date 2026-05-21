@@ -1,6 +1,4 @@
 import { feature } from 'bun:bundle'
-import type { TextBlock } from '../../types/llm.js'
-import * as React from 'react'
 import { NO_CONTENT_MESSAGE } from '../../constants/messages.js'
 import {
   COMMAND_MESSAGE_TAG,
@@ -9,6 +7,7 @@ import {
   TEAMMATE_MESSAGE_TAG,
   TICK_TAG,
 } from '../../constants/xml.js'
+import type { TextBlock } from '../../types/llm.js'
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
 import {
   extractTag,
@@ -27,6 +26,7 @@ import { UserPlanMessage } from './UserPlanMessage.js'
 import { UserPromptMessage } from './UserPromptMessage.js'
 import { UserResourceUpdateMessage } from './UserResourceUpdateMessage.js'
 import { UserTeammateMessage } from './UserTeammateMessage.js'
+
 type Props = {
   addMargin: boolean
   param: TextBlock
@@ -73,9 +73,9 @@ export function UserTextMessage({
   }
   if (feature('KAIROS_GITHUB_WEBHOOKS')) {
     if (param.text.startsWith('<github-webhook-activity>')) {
-      // @ts-ignore
+      // @ts-expect-error
       const githubWebhookModule = require('./UserGitHubWebhookMessage.js')
-      // @ts-ignore
+      // @ts-expect-error
       const { UserGitHubWebhookMessage } = githubWebhookModule
       return <UserGitHubWebhookMessage addMargin={addMargin} param={param} />
     }
@@ -106,18 +106,18 @@ export function UserTextMessage({
   }
   if (feature('FORK_SUBAGENT')) {
     if (param.text.includes('<fork-boilerplate>')) {
-      // @ts-ignore
+      // @ts-expect-error
       const forkBoilerplateModule = require('./UserForkBoilerplateMessage.js')
-      // @ts-ignore
+      // @ts-expect-error
       const { UserForkBoilerplateMessage } = forkBoilerplateModule
       return <UserForkBoilerplateMessage addMargin={addMargin} param={param} />
     }
   }
   if (feature('UDS_INBOX')) {
     if (param.text.includes('<cross-session-message')) {
-      // @ts-ignore
+      // @ts-expect-error
       const crossSessionModule = require('./UserCrossSessionMessage.js')
-      // @ts-ignore
+      // @ts-expect-error
       const { UserCrossSessionMessage } = crossSessionModule
       return <UserCrossSessionMessage addMargin={addMargin} param={param} />
     }

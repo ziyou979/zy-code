@@ -159,7 +159,9 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
     const running = Object.entries(tasks).filter(
       ([, t]) => t.type === 'local_agent' && t.status === 'running',
     )
-    if (running.length === 0) return false
+    if (running.length === 0) {
+      return false
+    }
     killAllRunningAgentTasks(tasks, setAppState)
     const descriptions: string[] = []
     for (const [taskId, task] of running) {

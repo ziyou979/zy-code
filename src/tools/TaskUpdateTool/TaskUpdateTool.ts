@@ -95,8 +95,12 @@ export const TaskUpdateTool = buildTool({
   },
   toAutoClassifierInput(input) {
     const parts = [input.taskId]
-    if (input.status) parts.push(input.status)
-    if (input.subject) parts.push(input.subject)
+    if (input.status) {
+      parts.push(input.status)
+    }
+    if (input.subject) {
+      parts.push(input.subject)
+    }
     return parts.join(' ')
   },
   renderToolUseMessage() {
@@ -110,7 +114,9 @@ export const TaskUpdateTool = buildTool({
 
     // Auto-expand task list when updating tasks
     context.setAppState((prev) => {
-      if (prev.expandedView === 'tasks') return prev
+      if (prev.expandedView === 'tasks') {
+        return prev
+      }
       return { ...prev, expandedView: 'tasks' as const }
     })
 
@@ -357,4 +363,5 @@ export const TaskUpdateTool = buildTool({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(TaskUpdateTool, () => isTodoV2Enabled())

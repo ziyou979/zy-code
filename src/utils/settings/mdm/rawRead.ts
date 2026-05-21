@@ -9,8 +9,8 @@
  * Raw stdout is consumed by mdmSettings.ts via consumeRawReadResult().
  */
 
-import { execFile } from 'child_process'
-import { existsSync } from 'fs'
+import { execFile } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import {
   getMacOSPlistPaths,
   MDM_SUBPROCESS_TIMEOUT_MS,
@@ -113,7 +113,9 @@ export function fireRawRead(): Promise<RawReadResult> {
  * Results are consumed via getMdmRawReadPromise().
  */
 export function startMdmRawRead(): void {
-  if (rawReadPromise) return
+  if (rawReadPromise) {
+    return
+  }
   rawReadPromise = fireRawRead()
 }
 

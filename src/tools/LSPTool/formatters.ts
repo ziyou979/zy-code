@@ -1,4 +1,4 @@
-import { relative } from 'path'
+import { relative } from 'node:path'
 import type {
   CallHierarchyIncomingCall,
   CallHierarchyItem,
@@ -136,7 +136,7 @@ export function formatGoToDefinitionResult(
     )
 
     // Log and filter out any locations with undefined uris
-    const invalidLocations = locations.filter((loc) => !loc || !loc.uri)
+    const invalidLocations = locations.filter((loc) => !loc?.uri)
     if (invalidLocations.length > 0) {
       logForDebugging(
         `formatGoToDefinitionResult: Filtering out ${invalidLocations.length} invalid location(s) - this should have been caught earlier`,
@@ -144,7 +144,7 @@ export function formatGoToDefinitionResult(
       )
     }
 
-    const validLocations = locations.filter((loc) => loc && loc.uri)
+    const validLocations = locations.filter((loc) => loc?.uri)
 
     if (validLocations.length === 0) {
       return 'No definition found. This may occur if the cursor is not on a symbol, or if the definition is in an external library not indexed by the LSP server.'
@@ -170,7 +170,7 @@ export function formatFindReferencesResult(result: Location[] | null, cwd?: stri
   }
 
   // Log and filter out any locations with undefined uris
-  const invalidLocations = result.filter((loc) => !loc || !loc.uri)
+  const invalidLocations = result.filter((loc) => !loc?.uri)
   if (invalidLocations.length > 0) {
     logForDebugging(
       `formatFindReferencesResult: Filtering out ${invalidLocations.length} invalid location(s) - this should have been caught earlier`,
@@ -178,7 +178,7 @@ export function formatFindReferencesResult(result: Location[] | null, cwd?: stri
     )
   }
 
-  const validLocations = result.filter((loc) => loc && loc.uri)
+  const validLocations = result.filter((loc) => loc?.uri)
 
   if (validLocations.length === 0) {
     return 'No references found. This may occur if the symbol has no usages, or if the LSP server has not fully indexed the workspace.'
@@ -257,32 +257,32 @@ export function formatHoverResult(result: Hover | null, _cwd?: string): string {
  */
 function symbolKindToString(kind: SymbolKind): string {
   const kinds: Record<SymbolKind, string> = {
-    [1]: 'File',
-    [2]: 'Module',
-    [3]: 'Namespace',
-    [4]: 'Package',
-    [5]: 'Class',
-    [6]: 'Method',
-    [7]: 'Property',
-    [8]: 'Field',
-    [9]: 'Constructor',
-    [10]: 'Enum',
-    [11]: 'Interface',
-    [12]: 'Function',
-    [13]: 'Variable',
-    [14]: 'Constant',
-    [15]: 'String',
-    [16]: 'Number',
-    [17]: 'Boolean',
-    [18]: 'Array',
-    [19]: 'Object',
-    [20]: 'Key',
-    [21]: 'Null',
-    [22]: 'EnumMember',
-    [23]: 'Struct',
-    [24]: 'Event',
-    [25]: 'Operator',
-    [26]: 'TypeParameter',
+    1: 'File',
+    2: 'Module',
+    3: 'Namespace',
+    4: 'Package',
+    5: 'Class',
+    6: 'Method',
+    7: 'Property',
+    8: 'Field',
+    9: 'Constructor',
+    10: 'Enum',
+    11: 'Interface',
+    12: 'Function',
+    13: 'Variable',
+    14: 'Constant',
+    15: 'String',
+    16: 'Number',
+    17: 'Boolean',
+    18: 'Array',
+    19: 'Object',
+    20: 'Key',
+    21: 'Null',
+    22: 'EnumMember',
+    23: 'Struct',
+    24: 'Event',
+    25: 'Operator',
+    26: 'TypeParameter',
   }
   return kinds[kind] || 'Unknown'
 }
@@ -360,7 +360,7 @@ export function formatWorkspaceSymbolResult(
   }
 
   // Log and filter out any symbols with undefined location.uri
-  const invalidSymbols = result.filter((sym) => !sym || !sym.location || !sym.location.uri)
+  const invalidSymbols = result.filter((sym) => !sym?.location?.uri)
   if (invalidSymbols.length > 0) {
     logForDebugging(
       `formatWorkspaceSymbolResult: Filtering out ${invalidSymbols.length} invalid symbol(s) - this should have been caught earlier`,
@@ -368,7 +368,7 @@ export function formatWorkspaceSymbolResult(
     )
   }
 
-  const validSymbols = result.filter((sym) => sym && sym.location && sym.location.uri)
+  const validSymbols = result.filter((sym) => sym?.location?.uri)
 
   if (validSymbols.length === 0) {
     return 'No symbols found in workspace. This may occur if the workspace is empty, or if the LSP server has not finished indexing the project.'

@@ -2,9 +2,9 @@
  * OSC（操作系统命令）类型和解析器
  */
 
-import { Buffer } from 'buffer'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { Buffer } from 'node:buffer'
 import { env } from '../../utils/env.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
 import { BEL, ESC, ESC_TYPE, SEP } from './ansi.js'
 import type { Action, Color, TabStatusAction } from './types.js'
@@ -12,7 +12,7 @@ import type { Action, Color, TabStatusAction } from './types.js'
 export const OSC_PREFIX = ESC + String.fromCharCode(ESC_TYPE.OSC)
 
 /** 字符串终止符（ESC \）- 用于终止 OSC 的 BEL 替代方案 */
-export const ST = ESC + '\\'
+export const ST = `${ESC}\\`
 
 /** 生成 OSC 序列：ESC ] p1;p2;...;pN <终止符>
  * Kitty 使用 ST 终止符（避免蜂鸣），其他使用 BEL */
@@ -34,11 +34,11 @@ export function osc(...parts: (string | number)[]): string {
  * 包装后的 \x07 是不透明的 DCS 载荷，tmux 永远不会看到铃铛。
  */
 export function wrapForMultiplexer(sequence: string): string {
-  if (process.env['TMUX']) {
+  if (process.env.TMUX) {
     const escaped = sequence.replaceAll('\x1b', '\x1b\x1b')
     return `\x1bPtmux;${escaped}\x1b\\`
   }
-  if (process.env['STY']) {
+  if (process.env.STY) {
     return `\x1bP${sequence}\x1b\\`
   }
   return sequence
@@ -63,9 +63,13 @@ export function wrapForMultiplexer(sequence: string): string {
 export type ClipboardPath = 'native' | 'tmux-buffer' | 'osc52'
 
 export function getClipboardPath(): ClipboardPath {
-  const nativeAvailable = process.platform === 'darwin' && !process.env['SSH_CONNECTION']
-  if (nativeAvailable) return 'native'
-  if (process.env['TMUX']) return 'tmux-buffer'
+  const nativeAvailable = process.platform === 'darwin' && !process.env.SSH_CONNECTION
+  if (nativeAvailable) {
+    return 'native'
+  }
+  if (process.env.TMUX) {
+    return 'tmux-buffer'
+  }
   return 'osc52'
 }
 
@@ -88,9 +92,11 @@ function tmuxPassthrough(payload: string): string {
  * 如果缓冲区加载成功则返回 true。
  */
 export async function tmuxLoadBuffer(text: string): Promise<boolean> {
-  if (!process.env['TMUX']) return false
+  if (!process.env.TMUX) {
+    return false
+  }
   const args =
-    process.env['LC_TERMINAL'] === 'iTerm2' ? ['load-buffer', '-'] : ['load-buffer', '-w', '-']
+    process.env.LC_TERMINAL === 'iTerm2' ? ['load-buffer', '-'] : ['load-buffer', '-w', '-']
   const { code } = await execFileNoThrow('tmux', args, {
     input: text,
     useCwd: false,
@@ -144,13 +150,17 @@ export async function setClipboard(text: string): Promise<string> {
   // 受 SSH_CONNECTION 门控（而非 SSH_TTY），因为 tmux 面板永远继承 SSH_TTY，
   // 但 SSH_CONNECTION 在 tmux 默认的 update-environment 中，
   // 本地连接时会被清除。触发后不等待。
-  if (!process.env['SSH_CONNECTION']) copyNative(text)
+  if (!process.env.SSH_CONNECTION) {
+    copyNative(text)
+  }
 
   const tmuxBufferLoaded = await tmuxLoadBuffer(text)
 
   // 内部 OSC 直接使用 BEL（而非 osc()）— ST 的 ESC 也需要加倍，
   // 而 BEL 在 OSC 52 上到处都可用。
-  if (tmuxBufferLoaded) return tmuxPassthrough(`${ESC}]52;c;${b64}${BEL}`)
+  if (tmuxBufferLoaded) {
+    return tmuxPassthrough(`${ESC}]52;c;${b64}${BEL}`)
+  }
   return raw
 }
 
@@ -172,7 +182,9 @@ function copyNative(text: string): void {
       void execFileNoThrow('pbcopy', [], opts)
       return
     case 'linux': {
-      if (linuxCopy === null) return
+      if (linuxCopy === null) {
+        return
+      }
       if (linuxCopy === 'wl-copy') {
         void execFileNoThrow('wl-copy', [], opts)
         return
@@ -362,8 +374,11 @@ function* splitTabStatusPairs(data: string): Generator<[string, string]> {
   let esc = false
   for (const c of data) {
     if (esc) {
-      if (inVal) val += c
-      else key += c
+      if (inVal) {
+        val += c
+      } else {
+        key += c
+      }
       esc = false
     } else if (c === '\\') {
       esc = true
@@ -380,7 +395,9 @@ function* splitTabStatusPairs(data: string): Generator<[string, string]> {
       key += c
     }
   }
-  if (key || inVal) yield [key, val]
+  if (key || inVal) {
+    yield [key, val]
+  }
 }
 
 // 输出生成器
@@ -391,7 +408,9 @@ function* splitTabStatusPairs(data: string): Generator<[string, string]> {
  *  每行都是独立的链接 — 悬停行为不一致，工具提示不完整）。
  *  空 url = 结束序列（按规范使用空参数）。 */
 export function link(url: string, params?: Record<string, string>): string {
-  if (!url) return LINK_END
+  if (!url) {
+    return LINK_END
+  }
   const p = { id: osc8Id(url), ...params }
   const paramStr = Object.entries(p)
     .map(([k, v]) => `${k}=${v}`)
@@ -401,7 +420,9 @@ export function link(url: string, params?: Record<string, string>): string {
 
 function osc8Id(url: string): string {
   let h = 0
-  for (let i = 0; i < url.length; i++) h = ((h << 5) - h + url.charCodeAt(i)) | 0
+  for (let i = 0; i < url.length; i++) {
+    h = ((h << 5) - h + url.charCodeAt(i)) | 0
+  }
   return (h >>> 0).toString(36)
 }
 
@@ -466,11 +487,14 @@ export function tabStatus(fields: TabStatusAction): string {
     c.type === 'rgb'
       ? `#${[c.r, c.g, c.b].map((n) => n.toString(16).padStart(2, '0')).join('')}`
       : ''
-  if ('indicator' in fields)
+  if ('indicator' in fields) {
     parts.push(`indicator=${fields.indicator ? rgb(fields.indicator) : ''}`)
-  if ('status' in fields)
+  }
+  if ('status' in fields) {
     parts.push(`status=${fields.status?.replaceAll('\\', '\\\\').replaceAll(';', '\\;') ?? ''}`)
-  if ('statusColor' in fields)
+  }
+  if ('statusColor' in fields) {
     parts.push(`status-color=${fields.statusColor ? rgb(fields.statusColor) : ''}`)
+  }
   return osc(OSC.TAB_STATUS, parts.join(';'))
 }

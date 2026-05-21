@@ -17,7 +17,7 @@ export type MonitorMcpTaskState = TaskStateBase & {
 export const MonitorMcpTask: Task = {
   name: 'MonitorMcpTask',
   type: 'monitor_mcp',
-  async kill(taskId: string, setAppState: SetAppState): Promise<void> {
+  async kill(_taskId: string, _setAppState: SetAppState): Promise<void> {
     // Stub implementation - update task status to killed
     // In real implementation, this would terminate the monitor process
   },
@@ -28,7 +28,7 @@ export const MonitorMcpTask: Task = {
  * @param taskId - The task ID to kill
  * @param setAppState - State setter function
  */
-export async function killMonitorMcp(taskId: string, setAppState: SetAppState): Promise<void> {
+export async function killMonitorMcp(_taskId: string, _setAppState: SetAppState): Promise<void> {
   // Stub implementation
 }
 
@@ -39,9 +39,9 @@ export async function killMonitorMcp(taskId: string, setAppState: SetAppState): 
  * @param setAppState - State setter function
  */
 export function killMonitorMcpTasksForAgent(
-  agentId: AgentId,
-  getAppState: () => unknown,
-  setAppState: SetAppState,
+  _agentId: AgentId,
+  _getAppState: () => unknown,
+  _setAppState: SetAppState,
 ): void {
   // Stub implementation
 }

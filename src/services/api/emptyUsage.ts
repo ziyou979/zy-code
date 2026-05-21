@@ -10,7 +10,7 @@ export const EMPTY_USAGE: Readonly<NonNullableUsage> = {
   cacheCreationInputTokens: 0,
   cacheReadInputTokens: 0,
   outputTokens: 0,
-  // @ts-ignore
+  // @ts-expect-error
   server_tool_use: { web_search_requests: 0, web_fetch_requests: 0 },
   service_tier: 'standard',
   cache_creation: {

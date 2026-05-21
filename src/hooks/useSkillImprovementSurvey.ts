@@ -52,7 +52,9 @@ export function useSkillImprovementSurvey(setMessages: SetMessages): {
   const handleSelect = useCallback(
     (selected: FeedbackSurveyResponse) => {
       const current = lastSuggestionRef.current
-      if (!current) return
+      if (!current) {
+        return
+      }
 
       const applied = (selected as any) !== 'dismissed'
 
@@ -82,7 +84,9 @@ export function useSkillImprovementSurvey(setMessages: SetMessages): {
       setIsOpen(false)
       loggedAppearanceRef.current = false
       setAppState((prev) => {
-        if (!prev.skillImprovement.suggestion) return prev
+        if (!prev.skillImprovement.suggestion) {
+          return prev
+        }
         return {
           ...prev,
           skillImprovement: { suggestion: null },

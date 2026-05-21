@@ -1,9 +1,10 @@
-// @ts-ignore
+// @ts-expect-error
 import type { StructuredPatchHunk } from 'diff'
 import * as React from 'react'
 import { Box, NoSelect, Text } from '../ink.js'
 import { intersperse } from '../utils/array.js'
 import { StructuredDiff } from './StructuredDiff.js'
+
 type Props = {
   hunks: StructuredPatchHunk[]
   dim: boolean

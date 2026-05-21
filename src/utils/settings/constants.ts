@@ -124,7 +124,9 @@ export function getSettingSourceDisplayNameCapitalized(
  * @returns Array of SettingSource values
  */
 export function parseSettingSourcesFlag(flag: string): SettingSource[] {
-  if (flag === '') return []
+  if (flag === '') {
+    return []
+  }
 
   const names = flag.split(',').map((s) => s.trim())
   const result: SettingSource[] = []

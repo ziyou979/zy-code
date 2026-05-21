@@ -1,10 +1,10 @@
 import figures from 'figures'
 import React, { useEffect, useRef, useState } from 'react'
+import { tSync } from 'src/i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { tSync } from 'src/i18n/index.js'
 import type { CommandResultDisplay } from '../../commands.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
@@ -40,8 +40,9 @@ import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { Spinner } from '../Spinner.js'
 import TextInput from '../TextInput.js'
 import { CapabilitiesSection } from './CapabilitiesSection.js'
-import type { ZyAIServerInfo, HTTPServerInfo, SSEServerInfo } from './types.js'
+import type { HTTPServerInfo, SSEServerInfo, ZyAIServerInfo } from './types.js'
 import { handleReconnectError, handleReconnectResult } from './utils/reconnectHelpers.js'
+
 type Props = {
   server: SSEServerInfo | HTTPServerInfo | ZyAIServerInfo
   serverToolsCount: number
@@ -234,8 +235,12 @@ export function MCPRemoteServerMenu({
       const urlToCopy = authorizationUrl || ZyAIAuthUrl || ZyAIClearAuthUrl
       if (urlToCopy) {
         void setClipboard(urlToCopy).then((raw) => {
-          if (unmountedRef.current) return
-          if (raw) process.stdout.write(raw)
+          if (unmountedRef.current) {
+            return
+          }
+          if (raw) {
+            process.stdout.write(raw)
+          }
           setUrlCopied(true)
           if (copyTimeoutRef.current !== undefined) {
             clearTimeout(copyTimeoutRef.current)
@@ -259,7 +264,7 @@ export function MCPRemoteServerMenu({
       // Use the direct auth URL with org and server IDs
       // Replace 'mcprs' prefix with 'mcpsrv' if present
       const serverId = (server as any).config.id.startsWith('mcprs')
-        ? 'mcpsrv' + (server as any).config.id.slice(5)
+        ? `mcpsrv${(server as any).config.id.slice(5)}`
         : (server as any).config.id
       const productSurface = encodeURIComponent(process.env.ZY_CODE_ENTRYPOINT || 'cli')
       authUrl = `${zyAiBaseUrl}/api/organizations/${orgUuid}/mcp/start-auth/${serverId}?product_surface=${productSurface}`
@@ -309,7 +314,9 @@ export function MCPRemoteServerMenu({
     onComplete,
   ])
   const handleAuthenticate = React.useCallback(async () => {
-    if ((server as any).config.type === 'zyai-proxy') return
+    if ((server as any).config.type === 'zyai-proxy') {
+      return
+    }
     setIsAuthenticating(true)
     setError(null)
     const controller = new AbortController()
@@ -371,7 +378,9 @@ export function MCPRemoteServerMenu({
     isEffectivelyAuthenticated,
   ])
   const handleClearAuth = async () => {
-    if ((server as any).config.type === 'zyai-proxy') return
+    if ((server as any).config.type === 'zyai-proxy') {
+      return
+    }
     if ((server as any).config) {
       // First revoke the authentication tokens and clear all auth state
       await revokeServerTokens(server.name, (server as any).config)
@@ -778,7 +787,7 @@ export function MCPRemoteServerMenu({
       <Box marginTop={1}>
         <Text dimColor italic>
           {exitState.pending ? (
-            <>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</>
+            tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })
           ) : (
             <Byline>
               <KeyboardShortcutHint shortcut="↑↓" action="navigate" />

@@ -25,14 +25,13 @@
  * - Detailed new_context attributes for LLM requests
  */
 
+import { createHash } from 'node:crypto'
 import type { Span } from '@opentelemetry/api'
-import { createHash } from 'crypto'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { sanitizeToolNameForAnalytics } from '../../services/analytics/metadata.js'
 import type { AssistantMessage, UserMessage } from '../../types/message.js'
-import { isEnvTruthy } from '../envUtils.js'
-import { isInternalBuild } from '../envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../envUtils.js'
 import { jsonParse, jsonStringify } from '../slowOperations.js'
 import { logOTelEvent } from './events.js'
 
@@ -109,7 +108,7 @@ export function truncateContent(
   }
 
   return {
-    content: content.slice(0, maxSize) + '\n\n[TRUNCATED - Content exceeds 60KB limit]',
+    content: `${content.slice(0, maxSize)}\n\n[TRUNCATED - Content exceeds 60KB limit]`,
     truncated: true,
   }
 }
@@ -145,7 +144,7 @@ const SYSTEM_REMINDER_REGEX = /^<system-reminder>\n?([\s\S]*?)\n?<\/system-remin
  */
 function extractSystemReminderContent(text: string): string | null {
   const match = text.trim().match(SYSTEM_REMINDER_REGEX)
-  return match && match[1] ? match[1].trim() : null
+  return match?.[1] ? match[1].trim() : null
 }
 
 /**
@@ -455,9 +454,9 @@ export function addBetaToolResultAttributes(
   const { content: truncatedResult, truncated } = truncateContent(
     `[TOOL RESULT: ${toolName}]\n${toolResult}`,
   )
-  endAttributes['new_context'] = truncatedResult
+  endAttributes.new_context = truncatedResult
   if (truncated) {
-    endAttributes['new_context_truncated'] = true
-    endAttributes['new_context_original_length'] = toolResult.length
+    endAttributes.new_context_truncated = true
+    endAttributes.new_context_original_length = toolResult.length
   }
 }

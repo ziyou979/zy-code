@@ -1,7 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { ToolResultBlock } from '../../types/llm.js'
-import { copyFile, stat as fsStat, truncate as fsTruncate, link } from 'fs/promises'
-import * as React from 'react'
+import { copyFile, stat as fsStat, truncate as fsTruncate, link } from 'node:fs/promises'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
 import type { AppState } from 'src/state/AppState.js'
 import { z } from 'zod/v4'
@@ -21,8 +19,8 @@ import {
   unregisterForeground,
 } from '../../tasks/LocalShellTask/LocalShellTask.js'
 import type { AgentId } from '../../types/ids.js'
+import type { ToolResultBlock } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
-import { extractZyCodeHints } from '../../utils/zyCodeHints.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { errorMessage as getErrorMessage, ShellError } from '../../utils/errors.js'
 import { truncate } from '../../utils/format.js'
@@ -48,6 +46,7 @@ import {
   getToolResultPath,
   PREVIEW_SIZE_BYTES,
 } from '../../utils/toolResultStorage.js'
+import { extractZyCodeHints } from '../../utils/zyCodeHints.js'
 import { shouldUseSandbox } from '../BashTool/shouldUseSandbox.js'
 import { BackgroundHint } from '../BashTool/UI.js'
 import {
@@ -176,8 +175,12 @@ function isSearchOrReadPowerShellCommand(command: string): {
         isRead: false,
       }
     }
-    if (isPartSearch) hasSearch = true
-    if (isPartRead) hasRead = true
+    if (isPartSearch) {
+      hasSearch = true
+    }
+    if (isPartRead) {
+      hasRead = true
+    }
   }
   if (!hasNonNeutralCommand) {
     return {
@@ -213,7 +216,9 @@ const DISALLOWED_AUTO_BACKGROUND_COMMANDS = [
  */
 function isAutobackgroundingAllowed(command: string): boolean {
   const firstWord = command.trim().split(/\s+/)[0]
-  if (!firstWord) return true
+  if (!firstWord) {
+    return true
+  }
   const canonical = resolveToCanonical(firstWord)
   return !DISALLOWED_AUTO_BACKGROUND_COMMANDS.includes(canonical)
 }
@@ -238,9 +243,13 @@ export function detectBlockedSleepPattern(command: string): string | null {
   // Match: Start-Sleep N, Start-Sleep -Seconds N, Start-Sleep -s N, sleep N
   // (case-insensitive; -Seconds can be abbreviated to -s per PS convention)
   const m = /^(?:start-sleep|sleep)(?:\s+-s(?:econds)?)?\s+(\d+)\s*$/i.exec(first)
-  if (!m) return null
+  if (!m) {
+    return null
+  }
   const secs = parseInt(m[1]!, 10)
-  if (secs < 2) return null // sub-2s sleeps are fine (rate limiting, pacing)
+  if (secs < 2) {
+    return null // sub-2s sleeps are fine (rate limiting, pacing)
+  }
 
   const rest = command
     .trim()
@@ -341,8 +350,11 @@ const outputSchema = lazySchema(() =>
 )
 type OutputSchema = ReturnType<typeof outputSchema>
 export type Out = z.infer<OutputSchema>
+
 import type { PowerShellProgress } from '../../types/tools.js'
+
 export type { PowerShellProgress } from '../../types/tools.js'
+
 const COMMON_BACKGROUND_COMMANDS = [
   'npm',
   'yarn',
@@ -505,7 +517,9 @@ export const PowerShellTool = buildTool({
     // For image data, format as image content block for ZY
     if (isImage) {
       const block = buildImageToolResult(stdout, toolUseID)
-      if (block) return block
+      if (block) {
+        return block
+      }
     }
     let processedStdout = stdout
     if (persistedOutputPath) {
@@ -524,7 +538,9 @@ export const PowerShellTool = buildTool({
     }
     let errorMessage = stderr.trim()
     if (interrupted) {
-      if (stderr) errorMessage += EOL
+      if (stderr) {
+        errorMessage += EOL
+      }
       errorMessage += '<error>Command was aborted before completion</error>'
     }
     let backgroundInfo = ''
@@ -645,7 +661,9 @@ export const PowerShellTool = buildTool({
       if (result.backgroundTaskId) {
         const bgExtracted = extractZyCodeHints(result.stdout || '', input.command)
         if (isMainThread && bgExtracted.hints.length > 0) {
-          for (const hint of bgExtracted.hints) maybeRecordPluginHint(hint)
+          for (const hint of bgExtracted.hints) {
+            maybeRecordPluginHint(hint)
+          }
         }
         return {
           data: {
@@ -689,7 +707,9 @@ export const PowerShellTool = buildTool({
       const extracted = extractZyCodeHints(stdout, input.command)
       stdout = extracted.stripped
       if (isMainThread && extracted.hints.length > 0) {
-        for (const hint of extracted.hints) maybeRecordPluginHint(hint)
+        for (const hint of extracted.hints) {
+          maybeRecordPluginHint(hint)
+        }
       }
 
       // preSpawnError means exec() succeeded but the inner shell failed before
@@ -776,7 +796,9 @@ export const PowerShellTool = buildTool({
         },
       }
     } finally {
-      if (setToolJSX) setToolJSX(null)
+      if (setToolJSX) {
+        setToolJSX(null)
+      }
     }
   },
   isResultTruncated(output: Out): boolean {
@@ -821,7 +843,7 @@ async function* runPowerShellCommand({
   let lastProgressOutput = ''
   let lastTotalLines = 0
   let lastTotalBytes = 0
-  let backgroundShellId: string | undefined = undefined
+  let backgroundShellId: string | undefined
   let interruptBackgroundingStarted = false
   let assistantAutoBackgrounded = false
 
@@ -1003,7 +1025,7 @@ async function* runPowerShellCommand({
   // Set up progress yielding with periodic checks
   const startTime = Date.now()
   let nextProgressTime = startTime + PROGRESS_THRESHOLD_MS
-  let foregroundTaskId: string | undefined = undefined
+  let foregroundTaskId: string | undefined
 
   // Progress loop: wrap in try/finally so stopPolling is called on every exit
   // path — normal completion, timeout/interrupt backgrounding, and Ctrl+B
@@ -1159,7 +1181,8 @@ async function* runPowerShellCommand({
   }
 }
 
+import { isPowerShellToolEnabled } from '../../utils/shell/shellToolUtils.js'
 // 插件化注册
 import { toolRegistry } from '../registry.js'
-import { isPowerShellToolEnabled } from '../../utils/shell/shellToolUtils.js'
+
 toolRegistry.register(PowerShellTool, () => isPowerShellToolEnabled())

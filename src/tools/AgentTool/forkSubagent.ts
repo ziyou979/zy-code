@@ -1,9 +1,9 @@
 import { feature } from 'bun:bundle'
-import type { ToolCallBlock } from '../../types/llm.js'
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import { FORK_BOILERPLATE_TAG, FORK_DIRECTIVE_PREFIX } from '../../constants/xml.js'
 import { isCoordinatorMode } from '../../coordinator/coordinatorMode.js'
+import type { ToolCallBlock } from '../../types/llm.js'
 import type { AssistantMessage, Message as MessageType } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { createUserMessage } from '../../utils/messages.js'
@@ -25,9 +25,10 @@ import type { BuiltInAgentDefinition } from './loadAgentsDir.js'
  */
 export function isForkSubagentEnabled(): boolean {
   if (feature('FORK_SUBAGENT')) {
-    if (isCoordinatorMode()) return false
-    return !getIsNonInteractiveSession();
-
+    if (isCoordinatorMode()) {
+      return false
+    }
+    return !getIsNonInteractiveSession()
   }
   return false
 }
@@ -71,9 +72,13 @@ export const FORK_AGENT = {
  */
 export function isInForkChild(messages: MessageType[]): boolean {
   return messages.some((m) => {
-    if (m.type !== 'user') return false
+    if (m.type !== 'user') {
+      return false
+    }
     const content = m.message.content
-    if (!Array.isArray(content)) return false
+    if (!Array.isArray(content)) {
+      return false
+    }
     return content.some(
       (block) => block.type === 'text' && block.text.includes(`<${FORK_BOILERPLATE_TAG}>`),
     )
@@ -114,8 +119,7 @@ export function buildForkedMessages(
 
   // Collect all tool_use blocks from the assistant message
   const toolUseBlocks = contentBlocks.filter(
-    (block): block is ToolCallBlock =>
-      typeof block !== 'string' && block.type === 'tool_call',
+    (block): block is ToolCallBlock => typeof block !== 'string' && block.type === 'tool_call',
   )
 
   if (toolUseBlocks.length === 0) {

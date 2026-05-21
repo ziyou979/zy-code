@@ -1,44 +1,53 @@
 // @ts-nocheck
+
+import {
+  getPromptCache1hAllowlist,
+  getPromptCache1hEligible,
+  setPromptCache1hAllowlist,
+  setPromptCache1hEligible,
+} from '../../bootstrap/state.js'
+import type { QuerySource } from '../../constants/querySource.js'
+import type { TextBlock } from '../../types/llm.js'
+import type { CacheScope } from '../../utils/api.js'
+import { splitSysPromptPrefix } from '../../utils/api.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import {
+  getDefaultAdvancedModel,
   getDefaultCompactModel,
   getDefaultStandardModel,
-  getDefaultAdvancedModel,
 } from '../../utils/model/model.js'
-import type { CacheScope } from '../../utils/api.js'
-import type { QuerySource } from '../../constants/querySource.js'
 import { getAPIProvider } from '../../utils/model/providers.js'
-import {
-  getPromptCache1hEligible,
-  setPromptCache1hEligible,
-  getPromptCache1hAllowlist,
-  setPromptCache1hAllowlist,
-} from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import type { SystemPrompt } from '../../utils/systemPromptType.js'
-import { splitSysPromptPrefix } from '../../utils/api.js'
-import type { TextBlock } from '../../types/llm.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 
 export function getPromptCachingEnabled(model: string): boolean {
   // 全局禁用优先
-  if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING)) return false
+  if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING)) {
+    return false
+  }
 
   // 检查是否应对 compact 模型禁用
   if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING_HAIKU)) {
     const compactModel = getDefaultCompactModel()
-    if (model === compactModel) return false
+    if (model === compactModel) {
+      return false
+    }
   }
 
   // 检查是否应对 standard 模型禁用
   if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING_SONNET)) {
     const standardModel = getDefaultStandardModel()
-    if (model === standardModel) return false
+    if (model === standardModel) {
+      return false
+    }
   }
 
   // 检查是否应对 advanced 模型禁用
   if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING_OPUS)) {
     const advancedModel = getDefaultAdvancedModel()
-    if (model === advancedModel) return false
+    if (model === advancedModel) {
+      return false
+    }
   }
 
   return true
@@ -94,7 +103,9 @@ function should1hCacheTTL(querySource?: QuerySource): boolean {
     userEligible = isInternalBuild()
     setPromptCache1hEligible(userEligible)
   }
-  if (!userEligible) return false
+  if (!userEligible) {
+    return false
+  }
 
   // 缓存允许列表到引导状态中以保证会话稳定性 — 防止
   // GrowthBook 的磁盘缓存在请求中途更新时导致混合 TTL

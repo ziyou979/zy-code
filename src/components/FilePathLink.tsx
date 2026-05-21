@@ -1,8 +1,9 @@
-import { resolve } from 'path'
+import { resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import React from 'react'
-import { pathToFileURL } from 'url'
-import { Ansi } from '../ink.js'
 import Link from '../ink/components/Link.js'
+import { Ansi } from '../ink.js'
+
 type Props = {
   /** The absolute file path */
   filePath: string

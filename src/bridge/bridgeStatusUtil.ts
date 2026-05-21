@@ -1,4 +1,4 @@
-import { getZyAiBaseUrl, getRemoteSessionUrl } from '../constants/product.js'
+import { getRemoteSessionUrl, getZyAiBaseUrl } from '../constants/product.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { formatDuration, truncateToWidth } from '../utils/format.js'
 import { getGraphemeSegmenter } from '../utils/intl.js'
@@ -118,9 +118,15 @@ export function getBridgeStatus({
   sessionActive: boolean
   reconnecting: boolean
 }): BridgeStatusInfo {
-  if (error) return { label: 'Remote Control failed', color: 'error' }
-  if (reconnecting) return { label: 'Remote Control reconnecting', color: 'warning' }
-  if (sessionActive || connected) return { label: 'Remote Control active', color: 'success' }
+  if (error) {
+    return { label: 'Remote Control failed', color: 'error' }
+  }
+  if (reconnecting) {
+    return { label: 'Remote Control reconnecting', color: 'warning' }
+  }
+  if (sessionActive || connected) {
+    return { label: 'Remote Control active', color: 'success' }
+  }
   return { label: 'Remote Control connecting\u2026', color: 'warning' }
 }
 

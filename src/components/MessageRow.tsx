@@ -264,13 +264,19 @@ export function allToolsResolved(msg: RenderableMessage, resolvedToolUseIDs: Set
  */
 export function areMessageRowPropsEqual(prev: Props, next: Props): boolean {
   // 不同的消息引用 = 内容可能已更改，必须重新渲染
-  if (prev.message !== next.message) return false
+  if (prev.message !== next.message) {
+    return false
+  }
 
   // 屏幕模式变化 = 重新渲染
-  if (prev.screen !== next.screen) return false
+  if (prev.screen !== next.screen) {
+    return false
+  }
 
   // verbose 切换改变思考块的可见性
-  if (prev.verbose !== next.verbose) return false
+  if (prev.verbose !== next.verbose) {
+    return false
+  }
 
   // collapsed_read_search is never static in prompt mode (matches shouldRenderStatically)
   if (prev.message.type === 'collapsed_read_search' && next.screen !== 'transcript') {
@@ -278,12 +284,16 @@ export function areMessageRowPropsEqual(prev: Props, next: Props): boolean {
   }
 
   // 宽度变化影响 Box 布局
-  if (prev.columns !== next.columns) return false
+  if (prev.columns !== next.columns) {
+    return false
+  }
 
   // latestBashOutputUUID affects rendering (full vs truncated output)
   const prevIsLatestBash = prev.latestBashOutputUUID === prev.message.uuid
   const nextIsLatestBash = next.latestBashOutputUUID === next.message.uuid
-  if (prevIsLatestBash !== nextIsLatestBash) return false
+  if (prevIsLatestBash !== nextIsLatestBash) {
+    return false
+  }
 
   // lastThinkingBlockId affects thinking block visibility — but only for
   // messages that HAVE thinking content. Checking unconditionally busts the
@@ -300,7 +310,9 @@ export function areMessageRowPropsEqual(prev: Props, next: Props): boolean {
   const isResolved = allToolsResolved(prev.message as any, prev.lookups.resolvedToolUseIDs)
 
   // 仅对真正静态的消息才跳出
-  if (isStreaming || !isResolved) return false
+  if (isStreaming || !isResolved) {
+    return false
+  }
 
   // 静态消息——可以安全跳过重新渲染
   return true

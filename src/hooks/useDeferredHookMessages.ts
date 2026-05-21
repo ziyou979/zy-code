@@ -18,10 +18,14 @@ export function useDeferredHookMessages(
 
   useEffect(() => {
     const promise = pendingRef.current
-    if (!promise) return
+    if (!promise) {
+      return
+    }
     let cancelled = false
     promise.then((msgs) => {
-      if (cancelled) return
+      if (cancelled) {
+        return
+      }
       resolvedRef.current = true
       pendingRef.current = null
       if (msgs.length > 0) {
@@ -34,9 +38,13 @@ export function useDeferredHookMessages(
   }, [setMessages])
 
   return useCallback(async () => {
-    if (resolvedRef.current || !pendingRef.current) return
+    if (resolvedRef.current || !pendingRef.current) {
+      return
+    }
     const msgs = await pendingRef.current
-    if (resolvedRef.current) return
+    if (resolvedRef.current) {
+      return
+    }
     resolvedRef.current = true
     pendingRef.current = null
     if (msgs.length > 0) {

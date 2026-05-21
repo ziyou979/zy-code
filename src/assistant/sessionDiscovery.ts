@@ -5,10 +5,10 @@
  * 可恢复的会话列表。
  */
 
-import { mkdirSync, readdirSync } from 'fs'
-import { join } from 'path'
-import { getZyConfigHomeDir } from '../utils/envUtils.js'
+import { mkdirSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
 import { logForDebugging } from '../utils/debug.js'
+import { getZyConfigHomeDir } from '../utils/envUtils.js'
 
 export type AssistantSession = { id: string; name: string; timestamp?: string }
 

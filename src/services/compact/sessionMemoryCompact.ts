@@ -422,7 +422,7 @@ function createCompactionResultFromSessionMemory(
 ): CompactionResult {
   const preCompactTokenCount = tokenCountFromLastAPIResponse(messages)
 
-  // @ts-ignore
+  // @ts-expect-error
   const boundaryMarker = createCompactBoundaryMessage(
     'auto',
     preCompactTokenCount ?? 0,
@@ -430,7 +430,7 @@ function createCompactionResultFromSessionMemory(
   )
   const preCompactDiscovered = extractDiscoveredToolNames(messages)
   if (preCompactDiscovered.size > 0) {
-    // @ts-ignore
+    // @ts-expect-error
     boundaryMarker.compactMetadata.preCompactDiscoveredTools = [...preCompactDiscovered].sort()
   }
 
@@ -457,7 +457,7 @@ function createCompactionResultFromSessionMemory(
   const attachments = planAttachment ? [planAttachment] : []
 
   return {
-    // @ts-ignore
+    // @ts-expect-error
     boundaryMarker: annotateBoundaryWithPreservedSegment(
       boundaryMarker,
       summaryMessages[summaryMessages.length - 1]!.uuid as any,

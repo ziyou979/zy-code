@@ -6,6 +6,7 @@ import type { DeepImmutable } from 'src/types/utils.js'
 import type { CommandResultDisplay } from '../../commands.js'
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js'
 import { useElapsedTime } from '../../hooks/useElapsedTime.js'
+import { tSync } from '../../i18n/index.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Link, Text } from '../../ink.js'
 import type { RemoteAgentTaskState } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js'
@@ -25,8 +26,8 @@ import { Byline } from '../design-system/Byline.js'
 import { Dialog } from '../design-system/Dialog.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { Message } from '../Message.js'
-import { tSync } from '../../i18n/index.js'
 import { formatReviewStageCounts, RemoteSessionProgress } from './RemoteSessionProgress.js'
+
 type Props = {
   session: DeepImmutable<RemoteAgentTaskState>
   toolUseContext: ToolUseContext
@@ -49,7 +50,9 @@ export function formatToolUseSummary(name: string, input: unknown): string {
   if (name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
     return tSync('backgroundTasks.reviewPlanOnWeb')
   }
-  if (!input || typeof input !== 'object') return name
+  if (!input || typeof input !== 'object') {
+    return name
+  }
   // AskUserQuestion：将问题文本显示为 CTA，而非工具名。
   // 输入格式为 {questions: [{question, header, options}]}。
   if (name === ASK_USER_QUESTION_TOOL_NAME && 'questions' in input) {
@@ -285,15 +288,18 @@ function reviewCountsLine(session: DeepImmutable<RemoteAgentTaskState>): string 
   const p = session.reviewProgress
   // 没有进度数据 —— 编排器从未写入快照。完成时
   // 不要声称"0 发现"；我们只是不知道。
-  if (!p)
+  if (!p) {
     return session.status === 'completed'
       ? tSync('backgroundTasks.done')
       : tSync('backgroundTasks.settingUp')
+  }
   const verified = p.bugsVerified
   const refuted = p.bugsRefuted ?? 0
   if (session.status === 'completed') {
     const parts = [`${verified} ${plural(verified, 'finding')}`]
-    if (refuted > 0) parts.push(`${refuted} refuted`)
+    if (refuted > 0) {
+      parts.push(`${refuted} refuted`)
+    }
     return parts.join(' · ')
   }
   return formatReviewStageCounts(p.stage, p.bugsFound, verified, refuted)
@@ -465,7 +471,9 @@ export function RemoteSessionDetailDialog({
   // 放在提前返回之前，以确保 hook 调用顺序稳定（Hooks 规则）。
   // Ultraplan/review 会话从不读取此数据 —— 跳过它们的归一化工作。
   const lastMessages = useMemo(() => {
-    if (session.isUltraplan || session.isRemoteReview) return []
+    if (session.isUltraplan || session.isRemoteReview) {
+      return []
+    }
     return normalizeMessages(toInternalMessages(session.log as SDKMessage[]))
       .filter((_) => _.type !== 'progress')
       .slice(-3)

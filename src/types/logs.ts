@@ -1,4 +1,4 @@
-import type { UUID } from 'crypto'
+import type { UUID } from 'node:crypto'
 import type { FileHistorySnapshot } from 'src/utils/fileHistory.js'
 import type { ContentReplacementRecord } from 'src/utils/toolResultStorage.js'
 import type { AgentId } from './ids.js'

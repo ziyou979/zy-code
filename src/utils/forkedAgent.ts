@@ -8,8 +8,8 @@
  * 4. 隔离可变状态，防止干扰主代理循环
  */
 
-import type { UUID } from 'crypto'
-import { randomUUID } from 'crypto'
+import type { UUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import type { PromptCommand } from '../commands.js'
 import type { QuerySource } from '../constants/querySource.js'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
@@ -139,7 +139,9 @@ export function createGetAppStateWithAllowedTools(
   baseGetAppState: ToolUseContext['getAppState'],
   allowedTools: string[],
 ): ToolUseContext['getAppState'] {
-  if (allowedTools.length === 0) return baseGetAppState
+  if (allowedTools.length === 0) {
+    return baseGetAppState
+  }
   return () => {
     const appState = baseGetAppState()
     return {
@@ -226,7 +228,9 @@ export function extractResultText(
   defaultText = 'Execution completed',
 ): string {
   const lastAssistantMessage = getLastAssistantMessage(agentMessages)
-  if (!lastAssistantMessage) return defaultText
+  if (!lastAssistantMessage) {
+    return defaultText
+  }
 
   const content = Array.isArray(lastAssistantMessage.message.content)
     ? lastAssistantMessage.message.content

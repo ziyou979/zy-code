@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import TextInput from '../../components/TextInput.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { Box, color, Text, useTheme } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
+
 interface CheckExistingSecretStepProps {
   useExistingSecret: boolean
   secretName: string

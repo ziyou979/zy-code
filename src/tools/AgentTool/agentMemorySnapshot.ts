@@ -1,5 +1,5 @@
-import { mkdir, readdir, readFile, unlink, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { z } from 'zod/v4'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -59,7 +59,9 @@ async function copySnapshotToLocal(agentType: string, scope: AgentMemoryScope): 
   try {
     const files = await readdir(snapshotMemDir, { withFileTypes: true })
     for (const dirent of files) {
-      if (!dirent.isFile() || dirent.name === SNAPSHOT_JSON) continue
+      if (!dirent.isFile() || dirent.name === SNAPSHOT_JSON) {
+        continue
+      }
       const content = await readFile(join(snapshotMemDir, dirent.name), {
         encoding: 'utf-8',
       })

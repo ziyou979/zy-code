@@ -1,6 +1,6 @@
-import type { IncomingMessage, ServerResponse } from 'http'
-import { createServer, type Server } from 'http'
-import type { AddressInfo } from 'net'
+import type { IncomingMessage, ServerResponse } from 'node:http'
+import { createServer, type Server } from 'node:http'
+import type { AddressInfo } from 'node:net'
 import { logEvent } from 'src/services/analytics/index.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { logError } from '../../utils/log.js'
@@ -76,7 +76,9 @@ export class AuthCodeListener {
     scopes: string[],
     customHandler?: (res: ServerResponse, scopes: string[]) => void,
   ): void {
-    if (!this.pendingResponse) return
+    if (!this.pendingResponse) {
+      return
+    }
 
     // If custom handler provided, use it instead of default redirect
     if (customHandler) {
@@ -104,7 +106,9 @@ export class AuthCodeListener {
    * ensuring the browser flow is completed properly.
    */
   handleErrorRedirect(): void {
-    if (!this.pendingResponse) return
+    if (!this.pendingResponse) {
+      return
+    }
 
     // TODO: swap to a different url once we have an error page
     const errorUrl = getOauthConfig().ZY_CODE_SUCCESS_URL

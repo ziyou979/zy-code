@@ -1,5 +1,6 @@
 import { feature } from 'bun:bundle'
 import * as React from 'react'
+import type { TextBlock } from 'src/types/llm.ts'
 import type { Command } from '../commands.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { Box } from '../ink.js'
@@ -34,7 +35,6 @@ import { UserTextMessage } from './messages/UserTextMessage.js'
 import { UserToolResultMessage } from './messages/UserToolResultMessage/UserToolResultMessage.js'
 import { OffscreenFreeze } from './OffscreenFreeze.js'
 import { ExpandShellOutputProvider } from './shell/ExpandShellOutputContext.js'
-import type { TextBlock } from 'src/types/llm.ts'
 
 export type Props = {
   message:
@@ -102,7 +102,7 @@ function MessageImpl({
     }
     case 'assistant': {
       const assistantWidth = containerWidth ?? '100%'
-      let renderAssistantBlock = (_, index) => (
+      const renderAssistantBlock = (_, index) => (
         <AssistantMessageBlock
           key={index}
           param={_ as any}
@@ -135,7 +135,7 @@ function MessageImpl({
         const compactScreen = isTranscriptMode ? 'transcript' : 'prompt'
         return <CompactSummary message={message as any} screen={compactScreen} />
       }
-      let imageIndices = []
+      const imageIndices = []
       let imagePosition = 0
       for (const param of message.message.content) {
         if (param.type === 'image') {
@@ -148,7 +148,7 @@ function MessageImpl({
       }
       const isLatestBashOutput = latestBashOutputUUID === message.uuid
       const userWidth = containerWidth ?? '100%'
-      let userContent = message.message.content.map((contentBlock, index) => (
+      const userContent = message.message.content.map((contentBlock, index) => (
         <UserMessage
           key={index}
           message={message as any}
@@ -191,7 +191,7 @@ function MessageImpl({
         const { isSnipMarkerMessage } =
           require('../services/compact/snipCompact.js') as typeof import('../services/compact/snipCompact.js')
         if (isSnipBoundaryMessage(message)) {
-          let snipModule = require('./messages/SnipBoundaryMessage.js')
+          const snipModule = require('./messages/SnipBoundaryMessage.js')
           const { SnipBoundaryMessage } =
             snipModule as typeof import('./messages/SnipBoundaryMessage.js')
           return <SnipBoundaryMessage message={message} />
@@ -201,7 +201,7 @@ function MessageImpl({
         }
       }
       if (message.subtype === 'local_command') {
-        let localCommandContent: TextBlock = {
+        const localCommandContent: TextBlock = {
           type: 'text',
           text: message.content,
         }
@@ -426,13 +426,17 @@ export function hasThinkingContent(m: {
     }>
   }
 }): boolean {
-  if (m.type !== 'assistant' || !m.message) return false
+  if (m.type !== 'assistant' || !m.message) {
+    return false
+  }
   return m.message.content.some((b) => b.type === 'thinking' || b.type === 'redacted_thinking')
 }
 
 /** 导出用于测试 */
 export function areMessagePropsEqual(prev: Props, next: Props): boolean {
-  if (prev.message.uuid !== next.message.uuid) return false
+  if (prev.message.uuid !== next.message.uuid) {
+    return false
+  }
   // 仅在 lastThinkingBlockId 变更且该消息包含 thinking 内容时才重新渲染
   // 否则每次 streaming thinking 开始/停止时，scrollback 中的每条消息都会重新渲染 (CC-941)
   if (
@@ -442,16 +446,24 @@ export function areMessagePropsEqual(prev: Props, next: Props): boolean {
     return false
   }
   // verbose 切换会改变 thinking 块的可见性/展开状态
-  if (prev.verbose !== next.verbose) return false
+  if (prev.verbose !== next.verbose) {
+    return false
+  }
   // 仅当该消息的"是否为最新 bash output"状态发生变化时才重新渲染，
   // 而不是当全局 latestBashOutputUUID 变为其他消息时
   const prevIsLatest = prev.latestBashOutputUUID === prev.message.uuid
   const nextIsLatest = next.latestBashOutputUUID === next.message.uuid
-  if (prevIsLatest !== nextIsLatest) return false
-  if (prev.isTranscriptMode !== next.isTranscriptMode) return false
+  if (prevIsLatest !== nextIsLatest) {
+    return false
+  }
+  if (prev.isTranscriptMode !== next.isTranscriptMode) {
+    return false
+  }
   // containerWidth 在无元数据路径中是一个绝对数值（跳过了包装 Box）。
   // 静态消息必须在终端缩放时重新渲染。
-  if (prev.containerWidth !== next.containerWidth) return false
+  if (prev.containerWidth !== next.containerWidth) {
+    return false
+  }
   return prev.isStatic && next.isStatic
 }
 export const Message = React.memo(MessageImpl, areMessagePropsEqual)

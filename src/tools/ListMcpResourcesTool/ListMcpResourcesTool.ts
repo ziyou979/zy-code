@@ -77,7 +77,9 @@ export const ListMcpResourcesTool = buildTool({
     // onclose it returns a fresh connection so the re-fetch succeeds.
     const results = await Promise.all(
       clientsToProcess.map(async (client) => {
-        if (client.type !== 'connected') return []
+        if (client.type !== 'connected') {
+          return []
+        }
         try {
           const fresh = await ensureConnectedClient(client)
           return await fetchResourcesForClient(fresh)
@@ -118,4 +120,5 @@ export const ListMcpResourcesTool = buildTool({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(ListMcpResourcesTool, undefined, { special: true })

@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
+import { dirname, join, resolve } from 'node:path'
 import mergeWith from 'lodash-es/mergeWith.js'
-import { dirname, join, resolve } from 'path'
 import { z } from 'zod/v4'
 import {
   getFlagSettingsInline,
@@ -12,13 +12,12 @@ import { getRemoteManagedSettingsSyncFromCache } from '../../services/remoteMana
 import { uniq } from '../array.js'
 import { logForDebugging } from '../debug.js'
 import { logForDiagnosticsNoPII } from '../diagLogs.js'
-import { getZyConfigHomeDir, isEnvTruthy } from '../envUtils.js'
+import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from '../envUtils.js'
 import { getErrnoCode, isENOENT } from '../errors.js'
 import { writeFileSyncAndFlush_DEPRECATED } from '../file.js'
 import { readFileSync } from '../fileRead.js'
 import { getFsImplementation, safeResolvePath } from '../fsOperations.js'
 import { addFileGlobRuleToGitignore } from '../git/gitignore.js'
-import { isInternalBuild } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
 import { logError } from '../log.js'
 import { getPlatform } from '../platform.js'
@@ -282,7 +281,9 @@ export function getRelativeSettingsFilePathForSource(
 
 export function getSettingsForSource(source: SettingSource): SettingsJson | null {
   const cached = getCachedSettingsForSource(source)
-  if (cached !== undefined) return cached
+  if (cached !== undefined) {
+    return cached
+  }
   const result = getSettingsForSourceUncached(source)
   setCachedSettingsForSource(source, result)
   return result
@@ -449,7 +450,7 @@ export function updateSettingsForSource(
     // 在写入文件之前标记为内部写入
     markInternalWrite(filePath)
 
-    writeFileSyncAndFlush_DEPRECATED(filePath, jsonStringify(updatedSettings, null, 2) + '\n')
+    writeFileSyncAndFlush_DEPRECATED(filePath, `${jsonStringify(updatedSettings, null, 2)}\n`)
 
     // 配置已更新，使会话缓存失效
     resetSettingsCache()
@@ -864,15 +865,25 @@ export function getAutoModeConfig():
       'policySettings',
     ] as const) {
       const settings = getSettingsForSource(source)
-      if (!settings) continue
+      if (!settings) {
+        continue
+      }
       const result = schema.safeParse((settings as Record<string, unknown>).autoMode)
       if (result.success) {
-        if (result.data.allow) allow.push(...result.data.allow)
-        if (result.data.soft_deny) soft_deny.push(...result.data.soft_deny)
-        if (isInternalBuild()) {
-          if (result.data.deny) soft_deny.push(...result.data.deny)
+        if (result.data.allow) {
+          allow.push(...result.data.allow)
         }
-        if (result.data.environment) environment.push(...result.data.environment)
+        if (result.data.soft_deny) {
+          soft_deny.push(...result.data.soft_deny)
+        }
+        if (isInternalBuild()) {
+          if (result.data.deny) {
+            soft_deny.push(...result.data.deny)
+          }
+        }
+        if (result.data.environment) {
+          environment.push(...result.data.environment)
+        }
       }
     }
 

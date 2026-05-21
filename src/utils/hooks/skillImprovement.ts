@@ -8,8 +8,8 @@ import {
 } from '../../services/analytics/index.js'
 import { queryModelWithoutStreaming } from '../../services/api/llmOrchestrator.js'
 import { getEmptyToolPermissionContext } from '../../Tool.js'
-import type { Message } from '../../types/message.js'
 import type { TextBlock } from '../../types/llm.js'
+import type { Message } from '../../types/message.js'
 import { createAbortController } from '../abortController.js'
 import { count } from '../array.js'
 import { getCwd } from '../cwd.js'
@@ -36,7 +36,9 @@ function formatRecentMessages(messages: Message[]): string {
     .map((m) => {
       const role = m.type === 'user' ? 'User' : 'Assistant'
       const content = m.message.content
-      if (typeof content === 'string') return `${role}: ${content.slice(0, 500)}`
+      if (typeof content === 'string') {
+        return `${role}: ${content.slice(0, 500)}`
+      }
       const text = content
         .filter((b): b is TextBlock => b.type === 'text')
         .map((b: TextBlock) => b.text)
@@ -64,7 +66,7 @@ function createSkillImprovementHook() {
     name: 'skill_improvement' as any,
 
     async shouldRun(context) {
-      // @ts-ignore
+      // @ts-expect-error
       if (context.querySource !== 'repl_main_thread') {
         return false
       }
@@ -140,7 +142,7 @@ Output <updates>[]</updates> if no updates are needed.`,
         const projectSkill = findProjectSkill()
         const skillName = projectSkill?.skillName ?? 'unknown'
 
-        // @ts-ignore
+        // @ts-expect-error
         logEvent('zy_skill_improvement_detected', {
           updateCount: result.result
             .length as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -181,10 +183,12 @@ export async function applySkillImprovement(
   skillName: string,
   updates: SkillUpdate[],
 ): Promise<void> {
-  if (!skillName) return
+  if (!skillName) {
+    return
+  }
 
-  const { join } = await import('path')
-  const fs = await import('fs/promises')
+  const { join } = await import('node:path')
+  const fs = await import('node:fs/promises')
 
   // Skills live at .zy/skills/<name>/SKILL.md relative to CWD
   const filePath = join(getCwd(), '.zy', 'skills', skillName, 'SKILL.md')
@@ -234,7 +238,7 @@ Rules:
       hasAppendSystemPrompt: false,
       temperatureOverride: 0,
       agents: [],
-      // @ts-ignore
+      // @ts-expect-error
       querySource: 'skill_improvement_apply',
       mcpTools: [],
     },

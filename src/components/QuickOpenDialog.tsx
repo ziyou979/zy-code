@@ -1,11 +1,10 @@
-import * as path from 'path'
-import * as React from 'react'
+import * as path from 'node:path'
 import { useEffect, useRef, useState } from 'react'
 import { useRegisterOverlay } from '../context/overlayContext.js'
 import { generateFileSuggestions } from '../hooks/fileSuggestions.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
-import { Text } from '../ink.js'
 import { tSync } from '../i18n/index.js'
+import { Text } from '../ink.js'
 import { logEvent } from '../services/analytics/index.js'
 import { getCwd } from '../utils/cwd.js'
 import { openFileInExternalEditor } from '../utils/editor.js'
@@ -14,6 +13,7 @@ import { highlightMatch } from '../utils/highlightMatch.js'
 import { readFileInRange } from '../utils/readFileInRange.js'
 import { FuzzyPicker } from './design-system/FuzzyPicker.js'
 import { LoadingState } from './design-system/LoadingState.js'
+
 type Props = {
   onDone: () => void
   onInsert: (text: string) => void
@@ -26,7 +26,7 @@ const PREVIEW_LINES = 20
  * Fuzzy file finder with a syntax-highlighted preview of the focused file.
  */
 export function QuickOpenDialog({ onDone, onInsert }: Props) {
-  // @ts-ignore
+  // @ts-expect-error
   useRegisterOverlay('quick-open')
   const { columns, rows } = useTerminalSize()
   const visibleResults = Math.min(VISIBLE_RESULTS, Math.max(4, rows - 14))

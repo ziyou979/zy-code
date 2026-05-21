@@ -7,8 +7,8 @@
  * 注意：收件箱在团队内以 agent 名称作为键。
  */
 
-import { mkdir, readFile, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { z } from 'zod/v4'
 import { TEAMMATE_MESSAGE_TAG } from '../constants/xml.js'
 import { PermissionModeSchema } from '../entrypoints/sdk/coreSchemas.js'
@@ -297,7 +297,9 @@ export async function markMessagesAsRead(agentName: string, teamName?: string): 
     )
 
     // messages 来自 jsonParse —— 全新的、未共享的对象，可以安全地直接修改
-    for (const m of messages) m.read = true
+    for (const m of messages) {
+      m.read = true
+    }
 
     await writeFile(inboxPath, jsonStringify(messages, null, 2), 'utf-8')
     logForDebugging(
@@ -831,7 +833,9 @@ export async function sendShutdownRequestToMailbox(
 export function isShutdownRequest(messageText: string): ShutdownRequestMessage | null {
   try {
     const result = ShutdownRequestMessageSchema().safeParse(jsonParse(messageText))
-    if (result.success) return result.data
+    if (result.success) {
+      return result.data
+    }
   } catch {
     // 非 JSON
   }
@@ -844,7 +848,9 @@ export function isShutdownRequest(messageText: string): ShutdownRequestMessage |
 export function isPlanApprovalRequest(messageText: string): PlanApprovalRequestMessage | null {
   try {
     const result = PlanApprovalRequestMessageSchema().safeParse(jsonParse(messageText))
-    if (result.success) return result.data
+    if (result.success) {
+      return result.data
+    }
   } catch {
     // 非 JSON
   }
@@ -857,7 +863,9 @@ export function isPlanApprovalRequest(messageText: string): PlanApprovalRequestM
 export function isShutdownApproved(messageText: string): ShutdownApprovedMessage | null {
   try {
     const result = ShutdownApprovedMessageSchema().safeParse(jsonParse(messageText))
-    if (result.success) return result.data
+    if (result.success) {
+      return result.data
+    }
   } catch {
     // 非 JSON
   }
@@ -870,7 +878,9 @@ export function isShutdownApproved(messageText: string): ShutdownApprovedMessage
 export function isShutdownRejected(messageText: string): ShutdownRejectedMessage | null {
   try {
     const result = ShutdownRejectedMessageSchema().safeParse(jsonParse(messageText))
-    if (result.success) return result.data
+    if (result.success) {
+      return result.data
+    }
   } catch {
     // 非 JSON
   }
@@ -883,7 +893,9 @@ export function isShutdownRejected(messageText: string): ShutdownRejectedMessage
 export function isPlanApprovalResponse(messageText: string): PlanApprovalResponseMessage | null {
   try {
     const result = PlanApprovalResponseMessageSchema().safeParse(jsonParse(messageText))
-    if (result.success) return result.data
+    if (result.success) {
+      return result.data
+    }
   } catch {
     // 非 JSON
   }
@@ -1082,14 +1094,18 @@ export async function markMessagesAsReadByPredicate(
 export function getLastPeerDmSummary(messages: Message[]): string | undefined {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i]
-    if (!msg) continue
+    if (!msg) {
+      continue
+    }
 
     // 在唤醒边界处停止：用户提示（string 类型内容），而非工具结果（array 类型内容）
     if (msg.type === 'user' && typeof msg.message.content === 'string') {
       break
     }
 
-    if (msg.type !== 'assistant') continue
+    if (msg.type !== 'assistant') {
+      continue
+    }
     for (const block of msg.message.content) {
       if (
         block.type === 'tool_call' &&

@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
+import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
-import { EffortLevel, EffortValue } from '../utils/effort.js'
 import {
   convertEffortValueToLevel,
+  EffortLevel,
   getDefaultEffortForModel,
   getEffortCalloutConfig,
   toPersistableEffort,
@@ -11,7 +12,7 @@ import { updateSettingsForSource } from '../utils/settings/settings.js'
 import { Select } from './CustomSelect/select.js'
 import { effortLevelToSymbol } from './EffortIndicator.js'
 import { PermissionDialog } from './permissions/PermissionDialog.js'
-import { tSync } from '../i18n/index.js'
+
 type EffortCalloutSelection = EffortLevel | undefined | 'dismiss'
 type Props = {
   model: string

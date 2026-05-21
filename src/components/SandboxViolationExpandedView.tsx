@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
@@ -15,6 +14,7 @@ function formatTime(date: Date): string {
   const ampm = date.getHours() < 12 ? 'am' : 'pm'
   return `${h}:${m}:${s}${ampm}`
 }
+
 import { getPlatform } from 'src/utils/platform.js'
 export function SandboxViolationExpandedView() {
   const [violations, setViolations] = useState([])

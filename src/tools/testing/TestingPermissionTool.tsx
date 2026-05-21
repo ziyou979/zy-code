@@ -5,8 +5,9 @@
 import { z } from 'zod/v4'
 import type { Tool } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
-import { lazySchema } from '../../utils/lazySchema.js'
 import { isTestEnv } from '../../utils/envUtils.js'
+import { lazySchema } from '../../utils/lazySchema.js'
+
 const NAME = 'TestingPermission'
 const inputSchema = lazySchema(() => z.strictObject({}))
 type InputSchema = ReturnType<typeof inputSchema>
@@ -75,4 +76,5 @@ export const TestingPermissionTool: Tool<InputSchema, string> = buildTool({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(TestingPermissionTool, () => process.env.NODE_ENV === 'test')

@@ -4,6 +4,7 @@ import { TEARDROP_ASTERISK } from '../../constants/figures.js'
 import { Box, Text, useAnimationFrame } from '../../ink.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import { hueToRgb, toRGBColor } from '../Spinner/utils.js'
+
 const SWEEP_DURATION_MS = 1500
 const SWEEP_COUNT = 2
 const TOTAL_ANIMATION_MS = SWEEP_DURATION_MS * SWEEP_COUNT
@@ -25,7 +26,9 @@ export function AnimatedAsterisk({ char = TEARDROP_ASTERISK }: { char?: string }
   // automatically once this row enters scrollback (prevents flicker).
   const [ref, time] = useAnimationFrame(done ? null : 50)
   useEffect(() => {
-    if (done) return
+    if (done) {
+      return
+    }
     const t = setTimeout(setDone, TOTAL_ANIMATION_MS, true)
     return () => clearTimeout(t)
   }, [done])

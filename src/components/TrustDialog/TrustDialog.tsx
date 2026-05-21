@@ -1,12 +1,12 @@
-import { homedir } from 'os'
+import { homedir } from 'node:os'
 import React from 'react'
 import { logEvent } from 'src/services/analytics/index.js'
 import { setSessionTrustAccepted } from '../../bootstrap/state.js'
 import type { Command } from '../../commands.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, Link, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
-import { tSync } from '../../i18n/index.js'
 import { getMcpConfigsByScope } from '../../services/mcp/config.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
 import { checkHasTrustDialogAccepted, saveCurrentProjectConfig } from '../../utils/config.js'
@@ -24,6 +24,7 @@ import {
   getHooksSources,
   getOtelHeadersHelperSources,
 } from './utils.js'
+
 type Props = {
   onDone(): void
   commands?: Command[]
@@ -52,7 +53,7 @@ export function TrustDialog({ onDone, commands }: Props) {
         command.loadedFrom === 'commands_DEPRECATED' &&
         (command.source === 'projectSettings' || command.source === 'localSettings') &&
         command.allowedTools?.some(
-          (tool) => tool === BASH_TOOL_NAME || tool.startsWith(BASH_TOOL_NAME + '('),
+          (tool) => tool === BASH_TOOL_NAME || tool.startsWith(`${BASH_TOOL_NAME}(`),
         ),
     ) ?? false
   const hasSkillsBash =
@@ -64,7 +65,7 @@ export function TrustDialog({ onDone, commands }: Props) {
           command_0.source === 'localSettings' ||
           command_0.source === 'plugin') &&
         command_0.allowedTools?.some(
-          (tool_0) => tool_0 === BASH_TOOL_NAME || tool_0.startsWith(BASH_TOOL_NAME + '('),
+          (tool_0) => tool_0 === BASH_TOOL_NAME || tool_0.startsWith(`${BASH_TOOL_NAME}(`),
         ),
     ) ?? false
   const hasAnyBashExecution = bashSettingSources.length > 0 || hasSlashCommandBash || hasSkillsBash
@@ -164,11 +165,9 @@ export function TrustDialog({ onDone, commands }: Props) {
         }
         {
           <Text dimColor={true}>
-            {exitState.pending ? (
-              <>{tSync('trustDialog.pressAgainToExit', { key: exitState.keyName })}</>
-            ) : (
-              <>{tSync('trustDialog.enterToConfirm')}</>
-            )}
+            {exitState.pending
+              ? tSync('trustDialog.pressAgainToExit', { key: exitState.keyName })
+              : tSync('trustDialog.enterToConfirm')}
           </Text>
         }
       </Box>

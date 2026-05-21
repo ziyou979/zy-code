@@ -3,7 +3,7 @@
  * Extracts file paths and substitution patterns to enable file-edit-style rendering
  */
 
-import { randomBytes } from 'crypto'
+import { randomBytes } from 'node:crypto'
 import { tryParseShellCommand } from '../../utils/bash/shellQuote.js'
 
 // BRE→ERE conversion placeholders (null-byte sentinels, never appear in user input)
@@ -51,11 +51,15 @@ export function parseSedEditCommand(command: string): SedEditInfo | null {
 
   // Must start with sed
   const sedMatch = trimmed.match(/^\s*sed\s+/)
-  if (!sedMatch) return null
+  if (!sedMatch) {
+    return null
+  }
 
   const withoutSed = trimmed.slice(sedMatch[0].length)
   const parseResult = tryParseShellCommand(withoutSed)
-  if (!parseResult.success) return null
+  if (!parseResult.success) {
+    return null
+  }
   const tokens = parseResult.tokens
 
   // Extract string tokens only
@@ -122,7 +126,9 @@ export function parseSedEditCommand(command: string): SedEditInfo | null {
     if (arg === '-e' || arg === '--expression') {
       if (i + 1 < args.length && typeof args[i + 1] === 'string') {
         // Only support single expression
-        if (expression !== null) return null
+        if (expression !== null) {
+          return null
+        }
         expression = args[i + 1]!
         i += 2
         continue
@@ -130,7 +136,9 @@ export function parseSedEditCommand(command: string): SedEditInfo | null {
       return null
     }
     if (arg.startsWith('--expression=')) {
-      if (expression !== null) return null
+      if (expression !== null) {
+        return null
+      }
       expression = arg.slice('--expression='.length)
       i++
       continue

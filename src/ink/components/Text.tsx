@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import React from 'react'
 import type { Color, Styles } from '../styles.js'
+
 type BaseProps = {
   /**
    * 更改文本颜色。接受原始颜色值（rgb、hex、ansi）。

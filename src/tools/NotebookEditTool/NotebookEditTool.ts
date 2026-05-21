@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { extname, isAbsolute, resolve } from 'path'
+import { extname, isAbsolute, resolve } from 'node:path'
 import { fileHistoryEnabled, fileHistoryTrackEdit } from 'src/utils/fileHistory.js'
 import { z } from 'zod/v4'
 import { buildTool, type ToolDef, type ToolUseContext } from '../../Tool.js'
@@ -333,7 +333,7 @@ export const NotebookEditTool = buildTool({
       }
 
       const language = (notebook.metadata.language_info as any)?.name ?? 'python'
-      let new_cell_id = undefined
+      let new_cell_id
       if (notebook.nbformat > 4 || (notebook.nbformat === 4 && notebook.nbformat_minor >= 5)) {
         if (edit_mode === 'insert') {
           new_cell_id = Math.random().toString(36).substring(2, 15)
@@ -444,4 +444,5 @@ export const NotebookEditTool = buildTool({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(NotebookEditTool)

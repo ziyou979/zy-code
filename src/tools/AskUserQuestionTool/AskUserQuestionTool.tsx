@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-import * as React from 'react'
 import { getAllowedChannels, getQuestionPreviewFormat } from 'src/bootstrap/state.js'
 import { MessageResponse } from 'src/components/MessageResponse.js'
 import { BLACK_CIRCLE } from 'src/constants/figures.js'
@@ -17,6 +16,7 @@ import {
   DESCRIPTION,
   PREVIEW_FEATURE_PROMPT,
 } from './prompt.js'
+
 const questionOptionSchema = lazySchema(() =>
   z.object({
     label: z
@@ -314,7 +314,9 @@ export const AskUserQuestionTool: Tool<InputSchema, Output> = buildTool({
 // error-recovering by spec and accept anything. We're checking model intent
 // (did it emit HTML?) and catching the specific things we told it not to do.
 function validateHtmlPreview(preview: string | undefined): string | null {
-  if (preview === undefined) return null
+  if (preview === undefined) {
+    return null
+  }
   if (/<\s*(html|body|!doctype)\b/i.test(preview)) {
     return 'preview must be an HTML fragment, not a full document (no <html>, <body>, or <!DOCTYPE>)'
   }
@@ -332,4 +334,5 @@ function validateHtmlPreview(preview: string | undefined): string | null {
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(AskUserQuestionTool)

@@ -1,5 +1,5 @@
-import { readdir, rm, stat, unlink, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { readdir, rm, stat, unlink, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { clearCommandsCache } from '../../commands.js'
 import { clearAllOutputStylesCache } from '../../constants/outputStyles.js'
 import { clearAgentDefinitionsCache } from '../../tools/AgentTool/loadAgentsDir.js'
@@ -75,7 +75,9 @@ export async function cleanupOrphanedPluginVersionsInBackground(): Promise<void>
   }
   try {
     const installedVersions = getInstalledVersionPaths()
-    if (!installedVersions) return
+    if (!installedVersions) {
+      return
+    }
 
     const cachePath = getPluginCachePath()
 
@@ -94,7 +96,9 @@ export async function cleanupOrphanedPluginVersionsInBackground(): Promise<void>
 
         for (const version of await readSubdirs(pluginPath)) {
           const versionPath = join(pluginPath, version)
-          if (installedVersions.has(versionPath)) continue
+          if (installedVersions.has(versionPath)) {
+            continue
+          }
           await processOrphanedPluginVersion(versionPath, now)
         }
 
@@ -118,7 +122,9 @@ async function removeOrphanedAtMarker(versionPath: string): Promise<void> {
     await unlink(orphanedAtPath)
   } catch (error) {
     const code = getErrnoCode(error)
-    if (code === 'ENOENT') return
+    if (code === 'ENOENT') {
+      return
+    }
     logForDebugging(`Failed to remove .orphaned_at: ${versionPath}: ${error}`)
   }
 }

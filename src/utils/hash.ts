@@ -21,7 +21,7 @@ export function hashContent(content: string): string {
     return Bun.hash(content).toString()
   }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const crypto = require('crypto') as typeof import('crypto')
+  const crypto = require('node:crypto') as typeof import('crypto')
   return crypto.createHash('sha256').update(content).digest('hex')
 }
 
@@ -36,6 +36,6 @@ export function hashPair(a: string, b: string): string {
     return Bun.hash(b, Bun.hash(a)).toString()
   }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const crypto = require('crypto') as typeof import('crypto')
+  const crypto = require('node:crypto') as typeof import('crypto')
   return crypto.createHash('sha256').update(a).update('\0').update(b).digest('hex')
 }

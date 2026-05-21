@@ -16,16 +16,22 @@ import { nodeCache } from './node-cache.js'
  */
 export function hitTest(node: DOMElement, col: number, row: number): DOMElement | null {
   const rect = nodeCache.get(node)
-  if (!rect) return null
+  if (!rect) {
+    return null
+  }
   if (col < rect.x || col >= rect.x + rect.width || row < rect.y || row >= rect.y + rect.height) {
     return null
   }
   // 后渲染的兄弟节点绘制在上层；逆序遍历返回最上层的命中结果。
   for (let i = node.childNodes.length - 1; i >= 0; i--) {
     const child = node.childNodes[i]!
-    if (child.nodeName === '#text') continue
+    if (child.nodeName === '#text') {
+      continue
+    }
     const hit = hitTest(child, col, row)
-    if (hit) return hit
+    if (hit) {
+      return hit
+    }
   }
   return node
 }
@@ -43,14 +49,16 @@ export function dispatchClick(
   cellIsBlank = false,
 ): boolean {
   let target: DOMElement | undefined = hitTest(root, col, row) ?? undefined
-  if (!target) return false
+  if (!target) {
+    return false
+  }
 
   // 点击聚焦：查找最近的聚焦祖先并聚焦它。
   // root 始终是 ink-root，它拥有 FocusManager。
   if (root.focusManager) {
     let focusTarget: DOMElement | undefined = target
     while (focusTarget) {
-      if (typeof focusTarget.attributes['tabIndex'] === 'number') {
+      if (typeof focusTarget.attributes.tabIndex === 'number') {
         root.focusManager.handleClickFocus(focusTarget)
         break
       }
@@ -69,7 +77,9 @@ export function dispatchClick(
         event.localRow = row - rect.y
       }
       handler(event)
-      if (event.didStopImmediatePropagation()) return true
+      if (event.didStopImmediatePropagation()) {
+        return true
+      }
     }
     target = target.parentNode
   }
@@ -95,7 +105,9 @@ export function dispatchHover(
   let node: DOMElement | undefined = hitTest(root, col, row) ?? undefined
   while (node) {
     const h = node._eventHandlers as EventHandlerProps | undefined
-    if (h?.onMouseEnter || h?.onMouseLeave) next.add(node)
+    if (h?.onMouseEnter || h?.onMouseLeave) {
+      next.add(node)
+    }
     node = node.parentNode
   }
   for (const old of hovered) {

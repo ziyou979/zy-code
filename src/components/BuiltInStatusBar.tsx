@@ -1,9 +1,7 @@
-import { basename } from 'path'
+import { basename } from 'node:path'
 import * as React from 'react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { getGlobalConfig } from '../utils/config.js'
-import { resolveThemeSetting } from '../utils/systemTheme.js'
-import { getTheme } from '../utils/theme.js'
+import { getVisibleAgentTasks } from '../components/CoordinatorAgentStatus.js'
 import {
   EFFORT_HIGH,
   EFFORT_LOW,
@@ -12,20 +10,22 @@ import {
   FORK_GLYPH,
 } from '../constants/figures.js'
 import { getTotalCost, getTotalInputTokens, getTotalOutputTokens } from '../cost-tracker.js'
-import { tSync } from '../i18n/index.js'
 import { useSettings } from '../hooks/useSettings.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
-import { Box, Text } from '../ink.js'
+import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'
+import { Box, Text } from '../ink.js'
 import { useAppState } from '../state/AppState.js'
 import type { Message } from '../types/message.js'
-import { getVisibleAgentTasks } from '../components/CoordinatorAgentStatus.js'
+import { getGlobalConfig } from '../utils/config.js'
 import { calculateContextPercentages, getContextWindowForModel } from '../utils/context.js'
 import { getCwd } from '../utils/cwd.js'
 import { getDisplayedEffortLevel } from '../utils/effort.js'
 import { formatTokens } from '../utils/format.js'
 import { getBranch, getIsClean } from '../utils/git.js'
 import { type ModelName } from '../utils/model/model.js'
+import { resolveThemeSetting } from '../utils/systemTheme.js'
+import { getTheme } from '../utils/theme.js'
 import { getCurrentUsage } from '../utils/tokens.js'
 
 /** 进度条宽度（字符数） */
@@ -67,7 +67,9 @@ const EFFORT_I18N_KEYS: Record<string, string> = {
  * @returns 如 "[████░░░░] 17%"
  */
 function renderContextBar(percentage: number | null): string {
-  if (percentage === null) return ''
+  if (percentage === null) {
+    return ''
+  }
   const clamped = Math.min(100, Math.max(0, percentage))
   const filled = Math.round((clamped / 100) * BAR_WIDTH)
   const empty = BAR_WIDTH - filled
@@ -113,7 +115,9 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
     (name: keyof NonNullable<typeof modules>) => modules === undefined || modules[name] !== false,
     [modules],
   )
-  if (!enabled) return null
+  if (!enabled) {
+    return null
+  }
 
   // 异步获取 git 分支名和仓库状态
   useEffect(() => {
@@ -146,7 +150,9 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
 
   // 加载期间定时刷新，确保 token/费用读数实时更新
   useEffect(() => {
-    if (!isLoading) return
+    if (!isLoading) {
+      return
+    }
     const id = setInterval(() => setTick((n) => n + 1), LOADING_REFRESH_MS)
     return () => clearInterval(id)
   }, [isLoading])
@@ -171,7 +177,11 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
         dirStr += ' ●'
       }
     }
-    segments.push({ text: dirStr, color: theme.rainbow_blue_shimmer, priority: MODULE_PRIORITY.directory })
+    segments.push({
+      text: dirStr,
+      color: theme.rainbow_blue_shimmer,
+      priority: MODULE_PRIORITY.directory,
+    })
   }
 
   // 2. 模型名 · Effort → cyan（核心智能）
@@ -214,7 +224,11 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
         currentUsage.cacheReadInputTokens
       const bar = renderContextBar(percentages.used)
       const contextColor =
-        percentages.used >= 75 ? theme.error : percentages.used >= 50 ? theme.warning : theme.success
+        percentages.used >= 75
+          ? theme.error
+          : percentages.used >= 50
+            ? theme.warning
+            : theme.success
       segments.push({
         text: `⛁ ${formatTokens(usedTokens)}/${formatTokens(contextWindowSize)} ${bar}`,
         color: contextColor,
@@ -263,8 +277,12 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
 
     if (runningTasks.length > 0 || completedTasks.length > 0) {
       let taskInfo = `🛰 ${runningTasks.length}`
-      if (completedTasks.length > 0) taskInfo += ` ✓${completedTasks.length}`
-      if (failedTasks.length > 0) taskInfo += ` ✗${failedTasks.length}`
+      if (completedTasks.length > 0) {
+        taskInfo += ` ✓${completedTasks.length}`
+      }
+      if (failedTasks.length > 0) {
+        taskInfo += ` ✗${failedTasks.length}`
+      }
       segments.push({ text: taskInfo, color: theme.permission, priority: MODULE_PRIORITY.agents })
     }
   }

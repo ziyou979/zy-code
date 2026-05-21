@@ -4,7 +4,7 @@ import * as React from 'react'
 import { getLargeMemoryFiles, MAX_MEMORY_CHARACTER_COUNT, type MemoryFileInfo } from './zymd.js'
 import figures from 'figures'
 import { getCwd } from './cwd.js'
-import { relative } from 'path'
+import { relative } from 'node:path'
 import { formatNumber } from './format.js'
 import type { getGlobalConfig } from './config.js'
 import {

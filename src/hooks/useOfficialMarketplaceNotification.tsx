@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { Text } from '../ink.js'
 import { logForDebugging } from '../utils/debug.js'
 import { checkAndInstallOfficialMarketplace } from '../utils/plugins/officialMarketplaceStartupCheck.js'

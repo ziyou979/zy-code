@@ -1,11 +1,11 @@
 import figures from 'figures'
-import * as React from 'react'
 import { Box, Text } from '../../ink.js'
 import { useAppState } from '../../state/AppState.js'
 import { getRunningTeammatesSorted } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
 import { formatNumber } from '../../utils/format.js'
 import { TeammateSpinnerLine } from './TeammateSpinnerLine.js'
 import { TEAMMATE_SELECT_HINT } from './teammateSelectHint.js'
+
 type Props = {
   selectedIndex?: number
   isInSelectionMode?: boolean
@@ -44,7 +44,7 @@ export function TeammateSpinnerTree({
     isHideSelected = isInSelectionMode === true && selectedIndex === teammateTasks.length
     BoxComponent = Box
 
-    const boxElement = (
+    const _boxElement = (
       <Box paddingLeft={3}>
         {
           <Text color={isLeaderSelected ? 'suggestion' : undefined} bold={isLeaderHighlighted}>
@@ -91,7 +91,7 @@ export function TeammateSpinnerTree({
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
     return earlyReturn
   }
-  // @ts-ignore
+  // @ts-expect-error
   return (
     <BoxComponent flexDirection={'column'} marginTop={1}>
       {null}

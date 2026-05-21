@@ -23,7 +23,9 @@ export class CharPool {
       const code = char.charCodeAt(0)
       if (code < 128) {
         const cached = this.ascii[code]!
-        if (cached !== -1) return cached
+        if (cached !== -1) {
+          return cached
+        }
         const index = this.strings.length
         this.strings.push(char)
         this.ascii[code] = index
@@ -31,7 +33,9 @@ export class CharPool {
       }
     }
     const existing = this.stringMap.get(char)
-    if (existing !== undefined) return existing
+    if (existing !== undefined) {
+      return existing
+    }
     const index = this.strings.length
     this.strings.push(char)
     this.stringMap.set(char, index)
@@ -50,7 +54,9 @@ export class HyperlinkPool {
   private stringMap = new Map<string, number>()
 
   intern(hyperlink: string | undefined): number {
-    if (!hyperlink) return 0
+    if (!hyperlink) {
+      return 0
+    }
     let id = this.stringMap.get(hyperlink)
     if (id === undefined) {
       id = this.strings.length
@@ -140,7 +146,9 @@ export class StylePool {
    * 零分配。
    */
   transition(fromId: number, toId: number): string {
-    if (fromId === toId) return ''
+    if (fromId === toId) {
+      return ''
+    }
     const key = fromId * 0x100000 + toId
     let str = this.transitionCache.get(key)
     if (str === undefined) {
@@ -191,13 +199,19 @@ export class StylePool {
       // 先设置黄色前景，这样反色会将其交换为背景。反色之后设置粗体也
       // 没问题——SGR 1 只影响前景属性，与 7 的顺序无关。
       codes.push(YELLOW_FG_CODE)
-      if (!baseCodes.some((c) => c.endCode === '\x1b[27m')) codes.push(INVERSE_CODE)
-      if (!baseCodes.some((c) => c.endCode === '\x1b[22m')) codes.push(BOLD_CODE)
+      if (!baseCodes.some((c) => c.endCode === '\x1b[27m')) {
+        codes.push(INVERSE_CODE)
+      }
+      if (!baseCodes.some((c) => c.endCode === '\x1b[22m')) {
+        codes.push(BOLD_CODE)
+      }
       // 使用下划线作为无歧义标记——黄底可能与
       // 现有背景样式冲突（用户提示背景、语法背景）。如果你在匹配处
       // 看到下划线但没有黄色，说明叠加层确实找到了它；
       // 只是黄色在样式竞争中丢失了。
-      if (!baseCodes.some((c) => c.endCode === '\x1b[24m')) codes.push(UNDERLINE_CODE)
+      if (!baseCodes.some((c) => c.endCode === '\x1b[24m')) {
+        codes.push(UNDERLINE_CODE)
+      }
       id = this.intern(codes)
       this.currentMatchCache.set(baseId, id)
     }
@@ -222,13 +236,17 @@ export class StylePool {
   private selectionBgCode: AnsiCode | null = null
   private selectionBgCache = new Map<number, number>()
   setSelectionBg(bg: AnsiCode | null): void {
-    if (this.selectionBgCode?.code === bg?.code) return
+    if (this.selectionBgCode?.code === bg?.code) {
+      return
+    }
     this.selectionBgCode = bg
     this.selectionBgCache.clear()
   }
   withSelectionBg(baseId: number): number {
     const bg = this.selectionBgCode
-    if (bg === null) return this.withInverse(baseId)
+    if (bg === null) {
+      return this.withInverse(baseId)
+    }
     let id = this.selectionBgCache.get(baseId)
     if (id === undefined) {
       // 保留除了背景（49m）和反色（27m）之外的所有内容。前景、粗体、dim、
@@ -255,7 +273,9 @@ const VISIBLE_ON_SPACE = new Set([
 
 function hasVisibleSpaceEffect(styles: AnsiCode[]): boolean {
   for (const style of styles) {
-    if (VISIBLE_ON_SPACE.has(style.endCode)) return true
+    if (VISIBLE_ON_SPACE.has(style.endCode)) {
+      return true
+    }
   }
   return false
 }
@@ -270,7 +290,7 @@ function hasVisibleSpaceEffect(styles: AnsiCode[]): boolean {
  * @see https://mitchellh.com/writing/grapheme-clusters-in-terminals
  */
 // const enum 在编译时内联——无运行时对象，无属性访问
-export const enum CellWidth {
+export enum CellWidth {
   // 非宽字符，单元格宽度 1
   Narrow = 0,
   // 宽字符，单元格宽度 2。此单元格包含实际字符。
@@ -400,7 +420,9 @@ function isEmptyCellByIndex(screen: Screen, index: number): boolean {
 }
 
 export function isEmptyCellAt(screen: Screen, x: number, y: number): boolean {
-  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) return true
+  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) {
+    return true
+  }
   return isEmptyCellByIndex(screen, y * screen.width + x)
 }
 
@@ -532,7 +554,9 @@ export function migrateScreenPools(
 ): void {
   const oldCharPool = screen.charPool
   const oldHyperlinkPool = screen.hyperlinkPool
-  if (oldCharPool === charPool && oldHyperlinkPool === hyperlinkPool) return
+  if (oldCharPool === charPool && oldHyperlinkPool === hyperlinkPool) {
+    return
+  }
 
   const size = screen.width * screen.height
   const cells = screen.cells
@@ -565,7 +589,9 @@ export function migrateScreenPools(
  * 这是有意为之，因为单元格以打包方式存储，而非对象。
  */
 export function cellAt(screen: Screen, x: number, y: number): Cell | undefined {
-  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) return undefined
+  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) {
+    return undefined
+  }
   return cellAtIndex(screen, y * screen.width + x)
 }
 /**
@@ -603,7 +629,9 @@ export function visibleCellAtIndex(
 ): Cell | undefined {
   const ci = index << 1
   const charId = cells[ci]!
-  if (charId === 1) return undefined // 占位符
+  if (charId === 1) {
+    return undefined // 占位符
+  }
   const word1 = cells[ci + 1]!
   // 对于空格：0x3fffc 屏蔽位 2-17（hyperlinkId + styleId 可见性
   // 位）。如果为零，该空格没有超链接且至多只有仅前景的样式。
@@ -611,7 +639,9 @@ export function visibleCellAtIndex(
   // （真正不可见）或与此行最后渲染的样式匹配。
   if (charId === 0 && (word1 & 0x3fffc) === 0) {
     const fgStyle = word1 >>> STYLE_SHIFT
-    if (fgStyle === 0 || fgStyle === lastRenderedStyleId) return undefined
+    if (fgStyle === 0 || fgStyle === lastRenderedStyleId) {
+      return undefined
+    }
   }
   const hid = (word1 >>> HYPERLINK_SHIFT) & HYPERLINK_MASK
   return {
@@ -637,7 +667,9 @@ function cellAtCI(screen: Screen, ci: number, out: Cell): void {
 }
 
 export function charInCellAt(screen: Screen, x: number, y: number): string | undefined {
-  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) return undefined
+  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) {
+    return undefined
+  }
   const ci = (y * screen.width + x) << 1
   return screen.charPool.get(screen.cells[ci]!)
 }
@@ -657,7 +689,9 @@ export function charInCellAt(screen: Screen, x: number, y: number): string | und
  * 此函数无需自动处理 SpacerHead——它将由换行代码直接设置。
  */
 export function setCellAt(screen: Screen, x: number, y: number, cell: Cell): void {
-  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) return
+  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) {
+    return
+  }
   const ci = (y * screen.width + x) << 1
   const cells = screen.cells
 
@@ -757,13 +791,17 @@ export function setCellAt(screen: Screen, x: number, y: number, cell: Cell): voi
  * damage 以便 diffEach 检测到变化。
  */
 export function setCellStyleId(screen: Screen, x: number, y: number, styleId: number): void {
-  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) return
+  if (x < 0 || y < 0 || x >= screen.width || y >= screen.height) {
+    return
+  }
   const ci = (y * screen.width + x) << 1
   const cells = screen.cells
   const word1 = cells[ci + 1]!
   const width = word1 & WIDTH_MASK
   // 跳过占位符单元格——头单元格上的反色在视觉上已覆盖两列
-  if (width === CellWidth.SpacerTail || width === CellWidth.SpacerHead) return
+  if (width === CellWidth.SpacerTail || width === CellWidth.SpacerHead) {
+    return
+  }
   const hid = (word1 >>> HYPERLINK_SHIFT) & HYPERLINK_MASK
   cells[ci + 1] = packWord1(styleId, hid, width)
   // 扩展 damage 以便 diffEach 扫描此单元格
@@ -802,7 +840,9 @@ export function blitRegion(
 ): void {
   regionX = Math.max(0, regionX)
   regionY = Math.max(0, regionY)
-  if (regionX >= maxX || regionY >= maxY) return
+  if (regionX >= maxX || regionY >= maxY) {
+    return
+  }
 
   const rowLen = maxX - regionX
   const srcStride = src.width << 1
@@ -900,7 +940,9 @@ export function clearRegion(
   const startY = Math.max(0, regionY)
   const maxX = Math.min(regionX + regionWidth, screen.width)
   const maxY = Math.min(regionY + regionHeight, screen.height)
-  if (startX >= maxX || startY >= maxY) return
+  if (startX >= maxX || startY >= maxY) {
+    return
+  }
 
   const cells = screen.cells
   const cells64 = screen.cells64
@@ -984,7 +1026,9 @@ export function clearRegion(
  * 快速路径期间的 next.screen 时，文本选区标记保持对齐。
  */
 export function shiftRows(screen: Screen, top: number, bottom: number, n: number): void {
-  if (n === 0 || top < 0 || bottom >= screen.height || top > bottom) return
+  if (n === 0 || top < 0 || bottom >= screen.height || top > bottom) {
+    return
+  }
   const w = screen.width
   const cells64 = screen.cells64
   const noSel = screen.noSelect
@@ -1023,7 +1067,9 @@ export const OSC8_PREFIX = `${ESC}]8${SEP}`
 export function extractHyperlinkFromStyles(styles: AnsiCode[]): Hyperlink | null {
   for (const style of styles) {
     const code = style.code
-    if (code.length < 5 || !code.startsWith(OSC8_PREFIX)) continue
+    if (code.length < 5 || !code.startsWith(OSC8_PREFIX)) {
+      continue
+    }
     const match = code.match(OSC8_REGEX)
     if (match) {
       return match[1] || null
@@ -1061,7 +1107,7 @@ type DiffCallback = (
   y: number,
   removed: Cell | undefined,
   added: Cell | undefined,
-) => boolean | void
+) => boolean | undefined
 
 /**
  * 类似 diff()，但对每次更改调用回调而非构建数组。
@@ -1126,7 +1172,9 @@ export function diffEach(prev: Screen, next: Screen, cb: DiffCallback): boolean 
 function findNextDiff(a: Int32Array, b: Int32Array, w0: number, count: number): number {
   for (let i = 0; i < count; i++, w0 += 2) {
     const w1 = w0 | 1
-    if (a[w0] !== b[w0] || a[w1] !== b[w1]) return i
+    if (a[w0] !== b[w0] || a[w1] !== b[w1]) {
+      return i
+    }
   }
   return count
 }
@@ -1153,10 +1201,14 @@ function diffRowBoth(
     const skip = findNextDiff(prevCells, nextCells, ci, endX - x)
     x += skip
     ci += skip << 1
-    if (x >= endX) break
+    if (x >= endX) {
+      break
+    }
     cellAtCI(prev, ci, prevCell)
     cellAtCI(next, ci, nextCell)
-    if (cb(x, y, prevCell, nextCell)) return true
+    if (cb(x, y, prevCell, nextCell)) {
+      return true
+    }
     x++
     ci += 2
   }
@@ -1179,7 +1231,9 @@ function diffRowRemoved(
 ): boolean {
   for (let x = startX; x < endX; x++, ci += 2) {
     cellAtCI(prev, ci, prevCell)
-    if (cb(x, y, prevCell, undefined)) return true
+    if (cb(x, y, prevCell, undefined)) {
+      return true
+    }
   }
   return false
 }
@@ -1199,9 +1253,13 @@ function diffRowAdded(
   cb: DiffCallback,
 ): boolean {
   for (let x = startX; x < endX; x++, ci += 2) {
-    if (nextCells[ci] === 0 && nextCells[ci | 1] === 0) continue
+    if (nextCells[ci] === 0 && nextCells[ci | 1] === 0) {
+      continue
+    }
     cellAtCI(next, ci, nextCell)
-    if (cb(x, y, undefined, nextCell)) return true
+    if (cb(x, y, undefined, nextCell)) {
+      return true
+    }
   }
   return false
 }
@@ -1261,12 +1319,17 @@ function diffSameWidth(
           nextCell,
           cb,
         )
-      )
+      ) {
         return true
+      }
     } else if (prevIn) {
-      if (diffRowRemoved(prev, rowCI, y, startX, rowEndX, prevCell, cb)) return true
+      if (diffRowRemoved(prev, rowCI, y, startX, rowEndX, prevCell, cb)) {
+        return true
+      }
     } else if (nextIn) {
-      if (diffRowAdded(nextCells, next, rowCI, y, startX, rowEndX, nextCell, cb)) return true
+      if (diffRowAdded(nextCells, next, rowCI, y, startX, rowEndX, nextCell, cb)) {
+        return true
+      }
     }
 
     rowCI += stride
@@ -1334,7 +1397,9 @@ function diffDifferentWidth(
       cellAtCI(next, nextCI, nextCell)
       prevCI += 2
       nextCI += 2
-      if (cb(x, y, prevCell, nextCell)) return true
+      if (cb(x, y, prevCell, nextCell)) {
+        return true
+      }
     }
 
     if (prevEndX > bothEndX) {
@@ -1342,7 +1407,9 @@ function diffDifferentWidth(
       for (let x = bothEndX; x < prevEndX; x++) {
         cellAtCI(prev, prevCI, prevCell)
         prevCI += 2
-        if (cb(x, y, prevCell, undefined)) return true
+        if (cb(x, y, prevCell, undefined)) {
+          return true
+        }
       }
     }
 
@@ -1355,7 +1422,9 @@ function diffDifferentWidth(
         }
         cellAtCI(next, nextCI, nextCell)
         nextCI += 2
-        if (cb(x, y, undefined, nextCell)) return true
+        if (cb(x, y, undefined, nextCell)) {
+          return true
+        }
       }
     }
 

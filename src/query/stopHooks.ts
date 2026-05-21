@@ -42,7 +42,7 @@ import { getAgentName, getTeamName, isTeammate } from '../utils/teammate.js'
 const extractMemoriesModule = feature('MEMORY')
   ? (require('../services/extractMemories/extractMemories.js') as typeof import('../services/extractMemories/extractMemories.js'))
   : null
-// @ts-ignore
+// @ts-expect-error
 const jobClassifierModule = feature('TEMPLATES')
   ? (require('../jobs/classifier.js') as typeof import('../jobs/classifier.js'))
   : null
@@ -230,10 +230,7 @@ export async function* handleStopHooks(
               hasOutput = true
             } else if (attachment.type === 'hook_success') {
               // Check if successful hook produced any stdout/stderr
-              if (
-                (attachment.stdout && attachment.stdout.trim()) ||
-                (attachment.stderr && attachment.stderr.trim())
-              ) {
+              if (attachment.stdout?.trim() || attachment.stderr?.trim()) {
                 hasOutput = true
               }
             }

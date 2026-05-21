@@ -1,13 +1,13 @@
 import { z } from 'zod/v4'
-import { buildTool } from '../../Tool.js'
 import type { ToolUseContext } from '../../Tool.js'
+import { buildTool } from '../../Tool.js'
 import { spawnShellTask } from '../../tasks/LocalShellTask/LocalShellTask.js'
-import { lazySchema } from '../../utils/lazySchema.js'
-import { exec } from '../../utils/Shell.js'
-import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { DESCRIPTION, MONITOR_TOOL_NAME, PROMPT } from './prompt.js'
+import { lazySchema } from '../../utils/lazySchema.js'
+import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
+import { exec } from '../../utils/Shell.js'
 import { toolRegistry } from '../registry.js'
+import { DESCRIPTION, MONITOR_TOOL_NAME, PROMPT } from './prompt.js'
 
 // --- 速率限制常量 ---
 /** 令牌桶容量 */
@@ -174,7 +174,9 @@ export const MonitorTool = buildTool({
     let shellCommand: Awaited<ReturnType<typeof exec>> | null = null
 
     const stopMonitor = (): void => {
-      if (stopped) return
+      if (stopped) {
+        return
+      }
       stopped = true
       bucket.dispose()
       if (batchTimer) {
@@ -186,7 +188,9 @@ export const MonitorTool = buildTool({
 
     /** 将合批缓冲区作为一条通知发出 */
     const flushBatch = (): void => {
-      if (batchBuffer.length === 0 || stopped) return
+      if (batchBuffer.length === 0 || stopped) {
+        return
+      }
 
       if (bucket.tryConsume()) {
         // 令牌桶允许：发送通知
@@ -216,13 +220,15 @@ export const MonitorTool = buildTool({
 
     /** stdout 数据回调：逐行拆分 → 合批窗口 → 速率限制 → 通知投递 */
     const onStdout = (data: string): void => {
-      if (stopped) return
+      if (stopped) {
+        return
+      }
       const lines = data.split('\n').filter((line) => line.length > 0)
       for (const rawLine of lines) {
         // 单行截断
         const line =
           rawLine.length > MAX_LINE_LENGTH
-            ? rawLine.slice(0, MAX_LINE_LENGTH) + '...(truncated)'
+            ? `${rawLine.slice(0, MAX_LINE_LENGTH)}...(truncated)`
             : rawLine
         batchBuffer.push(line)
       }
@@ -259,7 +265,7 @@ export const MonitorTool = buildTool({
     )
 
     logForDebugging(
-      `[MonitorTool] Started monitor "${description}" (task ${handle.taskId}), timeout=${persistent ? 'persistent' : timeoutMs + 'ms'}`,
+      `[MonitorTool] Started monitor "${description}" (task ${handle.taskId}), timeout=${persistent ? 'persistent' : `${timeoutMs}ms`}`,
     )
 
     // 进程退出时清理

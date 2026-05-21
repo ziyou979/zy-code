@@ -5,10 +5,10 @@
  * 不依赖模型 provider 的服务端联网搜索能力。
  */
 import { getUiLanguage } from '../../i18n/index.js'
-import type { SearchProvider } from './types.js'
 import { DuckDuckGoProvider } from './DuckDuckGoProvider.js'
+import type { SearchProvider } from './types.js'
 
-export type { SearchProvider, SearchResult, SearchOptions } from './types.js'
+export type { SearchOptions, SearchProvider, SearchResult } from './types.js'
 
 export function getDuckDuckGoRegionForUiLanguage(language = getUiLanguage()): string {
   switch (language) {

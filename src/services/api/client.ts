@@ -1,8 +1,9 @@
+import { randomUUID } from 'node:crypto'
 import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
 import OpenAI from 'openai'
-import { randomUUID } from 'crypto'
 import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/utils/auth.js'
 import { getUserAgent } from 'src/utils/http.js'
+import { getProviderEntry } from 'src/utils/model/providerRegistry.js'
 import {
   getAPIProvider,
   isAnthropicBaseUrl,
@@ -11,13 +12,12 @@ import {
   isOpenAIProvider,
   isPreconfiguredEndpointProvider,
 } from 'src/utils/model/providers.js'
-import { getProviderEntry } from 'src/utils/model/providerRegistry.js'
 import { getProxyFetchOptions } from 'src/utils/proxy.js'
 import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/state.js'
 import { getOauthConfig } from '../../constants/oauth.js'
+import type { LLMAdapter } from '../../types/llm.js'
 import { isDebugToStdErr, logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import type { LLMAdapter } from '../../types/llm.js'
 import { AnthropicProviderAdapter } from './AnthropicProviderAdapter.js'
 import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js'
 
@@ -86,7 +86,7 @@ export async function getAnthropicClient({
 
   // 记录 API 客户端配置，用于 HFI 调试
   logForDebugging(
-    `[API:request] Creating client, ZY_CODE_CUSTOM_HEADERS present: ${!!process.env.ZY_CODE_CUSTOM_HEADERS}, has Authorization header: ${!!customHeaders['Authorization']}`,
+    `[API:request] Creating client, ZY_CODE_CUSTOM_HEADERS present: ${!!process.env.ZY_CODE_CUSTOM_HEADERS}, has Authorization header: ${!!customHeaders.Authorization}`,
   )
 
   // 如果通过环境变量启用了额外保护 header
@@ -330,23 +330,29 @@ async function configureApiKeyHeaders(
   const token =
     process.env.ANTHROPIC_AUTH_TOKEN || (await getApiKeyFromApiKeyHelper(isNonInteractiveSession))
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`
+    headers.Authorization = `Bearer ${token}`
   }
 }
 function getCustomHeaders(): Record<string, string> {
   const customHeaders: Record<string, string> = {}
   const customHeadersEnv = process.env.ZY_CODE_CUSTOM_HEADERS
-  if (!customHeadersEnv) return customHeaders
+  if (!customHeadersEnv) {
+    return customHeaders
+  }
 
   // 按换行符分割以支持多个 header
   const headerStrings = customHeadersEnv.split(/\n|\r\n/)
   for (const headerString of headerStrings) {
-    if (!headerString.trim()) continue
+    if (!headerString.trim()) {
+      continue
+    }
 
     // 解析 "Name: Value" 格式的 header（curl 风格）。在第一个 `:` 处分割
     // 然后修剪空白——避免在畸形长 header 行上出现正则回溯
     const colonIdx = headerString.indexOf(':')
-    if (colonIdx === -1) continue
+    if (colonIdx === -1) {
+      continue
+    }
     const name = headerString.slice(0, colonIdx).trim()
     const value = headerString.slice(colonIdx + 1).trim()
     if (name) {

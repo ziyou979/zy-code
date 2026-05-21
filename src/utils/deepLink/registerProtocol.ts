@@ -13,9 +13,9 @@
  *   Windows — Writes registry keys under HKEY_CURRENT_USER\Software\Classes
  */
 
-import { promises as fs } from 'fs'
-import * as os from 'os'
-import * as path from 'path'
+import { promises as fs } from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

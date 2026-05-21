@@ -7,8 +7,8 @@
 
 import type { SubscriptionType } from '../services/oauth/types.js'
 import { setMockBillingAccessOverride } from '../utils/billing.js'
-import type { OverageDisabledReason } from './zyAiLimits.js'
 import { isInternalBuild } from '../utils/envUtils.js'
+import type { OverageDisabledReason } from './zyAiLimits.js'
 
 type MockHeaders = {
   'anthropic-ratelimit-unified-status'?: 'allowed' | 'allowed_warning' | 'rejected'
@@ -115,7 +115,7 @@ export function setMockHeader(key: MockHeaderKey, value: string | undefined): vo
     if (key === 'reset' || key === 'overage-reset') {
       // If user provides a number, treat it as hours from now
       const hours = Number(value)
-      if (!isNaN(hours)) {
+      if (!Number.isNaN(hours)) {
         value = String(Math.floor(Date.now() / 1000) + hours * 3600)
       }
     }
@@ -657,7 +657,9 @@ export function getCurrentMockScenario(): MockScenario | null {
   }
 
   // Reverse lookup the scenario from current headers
-  if (!mockHeaders) return null
+  if (!mockHeaders) {
+    return null
+  }
 
   const status = mockHeaders['anthropic-ratelimit-unified-status']
   const overage = mockHeaders['anthropic-ratelimit-unified-overage-status']
@@ -671,20 +673,34 @@ export function getCurrentMockScenario(): MockScenario | null {
     return status === 'rejected' ? 'sonnet-limit' : 'sonnet-warning'
   }
 
-  if (overage === 'rejected') return 'overage-exhausted'
-  if (overage === 'allowed_warning') return 'overage-warning'
-  if (overage === 'allowed') return 'overage-active'
+  if (overage === 'rejected') {
+    return 'overage-exhausted'
+  }
+  if (overage === 'allowed_warning') {
+    return 'overage-warning'
+  }
+  if (overage === 'allowed') {
+    return 'overage-active'
+  }
 
   if (status === 'rejected') {
-    if (claim === 'five_hour') return 'session-limit-reached'
-    if (claim === 'seven_day') return 'weekly-limit-reached'
+    if (claim === 'five_hour') {
+      return 'session-limit-reached'
+    }
+    if (claim === 'seven_day') {
+      return 'weekly-limit-reached'
+    }
   }
 
   if (status === 'allowed_warning') {
-    if (claim === 'seven_day') return 'approaching-weekly-limit'
+    if (claim === 'seven_day') {
+      return 'approaching-weekly-limit'
+    }
   }
 
-  if (status === 'allowed') return 'normal'
+  if (status === 'allowed') {
+    return 'normal'
+  }
 
   return null
 }

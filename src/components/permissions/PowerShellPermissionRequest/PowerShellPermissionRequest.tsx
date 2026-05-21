@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Box, Text, useTheme } from '../../../ink.js'
 import { tSync } from '../../../i18n/index.js'
+import { Box, Text, useTheme } from '../../../ink.js'
 import { useKeybinding } from '../../../keybindings/useKeybinding.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../../services/analytics/growthbook.js'
 import {
@@ -83,7 +83,9 @@ export function PowerShellPermissionRequest(props: PermissionRequestProps): Reac
       isAllowlistedCommand(element, element.text),
     )
       .then((prefixes) => {
-        if (cancelled || hasUserEditedPrefix.current) return
+        if (cancelled || hasUserEditedPrefix.current) {
+          return
+        }
         if (prefixes.length > 0) {
           setEditablePrefix(`${prefixes[0]}:*`)
         }
@@ -120,7 +122,15 @@ export function PowerShellPermissionRequest(props: PermissionRequestProps): Reac
         editablePrefix,
         onEditablePrefixChange,
       }),
-    [toolUseConfirm, yesInputMode, noInputMode, editablePrefix, onEditablePrefixChange],
+    [
+      toolUseConfirm,
+      yesInputMode,
+      noInputMode,
+      editablePrefix,
+      onEditablePrefixChange,
+      setRejectFeedback,
+      setAcceptFeedback,
+    ],
   )
 
   // Toggle permission debug info with keybinding

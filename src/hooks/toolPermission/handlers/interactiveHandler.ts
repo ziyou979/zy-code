@@ -1,6 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { ContentBlock } from '../../../types/llm.js'
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import { logForDebugging } from 'src/utils/debug.js'
 import { getAllowedChannels } from '../../../bootstrap/state.js'
 import type { BridgePermissionCallbacks } from '../../../bridge/bridgePermissionCallbacks.js'
@@ -18,6 +17,7 @@ import {
 } from '../../../services/mcp/channelPermissions.js'
 import { executeAsyncClassifierCheck } from '../../../tools/BashTool/bashPermissions.js'
 import { BASH_TOOL_NAME } from '../../../tools/BashTool/toolName.js'
+import type { ContentBlock } from '../../../types/llm.js'
 import {
   clearClassifierChecking,
   setClassifierApproval,
@@ -134,7 +134,9 @@ function handleInteractivePermission(
       }
     },
     onAbort() {
-      if (!claim()) return
+      if (!claim()) {
+        return
+      }
       if (bridgeCallbacks && bridgeRequestId) {
         bridgeCallbacks.sendResponse(bridgeRequestId, {
           behavior: 'deny',
@@ -156,7 +158,9 @@ function handleInteractivePermission(
       feedback?: string,
       contentBlocks?: ContentBlock[],
     ) {
-      if (!claim()) return // atomic check-and-mark before await
+      if (!claim()) {
+        return // atomic check-and-mark before await
+      }
 
       if (bridgeCallbacks && bridgeRequestId) {
         bridgeCallbacks.sendResponse(bridgeRequestId, {
@@ -180,7 +184,9 @@ function handleInteractivePermission(
       )
     },
     onReject(feedback?: string, contentBlocks?: ContentBlock[]) {
-      if (!claim()) return
+      if (!claim()) {
+        return
+      }
 
       if (bridgeCallbacks && bridgeRequestId) {
         bridgeCallbacks.sendResponse(bridgeRequestId, {
@@ -201,7 +207,9 @@ function handleInteractivePermission(
       resolveOnce(ctx.cancelAndAbort(feedback, undefined, contentBlocks))
     },
     async recheckPermission() {
-      if (isResolved()) return
+      if (isResolved()) {
+        return
+      }
       const freshResult = await hasPermissionsToUseTool(
         ctx.tool,
         ctx.input,
@@ -218,7 +226,9 @@ function handleInteractivePermission(
         // executing (particularly visible when recheck is triggered by
         // a CCR-initiated mode switch, the very case this callback exists
         // for after useReplBridge started calling it).
-        if (!claim()) return
+        if (!claim()) {
+          return
+        }
         if (bridgeCallbacks && bridgeRequestId) {
           bridgeCallbacks.cancelRequest(bridgeRequestId)
         }
@@ -253,7 +263,9 @@ function handleInteractivePermission(
 
     const signal = ctx.toolUseContext.abortController.signal
     const unsubscribe = bridgeCallbacks.onResponse(bridgeRequestId, (response) => {
-      if (!claim()) return // Local user/hook/classifier already responded
+      if (!claim()) {
+        return // Local user/hook/classifier already responded
+      }
       signal.removeEventListener('abort', unsubscribe)
       clearClassifierChecking(ctx.toolUseID)
       clearClassifierIndicator()
@@ -335,7 +347,9 @@ function handleInteractivePermission(
       }
 
       for (const client of channelClients) {
-        if (client.type !== 'connected') continue // refine for TS
+        if (client.type !== 'connected') {
+          continue // refine for TS
+        }
         void client.client
           .notification({
             method: CHANNEL_PERMISSION_REQUEST_METHOD,
@@ -357,7 +371,9 @@ function handleInteractivePermission(
       // until the session ended. Not a functional bug (Map.delete is
       // idempotent), but it held the closure alive.
       const mapUnsub = channelCallbacks.onResponse(channelRequestId, (response) => {
-        if (!claim()) return // Another racer won
+        if (!claim()) {
+          return // Another racer won
+        }
         channelUnsubscribe?.() // both: map delete + listener remove
         clearClassifierChecking(ctx.toolUseID)
         clearClassifierIndicator()
@@ -403,7 +419,9 @@ function handleInteractivePermission(
     // Execute PermissionRequest hooks asynchronously
     // If hook returns a decision before user responds, apply it
     void (async () => {
-      if (isResolved()) return
+      if (isResolved()) {
+        return
+      }
       const currentAppState = ctx.toolUseContext.getAppState()
       const hookDecision = await ctx.runHooks(
         currentAppState.toolPermissionContext.mode,
@@ -411,7 +429,9 @@ function handleInteractivePermission(
         result.updatedInput,
         permissionPromptStartTimeMs,
       )
-      if (!hookDecision || !claim()) return
+      if (!hookDecision || !claim()) {
+        return
+      }
       if (bridgeCallbacks && bridgeRequestId) {
         bridgeCallbacks.cancelRequest(bridgeRequestId)
       }
@@ -443,7 +463,9 @@ function handleInteractivePermission(
           clearClassifierIndicator()
         },
         onAllow: (decisionReason) => {
-          if (!claim()) return
+          if (!claim()) {
+            return
+          }
           if (bridgeCallbacks && bridgeRequestId) {
             bridgeCallbacks.cancelRequest(bridgeRequestId)
           }
@@ -519,5 +541,5 @@ function handleInteractivePermission(
 
 // --
 
-export { handleInteractivePermission }
 export type { InteractivePermissionParams }
+export { handleInteractivePermission }

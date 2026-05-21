@@ -1,5 +1,4 @@
 import chalk from 'chalk'
-import { isInternalBuild } from 'src/utils/envUtils.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import {
   getLatestVersion,
@@ -10,6 +9,7 @@ import { regenerateCompletionCache } from 'src/utils/completionCache.js'
 import { getGlobalConfig, type InstallMethod, saveGlobalConfig } from 'src/utils/config.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { getDoctorDiagnostic } from 'src/utils/doctorDiagnostic.js'
+import { isInternalBuild } from 'src/utils/envUtils.js'
 import { gracefulShutdown } from 'src/utils/gracefulShutdown.js'
 import { installOrUpdateZyPackage, localInstallationExists } from 'src/utils/localInstaller.js'
 import {
@@ -39,7 +39,7 @@ export async function update() {
   // Check for multiple installations
   if (diagnostic.multipleInstallations.length > 1) {
     writeToStdout('\n')
-    writeToStdout(chalk.yellow('Warning: Multiple installations found') + '\n')
+    writeToStdout(`${chalk.yellow('Warning: Multiple installations found')}\n`)
     for (const install of diagnostic.multipleInstallations) {
       const current = diagnostic.installationType === install.type ? ' (currently running)' : ''
       writeToStdout(`- ${install.type} at ${install.path}${current}\n`)
@@ -94,7 +94,7 @@ export async function update() {
   // Check if running from development build
   if (diagnostic.installationType === 'development') {
     writeToStdout('\n')
-    writeToStdout(chalk.yellow('Warning: Cannot update development build') + '\n')
+    writeToStdout(`${chalk.yellow('Warning: Cannot update development build')}\n`)
     await gracefulShutdown(1)
   }
 
@@ -110,7 +110,7 @@ export async function update() {
         writeToStdout(`Update available: ${MACRO.VERSION} → ${latest}\n`)
         writeToStdout('\n')
         writeToStdout('To update, run:\n')
-        writeToStdout(chalk.bold('  brew upgrade zy-code') + '\n')
+        writeToStdout(`${chalk.bold('  brew upgrade zy-code')}\n`)
       } else {
         writeToStdout('Zy is up to date!\n')
       }
@@ -121,7 +121,7 @@ export async function update() {
         writeToStdout(`Update available: ${MACRO.VERSION} → ${latest}\n`)
         writeToStdout('\n')
         writeToStdout('To update, run:\n')
-        writeToStdout(chalk.bold('  winget upgrade Anthropic.ZyCode') + '\n')
+        writeToStdout(`${chalk.bold('  winget upgrade Anthropic.ZyCode')}\n`)
       } else {
         writeToStdout('Zy is up to date!\n')
       }
@@ -132,7 +132,7 @@ export async function update() {
         writeToStdout(`Update available: ${MACRO.VERSION} → ${latest}\n`)
         writeToStdout('\n')
         writeToStdout('To update, run:\n')
-        writeToStdout(chalk.bold('  apk upgrade zy-code') + '\n')
+        writeToStdout(`${chalk.bold('  apk upgrade zy-code')}\n`)
       } else {
         writeToStdout('Zy is up to date!\n')
       }
@@ -169,11 +169,11 @@ export async function update() {
 
     if (normalizedRunningType !== configExpects && configExpects !== 'unknown') {
       writeToStdout('\n')
-      writeToStdout(chalk.yellow('Warning: Configuration mismatch') + '\n')
+      writeToStdout(`${chalk.yellow('Warning: Configuration mismatch')}\n`)
       writeToStdout(`Config expects: ${configExpects} installation\n`)
       writeToStdout(`Currently running: ${runningType}\n`)
       writeToStdout(
-        chalk.yellow(`Updating the ${runningType} installation you are currently using`) + '\n',
+        `${chalk.yellow(`Updating the ${runningType} installation you are currently using`)}\n`,
       )
 
       // Update config to match reality
@@ -197,9 +197,9 @@ export async function update() {
       if (result.lockFailed) {
         const pidInfo = result.lockHolderPid ? ` (PID ${result.lockHolderPid})` : ''
         writeToStdout(
-          chalk.yellow(
+          `${chalk.yellow(
             `Another Zy process${pidInfo} is currently running. Please try again in a moment.`,
-          ) + '\n',
+          )}\n`,
         )
         await gracefulShutdown(0)
       }
@@ -210,19 +210,19 @@ export async function update() {
       }
 
       if (result.latestVersion === MACRO.VERSION) {
-        writeToStdout(chalk.green(`ZY Code is up to date (${MACRO.VERSION})`) + '\n')
+        writeToStdout(`${chalk.green(`ZY Code is up to date (${MACRO.VERSION})`)}\n`)
       } else {
         writeToStdout(
-          chalk.green(
+          `${chalk.green(
             `Successfully updated from ${MACRO.VERSION} to version ${result.latestVersion}`,
-          ) + '\n',
+          )}\n`,
         )
         await regenerateCompletionCache()
       }
       await gracefulShutdown(0)
     } catch (error) {
       process.stderr.write('Error: Failed to install native update\n')
-      process.stderr.write(String(error) + '\n')
+      process.stderr.write(`${String(error)}\n`)
       process.stderr.write('Try running "zy doctor" for diagnostics\n')
       await gracefulShutdown(1)
     }
@@ -245,7 +245,7 @@ export async function update() {
 
   if (!latestVersion) {
     logForDebugging('update: Failed to get latest version from npm registry')
-    process.stderr.write(chalk.red('Failed to check for updates') + '\n')
+    process.stderr.write(`${chalk.red('Failed to check for updates')}\n`)
     process.stderr.write('Unable to fetch latest version from npm registry\n')
     process.stderr.write('\n')
     process.stderr.write('Possible causes:\n')
@@ -269,7 +269,7 @@ export async function update() {
 
   // Check if versions match exactly, including any build metadata (like SHA)
   if (latestVersion === MACRO.VERSION) {
-    writeToStdout(chalk.green(`ZY Code is up to date (${MACRO.VERSION})`) + '\n')
+    writeToStdout(`${chalk.green(`ZY Code is up to date (${MACRO.VERSION})`)}\n`)
     await gracefulShutdown(0)
   }
 
@@ -294,7 +294,7 @@ export async function update() {
       const isLocal = await localInstallationExists()
       useLocalUpdate = isLocal
       updateMethodName = isLocal ? 'local' : 'global'
-      writeToStdout(chalk.yellow('Warning: Could not determine installation type') + '\n')
+      writeToStdout(`${chalk.yellow('Warning: Could not determine installation type')}\n`)
       writeToStdout(`Attempting ${updateMethodName} update based on file detection...\n`)
       break
     }

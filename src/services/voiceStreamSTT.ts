@@ -11,7 +11,7 @@
 // binary audio frames.  The server responds with TranscriptText and
 // TranscriptEndpoint JSON messages.
 
-import type { ClientRequest, IncomingMessage } from 'http'
+import type { ClientRequest, IncomingMessage } from 'node:http'
 import WebSocket from 'ws'
 import { getOauthConfig } from '../constants/oauth.js'
 import {
@@ -501,7 +501,9 @@ export async function connectVoiceStream(
     upgradeRejected = true
     res.resume()
     req.destroy()
-    if (finalizing) return
+    if (finalizing) {
+      return
+    }
     callbacks.onError(`WebSocket upgrade rejected with HTTP ${String(status)}`, {
       fatal: status >= 400 && status < 500,
     })

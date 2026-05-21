@@ -1,17 +1,16 @@
-import { mkdir, readdir, readFile, unlink, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { z } from 'zod/v4'
 import { getIsNonInteractiveSession, getSessionId } from '../bootstrap/state.js'
 import { uniq } from './array.js'
 import { logForDebugging } from './debug.js'
-import { getZyConfigHomeDir, getTeamsDir, isEnvTruthy } from './envUtils.js'
+import { getTeamsDir, getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { errorMessage, getErrnoCode } from './errors.js'
 import { lazySchema } from './lazySchema.js'
 import * as lockfile from './lockfile.js'
 import { logError } from './log.js'
 import { createSignal } from './signal.js'
 import { jsonParse, jsonStringify } from './slowOperations.js'
-import { isInternalBuild } from './envUtils.js'
 import { getTeamName } from './teammate.js'
 import { getTeammateContext } from './teammateContext.js'
 
@@ -30,7 +29,9 @@ let leaderTeamName: string | undefined
  * Called by TeamCreateTool when a team is created.
  */
 export function setLeaderTeamName(teamName: string): void {
-  if (leaderTeamName === teamName) return
+  if (leaderTeamName === teamName) {
+    return
+  }
   leaderTeamName = teamName
   // Changing the task list ID is a "tasks updated" event for subscribers —
   // they're now looking at a different directory.
@@ -42,7 +43,9 @@ export function setLeaderTeamName(teamName: string): void {
  * Called when a team is deleted.
  */
 export function clearLeaderTeamName(): void {
-  if (leaderTeamName === undefined) return
+  if (leaderTeamName === undefined) {
+    return
+  }
   leaderTeamName = undefined
   notifyTasksUpdated()
 }
@@ -115,7 +118,7 @@ async function readHighWaterMark(taskListId: string): Promise<number> {
   try {
     const content = (await readFile(path, 'utf-8')).trim()
     const value = parseInt(content, 10)
-    return isNaN(value) ? 0 : value
+    return Number.isNaN(value) ? 0 : value
   } catch {
     return 0
   }
@@ -249,7 +252,7 @@ async function findHighestTaskIdFromFiles(taskListId: string): Promise<number> {
       continue
     }
     const taskId = parseInt(file.replace('.json', ''), 10)
-    if (!isNaN(taskId) && taskId > highest) {
+    if (!Number.isNaN(taskId) && taskId > highest) {
       highest = taskId
     }
   }
@@ -304,8 +307,11 @@ export async function getTask(taskListId: string, taskId: string): Promise<Task 
 
     // TEMPORARY: Migrate old status names for existing sessions (ant-only)
     if (isInternalBuild()) {
-      if (data.status === 'open') data.status = 'pending'
-      else if (data.status === 'resolved') data.status = 'completed'
+      if (data.status === 'open') {
+        data.status = 'pending'
+      } else if (data.status === 'resolved') {
+        data.status = 'completed'
+      }
       // Migrate development task statuses to in_progress
       else if (
         data.status &&
@@ -378,7 +384,7 @@ export async function deleteTask(taskListId: string, taskId: string): Promise<bo
   try {
     // Update high water mark before deleting to prevent ID reuse
     const numericId = parseInt(taskId, 10)
-    if (!isNaN(numericId)) {
+    if (!Number.isNaN(numericId)) {
       const currentMark = await readHighWaterMark(taskListId)
       if (numericId > currentMark) {
         await writeHighWaterMark(taskListId, numericId)

@@ -3,15 +3,15 @@
  * Single source of truth for all rate limit-related messages
  */
 
+import { tSync } from '../i18n/index.js'
 import {
   getOauthAccountInfo,
   getSubscriptionType,
   isOverageProvisioningAllowed,
 } from '../utils/auth.js'
 import { hasZyAiBillingAccess } from '../utils/billing.js'
-import { formatResetTime } from '../utils/format.js'
-import { tSync } from '../i18n/index.js'
 import { isInternalBuild } from '../utils/envUtils.js'
+import { formatResetTime } from '../utils/format.js'
 import type { ZyAILimits } from './zyAiLimits.js'
 
 const FEEDBACK_CHANNEL_ANT = '#briarpatch-cc'
@@ -19,15 +19,21 @@ const FEEDBACK_CHANNEL_ANT = '#briarpatch-cc'
 /**
  * Get the translated name for a rate limit type
  */
-function getLimitNameTranslation(rateLimitType: string, model: string): string {
+function getLimitNameTranslation(rateLimitType: string, _model: string): string {
   if (rateLimitType === 'seven_day_sonnet') {
     const subscriptionType = getSubscriptionType()
     const isProOrEnterprise = subscriptionType === 'pro' || subscriptionType === 'enterprise'
     return isProOrEnterprise ? tSync('rateLimit.weeklyLimit') : tSync('rateLimit.standardLimit')
   }
-  if (rateLimitType === 'seven_day_opus') return tSync('rateLimit.advancedLimit')
-  if (rateLimitType === 'seven_day') return tSync('rateLimit.weeklyLimit')
-  if (rateLimitType === 'five_hour') return tSync('rateLimit.sessionLimit')
+  if (rateLimitType === 'seven_day_opus') {
+    return tSync('rateLimit.advancedLimit')
+  }
+  if (rateLimitType === 'seven_day') {
+    return tSync('rateLimit.weeklyLimit')
+  }
+  if (rateLimitType === 'five_hour') {
+    return tSync('rateLimit.sessionLimit')
+  }
   return tSync('rateLimit.usageLimit')
 }
 

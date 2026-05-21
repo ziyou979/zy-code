@@ -105,7 +105,9 @@ export function getBuiltinPluginSkillCommands(): Command[] {
 
   for (const plugin of enabled) {
     const definition = BUILTIN_PLUGINS.get(plugin.name)
-    if (!definition?.skills) continue
+    if (!definition?.skills) {
+      continue
+    }
     for (const skill of definition.skills) {
       commands.push(skillDefinitionToCommand(skill))
     }

@@ -56,7 +56,9 @@ export async function cleanupComputerUseAfterTurn(
 
   // Zero-syscall pre-check so non-CU turns don't touch disk. Release is still
   // idempotent (returns false if already released or owned by another session).
-  if (!isLockHeldLocally()) return
+  if (!isLockHeldLocally()) {
+    return
+  }
 
   // Unregister before lock release so the pump-retain drops as soon as the
   // CU session ends. Idempotent — no-ops if registration failed at acquire.

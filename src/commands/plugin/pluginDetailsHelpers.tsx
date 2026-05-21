@@ -4,7 +4,6 @@
  * Used by both DiscoverPlugins and BrowseMarketplace components.
  */
 
-import * as React from 'react'
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
 import { Byline } from '../../components/design-system/Byline.js'
 import { Box, Text } from '../../ink.js'

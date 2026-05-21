@@ -1,6 +1,6 @@
-import { createHash, randomUUID } from 'crypto'
-import { tmpdir } from 'os'
-import { join } from 'path'
+import { createHash, randomUUID } from 'node:crypto'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 /**
  * Generate a temporary file path.

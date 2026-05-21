@@ -7,9 +7,9 @@
  * initialization or pulling in expensive dependency chains.
  */
 
-import type { Dirent } from 'fs'
-import { readdir, stat } from 'fs/promises'
-import { basename, join } from 'path'
+import type { Dirent } from 'node:fs'
+import { readdir, stat } from 'node:fs/promises'
+import { basename, join } from 'node:path'
 import { getWorktreePathsPortable } from './getWorktreePathsPortable.js'
 import type { LiteSessionFile } from './sessionStoragePortable.js'
 import {
@@ -104,7 +104,9 @@ export function parseSessionInfoFromLite(
   let createdAt: number | undefined
   if (firstTimestamp) {
     const parsed = Date.parse(firstTimestamp)
-    if (!Number.isNaN(parsed)) createdAt = parsed
+    if (!Number.isNaN(parsed)) {
+      createdAt = parsed
+    }
   }
   // last-prompt tail entry (captured by extractFirstPrompt at write
   // time, filtered) shows what the user was most recently doing.
@@ -116,7 +118,9 @@ export function parseSessionInfoFromLite(
     firstPrompt
 
   // Skip metadata-only sessions (no title, no summary, no prompt)
-  if (!summary) return null
+  if (!summary) {
+    return null
+  }
   const gitBranch =
     extractLastJsonStringField(tail, 'gitBranch') ||
     extractJsonStringField(head, 'gitBranch') ||
@@ -174,11 +178,17 @@ export async function listCandidates(
 
   const results = await Promise.all(
     names.map(async (name): Promise<Candidate | null> => {
-      if (!name.endsWith('.jsonl')) return null
+      if (!name.endsWith('.jsonl')) {
+        return null
+      }
       const sessionId = validateUuid(name.slice(0, -6))
-      if (!sessionId) return null
+      if (!sessionId) {
+        return null
+      }
       const filePath = join(projectDir, name)
-      if (!doStat) return { sessionId, filePath, mtime: 0, projectPath }
+      if (!doStat) {
+        return { sessionId, filePath, mtime: 0, projectPath }
+      }
       try {
         const s = await stat(filePath)
         return { sessionId, filePath, mtime: s.mtime.getTime(), projectPath }
@@ -197,14 +207,20 @@ export async function listCandidates(
  */
 async function readCandidate(c: Candidate): Promise<SessionInfo | null> {
   const lite = await readSessionLite(c.filePath)
-  if (!lite) return null
+  if (!lite) {
+    return null
+  }
 
   const info = parseSessionInfoFromLite(c.sessionId, lite, c.projectPath)
-  if (!info) return null
+  if (!info) {
+    return null
+  }
 
   // Prefer stat-pass mtime for sort-key consistency; fall back to
   // lite.mtime when doStat=false (c.mtime is 0 placeholder).
-  if (c.mtime) info.lastModified = c.mtime
+  if (c.mtime) {
+    info.lastModified = c.mtime
+  }
 
   return info
 }
@@ -222,7 +238,9 @@ const READ_BATCH_SIZE = 32
  * ordering across mtime ties.
  */
 function compareDesc(a: Candidate, b: Candidate): number {
-  if (b.mtime !== a.mtime) return b.mtime - a.mtime
+  if (b.mtime !== a.mtime) {
+    return b.mtime - a.mtime
+  }
   return b.sessionId < a.sessionId ? -1 : b.sessionId > a.sessionId ? 1 : 0
 }
 
@@ -250,8 +268,12 @@ async function applySortAndLimit(
     for (let j = 0; j < results.length && sessions.length < want; j++) {
       i++
       const r = results[j]
-      if (!r) continue
-      if (seen.has(r.sessionId)) continue
+      if (!r) {
+        continue
+      }
+      if (seen.has(r.sessionId)) {
+        continue
+      }
       seen.add(r.sessionId)
       if (skipped < offset) {
         skipped++
@@ -273,7 +295,9 @@ async function readAllAndSort(candidates: Candidate[]): Promise<SessionInfo[]> {
   const all = await Promise.all(candidates.map(readCandidate))
   const byId = new Map<string, SessionInfo>()
   for (const s of all) {
-    if (!s) continue
+    if (!s) {
+      continue
+    }
     const existing = byId.get(s.sessionId)
     if (!existing || s.lastModified > existing.lastModified) {
       byId.set(s.sessionId, s)
@@ -321,7 +345,9 @@ async function gatherProjectCandidates(
   // No worktrees (or git not available / scanning disabled) — just scan the single project dir
   if (worktreePaths.length <= 1) {
     const projectDir = await findProjectDir(canonicalDir)
-    if (!projectDir) return []
+    if (!projectDir) {
+      return []
+    }
     return listCandidates(projectDir, doStat, canonicalDir)
   }
 
@@ -346,7 +372,9 @@ async function gatherProjectCandidates(
   } catch {
     // Fall back to single project dir
     const projectDir = await findProjectDir(canonicalDir)
-    if (!projectDir) return []
+    if (!projectDir) {
+      return []
+    }
     return listCandidates(projectDir, doStat, canonicalDir)
   }
 
@@ -363,9 +391,13 @@ async function gatherProjectCandidates(
   }
 
   for (const dirent of allDirents) {
-    if (!dirent.isDirectory()) continue
+    if (!dirent.isDirectory()) {
+      continue
+    }
     const dirName = caseInsensitive ? dirent.name.toLowerCase() : dirent.name
-    if (seenDirs.has(dirName)) continue
+    if (seenDirs.has(dirName)) {
+      continue
+    }
 
     for (const { path: wtPath, prefix } of indexed) {
       // Only use startsWith for truncated paths (>MAX_SANITIZED_LENGTH) where
@@ -373,7 +405,7 @@ async function gatherProjectCandidates(
       // /root/project matching /root/project-foo.
       const isMatch =
         dirName === prefix ||
-        (prefix.length >= MAX_SANITIZED_LENGTH && dirName.startsWith(prefix + '-'))
+        (prefix.length >= MAX_SANITIZED_LENGTH && dirName.startsWith(`${prefix}-`))
       if (isMatch) {
         seenDirs.add(dirName)
         all.push(...(await listCandidates(join(projectsDir, dirent.name), doStat, wtPath)))
@@ -432,6 +464,8 @@ export async function listSessionsImpl(options?: ListSessionsOptions): Promise<S
     ? await gatherProjectCandidates(dir, includeWorktrees ?? true, doStat)
     : await gatherAllCandidates(doStat)
 
-  if (!doStat) return readAllAndSort(candidates)
+  if (!doStat) {
+    return readAllAndSort(candidates)
+  }
   return applySortAndLimit(candidates, limit, off)
 }

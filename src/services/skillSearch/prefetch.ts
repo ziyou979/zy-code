@@ -27,7 +27,9 @@ export async function getTurnZeroSkillDiscovery(
   input: string | undefined,
   _context: unknown,
 ): Promise<unknown[]> {
-  if (!input || input.trim().length === 0) return []
+  if (!input || input.trim().length === 0) {
+    return []
+  }
   try {
     const results = searchLocalSkills(input, 5)
     return results.map((r) => ({

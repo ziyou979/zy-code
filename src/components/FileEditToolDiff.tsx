@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-expect-error
 import type { StructuredPatchHunk } from 'diff'
 import * as React from 'react'
 import { Suspense, use, useState } from 'react'
@@ -11,6 +11,7 @@ import { logError } from '../utils/log.js'
 import { CHUNK_SIZE, openForScan, readCapped, scanForContext } from '../utils/readEditContext.js'
 import { firstLineOf } from '../utils/stringUtils.js'
 import { StructuredDiffList } from './StructuredDiffList.js'
+
 type Props = {
   file_path: string
   edits: FileEdit[]
@@ -77,14 +78,18 @@ async function loadDiffData(file_path: string, edits: FileEdit[]): Promise<DiffD
   }
   try {
     const handle = await openForScan(file_path)
-    if (handle === null) return diffToolInputsOnly(file_path, valid)
+    if (handle === null) {
+      return diffToolInputsOnly(file_path, valid)
+    }
     try {
       // 多编辑和空的 old_string 确实需要完整文件来进行顺序替换——
       // structuredPatch 需要 before/after 字符串。replace_all 通过下方的分块路径
       //（显示首次出现窗口；切片内的匹配仍然通过 edit.replace_all 替换）。
       if (!single || single.old_string === '') {
         const file = await readCapped(handle)
-        if (file === null) return diffToolInputsOnly(file_path, valid)
+        if (file === null) {
+          return diffToolInputsOnly(file_path, valid)
+        }
         const normalized = valid.map((e) => normalizeEdit(file, e))
         return {
           patch: getPatchForDisplay({

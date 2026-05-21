@@ -1,12 +1,11 @@
 import { feature } from 'bun:bundle'
-import type { ToolResultBlock } from '../../types/llm.js'
-import { copyFile, stat as fsStat, truncate as fsTruncate, link } from 'fs/promises'
-import * as React from 'react'
+import { copyFile, stat as fsStat, truncate as fsTruncate, link } from 'node:fs/promises'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
 import type { AppState } from 'src/state/AppState.js'
 import { z } from 'zod/v4'
 import { getKairosActive } from '../../bootstrap/state.js'
 import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js'
+import { tSync } from '../../i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -27,11 +26,10 @@ import {
   unregisterForeground,
 } from '../../tasks/LocalShellTask/LocalShellTask.js'
 import type { AgentId } from '../../types/ids.js'
+import type { ToolResultBlock } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
 import { parseForSecurity } from '../../utils/bash/ast.js'
 import { splitCommand_DEPRECATED, splitCommandWithOperators } from '../../utils/bash/commands.js'
-// @ts-ignore
-import { extractZyCodeHints } from '../../utils/ZyCodeHints.js'
 import { detectCodeIndexingFromCommand } from '../../utils/codeIndexing.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isENOENT, ShellError } from '../../utils/errors.js'
@@ -64,9 +62,10 @@ import {
   getToolResultPath,
   PREVIEW_SIZE_BYTES,
 } from '../../utils/toolResultStorage.js'
+// @ts-expect-error
+import { extractZyCodeHints } from '../../utils/ZyCodeHints.js'
 import { userFacingName as fileEditUserFacingName } from '../FileEditTool/UI.js'
 import { trackGitOperations } from '../shared/gitOperationTracking.js'
-import { tSync } from '../../i18n/index.js'
 import {
   bashToolHasPermission,
   commandHasAnyCd,
@@ -95,6 +94,7 @@ import {
   stdErrAppendShellResetMessage,
   stripEmptyLines,
 } from './utils.js'
+
 const EOL = '\n'
 
 // Progress display constants
@@ -240,9 +240,15 @@ export function isSearchOrReadBashCommand(command: string): {
         isList: false,
       }
     }
-    if (isPartSearch) hasSearch = true
-    if (isPartRead) hasRead = true
-    if (isPartList) hasList = true
+    if (isPartSearch) {
+      hasSearch = true
+    }
+    if (isPartRead) {
+      hasRead = true
+    }
+    if (isPartList) {
+      hasList = true
+    }
   }
 
   // Only neutral commands (e.g., just "echo foo") -- not collapsible
@@ -398,8 +404,9 @@ function getCommandTypeForLogging(
   command: string,
 ): AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS {
   const parts = splitCommand_DEPRECATED(command)
-  if (parts.length === 0)
+  if (parts.length === 0) {
     return 'other' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
+  }
 
   // Check each part of the command to see if any match common background commands
   for (const part of parts) {
@@ -466,6 +473,7 @@ export type Out = z.infer<OutputSchema>
 
 // Re-export BashProgress from centralized types to break import cycles
 export type { BashProgress } from '../../types/tools.js'
+
 import type { BashProgress } from '../../types/tools.js'
 
 /**
@@ -475,11 +483,15 @@ import type { BashProgress } from '../../types/tools.js'
  */
 function isAutobackgroundingAllowed(command: string): boolean {
   const parts = splitCommand_DEPRECATED(command)
-  if (parts.length === 0) return true
+  if (parts.length === 0) {
+    return true
+  }
 
   // Get the first part which should be the base command
   const baseCommand = parts[0]?.trim()
-  if (!baseCommand) return true
+  if (!baseCommand) {
+    return true
+  }
   return !DISALLOWED_AUTO_BACKGROUND_COMMANDS.includes(baseCommand)
 }
 
@@ -490,14 +502,20 @@ function isAutobackgroundingAllowed(command: string): boolean {
  */
 export function detectBlockedSleepPattern(command: string): string | null {
   const parts = splitCommand_DEPRECATED(command)
-  if (parts.length === 0) return null
+  if (parts.length === 0) {
+    return null
+  }
   const first = parts[0]?.trim() ?? ''
   // Bare `sleep N` or `sleep N.N` as the first subcommand.
   // Float durations (sleep 0.5) are allowed — those are legit pacing, not polls.
   const m = /^sleep\s+(\d+)\s*$/.exec(first)
-  if (!m) return null
+  if (!m) {
+    return null
+  }
   const secs = parseInt(m[1]!, 10)
-  if (secs < 2) return null // sub-2s sleeps are fine (rate limiting, pacing)
+  if (secs < 2) {
+    return null // sub-2s sleeps are fine (rate limiting, pacing)
+  }
 
   // `sleep N` alone → "what are you waiting for?"
   // `sleep N && check` → "use Monitor { command: check }"
@@ -638,12 +656,13 @@ export const BashTool = buildTool({
   },
   isSearchOrReadCommand(input) {
     const parsed = inputSchema().safeParse(input)
-    if (!parsed.success)
+    if (!parsed.success) {
       return {
         isSearch: false,
         isRead: false,
         isList: false,
       }
+    }
     return isSearchOrReadBashCommand(parsed.data.command)
   },
   get inputSchema(): InputSchema {
@@ -746,7 +765,9 @@ export const BashTool = buildTool({
     // For image data, format as image content block for ZY
     if (isImage) {
       const block = buildImageToolResult(stdout, toolUseID)
-      if (block) return block
+      if (block) {
+        return block
+      }
     }
     let processedStdout = stdout
     if (stdout) {
@@ -770,7 +791,9 @@ export const BashTool = buildTool({
     }
     let errorMessage = stderr.trim()
     if (interrupted) {
-      if (stderr) errorMessage += EOL
+      if (stderr) {
+        errorMessage += EOL
+      }
       errorMessage += '<error>Command was aborted before completion</error>'
     }
     let backgroundInfo = ''
@@ -866,7 +889,7 @@ export const BashTool = buildTool({
       )
 
       // Check for git index.lock error (stderr is in stdout now)
-      if (result.stdout && result.stdout.includes(".git/index.lock': File exists")) {
+      if (result.stdout?.includes(".git/index.lock': File exists")) {
         logEvent('zy_git_index_lock_error', {})
       }
       if (interpretationResult.isError && !isInterrupt) {
@@ -898,7 +921,9 @@ export const BashTool = buildTool({
       }
       wasInterrupted = result.interrupted
     } finally {
-      if (setToolJSX) setToolJSX(null)
+      if (setToolJSX) {
+        setToolJSX(null)
+      }
     }
 
     // Get final string from accumulator
@@ -959,7 +984,9 @@ export const BashTool = buildTool({
     const extracted = extractZyCodeHints(strippedStdout, input.command)
     strippedStdout = extracted.stripped
     if (isMainThread && extracted.hints.length > 0) {
-      for (const hint of extracted.hints) maybeRecordPluginHint(hint)
+      for (const hint of extracted.hints) {
+        maybeRecordPluginHint(hint)
+      }
     }
     let isImage = isImageOutput(strippedStdout)
 
@@ -1047,7 +1074,7 @@ async function* runShellCommand({
   let lastProgressOutput = ''
   let lastTotalLines = 0
   let lastTotalBytes = 0
-  let backgroundShellId: string | undefined = undefined
+  let backgroundShellId: string | undefined
   let assistantAutoBackgrounded = false
 
   // Progress signal: resolved by onProgress callback from the shared poller,
@@ -1204,7 +1231,7 @@ async function* runShellCommand({
 
   // Wait for the initial threshold before showing progress
   const startTime = Date.now()
-  let foregroundTaskId: string | undefined = undefined
+  let foregroundTaskId: string | undefined
   {
     const initialResult = await Promise.race([
       resultPromise,
@@ -1358,4 +1385,5 @@ async function* runShellCommand({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(BashTool)

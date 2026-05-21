@@ -1,5 +1,4 @@
 import figures from 'figures'
-import React from 'react'
 import { isCoordinatorMode } from 'src/coordinator/coordinatorMode.js'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
 import type { DreamTaskState } from 'src/tasks/DreamTask/DreamTask.js'
@@ -142,7 +141,7 @@ export function Item({ item, isSelected }: { item: ListItem; isSelected: boolean
     <Box flexDirection="row">
       {
         <Text dimColor={useGreyPointer && isSelected}>
-          {isSelected ? figures.pointer + ' ' : '  '}
+          {isSelected ? `${figures.pointer} ` : '  '}
         </Text>
       }
       {

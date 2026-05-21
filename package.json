@@ -13,7 +13,7 @@
     "test": "bun test",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "lint:biome": "biome check ."
+    "lint:biome": "biome check --write ."
   },
   "dependencies": {
     "@alcalzone/ansi-tokenize": "^0.1.3",

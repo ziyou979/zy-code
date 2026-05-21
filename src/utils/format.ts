@@ -1,7 +1,7 @@
 // 纯展示格式化函数 — 叶节点安全（不依赖 Ink）。宽度感知的截断逻辑位于 ./truncate.ts。
 
-import { getRelativeTimeFormat, getTimeZone } from './intl.js'
 import { getUiLanguage } from '../i18n/index.js'
+import { getRelativeTimeFormat, getTimeZone } from './intl.js'
 
 /**
  * 将字节数格式化为人类可读的字符串（KB、MB、GB）。
@@ -76,24 +76,40 @@ export function formatDuration(
   const hide = options?.hideTrailingZeros
 
   if (options?.mostSignificantOnly) {
-    if (days > 0) return `${days}d`
-    if (hours > 0) return `${hours}h`
-    if (minutes > 0) return `${minutes}m`
+    if (days > 0) {
+      return `${days}d`
+    }
+    if (hours > 0) {
+      return `${hours}h`
+    }
+    if (minutes > 0) {
+      return `${minutes}m`
+    }
     return `${seconds}s`
   }
 
   if (days > 0) {
-    if (hide && hours === 0 && minutes === 0) return `${days}d`
-    if (hide && minutes === 0) return `${days}d ${hours}h`
+    if (hide && hours === 0 && minutes === 0) {
+      return `${days}d`
+    }
+    if (hide && minutes === 0) {
+      return `${days}d ${hours}h`
+    }
     return `${days}d ${hours}h ${minutes}m`
   }
   if (hours > 0) {
-    if (hide && minutes === 0 && seconds === 0) return `${hours}h`
-    if (hide && seconds === 0) return `${hours}h ${minutes}m`
+    if (hide && minutes === 0 && seconds === 0) {
+      return `${hours}h`
+    }
+    if (hide && seconds === 0) {
+      return `${hours}h ${minutes}m`
+    }
     return `${hours}h ${minutes}m ${seconds}s`
   }
   if (minutes > 0) {
-    if (hide && seconds === 0) return `${minutes}m`
+    if (hide && seconds === 0) {
+      return `${minutes}m`
+    }
     return `${minutes}m ${seconds}s`
   }
   return `${seconds}s`
@@ -140,24 +156,40 @@ export function formatDurationZh(
   const hide = options?.hideTrailingZeros
 
   if (options?.mostSignificantOnly) {
-    if (days > 0) return `${days} 天`
-    if (hours > 0) return `${hours} 小时`
-    if (minutes > 0) return `${minutes} 分`
+    if (days > 0) {
+      return `${days} 天`
+    }
+    if (hours > 0) {
+      return `${hours} 小时`
+    }
+    if (minutes > 0) {
+      return `${minutes} 分`
+    }
     return `${seconds} 秒`
   }
 
   if (days > 0) {
-    if (hide && hours === 0 && minutes === 0) return `${days} 天`
-    if (hide && minutes === 0) return `${days} 天 ${hours} 小时`
+    if (hide && hours === 0 && minutes === 0) {
+      return `${days} 天`
+    }
+    if (hide && minutes === 0) {
+      return `${days} 天 ${hours} 小时`
+    }
     return `${days} 天 ${hours} 小时 ${minutes} 分`
   }
   if (hours > 0) {
-    if (hide && minutes === 0 && seconds === 0) return `${hours} 小时`
-    if (hide && seconds === 0) return `${hours} 小时 ${minutes} 分`
+    if (hide && minutes === 0 && seconds === 0) {
+      return `${hours} 小时`
+    }
+    if (hide && seconds === 0) {
+      return `${hours} 小时 ${minutes} 分`
+    }
     return `${hours} 小时 ${minutes} 分 ${seconds} 秒`
   }
   if (minutes > 0) {
-    if (hide && seconds === 0) return `${minutes}分`
+    if (hide && seconds === 0) {
+      return `${minutes}分`
+    }
     return `${minutes} 分 ${seconds} 秒`
   }
   return `${seconds} 秒`
@@ -312,7 +344,9 @@ export function formatResetTime(
   showTimezone: boolean = false,
   showTime: boolean = true,
 ): string | undefined {
-  if (!timestampInSeconds) return undefined
+  if (!timestampInSeconds) {
+    return undefined
+  }
 
   const date = new Date(timestampInSeconds * 1000)
   const now = new Date()

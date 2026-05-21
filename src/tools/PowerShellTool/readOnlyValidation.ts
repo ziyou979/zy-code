@@ -11,6 +11,7 @@ import type {
 
 type ParsedStatement = ParsedPowerShellCommand['statements'][number]
 
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { getPlatform } from '../../utils/platform.js'
 import {
   COMMON_ALIASES,
@@ -28,7 +29,6 @@ import {
   validateFlags,
 } from '../../utils/shell/readOnlyCommandValidation.js'
 import { COMMON_PARAMETERS } from './commonParameters.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 
 const DOTNET_READ_ONLY_FLAGS = new Set(['--version', '--info', '--list-runtimes', '--list-sdks'])
 
@@ -949,13 +949,19 @@ export function isAllowlistedPipelineTail(
  * through to false by construction.
  */
 export function isProvablySafeStatement(stmt: ParsedStatement): boolean {
-  if (stmt.statementType !== 'PipelineAst') return false
+  if (stmt.statementType !== 'PipelineAst') {
+    return false
+  }
   // Empty commands → vacuously passes the loop below. PowerShell's
   // parser guarantees PipelineAst.PipelineElements ≥ 1 for valid source,
   // but this gate is the linchpin — defend against parser/JSON edge cases.
-  if (stmt.commands.length === 0) return false
+  if (stmt.commands.length === 0) {
+    return false
+  }
   for (const cmd of stmt.commands) {
-    if (cmd.elementType !== 'CommandAst') return false
+    if (cmd.elementType !== 'CommandAst') {
+      return false
+    }
   }
   return true
 }
@@ -1248,47 +1254,45 @@ export function isAllowlistedCommand(cmd: ParsedCommandElement, originalCommand:
   if (!cmd.elementTypes) {
     return false
   }
-  {
-    for (let i = 1; i < cmd.elementTypes.length; i++) {
-      const t = cmd.elementTypes[i]
-      if (t !== 'StringConstant' && t !== 'Parameter') {
-        // ArrayLiteralAst (`Get-Process Name, Id`) maps to 'Other'. The
-        // leak vectors enumerated above all have a metachar in their extent
-        // text: Hashtable `@{`, Convert `[`, BinaryExpr-with-var `$`,
-        // ParenExpr `(`. A bare comma-list of identifiers has none.
-        if (!/[$(@{[]/.test(cmd.args[i - 1] ?? '')) {
-          continue
-        }
-        return false
+  for (let i = 1; i < cmd.elementTypes.length; i++) {
+    const t = cmd.elementTypes[i]
+    if (t !== 'StringConstant' && t !== 'Parameter') {
+      // ArrayLiteralAst (`Get-Process Name, Id`) maps to 'Other'. The
+      // leak vectors enumerated above all have a metachar in their extent
+      // text: Hashtable `@{`, Convert `[`, BinaryExpr-with-var `$`,
+      // ParenExpr `(`. A bare comma-list of identifiers has none.
+      if (!/[$(@{[]/.test(cmd.args[i - 1] ?? '')) {
+        continue
       }
-      // Colon-bound parameter (`-Flag:$env:SECRET`) is a SINGLE
-      // CommandParameterAst — the VariableExpressionAst is its .Argument
-      // child, not a separate CommandElement, so elementTypes says 'Parameter'
-      // and the whitelist above passes.
-      //
-      // Query the parser's children[] tree instead of doing
-      // string-archaeology on the arg text. children[i-1] holds the
-      // .Argument child's mapped type (aligned with args[i-1]).
-      // Tree query catches MORE than the string check — e.g.
-      // `-InputObject:@{k=v}` (HashtableAst → 'Other', no `$` in text),
-      // `-Name:('payload' > file)` (ParenExpressionAst with redirection).
-      // Fallback to the extended metachar check when children is undefined
-      // (backward compat / test helpers that don't set it).
-      if (t === 'Parameter') {
-        const paramChildren = cmd.children?.[i - 1]
-        if (paramChildren) {
-          if (paramChildren.some((c) => c.type !== 'StringConstant')) {
-            return false
-          }
-        } else {
-          // Fallback: string-archaeology on arg text (pre-children parsers).
-          // Reject `$` (variable), `(` (ParenExpressionAst), `@` (hash/array
-          // sub), `{` (scriptblock), `[` (type literal/static method).
-          const arg = cmd.args[i - 1] ?? ''
-          const colonIdx = arg.indexOf(':')
-          if (colonIdx > 0 && /[$(@{[]/.test(arg.slice(colonIdx + 1))) {
-            return false
-          }
+      return false
+    }
+    // Colon-bound parameter (`-Flag:$env:SECRET`) is a SINGLE
+    // CommandParameterAst — the VariableExpressionAst is its .Argument
+    // child, not a separate CommandElement, so elementTypes says 'Parameter'
+    // and the whitelist above passes.
+    //
+    // Query the parser's children[] tree instead of doing
+    // string-archaeology on the arg text. children[i-1] holds the
+    // .Argument child's mapped type (aligned with args[i-1]).
+    // Tree query catches MORE than the string check — e.g.
+    // `-InputObject:@{k=v}` (HashtableAst → 'Other', no `$` in text),
+    // `-Name:('payload' > file)` (ParenExpressionAst with redirection).
+    // Fallback to the extended metachar check when children is undefined
+    // (backward compat / test helpers that don't set it).
+    if (t === 'Parameter') {
+      const paramChildren = cmd.children?.[i - 1]
+      if (paramChildren) {
+        if (paramChildren.some((c) => c.type !== 'StringConstant')) {
+          return false
+        }
+      } else {
+        // Fallback: string-archaeology on arg text (pre-children parsers).
+        // Reject `$` (variable), `(` (ParenExpressionAst), `@` (hash/array
+        // sub), `{` (scriptblock), `[` (type literal/static method).
+        const arg = cmd.args[i - 1] ?? ''
+        const colonIdx = arg.indexOf(':')
+        if (colonIdx > 0 && /[$(@{[]/.test(arg.slice(colonIdx + 1))) {
+          return false
         }
       }
     }
@@ -1350,7 +1354,7 @@ export function isAllowlistedCommand(cmd: ParsedCommandElement, originalCommand:
       // For cmdlets, normalize Unicode dash to ASCII hyphen for safeFlags
       // comparison (safeFlags entries are always written with ASCII `-`).
       // Native-exe safeFlags are stored with `/` (e.g. '/FO') — don't touch.
-      let paramName = isCmdlet ? '-' + arg.slice(1) : arg
+      let paramName = isCmdlet ? `-${arg.slice(1)}` : arg
       const colonIndex = paramName.indexOf(':')
       if (colonIndex > 0) {
         paramName = paramName.substring(0, colonIndex)
@@ -1470,7 +1474,7 @@ function isGitSafe(args: string[]): boolean {
   let idx = 0
   while (idx < args.length) {
     const arg = args[idx]
-    if (!arg || !arg.startsWith('-')) {
+    if (!arg?.startsWith('-')) {
       break
     }
     // SECURITY: Attached-form short flags. `-ccore.pager=sh` splits on `=` to
@@ -1547,10 +1551,7 @@ function isGitSafe(args: string[]): boolean {
     }
   }
 
-  if (
-    config.additionalCommandIsDangerousCallback &&
-    config.additionalCommandIsDangerousCallback('', flagArgs)
-  ) {
+  if (config.additionalCommandIsDangerousCallback?.('', flagArgs)) {
     return false
   }
   return validateFlags(flagArgs, 0, config, { commandName: 'git' })
@@ -1603,10 +1604,7 @@ function isGhSafe(args: string[]): boolean {
       return false
     }
   }
-  if (
-    config.additionalCommandIsDangerousCallback &&
-    config.additionalCommandIsDangerousCallback('', flagArgs)
-  ) {
+  if (config.additionalCommandIsDangerousCallback?.('', flagArgs)) {
     return false
   }
   return validateFlags(flagArgs, 0, config)
@@ -1652,10 +1650,7 @@ function isDockerSafe(args: string[]): boolean {
 
   const flagArgs = args.slice(1)
 
-  if (
-    config.additionalCommandIsDangerousCallback &&
-    config.additionalCommandIsDangerousCallback('', flagArgs)
-  ) {
+  if (config.additionalCommandIsDangerousCallback?.('', flagArgs)) {
     return false
   }
   return validateFlags(flagArgs, 0, config)

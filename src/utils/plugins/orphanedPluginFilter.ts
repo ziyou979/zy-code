@@ -15,7 +15,7 @@
  * (autoupdate, concurrent sessions) don't affect it.
  */
 
-import { dirname, isAbsolute, join, normalize, relative, sep } from 'path'
+import { dirname, isAbsolute, join, normalize, relative, sep } from 'node:path'
 import { ripGrep } from '../ripgrep.js'
 import { getPluginsDirectory } from './pluginDirectories.js'
 

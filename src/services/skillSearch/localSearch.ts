@@ -5,10 +5,10 @@
  * 根据名称、描述和关键词匹配用户查询。
  */
 
-import { existsSync, readdirSync, readFileSync, statSync } from 'fs'
-import { join } from 'path'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { join } from 'node:path'
 import { getProjectRoot } from '../../bootstrap/state.js'
+import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 
 type SkillEntry = {
   name: string
@@ -87,7 +87,9 @@ function extractDescription(content: string): string {
   if (fmMatch) {
     const fm = fmMatch[1] ?? ''
     const descMatch = fm.match(/description:\s*(.+)/)
-    if (descMatch) return descMatch[1]?.trim() ?? ''
+    if (descMatch) {
+      return descMatch[1]?.trim() ?? ''
+    }
   }
   // 取第一行非空非标题文本作为描述
   const lines = content.split('\n')
@@ -119,7 +121,9 @@ export function clearSkillIndexCache(): void {
 }
 
 export function searchLocalSkills(query: string, limit: number = 10): SkillEntry[] {
-  if (!_index) _index = buildIndex()
+  if (!_index) {
+    _index = buildIndex()
+  }
 
   const q = query.toLowerCase()
   const results: { entry: SkillEntry; score: number }[] = []
@@ -127,22 +131,31 @@ export function searchLocalSkills(query: string, limit: number = 10): SkillEntry
   for (const entry of _index.values()) {
     let score = 0
     const nameLower = entry.name.toLowerCase()
-    if (nameLower === q) score += 100
-    else if (nameLower.includes(q)) score += 50
-    else {
+    if (nameLower === q) {
+      score += 100
+    } else if (nameLower.includes(q)) {
+      score += 50
+    } else {
       // 部分匹配名称
       const nameParts = nameLower.split(/[-_\s]+/)
       for (const part of nameParts) {
-        if (part === q) score += 30
-        else if (part.includes(q)) score += 15
+        if (part === q) {
+          score += 30
+        } else if (part.includes(q)) {
+          score += 15
+        }
       }
     }
 
     // 描述匹配
     const descLower = entry.description.toLowerCase()
-    if (descLower.includes(q)) score += 10
+    if (descLower.includes(q)) {
+      score += 10
+    }
 
-    if (score > 0) results.push({ entry, score })
+    if (score > 0) {
+      results.push({ entry, score })
+    }
   }
 
   results.sort((a, b) => b.score - a.score)
@@ -150,6 +163,8 @@ export function searchLocalSkills(query: string, limit: number = 10): SkillEntry
 }
 
 export function getSkillIndex(): Map<string, SkillEntry> {
-  if (!_index) _index = buildIndex()
+  if (!_index) {
+    _index = buildIndex()
+  }
   return new Map(_index)
 }

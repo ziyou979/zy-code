@@ -32,22 +32,28 @@ const INITIAL_STATE: PrStatusState = {
  * Pass `enabled: false` to skip polling entirely (hook still must be
  * called unconditionally to satisfy the rules of hooks).
  */
-export function usePrStatus(isLoading: boolean, enabled = true): PrStatusState {
+export function usePrStatus(_isLoading: boolean, enabled = true): PrStatusState {
   const [prStatus, setPrStatus] = useState<PrStatusState>(INITIAL_STATE)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const disabledRef = useRef(false)
   const lastFetchRef = useRef(0)
 
   useEffect(() => {
-    if (!enabled) return
-    if (disabledRef.current) return
+    if (!enabled) {
+      return
+    }
+    if (disabledRef.current) {
+      return
+    }
 
     let cancelled = false
     let lastSeenInteractionTime = -1
     let lastActivityTimestamp = Date.now()
 
     async function poll() {
-      if (cancelled) return
+      if (cancelled) {
+        return
+      }
 
       const currentInteractionTime = getLastInteractionTime()
       if (lastSeenInteractionTime !== currentInteractionTime) {
@@ -59,7 +65,9 @@ export function usePrStatus(isLoading: boolean, enabled = true): PrStatusState {
 
       const start = Date.now()
       const result = await fetchPrStatus()
-      if (cancelled) return
+      if (cancelled) {
+        return
+      }
       lastFetchRef.current = start
 
       setPrStatus((prev) => {
@@ -100,7 +108,7 @@ export function usePrStatus(isLoading: boolean, enabled = true): PrStatusState {
         timeoutRef.current = null
       }
     }
-  }, [isLoading, enabled])
+  }, [enabled])
 
   return prStatus
 }

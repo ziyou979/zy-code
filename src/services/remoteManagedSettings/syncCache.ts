@@ -37,7 +37,9 @@ export function resetSyncCache(): void {
  * getSettings() to avoid circular dependencies during settings loading.
  */
 export function isRemoteManagedSettingsEligible(): boolean {
-  if (cached !== undefined) return cached
+  if (cached !== undefined) {
+    return cached
+  }
 
   // 3p provider users should not hit the settings endpoint
   if (getAPIProvider() !== 'anthropic') {

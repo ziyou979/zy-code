@@ -159,7 +159,9 @@ function peek(L: Lexer, off = 0): string {
 
 function byteAt(L: Lexer, charIdx: number): number {
   // Fast path: ASCII-only prefix means char idx == byte idx
-  if (L.byteTable) return L.byteTable[charIdx]!
+  if (L.byteTable) {
+    return L.byteTable[charIdx]!
+  }
   // Build table on first non-trivial lookup
   const t = new Uint32Array(L.len + 1)
   let b = 0
@@ -275,7 +277,9 @@ function skipBlanks(L: Lexer): void {
         // Line continuation — tree-sitter extras: /\\\r?\n/
         advance(L)
         advance(L)
-        if (nx === '\r') advance(L)
+        if (nx === '\r') {
+          advance(L)
+        }
       } else if (nx === ' ' || nx === '\t') {
         // \<space> or \<tab> — tree-sitter's _whitespace is /\\?[ \t\v]+/
         advance(L)
@@ -296,7 +300,9 @@ function skipBlanks(L: Lexer): void {
 function nextToken(L: Lexer, ctx: 'cmd' | 'arg' = 'arg'): Token {
   skipBlanks(L)
   const start = L.b
-  if (L.i >= L.len) return { type: 'EOF', value: '', start, end: start }
+  if (L.i >= L.len) {
+    return { type: 'EOF', value: '', start, end: start }
+  }
 
   const c = L.src[L.i]!
   const c1 = peek(L, 1)
@@ -309,7 +315,9 @@ function nextToken(L: Lexer, ctx: 'cmd' | 'arg' = 'arg'): Token {
 
   if (c === '#') {
     const si = L.i
-    while (L.i < L.len && L.src[L.i] !== '\n') advance(L)
+    while (L.i < L.len && L.src[L.i] !== '\n') {
+      advance(L)
+    }
     return {
       type: 'COMMENT',
       value: L.src.slice(si, L.i),
@@ -472,8 +480,12 @@ function nextToken(L: Lexer, ctx: 'cmd' | 'arg' = 'arg'): Token {
   if (c === "'") {
     const si = L.i
     advance(L)
-    while (L.i < L.len && L.src[L.i] !== "'") advance(L)
-    if (L.i < L.len) advance(L)
+    while (L.i < L.len && L.src[L.i] !== "'") {
+      advance(L)
+    }
+    if (L.i < L.len) {
+      advance(L)
+    }
     return {
       type: 'SQUOTE',
       value: L.src.slice(si, L.i),
@@ -505,10 +517,14 @@ function nextToken(L: Lexer, ctx: 'cmd' | 'arg' = 'arg'): Token {
       advance(L)
       advance(L)
       while (L.i < L.len && L.src[L.i] !== "'") {
-        if (L.src[L.i] === '\\' && L.i + 1 < L.len) advance(L)
+        if (L.src[L.i] === '\\' && L.i + 1 < L.len) {
+          advance(L)
+        }
         advance(L)
       }
-      if (L.i < L.len) advance(L)
+      if (L.i < L.len) {
+        advance(L)
+      }
       return {
         type: 'ANSI_C',
         value: L.src.slice(si, L.i),
@@ -528,11 +544,15 @@ function nextToken(L: Lexer, ctx: 'cmd' | 'arg' = 'arg'): Token {
   // File descriptor before redirect: digit+ immediately followed by > or <
   if (isDigit(c)) {
     let j = L.i
-    while (j < L.len && isDigit(L.src[j]!)) j++
+    while (j < L.len && isDigit(L.src[j]!)) {
+      j++
+    }
     const after = j < L.len ? L.src[j]! : ''
     if (after === '>' || after === '<') {
       const si = L.i
-      while (L.i < j) advance(L)
+      while (L.i < j) {
+        advance(L)
+      }
       return {
         type: 'WORD',
         value: L.src.slice(si, L.i),
@@ -617,7 +637,9 @@ function parseSource(source: string, timeoutMs?: number): TsNode | null {
   }
   try {
     const program = parseProgram(P)
-    if (P.aborted) return null
+    if (P.aborted) {
+      return null
+    }
     return program
   } catch {
     return null
@@ -628,12 +650,16 @@ function byteLengthUtf8(s: string): number {
   let b = 0
   for (let i = 0; i < s.length; i++) {
     const c = s.charCodeAt(i)
-    if (c < 0x80) b++
-    else if (c < 0x800) b += 2
-    else if (c >= 0xd800 && c <= 0xdbff) {
+    if (c < 0x80) {
+      b++
+    } else if (c < 0x800) {
+      b += 2
+    } else if (c >= 0xd800 && c <= 0xdbff) {
       b += 4
       i++
-    } else b += 3
+    } else {
+      b += 3
+    }
   }
   return b
 }
@@ -663,26 +689,36 @@ function mk(P: ParseState, type: string, start: number, end: number, children: T
 }
 
 function sliceBytes(P: ParseState, startByte: number, endByte: number): string {
-  if (P.isAscii) return P.src.slice(startByte, endByte)
+  if (P.isAscii) {
+    return P.src.slice(startByte, endByte)
+  }
   // Find char indices for byte offsets. Build byte table if needed.
   const L = P.L
-  if (!L.byteTable) byteAt(L, 0)
+  if (!L.byteTable) {
+    byteAt(L, 0)
+  }
   const t = L.byteTable!
   // Binary search for char index where byte offset matches
   let lo = 0
   let hi = P.src.length
   while (lo < hi) {
     const m = (lo + hi) >>> 1
-    if (t[m]! < startByte) lo = m + 1
-    else hi = m
+    if (t[m]! < startByte) {
+      lo = m + 1
+    } else {
+      hi = m
+    }
   }
   const sc = lo
   lo = sc
   hi = P.src.length
   while (lo < hi) {
     const m = (lo + hi) >>> 1
-    if (t[m]! < endByte) lo = m + 1
-    else hi = m
+    if (t[m]! < endByte) {
+      lo = m + 1
+    } else {
+      hi = m
+    }
   }
   return P.src.slice(sc, lo)
 }
@@ -709,19 +745,27 @@ function parseProgram(P: ParseState): TsNode {
   while (P.L.i < P.L.len) {
     const save = saveLex(P.L)
     const t = nextToken(P.L, 'cmd')
-    if (t.type === 'EOF') break
-    if (t.type === 'NEWLINE') continue
+    if (t.type === 'EOF') {
+      break
+    }
+    if (t.type === 'NEWLINE') {
+      continue
+    }
     if (t.type === 'COMMENT') {
       children.push(leaf(P, 'comment', t))
       continue
     }
     restoreLex(P.L, save)
     const stmts = parseStatements(P, null)
-    for (const s of stmts) children.push(s)
+    for (const s of stmts) {
+      children.push(s)
+    }
     if (stmts.length === 0) {
       // Couldn't parse — emit ERROR and skip one token
       const errTok = nextToken(P.L, 'cmd')
-      if (errTok.type === 'EOF') break
+      if (errTok.type === 'EOF') {
+        break
+      }
       // Stray `;;` at program level (e.g., `var=;;` outside case) — tree-sitter
       // silently elides. Keep leading `;` as ERROR (security: paste artifact).
       if (errTok.type === 'OP' && errTok.value === ';;' && children.length > 0) {
@@ -808,7 +852,9 @@ function parseStatements(P: ParseState, terminator: string | null): TsNode[] {
     }
     restoreLex(P.L, save)
     const stmt = parseAndOr(P)
-    if (!stmt) break
+    if (!stmt) {
+      break
+    }
     out.push(stmt)
     // Look for separator
     skipBlanks(P.L)
@@ -837,15 +883,11 @@ function parseStatements(P: ParseState, terminator: string | null): TsNode[] {
             after.value === 'done' ||
             after.value === 'esac'))
       ) {
-        // Trailing separator — don't include it at program level unless
-        // there's content after. But at inner levels we keep it.
-        continue
       }
     } else if (sep.type === 'NEWLINE') {
       if (P.L.heredocs.length > 0) {
         scanHeredocBodies(P)
       }
-      continue
     } else {
       restoreLex(P.L, save2)
     }
@@ -862,7 +904,9 @@ function parseStatements(P: ParseState, terminator: string | null): TsNode[] {
  */
 function parseAndOr(P: ParseState): TsNode | null {
   let left = parsePipeline(P)
-  if (!left) return null
+  if (!left) {
+    return null
+  }
   while (true) {
     const save = saveLex(P.L)
     const t = nextToken(P.L, 'cmd')
@@ -914,7 +958,9 @@ function skipNewlines(P: ParseState): void {
  */
 function parsePipeline(P: ParseState): TsNode | null {
   let first = parseCommand(P)
-  if (!first) return null
+  if (!first) {
+    return null
+  }
   const parts: TsNode[] = [first]
   while (true) {
     const save = saveLex(P.L)
@@ -950,7 +996,9 @@ function parsePipeline(P: ParseState): TsNode | null {
       break
     }
   }
-  if (parts.length === 1) return parts[0]!
+  if (parts.length === 1) {
+    return parts[0]!
+  }
   const last = parts[parts.length - 1]!
   return mk(P, 'pipeline', parts[0]!.startIndex, last.endIndex, parts)
 }
@@ -1063,13 +1111,27 @@ function parseCommand(P: ParseState): TsNode | null {
   }
 
   if (t.type === 'WORD') {
-    if (t.value === 'if') return maybeRedirect(P, parseIf(P, t), true)
-    if (t.value === 'while' || t.value === 'until') return maybeRedirect(P, parseWhile(P, t), true)
-    if (t.value === 'for') return maybeRedirect(P, parseFor(P, t), true)
-    if (t.value === 'select') return maybeRedirect(P, parseFor(P, t), true)
-    if (t.value === 'case') return maybeRedirect(P, parseCase(P, t), true)
-    if (t.value === 'function') return parseFunction(P, t)
-    if (DECL_KEYWORDS.has(t.value)) return maybeRedirect(P, parseDeclaration(P, t))
+    if (t.value === 'if') {
+      return maybeRedirect(P, parseIf(P, t), true)
+    }
+    if (t.value === 'while' || t.value === 'until') {
+      return maybeRedirect(P, parseWhile(P, t), true)
+    }
+    if (t.value === 'for') {
+      return maybeRedirect(P, parseFor(P, t), true)
+    }
+    if (t.value === 'select') {
+      return maybeRedirect(P, parseFor(P, t), true)
+    }
+    if (t.value === 'case') {
+      return maybeRedirect(P, parseCase(P, t), true)
+    }
+    if (t.value === 'function') {
+      return parseFunction(P, t)
+    }
+    if (DECL_KEYWORDS.has(t.value)) {
+      return maybeRedirect(P, parseDeclaration(P, t))
+    }
     if (t.value === 'unset' || t.value === 'unsetenv') {
       return maybeRedirect(P, parseUnset(P, t))
     }
@@ -1178,7 +1240,9 @@ function parseSimpleCommand(P: ParseState): TsNode | null {
 
   const nameArg = parseWord(P, 'cmd')
   if (!nameArg) {
-    if (assignments.length === 1) return assignments[0]!
+    if (assignments.length === 1) {
+      return assignments[0]!
+    }
     return null
   }
 
@@ -1208,9 +1272,13 @@ function parseSimpleCommand(P: ParseState): TsNode | null {
     // Once a file_redirect has been seen, command args are done — grammar's
     // command rule doesn't allow file_redirect in its post-name choice, so
     // anything after belongs to redirected_statement's file_redirect children.
-    if (redirects.length > 0) break
+    if (redirects.length > 0) {
+      break
+    }
     // `[` test_command backtrack — stop at `]` so outer handler can consume it
-    if (P.stopToken === ']' && peek(P.L) === ']') break
+    if (P.stopToken === ']' && peek(P.L) === ']') {
+      break
+    }
     const save2 = saveLex(P.L)
     const pk = nextToken(P.L, 'arg')
     if (
@@ -1320,14 +1388,18 @@ function maybeRedirect(P: ParseState, node: TsNode, allowHerestring = false): Ts
     skipBlanks(P.L)
     const save = saveLex(P.L)
     const r = tryParseRedirect(P)
-    if (!r) break
+    if (!r) {
+      break
+    }
     if (r.type === 'herestring_redirect' && !allowHerestring) {
       restoreLex(P.L, save)
       break
     }
     redirects.push(r)
   }
-  if (redirects.length === 0) return node
+  if (redirects.length === 0) {
+    return node
+  }
   const last = redirects[redirects.length - 1]!
   return mk(P, 'redirected_statement', node.startIndex, last.endIndex, [node, ...redirects])
 }
@@ -1341,7 +1413,9 @@ function tryParseAssignment(P: ParseState): TsNode | null {
     restoreLex(P.L, save)
     return null
   }
-  while (isIdentChar(peek(P.L))) advance(P.L)
+  while (isIdentChar(peek(P.L))) {
+    advance(P.L)
+  }
   const nameEnd = P.L.b
   // Optional subscript
   let subEnd = nameEnd
@@ -1350,8 +1424,11 @@ function tryParseAssignment(P: ParseState): TsNode | null {
     let depth = 1
     while (P.L.i < P.L.len && depth > 0) {
       const c = peek(P.L)
-      if (c === '[') depth++
-      else if (c === ']') depth--
+      if (c === '[') {
+        depth++
+      } else if (c === ']') {
+        depth--
+      }
       advance(P.L)
     }
     subEnd = P.L.b
@@ -1378,7 +1455,9 @@ function tryParseAssignment(P: ParseState): TsNode | null {
   }
   const opStart = P.L.b
   advance(P.L)
-  if (op === '+=') advance(P.L)
+  if (op === '+=') {
+    advance(P.L)
+  }
   const opEnd = P.L.b
   const opNode = mk(P, op, opStart, opEnd, [])
   let val: TsNode | null = null
@@ -1389,9 +1468,13 @@ function tryParseAssignment(P: ParseState): TsNode | null {
     const elems: TsNode[] = [aOpen]
     while (true) {
       skipBlanks(P.L)
-      if (peek(P.L) === ')') break
+      if (peek(P.L) === ')') {
+        break
+      }
       const e = parseWord(P, 'arg')
-      if (!e) break
+      if (!e) {
+        break
+      }
       elems.push(e)
     }
     const acTok = nextToken(P.L, 'cmd')
@@ -1463,7 +1546,9 @@ function parseSubscriptIndexInline(P: ParseState): TsNode | null {
 /** Legacy byte-range subscript index parser — kept for callers that pre-scan. */
 function parseSubscriptIndex(P: ParseState, startB: number, endB: number): TsNode {
   const text = sliceBytes(P, startB, endB)
-  if (/^\d+$/.test(text)) return mk(P, 'number', startB, endB, [])
+  if (/^\d+$/.test(text)) {
+    return mk(P, 'number', startB, endB, [])
+  }
   const m = /^\$([a-zA-Z_]\w*)$/.exec(text)
   if (m) {
     const dollar = mk(P, '$', startB, startB + 1, [])
@@ -1485,9 +1570,13 @@ function parseSubscriptIndex(P: ParseState, startB: number, endB: number): TsNod
  */
 function isRedirectLiteralStart(P: ParseState): boolean {
   const c = peek(P.L)
-  if (c === '' || c === '\n') return false
+  if (c === '' || c === '\n') {
+    return false
+  }
   // Shell terminators and operators
-  if (c === '|' || c === '&' || c === ';' || c === '(' || c === ')') return false
+  if (c === '|' || c === '&' || c === ';' || c === '(' || c === ')') {
+    return false
+  }
   // Redirect operators (< > with any suffix; <( >( handled by caller)
   if (c === '<' || c === '>') {
     // <( >( are process substitutions — those ARE literals
@@ -1496,17 +1585,25 @@ function isRedirectLiteralStart(P: ParseState): boolean {
   // N< N> file descriptor prefix — starts a new redirect, not a literal
   if (isDigit(c)) {
     let j = P.L.i
-    while (j < P.L.len && isDigit(P.L.src[j]!)) j++
+    while (j < P.L.len && isDigit(P.L.src[j]!)) {
+      j++
+    }
     const after = j < P.L.len ? P.L.src[j]! : ''
-    if (after === '>' || after === '<') return false
+    if (after === '>' || after === '<') {
+      return false
+    }
   }
   // `}` only terminates if we're in a context where it's a closer — but
   // file_redirect sees `}` as word char (e.g., `>$HOME}` is valid path char).
   // Actually `}` at top level terminates compound_statement — need to stop.
-  if (c === '}') return false
+  if (c === '}') {
+    return false
+  }
   // Test command closer — when parseSimpleCommand is called from `[` context,
   // `]` must terminate so parseCommand can return and `[` handler consume it.
-  if (P.stopToken === ']' && c === ']') return false
+  if (P.stopToken === ']' && c === ']') {
+    return false
+  }
   return true
 }
 
@@ -1525,10 +1622,14 @@ function tryParseRedirect(P: ParseState, greedy = false): TsNode | null {
   if (isDigit(peek(P.L))) {
     const startB = P.L.b
     let j = P.L.i
-    while (j < P.L.len && isDigit(P.L.src[j]!)) j++
+    while (j < P.L.len && isDigit(P.L.src[j]!)) {
+      j++
+    }
     const after = j < P.L.len ? P.L.src[j]! : ''
     if (after === '>' || after === '<') {
-      while (P.L.i < j) advance(P.L)
+      while (P.L.i < j) {
+        advance(P.L)
+      }
       fd = mk(P, 'file_descriptor', startB, P.L.b, [])
     }
   }
@@ -1567,7 +1668,9 @@ function tryParseRedirect(P: ParseState, greedy = false): TsNode | null {
         delim += peek(P.L)
         advance(P.L)
       }
-      if (P.L.i < P.L.len) advance(P.L)
+      if (P.L.i < P.L.len) {
+        advance(P.L)
+      }
     } else if (dc === '\\') {
       // Backslash-escaped delimiter: \X — exactly one escaped char, body is
       // quoted (literal). Covers <<\EOF <<\' <<\\ etc.
@@ -1614,7 +1717,9 @@ function tryParseRedirect(P: ParseState, greedy = false): TsNode | null {
     while (true) {
       skipBlanks(P.L)
       const tc = peek(P.L)
-      if (tc === '\n' || tc === '' || P.L.i >= P.L.len) break
+      if (tc === '\n' || tc === '' || P.L.i >= P.L.len) {
+        break
+      }
       // File redirect after delimiter: cat <<EOF > out.txt
       if (tc === '>' || tc === '<' || isDigit(tc)) {
         const rSave = saveLex(P.L)
@@ -1634,7 +1739,9 @@ function tryParseRedirect(P: ParseState, greedy = false): TsNode | null {
         const pipeCmds: TsNode[] = []
         while (true) {
           const cmd = parseCommand(P)
-          if (!cmd) break
+          if (!cmd) {
+            break
+          }
           pipeCmds.push(cmd)
           skipBlanks(P.L)
           if (peek(P.L) === '|' && peek(P.L, 1) !== '|') {
@@ -1660,14 +1767,18 @@ function tryParseRedirect(P: ParseState, greedy = false): TsNode | null {
         advance(P.L)
         skipBlanks(P.L)
         const rhs = parseCommand(P)
-        if (rhs) kids.push(rhs)
+        if (rhs) {
+          kids.push(rhs)
+        }
         continue
       }
       // Terminator / unhandled metachar — consume rest of line as ERROR so
       // ast.ts rejects it. Covers ; & ( )
       if (tc === '&' || tc === ';' || tc === '(' || tc === ')') {
         const eStart = P.L.b
-        while (P.L.i < P.L.len && peek(P.L) !== '\n') advance(P.L)
+        while (P.L.i < P.L.len && peek(P.L) !== '\n') {
+          advance(P.L)
+        }
         kids.push(mk(P, 'ERROR', eStart, P.L.b, []))
         break
       }
@@ -1679,8 +1790,12 @@ function tryParseRedirect(P: ParseState, greedy = false): TsNode | null {
       }
       // Unrecognized — consume rest of line as ERROR
       const eStart = P.L.b
-      while (P.L.i < P.L.len && peek(P.L) !== '\n') advance(P.L)
-      if (P.L.b > eStart) kids.push(mk(P, 'ERROR', eStart, P.L.b, []))
+      while (P.L.i < P.L.len && peek(P.L) !== '\n') {
+        advance(P.L)
+      }
+      if (P.L.b > eStart) {
+        kids.push(mk(P, 'ERROR', eStart, P.L.b, []))
+      }
       break
     }
     return mk(P, 'heredoc_redirect', startIdx, P.L.b, kids)
@@ -1689,7 +1804,9 @@ function tryParseRedirect(P: ParseState, greedy = false): TsNode | null {
   if (v === '<&-' || v === '>&-') {
     const op = leaf(P, v, t)
     const kids: TsNode[] = []
-    if (fd) kids.push(fd)
+    if (fd) {
+      kids.push(fd)
+    }
     kids.push(op)
     // Optional single destination — only consume if next is a literal
     skipBlanks(P.L)
@@ -1716,7 +1833,9 @@ function tryParseRedirect(P: ParseState, greedy = false): TsNode | null {
   ) {
     const op = leaf(P, v, t)
     const kids: TsNode[] = []
-    if (fd) kids.push(fd)
+    if (fd) {
+      kids.push(fd)
+    }
     kids.push(op)
     // Grammar: destination is repeat1($._literal) — greedily consume literals
     // until a non-literal (redirect op, terminator, etc). tree-sitter's
@@ -1728,8 +1847,12 @@ function tryParseRedirect(P: ParseState, greedy = false): TsNode | null {
     let taken = 0
     while (true) {
       skipBlanks(P.L)
-      if (!isRedirectLiteralStart(P)) break
-      if (!greedy && taken >= 1) break
+      if (!isRedirectLiteralStart(P)) {
+        break
+      }
+      if (!greedy && taken >= 1) {
+        break
+      }
       const tc = peek(P.L)
       const tc1 = peek(P.L, 1)
       let target: TsNode | null = null
@@ -1738,7 +1861,9 @@ function tryParseRedirect(P: ParseState, greedy = false): TsNode | null {
       } else {
         target = parseWord(P, 'arg')
       }
-      if (!target) break
+      if (!target) {
+        break
+      }
       kids.push(target)
       end = target.endIndex
       taken++
@@ -1752,11 +1877,13 @@ function tryParseRedirect(P: ParseState, greedy = false): TsNode | null {
 
 function parseProcessSub(P: ParseState): TsNode | null {
   const c = peek(P.L)
-  if ((c !== '<' && c !== '>') || peek(P.L, 1) !== '(') return null
+  if ((c !== '<' && c !== '>') || peek(P.L, 1) !== '(') {
+    return null
+  }
   const start = P.L.b
   advance(P.L)
   advance(P.L)
-  const open = mk(P, c + '(', start, P.L.b, [])
+  const open = mk(P, `${c}(`, start, P.L.b, [])
   const body = parseStatements(P, ')')
   skipBlanks(P.L)
   let close: TsNode
@@ -1772,8 +1899,12 @@ function parseProcessSub(P: ParseState): TsNode | null {
 
 function scanHeredocBodies(P: ParseState): void {
   // Skip to newline if not already there
-  while (P.L.i < P.L.len && P.L.src[P.L.i] !== '\n') advance(P.L)
-  if (P.L.i < P.L.len) advance(P.L)
+  while (P.L.i < P.L.len && P.L.src[P.L.i] !== '\n') {
+    advance(P.L)
+  }
+  if (P.L.i < P.L.len) {
+    advance(P.L)
+  }
   for (const hd of P.L.heredocs) {
     hd.bodyStart = P.L.b
     const delimLen = hd.delim.length
@@ -1783,7 +1914,9 @@ function scanHeredocBodies(P: ParseState): void {
       // Skip leading tabs if <<-
       let checkI = lineStart
       if (hd.stripTabs) {
-        while (checkI < P.L.len && P.L.src[checkI] === '\t') checkI++
+        while (checkI < P.L.len && P.L.src[checkI] === '\t') {
+          checkI++
+        }
       }
       // Check if this line is the delimiter
       if (
@@ -1794,18 +1927,28 @@ function scanHeredocBodies(P: ParseState): void {
       ) {
         hd.bodyEnd = lineStartB
         // Advance past tabs
-        while (P.L.i < checkI) advance(P.L)
+        while (P.L.i < checkI) {
+          advance(P.L)
+        }
         hd.endStart = P.L.b
         // Advance past delimiter
-        for (let k = 0; k < delimLen; k++) advance(P.L)
+        for (let k = 0; k < delimLen; k++) {
+          advance(P.L)
+        }
         hd.endEnd = P.L.b
         // Skip trailing newline
-        if (P.L.i < P.L.len && P.L.src[P.L.i] === '\n') advance(P.L)
+        if (P.L.i < P.L.len && P.L.src[P.L.i] === '\n') {
+          advance(P.L)
+        }
         return
       }
       // Consume line
-      while (P.L.i < P.L.len && P.L.src[P.L.i] !== '\n') advance(P.L)
-      if (P.L.i < P.L.len) advance(P.L)
+      while (P.L.i < P.L.len && P.L.src[P.L.i] !== '\n') {
+        advance(P.L)
+      }
+      if (P.L.i < P.L.len) {
+        advance(P.L)
+      }
     }
     // Unterminated
     hd.bodyEnd = P.L.b
@@ -1871,14 +2014,19 @@ function parseHeredocBodyContent(P: ParseState, start: number, end: number): TsN
 }
 
 function restoreLexToByte(P: ParseState, targetByte: number): void {
-  if (!P.L.byteTable) byteAt(P.L, 0)
+  if (!P.L.byteTable) {
+    byteAt(P.L, 0)
+  }
   const t = P.L.byteTable!
   let lo = 0
   let hi = P.src.length
   while (lo < hi) {
     const m = (lo + hi) >>> 1
-    if (t[m]! < targetByte) lo = m + 1
-    else hi = m
+    if (t[m]! < targetByte) {
+      lo = m + 1
+    } else {
+      hi = m
+    }
   }
   P.L.i = lo
   P.L.b = targetByte
@@ -1912,7 +2060,9 @@ function parseWord(P: ParseState, _ctx: 'cmd' | 'arg'): TsNode | null {
     if (c === '<' || c === '>') {
       if (peek(P.L, 1) === '(') {
         const ps = parseProcessSub(P)
-        if (ps) parts.push(ps)
+        if (ps) {
+          parts.push(ps)
+        }
         continue
       }
       break
@@ -1954,13 +2104,19 @@ function parseWord(P: ParseState, _ctx: 'cmd' | 'arg'): TsNode | null {
         continue
       }
       const exp = parseDollarLike(P)
-      if (exp) parts.push(exp)
+      if (exp) {
+        parts.push(exp)
+      }
       continue
     }
     if (c === '`') {
-      if (P.inBacktick > 0) break
+      if (P.inBacktick > 0) {
+        break
+      }
       const bt = parseBacktick(P)
-      if (bt) parts.push(bt)
+      if (bt) {
+        parts.push(bt)
+      }
       continue
     }
     // Brace expression {1..5} or {a,b,c} — only if looks like one
@@ -1993,7 +2149,9 @@ function parseWord(P: ParseState, _ctx: 'cmd' | 'arg'): TsNode | null {
       // Otherwise treat { and } as word fragments
       const cat = tryParseBraceLikeCat(P)
       if (cat) {
-        for (const p of cat) parts.push(p)
+        for (const p of cat) {
+          parts.push(p)
+        }
         continue
       }
     }
@@ -2015,7 +2173,9 @@ function parseWord(P: ParseState, _ctx: 'cmd' | 'arg'): TsNode | null {
     }
     // Bare word fragment
     const frag = parseBareWord(P)
-    if (!frag) break
+    if (!frag) {
+      break
+    }
     // `NN#${...}` or `NN#$(...)` → (number (expansion|command_substitution)).
     // Grammar: number can be seq(/-?(0x)?[0-9]+#/, choice(expansion, cmd_sub)).
     // `10#${cmd}` must NOT be concatenation — it's a single number node with
@@ -2036,8 +2196,12 @@ function parseWord(P: ParseState, _ctx: 'cmd' | 'arg'): TsNode | null {
     }
     parts.push(frag)
   }
-  if (parts.length === 0) return null
-  if (parts.length === 1) return parts[0]!
+  if (parts.length === 0) {
+    return null
+  }
+  if (parts.length === 1) {
+    return parts[0]!
+  }
   // Concatenation
   const first = parts[0]!
   const last = parts[parts.length - 1]!
@@ -2090,7 +2254,9 @@ function parseBareWord(P: ParseState): TsNode | null {
     }
     advance(P.L)
   }
-  if (P.L.b === start) return null
+  if (P.L.b === start) {
+    return null
+  }
   const text = P.src.slice(startI, P.L.i)
   const type = /^-?\d+$/.test(text) ? 'number' : 'word'
   return mk(P, type, start, P.L.b, [])
@@ -2099,13 +2265,17 @@ function parseBareWord(P: ParseState): TsNode | null {
 function tryParseBraceExpr(P: ParseState): TsNode | null {
   // {N..M} where N, M are numbers or single chars
   const save = saveLex(P.L)
-  if (peek(P.L) !== '{') return null
+  if (peek(P.L) !== '{') {
+    return null
+  }
   const oStart = P.L.b
   advance(P.L)
   const oEnd = P.L.b
   // First part
   const p1Start = P.L.b
-  while (isDigit(peek(P.L)) || isIdentStart(peek(P.L))) advance(P.L)
+  while (isDigit(peek(P.L)) || isIdentStart(peek(P.L))) {
+    advance(P.L)
+  }
   const p1End = P.L.b
   if (p1End === p1Start || peek(P.L) !== '.' || peek(P.L, 1) !== '.') {
     restoreLex(P.L, save)
@@ -2116,7 +2286,9 @@ function tryParseBraceExpr(P: ParseState): TsNode | null {
   advance(P.L)
   const dotEnd = P.L.b
   const p2Start = P.L.b
-  while (isDigit(peek(P.L)) || isIdentStart(peek(P.L))) advance(P.L)
+  while (isDigit(peek(P.L)) || isIdentStart(peek(P.L))) {
+    advance(P.L)
+  }
   const p2End = P.L.b
   if (p2End === p2Start || peek(P.L) !== '}') {
     restoreLex(P.L, save)
@@ -2151,7 +2323,9 @@ function tryParseBraceExpr(P: ParseState): TsNode | null {
 
 function tryParseBraceLikeCat(P: ParseState): TsNode[] | null {
   // {a,b,c} or {} → split into word fragments like tree-sitter does
-  if (peek(P.L) !== '{') return null
+  if (peek(P.L) !== '{') {
+    return null
+  }
   const oStart = P.L.b
   advance(P.L)
   const oEnd = P.L.b
@@ -2244,7 +2418,9 @@ function parseDoubleQuoted(P: ParseState): TsNode {
   }
   while (P.L.i < P.L.len) {
     const c = peek(P.L)
-    if (c === '"') break
+    if (c === '"') {
+      break
+    }
     if (c === '\\' && P.L.i + 1 < P.L.len) {
       advance(P.L)
       advance(P.L)
@@ -2263,7 +2439,9 @@ function parseDoubleQuoted(P: ParseState): TsNode {
       if (c1 === '(' || c1 === '{' || isIdentStart(c1) || SPECIAL_VARS.has(c1) || isDigit(c1)) {
         flushContent()
         const exp = parseDollarLike(P)
-        if (exp) parts.push(exp)
+        if (exp) {
+          parts.push(exp)
+        }
         contentStart = P.L.b
         contentStartI = P.L.i
         continue
@@ -2284,7 +2462,9 @@ function parseDoubleQuoted(P: ParseState): TsNode {
     if (c === '`') {
       flushContent()
       const bt = parseBacktick(P)
-      if (bt) parts.push(bt)
+      if (bt) {
+        parts.push(bt)
+      }
       contentStart = P.L.b
       contentStartI = P.L.i
       continue
@@ -2398,7 +2578,9 @@ function parseDollarLike(P: ParseState): TsNode | null {
   }
   if (isIdentStart(nc)) {
     const vStart = P.L.b
-    while (isIdentChar(peek(P.L))) advance(P.L)
+    while (isIdentChar(peek(P.L))) {
+      advance(P.L)
+    }
     const vn = mk(P, 'variable_name', vStart, P.L.b, [])
     return mk(P, 'simple_expansion', dStart, P.L.b, [dollar, vn])
   }
@@ -2436,10 +2618,16 @@ function parseExpansionBody(P: ParseState): TsNode[] {
     if (c0 === '!' && c1 === '#') {
       // ${!#} ${!##} with optional trailing space then }
       let j = 2
-      if (peek(P.L, j) === '#') j++
-      if (peek(P.L, j) === ' ') j++
+      if (peek(P.L, j) === '#') {
+        j++
+      }
+      if (peek(P.L, j) === ' ') {
+        j++
+      }
       if (peek(P.L, j) === '}') {
-        while (j-- > 0) advance(P.L)
+        while (j-- > 0) {
+          advance(P.L)
+        }
         return out
       }
     }
@@ -2466,11 +2654,15 @@ function parseExpansionBody(P: ParseState): TsNode[] {
   // Variable name
   if (isIdentStart(peek(P.L))) {
     const s = P.L.b
-    while (isIdentChar(peek(P.L))) advance(P.L)
+    while (isIdentChar(peek(P.L))) {
+      advance(P.L)
+    }
     out.push(mk(P, 'variable_name', s, P.L.b, []))
   } else if (isDigit(peek(P.L))) {
     const s = P.L.b
-    while (isDigit(peek(P.L))) advance(P.L)
+    while (isDigit(peek(P.L))) {
+      advance(P.L)
+    }
     out.push(mk(P, 'variable_name', s, P.L.b, []))
   } else if (SPECIAL_VARS.has(peek(P.L))) {
     const s = P.L.b
@@ -2486,7 +2678,9 @@ function parseExpansionBody(P: ParseState): TsNode[] {
     const idx = parseSubscriptIndexInline(P)
     skipBlanks(P.L)
     const brClose = P.L.b
-    if (peek(P.L) === ']') advance(P.L)
+    if (peek(P.L) === ']') {
+      advance(P.L)
+    }
     const brCloseNode = mk(P, ']', brClose, P.L.b, [])
     if (varNode) {
       const kids = idx
@@ -2510,7 +2704,9 @@ function parseExpansionBody(P: ParseState): TsNode[] {
     const s = P.L.b
     advance(P.L)
     out.push(mk(P, '@', s, P.L.b, []))
-    while (isIdentChar(peek(P.L))) advance(P.L)
+    while (isIdentChar(peek(P.L))) {
+      advance(P.L)
+    }
     return out
   }
   // Operator :- := :? :+ - = ? + # ## % %% / // ^ ^^ , ,, etc.
@@ -2525,7 +2721,9 @@ function parseExpansionBody(P: ParseState): TsNode[] {
     // `:\n` or `:}` — empty substring expansion, emits nothing (variable_name only)
     if (c1 === '\n' || c1 === '}') {
       advance(P.L)
-      while (peek(P.L) === '\n') advance(P.L)
+      while (peek(P.L) === '\n') {
+        advance(P.L)
+      }
       return out
     }
     if (c1 !== '-' && c1 !== '=' && c1 !== '?' && c1 !== '+') {
@@ -2538,12 +2736,16 @@ function parseExpansionBody(P: ParseState): TsNode[] {
       if (offC === '-' && isDigit(peek(P.L, 1))) {
         const ns = P.L.b
         advance(P.L)
-        while (isDigit(peek(P.L))) advance(P.L)
+        while (isDigit(peek(P.L))) {
+          advance(P.L)
+        }
         off = mk(P, 'number', ns, P.L.b, [])
       } else {
         off = parseArithExpr(P, ':}', 'var')
       }
-      if (off) out.push(off)
+      if (off) {
+        out.push(off)
+      }
       skipBlanks(P.L)
       if (peek(P.L) === ':') {
         advance(P.L)
@@ -2553,12 +2755,16 @@ function parseExpansionBody(P: ParseState): TsNode[] {
         if (lenC === '-' && isDigit(peek(P.L, 1))) {
           const ns = P.L.b
           advance(P.L)
-          while (isDigit(peek(P.L))) advance(P.L)
+          while (isDigit(peek(P.L))) {
+            advance(P.L)
+          }
           len = mk(P, 'number', ns, P.L.b, [])
         } else {
           len = parseArithExpr(P, '}', 'var')
         }
-        if (len) out.push(len)
+        if (len) {
+          out.push(len)
+        }
       }
       return out
     }
@@ -2622,10 +2828,14 @@ function parseExpansionBody(P: ParseState): TsNode[] {
       if (peek(P.L) === '"') {
         out.push(parseDoubleQuoted(P))
         const tail = parseExpansionRest(P, 'regex', true)
-        if (tail) out.push(tail)
+        if (tail) {
+          out.push(tail)
+        }
       } else {
         const regex = parseExpansionRest(P, 'regex', true)
-        if (regex) out.push(regex)
+        if (regex) {
+          out.push(regex)
+        }
       }
       if (peek(P.L) === '/') {
         const sepStart = P.L.b
@@ -2658,10 +2868,14 @@ function parseExpansionBody(P: ParseState): TsNode[] {
       // repeat(choice(regex, string, raw_string, ')')). Each quote/string
       // is a SIBLING, not absorbed into one regex. `${f%'str'*}` →
       // (raw_string)(regex); `${f/'str'*}` (slash) stays single regex.
-      for (const p of parseExpansionRegexSegmented(P)) out.push(p)
+      for (const p of parseExpansionRegexSegmented(P)) {
+        out.push(p)
+      }
     } else {
       const rest = parseExpansionRest(P, isPattern ? 'regex' : 'word', false)
-      if (rest) out.push(rest)
+      if (rest) {
+        out.push(rest)
+      }
     }
   }
   return out
@@ -2684,7 +2898,9 @@ function parseExpansionRest(P: ParseState, nodeType: string, stopAtSlash: boolea
     while (P.L.i < P.L.len) {
       skipBlanks(P.L)
       const c = peek(P.L)
-      if (c === ')' || c === '}' || c === '\n' || c === '') break
+      if (c === ')' || c === '}' || c === '\n' || c === '') {
+        break
+      }
       const wStart = P.L.b
       while (P.L.i < P.L.len) {
         const wc = peek(P.L)
@@ -2693,15 +2909,20 @@ function parseExpansionRest(P: ParseState, nodeType: string, stopAtSlash: boolea
         }
         advance(P.L)
       }
-      if (P.L.b > wStart) elems.push(mk(P, 'word', wStart, P.L.b, []))
-      else break
+      if (P.L.b > wStart) {
+        elems.push(mk(P, 'word', wStart, P.L.b, []))
+      } else {
+        break
+      }
     }
     if (peek(P.L) === ')') {
       const cStart = P.L.b
       advance(P.L)
       elems.push(mk(P, ')', cStart, P.L.b, []))
     }
-    while (peek(P.L) === '\n') advance(P.L)
+    while (peek(P.L) === '\n') {
+      advance(P.L)
+    }
     return mk(P, 'array', start, P.L.b, elems)
   }
   // REGEX mode: flat single-span scan. Quotes are opaque (skipped past so
@@ -2711,10 +2932,16 @@ function parseExpansionRest(P: ParseState, nodeType: string, stopAtSlash: boolea
     let braceDepth = 0
     while (P.L.i < P.L.len) {
       const c = peek(P.L)
-      if (c === '\n') break
+      if (c === '\n') {
+        break
+      }
       if (braceDepth === 0) {
-        if (c === '}') break
-        if (stopAtSlash && c === '/') break
+        if (c === '}') {
+          break
+        }
+        if (stopAtSlash && c === '/') {
+          break
+        }
       }
       if (c === '\\' && P.L.i + 1 < P.L.len) {
         advance(P.L)
@@ -2724,10 +2951,14 @@ function parseExpansionRest(P: ParseState, nodeType: string, stopAtSlash: boolea
       if (c === '"' || c === "'") {
         advance(P.L)
         while (P.L.i < P.L.len && peek(P.L) !== c) {
-          if (peek(P.L) === '\\' && P.L.i + 1 < P.L.len) advance(P.L)
+          if (peek(P.L) === '\\' && P.L.i + 1 < P.L.len) {
+            advance(P.L)
+          }
           advance(P.L)
         }
-        if (peek(P.L) === c) advance(P.L)
+        if (peek(P.L) === c) {
+          advance(P.L)
+        }
         continue
       }
       // Skip past nested ${...} $(...) $[...] so their } / don't terminate us
@@ -2740,8 +2971,11 @@ function parseExpansionRest(P: ParseState, nodeType: string, stopAtSlash: boolea
           d++
           while (P.L.i < P.L.len && d > 0) {
             const nc = peek(P.L)
-            if (nc === '{') d++
-            else if (nc === '}') d--
+            if (nc === '{') {
+              d++
+            } else if (nc === '}') {
+              d--
+            }
             advance(P.L)
           }
           continue
@@ -2753,20 +2987,30 @@ function parseExpansionRest(P: ParseState, nodeType: string, stopAtSlash: boolea
           d++
           while (P.L.i < P.L.len && d > 0) {
             const nc = peek(P.L)
-            if (nc === '(') d++
-            else if (nc === ')') d--
+            if (nc === '(') {
+              d++
+            } else if (nc === ')') {
+              d--
+            }
             advance(P.L)
           }
           continue
         }
       }
-      if (c === '{') braceDepth++
-      else if (c === '}' && braceDepth > 0) braceDepth--
+      if (c === '{') {
+        braceDepth++
+      } else if (c === '}' && braceDepth > 0) {
+        braceDepth--
+      }
       advance(P.L)
     }
     const end = P.L.b
-    while (peek(P.L) === '\n') advance(P.L)
-    if (end === start) return null
+    while (peek(P.L) === '\n') {
+      advance(P.L)
+    }
+    if (end === start) {
+      return null
+    }
     return mk(P, 'regex', start, end, [])
   }
   // WORD mode: segmenting parser — recognize nested ${...}, $(...), $'...',
@@ -2782,10 +3026,16 @@ function parseExpansionRest(P: ParseState, nodeType: string, stopAtSlash: boolea
   }
   while (P.L.i < P.L.len) {
     const c = peek(P.L)
-    if (c === '\n') break
+    if (c === '\n') {
+      break
+    }
     if (braceDepth === 0) {
-      if (c === '}') break
-      if (stopAtSlash && c === '/') break
+      if (c === '}') {
+        break
+      }
+      if (stopAtSlash && c === '/') {
+        break
+      }
     }
     if (c === '\\' && P.L.i + 1 < P.L.len) {
       advance(P.L)
@@ -2797,7 +3047,9 @@ function parseExpansionRest(P: ParseState, nodeType: string, stopAtSlash: boolea
       if (c1 === '{' || c1 === '(' || c1 === '[') {
         flushSeg()
         const exp = parseDollarLike(P)
-        if (exp) parts.push(exp)
+        if (exp) {
+          parts.push(exp)
+        }
         segStart = P.L.b
         continue
       }
@@ -2808,10 +3060,14 @@ function parseExpansionRest(P: ParseState, nodeType: string, stopAtSlash: boolea
         advance(P.L)
         advance(P.L)
         while (P.L.i < P.L.len && peek(P.L) !== "'") {
-          if (peek(P.L) === '\\' && P.L.i + 1 < P.L.len) advance(P.L)
+          if (peek(P.L) === '\\' && P.L.i + 1 < P.L.len) {
+            advance(P.L)
+          }
           advance(P.L)
         }
-        if (peek(P.L) === "'") advance(P.L)
+        if (peek(P.L) === "'") {
+          advance(P.L)
+        }
         parts.push(mk(P, 'ansi_c_string', aStart, P.L.b, []))
         segStart = P.L.b
         continue
@@ -2819,7 +3075,9 @@ function parseExpansionRest(P: ParseState, nodeType: string, stopAtSlash: boolea
       if (isIdentStart(c1) || isDigit(c1) || SPECIAL_VARS.has(c1)) {
         flushSeg()
         const exp = parseDollarLike(P)
-        if (exp) parts.push(exp)
+        if (exp) {
+          parts.push(exp)
+        }
         segStart = P.L.b
         continue
       }
@@ -2834,8 +3092,12 @@ function parseExpansionRest(P: ParseState, nodeType: string, stopAtSlash: boolea
       flushSeg()
       const rStart = P.L.b
       advance(P.L)
-      while (P.L.i < P.L.len && peek(P.L) !== "'") advance(P.L)
-      if (peek(P.L) === "'") advance(P.L)
+      while (P.L.i < P.L.len && peek(P.L) !== "'") {
+        advance(P.L)
+      }
+      if (peek(P.L) === "'") {
+        advance(P.L)
+      }
       parts.push(mk(P, 'raw_string', rStart, P.L.b, []))
       segStart = P.L.b
       continue
@@ -2843,26 +3105,35 @@ function parseExpansionRest(P: ParseState, nodeType: string, stopAtSlash: boolea
     if ((c === '<' || c === '>') && c1 === '(') {
       flushSeg()
       const ps = parseProcessSub(P)
-      if (ps) parts.push(ps)
+      if (ps) {
+        parts.push(ps)
+      }
       segStart = P.L.b
       continue
     }
     if (c === '`') {
       flushSeg()
       const bt = parseBacktick(P)
-      if (bt) parts.push(bt)
+      if (bt) {
+        parts.push(bt)
+      }
       segStart = P.L.b
       continue
     }
     // Brace tracking so nested {a,b} brace-expansion chars don't prematurely
     // terminate (rare, but the `?` in `${cond}? (` should be treated as word).
-    if (c === '{') braceDepth++
-    else if (c === '}' && braceDepth > 0) braceDepth--
+    if (c === '{') {
+      braceDepth++
+    } else if (c === '}' && braceDepth > 0) {
+      braceDepth--
+    }
     advance(P.L)
   }
   flushSeg()
   // Consume trailing newlines before } so caller sees }
-  while (peek(P.L) === '\n') advance(P.L)
+  while (peek(P.L) === '\n') {
+    advance(P.L)
+  }
   // Tree-sitter skips leading whitespace (extras) in expansion RHS when
   // there's content after: `${2+ ${2}}` → just (expansion). But `${v:- }`
   // (space-only RHS) keeps the space as (word). So drop leading whitespace-
@@ -2870,8 +3141,12 @@ function parseExpansionRest(P: ParseState, nodeType: string, stopAtSlash: boolea
   if (parts.length > 1 && parts[0]!.type === 'word' && /^[ \t]+$/.test(parts[0]!.text)) {
     parts.shift()
   }
-  if (parts.length === 0) return null
-  if (parts.length === 1) return parts[0]!
+  if (parts.length === 0) {
+    return null
+  }
+  if (parts.length === 1) {
+    return parts[0]!
+  }
   // Multiple parts: wrap in concatenation (word mode keeps concat wrapping;
   // regex mode also concats per tree-sitter for mixed quote+glob patterns).
   const last = parts[parts.length - 1]!
@@ -2885,11 +3160,15 @@ function parseExpansionRegexSegmented(P: ParseState): TsNode[] {
   const out: TsNode[] = []
   let segStart = P.L.b
   const flushRegex = (): void => {
-    if (P.L.b > segStart) out.push(mk(P, 'regex', segStart, P.L.b, []))
+    if (P.L.b > segStart) {
+      out.push(mk(P, 'regex', segStart, P.L.b, []))
+    }
   }
   while (P.L.i < P.L.len) {
     const c = peek(P.L)
-    if (c === '}' || c === '\n') break
+    if (c === '}' || c === '\n') {
+      break
+    }
     if (c === '\\' && P.L.i + 1 < P.L.len) {
       advance(P.L)
       advance(P.L)
@@ -2905,8 +3184,12 @@ function parseExpansionRegexSegmented(P: ParseState): TsNode[] {
       flushRegex()
       const rStart = P.L.b
       advance(P.L)
-      while (P.L.i < P.L.len && peek(P.L) !== "'") advance(P.L)
-      if (peek(P.L) === "'") advance(P.L)
+      while (P.L.i < P.L.len && peek(P.L) !== "'") {
+        advance(P.L)
+      }
+      if (peek(P.L) === "'") {
+        advance(P.L)
+      }
       out.push(mk(P, 'raw_string', rStart, P.L.b, []))
       segStart = P.L.b
       continue
@@ -2920,8 +3203,11 @@ function parseExpansionRegexSegmented(P: ParseState): TsNode[] {
         advance(P.L)
         while (P.L.i < P.L.len && d > 0) {
           const nc = peek(P.L)
-          if (nc === '{') d++
-          else if (nc === '}') d--
+          if (nc === '{') {
+            d++
+          } else if (nc === '}') {
+            d--
+          }
           advance(P.L)
         }
         continue
@@ -2932,8 +3218,11 @@ function parseExpansionRegexSegmented(P: ParseState): TsNode[] {
         advance(P.L)
         while (P.L.i < P.L.len && d > 0) {
           const nc = peek(P.L)
-          if (nc === '(') d++
-          else if (nc === ')') d--
+          if (nc === '(') {
+            d++
+          } else if (nc === ')') {
+            d--
+          }
           advance(P.L)
         }
         continue
@@ -2942,7 +3231,9 @@ function parseExpansionRegexSegmented(P: ParseState): TsNode[] {
     advance(P.L)
   }
   flushRegex()
-  while (peek(P.L) === '\n') advance(P.L)
+  while (peek(P.L) === '\n') {
+    advance(P.L)
+  }
   return out
 }
 
@@ -2955,20 +3246,28 @@ function parseBacktick(P: ParseState): TsNode | null {
   const body: TsNode[] = []
   while (true) {
     skipBlanks(P.L)
-    if (peek(P.L) === '`' || peek(P.L) === '') break
+    if (peek(P.L) === '`' || peek(P.L) === '') {
+      break
+    }
     const save = saveLex(P.L)
     const t = nextToken(P.L, 'cmd')
     if (t.type === 'EOF' || t.type === 'BACKTICK') {
       restoreLex(P.L, save)
       break
     }
-    if (t.type === 'NEWLINE') continue
+    if (t.type === 'NEWLINE') {
+      continue
+    }
     restoreLex(P.L, save)
     const stmt = parseAndOr(P)
-    if (!stmt) break
+    if (!stmt) {
+      break
+    }
     body.push(stmt)
     skipBlanks(P.L)
-    if (peek(P.L) === '`') break
+    if (peek(P.L) === '`') {
+      break
+    }
     const save2 = saveLex(P.L)
     const sep = nextToken(P.L, 'cmd')
     if (sep.type === 'OP' && (sep.value === ';' || sep.value === '&')) {
@@ -2989,7 +3288,9 @@ function parseBacktick(P: ParseState): TsNode | null {
   // Empty backticks (whitespace/newline only) are elided entirely by
   // tree-sitter — used as a line-continuation hack: "foo"`<newline>`"bar"
   // → (concatenation (string) (string)) with no command_substitution.
-  if (body.length === 0) return null
+  if (body.length === 0) {
+    return null
+  }
   return mk(P, 'command_substitution', start, close.endIndex, [open, ...body, close])
 }
 
@@ -3034,7 +3335,9 @@ function parseWhile(P: ParseState, kwTok: Token): TsNode {
   const cond = parseStatements(P, null)
   kids.push(...cond)
   const dg = parseDoGroup(P)
-  if (dg) kids.push(dg)
+  if (dg) {
+    kids.push(dg)
+  }
   const last = kids[kids.length - 1]!
   return mk(P, 'while_statement', kw.startIndex, last.endIndex, kids)
 }
@@ -3119,9 +3422,13 @@ function parseFor(P: ParseState, forTok: Token): TsNode {
     while (true) {
       skipBlanks(P.L)
       const c = peek(P.L)
-      if (c === ';' || c === '\n' || c === '') break
+      if (c === ';' || c === '\n' || c === '') {
+        break
+      }
       const w = parseWord(P, 'arg')
-      if (!w) break
+      if (!w) {
+        break
+      }
       kids.push(w)
     }
   } else {
@@ -3136,7 +3443,9 @@ function parseFor(P: ParseState, forTok: Token): TsNode {
     restoreLex(P.L, save2)
   }
   const dg = parseDoGroup(P)
-  if (dg) kids.push(dg)
+  if (dg) {
+    kids.push(dg)
+  }
   const last = kids[kids.length - 1]!
   return mk(P, 'for_statement', forKw.startIndex, last.endIndex, kids)
 }
@@ -3162,7 +3471,9 @@ function parseCase(P: ParseState, caseTok: Token): TsNode {
   const kids: TsNode[] = [caseKw]
   skipBlanks(P.L)
   const word = parseWord(P, 'arg')
-  if (word) kids.push(word)
+  if (word) {
+    kids.push(word)
+  }
   skipBlanks(P.L)
   consumeKeyword(P, 'in', kids)
   skipNewlines(P)
@@ -3175,10 +3486,14 @@ function parseCase(P: ParseState, caseTok: Token): TsNode {
       kids.push(leaf(P, 'esac', t))
       break
     }
-    if (t.type === 'EOF') break
+    if (t.type === 'EOF') {
+      break
+    }
     restoreLex(P.L, save)
     const item = parseCaseItem(P)
-    if (!item) break
+    if (!item) {
+      break
+    }
     kids.push(item)
   }
   const last = kids[kids.length - 1]!
@@ -3200,9 +3515,13 @@ function parseCaseItem(P: ParseState): TsNode | null {
   while (true) {
     skipBlanks(P.L)
     const c = peek(P.L)
-    if (c === ')' || c === '') break
+    if (c === ')' || c === '') {
+      break
+    }
     const pats = parseCasePattern(P)
-    if (pats.length === 0) break
+    if (pats.length === 0) {
+      break
+    }
     // tree-sitter quirk: first alternative with quotes is inlined as flat
     // siblings; subsequent alternatives are wrapped in (concatenation) with
     // `word` instead of `extglob_pattern` for bare segments.
@@ -3251,14 +3570,18 @@ function parseCaseItem(P: ParseState): TsNode | null {
   } else {
     restoreLex(P.L, save)
   }
-  if (kids.length === 0) return null
+  if (kids.length === 0) {
+    return null
+  }
   // tree-sitter quirk: case_item with EMPTY body and a single pattern matching
   // extglob-operator-char-prefix (no actual glob metachars) downgrades to word.
   // `-o) owner=$2 ;;` (has body) → extglob_pattern; `-g) ;;` (empty) → word.
   if (body.length === 0) {
     for (let i = 0; i < kids.length; i++) {
       const k = kids[i]!
-      if (k.type !== 'extglob_pattern') continue
+      if (k.type !== 'extglob_pattern') {
+        continue
+      }
       const text = sliceBytes(P, k.startIndex, k.endIndex)
       if (/^[-+?*@!][a-zA-Z]/.test(text) && !/[*?(]/.test(text)) {
         kids[i] = mk(P, 'word', k.startIndex, k.endIndex, [])
@@ -3293,10 +3616,14 @@ function parseCasePattern(P: ParseState): TsNode[] {
       // break the peek-ahead scan.
       advance(P.L)
       while (P.L.i < P.L.len && peek(P.L) !== c) {
-        if (peek(P.L) === '\\' && P.L.i + 1 < P.L.len) advance(P.L)
+        if (peek(P.L) === '\\' && P.L.i + 1 < P.L.len) {
+          advance(P.L)
+        }
         advance(P.L)
       }
-      if (peek(P.L) === c) advance(P.L)
+      if (peek(P.L) === c) {
+        advance(P.L)
+      }
       continue
     }
     // Paren counting: any ( inside pattern opens a scope; don't break at ) or |
@@ -3312,16 +3639,26 @@ function parseCasePattern(P: ParseState): TsNode[] {
         advance(P.L)
         continue
       }
-      if (c === '\n') break
+      if (c === '\n') {
+        break
+      }
       advance(P.L)
       continue
     }
-    if (c === ')' || c === '|' || c === ' ' || c === '\t' || c === '\n') break
-    if (c === '$') hasDollar = true
-    if (c === '[') hasBracketOutsideParen = true
+    if (c === ')' || c === '|' || c === ' ' || c === '\t' || c === '\n') {
+      break
+    }
+    if (c === '$') {
+      hasDollar = true
+    }
+    if (c === '[') {
+      hasBracketOutsideParen = true
+    }
     advance(P.L)
   }
-  if (P.L.b === start) return []
+  if (P.L.b === start) {
+    return []
+  }
   const text = P.src.slice(startI, P.L.i)
   const hasExtglobParen = /[*?+@!]\(/.test(text)
   // Quoted segments in pattern: tree-sitter splits at quote boundaries into
@@ -3386,7 +3723,9 @@ function parseCasePatternSegmented(P: ParseState): TsNode[] {
       segStartI = P.L.i
       continue
     }
-    if (c === ')' || c === '|' || c === ' ' || c === '\t' || c === '\n') break
+    if (c === ')' || c === '|' || c === ' ' || c === '\t' || c === '\n') {
+      break
+    }
     advance(P.L)
   }
   flushSeg()
@@ -3501,7 +3840,9 @@ function parseUnset(P: ParseState, kwTok: Token): TsNode {
     // Previously `break` silently dropped non-WORD args — hiding the
     // arithmetic-subscript code-exec vector from the security walker.
     const arg = parseWord(P, 'arg')
-    if (!arg) break
+    if (!arg) {
+      break
+    }
     if (arg.type === 'word') {
       if (arg.text.startsWith('-')) {
         kids.push(arg)
@@ -3535,7 +3876,9 @@ function parseTestExpr(P: ParseState, closer: string): TsNode | null {
 
 function parseTestOr(P: ParseState, closer: string): TsNode | null {
   let left = parseTestAnd(P, closer)
-  if (!left) return null
+  if (!left) {
+    return null
+  }
   while (true) {
     skipBlanks(P.L)
     const save = saveLex(P.L)
@@ -3559,7 +3902,9 @@ function parseTestOr(P: ParseState, closer: string): TsNode | null {
 
 function parseTestAnd(P: ParseState, closer: string): TsNode | null {
   let left = parseTestUnary(P, closer)
-  if (!left) return null
+  if (!left) {
+    return null
+  }
   while (true) {
     skipBlanks(P.L)
     if (peek(P.L) === '&' && peek(P.L, 1) === '&') {
@@ -3568,7 +3913,9 @@ function parseTestAnd(P: ParseState, closer: string): TsNode | null {
       advance(P.L)
       const op = mk(P, '&&', s, P.L.b, [])
       const right = parseTestUnary(P, closer)
-      if (!right) break
+      if (!right) {
+        break
+      }
       left = mk(P, 'binary_expression', left.startIndex, right.endIndex, [left, op, right])
     } else {
       break
@@ -3613,17 +3960,23 @@ function parseTestNegatablePrimary(P: ParseState, closer: string): TsNode | null
     advance(P.L)
     const bang = mk(P, '!', s, P.L.b, [])
     const inner = parseTestNegatablePrimary(P, closer)
-    if (!inner) return bang
+    if (!inner) {
+      return bang
+    }
     return mk(P, 'unary_expression', bang.startIndex, inner.endIndex, [bang, inner])
   }
   if (c === '-' && isIdentStart(peek(P.L, 1))) {
     const s = P.L.b
     advance(P.L)
-    while (isIdentChar(peek(P.L))) advance(P.L)
+    while (isIdentChar(peek(P.L))) {
+      advance(P.L)
+    }
     const op = mk(P, 'test_operator', s, P.L.b, [])
     skipBlanks(P.L)
     const arg = parseTestPrimary(P, closer)
-    if (!arg) return op
+    if (!arg) {
+      return op
+    }
     return mk(P, 'unary_expression', op.startIndex, arg.endIndex, [op, arg])
   }
   return parseTestPrimary(P, closer)
@@ -3635,7 +3988,9 @@ function parseTestBinary(P: ParseState, closer: string): TsNode | null {
   // `[[ ! "x" =~ y ]]` → (binary_expression (unary_expression (string)) (regex))
   // `[[ ! -f x ]]` → (unary_expression ! (unary_expression (test_operator) (word)))
   const left = parseTestNegatablePrimary(P, closer)
-  if (!left) return null
+  if (!left) {
+    return null
+  }
   skipBlanks(P.L)
   // Binary comparison: == != =~ -eq -lt etc.
   const c = peek(P.L)
@@ -3665,10 +4020,14 @@ function parseTestBinary(P: ParseState, closer: string): TsNode | null {
     op = mk(P, '>', os, P.L.b, [])
   } else if (c === '-' && isIdentStart(c1)) {
     advance(P.L)
-    while (isIdentChar(peek(P.L))) advance(P.L)
+    while (isIdentChar(peek(P.L))) {
+      advance(P.L)
+    }
     op = mk(P, 'test_operator', os, P.L.b, [])
   }
-  if (!op) return left
+  if (!op) {
+    return left
+  }
   skipBlanks(P.L)
   // In [[ ]], RHS of ==/!=/=/=~ gets special pattern parsing: paren counting
   // so @(a|b|c) doesn't break on |, and segments become extglob_pattern/regex.
@@ -3688,7 +4047,9 @@ function parseTestBinary(P: ParseState, closer: string): TsNode | null {
           rc === '"' ? parseDoubleQuoted(P) : leaf(P, 'raw_string', nextToken(P.L, 'arg'))
         // Check if RHS ends here: only whitespace then ]] or &&/|| or newline
         let j = P.L.i
-        while (j < P.L.len && (P.src[j] === ' ' || P.src[j] === '\t')) j++
+        while (j < P.L.len && (P.src[j] === ' ' || P.src[j] === '\t')) {
+          j++
+        }
         const nc = P.src[j] ?? ''
         const nc1 = P.src[j + 1] ?? ''
         if (
@@ -3703,25 +4064,35 @@ function parseTestBinary(P: ParseState, closer: string): TsNode | null {
           restoreLex(P.L, save)
         }
       }
-      if (!rhs) rhs = parseTestRegexRhs(P)
-      if (!rhs) return left
+      if (!rhs) {
+        rhs = parseTestRegexRhs(P)
+      }
+      if (!rhs) {
+        return left
+      }
       return mk(P, 'binary_expression', left.startIndex, rhs.endIndex, [left, op, rhs])
     }
     // Single `=` emits (regex) per tree-sitter; `==` and `!=` emit extglob_pattern
     if (opText === '=') {
       const rhs = parseTestRegexRhs(P)
-      if (!rhs) return left
+      if (!rhs) {
+        return left
+      }
       return mk(P, 'binary_expression', left.startIndex, rhs.endIndex, [left, op, rhs])
     }
     if (opText === '==' || opText === '!=') {
       const parts = parseTestExtglobRhs(P)
-      if (parts.length === 0) return left
+      if (parts.length === 0) {
+        return left
+      }
       const last = parts[parts.length - 1]!
       return mk(P, 'binary_expression', left.startIndex, last.endIndex, [left, op, ...parts])
     }
   }
   const right = parseTestPrimary(P, closer)
-  if (!right) return left
+  if (!right) {
+    return left
+  }
   return mk(P, 'binary_expression', left.startIndex, right.endIndex, [left, op, right])
 }
 
@@ -3739,13 +4110,19 @@ function parseTestRegexRhs(P: ParseState): TsNode | null {
       advance(P.L)
       continue
     }
-    if (c === '\n') break
+    if (c === '\n') {
+      break
+    }
     if (parenDepth === 0 && bracketDepth === 0) {
-      if (c === ']' && peek(P.L, 1) === ']') break
+      if (c === ']' && peek(P.L, 1) === ']') {
+        break
+      }
       if (c === ' ' || c === '\t') {
         // Peek past blanks for ]] or &&/||
         let j = P.L.i
-        while (j < P.L.len && (P.L.src[j] === ' ' || P.L.src[j] === '\t')) j++
+        while (j < P.L.len && (P.L.src[j] === ' ' || P.L.src[j] === '\t')) {
+          j++
+        }
         const nc = P.L.src[j] ?? ''
         const nc1 = P.L.src[j + 1] ?? ''
         if (
@@ -3759,13 +4136,20 @@ function parseTestRegexRhs(P: ParseState): TsNode | null {
         continue
       }
     }
-    if (c === '(') parenDepth++
-    else if (c === ')' && parenDepth > 0) parenDepth--
-    else if (c === '[') bracketDepth++
-    else if (c === ']' && bracketDepth > 0) bracketDepth--
+    if (c === '(') {
+      parenDepth++
+    } else if (c === ')' && parenDepth > 0) {
+      parenDepth--
+    } else if (c === '[') {
+      bracketDepth++
+    } else if (c === ']' && bracketDepth > 0) {
+      bracketDepth--
+    }
     advance(P.L)
   }
-  if (P.L.b === start) return null
+  if (P.L.b === start) {
+    return null
+  }
   return mk(P, 'regex', start, P.L.b, [])
 }
 
@@ -3793,12 +4177,18 @@ function parseTestExtglobRhs(P: ParseState): TsNode[] {
       advance(P.L)
       continue
     }
-    if (c === '\n') break
+    if (c === '\n') {
+      break
+    }
     if (parenDepth === 0) {
-      if (c === ']' && peek(P.L, 1) === ']') break
+      if (c === ']' && peek(P.L, 1) === ']') {
+        break
+      }
       if (c === ' ' || c === '\t') {
         let j = P.L.i
-        while (j < P.L.len && (P.L.src[j] === ' ' || P.L.src[j] === '\t')) j++
+        while (j < P.L.len && (P.L.src[j] === ' ' || P.L.src[j] === '\t')) {
+          j++
+        }
         const nc = P.L.src[j] ?? ''
         const nc1 = P.L.src[j + 1] ?? ''
         if (
@@ -3819,7 +4209,9 @@ function parseTestExtglobRhs(P: ParseState): TsNode[] {
       if (c1 === '(' || c1 === '{' || isIdentStart(c1) || SPECIAL_VARS.has(c1)) {
         flushSeg()
         const exp = parseDollarLike(P)
-        if (exp) parts.push(exp)
+        if (exp) {
+          parts.push(exp)
+        }
         segStart = P.L.b
         segStartI = P.L.i
         continue
@@ -3840,8 +4232,11 @@ function parseTestExtglobRhs(P: ParseState): TsNode[] {
       segStartI = P.L.i
       continue
     }
-    if (c === '(') parenDepth++
-    else if (c === ')' && parenDepth > 0) parenDepth--
+    if (c === '(') {
+      parenDepth++
+    } else if (c === ')' && parenDepth > 0) {
+      parenDepth--
+    }
     advance(P.L)
   }
   flushSeg()
@@ -3851,8 +4246,12 @@ function parseTestExtglobRhs(P: ParseState): TsNode[] {
 function parseTestPrimary(P: ParseState, closer: string): TsNode | null {
   skipBlanks(P.L)
   // Stop at closer
-  if (closer === ']' && peek(P.L) === ']') return null
-  if (closer === ']]' && peek(P.L) === ']' && peek(P.L, 1) === ']') return null
+  if (closer === ']' && peek(P.L) === ']') {
+    return null
+  }
+  if (closer === ']]' && peek(P.L) === ']' && peek(P.L, 1) === ']') {
+    return null
+  }
   return parseWord(P, 'arg')
 }
 
@@ -3923,7 +4322,9 @@ function parseArithCommaList(P: ParseState, stop: string, mode: ArithMode = 'var
   const out: TsNode[] = []
   while (true) {
     const e = parseArithTernary(P, stop, mode)
-    if (e) out.push(e)
+    if (e) {
+      out.push(e)
+    }
     skipBlanks(P.L)
     if (peek(P.L) === ',' && !isArithStop(P, stop)) {
       advance(P.L)
@@ -3936,7 +4337,9 @@ function parseArithCommaList(P: ParseState, stop: string, mode: ArithMode = 'var
 
 function parseArithTernary(P: ParseState, stop: string, mode: ArithMode): TsNode | null {
   const cond = parseArithBinary(P, stop, 0, mode)
-  if (!cond) return null
+  if (!cond) {
+    return null
+  }
   skipBlanks(P.L)
   if (peek(P.L) === '?') {
     const qs = P.L.b
@@ -3955,9 +4358,13 @@ function parseArithTernary(P: ParseState, stop: string, mode: ArithMode): TsNode
     const f = parseArithTernary(P, stop, mode)
     const last = f ?? colon
     const kids: TsNode[] = [cond, q]
-    if (t) kids.push(t)
+    if (t) {
+      kids.push(t)
+    }
     kids.push(colon)
-    if (f) kids.push(f)
+    if (f) {
+      kids.push(f)
+    }
     return mk(P, 'ternary_expression', cond.startIndex, last.endIndex, kids)
   }
   return cond
@@ -3969,38 +4376,98 @@ function scanArithOp(P: ParseState): [string, number] | null {
   const c1 = peek(P.L, 1)
   const c2 = peek(P.L, 2)
   // 3-char: <<= >>=
-  if (c === '<' && c1 === '<' && c2 === '=') return ['<<=', 3]
-  if (c === '>' && c1 === '>' && c2 === '=') return ['>>=', 3]
+  if (c === '<' && c1 === '<' && c2 === '=') {
+    return ['<<=', 3]
+  }
+  if (c === '>' && c1 === '>' && c2 === '=') {
+    return ['>>=', 3]
+  }
   // 2-char
-  if (c === '*' && c1 === '*') return ['**', 2]
-  if (c === '<' && c1 === '<') return ['<<', 2]
-  if (c === '>' && c1 === '>') return ['>>', 2]
-  if (c === '=' && c1 === '=') return ['==', 2]
-  if (c === '!' && c1 === '=') return ['!=', 2]
-  if (c === '<' && c1 === '=') return ['<=', 2]
-  if (c === '>' && c1 === '=') return ['>=', 2]
-  if (c === '&' && c1 === '&') return ['&&', 2]
-  if (c === '|' && c1 === '|') return ['||', 2]
-  if (c === '+' && c1 === '=') return ['+=', 2]
-  if (c === '-' && c1 === '=') return ['-=', 2]
-  if (c === '*' && c1 === '=') return ['*=', 2]
-  if (c === '/' && c1 === '=') return ['/=', 2]
-  if (c === '%' && c1 === '=') return ['%=', 2]
-  if (c === '&' && c1 === '=') return ['&=', 2]
-  if (c === '^' && c1 === '=') return ['^=', 2]
-  if (c === '|' && c1 === '=') return ['|=', 2]
+  if (c === '*' && c1 === '*') {
+    return ['**', 2]
+  }
+  if (c === '<' && c1 === '<') {
+    return ['<<', 2]
+  }
+  if (c === '>' && c1 === '>') {
+    return ['>>', 2]
+  }
+  if (c === '=' && c1 === '=') {
+    return ['==', 2]
+  }
+  if (c === '!' && c1 === '=') {
+    return ['!=', 2]
+  }
+  if (c === '<' && c1 === '=') {
+    return ['<=', 2]
+  }
+  if (c === '>' && c1 === '=') {
+    return ['>=', 2]
+  }
+  if (c === '&' && c1 === '&') {
+    return ['&&', 2]
+  }
+  if (c === '|' && c1 === '|') {
+    return ['||', 2]
+  }
+  if (c === '+' && c1 === '=') {
+    return ['+=', 2]
+  }
+  if (c === '-' && c1 === '=') {
+    return ['-=', 2]
+  }
+  if (c === '*' && c1 === '=') {
+    return ['*=', 2]
+  }
+  if (c === '/' && c1 === '=') {
+    return ['/=', 2]
+  }
+  if (c === '%' && c1 === '=') {
+    return ['%=', 2]
+  }
+  if (c === '&' && c1 === '=') {
+    return ['&=', 2]
+  }
+  if (c === '^' && c1 === '=') {
+    return ['^=', 2]
+  }
+  if (c === '|' && c1 === '=') {
+    return ['|=', 2]
+  }
   // 1-char — but NOT ++ -- (those are pre/postfix)
-  if (c === '+' && c1 !== '+') return ['+', 1]
-  if (c === '-' && c1 !== '-') return ['-', 1]
-  if (c === '*') return ['*', 1]
-  if (c === '/') return ['/', 1]
-  if (c === '%') return ['%', 1]
-  if (c === '<') return ['<', 1]
-  if (c === '>') return ['>', 1]
-  if (c === '&') return ['&', 1]
-  if (c === '|') return ['|', 1]
-  if (c === '^') return ['^', 1]
-  if (c === '=') return ['=', 1]
+  if (c === '+' && c1 !== '+') {
+    return ['+', 1]
+  }
+  if (c === '-' && c1 !== '-') {
+    return ['-', 1]
+  }
+  if (c === '*') {
+    return ['*', 1]
+  }
+  if (c === '/') {
+    return ['/', 1]
+  }
+  if (c === '%') {
+    return ['%', 1]
+  }
+  if (c === '<') {
+    return ['<', 1]
+  }
+  if (c === '>') {
+    return ['>', 1]
+  }
+  if (c === '&') {
+    return ['&', 1]
+  }
+  if (c === '|') {
+    return ['|', 1]
+  }
+  if (c === '^') {
+    return ['^', 1]
+  }
+  if (c === '=') {
+    return ['=', 1]
+  }
   return null
 }
 
@@ -4012,22 +4479,36 @@ function parseArithBinary(
   mode: ArithMode,
 ): TsNode | null {
   let left = parseArithUnary(P, stop, mode)
-  if (!left) return null
+  if (!left) {
+    return null
+  }
   while (true) {
     skipBlanks(P.L)
-    if (isArithStop(P, stop)) break
-    if (peek(P.L) === ',') break
+    if (isArithStop(P, stop)) {
+      break
+    }
+    if (peek(P.L) === ',') {
+      break
+    }
     const opInfo = scanArithOp(P)
-    if (!opInfo) break
+    if (!opInfo) {
+      break
+    }
     const [opText, opLen] = opInfo
     const prec = ARITH_PREC[opText]
-    if (prec === undefined || prec < minPrec) break
+    if (prec === undefined || prec < minPrec) {
+      break
+    }
     const os = P.L.b
-    for (let k = 0; k < opLen; k++) advance(P.L)
+    for (let k = 0; k < opLen; k++) {
+      advance(P.L)
+    }
     const op = mk(P, opText, os, P.L.b, [])
     const nextMin = ARITH_RIGHT_ASSOC.has(opText) ? prec : prec + 1
     const right = parseArithBinary(P, stop, nextMin, mode)
-    if (!right) break
+    if (!right) {
+      break
+    }
     left = mk(P, 'binary_expression', left.startIndex, right.endIndex, [left, op, right])
   }
   return left
@@ -4035,7 +4516,9 @@ function parseArithBinary(
 
 function parseArithUnary(P: ParseState, stop: string, mode: ArithMode): TsNode | null {
   skipBlanks(P.L)
-  if (isArithStop(P, stop)) return null
+  if (isArithStop(P, stop)) {
+    return null
+  }
   const c = peek(P.L)
   const c1 = peek(P.L, 1)
   // Prefix ++ --
@@ -4045,7 +4528,9 @@ function parseArithUnary(P: ParseState, stop: string, mode: ArithMode): TsNode |
     advance(P.L)
     const op = mk(P, c + c1, s, P.L.b, [])
     const inner = parseArithUnary(P, stop, mode)
-    if (!inner) return op
+    if (!inner) {
+      return op
+    }
     return mk(P, 'unary_expression', op.startIndex, inner.endIndex, [op, inner])
   }
   if (c === '-' || c === '+' || c === '!' || c === '~') {
@@ -4054,14 +4539,18 @@ function parseArithUnary(P: ParseState, stop: string, mode: ArithMode): TsNode |
     if (mode !== 'var' && c === '-' && isDigit(c1)) {
       const s = P.L.b
       advance(P.L)
-      while (isDigit(peek(P.L))) advance(P.L)
+      while (isDigit(peek(P.L))) {
+        advance(P.L)
+      }
       return mk(P, 'number', s, P.L.b, [])
     }
     const s = P.L.b
     advance(P.L)
     const op = mk(P, c, s, P.L.b, [])
     const inner = parseArithUnary(P, stop, mode)
-    if (!inner) return op
+    if (!inner) {
+      return op
+    }
     return mk(P, 'unary_expression', op.startIndex, inner.endIndex, [op, inner])
   }
   return parseArithPostfix(P, stop, mode)
@@ -4069,7 +4558,9 @@ function parseArithUnary(P: ParseState, stop: string, mode: ArithMode): TsNode |
 
 function parseArithPostfix(P: ParseState, stop: string, mode: ArithMode): TsNode | null {
   const prim = parseArithPrimary(P, stop, mode)
-  if (!prim) return null
+  if (!prim) {
+    return null
+  }
   const c = peek(P.L)
   const c1 = peek(P.L, 1)
   if ((c === '+' && c1 === '+') || (c === '-' && c1 === '-')) {
@@ -4084,7 +4575,9 @@ function parseArithPostfix(P: ParseState, stop: string, mode: ArithMode): TsNode
 
 function parseArithPrimary(P: ParseState, stop: string, mode: ArithMode): TsNode | null {
   skipBlanks(P.L)
-  if (isArithStop(P, stop)) return null
+  if (isArithStop(P, stop)) {
+    return null
+  }
   const c = peek(P.L)
   if (c === '(') {
     const s = P.L.b
@@ -4115,22 +4608,30 @@ function parseArithPrimary(P: ParseState, stop: string, mode: ArithMode): TsNode
   }
   if (isDigit(c)) {
     const s = P.L.b
-    while (isDigit(peek(P.L))) advance(P.L)
+    while (isDigit(peek(P.L))) {
+      advance(P.L)
+    }
     // Hex: 0x1f
     if (P.L.b - s === 1 && c === '0' && (peek(P.L) === 'x' || peek(P.L) === 'X')) {
       advance(P.L)
-      while (isHexDigit(peek(P.L))) advance(P.L)
+      while (isHexDigit(peek(P.L))) {
+        advance(P.L)
+      }
     }
     // Base notation: BASE#DIGITS e.g. 2#1010, 16#ff
     else if (peek(P.L) === '#') {
       advance(P.L)
-      while (isBaseDigit(peek(P.L))) advance(P.L)
+      while (isBaseDigit(peek(P.L))) {
+        advance(P.L)
+      }
     }
     return mk(P, 'number', s, P.L.b, [])
   }
   if (isIdentStart(c)) {
     const s = P.L.b
-    while (isIdentChar(peek(P.L))) advance(P.L)
+    while (isIdentChar(peek(P.L))) {
+      advance(P.L)
+    }
     const nc = peek(P.L)
     // Assignment in 'assign' mode (c-style for init): emit variable_assignment
     // so chained `a = b = c = 1` nests correctly. Other modes treat `=` as a
@@ -4181,12 +4682,26 @@ function parseArithPrimary(P: ParseState, stop: string, mode: ArithMode): TsNode
 
 function isArithStop(P: ParseState, stop: string): boolean {
   const c = peek(P.L)
-  if (stop === '))') return c === ')' && peek(P.L, 1) === ')'
-  if (stop === ')') return c === ')'
-  if (stop === ';') return c === ';'
-  if (stop === ':') return c === ':'
-  if (stop === ']') return c === ']'
-  if (stop === '}') return c === '}'
-  if (stop === ':}') return c === ':' || c === '}'
+  if (stop === '))') {
+    return c === ')' && peek(P.L, 1) === ')'
+  }
+  if (stop === ')') {
+    return c === ')'
+  }
+  if (stop === ';') {
+    return c === ';'
+  }
+  if (stop === ':') {
+    return c === ':'
+  }
+  if (stop === ']') {
+    return c === ']'
+  }
+  if (stop === '}') {
+    return c === '}'
+  }
+  if (stop === ':}') {
+    return c === ':' || c === '}'
+  }
   return c === '' || c === '\n'
 }

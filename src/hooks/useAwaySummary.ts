@@ -13,8 +13,12 @@ type SetMessages = (updater: (prev: Message[]) => Message[]) => void
 function hasSummarySinceLastUserTurn(messages: readonly Message[]): boolean {
   for (let i = messages.length - 1; i >= 0; i--) {
     const m = messages[i]!
-    if (m.type === 'user' && !m.isMeta && !m.isCompactSummary) return false
-    if (m.type === 'system' && m.subtype === 'away_summary') return true
+    if (m.type === 'user' && !m.isMeta && !m.isCompactSummary) {
+      return false
+    }
+    if (m.type === 'system' && m.subtype === 'away_summary') {
+      return true
+    }
   }
   return false
 }
@@ -45,8 +49,12 @@ export function useAwaySummary(
   const gbEnabled = getFeatureValue_CACHED_MAY_BE_STALE('zy_sedge_lantern', false)
 
   useEffect(() => {
-    if (!feature('AWAY_SUMMARY')) return
-    if (!gbEnabled) return
+    if (!feature('AWAY_SUMMARY')) {
+      return
+    }
+    if (!gbEnabled) {
+      return
+    }
 
     function clearTimer(): void {
       if (timerRef.current !== null) {
@@ -62,12 +70,16 @@ export function useAwaySummary(
 
     async function generate(): Promise<void> {
       pendingRef.current = false
-      if (hasSummarySinceLastUserTurn(messagesRef.current)) return
+      if (hasSummarySinceLastUserTurn(messagesRef.current)) {
+        return
+      }
       abortInFlight()
       const controller = new AbortController()
       abortRef.current = controller
       const text = await generateAwaySummary(messagesRef.current, controller.signal)
-      if (controller.signal.aborted || text === null) return
+      if (controller.signal.aborted || text === null) {
+        return
+      }
       setMessages((prev) => [...prev, createAwaySummaryMessage(text)])
     }
 
@@ -108,9 +120,15 @@ export function useAwaySummary(
 
   // Timer fired mid-turn → fire when turn ends (if still blurred)
   useEffect(() => {
-    if (isLoading) return
-    if (!pendingRef.current) return
-    if (getTerminalFocusState() !== 'blurred') return
+    if (isLoading) {
+      return
+    }
+    if (!pendingRef.current) {
+      return
+    }
+    if (getTerminalFocusState() !== 'blurred') {
+      return
+    }
     void generateRef.current?.()
   }, [isLoading])
 }

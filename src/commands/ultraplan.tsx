@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs'
+import { readFileSync } from 'node:fs'
 import { REMOTE_CONTROL_DISCONNECTED_MSG } from '../bridge/types.js'
 import type { Command } from '../commands.js'
 import { DIAMOND_OPEN } from '../constants/figures.js'
@@ -18,13 +18,13 @@ import {
 } from '../tasks/RemoteAgentTask/RemoteAgentTask.js'
 import type { LocalJSXCommandCall } from '../types/command.js'
 import { logForDebugging } from '../utils/debug.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
 import { logError } from '../utils/log.js'
 import { enqueuePendingNotification } from '../utils/messageQueueManager.js'
 import { ALL_MODEL_CONFIGS } from '../utils/model/configs.js'
 import { updateTaskState } from '../utils/task/framework.js'
 import { archiveRemoteSession, teleportToRemote } from '../utils/teleport.js'
-import { isInternalBuild } from '../utils/envUtils.js'
 import { pollForApprovedExitPlanMode, UltraplanPollError } from '../utils/ultraplan/ccrSession.js'
 
 // TODO(prod-hardening): OAuth token may go stale over the 30min poll;
@@ -104,9 +104,13 @@ function startDetachedPoll(
         sessionId,
         ULTRAPLAN_TIMEOUT_MS,
         (phase) => {
-          if (phase === 'needs_input') logEvent('zy_ultraplan_awaiting_input', {})
+          if (phase === 'needs_input') {
+            logEvent('zy_ultraplan_awaiting_input', {})
+          }
           updateTaskState<RemoteAgentTaskState>(taskId, setAppState, (t) => {
-            if (t.status !== 'running') return t
+            if (t.status !== 'running') {
+              return t
+            }
             const next = phase === 'running' ? undefined : phase
             return t.ultraplanPhase === next
               ? t
@@ -132,7 +136,9 @@ function startDetachedPoll(
         // Guard on task status so a poll that resolves after stopUltraplan
         // doesn't notify for a killed session.
         const task = getAppState().tasks?.[taskId]
-        if (task?.status !== 'running') return
+        if (task?.status !== 'running') {
+          return
+        }
         updateTaskState<RemoteAgentTaskState>(taskId, setAppState, (t) =>
           t.status !== 'running'
             ? t
@@ -165,7 +171,9 @@ function startDetachedPoll(
         // dialog for a killed session.
         setAppState((prev) => {
           const task = prev.tasks?.[taskId]
-          if (!task || task.status !== 'running') return prev
+          if (!task || task.status !== 'running') {
+            return prev
+          }
           return {
             ...prev,
             ultraplanPendingChoice: {
@@ -181,7 +189,9 @@ function startDetachedPoll(
       // erroring is expected — skip the failure notification and cleanup
       // (kill() already archived; stopUltraplan cleared the URL).
       const task = getAppState().tasks?.[taskId]
-      if (task?.status !== 'running') return
+      if (task?.status !== 'running') {
+        return
+      }
       failed = true
       logEvent('zy_ultraplan_failed', {
         duration_ms: Date.now() - started,

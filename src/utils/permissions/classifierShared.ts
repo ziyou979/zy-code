@@ -6,8 +6,8 @@
  * - yoloClassifier.ts (YOLO mode security classification)
  */
 
-import type { ContentBlock } from '../../types/llm.js'
 import type { z } from 'zod/v4'
+import type { ContentBlock } from '../../types/llm.js'
 
 /**
  * Extract tool call block from message content by tool name.

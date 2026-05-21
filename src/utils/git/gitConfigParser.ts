@@ -8,8 +8,8 @@
  *   - Values: optional quoting, inline comments (# or ;), backslash escapes
  */
 
-import { readFile } from 'fs/promises'
-import { join } from 'path'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 
 /**
  * Parse a single value from .git/config.

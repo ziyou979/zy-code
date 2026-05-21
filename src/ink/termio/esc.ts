@@ -12,7 +12,9 @@ import type { Action } from './types.js'
  * @param chars - ESC 之后的字符（不包括 ESC 本身）
  */
 export function parseEsc(chars: string): Action | null {
-  if (chars.length === 0) return null
+  if (chars.length === 0) {
+    return null
+  }
 
   const first = chars[0]!
 

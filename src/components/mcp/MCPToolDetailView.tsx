@@ -6,6 +6,7 @@ import type { Tool } from '../../Tool.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Dialog } from '../design-system/Dialog.js'
 import type { ServerInfo } from './types.js'
+
 type Props = {
   tool: Tool
   server: ServerInfo
@@ -92,8 +93,7 @@ export function MCPToolDetailView({ tool, server, onBack }: Props) {
               <Text wrap="wrap">{toolDescription}</Text>
             </Box>
           )}
-          {tool.inputJSONSchema &&
-            tool.inputJSONSchema.properties &&
+          {tool.inputJSONSchema?.properties &&
             Object.keys(tool.inputJSONSchema.properties).length > 0 && (
               <Box flexDirection="column" marginTop={1}>
                 <Text bold={true}>{tSync('mcp.parametersLabel')}</Text>

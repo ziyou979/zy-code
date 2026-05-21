@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import type { CommandResultDisplay } from 'src/commands.js'
+import { tSync } from 'src/i18n/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { Box, Text } from '../ink.js'
@@ -15,7 +16,6 @@ import {
 import { Select } from './CustomSelect/select.js'
 import { Dialog } from './design-system/Dialog.js'
 import { Spinner } from './Spinner.js'
-import { tSync } from 'src/i18n/index.js'
 
 // 内联 require 打破此文件会形成的循环：
 // sessionStorage → commands → exit → ExitFlow → 此处。所有调用点
@@ -61,7 +61,7 @@ export function WorktreeExitDialog({ onDone, onCancel }: Props): React.ReactNode
           '--count',
           `${worktreeSession.originalHeadCommit}..HEAD`,
         ])
-        const count = parseInt(commitsStr.trim()) || 0
+        const count = parseInt(commitsStr.trim(), 10) || 0
         setCommitCount(count)
 
         // 如果没有更改也没有提交，静默清理
@@ -109,7 +109,9 @@ export function WorktreeExitDialog({ onDone, onCancel }: Props): React.ReactNode
     return null
   }
   async function handleSelect(value: string) {
-    if (!worktreeSession) return
+    if (!worktreeSession) {
+      return
+    }
     const hasTmux = Boolean(worktreeSession.tmuxSessionName)
     if (value === 'keep' || value === 'keep-with-tmux') {
       setStatus('keeping')

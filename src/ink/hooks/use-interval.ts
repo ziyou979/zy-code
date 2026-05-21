@@ -13,7 +13,9 @@ export function useAnimationTimer(intervalMs: number): number {
   const [time, setTime] = useState(() => clock?.now() ?? 0)
 
   useEffect(() => {
-    if (!clock) return
+    if (!clock) {
+      return
+    }
 
     let lastUpdate = clock.now()
 
@@ -45,7 +47,9 @@ export function useInterval(callback: () => void, intervalMs: number | null): vo
   const clock = useContext(ClockContext)
 
   useEffect(() => {
-    if (!clock || intervalMs === null) return
+    if (!clock || intervalMs === null) {
+      return
+    }
 
     let lastUpdate = clock.now()
 

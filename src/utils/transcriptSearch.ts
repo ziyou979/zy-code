@@ -17,7 +17,9 @@ const searchTextCache = new WeakMap<RenderableMessage, string>()
  *  (the backspace hang). Returns '' for non-searchable types. */
 export function renderableSearchText(msg: RenderableMessage): string {
   const cached = searchTextCache.get(msg)
-  if (cached !== undefined) return cached
+  if (cached !== undefined) {
+    return cached
+  }
   const result = computeSearchText(msg).toLowerCase()
   searchTextCache.set(msg, result)
   return result
@@ -34,7 +36,9 @@ function computeSearchText(msg: RenderableMessage): string {
         const parts: string[] = []
         for (const b of c) {
           if (b.type === 'text') {
-            if (!RENDERED_AS_SENTINEL.has(b.text)) parts.push(b.text)
+            if (!RENDERED_AS_SENTINEL.has(b.text)) {
+              parts.push(b.text)
+            }
           } else if (b.type === 'tool_result') {
             // b.content is the MODEL-facing serialization (from each tool's
             // mapToolResultToToolResultBlock) — adds system-reminders,
@@ -65,8 +69,12 @@ function computeSearchText(msg: RenderableMessage): string {
         // Skip thinking (hidden by hidePastThinking in transcript mount).
         raw = c
           .flatMap((b) => {
-            if (b.type === 'text') return [b.text]
-            if (b.type === 'tool_call') return [toolUseSearchText(b.input)]
+            if (b.type === 'text') {
+              return [b.text]
+            }
+            if (b.type === 'tool_call') {
+              return [toolUseSearchText(b.input)]
+            }
             return []
           })
           .join('\n')
@@ -114,7 +122,9 @@ function computeSearchText(msg: RenderableMessage): string {
   let open = t.indexOf('<system-reminder>')
   while (open >= 0) {
     const close = t.indexOf(SYSTEM_REMINDER_CLOSE, open)
-    if (close < 0) break
+    if (close < 0) {
+      break
+    }
     t = t.slice(0, open) + t.slice(close + SYSTEM_REMINDER_CLOSE.length)
     open = t.indexOf('<system-reminder>')
   }
@@ -126,7 +136,9 @@ function computeSearchText(msg: RenderableMessage): string {
  *  Same duck-type strategy as toolResultSearchText — known field names,
  *  unknown → empty. Under-count > phantom. */
 export function toolUseSearchText(input: unknown): string {
-  if (!input || typeof input !== 'object') return ''
+  if (!input || typeof input !== 'object') {
+    return ''
+  }
   const o = input as Record<string, unknown>
   const parts: string[] = []
   // renderToolUseMessage typically shows one or two of these as the
@@ -144,7 +156,9 @@ export function toolUseSearchText(input: unknown): string {
     'skill', // SkillTool
   ]) {
     const v = o[k]
-    if (typeof v === 'string') parts.push(v)
+    if (typeof v === 'string') {
+      parts.push(v)
+    }
   }
   // args[] (Tmux/TungstenTool), files[] (SendUserFile) — tool-use
   // renders the joined array as the primary display. Under-count > skip.
@@ -163,12 +177,14 @@ export function toolUseSearchText(input: unknown): string {
  *  all top-level string fields — crude but better than indexing model-chatter.
  *  Empty for unknown shapes: under-count > phantom. */
 export function toolResultSearchText(r: unknown): string {
-  if (!r || typeof r !== 'object') return typeof r === 'string' ? r : ''
+  if (!r || typeof r !== 'object') {
+    return typeof r === 'string' ? r : ''
+  }
   const o = r as Record<string, unknown>
   // Known shapes first (common tools).
   if (typeof o.stdout === 'string') {
     const err = typeof o.stderr === 'string' ? o.stderr : ''
-    return o.stdout + (err ? '\n' + err : '')
+    return o.stdout + (err ? `\n${err}` : '')
   }
   if (
     o.file &&
@@ -184,7 +200,9 @@ export function toolResultSearchText(r: unknown): string {
   const parts: string[] = []
   for (const k of ['content', 'output', 'result', 'text', 'message']) {
     const v = o[k]
-    if (typeof v === 'string') parts.push(v)
+    if (typeof v === 'string') {
+      parts.push(v)
+    }
   }
   for (const k of ['filenames', 'lines', 'results']) {
     const v = o[k]

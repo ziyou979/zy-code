@@ -2,10 +2,11 @@ import React from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { Box, Link, Text } from '../ink.js'
-import type { ExternalzyMdInclude } from '../utils/zymd.js'
 import { saveCurrentProjectConfig } from '../utils/config.js'
+import type { ExternalzyMdInclude } from '../utils/zymd.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
+
 type Props = {
   onDone(): void
   isStandaloneDialog?: boolean

@@ -1,12 +1,12 @@
+import { homedir } from 'node:os'
 import figures from 'figures'
-import { homedir } from 'os'
+import { isInternalBuild } from 'src/utils/envUtils.ts'
+import { tSync } from '../../i18n/index.js'
 import type { Step } from '../../projectOnboardingState.js'
 import type { LogOption } from '../../types/logs.js'
 import { getCwd } from '../../utils/cwd.js'
 import { formatRelativeTimeAgo } from '../../utils/format.js'
-import { tSync } from '../../i18n/index.js'
 import type { FeedConfig, FeedLine } from './Feed.js'
-import { isInternalBuild } from 'src/utils/envUtils.ts'
 export function createRecentActivityFeed(activities: LogOption[]): FeedConfig {
   const lines: FeedLine[] = activities.map((log) => {
     const time = formatRelativeTimeAgo(log.modified)

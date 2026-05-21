@@ -15,6 +15,7 @@ import {
   type Output as FileReadToolOutput,
   registerFileReadListener,
 } from '../../tools/FileReadTool/FileReadTool.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { isFsInaccessible } from '../../utils/errors.js'
 import { cloneFileStateCache } from '../../utils/fileStateCache.js'
 import {
@@ -23,7 +24,6 @@ import {
 } from '../../utils/hooks/postSamplingHooks.js'
 import { createUserMessage, hasToolCallsInLastAssistantTurn } from '../../utils/messages.js'
 import { sequential } from '../../utils/sequential.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { buildMagicDocsUpdatePrompt } from './prompts.js'
 
 // Magic Doc header pattern: # MAGIC DOC: [title]
@@ -51,7 +51,7 @@ export function detectMagicDocHeader(
   content: string,
 ): { title: string; instructions?: string } | null {
   const match = content.match(MAGIC_DOC_HEADER_PATTERN)
-  if (!match || !match[1]) {
+  if (!match?.[1]) {
     return null
   }
 
@@ -63,10 +63,10 @@ export function detectMagicDocHeader(
   // Match: newline, optional blank line, then content line
   const nextLineMatch = afterHeader.match(/^\s*\n(?:\s*\n)?(.+?)(?:\n|$)/)
 
-  if (nextLineMatch && nextLineMatch[1]) {
+  if (nextLineMatch?.[1]) {
     const nextLine = nextLineMatch[1]
     const italicsMatch = nextLine.match(ITALICS_PATTERN)
-    if (italicsMatch && italicsMatch[1]) {
+    if (italicsMatch?.[1]) {
       const instructions = italicsMatch[1].trim()
       return {
         title,
@@ -205,7 +205,7 @@ async function updateMagicDoc(docInfo: MagicDocInfo, context: REPLHookContext): 
 /**
  * Magic Docs post-sampling hook that updates all tracked Magic Docs
  */
-const updateMagicDocs = sequential(async function (context: REPLHookContext): Promise<void> {
+const updateMagicDocs = sequential(async (context: REPLHookContext): Promise<void> => {
   const { messages, querySource } = context
 
   if ((querySource as any) !== 'repl_main_thread') {

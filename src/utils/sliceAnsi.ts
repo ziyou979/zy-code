@@ -49,7 +49,9 @@ export default function sliceAnsi(str: string, start: number, end?: number): str
     // !include guard ensures empty slices (start===end) stay empty even
     // when the string starts with a zero-width char (BOM, ZWJ).
     if (end !== undefined && position >= end) {
-      if (token.type === 'ansi' || width > 0 || !include) break
+      if (token.type === 'ansi' || width > 0 || !include) {
+        break
+      }
     }
 
     if (token.type === 'ansi') {
@@ -64,7 +66,9 @@ export default function sliceAnsi(str: string, start: number, end?: number): str
         // to the preceding base char in the left half. Without this, the
         // mark appears in BOTH halves: left+right ≠ original. Only applies
         // when start > 0 (otherwise there's no preceding char to own it).
-        if (start > 0 && width === 0) continue
+        if (start > 0 && width === 0) {
+          continue
+        }
         include = true
         // Reduce and filter to only active start codes
         activeCodes = filterStartCodes(reduceAnsiCodes(activeCodes))

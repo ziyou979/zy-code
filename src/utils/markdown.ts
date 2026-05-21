@@ -19,7 +19,9 @@ const EOL = '\n'
 let markedConfigured = false
 
 export function configureMarked(): void {
-  if (markedConfigured) return
+  if (markedConfigured) {
+    return
+  }
   markedConfigured = true
 
   // 禁用删除线解析——模型常用 ~ 表示「约等于」
@@ -191,7 +193,7 @@ export function formatToken(
         return token.text
       }
       if (parent?.type === 'list_item') {
-        return `${orderedListNumber === null ? '-' : getListNumber(listDepth, orderedListNumber) + '.'} ${token.tokens ? token.tokens.map((_) => formatToken(_, theme, listDepth, orderedListNumber, token, highlight)).join('') : linkifyIssueReferences(token.text)}${EOL}`
+        return `${orderedListNumber === null ? '-' : `${getListNumber(listDepth, orderedListNumber)}.`} ${token.tokens ? token.tokens.map((_) => formatToken(_, theme, listDepth, orderedListNumber, token, highlight)).join('') : linkifyIssueReferences(token.text)}${EOL}`
       }
       return linkifyIssueReferences(token.text)
     case 'table': {
@@ -222,7 +224,7 @@ export function formatToken(
         const displayText = getDisplayText(header.tokens)
         const width = columnWidths[index]!
         const align = tableToken.align?.[index]
-        tableOutput += padAligned(content, stringWidth(displayText), width, align) + ' | '
+        tableOutput += `${padAligned(content, stringWidth(displayText), width, align)} | `
       })
       tableOutput = tableOutput.trimEnd() + EOL
 
@@ -231,7 +233,7 @@ export function formatToken(
       columnWidths.forEach((width) => {
         // 始终使用短横线，输出中不显示对齐冒号
         const separator = '-'.repeat(width + 2) // +2 为两侧空格
-        tableOutput += separator + '|'
+        tableOutput += `${separator}|`
       })
       tableOutput += EOL
 
@@ -244,7 +246,7 @@ export function formatToken(
           const displayText = getDisplayText(cell.tokens)
           const width = columnWidths[index]!
           const align = tableToken.align?.[index]
-          tableOutput += padAligned(content, stringWidth(displayText), width, align) + ' | '
+          tableOutput += `${padAligned(content, stringWidth(displayText), width, align)} | `
         })
         tableOutput = tableOutput.trimEnd() + EOL
       })

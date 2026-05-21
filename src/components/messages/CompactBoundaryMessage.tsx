@@ -1,6 +1,5 @@
-import * as React from 'react'
-import { Box, Text } from '../../ink.js'
 import { tSync } from '../../i18n/index.js'
+import { Box, Text } from '../../ink.js'
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
 export function CompactBoundaryMessage() {
   const historyShortcut = useShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')

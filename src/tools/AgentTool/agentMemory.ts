@@ -1,4 +1,4 @@
-import { join, normalize, sep } from 'path'
+import { join, normalize, sep } from 'node:path'
 import { getProjectRoot } from '../../bootstrap/state.js'
 import { buildMemoryPrompt, ensureMemoryDirExists } from '../../memdir/memdir.js'
 import { getMemoryBaseDir } from '../../memdir/paths.js'
@@ -75,7 +75,7 @@ export function isAgentMemoryPath(absolutePath: string): boolean {
   // Local scope: persisted to mount when ZY_CODE_REMOTE_MEMORY_DIR is set, otherwise cwd-based
   if (process.env.ZY_CODE_REMOTE_MEMORY_DIR) {
     if (
-      normalizedPath.includes(sep + 'agent-memory-local' + sep) &&
+      normalizedPath.includes(`${sep}agent-memory-local${sep}`) &&
       normalizedPath.startsWith(join(process.env.ZY_CODE_REMOTE_MEMORY_DIR, 'projects') + sep)
     ) {
       return true

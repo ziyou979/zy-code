@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-import type { ContentBlock, ToolResultBlock, ToolCallBlock } from '../../types/llm.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -23,7 +22,6 @@ import {
   buildCodeEditToolAttributes,
   isCodeEditingTool,
 } from '../../hooks/toolPermission/permissionLogging.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import {
   findToolByName,
@@ -45,6 +43,12 @@ import { isDeferredTool, TOOL_SEARCH_TOOL_NAME } from '../../tools/ToolSearchToo
 import { getAllBaseTools } from '../../tools.js'
 import type { HookProgress } from '../../types/hooks.js'
 import type {
+  ContentBlock,
+  ToolCallBlock,
+  ToolResultBlock,
+  UserContentBlock,
+} from '../../types/llm.js'
+import type {
   AssistantMessage,
   AttachmentMessage,
   Message,
@@ -54,6 +58,7 @@ import type {
 import { count } from '../../utils/array.js'
 import { createAttachmentMessage } from '../../utils/attachments.js'
 import { logForDebugging } from '../../utils/debug.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   AbortError,
   errorMessage,
@@ -227,7 +232,9 @@ function getNextImagePasteId(messages: Message[]): number {
   for (const message of messages) {
     if (message.type === 'user' && message.imagePasteIds) {
       for (const id of message.imagePasteIds) {
-        if (id > maxId) maxId = id
+        if (id > maxId) {
+          maxId = id
+        }
       }
     }
   }
@@ -358,7 +365,7 @@ export async function* runToolUse(
   if (!tool) {
     const fallbackTool = findToolByName(getAllBaseTools(), toolName)
     // 仅在通过别名（废弃名称）查找到时才使用回退
-    if (fallbackTool && fallbackTool.aliases?.includes(toolName)) {
+    if (fallbackTool?.aliases?.includes(toolName)) {
       tool = fallbackTool
     }
   }
@@ -578,11 +585,19 @@ export function buildSchemaNotSentHint(
   // 计算过于脆弱。这两道门控可避免指向不可调用的 ToolSearch；
   // 偶尔误报（例如 Haiku、阈值以下的 tst-auto）只会在本已失败的路径上
   // 多费一个往返。
-  if (!isToolSearchEnabledOptimistic()) return null
-  if (!isToolSearchToolAvailable(tools)) return null
-  if (!isDeferredTool(tool)) return null
+  if (!isToolSearchEnabledOptimistic()) {
+    return null
+  }
+  if (!isToolSearchToolAvailable(tools)) {
+    return null
+  }
+  if (!isDeferredTool(tool)) {
+    return null
+  }
   const discovered = extractDiscoveredToolNames(messages)
-  if (discovered.has(tool.name)) return null
+  if (discovered.has(tool.name)) {
+    return null
+  }
   return (
     `\n\nThis tool's schema was not sent to the API — it was not in the discovered-tool set derived from message history. ` +
     `Without the schema in your prompt, typed parameters (arrays, numbers, booleans) get emitted as strings and the client-side parser rejects them. ` +
@@ -979,7 +994,7 @@ async function checkPermissionsAndCallTool(
     }
 
     // 构造顶层 content：tool_result（仅文本以兼容 is_error） + 并列的图片
-    const messageContent: ContentBlock[] = [
+    const messageContent: UserContentBlock[] = [
       {
         type: 'tool_result',
         content: errorMessage,
@@ -992,7 +1007,7 @@ async function checkPermissionsAndCallTool(
     const rejectContentBlocks =
       permissionDecision.behavior === 'ask' ? permissionDecision.contentBlocks : undefined
     if (rejectContentBlocks?.length) {
-      messageContent.push(...rejectContentBlocks)
+      messageContent.push(...(rejectContentBlocks as UserContentBlock[]))
     }
 
     // 按顺序生成 imagePasteIds，使每张图片以不同标签渲染
@@ -1031,7 +1046,9 @@ async function checkPermissionsAndCallTool(
         permissionMode,
         toolUseContext.abortController.signal,
       )) {
-        if (result.retry) hookSaysRetry = true
+        if (result.retry) {
+          hookSaysRetry = true
+        }
       }
       if (hookSaysRetry) {
         resultingMessages.push({
@@ -1348,7 +1365,7 @@ async function checkPermissionsAndCallTool(
           )
 
       // 构造 content 块——先是工具结果，然后是可选的反馈
-      const contentBlocks: ContentBlock[] = [toolResultBlock]
+      const contentBlocks: UserContentBlock[] = [toolResultBlock]
       // 若用户在同意时提供了反馈，附加 accept feedback
       // (acceptFeedback 仅在 PermissionAllowDecision 上存在，这里能保证包含)
       if ('acceptFeedback' in permissionDecision && permissionDecision.acceptFeedback) {
@@ -1362,7 +1379,7 @@ async function checkPermissionsAndCallTool(
       const allowContentBlocks =
         'contentBlocks' in permissionDecision ? permissionDecision.contentBlocks : undefined
       if (allowContentBlocks?.length) {
-        contentBlocks.push(...allowContentBlocks)
+        contentBlocks.push(...(allowContentBlocks as UserContentBlock[]))
       }
 
       // 按顺序生成 imagePasteIds，使每张图片以不同标签渲染

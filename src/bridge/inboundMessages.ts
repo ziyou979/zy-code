@@ -1,6 +1,6 @@
-import type { ContentBlock } from '../types/llm.js'
-import type { UUID } from 'crypto'
+import type { UUID } from 'node:crypto'
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
+import type { ContentBlock } from '../types/llm.js'
 
 /**
  * 从 bridge 入站的 user 消息中提取 content 与 uuid 用于 enqueue。
@@ -14,10 +14,16 @@ import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
 export function extractInboundMessageFields(
   msg: SDKMessage,
 ): { content: string | Array<ContentBlock>; uuid: UUID | undefined } | undefined {
-  if (msg.type !== 'user') return undefined
+  if (msg.type !== 'user') {
+    return undefined
+  }
   const content = (msg.message as any)?.content
-  if (!content) return undefined
-  if (Array.isArray(content) && content.length === 0) return undefined
+  if (!content) {
+    return undefined
+  }
+  if (Array.isArray(content) && content.length === 0) {
+    return undefined
+  }
 
   const uuid = 'uuid' in msg && typeof msg.uuid === 'string' ? (msg.uuid as UUID) : undefined
 

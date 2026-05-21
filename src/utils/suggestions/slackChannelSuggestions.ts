@@ -45,7 +45,9 @@ async function fetchChannels(clients: MCPServerConnection[], query: string): Pro
     )
 
     const content = result.content
-    if (!Array.isArray(content)) return []
+    if (!Array.isArray(content)) {
+      return []
+    }
 
     const rawText = content
       .filter((c): c is { type: 'text'; text: string } => c.type === 'text')
@@ -65,10 +67,14 @@ const resultsEnvelopeSchema = lazySchema(() => z.object({ results: z.string() })
 
 function unwrapResults(text: string): string {
   const trimmed = text.trim()
-  if (!trimmed.startsWith('{')) return text
+  if (!trimmed.startsWith('{')) {
+    return text
+  }
   try {
     const parsed = resultsEnvelopeSchema().safeParse(jsonParse(trimmed))
-    if (parsed.success) return parsed.data.results
+    if (parsed.success) {
+      return parsed.data.results
+    }
   } catch {
     // jsonParse threw — fall through
   }
@@ -105,7 +111,9 @@ export function findSlackChannelPositions(text: string): Array<{ start: number; 
   const re = /(^|\s)#([a-z0-9][a-z0-9_-]{0,79})(?=\s|$)/g
   let m: RegExpExecArray | null
   while ((m = re.exec(text)) !== null) {
-    if (!knownChannels.has(m[2]!)) continue
+    if (!knownChannels.has(m[2]!)) {
+      continue
+    }
     const start = m.index + m[1]!.length
     positions.push({ start, end: start + 1 + m[2]!.length })
   }
@@ -145,7 +153,9 @@ export async function getSlackChannelSuggestions(
   clients: MCPServerConnection[],
   searchToken: string,
 ): Promise<SuggestionItem[]> {
-  if (!searchToken) return []
+  if (!searchToken) {
+    return []
+  }
 
   const mcpQuery = mcpQueryFor(searchToken)
   const lower = searchToken.toLowerCase()
@@ -160,7 +170,9 @@ export async function getSlackChannelSuggestions(
       channels = await inflightPromise
       cache.set(mcpQuery, channels)
       const before = knownChannels.size
-      for (const c of channels) knownChannels.add(c)
+      for (const c of channels) {
+        knownChannels.add(c)
+      }
       if (knownChannels.size !== before) {
         knownChannelsVersion++
         knownChannelsChanged.emit()

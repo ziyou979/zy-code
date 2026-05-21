@@ -1,8 +1,8 @@
 import { feature } from 'bun:bundle'
 import figures from 'figures'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Box, Text, useTheme } from '../../../ink.js'
 import { tSync } from '../../../i18n/index.js'
+import { Box, Text, useTheme } from '../../../ink.js'
 import { useKeybinding } from '../../../keybindings/useKeybinding.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../../services/analytics/growthbook.js'
 import {
@@ -42,6 +42,7 @@ import { SedEditPermissionRequest } from '../SedEditPermissionRequest/SedEditPer
 import { useShellPermissionFeedback } from '../useShellPermissionFeedback.js'
 import { logUnaryPermissionEvent } from '../utils.js'
 import { bashToolUseOptions } from './bashToolUseOptions.js'
+
 const CHECKING_TEXT = tSync('permission.attemptingAutoApprove')
 
 // Isolates the 20fps shimmer clock from BashPermissionRequestInner. Before this
@@ -156,7 +157,9 @@ function BashPermissionRequestInner({
 
   // Asynchronously generate a generic description for the classifier
   useEffect(() => {
-    if (!isClassifierPermissionsEnabled()) return
+    if (!isClassifierPermissionsEnabled()) {
+      return
+    }
     const abortController = new AbortController()
     generateGenericDescription(command, description, abortController.signal)
       .then((generic) => {
@@ -206,9 +209,13 @@ function BashPermissionRequestInner({
       return backendBashRules.length === 1 ? backendBashRules[0]!.ruleContent : undefined
     }
     const two = getSimpleCommandPrefix(command)
-    if (two) return `${two}:*`
+    if (two) {
+      return `${two}:*`
+    }
     const one = getFirstWordPrefix(command)
-    if (one) return `${one}:*`
+    if (one) {
+      return `${one}:*`
+    }
     return command
   })
   const hasUserEditedPrefix = useRef(false)
@@ -219,7 +226,9 @@ function BashPermissionRequestInner({
   useEffect(() => {
     // Skip async refinement for compound commands — the backend already ran
     // the full per-subcommand analysis and its suggestion is correct.
-    if (isCompound) return
+    if (isCompound) {
+      return
+    }
     let cancelled = false
     getCompoundCommandPrefixesStatic(command, (subcmd) =>
       BashTool.isReadOnly({
@@ -227,7 +236,9 @@ function BashPermissionRequestInner({
       }),
     )
       .then((prefixes) => {
-        if (cancelled || hasUserEditedPrefix.current) return
+        if (cancelled || hasUserEditedPrefix.current) {
+          return
+        }
         if (prefixes.length > 0) {
           setEditablePrefix(`${prefixes[0]}:*`)
         }
@@ -312,6 +323,8 @@ function BashPermissionRequestInner({
       noInputMode,
       editablePrefix,
       onEditablePrefixChange,
+      setRejectFeedback,
+      setAcceptFeedback,
     ],
   )
 

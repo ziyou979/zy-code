@@ -44,11 +44,13 @@ export function recordSkillUsage(skillName: string): void {
 export function getSkillUsageScore(skillName: string): number {
   const config = getGlobalConfig()
   const usage = config.skillUsage?.[skillName]
-  if (!usage) return 0
+  if (!usage) {
+    return 0
+  }
 
   // Recency decay: halve score every 7 days
   const daysSinceUse = (Date.now() - usage.lastUsedAt) / (1000 * 60 * 60 * 24)
-  const recencyFactor = Math.pow(0.5, daysSinceUse / 7)
+  const recencyFactor = 0.5 ** (daysSinceUse / 7)
 
   // Minimum recency factor of 0.1 to avoid completely dropping old but heavily used skills
   return usage.usageCount * Math.max(recencyFactor, 0.1)

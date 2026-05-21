@@ -8,13 +8,19 @@ export function parseDirectMemberMessage(input: string): {
   message: string
 } | null {
   const match = input.match(/^@([\w-]+)\s+(.+)$/s)
-  if (!match) return null
+  if (!match) {
+    return null
+  }
 
   const [, recipientName, message] = match
-  if (!recipientName || !message) return null
+  if (!recipientName || !message) {
+    return null
+  }
 
   const trimmedMessage = message.trim()
-  if (!trimmedMessage) return null
+  if (!trimmedMessage) {
+    return null
+  }
 
   return { recipientName, message: trimmedMessage }
 }

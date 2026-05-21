@@ -1,8 +1,8 @@
-import { relative } from 'path'
+import { relative } from 'node:path'
 import React, { useMemo } from 'react'
 import { useDiffInIDE } from '../../../hooks/useDiffInIDE.js'
-import { Box, Text } from '../../../ink.js'
 import { tSync } from '../../../i18n/index.js'
+import { Box, Text } from '../../../ink.js'
 import type { ToolUseContext } from '../../../Tool.js'
 import { getLanguageName } from '../../../utils/cliHighlight.js'
 import { getCwd } from '../../../utils/cwd.js'
@@ -123,7 +123,7 @@ export function FilePermissionDialog<T extends ToolInput = ToolInput>({
   // depends only on toolUseConfirm.input.
   const ideDiffConfig = useMemo(
     () => (ideDiffSupport ? ideDiffSupport.getConfig(parseInput(toolUseConfirm.input)) : null),
-    [ideDiffSupport, toolUseConfirm.input],
+    [ideDiffSupport, toolUseConfirm.input, parseInput],
   )
 
   // Create diff params based on whether IDE diff is available

@@ -95,7 +95,9 @@ export function registerTask(task: TaskState, setAppState: SetAppState): void {
   })
 
   // Replacement (resume) — not a new start. Skip to avoid double-emit.
-  if (isReplacement) return
+  if (isReplacement) {
+    return
+  }
 
   enqueueSdkEvent({
     type: 'system',
@@ -118,9 +120,15 @@ export function registerTask(task: TaskState, setAppState: SetAppState): void {
 export function evictTerminalTask(taskId: string, setAppState: SetAppState): void {
   setAppState((prev) => {
     const task = prev.tasks?.[taskId]
-    if (!task) return prev
-    if (!isTerminalTaskStatus(task.status)) return prev
-    if (!task.notified) return prev
+    if (!task) {
+      return prev
+    }
+    if (!isTerminalTaskStatus(task.status)) {
+      return prev
+    }
+    if (!task.notified) {
+      return prev
+    }
     // Panel grace period — blocks eviction until deadline passes.
     // 'retain' in task narrows to LocalAgentTaskState (the only type with
     // that field); evictAfter is optional so 'evictAfter' in task would

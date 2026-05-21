@@ -3,9 +3,9 @@
 
 import type {
   SDKMessage,
+  SDKPostTurnSummaryMessage,
   SDKStreamlinedTextMessage,
   SDKStreamlinedToolUseSummaryMessage,
-  SDKPostTurnSummaryMessage,
   SDKUserMessage,
 } from './coreTypes.generated.js'
 

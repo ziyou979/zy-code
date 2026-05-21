@@ -11,7 +11,7 @@
  * 因此本模块运行在无头环境中（无 TTY）。
  */
 
-import { homedir } from 'os'
+import { homedir } from 'node:os'
 import { logForDebugging } from '../debug.js'
 import { filterExistingPaths, getKnownPathsForRepo } from '../githubRepoPathMapping.js'
 import { jsonStringify } from '../slowOperations.js'
@@ -85,7 +85,7 @@ export async function handleUrlSchemeLaunch(): Promise<number | null> {
   }
 
   try {
-    // @ts-ignore
+    // @ts-expect-error
     const { waitForUrlEvent } = (await import('url-handler-napi')) as any
     const url = waitForUrlEvent(5000)
     if (!url) {

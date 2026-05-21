@@ -50,7 +50,9 @@ export type Props = BaseStylesWithoutColors &
  * Resolves a color value that may be a theme key to a raw Color.
  */
 function resolveColor(color: keyof Theme | Color | undefined, theme: Theme): Color | undefined {
-  if (!color) return undefined
+  if (!color) {
+    return undefined
+  }
   // Check if it's a raw color (starts with rgb(, #, ansi256(, or ansi:)
   if (
     color.startsWith('rgb(') ||

@@ -1,7 +1,7 @@
+import figures from 'figures'
 import * as React from 'react'
 import { Text } from '../ink.js'
 import { useAppState } from '../state/AppState.js'
-import figures from 'figures'
 
 type Props = {
   selected: boolean

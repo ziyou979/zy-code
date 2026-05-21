@@ -30,7 +30,9 @@ export function recordDenial(state: DenialTrackingState): DenialTrackingState {
 }
 
 export function recordSuccess(state: DenialTrackingState): DenialTrackingState {
-  if (state.consecutiveDenials === 0) return state // No change needed
+  if (state.consecutiveDenials === 0) {
+    return state // No change needed
+  }
   return {
     ...state,
     consecutiveDenials: 0,

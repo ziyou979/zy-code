@@ -130,7 +130,9 @@ const PATH_DOC_LINKS: Record<string, string> = {
 export function getValidationTip(context: TipContext): ValidationTip | null {
   const matcher = TIP_MATCHERS.find((m) => m.matches(context))
 
-  if (!matcher) return null
+  if (!matcher) {
+    return null
+  }
 
   const tip: ValidationTip = { ...matcher.tip }
 

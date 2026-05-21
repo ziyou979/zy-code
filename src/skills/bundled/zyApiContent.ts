@@ -1,57 +1,57 @@
 // Content for the zy-api bundled skill.
 // Each .md file is inlined as a string at build time via Bun's text loader.
 
-// @ts-ignore
+// @ts-expect-error
 import csharpZyApi from './zy-api/csharp/zy-api.md'
-// @ts-ignore
+// @ts-expect-error
 import curlExamples from './zy-api/curl/examples.md'
-// @ts-ignore
+// @ts-expect-error
 import goZyApi from './zy-api/go/zy-api.md'
-// @ts-ignore
+// @ts-expect-error
 import javaZyApi from './zy-api/java/zy-api.md'
-// @ts-ignore
+// @ts-expect-error
 import phpZyApi from './zy-api/php/zy-api.md'
-// @ts-ignore
+// @ts-expect-error
 import pythonAgentSdkPatterns from './zy-api/python/agent-sdk/patterns.md'
-// @ts-ignore
+// @ts-expect-error
 import pythonAgentSdkReadme from './zy-api/python/agent-sdk/README.md'
-// @ts-ignore
+// @ts-expect-error
 import pythonZyApiBatches from './zy-api/python/zy-api/batches.md'
-// @ts-ignore
+// @ts-expect-error
 import pythonZyApiFilesApi from './zy-api/python/zy-api/files-api.md'
-// @ts-ignore
+// @ts-expect-error
 import pythonZyApiReadme from './zy-api/python/zy-api/README.md'
-// @ts-ignore
+// @ts-expect-error
 import pythonZyApiStreaming from './zy-api/python/zy-api/streaming.md'
-// @ts-ignore
+// @ts-expect-error
 import pythonZyApiToolUse from './zy-api/python/zy-api/tool-use.md'
-// @ts-ignore
+// @ts-expect-error
 import rubyZyApi from './zy-api/ruby/zy-api.md'
-// @ts-ignore
+// @ts-expect-error
 import skillPrompt from './zy-api/SKILL.md'
-// @ts-ignore
+// @ts-expect-error
 import sharedErrorCodes from './zy-api/shared/error-codes.md'
-// @ts-ignore
+// @ts-expect-error
 import sharedLiveSources from './zy-api/shared/live-sources.md'
-// @ts-ignore
+// @ts-expect-error
 import sharedModels from './zy-api/shared/models.md'
-// @ts-ignore
+// @ts-expect-error
 import sharedPromptCaching from './zy-api/shared/prompt-caching.md'
-// @ts-ignore
+// @ts-expect-error
 import sharedToolUseConcepts from './zy-api/shared/tool-use-concepts.md'
-// @ts-ignore
+// @ts-expect-error
 import typescriptAgentSdkPatterns from './zy-api/typescript/agent-sdk/patterns.md'
-// @ts-ignore
+// @ts-expect-error
 import typescriptAgentSdkReadme from './zy-api/typescript/agent-sdk/README.md'
-// @ts-ignore
+// @ts-expect-error
 import typescriptZyApiBatches from './zy-api/typescript/zy-api/batches.md'
-// @ts-ignore
+// @ts-expect-error
 import typescriptZyApiFilesApi from './zy-api/typescript/zy-api/files-api.md'
-// @ts-ignore
+// @ts-expect-error
 import typescriptZyApiReadme from './zy-api/typescript/zy-api/README.md'
-// @ts-ignore
+// @ts-expect-error
 import typescriptZyApiStreaming from './zy-api/typescript/zy-api/streaming.md'
-// @ts-ignore
+// @ts-expect-error
 import typescriptZyApiToolUse from './zy-api/typescript/zy-api/tool-use.md'
 
 export const SKILL_PROMPT: string = skillPrompt

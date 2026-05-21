@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { writeFile } from 'fs/promises'
+import { writeFile } from 'node:fs/promises'
 import { z } from 'zod/v4'
 import {
   getAllowedChannels,
@@ -187,7 +187,7 @@ export const ExitPlanModeV2Tool: Tool<InputSchema, Output> = buildTool({
     }
     return { result: true }
   },
-  async checkPermissions(input, context) {
+  async checkPermissions(input, _context) {
     // For ALL teammates, bypass the permission UI to avoid sending permission_request
     // The call() method handles the appropriate behavior:
     // - If isPlanModeRequired(): sends plan_approval_request to leader
@@ -318,7 +318,9 @@ export const ExitPlanModeV2Tool: Tool<InputSchema, Output> = buildTool({
     }
 
     context.setAppState((prev) => {
-      if (prev.toolPermissionContext.mode !== 'plan') return prev
+      if (prev.toolPermissionContext.mode !== 'plan') {
+        return prev
+      }
       setHasExitedPlanMode(true)
       setNeedsPlanModeExitAttachment(true)
       let restoreMode = prev.toolPermissionContext.prePlanMode ?? 'default'
@@ -439,4 +441,5 @@ ${plan}`,
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(ExitPlanModeV2Tool)

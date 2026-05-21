@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import figures from 'figures'
 import React, {
   createContext,
@@ -10,7 +11,6 @@ import React, {
   useState,
   useSyncExternalStore,
 } from 'react'
-import { fileURLToPath } from 'url'
 import { ModalContext } from '../context/modalContext.js'
 import {
   PromptOverlayProvider,
@@ -142,7 +142,9 @@ export function useUnseenDivider(messageCount: number): {
     // pendingDelta：scrollBy 累积但不更新 scrollTop。没有它的话，从最大值滚轮上滚
     // 会看到 scrollTop==max 并抑制 pill 显示。
     const max = Math.max(0, handle.getScrollHeight() - handle.getViewportHeight())
-    if (handle.getScrollTop() + handle.getPendingDelta() >= max) return
+    if (handle.getScrollTop() + handle.getPendingDelta() >= max) {
+      return
+    }
     // 仅在第一次离开底部时快照。onScrollAway 在每次滚动操作时都会触发
     //（而不仅是初次离开 sticky）——此守卫保留原始基线，这样第二次 PageUp 时
     // 计数不会重置。后续调用仅为 ref 级别的空操作（不会触发 REPL 重新渲染）。
@@ -153,7 +155,9 @@ export function useUnseenDivider(messageCount: number): {
     }
   }, [])
   const jumpToNew = useCallback((handle_0: ScrollBoxHandle | null) => {
-    if (!handle_0) return
+    if (!handle_0) {
+      return
+    }
     // scrollToBottom（而非 scrollTo(dividerY)）：设置 stickyScroll=true 使
     // useVirtualScroll 挂载尾部，render-node-to-output 固定 scrollTop=maxScroll。
     // scrollTo 设置 stickyScroll=false → 钳位（仍在 React 重新渲染前的顶部范围边界）
@@ -209,24 +213,36 @@ export function countUnseenAssistantTurns(
   let prevWasAssistant = false
   for (let i = dividerIndex; i < messages.length; i++) {
     const m = messages[i]!
-    if (m.type === 'progress') continue
+    if (m.type === 'progress') {
+      continue
+    }
     // 仅包含工具调用的 assistant 条目对用户来说不是"新消息"——
     // 与跳过 progress 消息一样跳过它们。prevWasAssistant 不会更新，
     // 因此紧随其后的文本块仍然算作同一个回合（一次 API 响应中的
     // tool_use + text = 1）。
-    if (m.type === 'assistant' && !assistantHasVisibleText(m)) continue
+    if (m.type === 'assistant' && !assistantHasVisibleText(m)) {
+      continue
+    }
     const isAssistant = m.type === 'assistant'
-    if (isAssistant && !prevWasAssistant) count++
+    if (isAssistant && !prevWasAssistant) {
+      count++
+    }
     prevWasAssistant = isAssistant
   }
   return count
 }
 function assistantHasVisibleText(m: Message): boolean {
-  if (m.type !== 'assistant') return false
+  if (m.type !== 'assistant') {
+    return false
+  }
   const content = m.message.content
-  if (!Array.isArray(content)) return false
+  if (!Array.isArray(content)) {
+    return false
+  }
   for (const b of content) {
-    if (b.type === 'text' && b.text.trim() !== '') return true
+    if (b.type === 'text' && b.text.trim() !== '') {
+      return true
+    }
   }
   return false
 }
@@ -249,7 +265,9 @@ export function computeUnseenDivider(
   messages: readonly Message[],
   dividerIndex: number | null,
 ): UnseenDivider | undefined {
-  if (dividerIndex === null) return undefined
+  if (dividerIndex === null) {
+    return undefined
+  }
   // 跳过 progress 和 null-rendering attachments 来选择分割线锚点——
   // Messages.tsx 在 dividerBeforeIndex 搜索之前将这些从 renderableMessages 中过滤掉，
   // 因此它们的 UUID 不会被找到 (CC-724)。Hook attachments 使用 randomUUID()，
@@ -262,7 +280,9 @@ export function computeUnseenDivider(
     anchorIdx++
   }
   const uuid = messages[anchorIdx]?.uuid
-  if (!uuid) return undefined
+  if (!uuid) {
+    return undefined
+  }
   const count = countUnseenAssistantTurns(messages, dividerIndex)
   return {
     firstUnseenUuid: uuid,

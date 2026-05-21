@@ -1,5 +1,4 @@
 import { toString as qrToString } from 'qrcode'
-import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { Box, Text } from '../ink.js'
 
@@ -20,7 +19,7 @@ export function QRCodeDisplay({ displayUrl, showQR }: QRCodeDisplayProps) {
       setQrText('')
       return
     }
-    // @ts-ignore
+    // @ts-expect-error
     qrToString(displayUrl, {
       type: 'utf8',
       errorCorrectionLevel: 'L',

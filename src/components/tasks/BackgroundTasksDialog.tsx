@@ -14,9 +14,9 @@ import { LocalAgentTask } from 'src/tasks/LocalAgentTask/LocalAgentTask.js'
 import type { LocalShellTaskState } from 'src/tasks/LocalShellTask/guards.js'
 import { LocalShellTask } from 'src/tasks/LocalShellTask/LocalShellTask.js'
 // Type import is erased at build time — safe even though module is ant-gated.
-// @ts-ignore
+// @ts-expect-error
 import type { LocalWorkflowTaskState } from 'src/tasks/LocalWorkflowTask/LocalWorkflowTask.js'
-// @ts-ignore
+// @ts-expect-error
 import type { MonitorMcpTaskState } from 'src/tasks/MonitorMcpTask/MonitorMcpTask.js'
 import {
   RemoteAgentTask,
@@ -26,11 +26,11 @@ import { type BackgroundTaskState, isBackgroundTask, type TaskState } from 'src/
 import type { DeepImmutable } from 'src/types/utils.js'
 import { intersperse } from 'src/utils/array.js'
 import { TEAM_LEAD_NAME } from 'src/utils/swarm/constants.js'
-import { tSync } from '../../i18n/index.js'
 import { stopUltraplan } from '../../commands/ultraplan.js'
 import type { CommandResultDisplay } from '../../commands.js'
 import { useRegisterOverlay } from '../../context/overlayContext.js'
 import type { ExitState } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
+import { tSync } from '../../i18n/index.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
@@ -41,11 +41,12 @@ import { Dialog } from '../design-system/Dialog.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { AsyncAgentDetailDialog } from './AsyncAgentDetailDialog.js'
 import { BackgroundTask as BackgroundTaskComponent } from './BackgroundTask.js'
-import { type ListItem, toListItem, Item, TeammateTaskGroups } from './taskListRenderers.js'
 import { DreamDetailDialog } from './DreamDetailDialog.js'
 import { InProcessTeammateDetailDialog } from './InProcessTeammateDetailDialog.js'
 import { RemoteSessionDetailDialog } from './RemoteSessionDetailDialog.js'
 import { ShellDetailDialog } from './ShellDetailDialog.js'
+import { Item, type ListItem, TeammateTaskGroups, toListItem } from './taskListRenderers.js'
+
 type ViewState =
   | {
       mode: 'list'
@@ -127,7 +128,7 @@ export function BackgroundTasksDialog({
   const [selectedIndex, setSelectedIndex] = useState<number>(0)
 
   // 注册为模态覆盖层，这样此对话框打开时父级 Chat 快捷键（上/下键翻历史）会被禁用
-  // @ts-ignore
+  // @ts-expect-error
   useRegisterOverlay('background-tasks-dialog')
 
   // 将排序和分类的项目一起 memo 化以确保引用稳定

@@ -16,7 +16,9 @@ const cache = new WeakMap<ZodTypeAny, JsonSchema7Type>()
  */
 export function zodToJsonSchema(schema: ZodTypeAny): JsonSchema7Type {
   const hit = cache.get(schema)
-  if (hit) return hit
+  if (hit) {
+    return hit
+  }
   const result = toJSONSchema(schema) as JsonSchema7Type
   cache.set(schema, result)
   return result

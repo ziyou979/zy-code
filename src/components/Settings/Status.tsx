@@ -1,5 +1,4 @@
 import figures from 'figures'
-import * as React from 'react'
 import { Suspense, use } from 'react'
 import { getSessionId } from '../../bootstrap/state.js'
 import type { LocalJSXCommandContext } from '../../commands.js'
@@ -25,6 +24,7 @@ import {
 } from '../../utils/status.js'
 import type { ThemeName } from '../../utils/theme.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
+
 type Props = {
   context: LocalJSXCommandContext
   diagnosticsPromise: Promise<Diagnostic[]>

@@ -85,7 +85,9 @@ async function segmentedCommandPermissionResult(
   // Check each segment through the full permission system
   for (const segment of segments) {
     const trimmedSegment = segment.trim()
-    if (!trimmedSegment) continue // Skip empty segments
+    if (!trimmedSegment) {
+      continue // Skip empty segments
+    }
 
     const segmentResult = await bashToolHasPermissionFn({
       ...input,

@@ -52,7 +52,7 @@ export function truncatePathMiddle(path: string, maxLength: number): string {
 
   // Truncate directory and combine
   const truncatedDir = truncateToWidthNoEllipsis(directory, availableForDir)
-  return truncatedDir + '…' + filename
+  return `${truncatedDir}…${filename}`
 }
 
 /**
@@ -61,17 +61,23 @@ export function truncatePathMiddle(path: string, maxLength: number): string {
  * Appends '…' when truncation occurs.
  */
 export function truncateToWidth(text: string, maxWidth: number): string {
-  if (stringWidth(text) <= maxWidth) return text
-  if (maxWidth <= 1) return '…'
+  if (stringWidth(text) <= maxWidth) {
+    return text
+  }
+  if (maxWidth <= 1) {
+    return '…'
+  }
   let width = 0
   let result = ''
   for (const { segment } of getGraphemeSegmenter().segment(text)) {
     const segWidth = stringWidth(segment)
-    if (width + segWidth > maxWidth - 1) break
+    if (width + segWidth > maxWidth - 1) {
+      break
+    }
     result += segment
     width += segWidth
   }
-  return result + '…'
+  return `${result}…`
 }
 
 /**
@@ -80,14 +86,20 @@ export function truncateToWidth(text: string, maxWidth: number): string {
  * Width-aware and grapheme-safe.
  */
 export function truncateStartToWidth(text: string, maxWidth: number): string {
-  if (stringWidth(text) <= maxWidth) return text
-  if (maxWidth <= 1) return '…'
+  if (stringWidth(text) <= maxWidth) {
+    return text
+  }
+  if (maxWidth <= 1) {
+    return '…'
+  }
   const segments = [...getGraphemeSegmenter().segment(text)]
   let width = 0
   let startIdx = segments.length
   for (let i = segments.length - 1; i >= 0; i--) {
     const segWidth = stringWidth(segments[i]!.segment)
-    if (width + segWidth > maxWidth - 1) break // -1 for '…'
+    if (width + segWidth > maxWidth - 1) {
+      break // -1 for '…'
+    }
     width += segWidth
     startIdx = i
   }
@@ -106,13 +118,19 @@ export function truncateStartToWidth(text: string, maxWidth: number): string {
  * Width-aware and grapheme-safe.
  */
 export function truncateToWidthNoEllipsis(text: string, maxWidth: number): string {
-  if (stringWidth(text) <= maxWidth) return text
-  if (maxWidth <= 0) return ''
+  if (stringWidth(text) <= maxWidth) {
+    return text
+  }
+  if (maxWidth <= 0) {
+    return ''
+  }
   let width = 0
   let result = ''
   for (const { segment } of getGraphemeSegmenter().segment(text)) {
     const segWidth = stringWidth(segment)
-    if (width + segWidth > maxWidth) break
+    if (width + segWidth > maxWidth) {
+      break
+    }
     result += segment
     width += segWidth
   }
@@ -161,12 +179,16 @@ export function wrapText(text: string, width: number): string[] {
       currentLine += segment
       currentWidth += segWidth
     } else {
-      if (currentLine) lines.push(currentLine)
+      if (currentLine) {
+        lines.push(currentLine)
+      }
       currentLine = segment
       currentWidth = segWidth
     }
   }
 
-  if (currentLine) lines.push(currentLine)
+  if (currentLine) {
+    lines.push(currentLine)
+  }
   return lines
 }

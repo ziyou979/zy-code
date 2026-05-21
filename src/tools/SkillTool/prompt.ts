@@ -9,10 +9,10 @@ import {
 } from '../../services/analytics/index.js'
 import { count } from '../../utils/array.js'
 import { logForDebugging } from '../../utils/debug.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { toError } from '../../utils/errors.js'
 import { truncate } from '../../utils/format.js'
 import { logError } from '../../utils/log.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 
 // Skill listing gets 1% of the context window (in characters)
 export const SKILL_BUDGET_CONTEXT_PERCENT = 0.01
@@ -38,7 +38,7 @@ export function getCharBudget(contextWindowTokens?: number): number {
 function getCommandDescription(cmd: Command): string {
   const desc = cmd.whenToUse ? `${cmd.description} - ${cmd.whenToUse}` : cmd.description
   return desc.length > MAX_LISTING_DESC_CHARS
-    ? desc.slice(0, MAX_LISTING_DESC_CHARS - 1) + '\u2026'
+    ? `${desc.slice(0, MAX_LISTING_DESC_CHARS - 1)}\u2026`
     : desc
 }
 
@@ -58,7 +58,9 @@ export function formatCommandsWithinBudget(
   commands: Command[],
   contextWindowTokens?: number,
 ): string {
-  if (commands.length === 0) return ''
+  if (commands.length === 0) {
+    return ''
+  }
 
   const budget = getCharBudget(contextWindowTokens)
 
@@ -145,7 +147,9 @@ export function formatCommandsWithinBudget(
   return commands
     .map((cmd, i) => {
       // Bundled skills always get full descriptions
-      if (bundledIndices.has(i)) return fullEntries[i]!.full
+      if (bundledIndices.has(i)) {
+        return fullEntries[i]!.full
+      }
       const description = getCommandDescription(cmd)
       return `- ${cmd.name}: ${truncate(description, maxDescLen)}`
     })

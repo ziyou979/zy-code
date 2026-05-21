@@ -1,8 +1,8 @@
+import { appendFile, mkdir } from 'node:fs/promises'
+import * as path from 'node:path'
 import type { HrTime } from '@opentelemetry/api'
 import { type ExportResult, ExportResultCode } from '@opentelemetry/core'
 import type { LogRecordExporter, ReadableLogRecord } from '@opentelemetry/sdk-logs'
-import { appendFile, mkdir } from 'fs/promises'
-import * as path from 'path'
 import type { CoreUserData } from 'src/utils/user.js'
 import { getSessionId } from '../../bootstrap/state.js'
 import { ZyCodeInternalEvent } from '../../types/generated/events_mono/claude_code/v1/claude_code_internal_event.js'
@@ -90,14 +90,16 @@ export class ZyEventExporter implements LogRecordExporter {
   }
 
   private async appendEventsToLocalFile(events: ZyEventLoggingEvent[]): Promise<void> {
-    if (events.length === 0) return
+    if (events.length === 0) {
+      return
+    }
 
     try {
       const filePath = this.getEventsFilePath()
       const dir = path.dirname(filePath)
       await mkdir(dir, { recursive: true })
 
-      const content = events.map((e) => jsonStringify(e)).join('\n') + '\n'
+      const content = `${events.map((e) => jsonStringify(e)).join('\n')}\n`
       await appendFile(filePath, content, 'utf8')
     } catch (error) {
       logError(error)

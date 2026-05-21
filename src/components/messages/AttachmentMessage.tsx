@@ -7,7 +7,7 @@ import { useAppState } from '../../state/AppState.js'
 import { getDisplayPath } from 'src/utils/file.js'
 import { formatFileSize } from 'src/utils/format.js'
 import { MessageResponse } from '../MessageResponse.js'
-import { basename, sep } from 'path'
+import { basename, sep } from 'node:path'
 import { UserTextMessage } from './UserTextMessage.js'
 import { DiagnosticsDisplay } from '../DiagnosticsDisplay.js'
 import { getContentText } from 'src/utils/messages.js'
@@ -123,7 +123,9 @@ export function AttachmentMessage({
   // 条件性消除；而 if 主体可以。
   if (feature('EXPERIMENTAL_SKILL_SEARCH')) {
     if (attachment.type === 'skill_discovery') {
-      if (attachment.skills.length === 0) return null
+      if (attachment.skills.length === 0) {
+        return null
+      }
       // Ant users get shortIds inline so they can /skill-feedback while the
       // turn is still fresh. External users (when this un-gates) just see
       // names — shortId is undefined outside ant builds anyway.
@@ -392,7 +394,7 @@ export function AttachmentMessage({
       )
     }
     case 'task_status':
-      // @ts-ignore -- TaskStatusMessage props may differ between builds
+      // @ts-expect-error -- TaskStatusMessage props may differ between builds
       return <TaskStatusMessage attachment={attachment} />
     case 'teammate_shutdown_batch':
       return (

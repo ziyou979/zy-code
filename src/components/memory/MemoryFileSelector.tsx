@@ -1,8 +1,7 @@
 import { feature } from 'bun:bundle'
+import { mkdir } from 'node:fs/promises'
+import { join } from 'node:path'
 import chalk from 'chalk'
-import { mkdir } from 'fs/promises'
-import { join } from 'path'
-import * as React from 'react'
 import { use, useEffect, useState } from 'react'
 import { getOriginalCwd } from '../../bootstrap/state.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
@@ -15,12 +14,12 @@ import { readLastConsolidatedAt } from '../../services/autoDream/consolidationLo
 import { useAppState } from '../../state/AppState.js'
 import { getAgentMemoryDir } from '../../tools/AgentTool/agentMemory.js'
 import { openPath } from '../../utils/browser.js'
-import { getMemoryFiles, type MemoryFileInfo } from '../../utils/zymd.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { getDisplayPath } from '../../utils/file.js'
 import { formatRelativeTimeAgo } from '../../utils/format.js'
 import { projectIsInGitRepo } from '../../utils/memory/versions.js'
 import { updateSettingsForSource } from '../../utils/settings/settings.js'
+import { getMemoryFiles, type MemoryFileInfo } from '../../utils/zymd.js'
 import { Select } from '../CustomSelect/index.js'
 import { ListItem } from '../design-system/ListItem.js'
 
@@ -167,7 +166,7 @@ export function MemoryFileSelector({ onSelect, onCancel }: Props) {
       return
     }
     readLastConsolidatedAt().then(setLastDreamAt)
-  }, [showDreamRow, isDreamRunning])
+  }, [showDreamRow])
   const dreamStatus = isDreamRunning
     ? 'running'
     : lastDreamAt === null

@@ -1,20 +1,20 @@
 import { feature } from 'bun:bundle'
-import { randomUUID } from 'crypto'
-import { hostname, tmpdir } from 'os'
-import { basename, join, resolve } from 'path'
+import { randomUUID } from 'node:crypto'
+import { hostname, tmpdir } from 'node:os'
+import { basename, join, resolve } from 'node:path'
 import { getRemoteSessionUrl } from '../constants/product.js'
 import { shutdownDatadog } from '../services/analytics/datadog.js'
-import { shutdownZyEventLogging } from '../services/analytics/zyEventLogger.js'
 import { checkGate_CACHED_OR_BLOCKING } from '../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
   logEventAsync,
 } from '../services/analytics/index.js'
+import { shutdownZyEventLogging } from '../services/analytics/zyEventLogger.js'
 import { isInBundledMode } from '../utils/bundledMode.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
-import { isEnvTruthy, isInternalBuild, isInProtectedNamespace } from '../utils/envUtils.js'
+import { isEnvTruthy, isInProtectedNamespace, isInternalBuild } from '../utils/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
 import { truncateToWidth } from '../utils/format.js'
 import { logError } from '../utils/log.js'
@@ -380,13 +380,17 @@ export async function runBridgeLoop(
     // whatever state it had (Attached / session title).
     const [sessionId, handle] = [...activeSessions.entries()].pop()!
     const startTime = sessionStartTimes.get(sessionId)
-    if (!startTime) return
+    if (!startTime) {
+      return
+    }
 
     const activity = handle.currentActivity
     if (!activity || activity.type === 'result' || activity.type === 'error') {
       // Session is between turns — keep current status (Attached/titled).
       // In multi-session mode, still refresh so bullet-list activities stay current.
-      if (config.maxSessions > 1) logger.refreshDisplay()
+      if (config.maxSessions > 1) {
+        logger.refreshDisplay()
+      }
       return
     }
 
@@ -625,7 +629,9 @@ export async function runBridgeLoop(
             ) {
               // Re-read config each cycle so GrowthBook updates take effect
               const hbConfig = getPollIntervalConfig()
-              if (hbConfig.non_exclusive_heartbeat_interval_ms <= 0) break
+              if (hbConfig.non_exclusive_heartbeat_interval_ms <= 0) {
+                break
+              }
 
               // Capture capacity signal BEFORE the async heartbeat call so
               // a session ending during the HTTP request is caught by the
@@ -861,7 +867,9 @@ export async function runBridgeLoop(
                     `[bridge:session] CCR v2: registerWorker attempt ${attempt} failed, retrying: ${errMsg}`,
                   )
                   await sleep(2_000, loopSignal)
-                  if (loopSignal.aborted) break
+                  if (loopSignal.aborted) {
+                    break
+                  }
                   continue
                 }
                 logger.logError(
@@ -880,7 +888,9 @@ export async function runBridgeLoop(
                 )
               }
             }
-            if (!useCcrV2) break
+            if (!useCcrV2) {
+              break
+            }
           } else {
             sdkUrl = buildSdkUrl(config.sessionIngressUrl, sessionId)
           }
@@ -954,7 +964,9 @@ export async function runBridgeLoop(
                 // runs concurrently; if it already populated titledSessions,
                 // skip. If it hasn't resolved yet, the derived title sticks —
                 // acceptable since the server had no title at spawn time.
-                if (titledSessions.has(compatSessionId)) return
+                if (titledSessions.has(compatSessionId)) {
+                  return
+                }
                 titledSessions.add(compatSessionId)
                 const title = deriveSessionTitle(text)
                 logger.setSessionTitle(compatSessionId, title)
@@ -1523,7 +1535,7 @@ async function stopWorkWithRetry(
       }
       const errMsg = errorMessage(err)
       if (attempt < MAX_ATTEMPTS) {
-        const delay = addJitter(baseDelayMs * Math.pow(2, attempt - 1))
+        const delay = addJitter(baseDelayMs * 2 ** (attempt - 1))
         logger.logVerbose(
           `Failed to stop work ${workId} (attempt ${attempt}/${MAX_ATTEMPTS}), retrying in ${formatDelay(delay)}: ${errMsg}`,
         )
@@ -1580,15 +1592,21 @@ export type ParsedArgs = {
 const SPAWN_FLAG_VALUES = ['session', 'same-dir', 'worktree'] as const
 
 function parseSpawnValue(raw: string | undefined): SpawnMode | string {
-  if (raw === 'session') return 'single-session'
-  if (raw === 'same-dir') return 'same-dir'
-  if (raw === 'worktree') return 'worktree'
+  if (raw === 'session') {
+    return 'single-session'
+  }
+  if (raw === 'same-dir') {
+    return 'same-dir'
+  }
+  if (raw === 'worktree') {
+    return 'worktree'
+  }
   return `--spawn requires one of: ${SPAWN_FLAG_VALUES.join(', ')} (got: ${raw ?? '<missing>'})`
 }
 
 function parseCapacityValue(raw: string | undefined): number | string {
   const n = raw === undefined ? NaN : parseInt(raw, 10)
-  if (isNaN(n) || n < 1) {
+  if (Number.isNaN(n) || n < 1) {
     return `--capacity requires a positive integer (got: ${raw ?? '<missing>'})`
   }
   return n
@@ -1663,8 +1681,11 @@ export function parseArgs(args: string[]): ParsedArgs {
       }
       const raw = arg.startsWith('--capacity=') ? arg.slice('--capacity='.length) : args[++i]
       const v = parseCapacityValue(raw)
-      if (typeof v === 'number') capacity = v
-      else return makeError(v)
+      if (typeof v === 'number') {
+        capacity = v
+      } else {
+        return makeError(v)
+      }
     } else if (arg === '--create-session-in-dir') {
       createSessionInDir = true
     } else if (arg === '--no-create-session-in-dir') {
@@ -1953,7 +1974,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
   const { getGlobalConfig, saveGlobalConfig, getCurrentProjectConfig, saveCurrentProjectConfig } =
     await import('../utils/config.js')
   if (!getGlobalConfig().remoteDialogSeen) {
-    const readline = await import('readline')
+    const readline = await import('node:readline')
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
@@ -1967,7 +1988,9 @@ export async function bridgeMain(args: string[]): Promise<void> {
     })
     rl.close()
     saveGlobalConfig((current) => {
-      if (current.remoteDialogSeen) return current
+      if (current.remoteDialogSeen) {
+        return current
+      }
       return { ...current, remoteDialogSeen: true }
     })
     if (answer.toLowerCase() !== 'y' && answer.toLowerCase() !== 'yes') {
@@ -2060,7 +2083,9 @@ export async function bridgeMain(args: string[]): Promise<void> {
     )
     savedSpawnMode = undefined
     saveCurrentProjectConfig((current) => {
-      if (current.remoteControlSpawnMode === undefined) return current
+      if (current.remoteControlSpawnMode === undefined) {
+        return current
+      }
       return { ...current, remoteControlSpawnMode: undefined }
     })
   }
@@ -2076,7 +2101,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
     !resumeSessionId &&
     process.stdin.isTTY
   ) {
-    const readline = await import('readline')
+    const readline = await import('node:readline')
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
@@ -2099,7 +2124,9 @@ export async function bridgeMain(args: string[]): Promise<void> {
       spawn_mode: chosen as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     saveCurrentProjectConfig((current) => {
-      if (current.remoteControlSpawnMode === chosen) return current
+      if (current.remoteControlSpawnMode === chosen) {
+        return current
+      }
       return { ...current, remoteControlSpawnMode: chosen }
     })
   }
@@ -2434,7 +2461,9 @@ export async function bridgeMain(args: string[]): Promise<void> {
       return
     }
     if (data[0] === 0x77 /* 'w' */) {
-      if (!toggleAvailable) return
+      if (!toggleAvailable) {
+        return
+      }
       const newMode: 'same-dir' | 'worktree' =
         config.spawnMode === 'same-dir' ? 'worktree' : 'same-dir'
       config.spawnMode = newMode
@@ -2449,7 +2478,9 @@ export async function bridgeMain(args: string[]): Promise<void> {
       logger.setSpawnModeDisplay(newMode)
       logger.refreshDisplay()
       saveCurrentProjectConfig((current) => {
-        if (current.remoteControlSpawnMode === newMode) return current
+        if (current.remoteControlSpawnMode === newMode) {
+          return current
+        }
         return { ...current, remoteControlSpawnMode: newMode }
       })
       return

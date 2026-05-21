@@ -144,7 +144,9 @@ export function clearZyAIMcpConfigsCache(): void {
 export function markZyAiMcpConnected(name: string): void {
   saveGlobalConfig((current) => {
     const seen = current.zyAiMcpEverConnected ?? []
-    if (seen.includes(name)) return current
+    if (seen.includes(name)) {
+      return current
+    }
     return { ...current, zyAiMcpEverConnected: [...seen, name] }
   })
 }

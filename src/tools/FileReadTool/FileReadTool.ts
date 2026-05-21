@@ -1,7 +1,6 @@
-import type { ImageSource } from '../../types/llm.js'
-import { readdir, readFile as readFileAsync } from 'fs/promises'
-import * as path from 'path'
-import { posix, win32 } from 'path'
+import { readdir, readFile as readFileAsync } from 'node:fs/promises'
+import * as path from 'node:path'
+import { posix, win32 } from 'node:path'
 import { z } from 'zod/v4'
 import {
   PDF_AT_MENTION_INLINE_THRESHOLD,
@@ -27,6 +26,7 @@ import {
 } from '../../skills/loadSkillsDir.js'
 import type { ToolUseContext } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
+import type { ImageSource } from '../../types/llm.js'
 import { getCwd } from '../../utils/cwd.js'
 import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
 import { getErrnoCode, isENOENT } from '../../utils/errors.js'
@@ -108,13 +108,16 @@ const BLOCKED_DEVICE_PATHS = new Set([
 ])
 
 function isBlockedDevicePath(filePath: string): boolean {
-  if (BLOCKED_DEVICE_PATHS.has(filePath)) return true
+  if (BLOCKED_DEVICE_PATHS.has(filePath)) {
+    return true
+  }
   // /proc/self/fd/0-2 and /proc/<pid>/fd/0-2 are Linux aliases for stdio
   if (
     filePath.startsWith('/proc/') &&
     (filePath.endsWith('/fd/0') || filePath.endsWith('/fd/1') || filePath.endsWith('/fd/2'))
-  )
+  ) {
     return true
+  }
   return false
 }
 
@@ -139,7 +142,9 @@ function getAlternateScreenshotPath(filePath: string): string | undefined {
   const filename = path.basename(filePath)
   const amPmPattern = /^(.+)([ \u202F])(AM|PM)(\.png)$/
   const match = filename.match(amPmPattern)
-  if (!match) return undefined
+  if (!match) {
+    return undefined
+  }
 
   const currentSpace = match[2]
   const alternateSpace = currentSpace === ' ' ? THIN_SPACE : ' '
@@ -157,7 +162,9 @@ export function registerFileReadListener(listener: FileReadListener): () => void
   fileReadListeners.push(listener)
   return () => {
     const i = fileReadListeners.indexOf(listener)
-    if (i >= 0) fileReadListeners.splice(i, 1)
+    if (i >= 0) {
+      fileReadListeners.splice(i, 1)
+    }
   }
 }
 
@@ -689,7 +696,9 @@ const memoryFileMtimes = new WeakMap<object, number>()
 
 function memoryFileFreshnessPrefix(data: object): string {
   const mtimeMs = memoryFileMtimes.get(data)
-  if (mtimeMs === undefined) return ''
+  if (mtimeMs === undefined) {
+    return ''
+  }
   return memoryFreshnessNote(mtimeMs)
 }
 
@@ -701,7 +710,9 @@ async function validateContentTokens(
   const effectiveMaxTokens = maxTokens ?? getDefaultFileReadingLimits().maxTokens
 
   const tokenEstimate = roughTokenCountEstimationForFileType(content, ext)
-  if (!tokenEstimate || tokenEstimate <= effectiveMaxTokens / 4) return
+  if (!tokenEstimate || tokenEstimate <= effectiveMaxTokens / 4) {
+    return
+  }
 
   const tokenCount = await countTokensWithAPI(content)
   const effectiveCount = tokenCount ?? tokenEstimate
@@ -1049,7 +1060,9 @@ export async function readImageWithTokenBudget(
       resized.dimensions,
     )
   } catch (e) {
-    if (e instanceof ImageResizeError) throw e
+    if (e instanceof ImageResizeError) {
+      throw e
+    }
     logError(e)
     result = createImageResponse(imageBuffer, detectedFormat, originalSize)
   }
@@ -1076,7 +1089,7 @@ export async function readImageWithTokenBudget(
       logError(e)
       // Fallback: heavily compressed version from the SAME buffer
       try {
-        // @ts-ignore TS2307
+        // @ts-expect-error TS2307
         const sharpModule = await import('sharp')
         const sharp =
           (
@@ -1106,4 +1119,5 @@ export async function readImageWithTokenBudget(
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(FileReadTool)

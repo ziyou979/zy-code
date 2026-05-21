@@ -3,8 +3,8 @@
  * 仅在 CONTEXT_COLLAPSE feature 启用时编译。
  */
 
-import { buildTool, type ToolDef } from '../../Tool.js'
 import { z } from 'zod/v4'
+import { buildTool, type ToolDef } from '../../Tool.js'
 
 const DESCRIPTION =
   'Inspect a previously collapsed context span by its collapse ID. Returns the original summary or placeholder content for that span. Useful when the model needs to recall details from a collapsed portion of the conversation.'
@@ -71,4 +71,5 @@ export const CtxInspectTool = buildTool({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(CtxInspectTool)

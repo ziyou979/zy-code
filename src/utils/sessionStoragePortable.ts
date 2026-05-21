@@ -6,9 +6,9 @@
  * extension (packages/zy-vscode/src/common-host/sessionStorage.ts).
  */
 
-import type { UUID } from 'crypto'
-import { open as fsOpen, readdir, realpath, stat } from 'fs/promises'
-import { join } from 'path'
+import type { UUID } from 'node:crypto'
+import { open as fsOpen, readdir, realpath, stat } from 'node:fs/promises'
+import { join } from 'node:path'
 import { getZyConfigHomeDir } from './envUtils.js'
 import { getWorktreePathsPortable } from './getWorktreePathsPortable.js'
 import { djb2Hash } from './hash.js'
@@ -23,7 +23,9 @@ export const LITE_READ_BUF_SIZE = 65536
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export function validateUuid(maybeUuid: unknown): UUID | null {
-  if (typeof maybeUuid !== 'string') return null
+  if (typeof maybeUuid !== 'string') {
+    return null
+  }
   return uuidRegex.test(maybeUuid) ? (maybeUuid as UUID) : null
 }
 
@@ -36,7 +38,9 @@ export function validateUuid(maybeUuid: unknown): UUID | null {
  * Only allocates a new string when escape sequences are present.
  */
 export function unescapeJsonString(raw: string): string {
-  if (!raw.includes('\\')) return raw
+  if (!raw.includes('\\')) {
+    return raw
+  }
   try {
     return JSON.parse(`"${raw}"`)
   } catch {
@@ -53,7 +57,9 @@ export function extractJsonStringField(text: string, key: string): string | unde
   const patterns = [`"${key}":"`, `"${key}": "`]
   for (const pattern of patterns) {
     const idx = text.indexOf(pattern)
-    if (idx < 0) continue
+    if (idx < 0) {
+      continue
+    }
 
     const valueStart = idx + pattern.length
     let i = valueStart
@@ -82,7 +88,9 @@ export function extractLastJsonStringField(text: string, key: string): string | 
     let searchFrom = 0
     while (true) {
       const idx = text.indexOf(pattern, searchFrom)
-      if (idx < 0) break
+      if (idx < 0) {
+        break
+      }
 
       const valueStart = idx + pattern.length
       let i = valueStart
@@ -132,18 +140,29 @@ export function extractFirstPromptFromHead(head: string): string {
     const line = newlineIdx >= 0 ? head.slice(start, newlineIdx) : head.slice(start)
     start = newlineIdx >= 0 ? newlineIdx + 1 : head.length
 
-    if (!line.includes('"type":"user"') && !line.includes('"type": "user"')) continue
-    if (line.includes('"tool_result"')) continue
-    if (line.includes('"isMeta":true') || line.includes('"isMeta": true')) continue
-    if (line.includes('"isCompactSummary":true') || line.includes('"isCompactSummary": true'))
+    if (!line.includes('"type":"user"') && !line.includes('"type": "user"')) {
       continue
+    }
+    if (line.includes('"tool_result"')) {
+      continue
+    }
+    if (line.includes('"isMeta":true') || line.includes('"isMeta": true')) {
+      continue
+    }
+    if (line.includes('"isCompactSummary":true') || line.includes('"isCompactSummary": true')) {
+      continue
+    }
 
     try {
       const entry = JSON.parse(line) as Record<string, unknown>
-      if (entry.type !== 'user') continue
+      if (entry.type !== 'user') {
+        continue
+      }
 
       const message = entry.message as Record<string, unknown> | undefined
-      if (!message) continue
+      if (!message) {
+        continue
+      }
 
       const content = message.content
       const texts: string[] = []
@@ -159,31 +178,39 @@ export function extractFirstPromptFromHead(head: string): string {
 
       for (const raw of texts) {
         let result = raw.replace(/\n/g, ' ').trim()
-        if (!result) continue
+        if (!result) {
+          continue
+        }
 
         // Skip slash-command messages but remember first as fallback
         const cmdMatch = COMMAND_NAME_RE.exec(result)
         if (cmdMatch) {
-          if (!commandFallback) commandFallback = cmdMatch[1]!
+          if (!commandFallback) {
+            commandFallback = cmdMatch[1]!
+          }
           continue
         }
 
         // Format bash input with ! prefix before the generic XML skip
         const bashMatch = /<bash-input>([\s\S]*?)<\/bash-input>/.exec(result)
-        if (bashMatch) return `! ${bashMatch[1]!.trim()}`
+        if (bashMatch) {
+          return `! ${bashMatch[1]!.trim()}`
+        }
 
-        if (SKIP_FIRST_PROMPT_PATTERN.test(result)) continue
+        if (SKIP_FIRST_PROMPT_PATTERN.test(result)) {
+          continue
+        }
 
         if (result.length > 200) {
-          result = result.slice(0, 200).trim() + '\u2026'
+          result = `${result.slice(0, 200).trim()}\u2026`
         }
         return result
       }
-    } catch {
-      continue
-    }
+    } catch {}
   }
-  if (commandFallback) return commandFallback
+  if (commandFallback) {
+    return commandFallback
+  }
   return ''
 }
 
@@ -207,7 +234,9 @@ export async function readHeadAndTail(
     const fh = await fsOpen(filePath, 'r')
     try {
       const headResult = await fh.read(buf, 0, LITE_READ_BUF_SIZE, 0)
-      if (headResult.bytesRead === 0) return { head: '', tail: '' }
+      if (headResult.bytesRead === 0) {
+        return { head: '', tail: '' }
+      }
 
       const head = buf.toString('utf8', 0, headResult.bytesRead)
 
@@ -246,7 +275,9 @@ export async function readSessionLite(filePath: string): Promise<LiteSessionFile
       const stat = await fh.stat()
       const buf = Buffer.allocUnsafe(LITE_READ_BUF_SIZE)
       const headResult = await fh.read(buf, 0, LITE_READ_BUF_SIZE, 0)
-      if (headResult.bytesRead === 0) return null
+      if (headResult.bytesRead === 0) {
+        return null
+      }
 
       const head = buf.toString('utf8', 0, headResult.bytesRead)
       const tailOffset = Math.max(0, stat.size - LITE_READ_BUF_SIZE)
@@ -350,7 +381,7 @@ export async function findProjectDir(projectPath: string): Promise<string | unde
     const projectsDir = getProjectsDir()
     try {
       const dirents = await readdir(projectsDir, { withFileTypes: true })
-      const match = dirents.find((d) => d.isDirectory() && d.name.startsWith(prefix + '-'))
+      const match = dirents.find((d) => d.isDirectory() && d.name.startsWith(`${prefix}-`))
       return match ? join(projectsDir, match.name) : undefined
     } catch {
       return undefined
@@ -392,7 +423,9 @@ export async function resolveSessionFilePath(
       const filePath = join(projectDir, fileName)
       try {
         const s = await stat(filePath)
-        if (s.size > 0) return { filePath, projectPath: canonical, fileSize: s.size }
+        if (s.size > 0) {
+          return { filePath, projectPath: canonical, fileSize: s.size }
+        }
       } catch {
         // ENOENT/EACCES — keep searching
       }
@@ -405,13 +438,19 @@ export async function resolveSessionFilePath(
       worktreePaths = []
     }
     for (const wt of worktreePaths) {
-      if (wt === canonical) continue
+      if (wt === canonical) {
+        continue
+      }
       const wtProjectDir = await findProjectDir(wt)
-      if (!wtProjectDir) continue
+      if (!wtProjectDir) {
+        continue
+      }
       const filePath = join(wtProjectDir, fileName)
       try {
         const s = await stat(filePath)
-        if (s.size > 0) return { filePath, projectPath: wt, fileSize: s.size }
+        if (s.size > 0) {
+          return { filePath, projectPath: wt, fileSize: s.size }
+        }
       } catch {
         // ENOENT/EACCES — keep searching
       }
@@ -431,7 +470,9 @@ export async function resolveSessionFilePath(
     const filePath = join(projectsDir, name, fileName)
     try {
       const s = await stat(filePath)
-      if (s.size > 0) return { filePath, projectPath: undefined, fileSize: s.size }
+      if (s.size > 0) {
+        return { filePath, projectPath: undefined, fileSize: s.size }
+      }
     } catch {
       // ENOENT/ENOTDIR — not in this project, keep scanning
     }
@@ -496,7 +537,9 @@ type Sink = { buf: Buffer; len: number; cap: number }
 
 function sinkWrite(s: Sink, src: Buffer, start: number, end: number): void {
   const n = end - start
-  if (n <= 0) return
+  if (n <= 0) {
+    return
+  }
   if (s.len + n > s.buf.length) {
     const grown = Buffer.allocUnsafe(Math.min(Math.max(s.buf.length * 2, s.len + n), s.cap))
     s.buf.copy(grown, 0, 0, s.len)
@@ -536,10 +579,14 @@ type LoadState = {
 function processStraddle(s: LoadState, chunk: Buffer, bytesRead: number): number {
   s.straddleSnapCarryLen = 0
   s.straddleSnapTailEnd = 0
-  if (s.carryLen === 0) return 0
+  if (s.carryLen === 0) {
+    return 0
+  }
   const cb = s.carryBuf!
   const firstNl = chunk.indexOf(LF)
-  if (firstNl === -1 || firstNl >= bytesRead) return 0
+  if (firstNl === -1 || firstNl >= bytesRead) {
+    return 0
+  }
   const tailEnd = firstNl + 1
   if (hasPrefix(cb, ATTR_SNAP_PREFIX, 0, s.carryLen)) {
     s.straddleSnapCarryLen = s.carryLen
@@ -716,7 +763,9 @@ export async function readTranscriptForLoad(
         Math.min(CHUNK_SIZE, fileSize - filePos),
         filePos,
       )
-      if (bytesRead === 0) break
+      if (bytesRead === 0) {
+        break
+      }
       filePos += bytesRead
 
       const chunkOff = processStraddle(s, chunk, bytesRead)

@@ -1,7 +1,7 @@
-import { ExportResultCode, type ExportResult } from '@opentelemetry/core'
+import { appendFileSync, mkdirSync } from 'node:fs'
+import { join } from 'node:path'
+import { type ExportResult, ExportResultCode } from '@opentelemetry/core'
 import type { LogRecordExporter, ReadableLogRecord } from '@opentelemetry/sdk-logs'
-import { appendFileSync, mkdirSync } from 'fs'
-import { join } from 'path'
 
 /**
  * Local-only exporter that writes all events to a local file
@@ -36,7 +36,7 @@ export class LocalFileExporter implements LogRecordExporter {
           body: log.body,
           attributes: log.attributes,
         }
-        appendFileSync(this.logFile, JSON.stringify(entry) + '\n', 'utf8')
+        appendFileSync(this.logFile, `${JSON.stringify(entry)}\n`, 'utf8')
       }
       resultCallback({ code: ExportResultCode.SUCCESS })
     } catch {

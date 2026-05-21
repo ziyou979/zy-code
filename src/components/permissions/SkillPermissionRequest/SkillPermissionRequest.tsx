@@ -1,4 +1,4 @@
-import React from 'react'
+import { tSync } from 'src/i18n/index.js'
 import { logError } from 'src/utils/log.js'
 import { getOriginalCwd } from '../../../bootstrap/state.js'
 import { Box, Text } from '../../../ink.js'
@@ -12,7 +12,7 @@ import { usePermissionRequestLogging } from '../hooks.js'
 import { PermissionDialog } from '../PermissionDialog.js'
 import { PermissionPrompt } from '../PermissionPrompt.js'
 import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js'
-import { tSync } from 'src/i18n/index.js'
+
 type SkillOptionValue = 'yes' | 'yes-exact' | 'yes-prefix' | 'no'
 export function SkillPermissionRequest(props) {
   const { toolUseConfirm, onDone, onReject, workerBadge } = props
@@ -62,7 +62,7 @@ export function SkillPermissionRequest(props) {
         label: (
           <Text>
             {tSync('permission.yesDontAskAgainCommands', {
-              name: commandPrefix + ':*',
+              name: `${commandPrefix}:*`,
               cwd: originalCwd,
             })}
           </Text>

@@ -14,8 +14,8 @@ import { lazySchema } from '../lazySchema.js'
 // 为向后兼容而重新导出
 export {
   EXTERNAL_PERMISSION_MODES,
-  PERMISSION_MODES,
   type ExternalPermissionMode,
+  PERMISSION_MODES,
   type PermissionMode,
 }
 

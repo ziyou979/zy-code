@@ -1,5 +1,6 @@
-import { join } from 'path'
+import { join } from 'node:path'
 import React, { useCallback, useState } from 'react'
+import { tSync } from 'src/i18n/index.js'
 import type { ExitState } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { setClipboard } from '../ink/termio/osc.js'
@@ -13,7 +14,7 @@ import { Byline } from './design-system/Byline.js'
 import { Dialog } from './design-system/Dialog.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 import TextInput from './TextInput.js'
-import { tSync } from 'src/i18n/index.js'
+
 type ExportDialogProps = {
   content: string
   defaultFilename: string
@@ -40,7 +41,9 @@ export function ExportDialog({
     if (value === 'clipboard') {
       // 立即复制到剪贴板
       const raw = await setClipboard(content)
-      if (raw) process.stdout.write(raw)
+      if (raw) {
+        process.stdout.write(raw)
+      }
       onDone({
         success: true,
         message: tSync('export.successClipboard'),
@@ -53,7 +56,7 @@ export function ExportDialog({
   const handleFilenameSubmit = () => {
     const finalFilename = filename.endsWith('.txt')
       ? filename
-      : filename.replace(/\.[^.]+$/, '') + '.txt'
+      : `${filename.replace(/\.[^.]+$/, '')}.txt`
     const filepath = join(getCwd(), finalFilename)
     try {
       writeFileSync_DEPRECATED(filepath, content, {

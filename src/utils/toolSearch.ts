@@ -23,12 +23,10 @@ import {
 import type { Message } from '../types/message.js'
 import { countToolDefinitionTokens, TOOL_TOKEN_COUNT_OVERHEAD } from './analyzeContext.js'
 import { count } from './array.js'
-import { getMergedBetas } from './betas.js'
 import { getContextWindowForModel } from './context.js'
 import { logForDebugging } from './debug.js'
-import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { getAPIProvider, isAnthropicBaseUrl } from './model/providers.js'
-import { isInternalBuild } from './envUtils.js'
 import { jsonStringify } from './slowOperations.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
 
@@ -44,12 +42,14 @@ const DEFAULT_AUTO_TOOL_SEARCH_PERCENTAGE = 10 // 10%
  * Returns the percentage clamped to 0-100, or null if not auto:N format or not a number.
  */
 function parseAutoPercentage(value: string): number | null {
-  if (!value.startsWith('auto:')) return null
+  if (!value.startsWith('auto:')) {
+    return null
+  }
 
   const percentStr = value.slice(5)
   const percent = parseInt(percentStr, 10)
 
-  if (isNaN(percent)) {
+  if (Number.isNaN(percent)) {
     logForDebugging(
       `Invalid ENABLE_TOOL_SEARCH value "${value}": expected auto:N where N is a number.`,
     )
@@ -64,7 +64,9 @@ function parseAutoPercentage(value: string): number | null {
  * Check if ENABLE_TOOL_SEARCH is set to auto mode (auto or auto:N).
  */
 function isAutoToolSearchMode(value: string | undefined): boolean {
-  if (!value) return false
+  if (!value) {
+    return false
+  }
   return value === 'auto' || value.startsWith('auto:')
 }
 
@@ -73,12 +75,18 @@ function isAutoToolSearchMode(value: string | undefined): boolean {
  */
 function getAutoToolSearchPercentage(): number {
   const value = process.env.ENABLE_TOOL_SEARCH
-  if (!value) return DEFAULT_AUTO_TOOL_SEARCH_PERCENTAGE
+  if (!value) {
+    return DEFAULT_AUTO_TOOL_SEARCH_PERCENTAGE
+  }
 
-  if (value === 'auto') return DEFAULT_AUTO_TOOL_SEARCH_PERCENTAGE
+  if (value === 'auto') {
+    return DEFAULT_AUTO_TOOL_SEARCH_PERCENTAGE
+  }
 
   const parsed = parseAutoPercentage(value)
-  if (parsed !== null) return parsed
+  if (parsed !== null) {
+    return parsed
+  }
 
   return DEFAULT_AUTO_TOOL_SEARCH_PERCENTAGE
 }
@@ -119,7 +127,9 @@ const getDeferredToolTokenCount = memoize(
     model: string,
   ): Promise<number | null> => {
     const deferredTools = tools.filter((t) => isDeferredTool(t))
-    if (deferredTools.length === 0) return 0
+    if (deferredTools.length === 0) {
+      return 0
+    }
 
     try {
       const total = await countToolDefinitionTokens(
@@ -128,7 +138,9 @@ const getDeferredToolTokenCount = memoize(
         { activeAgents: agents, allAgents: agents },
         model,
       )
-      if (total === 0) return null // API unavailable
+      if (total === 0) {
+        return null // API unavailable
+      }
       return Math.max(0, total - TOOL_TOKEN_COUNT_OVERHEAD)
     } catch {
       return null // Fall back to char heuristic
@@ -176,14 +188,22 @@ export function getToolSearchMode(): ToolSearchMode {
 
   // Handle auto:N syntax - check edge cases first
   const autoPercent = value ? parseAutoPercentage(value) : null
-  if (autoPercent === 0) return 'tst' // auto:0 = always enabled
-  if (autoPercent === 100) return 'standard'
+  if (autoPercent === 0) {
+    return 'tst' // auto:0 = always enabled
+  }
+  if (autoPercent === 100) {
+    return 'standard'
+  }
   if (isAutoToolSearchMode(value)) {
     return 'tst-auto' // auto or auto:1-99
   }
 
-  if (isEnvTruthy(value)) return 'tst'
-  if (isEnvDefinedFalsy(process.env.ENABLE_TOOL_SEARCH)) return 'standard'
+  if (isEnvTruthy(value)) {
+    return 'tst'
+  }
+  if (isEnvDefinedFalsy(process.env.ENABLE_TOOL_SEARCH)) {
+    return 'standard'
+  }
   return 'tst' // default: always defer MCP and shouldDefer tools
 }
 
@@ -331,7 +351,9 @@ async function calculateDeferredToolDescriptionChars(
   agents: AgentDefinition[],
 ): Promise<number> {
   const deferredTools = tools.filter((t) => isDeferredTool(t))
-  if (deferredTools.length === 0) return 0
+  if (deferredTools.length === 0) {
+    return 0
+  }
 
   const sizes = await Promise.all(
     deferredTools.map(async (tool) => {
@@ -437,14 +459,14 @@ export async function isToolSearchEnabled(
 
       if (enabled) {
         logForDebugging(
-          `Auto tool search enabled: ${debugDescription}` + (source ? ` [source: ${source}]` : ''),
+          `Auto tool search enabled: ${debugDescription}${source ? ` [source: ${source}]` : ''}`,
         )
         logModeDecision(true, mode, 'auto_above_threshold', metrics)
         return true
       }
 
       logForDebugging(
-        `Auto tool search disabled: ${debugDescription}` + (source ? ` [source: ${source}]` : ''),
+        `Auto tool search disabled: ${debugDescription}${source ? ` [source: ${source}]` : ''}`,
       )
       logModeDecision(false, mode, 'auto_below_threshold', metrics)
       return false
@@ -537,17 +559,23 @@ export function extractDiscoveredToolNames(messages: Message[]): Set<string> {
     if (msg.type === 'system' && msg.subtype === 'compact_boundary') {
       const carried = (msg.compactMetadata as any)?.preCompactDiscoveredTools
       if (carried) {
-        for (const name of carried) discoveredTools.add(name)
+        for (const name of carried) {
+          discoveredTools.add(name)
+        }
         carriedFromBoundary += carried.length
       }
       continue
     }
 
     // Only user messages contain tool_result blocks (responses to tool_use)
-    if (msg.type !== 'user') continue
+    if (msg.type !== 'user') {
+      continue
+    }
 
     const content = msg.message?.content
-    if (!Array.isArray(content)) continue
+    if (!Array.isArray(content)) {
+      continue
+    }
 
     for (const block of content) {
       // tool_reference blocks only appear inside tool_result content, specifically
@@ -632,13 +660,21 @@ export function getDeferredToolsDelta(
   let dtdCount = 0
   const attachmentTypesSeen = new Set<string>()
   for (const msg of messages) {
-    if (msg.type !== 'attachment') continue
+    if (msg.type !== 'attachment') {
+      continue
+    }
     attachmentCount++
     attachmentTypesSeen.add(msg.attachment.type)
-    if (msg.attachment.type !== 'deferred_tools_delta') continue
+    if (msg.attachment.type !== 'deferred_tools_delta') {
+      continue
+    }
     dtdCount++
-    for (const n of (msg.attachment as any).addedNames) announced.add(n)
-    for (const n of (msg.attachment as any).removedNames) announced.delete(n)
+    for (const n of (msg.attachment as any).addedNames) {
+      announced.add(n)
+    }
+    for (const n of (msg.attachment as any).removedNames) {
+      announced.delete(n)
+    }
   }
 
   const deferred: Tool[] = tools.filter(isDeferredTool)
@@ -648,12 +684,18 @@ export function getDeferredToolsDelta(
   const added = deferred.filter((t) => !announced.has(t.name))
   const removed: string[] = []
   for (const n of announced) {
-    if (deferredNames.has(n)) continue
-    if (!poolNames.has(n)) removed.push(n)
+    if (deferredNames.has(n)) {
+      continue
+    }
+    if (!poolNames.has(n)) {
+      removed.push(n)
+    }
     // else: undeferred — silent
   }
 
-  if (added.length === 0 && removed.length === 0) return null
+  if (added.length === 0 && removed.length === 0) {
+    return null
+  }
 
   // Diagnostic for the inc-4747 scan-finds-nothing bug. Round-1 fields
   // (messagesLength/attachmentCount/dtdCount from #23167) showed 45.6% of

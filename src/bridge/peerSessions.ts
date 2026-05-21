@@ -3,8 +3,8 @@
  * This is a stub implementation for external builds.
  */
 export async function postInterZyMessage(
-  target: string,
-  message: string,
+  _target: string,
+  _message: string,
 ): Promise<{ ok: boolean; error?: string }> {
   // Stub: always fails in external builds since peer sessions are not supported
   return {

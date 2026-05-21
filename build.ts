@@ -1,12 +1,13 @@
 #!/usr/bin/env bun
+
 /**
  * Build script for ZY Code.
  * Uses Bun's native bundler. All feature() flags default to false,
  * which DCEs internal-only code paths (BRIDGE_MODE, DAEMON, etc.).
  */
 
-import { join, resolve } from 'path'
-import { readdirSync } from 'fs'
+import { readdirSync } from 'node:fs'
+import { join, resolve } from 'node:path'
 
 const root = import.meta.dir
 const srcDir = join(root, 'src')
@@ -45,7 +46,7 @@ const reactCompilerRuntime = resolve(root, 'node_modules/react-compiler-runtime/
 
 console.log(`Building target: ${target}`)
 const entrypoints = resolveEntrypoints()
-console.log(`Entrypoints: ${entrypoints.map((e) => e.replace(root + '/', '')).join(', ')}`)
+console.log(`Entrypoints: ${entrypoints.map((e) => e.replace(`${root}/`, '')).join(', ')}`)
 
 const result = await Bun.build({
   entrypoints,

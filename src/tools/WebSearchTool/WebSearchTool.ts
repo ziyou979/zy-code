@@ -1,20 +1,19 @@
-import type { ContentBlock } from '../../types/llm.js'
+import { z } from 'zod/v4'
 import type {
   SearchOptions,
   SearchResult as ServiceSearchResult,
 } from '../../services/search/index.js'
 import { createFallbackSearchProvider } from '../../services/search/index.js'
-import { modelHasCapability } from '../../utils/model/providers.js'
-
-import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
-import { z } from 'zod/v4'
 import { buildTool, type ToolDef } from '../../Tool.js'
+import type { ContentBlock } from '../../types/llm.js'
+import { logForDebugging } from '../../utils/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
-import { logForDebugging } from '../../utils/debug.js'
 import { getMainLoopModel } from '../../utils/model/model.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { modelHasCapability } from '../../utils/model/providers.js'
+import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
 import { getWebSearchPrompt, WEB_SEARCH_TOOL_NAME } from './prompt.js'
 import {
   getToolUseSummary,
@@ -90,7 +89,9 @@ export const WebSearchTool = buildTool({
   },
   isEnabled() {
     const model = getMainLoopModel()
-    if (!model) return false
+    if (!model) {
+      return false
+    }
     return modelHasCapability(model, 'web_search')
   },
   get inputSchema(): InputSchema {
@@ -238,7 +239,7 @@ export const WebSearchTool = buildTool({
         return
       }
       if (typeof result === 'string') {
-        formattedOutput += result + '\n\n'
+        formattedOutput += `${result}\n\n`
       } else {
         if (result.content?.length > 0) {
           formattedOutput += `Links: ${jsonStringify(result.content)}\n\n`
@@ -302,7 +303,7 @@ async function searchViaLocalProvider(
 // 从模型文本回复中解析搜索结果（通用回退方案）
 // ---------------------------------------------------------------------------
 
-function parseResultsFromText(
+function _parseResultsFromText(
   contentBlocks: ContentBlock[],
   _query: string,
   blockedDomains?: string[],
@@ -315,7 +316,9 @@ function parseResultsFromText(
     .map((b) => (b as any).text ?? '')
     .join('\n')
 
-  if (!text) return results
+  if (!text) {
+    return results
+  }
 
   // 尝试从文本中提取 URL 和标题
   // 模型通常会以 markdown 链接格式返回：[Title](URL)
@@ -325,13 +328,17 @@ function parseResultsFromText(
     const title = match[1].trim()
     const url = match[2].trim()
 
-    if (!title || !url) continue
+    if (!title || !url) {
+      continue
+    }
 
     // 域名黑名单过滤
     if (blockedDomains && blockedDomains.length > 0) {
       try {
         const hostname = new URL(url).hostname
-        if (blockedDomains.some((d) => hostname.includes(d))) continue
+        if (blockedDomains.some((d) => hostname.includes(d))) {
+          continue
+        }
       } catch {
         // URL 解析失败，保留结果
       }
@@ -346,12 +353,16 @@ function parseResultsFromText(
     let urlMatch
     while ((urlMatch = urlRegex.exec(text)) !== null) {
       const url = urlMatch[1]
-      if (!url) continue
+      if (!url) {
+        continue
+      }
 
       if (blockedDomains && blockedDomains.length > 0) {
         try {
           const hostname = new URL(url).hostname
-          if (blockedDomains.some((d) => hostname.includes(d))) continue
+          if (blockedDomains.some((d) => hostname.includes(d))) {
+            continue
+          }
         } catch {
           continue
         }
@@ -366,4 +377,5 @@ function parseResultsFromText(
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(WebSearchTool)

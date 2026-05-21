@@ -41,7 +41,7 @@ export class DirectConnectSessionManager {
   connect(): void {
     const headers: Record<string, string> = {}
     if (this.config.authToken) {
-      headers['authorization'] = `Bearer ${this.config.authToken}`
+      headers.authorization = `Bearer ${this.config.authToken}`
     }
     // Bun's WebSocket supports headers option but the DOM typings don't
     this.ws = new WebSocket(this.config.wsUrl, {

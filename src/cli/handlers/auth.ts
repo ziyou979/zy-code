@@ -1,6 +1,7 @@
 /* eslint-disable custom-rules/no-process-exit -- CLI 子命令处理器有意退出 */
 
 import { clearAuthRelatedCaches, performLogout } from '../../commands/logout/logout.js'
+import { tSync } from '../../i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -29,7 +30,6 @@ import { saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isRunningOnHomespace } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import { tSync } from '../../i18n/index.js'
 import { logError } from '../../utils/log.js'
 import { getAPIProvider } from '../../utils/model/providers.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
@@ -109,7 +109,7 @@ export async function authLogin({
   zyai?: boolean
 }): Promise<void> {
   if (useConsole && zyai) {
-    process.stderr.write(tSync('auth.login.consoleZyaiMutualExclusive') + '\n')
+    process.stderr.write(`${tSync('auth.login.consoleZyaiMutualExclusive')}\n`)
     process.exit(1)
   }
 
@@ -127,7 +127,7 @@ export async function authLogin({
   if (envRefreshToken) {
     const envScopes = process.env.ZY_CODE_OAUTH_SCOPES
     if (!envScopes) {
-      process.stderr.write(tSync('auth.login.scopesRequired') + '\n')
+      process.stderr.write(`${tSync('auth.login.scopesRequired')}\n`)
       process.exit(1)
     }
 
@@ -141,21 +141,23 @@ export async function authLogin({
 
       const orgResult = await validateForceLoginOrg()
       if (!(orgResult as any).valid) {
-        process.stderr.write((orgResult as any).message + '\n')
+        process.stderr.write(`${(orgResult as any).message}\n`)
         process.exit(1)
       }
 
       // 标记引导完成——交互式路径通过 Onboarding 组件处理此步骤，
       // 但环境变量路径跳过了该组件。
       saveGlobalConfig((current) => {
-        if (current.hasCompletedOnboarding) return current
+        if (current.hasCompletedOnboarding) {
+          return current
+        }
         return { ...current, hasCompletedOnboarding: true }
       })
 
       logEvent('zy_oauth_success', {
         loginWithZyAi: shouldUseZyAIAuth((tokens as any).scopes),
       })
-      process.stdout.write(tSync('auth.login.successful') + '\n')
+      process.stdout.write(`${tSync('auth.login.successful')}\n`)
       process.exit(0)
     } catch (err) {
       logError(err)
@@ -163,7 +165,7 @@ export async function authLogin({
       process.stderr.write(
         tSync('auth.login.failed', { error: errorMessage(err) }) +
           '\n' +
-          (sslHint ? sslHint + '\n' : ''),
+          (sslHint ? `${sslHint}\n` : ''),
       )
       process.exit(1)
     }
@@ -178,8 +180,8 @@ export async function authLogin({
 
     const result = await oauthService.startOAuthFlow(
       async (url) => {
-        process.stdout.write(tSync('auth.login.openingBrowser') + '\n')
-        process.stdout.write(tSync('auth.login.visitUrl', { url }) + '\n')
+        process.stdout.write(`${tSync('auth.login.openingBrowser')}\n`)
+        process.stdout.write(`${tSync('auth.login.visitUrl', { url })}\n`)
       },
       {
         loginWithZyAi,
@@ -193,13 +195,13 @@ export async function authLogin({
 
     const orgResult = await validateForceLoginOrg()
     if (!(orgResult as any).valid) {
-      process.stderr.write((orgResult as any).message + '\n')
+      process.stderr.write(`${(orgResult as any).message}\n`)
       process.exit(1)
     }
 
     logEvent('zy_oauth_success', { loginWithZyAi })
 
-    process.stdout.write(tSync('auth.login.successful') + '\n')
+    process.stdout.write(`${tSync('auth.login.successful')}\n`)
     process.exit(0)
   } catch (err) {
     logError(err)
@@ -207,7 +209,7 @@ export async function authLogin({
     process.stderr.write(
       tSync('auth.login.failed', { error: errorMessage(err) }) +
         '\n' +
-        (sslHint ? sslHint + '\n' : ''),
+        (sslHint ? `${sslHint}\n` : ''),
     )
     process.exit(1)
   } finally {
@@ -260,10 +262,10 @@ export async function authStatus(opts: { json?: boolean; text?: boolean }): Prom
       }
     }
     if (!hasAuthProperty && hasApiKeyEnvVar) {
-      process.stdout.write(tSync('auth.status.apiKeyEnvVar') + '\n')
+      process.stdout.write(`${tSync('auth.status.apiKeyEnvVar')}\n`)
     }
     if (!loggedIn) {
-      process.stdout.write(tSync('auth.status.notLoggedIn') + '\n')
+      process.stdout.write(`${tSync('auth.status.notLoggedIn')}\n`)
     }
   } else {
     const apiProvider = getAPIProvider()
@@ -283,7 +285,7 @@ export async function authStatus(opts: { json?: boolean; text?: boolean }): Prom
       output.orgName = oauthAccount?.organizationName ?? null
     }
 
-    process.stdout.write(jsonStringify(output, null, 2) + '\n')
+    process.stdout.write(`${jsonStringify(output, null, 2)}\n`)
   }
   process.exit(loggedIn ? 0 : 1)
 }
@@ -292,9 +294,9 @@ export async function authLogout(): Promise<void> {
   try {
     await performLogout({ clearOnboarding: false })
   } catch {
-    process.stderr.write(tSync('auth.logout.failed') + '\n')
+    process.stderr.write(`${tSync('auth.logout.failed')}\n`)
     process.exit(1)
   }
-  process.stdout.write(tSync('auth.logout.successful') + '\n')
+  process.stdout.write(`${tSync('auth.logout.successful')}\n`)
   process.exit(0)
 }

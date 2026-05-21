@@ -1,4 +1,4 @@
-import type { UUID } from 'crypto'
+import type { UUID } from 'node:crypto'
 import { getSessionId } from '../../bootstrap/state.js'
 import { getBridgeBaseUrlOverride, getBridgeTokenOverride } from '../../bridge/bridgeConfig.js'
 import type { ToolUseContext } from '../../Tool.js'

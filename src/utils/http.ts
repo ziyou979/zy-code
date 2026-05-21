@@ -3,8 +3,8 @@
  */
 
 import axios from 'axios'
-import { getAPIProvider, isOpenAIProvider } from './model/providers.js'
 import { getApiKey, getZyAIOAuthTokens, handleOAuth401Error } from './auth.js'
+import { getAPIProvider, isOpenAIProvider } from './model/providers.js'
 import { getZyCodeUserAgent } from './userAgent.js'
 import { getWorkload } from './workloadContext.js'
 
@@ -109,7 +109,9 @@ export async function withOAuth401Retry<T>(
   try {
     return await request()
   } catch (err) {
-    if (!axios.isAxiosError(err)) throw err
+    if (!axios.isAxiosError(err)) {
+      throw err
+    }
     const status = err.response?.status
     const isAuthError =
       status === 401 ||
@@ -117,9 +119,13 @@ export async function withOAuth401Retry<T>(
         status === 403 &&
         typeof err.response?.data === 'string' &&
         err.response.data.includes('OAuth token has been revoked'))
-    if (!isAuthError) throw err
+    if (!isAuthError) {
+      throw err
+    }
     const failedAccessToken = getZyAIOAuthTokens()?.accessToken
-    if (!failedAccessToken) throw err
+    if (!failedAccessToken) {
+      throw err
+    }
     await handleOAuth401Error(failedAccessToken)
     return await request()
   }

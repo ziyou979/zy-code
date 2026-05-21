@@ -2,13 +2,13 @@
 /**
  * Hook 是用户自定义的 shell 命令，可在 ZY Code 生命周期的各个节点执行。
  */
-import { basename } from 'path'
-import { spawn, type ChildProcessWithoutNullStreams } from 'child_process'
+import { basename } from 'node:path'
+import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
 import { pathExists } from './file.js'
 import { wrapSpawn } from './ShellCommand.js'
 import { TaskOutput } from './task/TaskOutput.js'
 import { getCwd } from './cwd.js'
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import { formatShellPrefixCommand } from './bash/shellPrefix.js'
 import { getHookEnvFilePath, invalidateSessionEnvCache } from './sessionEnvironment.js'
 import { subprocessEnv } from './subprocessEnv.js'
@@ -91,7 +91,7 @@ import type {
   AsyncHookJSONOutput,
 } from 'src/entrypoints/agentSdkTypes.js'
 import type { ElicitResult } from '@modelcontextprotocol/sdk/types.js'
-// @ts-ignore
+// @ts-expect-error
 import type { FileSuggestionCommandInput } from '../types/fileSuggestion.js'
 import type { HookResultMessage } from 'src/types/message.js'
 import chalk from 'chalk'
@@ -436,7 +436,7 @@ function parseHttpHookOutput(body: string): {
   }
 
   if (!trimmed.startsWith('{')) {
-    const validationError = `HTTP hook must return JSON, but got non-JSON response body: ${trimmed.length > 200 ? trimmed.slice(0, 200) + '\u2026' : trimmed}`
+    const validationError = `HTTP hook must return JSON, but got non-JSON response body: ${trimmed.length > 200 ? `${trimmed.slice(0, 200)}\u2026` : trimmed}`
     logForDebugging(validationError)
     return { validationError }
   }
@@ -944,7 +944,7 @@ async function execCommandHook(
     // bash `read -r line` 返回退出码 1（定界符前遇到 EOF）——
     // 变量确实被填充了，但 `if read -r line; then ...` 会跳过
     // 该分支。参见 gh-30509 / CC-161。
-    child.stdin.write(jsonInput + '\n', 'utf8')
+    child.stdin.write(`${jsonInput}\n`, 'utf8')
     child.stdin.end()
     stdinWritten = true
 
@@ -1013,7 +1013,9 @@ async function execCommandHook(
 
       for (const line of lines) {
         const trimmed = line.trim()
-        if (!trimmed) continue
+        if (!trimmed) {
+          continue
+        }
 
         try {
           const parsed = jsonParse(trimmed)
@@ -1027,7 +1029,7 @@ async function execCommandHook(
             promptChain = promptChain.then(async () => {
               try {
                 const response = await reqPrompt(promptReq)
-                child.stdin.write(jsonStringify(response) + '\n', 'utf8')
+                child.stdin.write(`${jsonStringify(response)}\n`, 'utf8')
               } catch (err) {
                 logForDebugging(`Hooks: Prompt request handling failed: ${err}`)
                 // 用户取消或 prompt 失败——关闭 stdin 以防 hook
@@ -1035,7 +1037,6 @@ async function execCommandHook(
                 child.stdin.destroy()
               }
             })
-            continue
           }
         } catch {
           // 非 JSON，只是普通行
@@ -1050,7 +1051,9 @@ async function execCommandHook(
     // and an async hook blocks for its full duration instead of backgrounding.
     if (!initialResponseChecked) {
       const firstLine = firstLineOf(stdout).trim()
-      if (!firstLine.includes('}')) return
+      if (!firstLine.includes('}')) {
+        return
+      }
       initialResponseChecked = true
       logForDebugging(`Hooks: Checking first line for async: ${firstLine}`)
       try {
@@ -1133,7 +1136,7 @@ async function execCommandHook(
           }
         })
         // Explicitly specify UTF-8 encoding to ensure proper handling of Unicode characters
-        child.stdin.write(jsonInput + '\n', 'utf8')
+        child.stdin.write(`${jsonInput}\n`, 'utf8')
         // When requestPrompt is provided, keep stdin open for prompt responses
         if (!requestPrompt) {
           child.stdin.end()
@@ -1494,10 +1497,16 @@ function hasHookForEvent(
   sessionId: string,
 ): boolean {
   const snap = getHooksConfigFromSnapshot()?.[hookEvent]
-  if (snap && snap.length > 0) return true
+  if (snap && snap.length > 0) {
+    return true
+  }
   const reg = getRegisteredHooks()?.[hookEvent]
-  if (reg && reg.length > 0) return true
-  if (appState?.sessionHooks.get(sessionId)?.hooks[hookEvent]) return true
+  if (reg && reg.length > 0) {
+    return true
+  }
+  if (appState?.sessionHooks.get(sessionId)?.hooks[hookEvent]) {
+    return true
+  }
   return false
 }
 
@@ -1521,7 +1530,7 @@ export async function getMatchingHooks(
 
     // 如果更改以下条件，必须同时更改
     // src/utils/hooks/hooksConfigManager.ts。
-    let matchQuery: string | undefined = undefined
+    let matchQuery: string | undefined
     switch (hookInput.hook_event_name) {
       case 'PreToolUse':
       case 'PostToolUse':
@@ -3398,7 +3407,9 @@ export async function executeStopFailureHooks(
   // hooks (registerFrontmatterHooks) key by agentId; gating with agentId here
   // would pass the gate but fail execution. Align gate with execution.
   const sessionId = getSessionId()
-  if (!hasHookForEvent('StopFailure', appState, sessionId)) return
+  if (!hasHookForEvent('StopFailure', appState, sessionId)) {
+    return
+  }
 
   const contentBlocks = Array.isArray(lastMessage.message.content)
     ? lastMessage.message.content
@@ -4109,10 +4120,14 @@ export type InstructionsMemoryType = 'User' | 'Project' | 'Local' | 'Managed'
  * derived hooks (structured output enforcement etc.) are internal and not checked.
  */
 export function hasInstructionsLoadedHook(): boolean {
-  const snapshotHooks = getHooksConfigFromSnapshot()?.['InstructionsLoaded']
-  if (snapshotHooks && snapshotHooks.length > 0) return true
-  const registeredHooks = getRegisteredHooks()?.['InstructionsLoaded']
-  if (registeredHooks && registeredHooks.length > 0) return true
+  const snapshotHooks = getHooksConfigFromSnapshot()?.InstructionsLoaded
+  if (snapshotHooks && snapshotHooks.length > 0) {
+    return true
+  }
+  const registeredHooks = getRegisteredHooks()?.InstructionsLoaded
+  if (registeredHooks && registeredHooks.length > 0) {
+    return true
+  }
   return false
 }
 
@@ -4602,10 +4617,14 @@ async function executeHookCallback({
  * blocking the git-worktree fallback.
  */
 export function hasWorktreeCreateHook(): boolean {
-  const snapshotHooks = getHooksConfigFromSnapshot()?.['WorktreeCreate']
-  if (snapshotHooks && snapshotHooks.length > 0) return true
-  const registeredHooks = getRegisteredHooks()?.['WorktreeCreate']
-  if (!registeredHooks || registeredHooks.length === 0) return false
+  const snapshotHooks = getHooksConfigFromSnapshot()?.WorktreeCreate
+  if (snapshotHooks && snapshotHooks.length > 0) {
+    return true
+  }
+  const registeredHooks = getRegisteredHooks()?.WorktreeCreate
+  if (!registeredHooks || registeredHooks.length === 0) {
+    return false
+  }
   // 镜像 getHooksConfig()：在仅托管模式下跳过插件 hook
   const managedOnly = shouldAllowManagedHooksOnly()
   return registeredHooks.some((matcher) => !(managedOnly && 'pluginRoot' in matcher))
@@ -4653,8 +4672,8 @@ export async function executeWorktreeCreateHook(name: string): Promise<{ worktre
  * hooks (plugin hooks + SDK callback hooks via registerHookCallbacks).
  */
 export async function executeWorktreeRemoveHook(worktreePath: string): Promise<boolean> {
-  const snapshotHooks = getHooksConfigFromSnapshot()?.['WorktreeRemove']
-  const registeredHooks = getRegisteredHooks()?.['WorktreeRemove']
+  const snapshotHooks = getHooksConfigFromSnapshot()?.WorktreeRemove
+  const registeredHooks = getRegisteredHooks()?.WorktreeRemove
   const hasSnapshotHooks = snapshotHooks && snapshotHooks.length > 0
   const hasRegisteredHooks = registeredHooks && registeredHooks.length > 0
   if (!hasSnapshotHooks && !hasRegisteredHooks) {

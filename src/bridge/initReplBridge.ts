@@ -14,7 +14,7 @@
  */
 
 import { feature } from 'bun:bundle'
-import { hostname } from 'os'
+import { hostname } from 'node:os'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
 import type { SDKControlResponse } from '../entrypoints/sdk/controlTypes.js'
@@ -27,11 +27,10 @@ import {
   getZyAIOAuthTokens,
   handleOAuth401Error,
 } from '../utils/auth.js'
-import { isInternalBuild } from '../utils/envUtils.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
-import { getAPIProvider, isOpenAIProvider } from '../utils/model/providers.js'
 import { logForDebugging } from '../utils/debug.js'
 import { stripDisplayTagsAllowEmpty } from '../utils/displayTags.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
 import { getBranch, getRemoteUrl } from '../utils/git.js'
 import { toSDKMessages } from '../utils/messages/mappers.js'
@@ -40,6 +39,7 @@ import {
   getMessagesAfterCompactBoundary,
   isSyntheticMessage,
 } from '../utils/messages.js'
+import { getAPIProvider, isOpenAIProvider } from '../utils/model/providers.js'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
 import { getCurrentSessionTitle, saveAiGeneratedTitle } from '../utils/sessionStorage.js'
 import { extractConversationText, generateSessionTitle } from '../utils/sessionTitle.js'
@@ -273,12 +273,17 @@ export async function initReplBridge(
           msg.isCompactSummary ||
           (msg.origin && msg.origin.kind !== 'human') ||
           isSyntheticMessage(msg)
-        )
+        ) {
           continue
+        }
         const rawContent = getContentText(msg.message.content)
-        if (!rawContent) continue
+        if (!rawContent) {
+          continue
+        }
         const derived = deriveTitle(rawContent)
-        if (!derived) continue
+        if (!derived) {
+          continue
+        }
         title = derived
         hasTitle = true
         break
@@ -309,7 +314,9 @@ export async function initReplBridge(
     // Persist AI title locally so /resume can display it without regeneration
     try {
       const sid = getSessionId()
-      if (sid) saveAiGeneratedTitle(sid as import('crypto').UUID, derived)
+      if (sid) {
+        saveAiGeneratedTitle(sid as import('crypto').UUID, derived)
+      }
     } catch {
       // Ignore — non-critical persistence
     }
@@ -347,7 +354,9 @@ export async function initReplBridge(
     userMessageCount++
     if (userMessageCount === 1 && !hasTitle) {
       const placeholder = deriveTitle(text)
-      if (placeholder) patch(placeholder, bridgeSessionId, userMessageCount)
+      if (placeholder) {
+        patch(placeholder, bridgeSessionId, userMessageCount)
+      }
       generateAndPatch(text, bridgeSessionId)
     } else if (userMessageCount === 3) {
       const msgs = getMessages?.()
@@ -449,7 +458,7 @@ export async function initReplBridge(
   let workerType: BridgeWorkerType = 'zy_code'
   if (feature('KAIROS')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
-    // @ts-ignore
+    // @ts-expect-error
     const { isAssistantMode } =
       require('../assistant/index.js') as any as typeof import('../assistant/index.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
@@ -535,6 +544,8 @@ function deriveTitle(raw: string): string | undefined {
   const firstSentence = /^(.*?[.!?])\s/.exec(clean)?.[1] ?? clean
   // Collapse newlines/tabs — titles are single-line in the zy.ai list.
   const flat = firstSentence.replace(/\s+/g, ' ').trim()
-  if (!flat) return undefined
-  return flat.length > TITLE_MAX_LEN ? flat.slice(0, TITLE_MAX_LEN - 1) + '\u2026' : flat
+  if (!flat) {
+    return undefined
+  }
+  return flat.length > TITLE_MAX_LEN ? `${flat.slice(0, TITLE_MAX_LEN - 1)}\u2026` : flat
 }

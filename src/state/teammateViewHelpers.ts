@@ -50,11 +50,15 @@ export function enterTeammateView(
     const needsRetain = isLocalAgent(task) && (!task.retain || task.evictAfter !== undefined)
     const needsView =
       prev.viewingAgentTaskId !== taskId || prev.viewSelectionMode !== 'viewing-agent'
-    if (!needsRetain && !needsView && !switching) return prev
+    if (!needsRetain && !needsView && !switching) {
+      return prev
+    }
     let tasks = prev.tasks
     if (switching || needsRetain) {
       tasks = { ...prev.tasks }
-      if (switching) tasks[prevId] = release(prevTask)
+      if (switching) {
+        tasks[prevId] = release(prevTask)
+      }
       if (needsRetain) {
         tasks[taskId] = { ...task, retain: true, evictAfter: undefined }
       }
@@ -88,7 +92,9 @@ export function exitTeammateView(
       return prev.viewSelectionMode === 'none' ? prev : cleared
     }
     const task = prev.tasks[id]
-    if (!isLocalAgent(task) || !task.retain) return cleared
+    if (!isLocalAgent(task) || !task.retain) {
+      return cleared
+    }
     return {
       ...cleared,
       tasks: { ...prev.tasks, [id]: release(task) },
@@ -107,12 +113,16 @@ export function stopOrDismissAgent(
 ): void {
   setAppState((prev) => {
     const task = prev.tasks[taskId]
-    if (!isLocalAgent(task)) return prev
+    if (!isLocalAgent(task)) {
+      return prev
+    }
     if (task.status === 'running') {
       task.abortController?.abort()
       return prev
     }
-    if (task.evictAfter === 0) return prev
+    if (task.evictAfter === 0) {
+      return prev
+    }
     const viewingThis = prev.viewingAgentTaskId === taskId
     return {
       ...prev,

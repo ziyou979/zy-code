@@ -1,12 +1,12 @@
-import { basename } from 'path'
-import React from 'react'
+import { basename } from 'node:path'
 import type { z } from 'zod/v4'
-import { Text } from '../../../ink.js'
 import { tSync } from '../../../i18n/index.js'
+import { Text } from '../../../ink.js'
 import { NotebookEditTool } from '../../../tools/NotebookEditTool/NotebookEditTool.js'
 import { logError } from '../../../utils/log.js'
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js'
 import { NotebookEditToolDiff } from './NotebookEditToolDiff.js'
+
 type NotebookEditInput = z.infer<typeof NotebookEditTool.inputSchema>
 export function NotebookEditPermissionRequest(props) {
   const parseInput = (input) => {
@@ -21,7 +21,7 @@ export function NotebookEditPermissionRequest(props) {
     }
     return result.data
   }
-  const TextComponent = Text
+  const _TextComponent = Text
   const FilenameText = Text
   const DialogComponent = FilePermissionDialog
   const parsed = parseInput(props.toolUseConfirm.input)

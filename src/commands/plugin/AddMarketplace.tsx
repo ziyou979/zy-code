@@ -19,6 +19,7 @@ import {
 } from '../../utils/plugins/marketplaceManager.js'
 import { parseMarketplaceInput } from '../../utils/plugins/parseMarketplaceInput.js'
 import type { ViewState } from './types.js'
+
 type Props = {
   inputValue: string
   setInputValue: (value: string) => void
@@ -121,7 +122,7 @@ export function AddMarketplace({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
-  }, []) // Only run once on mount
+  }, [result, inputValue, handleAdd, error]) // Only run once on mount
 
   return (
     <Box flexDirection="column">

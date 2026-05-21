@@ -1,6 +1,6 @@
-import React from 'react'
 import { Link, Text } from '../ink.js'
 import type { PrReviewState } from '../utils/ghPrStatus.js'
+
 type Props = {
   number: number
   url: string

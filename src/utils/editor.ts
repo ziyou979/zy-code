@@ -1,6 +1,6 @@
-import { type SpawnOptions, type SpawnSyncOptions, spawn, spawnSync } from 'child_process'
+import { type SpawnOptions, type SpawnSyncOptions, spawn, spawnSync } from 'node:child_process'
+import { basename } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { basename } from 'path'
 import instances from '../ink/instances.js'
 import { logForDebugging } from './debug.js'
 import { whichSync } from './which.js'
@@ -51,9 +51,15 @@ export function classifyGuiEditor(editor: string): string | undefined {
  * subl uses bare file:line; others don't support goto-line.
  */
 function guiGotoArgv(guiFamily: string, filePath: string, line: number | undefined): string[] {
-  if (!line) return [filePath]
-  if (VSCODE_FAMILY.has(guiFamily)) return ['-g', `${filePath}:${line}`]
-  if (guiFamily === 'subl') return [`${filePath}:${line}`]
+  if (!line) {
+    return [filePath]
+  }
+  if (VSCODE_FAMILY.has(guiFamily)) {
+    return ['-g', `${filePath}:${line}`]
+  }
+  if (guiFamily === 'subl') {
+    return [`${filePath}:${line}`]
+  }
   return [filePath]
 }
 
@@ -71,7 +77,9 @@ function guiGotoArgv(guiFamily: string, filePath: string, line: number | undefin
  */
 export function openFileInExternalEditor(filePath: string, line?: number): boolean {
   const editor = getExternalEditor()
-  if (!editor) return false
+  if (!editor) {
+    return false
+  }
 
   // Spawn the user's actual binary (preserves code-insiders, abs paths, etc.).
   // Split into binary + extra args so multi-word values like 'start /wait
@@ -108,7 +116,9 @@ export function openFileInExternalEditor(filePath: string, line?: number): boole
   // Terminal editor — needs alt-screen handoff since it takes over the
   // terminal. Blocks until the editor exits.
   const inkInstance = instances.get(process.stdout)
-  if (!inkInstance) return false
+  if (!inkInstance) {
+    return false
+  }
   // Only prepend +N for editors known to support it — notepad treats +42 as a
   // filename to open. Test basename so /home/vim/bin/kak doesn't match 'vim'
   // via the directory segment.

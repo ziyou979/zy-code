@@ -102,7 +102,9 @@ export function useSearchInput({
   }, [])
 
   const handleKeyDown = (e: KeyboardEvent): void => {
-    if (!isActive) return
+    if (!isActive) {
+      return
+    }
 
     const cursor = Cursor.fromText(query, effectiveColumns, cursorOffset)
 
@@ -161,7 +163,9 @@ export function useSearchInput({
       if (query.length === 0) {
         // Backspace past the / — cancel (clear + snap back), not commit.
         // less: same. vim: deletes the / and exits command mode.
-        if (backspaceExitsOnEmpty) (onCancel ?? onExit)()
+        if (backspaceExitsOnEmpty) {
+          ;(onCancel ?? onExit)()
+        }
         return
       }
       const newCursor = cursor.backspace()
@@ -246,7 +250,9 @@ export function useSearchInput({
         }
         case 'h': {
           if (query.length === 0) {
-            if (backspaceExitsOnEmpty) (onCancel ?? onExit)()
+            if (backspaceExitsOnEmpty) {
+              ;(onCancel ?? onExit)()
+            }
             return
           }
           const newCursor = cursor.backspace()

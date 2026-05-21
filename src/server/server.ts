@@ -1,6 +1,6 @@
 /**
  * Server startup function
  */
-export function startServer(config: any, sessionManager: any, logger: any): any {
+export function startServer(_config: any, _sessionManager: any, _logger: any): any {
   throw new Error('startServer not implemented')
 }

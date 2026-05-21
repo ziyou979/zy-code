@@ -1,8 +1,6 @@
-import figures from 'figures'
-import * as React from 'react'
 import { useEffect, useState } from 'react'
-import { useDebounceCallback } from 'usehooks-ts'
 import { tSync } from 'src/i18n/index.js'
+import { useDebounceCallback } from 'usehooks-ts'
 import {
   addDirHelpMessage,
   validateDirectoryForWorkspace,
@@ -18,6 +16,7 @@ import { Byline } from '../../design-system/Byline.js'
 import { Dialog } from '../../design-system/Dialog.js'
 import { KeyboardShortcutHint } from '../../design-system/KeyboardShortcutHint.js'
 import { PromptInputFooterSuggestions } from '../../PromptInput/PromptInputFooterSuggestions.js'
+
 type Props = {
   onAddDirectory: (path: string, remember?: boolean) => void
   onCancel: () => void
@@ -109,7 +108,7 @@ export function AddWorkspaceDirectory({
     debouncedFetchSuggestions(directoryInput)
   }, [directoryInput, debouncedFetchSuggestions])
   const applySuggestion = (suggestion) => {
-    const newPath = suggestion.id + '/'
+    const newPath = `${suggestion.id}/`
     setDirectoryInput(newPath)
     setError(null)
   }
@@ -138,7 +137,7 @@ export function AddWorkspaceDirectory({
         e.preventDefault()
         const suggestion_1 = suggestions[selectedSuggestion]
         if (suggestion_1) {
-          handleSubmit(suggestion_1.id + '/')
+          handleSubmit(`${suggestion_1.id}/`)
         }
         return
       }

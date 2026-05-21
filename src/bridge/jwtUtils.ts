@@ -6,7 +6,9 @@ import { jsonParse } from '../utils/slowOperations.js'
 
 /** Format a millisecond duration as a human-readable string (e.g. "5m 30s"). */
 function formatDuration(ms: number): string {
-  if (ms < 60_000) return `${Math.round(ms / 1000)}s`
+  if (ms < 60_000) {
+    return `${Math.round(ms / 1000)}s`
+  }
   const m = Math.floor(ms / 60_000)
   const s = Math.round((ms % 60_000) / 1000)
   return s > 0 ? `${m}m ${s}s` : `${m}m`
@@ -21,7 +23,9 @@ function formatDuration(ms: number): string {
 export function decodeJwtPayload(token: string): unknown | null {
   const jwt = token.startsWith('sk-ant-si-') ? token.slice('sk-ant-si-'.length) : token
   const parts = jwt.split('.')
-  if (parts.length !== 3 || !parts[1]) return null
+  if (parts.length !== 3 || !parts[1]) {
+    return null
+  }
   try {
     return jsonParse(Buffer.from(parts[1], 'base64url').toString('utf8'))
   } catch {
@@ -144,7 +148,9 @@ export function createTokenRefreshScheduler({
    */
   function scheduleFromExpiresIn(sessionId: string, expiresInSeconds: number): void {
     const existing = timers.get(sessionId)
-    if (existing) clearTimeout(existing)
+    if (existing) {
+      clearTimeout(existing)
+    }
     const gen = nextGeneration(sessionId)
     // Clamp to 30s floor — if refreshBufferMs exceeds the server's expires_in
     // (e.g. very large buffer for frequent-refresh testing, or server shortens

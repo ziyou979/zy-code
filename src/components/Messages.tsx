@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
+import type { UUID } from 'node:crypto'
 import chalk from 'chalk'
-import type { UUID } from 'crypto'
 import type { RefObject } from 'react'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -147,7 +147,9 @@ export function filterForBriefTool<
     const block = msg.message?.content[0]
     if (msg.type === 'assistant') {
       // API 错误消息（认证失败、限流等）必须保持可见
-      if (msg.isApiErrorMessage) return true
+      if (msg.isApiErrorMessage) {
+        return true
+      }
       // 保留 Brief tool_use 块（使用标准 tool call 样式渲染，
       // 并且必须在列表中以便 buildMessageLookups 可以解析 tool result）
       if (block?.type === 'tool_call' && block.name && nameSet.has(block.name)) {
@@ -230,7 +232,9 @@ export function dropTextInBriefTurns<
       }
     }
   }
-  if (turnsWithBrief.size === 0) return messages
+  if (turnsWithBrief.size === 0) {
+    return messages
+  }
   // 第二遍：丢弃调用了 Brief 的 turn 中的文本块。
   return messages.filter((_, i) => {
     const t = textIndexToTurn[i]
@@ -418,8 +422,12 @@ const MessagesImpl = ({
 
   // Check if streaming thinking should be visible (streaming or within 30s timeout)
   const isStreamingThinkingVisible = useMemo(() => {
-    if (!streamingThinking) return false
-    if (streamingThinking.isStreaming) return true
+    if (!streamingThinking) {
+      return false
+    }
+    if (streamingThinking.isStreaming) {
+      return true
+    }
     if (streamingThinking.streamingEndedAt) {
       return Date.now() - streamingThinking.streamingEndedAt < 30000
     }
@@ -430,9 +438,13 @@ const MessagesImpl = ({
   // 当 streaming thinking 可见时，使用一个不会匹配任何已完成 thinking 块的特殊 ID
   // 使用 adaptive thinking 时，仅考虑当前 turn 的 thinking 块，并在遇到最后一个 user 消息时停止搜索
   const lastThinkingBlockId = useMemo(() => {
-    if (!hidePastThinking) return null
+    if (!hidePastThinking) {
+      return null
+    }
     // 如果 streaming thinking 可见，通过使用不匹配的 ID 隐藏所有已完成的 thinking 块
-    if (isStreamingThinkingVisible) return 'streaming'
+    if (isStreamingThinkingVisible) {
+      return 'streaming'
+    }
     // 从后向前遍历，查找包含 thinking 块的最后一条消息
     for (let i = normalizedMessages.length - 1; i >= 0; i--) {
       const msg = normalizedMessages[i]
@@ -532,12 +544,7 @@ const MessagesImpl = ({
   // renderRange → 每次滚动都在 27k 条消息上重建 6 个 Map +
   // 4 次过滤/map 传递 = 每次滚动约 50ms 分配 → GC 压力 →
   // 在 1GB 堆上出现 100-173ms 的 stop-the-world 暂停。
-  const {
-    collapsed: collapsed,
-    lookups: lookups,
-    hasTruncatedMessages: hasTruncatedMessages,
-    hiddenMessageCount: hiddenMessageCount,
-  } = useMemo(() => {
+  const { collapsed, lookups, hasTruncatedMessages, hiddenMessageCount } = useMemo(() => {
     // 在 fullscreen 模式下，alt buffer 没有原生 scrollback，所以
     // compact-boundary 过滤器只是隐藏了 ScrollBox 可以滚动到的历史。
     // 主屏幕模式保留过滤器——pre-compact 行存在于原生 scrollback 中的
@@ -589,16 +596,16 @@ const MessagesImpl = ({
       : briefFiltered
     const hasTruncatedMessages =
       shouldTruncate && briefFiltered.length > MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE
-    // @ts-ignore
+    // @ts-expect-error
     const { messages: groupedMessages } = applyGrouping(messagesToShow as any, tools, verbose)
-    // @ts-ignore
+    // @ts-expect-error
     const collapsed = collapseBackgroundBashNotifications(
       collapseHookSummaries(
         collapseTeammateShutdowns(collapseReadSearchGroups(groupedMessages, tools)),
       ),
       verbose,
     )
-    // @ts-ignore
+    // @ts-expect-error
     const lookups = buildMessageLookups(normalizedMessages, messagesToShow as any)
     const hiddenMessageCount =
       messagesToShowNotTruncated.length - MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE
@@ -635,7 +642,7 @@ const MessagesImpl = ({
       : sliceStart > 0
         ? collapsed.slice(sliceStart)
         : collapsed
-  }, [collapsed, renderRange, virtualScrollRuntimeGate, disableRenderCap])
+  }, [collapsed, renderRange, virtualScrollRuntimeGate, disableRenderCap, showAllInTranscript])
   const streamingToolUseIDs = useMemo(
     () => new Set(streamingToolUses.map((stu) => stu.contentBlock.id)),
     [streamingToolUses],
@@ -644,12 +651,16 @@ const MessagesImpl = ({
   // 分割线插入点：第一个 renderableMessage，其 uuid 与 firstUnseenUuid
   // 共享 24 字符前缀（deriveUUID 保留源消息 uuid 的前 24 个字符，因此这会匹配其中的任何块）。
   const dividerBeforeIndex = useMemo(() => {
-    if (!unseenDivider) return -1
+    if (!unseenDivider) {
+      return -1
+    }
     const prefix = unseenDivider.firstUnseenUuid.slice(0, 24)
     return renderableMessages.findIndex((m) => m.uuid.slice(0, 24) === prefix)
   }, [unseenDivider, renderableMessages])
   const selectedIdx = useMemo(() => {
-    if (!cursor) return -1
+    if (!cursor) {
+      return -1
+    }
     return renderableMessages.findIndex((message) => message.uuid === cursor.uuid)
   }, [cursor, renderableMessages])
 
@@ -662,8 +673,11 @@ const MessagesImpl = ({
     const key = expandKey(message)
     setExpandedKeys((prev) => {
       const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
+      if (next.has(key)) {
+        next.delete(key)
+      } else {
+        next.add(key)
+      }
       return next
     })
   }, [])
@@ -681,7 +695,9 @@ const MessagesImpl = ({
   lookupsRef.current = lookups
   const isItemClickable = useCallback(
     (message: RenderableMessage): boolean => {
-      if (message.type === 'collapsed_read_search') return true
+      if (message.type === 'collapsed_read_search') {
+        return true
+      }
       if (message.type === 'assistant') {
         const b = message.message.content[0] as unknown as AdvisorBlock | undefined
         return (
@@ -691,11 +707,17 @@ const MessagesImpl = ({
           b.content.type === 'advisor_result'
         )
       }
-      if (message.type !== 'user') return false
+      if (message.type !== 'user') {
+        return false
+      }
       const content = message.message.content
-      if (!Array.isArray(content)) return false
+      if (!Array.isArray(content)) {
+        return false
+      }
       const block = content[0]
-      if (block?.type !== 'tool_result' || block.isError || !message.toolUseResult) return false
+      if (block?.type !== 'tool_result' || block.isError || !message.toolUseResult) {
+        return false
+      }
       const name = lookupsRef.current.toolUseByToolUseID.get(block.toolCallId)?.name
       const tool = name ? findToolByName(tools, name) : undefined
       return tool?.isResultTruncated?.(message.toolUseResult as never) ?? false
@@ -717,7 +739,9 @@ const MessagesImpl = ({
     !(proactiveModule?.isProactiveActive() ?? false)
   useEffect(() => {
     const state = progressEnabled ? (hasToolsInProgress ? 'indeterminate' : 'completed') : null
-    if (prevProgressState.current === state) return
+    if (prevProgressState.current === state) {
+      return
+    }
     prevProgressState.current = state
     progress(state)
   }, [progress, progressEnabled, hasToolsInProgress])
@@ -801,7 +825,9 @@ const MessagesImpl = ({
   const extractSearchText = useCallback(
     (message: RenderableMessage): string => {
       const cached = searchTextCache.current.get(message)
-      if (cached !== undefined) return cached
+      if (cached !== undefined) {
+        return cached
+      }
       let text = renderableSearchText(message)
       // 如果这是 tool_result 消息且 tool 实现了
       // extractSearchText，优先使用它——比 renderableSearchText 的
@@ -818,7 +844,9 @@ const MessagesImpl = ({
           const extracted = tool?.extractSearchText?.(message.toolUseResult as never)
           // undefined = tool 未实现 → 保留启发式。空字符串 = tool
           // 说"没有可索引的内容" → 遵从它。
-          if (extracted !== undefined) text = extracted
+          if (extracted !== undefined) {
+            text = extracted
+          }
         }
       }
       // 缓存小写形式：setSearchQuery 的热循环在每次击键时进行 indexOf。
@@ -941,9 +969,13 @@ function expandKey(msg: RenderableMessage): string {
 // 2. streamingToolUses 数组在每个 delta 时重新创建，但只有 contentBlock 对渲染重要
 // 3. streamingThinking 在每个 delta 时变化——我们确实想为此重新渲染
 function setsEqual<T>(a: Set<T>, b: Set<T>): boolean {
-  if (a.size !== b.size) return false
+  if (a.size !== b.size) {
+    return false
+  }
   for (const item of a) {
-    if (!b.has(item)) return false
+    if (!b.has(item)) {
+      return false
+    }
   }
   return true
 }
@@ -960,8 +992,9 @@ export const Messages = React.memo(MessagesImpl, (prev, next) => {
       key === 'onSearchMatchesChange' ||
       key === 'scanElement' ||
       key === 'setPositions'
-    )
+    ) {
       continue
+    }
     if (prev[key] !== next[key]) {
       if (key === 'streamingToolUses') {
         const p = prev.streamingToolUses

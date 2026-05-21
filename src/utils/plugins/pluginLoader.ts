@@ -41,9 +41,9 @@ import {
   rmdir,
   stat,
   symlink,
-} from 'fs/promises'
+} from 'node:fs/promises'
+import { basename, dirname, join, relative, resolve, sep } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { basename, dirname, join, relative, resolve, sep } from 'path'
 import { getInlinePlugins } from '../../bootstrap/state.js'
 import { BUILTIN_MARKETPLACE_NAME, getBuiltinPlugins } from '../../plugins/builtinPlugins.js'
 import type {
@@ -168,7 +168,9 @@ async function probeSeedCache(pluginId: string, version: string): Promise<string
     const seedPath = getVersionedCachePathIn(seedDir, pluginId, version)
     try {
       const entries = await readdir(seedPath)
-      if (entries.length > 0) return seedPath
+      if (entries.length > 0) {
+        return seedPath
+      }
     } catch {
       // 尝试下一个种子
     }
@@ -192,10 +194,14 @@ export async function probeSeedCacheAnyVersion(pluginId: string): Promise<string
     const pluginDir = dirname(getVersionedCachePathIn(seedDir, pluginId, '_'))
     try {
       const versions = await readdir(pluginDir)
-      if (versions.length !== 1) continue
+      if (versions.length !== 1) {
+        continue
+      }
       const versionDir = join(pluginDir, versions[0]!)
       const entries = await readdir(versionDir)
-      if (entries.length > 0) return versionDir
+      if (entries.length > 0) {
+        return versionDir
+      }
     } catch {
       // 尝试下一个种子
     }
@@ -1282,7 +1288,9 @@ export async function createPluginFromPath(
         }),
       )
       for (const check of checks) {
-        if (check.kind === 'skip') continue
+        if (check.kind === 'skip') {
+          continue
+        }
         if (check.kind === 'content') {
           // 对于内联内容命令，添加元数据但不添加路径
           commandsMetadata[check.commandName] = check.metadata
@@ -1772,7 +1780,9 @@ async function loadPluginsFromMarketplaces({ cacheOnly }: { cacheOnly: boolean }
   const marketplacePluginEntries = Object.entries(enabledPlugins).filter(([key, value]) => {
     // 检查是否为 plugin@marketplace 格式（包括已启用和已禁用的）
     const isValidFormat = PluginIdSchema().safeParse(key).success
-    if (!isValidFormat || value === undefined) return false
+    if (!isValidFormat || value === undefined) {
+      return false
+    }
     // 跳过内置插件 — 由 getBuiltinPlugins() 单独处理
     const { marketplace } = parsePluginIdentifier(key)
     return marketplace !== BUILTIN_MARKETPLACE_NAME
@@ -2294,7 +2304,9 @@ async function finishLoadingPluginFromPath(
           }),
         )
         for (const check of checks) {
-          if (check.skip) continue
+          if (check.skip) {
+            continue
+          }
           if (check.exists) {
             validPaths.push(check.fullPath)
             commandsMetadata[check.commandName] = check.metadata
@@ -2524,7 +2536,9 @@ async function finishLoadingPluginFromPath(
           }),
         )
         for (const check of checks) {
-          if (check.skip) continue
+          if (check.skip) {
+            continue
+          }
           if (check.exists) {
             validPaths.push(check.fullPath)
             commandsMetadata[check.commandName] = check.metadata
@@ -2933,7 +2947,9 @@ async function assemblePluginLoadResult(
   // 会话本地的：不写入设置（用户通过 /doctor 修复意图）。
   const { demoted, errors: depErrors } = verifyAndDemote(allPlugins)
   for (const p of allPlugins) {
-    if (demoted.has(p.source)) p.enabled = false
+    if (demoted.has(p.source)) {
+      p.enabled = false
+    }
   }
   allErrors.push(...depErrors)
 

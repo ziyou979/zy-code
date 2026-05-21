@@ -2,18 +2,19 @@
  * /goal 命令实现 — 通过 session-scoped Stop hook 驱动模型持续工作直到条件满足。
  * 类型为 local-jsx，使用 onDone 回调的 shouldQuery + metaMessages 触发模型。
  */
-import type { LocalJSXCommandCall } from '../../types/command.js'
-import type { HookCommand } from '../../utils/settings/types.js'
-import { addSessionHook, removeSessionHook } from '../../utils/hooks/sessionHooks.js'
+
 import { getSessionId } from '../../bootstrap/state.js'
-import { checkHasTrustDialogAccepted } from '../../utils/config.js'
-import {
-  shouldDisableAllHooksIncludingManaged,
-  shouldAllowManagedHooksOnly,
-} from '../../utils/hooks/hooksConfigSnapshot.js'
-import { logForDebugging } from '../../utils/debug.js'
 import { getTotalInputTokens } from '../../cost-tracker.js'
 import { logEvent } from '../../services/analytics/index.js'
+import type { LocalJSXCommandCall } from '../../types/command.js'
+import { checkHasTrustDialogAccepted } from '../../utils/config.js'
+import { logForDebugging } from '../../utils/debug.js'
+import {
+  shouldAllowManagedHooksOnly,
+  shouldDisableAllHooksIncludingManaged,
+} from '../../utils/hooks/hooksConfigSnapshot.js'
+import { addSessionHook, removeSessionHook } from '../../utils/hooks/sessionHooks.js'
+import type { HookCommand } from '../../utils/settings/types.js'
 
 /** 条件字符上限 */
 const MAX_CONDITION_LENGTH = 4000
@@ -63,10 +64,7 @@ function buildGoalMetaMessage(condition: string): string {
 /**
  * 设置目标：注册 Stop hook + 写入 activeGoal 状态
  */
-function setGoal(
-  condition: string,
-  setAppState: (f: (prev: any) => any) => void,
-): string | null {
+function setGoal(condition: string, setAppState: (f: (prev: any) => any) => void): string | null {
   const gate = checkGates()
   if (gate !== null) {
     return gate.message
@@ -123,11 +121,10 @@ function clearGoal(
 /**
  * 移除当前 goal 的 Stop hook
  */
-function clearGoalHooks(
-  setAppState: (f: (prev: any) => any) => void,
-  condition?: string,
-): void {
-  if (!condition) return
+function clearGoalHooks(setAppState: (f: (prev: any) => any) => void, condition?: string): void {
+  if (!condition) {
+    return
+  }
   const sessionId = getSessionId()
   const hook: HookCommand = { type: 'prompt', prompt: condition }
   removeSessionHook(setAppState, sessionId, 'Stop', hook)

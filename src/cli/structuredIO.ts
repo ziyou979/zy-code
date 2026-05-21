@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
+import { randomUUID } from 'node:crypto'
 import type { ElicitResult, JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
-import { randomUUID } from 'crypto'
 import type { AssistantMessage } from 'src//types/message.js'
 import type {
   HookInput,
@@ -195,12 +195,12 @@ export class StructuredIO {
    */
   prependUserMessage(content: string): void {
     this.prependedLines.push(
-      jsonStringify({
+      `${jsonStringify({
         type: 'user',
         session_id: '',
         message: { role: 'user', content },
         parent_tool_use_id: null,
-      } satisfies SDKUserMessage) + '\n',
+      } satisfies SDKUserMessage)}\n`,
     )
   }
 
@@ -218,7 +218,9 @@ export class StructuredIO {
           this.prependedLines = []
         }
         const newline = content.indexOf('\n')
-        if (newline === -1) break
+        if (newline === -1) {
+          break
+        }
         const line = content.slice(0, newline)
         content = content.slice(newline + 1)
         const message = await this.processLine(line)
@@ -270,9 +272,13 @@ export class StructuredIO {
    */
   injectControlResponse(response: SDKControlResponse): void {
     const requestId = response.response?.request_id
-    if (!requestId) return
+    if (!requestId) {
+      return
+    }
     const request = this.pendingRequests.get(requestId)
-    if (!request) return
+    if (!request) {
+      return
+    }
     this.trackResolvedToolUseId(request.request)
     this.pendingRequests.delete(requestId)
     // Cancel the SDK consumer's canUseTool callback — the bridge won.
@@ -431,7 +437,7 @@ export class StructuredIO {
   }
 
   async write(message: StdoutMessage): Promise<void> {
-    writeToStdout(ndjsonSafeStringify(message) + '\n')
+    writeToStdout(`${ndjsonSafeStringify(message)}\n`)
   }
 
   private async sendRequest<Response>(
@@ -773,7 +779,9 @@ async function executePermissionRequestHooksForSDK(
           )
           // Update permission context via setAppState
           toolUseContext.setAppState((prev) => {
-            if (prev.toolPermissionContext === updatedContext) return prev
+            if (prev.toolPermissionContext === updatedContext) {
+              return prev
+            }
             return { ...prev, toolPermissionContext: updatedContext }
           })
         }

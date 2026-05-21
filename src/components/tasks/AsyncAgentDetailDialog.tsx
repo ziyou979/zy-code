@@ -1,6 +1,6 @@
-import React from 'react'
 import type { DeepImmutable } from 'src/types/utils.js'
 import { useElapsedTime } from '../../hooks/useElapsedTime.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text, useTheme } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import { getEmptyToolPermissionContext } from '../../Tool.js'
@@ -8,13 +8,13 @@ import type { LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentT
 import { getTools } from '../../tools.js'
 import { formatNumber } from '../../utils/format.js'
 import { extractTag } from '../../utils/messages.js'
-import { tSync } from '../../i18n/index.js'
 import { Byline } from '../design-system/Byline.js'
 import { Dialog } from '../design-system/Dialog.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { UserPlanMessage } from '../messages/UserPlanMessage.js'
 import { renderToolActivity } from './renderToolActivity.js'
 import { getTaskStatusColor, getTaskStatusIcon } from './taskStatusUtils.js'
+
 type Props = {
   agent: DeepImmutable<LocalAgentTaskState>
   onDone: () => void
@@ -56,7 +56,7 @@ export function AsyncAgentDetailDialog({ agent, onDone, onKillAgent, onBack }: P
   }
   const planContent = extractTag(agent.prompt, 'plan')
   const displayPrompt =
-    agent.prompt.length > 300 ? agent.prompt.substring(0, 297) + '\u2026' : agent.prompt
+    agent.prompt.length > 300 ? `${agent.prompt.substring(0, 297)}\u2026` : agent.prompt
   const tokenCount = agent.result?.totalTokens ?? agent.progress?.tokenCount
   const toolUseCount = agent.result?.totalToolUseCount ?? agent.progress?.toolUseCount
   const agentType = agent.selectedAgent?.agentType ?? 'agent'

@@ -17,7 +17,9 @@ let _initialized = false
  * 由 main.tsx 在信任检查通过后调用。
  */
 export async function isKairosEnabled(): Promise<boolean> {
-  if (_kairosEnabled !== null) return _kairosEnabled
+  if (_kairosEnabled !== null) {
+    return _kairosEnabled
+  }
 
   // 优先读取环境变量
   const env = process.env.ZY_CODE_KAIROS_ENABLED
@@ -46,10 +48,12 @@ export async function isKairosEnabled(): Promise<boolean> {
  * 检查指定子功能是否允许通过门控。
  * @param featureName - 子功能名称
  */
-export function checkGate(featureName: string): boolean {
+export function checkGate(_featureName: string): boolean {
   // 简单实现：所有子功能均通过（只要 KAIROS 主门控已启用）
   // 后续可按需细化（如根据 GrowthBook flag 或 settings 控制子功能）
-  if (_kairosEnabled === null) return false
+  if (_kairosEnabled === null) {
+    return false
+  }
   return _kairosEnabled
 }
 

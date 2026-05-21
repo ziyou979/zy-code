@@ -67,7 +67,7 @@ export class WebSocketTransport implements Transport {
   private ws: WebSocketLike | null = null
   private lastSentId: string | null = null
   protected url: URL
-  // @ts-ignore
+  // @ts-expect-error
   protected state: WebSocketTransportState = 'idle'
   protected onData?: (data: string) => void
   private onCloseCallback?: (closeCode?: number) => void
@@ -235,7 +235,9 @@ export class WebSocketTransport implements Transport {
     // The old inline-closure code had this safety implicitly via closure capture.
     const ws = this.ws
     this.handleOpenEvent()
-    if (!ws) return
+    if (!ws) {
+      return
+    }
     // Check for last-id in upgrade response headers (ws package only)
     const nws = ws as unknown as WsWebSocket & {
       upgradeReq?: { headers?: Record<string, string> }
@@ -403,7 +405,9 @@ export class WebSocketTransport implements Transport {
     }
     this.doDisconnect()
 
-    if (this.state === 'closing' || this.state === 'closed') return
+    if (this.state === 'closing' || this.state === 'closed') {
+      return
+    }
 
     // Permanent codes: don't retry — server has definitively ended the session.
     // Exception: 4003 (unauthorized) can be retried when refreshHeaders is
@@ -488,7 +492,7 @@ export class WebSocketTransport implements Transport {
       this.reconnectAttempts++
 
       const baseDelay = Math.min(
-        DEFAULT_BASE_RECONNECT_DELAY * Math.pow(2, this.reconnectAttempts - 1),
+        DEFAULT_BASE_RECONNECT_DELAY * 2 ** (this.reconnectAttempts - 1),
         DEFAULT_MAX_RECONNECT_DELAY,
       )
       // Add ±25% jitter to avoid thundering herd
@@ -550,7 +554,9 @@ export class WebSocketTransport implements Transport {
 
   private replayBufferedMessages(lastId: string): void {
     const messages = this.messageBuffer.toArray()
-    if (messages.length === 0) return
+    if (messages.length === 0) {
+      return
+    }
 
     // Find where to start replay based on server's last received message
     let startIndex = 0
@@ -591,7 +597,7 @@ export class WebSocketTransport implements Transport {
     })
 
     for (const message of messagesToReplay) {
-      const line = jsonStringify(message) + '\n'
+      const line = `${jsonStringify(message)}\n`
       const success = this.sendLine(line)
       if (!success) {
         this.handleConnectionError()
@@ -634,7 +640,7 @@ export class WebSocketTransport implements Transport {
       this.lastSentId = message.uuid
     }
 
-    const line = jsonStringify(message) + '\n'
+    const line = `${jsonStringify(message)}\n`
 
     if (this.state !== 'connected') {
       // Message buffered for replay when connected (if it has a UUID)

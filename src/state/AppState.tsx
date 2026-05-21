@@ -62,7 +62,7 @@ export function AppStateProvider({ children, initialState, onChangeAppState }: P
         toolPermissionContext: createDisabledBypassPermissionsContext(prev.toolPermissionContext),
       }))
     }
-  }, [])
+  }, [store.setState, store.getState])
   const onSettingsChange = useEffectEvent((source) => applySettingsChange(source, store.setState))
   useSettingsChange(onSettingsChange)
   return (

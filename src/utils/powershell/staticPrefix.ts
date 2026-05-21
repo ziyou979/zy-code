@@ -99,10 +99,14 @@ async function extractPrefixFromElement(cmd: ParsedCommandElement): Promise<stri
   // Backslash (C:\repo) rejected: dead over-specific rule.
   let argIdx = 0
   for (const word of prefix.split(' ').slice(1)) {
-    if (word.includes('\\')) return null
+    if (word.includes('\\')) {
+      return null
+    }
     while (argIdx < cmd.args.length) {
       const a = cmd.args[argIdx]!
-      if (a === word) break
+      if (a === word) {
+        break
+      }
       if (a.startsWith('-')) {
         argIdx++
         // Only skip the flag's value if the spec says this flag takes a
@@ -127,7 +131,9 @@ async function extractPrefixFromElement(cmd: ParsedCommandElement): Promise<stri
       // Positional arg that isn't the expected word → arg was split.
       return null
     }
-    if (argIdx >= cmd.args.length) return null
+    if (argIdx >= cmd.args.length) {
+      return null
+    }
     argIdx++
   }
 
@@ -275,8 +281,12 @@ export async function getCompoundCommandPrefixesStatic(
  * ["Get-Process"] → "Get-Process"
  */
 function wordAlignedLCP(strings: string[]): string {
-  if (strings.length === 0) return ''
-  if (strings.length === 1) return strings[0]!
+  if (strings.length === 0) {
+    return ''
+  }
+  if (strings.length === 1) {
+    return strings[0]!
+  }
 
   const firstWords = strings[0]!.split(' ')
   let commonWordCount = firstWords.length
@@ -292,7 +302,9 @@ function wordAlignedLCP(strings: string[]): string {
       matchCount++
     }
     commonWordCount = matchCount
-    if (commonWordCount === 0) break
+    if (commonWordCount === 0) {
+      break
+    }
   }
 
   return firstWords.slice(0, commonWordCount).join(' ')

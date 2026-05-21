@@ -1,4 +1,4 @@
-import React, { PureComponent, type ReactNode } from 'react'
+import { PureComponent, type ReactNode } from 'react'
 import { updateLastInteractionTime } from '../../bootstrap/state.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { stopCapturingEarlyInput } from '../../utils/earlyInput.js'
@@ -324,7 +324,9 @@ export default class App extends PureComponent<Props, State> {
     this.incompleteEscapeTimer = null
 
     // 仅在有不完整序列时继续
-    if (!this.keyParseState.incomplete) return
+    if (!this.keyParseState.incomplete) {
+      return
+    }
 
     // 全屏模式：如果 stdin 有数据等待，几乎肯定是
     // 缓冲序列的后续部分（例如在独立 ESC 之后的 `[<64;74;16M`）。
@@ -570,7 +572,9 @@ function processKeysInBatch(
 export function handleMouseEvent(app: App, m: ParsedMouse): void {
   // 允许禁用点击处理，同时保持滚轮滚动（滚轮通过
   // 键绑定系统作为 'wheelup'/'wheeldown' 传递，不走这里）。
-  if (isMouseClicksDisabled()) return
+  if (isMouseClicksDisabled()) {
+    return
+  }
   const sel = app.props.selection
   // 终端坐标是 1 索引的；屏幕缓冲区是 0 索引的
   const col = m.col - 1
@@ -591,7 +595,9 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
         finishSelection(sel)
         app.props.onSelectionChange()
       }
-      if (col === app.lastHoverCol && row === app.lastHoverRow) return
+      if (col === app.lastHoverCol && row === app.lastHoverRow) {
+        return
+      }
       app.lastHoverCol = col
       app.lastHoverRow = row
       app.props.onHoverAt(col, row)
@@ -660,7 +666,9 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
   // 滚动边界。仅在我们正在拖拽时对非左释放执行操作
   //（这样不相关的中键/右键释放不会影响选择）。
   if (baseButton !== 0) {
-    if (!sel.isDragging) return
+    if (!sel.isDragging) {
+      return
+    }
     finishSelection(sel)
     app.props.onSelectionChange()
     return

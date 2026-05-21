@@ -1,7 +1,6 @@
 import { getApiKey, getAuthTokenSource } from './auth.js'
 import { getGlobalConfig } from './config.js'
-import { isEnvTruthy } from './envUtils.js'
-import { isInternalBuild } from './envUtils.js'
+import { isEnvTruthy, isInternalBuild } from './envUtils.js'
 
 export function hasConsoleBillingAccess(): boolean {
   // Check if cost reporting is disabled via environment变量
@@ -19,7 +18,9 @@ export function hasConsoleBillingAccess(): boolean {
 
   // 内部构建：检查 OAuth 角色
   const isSubscriber = false
-  if (isSubscriber) return false
+  if (isSubscriber) {
+    return false
+  }
 
   const authSource = getAuthTokenSource()
   const hasApiKey = getApiKey() !== null

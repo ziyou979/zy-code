@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { Box, Text } from '../../ink.js'
 import { tSync } from '../../i18n/index.js'
+import { Box, Text } from '../../ink.js'
 import {
   isShutdownApproved,
   isShutdownRejected,
@@ -8,6 +8,7 @@ import {
   type ShutdownRejectedMessage,
   type ShutdownRequestMessage,
 } from '../../utils/teammateMailbox.js'
+
 type ShutdownRequestProps = {
   request: ShutdownRequestMessage
 }

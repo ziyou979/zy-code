@@ -266,19 +266,27 @@ function ModeIndicator({
   const voiceHintIncrementedRef = feature('VOICE_MODE') ? useRef(false) : null
   useEffect(() => {
     if (feature('VOICE_MODE')) {
-      if (!voiceEnabled || !voiceHintUnderCap) return
-      if (voiceHintIncrementedRef?.current) return
-      if (voiceHintIncrementedRef) voiceHintIncrementedRef.current = true
+      if (!voiceEnabled || !voiceHintUnderCap) {
+        return
+      }
+      if (voiceHintIncrementedRef?.current) {
+        return
+      }
+      if (voiceHintIncrementedRef) {
+        voiceHintIncrementedRef.current = true
+      }
       const newCount = (getGlobalConfig().voiceFooterHintSeenCount ?? 0) + 1
       saveGlobalConfig((prev) => {
-        if ((prev.voiceFooterHintSeenCount ?? 0) >= newCount) return prev
+        if ((prev.voiceFooterHintSeenCount ?? 0) >= newCount) {
+          return prev
+        }
         return {
           ...prev,
           voiceFooterHintSeenCount: newCount,
         }
       })
     }
-  }, [voiceEnabled, voiceHintUnderCap])
+  }, [voiceEnabled, voiceHintUnderCap, voiceHintIncrementedRef?.current, voiceHintIncrementedRef])
   const isKillAgentsConfirmShowing = useAppState(
     (state) => state.notifications.current?.key === 'kill-agents-confirm',
   )
@@ -592,7 +600,7 @@ function ModeIndicator({
 }
 function getSpinnerHintParts(
   isLoading: boolean,
-  escShortcut: string,
+  _escShortcut: string,
   todosShortcut: string,
   killAgentsShortcut: string,
   hasTaskItems: boolean,

@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
 import { Text } from 'src/ink.js'
@@ -26,6 +25,7 @@ import type { InlineGhostText, PromptInputMode } from '../types/textInputTypes.j
 import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js'
 import { generateProgressiveArgumentHint, parseArguments } from '../utils/argumentSubstitution.js'
 import { getShellCompletions, type ShellCompletionType } from '../utils/bash/shellCompletion.js'
+import { isTestEnv } from '../utils/envUtils.js'
 import { formatLogMetadata } from '../utils/format.js'
 import { getSessionIdFromLog, searchSessionsByCustomTitle } from '../utils/sessionStorage.js'
 import {
@@ -52,7 +52,6 @@ import {
   onIndexBuildComplete,
   startBackgroundCacheRefresh,
 } from './fileSuggestions.js'
-import { isTestEnv } from '../utils/envUtils.js'
 import { generateUnifiedSuggestions } from './unifiedSuggestions.js'
 
 // Unicode-aware character class for file path tokens:
@@ -218,9 +217,9 @@ export function applyShellSuggestion(
   // Prepare the replacement text based on completion type
   let replacementText: string
   if (completionType === 'variable') {
-    replacementText = '$' + suggestion.displayText + ' '
+    replacementText = `$${suggestion.displayText} `
   } else if (completionType === 'command') {
-    replacementText = suggestion.displayText + ' '
+    replacementText = `${suggestion.displayText} `
   } else {
     replacementText = suggestion.displayText
   }
@@ -238,10 +237,12 @@ function applyTriggerSuggestion(
   setCursorOffset: (offset: number) => void,
 ): void {
   const m = input.slice(0, cursorOffset).match(triggerRe)
-  if (!m || m.index === undefined) return
+  if (!m || m.index === undefined) {
+    return
+  }
   const prefixStart = m.index + (m[1]?.length ?? 0)
   const before = input.slice(0, prefixStart)
-  const newInput = before + suggestion.displayText + ' ' + input.slice(cursorOffset)
+  const newInput = `${before + suggestion.displayText} ${input.slice(cursorOffset)}`
   onInputChange(newInput)
   setCursorOffset(before.length + suggestion.displayText.length + 1)
 }
@@ -298,7 +299,7 @@ export function applyDirectorySuggestion(
   const after = input.slice(tokenStartPos + tokenLength)
   // Always add @ prefix - if token already has it, we're replacing
   // the whole token (including @) with @suggestion.id
-  const replacement = '@' + suggestionId + suffix
+  const replacement = `@${suggestionId}${suffix}`
   const newInput = before + replacement + after
   return {
     newInput,
@@ -323,7 +324,9 @@ export function extractCompletionToken(
   isQuoted?: boolean
 } | null {
   // Empty input check
-  if (!text) return null
+  if (!text) {
+    return null
+  }
 
   // Get text up to cursor
   const textBeforeCursor = text.substring(0, cursorPos)
@@ -388,11 +391,12 @@ function extractCommandNameAndArgs(value: string): {
 } | null {
   if (isCommandInput(value)) {
     const spaceIndex = value.indexOf(' ')
-    if (spaceIndex === -1)
+    if (spaceIndex === -1) {
       return {
         commandName: value.slice(1),
         args: '',
       }
+    }
     return {
       commandName: value.slice(1, spaceIndex),
       args: value.slice(spaceIndex + 1),
@@ -433,7 +437,9 @@ export function useTypeahead({
   // This prevents layout shift when filtering
   const allCommandsMaxWidth = useMemo(() => {
     const visibleCommands = commands.filter((cmd) => !cmd.isHidden)
-    if (visibleCommands.length === 0) return undefined
+    if (visibleCommands.length === 0) {
+      return undefined
+    }
     const maxLen = Math.max(...visibleCommands.map((cmd) => getCommandName(cmd).length))
     return maxLen + 6 // +1 for "/" prefix, +5 for padding
   }, [commands])
@@ -455,11 +461,17 @@ export function useTypeahead({
   // Computed during render via useMemo to eliminate the one-frame flicker
   // that occurs when using useState + useEffect (effect runs after render).
   const syncPromptGhostText = useMemo((): InlineGhostText | undefined => {
-    if (mode !== 'prompt' || suppressSuggestions) return undefined
+    if (mode !== 'prompt' || suppressSuggestions) {
+      return undefined
+    }
     const midInputCommand = findMidInputSlashCommand(input, cursorOffset)
-    if (!midInputCommand) return undefined
+    if (!midInputCommand) {
+      return undefined
+    }
     const match = getBestCommandMatch(midInputCommand.partialCommand, commands)
-    if (!match) return undefined
+    if (!match) {
+      return undefined
+    }
     return {
       text: match.suffix,
       fullCommand: match.fullCommand,
@@ -544,7 +556,7 @@ export function useTypeahead({
       setSuggestionType(combinedItems.length > 0 ? 'file' : 'none')
       setMaxColumnWidth(undefined) // No fixed width for file suggestions
     },
-    [mcpResources, setSuggestionsState, setSuggestionType, setMaxColumnWidth, agents],
+    [mcpResources, setSuggestionsState, agents],
   )
 
   // Pre-warm the file index on mount so the first @-mention doesn't block.
@@ -583,7 +595,9 @@ export function useTypeahead({
     async (partial: string): Promise<void> => {
       latestSlackTokenRef.current = partial
       const channels = await getSlackChannelSuggestions(store.getState().mcp.clients, partial)
-      if (latestSlackTokenRef.current !== partial) return
+      if (latestSlackTokenRef.current !== partial) {
+        return
+      }
       setSuggestionsState((prev) => ({
         commandArgumentHint: undefined,
         suggestions: channels,
@@ -597,7 +611,7 @@ export function useTypeahead({
       setMaxColumnWidth(undefined)
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable context ref
-    [setSuggestionsState],
+    [setSuggestionsState, store.getState],
   )
 
   // First keystroke after # needs the MCP round-trip; subsequent keystrokes
@@ -681,8 +695,12 @@ export function useTypeahead({
         const seen = new Set<string>()
         if (isAgentSwarmsEnabled() && state.teamContext) {
           for (const t of Object.values(state.teamContext.teammates ?? {})) {
-            if (t.name === TEAM_LEAD_NAME) continue
-            if (!t.name.toLowerCase().startsWith(partialName)) continue
+            if (t.name === TEAM_LEAD_NAME) {
+              continue
+            }
+            if (!t.name.toLowerCase().startsWith(partialName)) {
+              continue
+            }
             seen.add(t.name)
             members.push({
               id: `dm-${t.name}`,
@@ -692,8 +710,12 @@ export function useTypeahead({
           }
         }
         for (const [name, agentId] of state.agentNameRegistry) {
-          if (seen.has(name)) continue
-          if (!name.toLowerCase().startsWith(partialName)) continue
+          if (seen.has(name)) {
+            continue
+          }
+          if (!name.toLowerCase().startsWith(partialName)) {
+            continue
+          }
           const status = state.tasks[agentId]?.status
           members.push({
             id: `dm-${name}`,
@@ -828,7 +850,7 @@ export function useTypeahead({
         effectiveCursorOffset > 0 &&
         !hasCommandWithArguments(isAtEndWithWhitespace, value)
       ) {
-        let commandArgumentHint: string | undefined = undefined
+        let commandArgumentHint: string | undefined
         if (value.length > 1) {
           // We have a partial or complete command without arguments
           // Check if it matches a command exactly and has an argument hint
@@ -934,7 +956,7 @@ export function useTypeahead({
       if (hasAtSymbol && mode !== 'bash') {
         // Get the @ token (including the @ symbol)
         const completionToken = extractCompletionToken(value, effectiveCursorOffset, true)
-        if (completionToken && completionToken.token.startsWith('@')) {
+        if (completionToken?.token.startsWith('@')) {
           const searchToken = extractSearchToken(completionToken)
 
           // If the token after @ is path-like, use path completion instead of fuzzy search
@@ -1058,7 +1080,7 @@ export function useTypeahead({
         // Replace the partial command with the full command + space
         const before = input.slice(0, midInputCommand.startPos)
         const after = input.slice(midInputCommand.startPos + midInputCommand.token.length)
-        const newInput = before + '/' + effectiveGhostText.fullCommand + ' ' + after
+        const newInput = `${before}/${effectiveGhostText.fullCommand} ${after}`
         const newCursorOffset =
           midInputCommand.startPos + 1 + effectiveGhostText.fullCommand.length + 1
         onInputChange(newInput)
@@ -1366,7 +1388,9 @@ export function useTypeahead({
 
   // Handle enter key press - apply and execute suggestions
   const handleEnter = useCallback(() => {
-    if (selectedSuggestion < 0 || suggestions.length === 0) return
+    if (selectedSuggestion < 0 || suggestions.length === 0) {
+      return
+    }
     const suggestion = suggestions[selectedSuggestion]
     if (suggestionType === 'command' && selectedSuggestion < suggestions.length) {
       if (suggestion) {
@@ -1637,7 +1661,9 @@ export function useTypeahead({
     }
 
     // Only continue with navigation if we have suggestions
-    if (suggestions.length === 0) return
+    if (suggestions.length === 0) {
+      return
+    }
 
     // Handle Ctrl-N/P for navigation (arrows handled by keybindings)
     // Skip if we're in the middle of a chord sequence to allow chords like ctrl+f n

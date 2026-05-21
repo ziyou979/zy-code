@@ -30,7 +30,9 @@ export type KeybindingWarning = {
  * Type guard to check if an object is a valid KeybindingBlock.
  */
 function isKeybindingBlock(obj: unknown): obj is KeybindingBlock {
-  if (typeof obj !== 'object' || obj === null) return false
+  if (typeof obj !== 'object' || obj === null) {
+    return false
+  }
   const b = obj as Record<string, unknown>
   return typeof b.context === 'string' && typeof b.bindings === 'object' && b.bindings !== null
 }
@@ -245,7 +247,9 @@ export function checkDuplicateKeysInJson(jsonString: string): KeybindingWarning[
   let blockMatch
   while ((blockMatch = bindingsBlockPattern.exec(jsonString)) !== null) {
     const blockContent = blockMatch[1]
-    if (!blockContent) continue
+    if (!blockContent) {
+      continue
+    }
 
     // Find the context for this block by looking backwards
     const textBeforeBlock = jsonString.slice(0, blockMatch.index)
@@ -259,7 +263,9 @@ export function checkDuplicateKeysInJson(jsonString: string): KeybindingWarning[
     let keyMatch
     while ((keyMatch = keyPattern.exec(blockContent)) !== null) {
       const key = keyMatch[1]
-      if (!key) continue
+      if (!key) {
+        continue
+      }
 
       const count = (keysByName.get(key) ?? 0) + 1
       keysByName.set(key, count)
@@ -412,7 +418,9 @@ export function validateBindings(
   const seen = new Set<string>()
   return warnings.filter((w) => {
     const key = `${w.type}:${w.key}:${w.context}`
-    if (seen.has(key)) return false
+    if (seen.has(key)) {
+      return false
+    }
     seen.add(key)
     return true
   })
@@ -436,7 +444,9 @@ export function formatWarning(warning: KeybindingWarning): string {
  * Format multiple warnings for display.
  */
 export function formatWarnings(warnings: KeybindingWarning[]): string {
-  if (warnings.length === 0) return ''
+  if (warnings.length === 0) {
+    return ''
+  }
 
   const errors = warnings.filter((w) => w.severity === 'error')
   const warns = warnings.filter((w) => w.severity === 'warning')
@@ -451,7 +461,9 @@ export function formatWarnings(warnings: KeybindingWarning[]): string {
   }
 
   if (warns.length > 0) {
-    if (lines.length > 0) lines.push('')
+    if (lines.length > 0) {
+      lines.push('')
+    }
     lines.push(`Found ${warns.length} keybinding ${plural(warns.length, 'warning')}:`)
     for (const w of warns) {
       lines.push(formatWarning(w))

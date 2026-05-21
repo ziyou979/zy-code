@@ -2,9 +2,10 @@
 // dynamically in getAWSClientProxyConfig() to defer ~929KB of AWS SDK.
 // undici is lazy-required inside getProxyAgent/configureGlobalAgents to defer
 // ~1.5MB when no HTTPS_PROXY/mTLS env vars are set (the common case).
+
+import type { LookupOptions } from 'node:dns'
+import type { Agent } from 'node:http'
 import axios, { type AxiosInstance } from 'axios'
-import type { LookupOptions } from 'dns'
-import type { Agent } from 'http'
 import { HttpsProxyAgent, type HttpsProxyAgentOptions } from 'https-proxy-agent'
 import memoize from 'lodash-es/memoize.js'
 import type * as undici from 'undici'
@@ -84,10 +85,14 @@ export function shouldBypassProxy(
   urlString: string,
   noProxy: string | undefined = getNoProxy(),
 ): boolean {
-  if (!noProxy) return false
+  if (!noProxy) {
+    return false
+  }
 
   // Handle wildcard
-  if (noProxy === '*') return true
+  if (noProxy === '*') {
+    return true
+  }
 
   try {
     const url = new URL(urlString)
@@ -166,7 +171,9 @@ export function createAxiosInstance(extra: HttpsProxyAgentOptions<string> = {}):
   const instance = axios.create({ proxy: false })
 
   if (!proxyUrl) {
-    if (mtlsAgent) instance.defaults.httpsAgent = mtlsAgent
+    if (mtlsAgent) {
+      instance.defaults.httpsAgent = mtlsAgent
+    }
     return instance
   }
 

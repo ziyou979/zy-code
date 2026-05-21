@@ -1,7 +1,7 @@
 import { toJSONSchema } from 'zod/v4'
+import { tSync } from '../../i18n/index.js'
 import { SettingsSchema } from '../../utils/settings/types.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { tSync } from '../../i18n/index.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 
 /**
@@ -454,7 +454,7 @@ export function registerUpdateConfigSkill(): void {
     async getPromptForCommand(args) {
       if (args.startsWith('[hooks-only]')) {
         const req = args.slice('[hooks-only]'.length).trim()
-        let prompt = HOOKS_DOCS + '\n\n' + HOOK_VERIFICATION_FLOW
+        let prompt = `${HOOKS_DOCS}\n\n${HOOK_VERIFICATION_FLOW}`
         if (req) {
           prompt += `\n\n## Task\n\n${req}`
         }

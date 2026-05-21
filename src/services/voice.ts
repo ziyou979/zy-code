@@ -4,8 +4,8 @@
 // for in-process mic access. Falls back to SoX `rec` or arecord (ALSA)
 // on Linux if the native module is unavailable.
 
-import { type ChildProcess, spawn, spawnSync } from 'child_process'
-import { readFile } from 'fs/promises'
+import { type ChildProcess, spawn, spawnSync } from 'node:child_process'
+import { readFile } from 'node:fs/promises'
 import { logForDebugging } from '../utils/debug.js'
 import { isEnvTruthy, isRunningOnHomespace } from '../utils/envUtils.js'
 import { logError } from '../utils/log.js'
@@ -17,7 +17,7 @@ import { getPlatform } from '../utils/platform.js'
 // (post-wake, post-boot). Load happens on first voice keypress — no
 // preload, because there's no way to make dlopen non-blocking and a
 // startup freeze is worse than a first-press delay.
-// @ts-ignore
+// @ts-expect-error
 type AudioNapi = typeof import('audio-capture-napi')
 let audioNapi: AudioNapi | null = null
 let audioNapiPromise: Promise<AudioNapi> | null = null
@@ -25,7 +25,7 @@ let audioNapiPromise: Promise<AudioNapi> | null = null
 function loadAudioNapi(): Promise<AudioNapi> {
   audioNapiPromise ??= (async () => {
     const startTime = Date.now()
-    // @ts-ignore
+    // @ts-expect-error
     const mod = await import('audio-capture-napi')
     // vendor/audio-capture-src/index.ts defers require(...node) until the
     // first function call — trigger it here so timing reflects real cost.

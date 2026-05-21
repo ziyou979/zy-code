@@ -1,8 +1,8 @@
 import { feature } from 'bun:bundle'
-import { chmod, open, rename, stat, unlink } from 'fs/promises'
+import { chmod, open, rename, stat, unlink } from 'node:fs/promises'
+import { dirname, join, parse } from 'node:path'
 import mapValues from 'lodash-es/mapValues.js'
 import memoize from 'lodash-es/memoize.js'
-import { dirname, join, parse } from 'path'
 import { getPlatform } from 'src/utils/platform.js'
 import type { PluginError } from '../../types/plugin.js'
 import { getPluginErrorMessage } from '../../types/plugin.js'
@@ -37,7 +37,6 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { fetchZyAIMcpConfigsIfEligible } from './zyai.js'
 import { expandEnvVarsInString } from './envExpansion.js'
 import {
   type ConfigScope,
@@ -52,6 +51,7 @@ import {
   type ScopedMcpServerConfig,
 } from './types.js'
 import { getProjectMcpServerStatus } from './utils.js'
+import { fetchZyAIMcpConfigsIfEligible } from './zyai.js'
 
 /**
  * 获取托管 MCP 配置文件的路径
@@ -225,7 +225,9 @@ export function dedupPluginMcpServers(
   const manualSigs = new Map<string, string>()
   for (const [name, config] of Object.entries(manualServers)) {
     const sig = getMcpServerSignature(config)
-    if (sig && !manualSigs.has(sig)) manualSigs.set(sig, name)
+    if (sig && !manualSigs.has(sig)) {
+      manualSigs.set(sig, name)
+    }
   }
 
   const servers: Record<string, ScopedMcpServerConfig> = {}
@@ -281,9 +283,13 @@ export function dedupZyAIMcpServers(
 } {
   const manualSigs = new Map<string, string>()
   for (const [name, config] of Object.entries(manualServers)) {
-    if (isMcpServerDisabled(name)) continue
+    if (isMcpServerDisabled(name)) {
+      continue
+    }
     const sig = getMcpServerSignature(config)
-    if (sig && !manualSigs.has(sig)) manualSigs.set(sig, name)
+    if (sig && !manualSigs.has(sig)) {
+      manualSigs.set(sig, name)
+    }
   }
 
   const servers: Record<string, ScopedMcpServerConfig> = {}
@@ -1160,7 +1166,9 @@ export async function getZyCodeMcpConfigs(
   for (const { name, duplicateOf } of suppressed) {
     // 名称是 "plugin:${pluginName}:${serverName}"，来自 addPluginScopeToServers
     const parts = name.split(':')
-    if (parts[0] !== 'plugin' || parts.length < 3) continue
+    if (parts[0] !== 'plugin' || parts.length < 3) {
+      continue
+    }
     mcpErrors.push({
       type: 'mcp-server-suppressed-duplicate',
       source: name,
@@ -1467,7 +1475,9 @@ export function isMcpServerDisabled(name: string): boolean {
 
 function toggleMembership(list: string[], name: string, shouldContain: boolean): string[] {
   const contains = list.includes(name)
-  if (contains === shouldContain) return list
+  if (contains === shouldContain) {
+    return list
+  }
   return shouldContain ? [...list, name] : list.filter((s) => s !== name)
 }
 
@@ -1484,13 +1494,17 @@ export function setMcpServerEnabled(name: string, enabled: boolean): void {
     if (isDefaultDisabledBuiltin(name)) {
       const prev = current.enabledMcpServers || []
       const next = toggleMembership(prev, name, enabled)
-      if (next === prev) return current
+      if (next === prev) {
+        return current
+      }
       return { ...current, enabledMcpServers: next }
     }
 
     const prev = current.disabledMcpServers || []
     const next = toggleMembership(prev, name, !enabled)
-    if (next === prev) return current
+    if (next === prev) {
+      return current
+    }
     return { ...current, disabledMcpServers: next }
   })
 

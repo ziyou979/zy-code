@@ -53,10 +53,12 @@ export function useKickOffCheckAndDisableBypassPermissionsIfNeeded(): void {
 
   // Run once, when the component mounts
   useEffect(() => {
-    if (getIsRemoteMode()) return
+    if (getIsRemoteMode()) {
+      return
+    }
     void checkAndDisableBypassPermissionsIfNeeded(toolPermissionContext, setAppState)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [setAppState, toolPermissionContext])
 }
 
 let autoModeCheckRan = false
@@ -80,7 +82,9 @@ export async function checkAndDisableAutoModeIfNeeded(
       const nextCtx = updateContext(prev.toolPermissionContext)
       const newState =
         nextCtx === prev.toolPermissionContext ? prev : { ...prev, toolPermissionContext: nextCtx }
-      if (!notification) return newState
+      if (!notification) {
+        return newState
+      }
       return {
         ...newState,
         notifications: {
@@ -109,8 +113,8 @@ export function resetAutoModeGateCheck(): void {
 }
 
 export function useKickOffCheckAndDisableAutoModeIfNeeded(): void {
-  const mainLoopModel = useAppState((s) => s.mainLoopModel)
-  const mainLoopModelForSession = useAppState((s) => s.mainLoopModelForSession)
+  const _mainLoopModel = useAppState((s) => s.mainLoopModel)
+  const _mainLoopModelForSession = useAppState((s) => s.mainLoopModelForSession)
   const setAppState = useSetAppState()
   const store = useAppStateStore()
   const isFirstRunRef = useRef(true)
@@ -121,7 +125,9 @@ export function useKickOffCheckAndDisableAutoModeIfNeeded(): void {
   // The print.ts headless paths are covered by the sync
   // isAutoModeGateEnabled() check.
   useEffect(() => {
-    if (getIsRemoteMode()) return
+    if (getIsRemoteMode()) {
+      return
+    }
     if (isFirstRunRef.current) {
       isFirstRunRef.current = false
     } else {
@@ -129,5 +135,5 @@ export function useKickOffCheckAndDisableAutoModeIfNeeded(): void {
     }
     void checkAndDisableAutoModeIfNeeded(store.getState().toolPermissionContext, setAppState)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mainLoopModel, mainLoopModelForSession])
+  }, [store.getState, setAppState])
 }

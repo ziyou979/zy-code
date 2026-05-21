@@ -1,6 +1,6 @@
-import type { Dirent, Stats } from 'fs'
-import { readdir, readFile, stat } from 'fs/promises'
-import * as path from 'path'
+import type { Dirent, Stats } from 'node:fs'
+import { readdir, readFile, stat } from 'node:fs/promises'
+import * as path from 'node:path'
 import { z } from 'zod/v4'
 import { errorMessage, getErrnoCode, isENOENT } from '../errors.js'
 import { FRONTMATTER_REGEX } from '../frontmatterParser.js'
@@ -50,8 +50,12 @@ function detectManifestType(filePath: string): 'plugin' | 'marketplace' | 'unkno
   const dirName = path.basename(path.dirname(filePath))
 
   // Check filename patterns
-  if (fileName === 'plugin.json') return 'plugin'
-  if (fileName === 'marketplace.json') return 'marketplace'
+  if (fileName === 'plugin.json') {
+    return 'plugin'
+  }
+  if (fileName === 'marketplace.json') {
+    return 'marketplace'
+  }
 
   // Check if it's in .zy-plugin directory
   if (dirName === '.zy-plugin') {
@@ -678,7 +682,9 @@ async function collectMarkdown(dir: string, isSkillsDir: boolean): Promise<strin
     entries = await readdir(dir, { withFileTypes: true })
   } catch (e: unknown) {
     const code = getErrnoCode(e)
-    if (code === 'ENOENT' || code === 'ENOTDIR') return []
+    if (code === 'ENOENT' || code === 'ENOTDIR') {
+      return []
+    }
     throw e
   }
 
@@ -729,7 +735,9 @@ export async function validatePluginContents(pluginDir: string): Promise<Validat
         content = await readFile(filePath, { encoding: 'utf-8' })
       } catch (e: unknown) {
         // ENOENT is expected for speculative skill paths (subdirs without SKILL.md)
-        if (isENOENT(e)) continue
+        if (isENOENT(e)) {
+          continue
+        }
         results.push({
           success: false,
           errors: [{ path: 'file', message: `Failed to read: ${errorMessage(e)}` }],

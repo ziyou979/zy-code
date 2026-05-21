@@ -107,10 +107,14 @@ const APP_NAME_MAX_LEN = 40
 const APP_NAME_MAX_COUNT = 50
 
 function isUserFacingPath(path: string, homeDir: string | undefined): boolean {
-  if (PATH_ALLOWLIST.some((root) => path.startsWith(root))) return true
+  if (PATH_ALLOWLIST.some((root) => path.startsWith(root))) {
+    return true
+  }
   if (homeDir) {
     const userApps = homeDir.endsWith('/') ? `${homeDir}Applications/` : `${homeDir}/Applications/`
-    if (path.startsWith(userApps)) return true
+    if (path.startsWith(userApps)) {
+      return true
+    }
   }
   return false
 }
@@ -129,10 +133,18 @@ function sanitizeCore(raw: readonly string[], applyCharFilter: boolean): string[
   return raw
     .map((name) => name.trim())
     .filter((trimmed) => {
-      if (!trimmed) return false
-      if (trimmed.length > APP_NAME_MAX_LEN) return false
-      if (applyCharFilter && !APP_NAME_ALLOWED.test(trimmed)) return false
-      if (seen.has(trimmed)) return false
+      if (!trimmed) {
+        return false
+      }
+      if (trimmed.length > APP_NAME_MAX_LEN) {
+        return false
+      }
+      if (applyCharFilter && !APP_NAME_ALLOWED.test(trimmed)) {
+        return false
+      }
+      if (seen.has(trimmed)) {
+        return false
+      }
       seen.add(trimmed)
       return true
     })
@@ -141,7 +153,9 @@ function sanitizeCore(raw: readonly string[], applyCharFilter: boolean): string[
 
 function sanitizeAppNames(raw: readonly string[]): string[] {
   const filtered = sanitizeCore(raw, true)
-  if (filtered.length <= APP_NAME_MAX_COUNT) return filtered
+  if (filtered.length <= APP_NAME_MAX_COUNT) {
+    return filtered
+  }
   return [
     ...filtered.slice(0, APP_NAME_MAX_COUNT),
     `… and ${filtered.length - APP_NAME_MAX_COUNT} more`,

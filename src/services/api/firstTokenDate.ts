@@ -39,7 +39,7 @@ export async function fetchAndStoreZyCodeFirstTokenDate(): Promise<void> {
     // 如果日期非空则验证
     if (firstTokenDate !== null) {
       const dateTime = new Date(firstTokenDate).getTime()
-      if (isNaN(dateTime)) {
+      if (Number.isNaN(dateTime)) {
         logError(new Error(`从 API 收到无效的 first_token_date：${firstTokenDate}`))
         // 不保存无效日期
         return

@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
-import * as React from 'react'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
+import { tSync } from '../i18n/index.js'
 import { Box, Text, usePreviewTheme, useTheme, useThemeSetting } from '../ink.js'
 import { useRegisterKeybindingContext } from '../keybindings/KeybindingContext.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
@@ -10,7 +10,6 @@ import { useAppState, useSetAppState } from '../state/AppState.js'
 import { gracefulShutdown } from '../utils/gracefulShutdown.js'
 import { updateSettingsForSource } from '../utils/settings/settings.js'
 import type { ThemeSetting } from '../utils/theme.js'
-import { tSync } from '../i18n/index.js'
 import { Select } from './CustomSelect/index.js'
 import { Byline } from './design-system/Byline.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
@@ -45,7 +44,7 @@ export function ThemePicker({
   const syntaxHighlightingDisabled =
     useAppState((s) => s.settings.syntaxHighlightingDisabled) ?? false
   const setAppState = useSetAppState()
-  // @ts-ignore
+  // @ts-expect-error
   useRegisterKeybindingContext('ThemePicker')
   const syntaxToggleShortcut = useShortcutDisplay(
     'theme:toggleSyntaxHighlighting',

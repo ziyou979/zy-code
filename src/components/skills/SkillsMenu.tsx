@@ -1,5 +1,5 @@
 import capitalize from 'lodash-es/capitalize.js'
-import * as React from 'react'
+import { tSync } from 'src/i18n/index.js'
 import {
   type Command,
   type CommandBase,
@@ -15,7 +15,6 @@ import { getSettingSourceName, type SettingSource } from '../../utils/settings/c
 import { plural } from '../../utils/stringUtils.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Dialog } from '../design-system/Dialog.js'
-import { tSync } from 'src/i18n/index.js'
 
 // Skills are always PromptCommands with CommandBase properties
 type SkillCommand = CommandBase & PromptCommand
@@ -117,7 +116,7 @@ export function SkillsMenu({ onExit, commands }: Props) {
   }
   const renderSkill = (skill_0) => {
     const estimatedTokens = estimateSkillFrontmatterTokens(skill_0)
-    const tokenDisplay = `~${formatTokens(estimatedTokens)}`
+    const _tokenDisplay = `~${formatTokens(estimatedTokens)}`
     const pluginName =
       skill_0.source === 'plugin' ? skill_0.pluginInfo?.pluginManifest.name : undefined
     return (

@@ -37,8 +37,8 @@
 //     that fits; sets truncatedByBytes in the result.  Never throws.
 // ---------------------------------------------------------------------------
 
-import { createReadStream, fstat } from 'fs'
-import { stat as fsStat, readFile } from 'fs/promises'
+import { createReadStream, fstat } from 'node:fs'
+import { stat as fsStat, readFile } from 'node:fs/promises'
 import { formatFileSize } from './format.js'
 
 const FAST_PATH_MAX_SIZE = 10 * 1024 * 1024 // 10 MB

@@ -1,7 +1,7 @@
+import { createHash } from 'node:crypto'
+import { promises as fs } from 'node:fs'
+import { dirname, join } from 'node:path'
 import type { ClientOptions } from '@anthropic-ai/sdk'
-import { createHash } from 'crypto'
-import { promises as fs } from 'fs'
-import { dirname, join } from 'path'
 import { getSessionId } from 'src/bootstrap/state.js'
 import { getZyConfigHomeDir, isInternalBuild } from '../../utils/envUtils.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
@@ -46,7 +46,9 @@ export function clearAllDumpState(): void {
 }
 
 export function addApiRequestToCache(requestData: unknown): void {
-  if (!isInternalBuild()) return
+  if (!isInternalBuild()) {
+    return
+  }
   cachedApiRequests.push({
     timestamp: new Date().toISOString(),
     request: requestData,
@@ -61,9 +63,11 @@ export function getDumpPromptsPath(agentIdOrSessionId?: string): string {
 }
 
 function appendToFile(filePath: string, entries: string[]): void {
-  if (entries.length === 0) return
+  if (entries.length === 0) {
+    return
+  }
   fs.mkdir(dirname(filePath), { recursive: true })
-    .then(() => fs.appendFile(filePath, entries.join('\n') + '\n'))
+    .then(() => fs.appendFile(filePath, `${entries.join('\n')}\n`))
     .catch(() => {})
 }
 
@@ -85,7 +89,9 @@ function dumpRequest(body: string, ts: string, state: DumpState, filePath: strin
     const req = jsonParse(body) as Record<string, unknown>
     addApiRequestToCache(req)
 
-    if (!isInternalBuild()) return
+    if (!isInternalBuild()) {
+      return
+    }
     const entries: string[] = []
     const messages = (req.messages ?? []) as Array<{ role?: string }>
 
@@ -166,7 +172,9 @@ export function createDumpPromptsFetch(agentIdOrSessionId: string): ClientOption
             try {
               while (true) {
                 const { done, value } = await reader.read()
-                if (done) break
+                if (done) {
+                  break
+                }
                 buffer += decoder.decode(value, { stream: true })
               }
             } finally {
@@ -189,7 +197,7 @@ export function createDumpPromptsFetch(agentIdOrSessionId: string): ClientOption
             data = await cloned.json()
           }
 
-          await fs.appendFile(filePath, jsonStringify({ type: 'response', timestamp, data }) + '\n')
+          await fs.appendFile(filePath, `${jsonStringify({ type: 'response', timestamp, data })}\n`)
         } catch {
           // 尽力而为
         }

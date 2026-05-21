@@ -1,4 +1,4 @@
-import { promises as fsp } from 'fs'
+import { promises as fsp } from 'node:fs'
 import { getSdkAgentProgressSummariesEnabled } from '../../bootstrap/state.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
 import { isCoordinatorMode } from '../../coordinator/coordinatorMode.js'

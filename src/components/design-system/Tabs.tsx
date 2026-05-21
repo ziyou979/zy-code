@@ -6,6 +6,7 @@ import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import type { Theme } from '../../utils/theme.js'
+
 type TabsProps = {
   children: Array<React.ReactElement<TabProps>>
   title?: string

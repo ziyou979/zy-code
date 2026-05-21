@@ -6,7 +6,7 @@
  * on top so that user/project/local/flag/policy sources all override.
  */
 
-import { join } from 'path'
+import { join } from 'node:path'
 import type { z } from 'zod/v4'
 import { getAdditionalDirectoriesForzyMd } from '../../bootstrap/state.js'
 import { parseSettingsFile } from '../settings/settings.js'

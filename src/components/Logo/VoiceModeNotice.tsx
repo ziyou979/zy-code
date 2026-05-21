@@ -1,11 +1,11 @@
 import { feature } from 'bun:bundle'
-import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { Box, Text } from '../../ink.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import { isVoiceModeEnabled } from '../../voice/voiceModeEnabled.js'
 import { AnimatedAsterisk } from './AnimatedAsterisk.js'
+
 const MAX_SHOW_COUNT = 3
 export function VoiceModeNotice() {
   return feature('VOICE_MODE') ? <VoiceModeNoticeInner /> : null

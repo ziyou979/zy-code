@@ -5,13 +5,13 @@
 // deps is a separate sweep; this ref preserves the status quo.
 /// <reference lib="dom" />
 
-import { extname } from 'path'
+import { extname } from 'node:path'
 
-// @ts-ignore
+// @ts-expect-error
 export type CliHighlight = {
-  // @ts-ignore
+  // @ts-expect-error
   highlight: typeof import('cli-highlight').highlight
-  // @ts-ignore
+  // @ts-expect-error
   supportsLanguage: typeof import('cli-highlight').supportsLanguage
 }
 
@@ -21,12 +21,12 @@ export type CliHighlight = {
 // faulted in.
 let cliHighlightPromise: Promise<CliHighlight | null> | undefined
 
-// @ts-ignore
+// @ts-expect-error
 let loadedGetLanguage: typeof import('highlight.js').getLanguage | undefined
 
 async function loadCliHighlight(): Promise<CliHighlight | null> {
   try {
-    // @ts-ignore
+    // @ts-expect-error
     const cliHighlight = await import('cli-highlight')
     // cache hit — cli-highlight already loaded highlight.js
     const highlightJs = await import('highlight.js')
@@ -54,6 +54,8 @@ export function getCliHighlightPromise(): Promise<CliHighlight | null> {
 export async function getLanguageName(file_path: string): Promise<string> {
   await getCliHighlightPromise()
   const ext = extname(file_path).slice(1)
-  if (!ext) return 'unknown'
+  if (!ext) {
+    return 'unknown'
+  }
   return loadedGetLanguage?.(ext)?.name ?? 'unknown'
 }

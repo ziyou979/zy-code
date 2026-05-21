@@ -45,7 +45,7 @@ import { getPlatform, getWslVersion } from 'src/utils/platform.js'
 import { getCACertificates } from '../caCerts.js'
 import { registerCleanup } from '../cleanupRegistry.js'
 import { getHasFormattedOutput, logForDebugging } from '../debug.js'
-import { isEnvTruthy } from '../envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../envUtils.js'
 import { errorMessage } from '../errors.js'
 import { getMTLSConfig } from '../mtls.js'
 import { getProxyUrl, shouldBypassProxy } from '../proxy.js'
@@ -57,7 +57,6 @@ import { BigQueryMetricsExporter } from './bigqueryExporter.js'
 import { ZyCodeDiagLogger } from './logger.js'
 import { initializePerfettoTracing } from './perfettoTracing.js'
 import { endInteractionSpan, isEnhancedTelemetryEnabled } from './sessionTracing.js'
-import { isInternalBuild } from '../envUtils.js'
 
 const DEFAULT_METRICS_EXPORT_INTERVAL_MS = 60000
 const DEFAULT_LOGS_EXPORT_INTERVAL_MS = 5000
@@ -120,6 +119,7 @@ async function getOtlpReaders() {
   const exporterTypes = parseExporterTypes(process.env.OTEL_METRICS_EXPORTER)
   const exportInterval = parseInt(
     process.env.OTEL_METRIC_EXPORT_INTERVAL || DEFAULT_METRICS_EXPORT_INTERVAL_MS.toString(),
+    10,
   )
 
   const exporters = []
@@ -131,7 +131,7 @@ async function getOtlpReaders() {
 
       consoleExporter.export = (metrics, callback) => {
         // Log resource attributes once at the start
-        if (metrics.resource && metrics.resource.attributes) {
+        if (metrics.resource?.attributes) {
           // The console exporter is for debugging, so console output is intentional here
 
           logForDebugging('\n=== Resource Attributes ===')
@@ -326,11 +326,11 @@ async function initializeBetaTracing(
     return
   }
 
-  // @ts-ignore
+  // @ts-expect-error
   const [{ OTLPTraceExporter }, { OTLPLogExporter }] = await Promise.all([
-    // @ts-ignore
+    // @ts-expect-error
     import('@opentelemetry/exporter-trace-otlp-http'),
-    // @ts-ignore
+    // @ts-expect-error
     import('@opentelemetry/exporter-logs-otlp-http'),
   ])
 
@@ -360,7 +360,7 @@ async function initializeBetaTracing(
   const logExporter = new OTLPLogExporter(logHttpConfig)
   const loggerProvider = new LoggerProvider({
     resource,
-    // @ts-ignore
+    // @ts-expect-error
     processors: [
       new BatchLogRecordProcessor(logExporter, {
         scheduledDelayMillis: DEFAULT_LOGS_EXPORT_INTERVAL_MS,
@@ -487,7 +487,7 @@ export async function initializeTelemetry() {
 
     // Register shutdown for beta tracing
     const shutdownTelemetry = async () => {
-      const timeoutMs = parseInt(process.env.ZY_CODE_OTEL_SHUTDOWN_TIMEOUT_MS || '2000')
+      const timeoutMs = parseInt(process.env.ZY_CODE_OTEL_SHUTDOWN_TIMEOUT_MS || '2000', 10)
       try {
         endInteractionSpan()
 
@@ -537,12 +537,13 @@ export async function initializeTelemetry() {
       const loggerProvider = new LoggerProvider({
         resource,
         // Add batch processors for each exporter
-        // @ts-ignore
+        // @ts-expect-error
         processors: logExporters.map(
           (exporter) =>
             new BatchLogRecordProcessor(exporter, {
               scheduledDelayMillis: parseInt(
                 process.env.OTEL_LOGS_EXPORT_INTERVAL || DEFAULT_LOGS_EXPORT_INTERVAL_MS.toString(),
+                10,
               ),
             }),
         ),
@@ -586,6 +587,7 @@ export async function initializeTelemetry() {
             scheduledDelayMillis: parseInt(
               process.env.OTEL_TRACES_EXPORT_INTERVAL ||
                 DEFAULT_TRACES_EXPORT_INTERVAL_MS.toString(),
+              10,
             ),
           }),
       )
@@ -603,7 +605,7 @@ export async function initializeTelemetry() {
 
   // Shutdown metrics and logs on exit (flushes and closes exporters)
   const shutdownTelemetry = async () => {
-    const timeoutMs = parseInt(process.env.ZY_CODE_OTEL_SHUTDOWN_TIMEOUT_MS || '2000')
+    const timeoutMs = parseInt(process.env.ZY_CODE_OTEL_SHUTDOWN_TIMEOUT_MS || '2000', 10)
 
     try {
       // End any active interaction span before shutdown
@@ -659,7 +661,7 @@ export async function flushTelemetry(): Promise<void> {
     return
   }
 
-  const timeoutMs = parseInt(process.env.ZY_CODE_OTEL_FLUSH_TIMEOUT_MS || '5000')
+  const timeoutMs = parseInt(process.env.ZY_CODE_OTEL_FLUSH_TIMEOUT_MS || '5000', 10)
 
   try {
     const flushPromises = [meterProvider.forceFlush()]

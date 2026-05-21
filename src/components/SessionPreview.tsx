@@ -1,4 +1,4 @@
-import type { UUID } from 'crypto'
+import type { UUID } from 'node:crypto'
 import React from 'react'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
@@ -12,6 +12,7 @@ import { Byline } from './design-system/Byline.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 import { LoadingState } from './design-system/LoadingState.js'
 import { Messages } from './Messages.js'
+
 type Props = {
   log: LogOption
   onExit: () => void

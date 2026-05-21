@@ -1,4 +1,3 @@
-import React from 'react'
 import { BLACK_CIRCLE } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'

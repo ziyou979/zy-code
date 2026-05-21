@@ -49,7 +49,9 @@ export function buildSdkUrl(apiBaseUrl: string, sessionId: string): string {
  * work-received check when the ccr_v2_compat_enabled gate is on.
  */
 export function sameSessionId(a: string, b: string): boolean {
-  if (a === b) return true
+  if (a === b) {
+    return true
+  }
   // The body is everything after the last underscore — this handles both
   // `{tag}_{body}` and `{tag}_staging_{body}`.
   const aBody = a.slice(a.lastIndexOf('_') + 1)

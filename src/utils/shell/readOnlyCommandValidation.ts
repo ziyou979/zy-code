@@ -283,7 +283,9 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       // 位置参数是引用名（安全）。
       const DANGEROUS_SUBCOMMANDS = new Set(['expire', 'delete', 'exists'])
       for (const token of args) {
-        if (!token || token.startsWith('-')) continue
+        if (!token || token.startsWith('-')) {
+          continue
+        }
         // 第一个非标志位置参数：检查是否为危险子命令。
         // 如果是 `show` 或类似 `HEAD`/`refs/...` 的引用名，则安全。
         if (DANGEROUS_SUBCOMMANDS.has(token)) {
@@ -470,7 +472,9 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       // 过滤掉已知的安全标志
       const positional = args.filter((a) => a !== '-n')
       // 必须恰好有一个看起来像远程名称的位置参数
-      if (positional.length !== 1) return true
+      if (positional.length !== 1) {
+        return true
+      }
       return !/^[a-zA-Z0-9_-]+$/.test(positional[0]!)
     },
   },
@@ -921,7 +925,9 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
 // 等号附加形式 `--repo=HOST/OWNER/REPO`（cobra 接受两种形式）。
 function ghIsDangerousCallback(_rawCommand: string, args: string[]): boolean {
   for (const token of args) {
-    if (!token) continue
+    if (!token) {
+      continue
+    }
     // 对于标志标记，提取 `=` 之后的值进行检查。否则
     // `--repo=evil.com/SECRET/x`（以 `-` 开头的单个标记）会被完全跳过，
     // 绕过 HOST 检查。Cobra 将 `--flag=val` 和 `--flag val` 同等对待；
@@ -929,9 +935,13 @@ function ghIsDangerousCallback(_rawCommand: string, args: string[]): boolean {
     let value = token
     if (token.startsWith('-')) {
       const eqIdx = token.indexOf('=')
-      if (eqIdx === -1) continue // 无内联值的标志，无需检查
+      if (eqIdx === -1) {
+        continue // 无内联值的标志，无需检查
+      }
       value = token.slice(eqIdx + 1)
-      if (!value) continue
+      if (!value) {
+        continue
+      }
     }
     // 跳过明显不是 repo 规格的值（完全没有 `/`，或纯数字）
     if (!value.includes('/') && !value.includes('://') && !value.includes('@')) {
@@ -1776,7 +1786,7 @@ export function validateFlags(
         // 安全的方向。需要 `-I` 的用户可以不组合使用：`-r -I {}`。
         if (flag.startsWith('-') && !flag.startsWith('--') && flag.length > 2) {
           for (let j = 1; j < flag.length; j++) {
-            const singleFlag = '-' + flag[j]
+            const singleFlag = `-${flag[j]}`
             const flagType = config.safeFlags[singleFlag]
             if (!flagType) {
               return false // 组合标志中有一个不安全

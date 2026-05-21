@@ -1,7 +1,7 @@
-import * as React from 'react'
 import { Text } from '../../../ink.js'
 import { BashTool } from '../../../tools/BashTool/BashTool.js'
 import type { PermissionRuleValue } from '../../../utils/permissions/PermissionRule.js'
+
 type RuleSubtitleProps = {
   ruleValue: PermissionRuleValue
 }

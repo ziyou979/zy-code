@@ -1,5 +1,5 @@
+import * as platformPath from 'node:path'
 import chokidar, { type FSWatcher } from 'chokidar'
-import * as platformPath from 'path'
 import { getAdditionalDirectoriesForzyMd } from '../../bootstrap/state.js'
 import { clearCommandMemoizationCaches, clearCommandsCache } from '../../commands.js'
 import {
@@ -80,7 +80,9 @@ let testOverrides: {
  * Initialize file watching for skill directories
  */
 export async function initialize(): Promise<void> {
-  if (initialized || disposed) return
+  if (initialized || disposed) {
+    return
+  }
   initialized = true
 
   // Register callback for when dynamic skills are loaded (only once)
@@ -98,7 +100,9 @@ export async function initialize(): Promise<void> {
   }
 
   const paths = await getWatchablePaths()
-  if (paths.length === 0) return
+  if (paths.length === 0) {
+    return
+  }
 
   logForDebugging(`Watching for changes in skill/command directories: ${paths.join(', ')}...`)
 
@@ -113,7 +117,9 @@ export async function initialize(): Promise<void> {
     // Ignore special file types (sockets, FIFOs, devices) - they cannot be watched
     // and will error with EOPNOTSUPP on macOS. Only allow regular files and directories.
     ignored: (path, stats) => {
-      if (stats && !stats.isFile() && !stats.isDirectory()) return true
+      if (stats && !stats.isFile() && !stats.isDirectory()) {
+        return true
+      }
       // Ignore .git directories
       return path.split(platformPath.sep).some((dir) => dir === '.git')
     },
@@ -246,7 +252,9 @@ function handleChange(path: string): void {
  */
 function scheduleReload(changedPath: string): void {
   pendingChangedPaths.add(changedPath)
-  if (reloadTimer) clearTimeout(reloadTimer)
+  if (reloadTimer) {
+    clearTimeout(reloadTimer)
+  }
   reloadTimer = setTimeout(async () => {
     reloadTimer = null
     const paths = [...pendingChangedPaths]

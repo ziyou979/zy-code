@@ -1,5 +1,5 @@
-import { mkdir, open } from 'fs/promises'
-import { join } from 'path'
+import { mkdir, open } from 'node:fs/promises'
+import { join } from 'node:path'
 import { getSessionId } from '../bootstrap/state.js'
 import type { PastedContent } from './config.js'
 import { logForDebugging } from './debug.js'

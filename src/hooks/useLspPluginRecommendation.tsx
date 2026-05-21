@@ -10,7 +10,7 @@
  * Only shows one recommendation per session.
  */
 
-import { extname, join } from 'path'
+import { extname, join } from 'node:path'
 import * as React from 'react'
 import {
   hasShownLspRecommendationThisSession,

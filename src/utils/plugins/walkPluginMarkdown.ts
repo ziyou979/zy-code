@@ -1,4 +1,4 @@
-import { join } from 'path'
+import { join } from 'node:path'
 import { logForDebugging } from '../debug.js'
 import { getFsImplementation } from '../fsOperations.js'
 

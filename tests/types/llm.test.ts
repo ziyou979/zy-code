@@ -7,20 +7,20 @@
  * - isAbortError / createAbortError
  * - getErrorStatus / getErrorMessage / getErrorHeader 安全访问
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import {
+  createAbortError,
+  getErrorHeader,
+  getErrorMessage,
+  getErrorStatus,
+  getHeader,
+  isAbortError,
   isAPIError,
   isConnectionError,
   isConnectionTimeoutError,
-  isAbortError,
-  createAbortError,
-  getErrorStatus,
-  getErrorMessage,
-  getErrorHeader,
-  getHeader,
-  LLMError,
   LLMAbortError,
   LLMConnectionError,
+  LLMError,
 } from '../../src/types/llm.js'
 
 describe('llm 类型守卫', () => {
@@ -176,7 +176,7 @@ describe('llm 类型守卫', () => {
     })
 
     test('headers 为 undefined → null', () => {
-      // @ts-ignore
+      // @ts-expect-error
       expect(getHeader({}, 'foo')).toBe(null)
     })
 

@@ -8,6 +8,7 @@ import { getDisplayPath } from '../utils/file.js'
 import { formatTokens } from '../utils/format.js'
 import { getSourceDisplayName, type SettingSource } from '../utils/settings/constants.js'
 import { ContextSuggestions } from './ContextSuggestions.js'
+
 const RESERVED_CATEGORY_NAME = 'Autocompact buffer'
 const FREE_CATEGORY_NAME = 'Free space'
 
@@ -212,7 +213,7 @@ export function ContextVisualization({ data }: Props) {
       })}
     </Box>
   ))
-  const gridBox = (
+  const _gridBox = (
     <Box flexDirection="column" flexShrink={0}>
       {gridRowElements}
     </Box>
@@ -244,14 +245,16 @@ export function ContextVisualization({ data }: Props) {
       </Box>
     )
   })
-  const freeSpaceItem = (categories.find((cat) => cat.name === FREE_CATEGORY_NAME)?.tokens ?? 0) > 0 && (
+  const freeSpaceItem = (categories.find((cat) => cat.name === FREE_CATEGORY_NAME)?.tokens ?? 0) >
+    0 && (
     <Box>
       <Text dimColor={true}>⛶</Text>
       <Text> {tSync('contextVis.freeSpace')}: </Text>
       <Text dimColor={true}>
         {formatTokens(categories.find((cat) => cat.name === FREE_CATEGORY_NAME)?.tokens || 0)} (
         {(
-          ((categories.find((cat) => cat.name === FREE_CATEGORY_NAME)?.tokens || 0) / rawMaxTokens) *
+          ((categories.find((cat) => cat.name === FREE_CATEGORY_NAME)?.tokens || 0) /
+            rawMaxTokens) *
           100
         ).toFixed(1)}
         %)
@@ -471,15 +474,21 @@ export function ContextVisualization({ data }: Props) {
   // 逐行拼接网格（左）和信息（右），避免 Ink flex row 对齐产生空行
   const infoRows: React.ReactNode[] = []
   infoRows.push(modelInfoText)
-  if (collapseStatus) infoRows.push(collapseStatus)
+  if (collapseStatus) {
+    infoRows.push(collapseStatus)
+  }
   infoRows.push(spacer)
   infoRows.push(
     <Text key="estimatedUsage" dimColor={true} italic={true}>
       {tSync('contextVis.estimatedUsage')}
     </Text>,
   )
-  for (const item of categoryItems) infoRows.push(item)
-  if (freeSpaceItem) infoRows.push(freeSpaceItem)
+  for (const item of categoryItems) {
+    infoRows.push(item)
+  }
+  if (freeSpaceItem) {
+    infoRows.push(freeSpaceItem)
+  }
   if (autocompactCategory && autocompactCategory.tokens > 0) {
     infoRows.push(
       <Box key="autocompact">

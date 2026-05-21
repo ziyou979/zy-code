@@ -106,7 +106,9 @@ export const TaskCreateTool = buildTool({
 
     // Auto-expand task list when creating tasks
     context.setAppState((prev) => {
-      if (prev.expandedView === 'tasks') return prev
+      if (prev.expandedView === 'tasks') {
+        return prev
+      }
       return { ...prev, expandedView: 'tasks' as const }
     })
 
@@ -131,4 +133,5 @@ export const TaskCreateTool = buildTool({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(TaskCreateTool, () => isTodoV2Enabled())

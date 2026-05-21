@@ -10,7 +10,7 @@
  * 3. Fallback timestamp for local sources
  */
 
-import { createHash } from 'crypto'
+import { createHash } from 'node:crypto'
 import { logForDebugging } from '../debug.js'
 import { getHeadForDir } from '../git/gitFilesystem.js'
 import type { PluginManifest, PluginSource } from './schemas.js'

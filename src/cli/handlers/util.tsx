@@ -4,7 +4,7 @@
  */
 /* eslint-disable custom-rules/no-process-exit -- CLI subcommand handlers intentionally exit */
 
-import { cwd } from 'process'
+import { cwd } from 'node:process'
 import React from 'react'
 import { Welcome } from '../../components/Logo/Welcome.js'
 import { useManagePlugins } from '../../hooks/useManagePlugins.js'
@@ -100,8 +100,12 @@ export async function installHandler(
   const { install } = await import('../../commands/install.js')
   await new Promise<void>((resolve) => {
     const args: string[] = []
-    if (target) args.push(target)
-    if (options.force) args.push('--force')
+    if (target) {
+      args.push(target)
+    }
+    if (options.force) {
+      args.push('--force')
+    }
     void install.call(
       (result) => {
         void resolve()

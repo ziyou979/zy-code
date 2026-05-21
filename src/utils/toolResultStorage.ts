@@ -2,9 +2,8 @@
  * 将大型工具结果持久化到磁盘而非截断的工具。
  */
 
-import type { ToolResultBlock } from '../types/llm.js'
-import { mkdir, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
 import {
   BYTES_PER_TOKEN,
@@ -15,6 +14,7 @@ import {
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { logEvent } from '../services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../services/analytics/metadata.js'
+import type { ToolResultBlock } from '../types/llm.js'
 import type { Message } from '../types/message.js'
 import { logForDebugging } from './debug.js'
 import { getErrnoCode, toError } from './errors.js'
@@ -232,10 +232,18 @@ export async function processPreMappedToolResultBlock(
  * 空/空白文本块的数组。非文本块（图片、tool_reference）视为非空。
  */
 export function isToolResultContentEmpty(content: ToolResultBlock['content']): boolean {
-  if (!content) return true
-  if (typeof content === 'string') return content.trim() === ''
-  if (!Array.isArray(content)) return false
-  if (content.length === 0) return true
+  if (!content) {
+    return true
+  }
+  if (typeof content === 'string') {
+    return content.trim() === ''
+  }
+  if (!Array.isArray(content)) {
+    return false
+  }
+  if (content.length === 0) {
+    return true
+  }
   return content.every(
     (block) =>
       typeof block === 'object' &&
@@ -422,7 +430,9 @@ export function provisionContentReplacementState(
   initialContentReplacements?: ContentReplacementRecord[],
 ): ContentReplacementState | undefined {
   const enabled = getFeatureValue_CACHED_MAY_BE_STALE('zy_hawthorn_steeple', false)
-  if (!enabled) return undefined
+  if (!enabled) {
+    return undefined
+  }
   if (initialMessages) {
     return reconstructContentReplacementState(initialMessages, initialContentReplacements ?? [])
   }
@@ -474,7 +484,9 @@ function hasImageBlock(content: NonNullable<ToolResultBlock['content']>): boolea
 }
 
 function contentSize(content: NonNullable<ToolResultBlock['content']>): number {
-  if (typeof content === 'string') return content.length
+  if (typeof content === 'string') {
+    return content.length
+  }
   // 直接对文本块长度求和。与序列化相比略微少计
   // （无 JSON 框架），但预算本身是粗略的 token 启发式。
   // 避免在每次执行时分配内容大小的字符串。
@@ -489,9 +501,13 @@ function contentSize(content: NonNullable<ToolResultBlock['content']>): number {
 function buildToolNameMap(messages: Message[]): Map<string, string> {
   const map = new Map<string, string>()
   for (const message of messages) {
-    if (message.type !== 'assistant') continue
+    if (message.type !== 'assistant') {
+      continue
+    }
     const content = message.message.content
-    if (!Array.isArray(content)) continue
+    if (!Array.isArray(content)) {
+      continue
+    }
     for (const block of content) {
       if (block.type === 'tool_call') {
         map.set(block.id, block.name)
@@ -512,9 +528,15 @@ function collectCandidatesFromMessage(message: Message): ToolResultCandidate[] {
     return []
   }
   return message.message.content.flatMap((block) => {
-    if (block.type !== 'tool_result' || !block.content) return []
-    if (isContentAlreadyCompacted(block.content)) return []
-    if (hasImageBlock(block.content)) return []
+    if (block.type !== 'tool_result' || !block.content) {
+      return []
+    }
+    if (isContentAlreadyCompacted(block.content)) {
+      return []
+    }
+    if (hasImageBlock(block.content)) {
+      return []
+    }
     return [
       {
         toolUseId: block.toolCallId,
@@ -554,7 +576,9 @@ function collectCandidatesByMessage(messages: Message[]): ToolResultCandidate[][
   let current: ToolResultCandidate[] = []
 
   const flush = () => {
-    if (current.length > 0) groups.push(current)
+    if (current.length > 0) {
+      groups.push(current)
+    }
     current = []
   }
 
@@ -630,7 +654,9 @@ function selectFreshToReplace(
   const selected: ToolResultCandidate[] = []
   let remaining = frozenSize + fresh.reduce((sum, c) => sum + c.size, 0)
   for (const c of sorted) {
-    if (remaining <= limit) break
+    if (remaining <= limit) {
+      break
+    }
     selected.push(c)
     // 我们不知道持久化后的替换大小，但预览约 ~2K，
     // 到达此路径的结果要大得多，因此减去完整大小
@@ -657,13 +683,17 @@ function replaceToolResultContents(
     const needsReplace = content.some(
       (b) => b.type === 'tool_result' && replacementMap.has(b.toolCallId),
     )
-    if (!needsReplace) return message
+    if (!needsReplace) {
+      return message
+    }
     return {
       ...message,
       message: {
         ...message.message,
         content: content.map((block) => {
-          if (block.type !== 'tool_result') return block
+          if (block.type !== 'tool_result') {
+            return block
+          }
           const replacement = replacementMap.get(block.toolCallId)
           return replacement === undefined ? block : { ...block, content: replacement }
         }),
@@ -676,7 +706,9 @@ async function buildReplacement(
   candidate: ToolResultCandidate,
 ): Promise<{ content: string; originalSize: number } | null> {
   const result = await persistToolResult(candidate.content, candidate.toolUseId)
-  if (isPersistError(result)) return null
+  if (isPersistError(result)) {
+    return null
+  }
   return {
     content: buildLargeToolResultMessage(result),
     originalSize: result.originalSize,
@@ -778,7 +810,9 @@ export async function enforceToolResultBudget(
       .filter((c) => !selectedIds.has(c.toolUseId))
       .forEach((c) => state.seenIds.add(c.toolUseId))
 
-    if (selected.length === 0) continue
+    if (selected.length === 0) {
+      continue
+    }
     messagesOverBudget++
     toPersist.push(...selected)
   }
@@ -800,7 +834,9 @@ export async function enforceToolResultBudget(
     // ID 是已见过但未替换的——原始内容已发送给模型，
     // 因此将其视为 frozen 是正确的。
     state.seenIds.add(candidate.toolUseId)
-    if (replacement === null) continue
+    if (replacement === null) {
+      continue
+    }
     replacedSize += candidate.size
     replacementMap.set(candidate.toolUseId, replacement.content)
     state.replacements.set(candidate.toolUseId, replacement.content)
@@ -860,7 +896,9 @@ export async function applyToolResultBudget(
   writeToTranscript?: (records: ToolResultReplacementRecord[]) => void,
   skipToolNames?: ReadonlySet<string>,
 ): Promise<Message[]> {
-  if (!state) return messages
+  if (!state) {
+    return messages
+  }
   const result = await enforceToolResultBudget(messages, state, skipToolNames)
   if (result.newlyReplaced.length > 0) {
     writeToTranscript?.(result.newlyReplaced)
@@ -935,7 +973,9 @@ export function reconstructForSubagentResume(
   resumedMessages: Message[],
   sidechainRecords: ContentReplacementRecord[],
 ): ContentReplacementState | undefined {
-  if (!parentState) return undefined
+  if (!parentState) {
+    return undefined
+  }
   return reconstructContentReplacementState(
     resumedMessages,
     sidechainRecords,

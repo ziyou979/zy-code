@@ -1,4 +1,4 @@
-import * as fs from 'fs'
+import * as fs from 'node:fs'
 import {
   mkdir as mkdirPromise,
   open,
@@ -9,9 +9,9 @@ import {
   rm as rmPromise,
   stat as statPromise,
   unlink as unlinkPromise,
-} from 'fs/promises'
-import { homedir } from 'os'
-import * as nodePath from 'path'
+} from 'node:fs/promises'
+import { homedir } from 'node:os'
+import * as nodePath from 'node:path'
 import { getErrnoCode } from './errors.js'
 import { slowLogging } from './slowOperations.js'
 
@@ -402,7 +402,9 @@ export const NodeFsOperations: FsOperations = {
       // Bun's directoryExistsAt misclassifies DIRECTORY+READONLY as not-a-dir
       // (bun-internal src/sys.zig existsAtType). The dir exists; ignore.
       // https://github.com/anthropics/zy-code/issues/30924
-      if (getErrnoCode(e) !== 'EEXIST') throw e
+      if (getErrnoCode(e) !== 'EEXIST') {
+        throw e
+      }
     }
   },
 
@@ -436,14 +438,16 @@ export const NodeFsOperations: FsOperations = {
 
   readSync(fsPath, options) {
     using _ = slowLogging`fs.readSync(${fsPath}, ${options.length} bytes)`
-    let fd: number | undefined = undefined
+    let fd: number | undefined
     try {
       fd = fs.openSync(fsPath, 'r')
       const buffer = Buffer.alloc(options.length)
       const bytesRead = fs.readSync(fd, buffer, 0, options.length, 0)
       return { buffer, bytesRead }
     } finally {
-      if (fd) fs.closeSync(fd)
+      if (fd) {
+        fs.closeSync(fd)
+      }
     }
   },
 
@@ -461,7 +465,9 @@ export const NodeFsOperations: FsOperations = {
         }
         return
       } catch (e) {
-        if (getErrnoCode(e) !== 'EEXIST') throw e
+        if (getErrnoCode(e) !== 'EEXIST') {
+          throw e
+        }
         // File exists — fall through to normal append
       }
     }
@@ -519,7 +525,9 @@ export const NodeFsOperations: FsOperations = {
       // Bun's directoryExistsAt misclassifies DIRECTORY+READONLY as not-a-dir
       // (bun-internal src/sys.zig existsAtType). The dir exists; ignore.
       // https://github.com/anthropics/zy-code/issues/30924
-      if (getErrnoCode(e) !== 'EEXIST') throw e
+      if (getErrnoCode(e) !== 'EEXIST') {
+        throw e
+      }
     }
   },
 
@@ -565,7 +573,9 @@ export const NodeFsOperations: FsOperations = {
       let offset = 0
       while (offset < readSize) {
         const { bytesRead } = await handle.read(buffer, offset, readSize - offset, offset)
-        if (bytesRead === 0) break
+        if (bytesRead === 0) {
+          break
+        }
         offset += bytesRead
       }
       return offset < readSize ? buffer.subarray(0, offset) : buffer

@@ -5,7 +5,7 @@
  * - projectView: 读取时投影——将已提交的折叠 span 替换为占位消息
  */
 
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import type { Message, UserMessage } from '../../types/message.js'
 import { createUserMessage } from '../../utils/messages.js'
 
@@ -33,7 +33,9 @@ export function projectView(
   messages: readonly Message[],
   collapseEntries: readonly CollapseEntry[],
 ): Message[] {
-  if (collapseEntries.length === 0) return messages as Message[]
+  if (collapseEntries.length === 0) {
+    return messages as Message[]
+  }
 
   // 收集所有需要归档的 UUID 范围
   const ranges = collapseEntries.map((e) => ({
@@ -93,7 +95,9 @@ export function projectView(
  * @returns 折叠后的消息列表
  */
 export function collapseContext(messages: readonly Message[]): Message[] {
-  if (messages.length < 10) return messages as Message[]
+  if (messages.length < 10) {
+    return messages as Message[]
+  }
 
   // 找到至少 2 个 assistant 消息后才开始折叠
   const assistantPositions: number[] = []
@@ -103,11 +107,15 @@ export function collapseContext(messages: readonly Message[]): Message[] {
     }
   }
 
-  if (assistantPositions.length < 5) return messages as Message[]
+  if (assistantPositions.length < 5) {
+    return messages as Message[]
+  }
 
   // 保留最近 3 个 assistant 消息，折叠更早的部分
   const cutIdx = assistantPositions[assistantPositions.length - 3]!
-  if (cutIdx <= 0) return messages as Message[]
+  if (cutIdx <= 0) {
+    return messages as Message[]
+  }
 
   const toArchive = messages.slice(0, cutIdx)
   const keep = messages.slice(cutIdx)
@@ -117,7 +125,9 @@ export function collapseContext(messages: readonly Message[]): Message[] {
   for (const m of toArchive) {
     if (m.type === 'user' && typeof m.message.content === 'string') {
       userTexts.push(m.message.content.slice(0, 100))
-      if (userTexts.length >= 3) break
+      if (userTexts.length >= 3) {
+        break
+      }
     }
   }
 

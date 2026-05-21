@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-expect-error
 import type { Cursor } from './cursor.js'
 import type { Size } from './layout/geometry.js'
 import type { ScrollHint } from './render-node-to-output.js'

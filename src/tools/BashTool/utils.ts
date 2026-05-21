@@ -1,11 +1,11 @@
-import type { ImageSource, ContentBlock, ToolResultBlock } from '../../types/llm.js'
-import { readFile, stat } from 'fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { getOriginalCwd } from 'src/bootstrap/state.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import type { ToolPermissionContext } from 'src/Tool.js'
 import { getCwd } from 'src/utils/cwd.js'
 import { pathInAllowedWorkingPath } from 'src/utils/permissions/filesystem.js'
 import { setCwd } from 'src/utils/Shell.js'
+import type { ContentBlock, ToolResultBlock } from '../../types/llm.js'
 import { shouldMaintainProjectWorkingDir } from '../../utils/envUtils.js'
 import { maybeResizeAndDownsampleImageBuffer } from '../../utils/imageResizer.js'
 import { getMaxOutputLength } from '../../utils/shell/outputLimits.js'
@@ -54,7 +54,9 @@ const DATA_URI_RE = /^data:([^;]+);base64,(.+)$/
  */
 export function parseDataUri(s: string): { mediaType: string; data: string } | null {
   const match = s.trim().match(DATA_URI_RE)
-  if (!match || !match[1] || !match[2]) return null
+  if (!match?.[1] || !match[2]) {
+    return null
+  }
   return { mediaType: match[1], data: match[2] }
 }
 
@@ -64,7 +66,9 @@ export function parseDataUri(s: string): { mediaType: string; data: string } | n
  */
 export function buildImageToolResult(stdout: string, toolUseID: string): ToolResultBlock | null {
   const parsed = parseDataUri(stdout)
-  if (!parsed) return null
+  if (!parsed) {
+    return null
+  }
   return {
     toolCallId: toolUseID,
     type: 'tool_result',
@@ -103,11 +107,15 @@ export async function resizeShellImageOutput(
   let source = stdout
   if (outputFilePath) {
     const size = outputFileSize ?? (await stat(outputFilePath)).size
-    if (size > MAX_IMAGE_FILE_SIZE) return null
+    if (size > MAX_IMAGE_FILE_SIZE) {
+      return null
+    }
     source = await readFile(outputFilePath, 'utf8')
   }
   const parsed = parseDataUri(source)
-  if (!parsed) return null
+  if (!parsed) {
+    return null
+  }
   const buf = Buffer.from(parsed.data, 'base64')
   const ext = parsed.mediaType.split('/')[1] || 'png'
   const resized = await maybeResizeAndDownsampleImageBuffer(buf, buf.length, ext)
@@ -200,5 +208,5 @@ export function createContentSummary(content: ContentBlock[]): string {
     summary.push(`[${textCount} text ${plural(textCount, 'block')}]`)
   }
 
-  return `MCP Result: ${summary.join(', ')}${parts.length > 0 ? '\n\n' + parts.join('\n\n') : ''}`
+  return `MCP Result: ${summary.join(', ')}${parts.length > 0 ? `\n\n${parts.join('\n\n')}` : ''}`
 }

@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useState } from 'react'
 import { useDoublePress } from '../hooks/useDoublePress.js'
 import { Box, Text } from '../ink.js'
@@ -10,6 +9,7 @@ import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
 import { env } from '../utils/env.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
+
 type Props = {
   onBackgroundSession: () => void
   isLoading: boolean

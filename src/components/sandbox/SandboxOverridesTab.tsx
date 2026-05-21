@@ -1,9 +1,9 @@
-import React from 'react'
 import { Box, color, Link, Text, useTheme } from '../../ink.js'
 import type { CommandResultDisplay } from '../../types/command.js'
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
 import { Select } from '../CustomSelect/select.js'
 import { useTabHeaderFocus } from '../design-system/Tabs.js'
+
 type Props = {
   onComplete: (
     result?: string,
@@ -44,7 +44,7 @@ export function SandboxOverridesTab({ onComplete }: Props) {
       </Box>
     )
   }
-  // @ts-ignore
+  // @ts-expect-error
   return (
     <OverridesSelect
       onComplete={onComplete}

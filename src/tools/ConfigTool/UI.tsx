@@ -1,11 +1,13 @@
 import React from 'react'
-import { tSync } from '../../i18n/index.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
+import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import type { Input, Output } from './ConfigTool.js'
 export function renderToolUseMessage(input: Partial<Input>): React.ReactNode {
-  if (!input.setting) return null
+  if (!input.setting) {
+    return null
+  }
   if (input.value === undefined) {
     return <Text dimColor>{tSync('toolConfig.getting', { setting: input.setting })}</Text>
   }

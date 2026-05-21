@@ -72,9 +72,13 @@ export function withTimeout<T>(promise: Promise<T>, ms: number, message: string)
   const timeoutPromise = new Promise<never>((_, reject) => {
     // eslint-disable-next-line no-restricted-syntax -- not a sleep: REJECTS after ms (timeout guard)
     timer = setTimeout(rejectWithTimeout, ms, reject, message)
-    if (typeof timer === 'object') timer.unref?.()
+    if (typeof timer === 'object') {
+      timer.unref?.()
+    }
   })
   return Promise.race([promise, timeoutPromise]).finally(() => {
-    if (timer !== undefined) clearTimeout(timer)
+    if (timer !== undefined) {
+      clearTimeout(timer)
+    }
   })
 }

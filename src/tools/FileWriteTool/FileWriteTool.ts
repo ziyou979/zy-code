@@ -1,4 +1,4 @@
-import { dirname, sep } from 'path'
+import { dirname, sep } from 'node:path'
 import { logEvent } from 'src/services/analytics/index.js'
 import { z } from 'zod/v4'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
@@ -334,7 +334,9 @@ export const FileWriteTool = buildTool({
     ) {
       const startTime = Date.now()
       const diff = await fetchSingleFileGitDiff(fullFilePath)
-      if (diff) gitDiff = diff
+      if (diff) {
+        gitDiff = diff
+      }
       logEvent('zy_tool_use_diff_computed', {
         isWriteTool: true,
         durationMs: Date.now() - startTime,
@@ -421,4 +423,5 @@ export const FileWriteTool = buildTool({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(FileWriteTool)

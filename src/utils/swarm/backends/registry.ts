@@ -72,7 +72,9 @@ let ITermBackendClass: (new () => PaneBackend) | null = null
  * registration (e.g., killing a pane by its stored backendType).
  */
 export async function ensureBackendsRegistered(): Promise<void> {
-  if (backendsRegistered) return
+  if (backendsRegistered) {
+    return
+  }
   await import('./TmuxBackend.js')
   await import('./ITermBackend.js')
   backendsRegistered = true

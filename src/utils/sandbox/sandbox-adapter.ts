@@ -4,6 +4,9 @@
  * settings system, tool integration, and additional features.
  */
 
+import { rmSync, statSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
+import { join, resolve, sep } from 'node:path'
 import type {
   FsReadRestrictionConfig,
   FsWriteRestrictionConfig,
@@ -20,10 +23,7 @@ import {
   SandboxRuntimeConfigSchema,
   SandboxViolationStore,
 } from '@anthropic-ai/sandbox-runtime'
-import { rmSync, statSync } from 'fs'
-import { readFile } from 'fs/promises'
 import { memoize } from 'lodash-es'
-import { join, resolve, sep } from 'path'
 import {
   getAdditionalDirectoriesForzyMd,
   getCwdState,
@@ -132,7 +132,9 @@ export function resolvePathPatternForSandbox(pattern: string, source: SettingSou
 export function resolveSandboxFilesystemPath(pattern: string, source: SettingSource): string {
   // Legacy permission-rule escape: //path → /path. Kept for compat with
   // users who worked around #30067 by writing //Users/foo/.cargo in config.
-  if (pattern.startsWith('//')) return pattern.slice(1)
+  if (pattern.startsWith('//')) {
+    return pattern.slice(1)
+  }
   return expandPath(pattern, getSettingsRootPathForSource(source))
 }
 
@@ -754,7 +756,9 @@ async function initialize(sandboxAskCallback?: SandboxAskCallback): Promise<void
  * Call this after updating permissions to avoid race conditions
  */
 function refreshConfig(): void {
-  if (!isSandboxingEnabled()) return
+  if (!isSandboxingEnabled()) {
+    return
+  }
   const settings = getInitialSettings()
   const newConfig = convertToSandboxRuntimeConfig(settings)
   BaseSandboxManager.updateConfig(newConfig)
@@ -926,15 +930,15 @@ export const SandboxManager: ISandboxManager = {
 // ============================================================================
 
 export type {
-  SandboxAskCallback,
-  SandboxDependencyCheck,
   FsReadRestrictionConfig,
   FsWriteRestrictionConfig,
-  NetworkRestrictionConfig,
-  NetworkHostPattern,
-  SandboxViolationEvent,
-  SandboxRuntimeConfig,
   IgnoreViolationsConfig,
+  NetworkHostPattern,
+  NetworkRestrictionConfig,
+  SandboxAskCallback,
+  SandboxDependencyCheck,
+  SandboxRuntimeConfig,
+  SandboxViolationEvent,
 }
 
-export { SandboxViolationStore, SandboxRuntimeConfigSchema }
+export { SandboxRuntimeConfigSchema, SandboxViolationStore }

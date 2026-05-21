@@ -5,6 +5,7 @@ import {
   subscribeTerminalFocus,
   type TerminalFocusState,
 } from '../terminal-focus-state.js'
+
 export type { TerminalFocusState }
 export type TerminalFocusContextProps = {
   readonly isTerminalFocused: boolean

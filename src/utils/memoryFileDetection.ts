@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { normalize, posix, win32 } from 'path'
+import { normalize, posix, win32 } from 'node:path'
 import {
   getAutoMemPath,
   getMemoryBaseDir,
@@ -220,7 +220,9 @@ export function isShellCommandTargetingMemory(command: string): boolean {
   const commandCmp = toComparable(command)
   const dirs = [configDir, memoryBase, autoMemDir].filter(Boolean)
   const matchesAnyDir = dirs.some((d) => {
-    if (commandCmp.includes(toComparable(d))) return true
+    if (commandCmp.includes(toComparable(d))) {
+      return true
+    }
     if (IS_WINDOWS) {
       // BashTool on Windows (Git Bash) emits /c/Users/... — check MinGW form too
       return commandCmp.includes(windowsPathToPosixPath(d).toLowerCase())

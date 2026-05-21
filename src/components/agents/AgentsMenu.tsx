@@ -1,5 +1,4 @@
 import chalk from 'chalk'
-import * as React from 'react'
 import { useState } from 'react'
 import type { CommandResultDisplay } from '../../commands.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
@@ -12,6 +11,7 @@ import { resolveAgentOverrides } from '../../tools/AgentTool/agentDisplay.js'
 import { getActiveAgentsFromList } from '../../tools/AgentTool/loadAgentsDir.js'
 import { toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
+import type { SettingSource } from '../../utils/settings/constants.js'
 import { Select } from '../CustomSelect/select.js'
 import { Dialog } from '../design-system/Dialog.js'
 import { AgentDetail } from './AgentDetail.js'
@@ -20,7 +20,7 @@ import { AgentNavigationFooter } from './AgentNavigationFooter.js'
 import { AgentsList } from './AgentsList.js'
 import { deleteAgentFromFile } from './agentFileUtils.js'
 import { CreateAgentWizard } from './new-agent-creation/CreateAgentWizard.js'
-import type { SettingSource } from '../../utils/settings/constants.js'
+
 type Props = {
   tools: Tools
   onExit: (

@@ -11,6 +11,6 @@ type Props = {
 export function SnapshotUpdateDialog({ onCancel }: Props): React.ReactElement {
   React.useEffect(() => {
     onCancel()
-  }, [])
+  }, [onCancel])
   return React.createElement('div', null)
 }

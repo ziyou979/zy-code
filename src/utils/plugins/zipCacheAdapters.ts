@@ -10,8 +10,8 @@
  * for extracted plugins used during a single session.
  */
 
-import { readFile } from 'fs/promises'
-import { join } from 'path'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { logForDebugging } from '../debug.js'
 import { jsonParse, jsonStringify } from '../slowOperations.js'
 import { loadKnownMarketplacesConfigSafe } from './marketplaceManager.js'
@@ -138,7 +138,9 @@ export async function syncMarketplacesToZipCache(): Promise<void> {
 
   // Save marketplace JSONs to zip cache
   for (const [name, entry] of Object.entries(knownMarketplaces)) {
-    if (!entry.installLocation) continue
+    if (!entry.installLocation) {
+      continue
+    }
     try {
       await saveMarketplaceJsonToZipCache(name, entry.installLocation)
     } catch (error) {

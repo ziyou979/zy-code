@@ -32,6 +32,7 @@ import { Byline } from '../design-system/Byline.js'
 import { Dialog } from '../design-system/Dialog.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import TextInput from '../TextInput.js'
+
 type Props = {
   event: ElicitationRequestEvent
   onResponse: (action: ElicitResult['action'], content?: ElicitResult['content']) => void
@@ -75,7 +76,9 @@ function ResolvingSpinner() {
 function formatDateDisplay(isoValue: string, schema: PrimitiveSchemaDefinition): string {
   try {
     const date = new Date(isoValue)
-    if (Number.isNaN(date.getTime())) return isoValue
+    if (Number.isNaN(date.getTime())) {
+      return isoValue
+    }
     const format = 'format' in schema ? schema.format : undefined
     if (format === 'date-time') {
       return date.toLocaleDateString('en-US', {
@@ -158,7 +161,9 @@ function ElicitationFormDialog({
     return initialErrors
   })
   useEffect(() => {
-    if (!signal) return
+    if (!signal) {
+      return
+    }
     const handleAbort = () => {
       onResponse('cancel')
     }
@@ -187,7 +192,9 @@ function ElicitationFormDialog({
     const firstField = schemaFields[0]
     if (firstField && isTextField(firstField.schema)) {
       const val = formValues[firstField.name]
-      if (val === undefined) return ''
+      if (val === undefined) {
+        return ''
+      }
       return String(val)
     }
     return ''
@@ -232,7 +239,7 @@ function ElicitationFormDialog({
 
   // Text fields are always in edit mode when focused — no Enter-to-edit step.
   const isEditingTextField = currentFieldIsText && !focusedButton
-  // @ts-ignore
+  // @ts-expect-error
   useRegisterOverlay('elicitation')
   useNotifyAfterTimeout('ZY Code needs your input', 'elicitation_dialog')
 
@@ -255,7 +262,9 @@ function ElicitationFormDialog({
     [schemaFields, formValues],
   )
   function validateMultiSelect(fieldName: string, schema_0: PrimitiveSchemaDefinition) {
-    if (!isMultiSelectEnumSchema(schema_0)) return
+    if (!isMultiSelectEnumSchema(schema_0)) {
+      return
+    }
     const selected = (formValues[fieldName] as string[] | undefined) ?? []
     const fieldRequired = schemaFields.find((f) => f.name === fieldName)?.isRequired ?? false
     const min = schema_0.minItems
@@ -359,7 +368,9 @@ function ElicitationFormDialog({
     })
   }
   function unsetField(fieldName_2: string) {
-    if (!fieldName_2) return
+    if (!fieldName_2) {
+      return
+    }
     setField(fieldName_2, undefined)
     updateValidationError(fieldName_2)
     setTextInputValue('')
@@ -396,7 +407,9 @@ function ElicitationFormDialog({
     schema_2: PrimitiveSchemaDefinition,
     rawValue: string,
   ) {
-    if (!signal) return
+    if (!signal) {
+      return
+    }
 
     // Abort any existing resolution for this field
     const existing = resolveAbortRef.current.get(fieldName_4)
@@ -414,7 +427,9 @@ function ElicitationFormDialog({
           next_1.delete(fieldName_4)
           return next_1
         })
-        if (controller_0.signal.aborted) return
+        if (controller_0.signal.aborted) {
+          return
+        }
         if (result.isValid) {
           setField(fieldName_4, result.value)
           updateValidationError(fieldName_4)
@@ -487,11 +502,15 @@ function ElicitationFormDialog({
    */
   function runTypeahead(char: string, labels: string[], onMatch: (index: number) => void) {
     const ta_0 = enumTypeaheadRef.current
-    if (ta_0.timer !== undefined) clearTimeout(ta_0.timer)
+    if (ta_0.timer !== undefined) {
+      clearTimeout(ta_0.timer)
+    }
     ta_0.buffer += char.toLowerCase()
     ta_0.timer = setTimeout(resetTypeahead, 2000, ta_0)
     const match = labels.findIndex((l) => l.startsWith(ta_0.buffer))
-    if (match !== -1) onMatch(match)
+    if (match !== -1) {
+      onMatch(match)
+    }
   }
 
   // Esc while a field is focused: cancel the dialog.
@@ -697,7 +716,9 @@ function ElicitationFormDialog({
         setFocusedButton(focusedButton === 'accept' ? 'decline' : 'accept')
         return
       }
-      if (!currentField) return
+      if (!currentField) {
+        return
+      }
       const { schema: schema_5, name: name_0 } = currentField
       const value_1 = formValues[name_0]
 
@@ -825,7 +846,9 @@ function ElicitationFormDialog({
   const hasFieldsAbove = scrollWindow.start > 0
   const hasFieldsBelow = scrollWindow.end < schemaFields.length
   function renderFormFields(): React.ReactNode {
-    if (!schemaFields.length) return null
+    if (!schemaFields.length) {
+      return null
+    }
     return (
       <Box flexDirection="column">
         {hasFieldsAbove && (
@@ -1159,7 +1182,7 @@ function ElicitationURLDialog({
   >('accept')
   const showCancel = waitingState?.showCancel ?? false
   useNotifyAfterTimeout('ZY Code needs your input', 'elicitation_url_dialog')
-  // @ts-ignore
+  // @ts-expect-error
   useRegisterOverlay('elicitation-url')
 
   // Keep refs in sync for use in abort handler (avoids re-registering listener)

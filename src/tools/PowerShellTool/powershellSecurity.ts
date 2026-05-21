@@ -88,7 +88,7 @@ function psExeHasParamAbbreviation(
   const normalized: ParsedCommandElement = {
     ...cmd,
     args: cmd.args.map((a) =>
-      a.length > 0 && PS_ALT_PARAM_PREFIXES.has(a[0]!) ? '-' + a.slice(1) : a,
+      a.length > 0 && PS_ALT_PARAM_PREFIXES.has(a[0]!) ? `-${a.slice(1)}` : a,
     ),
   }
   return commandHasArgAbbreviation(normalized, fullParam, minPrefix)
@@ -379,8 +379,12 @@ function checkComObject(parsed: ParsedPowerShellCommand): PowerShellSecurityResu
             continue
           }
           // Colon-bound form: -Param:Value (single token, no skip needed)
-          if (lower.includes(':')) continue
-          if (SWITCH_PARAMS.has(lower)) continue
+          if (lower.includes(':')) {
+            continue
+          }
+          if (SWITCH_PARAMS.has(lower)) {
+            continue
+          }
           if (VALUE_PARAMS.has(lower)) {
             i++ // skip value
             continue
@@ -552,9 +556,13 @@ function checkStartProcess(parsed: ParsedPowerShellCommand): PowerShellSecurityR
       for (let i = 0; i < cmd.args.length; i++) {
         // Strip backticks before matching param name (bug #14): -V`erb:RunAs
         const argClean = cmd.args[i]!.replace(/`/g, '')
-        if (!/^[-\u2013\u2014\u2015/]v[a-z]*:/i.test(argClean)) continue
+        if (!/^[-\u2013\u2014\u2015/]v[a-z]*:/i.test(argClean)) {
+          continue
+        }
         const kids = cmd.children[i]
-        if (!kids) continue
+        if (!kids) {
+          continue
+        }
         for (const child of kids) {
           if (child.text.replace(/['"`\s]/g, '').toLowerCase() === 'runas') {
             return {

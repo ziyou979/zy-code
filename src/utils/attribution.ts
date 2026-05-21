@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { stat } from 'fs/promises'
+import { stat } from 'node:fs/promises'
 import { getClientType } from '../bootstrap/state.js'
 import { getRemoteSessionUrl, isRemoteSessionLocal, PRODUCT_URL } from '../constants/product.js'
 import { TERMINAL_OUTPUT_TAGS } from '../constants/xml.js'
@@ -162,7 +162,7 @@ function countUserPromptsFromEntries(entries: ReadonlyArray<Entry>): number {
   const nonSidechain = entries.filter(
     (entry) => entry.type === 'user' && !('isSidechain' in entry && entry.isSidechain),
   )
-  // @ts-ignore
+  // @ts-expect-error
   return countUserPromptsInMessages(nonSidechain as any)
 }
 
@@ -211,12 +211,20 @@ const MEMORY_ACCESS_TOOL_NAMES = new Set([
 function countMemoryFileAccessFromEntries(entries: ReadonlyArray<Entry>): number {
   let count = 0
   for (const entry of entries) {
-    if (entry.type !== 'assistant') continue
+    if (entry.type !== 'assistant') {
+      continue
+    }
     const content = entry.message?.content
-    if (!Array.isArray(content)) continue
+    if (!Array.isArray(content)) {
+      continue
+    }
     for (const block of content) {
-      if (block.type !== 'tool_call' || !MEMORY_ACCESS_TOOL_NAMES.has(block.name)) continue
-      if (isMemoryFileAccess(block.name, block.input)) count++
+      if (block.type !== 'tool_call' || !MEMORY_ACCESS_TOOL_NAMES.has(block.name)) {
+        continue
+      }
+      if (isMemoryFileAccess(block.name, block.input)) {
+        count++
+      }
     }
   }
   return count
@@ -347,9 +355,9 @@ export async function getEnhancedPRAttribution(getAppState: () => AppState): Pro
   // （cli、apps）时，PR body 会原样成为 squash commit body —
   // 末尾的 trailer 行会成为 squash commit 上的正式 git trailers。
   if (feature('COMMIT_ATTRIBUTION') && isInternal && attributionData) {
-    // @ts-ignore
+    // @ts-expect-error
     const { buildPRTrailers } = await import('./attributionTrailer.js')
-    // @ts-ignore
+    // @ts-expect-error
     const trailers = buildPRTrailers(attributionData, appState.attribution)
     const result = `${summary}\n\n${trailers.join('\n')}`
     logForDebugging(`PR Attribution: returning with trailers: ${result}`)

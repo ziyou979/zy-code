@@ -34,7 +34,9 @@ export function createSignal<Args extends unknown[] = []>(): Signal<Args> {
       }
     },
     emit(...args) {
-      for (const listener of listeners) listener(...args)
+      for (const listener of listeners) {
+        listener(...args)
+      }
     },
     clear() {
       listeners.clear()

@@ -5,13 +5,13 @@
  * 通过 adaptExternalTool() 包装后注册到 toolRegistry。
  * 加载失败不阻塞启动，仅记录警告日志。
  */
-import { readdirSync, statSync, existsSync } from 'fs'
-import { join, extname } from 'path'
+import { existsSync, readdirSync, statSync } from 'node:fs'
+import { extname, join } from 'node:path'
+import { logEvent } from '../services/analytics/index.js'
 import { getZyConfigHomeDir } from '../utils/envUtils.js'
 import { logError } from '../utils/log.js'
-import { logEvent } from '../services/analytics/index.js'
-import { toolRegistry } from './registry.js'
 import { adaptExternalTool, type ExternalToolDefinition } from './externalToolAdapter.js'
+import { toolRegistry } from './registry.js'
 
 /** ~/.zy/tools/ 目录路径 */
 function getExternalToolsDir(): string {
@@ -23,7 +23,9 @@ function getExternalToolsDir(): string {
  * 不使用 Zod 验证，避免引入不必要的开销。
  */
 function isValidExternalToolDefinition(value: unknown): value is ExternalToolDefinition {
-  if (value == null || typeof value !== 'object') return false
+  if (value == null || typeof value !== 'object') {
+    return false
+  }
   const obj = value as Record<string, unknown>
   return (
     typeof obj.name === 'string' &&
@@ -54,7 +56,9 @@ function discoverToolEntryPoints(toolsDir: string): string[] {
 
   for (const item of items) {
     // 跳过隐藏文件和非工具文件
-    if (item.startsWith('.') || item.startsWith('_')) continue
+    if (item.startsWith('.') || item.startsWith('_')) {
+      continue
+    }
 
     const fullPath = join(toolsDir, item)
     let itemStat

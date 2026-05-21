@@ -90,8 +90,12 @@ export function registerMcpAddCommand(mcp: Command): void {
         const xaa = Boolean(options.xaa)
         if (xaa) {
           const missing: string[] = []
-          if (!options.clientId) missing.push('--client-id')
-          if (!options.clientSecret) missing.push('--client-secret')
+          if (!options.clientId) {
+            missing.push('--client-id')
+          }
+          if (!options.clientSecret) {
+            missing.push('--client-secret')
+          }
           if (!getXaaIdpSettings()) {
             missing.push("'zy mcp xaa setup' (settings.xaaIdp not configured)")
           }

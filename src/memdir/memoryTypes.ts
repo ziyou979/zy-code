@@ -21,7 +21,9 @@ export type MemoryType = (typeof MEMORY_TYPES)[number]
  * `type:` field keep working, files with unknown types degrade gracefully.
  */
 export function parseMemoryType(raw: unknown): MemoryType | undefined {
-  if (typeof raw !== 'string') return undefined
+  if (typeof raw !== 'string') {
+    return undefined
+  }
   return MEMORY_TYPES.find((t) => t === raw)
 }
 

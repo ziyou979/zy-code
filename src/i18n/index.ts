@@ -25,10 +25,12 @@ let _cachedMessages: Record<string, string> | undefined
  * 加载给定语言的消息映射（首次加载后缓存）。
  */
 async function loadMessages(lang: UiLanguage): Promise<Record<string, string>> {
-  if (_cachedLang === lang && _cachedMessages) return _cachedMessages
+  if (_cachedLang === lang && _cachedMessages) {
+    return _cachedMessages
+  }
   const loader = localeLoaders[lang]
   if (!loader) {
-    const fallback = localeLoaders['en']!
+    const fallback = localeLoaders.en!
     _cachedMessages = await fallback()
   } else {
     _cachedMessages = await loader()
@@ -43,7 +45,9 @@ let _syncMessagesLang: string | undefined
 
 function getSyncMessages(): Record<string, string> {
   const lang = getUiLanguage()
-  if (_syncMessages && _syncMessagesLang === lang) return _syncMessages
+  if (_syncMessages && _syncMessagesLang === lang) {
+    return _syncMessages
+  }
   // Try to load the current language synchronously
   try {
     if (lang === 'en') {
@@ -71,7 +75,9 @@ function getSyncMessages(): Record<string, string> {
  * 将 `{key}` 占位符替换为 vars 中的值
  */
 function interpolate(template: string, vars?: Record<string, string | number>): string {
-  if (!vars) return template
+  if (!vars) {
+    return template
+  }
   return template.replace(/\{(\w+)}/g, (_, k: string) => {
     const v = vars[k]
     return v !== undefined ? String(v) : `{${k}}`

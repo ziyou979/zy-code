@@ -46,7 +46,7 @@ export function renderToolUseMessage(
     .map(([key, value]) => {
       let rendered = jsonStringify(value)
       if (feature('MCP_RICH_OUTPUT') && !verbose && rendered.length > MAX_INPUT_VALUE_CHARS) {
-        rendered = rendered.slice(0, MAX_INPUT_VALUE_CHARS).trimEnd() + '…'
+        rendered = `${rendered.slice(0, MAX_INPUT_VALUE_CHARS).trimEnd()}…`
       }
       return `${key}: ${rendered}`
     })
@@ -280,7 +280,9 @@ export function tryFlattenJson(content: string): [string, string][] | null {
     maxChars: MAX_FLAT_JSON_CHARS,
     maxKeys: MAX_FLAT_JSON_KEYS,
   })
-  if (entries === null) return null
+  if (entries === null) {
+    return null
+  }
   const result: [string, string][] = []
   for (const [key, value] of entries) {
     if (typeof value === 'string') {
@@ -289,7 +291,9 @@ export function tryFlattenJson(content: string): [string, string][] | null {
       result.push([key, String(value)])
     } else if (typeof value === 'object') {
       const compact = jsonStringify(value)
-      if (compact.length > 120) return null
+      if (compact.length > 120) {
+        return null
+      }
       result.push([key, compact])
     } else {
       return null
@@ -309,7 +313,9 @@ export function tryUnwrapTextPayload(content: string): {
     maxChars: MAX_JSON_PARSE_CHARS,
     maxKeys: 4,
   })
-  if (entries === null) return null
+  if (entries === null) {
+    return null
+  }
   // 找到主导字符串负载。先 trim：短兄弟节点上的尾随 \n（如分页提示）不应使其成为“主导”。
   let body: string | null = null
   const extras: [string, string][] = []
@@ -318,11 +324,15 @@ export function tryUnwrapTextPayload(content: string): {
       const t = value.trimEnd()
       const isDominant = t.length > UNWRAP_MIN_STRING_LEN || (t.includes('\n') && t.length > 50)
       if (isDominant) {
-        if (body !== null) return null // 两个大字符串 — 无法判断
+        if (body !== null) {
+          return null // 两个大字符串 — 无法判断
+        }
         body = t
         continue
       }
-      if (t.length > 150) return null
+      if (t.length > 150) {
+        return null
+      }
       extras.push([key, t.replace(/\s+/g, ' ')])
     } else if (value === null || typeof value === 'number' || typeof value === 'boolean') {
       extras.push([key, String(value)])
@@ -330,7 +340,9 @@ export function tryUnwrapTextPayload(content: string): {
       return null // 嵌套对象/数组 — 使用扁平或美化打印路径
     }
   }
-  if (body === null) return null
+  if (body === null) {
+    return null
+  }
   return {
     body,
     extras,
@@ -361,9 +373,13 @@ export function trySlackSendCompact(
     maxKeys: 6,
   })
   const url = entries?.find(([k]) => k === 'message_link')?.[1]
-  if (typeof url !== 'string') return null
+  if (typeof url !== 'string') {
+    return null
+  }
   const m = SLACK_ARCHIVES_RE.exec(url)
-  if (!m) return null
+  if (!m) {
+    return null
+  }
   const inp = input as
     | {
         channel_id?: unknown

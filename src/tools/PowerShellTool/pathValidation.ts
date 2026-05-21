@@ -6,8 +6,8 @@
  * Follows the same patterns as BashTool/pathValidation.ts.
  */
 
-import { homedir } from 'os'
-import { isAbsolute, resolve } from 'path'
+import { homedir } from 'node:os'
+import { isAbsolute, resolve } from 'node:path'
 import type { ToolPermissionContext } from '../../Tool.js'
 import type { PermissionRule } from '../../types/permissions.js'
 import { getCwd } from '../../utils/cwd.js'
@@ -847,7 +847,9 @@ function checkDenyRuleForGuessedPath(
 ): { resolvedPath: string; rule: PermissionRule } | null {
   // Red-team P7: null bytes make expandPath throw. Pre-existing but
   // defend here since we're introducing a new call path.
-  if (!strippedPath || strippedPath.includes('\0')) return null
+  if (!strippedPath || strippedPath.includes('\0')) {
+    return null
+  }
   // Red-team P3: `~/.ssh/x strips to ~/.ssh/x but expandTilde only fires
   // on leading ~ — the backtick was in front of it. Re-run here.
   const tildeExpanded = expandTilde(strippedPath)
@@ -1107,7 +1109,9 @@ function getGlobBaseDirectory(filePath: string): string {
   }
   const beforeGlob = filePath.substring(0, globMatch.index)
   const lastSepIndex = Math.max(beforeGlob.lastIndexOf('/'), beforeGlob.lastIndexOf('\\'))
-  if (lastSepIndex === -1) return '.'
+  if (lastSepIndex === -1) {
+    return '.'
+  }
   return beforeGlob.substring(0, lastSepIndex + 1) || '/'
 }
 
@@ -1166,7 +1170,9 @@ function extractPathsFromCommand(cmd: ParsedCommandElement): {
   const positionalSkip = config.positionalSkip ?? 0
 
   function checkArgElementType(argIdx: number): void {
-    if (!elementTypes) return
+    if (!elementTypes) {
+      return
+    }
     const et = elementTypes[argIdx + 1]
     if (et && !SAFE_PATH_ELEMENT_TYPES.has(et)) {
       hasUnvalidatablePathArg = true
@@ -1176,7 +1182,9 @@ function extractPathsFromCommand(cmd: ParsedCommandElement): {
   // Extract named parameter values (e.g., -Path "C:\foo")
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
-    if (!arg) continue
+    if (!arg) {
+      continue
+    }
 
     // Check if this arg is a parameter name.
     // SECURITY: Use elementTypes as ground truth. PowerShell's tokenizer
@@ -1189,7 +1197,7 @@ function extractPathsFromCommand(cmd: ParsedCommandElement): {
     if (isPowerShellParameter(arg, argElementType)) {
       // Handle colon syntax: -Path:C:\secret
       // Normalize Unicode dash to ASCII `-` (pathParams are stored with `-`).
-      const normalized = '-' + arg.slice(1)
+      const normalized = `-${arg.slice(1)}`
       const colonIdx = normalized.indexOf(':', 1) // skip first char (the dash)
       const paramName = colonIdx > 0 ? normalized.substring(0, colonIdx) : normalized
       const paramLower = paramName.toLowerCase()
@@ -1351,7 +1359,7 @@ function extractPathsFromCommand(cmd: ParsedCommandElement): {
  * - 'passthrough' if no path commands were found or all paths are valid
  */
 export function checkPathConstraints(
-  input: { command: string },
+  _input: { command: string },
   parsed: ParsedPowerShellCommand,
   toolPermissionContext: ToolPermissionContext,
   compoundCommandHasCd = false,
@@ -1758,9 +1766,15 @@ function checkPathConstraintsForStatement(
     for (const cmd of statement.nestedCommands) {
       if (cmd.redirections) {
         for (const redir of cmd.redirections) {
-          if (redir.isMerging) continue
-          if (!redir.target) continue
-          if (isNullRedirectionTarget(redir.target)) continue
+          if (redir.isMerging) {
+            continue
+          }
+          if (!redir.target) {
+            continue
+          }
+          if (isNullRedirectionTarget(redir.target)) {
+            continue
+          }
 
           const { allowed, resolvedPath, decisionReason } = validatePath(
             redir.target,
@@ -1808,9 +1822,15 @@ function checkPathConstraintsForStatement(
   // Check file redirections
   if (statement.redirections) {
     for (const redir of statement.redirections) {
-      if (redir.isMerging) continue
-      if (!redir.target) continue
-      if (isNullRedirectionTarget(redir.target)) continue
+      if (redir.isMerging) {
+        continue
+      }
+      if (!redir.target) {
+        continue
+      }
+      if (isNullRedirectionTarget(redir.target)) {
+        continue
+      }
 
       const { allowed, resolvedPath, decisionReason } = validatePath(
         redir.target,

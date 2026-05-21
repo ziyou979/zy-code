@@ -5,9 +5,9 @@
  * system to reduce code duplication and improve maintainability.
  */
 
-import { randomBytes } from 'crypto'
-import { rename, rm } from 'fs/promises'
-import { dirname, join, resolve, sep } from 'path'
+import { randomBytes } from 'node:crypto'
+import { rename, rm } from 'node:fs/promises'
+import { dirname, join, resolve, sep } from 'node:path'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
@@ -369,10 +369,16 @@ export async function installResolvedPlugin({
   const resolution = await resolveDependencyClosure(
     pluginId,
     async (id) => {
-      if (depInfo.has(id)) return depInfo.get(id)!.entry
-      if (id === pluginId) return entry
+      if (depInfo.has(id)) {
+        return depInfo.get(id)!.entry
+      }
+      if (id === pluginId) {
+        return entry
+      }
       const info = await getPluginById(id)
-      if (info) depInfo.set(id, info)
+      if (info) {
+        depInfo.set(id, info)
+      }
       return info?.entry ?? null
     },
     getEnabledPluginIdsForScope(settingSource),
@@ -399,7 +405,9 @@ export async function installResolvedPlugin({
 
   // ── ACTION: write entire closure to settings in one call ──
   const closureEnabled: Record<string, true> = {}
-  for (const id of resolution.closure) closureEnabled[id] = true
+  for (const id of resolution.closure) {
+    closureEnabled[id] = true
+  }
   const { error } = updateSettingsForSource(settingSource, {
     enabledPlugins: {
       ...getSettingsForSource(settingSource)?.enabledPlugins,
@@ -422,9 +430,13 @@ export async function installResolvedPlugin({
     // for a non-local source). Fetch now; it's needed for the cache write.
     if (!info && id === pluginId) {
       const mktLocation = (await getPluginById(id))?.marketplaceInstallLocation
-      if (mktLocation) info = { entry, marketplaceInstallLocation: mktLocation }
+      if (mktLocation) {
+        info = { entry, marketplaceInstallLocation: mktLocation }
+      }
     }
-    if (!info) continue
+    if (!info) {
+      continue
+    }
 
     let localSourcePath: string | undefined
     const { source } = info.entry

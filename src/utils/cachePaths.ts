@@ -1,5 +1,5 @@
+import { join } from 'node:path'
 import envPaths from 'env-paths'
-import { join } from 'path'
 import { getFsImplementation } from './fsOperations.js'
 import { djb2Hash } from './hash.js'
 

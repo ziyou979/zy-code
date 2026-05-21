@@ -114,7 +114,9 @@ export function isOutputLineTruncated(content: string): boolean {
   // The +1 accounts for wrapText showing an extra line when remainingLines==1.
   for (let i = 0; i <= MAX_LINES_TO_SHOW; i++) {
     pos = content.indexOf('\n', pos)
-    if (pos === -1) return false
+    if (pos === -1) {
+      return false
+    }
     pos++
   }
   // A trailing newline is a terminator, not a new line — match

@@ -1,4 +1,3 @@
-import type { ToolResultBlock } from '../../types/llm.js'
 import * as React from 'react'
 import { SubAgentProvider } from 'src/components/CtrlOToExpand.js'
 import { FallbackToolUseErrorMessage } from 'src/components/FallbackToolUseErrorMessage.js'
@@ -8,13 +7,15 @@ import type { Command } from '../../commands.js'
 import { Byline } from '../../components/design-system/Byline.js'
 import { Message as MessageComponent } from '../../components/Message.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import type { Tools } from '../../Tool.js'
+import type { ToolResultBlock } from '../../types/llm.js'
 import type { ProgressMessage } from '../../types/message.js'
 import { buildSubagentLookups, EMPTY_LOOKUPS } from '../../utils/messages.js'
-import { tSync } from '../../i18n/index.js'
 import { plural } from '../../utils/stringUtils.js'
 import type { inputSchema, Output, Progress } from './SkillTool.js'
+
 type Input = z.infer<ReturnType<typeof inputSchema>>
 const MAX_PROGRESS_MESSAGES_TO_SHOW = 3
 const INITIALIZING_TEXT = tSync('skill.initializing')

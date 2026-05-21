@@ -85,7 +85,7 @@ export function createBridgeLogger(options: {
    * line wrapping. Each `\n` is one row, and content wider than the terminal
    * wraps to additional rows.
    */
-  function countVisualLines(text: string): number {
+  function _countVisualLines(text: string): number {
     // eslint-disable-next-line custom-rules/prefer-use-terminal-size
     const cols = process.stdout.columns || 80 // non-React CLI context
     let count = 0
@@ -273,17 +273,17 @@ export function createBridgeLogger(options: {
       regenerateQr(connectUrl)
 
       if (verbose) {
-        write(chalk.dim(`Remote Control`) + ` v${MACRO.VERSION}\n`)
+        write(`${chalk.dim(`Remote Control`)} v${MACRO.VERSION}\n`)
       }
       if (verbose) {
         if (config.spawnMode !== 'single-session') {
-          write(chalk.dim(`Spawn mode: `) + `${config.spawnMode}\n`)
-          write(chalk.dim(`Max concurrent sessions: `) + `${config.maxSessions}\n`)
+          write(`${chalk.dim(`Spawn mode: `)}${config.spawnMode}\n`)
+          write(`${chalk.dim(`Max concurrent sessions: `)}${config.maxSessions}\n`)
         }
-        write(chalk.dim(`Environment ID: `) + `${environmentId}\n`)
+        write(`${chalk.dim(`Environment ID: `)}${environmentId}\n`)
       }
       if (config.sandbox) {
-        write(chalk.dim(`Sandbox: `) + `${chalk.green('Enabled')}\n`)
+        write(`${chalk.dim(`Sandbox: `)}${chalk.green('Enabled')}\n`)
       }
       write('\n')
 
@@ -316,17 +316,17 @@ export function createBridgeLogger(options: {
     },
 
     logStatus(message: string): void {
-      printLog(chalk.dim(`[${timestamp()}]`) + ` ${message}\n`)
+      printLog(`${chalk.dim(`[${timestamp()}]`)} ${message}\n`)
     },
 
     logVerbose(message: string): void {
       if (verbose) {
-        printLog(chalk.dim(`[${timestamp()}] ${message}`) + '\n')
+        printLog(`${chalk.dim(`[${timestamp()}] ${message}`)}\n`)
       }
     },
 
     logError(message: string): void {
-      printLog(chalk.red(`[${timestamp()}] Error: ${message}`) + '\n')
+      printLog(`${chalk.red(`[${timestamp()}] Error: ${message}`)}\n`)
     },
 
     logReconnected(disconnectedMs: number): void {
@@ -439,7 +439,9 @@ export function createBridgeLogger(options: {
     },
 
     updateSessionCount(active: number, max: number, mode: SpawnMode): void {
-      if (sessionActive === active && sessionMax === max && spawnMode === mode) return
+      if (sessionActive === active && sessionMax === max && spawnMode === mode) {
+        return
+      }
       sessionActive = active
       sessionMax = max
       spawnMode = mode
@@ -448,13 +450,17 @@ export function createBridgeLogger(options: {
     },
 
     setSpawnModeDisplay(mode: 'same-dir' | 'worktree' | null): void {
-      if (spawnModeDisplay === mode) return
+      if (spawnModeDisplay === mode) {
+        return
+      }
       spawnModeDisplay = mode
       // Also sync the #21118-added spawnMode so the next render shows correct
       // mode hint + branch visibility. Don't render here — matches
       // updateSessionCount: called before printBanner (initial setup) and
       // again from the `w` handler (which follows with refreshDisplay).
-      if (mode) spawnMode = mode
+      if (mode) {
+        spawnMode = mode
+      }
     },
 
     addSession(sessionId: string, url: string): void {
@@ -463,17 +469,23 @@ export function createBridgeLogger(options: {
 
     updateSessionActivity(sessionId: string, activity: SessionActivity): void {
       const info = sessionDisplayInfo.get(sessionId)
-      if (!info) return
+      if (!info) {
+        return
+      }
       info.activity = activity
     },
 
     setSessionTitle(sessionId: string, title: string): void {
       const info = sessionDisplayInfo.get(sessionId)
-      if (!info) return
+      if (!info) {
+        return
+      }
       info.title = title
       // Guard against reconnecting/failed — renderStatusLine clears then returns
       // early for those states, which would erase the spinner/error.
-      if (currentState === 'reconnecting' || currentState === 'failed') return
+      if (currentState === 'reconnecting' || currentState === 'failed') {
+        return
+      }
       if (sessionMax === 1) {
         // Single-session: show title in the main status line too.
         currentState = 'titled'
@@ -489,7 +501,9 @@ export function createBridgeLogger(options: {
     refreshDisplay(): void {
       // Skip during reconnecting/failed — renderStatusLine clears then returns
       // early for those states, which would erase the spinner/error.
-      if (currentState === 'reconnecting' || currentState === 'failed') return
+      if (currentState === 'reconnecting' || currentState === 'failed') {
+        return
+      }
       renderStatusLine()
     },
   }

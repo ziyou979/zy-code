@@ -1,10 +1,10 @@
 // @ts-nocheck
 import { feature } from 'bun:bundle'
-import type { UUID } from 'crypto'
-import type { Dirent } from 'fs'
+import type { UUID } from 'node:crypto'
+import type { Dirent } from 'node:fs'
 // readFileTailSync 所需的同步 fs 原语 — 与上面的 fs/promises 导入分开。
 // 按 CLAUDE.md 风格使用具名导入（非通配符）；与异步后缀命名无冲突。
-import { closeSync, fstatSync, openSync, readSync } from 'fs'
+import { closeSync, fstatSync, openSync, readSync } from 'node:fs'
 import {
   appendFile as fsAppendFile,
   open as fsOpen,
@@ -14,9 +14,9 @@ import {
   stat,
   unlink,
   writeFile,
-} from 'fs/promises'
+} from 'node:fs/promises'
+import { basename, dirname, join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { basename, dirname, join } from 'path'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -268,7 +268,9 @@ export async function readAgentMetadata(agentId: AgentId): Promise<AgentMetadata
     const raw = await readFile(path, 'utf-8')
     return JSON.parse(raw) as AgentMetadata
   } catch (e) {
-    if (isFsInaccessible(e)) return null
+    if (isFsInaccessible(e)) {
+      return null
+    }
     throw e
   }
 }
@@ -320,7 +322,9 @@ export async function readRemoteAgentMetadata(taskId: string): Promise<RemoteAge
     const raw = await readFile(path, 'utf-8')
     return JSON.parse(raw) as RemoteAgentMetadata
   } catch (e) {
-    if (isFsInaccessible(e)) return null
+    if (isFsInaccessible(e)) {
+      return null
+    }
     throw e
   }
 }
@@ -330,7 +334,9 @@ export async function deleteRemoteAgentMetadata(taskId: string): Promise<void> {
   try {
     await unlink(path)
   } catch (e) {
-    if (isFsInaccessible(e)) return
+    if (isFsInaccessible(e)) {
+      return
+    }
     throw e
   }
 }
@@ -345,12 +351,16 @@ export async function listRemoteAgentMetadata(): Promise<RemoteAgentMetadata[]> 
   try {
     entries = await readdir(dir, { withFileTypes: true })
   } catch (e) {
-    if (isFsInaccessible(e)) return []
+    if (isFsInaccessible(e)) {
+      return []
+    }
     throw e
   }
   const results: RemoteAgentMetadata[] = []
   for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith('.meta.json')) continue
+    if (!entry.isFile() || !entry.name.endsWith('.meta.json')) {
+      continue
+    }
     try {
       const raw = await readFile(join(dir, entry.name), 'utf-8')
       results.push(JSON.parse(raw) as RemoteAgentMetadata)
@@ -527,13 +537,13 @@ class Project {
   private FLUSH_INTERVAL_MS = 100
   private readonly MAX_CHUNK_BYTES = 100 * 1024 * 1024
 
-  constructor() {}
-
   /** @internal 重置 flush/队列状态，用于测试。 */
   _resetFlushState(): void {
     this.pendingWriteCount = 0
     this.flushResolvers = []
-    if (this.flushTimer) clearTimeout(this.flushTimer)
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer)
+    }
     this.flushTimer = null
     this.activeDrain = null
     this.writeQueues = new Map()
@@ -613,7 +623,7 @@ class Project {
       const resolvers: Array<() => void> = []
 
       for (const { entry, resolve } of batch) {
-        const line = jsonStringify(entry) + '\n'
+        const line = `${jsonStringify(entry)}\n`
 
         if (content.length + line.length >= this.MAX_CHUNK_BYTES) {
           // 在开始新 chunk 之前 flush 当前 chunk 并解析其条目
@@ -676,9 +686,13 @@ class Project {
    * 它们的缓存具有权威性。
    */
   reAppendSessionMetadata(skipTitleRefresh = false): void {
-    if (!this.sessionFile) return
+    if (!this.sessionFile) {
+      return
+    }
     const sessionId = getSessionId() as UUID
-    if (!sessionId) return
+    if (!sessionId) {
+      return
+    }
 
     // 一次同步尾部读取以刷新 SDK 可变字段。使用与 readLiteMetadata
     // 相同的 LITE_READ_BUF_SIZE 窗口。失败时返回空字符串 →
@@ -824,14 +838,18 @@ class Project {
    */
   async removeMessageByUuid(targetUuid: UUID): Promise<void> {
     return this.trackWrite(async () => {
-      if (this.sessionFile === null) return
+      if (this.sessionFile === null) {
+        return
+      }
       try {
         let fileSize = 0
         const fh = await fsOpen(this.sessionFile, 'r+')
         try {
           const { size } = await fh.stat()
           fileSize = size
-          if (size === 0) return
+          if (size === 0) {
+            return
+          }
 
           const chunkLen = Math.min(size, LITE_READ_BUF_SIZE)
           const tailStart = size - chunkLen
@@ -883,7 +901,9 @@ class Project {
         }
         const content = await readFile(this.sessionFile, { encoding: 'utf-8' })
         const lines = content.split('\n').filter((line: string) => {
-          if (!line.trim()) return true
+          if (!line.trim()) {
+            return true
+          }
           try {
             const entry = jsonParse(line)
             return entry.uuid !== targetUuid
@@ -925,7 +945,9 @@ class Project {
     // 此处也需守卫 — reAppendSessionMetadata 通过 appendEntryToFile
     // （而非 appendEntry）写入，因此会绕过逐 entry 的持久化检查，
     // 尽管设置了 --no-session-persistence 仍会创建仅含 metadata 的文件。
-    if (this.shouldSkipPersistence()) return
+    if (this.shouldSkipPersistence()) {
+      return
+    }
     this.ensureCurrentSessionFile()
     // mode/agentSetting 在物化之前仅存于缓存中；现在写入它们。
     this.reAppendSessionMetadata()
@@ -1021,7 +1043,7 @@ class Project {
         const text = getFirstMeaningfulUserMessageTextContent(messages)
         if (text) {
           const flat = text.replace(/\n/g, ' ').trim()
-          this.currentSessionLastPrompt = flat.length > 200 ? flat.slice(0, 200).trim() + '…' : flat
+          this.currentSessionLastPrompt = flat.length > 200 ? `${flat.slice(0, 200).trim()}…` : flat
         }
       }
     })
@@ -1216,7 +1238,9 @@ class Project {
   private existingSessionFiles = new Map<string, string>()
   private async getExistingSessionFile(sessionId: UUID): Promise<string | null> {
     const cached = this.existingSessionFiles.get(sessionId)
-    if (cached) return cached
+    if (cached) {
+      return cached
+    }
 
     const targetFile = getTranscriptPathForSession(sessionId)
     try {
@@ -1224,7 +1248,9 @@ class Project {
       this.existingSessionFiles.set(sessionId, targetFile)
       return targetFile
     } catch (e) {
-      if (isFsInaccessible(e)) return null
+      if (isFsInaccessible(e)) {
+        return null
+      }
       throw e
     }
   }
@@ -1449,7 +1475,9 @@ export async function recordContextCollapseCommit(commit: {
   lastArchivedUuid: string
 }): Promise<void> {
   const sessionId = getSessionId() as UUID
-  if (!sessionId) return
+  if (!sessionId) {
+    return
+  }
   await getProject().appendEntry({
     type: 'marble-origami-commit',
     sessionId,
@@ -1474,7 +1502,9 @@ export async function recordContextCollapseSnapshot(snapshot: {
   lastSpawnTokens: number
 }): Promise<void> {
   const sessionId = getSessionId() as UUID
-  if (!sessionId) return
+  if (!sessionId) {
+    return
+  }
   await getProject().appendEntry({
     type: 'marble-origami-snapshot',
     sessionId,
@@ -1505,7 +1535,7 @@ export async function hydrateRemoteSession(
 
     // 用远程日志替换本地日志。writeFile 会截断，因此无需
     // unlink；空的 remoteLogs 数组会产生空文件。
-    const content = remoteLogs.map((e) => jsonStringify(e) + '\n').join('')
+    const content = remoteLogs.map((e) => `${jsonStringify(e)}\n`).join('')
     await writeFile(sessionFile, content, { encoding: 'utf8', mode: 0o600 })
 
     logForDebugging(`Hydrated ${remoteLogs.length} entries from remote`)
@@ -1553,7 +1583,7 @@ export async function hydrateFromCCRv2InternalEvents(sessionId: string): Promise
 
     // 写入前台 transcript
     const sessionFile = getTranscriptPathForSession(sessionId)
-    const fgContent = events.map((e) => jsonStringify(e.payload) + '\n').join('')
+    const fgContent = events.map((e) => `${jsonStringify(e.payload)}\n`).join('')
     await writeFile(sessionFile, fgContent, { encoding: 'utf8', mode: 0o600 })
 
     logForDebugging(`Hydrated ${events.length} foreground entries from CCR v2 internal events`)
@@ -1569,7 +1599,9 @@ export async function hydrateFromCCRv2InternalEvents(sessionId: string): Promise
         const byAgent = new Map<string, Record<string, unknown>[]>()
         for (const e of subagentEvents) {
           const agentId = e.agent_id || ''
-          if (!agentId) continue
+          if (!agentId) {
+            continue
+          }
           let list = byAgent.get(agentId)
           if (!list) {
             list = []
@@ -1582,7 +1614,7 @@ export async function hydrateFromCCRv2InternalEvents(sessionId: string): Promise
         for (const [agentId, entries] of byAgent) {
           const agentFile = getAgentTranscriptPath(asAgentId(agentId))
           await mkdir(dirname(agentFile), { recursive: true, mode: 0o700 })
-          const agentContent = entries.map((p) => jsonStringify(p) + '\n').join('')
+          const agentContent = entries.map((p) => `${jsonStringify(p)}\n`).join('')
           await writeFile(agentFile, agentContent, {
             encoding: 'utf8',
             mode: 0o600,
@@ -1620,7 +1652,7 @@ function extractFirstPrompt(transcript: TranscriptMessage[]): string {
     // 存储一个合理长度的版本用于显示时截断
     // 实际截断将在显示时根据终端宽度应用
     if (result.length > 200) {
-      result = result.slice(0, 200).trim() + '…'
+      result = `${result.slice(0, 200).trim()}…`
     }
 
     return result
@@ -1637,12 +1669,18 @@ export function getFirstMeaningfulUserMessageTextContent<T extends Message>(
   transcript: T[],
 ): string | undefined {
   for (const msg of transcript) {
-    if (msg.type !== 'user' || msg.isMeta) continue
+    if (msg.type !== 'user' || msg.isMeta) {
+      continue
+    }
     // 跳过压缩摘要消息 - 它们不应被视为首条 prompt
-    if ('isCompactSummary' in msg && msg.isCompactSummary) continue
+    if ('isCompactSummary' in msg && msg.isCompactSummary) {
+      continue
+    }
 
     const content = msg.message?.content
-    if (!content) continue
+    if (!content) {
+      continue
+    }
 
     // 收集所有文本值。对于数组内容（在 VS Code 中很常见，其中
     // IDE metadata 标签在用户实际 prompt 之前），遍历所有文本块，
@@ -1660,7 +1698,9 @@ export function getFirstMeaningfulUserMessageTextContent<T extends Message>(
     }
 
     for (const textContent of texts) {
-      if (!textContent) continue
+      if (!textContent) {
+        continue
+      }
 
       const commandNameTag = extractTag(textContent, COMMAND_NAME_TAG)
       if (commandNameTag) {
@@ -1744,7 +1784,9 @@ function applyPreservedSegmentRelinks(messages: Map<UUID, TranscriptMessage>): v
     i++
   }
   // 任何地方都没有 seg → 无操作。findUnresolvedToolUse 等读取完整 map。
-  if (!lastSeg) return
+  if (!lastSeg) {
+    return
+  }
 
   // seg 过时（无 seg 的 boundary 在其后出现）：跳过重新链接，仍在绝对
   // 位置裁剪 — 否则过时的保留链变成幽灵叶子。
@@ -1802,7 +1844,9 @@ function applyPreservedSegmentRelinks(messages: Map<UUID, TranscriptMessage>): v
     // 没有这个，恢复 → 立即自动压缩螺旋。
     for (const uuid of preservedUuids) {
       const msg = messages.get(uuid)
-      if (msg?.type !== 'assistant') continue
+      if (msg?.type !== 'assistant') {
+        continue
+      }
       messages.set(uuid, {
         ...msg,
         message: {
@@ -1828,7 +1872,9 @@ function applyPreservedSegmentRelinks(messages: Map<UUID, TranscriptMessage>): v
       toDelete.push(uuid)
     }
   }
-  for (const uuid of toDelete) messages.delete(uuid)
+  for (const uuid of toDelete) {
+    messages.delete(uuid)
+  }
 }
 
 /**
@@ -1861,10 +1907,16 @@ function applySnipRemovals(messages: Map<UUID, TranscriptMessage>): void {
   const toDelete = new Set<UUID>()
   for (const entry of messages.values()) {
     const removedUuids = (entry as WithSnipMeta).snipMetadata?.removedUuids
-    if (!removedUuids) continue
-    for (const uuid of removedUuids) toDelete.add(uuid)
+    if (!removedUuids) {
+      continue
+    }
+    for (const uuid of removedUuids) {
+      toDelete.add(uuid)
+    }
   }
-  if (toDelete.size === 0) return
+  if (toDelete.size === 0) {
+    return
+  }
 
   // 在删除之前捕获每个待删除 entry 自己的 parentUuid，以便我们可以
   // 通过连续的已移除范围向后遍历。不在 Map 中的 entry
@@ -1875,7 +1927,9 @@ function applySnipRemovals(messages: Map<UUID, TranscriptMessage>): void {
   let removedCount = 0
   for (const uuid of toDelete) {
     const entry = messages.get(uuid)
-    if (!entry) continue
+    if (!entry) {
+      continue
+    }
     deletedParent.set(uuid, entry.parentUuid)
     messages.delete(uuid)
     removedCount++
@@ -1896,12 +1950,16 @@ function applySnipRemovals(messages: Map<UUID, TranscriptMessage>): void {
         break
       }
     }
-    for (const p of path) deletedParent.set(p, cur)
+    for (const p of path) {
+      deletedParent.set(p, cur)
+    }
     return cur
   }
   let relinkedCount = 0
   for (const [uuid, msg] of messages) {
-    if (!msg.parentUuid || !toDelete.has(msg.parentUuid)) continue
+    if (!msg.parentUuid || !toDelete.has(msg.parentUuid)) {
+      continue
+    }
     messages.set(uuid, { ...msg, parentUuid: resolve(msg.parentUuid) })
     relinkedCount++
   }
@@ -1924,7 +1982,9 @@ function findLatestMessage<T extends { timestamp: string }>(
   let latest: T | undefined
   let maxTime = -Infinity
   for (const m of messages) {
-    if (!predicate(m)) continue
+    if (!predicate(m)) {
+      continue
+    }
     const t = Date.parse(m.timestamp)
     if (t > maxTime) {
       maxTime = t
@@ -1993,13 +2053,17 @@ function recoverOrphanedParallelToolResults(
 ): TranscriptMessage[] {
   type ChainAssistant = Extract<TranscriptMessage, { type: 'assistant' }>
   const chainAssistants = chain.filter((m): m is ChainAssistant => m.type === 'assistant')
-  if (chainAssistants.length === 0) return chain
+  if (chainAssistants.length === 0) {
+    return chain
+  }
 
   // Anchor = 每个兄弟组的最后一个链上成员。chainAssistants 已按
   // 链顺序排列，因此后面的迭代覆写 → 后者优先。
   const anchorByMsgId = new Map<string, ChainAssistant>()
   for (const a of chainAssistants) {
-    if (a.message.id) anchorByMsgId.set(a.message.id, a)
+    if (a.message.id) {
+      anchorByMsgId.set(a.message.id, a)
+    }
   }
 
   // O(n) 预计算：兄弟组和 TR 索引。
@@ -2010,8 +2074,11 @@ function recoverOrphanedParallelToolResults(
   for (const m of messages.values()) {
     if (m.type === 'assistant' && m.message.id) {
       const group = siblingsByMsgId.get(m.message.id)
-      if (group) group.push(m)
-      else siblingsByMsgId.set(m.message.id, [m])
+      if (group) {
+        group.push(m)
+      } else {
+        siblingsByMsgId.set(m.message.id, [m])
+      }
     } else if (
       m.type === 'user' &&
       m.parentUuid &&
@@ -2019,8 +2086,11 @@ function recoverOrphanedParallelToolResults(
       m.message.content.some((b) => b.type === 'tool_result')
     ) {
       const group = toolResultsByAsst.get(m.parentUuid)
-      if (group) group.push(m)
-      else toolResultsByAsst.set(m.parentUuid, [m])
+      if (group) {
+        group.push(m)
+      } else {
+        toolResultsByAsst.set(m.parentUuid, [m])
+      }
     }
   }
 
@@ -2033,7 +2103,9 @@ function recoverOrphanedParallelToolResults(
   let recoveredCount = 0
   for (const asst of chainAssistants) {
     const msgId = asst.message.id
-    if (!msgId || processedGroups.has(msgId)) continue
+    if (!msgId || processedGroups.has(msgId)) {
+      continue
+    }
     processedGroups.add(msgId)
 
     const group = siblingsByMsgId.get(msgId) ?? [asst]
@@ -2041,12 +2113,18 @@ function recoverOrphanedParallelToolResults(
     const orphanedTRs: TranscriptMessage[] = []
     for (const member of group) {
       const trs = toolResultsByAsst.get(member.uuid)
-      if (!trs) continue
+      if (!trs) {
+        continue
+      }
       for (const tr of trs) {
-        if (!seen.has(tr.uuid)) orphanedTRs.push(tr)
+        if (!seen.has(tr.uuid)) {
+          orphanedTRs.push(tr)
+        }
       }
     }
-    if (orphanedSiblings.length === 0 && orphanedTRs.length === 0) continue
+    if (orphanedSiblings.length === 0 && orphanedTRs.length === 0) {
+      continue
+    }
 
     // 时间戳排序保持 content-block / completion 顺序；
     // 稳定排序在相同时保留 JSONL 写入顺序。
@@ -2055,12 +2133,16 @@ function recoverOrphanedParallelToolResults(
 
     const anchor = anchorByMsgId.get(msgId)!
     const recovered = [...orphanedSiblings, ...orphanedTRs]
-    for (const r of recovered) seen.add(r.uuid)
+    for (const r of recovered) {
+      seen.add(r.uuid)
+    }
     recoveredCount += recovered.length
     inserts.set(anchor.uuid, recovered)
   }
 
-  if (recoveredCount === 0) return chain
+  if (recoveredCount === 0) {
+    return chain
+  }
   logEvent('zy_chain_parallel_tr_recovered', {
     recovered_count: recoveredCount,
   })
@@ -2069,7 +2151,9 @@ function recoverOrphanedParallelToolResults(
   for (const m of chain) {
     result.push(m)
     const toInsert = inserts.get(m.uuid)
-    if (toInsert) result.push(...toInsert)
+    if (toInsert) {
+      result.push(...toInsert)
+    }
   }
   return result
 }
@@ -2091,9 +2175,13 @@ function recoverOrphanedParallelToolResults(
 export function checkResumeConsistency(chain: Message[]): void {
   for (let i = chain.length - 1; i >= 0; i--) {
     const m = chain[i]!
-    if (m.type !== 'system' || m.subtype !== 'turn_duration') continue
+    if (m.type !== 'system' || m.subtype !== 'turn_duration') {
+      continue
+    }
     const expected = m.messageCount
-    if (expected === undefined) return
+    if (expected === undefined) {
+      return
+    }
     // `i` 是检查点在重建链中的 0 基索引。
     // 检查点在 messageCount 条消息之后追加，因此它自己的
     // 位置应为 messageCount（即 i === expected）。
@@ -2241,13 +2329,19 @@ export async function loadTranscriptFromFile(filePath: string): Promise<LogOptio
  * 也排除不向用户显示的 meta 消息。
  */
 function hasVisibleUserContent(message: TranscriptMessage): boolean {
-  if (message.type !== 'user') return false
+  if (message.type !== 'user') {
+    return false
+  }
 
   // meta 消息不向用户显示
-  if (message.isMeta) return false
+  if (message.isMeta) {
+    return false
+  }
 
   const content = message.message?.content
-  if (!content) return false
+  if (!content) {
+    return false
+  }
 
   // 字符串内容总是可见的
   if (typeof content === 'string') {
@@ -2269,10 +2363,14 @@ function hasVisibleUserContent(message: TranscriptMessage): boolean {
  * 工具使用作为分组/折叠的 UI 元素显示，而非独立消息。
  */
 function hasVisibleAssistantContent(message: TranscriptMessage): boolean {
-  if (message.type !== 'assistant') return false
+  if (message.type !== 'assistant') {
+    return false
+  }
 
   const content = message.message?.content
-  if (!content || !Array.isArray(content)) return false
+  if (!content || !Array.isArray(content)) {
+    return false
+  }
 
   // 检查文本块（不仅是 tool_use/thinking 块）
   return content.some(
@@ -2408,7 +2506,7 @@ export async function fetchLogs(limit?: number): Promise<LogOption[]> {
 /* eslint-disable custom-rules/no-sync-fs -- sync callers (exit cleanup, materialize) */
 function appendEntryToFile(fullPath: string, entry: Record<string, unknown>): void {
   const fs = getFsImplementation()
-  const line = jsonStringify(entry) + '\n'
+  const line = `${jsonStringify(entry)}\n`
   try {
     fs.appendFileSync(fullPath, line, { mode: 0o600 })
   } catch {
@@ -2596,16 +2694,36 @@ export function restoreSessionMetadata(meta: {
   const project = getProject()
   // ??= 使 --name（cacheSessionTitle）优先于恢复的 session 标题。
   // REPL.tsx 在调用前清除，因此 /resume 不受影响。
-  if (meta.customTitle) project.currentSessionTitle ??= meta.customTitle
-  if (meta.tag !== undefined) project.currentSessionTag = meta.tag || undefined
-  if (meta.agentName) project.currentSessionAgentName = meta.agentName
-  if (meta.agentColor) project.currentSessionAgentColor = meta.agentColor
-  if (meta.agentSetting) project.currentSessionAgentSetting = meta.agentSetting
-  if (meta.mode) project.currentSessionMode = meta.mode
-  if (meta.worktreeSession !== undefined) project.currentSessionWorktree = meta.worktreeSession
-  if (meta.prNumber !== undefined) project.currentSessionPrNumber = meta.prNumber
-  if (meta.prUrl) project.currentSessionPrUrl = meta.prUrl
-  if (meta.prRepository) project.currentSessionPrRepository = meta.prRepository
+  if (meta.customTitle) {
+    project.currentSessionTitle ??= meta.customTitle
+  }
+  if (meta.tag !== undefined) {
+    project.currentSessionTag = meta.tag || undefined
+  }
+  if (meta.agentName) {
+    project.currentSessionAgentName = meta.agentName
+  }
+  if (meta.agentColor) {
+    project.currentSessionAgentColor = meta.agentColor
+  }
+  if (meta.agentSetting) {
+    project.currentSessionAgentSetting = meta.agentSetting
+  }
+  if (meta.mode) {
+    project.currentSessionMode = meta.mode
+  }
+  if (meta.worktreeSession !== undefined) {
+    project.currentSessionWorktree = meta.worktreeSession
+  }
+  if (meta.prNumber !== undefined) {
+    project.currentSessionPrNumber = meta.prNumber
+  }
+  if (meta.prUrl) {
+    project.currentSessionPrUrl = meta.prUrl
+  }
+  if (meta.prRepository) {
+    project.currentSessionPrRepository = meta.prRepository
+  }
 }
 
 /**
@@ -2878,7 +2996,9 @@ export async function searchSessionsByCustomTitle(
 
   const matchingLogs = logs.filter((log) => {
     const title = log.customTitle?.toLowerCase().trim()
-    if (!title) return false
+    if (!title) {
+      return false
+    }
     return exact ? title === normalizedQuery : title.includes(normalizedQuery)
   })
 
@@ -2930,7 +3050,9 @@ const METADATA_PREFIX_BOUND = 25
 // null = carry 跨越整个 chunk。当 carry 明确不是 metadata 行时
 // 跳过拼接（标记位于 `{` 后的第 1 字节）。
 function resolveMetadataBuf(carry: Buffer | null, chunkBuf: Buffer): Buffer | null {
-  if (carry === null || carry.length === 0) return chunkBuf
+  if (carry === null || carry.length === 0) {
+    return chunkBuf
+  }
   if (carry.length < METADATA_PREFIX_BOUND) {
     return Buffer.concat([carry, chunkBuf])
   }
@@ -2954,7 +3076,7 @@ function resolveMetadataBuf(carry: Buffer | null, chunkBuf: Buffer): Buffer | nu
  * 的 metadata entry 少于 50 个），整个 chunk 跳过而不拆分行。
  */
 async function scanPreBoundaryMetadata(filePath: string, endOffset: number): Promise<string[]> {
-  const { createReadStream } = await import('fs')
+  const { createReadStream } = await import('node:fs')
   const NEWLINE = 0x0a
 
   const stream = createReadStream(filePath, { end: endOffset - 1 })
@@ -3003,7 +3125,9 @@ async function scanPreBoundaryMetadata(filePath: string, endOffset: number): Pro
     // 防止病态巨大行（例如无换行符的 10 MB 工具输出行）导致的
     // carry 二次增长。真实 metadata entry 小于 1 KB，因此如果 carry
     // 超过此值则我们在消息内容中间 — 丢弃它。
-    if (carry.length > 64 * 1024) carry = null
+    if (carry.length > 64 * 1024) {
+      carry = null
+    }
   }
 
   // 最后的不完整行（endOffset 处无尾部换行符）
@@ -3077,18 +3201,27 @@ function pickDepthOneUuidCandidate(buf: Buffer, lineStart: number, candidates: n
   let ci = 0
   for (let i = lineStart; ci < candidates.length; i++) {
     if (i === candidates[ci]) {
-      if (depth === 1 && !inString) return candidates[ci]!
+      if (depth === 1 && !inString) {
+        return candidates[ci]!
+      }
       ci++
     }
     const b = buf[i]!
     if (escapeNext) {
       escapeNext = false
     } else if (inString) {
-      if (b === BACKSLASH) escapeNext = true
-      else if (b === QUOTE) inString = false
-    } else if (b === QUOTE) inString = true
-    else if (b === OPEN_BRACE) depth++
-    else if (b === CLOSE_BRACE) depth--
+      if (b === BACKSLASH) {
+        escapeNext = true
+      } else if (b === QUOTE) {
+        inString = false
+      }
+    } else if (b === QUOTE) {
+      inString = true
+    } else if (b === OPEN_BRACE) {
+      depth++
+    } else if (b === CLOSE_BRACE) {
+      depth--
+    }
   }
   return candidates.at(-1)!
 }
@@ -3146,15 +3279,22 @@ function walkChainBeforeParse(buf: Buffer): Buffer {
       let from = pos
       for (;;) {
         const next = buf.indexOf(UUID_KEY, from)
-        if (next < 0 || next >= lineEnd) break
-        if (firstAny < 0) firstAny = next
+        if (next < 0 || next >= lineEnd) {
+          break
+        }
+        if (firstAny < 0) {
+          firstAny = next
+        }
         const after = next + KEY_LEN + UUID_LEN
         if (
           after + TS_SUFFIX_LEN <= lineEnd &&
           buf.compare(TS_SUFFIX, 0, TS_SUFFIX_LEN, after, after + TS_SUFFIX_LEN) === 0
         ) {
-          if (suffix0 < 0) suffix0 = next
-          else (suffixN ??= [suffix0]).push(next)
+          if (suffix0 < 0) {
+            suffix0 = next
+          } else {
+            ;(suffixN ??= [suffix0]).push(next)
+          }
         }
         from = next + KEY_LEN
       }
@@ -3189,7 +3329,9 @@ function walkChainBeforeParse(buf: Buffer): Buffer {
       break
     }
   }
-  if (leafSlot < 0) return buf
+  if (leafSlot < 0) {
+    return buf
+  }
 
   // 遍历 parentUuid 到根。收集保留消息的行起始位置并累加它们的
   // 字节长度，以便决定拼接是否值得。悬挂的父级（uuid 不在文件中）
@@ -3201,12 +3343,16 @@ function walkChainBeforeParse(buf: Buffer): Buffer {
   let chainBytes = 0
   let slot: number | undefined = leafSlot
   while (slot !== undefined) {
-    if (seen.has(slot)) break
+    if (seen.has(slot)) {
+      break
+    }
     seen.add(slot)
     chain.add(msgIdx[slot]!)
     chainBytes += msgIdx[slot + 1]! - msgIdx[slot]!
     const parentStart = msgIdx[slot + 2]!
-    if (parentStart < 0) break
+    if (parentStart < 0) {
+      break
+    }
     const parent = buf.toString('latin1', parentStart, parentStart + UUID_LEN)
     slot = uuidToSlot.get(parent)
   }
@@ -3219,7 +3365,9 @@ function walkChainBeforeParse(buf: Buffer): Buffer {
   // 因此 len - chainBytes 足够近似死字节。
   // 接近收支平衡时 concat memcpy（将 chainBytes 复制到新分配）
   // 占主导，因此保守的 50% 门控安全地保持在获胜一侧。
-  if (len - chainBytes < len >> 1) return buf
+  if (len - chainBytes < len >> 1) {
+    return buf
+  }
 
   // 按原始文件顺序合并链 entry 和 metadata。msgIdx 和 metaRanges
   // 都已按偏移排序；将它们交错为子数组视图并一次性拼接。
@@ -3255,20 +3403,28 @@ function repairBrokenParentUuidChains(messages: Map<UUID, TranscriptMessage>): v
   // 快速扫描：检查是否有需要修复的消息
   let hasBroken = false
   for (const msg of messages.values()) {
-    if (msg.isSidechain || isCompactBoundaryMessage(msg)) continue
+    if (msg.isSidechain || isCompactBoundaryMessage(msg)) {
+      continue
+    }
     if (!msg.parentUuid || !messages.has(msg.parentUuid)) {
       hasBroken = true
       break
     }
   }
-  if (!hasBroken) return
+  if (!hasBroken) {
+    return
+  }
 
   // 按 sessionId 分组（排除 sidechain 和 compact_boundary）
   const bySession = new Map<string, TranscriptMessage[]>()
   for (const msg of messages.values()) {
-    if (msg.isSidechain || isCompactBoundaryMessage(msg)) continue
+    if (msg.isSidechain || isCompactBoundaryMessage(msg)) {
+      continue
+    }
     const sid = (msg.sessionId as string) ?? '__root__'
-    if (!bySession.has(sid)) bySession.set(sid, [])
+    if (!bySession.has(sid)) {
+      bySession.set(sid, [])
+    }
     bySession.get(sid)!.push(msg)
   }
 
@@ -3687,7 +3843,9 @@ export async function getLastSessionLog(sessionId: UUID): Promise<LogOption | nu
     contextCollapseCommits,
     contextCollapseSnapshot,
   } = await loadSessionFile(sessionId)
-  if (messages.size === 0) return null
+  if (messages.size === 0) {
+    return null
+  }
   // 预热 getSessionMessages 缓存使 recordTranscript（在 --resume 时
   // REPL 挂载后调用）跳过第二次完整文件加载。大 session 上 -170~227ms。
   // 守卫：仅在缓存为空时预热。session 中的调用者（例如 IssueFeedback）
@@ -3699,7 +3857,9 @@ export async function getLastSessionLog(sessionId: UUID): Promise<LogOption | nu
 
   // 找到最近的非 sidechain 消息
   const lastMessage = findLatestMessage(messages.values(), (m) => !m.isSidechain)
-  if (!lastMessage) return null
+  if (!lastMessage) {
+    return null
+  }
 
   // 从最后一条消息构建 transcript 链
   const transcript = buildConversationChain(messages, lastMessage)
@@ -3938,12 +4098,16 @@ async function getStatOnlyLogsForWorktrees(
   }
 
   for (const dirent of allDirents) {
-    if (!dirent.isDirectory()) continue
+    if (!dirent.isDirectory()) {
+      continue
+    }
     const dirName = caseInsensitive ? dirent.name.toLowerCase() : dirent.name
-    if (seenDirs.has(dirName)) continue
+    if (seenDirs.has(dirName)) {
+      continue
+    }
 
     for (const { path: wtPath, prefix } of indexed) {
-      if (dirName === prefix || dirName.startsWith(prefix + '-')) {
+      if (dirName === prefix || dirName.startsWith(`${prefix}-`)) {
         seenDirs.add(dirName)
         allLogs.push(
           ...(await getSessionFilesLite(join(projectsDir, dirent.name), undefined, wtPath)),
@@ -4117,7 +4281,9 @@ export async function loadAllSubagentTranscriptsFromDisk(): Promise<{
 // 导出以便 useLogMessages 可以同步计算最后一个可记录的 uuid，
 // 而无需 await recordTranscript 的返回值（无竞争的提示跟踪）。
 export function isLoggableMessage(m: Message): boolean {
-  if (m.type === 'progress') return false
+  if (m.type === 'progress') {
+    return false
+  }
   // 重要：我们故意为非 ant 用户过滤掉大多数 attachment，因为
   // 它们包含不想公开的训练敏感信息。
   // 启用时，我们允许 hook_additional_context 通过，因为它包含
@@ -4171,7 +4337,9 @@ function transformMessagesForExternalTranscript(
       const filtered = hasRepl
         ? content.filter((b) => !(b.type === 'tool_call' && b.name === REPL_TOOL_NAME))
         : content
-      if (filtered.length === 0) return []
+      if (filtered.length === 0) {
+        return []
+      }
       if (m.isVirtual) {
         const { isVirtual: _omit, ...rest } = m
         return [{ ...rest, message: { ...m.message, content: filtered } }]
@@ -4187,7 +4355,9 @@ function transformMessagesForExternalTranscript(
       const filtered = hasRepl
         ? content.filter((b) => !(b.type === 'tool_result' && replIds.has(b.toolCallId)))
         : content
-      if (filtered.length === 0) return []
+      if (filtered.length === 0) {
+        return []
+      }
       if (m.isVirtual) {
         const { isVirtual: _omit, ...rest } = m
         return [{ ...rest, message: { ...m.message, content: filtered } }]
@@ -4292,9 +4462,13 @@ export async function getSessionFilesWithMtime(
 
   const candidates: Array<{ sessionId: string; filePath: string }> = []
   for (const dirent of dirents) {
-    if (!dirent.isFile() || !dirent.name.endsWith('.jsonl')) continue
+    if (!dirent.isFile() || !dirent.name.endsWith('.jsonl')) {
+      continue
+    }
     const sessionId = validateUuid(basename(dirent.name, '.jsonl'))
-    if (!sessionId) continue
+    if (!sessionId) {
+      continue
+    }
     candidates.push({ sessionId, filePath: join(projectDir, dirent.name) })
   }
 
@@ -4367,7 +4541,9 @@ export async function loadAllLogsFromSessionFile(
     leafUuids,
   } = await loadTranscriptFile(sessionFile, { keepAllLeaves: true })
 
-  if (messages.size === 0) return []
+  if (messages.size === 0) {
+    return []
+  }
 
   const leafMessages: TranscriptMessage[] = []
   // 构建一次 parentUuid → children 索引（O(n)），使每个叶子的尾部消息查找为 O(1)
@@ -4389,7 +4565,9 @@ export async function loadAllLogsFromSessionFile(
 
   for (const leafMessage of leafMessages) {
     const chain = buildConversationChain(messages, leafMessage)
-    if (chain.length === 0) continue
+    if (chain.length === 0) {
+      continue
+    }
 
     // 追加叶子的子消息作为尾部消息
     const trailingMessages = childrenByParent.get(leafMessage.uuid)
@@ -4444,7 +4622,9 @@ export async function loadAllLogsFromSessionFile(
  */
 async function getLogsWithoutIndex(projectDir: string, limit?: number): Promise<LogOption[]> {
   const sessionFilesMap = await getSessionFilesWithMtime(projectDir)
-  if (sessionFilesMap.size === 0) return []
+  if (sessionFilesMap.size === 0) {
+    return []
+  }
 
   // 如果指定了限制，仅按 mtime 加载最近的 N 个文件
   let filesToProcess: Array<{ path: string; mtime: number }>
@@ -4481,7 +4661,9 @@ async function readLiteMetadata(
   buf: Buffer,
 ): Promise<LiteMetadata> {
   const { head, tail } = await readHeadAndTail(filePath, fileSize, buf)
-  if (!head) return { firstPrompt: '', isSidechain: false }
+  if (!head) {
+    return { firstPrompt: '', isSidechain: false }
+  }
 
   // 通过字符串搜索从首行提取稳定 metadata。
   // 即使首行被截断（>64KB 消息）也有效。
@@ -4529,7 +4711,9 @@ async function readLiteMetadata(
     if (prNumMatch >= 0) {
       const afterColon = tail.slice(prNumMatch + 11, prNumMatch + 25)
       const num = parseInt(afterColon.trim(), 10)
-      if (num > 0) prNumber = num
+      if (num > 0) {
+        prNumber = num
+      }
     }
   }
 
@@ -4564,15 +4748,23 @@ function extractFirstPromptFromChunk(chunk: string): string {
     if (!line.includes('"type":"user"') && !line.includes('"type": "user"')) {
       continue
     }
-    if (line.includes('"tool_result"')) continue
-    if (line.includes('"isMeta":true') || line.includes('"isMeta": true')) continue
+    if (line.includes('"tool_result"')) {
+      continue
+    }
+    if (line.includes('"isMeta":true') || line.includes('"isMeta": true')) {
+      continue
+    }
 
     try {
       const entry = jsonParse(line) as Record<string, unknown>
-      if (entry.type !== 'user') continue
+      if (entry.type !== 'user') {
+        continue
+      }
 
       const message = entry.message as Record<string, unknown> | undefined
-      if (!message) continue
+      if (!message) {
+        continue
+      }
 
       const content = message.content
       // 从消息内容中收集所有文本值。对于数组内容
@@ -4592,7 +4784,9 @@ function extractFirstPromptFromChunk(chunk: string): string {
       }
 
       for (const text of texts) {
-        if (!text) continue
+        if (!text) {
+          continue
+        }
 
         let result = text.replace(/\n/g, ' ').trim()
 
@@ -4616,28 +4810,33 @@ function extractFirstPromptFromChunk(chunk: string): string {
 
         // 在通用 XML 跳过之前以 ! 前缀格式化 bash 输入
         const bashInput = extractTag(result, 'bash-input')
-        if (bashInput) return `! ${bashInput}`
+        if (bashInput) {
+          return `! ${bashInput}`
+        }
 
         if (SKIP_FIRST_PROMPT_PATTERN.test(result)) {
-          if ((feature('PROACTIVE') || feature('KAIROS')) && result.startsWith(`<${TICK_TAG}>`))
+          if ((feature('PROACTIVE') || feature('KAIROS')) && result.startsWith(`<${TICK_TAG}>`)) {
             hasTickMessages = true
+          }
           continue
         }
         if (result.length > 200) {
-          result = result.slice(0, 200).trim() + '…'
+          result = `${result.slice(0, 200).trim()}…`
         }
         return result
       }
-    } catch {
-      continue
-    }
+    } catch {}
   }
   // session 以斜杠命令开始但没有后续真实消息 —
   // 使用清晰的命令名称使 session 仍出现在恢复选择器中
-  if (firstCommandFallback) return firstCommandFallback
+  if (firstCommandFallback) {
+    return firstCommandFallback
+  }
   // 主动式 session 只有 tick 消息 — 给它们一个合成的 prompt
   // 以免被 enrichLogs 过滤掉
-  if ((feature('PROACTIVE') || feature('KAIROS')) && hasTickMessages) return 'Proactive session'
+  if ((feature('PROACTIVE') || feature('KAIROS')) && hasTickMessages) {
+    return 'Proactive session'
+  }
   return ''
 }
 
@@ -4649,7 +4848,9 @@ function extractJsonStringFieldPrefix(text: string, key: string, maxLen: number)
   const patterns = [`"${key}":"`, `"${key}": "`]
   for (const pattern of patterns) {
     const idx = text.indexOf(pattern)
-    if (idx < 0) continue
+    if (idx < 0) {
+      continue
+    }
 
     const valueStart = idx + pattern.length
     // 从值中获取最多 maxLen 个字符，在闭合引号处停止
@@ -4661,7 +4862,9 @@ function extractJsonStringFieldPrefix(text: string, key: string, maxLen: number)
         collected++
         continue
       }
-      if (text[i] === '"') break
+      if (text[i] === '"') {
+        break
+      }
       i++
       collected++
     }
@@ -4678,7 +4881,9 @@ function extractJsonStringFieldPrefix(text: string, key: string, maxLen: number)
 function deduplicateLogsBySessionId(logs: LogOption[]): LogOption[] {
   const deduped = new Map<string, LogOption>()
   for (const log of logs) {
-    if (!log.sessionId) continue
+    if (!log.sessionId) {
+      continue
+    }
     const existing = deduped.get(log.sessionId)
     if (!existing || log.modified.getTime() > existing.modified.getTime()) {
       deduped.set(log.sessionId, log)
@@ -4742,7 +4947,9 @@ export async function getSessionFilesLite(
  * （无 firstPrompt、无 customTitle — 例如仅含 metadata 的 session 文件）。
  */
 async function enrichLog(log: LogOption, readBuf: Buffer): Promise<LogOption | null> {
-  if (!log.isLite || !log.fullPath) return log
+  if (!log.isLite || !log.fullPath) {
+    return log
+  }
 
   const meta = await readLiteMetadata(log.fullPath, log.fileSize ?? 0, readBuf)
 

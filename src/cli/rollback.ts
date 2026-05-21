@@ -1,6 +1,6 @@
 /**
  * Rollback handler for CLI command
  */
-export async function rollback(target: string, options: any): Promise<void> {
+export async function rollback(_target: string, _options: any): Promise<void> {
   throw new Error('rollback not implemented')
 }

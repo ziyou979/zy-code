@@ -3,6 +3,7 @@ import type { Except } from 'type-fest'
 import type { DOMElement } from '../dom.js'
 import type { Styles } from '../styles.js'
 import Box from './Box.js'
+
 type ButtonState = {
   focused: boolean
   hovered: boolean

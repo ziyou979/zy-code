@@ -144,22 +144,29 @@ const { HOSTNAME_ONLY, PATH_PREFIXES } = (() => {
       const host = entry.slice(0, slash)
       const path = entry.slice(slash)
       const prefixes = paths.get(host)
-      if (prefixes) prefixes.push(path)
-      else paths.set(host, [path])
+      if (prefixes) {
+        prefixes.push(path)
+      } else {
+        paths.set(host, [path])
+      }
     }
   }
   return { HOSTNAME_ONLY: hosts, PATH_PREFIXES: paths }
 })()
 
 export function isPreapprovedHost(hostname: string, pathname: string): boolean {
-  if (HOSTNAME_ONLY.has(hostname)) return true
+  if (HOSTNAME_ONLY.has(hostname)) {
+    return true
+  }
   const prefixes = PATH_PREFIXES.get(hostname)
   if (prefixes) {
     for (const p of prefixes) {
       // Enforce path segment boundaries: "/anthropics" must not match
       // "/anthropics-evil/malware". Only exact match or a "/" after the
       // prefix is allowed.
-      if (pathname === p || pathname.startsWith(p + '/')) return true
+      if (pathname === p || pathname.startsWith(`${p}/`)) {
+        return true
+      }
     }
   }
   return false

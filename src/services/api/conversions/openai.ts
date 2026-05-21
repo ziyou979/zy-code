@@ -14,9 +14,10 @@
  * - normalizeContentFromAPI（messages.ts）：流式累积后把字符串 input parse 回 object
  * - 出站 messagesToOpenAI 内对 string input 兜底为 {}
  */
+
+import { randomUUID } from 'node:crypto'
 import OpenAI from 'openai'
 import type { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions/completions'
-import { randomUUID } from 'crypto'
 import type {
   AssistantContentBlock,
   ChunkDelta,
@@ -29,7 +30,6 @@ import type {
   TokenUsage,
   ToolChoice,
   ToolDefinition,
-  UserContentBlock,
 } from '../../../types/llm.js'
 
 /**
@@ -40,11 +40,10 @@ import type {
 export interface OpenAICreateParams extends ChatCompletionCreateParamsBase {
   [key: string]: unknown
 }
-import { getAPIProvider } from '../../../utils/model/providers.js'
+
 import { normalizeModelStringForAPI } from '../../../utils/model/model.js'
+import { getAPIProvider } from '../../../utils/model/providers.js'
 import { localModelHasCapability } from '../../../utils/settings/localModelCapabilities.js'
-import { logForDebugging } from '../../../utils/debug.js'
-import { jsonStringify } from '../../../utils/slowOperations.js'
 
 interface DashScopeChatCompletionDelta {
   content?: string | null
@@ -74,9 +73,13 @@ interface DashScopeChatCompletionDelta {
  *   - undefined / null / 其他：回退 "{}"
  */
 export function safeStringifyToolArguments(input: unknown): string {
-  if (input === undefined || input === null) return '{}'
+  if (input === undefined || input === null) {
+    return '{}'
+  }
   if (typeof input === 'string') {
-    if (input.trim() === '') return '{}'
+    if (input.trim() === '') {
+      return '{}'
+    }
     try {
       const parsed = JSON.parse(input)
       if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
@@ -119,8 +122,12 @@ type AnyMessage = LLMMessage | Record<string, unknown>
  * 判定条件：模型名含 'deepseek' 且具备 thinking 能力（由 model-capabilities 声明）。
  */
 function isDeepSeekReasoningModel(model: string | undefined): boolean {
-  if (!model) return false
-  if (!model.toLowerCase().includes('deepseek')) return false
+  if (!model) {
+    return false
+  }
+  if (!model.toLowerCase().includes('deepseek')) {
+    return false
+  }
   return localModelHasCapability(model, 'thinking')
 }
 
@@ -207,7 +214,9 @@ export function messagesToOpenAI(
           result.push(am)
           break
         }
-        if (!Array.isArray(msg.content)) break
+        if (!Array.isArray(msg.content)) {
+          break
+        }
 
         const textParts: string[] = []
         const thinkingParts: string[] = []
@@ -250,8 +259,12 @@ export function messagesToOpenAI(
           }
           // DeepSeek 纯文本轮次：thinking 丢弃（官方要求）
         }
-        if (textParts.length > 0) am.content = textParts.join('\n\n')
-        if (toolCalls.length > 0) am.tool_calls = toolCalls
+        if (textParts.length > 0) {
+          am.content = textParts.join('\n\n')
+        }
+        if (toolCalls.length > 0) {
+          am.tool_calls = toolCalls
+        }
         result.push(am)
         break
       }
@@ -272,7 +285,9 @@ export function messagesToOpenAI(
 export function toolsToOpenAI(
   tools?: ToolDefinition[],
 ): OpenAI.Chat.ChatCompletionTool[] | undefined {
-  if (!tools?.length) return undefined
+  if (!tools?.length) {
+    return undefined
+  }
   return tools.map((tool) => ({
     type: 'function' as const,
     function: {
@@ -290,7 +305,9 @@ export function toolsToOpenAI(
 export function toolChoiceToOpenAI(
   choice?: ToolChoice,
 ): OpenAI.Chat.ChatCompletionToolChoiceOption | undefined {
-  if (!choice) return undefined
+  if (!choice) {
+    return undefined
+  }
   switch (choice.type) {
     case 'auto':
       return 'auto'
@@ -328,13 +345,17 @@ export function convertThinkingForOpenAI(
   model: string,
   outputConfig?: Record<string, unknown>,
 ): Record<string, unknown> {
-  if (!thinking || thinking.type === 'disabled') return {}
+  if (!thinking || thinking.type === 'disabled') {
+    return {}
+  }
 
   const provider = getAPIProvider()
   const modelLower = model.toLowerCase()
   const effort = outputConfig?.effort as string | undefined
 
-  if (provider === 'dashscope') return { enable_thinking: true }
+  if (provider === 'dashscope') {
+    return { enable_thinking: true }
+  }
   if (provider === 'zhipu') {
     return { thinking: { type: 'enabled', clear_thinking: false } }
   }
@@ -344,9 +365,15 @@ export function convertThinkingForOpenAI(
     }
     return { enable_thinking: true }
   }
-  if (provider === 'deepseek') return { reasoning_effort: effort ?? 'medium' }
-  if (provider === 'openrouter') return { reasoning: { effort: effort ?? 'medium' } }
-  if (provider === 'openai') return { reasoning_effort: effort ?? 'medium' }
+  if (provider === 'deepseek') {
+    return { reasoning_effort: effort ?? 'medium' }
+  }
+  if (provider === 'openrouter') {
+    return { reasoning: { effort: effort ?? 'medium' } }
+  }
+  if (provider === 'openai') {
+    return { reasoning_effort: effort ?? 'medium' }
+  }
 
   if (
     modelLower.includes('reasoning') ||
@@ -376,16 +403,24 @@ export function convertThinkingForOpenAI(
 export function convertOutputFormatToResponseFormat(
   outputConfig: Record<string, unknown> | undefined,
 ): OpenAI.Chat.Completions.ChatCompletionCreateParams['response_format'] | undefined {
-  if (!outputConfig) return undefined
+  if (!outputConfig) {
+    return undefined
+  }
 
   const format = outputConfig.format as Record<string, unknown> | undefined
-  if (!format) return undefined
+  if (!format) {
+    return undefined
+  }
 
-  if (format.type === 'json_object') return { type: 'json_object' }
+  if (format.type === 'json_object') {
+    return { type: 'json_object' }
+  }
 
   if (format.type === 'json_schema') {
     const rawSchema = format.schema as Record<string, unknown> | undefined
-    if (!rawSchema) return undefined
+    if (!rawSchema) {
+      return undefined
+    }
 
     // 原始 JSON Schema 需包裹成 OpenAI 要求的 {name, schema, strict}
     const jsonSchema: Record<string, unknown> = {
@@ -420,7 +455,9 @@ const OPENAI_STOP_REASON_MAP: Record<string, StopReason> = {
 }
 
 export function openAIFinishReasonToStandard(reason: string | null | undefined): StopReason {
-  if (!reason) return null
+  if (!reason) {
+    return null
+  }
   return OPENAI_STOP_REASON_MAP[reason] ?? 'end_turn'
 }
 
@@ -545,7 +582,7 @@ export async function* mapOpenAIStreamToStandard(
   const thinkingBlockIndex = 0
   // 最终 stop_reason 和 usage（usage 可能在独立的 usage-only chunk 中到达）
   let finalStopReason: StopReason | null = null
-  let finalUsage: DeltaUsage | undefined = undefined
+  let finalUsage: DeltaUsage | undefined
 
   yield { type: 'response_start', responseId: messageId, model }
 
@@ -702,12 +739,20 @@ export function buildOpenAIRequestParams(params: CreateParams): OpenAICreatePara
     temperature: p.temperature ?? 1,
   }
   const topP = p.topP ?? p.top_p
-  if (topP !== undefined) out.top_p = topP
+  if (topP !== undefined) {
+    out.top_p = topP
+  }
   const stops = p.stopSequences ?? p.stop_sequences
-  if (stops) out.stop = stops
-  if (toolDefs) out.tools = toolDefs
+  if (stops) {
+    out.stop = stops
+  }
+  if (toolDefs) {
+    out.tools = toolDefs
+  }
   const toolChoice = p.toolChoice ?? p.tool_choice
-  if (toolChoice) out.tool_choice = toolChoiceToOpenAI(toolChoice) ?? toolChoice
+  if (toolChoice) {
+    out.tool_choice = toolChoiceToOpenAI(toolChoice) ?? toolChoice
+  }
 
   if (explicitResponseFormat) {
     out.response_format = explicitResponseFormat
@@ -717,7 +762,9 @@ export function buildOpenAIRequestParams(params: CreateParams): OpenAICreatePara
 
   Object.assign(out, thinkingParams)
   Object.assign(out, cleanedExtras)
-  if (p.extra_body) Object.assign(out, p.extra_body)
+  if (p.extra_body) {
+    Object.assign(out, p.extra_body)
+  }
 
   return out
 }

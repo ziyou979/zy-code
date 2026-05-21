@@ -1,4 +1,3 @@
-import type { ToolResultBlock } from '../../types/llm.js'
 import * as React from 'react'
 import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js'
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js'
@@ -9,6 +8,7 @@ import { ShellTimeDisplay } from '../../components/shell/ShellTimeDisplay.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import type { Tool } from '../../Tool.js'
+import type { ToolResultBlock } from '../../types/llm.js'
 import type { ProgressMessage } from '../../types/message.js'
 import type { PowerShellProgress } from '../../types/tools.js'
 import type { ThemeName } from '../../utils/theme.js'
@@ -67,7 +67,7 @@ export function renderToolUseProgressMessage(
   },
 ): React.ReactNode {
   const lastProgress = progressMessagesForMessage.at(-1)
-  if (!lastProgress || !lastProgress.data) {
+  if (!lastProgress?.data) {
     return (
       <MessageResponse height={1}>
         <Text dimColor>{tSync('bash.running')}</Text>

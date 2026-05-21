@@ -1,4 +1,3 @@
-import type { ToolCallBlock } from '../types/llm.js'
 import last from 'lodash-es/last.js'
 import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
 import type { SDKMessage } from 'src/entrypoints/agentSdkTypes.js'
@@ -10,6 +9,7 @@ import { FILE_EDIT_TOOL_NAME } from '../tools/FileEditTool/constants.js'
 import type { Input as FileReadInput } from '../tools/FileReadTool/FileReadTool.js'
 import { FILE_READ_TOOL_NAME, FILE_UNCHANGED_STUB } from '../tools/FileReadTool/prompt.js'
 import { FILE_WRITE_TOOL_NAME } from '../tools/FileWriteTool/prompt.js'
+import type { ToolCallBlock } from '../types/llm.js'
 import type { Message } from '../types/message.js'
 import type { OrphanedPermission } from '../types/textInputTypes.js'
 import { logForDebugging } from './debug.js'
@@ -47,7 +47,9 @@ export function isResultSuccessful(
   message: Message | undefined,
   stopReason: string | null = null,
 ): message is Message {
-  if (!message) return false
+  if (!message) {
+    return false
+  }
 
   if (message.type === 'assistant') {
     const content = message.message.content
@@ -464,7 +466,9 @@ export function extractBashToolsFromMessages(messages: Message[]): Set<string> {
       for (const content of message.message.content) {
         if (content.type === 'tool_call' && content.name === BASH_TOOL_NAME) {
           const { input } = content
-          if (typeof input !== 'object' || input === null || !('command' in input)) continue
+          if (typeof input !== 'object' || input === null || !('command' in input)) {
+            continue
+          }
           const cmd = extractCliName(typeof input.command === 'string' ? input.command : undefined)
           if (cmd) {
             tools.add(cmd)
@@ -483,11 +487,17 @@ const STRIPPED_COMMANDS = new Set(['sudo'])
  * （例如 `FOO=bar vercel` -> `vercel`）以及 STRIPPED_COMMANDS 中的前缀。
  */
 function extractCliName(command: string | undefined): string | undefined {
-  if (!command) return undefined
+  if (!command) {
+    return undefined
+  }
   const tokens = command.trim().split(/\s+/)
   for (const token of tokens) {
-    if (/^[A-Za-z_]\w*=/.test(token)) continue
-    if (STRIPPED_COMMANDS.has(token)) continue
+    if (/^[A-Za-z_]\w*=/.test(token)) {
+      continue
+    }
+    if (STRIPPED_COMMANDS.has(token)) {
+      continue
+    }
     return token
   }
   return undefined

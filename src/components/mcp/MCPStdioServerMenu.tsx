@@ -18,6 +18,7 @@ import { Spinner } from '../Spinner.js'
 import { CapabilitiesSection } from './CapabilitiesSection.js'
 import type { StdioServerInfo } from './types.js'
 import { handleReconnectError, handleReconnectResult } from './utils/reconnectHelpers.js'
+
 type Props = {
   server: StdioServerInfo
   serverToolsCount: number
@@ -52,7 +53,7 @@ export function MCPStdioServerMenu({
       // Return to the server list so user can continue managing other servers
       onCancel()
     } catch (err) {
-      const action = wasEnabled ? 'disable' : 'enable'
+      const _action = wasEnabled ? 'disable' : 'enable'
       onComplete(
         tSync('mcp.failedToToggle', {
           action: wasEnabled ? tSync('mcp.disable') : tSync('mcp.enable'),
@@ -205,7 +206,7 @@ export function MCPStdioServerMenu({
       <Box marginTop={1}>
         <Text dimColor italic>
           {exitState.pending ? (
-            <>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</>
+            tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })
           ) : (
             <Byline>
               <KeyboardShortcutHint shortcut="↑↓" action="navigate" />

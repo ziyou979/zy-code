@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { Select } from '../../../components/CustomSelect/select.js'
 import { Box, Text } from '../../../ink.js'

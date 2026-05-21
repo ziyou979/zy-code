@@ -1,7 +1,7 @@
 import { getMainLoopModelOverride } from '../../bootstrap/state.js'
 import { getInitialSettings } from '../settings/settings.js'
-import { isModelAllowed } from './modelAllowlist.js'
 import type { ModelAlias } from './aliases.js'
+import { isModelAllowed } from './modelAllowlist.js'
 
 export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
@@ -17,11 +17,15 @@ type ModelTier = 'advanced' | 'standard' | 'compact'
 function getModelByTier(tier: ModelTier): ModelName | undefined {
   const settings = getInitialSettings() || {}
   const tierModel = settings.models?.[tier]
-  if (tierModel) return tierModel
+  if (tierModel) {
+    return tierModel
+  }
   // 其他层级未配置时使用 standard
   if (tier !== 'standard') {
     const standard = settings.models?.standard
-    if (standard) return standard
+    if (standard) {
+      return standard
+    }
   }
   return undefined
 }
@@ -101,7 +105,9 @@ export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias | undef
  */
 export function getDefaultMainLoopModel(): ModelName | undefined {
   const setting = getDefaultMainLoopModelSetting()
-  if (!setting) return undefined
+  if (!setting) {
+    return undefined
+  }
   return parseUserSpecifiedModel(setting)
 }
 
@@ -131,7 +137,7 @@ export function getPublicModelDisplayName(model: ModelName): string | null {
   const settings = getInitialSettings() || {}
   if (settings.customModels && settings.customModels.length > 0) {
     const customModel = settings.customModels.find(
-      (m) => m.model === model || m.model + '[1m]' === model,
+      (m) => m.model === model || `${m.model}[1m]` === model,
     )
     if (customModel) {
       const has1m = model.toLowerCase().includes('[1m]')
@@ -172,9 +178,15 @@ export function parseUserSpecifiedModel(modelInput: ModelName | ModelAlias): Mod
   const normalizedModel = modelInputTrimmed.toLowerCase()
 
   // 直接解析 tier 别名到对应模型
-  if (normalizedModel === 'advanced') return getModelByTier('advanced')
-  if (normalizedModel === 'standard') return getModelByTier('standard')
-  if (normalizedModel === 'compact') return getModelByTier('compact')
+  if (normalizedModel === 'advanced') {
+    return getModelByTier('advanced')
+  }
+  if (normalizedModel === 'standard') {
+    return getModelByTier('standard')
+  }
+  if (normalizedModel === 'compact') {
+    return getModelByTier('compact')
+  }
 
   // 从 settings 中解析自定义模型别名
   const settings = getInitialSettings() || {}
@@ -193,7 +205,7 @@ export function parseUserSpecifiedModel(modelInput: ModelName | ModelAlias): Mod
  * Skill 作者可以指定 tier 别名（例如 `model: advanced`），
  * 会被解析为对应的实际模型名称。
  */
-export function resolveSkillModelOverride(skillModel: string, currentModel: string): string {
+export function resolveSkillModelOverride(skillModel: string, _currentModel: string): string {
   // 上下文窗口统一通过 model-capabilities.json 中的 contextWindow 配置管理，
   // skill 指定的模型会使用其自身配置的 contextWindow，无需后缀传递
   return skillModel

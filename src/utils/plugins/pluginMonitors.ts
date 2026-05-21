@@ -5,10 +5,10 @@
  * 持续监听事件和状态变化，类似守护进程（daemon）。
  * 适合日志监控、资源监控、自动修复等场景。
  */
-import { spawn, type ChildProcess } from 'node:child_process'
+import { type ChildProcess, spawn } from 'node:child_process'
 import type { LoadedPlugin } from '../../types/plugin.js'
-import { logForDebugging } from '../debug.js'
 import { getCwd } from '../cwd.js'
+import { logForDebugging } from '../debug.js'
 
 type MonitorConfig = NonNullable<LoadedPlugin['monitors']>[number]
 
@@ -28,11 +28,15 @@ const _runningMonitors: RunningMonitor[] = []
  */
 export function startPluginMonitors(plugins: readonly LoadedPlugin[]): void {
   for (const plugin of plugins) {
-    if (!plugin.enabled || !plugin.monitors?.length) continue
+    if (!plugin.enabled || !plugin.monitors?.length) {
+      continue
+    }
 
     for (const monitor of plugin.monitors) {
       const trigger = monitor.trigger ?? 'session_start'
-      if (trigger !== 'session_start') continue
+      if (trigger !== 'session_start') {
+        continue
+      }
 
       startMonitor(plugin.name, monitor)
     }
@@ -53,16 +57,22 @@ export function triggerPluginMonitors(
   trigger: 'skill_invoke',
 ): void {
   for (const plugin of plugins) {
-    if (!plugin.enabled || !plugin.monitors?.length) continue
+    if (!plugin.enabled || !plugin.monitors?.length) {
+      continue
+    }
 
     for (const monitor of plugin.monitors) {
-      if (monitor.trigger !== trigger) continue
+      if (monitor.trigger !== trigger) {
+        continue
+      }
 
       // 避免重复启动同名 monitor
       const alreadyRunning = _runningMonitors.some(
         (r) => r.pluginName === plugin.name && r.config.name === monitor.name,
       )
-      if (alreadyRunning) continue
+      if (alreadyRunning) {
+        continue
+      }
 
       startMonitor(plugin.name, monitor)
     }
@@ -75,7 +85,9 @@ export function triggerPluginMonitors(
  */
 export function stopAllPluginMonitors(): void {
   const count = _runningMonitors.length
-  if (count === 0) return
+  if (count === 0) {
+    return
+  }
 
   for (const monitor of _runningMonitors) {
     try {

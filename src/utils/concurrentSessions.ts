@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
-import { chmod, mkdir, readdir, readFile, unlink, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { chmod, mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { getOriginalCwd, getSessionId, onSessionSwitch } from '../bootstrap/state.js'
 import { registerCleanup } from './cleanupRegistry.js'
 import { logForDebugging } from './debug.js'
@@ -27,7 +27,9 @@ function getSessionsDir(): string {
 function envSessionKind(): SessionKind | undefined {
   if (feature('BG_SESSIONS')) {
     const k = process.env.ZY_CODE_SESSION_KIND
-    if (k === 'bg' || k === 'daemon' || k === 'daemon-worker') return k
+    if (k === 'bg' || k === 'daemon' || k === 'daemon-worker') {
+      return k
+    }
   }
   return undefined
 }
@@ -53,7 +55,9 @@ export function isBgSession(): boolean {
  * Errors logged to debug, never thrown.
  */
 export async function registerSession(): Promise<boolean> {
-  if (getAgentId() != null) return false
+  if (getAgentId() != null) {
+    return false
+  }
 
   const kind: SessionKind = envSessionKind() ?? 'interactive'
   const dir = getSessionsDir()
@@ -120,7 +124,9 @@ async function updatePidFile(patch: Record<string, unknown>): Promise<void> {
 }
 
 export async function updateSessionName(name: string | undefined): Promise<void> {
-  if (!name) return
+  if (!name) {
+    return
+  }
   await updatePidFile({ name })
 }
 
@@ -143,7 +149,9 @@ export async function updateSessionActivity(patch: {
   status?: SessionStatus
   waitingFor?: string
 }): Promise<void> {
-  if (!feature('BG_SESSIONS')) return
+  if (!feature('BG_SESSIONS')) {
+    return
+  }
   await updatePidFile({ ...patch, updatedAt: Date.now() })
 }
 
@@ -170,7 +178,9 @@ export async function countConcurrentSessions(): Promise<number> {
     // lenient prefix-parsing means `2026-03-14_notes.md` would otherwise
     // parse as PID 2026 and get swept as stale — silent user data loss.
     // See anthropics/zy-code#34210.
-    if (!/^\d+\.json$/.test(file)) continue
+    if (!/^\d+\.json$/.test(file)) {
+      continue
+    }
     const pid = parseInt(file.slice(0, -5), 10)
     if (pid === process.pid) {
       count++

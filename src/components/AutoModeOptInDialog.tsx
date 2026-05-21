@@ -1,6 +1,6 @@
 import React from 'react'
-import { logEvent } from 'src/services/analytics/index.js'
 import { tSync } from 'src/i18n/index.js'
+import { logEvent } from 'src/services/analytics/index.js'
 import { Box, Link, Text } from '../ink.js'
 import { updateSettingsForSource } from '../utils/settings/settings.js'
 import { Select } from './CustomSelect/index.js'

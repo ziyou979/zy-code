@@ -1,4 +1,3 @@
-import type { ToolResultBlock } from '../../types/llm.js'
 import React from 'react'
 import { MessageResponse } from 'src/components/MessageResponse.js'
 import { extractTag } from 'src/utils/messages.js'
@@ -6,6 +5,7 @@ import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErr
 import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js'
 import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink.js'
+import type { ToolResultBlock } from '../../types/llm.js'
 import { FILE_NOT_FOUND_CWD_NOTE, getDisplayPath } from '../../utils/file.js'
 import { truncate } from '../../utils/format.js'
 import { GrepTool } from '../GrepTool/GrepTool.js'

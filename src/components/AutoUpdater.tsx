@@ -18,11 +18,12 @@ import {
 import { getGlobalConfig, isAutoUpdaterDisabled } from '../utils/config.js'
 import { logForDebugging } from '../utils/debug.js'
 import { getCurrentInstallationType } from '../utils/doctorDiagnostic.js'
+import { isDevEnv, isTestEnv } from '../utils/envUtils.js'
 import { installOrUpdateZyPackage, localInstallationExists } from '../utils/localInstaller.js'
 import { removeInstalledSymlink } from '../utils/nativeInstaller/index.js'
 import { gt, gte } from '../utils/semver.js'
 import { getInitialSettings } from '../utils/settings/settings.js'
-import { isTestEnv, isDevEnv } from '../utils/envUtils.js'
+
 type Props = {
   isUpdating: boolean
   onChangeIsUpdating: (isUpdating: boolean) => void
@@ -182,7 +183,7 @@ export function AutoUpdater({
     // identity (which would re-trigger the initial-check useEffect below).
     // eslint-disable-next-line react-hooks/exhaustive-deps
     // biome-ignore lint/correctness/useExhaustiveDependencies: isUpdating read via ref
-  }, [onAutoUpdaterResult])
+  }, [onAutoUpdaterResult, onChangeIsUpdating])
 
   // Initial check
   useEffect(() => {
@@ -205,13 +206,11 @@ export function AutoUpdater({
         </Text>
       )}
       {isUpdating ? (
-        <>
-          <Box>
-            <Text color="text" dimColor wrap="truncate">
-              Auto-updating…
-            </Text>
-          </Box>
-        </>
+        <Box>
+          <Text color="text" dimColor wrap="truncate">
+            Auto-updating…
+          </Text>
+        </Box>
       ) : (
         autoUpdaterResult?.status === 'success' &&
         showSuccessMessage &&

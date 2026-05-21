@@ -1,7 +1,7 @@
 import React from 'react'
 import { MessageResponse } from '../../components/MessageResponse.js'
-import { stringWidth } from '../../ink/stringWidth.js'
 import { tSync } from '../../i18n/index.js'
+import { stringWidth } from '../../ink/stringWidth.js'
 import { Text } from '../../ink.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { truncateToWidthNoEllipsis } from '../../utils/format.js'

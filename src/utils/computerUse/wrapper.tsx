@@ -33,6 +33,7 @@ import { registerEscHotkey } from './escHotkey.js'
 import { getChicagoCoordinateMode } from './gates.js'
 import { getComputerUseHostAdapter } from './hostAdapter.js'
 import { getComputerUseMCPRenderingOverrides } from './toolRendering.js'
+
 type CallOverride = Pick<Tool, 'call'>['call']
 type Binding = {
   ctx: ComputerUseSessionContext
@@ -116,11 +117,15 @@ export function buildSessionContext(): ComputerUseSessionContext {
             }
       }),
     onAppsHidden: (ids) => {
-      if (ids.length === 0) return
+      if (ids.length === 0) {
+        return
+      }
       tuc().setAppState((prev) => {
         const cu = prev.computerUseMcpState
         const existing = cu?.hiddenDuringTurn
-        if (existing && ids.every((id) => existing.has(id))) return prev
+        if (existing && ids.every((id) => existing.has(id))) {
+          return prev
+        }
         return {
           ...prev,
           computerUseMcpState: {
@@ -181,7 +186,9 @@ export function buildSessionContext(): ComputerUseSessionContext {
     onDisplayResolvedForApps: (key) =>
       tuc().setAppState((prev) => {
         const cu = prev.computerUseMcpState
-        if (cu?.displayResolvedForApps === key) return prev
+        if (cu?.displayResolvedForApps === key) {
+          return prev
+        }
         return {
           ...prev,
           computerUseMcpState: {
@@ -265,7 +272,9 @@ export function buildSessionContext(): ComputerUseSessionContext {
   }
 }
 function getOrBind(): Binding {
-  if (binding) return binding
+  if (binding) {
+    return binding
+  }
   const ctx = buildSessionContext()
   binding = {
     ctx,

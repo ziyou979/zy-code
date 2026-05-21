@@ -1,4 +1,3 @@
-import React from 'react'
 type Props = {
   /**
    * 预渲染的 ANSI 行。每个元素必须恰好是一个终端行
@@ -28,6 +27,6 @@ export function RawAnsi({ lines, width }: Props) {
     return null
   }
   const joinedText = lines.join('\n')
-  // @ts-ignore
+  // @ts-expect-error
   return <ink-raw-ansi rawText={joinedText} rawWidth={width} rawHeight={lines.length} />
 }

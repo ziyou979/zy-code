@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import { LRUCache } from 'lru-cache'
 import { logForDebugging } from '../../utils/debug.js'
 import { toError } from '../../utils/errors.js'

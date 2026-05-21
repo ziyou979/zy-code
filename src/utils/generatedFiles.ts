@@ -1,4 +1,4 @@
-import { basename, extname, posix, sep } from 'path'
+import { basename, extname, posix, sep } from 'node:path'
 
 /**
  * File patterns that should be excluded from attribution.
@@ -101,7 +101,7 @@ export function isGeneratedFile(filePath: string): boolean {
   // Check for compound extensions like .min.js
   const parts = fileName.split('.')
   if (parts.length > 2) {
-    const compoundExt = '.' + parts.slice(-2).join('.')
+    const compoundExt = `.${parts.slice(-2).join('.')}`
     if (EXCLUDED_EXTENSIONS.has(compoundExt)) {
       return true
     }

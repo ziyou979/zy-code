@@ -178,7 +178,7 @@ export function TreeSelect({
   const findFlattenedNode = (nodeId_0) => flattenedNodes.find((fn_0) => fn_0.node.id === nodeId_0)
   const toggleExpand = (nodeId_1, shouldExpand) => {
     const flatNode_1 = findFlattenedNode(nodeId_1)
-    if (!flatNode_1 || !flatNode_1.hasChildren) {
+    if (!flatNode_1?.hasChildren) {
       return
     }
     if (shouldExpand) {

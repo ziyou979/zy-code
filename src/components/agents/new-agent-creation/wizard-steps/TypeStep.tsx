@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import { tSync } from '../../../../i18n/index.js'
 import { Box, Text } from '../../../../ink.js'
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js'
 import type { AgentDefinition } from '../../../../tools/AgentTool/loadAgentsDir.js'
-import { tSync } from '../../../../i18n/index.js'
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
 import { Byline } from '../../../design-system/Byline.js'
 import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js'
@@ -10,6 +10,7 @@ import TextInput from '../../../TextInput.js'
 import { useWizard } from '../../../wizard/index.js'
 import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
 import { validateAgentType } from '../../validateAgent.js'
+
 type Props = {
   existingAgents: AgentDefinition[]
 }

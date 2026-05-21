@@ -7,6 +7,7 @@ import { getCurrentInstallationType } from '../utils/doctorDiagnostic.js'
 import { AutoUpdater } from './AutoUpdater.js'
 import { NativeAutoUpdater } from './NativeAutoUpdater.js'
 import { PackageManagerAutoUpdater } from './PackageManagerAutoUpdater.js'
+
 type Props = {
   isUpdating: boolean
   onChangeIsUpdating: (isUpdating: boolean) => void

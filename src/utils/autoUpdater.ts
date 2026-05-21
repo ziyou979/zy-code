@@ -1,8 +1,8 @@
+import { constants as fsConstants } from 'node:fs'
+import { access, writeFile } from 'node:fs/promises'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 import axios from 'axios'
-import { constants as fsConstants } from 'fs'
-import { access, writeFile } from 'fs/promises'
-import { homedir } from 'os'
-import { join } from 'path'
 import { getDynamicConfig_BLOCKS_ON_INIT } from 'src/services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -11,12 +11,11 @@ import {
 import { type ReleaseChannel, saveGlobalConfig } from './config.js'
 import { logForDebugging } from './debug.js'
 import { env } from './env.js'
-import { getZyConfigHomeDir } from './envUtils.js'
-import { ZyError, getErrnoCode, isENOENT } from './errors.js'
+import { getZyConfigHomeDir, isInternalBuild } from './envUtils.js'
+import { getErrnoCode, isENOENT, ZyError } from './errors.js'
 import { execFileNoThrowWithCwd } from './execFileNoThrow.js'
 import { getFsImplementation } from './fsOperations.js'
 import { gracefulShutdownSync } from './gracefulShutdown.js'
-import { isInternalBuild } from './envUtils.js'
 import { logError } from './log.js'
 import { gte, lt } from './semver.js'
 import { getInitialSettings } from './settings/settings.js'
@@ -518,7 +517,9 @@ async function removeZyAliasesFromShellConfigs(): Promise<void> {
   for (const [, configFile] of Object.entries(configMap)) {
     try {
       const lines = await readFileLines(configFile)
-      if (!lines) continue
+      if (!lines) {
+        continue
+      }
 
       const { filtered, hadAlias } = filterZyAliases(lines)
 

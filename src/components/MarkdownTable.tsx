@@ -48,7 +48,9 @@ function wrapText(
     hard?: boolean
   },
 ): string[] {
-  if (width <= 0) return [text]
+  if (width <= 0) {
+    return [text]
+  }
   // Strip trailing whitespace/newlines before wrapping.
   // formatToken() adds EOL to paragraphs and other token types,
   // which would otherwise create extra blank lines in table cells.
@@ -92,7 +94,9 @@ export function MarkdownTable({ token, highlight, forceWidth }: Props): React.Re
   function getMinWidth(tokens: Token[] | undefined): number {
     const text = getPlainText(tokens)
     const words = text.split(/\s+/).filter((word) => word.length > 0)
-    if (words.length === 0) return MIN_COLUMN_WIDTH
+    if (words.length === 0) {
+      return MIN_COLUMN_WIDTH
+    }
     return Math.max(...words.map((word) => stringWidth(word)), MIN_COLUMN_WIDTH)
   }
 
@@ -144,7 +148,9 @@ export function MarkdownTable({ token, highlight, forceWidth }: Props): React.Re
     const overflows = idealWidths.map((ideal, i) => ideal - minWidths[i]!)
     const totalOverflow = overflows.reduce((sum, overflow) => sum + overflow, 0)
     columnWidths = minWidths.map((min, i) => {
-      if (totalOverflow === 0) return min
+      if (totalOverflow === 0) {
+        return min
+      }
       const extra = Math.floor((overflows[i]! / totalOverflow) * extraSpace)
       return min + extra
     })
@@ -222,7 +228,7 @@ export function MarkdownTable({ token, highlight, forceWidth }: Props): React.Re
         const width = columnWidths[colIndex]!
         // Headers always centered; data uses table alignment
         const align = isHeader ? 'center' : (token.align?.[colIndex] ?? 'left')
-        line += ' ' + padAligned(lineText, stringWidth(lineText), width, align) + ' │'
+        line += ` ${padAligned(lineText, stringWidth(lineText), width, align)} │`
       }
       result.push(line)
     }
@@ -289,7 +295,9 @@ export function MarkdownTable({ token, highlight, forceWidth }: Props): React.Re
         // Subsequent lines with small indent (skip empty lines)
         for (let i = 1; i < wrappedValue.length; i++) {
           const wrappedLine = wrappedValue[i]!
-          if (!wrappedLine.trim()) continue
+          if (!wrappedLine.trim()) {
+            continue
+          }
           resultLines.push(`${wrapIndent}${wrappedLine}`)
         }
       })

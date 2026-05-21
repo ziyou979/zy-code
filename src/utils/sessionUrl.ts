@@ -1,4 +1,4 @@
-import { randomUUID, type UUID } from 'crypto'
+import { randomUUID, type UUID } from 'node:crypto'
 import { validateUuid } from './uuid.js'
 
 export type ParsedSessionUrl = {

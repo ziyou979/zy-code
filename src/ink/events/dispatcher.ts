@@ -2,7 +2,7 @@ import {
   ContinuousEventPriority,
   DefaultEventPriority,
   DiscreteEventPriority,
-  // @ts-ignore
+  // @ts-expect-error
   NoEventPriority,
 } from 'react-reconciler/constants.js'
 import { logError } from '../../utils/log.js'
@@ -23,13 +23,19 @@ function getHandler(
   capture: boolean,
 ): ((event: TerminalEvent) => void) | undefined {
   const handlers = node._eventHandlers
-  if (!handlers) return undefined
+  if (!handlers) {
+    return undefined
+  }
 
   const mapping = HANDLER_FOR_EVENT[eventType]
-  if (!mapping) return undefined
+  if (!mapping) {
+    return undefined
+  }
 
   const propName = capture ? mapping.capture : mapping.bubble
-  if (!propName) return undefined
+  if (!propName) {
+    return undefined
+  }
 
   return handlers[propName] as ((event: TerminalEvent) => void) | undefined
 }

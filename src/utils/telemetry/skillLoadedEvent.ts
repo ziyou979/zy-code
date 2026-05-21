@@ -15,7 +15,9 @@ export async function logSkillsLoaded(cwd: string, contextWindowTokens: number):
   const skillBudget = getCharBudget(contextWindowTokens)
 
   for (const skill of skills) {
-    if (skill.type !== 'prompt') continue
+    if (skill.type !== 'prompt') {
+      continue
+    }
 
     logEvent('zy_skill_loaded', {
       // _PROTO_skill_name routes to the privileged skill_name BQ column.

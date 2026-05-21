@@ -9,9 +9,9 @@
  * The base directory can be overridden via ZY_CODE_PLUGIN_CACHE_DIR.
  */
 
-import { mkdirSync } from 'fs'
-import { readdir, rm, stat } from 'fs/promises'
-import { delimiter, join } from 'path'
+import { mkdirSync } from 'node:fs'
+import { readdir, rm, stat } from 'node:fs/promises'
+import { delimiter, join } from 'node:path'
 import { getUseCoworkPlugins } from '../../bootstrap/state.js'
 import { logForDebugging } from '../debug.js'
 import { getZyConfigHomeDir, isEnvTruthy } from '../envUtils.js'
@@ -85,7 +85,9 @@ export function getPluginsDirectory(): string {
 export function getPluginSeedDirs(): string[] {
   // Same tilde-expansion rationale as getPluginsDirectory (gh-30794).
   const raw = process.env.ZY_CODE_PLUGIN_SEED_DIR
-  if (!raw) return []
+  if (!raw) {
+    return []
+  }
   return raw.split(delimiter).filter(Boolean).map(expandTilde)
 }
 
@@ -152,10 +154,14 @@ export async function getPluginDataDirSize(
   try {
     await walk(dir)
   } catch (e) {
-    if (isFsInaccessible(e)) return null
+    if (isFsInaccessible(e)) {
+      return null
+    }
     throw e
   }
-  if (bytes === 0) return null
+  if (bytes === 0) {
+    return null
+  }
   return { bytes, human: formatFileSize(bytes) }
 }
 

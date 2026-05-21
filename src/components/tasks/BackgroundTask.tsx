@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { Text } from 'src/ink.js'
 import type { BackgroundTaskState } from 'src/tasks/types.js'
 import type { DeepImmutable } from 'src/types/utils.js'
@@ -10,6 +9,7 @@ import { tSync } from '../../i18n/index.js'
 import { RemoteSessionProgress } from './RemoteSessionProgress.js'
 import { ShellProgress, TaskStatusText } from './ShellProgress.js'
 import { describeTeammateActivity } from './taskStatusUtils.js'
+
 type Props = {
   task: DeepImmutable<BackgroundTaskState>
   maxActivityWidth?: number

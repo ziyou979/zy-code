@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { getRemoteControlAtStartup } from '../../utils/config.js'
 import { EDITOR_MODES, NOTIFICATION_CHANNELS, TEAMMATE_MODES } from '../../utils/configConstants.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { getModelOptions } from '../../utils/model/modelOptions.js'
 import { validateModel } from '../../utils/model/validateModel.js'
 import { THEME_NAMES, THEME_SETTINGS } from '../../utils/theme.js'
@@ -220,9 +220,15 @@ export function getAllKeys(): string[] {
 
 export function getOptionsForSetting(key: string): string[] | undefined {
   const config = SUPPORTED_SETTINGS[key]
-  if (!config) return undefined
-  if (config.options) return [...config.options]
-  if (config.getOptions) return config.getOptions()
+  if (!config) {
+    return undefined
+  }
+  if (config.options) {
+    return [...config.options]
+  }
+  if (config.getOptions) {
+    return config.getOptions()
+  }
   return undefined
 }
 

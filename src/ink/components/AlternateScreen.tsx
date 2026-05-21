@@ -1,4 +1,4 @@
-import React, { type PropsWithChildren, useContext, useInsertionEffect } from 'react'
+import { type PropsWithChildren, useContext, useInsertionEffect } from 'react'
 import instances from '../instances.js'
 import {
   DISABLE_MOUSE_TRACKING,
@@ -9,6 +9,7 @@ import {
 import { TerminalWriteContext } from '../useTerminalNotification.js'
 import Box from './Box.js'
 import { TerminalSizeContext } from './TerminalSizeContext.js'
+
 type Props = PropsWithChildren<{
   /** 启用 SGR 鼠标追踪（滚轮 + 点击/拖拽）。默认为 true。 */
   mouseTracking?: boolean
@@ -38,7 +39,7 @@ export function AlternateScreen({ children, mouseTracking = true }: Props) {
     if (!writeRaw) {
       return
     }
-    writeRaw(ENTER_ALT_SCREEN + '\x1B[2J\x1B[H' + (mouseTracking ? ENABLE_MOUSE_TRACKING : ''))
+    writeRaw(`${ENTER_ALT_SCREEN}\x1B[2J\x1B[H${mouseTracking ? ENABLE_MOUSE_TRACKING : ''}`)
     ink?.setAltScreenActive(true, mouseTracking)
     return () => {
       ink?.setAltScreenActive(false)

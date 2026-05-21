@@ -52,7 +52,9 @@ export function messagesToAnthropic(messages: AnyMessage[]): any[] {
   for (const raw of messages) {
     const msg = raw as any
 
-    if (msg.role === 'system') continue // 由顶层 system 处理
+    if (msg.role === 'system') {
+      continue // 由顶层 system 处理
+    }
 
     if (msg.role === 'tool') {
       pendingToolResults.push({
@@ -107,18 +109,30 @@ export function messagesToAnthropic(messages: AnyMessage[]): any[] {
 function userContentToAnthropic(
   content: string | UserContentBlock[] | undefined,
 ): string | Array<Record<string, unknown>> {
-  if (content == null) return ''
-  if (typeof content === 'string') return content
-  if (!Array.isArray(content)) return ''
+  if (content == null) {
+    return ''
+  }
+  if (typeof content === 'string') {
+    return content
+  }
+  if (!Array.isArray(content)) {
+    return ''
+  }
   return content.map(blockToAnthropic)
 }
 
 function assistantContentToAnthropic(
   content: string | AssistantContentBlock[] | undefined,
 ): string | Array<Record<string, unknown>> {
-  if (content == null) return ''
-  if (typeof content === 'string') return content
-  if (!Array.isArray(content)) return ''
+  if (content == null) {
+    return ''
+  }
+  if (typeof content === 'string') {
+    return content
+  }
+  if (!Array.isArray(content)) {
+    return ''
+  }
   return content.map(blockToAnthropic)
 }
 
@@ -126,7 +140,9 @@ function blockToAnthropic(
   block: AssistantContentBlock | UserContentBlock | Record<string, unknown>,
 ): Record<string, unknown> {
   const b = block as any
-  if (b.type === 'text') return { type: 'text', text: b.text }
+  if (b.type === 'text') {
+    return { type: 'text', text: b.text }
+  }
   if (b.type === 'tool_call' || b.type === 'tool_use') {
     return {
       type: 'tool_use',
@@ -158,7 +174,9 @@ function blockToAnthropic(
 }
 
 function safeParseToolArguments(args: string | undefined): Record<string, unknown> {
-  if (!args) return {}
+  if (!args) {
+    return {}
+  }
   try {
     const parsed = JSON.parse(args)
     if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
@@ -173,7 +191,9 @@ function safeParseToolArguments(args: string | undefined): Record<string, unknow
 export function toolsToAnthropic(
   tools?: ToolDefinition[],
 ): Array<Record<string, unknown>> | undefined {
-  if (!tools?.length) return undefined
+  if (!tools?.length) {
+    return undefined
+  }
   return tools.map((t) => ({
     name: t.name,
     description: t.description,
@@ -182,7 +202,9 @@ export function toolsToAnthropic(
 }
 
 export function toolChoiceToAnthropic(choice?: ToolChoice): Record<string, unknown> | undefined {
-  if (!choice) return undefined
+  if (!choice) {
+    return undefined
+  }
   switch (choice.type) {
     case 'auto':
       return { type: 'auto' }
@@ -439,25 +461,47 @@ export function buildAnthropicCreateParams(params: CreateParams): AnthropicCreat
     max_tokens: maxTokens,
     messages: anthropicMessages,
   }
-  if (systemContent !== undefined) out.system = systemContent
-  if (allTools.length > 0) out.tools = allTools
+  if (systemContent !== undefined) {
+    out.system = systemContent
+  }
+  if (allTools.length > 0) {
+    out.tools = allTools
+  }
 
   const toolChoiceRaw = p.toolChoice ?? p.tool_choice
   if (toolChoiceRaw) {
     out.tool_choice = toolChoiceToAnthropic(toolChoiceRaw) ?? toolChoiceRaw
   }
 
-  if (p.temperature !== undefined) out.temperature = p.temperature
-  if (topP !== undefined) out.top_p = topP
-  if (stopSequences !== undefined) out.stop_sequences = stopSequences
-  if (metadata !== undefined) out.metadata = metadata
-  if (thinking !== undefined) out.thinking = thinking
-  if (betas !== undefined) out.betas = betas
-  if (contextManagement !== undefined) out.context_management = contextManagement
-  if (outputConfig !== undefined) out.output_config = outputConfig
+  if (p.temperature !== undefined) {
+    out.temperature = p.temperature
+  }
+  if (topP !== undefined) {
+    out.top_p = topP
+  }
+  if (stopSequences !== undefined) {
+    out.stop_sequences = stopSequences
+  }
+  if (metadata !== undefined) {
+    out.metadata = metadata
+  }
+  if (thinking !== undefined) {
+    out.thinking = thinking
+  }
+  if (betas !== undefined) {
+    out.betas = betas
+  }
+  if (contextManagement !== undefined) {
+    out.context_management = contextManagement
+  }
+  if (outputConfig !== undefined) {
+    out.output_config = outputConfig
+  }
 
   // extra_body 顶层透传
-  if (p.extra_body) Object.assign(out, p.extra_body)
+  if (p.extra_body) {
+    Object.assign(out, p.extra_body)
+  }
 
   return out
 }

@@ -1,10 +1,10 @@
-import { relative } from 'path'
-import * as React from 'react'
+import { relative } from 'node:path'
 import { getCwd } from 'src/utils/cwd.js'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { HighlightedCode } from './HighlightedCode.js'
 import { MessageResponse } from './MessageResponse.js'
+
 type Props = {
   notebook_path: string
   cell_id: string | undefined

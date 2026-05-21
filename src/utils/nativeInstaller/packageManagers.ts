@@ -2,7 +2,7 @@
  * Package manager detection for Zy CLI
  */
 
-import { readFile } from 'fs/promises'
+import { readFile } from 'node:fs/promises'
 import memoize from 'lodash-es/memoize.js'
 import { logForDebugging } from '../debug.js'
 import { execFileNoThrow } from '../execFileNoThrow.js'

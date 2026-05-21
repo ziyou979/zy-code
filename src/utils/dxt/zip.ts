@@ -1,4 +1,4 @@
-import { isAbsolute, normalize } from 'path'
+import { isAbsolute, normalize } from 'node:path'
 import { logForDebugging } from '../debug.js'
 import { isENOENT } from '../errors.js'
 import { getFsImplementation } from '../fsOperations.js'
@@ -111,7 +111,7 @@ export function validateZipFile(
  * when this module is reached via the plugin loader chain.
  */
 export async function unzipFile(zipData: Buffer): Promise<Record<string, Uint8Array>> {
-  // @ts-ignore
+  // @ts-expect-error
   const { unzipSync } = (await import('fflate')) as any
   const compressedSize = zipData.length
 
@@ -172,7 +172,9 @@ export function parseZipModes(data: Uint8Array): Record<string, number> {
       break
     }
   }
-  if (eocd < 0) return modes // malformed — let fflate's error surface elsewhere
+  if (eocd < 0) {
+    return modes // malformed — let fflate's error surface elsewhere
+  }
 
   const entryCount = buf.readUInt16LE(eocd + 10)
   let off = buf.readUInt32LE(eocd + 16) // central directory start offset
@@ -180,7 +182,9 @@ export function parseZipModes(data: Uint8Array): Record<string, number> {
   // 2. Walk central directory entries (sig 0x02014b50). Each entry has a
   //    46-byte fixed header followed by variable-length name/extra/comment.
   for (let i = 0; i < entryCount; i++) {
-    if (off + 46 > buf.length || buf.readUInt32LE(off) !== 0x02014b50) break
+    if (off + 46 > buf.length || buf.readUInt32LE(off) !== 0x02014b50) {
+      break
+    }
     const versionMadeBy = buf.readUInt16LE(off + 4)
     const nameLen = buf.readUInt16LE(off + 28)
     const extraLen = buf.readUInt16LE(off + 30)
@@ -192,7 +196,9 @@ export function parseZipModes(data: Uint8Array): Record<string, number> {
     // 16 bits of externalAttr hold st_mode (file type + permission bits).
     if (versionMadeBy >> 8 === 3) {
       const mode = (externalAttr >>> 16) & 0xffff
-      if (mode) modes[name] = mode
+      if (mode) {
+        modes[name] = mode
+      }
     }
 
     off += 46 + nameLen + extraLen + commentLen

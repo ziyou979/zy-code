@@ -131,11 +131,17 @@ export const useSelectInput = <T>({
         state.focusPreviousOption()
       }
       handlers['select:accept'] = () => {
-        if (disableSelection === true) return
-        if (state.focusedValue === undefined) return
+        if (disableSelection === true) {
+          return
+        }
+        if (state.focusedValue === undefined) {
+          return
+        }
 
         const focusedOption = options.find((opt) => opt.value === state.focusedValue)
-        if (focusedOption?.disabled === true) return
+        if (focusedOption?.disabled === true) {
+          return
+        }
 
         state.selectFocusedOption?.()
         state.onChange?.(state.focusedValue)
@@ -173,7 +179,9 @@ export const useSelectInput = <T>({
       if (currentIsInInput) {
         // When in image selection mode, suppress all input handling so
         // Attachments keybindings can handle navigation/deletion instead
-        if (imagesSelected) return
+        if (imagesSelected) {
+          return
+        }
 
         // DOWN arrow enters image selection mode if images exist
         if (key.downArrow && onEnterImageSelection?.()) {
@@ -239,7 +247,7 @@ export const useSelectInput = <T>({
         }
 
         if (disableSelection !== 'numeric' && /^[0-9]+$/.test(normalizedInput)) {
-          const index = parseInt(normalizedInput) - 1
+          const index = parseInt(normalizedInput, 10) - 1
           if (index >= 0 && index < state.options.length) {
             const selectedOption = state.options[index]!
             if (selectedOption.disabled === true) {

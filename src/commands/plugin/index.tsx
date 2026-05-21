@@ -1,4 +1,5 @@
 import type { Command } from '../../commands.js'
+
 const plugin = {
   type: 'local-jsx',
   name: 'plugin',

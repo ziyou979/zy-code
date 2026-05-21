@@ -1,9 +1,8 @@
 import { feature } from 'bun:bundle'
-import type { UUID } from 'crypto'
-import { randomUUID } from 'crypto'
+import type { UUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { logForDebugging } from 'src/utils/debug.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { getProjectRoot, getSessionId } from '../../bootstrap/state.js'
 import { getCommand, getSkillToolCommands, hasCommand } from '../../commands.js'
 import { DEFAULT_AGENT_PROMPT, enhanceSystemPromptWithEnvDetails } from '../../constants/prompts.js'
@@ -33,6 +32,7 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 import { createAttachmentMessage } from '../../utils/attachments.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { AbortError } from '../../utils/errors.js'
 import { getDisplayPath } from '../../utils/file.js'
 import {
@@ -699,7 +699,9 @@ export async function* runAgent({
   let idleTimer: ReturnType<typeof setTimeout> | null = null
 
   const resetIdleTimer = () => {
-    if (idleTimer) clearTimeout(idleTimer)
+    if (idleTimer) {
+      clearTimeout(idleTimer)
+    }
     idleTimer = setTimeout(() => {
       idleTimedOut = true
       agentAbortController.abort()
@@ -771,7 +773,9 @@ export async function* runAgent({
     }
   } finally {
     // 清理空闲超时计时器
-    if (idleTimer) clearTimeout(idleTimer)
+    if (idleTimer) {
+      clearTimeout(idleTimer)
+    }
     // Clean up agent-specific MCP servers (runs on normal completion, abort, or error)
     await mcpCleanup()
     // Clean up agent's session hooks
@@ -795,7 +799,9 @@ export async function* runAgent({
     // items complete, the value is [] but the key stays). Whale sessions
     // spawn hundreds of agents; each orphaned key is a small leak that adds up.
     rootSetAppState((prev) => {
-      if (!(agentId in prev.todos)) return prev
+      if (!(agentId in prev.todos)) {
+        return prev
+      }
       const { [agentId]: _removed, ...todos } = prev.todos
       return { ...prev, todos }
     })

@@ -1,6 +1,5 @@
 import { feature } from 'bun:bundle'
 import React, { useCallback, useEffect, useRef } from 'react'
-import { tSync } from '../i18n/index.js'
 import { setMainLoopModelOverride } from '../bootstrap/state.js'
 import {
   type BridgePermissionCallbacks,
@@ -17,6 +16,7 @@ import { getRemoteSessionUrl } from '../constants/product.js'
 import { useNotifications } from '../context/notifications.js'
 import type { PermissionMode, SDKMessage } from '../entrypoints/agentSdkTypes.js'
 import type { SDKControlResponse } from '../entrypoints/sdk/controlTypes.js'
+import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { useAppState, useAppStateStore, useSetAppState } from '../state/AppState.js'
@@ -113,10 +113,14 @@ export function useReplBridge(
     // feature() 检查必须使用正向模式以进行死代码消除——
     // 负向模式（if (!feature(...)) return）不会消除下方的动态 import。
     if (feature('BRIDGE_MODE')) {
-      if (!replBridgeEnabled) return
+      if (!replBridgeEnabled) {
+        return
+      }
       const outboundOnly = replBridgeOutboundOnly
       function notifyBridgeFailed(detail?: string): void {
-        if (outboundOnly) return
+        if (outboundOnly) {
+          return
+        }
         addNotification({
           key: 'bridge-failed',
           jsx: (
@@ -137,7 +141,9 @@ export function useReplBridge(
         const fuseHint = 'disabled after repeated failures · restart to retry'
         notifyBridgeFailed(fuseHint)
         setAppState((prev) => {
-          if (prev.replBridgeError === fuseHint && !prev.replBridgeEnabled) return prev
+          if (prev.replBridgeError === fuseHint && !prev.replBridgeEnabled) {
+            return prev
+          }
           return {
             ...prev,
             replBridgeError: fuseHint,
@@ -165,7 +171,9 @@ export function useReplBridge(
               '[bridge:repl] Hook: previous teardown complete, proceeding with re-init',
             )
           }
-          if (cancelled) return
+          if (cancelled) {
+            return
+          }
 
           // 动态 import，使该模块在 external 构建 中被 tree-shake 掉
           const { initReplBridge } = await import('../bridge/initReplBridge.js')
@@ -182,7 +190,7 @@ export function useReplBridge(
           let perpetual = false
           if (feature('KAIROS')) {
             const { isAssistantMode } = await import('../assistant/index.js' as any)
-            // @ts-ignore
+            // @ts-expect-error
             perpetual = (isAssistantMode as any)()
           }
 
@@ -195,7 +203,9 @@ export function useReplBridge(
           async function handleInboundMessage(msg: SDKMessage): Promise<void> {
             try {
               const fields = extractInboundMessageFields(msg)
-              if (!fields) return
+              if (!fields) {
+                return
+              }
               const { uuid } = fields
 
               // 动态 import，使 bridge 代码不会出现在非 BRIDGE_MODE 构建中。
@@ -252,7 +262,9 @@ export function useReplBridge(
 
           // 状态变更回调——将 bridge 生命周期事件映射到 AppState。
           function handleStateChange(state: BridgeState, detail?: string): void {
-            if (cancelled) return
+            if (cancelled) {
+              return
+            }
             if (outboundOnly) {
               logForDebugging(
                 `[bridge:repl] Mirror state=${state}${detail ? ` detail=${detail}` : ''}`,
@@ -260,7 +272,9 @@ export function useReplBridge(
               // 同步 replBridgeConnected，使转发 effect 在传输层建立或断开时开始/停止写入。
               if (state === 'failed') {
                 setAppState((prev) => {
-                  if (!prev.replBridgeConnected) return prev
+                  if (!prev.replBridgeConnected) {
+                    return prev
+                  }
                   return {
                     ...prev,
                     replBridgeConnected: false,
@@ -268,7 +282,9 @@ export function useReplBridge(
                 })
               } else if (state === 'ready' || state === 'connected') {
                 setAppState((prev) => {
-                  if (prev.replBridgeConnected) return prev
+                  if (prev.replBridgeConnected) {
+                    return prev
+                  }
                   return {
                     ...prev,
                     replBridgeConnected: true,
@@ -316,7 +332,9 @@ export function useReplBridge(
                 break
               case 'connected': {
                 setAppState((prev) => {
-                  if (prev.replBridgeSessionActive) return prev
+                  if (prev.replBridgeSessionActive) {
+                    return prev
+                  }
                   return {
                     ...prev,
                     replBridgeConnected: true,
@@ -334,7 +352,9 @@ export function useReplBridge(
                   void (async () => {
                     try {
                       const skills = await getSlashCommandToolSkills(getCwd())
-                      if (cancelled) return
+                      if (cancelled) {
+                        return
+                      }
                       const currentState = store.getState()
                       handleRef.current?.writeSdkMessages([
                         buildSystemInitMessage({
@@ -372,7 +392,9 @@ export function useReplBridge(
               }
               case 'reconnecting':
                 setAppState((prevState) => {
-                  if (prevState.replBridgeReconnecting) return prevState
+                  if (prevState.replBridgeReconnecting) {
+                    return prevState
+                  }
                   return {
                     ...prevState,
                     replBridgeReconnecting: true,
@@ -393,10 +415,14 @@ export function useReplBridge(
                 }))
                 // 超时后自动禁用，使 hook 停止重试。
                 failureTimeoutRef.current = setTimeout(() => {
-                  if (cancelled) return
+                  if (cancelled) {
+                    return
+                  }
                   failureTimeoutRef.current = undefined
                   setAppState((prevState) => {
-                    if (!prevState.replBridgeError) return prevState
+                    if (!prevState.replBridgeError) {
+                      return prevState
+                    }
                     return {
                       ...prevState,
                       replBridgeEnabled: false,
@@ -418,7 +444,9 @@ export function useReplBridge(
           // 将收到的 control_response 消息分发给已注册的 handler
           function handlePermissionResponse(message: SDKControlResponse): void {
             const requestId = message.response?.request_id
-            if (!requestId) return
+            if (!requestId) {
+              return
+            }
             const handler = pendingPermissionHandlers.get(requestId)
             if (!handler) {
               logForDebugging(
@@ -449,7 +477,9 @@ export function useReplBridge(
               const resolved = model === 'default' ? null : (model ?? null)
               setMainLoopModelOverride(resolved)
               setAppState((prevState) => {
-                if (prevState.mainLoopModelForSession === resolved) return prevState
+                if (prevState.mainLoopModelForSession === resolved) {
+                  return prevState
+                }
                 return {
                   ...prevState,
                   mainLoopModelForSession: resolved,
@@ -459,7 +489,9 @@ export function useReplBridge(
             onSetMaxThinkingTokens(maxTokens) {
               const enabled = maxTokens !== null
               setAppState((prevState) => {
-                if (prevState.thinkingEnabled === enabled) return prevState
+                if (prevState.thinkingEnabled === enabled) {
+                  return prevState
+                }
                 return {
                   ...prevState,
                   thinkingEnabled: enabled,
@@ -506,7 +538,9 @@ export function useReplBridge(
               // 使 prePlanMode 存储和 auto-mode 状态同步全部触发。
               setAppState((prevState) => {
                 const current = prevState.toolPermissionContext.mode
-                if (current === mode) return prevState
+                if (current === mode) {
+                  return prevState
+                }
                 const next = transitionPermissionMode(
                   current,
                   mode,
@@ -567,10 +601,14 @@ export function useReplBridge(
               replBridgeError: prevState.replBridgeError ?? 'check debug logs for details',
             }))
             failureTimeoutRef.current = setTimeout(() => {
-              if (cancelled) return
+              if (cancelled) {
+                return
+              }
               failureTimeoutRef.current = undefined
               setAppState((prevState) => {
-                if (!prevState.replBridgeError) return prevState
+                if (!prevState.replBridgeError) {
+                  return prevState
+                }
                 return {
                   ...prevState,
                   replBridgeEnabled: false,
@@ -591,8 +629,9 @@ export function useReplBridge(
               if (
                 prevState.replBridgeConnected &&
                 prevState.replBridgeSessionId === bridgeHandle.bridgeSessionId
-              )
+              ) {
                 return prevState
+              }
               return {
                 ...prevState,
                 replBridgeConnected: true,
@@ -699,7 +738,9 @@ export function useReplBridge(
             const upgradeNudge = !perpetual
               ? await shouldShowAppUpgradeMessage().catch(() => false)
               : false
-            if (cancelled) return
+            if (cancelled) {
+              return
+            }
             setMessages((prevMessages) => [
               ...prevMessages,
               createBridgeStatusMessage(
@@ -719,7 +760,9 @@ export function useReplBridge(
           // 如果 initReplBridge 在快速 toggle-off 期间抛出（进行中的网络错误），
           // 不要将其计入保险丝或向 UI 发送过时的错误。
           // 同时修复了之前在 cancelled 抛出时虚假的 setAppState/setMessages。
-          if (cancelled) return
+          if (cancelled) {
+            return
+          }
           consecutiveFailuresRef.current++
           const errMsg = errorMessage(err)
           logForDebugging(
@@ -732,10 +775,14 @@ export function useReplBridge(
             replBridgeError: errMsg,
           }))
           failureTimeoutRef.current = setTimeout(() => {
-            if (cancelled) return
+            if (cancelled) {
+              return
+            }
             failureTimeoutRef.current = undefined
             setAppState((prevState) => {
-              if (!prevState.replBridgeError) return prevState
+              if (!prevState.replBridgeError) {
+                return prevState
+              }
               return {
                 ...prevState,
                 replBridgeEnabled: false,
@@ -787,7 +834,17 @@ export function useReplBridge(
         lastWrittenIndexRef.current = 0
       }
     }
-  }, [replBridgeEnabled, replBridgeOutboundOnly, setAppState, setMessages, addNotification])
+  }, [
+    replBridgeEnabled,
+    replBridgeOutboundOnly,
+    setAppState,
+    setMessages,
+    addNotification,
+    messages,
+    store.getState,
+    replBridgeInitialName,
+    abortControllerRef.current?.abort,
+  ])
 
   // 新消息出现时写入。
   // 当 replBridgeConnected 变化时（bridge 完成初始化）也会重跑，
@@ -795,9 +852,13 @@ export function useReplBridge(
   useEffect(() => {
     // 正向 feature() 守卫——参见第一个 useEffect 注释
     if (feature('BRIDGE_MODE')) {
-      if (!replBridgeConnected) return
+      if (!replBridgeConnected) {
+        return
+      }
       const bridgeHandle = handleRef.current
-      if (!bridgeHandle) return
+      if (!bridgeHandle) {
+        return
+      }
 
       // 如果消息被压缩（数组缩短），钳位索引。
       // 压缩后 ref 可能超过 messages.length，如果不钳位则不会转发新消息。

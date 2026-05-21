@@ -53,10 +53,10 @@ type KeybindingContextName =
 type KeybindingAction = string
 
 export type {
-  ParsedKeystroke,
   Chord,
-  ParsedBinding,
+  KeybindingAction,
   KeybindingBlock,
   KeybindingContextName,
-  KeybindingAction,
+  ParsedBinding,
+  ParsedKeystroke,
 }

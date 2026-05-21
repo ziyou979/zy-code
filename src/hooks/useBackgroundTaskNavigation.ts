@@ -22,7 +22,9 @@ function stepTeammateSelection(
 ): void {
   setAppState((prev) => {
     const currentCount = getRunningTeammatesSorted(prev.tasks).length
-    if (currentCount === 0) return prev
+    if (currentCount === 0) {
+      return prev
+    }
 
     if (prev.expandedView !== 'teammates') {
       return {
@@ -117,10 +119,14 @@ export function useBackgroundTaskNavigation(options?: { onOpenBackgroundTasks?: 
     taskId: string
     task: InProcessTeammateTaskState
   } | null => {
-    if (teammateCount === 0) return null
+    if (teammateCount === 0) {
+      return null
+    }
     const selectedIndex = selectedIPAgentIndex
     const task = teammateTasks[selectedIndex]
-    if (!task) return null
+    if (!task) {
+      return null
+    }
 
     return { taskId: task.id, task }
   }

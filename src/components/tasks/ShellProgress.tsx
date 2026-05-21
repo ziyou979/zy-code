@@ -1,4 +1,3 @@
-import React from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { Text } from 'src/ink.js'
 import type { TaskStatus } from 'src/Task.js'

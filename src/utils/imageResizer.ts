@@ -1,4 +1,3 @@
-import type { ImageSource, ImageBlock } from '../types/llm.js'
 import {
   API_IMAGE_MAX_BASE64_SIZE,
   IMAGE_MAX_HEIGHT,
@@ -11,6 +10,7 @@ import {
   type SharpFunction,
   type SharpInstance,
 } from '../tools/FileReadTool/imageProcessor.js'
+import type { ImageBlock, ImageSource } from '../types/llm.js'
 import { logForDebugging } from './debug.js'
 import { errorMessage } from './errors.js'
 import { formatFileSize } from './format.js'
@@ -720,7 +720,9 @@ async function createUltraCompressedJPEG(
  * @returns Media type string (e.g., 'image/png', 'image/jpeg') or 'image/png' as default
  */
 export function detectImageFormatFromBuffer(buffer: Buffer): ImageMediaType {
-  if (buffer.length < 4) return 'image/png' // default
+  if (buffer.length < 4) {
+    return 'image/png' // default
+  }
 
   // Check PNG signature
   if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {

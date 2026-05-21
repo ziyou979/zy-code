@@ -4,7 +4,7 @@
  * without interrupting the main conversation flow.
  */
 
-import { writeFile } from 'fs/promises'
+import { writeFile } from 'node:fs/promises'
 import memoize from 'lodash-es/memoize.js'
 import { getIsRemoteMode } from '../../bootstrap/state.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
@@ -18,13 +18,13 @@ import {
 } from '../../tools/FileReadTool/FileReadTool.js'
 import type { Message } from '../../types/message.js'
 import { count } from '../../utils/array.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   createCacheSafeParams,
   createSubagentContext,
   runForkedAgent,
 } from '../../utils/forkedAgent.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   type REPLHookContext,
   registerPostSamplingHook,
@@ -245,11 +245,11 @@ const initSessionMemoryConfigIfNeeded = memoize((): void => {
 // Track if we've logged the gate check failure this session (to avoid spam)
 let hasLoggedGateFailure = false
 
-const extractSessionMemory = sequential(async function (context: REPLHookContext): Promise<void> {
+const extractSessionMemory = sequential(async (context: REPLHookContext): Promise<void> => {
   const { messages, toolUseContext, querySource } = context
 
   // Only run session memory on main REPL thread
-  // @ts-ignore
+  // @ts-expect-error
   if (querySource !== 'repl_main_thread') {
     // Don't log this - it's expected for subagents, teammates, etc.
     return
@@ -290,7 +290,7 @@ const extractSessionMemory = sequential(async function (context: REPLHookContext
     promptMessages: [createUserMessage({ content: userPrompt })],
     cacheSafeParams: createCacheSafeParams(context),
     canUseTool: createMemoryFileCanUseTool(memoryPath),
-    // @ts-ignore
+    // @ts-expect-error
     querySource: 'session_memory',
     forkLabel: 'session_memory',
     overrides: { readFileState: setupContext.readFileState },
@@ -326,7 +326,9 @@ const extractSessionMemory = sequential(async function (context: REPLHookContext
  * The gate check and config loading happen lazily when the hook runs.
  */
 export function initSessionMemory(): void {
-  if (getIsRemoteMode()) return
+  if (getIsRemoteMode()) {
+    return
+  }
   // Session memory is used for compaction, so respect auto-compact settings
   const autoCompactEnabled = isAutoCompactEnabled()
 
@@ -394,7 +396,7 @@ export async function manuallyExtractSessionMemory(
         forkContextMessages: messages,
       },
       canUseTool: createMemoryFileCanUseTool(memoryPath),
-      // @ts-ignore
+      // @ts-expect-error
       querySource: 'session_memory',
       forkLabel: 'session_memory_manual',
       overrides: { readFileState: setupContext.readFileState },

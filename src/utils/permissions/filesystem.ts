@@ -1,9 +1,9 @@
 import { feature } from 'bun:bundle'
-import { randomBytes } from 'crypto'
+import { randomBytes } from 'node:crypto'
+import { homedir, tmpdir } from 'node:os'
+import { join, normalize, posix, sep } from 'node:path'
 import ignore from 'ignore'
 import memoize from 'lodash-es/memoize.js'
-import { homedir, tmpdir } from 'os'
-import { join, normalize, posix, sep } from 'path'
 import { hasAutoMemPathOverride, isAutoMemPath } from 'src/memdir/paths.js'
 import { isAgentMemoryPath } from 'src/tools/AgentTool/agentMemory.js'
 import {
@@ -107,7 +107,9 @@ export function getZySkillScope(filePath: string): { skillName: string; pattern:
         const cut = slash === -1 ? bslash : bslash === -1 ? slash : Math.min(slash, bslash)
         // 需要分隔符：文件必须在技能目录内部，而不是直接在 skills/ 下
         // （这种情况没有技能范围）
-        if (cut <= 0) return null
+        if (cut <= 0) {
+          return null
+        }
         const skillName = rest.slice(0, cut)
         // 拒绝路径穿越和空值。使用 includes('..') 而非 === '..'
         // 以匹配步骤 1.6 的 ruleContent.includes('..') 守卫：
@@ -120,8 +122,10 @@ export function getZySkillScope(filePath: string): { skillName: string; pattern:
         // 由 matchingRuleForInput 中的 ignore().add() 消费（步骤 1.6）。
         // 字面名为 '*' 的目录（在 POSIX 上有效）会产生 '/.zy/skills/*/**'，
         // 这将匹配所有技能。返回 null 以便回退到 generateSuggestions()。
-        if (/[*?[\]]/.test(skillName)) return null
-        return { skillName, pattern: prefix + skillName + '/**' }
+        if (/[*?[\]]/.test(skillName)) {
+          return null
+        }
+        return { skillName, pattern: `${prefix + skillName}/**` }
       }
     }
   }
@@ -928,7 +932,7 @@ export function matchingRuleForInput(
       const originalPattern = igResult.rule.pattern
 
       // 检查这是否是我们简化的 /** 模式
-      const withWildcard = originalPattern + '/**'
+      const withWildcard = `${originalPattern}/**`
       if (patternMap.has(withWildcard)) {
         return patternMap.get(withWildcard) ?? null
       }

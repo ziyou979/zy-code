@@ -1,10 +1,10 @@
-import React from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { getMcpConfigsByScope } from 'src/services/mcp/config.js'
 import type { ConfigScope } from 'src/services/mcp/types.js'
 import { describeMcpConfigFilePath, getScopeLabel } from 'src/services/mcp/utils.js'
 import type { ValidationError } from 'src/utils/settings/validation.js'
 import { Box, Link, Text } from '../../ink.js'
+
 function McpConfigErrorSection({ scope, parsingErrors, warnings }) {
   const hasErrors = parsingErrors.length > 0
   const hasWarnings = warnings.length > 0

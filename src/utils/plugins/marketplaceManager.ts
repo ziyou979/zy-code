@@ -18,11 +18,11 @@
  *                   └── marketplace.json
  */
 
+import { writeFile } from 'node:fs/promises'
+import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path'
 import axios from 'axios'
-import { writeFile } from 'fs/promises'
 import isEqual from 'lodash-es/isEqual.js'
 import memoize from 'lodash-es/memoize.js'
-import { basename, dirname, isAbsolute, join, resolve, sep } from 'path'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { logForDebugging } from '../debug.js'
 import { isEnvTruthy } from '../envUtils.js'
@@ -353,7 +353,9 @@ export async function saveKnownMarketplacesConfig(config: KnownMarketplacesConfi
  */
 export async function registerSeedMarketplaces(): Promise<boolean> {
   const seedDirs = getPluginSeedDirs()
-  if (seedDirs.length === 0) return false
+  if (seedDirs.length === 0) {
+    return false
+  }
 
   const primary = await loadKnownMarketplacesConfig()
   // 此注册过程中第一个种子胜出。不能单独使用 isEqual 检查
@@ -363,10 +365,14 @@ export async function registerSeedMarketplaces(): Promise<boolean> {
 
   for (const seedDir of seedDirs) {
     const seedConfig = await readSeedKnownMarketplaces(seedDir)
-    if (!seedConfig) continue
+    if (!seedConfig) {
+      continue
+    }
 
     for (const [name, seedEntry] of Object.entries(seedConfig)) {
-      if (claimed.has(name)) continue
+      if (claimed.has(name)) {
+        continue
+      }
 
       // 相对于此 seedDir 计算 installLocation，而非烘焙到种子 JSON
       // 中的构建时路径。处理多阶段 Docker 构建，其中种子被
@@ -391,7 +397,9 @@ export async function registerSeedMarketplaces(): Promise<boolean> {
       }
 
       // 如果主配置已匹配则跳过 — 幂等空操作，不写入。
-      if (isEqual(primary[name], desired)) continue
+      if (isEqual(primary[name], desired)) {
+        continue
+      }
 
       // 种子胜出 — 管理员管理。覆写任何现有的主条目。
       primary[name] = desired
@@ -486,7 +494,7 @@ function getPluginGitTimeoutMs(): number {
   const envValue = process.env.ZY_CODE_PLUGIN_GIT_TIMEOUT_MS
   if (envValue) {
     const parsed = parseInt(envValue, 10)
-    if (!isNaN(parsed) && parsed > 0) {
+    if (!Number.isNaN(parsed) && parsed > 0) {
       return parsed
     }
   }
@@ -577,14 +585,18 @@ async function gitSubmoduleUpdate(
   env: NodeJS.ProcessEnv,
   sparsePaths: string[] | undefined,
 ): Promise<void> {
-  if (sparsePaths && sparsePaths.length > 0) return
+  if (sparsePaths && sparsePaths.length > 0) {
+    return
+  }
   const hasGitmodules = await getFsImplementation()
     .stat(join(cwd, '.gitmodules'))
     .then(
       () => true,
       () => false,
     )
-  if (!hasGitmodules) return
+  if (!hasGitmodules) {
+    return
+  }
   const result = await execFileNoThrowWithCwd(
     gitExe(),
     [
@@ -804,8 +816,12 @@ export async function gitClone(
   // versions.
   const redacted = redactUrlCredentials(gitUrl)
   if (gitUrl !== redacted) {
-    if (result.error) result.error = result.error.replaceAll(gitUrl, redacted)
-    if (result.stderr) result.stderr = result.stderr.replaceAll(gitUrl, redacted)
+    if (result.error) {
+      result.error = result.error.replaceAll(gitUrl, redacted)
+    }
+    if (result.stderr) {
+      result.stderr = result.stderr.replaceAll(gitUrl, redacted)
+    }
   }
 
   if (result.code === 0) {
@@ -963,7 +979,9 @@ function safeCallProgress(
   onProgress: MarketplaceProgressCallback | undefined,
   message: string,
 ): void {
-  if (!onProgress) return
+  if (!onProgress) {
+    return
+  }
   try {
     onProgress(message)
   } catch (callbackError) {
@@ -1069,7 +1087,9 @@ async function cacheMarketplaceFromGit(
       performance.now() - pullStarted,
       pullResult.code === 0 ? undefined : classifyFetchError(pullResult.stderr),
     )
-    if (pullResult.code === 0) return
+    if (pullResult.code === 0) {
+      return
+    }
     logForDebugging(`git pull failed, will re-clone: ${pullResult.stderr}`, {
       level: 'warn',
     })
@@ -1157,8 +1177,12 @@ function redactUrlCredentials(urlString: string): string {
     const parsed = new URL(urlString)
     const isHttp = parsed.protocol === 'http:' || parsed.protocol === 'https:'
     if (isHttp && (parsed.username || parsed.password)) {
-      if (parsed.username) parsed.username = '***'
-      if (parsed.password) parsed.password = '***'
+      if (parsed.username) {
+        parsed.username = '***'
+      }
+      if (parsed.password) {
+        parsed.password = '***'
+      }
       return parsed.toString()
     }
   } catch {
@@ -1295,7 +1319,7 @@ function getCachePathForSource(source: MarketplaceSource): string {
           ? basename(source.path).replace('.json', '')
           : source.source === 'directory'
             ? basename(source.path)
-            : 'temp_' + Date.now()
+            : `temp_${Date.now()}`
   return tempName
 }
 
@@ -1860,7 +1884,9 @@ export async function removeMarketplaceSource(name: string): Promise<void> {
 
   for (const source of editableSources) {
     const settings = getSettingsForSource(source)
-    if (!settings) continue
+    if (!settings) {
+      continue
+    }
 
     let needsUpdate = false
     const updates: {
@@ -1944,9 +1970,13 @@ async function readCachedMarketplace(installLocation: string): Promise<PluginMar
   try {
     return await parseFileWithSchema(nestedPath, PluginMarketplaceSchema())
   } catch (e) {
-    if (e instanceof ConfigParseError) throw e
+    if (e instanceof ConfigParseError) {
+      throw e
+    }
     const code = getErrnoCode(e)
-    if (code !== 'ENOENT' && code !== 'ENOTDIR') throw e
+    if (code !== 'ENOENT' && code !== 'ENOTDIR') {
+      throw e
+    }
   }
   return await parseFileWithSchema(installLocation, PluginMarketplaceSchema())
 }

@@ -157,14 +157,20 @@ export function getErrnoPath(e: unknown): string | undefined {
  * waste context tokens. Keep the full stack in debug logs instead.
  */
 export function shortErrorStack(e: unknown, maxFrames = 5): string {
-  if (!(e instanceof Error)) return String(e)
-  if (!e.stack) return e.message
+  if (!(e instanceof Error)) {
+    return String(e)
+  }
+  if (!e.stack) {
+    return e.message
+  }
   // V8/Bun stack format: "Name: message\n    at frame1\n    at frame2..."
   // First line is the message; subsequent "    at " lines are frames.
   const lines = e.stack.split('\n')
   const header = lines[0] ?? e.message
   const frames = lines.slice(1).filter((l) => l.trim().startsWith('at '))
-  if (frames.length <= maxFrames) return e.stack
+  if (frames.length <= maxFrames) {
+    return e.stack
+  }
   return [header, ...frames.slice(0, maxFrames)].join('\n')
 }
 
@@ -222,8 +228,12 @@ export function classifyAxiosError(e: unknown): {
     code?: string
   }
   const status = err.response?.status
-  if (status === 401 || status === 403) return { kind: 'auth', status, message }
-  if (err.code === 'ECONNABORTED') return { kind: 'timeout', status, message }
+  if (status === 401 || status === 403) {
+    return { kind: 'auth', status, message }
+  }
+  if (err.code === 'ECONNABORTED') {
+    return { kind: 'timeout', status, message }
+  }
   if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
     return { kind: 'network', status, message }
   }

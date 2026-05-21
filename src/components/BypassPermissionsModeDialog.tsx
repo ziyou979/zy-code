@@ -5,6 +5,7 @@ import { gracefulShutdownSync } from '../utils/gracefulShutdown.js'
 import { updateSettingsForSource } from '../utils/settings/settings.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
+
 type Props = {
   onAccept(): void
 }

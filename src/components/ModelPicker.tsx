@@ -1,11 +1,7 @@
 import capitalize from 'lodash-es/capitalize.js'
-import * as React from 'react'
 import { useState } from 'react'
 import { useExitOnCtrlCDWithKeybindings } from 'src/hooks/useExitOnCtrlCDWithKeybindings.js'
-import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  logEvent,
-} from 'src/services/analytics/index.js'
+import { logEvent } from 'src/services/analytics/index.js'
 import { Box, Text } from '../ink.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { useAppState, useSetAppState } from '../state/AppState.js'
@@ -243,7 +239,9 @@ export function ModelPicker({
 }
 function _temp4() {}
 function resolveOptionModel(value?: string): string | undefined {
-  if (!value) return undefined
+  if (!value) {
+    return undefined
+  }
   return value === NO_PREFERENCE ? getDefaultMainLoopModel() : parseUserSpecifiedModel(value)
 }
 function EffortLevelIndicator({ effort }) {

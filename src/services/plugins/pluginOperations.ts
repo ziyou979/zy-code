@@ -11,7 +11,7 @@
  * - Return result objects indicating success/failure with messages
  * - Can throw errors for unexpected failures
  */
-import { dirname, join } from 'path'
+import { dirname, join } from 'node:path'
 import { getOriginalCwd } from '../../bootstrap/state.js'
 import { isBuiltinPluginId } from '../../plugins/builtinPlugins.js'
 import type { LoadedPlugin, PluginManifest } from '../../types/plugin.js'
@@ -172,7 +172,9 @@ function findPluginInSettings(plugin: string): {
 
   for (const scope of searchOrder) {
     const enabledPlugins = getSettingsForSource(scopeToSettingSource(scope))?.enabledPlugins
-    if (!enabledPlugins) continue
+    if (!enabledPlugins) {
+      continue
+    }
 
     for (const key of Object.keys(enabledPlugins)) {
       if (hasMarketplace ? key === plugin : key.startsWith(`${plugin}@`)) {
@@ -191,7 +193,9 @@ function findPluginByIdentifier(plugin: string, plugins: LoadedPlugin[]): Loaded
 
   return plugins.find((p) => {
     // Check exact name match
-    if (p.name === plugin || p.name === name) return true
+    if (p.name === plugin || p.name === name) {
+      return true
+    }
 
     // If marketplace specified, check if it matches the source
     if (marketplace && p.source) {
@@ -330,7 +334,6 @@ export async function installPluginOp(
         }
       } catch (error) {
         logError(toError(error))
-        continue
       }
     }
   }
@@ -674,7 +677,9 @@ export async function setPluginEnabledOp(
   if (!enabled) {
     const { enabled: loadedEnabled, disabled } = await loadAllPlugins()
     const rdeps = findReverseDependents(pluginId, [...loadedEnabled, ...disabled])
-    if (rdeps.length > 0) reverseDependents = rdeps
+    if (rdeps.length > 0) {
+      reverseDependents = rdeps
+    }
   }
 
   // ── ACTION: write settings ──

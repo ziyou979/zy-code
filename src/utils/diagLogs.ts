@@ -1,4 +1,4 @@
-import { dirname } from 'path'
+import { dirname } from 'node:path'
 import { getFsImplementation } from './fsOperations.js'
 import { jsonStringify } from './slowOperations.js'
 
@@ -42,7 +42,7 @@ export function logForDiagnosticsNoPII(
   }
 
   const fs = getFsImplementation()
-  const line = jsonStringify(entry) + '\n'
+  const line = `${jsonStringify(entry)}\n`
   try {
     fs.appendFileSync(logFile, line)
   } catch {

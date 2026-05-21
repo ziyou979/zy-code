@@ -1,5 +1,5 @@
 import figures from 'figures'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import type { CommandResultDisplay } from '../../commands.js'
 import { Box, color, Link, Text, useTheme } from '../../ink.js'
@@ -14,6 +14,7 @@ import { Dialog } from '../design-system/Dialog.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { McpParsingWarnings } from './McpParsingWarnings.js'
 import type { AgentMcpServerInfo, ServerInfo } from './types.js'
+
 type Props = {
   servers: ServerInfo[]
   agentServers?: AgentMcpServerInfo[]

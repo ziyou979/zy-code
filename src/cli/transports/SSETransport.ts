@@ -69,7 +69,9 @@ export function parseSSEFrames(buffer: string): {
     pos = idx + 2
 
     // Skip empty frames
-    if (!rawFrame.trim()) continue
+    if (!rawFrame.trim()) {
+      continue
+    }
 
     const frame: SSEFrame = {}
     let isComment = false
@@ -82,7 +84,9 @@ export function parseSSEFrames(buffer: string): {
       }
 
       const colonIdx = line.indexOf(':')
-      if (colonIdx === -1) continue
+      if (colonIdx === -1) {
+        continue
+      }
 
       const field = line.slice(0, colonIdx)
       // Per SSE spec, strip one leading space after colon if present
@@ -97,7 +101,7 @@ export function parseSSEFrames(buffer: string): {
           break
         case 'data':
           // Per SSE spec, multiple data: lines are concatenated with \n
-          frame.data = frame.data ? frame.data + '\n' + value : value
+          frame.data = frame.data ? `${frame.data}\n${value}` : value
           break
         // Ignore other fields (retry:, etc.)
       }
@@ -152,7 +156,7 @@ export type StreamClientEvent = {
  * for resumption after disconnection.
  */
 export class SSETransport implements Transport {
-  // @ts-ignore
+  // @ts-expect-error
   private state: SSETransportState = 'idle'
   private onData?: (data: string) => void
   private onCloseCallback?: (closeCode?: number) => void
@@ -250,8 +254,8 @@ export class SSETransport implements Transport {
       'anthropic-version': '2023-06-01',
       'User-Agent': getZyCodeUserAgent(),
     }
-    if (authHeaders['Cookie']) {
-      delete headers['Authorization']
+    if (authHeaders.Cookie) {
+      delete headers.Authorization
     }
     if (this.lastSequenceNum > 0) {
       headers['Last-Event-ID'] = String(this.lastSequenceNum)
@@ -333,7 +337,9 @@ export class SSETransport implements Transport {
     try {
       while (true) {
         const { done, value } = await reader.read()
-        if (done) break
+        if (done) {
+          break
+        }
 
         buffer += decoder.decode(value, STREAM_DECODE_OPTS)
         const { frames, remaining } = parseSSEFrames(buffer)
@@ -345,7 +351,7 @@ export class SSETransport implements Transport {
 
           if (frame.id) {
             const seqNum = parseInt(frame.id, 10)
-            if (!isNaN(seqNum)) {
+            if (!Number.isNaN(seqNum)) {
               if (this.seenSequenceNums.has(seqNum)) {
                 logForDebugging(
                   `SSETransport: DUPLICATE frame seq=${seqNum} (lastSequenceNum=${this.lastSequenceNum}, seenCount=${this.seenSequenceNums.size})`,
@@ -385,7 +391,9 @@ export class SSETransport implements Transport {
         }
       }
     } catch (error) {
-      if (this.abortController?.signal.aborted) return
+      if (this.abortController?.signal.aborted) {
+        return
+      }
       logForDebugging(`SSETransport: Stream read error: ${errorMessage(error)}`, { level: 'error' })
       logForDiagnosticsNoPII('error', 'cli_sse_stream_read_error')
     } finally {
@@ -437,7 +445,7 @@ export class SSETransport implements Transport {
       logForDiagnosticsNoPII('info', 'cli_sse_message_received')
       // Pass the unwrapped payload as newline-delimited JSON,
       // matching the format that StructuredIO/WebSocketTransport consumers expect
-      this.onData?.(jsonStringify(payload) + '\n')
+      this.onData?.(`${jsonStringify(payload)}\n`)
     } else {
       logForDebugging(
         `SSETransport: Ignoring client_event with no type in payload: event_id=${ev.event_id}`,
@@ -453,7 +461,9 @@ export class SSETransport implements Transport {
   private handleConnectionError(): void {
     this.clearLivenessTimer()
 
-    if (this.state === 'closing' || this.state === 'closed') return
+    if (this.state === 'closing' || this.state === 'closed') {
+      return
+    }
 
     // Abort any in-flight SSE fetch
     this.abortController?.abort()
@@ -483,7 +493,7 @@ export class SSETransport implements Transport {
       this.reconnectAttempts++
 
       const baseDelay = Math.min(
-        RECONNECT_BASE_DELAY_MS * Math.pow(2, this.reconnectAttempts - 1),
+        RECONNECT_BASE_DELAY_MS * 2 ** (this.reconnectAttempts - 1),
         RECONNECT_MAX_DELAY_MS,
       )
       // Add ±25% jitter
@@ -618,7 +628,7 @@ export class SSETransport implements Transport {
         return
       }
 
-      const delayMs = Math.min(POST_BASE_DELAY_MS * Math.pow(2, attempt - 1), POST_MAX_DELAY_MS)
+      const delayMs = Math.min(POST_BASE_DELAY_MS * 2 ** (attempt - 1), POST_MAX_DELAY_MS)
       await sleep(delayMs)
     }
   }

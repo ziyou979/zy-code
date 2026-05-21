@@ -1,7 +1,8 @@
-import React, { useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Select } from '../../components/CustomSelect/select.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { Box, Text } from '../../ink.js'
+
 type Props = {
   onProceed: (signal: AbortSignal) => Promise<void>
   onCancel: () => void

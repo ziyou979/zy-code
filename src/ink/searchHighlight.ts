@@ -18,7 +18,9 @@ import { CellWidth, cellAtIndex, type Screen, type StylePool, setCellStyleId } f
  * 强制全屏损伤）。
  */
 export function applySearchHighlight(screen: Screen, query: string, stylePool: StylePool): boolean {
-  if (!query) return false
+  if (!query) {
+    return false
+  }
   const lq = query.toLowerCase()
   const qlen = lq.length
   const w = screen.width

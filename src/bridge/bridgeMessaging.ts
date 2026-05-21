@@ -10,7 +10,7 @@
  * as params.
  */
 
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
 import type { SDKControlRequest, SDKControlResponse } from '../entrypoints/sdk/controlTypes.js'
 import type { SDKResultSuccess } from '../entrypoints/sdk/coreTypes.js'
@@ -91,8 +91,12 @@ export function isEligibleBridgeMessage(m: Message): boolean {
  * implausible (an interrupt implies a prior prompt already flowed through).
  */
 export function extractTitleText(m: Message): string | undefined {
-  if (m.type !== 'user' || m.isMeta || m.toolUseResult || m.isCompactSummary) return undefined
-  if (m.origin && m.origin.kind !== 'human') return undefined
+  if (m.type !== 'user' || m.isMeta || m.toolUseResult || m.isCompactSummary) {
+    return undefined
+  }
+  if (m.origin && m.origin.kind !== 'human') {
+    return undefined
+  }
   const content = m.message.content
   let raw: string | undefined
   if (typeof content === 'string') {
@@ -105,7 +109,9 @@ export function extractTitleText(m: Message): string | undefined {
       }
     }
   }
-  if (!raw) return undefined
+  if (!raw) {
+    return undefined
+  }
   const clean = stripDisplayTagsAllowEmpty(raw)
   return clean || undefined
 }
@@ -144,7 +150,9 @@ export function handleIngressMessage(
       return
     }
 
-    if (!isSDKMessage(parsed)) return
+    if (!isSDKMessage(parsed)) {
+      return
+    }
 
     // Check for UUID to detect echoes of our own messages
     const uuid = 'uuid' in parsed && typeof parsed.uuid === 'string' ? parsed.uuid : undefined
@@ -171,7 +179,9 @@ export function handleIngressMessage(
     )
 
     if (parsed.type === 'user') {
-      if (uuid) recentInboundUUIDs.add(uuid)
+      if (uuid) {
+        recentInboundUUIDs.add(uuid)
+      }
       logEvent('zy_bridge_message_received', {
         is_repl: true,
       })
@@ -412,7 +422,9 @@ export class BoundedUUIDSet {
   }
 
   add(uuid: string): void {
-    if (this.set.has(uuid)) return
+    if (this.set.has(uuid)) {
+      return
+    }
     // Evict the entry at the current write position (if occupied)
     const evicted = this.ring[this.writeIdx]
     if (evicted !== undefined) {

@@ -9,10 +9,10 @@
 // File format:
 //   { "tasks": [{ id, cron, prompt, createdAt, recurring?, permanent? }] }
 
-import { randomUUID } from 'crypto'
-import { readFileSync } from 'fs'
-import { mkdir, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { randomUUID } from 'node:crypto'
+import { readFileSync } from 'node:fs'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import {
   addSessionCronTask,
   getProjectRoot,
@@ -94,15 +94,21 @@ export async function readCronTasks(dir?: string): Promise<CronTask[]> {
   try {
     raw = await fs.readFile(getCronFilePath(dir), { encoding: 'utf-8' })
   } catch (e: unknown) {
-    if (isFsInaccessible(e)) return []
+    if (isFsInaccessible(e)) {
+      return []
+    }
     logError(e)
     return []
   }
 
   const parsed = safeParseJSON(raw, false)
-  if (!parsed || typeof parsed !== 'object') return []
+  if (!parsed || typeof parsed !== 'object') {
+    return []
+  }
   const file = parsed as Partial<CronFile>
-  if (!Array.isArray(file.tasks)) return []
+  if (!Array.isArray(file.tasks)) {
+    return []
+  }
 
   const out: CronTask[] = []
   for (const t of file.tasks) {
@@ -146,7 +152,9 @@ export function hasCronTasksSync(dir?: string): boolean {
     return false
   }
   const parsed = safeParseJSON(raw, false)
-  if (!parsed || typeof parsed !== 'object') return false
+  if (!parsed || typeof parsed !== 'object') {
+    return false
+  }
   const tasks = (parsed as Partial<CronFile>).tasks
   return Array.isArray(tasks) && tasks.length > 0
 }
@@ -165,7 +173,7 @@ export async function writeCronTasks(tasks: CronTask[], dir?: string): Promise<v
   const body: CronFile = {
     tasks: tasks.map(({ durable: _durable, ...rest }) => rest),
   }
-  await writeFile(getCronFilePath(root), jsonStringify(body, null, 2) + '\n', 'utf-8')
+  await writeFile(getCronFilePath(root), `${jsonStringify(body, null, 2)}\n`, 'utf-8')
 }
 
 /**
@@ -216,7 +224,9 @@ export async function addCronTask(
  * state on that path (tests enforce this).
  */
 export async function removeCronTasks(ids: string[], dir?: string): Promise<void> {
-  if (ids.length === 0) return
+  if (ids.length === 0) {
+    return
+  }
   // Sweep session store first. If every id was accounted for there, we're
   // done — skip the file read entirely. removeSessionCronTasks is a no-op
   // (returns 0) on miss, so pre-existing durable-delete paths fall through
@@ -227,7 +237,9 @@ export async function removeCronTasks(ids: string[], dir?: string): Promise<void
   const idSet = new Set(ids)
   const tasks = await readCronTasks(dir)
   const remaining = tasks.filter((t) => !idSet.has(t.id))
-  if (remaining.length === tasks.length) return
+  if (remaining.length === tasks.length) {
+    return
+  }
   await writeCronTasks(remaining, dir)
 }
 
@@ -247,7 +259,9 @@ export async function markCronTasksFired(
   firedAt: number,
   dir?: string,
 ): Promise<void> {
-  if (ids.length === 0) return
+  if (ids.length === 0) {
+    return
+  }
   const idSet = new Set(ids)
   const tasks = await readCronTasks(dir)
   let changed = false
@@ -257,7 +271,9 @@ export async function markCronTasksFired(
       changed = true
     }
   }
-  if (!changed) return
+  if (!changed) {
+    return
+  }
   await writeCronTasks(tasks, dir)
 }
 
@@ -271,7 +287,9 @@ export async function markCronTasksFired(
  */
 export async function listAllCronTasks(dir?: string): Promise<CronTask[]> {
   const fileTasks = await readCronTasks(dir)
-  if (dir !== undefined) return fileTasks
+  if (dir !== undefined) {
+    return fileTasks
+  }
   const sessionTasks = getSessionCronTasks().map((t) => ({
     ...t,
     durable: false as const,
@@ -285,7 +303,9 @@ export async function listAllCronTasks(dir?: string): Promise<CronTask[]> {
  */
 export function nextCronRunMs(cron: string, fromMs: number): number | null {
   const fields = parseCronExpression(cron)
-  if (!fields) return null
+  if (!fields) {
+    return null
+  }
   const next = computeNextCronRun(fields, new Date(fromMs))
   return next ? next.getTime() : null
 }
@@ -369,11 +389,15 @@ export function jitteredNextCronRunMs(
   cfg: CronJitterConfig = DEFAULT_CRON_JITTER_CONFIG,
 ): number | null {
   const nextRunMs = nextCronRunMs(cron, fromMs)
-  if (nextRunMs === null) return null
+  if (nextRunMs === null) {
+    return null
+  }
   const followingRunMs = nextCronRunMs(cron, nextRunMs)
   // No second match in the next year (e.g. pinned date) → nothing to
   // proportion against, and near-certainly not a herd risk. Fire on nextRunMs.
-  if (followingRunMs === null) return nextRunMs
+  if (followingRunMs === null) {
+    return nextRunMs
+  }
   const jitter = Math.min(
     jitterFrac(taskId) * cfg.recurringFrac * (followingRunMs - nextRunMs),
     cfg.recurringCapMs,
@@ -409,14 +433,18 @@ export function oneShotJitteredNextCronRunMs(
   cfg: CronJitterConfig = DEFAULT_CRON_JITTER_CONFIG,
 ): number | null {
   const nextRunMs = nextCronRunMs(cron, fromMs)
-  if (nextRunMs === null) return null
+  if (nextRunMs === null) {
+    return null
+  }
   // Cron resolution is 1 minute → computed times always have :00 seconds,
   // so a minute-field check is sufficient to identify the hot marks.
   // getMinutes() (local), not getUTCMinutes(): cron is evaluated in local
   // time, and "user picked a round time" means round in *their* TZ. In
   // half-hour-offset zones (India UTC+5:30) local :00 is UTC :30 — the
   // UTC check would jitter the wrong marks.
-  if (new Date(nextRunMs).getMinutes() % cfg.oneShotMinuteMod !== 0) return nextRunMs
+  if (new Date(nextRunMs).getMinutes() % cfg.oneShotMinuteMod !== 0) {
+    return nextRunMs
+  }
   // floor + frac * (max - floor) → uniform over [floor, max). With floor=0
   // this reduces to the original frac * max. With floor>0, even a taskId
   // hashing to 0 gets `floor` ms of lead — nobody fires on the exact mark.

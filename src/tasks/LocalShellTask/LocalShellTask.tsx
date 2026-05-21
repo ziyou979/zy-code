@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { stat } from 'fs/promises'
+import { stat } from 'node:fs/promises'
 import {
   OUTPUT_FILE_TAG,
   STATUS_TAG,
@@ -68,7 +68,9 @@ function startStallWatchdog(
   toolUseId?: string,
   agentId?: AgentId,
 ): () => void {
-  if (kind === 'monitor') return () => {}
+  if (kind === 'monitor') {
+    return () => {}
+  }
   const outputPath = getTaskOutputPath(taskId)
   let lastSize = 0
   let lastGrowth = Date.now()
@@ -81,10 +83,14 @@ function startStallWatchdog(
           lastGrowth = Date.now()
           return
         }
-        if (Date.now() - lastGrowth < STALL_THRESHOLD_MS) return
+        if (Date.now() - lastGrowth < STALL_THRESHOLD_MS) {
+          return
+        }
         void tailFile(outputPath, STALL_TAIL_BYTES).then(
           ({ content }) => {
-            if (cancelled) return
+            if (cancelled) {
+              return
+            }
             if (!looksLikePrompt(content)) {
               // Not a prompt — keep watching. Reset so the next check is
               // 45s out instead of re-reading the tail on every tick.

@@ -37,8 +37,12 @@ function expandField(field: string, range: FieldRange): number[] | null {
     const stepMatch = part.match(/^\*(?:\/(\d+))?$/)
     if (stepMatch) {
       const step = stepMatch[1] ? parseInt(stepMatch[1], 10) : 1
-      if (step < 1) return null
-      for (let i = min; i <= max; i += step) out.add(i)
+      if (step < 1) {
+        return null
+      }
+      for (let i = min; i <= max; i += step) {
+        out.add(i)
+      }
       continue
     }
 
@@ -51,7 +55,9 @@ function expandField(field: string, range: FieldRange): number[] | null {
       // dayOfWeek: accept 7 as Sunday alias in ranges (e.g. 5-7 = Fri,Sat,Sun → [5,6,0])
       const isDow = min === 0 && max === 6
       const effMax = isDow ? 7 : max
-      if (lo > hi || step < 1 || lo < min || hi > effMax) return null
+      if (lo > hi || step < 1 || lo < min || hi > effMax) {
+        return null
+      }
       for (let i = lo; i <= hi; i += step) {
         out.add(isDow && i === 7 ? 0 : i)
       }
@@ -63,8 +69,12 @@ function expandField(field: string, range: FieldRange): number[] | null {
     if (singleMatch) {
       let n = parseInt(part, 10)
       // dayOfWeek: accept 7 as Sunday alias → 0
-      if (min === 0 && max === 6 && n === 7) n = 0
-      if (n < min || n > max) return null
+      if (min === 0 && max === 6 && n === 7) {
+        n = 0
+      }
+      if (n < min || n > max) {
+        return null
+      }
       out.add(n)
       continue
     }
@@ -72,7 +82,9 @@ function expandField(field: string, range: FieldRange): number[] | null {
     return null
   }
 
-  if (out.size === 0) return null
+  if (out.size === 0) {
+    return null
+  }
   return Array.from(out).sort((a, b) => a - b)
 }
 
@@ -82,12 +94,16 @@ function expandField(field: string, range: FieldRange): number[] | null {
  */
 export function parseCronExpression(expr: string): CronFields | null {
   const parts = expr.trim().split(/\s+/)
-  if (parts.length !== 5) return null
+  if (parts.length !== 5) {
+    return null
+  }
 
   const expanded: number[][] = []
   for (let i = 0; i < 5; i++) {
     const result = expandField(parts[i]!, FIELD_RANGES[i]!)
-    if (!result) return null
+    if (!result) {
+      return null
+    }
     expanded.push(result)
   }
 
@@ -207,7 +223,9 @@ function formatUtcTimeAsLocal(minute: number, hour: number): string {
 export function cronToHuman(cron: string, opts?: { utc?: boolean }): string {
   const utc = opts?.utc ?? false
   const parts = cron.trim().split(/\s+/)
-  if (parts.length !== 5) return cron
+  if (parts.length !== 5) {
+    return cron
+  }
 
   const [minute, hour, dayOfMonth, month, dayOfWeek] = parts as [
     string,
@@ -233,7 +251,9 @@ export function cronToHuman(cron: string, opts?: { utc?: boolean }): string {
     dayOfWeek === '*'
   ) {
     const m = parseInt(minute, 10)
-    if (m === 0) return 'Every hour'
+    if (m === 0) {
+      return 'Every hour'
+    }
     return `Every hour at :${m.toString().padStart(2, '0')}`
   }
 
@@ -254,7 +274,9 @@ export function cronToHuman(cron: string, opts?: { utc?: boolean }): string {
 
   // --- Remaining cases reference hour+minute: branch on utc ----------------
 
-  if (!minute.match(/^\d+$/) || !hour.match(/^\d+$/)) return cron
+  if (!minute.match(/^\d+$/) || !hour.match(/^\d+$/)) {
+    return cron
+  }
   const m = parseInt(minute, 10)
   const h = parseInt(hour, 10)
   const fmtTime = utc ? formatUtcTimeAsLocal : formatLocalTime
@@ -279,7 +301,9 @@ export function cronToHuman(cron: string, opts?: { utc?: boolean }): string {
     } else {
       dayName = DAY_NAMES[dayIndex]
     }
-    if (dayName) return `Every ${dayName} at ${fmtTime(m, h)}`
+    if (dayName) {
+      return `Every ${dayName} at ${fmtTime(m, h)}`
+    }
   }
 
   // Weekdays: M H * * 1-5

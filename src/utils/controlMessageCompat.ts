@@ -11,7 +11,9 @@
  * Mutates the object in place.
  */
 export function normalizeControlMessageKeys(obj: unknown): unknown {
-  if (obj === null || typeof obj !== 'object') return obj
+  if (obj === null || typeof obj !== 'object') {
+    return obj
+  }
   const record = obj as Record<string, unknown>
   if ('requestId' in record && !('request_id' in record)) {
     record.request_id = record.requestId

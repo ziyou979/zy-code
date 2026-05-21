@@ -6,6 +6,7 @@ import React, { Suspense, use, useEffect, useMemo, useState } from 'react'
 import stripAnsi from 'strip-ansi'
 import type { CommandResultDisplay } from '../commands.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
+import { getUiLanguage, tSync } from '../i18n/index.js'
 import { applyColor } from '../ink/colorize.js'
 import { stringWidth as getStringWidth } from '../ink/stringWidth.js'
 import type { Color } from '../ink/styles.js'
@@ -13,23 +14,23 @@ import type { Color } from '../ink/styles.js'
 import { Ansi, Box, Text, useInput } from '../ink.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { getGlobalConfig } from '../utils/config.js'
+import { isInternalBuild } from '../utils/envUtils.js'
 import { formatDuration, formatNumber } from '../utils/format.js'
 import { generateHeatmap } from '../utils/heatmap.js'
 import { renderModelName } from '../utils/model/model.js'
 import { copyAnsiToClipboard } from '../utils/screenshotClipboard.js'
 import {
   aggregateZyCodeStatsForRange,
-  type ZyCodeStats,
   type DailyModelTokens,
   type StatsDateRange,
+  type ZyCodeStats,
 } from '../utils/stats.js'
 import { resolveThemeSetting } from '../utils/systemTheme.js'
 import { getTheme, themeColorToAnsi } from '../utils/theme.js'
 import { Pane } from './design-system/Pane.js'
 import { Tab, Tabs, useTabHeaderFocus } from './design-system/Tabs.js'
-import { isInternalBuild } from '../utils/envUtils.js'
-import { getUiLanguage, tSync } from '../i18n/index.js'
 import { Spinner } from './Spinner.js'
+
 function getLocale(): string {
   return getUiLanguage() === 'zh-CN' ? 'zh-CN' : 'en-US'
 }
@@ -744,7 +745,7 @@ function ModelsTab({ stats, dateRange, isLoading }) {
   const StatsBox = Box
   const rightModelEntries = rightModels.map((entry) => {
     const [model_1, usage_1] = entry
-    // @ts-ignore -- ModelEntry props may differ between builds
+    // @ts-expect-error -- ModelEntry props may differ between builds
     return <ModelEntry key={model_1} model={model_1} usage={usage_1} totalTokens={totalTokens} />
   })
   return (
@@ -878,7 +879,11 @@ function generateTokenChart(
 
   // Color palette for different models - use blue shades
   const theme = getTheme(resolveThemeSetting(getGlobalConfig().theme))
-  const colors = [themeColorToAnsi(theme.suggestion), themeColorToAnsi(theme.success), themeColorToAnsi(theme.warning)]
+  const colors = [
+    themeColorToAnsi(theme.suggestion),
+    themeColorToAnsi(theme.success),
+    themeColorToAnsi(theme.warning),
+  ]
 
   // Prepare series data for each model
   const series: number[][] = []
@@ -910,9 +915,9 @@ function generateTokenChart(
     format: (x: number) => {
       let label: string
       if (x >= 1_000_000) {
-        label = (x / 1_000_000).toFixed(1) + 'M'
+        label = `${(x / 1_000_000).toFixed(1)}M`
       } else if (x >= 1_000) {
-        label = (x / 1_000).toFixed(0) + 'k'
+        label = `${(x / 1_000).toFixed(0)}k`
       } else {
         label = x.toFixed(0)
       }
@@ -933,7 +938,9 @@ function generateXAxisLabels(
   _chartWidth: number,
   yAxisOffset: number,
 ): string {
-  if (data.length === 0) return ''
+  if (data.length === 0) {
+    return ''
+  }
 
   // Show 3-4 date labels evenly spaced, but leave room for last label
   const numLabels = Math.min(4, Math.max(2, Math.floor(data.length / 8)))
@@ -1022,14 +1029,14 @@ function renderOverviewToAnsi(stats: ZyCodeStats): string[] {
   const COL2_LABEL_WIDTH = 18
   const row = (l1: string, v1: string, l2: string, v2: string): string => {
     // Build column 1: label + value
-    const label1 = (l1 + ':').padEnd(COL1_LABEL_WIDTH)
+    const label1 = `${l1}:`.padEnd(COL1_LABEL_WIDTH)
     const col1PlainLen = label1.length + v1.length
 
     // Calculate spaces needed between col1 value and col2 label
     const spaceBetween = Math.max(2, COL2_START - col1PlainLen)
 
     // Build column 2: label + value
-    const label2 = (l2 + ':').padEnd(COL2_LABEL_WIDTH)
+    const label2 = `${l2}:`.padEnd(COL2_LABEL_WIDTH)
 
     // Assemble with colors applied to values only
     return label1 + h(v1) + ' '.repeat(spaceBetween) + label2 + h(v2)
@@ -1102,7 +1109,7 @@ function renderOverviewToAnsi(stats: ZyCodeStats): string[] {
 
   // Speculation time saved (ant-only)
   if (isInternalBuild() && stats.totalSpeculationTimeSavedMs > 0) {
-    const label = (tSync('stats.speculationSaved') + ':').padEnd(COL1_LABEL_WIDTH)
+    const label = `${tSync('stats.speculationSaved')}:`.padEnd(COL1_LABEL_WIDTH)
     lines.push(label + h(formatDuration(stats.totalSpeculationTimeSavedMs)))
   }
 
@@ -1135,7 +1142,7 @@ function renderOverviewToAnsi(stats: ZyCodeStats): string[] {
       lines.push(
         row('6\u201310 shot', fmtBucket(b6_10, pct(b6_10)), '11+ shot', fmtBucket(b11, pct(b11))),
       )
-      lines.push(`${(tSync('stats.avgPerSession') + ':').padEnd(COL1_LABEL_WIDTH)}${h(avgShots)}`)
+      lines.push(`${(`${tSync('stats.avgPerSession')}:`).padEnd(COL1_LABEL_WIDTH)}${h(avgShots)}`)
     }
   }
   lines.push('')

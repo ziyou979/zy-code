@@ -48,7 +48,9 @@ const LOCK_PROBE_INTERVAL_MS = 5000
  * setInterval/chokidar/lock machinery.
  */
 export function isRecurringTaskAged(t: CronTask, nowMs: number, maxAgeMs: number): boolean {
-  if (maxAgeMs === 0) return false
+  if (maxAgeMs === 0) {
+    return false
+  }
   return Boolean(t.recurring && !t.permanent && nowMs - t.createdAt >= maxAgeMs)
 }
 
@@ -169,7 +171,9 @@ export function createCronScheduler(options: CronSchedulerOptions): CronSchedule
 
   async function load(initial: boolean) {
     const next = await readCronTasks(dir)
-    if (stopped) return
+    if (stopped) {
+      return
+    }
     tasks = next
 
     // Only surface missed tasks on initial load. Chokidar-triggered
@@ -180,7 +184,9 @@ export function createCronScheduler(options: CronSchedulerOptions): CronSchedule
     // Recurring tasks are NOT surfaced or deleted — check() handles them
     // correctly (fires on first tick, reschedules forward). Only one-shot
     // missed tasks need user input (run once now, or discard forever).
-    if (!initial) return
+    if (!initial) {
+      return
+    }
 
     const now = Date.now()
     const missed = findMissedTasks(next, now).filter(
@@ -213,8 +219,12 @@ export function createCronScheduler(options: CronSchedulerOptions): CronSchedule
   }
 
   function check() {
-    if (isKilled?.()) return
-    if (isLoading() && !assistantMode) return
+    if (isKilled?.()) {
+      return
+    }
+    if (isLoading() && !assistantMode) {
+      return
+    }
     const now = Date.now()
     const seen = new Set<string>()
     // File-backed recurring tasks that fired this tick. Batched into one
@@ -231,9 +241,13 @@ export function createCronScheduler(options: CronSchedulerOptions): CronSchedule
     // session tasks are removed synchronously from memory, file tasks go
     // through the async removeCronTasks + chokidar reload.
     function process(t: CronTask, isSession: boolean) {
-      if (filter && !filter(t)) return
+      if (filter && !filter(t)) {
+        return
+      }
       seen.add(t.id)
-      if (inFlight.has(t.id)) return
+      if (inFlight.has(t.id)) {
+        return
+      }
 
       let next = nextFireAt.get(t.id)
       if (next === undefined) {
@@ -256,7 +270,9 @@ export function createCronScheduler(options: CronSchedulerOptions): CronSchedule
         )
       }
 
-      if (now < next) return
+      if (now < next) {
+        return
+      }
 
       logForDebugging(`[ScheduledTasks] firing ${t.id}${t.recurring ? ' (recurring)' : ''}`)
       logEvent('zy_scheduled_task_fire', {
@@ -292,7 +308,9 @@ export function createCronScheduler(options: CronSchedulerOptions): CronSchedule
         nextFireAt.set(t.id, newNext)
         // Persist lastFiredAt=now so next process spawn reconstructs this
         // same newNext on first-sight. Session tasks skip — process-local.
-        if (!isSession) firedFileRecurring.push(t.id)
+        if (!isSession) {
+          firedFileRecurring.push(t.id)
+        }
       } else if (isSession) {
         // One-shot (or aged-out recurring) session task: synchronous memory
         // removal. No inFlight window — the next tick will read a session
@@ -315,7 +333,9 @@ export function createCronScheduler(options: CronSchedulerOptions): CronSchedule
     // exists to stop two Zy sessions in the same cwd from double-firing
     // the same on-disk task.
     if (isOwner) {
-      for (const t of tasks) process(t, false)
+      for (const t of tasks) {
+        process(t, false)
+      }
       // Batched lastFiredAt write. inFlight guards against double-fire
       // during the chokidar-triggered reload (same pattern as removeCronTasks
       // below) — the reload re-seeds `tasks` with the just-written
@@ -323,11 +343,15 @@ export function createCronScheduler(options: CronSchedulerOptions): CronSchedule
       // already set in-memory, so it's idempotent even without inFlight.
       // Guarding anyway keeps the semantics obvious.
       if (firedFileRecurring.length > 0) {
-        for (const id of firedFileRecurring) inFlight.add(id)
+        for (const id of firedFileRecurring) {
+          inFlight.add(id)
+        }
         void markCronTasksFired(firedFileRecurring, now, dir)
           .catch((e) => logForDebugging(`[ScheduledTasks] failed to persist lastFiredAt: ${e}`))
           .finally(() => {
-            for (const id of firedFileRecurring) inFlight.delete(id)
+            for (const id of firedFileRecurring) {
+              inFlight.delete(id)
+            }
           })
       }
     }
@@ -337,7 +361,9 @@ export function createCronScheduler(options: CronSchedulerOptions): CronSchedule
     // is skipped on the daemon path (`dir !== undefined`) which never
     // touches bootstrap state.
     if (dir === undefined) {
-      for (const t of getSessionCronTasks()) process(t, true)
+      for (const t of getSessionCronTasks()) {
+        process(t, true)
+      }
     }
 
     if (seen.size === 0) {
@@ -352,19 +378,25 @@ export function createCronScheduler(options: CronSchedulerOptions): CronSchedule
     // file-task ids aren't in `seen` and get evicted — harmless: they
     // re-anchor from createdAt on the first owned tick.
     for (const id of nextFireAt.keys()) {
-      if (!seen.has(id)) nextFireAt.delete(id)
+      if (!seen.has(id)) {
+        nextFireAt.delete(id)
+      }
     }
   }
 
   async function enable() {
-    if (stopped) return
+    if (stopped) {
+      return
+    }
     if (enablePoll) {
       clearInterval(enablePoll)
       enablePoll = null
     }
 
     const { default: chokidar } = await import('chokidar')
-    if (stopped) return
+    if (stopped) {
+      return
+    }
 
     // Acquire the per-project scheduler lock. Only the owning session runs
     // check(). Other sessions probe periodically to take over if the owner
@@ -382,7 +414,9 @@ export function createCronScheduler(options: CronSchedulerOptions): CronSchedule
         void tryAcquireSchedulerLock(lockOpts)
           .then((owned) => {
             if (stopped) {
-              if (owned) void releaseSchedulerLock(lockOpts)
+              if (owned) {
+                void releaseSchedulerLock(lockOpts)
+              }
               return
             }
             if (owned) {
@@ -449,7 +483,9 @@ export function createCronScheduler(options: CronSchedulerOptions): CronSchedule
       }
       enablePoll = setInterval(
         (en) => {
-          if (getScheduledTasksEnabled()) void en()
+          if (getScheduledTasksEnabled()) {
+            void en()
+          }
         },
         CHECK_INTERVAL_MS,
         enable,
@@ -483,7 +519,9 @@ export function createCronScheduler(options: CronSchedulerOptions): CronSchedule
       // "nothing pending".
       let min = Infinity
       for (const t of nextFireAt.values()) {
-        if (t < min) min = t
+        if (t < min) {
+          min = t
+        }
       }
       return min === Infinity ? null : min
     },
@@ -508,7 +546,7 @@ export function buildMissedTaskNotification(missed: CronTask[]): string {
     `First use the AskUserQuestion tool to ask whether to run ${plural ? 'each one' : 'it'} now. ` +
     `Only execute if the user confirms.`
 
-  // @ts-ignore
+  // @ts-expect-error
   const blocks = missed.map((t: any) => {
     const meta = `[${cronToHuman(t.cron)}, created ${new Date(t.createdAt).toLocaleString()}]`
     // Use a fence one longer than any backtick run in the prompt so a

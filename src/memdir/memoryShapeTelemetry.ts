@@ -2,7 +2,7 @@
  * Logs the shape of a memory recall operation for telemetry.
  * This is a stub implementation for external builds.
  */
-export function logMemoryRecallShape(memories: unknown, selected: unknown): void {
+export function logMemoryRecallShape(_memories: unknown, _selected: unknown): void {
   // Stub: no-op in external builds
 }
 
@@ -11,10 +11,10 @@ export function logMemoryRecallShape(memories: unknown, selected: unknown): void
  * This is a stub implementation for external builds.
  */
 export function logMemoryWriteShape(
-  toolName: string,
-  toolInput: unknown,
-  filePath: string,
-  scope: unknown,
+  _toolName: string,
+  _toolInput: unknown,
+  _filePath: string,
+  _scope: unknown,
 ): void {
   // Stub: no-op in external builds
 }

@@ -1,6 +1,6 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'fs'
-import { mkdir, readFile, rm, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { z } from 'zod/v4'
 import { getSessionCreatedTeams } from '../../bootstrap/state.js'
 import { logForDebugging } from '../debug.js'
@@ -133,7 +133,9 @@ export function readTeamFile(teamName: string): TeamFile | null {
     const content = readFileSync(getTeamFilePath(teamName), 'utf-8')
     return jsonParse(content) as TeamFile
   } catch (e) {
-    if (getErrnoCode(e) === 'ENOENT') return null
+    if (getErrnoCode(e) === 'ENOENT') {
+      return null
+    }
     logForDebugging(`[TeammateTool] Failed to read team file for ${teamName}: ${errorMessage(e)}`)
     return null
   }
@@ -147,7 +149,9 @@ export async function readTeamFileAsync(teamName: string): Promise<TeamFile | nu
     const content = await readFile(getTeamFilePath(teamName), 'utf-8')
     return jsonParse(content) as TeamFile
   } catch (e) {
-    if (getErrnoCode(e) === 'ENOENT') return null
+    if (getErrnoCode(e) === 'ENOENT') {
+      return null
+    }
     logForDebugging(`[TeammateTool] Failed to read team file for ${teamName}: ${errorMessage(e)}`)
     return null
   }
@@ -196,8 +200,12 @@ export function removeTeammateFromTeamFile(
 
   const originalLength = teamFile.members.length
   teamFile.members = teamFile.members.filter((m) => {
-    if (identifier.agentId && m.agentId === identifier.agentId) return false
-    if (identifier.name && m.name === identifier.name) return false
+    if (identifier.agentId && m.agentId === identifier.agentId) {
+      return false
+    }
+    if (identifier.name && m.name === identifier.name) {
+      return false
+    }
     return true
   })
 
@@ -358,7 +366,9 @@ export function setMemberMode(teamName: string, memberName: string, mode: Permis
  * @param teamNameOverride - Optional team name override (uses env var if not provided)
  */
 export function syncTeammateMode(mode: PermissionMode, teamNameOverride?: string): void {
-  if (!isTeammate()) return
+  if (!isTeammate()) {
+    return
+  }
   const teamName = teamNameOverride ?? getTeamName()
   const agentName = getAgentName()
   if (teamName && agentName) {
@@ -454,7 +464,7 @@ async function destroyWorktree(worktreePath: string): Promise<void> {
     const gitFileContent = (await readFile(gitFilePath, 'utf-8')).trim()
     // The .git file contains something like: gitdir: /path/to/repo/.git/worktrees/worktree-name
     const match = gitFileContent.match(/^gitdir:\s*(.+)$/)
-    if (match && match[1]) {
+    if (match?.[1]) {
       // Extract the main repo .git directory (go up from .git/worktrees/name to .git)
       const worktreeGitDir = match[1]
       // Go up 2 levels from .git/worktrees/name to get to .git, then get parent for repo root
@@ -525,7 +535,9 @@ export function unregisterTeamForSessionCleanup(teamName: string): void {
  */
 export async function cleanupSessionTeams(): Promise<void> {
   const sessionCreatedTeams = getSessionCreatedTeams()
-  if (sessionCreatedTeams.size === 0) return
+  if (sessionCreatedTeams.size === 0) {
+    return
+  }
   const teams = Array.from(sessionCreatedTeams)
   logForDebugging(
     `cleanupSessionTeams: removing ${teams.length} orphan team dir(s): ${teams.join(', ')}`,
@@ -547,13 +559,17 @@ export async function cleanupSessionTeams(): Promise<void> {
  */
 async function killOrphanedTeammatePanes(teamName: string): Promise<void> {
   const teamFile = readTeamFile(teamName)
-  if (!teamFile) return
+  if (!teamFile) {
+    return
+  }
 
   const paneMembers = teamFile.members.filter(
     (m) =>
       m.name !== TEAM_LEAD_NAME && m.tmuxPaneId && m.backendType && isPaneBackend(m.backendType),
   )
-  if (paneMembers.length === 0) return
+  if (paneMembers.length === 0) {
+    return
+  }
 
   const [{ ensureBackendsRegistered, getBackendByType }, { isInsideTmux }] = await Promise.all([
     import('./backends/registry.js'),

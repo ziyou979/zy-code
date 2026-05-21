@@ -1,4 +1,5 @@
-import React, { Suspense, use, useState } from 'react'
+import { Suspense, use, useState } from 'react'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { logEvent } from '../../services/analytics/index.js'
@@ -11,7 +12,7 @@ import {
 } from '../../utils/permissions/permissionExplainer.js'
 import { ShimmerChar } from '../Spinner/ShimmerChar.js'
 import { useShimmerAnimation } from '../Spinner/useShimmerAnimation.js'
-import { tSync } from '../../i18n/index.js'
+
 const LOADING_MESSAGE = tSync('permission.loadingExplanation')
 function ShimmerLoadingText() {
   const [ref, glimmerIndex] = useShimmerAnimation('responding', LOADING_MESSAGE, false)

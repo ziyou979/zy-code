@@ -2,7 +2,7 @@
  * OAuth redirect port helpers — extracted from auth.ts to break the
  * auth.ts ↔ xaaIdpLogin.ts circular dependency.
  */
-import { createServer } from 'http'
+import { createServer } from 'node:http'
 import { getPlatform } from '../../utils/platform.js'
 
 // Windows dynamic port range 49152-65535 is reserved
@@ -52,10 +52,7 @@ export async function findAvailablePort(): Promise<number> {
         })
       })
       return port
-    } catch {
-      // Port in use, try another random port
-      continue
-    }
+    } catch {}
   }
 
   // If random selection failed, try the fallback port

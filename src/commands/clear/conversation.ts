@@ -3,7 +3,7 @@
  * This module has heavier dependencies and should be lazy-loaded when possible.
  */
 import { feature } from 'bun:bundle'
-import { randomUUID, type UUID } from 'crypto'
+import { randomUUID, type UUID } from 'node:crypto'
 import {
   getLastMainRequestId,
   getOriginalCwd,
@@ -24,6 +24,7 @@ import { isLocalShellTask } from '../../tasks/LocalShellTask/guards.js'
 import { asAgentId } from '../../types/ids.js'
 import type { Message } from '../../types/message.js'
 import { createEmptyAttributionState } from '../../utils/commitAttribution.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import type { FileStateCache } from '../../utils/fileStateCache.js'
 import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../../utils/hooks.js'
 import { logError } from '../../utils/log.js'
@@ -37,7 +38,6 @@ import {
   saveWorktreeState,
 } from '../../utils/sessionStorage.js'
 import { evictTaskOutput, initTaskOutputAsSymlink } from '../../utils/task/diskOutput.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { getCurrentWorktreeSession } from '../../utils/worktree.js'
 import { clearSessionCaches } from './caches.js'
 
@@ -89,7 +89,9 @@ export async function clearConversation({
     'isBackgrounded' in task && task.isBackgrounded === false
   if (getAppState) {
     for (const task of Object.values(getAppState().tasks)) {
-      if (shouldKillTask(task)) continue
+      if (shouldKillTask(task)) {
+        continue
+      }
       if (isLocalAgentTask(task)) {
         preservedAgentIds.add(task.agentId)
         preservedLocalAgents.push(task)
@@ -209,7 +211,9 @@ export async function clearConversation({
   // Main-session tasks use the same per-agent path (they write via
   // recordSidechainTranscript to getAgentTranscriptPath), so no special case.
   for (const task of preservedLocalAgents) {
-    if (task.status !== 'running') continue
+    if (task.status !== 'running') {
+      continue
+    }
     void initTaskOutputAsSymlink(task.id, getAgentTranscriptPath(asAgentId(task.agentId)))
   }
 

@@ -76,35 +76,49 @@ function getSessionFileTypeFromInput(
   switch (toolName) {
     case FILE_READ_TOOL_NAME: {
       const parsed = FileReadTool.inputSchema.safeParse(toolInput)
-      if (!parsed.success) return null
+      if (!parsed.success) {
+        return null
+      }
       return detectSessionFileType(parsed.data.file_path)
     }
     case GREP_TOOL_NAME: {
       const parsed = GrepTool.inputSchema.safeParse(toolInput)
-      if (!parsed.success) return null
+      if (!parsed.success) {
+        return null
+      }
       // Check path if provided
       if (parsed.data.path) {
         const pathType = detectSessionFileType(parsed.data.path)
-        if (pathType) return pathType
+        if (pathType) {
+          return pathType
+        }
       }
       // Check glob pattern
       if (parsed.data.glob) {
         const globType = detectSessionPatternType(parsed.data.glob)
-        if (globType) return globType
+        if (globType) {
+          return globType
+        }
       }
       return null
     }
     case GLOB_TOOL_NAME: {
       const parsed = GlobTool.inputSchema.safeParse(toolInput)
-      if (!parsed.success) return null
+      if (!parsed.success) {
+        return null
+      }
       // Check path if provided
       if (parsed.data.path) {
         const pathType = detectSessionFileType(parsed.data.path)
-        if (pathType) return pathType
+        if (pathType) {
+          return pathType
+        }
       }
       // Check pattern
       const patternType = detectSessionPatternType(parsed.data.pattern)
-      if (patternType) return patternType
+      if (patternType) {
+        return patternType
+      }
       return null
     }
     default:
@@ -141,7 +155,9 @@ async function handleSessionFileAccess(
   _toolUseID: string | null,
   _signal: AbortSignal | undefined,
 ): Promise<HookJSONOutput> {
-  if (input.hook_event_name !== 'PostToolUse') return {}
+  if (input.hook_event_name !== 'PostToolUse') {
+    return {}
+  }
 
   const fileType = getSessionFileTypeFromInput(input.tool_name, input.tool_input)
 

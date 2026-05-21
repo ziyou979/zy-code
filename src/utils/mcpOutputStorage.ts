@@ -1,5 +1,5 @@
-import { writeFile } from 'fs/promises'
-import { join } from 'path'
+import { writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -61,7 +61,9 @@ export function getLargeOutputInstructions(
  * the Read tool dispatches on it (PDFs, images, etc. need the right ext).
  */
 export function extensionForMimeType(mimeType: string | undefined): string {
-  if (!mimeType) return 'bin'
+  if (!mimeType) {
+    return 'bin'
+  }
   // Strip any charset/boundary parameter
   const mt = (mimeType.split(';')[0] ?? '').trim().toLowerCase()
   switch (mt) {
@@ -120,15 +122,27 @@ export function extensionForMimeType(mimeType: string | undefined): string {
  * Text-ish types (text/*, json, xml, form data) are treated as non-binary.
  */
 export function isBinaryContentType(contentType: string): boolean {
-  if (!contentType) return false
+  if (!contentType) {
+    return false
+  }
   const mt = (contentType.split(';')[0] ?? '').trim().toLowerCase()
-  if (mt.startsWith('text/')) return false
+  if (mt.startsWith('text/')) {
+    return false
+  }
   // Structured text formats delivered with an application/ type. Use suffix
   // or exact match rather than substring so 'openxmlformats' (docx/xlsx) stays binary.
-  if (mt.endsWith('+json') || mt === 'application/json') return false
-  if (mt.endsWith('+xml') || mt === 'application/xml') return false
-  if (mt.startsWith('application/javascript')) return false
-  if (mt === 'application/x-www-form-urlencoded') return false
+  if (mt.endsWith('+json') || mt === 'application/json') {
+    return false
+  }
+  if (mt.endsWith('+xml') || mt === 'application/xml') {
+    return false
+  }
+  if (mt.startsWith('application/javascript')) {
+    return false
+  }
+  if (mt === 'application/x-www-form-urlencoded') {
+    return false
+  }
   return true
 }
 

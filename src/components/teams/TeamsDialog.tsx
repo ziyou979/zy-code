@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import figures from 'figures'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -49,6 +49,7 @@ import {
 } from '../../utils/teammateMailbox.js'
 import { Dialog } from '../design-system/Dialog.js'
 import ThemedText from '../design-system/ThemedText.js'
+
 type Props = {
   initialTeams?: TeamSummary[]
   onDone: () => void
@@ -69,7 +70,7 @@ type DialogLevel =
  */
 export function TeamsDialog({ initialTeams, onDone }: Props): React.ReactNode {
   // Register as overlay so CancelRequestHandler doesn't intercept escape
-  // @ts-ignore
+  // @ts-expect-error
   useRegisterOverlay('teams-dialog')
 
   // initialTeams is derived from teamContext in PromptInput (no filesystem I/O)
@@ -82,7 +83,7 @@ export function TeamsDialog({ initialTeams, onDone }: Props): React.ReactNode {
     teamName: firstTeamName,
   })
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [_refreshKey, setRefreshKey] = useState(0)
 
   // initialTeams is now always provided from PromptInput (derived from teamContext)
   // No filesystem I/O needed here
@@ -91,14 +92,16 @@ export function TeamsDialog({ initialTeams, onDone }: Props): React.ReactNode {
     return getTeammateStatuses(dialogLevel.teamName)
     // eslint-disable-next-line react-hooks/exhaustive-deps
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
-  }, [dialogLevel.teamName, refreshKey])
+  }, [dialogLevel.teamName])
 
   // Periodically refresh to pick up mode changes from teammates
   useInterval(() => {
     setRefreshKey((k) => k + 1)
   }, 1000)
   const currentTeammate = useMemo(() => {
-    if (dialogLevel.type !== 'teammateDetail') return null
+    if (dialogLevel.type !== 'teammateDetail') {
+      return null
+    }
     return teammateStatuses.find((t) => t.name === dialogLevel.memberName) ?? null
   }, [dialogLevel, teammateStatuses])
 
@@ -378,7 +381,7 @@ function TeammateListItem({ teammate, isSelected }: TeammateListItemProps) {
   const modeColor = getModeColor(mode)
   return (
     <Text color={isSelected ? 'suggestion' : undefined} dimColor={shouldDim}>
-      {isSelected ? figures.pointer + ' ' : '  '}
+      {isSelected ? `${figures.pointer} ` : '  '}
       {teammate.isHidden && <Text dimColor={true}>[hidden] </Text>}
       {isIdle && <Text dimColor={true}>[idle] </Text>}
       {modeSymbol && <Text color={modeColor}>{modeSymbol} </Text>}@{teammate.name}
@@ -525,8 +528,12 @@ async function killTeammate(
 
   // Update AppState to keep status line in sync and notify the lead
   setAppState((prev) => {
-    if (!prev.teamContext?.teammates) return prev
-    if (!(teammateId in prev.teamContext.teammates)) return prev
+    if (!prev.teamContext?.teammates) {
+      return prev
+    }
+    if (!(teammateId in prev.teamContext.teammates)) {
+      return prev
+    }
     const { [teammateId]: _, ...remainingTeammates } = prev.teamContext.teammates
     return {
       ...prev,
@@ -586,13 +593,13 @@ async function toggleTeammateVisibility(teammate: TeammateStatus, teamName: stri
  * Hide a teammate pane using the backend abstraction.
  * Only available for ant users (gated for dead code elimination in external builds)
  */
-async function hideTeammate(teammate: TeammateStatus, teamName: string): Promise<void> {}
+async function hideTeammate(_teammate: TeammateStatus, _teamName: string): Promise<void> {}
 
 /**
  * Show a previously hidden teammate pane using the backend abstraction.
  * Only available for ant users (gated for dead code elimination in external builds)
  */
-async function showTeammate(teammate: TeammateStatus, teamName: string): Promise<void> {}
+async function showTeammate(_teammate: TeammateStatus, _teamName: string): Promise<void> {}
 
 /**
  * Send a mode change message to a single teammate
@@ -652,7 +659,9 @@ function cycleAllTeammateModes(
   teamName: string,
   isBypassAvailable: boolean,
 ): void {
-  if (teammates.length === 0) return
+  if (teammates.length === 0) {
+    return
+  }
   const modes = teammates.map((t) => (t.mode ? permissionModeFromString(t.mode) : 'default'))
   const allSame = modes.every((m) => m === modes[0])
 

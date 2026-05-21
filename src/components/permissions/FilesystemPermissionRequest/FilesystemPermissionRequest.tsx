@@ -1,10 +1,10 @@
-import React from 'react'
-import { Box, Text, useTheme } from '../../../ink.js'
 import { tSync } from '../../../i18n/index.js'
+import { Box, Text, useTheme } from '../../../ink.js'
 import { FallbackPermissionRequest } from '../FallbackPermissionRequest.js'
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js'
 import type { ToolInput } from '../FilePermissionDialog/useFilePermissionDialog.js'
 import type { ToolUseConfirm } from '../PermissionRequest.js'
+
 function pathFromToolUse(toolUseConfirm: ToolUseConfirm): string | null {
   const tool = toolUseConfirm.tool
   if ('getPath' in tool && typeof tool.getPath === 'function') {
@@ -28,7 +28,7 @@ export function FilesystemPermissionRequest({
   const path = pathFromToolUse(toolUseConfirm)
   const userFacingName = toolUseConfirm.tool.userFacingName(toolUseConfirm.input as never)
   const isReadOnly = toolUseConfirm.tool.isReadOnly(toolUseConfirm.input)
-  const userFacingReadOrEdit = isReadOnly ? tSync('permission.read') : tSync('permission.edit')
+  const _userFacingReadOrEdit = isReadOnly ? tSync('permission.read') : tSync('permission.edit')
   const title = isReadOnly ? tSync('permission.readFileTitle') : tSync('permission.editFile')
   const parseInput = (input) => input as ToolInput
   if (!path) {

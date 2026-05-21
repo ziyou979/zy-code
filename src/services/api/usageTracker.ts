@@ -1,8 +1,9 @@
 // @ts-nocheck
+
+import { feature } from 'bun:bundle'
+import type { TokenUsage } from '../../types/llm.js'
 import type { StreamEvent } from '../../types/message.js'
 import type { NonNullableUsage } from './logging.js'
-import type { TokenUsage } from '../../types/llm.js'
-import { feature } from 'bun:bundle'
 
 /**
  * 清理流资源以防止内存泄漏。

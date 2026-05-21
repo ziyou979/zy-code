@@ -1,7 +1,6 @@
 import { feature } from 'bun:bundle'
-import type { ToolResultBlock } from '../../types/llm.js'
+import { dirname } from 'node:path'
 import uniqBy from 'lodash-es/uniqBy.js'
-import { dirname } from 'path'
 import { getProjectRoot } from 'src/bootstrap/state.js'
 import { builtInCommandNames, findCommand, getCommands, type PromptCommand } from 'src/commands.js'
 import type {
@@ -37,9 +36,10 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
   logEvent,
 } from '../../services/analytics/index.js'
+import type { ToolResultBlock } from '../../types/llm.js'
 import { getAgentContext } from '../../utils/agentContext.js'
-import { errorMessage } from '../../utils/errors.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
+import { errorMessage } from '../../utils/errors.js'
 import { extractResultText, prepareForkedCommandContext } from '../../utils/forkedAgent.js'
 import { parseFrontmatter } from '../../utils/frontmatterParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -72,7 +72,9 @@ async function getAllCommands(context: ToolUseContext): Promise<Command[]> {
   const mcpSkills = context
     .getAppState()
     .mcp.commands.filter((cmd) => cmd.type === 'prompt' && cmd.loadedFrom === 'mcp')
-  if (mcpSkills.length === 0) return getCommands(getProjectRoot())
+  if (mcpSkills.length === 0) {
+    return getCommands(getProjectRoot())
+  }
   const localCommands = await getCommands(getProjectRoot())
   return uniqBy([...localCommands, ...mcpSkills], 'name')
 }
@@ -848,10 +850,18 @@ function isOfficialMarketplaceSkill(command: PromptCommand): boolean {
  * unknown schemes before we reach telemetry anyway.
  */
 function extractUrlScheme(url: string): 'gs' | 'http' | 'https' | 's3' {
-  if (url.startsWith('gs://')) return 'gs'
-  if (url.startsWith('https://')) return 'https'
-  if (url.startsWith('http://')) return 'http'
-  if (url.startsWith('s3://')) return 's3'
+  if (url.startsWith('gs://')) {
+    return 'gs'
+  }
+  if (url.startsWith('https://')) {
+    return 'https'
+  }
+  if (url.startsWith('http://')) {
+    return 'http'
+  }
+  if (url.startsWith('s3://')) {
+    return 's3'
+  }
   return 'gs'
 }
 
@@ -983,4 +993,5 @@ async function executeRemoteSkill(
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(SkillTool)

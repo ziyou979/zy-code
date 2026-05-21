@@ -10,7 +10,7 @@
  * - Support for both JS and native builds
  */
 
-import { constants as fsConstants, type Stats } from 'fs'
+import { constants as fsConstants, type Stats } from 'node:fs'
 import {
   access,
   chmod,
@@ -27,9 +27,9 @@ import {
   symlink,
   unlink,
   writeFile,
-} from 'fs/promises'
-import { homedir } from 'os'
-import { basename, delimiter, dirname, join, resolve } from 'path'
+} from 'node:fs/promises'
+import { homedir } from 'node:os'
+import { basename, delimiter, dirname, join, resolve } from 'node:path'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -212,7 +212,7 @@ async function tryWithVersionLock(
       attempts++
       if (attempts < maxAttempts) {
         // Wait before retrying with exponential backoff
-        const timeout = Math.min(minTimeout * Math.pow(2, attempts - 1), maxTimeout)
+        const timeout = Math.min(minTimeout * 2 ** (attempts - 1), maxTimeout)
         await sleep(timeout)
       }
     }
@@ -1122,7 +1122,9 @@ export async function cleanupOldVersions(): Promise<void> {
       const files = await readdir(executableDir)
       let cleanedCount = 0
       for (const file of files) {
-        if (!/^zy\.exe\.old\.\d+$/.test(file)) continue
+        if (!/^zy\.exe\.old\.\d+$/.test(file)) {
+          continue
+        }
         try {
           await unlink(join(executableDir, file))
           cleanedCount++
@@ -1225,7 +1227,9 @@ export async function cleanupOldVersions(): Promise<void> {
     // Candidate version binary — stat once, reuse for isFile/size/mtime/mode
     try {
       const stats = await stat(entryPath)
-      if (!stats.isFile()) continue
+      if (!stats.isFile()) {
+        continue
+      }
       if (process.platform !== 'win32' && stats.size > 0 && (stats.mode & 0o111) === 0) {
         // Check executability via mode bits from the existing stat result —
         // avoids a second syscall (access(X_OK)) and the TOCTOU window between
@@ -1261,7 +1265,7 @@ export async function cleanupOldVersions(): Promise<void> {
     // Identify protected versions
     const currentBinaryPath = process.execPath
     const protectedVersions = new Set<string>()
-    if (currentBinaryPath && currentBinaryPath.includes(dirs.versions)) {
+    if (currentBinaryPath?.includes(dirs.versions)) {
       protectedVersions.add(resolve(currentBinaryPath))
     }
 
@@ -1272,7 +1276,9 @@ export async function cleanupOldVersions(): Promise<void> {
 
     // Protect versions with active locks (running in other processes)
     for (const v of versionFiles) {
-      if (protectedVersions.has(v.resolvedPath)) continue
+      if (protectedVersions.has(v.resolvedPath)) {
+        continue
+      }
 
       const lockFilePath = getLockFilePathFromVersionPath(dirs, v.resolvedPath)
       let hasActiveLock = false
@@ -1407,7 +1413,9 @@ export async function cleanupShellAliases(): Promise<SetupMessage[]> {
   for (const [shellType, configFile] of Object.entries(configMap)) {
     try {
       const lines = await readFileLines(configFile)
-      if (!lines) continue
+      if (!lines) {
+        continue
+      }
 
       const { filtered, hadAlias } = filterZyAliases(lines)
 

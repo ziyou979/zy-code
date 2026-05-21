@@ -106,7 +106,9 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
 
   function replayLastChange(): void {
     const change = persistentRef.current.lastChange
-    if (!change) return
+    if (!change) {
+      return
+    }
 
     const cursor = Cursor.fromText(props.value, props.columns, textInput.offset)
     const ctx = createOperatorContext(cursor, true)
@@ -228,10 +230,15 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
 
       // Map arrow keys to motions
       let visInput = input
-      if (key.leftArrow) visInput = 'h'
-      else if (key.rightArrow) visInput = 'l'
-      else if (key.upArrow) visInput = 'k'
-      else if (key.downArrow) visInput = 'j'
+      if (key.leftArrow) {
+        visInput = 'h'
+      } else if (key.rightArrow) {
+        visInput = 'l'
+      } else if (key.upArrow) {
+        visInput = 'k'
+      } else if (key.downArrow) {
+        visInput = 'j'
+      }
 
       // Motion keys extend selection
       if (['h', 'j', 'k', 'l'].includes(visInput)) {
@@ -250,7 +257,9 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
             }
           },
           k: () => {
-            if (cursor.offset === 0) return
+            if (cursor.offset === 0) {
+              return
+            }
             const prev = cursor.text.lastIndexOf('\n', cursor.offset - 1)
             if (prev !== -1) {
               const col = cursor.offset - cursor.startOfLogicalLine().offset
@@ -273,7 +282,9 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
           e: () => cursor.endOfVimWord(),
         }
         const target = wordMap[visInput]?.()
-        if (target) textInput.setOffset(target.offset)
+        if (target) {
+          textInput.setOffset(target.offset)
+        }
         return
       }
 
@@ -378,12 +389,19 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
 
     // Map arrow keys to vim motions in NORMAL mode
     let vimInput = input
-    if (key.leftArrow) vimInput = 'h'
-    else if (key.rightArrow) vimInput = 'l'
-    else if (key.upArrow) vimInput = 'k'
-    else if (key.downArrow) vimInput = 'j'
-    else if (expectsMotion && key.backspace) vimInput = 'h'
-    else if (expectsMotion && state.command.type !== 'count' && key.delete) vimInput = 'x'
+    if (key.leftArrow) {
+      vimInput = 'h'
+    } else if (key.rightArrow) {
+      vimInput = 'l'
+    } else if (key.upArrow) {
+      vimInput = 'k'
+    } else if (key.downArrow) {
+      vimInput = 'j'
+    } else if (expectsMotion && key.backspace) {
+      vimInput = 'h'
+    } else if (expectsMotion && state.command.type !== 'count' && key.delete) {
+      vimInput = 'x'
+    }
 
     const result = transition(state.command, vimInput, ctx)
 

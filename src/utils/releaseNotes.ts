@@ -1,15 +1,14 @@
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import axios from 'axios'
-import { mkdir, readFile, writeFile } from 'fs/promises'
-import { dirname, join } from 'path'
 import { coerce } from 'semver'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { getGlobalConfig, saveGlobalConfig } from './config.js'
-import { getZyConfigHomeDir } from './envUtils.js'
+import { getZyConfigHomeDir, isInternalBuild } from './envUtils.js'
 import { toError } from './errors.js'
 import { logError } from './log.js'
 import { isEssentialTrafficOnly } from './privacyLevel.js'
 import { gt } from './semver.js'
-import { isInternalBuild } from './envUtils.js'
 
 const MAX_RELEASE_NOTES_SHOWN = 5
 
@@ -155,7 +154,9 @@ export function getStoredChangelogFromMemory(): string {
  */
 export function parseChangelog(content: string): Record<string, string[]> {
   try {
-    if (!content) return {}
+    if (!content) {
+      return {}
+    }
 
     // Parse the content
     const releaseNotes: Record<string, string[]> = {}
@@ -165,16 +166,22 @@ export function parseChangelog(content: string): Record<string, string[]> {
 
     for (const section of sections) {
       const lines = section.trim().split('\n')
-      if (lines.length === 0) continue
+      if (lines.length === 0) {
+        continue
+      }
 
       // Extract version from the first line
       // Handle both "1.2.3" and "1.2.3 - YYYY-MM-DD" formats
       const versionLine = lines[0]
-      if (!versionLine) continue
+      if (!versionLine) {
+        continue
+      }
 
       // First part before any dash is the version
       const version = versionLine.split(' - ')[0]?.trim() || ''
-      if (!version) continue
+      if (!version) {
+        continue
+      }
 
       // Extract bullet points
       const notes = lines
@@ -255,10 +262,14 @@ export function getAllReleaseNotes(
     return sortedVersions
       .map((version) => {
         const versionNotes = releaseNotes[version]
-        if (!versionNotes || versionNotes.length === 0) return null
+        if (!versionNotes || versionNotes.length === 0) {
+          return null
+        }
 
         const notes = versionNotes.filter(Boolean)
-        if (notes.length === 0) return null
+        if (notes.length === 0) {
+          return null
+        }
 
         return [version, notes] as [string, string[]]
       })

@@ -124,7 +124,9 @@ export function removeFunctionHook(
     const updatedMatchers = eventMatchers
       .map((matcher) => {
         const updatedHooks = matcher.hooks.filter((h) => {
-          if (h.hook.type !== 'function') return true
+          if (h.hook.type !== 'function') {
+            return true
+          }
           return h.hook.id !== hookId
         })
 

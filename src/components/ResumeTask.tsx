@@ -14,6 +14,7 @@ import { Byline } from './design-system/Byline.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 import { Spinner } from './Spinner.js'
 import { TeleportError } from './TeleportError.js'
+
 type Props = {
   onSelect: (session: CodeSession) => void
   onCancel: () => void
@@ -49,7 +50,9 @@ export function ResumeTask({ onSelect, onCancel, isEmbedded = false }: Props): R
       let filteredSessions = codeSessions
       if (detectedRepo) {
         filteredSessions = codeSessions.filter((session) => {
-          if (!session.repo) return false
+          if (!session.repo) {
+            return false
+          }
           const sessionRepo = `${session.repo.owner.login}/${session.repo.name}`
           return sessionRepo === detectedRepo
         })
@@ -105,7 +108,7 @@ export function ResumeTask({ onSelect, onCancel, isEmbedded = false }: Props): R
   const handleErrorComplete = useCallback(() => {
     setHasCompletedTeleportErrorFlow(true)
     void loadSessions()
-  }, [setHasCompletedTeleportErrorFlow, loadSessions])
+  }, [loadSessions])
 
   // Show error dialog if needed
   if (!hasCompletedTeleportErrorFlow) {

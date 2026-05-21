@@ -7,9 +7,9 @@
  * - finish_reason 映射
  * - usage 赋值 inputTokens/outputTokens（驼峰）
  */
-import { describe, test, expect } from 'bun:test'
-import { openAIResponseToStandard } from '../../../src/services/api/conversions/openai.js'
+import { describe, expect, test } from 'bun:test'
 import type OpenAI from 'openai'
+import { openAIResponseToStandard } from '../../../src/services/api/conversions/openai.js'
 import type { StopReason } from '../../../src/types/llm.js'
 
 function makeCompletion(args: {

@@ -4,7 +4,7 @@
  * 使用 termio 分词器进行转义序列边界检测，
  * 然后将序列解析为按键事件。
  */
-import { Buffer } from 'buffer'
+import { Buffer } from 'node:buffer'
 import { PASTE_END, PASTE_START } from './termio/csi.js'
 import { createTokenizer, type Tokenizer } from './termio/tokenize.js'
 
@@ -175,7 +175,9 @@ function parseTerminalResponse(s: string): TerminalResponse | null {
 }
 
 function splitNumericParams(params: string): number[] {
-  if (!params) return []
+  if (!params) {
+    return []
+  }
   return params.split(';').map((p) => parseInt(p, 10))
 }
 
@@ -197,7 +199,7 @@ function inputToString(input: Buffer | string): string {
   if (Buffer.isBuffer(input)) {
     if (input[0]! > 127 && input[1] === undefined) {
       ;(input[0] as unknown as number) -= 128
-      return '\x1b' + String(input)
+      return `\x1b${String(input)}`
     } else {
       return String(input)
     }
@@ -273,7 +275,7 @@ export function parseMultipleKeypresses(
         // 完整的 [\x20-] 范围会匹配像 `[MAX]` 这样批量读取的输入，
         // 并将其作为幻影点击静默丢弃。点击/拖拽的孤立事件会以可见
         // 垃圾形式泄漏；可删除的垃圾优于静默丢失。
-        const resynthesized = '\x1b' + token.value
+        const resynthesized = `\x1b${token.value}`
         const mouse = parseMouseEvent(resynthesized)
         keys.push(mouse ?? parseKeypress(resynthesized))
       } else {
@@ -569,11 +571,15 @@ export type ParsedInput = ParsedKey | ParsedMouse | ParsedResponse
  */
 function parseMouseEvent(s: string): ParsedMouse | null {
   const match = SGR_MOUSE_RE.exec(s)
-  if (!match) return null
+  if (!match) {
+    return null
+  }
   const button = parseInt(match[1]!, 10)
   // Wheel events (bit 6 set, low bits 0/1 for up/down) stay as ParsedKey
   // so the keybinding system can route them to scroll handlers.
-  if ((button & 0x40) !== 0) return null
+  if ((button & 0x40) !== 0) {
+    return null
+  }
   return {
     kind: 'mouse',
     button,
@@ -656,8 +662,12 @@ function parseKeypress(s: string = ''): ParsedKey {
   // 仍应被识别为 wheelup/wheeldown。
   if ((match = SGR_MOUSE_RE.exec(s))) {
     const button = parseInt(match[1]!, 10)
-    if ((button & 0x43) === 0x40) return createNavKey(s, 'wheelup', false)
-    if ((button & 0x43) === 0x41) return createNavKey(s, 'wheeldown', false)
+    if ((button & 0x43) === 0x40) {
+      return createNavKey(s, 'wheelup', false)
+    }
+    if ((button & 0x43) === 0x41) {
+      return createNavKey(s, 'wheeldown', false)
+    }
     // 理论上不应到达此处（parseMouseEvent 已处理非滚轮事件），但做安全处理
     return createNavKey(s, 'mouse', false)
   }
@@ -669,8 +679,12 @@ function parseKeypress(s: string = ''): ParsedKey {
   // 备用屏幕中启用鼠标跟踪，且 ScrollBox 只需要滚轮。
   if (s.length === 6 && s.startsWith('\x1b[M')) {
     const button = s.charCodeAt(3) - 32
-    if ((button & 0x43) === 0x40) return createNavKey(s, 'wheelup', false)
-    if ((button & 0x43) === 0x41) return createNavKey(s, 'wheeldown', false)
+    if ((button & 0x43) === 0x40) {
+      return createNavKey(s, 'wheelup', false)
+    }
+    if ((button & 0x43) === 0x41) {
+      return createNavKey(s, 'wheeldown', false)
+    }
     return createNavKey(s, 'mouse', false)
   }
 

@@ -188,16 +188,23 @@ export class TerminalQuerier {
     const idx = this.queue.findIndex((p) => p.kind === 'query' && p.match(r))
     if (idx !== -1) {
       const [q] = this.queue.splice(idx, 1)
-      if (q?.kind === 'query') q.resolve(r)
+      if (q?.kind === 'query') {
+        q.resolve(r)
+      }
       return
     }
 
     if (r.type === 'da1') {
       const s = this.queue.findIndex((p) => p.kind === 'sentinel')
-      if (s === -1) return
+      if (s === -1) {
+        return
+      }
       for (const p of this.queue.splice(0, s + 1)) {
-        if (p.kind === 'query') p.resolve(undefined)
-        else p.resolve()
+        if (p.kind === 'query') {
+          p.resolve(undefined)
+        } else {
+          p.resolve()
+        }
       }
     }
   }

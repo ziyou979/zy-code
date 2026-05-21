@@ -152,7 +152,9 @@ function getEncoder(encoding: TiktokenEncoding): ReturnType<typeof getEncoding> 
  * @returns token 数量
  */
 export function countTokensLocally(text: string, model: string): number {
-  if (!text) return 0
+  if (!text) {
+    return 0
+  }
 
   const encoding = getEncodingForModel(model)
   const encoder = getEncoder(encoding)
@@ -168,7 +170,9 @@ export function countTokensLocally(text: string, model: string): number {
  * @returns 总 token 数量
  */
 export function countTokensBatchLocally(texts: string[], model: string): number {
-  if (texts.length === 0) return 0
+  if (texts.length === 0) {
+    return 0
+  }
 
   const encoding = getEncodingForModel(model)
   const encoder = getEncoder(encoding)

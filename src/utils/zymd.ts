@@ -26,10 +26,10 @@
  */
 
 import { feature } from 'bun:bundle'
+import { basename, dirname, extname, isAbsolute, join, parse, relative, sep } from 'node:path'
 import ignore from 'ignore'
 import memoize from 'lodash-es/memoize.js'
 import { Lexer } from 'marked'
-import { basename, dirname, extname, isAbsolute, join, parse, relative, sep } from 'path'
 import picomatch from 'picomatch'
 import { logEvent } from 'src/services/analytics/index.js'
 import { getAdditionalDirectoriesForzyMd, getOriginalCwd } from '../bootstrap/state.js'
@@ -442,14 +442,18 @@ function extractIncludePathsFromTokens(
     let match
     while ((match = includeRegex.exec(textContent)) !== null) {
       let path = match[1]
-      if (!path) continue
+      if (!path) {
+        continue
+      }
 
       // Strip fragment identifiers (#heading, #section-name, etc.)
       const hashIndex = path.indexOf('#')
       if (hashIndex !== -1) {
         path = path.substring(0, hashIndex)
       }
-      if (!path) continue
+      if (!path) {
+        continue
+      }
 
       // Unescape the spaces in the path
       path = path.replace(/\\ /g, ' ')
@@ -625,7 +629,7 @@ export async function processMemoryFile(
     type,
     resolvedPath,
   )
-  if (!memoryFile || !memoryFile.content.trim()) {
+  if (!memoryFile?.content.trim()) {
     return []
   }
 
@@ -958,12 +962,12 @@ export const getMemoryFiles = memoize(
       logEvent('zy_Zymd__initial_load', {
         file_count: result.length,
         total_content_length: totalContentLength,
-        user_count: typeCounts['User'] ?? 0,
-        project_count: typeCounts['Project'] ?? 0,
-        local_count: typeCounts['Local'] ?? 0,
-        managed_count: typeCounts['Managed'] ?? 0,
-        automem_count: typeCounts['AutoMem'] ?? 0,
-        ...(feature('TEAMMEM') ? { teammem_count: typeCounts['TeamMem'] ?? 0 } : {}),
+        user_count: typeCounts.User ?? 0,
+        project_count: typeCounts.Project ?? 0,
+        local_count: typeCounts.Local ?? 0,
+        managed_count: typeCounts.Managed ?? 0,
+        automem_count: typeCounts.AutoMem ?? 0,
+        ...(feature('TEAMMEM') ? { teammem_count: typeCounts.TeamMem ?? 0 } : {}),
         duration_ms: Date.now() - startTime,
       })
     }
@@ -984,7 +988,9 @@ export const getMemoryFiles = memoize(
       const eagerLoadReason = consumeNextEagerLoadReason()
       if (eagerLoadReason !== undefined && hasInstructionsLoadedHook()) {
         for (const file of result) {
-          if (!isInstructionsMemoryType(file.type)) continue
+          if (!isInstructionsMemoryType(file.type)) {
+            continue
+          }
           const loadReason = file.parent ? 'include' : eagerLoadReason
           void executeInstructionsLoadedHooks(file.path, file.type, loadReason, {
             globs: file.globs,
@@ -1017,7 +1023,9 @@ let nextEagerLoadReason: InstructionsLoadReason = 'session_start'
 let shouldFireHook = true
 
 function consumeNextEagerLoadReason(): InstructionsLoadReason | undefined {
-  if (!shouldFireHook) return undefined
+  if (!shouldFireHook) {
+    return undefined
+  }
   shouldFireHook = false
   const reason = nextEagerLoadReason
   nextEagerLoadReason = 'session_start'
@@ -1056,7 +1064,9 @@ export function getLargeMemoryFiles(files: MemoryFileInfo[]): MemoryFileInfo[] {
  */
 export function filterInjectedMemoryFiles(files: MemoryFileInfo[]): MemoryFileInfo[] {
   const skipMemoryIndex = getFeatureValue_CACHED_MAY_BE_STALE('zy_moth_copse', false)
-  if (!skipMemoryIndex) return files
+  if (!skipMemoryIndex) {
+    return files
+  }
   return files.filter((f) => f.type !== 'AutoMem' && f.type !== 'TeamMem')
 }
 
@@ -1068,8 +1078,12 @@ export const getzyMds = (
   const skipProjectLevel = getFeatureValue_CACHED_MAY_BE_STALE('zy_paper_halyard', false)
 
   for (const file of memoryFiles) {
-    if (filter && !filter(file.type)) continue
-    if (skipProjectLevel && (file.type === 'Project' || file.type === 'Local')) continue
+    if (filter && !filter(file.type)) {
+      continue
+    }
+    if (skipProjectLevel && (file.type === 'Project' || file.type === 'Local')) {
+      continue
+    }
     if (file.content) {
       const description =
         file.type === 'Project'

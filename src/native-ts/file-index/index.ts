@@ -46,9 +46,6 @@ export class FileIndex {
   private charBits: Int32Array = new Int32Array(0)
   private pathLens: Uint16Array = new Uint16Array(0)
   private topLevelCache: SearchResult[] | null = null
-  // During async build, tracks how many paths have bitmap/lowerPath filled.
-  // search() uses this to search the ready prefix while build continues.
-  private readyCount = 0
 
   /**
    * Load paths from an array of strings.
@@ -158,7 +155,9 @@ export class FileIndex {
     let bits = 0
     for (let j = 0; j < len; j++) {
       const c = lp.charCodeAt(j)
-      if (c >= 97 && c <= 122) bits |= 1 << (c - 97)
+      if (c >= 97 && c <= 122) {
+        bits |= 1 << (c - 97)
+      }
     }
     this.charBits[i] = bits
   }
@@ -168,7 +167,9 @@ export class FileIndex {
    * Returns top N results sorted by match score.
    */
   search(query: string, limit: number): SearchResult[] {
-    if (limit <= 0) return []
+    if (limit <= 0) {
+      return []
+    }
     if (query.length === 0) {
       if (this.topLevelCache) {
         return this.topLevelCache.slice(0, limit)
@@ -186,7 +187,9 @@ export class FileIndex {
       const ch = needle.charAt(j)
       needleChars[j] = ch
       const cc = ch.charCodeAt(0)
-      if (cc >= 97 && cc <= 122) needleBitmap |= 1 << (cc - 97)
+      if (cc >= 97 && cc <= 122) {
+        needleBitmap |= 1 << (cc - 97)
+      }
     }
 
     // Upper bound on score assuming every match gets the max boundary bonus.
@@ -203,7 +206,9 @@ export class FileIndex {
 
     outer: for (let i = 0; i < readyCount; i++) {
       // O(1) bitmap reject: path must contain every letter in the needle
-      if ((charBits[i]! & needleBitmap) !== needleBitmap) continue
+      if ((charBits[i]! & needleBitmap) !== needleBitmap) {
+        continue
+      }
 
       const haystack = caseSensitive ? paths[i]! : lowerPaths[i]!
 
@@ -212,18 +217,25 @@ export class FileIndex {
       // found here are identical to what the charCodeAt scorer would find, so
       // we score directly from them — no second scan.
       let pos = haystack.indexOf(needleChars[0]!)
-      if (pos === -1) continue
+      if (pos === -1) {
+        continue
+      }
       posBuf[0] = pos
       let gapPenalty = 0
       let consecBonus = 0
       let prev = pos
       for (let j = 1; j < nLen; j++) {
         pos = haystack.indexOf(needleChars[j]!, prev + 1)
-        if (pos === -1) continue outer
+        if (pos === -1) {
+          continue outer
+        }
         posBuf[j] = pos
         const gap = pos - prev - 1
-        if (gap === 0) consecBonus += BONUS_CONSECUTIVE
-        else gapPenalty += PENALTY_GAP_START + gap * PENALTY_GAP_EXTENSION
+        if (gap === 0) {
+          consecBonus += BONUS_CONSECUTIVE
+        } else {
+          gapPenalty += PENALTY_GAP_START + gap * PENALTY_GAP_EXTENSION
+        }
         prev = pos
       }
 
@@ -254,8 +266,11 @@ export class FileIndex {
         let hi = topK.length
         while (lo < hi) {
           const mid = (lo + hi) >> 1
-          if (topK[mid]!.fuzzScore < score) lo = mid + 1
-          else hi = mid
+          if (topK[mid]!.fuzzScore < score) {
+            lo = mid + 1
+          } else {
+            hi = mid
+          }
         }
         topK.splice(lo, 0, { path, fuzzScore: score })
         topK.shift()
@@ -286,10 +301,16 @@ export class FileIndex {
  * path. `first` enables the start-of-string bonus (only for needle[0]).
  */
 function scoreBonusAt(path: string, pos: number, first: boolean): number {
-  if (pos === 0) return first ? BONUS_FIRST_CHAR : 0
+  if (pos === 0) {
+    return first ? BONUS_FIRST_CHAR : 0
+  }
   const prevCh = path.charCodeAt(pos - 1)
-  if (isBoundary(prevCh)) return BONUS_BOUNDARY
-  if (isLower(prevCh) && isUpper(path.charCodeAt(pos))) return BONUS_CAMEL
+  if (isBoundary(prevCh)) {
+    return BONUS_BOUNDARY
+  }
+  if (isLower(prevCh) && isUpper(path.charCodeAt(pos))) {
+    return BONUS_CAMEL
+  }
   return 0
 }
 
@@ -340,14 +361,18 @@ function computeTopLevelEntries(paths: string[], limit: number): SearchResult[] 
     const segment = p.slice(0, end)
     if (segment.length > 0) {
       topLevel.add(segment)
-      if (topLevel.size >= limit) break
+      if (topLevel.size >= limit) {
+        break
+      }
     }
   }
 
   const sorted = Array.from(topLevel)
   sorted.sort((a, b) => {
     const lenDiff = a.length - b.length
-    if (lenDiff !== 0) return lenDiff
+    if (lenDiff !== 0) {
+      return lenDiff
+    }
     return a < b ? -1 : a > b ? 1 : 0
   })
 

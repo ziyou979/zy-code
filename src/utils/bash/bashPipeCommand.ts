@@ -248,7 +248,7 @@ function containsControlStructure(command: string): boolean {
  *   → eval concatenates args to 'cmd < /dev/null', redirect applies to LAST pipe command
  */
 function quoteWithEvalStdinRedirect(command: string): string {
-  return singleQuoteForEval(command) + ' < /dev/null'
+  return `${singleQuoteForEval(command)} < /dev/null`
 }
 
 /**
@@ -259,7 +259,7 @@ function quoteWithEvalStdinRedirect(command: string): string {
  * like `select(.x != .y)` into `select(.x \!= .y)`.
  */
 function singleQuoteForEval(s: string): string {
-  return "'" + s.replace(/'/g, `'"'"'`) + "'"
+  return `'${s.replace(/'/g, `'"'"'`)}'`
 }
 
 /**

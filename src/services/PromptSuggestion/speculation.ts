@@ -1,7 +1,7 @@
-import { randomUUID } from 'crypto'
-import { rm } from 'fs'
-import { appendFile, copyFile, mkdir } from 'fs/promises'
-import { dirname, isAbsolute, join, relative } from 'path'
+import { randomUUID } from 'node:crypto'
+import { rm } from 'node:fs'
+import { appendFile, copyFile, mkdir } from 'node:fs/promises'
+import { dirname, isAbsolute, join, relative } from 'node:path'
 import { getCwdState } from '../../bootstrap/state.js'
 import type { CompletionBoundary } from '../../state/AppStateStore.js'
 import {
@@ -17,8 +17,8 @@ import type { Message } from '../../types/message.js'
 import { createChildAbortController } from '../../utils/abortController.js'
 import { count } from '../../utils/array.js'
 import { getGlobalConfig } from '../../utils/config.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { logForDebugging } from '../../utils/debug.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import {
   type FileStateCache,
@@ -156,7 +156,9 @@ function countToolsInMessages(messages: Message[]): number {
 }
 
 function getBoundaryTool(boundary: CompletionBoundary | null): string | undefined {
-  if (!boundary) return undefined
+  if (!boundary) {
+    return undefined
+  }
   switch (boundary.type) {
     case 'bash':
       return 'Bash'
@@ -169,7 +171,9 @@ function getBoundaryTool(boundary: CompletionBoundary | null): string | undefine
 }
 
 function getBoundaryDetail(boundary: CompletionBoundary | null): string | undefined {
-  if (!boundary) return undefined
+  if (!boundary) {
+    return undefined
+  }
   switch (boundary.type) {
     case 'bash':
       return boundary.command.slice(0, 200)
@@ -230,17 +234,25 @@ export function prepareMessagesForInjection(messages: Message[]): Message[] {
 
   return messages
     .map((msg) => {
-      if (!('message' in msg) || !Array.isArray((msg.message as any).content)) return msg
+      if (!('message' in msg) || !Array.isArray((msg.message as any).content)) {
+        return msg
+      }
       const content = ((msg.message as any).content as any[]).filter(keep)
-      if (content.length === (msg.message as any).content.length) return msg
-      if (content.length === 0) return null
+      if (content.length === (msg.message as any).content.length) {
+        return msg
+      }
+      if (content.length === 0) {
+        return null
+      }
       // Drop messages where all remaining blocks are whitespace-only text
       // (API rejects these with 400: "text content blocks must contain non-whitespace text")
       const hasNonWhitespaceContent = content.some(
         (b: { type: string; text?: string }) =>
           b.type !== 'text' || (b.text !== undefined && b.text.trim() !== ''),
       )
-      if (!hasNonWhitespaceContent) return null
+      if (!hasNonWhitespaceContent) {
+        return null
+      }
       return { ...msg, message: { ...msg.message, content } } as typeof msg
     })
     .filter((m): m is Message => m !== null)
@@ -252,9 +264,13 @@ function createSpeculationFeedbackMessage(
   timeSavedMs: number,
   sessionTotalMs: number,
 ): Message | null {
-  if (!isInternalBuild()) return null
+  if (!isInternalBuild()) {
+    return null
+  }
 
-  if (messages.length === 0 || timeSavedMs === 0) return null
+  if (messages.length === 0 || timeSavedMs === 0) {
+    return null
+  }
 
   const toolUses = countToolsInMessages(messages)
   const tokens = boundary?.type === 'complete' ? boundary.outputTokens : null
@@ -286,14 +302,18 @@ function updateActiveSpeculationState(
   updater: (state: ActiveSpeculationState) => Partial<ActiveSpeculationState>,
 ): void {
   setAppState((prev) => {
-    if (prev.speculation.status !== 'active') return prev
+    if (prev.speculation.status !== 'active') {
+      return prev
+    }
     const current = prev.speculation as ActiveSpeculationState
     const updates = updater(current)
     // Check if any values actually changed to avoid unnecessary re-renders
     const hasChanges = Object.entries(updates).some(
       ([key, value]) => current[key as keyof ActiveSpeculationState] !== value,
     )
-    if (!hasChanges) return prev
+    if (!hasChanges) {
+      return prev
+    }
     return {
       ...prev,
       speculation: { ...current, ...updates },
@@ -303,7 +323,9 @@ function updateActiveSpeculationState(
 
 function resetSpeculationState(setAppState: SetAppState): void {
   setAppState((prev) => {
-    if (prev.speculation.status === 'idle') return prev
+    if (prev.speculation.status === 'idle') {
+      return prev
+    }
     return { ...prev, speculation: IDLE_SPECULATION_STATE }
   })
 }
@@ -339,7 +361,9 @@ async function generatePipelinedSuggestion(
     }
 
     const pipelineAbortController = createChildAbortController(parentAbortController)
-    if (pipelineAbortController.signal.aborted) return
+    if (pipelineAbortController.signal.aborted) {
+      return
+    }
 
     const promptId = getPromptVariant()
     const { suggestion, generationRequestId } = await generateSuggestion(
@@ -348,8 +372,12 @@ async function generatePipelinedSuggestion(
       createCacheSafeParams(augmentedContext),
     )
 
-    if (pipelineAbortController.signal.aborted) return
-    if (shouldFilterSuggestion(suggestion, promptId)) return
+    if (pipelineAbortController.signal.aborted) {
+      return
+    }
+    if (shouldFilterSuggestion(suggestion, promptId)) {
+      return
+    }
 
     logForDebugging(`[Speculation] Pipelined suggestion: "${suggestion!.slice(0, 50)}..."`)
     updateActiveSpeculationState(setAppState, () => ({
@@ -360,7 +388,9 @@ async function generatePipelinedSuggestion(
       },
     }))
   } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') return
+    if (error instanceof Error && error.name === 'AbortError') {
+      return
+    }
     logForDebugging(`[Speculation] Pipelined suggestion failed: ${errorMessage(error)}`)
   }
 }
@@ -372,7 +402,9 @@ export async function startSpeculation(
   isPipelined = false,
   cacheSafeParams?: CacheSafeParams,
 ): Promise<void> {
-  if (!isSpeculationEnabled()) return
+  if (!isSpeculationEnabled()) {
+    return
+  }
 
   // Abort any existing speculation before starting a new one
   abortSpeculation(setAppState)
@@ -381,7 +413,9 @@ export async function startSpeculation(
 
   const abortController = createChildAbortController(context.toolUseContext.abortController)
 
-  if (abortController.signal.aborted) return
+  if (abortController.signal.aborted) {
+    return
+  }
 
   const startTime = Date.now()
   const messagesRef = { current: [] as Message[] }
@@ -606,7 +640,9 @@ export async function startSpeculation(
       },
     })
 
-    if (abortController.signal.aborted) return
+    if (abortController.signal.aborted) {
+      return
+    }
 
     updateActiveSpeculationState(setAppState, () => ({
       boundary: {
@@ -659,7 +695,9 @@ export async function acceptSpeculation(
   setAppState: (f: (prev: AppState) => AppState) => void,
   cleanMessageCount: number,
 ): Promise<SpeculationResult | null> {
-  if (state.status !== 'active') return null
+  if (state.status !== 'active') {
+    return null
+  }
 
   const { id, messagesRef, writtenPathsRef, abort, startTime, suggestionLength, isPipelined } =
     state
@@ -710,7 +748,7 @@ export async function acceptSpeculation(
       timestamp: new Date().toISOString(),
       timeSavedMs,
     }
-    void appendFile(getTranscriptPath(), jsonStringify(entry) + '\n', {
+    void appendFile(getTranscriptPath(), `${jsonStringify(entry)}\n`, {
       mode: 0o600,
     }).catch(() => {
       logForDebugging('[Speculation] Failed to write speculation-accept to transcript')
@@ -722,7 +760,9 @@ export async function acceptSpeculation(
 
 export function abortSpeculation(setAppState: SetAppState): void {
   setAppState((prev) => {
-    if (prev.speculation.status !== 'active') return prev
+    if (prev.speculation.status !== 'active') {
+      return prev
+    }
 
     const { id, abort, startTime, boundary, suggestionLength, messagesRef, isPipelined } =
       prev.speculation

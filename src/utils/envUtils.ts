@@ -1,6 +1,6 @@
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { homedir } from 'os'
-import { join } from 'path'
 
 /**
  * Checks if this is an internal (zy-super) build.
@@ -61,16 +61,26 @@ export function hasNodeOption(flag: string): boolean {
 }
 
 export function isEnvTruthy(envVar: string | boolean | undefined): boolean {
-  if (!envVar) return false
-  if (typeof envVar === 'boolean') return envVar
+  if (!envVar) {
+    return false
+  }
+  if (typeof envVar === 'boolean') {
+    return envVar
+  }
   const normalizedValue = envVar.toLowerCase().trim()
   return ['1', 'true', 'yes', 'on'].includes(normalizedValue)
 }
 
 export function isEnvDefinedFalsy(envVar: string | boolean | undefined): boolean {
-  if (envVar === undefined) return false
-  if (typeof envVar === 'boolean') return !envVar
-  if (!envVar) return false
+  if (envVar === undefined) {
+    return false
+  }
+  if (typeof envVar === 'boolean') {
+    return !envVar
+  }
+  if (!envVar) {
+    return false
+  }
   const normalizedValue = envVar.toLowerCase().trim()
   return ['0', 'false', 'no', 'off'].includes(normalizedValue)
 }

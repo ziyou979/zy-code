@@ -10,13 +10,13 @@
  * skips that attachment. The message still reaches ZY, just without @path.
  */
 
-import type { ContentBlock } from '../types/llm.js'
+import { randomUUID } from 'node:crypto'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { basename, join } from 'node:path'
 import axios from 'axios'
-import { randomUUID } from 'crypto'
-import { mkdir, writeFile } from 'fs/promises'
-import { basename, join } from 'path'
 import { z } from 'zod/v4'
 import { getSessionId } from '../bootstrap/state.js'
+import type { ContentBlock } from '../types/llm.js'
 import { logForDebugging } from '../utils/debug.js'
 import { getZyConfigHomeDir } from '../utils/envUtils.js'
 import { lazySchema } from '../utils/lazySchema.js'
@@ -122,14 +122,18 @@ async function resolveOne(att: InboundAttachment): Promise<string | undefined> {
  * @path refs. Empty string if none resolved.
  */
 export async function resolveInboundAttachments(attachments: InboundAttachment[]): Promise<string> {
-  if (attachments.length === 0) return ''
+  if (attachments.length === 0) {
+    return ''
+  }
   debug(`resolving ${attachments.length} attachment(s)`)
   const paths = await Promise.all(attachments.map(resolveOne))
   const ok = paths.filter((p): p is string => p !== undefined)
-  if (ok.length === 0) return ''
+  if (ok.length === 0) {
+    return ''
+  }
   // Quoted form — extractAtMentionedFiles truncates unquoted @refs at the
   // first space, which breaks any home dir with spaces (/Users/John Smith/).
-  return ok.map((p) => `@"${p}"`).join(' ') + ' '
+  return `${ok.map((p) => `@"${p}"`).join(' ')} `
 }
 
 /**
@@ -142,8 +146,12 @@ export function prependPathRefs(
   content: string | Array<ContentBlock>,
   prefix: string,
 ): string | Array<ContentBlock> {
-  if (!prefix) return content
-  if (typeof content === 'string') return prefix + content
+  if (!prefix) {
+    return content
+  }
+  if (typeof content === 'string') {
+    return prefix + content
+  }
   const i = content.findLastIndex((b) => b.type === 'text')
   if (i !== -1) {
     const b = content[i]!
@@ -164,7 +172,9 @@ export async function resolveAndPrepend(
   content: string | Array<ContentBlock>,
 ): Promise<string | Array<ContentBlock>> {
   const attachments = extractInboundAttachments(msg)
-  if (attachments.length === 0) return content
+  if (attachments.length === 0) {
+    return content
+  }
   const prefix = await resolveInboundAttachments(attachments)
   return prependPathRefs(content, prefix)
 }

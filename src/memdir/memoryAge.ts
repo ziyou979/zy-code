@@ -14,8 +14,12 @@ export function memoryAgeDays(mtimeMs: number): number {
  */
 export function memoryAge(mtimeMs: number): string {
   const d = memoryAgeDays(mtimeMs)
-  if (d === 0) return 'today'
-  if (d === 1) return 'yesterday'
+  if (d === 0) {
+    return 'today'
+  }
+  if (d === 1) {
+    return 'yesterday'
+  }
   return `${d} days ago`
 }
 
@@ -32,7 +36,9 @@ export function memoryAge(mtimeMs: number): string {
  */
 export function memoryFreshnessText(mtimeMs: number): string {
   const d = memoryAgeDays(mtimeMs)
-  if (d <= 1) return ''
+  if (d <= 1) {
+    return ''
+  }
   return (
     `This memory is ${d} days old. ` +
     `Memories are point-in-time observations, not live state — ` +
@@ -48,6 +54,8 @@ export function memoryFreshnessText(mtimeMs: number): string {
  */
 export function memoryFreshnessNote(mtimeMs: number): string {
   const text = memoryFreshnessText(mtimeMs)
-  if (!text) return ''
+  if (!text) {
+    return ''
+  }
   return `<system-reminder>${text}</system-reminder>\n`
 }

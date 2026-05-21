@@ -1,6 +1,7 @@
 import { structuredPatch } from 'diff'
 
 type StructuredPatchHunk = any
+
 import { logEvent } from 'src/services/analytics/index.js'
 import { getLocCounter } from '../bootstrap/state.js'
 import { addToTotalLinesChanged } from '../cost-tracker.js'
@@ -20,7 +21,9 @@ export function adjustHunkLineNumbers(
   hunks: StructuredPatchHunk[],
   offset: number,
 ): StructuredPatchHunk[] {
-  if (offset === 0) return hunks
+  if (offset === 0) {
+    return hunks
+  }
   return hunks.map((h) => ({
     ...h,
     oldStart: h.oldStart + offset,

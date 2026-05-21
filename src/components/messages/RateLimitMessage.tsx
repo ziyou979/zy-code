@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Box, Text } from 'src/ink.js'
-import { useZyAiLimits } from 'src/services/zyAiLimitsHook.js'
 import { shouldProcessMockLimits } from 'src/services/rateLimitMocking.js' // Used for /mock-limits command
+import { useZyAiLimits } from 'src/services/zyAiLimitsHook.js'
 import { getRateLimitTier, getSubscriptionType, isZyAISubscriber } from 'src/utils/auth.js'
 import { hasZyAiBillingAccess } from 'src/utils/billing.js'
-import { MessageResponse } from '../MessageResponse.js'
 import { tSync } from '../../i18n/index.js'
+import { MessageResponse } from '../MessageResponse.js'
+
 type UpsellParams = {
   shouldShowUpsell: boolean
   isMax20x: boolean
@@ -22,7 +23,9 @@ export function getUpsellMessage({
   isTeamOrEnterprise,
   hasBillingAccess,
 }: UpsellParams): string | null {
-  if (!shouldShowUpsell) return null
+  if (!shouldShowUpsell) {
+    return null
+  }
   if (isMax20x) {
     if (isExtraUsageCommandEnabled) {
       return tSync('rateLimit.upsell.extraUsage')
@@ -36,7 +39,9 @@ export function getUpsellMessage({
     return tSync('rateLimit.upsell.upgrade')
   }
   if (isTeamOrEnterprise) {
-    if (!isExtraUsageCommandEnabled) return null
+    if (!isExtraUsageCommandEnabled) {
+      return null
+    }
     if (hasBillingAccess) {
       return tSync('rateLimit.upsell.extraUsage')
     }

@@ -1,8 +1,8 @@
-import { readFile } from 'fs/promises'
+import { readFile } from 'node:fs/promises'
 import memoize from 'lodash-es/memoize.js'
 import type { ToolPermissionContext } from '../Tool.js'
-import { jsonStringify } from '../utils/slowOperations.js'
 import { isInternalBuild } from '../utils/envUtils.js'
+import { jsonStringify } from '../utils/slowOperations.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -51,7 +51,7 @@ export const getContainerId = memoize(async (): Promise<string | null> => {
 
     for (const line of lines) {
       const match = line.match(containerIdPattern)
-      if (match && match[1]) {
+      if (match?.[1]) {
         return match[1]
       }
     }

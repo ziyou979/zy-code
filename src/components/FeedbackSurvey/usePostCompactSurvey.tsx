@@ -11,6 +11,7 @@ import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isCompactBoundaryMessage } from '../../utils/messages.js'
 import { logOTelEvent } from '../../utils/telemetry/events.js'
 import { useSurveyState } from './useSurveyState.js'
+
 const HIDE_THANKS_AFTER_MS = 3000
 const POST_COMPACT_SURVEY_GATE = 'zy_post_compact_survey'
 const SURVEY_PROBABILITY = 0.2 // Show survey 20% of the time after compaction

@@ -27,9 +27,15 @@ export function useAutoModeUnavailableNotification(): void {
     const prevMode = prevModeRef.current
     prevModeRef.current = mode
 
-    if (!feature('TRANSCRIPT_CLASSIFIER')) return
-    if (getIsRemoteMode()) return
-    if (shownRef.current) return
+    if (!feature('TRANSCRIPT_CLASSIFIER')) {
+      return
+    }
+    if (getIsRemoteMode()) {
+      return
+    }
+    if (shownRef.current) {
+      return
+    }
 
     const wrappedPastAutoSlot =
       mode === 'default' &&
@@ -38,10 +44,14 @@ export function useAutoModeUnavailableNotification(): void {
       !isAutoModeAvailable &&
       hasAutoModeOptIn()
 
-    if (!wrappedPastAutoSlot) return
+    if (!wrappedPastAutoSlot) {
+      return
+    }
 
     const reason = getAutoModeUnavailableReason()
-    if (!reason) return
+    if (!reason) {
+      return
+    }
 
     shownRef.current = true
     addNotification({

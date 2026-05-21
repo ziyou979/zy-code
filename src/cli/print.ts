@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle'
-import { readFile, stat } from 'fs/promises'
-import { dirname } from 'path'
+import { readFile, stat } from 'node:fs/promises'
+import { dirname } from 'node:path'
 import { downloadUserSettings, redownloadUserSettings } from 'src/services/settingsSync/index.js'
 import { waitForRemoteManagedSettingsToLoad } from 'src/services/remoteManagedSettings/index.js'
 import { StructuredIO } from 'src/cli/structuredIO.js'
@@ -111,10 +111,10 @@ import type {
   SDKControlMcpSetServersResponse,
   SDKControlReloadPluginsResponse,
 } from 'src/entrypoints/sdk/controlTypes.js'
-// @ts-ignore
+// @ts-expect-error
 import type { PermissionMode } from '@anthropic-ai/zy-agent-sdk'
 import type { PermissionMode as InternalPermissionMode } from 'src/types/permissions.js'
-import { cwd } from 'process'
+import { cwd } from 'node:process'
 import { getCwd } from 'src/utils/cwd.js'
 import omit from 'lodash-es/omit.js'
 import reject from 'lodash-es/reject.js'
@@ -252,8 +252,8 @@ import {
   type ChannelEntry,
 } from 'src/bootstrap/state.js'
 import { runWithWorkload, WORKLOAD_CRON } from 'src/utils/workloadContext.js'
-import type { UUID } from 'crypto'
-import { randomUUID } from 'crypto'
+import type { UUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import type { ContentBlock } from '../types/llm.js'
 import type { AppState } from 'src/state/AppStateStore.js'
 import {
@@ -374,7 +374,9 @@ function toBlocks(v: PromptValue): ContentBlock[] {
  * to blocks and concatenated.
  */
 export function joinPromptValues(values: PromptValue[]): PromptValue {
-  if (values.length === 1) return values[0]!
+  if (values.length === 1) {
+    return values[0]!
+  }
   if (values.every((v) => typeof v === 'string')) {
     return values.join('\n')
   }
@@ -837,10 +839,10 @@ export async function runHeadless(
         throw new Error('No messages returned')
       }
       if (options.verbose) {
-        writeToStdout(jsonStringify(messages) + '\n')
+        writeToStdout(`${jsonStringify(messages)}\n`)
         break
       }
-      writeToStdout(jsonStringify(lastMessage) + '\n')
+      writeToStdout(`${jsonStringify(lastMessage)}\n`)
       break
     case 'stream-json':
       // already logged above
@@ -852,7 +854,7 @@ export async function runHeadless(
       switch (lastMessage.subtype) {
         case 'success':
           writeToStdout(
-            lastMessage.result.endsWith('\n') ? lastMessage.result : lastMessage.result + '\n',
+            lastMessage.result.endsWith('\n') ? lastMessage.result : `${lastMessage.result}\n`,
           )
           break
         case 'error_during_execution':
@@ -953,7 +955,9 @@ function runHeadlessStreaming(
   registerCleanup(async () => {
     const bg: Record<string, number> = {}
     for (const t of getRunningTasks(getAppState())) {
-      if (isBackgroundTask(t)) bg[t.type] = (bg[t.type] ?? 0) + 1
+      if (isBackgroundTask(t)) {
+        bg[t.type] = (bg[t.type] ?? 0) + 1
+      }
     }
     logForDiagnosticsNoPII('info', 'run_state_at_shutdown', {
       run_active: running,
@@ -1380,7 +1384,9 @@ function runHeadlessStreaming(
   // recentPostedUUIDs) — the index cursor here is a pre-filter to avoid
   // O(n) re-scanning of already-sent messages on every call.
   function forwardMessagesToBridge(): void {
-    if (!bridgeHandle) return
+    if (!bridgeHandle) {
+      return
+    }
     // Guard against mutableMessages shrinking (compaction truncates it).
     const startIndex = Math.min(bridgeLastForwardedIndex, mutableMessages.length)
     const newMessages = mutableMessages
@@ -1679,8 +1685,7 @@ function runHeadlessStreaming(
       ? () => {
           setTimeout(() => {
             if (
-              !proactiveModule ||
-              !proactiveModule.isProactiveActive() ||
+              !proactiveModule?.isProactiveActive() ||
               proactiveModule.isProactivePaused() ||
               inputClosed
             ) {
@@ -2099,7 +2104,9 @@ function runHeadlessStreaming(
                     cacheSafeParams,
                     'sdk',
                   )
-                  if (!result || localAbort.signal.aborted) return
+                  if (!result || localAbort.signal.aborted) {
+                    return
+                  }
                   const suggestionMsg = {
                     type: 'prompt_suggestion' as const,
                     suggestion: result.suggestion,
@@ -2348,8 +2355,12 @@ function runHeadlessStreaming(
 
                   // Remove from teamContext in AppState
                   setAppState((prev) => {
-                    if (!prev.teamContext?.teammates) return prev
-                    if (!(teammateId in prev.teamContext.teammates)) return prev
+                    if (!prev.teamContext?.teammates) {
+                      return prev
+                    }
+                    if (!(teammateId in prev.teamContext.teammates)) {
+                      return prev
+                    }
                     const { [teammateId]: _, ...remainingTeammates } = prev.teamContext.teammates
                     return {
                       ...prev,
@@ -2468,7 +2479,9 @@ function runHeadlessStreaming(
   if (feature('AGENT_TRIGGERS') && cronSchedulerModule && cronGate?.isKairosCronEnabled()) {
     cronScheduler = cronSchedulerModule.createCronScheduler({
       onFire: (prompt) => {
-        if (inputClosed) return
+        if (inputClosed) {
+          return
+        }
         enqueue({
           mode: 'prompt',
           value: prompt,
@@ -2493,10 +2506,10 @@ function runHeadlessStreaming(
     cronScheduler.start()
   }
 
-  const sendControlResponseSuccess = function (
+  const sendControlResponseSuccess = (
     message: SDKControlRequest,
     response?: Record<string, unknown>,
-  ) {
+  ) => {
     output.enqueue({
       type: 'control_response',
       response: {
@@ -2507,7 +2520,7 @@ function runHeadlessStreaming(
     })
   }
 
-  const sendControlResponseError = function (message: SDKControlRequest, errorMessage: string) {
+  const sendControlResponseError = (message: SDKControlRequest, errorMessage: string) => {
     output.enqueue({
       type: 'control_response',
       response: {
@@ -2647,7 +2660,9 @@ function runHeadlessStreaming(
           // sessions, but the SDK consumer explicitly requested suggestions.
           if (message.request.promptSuggestions) {
             setAppState((prev) => {
-              if (prev.promptSuggestionEnabled) return prev
+              if (prev.promptSuggestionEnabled) {
+                return prev
+              }
               return { ...prev, promptSuggestionEnabled: true }
             })
           }
@@ -3571,7 +3586,7 @@ function runHeadlessStreaming(
             enabled: boolean
           }
           if (req.enabled) {
-            if (!proactiveModule || !proactiveModule.isProactiveActive()) {
+            if (!proactiveModule?.isProactiveActive()) {
               proactiveModule.activateProactive('command')
               scheduleProactiveTick!()
             }
@@ -3607,7 +3622,9 @@ function runHeadlessStreaming(
                 const handle = await initReplBridge({
                   onInboundMessage(msg) {
                     const fields = extractInboundMessageFields(msg)
-                    if (!fields) return
+                    if (!fields) {
+                      return
+                    }
                     const { content, uuid } = fields
                     enqueue({
                       value: content,
@@ -3996,7 +4013,7 @@ async function handleInitializeRequest(
     [key: string]: unknown
   },
   agents: AgentDefinition[],
-  getAppState: () => AppState,
+  _getAppState: () => AppState,
 ): Promise<void> {
   if (initialized) {
     output.enqueue({
@@ -4329,12 +4346,16 @@ function handleChannelEnable(
   const already = prior.some(
     (e) => e.kind === 'plugin' && e.name === entry.name && e.marketplace === entry.marketplace,
   )
-  if (!already) setAllowedChannels([...prior, entry])
+  if (!already) {
+    setAllowedChannels([...prior, entry])
+  }
 
   const gate = gateChannelServer(serverName, connection.capabilities, pluginSource)
   if (gate.action === 'skip') {
     // Rollback — only remove the entry we appended.
-    if (!already) setAllowedChannels(prior)
+    if (!already) {
+      setAllowedChannels(prior)
+    }
     return respondError(gate.reason)
   }
 
@@ -4397,15 +4418,21 @@ function handleChannelEnable(
  * check.
  */
 function reregisterChannelHandlerAfterReconnect(connection: MCPServerConnection): void {
-  if (!(feature('KAIROS') || feature('KAIROS_CHANNELS'))) return
-  if (connection.type !== 'connected') return
+  if (!(feature('KAIROS') || feature('KAIROS_CHANNELS'))) {
+    return
+  }
+  if (connection.type !== 'connected') {
+    return
+  }
 
   const gate = gateChannelServer(
     connection.name,
     connection.capabilities,
     connection.config.pluginSource,
   )
-  if (gate.action !== 'register') return
+  if (gate.action !== 'register') {
+    return
+  }
 
   const entry = findChannelEntry(connection.name, getAllowedChannels())
   const pluginId =
@@ -4460,9 +4487,9 @@ function emitLoadError(message: string, outputFormat: string | undefined): void 
       uuid: randomUUID(),
       errors: [message],
     }
-    process.stdout.write(jsonStringify(errorResult) + '\n')
+    process.stdout.write(`${jsonStringify(errorResult)}\n`)
   } else {
-    process.stderr.write(message + '\n')
+    process.stderr.write(`${message}\n`)
   }
 }
 
@@ -4519,7 +4546,7 @@ async function loadInitialMessages(
         if (feature('COORDINATOR_MODE') && coordinatorModeModule) {
           const warning = coordinatorModeModule.matchSessionMode(result.mode)
           if (warning) {
-            process.stderr.write(warning + '\n')
+            process.stderr.write(`${warning}\n`)
             // Refresh agent definitions to reflect the mode switch
             const { getAgentDefinitionsWithOverrides, getActiveAgentsFromList } =
               // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -4698,7 +4725,7 @@ async function loadInitialMessages(
       if (feature('COORDINATOR_MODE') && coordinatorModeModule) {
         const warning = coordinatorModeModule.matchSessionMode(result.mode)
         if (warning) {
-          process.stderr.write(warning + '\n')
+          process.stderr.write(`${warning}\n`)
           // Refresh agent definitions to reflect the mode switch
           const { getAgentDefinitionsWithOverrides, getActiveAgentsFromList } =
             // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -5027,7 +5054,9 @@ export async function reconcileMcpServers(
   const toReplace = toCheck.filter((name) => {
     const currentConfig = currentState.configs[name]
     const desiredConfigRaw = desiredConfigs[name]
-    if (!currentConfig || !desiredConfigRaw) return true
+    if (!currentConfig || !desiredConfigRaw) {
+      return true
+    }
     const desiredConfig = toScopedConfig(desiredConfigRaw)
     return !areMcpConfigsEqual(currentConfig, desiredConfig)
   })
@@ -5071,7 +5100,9 @@ export async function reconcileMcpServers(
   // Add new servers (including replacements)
   for (const name of [...toAdd, ...toReplace]) {
     const config = desiredConfigs[name]
-    if (!config) continue
+    if (!config) {
+      continue
+    }
     const scopedConfig = toScopedConfig(config)
 
     // SDK servers are managed by the SDK process, not the CLI.

@@ -116,7 +116,9 @@ export default function createRenderer(node: DOMElement, stylePool: StylePool): 
     // 会跳过该子树。markDirty 会遍历祖先节点，使下一帧能够下降。
     // 在渲染之后完成，以免 renderNodeToOutput 末尾的 clear-dirty 覆盖此标记。
     const drainNode = getScrollDrainNode()
-    if (drainNode) markDirty(drainNode)
+    if (drainNode) {
+      markDirty(drainNode)
+    }
 
     return {
       scrollHint: options.altScreen ? getScrollHint() : null,

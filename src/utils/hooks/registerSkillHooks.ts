@@ -28,7 +28,9 @@ export function registerSkillHooks(
 
   for (const eventName of HOOK_EVENTS) {
     const matchers = hooks[eventName]
-    if (!matchers) continue
+    if (!matchers) {
+      continue
+    }
 
     for (const matcher of matchers) {
       for (const hook of matcher.hooks) {

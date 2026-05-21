@@ -1,20 +1,18 @@
-import type {
-  ToolDefinition,
-  LLMResponse,
-  LLMMessage,
-  TextBlock,
-  ToolChoice,
-  JSONOutputFormat,
-} from '../types/llm.js'
-
 import { getLastApiCompletionTimestamp, setLastApiCompletionTimestamp } from '../bootstrap/state.js'
 import { STRUCTURED_OUTPUTS_BETA_HEADER } from '../constants/betas.js'
 import type { QuerySource } from '../constants/querySource.js'
 import { getCLISyspromptPrefix } from '../constants/system.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/metadata.js'
-
 import { getLLMAdapter } from '../services/api/client.js'
+import type {
+  JSONOutputFormat,
+  LLMMessage,
+  LLMResponse,
+  TextBlock,
+  ToolChoice,
+  ToolDefinition,
+} from '../types/llm.js'
 import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
 import { normalizeModelStringForAPI } from './model/model.js'
 
@@ -147,7 +145,9 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
       content: systemBlocks.map((b) => b.text).join('\n\n'),
     } as any)
   }
-  for (const m of messages) allMessages.push(m)
+  for (const m of messages) {
+    allMessages.push(m)
+  }
 
   const response = await adapter.createMessage(
     {

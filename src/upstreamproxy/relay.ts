@@ -78,8 +78,12 @@ export function encodeChunk(data: Uint8Array): Uint8Array {
  * Tolerates the server sending a zero-length chunk (keepalive semantics).
  */
 export function decodeChunk(buf: Uint8Array): Uint8Array | null {
-  if (buf.length === 0) return new Uint8Array(0)
-  if (buf[0] !== 0x0a) return null
+  if (buf.length === 0) {
+    return new Uint8Array(0)
+  }
+  if (buf[0] !== 0x0a) {
+    return null
+  }
   let len = 0
   let shift = 0
   let i = 1
@@ -87,11 +91,17 @@ export function decodeChunk(buf: Uint8Array): Uint8Array | null {
     const b = buf[i]!
     len |= (b & 0x7f) << shift
     i++
-    if ((b & 0x80) === 0) break
+    if ((b & 0x80) === 0) {
+      break
+    }
     shift += 7
-    if (shift > 28) return null
+    if (shift > 28) {
+      return null
+    }
   }
-  if (i + len > buf.length) return null
+  if (i + len > buf.length) {
+    return null
+  }
   return buf.subarray(i, i + len)
 }
 
@@ -150,7 +160,7 @@ export async function startUpstreamProxyRelay(opts: {
   sessionId: string
   token: string
 }): Promise<UpstreamProxyRelay> {
-  const authHeader = 'Basic ' + Buffer.from(`${opts.sessionId}:${opts.token}`).toString('base64')
+  const authHeader = `Basic ${Buffer.from(`${opts.sessionId}:${opts.token}`).toString('base64')}`
   // WS upgrade itself is auth-gated (proto authn: PRIVATE_API) — the gateway
   // wants the session-ingress JWT on the upgrade request, separate from the
   // Proxy-Authorization that rides inside the tunneled CONNECT.
@@ -195,7 +205,9 @@ function startBunRelay(
               return
             }
             const n = sock.write(bytes)
-            if (n < bytes.length) st.writeBuf.push(bytes.subarray(n))
+            if (n < bytes.length) {
+              st.writeBuf.push(bytes.subarray(n))
+            }
           },
           end: () => sock.end(),
         }
@@ -366,7 +378,7 @@ function openTunnel(
     // First chunk carries the CONNECT line plus Proxy-Authorization so the
     // server can auth the tunnel and know the target host:port. Server
     // responds with its own "HTTP/1.1 200" over the tunnel; we just pipe it.
-    const head = `${connectLine}\r\n` + `Proxy-Authorization: ${authHeader}\r\n` + `\r\n`
+    const head = `${connectLine}\r\nProxy-Authorization: ${authHeader}\r\n\r\n`
     ws.send(encodeChunk(Buffer.from(head, 'utf8')))
     // Flush anything that arrived while the WS handshake was in flight —
     // trailing bytes from the CONNECT packet and any data() callbacks that
@@ -396,7 +408,9 @@ function openTunnel(
   ws.onerror = (ev) => {
     const msg = 'message' in ev ? String(ev.message) : 'websocket error'
     logForDebugging(`[upstreamproxy] ws error: ${msg}`)
-    if (st.closed) return
+    if (st.closed) {
+      return
+    }
     st.closed = true
     if (!st.established) {
       sock.write('HTTP/1.1 502 Bad Gateway\r\n\r\n')
@@ -406,7 +420,9 @@ function openTunnel(
   }
 
   ws.onclose = () => {
-    if (st.closed) return
+    if (st.closed) {
+      return
+    }
     st.closed = true
     sock.end()
     cleanupConn(st)
@@ -420,7 +436,9 @@ function sendKeepalive(ws: WebSocketLike): void {
 }
 
 function forwardToWs(ws: WebSocketLike, data: Buffer): void {
-  if (ws.readyState !== WebSocket.OPEN) return
+  if (ws.readyState !== WebSocket.OPEN) {
+    return
+  }
   for (let off = 0; off < data.length; off += MAX_CHUNK_BYTES) {
     const slice = data.subarray(off, off + MAX_CHUNK_BYTES)
     ws.send(encodeChunk(slice))
@@ -428,8 +446,12 @@ function forwardToWs(ws: WebSocketLike, data: Buffer): void {
 }
 
 function cleanupConn(st: ConnState | undefined): void {
-  if (!st) return
-  if (st.pinger) clearInterval(st.pinger)
+  if (!st) {
+    return
+  }
+  if (st.pinger) {
+    clearInterval(st.pinger)
+  }
   if (st.ws && st.ws.readyState <= WebSocket.OPEN) {
     try {
       st.ws.close()

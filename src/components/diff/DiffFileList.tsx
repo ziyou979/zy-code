@@ -1,10 +1,10 @@
 import figures from 'figures'
-import React from 'react'
 import type { DiffFile } from '../../hooks/useDiffData.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { Box, Text } from '../../ink.js'
 import { truncateStartToWidth } from '../../utils/format.js'
 import { plural } from '../../utils/stringUtils.js'
+
 const MAX_VISIBLE_FILES = 5
 type Props = {
   files: DiffFile[]
@@ -68,7 +68,7 @@ export function DiffFileList({ files, selectedIndex }: Props) {
 }
 function FileItem({ file, isSelected, maxPathWidth }: any) {
   const displayPath = truncateStartToWidth((file as any).path, maxPathWidth)
-  const pointer = isSelected ? figures.pointer + ' ' : '  '
+  const pointer = isSelected ? `${figures.pointer} ` : '  '
   const line = `${pointer}${displayPath}`
   return (
     <Box flexDirection="row">

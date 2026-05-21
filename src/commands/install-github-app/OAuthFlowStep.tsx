@@ -13,6 +13,7 @@ import { Box, Link, Text } from '../../ink.js'
 import { OAuthService } from '../../services/oauth/index.js'
 import { saveOAuthTokensIfNeeded } from '../../utils/auth.js'
 import { logError } from '../../utils/log.js'
+
 interface OAuthFlowStepProps {
   onSuccess: (token: string) => void
   onCancel: () => void
@@ -57,7 +58,9 @@ export function OAuthFlowStep({ onSuccess, onCancel }: OAuthFlowStepProps): Reac
   const terminalSize = useTerminalSize()
   const textInputColumns = Math.max(50, terminalSize.columns - PASTE_HERE_MSG.length - 4)
   function handleKeyDown(e: KeyboardEvent): void {
-    if (oauthStatus.state !== 'error') return
+    if (oauthStatus.state !== 'error') {
+      return
+    }
     e.preventDefault()
     if (e.key === 'return' && oauthStatus.toRetry) {
       setPastedCode('')
@@ -200,7 +203,9 @@ export function OAuthFlowStep({ onSuccess, onCancel }: OAuthFlowStepProps): Reac
       !urlCopied
     ) {
       void setClipboard(oauthStatus.url).then((raw) => {
-        if (raw) process.stdout.write(raw)
+        if (raw) {
+          process.stdout.write(raw)
+        }
         setUrlCopied(true)
         clearTimeout(urlCopiedTimerRef.current)
         urlCopiedTimerRef.current = setTimeout(setUrlCopied, 2000, false)

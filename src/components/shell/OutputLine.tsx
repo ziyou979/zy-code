@@ -4,9 +4,9 @@ import { Text } from '../../ink.js'
 import { createHyperlink } from '../../utils/hyperlink.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { renderTruncatedContent } from '../../utils/terminal.js'
+import { renderContentWithFileLinks } from '../FilePathLink.js'
 import { MessageResponse } from '../MessageResponse.js'
 import { InVirtualListContext } from '../messageActions.js'
-import { renderContentWithFileLinks } from '../FilePathLink.js'
 import { useExpandShellOutput } from './ExpandShellOutputContext.js'
 export function tryFormatJson(line: string): string {
   try {
@@ -59,7 +59,7 @@ export function OutputLine({ content, verbose, isError, isWarning, linkifyUrls }
   if (linkifyUrls) {
     formatted = linkifyUrlsInText(formatted)
   }
-  let formattedContent = shouldShowFull
+  const formattedContent = shouldShowFull
     ? stripUnderlineAnsi(formatted)
     : stripUnderlineAnsi(renderTruncatedContent(formatted, columns, inVirtualList))
   const color = isError ? 'error' : isWarning ? 'warning' : undefined

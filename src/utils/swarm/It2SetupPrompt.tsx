@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Select } from '../../components/CustomSelect/index.js'
 import { Pane } from '../../components/design-system/Pane.js'
 import { Spinner } from '../../components/Spinner.js'
@@ -14,6 +14,7 @@ import {
   setPreferTmuxOverIterm2,
   verifyIt2Setup,
 } from './backends/it2Setup.js'
+
 type SetupStep =
   | 'initial'
   | 'installing'

@@ -1,6 +1,5 @@
-import type { ToolResultBlock } from '../../../types/llm.js'
-import * as React from 'react'
 import type { Tools } from '../../../Tool.js'
+import type { ToolResultBlock } from '../../../types/llm.js'
 import type { NormalizedUserMessage, ProgressMessage } from '../../../types/message.js'
 import {
   type buildMessageLookups,
@@ -13,6 +12,7 @@ import { UserToolErrorMessage } from './UserToolErrorMessage.js'
 import { UserToolRejectMessage } from './UserToolRejectMessage.js'
 import { UserToolSuccessMessage } from './UserToolSuccessMessage.js'
 import { useGetToolFromMessages } from './utils.js'
+
 type Props = {
   param: ToolResultBlock
   message: NormalizedUserMessage

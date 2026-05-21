@@ -24,12 +24,13 @@
  */
 
 import { getOauthConfig } from '../constants/oauth.js'
-import { isEnvTruthy } from './envUtils.js'
 
 let fired = false
 
 export function preconnectAnthropicApi(): void {
-  if (fired) return
+  if (fired) {
+    return
+  }
   fired = true
 
   // Skip if proxy/mTLS/unix — SDK's custom dispatcher won't reuse this pool

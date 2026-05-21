@@ -1,4 +1,4 @@
-import { unlink } from 'fs/promises'
+import { unlink } from 'node:fs/promises'
 import { CircularBuffer } from '../CircularBuffer.js'
 import { logForDebugging } from '../debug.js'
 import { readFileRange, tailFile } from '../fsOperations.js'
@@ -80,7 +80,7 @@ export class TaskOutput {
    */
   static startPolling(taskId: string): void {
     const instance = TaskOutput.#registry.get(taskId)
-    if (!instance || !instance.#onProgress) {
+    if (!instance?.#onProgress) {
       return
     }
     TaskOutput.#activePolling.set(taskId, instance)
@@ -128,13 +128,17 @@ export class TaskOutput {
           // for dense output (short lines → >100 newlines in 4KB).
           let pos = content.length
           let last5Start = 0
-          let last100Start = 0
+          let _last100Start = 0
           let lineCount = 0
           while (pos > 0) {
             pos = content.lastIndexOf('\n', pos - 1)
             lineCount++
-            if (lineCount === 5) last5Start = pos <= 0 ? 0 : pos + 1
-            if (lineCount === 100) last100Start = pos <= 0 ? 0 : pos + 1
+            if (lineCount === 5) {
+              last5Start = pos <= 0 ? 0 : pos + 1
+            }
+            if (lineCount === 100) {
+              _last100Start = pos <= 0 ? 0 : pos + 1
+            }
           }
           // lineCount is exact when the whole file fits in PROGRESS_TAIL_BYTES.
           // Otherwise extrapolate from the tail sample; monotone max keeps the
@@ -147,7 +151,7 @@ export class TaskOutput {
           entry.#totalBytes = bytesTotal
           entry.#onProgress(
             content.slice(last5Start),
-            // @ts-ignore
+            // @ts-expect-error
             content.slice(n100),
             totalLines,
             bytesTotal,

@@ -42,7 +42,9 @@ const TERMINAL_BUNDLE_ID_FALLBACK: Readonly<Record<string, string>> = {
  */
 export function getTerminalBundleId(): string | null {
   const cfBundleId = process.env.__CFBundleIdentifier
-  if (cfBundleId) return cfBundleId
+  if (cfBundleId) {
+    return cfBundleId
+  }
   return TERMINAL_BUNDLE_ID_FALLBACK[env.terminal ?? ''] ?? null
 }
 

@@ -1,6 +1,6 @@
-import { createHash, randomUUID, type UUID } from 'crypto'
-import { stat } from 'fs/promises'
-import { isAbsolute, join, relative, sep } from 'path'
+import { createHash, randomUUID, type UUID } from 'node:crypto'
+import { stat } from 'node:fs/promises'
+import { isAbsolute, join, relative, sep } from 'node:path'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
 import type { AttributionSnapshotMessage, FileAttributionState } from '../types/logs.js'
 import { getCwd } from './cwd.js'
@@ -148,7 +148,9 @@ export function sanitizeSurfaceKey(surfaceKey: string): string {
  * Sanitize a model name to its public equivalent.
  */
 export function sanitizeModelName(shortName: string): string {
-  if (shortName.includes('qwen3.6-plus')) return 'qwen3.6-plus'
+  if (shortName.includes('qwen3.6-plus')) {
+    return 'qwen3.6-plus'
+  }
   // Unknown models get a generic name
   return 'zy'
 }
@@ -660,7 +662,9 @@ export async function calculateCommitAttribution(
 
   // Aggregate results
   for (const result of fileResults) {
-    if (!result) continue
+    if (!result) {
+      continue
+    }
 
     if (result.type === 'generated') {
       excludedGenerated.push(result.file)
@@ -805,7 +809,9 @@ export async function getStagedFiles(): Promise<string[]> {
  */
 export async function isGitTransientState(): Promise<boolean> {
   const gitDir = await resolveGitDir(getAttributionRepoRoot())
-  if (!gitDir) return false
+  if (!gitDir) {
+    return false
+  }
 
   const indicators = [
     'rebase-merge',

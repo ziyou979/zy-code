@@ -1,5 +1,5 @@
-import { registerBundledSkill } from '../bundledSkills.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
+import { registerBundledSkill } from '../bundledSkills.js'
 
 // Verified 1-token words (tested via API token counting)
 // All common English words confirmed to tokenize as single tokens
@@ -243,9 +243,9 @@ export function registerLoremIpsumSkill(): void {
     argumentHint: '[token_count]',
     userInvocable: true,
     async getPromptForCommand(args) {
-      const parsed = parseInt(args)
+      const parsed = parseInt(args, 10)
 
-      if (args && (isNaN(parsed) || parsed <= 0)) {
+      if (args && (Number.isNaN(parsed) || parsed <= 0)) {
         return [
           {
             type: 'text',

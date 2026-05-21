@@ -3,9 +3,9 @@
  * Used for managing zy aliases and PATH entries
  */
 
-import { open, readFile, stat } from 'fs/promises'
-import { homedir as osHomedir } from 'os'
-import { join } from 'path'
+import { open, readFile, stat } from 'node:fs/promises'
+import { homedir as osHomedir } from 'node:os'
+import { join } from 'node:path'
 import { isFsInaccessible } from './errors.js'
 import { getLocalZyPath } from './localInstaller.js'
 
@@ -56,7 +56,7 @@ export function filterZyAliases(lines: string[]): {
         match = line.match(/alias\s+zy\s*=\s*([^#\n]+)/)
       }
 
-      if (match && match[1]) {
+      if (match?.[1]) {
         const target = match[1].trim()
         // Only remove if it points to the installer location
         // The installer always creates aliases with the full expanded path
@@ -81,7 +81,9 @@ export async function readFileLines(filePath: string): Promise<string[] | null> 
     const content = await readFile(filePath, { encoding: 'utf8' })
     return content.split('\n')
   } catch (e: unknown) {
-    if (isFsInaccessible(e)) return null
+    if (isFsInaccessible(e)) {
+      return null
+    }
     throw e
   }
 }
@@ -109,13 +111,15 @@ export async function findZyAlias(options?: ShellConfigOptions): Promise<string 
 
   for (const configPath of Object.values(configs)) {
     const lines = await readFileLines(configPath)
-    if (!lines) continue
+    if (!lines) {
+      continue
+    }
 
     for (const line of lines) {
       if (CLAUDE_ALIAS_REGEX.test(line)) {
         // Extract the alias target
         const match = line.match(/alias\s+zy=["']?([^"'\s]+)/)
-        if (match && match[1]) {
+        if (match?.[1]) {
           return match[1]
         }
       }
@@ -132,7 +136,9 @@ export async function findZyAlias(options?: ShellConfigOptions): Promise<string 
  */
 export async function findValidZyAlias(options?: ShellConfigOptions): Promise<string | null> {
   const aliasTarget = await findZyAlias(options)
-  if (!aliasTarget) return null
+  if (!aliasTarget) {
+    return null
+  }
 
   const home = options?.homedir ?? osHomedir()
 

@@ -92,12 +92,22 @@ function needsSegmentation(str: string): boolean {
   for (const char of str) {
     const cp = char.codePointAt(0)!
     // Emoji ranges
-    if (cp >= 0x1f300 && cp <= 0x1faff) return true
-    if (cp >= 0x2600 && cp <= 0x27bf) return true
-    if (cp >= 0x1f1e6 && cp <= 0x1f1ff) return true
+    if (cp >= 0x1f300 && cp <= 0x1faff) {
+      return true
+    }
+    if (cp >= 0x2600 && cp <= 0x27bf) {
+      return true
+    }
+    if (cp >= 0x1f1e6 && cp <= 0x1f1ff) {
+      return true
+    }
     // Variation selectors, ZWJ
-    if (cp >= 0xfe00 && cp <= 0xfe0f) return true
-    if (cp === 0x200d) return true
+    if (cp >= 0xfe00 && cp <= 0xfe0f) {
+      return true
+    }
+    if (cp === 0x200d) {
+      return true
+    }
   }
   return false
 }
@@ -107,7 +117,9 @@ function getEmojiWidth(grapheme: string): number {
   const first = grapheme.codePointAt(0)!
   if (first >= 0x1f1e6 && first <= 0x1f1ff) {
     let count = 0
-    for (const _ of grapheme) count++
+    for (const _ of grapheme) {
+      count++
+    }
     return count === 1 ? 1 : 2
   }
 
@@ -127,11 +139,17 @@ function getEmojiWidth(grapheme: string): number {
 
 function isZeroWidth(codePoint: number): boolean {
   // 常见可打印范围的快速路径
-  if (codePoint >= 0x20 && codePoint < 0x7f) return false
-  if (codePoint >= 0xa0 && codePoint < 0x0300) return codePoint === 0x00ad
+  if (codePoint >= 0x20 && codePoint < 0x7f) {
+    return false
+  }
+  if (codePoint >= 0xa0 && codePoint < 0x0300) {
+    return codePoint === 0x00ad
+  }
 
   // 控制字符
-  if (codePoint <= 0x1f || (codePoint >= 0x7f && codePoint <= 0x9f)) return true
+  if (codePoint <= 0x1f || (codePoint >= 0x7f && codePoint <= 0x9f)) {
+    return true
+  }
 
   // 零宽和不可见字符
   if (
@@ -165,10 +183,18 @@ function isZeroWidth(codePoint: number): boolean {
   if (codePoint >= 0x0900 && codePoint <= 0x0d4f) {
     // 每个文字区块起始处的符号和元音标记
     const offset = codePoint & 0x7f
-    if (offset <= 0x03) return true // 区块起始处的符号
-    if (offset >= 0x3a && offset <= 0x4f) return true // 元音符号、virama
-    if (offset >= 0x51 && offset <= 0x57) return true // 重音符号
-    if (offset >= 0x62 && offset <= 0x63) return true // 元音符号
+    if (offset <= 0x03) {
+      return true // 区块起始处的符号
+    }
+    if (offset >= 0x3a && offset <= 0x4f) {
+      return true // 元音符号、virama
+    }
+    if (offset >= 0x51 && offset <= 0x57) {
+      return true // 重音符号
+    }
+    if (offset >= 0x62 && offset <= 0x63) {
+      return true // 元音符号
+    }
   }
 
   // 泰语/老挝语组合标记
@@ -195,8 +221,12 @@ function isZeroWidth(codePoint: number): boolean {
   }
 
   // 代理对、标签字符
-  if (codePoint >= 0xd800 && codePoint <= 0xdfff) return true
-  if (codePoint >= 0xe0000 && codePoint <= 0xe007f) return true
+  if (codePoint >= 0xd800 && codePoint <= 0xdfff) {
+    return true
+  }
+  if (codePoint >= 0xe0000 && codePoint <= 0xe007f) {
+    return true
+  }
 
   return false
 }

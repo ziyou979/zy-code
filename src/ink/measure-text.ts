@@ -37,7 +37,9 @@ function measureText(text: string, maxWidth: number): Output {
       height += w === 0 ? 1 : Math.ceil(w / maxWidth)
     }
 
-    if (end === -1) break
+    if (end === -1) {
+      break
+    }
     start = end + 1
   }
 

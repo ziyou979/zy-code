@@ -80,10 +80,14 @@ export function injectBridgeFault(fault: BridgeFault): void {
 export function wrapApiForFaultInjection(api: BridgeApiClient): BridgeApiClient {
   function consume(method: BridgeFault['method']): BridgeFault | null {
     const idx = faultQueue.findIndex((f) => f.method === method)
-    if (idx === -1) return null
+    if (idx === -1) {
+      return null
+    }
     const fault = faultQueue[idx]!
     fault.count--
-    if (fault.count <= 0) faultQueue.splice(idx, 1)
+    if (fault.count <= 0) {
+      faultQueue.splice(idx, 1)
+    }
     return fault
   }
 
@@ -107,22 +111,30 @@ export function wrapApiForFaultInjection(api: BridgeApiClient): BridgeApiClient 
     ...api,
     async pollForWork(envId, secret, signal, reclaimMs) {
       const f = consume('pollForWork')
-      if (f) throwFault(f, 'Poll')
+      if (f) {
+        throwFault(f, 'Poll')
+      }
       return api.pollForWork(envId, secret, signal, reclaimMs)
     },
     async registerBridgeEnvironment(config) {
       const f = consume('registerBridgeEnvironment')
-      if (f) throwFault(f, 'Registration')
+      if (f) {
+        throwFault(f, 'Registration')
+      }
       return api.registerBridgeEnvironment(config)
     },
     async reconnectSession(envId, sessionId) {
       const f = consume('reconnectSession')
-      if (f) throwFault(f, 'ReconnectSession')
+      if (f) {
+        throwFault(f, 'ReconnectSession')
+      }
       return api.reconnectSession(envId, sessionId)
     },
     async heartbeatWork(envId, workId, token) {
       const f = consume('heartbeatWork')
-      if (f) throwFault(f, 'Heartbeat')
+      if (f) {
+        throwFault(f, 'Heartbeat')
+      }
       return api.heartbeatWork(envId, workId, token)
     },
   }

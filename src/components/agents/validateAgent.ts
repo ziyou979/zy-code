@@ -1,7 +1,7 @@
+import { tSync } from '../../i18n/index.js'
 import type { Tools } from '../../Tool.js'
 import { resolveAgentTools } from '../../tools/AgentTool/agentToolUtils.js'
 import type { AgentDefinition, CustomAgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-import { tSync } from '../../i18n/index.js'
 import { getAgentSourceDisplayName } from './utils.js'
 
 export type AgentValidationResult = {

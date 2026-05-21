@@ -120,37 +120,51 @@ export function hasMalformedTokens(command: string, parsed: ParseEntry[]): boole
       inSingle = !inSingle
     }
   }
-  if (doubleCount % 2 !== 0 || singleCount % 2 !== 0) return true
+  if (doubleCount % 2 !== 0 || singleCount % 2 !== 0) {
+    return true
+  }
 
   for (const entry of parsed) {
-    if (typeof entry !== 'string') continue
+    if (typeof entry !== 'string') {
+      continue
+    }
 
     // Check for unbalanced curly braces
     const openBraces = (entry.match(/{/g) || []).length
     const closeBraces = (entry.match(/}/g) || []).length
-    if (openBraces !== closeBraces) return true
+    if (openBraces !== closeBraces) {
+      return true
+    }
 
     // Check for unbalanced parentheses
     const openParens = (entry.match(/\(/g) || []).length
     const closeParens = (entry.match(/\)/g) || []).length
-    if (openParens !== closeParens) return true
+    if (openParens !== closeParens) {
+      return true
+    }
 
     // Check for unbalanced square brackets
     const openBrackets = (entry.match(/\[/g) || []).length
     const closeBrackets = (entry.match(/\]/g) || []).length
-    if (openBrackets !== closeBrackets) return true
+    if (openBrackets !== closeBrackets) {
+      return true
+    }
 
     // Check for unbalanced double quotes
     // Count quotes that aren't escaped (preceded by backslash)
     // A token with an odd number of unescaped quotes is malformed
     // eslint-disable-next-line custom-rules/no-lookbehind-regex -- gated by hasCommandSeparator check at caller, runs on short per-token strings
     const doubleQuotes = entry.match(/(?<!\\)"/g) || []
-    if (doubleQuotes.length % 2 !== 0) return true
+    if (doubleQuotes.length % 2 !== 0) {
+      return true
+    }
 
     // Check for unbalanced single quotes
     // eslint-disable-next-line custom-rules/no-lookbehind-regex -- same as above
     const singleQuotes = entry.match(/(?<!\\)'/g) || []
-    if (singleQuotes.length % 2 !== 0) return true
+    if (singleQuotes.length % 2 !== 0) {
+      return true
+    }
   }
   return false
 }
@@ -233,7 +247,6 @@ export function hasShellQuoteSingleQuoteBug(command: string): boolean {
           return true
         }
       }
-      continue
     }
   }
 

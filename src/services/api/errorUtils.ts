@@ -1,5 +1,5 @@
-import type { APIErrorLike } from '../../types/llm.js'
 import { tSync } from '../../i18n/index.js'
+import type { APIErrorLike } from '../../types/llm.js'
 
 // 来自 OpenSSL 的 SSL/TLS 错误码（Node.js 和 Bun 均使用）
 // 参见：https://www.openssl.org/docs/man3.1/man3/X509_STORE_CTX_get_error.html
@@ -97,7 +97,7 @@ export function getSSLErrorHint(error: unknown): string | null {
 function sanitizeMessageHTML(message: string): string {
   if (message.includes('<!DOCTYPE html') || message.includes('<html')) {
     const titleMatch = message.match(/<title>([^<]+)<\/title>/)
-    if (titleMatch && titleMatch[1]) {
+    if (titleMatch?.[1]) {
       return titleMatch[1].trim()
     }
     return ''

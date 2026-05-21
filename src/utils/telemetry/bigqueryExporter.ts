@@ -1,22 +1,22 @@
-import type {Attributes, HrTime} from '@opentelemetry/api'
-import {type ExportResult, ExportResultCode} from '@opentelemetry/core'
+import type { Attributes, HrTime } from '@opentelemetry/api'
+import { type ExportResult, ExportResultCode } from '@opentelemetry/core'
 import {
   AggregationTemporality,
-  type DataPoint as OTelDataPoint,
   type MetricData,
+  type DataPoint as OTelDataPoint,
   type PushMetricExporter,
   type ResourceMetrics,
 } from '@opentelemetry/sdk-metrics'
-import {checkMetricsEnabled} from 'src/services/api/metricsOptOut.js'
-import {getIsNonInteractiveSession} from '../../bootstrap/state.js'
-import {getOauthConfig} from '../../constants/oauth.js'
-import {checkHasTrustDialogAccepted} from '../config.js'
-import {logForDebugging} from '../debug.js'
-import {errorMessage, toError} from '../errors.js'
-import {getAuthHeaders} from '../http.js'
-import {logError} from '../log.js'
-import {isInternalBuild} from '../envUtils.js'
-import {getZyCodeUserAgent} from '../userAgent.js'
+import { checkMetricsEnabled } from 'src/services/api/metricsOptOut.js'
+import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
+import { getOauthConfig } from '../../constants/oauth.js'
+import { checkHasTrustDialogAccepted } from '../config.js'
+import { logForDebugging } from '../debug.js'
+import { isInternalBuild } from '../envUtils.js'
+import { errorMessage, toError } from '../errors.js'
+import { getAuthHeaders } from '../http.js'
+import { logError } from '../log.js'
+import { getZyCodeUserAgent } from '../userAgent.js'
 
 type DataPoint = {
   attributes: Record<string, string>
@@ -37,7 +37,6 @@ type InternalMetricsPayload = {
 }
 
 export class BigQueryMetricsExporter implements PushMetricExporter {
-  private readonly endpoint: string
   private readonly timeout: number
   private pendingExports: Promise<void>[] = []
   private isShutdown = false
@@ -101,7 +100,7 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
         return
       }
 
-      const payload = this.transformMetricsForInternal(metrics)
+      const _payload = this.transformMetricsForInternal(metrics)
 
       const authResult = getAuthHeaders()
       if (authResult.error) {
@@ -113,7 +112,7 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
         return
       }
 
-      const headers: Record<string, string> = {
+      const _headers: Record<string, string> = {
         'Content-Type': 'application/json',
         'User-Agent': getZyCodeUserAgent(),
         ...authResult.headers,
@@ -165,12 +164,12 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
     return {
       resource_attributes: resourceAttributes,
       metrics: metrics.scopeMetrics.flatMap((scopeMetric) =>
-          scopeMetric.metrics.map((metric) => ({
-            name: metric.descriptor.name,
-            description: metric.descriptor.description,
-            unit: metric.descriptor.unit,
-            data_points: this.extractDataPoints(metric),
-          })),
+        scopeMetric.metrics.map((metric) => ({
+          name: metric.descriptor.name,
+          description: metric.descriptor.description,
+          unit: metric.descriptor.unit,
+          data_points: this.extractDataPoints(metric),
+        })),
       ),
     }
   }

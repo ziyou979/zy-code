@@ -266,7 +266,9 @@ export async function initEnvLessBridgeCore(
   // signal for the `started → (silence)` gap.
   let connectDeadline: ReturnType<typeof setTimeout> | undefined
   function onConnectTimeout(cause: ConnectCause): void {
-    if (tornDown) return
+    if (tornDown) {
+      return
+    }
     logEvent('zy_bridge_repl_connect_timeout', {
       v2: true,
       elapsed_ms: cfg.connect_timeout_ms,
@@ -288,7 +290,9 @@ export async function initEnvLessBridgeCore(
       // so truthiness doesn't mean valid. Pass the stale token to onAuth401
       // so handleOAuth401Error's keychain-comparison can detect parallel refresh.
       const stale = getAccessToken()
-      if (onAuth401) await onAuth401(stale ?? '')
+      if (onAuth401) {
+        await onAuth401(stale ?? '')
+      }
       return getAccessToken() ?? stale
     },
     onRefresh: (sid, oauthToken) => {
@@ -308,7 +312,9 @@ export async function initEnvLessBridgeCore(
             'fetchRemoteCredentials (proactive)',
             cfg,
           )
-          if (!fresh || tornDown) return
+          if (!fresh || tornDown) {
+            return
+          }
           await rebuildTransport(fresh, 'proactive_refresh')
           logForDebugging('[remote-bridge] Transport rebuilt (proactive refresh)')
         } catch (err) {
@@ -395,7 +401,9 @@ export async function initEnvLessBridgeCore(
 
     transport.setOnClose((code?: number) => {
       clearTimeout(connectDeadline)
-      if (tornDown) return
+      if (tornDown) {
+        return
+      }
       logForDebugging(`[remote-bridge] v2 transport closed (code=${code})`)
       logEvent('zy_bridge_repl_ws_closed', { code, v2: true })
       // onClose fires only for TERMINAL failures: 401 (JWT invalid),
@@ -473,7 +481,9 @@ export async function initEnvLessBridgeCore(
     // setOnClose already guards `!authRecoveryInFlight` but that check and
     // this set must be atomic against onRefresh — claim synchronously before
     // any await. Laptop wake fires both paths ~simultaneously.
-    if (authRecoveryInFlight) return
+    if (authRecoveryInFlight) {
+      return
+    }
     authRecoveryInFlight = true
     onStateChange?.('reconnecting', 'JWT expired — refreshing')
     logForDebugging('[remote-bridge] 401 on SSE — attempting JWT refresh')
@@ -483,7 +493,9 @@ export async function initEnvLessBridgeCore(
       // Pass the stale token so handleOAuth401Error's keychain-comparison
       // can detect if another tab already refreshed.
       const stale = getAccessToken()
-      if (onAuth401) await onAuth401(stale ?? '')
+      if (onAuth401) {
+        await onAuth401(stale ?? '')
+      }
       const oauthToken = getAccessToken() ?? stale
       if (!oauthToken || tornDown) {
         if (!tornDown) {
@@ -537,8 +549,12 @@ export async function initEnvLessBridgeCore(
   // ── 8. History flush + drain helpers ────────────────────────────────────
   function drainFlushGate(): void {
     const msgs = flushGate.end()
-    if (msgs.length === 0) return
-    for (const msg of msgs) recentPostedUUIDs.add(msg.uuid)
+    if (msgs.length === 0) {
+      return
+    }
+    for (const msg of msgs) {
+      recentPostedUUIDs.add(msg.uuid)
+    }
     const events = toSDKMessages(msgs).map((m) => ({
       ...m,
       session_id: sessionId,
@@ -569,7 +585,9 @@ export async function initEnvLessBridgeCore(
       ...m,
       session_id: sessionId,
     }))
-    if (events.length === 0) return
+    if (events.length === 0) {
+      return
+    }
     // Mid-turn init: if Remote Control is enabled while a query is running,
     // the last eligible message is a user prompt or tool_result (both 'user'
     // type). Without this the init PUT's 'idle' sticks until the next user-
@@ -591,7 +609,9 @@ export async function initEnvLessBridgeCore(
   //   - result write: fire-and-forget, archive latency covers the drain
   //   - 401 retry: only if first archive 401s, shares the same budget
   async function teardown(): Promise<void> {
-    if (tornDown) return
+    if (tornDown) {
+      return
+    }
     tornDown = true
     refresh.cancelAll()
     clearTimeout(connectDeadline)
@@ -696,7 +716,9 @@ export async function initEnvLessBridgeCore(
           !initialMessageUUIDs.has(m.uuid) &&
           !recentPostedUUIDs.has(m.uuid),
       )
-      if (filtered.length === 0) return
+      if (filtered.length === 0) {
+        return
+      }
 
       // Fire onUserMessage for title derivation. Scan before the flushGate
       // check — prompts are title-worthy even if they queue. Keeps calling
@@ -717,7 +739,9 @@ export async function initEnvLessBridgeCore(
         return
       }
 
-      for (const msg of filtered) recentPostedUUIDs.add(msg.uuid)
+      for (const msg of filtered) {
+        recentPostedUUIDs.add(msg.uuid)
+      }
       const events = toSDKMessages(filtered).map((m) => ({
         ...m,
         session_id: sessionId,
@@ -735,9 +759,13 @@ export async function initEnvLessBridgeCore(
     },
     writeSdkMessages(messages: SDKMessage[]) {
       const filtered = messages.filter((m) => !m.uuid || !recentPostedUUIDs.has(m.uuid))
-      if (filtered.length === 0) return
+      if (filtered.length === 0) {
+        return
+      }
       for (const msg of filtered) {
-        if (msg.uuid) recentPostedUUIDs.add(msg.uuid)
+        if (msg.uuid) {
+          recentPostedUUIDs.add(msg.uuid)
+        }
       }
       const events = filtered.map((m) => ({ ...m, session_id: sessionId }))
       void transport.writeBatch(events)
@@ -812,7 +840,9 @@ async function withRetry<T>(
   const max = cfg.init_retry_max_attempts
   for (let attempt = 1; attempt <= max; attempt++) {
     const result = await fn()
-    if (result !== null) return result
+    if (result !== null) {
+      return result
+    }
     if (attempt < max) {
       const base = cfg.init_retry_base_delay_ms * 2 ** (attempt - 1)
       const jitter = base * cfg.init_retry_jitter_fraction * (2 * Math.random() - 1)
@@ -855,7 +885,9 @@ export async function fetchRemoteCredentials(
     timeoutMs,
     getTrustedDeviceToken(),
   )
-  if (!creds) return null
+  if (!creds) {
+    return null
+  }
   return getBridgeBaseUrlOverride() ? { ...creds, api_base_url: baseUrl } : creds
 }
 
@@ -879,7 +911,9 @@ async function archiveSession(
   orgUUID: string,
   timeoutMs: number,
 ): Promise<ArchiveStatus> {
-  if (!accessToken) return 'no_token'
+  if (!accessToken) {
+    return 'no_token'
+  }
   // Archive lives at the compat layer (/v1/sessions/*, not /v1/code/sessions).
   // compat.parseSessionID only accepts TagSession (session_*), so retag cse_*.
   // anthropic-beta + x-organization-uuid are required — without them the

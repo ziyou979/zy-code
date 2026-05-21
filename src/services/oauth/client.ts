@@ -6,9 +6,9 @@ import {
 } from 'src/services/analytics/index.js'
 import {
   ALL_OAUTH_SCOPES,
+  getOauthConfig,
   ZY_CODE_INFERENCE_SCOPE,
   ZY_CODE_OAUTH_SCOPES,
-  getOauthConfig,
 } from '../../constants/oauth.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
@@ -20,7 +20,7 @@ import type { AccountInfo } from '../../utils/config.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getOauthProfileFromOauthToken } from './getOauthProfile.js'
-// @ts-ignore
+// @ts-expect-error
 import type { OAuthProfileResponse, OAuthTokens, SubscriptionType } from './types.js'
 
 type OAuthTokenExchangeResponse = any
@@ -433,7 +433,7 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
   const envAccountUuid = process.env.ZY_CODE_ACCOUNT_UUID
   const envUserEmail = process.env.ZY_CODE_USER_EMAIL
   const envOrganizationUuid = process.env.ZY_CODE_ORGANIZATION_UUID
-  const hasEnvVars = Boolean(envAccountUuid && envUserEmail && envOrganizationUuid)
+  const _hasEnvVars = Boolean(envAccountUuid && envUserEmail && envOrganizationUuid)
   if (envAccountUuid && envUserEmail && envOrganizationUuid) {
     if (!getGlobalConfig().oauthAccount) {
       storeOAuthAccountInfo({
@@ -453,7 +453,7 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
     // refreshOAuthToken already fetches and stores profile info
     await checkAndRefreshOAuthTokenIfNeeded()
   } catch (error) {
-    // @ts-ignore
+    // @ts-expect-error
     logForDebugging('OAuth token refresh skipped during init', {
       level: 'warn',
       error: error as any as any,
@@ -491,7 +491,7 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
         return true
       }
     } catch (error) {
-      // @ts-ignore
+      // @ts-expect-error
       logForDebugging('OAuth profile fetch skipped during init', {
         level: 'warn',
         error: error as any as any,

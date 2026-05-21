@@ -1,4 +1,4 @@
-import * as path from 'path'
+import * as path from 'node:path'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
@@ -28,6 +28,7 @@ import {
   toIDEDisplayName,
 } from '../../utils/ide.js'
 import { getCurrentWorktreeSession } from '../../utils/worktree.js'
+
 type IDEScreenProps = {
   availableIDEs: DetectedIDEInfo[]
   unavailableIDEs: DetectedIDEInfo[]
@@ -53,7 +54,7 @@ function IDEScreen({
       if (value === tSync('ide.none') && shouldShowDisableAutoConnectDialog()) {
         setShowDisableAutoConnectDialog(true)
       } else {
-        onSelect(availableIDEs.find((ide) => ide.port === parseInt(value)))
+        onSelect(availableIDEs.find((ide) => ide.port === parseInt(value, 10)))
       }
     }
   }
@@ -180,7 +181,7 @@ function IDEOpenSelection({ availableIDEs, onSelectIDE, onDone }: IDEOpenSelecti
   const defaultPort = availableIDEs[0]?.port?.toString() ?? ''
   const [selectedValue, setSelectedValue] = useState(defaultPort)
   const handleSelectIDE = (value) => {
-    const selectedIDE = availableIDEs.find((ide) => ide.port === parseInt(value))
+    const selectedIDE = availableIDEs.find((ide) => ide.port === parseInt(value, 10))
     onSelectIDE(selectedIDE)
   }
   const options = availableIDEs.map((ide) => ({
@@ -407,14 +408,18 @@ function IDECommandFlow({
 
   // Watch for connection result
   useEffect(() => {
-    if (!connectingIDE) return
+    if (!connectingIDE) {
+      return
+    }
     // Skip the first check — it reflects stale state from before the
     // config change was dispatched
     if (isFirstCheckRef.current) {
       isFirstCheckRef.current = false
       return
     }
-    if (!ideClient || ideClient.type === 'pending') return
+    if (!ideClient || ideClient.type === 'pending') {
+      return
+    }
     if (ideClient.type === 'connected') {
       onDone(tSync('ide.connected', { name: connectingIDE.name }))
     } else if (ideClient.type === 'failed') {
@@ -424,7 +429,9 @@ function IDECommandFlow({
 
   // Timeout fallback
   useEffect(() => {
-    if (!connectingIDE) return
+    if (!connectingIDE) {
+      return
+    }
     const timer = setTimeout(
       onDone,
       IDE_CONNECTION_TIMEOUT_MS,
@@ -508,7 +515,9 @@ function IDECommandFlow({
  * @returns Formatted string with folder paths
  */
 export function formatWorkspaceFolders(folders: string[], maxLength: number = 100): string {
-  if (folders.length === 0) return ''
+  if (folders.length === 0) {
+    return ''
+  }
   const cwd = getCwd()
 
   // Only show first 2 workspaces
@@ -533,7 +542,7 @@ export function formatWorkspaceFolders(folders: string[], maxLength: number = 10
     if (folder.length <= maxLengthPerPath) {
       return folder
     }
-    return '…' + folder.slice(-(maxLengthPerPath - 1))
+    return `…${folder.slice(-(maxLengthPerPath - 1))}`
   })
   let result = formattedFolders.join(', ')
   if (hasMore) {

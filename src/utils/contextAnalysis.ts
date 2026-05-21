@@ -1,5 +1,5 @@
-import type { ContentBlock } from '../types/llm.js'
 import { roughTokenCountEstimation as countTokens } from '../services/tokenEstimation.js'
+import type { ContentBlock } from '../types/llm.js'
 import type { AssistantMessage, Message, UserMessage } from '../types/message.js'
 import { normalizeMessagesForAPI } from './messages.js'
 import { jsonStringify } from './slowOperations.js'
@@ -160,7 +160,7 @@ function processBlock(
     case 'tool_search_tool_result':
     case 'compaction':
       // Don't care about these for now..
-      stats['other'] += tokens
+      stats.other += tokens
       break
   }
 }

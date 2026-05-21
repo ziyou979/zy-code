@@ -3,11 +3,16 @@
  * Used by the /heapdump command.
  */
 
-import { createWriteStream, writeFileSync } from 'fs'
-import { readdir, readFile, writeFile } from 'fs/promises'
-import { join } from 'path'
-import { pipeline } from 'stream/promises'
-import { getHeapSnapshot, getHeapSpaceStatistics, getHeapStatistics, type HeapSpaceInfo } from 'v8'
+import { createWriteStream, writeFileSync } from 'node:fs'
+import { readdir, readFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { pipeline } from 'node:stream/promises'
+import {
+  getHeapSnapshot,
+  getHeapSpaceStatistics,
+  getHeapStatistics,
+  type HeapSpaceInfo,
+} from 'node:v8'
 import { getSessionId } from '../bootstrap/state.js'
 import { logEvent } from '../services/analytics/index.js'
 import { logForDebugging } from './debug.js'

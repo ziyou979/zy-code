@@ -1,5 +1,4 @@
-import chalk from 'chalk'
-import type { UUID } from 'crypto'
+import type { UUID } from 'node:crypto'
 import * as React from 'react'
 import { getSessionId } from '../../bootstrap/state.js'
 import { Select } from '../../components/CustomSelect/select.js'
@@ -11,6 +10,7 @@ import { logEvent } from '../../services/analytics/index.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
 import { recursivelySanitizeUnicode } from '../../utils/sanitization.js'
 import { getCurrentSessionTag, getTranscriptPath, saveTag } from '../../utils/sessionStorage.js'
+
 function ConfirmRemoveTag({ tagName, onConfirm, onCancel }) {
   return (
     <Dialog

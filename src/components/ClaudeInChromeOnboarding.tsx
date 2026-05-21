@@ -1,12 +1,13 @@
 import React from 'react'
-// @ts-ignore
-import { logEvent } from 'src/services/analytics/index.js'
 import { tSync } from 'src/i18n/index.js'
+// @ts-expect-error
+import { logEvent } from 'src/services/analytics/index.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- enter to continue
 import { Box, Link, Newline, Text, useInput } from '../ink.js'
 import { isChromeExtensionInstalled } from '../utils/claudeInChrome/setup.js'
 import { saveGlobalConfig } from '../utils/config.js'
 import { Dialog } from './design-system/Dialog.js'
+
 const CHROME_EXTENSION_URL = 'https://zy.ai/chrome'
 const CHROME_PERMISSIONS_URL = 'https://clau.de/chrome/permissions'
 type Props = {

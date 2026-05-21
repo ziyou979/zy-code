@@ -1,5 +1,5 @@
-import { readdir } from 'fs/promises'
-import { join } from 'path'
+import { readdir } from 'node:fs/promises'
+import { join } from 'node:path'
 import { coerce as semverCoerce } from 'semver'
 import { getSessionId } from '../bootstrap/state.js'
 import { getCwd } from './cwd.js'

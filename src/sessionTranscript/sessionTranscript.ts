@@ -12,7 +12,7 @@ export function getSessionTranscript(): unknown | null {
  * Append to session transcript
  * @param content - Content to append
  */
-export function appendToTranscript(content: string): void {
+export function appendToTranscript(_content: string): void {
   // Stub implementation
 }
 

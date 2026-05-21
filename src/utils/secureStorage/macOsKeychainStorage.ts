@@ -24,7 +24,7 @@ import type { SecureStorage, SecureStorageData } from './types.js'
 const SECURITY_STDIN_LINE_LIMIT = 4096 - 64
 
 export const macOsKeychainStorage = {
-  // @ts-ignore
+  // @ts-expect-error
   name: 'keychain',
   read(): SecureStorageData | null {
     const prev = keychainCacheState.cache
@@ -193,7 +193,9 @@ let keychainLockedCache: boolean | undefined
  * Keychain lock state doesn't change during a CLI session.
  */
 export function isMacOsKeychainLocked(): boolean {
-  if (keychainLockedCache !== undefined) return keychainLockedCache
+  if (keychainLockedCache !== undefined) {
+    return keychainLockedCache
+  }
   // Only check on macOS
   if (process.platform !== 'darwin') {
     keychainLockedCache = false

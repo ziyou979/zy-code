@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import type { SDKPartialAssistantMessage, StdoutMessage } from 'src/entrypoints/sdk/controlTypes.js'
 import { decodeJwtExpiry } from '../../bridge/jwtUtils.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -137,7 +137,9 @@ export function accumulateStreamEvents(
       case 'message_start': {
         const id = (msg.event as any).message.id
         const prevId = state.scopeToMessage.get(scopeKey(msg))
-        if (prevId) state.byMessage.delete(prevId)
+        if (prevId) {
+          state.byMessage.delete(prevId)
+        }
         state.scopeToMessage.set(scopeKey(msg), id)
         state.byMessage.set(id, [])
         out.push(msg as any)
@@ -441,7 +443,7 @@ export class CCRClient {
       const rawEpoch = process.env.ZY_CODE_WORKER_EPOCH
       epoch = rawEpoch ? parseInt(rawEpoch, 10) : NaN
     }
-    if (isNaN(epoch)) {
+    if (Number.isNaN(epoch)) {
       throw new CCRInitError('missing_epoch')
     }
     this.workerEpoch = epoch
@@ -537,7 +539,9 @@ export class CCRClient {
     { timeout = 10_000 }: { timeout?: number } = {},
   ): Promise<RequestResult> {
     const authHeaders = this.getAuthHeaders()
-    if (Object.keys(authHeaders).length === 0) return { ok: false }
+    if (Object.keys(authHeaders).length === 0) {
+      return { ok: false }
+    }
 
     try {
       const response = await this.http[method](`${this.sessionBaseUrl}${path}`, body, {
@@ -595,7 +599,7 @@ export class CCRClient {
       if (response.status === 429) {
         const raw = response.headers?.['retry-after']
         const seconds = typeof raw === 'string' ? parseInt(raw, 10) : NaN
-        if (!isNaN(seconds) && seconds >= 0) {
+        if (!Number.isNaN(seconds) && seconds >= 0) {
           return { ok: false, retryAfterMs: seconds * 1000 }
         }
       }
@@ -615,7 +619,9 @@ export class CCRClient {
 
   /** Report worker state to CCR via PUT /sessions/{id}/worker. */
   reportState(state: SessionState, details?: RequiresActionDetails): void {
-    if (state === this.currentState && !details) return
+    if (state === this.currentState && !details) {
+      return
+    }
     this.currentState = state
     this.workerState.enqueue({
       worker_status: state,
@@ -659,7 +665,9 @@ export class CCRClient {
       void this.sendHeartbeat()
       // stopHeartbeat nulls the timer; check after the fire-and-forget send
       // but before rescheduling so close() during sendHeartbeat is honored.
-      if (this.heartbeatTimer === null) return
+      if (this.heartbeatTimer === null) {
+        return
+      }
       schedule()
     }
     schedule()
@@ -675,7 +683,9 @@ export class CCRClient {
 
   /** Send a heartbeat via POST /sessions/{id}/worker/heartbeat. */
   private async sendHeartbeat(): Promise<void> {
-    if (this.heartbeatInFlight) return
+    if (this.heartbeatInFlight) {
+      return
+    }
     this.heartbeatInFlight = true
     try {
       const result = await this.request(
@@ -744,7 +754,9 @@ export class CCRClient {
       clearTimeout(this.streamEventTimer)
       this.streamEventTimer = null
     }
-    if (this.streamEventBuffer.length === 0) return
+    if (this.streamEventBuffer.length === 0) {
+      return
+    }
     const buffered = this.streamEventBuffer
     this.streamEventBuffer = []
     const payloads = accumulateStreamEvents(buffered, this.streamTextAccumulator)
@@ -829,7 +841,9 @@ export class CCRClient {
     context: string,
   ): Promise<InternalEvent[] | null> {
     const authHeaders = this.getAuthHeaders()
-    if (Object.keys(authHeaders).length === 0) return null
+    if (Object.keys(authHeaders).length === 0) {
+      return null
+    }
 
     const allEvents: InternalEvent[] = []
     let cursor: string | undefined
@@ -848,7 +862,9 @@ export class CCRClient {
         authHeaders,
         context,
       )
-      if (!page) return null
+      if (!page) {
+        return null
+      }
 
       allEvents.push(...(page.data ?? []))
       cursor = page.next_cursor

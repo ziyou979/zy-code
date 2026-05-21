@@ -22,7 +22,7 @@ import { getLocalizedDurationFormatter } from '../utils/format.js'
 export function useElapsedTime(
   startTime: number,
   isRunning: boolean,
-  ms: number = 1000,
+  _ms: number = 1000,
   pausedMs: number = 0,
   endTime?: number,
 ): string {
@@ -49,7 +49,7 @@ export function useElapsedTime(
     }
 
     return clock.subscribe(onChange, true)
-  }, [isRunning, startTime, pausedMs, endTime, clock])
+  }, [isRunning, startTime, pausedMs, endTime, clock, fmt])
 
   return elapsed
 }

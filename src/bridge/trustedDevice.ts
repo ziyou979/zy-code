@@ -1,6 +1,6 @@
+import { hostname } from 'node:os'
 import axios from 'axios'
 import memoize from 'lodash-es/memoize.js'
-import { hostname } from 'os'
 import { getOauthConfig } from '../constants/oauth.js'
 import {
   checkGate_CACHED_OR_BLOCKING,
@@ -77,7 +77,7 @@ export function clearTrustedDeviceToken(): void {
   try {
     const data = (secureStorage as any).read()
     if (data?.trustedDeviceToken) {
-      // @ts-ignore
+      // @ts-expect-error
       delete data.trustedDeviceToken(secureStorage as any).update(data)
     }
   } catch {

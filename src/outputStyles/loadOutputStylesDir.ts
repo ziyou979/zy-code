@@ -1,5 +1,5 @@
+import { basename } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { basename } from 'path'
 import type { OutputStyleConfig } from '../constants/outputStyles.js'
 import { logForDebugging } from '../utils/debug.js'
 import { coerceDescriptionToString } from '../utils/frontmatterParser.js'
@@ -35,9 +35,9 @@ export const getOutputStyleDirStyles = memoize(
             const styleName = fileName.replace(/\.md$/, '')
 
             // Get style configuration from frontmatter
-            const name = (frontmatter['name'] || styleName) as string
+            const name = (frontmatter.name || styleName) as string
             const description =
-              coerceDescriptionToString(frontmatter['description'], styleName) ??
+              coerceDescriptionToString(frontmatter.description, styleName) ??
               extractDescriptionFromMarkdown(content, `Custom ${styleName} output style`)
 
             // Parse keep-coding-instructions flag (supports both boolean and string values)

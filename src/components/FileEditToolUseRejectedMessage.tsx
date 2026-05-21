@@ -1,7 +1,7 @@
-// @ts-ignore
+// @ts-expect-error
+
+import { relative } from 'node:path'
 import type { StructuredPatchHunk } from 'diff'
-import { relative } from 'path'
-import * as React from 'react'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
 import { getCwd } from 'src/utils/cwd.js'
 import { tSync } from '../i18n/index.js'
@@ -9,6 +9,7 @@ import { Box, Text } from '../ink.js'
 import { HighlightedCode } from './HighlightedCode.js'
 import { MessageResponse } from './MessageResponse.js'
 import { StructuredDiffList } from './StructuredDiffList.js'
+
 const MAX_LINES_TO_RENDER = 10
 type Props = {
   file_path: string

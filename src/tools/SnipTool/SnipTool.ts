@@ -1,9 +1,9 @@
-import { z } from 'zod/v4'
 import React from 'react'
-import { buildTool, type ToolDef } from '../../Tool.js'
+import { z } from 'zod/v4'
 import { isSnipRuntimeEnabled } from '../../services/compact/snipCompact.js'
-import { SNIP_TOOL_NAME } from './prompt.js'
+import { buildTool, type ToolDef } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
+import { SNIP_TOOL_NAME } from './prompt.js'
 
 const inputSchema = lazySchema(() => z.strictObject({}))
 type InputSchema = ReturnType<typeof inputSchema>
@@ -54,4 +54,5 @@ export const SnipTool = buildTool({
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'
+
 toolRegistry.register(SnipTool)

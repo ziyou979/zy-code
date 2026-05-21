@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 
-export interface WizardStep<T> {
+export interface WizardStep<_T> {
   id: string
   title?: string
   render: () => ReactNode

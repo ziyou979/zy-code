@@ -1,5 +1,5 @@
 import figures from 'figures'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Box, Text } from '../../ink.js'
 import {
   AGENT_COLOR_TO_THEME_COLOR,
@@ -7,6 +7,7 @@ import {
   type AgentColorName,
 } from '../../tools/AgentTool/agentColorManager.js'
 import { capitalize } from '../../utils/stringUtils.js'
+
 type ColorOption = AgentColorName | 'automatic'
 const COLOR_OPTIONS: ColorOption[] = ['automatic', ...AGENT_COLORS]
 type Props = {
@@ -15,7 +16,7 @@ type Props = {
   onConfirm: (color: AgentColorName | undefined) => void
 }
 export function ColorPicker({ agentName, currentColor = 'automatic', onConfirm }: Props) {
-  const initialIndex = COLOR_OPTIONS.findIndex((opt) => opt === currentColor)
+  const initialIndex = COLOR_OPTIONS.indexOf(currentColor)
   const [selectedIndex, setSelectedIndex] = useState(Math.max(0, initialIndex))
   const handleKeyDown = (e) => {
     if (e.key === 'up') {

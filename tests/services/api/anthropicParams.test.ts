@@ -8,7 +8,7 @@
  * - tool_use 消息中 input 必须是 object
  * - thinking / betas / context_management 等 anthropic 专属字段
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import { buildAnthropicCreateParams } from '../../../src/services/api/conversions/anthropic.js'
 import { assertValidAnthropicCreateParams } from '../../_helpers/sdkValidators.js'
 

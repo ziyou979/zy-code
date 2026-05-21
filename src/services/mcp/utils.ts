@@ -1,5 +1,5 @@
-import { createHash } from 'crypto'
-import { join } from 'path'
+import { createHash } from 'node:crypto'
+import { join } from 'node:path'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import type { Command } from '../../commands.js'
 import type { AgentMcpServerInfo } from '../../components/mcp/types.js'
@@ -52,7 +52,9 @@ export function filterToolsByServer(tools: Tool[], serverName: string): Tool[] {
 export function commandBelongsToServer(command: Command, serverName: string): boolean {
   const normalized = normalizeNameForMCP(serverName)
   const name = command.name
-  if (!name) return false
+  if (!name) {
+    return false
+  }
   return name.startsWith(`mcp__${normalized}__`) || name.startsWith(`${normalized}:`)
 }
 
@@ -142,7 +144,9 @@ export function hashMcpConfig(config: ScopedMcpServerConfig): string {
     if (v && typeof v === 'object' && !Array.isArray(v)) {
       const obj = v as Record<string, unknown>
       const sorted: Record<string, unknown> = {}
-      for (const k of Object.keys(obj).sort()) sorted[k] = obj[k]
+      for (const k of Object.keys(obj).sort()) {
+        sorted[k] = obj[k]
+      }
       return sorted
     }
     return v
@@ -181,7 +185,9 @@ export function excludeStalePluginClients(
 } {
   const stale = mcp.clients.filter((c) => {
     const fresh = configs[c.name]
-    if (!fresh) return c.config.scope === 'dynamic'
+    if (!fresh) {
+      return c.config.scope === 'dynamic'
+    }
     return hashMcpConfig(c.config) !== hashMcpConfig(fresh)
   })
   if (stale.length === 0) {
@@ -278,7 +284,9 @@ export function getScopeLabel(scope: ConfigScope): string {
 }
 
 export function ensureConfigScope(scope?: string): ConfigScope {
-  if (!scope) return 'local'
+  if (!scope) {
+    return 'local'
+  }
 
   if (!ConfigScopeSchema().options.includes(scope as ConfigScope)) {
     throw new Error(
@@ -290,7 +298,9 @@ export function ensureConfigScope(scope?: string): ConfigScope {
 }
 
 export function ensureTransport(type?: string): 'stdio' | 'sse' | 'http' {
-  if (!type) return 'stdio'
+  if (!type) {
+    return 'stdio'
+  }
 
   if (type !== 'stdio' && type !== 'sse' && type !== 'http') {
     throw new Error(`Invalid transport type: ${type}. Must be one of: stdio, sse, http`)
@@ -429,15 +439,21 @@ export function extractAgentMcpServers(agents: AgentDefinition[]): AgentMcpServe
   >()
 
   for (const agent of agents) {
-    if (!agent.mcpServers?.length) continue
+    if (!agent.mcpServers?.length) {
+      continue
+    }
 
     for (const spec of agent.mcpServers) {
       // Skip string references - these refer to servers already in global config
-      if (typeof spec === 'string') continue
+      if (typeof spec === 'string') {
+        continue
+      }
 
       // Inline definition as { [name]: config }
       const entries = Object.entries(spec)
-      if (entries.length !== 1) continue
+      if (entries.length !== 1) {
+        continue
+      }
 
       const [serverName, serverConfig] = entries[0]!
       const existing = serverMap.get(serverName)

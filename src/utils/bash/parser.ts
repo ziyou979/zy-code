@@ -28,7 +28,9 @@ const COMMAND_TYPES = new Set(['command', 'declaration_command'])
 
 let logged = false
 function logLoadOnce(success: boolean): void {
-  if (logged) return
+  if (logged) {
+    return
+  }
   logged = true
   logForDebugging(success ? 'tree-sitter: native module loaded' : 'tree-sitter: unavailable')
   logEvent('zy_tree_sitter_load', { success })
@@ -45,7 +47,9 @@ export async function ensureInitialized(): Promise<void> {
 }
 
 export async function parseCommand(command: string): Promise<ParsedCommandData | null> {
-  if (!command || command.length > MAX_COMMAND_LENGTH) return null
+  if (!command || command.length > MAX_COMMAND_LENGTH) {
+    return null
+  }
 
   // 门控：仅限内部使用，直到安全测试完成。外部构建回退到旧的
   // regex/shell-quote 路径。将整个函数体包裹在正向分支内，使 Bun 可以
@@ -55,11 +59,15 @@ export async function parseCommand(command: string): Promise<ParsedCommandData |
     await ensureParserInitialized()
     const mod = getParserModule()
     logLoadOnce(mod !== null)
-    if (!mod) return null
+    if (!mod) {
+      return null
+    }
 
     try {
       const rootNode = mod.parse(command)
-      if (!rootNode) return null
+      if (!rootNode) {
+        return null
+      }
 
       const commandNode = findCommandNode(rootNode, null)
       const envVars = extractEnvVars(commandNode)
@@ -93,12 +101,16 @@ export const PARSE_ABORTED = Symbol('parse-aborted')
 export async function parseCommandRaw(
   command: string,
 ): Promise<Node | null | typeof PARSE_ABORTED> {
-  if (!command || command.length > MAX_COMMAND_LENGTH) return null
+  if (!command || command.length > MAX_COMMAND_LENGTH) {
+    return null
+  }
   if (feature('TREE_SITTER_BASH') || feature('TREE_SITTER_BASH_SHADOW')) {
     await ensureParserInitialized()
     const mod = getParserModule()
     logLoadOnce(mod !== null)
-    if (!mod) return null
+    if (!mod) {
+      return null
+    }
     try {
       const result = mod.parse(command)
       // 安全机制：模块已加载；此处返回 null 意味着在 bashParser.ts 中发生了
@@ -127,7 +139,9 @@ export async function parseCommandRaw(
 function findCommandNode(node: Node, parent: Node | null): Node | null {
   const { type, children } = node
 
-  if (COMMAND_TYPES.has(type)) return node
+  if (COMMAND_TYPES.has(type)) {
+    return node
+  }
 
   // 变量赋值后跟命令
   if (type === 'variable_assignment' && parent) {
@@ -141,7 +155,9 @@ function findCommandNode(node: Node, parent: Node | null): Node | null {
   if (type === 'pipeline') {
     for (const child of children) {
       const result = findCommandNode(child, node)
-      if (result) return result
+      if (result) {
+        return result
+      }
     }
     return null
   }
@@ -154,14 +170,18 @@ function findCommandNode(node: Node, parent: Node | null): Node | null {
   // 递归搜索
   for (const child of children) {
     const result = findCommandNode(child, node)
-    if (result) return result
+    if (result) {
+      return result
+    }
   }
 
   return null
 }
 
 function extractEnvVars(commandNode: Node | null): string[] {
-  if (!commandNode || commandNode.type !== 'command') return []
+  if (!commandNode || commandNode.type !== 'command') {
+    return []
+  }
 
   const envVars: string[] = []
   for (const child of commandNode.children) {
@@ -185,7 +205,9 @@ export function extractCommandArguments(commandNode: Node): string[] {
   let foundCommandName = false
 
   for (const child of commandNode.children) {
-    if (child.type === 'variable_assignment') continue
+    if (child.type === 'variable_assignment') {
+      continue
+    }
 
     // 命令名称
     if (child.type === 'command_name' || (!foundCommandName && child.type === 'word')) {

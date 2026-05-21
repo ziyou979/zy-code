@@ -1,6 +1,5 @@
-import React from 'react'
-import { Text } from '../../ink.js'
 import { tSync } from '../../i18n/index.js'
+import { Text } from '../../ink.js'
 import type { CollapsedReadSearchGroup } from '../../types/message.js'
 
 /**

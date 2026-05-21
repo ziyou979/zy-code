@@ -4,7 +4,6 @@ import { logForDebugging } from 'src/utils/debug.js'
 import { fileHistoryEnabled } from 'src/utils/fileHistory.js'
 import { getInitialSettings, getSettingsForSource } from 'src/utils/settings/settings.js'
 import { shouldOfferTerminalSetup } from '../../commands/terminalSetup/terminalSetup.js'
-import { getDesktopUpsellConfig } from '../../components/DesktopUpsell/DesktopUpsellStartup.js'
 import { color } from '../../components/design-system/color.js'
 import { getShortcutDisplay } from '../../keybindings/shortcutFormat.js'
 import { isKairosCronEnabled } from '../../tools/ScheduleCronTool/prompt.js'
@@ -33,7 +32,7 @@ import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketpla
 import { getCurrentSessionAgentColor, isCustomTitleEnabled } from '../../utils/sessionStorage.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { getSessionsSinceLastShown } from './tipHistory.js'
-// @ts-ignore
+// @ts-expect-error
 import type { Tip, TipContext } from './types.js'
 
 let _isOfficialMarketplaceInstalledCache: boolean | undefined
@@ -90,7 +89,9 @@ const externalTips: Tip[] = [
       }),
     cooldownSessions: 5,
     isRelevant: async () => {
-      if (isInternalBuild()) return false
+      if (isInternalBuild()) {
+        return false
+      }
       const config = getGlobalConfig()
       // Show to users who haven't used plan mode recently (7+ days)
       const daysSinceLastUse = config.lastPlanModeUse
@@ -138,7 +139,9 @@ const externalTips: Tip[] = [
     content: async () => tSync('tip.colorWhenMultiSessions'),
     cooldownSessions: 10,
     isRelevant: async () => {
-      if (getCurrentSessionAgentColor()) return false
+      if (getCurrentSessionAgentColor()) {
+        return false
+      }
       const count = await countConcurrentSessions()
       return count >= 2
     },
@@ -435,7 +438,9 @@ const externalTips: Tip[] = [
       }),
     cooldownSessions: 2,
     async isRelevant() {
-      if (isInternalBuild()) return false
+      if (isInternalBuild()) {
+        return false
+      }
       const config = getGlobalConfig()
       const modelSetting = getUserSpecifiedModelSetting()
       const hasOpusPlanMode = modelSetting === 'opusplan'
@@ -488,14 +493,22 @@ const externalTips: Tip[] = [
     },
     cooldownSessions: 3,
     isRelevant: async () => {
-      if (!isDirectApiClient()) return false
-      if (!modelSupportsEffort(getMainLoopModel())) return false
+      if (!isDirectApiClient()) {
+        return false
+      }
+      if (!modelSupportsEffort(getMainLoopModel())) {
+        return false
+      }
       if (getSettingsForSource('policySettings')?.effortLevel !== undefined) {
         return false
       }
-      if (getEffortEnvOverride() !== undefined) return false
+      if (getEffortEnvOverride() !== undefined) {
+        return false
+      }
       const persisted = getInitialSettings().effortLevel
-      if (persisted === 'high' || persisted === 'max') return false
+      if (persisted === 'high' || persisted === 'max') {
+        return false
+      }
       return (
         getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>('zy_tide_elm', 'off') !==
         'off'
@@ -516,7 +529,9 @@ const externalTips: Tip[] = [
     },
     cooldownSessions: 3,
     isRelevant: async () => {
-      if (!isDirectApiClient()) return false
+      if (!isDirectApiClient()) {
+        return false
+      }
       return (
         getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>('zy_tern_alloy', 'off') !==
         'off'
@@ -537,8 +552,12 @@ const externalTips: Tip[] = [
     },
     cooldownSessions: 3,
     isRelevant: async () => {
-      if (!isDirectApiClient()) return false
-      if (!isKairosCronEnabled()) return false
+      if (!isDirectApiClient()) {
+        return false
+      }
+      if (!isKairosCronEnabled()) {
+        return false
+      }
       return (
         getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
           'zy_timber_lark',
@@ -581,7 +600,9 @@ const internalOnlyTips: Tip[] = isInternalBuild()
 function getCustomTips(): Tip[] {
   const settings = getInitialSettings()
   const override = settings.spinnerTipsOverride
-  if (!override?.tips?.length) return []
+  if (!override?.tips?.length) {
+    return []
+  }
 
   return override.tips.map((content, i) => ({
     id: `custom-tip-${i}`,

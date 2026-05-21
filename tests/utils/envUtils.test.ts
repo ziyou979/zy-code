@@ -6,13 +6,13 @@
  * - parseEnvVars 格式校验
  * - isInternalBuild / getUserType 等构建时门控
  */
-import { describe, test, expect, afterEach } from 'bun:test'
+import { afterEach, describe, expect, test } from 'bun:test'
 import {
-  isEnvTruthy,
-  isEnvDefinedFalsy,
-  parseEnvVars,
-  isBareMode,
   hasNodeOption,
+  isBareMode,
+  isEnvDefinedFalsy,
+  isEnvTruthy,
+  parseEnvVars,
   shouldMaintainProjectWorkingDir,
 } from '../../src/utils/envUtils.js'
 

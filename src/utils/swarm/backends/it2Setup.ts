@@ -1,4 +1,4 @@
-import { homedir } from 'os'
+import { homedir } from 'node:os'
 import { getGlobalConfig, saveGlobalConfig } from '../../../utils/config.js'
 import { logForDebugging } from '../../../utils/debug.js'
 import { execFileNoThrow, execFileNoThrowWithCwd } from '../../../utils/execFileNoThrow.js'

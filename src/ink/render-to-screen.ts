@@ -140,7 +140,9 @@ export function renderToScreen(
  *  位置是稳定的——要在真实屏幕上高亮，加上消息的屏幕偏移（lo）。 */
 export function scanPositions(screen: Screen, query: string): MatchPosition[] {
   const lq = query.toLowerCase()
-  if (!lq) return []
+  if (!lq) {
+    return []
+  }
   const qlen = lq.length
   const w = screen.width
   const h = screen.height
@@ -208,14 +210,20 @@ export function applyPositionedHighlight(
   rowOffset: number,
   currentIdx: number,
 ): boolean {
-  if (currentIdx < 0 || currentIdx >= positions.length) return false
+  if (currentIdx < 0 || currentIdx >= positions.length) {
+    return false
+  }
   const p = positions[currentIdx]!
   const row = p.row + rowOffset
-  if (row < 0 || row >= screen.height) return false
+  if (row < 0 || row >= screen.height) {
+    return false
+  }
   const transform = (id: number) => stylePool.withCurrentMatch(id)
   const rowOff = row * screen.width
   for (let col = p.col; col < p.col + p.len; col++) {
-    if (col < 0 || col >= screen.width) continue
+    if (col < 0 || col >= screen.width) {
+      continue
+    }
     const cell = cellAtIndex(screen, rowOff + col)
     setCellStyleId(screen, col, row, transform(cell.styleId))
   }

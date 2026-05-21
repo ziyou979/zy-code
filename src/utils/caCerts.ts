@@ -42,7 +42,7 @@ export const getCACertificates = memoize((): string[] | undefined => {
   // is never accessed. Most users hit the early return above, so we only
   // pay this cost when custom CA handling is actually needed.
   /* eslint-disable @typescript-eslint/no-require-imports */
-  const tls = require('tls') as typeof import('tls')
+  const tls = require('node:tls') as typeof import('tls')
   /* eslint-enable @typescript-eslint/no-require-imports */
 
   const certs: string[] = []

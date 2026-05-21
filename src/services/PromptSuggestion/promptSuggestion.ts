@@ -96,12 +96,21 @@ export function abortPromptSuggestion(): void {
  * or null if generation is allowed. Shared by main and pipelined paths.
  */
 export function getSuggestionSuppressReason(appState: AppState): string | null {
-  if (!appState.promptSuggestionEnabled) return 'disabled'
-  if (appState.pendingWorkerRequest || appState.pendingSandboxRequest) return 'pending_permission'
-  if (appState.elicitation.queue.length > 0) return 'elicitation_active'
-  if (appState.toolPermissionContext.mode === 'plan') return 'plan_mode'
-  if (process.env.USER_TYPE === 'external' && currentLimits.status !== 'allowed')
+  if (!appState.promptSuggestionEnabled) {
+    return 'disabled'
+  }
+  if (appState.pendingWorkerRequest || appState.pendingSandboxRequest) {
+    return 'pending_permission'
+  }
+  if (appState.elicitation.queue.length > 0) {
+    return 'elicitation_active'
+  }
+  if (appState.toolPermissionContext.mode === 'plan') {
+    return 'plan_mode'
+  }
+  if (process.env.USER_TYPE === 'external' && currentLimits.status !== 'allowed') {
     return 'rate_limit'
+  }
   return null
 }
 
@@ -163,13 +172,17 @@ export async function tryGenerateSuggestion(
     logSuggestionSuppressed('empty', undefined, promptId, source)
     return null
   }
-  if (shouldFilterSuggestion(suggestion, promptId, source)) return null
+  if (shouldFilterSuggestion(suggestion, promptId, source)) {
+    return null
+  }
 
   return { suggestion, promptId, generationRequestId }
 }
 
 export async function executePromptSuggestion(context: REPLHookContext): Promise<void> {
-  if ((context.querySource as any) !== 'repl_main_thread') return
+  if ((context.querySource as any) !== 'repl_main_thread') {
+    return
+  }
 
   currentAbortController = new AbortController()
   const abortController = currentAbortController
@@ -183,7 +196,9 @@ export async function executePromptSuggestion(context: REPLHookContext): Promise
       cacheSafeParams,
       'cli',
     )
-    if (!result) return
+    if (!result) {
+      return
+    }
 
     context.toolUseContext.setAppState((prev) => ({
       ...prev,
@@ -226,7 +241,9 @@ const MAX_PARENT_UNCACHED_TOKENS = 10_000
 export function getParentCacheSuppressReason(
   lastAssistantMessage: ReturnType<typeof getLastAssistantMessage>,
 ): string | null {
-  if (!lastAssistantMessage) return null
+  if (!lastAssistantMessage) {
+    return null
+  }
 
   const usage = lastAssistantMessage.message.usage
   const inputTokens = usage.inputTokens
@@ -320,7 +337,9 @@ export async function generateSuggestion(
     firstAssistantMsg?.type === 'assistant' ? (firstAssistantMsg.requestId ?? null) : null
 
   for (const msg of result.messages) {
-    if (msg.type !== 'assistant') continue
+    if (msg.type !== 'assistant') {
+      continue
+    }
     const content = Array.isArray(msg.message.content) ? msg.message.content : []
     const textBlock = content.find((b) => b.type === 'text')
     if (textBlock?.type === 'text') {
@@ -379,9 +398,13 @@ export function shouldFilterSuggestion(
     [
       'too_few_words',
       () => {
-        if (wordCount >= 2) return false
+        if (wordCount >= 2) {
+          return false
+        }
         // Allow slash commands — these are valid user commands
-        if (suggestion.startsWith('/')) return false
+        if (suggestion.startsWith('/')) {
+          return false
+        }
         // Allow common single-word inputs that are valid user commands
         const ALLOWED_SINGLE_WORDS = new Set([
           // Affirmatives

@@ -30,7 +30,8 @@
       },
       "style": {
         "noNonNullAssertion": "off",
-        "useImportType": "off"
+        "useImportType": "off",
+        "useBlockStatements": "error"
       },
       "suspicious": {
         "noExplicitAny": "off",

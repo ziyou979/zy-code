@@ -439,7 +439,9 @@ export async function performCrossAppAccess(
     try {
       candidate = await discoverAuthorizationServer(asUrl, { fetchFn })
     } catch (e) {
-      if (abortSignal?.aborted) throw e
+      if (abortSignal?.aborted) {
+        throw e
+      }
       asErrors.push(`${asUrl}: ${e instanceof Error ? e.message : String(e)}`)
       continue
     }

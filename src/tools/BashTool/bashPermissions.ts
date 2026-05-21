@@ -1,13 +1,13 @@
 import { feature } from 'bun:bundle'
-import { isAbortError } from '../../types/llm.js'
-import { tSync } from '../../i18n/index.js'
 import type { z } from 'zod/v4'
+import { tSync } from '../../i18n/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
 import type { ToolPermissionContext, ToolUseContext } from '../../Tool.js'
+import { isAbortError } from '../../types/llm.js'
 import type { PendingClassifierCheck } from '../../types/permissions.js'
 import { count } from '../../utils/array.js'
 import {
@@ -151,7 +151,9 @@ function logClassifierResultForAnts(
  */
 export function getSimpleCommandPrefix(command: string): string | null {
   const tokens = command.trim().split(/\s+/).filter(Boolean)
-  if (tokens.length === 0) return null
+  if (tokens.length === 0) {
+    return null
+  }
 
   // Skip env var assignments (VAR=value) at the start, but only if they are
   // in SAFE_ENV_VARS (or ANT_ONLY_SAFE_ENV_VARS for ant users). If a non-safe
@@ -169,11 +171,15 @@ export function getSimpleCommandPrefix(command: string): string | null {
   }
 
   const remaining = tokens.slice(i)
-  if (remaining.length < 2) return null
+  if (remaining.length < 2) {
+    return null
+  }
   const subcmd = remaining[1]!
   // Second token must look like a subcommand (e.g., "commit", "run", "compose"),
   // not a flag (-rf), filename (file.txt), path (/tmp), URL, or number (755).
-  if (!/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(subcmd)) return null
+  if (!/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(subcmd)) {
+    return null
+  }
   return remaining.slice(0, 2).join(' ')
 }
 
@@ -244,11 +250,17 @@ export function getFirstWordPrefix(command: string): string | null {
   }
 
   const cmd = tokens[i]
-  if (!cmd) return null
+  if (!cmd) {
+    return null
+  }
   // Same shape check as the subcommand regex in getSimpleCommandPrefix:
   // rejects paths (./script.sh, /usr/bin/python), flags, numbers, filenames.
-  if (!/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(cmd)) return null
-  if (BARE_SHELL_PREFIXES.has(cmd)) return null
+  if (!/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(cmd)) {
+    return null
+  }
+  if (BARE_SHELL_PREFIXES.has(cmd)) {
+    return null
+  }
   return cmd
 }
 
@@ -294,16 +306,24 @@ function suggestionForExactCommand(command: string): PermissionUpdate[] {
  *   'echo hello' → null (no heredoc)
  */
 function extractPrefixBeforeHeredoc(command: string): string | null {
-  if (!command.includes('<<')) return null
+  if (!command.includes('<<')) {
+    return null
+  }
 
   const idx = command.indexOf('<<')
-  if (idx <= 0) return null
+  if (idx <= 0) {
+    return null
+  }
 
   const before = command.substring(0, idx).trim()
-  if (!before) return null
+  if (!before) {
+    return null
+  }
 
   const prefix = getSimpleCommandPrefix(before)
-  if (prefix) return prefix
+  if (prefix) {
+    return prefix
+  }
 
   // Fallback: skip safe env var assignments and take up to 2 tokens.
   // This preserves flag tokens (e.g., "python3 -c" stays "python3 -c",
@@ -320,7 +340,9 @@ function extractPrefixBeforeHeredoc(command: string): string | null {
     }
     i++
   }
-  if (i >= tokens.length) return null
+  if (i >= tokens.length) {
+    return null
+  }
   return tokens.slice(i, i + 2).join(' ') || null
 }
 
@@ -620,24 +642,33 @@ function skipTimeoutFlags(a: readonly string[]): number {
   while (i < a.length) {
     const arg = a[i]!
     const next = a[i + 1]
-    if (arg === '--foreground' || arg === '--preserve-status' || arg === '--verbose') i++
-    else if (/^--(?:kill-after|signal)=[A-Za-z0-9_.+-]+$/.test(arg)) i++
-    else if (
+    if (arg === '--foreground' || arg === '--preserve-status' || arg === '--verbose') {
+      i++
+    } else if (/^--(?:kill-after|signal)=[A-Za-z0-9_.+-]+$/.test(arg)) {
+      i++
+    } else if (
       (arg === '--kill-after' || arg === '--signal') &&
       next &&
       TIMEOUT_FLAG_VALUE_RE.test(next)
-    )
+    ) {
       i += 2
-    else if (arg === '--') {
+    } else if (arg === '--') {
       i++
       break
     } // end-of-options marker
-    else if (arg.startsWith('--')) return -1
-    else if (arg === '-v') i++
-    else if ((arg === '-k' || arg === '-s') && next && TIMEOUT_FLAG_VALUE_RE.test(next)) i += 2
-    else if (/^-[ks][A-Za-z0-9_.+-]+$/.test(arg)) i++
-    else if (arg.startsWith('-')) return -1
-    else break
+    else if (arg.startsWith('--')) {
+      return -1
+    } else if (arg === '-v') {
+      i++
+    } else if ((arg === '-k' || arg === '-s') && next && TIMEOUT_FLAG_VALUE_RE.test(next)) {
+      i += 2
+    } else if (/^-[ks][A-Za-z0-9_.+-]+$/.test(arg)) {
+      i++
+    } else if (arg.startsWith('-')) {
+      return -1
+    } else {
+      break
+    }
   }
   return i
 }
@@ -660,7 +691,9 @@ export function stripWrappersFromArgv(argv: string[]): string[] {
       a = a.slice(a[1] === '--' ? 2 : 1)
     } else if (a[0] === 'timeout') {
       const i = skipTimeoutFlags(a)
-      if (i < 0 || !a[i] || !/^\d+(?:\.\d+)?[smhd]?$/.test(a[i]!)) return a
+      if (i < 0 || !a[i] || !/^\d+(?:\.\d+)?[smhd]?$/.test(a[i]!)) {
+        return a
+      }
       a = a.slice(i + 1)
     } else if (a[0] === 'nice' && a[1] === '-n' && a[2] && /^-?\d+$/.test(a[2])) {
       a = a.slice(a[3] === '--' ? 4 : 3)
@@ -734,8 +767,12 @@ export function stripAllLeadingEnvVars(command: string, blocklist?: RegExp): str
     stripped = stripCommentLines(stripped)
 
     const m = stripped.match(ENV_VAR_PATTERN)
-    if (!m) continue
-    if (blocklist?.test(m[1]!)) break
+    if (!m) {
+      continue
+    }
+    if (blocklist?.test(m[1]!)) {
+      break
+    }
     stripped = stripped.slice(m[0].length)
   }
 
@@ -860,7 +897,7 @@ function filterRulesByContentsMatchingInput(
                 if (cmdToMatch === bashRule.prefix) {
                   return true
                 }
-                if (cmdToMatch.startsWith(bashRule.prefix + ' ')) {
+                if (cmdToMatch.startsWith(`${bashRule.prefix} `)) {
                   return true
                 }
                 // Also match "xargs <prefix>" for bare xargs with no flags.
@@ -868,11 +905,11 @@ function filterRulesByContentsMatchingInput(
                 // and deny rules like Bash(rm:*) to block "xargs rm file".
                 // Natural word-boundary: "xargs -n1 grep" does NOT start with
                 // "xargs grep " so flagged xargs invocations are not matched.
-                const xargsPrefix = 'xargs ' + bashRule.prefix
+                const xargsPrefix = `xargs ${bashRule.prefix}`
                 if (cmdToMatch === xargsPrefix) {
                   return true
                 }
-                return cmdToMatch.startsWith(xargsPrefix + ' ')
+                return cmdToMatch.startsWith(`${xargsPrefix} `)
               }
             }
             break
@@ -1312,7 +1349,9 @@ function filterCdCwdSubcommands(
   const astCommandsByIdx: (SimpleCommand | undefined)[] = []
   for (let i = 0; i < rawSubcommands.length; i++) {
     const cmd = rawSubcommands[i]!
-    if (cmd === `cd ${cwd}` || cmd === `cd ${cwdMingw}`) continue
+    if (cmd === `cd ${cwd}` || cmd === `cd ${cwdMingw}`) {
+      continue
+    }
     subcommands.push(cmd)
     astCommandsByIdx.push(astCommands?.[i])
   }
@@ -1366,7 +1405,9 @@ function checkSemanticsDeny(
   commands: readonly { text: string }[],
 ): PermissionResult | null {
   const fullCmd = checkEarlyExitDeny(input, toolPermissionContext)
-  if (fullCmd !== null) return fullCmd
+  if (fullCmd !== null) {
+    return fullCmd
+  }
   for (const cmd of commands) {
     const subDeny = matchingRulesForInput(
       { ...input, command: cmd.text },
@@ -1396,11 +1437,17 @@ function buildPendingClassifierCheck(
     return undefined
   }
   // Skip in auto mode - auto mode classifier handles all permission decisions
-  if (feature('TRANSCRIPT_CLASSIFIER') && toolPermissionContext.mode === 'auto') return undefined
-  if (toolPermissionContext.mode === 'bypassPermissions') return undefined
+  if (feature('TRANSCRIPT_CLASSIFIER') && toolPermissionContext.mode === 'auto') {
+    return undefined
+  }
+  if (toolPermissionContext.mode === 'bypassPermissions') {
+    return undefined
+  }
 
   const allowDescriptions = getBashPromptAllowDescriptions(toolPermissionContext)
-  if (allowDescriptions.length === 0) return undefined
+  if (allowDescriptions.length === 0) {
+    return undefined
+  }
 
   return {
     command,
@@ -1430,11 +1477,19 @@ export function startSpeculativeClassifierCheck(
   isNonInteractiveSession: boolean,
 ): boolean {
   // Same guards as buildPendingClassifierCheck
-  if (!isClassifierPermissionsEnabled()) return false
-  if (feature('TRANSCRIPT_CLASSIFIER') && toolPermissionContext.mode === 'auto') return false
-  if (toolPermissionContext.mode === 'bypassPermissions') return false
+  if (!isClassifierPermissionsEnabled()) {
+    return false
+  }
+  if (feature('TRANSCRIPT_CLASSIFIER') && toolPermissionContext.mode === 'auto') {
+    return false
+  }
+  if (toolPermissionContext.mode === 'bypassPermissions') {
+    return false
+  }
   const allowDescriptions = getBashPromptAllowDescriptions(toolPermissionContext)
-  if (allowDescriptions.length === 0) return false
+  if (allowDescriptions.length === 0) {
+    return false
+  }
 
   const cwd = getCwd()
   const promise = classifyBashCommand(
@@ -1567,7 +1622,9 @@ export async function executeAsyncClassifierCheck(
 
   // Don't auto-approve if user already made a decision or has interacted
   // with the permission dialog (e.g., arrow keys, tab, typing)
-  if (!callbacks.shouldContinue()) return
+  if (!callbacks.shouldContinue()) {
+    return
+  }
 
   if (
     feature('BASH_CLASSIFIER') &&
@@ -1667,7 +1724,9 @@ export async function bashToolHasPermission(
     // Respect exact-match deny/ask/allow, then prefix/wildcard deny. Only
     // fall through to ask if no deny matched — don't downgrade deny to ask.
     const earlyExit = checkEarlyExitDeny(input, appState.toolPermissionContext)
-    if (earlyExit !== null) return earlyExit
+    if (earlyExit !== null) {
+      return earlyExit
+    }
     const decisionReason: PermissionDecisionReason = {
       type: 'other' as const,
       reason: astResult.reason,
@@ -1703,7 +1762,9 @@ export async function bashToolHasPermission(
         appState.toolPermissionContext,
         astResult.commands,
       )
-      if (earlyExit !== null) return earlyExit
+      if (earlyExit !== null) {
+        return earlyExit
+      }
       const decisionReason: PermissionDecisionReason = {
         type: 'other' as const,
         reason: (sem as any).reason,

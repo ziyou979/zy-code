@@ -24,6 +24,7 @@ import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { ToolUseContext } from '../../Tool.js'
 import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../../types/command.js'
 import { logForDebugging } from '../../utils/debug.js'
+
 type Props = {
   onDone: LocalJSXCommandOnDone
   name?: string
@@ -104,7 +105,7 @@ function BridgeToggle({ onDone, name }: Props) {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [replBridgeOutboundOnly, onDone, setAppState, replBridgeEnabled, replBridgeConnected, name])
   if (showDisconnectDialog) {
     return <BridgeDisconnectDialog onDone={onDone} />
   }
@@ -117,7 +118,7 @@ function BridgeToggle({ onDone, name }: Props) {
  */
 
 function BridgeDisconnectDialog({ onDone }: Props) {
-  // @ts-ignore
+  // @ts-expect-error
   useRegisterOverlay('bridge-disconnect-dialog')
   const setAppState = useSetAppState()
   const sessionUrl = useAppState((s) => s.replBridgeSessionUrl)

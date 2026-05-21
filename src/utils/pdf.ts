@@ -1,6 +1,6 @@
-import { randomUUID } from 'crypto'
-import { mkdir, readdir, readFile } from 'fs/promises'
-import { join } from 'path'
+import { randomUUID } from 'node:crypto'
+import { mkdir, readdir, readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { PDF_MAX_EXTRACT_SIZE, PDF_TARGET_RAW_SIZE } from '../constants/apiLimits.js'
 import { errorMessage } from './errors.js'
 import { execFileNoThrow } from './execFileNoThrow.js'
@@ -118,7 +118,7 @@ export async function getPDFPageCount(filePath: string): Promise<number | null> 
     return null
   }
   const count = parseInt(match[1]!, 10)
-  return isNaN(count) ? null : count
+  return Number.isNaN(count) ? null : count
 }
 
 export type PDFExtractPagesResult = {
@@ -145,7 +145,9 @@ export function resetPdftoppmCache(): void {
  * The result is cached for the lifetime of the process.
  */
 export async function isPdftoppmAvailable(): Promise<boolean> {
-  if (pdftoppmAvailable !== undefined) return pdftoppmAvailable
+  if (pdftoppmAvailable !== undefined) {
+    return pdftoppmAvailable
+  }
   const { code, stderr } = await execFileNoThrow('pdftoppm', ['-v'], {
     timeout: 5000,
     useCwd: false,

@@ -5,20 +5,19 @@ import {
 } from '@ant/claude-for-chrome-mcp'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { shutdownDatadog } from '../../services/analytics/datadog.js'
-import { shutdownZyEventLogging } from '../../services/analytics/zyEventLogger.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
 import { initializeAnalyticsSink } from '../../services/analytics/sink.js'
+import { shutdownZyEventLogging } from '../../services/analytics/zyEventLogger.js'
 import { getZyAIOAuthTokens } from '../auth.js'
 import { enableConfigs, getGlobalConfig, saveGlobalConfig } from '../config.js'
 import { DebugLogger, logForDebugging } from '../debug.js'
-import { isEnvTruthy } from '../envUtils.js'
-import { isInternalBuild } from '../envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../envUtils.js'
 import { sideQuery } from '../sideQuery.js'
-// @ts-ignore TS1149
+// @ts-expect-error TS1149
 import { getAllSocketPaths, getSecureSocketPath } from './common.js'
 
 const EXTENSION_DOWNLOAD_URL = 'https://claude.ai/chrome'

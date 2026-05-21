@@ -20,6 +20,7 @@ import { ScrollChromeContext } from './FullscreenLayout.js'
 
 // scrollTo 时目标上方留出的空间行数。
 const HEADROOM = 3
+
 import { logForDebugging } from '../utils/debug.js'
 import { sleep } from '../utils/sleep.js'
 import { renderableSearchText } from '../utils/transcriptSearch.js'
@@ -37,7 +38,9 @@ import {
 const fallbackLowerCache = new WeakMap<RenderableMessage, string>()
 function defaultExtractSearchText(msg: RenderableMessage): string {
   const cached = fallbackLowerCache.get(msg)
-  if (cached !== undefined) return cached
+  if (cached !== undefined) {
+    return cached
+  }
   const lowered = renderableSearchText(msg)
   fallbackLowerCache.set(msg, lowered)
   return lowered
@@ -143,7 +146,9 @@ function stickyPromptText(msg: RenderableMessage): string | null {
   // 每个 tick 用相同的消息调用此函数 5-50+ 次；系统提醒剥离每次
   // 解析都分配新字符串。WeakMap 在压缩/清除时自动 GC（messages[] 被替换）。
   const cached = promptTextCache.get(msg)
-  if (cached !== undefined) return cached
+  if (cached !== undefined) {
+    return cached
+  }
   const result = computeStickyPromptText(msg)
   promptTextCache.set(msg, result)
   return result
@@ -151,9 +156,13 @@ function stickyPromptText(msg: RenderableMessage): string | null {
 function computeStickyPromptText(msg: RenderableMessage): string | null {
   let raw: string | null = null
   if (msg.type === 'user') {
-    if (msg.isMeta || msg.isVisibleInTranscriptOnly) return null
+    if (msg.isMeta || msg.isVisibleInTranscriptOnly) {
+      return null
+    }
     const block = msg.message.content[0] as any
-    if (block?.type !== 'text') return null
+    if (block?.type !== 'text') {
+      return null
+    }
     raw = block.text
   } else if (
     (msg as any).type === 'attachment' &&
@@ -167,9 +176,13 @@ function computeStickyPromptText(msg: RenderableMessage): string | null {
         ? p
         : p.flatMap((b: any) => (b.type === 'text' ? [b.text] : [])).join('\n')
   }
-  if (raw === null) return null
+  if (raw === null) {
+    return null
+  }
   const t = stripSystemReminders(raw)
-  if (t.startsWith('<') || t === '') return null
+  if (t.startsWith('<') || t === '') {
+    return null
+  }
   return t
 }
 
@@ -298,7 +311,9 @@ export function VirtualMessageList({
   const isVisible = useCallback(
     (i: number) => {
       const h = getItemHeight(i)
-      if (h === 0) return false
+      if (h === 0) {
+        return false
+      }
       return isNavigableMessage(messages[i]!)
     },
     [getItemHeight, messages],
@@ -327,7 +342,9 @@ export function VirtualMessageList({
       enterCursor: () => scan(messages.length - 1, -1, isUser),
       navigatePrev: () => scan(selIdx - 1, -1),
       navigateNext: () => {
-        if (scan(selIdx + 1, 1)) return
+        if (scan(selIdx + 1, 1)) {
+          return
+        }
         // 超过最后可见项 → 退出并重新固定。最后消息的顶部在视口
         // 顶部（选择滚动效果）；其底部可能在视口下方。
         scrollRef.current?.scrollToBottom()
@@ -340,7 +357,14 @@ export function VirtualMessageList({
       navigateBottom: () => scan(messages.length - 1, -1),
       getSelected: () => (selIdx >= 0 ? (messages[selIdx] ?? null) : null),
     }
-  }, [messages, selectedIndex, setCursor, isVisible])
+  }, [
+    messages,
+    selectedIndex,
+    setCursor,
+    isVisible, // 超过最后可见项 → 退出并重新固定。最后消息的顶部在视口
+    // 顶部（选择滚动效果）；其底部可能在视口下方。
+    scrollRef.current?.scrollToBottom,
+  ])
   // 两阶段跳转 + 搜索引擎。通过 ref 读取以保持句柄在渲染间稳定——
   // offsets/messages 标识每次渲染都变化，不能放在 useImperativeHandle 依赖中而不重新创建句柄。
   const jumpState = useRef({
@@ -365,7 +389,9 @@ export function VirtualMessageList({
   // jumpState 读取；超出 overscan 的跳转通过 scrollToIndex 着陆，
   // 下次导航是精确的。
   useEffect(() => {
-    if (selectedIndex === undefined) return
+    if (selectedIndex === undefined) {
+      return
+    }
     const s = jumpState.current
     const el = s.getItemElement(selectedIndex)
     if (el) {
@@ -494,14 +520,18 @@ export function VirtualMessageList({
   //
   // 依赖仅为 seekGen——effect 不会在随机渲染时重新运行
   //（incsearch 期间 onSearchMatchesChange 变化）。
-  const [seekGen, setSeekGen] = useState(0)
+  const [_seekGen, setSeekGen] = useState(0)
   const bumpSeek = useCallback(() => setSeekGen((g) => g + 1), [])
   useEffect(() => {
     const req = scanRequestRef.current
-    if (!req) return
+    if (!req) {
+      return
+    }
     const { idx, wantLast, tries } = req
     const s = scrollRef.current
-    if (!s) return
+    if (!s) {
+      return
+    }
     const { getItemElement, getItemTop, scrollToIndex } = jumpState.current
     const el = getItemElement(idx)
     const h = el?.yogaNode?.getComputedHeight() ?? 0
@@ -555,18 +585,22 @@ export function VirtualMessageList({
       stepRef.current(pending)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seekGen])
+  }, [scanElement, bumpSeek, scrollRef.current])
 
   // 滚动到消息 i 的顶部，准备 scanPending。search effect 在下个 tick 读取新的屏幕。
   // wantLast：N 进入消息——screenOrd = length-1。
   function jump(i: number, wantLast: boolean): void {
     const s = scrollRef.current
-    if (!s) return
+    if (!s) {
+      return
+    }
     const js = jumpState.current
     const { getItemElement, scrollToIndex } = js
     // offsets is a Float64Array whose .length is the allocated buffer (only
     // grows) — messages.length is the logical item count.
-    if (i < 0 || i >= js.messages.length) return
+    if (i < 0 || i >= js.messages.length) {
+      return
+    }
     // 清除过时的高亮，在滚动前进行。从现在到搜索
     // effect 的高亮之间，scan-highlight 的反向显示。
     setPositions?.(null)
@@ -599,7 +633,9 @@ export function VirtualMessageList({
     const st = searchState.current
     const { matches, prefixSum } = st
     const total = prefixSum.at(-1) ?? 0
-    if (matches.length === 0) return
+    if (matches.length === 0) {
+      return
+    }
 
     // 搜索进行中——将此按键排队（单深度，最新覆盖）。
     // seek effect 在高亮后触发它。
@@ -607,7 +643,9 @@ export function VirtualMessageList({
       pendingStepRef.current = delta
       return
     }
-    if (startPtrRef.current < 0) startPtrRef.current = st.ptr
+    if (startPtrRef.current < 0) {
+      startPtrRef.current = st.ptr
+    }
     const { positions } = elementPositions.current
     const newOrd = st.screenOrd + delta
     if (newOrd >= 0 && newOrd < positions.length) {
@@ -642,7 +680,9 @@ export function VirtualMessageList({
       // 非搜索跳转（sticky 头部点击等）。不扫描，无位置。
       jumpToIndex: (i: number) => {
         const s = scrollRef.current
-        if (s) s.scrollTo(targetFor(i))
+        if (s) {
+          s.scrollTo(targetFor(i))
+        }
       },
       setSearchQuery: (q: string) => {
         // 新搜索使一切失效。
@@ -724,7 +764,9 @@ export function VirtualMessageList({
       prevMatch: () => step(-1),
       setAnchor: () => {
         const s = scrollRef.current
-        if (s) searchAnchor.current = s.getScrollTop()
+        if (s) {
+          searchAnchor.current = s.getScrollTop()
+        }
       },
       disarmSearch: () => {
         // 手动滚动使屏幕绝对位置失效。
@@ -737,7 +779,9 @@ export function VirtualMessageList({
         startPtrRef.current = -1
       },
       warmSearchIndex: async () => {
-        if (indexWarmed.current) return 0
+        if (indexWarmed.current) {
+          return 0
+        }
         const msgs = jumpState.current.messages
         const CHUNK = 500
         let workMs = 0
@@ -762,7 +806,20 @@ export function VirtualMessageList({
     // 闭包引用 ref + 回调。scrollRef 稳定；其他是
     // useCallback([]) 或从 REPL 传递的 props（稳定）。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [scrollRef],
+    [
+      scrollRef,
+      step,
+      targetFor, // wantLast=true：预览最近消息中的最后一个出现。
+      // 在 sticky-bottom（常见的 / 入口），最近的是最后一条消息；
+      // 其最后一次出现最接近用户之前所在位置——视图移动最小。
+      // n 从那里向前前进。
+      jump, // 全局出现次数 + 1 基当前。wantLast=true 所以
+      // 扫描会落在 matches[ptr] 的最后一次出现上。占位符
+      // = prefixSum[ptr+1]（到此消息的计数）。highlight() 在扫描完成后更新为精确值。
+      onSearchMatchesChange, // 手动滚动使屏幕绝对位置失效。
+      setPositions,
+      extractSearchText,
+    ],
   )
 
   // StickyTracker 放在列表内容之后。它返回 null（无 DOM 节点），
@@ -789,7 +846,9 @@ export function VirtualMessageList({
   }
   const onClickK = useCallback((msg: RenderableMessage, cellIsBlank: boolean) => {
     const h = handlersRef.current
-    if (!cellIsBlank && h.onItemClick) h.onItemClick(msg)
+    if (!cellIsBlank && h.onItemClick) {
+      h.onItemClick(msg)
+    }
   }, [])
   const onEnterK = useCallback((k: string) => {
     handlersRef.current.setHoveredKey(k)
@@ -885,7 +944,9 @@ function StickyTracker({
   )
   useSyncExternalStore(subscribe, () => {
     const s = scrollRef.current
-    if (!s) return NaN
+    if (!s) {
+      return NaN
+    }
     const t = s.getScrollTop() + s.getPendingDelta()
     return s.isSticky() ? -1 - t : t
   })
@@ -907,7 +968,9 @@ function StickyTracker({
   for (let i = end - 1; i >= start; i--) {
     const top = getItemTop(i)
     if (top >= 0) {
-      if (top < target) break
+      if (top < target) {
+        break
+      }
       firstVisibleTop = top
     }
     firstVisible = i
@@ -917,14 +980,18 @@ function StickyTracker({
   if (firstVisible > 0 && !isSticky) {
     for (let i = firstVisible - 1; i >= 0; i--) {
       const t = stickyPromptText(messages[i]!)
-      if (t === null) continue
+      if (t === null) {
+        continue
+      }
       // 提示的包装 Box 顶部在 target 上方（这就是为什么它在
       // [0, firstVisible) 范围内），但其 ❯ 在 top+1（marginTop=1）。
       // 如果 ❯ 在或低于 target，它在视口顶部可见——
       // 在头部显示相同文本会重复它。发生在 Box 顶部滚过和
       // ❯ 滚过之间的 1 行间隙中。跳到下一个更旧的提示（其 ❯ 肯定在上方）。
       const top = getItemTop(i)
-      if (top >= 0 && top + 1 >= target) continue
+      if (top >= 0 && top + 1 >= target) {
+        continue
+      }
       idx = i
       text = t
       break
@@ -964,14 +1031,18 @@ function StickyTracker({
   // 跳转中间触发，在 'clicked' 上重新挂载头部。
   useEffect(() => {
     // 在两阶段校正进行中时保持。
-    if (pending.current.idx >= 0) return
+    if (pending.current.idx >= 0) {
+      return
+    }
     if (suppress.current === 'armed') {
       suppress.current = 'force'
       return
     }
     const force = suppress.current === 'force'
     suppress.current = 'none'
-    if (!force && lastIdx.current === idx) return
+    if (!force && lastIdx.current === idx) {
+      return
+    }
     lastIdx.current = idx
     if (text === null) {
       setStickyPrompt(null)
@@ -1030,7 +1101,9 @@ function StickyTracker({
   // 此在项目出现后通过元素重新锚定。scrollToElement 将 Yoga 读取延迟到绘制时——确定性的。
   // 第二个运行，使它在 onChange 门控看到 pending 之后清除 pending。
   useEffect(() => {
-    if (pending.current.idx < 0) return
+    if (pending.current.idx < 0) {
+      return
+    }
     const el = getItemElement(pending.current.idx)
     if (el) {
       scrollRef.current?.scrollToElement(el, 1)

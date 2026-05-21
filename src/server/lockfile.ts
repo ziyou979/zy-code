@@ -11,7 +11,7 @@ export interface ServerLockInfo {
   [key: string]: unknown
 }
 
-export async function writeServerLock(info: ServerLockInfo): Promise<void> {
+export async function writeServerLock(_info: ServerLockInfo): Promise<void> {
   throw new Error('writeServerLock not implemented')
 }
 

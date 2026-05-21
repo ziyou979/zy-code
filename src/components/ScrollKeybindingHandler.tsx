@@ -10,6 +10,7 @@ import { getClipboardPath } from '../ink/termio/osc.js'
 import { type Key, useInput } from '../ink.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { logForDebugging } from '../utils/debug.js'
+
 type Props = {
   scrollRef: RefObject<ScrollBoxHandle | null>
   isActive: boolean
@@ -113,7 +114,9 @@ const WHEEL_DECAY_IDLE_MS = 500
  * excluded — scroll:lineUp/Down already clears via the keybinding path.
  */
 export function shouldClearSelectionOnKey(key: Key): boolean {
-  if (key.wheelUp || key.wheelDown) return false
+  if (key.wheelUp || key.wheelDown) {
+    return false
+  }
   const isNav =
     key.leftArrow ||
     key.rightArrow ||
@@ -123,7 +126,9 @@ export function shouldClearSelectionOnKey(key: Key): boolean {
     key.end ||
     key.pageUp ||
     key.pageDown
-  if (isNav && (key.shift || key.meta || key.super)) return false
+  if (isNav && (key.shift || key.meta || key.super)) {
+    return false
+  }
   return true
 }
 
@@ -138,13 +143,27 @@ export function shouldClearSelectionOnKey(key: Key): boolean {
  * preserves (modified nav). Returns null for non-extend keys.
  */
 export function selectionFocusMoveForKey(key: Key): FocusMove | null {
-  if (!key.shift || key.meta) return null
-  if (key.leftArrow) return 'left'
-  if (key.rightArrow) return 'right'
-  if (key.upArrow) return 'up'
-  if (key.downArrow) return 'down'
-  if (key.home) return 'lineStart'
-  if (key.end) return 'lineEnd'
+  if (!key.shift || key.meta) {
+    return null
+  }
+  if (key.leftArrow) {
+    return 'left'
+  }
+  if (key.rightArrow) {
+    return 'right'
+  }
+  if (key.upArrow) {
+    return 'up'
+  }
+  if (key.downArrow) {
+    return 'down'
+  }
+  if (key.home) {
+    return 'lineStart'
+  }
+  if (key.end) {
+    return 'lineEnd'
+  }
   return null
 }
 export type WheelAccelState = {
@@ -253,7 +272,7 @@ export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: numbe
       // the curve handles it (gap=1000ms → m≈0.01 → mult≈1). No frac —
       // rounding loss is minor at high mult, and frac persisting across idle
       // was causing off-by-one on the first click back.
-      const m = Math.pow(0.5, gap / WHEEL_DECAY_HALFLIFE_MS)
+      const m = 0.5 ** (gap / WHEEL_DECAY_HALFLIFE_MS)
       const cap = Math.max(WHEEL_MODE_CAP, state.base * 2)
       const next = 1 + (state.mult - 1) * m + WHEEL_MODE_STEP * m
       state.mult = Math.min(cap, next, state.mult + WHEEL_MODE_RAMP)
@@ -286,14 +305,16 @@ export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: numbe
   // (b) give 1 row/event — the burst count IS the acceleration, same as
   // native. For (a) the decay curve gives 3-5 rows. For sparse events
   // (100ms+, slow deliberate scroll) the curve gives 1-3.
-  if (sameDir && gap < WHEEL_BURST_MS) return 1
+  if (sameDir && gap < WHEEL_BURST_MS) {
+    return 1
+  }
   if (!sameDir || gap > WHEEL_DECAY_IDLE_MS) {
     // 方向反转或长时间空闲：从 2 开始（而非 1），这样暂停后的第一次
     // 点击移动可见量。没有这个的话，同方向空闲后恢复会衰减到 mult≈1（1 行）。
     state.mult = 2
     state.frac = 0
   } else {
-    const m = Math.pow(0.5, gap / WHEEL_DECAY_HALFLIFE_MS)
+    const m = 0.5 ** (gap / WHEEL_DECAY_HALFLIFE_MS)
     const cap = gap >= WHEEL_DECAY_GAP_MS ? WHEEL_DECAY_CAP_SLOW : WHEEL_DECAY_CAP_FAST
     state.mult = Math.min(cap, 1 + (state.mult - 1) * m + WHEEL_DECAY_STEP * m)
   }
@@ -311,7 +332,9 @@ export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: numbe
  *  from initAndLogWheelAccel so globalSettings.env has loaded. */
 export function readScrollSpeedBase(): number {
   const raw = process.env.ZY_CODE_SCROLL_SPEED
-  if (!raw) return 1
+  if (!raw) {
+    return 1
+  }
   const n = parseFloat(raw)
   return Number.isNaN(n) || n <= 0 ? 1 : Math.min(n, 20)
 }
@@ -403,7 +426,9 @@ export function ScrollKeybindingHandler({
   }
   function copyAndToast(): void {
     const text = selection.copySelection()
-    if (text) showCopiedToast(text)
+    if (text) {
+      showCopiedToast(text)
+    }
   }
 
   // 转换选区以跟踪键盘页面跳转。选区坐标是
@@ -416,23 +441,31 @@ export function ScrollKeybindingHandler({
   // 其异步 pendingScrollDelta 排放意味着实际 delta 无法同步知道。
   function translateSelectionForJump(s: ScrollBoxHandle, delta: number): void {
     const sel = selection.getState()
-    if (!sel?.anchor || !sel.focus) return
+    if (!sel?.anchor || !sel.focus) {
+      return
+    }
     const top = s.getViewportTop()
     const bottom = top + s.getViewportHeight() - 1
     // 仅当选区在 scrollbox 内容上时才转换。页脚/提示/StickyPromptHeader
     // 中的选区在静态文本上——滚动不会移动它们下面的内容。
     // 与 ink.tsx 的自动跟随转换相同的守卫（commit 36a8d154）。
-    if (sel.anchor.row < top || sel.anchor.row > bottom) return
+    if (sel.anchor.row < top || sel.anchor.row > bottom) {
+      return
+    }
     // 跨边界：anchor 在 scrollbox，focus 在页脚/头部。镜像
     // ink.tsx 的 Flag-3 守卫——不移动也不捕获。
     // 静态端点固定选区；移动会将其传送到 scrollbox 内容中。
-    if (sel.focus.row < top || sel.focus.row > bottom) return
+    if (sel.focus.row < top || sel.focus.row > bottom) {
+      return
+    }
     const max = Math.max(0, s.getScrollHeight() - s.getViewportHeight())
     const cur = s.getScrollTop() + s.getPendingDelta()
     // 边界钳位后的实际滚动距离。jumpBy 可能在 target >= max 时调用
     // scrollToBottom，但视图无法超过 max 移动，所以选区位移在此受限。
     const actual = Math.max(0, Math.min(max, cur + delta)) - cur
-    if (actual === 0) return
+    if (actual === 0) {
+      return
+    }
     if (actual > 0) {
       // 向下滚动：内容向上移动。顶部的行离开视口。
       // Anchor+focus 移动 -actual，这样它们跟踪向上移动的内容。
@@ -449,7 +482,9 @@ export function ScrollKeybindingHandler({
     {
       'scroll:pageUp': () => {
         const scrollHandle = scrollRef.current
-        if (!scrollHandle) return
+        if (!scrollHandle) {
+          return
+        }
         const delta = -Math.max(1, Math.floor(scrollHandle.getViewportHeight() / 2))
         translateSelectionForJump(scrollHandle, delta)
         const sticky = jumpBy(scrollHandle, delta)
@@ -457,7 +492,9 @@ export function ScrollKeybindingHandler({
       },
       'scroll:pageDown': () => {
         const scrollHandle = scrollRef.current
-        if (!scrollHandle) return
+        if (!scrollHandle) {
+          return
+        }
         const delta = Math.max(1, Math.floor(scrollHandle.getViewportHeight() / 2))
         translateSelectionForJump(scrollHandle, delta)
         const sticky = jumpBy(scrollHandle, delta)
@@ -473,8 +510,9 @@ export function ScrollKeybindingHandler({
         // scroll would be a no-op. Lets a child component's handler take
         // the wheel event instead (e.g. Settings Config's list navigation
         // inside the centered Modal, where the paginated slice always fits).
-        if (!scrollHandle || scrollHandle.getScrollHeight() <= scrollHandle.getViewportHeight())
+        if (!scrollHandle || scrollHandle.getScrollHeight() <= scrollHandle.getViewportHeight()) {
           return false
+        }
         wheelAccel.current ??= initAndLogWheelAccel()
         scrollUp(scrollHandle, computeWheelStep(wheelAccel.current, -1, performance.now()))
         onScroll?.(false, scrollHandle)
@@ -482,8 +520,9 @@ export function ScrollKeybindingHandler({
       'scroll:lineDown': () => {
         selection.clearSelection()
         const scrollHandle = scrollRef.current
-        if (!scrollHandle || scrollHandle.getScrollHeight() <= scrollHandle.getViewportHeight())
+        if (!scrollHandle || scrollHandle.getScrollHeight() <= scrollHandle.getViewportHeight()) {
           return false
+        }
         wheelAccel.current ??= initAndLogWheelAccel()
         const step = computeWheelStep(wheelAccel.current, 1, performance.now())
         const reachedBottom = scrollDown(scrollHandle, step)
@@ -491,7 +530,9 @@ export function ScrollKeybindingHandler({
       },
       'scroll:top': () => {
         const scrollHandle = scrollRef.current
-        if (!scrollHandle) return
+        if (!scrollHandle) {
+          return
+        }
         translateSelectionForJump(
           scrollHandle,
           -(scrollHandle.getScrollTop() + scrollHandle.getPendingDelta()),
@@ -501,7 +542,9 @@ export function ScrollKeybindingHandler({
       },
       'scroll:bottom': () => {
         const scrollHandle = scrollRef.current
-        if (!scrollHandle) return
+        if (!scrollHandle) {
+          return
+        }
         const maxScrollTop = Math.max(
           0,
           scrollHandle.getScrollHeight() - scrollHandle.getViewportHeight(),
@@ -535,7 +578,9 @@ export function ScrollKeybindingHandler({
     {
       'scroll:halfPageUp': () => {
         const scrollHandle = scrollRef.current
-        if (!scrollHandle) return
+        if (!scrollHandle) {
+          return
+        }
         const delta = -Math.max(1, Math.floor(scrollHandle.getViewportHeight() / 2))
         translateSelectionForJump(scrollHandle, delta)
         const sticky = jumpBy(scrollHandle, delta)
@@ -543,7 +588,9 @@ export function ScrollKeybindingHandler({
       },
       'scroll:halfPageDown': () => {
         const scrollHandle = scrollRef.current
-        if (!scrollHandle) return
+        if (!scrollHandle) {
+          return
+        }
         const delta = Math.max(1, Math.floor(scrollHandle.getViewportHeight() / 2))
         translateSelectionForJump(scrollHandle, delta)
         const sticky = jumpBy(scrollHandle, delta)
@@ -551,7 +598,9 @@ export function ScrollKeybindingHandler({
       },
       'scroll:fullPageUp': () => {
         const scrollHandle = scrollRef.current
-        if (!scrollHandle) return
+        if (!scrollHandle) {
+          return
+        }
         const delta = -Math.max(1, scrollHandle.getViewportHeight())
         translateSelectionForJump(scrollHandle, delta)
         const sticky = jumpBy(scrollHandle, delta)
@@ -559,7 +608,9 @@ export function ScrollKeybindingHandler({
       },
       'scroll:fullPageDown': () => {
         const scrollHandle = scrollRef.current
-        if (!scrollHandle) return
+        if (!scrollHandle) {
+          return
+        }
         const delta = Math.max(1, scrollHandle.getViewportHeight())
         translateSelectionForJump(scrollHandle, delta)
         const sticky = jumpBy(scrollHandle, delta)
@@ -591,13 +642,17 @@ export function ScrollKeybindingHandler({
   useInput(
     (input, key, event) => {
       const scrollState = scrollRef.current
-      if (!scrollState) return
+      if (!scrollState) {
+        return
+      }
       const stickyResult = applyModalPagerAction(
         scrollState,
         modalPagerAction(input, key),
         (direction) => translateSelectionForJump(scrollState, direction),
       )
-      if (stickyResult === null) return
+      if (stickyResult === null) {
+        return
+      }
       onScroll?.(stickyResult, scrollState)
       event.stopImmediatePropagation()
     },
@@ -617,7 +672,9 @@ export function ScrollKeybindingHandler({
   // 在上方注册并在到达此处之前消费其事件。
   useInput(
     (input, key, event) => {
-      if (!selection.hasSelection()) return
+      if (!selection.hasSelection()) {
+        return
+      }
       if (key.escape) {
         selection.clearSelection()
         event.stopImmediatePropagation()
@@ -677,7 +734,9 @@ function useDragToScroll(
   const onScrollRef = useRef(onScroll)
   onScrollRef.current = onScroll
   useEffect(() => {
-    if (!isActive) return
+    if (!isActive) {
+      return
+    }
     function stop(): void {
       dirRef.current = 0
       if (timerRef.current) {
@@ -710,7 +769,9 @@ function useDragToScroll(
       // accumulator AND missing the rows that actually scrolled out).
       // 跳过此 tick；50ms 间隔将在 Ink 的 16ms 渲染赶上后重试。
       // 也防止 shiftAnchor 不同步。
-      if (s.getPendingDelta() !== 0) return
+      if (s.getPendingDelta() !== 0) {
+        return
+      }
       const top = s.getViewportTop()
       const bottom = top + s.getViewportHeight() - 1
       // 将 anchor 钳位在 [top, bottom] 内。不是 [0, bottom]：ScrollBox
@@ -753,7 +814,9 @@ function useDragToScroll(
       // 可能在预穿越阶段将此清零（累加器在 anchor 行进入捕获范围之前为空）。
       // 每次调用都重新记录，这样损坏可以立即修复。
       lastScrolledDirRef.current = dir
-      if (dirRef.current === dir) return // already going this way
+      if (dirRef.current === dir) {
+        return // already going this way
+      }
       stop()
       dirRef.current = dir
       ticksRef.current = 0
@@ -814,7 +877,9 @@ function useDragToScroll(
           }
         }
         stop()
-      } else start(scrollDir)
+      } else {
+        start(scrollDir)
+      }
     }
     const unsubscribe = selection.subscribe(check)
     return () => {
@@ -845,7 +910,9 @@ export function dragScrollDirection(
   bottom: number,
   alreadyScrollingDir: -1 | 0 | 1 = 0,
 ): -1 | 0 | 1 {
-  if (!sel?.isDragging || !sel.anchor || !sel.focus) return 0
+  if (!sel?.isDragging || !sel.anchor || !sel.focus) {
+    return 0
+  }
   const row = sel.focus.row
   const want: -1 | 0 | 1 = row < top ? -1 : row > bottom ? 1 : 0
   if (alreadyScrollingDir !== 0) {
@@ -857,7 +924,9 @@ export function dragScrollDirection(
   // Anchor must be inside the viewport for us to own this drag. If the
   // user started selecting in the input box or header, autoscrolling the
   // message history is surprising and corrupts the anchor via shiftAnchor.
-  if (sel.anchor.row < top || sel.anchor.row > bottom) return 0
+  if (sel.anchor.row < top || sel.anchor.row > bottom) {
+    return 0
+  }
   return want
 }
 
@@ -942,18 +1011,30 @@ export function modalPagerAction(
   input: string,
   key: Pick<Key, 'ctrl' | 'meta' | 'shift' | 'upArrow' | 'downArrow' | 'home' | 'end'>,
 ): ModalPagerAction | null {
-  if (key.meta) return null
+  if (key.meta) {
+    return null
+  }
   // 特殊键优先——箭头/home/end 带有空或垃圾输入到达，
   // 所以这些必须在任何输入字符串逻辑之前检查。shift 保留用于选区扩展
   //（selectionFocusMoveForKey）；ctrl+home/end 已有 useKeybindings 路由到 scroll:top/bottom。
   if (!key.ctrl && !key.shift) {
-    if (key.upArrow) return 'lineUp'
-    if (key.downArrow) return 'lineDown'
-    if (key.home) return 'top'
-    if (key.end) return 'bottom'
+    if (key.upArrow) {
+      return 'lineUp'
+    }
+    if (key.downArrow) {
+      return 'lineDown'
+    }
+    if (key.home) {
+      return 'top'
+    }
+    if (key.end) {
+      return 'bottom'
+    }
   }
   if (key.ctrl) {
-    if (key.shift) return null
+    if (key.shift) {
+      return null
+    }
     switch (input) {
       case 'u':
         return 'halfPageUp'
@@ -976,11 +1057,17 @@ export function modalPagerAction(
   }
   // 裸字母。按键重复批次：仅对统一连续字符执行。
   const c = input[0]
-  if (!c || input !== c.repeat(input.length)) return null
+  if (!c || input !== c.repeat(input.length)) {
+    return null
+  }
   // kitty sends G as input='g' shift=true; legacy as 'G' shift=false.
   // Check BEFORE the shift-gate so both hit 'bottom'.
-  if (c === 'G' || (c === 'g' && key.shift)) return 'bottom'
-  if (key.shift) return null
+  if (c === 'G' || (c === 'g' && key.shift)) {
+    return 'bottom'
+  }
+  if (key.shift) {
+    return null
+  }
   switch (c) {
     case 'g':
       return 'top'

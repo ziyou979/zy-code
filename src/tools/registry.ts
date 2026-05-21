@@ -37,7 +37,9 @@ class ToolRegistry {
   getAll(opts?: { excludeSpecial?: boolean }): Tool[] {
     return this.registrations
       .filter((r) => {
-        if (opts?.excludeSpecial && r.options.special) return false
+        if (opts?.excludeSpecial && r.options.special) {
+          return false
+        }
         return !(r.condition && !r.condition())
       })
       .map((r) => r.tool)

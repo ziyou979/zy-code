@@ -116,8 +116,12 @@ function formatLimitInfo(
   appliedOffset: number | undefined,
 ): string {
   const parts: string[] = []
-  if (appliedLimit !== undefined) parts.push(`limit: ${appliedLimit}`)
-  if (appliedOffset) parts.push(`offset: ${appliedOffset}`)
+  if (appliedLimit !== undefined) {
+    parts.push(`limit: ${appliedLimit}`)
+  }
+  if (appliedOffset) {
+    parts.push(`offset: ${appliedOffset}`)
+  }
   return parts.join(', ')
 }
 
@@ -224,7 +228,9 @@ export const GrepTool = buildTool({
   // numFiles/numLines/numMatches are chrome ("Found 3 files") — fine to
   // skip (under-count, not phantom). Glob reuses this via UI.tsx:65.
   extractSearchText({ mode, content, filenames }) {
-    if (mode === 'content' && content) return content
+    if (mode === 'content' && content) {
+      return content
+    }
     return filenames.join('\n')
   },
   mapToolResultToToolResultBlock(
@@ -470,7 +476,7 @@ export const GrepTool = buildTool({
         if (colonIndex > 0) {
           const countStr = line.substring(colonIndex + 1)
           const count = parseInt(countStr, 10)
-          if (!isNaN(count)) {
+          if (!Number.isNaN(count)) {
             totalMatches += count
             fileCount += 1
           }
@@ -533,7 +539,8 @@ export const GrepTool = buildTool({
   },
 } satisfies ToolDef<InputSchema, Output>)
 
+import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
 // 插件化注册
 import { toolRegistry } from '../registry.js'
-import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
+
 toolRegistry.register(GrepTool, () => !hasEmbeddedSearchTools())

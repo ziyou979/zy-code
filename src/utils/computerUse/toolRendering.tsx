@@ -4,6 +4,7 @@ import { Text } from '../../ink.js'
 import { truncateToWidth } from '../format.js'
 import type { MCPToolResult } from '../mcpValidation.js'
 import { renderInlineImage } from '../terminalImage.js'
+
 type CuToolInput = Record<string, unknown> & {
   coordinate?: [number, number]
   start_coordinate?: [number, number]
@@ -109,7 +110,9 @@ export function getComputerUseMCPRenderingOverrides(toolName: string): {
           return typeof input.bundle_id === 'string' ? String(input.bundle_id) : ''
         case 'request_access': {
           const apps = input.apps
-          if (!Array.isArray(apps)) return ''
+          if (!Array.isArray(apps)) {
+            return ''
+          }
           const names = apps
             .map((a) => (typeof a?.displayName === 'string' ? a.displayName : ''))
             .filter(Boolean)
@@ -124,7 +127,9 @@ export function getComputerUseMCPRenderingOverrides(toolName: string): {
       }
     },
     renderToolResultMessage(output, _progress, { verbose }) {
-      if (verbose || typeof output !== 'object' || output === null) return null
+      if (verbose || typeof output !== 'object' || output === null) {
+        return null
+      }
 
       // 尝试从结果中提取图像数据用于内联渲染
       if (Array.isArray(output)) {
@@ -154,7 +159,9 @@ export function getComputerUseMCPRenderingOverrides(toolName: string): {
 
       // Non-verbose: one-line dim summary, like Chrome's pattern.
       const summary = RESULT_SUMMARY[toolName]
-      if (!summary) return null
+      if (!summary) {
+        return null
+      }
       return (
         <MessageResponse height={1}>
           <Text dimColor>{summary}</Text>

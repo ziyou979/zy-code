@@ -8,10 +8,10 @@
  * Cache location: ~/.zy/plugins/install-counts-cache.json
  */
 
+import { randomBytes } from 'node:crypto'
+import { readFile, rename, unlink, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import axios from 'axios'
-import { randomBytes } from 'crypto'
-import { readFile, rename, unlink, writeFile } from 'fs/promises'
-import { join } from 'path'
 import { logForDebugging } from '../debug.js'
 import { errorMessage, getErrnoCode } from '../errors.js'
 import { getFsImplementation } from '../fsOperations.js'

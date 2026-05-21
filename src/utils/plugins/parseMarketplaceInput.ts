@@ -1,5 +1,5 @@
-import { homedir } from 'os'
-import { resolve } from 'path'
+import { homedir } from 'node:os'
+import { resolve } from 'node:path'
 import { getErrnoCode } from '../errors.js'
 import { getFsImplementation } from '../fsOperations.js'
 import type { MarketplaceSource } from './schemas.js'

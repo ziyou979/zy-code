@@ -4,7 +4,7 @@
 // engine correctly recognises coding terminology, project names, and branch
 // names that would otherwise be misheard.
 
-import { basename } from 'path'
+import { basename } from 'node:path'
 import { getProjectRoot } from '../bootstrap/state.js'
 import { getBranch } from '../utils/git.js'
 
@@ -93,7 +93,9 @@ export async function getVoiceKeyterms(recentFiles?: ReadonlySet<string>): Promi
   // Recent file names — only scan enough to fill remaining slots
   if (recentFiles) {
     for (const filePath of recentFiles) {
-      if (terms.size >= MAX_KEYTERMS) break
+      if (terms.size >= MAX_KEYTERMS) {
+        break
+      }
       for (const word of fileNameWords(filePath)) {
         terms.add(word)
       }

@@ -1,6 +1,4 @@
 import { feature } from 'bun:bundle'
-import { LLMAbortError } from '../types/llm.js'
-import * as React from 'react'
 import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
 import type { Tool as ToolType, ToolUseContext } from '../Tool.js'
@@ -9,6 +7,7 @@ import {
   peekSpeculativeClassifierCheck,
 } from '../tools/BashTool/bashPermissions.js'
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
+import { LLMAbortError } from '../types/llm.js'
 import type { AssistantMessage } from '../types/message.js'
 import { recordAutoModeDenial } from '../utils/autoModeDenials.js'
 import {

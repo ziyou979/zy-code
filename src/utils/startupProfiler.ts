@@ -9,17 +9,16 @@
  * Uses Node.js built-in performance hooks API for standard timing measurement.
  */
 
-import { dirname, join } from 'path'
+import { dirname, join } from 'node:path'
 import { getSessionId } from 'src/bootstrap/state.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../services/analytics/index.js'
 import { logForDebugging } from './debug.js'
-import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
+import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { getFsImplementation } from './fsOperations.js'
 import { formatMs, formatTimelineLine, getPerformance } from './profilerBase.js'
-import { isInternalBuild } from './envUtils.js'
 import { writeFileSync_DEPRECATED } from './slowOperations.js'
 
 // Module-level state - decided once at module load
@@ -63,7 +62,9 @@ if (SHOULD_PROFILE) {
  * Record a checkpoint with the given name
  */
 export function profileCheckpoint(name: string): void {
-  if (!SHOULD_PROFILE) return
+  if (!SHOULD_PROFILE) {
+    return
+  }
 
   const perf = getPerformance()
   perf.mark(name)
@@ -121,7 +122,9 @@ function getReport(): string {
 let reported = false
 
 export function profileReport(): void {
-  if (reported) return
+  if (reported) {
+    return
+  }
   reported = true
 
   // Log to Statsig (sampled: 100% ant, 0.1% external)
@@ -158,11 +161,15 @@ export function getStartupPerfLogPath(): string {
  */
 export function logStartupPerf(): void {
   // Only log if we were sampled (decision made at module load)
-  if (!STATSIG_LOGGING_SAMPLED) return
+  if (!STATSIG_LOGGING_SAMPLED) {
+    return
+  }
 
   const perf = getPerformance()
   const marks = perf.getEntriesByType('mark')
-  if (marks.length === 0) return
+  if (marks.length === 0) {
+    return
+  }
 
   // Build checkpoint lookup
   const checkpointTimes = new Map<string, number>()

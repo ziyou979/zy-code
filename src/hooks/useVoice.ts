@@ -122,14 +122,24 @@ export function normalizeLanguageForSTT(language: string | undefined): {
   code: string
   fellBackFrom?: string
 } {
-  if (!language) return { code: DEFAULT_STT_LANGUAGE }
+  if (!language) {
+    return { code: DEFAULT_STT_LANGUAGE }
+  }
   const lower = language.toLowerCase().trim()
-  if (!lower) return { code: DEFAULT_STT_LANGUAGE }
-  if (SUPPORTED_LANGUAGE_CODES.has(lower)) return { code: lower }
+  if (!lower) {
+    return { code: DEFAULT_STT_LANGUAGE }
+  }
+  if (SUPPORTED_LANGUAGE_CODES.has(lower)) {
+    return { code: lower }
+  }
   const fromName = LANGUAGE_NAME_TO_CODE[lower]
-  if (fromName) return { code: fromName }
+  if (fromName) {
+    return { code: fromName }
+  }
   const base = lower.split('-')[0]
-  if (base && SUPPORTED_LANGUAGE_CODES.has(base)) return { code: base }
+  if (base && SUPPORTED_LANGUAGE_CODES.has(base)) {
+    return { code: base }
+  }
   return { code: DEFAULT_STT_LANGUAGE, fellBackFrom: language }
 }
 
@@ -184,7 +194,9 @@ const AUDIO_LEVEL_BARS = 16
 // of the visual range so the waveform uses the full set of block heights.
 export function computeLevel(chunk: Buffer): number {
   const samples = chunk.length >> 1 // 16-bit = 2 bytes per sample
-  if (samples === 0) return 0
+  if (samples === 0) {
+    return 0
+  }
   let sumSq = 0
   for (let i = 0; i < chunk.length - 1; i += 2) {
     // Read 16-bit signed little-endian
@@ -272,7 +284,9 @@ export function useVoice({
     stateRef.current = newState
     setState(newState)
     setVoiceState((prev) => {
-      if (prev.voiceState === newState) return prev
+      if (prev.voiceState === newState) {
+        return prev
+      }
       return { ...prev, voiceState: newState }
     })
   }
@@ -309,7 +323,9 @@ export function useVoice({
     audioLevelsRef.current = []
     fullAudioRef.current = []
     setVoiceState((prev) => {
-      if (prev.voiceInterimTranscript === '' && !prev.voiceAudioLevels.length) return prev
+      if (prev.voiceInterimTranscript === '' && !prev.voiceAudioLevels.length) {
+        return prev
+      }
       return { ...prev, voiceInterimTranscript: '', voiceAudioLevels: [] }
     })
   }, [setVoiceState])
@@ -361,7 +377,9 @@ export function useVoice({
 
     void finalizePromise
       .then(async (finalizeSource) => {
-        if (isStale()) return
+        if (isStale()) {
+          return
+        }
         // Silent-drop replay: when the server accepted audio (wsConnected),
         // the mic captured real signal (hadAudioSignal), but finalize timed
         // out with zero transcript — the ~1% session-sticky CE-pod bug.
@@ -392,17 +410,25 @@ export function useVoice({
           }
           const replayBuffer = fullAudioRef.current
           await sleep(250)
-          if (isStale()) return
+          if (isStale()) {
+            return
+          }
           const stt = normalizeLanguageForSTT(getInitialSettings().language)
           const keyterms = await getVoiceKeyterms()
-          if (isStale()) return
+          if (isStale()) {
+            return
+          }
           await new Promise<void>((resolve) => {
             void connectVoiceStream(
               {
                 onTranscript: (t, isFinal) => {
-                  if (isStale()) return
+                  if (isStale()) {
+                    return
+                  }
                   if (isFinal && t.trim()) {
-                    if (accumulatedRef.current) accumulatedRef.current += ' '
+                    if (accumulatedRef.current) {
+                      accumulatedRef.current += ' '
+                    }
                     accumulatedRef.current += t.trim()
                   }
                 },
@@ -427,7 +453,9 @@ export function useVoice({
                     slice.push(c)
                     bytes += c.length
                   }
-                  if (slice.length) conn.send(Buffer.concat(slice))
+                  if (slice.length) {
+                    conn.send(Buffer.concat(slice))
+                  }
                   void conn.finalize().then(() => {
                     conn.close()
                     resolve()
@@ -437,12 +465,16 @@ export function useVoice({
               { language: stt.code, keyterms },
             ).then(
               (c) => {
-                if (!c) resolve()
+                if (!c) {
+                  resolve()
+                }
               },
               () => resolve(),
             )
           })
-          if (isStale()) return
+          if (isStale()) {
+            return
+          }
         }
         fullAudioRef.current = []
 
@@ -498,14 +530,18 @@ export function useVoice({
 
         accumulatedRef.current = ''
         setVoiceState((prev) => {
-          if (prev.voiceInterimTranscript === '') return prev
+          if (prev.voiceInterimTranscript === '') {
+            return prev
+          }
           return { ...prev, voiceInterimTranscript: '' }
         })
         updateState('idle')
       })
       .catch((err) => {
         logError(toError(err))
-        if (!isStale()) updateState('idle')
+        if (!isStale()) {
+          updateState('idle')
+        }
       })
   }
 
@@ -568,7 +604,9 @@ export function useVoice({
       const beginFocusRecording = (): void => {
         // Re-check conditions — state or enabled/focusMode may have changed
         // during the await (effect cleanup sets cancelled).
-        if (cancelled || stateRef.current !== 'idle' || silenceTimedOutRef.current) return
+        if (cancelled || stateRef.current !== 'idle' || silenceTimedOutRef.current) {
+          return
+        }
         logForDebugging('[voice] Focus gained, starting recording session')
         focusTriggeredRef.current = true
         void startRecordingSession()
@@ -596,7 +634,7 @@ export function useVoice({
     return () => {
       cancelled = true
     }
-  }, [enabled, focusMode, isFocused])
+  }, [enabled, focusMode, isFocused, armFocusSilenceTimer, finishRecording, startRecordingSession])
 
   // ── Start a new recording session (voice_stream connect + audio) ──
   async function startRecordingSession(): Promise<void> {
@@ -637,7 +675,9 @@ export function useVoice({
     logForDebugging('[voice] Starting recording session, connecting voice stream')
     // Clear any previous error
     setVoiceState((prev) => {
-      if (!prev.voiceError) return prev
+      if (!prev.voiceError) {
+        return prev
+      }
       return { ...prev, voiceError: null }
     })
 
@@ -739,7 +779,9 @@ export function useVoice({
       void connectVoiceStream(
         {
           onTranscript: (text: string, isFinal: boolean) => {
-            if (isStale()) return
+            if (isStale()) {
+              return
+            }
             sawTranscript = true
             logForDebugging(`[voice] onTranscript: isFinal=${String(isFinal)} text="${text}"`)
             if (isFinal && text.trim()) {
@@ -753,7 +795,9 @@ export function useVoice({
                 onTranscriptRef.current(text.trim())
                 focusFlushedCharsRef.current += text.trim().length
                 setVoiceState((prev) => {
-                  if (prev.voiceInterimTranscript === '') return prev
+                  if (prev.voiceInterimTranscript === '') {
+                    return prev
+                  }
                   return { ...prev, voiceInterimTranscript: '' }
                 })
                 accumulatedRef.current = ''
@@ -769,7 +813,9 @@ export function useVoice({
                 // Clear interim since final supersedes it
                 setVoiceState((prev) => {
                   const preview = accumulatedRef.current
-                  if (prev.voiceInterimTranscript === preview) return prev
+                  if (prev.voiceInterimTranscript === preview) {
+                    return prev
+                  }
                   return { ...prev, voiceInterimTranscript: preview }
                 })
               }
@@ -784,10 +830,12 @@ export function useVoice({
               // Show accumulated finals + current interim as live preview
               const interim = text.trim()
               const preview = accumulatedRef.current
-                ? accumulatedRef.current + (interim ? ' ' + interim : '')
+                ? accumulatedRef.current + (interim ? ` ${interim}` : '')
                 : interim
               setVoiceState((prev) => {
-                if (prev.voiceInterimTranscript === preview) return prev
+                if (prev.voiceInterimTranscript === preview) {
+                  return prev
+                }
                 return { ...prev, voiceInterimTranscript: preview }
               })
             }
@@ -874,7 +922,9 @@ export function useVoice({
             const SLICE_TARGET_BYTES = 32_000 // ~1s at 16kHz/16-bit/mono
             if (audioBuffer.length > 0) {
               let totalBytes = 0
-              for (const c of audioBuffer) totalBytes += c.length
+              for (const c of audioBuffer) {
+                totalBytes += c.length
+              }
               const slices: Buffer[][] = [[]]
               let sliceBytes = 0
               for (const chunk of audioBuffer) {
@@ -1050,7 +1100,7 @@ export function useVoice({
         )
       }
     },
-    [enabled, focusMode, cleanup],
+    [enabled, focusMode, startRecordingSession, finishRecording, armFocusSilenceTimer],
   )
 
   // Cleanup only when disabled or unmounted - NOT on state changes
@@ -1062,7 +1112,7 @@ export function useVoice({
     return () => {
       cleanup()
     }
-  }, [enabled, cleanup])
+  }, [enabled, cleanup, updateState])
 
   return {
     state,
