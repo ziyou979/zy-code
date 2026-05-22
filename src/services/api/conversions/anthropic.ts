@@ -240,12 +240,6 @@ export function anthropicStopReasonToStandard(reason: string | null | undefined)
 
 export function anthropicUsageToStandard(usage: any): TokenUsage {
   const extras: Record<string, number> = {}
-  if (usage?.cache_creation_input_tokens !== undefined) {
-    extras.cacheCreationInputTokens = usage.cache_creation_input_tokens
-  }
-  if (usage?.cache_read_input_tokens !== undefined) {
-    extras.cacheReadInputTokens = usage.cache_read_input_tokens
-  }
   if (usage?.server_tool_use_input_tokens !== undefined) {
     extras.serverToolUseInputTokens = usage.server_tool_use_input_tokens
   }
@@ -254,21 +248,17 @@ export function anthropicUsageToStandard(usage: any): TokenUsage {
   return {
     inputTokens,
     outputTokens,
+    cacheReadInputTokens: usage?.cache_read_input_tokens ?? 0,
+    cacheCreationInputTokens: usage?.cache_creation_input_tokens ?? 0,
     ...(Object.keys(extras).length > 0 && { extras }),
   }
 }
 
 export function anthropicDeltaUsageToStandard(usage: any): DeltaUsage {
-  const extras: Record<string, number> = {}
-  if (usage?.cache_creation_input_tokens !== undefined) {
-    extras.cacheCreationInputTokens = usage.cache_creation_input_tokens
-  }
-  if (usage?.cache_read_input_tokens !== undefined) {
-    extras.cacheReadInputTokens = usage.cache_read_input_tokens
-  }
   return {
     outputTokens: usage?.output_tokens ?? 0,
-    ...(Object.keys(extras).length > 0 && { extras }),
+    cacheReadInputTokens: usage?.cache_read_input_tokens ?? 0,
+    cacheCreationInputTokens: usage?.cache_creation_input_tokens ?? 0,
   }
 }
 

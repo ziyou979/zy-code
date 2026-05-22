@@ -453,14 +453,8 @@ function logAPISuccess({
     messageTokens,
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
-    cachedInputTokens:
-      'extras' in usage
-        ? (usage.extras?.cacheReadInputTokens ?? 0)
-        : ((usage as NonNullableUsage).cacheReadInputTokens ?? 0),
-    uncachedInputTokens:
-      'extras' in usage
-        ? (usage.extras?.cacheCreationInputTokens ?? 0)
-        : ((usage as NonNullableUsage).cacheCreationInputTokens ?? 0),
+    cachedInputTokens: usage.cacheReadInputTokens ?? 0,
+    uncachedInputTokens: usage.cacheCreationInputTokens ?? 0,
     durationMs: durationMs,
     durationMsIncludingRetries: durationMsIncludingRetries,
     attempt: attempt,

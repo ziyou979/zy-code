@@ -632,12 +632,12 @@ export async function compactConversation(
         '') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       compactionInputTokens: compactionUsage?.inputTokens,
       compactionOutputTokens: compactionUsage?.outputTokens,
-      compactionCacheReadTokens: compactionUsage?.extras?.cacheReadInputTokens ?? 0,
-      compactionCacheCreationTokens: compactionUsage?.extras?.cacheCreationInputTokens ?? 0,
+      compactionCacheReadTokens: compactionUsage?.cacheReadInputTokens ?? 0,
+      compactionCacheCreationTokens: compactionUsage?.cacheCreationInputTokens ?? 0,
       compactionTotalTokens: compactionUsage
         ? compactionUsage.inputTokens +
-          (compactionUsage.extras?.cacheCreationInputTokens ?? 0) +
-          (compactionUsage.extras?.cacheReadInputTokens ?? 0) +
+          (compactionUsage.cacheCreationInputTokens ?? 0) +
+          (compactionUsage.cacheReadInputTokens ?? 0) +
           compactionUsage.outputTokens
         : 0,
       promptCacheSharingEnabled,
@@ -949,8 +949,8 @@ export async function partialCompactConversation(
       trigger: 'message_selector' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       compactionInputTokens: compactionUsage?.inputTokens,
       compactionOutputTokens: compactionUsage?.outputTokens,
-      compactionCacheReadTokens: compactionUsage?.extras?.cacheReadInputTokens ?? 0,
-      compactionCacheCreationTokens: compactionUsage?.extras?.cacheCreationInputTokens ?? 0,
+      compactionCacheReadTokens: compactionUsage?.cacheReadInputTokens ?? 0,
+      compactionCacheCreationTokens: compactionUsage?.cacheCreationInputTokens ?? 0,
     })
 
     // progress 消息无法记录日志，所以 forkSessionImpl 会将

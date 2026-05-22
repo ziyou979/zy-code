@@ -1504,8 +1504,8 @@ async function* queryModel(
               ? {
                   output_tokens: rawUsage.outputTokens ?? 0,
                   input_tokens: rawUsage.inputTokens,
-                  cache_creation_input_tokens: rawUsage.extras?.cacheCreationInputTokens,
-                  cache_read_input_tokens: rawUsage.extras?.cacheReadInputTokens,
+                  cache_creation_input_tokens: rawUsage.cacheCreationInputTokens,
+                  cache_read_input_tokens: rawUsage.cacheReadInputTokens,
                 }
               : undefined
 

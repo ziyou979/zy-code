@@ -1,6 +1,7 @@
 import { marked, type Token, type Tokens } from 'marked'
 import React, { Suspense, use, useRef } from 'react'
 import { useSettings } from '../hooks/useSettings.js'
+import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { Box, useTheme } from '../ink.js'
 import type { CliHighlight } from '../utils/cliHighlight.js'
 import { getCliHighlightPromise } from '../utils/cliHighlight.js'
@@ -105,6 +106,7 @@ function MarkdownWithHighlight(props: Props) {
 }
 function MarkdownBody({ children, dimColor, highlight }: MarkdownBodyProps) {
   const [theme] = useTheme()
+  const { columns } = useTerminalSize()
   configureMarked()
   const tokens = cachedLexer(stripPromptXMLTags(children))
   const elements = []
@@ -113,7 +115,7 @@ function MarkdownBody({ children, dimColor, highlight }: MarkdownBodyProps) {
     if (nonTableContent) {
       const trimmed = nonTableContent.trim()
       if (trimmed) {
-        const nodes = renderContentWithFileLinks(trimmed, dimColor as boolean)
+        const nodes = renderContentWithFileLinks(trimmed, columns, dimColor as boolean)
         elements.push(...nodes)
       }
       nonTableContent = ''

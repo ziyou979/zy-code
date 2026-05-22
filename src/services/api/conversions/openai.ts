@@ -466,54 +466,63 @@ export function openAIFinishReasonToStandard(reason: string | null | undefined):
  * 百炼/火山引擎等兼容端点可能返回 cache_read_input_tokens / prompt_cache_hit_tokens，
  * 标准 OpenAI 则在 prompt_tokens_details.cached_tokens 下。
  */
-function extractOpenAIUsageExtras(
-  usage: OpenAI.CompletionUsage | undefined | null,
-): Record<string, number> {
-  const extras: Record<string, number> = {}
+/**
+ * 从 OpenAI usage 中提取缓存相关 token 数量。
+ * 百炼/火山引擎等兼容端点可能返回 cache_read_input_tokens / prompt_cache_hit_tokens，
+ * 标准 OpenAI 则在 prompt_tokens_details.cached_tokens 下。
+ */
+function extractOpenAICacheTokens(usage: OpenAI.CompletionUsage | undefined | null): {
+  cacheReadInputTokens: number
+  cacheCreationInputTokens: number
+} {
   const rawUsage = usage as unknown as Record<string, unknown> | null | undefined
+  let cacheReadInputTokens = 0
+  let cacheCreationInputTokens = 0
 
   // 缓存命中 token
   if (rawUsage && typeof rawUsage.cache_read_input_tokens === 'number') {
-    extras.cacheReadInputTokens = rawUsage.cache_read_input_tokens as number
+    cacheReadInputTokens = rawUsage.cache_read_input_tokens as number
   } else if (typeof usage?.prompt_tokens_details?.cached_tokens === 'number') {
-    extras.cacheReadInputTokens = usage!.prompt_tokens_details!.cached_tokens
+    cacheReadInputTokens = usage!.prompt_tokens_details!.cached_tokens
   } else if (rawUsage && typeof rawUsage.prompt_cache_hit_tokens === 'number') {
-    extras.cacheReadInputTokens = rawUsage.prompt_cache_hit_tokens as number
+    cacheReadInputTokens = rawUsage.prompt_cache_hit_tokens as number
   }
 
   // 缓存写入 token
   if (rawUsage && typeof rawUsage.cache_creation_input_tokens === 'number') {
-    extras.cacheCreationInputTokens = rawUsage.cache_creation_input_tokens as number
+    cacheCreationInputTokens = rawUsage.cache_creation_input_tokens as number
   } else if (
     typeof (usage?.prompt_tokens_details as any)?.cache_creation_input_tokens === 'number'
   ) {
-    extras.cacheCreationInputTokens = (
+    cacheCreationInputTokens = (
       usage!.prompt_tokens_details as any
     ).cache_creation_input_tokens
   }
 
-  return extras
+  return { cacheReadInputTokens, cacheCreationInputTokens }
 }
 
 export function openAIUsageToStandard(
   usage: OpenAI.CompletionUsage | undefined | null,
 ): TokenUsage {
-  const extras = extractOpenAIUsageExtras(usage)
+  const { cacheReadInputTokens, cacheCreationInputTokens } = extractOpenAICacheTokens(usage)
   return {
     inputTokens: usage?.prompt_tokens ?? 0,
     outputTokens: usage?.completion_tokens ?? 0,
-    ...(Object.keys(extras).length > 0 && { extras }),
+    cacheReadInputTokens,
+    cacheCreationInputTokens,
   }
 }
 
 export function openAIDeltaUsageToStandard(
   usage: OpenAI.CompletionUsage | undefined | null,
 ): DeltaUsage {
-  const extras = extractOpenAIUsageExtras(usage)
+  const { cacheReadInputTokens, cacheCreationInputTokens } = extractOpenAICacheTokens(usage)
   return {
     inputTokens: usage?.prompt_tokens,
     outputTokens: usage?.completion_tokens ?? 0,
-    ...(Object.keys(extras).length > 0 && { extras }),
+    cacheReadInputTokens,
+    cacheCreationInputTokens,
   }
 }
 

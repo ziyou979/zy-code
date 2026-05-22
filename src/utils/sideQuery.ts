@@ -177,8 +177,8 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
     model: normalizedModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     inputTokens: response.usage?.inputTokens ?? 0,
     outputTokens: response.usage?.outputTokens ?? 0,
-    cachedInputTokens: response.usage?.extras?.cacheReadInputTokens ?? 0,
-    uncachedInputTokens: response.usage?.extras?.cacheCreationInputTokens ?? 0,
+    cachedInputTokens: response.usage?.cacheReadInputTokens ?? 0,
+    uncachedInputTokens: response.usage?.cacheCreationInputTokens ?? 0,
     durationMsIncludingRetries: now - start,
     timeSinceLastApiCallMs: lastCompletion !== null ? now - lastCompletion : undefined,
   })

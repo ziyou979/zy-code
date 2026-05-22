@@ -84,8 +84,8 @@ export function getCurrencySymbol(): string {
  * 参考 opencode 同类修正：adjustedInputTokens = inputTokens - cacheRead - cacheWrite。
  */
 function calculateTokenCost(modelCosts: ModelCosts, usage: Usage): number {
-  const cacheRead = usage.extras?.cacheReadInputTokens ?? 0
-  const cacheWrite = usage.extras?.cacheCreationInputTokens ?? 0
+  const cacheRead = usage.cacheReadInputTokens ?? 0
+  const cacheWrite = usage.cacheCreationInputTokens ?? 0
   // 非缓存的普通输入 token = 总输入 - 缓存命中 - 缓存写入
   const plainInput = Math.max(0, usage.inputTokens - cacheRead - cacheWrite)
   return (
@@ -122,10 +122,8 @@ export function calculateCostFromTokens(
   const usage: Usage = {
     inputTokens: tokens.inputTokens,
     outputTokens: tokens.outputTokens,
-    extras: {
-      cacheReadInputTokens: tokens.cacheReadInputTokens,
-      cacheCreationInputTokens: tokens.cacheCreationInputTokens,
-    },
+    cacheReadInputTokens: tokens.cacheReadInputTokens,
+    cacheCreationInputTokens: tokens.cacheCreationInputTokens,
   }
   return calculateUSDCost(model, usage)
 }

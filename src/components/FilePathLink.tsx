@@ -2,7 +2,8 @@ import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import React from 'react'
 import Link from '../ink/components/Link.js'
-import { Ansi } from '../ink.js'
+import { RawAnsi } from '../ink/components/RawAnsi.js'
+import { wrapAnsi } from '../ink/wrapAnsi.js'
 
 type Props = {
   /** The absolute file path */
@@ -93,100 +94,67 @@ function buildPlainToOriginalMap(content: string): { plain: string; map: number[
   return { plain, map }
 }
 
-/** 将含文件路径引用的文本拆分为 Ansi/FilePathLink 混合节点 */
-export function renderContentWithFileLinks(content: string, dimColor = false): React.ReactNode[] {
-  // 快速路径：无 ANSI 序列时走原始逻辑避免额外开销
+/**
+ * 将含文件路径引用的文本中的路径替换为 OSC 8 超链接序列，
+ * 返回单个 <RawAnsi> 节点。使用 RawAnsi 绕过 <Ansi> 组件的
+ * OSC 8 → <Link> → 重新序列化循环，让 OSC 8 直接穿透到
+ * output.write() 的 tokenizer 处理，确保多个链接都能正确跳转。
+ */
+export function renderContentWithFileLinks(
+  content: string,
+  width: number,
+  dimColor = false,
+): React.ReactNode[] {
+  // 快速路径：无 ANSI 序列时直接在原始字符串上替换
   const hasAnsi = content.indexOf('\x1b') !== -1
 
+  let result: string
   if (!hasAnsi) {
-    return matchFileLinksSimple(content, dimColor)
-  }
+    result = content.replace(FILE_PATH_RE, (_match, filePath: string) => {
+      return wrapWithFileLink(filePath, _match)
+    })
+  } else {
+    // 含 ANSI 序列：在纯文本上定位匹配，然后在原始字符串中插入 OSC 8
+    const { plain, map } = buildPlainToOriginalMap(content)
+    const segments: string[] = []
+    let lastOriginalIndex = 0
+    let match: RegExpExecArray | null
 
-  // 含 ANSI 序列：在纯文本上匹配，然后映射回原始位置
-  const { plain, map } = buildPlainToOriginalMap(content)
-  const parts: React.ReactNode[] = []
-  let lastOriginalIndex = 0
-  let match: RegExpExecArray | null
+    FILE_PATH_RE.lastIndex = 0
+    while ((match = FILE_PATH_RE.exec(plain)) !== null) {
+      const plainStart = match.index
+      const plainEnd = match.index + match[0].length
+      const originalStart = map[plainStart]!
+      const originalEnd = map[plainEnd]!
 
-  FILE_PATH_RE.lastIndex = 0
-  while ((match = FILE_PATH_RE.exec(plain)) !== null) {
-    const plainStart = match.index
-    const plainEnd = match.index + match[0].length
-    // 映射回原始文本中的位置
-    const originalStart = map[plainStart]!
-    const originalEnd = map[plainEnd]!
+      // 保留匹配前的原始文本（含 ANSI）
+      if (originalStart > lastOriginalIndex) {
+        segments.push(content.slice(lastOriginalIndex, originalStart))
+      }
 
-    // 渲染匹配前的带 ANSI 的文本
-    if (originalStart > lastOriginalIndex) {
-      const before = content.slice(lastOriginalIndex, originalStart)
-      parts.push(
-        <Ansi key={parts.length} dimColor={dimColor}>
-          {before}
-        </Ansi>,
-      )
+      // 用 OSC 8 包裹匹配的文件路径显示文本
+      const filePath = match[1]!
+      const display = match[0]
+      segments.push(wrapWithFileLink(filePath, display))
+      lastOriginalIndex = originalEnd
     }
 
-    // 将文件路径用 OSC 8 超链接包裹后拼入文本，整体用 <Ansi> 渲染避免换行
-    const filePath = match[1]!
-    const display = match[0]
-    const linked = wrapWithFileLink(filePath, display)
-    parts.push(
-      <Ansi key={parts.length} dimColor={dimColor}>
-        {linked}
-      </Ansi>,
-    )
-    lastOriginalIndex = originalEnd
-  }
-
-  // 渲染剩余部分
-  if (lastOriginalIndex < content.length) {
-    parts.push(
-      <Ansi key={parts.length} dimColor={dimColor}>
-        {content.slice(lastOriginalIndex)}
-      </Ansi>,
-    )
-  }
-
-  return parts
-}
-
-/** 无 ANSI 序列时的简单匹配路径（零额外开销） */
-function matchFileLinksSimple(content: string, dimColor: boolean): React.ReactNode[] {
-  const parts: React.ReactNode[] = []
-  let lastIndex = 0
-  let match: RegExpExecArray | null
-
-  FILE_PATH_RE.lastIndex = 0
-  while ((match = FILE_PATH_RE.exec(content)) !== null) {
-    // 渲染匹配前的纯文本
-    if (match.index > lastIndex) {
-      const before = content.slice(lastIndex, match.index)
-      parts.push(
-        <Ansi key={parts.length} dimColor={dimColor}>
-          {before}
-        </Ansi>,
-      )
+    // 剩余部分
+    if (lastOriginalIndex < content.length) {
+      segments.push(content.slice(lastOriginalIndex))
     }
-    // 将文件路径用 OSC 8 超链接包裹后拼入文本，整体用 <Ansi> 渲染避免换行
-    const filePath = match[1]!
-    const display = match[0]
-    const linked = wrapWithFileLink(filePath, display)
-    parts.push(
-      <Ansi key={parts.length} dimColor={dimColor}>
-        {linked}
-      </Ansi>,
-    )
-    lastIndex = match.index + display.length
+
+    result = segments.join('')
   }
 
-  // 渲染剩余部分
-  if (lastIndex < content.length) {
-    parts.push(
-      <Ansi key={parts.length} dimColor={dimColor}>
-        {content.slice(lastIndex)}
-      </Ansi>,
-    )
+  // dimColor 通过 ANSI dim 序列实现（SGR 2）
+  if (dimColor) {
+    result = `\x1b[2m${result}\x1b[22m`
   }
 
-  return parts
+  // 按终端宽度预换行，然后交给 RawAnsi 直接输出
+  const wrapped = wrapAnsi(result, width, { hard: true, trim: false })
+  const lines = wrapped.split('\n')
+
+  return [<RawAnsi key={0} lines={lines} width={width} />]
 }

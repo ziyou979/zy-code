@@ -27,7 +27,6 @@ export async function call(onDone: LocalJSXCommandOnDone): Promise<React.ReactNo
   if (showWorktree) {
     return <ExitFlow showWorktree={showWorktree} onDone={onDone} onCancel={() => onDone()} />
   }
-  onDone(getRandomGoodbyeMessage())
   await gracefulShutdown(0, 'prompt_input_exit')
   return null
 }

@@ -583,8 +583,8 @@ function extractUsage(result: LLMResponse): ClassifierUsage {
   return {
     inputTokens: result.usage.inputTokens,
     outputTokens: result.usage.outputTokens,
-    cacheReadInputTokens: result.usage.extras?.cacheReadInputTokens ?? 0,
-    cacheCreationInputTokens: result.usage.extras?.cacheCreationInputTokens ?? 0,
+    cacheReadInputTokens: result.usage.cacheReadInputTokens ?? 0,
+    cacheCreationInputTokens: result.usage.cacheCreationInputTokens ?? 0,
   }
 }
 
@@ -1088,8 +1088,8 @@ export async function classifyYoloAction(
     const usage = {
       inputTokens: result.usage.inputTokens,
       outputTokens: result.usage.outputTokens,
-      cacheReadInputTokens: result.usage.extras?.cacheReadInputTokens ?? 0,
-      cacheCreationInputTokens: result.usage.extras?.cacheCreationInputTokens ?? 0,
+      cacheReadInputTokens: result.usage.cacheReadInputTokens ?? 0,
+      cacheCreationInputTokens: result.usage.cacheCreationInputTokens ?? 0,
     }
     // 分类器 API 实际消耗的总输入 tokens（未缓存 + 缓存）
     const classifierInputTokens =

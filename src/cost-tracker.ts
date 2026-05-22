@@ -253,8 +253,8 @@ function addToTotalModelUsage(cost: number, usage: Usage, model: string): ModelU
 
   modelUsage.inputTokens += usage.inputTokens
   modelUsage.outputTokens += usage.outputTokens
-  modelUsage.cacheReadInputTokens += usage.extras?.cacheReadInputTokens ?? 0
-  modelUsage.cacheCreationInputTokens += usage.extras?.cacheCreationInputTokens ?? 0
+  modelUsage.cacheReadInputTokens += usage.cacheReadInputTokens ?? 0
+  modelUsage.cacheCreationInputTokens += usage.cacheCreationInputTokens ?? 0
   modelUsage.webSearchRequests += (usage as any).server_tool_use?.web_search_requests ?? 0
   modelUsage.costUSD += cost
   modelUsage.contextWindow = getContextWindowForModel(model)
@@ -271,11 +271,11 @@ export function addToTotalSessionCost(cost: number, usage: Usage, model: string)
   getCostCounter()?.add(cost, attrs)
   getTokenCounter()?.add(usage.inputTokens, { ...attrs, type: 'input' })
   getTokenCounter()?.add(usage.outputTokens, { ...attrs, type: 'output' })
-  getTokenCounter()?.add(usage.extras?.cacheReadInputTokens ?? 0, {
+  getTokenCounter()?.add(usage.cacheReadInputTokens ?? 0, {
     ...attrs,
     type: 'cacheRead',
   })
-  getTokenCounter()?.add(usage.extras?.cacheCreationInputTokens ?? 0, {
+  getTokenCounter()?.add(usage.cacheCreationInputTokens ?? 0, {
     ...attrs,
     type: 'cacheCreation',
   })
@@ -288,8 +288,8 @@ export function addToTotalSessionCost(cost: number, usage: Usage, model: string)
         advisorUsage.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       input_tokens: advisorUsage.inputTokens,
       output_tokens: advisorUsage.outputTokens,
-      cache_read_input_tokens: advisorUsage.extras?.cacheReadInputTokens ?? 0,
-      cache_creation_input_tokens: advisorUsage.extras?.cacheCreationInputTokens ?? 0,
+      cache_read_input_tokens: advisorUsage.cacheReadInputTokens ?? 0,
+      cache_creation_input_tokens: advisorUsage.cacheCreationInputTokens ?? 0,
       cost_usd_micros: Math.round(advisorCost * 1_000_000),
     })
     totalCost += addToTotalSessionCost(advisorCost, advisorUsage, advisorUsage.model)

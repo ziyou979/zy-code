@@ -63,7 +63,7 @@ export function OutputLine({ content, verbose, isError, isWarning, linkifyUrls }
     ? stripUnderlineAnsi(formatted)
     : stripUnderlineAnsi(renderTruncatedContent(formatted, columns, inVirtualList))
   const color = isError ? 'error' : isWarning ? 'warning' : undefined
-  const finalContent = renderContentWithFileLinks(formattedContent, false)
+  const finalContent = renderContentWithFileLinks(formattedContent, columns, false)
   return (
     <MessageResponse>
       <Text color={color}>{finalContent}</Text>

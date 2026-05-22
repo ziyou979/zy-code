@@ -51,8 +51,8 @@ function getAssistantMessageId(message: Message): string | undefined {
 export function getTokenCountFromUsage(usage: Usage): number {
   return (
     usage.inputTokens +
-    (usage.extras?.cacheCreationInputTokens ?? 0) +
-    (usage.extras?.cacheReadInputTokens ?? 0) +
+    (usage.cacheCreationInputTokens ?? 0) +
+    (usage.cacheReadInputTokens ?? 0) +
     usage.outputTokens
   )
 }
@@ -150,8 +150,8 @@ export function getCurrentUsage(messages: Message[]): {
       return {
         inputTokens: usage.inputTokens,
         outputTokens: usage.outputTokens,
-        cacheCreationInputTokens: usage.extras?.cacheCreationInputTokens ?? 0,
-        cacheReadInputTokens: usage.extras?.cacheReadInputTokens ?? 0,
+        cacheCreationInputTokens: usage.cacheCreationInputTokens ?? 0,
+        cacheReadInputTokens: usage.cacheReadInputTokens ?? 0,
       }
     }
   }

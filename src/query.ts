@@ -462,12 +462,12 @@ async function* queryLoop(
         truePostCompactTokenCount,
         compactionInputTokens: compactionUsage?.inputTokens,
         compactionOutputTokens: compactionUsage?.outputTokens,
-        compactionCacheReadTokens: compactionUsage?.extras?.cacheReadInputTokens ?? 0,
-        compactionCacheCreationTokens: compactionUsage?.extras?.cacheCreationInputTokens ?? 0,
+        compactionCacheReadTokens: compactionUsage?.cacheReadInputTokens ?? 0,
+        compactionCacheCreationTokens: compactionUsage?.cacheCreationInputTokens ?? 0,
         compactionTotalTokens: compactionUsage
           ? compactionUsage.inputTokens +
-            (compactionUsage.extras?.cacheCreationInputTokens ?? 0) +
-            (compactionUsage.extras?.cacheReadInputTokens ?? 0) +
+            (compactionUsage.cacheCreationInputTokens ?? 0) +
+            (compactionUsage.cacheReadInputTokens ?? 0) +
             compactionUsage.outputTokens
           : 0,
 

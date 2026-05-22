@@ -304,8 +304,8 @@ const extractSessionMemory = sequential(async (context: REPLHookContext): Promis
   logEvent('zy_session_memory_extraction', {
     input_tokens: usage?.inputTokens,
     output_tokens: usage?.outputTokens,
-    cache_read_input_tokens: usage?.extras?.cacheReadInputTokens ?? undefined,
-    cache_creation_input_tokens: usage?.extras?.cacheCreationInputTokens ?? undefined,
+    cache_read_input_tokens: usage?.cacheReadInputTokens ?? undefined,
+    cache_creation_input_tokens: usage?.cacheCreationInputTokens ?? undefined,
     config_min_message_tokens_to_init: config.minimumMessageTokensToInit,
     config_min_tokens_between_update: config.minimumTokensBetweenUpdate,
     config_tool_calls_between_updates: config.toolCallsBetweenUpdates,

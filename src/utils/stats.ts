@@ -327,9 +327,9 @@ async function processSessionFiles(
 
             modelUsageAgg[model]!.inputTokens += usage.inputTokens || 0
             modelUsageAgg[model]!.outputTokens += usage.outputTokens || 0
-            modelUsageAgg[model]!.cacheReadInputTokens += usage.extras?.cacheReadInputTokens || 0
+            modelUsageAgg[model]!.cacheReadInputTokens += usage.cacheReadInputTokens || 0
             modelUsageAgg[model]!.cacheCreationInputTokens +=
-              usage.extras?.cacheCreationInputTokens || 0
+              usage.cacheCreationInputTokens || 0
 
             // Track daily tokens per model
             const totalTokens = (usage.inputTokens || 0) + (usage.outputTokens || 0)

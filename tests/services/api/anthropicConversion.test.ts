@@ -215,7 +215,7 @@ describe('anthropicResponseToStandard: 非流式响应映射', () => {
     expect(r.content[0]).toEqual({ type: 'text', text: 'hmm' })
   })
 
-  test('cache tokens 进 extras', () => {
+  test('cache tokens 提到顶层字段', () => {
     const r = anthropicResponseToStandard(
       {
         id: 'm',
@@ -231,10 +231,8 @@ describe('anthropicResponseToStandard: 非流式响应映射', () => {
       },
       'c',
     )
-    expect(r.usage.extras).toEqual({
-      cacheCreationInputTokens: 100,
-      cacheReadInputTokens: 50,
-    })
+    expect(r.usage.cacheCreationInputTokens).toBe(100)
+    expect(r.usage.cacheReadInputTokens).toBe(50)
   })
 })
 
@@ -296,7 +294,10 @@ describe('messagesToAnthropic: 出站 Anthropic 消息构造', () => {
 
   test('assistant content 为 null 但有 toolCalls：从 toolCalls 构造 tool_use', () => {
     const result = messagesToAnthropic([
-      { role: 'assistant', content: null, toolCalls: [{ id: 'c', name: 'f', arguments: '{}' }] },
+      {
+        role: 'assistant',
+        content: [{ type: 'tool_call', id: 'c', name: 'f', input: {} }],
+      },
     ] as any)
     const content = result[0].content as any[]
     expect(content[0].type).toBe('tool_use')
@@ -305,12 +306,14 @@ describe('messagesToAnthropic: 出站 Anthropic 消息构造', () => {
     expect(content[0].input).toEqual({})
   })
 
-  test('assistant string content + toolCalls：文本和 tool_use 并存', () => {
+  test('assistant text + tool_call block：文本和 tool_use 并存', () => {
     const result = messagesToAnthropic([
       {
         role: 'assistant',
-        content: 'Let me check',
-        toolCalls: [{ id: 'c', name: 'f', arguments: '{"x":1}' }],
+        content: [
+          { type: 'text', text: 'Let me check' },
+          { type: 'tool_call', id: 'c', name: 'f', input: { x: 1 } },
+        ],
       },
     ] as any)
     const content = result[0].content as any[]
@@ -320,17 +323,11 @@ describe('messagesToAnthropic: 出站 Anthropic 消息构造', () => {
     expect(content[1].input).toEqual({ x: 1 })
   })
 
-  test('assistant content 为空字符串但有 toolCalls：仅 tool_use', () => {
+  test('assistant content 为空字符串：转为空字符串', () => {
     const result = messagesToAnthropic([
-      {
-        role: 'assistant',
-        content: '',
-        toolCalls: [{ id: 'c', name: 'f', arguments: '{}' }],
-      },
+      { role: 'assistant', content: '' },
     ] as any)
-    const content = result[0].content as any[]
-    expect(content).toHaveLength(1)
-    expect(content[0].type).toBe('tool_use')
+    expect(result[0].content).toBe('')
   })
 })
 
@@ -498,15 +495,15 @@ describe('anthropicUsageToStandard', () => {
 })
 
 describe('anthropicDeltaUsageToStandard', () => {
-  test('cache tokens → extras', () => {
+  test('cache tokens → 顶层字段', () => {
     const usage = anthropicDeltaUsageToStandard({
       output_tokens: 5,
       cache_creation_input_tokens: 100,
       cache_read_input_tokens: 50,
     })
     expect(usage.outputTokens).toBe(5)
-    expect(usage.extras?.cacheCreationInputTokens).toBe(100)
-    expect(usage.extras?.cacheReadInputTokens).toBe(50)
+    expect(usage.cacheCreationInputTokens).toBe(100)
+    expect(usage.cacheReadInputTokens).toBe(50)
   })
 
   test('undefined usage → outputTokens 0', () => {
@@ -683,7 +680,7 @@ describe('toolsToAnthropic', () => {
       { name: 'search', description: 'Search', inputSchema: { type: 'object', properties: {} } },
     ])
     expect(result).toEqual([
-      { name: 'search', description: 'Search', input_schema: { type: 'object' } },
+      { name: 'search', description: 'Search', input_schema: { type: 'object', properties: {} } },
     ])
   })
 })

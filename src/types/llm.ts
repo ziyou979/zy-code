@@ -254,7 +254,11 @@ export type StopReason =
 export interface TokenUsage {
   inputTokens: number
   outputTokens: number
-  /** provider 特定计量（如 Anthropic 的 cache tokens） */
+  /** 缓存命中的输入 token 数 */
+  cacheReadInputTokens?: number
+  /** 缓存写入的输入 token 数 */
+  cacheCreationInputTokens?: number
+  /** provider 特定计量（如 serverToolUseInputTokens 等不常用字段） */
   extras?: Record<string, number>
 }
 
@@ -263,6 +267,10 @@ export interface DeltaUsage {
   /** 输入 token 数（OpenAI 在最后一个 chunk 中包含，Anthropic 在 message_start 中） */
   inputTokens?: number
   outputTokens: number
+  /** 缓存命中的输入 token 数 */
+  cacheReadInputTokens?: number
+  /** 缓存写入的输入 token 数 */
+  cacheCreationInputTokens?: number
   /** provider 特定增量计量 */
   extras?: Record<string, number>
 }
