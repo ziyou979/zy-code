@@ -1095,10 +1095,19 @@ export function diff(
   next: Screen,
 ): [point: Point, removed: Cell | undefined, added: Cell | undefined][] {
   const output: [Point, Cell | undefined, Cell | undefined][] = []
-  diffEach(prev, next, (x, y, removed, added) => {
-    // 复制单元格，因为 diffEach 重用对象
-    output.push([{ x, y }, removed ? { ...removed } : undefined, added ? { ...added } : undefined])
-  })
+  diffEach(
+    prev,
+    next,
+    (x: number, y: number, removed: Cell | undefined, added: Cell | undefined) => {
+      // 复制单元格，因为 diffEach 重用对象
+      output.push([
+        { x, y },
+        removed ? { ...removed } : undefined,
+        added ? { ...added } : undefined,
+      ])
+      return undefined
+    },
+  )
   return output
 }
 

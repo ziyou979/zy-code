@@ -91,7 +91,6 @@ export function TeammateSpinnerTree({
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
     return earlyReturn
   }
-  // @ts-expect-error
   return (
     <BoxComponent flexDirection={'column'} marginTop={1}>
       {null}

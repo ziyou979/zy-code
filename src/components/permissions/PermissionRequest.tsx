@@ -33,35 +33,29 @@ import { SkillPermissionRequest } from './SkillPermissionRequest/SkillPermission
 import { WebFetchPermissionRequest } from './WebFetchPermissionRequest/WebFetchPermissionRequest.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-// @ts-expect-error
 const ReviewArtifactTool = feature('REVIEW_ARTIFACT')
   ? (
       require('../../tools/ReviewArtifactTool/ReviewArtifactTool.js') as typeof import('../../tools/ReviewArtifactTool/ReviewArtifactTool.js')
     ).ReviewArtifactTool
   : null
-// @ts-expect-error
 const ReviewArtifactPermissionRequest = feature('REVIEW_ARTIFACT')
   ? require('./ReviewArtifactPermissionRequest/ReviewArtifactPermissionRequest.js')
   : null
-// @ts-expect-error
 const WorkflowTool = feature('WORKFLOW_SCRIPTS')
   ? (
       require('../../tools/WorkflowTool/WorkflowTool.js') as typeof import('../../tools/WorkflowTool/WorkflowTool.js')
     ).WorkflowTool
   : null
-// @ts-expect-error
 const WorkflowPermissionRequest = feature('WORKFLOW_SCRIPTS')
   ? (
       require('../../tools/WorkflowTool/WorkflowPermissionRequest.js') as typeof import('../../tools/WorkflowTool/WorkflowPermissionRequest.js')
     ).WorkflowPermissionRequest
   : null
-// @ts-expect-error
 const MonitorTool = feature('MONITOR_TOOL')
   ? (
       require('../../tools/MonitorTool/MonitorTool.js') as typeof import('../../tools/MonitorTool/MonitorTool.js')
     ).MonitorTool
   : null
-// @ts-expect-error
 const MonitorPermissionRequest = feature('MONITOR_TOOL')
   ? require('./MonitorPermissionRequest/MonitorPermissionRequest.js')
   : null

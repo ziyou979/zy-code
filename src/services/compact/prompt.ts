@@ -354,7 +354,6 @@ Continue the conversation from where it left off without asking the user any fur
 
     if (
       (feature('PROACTIVE') || feature('KAIROS')) &&
-      // @ts-expect-error
       proactiveModule?.isProactiveActive()
     ) {
       continuation += `

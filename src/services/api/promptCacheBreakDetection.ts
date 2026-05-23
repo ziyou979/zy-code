@@ -45,8 +45,9 @@ type PreviousState = {
   /** AFK_MODE_BETA_HEADER presence — should NOT break cache anymore
    *  (sticky-on latched in zy.ts). Tracked to verify the fix. */
   autoModeActive: boolean
-  /** Overage state flip — should NOT break cache anymore (eligibility is
-   *  latched session-stable in should1hCacheTTL). Tracked to verify the fix. */
+  /** Overage state flip — should NOT break cache anymore (TTL is now
+   *  configured via settings.promptCacheTTL, not affected by overage state).
+   *  Tracked to verify the fix. */
   isUsingOverage: boolean
   /** Cache-editing beta header presence — should NOT break cache anymore
    *  (sticky-on latched in zy.ts). Tracked to verify the fix. */

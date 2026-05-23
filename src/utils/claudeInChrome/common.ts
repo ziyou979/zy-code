@@ -12,7 +12,6 @@ import { which } from '../which.js'
 export const CLAUDE_IN_CHROME_MCP_SERVER_NAME = 'claude-in-chrome'
 
 // Re-export ChromiumBrowser type for setup.ts
-// @ts-expect-error
 export type { ChromiumBrowser } from './setupPortable.js'
 
 // Import for local use

@@ -44,7 +44,6 @@ export function SandboxOverridesTab({ onComplete }: Props) {
       </Box>
     )
   }
-  // @ts-expect-error
   return (
     <OverridesSelect
       onComplete={onComplete}

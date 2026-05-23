@@ -4,7 +4,6 @@ import { Dialog } from '../../components/design-system/Dialog.js'
 import { Box, Text } from '../../ink.js'
 import { useAppState } from '../../state/AppState.js'
 import { openBrowser } from '../../utils/browser.js'
-// @ts-expect-error
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   openInChrome,

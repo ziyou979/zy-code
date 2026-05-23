@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { feature } from 'bun:bundle'
 import { getSessionId } from '../../bootstrap/state.js'
 import { EFFORT_BETA_HEADER, TASK_BUDGETS_BETA_HEADER } from '../../constants/betas.js'
@@ -124,7 +122,7 @@ export function configureEffortParams(
 // 因此我们在此处定义线路形状并进行类型转换。API 在接收时进行验证；
 // 参见 monorepo 中的 api/api/schemas/messages/request/output_config.py:12-39。
 // Beta：task-budgets-2026-03-13（EAP，截至 2026 年 3 月仅限 zy-strudel-eap）。
-type TaskBudgetParam = {
+export type TaskBudgetParam = {
   type: 'tokens'
   total: number
   remaining?: number

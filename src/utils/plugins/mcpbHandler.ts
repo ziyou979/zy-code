@@ -1,12 +1,9 @@
-// @ts-expect-error
 
 import { createHash } from 'node:crypto'
 import { chmod, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import type {
-  // @ts-expect-error
   McpbManifest,
-  // @ts-expect-error
   McpbUserConfigurationOption,
   // @ts-expect-error
 } from '@anthropic-ai/mcpb'

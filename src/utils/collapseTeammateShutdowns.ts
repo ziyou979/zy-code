@@ -3,11 +3,8 @@ import type { AttachmentMessage, RenderableMessage } from '../types/message.js'
 function isTeammateShutdownAttachment(msg: RenderableMessage): msg is AttachmentMessage {
   return (
     msg.type === 'attachment' &&
-    // @ts-expect-error
     (msg.attachment as any).type === 'task_status' &&
-    // @ts-expect-error
     (msg.attachment as any).taskType === 'in_process_teammate' &&
-    // @ts-expect-error
     (msg.attachment as any).status === 'completed'
   )
 }
@@ -31,7 +28,6 @@ export function collapseTeammateShutdowns(messages: RenderableMessage[]): Render
       if (count === 1) {
         result.push(msg)
       } else {
-        // @ts-expect-error
         result.push({
           type: 'attachment',
           uuid: msg.uuid,

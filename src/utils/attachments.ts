@@ -64,7 +64,6 @@ import uniqBy from 'lodash-es/uniqBy.js'
 import { getProjectRoot } from '../bootstrap/state.js'
 import { formatCommandsWithinBudget } from '../tools/SkillTool/prompt.js'
 import { getContextWindowForModel } from './context.js'
-// @ts-expect-error
 import type { DiscoverySignal } from '../services/skillSearch/signals.js'
 // DCE 条件加载。所有技能搜索字符串字面量，
 // 否则会泄露到外部构建中，都放在这些模块内。
@@ -3602,7 +3601,6 @@ export function getContextEfficiencyAttachment(messages: Message[]): Attachment[
   // 延迟 require 使此文件不包含 snip 字符串。
   const {
     isSnipRuntimeEnabled,
-    // @ts-expect-error
     shouldNudgeForSnips,
   } =
     // eslint-disable-next-line @typescript-eslint/no-require-imports

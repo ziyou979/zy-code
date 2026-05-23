@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
-import { Text } from '../../ink.js'
+import { Text, useTheme } from '../../ink.js'
 import { createHyperlink } from '../../utils/hyperlink.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { renderTruncatedContent } from '../../utils/terminal.js'
@@ -51,6 +51,7 @@ type OutputLineProps = {
 }
 export function OutputLine({ content, verbose, isError, isWarning, linkifyUrls }: OutputLineProps) {
   const { columns } = useTerminalSize()
+  const [theme] = useTheme()
   const expandShellOutput = useExpandShellOutput()
   const inVirtualList = React.useContext(InVirtualListContext)
   const shouldShowFull = verbose || expandShellOutput
@@ -63,7 +64,7 @@ export function OutputLine({ content, verbose, isError, isWarning, linkifyUrls }
     ? stripUnderlineAnsi(formatted)
     : stripUnderlineAnsi(renderTruncatedContent(formatted, columns, inVirtualList))
   const color = isError ? 'error' : isWarning ? 'warning' : undefined
-  const finalContent = renderContentWithFileLinks(formattedContent, columns, false)
+  const finalContent = renderContentWithFileLinks(formattedContent, columns, false, theme)
   return (
     <MessageResponse>
       <Text color={color}>{finalContent}</Text>

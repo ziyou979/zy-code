@@ -6,7 +6,7 @@ import type { PastedContent } from '../utils/config.js'
 import type { ImageDimensions } from '../utils/imageResizer.js'
 import type { TextHighlight } from '../utils/textHighlighting.js'
 import type { AgentId } from './ids.js'
-import type { ContentBlock } from './llm.js'
+import type { UserContentBlock } from './llm.js'
 import type { AssistantMessage, MessageOrigin } from './message.js'
 
 /**
@@ -290,7 +290,7 @@ export type QueuePriority = 'now' | 'next' | 'later'
  * Queued command type
  */
 export type QueuedCommand = {
-  value: string | Array<ContentBlock>
+  value: string | Array<UserContentBlock>
   mode: PromptInputMode
   /** Defaults to the priority implied by `mode` when enqueued. */
   priority?: QueuePriority

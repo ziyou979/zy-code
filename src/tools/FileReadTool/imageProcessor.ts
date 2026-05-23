@@ -53,7 +53,6 @@ export async function getImageProcessor(): Promise<SharpFunction> {
 
   // Use sharp for non-bundled builds or as fallback.
   // Single structural cast: our SharpFunction is a subset of sharp's actual type surface.
-  // @ts-expect-error
   const imported = (await import(
     // @ts-expect-error
     'sharp'
@@ -73,7 +72,6 @@ export async function getImageCreator(): Promise<SharpCreator> {
     return imageCreatorModule.default
   }
 
-  // @ts-expect-error
   const imported = (await import(
     // @ts-expect-error
     'sharp'

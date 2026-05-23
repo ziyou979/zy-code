@@ -1,5 +1,5 @@
 /**
- * OpenAI 双向转换层 — 标准 Message[] / StreamEvent ↔ OpenAI SDK 格式。
+ * OpenAI 双向转换层 — 标准 Message[] / LLMStreamEvent ↔ OpenAI SDK 格式。
  *
  * 这个文件是 OpenAIProviderAdapter 的"知识库"，所有与 OpenAI SDK 接触的转换
  * 都集中在这里，方便测试和复用。
@@ -26,7 +26,7 @@ import type {
   LLMMessage,
   LLMResponse,
   StopReason,
-  StreamEvent,
+  LLMStreamEvent,
   TokenUsage,
   ToolChoice,
   ToolDefinition,
@@ -195,9 +195,18 @@ export function messagesToOpenAI(
         // tool 消息要紧跟在前一条 assistant tool_calls 后面
         result.push(...toolResults)
         if (parts.length > 0) {
+          // 单 text block 通常压扁成 string，但若带 cache_control 必须保留 array
+          // 形式 —— 否则百炼/火山等 OpenAI 兼容端点收不到 cache_control 字段，
+          // addCacheBreakpoints 在最后一条消息打的滚动 marker 会静默丢失。
+          const first = parts[0]
+          const onlyOneText = parts.length === 1 && first?.type === 'text'
+          const hasCacheControl = parts.some(
+            (p) => p && typeof p === 'object' && 'cache_control' in p,
+          )
           result.push({
             role: 'user',
-            content: parts.length === 1 && parts[0]?.type === 'text' ? parts[0].text : parts,
+            content:
+              onlyOneText && !hasCacheControl && first && 'text' in first ? first.text : parts,
           })
         } else if (toolResults.length === 0) {
           result.push({ role: 'user', content: '' })
@@ -567,7 +576,7 @@ export function openAIResponseToStandard(
 }
 
 /**
- * OpenAI 流式 → 标准 StreamEvent。
+ * OpenAI 流式 → 标准 LLMStreamEvent。
  *
  * 关键设计：thinking / text / tool_call 三类 block 的 index 严格分离，
  * tool_call 的 baseIndex = max(textIndex, thinkingIndex) + 1，避免与
@@ -580,7 +589,7 @@ export function openAIResponseToStandard(
 export async function* mapOpenAIStreamToStandard(
   stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>,
   model: string,
-): AsyncIterable<StreamEvent> {
+): AsyncIterable<LLMStreamEvent> {
   const messageId = randomUUID()
   let textBlockIndex = 0
   const toolBlockIndices = new Map<number, number>()

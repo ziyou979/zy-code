@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-expect-error - Some types not exported in current SDK version
 
 import { randomUUID } from 'node:crypto'
 import { getAPIProvider, isAnthropicBaseUrl } from 'src/utils/model/providers.js'
@@ -12,14 +10,27 @@ import {
   toolMatchesName,
 } from '../../Tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-// @ts-expect-error - ConnectorTextDelta may not be exported
 import { type ConnectorTextBlock, type ConnectorTextDelta } from '../../types/connectorText.js'
+import type { TaskBudgetParam } from './apiHelpers.js'
 import type {
+  AssistantContentBlock,
+  ChunkDeltaEvent,
+  ChunkStartEvent,
+  ChunkStopEvent,
   ContentBlock,
+  CreateParams,
   JSONOutputFormat,
-  Response as LLMMessage,
+  LLMAssistantMessage,
+  LLMError,
+  LLMResponse,
   ProviderExtras,
+  ResponseDeltaEvent,
+  ResponseStartEvent,
+  SignatureDelta,
   StopReason,
+  TextDelta,
+  ThinkingDelta,
+  ToolCallInputDelta,
   ToolChoice,
   ToolDefinition,
 } from '../../types/llm.js'
@@ -76,7 +87,6 @@ import {
 import {
   AFK_MODE_BETA_HEADER,
   CONTEXT_MANAGEMENT_BETA_HEADER,
-  PROMPT_CACHING_SCOPE_BETA_HEADER,
   REDACT_THINKING_BETA_HEADER,
   STRUCTURED_OUTPUTS_BETA_HEADER,
 } from 'src/constants/betas.js'
@@ -97,11 +107,8 @@ import {
   getToolSearchBetaHeader,
   modelSupportsStructuredOutputs,
   shouldIncludeExperimentalBetas,
-  shouldUseGlobalCacheScope,
 } from 'src/utils/betas.js'
-// @ts-expect-error
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/utils/claudeInChrome/common.js'
-// @ts-expect-error
 import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/utils/claudeInChrome/prompt.js'
 import { getMaxThinkingTokensForModel } from 'src/utils/context.js'
 import { logForDebugging } from 'src/utils/debug.js'
@@ -243,7 +250,7 @@ export async function queryModelWithoutStreaming({
 }): Promise<AssistantMessage> {
   // 存储助手消息但继续消费生成器以确保
   // logAPISuccessAndDuration 被调用（在所有 yield 之后发生）
-  let assistantMessage: AssistantMessage | undefined
+  let assistantMessage: AssistantMessage
   for await (const message of withStreamingVCR(messages, async function* () {
     yield* queryModel(messages, systemPrompt, thinkingConfig, tools, signal, options)
   })) {
@@ -318,6 +325,39 @@ function getNonstreamingFallbackTimeoutMs(): number {
 }
 
 /**
+ * 从非流式响应构造 AssistantMessage。
+ * 统一两处回退路径的重复逻辑。
+ */
+function buildNonStreamingAssistantMessage(
+  result: LLMResponse,
+  opts: {
+    requestId: string | null | undefined
+    tools: Tools
+    agentId?: AgentId
+    research?: unknown
+    advisorModel?: string
+  },
+): AssistantMessage {
+  return {
+    message: {
+      ...result,
+      context_management: null,
+      content: normalizeContentFromAPI(
+        result.content as unknown as ContentBlock[],
+        opts.tools,
+        opts.agentId,
+      ) as AssistantContentBlock[],
+    },
+    requestId: opts.requestId ?? undefined,
+    type: 'assistant',
+    uuid: randomUUID(),
+    timestamp: new Date().toISOString(),
+    ...(isInternalBuild() && opts.research !== undefined && { research: opts.research }),
+    ...(opts.advisorModel && { advisorModel: opts.advisorModel }),
+  }
+}
+
+/**
  * 非流式 API 请求的辅助生成器。
  * 封装了创建 withRetry 生成器、迭代以产出系统消息、
  * 并返回最终 BetaMessage 的常见模式。
@@ -344,7 +384,7 @@ export async function* executeNonStreamingRequest(
    * 在 zy_nonstreaming_fallback_error 中发出，用于漏斗关联。
    */
   originatingRequestId?: string | null,
-): AsyncGenerator<SystemAPIErrorMessage, LLMMessage> {
+): AsyncGenerator<SystemAPIErrorMessage, LLMResponse> {
   const fallbackTimeoutMs = getNonstreamingFallbackTimeoutMs()
   const generator = withRetry(
     () =>
@@ -401,15 +441,15 @@ export async function* executeNonStreamingRequest(
     },
   )
 
-  let e
+  let iterResult
   do {
-    e = await generator.next()
-    if (!e.done && e.value.type === 'system') {
-      yield e.value
+    iterResult = await generator.next()
+    if (!iterResult.done && iterResult.value.type === 'system') {
+      yield iterResult.value
     }
-  } while (!e.done)
+  } while (!iterResult.done)
 
-  return e.value as LLMMessage
+  return iterResult.value as LLMResponse
 }
 
 /**
@@ -586,25 +626,8 @@ async function* queryModel(
     )
   }
 
-  const useGlobalCacheFeature = shouldUseGlobalCacheScope()
-  const willDefer = (t: Tool) =>
-    useToolSearch && (deferredToolNames.has(t.name) || shouldDeferLspTool(t))
-  // MCP 工具是每用户的 → 动态工具部分 → 无法全局缓存。
-  // 仅在 MCP 工具实际渲染（非 defer_loading）时才进行门控。
-  const needsToolBasedCacheMarker =
-    useGlobalCacheFeature && filteredTools.some((t) => t.isMcp === true && !willDefer(t))
-
-  // 启用全局缓存时，确保存在 prompt_caching_scope beta header。
-  if (useGlobalCacheFeature && !betas.includes(PROMPT_CACHING_SCOPE_BETA_HEADER)) {
-    betas.push(PROMPT_CACHING_SCOPE_BETA_HEADER)
-  }
-
-  // 确定全局缓存策略以用于日志记录
-  const globalCacheStrategy: GlobalCacheStrategy = useGlobalCacheFeature
-    ? needsToolBasedCacheMarker
-      ? 'none'
-      : 'system_prompt'
-    : 'none'
+  // 全局缓存策略：始终使用 system_prompt 模式（基于边界标记的静态/动态拆分）
+  const globalCacheStrategy: GlobalCacheStrategy = 'system_prompt'
 
   // 构建工具 schema，在启用工具搜索时为 MCP 工具添加 defer_loading
   // 注意：我们传递完整的 `tools` 列表（而非 filteredTools）给 toolToAPISchema，以便
@@ -618,7 +641,7 @@ async function* queryModel(
         agents: options.agents,
         allowedAgentTypes: options.allowedAgentTypes,
         model: options.model,
-        deferLoading: willDefer(tool),
+        deferLoading: deferredToolNames.has(tool.name),
       }),
     ),
   )
@@ -738,10 +761,7 @@ async function* queryModel(
   logAPIPrefix(systemPrompt)
 
   const enablePromptCaching = options.enablePromptCaching ?? getPromptCachingEnabled(options.model)
-  const system = buildSystemPromptBlocks(systemPrompt, enablePromptCaching, {
-    skipGlobalCacheForSystemPrompt: needsToolBasedCacheMarker,
-    querySource: options.querySource,
-  })
+  const system = buildSystemPromptBlocks(systemPrompt, enablePromptCaching)
   const useBetas = betas.length > 0
 
   // 构建用于详细追踪的最小上下文（启用 beta 追踪时）
@@ -999,7 +1019,7 @@ async function* queryModel(
         options.querySource,
         useCachedMC,
         consumedCacheEdits,
-        consumedPinnedEdits,
+        consumedPinnedEdits as unknown as import('./messageTransforms.js').CachedMCPinnedEdits[],
         options.skipCacheWrite,
       ),
       system,
@@ -1047,7 +1067,7 @@ async function* queryModel(
         querySource: options.querySource,
         queryTracking: options.queryTracking,
         thinkingType: logThinkingType,
-        effortValue: logEffortValue,
+        effortValue: logEffortValue as import('src/utils/effort.js').EffortLevel | undefined,
         previousRequestId,
       })
     })
@@ -1055,7 +1075,7 @@ async function* queryModel(
 
   const newMessages: AssistantMessage[] = []
   let ttftMs = 0
-  let partialMessage: LLMMessage | undefined
+  let partialMessage: LLMAssistantMessage | undefined
   const contentBlocks: (ContentBlock | ConnectorTextBlock)[] = []
   let usage: NonNullableUsage = EMPTY_USAGE
   let costUSD = 0
@@ -1088,9 +1108,9 @@ async function* queryModel(
         queryCheckpoint('query_client_creation_end')
 
         const params = paramsFromContext(context)
-        captureAPIRequest(params, options.querySource) // Capture for bug reports
+        captureAPIRequest(params as unknown as CreateParams, options.querySource) // 捕获用于 bug 报告
 
-        maxOutputTokens = params.max_tokens
+        maxOutputTokens = (params as { max_tokens: number }).max_tokens
 
         // 在 fetch 发出前立即触发。下方的 .withResponse()
         // 会等到响应头到达，所以这必须在 await 之前，
@@ -1113,9 +1133,9 @@ async function* queryModel(
 
         // 统一的流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
         const adapter = getLLMAdapter({ anthropicClient: anthropic })
-        const streamResult = await adapter.createStream(params, signal, clientRequestId)
+        const streamResult = await adapter.createStream(params as unknown as CreateParams, signal, clientRequestId)
         queryCheckpoint('query_response_headers_received')
-        streamRequestId = streamResult.request_id
+        streamRequestId = streamResult.requestId
         streamResponse = streamResult.response
         return streamResult.stream
       },
@@ -1132,14 +1152,14 @@ async function* queryModel(
     do {
       e = await generator.next()
 
-      // yield API error messages (the stream has a 'controller' property, error messages don't)
+      // 产出 API 错误消息（流具有 'controller' 属性，而错误消息没有）
       if (!('controller' in e.value)) {
         yield e.value
       }
     } while (!e.done)
     stream = e.value as AsyncIterable<StreamEvent>
 
-    // reset state
+    // 重置状态
     newMessages.length = 0
     ttftMs = 0
     partialMessage = undefined
@@ -1258,26 +1278,23 @@ async function* queryModel(
         switch (eventType) {
           case 'response_start': {
             // response_start 不包含完整 message，需要构造 partialMessage
-            const startEvent = part as import('../../types/llm.js').ResponseStartEvent
+            const startEvent = part as unknown as ResponseStartEvent
             partialMessage = {
-              id: startEvent.responseId ?? '',
-              type: 'message',
               role: 'assistant',
-              content: [],
+              id: startEvent.responseId ?? '',
               model: startEvent.model ?? resolvedModel,
-              stop_reason: null,
-              stop_sequence: null,
-              usage: { input_tokens: 0, output_tokens: 0 },
-            } as any
+              content: [],
+              stopReason: null,
+            }
             ttftMs = Date.now() - start
             break
           }
           case 'chunk_start': {
             // chunk 可能包含标准类型（text/tool_call/thinking）以及 Anthropic 内部扩展类型
             // （server_tool_use/advisor_tool_result 等），所以类型标注需要足够宽泛
-            const chunkStartEvent = part as import('../../types/llm.js').ChunkStartEvent
+            const chunkStartEvent = part as unknown as ChunkStartEvent
             const startChunk: Record<string, unknown> & { type: string } =
-              chunkStartEvent.chunk as Record<string, unknown> & { type: string }
+              chunkStartEvent.chunk as unknown as Record<string, unknown> & { type: string }
             const chunkIndex = chunkStartEvent.index
             switch (startChunk.type) {
               case 'tool_use':
@@ -1285,7 +1302,7 @@ async function* queryModel(
                 contentBlocks[chunkIndex] = {
                   ...startChunk,
                   input: '',
-                } as ContentBlock
+                } as unknown as ContentBlock
                 break
               case 'server_tool_use':
                 contentBlocks[chunkIndex] = {
@@ -1327,14 +1344,15 @@ async function* queryModel(
             break
           }
           case 'chunk_delta': {
-            const contentBlock = contentBlocks[part.index]
-            const delta = part.delta as typeof part.delta | ConnectorTextDelta
+            const chunkDeltaEvent = part as unknown as ChunkDeltaEvent
+            const contentBlock = contentBlocks[chunkDeltaEvent.index]
+            const delta = chunkDeltaEvent.delta as typeof chunkDeltaEvent.delta | ConnectorTextDelta
             if (!contentBlock) {
               logEvent('zy_streaming_error', {
                 error_type:
                   'content_block_not_found_delta' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 part_type: part.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-                part_index: part.index,
+                part_index: chunkDeltaEvent.index,
               })
               throw new RangeError('Content block not found')
             }
@@ -1352,14 +1370,14 @@ async function* queryModel(
               }
               contentBlock.connectorText += delta.connectorText
             } else {
-              switch (delta.type) {
+              switch ((delta as { type: string }).type) {
                 case 'citations_delta':
                   // TODO: handle citations
                   break
                 case 'input_json_delta':
                   if (
                     contentBlock.type !== 'tool_call' &&
-                    contentBlock.type !== 'server_tool_use'
+                    (contentBlock as { type: string }).type !== 'server_tool_use'
                   ) {
                     logEvent('zy_streaming_error', {
                       error_type:
@@ -1371,17 +1389,17 @@ async function* queryModel(
                     })
                     throw new Error('Content block is not a input_json block')
                   }
-                  if (typeof contentBlock.input !== 'string') {
+                  if (typeof (contentBlock as unknown as { input: unknown }).input !== 'string') {
                     logEvent('zy_streaming_error', {
                       error_type:
                         'content_block_input_not_string' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                       input_type:
-                        typeof contentBlock.input as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                        typeof (contentBlock as unknown as { input: unknown }).input as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                     })
                     throw new Error('Content block input is not a string')
                   }
                   // 标准层统一使用驼峰 partialJson（见 types/llm.ts ToolCallInputDelta）
-                  contentBlock.input += (delta as any).partialJson ?? ''
+                  ;(contentBlock as unknown as { input: string }).input += (delta as unknown as ToolCallInputDelta).partialJson ?? ''
                   break
                 case 'text_delta':
                   if (contentBlock.type !== 'text') {
@@ -1395,11 +1413,11 @@ async function* queryModel(
                     })
                     throw new Error('Content block is not a text block')
                   }
-                  contentBlock.text += delta.text
+                  contentBlock.text += (delta as unknown as TextDelta).text
                   break
                 case 'signature_delta':
                   if (feature('CONNECTOR_TEXT') && contentBlock.type === 'connector_text') {
-                    contentBlock.signature = delta.signature
+                    ;(contentBlock as ConnectorTextBlock).signature = (delta as unknown as SignatureDelta).signature
                     break
                   }
                   if (contentBlock.type !== 'thinking') {
@@ -1413,7 +1431,7 @@ async function* queryModel(
                     })
                     throw new Error('Content block is not a thinking block')
                   }
-                  contentBlock.signature = delta.signature
+                  contentBlock.signature = (delta as any).signature
                   break
                 case 'thinking_delta':
                   if (contentBlock.type !== 'thinking') {
@@ -1427,7 +1445,7 @@ async function* queryModel(
                     })
                     throw new Error('Content block is not a thinking block')
                   }
-                  contentBlock.thinking += delta.thinking
+                  contentBlock.thinking += (delta as unknown as ThinkingDelta).thinking
                   break
                 default:
                   logForDebugging(
@@ -1448,7 +1466,7 @@ async function* queryModel(
             break
           }
           case 'chunk_stop': {
-            const chunkStopEvent = part as import('../../types/llm.js').ChunkStopEvent
+            const chunkStopEvent = part as unknown as ChunkStopEvent
             const streamExtras = chunkStopEvent.extras
             // Always overwrite with the latest value.
             if (isInternalBuild() && 'research' in part) {
@@ -1460,7 +1478,7 @@ async function* queryModel(
                 error_type:
                   'content_block_not_found_stop' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 part_type: part.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-                part_index: part.index,
+                part_index: chunkStopEvent.index,
               })
               throw new RangeError('Content block not found')
             }
@@ -1472,14 +1490,15 @@ async function* queryModel(
               })
               throw new Error('Message not found')
             }
-            const m: AssistantMessage = {
+            const assistantMsg: AssistantMessage = {
               message: {
-                ...partialMessage,
+                ...partialMessage!,
+                context_management: null,
                 content: normalizeContentFromAPI(
-                  [contentBlock] as ContentBlock[],
+                  [contentBlock] as unknown as ContentBlock[],
                   tools,
                   options.agentId,
-                ),
+                ) as unknown as AssistantContentBlock[],
                 ...(streamExtras && { extras: streamExtras }),
               },
               requestId: streamRequestId ?? undefined,
@@ -1489,13 +1508,13 @@ async function* queryModel(
               ...(isInternalBuild() && research !== undefined && { research }),
               ...(advisorModel && { advisorModel }),
             }
-            newMessages.push(m)
-            yield m
+            newMessages.push(assistantMsg)
+            yield assistantMsg
             break
           }
           case 'response_delta': {
             // 标准格式：part.stopReason / part.usage（驼峰）
-            const responseDelta = part as import('../../types/llm.js').ResponseDeltaEvent
+            const responseDelta = part as unknown as ResponseDeltaEvent
             const stopReasonV2 = responseDelta.stopReason
             const streamExtras = responseDelta.extras
             // 标准 usage 是驼峰(outputTokens)，updateUsage 期望 snake_case(output_tokens)
@@ -1510,30 +1529,26 @@ async function* queryModel(
               : undefined
 
             usage = updateUsage(usage, usageForUpdate)
-            // Capture research from response_delta if available (internal only).
-            // Always overwrite with the latest value. Also write back to
-            // already-yielded messages since message_delta arrives after
-            // content_block_stop.
+            // 从 response_delta 捕获 research（仅限内部使用）。
+            // 始终用最新值覆盖。同时回写到已产出的消息，
+            // 因为 message_delta 在 content_block_stop 之后到达。
             if (isInternalBuild() && 'research' in (part as unknown as Record<string, unknown>)) {
               research = (part as unknown as Record<string, unknown>).research
               for (const msg of newMessages) {
-                msg.research = research
+                ;(msg as unknown as Record<string, unknown>).research = research
               }
             }
 
-            // Write final usage and stop_reason back to the last yielded
-            // message. Messages are created at content_block_stop from
-            // partialMessage, which was set at message_start before any tokens
-            // were generated (output_tokens: 0, stop_reason: null).
-            // message_delta arrives after content_block_stop with the real
-            // values.
+            // 将最终 usage 和 stop_reason 写回最后一个已产出的 message。
+            // 消息在 content_block_stop 时从 partialMessage 创建，
+            // partialMessage 在 message_start 时设置，此时尚未生成任何 token
+            //（output_tokens: 0, stop_reason: null）。
+            // message_delta 在 content_block_stop 之后到达，携带真实值。
             //
-            // IMPORTANT: Use direct property mutation, not object replacement.
-            // The transcript write queue holds a reference to message.message
-            // and serializes it lazily (100ms flush interval). Object
-            // replacement ({ ...lastMsg.message, usage }) would disconnect
-            // the queued reference; direct mutation ensures the transcript
-            // captures the final values.
+            // 重要：使用直接属性修改，而非对象替换。
+            // 转录写入队列持有对 message.message 的引用并惰性序列化
+            //（100ms 刷新间隔）。对象替换（{ ...lastMsg.message, usage }）
+            // 会断开队列中的引用；直接修改确保转录捕获最终值。
             stopReason = stopReasonV2
 
             const lastMsg = newMessages.at(-1)
@@ -1545,7 +1560,7 @@ async function* queryModel(
               }
             }
 
-            // Update cost
+            // 更新成本
             const costUSDForPart = calculateUSDCost(resolvedModel, usage)
             costUSD += addToTotalSessionCost(costUSDForPart, usage, options.model)
 
@@ -1562,22 +1577,21 @@ async function* queryModel(
                 content: `${API_ERROR_MESSAGE_PREFIX}: Zy's response exceeded the ${
                   maxOutputTokens
                 } output token maximum. To configure this behavior, set the ZY_CODE_MAX_OUTPUT_TOKENS environment variable.`,
-                apiError: 'max_output_tokens',
+                apiError: 'max_output_tokens' as unknown as LLMError,
                 error: 'max_output_tokens',
               })
             }
 
-            if (stopReason === 'model_context_window_exceeded') {
+            if ((stopReason as string) === 'model_context_window_exceeded') {
               logEvent('zy_context_window_exceeded', {
                 max_tokens: maxOutputTokens,
                 output_tokens: usage.outputTokens,
               })
-              // Reuse the max_output_tokens recovery path — from the model's
-              // perspective, both mean "response was cut off, continue from
-              // where you left off."
+              // 复用 max_output_tokens 恢复路径——从模型视角来看，
+              // 两者都意味着"响应被截断，从上次停止的地方继续"。
               yield createAssistantAPIErrorMessage({
                 content: `${API_ERROR_MESSAGE_PREFIX}: The model has reached its context window limit.`,
-                apiError: 'max_output_tokens',
+                apiError: 'max_output_tokens' as unknown as LLMError,
                 error: 'max_output_tokens',
               })
             }
@@ -1602,19 +1616,21 @@ async function* queryModel(
 
         yield {
           type: 'stream_event',
-          event: part,
-          ...(part.type === 'response_start' ? { ttftMs } : undefined),
-        }
+          event: part as unknown as StreamEvent['event'],
+          ...((part as unknown as { type: string }).type === 'response_start' ? { ttftMs } : undefined),
+          uuid: randomUUID(),
+          timestamp: new Date().toISOString(),
+        } as StreamEvent
       }
-      // Clear the idle timeout watchdog now that the stream loop has exited
+      // 流循环已退出，清除空闲超时看门狗
       clearStreamIdleTimers()
 
-      // If the stream was aborted by our idle timeout watchdog, fall back to
-      // non-streaming retry rather than treating it as a completed stream.
+      // 如果流被空闲超时看门狗中止，则回退到非流式重试，
+      // 而不是将其视为已完成的流。
       if (streamIdleAborted) {
-        // Instrumentation: proves the for-await exited after the watchdog fired
-        // (vs. hung forever). exit_delay_ms measures abort propagation latency:
-        // 0-10ms = abort worked; >>1000ms = something else woke the loop.
+        // 埋点：证明 for-await 在看门狗触发后退出（而非永远挂起）。
+        // exit_delay_ms 测量中止传播延迟：
+        // 0-10ms = 中止生效；>>1000ms = 其他原因唤醒了循环。
         const exitDelayMs =
           streamWatchdogFiredAt !== null
             ? Math.round(performance.now() - streamWatchdogFiredAt)
@@ -1627,25 +1643,24 @@ async function* queryModel(
           exit_path: 'clean' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
-        // Prevent double-emit: this throw lands in the catch block below,
-        // whose exit_path='error' probe guards on streamWatchdogFiredAt.
+        // 防止双重产出：此 throw 会落入下方的 catch 块，
+        // 其 exit_path='error' 探针会检查 streamWatchdogFiredAt。
         streamWatchdogFiredAt = null
         throw new Error('Stream idle timeout - no chunks received')
       }
 
-      // Detect when the stream completed without producing any assistant messages.
-      // This covers two proxy failure modes:
-      // 1. No events at all (!partialMessage): proxy returned 200 with non-SSE body
-      // 2. Partial events (partialMessage set but no content blocks completed AND
-      //    no stop_reason received): proxy returned message_start but stream ended
-      //    before content_block_stop and before message_delta with stop_reason
-      // BetaMessageStream had the first check in _endRequest() but the raw Stream
-      // does not - without it the generator silently returns no assistant messages,
-      // causing "Execution error" in -p mode.
-      // Note: We must check stopReason to avoid false positives. For example, with
-      // structured output (--json-schema), the model calls a StructuredOutput tool
-      // on turn 1, then on turn 2 responds with end_turn and no content blocks.
-      // That's a legitimate empty response, not an incomplete stream.
+      // 检测流完成但未产生任何助手消息的情况。
+      // 这涵盖两种代理失败模式：
+      // 1. 完全没有事件（!partialMessage）：代理返回 200 但 body 非 SSE
+      // 2. 部分事件（partialMessage 已设置但没有 content block 完成且
+      //    未收到 stop_reason）：代理返回 message_start 但流在
+      //    content_block_stop 和带 stop_reason 的 message_delta 之前结束
+      // BetaMessageStream 在 _endRequest() 中有此检查，但原始 Stream 没有——
+      // 没有它，生成器会静默返回无助手消息，导致 -p 模式下出现 "Execution error"。
+      // 注意：我们必须检查 stopReason 以避免误报。例如，使用结构化输出
+      //（--json-schema）时，模型在第 1 轮调用 StructuredOutput 工具，
+      // 然后在第 2 轮响应 end_turn 且无 content block。
+      // 那是合法的空响应，而非不完整的流。
       if (!partialMessage || (newMessages.length === 0 && !stopReason)) {
         logForDebugging(
           !partialMessage
@@ -1661,7 +1676,7 @@ async function* queryModel(
         throw new Error('Stream ended without receiving any events')
       }
 
-      // Log summary if any stalls occurred during streaming
+      // 如果流式传输期间发生了停顿，记录汇总日志
       if (stallCount > 0) {
         logForDebugging(
           `Streaming completed with ${stallCount} stall(s), total stall time: ${(totalStallTime / 1000).toFixed(1)}s`,
@@ -1676,7 +1691,7 @@ async function* queryModel(
         })
       }
 
-      // Check if the cache actually broke based on response tokens
+      // 根据响应 token 检查 cache 是否实际被打破
       if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
         void checkResponseForCacheBreak(
           options.querySource,
@@ -1688,23 +1703,22 @@ async function* queryModel(
         )
       }
 
-      // Process fallback percentage header and quota status if available
-      // streamResponse is set when the stream is created in the withRetry callback above
-      // TypeScript's control flow analysis can't track that streamResponse is set in the callback
+      // 处理回退百分比 header 和配额状态（如果可用）
+      // streamResponse 在上方 withRetry 回调中创建流时设置
+      // TypeScript 的控制流分析无法追踪 streamResponse 在回调中被设置
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
       const resp = streamResponse as unknown as Response | undefined
       if (resp) {
         extractQuotaStatusFromHeaders(resp.headers)
-        // Store headers for gateway detection
+        // 存储 header 用于网关检测
         responseHeaders = resp.headers
       }
     } catch (streamingError) {
-      // Clear the idle timeout watchdog on error path too
+      // 在错误路径上也清除空闲超时看门狗
       clearStreamIdleTimers()
 
-      // Instrumentation: if the watchdog had already fired and the for-await
-      // threw (rather than exiting cleanly), record that the loop DID exit and
-      // how long after the watchdog. Distinguishes true hangs from error exits.
+      // 埋点：如果看门狗已经触发且 for-await 抛出（而非干净退出），
+      // 记录循环确实退出以及看门狗触发后多久。区分真正的挂起和错误退出。
       if (streamIdleAborted && streamWatchdogFiredAt !== null) {
         const exitDelayMs = Math.round(performance.now() - streamWatchdogFiredAt)
         logForDiagnosticsNoPII('info', 'cli_stream_loop_exited_after_watchdog_error')
@@ -1722,11 +1736,11 @@ async function* queryModel(
       }
 
       if (isAbortError(streamingError)) {
-        // Check if the abort signal was triggered by the user (ESC key)
-        // If the signal is aborted, it's a user-initiated abort
-        // If not, it's likely a timeout from the SDK
+        // 检查中止信号是否由用户触发（ESC 键）
+        // 如果信号已中止，则是用户发起的中止
+        // 如果不是，则可能是 SDK 的超时
         if (signal.aborted) {
-          // This is a real user abort (ESC key was pressed)
+          // 这是真正的用户中止（按下了 ESC 键）
           logForDebugging(`Streaming aborted by user: ${errorMessage(streamingError)}`)
           if (isAdvisorInProgress) {
             logEvent('zy_advisor_tool_interrupted', {
@@ -1737,21 +1751,20 @@ async function* queryModel(
           }
           throw streamingError
         } else {
-          // The SDK threw APIUserAbortError but our signal wasn't aborted
-          // This means it's a timeout from the SDK's internal timeout
+          // SDK 抛出了 APIUserAbortError 但我们的信号未被中止
+          // 这意味着是 SDK 内部超时
           logForDebugging(`Streaming timeout (SDK abort): ${streamingError.message}`, {
             level: 'error',
           })
-          // Throw a more specific error for timeout
+          // 为超时抛出更具体的错误
           throw new LLMConnectionError('Request timed out')
         }
       }
 
-      // When the flag is enabled, skip the non-streaming fallback and let the
-      // error propagate to withRetry. The mid-stream fallback causes double tool
-      // execution when streaming tool execution is active: the partial stream
-      // starts a tool, then the non-streaming retry produces the same tool_use
-      // and runs it again. See inc-4258.
+      // 当标志启用时，跳过非流式回退并让错误传播到 withRetry。
+      // 中途流回退在流式工具执行活跃时会导致双重工具执行：
+      // 部分流启动一个工具，然后非流式重试产生相同的 tool_use
+      // 并再次运行它。参见 inc-4258。
       const disableFallback =
         isEnvTruthy(process.env.ZY_CODE_DISABLE_NONSTREAMING_FALLBACK) ||
         getFeatureValue_CACHED_MAY_BE_STALE('zy_disable_streaming_to_non_streaming_fallback', false)
@@ -1812,13 +1825,12 @@ async function* queryModel(
           : 'other') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
 
-      // Fall back to non-streaming mode with retries.
-      // If the streaming failure was itself a 529, count it toward the
-      // consecutive-529 budget so total 529s-before-model-fallback is the
-      // same whether the overload was hit in streaming or non-streaming mode.
-      // This is a speculative fix for https://github.com/anthropics/zy-code/issues/1513
-      // Instrumentation: proves executeNonStreamingRequest was entered (vs. the
-      // fallback event firing but the call itself hanging at dispatch).
+      // 回退到带重试的非流式模式。
+      // 如果流式失败本身是 529，则将其计入连续 529 预算，
+      // 使模型回退前的总 529 次数无论在流式还是非流式模式下命中都相同。
+      // 这是对 https://github.com/anthropics/zy-code/issues/1513 的推测性修复。
+      // 埋点：证明 executeNonStreamingRequest 已进入
+      //（而非回退事件触发但调用本身在分发时挂起）。
       logForDiagnosticsNoPII('info', 'cli_nonstreaming_fallback_started')
       logEvent('zy_nonstreaming_fallback_started', {
         request_id: (streamRequestId ??
@@ -1847,43 +1859,33 @@ async function* queryModel(
         streamRequestId,
       )
 
-      const m: AssistantMessage = {
-        message: {
-          ...result,
-          content: normalizeContentFromAPI(result.content, tools, options.agentId),
-        },
-        requestId: streamRequestId ?? undefined,
-        type: 'assistant',
-        uuid: randomUUID(),
-        timestamp: new Date().toISOString(),
-        ...(isInternalBuild() &&
-          research !== undefined && {
-            research,
-          }),
-        ...(advisorModel && {
-          advisorModel,
-        }),
-      }
-      newMessages.push(m)
-      fallbackMessage = m
-      yield m
+      const assistantMsg = buildNonStreamingAssistantMessage(result, {
+        requestId: streamRequestId,
+        tools,
+        agentId: options.agentId,
+        research,
+        advisorModel,
+      })
+      newMessages.push(assistantMsg)
+      fallbackMessage = assistantMsg
+      yield assistantMsg
     } finally {
       clearStreamIdleTimers()
     }
   } catch (errorFromRetry) {
-    // FallbackTriggeredError must propagate to query.ts, which performs the
-    // actual model switch. Swallowing it here would turn the fallback into a
-    // no-op — the user would just see "Model fallback triggered: X -> Y" as
-    // an error message with no actual retry on the fallback model.
+    // FallbackTriggeredError 必须传播到 query.ts，它执行实际的模型切换。
+    // 在这里吞掉它会使回退变成空操作——用户只会看到
+    // "Model fallback triggered: X -> Y" 作为错误消息，
+    // 而在回退模型上没有实际重试。
     if (errorFromRetry instanceof FallbackTriggeredError) {
       throw errorFromRetry
     }
 
-    // Check if this is a 404 error during stream creation that should trigger
-    // non-streaming fallback. This handles gateways that return 404 for streaming
-    // endpoints but work fine with non-streaming. Before v2.1.8, BetaMessageStream
-    // threw 404s during iteration (caught by inner catch with fallback), but now
-    // with raw streams, 404s are thrown during creation (caught here).
+    // 检查这是否是流创建期间的 404 错误，应该触发非流式回退。
+    // 这处理那些对流式端点返回 404 但非流式端点正常工作的网关。
+    // 在 v2.1.8 之前，BetaMessageStream 在迭代期间抛出 404
+    //（被内部 catch 捕获并回退），但现在使用原始流，
+    // 404 在创建期间抛出（在此处捕获）。
     const is404StreamCreationError =
       !didFallBackToNonStreaming &&
       errorFromRetry instanceof CannotRetryError &&
@@ -1891,9 +1893,9 @@ async function* queryModel(
       errorFromRetry.originalError.status === 404
 
     if (is404StreamCreationError) {
-      // 404 is thrown at .withResponse() before streamRequestId is assigned,
-      // and CannotRetryError means every retry failed — so grab the failed
-      // request's ID from the error header instead.
+      // 404 在分配 streamRequestId 之前在 .withResponse() 处抛出，
+      // 且 CannotRetryError 意味着每次重试都失败——所以从错误 header 中获取
+      // 失败的请求 ID。
       const failedRequestId = (errorFromRetry.originalError as any).requestID ?? 'unknown'
       logForDebugging('Streaming endpoint returned 404, falling back to non-streaming mode', {
         level: 'warn',
@@ -1916,7 +1918,7 @@ async function* queryModel(
       })
 
       try {
-        // Fall back to non-streaming mode
+        // 回退到非流式模式
         const result = yield* executeNonStreamingRequest(
           { model: options.model, source: options.querySource },
           {
@@ -1934,30 +1936,25 @@ async function* queryModel(
           failedRequestId,
         )
 
-        const m: AssistantMessage = {
-          message: {
-            ...result,
-            content: normalizeContentFromAPI(result.content, tools, options.agentId),
-          },
-          requestId: streamRequestId ?? undefined,
-          type: 'assistant',
-          uuid: randomUUID(),
-          timestamp: new Date().toISOString(),
-          ...(isInternalBuild() && research !== undefined && { research }),
-          ...(advisorModel && { advisorModel }),
-        }
-        newMessages.push(m)
-        fallbackMessage = m
-        yield m
+        const assistantMsg = buildNonStreamingAssistantMessage(result, {
+          requestId: streamRequestId,
+          tools,
+          agentId: options.agentId,
+          research,
+          advisorModel,
+        })
+        newMessages.push(assistantMsg)
+        fallbackMessage = assistantMsg
+        yield assistantMsg
 
-        // Continue to success logging below
+        // 继续到下方的成功日志记录
       } catch (fallbackError) {
-        // Propagate model-fallback signal to query.ts (see comment above).
+        // 将模型回退信号传播到 query.ts（见上方注释）。
         if (fallbackError instanceof FallbackTriggeredError) {
           throw fallbackError
         }
 
-        // Fallback also failed, handle as normal error
+        // 回退也失败了，按正常错误处理
         logForDebugging(`Non-streaming fallback also failed: ${errorMessage(fallbackError)}`, {
           level: 'error',
         })
@@ -2010,7 +2007,7 @@ async function* queryModel(
         return
       }
     } else {
-      // Original error handling for non-404 errors
+      // 非 404 错误的原始错误处理
       logForDebugging(`Error in API request: ${errorMessage(errorFromRetry)}`, {
         level: 'error',
       })
@@ -2112,7 +2109,7 @@ async function* queryModel(
   const logMessageTokens = tokenCountFromLastAPIResponse(messagesForAPI)
   void options.getToolPermissionContext().then((permissionContext) => {
     logAPISuccessAndDuration({
-      model: newMessages[0]?.message.model ?? partialMessage?.model ?? options.model,
+      model: (newMessages[0]?.message as unknown as { model?: string })?.model ?? (partialMessage as unknown as { model?: string })?.model ?? options.model,
       preNormalizedModel: options.model,
       usage,
       start,
@@ -2145,27 +2142,4 @@ async function* queryModel(
   releaseStreamResources()
 }
 
-// Barrel re-exports (保持向后兼容，外部依赖方无需修改 import 路径)
-export {
-  adjustParamsForNonStreaming,
-  configureEffortParams,
-  configureTaskBudgetParams,
-  getAPIMetadata,
-  getExtraBodyParams,
-  getMaxOutputTokensForModel,
-  MAX_NON_STREAMING_TOKENS,
-  verifyApiKey,
-} from './apiHelpers.js'
-export {
-  buildSystemPromptBlocks,
-  getCacheControl,
-  getPromptCachingEnabled,
-} from './cacheControl.js'
-export { queryCompactModel, queryWithModel } from './compactQueries.js'
-export {
-  addCacheBreakpoints,
-  assistantMessageToMessageParam,
-  stripExcessMediaItems,
-  userMessageToMessageParam,
-} from './messageTransforms.js'
-export { accumulateUsage, cleanupStream, updateUsage } from './usageTracker.js'
+

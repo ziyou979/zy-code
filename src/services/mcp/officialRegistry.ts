@@ -39,9 +39,7 @@ export async function prefetchOfficialMcpUrls(): Promise<void> {
     return
 
     const urls = new Set<string>()
-    // @ts-expect-error
     const response: any = undefined
-    // @ts-expect-error
     for (const entry of (response as any).data.servers) {
       for (const remote of entry.server.remotes ?? []) {
         const normalized = normalizeUrl(remote.url)

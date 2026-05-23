@@ -12,7 +12,7 @@ import {
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
 import type { SetToolJSXFn, ToolUseContext } from '../../Tool.js'
-import type { ContentBlock, ImageBlock, ImageSource } from '../../types/llm.js'
+import type { UserContentBlock, ImageBlock, ImageSource } from '../../types/llm.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -75,7 +75,7 @@ export async function processUserInput({
   isMeta,
   skipAttachments,
 }: {
-  input: string | Array<ContentBlock>
+  input: string | Array<UserContentBlock>
   /**
    * Input before [Pasted text #N] expansion. Used for ultraplan keyword
    * detection so pasted content containing the word cannot trigger. Falls
@@ -245,7 +245,7 @@ function applyTruncation(content: string): string {
 }
 
 async function processUserInputBase(
-  input: string | Array<ContentBlock>,
+  input: string | Array<UserContentBlock>,
   mode: PromptInputMode,
   setToolJSX: SetToolJSXFn,
   context: ProcessUserInputContext,
@@ -264,7 +264,7 @@ async function processUserInputBase(
   preExpansionInput?: string,
 ): Promise<ProcessUserInputBaseResult> {
   let inputString: string | null = null
-  let precedingInputBlocks: ContentBlock[] = []
+  let precedingInputBlocks: UserContentBlock[] = []
 
   // Collect image metadata texts for isMeta message
   const imageMetadataTexts: string[] = []
@@ -275,13 +275,13 @@ async function processUserInputBase(
   // blocks actually reach the API — otherwise the resize work above is
   // discarded for the regular prompt path. Also normalizes bridge inputs
   // where iOS may send `mediaType` instead of `media_type` (mobile-apps#5825).
-  let normalizedInput: string | ContentBlock[] = input
+  let normalizedInput: string | UserContentBlock[] = input
 
   if (typeof input === 'string') {
     inputString = input
   } else if (input.length > 0) {
     queryCheckpoint('query_image_processing_start')
-    const processedBlocks: ContentBlock[] = []
+    const processedBlocks: UserContentBlock[] = []
     for (const block of input) {
       if (block.type === 'image') {
         const resized = await maybeResizeAndDownsampleImageBlock(block)
@@ -348,7 +348,7 @@ async function processUserInputBase(
     }),
   )
   // Collect results preserving order
-  const imageContentBlocks: ContentBlock[] = []
+  const imageContentBlocks: UserContentBlock[] = []
   for (const { resized, originalDimensions, sourcePath } of imageProcessingResults) {
     // Collect image metadata for isMeta message (prefer resized dimensions)
     if (resized.dimensions) {

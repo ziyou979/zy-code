@@ -9,7 +9,6 @@ export type Props = {
 export default function Link({ children, url, fallback }: Props) {
   const content = children ?? url
   if (supportsHyperlinks()) {
-    // @ts-expect-error
     return (
       <Text>
         {/* @ts-ignore */}

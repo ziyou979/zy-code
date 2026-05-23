@@ -17,7 +17,6 @@ import { enableConfigs, getGlobalConfig, saveGlobalConfig } from '../config.js'
 import { DebugLogger, logForDebugging } from '../debug.js'
 import { isEnvTruthy, isInternalBuild } from '../envUtils.js'
 import { sideQuery } from '../sideQuery.js'
-// @ts-expect-error TS1149
 import { getAllSocketPaths, getSecureSocketPath } from './common.js'
 
 const EXTENSION_DOWNLOAD_URL = 'https://claude.ai/chrome'

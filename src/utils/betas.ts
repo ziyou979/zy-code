@@ -173,17 +173,6 @@ export function shouldIncludeExperimentalBetas(): boolean {
   )
 }
 
-/**
- * Global-scope prompt caching is direct API only. Foundry is excluded because
- * GrowthBook never bucketed Foundry users into the rollout experiment — the
- * treatment data is direct API-only.
- */
-export function shouldUseGlobalCacheScope(): boolean {
-  return (
-    providerHasCapability(getAPIProvider(), 'prompt_caching') &&
-    !isEnvTruthy(process.env.ZY_CODE_DISABLE_EXPERIMENTAL_BETAS)
-  )
-}
 export const getAllModelBetas = memoize((model: string): string[] => {
   const betaHeaders = []
   const isHaiku = model.toLowerCase().includes('haiku')

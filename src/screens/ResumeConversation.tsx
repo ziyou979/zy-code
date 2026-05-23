@@ -382,7 +382,6 @@ export function ResumeConversation({
   if (filteredLogs.length === 0) {
     return <NoConversationsMessage />
   }
-  // @ts-expect-error
   return (
     <LogSelector
       logs={filteredLogs}

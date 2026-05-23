@@ -20,7 +20,6 @@ import type { AccountInfo } from '../../utils/config.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getOauthProfileFromOauthToken } from './getOauthProfile.js'
-// @ts-expect-error
 import type { OAuthProfileResponse, OAuthTokens, SubscriptionType } from './types.js'
 
 type OAuthTokenExchangeResponse = any
@@ -453,7 +452,6 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
     // refreshOAuthToken already fetches and stores profile info
     await checkAndRefreshOAuthTokenIfNeeded()
   } catch (error) {
-    // @ts-expect-error
     logForDebugging('OAuth token refresh skipped during init', {
       level: 'warn',
       error: error as any as any,
@@ -491,7 +489,6 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
         return true
       }
     } catch (error) {
-      // @ts-expect-error
       logForDebugging('OAuth profile fetch skipped during init', {
         level: 'warn',
         error: error as any as any,

@@ -273,7 +273,6 @@ async function countSystemTokens(effectiveSystemPrompt: readonly string[]): Prom
     ...effectiveSystemPrompt
       .filter(
         (content) =>
-          // @ts-expect-error
           (content as any).length > 0 && content !== SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
       )
       .map((content) => ({ name: extractSectionName(content), content })),

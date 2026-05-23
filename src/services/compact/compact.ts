@@ -83,7 +83,8 @@ import {
   PROMPT_TOO_LONG_ERROR_MESSAGE,
   startsWithApiErrorPrefix,
 } from '../api/errors.js'
-import { getMaxOutputTokensForModel, queryModelWithStreaming } from '../api/llmOrchestrator.js'
+import { getMaxOutputTokensForModel } from '../api/apiHelpers.js'
+import { queryModelWithStreaming } from '../api/llmOrchestrator.js'
 import { notifyCompaction } from '../api/promptCacheBreakDetection.js'
 import { getRetryDelay } from '../api/withRetry.js'
 import { logPermissionContextForAnts } from '../internalLogging.js'

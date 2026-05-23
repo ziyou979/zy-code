@@ -422,7 +422,6 @@ function createCompactionResultFromSessionMemory(
 ): CompactionResult {
   const preCompactTokenCount = tokenCountFromLastAPIResponse(messages)
 
-  // @ts-expect-error
   const boundaryMarker = createCompactBoundaryMessage(
     'auto',
     preCompactTokenCount ?? 0,
@@ -457,7 +456,6 @@ function createCompactionResultFromSessionMemory(
   const attachments = planAttachment ? [planAttachment] : []
 
   return {
-    // @ts-expect-error
     boundaryMarker: annotateBoundaryWithPreservedSegment(
       boundaryMarker,
       summaryMessages[summaryMessages.length - 1]!.uuid as any,

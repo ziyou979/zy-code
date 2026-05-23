@@ -62,7 +62,6 @@ export async function findModifiedFiles(
   outputsDir: string,
 ): Promise<string[]> {
   // Use recursive flag to get all entries in one call
-  // @ts-expect-error
   let entries: Awaited<ReturnType<typeof fs.readdir>>
   try {
     // @ts-expect-error
@@ -113,7 +112,6 @@ export async function findModifiedFiles(
   // Filter to files modified since turn start
   const modifiedFiles: string[] = []
   for (const result of statResults) {
-    // @ts-expect-error
     if (result && result.mtimeMs >= (turnStartTime as any)) {
       modifiedFiles.push(result.filePath)
     }

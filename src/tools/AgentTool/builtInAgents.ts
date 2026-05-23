@@ -34,7 +34,6 @@ export function getBuiltInAgents(): AgentDefinition[] {
   if (feature('COORDINATOR_MODE')) {
     if (isEnvTruthy(process.env.ZY_CODE_COORDINATOR_MODE)) {
       /* eslint-disable @typescript-eslint/no-require-imports */
-      // @ts-expect-error
       const { getCoordinatorAgents } = require('../../coordinator/workerAgent.js')
       /* eslint-enable @typescript-eslint/no-require-imports */
       return getCoordinatorAgents()

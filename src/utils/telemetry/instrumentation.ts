@@ -326,7 +326,6 @@ async function initializeBetaTracing(
     return
   }
 
-  // @ts-expect-error
   const [{ OTLPTraceExporter }, { OTLPLogExporter }] = await Promise.all([
     // @ts-expect-error
     import('@opentelemetry/exporter-trace-otlp-http'),
@@ -360,7 +359,6 @@ async function initializeBetaTracing(
   const logExporter = new OTLPLogExporter(logHttpConfig)
   const loggerProvider = new LoggerProvider({
     resource,
-    // @ts-expect-error
     processors: [
       new BatchLogRecordProcessor(logExporter, {
         scheduledDelayMillis: DEFAULT_LOGS_EXPORT_INTERVAL_MS,
@@ -537,7 +535,6 @@ export async function initializeTelemetry() {
       const loggerProvider = new LoggerProvider({
         resource,
         // Add batch processors for each exporter
-        // @ts-expect-error
         processors: logExporters.map(
           (exporter) =>
             new BatchLogRecordProcessor(exporter, {

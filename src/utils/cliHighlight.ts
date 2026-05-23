@@ -7,11 +7,8 @@
 
 import { extname } from 'node:path'
 
-// @ts-expect-error
 export type CliHighlight = {
-  // @ts-expect-error
   highlight: typeof import('cli-highlight').highlight
-  // @ts-expect-error
   supportsLanguage: typeof import('cli-highlight').supportsLanguage
 }
 
@@ -26,7 +23,6 @@ let loadedGetLanguage: typeof import('highlight.js').getLanguage | undefined
 
 async function loadCliHighlight(): Promise<CliHighlight | null> {
   try {
-    // @ts-expect-error
     const cliHighlight = await import('cli-highlight')
     // cache hit — cli-highlight already loaded highlight.js
     const highlightJs = await import('highlight.js')

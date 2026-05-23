@@ -30,7 +30,6 @@ import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 
 import { feature } from 'bun:bundle'
 
-import { shouldUseGlobalCacheScope } from '../utils/betas.js'
 import { isForkSubagentEnabled } from '../tools/AgentTool/forkSubagent.js'
 import {
   systemPromptSection,
@@ -78,13 +77,13 @@ import type { OutputStyleConfig } from './outputStyles.js'
 import { CYBER_RISK_INSTRUCTION } from './cyberRiskInstruction.js'
 
 /**
- * Boundary marker separating static (cross-org cacheable) content from dynamic content.
- * Everything BEFORE this marker in the system prompt array can use scope: 'global'.
+ * Boundary marker separating static (cacheable) content from dynamic content.
+ * Everything BEFORE this marker in the system prompt array will be marked as cacheable.
  * Everything AFTER contains user/session-specific content and should not be cached.
  *
  * WARNING: Do not remove or reorder this marker without updating cache logic in:
  * - src/utils/api.ts (splitSysPromptPrefix)
- * - src/services/api/zy.js (buildSystemPromptBlocks)
+ * - src/services/api/cacheControl.ts (buildSystemPromptBlocks)
  */
 export const SYSTEM_PROMPT_DYNAMIC_BOUNDARY = '__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__'
 
@@ -168,10 +167,10 @@ function getDiscoverSkillsGuidance(): string | null {
 }
 
 /**
- * Session-variant guidance that would fragment the cacheScope:'global'
- * prefix if placed before SYSTEM_PROMPT_DYNAMIC_BOUNDARY. Each conditional
- * here is a runtime bit that would otherwise multiply the Blake2b prefix
- * hash variants (2^N). See PR #24490, #24171 for the same bug class.
+ * Session-variant guidance that would fragment the cacheable prefix if placed
+ * before SYSTEM_PROMPT_DYNAMIC_BOUNDARY. Each conditional here is a runtime bit
+ * that would otherwise multiply the cache key variants (2^N).
+ * See PR #24490, #24171 for the same bug class.
  *
  * outputStyleConfig intentionally NOT moved here — identity framing lives
  * in the static intro pending eval.
@@ -309,7 +308,7 @@ ${CYBER_RISK_INSTRUCTION}`,
     getTextOutputSection(),
     getLanguageSection(settings.language),
     // === BOUNDARY MARKER - DO NOT MOVE OR REMOVE ===
-    ...(shouldUseGlobalCacheScope() ? [SYSTEM_PROMPT_DYNAMIC_BOUNDARY] : []),
+    SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
     // --- Dynamic content (registry-managed) ---
     ...resolvedDynamicSections,
   ].filter((s) => s !== null)

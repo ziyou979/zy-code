@@ -394,7 +394,6 @@ export function AttachmentMessage({
       )
     }
     case 'task_status':
-      // @ts-expect-error -- TaskStatusMessage props may differ between builds
       return <TaskStatusMessage attachment={attachment} />
     case 'teammate_shutdown_batch':
       return (

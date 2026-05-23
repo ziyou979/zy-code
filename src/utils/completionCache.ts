@@ -22,7 +22,6 @@ type ShellInfo = {
 function detectShell(): ShellInfo | null {
   const shell = process.env.SHELL || ''
   const ZyDir = getZyConfigHomeDir()
-  // @ts-expect-error
   if (shell.endsWith('/zsh') || shell.endsWith('/zsh.exe')) {
     const cacheFile = join(ZyDir, 'completion.zsh')
     return {
@@ -34,7 +33,6 @@ function detectShell(): ShellInfo | null {
       shellFlag: 'zsh',
     }
   }
-  // @ts-expect-error
   if (shell.endsWith('/bash') || shell.endsWith('/bash.exe')) {
     const cacheFile = join(ZyDir, 'completion.bash')
     return {
@@ -46,7 +44,6 @@ function detectShell(): ShellInfo | null {
       shellFlag: 'bash',
     }
   }
-  // @ts-expect-error
   if (shell.endsWith('/fish') || shell.endsWith('/fish.exe')) {
     // @ts-expect-error
     const xdg = process.env.XDG_CONFIG_HOME || join(home, '.config')

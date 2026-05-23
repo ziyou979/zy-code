@@ -1,10 +1,10 @@
 import type { UUID } from 'node:crypto'
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
-import type { ContentBlock } from '../types/llm.js'
+import type { UserContentBlock } from '../types/llm.js'
 
 /**
  * 从 bridge 入站的 user 消息中提取 content 与 uuid 用于 enqueue。
- * 支持字符串 content 和 ContentBlock[]（含图片等多模态）。
+ * 支持字符串 content 和 UserContentBlock[]（含图片等多模态）。
  *
  * 入参假定遵循标准类型（src/types/llm.ts），ImageBlock 必须是平铺
  * { type:'image', mimeType, data } 格式。
@@ -13,7 +13,7 @@ import type { ContentBlock } from '../types/llm.js'
  */
 export function extractInboundMessageFields(
   msg: SDKMessage,
-): { content: string | Array<ContentBlock>; uuid: UUID | undefined } | undefined {
+): { content: string | Array<UserContentBlock>; uuid: UUID | undefined } | undefined {
   if (msg.type !== 'user') {
     return undefined
   }

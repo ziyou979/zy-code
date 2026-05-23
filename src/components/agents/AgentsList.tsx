@@ -192,7 +192,6 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
     !sortedAgents.length ||
     (source !== 'built-in' && !sortedAgents.some((a_4) => a_4.source !== 'built-in'))
   if (hasNoAgents) {
-    // @ts-expect-error
     const fragmentContent2 = source !== 'built-in' &&
       sortedAgents.some((a_5) => a_5.source === 'built-in') && (
         <>
@@ -200,7 +199,6 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
           {renderBuiltInAgentsSection(undefined)}
         </>
       )
-    // @ts-expect-error
     return (
       <Dialog
         title={sourceTitle}
@@ -255,7 +253,6 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
               )}
             </React.Fragment>
           )
-          // @ts-expect-error
         })}
         {builtInAgents_0.length > 0 && (
           <Box flexDirection="column" marginBottom={1} paddingLeft={2}>
@@ -290,7 +287,6 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
       </>
     )
 
-  // @ts-expect-error
   return (
     <DialogComponent
       title={dialogTitle}

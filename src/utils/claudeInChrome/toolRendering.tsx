@@ -5,7 +5,6 @@ import { Link, Text } from '../../ink.js'
 import { renderToolResultMessage as renderDefaultMCPToolResultMessage } from '../../tools/MCPTool/UI.js'
 import type { MCPToolResult } from '../../utils/mcpValidation.js'
 import { truncateToWidth } from '../format.js'
-// @ts-expect-error
 import { trackClaudeInChromeTabId } from './common.js'
 
 export type { Tool } from '@modelcontextprotocol/sdk/types.js'

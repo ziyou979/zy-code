@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-// @ts-expect-error
 import { isReplBridgeActive } from '../../bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import type { Tool } from '../../Tool.js'

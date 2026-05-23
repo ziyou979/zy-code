@@ -664,7 +664,7 @@ function getClassifierThinkingConfig(_model: string): [false | undefined, number
  * 'thinking'：仅阶段 2。完全跳过阶段 1。
  *
  * 两个阶段共享相同的系统 prompt 和用户内容，受益于
- * 跨调用的 prompt 缓存（1h TTL）。
+ * 跨调用的 prompt 缓存（TTL 由 settings.promptCacheTTL 配置，默认 5m）。
  */
 async function classifyYoloActionXml(
   prefixMessages: LLMMessage[],
@@ -1021,8 +1021,6 @@ export async function classifyYoloAction(
     )
   }
 
-  // 为与主 agent 循环保持一致而使用 getCacheControl —
-  // 遵循 GrowthBook TTL 允许列表和 query-source 门控。
   // 将操作块添加到用户内容中
   userContentBlocks.push({
     type: 'text' as const,

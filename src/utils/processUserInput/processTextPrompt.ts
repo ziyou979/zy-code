@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { setPromptId } from 'src/bootstrap/state.js'
 import type { AttachmentMessage, SystemMessage, UserMessage } from 'src/types/message.js'
 import { logEvent } from '../../services/analytics/index.js'
-import type { ContentBlock } from '../../types/llm.js'
+import type { UserContentBlock } from '../../types/llm.js'
 import type { PermissionMode } from '../../types/permissions.js'
 import { createUserMessage } from '../messages.js'
 import { logOTelEvent, redactIfDisabled } from '../telemetry/events.js'
@@ -10,8 +10,8 @@ import { startInteractionSpan } from '../telemetry/sessionTracing.js'
 import { matchesKeepGoingKeyword, matchesNegativeKeyword } from '../userPromptKeywords.js'
 
 export function processTextPrompt(
-  input: string | Array<ContentBlock>,
-  imageContentBlocks: ContentBlock[],
+  input: string | Array<UserContentBlock>,
+  imageContentBlocks: UserContentBlock[],
   imagePasteIds: number[],
   attachmentMessages: AttachmentMessage[],
   uuid?: string,

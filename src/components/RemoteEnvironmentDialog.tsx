@@ -124,7 +124,6 @@ function SingleEnvironmentContent({ environment, onDone }) {
   useKeybinding('confirm:yes', onDone, {
     context: 'Confirmation',
   })
-  // @ts-expect-error
   return (
     <Dialog
       title={tSync('remoteEnv.title')}

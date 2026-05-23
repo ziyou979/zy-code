@@ -140,6 +140,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       'effort',
       'structured_outputs',
       'context_management',
+      'prompt_caching',
       'web_search',
       'interleaved_thinking',
     ],

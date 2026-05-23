@@ -46,6 +46,7 @@ export class FileIndex {
   private charBits: Int32Array = new Int32Array(0)
   private pathLens: Uint16Array = new Uint16Array(0)
   private topLevelCache: SearchResult[] | null = null
+  private readyCount = 0
 
   /**
    * Load paths from an array of strings.

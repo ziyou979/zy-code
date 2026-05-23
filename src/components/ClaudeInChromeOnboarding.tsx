@@ -1,6 +1,5 @@
 import React from 'react'
 import { tSync } from 'src/i18n/index.js'
-// @ts-expect-error
 import { logEvent } from 'src/services/analytics/index.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- enter to continue
 import { Box, Link, Newline, Text, useInput } from '../ink.js'

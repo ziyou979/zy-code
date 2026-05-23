@@ -5,11 +5,8 @@ import * as client from './client.js'
 import * as crypto from './crypto.js'
 import type { OAuthProfileResponse, OAuthTokens } from './types.js'
 
-// @ts-expect-error
 type OAuthTokenExchangeResponse = any
-// @ts-expect-error
 type RateLimitTier = any
-// @ts-expect-error
 type SubscriptionType = any
 
 /**
@@ -167,7 +164,6 @@ export class OAuthService {
     return {
       accessToken: response.access_token,
       refreshToken: response.refresh_token,
-      // @ts-expect-error
       expiresAt: (Date.now() + response.expires_in * 1000) as any,
       scopes: client.parseScopes(response.scope),
       subscriptionType,

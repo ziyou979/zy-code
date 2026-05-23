@@ -480,7 +480,6 @@ export function useManageMCPConnections(
                       value: wrapChannelMessage(client.name, content, meta),
                       priority: 'next',
                       isMeta: true,
-                      // @ts-expect-error
                       origin: { kind: 'channel', server: client.name } as any,
                       skipSlashCommands: true,
                     })

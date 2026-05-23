@@ -80,7 +80,6 @@ function getSearchOrReadInfo(
   const message = progressMessage.data.message
 
   // 检查 tool_use（助手消息）
-  // @ts-expect-error -- message type is narrowed at runtime; AgentToolProgress.message may be assistant after build-time transforms
   if (message.type === 'assistant') {
     return getSearchOrReadFromContent(message.message.content[0], tools)
   }
@@ -165,7 +164,6 @@ function processProgressMessages(
   const toolUseByID = new Map<string, ToolCallBlock>()
   for (const msg of agentMessages) {
     // 跟踪遇到的 tool_use 块
-    // @ts-expect-error -- message type is narrowed at runtime
     if (msg.data.message.type === 'assistant') {
       for (const c of (msg.data.message as any).message.content) {
         if (c.type === 'tool_call') {
@@ -979,7 +977,6 @@ export function extractLastToolInfo(
     if (!hasProgressMessage(pm.data)) {
       continue
     }
-    // @ts-expect-error -- message type is narrowed at runtime
     if (pm.data.message.type === 'assistant') {
       for (const c of (pm.data.message as any).message.content) {
         if (c.type === 'tool_call') {

@@ -16,7 +16,7 @@ import { basename, join } from 'node:path'
 import axios from 'axios'
 import { z } from 'zod/v4'
 import { getSessionId } from '../bootstrap/state.js'
-import type { ContentBlock } from '../types/llm.js'
+import type { UserContentBlock } from '../types/llm.js'
 import { logForDebugging } from '../utils/debug.js'
 import { getZyConfigHomeDir } from '../utils/envUtils.js'
 import { lazySchema } from '../utils/lazySchema.js'
@@ -143,9 +143,9 @@ export async function resolveInboundAttachments(attachments: InboundAttachment[]
  * block[0] means they're silently ignored for [text, image] content.
  */
 export function prependPathRefs(
-  content: string | Array<ContentBlock>,
+  content: string | Array<UserContentBlock>,
   prefix: string,
-): string | Array<ContentBlock> {
+): string | Array<UserContentBlock> {
   if (!prefix) {
     return content
   }
@@ -169,8 +169,8 @@ export function prependPathRefs(
  */
 export async function resolveAndPrepend(
   msg: unknown,
-  content: string | Array<ContentBlock>,
-): Promise<string | Array<ContentBlock>> {
+  content: string | Array<UserContentBlock>,
+): Promise<string | Array<UserContentBlock>> {
   const attachments = extractInboundAttachments(msg)
   if (attachments.length === 0) {
     return content

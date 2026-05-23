@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
-import { verifyApiKey } from '../services/api/llmOrchestrator.js'
+import { verifyApiKey } from '../services/api/apiHelpers.js'
 import { getApiKeyFromApiKeyHelper, getApiKeyWithSource, isAuthEnabled } from '../utils/auth.js'
 import { getAPIProvider, isOpenAIProvider } from '../utils/model/providers.js'
 export type VerificationStatus = 'loading' | 'valid' | 'invalid' | 'missing' | 'error'

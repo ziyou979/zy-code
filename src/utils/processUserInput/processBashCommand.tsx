@@ -6,7 +6,7 @@ import { BashTool } from 'src/tools/BashTool/BashTool.js'
 import type { AttachmentMessage, SystemMessage, UserMessage } from 'src/types/message.js'
 import type { ShellProgress } from 'src/types/tools.js'
 import { logEvent } from '../../services/analytics/index.js'
-import type { ContentBlock } from '../../types/llm.js'
+import type { UserContentBlock } from '../../types/llm.js'
 import { errorMessage, ShellError } from '../errors.js'
 import {
   createSyntheticUserCaveatMessage,
@@ -21,7 +21,7 @@ import { escapeXml } from '../xml.js'
 import type { ProcessUserInputContext } from './processUserInput.js'
 export async function processBashCommand(
   inputString: string,
-  precedingInputBlocks: ContentBlock[],
+  precedingInputBlocks: UserContentBlock[],
   attachmentMessages: AttachmentMessage[],
   context: ProcessUserInputContext,
   setToolJSX: SetToolJSXFn,

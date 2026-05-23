@@ -26,7 +26,6 @@ type Item = {
   firstLine: string
   age: string
 }
-// @ts-expect-error
 export function HistorySearchDialog({ initialQuery, onSelect, onCancel }: Props): React.ReactNode {
   // @ts-expect-error
   useRegisterOverlay('history-search')

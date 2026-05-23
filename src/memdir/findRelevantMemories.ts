@@ -56,10 +56,8 @@ export async function findRelevantMemories(
   // and -1 ages distinguish "ran, picked nothing" from "never ran".
   if (feature('MEMORY_SHAPE_TELEMETRY')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
-    // @ts-expect-error
     const { logMemoryRecallShape } = require('./memoryShapeTelemetry.js') as any
     /* eslint-enable @typescript-eslint/no-require-imports */
-    // @ts-expect-error
     ;(logMemoryRecallShape as any)(memories, selected)
   }
 

@@ -109,8 +109,7 @@ import { markZyAiMcpConnected } from './zyai.js'
  * 此错误应在工具执行层被捕获，以将客户端状态更新为 'needs-auth'。
  */
 
-// @ts-expect-error
-import { isClaudeInChromeMCPServer } from '../../utils/ClaudeInChrome/common.js'
+import { isClaudeInChromeMCPServer } from '../../utils/claudeInChrome/common.js'
 
 // 惰性加载：toolRendering.tsx 引入 React/ink；仅在 Zy-in-Chrome MCP 服务器连接时需要
 /* eslint-disable @typescript-eslint/no-require-imports */

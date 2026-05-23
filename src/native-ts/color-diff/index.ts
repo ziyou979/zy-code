@@ -443,12 +443,10 @@ function detectLanguage(filePath: string, firstLine: string | null): string | nu
   // Filename-based lookup (handles Dockerfile, Makefile, CMakeLists.txt, etc.)
   const stem = base.split('.')[0] ?? ''
   const byName = FILENAME_LANGS[base] ?? FILENAME_LANGS[stem]
-  // @ts-expect-error
   if (byName && (hljs() as any).getLanguage(byName)) {
     return byName
   }
   if (ext) {
-    // @ts-expect-error
     const lang = (hljs() as any).getLanguage(ext)
     if (lang) {
       return ext
@@ -541,7 +539,6 @@ function highlightLine(
   }
   let result
   try {
-    // @ts-expect-error
     result = (hljs() as any).highlight(code, {
       language: state.lang,
       ignoreIllegals: true,

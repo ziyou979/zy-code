@@ -254,7 +254,7 @@ import {
 import { runWithWorkload, WORKLOAD_CRON } from 'src/utils/workloadContext.js'
 import type { UUID } from 'node:crypto'
 import { randomUUID } from 'node:crypto'
-import type { ContentBlock } from '../types/llm.js'
+import type { UserContentBlock } from '../types/llm.js'
 import type { AppState } from 'src/state/AppStateStore.js'
 import {
   fileHistoryRewind,
@@ -362,9 +362,9 @@ function trackReceivedMessageUuid(uuid: UUID): boolean {
   return true // new UUID
 }
 
-type PromptValue = string | ContentBlock[]
+type PromptValue = string | UserContentBlock[]
 
-function toBlocks(v: PromptValue): ContentBlock[] {
+function toBlocks(v: PromptValue): UserContentBlock[] {
   return typeof v === 'string' ? [{ type: 'text', text: v }] : v
 }
 
@@ -1923,7 +1923,7 @@ function runHeadlessStreaming(
           suggestionState.pendingLastEmittedEntry = null
           if (suggestionState.lastEmitted) {
             if (command.mode === 'prompt') {
-              // SDK user messages enqueue ContentBlock[], not a plain string
+              // SDK user messages enqueue UserContentBlock[], not a plain string
               const inputText =
                 typeof input === 'string'
                   ? input

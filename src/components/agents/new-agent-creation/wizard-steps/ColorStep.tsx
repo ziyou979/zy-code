@@ -37,7 +37,6 @@ export function ColorStep() {
     })
     goNext()
   }
-  // @ts-expect-error
   return (
     <WizardDialogLayout
       subtitle={tSync('wizard.chooseColor') as any}

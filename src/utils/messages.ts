@@ -495,8 +495,8 @@ export function prepareUserContent({
   precedingInputBlocks,
 }: {
   inputString: string
-  precedingInputBlocks: ContentBlock[]
-}): string | ContentBlock[] {
+  precedingInputBlocks: UserContentBlock[]
+}): string | UserContentBlock[] {
   if (precedingInputBlocks.length === 0) {
     return inputString
   }

@@ -10,7 +10,7 @@
  * - 所以累积阶段 input 一直是字符串
  * - 真正把字符串 parse 回对象的是 messages.ts 的 normalizeContentFromAPI
  */
-import type { StreamEvent } from '../../src/types/llm.js'
+import type { LLMStreamEvent } from '../../src/types/llm.js'
 
 /**
  * 累积后的 ContentBlock。字段格式刻意保持与 zy.ts 累积出的 partialMessage.content 一致。
@@ -36,7 +36,7 @@ export interface AccumulatedResult {
  * 包括 input 故意以 string 形式初始化和累积。
  */
 export async function accumulateStream(
-  stream: AsyncIterable<StreamEvent>,
+  stream: AsyncIterable<LLMStreamEvent>,
 ): Promise<AccumulatedResult> {
   const contentBlocks: AccumulatedBlock[] = []
   let responseId = ''
@@ -159,7 +159,7 @@ export async function accumulateStream(
 /**
  * 把一个事件数组转为 AsyncIterable。
  */
-export async function* eventsToStream(events: StreamEvent[]): AsyncIterable<StreamEvent> {
+export async function* eventsToStream(events: LLMStreamEvent[]): AsyncIterable<LLMStreamEvent> {
   for (const e of events) {
     yield e
   }

@@ -190,7 +190,7 @@ export function ManageMarketplaces({
   }
 
   // Apply all pending changes
-  const applyChanges = async (states?: MarketplaceState[]) => {
+  async function applyChanges(states?: MarketplaceState[]) {
     const statesToProcess = states || marketplaceStates
     const wasInDetailsView = internalView === 'details'
     setIsProcessing(true)

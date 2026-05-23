@@ -95,7 +95,6 @@ export function DiffDialog({ messages, onDone }: Props) {
   }, [sourceIndex])
   // @ts-expect-error
   useRegisterOverlay('diff-dialog')
-  // @ts-expect-error
   useKeybindings(
     {
       'diff:previousSource': () => {

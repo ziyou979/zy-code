@@ -217,12 +217,6 @@ type State = {
   hasDevChannels: boolean
   // 包含会话 `.jsonl` 的目录；null = 从 originalCwd 推导。
   sessionProjectDir: string | null
-  // 从 GrowthBook 缓存的提示词缓存 1h TTL 允许列表（会话级稳定）
-  promptCache1hAllowlist: string[] | null
-  // 缓存的 1h TTL 用户资格（会话级稳定）。在首次
-  // 评估时锁定，使会话中的超额翻转不会改变 cache_control
-  // TTL，否则会破坏服务端的提示词缓存。
-  promptCache1hEligible: boolean | null
   // AFK_MODE_BETA_HEADER 的粘滞锁定。自动模式首次
   // 激活后，在会话剩余时间内持续发送该头，这样
   // Shift+Tab 切换就不会破坏约 50-70K token 的提示词缓存。
@@ -402,10 +396,6 @@ function getInitialState(): State {
     hasDevChannels: false,
     // Session project dir (null = derive from originalCwd)
     sessionProjectDir: null,
-    // 提示词缓存 1h 允许列表（null = 尚未从 GrowthBook 获取）
-    promptCache1hAllowlist: null,
-    // 提示词缓存 1h 资格（null = 尚未评估）
-    promptCache1hEligible: null,
     // Beta 头锁定（null = 尚未触发）
     afkModeHeaderLatched: null,
     cacheEditingHeaderLatched: null,
@@ -1636,21 +1626,6 @@ export function setHasDevChannels(value: boolean): void {
   STATE.hasDevChannels = value
 }
 
-export function getPromptCache1hAllowlist(): string[] | null {
-  return STATE.promptCache1hAllowlist
-}
-
-export function setPromptCache1hAllowlist(allowlist: string[] | null): void {
-  STATE.promptCache1hAllowlist = allowlist
-}
-
-export function getPromptCache1hEligible(): boolean | null {
-  return STATE.promptCache1hEligible
-}
-
-export function setPromptCache1hEligible(eligible: boolean | null): void {
-  STATE.promptCache1hEligible = eligible
-}
 
 export function getAfkModeHeaderLatched(): boolean | null {
   return STATE.afkModeHeaderLatched

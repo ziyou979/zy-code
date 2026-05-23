@@ -1,8 +1,7 @@
-// @ts-expect-error
 
 import { access, readFile } from 'node:fs/promises'
 import { dirname, join, relative, sep } from 'node:path'
-import type { StructuredPatchHunk } from 'diff'
+import type { Hunk } from 'diff'
 import { getCwd } from './cwd.js'
 import { getCachedRepository } from './detectRepository.js'
 import { execFileNoThrow, execFileNoThrowWithCwd } from './execFileNoThrow.js'
@@ -25,7 +24,7 @@ export type PerFileStats = {
 export type GitDiffResult = {
   stats: GitDiffStats
   perFileStats: Map<string, PerFileStats>
-  hunks: Map<string, StructuredPatchHunk[]>
+  hunks: Map<string, Hunk[]>
 }
 
 const GIT_TIMEOUT_MS = 5000
@@ -109,7 +108,7 @@ export async function fetchGitDiff(): Promise<GitDiffResult | null> {
  * 按需获取 git diff hunk（用于 DiffDialog）。
  * 与 fetchGitDiff() 分离以避免轮询期间的昂贵调用。
  */
-export async function fetchGitDiffHunks(): Promise<Map<string, StructuredPatchHunk[]>> {
+export async function fetchGitDiffHunks(): Promise<Map<string, Hunk[]>> {
   const isGit = await getIsGit()
   if (!isGit) {
     return new Map()
@@ -197,8 +196,8 @@ export function parseGitNumstat(stdout: string): NumstatResult {
  * - 大于 1MB 的文件：完全跳过（不在结果 map 中）
  * - 小于等于 1MB 的文件：解析但限制为 MAX_LINES_PER_FILE 行
  */
-export function parseGitDiff(stdout: string): Map<string, StructuredPatchHunk[]> {
-  const result = new Map<string, StructuredPatchHunk[]>()
+export function parseGitDiff(stdout: string): Map<string, Hunk[]> {
+  const result = new Map<string, Hunk[]>()
   if (!stdout.trim()) {
     return result
   }
@@ -227,14 +226,14 @@ export function parseGitDiff(stdout: string): Map<string, StructuredPatchHunk[]>
     const filePath = headerMatch[2] ?? headerMatch[1] ?? ''
 
     // 查找并解析 hunk
-    const fileHunks: StructuredPatchHunk[] = []
-    let currentHunk: StructuredPatchHunk | null = null
+    const fileHunks: Hunk[] = []
+    let currentHunk: Hunk | null = null
     let lineCount = 0
 
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i] ?? ''
 
-      // StructuredPatchHunk 头部：@@ -oldStart,oldLines +newStart,newLines @@
+      // Hunk 头部：@@ -oldStart,oldLines +newStart,newLines @@
       const hunkMatch = line.match(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/)
       if (hunkMatch) {
         if (currentHunk) {

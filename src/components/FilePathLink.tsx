@@ -1,9 +1,11 @@
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import React from 'react'
+import { colorize } from '../ink/colorize.js'
 import Link from '../ink/components/Link.js'
 import { RawAnsi } from '../ink/components/RawAnsi.js'
 import { wrapAnsi } from '../ink/wrapAnsi.js'
+import { getTheme, type ThemeName } from '../utils/theme.js'
 
 type Props = {
   /** The absolute file path */
@@ -104,14 +106,19 @@ export function renderContentWithFileLinks(
   content: string,
   width: number,
   dimColor = false,
+  theme?: ThemeName,
 ): React.ReactNode[] {
   // 快速路径：无 ANSI 序列时直接在原始字符串上替换
   const hasAnsi = content.indexOf('\x1b') !== -1
+  // 解析主题色用于给纯文本路径着色
+  const zyColor = theme ? getTheme(theme).zy : undefined
 
   let result: string
   if (!hasAnsi) {
     result = content.replace(FILE_PATH_RE, (_match, filePath: string) => {
-      return wrapWithFileLink(filePath, _match)
+      // 纯文本路径：用 zy 主题色着色后再包裹 OSC 8
+      const colored = zyColor ? colorize(_match, zyColor, 'foreground') : _match
+      return wrapWithFileLink(filePath, colored)
     })
   } else {
     // 含 ANSI 序列：在纯文本上定位匹配，然后在原始字符串中插入 OSC 8
@@ -133,8 +140,9 @@ export function renderContentWithFileLinks(
       }
 
       // 用 OSC 8 包裹匹配的文件路径显示文本
+      // 使用原始文本（含 ANSI 颜色序列）作为 display，保留主题色
       const filePath = match[1]!
-      const display = match[0]
+      const display = content.slice(originalStart, originalEnd)
       segments.push(wrapWithFileLink(filePath, display))
       lastOriginalIndex = originalEnd
     }

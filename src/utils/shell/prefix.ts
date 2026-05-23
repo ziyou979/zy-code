@@ -14,7 +14,7 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { startsWithApiErrorPrefix } from '../../services/api/errors.js'
-import { queryCompactModel } from '../../services/api/llmOrchestrator.js'
+import { queryCompactModel } from '../../services/api/compactQueries.js'
 import { memoizeWithLRU } from '../memoize.js'
 import { jsonStringify } from '../slowOperations.js'
 import { asSystemPrompt } from '../systemPromptType.js'

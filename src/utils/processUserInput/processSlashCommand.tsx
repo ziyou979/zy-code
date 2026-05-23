@@ -36,7 +36,7 @@ import type { Progress as AgentProgress } from '../../tools/AgentTool/AgentTool.
 import { runAgent } from '../../tools/AgentTool/runAgent.js'
 import { renderToolUseProgressMessage } from '../../tools/AgentTool/UI.js'
 import type { CommandResultDisplay } from '../../types/command.js'
-import type { ContentBlock, TextBlock } from '../../types/llm.js'
+import type { UserContentBlock, TextBlock } from '../../types/llm.js'
 import { createAbortController } from '../abortController.js'
 import { getAgentContext } from '../agentContext.js'
 import { createAttachmentMessage, getAttachmentMessages } from '../attachments.js'
@@ -96,7 +96,7 @@ async function executeForkedSlashCommand(
   command: CommandBase & PromptCommand,
   args: string,
   context: ProcessUserInputContext,
-  precedingInputBlocks: ContentBlock[],
+  precedingInputBlocks: UserContentBlock[],
   setToolJSX: SetToolJSXFn,
   canUseTool: CanUseToolFn,
 ): Promise<SlashCommandResult> {
@@ -368,8 +368,8 @@ export function looksLikeCommand(commandName: string): boolean {
 }
 export async function processSlashCommand(
   inputString: string,
-  precedingInputBlocks: ContentBlock[],
-  imageContentBlocks: ContentBlock[],
+  precedingInputBlocks: UserContentBlock[],
+  imageContentBlocks: UserContentBlock[],
   attachmentMessages: AttachmentMessage[],
   context: ProcessUserInputContext,
   setToolJSX: SetToolJSXFn,
@@ -643,8 +643,8 @@ async function getMessagesForSlashCommand(
   args: string,
   setToolJSX: SetToolJSXFn,
   context: ProcessUserInputContext,
-  precedingInputBlocks: ContentBlock[],
-  imageContentBlocks: ContentBlock[],
+  precedingInputBlocks: UserContentBlock[],
+  imageContentBlocks: UserContentBlock[],
   _isAlreadyProcessing?: boolean,
   canUseTool?: CanUseToolFn,
   uuid?: string,
@@ -1046,7 +1046,7 @@ export async function processPromptSlashCommand(
   args: string,
   commands: Command[],
   context: ToolUseContext,
-  imageContentBlocks: ContentBlock[] = [],
+  imageContentBlocks: UserContentBlock[] = [],
 ): Promise<SlashCommandResult> {
   const command = findCommand(commandName, commands)
   if (!command) {
@@ -1063,8 +1063,8 @@ async function getMessagesForPromptSlashCommand(
   command: CommandBase & PromptCommand,
   args: string,
   context: ToolUseContext,
-  precedingInputBlocks: ContentBlock[] = [],
-  imageContentBlocks: ContentBlock[] = [],
+  precedingInputBlocks: UserContentBlock[] = [],
+  imageContentBlocks: UserContentBlock[] = [],
   uuid?: string,
 ): Promise<SlashCommandResult> {
   // In coordinator mode (main thread only), skip loading the full skill content
@@ -1098,7 +1098,7 @@ async function getMessagesForPromptSlashCommand(
     parts.push(
       `\nInstruct a worker to use this skill by including "Use the /${command.name} skill" in your Agent prompt. The worker has access to the Skill tool and will receive the skill's content and permissions when it invokes it.`,
     )
-    const summaryContent: ContentBlock[] = [
+    const summaryContent: UserContentBlock[] = [
       {
         type: 'text',
         text: parts.join('\n'),
@@ -1152,7 +1152,7 @@ async function getMessagesForPromptSlashCommand(
   const additionalAllowedTools = parseToolListFromCLI(command.allowedTools ?? [])
 
   // Create content for the main message, including any pasted images
-  const mainMessageContent: ContentBlock[] = (
+  const mainMessageContent: UserContentBlock[] = (
     imageContentBlocks.length > 0 || precedingInputBlocks.length > 0
       ? [...imageContentBlocks, ...precedingInputBlocks, ...result]
       : result

@@ -8,7 +8,7 @@ import type { Progress } from '../Tool.js'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
 import type {
   AssistantContentBlock,
-  AssistantMessage as LLMAssistantMessage,
+  LLMAssistantMessage,
   LLMError,
   ToolCallBlock,
   UserContentBlock,

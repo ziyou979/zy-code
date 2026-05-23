@@ -6,7 +6,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { queryCompactModel } from '../../services/api/llmOrchestrator.js'
+import { queryCompactModel } from '../../services/api/compactQueries.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { AbortError } from '../../utils/errors.js'
 import { getWebFetchUserAgent } from '../../utils/http.js'
@@ -85,11 +85,9 @@ export function clearWebFetchCache(): void {
 //（构造时会创建 15 个规则对象；.turndown() 是无状态的）。
 // @types/turndown 只提供 `export =`（没有 .d.mts），所以 TS 将导入类型视为类本身，
 // 而 Bun 将 CJS 包装为 { default } —— 因此需要类型断言。
-// @ts-expect-error
 type TurndownCtor = typeof import('turndown')
 let turndownServicePromise: Promise<InstanceType<TurndownCtor>> | undefined
 function getTurndownService(): Promise<InstanceType<TurndownCtor>> {
-  // @ts-expect-error
   return (turndownServicePromise ??= import('turndown').then((m) => {
     const Turndown = (m as unknown as { default: TurndownCtor }).default
     return new Turndown()

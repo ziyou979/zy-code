@@ -66,7 +66,6 @@ async function appendSessionLogImpl(
         requestHeaders['Last-Uuid'] = lastUuid
       }
 
-      // @ts-expect-error
       const response = await axios.put(url, entry, {
         headers: requestHeaders,
         validateStatus: (status) => status < 500,
@@ -83,10 +82,8 @@ async function appendSessionLogImpl(
         // 处理条目已存储但客户端收到错误响应的场景，
         // 导致 lastUuidMap 过期
         const serverLastUuid = response.headers['x-last-uuid']
-        // @ts-expect-error
         if (serverLastUuid === (entry.uuid as any)) {
           // 我们的条目就是服务器上的最后一条——之前已成功存储
-          // @ts-expect-error
           lastUuidMap.set(sessionId, entry.uuid as any)
           logForDebugging(`会话条目 ${entry.uuid} 已存在于服务器，从过期状态恢复`)
           logForDiagnosticsNoPII('info', 'session_persist_recovered_from_409')
@@ -208,7 +205,6 @@ export async function getSessionLogs(sessionId: string, url: string): Promise<En
     // 更新 lastUuid 为最后一条的 UUID
     const lastEntry = logs.at(-1)
     if (lastEntry && 'uuid' in lastEntry && lastEntry.uuid) {
-      // @ts-expect-error
       lastUuidMap.set(sessionId, lastEntry.uuid as any)
     }
   }

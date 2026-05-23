@@ -1,7 +1,7 @@
 /**
- * 入站测试：Anthropic SDK 流式/非流式响应 → 标准 LLMResponse / StreamEvent
+ * 入站测试：Anthropic SDK 流式/非流式响应 → 标准 LLMResponse / LLMStreamEvent
  * 被测函数：streamAdapter.ts
- *   - anthropicStreamEventToStandard
+ *   - anthropicLLMStreamEventToStandard
  *   - anthropicStreamToStandard
  *   - anthropicResponseToStandard
  *
@@ -15,7 +15,7 @@ import {
   anthropicDeltaUsageToStandard,
   anthropicResponseToStandard,
   anthropicStopReasonToStandard,
-  anthropicStreamEventToStandard,
+  anthropicLLMStreamEventToStandard,
   anthropicStreamToStandard,
   anthropicUsageToStandard,
   buildAnthropicCreateParams,
@@ -23,19 +23,19 @@ import {
   toolChoiceToAnthropic,
   toolsToAnthropic,
 } from '../../../src/services/api/conversions/anthropic.js'
-import type { StreamEvent } from '../../../src/types/llm.js'
+import type { LLMStreamEvent } from '../../../src/types/llm.js'
 
-async function collect(stream: AsyncIterable<StreamEvent>): Promise<StreamEvent[]> {
-  const out: StreamEvent[] = []
+async function collect(stream: AsyncIterable<LLMStreamEvent>): Promise<LLMStreamEvent[]> {
+  const out: LLMStreamEvent[] = []
   for await (const e of stream) {
     out.push(e)
   }
   return out
 }
 
-describe('anthropicStreamEventToStandard: 单事件映射', () => {
+describe('anthropicLLMStreamEventToStandard: 单事件映射', () => {
   test('message_start → response_start', () => {
-    const e = anthropicStreamEventToStandard({
+    const e = anthropicLLMStreamEventToStandard({
       type: 'message_start',
       message: { id: 'msg_1', model: 'claude-3-opus' },
     })
@@ -47,7 +47,7 @@ describe('anthropicStreamEventToStandard: 单事件映射', () => {
   })
 
   test('content_block_start (text) → chunk_start text', () => {
-    const e = anthropicStreamEventToStandard({
+    const e = anthropicLLMStreamEventToStandard({
       type: 'content_block_start',
       index: 0,
       content_block: { type: 'text', text: '' },
@@ -58,7 +58,7 @@ describe('anthropicStreamEventToStandard: 单事件映射', () => {
   })
 
   test('content_block_start (tool_use) → chunk_start tool_call (类型被映射)', () => {
-    const e = anthropicStreamEventToStandard({
+    const e = anthropicLLMStreamEventToStandard({
       type: 'content_block_start',
       index: 1,
       content_block: { type: 'tool_use', id: 'tu', name: 'fn', input: {} },
@@ -70,7 +70,7 @@ describe('anthropicStreamEventToStandard: 单事件映射', () => {
   })
 
   test('content_block_start (thinking) → chunk_start thinking', () => {
-    const e = anthropicStreamEventToStandard({
+    const e = anthropicLLMStreamEventToStandard({
       type: 'content_block_start',
       index: 0,
       content_block: { type: 'thinking', thinking: 'hmm', signature: 'sig' },
@@ -81,7 +81,7 @@ describe('anthropicStreamEventToStandard: 单事件映射', () => {
   })
 
   test('content_block_delta (input_json_delta)：partial_json → partialJson 驼峰', () => {
-    const e = anthropicStreamEventToStandard({
+    const e = anthropicLLMStreamEventToStandard({
       type: 'content_block_delta',
       index: 1,
       delta: { type: 'input_json_delta', partial_json: '{"q":' },
@@ -91,7 +91,7 @@ describe('anthropicStreamEventToStandard: 单事件映射', () => {
   })
 
   test('content_block_delta (text_delta) → text_delta', () => {
-    const e = anthropicStreamEventToStandard({
+    const e = anthropicLLMStreamEventToStandard({
       type: 'content_block_delta',
       index: 0,
       delta: { type: 'text_delta', text: 'hi' },
@@ -100,7 +100,7 @@ describe('anthropicStreamEventToStandard: 单事件映射', () => {
   })
 
   test('content_block_delta (thinking_delta) → thinking_delta', () => {
-    const e = anthropicStreamEventToStandard({
+    const e = anthropicLLMStreamEventToStandard({
       type: 'content_block_delta',
       index: 0,
       delta: { type: 'thinking_delta', thinking: 'so' },
@@ -110,7 +110,7 @@ describe('anthropicStreamEventToStandard: 单事件映射', () => {
   })
 
   test('message_delta → response_delta，stop_reason 透传', () => {
-    const e = anthropicStreamEventToStandard({
+    const e = anthropicLLMStreamEventToStandard({
       type: 'message_delta',
       delta: { stop_reason: 'tool_use' },
       usage: { output_tokens: 12 },
@@ -121,12 +121,12 @@ describe('anthropicStreamEventToStandard: 单事件映射', () => {
   })
 
   test('message_stop → response_stop', () => {
-    const e = anthropicStreamEventToStandard({ type: 'message_stop' })
+    const e = anthropicLLMStreamEventToStandard({ type: 'message_stop' })
     expect(e).toEqual({ type: 'response_stop' })
   })
 
   test('未知事件 → 安全降级为 response_stop', () => {
-    const e = anthropicStreamEventToStandard({ type: '__unknown__' })
+    const e = anthropicLLMStreamEventToStandard({ type: '__unknown__' })
     expect(e).toEqual({ type: 'response_stop' })
   })
 })
@@ -511,9 +511,9 @@ describe('anthropicDeltaUsageToStandard', () => {
   })
 })
 
-describe('anthropicStreamEventToStandard: 未覆盖的分支', () => {
+describe('anthropicLLMStreamEventToStandard: 未覆盖的分支', () => {
   test('content_block_start (redacted_thinking)', () => {
-    const e = anthropicStreamEventToStandard({
+    const e = anthropicLLMStreamEventToStandard({
       type: 'content_block_start',
       index: 0,
       content_block: { type: 'redacted_thinking', data: 'encrypted' },
@@ -523,7 +523,7 @@ describe('anthropicStreamEventToStandard: 未覆盖的分支', () => {
   })
 
   test('content_block_start (server_tool_use)', () => {
-    const e = anthropicStreamEventToStandard({
+    const e = anthropicLLMStreamEventToStandard({
       type: 'content_block_start',
       index: 1,
       content_block: { type: 'server_tool_use', id: 'st_1', name: 'server_fn', input: { x: 1 } },
@@ -535,7 +535,7 @@ describe('anthropicStreamEventToStandard: 未覆盖的分支', () => {
   })
 
   test('content_block_delta (signature_delta)', () => {
-    const e = anthropicStreamEventToStandard({
+    const e = anthropicLLMStreamEventToStandard({
       type: 'content_block_delta',
       index: 0,
       delta: { type: 'signature_delta', signature: 'sig_val' },
@@ -545,7 +545,7 @@ describe('anthropicStreamEventToStandard: 未覆盖的分支', () => {
   })
 
   test('未知 content_block_delta 类型 → 降级 text_delta', () => {
-    const e = anthropicStreamEventToStandard({
+    const e = anthropicLLMStreamEventToStandard({
       type: 'content_block_delta',
       index: 0,
       delta: { type: '__unknown_delta__', text: 'x' },

@@ -9,7 +9,7 @@ import type {
   SDKStatus,
   SDKUserMessageReplay,
 } from 'src/entrypoints/agentSdkTypes.js'
-import { accumulateUsage, updateUsage } from 'src/services/api/llmOrchestrator.js'
+import { accumulateUsage, updateUsage } from 'src/services/api/usageTracker.js'
 import type { NonNullableUsage } from 'src/services/api/logging.js'
 import { EMPTY_USAGE } from 'src/services/api/logging.js'
 import stripAnsi from 'strip-ansi'
@@ -27,7 +27,7 @@ import type { AppState } from './state/AppState.js'
 import { type Tools, type ToolUseContext, toolMatchesName } from './Tool.js'
 import type { AgentDefinition } from './tools/AgentTool/loadAgentsDir.js'
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from './tools/SyntheticOutputTool/SyntheticOutputTool.js'
-import type { ContentBlock } from './types/llm.js'
+import type { UserContentBlock } from './types/llm.js'
 import type {
   AssistantMessage,
   Message,
@@ -179,7 +179,7 @@ export class QueryEngine {
   }
 
   async *submitMessage(
-    prompt: string | ContentBlock[],
+    prompt: string | UserContentBlock[],
     options?: { uuid?: string; isMeta?: boolean },
   ): AsyncGenerator<SDKMessage, void, unknown> {
     const {
@@ -1192,7 +1192,7 @@ export async function* ask({
   orphanedPermission,
 }: {
   commands: Command[]
-  prompt: string | Array<ContentBlock>
+  prompt: string | Array<UserContentBlock>
   promptUuid?: string
   isMeta?: boolean
   cwd: string

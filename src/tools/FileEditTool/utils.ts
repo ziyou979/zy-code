@@ -339,7 +339,6 @@ export function getSnippetForTwoFileDiff(fileAContents: string, fileBContents: s
     return ''
   }
 
-  // @ts-expect-error
   const full = (patch as any).hunks
     .map((_) => ({
       startLine: _.oldStart,

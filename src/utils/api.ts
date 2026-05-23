@@ -29,7 +29,7 @@ import { TASK_OUTPUT_TOOL_NAME } from '../tools/TaskOutputTool/constants.js'
 import type { ToolDefinition } from '../types/llm.js'
 import type { Message } from '../types/message.js'
 import { isAgentSwarmsEnabled } from './agentSwarmsEnabled.js'
-import { modelSupportsStructuredOutputs, shouldUseGlobalCacheScope } from './betas.js'
+import { modelSupportsStructuredOutputs } from './betas.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { isEnvTruthy } from './envUtils.js'
@@ -58,10 +58,9 @@ type ToolDefinitionWithExtras = ToolDefinition & {
   eager_input_streaming?: boolean
 }
 
-export type CacheScope = 'global' | 'org'
 export type SystemPromptBlock = {
   text: string
-  cacheScope: CacheScope | null
+  shouldCache: boolean
 }
 
 // 当智能体集群未启用时，需要从工具模式中过滤的字段
@@ -282,135 +281,30 @@ export function logAPIPrefix(systemPrompt: SystemPrompt): void {
 }
 
 /**
- * 按内容类型拆分系统提示块以进行 API 匹配和缓存控制。
- * 见 https://console.statsig.com/4aF3Ewatb6xPVpCwxb5nA3/dynamic_configs/zy_code_system_prompt_prefixes
+ * 按内容类型拆分系统提示块以进行缓存控制。
  *
- * 行为取决于功能标志和选项：
+ * 通用设计：基于边界标记将系统提示拆分为静态和动态部分。
+ * 静态内容（边界前）适合缓存，动态内容（边界后）每次请求都变化。
  *
- * 1. 存在 MCP 工具（skipGlobalCacheForSystemPrompt=true）：
- *    返回最多 3 个带有组织级缓存的块（系统提示上无全局缓存）：
- *    - 归属标头（cacheScope=null）
- *    - 系统提示前缀（cacheScope='org'）
- *    - 其余内容连接（cacheScope='org'）
+ * 返回最多 4 个块：
+ * - 归属标头（shouldCache: false）- 每次请求可能不同
+ * - 系统提示前缀（shouldCache: false）- 内容太小，缓存收益低
+ * - 边界前的静态内容（shouldCache: true）- 大块稳定内容
+ * - 边界后的动态内容（shouldCache: false）- 每次请求都变化
  *
- * 2. 带有边界标记的全局缓存模式（仅限直接 API，找到边界）：
- *    返回最多 4 个块：
- *    - 归属标头（cacheScope=null）
- *    - 系统提示前缀（cacheScope=null）
- *    - 边界前的静态内容（cacheScope='global'）
- *    - 边界后的动态内容（cacheScope=null）
- *
- * 3. 默认模式（第三方提供商，或缺少边界）：
- *    返回最多 3 个带有组织级缓存的块：
- *    - 归属标头（cacheScope=null）
- *    - 系统提示前缀（cacheScope='org'）
- *    - 其余内容连接（cacheScope='org'）
+ * 如果没有边界标记，将所有内容视为静态（shouldCache: true）
  */
-export function splitSysPromptPrefix(
-  systemPrompt: SystemPrompt,
-  options?: { skipGlobalCacheForSystemPrompt?: boolean },
-): SystemPromptBlock[] {
-  const useGlobalCacheFeature = shouldUseGlobalCacheScope()
-  if (useGlobalCacheFeature && options?.skipGlobalCacheForSystemPrompt) {
-    logEvent('zy_sysprompt_using_tool_based_cache', {
-      promptBlockCount: systemPrompt.length,
-    })
+export function splitSysPromptPrefix(systemPrompt: SystemPrompt): SystemPromptBlock[] {
+  const boundaryIndex = systemPrompt.indexOf(SYSTEM_PROMPT_DYNAMIC_BOUNDARY)
 
-    // 过滤边界标记，返回不带全局作用域的块
-    let attributionHeader: string | undefined
-    let systemPromptPrefix: string | undefined
-    const rest: string[] = []
-
-    for (const prompt of systemPrompt) {
-      if (!prompt) {
-        continue
-      }
-      if (prompt === SYSTEM_PROMPT_DYNAMIC_BOUNDARY) {
-        continue // Skip boundary
-      }
-      if (prompt.startsWith('x-anthropic-billing-header')) {
-        attributionHeader = prompt
-      } else if (CLI_SYSPROMPT_PREFIXES.has(prompt)) {
-        systemPromptPrefix = prompt
-      } else {
-        rest.push(prompt)
-      }
-    }
-
-    const result: SystemPromptBlock[] = []
-    if (attributionHeader) {
-      result.push({ text: attributionHeader, cacheScope: null })
-    }
-    if (systemPromptPrefix) {
-      result.push({ text: systemPromptPrefix, cacheScope: 'org' })
-    }
-    const restJoined = rest.join('\n\n')
-    if (restJoined) {
-      result.push({ text: restJoined, cacheScope: 'org' })
-    }
-    return result
-  }
-
-  if (useGlobalCacheFeature) {
-    const boundaryIndex = systemPrompt.indexOf(SYSTEM_PROMPT_DYNAMIC_BOUNDARY)
-    if (boundaryIndex !== -1) {
-      let attributionHeader: string | undefined
-      let systemPromptPrefix: string | undefined
-      const staticBlocks: string[] = []
-      const dynamicBlocks: string[] = []
-
-      for (let i = 0; i < systemPrompt.length; i++) {
-        const block = systemPrompt[i]
-        if (!block || block === SYSTEM_PROMPT_DYNAMIC_BOUNDARY) {
-          continue
-        }
-
-        if (block.startsWith('x-anthropic-billing-header')) {
-          attributionHeader = block
-        } else if (CLI_SYSPROMPT_PREFIXES.has(block)) {
-          systemPromptPrefix = block
-        } else if (i < boundaryIndex) {
-          staticBlocks.push(block)
-        } else {
-          dynamicBlocks.push(block)
-        }
-      }
-
-      const result: SystemPromptBlock[] = []
-      if (attributionHeader) {
-        result.push({ text: attributionHeader, cacheScope: null })
-      }
-      if (systemPromptPrefix) {
-        result.push({ text: systemPromptPrefix, cacheScope: null })
-      }
-      const staticJoined = staticBlocks.join('\n\n')
-      if (staticJoined) {
-        result.push({ text: staticJoined, cacheScope: 'global' })
-      }
-      const dynamicJoined = dynamicBlocks.join('\n\n')
-      if (dynamicJoined) {
-        result.push({ text: dynamicJoined, cacheScope: null })
-      }
-
-      logEvent('zy_sysprompt_boundary_found', {
-        blockCount: result.length,
-        staticBlockLength: staticJoined.length,
-        dynamicBlockLength: dynamicJoined.length,
-      })
-
-      return result
-    } else {
-      logEvent('zy_sysprompt_missing_boundary_marker', {
-        promptBlockCount: systemPrompt.length,
-      })
-    }
-  }
   let attributionHeader: string | undefined
   let systemPromptPrefix: string | undefined
-  const rest: string[] = []
+  const staticBlocks: string[] = []
+  const dynamicBlocks: string[] = []
 
-  for (const block of systemPrompt) {
-    if (!block) {
+  for (let i = 0; i < systemPrompt.length; i++) {
+    const block = systemPrompt[i]
+    if (!block || block === SYSTEM_PROMPT_DYNAMIC_BOUNDARY) {
       continue
     }
 
@@ -418,22 +312,37 @@ export function splitSysPromptPrefix(
       attributionHeader = block
     } else if (CLI_SYSPROMPT_PREFIXES.has(block)) {
       systemPromptPrefix = block
+    } else if (boundaryIndex === -1 || i < boundaryIndex) {
+      staticBlocks.push(block)
     } else {
-      rest.push(block)
+      dynamicBlocks.push(block)
     }
   }
 
   const result: SystemPromptBlock[] = []
   if (attributionHeader) {
-    result.push({ text: attributionHeader, cacheScope: null })
+    result.push({ text: attributionHeader, shouldCache: false })
   }
   if (systemPromptPrefix) {
-    result.push({ text: systemPromptPrefix, cacheScope: 'org' })
+    result.push({ text: systemPromptPrefix, shouldCache: false })
   }
-  const restJoined = rest.join('\n\n')
-  if (restJoined) {
-    result.push({ text: restJoined, cacheScope: 'org' })
+  const staticJoined = staticBlocks.join('\n\n')
+  if (staticJoined) {
+    result.push({ text: staticJoined, shouldCache: true })
   }
+  const dynamicJoined = dynamicBlocks.join('\n\n')
+  if (dynamicJoined) {
+    result.push({ text: dynamicJoined, shouldCache: false })
+  }
+
+  if (boundaryIndex !== -1) {
+    logEvent('zy_sysprompt_boundary_found', {
+      blockCount: result.length,
+      staticBlockLength: staticJoined.length,
+      dynamicBlockLength: dynamicJoined.length,
+    })
+  }
+
   return result
 }
 

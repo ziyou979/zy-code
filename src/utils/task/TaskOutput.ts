@@ -80,7 +80,7 @@ export class TaskOutput {
    */
   static startPolling(taskId: string): void {
     const instance = TaskOutput.#registry.get(taskId)
-    if (!instance?.#onProgress) {
+    if (!instance || !instance.#onProgress) {
       return
     }
     TaskOutput.#activePolling.set(taskId, instance)

@@ -17,7 +17,6 @@ import {
   createToolStub,
 } from '../remote/remotePermissionBridge.js'
 import { convertSDKMessage, isSessionEndMessage } from '../remote/sdkMessageAdapter.js'
-// @ts-expect-error
 import type { SSHSession } from '../ssh/createSSHSession.js'
 // @ts-expect-error
 import type { SSHSessionManager } from '../ssh/SSHSessionManager.js'

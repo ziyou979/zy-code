@@ -208,7 +208,6 @@ export function logEventToZy(
     return
   }
 
-  // @ts-expect-error
   if (!zyEventLogger || isSinkKilled('zyEvent' as any)) {
     return
   }

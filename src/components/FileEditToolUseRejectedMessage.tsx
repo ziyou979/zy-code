@@ -1,7 +1,6 @@
-// @ts-expect-error
 
 import { relative } from 'node:path'
-import type { StructuredPatchHunk } from 'diff'
+import type { Hunk } from 'diff'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
 import { getCwd } from 'src/utils/cwd.js'
 import { tSync } from '../i18n/index.js'
@@ -15,7 +14,7 @@ type Props = {
   file_path: string
   operation: 'write' | 'update'
   // 对于更新——显示 diff
-  patch?: StructuredPatchHunk[]
+  patch?: Hunk[]
   firstLine: string | null
   fileContent?: string
   // 对于新文件创建——显示内容预览

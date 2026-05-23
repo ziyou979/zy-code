@@ -115,7 +115,7 @@ function MarkdownBody({ children, dimColor, highlight }: MarkdownBodyProps) {
     if (nonTableContent) {
       const trimmed = nonTableContent.trim()
       if (trimmed) {
-        const nodes = renderContentWithFileLinks(trimmed, columns, dimColor as boolean)
+        const nodes = renderContentWithFileLinks(trimmed, columns, dimColor as boolean, theme)
         elements.push(...nodes)
       }
       nonTableContent = ''

@@ -91,7 +91,6 @@ export async function setup(
     // （特别是 SessionStart）才能派生并快照 process.env。
     if (feature('UDS_INBOX')) {
       const m = await import('./utils/udsMessaging.js')
-      // @ts-expect-error
       await (m as any).startUdsMessaging(
         messagingSocketPath ?? (m as any).getDefaultUdsSocketPath(),
         { isExplicit: messagingSocketPath !== undefined },

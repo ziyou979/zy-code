@@ -66,19 +66,19 @@ export interface ToolCallBlock {
 // ============================================================================
 
 /** system 消息 — 纯文本系统提示 */
-export interface SystemMessage {
+export interface LLMSystemMessage {
   role: 'system'
   content: string
 }
 
 /** user 消息 — 用户输入，可包含文本和多模态内容 */
-export interface UserMessage {
+export interface LLMUserMessage {
   role: 'user'
   content: string | UserContentBlock[]
 }
 
 /** assistant 消息 — 模型响应，可包含文本和工具调用 */
-export interface AssistantMessage {
+export interface LLMAssistantMessage {
   role: 'assistant'
   /** 消息唯一标识 */
   id?: string
@@ -95,7 +95,7 @@ export interface AssistantMessage {
 }
 
 /** tool 消息 — 工具执行结果，独立角色 */
-export interface ToolMessage {
+export interface LLMToolMessage {
   role: 'tool'
   /** 对应的工具调用 ID */
   toolCallId: string
@@ -106,7 +106,7 @@ export interface ToolMessage {
 }
 
 /** 请求中的消息联合类型 */
-export type LLMMessage = SystemMessage | UserMessage | AssistantMessage | ToolMessage
+export type LLMMessage = LLMSystemMessage | LLMUserMessage | LLMAssistantMessage | LLMToolMessage
 
 // ============================================================================
 // 工具定义
@@ -137,7 +137,7 @@ export interface JSONOutputFormat {
 // ============================================================================
 
 /** 流式事件联合类型 */
-export type StreamEvent =
+export type LLMStreamEvent =
   | ResponseStartEvent
   | ChunkStartEvent
   | ChunkDeltaEvent
@@ -338,7 +338,7 @@ export interface ProviderExtras {
 /** 流式请求的返回结果 */
 export interface StreamResult {
   /** 标准格式的事件流 */
-  stream: AsyncIterable<StreamEvent>
+  stream: AsyncIterable<LLMStreamEvent>
   /** 服务端返回的请求 ID */
   requestId: string | undefined
   /** 原始 HTTP 响应对象 */
@@ -527,7 +527,7 @@ export function createAbortError(): LLMAbortError {
 
 /**
  * 工具结果内容块。
- * 注意：推荐使用独立的 ToolMessage（role: 'tool'）。
+ * 注意：推荐使用独立的 LLMToolMessage（role: 'tool'）。
  * 此类型保留用于兼容 Anthropic 格式的消息内容。
  */
 export interface ToolResultBlock {

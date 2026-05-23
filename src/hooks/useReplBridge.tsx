@@ -190,7 +190,6 @@ export function useReplBridge(
           let perpetual = false
           if (feature('KAIROS')) {
             const { isAssistantMode } = await import('../assistant/index.js' as any)
-            // @ts-expect-error
             perpetual = (isAssistantMode as any)()
           }
 

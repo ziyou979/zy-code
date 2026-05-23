@@ -2,11 +2,7 @@
 
 import type { ReactNode } from 'react'
 
-export interface WizardStep<_T> {
-  id: string
-  title?: string
-  render: () => ReactNode
-}
+export type WizardStep<_T> = () => ReactNode
 
 export interface WizardContextValue<T> {
   currentStepIndex: number
@@ -24,7 +20,7 @@ export interface WizardProviderProps<T> {
   initialData: T
   onComplete: (data: T) => void
   onCancel?: () => void
-  children: ReactNode
+  children?: ReactNode
   title?: string
   showStepCounter?: boolean
 }

@@ -1,5 +1,5 @@
 /**
- * 入站测试：OpenAI 流式响应 → 标准 StreamEvent
+ * 入站测试：OpenAI 流式响应 → 标准 LLMStreamEvent
  * 被测函数：streamAdapter.ts mapOpenAIStreamToStandard
  *
  * 重点关注：
@@ -11,7 +11,7 @@
  */
 import { describe, expect, test } from 'bun:test'
 import { mapOpenAIStreamToStandard } from '../../../src/services/api/conversions/openai.js'
-import type { StreamEvent } from '../../../src/types/llm.js'
+import type { LLMStreamEvent } from '../../../src/types/llm.js'
 import {
   chunksToStream,
   finishChunk,
@@ -21,8 +21,8 @@ import {
   toolCallStartChunk,
 } from '../../_helpers/openaiStreamFixtures.js'
 
-async function collect(stream: AsyncIterable<StreamEvent>): Promise<StreamEvent[]> {
-  const out: StreamEvent[] = []
+async function collect(stream: AsyncIterable<LLMStreamEvent>): Promise<LLMStreamEvent[]> {
+  const out: LLMStreamEvent[] = []
   for await (const e of stream) {
     out.push(e)
   }

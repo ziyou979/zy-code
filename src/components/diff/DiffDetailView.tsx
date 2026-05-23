@@ -1,7 +1,6 @@
-// @ts-expect-error
 
 import { resolve } from 'node:path'
-import type { StructuredPatchHunk } from 'diff'
+import type { Hunk } from 'diff'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { Box, Text } from '../../ink.js'
 import { getCwd } from '../../utils/cwd.js'
@@ -11,7 +10,7 @@ import { StructuredDiff } from '../StructuredDiff.js'
 
 type Props = {
   filePath: string
-  hunks: StructuredPatchHunk[]
+  hunks: Hunk[]
   isLargeFile?: boolean
   isBinary?: boolean
   isTruncated?: boolean

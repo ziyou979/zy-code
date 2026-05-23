@@ -17,16 +17,13 @@ import { getZyConfigHomeDir, isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } f
 import { execFileNoThrowWithCwd } from '../execFileNoThrow.js'
 import { getPlatform } from '../platform.js'
 import { jsonStringify } from '../slowOperations.js'
-// @ts-expect-error
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   getAllBrowserDataPaths,
   getAllNativeMessagingHostsDirs,
   getAllWindowsRegistryKeys,
   openInChrome,
-  // @ts-expect-error
 } from './common.js'
-// @ts-expect-error
 import { getChromeSystemPrompt } from './prompt.js'
 import { isChromeExtensionInstalledPortable } from './setupPortable.js'
 
@@ -92,9 +89,7 @@ export function setupClaudeInChrome(): {
   systemPrompt: string
 } {
   const isNativeBuild = isInBundledMode()
-  // @ts-expect-error
   const allowedTools = BROWSER_TOOLS.map(
-    // @ts-expect-error
     (tool) => `mcp__claude-in-chrome__${(tool as any).name}`,
   )
 

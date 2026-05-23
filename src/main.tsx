@@ -193,12 +193,10 @@ import {
 import type { LogOption } from './types/logs.js'
 import type { Message as MessageType } from './types/message.js'
 import { assertMinVersion } from './utils/autoUpdater.js'
-// @ts-expect-error
 import {
   CLAUDE_IN_CHROME_SKILL_HINT,
   CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER,
 } from './utils/claudeInChrome/prompt.js'
-// @ts-expect-error
 import {
   setupClaudeInChrome,
   shouldAutoEnableClaudeInChrome,
@@ -290,7 +288,6 @@ import { isXaaEnabled } from 'src/services/mcp/xaaIdpLogin.js'
 import { fetchZyAIMcpConfigsIfEligible } from 'src/services/mcp/zyai.js'
 import { getRelevantTips } from 'src/services/tips/tipRegistry.js'
 import { logContextMetrics } from 'src/utils/api.js'
-// @ts-expect-error
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   isClaudeInChromeMCPServer,
@@ -802,7 +799,6 @@ export async function main() {
     if (ccIdx !== -1 && _pendingConnect) {
       const ccUrl = rawCliArgs[ccIdx]!
       const {
-        // @ts-expect-error
         parseConnectUrl,
       } = await import('./server/parseConnectUrl.js')
       const parsed = (parseConnectUrl as any)(ccUrl)
@@ -4096,11 +4092,8 @@ async function run(): Promise<CommanderCommand> {
         // `--local` 跳过探测/部署/ssh 并直接生成当前二进制文件
         // 使用相同的环境 —— 代理/认证管道的 e2e 测试。
         const {
-          // @ts-expect-error
           createSSHSession,
-          // @ts-expect-error
           createLocalSSHSession,
-          // @ts-expect-error
           SSHSessionError,
         } = await import('./ssh/createSSHSession.js')
         let sshSession
@@ -5185,31 +5178,23 @@ async function run(): Promise<CommanderCommand> {
         }) => {
           const { randomBytes } = await import('node:crypto')
           const {
-            // @ts-expect-error
             startServer,
           } = await import('./server/server.js')
           const {
-            // @ts-expect-error
             SessionManager,
           } = await import('./server/sessionManager.js')
           const {
-            // @ts-expect-error
             DangerousBackend,
           } = await import('./server/backends/dangerousBackend.js')
           const {
-            // @ts-expect-error
             printBanner,
           } = await import('./server/serverBanner.js')
           const {
-            // @ts-expect-error
             createServerLogger,
           } = await import('./server/serverLog.js')
           const {
-            // @ts-expect-error
             writeServerLock,
-            // @ts-expect-error
             removeServerLock,
-            // @ts-expect-error
             probeRunningServer,
           } = await import('./server/lockfile.js')
           const existing = await probeRunningServer()
@@ -5303,7 +5288,6 @@ async function run(): Promise<CommanderCommand> {
   // 交互模式（不带 -p）由 main() 中的早期 argv 重写处理
   // 重定向到主命令，具有完整 TUI 支持。
   if (feature('DIRECT_CONNECT')) {
-    // @ts-expect-error
     program
       .command('open <cc-url>')
       .description('Connect to a ZY Code server (internal — use cc:// URLs)')
@@ -5318,7 +5302,6 @@ async function run(): Promise<CommanderCommand> {
           },
         ) => {
           const {
-            // @ts-expect-error
             parseConnectUrl,
           } = await import('./server/parseConnectUrl.js')
           const { serverUrl, authToken } = (parseConnectUrl as any)(ccUrl)
@@ -5342,7 +5325,6 @@ async function run(): Promise<CommanderCommand> {
             process.exit(1)
           }
           const {
-            // @ts-expect-error
             runConnectHeadless,
           } = await import('./server/connectHeadless.js')
           const prompt = typeof opts.print === 'string' ? opts.print : ''
@@ -5778,7 +5760,6 @@ async function run(): Promise<CommanderCommand> {
       )
       .action(async () => {
         const {
-          // @ts-expect-error
           up,
         } = await import('src/cli/up.js')
         await up()
@@ -5809,7 +5790,6 @@ async function run(): Promise<CommanderCommand> {
           },
         ) => {
           const {
-            // @ts-expect-error
             rollback,
           } = await import('src/cli/rollback.js')
           await rollback(target, options)
@@ -5856,7 +5836,6 @@ async function run(): Promise<CommanderCommand> {
       )
       .action(async (logId: string | number | undefined) => {
         const {
-          // @ts-expect-error
           logHandler,
         } = await import('./cli/handlers/ant.js')
         await logHandler(logId)
@@ -5871,7 +5850,6 @@ async function run(): Promise<CommanderCommand> {
       .argument('[number]', 'A number (0, 1, 2, etc.) to display a specific log', parseInt)
       .action(async (number: number | undefined) => {
         const {
-          // @ts-expect-error
           errorHandler,
         } = await import('./cli/handlers/ant.js')
         await errorHandler(number)
@@ -5898,7 +5876,6 @@ Examples:
       )
       .action(async (source: string, outputFile: string) => {
         const {
-          // @ts-expect-error
           exportHandler,
         } = await import('./cli/handlers/ant.js')
         await exportHandler(source, outputFile)
@@ -5919,7 +5896,6 @@ Examples:
             },
           ) => {
             const {
-              // @ts-expect-error
               taskCreateHandler,
             } = await import('./cli/handlers/ant.js')
             await taskCreateHandler(subject, opts)
@@ -5933,7 +5909,6 @@ Examples:
         .option('--json', 'Output as JSON')
         .action(async (opts: { list?: string; pending?: boolean; json?: boolean }) => {
           const {
-            // @ts-expect-error
             taskListHandler,
           } = await import('./cli/handlers/ant.js')
           await taskListHandler(opts)
@@ -5950,7 +5925,6 @@ Examples:
             },
           ) => {
             const {
-              // @ts-expect-error
               taskGetHandler,
             } = await import('./cli/handlers/ant.js')
             await taskGetHandler(id, opts)
@@ -5978,7 +5952,6 @@ Examples:
             },
           ) => {
             const {
-              // @ts-expect-error
               taskUpdateHandler,
             } = await import('./cli/handlers/ant.js')
             await taskUpdateHandler(id, opts)
@@ -5990,7 +5963,6 @@ Examples:
         .option('-l, --list <id>', 'Task list ID (defaults to "tasklist")')
         .action(async (opts: { list?: string }) => {
           const {
-            // @ts-expect-error
             taskDirHandler,
           } = await import('./cli/handlers/ant.js')
           await taskDirHandler(opts)
@@ -6012,7 +5984,6 @@ Examples:
           },
         ) => {
           const {
-            // @ts-expect-error
             completionHandler,
           } = await import('./cli/handlers/ant.js')
           await completionHandler(shell, opts, program)

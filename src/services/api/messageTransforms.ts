@@ -30,7 +30,7 @@ export function userMessageToMessageParam(
             type: 'text',
             text: message.message.content,
             ...(enablePromptCaching && {
-              cache_control: getCacheControl({ querySource }),
+              cache_control: getCacheControl(),
             }),
           },
         ],
@@ -42,7 +42,7 @@ export function userMessageToMessageParam(
           ..._,
           ...(i === message.message.content.length - 1
             ? enablePromptCaching
-              ? { cache_control: getCacheControl({ querySource }) }
+              ? { cache_control: getCacheControl() }
               : {}
             : {}),
         })),
@@ -75,7 +75,7 @@ export function assistantMessageToMessageParam(
             type: 'text',
             text: message.message.content,
             ...(enablePromptCaching && {
-              cache_control: getCacheControl({ querySource }),
+              cache_control: getCacheControl(),
             }),
           },
         ],
@@ -90,7 +90,7 @@ export function assistantMessageToMessageParam(
           _.type !== 'redacted_thinking' &&
           (feature('CONNECTOR_TEXT') ? !isConnectorTextBlock(_) : true)
             ? enablePromptCaching
-              ? { cache_control: getCacheControl({ querySource }) }
+              ? { cache_control: getCacheControl() }
               : {}
             : {}),
         })),
@@ -197,7 +197,7 @@ type CachedMCEditsBlock = {
   edits: { type: 'delete'; cache_reference: string }[]
 }
 
-type CachedMCPinnedEdits = {
+export type CachedMCPinnedEdits = {
   userMessageIndex: number
   block: CachedMCEditsBlock
 }

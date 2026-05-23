@@ -22,8 +22,7 @@ import {
   hasShownHintThisSession,
   setPendingHint,
   type ZyCodeHint,
-  // @ts-expect-error
-} from '../ZyCodeHints.js'
+} from '../zyCodeHints.js'
 import { isPluginInstalled } from './installedPluginsManager.js'
 import { getPluginById } from './marketplaceManager.js'
 import { isOfficialMarketplaceName, parsePluginIdentifier } from './pluginIdentifier.js'

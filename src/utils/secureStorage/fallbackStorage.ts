@@ -60,7 +60,6 @@ export function createFallbackStorage(
 
       return { success: false }
     },
-    // @ts-expect-error
     delete(): boolean {
       const primarySuccess = (primary as any).delete()
       const secondarySuccess = (secondary as any).delete()

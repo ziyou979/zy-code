@@ -13,7 +13,7 @@ import { logError } from '../../utils/log.js'
 import { getLocalMaxInputTokens } from '../../utils/settings/localModelCapabilities.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
-import { getMaxOutputTokensForModel } from '../api/llmOrchestrator.js'
+import { getMaxOutputTokensForModel } from '../api/apiHelpers.js'
 import { notifyCompaction } from '../api/promptCacheBreakDetection.js'
 import { setLastSummarizedMessageId } from '../SessionMemory/sessionMemoryUtils.js'
 import {

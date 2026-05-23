@@ -47,7 +47,6 @@ export function Settings({ onClose, context, defaultTab }: Props) {
       !(selectedTab === 'Config' && configOwnsEsc) &&
       !(selectedTab === 'Gates' && gatesOwnsEsc),
   })
-  // @ts-expect-error - Gates is internal-only and may not be available
   const tabs = [
     <Tab key="status" title={tSync('settings.statusTab')}>
       <Status context={context as any} diagnosticsPromise={diagnosticsPromise} />

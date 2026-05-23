@@ -1,5 +1,5 @@
 /**
- * Anthropic 双向转换层 — 标准 Message[] / StreamEvent ↔ Anthropic SDK 格式。
+ * Anthropic 双向转换层 — 标准 Message[] / LLMStreamEvent ↔ Anthropic SDK 格式。
  *
  * 设计原则与 conversions/openai.ts 一致：
  * - 公开函数接受标准 llm.ts 类型
@@ -15,7 +15,7 @@ import type {
   LLMMessage,
   LLMResponse,
   StopReason,
-  StreamEvent,
+  LLMStreamEvent,
   TokenUsage,
   ToolChoice,
   ToolDefinition,
@@ -263,14 +263,14 @@ export function anthropicDeltaUsageToStandard(usage: any): DeltaUsage {
 }
 
 /**
- * 把 Anthropic 单个 SSE 事件转成标准 StreamEvent。
+ * 把 Anthropic 单个 SSE 事件转成标准 LLMStreamEvent。
  *
  * 关键事实：Anthropic SDK 原生 content_block_start.content_block.type 是
  *   'tool_use'（不是 'tool_call'），转换层映射成标准的 'tool_call'。
  * 之前在 AnthropicProviderAdapter 里写成 case 'tool_call' 是 bug，
  * 导致工具调用 block 永远拿不到，已在此处统一修复。
  */
-export function anthropicStreamEventToStandard(event: any): StreamEvent {
+export function anthropicLLMStreamEventToStandard(event: any): LLMStreamEvent {
   switch (event.type) {
     case 'message_start': {
       const msg = event.message
@@ -366,9 +366,9 @@ export function anthropicStreamEventToStandard(event: any): StreamEvent {
 
 export async function* anthropicStreamToStandard(
   rawStream: AsyncIterable<any>,
-): AsyncIterable<StreamEvent> {
+): AsyncIterable<LLMStreamEvent> {
   for await (const event of rawStream) {
-    yield anthropicStreamEventToStandard(event)
+    yield anthropicLLMStreamEventToStandard(event)
   }
 }
 

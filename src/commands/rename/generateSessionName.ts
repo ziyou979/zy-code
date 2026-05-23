@@ -1,4 +1,4 @@
-import { queryCompactModel } from '../../services/api/llmOrchestrator.js'
+import { queryCompactModel } from '../../services/api/compactQueries.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'

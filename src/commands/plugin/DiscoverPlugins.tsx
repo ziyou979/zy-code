@@ -781,7 +781,6 @@ export function DiscoverPlugins({
     </Box>
   )
 }
-// @ts-expect-error
 function DiscoverPluginsKeyHint({ hasSelection, canToggle }: any) {
   return (
     <Box marginTop={1}>

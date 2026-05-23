@@ -14,7 +14,6 @@ import { z } from 'zod'
 import { isInternalBuild } from '../envUtils.js'
 import { lazySchema } from '../lazySchema.js'
 import { jsonParse, jsonStringify } from '../slowOperations.js'
-// @ts-expect-error
 import { getSecureSocketPath, getSocketDir } from './common.js'
 
 const VERSION = '1.0.0'

@@ -145,7 +145,6 @@ export function FallbackPermissionRequest({ toolUseConfirm, onDone, onReject, wo
     ''
   )
   const truncatedDescription = truncateToLines(toolUseConfirm.description, 3)
-  // @ts-expect-error
   return (
     <PermissionDialog title={tSync('permissionRules.toolUse')} workerBadge={workerBadge}>
       {

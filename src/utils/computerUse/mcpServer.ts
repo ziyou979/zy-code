@@ -1,8 +1,6 @@
-// @ts-expect-error
 
 import { homedir } from 'node:os'
 import {
-  // @ts-expect-error
   buildComputerUseTools,
   // @ts-expect-error
   createComputerUseMcpServer,

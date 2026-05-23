@@ -73,9 +73,7 @@ export function UserTextMessage({
   }
   if (feature('KAIROS_GITHUB_WEBHOOKS')) {
     if (param.text.startsWith('<github-webhook-activity>')) {
-      // @ts-expect-error
       const githubWebhookModule = require('./UserGitHubWebhookMessage.js')
-      // @ts-expect-error
       const { UserGitHubWebhookMessage } = githubWebhookModule
       return <UserGitHubWebhookMessage addMargin={addMargin} param={param} />
     }
@@ -106,18 +104,14 @@ export function UserTextMessage({
   }
   if (feature('FORK_SUBAGENT')) {
     if (param.text.includes('<fork-boilerplate>')) {
-      // @ts-expect-error
       const forkBoilerplateModule = require('./UserForkBoilerplateMessage.js')
-      // @ts-expect-error
       const { UserForkBoilerplateMessage } = forkBoilerplateModule
       return <UserForkBoilerplateMessage addMargin={addMargin} param={param} />
     }
   }
   if (feature('UDS_INBOX')) {
     if (param.text.includes('<cross-session-message')) {
-      // @ts-expect-error
       const crossSessionModule = require('./UserCrossSessionMessage.js')
-      // @ts-expect-error
       const { UserCrossSessionMessage } = crossSessionModule
       return <UserCrossSessionMessage addMargin={addMargin} param={param} />
     }

@@ -756,6 +756,14 @@ export const SettingsSchema = lazySchema(() =>
           'When false, prompt suggestions are disabled. When absent or true, ' +
             'prompt suggestions are enabled.',
         ),
+      promptCacheTTL: z
+        .enum(['5m', '1h'])
+        .optional()
+        .describe(
+          'TTL for prompt cache entries. Options: "5m" (5 minutes, default) or "1h" (1 hour). ' +
+            'Longer TTL improves cache hit rates but uses more storage. ' +
+            'Applies to Anthropic and OpenAI APIs that support prompt caching.',
+        ),
       showClearContextOnPlanAccept: z
         .boolean()
         .optional()

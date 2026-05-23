@@ -406,4 +406,38 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     const result = messagesToOpenAI([{ role: 'user', content: null }] as any)
     expect(result[0].content).toBe('')
   })
+
+  test('user 单 text block 带 cache_control：保留 array 形式而非压扁成 string', () => {
+    // 回归：addCacheBreakpoints 给最后一条 user 消息打的 marker 必须能透出到
+    // 百炼/火山等 OpenAI 兼容端点；否则单 text block 被三元运算符压扁成纯
+    // string 时 cache_control 会被静默丢弃。
+    const messages = [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'hello', cache_control: { type: 'ephemeral' } },
+        ],
+      },
+    ]
+    const result = messagesToOpenAI(messages as any)
+    expect(result).toHaveLength(1)
+    const m = result[0] as any
+    expect(m.role).toBe('user')
+    expect(Array.isArray(m.content)).toBe(true)
+    expect(m.content).toHaveLength(1)
+    expect(m.content[0]).toEqual({
+      type: 'text',
+      text: 'hello',
+      cache_control: { type: 'ephemeral' },
+    })
+    assertValidOpenAIChatMessages(result)
+  })
+
+  test('user 单 text block 不带 cache_control：仍压扁成 string（保持原行为）', () => {
+    const result = messagesToOpenAI([
+      { role: 'user', content: [{ type: 'text', text: 'hello' }] },
+    ] as any)
+    expect(result[0]).toEqual({ role: 'user', content: 'hello' })
+    assertValidOpenAIChatMessages(result)
+  })
 })

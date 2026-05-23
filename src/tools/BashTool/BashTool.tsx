@@ -62,8 +62,7 @@ import {
   getToolResultPath,
   PREVIEW_SIZE_BYTES,
 } from '../../utils/toolResultStorage.js'
-// @ts-expect-error
-import { extractZyCodeHints } from '../../utils/ZyCodeHints.js'
+import { extractZyCodeHints } from '../../utils/zyCodeHints.js'
 import { userFacingName as fileEditUserFacingName } from '../FileEditTool/UI.js'
 import { trackGitOperations } from '../shared/gitOperationTracking.js'
 import {
