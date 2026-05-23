@@ -42,6 +42,9 @@ import { logForDebugging } from '../utils/debug.js'
 import { loadMemoryPrompt } from '../memdir/memdir.js'
 import { isUndercover } from '../utils/undercover.js'
 import { isMcpInstructionsDeltaEnabled } from '../utils/mcpInstructionsDelta.js'
+import { resolveUiLanguage, type UiLanguage } from '../i18n/types.js'
+import { en as enMessages } from '../i18n/locales/en.js'
+import { zhCN as zhCNMessages } from '../i18n/locales/zh-CN.js'
 
 // Dead code elimination: conditional imports for feature-gated modules
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -97,8 +100,25 @@ export function getLanguageSection(languagePreference: string | undefined): stri
     return null
   }
 
-  return `# Language
-Reason and respond in ${languagePreference} natively. Prompts may be written in English, but actual outputs must be applied in ${languagePreference}. Keep code, identifiers, file paths, and quoted text unchanged.`
+  const uiLang = resolveUiLanguage(languagePreference)
+  const messages = getMessagesForUiLanguage(uiLang)
+
+  const body = messages['prompts.languageSection.body']
+  if (!body) {
+    return null
+  }
+
+  return `# Language\n${body}`
+}
+
+function getMessagesForUiLanguage(uiLang: UiLanguage): Record<string, string> {
+  switch (uiLang) {
+    case 'zh-CN':
+      return zhCNMessages
+    case 'en':
+    default:
+      return enMessages
+  }
 }
 
 function getOutputStyleSection(outputStyleConfig: OutputStyleConfig | null): string | null {
