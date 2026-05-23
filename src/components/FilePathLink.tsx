@@ -160,9 +160,13 @@ export function renderContentWithFileLinks(
     result = `\x1b[2m${result}\x1b[22m`
   }
 
-  // 按终端宽度预换行，然后交给 RawAnsi 直接输出
-  const wrapped = wrapAnsi(result, width, { hard: true, trim: false })
+  // 按终端宽度预换行，然后交给 RawAnsi 直接输出。
+  // 减去安全边距（消息图标、Box padding 等父容器缩进），
+  // 避免实际渲染行超出终端可见宽度触发终端换行，
+  // 导致 OSC 8 超链接和终端自带路径检测失效。
+  const safeWidth = Math.max(40, width - 4)
+  const wrapped = wrapAnsi(result, safeWidth, { hard: true, trim: false })
   const lines = wrapped.split('\n')
 
-  return [<RawAnsi key={0} lines={lines} width={width} />]
+  return [<RawAnsi key={0} lines={lines} width={safeWidth} />]
 }
