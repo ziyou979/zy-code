@@ -54,6 +54,17 @@
 - 禁止在 `dist/` 中手动放文件
 - 禁止修改 `build.ts` 的 `define` 宏值
 
+### 12. 目录边界
+- **`src/utils/` 仅放无业务语义的纯函数 helper**：任何牵涉外部 IO（网络 / 文件系统 / spawn）、特定领域知识（auth / billing / mcp / shell 解析等）、用户可见行为（i18n 文案 / 终端输出）的代码必须放 `src/services/<domain>/` 或 `src/<domain>/`，不允许新增到 `utils/`
+- **`src/utils/` 单文件行数上限 800**：超出必须按子领域拆分。已有的 `utils/messages.ts`（5500 行）、`utils/sessionStorage.ts`（5000 行）、`utils/hooks.ts`（4700 行）等是历史包袱，新代码不应跟随
+- **`src/` 根目录禁止新增 `.ts`/`.tsx` 文件**：现有的 `Tool.ts` / `Task.ts` / `tools.ts` / `query.ts` 等是历史结构，所有新模块必须放在子目录里。入口（`main.tsx` / `commands.ts` 等）已存在，不需要新增
+
+### 13. feature() 宏使用
+- bun `feature('X')` 必须直接出现在 `if` / 三元的条件位置才能被构建期 DCE 处理
+- ❌ 禁止：`feature('X') && something`、`(feature('X') ? a : b) ?? c`、`const flag = feature('X'); if (flag)`
+- ✅ 允许：`if (feature('X')) { ... }`、`feature('X') ? a : b`
+- 把 `feature() ? require(...) : null` 模式抽到独立模块（如 `cli/lazyModules.ts`）时，DCE 仍按 caller 模块独立生效，可放心跨模块迁移
+
 ## 启动/构建命令
 
 ```bash
