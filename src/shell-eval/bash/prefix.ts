@@ -1,4 +1,4 @@
-import { buildPrefix } from '../shell/specPrefix.js'
+import { buildPrefix } from '../shared/specPrefix.js'
 import { splitCommand_DEPRECATED } from './commands.js'
 import { extractCommandArguments, parseCommand } from './parser.js'
 import { getCommandSpec } from './registry.js'

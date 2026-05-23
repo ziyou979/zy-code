@@ -30,8 +30,8 @@ import {
   PS_TOKENIZER_DASH_CHARS,
   parsePowerShellCommand,
   stripModulePrefix,
-} from '../../utils/powershell/parser.js'
-import { containsVulnerableUncPath } from '../../utils/shell/readOnlyCommandValidation.js'
+} from '../../shell-eval/powershell/parser.js'
+import { containsVulnerableUncPath } from '../../shell-eval/shared/readOnlyCommandValidation.js'
 import { isDotGitPathPS, isGitInternalPathPS } from './gitSafety.js'
 import { checkPermissionMode, isSymlinkCreatingCommand } from './modeValidation.js'
 import {

@@ -34,7 +34,7 @@ import type { ExecResult } from '../../utils/ShellCommand.js'
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
 import { semanticBoolean } from '../../utils/semanticBoolean.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
-import { getCachedPowerShellPath } from '../../utils/shell/powershellDetection.js'
+import { getCachedPowerShellPath } from '../../shell-eval/shared/powershellDetection.js'
 import { EndTruncatingAccumulator } from '../../utils/stringUtils.js'
 import { getTaskOutputPath } from '../../utils/task/diskOutput.js'
 import { TaskOutput } from '../../utils/task/TaskOutput.js'
@@ -234,7 +234,7 @@ export function detectBlockedSleepPattern(command: string): string | null {
   // `&`/`&&`/`||` (pwsh 7+), and newline (PS's primary separator). This is
   // intentionally shallow — sleep inside script blocks, subshells, or later
   // pipeline stages is fine. Matches BashTool's splitCommandWithOperators
-  // intent (src/utils/bash/commands.ts) without a full PS parser.
+  // intent (src/shell-eval/bash/commands.ts) without a full PS parser.
   const first =
     command
       .trim()
@@ -1181,7 +1181,7 @@ async function* runPowerShellCommand({
   }
 }
 
-import { isPowerShellToolEnabled } from '../../utils/shell/shellToolUtils.js'
+import { isPowerShellToolEnabled } from '../../shell-eval/shared/shellToolUtils.js'
 // 插件化注册
 import { toolRegistry } from '../registry.js'
 

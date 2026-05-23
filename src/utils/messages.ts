@@ -113,7 +113,7 @@ import {
   type HookPermissionDecisionAttachment,
   memoryHeader,
 } from './attachments.js'
-import { quote } from './bash/shellQuote.js'
+import { quote } from 'src/shell-eval/bash/shellQuote.js'
 import { getCurrentProjectConfig } from './config.js'
 import { logAntError, logForDebugging } from './debug.js'
 import { stripIdeContextTags } from './displayTags.js'

@@ -1,7 +1,7 @@
 import { sep } from 'node:path'
 import { getOriginalCwd } from '../bootstrap/state.js'
 import type { LogOption } from '../types/logs.js'
-import { quote } from './bash/shellQuote.js'
+import { quote } from 'src/shell-eval/bash/shellQuote.js'
 import { isInternalBuild } from './envUtils.js'
 import { getSessionIdFromLog } from './sessionStorage.js'
 

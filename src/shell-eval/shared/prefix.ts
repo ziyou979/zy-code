@@ -15,9 +15,9 @@ import {
 } from '../../services/analytics/index.js'
 import { startsWithApiErrorPrefix } from '../../services/api/errors.js'
 import { queryCompactModel } from '../../services/api/compactQueries.js'
-import { memoizeWithLRU } from '../memoize.js'
-import { jsonStringify } from '../slowOperations.js'
-import { asSystemPrompt } from '../systemPromptType.js'
+import { memoizeWithLRU } from '../../utils/memoize.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
+import { asSystemPrompt } from '../../utils/systemPromptType.js'
 
 /**
  * 绝不能作为裸前缀接受的 shell 可执行文件。

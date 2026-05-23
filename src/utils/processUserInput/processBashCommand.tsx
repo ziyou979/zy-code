@@ -14,8 +14,8 @@ import {
   createUserMessage,
   prepareUserContent,
 } from '../messages.js'
-import { resolveDefaultShell } from '../shell/resolveDefaultShell.js'
-import { isPowerShellToolEnabled } from '../shell/shellToolUtils.js'
+import { resolveDefaultShell } from 'src/shell-eval/shared/resolveDefaultShell.js'
+import { isPowerShellToolEnabled } from 'src/shell-eval/shared/shellToolUtils.js'
 import { processToolResultBlock } from '../toolResultStorage.js'
 import { escapeXml } from '../xml.js'
 import type { ProcessUserInputContext } from './processUserInput.js'

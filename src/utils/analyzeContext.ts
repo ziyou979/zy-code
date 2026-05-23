@@ -272,8 +272,7 @@ async function countSystemTokens(effectiveSystemPrompt: readonly string[]): Prom
   const namedEntries: Array<{ name: string; content: string }> = [
     ...effectiveSystemPrompt
       .filter(
-        (content) =>
-          (content as any).length > 0 && content !== SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
+        (content) => (content as any).length > 0 && content !== SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
       )
       .map((content) => ({ name: extractSectionName(content), content })),
     ...Object.entries(systemContext)

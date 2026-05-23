@@ -3,13 +3,13 @@ import { tSync } from '../../i18n/index.js'
 import {
   isUnsafeCompoundCommand_DEPRECATED,
   splitCommand_DEPRECATED,
-} from '../../utils/bash/commands.js'
+} from '../../shell-eval/bash/commands.js'
 import {
   buildParsedCommandFromRoot,
   type IParsedCommand,
   ParsedCommand,
-} from '../../utils/bash/ParsedCommand.js'
-import { type Node, PARSE_ABORTED } from '../../utils/bash/parser.js'
+} from '../../shell-eval/bash/ParsedCommand.js'
+import { type Node, PARSE_ABORTED } from '../../shell-eval/bash/parser.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
 import { createPermissionRequestMessage } from '../../utils/permissions/permissions.js'

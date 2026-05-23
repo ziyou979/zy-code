@@ -32,8 +32,8 @@ import { getPlatform } from '../../utils/platform.js'
 import type {
   ParsedCommandElement,
   ParsedPowerShellCommand,
-} from '../../utils/powershell/parser.js'
-import { isNullRedirectionTarget, isPowerShellParameter } from '../../utils/powershell/parser.js'
+} from '../../shell-eval/powershell/parser.js'
+import { isNullRedirectionTarget, isPowerShellParameter } from '../../shell-eval/powershell/parser.js'
 import { COMMON_SWITCHES, COMMON_VALUE_PARAMS } from './commonParameters.js'
 import { resolveToCanonical } from './readOnlyValidation.js'
 

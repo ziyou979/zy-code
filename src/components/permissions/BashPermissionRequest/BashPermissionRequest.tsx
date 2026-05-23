@@ -19,7 +19,7 @@ import {
 import { getDestructiveCommandWarning } from '../../../tools/BashTool/destructiveCommandWarning.js'
 import { parseSedEditCommand } from '../../../tools/BashTool/sedEditParser.js'
 import { shouldUseSandbox } from '../../../tools/BashTool/shouldUseSandbox.js'
-import { getCompoundCommandPrefixesStatic } from '../../../utils/bash/prefix.js'
+import { getCompoundCommandPrefixesStatic } from '../../../shell-eval/bash/prefix.js'
 import {
   createPromptRuleContent,
   generateGenericDescription,

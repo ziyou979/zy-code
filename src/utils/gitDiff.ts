@@ -1,4 +1,3 @@
-
 import { access, readFile } from 'node:fs/promises'
 import { dirname, join, relative, sep } from 'node:path'
 import type { Hunk } from 'diff'

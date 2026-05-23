@@ -1,7 +1,7 @@
 import type { z } from 'zod/v4'
 import { getOriginalCwd } from '../../bootstrap/state.js'
-import { extractOutputRedirections, splitCommand_DEPRECATED } from '../../utils/bash/commands.js'
-import { tryParseShellCommand } from '../../utils/bash/shellQuote.js'
+import { extractOutputRedirections, splitCommand_DEPRECATED } from '../../shell-eval/bash/commands.js'
+import { tryParseShellCommand } from '../../shell-eval/bash/shellQuote.js'
 import { getCwd } from '../../utils/cwd.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { isCurrentDirectoryBareGitRepo } from '../../utils/git.js'
@@ -18,7 +18,7 @@ import {
   PYRIGHT_READ_ONLY_COMMANDS,
   RIPGREP_READ_ONLY_COMMANDS,
   validateFlags,
-} from '../../utils/shell/readOnlyCommandValidation.js'
+} from '../../shell-eval/shared/readOnlyCommandValidation.js'
 import type { BashTool } from './BashTool.js'
 import { isNormalizedGitCommand } from './bashPermissions.js'
 import { bashCommandIsSafe_DEPRECATED } from './bashSecurity.js'

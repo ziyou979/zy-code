@@ -6,7 +6,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
-import { splitCommand_DEPRECATED } from 'src/utils/bash/commands.js'
+import { splitCommand_DEPRECATED } from 'src/shell-eval/bash/commands.js'
 import type {
   PermissionDecisionReason,
   PermissionResult,

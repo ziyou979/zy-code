@@ -3,9 +3,9 @@ import { isAbsolute, resolve } from 'node:path'
 import type { z } from 'zod/v4'
 import { tSync } from '../../i18n/index.js'
 import type { ToolPermissionContext } from '../../Tool.js'
-import type { Redirect, SimpleCommand } from '../../utils/bash/ast.js'
-import { extractOutputRedirections, splitCommand_DEPRECATED } from '../../utils/bash/commands.js'
-import { tryParseShellCommand } from '../../utils/bash/shellQuote.js'
+import type { Redirect, SimpleCommand } from '../../shell-eval/bash/ast.js'
+import { extractOutputRedirections, splitCommand_DEPRECATED } from '../../shell-eval/bash/commands.js'
+import { tryParseShellCommand } from '../../shell-eval/bash/shellQuote.js'
 import { getDirectoryForPath } from '../../utils/path.js'
 import { allWorkingDirectories } from '../../utils/permissions/filesystem.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
@@ -1147,7 +1147,7 @@ function astRedirectsToOutputRedirections(redirects: Redirect[]): {
 //
 // KEEP IN SYNC with:
 //   - SAFE_WRAPPER_PATTERNS in bashPermissions.ts (text-based stripSafeWrappers)
-//   - the wrapper-stripping loop in checkSemantics (src/utils/bash/ast.ts ~1860)
+//   - the wrapper-stripping loop in checkSemantics (src/shell-eval/bash/ast.ts ~1860)
 // If you add a wrapper in either, add it here too. Asymmetry means
 // checkSemantics exposes the wrapped command to semantic checks but path
 // validation sees the wrapper name → passthrough → wrapped paths never

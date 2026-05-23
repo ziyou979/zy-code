@@ -13,8 +13,8 @@
  */
 
 import { getCommandSpec } from '../bash/registry.js'
-import { buildPrefix, DEPTH_RULES } from '../shell/specPrefix.js'
-import { countCharInString } from '../stringUtils.js'
+import { buildPrefix, DEPTH_RULES } from '../shared/specPrefix.js'
+import { countCharInString } from '../../utils/stringUtils.js'
 import { NEVER_SUGGEST } from './dangerousCmdlets.js'
 import { getAllCommands, type ParsedCommandElement, parsePowerShellCommand } from './parser.js'
 

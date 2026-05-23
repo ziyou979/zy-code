@@ -1,5 +1,5 @@
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
-import { splitCommand_DEPRECATED } from '../../utils/bash/commands.js'
+import { splitCommand_DEPRECATED } from '../../shell-eval/bash/commands.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'

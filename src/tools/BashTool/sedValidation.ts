@@ -1,7 +1,7 @@
 import { tSync } from '../../i18n/index.js'
 import type { ToolPermissionContext } from '../../Tool.js'
-import { splitCommand_DEPRECATED } from '../../utils/bash/commands.js'
-import { tryParseShellCommand } from '../../utils/bash/shellQuote.js'
+import { splitCommand_DEPRECATED } from '../../shell-eval/bash/commands.js'
+import { tryParseShellCommand } from '../../shell-eval/bash/shellQuote.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 
 /**

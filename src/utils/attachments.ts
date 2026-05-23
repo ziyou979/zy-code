@@ -3599,10 +3599,7 @@ export function getContextEfficiencyAttachment(messages: Message[]): Attachment[
   }
   // 门控必须与 SnipTool.isEnabled() 匹配 — 不要提示使用不在工具列表中的工具。
   // 延迟 require 使此文件不包含 snip 字符串。
-  const {
-    isSnipRuntimeEnabled,
-    shouldNudgeForSnips,
-  } =
+  const { isSnipRuntimeEnabled, shouldNudgeForSnips } =
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('../services/compact/snipCompact.js') as any as typeof import('../services/compact/snipCompact.js')
   if (!isSnipRuntimeEnabled()) {

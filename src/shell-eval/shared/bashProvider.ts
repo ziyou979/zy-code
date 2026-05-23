@@ -12,13 +12,17 @@ import {
   rewriteWindowsNullRedirect,
   shouldAddStdinRedirect,
 } from '../bash/shellQuoting.js'
-import { logForDebugging } from '../debug.js'
-import { isInternalBuild } from '../envUtils.js'
-import { getPlatform } from '../platform.js'
-import { getSessionEnvironmentScript } from '../sessionEnvironment.js'
-import { getSessionEnvVars } from '../sessionEnvVars.js'
-import { ensureSocketInitialized, getZyTmuxEnv, hasTmuxToolBeenUsed } from '../tmuxSocket.js'
-import { windowsPathToPosixPath } from '../windowsPaths.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
+import { getPlatform } from '../../utils/platform.js'
+import { getSessionEnvironmentScript } from '../../utils/sessionEnvironment.js'
+import { getSessionEnvVars } from '../../utils/sessionEnvVars.js'
+import {
+  ensureSocketInitialized,
+  getZyTmuxEnv,
+  hasTmuxToolBeenUsed,
+} from '../../utils/tmuxSocket.js'
+import { windowsPathToPosixPath } from '../../utils/windowsPaths.js'
 import type { ShellProvider } from './shellProvider.js'
 
 /**

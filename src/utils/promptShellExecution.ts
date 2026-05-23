@@ -20,7 +20,7 @@ type PromptShellTool = Tool & {
   call(input: { command: string }, context: ToolUseContext): Promise<{ data: ShellOut }>
 }
 
-import { isPowerShellToolEnabled } from './shell/shellToolUtils.js'
+import { isPowerShellToolEnabled } from 'src/shell-eval/shared/shellToolUtils.js'
 
 // Lazy: this file is on the startup import chain (main → commands →
 // loadSkillsDir → here). A static import would load PowerShellTool.ts

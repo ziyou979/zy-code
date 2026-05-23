@@ -22,7 +22,7 @@ import { resetAllLSPDiagnosticState } from '../../services/lsp/LSPDiagnosticRegi
 import { clearTrackedMagicDocs } from '../../services/MagicDocs/magicDocs.js'
 import { clearDynamicSkills } from '../../skills/loadSkillsDir.js'
 import { resetSentSkillNames } from '../../utils/attachments.js'
-import { clearCommandPrefixCaches } from '../../utils/bash/commands.js'
+import { clearCommandPrefixCaches } from '../../shell-eval/bash/commands.js'
 import { clearRepositoryCaches } from '../../utils/detectRepository.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { clearResolveGitDirCache } from '../../utils/git/gitFilesystem.js'

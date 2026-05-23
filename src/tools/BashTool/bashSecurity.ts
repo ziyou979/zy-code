@@ -1,13 +1,13 @@
 import { logEvent } from 'src/services/analytics/index.js'
 import { tSync } from '../../i18n/index.js'
-import { extractHeredocs } from '../../utils/bash/heredoc.js'
-import { ParsedCommand } from '../../utils/bash/ParsedCommand.js'
+import { extractHeredocs } from '../../shell-eval/bash/heredoc.js'
+import { ParsedCommand } from '../../shell-eval/bash/ParsedCommand.js'
 import {
   hasMalformedTokens,
   hasShellQuoteSingleQuoteBug,
   tryParseShellCommand,
-} from '../../utils/bash/shellQuote.js'
-import type { TreeSitterAnalysis } from '../../utils/bash/treeSitterAnalysis.js'
+} from '../../shell-eval/bash/shellQuote.js'
+import type { TreeSitterAnalysis } from '../../shell-eval/bash/treeSitterAnalysis.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 
 const HEREDOC_IN_SUBSTITUTION = /\$\(.*<</

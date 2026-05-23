@@ -9,7 +9,7 @@ import { getFsImplementation } from './fsOperations.js'
 import { readJSONLFile } from './json.js'
 import { SYNTHETIC_MODEL } from './messages.js'
 import { getProjectsDir, isTranscriptMessage } from './sessionStorage.js'
-import { SHELL_TOOL_NAMES } from './shell/shellToolUtils.js'
+import { SHELL_TOOL_NAMES } from 'src/shell-eval/shared/shellToolUtils.js'
 import { jsonParse } from './slowOperations.js'
 import {
   getTodayDateString,
@@ -328,8 +328,7 @@ async function processSessionFiles(
             modelUsageAgg[model]!.inputTokens += usage.inputTokens || 0
             modelUsageAgg[model]!.outputTokens += usage.outputTokens || 0
             modelUsageAgg[model]!.cacheReadInputTokens += usage.cacheReadInputTokens || 0
-            modelUsageAgg[model]!.cacheCreationInputTokens +=
-              usage.cacheCreationInputTokens || 0
+            modelUsageAgg[model]!.cacheCreationInputTokens += usage.cacheCreationInputTokens || 0
 
             // Track daily tokens per model
             const totalTokens = (usage.inputTokens || 0) + (usage.outputTokens || 0)

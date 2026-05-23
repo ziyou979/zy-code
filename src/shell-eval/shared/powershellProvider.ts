@@ -1,8 +1,8 @@
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { join as posixJoin } from 'node:path/posix'
-import { isEnvTruthy } from '../envUtils.js'
-import { getSessionEnvVars } from '../sessionEnvVars.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
+import { getSessionEnvVars } from '../../utils/sessionEnvVars.js'
 import type { ShellProvider } from './shellProvider.js'
 
 /**

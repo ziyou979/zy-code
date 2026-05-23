@@ -9,7 +9,7 @@
  * - outputLimits 在 outputLimits.ts 中
  */
 
-import { getPlatform } from '../platform.js'
+import { getPlatform } from '../../utils/platform.js'
 
 // ---------------------------------------------------------------------------
 // 类型定义

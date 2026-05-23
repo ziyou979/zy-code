@@ -21,7 +21,7 @@ import { NOTEBOOK_EDIT_TOOL_NAME } from 'src/tools/NotebookEditTool/constants.js
 import { TASK_STOP_TOOL_NAME } from 'src/tools/TaskStopTool/prompt.js'
 import { WEB_SEARCH_TOOL_NAME } from 'src/tools/WebSearchTool/prompt.js'
 import { extractTextContent } from 'src/utils/messages.js'
-import { SHELL_TOOL_NAMES } from 'src/utils/shell/shellToolUtils.js'
+import { SHELL_TOOL_NAMES } from 'src/shell-eval/shared/shellToolUtils.js'
 import { capitalize } from 'src/utils/stringUtils.js'
 
 type ToolCounts = {
