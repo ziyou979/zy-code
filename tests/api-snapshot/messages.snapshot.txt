@@ -3,20 +3,7 @@
 // Refactor invariant: this file should NOT diff after restructuring,
 // only when exports are intentionally added/removed/renamed.
 
-export const EMPTY_LOOKUPS: MessageLookups = ...
-
-export const EMPTY_STRING_SET: ReadonlySet<string> = ...
-
 export const PLAN_PHASE4_CONTROL = ...
-
-export function buildMessageLookups(
-  normalizedMessages: NormalizedMessage[],
-  messages: Message[],
-): MessageLookups { ... }
-
-export function buildSubagentLookups(
-  messages: { message: AssistantMessage | NormalizedAssistantMessage | NormalizedUserMessage }[],
-): { lookups: MessageLookups; inProgressToolUseIDs: Set<string> } { ... }
 
 export function ensureToolResultPairing(
   messages: (UserMessage | AssistantMessage)[],
@@ -40,24 +27,6 @@ export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Mess
 
 export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[] { ... }
 
-export function getProgressMessagesFromLookup(
-  message: NormalizedMessage,
-  lookups: MessageLookups,
-): ProgressMessage[] { ... }
-
-export function getSiblingToolUseIDs(message: NormalizedMessage, messages: Message[]): Set<string> { ... }
-
-export function getSiblingToolUseIDsFromLookup(
-  message: NormalizedMessage,
-  lookups: MessageLookups,
-): ReadonlySet<string> { ... }
-
-export function getToolResultIDs(normalizedMessages: NormalizedMessage[]): {
-  [toolUseID: string]: boolean
-} { ... }
-
-export function getToolUseIDs(normalizedMessages: NormalizedMessage[]): Set<string> { ... }
-
 export function handleMessageFromStream(
   message: Message | TombstoneMessage | StreamEvent | RequestStartEvent | ToolUseSummaryMessage,
   onMessage: (message: Message) => void,
@@ -70,18 +39,6 @@ export function handleMessageFromStream(
   ) => void,
   onStreamingText?: (f: (current: string | null) => string | null) => void,
 ): void { ... }
-
-export function hasUnresolvedHooks(
-  messages: NormalizedMessage[],
-  toolUseID: string,
-  hookEvent: HookEvent,
-) { ... }
-
-export function hasUnresolvedHooksFromLookup(
-  toolUseID: string,
-  hookEvent: HookEvent,
-  lookups: MessageLookups,
-): boolean { ... }
 
 export function mergeAssistantMessages(a: AssistantMessage, b: AssistantMessage): AssistantMessage { ... }
 
@@ -151,23 +108,6 @@ export function wrapInSystemReminder(content: string): string { ... }
 
 export function wrapMessagesInSystemReminder(messages: UserMessage[]): UserMessage[] { ... }
 
-export type MessageLookups = {
-  siblingToolUseIDs: Map<string, Set<string>>
-  progressMessagesByToolUseID: Map<string, ProgressMessage[]>
-  inProgressHookCounts: Map<string, Map<HookEvent, number>>
-  resolvedHookCounts: Map<string, Map<HookEvent, number>>
-  /** 将 tool_use_id 映射到包含其 tool_result 的用户消息 */
-  toolResultByToolUseID: Map<string, NormalizedMessage>
-  /** 将 tool_use_id 映射到 ToolCallBlock */
-  toolUseByToolUseID: Map<string, ToolCallBlock>
-  /** 标准化消息的总计数（用于截断指示文本） */
-  normalizedMessageCount: number
-  /** 有对应 tool_result 的工具使用 ID 集合 */
-  resolvedToolUseIDs: Set<string>
-  /** 有错误 tool_result 的工具使用 ID 集合 */
-  erroredToolUseIDs: Set<string>
-}
-
 export type PruneResult = {
   messages: Message[]
   /** 释放的字节数估算（用于 profiler / 调试）。 */
@@ -195,6 +135,8 @@ export type {
   ToolUseResultMessage,
 } from './messages/predicates.js'
 
+export type { MessageLookups } from './messages/lookups.js'
+
 export {
   AUTO_REJECT_MESSAGE,
   buildClassifierUnavailableMessage,
@@ -216,6 +158,20 @@ export {
   SYNTHETIC_MODEL,
   SYNTHETIC_TOOL_RESULT_PLACEHOLDER,
 } from './messages/constants.js'
+
+export {
+  buildMessageLookups,
+  buildSubagentLookups,
+  EMPTY_LOOKUPS,
+  EMPTY_STRING_SET,
+  getProgressMessagesFromLookup,
+  getSiblingToolUseIDs,
+  getSiblingToolUseIDsFromLookup,
+  getToolResultIDs,
+  getToolUseIDs,
+  hasUnresolvedHooks,
+  hasUnresolvedHooksFromLookup,
+} from './messages/lookups.js'
 
 export {
   countToolCalls,

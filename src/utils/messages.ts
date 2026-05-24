@@ -107,12 +107,7 @@ import { isAdvisorBlock } from './advisor.js'
 import { isAgentSwarmsEnabled } from './agentSwarmsEnabled.js'
 import { normalizeToolInput, normalizeToolInputForAPI } from './api.js'
 import { count } from './array.js'
-import {
-  type Attachment,
-  type HookAttachment,
-  type HookPermissionDecisionAttachment,
-  memoryHeader,
-} from './attachments.js'
+import { type Attachment, memoryHeader } from './attachments.js'
 import { quote } from 'src/shell-eval/bash/shellQuote.js'
 import { getCurrentProjectConfig } from './config.js'
 import { logAntError, logForDebugging } from './debug.js'
@@ -134,9 +129,6 @@ import { jsonStringify } from './slowOperations.js'
 import { escapeRegExp } from './stringUtils.js'
 import { isTodoV2Enabled } from './tasks.js'
 import { isToolReferenceBlock, isToolSearchEnabledOptimistic } from './toolSearch.js'
-
-// 带有 hookName 字段的 Hook 附件（排除 HookPermissionDecisionAttachment）
-type HookAttachmentWithName = Exclude<HookAttachment, HookPermissionDecisionAttachment>
 
 // 延迟导入以避免循环依赖（teammateMailbox -> teammate -> ... -> messages）
 function getTeammateMailbox(): typeof import('./teammateMailbox.js') {
@@ -238,6 +230,32 @@ import {
   createToolUseMessage,
   createUserMessage,
 } from './messages/constructors.js'
+export {
+  buildMessageLookups,
+  buildSubagentLookups,
+  EMPTY_LOOKUPS,
+  EMPTY_STRING_SET,
+  getProgressMessagesFromLookup,
+  getSiblingToolUseIDs,
+  getSiblingToolUseIDsFromLookup,
+  getToolResultIDs,
+  getToolUseIDs,
+  hasUnresolvedHooks,
+  hasUnresolvedHooksFromLookup,
+} from './messages/lookups.js'
+export type { MessageLookups } from './messages/lookups.js'
+import {
+  buildMessageLookups,
+  EMPTY_LOOKUPS,
+  EMPTY_STRING_SET,
+  getProgressMessagesFromLookup,
+  getSiblingToolUseIDs,
+  getSiblingToolUseIDsFromLookup,
+  getToolUseIDs,
+  hasUnresolvedHooks,
+  hasUnresolvedHooksFromLookup,
+  type MessageLookups,
+} from './messages/lookups.js'
 import {
   deriveShortMessageId,
   deriveUUID,
@@ -270,18 +288,6 @@ function isSyntheticApiErrorMessage(
   )
 }
 
-/**
- * 为本地命令（如 bash、slash）创建新的合成用户警告消息。
- * 每次都需要创建新消息，因为消息必须有唯一的 uuid。
- */
-/**
- * 格式化 slash 命令运行时模型看到的命令输入面包屑。
- */
-/**
- * 构建 SDK set_model 控制处理器注入的面包屑追踪，
- * 使模型能看到会话中的切换。与 CLI 的
- * /model 命令通过 processSlashCommand 生成的形状相同。
- */
 // ============================================================
 // 内存优化：清理已完成 turn 的 UI-only 临时消息
 // ============================================================
@@ -700,115 +706,6 @@ export function reorderMessagesInUI(
   return result.filter((_) => _.type !== 'system' || _.subtype !== 'api_error' || _ === last)
 }
 
-function getInProgressHookCount(
-  messages: NormalizedMessage[],
-  toolUseID: string,
-  hookEvent: HookEvent,
-): number {
-  return count(
-    messages,
-    (_) =>
-      _.type === 'progress' &&
-      _.data.type === 'hook_progress' &&
-      _.data.hookEvent === hookEvent &&
-      _.parentToolUseID === toolUseID,
-  )
-}
-
-function getResolvedHookCount(
-  messages: NormalizedMessage[],
-  toolUseID: string,
-  hookEvent: HookEvent,
-): number {
-  // 统计唯一 hook 名称数量，因为单个 hook 可以产生多个
-  // 附件消息（如 hook_success + hook_additional_context）
-  const uniqueHookNames = new Set(
-    messages
-      .filter(
-        (_): _ is AttachmentMessage<Record<string, unknown>> =>
-          isHookAttachmentMessage(_) &&
-          (_.attachment as Record<string, unknown>).toolUseID === toolUseID &&
-          (_.attachment as Record<string, unknown>).hookEvent === hookEvent,
-      )
-      .map((_) => _.attachment.hookName),
-  )
-  return uniqueHookNames.size
-}
-
-export function hasUnresolvedHooks(
-  messages: NormalizedMessage[],
-  toolUseID: string,
-  hookEvent: HookEvent,
-) {
-  const inProgressHookCount = getInProgressHookCount(messages, toolUseID, hookEvent)
-  const resolvedHookCount = getResolvedHookCount(messages, toolUseID, hookEvent)
-
-  if (inProgressHookCount > resolvedHookCount) {
-    return true
-  }
-
-  return false
-}
-
-export function getToolResultIDs(normalizedMessages: NormalizedMessage[]): {
-  [toolUseID: string]: boolean
-} {
-  return Object.fromEntries(
-    normalizedMessages.flatMap((_) =>
-      _.type === 'user' && _.message.content[0]?.type === 'tool_result'
-        ? [[_.message.content[0].toolCallId, _.message.content[0].isError ?? false]]
-        : ([] as [string, boolean][]),
-    ),
-  )
-}
-
-export function getSiblingToolUseIDs(message: NormalizedMessage, messages: Message[]): Set<string> {
-  const toolUseID = getToolUseID(message)
-  if (!toolUseID) {
-    return new Set()
-  }
-
-  const unnormalizedMessage = messages.find(
-    (_): _ is AssistantMessage =>
-      _.type === 'assistant' &&
-      Array.isArray(_.message.content) &&
-      _.message.content.some((_) => _.type === 'tool_call' && _.id === toolUseID),
-  )
-  if (!unnormalizedMessage) {
-    return new Set()
-  }
-
-  const messageID = unnormalizedMessage.message.id
-  const siblingMessages = messages.filter(
-    (_): _ is AssistantMessage => _.type === 'assistant' && _.message.id === messageID,
-  )
-
-  return new Set(
-    siblingMessages.flatMap((_) =>
-      (Array.isArray(_.message.content) ? _.message.content : [])
-        .filter((_) => _.type === 'tool_call')
-        .map((_) => _.id),
-    ),
-  )
-}
-
-export type MessageLookups = {
-  siblingToolUseIDs: Map<string, Set<string>>
-  progressMessagesByToolUseID: Map<string, ProgressMessage[]>
-  inProgressHookCounts: Map<string, Map<HookEvent, number>>
-  resolvedHookCounts: Map<string, Map<HookEvent, number>>
-  /** 将 tool_use_id 映射到包含其 tool_result 的用户消息 */
-  toolResultByToolUseID: Map<string, NormalizedMessage>
-  /** 将 tool_use_id 映射到 ToolCallBlock */
-  toolUseByToolUseID: Map<string, ToolCallBlock>
-  /** 标准化消息的总计数（用于截断指示文本） */
-  normalizedMessageCount: number
-  /** 有对应 tool_result 的工具使用 ID 集合 */
-  resolvedToolUseIDs: Set<string>
-  /** 有错误 tool_result 的工具使用 ID 集合 */
-  erroredToolUseIDs: Set<string>
-}
-
 /**
  * 构建预计算的查找表，以 O(1) 效率访问消息关系。
  * 每次渲染调用一次，然后对所有消息使用查找表。
@@ -816,196 +713,7 @@ export type MessageLookups = {
  * 这避免了为每条消息调用 getProgressMessagesForMessage、
  * getSiblingToolUseIDs 和 hasUnresolvedHooks 的 O(n²) 行为。
  */
-export function buildMessageLookups(
-  normalizedMessages: NormalizedMessage[],
-  messages: Message[],
-): MessageLookups {
-  // 第一遍：按 ID 分组 assistant 消息并收集每条消息的所有工具使用 ID
-  const toolUseIDsByMessageID = new Map<string, Set<string>>()
-  const toolUseIDToMessageID = new Map<string, string>()
-  const toolUseByToolUseID = new Map<string, ToolCallBlock>()
-  for (const msg of messages) {
-    if (msg.type === 'assistant') {
-      const id = msg.message.id
-      let toolUseIDs = toolUseIDsByMessageID.get(id)
-      if (!toolUseIDs) {
-        toolUseIDs = new Set()
-        toolUseIDsByMessageID.set(id, toolUseIDs)
-      }
-      if (!Array.isArray(msg.message.content)) {
-        continue
-      }
-      for (const content of msg.message.content) {
-        if (content.type === 'tool_call') {
-          toolUseIDs.add(content.id)
-          toolUseIDToMessageID.set(content.id, id)
-          toolUseByToolUseID.set(content.id, content)
-        }
-      }
-    }
-  }
-
-  // 构建同级查找 — 每个工具使用 ID 映射到所有同级工具使用 ID
-  const siblingToolUseIDs = new Map<string, Set<string>>()
-  for (const [toolUseID, messageID] of toolUseIDToMessageID) {
-    siblingToolUseIDs.set(toolUseID, toolUseIDsByMessageID.get(messageID)!)
-  }
-
-  // 单次遍历 normalizedMessages 以构建进度、hook 和工具结果查找表
-  const progressMessagesByToolUseID = new Map<string, ProgressMessage[]>()
-  const inProgressHookCounts = new Map<string, Map<HookEvent, number>>()
-  // 按 (toolUseID, hookEvent) 追踪唯一 hook 名称，以匹配 getResolvedHookCount 行为。
-  // 单个 hook 可以产生多个附件消息（如 hook_success + hook_additional_context），
-  // 因此我们按 hookName 去重。
-  const resolvedHookNames = new Map<string, Map<HookEvent, Set<string>>>()
-  const toolResultByToolUseID = new Map<string, NormalizedMessage>()
-  // 追踪已解决/错误的工具使用 ID（替代 Messages.tsx 中单独的 useMemos）
-  const resolvedToolUseIDs = new Set<string>()
-  const erroredToolUseIDs = new Set<string>()
-
-  for (const msg of normalizedMessages) {
-    if (msg.type === 'progress') {
-      // 构建进度消息查找表
-      const toolUseID = msg.parentToolUseID
-      const existing = progressMessagesByToolUseID.get(toolUseID)
-      if (existing) {
-        existing.push(msg)
-      } else {
-        progressMessagesByToolUseID.set(toolUseID, [msg])
-      }
-
-      // 统计进行中的 hook 数量
-      if (msg.data.type === 'hook_progress') {
-        const hookEvent = msg.data.hookEvent
-        let byHookEvent = inProgressHookCounts.get(toolUseID)
-        if (!byHookEvent) {
-          byHookEvent = new Map()
-          inProgressHookCounts.set(toolUseID, byHookEvent)
-        }
-        byHookEvent.set(hookEvent, (byHookEvent.get(hookEvent) ?? 0) + 1)
-      }
-    }
-
-    // 构建工具结果查找表和已解决/错误集合
-    if (msg.type === 'user') {
-      for (const content of msg.message.content) {
-        if (content.type === 'tool_result') {
-          toolResultByToolUseID.set(content.toolCallId, msg)
-          resolvedToolUseIDs.add(content.toolCallId)
-          if (content.isError) {
-            erroredToolUseIDs.add(content.toolCallId)
-          }
-        }
-      }
-    }
-
-    if (msg.type === 'assistant') {
-      for (const content of msg.message.content) {
-        // 追踪所有服务端侧 *_tool_result 块（advisor、web_search、
-        // code_execution、mcp 等）— 任何带 toolCallId 的块都是结果。
-        if (
-          'toolCallId' in content &&
-          typeof (content as { toolCallId: string }).toolCallId === 'string'
-        ) {
-          resolvedToolUseIDs.add((content as { toolCallId: string }).toolCallId)
-        }
-        if ((content.type as string) === 'advisor_tool_result') {
-          const result = content as unknown as {
-            toolCallId: string
-            content: { type: string }
-          }
-          if (result.content.type === 'advisor_tool_result_error') {
-            erroredToolUseIDs.add(result.toolCallId)
-          }
-        }
-      }
-    }
-
-    // 统计已解决的 hook（按 hookName 去重）
-    if (isHookAttachmentMessage(msg)) {
-      const hookAttachment = msg.attachment as Record<string, unknown>
-      const toolUseID = hookAttachment.toolUseID as string
-      const hookEvent = hookAttachment.hookEvent as HookEvent
-      const hookName = (hookAttachment as HookAttachmentWithName).hookName
-      if (hookName !== undefined) {
-        let byHookEvent = resolvedHookNames.get(toolUseID)
-        if (!byHookEvent) {
-          byHookEvent = new Map()
-          resolvedHookNames.set(toolUseID, byHookEvent)
-        }
-        let names = byHookEvent.get(hookEvent)
-        if (!names) {
-          names = new Set()
-          byHookEvent.set(hookEvent, names)
-        }
-        names.add(hookName)
-      }
-    }
-  }
-
-  // 将已解决的 hook 名称集合转换为计数
-  const resolvedHookCounts = new Map<string, Map<HookEvent, number>>()
-  for (const [toolUseID, byHookEvent] of resolvedHookNames) {
-    const countMap = new Map<HookEvent, number>()
-    for (const [hookEvent, names] of byHookEvent) {
-      countMap.set(hookEvent, names.size)
-    }
-    resolvedHookCounts.set(toolUseID, countMap)
-  }
-
-  // 标记孤立的 server_tool_use / mcp_tool_use 块（无匹配
-  // 结果）为错误，使 UI 显示为失败而不是
-  // 永久旋转。
-  const lastMsg = messages.at(-1)
-  const lastAssistantMsgId = lastMsg?.type === 'assistant' ? lastMsg.message.id : undefined
-  for (const msg of normalizedMessages) {
-    if (msg.type !== 'assistant') {
-      continue
-    }
-    // 如果是 assistant 则跳过最后一条原始消息中的块，
-    // 因为它可能仍在进行中。
-    if (msg.message.id === lastAssistantMsgId) {
-      continue
-    }
-    for (const content of msg.message.content) {
-      if (
-        ((content.type as string) === 'server_tool_use' ||
-          (content.type as string) === 'mcp_tool_use') &&
-        !resolvedToolUseIDs.has((content as { id: string }).id)
-      ) {
-        const id = (content as { id: string }).id
-        resolvedToolUseIDs.add(id)
-        erroredToolUseIDs.add(id)
-      }
-    }
-  }
-
-  return {
-    siblingToolUseIDs,
-    progressMessagesByToolUseID,
-    inProgressHookCounts,
-    resolvedHookCounts,
-    toolResultByToolUseID,
-    toolUseByToolUseID,
-    normalizedMessageCount: normalizedMessages.length,
-    resolvedToolUseIDs,
-    erroredToolUseIDs,
-  }
-}
-
 /** 用于不需要真实查找表的静态渲染上下文的空查找表。 */
-export const EMPTY_LOOKUPS: MessageLookups = {
-  siblingToolUseIDs: new Map(),
-  progressMessagesByToolUseID: new Map(),
-  inProgressHookCounts: new Map(),
-  resolvedHookCounts: new Map(),
-  toolResultByToolUseID: new Map(),
-  toolUseByToolUseID: new Map(),
-  normalizedMessageCount: 0,
-  resolvedToolUseIDs: new Set(),
-  erroredToolUseIDs: new Set(),
-}
-
 /**
  * 共享的空 Set 单例。在退出路径上复用以避免
  * 每次渲染每条消息都分配新 Set。编译时通过
@@ -1013,8 +721,6 @@ export const EMPTY_LOOKUPS: MessageLookups = {
  *（冻结自身属性，不冻结 Set 内部状态）。
  * 所有消费者均为只读（迭代 / .has / .size）。
  */
-export const EMPTY_STRING_SET: ReadonlySet<string> = Object.freeze(new Set<string>())
-
 /**
  * 从 subagent/skill 进度消息构建查找表，使子工具使用
  * 能以正确的已解决/进行中/排队状态渲染。
@@ -1022,105 +728,15 @@ export const EMPTY_STRING_SET: ReadonlySet<string> = Object.freeze(new Set<strin
  * 每条进度消息必须有 `message` 字段，类型为
  * `AssistantMessage | NormalizedUserMessage`.
  */
-export function buildSubagentLookups(
-  messages: { message: AssistantMessage | NormalizedAssistantMessage | NormalizedUserMessage }[],
-): { lookups: MessageLookups; inProgressToolUseIDs: Set<string> } {
-  const toolUseByToolUseID = new Map<string, ToolCallBlock>()
-  const resolvedToolUseIDs = new Set<string>()
-  const toolResultByToolUseID = new Map<string, NormalizedUserMessage & { type: 'user' }>()
-
-  for (const { message: msg } of messages) {
-    if (msg.type === 'assistant') {
-      if (!Array.isArray(msg.message.content)) {
-        continue
-      }
-      for (const content of msg.message.content) {
-        if (content.type === 'tool_call') {
-          toolUseByToolUseID.set(content.id, content as ToolCallBlock)
-        }
-      }
-    } else if (msg.type === 'user') {
-      for (const content of msg.message.content) {
-        if (content.type === 'tool_result') {
-          resolvedToolUseIDs.add(content.toolCallId)
-          toolResultByToolUseID.set(content.toolCallId, msg)
-        }
-      }
-    }
-  }
-
-  const inProgressToolUseIDs = new Set<string>()
-  for (const id of toolUseByToolUseID.keys()) {
-    if (!resolvedToolUseIDs.has(id)) {
-      inProgressToolUseIDs.add(id)
-    }
-  }
-
-  return {
-    lookups: {
-      ...EMPTY_LOOKUPS,
-      toolUseByToolUseID,
-      resolvedToolUseIDs,
-      toolResultByToolUseID,
-    },
-    inProgressToolUseIDs,
-  }
-}
-
 /**
  * 使用预计算查找表获取同级工具使用 ID。O(1)。
  */
-export function getSiblingToolUseIDsFromLookup(
-  message: NormalizedMessage,
-  lookups: MessageLookups,
-): ReadonlySet<string> {
-  const toolUseID = getToolUseID(message)
-  if (!toolUseID) {
-    return EMPTY_STRING_SET
-  }
-  return lookups.siblingToolUseIDs.get(toolUseID) ?? EMPTY_STRING_SET
-}
-
 /**
  * 使用预计算查找表获取消息的进度消息。O(1)。
  */
-export function getProgressMessagesFromLookup(
-  message: NormalizedMessage,
-  lookups: MessageLookups,
-): ProgressMessage[] {
-  const toolUseID = getToolUseID(message)
-  if (!toolUseID) {
-    return []
-  }
-  return lookups.progressMessagesByToolUseID.get(toolUseID) ?? []
-}
-
 /**
  * 使用预计算查找表检查未解决的 hook。O(1)。
  */
-export function hasUnresolvedHooksFromLookup(
-  toolUseID: string,
-  hookEvent: HookEvent,
-  lookups: MessageLookups,
-): boolean {
-  const inProgressCount = lookups.inProgressHookCounts.get(toolUseID)?.get(hookEvent) ?? 0
-  const resolvedCount = lookups.resolvedHookCounts.get(toolUseID)?.get(hookEvent) ?? 0
-  return inProgressCount > resolvedCount
-}
-
-export function getToolUseIDs(normalizedMessages: NormalizedMessage[]): Set<string> {
-  return new Set(
-    normalizedMessages
-      .filter(
-        (_): _ is NormalizedAssistantMessage =>
-          _.type === 'assistant' &&
-          Array.isArray(_.message.content) &&
-          _.message.content[0]?.type === 'tool_call',
-      )
-      .map((_) => (_.message.content[0] as { id: string }).id),
-  )
-}
-
 /**
  * 重新排序消息，使附件向上冒泡，直到遇到以下之一：
  * - 工具调用结果（带 tool_result 内容的用户消息）
