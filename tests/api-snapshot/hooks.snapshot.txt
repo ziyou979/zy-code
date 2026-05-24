@@ -1,0 +1,391 @@
+// AUTO-GENERATED snapshot of public API for hooks.ts.
+// Regenerate: bun scripts/api-snapshot.ts
+// Refactor invariant: this file should NOT diff after restructuring,
+// only when exports are intentionally added/removed/renamed.
+
+export async function executeConfigChangeHooks(
+  source: ConfigChangeSource,
+  filePath?: string,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): Promise<HookOutsideReplResult[]> { ... }
+
+export async function executeElicitationHooks({
+  serverName,
+  message,
+  requestedSchema,
+  permissionMode,
+  signal,
+  timeoutMs = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+  mode,
+  url,
+  elicitationId,
+}: {
+  serverName: string
+  message: string
+  requestedSchema?: Record<string, unknown>
+  permissionMode?: string
+  signal?: AbortSignal
+  timeoutMs?: number
+  mode?: 'form' | 'url'
+  url?: string
+  elicitationId?: string
+}): Promise<ElicitationHookResult> { ... }
+
+export async function executeElicitationResultHooks({
+  serverName,
+  action,
+  content,
+  permissionMode,
+  signal,
+  timeoutMs = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+  mode,
+  elicitationId,
+}: {
+  serverName: string
+  action: 'accept' | 'decline' | 'cancel'
+  content?: Record<string, unknown>
+  permissionMode?: string
+  signal?: AbortSignal
+  timeoutMs?: number
+  mode?: 'form' | 'url'
+  elicitationId?: string
+}): Promise<ElicitationResultHookResult> { ... }
+
+export async function executeFileSuggestionCommand(
+  fileSuggestionInput: FileSuggestionCommandInput,
+  signal?: AbortSignal,
+  timeoutMs: number = 5000, // Short timeout for typeahead suggestions
+): Promise<string[]> { ... }
+
+export async function executeInstructionsLoadedHooks(
+  filePath: string,
+  memoryType: InstructionsMemoryType,
+  loadReason: InstructionsLoadReason,
+  options?: {
+    globs?: string[]
+    triggerFilePath?: string
+    parentFilePath?: string
+    timeoutMs?: number
+  },
+): Promise<void> { ... }
+
+export async function executeNotificationHooks(
+  notificationData: {
+    message: string
+    title?: string
+    notificationType: string
+  },
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): Promise<void> { ... }
+
+export async function executePostCompactHooks(
+  compactData: {
+    trigger: 'manual' | 'auto'
+    compactSummary: string
+  },
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): Promise< { ... }
+
+export async function executePreCompactHooks(
+  compactData: {
+    trigger: 'manual' | 'auto'
+    customInstructions: string | null
+  },
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): Promise< { ... }
+
+export async function executeSessionEndHooks(
+  reason: ExitReason,
+  options?: {
+    getAppState?: () => AppState
+    setAppState?: (updater: (prev: AppState) => AppState) => void
+    signal?: AbortSignal
+    timeoutMs?: number
+  },
+): Promise<void> { ... }
+
+export async function executeStopFailureHooks(
+  lastMessage: AssistantMessage,
+  toolUseContext?: ToolUseContext,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): Promise<void> { ... }
+
+export async function executeWorktreeCreateHook(name: string): Promise< { ... }
+
+export async function executeWorktreeRemoveHook(worktreePath: string): Promise<boolean> { ... }
+
+export async function getMatchingHooks(
+  appState: AppState | undefined,
+  sessionId: string,
+  hookEvent: HookEvent,
+  hookInput: HookInput,
+  tools?: Tools,
+): Promise<MatchedHook[]> { ... }
+
+export async function* executePermissionDeniedHooks<ToolInput>(
+  toolName: string,
+  toolUseID: string,
+  toolInput: ToolInput,
+  reason: string,
+  toolUseContext: ToolUseContext,
+  permissionMode?: string,
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): AsyncGenerator<AggregatedHookResult> { ... }
+
+export async function* executePermissionRequestHooks<ToolInput>(
+  toolName: string,
+  toolUseID: string,
+  toolInput: ToolInput,
+  toolUseContext: ToolUseContext,
+  permissionMode?: string,
+  permissionSuggestions?: PermissionUpdate[],
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+  requestPrompt?: (
+    sourceName: string,
+    toolInputSummary?: string | null,
+  ) => (request: PromptRequest) => Promise<PromptResponse>,
+  toolInputSummary?: string | null,
+): AsyncGenerator<AggregatedHookResult> { ... }
+
+export async function* executePostToolHooks<ToolInput, ToolResponse>(
+  toolName: string,
+  toolUseID: string,
+  toolInput: ToolInput,
+  toolResponse: ToolResponse,
+  toolUseContext: ToolUseContext,
+  permissionMode?: string,
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): AsyncGenerator<AggregatedHookResult> { ... }
+
+export async function* executePostToolUseFailureHooks<ToolInput>(
+  toolName: string,
+  toolUseID: string,
+  toolInput: ToolInput,
+  error: string,
+  toolUseContext: ToolUseContext,
+  isInterrupt?: boolean,
+  permissionMode?: string,
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): AsyncGenerator<AggregatedHookResult> { ... }
+
+export async function* executePreToolHooks<ToolInput>(
+  toolName: string,
+  toolUseID: string,
+  toolInput: ToolInput,
+  toolUseContext: ToolUseContext,
+  permissionMode?: string,
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+  requestPrompt?: (
+    sourceName: string,
+    toolInputSummary?: string | null,
+  ) => (request: PromptRequest) => Promise<PromptResponse>,
+  toolInputSummary?: string | null,
+): AsyncGenerator<AggregatedHookResult> { ... }
+
+export async function* executeSessionStartHooks(
+  source: 'startup' | 'resume' | 'clear' | 'compact',
+  sessionId?: string,
+  agentType?: string,
+  model?: string,
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+  forceSyncExecution?: boolean,
+): AsyncGenerator<AggregatedHookResult> { ... }
+
+export async function* executeSetupHooks(
+  trigger: 'init' | 'maintenance',
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+  forceSyncExecution?: boolean,
+): AsyncGenerator<AggregatedHookResult> { ... }
+
+export async function* executeStopHooks(
+  permissionMode?: string,
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+  stopHookActive: boolean = false,
+  subagentId?: AgentId,
+  toolUseContext?: ToolUseContext,
+  messages?: Message[],
+  agentType?: string,
+  requestPrompt?: (
+    sourceName: string,
+    toolInputSummary?: string | null,
+  ) => (request: PromptRequest) => Promise<PromptResponse>,
+): AsyncGenerator<AggregatedHookResult> { ... }
+
+export async function* executeSubagentStartHooks(
+  agentId: string,
+  agentType: string,
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): AsyncGenerator<AggregatedHookResult> { ... }
+
+export async function* executeTaskCompletedHooks(
+  taskId: string,
+  taskSubject: string,
+  taskDescription?: string,
+  teammateName?: string,
+  teamName?: string,
+  permissionMode?: string,
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+  toolUseContext?: ToolUseContext,
+): AsyncGenerator<AggregatedHookResult> { ... }
+
+export async function* executeTaskCreatedHooks(
+  taskId: string,
+  taskSubject: string,
+  taskDescription?: string,
+  teammateName?: string,
+  teamName?: string,
+  permissionMode?: string,
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+  toolUseContext?: ToolUseContext,
+): AsyncGenerator<AggregatedHookResult> { ... }
+
+export async function* executeTeammateIdleHooks(
+  teammateName: string,
+  teamName: string,
+  permissionMode?: string,
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): AsyncGenerator<AggregatedHookResult> { ... }
+
+export async function* executeUserPromptSubmitHooks(
+  prompt: string,
+  permissionMode: string,
+  toolUseContext: ToolUseContext,
+  requestPrompt?: (
+    sourceName: string,
+    toolInputSummary?: string | null,
+  ) => (request: PromptRequest) => Promise<PromptResponse>,
+): AsyncGenerator<AggregatedHookResult> { ... }
+
+export function createBaseHookInput(
+  permissionMode?: string,
+  sessionId?: string,
+  // 窄类型声明（非 ToolUseContext），以便调用者可通过结构类型直接传入
+  // toolUseContext，而无需本函数依赖 Tool.ts。
+  agentInfo?: { agentId?: string; agentType?: string },
+): { ... }
+
+export function executeCwdChangedHooks(
+  oldCwd: string,
+  newCwd: string,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): Promise< { ... }
+
+export function executeFileChangedHooks(
+  filePath: string,
+  event: 'change' | 'add' | 'unlink',
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): Promise< { ... }
+
+export function getPreToolHookBlockingMessage(
+  hookName: string,
+  blockingError: HookBlockingError,
+): string { ... }
+
+export function getSessionEndHookTimeoutMs(): number { ... }
+
+export function getStopHookMessage(blockingError: HookBlockingError): string { ... }
+
+export function getTaskCompletedHookMessage(blockingError: HookBlockingError): string { ... }
+
+export function getTaskCreatedHookMessage(blockingError: HookBlockingError): string { ... }
+
+export function getTeammateIdleHookMessage(blockingError: HookBlockingError): string { ... }
+
+export function getUserPromptSubmitHookBlockingMessage(blockingError: HookBlockingError): string { ... }
+
+export function hasBlockingResult(results: HookOutsideReplResult[]): boolean { ... }
+
+export function hasInstructionsLoadedHook(): boolean { ... }
+
+export function hasWorktreeCreateHook(): boolean { ... }
+
+export function shouldSkipHookDueToTrust(): boolean { ... }
+
+export interface HookBlockingError { ... }
+
+export interface HookResult { ... }
+
+export type AggregatedHookResult = { ... }
+
+export type ConfigChangeSource =
+  | 'user_settings'
+  | 'project_settings'
+  | 'local_settings'
+  | 'policy_settings'
+  | 'skills'
+
+/**
+ * Execute config change hooks when configuration files change during a session.
+ * Fired by file watchers when settings, skills, or commands change on disk.
+ * Enables enterprise admins to audit/log configuration changes for security.
+ *
+ * Policy settings are enterprise-managed and must never be blockable by hooks.
+ * Hooks still fire (for audit logging) but blocking results are ignored — callers
+ * will always see an empty result for policy sources.
+ *
+ * @param source The type of config that changed
+ * @param filePath Optional path to the changed file
+ * @param timeoutMs Optional timeout in milliseconds for hook execution
+ */
+export async function executeConfigChangeHooks(
+  source: ConfigChangeSource,
+  filePath?: string,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): Promise<HookOutsideReplResult[]> { ... }
+
+export type ElicitationHookResult = { ... }
+
+export type ElicitationResponse = ElicitResult
+
+export interface HookResult { ... }
+
+export type ElicitationResultHookResult = { ... }
+
+export type HookOutsideReplResult = { ... }
+
+export type InstructionsLoadReason =
+  | 'session_start'
+  | 'nested_traversal'
+  | 'path_glob_match'
+  | 'include'
+  | 'compact'
+
+export type InstructionsMemoryType = 'User' | 'Project' | 'Local' | 'Managed'
+
+/**
+ * Check if InstructionsLoaded hooks are configured (without executing them).
+ * Callers should check this before invoking executeInstructionsLoadedHooks to avoid
+ * building hook inputs for every instruction file when no hook is configured.
+ *
+ * Checks both settings-file hooks (getHooksConfigFromSnapshot) and registered
+ * hooks (plugin hooks + SDK callback hooks via registerHookCallbacks). Session-
+ * derived hooks (structured output enforcement etc.) are internal and not checked.
+ */
+export function hasInstructionsLoadedHook(): boolean { ... }
+
+export type InstructionsMemoryType = 'User' | 'Project' | 'Local' | 'Managed'
+
+/**
+ * Check if InstructionsLoaded hooks are configured (without executing them).
+ * Callers should check this before invoking executeInstructionsLoadedHooks to avoid
+ * building hook inputs for every instruction file when no hook is configured.
+ *
+ * Checks both settings-file hooks (getHooksConfigFromSnapshot) and registered
+ * hooks (plugin hooks + SDK callback hooks via registerHookCallbacks). Session-
+ * derived hooks (structured output enforcement etc.) are internal and not checked.
+ */
+export function hasInstructionsLoadedHook(): boolean { ... }

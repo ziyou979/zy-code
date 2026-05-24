@@ -1,0 +1,723 @@
+// AUTO-GENERATED snapshot of public API for messages.ts.
+// Regenerate: bun scripts/api-snapshot.ts
+// Refactor invariant: this file should NOT diff after restructuring,
+// only when exports are intentionally added/removed/renamed.
+
+export const CANCEL_MESSAGE =
+  "The user doesn't want to take this action right now. STOP what you are doing and wait for the user to tell you how to proceed."
+export const REJECT_MESSAGE =
+  "The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). STOP what you are doing and wait for the user to tell you how to proceed."
+export const REJECT_MESSAGE_WITH_REASON_PREFIX =
+  "The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). To tell you how to proceed, the user said:\n"
+export const SUBAGENT_REJECT_MESSAGE =
+  'Permission for this tool use was denied. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). Try a different approach or report the limitation to complete your task.'
+export const SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX =
+  'Permission for this tool use was denied. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). The user said:\n'
+export const PLAN_REJECTION_PREFIX =
+  'The agent proposed a plan that was rejected by the user. The user chose to stay in plan mode rather than proceed with implementation.\n\nRejected plan:\n'
+
+/**
+ * 权限拒绝时的共享指导，指示模型采取适当的变通方法。
+ */
+export const DENIAL_WORKAROUND_GUIDANCE =
+  `IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, ` +
+  `e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, ` +
+  `e.g. do not use your ability to run tests to execute non-test actions. ` +
+  `You should only try to work around this restriction in reasonable ways that do not attempt to bypass the intent behind this denial. ` +
+  `If you believe this capability is essential to complete the user's request, STOP and explain to the user ` +
+  `what you were trying to do and why you need this permission. Let the user decide how to proceed.`
+
+export function AUTO_REJECT_MESSAGE(toolName: string): string { ... }
+
+export const DENIAL_WORKAROUND_GUIDANCE =
+  `IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, ` +
+  `e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, ` +
+  `e.g. do not use your ability to run tests to execute non-test actions. ` +
+  `You should only try to work around this restriction in reasonable ways that do not attempt to bypass the intent behind this denial. ` +
+  `If you believe this capability is essential to complete the user's request, STOP and explain to the user ` +
+  `what you were trying to do and why you need this permission. Let the user decide how to proceed.`
+
+export function AUTO_REJECT_MESSAGE(toolName: string): string { ... }
+
+export const EMPTY_LOOKUPS: MessageLookups = { ... }
+
+export const EMPTY_STRING_SET: ReadonlySet<string> = Object.freeze(new Set<string>())
+
+/**
+ * 从 subagent/skill 进度消息构建查找表，使子工具使用
+ * 能以正确的已解决/进行中/排队状态渲染。
+ *
+ * 每条进度消息必须有 `message` 字段，类型为
+ * `AssistantMessage | NormalizedUserMessage`.
+ */
+export function buildSubagentLookups(
+  messages: { message: AssistantMessage | NormalizedAssistantMessage | NormalizedUserMessage }[],
+): { ... }
+
+export const INTERRUPT_MESSAGE = '[Request interrupted by user]'
+export const INTERRUPT_MESSAGE_FOR_TOOL_USE = '[Request interrupted by user for tool use]'
+export const CANCEL_MESSAGE =
+  "The user doesn't want to take this action right now. STOP what you are doing and wait for the user to tell you how to proceed."
+export const REJECT_MESSAGE =
+  "The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). STOP what you are doing and wait for the user to tell you how to proceed."
+export const REJECT_MESSAGE_WITH_REASON_PREFIX =
+  "The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). To tell you how to proceed, the user said:\n"
+export const SUBAGENT_REJECT_MESSAGE =
+  'Permission for this tool use was denied. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). Try a different approach or report the limitation to complete your task.'
+export const SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX =
+  'Permission for this tool use was denied. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). The user said:\n'
+export const PLAN_REJECTION_PREFIX =
+  'The agent proposed a plan that was rejected by the user. The user chose to stay in plan mode rather than proceed with implementation.\n\nRejected plan:\n'
+
+/**
+ * 权限拒绝时的共享指导，指示模型采取适当的变通方法。
+ */
+export const DENIAL_WORKAROUND_GUIDANCE =
+  `IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, ` +
+  `e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, ` +
+  `e.g. do not use your ability to run tests to execute non-test actions. ` +
+  `You should only try to work around this restriction in reasonable ways that do not attempt to bypass the intent behind this denial. ` +
+  `If you believe this capability is essential to complete the user's request, STOP and explain to the user ` +
+  `what you were trying to do and why you need this permission. Let the user decide how to proceed.`
+
+export function AUTO_REJECT_MESSAGE(toolName: string): string { ... }
+
+export const INTERRUPT_MESSAGE_FOR_TOOL_USE = '[Request interrupted by user for tool use]'
+export const CANCEL_MESSAGE =
+  "The user doesn't want to take this action right now. STOP what you are doing and wait for the user to tell you how to proceed."
+export const REJECT_MESSAGE =
+  "The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). STOP what you are doing and wait for the user to tell you how to proceed."
+export const REJECT_MESSAGE_WITH_REASON_PREFIX =
+  "The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). To tell you how to proceed, the user said:\n"
+export const SUBAGENT_REJECT_MESSAGE =
+  'Permission for this tool use was denied. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). Try a different approach or report the limitation to complete your task.'
+export const SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX =
+  'Permission for this tool use was denied. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). The user said:\n'
+export const PLAN_REJECTION_PREFIX =
+  'The agent proposed a plan that was rejected by the user. The user chose to stay in plan mode rather than proceed with implementation.\n\nRejected plan:\n'
+
+/**
+ * 权限拒绝时的共享指导，指示模型采取适当的变通方法。
+ */
+export const DENIAL_WORKAROUND_GUIDANCE =
+  `IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, ` +
+  `e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, ` +
+  `e.g. do not use your ability to run tests to execute non-test actions. ` +
+  `You should only try to work around this restriction in reasonable ways that do not attempt to bypass the intent behind this denial. ` +
+  `If you believe this capability is essential to complete the user's request, STOP and explain to the user ` +
+  `what you were trying to do and why you need this permission. Let the user decide how to proceed.`
+
+export function AUTO_REJECT_MESSAGE(toolName: string): string { ... }
+
+export const NO_RESPONSE_REQUESTED = 'No response requested.'
+
+// ensureToolResultPairing 在 tool_use 块没有匹配的 tool_result 时插入的
+// 合成 tool_result 内容。导出后 HFI 提交可以
+// 拒绝任何包含它的负载 — 占位符在结构上满足配对
+// 但内容是伪造的，如果提交会污染训练数据。
+export const SYNTHETIC_TOOL_RESULT_PLACEHOLDER = '[Tool result missing due to internal error]'
+
+// UI 用于识别分类器拒绝并简洁渲染的前缀
+const AUTO_MODE_REJECTION_PREFIX = 'Permission for this action has been denied. Reason: '
+
+/**
+ * 检查工具结果消息是否为分类器拒绝。
+ * UI 用它来渲染简短摘要而不是完整消息。
+ */
+export function isClassifierDenial(content: string): boolean { ... }
+
+export const PLAN_PHASE4_CONTROL = `### Phase 4: Final Plan
+Goal: Write your final plan to the plan file (the only file you can edit).
+- Begin with a **Context** section: explain why this change is being made — the problem or need it addresses, what prompted it, and the intended outcome
+- Include only your recommended approach, not all alternatives
+- Ensure that the plan file is concise enough to scan quickly, but detailed enough to execute effectively
+- Include the paths of critical files to be modified
+- Reference existing functions and utilities you found that should be reused, with their file paths
+- Include a verification section describing how to test the changes end-to-end (run the code, use MCP tools, run tests)`
+
+const PLAN_PHASE4_TRIM = `### Phase 4: Final Plan
+Goal: Write your final plan to the plan file (the only file you can edit).
+- One-line **Context**: what is being changed and why
+- Include only your recommended approach, not all alternatives
+- List the paths of files to be modified
+- Reference existing functions and utilities to reuse, with their file paths
+- End with **Verification**: the single command to run to confirm the change works (no numbered test procedures)`
+
+const PLAN_PHASE4_CUT = `### Phase 4: Final Plan
+Goal: Write your final plan to the plan file (the only file you can edit).
+- Do NOT write a Context or Background section. The user just told you what they want.
+- List the paths of files to be modified and what changes in each (one line per file)
+- Reference existing functions and utilities to reuse, with their file paths
+- End with **Verification**: the single command that confirms the change works
+- Most good plans are under 40 lines. Prose is a sign you are padding.`
+
+const PLAN_PHASE4_CAP = `### Phase 4: Final Plan
+Goal: Write your final plan to the plan file (the only file you can edit).
+- Do NOT write a Context, Background, or Overview section. The user just told you what they want.
+- Do NOT restate the user's request. Do NOT write prose paragraphs.
+- List the paths of files to be modified and what changes in each (one bullet per file)
+- Reference existing functions to reuse, with file:line
+- End with the single verification command
+- **Hard limit: 40 lines.** If the plan is longer, delete prose — not file paths.`
+
+function getPlanPhase4Section(): string { ... }
+
+export const PLAN_REJECTION_PREFIX =
+  'The agent proposed a plan that was rejected by the user. The user chose to stay in plan mode rather than proceed with implementation.\n\nRejected plan:\n'
+
+/**
+ * 权限拒绝时的共享指导，指示模型采取适当的变通方法。
+ */
+export const DENIAL_WORKAROUND_GUIDANCE =
+  `IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, ` +
+  `e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, ` +
+  `e.g. do not use your ability to run tests to execute non-test actions. ` +
+  `You should only try to work around this restriction in reasonable ways that do not attempt to bypass the intent behind this denial. ` +
+  `If you believe this capability is essential to complete the user's request, STOP and explain to the user ` +
+  `what you were trying to do and why you need this permission. Let the user decide how to proceed.`
+
+export function AUTO_REJECT_MESSAGE(toolName: string): string { ... }
+
+export const REJECT_MESSAGE =
+  "The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). STOP what you are doing and wait for the user to tell you how to proceed."
+export const REJECT_MESSAGE_WITH_REASON_PREFIX =
+  "The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). To tell you how to proceed, the user said:\n"
+export const SUBAGENT_REJECT_MESSAGE =
+  'Permission for this tool use was denied. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). Try a different approach or report the limitation to complete your task.'
+export const SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX =
+  'Permission for this tool use was denied. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). The user said:\n'
+export const PLAN_REJECTION_PREFIX =
+  'The agent proposed a plan that was rejected by the user. The user chose to stay in plan mode rather than proceed with implementation.\n\nRejected plan:\n'
+
+/**
+ * 权限拒绝时的共享指导，指示模型采取适当的变通方法。
+ */
+export const DENIAL_WORKAROUND_GUIDANCE =
+  `IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, ` +
+  `e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, ` +
+  `e.g. do not use your ability to run tests to execute non-test actions. ` +
+  `You should only try to work around this restriction in reasonable ways that do not attempt to bypass the intent behind this denial. ` +
+  `If you believe this capability is essential to complete the user's request, STOP and explain to the user ` +
+  `what you were trying to do and why you need this permission. Let the user decide how to proceed.`
+
+export function AUTO_REJECT_MESSAGE(toolName: string): string { ... }
+
+export const REJECT_MESSAGE_WITH_REASON_PREFIX =
+  "The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). To tell you how to proceed, the user said:\n"
+export const SUBAGENT_REJECT_MESSAGE =
+  'Permission for this tool use was denied. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). Try a different approach or report the limitation to complete your task.'
+export const SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX =
+  'Permission for this tool use was denied. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). The user said:\n'
+export const PLAN_REJECTION_PREFIX =
+  'The agent proposed a plan that was rejected by the user. The user chose to stay in plan mode rather than proceed with implementation.\n\nRejected plan:\n'
+
+/**
+ * 权限拒绝时的共享指导，指示模型采取适当的变通方法。
+ */
+export const DENIAL_WORKAROUND_GUIDANCE =
+  `IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, ` +
+  `e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, ` +
+  `e.g. do not use your ability to run tests to execute non-test actions. ` +
+  `You should only try to work around this restriction in reasonable ways that do not attempt to bypass the intent behind this denial. ` +
+  `If you believe this capability is essential to complete the user's request, STOP and explain to the user ` +
+  `what you were trying to do and why you need this permission. Let the user decide how to proceed.`
+
+export function AUTO_REJECT_MESSAGE(toolName: string): string { ... }
+
+export const SUBAGENT_REJECT_MESSAGE =
+  'Permission for this tool use was denied. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). Try a different approach or report the limitation to complete your task.'
+export const SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX =
+  'Permission for this tool use was denied. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). The user said:\n'
+export const PLAN_REJECTION_PREFIX =
+  'The agent proposed a plan that was rejected by the user. The user chose to stay in plan mode rather than proceed with implementation.\n\nRejected plan:\n'
+
+/**
+ * 权限拒绝时的共享指导，指示模型采取适当的变通方法。
+ */
+export const DENIAL_WORKAROUND_GUIDANCE =
+  `IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, ` +
+  `e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, ` +
+  `e.g. do not use your ability to run tests to execute non-test actions. ` +
+  `You should only try to work around this restriction in reasonable ways that do not attempt to bypass the intent behind this denial. ` +
+  `If you believe this capability is essential to complete the user's request, STOP and explain to the user ` +
+  `what you were trying to do and why you need this permission. Let the user decide how to proceed.`
+
+export function AUTO_REJECT_MESSAGE(toolName: string): string { ... }
+
+export const SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX =
+  'Permission for this tool use was denied. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). The user said:\n'
+export const PLAN_REJECTION_PREFIX =
+  'The agent proposed a plan that was rejected by the user. The user chose to stay in plan mode rather than proceed with implementation.\n\nRejected plan:\n'
+
+/**
+ * 权限拒绝时的共享指导，指示模型采取适当的变通方法。
+ */
+export const DENIAL_WORKAROUND_GUIDANCE =
+  `IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, ` +
+  `e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, ` +
+  `e.g. do not use your ability to run tests to execute non-test actions. ` +
+  `You should only try to work around this restriction in reasonable ways that do not attempt to bypass the intent behind this denial. ` +
+  `If you believe this capability is essential to complete the user's request, STOP and explain to the user ` +
+  `what you were trying to do and why you need this permission. Let the user decide how to proceed.`
+
+export function AUTO_REJECT_MESSAGE(toolName: string): string { ... }
+
+export const SYNTHETIC_MESSAGES = new Set([
+  INTERRUPT_MESSAGE,
+  INTERRUPT_MESSAGE_FOR_TOOL_USE,
+  CANCEL_MESSAGE,
+  REJECT_MESSAGE,
+  NO_RESPONSE_REQUESTED,
+])
+
+export function isSyntheticMessage(message: Message): boolean { ... }
+
+export const SYNTHETIC_MODEL = '<synthetic>'
+
+export const SYNTHETIC_MESSAGES = new Set([
+  INTERRUPT_MESSAGE,
+  INTERRUPT_MESSAGE_FOR_TOOL_USE,
+  CANCEL_MESSAGE,
+  REJECT_MESSAGE,
+  NO_RESPONSE_REQUESTED,
+])
+
+export function isSyntheticMessage(message: Message): boolean { ... }
+
+export const SYNTHETIC_TOOL_RESULT_PLACEHOLDER = '[Tool result missing due to internal error]'
+
+// UI 用于识别分类器拒绝并简洁渲染的前缀
+const AUTO_MODE_REJECTION_PREFIX = 'Permission for this action has been denied. Reason: '
+
+/**
+ * 检查工具结果消息是否为分类器拒绝。
+ * UI 用它来渲染简短摘要而不是完整消息。
+ */
+export function isClassifierDenial(content: string): boolean { ... }
+
+export function AUTO_REJECT_MESSAGE(toolName: string): string { ... }
+
+export function DONT_ASK_REJECT_MESSAGE(toolName: string): string { ... }
+
+export function buildClassifierUnavailableMessage(
+  toolName: string,
+  classifierModel: string,
+): string { ... }
+
+export function buildMessageLookups(
+  normalizedMessages: NormalizedMessage[],
+  messages: Message[],
+): MessageLookups { ... }
+
+export function buildSubagentLookups(
+  messages: { message: AssistantMessage | NormalizedAssistantMessage | NormalizedUserMessage }[],
+): { ... }
+
+export function buildYoloRejectionMessage(reason: string): string { ... }
+
+export function countToolCalls(messages: Message[], toolName: string, maxCount?: number): number { ... }
+
+export function createAgentsKilledMessage(): SystemAgentsKilledMessage { ... }
+
+export function createAssistantAPIErrorMessage({
+  content,
+  apiError,
+  error,
+  errorDetails,
+}: {
+  content: string
+  apiError?: AssistantMessage['apiError']
+  error?: SDKAssistantMessageError
+  errorDetails?: string
+}): AssistantMessage { ... }
+
+export function createAssistantMessage({
+  content,
+  usage,
+  isVirtual,
+}: {
+  content: string | AssistantContentBlock[]
+  usage?: Usage
+  isVirtual?: true
+}): AssistantMessage { ... }
+
+export function createAwaySummaryMessage(content: string): SystemAwaySummaryMessage { ... }
+
+export function createBridgeStatusMessage(
+  url: string,
+  upgradeNudge?: string,
+): SystemBridgeStatusMessage { ... }
+
+export function createCommandInputMessage(content: string): SystemLocalCommandMessage { ... }
+
+export function createCompactBoundaryMessage(
+  trigger: 'manual' | 'auto',
+  preTokens: number,
+  lastPreCompactMessageUuid?: UUID,
+  userContext?: string,
+  messagesSummarized?: number,
+): SystemCompactBoundaryMessage { ... }
+
+export function createMemorySavedMessage(writtenPaths: string[]): SystemMemorySavedMessage { ... }
+
+export function createMicrocompactBoundaryMessage(
+  trigger: 'auto',
+  preTokens: number,
+  tokensSaved: number,
+  compactedToolIds: string[],
+  clearedAttachmentUUIDs: string[],
+): SystemMicrocompactBoundaryMessage { ... }
+
+export function createModelSwitchBreadcrumbs(
+  modelArg: string,
+  resolvedDisplay: string,
+): UserMessage[] { ... }
+
+export function createPermissionRetryMessage(commands: string[]): SystemPermissionRetryMessage { ... }
+
+export function createProgressMessage<P extends Progress>({
+  toolUseID,
+  parentToolUseID,
+  data,
+  index = 0,
+}: {
+  toolUseID: string
+  parentToolUseID: string
+  data: P
+  index?: number
+}): ProgressMessage<P> { ... }
+
+export function createScheduledTaskFireMessage(content: string): SystemScheduledTaskFireMessage { ... }
+
+export function createStopHookSummaryMessage(
+  hookCount: number,
+  hookInfos: StopHookInfo[],
+  hookErrors: string[],
+  preventedContinuation: boolean,
+  stopReason: string | undefined,
+  hasOutput: boolean,
+  level: SystemMessageLevel,
+  toolUseID?: string,
+  hookLabel?: string,
+  totalDurationMs?: number,
+): SystemStopHookSummaryMessage { ... }
+
+export function createSyntheticUserCaveatMessage(): UserMessage { ... }
+
+export function createSystemAPIErrorMessage(
+  error: APIErrorLike,
+  retryInMs: number,
+  retryAttempt: number,
+  maxRetries: number,
+): SystemAPIErrorMessage { ... }
+
+export function createSystemMessage(
+  content: string,
+  level: SystemMessageLevel,
+  toolUseID?: string,
+  preventContinuation?: boolean,
+): SystemInformationalMessage { ... }
+
+export function createToolResultStopMessage(toolUseID: string): ToolResultBlock { ... }
+
+export function createToolUseSummaryMessage(
+  summary: string,
+  precedingToolUseIds: string[],
+): ToolUseSummaryMessage { ... }
+
+export function createTurnDurationMessage(
+  durationMs: number,
+  budget?: { tokens: number; limit: number; nudges: number },
+  messageCount?: number,
+): SystemTurnDurationMessage { ... }
+
+export function createUserInterruptionMessage({
+  toolUse = false,
+}: {
+  toolUse?: boolean
+}): UserMessage { ... }
+
+export function createUserMessage({
+  content,
+  isMeta,
+  isVisibleInTranscriptOnly,
+  isVirtual,
+  isCompactSummary,
+  summarizeMetadata,
+  toolUseResult,
+  mcpMeta,
+  uuid,
+  timestamp,
+  imagePasteIds,
+  sourceToolAssistantUUID,
+  permissionMode,
+  origin,
+}: {
+  content: string | UserContentBlock[]
+  isMeta?: true
+  isVisibleInTranscriptOnly?: true
+  isVirtual?: true
+  isCompactSummary?: true
+  toolUseResult?: unknown // 匹配工具的 `Output` 类型
+  /** MCP protocol metadata to pass through to SDK consumers (never sent to model) */
+  mcpMeta?: {
+    _meta?: Record<string, unknown>
+    structuredContent?: Record<string, unknown>
+  }
+  uuid?: UUID | string
+  timestamp?: string
+  imagePasteIds?: number[]
+  // 对于 tool_result 消息：包含匹配 tool_use 的 assistant 消息的 UUID
+  sourceToolAssistantUUID?: UUID
+  // 发送消息时的权限模式（用于倒带恢复）
+  permissionMode?: PermissionMode
+  summarizeMetadata?: {
+    messagesSummarized: number
+    userContext?: string
+    direction?: PartialCompactDirection
+  }
+  // 此消息的来源。undefined = 人类（键盘）。
+  origin?: MessageOrigin
+}): UserMessage { ... }
+
+export function deriveShortMessageId(uuid: string): string { ... }
+
+export function deriveUUID(parentUUID: string, index: number): UUID { ... }
+
+export function ensureToolResultPairing(
+  messages: (UserMessage | AssistantMessage)[],
+): (UserMessage | AssistantMessage)[] { ... }
+
+export function extractTag(html: string, tagName: string): string | null { ... }
+
+export function extractTextContent(
+  blocks: readonly { readonly type: string }[],
+  separator = '',
+): string { ... }
+
+export function filterOrphanedThinkingOnlyMessages(
+  messages: (UserMessage | AssistantMessage)[],
+): (UserMessage | AssistantMessage)[]
+export function filterOrphanedThinkingOnlyMessages(messages: Message[]): Message[]
+export function filterOrphanedThinkingOnlyMessages(messages: Message[]): Message[] { ... }
+
+export function filterOrphanedThinkingOnlyMessages(messages: Message[]): Message[]
+export function filterOrphanedThinkingOnlyMessages(messages: Message[]): Message[] { ... }
+
+export function filterOrphanedThinkingOnlyMessages(messages: Message[]): Message[] { ... }
+
+export function filterUnresolvedToolUses(messages: Message[]): Message[] { ... }
+
+export function filterWhitespaceOnlyAssistantMessages(
+  messages: (UserMessage | AssistantMessage)[],
+): (UserMessage | AssistantMessage)[]
+export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[]
+export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[] { ... }
+
+export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[]
+export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[] { ... }
+
+export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[] { ... }
+
+export function findLastCompactBoundaryIndex<T extends Message | NormalizedMessage>(
+  messages: T[],
+): number { ... }
+
+export function formatCommandInputTags(commandName: string, args: string): string { ... }
+
+export function getAssistantMessageText(message: Message): string | null { ... }
+
+export function getContentText(
+  content: string | DeepImmutable<Array<ContentBlock>>,
+): string | null { ... }
+
+export function getLastAssistantMessage(messages: Message[]): AssistantMessage | undefined { ... }
+
+export function getMessagesAfterCompactBoundary<T extends Message | NormalizedMessage>(
+  messages: T[],
+  options?: { includeSnipped?: boolean },
+): T[] { ... }
+
+export function getProgressMessagesFromLookup(
+  message: NormalizedMessage,
+  lookups: MessageLookups,
+): ProgressMessage[] { ... }
+
+export function getSiblingToolUseIDs(message: NormalizedMessage, messages: Message[]): Set<string> { ... }
+
+export function getSiblingToolUseIDsFromLookup(
+  message: NormalizedMessage,
+  lookups: MessageLookups,
+): ReadonlySet<string> { ... }
+
+export function getToolResultIDs(normalizedMessages: NormalizedMessage[]): { ... }
+
+export function getToolUseID(message: NormalizedMessage): string | null { ... }
+
+export function getToolUseIDs(normalizedMessages: NormalizedMessage[]): Set<string> { ... }
+
+export function getUserMessageText(message: Message | NormalizedMessage): string | null { ... }
+
+export function handleMessageFromStream(
+  message: Message | TombstoneMessage | StreamEvent | RequestStartEvent | ToolUseSummaryMessage,
+  onMessage: (message: Message) => void,
+  onUpdateLength: (newContent: string) => void,
+  onSetStreamMode: (mode: SpinnerMode) => void,
+  onStreamingToolUses: (f: (streamingToolUse: StreamingToolUse[]) => StreamingToolUse[]) => void,
+  onTombstone?: (message: Message) => void,
+  onStreamingThinking?: (
+    f: (current: StreamingThinking | null) => StreamingThinking | null,
+  ) => void,
+  onStreamingText?: (f: (current: string | null) => string | null) => void,
+): void { ... }
+
+export function hasSuccessfulToolCall(messages: Message[], toolName: string): boolean { ... }
+
+export function hasToolCallsInLastAssistantTurn(messages: Message[]): boolean { ... }
+
+export function hasUnresolvedHooks(
+  messages: NormalizedMessage[],
+  toolUseID: string,
+  hookEvent: HookEvent,
+) { ... }
+
+export function hasUnresolvedHooksFromLookup(
+  toolUseID: string,
+  hookEvent: HookEvent,
+  lookups: MessageLookups,
+): boolean { ... }
+
+export function isClassifierDenial(content: string): boolean { ... }
+
+export function isCompactBoundaryMessage(
+  message: Message | NormalizedMessage,
+): message is SystemCompactBoundaryMessage { ... }
+
+export function isEmptyMessageText(text: string): boolean { ... }
+
+export function isNotEmptyMessage(message: Message | NormalizedMessage): boolean { ... }
+
+export function isSyntheticMessage(message: Message): boolean { ... }
+
+export function isSystemLocalCommandMessage(
+  message: Message,
+): message is SystemLocalCommandMessage { ... }
+
+export function isThinkingMessage(message: Message): boolean { ... }
+
+export function isToolUseRequestMessage(
+  message: Message | NormalizedMessage,
+): message is ToolUseRequestMessage { ... }
+
+export function isToolUseResultMessage(message: Message): message is ToolUseResultMessage { ... }
+
+export function mergeAssistantMessages(a: AssistantMessage, b: AssistantMessage): AssistantMessage { ... }
+
+export function mergeUserContentBlocks(
+  a: UserContentBlock[],
+  b: UserContentBlock[],
+): UserContentBlock[] { ... }
+
+export function mergeUserMessages(a: UserMessage, b: UserMessage): UserMessage { ... }
+
+export function mergeUserMessagesAndToolResults(a: UserMessage, b: UserMessage): UserMessage { ... }
+
+export function normalizeAttachmentForAPI(attachment: Attachment): UserMessage[] { ... }
+
+export function normalizeContentFromAPI(
+  contentBlocks: ContentBlock[],
+  tools: Tools,
+  agentId?: AgentId,
+): ContentBlock[] { ... }
+
+export function normalizeMessages(
+  messages: (AssistantMessage | UserMessage)[],
+): (NormalizedAssistantMessage | NormalizedUserMessage)[]
+export function normalizeMessages(messages: Message[]): NormalizedMessage[]
+export function normalizeMessages(messages: Message[]): NormalizedMessage[] { ... }
+
+export function normalizeMessages(messages: AssistantMessage[]): NormalizedAssistantMessage[]
+export function normalizeMessages(messages: UserMessage[]): NormalizedUserMessage[]
+export function normalizeMessages(
+  messages: (AssistantMessage | UserMessage)[],
+): (NormalizedAssistantMessage | NormalizedUserMessage)[]
+export function normalizeMessages(messages: Message[]): NormalizedMessage[]
+export function normalizeMessages(messages: Message[]): NormalizedMessage[] { ... }
+
+export function normalizeMessages(messages: Message[]): NormalizedMessage[]
+export function normalizeMessages(messages: Message[]): NormalizedMessage[] { ... }
+
+export function normalizeMessages(messages: Message[]): NormalizedMessage[] { ... }
+
+export function normalizeMessages(messages: UserMessage[]): NormalizedUserMessage[]
+export function normalizeMessages(
+  messages: (AssistantMessage | UserMessage)[],
+): (NormalizedAssistantMessage | NormalizedUserMessage)[]
+export function normalizeMessages(messages: Message[]): NormalizedMessage[]
+export function normalizeMessages(messages: Message[]): NormalizedMessage[] { ... }
+
+export function normalizeMessagesForAPI(
+  messages: Message[],
+  tools: Tools = [],
+): (UserMessage | AssistantMessage)[] { ... }
+
+export function prepareUserContent({
+  inputString,
+  precedingInputBlocks,
+}: {
+  inputString: string
+  precedingInputBlocks: UserContentBlock[]
+}): string | UserContentBlock[] { ... }
+
+export function pruneCompletedTurnArtifacts(messages: readonly Message[]): PruneResult { ... }
+
+export function reorderAttachmentsForAPI(messages: Message[]): Message[] { ... }
+
+export function reorderMessagesInUI(
+  messages: (
+    | NormalizedUserMessage
+    | NormalizedAssistantMessage
+    | AttachmentMessage
+    | SystemMessage
+  )[],
+  syntheticStreamingToolUseMessages: NormalizedAssistantMessage[],
+): (NormalizedUserMessage | NormalizedAssistantMessage | AttachmentMessage | SystemMessage)[] { ... }
+
+export function shouldShowUserMessage(
+  message: NormalizedMessage,
+  isTranscriptMode: boolean,
+): boolean { ... }
+
+export function shrinkHistoricalProgress(msg: ProgressMessage): ProgressMessage { ... }
+
+export function stripAdvisorBlocks(
+  messages: (UserMessage | AssistantMessage)[],
+): (UserMessage | AssistantMessage)[] { ... }
+
+export function stripCallerFieldFromAssistantMessage(message: AssistantMessage): AssistantMessage { ... }
+
+export function stripPromptXMLTags(content: string): string { ... }
+
+export function stripSignatureBlocks(messages: Message[]): Message[] { ... }
+
+export function stripToolReferenceBlocksFromUserMessage(message: UserMessage): UserMessage { ... }
+
+export function textForResubmit(
+  msg: UserMessage,
+): { ... }
+
+export function withMemoryCorrectionHint(message: string): string { ... }
+
+export function wrapCommandText(raw: string, origin: MessageOrigin | undefined): string { ... }
+
+export function wrapInSystemReminder(content: string): string { ... }
+
+export function wrapMessagesInSystemReminder(messages: UserMessage[]): UserMessage[] { ... }
+
+export type MessageLookups = { ... }
+
+export type PruneResult = { ... }
+
+export type StreamingThinking = { ... }
+
+export type StreamingToolUse = { ... }

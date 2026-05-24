@@ -1,0 +1,328 @@
+// AUTO-GENERATED snapshot of public API for sessionStorage.ts.
+// Regenerate: bun scripts/api-snapshot.ts
+// Refactor invariant: this file should NOT diff after restructuring,
+// only when exports are intentionally added/removed/renamed.
+
+export async function deleteRemoteAgentMetadata(taskId: string): Promise<void> { ... }
+
+export async function doesMessageExistInSession(
+  sessionId: UUID,
+  messageUuid: UUID,
+): Promise<boolean> { ... }
+
+export async function enrichLogs(
+  allLogs: LogOption[],
+  startIndex: number,
+  count: number,
+): Promise< { ... }
+
+export async function fetchLogs(limit?: number): Promise<LogOption[]> { ... }
+
+export async function findUnresolvedToolUse(toolUseId: string): Promise<AssistantMessage | null> { ... }
+
+export async function flushSessionStorage(): Promise<void> { ... }
+
+export async function getAgentTranscript(agentId: AgentId): Promise< { ... }
+
+export async function getLastSessionLog(sessionId: UUID): Promise<LogOption | null> { ... }
+
+export async function getLogByIndex(index: number): Promise<LogOption | null> { ... }
+
+export async function getSessionFilesLite(
+  projectDir: string,
+  limit?: number,
+  projectPath?: string,
+): Promise<LogOption[]> { ... }
+
+export async function getSessionFilesWithMtime(
+  projectDir: string,
+): Promise<Map<string, { ... }
+
+export async function hydrateFromCCRv2InternalEvents(sessionId: string): Promise<boolean> { ... }
+
+export async function hydrateRemoteSession(
+  sessionId: string,
+  ingressUrl: string,
+): Promise<boolean> { ... }
+
+export async function linkSessionToPR(
+  sessionId: UUID,
+  prNumber: number,
+  prUrl: string,
+  prRepository: string,
+  fullPath?: string,
+): Promise<void> { ... }
+
+export async function listRemoteAgentMetadata(): Promise<RemoteAgentMetadata[]> { ... }
+
+export async function loadAllLogsFromSessionFile(
+  sessionFile: string,
+  projectPathOverride?: string,
+): Promise<LogOption[]> { ... }
+
+export async function loadAllProjectsMessageLogs(
+  limit?: number,
+  options?: { skipIndex?: boolean; initialEnrichCount?: number },
+): Promise<LogOption[]> { ... }
+
+export async function loadAllProjectsMessageLogsProgressive(
+  limit?: number,
+  initialEnrichCount: number = INITIAL_ENRICH_COUNT,
+): Promise<SessionLogResult> { ... }
+
+export async function loadAllSubagentTranscriptsFromDisk(): Promise< { ... }
+
+export async function loadFullLog(log: LogOption): Promise<LogOption> { ... }
+
+export async function loadMessageLogs(limit?: number): Promise<LogOption[]> { ... }
+
+export async function loadSameRepoMessageLogs(
+  worktreePaths: string[],
+  limit?: number,
+  initialEnrichCount: number = INITIAL_ENRICH_COUNT,
+): Promise<LogOption[]> { ... }
+
+export async function loadSameRepoMessageLogsProgressive(
+  worktreePaths: string[],
+  limit?: number,
+  initialEnrichCount: number = INITIAL_ENRICH_COUNT,
+): Promise<SessionLogResult> { ... }
+
+export async function loadSubagentTranscripts(
+  agentIds: string[],
+): Promise< { ... }
+
+export async function loadTranscriptFile(
+  filePath: string,
+  opts?: { keepAllLeaves?: boolean },
+): Promise< { ... }
+
+export async function loadTranscriptFromFile(filePath: string): Promise<LogOption> { ... }
+
+export async function readAgentMetadata(agentId: AgentId): Promise<AgentMetadata | null> { ... }
+
+export async function readRemoteAgentMetadata(taskId: string): Promise<RemoteAgentMetadata | null> { ... }
+
+export async function recordAttributionSnapshot(snapshot: AttributionSnapshotMessage) { ... }
+
+export async function recordContentReplacement(
+  replacements: ContentReplacementRecord[],
+  agentId?: AgentId,
+) { ... }
+
+export async function recordContextCollapseCommit(commit: {
+  collapseId: string
+  summaryUuid: string
+  summaryContent: string
+  summary: string
+  firstArchivedUuid: string
+  lastArchivedUuid: string
+}): Promise<void> { ... }
+
+export async function recordContextCollapseSnapshot(snapshot: {
+  staged: Array<{
+    startUuid: string
+    endUuid: string
+    summary: string
+    risk: number
+    stagedAt: number
+  }>
+  armed: boolean
+  lastSpawnTokens: number
+}): Promise<void> { ... }
+
+export async function recordFileHistorySnapshot(
+  messageId: UUID,
+  snapshot: FileHistorySnapshot,
+  isSnapshotUpdate: boolean,
+) { ... }
+
+export async function recordQueueOperation(queueOp: QueueOperationMessage) { ... }
+
+export async function recordSidechainTranscript(
+  messages: Message[],
+  agentId?: string,
+  startingParentUuid?: UUID | null,
+) { ... }
+
+export async function recordTranscript(
+  messages: Message[],
+  teamInfo?: TeamInfo,
+  startingParentUuidHint?: UUID,
+  allMessages?: readonly Message[],
+): Promise<UUID | null> { ... }
+
+export async function removeTranscriptMessage(targetUuid: UUID): Promise<void> { ... }
+
+export async function resetSessionFilePointer() { ... }
+
+export async function saveAgentColor(sessionId: UUID, agentColor: string, fullPath?: string) { ... }
+
+export async function saveAgentName(
+  sessionId: UUID,
+  agentName: string,
+  fullPath?: string,
+  source: 'user' | 'auto' = 'user',
+) { ... }
+
+export async function saveCustomTitle(
+  sessionId: UUID,
+  customTitle: string,
+  fullPath?: string,
+  source: 'user' | 'auto' = 'user',
+) { ... }
+
+export async function saveTag(sessionId: UUID, tag: string, fullPath?: string) { ... }
+
+export async function searchSessionsByCustomTitle(
+  query: string,
+  options?: { limit?: number; exact?: boolean },
+): Promise<LogOption[]> { ... }
+
+export async function writeAgentMetadata(agentId: AgentId, metadata: AgentMetadata): Promise<void> { ... }
+
+export async function writeRemoteAgentMetadata(
+  taskId: string,
+  metadata: RemoteAgentMetadata,
+): Promise<void> { ... }
+
+export const MAX_TRANSCRIPT_READ_BYTES = 50 * 1024 * 1024
+
+// agentId → 子目录的内存映射，用于对相关子代理 transcript 进行分组
+// （例如 workflow 运行写入 subagents/workflows/<runId>/）。
+// 在代理运行之前填充；由 getAgentTranscriptPath 查询。
+const agentTranscriptSubdirs = new Map<string, string>()
+
+export function setAgentTranscriptSubdir(agentId: string, subdir: string): void { ... }
+
+export function adoptResumedSessionFile(): void { ... }
+
+export function buildConversationChain(
+  messages: Map<UUID, TranscriptMessage>,
+  leafMessage: TranscriptMessage,
+): TranscriptMessage[] { ... }
+
+export function cacheSessionTitle(customTitle: string): void { ... }
+
+export function checkResumeConsistency(chain: Message[]): void { ... }
+
+export function cleanMessagesForLogging(
+  messages: Message[],
+  allMessages: readonly Message[] = messages,
+): Transcript { ... }
+
+export function clearAgentTranscriptSubdir(agentId: string): void { ... }
+
+export function clearSessionMessagesCache(): void { ... }
+
+export function clearSessionMetadata(): void { ... }
+
+export function extractAgentIdsFromMessages(messages: Message[]): string[] { ... }
+
+export function extractTeammateTranscriptsFromTasks(tasks: {
+  [taskId: string]: {
+    type: string
+    identity?: { agentId: string }
+    messages?: Message[]
+  }
+}): { ... }
+
+export function getAgentTranscriptPath(agentId: AgentId): string { ... }
+
+export function getCurrentSessionAgentColor(): string | undefined { ... }
+
+export function getCurrentSessionTag(sessionId: UUID): string | undefined { ... }
+
+export function getCurrentSessionTitle(sessionId: SessionId): string | undefined { ... }
+
+export function getFirstMeaningfulUserMessageTextContent<T extends Message>(
+  transcript: T[],
+): string | undefined { ... }
+
+export function getNodeEnv(): string { ... }
+
+export function getProjectsDir(): string { ... }
+
+export function getSessionIdFromLog(log: LogOption): UUID | undefined { ... }
+
+export function getTranscriptPath(): string { ... }
+
+export function getTranscriptPathForSession(sessionId: string): string { ... }
+
+export function getUserType(): string { ... }
+
+export function isChainParticipant(m: Pick<Message, 'type'>): boolean { ... }
+
+export function isCustomTitleEnabled(): boolean { ... }
+
+export function isEphemeralToolProgress(dataType: unknown): boolean { ... }
+
+export function isLiteLog(log: LogOption): boolean { ... }
+
+export function isLoggableMessage(m: Message): boolean { ... }
+
+export function isTranscriptMessage(entry: Entry): entry is TranscriptMessage { ... }
+
+export function reAppendSessionMetadata(): void { ... }
+
+export function removeExtraFields(transcript: TranscriptMessage[]): SerializedMessage[] { ... }
+
+export function resetProjectFlushStateForTesting(): void { ... }
+
+export function resetProjectForTesting(): void { ... }
+
+export function restoreSessionMetadata(meta: {
+  customTitle?: string
+  tag?: string
+  agentName?: string
+  agentColor?: string
+  agentSetting?: string
+  mode?: 'coordinator' | 'normal'
+  worktreeSession?: PersistedWorktreeSession | null
+  prNumber?: number
+  prUrl?: string
+  prRepository?: string
+}): void { ... }
+
+export function saveAgentSetting(agentSetting: string): void { ... }
+
+export function saveAiGeneratedTitle(sessionId: UUID, aiTitle: string): void { ... }
+
+export function saveMode(mode: 'coordinator' | 'normal'): void { ... }
+
+export function saveTaskSummary(sessionId: UUID, summary: string): void { ... }
+
+export function saveWorktreeState(worktreeSession: PersistedWorktreeSession | null): void { ... }
+
+export function sessionIdExists(sessionId: string): boolean { ... }
+
+export function setAgentTranscriptSubdir(agentId: string, subdir: string): void { ... }
+
+export function setInternalEventReader(
+  reader: InternalEventReader,
+  subagentReader: InternalEventReader,
+): void { ... }
+
+export function setInternalEventWriter(writer: InternalEventWriter): void { ... }
+
+export function setRemoteIngressUrlForTesting(url: string): void { ... }
+
+export function setSessionFileForTesting(path: string): void { ... }
+
+export let getProjectDir
+getProjectDir = memoize((projectDir: string): string => {
+  return join(getProjectsDir(), sanitizePath(projectDir))
+})
+
+let project: Project | null = null
+let cleanupRegistered = false
+
+function getProject(): Project { ... }
+
+export type AgentMetadata = { ... }
+
+export type RemoteAgentMetadata = { ... }
+
+export type SessionLogResult = { ... }
+
+export type TeamInfo = { ... }
