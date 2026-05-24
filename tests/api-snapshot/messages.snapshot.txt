@@ -18,169 +18,6 @@ export function buildSubagentLookups(
   messages: { message: AssistantMessage | NormalizedAssistantMessage | NormalizedUserMessage }[],
 ): { lookups: MessageLookups; inProgressToolUseIDs: Set<string> } { ... }
 
-export function createAgentsKilledMessage(): SystemAgentsKilledMessage { ... }
-
-export function createAssistantAPIErrorMessage({
-  content,
-  apiError,
-  error,
-  errorDetails,
-}: {
-  content: string
-  apiError?: AssistantMessage['apiError']
-  error?: SDKAssistantMessageError
-  errorDetails?: string
-}): AssistantMessage { ... }
-
-export function createAssistantMessage({
-  content,
-  usage,
-  isVirtual,
-}: {
-  content: string | AssistantContentBlock[]
-  usage?: Usage
-  isVirtual?: true
-}): AssistantMessage { ... }
-
-export function createAwaySummaryMessage(content: string): SystemAwaySummaryMessage { ... }
-
-export function createBridgeStatusMessage(
-  url: string,
-  upgradeNudge?: string,
-): SystemBridgeStatusMessage { ... }
-
-export function createCommandInputMessage(content: string): SystemLocalCommandMessage { ... }
-
-export function createCompactBoundaryMessage(
-  trigger: 'manual' | 'auto',
-  preTokens: number,
-  lastPreCompactMessageUuid?: UUID,
-  userContext?: string,
-  messagesSummarized?: number,
-): SystemCompactBoundaryMessage { ... }
-
-export function createMemorySavedMessage(writtenPaths: string[]): SystemMemorySavedMessage { ... }
-
-export function createMicrocompactBoundaryMessage(
-  trigger: 'auto',
-  preTokens: number,
-  tokensSaved: number,
-  compactedToolIds: string[],
-  clearedAttachmentUUIDs: string[],
-): SystemMicrocompactBoundaryMessage { ... }
-
-export function createModelSwitchBreadcrumbs(
-  modelArg: string,
-  resolvedDisplay: string,
-): UserMessage[] { ... }
-
-export function createPermissionRetryMessage(commands: string[]): SystemPermissionRetryMessage { ... }
-
-export function createProgressMessage<P extends Progress>({
-  toolUseID,
-  parentToolUseID,
-  data,
-  index = 0,
-}: {
-  toolUseID: string
-  parentToolUseID: string
-  data: P
-  index?: number
-}): ProgressMessage<P> { ... }
-
-export function createScheduledTaskFireMessage(content: string): SystemScheduledTaskFireMessage { ... }
-
-export function createStopHookSummaryMessage(
-  hookCount: number,
-  hookInfos: StopHookInfo[],
-  hookErrors: string[],
-  preventedContinuation: boolean,
-  stopReason: string | undefined,
-  hasOutput: boolean,
-  level: SystemMessageLevel,
-  toolUseID?: string,
-  hookLabel?: string,
-  totalDurationMs?: number,
-): SystemStopHookSummaryMessage { ... }
-
-export function createSyntheticUserCaveatMessage(): UserMessage { ... }
-
-export function createSystemAPIErrorMessage(
-  error: APIErrorLike,
-  retryInMs: number,
-  retryAttempt: number,
-  maxRetries: number,
-): SystemAPIErrorMessage { ... }
-
-export function createSystemMessage(
-  content: string,
-  level: SystemMessageLevel,
-  toolUseID?: string,
-  preventContinuation?: boolean,
-): SystemInformationalMessage { ... }
-
-export function createToolResultStopMessage(toolUseID: string): ToolResultBlock { ... }
-
-export function createToolUseSummaryMessage(
-  summary: string,
-  precedingToolUseIds: string[],
-): ToolUseSummaryMessage { ... }
-
-export function createTurnDurationMessage(
-  durationMs: number,
-  budget?: { tokens: number; limit: number; nudges: number },
-  messageCount?: number,
-): SystemTurnDurationMessage { ... }
-
-export function createUserInterruptionMessage({
-  toolUse = false,
-}: {
-  toolUse?: boolean
-}): UserMessage { ... }
-
-export function createUserMessage({
-  content,
-  isMeta,
-  isVisibleInTranscriptOnly,
-  isVirtual,
-  isCompactSummary,
-  summarizeMetadata,
-  toolUseResult,
-  mcpMeta,
-  uuid,
-  timestamp,
-  imagePasteIds,
-  sourceToolAssistantUUID,
-  permissionMode,
-  origin,
-}: {
-  content: string | UserContentBlock[]
-  isMeta?: true
-  isVisibleInTranscriptOnly?: true
-  isVirtual?: true
-  isCompactSummary?: true
-  toolUseResult?: unknown // 匹配工具的 `Output` 类型
-  /** MCP protocol metadata to pass through to SDK consumers (never sent to model) */
-  mcpMeta?: {
-    _meta?: Record<string, unknown>
-    structuredContent?: Record<string, unknown>
-  }
-  uuid?: UUID | string
-  timestamp?: string
-  imagePasteIds?: number[]
-  // 对于 tool_result 消息：包含匹配 tool_use 的 assistant 消息的 UUID
-  sourceToolAssistantUUID?: UUID
-  // 发送消息时的权限模式（用于倒带恢复）
-  permissionMode?: PermissionMode
-  summarizeMetadata?: {
-    messagesSummarized: number
-    userContext?: string
-    direction?: PartialCompactDirection
-  }
-  // 此消息的来源。undefined = 人类（键盘）。
-  origin?: MessageOrigin
-}): UserMessage { ... }
-
 export function ensureToolResultPairing(
   messages: (UserMessage | AssistantMessage)[],
 ): (UserMessage | AssistantMessage)[] { ... }
@@ -202,8 +39,6 @@ export function filterWhitespaceOnlyAssistantMessages(
 export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[]
 
 export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[] { ... }
-
-export function formatCommandInputTags(commandName: string, args: string): string { ... }
 
 export function getProgressMessagesFromLookup(
   message: NormalizedMessage,
@@ -283,14 +118,6 @@ export function normalizeMessagesForAPI(
   messages: Message[],
   tools: Tools = [],
 ): (UserMessage | AssistantMessage)[] { ... }
-
-export function prepareUserContent({
-  inputString,
-  precedingInputBlocks,
-}: {
-  inputString: string
-  precedingInputBlocks: UserContentBlock[]
-}): string | UserContentBlock[] { ... }
 
 export function pruneCompletedTurnArtifacts(messages: readonly Message[]): PruneResult { ... }
 
@@ -417,3 +244,30 @@ export {
   textForResubmit,
   withMemoryCorrectionHint,
 } from './messages/predicates.js'
+
+export {
+  createAgentsKilledMessage,
+  createAssistantAPIErrorMessage,
+  createAssistantMessage,
+  createAwaySummaryMessage,
+  createBridgeStatusMessage,
+  createCommandInputMessage,
+  createCompactBoundaryMessage,
+  createMemorySavedMessage,
+  createMicrocompactBoundaryMessage,
+  createModelSwitchBreadcrumbs,
+  createPermissionRetryMessage,
+  createProgressMessage,
+  createScheduledTaskFireMessage,
+  createStopHookSummaryMessage,
+  createSyntheticUserCaveatMessage,
+  createSystemAPIErrorMessage,
+  createSystemMessage,
+  createToolResultStopMessage,
+  createToolUseSummaryMessage,
+  createTurnDurationMessage,
+  createUserInterruptionMessage,
+  createUserMessage,
+  formatCommandInputTags,
+  prepareUserContent,
+} from './messages/constructors.js'
