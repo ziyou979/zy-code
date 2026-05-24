@@ -76,8 +76,6 @@ export function normalizeMessagesForAPI(
   tools: Tools = [],
 ): (UserMessage | AssistantMessage)[] { ... }
 
-export function pruneCompletedTurnArtifacts(messages: readonly Message[]): PruneResult { ... }
-
 export function reorderAttachmentsForAPI(messages: Message[]): Message[] { ... }
 
 export function reorderMessagesInUI(
@@ -90,33 +88,11 @@ export function reorderMessagesInUI(
   syntheticStreamingToolUseMessages: NormalizedAssistantMessage[],
 ): (NormalizedUserMessage | NormalizedAssistantMessage | AttachmentMessage | SystemMessage)[] { ... }
 
-export function shrinkHistoricalProgress(msg: ProgressMessage): ProgressMessage { ... }
-
-export function stripAdvisorBlocks(
-  messages: (UserMessage | AssistantMessage)[],
-): (UserMessage | AssistantMessage)[] { ... }
-
-export function stripCallerFieldFromAssistantMessage(message: AssistantMessage): AssistantMessage { ... }
-
-export function stripSignatureBlocks(messages: Message[]): Message[] { ... }
-
-export function stripToolReferenceBlocksFromUserMessage(message: UserMessage): UserMessage { ... }
-
 export function wrapCommandText(raw: string, origin: MessageOrigin | undefined): string { ... }
 
 export function wrapInSystemReminder(content: string): string { ... }
 
 export function wrapMessagesInSystemReminder(messages: UserMessage[]): UserMessage[] { ... }
-
-export type PruneResult = {
-  messages: Message[]
-  /** 释放的字节数估算（用于 profiler / 调试）。 */
-  freedBytes: number
-  /** 被丢弃的消息数。 */
-  droppedCount: number
-  /** 被瘦身（保留但裁字段）的消息数。 */
-  shrunkCount: number
-}
 
 export type StreamingThinking = {
   thinking: string
@@ -136,6 +112,8 @@ export type {
 } from './messages/predicates.js'
 
 export type { MessageLookups } from './messages/lookups.js'
+
+export type { PruneResult } from './messages/prune.js'
 
 export {
   AUTO_REJECT_MESSAGE,
@@ -227,3 +205,13 @@ export {
   formatCommandInputTags,
   prepareUserContent,
 } from './messages/constructors.js'
+
+export {
+  isThinkingBlock,
+  pruneCompletedTurnArtifacts,
+  shrinkHistoricalProgress,
+  stripAdvisorBlocks,
+  stripCallerFieldFromAssistantMessage,
+  stripSignatureBlocks,
+  stripToolReferenceBlocksFromUserMessage,
+} from './messages/prune.js'

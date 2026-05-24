@@ -244,6 +244,20 @@ export {
   hasUnresolvedHooksFromLookup,
 } from './messages/lookups.js'
 export type { MessageLookups } from './messages/lookups.js'
+export {
+  isThinkingBlock,
+  pruneCompletedTurnArtifacts,
+  shrinkHistoricalProgress,
+  stripAdvisorBlocks,
+  stripCallerFieldFromAssistantMessage,
+  stripSignatureBlocks,
+  stripToolReferenceBlocksFromUserMessage,
+} from './messages/prune.js'
+export type { PruneResult } from './messages/prune.js'
+import {
+  isThinkingBlock,
+  stripToolReferenceBlocksFromUserMessage,
+} from './messages/prune.js'
 import {
   buildMessageLookups,
   EMPTY_LOOKUPS,
@@ -305,76 +319,10 @@ function isSyntheticApiErrorMessage(
  * - buildPostCompactMessages 不保留 progress
  * - recordTranscript 已在消息产生时即时写入磁盘
  */
-const UI_ONLY_MESSAGE_TYPES = new Set<string>([
-  'progress',
-  'stream_event',
-  'stream_request_start',
-  'request_start',
-  'tombstone',
-])
-
-/**
- * 这些 attachment 子类型是纯 UI 状态信号，
- * 不会被 reinject 给模型（参见 stripReinjectedAttachments 的反向集合）。
- */
-const UI_ONLY_ATTACHMENT_SUBTYPES = new Set<string>([
-  'hook_success',
-  'hook_cancelled',
-  'hook_stopped_continuation',
-])
-
-/**
- * 估算单条消息在内存中的大致字节数（仅用于 profiler 统计，不要求精确）。
- */
-function estimateMessageBytes(msg: Message): number {
-  try {
-    // JSON.stringify 的成本与对象大小成正比，足够用于相对比较
-    return JSON.stringify(msg).length
-  } catch {
-    return 0
-  }
-}
-
 /**
  * 判断一条 progress 消息的体积是否值得"瘦身"（截断 fullOutput / 内嵌 message）。
  * 仅作用于已完成 turn 中的 progress（最新 turn 的不动）。
  */
-function shrinkProgressData(msg: ProgressMessage): ProgressMessage {
-  const data = msg.data as { type?: string; [k: string]: unknown }
-  const dataType = data?.type
-  // ShellProgress：fullOutput 是给 transcript 复制用的全文，已落盘，可清空
-  if (dataType === 'bash_progress' || dataType === 'powershell_progress') {
-    if ((data as { fullOutput?: string }).fullOutput) {
-      return {
-        ...msg,
-        data: { ...data, fullOutput: '' } as ProgressMessage['data'],
-      }
-    }
-    return msg
-  }
-  // AgentToolProgress / SkillToolProgress：内嵌完整子消息，已通过其他路径记录
-  if (dataType === 'agent_progress' || dataType === 'skill_progress') {
-    if ('message' in data && data.message) {
-      return {
-        ...msg,
-        data: { ...data, message: undefined } as unknown as ProgressMessage['data'],
-      }
-    }
-    return msg
-  }
-  return msg
-}
-
-export type PruneResult = {
-  messages: Message[]
-  /** 释放的字节数估算（用于 profiler / 调试）。 */
-  freedBytes: number
-  /** 被丢弃的消息数。 */
-  droppedCount: number
-  /** 被瘦身（保留但裁字段）的消息数。 */
-  shrunkCount: number
-}
-
 /**
  * 清理已完成 turn 中的 UI-only 临时消息，释放内存。
  *
@@ -387,67 +335,11 @@ export type PruneResult = {
  * @param messages 当前的消息数组（不会被原地修改）
  * @returns 新的消息数组 + 统计信息
  */
-export function pruneCompletedTurnArtifacts(messages: readonly Message[]): PruneResult {
-  // 找到"最后一个 user 消息"的索引——它划分了"最新 turn"和"历史 turn"。
-  // 最新 turn 的 progress 仍可能在 UI 上动画收尾，必须原样保留。
-  let lastUserIdx = -1
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i]?.type === 'user') {
-      lastUserIdx = i
-      break
-    }
-  }
-
-  let freedBytes = 0
-  let droppedCount = 0
-  const shrunkCount = 0
-
-  const result: Message[] = []
-  for (let i = 0; i < messages.length; i++) {
-    const msg = messages[i]!
-    // 最新 turn 范围内：原样保留
-    if (i >= lastUserIdx) {
-      result.push(msg)
-      continue
-    }
-
-    // 历史 turn 范围内
-    const msgType: string = msg.type
-
-    // 1. UI-only 消息：直接丢弃
-    if (UI_ONLY_MESSAGE_TYPES.has(msgType)) {
-      // progress 优先尝试瘦身——但既然在历史 turn 里，保留意义不大，直接丢弃更省。
-      freedBytes += estimateMessageBytes(msg)
-      droppedCount++
-      continue
-    }
-
-    // 2. UI-only attachment：丢弃
-    if (msgType === 'attachment') {
-      const attachmentType = (msg as AttachmentMessage).attachment?.type
-      if (attachmentType && UI_ONLY_ATTACHMENT_SUBTYPES.has(attachmentType)) {
-        freedBytes += estimateMessageBytes(msg)
-        droppedCount++
-        continue
-      }
-    }
-
-    // 其余消息原样保留
-    result.push(msg)
-  }
-
-  return { messages: result, freedBytes, droppedCount, shrunkCount }
-}
-
 /**
  * 单独导出 progress 瘦身工具，供需要"保留 progress 但只裁大字段"的场景使用。
  * 当前 pruneCompletedTurnArtifacts 选择直接丢弃历史 progress（更彻底），
  * 但保留这个 helper 以便未来如需"transcript view 仍能看到 progress 摘要"时切换策略。
  */
-export function shrinkHistoricalProgress(msg: ProgressMessage): ProgressMessage {
-  return shrinkProgressData(msg)
-}
-
 // 确定性 UUID 派生。从父 UUID + 内容块索引生成稳定的 UUID 形状字符串，
 // 使相同输入始终在跨调用时产生相同的 key。
 // 用于 normalizeMessages 和合成消息创建。
@@ -935,57 +827,6 @@ function appendMessageTagToUserMessage(message: UserMessage): UserMessage {
  * tool_reference 块仅在启用工具搜索 beta 时有效。
  * 工具搜索未启用时，需要移除这些块以避免 API 错误。
  */
-export function stripToolReferenceBlocksFromUserMessage(message: UserMessage): UserMessage {
-  const content = message.message.content
-  if (!Array.isArray(content)) {
-    return message
-  }
-
-  const hasToolReference = content.some(
-    (block) =>
-      block.type === 'tool_result' &&
-      Array.isArray(block.content) &&
-      block.content.some(isToolReferenceBlock),
-  )
-
-  if (!hasToolReference) {
-    return message
-  }
-
-  return {
-    ...message,
-    message: {
-      ...message.message,
-      content: content.map((block) => {
-        if (block.type !== 'tool_result' || !Array.isArray(block.content)) {
-          return block
-        }
-
-        // 从 tool_result 内容中过滤掉 tool_reference 块
-        const filteredContent = block.content.filter((c) => !isToolReferenceBlock(c))
-
-        // 如果全部内容都是 tool_reference 块，用占位符替换
-        if (filteredContent.length === 0) {
-          return {
-            ...block,
-            content: [
-              {
-                type: 'text' as const,
-                text: '[Tool references removed - tool search not enabled]',
-              },
-            ],
-          }
-        }
-
-        return {
-          ...block,
-          content: filteredContent,
-        }
-      }),
-    },
-  }
-}
-
 /**
  * 从 assistant 消息的 tool_use 块中剥离 'caller' 字段。
  * 'caller' 字段仅在启用工具搜索 beta 时有效。
@@ -996,38 +837,6 @@ export function stripToolReferenceBlocksFromUserMessage(message: UserMessage): U
  * 这是有意为之：此 helper 用于模型特定的后处理，
  * 在 normalizeMessagesForAPI 已运行之后使用，因此输入已标准化。
  */
-export function stripCallerFieldFromAssistantMessage(message: AssistantMessage): AssistantMessage {
-  if (!Array.isArray(message.message.content)) {
-    return message
-  }
-  const hasCallerField = message.message.content.some(
-    (block) => block.type === 'tool_call' && 'caller' in block && block.caller !== null,
-  )
-
-  if (!hasCallerField) {
-    return message
-  }
-
-  return {
-    ...message,
-    message: {
-      ...message.message,
-      content: message.message.content.map((block) => {
-        if (block.type !== 'tool_call') {
-          return block
-        }
-        // 仅用标准 API 字段显式构造
-        return {
-          type: 'tool_call' as const,
-          id: block.id,
-          name: block.name,
-          input: block.input,
-        }
-      }),
-    },
-  }
-}
-
 /**
  * content 数组是否包含 tool_result 块，其内部内容
  * 包含 tool_reference（ToolSearch 加载的工具）？
@@ -3442,26 +3251,6 @@ You have exited auto mode. The user may now want to interact more directly. You 
  * 注意：边界本身是系统消息，会被 normalizeMessagesForAPI 过滤。
  */
 /**
- * 统计消息历史中对指定工具的总调用次数
- * 达到 maxCount 时提前终止以提高效率
- */
-/**
- * 检查最近一次工具调用是否成功（有 result 且无 is_error）
- * 反向搜索以提高效率。
- */
-type ThinkingBlockType =
-  | ThinkingBlock
-  | RedactedThinkingBlock
-  | ThinkingBlock
-  | RedactedThinkingBlock
-
-function isThinkingBlock(
-  block: ContentBlock | ContentBlock | ContentBlock,
-): block is ThinkingBlockType {
-  return block.type === 'thinking' || block.type === 'redacted_thinking'
-}
-
-/**
  * 过滤最后一条 assistant 消息末尾的 thinking 块。
  * API 不允许 assistant 消息以 thinking/redacted_thinking 块结尾。
  */
@@ -3735,50 +3524,6 @@ export function filterOrphanedThinkingOnlyMessages(messages: Message[]): Message
  * 这些块的签名绑定到生成它们的 API key；在凭证变更后（例如 /login），
  * 签名失效，API 会以 400 拒绝。
  */
-export function stripSignatureBlocks(messages: Message[]): Message[] {
-  let changed = false
-  const result = messages.map((msg) => {
-    if (msg.type !== 'assistant') {
-      return msg
-    }
-
-    const content = msg.message.content
-    if (!Array.isArray(content)) {
-      return msg
-    }
-
-    const filtered = content.filter((block) => {
-      if (isThinkingBlock(block)) {
-        return false
-      }
-      if (feature('CONNECTOR_TEXT')) {
-        if (isConnectorTextBlock(block)) {
-          return false
-        }
-      }
-      return true
-    })
-    if (filtered.length === content.length) {
-      return msg
-    }
-
-    // 即使仅 thinking 消息也剥离为 []。流式传输将每个内容块生成为
-    // 单独的相同 id AssistantMessage（zy.ts:2150），因此此处的 thinking 单例
-    // 通常是被拆分的兄弟节点，mergeAssistantMessages（2232）会将其与
-    // text/tool_use 伙伴重新合并。如果返回原始消息，过期签名会在合并后存活。
-    // 空内容会被合并吸收；真正孤立的由 normalizeMessagesForAPI 中的
-    // 空内容占位符路径处理。
-
-    changed = true
-    return {
-      ...msg,
-      message: { ...msg.message, content: filtered },
-    } as typeof msg
-  })
-
-  return changed ? result : messages
-}
-
 /**
  * 创建用于 SDK 发射的工具使用摘要消息。
  * 工具使用摘要在工具批次完成后提供人类可读的进度更新。
@@ -4104,42 +3849,6 @@ export function ensureToolResultPairing(
  * 从消息中剥离 advisor 块。当 advisor beta header 不存在时，
  * API 会拒绝 name 为 "advisor" 的 server_tool_use 块。
  */
-export function stripAdvisorBlocks(
-  messages: (UserMessage | AssistantMessage)[],
-): (UserMessage | AssistantMessage)[] {
-  let changed = false
-  const result = messages.map((msg) => {
-    if (msg.type !== 'assistant') {
-      return msg
-    }
-    const content = msg.message.content
-    if (!Array.isArray(content)) {
-      return msg
-    }
-    const filtered = content.filter((b) => !isAdvisorBlock(b))
-    if (filtered.length === content.length) {
-      return msg
-    }
-    changed = true
-    if (
-      filtered.length === 0 ||
-      filtered.every(
-        (b) =>
-          b.type === 'thinking' ||
-          b.type === 'redacted_thinking' ||
-          (b.type === 'text' && !b.text?.trim()),
-      )
-    ) {
-      filtered.push({
-        type: 'text' as const,
-        text: '[Advisor response]',
-      })
-    }
-    return { ...msg, message: { ...msg.message, content: filtered } }
-  })
-  return changed ? result : messages
-}
-
 export function wrapCommandText(raw: string, origin: MessageOrigin | undefined): string {
   switch (origin?.kind) {
     case 'task-notification':
