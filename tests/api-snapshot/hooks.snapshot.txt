@@ -276,21 +276,6 @@ export async function* executeUserPromptSubmitHooks(
   ) => (request: PromptRequest) => Promise<PromptResponse>,
 ): AsyncGenerator<AggregatedHookResult> { ... }
 
-export function createBaseHookInput(
-  permissionMode?: string,
-  sessionId?: string,
-  // 窄类型声明（非 ToolUseContext），以便调用者可通过结构类型直接传入
-  // toolUseContext，而无需本函数依赖 Tool.ts。
-  agentInfo?: { agentId?: string; agentType?: string },
-): {
-  session_id: string
-  transcript_path: string
-  cwd: string
-  permission_mode?: string
-  agent_id?: string
-  agent_type?: string
-} { ... }
-
 export function executeCwdChangedHooks(
   oldCwd: string,
   newCwd: string,
@@ -311,15 +296,11 @@ export function executeFileChangedHooks(
   systemMessages: string[]
 }> { ... }
 
-export function getSessionEndHookTimeoutMs(): number { ... }
-
 export function hasBlockingResult(results: HookOutsideReplResult[]): boolean { ... }
 
 export function hasInstructionsLoadedHook(): boolean { ... }
 
 export function hasWorktreeCreateHook(): boolean { ... }
-
-export function shouldSkipHookDueToTrust(): boolean { ... }
 
 export type ConfigChangeSource =
   | 'user_settings'
@@ -366,3 +347,7 @@ export {
   getTeammateIdleHookMessage,
   getUserPromptSubmitHookBlockingMessage,
 } from './hooks/messages.js'
+
+export { createBaseHookInput, shouldSkipHookDueToTrust }
+
+export { getSessionEndHookTimeoutMs } from './hooks/config.js'
