@@ -102,21 +102,25 @@ export default function BashToolResultMessage({ content, verbose, timeoutMs }: P
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
     return earlyReturn
   }
+  // 当预期无输出且确实没有输出时，不展示 ⎿ 行
+  const shouldHideEmptyResponse =
+    noOutputExpected && !returnCodeInterpretation && !backgroundTaskId
   const messageResponseElement =
     stdout === '' && stderr.trim() === '' && !cwdResetWarning ? (
-      <MessageResponse height={1}>
-        <Text dimColor={true}>
-          {backgroundTaskId ? (
-            <>
-              {tSync('bash.runningInBackground')}{' '}
-              <KeyboardShortcutHint shortcut={'\u2193'} action="manage" parens={true} />
-            </>
-          ) : (
-            returnCodeInterpretation ||
-            (noOutputExpected ? tSync('bash.done') : tSync('bash.noOutput'))
-          )}
-        </Text>
-      </MessageResponse>
+      shouldHideEmptyResponse ? null : (
+        <MessageResponse height={1}>
+          <Text dimColor={true}>
+            {backgroundTaskId ? (
+              <>
+                {tSync('bash.runningInBackground')}{' '}
+                <KeyboardShortcutHint shortcut={'\u2193'} action="manage" parens={true} />
+              </>
+            ) : (
+              returnCodeInterpretation || tSync('bash.noOutput')
+            )}
+          </Text>
+        </MessageResponse>
+      )
     ) : null
   return (
     <BoxComponent flexDirection={'column'}>
