@@ -122,14 +122,6 @@ export async function executeWorktreeCreateHook(name: string): Promise<{ worktre
 
 export async function executeWorktreeRemoveHook(worktreePath: string): Promise<boolean> { ... }
 
-export async function getMatchingHooks(
-  appState: AppState | undefined,
-  sessionId: string,
-  hookEvent: HookEvent,
-  hookInput: HookInput,
-  tools?: Tools,
-): Promise<MatchedHook[]> { ... }
-
 export async function* executePermissionDeniedHooks<ToolInput>(
   toolName: string,
   toolUseID: string,
@@ -349,5 +341,7 @@ export {
 } from './hooks/messages.js'
 
 export { createBaseHookInput, shouldSkipHookDueToTrust }
+
+export { getMatchingHooks }
 
 export { getSessionEndHookTimeoutMs } from './hooks/config.js'
