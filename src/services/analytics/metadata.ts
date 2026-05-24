@@ -125,7 +125,7 @@ const BUILTIN_MCP_SERVER_NAMES: ReadonlySet<string> = new Set(
   feature('CHICAGO_MCP')
     ? [
         (
-          require('../../utils/computerUse/common.js') as typeof import('../../utils/computerUse/common.js')
+          require('../../services/computerUse/common.js') as typeof import('../../services/computerUse/common.js')
         ).COMPUTER_USE_MCP_SERVER_NAME,
       ]
     : [],

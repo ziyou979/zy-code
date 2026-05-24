@@ -8,7 +8,7 @@ const extractMemoriesModule = feature('EXTRACT_MEMORIES')
   ? (require('../services/extractMemories/extractMemories.js') as typeof import('../services/extractMemories/extractMemories.js'))
   : null
 const registerProtocolModule = feature('LODESTONE')
-  ? (require('./deepLink/registerProtocol.js') as typeof import('./deepLink/registerProtocol.js'))
+  ? (require('src/services/deepLink/registerProtocol.js') as typeof import('src/services/deepLink/registerProtocol.js'))
   : null
 
 /* eslint-enable @typescript-eslint/no-require-imports */

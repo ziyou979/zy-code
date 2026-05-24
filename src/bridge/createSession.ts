@@ -55,7 +55,7 @@ export async function createBridgeSession({
   const { getZyAIOAuthTokens } = await import('../utils/auth.js')
   const { getOrganizationUUID } = await import('../services/oauth/client.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
-  const { getOAuthHeaders } = await import('../utils/teleport/api.js')
+  const { getOAuthHeaders } = await import('../services/teleport/api.js')
   const { parseGitHubRepository } = await import('../utils/detectRepository.js')
   const { getDefaultBranch } = await import('../utils/git.js')
   const { getMainLoopModel } = await import('../utils/model/model.js')
@@ -191,7 +191,7 @@ export async function getBridgeSession(
   const { getZyAIOAuthTokens } = await import('../utils/auth.js')
   const { getOrganizationUUID } = await import('../services/oauth/client.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
-  const { getOAuthHeaders } = await import('../utils/teleport/api.js')
+  const { getOAuthHeaders } = await import('../services/teleport/api.js')
   const { default: axios } = await import('axios')
 
   const accessToken = opts?.getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken
@@ -266,7 +266,7 @@ export async function archiveBridgeSession(
   const { getZyAIOAuthTokens } = await import('../utils/auth.js')
   const { getOrganizationUUID } = await import('../services/oauth/client.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
-  const { getOAuthHeaders } = await import('../utils/teleport/api.js')
+  const { getOAuthHeaders } = await import('../services/teleport/api.js')
   const { default: axios } = await import('axios')
 
   const accessToken = opts?.getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken
@@ -326,7 +326,7 @@ export async function updateBridgeSessionTitle(
   const { getZyAIOAuthTokens } = await import('../utils/auth.js')
   const { getOrganizationUUID } = await import('../services/oauth/client.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
-  const { getOAuthHeaders } = await import('../utils/teleport/api.js')
+  const { getOAuthHeaders } = await import('../services/teleport/api.js')
   const { default: axios } = await import('axios')
 
   const accessToken = opts?.getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken

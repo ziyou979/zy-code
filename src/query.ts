@@ -958,7 +958,7 @@ async function* queryLoop(
       // 仅主线程 — 参见 stopHooks.ts 关于子 agent 释放主线程锁的理由。
       if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
         try {
-          const { cleanupComputerUseAfterTurn } = await import('./utils/computerUse/cleanup.js')
+          const { cleanupComputerUseAfterTurn } = await import('./services/computerUse/cleanup.js')
           await cleanupComputerUseAfterTurn(toolUseContext)
         } catch {
           // 失败是静默的 — 这是实验性清理，不是关键路径
@@ -1421,7 +1421,7 @@ async function* queryLoop(
       // 仅主线程 — 参见 stopHooks.ts 关于子 agent 的理由。
       if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
         try {
-          const { cleanupComputerUseAfterTurn } = await import('./utils/computerUse/cleanup.js')
+          const { cleanupComputerUseAfterTurn } = await import('./services/computerUse/cleanup.js')
           await cleanupComputerUseAfterTurn(toolUseContext)
         } catch {
           // 失败是静默的 — 这是实验性清理，不是关键路径

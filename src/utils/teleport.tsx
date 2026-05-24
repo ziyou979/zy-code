@@ -54,9 +54,9 @@ import {
   getBranchFromSession,
   getOAuthHeaders,
   type SessionResource,
-} from './teleport/api.js'
-import { fetchEnvironments } from './teleport/environments.js'
-import { createAndUploadGitBundle } from './teleport/gitBundle.js'
+} from 'src/services/teleport/api.js'
+import { fetchEnvironments } from 'src/services/teleport/environments.js'
+import { createAndUploadGitBundle } from 'src/services/teleport/gitBundle.js'
 export type TeleportResult = {
   messages: Message[]
   branchName: string

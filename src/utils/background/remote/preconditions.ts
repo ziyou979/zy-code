@@ -8,8 +8,8 @@ import { logForDebugging } from '../../debug.js'
 import { detectCurrentRepository } from '../../detectRepository.js'
 import { errorMessage } from '../../errors.js'
 import { findGitRoot, getIsClean } from '../../git.js'
-import { getOAuthHeaders } from '../../teleport/api.js'
-import { fetchEnvironments } from '../../teleport/environments.js'
+import { getOAuthHeaders } from 'src/services/teleport/api.js'
+import { fetchEnvironments } from 'src/services/teleport/environments.js'
 
 /**
  * Checks if user needs to log in with Zy.ai

@@ -189,20 +189,20 @@ import { assertMinVersion } from '../../utils/autoUpdater.js'
 import {
   CLAUDE_IN_CHROME_SKILL_HINT,
   CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER,
-} from '../../utils/claudeInChrome/prompt.js'
+} from '../../services/claudeInChrome/prompt.js'
 import {
   setupClaudeInChrome,
   shouldAutoEnableClaudeInChrome,
   shouldEnableClaudeInChrome,
-} from '../../utils/claudeInChrome/setup.js'
+} from '../../services/claudeInChrome/setup.js'
 import { loadConversationForResume } from '../../utils/conversationRecovery.js'
-import { buildDeepLinkBanner } from '../../utils/deepLink/banner.js'
+import { buildDeepLinkBanner } from '../../services/deepLink/banner.js'
 import { isBareMode, isEnvTruthy } from '../../utils/envUtils.js'
 import { refreshExampleCommands } from '../../utils/exampleCommands.js'
 import type { FpsMetrics } from '../../utils/fpsTracker.js'
 import { getWorktreePaths } from '../../utils/getWorktreePaths.js'
 import { getBranch, getIsGit, getWorktreeCount } from '../../utils/git.js'
-import { getGhAuthStatus } from '../../utils/github/ghAuthStatus.js'
+import { getGhAuthStatus } from '../../services/github/ghAuthStatus.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { logError } from '../../utils/log.js'
 import {
@@ -265,7 +265,7 @@ import { logContextMetrics } from 'src/utils/api.js'
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   isClaudeInChromeMCPServer,
-} from 'src/utils/claudeInChrome/common.js'
+} from 'src/services/claudeInChrome/common.js'
 import { registerCleanup } from 'src/utils/cleanupRegistry.js'
 import { createEmptyAttributionState } from 'src/utils/commitAttribution.js'
 import {
@@ -335,7 +335,7 @@ import { isInBundledMode } from '../../utils/bundledMode.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { filterExistingPaths, getKnownPathsForRepo } from '../../utils/githubRepoPathMapping.js'
 import { clearPluginCache } from '../../utils/plugins/pluginLoader.js'
-import { fetchSession, prepareApiRequest } from '../../utils/teleport/api.js'
+import { fetchSession, prepareApiRequest } from '../../services/teleport/api.js'
 import {
   checkOutTeleportedSessionBranch,
   processMessagesForTeleportResume,
@@ -940,7 +940,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
         reservedNameError = `Invalid MCP configuration: "${CLAUDE_IN_CHROME_MCP_SERVER_NAME}" is a reserved MCP name.`
       } else if (feature('CHICAGO_MCP')) {
         const { isComputerUseMCPServer, COMPUTER_USE_MCP_SERVER_NAME } = await import(
-          'src/utils/computerUse/common.js'
+          'src/services/computerUse/common.js'
         )
         if (nonSdkConfigNames.some(isComputerUseMCPServer)) {
           reservedNameError = `Invalid MCP configuration: "${COMPUTER_USE_MCP_SERVER_NAME}" is a reserved MCP name.`
@@ -1077,9 +1077,9 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   // shipped without incident; chicago places itself correctly.
   if (feature('CHICAGO_MCP') && getPlatform() === 'macos' && !getIsNonInteractiveSession()) {
     try {
-      const { getChicagoEnabled } = await import('src/utils/computerUse/gates.js')
+      const { getChicagoEnabled } = await import('src/services/computerUse/gates.js')
       if (getChicagoEnabled()) {
-        const { setupComputerUseMCP } = await import('src/utils/computerUse/setup.js')
+        const { setupComputerUseMCP } = await import('src/services/computerUse/setup.js')
         const { mcpConfig, allowedTools: cuTools } = setupComputerUseMCP()
         dynamicMcpConfig = {
           ...dynamicMcpConfig,

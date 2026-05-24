@@ -459,7 +459,7 @@ import { DevBar } from '../components/DevBar.js'
 // Session manager 已移除 - 现在使用 AppState
 import type { RemoteSessionConfig } from '../remote/RemoteSessionManager.js'
 import { REMOTE_SAFE_COMMANDS } from '../commands.js'
-import type { RemoteMessageContent } from '../utils/teleport/api.js'
+import type { RemoteMessageContent } from '../services/teleport/api.js'
 import {
   FullscreenLayout,
   useUnseenDivider,

@@ -7,7 +7,7 @@ import type {
 } from '../entrypoints/sdk/controlTypes.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logError } from '../utils/log.js'
-import { type RemoteMessageContent, sendEventToRemoteSession } from '../utils/teleport/api.js'
+import { type RemoteMessageContent, sendEventToRemoteSession } from '../services/teleport/api.js'
 import { SessionsWebSocket, type SessionsWebSocketCallbacks } from './SessionsWebSocket.js'
 
 /**

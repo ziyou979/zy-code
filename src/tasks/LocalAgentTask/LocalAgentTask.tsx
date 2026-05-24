@@ -94,10 +94,10 @@ export function updateProgressFromMessage(
   const usage = message.message.usage
   // Keep latest input (it's cumulative in the API), sum outputs
   tracker.latestInputTokens =
-    usage.inputTokens +
-    (usage.extras?.cacheCreationInputTokens ?? 0) +
-    (usage.extras?.cacheReadInputTokens ?? 0)
-  tracker.cumulativeOutputTokens += usage.outputTokens
+    (usage?.inputTokens ?? 0) +
+    (usage?.extras?.cacheCreationInputTokens ?? 0) +
+    (usage?.extras?.cacheReadInputTokens ?? 0)
+  tracker.cumulativeOutputTokens += usage?.outputTokens ?? 0
   for (const content of message.message.content) {
     if (content.type === 'tool_call') {
       tracker.toolUseCount++

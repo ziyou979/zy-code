@@ -7,8 +7,8 @@ import { openBrowser } from '../../utils/browser.js'
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   openInChrome,
-} from '../../utils/claudeInChrome/common.js'
-import { isChromeExtensionInstalled } from '../../utils/claudeInChrome/setup.js'
+} from '../../services/claudeInChrome/common.js'
+import { isChromeExtensionInstalled } from '../../services/claudeInChrome/setup.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { env } from '../../utils/env.js'
 import { isRunningOnHomespace } from '../../utils/envUtils.js'

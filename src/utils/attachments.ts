@@ -131,8 +131,8 @@ import {
   isMcpInstructionsDeltaEnabled,
   type ClientSideInstruction,
 } from './mcpInstructionsDelta.js'
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from './claudeInChrome/common.js'
-import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from './claudeInChrome/prompt.js'
+import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/services/claudeInChrome/common.js'
+import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claudeInChrome/prompt.js'
 import type { MCPServerConnection } from '../services/mcp/types.js'
 import type { HookEvent, SyncHookJSONOutput } from 'src/entrypoints/agentSdkTypes.js'
 import { checkForAsyncHookResponses, removeDeliveredAsyncHooks } from './hooks/AsyncHookRegistry.js'

@@ -34,7 +34,7 @@ import {
   getGlobalConfig,
   saveGlobalConfig,
 } from './utils/config.js'
-import { updateDeepLinkTerminalPreference } from './utils/deepLink/terminalPreference.js'
+import { updateDeepLinkTerminalPreference } from './services/deepLink/terminalPreference.js'
 import { isEnvTruthy, isRunningOnHomespace, isTestEnv } from './utils/envUtils.js'
 import { type FpsMetrics, FpsTracker } from './utils/fpsTracker.js'
 import { updateGithubRepoPathMapping } from './utils/githubRepoPathMapping.js'

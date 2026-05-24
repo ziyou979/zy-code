@@ -109,23 +109,23 @@ import { markZyAiMcpConnected } from './zyai.js'
  * 此错误应在工具执行层被捕获，以将客户端状态更新为 'needs-auth'。
  */
 
-import { isClaudeInChromeMCPServer } from '../../utils/claudeInChrome/common.js'
+import { isClaudeInChromeMCPServer } from '../../services/claudeInChrome/common.js'
 
 // 惰性加载：toolRendering.tsx 引入 React/ink；仅在 Zy-in-Chrome MCP 服务器连接时需要
 /* eslint-disable @typescript-eslint/no-require-imports */
 const ClaudeInChromeToolRendering =
-  (): typeof import('../../utils/claudeInChrome/toolRendering.js') =>
-    require('../../utils/claudeInChrome/toolRendering.js')
+  (): typeof import('../../services/claudeInChrome/toolRendering.js') =>
+    require('../../services/claudeInChrome/toolRendering.js')
 // 惰性加载：wrapper.tsx → hostAdapter.ts → executor.ts 引入两个原生模块
 //（@ant/computer-use-input + @ant/computer-use-swift）。由
 // GrowthBook zy_malort_pedway 运行时门控（见 gates.ts）。
 const computerUseWrapper = feature('CHICAGO_MCP')
-  ? (): typeof import('../../utils/computerUse/wrapper.js') =>
-      require('../../utils/computerUse/wrapper.js')
+  ? (): typeof import('../../services/computerUse/wrapper.js') =>
+      require('../../services/computerUse/wrapper.js')
   : undefined
 const isComputerUseMCPServer = feature('CHICAGO_MCP')
   ? (
-      require('../../utils/computerUse/common.js') as typeof import('../../utils/computerUse/common.js')
+      require('../../services/computerUse/common.js') as typeof import('../../services/computerUse/common.js')
     ).isComputerUseMCPServer
   : undefined
 
@@ -740,7 +740,7 @@ export const connectToServer = memoize(
         isClaudeInChromeMCPServer(name)
       ) {
         // 在进程中运行 Chrome MCP 服务器以避免生成约 325 MB 的子进程
-        const { createChromeContext } = await import('../../utils/claudeInChrome/mcpServer.js')
+        const { createChromeContext } = await import('../../services/claudeInChrome/mcpServer.js')
         const { createZyForChromeMcpServer } = await import('@ant/claude-for-chrome-mcp')
         const { createLinkedTransportPair } = await import('./InProcessTransport.js')
         const context = createChromeContext(serverRef.env)
@@ -758,7 +758,7 @@ export const connectToServer = memoize(
         // 该包的 CallTool 处理器是桩；实际分发通过 wrapper.tsx 的
         // .call() 覆盖。
         const { createComputerUseMcpServerForCli } = await import(
-          '../../utils/computerUse/mcpServer.js'
+          '../../services/computerUse/mcpServer.js'
         )
         const { createLinkedTransportPair } = await import('./InProcessTransport.js')
         inProcessServer = await createComputerUseMcpServerForCli()

@@ -116,9 +116,12 @@ export function renderContentWithFileLinks(
   let result: string
   if (!hasAnsi) {
     result = content.replace(FILE_PATH_RE, (_match, filePath: string) => {
-      // 纯文本路径：用 zy 主题色着色后再包裹 OSC 8
-      const colored = zyColor ? colorize(_match, zyColor, 'foreground') : _match
-      return wrapWithFileLink(filePath, colored)
+      // 仅文件路径部分包裹 OSC 8，行号留在外面保持纯文本，
+      // 让终端自带路径检测能识别完整的 file:lineNumber 模式
+      const lineNumberPart = _match.slice(filePath.length)
+      const coloredPath = zyColor ? colorize(filePath, zyColor, 'foreground') : filePath
+      const coloredLineNum = zyColor ? colorize(lineNumberPart, zyColor, 'foreground') : lineNumberPart
+      return wrapWithFileLink(filePath, coloredPath) + coloredLineNum
     })
   } else {
     // 含 ANSI 序列：在纯文本上定位匹配，然后在原始字符串中插入 OSC 8
@@ -139,11 +142,13 @@ export function renderContentWithFileLinks(
         segments.push(content.slice(lastOriginalIndex, originalStart))
       }
 
-      // 用 OSC 8 包裹匹配的文件路径显示文本
-      // 使用原始文本（含 ANSI 颜色序列）作为 display，保留主题色
+      // 仅文件路径部分包裹 OSC 8，行号留在外面保持纯文本
       const filePath = match[1]!
-      const display = content.slice(originalStart, originalEnd)
-      segments.push(wrapWithFileLink(filePath, display))
+      const filePathEnd = match.index + filePath.length
+      const originalFilePathEnd = map[filePathEnd]!
+      const filePathDisplay = content.slice(originalStart, originalFilePathEnd)
+      const lineNumberDisplay = content.slice(originalFilePathEnd, originalEnd)
+      segments.push(wrapWithFileLink(filePath, filePathDisplay) + lineNumberDisplay)
       lastOriginalIndex = originalEnd
     }
 

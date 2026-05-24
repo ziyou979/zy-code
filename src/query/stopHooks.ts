@@ -161,7 +161,7 @@ export async function* handleStopHooks(
   // mid-turn. Subagents don't start CU sessions so this is a pure skip.
   if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
     try {
-      const { cleanupComputerUseAfterTurn } = await import('../utils/computerUse/cleanup.js')
+      const { cleanupComputerUseAfterTurn } = await import('../services/computerUse/cleanup.js')
       await cleanupComputerUseAfterTurn(toolUseContext)
     } catch {
       // Failures are silent — this is dogfooding cleanup, not critical path

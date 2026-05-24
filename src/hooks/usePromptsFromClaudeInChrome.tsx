@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { z } from 'zod/v4'
 import { callIdeRpc } from '../services/mcp/mcpToolCall.js'
 import type { ConnectedMCPServer, MCPServerConnection } from '../services/mcp/types.js'
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from '../utils/claudeInChrome/common.js'
+import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from '../services/claudeInChrome/common.js'
 import { lazySchema } from '../utils/lazySchema.js'
 
 // Schema for the prompt notification from Chrome extension (JSON-RPC 2.0 format)

@@ -11,7 +11,7 @@ import {
 } from '../../services/analytics/index.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
 import { openBrowser } from '../../utils/browser.js'
-import { getGhAuthStatus } from '../../utils/github/ghAuthStatus.js'
+import { getGhAuthStatus } from '../../services/github/ghAuthStatus.js'
 import {
   createDefaultEnvironment,
   getCodeWebUrl,

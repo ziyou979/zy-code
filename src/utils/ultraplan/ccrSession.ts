@@ -9,7 +9,7 @@ import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../../tools/ExitPlanModeTool/consta
 import type { ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
 import { logForDebugging } from '../debug.js'
 import { sleep } from '../sleep.js'
-import { isTransientNetworkError } from '../teleport/api.js'
+import { isTransientNetworkError } from 'src/services/teleport/api.js'
 import { type PollRemoteSessionResponse, pollRemoteSessionEvents } from '../teleport.js'
 
 const POLL_INTERVAL_MS = 3000

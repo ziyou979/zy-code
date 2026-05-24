@@ -3,7 +3,7 @@ import { Text } from '../ink.js'
 import {
   isChromeExtensionInstalled,
   shouldEnableClaudeInChrome,
-} from '../utils/claudeInChrome/setup.js'
+} from '../services/claudeInChrome/setup.js'
 import { isRunningOnHomespace } from '../utils/envUtils.js'
 import { useStartupNotification } from './notifs/useStartupNotification.js'
 
