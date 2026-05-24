@@ -173,7 +173,9 @@ function printResumeHint(): void {
         resumeArg = sessionId
       }
 
-      writeSync(1, chalk.dim(`\nResume this session with:\nzy --resume ${resumeArg}\n`))
+      // \r 回到行首 + \x1b[K 清除当前行残留（alt screen 退出后光标位置不确定，
+      // 状态栏内容可能残留在当前行）
+      writeSync(1, `\r\x1b[K${chalk.dim(`Resume this session with:\nzy --resume ${resumeArg}\n`)}`)
       resumeHintPrinted = true
     } catch {
       // Ignore write errors
