@@ -300,55 +300,13 @@ export function createBaseHookInput(
   }
 }
 
-export interface HookBlockingError {
-  blockingError: string
-  command: string
-}
-
-/** 从 MCP SDK 重新导出 ElicitResult 作为 ElicitationResponse，用于向后兼容。 */
-export type ElicitationResponse = ElicitResult
-
-export interface HookResult {
-  message?: HookResultMessage
-  systemMessage?: string
-  blockingError?: HookBlockingError
-  outcome: 'success' | 'blocking' | 'non_blocking_error' | 'cancelled'
-  preventContinuation?: boolean
-  stopReason?: string
-  permissionBehavior?: 'ask' | 'deny' | 'allow' | 'passthrough'
-  hookPermissionDecisionReason?: string
-  additionalContext?: string
-  initialUserMessage?: string
-  updatedInput?: Record<string, unknown>
-  updatedMCPToolOutput?: unknown
-  permissionRequestResult?: PermissionRequestResult
-  elicitationResponse?: ElicitationResponse
-  watchPaths?: string[]
-  elicitationResultResponse?: ElicitationResponse
-  retry?: boolean
-  hook: HookCommand | HookCallback | FunctionHook
-}
-
-export type AggregatedHookResult = {
-  message?: HookResultMessage
-  blockingError?: HookBlockingError
-  preventContinuation?: boolean
-  stopReason?: string
-  /** 终端控制序列（如 OSC、光标移动等），hook 返回后立即写入 stdout */
-  terminalSequence?: string
-  hookPermissionDecisionReason?: string
-  hookSource?: string
-  permissionBehavior?: PermissionResult['behavior']
-  additionalContexts?: string[]
-  initialUserMessage?: string
-  updatedInput?: Record<string, unknown>
-  updatedMCPToolOutput?: unknown
-  permissionRequestResult?: PermissionRequestResult
-  watchPaths?: string[]
-  elicitationResponse?: ElicitationResponse
-  elicitationResultResponse?: ElicitationResponse
-  retry?: boolean
-}
+import type {
+  AggregatedHookResult,
+  ElicitationResponse,
+  HookBlockingError,
+  HookResult,
+} from './hooks/types.js'
+export type { AggregatedHookResult, ElicitationResponse, HookBlockingError, HookResult }
 
 /**
  * 解析 JSON 字符串并根据 hook 输出的 Zod schema 进行校验。

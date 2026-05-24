@@ -85,7 +85,9 @@ export async function executePostCompactHooks(
   },
   signal?: AbortSignal,
   timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): Promise< { ... }
+): Promise<{
+  userDisplayMessage?: string
+}> { ... }
 
 export async function executePreCompactHooks(
   compactData: {
@@ -94,7 +96,11 @@ export async function executePreCompactHooks(
   },
   signal?: AbortSignal,
   timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): Promise< { ... }
+): Promise<{
+  newCustomInstructions?: string
+  userDisplayMessage?: string
+  blocked?: boolean
+}> { ... }
 
 export async function executeSessionEndHooks(
   reason: ExitReason,
@@ -112,7 +118,7 @@ export async function executeStopFailureHooks(
   timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
 ): Promise<void> { ... }
 
-export async function executeWorktreeCreateHook(name: string): Promise< { ... }
+export async function executeWorktreeCreateHook(name: string): Promise<{ worktreePath: string }> { ... }
 
 export async function executeWorktreeRemoveHook(worktreePath: string): Promise<boolean> { ... }
 
@@ -276,19 +282,34 @@ export function createBaseHookInput(
   // 窄类型声明（非 ToolUseContext），以便调用者可通过结构类型直接传入
   // toolUseContext，而无需本函数依赖 Tool.ts。
   agentInfo?: { agentId?: string; agentType?: string },
-): { ... }
+): {
+  session_id: string
+  transcript_path: string
+  cwd: string
+  permission_mode?: string
+  agent_id?: string
+  agent_type?: string
+} { ... }
 
 export function executeCwdChangedHooks(
   oldCwd: string,
   newCwd: string,
   timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): Promise< { ... }
+): Promise<{
+  results: HookOutsideReplResult[]
+  watchPaths: string[]
+  systemMessages: string[]
+}> { ... }
 
 export function executeFileChangedHooks(
   filePath: string,
   event: 'change' | 'add' | 'unlink',
   timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): Promise< { ... }
+): Promise<{
+  results: HookOutsideReplResult[]
+  watchPaths: string[]
+  systemMessages: string[]
+}> { ... }
 
 export function getPreToolHookBlockingMessage(
   hookName: string,
@@ -315,12 +336,6 @@ export function hasWorktreeCreateHook(): boolean { ... }
 
 export function shouldSkipHookDueToTrust(): boolean { ... }
 
-export interface HookBlockingError { ... }
-
-export interface HookResult { ... }
-
-export type AggregatedHookResult = { ... }
-
 export type ConfigChangeSource =
   | 'user_settings'
   | 'project_settings'
@@ -328,34 +343,24 @@ export type ConfigChangeSource =
   | 'policy_settings'
   | 'skills'
 
-/**
- * Execute config change hooks when configuration files change during a session.
- * Fired by file watchers when settings, skills, or commands change on disk.
- * Enables enterprise admins to audit/log configuration changes for security.
- *
- * Policy settings are enterprise-managed and must never be blockable by hooks.
- * Hooks still fire (for audit logging) but blocking results are ignored — callers
- * will always see an empty result for policy sources.
- *
- * @param source The type of config that changed
- * @param filePath Optional path to the changed file
- * @param timeoutMs Optional timeout in milliseconds for hook execution
- */
-export async function executeConfigChangeHooks(
-  source: ConfigChangeSource,
-  filePath?: string,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): Promise<HookOutsideReplResult[]> { ... }
+export type ElicitationHookResult = {
+  elicitationResponse?: ElicitationResponse
+  blockingError?: HookBlockingError
+}
 
-export type ElicitationHookResult = { ... }
+export type ElicitationResultHookResult = {
+  elicitationResultResponse?: ElicitationResponse
+  blockingError?: HookBlockingError
+}
 
-export type ElicitationResponse = ElicitResult
-
-export interface HookResult { ... }
-
-export type ElicitationResultHookResult = { ... }
-
-export type HookOutsideReplResult = { ... }
+export type HookOutsideReplResult = {
+  command: string
+  succeeded: boolean
+  output: string
+  blocked: boolean
+  watchPaths?: string[]
+  systemMessage?: string
+}
 
 export type InstructionsLoadReason =
   | 'session_start'
@@ -366,26 +371,4 @@ export type InstructionsLoadReason =
 
 export type InstructionsMemoryType = 'User' | 'Project' | 'Local' | 'Managed'
 
-/**
- * Check if InstructionsLoaded hooks are configured (without executing them).
- * Callers should check this before invoking executeInstructionsLoadedHooks to avoid
- * building hook inputs for every instruction file when no hook is configured.
- *
- * Checks both settings-file hooks (getHooksConfigFromSnapshot) and registered
- * hooks (plugin hooks + SDK callback hooks via registerHookCallbacks). Session-
- * derived hooks (structured output enforcement etc.) are internal and not checked.
- */
-export function hasInstructionsLoadedHook(): boolean { ... }
-
-export type InstructionsMemoryType = 'User' | 'Project' | 'Local' | 'Managed'
-
-/**
- * Check if InstructionsLoaded hooks are configured (without executing them).
- * Callers should check this before invoking executeInstructionsLoadedHooks to avoid
- * building hook inputs for every instruction file when no hook is configured.
- *
- * Checks both settings-file hooks (getHooksConfigFromSnapshot) and registered
- * hooks (plugin hooks + SDK callback hooks via registerHookCallbacks). Session-
- * derived hooks (structured output enforcement etc.) are internal and not checked.
- */
-export function hasInstructionsLoadedHook(): boolean { ... }
+export type { AggregatedHookResult, ElicitationResponse, HookBlockingError, HookResult }

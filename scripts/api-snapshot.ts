@@ -1,19 +1,18 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { basename } from 'node:path'
+import ts from 'typescript'
 
 /**
- * 为 god file 抽取 API 表面快照。
+ * 为 god file 抽取 API 表面快照（基于 TS AST，避免字符扫描的边界陷阱）。
  *
- * 用途：Phase 4 拆分这些大文件时，重构前后 diff 此快照应为空——
- * 说明 export 集合 + 签名都保留。
+ * 截断策略：
+ * - function / class：保留签名（params + 返回类型），body 替换为 `{ ... }`
+ * - const / let / var：保留名称 + 类型注解，`= ...` 占位
+ * - type alias / interface / enum：完整保留
+ * - export { ... } / export type { ... } / export * from：完整保留
  *
- * 实现：token 扫描跟踪 () [] {} 三种括号深度，定位 export 声明结尾：
- * - function/class/interface body 起始 `{` (depth=0) 替换为 ` { ... }`
- * - const 赋值 `=` (depth=0) 替换为 ` = ...`
- * - type alias 末尾 `;` 截断
- *
- * 运行：bun scripts/api-snapshot.ts          # 重新生成快照
- * 校验：bun test tests/api-snapshot/         # 校验快照与源码一致
+ * 运行：bun scripts/api-snapshot.ts
+ * 校验：bun test tests/api-snapshot/
  */
 
 export const GOD_FILES = [
@@ -22,106 +21,72 @@ export const GOD_FILES = [
   'src/utils/messages.ts',
 ] as const
 
-export function stripBody(text: string): string {
-  let parenDepth = 0
-  let bracketDepth = 0
-  let braceDepth = 0
-  let inString: string | null = null
-  let inLineComment = false
-  let inBlockComment = false
-  let cutAt = -1
-  let cutKind: '{' | '=' | ';' = '{'
+function getModifierKinds(node: ts.Node): ts.SyntaxKind[] {
+  if (!ts.canHaveModifiers(node)) return []
+  return (ts.getModifiers(node) ?? []).map((m) => m.kind)
+}
 
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i]
-    const next = text[i + 1]
+function hasExportModifier(node: ts.Node): boolean {
+  return getModifierKinds(node).includes(ts.SyntaxKind.ExportKeyword)
+}
 
-    if (inLineComment) {
-      if (c === '\n') inLineComment = false
-      continue
-    }
-    if (inBlockComment) {
-      if (c === '*' && next === '/') {
-        inBlockComment = false
-        i++
-      }
-      continue
-    }
-    if (inString) {
-      if (c === '\\') {
-        i++
-        continue
-      }
-      if (c === inString) inString = null
-      continue
-    }
-    if (c === '/' && next === '/') {
-      inLineComment = true
-      i++
-      continue
-    }
-    if (c === '/' && next === '*') {
-      inBlockComment = true
-      i++
-      continue
-    }
-    if (c === "'" || c === '"' || c === '`') {
-      inString = c
-      continue
-    }
+function emitDeclaration(node: ts.Node, src: string): string | null {
+  const full = src.slice(node.getStart(), node.getEnd())
 
-    if (c === '(') parenDepth++
-    else if (c === ')') parenDepth--
-    else if (c === '[') bracketDepth++
-    else if (c === ']') bracketDepth--
-    else if (c === '{') {
-      if (parenDepth === 0 && bracketDepth === 0 && braceDepth === 0) {
-        cutAt = i
-        cutKind = '{'
-        break
-      }
-      braceDepth++
-    } else if (c === '}') {
-      braceDepth--
-    } else if (
-      c === '=' &&
-      next !== '>' &&
-      next !== '=' &&
-      text[i - 1] !== '=' &&
-      text[i - 1] !== '!' &&
-      text[i - 1] !== '<' &&
-      text[i - 1] !== '>'
-    ) {
-      if (parenDepth === 0 && bracketDepth === 0 && braceDepth === 0 && cutAt === -1) {
-        cutAt = i
-        cutKind = '='
-      }
-    } else if (c === ';' && parenDepth === 0 && bracketDepth === 0 && braceDepth === 0) {
-      cutAt = i
-      cutKind = ';'
-      break
-    }
+  if (ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node)) {
+    // 截断 body：第一个 `{`（属于 body，参数已经在 () 内）
+    // body 是 .body 字段，可以精确取位
+    // biome-ignore lint/suspicious/noExplicitAny: 通用 Node 不暴露 .body 字段
+    const body = (node as any).body as ts.Node | undefined
+    if (!body) return full // ambient declaration without body
+    const sigEnd = body.getStart() - node.getStart() // 相对 full 的偏移
+    return `${full.slice(0, sigEnd).trimEnd()} { ... }`
   }
 
-  if (cutAt === -1) return text.trim()
-  const head = text.slice(0, cutAt).trimEnd()
-  if (cutKind === '{') return `${head} { ... }`
-  if (cutKind === '=') return `${head} = ...`
-  return `${head};`
+  if (ts.isVariableStatement(node)) {
+    // export const X = ...; 多个声明合并到一个 statement
+    // 取每个 VariableDeclaration 的 name + type
+    const parts = node.declarationList.declarations.map((d) => {
+      const name = d.name.getText()
+      const type = d.type ? `: ${d.type.getText()}` : ''
+      return `${name}${type} = ...`
+    })
+    const keyword =
+      node.declarationList.flags & ts.NodeFlags.Const
+        ? 'const'
+        : node.declarationList.flags & ts.NodeFlags.Let
+          ? 'let'
+          : 'var'
+    return `export ${keyword} ${parts.join(', ')}`
+  }
+
+  if (ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node) || ts.isEnumDeclaration(node)) {
+    return full
+  }
+
+  if (ts.isExportDeclaration(node)) {
+    // export { ... } from / export type { ... } / export * from
+    return full
+  }
+
+  return null
 }
 
 export function generateSnapshot(file: string): string {
   const src = readFileSync(file, 'utf8')
-  const lines = src.split('\n')
+  const sf = ts.createSourceFile(file, src, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS)
   const out: string[] = []
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]!
-    if (!/^export (async )?(function|const|let|var|type|interface|enum|class)\b/.test(line)) {
+  for (const node of sf.statements) {
+    // ExportDeclaration 始终是 export，不需要 modifier 检查
+    if (ts.isExportDeclaration(node)) {
+      const r = emitDeclaration(node, src)
+      if (r) out.push(r)
       continue
     }
-    const chunk = lines.slice(i, Math.min(i + 80, lines.length)).join('\n')
-    out.push(stripBody(chunk))
+    if (!hasExportModifier(node)) continue
+    const r = emitDeclaration(node, src)
+    if (r) out.push(r)
   }
 
   out.sort()
@@ -134,7 +99,6 @@ export function generateSnapshot(file: string): string {
   return header + out.join('\n\n') + '\n'
 }
 
-// 入口（仅在直接 bun 运行时执行）
 if (import.meta.main) {
   for (const file of GOD_FILES) {
     const snapshot = generateSnapshot(file)
