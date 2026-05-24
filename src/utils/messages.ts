@@ -258,6 +258,31 @@ import {
   isThinkingBlock,
   stripToolReferenceBlocksFromUserMessage,
 } from './messages/prune.js'
+export {
+  ensureNonEmptyAssistantContent,
+  filterOrphanedThinkingOnlyMessages,
+  filterTrailingThinkingFromLastAssistant,
+  filterWhitespaceOnlyAssistantMessages,
+  mergeAdjacentUserMessages,
+  mergeAssistantMessages,
+  mergeUserContentBlocks,
+  mergeUserMessages,
+  mergeUserMessagesAndToolResults,
+  normalizeContentFromAPI,
+  normalizeMessages,
+} from './messages/normalize.js'
+import {
+  ensureNonEmptyAssistantContent,
+  filterOrphanedThinkingOnlyMessages,
+  filterTrailingThinkingFromLastAssistant,
+  filterWhitespaceOnlyAssistantMessages,
+  isToolResultMessage,
+  mergeAdjacentUserMessages,
+  mergeAssistantMessages,
+  mergeUserMessages,
+  mergeUserMessagesAndToolResults,
+  smooshIntoToolResult,
+} from './messages/normalize.js'
 import {
   buildMessageLookups,
   EMPTY_LOOKUPS,
@@ -344,98 +369,6 @@ function isSyntheticApiErrorMessage(
 // 使相同输入始终在跨调用时产生相同的 key。
 // 用于 normalizeMessages 和合成消息创建。
 // 拆分消息，使每个内容块获得自己的消息
-export function normalizeMessages(messages: AssistantMessage[]): NormalizedAssistantMessage[]
-export function normalizeMessages(messages: UserMessage[]): NormalizedUserMessage[]
-export function normalizeMessages(
-  messages: (AssistantMessage | UserMessage)[],
-): (NormalizedAssistantMessage | NormalizedUserMessage)[]
-export function normalizeMessages(messages: Message[]): NormalizedMessage[]
-export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
-  // isNewChain 追踪标准化时是否需要为新消息生成 UUID。
-  // 当消息有多个内容块时，我们将其拆分为多条消息，
-  // 每条只有一个内容块。此时，我们需要为
-  // 所有后续消息生成新 UUID，以维持正确排序并防止 UUID 重复。
-  // 一旦遇到有多个内容块的消息，此标志设为 true，
-  // 并在标准化过程中对所有后续消息保持为 true。
-  let isNewChain = false
-  return messages.flatMap((message) => {
-    switch (message.type) {
-      case 'assistant': {
-        const content = message.message.content
-        if (!Array.isArray(content)) {
-          return []
-        }
-        isNewChain = isNewChain || content.length > 1
-        return content.map((_, index) => {
-          const uuid = isNewChain ? deriveUUID(message.uuid as UUID, index) : message.uuid
-          return {
-            type: 'assistant' as const,
-            timestamp: message.timestamp,
-            message: {
-              ...message.message,
-              content: [_],
-              context_management: message.message.context_management ?? null,
-            },
-            isMeta: message.isMeta,
-            isVirtual: message.isVirtual,
-            requestId: message.requestId,
-            uuid,
-            error: message.error,
-            isApiErrorMessage: message.isApiErrorMessage,
-            advisorModel: message.advisorModel,
-          } as NormalizedAssistantMessage
-        })
-      }
-      case 'attachment':
-        return [message]
-      case 'progress':
-        return [message]
-      case 'system':
-        return [message]
-      case 'user': {
-        if (typeof message.message.content === 'string') {
-          const uuid = isNewChain ? deriveUUID(message.uuid as UUID, 0) : message.uuid
-          return [
-            {
-              ...message,
-              uuid,
-              message: {
-                ...message.message,
-                content: [{ type: 'text', text: message.message.content }],
-              },
-            } as NormalizedMessage,
-          ]
-        }
-        isNewChain = isNewChain || message.message.content.length > 1
-        let imageIndex = 0
-        return message.message.content.map((_, index) => {
-          const isImage = _.type === 'image'
-          // 对于图像内容块，仅提取此图像的 ID
-          const imageId =
-            isImage && message.imagePasteIds ? message.imagePasteIds[imageIndex] : undefined
-          if (isImage) {
-            imageIndex++
-          }
-          return {
-            ...createUserMessage({
-              content: [_],
-              toolUseResult: message.toolUseResult,
-              mcpMeta: message.mcpMeta,
-              isMeta: message.isMeta || undefined,
-              isVisibleInTranscriptOnly: message.isVisibleInTranscriptOnly,
-              isVirtual: message.isVirtual,
-              timestamp: message.timestamp,
-              imagePasteIds: imageId !== undefined ? [imageId] : undefined,
-              origin: message.origin,
-            }),
-            uuid: isNewChain ? deriveUUID(message.uuid as UUID, index) : message.uuid,
-          } as NormalizedMessage
-        })
-      }
-    }
-  })
-}
-
 // 重新排序，将结果消息移到工具使用消息之后
 export function reorderMessagesInUI(
   messages: (
@@ -1423,120 +1356,10 @@ export function normalizeMessagesForAPI(
   return sanitized
 }
 
-export function mergeUserMessagesAndToolResults(a: UserMessage, b: UserMessage): UserMessage {
-  const lastContent = normalizeUserTextContent(a.message.content)
-  const currentContent = normalizeUserTextContent(b.message.content)
-  return {
-    ...a,
-    message: {
-      ...a.message,
-      content: hoistToolResults(mergeUserContentBlocks(lastContent, currentContent)),
-    },
-  }
-}
-
-export function mergeAssistantMessages(a: AssistantMessage, b: AssistantMessage): AssistantMessage {
-  return {
-    ...a,
-    message: {
-      ...a.message,
-      content: [
-        ...(Array.isArray(a.message.content) ? a.message.content : []),
-        ...(Array.isArray(b.message.content) ? b.message.content : []),
-      ],
-    },
-  }
-}
-
-function isToolResultMessage(msg: Message): boolean {
-  if (msg.type !== 'user') {
-    return false
-  }
-  const content = msg.message.content
-  if (typeof content === 'string') {
-    return false
-  }
-  return content.some((block) => block.type === 'tool_result')
-}
-
-export function mergeUserMessages(a: UserMessage, b: UserMessage): UserMessage {
-  const lastContent = normalizeUserTextContent(a.message.content)
-  const currentContent = normalizeUserTextContent(b.message.content)
-  if (feature('HISTORY_SNIP')) {
-    // 合并后的消息仅当所有合并消息都是 meta 时才是 meta。如果任何
-    // 操作数是真实的用户内容，结果就不能标记为 isMeta
-    // （这样 [id:] 标签会被注入，并被视为用户可见内容）。
-    // 通过完整运行时检查门控，因为更改 isMeta 语义会影响下游调用者
-    // （例如 SDK harness 测试中的 VCR fixture 哈希），所以这仅在 snip
-    // 实际启用时才触发 — 而非对所有 ant。
-    const { isSnipRuntimeEnabled } =
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      require('../services/compact/snipCompact.js') as typeof import('../services/compact/snipCompact.js')
-    if (isSnipRuntimeEnabled()) {
-      return {
-        ...a,
-        isMeta: a.isMeta && b.isMeta ? (true as const) : undefined,
-        uuid: a.isMeta ? b.uuid : a.uuid,
-        message: {
-          ...a.message,
-          content: hoistToolResults(joinTextAtSeam(lastContent, currentContent)),
-        },
-      }
-    }
-  }
-  return {
-    ...a,
-    // 保留非 meta 消息的 uuid，使 [id:] 标签（从 uuid 派生）在 API 调用间保持稳定
-    //（meta 消息如系统上下文每次调用都会获得新的 uuid）
-    uuid: a.isMeta ? b.uuid : a.uuid,
-    message: {
-      ...a.message,
-      content: hoistToolResults(joinTextAtSeam(lastContent, currentContent)),
-    },
-  }
-}
-
-function mergeAdjacentUserMessages(
-  msgs: (UserMessage | AssistantMessage)[],
-): (UserMessage | AssistantMessage)[] {
-  const out: (UserMessage | AssistantMessage)[] = []
-  for (const m of msgs) {
-    const prev = out.at(-1)
-    if (m.type === 'user' && prev?.type === 'user') {
-      out[out.length - 1] = mergeUserMessages(prev, m) // 左值赋值 — 不能使用 .at()
-    } else {
-      out.push(m)
-    }
-  }
-  return out
-}
-
 /**
  * 在 UserMessage 的 content[] 列表中，tool_result 块必须排在前面，
  * 以避免 "tool result must follow tool use" API 错误。
  */
-function hoistToolResults(content: UserContentBlock[]): UserContentBlock[] {
-  const toolResults: UserContentBlock[] = []
-  const otherBlocks: UserContentBlock[] = []
-
-  for (const block of content) {
-    if (block.type === 'tool_result') {
-      toolResults.push(block)
-    } else {
-      otherBlocks.push(block)
-    }
-  }
-
-  return [...toolResults, ...otherBlocks]
-}
-
-function normalizeUserTextContent(a: string | UserContentBlock[]): UserContentBlock[] {
-  if (typeof a === 'string') {
-    return [{ type: 'text', text: a }]
-  }
-  return a
-}
-
 /**
  * 拼接两个内容块数组，当拼接处为 text-text 时在 a 的最后一个文本块后追加 `\n`。
  * API 会将用户消息中相邻的文本块无分隔符地拼接，因此两个排队的 prompt
@@ -1546,17 +1369,6 @@ function normalizeUserTextContent(a: string | UserContentBlock[]): UserContentBl
  * smooshSystemReminderSiblings 通过 `startsWith('<system-reminder>')` 分类，
  * 前缀到 b 侧会在 b 是 SR 包装的附件时破坏该判断。
  */
-function joinTextAtSeam(a: UserContentBlock[], b: UserContentBlock[]): UserContentBlock[] {
-  const lastA = a.at(-1)
-  const firstB = b[0]
-  if (lastA?.type === 'text' && firstB?.type === 'text') {
-    return [...a.slice(0, -1), { ...lastA, text: `${lastA.text}\n` }, ...b]
-  }
-  return [...a, ...b]
-}
-
-type ToolResultContentItem = Extract<ToolResultBlock['content'], readonly unknown[]>[number]
-
 /**
  * 将内容块折叠到 tool_result 的 content 中。返回更新后的 tool_result，
  * 如果折叠不可行（tool_reference 约束）则返回 `null`。
@@ -1569,228 +1381,8 @@ type ToolResultContentItem = Extract<ToolResultBlock['content'], readonly unknow
  * - 数组内容含 tool_reference → null
  * - 其他情况 → 数组，相邻 text 合并（notebook.ts 惯用法）
  */
-function smooshIntoToolResult(tr: ToolResultBlock, blocks: ContentBlock[]): ToolResultBlock | null {
-  if (blocks.length === 0) {
-    return tr
-  }
-
-  const existing = tr.content
-  if (Array.isArray(existing) && existing.some(isToolReferenceBlock)) {
-    return null
-  }
-
-  // API 约束：is_error 的 tool_result 必须只包含 text 块。
-  // 队列命令的兄弟节点可能携带图片（粘贴的截图） — 将它们 smoosh 到
-  // 错误结果会产生一个每次后续调用都 400 且无法通过 /fork 恢复的记录。
-  // 图片不会丢失：它会作为正常的 user 轮次到达。
-  if (tr.isError) {
-    blocks = blocks.filter((b) => b.type === 'text')
-    if (blocks.length === 0) {
-      return tr
-    }
-  }
-
-  const allText = blocks.every((b) => b.type === 'text')
-
-  // 当 existing 是 string/undefined 且所有传入块都是 text 时保留字符串形态 —
-  // 这是常见情况（向 Bash/Read 结果注入 hook 提醒），且与旧版 smoosh 输出形态一致。
-  if (allText && (existing === undefined || typeof existing === 'string')) {
-    const joined = [
-      ((existing as string) ?? '').trim(),
-      ...blocks.map((b) => (b as TextBlock).text.trim()),
-    ]
-      .filter(Boolean)
-      .join('\n\n')
-    return { ...tr, content: joined }
-  }
-
-  // 一般情况：归一化为数组、拼接、合并相邻 text
-  const base: ToolResultContentItem[] =
-    existing === undefined
-      ? []
-      : typeof existing === 'string'
-        ? existing.trim()
-          ? [{ type: 'text', text: existing.trim() }]
-          : []
-        : [...existing]
-
-  const merged: ToolResultContentItem[] = []
-  for (const b of [...base, ...blocks]) {
-    if (b.type === 'text') {
-      const t = b.text.trim()
-      if (!t) {
-        continue
-      }
-      const prev = merged.at(-1)
-      if (prev?.type === 'text') {
-        merged[merged.length - 1] = { ...prev, text: `${prev.text}\n\n${t}` } // 左值赋值
-      } else {
-        merged.push({ type: 'text', text: t })
-      }
-    } else {
-      // image / search_result / document — 直接传递
-      merged.push(b as ToolResultContentItem)
-    }
-  }
-
-  return { ...tr, content: merged }
-}
-
-export function mergeUserContentBlocks(
-  a: UserContentBlock[],
-  b: UserContentBlock[],
-): UserContentBlock[] {
-  // 见 https://anthropic.slack.com/archives/C06FE2FP0Q2/p1747586370117479 和
-  // https://anthropic.slack.com/archives/C0AHK9P0129/p1773159663856279：
-  // tool_result 之后的任何兄弟节点在线上都会渲染为 </function_results>\n\nHuman:<...>。
-  // 在对话中反复出现时，这会教 capy 在尾部裸发出 Human: → 3-token 空 end_turn。
-  // A/B 测试（sai-20260310-161901）验证：smoosh 到 tool_result.content → 92% → 0%。
-  const lastBlock = last(a)
-  if (lastBlock?.type !== 'tool_result') {
-    return [...a, ...b]
-  }
-
-  if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_sysreminder_smoosh', false)) {
-    // 旧版（非门控）smoosh：仅 string-content tool_result + 全 text 兄弟节点 → 连接字符串。
-    // 与通用 smoosh 之前的 main 行为一致。
-    // 前置条件保证 smooshIntoToolResult 命中其字符串路径
-    //（无 tool_reference 退出，字符串输出形态得到保留）。
-    if (typeof lastBlock.content === 'string' && b.every((x) => x.type === 'text')) {
-      const copy = a.slice()
-      copy[copy.length - 1] = smooshIntoToolResult(lastBlock, b)!
-      return copy
-    }
-    return [...a, ...b]
-  }
-
-  // 通用 smoosh（门控）：将所有非 tool_result 块类型（text、image、document、search_result）
-  // 折叠到 tool_result.content 中。tool_result 块保持为兄弟节点（稍后由 hoistToolResults 提升）。
-  const toSmoosh = b.filter((x) => x.type !== 'tool_result')
-  const toolResults = b.filter((x) => x.type === 'tool_result')
-  if (toSmoosh.length === 0) {
-    return [...a, ...b]
-  }
-
-  const smooshed = smooshIntoToolResult(lastBlock, toSmoosh)
-  if (smooshed === null) {
-    // tool_reference 约束 — 回退到兄弟节点
-    return [...a, ...b]
-  }
-
-  return [...a.slice(0, -1), smooshed, ...toolResults]
-}
-
 // 有时 API 会返回空消息（例如 "\n\n"）。我们需要过滤掉它们，
 // 否则下次调用 query() 发送到 API 时会产生 API 错误。
-export function normalizeContentFromAPI(
-  contentBlocks: ContentBlock[],
-  tools: Tools,
-  agentId?: AgentId,
-): ContentBlock[] {
-  if (!contentBlocks) {
-    return []
-  }
-  return contentBlocks.map((contentBlock) => {
-    const block = contentBlock as {
-      type: string
-      input?: unknown
-      id?: string
-      name?: string
-      text?: string
-      [key: string]: unknown
-    }
-    switch (block.type) {
-      case 'tool_use':
-      case 'tool_call': {
-        // 同时覆盖 'tool_use'（v1 / Anthropic 路径）和 'tool_call'（v2 / OpenAI 路径）。
-        // OpenAI 适配器（mapOpenAIStreamToStandard）在流式累积阶段产出
-        // chunk.type === 'tool_call'，input 以字符串形式累积，必须在此 parse 回 object，
-        // 否则下一轮 messagesToOpenAI 会对字符串 JSON.stringify 产生双重转义，
-        // 触发 DashScope 400: "function.arguments parameter must be in JSON format"。
-        if (typeof block.input !== 'string' && !isObject(block.input)) {
-          // 我们以字符串形式流式传输 tool use 输入，但在回退时它们是对象
-          throw new Error('Tool use input must be a string or object')
-        }
-
-        // 启用细粒度流式传输后，我们从 API 获取的是序列化 JSON 字符串。
-        // API 有奇怪的行为：返回嵌套的序列化 JSON，因此我们需要递归解析。
-        // 如果 API 返回的顶层值是空字符串，它应变为空对象（嵌套值应为空字符串）。
-        // TODO：这需要修补，因为递归字段仍可能被序列化
-        let normalizedInput: unknown
-        if (typeof block.input === 'string') {
-          const parsed = safeParseJSON(block.input)
-          if (parsed === null && block.input.length > 0) {
-            // TET/FC-v3 诊断：流式 tool 输入 JSON 解析失败。我们回退到 {}，
-            // 这意味着下游校验会看到空输入。
-            logEvent('zy_tool_input_json_parse_fail', {
-              toolName: sanitizeToolNameForAnalytics(block.name),
-              inputLen: block.input.length,
-            })
-            if (isInternalBuild()) {
-              logForDebugging(`tool input JSON parse fail: ${block.input.slice(0, 200)}`, {
-                level: 'warn',
-              })
-            }
-          }
-          normalizedInput = parsed ?? {}
-        } else {
-          normalizedInput = block.input
-        }
-
-        // 然后应用特定于 tool 的修正
-        if (typeof normalizedInput === 'object' && normalizedInput !== null) {
-          const tool = findToolByName(tools, block.name)
-          if (tool) {
-            try {
-              normalizedInput = normalizeToolInput(
-                tool,
-                normalizedInput as { [key: string]: unknown },
-                agentId,
-              )
-            } catch (error) {
-              logError(new Error(`Error normalizing tool input: ${error}`))
-              // 归一化失败时保留原始输入
-            }
-          }
-        }
-
-        return {
-          ...contentBlock,
-          input: normalizedInput,
-        } as AssistantContentBlock
-      }
-      case 'text':
-        if ((block.text as string).trim().length === 0) {
-          logEvent('zy_model_whitespace_response', {
-            length: (block.text as string).length,
-          })
-        }
-        // 原样返回块以保留精确内容用于 prompt 缓存。
-        // 空 text 块在展示层处理，此处不得修改。
-        return contentBlock
-      case 'code_execution_tool_result':
-      case 'mcp_tool_use':
-      case 'mcp_tool_result':
-      case 'container_upload':
-      case 'server_tool_use': {
-        // Beta 专属内容块 — 原样传递
-        const betaBlock = block as { type: string; [key: string]: unknown }
-        if (betaBlock.type === 'server_tool_use' && typeof betaBlock.input === 'string') {
-          return {
-            ...contentBlock,
-            input: (safeParseJSON(betaBlock.input) ?? {}) as {
-              [key: string]: unknown
-            },
-          } as ContentBlock
-        }
-        return contentBlock
-      }
-      default:
-        return contentBlock
-    }
-  })
-}
-
 export function filterUnresolvedToolUses(messages: Message[]): Message[] {
   // 直接从消息内容块收集所有 tool_use ID 和 tool_result ID。
   // 这避免了调用 normalizeMessages()（它会生成新 UUID） — 如果那些
@@ -3254,82 +2846,11 @@ You have exited auto mode. The user may now want to interact more directly. You 
  * 过滤最后一条 assistant 消息末尾的 thinking 块。
  * API 不允许 assistant 消息以 thinking/redacted_thinking 块结尾。
  */
-function filterTrailingThinkingFromLastAssistant(
-  messages: (UserMessage | AssistantMessage)[],
-): (UserMessage | AssistantMessage)[] {
-  const lastMessage = messages.at(-1)
-  if (!lastMessage || lastMessage.type !== 'assistant') {
-    // 最后一条消息不是 assistant，无需过滤
-    return messages
-  }
-
-  const content = lastMessage.message.content
-  if (!Array.isArray(content)) {
-    return messages
-  }
-  const lastBlock = content.at(-1)
-  if (!lastBlock || !isThinkingBlock(lastBlock)) {
-    return messages
-  }
-
-  // 查找最后一个非 thinking 块
-  let lastValidIndex = content.length - 1
-  while (lastValidIndex >= 0) {
-    const block = content[lastValidIndex]
-    if (!block || !isThinkingBlock(block)) {
-      break
-    }
-    lastValidIndex--
-  }
-
-  logEvent('zy_filtered_trailing_thinking_block', {
-    messageUUID: lastMessage.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    blocksRemoved: content.length - lastValidIndex - 1,
-    remainingBlocks: lastValidIndex + 1,
-  })
-
-  // 如果所有块都是 thinking，插入占位符
-  const filteredContent =
-    lastValidIndex < 0
-      ? [{ type: 'text' as const, text: '[No message content]', citations: [] }]
-      : content.slice(0, lastValidIndex + 1)
-
-  const result = [...messages]
-  result[messages.length - 1] = {
-    ...lastMessage,
-    message: {
-      ...lastMessage.message,
-      content: filteredContent,
-    },
-  }
-  return result
-}
-
 /**
  * 检查 assistant 消息是否仅包含纯空白的 text 内容块。
  * 当所有内容块都是仅含空白的 text 块时返回 true。
  * 当存在任何非 text 块（如 tool_use）或包含实际内容的 text 时返回 false。
  */
-function hasOnlyWhitespaceTextContent(content: Array<{ type: string; text?: string }>): boolean {
-  if (content.length === 0) {
-    return false
-  }
-
-  for (const block of content) {
-    // 如果有任何非 text 块（tool_use、thinking 等），消息有效
-    if (block.type !== 'text') {
-      return false
-    }
-    // 如果有包含非空白内容的 text 块，消息有效
-    if (block.text !== undefined && block.text.trim() !== '') {
-      return false
-    }
-  }
-
-  // 所有块都是仅包含空白的 text 块
-  return true
-}
-
 /**
  * 过滤仅含纯空白 text 内容的 assistant 消息。
  *
@@ -3342,53 +2863,6 @@ function hasOnlyWhitespaceTextContent(content: Array<{ type: string; text?: stri
  *
  * 也被 conversationRecovery 在会话恢复时用于从主状态中过滤这些消息。
  */
-export function filterWhitespaceOnlyAssistantMessages(
-  messages: (UserMessage | AssistantMessage)[],
-): (UserMessage | AssistantMessage)[]
-export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[]
-export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[] {
-  let hasChanges = false
-
-  const filtered = messages.filter((message) => {
-    if (message.type !== 'assistant') {
-      return true
-    }
-
-    const content = message.message.content
-    // 保留空数组消息（在其他地方处理）或有实际内容的消息
-    if (!Array.isArray(content) || content.length === 0) {
-      return true
-    }
-
-    if (hasOnlyWhitespaceTextContent(content)) {
-      hasChanges = true
-      logEvent('zy_filtered_whitespace_only_assistant', {
-        messageUUID: message.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      })
-      return false
-    }
-
-    return true
-  })
-
-  if (!hasChanges) {
-    return messages
-  }
-
-  // 移除 assistant 消息可能会留下需要合并的相邻 user 消息
-  //（API 要求交替的 user/assistant 角色）。
-  const merged: Message[] = []
-  for (const message of filtered) {
-    const prev = merged.at(-1)
-    if (message.type === 'user' && prev?.type === 'user') {
-      merged[merged.length - 1] = mergeUserMessages(prev, message) // 左值赋值
-    } else {
-      merged.push(message)
-    }
-  }
-  return merged
-}
-
 /**
  * 确保所有非最后一条的 assistant 消息具有非空内容。
  *
@@ -3400,49 +2874,6 @@ export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Mess
  *
  * 注意：纯空白 text 内容由 filterWhitespaceOnlyAssistantMessages 单独处理。
  */
-function ensureNonEmptyAssistantContent(
-  messages: (UserMessage | AssistantMessage)[],
-): (UserMessage | AssistantMessage)[] {
-  if (messages.length === 0) {
-    return messages
-  }
-
-  let hasChanges = false
-  const result = messages.map((message, index) => {
-    // 跳过非 assistant 消息
-    if (message.type !== 'assistant') {
-      return message
-    }
-
-    // 跳过最后一条消息（预填充允许为空）
-    if (index === messages.length - 1) {
-      return message
-    }
-
-    // 检查内容是否为空
-    const content = message.message.content
-    if (Array.isArray(content) && content.length === 0) {
-      hasChanges = true
-      logEvent('zy_fixed_empty_assistant_content', {
-        messageUUID: message.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        messageIndex: index,
-      })
-
-      return {
-        ...message,
-        message: {
-          ...message.message,
-          content: [{ type: 'text' as const, text: NO_CONTENT_MESSAGE, citations: [] }],
-        },
-      }
-    }
-
-    return message
-  })
-
-  return hasChanges ? result : messages
-}
-
 /**
  * 过滤孤立的纯 thinking assistant 消息。
  *
@@ -3455,70 +2886,6 @@ function ensureNonEmptyAssistantContent(
  * message.id 的 assistant 消息包含非 thinking 内容（text、tool_use 等）。
  * 如果存在这样的消息，thinking 块将在 normalizeMessagesForAPI() 中与之合并。
  */
-export function filterOrphanedThinkingOnlyMessages(
-  messages: (UserMessage | AssistantMessage)[],
-): (UserMessage | AssistantMessage)[]
-export function filterOrphanedThinkingOnlyMessages(messages: Message[]): Message[]
-export function filterOrphanedThinkingOnlyMessages(messages: Message[]): Message[] {
-  // 第一轮：收集具有非 thinking 内容的 message.id
-  // 这些稍后会在 normalizeMessagesForAPI() 中合并
-  const messageIdsWithNonThinkingContent = new Set<string>()
-  for (const msg of messages) {
-    if (msg.type !== 'assistant') {
-      continue
-    }
-
-    const content = msg.message.content
-    if (!Array.isArray(content)) {
-      continue
-    }
-
-    const hasNonThinking = content.some(
-      (block) => block.type !== 'thinking' && block.type !== 'redacted_thinking',
-    )
-    if (hasNonThinking && msg.message.id) {
-      messageIdsWithNonThinkingContent.add(msg.message.id)
-    }
-  }
-
-  // 第二轮：过滤掉真正孤立的纯 thinking 消息
-  const filtered = messages.filter((msg) => {
-    if (msg.type !== 'assistant') {
-      return true
-    }
-
-    const content = msg.message.content
-    if (!Array.isArray(content) || content.length === 0) {
-      return true
-    }
-
-    // 检查是否所有内容块都是 thinking 块
-    const allThinking = content.every(
-      (block) => block.type === 'thinking' || block.type === 'redacted_thinking',
-    )
-
-    if (!allThinking) {
-      return true // 有非 thinking 内容，保留
-    }
-
-    // 仅 thinking。如果有相同 id 的其他消息包含非 thinking 内容，则保留
-    //（它们稍后会被合并）
-    if (msg.message.id && messageIdsWithNonThinkingContent.has(msg.message.id)) {
-      return true
-    }
-
-    // 真正孤立 — 没有相同 id 的其他消息有内容可合并
-    logEvent('zy_filtered_orphaned_thinking_message', {
-      messageUUID: msg.uuid as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      messageId: msg.message.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      blockCount: content.length,
-    })
-    return false
-  })
-
-  return filtered
-}
-
 /**
  * 从所有 assistant 消息中剥离带签名的块（thinking、redacted_thinking、connector_text）。
  * 这些块的签名绑定到生成它们的 API key；在凭证变更后（例如 /login），

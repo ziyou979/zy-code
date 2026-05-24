@@ -9,23 +9,7 @@ export function ensureToolResultPairing(
   messages: (UserMessage | AssistantMessage)[],
 ): (UserMessage | AssistantMessage)[] { ... }
 
-export function filterOrphanedThinkingOnlyMessages(
-  messages: (UserMessage | AssistantMessage)[],
-): (UserMessage | AssistantMessage)[]
-
-export function filterOrphanedThinkingOnlyMessages(messages: Message[]): Message[]
-
-export function filterOrphanedThinkingOnlyMessages(messages: Message[]): Message[] { ... }
-
 export function filterUnresolvedToolUses(messages: Message[]): Message[] { ... }
-
-export function filterWhitespaceOnlyAssistantMessages(
-  messages: (UserMessage | AssistantMessage)[],
-): (UserMessage | AssistantMessage)[]
-
-export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[]
-
-export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[] { ... }
 
 export function handleMessageFromStream(
   message: Message | TombstoneMessage | StreamEvent | RequestStartEvent | ToolUseSummaryMessage,
@@ -40,36 +24,7 @@ export function handleMessageFromStream(
   onStreamingText?: (f: (current: string | null) => string | null) => void,
 ): void { ... }
 
-export function mergeAssistantMessages(a: AssistantMessage, b: AssistantMessage): AssistantMessage { ... }
-
-export function mergeUserContentBlocks(
-  a: UserContentBlock[],
-  b: UserContentBlock[],
-): UserContentBlock[] { ... }
-
-export function mergeUserMessages(a: UserMessage, b: UserMessage): UserMessage { ... }
-
-export function mergeUserMessagesAndToolResults(a: UserMessage, b: UserMessage): UserMessage { ... }
-
 export function normalizeAttachmentForAPI(attachment: Attachment): UserMessage[] { ... }
-
-export function normalizeContentFromAPI(
-  contentBlocks: ContentBlock[],
-  tools: Tools,
-  agentId?: AgentId,
-): ContentBlock[] { ... }
-
-export function normalizeMessages(
-  messages: (AssistantMessage | UserMessage)[],
-): (NormalizedAssistantMessage | NormalizedUserMessage)[]
-
-export function normalizeMessages(messages: AssistantMessage[]): NormalizedAssistantMessage[]
-
-export function normalizeMessages(messages: Message[]): NormalizedMessage[]
-
-export function normalizeMessages(messages: Message[]): NormalizedMessage[] { ... }
-
-export function normalizeMessages(messages: UserMessage[]): NormalizedUserMessage[]
 
 export function normalizeMessagesForAPI(
   messages: Message[],
@@ -205,6 +160,20 @@ export {
   formatCommandInputTags,
   prepareUserContent,
 } from './messages/constructors.js'
+
+export {
+  ensureNonEmptyAssistantContent,
+  filterOrphanedThinkingOnlyMessages,
+  filterTrailingThinkingFromLastAssistant,
+  filterWhitespaceOnlyAssistantMessages,
+  mergeAdjacentUserMessages,
+  mergeAssistantMessages,
+  mergeUserContentBlocks,
+  mergeUserMessages,
+  mergeUserMessagesAndToolResults,
+  normalizeContentFromAPI,
+  normalizeMessages,
+} from './messages/normalize.js'
 
 export {
   isThinkingBlock,
