@@ -3,46 +3,11 @@
 // Refactor invariant: this file should NOT diff after restructuring,
 // only when exports are intentionally added/removed/renamed.
 
-export const CANCEL_MESSAGE = ...
-
-export const DENIAL_WORKAROUND_GUIDANCE = ...
-
 export const EMPTY_LOOKUPS: MessageLookups = ...
 
 export const EMPTY_STRING_SET: ReadonlySet<string> = ...
 
-export const INTERRUPT_MESSAGE = ...
-
-export const INTERRUPT_MESSAGE_FOR_TOOL_USE = ...
-
-export const NO_RESPONSE_REQUESTED = ...
-
 export const PLAN_PHASE4_CONTROL = ...
-
-export const PLAN_REJECTION_PREFIX = ...
-
-export const REJECT_MESSAGE = ...
-
-export const REJECT_MESSAGE_WITH_REASON_PREFIX = ...
-
-export const SUBAGENT_REJECT_MESSAGE = ...
-
-export const SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX = ...
-
-export const SYNTHETIC_MESSAGES = ...
-
-export const SYNTHETIC_MODEL = ...
-
-export const SYNTHETIC_TOOL_RESULT_PLACEHOLDER = ...
-
-export function AUTO_REJECT_MESSAGE(toolName: string): string { ... }
-
-export function DONT_ASK_REJECT_MESSAGE(toolName: string): string { ... }
-
-export function buildClassifierUnavailableMessage(
-  toolName: string,
-  classifierModel: string,
-): string { ... }
 
 export function buildMessageLookups(
   normalizedMessages: NormalizedMessage[],
@@ -52,8 +17,6 @@ export function buildMessageLookups(
 export function buildSubagentLookups(
   messages: { message: AssistantMessage | NormalizedAssistantMessage | NormalizedUserMessage }[],
 ): { lookups: MessageLookups; inProgressToolUseIDs: Set<string> } { ... }
-
-export function buildYoloRejectionMessage(reason: string): string { ... }
 
 export function countToolCalls(messages: Message[], toolName: string, maxCount?: number): number { ... }
 
@@ -323,8 +286,6 @@ export function hasUnresolvedHooksFromLookup(
   lookups: MessageLookups,
 ): boolean { ... }
 
-export function isClassifierDenial(content: string): boolean { ... }
-
 export function isCompactBoundaryMessage(
   message: Message | NormalizedMessage,
 ): message is SystemCompactBoundaryMessage { ... }
@@ -332,8 +293,6 @@ export function isCompactBoundaryMessage(
 export function isEmptyMessageText(text: string): boolean { ... }
 
 export function isNotEmptyMessage(message: Message | NormalizedMessage): boolean { ... }
-
-export function isSyntheticMessage(message: Message): boolean { ... }
 
 export function isSystemLocalCommandMessage(
   message: Message,
@@ -474,3 +433,25 @@ export type StreamingToolUse = {
   contentBlock: ToolCallBlock
   unparsedToolInput: string
 }
+
+export {
+  AUTO_REJECT_MESSAGE,
+  buildClassifierUnavailableMessage,
+  buildYoloRejectionMessage,
+  CANCEL_MESSAGE,
+  DENIAL_WORKAROUND_GUIDANCE,
+  DONT_ASK_REJECT_MESSAGE,
+  INTERRUPT_MESSAGE,
+  INTERRUPT_MESSAGE_FOR_TOOL_USE,
+  isClassifierDenial,
+  isSyntheticMessage,
+  NO_RESPONSE_REQUESTED,
+  PLAN_REJECTION_PREFIX,
+  REJECT_MESSAGE,
+  REJECT_MESSAGE_WITH_REASON_PREFIX,
+  SUBAGENT_REJECT_MESSAGE,
+  SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX,
+  SYNTHETIC_MESSAGES,
+  SYNTHETIC_MODEL,
+  SYNTHETIC_TOOL_RESULT_PLACEHOLDER,
+} from './messages/constants.js'
