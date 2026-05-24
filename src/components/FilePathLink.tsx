@@ -24,8 +24,16 @@ export function FilePathLink({ filePath, children }: Props) {
   return <Link url={fileUrl.href}>{children ?? filePath}</Link>
 }
 
-// 匹配文件路径 + 行号模式，如 src/foo.ts:123 或 /abs/path.go:10-20
-const FILE_PATH_RE = /((?:\.\.\/|\.\/|\/)?(?:[\w.-]+\/)*[\w.-]+\.\w{1,10}):(\d+)(?:-(\d+))?/g
+// 匹配文件路径模式：
+//   src/foo.ts:123、/abs/path.go:10-20（文件 + 行号）
+//   src/utils/、./config（目录路径，行号可选）
+// Unicode 属性 [\p{L}\p{N}] 替代 \w，CJK 标点（全角括号等）天然不在字符集中，
+// 形成正确的匹配边界，避免路径与中文标点粘连导致无法跳转。
+// 必须包含至少一个 / 段以避免误匹配 bare words（如 "see:1"）。
+// 注意：带扩展名的分支必须在 fallback 之前，否则 /abs/path.go 会在
+// /abs/ 处被 fallback 空匹配截断，导致路径被拆成 /abs 和 /path.go:10-20。
+const FILE_PATH_RE =
+  /((?:\.{1,2}\/|\/?)(?:[\p{L}\p{N}._-]+\/)+(?:[\p{L}\p{N}_-]+(?:\.[\p{L}\p{N}_-]{1,10})+|[\p{L}\p{N}._-]*))(?::(\d+)(?:-(\d+))?)?/gu
 
 /**
  * 用 OSC 8 超链接序列包裹文件路径显示文本。
@@ -117,10 +125,10 @@ export function renderContentWithFileLinks(
   if (!hasAnsi) {
     result = content.replace(
       FILE_PATH_RE,
-      (_match, filePath: string, startLine: string, endLine: string | undefined) => {
+      (_match, filePath: string, startLine: string | undefined, endLine: string | undefined) => {
         // file:startLine 整体包进 OSC 8（终端识别为可跳转路径），
         // 范围后缀 -endLine 留在外面作为纯文本，避免干扰终端识别。
-        const linkDisplay = `${filePath}:${startLine}`
+        const linkDisplay = startLine ? `${filePath}:${startLine}` : filePath
         const coloredLink = zyColor ? colorize(linkDisplay, zyColor, 'foreground') : linkDisplay
         const tail = endLine ? `-${endLine}` : ''
         const coloredTail = tail && zyColor ? colorize(tail, zyColor, 'foreground') : tail
@@ -148,10 +156,12 @@ export function renderContentWithFileLinks(
 
       // file:startLine 整体包进 OSC 8，-endLine 留在外面作为纯文本
       const filePath = match[1]!
-      const startLine = match[2]!
+      const startLine: string | undefined = match[2]
       const endLine: string | undefined = match[3]
-      // file:startLine 的纯文本结束位置
-      const linkPlainEnd = match.index + filePath.length + 1 + startLine.length
+      // file:startLine（或仅 filePath）的纯文本结束位置
+      const linkPlainEnd = startLine
+        ? match.index + filePath.length + 1 + startLine.length
+        : match.index + filePath.length
       const originalLinkEnd = map[linkPlainEnd]!
       const linkDisplay = content.slice(originalStart, originalLinkEnd)
       // -endLine 部分（如有）保留为纯文本

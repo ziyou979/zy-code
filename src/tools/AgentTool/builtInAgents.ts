@@ -10,12 +10,8 @@ import { ZY_CODE_GUIDE_AGENT } from './built-in/zyCodeGuideAgent.js'
 import type { AgentDefinition } from './loadAgentsDir.js'
 
 export function areExplorePlanAgentsEnabled(): boolean {
-  if (feature('BUILTIN_EXPLORE_PLAN_AGENTS')) {
-    // 3P default: true — Bedrock/Vertex keep agents enabled (matches pre-experiment
-    // external behavior). A/B test treatment sets false to measure impact of removal.
-    return getFeatureValue_CACHED_MAY_BE_STALE('zy_explore_plan_agent', true)
-  }
-  return false
+  // 始终启用 Explore/Plan agents，不受构建时 feature flag 限制
+  return getFeatureValue_CACHED_MAY_BE_STALE('zy_explore_plan_agent', true)
 }
 
 export function getBuiltInAgents(): AgentDefinition[] {

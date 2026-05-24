@@ -12,7 +12,8 @@
 - 用户可见文本**禁止硬编码**，必须走 i18n
 
 ### 2. 国际化（i18n）
-- 通过 `tSync()`/`t()` 读取翻译，翻译 key 同时写入 `en.ts` 和 `zh-CN.ts`
+- 通过 `tSync()`/`t()` 读取翻译，翻译 key 同时写入 `en/` 和 `zh-CN/` 对应文件
+- 翻译文件按前缀分组到子目录：`src/i18n/locales/en/` 和 `src/i18n/locales/zh-CN/`（如 `commands.ts`、`permissions.ts`、`settings.ts`、`stats.ts`、`mcp.ts`、`summary.ts`、`chat.ts`、`agents.ts`、`session.ts`、`shell.ts` 等）
 - key 按模块分组（`shellProgress.xxx`），使用描述性名称，支持 `{count}` 插值
 - `KeyboardShortcutHint.action` 必须在 `actionKeyMap` 中注册
 
@@ -56,7 +57,7 @@
 
 ### 12. 目录边界
 - **`src/utils/` 仅放无业务语义的纯函数 helper**：任何牵涉外部 IO（网络 / 文件系统 / spawn）、特定领域知识（auth / billing / mcp / shell 解析等）、用户可见行为（i18n 文案 / 终端输出）的代码必须放 `src/services/<domain>/` 或 `src/<domain>/`，不允许新增到 `utils/`
-- **`src/utils/` 单文件行数上限 800**：超出必须按子领域拆分。已有的 `utils/messages.ts`（5500 行）、`utils/sessionStorage.ts`（5000 行）、`utils/hooks.ts`（4700 行）等是历史包袱，新代码不应跟随
+- **`src/utils/` 单文件行数上限 800**：超出必须按子领域拆分。已有的 `utils/sessionStorage.ts`（5000 行）是历史包袱，新代码不应跟随。`messages/` 和 `hooks/` 已拆分为子目录模块化
 - **`src/` 根目录禁止新增 `.ts`/`.tsx` 文件**：现有的 `Tool.ts` / `Task.ts` / `tools.ts` / `query.ts` 等是历史结构，所有新模块必须放在子目录里。入口（`main.tsx` / `commands.ts` 等）已存在，不需要新增
 
 ### 13. feature() 宏使用
@@ -85,79 +86,121 @@ bun tsc --noEmit
 
 ## 架构
 
-本项目是一个基于 **TypeScript + React (Ink)** 的终端 UI 应用，由 **Bun** 打包。
+**TypeScript + React (Ink)** 终端 UI 应用，**Bun** 打包。
 
-### 入口（Entrypoints）
+### 入口
 
-- `src/entrypoints/cli.tsx` — CLI 启动入口：设置环境后委托给 `src/main.tsx`
-- `src/entrypoints/mcp.ts` — MCP 服务入口
-- `src/entrypoints/sdk/` — SDK 类型定义，供外部编程使用
+- `src/entrypoints/cli.tsx` → `src/main.tsx`（CLI 主入口）
+- `src/entrypoints/mcp.ts`（MCP 服务）
+- `src/entrypoints/sdk/`（SDK 类型）
 
-### 核心（Core）
+### 核心
 
-- `src/main.tsx` — 主启动流程：初始化功能开关（GrowthBook）、OAuth、MCP、MDM 配置、密钥预取，然后启动 REPL。在顶部并行触发异步预取后再执行重型导入
-- `src/QueryEngine.ts` — 主对话/查询引擎；处理消息流、工具调用、上下文管理
-- `src/tools.ts` — 工具注册表；聚合所有可用工具
-- `src/commands.ts` — 斜杠命令注册表
-- `src/types/llm.ts` — **标准 LLM 类型体系**，独立于任何 SDK，定义项目内部使用的统一类型：
-  - 流式事件：`StreamEvent`（`response_start`/`chunk_start`/`chunk_delta`/`chunk_stop`/`response_delta`/`response_stop`）
-  - 内容块：`UserContentBlock`（text/image）、`AssistantContentBlock`（text/tool_call/thinking 等）
-  - 消息：4 角色分离 `Message`（system/user/assistant/tool）
-  - 请求：`CreateParams`（驼峰字段，provider 专属走 `providerExtras`）
-  - 计量：`TokenUsage`/`DeltaUsage`（`inputTokens`/`outputTokens`，provider 扩展走 `extras`）
-  - 响应：`LLMResponse`
-  - 错误：`LLMError` 系列 + `isAPIError()`/`isAbortError()` 等判断函数
-  - 适配器：`LLMAdapter`、`StreamResult`
-  - **SDK 隔离**：`@anthropic-ai/sdk`、`openai` 等 SDK 包**只允许**在适配层（`src/services/api/conversions/*`、`src/services/api/*ProviderAdapter.ts`）中导入，业务代码**禁止**直接导入 SDK 类型
-- `src/utils/envUtils.ts` — 环境判断工具函数，包括 `isInternalBuild()`、`getUserType()` 等构建时门控
+- `src/main.tsx` — 启动入口（346 行）：仅处理副作用预取（MDM、keychain、profile），委托给 `src/cli/bootstrap/entrypoint.ts`
+- `src/cli/` — **CLI 框架**（从 main.tsx 拆分）：`bootstrap/`（迁移、设置、预取）、`commands/`（根命令、auth、mcp、plugins）、`handlers/`（agents、autoMode）、`options/`（模型、权限、会话等）、`transports/`（SSE/WebSocket/Hybrid）、`activate/`（主动激活）
+- `src/QueryEngine.ts` — 对话引擎：消息流、工具调用、上下文管理
+- `src/query/` — 查询配置、token 预算、停止钩子、状态转换
+- `src/bootstrap/state.ts` — **全局单例状态**（会话 ID、成本、模型、遥测、cron 任务等），替代原 `src/state/` 的部分职责。导入 DAG 的叶子节点，禁止引入更多状态
+- `src/state/` — `AppStateStore.ts` / `store.ts`，React 组件共享状态（selectors 读取）
 
-### 工具（Tools，`src/tools/`）
+### 工具与命令
 
-每个工具遵循统一的三文件模式（见规范约束第 4 条）。
+- `src/tools/` — 三文件模式：`ToolName.ts(x)` + `UI.tsx` + `prompt.ts`
+- `src/commands/` — 每个斜杠命令一个子目录（`/compact`、`/goal`、`/plan`、`/review` 等 100+）
+- `src/skills/` — 技能系统（`bundled/` 内置 + 插件技能）
 
-### UI 层（`src/components/`、`src/screens/`、`src/hooks/`）
+### LLM 适配
 
-终端 UI 全部由 React 组件通过 **Ink** 渲染。顶层页面在 `src/screens/`（如 `REPL.tsx`、`Doctor.tsx`）。React hooks 在 `src/hooks/` 中管理状态、快捷键、权限、剪贴板和历史。
+`src/services/api/streamAdapter.ts` — Anthropic / OpenAI 统一适配层：
+- 业务层通过 `src/types/llm.ts` 标准类型交互，**禁止**直接导入 SDK
+- 适配器将 SDK 流 → `AsyncIterable<StreamEvent>`
+- Provider 专属字段走 `CreateParams.providerExtras`
 
-### LLM 适配器层（`src/services/api/streamAdapter.ts`）
+### 关键模块
 
-统一的 LLM 请求适配层，使 Anthropic 和 OpenAI 两种 Provider 完全平等：
+| 目录 | 职责 |
+|------|------|
+| `src/shell-eval/` | **Shell 解析与执行**（从 `utils/` 提升）：`bash/`（parser、AST、命令注册）、`powershell/`（parser、危险 cmdlet）、`shared/`（provider、输出限制、只读校验） |
+| `src/bridge/` | 远程会话桥接（REPL bridge、transport、JWT、webhook） |
+| `src/coordinator/` | 协调器模式（多 worker 编排，`AgentTool` 调度） |
+| `src/assistant/` | 助手会话发现与历史 |
+| `src/goal/` | 目标驱动工作流 |
+| `src/tasks/` | 任务类型（Dream、LocalAgent、LocalShell、Remote、Workflow 等） |
+| `src/daemon/` | 后台守护进程 |
+| `src/server/` | 内置服务器（含 `backends/`） |
+| `src/remote/` | 远程连接 |
+| `src/ssh/` | SSH 支持 |
 
-- **核心设计**：业务层通过 `src/types/llm.ts` 中的标准类型（`CreateParams`、`StreamEvent` 等）与 LLM 交互，不依赖任何特定 SDK 类型
-- **适配器模式**：`AnthropicRequestAdapter` 和 `OpenAIRequestAdapter` 各自实现 `LLMAdapter` 接口，将 SDK 特有的请求/响应格式转换为标准类型
-- **流式处理**：适配器将 SDK 流转换为 `AsyncIterable<StreamEvent>`，业务层通过 `for await` 统一消费
-  - Anthropic 流：`message_start`/`content_block_start`/`content_block_delta`/`message_stop` → 标准事件
-  - OpenAI 流：`ChatCompletionChunk` delta → 标准事件（含百炼 `reasoning_content` → `thinking` block 映射）
-- **Provider 专属字段**：v2 通过 `CreateParams.providerExtras` namespace 传递（如 `providerExtras.anthropic.thinking`、`providerExtras.openai.response_format`），各适配器自行解析，互不干扰
-- **消息格式**：统一为 4 角色分离模型（system/user/assistant/tool），适配器负责转换为各自 SDK 格式
-  - OpenAI 适配器将 v1 `tool_result` 块拆分为独立的 `role:'tool'` 消息
-  - 工具调用统一为标准 `ToolDefinition` + `ToolCall` 结构
-- **Provider 选择**：运行时通过 `getRequestAdapter()` 根据当前 provider 的 `supportedFormats` 返回对应适配器
-- **类型导入规范**：业务代码中的 `Message`、`TokenUsage`、`CreateParams` 等类型**必须**从 `src/types/llm.ts` 导入，**禁止**从 `@anthropic-ai/sdk` 或 `openai` 直接导入（避免 SDK 类型与标准类型不兼容导致编译错误）
+### 服务层（`src/services/`）
 
-### 服务层（Services，`src/services/`）
+| 服务 | 职责 |
+|------|------|
+| `api/` | API 客户端、重试、用量、流适配 |
+| `mcp/` | MCP 连接管理与 OAuth |
+| `lsp/` | LSP 客户端（IDE 诊断） |
+| `analytics/` | GrowthBook 功能开关、遥测 |
+| `oauth/` | 认证流程 |
+| `model/` | 模型选择与字符串 |
+| `compact/` | 上下文压缩 |
+| `memory/` | 持久化记忆 |
+| `extractMemories/` | 自动记忆提取 |
+| `skills/` | 技能加载与搜索 |
+| `sandbox/` | 沙箱执行 |
+| `github/` | GitHub 集成 |
+| `swarm/` | 多 agent 蜂群 |
+| `todo/` | TODO 管理 |
+| `plugins/` | 插件系统 |
+| `computerUse/` | 计算机使用（截图/输入） |
+| `background/` | 后台任务管理（从 `utils/` 迁移） |
+| `jobs/` | 后台作业管理（从 `utils/` 迁移） |
+| `dxt/` | DXT 扩展支持（从 `utils/` 迁移） |
+| `claudeInChrome/` | Chrome 扩展集成（从 `utils/` 迁移） |
+| `teleport/` | Teleport 支持（从 `utils/` 迁移） |
+| `deepLink/` | 深度链接处理（从 `utils/` 迁移） |
+| `contextCollapse/` | 上下文折叠（智能裁剪对话历史） |
+| `filePersistence/` | 文件持久化（会话/配置存储） |
+| `policyLimits/` | 策略限制（用量/权限管控） |
+| `processUserInput/` | 用户输入处理（命令解析/分发） |
+| `remoteManagedSettings/` | 远程托管设置 |
+| `search/` | 搜索服务（代码/文件检索） |
+| `secureStorage/` | 安全存储（keychain/密钥管理） |
+| `sessionTranscript/` | 会话转录（导出/回放） |
+| `settingsSync/` | 设置同步（跨设备/会话） |
+| `skillSearch/` | 技能搜索（语义/关键词匹配） |
+| `suggestions/` | 建议系统（补全/推荐） |
+| `task/` | 任务管理（Dream/LocalAgent/Remote 等） |
+| `teamMemorySync/` | 团队记忆同步 |
+| `telemetry/` | 遥测数据收集 |
+| `tips/` | 提示信息（使用技巧/引导） |
+| `tokenizer/` | Token 计算（多模型适配） |
+| `toolUseSummary/` | 工具使用摘要 |
+| `ultraplan/` | 超级计划（复杂任务编排） |
+| `AgentSummary/` | Agent 摘要生成 |
+| `MagicDocs/` | 智能文档（自动补全/引用） |
+| `PromptSuggestion/` | 提示词建议 |
+| `SessionMemory/` | 会话记忆（短期上下文） |
+| `autoDream/` | 自动 Dream（后台任务触发） |
+| `nativeInstaller/` | 原生安装器（平台适配） |
 
-- `api/` — API 客户端、重试、用量追踪（含 `streamAdapter.ts` 适配层）
-- `mcp/` — MCP 服务连接管理器与 OAuth
-- `lsp/` — LSP 客户端，提供 IDE 级诊断
-- `analytics/` — GrowthBook 功能开关
-- `oauth/` — 认证流程
+### 工具函数模块化（`src/utils/`）
 
-### 状态（State，`src/state/`）
+原巨型文件已按职责拆分为子模块：
 
-通过 `AppStateStore.ts` / `store.ts` 集中管理应用状态，使用 selectors 读取。
+- **`messages/`**（10 模块）：`constants.ts`（常量/分类器）、`predicates.ts`（谓词/文本提取）、`constructors.ts`（消息构造器）、`lookups.ts`（查找表）、`prune.ts`（修剪/剥离）、`normalize.ts`（规范化/合并/过滤）、`api.ts`（API 后处理/plan 模板）、`streaming.ts`（流式处理）、`mappers.ts`（映射器）、`systemInit.ts`（系统初始化）
+- **`hooks/`**（35+ 模块）：核心引擎（`executeEngine.ts`）、匹配器（`matcher.ts`）、命令运行器（`commandRunner.ts`）、函数钩子（`functionHooks.ts`）、执行器子目录（`executors/` 含 compact/config/fileSuggestion/elicitation/notification/teammate/lifecycle/worktree/tool）
 
-### 构建系统（`build.ts`）
+### UI 层
 
-使用 `Bun.build()`，配置如下：
-- 入口：`src/entrypoints/cli.tsx` → `dist/`
-- 编译时 `define` 宏：`MACRO.VERSION`、`MACRO.BUILD_TIME`、`MACRO.PACKAGE_URL`、`MACRO.FEEDBACK_CHANNEL`
-- `process.env.USER_TYPE = "external"` 控制内部代码路径（构建时 tree-shake）
-- 外部包（不打包）：云 SDK（`bedrock`、`vertex`）、原生二进制、懒加载包（`sharp`、`yaml` 等）
-- 自定义插件：解析 `react/compiler-runtime`，将 `color-diff-napi` 映射到 `src/native-ts/` 的本地 TypeScript 回退实现
+- `src/screens/` — 顶层页面（`REPL.tsx`、`Doctor.tsx`）
+- `src/components/` — React 组件（Ink 渲染）
+- `src/hooks/` — React hooks（状态、快捷键、权限、通知）
+- `src/ink/` — Ink 底层（组件、事件、布局、termio）
+- `src/context/` — React Context（modal、overlay、notifications、voice）
 
-### Monorepo 子包（`packages/`）
+### 构建
 
-- `packages/claude-for-chrome-mcp/` — Chrome 扩展的 MCP 服务
-- `packages/computer-use-mcp/` — 计算机使用 MCP 服务（截图、输入模拟）
-- `packages/computer-use-input/` — 输入模拟
+`Bun.build()`：入口 `src/entrypoints/cli.tsx` → `dist/`，`define` 宏（VERSION/BUILD_TIME 等），`USER_TYPE` tree-shake，原生/云 SDK 外部化，`color-diff-napi` → `src/native-ts/` 回退。
+
+### Monorepo（`packages/`）
+
+- `claude-for-chrome-mcp/`、`computer-use-mcp/`、`computer-use-input/`

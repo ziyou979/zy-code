@@ -94,7 +94,7 @@ export default function BashToolResultMessage({ content, verbose, timeoutMs }: P
     BoxComponent = Box
 
     outputLineElement2 = (
-      stdout !== '' ? <OutputLine content={stdout as any} verbose={verbose} /> : null
+      stdout.trim() !== '' ? <OutputLine content={stdout as any} verbose={verbose} /> : null
     ) as any
     outputLineElement =
       stderr.trim() !== '' ? <OutputLine content={stderr} verbose={verbose} isError={true} /> : null
@@ -103,36 +103,42 @@ export default function BashToolResultMessage({ content, verbose, timeoutMs }: P
     return earlyReturn
   }
   // 当预期无输出且确实没有输出时，不展示 ⎿ 行
+  const isEffectivelyEmpty = stdout.trim() === '' && stderr.trim() === '' && !cwdResetWarning
   const shouldHideEmptyResponse =
     noOutputExpected && !returnCodeInterpretation && !backgroundTaskId
-  const messageResponseElement =
-    stdout === '' && stderr.trim() === '' && !cwdResetWarning ? (
-      shouldHideEmptyResponse ? null : (
-        <MessageResponse height={1}>
-          <Text dimColor={true}>
-            {backgroundTaskId ? (
-              <>
-                {tSync('bash.runningInBackground')}{' '}
-                <KeyboardShortcutHint shortcut={'\u2193'} action="manage" parens={true} />
-              </>
-            ) : (
-              returnCodeInterpretation || tSync('bash.noOutput')
-            )}
-          </Text>
-        </MessageResponse>
-      )
-    ) : null
+  const messageResponseElement = isEffectivelyEmpty ? (
+    shouldHideEmptyResponse ? null : (
+      <MessageResponse height={1}>
+        <Text dimColor={true}>
+          {backgroundTaskId ? (
+            <>
+              {tSync('bash.runningInBackground')}{' '}
+              <KeyboardShortcutHint shortcut={'\u2193'} action="manage" parens={true} />
+            </>
+          ) : (
+            returnCodeInterpretation || tSync('bash.noOutput')
+          )}
+        </Text>
+      </MessageResponse>
+    )
+  ) : null
+  // 所有子元素为 null 时直接返回 null，避免空 Box 占据空间
+  const hasCwdWarning = !!cwdResetWarning
+  const hasTimeout = !!timeoutMs
+  if (!outputLineElement2 && !outputLineElement && !hasCwdWarning && !messageResponseElement && !hasTimeout) {
+    return null
+  }
   return (
     <BoxComponent flexDirection={'column'}>
       {outputLineElement2}
       {outputLineElement}
-      {cwdResetWarning ? (
+      {hasCwdWarning ? (
         <MessageResponse>
           <Text dimColor={true}>{cwdResetWarning}</Text>
         </MessageResponse>
       ) : null}
       {messageResponseElement}
-      {timeoutMs && (
+      {hasTimeout && (
         <MessageResponse>
           <ShellTimeDisplay timeoutMs={timeoutMs} />
         </MessageResponse>

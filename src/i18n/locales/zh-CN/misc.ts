@@ -396,6 +396,8 @@ export const zhMisc: TranslationResource = {
   'notif.zyaiConnectorsNeedAuth': '{count} 个 zy.ai 连接器需要认证',
   'notif.zyaiConnectorsUnavailable': '{count} 个 zy.ai 连接器不可用',
   'notif.zyaiConnectorUnavailable': '{count} 个 zy.ai 连接器不可用',
+  'prompts.languageSection.body':
+    '用中文进行推理和回复。保持代码、标识符、文件路径和引用文本不变。',
   'outputStyle.hint': '这将改变 ZY Code 与你交流的方式',
   'outputStyle.loading': '正在加载输出风格…',
   'outputStyle.title': '首选输出风格',

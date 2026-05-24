@@ -173,9 +173,13 @@ function printResumeHint(): void {
         resumeArg = sessionId
       }
 
-      // \r 回到行首 + \x1b[K 清除当前行残留（alt screen 退出后光标位置不确定，
-      // 状态栏内容可能残留在当前行）
-      writeSync(1, `\r\x1b[K${chalk.dim(`Resume this session with:\nzy --resume ${resumeArg}\n`)}`)
+      // alt screen 退出后光标位置不确定，unmount diff 可能在当前行和下方
+      // 残留输入框边框/状态栏内容。先用 \r\x1b[K 清除当前行，输出后再用
+      // \x1b[J 清除光标以下所有残留行（如输入框底边框 "────"）
+      writeSync(
+        1,
+        `\r\x1b[K${chalk.dim(`Resume this session with:\nzy --resume ${resumeArg}\n`)}\x1b[J`,
+      )
       resumeHintPrinted = true
     } catch {
       // Ignore write errors
