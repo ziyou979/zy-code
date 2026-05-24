@@ -331,15 +331,6 @@ export type InstructionsMemoryType = 'User' | 'Project' | 'Local' | 'Managed'
 
 export type { AggregatedHookResult, ElicitationResponse, HookBlockingError, HookResult }
 
-export {
-  getPreToolHookBlockingMessage,
-  getStopHookMessage,
-  getTaskCompletedHookMessage,
-  getTaskCreatedHookMessage,
-  getTeammateIdleHookMessage,
-  getUserPromptSubmitHookBlockingMessage,
-} from './hooks/messages.js'
-
 export { createBaseHookInput, shouldSkipHookDueToTrust }
 
 export { getMatchingHooks }
