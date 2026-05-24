@@ -10,8 +10,8 @@ import {
   getSessionBypassPermissionsMode,
 } from '../../bootstrap/state.js'
 import { quote } from 'src/shell-eval/bash/shellQuote.js'
-import { isInBundledMode } from '../bundledMode.js'
-import type { PermissionMode } from '../permissions/PermissionMode.js'
+import { isInBundledMode } from '../../utils/bundledMode.js'
+import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
 import { getTeammateModeFromSnapshot } from './backends/teammateModeSnapshot.js'
 import { TEAMMATE_COMMAND_ENV_VAR } from './constants.js'
 

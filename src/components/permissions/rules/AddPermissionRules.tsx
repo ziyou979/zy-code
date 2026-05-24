@@ -16,7 +16,7 @@ import {
   detectUnreachableRules,
   type UnreachableRule,
 } from '../../../utils/permissions/shadowedRuleDetection.js'
-import { SandboxManager } from '../../../utils/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../../../services/sandbox/sandbox-adapter.js'
 import { type EditableSettingSource, SOURCES } from '../../../utils/settings/constants.js'
 import { getRelativeSettingsFilePathForSource } from '../../../utils/settings/settings.js'
 import { plural } from '../../../utils/stringUtils.js'

@@ -263,7 +263,7 @@ import {
   fileHistoryGetDiffStats,
 } from 'src/utils/fileHistory.js'
 import { restoreAgentFromSession, restoreSessionStateFromLog } from 'src/utils/sessionRestore.js'
-import { SandboxManager } from 'src/utils/sandbox/sandbox-adapter.js'
+import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import {
   headlessProfilerStartTurn,
   headlessProfilerCheckpoint,
@@ -273,7 +273,7 @@ import {
 import { startQueryProfile, logQueryProfileReport } from 'src/utils/queryProfiler.js'
 import { asSessionId } from 'src/types/ids.js'
 import { jsonStringify } from '../utils/slowOperations.js'
-import { skillChangeDetector } from '../utils/skills/skillChangeDetector.js'
+import { skillChangeDetector } from '../services/skills/skillChangeDetector.js'
 import { getCommands, clearCommandsCache } from '../commands.js'
 import { isBareMode, isEnvTruthy, isEnvDefinedFalsy, isInternalBuild } from '../utils/envUtils.js'
 import { installPluginsForHeadless } from '../utils/plugins/headlessPluginInstall.js'
@@ -290,7 +290,7 @@ import {
   markMessagesAsRead,
   isShutdownApproved,
 } from '../utils/teammateMailbox.js'
-import { removeTeammateFromTeamFile } from '../utils/swarm/teamHelpers.js'
+import { removeTeammateFromTeamFile } from '../services/swarm/teamHelpers.js'
 import { unassignTeammateTasks } from '../utils/tasks.js'
 import { getRunningTasks } from '../utils/task/framework.js'
 import { isBackgroundTask } from '../tasks/types.js'

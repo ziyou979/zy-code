@@ -34,7 +34,7 @@ import {
   isBypassPermissionsModeDisabled,
   transitionPermissionMode,
 } from '../utils/permissions/permissionSetup.js'
-import { getLeaderToolUseConfirmQueue } from '../utils/swarm/leaderPermissionBridge.js'
+import { getLeaderToolUseConfirmQueue } from '../services/swarm/leaderPermissionBridge.js'
 
 /** 失败后多久自动清除 replBridgeEnabled（停止重试）。 */
 export const BRIDGE_FAILURE_DISMISS_MS = 10_000

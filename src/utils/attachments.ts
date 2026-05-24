@@ -187,7 +187,7 @@ import {
 } from './teammateMailbox.js'
 import { getAgentName, getAgentId, getTeamName, isTeamLead } from './teammate.js'
 import { isInProcessTeammate } from './teammateContext.js'
-import { removeTeammateFromTeamFile } from './swarm/teamHelpers.js'
+import { removeTeammateFromTeamFile } from 'src/services/swarm/teamHelpers.js'
 import { unassignTeammateTasks } from './tasks.js'
 import { isInternalBuild } from './envUtils.js'
 export const TODO_REMINDER_CONFIG = {

@@ -8,12 +8,12 @@ import {
   getAgentColor,
 } from '../../tools/AgentTool/agentColorManager.js'
 import { getStandaloneAgentName } from '../../utils/standaloneAgent.js'
-import { isInsideTmux } from '../../utils/swarm/backends/detection.js'
+import { isInsideTmux } from '../../services/swarm/backends/detection.js'
 import {
   getCachedDetectionResult,
   isInProcessEnabled,
-} from '../../utils/swarm/backends/registry.js'
-import { getSwarmSocketName } from '../../utils/swarm/constants.js'
+} from '../../services/swarm/backends/registry.js'
+import { getSwarmSocketName } from '../../services/swarm/constants.js'
 import { getAgentName, getTeammateColor, getTeamName, isTeammate } from '../../utils/teammate.js'
 import { isInProcessTeammate } from '../../utils/teammateContext.js'
 import type { Theme } from '../../utils/theme.js'

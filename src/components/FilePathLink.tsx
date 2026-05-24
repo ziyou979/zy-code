@@ -115,14 +115,18 @@ export function renderContentWithFileLinks(
 
   let result: string
   if (!hasAnsi) {
-    result = content.replace(FILE_PATH_RE, (_match, filePath: string) => {
-      // 仅文件路径部分包裹 OSC 8，行号留在外面保持纯文本，
-      // 让终端自带路径检测能识别完整的 file:lineNumber 模式
-      const lineNumberPart = _match.slice(filePath.length)
-      const coloredPath = zyColor ? colorize(filePath, zyColor, 'foreground') : filePath
-      const coloredLineNum = zyColor ? colorize(lineNumberPart, zyColor, 'foreground') : lineNumberPart
-      return wrapWithFileLink(filePath, coloredPath) + coloredLineNum
-    })
+    result = content.replace(
+      FILE_PATH_RE,
+      (_match, filePath: string, startLine: string, endLine: string | undefined) => {
+        // file:startLine 整体包进 OSC 8（终端识别为可跳转路径），
+        // 范围后缀 -endLine 留在外面作为纯文本，避免干扰终端识别。
+        const linkDisplay = `${filePath}:${startLine}`
+        const coloredLink = zyColor ? colorize(linkDisplay, zyColor, 'foreground') : linkDisplay
+        const tail = endLine ? `-${endLine}` : ''
+        const coloredTail = tail && zyColor ? colorize(tail, zyColor, 'foreground') : tail
+        return wrapWithFileLink(filePath, coloredLink) + coloredTail
+      },
+    )
   } else {
     // 含 ANSI 序列：在纯文本上定位匹配，然后在原始字符串中插入 OSC 8
     const { plain, map } = buildPlainToOriginalMap(content)
@@ -142,13 +146,17 @@ export function renderContentWithFileLinks(
         segments.push(content.slice(lastOriginalIndex, originalStart))
       }
 
-      // 仅文件路径部分包裹 OSC 8，行号留在外面保持纯文本
+      // file:startLine 整体包进 OSC 8，-endLine 留在外面作为纯文本
       const filePath = match[1]!
-      const filePathEnd = match.index + filePath.length
-      const originalFilePathEnd = map[filePathEnd]!
-      const filePathDisplay = content.slice(originalStart, originalFilePathEnd)
-      const lineNumberDisplay = content.slice(originalFilePathEnd, originalEnd)
-      segments.push(wrapWithFileLink(filePath, filePathDisplay) + lineNumberDisplay)
+      const startLine = match[2]!
+      const endLine: string | undefined = match[3]
+      // file:startLine 的纯文本结束位置
+      const linkPlainEnd = match.index + filePath.length + 1 + startLine.length
+      const originalLinkEnd = map[linkPlainEnd]!
+      const linkDisplay = content.slice(originalStart, originalLinkEnd)
+      // -endLine 部分（如有）保留为纯文本
+      const tailDisplay = endLine ? content.slice(originalLinkEnd, originalEnd) : ''
+      segments.push(wrapWithFileLink(filePath, linkDisplay) + tailDisplay)
       lastOriginalIndex = originalEnd
     }
 

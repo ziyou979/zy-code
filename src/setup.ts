@@ -101,7 +101,7 @@ export async function setup(
   // 队友快照 — 仅 SIMPLE 门控（无逃生通道，bare 模式不使用 swarm）
   if (!isBareMode() && isAgentSwarmsEnabled()) {
     const { captureTeammateModeSnapshot } = await import(
-      './utils/swarm/backends/teammateModeSnapshot.js'
+      './services/swarm/backends/teammateModeSnapshot.js'
     )
     captureTeammateModeSnapshot()
   }

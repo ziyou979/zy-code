@@ -27,7 +27,7 @@ import { containsPathTraversal } from './path.js'
 import { getPlatform } from './platform.js'
 import { getInitialSettings, getRelativeSettingsFilePathForSource } from './settings/settings.js'
 import { sleep } from './sleep.js'
-import { isInITerm2 } from './swarm/backends/detection.js'
+import { isInITerm2 } from 'src/services/swarm/backends/detection.js'
 
 const VALID_WORKTREE_SLUG_SEGMENT = /^[a-zA-Z0-9._-]+$/
 const MAX_WORKTREE_SLUG_LENGTH = 64

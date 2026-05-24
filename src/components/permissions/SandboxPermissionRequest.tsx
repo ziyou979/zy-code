@@ -3,7 +3,7 @@ import { Box, Text } from 'src/ink.js'
 import {
   type NetworkHostPattern,
   shouldAllowManagedSandboxDomainsOnly,
-} from 'src/utils/sandbox/sandbox-adapter.js'
+} from 'src/services/sandbox/sandbox-adapter.js'
 import { Select } from '../CustomSelect/select.js'
 import { PermissionDialog } from './PermissionDialog.js'
 export type SandboxPermissionRequestProps = {

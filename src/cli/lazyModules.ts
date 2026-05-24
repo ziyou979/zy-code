@@ -21,9 +21,9 @@ import { feature } from 'bun:bundle'
 export const getTeammateUtils = () =>
   require('../utils/teammate.js') as typeof import('../utils/teammate.js')
 export const getTeammatePromptAddendum = () =>
-  require('../utils/swarm/teammatePromptAddendum.js') as typeof import('../utils/swarm/teammatePromptAddendum.js')
+  require('../services/swarm/teammatePromptAddendum.js') as typeof import('../services/swarm/teammatePromptAddendum.js')
 export const getTeammateModeSnapshot = () =>
-  require('../utils/swarm/backends/teammateModeSnapshot.js') as typeof import('../utils/swarm/backends/teammateModeSnapshot.js')
+  require('../services/swarm/backends/teammateModeSnapshot.js') as typeof import('../services/swarm/backends/teammateModeSnapshot.js')
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 // 死代码消除：COORDINATOR_MODE 的条件导入

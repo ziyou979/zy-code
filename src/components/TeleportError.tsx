@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
-import { checkIsGitClean, checkNeedsZyAiLogin } from 'src/utils/background/remote/preconditions.js'
+import { checkIsGitClean, checkNeedsZyAiLogin } from 'src/services/background/remote/preconditions.js'
 import { gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
 import { Box, Text } from '../ink.js'
 import { ConsoleOAuthFlow } from './ConsoleOAuthFlow.js'

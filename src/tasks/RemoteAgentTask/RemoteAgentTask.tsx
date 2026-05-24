@@ -18,7 +18,7 @@ import { TodoWriteTool } from '../../tools/TodoWriteTool/TodoWriteTool.js'
 import {
   type BackgroundRemoteSessionPrecondition,
   checkBackgroundRemoteSessionEligibility,
-} from '../../utils/background/remote/remoteSession.js'
+} from '../../services/background/remote/remoteSession.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logError } from '../../utils/log.js'
 import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
@@ -1006,7 +1006,7 @@ function startRemoteSessionPolling(taskId: string, context: TaskContext): () => 
  * RemoteAgentTask - Handles remote ZY session execution.
  *
  * Replaces the BackgroundRemoteSession implementation from:
- * - src/utils/background/remote/remoteSession.ts
+ * - src/services/background/remote/remoteSession.ts
  * - src/components/tasks/BackgroundTaskStatus.tsx (polling logic)
  */
 export const RemoteAgentTask: Task = {

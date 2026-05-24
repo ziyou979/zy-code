@@ -26,44 +26,44 @@ import { errorMessage } from '../../utils/errors.js'
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
 import { parseUserSpecifiedModel } from '../../utils/model/model.js'
 import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
-import { isTmuxAvailable } from '../../utils/swarm/backends/detection.js'
+import { isTmuxAvailable } from '../../services/swarm/backends/detection.js'
 import {
   detectAndGetBackend,
   getBackendByType,
   isInProcessEnabled,
   markInProcessFallback,
   resetBackendDetection,
-} from '../../utils/swarm/backends/registry.js'
-import { getTeammateModeFromSnapshot } from '../../utils/swarm/backends/teammateModeSnapshot.js'
-import type { BackendType } from '../../utils/swarm/backends/types.js'
-import { isPaneBackend } from '../../utils/swarm/backends/types.js'
+} from '../../services/swarm/backends/registry.js'
+import { getTeammateModeFromSnapshot } from '../../services/swarm/backends/teammateModeSnapshot.js'
+import type { BackendType } from '../../services/swarm/backends/types.js'
+import { isPaneBackend } from '../../services/swarm/backends/types.js'
 import {
   SWARM_SESSION_NAME,
   TEAM_LEAD_NAME,
   TEAMMATE_COMMAND_ENV_VAR,
   TMUX_COMMAND,
-} from '../../utils/swarm/constants.js'
-import { It2SetupPrompt } from '../../utils/swarm/It2SetupPrompt.js'
-import { startInProcessTeammate } from '../../utils/swarm/inProcessRunner.js'
+} from '../../services/swarm/constants.js'
+import { It2SetupPrompt } from '../../services/swarm/It2SetupPrompt.js'
+import { startInProcessTeammate } from '../../services/swarm/inProcessRunner.js'
 import {
   type InProcessSpawnConfig,
   spawnInProcessTeammate,
-} from '../../utils/swarm/spawnInProcess.js'
-import { buildInheritedEnvVars } from '../../utils/swarm/spawnUtils.js'
+} from '../../services/swarm/spawnInProcess.js'
+import { buildInheritedEnvVars } from '../../services/swarm/spawnUtils.js'
 import {
   readTeamFileAsync,
   sanitizeAgentName,
   sanitizeName,
   writeTeamFileAsync,
-} from '../../utils/swarm/teamHelpers.js'
+} from '../../services/swarm/teamHelpers.js'
 import {
   assignTeammateColor,
   createTeammatePaneInSwarmView,
   enablePaneBorderStatus,
   isInsideTmux,
   sendCommandToPane,
-} from '../../utils/swarm/teammateLayoutManager.js'
-import { getHardcodedTeammateModelFallback } from '../../utils/swarm/teammateModel.js'
+} from '../../services/swarm/teammateLayoutManager.js'
+import { getHardcodedTeammateModelFallback } from '../../services/swarm/teammateModel.js'
 import { registerTask } from '../../utils/task/framework.js'
 import { writeToMailbox } from '../../utils/teammateMailbox.js'
 import type { CustomAgentDefinition } from '../AgentTool/loadAgentsDir.js'

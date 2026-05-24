@@ -1,7 +1,7 @@
 // @ts-expect-error
 import type { McpbManifest } from '@anthropic-ai/mcpb'
-import { errorMessage } from '../errors.js'
-import { jsonParse } from '../slowOperations.js'
+import { errorMessage } from '../../utils/errors.js'
+import { jsonParse } from '../../utils/slowOperations.js'
 
 /**
  * Parses and validates a DXT manifest from a JSON object.

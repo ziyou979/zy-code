@@ -11,7 +11,7 @@ import { isBareMode, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.j
 import { refreshModelCapabilities } from '../../utils/model/modelCapabilities.js'
 import { countFilesRoundedRg } from '../../utils/ripgrep.js'
 import { settingsChangeDetector } from '../../utils/settings/changeDetector.js'
-import { skillChangeDetector } from '../../utils/skills/skillChangeDetector.js'
+import { skillChangeDetector } from '../../services/skills/skillChangeDetector.js'
 import { initUser } from '../../utils/user.js'
 
 /**

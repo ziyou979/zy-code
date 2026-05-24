@@ -2,7 +2,7 @@ import { Box, Text } from '../../ink.js'
 import {
   SandboxManager,
   shouldAllowManagedSandboxDomainsOnly,
-} from '../../utils/sandbox/sandbox-adapter.js'
+} from '../../services/sandbox/sandbox-adapter.js'
 export function SandboxConfigTab() {
   const isEnabled = SandboxManager.isSandboxingEnabled()
   const depCheck = SandboxManager.checkDependencies()

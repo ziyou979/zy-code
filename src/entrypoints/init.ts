@@ -188,7 +188,7 @@ export const init = memoize(async (): Promise<void> => {
     // 团队会永久残留在磁盘上。为此会话创建的所有团队注册清理函数。
     // 延迟导入：swarm 代码受 feature gate 保护，大多数会话不会创建团队。
     registerCleanup(async () => {
-      const { cleanupSessionTeams } = await import('../utils/swarm/teamHelpers.js')
+      const { cleanupSessionTeams } = await import('../services/swarm/teamHelpers.js')
       await cleanupSessionTeams()
     })
 

@@ -57,7 +57,7 @@ const ChannelsNoticeModule =
     : null
 
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { SandboxManager } from 'src/utils/sandbox/sandbox-adapter.js'
+import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useAppState } from '../../state/AppState.js'
 import { renderModelSetting } from '../../utils/model/model.js'

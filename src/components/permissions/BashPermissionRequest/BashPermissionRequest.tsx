@@ -28,7 +28,7 @@ import {
 } from '../../../utils/permissions/bashClassifier.js'
 import { extractRules } from '../../../utils/permissions/PermissionUpdate.js'
 import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js'
-import { SandboxManager } from '../../../utils/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../../../services/sandbox/sandbox-adapter.js'
 import { Select } from '../../CustomSelect/select.js'
 import { ShimmerChar } from '../../Spinner/ShimmerChar.js'
 import { useShimmerAnimation } from '../../Spinner/useShimmerAnimation.js'

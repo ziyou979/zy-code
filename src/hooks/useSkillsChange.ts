@@ -3,7 +3,7 @@ import type { Command } from '../commands.js'
 import { clearCommandMemoizationCaches, clearCommandsCache, getCommands } from '../commands.js'
 import { onGrowthBookRefresh } from '../services/analytics/growthbook.js'
 import { logError } from '../utils/log.js'
-import { skillChangeDetector } from '../utils/skills/skillChangeDetector.js'
+import { skillChangeDetector } from '../services/skills/skillChangeDetector.js'
 
 /**
  * Keep the commands list fresh across two triggers:

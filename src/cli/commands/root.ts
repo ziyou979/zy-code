@@ -83,7 +83,7 @@ import { createSystemMessage, createUserMessage } from '../../utils/messages.js'
 import { getPlatform } from '../../utils/platform.js'
 import { getSessionIngressAuthToken } from '../../utils/sessionIngressAuth.js'
 import { jsonParse } from '../../utils/slowOperations.js'
-import { computeInitialTeamContext } from '../../utils/swarm/reconnection.js'
+import { computeInitialTeamContext } from '../../services/swarm/reconnection.js'
 import { initializeWarningHandler } from '../../utils/warningHandler.js'
 import { isWorktreeModeEnabled } from '../../utils/worktreeModeEnabled.js'
 

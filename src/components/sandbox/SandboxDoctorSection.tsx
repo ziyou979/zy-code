@@ -1,5 +1,5 @@
 import { Box, Text } from '../../ink.js'
-import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 export function SandboxDoctorSection() {
   if (!SandboxManager.isSupportedPlatform()) {
     return null

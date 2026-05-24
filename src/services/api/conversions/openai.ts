@@ -503,9 +503,7 @@ function extractOpenAICacheTokens(usage: OpenAI.CompletionUsage | undefined | nu
   } else if (
     typeof (usage?.prompt_tokens_details as any)?.cache_creation_input_tokens === 'number'
   ) {
-    cacheCreationInputTokens = (
-      usage!.prompt_tokens_details as any
-    ).cache_creation_input_tokens
+    cacheCreationInputTokens = (usage!.prompt_tokens_details as any).cache_creation_input_tokens
   }
 
   return { cacheReadInputTokens, cacheCreationInputTokens }

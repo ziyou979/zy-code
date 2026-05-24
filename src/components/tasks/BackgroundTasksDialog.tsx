@@ -23,7 +23,7 @@ import {
 import { type BackgroundTaskState, isBackgroundTask, type TaskState } from 'src/tasks/types.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 import { intersperse } from 'src/utils/array.js'
-import { TEAM_LEAD_NAME } from 'src/utils/swarm/constants.js'
+import { TEAM_LEAD_NAME } from 'src/services/swarm/constants.js'
 import { stopUltraplan } from '../../commands/ultraplan.js'
 import type { CommandResultDisplay } from '../../commands.js'
 import { useRegisterOverlay } from '../../context/overlayContext.js'

@@ -45,7 +45,7 @@ import {
   getSlackChannelSuggestions,
   hasSlackMcpServer,
 } from '../utils/suggestions/slackChannelSuggestions.js'
-import { TEAM_LEAD_NAME } from '../utils/swarm/constants.js'
+import { TEAM_LEAD_NAME } from '../services/swarm/constants.js'
 import {
   applyFileSuggestion,
   findLongestCommonPrefix,

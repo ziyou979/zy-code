@@ -18,7 +18,7 @@ import { getAPIProvider } from './model/providers.js'
 import { getMTLSConfig } from './mtls.js'
 import { checkInstall } from './nativeInstaller/index.js'
 import { getProxyUrl } from './proxy.js'
-import { SandboxManager } from './sandbox/sandbox-adapter.js'
+import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { getSettingsWithAllErrors } from './settings/allErrors.js'
 import {
   getEnabledSettingSources,

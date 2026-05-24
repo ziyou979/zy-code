@@ -112,8 +112,8 @@ import {
   hasSlackMcpServer,
   subscribeKnownChannels,
 } from '../../utils/suggestions/slackChannelSuggestions.js'
-import { isInProcessEnabled } from '../../utils/swarm/backends/registry.js'
-import { syncTeammateMode } from '../../utils/swarm/teamHelpers.js'
+import { isInProcessEnabled } from '../../services/swarm/backends/registry.js'
+import { syncTeammateMode } from '../../services/swarm/teamHelpers.js'
 import type { TeamSummary } from '../../utils/teamDiscovery.js'
 import { getTeammateColor } from '../../utils/teammate.js'
 import { isInProcessTeammate } from '../../utils/teammateContext.js'

@@ -59,13 +59,13 @@ import { QueryGuard } from '../utils/QueryGuard.js'
 import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 import { formatTokens, truncateToWidth } from '../utils/format.js'
 import { consumeEarlyInput } from '../utils/earlyInput.js'
-import { setMemberActive } from '../utils/swarm/teamHelpers.js'
+import { setMemberActive } from '../services/swarm/teamHelpers.js'
 import {
   isSwarmWorker,
   generateSandboxRequestId,
   sendSandboxPermissionRequestViaMailbox,
   sendSandboxPermissionResponseViaMailbox,
-} from '../utils/swarm/permissionSync.js'
+} from '../services/swarm/permissionSync.js'
 import { registerSandboxPermissionCallback } from '../hooks/useSwarmPermissionPoller.js'
 import { getTeamName, getAgentName } from '../utils/teammate.js'
 import { WorkerPendingPermission } from '../components/permissions/WorkerPendingPermission.js'
@@ -84,7 +84,7 @@ import {
   unregisterLeaderToolUseConfirmQueue,
   registerLeaderSetToolPermissionContext,
   unregisterLeaderSetToolPermissionContext,
-} from '../utils/swarm/leaderPermissionBridge.js'
+} from '../services/swarm/leaderPermissionBridge.js'
 import { endInteractionSpan } from '../utils/telemetry/sessionTracing.js'
 import { useLogMessages } from '../hooks/useLogMessages.js'
 import { useReplBridge } from '../hooks/useReplBridge.js'
@@ -360,7 +360,7 @@ const useScheduledTasks = feature('AGENT_TRIGGERS')
 import { useGoalMode } from '../hooks/useGoalMode.js'
 import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js'
 import { useTaskListWatcher } from '../hooks/useTaskListWatcher.js'
-import type { SandboxAskCallback, NetworkHostPattern } from '../utils/sandbox/sandbox-adapter.js'
+import type { SandboxAskCallback, NetworkHostPattern } from '../services/sandbox/sandbox-adapter.js'
 import {
   type IDEExtensionInstallationStatus,
   closeOpenDiffs,
@@ -412,7 +412,7 @@ import {
   useKickOffCheckAndDisableBypassPermissionsIfNeeded,
   useKickOffCheckAndDisableAutoModeIfNeeded,
 } from 'src/utils/permissions/bypassPermissionsKillswitch.js'
-import { SandboxManager } from 'src/utils/sandbox/sandbox-adapter.js'
+import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { SANDBOX_NETWORK_ACCESS_TOOL_NAME } from 'src/cli/structuredIO.js'
 import { useFileHistorySnapshotInit } from 'src/hooks/useFileHistorySnapshotInit.js'
 import { SandboxPermissionRequest } from 'src/components/permissions/SandboxPermissionRequest.js'

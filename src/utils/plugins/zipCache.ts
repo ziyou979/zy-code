@@ -34,7 +34,7 @@ import { chmod, lstat, readdir, readFile, rename, rm, stat, writeFile } from 'no
 import { tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import { logForDebugging } from '../debug.js'
-import { parseZipModes, unzipFile } from '../dxt/zip.js'
+import { parseZipModes, unzipFile } from 'src/services/dxt/zip.js'
 import { isEnvTruthy } from '../envUtils.js'
 import { getFsImplementation } from '../fsOperations.js'
 import { expandTilde } from '../permissions/pathValidation.js'

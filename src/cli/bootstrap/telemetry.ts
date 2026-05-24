@@ -16,7 +16,7 @@ import { getDefaultMainLoopModel, parseUserSpecifiedModel } from '../../utils/mo
 import { loadAllPluginsCacheOnly } from '../../utils/plugins/pluginLoader.js'
 import { getManagedPluginNames } from '../../utils/plugins/managedPlugins.js'
 import { getPluginSeedDirs } from '../../utils/plugins/pluginDirectories.js'
-import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import {
   logPluginLoadErrors,

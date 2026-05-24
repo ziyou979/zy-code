@@ -23,19 +23,19 @@ import {
   permissionModeSymbol,
 } from '../../utils/permissions/PermissionMode.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { IT2_COMMAND, isInsideTmuxSync } from '../../utils/swarm/backends/detection.js'
+import { IT2_COMMAND, isInsideTmuxSync } from '../../services/swarm/backends/detection.js'
 import {
   ensureBackendsRegistered,
   getBackendByType,
   getCachedBackend,
-} from '../../utils/swarm/backends/registry.js'
-import type { PaneBackendType } from '../../utils/swarm/backends/types.js'
-import { getSwarmSocketName, TMUX_COMMAND } from '../../utils/swarm/constants.js'
+} from '../../services/swarm/backends/registry.js'
+import type { PaneBackendType } from '../../services/swarm/backends/types.js'
+import { getSwarmSocketName, TMUX_COMMAND } from '../../services/swarm/constants.js'
 import {
   removeMemberFromTeam,
   setMemberMode,
   setMultipleMemberModes,
-} from '../../utils/swarm/teamHelpers.js'
+} from '../../services/swarm/teamHelpers.js'
 import { listTasks, unassignTeammateTasks } from '../../utils/tasks.js'
 import {
   getTeammateStatuses,

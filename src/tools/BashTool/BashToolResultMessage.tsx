@@ -1,4 +1,4 @@
-import { removeSandboxViolationTags } from 'src/utils/sandbox/sandbox-ui-utils.js'
+import { removeSandboxViolationTags } from 'src/services/sandbox/sandbox-ui-utils.js'
 import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { OutputLine } from '../../components/shell/OutputLine.js'

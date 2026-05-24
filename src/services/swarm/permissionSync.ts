@@ -21,21 +21,21 @@
 import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { z } from 'zod/v4'
-import { logForDebugging } from '../debug.js'
-import { getErrnoCode } from '../errors.js'
-import { lazySchema } from '../lazySchema.js'
-import * as lockfile from '../lockfile.js'
-import { logError } from '../log.js'
-import type { PermissionUpdate } from '../permissions/PermissionUpdateSchema.js'
-import { jsonParse, jsonStringify } from '../slowOperations.js'
-import { getAgentId, getAgentName, getTeammateColor, getTeamName } from '../teammate.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { getErrnoCode } from '../../utils/errors.js'
+import { lazySchema } from '../../utils/lazySchema.js'
+import * as lockfile from '../../utils/lockfile.js'
+import { logError } from '../../utils/log.js'
+import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
+import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { getAgentId, getAgentName, getTeammateColor, getTeamName } from '../../utils/teammate.js'
 import {
   createPermissionRequestMessage,
   createPermissionResponseMessage,
   createSandboxPermissionRequestMessage,
   createSandboxPermissionResponseMessage,
   writeToMailbox,
-} from '../teammateMailbox.js'
+} from '../../utils/teammateMailbox.js'
 import { getTeamDir, readTeamFileAsync } from './teamHelpers.js'
 
 /**

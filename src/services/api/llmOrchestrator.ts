@@ -1,4 +1,3 @@
-
 import { randomUUID } from 'node:crypto'
 import { getAPIProvider, isAnthropicBaseUrl } from 'src/utils/model/providers.js'
 import { getCLISyspromptPrefix } from '../../constants/system.js'
@@ -1133,7 +1132,11 @@ async function* queryModel(
 
         // 统一的流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
         const adapter = getLLMAdapter({ anthropicClient: anthropic })
-        const streamResult = await adapter.createStream(params as unknown as CreateParams, signal, clientRequestId)
+        const streamResult = await adapter.createStream(
+          params as unknown as CreateParams,
+          signal,
+          clientRequestId,
+        )
         queryCheckpoint('query_response_headers_received')
         streamRequestId = streamResult.requestId
         streamResponse = streamResult.response
@@ -1393,13 +1396,14 @@ async function* queryModel(
                     logEvent('zy_streaming_error', {
                       error_type:
                         'content_block_input_not_string' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-                      input_type:
-                        typeof (contentBlock as unknown as { input: unknown }).input as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                      input_type: typeof (contentBlock as unknown as { input: unknown })
+                        .input as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                     })
                     throw new Error('Content block input is not a string')
                   }
                   // 标准层统一使用驼峰 partialJson（见 types/llm.ts ToolCallInputDelta）
-                  ;(contentBlock as unknown as { input: string }).input += (delta as unknown as ToolCallInputDelta).partialJson ?? ''
+                  ;(contentBlock as unknown as { input: string }).input +=
+                    (delta as unknown as ToolCallInputDelta).partialJson ?? ''
                   break
                 case 'text_delta':
                   if (contentBlock.type !== 'text') {
@@ -1417,7 +1421,9 @@ async function* queryModel(
                   break
                 case 'signature_delta':
                   if (feature('CONNECTOR_TEXT') && contentBlock.type === 'connector_text') {
-                    ;(contentBlock as ConnectorTextBlock).signature = (delta as unknown as SignatureDelta).signature
+                    ;(contentBlock as ConnectorTextBlock).signature = (
+                      delta as unknown as SignatureDelta
+                    ).signature
                     break
                   }
                   if (contentBlock.type !== 'thinking') {
@@ -1617,7 +1623,9 @@ async function* queryModel(
         yield {
           type: 'stream_event',
           event: part as unknown as StreamEvent['event'],
-          ...((part as unknown as { type: string }).type === 'response_start' ? { ttftMs } : undefined),
+          ...((part as unknown as { type: string }).type === 'response_start'
+            ? { ttftMs }
+            : undefined),
           uuid: randomUUID(),
           timestamp: new Date().toISOString(),
         } as StreamEvent
@@ -2109,7 +2117,10 @@ async function* queryModel(
   const logMessageTokens = tokenCountFromLastAPIResponse(messagesForAPI)
   void options.getToolPermissionContext().then((permissionContext) => {
     logAPISuccessAndDuration({
-      model: (newMessages[0]?.message as unknown as { model?: string })?.model ?? (partialMessage as unknown as { model?: string })?.model ?? options.model,
+      model:
+        (newMessages[0]?.message as unknown as { model?: string })?.model ??
+        (partialMessage as unknown as { model?: string })?.model ??
+        options.model,
       preNormalizedModel: options.model,
       usage,
       start,
@@ -2141,5 +2152,3 @@ async function* queryModel(
   // 防御性措施：正常完成时也释放（如果 finally 已运行则无影响）。
   releaseStreamResources()
 }
-
-

@@ -18,9 +18,9 @@ import { lazySchema } from '../../utils/lazySchema.js'
 import { parseAddress } from '../../utils/peerAddress.js'
 import { semanticBoolean } from '../../utils/semanticBoolean.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import type { BackendType } from '../../utils/swarm/backends/types.js'
-import { TEAM_LEAD_NAME } from '../../utils/swarm/constants.js'
-import { readTeamFileAsync } from '../../utils/swarm/teamHelpers.js'
+import type { BackendType } from '../../services/swarm/backends/types.js'
+import { TEAM_LEAD_NAME } from '../../services/swarm/constants.js'
+import { readTeamFileAsync } from '../../services/swarm/teamHelpers.js'
 import {
   getAgentId,
   getAgentName,

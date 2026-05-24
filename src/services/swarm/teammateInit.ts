@@ -6,12 +6,16 @@
  */
 
 import type { AppState } from '../../state/AppState.js'
-import { logForDebugging } from '../debug.js'
-import { addFunctionHook } from '../hooks/sessionHooks.js'
-import { applyPermissionUpdate } from '../permissions/PermissionUpdate.js'
-import { jsonStringify } from '../slowOperations.js'
-import { getTeammateColor } from '../teammate.js'
-import { createIdleNotification, getLastPeerDmSummary, writeToMailbox } from '../teammateMailbox.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { addFunctionHook } from '../../utils/hooks/sessionHooks.js'
+import { applyPermissionUpdate } from '../../utils/permissions/PermissionUpdate.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
+import { getTeammateColor } from '../../utils/teammate.js'
+import {
+  createIdleNotification,
+  getLastPeerDmSummary,
+  writeToMailbox,
+} from '../../utils/teammateMailbox.js'
 import { readTeamFile, setMemberActive } from './teamHelpers.js'
 
 /**

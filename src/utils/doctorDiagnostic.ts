@@ -32,7 +32,7 @@ import {
 } from './nativeInstaller/packageManagers.js'
 import { getPlatform } from './platform.js'
 import { getRipgrepStatus } from './ripgrep.js'
-import { SandboxManager } from './sandbox/sandbox-adapter.js'
+import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { getManagedFilePath } from './settings/managedPath.js'
 import { CUSTOMIZATION_SURFACES } from './settings/types.js'
 import { findValidZyAlias, findZyAlias, getShellConfigPaths } from './shellConfig.js'
