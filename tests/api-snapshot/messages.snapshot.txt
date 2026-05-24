@@ -18,8 +18,6 @@ export function buildSubagentLookups(
   messages: { message: AssistantMessage | NormalizedAssistantMessage | NormalizedUserMessage }[],
 ): { lookups: MessageLookups; inProgressToolUseIDs: Set<string> } { ... }
 
-export function countToolCalls(messages: Message[], toolName: string, maxCount?: number): number { ... }
-
 export function createAgentsKilledMessage(): SystemAgentsKilledMessage { ... }
 
 export function createAssistantAPIErrorMessage({
@@ -183,20 +181,9 @@ export function createUserMessage({
   origin?: MessageOrigin
 }): UserMessage { ... }
 
-export function deriveShortMessageId(uuid: string): string { ... }
-
-export function deriveUUID(parentUUID: string, index: number): UUID { ... }
-
 export function ensureToolResultPairing(
   messages: (UserMessage | AssistantMessage)[],
 ): (UserMessage | AssistantMessage)[] { ... }
-
-export function extractTag(html: string, tagName: string): string | null { ... }
-
-export function extractTextContent(
-  blocks: readonly { readonly type: string }[],
-  separator = '',
-): string { ... }
 
 export function filterOrphanedThinkingOnlyMessages(
   messages: (UserMessage | AssistantMessage)[],
@@ -216,24 +203,7 @@ export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Mess
 
 export function filterWhitespaceOnlyAssistantMessages(messages: Message[]): Message[] { ... }
 
-export function findLastCompactBoundaryIndex<T extends Message | NormalizedMessage>(
-  messages: T[],
-): number { ... }
-
 export function formatCommandInputTags(commandName: string, args: string): string { ... }
-
-export function getAssistantMessageText(message: Message): string | null { ... }
-
-export function getContentText(
-  content: string | DeepImmutable<Array<ContentBlock>>,
-): string | null { ... }
-
-export function getLastAssistantMessage(messages: Message[]): AssistantMessage | undefined { ... }
-
-export function getMessagesAfterCompactBoundary<T extends Message | NormalizedMessage>(
-  messages: T[],
-  options?: { includeSnipped?: boolean },
-): T[] { ... }
 
 export function getProgressMessagesFromLookup(
   message: NormalizedMessage,
@@ -251,11 +221,7 @@ export function getToolResultIDs(normalizedMessages: NormalizedMessage[]): {
   [toolUseID: string]: boolean
 } { ... }
 
-export function getToolUseID(message: NormalizedMessage): string | null { ... }
-
 export function getToolUseIDs(normalizedMessages: NormalizedMessage[]): Set<string> { ... }
-
-export function getUserMessageText(message: Message | NormalizedMessage): string | null { ... }
 
 export function handleMessageFromStream(
   message: Message | TombstoneMessage | StreamEvent | RequestStartEvent | ToolUseSummaryMessage,
@@ -270,10 +236,6 @@ export function handleMessageFromStream(
   onStreamingText?: (f: (current: string | null) => string | null) => void,
 ): void { ... }
 
-export function hasSuccessfulToolCall(messages: Message[], toolName: string): boolean { ... }
-
-export function hasToolCallsInLastAssistantTurn(messages: Message[]): boolean { ... }
-
 export function hasUnresolvedHooks(
   messages: NormalizedMessage[],
   toolUseID: string,
@@ -285,26 +247,6 @@ export function hasUnresolvedHooksFromLookup(
   hookEvent: HookEvent,
   lookups: MessageLookups,
 ): boolean { ... }
-
-export function isCompactBoundaryMessage(
-  message: Message | NormalizedMessage,
-): message is SystemCompactBoundaryMessage { ... }
-
-export function isEmptyMessageText(text: string): boolean { ... }
-
-export function isNotEmptyMessage(message: Message | NormalizedMessage): boolean { ... }
-
-export function isSystemLocalCommandMessage(
-  message: Message,
-): message is SystemLocalCommandMessage { ... }
-
-export function isThinkingMessage(message: Message): boolean { ... }
-
-export function isToolUseRequestMessage(
-  message: Message | NormalizedMessage,
-): message is ToolUseRequestMessage { ... }
-
-export function isToolUseResultMessage(message: Message): message is ToolUseResultMessage { ... }
 
 export function mergeAssistantMessages(a: AssistantMessage, b: AssistantMessage): AssistantMessage { ... }
 
@@ -364,11 +306,6 @@ export function reorderMessagesInUI(
   syntheticStreamingToolUseMessages: NormalizedAssistantMessage[],
 ): (NormalizedUserMessage | NormalizedAssistantMessage | AttachmentMessage | SystemMessage)[] { ... }
 
-export function shouldShowUserMessage(
-  message: NormalizedMessage,
-  isTranscriptMode: boolean,
-): boolean { ... }
-
 export function shrinkHistoricalProgress(msg: ProgressMessage): ProgressMessage { ... }
 
 export function stripAdvisorBlocks(
@@ -377,17 +314,9 @@ export function stripAdvisorBlocks(
 
 export function stripCallerFieldFromAssistantMessage(message: AssistantMessage): AssistantMessage { ... }
 
-export function stripPromptXMLTags(content: string): string { ... }
-
 export function stripSignatureBlocks(messages: Message[]): Message[] { ... }
 
 export function stripToolReferenceBlocksFromUserMessage(message: UserMessage): UserMessage { ... }
-
-export function textForResubmit(
-  msg: UserMessage,
-): { text: string; mode: 'bash' | 'prompt' } | null { ... }
-
-export function withMemoryCorrectionHint(message: string): string { ... }
 
 export function wrapCommandText(raw: string, origin: MessageOrigin | undefined): string { ... }
 
@@ -434,6 +363,11 @@ export type StreamingToolUse = {
   unparsedToolInput: string
 }
 
+export type {
+  ToolUseRequestMessage,
+  ToolUseResultMessage,
+} from './messages/predicates.js'
+
 export {
   AUTO_REJECT_MESSAGE,
   buildClassifierUnavailableMessage,
@@ -455,3 +389,31 @@ export {
   SYNTHETIC_MODEL,
   SYNTHETIC_TOOL_RESULT_PLACEHOLDER,
 } from './messages/constants.js'
+
+export {
+  countToolCalls,
+  deriveShortMessageId,
+  deriveUUID,
+  extractTag,
+  extractTextContent,
+  findLastCompactBoundaryIndex,
+  getAssistantMessageText,
+  getContentText,
+  getLastAssistantMessage,
+  getMessagesAfterCompactBoundary,
+  getToolUseID,
+  getUserMessageText,
+  hasSuccessfulToolCall,
+  hasToolCallsInLastAssistantTurn,
+  isCompactBoundaryMessage,
+  isEmptyMessageText,
+  isNotEmptyMessage,
+  isSystemLocalCommandMessage,
+  isThinkingMessage,
+  isToolUseRequestMessage,
+  isToolUseResultMessage,
+  shouldShowUserMessage,
+  stripPromptXMLTags,
+  textForResubmit,
+  withMemoryCorrectionHint,
+} from './messages/predicates.js'

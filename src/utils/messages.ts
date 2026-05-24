@@ -144,33 +144,7 @@ function getTeammateMailbox(): typeof import('./teammateMailbox.js') {
   return require('./teammateMailbox.js')
 }
 
-const MEMORY_CORRECTION_HINT =
-  "\n\nNote: The user's next message may contain a correction or preference. Pay close attention — if they explain what went wrong or how they'd prefer you to work, consider saving that to memory for future sessions."
-
 const TOOL_REFERENCE_TURN_BOUNDARY = 'Tool loaded.'
-
-/**
- * 当启用自动记忆且 GrowthBook 标志开启时，
- * 向拒绝/取消消息追加记忆纠正提示。
- */
-export function withMemoryCorrectionHint(message: string): string {
-  if (isAutoMemoryEnabled() && getFeatureValue_CACHED_MAY_BE_STALE('zy_amber_prism', false)) {
-    return message + MEMORY_CORRECTION_HINT
-  }
-  return message
-}
-
-/**
- * 从 UUID 派生短消息 ID（6 字符 base36 字符串）。
- * 用于 snip 工具引用 — 作为 [id:...] 标签注入到 API 消息中。
- * 确定性：相同 UUID 始终生成相同的短 ID。
- */
-export function deriveShortMessageId(uuid: string): string {
-  // 取 UUID 的前 10 个十六进制字符（跳过破折号）
-  const hex = uuid.replace(/-/g, '').slice(0, 10)
-  // 转换为 base36 以更短地表示，取 6 个字符
-  return parseInt(hex, 16).toString(36).slice(0, 6)
-}
 
 export {
   AUTO_REJECT_MESSAGE,
@@ -200,6 +174,58 @@ import {
   SYNTHETIC_MODEL,
   SYNTHETIC_TOOL_RESULT_PLACEHOLDER,
 } from './messages/constants.js'
+export {
+  countToolCalls,
+  deriveShortMessageId,
+  deriveUUID,
+  extractTag,
+  extractTextContent,
+  findLastCompactBoundaryIndex,
+  getAssistantMessageText,
+  getContentText,
+  getLastAssistantMessage,
+  getMessagesAfterCompactBoundary,
+  getToolUseID,
+  getUserMessageText,
+  hasSuccessfulToolCall,
+  hasToolCallsInLastAssistantTurn,
+  isCompactBoundaryMessage,
+  isEmptyMessageText,
+  isNotEmptyMessage,
+  isSystemLocalCommandMessage,
+  isThinkingMessage,
+  isToolUseRequestMessage,
+  isToolUseResultMessage,
+  shouldShowUserMessage,
+  stripPromptXMLTags,
+  textForResubmit,
+  withMemoryCorrectionHint,
+} from './messages/predicates.js'
+export type {
+  ToolUseRequestMessage,
+  ToolUseResultMessage,
+} from './messages/predicates.js'
+import {
+  deriveShortMessageId,
+  deriveUUID,
+  extractTag,
+  extractTextContent,
+  findLastCompactBoundaryIndex,
+  getContentText,
+  getMessagesAfterCompactBoundary,
+  getToolUseID,
+  getUserMessageText,
+  isCompactBoundaryMessage,
+  isHookAttachmentMessage,
+  isNotEmptyMessage,
+  isSystemLocalCommandMessage,
+  isThinkingMessage,
+  isToolUseRequestMessage,
+  isToolUseResultMessage,
+  stripPromptXMLTags,
+  type ToolUseRequestMessage,
+  type ToolUseResultMessage,
+} from './messages/predicates.js'
 
 function isSyntheticApiErrorMessage(
   message: Message,
@@ -209,26 +235,6 @@ function isSyntheticApiErrorMessage(
     message.isApiErrorMessage === true &&
     message.message.model === SYNTHETIC_MODEL
   )
-}
-
-export function getLastAssistantMessage(messages: Message[]): AssistantMessage | undefined {
-  // findLast 从末尾提前退出 — 对大消息数组比 filter + last 快得多
-  //（通过 useFeedbackSurvey 在每次 REPL 渲染时调用）。
-  return messages.findLast((msg): msg is AssistantMessage => msg.type === 'assistant')
-}
-
-export function hasToolCallsInLastAssistantTurn(messages: Message[]): boolean {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const message = messages[i]
-    if (message && message.type === 'assistant') {
-      const assistantMessage = message as AssistantMessage
-      const content = assistantMessage.message.content
-      if (Array.isArray(content)) {
-        return content.some((block) => block.type === 'tool_call')
-      }
-    }
-  }
-  return false
 }
 
 function baseCreateAssistantMessage({
@@ -665,110 +671,9 @@ export function shrinkHistoricalProgress(msg: ProgressMessage): ProgressMessage 
   return shrinkProgressData(msg)
 }
 
-export function extractTag(html: string, tagName: string): string | null {
-  if (!html.trim() || !tagName.trim()) {
-    return null
-  }
-
-  const escapedTag = escapeRegExp(tagName)
-
-  // 创建处理以下情况的正则表达式模式：
-  // 1. 自闭合标签
-  // 2. 带属性的标签
-  // 3. 相同类型的嵌套标签
-  // 4. 多行内容
-  const pattern = new RegExp(
-    `<${escapedTag}(?:\\s+[^>]*)?>` + // 开始标签，带可选属性
-      '([\\s\\S]*?)' + // 内容（非贪婪匹配）
-      `<\\/${escapedTag}>`, // 结束标签
-    'gi',
-  )
-
-  let match
-  let depth = 0
-  let lastIndex = 0
-  const openingTag = new RegExp(`<${escapedTag}(?:\\s+[^>]*?)?>`, 'gi')
-  const closingTag = new RegExp(`<\\/${escapedTag}>`, 'gi')
-
-  while ((match = pattern.exec(html)) !== null) {
-    // 检查嵌套标签
-    const content = match[1]
-    const beforeMatch = html.slice(lastIndex, match.index)
-
-    // 重置深度计数器
-    depth = 0
-
-    // 计算此匹配前的开始标签数量
-    openingTag.lastIndex = 0
-    while (openingTag.exec(beforeMatch) !== null) {
-      depth++
-    }
-
-    // 计算此匹配前的结束标签数量
-    closingTag.lastIndex = 0
-    while (closingTag.exec(beforeMatch) !== null) {
-      depth--
-    }
-
-    // 仅在处于正确嵌套层级时才包含内容
-    if (depth === 0 && content) {
-      return content
-    }
-
-    lastIndex = match.index + match[0].length
-  }
-
-  return null
-}
-
-export function isNotEmptyMessage(message: Message | NormalizedMessage): boolean {
-  if (!message) {
-    return false
-  }
-  if (
-    message.type === 'progress' ||
-    message.type === 'attachment' ||
-    message.type === 'system' ||
-    message.type === 'tool_use_summary' ||
-    message.type === 'stream_event' ||
-    message.type === 'stream_request_start'
-  ) {
-    return true
-  }
-
-  const msg = message as UserMessage | AssistantMessage
-  if (typeof msg.message.content === 'string') {
-    return msg.message.content.trim().length > 0
-  }
-
-  if (msg.message.content.length === 0) {
-    return false
-  }
-
-  // 暂时跳过多个内容块的消息
-  if (msg.message.content.length > 1) {
-    return true
-  }
-
-  if (msg.message.content[0]!.type !== 'text') {
-    return true
-  }
-
-  return (
-    msg.message.content[0]!.text.trim().length > 0 &&
-    msg.message.content[0]!.text !== NO_CONTENT_MESSAGE &&
-    msg.message.content[0]!.text !== INTERRUPT_MESSAGE_FOR_TOOL_USE
-  )
-}
-
 // 确定性 UUID 派生。从父 UUID + 内容块索引生成稳定的 UUID 形状字符串，
 // 使相同输入始终在跨调用时产生相同的 key。
 // 用于 normalizeMessages 和合成消息创建。
-export function deriveUUID(parentUUID: string, index: number): UUID {
-  const hex = index.toString(16).padStart(12, '0')
-  return `${parentUUID.slice(0, 24)}${hex}` as UUID
-}
-
 // 拆分消息，使每个内容块获得自己的消息
 export function normalizeMessages(messages: AssistantMessage[]): NormalizedAssistantMessage[]
 export function normalizeMessages(messages: UserMessage[]): NormalizedUserMessage[]
@@ -860,34 +765,6 @@ export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
       }
     }
   })
-}
-
-type ToolUseRequestMessage = NormalizedAssistantMessage & {
-  message: { content: [ToolCallBlock] }
-}
-
-export function isToolUseRequestMessage(
-  message: Message | NormalizedMessage,
-): message is ToolUseRequestMessage {
-  return (
-    message.type === 'assistant' &&
-    // 注意：stop_reason === 'tool_call' 不可靠 — 并不总是正确设置
-    Array.isArray(message.message.content) &&
-    message.message.content.some((_) => _.type === 'tool_call')
-  )
-}
-
-type ToolUseResultMessage = NormalizedUserMessage & {
-  message: { content: [ToolResultBlock] }
-}
-
-export function isToolUseResultMessage(message: Message): message is ToolUseResultMessage {
-  return (
-    message.type === 'user' &&
-    ((Array.isArray(message.message.content) &&
-      message.message.content[0]?.type === 'tool_result') ||
-      Boolean(message.toolUseResult))
-  )
 }
 
 // 重新排序，将结果消息移到工具使用消息之后
@@ -1050,22 +927,6 @@ export function reorderMessagesInUI(
   // 过滤以仅保留最后一个 api 错误消息
   const last = result.at(-1)
   return result.filter((_) => _.type !== 'system' || _.subtype !== 'api_error' || _ === last)
-}
-
-function isHookAttachmentMessage(
-  message: Message | NormalizedMessage,
-): message is AttachmentMessage<Record<string, unknown>> {
-  return (
-    message.type === 'attachment' &&
-    (message.attachment.type === 'hook_blocking_error' ||
-      message.attachment.type === 'hook_cancelled' ||
-      message.attachment.type === 'hook_error_during_execution' ||
-      message.attachment.type === 'hook_non_blocking_error' ||
-      message.attachment.type === 'hook_success' ||
-      message.attachment.type === 'hook_system_message' ||
-      message.attachment.type === 'hook_additional_context' ||
-      message.attachment.type === 'hook_stopped_continuation')
-  )
 }
 
 function getInProgressHookCount(
@@ -1540,12 +1401,6 @@ export function reorderAttachmentsForAPI(messages: Message[]): Message[] {
 
   result.reverse()
   return result
-}
-
-export function isSystemLocalCommandMessage(
-  message: Message,
-): message is SystemLocalCommandMessage {
-  return message.type === 'system' && message.subtype === 'local_command'
 }
 
 /**
@@ -2740,43 +2595,6 @@ export function normalizeContentFromAPI(
   })
 }
 
-export function isEmptyMessageText(text: string): boolean {
-  return stripPromptXMLTags(text).trim() === '' || text.trim() === NO_CONTENT_MESSAGE
-}
-const STRIPPED_TAGS_RE = /<(commit_analysis|context|function_analysis|pr_analysis)>.*?<\/\1>\n?/gs
-
-export function stripPromptXMLTags(content: string): string {
-  return content.replace(STRIPPED_TAGS_RE, '').trim()
-}
-
-export function getToolUseID(message: NormalizedMessage): string | null {
-  switch (message.type) {
-    case 'attachment':
-      if (isHookAttachmentMessage(message)) {
-        return (message.attachment as Record<string, unknown>).toolUseID as string | null
-      }
-      return null
-    case 'assistant':
-      if (message.message.content[0]?.type !== 'tool_call') {
-        return null
-      }
-      return message.message.content[0].id
-    case 'user':
-      if (message.sourceToolUseID) {
-        return message.sourceToolUseID
-      }
-
-      if (message.message.content[0]?.type !== 'tool_result') {
-        return null
-      }
-      return message.message.content[0].toolCallId
-    case 'progress':
-      return message.toolUseID
-    case 'system':
-      return message.subtype === 'informational' ? (message.toolUseID ?? null) : null
-  }
-}
-
 export function filterUnresolvedToolUses(messages: Message[]): Message[] {
   // 直接从消息内容块收集所有 tool_use ID 和 tool_result ID。
   // 这避免了调用 normalizeMessages()（它会生成新 UUID） — 如果那些
@@ -2832,79 +2650,10 @@ export function filterUnresolvedToolUses(messages: Message[]): Message[] {
   })
 }
 
-export function getAssistantMessageText(message: Message): string | null {
-  if (message.type !== 'assistant') {
-    return null
-  }
-
-  // 对于内容块数组，提取并连接 text 块
-  if (Array.isArray(message.message.content)) {
-    return (
-      message.message.content
-        .filter((block) => block.type === 'text')
-        .map((block) => (block.type === 'text' ? block.text : ''))
-        .join('\n')
-        .trim() || null
-    )
-  }
-  return null
-}
-
-export function getUserMessageText(message: Message | NormalizedMessage): string | null {
-  if (message.type !== 'user') {
-    return null
-  }
-
-  const content = message.message.content
-
-  return getContentText(content)
-}
-
-export function textForResubmit(
-  msg: UserMessage,
-): { text: string; mode: 'bash' | 'prompt' } | null {
-  const content = getUserMessageText(msg)
-  if (content === null) {
-    return null
-  }
-  const bash = extractTag(content, 'bash-input')
-  if (bash) {
-    return { text: bash, mode: 'bash' }
-  }
-  const cmd = extractTag(content, COMMAND_NAME_TAG)
-  if (cmd) {
-    const args = extractTag(content, COMMAND_ARGS_TAG) ?? ''
-    return { text: `${cmd} ${args}`, mode: 'prompt' }
-  }
-  return { text: stripIdeContextTags(content), mode: 'prompt' }
-}
-
 /**
  * 从内容块数组中提取文本，用给定分隔符连接文本块。
  * 通过结构化类型兼容 ContentBlock 及其 readonly/DeepImmutable 变体。
  */
-export function extractTextContent(
-  blocks: readonly { readonly type: string }[],
-  separator = '',
-): string {
-  return blocks
-    .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
-    .map((b) => b.text)
-    .join(separator)
-}
-
-export function getContentText(
-  content: string | DeepImmutable<Array<ContentBlock>>,
-): string | null {
-  if (typeof content === 'string') {
-    return content
-  }
-  if (Array.isArray(content)) {
-    return extractTextContent(content, '\n').trim() || null
-  }
-  return null
-}
-
 export type StreamingToolUse = {
   index: number
   contentBlock: ToolCallBlock
@@ -4559,29 +4308,10 @@ export function createSystemAPIErrorMessage(
 /**
  * 检查消息是否为 compact 边界标记
  */
-export function isCompactBoundaryMessage(
-  message: Message | NormalizedMessage,
-): message is SystemCompactBoundaryMessage {
-  return message?.type === 'system' && message.subtype === 'compact_boundary'
-}
-
 /**
  * 在消息数组中查找最后一个 compact 边界标记的索引
  * @returns 最后一个 compact 边界的索引，未找到则返回 -1
  */
-export function findLastCompactBoundaryIndex<T extends Message | NormalizedMessage>(
-  messages: T[],
-): number {
-  // 反向扫描以查找最近的 compact 边界
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const message = messages[i]
-    if (message && isCompactBoundaryMessage(message)) {
-      return i
-    }
-  }
-  return -1 // 未找到边界
-}
-
 /**
  * 返回从最后一个 compact 边界开始（包含边界本身）的消息。
  * 如果不存在边界，则返回所有消息。
@@ -4594,130 +4324,14 @@ export function findLastCompactBoundaryIndex<T extends Message | NormalizedMessa
  *
  * 注意：边界本身是系统消息，会被 normalizeMessagesForAPI 过滤。
  */
-export function getMessagesAfterCompactBoundary<T extends Message | NormalizedMessage>(
-  messages: T[],
-  options?: { includeSnipped?: boolean },
-): T[] {
-  const boundaryIndex = findLastCompactBoundaryIndex(messages)
-  const sliced = boundaryIndex === -1 ? messages : messages.slice(boundaryIndex)
-  if (!options?.includeSnipped && feature('HISTORY_SNIP')) {
-    /* eslint-disable @typescript-eslint/no-require-imports */
-    const { projectSnippedView } =
-      require('../services/compact/snipProjection.js') as typeof import('../services/compact/snipProjection.js')
-    /* eslint-enable @typescript-eslint/no-require-imports */
-    return projectSnippedView(sliced as Message[]) as T[]
-  }
-  return sliced
-}
-
-export function shouldShowUserMessage(
-  message: NormalizedMessage,
-  isTranscriptMode: boolean,
-): boolean {
-  if (message.type !== 'user') {
-    return true
-  }
-  if (message.isMeta) {
-    // Channel 消息保持 isMeta（用于 snip-tag/turn-boundary/brief-mode 语义），
-    // 但在默认 transcript 中渲染 — 键盘用户应该看到到达的内容。
-    // UserTextMessage 中的 <channel> 标签处理实际渲染。
-    if ((feature('KAIROS') || feature('KAIROS_CHANNELS')) && message.origin?.kind === 'channel') {
-      return true
-    }
-    return false
-  }
-  if (message.isVisibleInTranscriptOnly && !isTranscriptMode) {
-    return false
-  }
-  return true
-}
-
-export function isThinkingMessage(message: Message): boolean {
-  if (message.type !== 'assistant') {
-    return false
-  }
-  if (!Array.isArray(message.message.content)) {
-    return false
-  }
-  return message.message.content.every(
-    (block) => block.type === 'thinking' || block.type === 'redacted_thinking',
-  )
-}
-
 /**
  * 统计消息历史中对指定工具的总调用次数
  * 达到 maxCount 时提前终止以提高效率
  */
-export function countToolCalls(messages: Message[], toolName: string, maxCount?: number): number {
-  let count = 0
-  for (const msg of messages) {
-    if (!msg) {
-      continue
-    }
-    if (msg.type === 'assistant' && Array.isArray(msg.message.content)) {
-      const hasToolUse = msg.message.content.some(
-        (block): block is ToolCallBlock => block.type === 'tool_call' && block.name === toolName,
-      )
-      if (hasToolUse) {
-        count++
-        if (maxCount && count >= maxCount) {
-          return count
-        }
-      }
-    }
-  }
-  return count
-}
-
 /**
  * 检查最近一次工具调用是否成功（有 result 且无 is_error）
  * 反向搜索以提高效率。
  */
-export function hasSuccessfulToolCall(messages: Message[], toolName: string): boolean {
-  // 反向搜索以找到此工具最近的 tool_use
-  let mostRecentToolUseId: string | undefined
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const msg = messages[i]
-    if (!msg) {
-      continue
-    }
-    if (msg.type === 'assistant' && Array.isArray(msg.message.content)) {
-      const toolUse = msg.message.content.find(
-        (block): block is ToolCallBlock => block.type === 'tool_call' && block.name === toolName,
-      )
-      if (toolUse) {
-        mostRecentToolUseId = toolUse.id
-        break
-      }
-    }
-  }
-
-  if (!mostRecentToolUseId) {
-    return false
-  }
-
-  // 查找对应的 tool_result（反向搜索）
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const msg = messages[i]
-    if (!msg) {
-      continue
-    }
-    if (msg.type === 'user' && Array.isArray(msg.message.content)) {
-      const toolResult = msg.message.content.find(
-        (block): block is ToolResultBlock =>
-          block.type === 'tool_result' && block.toolCallId === mostRecentToolUseId,
-      )
-      if (toolResult) {
-        // is_error 为 false 或未定义时视为成功
-        return toolResult.isError !== true
-      }
-    }
-  }
-
-  // 工具已调用但尚无结果（实践中不应发生）
-  return false
-}
-
 type ThinkingBlockType =
   | ThinkingBlock
   | RedactedThinkingBlock
