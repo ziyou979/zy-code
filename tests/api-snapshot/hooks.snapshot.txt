@@ -311,22 +311,7 @@ export function executeFileChangedHooks(
   systemMessages: string[]
 }> { ... }
 
-export function getPreToolHookBlockingMessage(
-  hookName: string,
-  blockingError: HookBlockingError,
-): string { ... }
-
 export function getSessionEndHookTimeoutMs(): number { ... }
-
-export function getStopHookMessage(blockingError: HookBlockingError): string { ... }
-
-export function getTaskCompletedHookMessage(blockingError: HookBlockingError): string { ... }
-
-export function getTaskCreatedHookMessage(blockingError: HookBlockingError): string { ... }
-
-export function getTeammateIdleHookMessage(blockingError: HookBlockingError): string { ... }
-
-export function getUserPromptSubmitHookBlockingMessage(blockingError: HookBlockingError): string { ... }
 
 export function hasBlockingResult(results: HookOutsideReplResult[]): boolean { ... }
 
@@ -372,3 +357,12 @@ export type InstructionsLoadReason =
 export type InstructionsMemoryType = 'User' | 'Project' | 'Local' | 'Managed'
 
 export type { AggregatedHookResult, ElicitationResponse, HookBlockingError, HookResult }
+
+export {
+  getPreToolHookBlockingMessage,
+  getStopHookMessage,
+  getTaskCompletedHookMessage,
+  getTaskCreatedHookMessage,
+  getTeammateIdleHookMessage,
+  getUserPromptSubmitHookBlockingMessage,
+} from './hooks/messages.js'
