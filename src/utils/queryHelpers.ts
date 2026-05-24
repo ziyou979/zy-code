@@ -24,7 +24,7 @@ import type {
   inputSchema as permissionToolInputSchema,
   outputSchema as permissionToolOutputSchema,
 } from './permissions/PermissionPromptToolResultSchema.js'
-import type { ProcessUserInputContext } from './processUserInput/processUserInput.js'
+import type { ProcessUserInputContext } from 'src/services/processUserInput/processUserInput.js'
 import { recordTranscript } from './sessionStorage.js'
 
 export type PermissionPromptTool = Tool<

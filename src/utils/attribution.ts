@@ -21,7 +21,11 @@ import { logForDebugging } from './debug.js'
 import { isInternalBuild } from './envUtils.js'
 import { parseJSONL } from './json.js'
 import { logError } from './log.js'
-import { getMainLoopModel, getPublicModelDisplayName, getPublicModelName } from './model/model.js'
+import {
+  getMainLoopModel,
+  getPublicModelDisplayName,
+  getPublicModelName,
+} from 'src/services/model/model.js'
 import { isMemoryFileAccess } from './sessionFileAccessHooks.js'
 import { getTranscriptPath } from './sessionStorage.js'
 import { readTranscriptForLoad } from './sessionStoragePortable.js'

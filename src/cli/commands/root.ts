@@ -212,8 +212,8 @@ import {
   type ModelSetting,
   normalizeModelStringForAPI,
   parseUserSpecifiedModel,
-} from '../../utils/model/model.js'
-import { ensureModelStringsInitialized } from '../../utils/model/modelStrings.js'
+} from '../../services/model/model.js'
+import { ensureModelStringsInitialized } from '../../services/model/modelStrings.js'
 import {
   checkAndDisableBypassPermissions,
   initializeToolPermissionContext,

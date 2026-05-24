@@ -1,6 +1,6 @@
 // Critical system constants extracted to break circular dependencies
 
-import { getAPIProvider } from '../utils/model/providers.js'
+import { getAPIProvider } from '../services/model/providers.js'
 
 const DEFAULT_PREFIX = `You are ZY Code, an AI-powered CLI.`
 const AGENT_SDK_ZY_CODE_PRESET_PREFIX = `You are ZY Code, an AI-powered CLI, running within the Agent SDK.`

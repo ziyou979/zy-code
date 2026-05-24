@@ -3,7 +3,7 @@
  * Used by both the CLI `zy agents` handler and the interactive `/agents` command.
  */
 
-import { getDefaultSubagentModel } from '../../utils/model/agent.js'
+import { getDefaultSubagentModel } from '../../services/model/agent.js'
 import { getSourceDisplayName, type SettingSource } from '../../utils/settings/constants.js'
 import type { AgentDefinition } from './loadAgentsDir.js'
 

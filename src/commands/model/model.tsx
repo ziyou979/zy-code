@@ -10,13 +10,13 @@ import {
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandCall } from '../../types/command.js'
 
-import { MODEL_ALIASES } from '../../utils/model/aliases.js'
+import { MODEL_ALIASES } from '../../services/model/aliases.js'
 import {
   getDefaultMainLoopModelSetting,
   renderDefaultModelSetting,
-} from '../../utils/model/model.js'
-import { isModelAllowed } from '../../utils/model/modelAllowlist.js'
-import { validateModel } from '../../utils/model/validateModel.js'
+} from '../../services/model/model.js'
+import { isModelAllowed } from '../../services/model/modelAllowlist.js'
+import { validateModel } from '../../services/model/validateModel.js'
 
 function ModelPickerWrapper({ onDone }) {
   const mainLoopModel = useAppState((s) => s.mainLoopModel)

@@ -26,7 +26,7 @@ import { count } from './array.js'
 import { getContextWindowForModel } from './context.js'
 import { logForDebugging } from './debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
-import { getAPIProvider, isAnthropicBaseUrl } from './model/providers.js'
+import { getAPIProvider, isAnthropicBaseUrl } from 'src/services/model/providers.js'
 import { jsonStringify } from './slowOperations.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
 

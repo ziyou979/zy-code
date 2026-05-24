@@ -19,8 +19,8 @@ import {
   type ShellCommand,
   wrapSpawn,
 } from './ShellCommand.js'
-import { getTaskOutputDir } from './task/diskOutput.js'
-import { TaskOutput } from './task/TaskOutput.js'
+import { getTaskOutputDir } from 'src/services/task/diskOutput.js'
+import { TaskOutput } from 'src/services/task/TaskOutput.js'
 import { which } from './which.js'
 
 export type { ExecResult } from './ShellCommand.js'

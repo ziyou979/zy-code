@@ -37,7 +37,7 @@ import {
   resetSessionFilePointer,
   saveWorktreeState,
 } from '../../utils/sessionStorage.js'
-import { evictTaskOutput, initTaskOutputAsSymlink } from '../../utils/task/diskOutput.js'
+import { evictTaskOutput, initTaskOutputAsSymlink } from '../../services/task/diskOutput.js'
 import { getCurrentWorktreeSession } from '../../utils/worktree.js'
 import { clearSessionCaches } from './caches.js'
 

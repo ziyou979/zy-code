@@ -9,7 +9,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { getAPIProvider, isOpenAIProvider } from 'src/utils/model/providers.js'
+import { getAPIProvider, isOpenAIProvider } from 'src/services/model/providers.js'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { getMockSubscriptionType, shouldUseMockSubscription } from '../services/mockRateLimits.js'
 import {
@@ -42,16 +42,16 @@ import { errorMessage } from './errors.js'
 import { execSyncWithDefaults_DEPRECATED } from './execFileNoThrow.js'
 import * as lockfile from './lockfile.js'
 import { logError } from './log.js'
-import { getSecureStorage } from './secureStorage/index.js'
+import { getSecureStorage } from 'src/services/secureStorage/index.js'
 import {
   clearLegacyApiKeyPrefetch,
   getLegacyApiKeyPrefetchResult,
-} from './secureStorage/keychainPrefetch.js'
+} from 'src/services/secureStorage/keychainPrefetch.js'
 import {
   clearKeychainCache,
   getMacOsKeychainStorageServiceName,
   getUsername,
-} from './secureStorage/macOsKeychainHelpers.js'
+} from 'src/services/secureStorage/macOsKeychainHelpers.js'
 import { getInitialSettings, getSettingsForSource } from './settings/settings.js'
 import { sleep } from './sleep.js'
 import { jsonParse } from './slowOperations.js'

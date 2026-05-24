@@ -34,7 +34,11 @@ import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { isEnvTruthy } from './envUtils.js'
 import { createUserMessage } from './messages.js'
-import { getAPIProvider, isAnthropicBaseUrl, providerHasCapability } from './model/providers.js'
+import {
+  getAPIProvider,
+  isAnthropicBaseUrl,
+  providerHasCapability,
+} from 'src/services/model/providers.js'
 import { getFileReadIgnorePatterns, normalizePatternsToPath } from './permissions/filesystem.js'
 import { getPlan, getPlanFilePath, persistFileSnapshotIfRemote } from './plans.js'
 import { getPlatform } from './platform.js'

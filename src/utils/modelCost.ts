@@ -3,8 +3,8 @@ import { logEvent } from 'src/services/analytics/index.js'
 import { setHasUnknownModelCost } from '../bootstrap/state.js'
 import { getUiLanguage } from '../i18n/index.js'
 import type { TokenUsage as Usage } from '../types/llm.js'
-import { getDefaultMainLoopModelSetting } from './model/model.js'
-import { getStaticPricingForModel } from './model/modelCapabilities.js'
+import { getDefaultMainLoopModelSetting } from 'src/services/model/model.js'
+import { getStaticPricingForModel } from 'src/services/model/modelCapabilities.js'
 
 export type ModelCosts = {
   inputTokens: number

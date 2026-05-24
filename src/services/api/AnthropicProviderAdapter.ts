@@ -15,7 +15,7 @@ import type {
 } from '../../types/llm.js'
 import { getModelBetas } from '../../utils/betas.js'
 import { logError } from '../../utils/log.js'
-import { getMainLoopModel, normalizeModelStringForAPI } from '../../utils/model/model.js'
+import { getMainLoopModel, normalizeModelStringForAPI } from '../../services/model/model.js'
 import { getAnthropicClient } from './client.js'
 import type { AnthropicCreateParams } from './conversions/anthropic.js'
 import {

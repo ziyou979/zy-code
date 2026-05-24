@@ -39,7 +39,7 @@ import {
   getMessagesAfterCompactBoundary,
   isSyntheticMessage,
 } from '../utils/messages.js'
-import { getAPIProvider, isOpenAIProvider } from '../utils/model/providers.js'
+import { getAPIProvider, isOpenAIProvider } from '../services/model/providers.js'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
 import { getCurrentSessionTitle, saveAiGeneratedTitle } from '../utils/sessionStorage.js'
 import { extractConversationText, generateSessionTitle } from '../utils/sessionTitle.js'

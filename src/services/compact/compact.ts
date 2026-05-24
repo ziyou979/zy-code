@@ -44,7 +44,7 @@ import { cacheToObject } from '../../utils/fileStateCache.js'
 import { type CacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.js'
 import { executePostCompactHooks, executePreCompactHooks } from '../../utils/hooks.js'
 import { logError } from '../../utils/log.js'
-import { MEMORY_TYPE_VALUES } from '../../utils/memory/types.js'
+import { MEMORY_TYPE_VALUES } from '../../services/memory/types.js'
 import {
   createCompactBoundaryMessage,
   createUserMessage,
@@ -66,7 +66,7 @@ import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { getTaskOutputPath } from '../../utils/task/diskOutput.js'
+import { getTaskOutputPath } from '../../services/task/diskOutput.js'
 import {
   getTokenUsage,
   tokenCountFromLastAPIResponse,

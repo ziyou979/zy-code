@@ -36,12 +36,12 @@ import {
   evictTaskOutput,
   getTaskOutputPath,
   initTaskOutput,
-} from '../../utils/task/diskOutput.js'
-import { registerTask, updateTaskState } from '../../utils/task/framework.js'
+} from '../../services/task/diskOutput.js'
+import { registerTask, updateTaskState } from '../../services/task/framework.js'
 import { fetchSession } from '../../services/teleport/api.js'
 import { archiveRemoteSession, pollRemoteSessionEvents } from '../../utils/teleport.js'
-import type { TodoList } from '../../utils/todo/types.js'
-import type { UltraplanPhase } from '../../utils/ultraplan/ccrSession.js'
+import type { TodoList } from '../../services/todo/types.js'
+import type { UltraplanPhase } from '../../services/ultraplan/ccrSession.js'
 export type RemoteAgentTaskState = TaskStateBase & {
   type: 'remote_agent'
   remoteTaskType: RemoteTaskType

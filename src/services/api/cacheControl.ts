@@ -5,7 +5,7 @@ import {
   getDefaultAdvancedModel,
   getDefaultCompactModel,
   getDefaultStandardModel,
-} from '../../utils/model/model.js'
+} from '../../services/model/model.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import type { SystemPrompt } from '../../utils/systemPromptType.js'
 

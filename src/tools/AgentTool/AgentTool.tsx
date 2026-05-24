@@ -54,7 +54,7 @@ import {
   isSyntheticMessage,
   normalizeMessages,
 } from '../../utils/messages.js'
-import { getAgentModel } from '../../utils/model/agent.js'
+import { getAgentModel } from '../../services/model/agent.js'
 import { permissionModeSchema } from '../../utils/permissions/PermissionMode.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import { filterDeniedAgents, getDenyRuleForAgent } from '../../utils/permissions/permissions.js'
@@ -63,7 +63,7 @@ import { writeAgentMetadata } from '../../utils/sessionStorage.js'
 import { sleep } from '../../utils/sleep.js'
 import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { getTaskOutputPath } from '../../utils/task/diskOutput.js'
+import { getTaskOutputPath } from '../../services/task/diskOutput.js'
 import { getParentSessionId, isTeammate } from '../../utils/teammate.js'
 import { isInProcessTeammate } from '../../utils/teammateContext.js'
 import { teleportToRemote } from '../../utils/teleport.js'

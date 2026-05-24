@@ -15,7 +15,7 @@ import { z } from 'zod/v4'
 import { getZyConfigHomeDir } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
 import { lazySchema } from '../lazySchema.js'
-import type { ProviderCapability } from '../model/providers.js'
+import type { ProviderCapability } from 'src/services/model/providers.js'
 
 type ModelCapabilityKind = ProviderCapability | 'auto_mode'
 

@@ -19,7 +19,11 @@ import {
   ZY_CODE_,
 } from '../constants/betas.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
-import { getAPIProvider, modelHasCapability, providerHasCapability } from './model/providers.js'
+import {
+  getAPIProvider,
+  modelHasCapability,
+  providerHasCapability,
+} from 'src/services/model/providers.js'
 import { getInitialSettings } from './settings/settings.js'
 
 /**

@@ -3,7 +3,7 @@ import { checkGate_CACHED_OR_BLOCKING } from '../../../services/analytics/growth
 import { isPolicyAllowed } from '../../../services/policyLimits/index.js'
 import { detectCurrentRepositoryWithHost } from '../../../utils/detectRepository.js'
 import { isEnvTruthy } from '../../../utils/envUtils.js'
-import type { TodoList } from '../../../utils/todo/types.js'
+import type { TodoList } from '../../../services/todo/types.js'
 import {
   checkGithubAppInstalled,
   checkHasRemoteEnvironment,

@@ -31,7 +31,7 @@ import { getDisplayPath } from '../../../utils/file.js'
 import { toIDEDisplayName } from '../../../utils/ide.js'
 import { logError } from '../../../utils/log.js'
 import { createUserMessage } from '../../../utils/messages.js'
-import { getMainLoopModel } from '../../../utils/model/model.js'
+import { getMainLoopModel } from '../../../services/model/model.js'
 import {
   createPromptRuleContent,
   isClassifierPermissionsEnabled,

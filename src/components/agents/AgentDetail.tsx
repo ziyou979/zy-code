@@ -6,7 +6,7 @@ import { getAgentColor } from '../../tools/AgentTool/agentColorManager.js'
 import { getMemoryScopeDisplay } from '../../tools/AgentTool/agentMemory.js'
 import { resolveAgentTools } from '../../tools/AgentTool/agentToolUtils.js'
 import { type AgentDefinition, isBuiltInAgent } from '../../tools/AgentTool/loadAgentsDir.js'
-import { getAgentModelDisplay } from '../../utils/model/agent.js'
+import { getAgentModelDisplay } from '../../services/model/agent.js'
 import { Markdown } from '../Markdown.js'
 import { getActualRelativeAgentFilePath } from './agentFileUtils.js'
 

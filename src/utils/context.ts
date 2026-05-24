@@ -1,5 +1,5 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import 标记不可重排序
-import { getModelCapability } from './model/modelCapabilities.js'
+import { getModelCapability } from 'src/services/model/modelCapabilities.js'
 import { getInitialSettings } from './settings/settings.js'
 import {
   getLocalMaxOutputTokens,

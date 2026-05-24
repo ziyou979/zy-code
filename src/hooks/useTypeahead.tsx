@@ -34,17 +34,17 @@ import {
   generateCommandSuggestions,
   getBestCommandMatch,
   isCommandInput,
-} from '../utils/suggestions/commandSuggestions.js'
+} from '../services/suggestions/commandSuggestions.js'
 import {
   getDirectoryCompletions,
   getPathCompletions,
   isPathLikeToken,
-} from '../utils/suggestions/directoryCompletion.js'
-import { getShellHistoryCompletion } from '../utils/suggestions/shellHistoryCompletion.js'
+} from '../services/suggestions/directoryCompletion.js'
+import { getShellHistoryCompletion } from '../services/suggestions/shellHistoryCompletion.js'
 import {
   getSlackChannelSuggestions,
   hasSlackMcpServer,
-} from '../utils/suggestions/slackChannelSuggestions.js'
+} from '../services/suggestions/slackChannelSuggestions.js'
 import { TEAM_LEAD_NAME } from '../services/swarm/constants.js'
 import {
   applyFileSuggestion,

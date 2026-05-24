@@ -12,7 +12,7 @@ import { findGitRoot, getIsGit, getWorktreeCount } from '../../utils/git.js'
 import { getGhAuthStatus } from '../../services/github/ghAuthStatus.js'
 import { logError } from '../../utils/log.js'
 import { getInitialMainLoopModel } from '../../bootstrap/state.js'
-import { getDefaultMainLoopModel, parseUserSpecifiedModel } from '../../utils/model/model.js'
+import { getDefaultMainLoopModel, parseUserSpecifiedModel } from '../../services/model/model.js'
 import { loadAllPluginsCacheOnly } from '../../utils/plugins/pluginLoader.js'
 import { getManagedPluginNames } from '../../utils/plugins/managedPlugins.js'
 import { getPluginSeedDirs } from '../../utils/plugins/pluginDirectories.js'
@@ -21,8 +21,8 @@ import { getInitialSettings } from '../../utils/settings/settings.js'
 import {
   logPluginLoadErrors,
   logPluginsEnabledForSession,
-} from '../../utils/telemetry/pluginTelemetry.js'
-import { logSkillsLoaded } from '../../utils/telemetry/skillLoadedEvent.js'
+} from '../../services/telemetry/pluginTelemetry.js'
+import { logSkillsLoaded } from '../../services/telemetry/skillLoadedEvent.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
 

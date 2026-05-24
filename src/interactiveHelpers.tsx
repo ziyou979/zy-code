@@ -39,7 +39,7 @@ import { isEnvTruthy, isRunningOnHomespace, isTestEnv } from './utils/envUtils.j
 import { type FpsMetrics, FpsTracker } from './utils/fpsTracker.js'
 import { updateGithubRepoPathMapping } from './utils/githubRepoPathMapping.js'
 import { applyConfigEnvironmentVariables } from './utils/managedEnv.js'
-import { getDefaultStandardModel } from './utils/model/model.js'
+import { getDefaultStandardModel } from './services/model/model.js'
 import type { PermissionMode } from './utils/permissions/PermissionMode.js'
 import { getBaseRenderOptions } from './utils/renderOptions.js'
 import { getSettingsWithAllErrors } from './utils/settings/allErrors.js'

@@ -24,7 +24,7 @@ import {
   isVSCodeInstalled,
   isWindsurfInstalled,
 } from '../../utils/ide.js'
-import { getMainLoopModel, getUserSpecifiedModelSetting } from '../../utils/model/model.js'
+import { getMainLoopModel, getUserSpecifiedModelSetting } from '../../services/model/model.js'
 import { getPlatform } from '../../utils/platform.js'
 import { isPluginInstalled } from '../../utils/plugins/installedPluginsManager.js'
 import { loadKnownMarketplacesConfigSafe } from '../../utils/plugins/marketplaceManager.js'

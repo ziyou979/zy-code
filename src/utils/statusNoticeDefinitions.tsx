@@ -12,7 +12,7 @@ import {
   getApiKeyFromConfigOrMacOSKeychain,
   getAuthTokenSource,
 } from './auth.js'
-import { getAPIProvider, isOpenAIProvider } from './model/providers.js'
+import { getAPIProvider, isOpenAIProvider } from 'src/services/model/providers.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import {
   getAgentDescriptionsTotalTokens,

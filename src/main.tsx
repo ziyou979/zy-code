@@ -18,7 +18,7 @@ startMdmRawRead()
 import {
   ensureKeychainPrefetchCompleted,
   startKeychainPrefetch,
-} from './utils/secureStorage/keychainPrefetch.js'
+} from './services/secureStorage/keychainPrefetch.js'
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 startKeychainPrefetch()

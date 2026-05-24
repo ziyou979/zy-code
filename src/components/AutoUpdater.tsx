@@ -20,7 +20,7 @@ import { logForDebugging } from '../utils/debug.js'
 import { getCurrentInstallationType } from '../utils/doctorDiagnostic.js'
 import { isDevEnv, isTestEnv } from '../utils/envUtils.js'
 import { installOrUpdateZyPackage, localInstallationExists } from '../utils/localInstaller.js'
-import { removeInstalledSymlink } from '../utils/nativeInstaller/index.js'
+import { removeInstalledSymlink } from '../services/nativeInstaller/index.js'
 import { gt, gte } from '../utils/semver.js'
 import { getInitialSettings } from '../utils/settings/settings.js'
 

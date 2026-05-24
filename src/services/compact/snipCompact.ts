@@ -10,7 +10,7 @@
  */
 
 import type { Message, SystemSnipBoundaryMessage } from '../../types/message.js'
-import { getDefaultStandardModel } from '../../utils/model/model.js'
+import { getDefaultStandardModel } from '../../services/model/model.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
 import { getEffectiveContextWindowSize } from './autoCompact.js'
 import { groupMessagesByApiRound } from './grouping.js'

@@ -15,8 +15,8 @@ import { installOrUpdateZyPackage, localInstallationExists } from 'src/utils/loc
 import {
   installLatest as installLatestNative,
   removeInstalledSymlink,
-} from 'src/utils/nativeInstaller/index.js'
-import { getPackageManager } from 'src/utils/nativeInstaller/packageManagers.js'
+} from 'src/services/nativeInstaller/index.js'
+import { getPackageManager } from 'src/services/nativeInstaller/packageManagers.js'
 import { writeToStdout } from 'src/utils/process.js'
 import { gte } from 'src/utils/semver.js'
 import { getInitialSettings } from 'src/utils/settings/settings.js'

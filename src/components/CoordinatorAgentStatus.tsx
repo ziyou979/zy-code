@@ -20,7 +20,7 @@ import {
   type LocalAgentTaskState,
 } from '../tasks/LocalAgentTask/LocalAgentTask.js'
 import { formatDuration, formatNumber } from '../utils/format.js'
-import { evictTerminalTask } from '../utils/task/framework.js'
+import { evictTerminalTask } from '../services/task/framework.js'
 import { isTerminalStatus } from './tasks/taskStatusUtils.js'
 
 /**

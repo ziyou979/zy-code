@@ -19,8 +19,8 @@ import {
   type ModelSetting,
   modelDisplayString,
   parseUserSpecifiedModel,
-} from '../utils/model/model.js'
-import { getModelOptions } from '../utils/model/modelOptions.js'
+} from '../services/model/model.js'
+import { getModelOptions } from '../services/model/modelOptions.js'
 import { getSettingsForSource, updateSettingsForSource } from '../utils/settings/settings.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
 import { Select } from './CustomSelect/index.js'

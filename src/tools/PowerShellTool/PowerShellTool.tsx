@@ -36,8 +36,8 @@ import { semanticBoolean } from '../../utils/semanticBoolean.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
 import { getCachedPowerShellPath } from '../../shell-eval/shared/powershellDetection.js'
 import { EndTruncatingAccumulator } from '../../utils/stringUtils.js'
-import { getTaskOutputPath } from '../../utils/task/diskOutput.js'
-import { TaskOutput } from '../../utils/task/TaskOutput.js'
+import { getTaskOutputPath } from '../../services/task/diskOutput.js'
+import { TaskOutput } from '../../services/task/TaskOutput.js'
 import { isOutputLineTruncated } from '../../utils/terminal.js'
 import {
   buildLargeToolResultMessage,

@@ -10,7 +10,7 @@ import {
 } from '../utils/autoUpdater.js'
 import { isAutoUpdaterDisabled } from '../utils/config.js'
 import { logForDebugging } from '../utils/debug.js'
-import { getPackageManager } from '../utils/nativeInstaller/packageManagers.js'
+import { getPackageManager } from '../services/nativeInstaller/packageManagers.js'
 import { gt, gte } from '../utils/semver.js'
 import { getInitialSettings } from '../utils/settings/settings.js'
 

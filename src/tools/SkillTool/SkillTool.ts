@@ -26,7 +26,7 @@ import {
   isOfficialMarketplaceName,
   parsePluginIdentifier,
 } from 'src/utils/plugins/pluginIdentifier.js'
-import { buildPluginCommandTelemetryFields } from 'src/utils/telemetry/pluginTelemetry.js'
+import { buildPluginCommandTelemetryFields } from 'src/services/telemetry/pluginTelemetry.js'
 import { z } from 'zod/v4'
 import { addInvokedSkill, clearInvokedSkillsForAgent, getSessionId } from '../../bootstrap/state.js'
 import { COMMAND_MESSAGE_TAG } from '../../constants/xml.js'
@@ -44,9 +44,9 @@ import { extractResultText, prepareForkedCommandContext } from '../../utils/fork
 import { parseFrontmatter } from '../../utils/frontmatterParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { createUserMessage, normalizeMessages } from '../../utils/messages.js'
-import type { ModelAlias } from '../../utils/model/aliases.js'
-import { resolveSkillModelOverride } from '../../utils/model/model.js'
-import { recordSkillUsage } from '../../utils/suggestions/skillUsageTracking.js'
+import type { ModelAlias } from '../../services/model/aliases.js'
+import { resolveSkillModelOverride } from '../../services/model/model.js'
+import { recordSkillUsage } from '../../services/suggestions/skillUsageTracking.js'
 import { createAgentId } from '../../utils/uuid.js'
 import { runAgent } from '../AgentTool/runAgent.js'
 import { getToolUseIDFromParentMessage, tagMessagesWithToolUseID } from '../utils.js'
@@ -563,7 +563,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
 
     // Process the skill with optional args
     const { processPromptSlashCommand } = await import(
-      'src/utils/processUserInput/processSlashCommand.js'
+      'src/services/processUserInput/processSlashCommand.js'
     )
     const processedCommand = await processPromptSlashCommand(
       commandName,

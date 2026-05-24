@@ -13,7 +13,7 @@ import {
   cleanupNpmInstallations,
   cleanupShellAliases,
   installLatest,
-} from '../utils/nativeInstaller/index.js'
+} from '../services/nativeInstaller/index.js'
 import { getInitialSettings, updateSettingsForSource } from '../utils/settings/settings.js'
 
 interface InstallProps {

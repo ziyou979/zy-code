@@ -9,8 +9,8 @@ import {
   getDefaultMainLoopModelSetting,
   normalizeModelStringForAPI,
   parseUserSpecifiedModel,
-} from '../utils/model/model.js'
-import { validateModel } from '../utils/model/validateModel.js'
+} from '../services/model/model.js'
+import { validateModel } from '../services/model/validateModel.js'
 import { updateSettingsForSource } from '../utils/settings/settings.js'
 
 const call: LocalCommandCall = async (args, context) => {

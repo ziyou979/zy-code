@@ -77,7 +77,7 @@ import {
 } from './utils/messageQueueManager.js'
 import { notifyCommandLifecycle } from './utils/commandLifecycle.js'
 import { headlessProfilerCheckpoint } from './utils/headlessProfiler.js'
-import { renderModelName } from './utils/model/model.js'
+import { renderModelName } from './services/model/model.js'
 import { finalContextTokensFromLastResponse, tokenCountWithEstimation } from './utils/tokens.js'
 import { ESCALATED_MAX_TOKENS } from './utils/context.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from './services/analytics/growthbook.js'

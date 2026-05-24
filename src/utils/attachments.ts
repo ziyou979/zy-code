@@ -27,7 +27,7 @@ import { TASK_CREATE_TOOL_NAME } from '../tools/TaskCreateTool/constants.js'
 import { TASK_UPDATE_TOOL_NAME } from '../tools/TaskUpdateTool/constants.js'
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
 import { SKILL_TOOL_NAME } from '../tools/SkillTool/constants.js'
-import type { TodoList } from './todo/types.js'
+import type { TodoList } from 'src/services/todo/types.js'
 import { type Task, listTasks, getTaskListId, isTodoV2Enabled } from './tasks.js'
 import { getPlanFilePath, getPlan } from './plans.js'
 import { getConnectedIdeName } from './ide.js'
@@ -96,8 +96,11 @@ import { formatAgentLine, shouldInjectAgentListInMessages } from '../tools/Agent
 import { filterDeniedAgents } from './permissions/permissions.js'
 import { mcpInfoFromString } from '../services/mcp/mcpStringUtils.js'
 import { matchingRuleForInput, pathInAllowedWorkingPath } from './permissions/filesystem.js'
-import { generateTaskAttachments, applyTaskOffsetsAndEvictions } from './task/framework.js'
-import { getTaskOutputPath } from './task/diskOutput.js'
+import {
+  generateTaskAttachments,
+  applyTaskOffsetsAndEvictions,
+} from 'src/services/task/framework.js'
+import { getTaskOutputPath } from 'src/services/task/diskOutput.js'
 import { drainPendingMessages } from '../tasks/LocalAgentTask/LocalAgentTask.js'
 import type { TaskType, TaskStatus } from '../Task.js'
 import {

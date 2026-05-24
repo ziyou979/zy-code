@@ -39,7 +39,7 @@ import { ensureScratchpadDir, isScratchpadEnabled } from '../utils/permissions/f
 // ~400KB 的 OpenTelemetry + protobuf 模块，直到真正初始化遥测时才加载。
 // gRPC 导出器（通过 @grpc/grpc-js 约 ~700KB）在 instrumentation.ts 中进一步延迟加载。
 import { configureGlobalAgents } from '../utils/proxy.js'
-import { isBetaTracingEnabled } from '../utils/telemetry/betaSessionTracing.js'
+import { isBetaTracingEnabled } from '../services/telemetry/betaSessionTracing.js'
 import { getTelemetryAttributes } from '../utils/telemetryAttributes.js'
 import { setShellIfWindows } from '../utils/windowsPaths.js'
 
@@ -290,7 +290,7 @@ async function doInitializeTelemetry(): Promise<void> {
 
 async function setMeterState(): Promise<void> {
   // 延迟加载 instrumentation，以推迟 ~400KB 的 OpenTelemetry + protobuf
-  const { initializeTelemetry } = await import('../utils/telemetry/instrumentation.js')
+  const { initializeTelemetry } = await import('../services/telemetry/instrumentation.js')
   // 初始化客户 OTLP 遥测（metrics, logs, traces）
   const meter = await initializeTelemetry()
   if (meter) {

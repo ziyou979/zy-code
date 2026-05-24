@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { getAPIProvider, isAnthropicBaseUrl } from 'src/utils/model/providers.js'
+import { getAPIProvider, isAnthropicBaseUrl } from 'src/services/model/providers.js'
 import { getCLISyspromptPrefix } from '../../constants/system.js'
 import {
   type QueryChainTracking,
@@ -137,14 +137,14 @@ import {
 // LLMConnectionError 用于流式超时回退时创建错误实例
 import { LLMConnectionError } from '../../types/llm.js'
 import { count } from '../../utils/array.js'
-import { normalizeModelStringForAPI, parseUserSpecifiedModel } from '../../utils/model/model.js'
+import { normalizeModelStringForAPI, parseUserSpecifiedModel } from '../../services/model/model.js'
 import { startSessionActivity, stopSessionActivity } from '../../utils/sessionActivity.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import {
   isBetaTracingEnabled,
   type LLMRequestNewContext,
   startLLMRequestSpan,
-} from '../../utils/telemetry/sessionTracing.js'
+} from '../../services/telemetry/sessionTracing.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

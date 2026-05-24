@@ -54,12 +54,12 @@ import {
   pruneCompletedTurnArtifacts,
   SYNTHETIC_MESSAGES,
 } from './utils/messages.js'
-import { getMainLoopModel, parseUserSpecifiedModel } from './utils/model/model.js'
+import { getMainLoopModel, parseUserSpecifiedModel } from './services/model/model.js'
 import { loadAllPluginsCacheOnly } from './utils/plugins/pluginLoader.js'
 import {
   type ProcessUserInputContext,
   processUserInput,
-} from './utils/processUserInput/processUserInput.js'
+} from './services/processUserInput/processUserInput.js'
 import { fetchSystemPromptParts } from './utils/queryContext.js'
 import { setCwd } from './utils/Shell.js'
 import { flushSessionStorage, recordTranscript } from './utils/sessionStorage.js'

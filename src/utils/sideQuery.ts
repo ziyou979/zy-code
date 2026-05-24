@@ -14,7 +14,7 @@ import type {
   ToolDefinition,
 } from '../types/llm.js'
 import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
-import { normalizeModelStringForAPI } from './model/model.js'
+import { normalizeModelStringForAPI } from 'src/services/model/model.js'
 
 export type SideQueryOptions = {
   /** 用于查询的模型 */

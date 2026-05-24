@@ -17,7 +17,7 @@ import { writeToStdout } from '../../utils/process.js'
 import {
   buildPluginTelemetryFields,
   classifyPluginCommandError,
-} from '../../utils/telemetry/pluginTelemetry.js'
+} from '../../services/telemetry/pluginTelemetry.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,

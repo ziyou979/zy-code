@@ -11,7 +11,7 @@ import { isGeneratedFile } from './generatedFiles.js'
 import { getRemoteUrlForDir, resolveGitDir } from './git/gitFilesystem.js'
 import { findGitRoot, gitExe } from './git.js'
 import { logError } from './log.js'
-import { type ModelName } from './model/model.js'
+import { type ModelName } from 'src/services/model/model.js'
 import { sequential } from './sequential.js'
 
 /**

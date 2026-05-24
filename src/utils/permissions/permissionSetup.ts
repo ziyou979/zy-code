@@ -52,7 +52,7 @@ import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.j
 import { modelSupportsAutoMode } from '../betas.js'
 import { logForDebugging } from '../debug.js'
 import { gracefulShutdown } from '../gracefulShutdown.js'
-import { getMainLoopModel } from '../model/model.js'
+import { getMainLoopModel } from 'src/services/model/model.js'
 import { CROSS_PLATFORM_CODE_EXEC, DANGEROUS_BASH_PATTERNS } from './dangerousPatterns.js'
 import type { PermissionRule, PermissionRuleSource, PermissionRuleValue } from './PermissionRule.js'
 import { type AdditionalWorkingDirectory, applyPermissionUpdate } from './PermissionUpdate.js'

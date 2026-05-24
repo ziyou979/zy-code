@@ -13,10 +13,10 @@ import {
   isJetBrainsIde,
   toIDEDisplayName,
 } from './ide.js'
-import { modelDisplayString } from './model/model.js'
-import { getAPIProvider } from './model/providers.js'
+import { modelDisplayString } from 'src/services/model/model.js'
+import { getAPIProvider } from 'src/services/model/providers.js'
 import { getMTLSConfig } from './mtls.js'
-import { checkInstall } from './nativeInstaller/index.js'
+import { checkInstall } from 'src/services/nativeInstaller/index.js'
 import { getProxyUrl } from './proxy.js'
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { getSettingsWithAllErrors } from './settings/allErrors.js'

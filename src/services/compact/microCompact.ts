@@ -11,7 +11,7 @@ import { WEB_SEARCH_TOOL_NAME } from '../../tools/WebSearchTool/prompt.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { getMainLoopModel } from '../../utils/model/model.js'
+import { getMainLoopModel } from '../../services/model/model.js'
 import { SHELL_TOOL_NAMES } from '../../shell-eval/shared/shellToolUtils.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import {

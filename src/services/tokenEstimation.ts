@@ -3,7 +3,7 @@ import type { Attachment } from '../utils/attachments.js'
 import { logError } from '../utils/log.js'
 import { normalizeAttachmentForAPI } from '../utils/messages.js'
 import { jsonStringify } from '../utils/slowOperations.js'
-import { countTokensLocally } from '../utils/tokenizer/index.js'
+import { countTokensLocally } from '../services/tokenizer/index.js'
 import { getLLMAdapter } from './api/client.js'
 import { withTokenCountVCR } from './vcr.js'
 

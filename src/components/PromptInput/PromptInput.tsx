@@ -93,7 +93,7 @@ import type { ImageDimensions } from '../../utils/imageResizer.js'
 import { cacheImagePath, storeImage } from '../../utils/imageStore.js'
 import { isMacosOptionChar, MACOS_OPTION_SPECIAL_CHARS } from '../../utils/keyboardShortcuts.js'
 import { logError } from '../../utils/log.js'
-import { modelDisplayString } from '../../utils/model/model.js'
+import { modelDisplayString } from '../../services/model/model.js'
 import { setAutoModeActive } from '../../utils/permissions/autoModeState.js'
 import {
   cyclePermissionMode,
@@ -101,17 +101,17 @@ import {
 } from '../../utils/permissions/getNextPermissionMode.js'
 import { transitionPermissionMode } from '../../utils/permissions/permissionSetup.js'
 import { getPlatform } from '../../utils/platform.js'
-import type { ProcessUserInputContext } from '../../utils/processUserInput/processUserInput.js'
+import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
 import { editPromptInEditor } from '../../utils/promptEditor.js'
 import { hasAutoModeOptIn } from '../../utils/settings/settings.js'
 import { findBtwTriggerPositions } from '../../utils/sideQuestion.js'
-import { findSlashCommandPositions } from '../../utils/suggestions/commandSuggestions.js'
+import { findSlashCommandPositions } from '../../services/suggestions/commandSuggestions.js'
 import {
   findSlackChannelPositions,
   getKnownChannelsVersion,
   hasSlackMcpServer,
   subscribeKnownChannels,
-} from '../../utils/suggestions/slackChannelSuggestions.js'
+} from '../../services/suggestions/slackChannelSuggestions.js'
 import { isInProcessEnabled } from '../../services/swarm/backends/registry.js'
 import { syncTeammateMode } from '../../services/swarm/teamHelpers.js'
 import type { TeamSummary } from '../../utils/teamDiscovery.js'
@@ -129,7 +129,7 @@ import { findTokenBudgetPositions } from '../../utils/tokenBudget.js'
 import {
   findUltraplanTriggerPositions,
   findUltrareviewTriggerPositions,
-} from '../../utils/ultraplan/keyword.js'
+} from '../../services/ultraplan/keyword.js'
 import { AutoModeOptInDialog } from '../AutoModeOptInDialog.js'
 import { BridgeDialog } from '../BridgeDialog.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'

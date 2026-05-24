@@ -58,8 +58,8 @@ import type { ContentBlock } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import type { PermissionDecision } from '../../types/permissions.js'
 import { createAssistantAPIErrorMessage, createUserMessage } from '../../utils/messages.js'
-import { evictTaskOutput } from '../../utils/task/diskOutput.js'
-import { evictTerminalTask } from '../../utils/task/framework.js'
+import { evictTaskOutput } from '../../services/task/diskOutput.js'
+import { evictTerminalTask } from '../../services/task/framework.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { type AgentContext, runWithAgentContext } from '../../utils/agentContext.js'
@@ -71,7 +71,7 @@ import {
   SUBAGENT_REJECT_MESSAGE,
   SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX,
 } from '../../utils/messages.js'
-import type { ModelAlias } from '../../utils/model/aliases.js'
+import type { ModelAlias } from '../../services/model/aliases.js'
 import {
   applyPermissionUpdates,
   persistPermissionUpdates,
@@ -94,7 +94,7 @@ import {
   readMailbox,
   writeToMailbox,
 } from '../../utils/teammateMailbox.js'
-import { unregisterAgent as unregisterPerfettoAgent } from '../../utils/telemetry/perfettoTracing.js'
+import { unregisterAgent as unregisterPerfettoAgent } from '../../services/telemetry/perfettoTracing.js'
 import { createContentReplacementState } from '../../utils/toolResultStorage.js'
 import { TEAM_LEAD_NAME } from './constants.js'
 import {

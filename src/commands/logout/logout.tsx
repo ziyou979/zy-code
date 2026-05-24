@@ -9,12 +9,12 @@ import { getZyAIOAuthTokens, removeApiKey } from '../../utils/auth.js'
 import { clearBetasCaches } from '../../utils/betas.js'
 import { saveGlobalConfig } from '../../utils/config.js'
 import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'
-import { getSecureStorage } from '../../utils/secureStorage/index.js'
+import { getSecureStorage } from '../../services/secureStorage/index.js'
 import { clearToolSchemaCache } from '../../utils/toolSchemaCache.js'
 import { resetUserCache } from '../../utils/user.js'
 export async function performLogout({ clearOnboarding = false }): Promise<void> {
   // Flush telemetry BEFORE clearing credentials to prevent org data leakage
-  const { flushTelemetry } = await import('../../utils/telemetry/instrumentation.js')
+  const { flushTelemetry } = await import('../../services/telemetry/instrumentation.js')
   await flushTelemetry()
   await removeApiKey()
 

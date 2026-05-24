@@ -24,7 +24,7 @@ import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
-import { parseUserSpecifiedModel } from '../../utils/model/model.js'
+import { parseUserSpecifiedModel } from '../../services/model/model.js'
 import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
 import { isTmuxAvailable } from '../../services/swarm/backends/detection.js'
 import {
@@ -64,7 +64,7 @@ import {
   sendCommandToPane,
 } from '../../services/swarm/teammateLayoutManager.js'
 import { getHardcodedTeammateModelFallback } from '../../services/swarm/teammateModel.js'
-import { registerTask } from '../../utils/task/framework.js'
+import { registerTask } from '../../services/task/framework.js'
 import { writeToMailbox } from '../../utils/teammateMailbox.js'
 import type { CustomAgentDefinition } from '../AgentTool/loadAgentsDir.js'
 import { isCustomAgent } from '../AgentTool/loadAgentsDir.js'

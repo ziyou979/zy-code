@@ -28,14 +28,18 @@ import { formatAgentId } from '../../utils/agentId.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { emitTaskTerminatedSdk } from '../../utils/sdkEventQueue.js'
-import { evictTaskOutput } from '../../utils/task/diskOutput.js'
-import { evictTerminalTask, registerTask, STOPPED_DISPLAY_MS } from '../../utils/task/framework.js'
+import { evictTaskOutput } from '../../services/task/diskOutput.js'
+import {
+  evictTerminalTask,
+  registerTask,
+  STOPPED_DISPLAY_MS,
+} from '../../services/task/framework.js'
 import { createTeammateContext } from '../../utils/teammateContext.js'
 import {
   isPerfettoTracingEnabled,
   registerAgent as registerPerfettoAgent,
   unregisterAgent as unregisterPerfettoAgent,
-} from '../../utils/telemetry/perfettoTracing.js'
+} from '../../services/telemetry/perfettoTracing.js'
 import { removeMemberByAgentId } from './teamHelpers.js'
 
 type SetAppStateFn = (updater: (prev: AppState) => AppState) => void

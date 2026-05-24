@@ -20,7 +20,7 @@ import {
   cleanupOldVersionsThrottled,
 } from './cleanup.js'
 import { isInternalBuild } from './envUtils.js'
-import { cleanupOldVersions } from './nativeInstaller/index.js'
+import { cleanupOldVersions } from 'src/services/nativeInstaller/index.js'
 import { autoUpdateMarketplacesAndPluginsInBackground } from './plugins/pluginAutoupdate.js'
 
 // 24 hours in milliseconds

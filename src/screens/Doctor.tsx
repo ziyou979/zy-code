@@ -29,7 +29,7 @@ import {
   getAllLockInfo,
   isPidBasedLockingEnabled,
   type LockInfo,
-} from '../utils/nativeInstaller/pidLock.js'
+} from '../services/nativeInstaller/pidLock.js'
 import { getInitialSettings } from '../utils/settings/settings.js'
 import {
   BASH_MAX_OUTPUT_DEFAULT,
@@ -38,7 +38,7 @@ import {
 import {
   TASK_MAX_OUTPUT_DEFAULT,
   TASK_MAX_OUTPUT_UPPER_LIMIT,
-} from '../utils/task/outputFormatting.js'
+} from '../services/task/outputFormatting.js'
 import { getXDGStateHome } from '../utils/xdg.js'
 
 type Props = {

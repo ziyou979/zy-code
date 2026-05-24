@@ -85,7 +85,7 @@ import {
   registerLeaderSetToolPermissionContext,
   unregisterLeaderSetToolPermissionContext,
 } from '../services/swarm/leaderPermissionBridge.js'
-import { endInteractionSpan } from '../utils/telemetry/sessionTracing.js'
+import { endInteractionSpan } from '../services/telemetry/sessionTracing.js'
 import { useLogMessages } from '../hooks/useLogMessages.js'
 import { useReplBridge } from '../hooks/useReplBridge.js'
 import {
@@ -139,7 +139,7 @@ import {
   parseReferences,
 } from '../history.js'
 import { prependModeCharacterToInput } from '../components/PromptInput/inputModes.js'
-import { prependToShellHistoryCache } from '../utils/suggestions/shellHistoryCompletion.js'
+import { prependToShellHistoryCache } from '../services/suggestions/shellHistoryCompletion.js'
 import { useApiKeyVerification } from '../hooks/useApiKeyVerification.js'
 import { GlobalKeybindingHandlers } from '../hooks/useGlobalKeybindings.js'
 import { CommandKeybindingHandlers } from '../hooks/useCommandKeybindings.js'
@@ -281,7 +281,7 @@ import { resumeAgentBackground } from '../tools/AgentTool/resumeAgent.js'
 import { useMainLoopModel } from '../hooks/useMainLoopModel.js'
 import { useAppState, useSetAppState, useAppStateStore } from '../state/AppState.js'
 import type { ImageBlock, UserContentBlock } from '../types/llm.js'
-import type { ProcessUserInputContext } from '../utils/processUserInput/processUserInput.js'
+import type { ProcessUserInputContext } from '../services/processUserInput/processUserInput.js'
 import type { PastedContent } from '../utils/config.js'
 import { copyPlanForFork, copyPlanForResume, getPlanSlug, setPlanSlug } from '../utils/plans.js'
 import {

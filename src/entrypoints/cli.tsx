@@ -62,7 +62,7 @@ async function main(): Promise<void> {
     profileCheckpoint('cli_dump_system_prompt_path')
     const { enableConfigs } = await import('../utils/config.js')
     enableConfigs()
-    const { getMainLoopModel } = await import('../utils/model/model.js')
+    const { getMainLoopModel } = await import('../services/model/model.js')
     const modelIdx = args.indexOf('--model')
     const model = (modelIdx !== -1 && args[modelIdx + 1]) || getMainLoopModel()
     const { getSystemPrompt, SYSTEM_PROMPT_DYNAMIC_BOUNDARY } = await import(

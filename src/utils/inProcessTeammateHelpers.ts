@@ -14,7 +14,7 @@ import {
   type InProcessTeammateTaskState,
   isInProcessTeammateTask,
 } from '../tasks/InProcessTeammateTask/types.js'
-import { updateTaskState } from './task/framework.js'
+import { updateTaskState } from 'src/services/task/framework.js'
 import {
   isPermissionResponse,
   isSandboxPermissionResponse,

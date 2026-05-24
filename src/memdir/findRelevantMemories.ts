@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
-import { getDefaultStandardModel } from '../utils/model/model.js'
+import { getDefaultStandardModel } from '../services/model/model.js'
 import { sideQuery } from '../utils/sideQuery.js'
 import { jsonParse } from '../utils/slowOperations.js'
 import { formatMemoryManifest, type MemoryHeader, scanMemoryFiles } from './memoryScan.js'
