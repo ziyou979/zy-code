@@ -3,326 +3,76 @@
 // Refactor invariant: this file should NOT diff after restructuring,
 // only when exports are intentionally added/removed/renamed.
 
-export async function executeConfigChangeHooks(
-  source: ConfigChangeSource,
-  filePath?: string,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): Promise<HookOutsideReplResult[]> { ... }
-
-export async function executeElicitationHooks({
-  serverName,
-  message,
-  requestedSchema,
-  permissionMode,
-  signal,
-  timeoutMs = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-  mode,
-  url,
-  elicitationId,
-}: {
-  serverName: string
-  message: string
-  requestedSchema?: Record<string, unknown>
-  permissionMode?: string
-  signal?: AbortSignal
-  timeoutMs?: number
-  mode?: 'form' | 'url'
-  url?: string
-  elicitationId?: string
-}): Promise<ElicitationHookResult> { ... }
-
-export async function executeElicitationResultHooks({
-  serverName,
-  action,
-  content,
-  permissionMode,
-  signal,
-  timeoutMs = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-  mode,
-  elicitationId,
-}: {
-  serverName: string
-  action: 'accept' | 'decline' | 'cancel'
-  content?: Record<string, unknown>
-  permissionMode?: string
-  signal?: AbortSignal
-  timeoutMs?: number
-  mode?: 'form' | 'url'
-  elicitationId?: string
-}): Promise<ElicitationResultHookResult> { ... }
-
-export async function executeFileSuggestionCommand(
-  fileSuggestionInput: FileSuggestionCommandInput,
-  signal?: AbortSignal,
-  timeoutMs: number = 5000, // Short timeout for typeahead suggestions
-): Promise<string[]> { ... }
-
-export async function executeInstructionsLoadedHooks(
-  filePath: string,
-  memoryType: InstructionsMemoryType,
-  loadReason: InstructionsLoadReason,
-  options?: {
-    globs?: string[]
-    triggerFilePath?: string
-    parentFilePath?: string
-    timeoutMs?: number
-  },
-): Promise<void> { ... }
-
-export async function executeNotificationHooks(
-  notificationData: {
-    message: string
-    title?: string
-    notificationType: string
-  },
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): Promise<void> { ... }
-
-export async function executePostCompactHooks(
-  compactData: {
-    trigger: 'manual' | 'auto'
-    compactSummary: string
-  },
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): Promise<{
-  userDisplayMessage?: string
-}> { ... }
-
-export async function executePreCompactHooks(
-  compactData: {
-    trigger: 'manual' | 'auto'
-    customInstructions: string | null
-  },
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): Promise<{
-  newCustomInstructions?: string
-  userDisplayMessage?: string
-  blocked?: boolean
-}> { ... }
-
-export async function executeSessionEndHooks(
-  reason: ExitReason,
-  options?: {
-    getAppState?: () => AppState
-    setAppState?: (updater: (prev: AppState) => AppState) => void
-    signal?: AbortSignal
-    timeoutMs?: number
-  },
-): Promise<void> { ... }
-
-export async function executeStopFailureHooks(
-  lastMessage: AssistantMessage,
-  toolUseContext?: ToolUseContext,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): Promise<void> { ... }
-
-export async function executeWorktreeCreateHook(name: string): Promise<{ worktreePath: string }> { ... }
-
-export async function executeWorktreeRemoveHook(worktreePath: string): Promise<boolean> { ... }
-
-export async function* executePermissionDeniedHooks<ToolInput>(
-  toolName: string,
-  toolUseID: string,
-  toolInput: ToolInput,
-  reason: string,
-  toolUseContext: ToolUseContext,
-  permissionMode?: string,
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): AsyncGenerator<AggregatedHookResult> { ... }
-
-export async function* executePermissionRequestHooks<ToolInput>(
-  toolName: string,
-  toolUseID: string,
-  toolInput: ToolInput,
-  toolUseContext: ToolUseContext,
-  permissionMode?: string,
-  permissionSuggestions?: PermissionUpdate[],
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-  requestPrompt?: (
-    sourceName: string,
-    toolInputSummary?: string | null,
-  ) => (request: PromptRequest) => Promise<PromptResponse>,
-  toolInputSummary?: string | null,
-): AsyncGenerator<AggregatedHookResult> { ... }
-
-export async function* executePostToolHooks<ToolInput, ToolResponse>(
-  toolName: string,
-  toolUseID: string,
-  toolInput: ToolInput,
-  toolResponse: ToolResponse,
-  toolUseContext: ToolUseContext,
-  permissionMode?: string,
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): AsyncGenerator<AggregatedHookResult> { ... }
-
-export async function* executePostToolUseFailureHooks<ToolInput>(
-  toolName: string,
-  toolUseID: string,
-  toolInput: ToolInput,
-  error: string,
-  toolUseContext: ToolUseContext,
-  isInterrupt?: boolean,
-  permissionMode?: string,
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): AsyncGenerator<AggregatedHookResult> { ... }
-
-export async function* executePreToolHooks<ToolInput>(
-  toolName: string,
-  toolUseID: string,
-  toolInput: ToolInput,
-  toolUseContext: ToolUseContext,
-  permissionMode?: string,
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-  requestPrompt?: (
-    sourceName: string,
-    toolInputSummary?: string | null,
-  ) => (request: PromptRequest) => Promise<PromptResponse>,
-  toolInputSummary?: string | null,
-): AsyncGenerator<AggregatedHookResult> { ... }
-
-export async function* executeSessionStartHooks(
-  source: 'startup' | 'resume' | 'clear' | 'compact',
-  sessionId?: string,
-  agentType?: string,
-  model?: string,
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-  forceSyncExecution?: boolean,
-): AsyncGenerator<AggregatedHookResult> { ... }
-
-export async function* executeSetupHooks(
-  trigger: 'init' | 'maintenance',
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-  forceSyncExecution?: boolean,
-): AsyncGenerator<AggregatedHookResult> { ... }
-
-export async function* executeStopHooks(
-  permissionMode?: string,
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-  stopHookActive: boolean = false,
-  subagentId?: AgentId,
-  toolUseContext?: ToolUseContext,
-  messages?: Message[],
-  agentType?: string,
-  requestPrompt?: (
-    sourceName: string,
-    toolInputSummary?: string | null,
-  ) => (request: PromptRequest) => Promise<PromptResponse>,
-): AsyncGenerator<AggregatedHookResult> { ... }
-
-export async function* executeSubagentStartHooks(
-  agentId: string,
-  agentType: string,
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): AsyncGenerator<AggregatedHookResult> { ... }
-
-export async function* executeTaskCompletedHooks(
-  taskId: string,
-  taskSubject: string,
-  taskDescription?: string,
-  teammateName?: string,
-  teamName?: string,
-  permissionMode?: string,
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-  toolUseContext?: ToolUseContext,
-): AsyncGenerator<AggregatedHookResult> { ... }
-
-export async function* executeTaskCreatedHooks(
-  taskId: string,
-  taskSubject: string,
-  taskDescription?: string,
-  teammateName?: string,
-  teamName?: string,
-  permissionMode?: string,
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-  toolUseContext?: ToolUseContext,
-): AsyncGenerator<AggregatedHookResult> { ... }
-
-export async function* executeTeammateIdleHooks(
-  teammateName: string,
-  teamName: string,
-  permissionMode?: string,
-  signal?: AbortSignal,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): AsyncGenerator<AggregatedHookResult> { ... }
-
-export async function* executeUserPromptSubmitHooks(
-  prompt: string,
-  permissionMode: string,
-  toolUseContext: ToolUseContext,
-  requestPrompt?: (
-    sourceName: string,
-    toolInputSummary?: string | null,
-  ) => (request: PromptRequest) => Promise<PromptResponse>,
-): AsyncGenerator<AggregatedHookResult> { ... }
-
-export function executeCwdChangedHooks(
-  oldCwd: string,
-  newCwd: string,
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): Promise<{
-  results: HookOutsideReplResult[]
-  watchPaths: string[]
-  systemMessages: string[]
-}> { ... }
-
-export function executeFileChangedHooks(
-  filePath: string,
-  event: 'change' | 'add' | 'unlink',
-  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
-): Promise<{
-  results: HookOutsideReplResult[]
-  watchPaths: string[]
-  systemMessages: string[]
-}> { ... }
-
-export function hasInstructionsLoadedHook(): boolean { ... }
-
-export function hasWorktreeCreateHook(): boolean { ... }
-
-export type ConfigChangeSource =
-  | 'user_settings'
-  | 'project_settings'
-  | 'local_settings'
-  | 'policy_settings'
-  | 'skills'
-
-export type ElicitationHookResult = {
-  elicitationResponse?: ElicitationResponse
-  blockingError?: HookBlockingError
-}
-
-export type ElicitationResultHookResult = {
-  elicitationResultResponse?: ElicitationResponse
-  blockingError?: HookBlockingError
-}
-
-export type InstructionsLoadReason =
-  | 'session_start'
-  | 'nested_traversal'
-  | 'path_glob_match'
-  | 'include'
-  | 'compact'
-
-export type InstructionsMemoryType = 'User' | 'Project' | 'Local' | 'Managed'
+export type {
+  ConfigChangeSource,
+  ElicitationHookResult,
+  ElicitationResultHookResult,
+  InstructionsLoadReason,
+  InstructionsMemoryType,
+} from './hooks/types.js'
 
 export type { AggregatedHookResult, ElicitationResponse, HookBlockingError, HookResult }
 
 export type { HookOutsideReplResult }
 
+export {
+  executeConfigChangeHooks,
+  executeCwdChangedHooks,
+  executeFileChangedHooks,
+  hasInstructionsLoadedHook,
+  executeInstructionsLoadedHooks,
+} from './hooks/executors/config.js'
+
+export {
+  executeElicitationHooks,
+  executeElicitationResultHooks,
+} from './hooks/executors/elicitation.js'
+
+export {
+  executePreToolHooks,
+  executePostToolHooks,
+  executePostToolUseFailureHooks,
+  executePermissionDeniedHooks,
+  executePermissionRequestHooks,
+} from './hooks/executors/tool.js'
+
+export {
+  executeStopFailureHooks,
+  executeStopHooks,
+  executeSessionStartHooks,
+  executeSetupHooks,
+  executeSessionEndHooks,
+} from './hooks/executors/lifecycle.js'
+
+export {
+  executeTeammateIdleHooks,
+  executeTaskCreatedHooks,
+  executeTaskCompletedHooks,
+  executeSubagentStartHooks,
+} from './hooks/executors/teammate.js'
+
+export {
+  getPreToolHookBlockingMessage,
+  getStopHookMessage,
+  getTaskCompletedHookMessage,
+  getTaskCreatedHookMessage,
+  getTeammateIdleHookMessage,
+  getUserPromptSubmitHookBlockingMessage,
+} from './hooks/messages.js'
+
+export {
+  hasWorktreeCreateHook,
+  executeWorktreeCreateHook,
+  executeWorktreeRemoveHook,
+} from './hooks/executors/worktree.js'
+
 export { createBaseHookInput, shouldSkipHookDueToTrust }
+
+export { executeFileSuggestionCommand } from './hooks/executors/fileSuggestion.js'
+
+export { executeNotificationHooks, executeUserPromptSubmitHooks } from './hooks/executors/notification.js'
+
+export { executePreCompactHooks, executePostCompactHooks } from './hooks/executors/compact.js'
 
 export { getMatchingHooks }
 

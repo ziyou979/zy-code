@@ -6,8 +6,6 @@ import {
 } from './commandRunner.js'
 import { execHttpHook } from './execHttpHook.js'
 import { isAsyncHookJSONOutput, isSyncHookJSONOutput } from '../../types/hooks.js'
-import type { HookJSONOutput, SyncHookJSONOutput } from 'src/entrypoints/agentSdkTypes.js'
-import { all } from '../generators.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -24,14 +22,11 @@ import {
 } from './matcher.js'
 import type { AppState } from '../../state/AppState.js'
 import { logForDebugging } from '../debug.js'
-import { logForDiagnosticsNoPII } from '../diagLogs.js'
 import { logError } from '../log.js'
 import { TOOL_HOOK_EXECUTION_TIMEOUT_MS } from './config.js'
-import { executeHooks } from './executeEngine.js'
 import { getMatchingHooks } from './matcher.js'
 import { getSessionId } from '../../bootstrap/state.js'
-import type { HookEvent, HookInput } from 'src/entrypoints/agentSdkTypes.js'
-import type { HookResult } from './types.js'
+import type { HookInput } from 'src/entrypoints/agentSdkTypes.js'
 
 export type HookOutsideReplResult = {
   command: string

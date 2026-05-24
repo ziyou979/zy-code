@@ -34,6 +34,34 @@ export interface HookResult {
   hook: HookCommand | HookCallback | FunctionHook
 }
 
+export type ConfigChangeSource =
+  | 'user_settings'
+  | 'project_settings'
+  | 'local_settings'
+  | 'policy_settings'
+  | 'skills'
+
+export type InstructionsLoadReason =
+  | 'session_start'
+  | 'nested_traversal'
+  | 'path_glob_match'
+  | 'include'
+  | 'compact'
+
+export type InstructionsMemoryType = 'User' | 'Project' | 'Local' | 'Managed'
+
+/** Result of an elicitation hook execution (non-REPL path). */
+export type ElicitationHookResult = {
+  elicitationResponse?: ElicitationResponse
+  blockingError?: HookBlockingError
+}
+
+/** Result of an elicitation-result hook execution (non-REPL path). */
+export type ElicitationResultHookResult = {
+  elicitationResultResponse?: ElicitationResponse
+  blockingError?: HookBlockingError
+}
+
 export type AggregatedHookResult = {
   message?: HookResultMessage
   blockingError?: HookBlockingError

@@ -42,25 +42,16 @@ import {
 } from '../../services/telemetry/sessionTracing.js'
 import { logOTelEvent } from '../../services/telemetry/events.js'
 import {
-  getHooksConfigFromSnapshot,
   shouldAllowManagedHooksOnly,
   shouldDisableAllHooksIncludingManaged,
 } from './hooksConfigSnapshot.js'
 import { shouldSkipHookDueToTrust } from './config.js'
-import type { HookCommand } from '../settings/types.js'
-import type { HookCallback, PromptRequest, PromptResponse } from '../../types/hooks.js'
-import { findToolByName } from '../../Tool.js'
+import type { PromptRequest, PromptResponse } from '../../types/hooks.js'
 import {
-  type FunctionHook,
-  getSessionFunctionHooks,
   getSessionHookCallback,
-  getSessionHooks,
 } from './sessionHooks.js'
 import {
   addToTurnHookDuration,
-  getOriginalCwd,
-  getProjectRoot,
-  getRegisteredHooks,
   getSessionId,
   getStatsStore,
 } from '../../bootstrap/state.js'
@@ -69,20 +60,17 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { logForDebugging } from '../debug.js'
-import { logForDiagnosticsNoPII } from '../diagLogs.js'
 import { errorMessage } from '../errors.js'
 import { all } from '../generators.js'
 import { logError } from '../log.js'
-import { wrapInSystemReminder } from '../messages.js'
 import { execAgentHook } from './execAgentHook.js'
 import { execHttpHook } from './execHttpHook.js'
 import { execPromptHook } from './execPromptHook.js'
-import type { ToolUseContext, Tools } from '../../Tool.js'
+import type { ToolUseContext, } from '../../Tool.js'
 import type {
-  HookEvent,
   HookInput,
 } from 'src/entrypoints/agentSdkTypes.js'
-import type { Message, AssistantMessage } from '../../types/message.js'
+import type { Message, } from '../../types/message.js'
 import { TOOL_HOOK_EXECUTION_TIMEOUT_MS } from './config.js'
 import type { HookResult, AggregatedHookResult } from './types.js'
 import {

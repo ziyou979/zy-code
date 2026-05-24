@@ -3,11 +3,8 @@ import { DEFAULT_HOOK_SHELL } from 'src/shell-eval/shared/shellProvider.js'
 import { getRegisteredHooks } from '../../bootstrap/state.js'
 import type { AppState } from '../../state/AppState.js'
 import { permissionRuleValueFromString } from '../permissions/permissionRuleParser.js'
-import { logEvent } from '../../services/analytics/index.js'
 import type { HookEvent, HookInput } from 'src/entrypoints/agentSdkTypes.js'
-import { logError } from '../log.js'
 import { logForDebugging } from '../debug.js'
-import { logForDiagnosticsNoPII } from '../diagLogs.js'
 import {
   getLegacyToolNames,
   normalizeLegacyToolName,
@@ -27,12 +24,10 @@ import { findToolByName, type Tools } from '../../Tool.js'
 import {
   getHooksConfigFromSnapshot,
   shouldAllowManagedHooksOnly,
-  shouldDisableAllHooksIncludingManaged,
 } from './hooksConfigSnapshot.js'
 import {
   type FunctionHook,
   getSessionFunctionHooks,
-  getSessionHookCallback,
   getSessionHooks,
   type SessionDerivedHookMatcher,
 } from './sessionHooks.js'

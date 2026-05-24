@@ -1,66 +1,42 @@
 import { type ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
-import { randomUUID } from 'node:crypto'
-import { basename } from 'node:path'
-import chalk from 'chalk'
 import { formatShellPrefixCommand } from 'src/shell-eval/bash/shellPrefix.js'
 import { buildPowerShellArgs } from 'src/shell-eval/shared/powershellProvider.js'
 import { getCachedPowerShellPath } from 'src/shell-eval/shared/powershellDetection.js'
 import { DEFAULT_HOOK_SHELL } from 'src/shell-eval/shared/shellProvider.js'
 import {
-  addToTurnHookDuration,
   getProjectRoot,
-  getRegisteredHooks,
-  getSessionId,
-  getStatsStore,
 } from '../../bootstrap/state.js'
-import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  logEvent,
-} from '../../services/analytics/index.js'
 import { wrapInSystemReminder } from '../messages.js'
 import { logForDebugging } from '../debug.js'
 import { logForDiagnosticsNoPII } from '../diagLogs.js'
 import { errorMessage, getErrnoCode } from '../errors.js'
-import { isEnvTruthy } from '../envUtils.js'
 import { pathExists } from '../file.js'
-import { all } from '../generators.js'
 import { wrapSpawn, type ShellCommand } from '../ShellCommand.js'
 import { TaskOutput } from '../../services/task/TaskOutput.js'
 import { firstLineOf } from '../stringUtils.js'
 import { jsonParse, jsonStringify } from '../slowOperations.js'
 import { subprocessEnv } from '../subprocessEnv.js'
-import { getHookEnvFilePath, invalidateSessionEnvCache } from '../sessionEnvironment.js'
+import { getHookEnvFilePath, } from '../sessionEnvironment.js'
 import { getPluginDataDir } from '../plugins/pluginDirectories.js'
-import { ALLOWED_OFFICIAL_MARKETPLACE_NAMES } from '../plugins/schemas.js'
 import {
   loadPluginOptions,
   substituteUserConfigVariables,
 } from '../plugins/pluginOptionsStorage.js'
 import { findGitBashPath, windowsPathToPosixPath } from '../windowsPaths.js'
 import { getCwd } from '../cwd.js'
-import { logError } from '../log.js'
 import { getPlatform } from '../platform.js'
 import {
   hookJSONOutputSchema,
   isAsyncHookJSONOutput,
-  isSyncHookJSONOutput,
-  type HookCallback,
 } from '../../types/hooks.js'
 import type {
   AsyncHookJSONOutput,
   HookEvent,
   HookJSONOutput,
-  HookInput,
 } from 'src/entrypoints/agentSdkTypes.js'
 import { TOOL_HOOK_EXECUTION_TIMEOUT_MS } from './config.js'
-import { emitHookResponse, emitHookStarted, startHookProgressInterval } from './hookEvents.js'
-import { getHookDisplayText } from './hooksSettings.js'
+import { emitHookResponse, startHookProgressInterval } from './hookEvents.js'
 import { registerPendingAsyncHook } from './AsyncHookRegistry.js'
-import {
-  endHookSpan,
-  isBetaTracingEnabled,
-  startHookSpan,
-} from '../../services/telemetry/sessionTracing.js'
 import { enqueuePendingNotification } from '../messageQueueManager.js'
 import type { HookResult } from './types.js'
 import type { ElicitationResponse } from './types.js'
