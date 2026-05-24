@@ -3,14 +3,6 @@
 // Refactor invariant: this file should NOT diff after restructuring,
 // only when exports are intentionally added/removed/renamed.
 
-export const PLAN_PHASE4_CONTROL = ...
-
-export function ensureToolResultPairing(
-  messages: (UserMessage | AssistantMessage)[],
-): (UserMessage | AssistantMessage)[] { ... }
-
-export function filterUnresolvedToolUses(messages: Message[]): Message[] { ... }
-
 export function handleMessageFromStream(
   message: Message | TombstoneMessage | StreamEvent | RequestStartEvent | ToolUseSummaryMessage,
   onMessage: (message: Message) => void,
@@ -23,31 +15,6 @@ export function handleMessageFromStream(
   ) => void,
   onStreamingText?: (f: (current: string | null) => string | null) => void,
 ): void { ... }
-
-export function normalizeAttachmentForAPI(attachment: Attachment): UserMessage[] { ... }
-
-export function normalizeMessagesForAPI(
-  messages: Message[],
-  tools: Tools = [],
-): (UserMessage | AssistantMessage)[] { ... }
-
-export function reorderAttachmentsForAPI(messages: Message[]): Message[] { ... }
-
-export function reorderMessagesInUI(
-  messages: (
-    | NormalizedUserMessage
-    | NormalizedAssistantMessage
-    | AttachmentMessage
-    | SystemMessage
-  )[],
-  syntheticStreamingToolUseMessages: NormalizedAssistantMessage[],
-): (NormalizedUserMessage | NormalizedAssistantMessage | AttachmentMessage | SystemMessage)[] { ... }
-
-export function wrapCommandText(raw: string, origin: MessageOrigin | undefined): string { ... }
-
-export function wrapInSystemReminder(content: string): string { ... }
-
-export function wrapMessagesInSystemReminder(messages: UserMessage[]): UserMessage[] { ... }
 
 export type StreamingThinking = {
   thinking: string
@@ -174,6 +141,18 @@ export {
   normalizeContentFromAPI,
   normalizeMessages,
 } from './messages/normalize.js'
+
+export {
+  ensureToolResultPairing,
+  filterUnresolvedToolUses,
+  normalizeAttachmentForAPI,
+  normalizeMessagesForAPI,
+  reorderAttachmentsForAPI,
+  reorderMessagesInUI,
+  wrapCommandText,
+  wrapInSystemReminder,
+  wrapMessagesInSystemReminder,
+} from './messages/api.js'
 
 export {
   isThinkingBlock,
