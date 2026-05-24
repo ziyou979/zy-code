@@ -3,30 +3,12 @@
 // Refactor invariant: this file should NOT diff after restructuring,
 // only when exports are intentionally added/removed/renamed.
 
-export function handleMessageFromStream(
-  message: Message | TombstoneMessage | StreamEvent | RequestStartEvent | ToolUseSummaryMessage,
-  onMessage: (message: Message) => void,
-  onUpdateLength: (newContent: string) => void,
-  onSetStreamMode: (mode: SpinnerMode) => void,
-  onStreamingToolUses: (f: (streamingToolUse: StreamingToolUse[]) => StreamingToolUse[]) => void,
-  onTombstone?: (message: Message) => void,
-  onStreamingThinking?: (
-    f: (current: StreamingThinking | null) => StreamingThinking | null,
-  ) => void,
-  onStreamingText?: (f: (current: string | null) => string | null) => void,
-): void { ... }
-
-export type StreamingThinking = {
-  thinking: string
-  isStreaming: boolean
-  streamingEndedAt?: number
-}
-
-export type StreamingToolUse = {
-  index: number
-  contentBlock: ToolCallBlock
-  unparsedToolInput: string
-}
+export type {
+  AggregatedHookResult,
+  ElicitationResponse,
+  HookBlockingError,
+  HookResult,
+} from './hooks.js'
 
 export type {
   ToolUseRequestMessage,
@@ -36,6 +18,8 @@ export type {
 export type { MessageLookups } from './messages/lookups.js'
 
 export type { PruneResult } from './messages/prune.js'
+
+export type { StreamingThinking, StreamingToolUse } from './messages/streaming.js'
 
 export {
   AUTO_REJECT_MESSAGE,
@@ -163,3 +147,5 @@ export {
   stripSignatureBlocks,
   stripToolReferenceBlocksFromUserMessage,
 } from './messages/prune.js'
+
+export { handleMessageFromStream } from './messages/streaming.js'
