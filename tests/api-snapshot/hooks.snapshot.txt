@@ -288,8 +288,6 @@ export function executeFileChangedHooks(
   systemMessages: string[]
 }> { ... }
 
-export function hasBlockingResult(results: HookOutsideReplResult[]): boolean { ... }
-
 export function hasInstructionsLoadedHook(): boolean { ... }
 
 export function hasWorktreeCreateHook(): boolean { ... }
@@ -311,15 +309,6 @@ export type ElicitationResultHookResult = {
   blockingError?: HookBlockingError
 }
 
-export type HookOutsideReplResult = {
-  command: string
-  succeeded: boolean
-  output: string
-  blocked: boolean
-  watchPaths?: string[]
-  systemMessage?: string
-}
-
 export type InstructionsLoadReason =
   | 'session_start'
   | 'nested_traversal'
@@ -331,8 +320,12 @@ export type InstructionsMemoryType = 'User' | 'Project' | 'Local' | 'Managed'
 
 export type { AggregatedHookResult, ElicitationResponse, HookBlockingError, HookResult }
 
+export type { HookOutsideReplResult }
+
 export { createBaseHookInput, shouldSkipHookDueToTrust }
 
 export { getMatchingHooks }
 
 export { getSessionEndHookTimeoutMs } from './hooks/config.js'
+
+export { hasBlockingResult }
