@@ -93,6 +93,8 @@ export async function saveTag(sessionId: UUID, tag: string, fullPath?: string) {
 
 export function adoptResumedSessionFile(): void { ... }
 
+export function appendEntryToFile(fullPath: string, entry: Record<string, unknown>): void { ... }
+
 export function cacheSessionTitle(customTitle: string): void { ... }
 
 export function clearSessionMetadata(): void { ... }
@@ -105,9 +107,7 @@ export function getCurrentSessionTitle(sessionId: SessionId): string | undefined
 
 export function reAppendSessionMetadata(): void { ... }
 
-export function resetProjectFlushStateForTesting(): void { ... }
-
-export function resetProjectForTesting(): void { ... }
+export function readFileTailSync(fullPath: string): string { ... }
 
 export function restoreSessionMetadata(meta: {
   customTitle?: string
@@ -131,17 +131,6 @@ export function saveMode(mode: 'coordinator' | 'normal'): void { ... }
 export function saveTaskSummary(sessionId: UUID, summary: string): void { ... }
 
 export function saveWorktreeState(worktreeSession: PersistedWorktreeSession | null): void { ... }
-
-export function setInternalEventReader(
-  reader: InternalEventReader,
-  subagentReader: InternalEventReader,
-): void { ... }
-
-export function setInternalEventWriter(writer: InternalEventWriter): void { ... }
-
-export function setRemoteIngressUrlForTesting(url: string): void { ... }
-
-export function setSessionFileForTesting(path: string): void { ... }
 
 export type TeamInfo = {
   teamName?: string
@@ -222,3 +211,12 @@ export {
   isTranscriptMessage,
   sessionIdExists,
 } from './sessionStorage/predicates.js'
+
+export {
+  resetProjectFlushStateForTesting,
+  resetProjectForTesting,
+  setInternalEventReader,
+  setInternalEventWriter,
+  setRemoteIngressUrlForTesting,
+  setSessionFileForTesting,
+} from './sessionStorage/project.js'
