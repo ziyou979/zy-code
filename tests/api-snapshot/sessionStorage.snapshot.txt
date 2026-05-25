@@ -211,8 +211,6 @@ export async function writeRemoteAgentMetadata(
   metadata: RemoteAgentMetadata,
 ): Promise<void> { ... }
 
-export const MAX_TRANSCRIPT_READ_BYTES = ...
-
 export function adoptResumedSessionFile(): void { ... }
 
 export function buildConversationChain(
@@ -229,8 +227,6 @@ export function cleanMessagesForLogging(
   allMessages: readonly Message[] = messages,
 ): Transcript { ... }
 
-export function clearAgentTranscriptSubdir(agentId: string): void { ... }
-
 export function clearSessionMessagesCache(): void { ... }
 
 export function clearSessionMetadata(): void { ... }
@@ -245,8 +241,6 @@ export function extractTeammateTranscriptsFromTasks(tasks: {
   }
 }): { [agentId: string]: Message[] } { ... }
 
-export function getAgentTranscriptPath(agentId: AgentId): string { ... }
-
 export function getCurrentSessionAgentColor(): string | undefined { ... }
 
 export function getCurrentSessionTag(sessionId: UUID): string | undefined { ... }
@@ -259,13 +253,7 @@ export function getFirstMeaningfulUserMessageTextContent<T extends Message>(
 
 export function getNodeEnv(): string { ... }
 
-export function getProjectsDir(): string { ... }
-
 export function getSessionIdFromLog(log: LogOption): UUID | undefined { ... }
-
-export function getTranscriptPath(): string { ... }
-
-export function getTranscriptPathForSession(sessionId: string): string { ... }
 
 export function getUserType(): string { ... }
 
@@ -314,8 +302,6 @@ export function saveWorktreeState(worktreeSession: PersistedWorktreeSession | nu
 
 export function sessionIdExists(sessionId: string): boolean { ... }
 
-export function setAgentTranscriptSubdir(agentId: string, subdir: string): void { ... }
-
 export function setInternalEventReader(
   reader: InternalEventReader,
   subagentReader: InternalEventReader,
@@ -326,8 +312,6 @@ export function setInternalEventWriter(writer: InternalEventWriter): void { ... 
 export function setRemoteIngressUrlForTesting(url: string): void { ... }
 
 export function setSessionFileForTesting(path: string): void { ... }
-
-export let getProjectDir = ...
 
 export type AgentMetadata = {
   agentType: string
@@ -366,3 +350,14 @@ export type TeamInfo = {
   teamName?: string
   agentName?: string
 }
+
+export {
+  clearAgentTranscriptSubdir,
+  getAgentTranscriptPath,
+  getProjectDir,
+  getProjectsDir,
+  getTranscriptPath,
+  getTranscriptPathForSession,
+  MAX_TRANSCRIPT_READ_BYTES,
+  setAgentTranscriptSubdir,
+} from './sessionStorage/paths.js'
