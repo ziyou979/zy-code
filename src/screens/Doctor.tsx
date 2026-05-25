@@ -430,23 +430,23 @@ export function Doctor({ onDone }: Props) {
       )}
       {unreachableRulesSection}
       {contextWarnings &&
-        (contextWarnings.zyMdWarning ||
+        (contextWarnings.agentsMdWarning ||
           contextWarnings.agentWarning ||
           contextWarnings.mcpWarning) && (
           <Box flexDirection="column">
             <Text bold={true}>{tSync('doctor.contextWarnings')}</Text>
-            {contextWarnings.zyMdWarning && (
+            {contextWarnings.agentsMdWarning && (
               <>
                 <Text>
                   └{' '}
                   <Text color="warning">
-                    {figures.warning} {contextWarnings.zyMdWarning.message}
+                    {figures.warning} {contextWarnings.agentsMdWarning.message}
                   </Text>
                 </Text>
                 <Text>
                   {'  '}└ {tSync('status.cwd')}:
                 </Text>
-                {contextWarnings.zyMdWarning.details.map((detail_0, i_6) => (
+                {contextWarnings.agentsMdWarning.details.map((detail_0, i_6) => (
                   <Text key={i_6} dimColor={true}>
                     {'    '}└ {detail_0}
                   </Text>

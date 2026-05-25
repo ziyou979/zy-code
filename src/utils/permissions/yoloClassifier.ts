@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { z } from 'zod/v4'
 import {
-  getCachedZyMdContent,
+  getCachedAgentsMdContent,
   getLastClassifierRequests,
   getSessionId,
   setLastClassifierRequests,
@@ -425,23 +425,23 @@ export function buildTranscriptForClassifier(messages: Message[], tools: Tools):
 }
 
 /**
- * 构建分类器的 CLAUDE.md 前缀消息。当
- * CLAUDE.md 被禁用或为空时返回 null。内容包装在分隔符中，
+ * 构建分类器的 AGENTS.md 前缀消息。当
+ * AGENTS.md 被禁用或为空时返回 null。内容包装在分隔符中，
  * 告诉分类器这是用户提供的配置 — 此处描述的
  * 操作反映用户意图。设置 cache_control 是因为
- * 内容在每会话中是静态的，使系统 + CLAUDE.md 前缀成为
+ * 内容在每会话中是静态的，使系统 + AGENTS.md 前缀成为
  * 分类器调用之间的稳定缓存前缀。
  *
  * 从 bootstrap/state.ts 缓存读取（由 context.ts 填充），而非
- * 直接导入 zymd.ts — zymd → permissions/filesystem →
+ * 直接导入 agentsMd.ts — agentsMd → permissions/filesystem →
  * permissions → yoloClassifier 是循环依赖。context.ts 已经
  * 基于 ZY_CODE_DISABLE_CLAUDE_MDS 门控并将 '' 规范化为 null 再缓存。
  * 如果缓存未填充（测试，或从未调用 getUserContext 的入口点），
- * 分类器在没有 CLAUDE.md 的情况下继续 — 与 PR 前的行为相同。
+ * 分类器在没有 AGENTS.md 的情况下继续 — 与 PR 前的行为相同。
  */
-function buildzyMdMessage(): LLMMessage | null {
-  const zyMd = getCachedZyMdContent()
-  if (zyMd === null) {
+function buildAgentsMdMessage(): LLMMessage | null {
+  const agentsMd = getCachedAgentsMdContent()
+  if (agentsMd === null) {
     return null
   }
   return {
@@ -450,10 +450,10 @@ function buildzyMdMessage(): LLMMessage | null {
       {
         type: 'text',
         text:
-          `The following is the user's CLAUDE.md configuration. These are ` +
+          `The following is the user's AGENTS.md configuration. These are ` +
           `instructions the user provided to the agent and should be treated ` +
           `as part of the user's intent when evaluating actions.\n\n` +
-          `<user_Zy_md>\n${zyMd}\n</user_Zy_md>`,
+          `<user_agents_md>\n${agentsMd}\n</user_agents_md>`,
       },
     ],
   }
@@ -960,8 +960,8 @@ export async function classifyYoloAction(
 
   const systemPrompt = await buildYoloSystemPrompt(context)
   const transcriptEntries = buildTranscriptEntries(messages)
-  const zyMdMessage = buildzyMdMessage()
-  const prefixMessages: LLMMessage[] = zyMdMessage ? [zyMdMessage] : []
+  const agentsMdMessage = buildAgentsMdMessage()
+  const prefixMessages: LLMMessage[] = agentsMdMessage ? [agentsMdMessage] : []
 
   let toolCallsLength = actionCompact.length
   let userPromptsLength = 0

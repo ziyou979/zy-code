@@ -125,7 +125,7 @@ import { getSystemPrompt } from '../constants/prompts.js'
 import { buildEffectiveSystemPrompt } from '../utils/systemPrompt.js'
 import { getSystemContext, getUserContext } from '../context.js'
 import { getSettingsForSource } from '../utils/settings/settings.js'
-import { getMemoryFiles } from '../utils/zymd.js'
+import { getMemoryFiles } from '../utils/agentsMd.js'
 import { startBackgroundHousekeeping } from '../utils/backgroundHousekeeping.js'
 import { saveCurrentSessionCosts, resetCostState, getStoredSessionCosts } from '../cost-tracker.js'
 import { useCostSummary } from '../costHook.js'
@@ -667,7 +667,7 @@ export function REPL({
 
   // 注意：standaloneAgentContext 在 main.tsx（通过 initialState）或
   // ResumeConversation.tsx（在渲染 REPL 之前通过 setAppState）中初始化，以避免
-  // 挂载时基于 useEffect 的 state 初始化（遵循 CLAUDE.md 指南）
+  // 挂载时基于 useEffect 的 state 初始化（遵循 AGENTS.md 指南）
 
   // 命令的本地 state（skill 文件更改时可热重载）
   const [localCommands, setLocalCommands] = useState(initialCommands)
@@ -1535,8 +1535,8 @@ export function REPL({
   // 写入，turn N 的发现仍必须在 turn N+k 时归属于 SkillTool 调用。
   // 在 clearConversation 中清除。
   const discoveredSkillNamesRef = useRef(new Set<string>())
-  // 会话级去重嵌套记忆 CLAUDE.md 附件。
-  // readFileState 是 100 条目 LRU；一旦它驱逐 CLAUDE.md 路径，
+  // 会话级去重嵌套记忆 AGENTS.md 附件。
+  // readFileState 是 100 条目 LRU；一旦它驱逐 AGENTS.md 路径，
   // 下一个发现周期会重新注入它。在 clearConversation 中清除。
   const loadedNestedMemoryPathsRef = useRef(new Set<string>())
 
@@ -4346,7 +4346,7 @@ export function REPL({
     // 可以在屏幕右下角向用户显示错误
     void reverify()
 
-    // 启动时用 CLAUDE.md 文件填充 readFileState
+    // 启动时用 AGENTS.md 文件填充 readFileState
     const memoryFiles = await getMemoryFiles()
     if (memoryFiles.length > 0) {
       const fileList = memoryFiles
@@ -4355,9 +4355,9 @@ export function REPL({
             `  [${f.type}] ${f.path} (${f.content.length} chars)${f.parent ? ` (included by ${f.parent})` : ''}`,
         )
         .join('\n')
-      logForDebugging(`Loaded ${memoryFiles.length} CLAUDE.md/rules files:\n${fileList}`)
+      logForDebugging(`Loaded ${memoryFiles.length} AGENTS.md/rules files:\n${fileList}`)
     } else {
-      logForDebugging('No CLAUDE.md/rules files found')
+      logForDebugging('No AGENTS.md/rules files found')
     }
     for (const file of memoryFiles) {
       // 当注入的内容与磁盘不匹配时（剥离的 HTML 注释、

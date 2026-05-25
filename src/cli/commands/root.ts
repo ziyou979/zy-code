@@ -95,7 +95,7 @@ import {
 } from 'src/services/analytics/index.js'
 import {
   getOriginalCwd,
-  setAdditionalDirectoriesForzyMd,
+  setAdditionalDirectoriesForAgentsMd,
   setIsRemoteMode,
   setMainLoopModelOverride,
   setMainThreadAgentType,
@@ -356,7 +356,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   profileCheckpoint('action_handler_start')
 
   // --bare = 一键最小模式。设置 SIMPLE 以便所有现有的
-  // 门控触发（ZY.md、skills、hooks 在 executeHooks 中、agent
+  // 门控触发（AGENTS.md、skills、hooks 在 executeHooks 中、agent
   // 目录遍历）。必须在 setup() / 任何门控工作运行之前设置。
   if (
     (
@@ -1092,8 +1092,8 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     }
   }
 
-  // 存储额外目录用于 CLAUDE.md 加载（由 env var 控制）
-  setAdditionalDirectoriesForzyMd(addDir)
+  // 存储额外目录用于 AGENTS.md 加载（由 env var 控制）
+  setAdditionalDirectoriesForAgentsMd(addDir)
 
   // 来自 --channels 标志的通道服务器允许列表 —— 服务器 whose
   // 入站推送通知应注册此会话。选项
@@ -1487,7 +1487,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     // 信任在 -p 模式中是隐式的（与 prefetchSystemContextIfSafe 相同的门控）。
     void getSystemContext()
     // 现在也启动 getUserContext —— 它的首次 await（getMemoryFiles
-    // 中的 fs.readFile）自然让出，所以 CLAUDE.md 目录遍历
+    // 中的 fs.readFile）自然让出，所以 AGENTS.md 目录遍历
     // 在 context Promise.all 连接之前约 280ms 的重叠窗口中运行。
     // startDeferredPrefetches 中的 void getUserContext() 变成缓存命中。
     void getUserContext()
@@ -3589,7 +3589,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     // 知道会话是从外部启动的。Linux xdg-open 和
     // 设置了"始终允许"的浏览器在没有操作系统级别
     // 确认的情况下分派链接，所以这是用户得到的唯一信号
-    // 提示 —— 以及它暗示的工作目录 / CLAUDE.md —— 来自
+    // 提示 —— 以及它暗示的工作目录 / AGENTS.md —— 来自
     // 外部来源，而不是他们输入的内容。
     let deepLinkBanner: ReturnType<typeof createSystemMessage> | null = null
     if (feature('LODESTONE')) {

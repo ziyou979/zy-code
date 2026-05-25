@@ -52,7 +52,7 @@ import {
   generateTmuxSessionName,
   worktreeBranchName,
 } from './utils/worktree.js'
-import { clearMemoryFileCaches } from './utils/zymd.js'
+import { clearMemoryFileCaches } from './utils/agentsMd.js'
 
 export async function setup(
   cwd: string,

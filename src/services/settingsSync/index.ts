@@ -31,7 +31,7 @@ import { getSettingsFilePathForSource } from '../../utils/settings/settings.js'
 import { resetSettingsCache } from '../../utils/settings/settingsCache.js'
 import { sleep } from '../../utils/sleep.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
-import { clearMemoryFileCaches } from '../../utils/zymd.js'
+import { clearMemoryFileCaches } from '../../utils/agentsMd.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { logEvent } from '../analytics/index.js'
 import { getRetryDelay } from '../api/withRetry.js'
@@ -461,7 +461,7 @@ async function writeFileForSync(filePath: string, content: string): Promise<bool
  *
  * After writing, invalidates relevant caches:
  * - resetSettingsCache() for settings files
- * - clearMemoryFileCaches() for memory files (CLAUDE.md)
+ * - clearMemoryFileCaches() for memory files (AGENTS.md)
  */
 async function applyRemoteEntriesToLocal(
   entries: Record<string, string>,

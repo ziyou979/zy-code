@@ -15,7 +15,7 @@ import {
   getCurrentWorktreeSession,
   validateWorktreeSlug,
 } from '../../utils/worktree.js'
-import { clearMemoryFileCaches } from '../../utils/zymd.js'
+import { clearMemoryFileCaches } from '../../utils/agentsMd.js'
 import { ENTER_WORKTREE_TOOL_NAME } from './constants.js'
 import { getEnterWorktreeToolPrompt } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'

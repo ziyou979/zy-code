@@ -172,7 +172,7 @@ export type BridgeCoreParams = {
    * isBypassPermissionsModeAvailable) BEFORE calling transitionPermissionMode —
    * that function's internal auto-gate check is a defensive throw, not a
    * graceful guard, and its side-effect order is setAutoModeActive(true) then
-   * throw, which corrupts the 3-way invariant documented in src/CLAUDE.md if
+   * throw, which corrupts the 3-way invariant documented in src/AGENTS.md if
    * the callback lets the throw escape here.
    */
   onSetPermissionMode?: (mode: PermissionMode) => { ok: true } | { ok: false; error: string }

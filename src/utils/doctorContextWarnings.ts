@@ -11,13 +11,13 @@ import {
   getAgentDescriptionsTotalTokens,
 } from './statusNoticeHelpers.js'
 import { plural } from './stringUtils.js'
-import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './zymd.js'
+import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './agentsMd.js'
 
 // Thresholds (matching status notices and existing patterns)
 const MCP_TOOLS_THRESHOLD = 25_000 // 15k tokens
 
 export type ContextWarning = {
-  type: 'Zymd_files' | 'agent_descriptions' | 'mcp_tools' | 'unreachable_rules'
+  type: 'agents_md_files' | 'agent_descriptions' | 'mcp_tools' | 'unreachable_rules'
   severity: 'warning' | 'error'
   message: string
   details: string[]
@@ -26,13 +26,13 @@ export type ContextWarning = {
 }
 
 export type ContextWarnings = {
-  zyMdWarning: ContextWarning | null
+  agentsMdWarning: ContextWarning | null
   agentWarning: ContextWarning | null
   mcpWarning: ContextWarning | null
   unreachableRulesWarning: ContextWarning | null
 }
 
-async function checkzyMdFiles(): Promise<ContextWarning | null> {
+async function checkAgentsMdFiles(): Promise<ContextWarning | null> {
   const largeFiles = getLargeMemoryFiles(await getMemoryFiles())
 
   // This already filters for files > 40k chars each
@@ -46,11 +46,11 @@ async function checkzyMdFiles(): Promise<ContextWarning | null> {
 
   const message =
     largeFiles.length === 1
-      ? `Large CLAUDE.md file detected (${largeFiles[0]!.content.length.toLocaleString()} chars > ${MAX_MEMORY_CHARACTER_COUNT.toLocaleString()})`
-      : `${largeFiles.length} large CLAUDE.md files detected (each > ${MAX_MEMORY_CHARACTER_COUNT.toLocaleString()} chars)`
+      ? `Large AGENTS.md file detected (${largeFiles[0]!.content.length.toLocaleString()} chars > ${MAX_MEMORY_CHARACTER_COUNT.toLocaleString()})`
+      : `${largeFiles.length} large AGENTS.md files detected (each > ${MAX_MEMORY_CHARACTER_COUNT.toLocaleString()} chars)`
 
   return {
-    type: 'Zymd_files',
+    type: 'agents_md_files',
     severity: 'warning',
     message,
     details,
@@ -236,15 +236,15 @@ export async function checkContextWarnings(
   agentInfo: AgentDefinitionsResult | null,
   getToolPermissionContext: () => Promise<ToolPermissionContext>,
 ): Promise<ContextWarnings> {
-  const [zyMdWarning, agentWarning, mcpWarning, unreachableRulesWarning] = await Promise.all([
-    checkzyMdFiles(),
+  const [agentsMdWarning, agentWarning, mcpWarning, unreachableRulesWarning] = await Promise.all([
+    checkAgentsMdFiles(),
     checkAgentDescriptions(agentInfo),
     checkMcpTools(tools, getToolPermissionContext, agentInfo),
     checkUnreachableRules(getToolPermissionContext),
   ])
 
   return {
-    zyMdWarning,
+    agentsMdWarning,
     agentWarning,
     mcpWarning,
     unreachableRulesWarning,

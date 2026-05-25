@@ -544,7 +544,7 @@ export async function trySessionMemoryCompaction(
     // discarding the new boundary and summary.
     const messagesToKeep = messages.slice(startIndex).filter((m) => !isCompactBoundaryMessage(m))
 
-    // Run session start hooks to restore CLAUDE.md and other context
+    // Run session start hooks to restore AGENTS.md and other context
     const hookResults = await processSessionStartHooks('compact', {
       model: getMainLoopModel(),
     })

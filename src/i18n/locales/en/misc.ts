@@ -874,12 +874,12 @@ export const enMisc: TranslationResource = {
   'workflow.selectAtLeastOne': 'You must select at least one workflow to continue',
   'workflow.selectTitle': 'Select GitHub workflows to install',
   'workflow.subtitle': "We'll create a workflow file in your repository for each one you select.",
-  'zyMd.allowExternalTitle': 'Allow external ZY.md file imports?',
-  'zyMd.externalImports': 'External imports:',
-  'zyMd.importsOutsideWarning':
-    "This project's ZY.md imports files outside the current working directory. Never allow this for third-party repositories.",
-  'zyMd.noDisable': 'No, disable external imports',
-  'zyMd.securityWarning':
+  'agentsMd.allowExternalTitle': 'Allow external AGENTS.md file imports?',
+  'agentsMd.externalImports': 'External imports:',
+  'agentsMd.importsOutsideWarning':
+    "This project's AGENTS.md imports files outside the current working directory. Never allow this for third-party repositories.",
+  'agentsMd.noDisable': 'No, disable external imports',
+  'agentsMd.securityWarning':
     'Important: Only use ZY Code with files you trust. Accessing untrusted files may pose security risks',
-  'zyMd.yesAllow': 'Yes, allow external imports',
+  'agentsMd.yesAllow': 'Yes, allow external imports',
 }

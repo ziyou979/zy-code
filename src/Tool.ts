@@ -187,10 +187,10 @@ export type ToolUseContext = {
   sendOSNotification?: (opts: { message: string; notificationType: string }) => void
   nestedMemoryAttachmentTriggers?: Set<string>
   /**
-   * 本会话中已作为 nested_memory 附件注入的 CLAUDE.md 路径。
+   * 本会话中已作为 nested_memory 附件注入的 AGENTS.md 路径。
    * 用于 memoryFilesToAttachments 去重 — readFileState 是一个 LRU 缓存，
    * 会在繁忙会话中淘汰条目，因此仅靠它的 .has() 检查可能导致同一个
-   * CLAUDE.md 被重复注入数十次。
+   * AGENTS.md 被重复注入数十次。
    */
   loadedNestedMemoryPaths?: Set<string>
   dynamicSkillDirTriggers?: Set<string>

@@ -45,7 +45,7 @@ export const enCommands: TranslationResource = {
   'commands.help': 'Show help and available commands',
   'commands.hooks': 'View hook configurations for tool events',
   'commands.ide': 'Manage IDE integrations and show status',
-  'commands.init': 'Initialize a new ZY.md file with codebase documentation',
+  'commands.init': 'Initialize a new AGENTS.md file with codebase documentation',
   'commands.initVerifiers': 'Create verifier skill(s) for automated verification of code changes',
   'commands.insights': 'Generate a report analyzing your ZY Code sessions',
   'commands.installGitHubApp': 'Set up ZY GitHub Actions for a repository',

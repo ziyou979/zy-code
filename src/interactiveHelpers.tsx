@@ -48,10 +48,10 @@ import {
   hasSkipDangerousModePermissionPrompt,
 } from './utils/settings/settings.js'
 import {
-  getExternalzyMdIncludes,
+  getExternalAgentsMdIncludes,
   getMemoryFiles,
-  shouldShowzyMdExternalIncludesWarning,
-} from './utils/zymd.js'
+  shouldShowAgentsMdExternalIncludesWarning,
+} from 'src/utils/agentsMd.js'
 export function completeOnboarding(): void {
   saveGlobalConfig((current) => ({
     ...current,
@@ -181,7 +181,7 @@ export async function showSetupScreens(
 
   // Always show the trust dialog in interactive sessions, regardless of permission mode.
   // The trust dialog is the workspace trust boundary — it warns about untrusted repos
-  // and checks ZY.md external includes. bypassPermissions mode
+  // and checks AGENTS.md external includes. bypassPermissions mode
   // only affects tool execution permissions, not workspace trust.
   // Note: non-interactive sessions (CI/CD with -p) never reach showSetupScreens at all.
   // Skip permission checks in claubbit
@@ -214,12 +214,12 @@ export async function showSetupScreens(
     }
 
     // Check for zy.md includes that need approval
-    if (await shouldShowzyMdExternalIncludesWarning()) {
-      const externalIncludes = getExternalzyMdIncludes(await getMemoryFiles(true))
-      const { zyMdExternalIncludesDialog } = await import(
-        './components/ZyMdExternalIncludesDialog.js'
+    if (await shouldShowAgentsMdExternalIncludesWarning()) {
+      const externalIncludes = getExternalAgentsMdIncludes(await getMemoryFiles(true))
+      const { agentsMdExternalIncludesDialog } = await import(
+        './components/AgentsMdExternalIncludesDialog.js'
       )
-      const DialogComponent = zyMdExternalIncludesDialog as React.ComponentType<{
+      const DialogComponent = agentsMdExternalIncludesDialog as React.ComponentType<{
         onDone: () => void
         isStandaloneDialog: boolean
         externalIncludes: unknown

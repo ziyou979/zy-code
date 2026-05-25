@@ -1,41 +1,40 @@
 /**
- * Pure-TypeScript port of yoga-layout (Meta's flexbox engine).
+ * yoga-layout（Meta 的 flexbox 引擎）的纯 TypeScript 移植。
  *
- * This matches the `yoga-layout/load` API surface used by src/ink/layout/yoga.ts.
- * The upstream C++ source is ~2500 lines in CalculateLayout.cpp alone; this port
- * is a simplified single-pass flexbox implementation that covers the subset of
- * features Ink actually uses:
- *   - flex-direction (row/column + reverse)
+ * 与 src/ink/layout/yoga.ts 所使用的 `yoga-layout/load` API 接口保持一致。
+ * 上游 C++ 代码光是 CalculateLayout.cpp 就达 ~2500 行；本移植是一个简化的
+ * 单趟 flexbox 实现，仅覆盖 Ink 实际使用的特性子集：
+ *   - flex-direction（row/column + reverse）
  *   - flex-grow / flex-shrink / flex-basis
- *   - align-items / align-self (stretch, flex-start, center, flex-end)
- *   - justify-content (all six values)
+ *   - align-items / align-self（stretch、flex-start、center、flex-end）
+ *   - justify-content（全部六个取值）
  *   - margin / padding / border / gap
- *   - width / height / min / max (point, percent, auto)
- *   - position: relative / absolute
- *   - display: flex / none
- *   - measure functions (for text nodes)
+ *   - width / height / min / max（point、percent、auto）
+ *   - position：relative / absolute
+ *   - display：flex / none
+ *   - measure functions（用于文本节点）
  *
- * Also implemented for spec parity (not used by Ink):
- *   - margin: auto (main + cross axis, overrides justify/align)
- *   - multi-pass flex clamping when children hit min/max constraints
- *   - flex-grow/shrink against container min/max when size is indefinite
+ * 为与 spec 对齐而实现（Ink 未使用）：
+ *   - margin: auto（主轴 + 交叉轴，会覆盖 justify/align）
+ *   - 子节点命中 min/max 约束时的多趟 flex 夹限
+ *   - 容器尺寸不确定时，针对容器 min/max 的 flex-grow/shrink
  *
- * Also implemented for spec parity (not used by Ink):
- *   - flex-wrap: wrap / wrap-reverse (multi-line flex)
- *   - align-content (positions wrapped lines on cross axis)
+ * 为与 spec 对齐而实现（Ink 未使用）：
+ *   - flex-wrap：wrap / wrap-reverse（多行 flex）
+ *   - align-content（在交叉轴上安置换行后的行）
  *
- * Also implemented for spec parity (not used by Ink):
- *   - display: contents (children lifted to grandparent, box removed)
+ * 为与 spec 对齐而实现（Ink 未使用）：
+ *   - display: contents（子节点被提升到父父节点，本身被移除）
  *
- * Also implemented for spec parity (not used by Ink):
- *   - baseline alignment (align-items/align-self: baseline)
+ * 为与 spec 对齐而实现（Ink 未使用）：
+ *   - baseline 对齐（align-items/align-self: baseline）
  *
- * Not implemented (not used by Ink):
+ * 未实现（Ink 未使用）：
  *   - aspect-ratio
  *   - box-sizing: content-box
- *   - RTL direction (Ink always passes Direction.LTR)
+ *   - RTL 方向（Ink 始终传入 Direction.LTR）
  *
- * Upstream: https://github.com/facebook/yoga
+ * 上游项目：https://github.com/facebook/yoga
  */
 
 import {
@@ -77,7 +76,7 @@ export {
 }
 
 // --
-// Value types
+// 取值类型
 
 export type Value = {
   unit: Unit
@@ -109,27 +108,27 @@ function isDefined(n: number): boolean {
   return !Number.isNaN(n)
 }
 
-// NaN-safe equality for layout-cache input comparison
+// 对布局缓存输入比较的 NaN 安全相等判断
 function sameFloat(a: number, b: number): boolean {
   return a === b || (a !== a && b !== b)
 }
 
 // --
-// Layout result (computed values)
+// 布局结果（计算后的取值）
 
 type Layout = {
   left: number
   top: number
   width: number
   height: number
-  // Computed per-edge values (resolved to physical edges)
+  // 逐边计算后的值（解析到物理边）
   border: [number, number, number, number] // left, top, right, bottom
   padding: [number, number, number, number]
   margin: [number, number, number, number]
 }
 
 // --
-// Style (input values)
+// 样式（输入值）
 
 type Style = {
   direction: Direction
@@ -147,13 +146,13 @@ type Style = {
   flexShrink: number
   flexBasis: Value
 
-  // 9-edge arrays indexed by Edge enum
+  // 以 Edge 枚举作为索引的 9 边数组
   margin: Value[]
   padding: Value[]
   border: Value[]
   position: Value[]
 
-  // 3-gutter array indexed by Gutter enum
+  // 以 Gutter 枚举作为索引的 3 间隙数组
   gap: Value[]
 
   width: Value
@@ -194,7 +193,7 @@ function defaultStyle(): Style {
 }
 
 // --
-// Edge resolution — yoga's 9-edge model collapsed to 4 physical edges
+// 边解析 —— yoga 的9-边模型压缩到 4 个物理边
 
 const EDGE_LEFT = 0
 const EDGE_TOP = 1
@@ -205,10 +204,10 @@ function resolveEdge(
   edges: Value[],
   physicalEdge: number,
   ownerSize: number,
-  // For margin/position we allow auto; for padding/border auto resolves to 0
+  // 对于 margin/position 允许 auto；对于 padding/border，auto 解析为 0
   allowAuto = false,
 ): number {
-  // Precedence: specific edge > horizontal/vertical > all
+  // 优先级：特定边 > horizontal/vertical > all
   let v = edges[physicalEdge]!
   if (v.unit === Unit.Undefined) {
     if (physicalEdge === EDGE_LEFT || physicalEdge === EDGE_RIGHT) {
@@ -220,7 +219,7 @@ function resolveEdge(
   if (v.unit === Unit.Undefined) {
     v = edges[Edge.All]!
   }
-  // Start/End map to Left/Right for LTR (Ink is always LTR)
+  // Start/End 在 LTR 下映射到 Left/Right（Ink 始终是 LTR）
   if (v.unit === Unit.Undefined) {
     if (physicalEdge === EDGE_LEFT) {
       v = edges[Edge.Start]!
@@ -265,8 +264,8 @@ function isMarginAuto(edges: Value[], physicalEdge: number): boolean {
   return resolveEdgeRaw(edges, physicalEdge).unit === Unit.Auto
 }
 
-// Setter helpers for the _hasAutoMargin / _hasPosition fast-path flags.
-// Unit.Undefined = 0, Unit.Auto = 3.
+// _hasAutoMargin / _hasPosition 快路径标志位的 setter 辅助函数。
+// Unit.Undefined = 0，Unit.Auto = 3。
 function hasAnyAutoEdge(edges: Value[]): boolean {
   for (let i = 0; i < 9; i++) {
     if (edges[i]!.unit === 3) {
@@ -284,16 +283,16 @@ function hasAnyDefinedEdge(edges: Value[]): boolean {
   return false
 }
 
-// Hot path: resolve all 4 physical edges in one pass, writing into `out`.
-// Equivalent to calling resolveEdge() 4× with allowAuto=false, but hoists the
-// shared fallback lookups (Horizontal/Vertical/All/Start/End) and avoids
-// allocating a fresh 4-array on every layoutNode() call.
+// 热路径：一趟解析出所有 4 个物理边，写入 `out`。
+// 等价于以 allowAuto=false 调用 resolveEdge() 4 次，但会将共享的
+// 回退查找（Horizontal/Vertical/All/Start/End）提前读取，
+// 并避免每次 layoutNode() 调用都分配一个新的 4 元素数组。
 function resolveEdges4Into(
   edges: Value[],
   ownerSize: number,
   out: [number, number, number, number],
 ): void {
-  // Hoist fallbacks once — the 4 per-edge chains share these reads.
+  // 将回退项一次性提前读取——4 个逐边链路会共享这些读取。
   const eH = edges[6]! // Edge.Horizontal
   const eV = edges[7]! // Edge.Vertical
   const eA = edges[8]! // Edge.All
@@ -301,7 +300,7 @@ function resolveEdges4Into(
   const eE = edges[5]! // Edge.End
   const pctDenom = Number.isNaN(ownerSize) ? NaN : ownerSize / 100
 
-  // Left: edges[0] → Horizontal → All → Start
+  // 左边：edges[0] → Horizontal → All → Start
   let v = edges[0]!
   if (v.unit === 0) {
     v = eH
@@ -314,7 +313,7 @@ function resolveEdges4Into(
   }
   out[0] = v.unit === 1 ? v.value : v.unit === 2 ? v.value * pctDenom : 0
 
-  // Top: edges[1] → Vertical → All
+  // 顶边：edges[1] → Vertical → All
   v = edges[1]!
   if (v.unit === 0) {
     v = eV
@@ -324,7 +323,7 @@ function resolveEdges4Into(
   }
   out[1] = v.unit === 1 ? v.value : v.unit === 2 ? v.value * pctDenom : 0
 
-  // Right: edges[2] → Horizontal → All → End
+  // 右边：edges[2] → Horizontal → All → End
   v = edges[2]!
   if (v.unit === 0) {
     v = eH
@@ -337,7 +336,7 @@ function resolveEdges4Into(
   }
   out[2] = v.unit === 1 ? v.value : v.unit === 2 ? v.value * pctDenom : 0
 
-  // Bottom: edges[3] → Vertical → All
+  // 底边：edges[3] → Vertical → All
   v = edges[3]!
   if (v.unit === 0) {
     v = eV
@@ -349,7 +348,7 @@ function resolveEdges4Into(
 }
 
 // --
-// Axis helpers
+// 轴辅助函数
 
 function isRow(dir: FlexDirection): boolean {
   return dir === FlexDirection.Row || dir === FlexDirection.RowReverse
@@ -386,7 +385,7 @@ function trailingEdge(dir: FlexDirection): number {
 }
 
 // --
-// Public types
+// 公有类型
 
 export type MeasureFunction = (
   width: number,
@@ -398,7 +397,7 @@ export type MeasureFunction = (
 export type Size = { width: number; height: number }
 
 // --
-// Config
+// 配置
 
 export type Config = {
   pointScaleFactor: number
@@ -440,7 +439,7 @@ function createConfig(): Config {
 }
 
 // --
-// Node implementation
+// Node 实现
 
 export class Node {
   style: Style
@@ -452,35 +451,35 @@ export class Node {
   isDirty_: boolean
   isReferenceBaseline_: boolean
 
-  // Per-layout scratch (not public API)
+  // 单次布局使用的草稿字段（非公有 API）
   _flexBasis = 0
   _mainSize = 0
   _crossSize = 0
   _lineIndex = 0
-  // Fast-path flags maintained by style setters. Per CPU profile, the
-  // positioning loop calls isMarginAuto 6× and resolveEdgeRaw(position) 4×
-  // per child per layout pass — ~11k calls for the 1000-node bench, nearly
-  // all of which return false/undefined since most nodes have no auto
-  // margins and no position insets. These flags let us skip straight to
-  // the common case with a single branch.
+  // 由 style setter 维护的快路径标志位。根据 CPU profile，
+  // 定位循环每次布局会对每个子节点调用 isMarginAuto 6 次、
+  // resolveEdgeRaw(position) 4 次——1000 节点压测下约 1.1 万次调用，
+  // 几乎全部返回 false/undefined，因为大多数节点既没有 auto margin
+  // 也没有 position 偏移。这些标志位能让我们以单分支跳到
+  // 常见分支。
   _hasAutoMargin = false
   _hasPosition = false
-  // Same pattern for the 3× resolveEdges4Into calls at the top of every
-  // layoutNode(). In the 1000-node bench ~67% of those calls operate on
-  // all-undefined edge arrays (most nodes have no border; only cols have
-  // padding; only leaf cells have margin) — a single-branch skip beats
-  // ~20 property reads + ~15 compares + 4 writes of zeros.
+  // 同样适用于每次 layoutNode() 开头 3 次的 resolveEdges4Into 调用。
+  // 在1000 节点压测中，约 67% 的调用面对的是全 undefined 的 edge
+  // 数组（大多数节点没有 border；只有 col 有 padding；只有叶子
+  // 单元有 margin）——单分支跳过越过了约 20 次属性读取 +
+  // ~15 次比较 + 4 次零写入。
   _hasPadding = false
   _hasBorder = false
   _hasMargin = false
-  // -- Dirty-flag layout cache. Mirrors upstream CalculateLayout.cpp's
-  // layoutNodeInternal: skip a subtree entirely when it's clean and we're
-  // asking the same question we cached the answer to. Two slots since
-  // each node typically sees a measure call (performLayout=false, from
-  // computeFlexBasis) followed by a layout call (performLayout=true) with
-  // different inputs per parent pass — a single slot thrashes. Re-layout
-  // bench (dirty one leaf, recompute root) went 2.7x→1.1x with this:
-  // clean siblings skip straight through, only the dirty chain recomputes.
+  // -- 脏标志布局缓存。与上游 CalculateLayout.cpp 的
+  // layoutNodeInternal：当子树是 clean 状态且记录与当前询问一致时，
+  // 整棵子树都可跳过。使用两个槽位，因为每个节点通常会接收到一个
+  // measure 调用（performLayout=false，来自 computeFlexBasis），随后是一个
+  // layout 调用（performLayout=true），两个调用在不同父趟下输入不同
+  // ——单个槽位会频繁被覆写。加上该缓存后，重布局压测（将一个叶子
+  // 节点标脏，重算 root）从 2.7x 提升到 1.1x：clean 同级节点直接
+  // 跳过，只有 dirty 链路上的节点重算。
   _lW = NaN
   _lH = NaN
   _lWM: MeasureMode = 0
@@ -489,11 +488,11 @@ export class Node {
   _lOH = NaN
   _lFW = false
   _lFH = false
-  // _hasL stores INPUTS early (before compute) but layout.width/height are
-  // mutated by the multi-entry cache and by subsequent compute calls with
-  // different inputs. Without storing OUTPUTS, a _hasL hit returns whatever
-  // layout.width/height happened to be left by the last call — the scrollbox
-  // vpH=33→2624 bug. Store + restore outputs like the multi-entry cache does.
+  // _hasL 会在计算之前提前存储输入，但 layout.width/height
+  // 会被多槽缓存以及后续不同输入的 compute 调用修改。如果不存储
+  // 输出，_hasL 命中时返回的 layout.width/height 会是上一次调用随意
+  // 留下的值——即 scrollbox vpH=33→2624 的 bug。与多槽缓存一样，
+  // 同时存储与恢复输出。
   _lOutW = NaN
   _lOutH = NaN
   _hasL = false
@@ -506,31 +505,30 @@ export class Node {
   _mOutW = NaN
   _mOutH = NaN
   _hasM = false
-  // Cached computeFlexBasis result. For clean children, basis only depends
-  // on the container's inner dimensions — if those haven't changed, skip the
-  // layoutNode(performLayout=false) recursion entirely. This is the hot path
-  // for scroll: 500-message content container is dirty, its 499 clean
-  // children each get measured ~20× as the dirty chain's measure/layout
-  // passes cascade. Basis cache short-circuits at the child boundary.
+  // 缓存的 computeFlexBasis 结果。对 clean 子节点而言，basis 仅取决于
+  // 容器的内部尺寸——只要这些未变，就可以完全跳过
+  // layoutNode(performLayout=false) 递归。这是滚动场景的热路径：500 条
+  // 消息的内容容器是 dirty，其 499 个 clean 子节点会随 dirty 链路的
+  // measure/layout 趟叠起来被重复量约 20 次。Basis 缓存在子节点边界
+  // 上短路。
   _fbBasis = NaN
   _fbOwnerW = NaN
   _fbOwnerH = NaN
   _fbAvailMain = NaN
   _fbAvailCross = NaN
   _fbCrossMode: MeasureMode = 0
-  // Generation at which _fbBasis was written. Dirty nodes from a PREVIOUS
-  // generation have stale cache (subtree changed), but within the SAME
-  // generation the cache is fresh — the dirty chain's measure→layout
-  // cascade invokes computeFlexBasis ≥2^depth times per calculateLayout on
-  // fresh-mounted items, and the subtree doesn't change between calls.
-  // Gating on generation instead of isDirty_ lets fresh mounts (virtual
-  // scroll) cache-hit after first compute: 105k visits → ~10k.
+  // _fbBasis 写入时的代号。上一代中被标为 dirty 的节点会拥有过期缓存
+  // （子树发生过变化），但在同一代内缓存仍是新鲜的——dirty 链路的
+  // measure→layout 趟叠会在 calculateLayout 中针对刚挂载的子项调用
+  // computeFlexBasis ≥2^depth 次，而这期间子树不会变化。
+  // 以代号代替 isDirty_ 作为闸门，能让刚挂载（虚拟滚动）的节点在
+  // 首次计算后仍能命中缓存：105k 次访问 → 约 10k 次。
   _fbGen = -1
-  // Multi-entry layout cache — stores (inputs → computed w,h) so hits with
-  // different inputs than _hasL can restore the right dimensions. Upstream
-  // yoga uses 16; 4 covers Ink's dirty-chain depth. Packed as flat arrays
-  // to avoid per-entry object allocs. Slot i uses indices [i*8, i*8+8) in
-  // _cIn (aW,aH,wM,hM,oW,oH,fW,fH) and [i*2, i*2+2) in _cOut (w,h).
+  // 多槽布局缓存——存储（输入 → 计算后的 w,h），使与 _hasL 的输入
+  // 不同但仍命中时能恢复正确尺寸。上游 yoga 使用 16 个槽位；4 个
+  // 已足以覆盖 Ink 的 dirty 链深度。以扁数组存储，避免逐条目的对象
+  // 分配。槽位 i 使用 _cIn 索引 [i*8, i*8+8)（aW,aH,wM,hM,oW,oH,fW,fH）
+  // 与 _cOut 索引 [i*2, i*2+2)（w,h）。
   _cIn: Float64Array | null = null
   _cOut: Float64Array | null = null
   _cGen = -1
@@ -557,7 +555,7 @@ export class Node {
     _yogaLiveNodes++
   }
 
-  // -- Tree
+  // -- 树结构
 
   insertChild(child: Node, index: number): void {
     child.parent = this
@@ -582,7 +580,7 @@ export class Node {
     return this.parent
   }
 
-  // -- Lifecycle
+  // -- 生命周期
 
   free(): void {
     this.parent = null
@@ -616,7 +614,7 @@ export class Node {
     this._fbBasis = NaN
   }
 
-  // -- Dirty tracking
+  // -- 脏标记追踪
 
   markDirty(): void {
     this.isDirty_ = true
@@ -632,7 +630,7 @@ export class Node {
   }
   markLayoutSeen(): void {}
 
-  // -- Measure function
+  // -- 测量函数
 
   setMeasureFunc(fn: MeasureFunction | null): void {
     this.measureFunc = fn
@@ -643,7 +641,7 @@ export class Node {
     this.markDirty()
   }
 
-  // -- Computed layout getters
+  // -- 已计算布局的 getter
 
   getComputedLeft(): number {
     return this.layout.left
@@ -692,7 +690,7 @@ export class Node {
     return this.layout.margin[physicalEdge(edge)]!
   }
 
-  // -- Style setters: dimensions
+  // -- 样式 setter：dimensions
 
   setWidth(v: number | 'auto' | string | undefined): void {
     this.style.width = parseDimension(v)
@@ -751,7 +749,7 @@ export class Node {
     this.markDirty()
   }
 
-  // -- Style setters: flex
+  // -- 样式 setter：flex
 
   setFlexDirection(dir: FlexDirection): void {
     this.style.flexDirection = dir
@@ -799,7 +797,7 @@ export class Node {
     this.markDirty()
   }
 
-  // -- Style setters: alignment
+  // -- 样式 setter：alignment
 
   setAlignItems(a: Align): void {
     this.style.alignItems = a
@@ -818,7 +816,7 @@ export class Node {
     this.markDirty()
   }
 
-  // -- Style setters: display / position / overflow
+  // -- 样式 setter：display / position / overflow
 
   setDisplay(d: Display): void {
     this.style.display = d
@@ -855,10 +853,10 @@ export class Node {
     this.markDirty()
   }
   setBoxSizing(_: BoxSizing): void {
-    // Not implemented — Ink doesn't use content-box
+    // 未实现：Ink 不使用 content-box
   }
 
-  // -- Style setters: spacing
+  // -- 样式 setter：spacing
 
   setMargin(edge: Edge, v: number | 'auto' | string | undefined): void {
     const val = parseDimension(v)
@@ -907,7 +905,7 @@ export class Node {
     this.markDirty()
   }
 
-  // -- Style getters (partial — only what tests need)
+  // -- 样式 getter（部分实现，仅覆盖测试所需）
 
   getFlexDirection(): FlexDirection {
     return this.style.flexDirection
@@ -952,7 +950,7 @@ export class Node {
     return this.style.direction
   }
 
-  // -- Unused API stubs (present for API parity)
+  // -- 未使用的 API 桩（为保持 API 兼容性而存在）
 
   copyStyle(_: Node): void {}
   setDirtiedFunc(_: unknown): void {}
@@ -970,7 +968,7 @@ export class Node {
   }
   setAlwaysFormsContainingBlock(_: boolean): void {}
 
-  // -- Layout entry point
+  // -- 布局入口
 
   calculateLayout(
     ownerWidth: number | undefined,
@@ -993,9 +991,9 @@ export class Node {
       h,
       true,
     )
-    // Root's own position = margin + position insets (yoga applies position
-    // to the root even without a parent container; this matters for rounding
-    // since the root's abs top/left seeds the pixel-grid walk).
+    // 根节点自身位置 = margin + position insets（即使没有父容器，yoga 也会
+    // 对根节点应用 position；这一点对取整很重要，因为根节点的绝对 top/left
+    // 是像素网格遍历的起点）。
     const mar = this.layout.margin
     const posL = resolveValue(resolveEdgeRaw(this.style.position, EDGE_LEFT), isDefined(w) ? w : 0)
     const posT = resolveValue(resolveEdgeRaw(this.style.position, EDGE_TOP), isDefined(w) ? w : 0)
@@ -1025,18 +1023,18 @@ function cacheWrite(
     node._cIn = new Float64Array(CACHE_SLOTS * 8)
     node._cOut = new Float64Array(CACHE_SLOTS * 2)
   }
-  // First write after a dirty clears stale entries from before the dirty.
-  // _cGen < _generation means entries are from a previous calculateLayout;
-  // if wasDirty, the subtree changed since then → old dimensions invalid.
-  // Clean nodes' old entries stay — same subtree → same result for same
-  // inputs, so cross-generation caching works (the scroll hot path where
-  // 499 clean messages cache-hit while one dirty leaf recomputes).
+  // 脏化后的首次写入会清掉脏化之前的过期条目。
+  // _cGen < _generation 表示条目来自上一轮 calculateLayout；
+  // 若 wasDirty，则子树自那时起已发生变化 → 旧尺寸失效。
+  // 干净节点的旧条目则会保留 —— 同一子树 + 相同输入 → 相同结果，
+  // 所以跨代缓存仍然有效（这正是滚动热路径：499 条干净消息全部命中缓存，
+  // 仅有 1 个脏叶节点需要重新计算）。
   if (wasDirty && node._cGen !== _generation) {
     node._cN = 0
     node._cWr = 0
   }
-  // LRU write index wraps; _cN stays at CACHE_SLOTS so the read scan always
-  // checks all populated slots (not just those since last wrap).
+  // LRU 写索引会回绕；_cN 保持在 CACHE_SLOTS，使得读取扫描始终会检查所有
+  // 已填充的槽位（而不只是回绕之后写入的那些）。
   const i = node._cWr++ % CACHE_SLOTS
   if (node._cN < CACHE_SLOTS) {
     node._cN = node._cWr
@@ -1056,14 +1054,13 @@ function cacheWrite(
   node._cGen = _generation
 }
 
-// Store computed layout.width/height into the single-slot cache output fields.
-// _hasL/_hasM inputs are committed at the TOP of layoutNode (before compute);
-// outputs must be committed HERE (after compute) so a cache hit can restore
-// the correct dimensions. Without this, a _hasL hit returns whatever
-// layout.width/height was left by the last call — which may be the intrinsic
-// content height from a heightMode=Undefined measure pass rather than the
-// constrained viewport height from the layout pass. That's the scrollbox
-// vpH=33→2624 bug: scrollTop clamps to 0, viewport goes blank.
+// 将计算得到的 layout.width/height 写入单槽缓存的输出字段。
+// _hasL/_hasM 输入是在 layoutNode 顶部（计算之前）提交的；
+// 输出则必须在此处（计算之后）提交，这样缓存命中时才能还原出正确的尺寸。
+// 否则 _hasL 命中会返回上一次调用残留的 layout.width/height ——
+// 那可能是 heightMode=Undefined 测量 pass 得到的内在内容高度，
+// 而不是布局 pass 中受约束的视口高度。这就是 scrollbox
+// vpH=33→2624 bug 的成因：scrollTop 被截断到 0，视口变成空白。
 function commitCacheOutputs(node: Node, performLayout: boolean): void {
   if (performLayout) {
     node._lOutW = node.layout.width
@@ -1075,12 +1072,12 @@ function commitCacheOutputs(node: Node, performLayout: boolean): void {
 }
 
 // --
-// Core flexbox algorithm
+// 核心 flexbox 算法
 
-// Profiling counters — reset per calculateLayout, read via getYogaCounters.
-// Incremented on each calculateLayout(). Nodes stamp _fbGen/_cGen when
-// their cache is written; a cache entry with gen === _generation was
-// computed THIS pass and is fresh regardless of isDirty_ state.
+// 性能计数器：每次 calculateLayout 时重置，通过 getYogaCounters 读取。
+// 每次调用 calculateLayout() 时自增。节点在写入缓存时会盖上 _fbGen/_cGen 戳；
+// 当缓存条目的 gen === _generation 时，说明它是本轮 pass 计算出来的，
+// 不论 isDirty_ 状态如何都视为新鲜。
 let _generation = 0
 let _yogaNodesVisited = 0
 let _yogaMeasureCalls = 0
@@ -1109,8 +1106,8 @@ function layoutNode(
   ownerWidth: number,
   ownerHeight: number,
   performLayout: boolean,
-  // When true, ignore style dimension on this axis — the flex container
-  // has already determined the main size (flex-basis + grow/shrink result).
+  // 为 true 时忽略该轴上的样式尺寸 —— flex 容器已经确定了主轴尺寸
+  //（flex-basis + grow/shrink 的结果）。
   forceWidth = false,
   forceHeight = false,
 ): void {
@@ -1118,16 +1115,14 @@ function layoutNode(
   const style = node.style
   const layout = node.layout
 
-  // Dirty-flag skip: clean subtree + matching inputs → layout object already
-  // holds the answer. A cached layout result also satisfies a measure request
-  // (positions are a superset of dimensions); the reverse does not hold.
-  // Same-generation entries are fresh regardless of isDirty_ — they were
-  // computed THIS calculateLayout, the subtree hasn't changed since.
-  // Previous-generation entries need !isDirty_ (a dirty node's cache from
-  // before the dirty is stale).
-  // sameGen bypass only for MEASURE calls — a layout-pass cache hit would
-  // skip the child-positioning recursion (STEP 5), leaving children at
-  // stale positions. Measure calls only need w/h which the cache stores.
+  // 脏标志跳过：干净子树 + 匹配的输入 → layout 对象中已经持有答案。
+  // 缓存的布局结果也能满足测量请求（位置信息是尺寸信息的超集）；反之则不行。
+  // 同代条目无论 isDirty_ 状态如何都是新鲜的 —— 它们就是本轮 calculateLayout
+  // 计算出来的，子树之后未发生变化。
+  // 跨代条目则需要 !isDirty_（脏节点在脏化之前的缓存已经过期）。
+  // sameGen 旁路仅用于 MEASURE 调用 —— 在布局 pass 上跳过会绕开子节点定位
+  // 的递归（STEP 5），导致子节点停留在过期位置。测量调用只需要 w/h，
+  // 而这正是缓存中保存的内容。
   const sameGen = node._cGen === _generation && !performLayout
   if (!node.isDirty_ || sameGen) {
     if (
@@ -1147,15 +1142,14 @@ function layoutNode(
       layout.height = node._lOutH
       return
     }
-    // Multi-entry cache: scan for matching inputs, restore cached w/h on hit.
-    // Covers the scroll case where a dirty ancestor's measure→layout cascade
-    // produces N>1 distinct input combos per clean child — the single _hasL
-    // slot thrashed, forcing full subtree recursion. With 500-message
-    // scrollbox and one dirty leaf, this took dirty-leaf relayout from
-    // 76k layoutNode calls (21.7×nodes) to 4k (1.2×nodes), 6.86ms → 550µs.
-    // Same-generation check covers fresh-mounted (dirty) nodes during
-    // virtual scroll — the dirty chain invokes them ≥2^depth times, first
-    // call writes cache, rest hit: 105k visits → ~10k for 1593-node tree.
+    // 多槽缓存：扫描匹配的输入，命中时还原缓存的 w/h。
+    // 覆盖如下场景：脏祖先的 measure→layout 级联会让每个干净子节点产生 N>1 种
+    // 不同的输入组合 —— 单一 _hasL 槽不停地被覆盖，迫使整棵子树重新递归。
+    // 在 500 条消息的 scrollbox + 1 个脏叶节点的场景下，脏叶重布局从
+    // 76k 次 layoutNode 调用（21.7×节点数）降到 4k 次（1.2×节点数），
+    // 6.86ms → 550µs。
+    // 同代检查覆盖虚拟滚动中新挂载的（脏）节点 —— 脏链路会调用它们
+    // ≥2^depth 次，首次写缓存，其余命中：1593 节点的树 105k 访问 → 约 10k。
     if (node._cN > 0 && (sameGen || !node.isDirty_)) {
       const cIn = node._cIn!
       for (let i = 0; i < node._cN; i++) {
@@ -1194,14 +1188,13 @@ function layoutNode(
       return
     }
   }
-  // Commit cache inputs up front so every return path leaves a valid entry.
-  // Only clear isDirty_ on the LAYOUT pass — the measure pass (computeFlexBasis
-  // → layoutNode(performLayout=false)) runs before the layout pass in the same
-  // calculateLayout call. Clearing dirty during measure lets the subsequent
-  // layout pass hit the STALE _hasL cache from the previous calculateLayout
-  // (before children were inserted), so ScrollBox content height never grows
-  // and sticky-scroll never follows new content. A dirty node's _hasL entry is
-  // stale by definition — invalidate it so the layout pass recomputes.
+  // 提前提交缓存输入，使得每条返回路径都留下有效条目。
+  // 仅在布局 pass 上清掉 isDirty_ —— 测量 pass（computeFlexBasis →
+  // layoutNode(performLayout=false)）会在同一次 calculateLayout 调用中先于布局
+  // pass 运行。如果在测量期间清掉 dirty，后续布局 pass 会命中上一轮
+  // calculateLayout（子节点插入之前）留下的过期 _hasL 缓存，
+  // 使得 ScrollBox 内容高度永远不增长、sticky-scroll 永远跟不上新内容。
+  // 脏节点的 _hasL 条目按定义就是过期的 —— 必须将它失效，让布局 pass 重新计算。
   const wasDirty = node.isDirty_
   if (performLayout) {
     node._lW = availableWidth
@@ -1214,12 +1207,10 @@ function layoutNode(
     node._lFH = forceHeight
     node._hasL = true
     node.isDirty_ = false
-    // Previous approach cleared _cN here to prevent stale pre-dirty entries
-    // from hitting (long-continuous blank-screen bug). Now replaced by
-    // generation stamping: the cache check requires sameGen || !isDirty_, so
-    // previous-generation entries from a dirty node can't hit. Clearing here
-    // would wipe fresh same-generation entries from an earlier measure call,
-    // forcing recompute on the layout call.
+    // 早期做法是在此处清掉 _cN，防止脏化之前的过期条目命中（长时间持续黑屏 bug）。
+    // 现已改用「代戳」方案：缓存检查要求 sameGen || !isDirty_，
+    // 因此脏节点的跨代条目无法命中。若仍在此处清空，会顺带清掉前一次
+    // 测量调用刚写入的同代新鲜条目，导致布局调用又得重算一遍。
     if (wasDirty) {
       node._hasM = false
     }
@@ -1231,22 +1222,21 @@ function layoutNode(
     node._mOW = ownerWidth
     node._mOH = ownerHeight
     node._hasM = true
-    // Don't clear isDirty_. For DIRTY nodes, invalidate _hasL so the upcoming
-    // performLayout=true call recomputes with the new child set (otherwise
-    // sticky-scroll never follows new content — the bug from 4557bc9f9c).
-    // Clean nodes keep _hasL: their layout from the previous generation is
-    // still valid, they're only here because an ancestor is dirty and called
-    // with different inputs than cached.
+    // 不清空 isDirty_。对脏节点，要将 _hasL 失效，使后续 performLayout=true 的
+    // 调用基于新的子节点集合重新计算（否则 sticky-scroll 永远跟不上新内容 ——
+    // 即提交 4557bc9f9c 修复的 bug）。
+    // 干净节点则保留 _hasL：它们上一代的布局结果仍然有效，之所以走到这里，
+    // 只是因为某个祖先变脏并以与缓存不同的输入再次调用。
     if (wasDirty) {
       node._hasL = false
     }
   }
 
-  // Resolve padding/border/margin against ownerWidth (yoga uses ownerWidth for %)
-  // Write directly into the pre-allocated layout arrays — avoids 3 allocs per
-  // layoutNode call and 12 resolveEdge calls (was the #1 hotspot per CPU profile).
-  // Skip entirely when no edges are set — the 4-write zero is cheaper than
-  // the ~20 reads + ~15 compares resolveEdges4Into does to produce zeros.
+  // 用 ownerWidth 解析 padding/border/margin（yoga 用 ownerWidth 解析百分比）。
+  // 直接写入预分配的 layout 数组 —— 避免每次 layoutNode 调用 3 次分配和 12 次
+  // resolveEdge 调用（CPU 火焰图中曾经的头号热点）。
+  // 当没有任何 edge 被设置时整体跳过 —— 写 4 个零比 resolveEdges4Into
+  // 产生 0 时所做的约 20 次读取 + 15 次比较要便宜。
   const pad = layout.padding
   const bor = layout.border
   const mar = layout.margin
@@ -1269,11 +1259,11 @@ function layoutNode(
   const paddingBorderWidth = pad[0] + pad[2] + bor[0] + bor[2]
   const paddingBorderHeight = pad[1] + pad[3] + bor[1] + bor[3]
 
-  // Resolve style dimensions
+  // 解析样式尺寸
   const styleWidth = forceWidth ? NaN : resolveValue(style.width, ownerWidth)
   const styleHeight = forceHeight ? NaN : resolveValue(style.height, ownerHeight)
 
-  // If style dimension is defined, it overrides the available size
+  // 若样式尺寸已定义，则覆盖可用尺寸
   let width = availableWidth
   let height = availableHeight
   let wMode = widthMode
@@ -1287,11 +1277,11 @@ function layoutNode(
     hMode = MeasureMode.Exactly
   }
 
-  // Apply min/max constraints to the node's own dimensions
+  // 对节点自身尺寸应用 min/max 约束
   width = boundAxis(style, true, width, ownerWidth, ownerHeight)
   height = boundAxis(style, false, height, ownerWidth, ownerHeight)
 
-  // Measure-func leaf node
+  // 带 measure-func 的叶节点
   if (node.measureFunc && node.children.length === 0) {
     const innerW = wMode === MeasureMode.Undefined ? NaN : Math.max(0, width - paddingBorderWidth)
     const innerH = hMode === MeasureMode.Undefined ? NaN : Math.max(0, height - paddingBorderHeight)
@@ -1318,11 +1308,11 @@ function layoutNode(
             ownerHeight,
           )
     commitCacheOutputs(node, performLayout)
-    // Write cache even for dirty nodes — fresh-mounted items during virtual
-    // scroll are dirty on first layout, but the dirty chain's measure→layout
-    // cascade invokes them ≥2^depth times per calculateLayout. Writing here
-    // lets the 2nd+ calls hit cache (isDirty_ was cleared in the layout pass
-    // above). Measured: 105k visits → 10k for a 1593-node fresh-mount tree.
+    // 即使是脏节点也写入缓存 —— 虚拟滚动中新挂载的项目在首次布局时是脏的，
+    // 但脏链路的 measure→layout 级联会在每次 calculateLayout 中调用它们
+    // ≥2^depth 次。在此写入可以让第 2 次及之后的调用命中缓存（isDirty_
+    // 已经在上面的布局 pass 中被清掉）。实测：1593 节点新挂载树
+    // 105k 访问 → 10k。
     cacheWrite(
       node,
       availableWidth,
@@ -1338,7 +1328,7 @@ function layoutNode(
     return
   }
 
-  // Leaf node with no children and no measure func
+  // 既无子节点也无 measure-func 的叶节点
   if (node.children.length === 0) {
     node.layout.width =
       wMode === MeasureMode.Exactly
@@ -1349,11 +1339,11 @@ function layoutNode(
         ? height
         : boundAxis(style, false, paddingBorderHeight, ownerWidth, ownerHeight)
     commitCacheOutputs(node, performLayout)
-    // Write cache even for dirty nodes — fresh-mounted items during virtual
-    // scroll are dirty on first layout, but the dirty chain's measure→layout
-    // cascade invokes them ≥2^depth times per calculateLayout. Writing here
-    // lets the 2nd+ calls hit cache (isDirty_ was cleared in the layout pass
-    // above). Measured: 105k visits → 10k for a 1593-node fresh-mount tree.
+    // 即使是脏节点也写入缓存 —— 虚拟滚动中新挂载的项目在首次布局时是脏的，
+    // 但脏链路的 measure→layout 级联会在每次 calculateLayout 中调用它们
+    // ≥2^depth 次。在此写入可以让第 2 次及之后的调用命中缓存（isDirty_
+    // 已经在上面的布局 pass 中被清掉）。实测：1593 节点新挂载树
+    // 105k 访问 → 10k。
     cacheWrite(
       node,
       availableWidth,
@@ -1369,7 +1359,7 @@ function layoutNode(
     return
   }
 
-  // Container with children — run flexbox algorithm
+  // 带子节点的容器：运行 flexbox 算法
   const mainAxis = style.flexDirection
   const crossAx = crossAxis(mainAxis)
   const isMainRow = isRow(mainAxis)
@@ -1384,28 +1374,28 @@ function layoutNode(
   const innerMainSize = isDefined(mainSize) ? Math.max(0, mainSize - mainPadBorder) : NaN
   const innerCrossSize = isDefined(crossSize) ? Math.max(0, crossSize - crossPadBorder) : NaN
 
-  // Resolve gap
+  // 解析 gap
   const gapMain = resolveGap(style, isMainRow ? Gutter.Column : Gutter.Row, innerMainSize)
 
-  // Partition children into flow vs absolute. display:contents nodes are
-  // transparent — their children are lifted into the grandparent's child list
-  // (recursively), and the contents node itself gets zero layout.
+  // 将子节点分为 flow 与 absolute 两类。display:contents 节点是透明的 ——
+  // 它们的子节点会被上提到祖父节点的子列表中（递归进行），
+  // 而 contents 节点自身则得到零布局。
   const flowChildren: Node[] = []
   const absChildren: Node[] = []
   collectLayoutChildren(node, flowChildren, absChildren)
 
-  // ownerW/H are the reference sizes for resolving children's percentage
-  // values. Per CSS, a % width resolves against the parent's content-box
-  // width. If this node's width is indefinite, children's % widths are also
-  // indefinite — do NOT fall through to the grandparent's size.
+  // ownerW/H 是用于解析子节点百分比值的参考尺寸。
+  // 按 CSS 规范，% width 相对父节点的 content-box 宽度解析。
+  // 若本节点宽度不确定，子节点的 % 宽度也是不确定的 ——
+  // 不要回退到祖父节点的尺寸。
   const ownerW = isDefined(width) ? width : NaN
   const ownerH = isDefined(height) ? height : NaN
   const isWrap = style.flexWrap !== Wrap.NoWrap
   const gapCross = resolveGap(style, isMainRow ? Gutter.Row : Gutter.Column, innerCrossSize)
 
-  // STEP 1: Compute flex-basis for each flow child and break into lines.
-  // Single-line (NoWrap) containers always get one line; multi-line containers
-  // break when accumulated basis+margin+gap exceeds innerMainSize.
+  // STEP 1：为每个 flow 子节点计算 flex-basis 并切分成行。
+  // 单行（NoWrap）容器始终只有一行；多行容器在累计 basis+margin+gap
+  // 超过 innerMainSize 时另起一行。
   for (const c of flowChildren) {
     c._flexBasis = computeFlexBasis(
       c,
@@ -1424,8 +1414,8 @@ function layoutNode(
     }
     lines.push(flowChildren)
   } else {
-    // Line-break decisions use the min/max-clamped basis (flexbox spec §9.3.5:
-    // "hypothetical main size"), not the raw flex-basis.
+    // 换行判定使用经 min/max 截断后的 basis（flexbox 规范 §9.3.5:
+    // "hypothetical main size"），而不是原始的 flex-basis。
     let lineStart = 0
     let lineLen = 0
     for (let i = 0; i < flowChildren.length; i++) {
@@ -1447,12 +1437,12 @@ function layoutNode(
   const lineCount = lines.length
   const isBaseline = isBaselineLayout(node, flowChildren)
 
-  // STEP 2+3: For each line, resolve flexible lengths and lay out children to
-  // measure cross sizes. Track per-line consumed main and max cross.
+  // STEP 2+3：对每一行，解析弹性长度并布局子节点以测量交叉轴尺寸。
+  // 跟踪每行消耗的主轴长度与最大交叉轴尺寸。
   const lineConsumedMain: number[] = new Array(lineCount)
   const lineCrossSizes: number[] = new Array(lineCount)
-  // Baseline layout tracks max ascent (baseline + leading margin) per line so
-  // baseline-aligned items can be positioned at maxAscent - childBaseline.
+  // 基线布局会按行跟踪 maxAscent（baseline + 前导 margin），
+  // 使基线对齐的项目可以被定位到 maxAscent - childBaseline。
   const lineMaxAscent: number[] = isBaseline ? new Array(lineCount).fill(0) : []
   let maxLineMain = 0
   let totalLinesCross = 0
@@ -1463,8 +1453,8 @@ function layoutNode(
     for (const c of line) {
       lineBasis += c._flexBasis + childMarginForAxis(c, mainAxis, ownerW)
     }
-    // Resolve flexible lengths against available inner main. For indefinite
-    // containers with min/max, flex against the clamped size.
+    // 用可用的内部主轴尺寸解析弹性长度。对于不确定且带 min/max 的容器，
+    // 则按截断后的尺寸进行 flex 计算。
     let availMain = innerMainSize
     if (!isDefined(availMain)) {
       const mainOwner = isMainRow ? ownerWidth : ownerHeight
@@ -1478,7 +1468,7 @@ function layoutNode(
     }
     resolveFlexibleLengths(line, availMain, lineBasis, isMainRow, ownerW, ownerH)
 
-    // Lay out each child in this line to measure cross
+    // 对本行每个子节点进行布局以测量交叉轴
     let lineCross = 0
     for (const c of line) {
       const cStyle = c.style
@@ -1495,10 +1485,10 @@ function layoutNode(
       const hasCrossAutoMargin =
         c._hasAutoMargin &&
         (isMarginAuto(cStyle.margin, crossLeadE) || isMarginAuto(cStyle.margin, crossTrailE))
-      // Single-line stretch goes directly to the container cross size.
-      // Multi-line wrap measures intrinsic cross (Undefined mode) so
-      // flex-grow grandchildren don't expand to the container — the line
-      // cross size is determined first, then items are re-stretched.
+      // 单行 stretch 直接拉伸到容器的交叉轴尺寸。
+      // 多行 wrap 则以 Undefined 模式测量内在交叉轴尺寸，
+      // 这样 flex-grow 的孙节点不会扩张到整个容器 ——
+      // 先确定行的交叉轴尺寸，再对项目重新进行 stretch。
       if (isDefined(resolvedCrossStyle)) {
         childCrossSize = resolvedCrossStyle
         childCrossMode = MeasureMode.Exactly
@@ -1532,8 +1522,8 @@ function layoutNode(
       c._crossSize = isMainRow ? c.layout.height : c.layout.width
       lineCross = Math.max(lineCross, c._crossSize + cMarginCross)
     }
-    // Baseline layout: line cross size must fit maxAscent + maxDescent of
-    // baseline-aligned children (yoga STEP 8). Only applies to row direction.
+    // 基线布局：行的交叉轴尺寸必须能容纳基线对齐子节点的 maxAscent + maxDescent
+    //（yoga STEP 8）。仅在 row 方向适用。
     if (isBaseline) {
       let maxAscent = 0
       let maxDescent = 0
@@ -1557,9 +1547,9 @@ function layoutNode(
         lineCross = maxAscent + maxDescent
       }
     }
-    // layoutNode(c) at line ~1117 above already resolved c.layout.margin[] via
-    // resolveEdges4Into with the same ownerW — read directly instead of
-    // re-resolving through childMarginForAxis → 2× resolveEdge.
+    // 上方 ~1117 行的 layoutNode(c) 已经用相同的 ownerW 通过 resolveEdges4Into
+    // 解析了 c.layout.margin[] —— 直接读取，避免再走 childMarginForAxis →
+    // 2× resolveEdge 重新解析。
     const mainLead = leadingEdge(mainAxis)
     const mainTrail = trailingEdge(mainAxis)
     let consumed = lineGap
@@ -1575,12 +1565,12 @@ function layoutNode(
   const totalCrossGap = lineCount > 1 ? gapCross * (lineCount - 1) : 0
   totalLinesCross += totalCrossGap
 
-  // STEP 4: Determine container dimensions. Per yoga's STEP 9, for both
-  // AtMost (FitContent) and Undefined (MaxContent) the node sizes to its
-  // content — AtMost is NOT a hard clamp, items may overflow the available
-  // space (CSS "fit-content" behavior). Only Scroll overflow clamps to the
-  // available size. Wrap containers that broke into multiple lines under
-  // AtMost fill the available main size since they wrapped at that boundary.
+  // STEP 4：确定容器尺寸。按 yoga 的 STEP 9，对 AtMost（FitContent）和
+  // Undefined（MaxContent）两种模式，节点都按内容自适应大小 ——
+  // AtMost 不是硬截断，项目可能溢出可用空间（CSS "fit-content" 行为）。
+  // 只有 Scroll 类型的 overflow 才会截断到可用尺寸。
+  // 在 AtMost 下断成多行的 wrap 容器会填满可用主轴尺寸，
+  // 因为它们就是在那个边界处换行的。
   const isScroll = style.overflow === Overflow.Scroll
   const contentMain = maxLineMain + mainPadBorder
   const finalMainSize =
@@ -1613,7 +1603,7 @@ function layoutNode(
     ownerHeight,
   )
   commitCacheOutputs(node, performLayout)
-  // Write cache even for dirty nodes — fresh-mounted items during virtual scroll
+  // 即使是脏节点也写入缓存 —— 虚拟滚动中新挂载的项目
   cacheWrite(
     node,
     availableWidth,
@@ -1631,8 +1621,8 @@ function layoutNode(
     return
   }
 
-  // STEP 5: Position lines (align-content) and children (justify-content +
-  // align-items + auto margins).
+  // STEP 5：定位行（align-content）和子节点（justify-content +
+  // align-items + auto margins）。
   const actualInnerMain = (isMainRow ? node.layout.width : node.layout.height) - mainPadBorder
   const actualInnerCross = (isMainRow ? node.layout.height : node.layout.width) - crossPadBorder
   const mainLeadEdgePhys = leadingEdge(mainAxis)
@@ -1643,9 +1633,8 @@ function layoutNode(
   const mainContainerSize = isMainRow ? node.layout.width : node.layout.height
   const crossLead = pad[crossLeadEdgePhys]! + bor[crossLeadEdgePhys]!
 
-  // Align-content: distribute free cross space among lines. Single-line
-  // containers use the full cross size for the one line (align-items handles
-  // positioning within it).
+  // Align-content：在各行间分配剩余的交叉轴空间。
+  // 单行容器把全部交叉轴尺寸用于唯一的那一行（行内定位由 align-items 处理）。
   let lineCrossOffset = crossLead
   let betweenLines = gapCross
   const freeCross = actualInnerCross - totalLinesCross
@@ -1692,8 +1681,8 @@ function layoutNode(
     }
   }
 
-  // For wrap-reverse, lines stack from the trailing cross edge. Walk lines in
-  // order but flip the cross position within the container.
+  // 对 wrap-reverse，行从交叉轴的尾部边开始堆叠。
+  // 仍按顺序遍历行，但在容器内翻转交叉轴位置。
   const wrapReverse = style.flexWrap === Wrap.WrapReverse
   const crossContainerSize = isMainRow ? node.layout.height : node.layout.width
   let lineCrossPos = lineCrossOffset
@@ -1703,11 +1692,10 @@ function layoutNode(
     const consumedMain = lineConsumedMain[li]!
     const n = line.length
 
-    // Re-stretch children whose cross is auto and align is stretch, now that
-    // the line cross size is known. Needed for multi-line wrap (line cross
-    // wasn't known during initial measure) AND single-line when the container
-    // cross was not Exactly (initial stretch at ~line 1250 was skipped because
-    // innerCrossSize wasn't defined — the container sized to max child cross).
+    // 既然行的交叉轴尺寸已知，对那些交叉轴为 auto 且 align 为 stretch 的子节点
+    // 重新拉伸。多行 wrap 需要这样做（初次测量时行交叉轴尺寸尚未知）；
+    // 单行情况下当容器交叉轴非 Exactly 时也需要（~1250 行处的首次 stretch
+    // 因 innerCrossSize 未定义而被跳过 —— 容器是按子节点交叉轴最大值定的尺寸）。
     if (isWrap || crossMode !== MeasureMode.Exactly) {
       for (const c of line) {
         const cStyle = c.style
@@ -1743,7 +1731,7 @@ function layoutNode(
       }
     }
 
-    // Justify-content + auto margins for this line
+    // 本行的 justify-content + auto margins
     let mainOffset = pad[mainLeadEdgePhys]! + bor[mainLeadEdgePhys]!
     let betweenMain = gapMain
     let numAutoMarginsMain = 0
@@ -1799,11 +1787,11 @@ function layoutNode(
     let pos = mainOffset
     for (const c of line) {
       const cMargin = c.style.margin
-      // c.layout.margin[] was populated by resolveEdges4Into inside the
-      // layoutNode(c) call above (same ownerW). Read resolved values directly
-      // instead of re-running the edge fallback chain 4× via resolveEdge.
-      // Auto margins resolve to 0 in layout.margin, so autoMarginMainSize
-      // substitution still uses the isMarginAuto check against style.
+      // c.layout.margin[] 已由上方 layoutNode(c) 调用内部的 resolveEdges4Into
+      // 用相同 ownerW 填好。直接读取已解析的值，无需再通过 resolveEdge
+      // 走 4 次边回退链。
+      // auto margin 在 layout.margin 中解析为 0，所以 autoMarginMainSize
+      // 替换仍然以 style 上的 isMarginAuto 判断为准。
       const cLayoutMargin = c.layout.margin
       let autoMainLead = false
       let autoMainTrail = false
@@ -1823,7 +1811,7 @@ function layoutNode(
         mCrossLead = autoCrossLead ? 0 : cLayoutMargin[crossLeadEdgePhys]!
         mCrossTrail = autoCrossTrail ? 0 : cLayoutMargin[crossTrailEdgePhys]!
       } else {
-        // Fast path: no auto margins — read resolved values directly.
+        // 快路径：无 auto margin —— 直接读取已解析的值。
         mMainLead = cLayoutMargin[mainLeadEdgePhys]!
         mMainTrail = cLayoutMargin[mainTrailEdgePhys]!
         mCrossLead = cLayoutMargin[crossLeadEdgePhys]!
@@ -1842,7 +1830,7 @@ function layoutNode(
       } else if (autoCrossLead) {
         crossPos += Math.max(0, crossFree)
       } else if (autoCrossTrail) {
-        // stays at leading
+        // 保持在前缘
       } else {
         switch (childAlign) {
           case Align.FlexStart:
@@ -1860,9 +1848,9 @@ function layoutNode(
             }
             break
           case Align.Baseline:
-            // Row direction only (isBaselineLayout checked this). Position so
-            // the child's baseline aligns with the line's max ascent. Per
-            // yoga: top = currentLead + maxAscent - childBaseline + leadingPosition.
+            // 仅 row 方向（isBaselineLayout 已校验）。让子节点基线与行最大
+            // ascent 对齐。按 yoga：top = currentLead + maxAscent -
+            // childBaseline + leadingPosition。
             if (isBaseline) {
               crossPos = effectiveLineCrossPos + lineMaxAscent[li]! - calculateBaseline(c)
             }
@@ -1872,8 +1860,8 @@ function layoutNode(
         }
       }
 
-      // Relative position offsets. Fast path: no position insets set →
-      // skip 4× resolveEdgeRaw + 4× resolveValue + 4× isDefined.
+      // 相对位置偏移。快路径：未设置 position insets → 跳过
+      // 4× resolveEdgeRaw + 4× resolveValue + 4× isDefined。
       let relX = 0
       let relY = 0
       if (c._hasPosition) {
@@ -1897,7 +1885,7 @@ function layoutNode(
     lineCrossPos += lineCross + betweenLines
   }
 
-  // STEP 6: Absolute-positioned children
+  // STEP 6：绝对定位子节点
   for (const c of absChildren) {
     layoutAbsoluteChild(node, c, node.layout.width, node.layout.height, pad, bor)
   }
@@ -1922,14 +1910,14 @@ function layoutAbsoluteChild(
   const rTop = resolveValue(posTop, parentHeight)
   const rBottom = resolveValue(posBottom, parentHeight)
 
-  // Absolute children's percentage dimensions resolve against the containing
-  // block's padding-box (parent size minus border), per CSS §10.1.
+  // 绝对定位子节点的百分比尺寸按 CSS §10.1 相对包含块的 padding-box
+  //（父尺寸减去 border）解析。
   const paddingBoxW = parentWidth - bor[0] - bor[2]
   const paddingBoxH = parentHeight - bor[1] - bor[3]
   let cw = resolveValue(cs.width, paddingBoxW)
   let ch = resolveValue(cs.height, paddingBoxH)
 
-  // If both left+right defined and width not, derive width
+  // 若同时定义 left+right 且未定义 width，则推导出 width
   if (!isDefined(cw) && isDefined(rLeft) && isDefined(rRight)) {
     cw = paddingBoxW - rLeft - rRight
   }
@@ -1948,7 +1936,7 @@ function layoutAbsoluteChild(
     true,
   )
 
-  // Margin of absolute child (applied in addition to insets)
+  // 绝对定位子节点的 margin（在 insets 之外额外应用）
   const mL = resolveEdge(cs.margin, EDGE_LEFT, parentWidth)
   const mT = resolveEdge(cs.margin, EDGE_TOP, parentWidth)
   const mR = resolveEdge(cs.margin, EDGE_RIGHT, parentWidth)
@@ -1958,17 +1946,17 @@ function layoutAbsoluteChild(
   const reversed = isReverse(mainAxis)
   const mainRow = isRow(mainAxis)
   const wrapReverse = parent.style.flexWrap === Wrap.WrapReverse
-  // alignSelf overrides alignItems for absolute children (same as flow items)
+  // 对绝对定位子节点，alignSelf 覆盖 alignItems（与 flow 项目相同）
   const alignment = cs.alignSelf === Align.Auto ? parent.style.alignItems : cs.alignSelf
 
-  // Position
+  // 位置
   let left: number
   if (isDefined(rLeft)) {
     left = bor[0] + rLeft + mL
   } else if (isDefined(rRight)) {
     left = parentWidth - bor[2] - rRight - child.layout.width - mR
   } else if (mainRow) {
-    // Main axis — justify-content, flipped for reversed
+    // 主轴 —— justify-content，reverse 时翻转
     const lead = pad[0] + bor[0]
     const trail = parentWidth - pad[2] - bor[2]
     left = reversed
@@ -2034,9 +2022,9 @@ function alignAbsolute(
   childSize: number,
   wrapReverse: boolean,
 ): number {
-  // Wrap-reverse flips the cross axis: flex-start/stretch go to trailing,
-  // flex-end goes to leading (yoga's absoluteLayoutChild flips the align value
-  // when the containing block has wrap-reverse).
+  // wrap-reverse 翻转交叉轴：flex-start/stretch 移到尾缘，
+  // flex-end 移到前缘（yoga 的 absoluteLayoutChild 在包含块为 wrap-reverse 时
+  // 会翻转 align 取值）。
   switch (align) {
     case Align.Center:
       return leadEdge + (trailEdge - leadEdge - childSize) / 2
@@ -2056,14 +2044,13 @@ function computeFlexBasis(
   ownerWidth: number,
   ownerHeight: number,
 ): number {
-  // Same-generation cache hit: basis was computed THIS calculateLayout, so
-  // it's fresh regardless of isDirty_. Covers both clean children (scrolling
-  // past unchanged messages) AND fresh-mounted dirty children (virtual
-  // scroll mounts new items — the dirty chain's measure→layout cascade
-  // invokes this ≥2^depth times, but the child's subtree doesn't change
-  // between calls within one calculateLayout). For clean children with
-  // cache from a PREVIOUS generation, also hit if inputs match — isDirty_
-  // gates since a dirty child's previous-gen cache is stale.
+  // 同代缓存命中：basis 是本轮 calculateLayout 计算的，
+  // 所以无论 isDirty_ 状态如何都视为新鲜。这覆盖两类情况：干净子节点
+  //（滚过未变化的消息），以及虚拟滚动中新挂载的脏子节点 —— 脏链路的
+  // measure→layout 级联会调用本函数 ≥2^depth 次，但子节点的子树在同一次
+  // calculateLayout 内的多次调用之间并不会变化）。
+  // 对来自上一代缓存的干净子节点，若输入也匹配则同样命中 —— isDirty_
+  // 起到门控作用，因为脏子节点的上代缓存已经过期。
   const sameGen = child._fbGen === _generation
   if (
     (sameGen || !child.isDirty_) &&
@@ -2078,7 +2065,7 @@ function computeFlexBasis(
   const cs = child.style
   const isMainRow = isRow(mainAxis)
 
-  // Explicit flex-basis
+  // 显式 flex-basis
   const basis = resolveValue(cs.flexBasis, availableMain)
   if (isDefined(basis)) {
     const b = Math.max(0, basis)
@@ -2092,7 +2079,7 @@ function computeFlexBasis(
     return b
   }
 
-  // Style dimension on main axis
+  // 主轴上的样式尺寸
   const mainStyleDim = isMainRow ? cs.width : cs.height
   const mainOwner = isMainRow ? ownerWidth : ownerHeight
   const resolved = resolveValue(mainStyleDim, mainOwner)
@@ -2108,7 +2095,7 @@ function computeFlexBasis(
     return b
   }
 
-  // Need to measure the child to get its natural size
+  // 需要测量子节点以获取它的自然尺寸
   const crossStyleDim = isMainRow ? cs.height : cs.width
   const crossOwner = isMainRow ? ownerHeight : ownerWidth
   let crossConstraint = resolveValue(crossStyleDim, crossOwner)
@@ -2123,21 +2110,20 @@ function computeFlexBasis(
         : MeasureMode.AtMost
   }
 
-  // Upstream yoga (YGNodeComputeFlexBasisForChild) passes the available inner
-  // width with mode AtMost when the subtree will call a measure-func — so text
-  // nodes don't report unconstrained intrinsic width as flex-basis, which
-  // would force siblings to shrink and the text to wrap at the wrong width.
-  // Passing Undefined here made Ink's <Text> inside <Box flexGrow={1}> get
-  // width = intrinsic instead of available, dropping chars at wrap boundaries.
+  // 上游 yoga（YGNodeComputeFlexBasisForChild）在子树会调用 measure-func 时
+  // 以 AtMost 模式传入可用内部宽度 —— 这样文本节点不会把不受约束的内在宽度
+  // 报告为 flex-basis，否则会迫使兄弟节点收缩、文本在错误的宽度处换行。
+  // 此处若改为传 Undefined，会让 Ink 的 <Text>（位于 <Box flexGrow={1}> 内）
+  // 取到 width = 内在宽度而非可用宽度，导致换行边界处丢字。
   //
-  // Two constraints on when this applies:
-  //   - Width only. Height is never constrained during basis measurement —
-  //     column containers must measure children at natural height so
-  //     scrollable content can overflow (constraining height clips ScrollBox).
-  //   - Subtree has a measure-func. Pure layout subtrees (no measure-func)
-  //     with flex-grow children would grow into the AtMost constraint,
-  //     inflating the basis (breaks YGMinMaxDimensionTest flex_grow_in_at_most
-  //     where a flexGrow:1 child should stay at basis 0, not grow to 100).
+  // 何时应用该逻辑有两条约束：
+  //   - 仅适用于宽度。高度在 basis 测量时不会被约束 ——
+  //     column 容器必须以自然高度测量子节点，可滚动内容才能溢出
+  //（约束高度会裁掉 ScrollBox）。
+  //   - 子树必须含 measure-func。纯布局子树（无 measure-func）
+  //     若有 flex-grow 子节点，会在 AtMost 约束下扩张，撑大 basis
+  //（破坏 YGMinMaxDimensionTest 的 flex_grow_in_at_most 用例：
+  //     flexGrow:1 的子节点本应保持 basis 0，而不是涨到 100）。
   let mainConstraint = NaN
   let mainConstraintMode: MeasureMode = MeasureMode.Undefined
   if (isMainRow && isDefined(availableMain) && hasMeasureFuncInSubtree(child)) {
@@ -2182,13 +2168,13 @@ function resolveFlexibleLengths(
   ownerW: number,
   ownerH: number,
 ): void {
-  // Multi-pass flex distribution per CSS flexbox spec §9.7 "Resolving Flexible
-  // Lengths": distribute free space, detect min/max violations, freeze all
-  // violators, redistribute among unfrozen children. Repeat until stable.
+  // 按 CSS flexbox 规范 §9.7 "Resolving Flexible Lengths" 进行多趟弹性长度分配：
+  // 分配剩余空间、检测 min/max 违规、冻结所有违规者、在未冻结子节点间
+  // 重新分配，重复直至稳定。
   const n = children.length
   const frozen: boolean[] = new Array(n).fill(false)
   const initialFree = isDefined(availableInnerMain) ? availableInnerMain - totalFlexBasis : 0
-  // Freeze inflexible items at their clamped basis
+  // 把不可伸缩的项目按截断后的 basis 冻结
   for (let i = 0; i < n; i++) {
     const c = children[i]!
     const clamped = boundAxis(c.style, isMainRow, c._flexBasis, ownerW, ownerH)
@@ -2202,9 +2188,8 @@ function resolveFlexibleLengths(
       c._mainSize = c._flexBasis
     }
   }
-  // Iteratively distribute until no violations. Free space is recomputed each
-  // pass: initial free space minus the delta frozen children consumed beyond
-  // (or below) their basis.
+  // 迭代分配，直到没有违规。每趟都会重新计算剩余空间：
+  // 初始剩余空间减去已冻结子节点相对于其 basis 的偏差总和。
   const unclamped: number[] = new Array(n)
   for (let iter = 0; iter <= n; iter++) {
     let frozenDelta = 0
@@ -2225,8 +2210,8 @@ function resolveFlexibleLengths(
       break
     }
     let remaining = initialFree - frozenDelta
-    // Spec §9.7 step 4c: if sum of flex factors < 1, only distribute
-    // initialFree × sum, not the full remaining space (partial flex).
+    // 规范 §9.7 step 4c：若 flex factor 之和 < 1，则只分配
+    // initialFree × sum，而非全部剩余空间（部分 flex）。
     if (remaining > 0 && totalGrow > 0 && totalGrow < 1) {
       const scaled = initialFree * totalGrow
       if (scaled < remaining) {
@@ -2246,7 +2231,7 @@ function resolveFlexibleLengths(
         }
       }
     }
-    // Compute targets + violations for all unfrozen children
+    // 为所有未冻结子节点计算目标值 + 违规量
     let totalViolation = 0
     for (let i = 0; i < n; i++) {
       if (frozen[i]) {
@@ -2264,8 +2249,8 @@ function resolveFlexibleLengths(
       c._mainSize = clamped
       totalViolation += clamped - t
     }
-    // Freeze per spec §9.7 step 5: if totalViolation is zero freeze all; if
-    // positive freeze min-violators; if negative freeze max-violators.
+    // 按规范 §9.7 step 5 冻结：若 totalViolation 为零则全部冻结；
+    // 为正则冻结 min 违规者；为负则冻结 max 违规者。
     if (totalViolation === 0) {
       break
     }
@@ -2299,10 +2284,10 @@ function resolveChildAlign(parent: Node, child: Node): Align {
   return child.style.alignSelf === Align.Auto ? parent.style.alignItems : child.style.alignSelf
 }
 
-// Baseline of a node per CSS Flexbox §8.5 / yoga's YGBaseline. Leaf nodes
-// (no children) use their own height. Containers recurse into the first
-// baseline-aligned child on the first line (or the first flow child if none
-// are baseline-aligned), returning that child's baseline + its top offset.
+// 节点的基线，按 CSS Flexbox §8.5 / yoga 的 YGBaseline 定义。
+// 叶节点（无子节点）使用自身高度。容器则递归进入首行中第一个基线对齐的
+// 子节点（若都不是基线对齐，则取首个 flow 子节点），返回该子节点的基线 +
+// 其 top 偏移。
 function calculateBaseline(node: Node): number {
   let baselineChild: Node | null = null
   for (const c of node.children) {
@@ -2329,8 +2314,8 @@ function calculateBaseline(node: Node): number {
   return calculateBaseline(baselineChild) + baselineChild.layout.top
 }
 
-// A container uses baseline layout only for row direction, when either
-// align-items is baseline or any flow child has align-self: baseline.
+// 容器仅在 row 方向、且 align-items 为 baseline 或任一 flow 子节点的
+// align-self 为 baseline 时，使用基线布局。
 function isBaselineLayout(node: Node, flowChildren: Node[]): boolean {
   if (!isRow(node.style.flexDirection)) {
     return false
@@ -2375,16 +2360,15 @@ function boundAxis(
   const maxV = isWidth ? style.maxWidth : style.maxHeight
   const minU = minV.unit
   const maxU = maxV.unit
-  // Fast path: no min/max constraints set. Per CPU profile this is the
-  // overwhelmingly common case (~32k calls/layout on the 1000-node bench,
-  // nearly all with undefined min/max) — skipping 2× resolveValue + 2× isNaN
-  // that always no-op. Unit.Undefined = 0.
+  // 快路径：未设置 min/max 约束。按 CPU 火焰图，这是绝对主要的情况
+  //（1000 节点基准下每次布局约 32k 次调用，几乎都没有 min/max）——
+  // 跳过总是空操作的 2× resolveValue + 2× isNaN。Unit.Undefined = 0。
   if (minU === 0 && maxU === 0) {
     return value
   }
   const owner = isWidth ? ownerWidth : ownerHeight
   let v = value
-  // Inlined resolveValue: Unit.Point=1, Unit.Percent=2. `m === m` is !isNaN.
+  // 内联 resolveValue：Unit.Point=1，Unit.Percent=2。`m === m` 等价于 !isNaN。
   if (maxU === 1) {
     if (v > maxV.value) {
       v = maxV.value
@@ -2414,13 +2398,12 @@ function zeroLayoutRecursive(node: Node): void {
     c.layout.top = 0
     c.layout.width = 0
     c.layout.height = 0
-    // Invalidate layout cache — without this, unhide → calculateLayout finds
-    // the child clean (!isDirty_) with _hasL intact, hits the cache at line
-    // ~1086, restores stale _lOutW/_lOutH, and returns early — skipping the
-    // child-positioning recursion. Grandchildren stay at (0,0,0,0) from the
-    // zeroing above and render invisible. isDirty_=true also gates _cN and
-    // _fbBasis via their (sameGen || !isDirty_) checks — _cGen/_fbGen freeze
-    // during hide so sameGen is false on unhide.
+    // 使布局缓存失效 —— 否则隐藏后再 calculateLayout 时，子节点会被认为
+    // 是干净的（!isDirty_）且 _hasL 完好，命中 ~1086 行的缓存，
+    // 还原过期的 _lOutW/_lOutH 并提前返回 —— 跳过子节点定位的递归。
+    // 孙节点会因为上面的清零保持在 (0,0,0,0) 而无法渲染。
+    // isDirty_=true 还会通过 (sameGen || !isDirty_) 检查门控 _cN 与 _fbBasis ——
+    // 由于隐藏期间 _cGen/_fbGen 被冻结，所以取消隐藏时 sameGen 为 false。
     c.isDirty_ = true
     c._hasL = false
     c._hasM = false
@@ -2429,10 +2412,10 @@ function zeroLayoutRecursive(node: Node): void {
 }
 
 function collectLayoutChildren(node: Node, flow: Node[], abs: Node[]): void {
-  // Partition a node's children into flow and absolute lists, flattening
-  // display:contents subtrees so their children are laid out as direct
-  // children of this node (per CSS display:contents spec — the box is removed
-  // from the layout tree but its children remain, lifted to the grandparent).
+  // 把节点的子节点分为 flow 与 absolute 两类，并把 display:contents 子树扁平化，
+  // 使其子节点像本节点的直接子节点一样参与布局
+  //（按 CSS display:contents 规范 —— 盒子从布局树中移除，但其子节点保留并
+  // 上提到祖父节点）。
   for (const c of node.children) {
     const disp = c.style.display
     if (disp === Display.None) {
@@ -2446,8 +2429,8 @@ function collectLayoutChildren(node: Node, flow: Node[], abs: Node[]): void {
       c.layout.top = 0
       c.layout.width = 0
       c.layout.height = 0
-      // Recurse — nested display:contents lifts all the way up. The contents
-      // node's own margin/padding/position/dimensions are ignored.
+      // 递归 —— 嵌套的 display:contents 会一路向上提。contents 节点自身的
+      // margin/padding/position/尺寸都会被忽略。
       collectLayoutChildren(c, flow, abs)
     } else if (c.style.positionType === PositionType.Absolute) {
       abs.push(c)
@@ -2470,17 +2453,16 @@ function roundLayout(node: Node, scale: number, absLeft: number, absTop: number)
   const absNodeLeft = absLeft + nodeLeft
   const absNodeTop = absTop + nodeTop
 
-  // Upstream YGRoundValueToPixelGrid: text nodes (has measureFunc) floor their
-  // positions so wrapped text never starts past its allocated column. Width
-  // uses ceil-if-fractional to avoid clipping the last glyph. Non-text nodes
-  // use standard round. Matches yoga's PixelGrid.cpp — without this, justify
-  // center/space-evenly positions are off-by-one vs WASM and flex-shrink
-  // overflow places siblings at the wrong column.
+  // 上游 YGRoundValueToPixelGrid：文本节点（含 measureFunc）的位置向下取整，
+  // 使换行后的文本永远不会越过分配给它的列起点。宽度则在出现小数时向上取整，
+  // 避免裁掉最后一个字形。非文本节点用标准 round。
+  // 行为对齐 yoga 的 PixelGrid.cpp —— 否则 justify 的 center/space-evenly
+  // 位置与 WASM 相比会差 1 像素，flex-shrink 溢出时兄弟节点会放到错误的列。
   const isText = node.measureFunc !== null
   l.left = roundValue(nodeLeft, scale, false, isText)
   l.top = roundValue(nodeTop, scale, false, isText)
 
-  // Width/height rounded via absolute edges to avoid cumulative drift
+  // 通过绝对边来对宽高取整，避免累计漂移
   const absRight = absNodeLeft + nodeWidth
   const absBottom = absNodeTop + nodeHeight
   const hasFracW = !isWholeNumber(nodeWidth * scale)
@@ -2508,7 +2490,7 @@ function roundValue(v: number, scale: number, forceCeil: boolean, forceFloor: bo
   if (frac < 0) {
     frac += 1
   }
-  // Float-epsilon tolerance matches upstream YGDoubleEqual (1e-4)
+  // 浮点 epsilon 容差与上游 YGDoubleEqual 一致（1e-4）
   if (frac < 0.0001) {
     scaled = Math.floor(scaled)
   } else if (frac > 0.9999) {
@@ -2518,14 +2500,14 @@ function roundValue(v: number, scale: number, forceCeil: boolean, forceFloor: bo
   } else if (forceFloor) {
     scaled = Math.floor(scaled)
   } else {
-    // Round half-up (>= 0.5 goes up), per upstream
+    // half-up 取整（>= 0.5 进位），与上游一致
     scaled = Math.floor(scaled) + (frac >= 0.4999 ? 1 : 0)
   }
   return scaled / scale
 }
 
 // --
-// Helpers
+// 辅助函数
 
 function parseDimension(v: number | string | undefined): Value {
   if (v === undefined) {
@@ -2535,10 +2517,10 @@ function parseDimension(v: number | string | undefined): Value {
     return AUTO_VALUE
   }
   if (typeof v === 'number') {
-    // WASM yoga's YGFloatIsUndefined treats NaN and ±Infinity as undefined.
-    // Ink passes height={Infinity} (e.g. LogSelector maxHeight default) and
-    // expects it to mean "unconstrained" — storing it as a literal point value
-    // makes the node height Infinity and breaks all downstream layout.
+    // WASM 版 yoga 的 YGFloatIsUndefined 把 NaN 与 ±Infinity 都视作 undefined。
+    // Ink 会传入 height={Infinity}（例如 LogSelector 的 maxHeight 默认值），
+    // 期望它表示 "无约束" —— 若按字面 point 值存储，节点高度会变成 Infinity，
+    // 进而破坏后续所有布局。
     return Number.isFinite(v) ? pointValue(v) : UNDEFINED_VALUE
   }
   if (typeof v === 'string' && v.endsWith('%')) {
@@ -2566,7 +2548,7 @@ function physicalEdge(edge: Edge): number {
 }
 
 // --
-// Module API matching yoga-layout/load
+// 与 yoga-layout/load 对齐的模块 API
 
 export type Yoga = {
   Config: {

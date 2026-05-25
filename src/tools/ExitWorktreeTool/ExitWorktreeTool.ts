@@ -22,7 +22,7 @@ import {
   keepWorktree,
   killTmuxSession,
 } from '../../utils/worktree.js'
-import { clearMemoryFileCaches } from '../../utils/zymd.js'
+import { clearMemoryFileCaches } from '../../utils/agentsMd.js'
 import { EXIT_WORKTREE_TOOL_NAME } from './constants.js'
 import { getExitWorktreeToolPrompt } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'

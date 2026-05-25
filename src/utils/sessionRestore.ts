@@ -56,7 +56,7 @@ import type { TodoList } from 'src/services/todo/types.js'
 import { TodoListSchema } from 'src/services/todo/types.js'
 import type { ContentReplacementRecord } from './toolResultStorage.js'
 import { getCurrentWorktreeSession, restoreWorktreeSession } from './worktree.js'
-import { clearMemoryFileCaches } from './zymd.js'
+import { clearMemoryFileCaches } from './agentsMd.js'
 
 type ResumeResult = {
   messages?: Message[]
@@ -170,7 +170,7 @@ export function computeRestoredAttributionState(
 
 /**
  * 为 session 恢复计算独立 agent 上下文（名称/颜色）。
- * 用于在渲染前计算初始状态（遵循 CLAUDE.md 规范）。
+ * 用于在渲染前计算初始状态（遵循 AGENTS.md 规范）。
  * 当 session 未设置名称/颜色时返回 undefined。
  */
 export function computeStandaloneAgentContext(
@@ -492,7 +492,7 @@ export async function processResumedConversation(
     saveMode(context.modeApi?.isCoordinatorMode() ? 'coordinator' : 'normal')
   }
 
-  // 在渲染前计算初始状态（遵循 CLAUDE.md 规范）
+  // 在渲染前计算初始状态（遵循 AGENTS.md 规范）
   const restoredAttribution = opts.includeAttribution
     ? computeRestoredAttributionState(result)
     : undefined

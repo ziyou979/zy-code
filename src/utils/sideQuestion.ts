@@ -110,7 +110,7 @@ ${question}`
  *
  * 旧代码使用 `.find(m => m.type === 'assistant')` 获取第一条（仅含 thinking）消息，
  * 找不到 text block 就返回 null，导致 "No response received"。
- * 上下文较大的仓库（含大量 skills 或大型 CLAUDE.md）更频繁触发 thinking，
+ * 上下文较大的仓库（含大量 skills 或大型 AGENTS.md）更频繁触发 thinking，
  * 这就是为什么该问题在 monorepo 中复现而在此处不复现。
  *
  * 其他导致 "No response received" 的失败模式：

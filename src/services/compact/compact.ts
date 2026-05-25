@@ -1591,7 +1591,7 @@ function shouldExcludeFromPostCompactRestore(filename: string, agentId?: AgentId
   }
 
   // 排除所有类型的 zy.md 文件
-  // TODO: Refactor to use isMemoryFilePath() from zymd.ts for consistency
+  // TODO: Refactor to use isMemoryFilePath() from agentsMd.ts for consistency
   // and to also match child directory memory files (.zy/rules/*.md, etc.)
   try {
     const normalizedMemoryPaths = new Set(

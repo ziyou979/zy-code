@@ -322,8 +322,8 @@ export const FileWriteTool = buildTool({
       limit: undefined,
     })
 
-    // Log when writing to ZY.md
-    if (fullFilePath.endsWith(`${sep}ZY.md`)) {
+    // Log when writing to AGENTS.md
+    if (fullFilePath.endsWith(`${sep}AGENTS.md`)) {
       logEvent('zy_write_ZYmd', {})
     }
 

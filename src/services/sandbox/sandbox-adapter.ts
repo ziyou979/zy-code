@@ -25,7 +25,7 @@ import {
 } from '@anthropic-ai/sandbox-runtime'
 import { memoize } from 'lodash-es'
 import {
-  getAdditionalDirectoriesForzyMd,
+  getAdditionalDirectoriesForAgentsMd,
   getCwdState,
   getOriginalCwd,
 } from '../../bootstrap/state.js'
@@ -271,7 +271,7 @@ export function convertToSandboxRuntimeConfig(settings: SettingsJson): SandboxRu
   // Two sources: persisted in settings, and session-only in bootstrap state.
   const additionalDirs = new Set([
     ...(settings.permissions?.additionalDirectories || []),
-    ...getAdditionalDirectoriesForzyMd(),
+    ...getAdditionalDirectoriesForAgentsMd(),
   ])
   allowWrite.push(...additionalDirs)
 

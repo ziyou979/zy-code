@@ -1,6 +1,6 @@
 import * as platformPath from 'node:path'
 import chokidar, { type FSWatcher } from 'chokidar'
-import { getAdditionalDirectoriesForzyMd } from '../../bootstrap/state.js'
+import { getAdditionalDirectoriesForAgentsMd } from '../../bootstrap/state.js'
 import { clearCommandMemoizationCaches, clearCommandsCache } from '../../commands.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -220,7 +220,7 @@ async function getWatchablePaths(): Promise<string[]> {
   }
 
   // Additional directories (--add-dir) skills
-  for (const dir of getAdditionalDirectoriesForzyMd()) {
+  for (const dir of getAdditionalDirectoriesForAgentsMd()) {
     const additionalSkillsPath = platformPath.join(dir, '.zy', 'skills')
     try {
       await fs.stat(additionalSkillsPath)

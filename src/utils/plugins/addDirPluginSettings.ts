@@ -8,7 +8,7 @@
 
 import { join } from 'node:path'
 import type { z } from 'zod/v4'
-import { getAdditionalDirectoriesForzyMd } from '../../bootstrap/state.js'
+import { getAdditionalDirectoriesForAgentsMd } from '../../bootstrap/state.js'
 import { parseSettingsFile } from '../settings/settings.js'
 import type { ExtraKnownMarketplaceSchema, SettingsJson } from '../settings/types.js'
 
@@ -28,7 +28,7 @@ const SETTINGS_FILES = ['settings.json', 'settings.local.json'] as const
  */
 export function getAddDirEnabledPlugins(): NonNullable<SettingsJson['enabledPlugins']> {
   const result: NonNullable<SettingsJson['enabledPlugins']> = {}
-  for (const dir of getAdditionalDirectoriesForzyMd()) {
+  for (const dir of getAdditionalDirectoriesForAgentsMd()) {
     for (const file of SETTINGS_FILES) {
       const { settings } = parseSettingsFile(join(dir, '.zy', file))
       if (!settings?.enabledPlugins) {
@@ -48,7 +48,7 @@ export function getAddDirEnabledPlugins(): NonNullable<SettingsJson['enabledPlug
  */
 export function getAddDirExtraMarketplaces(): Record<string, ExtraKnownMarketplace> {
   const result: Record<string, ExtraKnownMarketplace> = {}
-  for (const dir of getAdditionalDirectoriesForzyMd()) {
+  for (const dir of getAdditionalDirectoriesForAgentsMd()) {
     for (const file of SETTINGS_FILES) {
       const { settings } = parseSettingsFile(join(dir, '.zy', file))
       if (!settings?.extraKnownMarketplaces) {

@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import memoize from 'lodash-es/memoize.js'
-import { getAdditionalDirectoriesForzyMd, setCachedZyMdContent } from './bootstrap/state.js'
+import { getAdditionalDirectoriesForAgentsMd, setCachedAgentsMdContent } from './bootstrap/state.js'
 import { getLocalISODate } from './constants/common.js'
 import { logForDiagnosticsNoPII } from './utils/diagLogs.js'
 import { isBareMode, isEnvTruthy } from './utils/envUtils.js'
@@ -8,7 +8,7 @@ import { execFileNoThrow } from './utils/execFileNoThrow.js'
 import { getBranch, getDefaultBranch, getIsGit, gitExe } from './utils/git.js'
 import { shouldIncludeGitInstructions } from './utils/gitSettings.js'
 import { logError } from './utils/log.js'
-import { filterInjectedMemoryFiles, getMemoryFiles, getzyMds } from './utils/zymd.js'
+import { filterInjectedMemoryFiles, getMemoryFiles, getAgentsMds } from './utils/agentsMd.js'
 
 const MAX_STATUS_CHARS = 2000
 
@@ -102,11 +102,8 @@ export const getGitStatus = memoize(async (): Promise<string | null> => {
 /**
  * This context is prepended to each conversation, and cached for the duration of the conversation.
  */
-export let getSystemContext
-getSystemContext = memoize(
-  async (): Promise<{
-    [k: string]: string
-  }> => {
+export let getSystemContext = memoize(
+  async (): Promise<{ [k: string]: string }> => {
     const startTime = Date.now()
     logForDiagnosticsNoPII('info', 'system_context_started')
 
@@ -139,38 +136,35 @@ getSystemContext = memoize(
 /**
  * This context is prepended to each conversation, and cached for the duration of the conversation.
  */
-export let getUserContext
-getUserContext = memoize(
-  async (): Promise<{
-    [k: string]: string
-  }> => {
+export let getUserContext = memoize(
+  async (): Promise<{ [k: string]: string }> => {
     const startTime = Date.now()
     logForDiagnosticsNoPII('info', 'user_context_started')
 
     // ZY_CODE_DISABLE_CLAUDE_MDS: hard off, always.
     // --bare: skip auto-discovery (cwd walk), BUT honor explicit --add-dir.
     // --bare means "skip what I didn't ask for", not "ignore what I asked for".
-    const shouldDisablezyMd =
+    const shouldDisableAgentsMd =
       isEnvTruthy(process.env.ZY_CODE_DISABLE_CLAUDE_MDS) ||
-      (isBareMode() && getAdditionalDirectoriesForzyMd().length === 0)
+      (isBareMode() && getAdditionalDirectoriesForAgentsMd().length === 0)
     // Await the async I/O (readFile/readdir directory walk) so the event
     // loop yields naturally at the first fs.readFile.
-    const zyMd = shouldDisablezyMd
+    const agentsMd = shouldDisableAgentsMd
       ? null
-      : getzyMds(filterInjectedMemoryFiles(await getMemoryFiles()))
+      : getAgentsMds(filterInjectedMemoryFiles(await getMemoryFiles()))
     // Cache for the auto-mode classifier (yoloClassifier.ts reads this
-    // instead of importing zymd.ts directly, which would create a
+    // instead of importing agentsMd.ts directly, which would create a
     // cycle through permissions/filesystem → permissions → yoloClassifier).
-    setCachedZyMdContent(zyMd || null)
+    setCachedAgentsMdContent(agentsMd || null)
 
     logForDiagnosticsNoPII('info', 'user_context_completed', {
       duration_ms: Date.now() - startTime,
-      Zymd_length: zyMd?.length ?? 0,
-      Zymd_disabled: Boolean(shouldDisablezyMd),
+      agentsMd_length: agentsMd?.length ?? 0,
+      agentsMd_disabled: Boolean(shouldDisableAgentsMd),
     })
 
     return {
-      ...(zyMd && { zyMd }),
+      ...(agentsMd && { agentsMd }),
       currentDate: `Today's date is ${getLocalISODate()}.`,
     }
   },

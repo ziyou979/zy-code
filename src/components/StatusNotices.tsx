@@ -4,7 +4,7 @@ import { Box } from '../ink.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import { getGlobalConfig } from '../utils/config.js'
 import { getActiveNotices } from '../utils/statusNoticeDefinitions.js'
-import { getMemoryFiles } from '../utils/zymd.js'
+import { getMemoryFiles } from '../utils/agentsMd.js'
 
 type Props = {
   agentDefinitions?: AgentDefinitionsResult

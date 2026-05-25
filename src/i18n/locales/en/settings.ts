@@ -68,7 +68,7 @@ export const enSettings: TranslationResource = {
   'settings.enableWithStableChannel': 'Enable with stable channel',
   'settings.errorTitle': 'Settings Error',
   'settings.exitAndFix': 'Exit and fix manually',
-  'settings.externalClaudeMdIncludes': 'External ZY.md includes',
+  'settings.externalClaudeMdIncludes': 'External AGENTS.md includes',
   'settings.filesSkippedWarning':
     'Files with errors are skipped entirely, not just the invalid settings.',
   'settings.languageLabel': 'Language',

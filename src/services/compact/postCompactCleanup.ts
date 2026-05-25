@@ -6,7 +6,7 @@ import { clearSpeculativeChecks } from '../../tools/BashTool/bashPermissions.js'
 import { clearClassifierApprovals } from '../../utils/classifierApprovals.js'
 import { clearSessionMessagesCache } from '../../utils/sessionStorage.js'
 import { clearBetaTracingState } from '../../services/telemetry/betaSessionTracing.js'
-import { resetGetMemoryFilesCache } from '../../utils/zymd.js'
+import { resetGetMemoryFilesCache } from '../../utils/agentsMd.js'
 import { resetMicrocompactState } from './microCompact.js'
 
 /**
@@ -45,7 +45,7 @@ export function runPostCompactCleanup(querySource?: QuerySource): void {
     }
   }
   if (isMainThreadCompact) {
-    // getUserContext 是包装 getzyMds() → getMemoryFiles() 的 memoized 外层。
+    // getUserContext 是包装 getAgentsMds() → getMemoryFiles() 的 memoized 外层。
     // 如果只清除内层的 getMemoryFiles 缓存，下次点击会命中
     // getUserContext 缓存而永远不会到达 getMemoryFiles()，因此已武装的
     // InstructionsLoaded 钩子永远不会触发。

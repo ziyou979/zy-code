@@ -44,7 +44,7 @@ export const zhCommands: TranslationResource = {
   'commands.help': '显示帮助和可用命令',
   'commands.hooks': '查看工具事件的钩子配置',
   'commands.ide': '管理 IDE 集成并显示状态',
-  'commands.init': '初始化 ZY.md 文件和可选的技能/钩子',
+  'commands.init': '初始化 AGENTS.md 文件和可选的技能/钩子',
   'commands.initVerifiers': '创建用于自动验证代码更改的验证器技能',
   'commands.insights': '生成分析你的 ZY Code 会话的报告',
   'commands.installGitHubApp': '为仓库设置 Zy GitHub Actions',

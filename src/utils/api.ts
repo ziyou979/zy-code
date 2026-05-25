@@ -408,10 +408,10 @@ export async function logContextMetrics(
   ])
   // 提取各个上下文的大小并计算总量
   const gitStatusSize = systemContext.gitStatus?.length ?? 0
-  const zyMdSize = userContext.zyMd?.length ?? 0
+  const agentsMdSize = userContext.agentsMd?.length ?? 0
 
   // 计算上下文总大小
-  const totalContextSize = gitStatusSize + zyMdSize
+  const totalContextSize = gitStatusSize + agentsMdSize
 
   // 使用 ripgrep 获取文件数量（为隐私考虑取最近的 10 的幂次）
   const currentDir = getCwd()
@@ -463,7 +463,7 @@ export async function logContextMetrics(
 
   logEvent('zy_context_size', {
     git_status_size: gitStatusSize,
-    zy_md_size: zyMdSize,
+    agents_md_size: agentsMdSize,
     total_context_size: totalContextSize,
     project_file_count_rounded: fileCount,
     mcp_tools_count: mcpToolsCount,

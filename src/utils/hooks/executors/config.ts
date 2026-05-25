@@ -127,15 +127,15 @@ export function hasInstructionsLoadedHook(): boolean {
 }
 
 /**
- * Execute InstructionsLoaded hooks when an instruction file (CLAUDE.md or
+ * Execute InstructionsLoaded hooks when an instruction file (AGENTS.md or
  * .zy/rules/*.md) is loaded into context. Fire-and-forget — this hook is
  * for observability/audit only and does not support blocking.
  *
  * Dispatch sites:
- * - Eager load at session start (getMemoryFiles in zymd.ts)
+ * - Eager load at session start (getMemoryFiles in agentsMd.ts)
  * - Eager reload after compaction (getMemoryFiles cache cleared by
  *   runPostCompactCleanup; next call reports load_reason: 'compact')
- * - Lazy load when Zy touches a file that triggers nested CLAUDE.md or
+ * - Lazy load when Zy touches a file that triggers nested AGENTS.md or
  *   conditional rules with paths: frontmatter (memoryFilesToAttachments in
  *   attachments.ts)
  */

@@ -113,14 +113,14 @@ type State = {
   // 最后一次 API 请求，用于 bug 报告
   lastAPIRequest: Omit<CreateParams, 'messages'> | null
   // 最后一次 API 请求的消息（仅 ant；引用而非克隆）。
-  // 捕获压缩后、CLAUDE.md 注入后发送给 API 的完整消息集，
+  // 捕获压缩后、AGENTS.md 注入后发送给 API 的完整消息集，
   // 以便 /share 的 serialized_conversation.json 反映真实情况。
   lastAPIRequestMessages: CreateParams['messages'] | null
   // 最后一次自动模式分类器请求，用于 /share 转录
   lastClassifierRequests: unknown[] | null
-  // 由 context.ts 缓存的 ZY.md 内容，供自动模式分类器使用。
-  // 打破 yoloClassifier → zymd → 文件系统 → 权限的循环依赖。
-  cachedZyMdContent: string | null
+  // 由 context.ts 缓存的 AGENTS.md 内容，供自动模式分类器使用。
+  // 打破 yoloClassifier → agentsMd → 文件系统 → 权限的循环依赖。
+  cachedAgentsMdContent: string | null
   // 近期错误的内存日志
   inMemoryErrorLog: Array<{ error: string; timestamp: string }>
   // 来自 --plugin-dir 标志的会话级插件
@@ -203,8 +203,8 @@ type State = {
   systemPromptSectionCache: Map<string, string | null>
   // 向模型发出的最后日期（用于检测午夜日期变化）
   lastEmittedDate: string | null
-  // 来自 --add-dir 标志的额外目录（用于加载 CLAUDE.md）
-  additionalDirectoriesForzyMd: string[]
+  // 来自 --add-dir 标志的额外目录（用于加载 AGENTS.md）
+  additionalDirectoriesForAgentsMd: string[]
   // 来自 --channels 标志的频道服务器允许列表（其频道
   // 通知应注册此会话的服务器）。在 main.tsx 中解析一次 —
   // 标签决定信任模型：'plugin' → 市场验证 + 允许列表，
@@ -334,7 +334,7 @@ function getInitialState(): State {
     lastAPIRequestMessages: null,
     // 最后一次自动模式分类器请求，用于 /share 转录
     lastClassifierRequests: null,
-    cachedZyMdContent: null,
+    cachedAgentsMdContent: null,
     // 近期错误的内存日志
     inMemoryErrorLog: [],
     // 来自 --plugin-dir 标志的会话级插件
@@ -389,8 +389,8 @@ function getInitialState(): State {
     systemPromptSectionCache: new Map(),
     // Last date emitted to the model
     lastEmittedDate: null,
-    // 来自 --add-dir 标志的额外目录（用于加载 CLAUDE.md）
-    additionalDirectoriesForzyMd: [],
+    // 来自 --add-dir 标志的额外目录（用于加载 AGENTS.md）
+    additionalDirectoriesForAgentsMd: [],
     // Channel server allowlist from --channels flag
     allowedChannels: [],
     hasDevChannels: false,
@@ -1159,12 +1159,12 @@ export function getLastClassifierRequests(): unknown[] | null {
   return STATE.lastClassifierRequests
 }
 
-export function setCachedZyMdContent(content: string | null): void {
-  STATE.cachedZyMdContent = content
+export function setCachedAgentsMdContent(content: string | null): void {
+  STATE.cachedAgentsMdContent = content
 }
 
-export function getCachedZyMdContent(): string | null {
-  return STATE.cachedZyMdContent
+export function getCachedAgentsMdContent(): string | null {
+  return STATE.cachedAgentsMdContent
 }
 
 export function addToInMemoryErrorLog(errorInfo: { error: string; timestamp: string }): void {
@@ -1602,12 +1602,12 @@ export function setLastEmittedDate(date: string | null): void {
   STATE.lastEmittedDate = date
 }
 
-export function getAdditionalDirectoriesForzyMd(): string[] {
-  return STATE.additionalDirectoriesForzyMd
+export function getAdditionalDirectoriesForAgentsMd(): string[] {
+  return STATE.additionalDirectoriesForAgentsMd
 }
 
-export function setAdditionalDirectoriesForzyMd(directories: string[]): void {
-  STATE.additionalDirectoriesForzyMd = directories
+export function setAdditionalDirectoriesForAgentsMd(directories: string[]): void {
+  STATE.additionalDirectoriesForAgentsMd = directories
 }
 
 export function getAllowedChannels(): ChannelEntry[] {

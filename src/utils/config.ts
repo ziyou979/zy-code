@@ -112,8 +112,8 @@ export type ProjectConfig = {
 
   hasCompletedProjectOnboarding?: boolean
   projectOnboardingSeenCount: number
-  haszyMdExternalIncludesApproved?: boolean
-  haszyMdExternalIncludesWarningShown?: boolean
+  hasAgentsMdExternalIncludesApproved?: boolean
+  hasAgentsMdExternalIncludesWarningShown?: boolean
   // MCP 服务器审批字段 — 已迁移到 settings，保留以兼容旧版本
   enabledMcpjsonServers?: string[]
   disabledMcpjsonServers?: string[]
@@ -143,8 +143,8 @@ const DEFAULT_PROJECT_CONFIG: ProjectConfig = {
   disabledMcpjsonServers: [],
   hasTrustDialogAccepted: false,
   projectOnboardingSeenCount: 0,
-  haszyMdExternalIncludesApproved: false,
-  haszyMdExternalIncludesWarningShown: false,
+  hasAgentsMdExternalIncludesApproved: false,
+  hasAgentsMdExternalIncludesWarningShown: false,
 }
 
 export type InstallMethod = 'local' | 'native' | 'global' | 'unknown'
@@ -1645,13 +1645,13 @@ export function getMemoryPath(memoryType: MemoryType): string {
 
   switch (memoryType) {
     case 'User':
-      return join(getZyConfigHomeDir(), 'CLAUDE.md')
+      return join(getZyConfigHomeDir(), 'AGENTS.md')
     case 'Local':
       return join(cwd, 'CLAUDE.local.md')
     case 'Project':
-      return join(cwd, 'CLAUDE.md')
+      return join(cwd, 'AGENTS.md')
     case 'Managed':
-      return join(getManagedFilePath(), 'CLAUDE.md')
+      return join(getManagedFilePath(), 'AGENTS.md')
     case 'AutoMem':
       return getAutoMemEntrypoint()
   }

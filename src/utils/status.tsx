@@ -30,7 +30,7 @@ import {
   getSettingsForSource,
 } from './settings/settings.js'
 import type { ThemeName } from './theme.js'
-import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './zymd.js'
+import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './agentsMd.js'
 export type Property = {
   label?: string
   value: React.ReactNode | Array<string>

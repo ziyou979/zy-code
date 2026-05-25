@@ -31,7 +31,7 @@ function readConfig(): ChicagoConfig {
 
 // Max/Pro only for external rollout. Ant bypass so dogfooding continues
 // regardless of subscription tier — not all ants are max/pro, and per
-// CLAUDE.md:281, USER_TYPE !== 'zy-super' branches get zero antfooding.
+// AGENTS.md:281, USER_TYPE !== 'zy-super' branches get zero antfooding.
 // No subscription context for external users, so always false.
 function hasRequiredSubscription(): boolean {
   if (isInternalBuild()) {

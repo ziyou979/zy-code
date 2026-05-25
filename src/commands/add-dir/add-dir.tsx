@@ -2,8 +2,8 @@ import chalk from 'chalk'
 import figures from 'figures'
 import React, { useEffect } from 'react'
 import {
-  getAdditionalDirectoriesForzyMd,
-  setAdditionalDirectoriesForzyMd,
+  getAdditionalDirectoriesForAgentsMd,
+  setAdditionalDirectoriesForAgentsMd,
 } from '../../bootstrap/state.js'
 import type { LocalJSXCommandContext } from '../../commands.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
@@ -70,9 +70,9 @@ export async function call(
     // Bootstrap state is the source of truth for session-only dirs; persisted
     // dirs are picked up via the settings subscription, but we refresh
     // eagerly here to avoid a race when the user acts immediately.
-    const currentDirs = getAdditionalDirectoriesForzyMd()
+    const currentDirs = getAdditionalDirectoriesForAgentsMd()
     if (!currentDirs.includes(path)) {
-      setAdditionalDirectoriesForzyMd([...currentDirs, path])
+      setAdditionalDirectoriesForAgentsMd([...currentDirs, path])
     }
     SandboxManager.refreshConfig()
     let message: string

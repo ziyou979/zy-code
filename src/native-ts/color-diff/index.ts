@@ -1,35 +1,34 @@
 /**
- * Pure TypeScript port of vendor/color-diff-src.
+ * vendor/color-diff-src 的纯 TypeScript 移植。
  *
- * The Rust version uses syntect+bat for syntax highlighting and the similar
- * crate for word diffing. This port uses highlight.js (already a dep via
- * cli-highlight) and the diff npm package's diffArrays.
+ * Rust 版本使用 syntect+bat 进行语法高亮，并使用 similar crate
+ * 进行单词级别 diff。本移植使用 highlight.js（已通过
+ * cli-highlight 引入为依赖）与 diff npm 包的 diffArrays。
  *
- * API matches vendor/color-diff-src/index.d.ts exactly so callers don't change.
+ * API 与 vendor/color-diff-src/index.d.ts 完全一致，调用方无需修改。
  *
- * Key semantic differences from the native module:
- * - Syntax highlighting uses highlight.js. Scope colors were measured from
- *   syntect's output so most tokens match, but hljs's grammar has gaps:
- *   plain identifiers and operators like `=` `:` aren't scoped, so they
- *   render in default fg instead of white/pink. Output structure (line
- *   numbers, markers, backgrounds, word-diff) is identical.
- * - BAT_THEME env support is a stub: highlight.js has no bat theme set, so
- *   getSyntaxTheme always returns the default for the given Zy theme.
+ * 与原生模块的关键语义差异：
+ * - 语法高亮使用 highlight.js。Scope 颜色是从 syntect 输出中采样获得的，
+ *   因此大多数 token 匹配，但 hljs 语法有缺失：普通标识符以及 `=` `:`
+ *   等运算符未被划入 scope，所以会以默认 fg 而非白色 / 粉色渲染。
+ *   输出结构（行号、标记、背景、word-diff）与原生一致。
+ * - BAT_THEME 环境变量仅作为占位：highlight.js 没有 bat 主题集，
+ *   所以 getSyntaxTheme 总是返回给定 Zy 主题下的默认值。
  */
 
 import { basename, extname } from 'node:path'
 import { diffArrays } from 'diff'
 import type * as hljsNamespace from 'highlight.js'
 
-// Lazy: defers loading highlight.js until first render. The full bundle
-// registers 190+ language grammars at require time (~50MB, 100-200ms on
-// macOS, several× that on Windows). With a top-level import, any caller
-// chunk that reaches this module — including test/preload.ts via
-// StructuredDiff.tsx → colorDiff.ts — pays that cost at module-eval time
-// and carries the heap for the rest of the process. On Windows CI this
-// pushed later tests in the same shard into GC-pause territory and a
-// beforeEach/afterEach hook timeout (officialRegistry.test.ts, PR #24150).
-// Same lazy pattern the NAPI wrapper used for dlopen.
+// 延迟加载：推迟到首次渲染时才加载 highlight.js。完整 bundle 会在
+// require 时注册 190+ 语言语法（~50MB，macOS 上 100–200ms，Windows
+// 上可能是几倍）。如果顶层 import，任何走到本模块的调用者 chunk
+// （包括经由 StructuredDiff.tsx → colorDiff.ts 的 test/preload.ts）
+// 都会在模块求值时付出这份开销，并在进程剩余生命周期内一直
+// 占用堆内存。在 Windows CI 上这会把同一 shard 后续的测试拖入严重
+// GC 停顿区间，并触发 beforeEach/afterEach hook 超时
+// （officialRegistry.test.ts，PR #24150）。
+// 与 NAPI 包装器对 dlopen 采用的是同样的延迟加载模式。
 type HLJSApi = typeof hljsNamespace
 let cachedHljs: HLJSApi | null = null
 function hljs(): HLJSApi {
@@ -38,8 +37,8 @@ function hljs(): HLJSApi {
   }
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const mod = require('highlight.js')
-  // highlight.js uses `export =` (CJS). Under bun/ESM the interop wraps it
-  // in .default; under node CJS the module IS the API. Check at runtime.
+  // highlight.js 使用 `export =`（CJS）。在 bun/ESM 下，interop 会将其包裹
+  // 在 .default 下；在 node CJS 下，模块本身就是 API。在运行时鉴别。
   cachedHljs = 'default' in mod && mod.default ? mod.default : mod
   return cachedHljs!
 }
@@ -48,7 +47,7 @@ import { stringWidth } from '../../ink/stringWidth.js'
 import { logError } from '../../utils/log.js'
 
 // ---------------------------------------------------------------------------
-// Public API types (match vendor/color-diff-src/index.d.ts)
+// Public API 类型（与 vendor/color-diff-src/index.d.ts 一致）
 // ---------------------------------------------------------------------------
 
 export type Hunk = {
@@ -71,7 +70,7 @@ export type NativeModule = {
 }
 
 // ---------------------------------------------------------------------------
-// Color / ANSI escape helpers
+// 颜色 / ANSI 转义序列辅助函数
 // ---------------------------------------------------------------------------
 
 type Color = { r: number; g: number; b: number; a: number }
@@ -91,7 +90,7 @@ function ansiIdx(index: number): Color {
   return { r: index, g: 0, b: 0, a: 0 }
 }
 
-// Sentinel: a=1 means "terminal default" (matches bat convention)
+// 哨兵值：a=1 表示“终端默认”（与 bat 约定一致）
 const DEFAULT_BG: Color = { r: 0, g: 0, b: 0, a: 1 }
 
 function detectColorMode(theme: string): ColorMode {
@@ -102,9 +101,9 @@ function detectColorMode(theme: string): ColorMode {
   return ct === 'truecolor' || ct === '24bit' ? 'truecolor' : 'color256'
 }
 
-// Port of ansi_colours::ansi256_from_rgb — approximates RGB to the xterm-256
-// palette (6x6x6 cube + 24 greys). Picks the perceptually closest index by
-// comparing cube vs grey-ramp candidates, like the Rust crate.
+// 移植自 ansi_colours::ansi256_from_rgb —— 将 RGB 近似到 xterm-256
+// 调色板（6x6x6 立方 + 24 灰阶）。通过比较立方候选与灰阶候选
+// 选取感知上最接近的索引，与 Rust crate 一致。
 const CUBE_LEVELS = [0, 95, 135, 175, 215, 255]
 function ansi256FromRgb(r: number, g: number, b: number): number {
   const q = (c: number) => (c < 48 ? 0 : c < 115 ? 1 : c < 155 ? 2 : c < 195 ? 3 : c < 235 ? 4 : 5)
@@ -112,9 +111,9 @@ function ansi256FromRgb(r: number, g: number, b: number): number {
   const qg = q(g)
   const qb = q(b)
   const cubeIdx = 16 + 36 * qr + 6 * qg + qb
-  // Grey ramp candidate (232-255, levels 8..238 step 10). Beyond the ramp's
-  // range the cube corner is the only option — ansi_colours snaps 248,248,242
-  // to 231 (cube white), not 255 (ramp top).
+  // 灰阶候选（232-255，取值 8..238 步长 10）。超出该范围后，立方角
+  // 点是唯一选择——ansi_colours 会将 248,248,242 映射到 231（立方白），
+  // 而非 255（灰阶顶部）。
   const grey = Math.round((r + g + b) / 3)
   if (grey < 5) {
     return 16
@@ -134,7 +133,7 @@ function ansi256FromRgb(r: number, g: number, b: number): number {
 }
 
 function colorToEscape(c: Color, fg: boolean, mode: ColorMode): string {
-  // alpha=0: palette index encoded in .r (bat's ansi-theme convention)
+  // alpha=0：调色板索引编码在 .r 中（bat 的 ansi-theme 约定）
   if (c.a === 0) {
     const idx = c.r
     if (idx < 8) {
@@ -145,7 +144,7 @@ function colorToEscape(c: Color, fg: boolean, mode: ColorMode): string {
     }
     return `\x1b[${fg ? 38 : 48};5;${idx}m`
   }
-  // alpha=1: terminal default
+  // alpha=1：终端默认颜色
   if (c.a === 1) {
     return fg ? '\x1b[39m' : '\x1b[49m'
   }
@@ -175,7 +174,7 @@ function asTerminalEscaped(
 }
 
 // ---------------------------------------------------------------------------
-// Theme
+// 主题
 // ---------------------------------------------------------------------------
 
 type Marker = '+' | '-' | ' '
@@ -202,8 +201,8 @@ function defaultSyntaxThemeName(themeName: string): string {
   return 'GitHub'
 }
 
-// highlight.js scope → syntect Monokai Extended foreground (measured from the
-// Rust module's output so colors match the original exactly)
+// highlight.js scope → syntect Monokai Extended 前景色（从 Rust 模块输出
+// 采样得到，以保证颜色与原生一致）
 const MONOKAI_SCOPES: Record<string, Color> = {
   keyword: rgb(249, 38, 114),
   _storage: rgb(102, 217, 239),
@@ -231,7 +230,7 @@ const MONOKAI_SCOPES: Record<string, Color> = {
   subst: rgb(248, 248, 242),
 }
 
-// highlight.js scope → syntect GitHub-light foreground (measured from Rust)
+// highlight.js scope → syntect GitHub-light 前景色（从 Rust 采样得到）
 const GITHUB_SCOPES: Record<string, Color> = {
   keyword: rgb(167, 29, 93),
   _storage: rgb(167, 29, 93),
@@ -259,9 +258,9 @@ const GITHUB_SCOPES: Record<string, Color> = {
   subst: rgb(51, 51, 51),
 }
 
-// Keywords that syntect scopes as storage.type rather than keyword.control.
-// highlight.js lumps these under "keyword"; we re-split so const/function/etc.
-// get the cyan storage color instead of pink.
+// syntect 中属于 storage.type 而非 keyword.control 的关键字。
+// highlight.js 将这些关键字类为 "keyword"，我们重新拆分，以便 const/function 等
+// 获得 storage 的青色，而非粉色。
 const STORAGE_KEYWORDS = new Set([
   'const',
   'let',
@@ -347,7 +346,7 @@ function buildTheme(themeName: string, mode: ColorMode): Theme {
     }
   }
 
-  // light
+  // 浅色主题
   const fg = rgb(51, 51, 51)
   const deleteLine = rgb(255, 220, 220)
   const deleteWord = rgb(255, 199, 199)
@@ -416,18 +415,18 @@ function decorationColor(marker: Marker, theme: Theme): Color {
 }
 
 // ---------------------------------------------------------------------------
-// Syntax highlighting via highlight.js
+// 通过 highlight.js 进行语法高亮
 // ---------------------------------------------------------------------------
 
-// hljs 10.x uses `kind`; 11.x uses `scope`. Handle both.
+// hljs 10.x 使用 `kind`；11.x 使用 `scope`。两者均需兼容。
 type HljsNode = {
   scope?: string
   kind?: string
   children: (HljsNode | string)[]
 }
 
-// Filename-based and extension-based language detection (approximates bat's
-// SyntaxMapping + syntect's find_syntax_by_extension)
+// 基于文件名与扩展名的语言检测（近似 bat 的 SyntaxMapping +
+// syntect 的 find_syntax_by_extension）
 const FILENAME_LANGS: Record<string, string> = {
   Dockerfile: 'dockerfile',
   Makefile: 'makefile',
@@ -440,7 +439,7 @@ function detectLanguage(filePath: string, firstLine: string | null): string | nu
   const base = basename(filePath)
   const ext = extname(filePath).slice(1)
 
-  // Filename-based lookup (handles Dockerfile, Makefile, CMakeLists.txt, etc.)
+  // 基于文件名查找（处理 Dockerfile、Makefile、CMakeLists.txt 等）
   const stem = base.split('.')[0] ?? ''
   const byName = FILENAME_LANGS[base] ?? FILENAME_LANGS[stem]
   if (byName && (hljs() as any).getLanguage(byName)) {
@@ -452,7 +451,7 @@ function detectLanguage(filePath: string, firstLine: string | null): string | nu
       return ext
     }
   }
-  // Shebang / first-line detection (strip UTF-8 BOM)
+  // Shebang / 首行检测（剥离 UTF-8 BOM）
   if (firstLine) {
     const line = firstLine.startsWith('\ufeff') ? firstLine.slice(1) : firstLine
     if (line.startsWith('#!')) {
@@ -509,11 +508,11 @@ function flattenHljs(
   }
 }
 
-// hljs v11 stores emitter in `_emitter` (underscore prefix), not `emitter`.
-// rootNode is internal to TokenTreeEmitter. Type guard validates the shape
-// once so we fail loudly (via logError) instead of a silent try/catch
-// swallow — the prior `as unknown as` cast hid a version mismatch
-// (_emitter vs emitter, scope vs kind) behind a silent gray fallback.
+// hljs v11 将 emitter 存在 `_emitter`（下划线前缀），而非 `emitter`。
+// rootNode 是 TokenTreeEmitter 的内部结构。这里使用类型保护一次性验证
+// 其形状，一旦不匹配则通过 logError 响亮报错，而非静默 try/catch
+// 吞掉 —— 之前的 `as unknown as` 强转会隐藏版本不匹配
+// （_emitter 与 emitter、scope 与 kind），只会静默地退到灰色。
 function hasRootNode(emitter: unknown): emitter is { rootNode: HljsNode } {
   return (
     typeof emitter === 'object' &&
@@ -532,7 +531,7 @@ function highlightLine(
   line: string,
   theme: Theme,
 ): Block[] {
-  // syntect-parity: feed a trailing \n so line comments terminate, then strip
+  // syntect 一致行为：追加一个尾部 \n 以便行注释能被终结，之后再去掉
   const code = `${line}\n`
   if (!state.lang) {
     return [[defaultStyle(theme), code]]
@@ -544,7 +543,7 @@ function highlightLine(
       ignoreIllegals: true,
     })
   } catch {
-    // hljs throws on unknown language despite ignoreIllegals
+    // 即使 ignoreIllegals 为 true，hljs 遇到未知语言仍会抛错
     return [[defaultStyle(theme), code]]
   }
   if (!hasRootNode(result._emitter)) {
@@ -564,15 +563,15 @@ function highlightLine(
 }
 
 // ---------------------------------------------------------------------------
-// Word diff
+// 单词级 diff
 // ---------------------------------------------------------------------------
 
 type Range = { start: number; end: number }
 
 const CHANGE_THRESHOLD = 0.4
 
-// Tokenize into word runs, whitespace runs, and single punctuation chars —
-// matches the Rust tokenize() which mirrors diffWordsWithSpace's splitting.
+// 将文本切分为单词 run、空白 run 与单个标点字符 ——
+// 与 Rust 的 tokenize() 一致，后者对应 diffWordsWithSpace 的切分方式。
 function tokenize(text: string): string[] {
   const tokens: string[] = []
   let i = 0
@@ -593,7 +592,7 @@ function tokenize(text: string): string[] {
       tokens.push(text.slice(i, j))
       i = j
     } else {
-      // advance one codepoint (handle surrogate pairs)
+      // 推进一个 code point（处理代理对）
       const cp = text.codePointAt(i)!
       const len = cp > 0xffff ? 2 : 1
       tokens.push(text.slice(i, i + len))
@@ -670,7 +669,7 @@ function wordDiffStrings(oldStr: string, newStr: string): [Range[], Range[]] {
 }
 
 // ---------------------------------------------------------------------------
-// Highlight (per-line transform pipeline)
+// 高亮（逐行变换流水线）
 // ---------------------------------------------------------------------------
 
 type Highlight = {
@@ -710,7 +709,7 @@ function wrapText(h: Highlight, width: number, theme: Theme): void {
         const remaining = width - curW
         let bytePos = 0
         let accW = 0
-        // iterate by codepoint
+        // 按 code point 迭代
         for (const ch of text) {
           const cw = charWidth(ch)
           if (accW + cw > remaining) {
@@ -721,13 +720,13 @@ function wrapText(h: Highlight, width: number, theme: Theme): void {
         }
         if (bytePos === 0) {
           if (curW === 0) {
-            // Fresh line and first char still doesn't fit — force one codepoint
-            // to guarantee forward progress (overflows, but prevents infinite loop)
+            // 新行且首个字符仍放不下 —— 强制取一个 code point
+            // 以保证向前推进（会溢出，但避免死循环）
             const firstCp = text.codePointAt(0)!
             bytePos = firstCp > 0xffff ? 2 : 1
           } else {
-            // Line has content and next char doesn't fit — finish this line,
-            // re-queue the whole block for a fresh line
+            // 本行已有内容且下一个字符放不下 —— 完成本行，
+            // 将整个块重新入队以起新行
             newLines.push(cur)
             queue.unshift([style, text])
             cur = []
@@ -746,7 +745,7 @@ function wrapText(h: Highlight, width: number, theme: Theme): void {
   }
   h.lines = newLines
 
-  // Pad changed lines so background extends to edge
+  // 对变动行填充，使背景延伸到边缘
   if (h.marker && h.marker !== ' ') {
     const bg = lineBackground(h.marker, theme)
     const padStyle: Style = { foreground: theme.foreground, background: bg }
@@ -856,7 +855,7 @@ function intoLines(h: Highlight, dim: boolean, skipBg: boolean, mode: ColorMode)
 }
 
 // ---------------------------------------------------------------------------
-// Public API
+// 公开 API
 // ---------------------------------------------------------------------------
 
 function maxLineNumber(hunk: Hunk): number {
@@ -893,8 +892,8 @@ export class ColorDiff {
     const lang = detectLanguage(this.filePath, this.firstLine)
     const hlState = { lang, stack: null }
 
-    // Warm highlighter with prefix lines (highlight.js is stateless per call,
-    // so this is a no-op for now — preserved for API parity)
+    // 用前缀行预热高亮器（highlight.js 每次调用都是无状态的，
+    // 所以目前这是个 no-op，保留以保持 API 一致）
     void this.prefixContent
 
     const maxDigits = String(maxLineNumber(this.hunk)).length
@@ -902,7 +901,7 @@ export class ColorDiff {
     let newLine = this.hunk.newStart
     const effectiveWidth = Math.max(1, width - maxDigits - 2 - 1)
 
-    // First pass: assign markers + line numbers
+    // 第一趟：分配标记 + 行号
     type Entry = { lineNumber: number; marker: Marker; code: string }
     const entries: Entry[] = this.hunk.lines.map((rawLine) => {
       const marker = parseMarker(rawLine.slice(0, 1))
@@ -924,7 +923,7 @@ export class ColorDiff {
       return { lineNumber, marker, code }
     })
 
-    // Word-diff ranges (skip when dim — too loud)
+    // Word-diff 范围（dim 模式下跳过，否则过于喧闹）
     const ranges: Range[][] = entries.map(() => [])
     if (!dim) {
       const markers = entries.map((e) => e.marker)
@@ -935,7 +934,7 @@ export class ColorDiff {
       }
     }
 
-    // Second pass: highlight + transform pipeline
+    // 第二趟：高亮 + 变换流水线
     const out: string[] = []
     for (let i = 0; i < entries.length; i++) {
       const { lineNumber, marker, code } = entries[i]!
@@ -970,7 +969,7 @@ export class ColorFile {
     const mode = detectColorMode(themeName)
     const theme = buildTheme(themeName, mode)
     const lines = this.code.split('\n')
-    // Rust .lines() drops trailing empty line from trailing \n
+    // Rust 的 .lines() 会丢弃因末尾 \n 产生的尾部空行
     if (lines.length > 0 && lines[lines.length - 1] === '') {
       lines.pop()
     }
@@ -995,14 +994,14 @@ export class ColorFile {
 }
 
 export function getSyntaxTheme(themeName: string): SyntaxTheme {
-  // highlight.js has no bat theme set, so env vars can't select alternate
-  // syntect themes. We still report the env var if set, for diagnostics.
+  // highlight.js 没有 bat 的主题集合，所以环境变量无法选择替代的
+  // syntect 主题。如果设置了环境变量，仍会作为诊断信息上报。
   const envTheme = process.env.ZY_CODE_SYNTAX_HIGHLIGHT ?? process.env.BAT_THEME
   void envTheme
   return { theme: defaultSyntaxThemeName(themeName), source: null }
 }
 
-// Lazy loader to match vendor/color-diff-src/index.ts API
+// 延迟加载器，与 vendor/color-diff-src/index.ts 的 API 保持一致
 let cachedModule: NativeModule | null = null
 
 export function getNativeModule(): NativeModule | null {
@@ -1015,7 +1014,7 @@ export function getNativeModule(): NativeModule | null {
 
 export type { ColorDiff as ColorDiffClass, ColorFile as ColorFileClass }
 
-// Exported for testing
+// 仅供测试导出
 export const __test = {
   tokenize,
   findAdjacentPairs,

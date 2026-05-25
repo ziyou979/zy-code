@@ -78,7 +78,7 @@ export const EXPLORE_AGENT: BuiltInAgentDefinition = {
   // Note: For ants, getAgentModel() checks zy_explore_agent GrowthBook flag at runtime
   model: isInternalBuild() ? 'inherit' : 'compact',
   // Explore is a fast read-only search agent — it doesn't need commit/PR/lint
-  // rules from CLAUDE.md. The main agent has full context and interprets results.
-  omitzyMd: true,
+  // rules from AGENTS.md. The main agent has full context and interprets results.
+  omitAgentsMd: true,
   getSystemPrompt: () => getExploreSystemPrompt(),
 }

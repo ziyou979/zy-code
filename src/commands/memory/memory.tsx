@@ -11,7 +11,7 @@ import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { editFileInEditor } from '../../utils/promptEditor.js'
-import { clearMemoryFileCaches, getMemoryFiles } from '../../utils/zymd.js'
+import { clearMemoryFileCaches, getMemoryFiles } from '../../utils/agentsMd.js'
 
 function MemoryCommand({
   onDone,

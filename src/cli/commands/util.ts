@@ -38,12 +38,12 @@ export function registerUtilCommands(program: Command<any, any, any>): void {
       await update()
     })
 
-  // zy up — run the project's CLAUDE.md "# zy up" setup instructions.
+  // zy up — run the project's AGENTS.md "# zy up" setup instructions.
   if (isInternalBuild()) {
     program
       .command('up')
       .description(
-        '[INNER-ONLY] Initialize or upgrade the local dev environment using the "# zy up" section of the nearest CLAUDE.md',
+        '[INNER-ONLY] Initialize or upgrade the local dev environment using the "# zy up" section of the nearest AGENTS.md',
       )
       .action(async () => {
         const { up } = await import('../up.js')

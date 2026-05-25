@@ -75,6 +75,8 @@ export const enOnboarding: TranslationResource = {
   'onboarding.platform.zhipu': 'ZHIPU AI',
   'onboarding.platform.zhipuDesc': 'ZHIPU AI (ChatGLM, GLM-4, etc.)',
   'onboarding.pressAgainToExit': 'Press {key} again to exit',
+  'onboarding.projectStep.workspace': 'Ask Zy to create a new app or clone a repository',
+  'onboarding.projectStep.agentsMd': 'Run /init to create a AGENTS.md file with instructions for ZY',
   'onboarding.security.risk1': 'ZY Code can make mistakes',
   'onboarding.security.risk1desc':
     'You should always review ZY Code&apos;s responses, especially when running code.',

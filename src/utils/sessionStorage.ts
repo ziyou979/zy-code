@@ -3,7 +3,7 @@ import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import type { Dirent } from 'node:fs'
 // readFileTailSync 所需的同步 fs 原语 — 与上面的 fs/promises 导入分开。
-// 按 CLAUDE.md 风格使用具名导入（非通配符）；与异步后缀命名无冲突。
+// 按 AGENTS.md 风格使用具名导入（非通配符）；与异步后缀命名无冲突。
 import { closeSync, fstatSync, openSync, readSync } from 'node:fs'
 import {
   appendFile as fsAppendFile,

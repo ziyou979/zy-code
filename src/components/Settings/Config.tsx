@@ -50,7 +50,7 @@ import { Dialog } from '../design-system/Dialog.js'
 import { Select } from '../CustomSelect/index.js'
 import { OutputStylePicker } from '../OutputStylePicker.js'
 import { LanguagePicker } from '../LanguagePicker.js'
-import { getExternalzyMdIncludes, getMemoryFiles, hasExternalzyMdIncludes } from 'src/utils/zymd.js'
+import { getExternalAgentsMdIncludes, getMemoryFiles, hasExternalAgentsMdIncludes } from 'src/utils/agentsMd.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Byline } from '../design-system/Byline.js'
@@ -247,7 +247,7 @@ export function Config({
   const isConnectedToIde = hasAccessToIDEExtensionDiffFeature(context.options.mcpClients)
   const isFileCheckpointingAvailable = !isEnvTruthy(process.env.ZY_CODE_DISABLE_FILE_CHECKPOINTING)
   const memoryFiles = React.use(getMemoryFiles(true))
-  const shouldShowExternalIncludesToggle = hasExternalzyMdIncludes(memoryFiles)
+  const shouldShowExternalIncludesToggle = hasExternalAgentsMdIncludes(memoryFiles)
   const autoUpdaterDisabledReason = getAutoUpdaterDisabledReason()
   function onChangeMainModelConfig(value: string | null): void {
     const previousModel = mainLoopModel
@@ -1126,7 +1126,7 @@ export function Config({
             label: tSync('settings.externalClaudeMdIncludes'),
             value: (() => {
               const projectConfig = getCurrentProjectConfig()
-              if (projectConfig.haszyMdExternalIncludesApproved) {
+              if (projectConfig.hasAgentsMdExternalIncludesApproved) {
                 return 'true'
               } else {
                 return 'false'
@@ -1838,13 +1838,13 @@ export function Config({
         </>
       ) : showSubmenu === 'ExternalIncludes' ? (
         <>
-          {/* @ts-ignore -- zyMdExternalIncludesDialog is a valid component but TS sees lowercase as intrinsic */}
-          <zyMdExternalIncludesDialog
+          {/* @ts-ignore -- agentsMdExternalIncludesDialog is a valid component but TS sees lowercase as intrinsic */}
+          <agentsMdExternalIncludesDialog
             onDone={() => {
               setShowSubmenu(null)
               setTabsHidden(false)
             }}
-            externalIncludes={getExternalzyMdIncludes(memoryFiles)}
+            externalIncludes={getExternalAgentsMdIncludes(memoryFiles)}
           />
           <Text dimColor>
             <Byline>

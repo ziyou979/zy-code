@@ -28,7 +28,7 @@ import { isInternalBuild } from '../../utils/envUtils.js'
 import { clearResolveGitDirCache } from '../../utils/git/gitFilesystem.js'
 import { clearStoredImagePaths } from '../../utils/imageStore.js'
 import { clearSessionEnvVars } from '../../utils/sessionEnvVars.js'
-import { resetGetMemoryFilesCache } from '../../utils/zymd.js'
+import { resetGetMemoryFilesCache } from '../../utils/agentsMd.js'
 
 /**
  * Clear all session-related caches.

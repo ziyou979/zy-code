@@ -52,7 +52,7 @@ import { jsonStringify } from './slowOperations.js'
 import { buildEffectiveSystemPrompt } from './systemPrompt.js'
 import type { Theme } from './theme.js'
 import { getCurrentUsage } from './tokens.js'
-import { filterInjectedMemoryFiles, getMemoryFiles } from './zymd.js'
+import { filterInjectedMemoryFiles, getMemoryFiles } from './agentsMd.js'
 
 const RESERVED_CATEGORY_NAME = 'Autocompact buffer'
 const MANUAL_COMPACT_BUFFER_NAME = 'Compact buffer'
@@ -268,7 +268,6 @@ async function countSystemTokens(effectiveSystemPrompt: readonly string[]): Prom
 
   // 构建命名条目：system prompt 各部分 + 系统上下文值
   // 跳过空字符串和全局缓存边界标记
-  // @ts-expect-error
   const namedEntries: Array<{ name: string; content: string }> = [
     ...effectiveSystemPrompt
       .filter(
@@ -303,25 +302,25 @@ async function countSystemTokens(effectiveSystemPrompt: readonly string[]): Prom
 
 async function countMemoryFileTokens(): Promise<{
   memoryFileDetails: MemoryFile[]
-  zyMdTokens: number
+  agentsMdTokens: number
 }> {
-  // Simple 模式禁用了 CLAUDE.md 加载，因此不报告其 token 数
+  // Simple 模式禁用了 AGENTS.md 加载，因此不报告其 token 数
   if (isEnvTruthy(process.env.ZY_CODE_SIMPLE)) {
-    return { memoryFileDetails: [], zyMdTokens: 0 }
+    return { memoryFileDetails: [], agentsMdTokens: 0 }
   }
 
   const memoryFilesData = filterInjectedMemoryFiles(await getMemoryFiles())
   const memoryFileDetails: MemoryFile[] = []
-  let zyMdTokens = 0
+  let agentsMdTokens = 0
 
   if (memoryFilesData.length < 1) {
     return {
       memoryFileDetails: [],
-      zyMdTokens: 0,
+      agentsMdTokens: 0,
     }
   }
 
-  const zyMdTokenCounts = await Promise.all(
+  const agentsMdTokenCounts = await Promise.all(
     memoryFilesData.map(async (file) => {
       const tokens = await countTokensWithFallback([{ role: 'user', content: file.content }], [])
 
@@ -329,8 +328,8 @@ async function countMemoryFileTokens(): Promise<{
     }),
   )
 
-  for (const { file, tokens } of zyMdTokenCounts) {
-    zyMdTokens += tokens
+  for (const { file, tokens } of agentsMdTokenCounts) {
+    agentsMdTokens += tokens
     memoryFileDetails.push({
       path: file.path,
       type: file.type,
@@ -338,7 +337,7 @@ async function countMemoryFileTokens(): Promise<{
     })
   }
 
-  return { zyMdTokens, memoryFileDetails }
+  return { agentsMdTokens, memoryFileDetails }
 }
 
 async function countBuiltInToolTokens(
@@ -895,7 +894,7 @@ export async function analyzeContextUsage(
   // 不应因 skill 而失败的关键操作
   const [
     { systemPromptTokens, systemPromptSections },
-    { zyMdTokens, memoryFileDetails },
+    { agentsMdTokens, memoryFileDetails },
     { builtInToolTokens, deferredBuiltinDetails, deferredBuiltinTokens, systemToolDetails },
     { mcpToolTokens, mcpToolDetails, deferredToolTokens },
     { agentTokens, agentDetails },
@@ -998,10 +997,10 @@ export async function analyzeContextUsage(
   }
 
   // 记忆文件在自定义 agent 之后
-  if (zyMdTokens > 0) {
+  if (agentsMdTokens > 0) {
     cats.push({
       name: 'Memory files',
-      tokens: zyMdTokens,
+      tokens: agentsMdTokens,
       color: 'zy',
     })
   }

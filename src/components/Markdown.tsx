@@ -1,14 +1,12 @@
 import { marked, type Token, type Tokens } from 'marked'
 import React, { Suspense, use, useRef } from 'react'
 import { useSettings } from '../hooks/useSettings.js'
-import { useTerminalSize } from '../hooks/useTerminalSize.js'
-import { Box, useTheme } from '../ink.js'
+import { Ansi, Box, useTheme } from '../ink.js'
 import type { CliHighlight } from '../utils/cliHighlight.js'
 import { getCliHighlightPromise } from '../utils/cliHighlight.js'
 import { hashContent } from '../utils/hash.js'
 import { configureMarked, formatToken } from '../utils/markdown.js'
 import { stripPromptXMLTags } from '../utils/messages.js'
-import { renderContentWithFileLinks } from './FilePathLink.js'
 import { MarkdownTable } from './MarkdownTable.js'
 
 type Props = {
@@ -83,6 +81,7 @@ function cachedLexer(content: string): Token[] {
   return tokens
 }
 
+
 /**
  * Renders markdown content using a hybrid approach:
  * - Tables are rendered as React components with proper flexbox layout
@@ -106,7 +105,6 @@ function MarkdownWithHighlight(props: Props) {
 }
 function MarkdownBody({ children, dimColor, highlight }: MarkdownBodyProps) {
   const [theme] = useTheme()
-  const { columns } = useTerminalSize()
   configureMarked()
   const tokens = cachedLexer(stripPromptXMLTags(children))
   const elements = []
@@ -115,8 +113,7 @@ function MarkdownBody({ children, dimColor, highlight }: MarkdownBodyProps) {
     if (nonTableContent) {
       const trimmed = nonTableContent.trim()
       if (trimmed) {
-        const nodes = renderContentWithFileLinks(trimmed, columns, dimColor as boolean, theme)
-        elements.push(...nodes)
+        elements.push(<Ansi key={elements.length} dimColor={dimColor}>{trimmed}</Ansi>)
       }
       nonTableContent = ''
     }

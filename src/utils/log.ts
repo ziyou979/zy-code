@@ -318,7 +318,7 @@ export function captureAPIRequest(params: CreateParams, querySource?: QuerySourc
   setLastAPIRequest(paramsWithoutMessages)
   // For ant users only: also keep a reference to the final messages array so
   // /share's serialized_conversation.json captures the exact post-compaction,
-  // CLAUDE.md-injected payload the API received. Overwritten each turn;
+  // AGENTS.md-injected payload the API received. Overwritten each turn;
   // dumpPrompts.ts already holds 5 full request bodies for ants, so this is
   // not a new retention class.
   setLastAPIRequestMessages(isInternalBuild() ? messages : null)

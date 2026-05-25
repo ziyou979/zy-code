@@ -75,6 +75,8 @@ export const zhOnboarding: TranslationResource = {
   'onboarding.platform.zhipu': '智谱 AI',
   'onboarding.platform.zhipuDesc': '智谱 AI（ChatGLM、GLM-4 等）',
   'onboarding.pressAgainToExit': '再按一次 {key} 退出',
+  'onboarding.projectStep.workspace': '让 Zy 创建新应用或克隆仓库',
+  'onboarding.projectStep.agentsMd': '运行 /init 创建 AGENTS.md 文件，为 ZY 提供项目指导',
   'onboarding.security.risk1': 'ZY Code 可能会出错',
   'onboarding.security.risk1desc': '你应该始终审查 ZY Code 的响应，尤其是在运行代码时。',
   'onboarding.security.risk2': '由于提示注入风险，请仅在你信任的代码上使用',

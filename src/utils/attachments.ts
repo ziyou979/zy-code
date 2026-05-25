@@ -36,7 +36,7 @@ import {
   getMemoryFilesForNestedDirectory,
   getConditionalRulesForCwdLevelDirectory,
   type MemoryFileInfo,
-} from './zymd.js'
+} from './agentsMd.js'
 import { dirname, parse, relative, resolve } from 'node:path'
 import { getCwd } from 'src/utils/cwd.js'
 import { getViewedTeammateTask } from '../state/selectors.js'
@@ -1518,7 +1518,7 @@ async function getSelectedLinesFromIDE(
 /**
  * Computes the directories to process for nested memory file loading.
  * Returns two lists:
- * - nestedDirs: Directories between CWD and targetPath (processed for CLAUDE.md + all rules)
+ * - nestedDirs: Directories between CWD and targetPath (processed for AGENTS.md + all rules)
  * - cwdLevelDirs: Directories from root to CWD (processed for conditional rules only)
  *
  * @param targetPath The target file path
@@ -1586,7 +1586,7 @@ export function memoryFilesToAttachments(
   for (const memoryFile of memoryFiles) {
     // 去重：loadedNestedMemoryPaths 是非淘汰 Set；
     // readFileState 是 100 条目 LRU，在繁忙会话中会丢弃条目，
-    // 因此仅依赖它会在每次淘汰周期重新注入相同的 CLAUDE.md。
+    // 因此仅依赖它会在每次淘汰周期重新注入相同的 AGENTS.md。
     if (toolUseContext.loadedNestedMemoryPaths?.has(memoryFile.path)) {
       continue
     }
@@ -1637,11 +1637,11 @@ export function memoryFilesToAttachments(
 
 /**
  * 为给定文件路径加载嵌套内存文件并将其作为附件返回。
- * 此函数执行目录遍历以查找适用于目标文件路径的 CLAUDE.md 文件和条件规则。
+ * 此函数执行目录遍历以查找适用于目标文件路径的 AGENTS.md 文件和条件规则。
  *
  * 处理顺序（必须保持）：
  * 1. 匹配 targetPath 的 Managed/User 条件规则
- * 2. 嵌套目录（CWD → target）：CLAUDE.md + 无条件规则 + 条件规则
+ * 2. 嵌套目录（CWD → target）：AGENTS.md + 无条件规则 + 条件规则
  * 3. CWD 级目录（root → CWD）：仅条件规则
  *
  * @param filePath 要获取嵌套内存文件的文件路径
@@ -1674,7 +1674,7 @@ async function getNestedMemoryAttachmentsForFile(
     const skipProjectLevel = getFeatureValue_CACHED_MAY_BE_STALE('zy_paper_halyard', false)
 
     // 阶段 3：处理嵌套目录（CWD → target）
-    // 每个目录获取：CLAUDE.md + 无条件规则 + 条件规则
+    // 每个目录获取：AGENTS.md + 无条件规则 + 条件规则
     for (const dir of nestedDirs) {
       const memoryFiles = (
         await getMemoryFilesForNestedDirectory(dir, filePath, processedPaths)
@@ -1962,7 +1962,7 @@ export async function getChangedFiles(toolUseContext: ToolUseContext): Promise<A
 }
 
 /**
- * 处理需要嵌套内存附件的路径并检查嵌套 CLAUDE.md 文件
+ * 处理需要嵌套内存附件的路径并检查嵌套 AGENTS.md 文件
  * 使用 ToolUseContext 中的 nestedMemoryAttachmentTriggers 字段
  */
 async function getNestedMemoryAttachments(toolUseContext: ToolUseContext): Promise<Attachment[]> {

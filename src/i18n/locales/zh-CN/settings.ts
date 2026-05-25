@@ -70,7 +70,7 @@ export const zhSettings: TranslationResource = {
   'settings.enableWithStableChannel': '使用稳定频道启用',
   'settings.errorTitle': '设置错误',
   'settings.exitAndFix': '退出手动修复',
-  'settings.externalClaudeMdIncludes': '外部 ZY.md 引用',
+  'settings.externalClaudeMdIncludes': '外部 AGENTS.md 引用',
   'settings.filesSkippedWarning': '包含错误的文件将被完全跳过，而不仅仅是跳过无效的设置项。',
   'settings.gatesTab': '门控',
   'settings.languageLabel': '语言',

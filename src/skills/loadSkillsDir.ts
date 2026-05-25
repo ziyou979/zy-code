@@ -2,7 +2,7 @@ import { realpath } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, sep as pathSep, relative } from 'node:path'
 import ignore from 'ignore'
 import memoize from 'lodash-es/memoize.js'
-import { getAdditionalDirectoriesForzyMd, getSessionId } from '../bootstrap/state.js'
+import { getAdditionalDirectoriesForAgentsMd, getSessionId } from '../bootstrap/state.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -122,7 +122,7 @@ function parseHooksFromFrontmatter(
 }
 
 /**
- * Parse paths frontmatter from a skill, using the same format as CLAUDE.md rules.
+ * Parse paths frontmatter from a skill, using the same format as AGENTS.md rules.
  * Returns undefined if no paths are specified or if all patterns are match-all.
  */
 function parseSkillPaths(frontmatter: FrontmatterData): string[] | undefined {
@@ -572,7 +572,7 @@ export const getSkillDirCommands = memoize(async (cwd: string): Promise<Command[
   )
 
   // Load from additional directories (--add-dir)
-  const additionalDirs = getAdditionalDirectoriesForzyMd()
+  const additionalDirs = getAdditionalDirectoriesForAgentsMd()
   const skillsLocked = isRestrictedToPluginOnly('skills')
   const projectSettingsEnabled = isSettingSourceEnabled('projectSettings') && !skillsLocked
 
@@ -893,7 +893,7 @@ export function getDynamicSkills(): Command[] {
  * dynamic skills map, making them available to the model.
  *
  * Uses the `ignore` library (gitignore-style matching), matching the behavior
- * of CLAUDE.md conditional rules.
+ * of AGENTS.md conditional rules.
  *
  * @param filePaths Array of file paths being operated on
  * @param cwd Current working directory (paths are matched relative to cwd)

@@ -1,5 +1,6 @@
 import { join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
+import { tSync } from './i18n/index.js'
 import { getCurrentProjectConfig, saveCurrentProjectConfig } from './utils/config.js'
 import { getCwd } from './utils/cwd.js'
 import { isDirEmpty } from './utils/file.js'
@@ -14,21 +15,21 @@ export type Step = {
 }
 
 export function getSteps(): Step[] {
-  const haszyMd = getFsImplementation().existsSync(join(getCwd(), 'ZY.md'))
+  const hasAgentsMd = getFsImplementation().existsSync(join(getCwd(), 'AGENTS.md'))
   const isWorkspaceDirEmpty = isDirEmpty(getCwd())
 
   return [
     {
       key: 'workspace',
-      text: 'Ask Zy to create a new app or clone a repository',
+      text: tSync('onboarding.projectStep.workspace'),
       isComplete: false,
       isCompletable: true,
       isEnabled: isWorkspaceDirEmpty,
     },
     {
-      key: 'zymd',
-      text: 'Run /init to create a ZY.md file with instructions for ZY',
-      isComplete: haszyMd,
+      key: 'agentsMd',
+      text: tSync('onboarding.projectStep.agentsMd'),
+      isComplete: hasAgentsMd,
       isCompletable: true,
       isEnabled: !isWorkspaceDirEmpty,
     },

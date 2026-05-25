@@ -886,12 +886,12 @@ export const zhMisc: TranslationResource = {
   'workflow.selectAtLeastOne': '你必须至少选择一个工作流才能继续',
   'workflow.selectTitle': '选择要安装的 GitHub 工作流',
   'workflow.subtitle': '我们将为你选择的每个工作流在仓库中创建一个工作流文件。',
-  'zyMd.allowExternalTitle': '允许外部 ZY.md 文件导入？',
-  'zyMd.externalImports': '外部导入：',
-  'zyMd.importsOutsideWarning':
-    '此项目的 ZY.md 引用了当前工作目录之外的文件。对于第三方仓库，切勿允许此操作。',
-  'zyMd.noDisable': '否，禁用外部导入',
-  'zyMd.securityWarning':
+  'agentsMd.allowExternalTitle': '允许外部 AGENTS.md 文件导入？',
+  'agentsMd.externalImports': '外部导入：',
+  'agentsMd.importsOutsideWarning':
+    '此项目的 AGENTS.md 引用了当前工作目录之外的文件。对于第三方仓库，切勿允许此操作。',
+  'agentsMd.noDisable': '否，禁用外部导入',
+  'agentsMd.securityWarning':
     '重要提示：仅对你信任的文件使用 ZY Code。访问不受信任的文件可能存在安全风险',
-  'zyMd.yesAllow': '是，允许外部导入',
+  'agentsMd.yesAllow': '是，允许外部导入',
 }

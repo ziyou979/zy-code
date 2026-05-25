@@ -48,7 +48,7 @@ type Binding = {
  * 均通过它读取，因此每调用的部分（`abortController`、
  * `setToolJSX`、`sendOSNotification`）始终是最新的。
  *
- * 模块级 `let` 是对「禁止模块作用域状态」规则（src/CLAUDE.md）的有意例外：
+ * 模块级 `let` 是对「禁止模块作用域状态」规则（src/AGENTS.md）的有意例外：
  * 分发器闭包必须跨调用持续，以保留内部截图 blob，
  * 而 `ToolUseContext` 是每调用独有的。
  * 测试时需要注入缓存或串行运行。

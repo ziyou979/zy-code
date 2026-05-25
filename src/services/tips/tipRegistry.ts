@@ -582,8 +582,8 @@ const externalTips: Tip[] = [
 const internalOnlyTips: Tip[] = isInternalBuild()
   ? [
       {
-        id: 'important-zymd',
-        content: async () => '[INNER-ONLY] Use "IMPORTANT:" prefix for must-follow CLAUDE.md rules',
+        id: 'important-agentsMd',
+        content: async () => '[INNER-ONLY] Use "IMPORTANT:" prefix for must-follow AGENTS.md rules',
         cooldownSessions: 30,
         isRelevant: async () => true,
       },

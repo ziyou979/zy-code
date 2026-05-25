@@ -97,12 +97,19 @@ const result = await Bun.build({
         }))
       },
     },
+    {
+      name: 'modifiers-napi',
+      setup(build) {
+        build.onResolve({ filter: /^modifiers-napi$/ }, () => ({
+          path: join(srcDir, 'native-ts/modifiers/index.ts'),
+        }))
+      },
+    },
   ],
   external: [
     // Native/binary packages (loaded at runtime, not bundled)
     '@ant/computer-use-input',
     '@ant/computer-use-swift',
-    'modifiers-napi',
     'image-processor-napi',
     // Dynamic-import-only SDK extensions
     '@azure/identity',

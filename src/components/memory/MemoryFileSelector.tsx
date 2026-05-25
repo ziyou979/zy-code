@@ -19,7 +19,7 @@ import { getDisplayPath } from '../../utils/file.js'
 import { formatRelativeTimeAgo } from '../../utils/format.js'
 import { projectIsInGitRepo } from '../../services/memory/versions.js'
 import { updateSettingsForSource } from '../../utils/settings/settings.js'
-import { getMemoryFiles, type MemoryFileInfo } from '../../utils/zymd.js'
+import { getMemoryFiles, type MemoryFileInfo } from '../../utils/agentsMd.js'
 import { Select } from '../CustomSelect/index.js'
 import { ListItem } from '../design-system/ListItem.js'
 
@@ -43,8 +43,8 @@ type Props = {
 }
 export function MemoryFileSelector({ onSelect, onCancel }: Props) {
   const existingMemoryFiles = use(getMemoryFiles())
-  const userMemoryPath = join(getZyConfigHomeDir(), 'CLAUDE.md')
-  const projectMemoryPath = join(getOriginalCwd(), 'CLAUDE.md')
+  const userMemoryPath = join(getZyConfigHomeDir(), 'AGENTS.md')
+  const projectMemoryPath = join(getOriginalCwd(), 'AGENTS.md')
   const hasUserMemory = existingMemoryFiles.some((f) => f.path === userMemoryPath)
   const hasProjectMemory = existingMemoryFiles.some((f_0) => f_0.path === projectMemoryPath)
   const allMemoryFiles = [
@@ -99,10 +99,10 @@ export function MemoryFileSelector({ onSelect, onCancel }: Props) {
     let description
     const isGit = projectIsInGitRepo(getOriginalCwd())
     if (file.type === 'User' && !(file as any).isNested) {
-      description = 'Saved in ~/.zy/CLAUDE.md'
+      description = 'Saved in ~/.zy/AGENTS.md'
     } else {
       if (file.type === 'Project' && !(file as any).isNested && file.path === projectMemoryPath) {
-        description = `${isGit ? 'Checked in at' : 'Saved in'} ./CLAUDE.md`
+        description = `${isGit ? 'Checked in at' : 'Saved in'} ./AGENTS.md`
       } else {
         if (file.parent) {
           description = '@-imported'

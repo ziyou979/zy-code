@@ -1,10 +1,9 @@
 import * as React from 'react'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
-import { Text, useTheme } from '../../ink.js'
+import { Ansi, Text, useTheme } from '../../ink.js'
 import { createHyperlink } from '../../utils/hyperlink.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { renderTruncatedContent } from '../../utils/terminal.js'
-import { renderContentWithFileLinks } from '../FilePathLink.js'
 import { MessageResponse } from '../MessageResponse.js'
 import { InVirtualListContext } from '../messageActions.js'
 import { useExpandShellOutput } from './ExpandShellOutputContext.js'
@@ -64,10 +63,9 @@ export function OutputLine({ content, verbose, isError, isWarning, linkifyUrls }
     ? stripUnderlineAnsi(formatted)
     : stripUnderlineAnsi(renderTruncatedContent(formatted, columns, inVirtualList))
   const color = isError ? 'error' : isWarning ? 'warning' : undefined
-  const finalContent = renderContentWithFileLinks(formattedContent, columns, false, theme)
   return (
     <MessageResponse>
-      <Text color={color}>{finalContent}</Text>
+      <Text color={color}>{<Ansi>{formattedContent}</Ansi>}</Text>
     </MessageResponse>
   )
 }

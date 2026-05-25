@@ -503,7 +503,7 @@ export function useReplBridge(
               // setAutoModeActivity(true) 副作用），而不是优雅拒绝。
               // 让该抛出逃逸会：
               // (1) 在 mode 不变的情况下留下 STATE.autoModeActive=true
-              //     （违反 src/CLAUDE.md 中的三方不变式）
+              //     （违反 src/AGENTS.md 中的三方不变式）
               // (2) 无法发送 control_response → 服务器关闭 WS
               // 这些镜像于 print.ts handleSetPermissionMode；bridge
               // 无法直接导入这些检查（bootstrap-isolation），因此
