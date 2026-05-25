@@ -1,109 +1,23 @@
 // 对话链构建：从 transcript JSONL 重建 user/assistant/attachment/system 链。
 // 处理 compact boundary、snip 保留段、孤立并行 tool_result 恢复、抓首条 prompt 等。
 
-import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
-import type { TokenUsage } from '../../types/llm.js'
-import type { Dirent } from 'node:fs'
-import { closeSync, fstatSync, openSync, readSync } from 'node:fs'
-import {
-  appendFile as fsAppendFile,
-  open as fsOpen,
-  mkdir,
-  readdir,
-  readFile,
-  stat,
-  unlink,
-  writeFile,
-} from 'node:fs/promises'
-import { basename, dirname, join } from 'node:path'
-import memoize from 'lodash-es/memoize.js'
-import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  logEvent,
-} from 'src/services/analytics/index.js'
-import {
-  getOriginalCwd,
-  getPlanSlugCache,
-  getPromptId,
-  getSessionId,
-  getSessionProjectDir,
-  isSessionPersistenceDisabled,
-  switchSession,
-} from '../../bootstrap/state.js'
+import { logEvent } from 'src/services/analytics/index.js'
 import { builtInCommandNames } from '../../commands.js'
-import { COMMAND_NAME_TAG, TICK_TAG } from '../../constants/xml.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import * as sessionIngress from '../../services/api/sessionIngress.js'
-import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
-import { type AgentId, asAgentId, asSessionId, type SessionId } from '../../types/ids.js'
+import { COMMAND_NAME_TAG } from '../../constants/xml.js'
+import type { TokenUsage } from '../../types/llm.js'
 import type { AttributionSnapshotMessage } from '../../types/logs.js'
 import {
-  type ContentReplacementEntry,
-  type ContextCollapseCommitEntry,
-  type ContextCollapseSnapshotEntry,
-  type Entry,
   type FileHistorySnapshotMessage,
-  type LogOption,
-  type PersistedWorktreeSession,
   type SerializedMessage,
-  sortLogs,
   type TranscriptMessage,
 } from '../../types/logs.js'
-import type {
-  AssistantMessage,
-  AttachmentMessage,
-  Message,
-  SystemCompactBoundaryMessage,
-  SystemMessage,
-  UserMessage,
-} from '../../types/message.js'
-import type { QueueOperationMessage } from '../../types/messageQueueTypes.js'
-import { uniq } from '../array.js'
-import { registerCleanup } from '../cleanupRegistry.js'
-import { updateSessionName } from '../concurrentSessions.js'
-import { getCwd } from '../cwd.js'
-import { logForDebugging } from '../debug.js'
-import { logForDiagnosticsNoPII } from '../diagLogs.js'
-import { getZyConfigHomeDir, isEnvTruthy } from '../envUtils.js'
-import { isFsInaccessible } from '../errors.js'
+import type { Message, SystemCompactBoundaryMessage } from '../../types/message.js'
 import type { FileHistorySnapshot } from '../fileHistory.js'
-import { formatFileSize } from '../format.js'
-import { getFsImplementation } from '../fsOperations.js'
-import { getWorktreePaths } from '../getWorktreePaths.js'
-import { getBranch } from '../git.js'
-import { gracefulShutdownSync, isShuttingDown } from '../gracefulShutdown.js'
-import { parseJSONL } from '../json.js'
 import { logError } from '../log.js'
 import { extractTag, isCompactBoundaryMessage } from '../messages.js'
-import { sanitizePath } from '../path.js'
-import {
-  extractJsonStringField,
-  extractLastJsonStringField,
-  LITE_READ_BUF_SIZE,
-  readHeadAndTail,
-  readTranscriptForLoad,
-  SKIP_PRECOMPACT_THRESHOLD,
-} from '../sessionStoragePortable.js'
-import { getInitialSettings } from '../settings/settings.js'
-import { jsonParse, jsonStringify } from '../slowOperations.js'
-import type { ContentReplacementRecord } from '../toolResultStorage.js'
-import { validateUuid } from '../uuid.js'
-import { getEntrypoint, getNodeEnv, getUserType } from '../sessionStorage/env.js'
-import { isLegacyProgressEntry } from '../sessionStorage/predicates.js'
-import {
-  getAgentMetadataPath,
-  getAgentTranscriptPath,
-  getProjectDir,
-  getProjectsDir,
-  getRemoteAgentMetadataPath,
-  getRemoteAgentsDir,
-  getTranscriptPath,
-  getTranscriptPathForSession,
-} from '../sessionStorage/paths.js'
 
 const SKIP_FIRST_PROMPT_PATTERN = /^(?:\s*<[a-z][\w-]*[\s>]|\[Request interrupted by user[^\]]*\])/
-
 
 export function extractFirstPrompt(transcript: TranscriptMessage[]): string {
   const textContent = getFirstMeaningfulUserMessageTextContent(transcript)
@@ -121,7 +35,6 @@ export function extractFirstPrompt(transcript: TranscriptMessage[]): string {
 
   return 'No prompt'
 }
-
 
 /**
  * 获取最后一条已处理的用户消息（即在任何非用户消息出现之前）。
@@ -201,14 +114,12 @@ export function getFirstMeaningfulUserMessageTextContent<T extends Message>(
   return undefined
 }
 
-
 export function removeExtraFields(transcript: TranscriptMessage[]): SerializedMessage[] {
   return transcript.map((m) => {
     const { isSidechain, parentUuid, ...serializedMessage } = m
     return serializedMessage
   })
 }
-
 
 /**
  * 压缩后将保留段重新拼接回链中。
@@ -343,7 +254,6 @@ export function applyPreservedSegmentRelinks(messages: Map<string, TranscriptMes
   }
 }
 
-
 /**
  * 删除 Snip 执行从内存数组中移除的消息，
  * 并跨越空隙重新链接 parentUuid。
@@ -437,7 +347,6 @@ export function applySnipRemovals(messages: Map<string, TranscriptMessage>): voi
   })
 }
 
-
 /**
  * O(n) 单次遍历：找到匹配谓词的最新时间戳的消息。
  * 替代 `[...values].filter(pred).sort((a,b) => Date(b)-Date(a))[0]` 模式，
@@ -461,7 +370,6 @@ export function findLatestMessage<T extends { timestamp: string }>(
   }
   return latest
 }
-
 
 /**
  * 从叶子消息到根节点构建对话链
@@ -493,7 +401,6 @@ export function buildConversationChain(
   transcript.reverse()
   return recoverOrphanedParallelToolResults(messages, transcript, seen)
 }
-
 
 /**
  * buildConversationChain 的后处理：恢复单父遍历使之成为孤儿的
@@ -628,7 +535,6 @@ function recoverOrphanedParallelToolResults(
   return result
 }
 
-
 /**
  * 在重建的链中找到最新的 turn_duration 检查点，并将其记录的
  * messageCount 与该点的链位置进行比较。发出 zy_resume_consistency_delta
@@ -668,7 +574,6 @@ export function checkResumeConsistency(chain: Message[]): void {
   }
 }
 
-
 /**
  * 从对话中构建文件历史快照链
  */
@@ -696,7 +601,6 @@ export function buildFileHistorySnapshotChain(
   return snapshots
 }
 
-
 /**
  * 从对话中构建归因快照链。
  * 与文件历史快照不同，归因快照完整返回，因为它们使用
@@ -709,7 +613,6 @@ export function buildAttributionSnapshotChain(
   // 返回所有归因快照 - 它们将在恢复时合并
   return Array.from(attributionSnapshots.values())
 }
-
 
 /**
  * 检查用户消息是否有可见内容（文本或图片，不仅是 tool_result）。
@@ -746,7 +649,6 @@ function hasVisibleUserContent(message: TranscriptMessage): boolean {
   return false
 }
 
-
 /**
  * 检查 assistant 消息是否有可见的文本内容（不仅是 tool_use 块）。
  * 工具使用作为分组/折叠的 UI 元素显示，而非独立消息。
@@ -767,7 +669,6 @@ function hasVisibleAssistantContent(message: TranscriptMessage): boolean {
       block.type === 'text' && typeof block.text === 'string' && block.text.trim().length > 0,
   )
 }
-
 
 /**
  * 计算在 UI 中显示为对话轮次的可见消息数。

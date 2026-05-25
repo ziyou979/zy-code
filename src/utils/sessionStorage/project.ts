@@ -4,148 +4,75 @@
 // 临时回环：appendEntryToFile / readFileTailSync 仍在 sessionStorage.ts。
 // 一旦 transcript.ts 抽出，可改为从那里 import。
 
-import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
-import type { Dirent } from 'node:fs'
-import { closeSync, fstatSync, openSync, readSync } from 'node:fs'
 import {
   appendFile as fsAppendFile,
   open as fsOpen,
   mkdir,
-  readdir,
   readFile,
   stat,
-  unlink,
   writeFile,
 } from 'node:fs/promises'
-import { basename, dirname, join } from 'node:path'
-import memoize from 'lodash-es/memoize.js'
+import { dirname } from 'node:path'
+import { logEvent } from 'src/services/analytics/index.js'
 import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  logEvent,
-} from 'src/services/analytics/index.js'
-import {
-  getOriginalCwd,
   getPlanSlugCache,
   getPromptId,
   getSessionId,
-  getSessionProjectDir,
   isSessionPersistenceDisabled,
-  switchSession,
 } from '../../bootstrap/state.js'
-import { builtInCommandNames } from '../../commands.js'
-import { COMMAND_NAME_TAG, TICK_TAG } from '../../constants/xml.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import * as sessionIngress from '../../services/api/sessionIngress.js'
-import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
-import { type AgentId, asAgentId, asSessionId, type SessionId } from '../../types/ids.js'
+import { type AgentId, asAgentId } from '../../types/ids.js'
 import type { AttributionSnapshotMessage } from '../../types/logs.js'
 import {
   type ContentReplacementEntry,
-  type ContextCollapseCommitEntry,
-  type ContextCollapseSnapshotEntry,
   type Entry,
   type FileHistorySnapshotMessage,
-  type LogOption,
   type PersistedWorktreeSession,
-  type SerializedMessage,
-  sortLogs,
   type TranscriptMessage,
 } from '../../types/logs.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
-  Message,
-  SystemCompactBoundaryMessage,
   SystemMessage,
   UserMessage,
 } from '../../types/message.js'
 import type { QueueOperationMessage } from '../../types/messageQueueTypes.js'
-import { uniq } from '../array.js'
 import { registerCleanup } from '../cleanupRegistry.js'
-import { updateSessionName } from '../concurrentSessions.js'
 import { getCwd } from '../cwd.js'
 import { logForDebugging } from '../debug.js'
-import { logForDiagnosticsNoPII } from '../diagLogs.js'
-import { getZyConfigHomeDir, isEnvTruthy } from '../envUtils.js'
+import { isEnvTruthy } from '../envUtils.js'
 import { isFsInaccessible } from '../errors.js'
 import type { FileHistorySnapshot } from '../fileHistory.js'
 import { formatFileSize } from '../format.js'
-import { getFsImplementation } from '../fsOperations.js'
-import { getWorktreePaths } from '../getWorktreePaths.js'
 import { getBranch } from '../git.js'
 import { gracefulShutdownSync, isShuttingDown } from '../gracefulShutdown.js'
-import { parseJSONL } from '../json.js'
 import { logError } from '../log.js'
-import { extractTag, isCompactBoundaryMessage } from '../messages.js'
-import { sanitizePath } from '../path.js'
-import {
-  extractJsonStringField,
-  extractLastJsonStringField,
-  LITE_READ_BUF_SIZE,
-  readHeadAndTail,
-  readTranscriptForLoad,
-  SKIP_PRECOMPACT_THRESHOLD,
-} from '../sessionStoragePortable.js'
-import { getInitialSettings } from '../settings/settings.js'
-import { jsonParse, jsonStringify } from '../slowOperations.js'
-import type { ContentReplacementRecord } from '../toolResultStorage.js'
-import { validateUuid } from '../uuid.js'
+import { isCompactBoundaryMessage } from '../messages.js'
+import { getFirstMeaningfulUserMessageTextContent } from '../sessionStorage/chain.js'
 import { getEntrypoint, getNodeEnv, getUserType } from '../sessionStorage/env.js'
-import { isLegacyProgressEntry } from '../sessionStorage/predicates.js'
+import { getSessionMessages, MAX_TOMBSTONE_REWRITE_BYTES } from '../sessionStorage/logLoading.js'
 import {
-  applyPreservedSegmentRelinks,
-  applySnipRemovals,
-  buildAttributionSnapshotChain,
-  buildConversationChain,
-  buildFileHistorySnapshotChain,
-  countVisibleMessages,
-  extractFirstPrompt,
-  findLatestMessage,
-} from '../sessionStorage/chain.js'
-import {
-  getAgentMetadataPath,
   getAgentTranscriptPath,
-  getProjectDir,
-  getProjectsDir,
-  getRemoteAgentMetadataPath,
-  getRemoteAgentsDir,
   getTranscriptPath,
   getTranscriptPathForSession,
 } from '../sessionStorage/paths.js'
-import {
-  cleanMessagesForLogging,
-  getSessionMessages,
-  loadSessionFile,
-  loadTranscriptFile,
-  loadTranscriptFromFile,
-  MAX_TOMBSTONE_REWRITE_BYTES,
-  repairBrokenParentUuidChains,
-} from '../sessionStorage/logLoading.js'
-import {
-  isChainParticipant,
-  isTranscriptMessage,
-} from '../sessionStorage/predicates.js'
-import {
-  getFirstMeaningfulUserMessageTextContent,
-} from '../sessionStorage/chain.js'
-import {
-  appendEntryToFile,
-  readFileTailSync,
-} from '../sessionStorage.js'
+import { isChainParticipant, isTranscriptMessage } from '../sessionStorage/predicates.js'
+import { appendEntryToFile, readFileTailSync } from '../sessionStorage.js'
+import { extractLastJsonStringField, LITE_READ_BUF_SIZE } from '../sessionStoragePortable.js'
+import { getInitialSettings } from '../settings/settings.js'
+import { jsonParse, jsonStringify } from '../slowOperations.js'
+import type { ContentReplacementRecord } from '../toolResultStorage.js'
 
 // 在模块层级缓存 MACRO.VERSION，用于规避 bun --define 在异步上下文中的 bug
 // 参见: https://github.com/oven-sh/bun/issues/26168
 const VERSION = typeof MACRO !== 'undefined' ? MACRO.VERSION : 'unknown'
 
-
 type Transcript = (UserMessage | AssistantMessage | AttachmentMessage | SystemMessage)[]
-
 
 let project: Project | null = null
 
 let cleanupRegistered = false
-
 
 export function getProject(): Project {
   if (!project) {
@@ -172,7 +99,6 @@ export function getProject(): Project {
   return project
 }
 
-
 /**
  * 重置 Project 单例的 flush 状态，用于测试。
  * 确保测试之间不会因共享计数器状态而相互干扰。
@@ -180,7 +106,6 @@ export function getProject(): Project {
 export function resetProjectFlushStateForTesting(): void {
   project?._resetFlushState()
 }
-
 
 /**
  * 重置整个 Project 单例，用于测试。
@@ -190,18 +115,15 @@ export function resetProjectForTesting(): void {
   project = null
 }
 
-
 export function setSessionFileForTesting(path: string): void {
   getProject().sessionFile = path
 }
-
 
 type InternalEventWriter = (
   eventType: string,
   payload: Record<string, unknown>,
   options?: { isCompaction?: boolean; agentId?: string },
 ) => Promise<void>
-
 
 /**
  * 注册 CCR v2 内部事件写入器，用于 transcript 持久化。
@@ -212,11 +134,9 @@ export function setInternalEventWriter(writer: InternalEventWriter): void {
   getProject().setInternalEventWriter(writer)
 }
 
-
 type InternalEventReader = () => Promise<
   { payload: Record<string, unknown>; agent_id?: string }[] | null
 >
-
 
 /**
  * 注册 CCR v2 内部事件读取器，用于 session 恢复。
@@ -231,7 +151,6 @@ export function setInternalEventReader(
   getProject().setInternalSubagentEventReader(subagentReader)
 }
 
-
 /**
  * 为当前 Project 设置远程 ingress URL，用于测试。
  * 模拟 hydrateRemoteSession 在生产环境中的行为。
@@ -240,9 +159,7 @@ export function setRemoteIngressUrlForTesting(url: string): void {
   getProject().setRemoteIngressUrl(url)
 }
 
-
 const REMOTE_FLUSH_INTERVAL_MS = 10
-
 
 class Project {
   // 仅当前 session 的最小缓存（非所有 session）

@@ -5,48 +5,24 @@
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import type { Dirent } from 'node:fs'
-import { closeSync, fstatSync, openSync, readSync } from 'node:fs'
-import {
-  appendFile as fsAppendFile,
-  open as fsOpen,
-  mkdir,
-  readdir,
-  readFile,
-  stat,
-  unlink,
-  writeFile,
-} from 'node:fs/promises'
-import { basename, dirname, join } from 'node:path'
+import { readdir, readFile, stat } from 'node:fs/promises'
+import { basename, join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  logEvent,
-} from 'src/services/analytics/index.js'
-import {
-  getOriginalCwd,
-  getPlanSlugCache,
-  getPromptId,
-  getSessionId,
-  getSessionProjectDir,
-  isSessionPersistenceDisabled,
-  switchSession,
-} from '../../bootstrap/state.js'
+import { logEvent } from 'src/services/analytics/index.js'
+import { getOriginalCwd, getSessionId, getSessionProjectDir } from '../../bootstrap/state.js'
 import { builtInCommandNames } from '../../commands.js'
 import { COMMAND_NAME_TAG, TICK_TAG } from '../../constants/xml.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import * as sessionIngress from '../../services/api/sessionIngress.js'
 import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
-import { type AgentId, asAgentId, asSessionId, type SessionId } from '../../types/ids.js'
+import { type AgentId, asAgentId } from '../../types/ids.js'
 import type { AttributionSnapshotMessage } from '../../types/logs.js'
 import {
-  type ContentReplacementEntry,
   type ContextCollapseCommitEntry,
   type ContextCollapseSnapshotEntry,
   type Entry,
   type FileHistorySnapshotMessage,
   type LogOption,
   type PersistedWorktreeSession,
-  type SerializedMessage,
   sortLogs,
   type TranscriptMessage,
 } from '../../types/logs.js'
@@ -54,29 +30,19 @@ import type {
   AssistantMessage,
   AttachmentMessage,
   Message,
-  SystemCompactBoundaryMessage,
   SystemMessage,
   UserMessage,
 } from '../../types/message.js'
-import type { QueueOperationMessage } from '../../types/messageQueueTypes.js'
 import { uniq } from '../array.js'
-import { registerCleanup } from '../cleanupRegistry.js'
-import { updateSessionName } from '../concurrentSessions.js'
-import { getCwd } from '../cwd.js'
 import { logForDebugging } from '../debug.js'
-import { logForDiagnosticsNoPII } from '../diagLogs.js'
-import { getZyConfigHomeDir, isEnvTruthy } from '../envUtils.js'
-import { isFsInaccessible } from '../errors.js'
+import { isEnvTruthy } from '../envUtils.js'
 import type { FileHistorySnapshot } from '../fileHistory.js'
-import { formatFileSize } from '../format.js'
-import { getFsImplementation } from '../fsOperations.js'
 import { getWorktreePaths } from '../getWorktreePaths.js'
-import { getBranch } from '../git.js'
-import { gracefulShutdownSync, isShuttingDown } from '../gracefulShutdown.js'
 import { parseJSONL } from '../json.js'
-import { logError } from '../log.js'
 import { extractTag, isCompactBoundaryMessage } from '../messages.js'
 import { sanitizePath } from '../path.js'
+import { getUserType } from '../sessionStorage/env.js'
+import { isLegacyProgressEntry, isTranscriptMessage } from '../sessionStorage/predicates.js'
 import {
   extractJsonStringField,
   extractLastJsonStringField,
@@ -85,12 +51,9 @@ import {
   readTranscriptForLoad,
   SKIP_PRECOMPACT_THRESHOLD,
 } from '../sessionStoragePortable.js'
-import { getInitialSettings } from '../settings/settings.js'
-import { jsonParse, jsonStringify } from '../slowOperations.js'
+import { jsonParse } from '../slowOperations.js'
 import type { ContentReplacementRecord } from '../toolResultStorage.js'
 import { validateUuid } from '../uuid.js'
-import { getEntrypoint, getNodeEnv, getUserType } from '../sessionStorage/env.js'
-import { isLegacyProgressEntry, isTranscriptMessage } from '../sessionStorage/predicates.js'
 
 type Transcript = (UserMessage | AssistantMessage | AttachmentMessage | SystemMessage)[]
 
@@ -116,6 +79,7 @@ type LiteMetadata = {
 
 // 跟 chain.ts:SKIP_FIRST_PROMPT_PATTERN 保持同步 — 镜像本地副本，避免循环 export 依赖。
 const SKIP_FIRST_PROMPT_PATTERN = /^(?:\s*<[a-z][\w-]*[\s>]|\[Request interrupted by user[^\]]*\])/
+
 import {
   applyPreservedSegmentRelinks,
   applySnipRemovals,
@@ -128,12 +92,9 @@ import {
   removeExtraFields,
 } from '../sessionStorage/chain.js'
 import {
-  getAgentMetadataPath,
   getAgentTranscriptPath,
   getProjectDir,
   getProjectsDir,
-  getRemoteAgentMetadataPath,
-  getRemoteAgentsDir,
   getTranscriptPath,
   getTranscriptPathForSession,
 } from '../sessionStorage/paths.js'
@@ -152,7 +113,6 @@ import {
 // 50MB — 防止 tombstone 慢路径（读取并重写整个 session 文件）时发生 OOM。
 // session 文件可增长到数 GB（inc-3930）。
 export const MAX_TOMBSTONE_REWRITE_BYTES = 50 * 1024 * 1024
-
 
 /**
  * 从 JSON 或 JSONL 文件加载 transcript 并转换为 LogOption 格式
@@ -240,7 +200,6 @@ export async function loadTranscriptFromFile(filePath: string): Promise<LogOptio
   return convertToLogOption(messages, 0, undefined, undefined, undefined, undefined, filePath)
 }
 
-
 function convertToLogOption(
   transcript: TranscriptMessage[],
   value: number = 0,
@@ -288,7 +247,6 @@ function convertToLogOption(
   }
 }
 
-
 async function trackSessionBranchingAnalytics(logs: LogOption[]): Promise<void> {
   const sessionIdCounts = new Map<string, number>()
   let maxCount = 0
@@ -320,7 +278,6 @@ async function trackSessionBranchingAnalytics(logs: LogOption[]): Promise<void> 
   })
 }
 
-
 export async function fetchLogs(limit?: number): Promise<LogOption[]> {
   const projectDir = getProjectDir(getOriginalCwd())
   const logs = await getSessionFilesLite(projectDir, limit, getOriginalCwd())
@@ -329,7 +286,6 @@ export async function fetchLogs(limit?: number): Promise<LogOption[]> {
 
   return logs
 }
-
 
 /**
  * 从日志中提取 session ID。
@@ -345,7 +301,6 @@ export function getSessionIdFromLog(log: LogOption): UUID | undefined {
   return log.messages[0]?.sessionId as UUID | undefined
 }
 
-
 /**
  * 检查日志是否为需要完整加载的 lite 日志。
  * lite 日志的 messages 为 [] 且 sessionId 已设置。
@@ -353,7 +308,6 @@ export function getSessionIdFromLog(log: LogOption): UUID | undefined {
 export function isLiteLog(log: LogOption): boolean {
   return log.messages.length === 0 && log.sessionId !== undefined
 }
-
 
 /**
  * 通过读取 JSONL 文件为 lite 日志加载完整消息。
@@ -456,7 +410,6 @@ export async function loadFullLog(log: LogOption): Promise<LogOption> {
   }
 }
 
-
 /**
  * 按自定义标题匹配搜索 session。
  * 返回按时间排序的匹配结果（最新优先）。
@@ -509,7 +462,6 @@ export async function searchSessionsByCustomTitle(
   return deduplicated
 }
 
-
 /**
  * 可出现在 compact boundary 之前但仍必须加载的 metadata entry 类型
  * （它们是 session 范围的，非消息范围的）。
@@ -532,7 +484,6 @@ const METADATA_MARKER_BUFS = METADATA_TYPE_MARKERS.map((m) => Buffer.from(m))
 // 最长标记为 22 字节；+1（前导 `{`）= 23。
 const METADATA_PREFIX_BOUND = 25
 
-
 // null = carry 跨越整个 chunk。当 carry 明确不是 metadata 行时
 // 跳过拼接（标记位于 `{` 后的第 1 字节）。
 function resolveMetadataBuf(carry: Buffer | null, chunkBuf: Buffer): Buffer | null {
@@ -552,7 +503,6 @@ function resolveMetadataBuf(carry: Buffer | null, chunkBuf: Buffer): Buffer | nu
   const firstNl = chunkBuf.indexOf(0x0a)
   return firstNl === -1 ? null : chunkBuf.subarray(firstNl + 1)
 }
-
 
 /**
  * [0, endOffset) 的轻量级前向扫描，仅收集 metadata entry 行。
@@ -629,7 +579,6 @@ async function scanPreBoundaryMetadata(filePath: string, endOffset: number): Pro
 
   return metadataLines
 }
-
 
 /**
  * 字节级预过滤器，在 parseJSONL 之前剔除死 fork 分支。
@@ -713,7 +662,6 @@ function pickDepthOneUuidCandidate(buf: Buffer, lineStart: number, candidates: n
   }
   return candidates.at(-1)!
 }
-
 
 function walkChainBeforeParse(buf: Buffer): Buffer {
   const NEWLINE = 0x0a
@@ -879,7 +827,6 @@ function walkChainBeforeParse(buf: Buffer): Buffer {
   return Buffer.concat(parts)
 }
 
-
 /**
  * 修复 transcript messages 中损坏的 parentUuid 链。
  * 正常文件零开销：先快速扫描，没有断链则直接返回。
@@ -929,7 +876,6 @@ export function repairBrokenParentUuidChains(messages: Map<string, TranscriptMes
     }
   }
 }
-
 
 /**
  * 从 transcript 文件加载所有消息、摘要和文件历史快照。
@@ -1264,7 +1210,6 @@ export async function loadTranscriptFile(
   }
 }
 
-
 /**
  * 从特定 session 文件加载所有消息、摘要、文件历史快照和归因快照。
  */
@@ -1288,7 +1233,6 @@ export async function loadSessionFile(sessionId: UUID): Promise<{
   return loadTranscriptFile(sessionFile)
 }
 
-
 /**
  * 获取特定 session 的消息 UUID，而无需加载所有 session。
  * 已记忆化以避免多次重读同一 session 文件。
@@ -1302,7 +1246,6 @@ getSessionMessages = memoize(
   (sessionId: UUID) => sessionId,
 )
 
-
 /**
  * 清除记忆化的 session 消息缓存。
  * 在压缩后调用，因为旧的消息 UUID 不再有效。
@@ -1310,7 +1253,6 @@ getSessionMessages = memoize(
 export function clearSessionMessagesCache(): void {
   getSessionMessages.cache.clear?.()
 }
-
 
 /**
  * 检查消息 UUID 是否存在于 session storage 中
@@ -1322,7 +1264,6 @@ export async function doesMessageExistInSession(
   const messageSet = await getSessionMessages(sessionId)
   return messageSet.has(messageUuid)
 }
-
 
 export async function getLastSessionLog(sessionId: UUID): Promise<LogOption | null> {
   // 单次读取：一次性加载所有 session 数据，而非读取文件两次
@@ -1384,7 +1325,6 @@ export async function getLastSessionLog(sessionId: UUID): Promise<LogOption | nu
   }
 }
 
-
 /**
  * 加载消息日志列表
  * @param limit 可选的要加载的 session 文件数量限制
@@ -1405,7 +1345,6 @@ export async function loadMessageLogs(limit?: number): Promise<LogOption[]> {
   return sorted
 }
 
-
 /**
  * 从所有项目目录加载消息日志。
  * @param limit 可选的每个项目要加载的 session 文件数量限制（在无索引时使用）
@@ -1425,7 +1364,6 @@ export async function loadAllProjectsMessageLogs(
   )
   return result.logs
 }
-
 
 async function loadAllProjectsMessageLogsFull(limit?: number): Promise<LogOption[]> {
   const projectsDir = getProjectsDir()
@@ -1465,7 +1403,6 @@ async function loadAllProjectsMessageLogsFull(limit?: number): Promise<LogOption
   return sorted
 }
 
-
 export async function loadAllProjectsMessageLogsProgressive(
   limit?: number,
   initialEnrichCount: number = INITIAL_ENRICH_COUNT,
@@ -1499,7 +1436,6 @@ export async function loadAllProjectsMessageLogsProgressive(
   return { logs, allStatLogs: sorted, nextIndex }
 }
 
-
 /**
  * 从同一 git 仓库的所有 worktree 加载消息日志。
  * 如果未提供 worktree 则回退到 loadMessageLogs。
@@ -1522,7 +1458,6 @@ export type SessionLogResult = {
   nextIndex: number
 }
 
-
 export async function loadSameRepoMessageLogs(
   worktreePaths: string[],
   limit?: number,
@@ -1531,7 +1466,6 @@ export async function loadSameRepoMessageLogs(
   const result = await loadSameRepoMessageLogsProgressive(worktreePaths, limit, initialEnrichCount)
   return result.logs
 }
-
 
 export async function loadSameRepoMessageLogsProgressive(
   worktreePaths: string[],
@@ -1552,7 +1486,6 @@ export async function loadSameRepoMessageLogsProgressive(
   })
   return { logs, allStatLogs, nextIndex }
 }
-
 
 /**
  * 获取 worktree 路径的仅 stat 日志（不读取文件）。
@@ -1626,7 +1559,6 @@ async function getStatOnlyLogsForWorktrees(
   return deduplicateLogsBySessionId(allLogs)
 }
 
-
 /**
  * 通过 agentId 检索特定代理的 transcript。
  * 直接加载代理特定的 transcript 文件。
@@ -1676,7 +1608,6 @@ export async function getAgentTranscript(agentId: AgentId): Promise<{
   }
 }
 
-
 /**
  * 从对话中的 progress 消息中提取代理 ID。
  * 代理/skill progress 消息的 type 为 'progress'，data.type
@@ -1702,7 +1633,6 @@ export function extractAgentIdsFromMessages(messages: Message[]): string[] {
 
   return uniq(agentIds)
 }
-
 
 /**
  * 直接从 AppState 任务中提取队友 transcript。
@@ -1732,7 +1662,6 @@ export function extractTeammateTranscriptsFromTasks(tasks: {
 
   return transcripts
 }
-
 
 /**
  * 为给定的代理 ID 加载子代理 transcript
@@ -1764,7 +1693,6 @@ export async function loadSubagentTranscripts(
   return transcripts
 }
 
-
 // 直接 glob session 的 subagents 目录 — 与 AppState.tasks 不同，这在任务驱逐后仍存活。
 export async function loadAllSubagentTranscriptsFromDisk(): Promise<{
   [agentId: string]: Message[]
@@ -1786,7 +1714,6 @@ export async function loadAllSubagentTranscriptsFromDisk(): Promise<{
     .map((d) => d.name.slice('agent-'.length, -'.jsonl'.length))
   return loadSubagentTranscripts(agentIds)
 }
-
 
 // 导出以便 useLogMessages 可以同步计算最后一个可记录的 uuid，
 // 而无需 await recordTranscript 的返回值（无竞争的提示跟踪）。
@@ -1810,7 +1737,6 @@ export function isLoggableMessage(m: Message): boolean {
   return true
 }
 
-
 function collectReplIds(messages: readonly Message[]): Set<string> {
   const ids = new Set<string>()
   for (const m of messages) {
@@ -1824,7 +1750,6 @@ function collectReplIds(messages: readonly Message[]): Set<string> {
   }
   return ids
 }
-
 
 /**
  * 对于外部用户，使 REPL 在持久化的 transcript 中不可见：剥离
@@ -1888,7 +1813,6 @@ function transformMessagesForExternalTranscript(
   }) as Transcript
 }
 
-
 export function cleanMessagesForLogging(
   messages: Message[],
   allMessages: readonly Message[] = messages,
@@ -1899,7 +1823,6 @@ export function cleanMessagesForLogging(
     : filtered
 }
 
-
 /**
  * 通过索引获取日志
  * @param index 排序后的日志列表中的索引（0 基）
@@ -1909,7 +1832,6 @@ export async function getLogByIndex(index: number): Promise<LogOption | null> {
   const logs = await loadMessageLogs()
   return logs[index] || null
 }
-
 
 /**
  * 通过 tool_use_id 在 transcript 中查找未解析的工具使用。
@@ -1953,7 +1875,6 @@ export async function findUnresolvedToolUse(toolUseId: string): Promise<Assistan
     return null
   }
 }
-
 
 /**
  * 获取项目目录中所有 session JSONL 文件及其 stat。
@@ -2006,7 +1927,6 @@ export async function getSessionFilesWithMtime(
 
   return sessionFilesMap
 }
-
 
 /**
  * 从单个 session 文件加载所有带完整消息数据的日志。
@@ -2108,7 +2028,6 @@ export async function loadAllLogsFromSessionFile(
   return logs
 }
 
-
 /**
  * 通过完整加载所有 session 文件获取日志，绕过 session 索引。
  * 当需要完整消息数据时使用（例如用于 /insights 分析）。
@@ -2140,7 +2059,6 @@ async function getLogsWithoutIndex(projectDir: string, limit?: number): Promise<
 
   return logs
 }
-
 
 /**
  * 读取 JSONL 文件的前后各 ~64KB 并提取 lite metadata。
@@ -2227,7 +2145,6 @@ async function readLiteMetadata(
     prRepository,
   }
 }
-
 
 /**
  * 扫描一段文本以找到首条有意义的用户 prompt。
@@ -2336,7 +2253,6 @@ function extractFirstPromptFromChunk(chunk: string): string {
   return ''
 }
 
-
 /**
  * 类似 extractJsonStringField 但即使缺少闭合引号（截断的缓冲区）也返回
  * 值的前 `maxLen` 个字符。换行转义被替换为空格，结果被修剪。
@@ -2371,7 +2287,6 @@ function extractJsonStringFieldPrefix(text: string, key: string, maxLen: number)
   return ''
 }
 
-
 /**
  * 按 sessionId 去重日志，保留修改时间最新的条目。
  * 返回带有顺序值索引的排序日志。
@@ -2392,7 +2307,6 @@ function deduplicateLogsBySessionId(logs: LogOption[]): LogOption[] {
     value: i,
   }))
 }
-
 
 /**
  * 从纯文件系统 metadata（仅 stat）返回 lite LogOption[]。
@@ -2439,7 +2353,6 @@ export async function getSessionFilesLite(
   })
   return sorted
 }
-
 
 /**
  * 使用 JSONL 文件中的 metadata 丰富 lite 日志。
@@ -2489,7 +2402,6 @@ async function enrichLog(log: LogOption, readBuf: Buffer): Promise<LogOption | n
 
   return enriched
 }
-
 
 /**
  * 从 `allLogs`（从 `startIndex` 开始）丰富足够的 lite 日志以

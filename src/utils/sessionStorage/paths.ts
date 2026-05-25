@@ -1,10 +1,6 @@
 import { join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import {
-  getOriginalCwd,
-  getSessionId,
-  getSessionProjectDir,
-} from '../../bootstrap/state.js'
+import { getOriginalCwd, getSessionId, getSessionProjectDir } from '../../bootstrap/state.js'
 import type { AgentId } from '../../types/ids.js'
 import { getZyConfigHomeDir } from '../envUtils.js'
 import { sanitizePath } from '../path.js'

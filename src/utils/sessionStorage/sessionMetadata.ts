@@ -1,131 +1,16 @@
 // Session metadata 持久化 / 恢复：标题、标签、PR 链接、agent 名称色、模式、worktree 状态。
 // 所有 save* 通过 appendEntryToFile 写入 transcript JSONL；getCurrentSession* 读 Project 单例缓存。
 
-import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
-import type { Dirent } from 'node:fs'
-import { closeSync, fstatSync, openSync, readSync } from 'node:fs'
-import {
-  appendFile as fsAppendFile,
-  open as fsOpen,
-  mkdir,
-  readdir,
-  readFile,
-  stat,
-  unlink,
-  writeFile,
-} from 'node:fs/promises'
-import { basename, dirname, join } from 'node:path'
-import memoize from 'lodash-es/memoize.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import {
-  getOriginalCwd,
-  getPlanSlugCache,
-  getPromptId,
-  getSessionId,
-  getSessionProjectDir,
-  isSessionPersistenceDisabled,
-  switchSession,
-} from '../../bootstrap/state.js'
-import { builtInCommandNames } from '../../commands.js'
-import { COMMAND_NAME_TAG, TICK_TAG } from '../../constants/xml.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import * as sessionIngress from '../../services/api/sessionIngress.js'
-import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
-import { type AgentId, asAgentId, asSessionId, type SessionId } from '../../types/ids.js'
-import type { AttributionSnapshotMessage } from '../../types/logs.js'
-import {
-  type ContentReplacementEntry,
-  type ContextCollapseCommitEntry,
-  type ContextCollapseSnapshotEntry,
-  type Entry,
-  type FileHistorySnapshotMessage,
-  type LogOption,
-  type PersistedWorktreeSession,
-  type SerializedMessage,
-  sortLogs,
-  type TranscriptMessage,
-} from '../../types/logs.js'
-import type {
-  AssistantMessage,
-  AttachmentMessage,
-  Message,
-  SystemCompactBoundaryMessage,
-  SystemMessage,
-  UserMessage,
-} from '../../types/message.js'
-import type { QueueOperationMessage } from '../../types/messageQueueTypes.js'
-import { uniq } from '../array.js'
-import { registerCleanup } from '../cleanupRegistry.js'
+import { getSessionId } from '../../bootstrap/state.js'
+import { type SessionId } from '../../types/ids.js'
+import { type PersistedWorktreeSession } from '../../types/logs.js'
 import { updateSessionName } from '../concurrentSessions.js'
-import { getCwd } from '../cwd.js'
-import { logForDebugging } from '../debug.js'
-import { logForDiagnosticsNoPII } from '../diagLogs.js'
-import { getZyConfigHomeDir, isEnvTruthy } from '../envUtils.js'
-import { isFsInaccessible } from '../errors.js'
-import type { FileHistorySnapshot } from '../fileHistory.js'
-import { formatFileSize } from '../format.js'
-import { getFsImplementation } from '../fsOperations.js'
-import { getWorktreePaths } from '../getWorktreePaths.js'
-import { getBranch } from '../git.js'
-import { gracefulShutdownSync, isShuttingDown } from '../gracefulShutdown.js'
-import { parseJSONL } from '../json.js'
-import { logError } from '../log.js'
-import { extractTag, isCompactBoundaryMessage } from '../messages.js'
-import { sanitizePath } from '../path.js'
-import {
-  extractJsonStringField,
-  extractLastJsonStringField,
-  LITE_READ_BUF_SIZE,
-  readHeadAndTail,
-  readTranscriptForLoad,
-  SKIP_PRECOMPACT_THRESHOLD,
-} from '../sessionStoragePortable.js'
-import { getInitialSettings } from '../settings/settings.js'
-import { jsonParse, jsonStringify } from '../slowOperations.js'
-import type { ContentReplacementRecord } from '../toolResultStorage.js'
-import { validateUuid } from '../uuid.js'
-import { getEntrypoint, getNodeEnv, getUserType } from '../sessionStorage/env.js'
-import { isLegacyProgressEntry } from '../sessionStorage/predicates.js'
-import {
-  applyPreservedSegmentRelinks,
-  applySnipRemovals,
-  buildAttributionSnapshotChain,
-  buildConversationChain,
-  buildFileHistorySnapshotChain,
-  countVisibleMessages,
-  extractFirstPrompt,
-  findLatestMessage,
-} from '../sessionStorage/chain.js'
-import {
-  getAgentMetadataPath,
-  getAgentTranscriptPath,
-  getProjectDir,
-  getProjectsDir,
-  getRemoteAgentMetadataPath,
-  getRemoteAgentsDir,
-  getTranscriptPath,
-  getTranscriptPathForSession,
-} from '../sessionStorage/paths.js'
-import {
-  cleanMessagesForLogging,
-  getSessionMessages,
-  loadSessionFile,
-  loadTranscriptFile,
-  loadTranscriptFromFile,
-  MAX_TOMBSTONE_REWRITE_BYTES,
-  repairBrokenParentUuidChains,
-} from '../sessionStorage/logLoading.js'
-import {
-  isChainParticipant,
-  isTranscriptMessage,
-} from '../sessionStorage/predicates.js'
-import {
-  getFirstMeaningfulUserMessageTextContent,
-} from '../sessionStorage/chain.js'
+import { getTranscriptPathForSession } from '../sessionStorage/paths.js'
 import { getProject } from '../sessionStorage/project.js'
 import { appendEntryToFile } from '../sessionStorage/transcript.js'
 
@@ -152,7 +37,6 @@ export async function saveCustomTitle(
     source: source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 }
-
 
 /**
  * 将 AI 生成的标题作为独立的 `ai-title` entry 持久化到 JSONL。
@@ -187,7 +71,6 @@ export function saveAiGeneratedTitle(sessionId: UUID, aiTitle: string): void {
   })
 }
 
-
 /**
  * 为 `zy ps` 追加周期性任务摘要。与 ai-title 不同，这不会被
  * reAppendSessionMetadata 重新追加 — 它是代理当前正在做什么的滚动快照，
@@ -202,7 +85,6 @@ export function saveTaskSummary(sessionId: UUID, summary: string): void {
   })
 }
 
-
 export async function saveTag(sessionId: UUID, tag: string, fullPath?: string) {
   // 如果未提供 fullPath 则回退到计算的路径
   const resolvedPath = fullPath ?? getTranscriptPathForSession(sessionId)
@@ -213,7 +95,6 @@ export async function saveTag(sessionId: UUID, tag: string, fullPath?: string) {
   }
   logEvent('zy_session_tagged', {})
 }
-
 
 /**
  * 将 session 链接到 GitHub pull request。
@@ -245,7 +126,6 @@ export async function linkSessionToPR(
   logEvent('zy_session_linked_to_pr', { prNumber })
 }
 
-
 export function getCurrentSessionTag(sessionId: UUID): string | undefined {
   // 仅返回当前 session 的标签（我们唯一缓存的）
   if (sessionId === getSessionId()) {
@@ -253,7 +133,6 @@ export function getCurrentSessionTag(sessionId: UUID): string | undefined {
   }
   return undefined
 }
-
 
 export function getCurrentSessionTitle(sessionId: SessionId): string | undefined {
   // 仅返回当前 session 的标题（我们唯一缓存的）
@@ -263,11 +142,9 @@ export function getCurrentSessionTitle(sessionId: SessionId): string | undefined
   return undefined
 }
 
-
 export function getCurrentSessionAgentColor(): string | undefined {
   return getProject().currentSessionAgentColor
 }
-
 
 /**
  * 恢复时将 session metadata 还原到内存缓存中。
@@ -321,7 +198,6 @@ export function restoreSessionMetadata(meta: {
   }
 }
 
-
 /**
  * 清除所有缓存的 session metadata（标题、标签、代理名称/颜色）。
  * 当 /clear 创建新 session 时调用，以防止前一个 session 的
@@ -342,7 +218,6 @@ export function clearSessionMetadata(): void {
   project.currentSessionPrRepository = undefined
 }
 
-
 /**
  * 将缓存的 session metadata（自定义标题、标签）重新追加到 transcript
  * 文件末尾。在压缩后调用此函数以使 metadata 保持在 readLiteMetadata
@@ -353,7 +228,6 @@ export function clearSessionMetadata(): void {
 export function reAppendSessionMetadata(): void {
   getProject().reAppendSessionMetadata()
 }
-
 
 export async function saveAgentName(
   sessionId: UUID,
@@ -373,7 +247,6 @@ export async function saveAgentName(
   })
 }
 
-
 export async function saveAgentColor(sessionId: UUID, agentColor: string, fullPath?: string) {
   const resolvedPath = fullPath ?? getTranscriptPathForSession(sessionId)
   appendEntryToFile(resolvedPath, {
@@ -388,7 +261,6 @@ export async function saveAgentColor(sessionId: UUID, agentColor: string, fullPa
   logEvent('zy_agent_color_set', {})
 }
 
-
 /**
  * 缓存 session 代理设置。由 materializeSessionFile 在首条用户消息时写入磁盘，
  * 并在退出时由 reAppendSessionMetadata 重新标记。
@@ -397,7 +269,6 @@ export async function saveAgentColor(sessionId: UUID, agentColor: string, fullPa
 export function saveAgentSetting(agentSetting: string): void {
   getProject().currentSessionAgentSetting = agentSetting
 }
-
 
 /**
  * 缓存启动时设置的 session 标题（--name）。由 materializeSessionFile
@@ -408,7 +279,6 @@ export function cacheSessionTitle(customTitle: string): void {
   getProject().currentSessionTitle = customTitle
 }
 
-
 /**
  * 缓存 session 模式。由 materializeSessionFile 在首条用户消息时写入磁盘，
  * 并在退出时由 reAppendSessionMetadata 重新标记。
@@ -417,7 +287,6 @@ export function cacheSessionTitle(customTitle: string): void {
 export function saveMode(mode: 'coordinator' | 'normal'): void {
   getProject().currentSessionMode = mode
 }
-
 
 /**
  * 记录 session 的 worktree 状态用于 --resume。由 materializeSessionFile

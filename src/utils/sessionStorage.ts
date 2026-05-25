@@ -10,30 +10,10 @@
 //   sessionMetadata.ts - save* / get* / restore* / cache* 标题 / 标签 / 模式
 // 此文件仅做公共 API re-export。
 
-export {
-  clearAgentTranscriptSubdir,
-  getAgentTranscriptPath,
-  getProjectDir,
-  getProjectsDir,
-  getTranscriptPath,
-  getTranscriptPathForSession,
-  MAX_TRANSCRIPT_READ_BYTES,
-  setAgentTranscriptSubdir,
-} from './sessionStorage/paths.js'
-
-export {
-  getNodeEnv,
-  getUserType,
-  isCustomTitleEnabled,
-} from './sessionStorage/env.js'
-
-export {
-  isChainParticipant,
-  isEphemeralToolProgress,
-  isTranscriptMessage,
-  sessionIdExists,
-} from './sessionStorage/predicates.js'
-
+export type {
+  AgentMetadata,
+  RemoteAgentMetadata,
+} from './sessionStorage/agentMetadata.js'
 export {
   deleteRemoteAgentMetadata,
   listRemoteAgentMetadata,
@@ -42,18 +22,18 @@ export {
   writeAgentMetadata,
   writeRemoteAgentMetadata,
 } from './sessionStorage/agentMetadata.js'
-export type {
-  AgentMetadata,
-  RemoteAgentMetadata,
-} from './sessionStorage/agentMetadata.js'
-
 export {
   buildConversationChain,
   checkResumeConsistency,
   getFirstMeaningfulUserMessageTextContent,
   removeExtraFields,
 } from './sessionStorage/chain.js'
-
+export {
+  getNodeEnv,
+  getUserType,
+  isCustomTitleEnabled,
+} from './sessionStorage/env.js'
+export type { SessionLogResult } from './sessionStorage/logLoading.js'
 export {
   cleanMessagesForLogging,
   clearSessionMessagesCache,
@@ -83,7 +63,22 @@ export {
   loadTranscriptFromFile,
   searchSessionsByCustomTitle,
 } from './sessionStorage/logLoading.js'
-export type { SessionLogResult } from './sessionStorage/logLoading.js'
+export {
+  clearAgentTranscriptSubdir,
+  getAgentTranscriptPath,
+  getProjectDir,
+  getProjectsDir,
+  getTranscriptPath,
+  getTranscriptPathForSession,
+  MAX_TRANSCRIPT_READ_BYTES,
+  setAgentTranscriptSubdir,
+} from './sessionStorage/paths.js'
+export {
+  isChainParticipant,
+  isEphemeralToolProgress,
+  isTranscriptMessage,
+  sessionIdExists,
+} from './sessionStorage/predicates.js'
 
 export {
   resetProjectFlushStateForTesting,
@@ -93,27 +88,6 @@ export {
   setRemoteIngressUrlForTesting,
   setSessionFileForTesting,
 } from './sessionStorage/project.js'
-
-export {
-  adoptResumedSessionFile,
-  appendEntryToFile,
-  flushSessionStorage,
-  hydrateFromCCRv2InternalEvents,
-  hydrateRemoteSession,
-  readFileTailSync,
-  recordAttributionSnapshot,
-  recordContentReplacement,
-  recordContextCollapseCommit,
-  recordContextCollapseSnapshot,
-  recordFileHistorySnapshot,
-  recordQueueOperation,
-  recordSidechainTranscript,
-  recordTranscript,
-  removeTranscriptMessage,
-  resetSessionFilePointer,
-} from './sessionStorage/transcript.js'
-export type { TeamInfo } from './sessionStorage/transcript.js'
-
 export {
   cacheSessionTitle,
   clearSessionMetadata,
@@ -133,3 +107,22 @@ export {
   saveTaskSummary,
   saveWorktreeState,
 } from './sessionStorage/sessionMetadata.js'
+export type { TeamInfo } from './sessionStorage/transcript.js'
+export {
+  adoptResumedSessionFile,
+  appendEntryToFile,
+  flushSessionStorage,
+  hydrateFromCCRv2InternalEvents,
+  hydrateRemoteSession,
+  readFileTailSync,
+  recordAttributionSnapshot,
+  recordContentReplacement,
+  recordContextCollapseCommit,
+  recordContextCollapseSnapshot,
+  recordFileHistorySnapshot,
+  recordQueueOperation,
+  recordSidechainTranscript,
+  recordTranscript,
+  removeTranscriptMessage,
+  resetSessionFilePointer,
+} from './sessionStorage/transcript.js'

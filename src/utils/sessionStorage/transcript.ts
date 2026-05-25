@@ -1,138 +1,37 @@
 // transcript 写路径 + hydrate：record* / flush / hydrateRemoteSession / hydrateFromCCRv2InternalEvents。
 // 文件写入原子助手 appendEntryToFile / readFileTailSync。
 
-import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
-import type { Dirent } from 'node:fs'
 import { closeSync, fstatSync, openSync, readSync } from 'node:fs'
-import {
-  appendFile as fsAppendFile,
-  open as fsOpen,
-  mkdir,
-  readdir,
-  readFile,
-  stat,
-  unlink,
-  writeFile,
-} from 'node:fs/promises'
-import { basename, dirname, join } from 'node:path'
-import memoize from 'lodash-es/memoize.js'
-import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  logEvent,
-} from 'src/services/analytics/index.js'
-import {
-  getOriginalCwd,
-  getPlanSlugCache,
-  getPromptId,
-  getSessionId,
-  getSessionProjectDir,
-  isSessionPersistenceDisabled,
-  switchSession,
-} from '../../bootstrap/state.js'
-import { builtInCommandNames } from '../../commands.js'
-import { COMMAND_NAME_TAG, TICK_TAG } from '../../constants/xml.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { dirname } from 'node:path'
+import { getOriginalCwd, getSessionId, switchSession } from '../../bootstrap/state.js'
 import * as sessionIngress from '../../services/api/sessionIngress.js'
-import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
-import { type AgentId, asAgentId, asSessionId, type SessionId } from '../../types/ids.js'
+import { type AgentId, asAgentId, asSessionId } from '../../types/ids.js'
 import type { AttributionSnapshotMessage } from '../../types/logs.js'
-import {
-  type ContentReplacementEntry,
-  type ContextCollapseCommitEntry,
-  type ContextCollapseSnapshotEntry,
-  type Entry,
-  type FileHistorySnapshotMessage,
-  type LogOption,
-  type PersistedWorktreeSession,
-  type SerializedMessage,
-  sortLogs,
-  type TranscriptMessage,
-} from '../../types/logs.js'
-import type {
-  AssistantMessage,
-  AttachmentMessage,
-  Message,
-  SystemCompactBoundaryMessage,
-  SystemMessage,
-  UserMessage,
-} from '../../types/message.js'
+import type { Message } from '../../types/message.js'
 import type { QueueOperationMessage } from '../../types/messageQueueTypes.js'
-import { uniq } from '../array.js'
-import { registerCleanup } from '../cleanupRegistry.js'
-import { updateSessionName } from '../concurrentSessions.js'
-import { getCwd } from '../cwd.js'
 import { logForDebugging } from '../debug.js'
 import { logForDiagnosticsNoPII } from '../diagLogs.js'
-import { getZyConfigHomeDir, isEnvTruthy } from '../envUtils.js'
-import { isFsInaccessible } from '../errors.js'
 import type { FileHistorySnapshot } from '../fileHistory.js'
-import { formatFileSize } from '../format.js'
 import { getFsImplementation } from '../fsOperations.js'
-import { getWorktreePaths } from '../getWorktreePaths.js'
-import { getBranch } from '../git.js'
-import { gracefulShutdownSync, isShuttingDown } from '../gracefulShutdown.js'
-import { parseJSONL } from '../json.js'
-import { logError } from '../log.js'
-import { extractTag, isCompactBoundaryMessage } from '../messages.js'
-import { sanitizePath } from '../path.js'
+import { cleanMessagesForLogging, getSessionMessages } from '../sessionStorage/logLoading.js'
 import {
-  extractJsonStringField,
-  extractLastJsonStringField,
-  LITE_READ_BUF_SIZE,
-  readHeadAndTail,
-  readTranscriptForLoad,
-  SKIP_PRECOMPACT_THRESHOLD,
-} from '../sessionStoragePortable.js'
-import { getInitialSettings } from '../settings/settings.js'
-import { jsonParse, jsonStringify } from '../slowOperations.js'
-import type { ContentReplacementRecord } from '../toolResultStorage.js'
-import { validateUuid } from '../uuid.js'
-import { getEntrypoint, getNodeEnv, getUserType } from '../sessionStorage/env.js'
-import { isLegacyProgressEntry } from '../sessionStorage/predicates.js'
-import {
-  applyPreservedSegmentRelinks,
-  applySnipRemovals,
-  buildAttributionSnapshotChain,
-  buildConversationChain,
-  buildFileHistorySnapshotChain,
-  countVisibleMessages,
-  extractFirstPrompt,
-  findLatestMessage,
-} from '../sessionStorage/chain.js'
-import {
-  getAgentMetadataPath,
   getAgentTranscriptPath,
   getProjectDir,
-  getProjectsDir,
-  getRemoteAgentMetadataPath,
-  getRemoteAgentsDir,
   getTranscriptPath,
   getTranscriptPathForSession,
 } from '../sessionStorage/paths.js'
-import {
-  cleanMessagesForLogging,
-  getSessionMessages,
-  loadSessionFile,
-  loadTranscriptFile,
-  loadTranscriptFromFile,
-  MAX_TOMBSTONE_REWRITE_BYTES,
-  repairBrokenParentUuidChains,
-} from '../sessionStorage/logLoading.js'
-import {
-  isChainParticipant,
-  isTranscriptMessage,
-} from '../sessionStorage/predicates.js'
-import {
-  getFirstMeaningfulUserMessageTextContent,
-} from '../sessionStorage/chain.js'
+import { isChainParticipant } from '../sessionStorage/predicates.js'
 import { getProject } from '../sessionStorage/project.js'
+import { LITE_READ_BUF_SIZE } from '../sessionStoragePortable.js'
+import { jsonStringify } from '../slowOperations.js'
+import type { ContentReplacementRecord } from '../toolResultStorage.js'
 
 export type TeamInfo = {
   teamName?: string
   agentName?: string
 }
-
 
 // 在传递给 insertMessageChain 之前过滤已记录的消息。
 // 如果不这样做，压缩后 messagesToKeep（与压缩前消息相同的 UUID）
@@ -192,7 +91,6 @@ export async function recordTranscript(
   return (lastRecorded?.uuid as UUID | undefined) ?? startingParentUuid ?? null
 }
 
-
 export async function recordSidechainTranscript(
   messages: Message[],
   agentId?: string,
@@ -206,11 +104,9 @@ export async function recordSidechainTranscript(
   )
 }
 
-
 export async function recordQueueOperation(queueOp: QueueOperationMessage) {
   await getProject().insertQueueOperation(queueOp)
 }
-
 
 /**
  * 通过 UUID 从 transcript 中删除一条消息。
@@ -220,7 +116,6 @@ export async function removeTranscriptMessage(targetUuid: UUID): Promise<void> {
   await getProject().removeMessageByUuid(targetUuid)
 }
 
-
 export async function recordFileHistorySnapshot(
   messageId: UUID,
   snapshot: FileHistorySnapshot,
@@ -229,11 +124,9 @@ export async function recordFileHistorySnapshot(
   await getProject().insertFileHistorySnapshot(messageId, snapshot, isSnapshotUpdate)
 }
 
-
 export async function recordAttributionSnapshot(snapshot: AttributionSnapshotMessage) {
   await getProject().insertAttributionSnapshot(snapshot)
 }
-
 
 export async function recordContentReplacement(
   replacements: ContentReplacementRecord[],
@@ -242,7 +135,6 @@ export async function recordContentReplacement(
   await getProject().insertContentReplacement(replacements, agentId)
 }
 
-
 /**
  * 在 switchSession/regenerateSessionId 之后重置 session 文件指针。
  * 新文件在首条 user/assistant 消息时懒创建。
@@ -250,7 +142,6 @@ export async function recordContentReplacement(
 export async function resetSessionFilePointer() {
   getProject().resetSessionFile()
 }
-
 
 /**
  * 在 --continue/--resume（非 fork）之后采纳现有的 session 文件。
@@ -276,7 +167,6 @@ export function adoptResumedSessionFile(): void {
   project.reAppendSessionMetadata(true)
 }
 
-
 /**
  * 将 context-collapse 提交 entry 追加到 transcript。每次提交一个 entry，
  * 按提交顺序。恢复时将它们收集到有序数组中，
@@ -300,7 +190,6 @@ export async function recordContextCollapseCommit(commit: {
     ...commit,
   })
 }
-
 
 /**
  * 快照 staged 队列 + spawn 状态。在每个 ctx-agent spawn 解析后写入
@@ -329,11 +218,9 @@ export async function recordContextCollapseSnapshot(snapshot: {
   })
 }
 
-
 export async function flushSessionStorage(): Promise<void> {
   await getProject().flush()
 }
-
 
 export async function hydrateRemoteSession(
   sessionId: string,
@@ -369,7 +256,6 @@ export async function hydrateRemoteSession(
     project.setRemoteIngressUrl(ingressUrl)
   }
 }
-
 
 /**
  * 从 CCR v2 内部事件 hydrate session 状态。
@@ -464,7 +350,6 @@ export async function hydrateFromCCRv2InternalEvents(sessionId: string): Promise
   }
 }
 
-
 /**
  * 向 session 文件追加一个 entry。如果父目录缺失则创建。
  */
@@ -479,7 +364,6 @@ export function appendEntryToFile(fullPath: string, entry: Record<string, unknow
     fs.appendFileSync(fullPath, line, { mode: 0o600 })
   }
 }
-
 
 /**
  * 用于 reAppendSessionMetadata 外部写入检查的同步尾部读取。
@@ -507,20 +391,4 @@ export function readFileTailSync(fullPath: string): string {
       }
     }
   }
-}
-
-
-type LiteMetadata = {
-  firstPrompt: string
-  gitBranch?: string
-  isSidechain: boolean
-  projectPath?: string
-  teamName?: string
-  customTitle?: string
-  summary?: string
-  tag?: string
-  agentSetting?: string
-  prNumber?: number
-  prUrl?: string
-  prRepository?: string
 }

@@ -4,11 +4,7 @@ import { dirname, join } from 'node:path'
 import type { AgentId } from '../../types/ids.js'
 import { logForDebugging } from '../debug.js'
 import { isFsInaccessible } from '../errors.js'
-import {
-  getAgentMetadataPath,
-  getRemoteAgentMetadataPath,
-  getRemoteAgentsDir,
-} from './paths.js'
+import { getAgentMetadataPath, getRemoteAgentMetadataPath, getRemoteAgentsDir } from './paths.js'
 
 export type AgentMetadata = {
   agentType: string
