@@ -215,7 +215,7 @@ function PromptInputFooter({
           <BridgeStatusIndicator bridgeSelected={bridgeSelected} />
         </Box>
       </Box>
-      {isInternalBuild() && <CoordinatorTaskPanel />}
+      <CoordinatorTaskPanel />
     </>
   )
 }

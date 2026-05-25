@@ -571,19 +571,27 @@ export const SettingsSchema = lazySchema(() =>
         .object({
           enabled: z.boolean().optional(),
           modules: z
-            .object({
-              directory: z.boolean().optional().describe('Working directory and git branch'),
-              model: z.boolean().optional().describe('Model name and effort level'),
-              context: z.boolean().optional().describe('Context window usage bar'),
-              tokens: z.boolean().optional().describe('Token input/output counts'),
-              cost: z.boolean().optional().describe('Estimated cost in CNY'),
-              agents: z.boolean().optional().describe('Active sub-agents'),
-              memory: z.boolean().optional().describe('Memory (RSS) usage'),
-            })
+            .array(
+              z.object({
+                id: z.enum(['directory', 'model', 'context', 'tokens', 'cost', 'memory']),
+                visible: z.boolean().optional().default(true),
+                icon: z.string().optional().describe('Override icon (1-cell unicode)'),
+                color: z
+                  .string()
+                  .optional()
+                  .describe('Override color: a theme token name (e.g. "success")'),
+              }),
+            )
             .optional()
-            .describe('Fine-grained control over which modules appear in the status bar.'),
+            .describe(
+              'Ordered list of status-bar modules. Array order = render order; modules are dropped from the end when the terminal is too narrow. Edit interactively via /statusline.',
+            ),
         })
         .optional()
+        // Reject old shape (modules: { directory: bool }) silently — fall back
+        // to defaults instead of failing the whole settings parse and nuking
+        // unrelated user config. /statusline can then re-customize.
+        .catch(undefined)
         .describe(
           'Built-in status bar at the bottom of the screen. Shows effort level, context usage, model name, token usage, and git branch.',
         ),

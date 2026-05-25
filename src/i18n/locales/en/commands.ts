@@ -103,7 +103,8 @@ export const enCommands: TranslationResource = {
   'commands.stats': 'Show your ZY Code usage statistics and activity',
   'commands.status':
     'Show ZY Code status including version, model, account, API connectivity, and tool statuses',
-  'commands.statusline': 'Toggle the built-in status bar at the bottom of the screen',
+  'commands.statusline':
+    'Configure the built-in status bar (modules, icons, colors, order). Opens an interactive dialog; `/statusline reset` / `on` / `off` / `<module>` also supported.',
   'commands.stickers': 'Order ZY Code stickers',
   'commands.tag': 'Toggle a searchable tag on the current session',
   'commands.tasks': 'List and manage background tasks',

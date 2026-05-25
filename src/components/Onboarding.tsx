@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { setupTerminal, shouldOfferTerminalSetup } from '../commands/terminalSetup/terminalSetup.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { tSync, warmI18n } from '../i18n/index.js'
@@ -546,6 +546,9 @@ function ApiKeyInput({
   onDone(apiKey: string): void
   onBack(): void
 }): React.ReactNode {
+  // ref instead of state: per-keystroke option.onChange must not auto-submit;
+  // the typed value is committed only on Enter via the Select's top-level onChange.
+  const apiKeyRef = useRef('')
   return (
     <Box flexDirection="column" gap={1}>
       <Text bold>{tSync('onboarding.enterApiKey', { apiKeyLabel })}</Text>
@@ -558,14 +561,18 @@ function ApiKeyInput({
               value: 'input',
               placeholder: 'sk-...',
               onChange: (value) => {
-                if (value.trim().length > 0) {
-                  onDone(value.trim())
-                }
+                apiKeyRef.current = value
               },
               allowEmptySubmitToCancel: true,
               resetCursorOnUpdate: true,
             },
           ]}
+          onChange={() => {
+            const trimmed = apiKeyRef.current.trim()
+            if (trimmed.length > 0) {
+              onDone(trimmed)
+            }
+          }}
           onCancel={onBack}
         />
         {baseUrlHint && (
@@ -576,6 +583,46 @@ function ApiKeyInput({
         <Text dimColor>{tSync('onboarding.confirmBack')}</Text>
       </Box>
     </Box>
+  )
+}
+
+function CustomModelInput({
+  onSubmit,
+  onBack,
+}: {
+  onSubmit(value: string): void
+  onBack(): void
+}): React.ReactNode {
+  const valueRef = useRef('')
+  return (
+    <>
+      <Text bold>{tSync('onboarding.enterModelName')}</Text>
+      <Box flexDirection="column" width={60} gap={1}>
+        <Select
+          options={[
+            {
+              type: 'input',
+              label: tSync('onboarding.modelNameLabel'),
+              value: 'input',
+              placeholder: tSync('onboarding.modelNamePlaceholder'),
+              onChange: (value) => {
+                valueRef.current = value
+              },
+              allowEmptySubmitToCancel: true,
+              resetCursorOnUpdate: true,
+            },
+          ]}
+          onChange={() => {
+            const trimmed = valueRef.current.trim()
+            if (trimmed.length > 0) {
+              onSubmit(trimmed)
+            }
+          }}
+          onCancel={onBack}
+        />
+        <Text dimColor>{tSync('onboarding.confirmBack')}</Text>
+      </Box>
+    </>
   )
 }
 
@@ -638,30 +685,10 @@ function TierModelSetup({
 
   if (phase === 'custom') {
     return (
-      <>
-        <Text bold>{tSync('onboarding.enterModelName')}</Text>
-        <Box flexDirection="column" width={60} gap={1}>
-          <Select
-            options={[
-              {
-                type: 'input',
-                label: tSync('onboarding.modelNameLabel'),
-                value: 'input',
-                placeholder: tSync('onboarding.modelNamePlaceholder'),
-                onChange: (value) => {
-                  if (value.trim().length > 0) {
-                    onDone(value.trim())
-                  }
-                },
-                allowEmptySubmitToCancel: true,
-                resetCursorOnUpdate: true,
-              },
-            ]}
-            onCancel={() => setPhase('select')}
-          />
-          <Text dimColor>{tSync('onboarding.confirmBack')}</Text>
-        </Box>
-      </>
+      <CustomModelInput
+        onSubmit={(value) => onDone(value)}
+        onBack={() => setPhase('select')}
+      />
     )
   }
 

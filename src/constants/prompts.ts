@@ -108,7 +108,7 @@ export function getLanguageSection(languagePreference: string | undefined): stri
     return null
   }
 
-  return `# Language\n${body}`
+  return `# Language\n${body}\n`
 }
 
 function getMessagesForUiLanguage(uiLang: UiLanguage): Record<string, string> {

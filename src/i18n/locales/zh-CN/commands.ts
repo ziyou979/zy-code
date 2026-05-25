@@ -96,7 +96,8 @@ export const zhCommands: TranslationResource = {
   'commands.source.workflow': '工作流',
   'commands.stats': '显示你的 ZY Code 使用统计和活动',
   'commands.status': '显示 ZY Code 状态，包括版本、模型、账户、API 连接性和工具状态',
-  'commands.statusline': '切换屏幕底部的内置状态栏',
+  'commands.statusline':
+    '配置底部内置状态栏（模块、图标、颜色、顺序）。打开交互式面板；也支持 `/statusline reset` / `on` / `off` / `<模块>`。',
   'commands.stickers': '订购 ZY Code 贴纸',
   'commands.tag': '为当前会话切换可搜索标签',
   'commands.tasks': '列出和管理后台任务',

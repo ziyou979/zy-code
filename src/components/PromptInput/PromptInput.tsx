@@ -466,7 +466,7 @@ function PromptInput({
   const hasBgTaskPill = useMemo(
     () =>
       Object.values(tasks).some(
-        (t) => isBackgroundTask(t) && !(isInternalBuild() && isPanelAgentTask(t)),
+        (t) => isBackgroundTask(t) && !isPanelAgentTask(t),
       ),
     [tasks],
   )
@@ -544,7 +544,7 @@ function PromptInput({
   // pill must stay navigable whenever the panel has rows — not just when
   // something is running.
   const tasksFooterVisible =
-    (runningTaskCount > 0 || (isInternalBuild() && coordinatorTaskCount > 0)) &&
+    (runningTaskCount > 0 || coordinatorTaskCount > 0) &&
     !shouldHideTasksFooter(tasks, showSpinnerTree)
   const teamsFooterVisible = cachedTeams.length > 0
   const footerItems = useMemo(
@@ -2061,7 +2061,6 @@ function PromptInput({
         // ↑ scrolls within the coordinator task list before leaving the pill
         if (
           tasksSelected &&
-          isInternalBuild() &&
           coordinatorTaskCount > 0 &&
           coordinatorTaskIndex > minCoordinatorIndex
         ) {
@@ -2072,7 +2071,7 @@ function PromptInput({
       },
       'footer:down': () => {
         // ↓ scrolls within the coordinator task list, never leaves the pill
-        if (tasksSelected && isInternalBuild() && coordinatorTaskCount > 0) {
+        if (tasksSelected && coordinatorTaskCount > 0) {
           if (coordinatorTaskIndex < coordinatorTaskCount - 1) {
             setCoordinatorTaskIndex((prev) => prev + 1)
           }

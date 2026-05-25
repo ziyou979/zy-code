@@ -174,12 +174,12 @@ function printResumeHint(): void {
       }
 
       // alt screen 退出后光标位置不确定，unmount diff 可能在当前行和下方
-      // 残留输入框边框/状态栏内容。先用 \r\x1b[K 清除当前行，输出后再用
-      // \x1b[J 清除光标以下所有残留行（如输入框底边框 "────"）
-      writeSync(
-        1,
-        `\r\x1b[K${chalk.dim(`Resume this session with:\nzy --resume ${resumeArg}\n`)}\x1b[J`,
-      )
+      // 残留输入框边框/状态栏内容。每行写入前先 \r\x1b[2K 清掉整行（避免
+      // "zy --resume ..."后面残留 prompt 输入框底边的 ────），结尾再 \x1b[J
+      // 清掉光标以下所有残留行。
+      const line1 = chalk.dim('Resume this session with:')
+      const line2 = chalk.dim(`zy --resume ${resumeArg}`)
+      writeSync(1, `\r\x1b[2K${line1}\n\r\x1b[2K${line2}\n\x1b[J`)
       resumeHintPrinted = true
     } catch {
       // Ignore write errors

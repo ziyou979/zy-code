@@ -1,16 +1,15 @@
 /**
- * /powerup 命令 — 交互式功能引导菜单。
- * 展示常用功能的用法和示例，降低新手上手门槛。
+ * /powerup 命令 — Ink 交互式功能引导菜单。
+ * 浏览课程列表 / 查看详情 / 标记完成；Esc 关闭并向对话流发送系统消息。
  */
 import type { Command } from '../../commands.js'
 import { tSync } from '../../i18n/index.js'
 
 const powerup = {
-  type: 'local',
+  type: 'local-jsx',
   name: 'powerup',
   description: tSync('commands.powerup'),
   aliases: ['tips', 'learn'],
-  supportsNonInteractive: false,
   load: () => import('./powerup.js'),
 } satisfies Command
 

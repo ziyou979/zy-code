@@ -67,6 +67,7 @@ const result = await Bun.build({
     'HISTORY_SNIP',
     'KAIROS',
     'BUILTIN_EXPLORE_PLAN_AGENTS',
+    'VERIFICATION_AGENT',
   ],
   define: {
     // Treat as external build (notinternal)

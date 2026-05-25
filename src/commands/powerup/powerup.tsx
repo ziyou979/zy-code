@@ -1,9 +1,13 @@
-import type { LocalCommandCall } from '../../types/command.js'
+import * as React from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import { Markdown } from '../../components/Markdown.js'
+import { Select } from '../../components/CustomSelect/select.js'
+import { ProgressBar } from '../../components/design-system/ProgressBar.js'
+import { tSync } from '../../i18n/index.js'
+import { Box, Text, useInput } from '../../ink.js'
+import type { LocalJSXCommandOnDone } from '../../types/command.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 
-/**
- * Powerup 课程定义
- */
 interface PowerupLesson {
   id: string
   title: string
@@ -11,9 +15,6 @@ interface PowerupLesson {
   body: string
 }
 
-/**
- * 10 节内置课程，覆盖 zy-code 高频但容易被忽略的特性
- */
 const LESSONS: PowerupLesson[] = [
   {
     id: 'at-mentions',
@@ -132,9 +133,6 @@ const LESSONS: PowerupLesson[] = [
       '**Hooks（生命周期钩子）：**',
       '- 在 settings 中定义，工具执行前后自动触发',
       '- 常见用途：自动格式化、自动测试、通知',
-      '',
-      '**进阶：**',
-      '- `/powerup done automate` 标记本课完成后试试创建你的第一个 skill',
     ].join('\n'),
   },
   {
@@ -190,167 +188,147 @@ const LESSONS: PowerupLesson[] = [
   },
 ]
 
-/**
- * 获取已解锁的课程 id 集合
- */
-function getUnlockedSet(): Set<string> {
-  const config = getGlobalConfig()
-  const unlocked = config.powerupsUnlocked ?? []
-  // 过滤掉已不存在的 lesson id
-  return new Set(unlocked.filter((lessonId) => LESSONS.some((lesson) => lesson.id === lessonId)))
+function loadUnlocked(): Set<string> {
+  const stored = getGlobalConfig().powerupsUnlocked ?? []
+  const valid = new Set(LESSONS.map((l) => l.id))
+  return new Set(stored.filter((id) => valid.has(id)))
 }
 
-/**
- * 标记课程为已完成并持久化
- */
-function markLessonDone(lessonId: string): boolean {
-  const existing = getUnlockedSet()
-  if (existing.has(lessonId)) {
-    return false // 已经完成过
-  }
-  existing.add(lessonId)
+function persistUnlocked(next: Set<string>): void {
   saveGlobalConfig((config) => ({
     ...config,
-    powerupsUnlocked: [...existing],
+    powerupsUnlocked: [...next],
   }))
-  return true
 }
 
-/**
- * 渲染进度条
- */
-function renderProgressBar(completed: number, total: number, width: number = 16): string {
-  const filled = Math.round((completed / total) * width)
-  const empty = width - filled
-  return `[${'█'.repeat(filled)}${'░'.repeat(empty)}]`
-}
+type Props = { onDone: LocalJSXCommandOnDone }
 
-/**
- * 格式化课程列表（带进度）
- */
-function formatLessonList(unlocked: Set<string>): string {
+function PowerupApp({ onDone }: Props) {
+  const [unlocked, setUnlocked] = useState<Set<string>>(() => loadUnlocked())
+  const [openLessonId, setOpenLessonId] = useState<string | null>(null)
+  const [focusId, setFocusId] = useState<string>(LESSONS[0].id)
+
   const total = LESSONS.length
   const completed = unlocked.size
-  const progressBar = renderProgressBar(completed, total)
   const allDone = completed === total
 
-  const lines: string[] = []
+  const close = useCallback(() => {
+    onDone(tSync('powerup.closed'), { display: 'system' })
+  }, [onDone])
 
-  // 标题和进度
-  lines.push(allDone ? '## ⚡ All powered up!' : '## ⚡ Power-ups')
-  lines.push('')
-  lines.push(`${progressBar} **${completed}/${total}** unlocked`)
-  lines.push('')
+  const markDone = useCallback(
+    (id: string) => {
+      setUnlocked((prev) => {
+        if (prev.has(id)) return prev
+        const next = new Set(prev)
+        next.add(id)
+        persistUnlocked(next)
+        return next
+      })
+    },
+    [],
+  )
 
-  // 副标题
-  if (allDone) {
-    lines.push('*Now go build something.*')
-  } else {
-    lines.push(
-      '*Each power-up teaches one thing zy-code can do that most people miss. Open one, read it, try it, mark it done.*',
+  const options = useMemo(
+    () =>
+      LESSONS.map((lesson, idx) => {
+        const done = unlocked.has(lesson.id)
+        const marker = done ? (
+          <Text color="success">✓</Text>
+        ) : (
+          <Text color="inactive">○</Text>
+        )
+        return {
+          value: lesson.id,
+          label: (
+            <Text>
+              [{marker}] <Text bold>{lesson.title}</Text>
+            </Text>
+          ),
+          description: lesson.tagline,
+        }
+      }),
+    [unlocked],
+  )
+
+  const openLesson = LESSONS.find((l) => l.id === openLessonId) ?? null
+
+  // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw y/n/Esc keystrokes inside detail view
+  useInput(
+    (input, key) => {
+      if (!openLesson) return
+      if (key.escape || input === 'n' || input === 'N') {
+        setOpenLessonId(null)
+        return
+      }
+      if (key.return || input === 'y' || input === 'Y') {
+        markDone(openLesson.id)
+        setOpenLessonId(null)
+      }
+    },
+    { isActive: openLesson !== null },
+  )
+
+  if (openLesson) {
+    const isUnlocked = unlocked.has(openLesson.id)
+    const badge = isUnlocked ? tSync('powerup.unlockedBadge') : tSync('powerup.todoBadge')
+    return (
+      <Box flexDirection="column" paddingX={1} paddingY={1} gap={1}>
+        <Box flexDirection="column">
+          <Text bold>{openLesson.title}</Text>
+          <Text color="subtle">
+            {openLesson.tagline} · {badge}
+          </Text>
+        </Box>
+        <Markdown>{openLesson.body}</Markdown>
+        <Text color="subtle">{tSync('powerup.detailHint')}</Text>
+      </Box>
     )
   }
-  lines.push('')
 
-  // 课程列表
-  LESSONS.forEach((lesson, index) => {
-    const done = unlocked.has(lesson.id)
-    const marker = done ? '✓' : '○'
-    const number = String(index + 1).padStart(2, ' ')
-    lines.push(`  ${number}. [${marker}] **${lesson.title}** — ${lesson.tagline}`)
+  const progressLabel = tSync('powerup.progressLabel', {
+    completed: String(completed),
+    total: String(total),
   })
 
-  lines.push('')
-  lines.push('---')
-  lines.push('`/powerup <number|id>` 查看详情 · `/powerup done <number|id>` 标记完成')
-
-  return lines.join('\n')
+  return (
+    <Box flexDirection="column" paddingX={1} paddingY={1}>
+      <Box flexDirection="row" gap={2}>
+        <Text bold>⚡ {allDone ? tSync('powerup.titleAll') : tSync('powerup.title')}</Text>
+        <Text color="subtle">{progressLabel}</Text>
+      </Box>
+      <Box>
+        <ProgressBar
+          ratio={completed / total}
+          width={20}
+          fillColor="zy"
+          emptyColor="inactive"
+        />
+      </Box>
+      <Box marginTop={1}>
+        <Text color="subtle">
+          {allDone ? tSync('powerup.subtitleAll') : tSync('powerup.subtitle')}
+        </Text>
+      </Box>
+      <Box marginTop={1}>
+        <Select
+          options={options}
+          defaultFocusValue={focusId}
+          onFocus={setFocusId}
+          onChange={(id) => setOpenLessonId(id)}
+          onCancel={close}
+          inlineDescriptions
+          visibleOptionCount={LESSONS.length}
+        />
+      </Box>
+    </Box>
+  )
 }
 
-/**
- * 格式化单个课程详情
- */
-function formatLessonDetail(lesson: PowerupLesson, isUnlocked: boolean): string {
-  const badge = isUnlocked ? '✓ 已完成' : '○ 未完成'
-  const lines: string[] = []
-
-  lines.push(`## ${lesson.title}`)
-  lines.push(`*${lesson.tagline}* · [${badge}]`)
-  lines.push('')
-  lines.push(lesson.body)
-  lines.push('')
-  lines.push('---')
-
-  if (!isUnlocked) {
-    lines.push(`读完并试过后，运行 \`/powerup done ${lesson.id}\` 标记完成`)
-  } else {
-    lines.push('*你已完成这节课 ✓*')
-  }
-
-  return lines.join('\n')
-}
-
-/**
- * 根据编号或关键词匹配课程
- */
-function findLesson(query: string): PowerupLesson | undefined {
-  const index = parseInt(query, 10)
-  if (!Number.isNaN(index) && index >= 1 && index <= LESSONS.length) {
-    return LESSONS[index - 1]
-  }
-  return LESSONS.find((lesson) => lesson.id === query || lesson.title.toLowerCase().includes(query))
-}
-
-export const call: LocalCommandCall = async (args) => {
-  const trimmedArgs = args.trim().toLowerCase()
-  const unlocked = getUnlockedSet()
-
-  // 无参数：显示课程列表
-  if (!trimmedArgs) {
-    return { type: 'text', value: formatLessonList(unlocked) }
-  }
-
-  // done 子命令：标记完成
-  if (trimmedArgs.startsWith('done')) {
-    const doneQuery = trimmedArgs.slice(4).trim()
-    if (!doneQuery) {
-      return { type: 'text', value: '⚠️ 请指定要标记完成的课程：`/powerup done <number|id>`' }
-    }
-
-    const lesson = findLesson(doneQuery)
-    if (!lesson) {
-      return { type: 'text', value: `⚠️ 未找到课程: "${doneQuery}"` }
-    }
-
-    const isNew = markLessonDone(lesson.id)
-    const newUnlocked = getUnlockedSet()
-    const allDone = newUnlocked.size === LESSONS.length
-
-    if (!isNew) {
-      return { type: 'text', value: `"${lesson.title}" 已经完成过了 ✓` }
-    }
-
-    const lines: string[] = []
-    lines.push(`✓ **${lesson.title}** — 完成！`)
-
-    if (allDone) {
-      lines.push('')
-      lines.push('🎉 **All powered up!** 你已解锁所有课程。Now go build something.')
-    } else {
-      lines.push(`  (${newUnlocked.size}/${LESSONS.length} unlocked)`)
-    }
-
-    return { type: 'text', value: lines.join('\n') }
-  }
-
-  // 按编号或关键词查看课程详情
-  const lesson = findLesson(trimmedArgs)
-  if (!lesson) {
-    return {
-      type: 'text',
-      value: `⚠️ 未找到课程: "${trimmedArgs}"。运行 \`/powerup\` 查看全部课程。`,
-    }
-  }
-
-  return { type: 'text', value: formatLessonDetail(lesson, unlocked.has(lesson.id)) }
+export async function call(
+  onDone: LocalJSXCommandOnDone,
+  _context: unknown,
+  _args?: string,
+): Promise<React.ReactNode> {
+  return <PowerupApp onDone={onDone} />
 }
