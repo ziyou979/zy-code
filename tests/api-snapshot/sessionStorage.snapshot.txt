@@ -251,23 +251,11 @@ export function getFirstMeaningfulUserMessageTextContent<T extends Message>(
   transcript: T[],
 ): string | undefined { ... }
 
-export function getNodeEnv(): string { ... }
-
 export function getSessionIdFromLog(log: LogOption): UUID | undefined { ... }
-
-export function getUserType(): string { ... }
-
-export function isChainParticipant(m: Pick<Message, 'type'>): boolean { ... }
-
-export function isCustomTitleEnabled(): boolean { ... }
-
-export function isEphemeralToolProgress(dataType: unknown): boolean { ... }
 
 export function isLiteLog(log: LogOption): boolean { ... }
 
 export function isLoggableMessage(m: Message): boolean { ... }
-
-export function isTranscriptMessage(entry: Entry): entry is TranscriptMessage { ... }
 
 export function reAppendSessionMetadata(): void { ... }
 
@@ -299,8 +287,6 @@ export function saveMode(mode: 'coordinator' | 'normal'): void { ... }
 export function saveTaskSummary(sessionId: UUID, summary: string): void { ... }
 
 export function saveWorktreeState(worktreeSession: PersistedWorktreeSession | null): void { ... }
-
-export function sessionIdExists(sessionId: string): boolean { ... }
 
 export function setInternalEventReader(
   reader: InternalEventReader,
@@ -361,3 +347,16 @@ export {
   MAX_TRANSCRIPT_READ_BYTES,
   setAgentTranscriptSubdir,
 } from './sessionStorage/paths.js'
+
+export {
+  getNodeEnv,
+  getUserType,
+  isCustomTitleEnabled,
+} from './sessionStorage/env.js'
+
+export {
+  isChainParticipant,
+  isEphemeralToolProgress,
+  isTranscriptMessage,
+  sessionIdExists,
+} from './sessionStorage/predicates.js'

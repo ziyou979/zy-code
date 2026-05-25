@@ -98,6 +98,19 @@ export {
   MAX_TRANSCRIPT_READ_BYTES,
   setAgentTranscriptSubdir,
 } from './sessionStorage/paths.js'
+export {
+  getNodeEnv,
+  getUserType,
+  isCustomTitleEnabled,
+} from './sessionStorage/env.js'
+import { getEntrypoint, getNodeEnv, getUserType } from './sessionStorage/env.js'
+export {
+  isChainParticipant,
+  isEphemeralToolProgress,
+  isTranscriptMessage,
+  sessionIdExists,
+} from './sessionStorage/predicates.js'
+import { isLegacyProgressEntry } from './sessionStorage/predicates.js'
 import {
   getAgentMetadataPath,
   getAgentTranscriptPath,
@@ -131,71 +144,6 @@ type Transcript = (UserMessage | AssistantMessage | AttachmentMessage | SystemMe
 const MAX_TOMBSTONE_REWRITE_BYTES = 50 * 1024 * 1024
 
 const SKIP_FIRST_PROMPT_PATTERN = /^(?:\s*<[a-z][\w-]*[\s>]|\[Request interrupted by user[^\]]*\])/
-
-/**
- * 类型守卫，用于检查一个 entry 是否为 transcript 消息。
- * transcript 消息包括 user、assistant、attachment 和 system 消息。
- * 重要：这是判定什么构成 transcript 消息的唯一权威来源。
- * loadTranscriptFile() 使用此函数决定哪些消息加载到对话链中。
- *
- * progress 消息不是 transcript 消息。它们是临时的 UI 状态，
- * 不应持久化到 JSONL 或参与 parentUuid 链。将它们包含在内会导致
- * 链分叉，使真实对话消息在恢复时成为孤儿（参见 #14373, #23537）。
- */
-export function isTranscriptMessage(entry: Entry): entry is TranscriptMessage {
-  return (
-    entry.type === 'user' ||
-    entry.type === 'assistant' ||
-    entry.type === 'attachment' ||
-    entry.type === 'system'
-  )
-}
-
-/**
- * 参与 parentUuid 链的 entry。在写入路径（insertMessageChain、useLogMessages）中
- * 用于在分配 parentUuid 时跳过 progress。旧的 transcript 中已在链里的 progress
- * 由 loadTranscriptFile 中的 progressBridge 重写处理。
- */
-export function isChainParticipant(m: Pick<Message, 'type'>): boolean {
-  return m.type !== 'progress'
-}
-
-type LegacyProgressEntry = {
-  type: 'progress'
-  uuid: UUID
-  parentUuid: UUID | null
-}
-
-/**
- * PR #24099 之前写入的 transcript 中的 progress entry。它们不再属于
- * Entry 类型联合，但仍以包含 uuid 和 parentUuid 字段的形式存在于磁盘上。
- * loadTranscriptFile 会在它们之间桥接链。
- */
-function isLegacyProgressEntry(entry: unknown): entry is LegacyProgressEntry {
-  return (
-    typeof entry === 'object' &&
-    entry !== null &&
-    'type' in entry &&
-    entry.type === 'progress' &&
-    'uuid' in entry &&
-    typeof entry.uuid === 'string'
-  )
-}
-
-/**
- * 高频工具进度 tick（Sleep 为 1次/秒，Bash 为每 chunk 一次）。
- * 仅用于 UI：不发送到 API，工具完成后不渲染。REPL.tsx 用它来
- * 原地替换而非追加，loadTranscriptFile 用它来跳过旧 transcript 中的遗留 entry。
- */
-const EPHEMERAL_PROGRESS_TYPES = new Set([
-  'bash_progress',
-  'powershell_progress',
-  'mcp_progress',
-  ...(feature('PROACTIVE') || feature('KAIROS') ? (['sleep_progress'] as const) : []),
-])
-export function isEphemeralToolProgress(dataType: unknown): boolean {
-  return typeof dataType === 'string' && EPHEMERAL_PROGRESS_TYPES.has(dataType)
-}
 
 export type AgentMetadata = {
   agentType: string
@@ -319,36 +267,6 @@ export async function listRemoteAgentMetadata(): Promise<RemoteAgentMetadata[]> 
     }
   }
   return results
-}
-
-export function sessionIdExists(sessionId: string): boolean {
-  const projectDir = getProjectDir(getOriginalCwd())
-  const sessionFile = join(projectDir, `${sessionId}.jsonl`)
-  const fs = getFsImplementation()
-  try {
-    fs.statSync(sessionFile)
-    return true
-  } catch {
-    return false
-  }
-}
-
-// 导出用于测试
-export function getNodeEnv(): string {
-  return process.env.NODE_ENV || 'development'
-}
-
-// 导出用于测试
-export function getUserType(): string {
-  return process.env.USER_TYPE || 'external'
-}
-
-function getEntrypoint(): string | undefined {
-  return process.env.ZY_CODE_ENTRYPOINT
-}
-
-export function isCustomTitleEnabled(): boolean {
-  return true
 }
 
 let project: Project | null = null
