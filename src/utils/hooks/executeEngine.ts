@@ -1,17 +1,13 @@
 import { randomUUID } from 'node:crypto'
 import chalk from 'chalk'
+import { isAsyncHookJSONOutput, isSyncHookJSONOutput } from '../../types/hooks.js'
 import { createAttachmentMessage } from '../attachments.js'
 import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
+import { isEnvTruthy } from '../envUtils.js'
+import type { PermissionResult } from '../permissions/PermissionResult.js'
+import { parseHookOutput, parseHttpHookOutput, processHookJSONOutput } from './commandRunner.js'
 import { emitHookResponse, emitHookStarted } from './hookEvents.js'
 import { getHookDisplayText } from './hooksSettings.js'
-import {
-  parseHookOutput,
-  parseHttpHookOutput,
-  processHookJSONOutput,
-} from './commandRunner.js'
-import { isEnvTruthy } from '../envUtils.js'
-import { isAsyncHookJSONOutput, isSyncHookJSONOutput } from '../../types/hooks.js'
-import type { PermissionResult } from '../permissions/PermissionResult.js'
 
 /**
  * 私有 helper：将 matched hooks 转换为 OTel/telemetry 用的简化 schema。
@@ -34,54 +30,46 @@ function getHookDefinitionsForTelemetry(
     return { type: 'unknown' }
   })
 }
-import { jsonStringify } from '../slowOperations.js'
+
+import type { HookInput } from 'src/entrypoints/agentSdkTypes.js'
+import { addToTurnHookDuration, getSessionId, getStatsStore } from '../../bootstrap/state.js'
+import {
+  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+  logEvent,
+} from '../../services/analytics/index.js'
+import { logOTelEvent } from '../../services/telemetry/events.js'
 import {
   endHookSpan,
   isBetaTracingEnabled,
   startHookSpan,
 } from '../../services/telemetry/sessionTracing.js'
-import { logOTelEvent } from '../../services/telemetry/events.js'
-import {
-  shouldAllowManagedHooksOnly,
-  shouldDisableAllHooksIncludingManaged,
-} from './hooksConfigSnapshot.js'
-import { shouldSkipHookDueToTrust } from './config.js'
+import type { ToolUseContext } from '../../Tool.js'
 import type { PromptRequest, PromptResponse } from '../../types/hooks.js'
-import {
-  getSessionHookCallback,
-} from './sessionHooks.js'
-import {
-  addToTurnHookDuration,
-  getSessionId,
-  getStatsStore,
-} from '../../bootstrap/state.js'
-import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  logEvent,
-} from '../../services/analytics/index.js'
+import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../debug.js'
 import { errorMessage } from '../errors.js'
 import { all } from '../generators.js'
 import { logError } from '../log.js'
+import { jsonStringify } from '../slowOperations.js'
+import { execCommandHook } from './commandRunner.js'
+import { shouldSkipHookDueToTrust, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from './config.js'
 import { execAgentHook } from './execAgentHook.js'
 import { execHttpHook } from './execHttpHook.js'
 import { execPromptHook } from './execPromptHook.js'
-import type { ToolUseContext, } from '../../Tool.js'
-import type {
-  HookInput,
-} from 'src/entrypoints/agentSdkTypes.js'
-import type { Message, } from '../../types/message.js'
-import { TOOL_HOOK_EXECUTION_TIMEOUT_MS } from './config.js'
-import type { HookResult, AggregatedHookResult } from './types.js'
+import { executeFunctionHook, executeHookCallback } from './functionHooks.js'
 import {
-  type MatchedHook,
+  shouldAllowManagedHooksOnly,
+  shouldDisableAllHooksIncludingManaged,
+} from './hooksConfigSnapshot.js'
+import {
   getHookTypeCounts,
   getMatchingHooks,
   getPluginHookCounts,
   isInternalHook,
+  type MatchedHook,
 } from './matcher.js'
-import { execCommandHook } from './commandRunner.js'
-import { executeFunctionHook, executeHookCallback } from './functionHooks.js'
+import { getSessionHookCallback } from './sessionHooks.js'
+import type { AggregatedHookResult, HookResult } from './types.js'
 
 export async function* executeHooks({
   hookInput,

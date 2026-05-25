@@ -1,4 +1,5 @@
 import { feature } from 'bun:bundle'
+import { getDefaultCompactModel } from 'src/services/model/model.js'
 import { getInvokedSkillsForAgent } from '../../bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
@@ -16,7 +17,6 @@ import { getCwd } from '../cwd.js'
 import { toError } from '../errors.js'
 import { logError } from '../log.js'
 import { createUserMessage, extractTag, extractTextContent } from '../messages.js'
-import { getDefaultCompactModel } from 'src/services/model/model.js'
 import { jsonParse } from '../slowOperations.js'
 import { asSystemPrompt } from '../systemPromptType.js'
 import { type ApiQueryHookConfig, createApiQueryHook } from './apiQueryHookHelper.js'

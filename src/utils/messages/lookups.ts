@@ -10,10 +10,7 @@ import type {
   ProgressMessage,
 } from '../../types/message.js'
 import { count } from '../array.js'
-import type {
-  HookAttachment,
-  HookPermissionDecisionAttachment,
-} from '../attachments.js'
+import type { HookAttachment, HookPermissionDecisionAttachment } from '../attachments.js'
 import { getToolUseID, isHookAttachmentMessage } from './predicates.js'
 
 // 带有 hookName 字段的 Hook 附件（排除 HookPermissionDecisionAttachment）

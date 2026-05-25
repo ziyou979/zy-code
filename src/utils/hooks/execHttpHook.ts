@@ -75,6 +75,7 @@ function urlMatchesPattern(url: string, pattern: string): boolean {
  */
 function sanitizeHeaderValue(value: string): string {
   // eslint-disable-next-line no-control-regex
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: 用于剥离 \r\n\0 防 header injection
   return value.replace(/[\r\n\x00]/g, '')
 }
 

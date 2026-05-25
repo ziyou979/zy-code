@@ -1,32 +1,27 @@
 import { randomUUID } from 'node:crypto'
-import {
-  execCommandHook,
-  parseHookOutput,
-  parseHttpHookOutput,
-} from './commandRunner.js'
-import { execHttpHook } from './execHttpHook.js'
-import { isAsyncHookJSONOutput, isSyncHookJSONOutput } from '../../types/hooks.js'
+import type { HookInput } from 'src/entrypoints/agentSdkTypes.js'
+import { getSessionId } from '../../bootstrap/state.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
+import type { AppState } from '../../state/AppState.js'
+import { isAsyncHookJSONOutput, isSyncHookJSONOutput } from '../../types/hooks.js'
 import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
+import { logForDebugging } from '../debug.js'
 import { isEnvTruthy } from '../envUtils.js'
+import { logError } from '../log.js'
 import { jsonStringify } from '../slowOperations.js'
-import { shouldSkipHookDueToTrust } from './config.js'
+import { execCommandHook, parseHookOutput, parseHttpHookOutput } from './commandRunner.js'
+import { shouldSkipHookDueToTrust, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from './config.js'
+import { execHttpHook } from './execHttpHook.js'
 import { shouldDisableAllHooksIncludingManaged } from './hooksConfigSnapshot.js'
 import {
   getHookTypeCounts,
+  getMatchingHooks,
   getPluginHookCounts,
   isInternalHook,
 } from './matcher.js'
-import type { AppState } from '../../state/AppState.js'
-import { logForDebugging } from '../debug.js'
-import { logError } from '../log.js'
-import { TOOL_HOOK_EXECUTION_TIMEOUT_MS } from './config.js'
-import { getMatchingHooks } from './matcher.js'
-import { getSessionId } from '../../bootstrap/state.js'
-import type { HookInput } from 'src/entrypoints/agentSdkTypes.js'
 
 export type HookOutsideReplResult = {
   command: string

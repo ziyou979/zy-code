@@ -1,17 +1,7 @@
-
-// FileSuggestionCommandInput 在 ../../../types/fileSuggestion.js 实际不导出，用 any 替代
-// biome-ignore lint/suspicious/noExplicitAny: 类型缺失的临时占位
-type FileSuggestionCommandInput = any
-import { TOOL_HOOK_EXECUTION_TIMEOUT_MS, createBaseHookInput } from '../config.js'
-import {
-  executeHooksOutsideREPL,
-  hasBlockingResult,
-} from '../outsideRepl.js'
+import type { PostCompactHookInput, PreCompactHookInput } from 'src/entrypoints/agentSdkTypes.js'
 import { logForDebugging } from '../../debug.js'
-import type {
-  PreCompactHookInput,
-  PostCompactHookInput,
-} from 'src/entrypoints/agentSdkTypes.js'
+import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
+import { executeHooksOutsideREPL, hasBlockingResult } from '../outsideRepl.js'
 
 export async function executePreCompactHooks(
   compactData: {

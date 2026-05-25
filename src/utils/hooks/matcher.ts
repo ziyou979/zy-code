@@ -1,30 +1,24 @@
 import { basename } from 'node:path'
+import type { HookEvent, HookInput } from 'src/entrypoints/agentSdkTypes.js'
 import { DEFAULT_HOOK_SHELL } from 'src/shell-eval/shared/shellProvider.js'
 import { getRegisteredHooks } from '../../bootstrap/state.js'
 import type { AppState } from '../../state/AppState.js'
-import { permissionRuleValueFromString } from '../permissions/permissionRuleParser.js'
-import type { HookEvent, HookInput } from 'src/entrypoints/agentSdkTypes.js'
+import { findToolByName, type Tools } from '../../Tool.js'
+import type { HookCallback, HookCallbackMatcher } from '../../types/hooks.js'
 import { logForDebugging } from '../debug.js'
 import {
   getLegacyToolNames,
   normalizeLegacyToolName,
+  permissionRuleValueFromString,
 } from '../permissions/permissionRuleParser.js'
 import { ALLOWED_OFFICIAL_MARKETPLACE_NAMES } from '../plugins/schemas.js'
-import type {
-  HookCallback,
-  HookCallbackMatcher,
-} from '../../types/hooks.js'
 import type {
   HookCommand,
   HookMatcher,
   PluginHookMatcher,
   SkillHookMatcher,
 } from '../settings/types.js'
-import { findToolByName, type Tools } from '../../Tool.js'
-import {
-  getHooksConfigFromSnapshot,
-  shouldAllowManagedHooksOnly,
-} from './hooksConfigSnapshot.js'
+import { getHooksConfigFromSnapshot, shouldAllowManagedHooksOnly } from './hooksConfigSnapshot.js'
 import {
   type FunctionHook,
   getSessionFunctionHooks,

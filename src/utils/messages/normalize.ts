@@ -2,11 +2,14 @@ import { feature } from 'bun:bundle'
 import { type UUID } from 'node:crypto'
 import isObject from 'lodash-es/isObject.js'
 import last from 'lodash-es/last.js'
+import { NO_CONTENT_MESSAGE } from '../../constants/messages.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../../services/analytics/metadata.js'
+import { findToolByName, type Tools } from '../../Tool.js'
 import type { AgentId } from '../../types/ids.js'
 import type {
   AssistantContentBlock,
@@ -23,16 +26,13 @@ import type {
   NormalizedUserMessage,
   UserMessage,
 } from '../../types/message.js'
-import { findToolByName, type Tools } from '../../Tool.js'
 import { normalizeToolInput } from '../api.js'
-import { createUserMessage } from './constructors.js'
 import { logAntError, logForDebugging } from '../debug.js'
 import { isInternalBuild } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
 import { logError } from '../log.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { isToolReferenceBlock } from '../toolSearch.js'
-import { NO_CONTENT_MESSAGE } from '../../constants/messages.js'
+import { createUserMessage } from './constructors.js'
 import { deriveUUID } from './predicates.js'
 import { isThinkingBlock } from './prune.js'
 
@@ -123,6 +123,8 @@ export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
           } as NormalizedMessage
         })
       }
+      default:
+        return []
     }
   })
 }
@@ -260,7 +262,10 @@ type ToolResultContentItem = Extract<ToolResultBlock['content'], readonly unknow
  * 有效块类型：text、image、search_result、document（均可折叠）。
  * tool_reference（beta）不能与其他类型混合 — 服务器报 ValueError — 返 null。
  */
-export function smooshIntoToolResult(tr: ToolResultBlock, blocks: ContentBlock[]): ToolResultBlock | null {
+export function smooshIntoToolResult(
+  tr: ToolResultBlock,
+  blocks: ContentBlock[],
+): ToolResultBlock | null {
   if (blocks.length === 0) {
     return tr
   }

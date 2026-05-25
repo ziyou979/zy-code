@@ -15,7 +15,17 @@ export type {
   HookBlockingError,
   HookResult,
 } from './hooks.js'
-
+export {
+  ensureToolResultPairing,
+  filterUnresolvedToolUses,
+  normalizeAttachmentForAPI,
+  normalizeMessagesForAPI,
+  reorderAttachmentsForAPI,
+  reorderMessagesInUI,
+  wrapCommandText,
+  wrapInSystemReminder,
+  wrapMessagesInSystemReminder,
+} from './messages/api.js'
 export {
   AUTO_REJECT_MESSAGE,
   buildClassifierUnavailableMessage,
@@ -37,7 +47,64 @@ export {
   SYNTHETIC_MODEL,
   SYNTHETIC_TOOL_RESULT_PLACEHOLDER,
 } from './messages/constants.js'
+export {
+  createAgentsKilledMessage,
+  createAssistantAPIErrorMessage,
+  createAssistantMessage,
+  createAwaySummaryMessage,
+  createBridgeStatusMessage,
+  createCommandInputMessage,
+  createCompactBoundaryMessage,
+  createMemorySavedMessage,
+  createMicrocompactBoundaryMessage,
+  createModelSwitchBreadcrumbs,
+  createPermissionRetryMessage,
+  createProgressMessage,
+  createScheduledTaskFireMessage,
+  createStopHookSummaryMessage,
+  createSyntheticUserCaveatMessage,
+  createSystemAPIErrorMessage,
+  createSystemMessage,
+  createToolResultStopMessage,
+  createToolUseSummaryMessage,
+  createTurnDurationMessage,
+  createUserInterruptionMessage,
+  createUserMessage,
+  formatCommandInputTags,
+  prepareUserContent,
+} from './messages/constructors.js'
+export type { MessageLookups } from './messages/lookups.js'
 
+export {
+  buildMessageLookups,
+  buildSubagentLookups,
+  EMPTY_LOOKUPS,
+  EMPTY_STRING_SET,
+  getProgressMessagesFromLookup,
+  getSiblingToolUseIDs,
+  getSiblingToolUseIDsFromLookup,
+  getToolResultIDs,
+  getToolUseIDs,
+  hasUnresolvedHooks,
+  hasUnresolvedHooksFromLookup,
+} from './messages/lookups.js'
+export {
+  ensureNonEmptyAssistantContent,
+  filterOrphanedThinkingOnlyMessages,
+  filterTrailingThinkingFromLastAssistant,
+  filterWhitespaceOnlyAssistantMessages,
+  mergeAdjacentUserMessages,
+  mergeAssistantMessages,
+  mergeUserContentBlocks,
+  mergeUserMessages,
+  mergeUserMessagesAndToolResults,
+  normalizeContentFromAPI,
+  normalizeMessages,
+} from './messages/normalize.js'
+export type {
+  ToolUseRequestMessage,
+  ToolUseResultMessage,
+} from './messages/predicates.js'
 export {
   countToolCalls,
   deriveShortMessageId,
@@ -65,53 +132,7 @@ export {
   textForResubmit,
   withMemoryCorrectionHint,
 } from './messages/predicates.js'
-export type {
-  ToolUseRequestMessage,
-  ToolUseResultMessage,
-} from './messages/predicates.js'
-
-export {
-  createAgentsKilledMessage,
-  createAssistantAPIErrorMessage,
-  createAssistantMessage,
-  createAwaySummaryMessage,
-  createBridgeStatusMessage,
-  createCommandInputMessage,
-  createCompactBoundaryMessage,
-  createMemorySavedMessage,
-  createMicrocompactBoundaryMessage,
-  createModelSwitchBreadcrumbs,
-  createPermissionRetryMessage,
-  createProgressMessage,
-  createScheduledTaskFireMessage,
-  createStopHookSummaryMessage,
-  createSyntheticUserCaveatMessage,
-  createSystemAPIErrorMessage,
-  createSystemMessage,
-  createToolResultStopMessage,
-  createToolUseSummaryMessage,
-  createTurnDurationMessage,
-  createUserInterruptionMessage,
-  createUserMessage,
-  formatCommandInputTags,
-  prepareUserContent,
-} from './messages/constructors.js'
-
-export {
-  buildMessageLookups,
-  buildSubagentLookups,
-  EMPTY_LOOKUPS,
-  EMPTY_STRING_SET,
-  getProgressMessagesFromLookup,
-  getSiblingToolUseIDs,
-  getSiblingToolUseIDsFromLookup,
-  getToolResultIDs,
-  getToolUseIDs,
-  hasUnresolvedHooks,
-  hasUnresolvedHooksFromLookup,
-} from './messages/lookups.js'
-export type { MessageLookups } from './messages/lookups.js'
-
+export type { PruneResult } from './messages/prune.js'
 export {
   isThinkingBlock,
   pruneCompletedTurnArtifacts,
@@ -121,33 +142,5 @@ export {
   stripSignatureBlocks,
   stripToolReferenceBlocksFromUserMessage,
 } from './messages/prune.js'
-export type { PruneResult } from './messages/prune.js'
-
-export {
-  ensureNonEmptyAssistantContent,
-  filterOrphanedThinkingOnlyMessages,
-  filterTrailingThinkingFromLastAssistant,
-  filterWhitespaceOnlyAssistantMessages,
-  mergeAdjacentUserMessages,
-  mergeAssistantMessages,
-  mergeUserContentBlocks,
-  mergeUserMessages,
-  mergeUserMessagesAndToolResults,
-  normalizeContentFromAPI,
-  normalizeMessages,
-} from './messages/normalize.js'
-
-export {
-  ensureToolResultPairing,
-  filterUnresolvedToolUses,
-  normalizeAttachmentForAPI,
-  normalizeMessagesForAPI,
-  reorderAttachmentsForAPI,
-  reorderMessagesInUI,
-  wrapCommandText,
-  wrapInSystemReminder,
-  wrapMessagesInSystemReminder,
-} from './messages/api.js'
-
-export { handleMessageFromStream } from './messages/streaming.js'
 export type { StreamingThinking, StreamingToolUse } from './messages/streaming.js'
+export { handleMessageFromStream } from './messages/streaming.js'

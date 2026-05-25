@@ -1,17 +1,15 @@
 import { randomUUID } from 'node:crypto'
-// FileSuggestionCommandInput 在 ../../../types/fileSuggestion.js 实际不导出，用 any 替代
-// biome-ignore lint/suspicious/noExplicitAny: 类型缺失的临时占位
-type FileSuggestionCommandInput = any
-import { TOOL_HOOK_EXECUTION_TIMEOUT_MS, createBaseHookInput } from '../config.js'
-import { executeHooks } from '../executeEngine.js'
+
 import type {
   SubagentStartHookInput,
-  TeammateIdleHookInput,
-  TaskCreatedHookInput,
   TaskCompletedHookInput,
+  TaskCreatedHookInput,
+  TeammateIdleHookInput,
 } from 'src/entrypoints/agentSdkTypes.js'
 import type { ToolUseContext } from '../../../Tool.js'
-import type { AggregatedHookResult, } from '../types.js'
+import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
+import { executeHooks } from '../executeEngine.js'
+import type { AggregatedHookResult } from '../types.js'
 
 export async function* executeTeammateIdleHooks(
   teammateName: string,

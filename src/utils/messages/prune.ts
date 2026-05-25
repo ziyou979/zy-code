@@ -1,9 +1,6 @@
 import { feature } from 'bun:bundle'
-import type {
-  ContentBlock,
-  RedactedThinkingBlock,
-  ThinkingBlock,
-} from '../../types/llm.js'
+import { isConnectorTextBlock } from '../../types/connectorText.js'
+import type { ContentBlock, RedactedThinkingBlock, ThinkingBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -12,7 +9,6 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 import { isAdvisorBlock } from '../advisor.js'
-import { isConnectorTextBlock } from '../../types/connectorText.js'
 import { isToolReferenceBlock } from '../toolSearch.js'
 
 /**

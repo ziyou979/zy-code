@@ -1,12 +1,14 @@
 import { randomUUID } from 'node:crypto'
 import { shouldSkipHookDueToTrust } from '../config.js'
-// FileSuggestionCommandInput 在 ../../../types/fileSuggestion.js 实际不导出，用 any 替代
-// biome-ignore lint/suspicious/noExplicitAny: 类型缺失的临时占位
-type FileSuggestionCommandInput = any
+
+// FileSuggestionCommandInput 在 ../../../types/fileSuggestion.js 实际不导出。
+// 该 hook 当前不读取字段，因此用 unknown 占位。
+type FileSuggestionCommandInput = unknown
+
 import { logForDebugging } from '../../debug.js'
-import { execCommandHook, } from '../commandRunner.js'
-import { jsonStringify } from '../../slowOperations.js'
 import { getInitialSettings, getSettingsForSource } from '../../settings/settings.js'
+import { jsonStringify } from '../../slowOperations.js'
+import { execCommandHook } from '../commandRunner.js'
 import {
   shouldAllowManagedHooksOnly,
   shouldDisableAllHooksIncludingManaged,
@@ -31,12 +33,9 @@ export async function executeFileSuggestionCommand(
 
   // When disableAllHooks is set in non-managed settings, only managed fileSuggestion runs
   // (non-managed settings cannot disable managed commands, but non-managed commands are disabled)
-  let fileSuggestion
-  if (shouldAllowManagedHooksOnly()) {
-    fileSuggestion = getSettingsForSource('policySettings')?.fileSuggestion
-  } else {
-    fileSuggestion = getInitialSettings()?.fileSuggestion
-  }
+  const fileSuggestion = shouldAllowManagedHooksOnly()
+    ? getSettingsForSource('policySettings')?.fileSuggestion
+    : getInitialSettings()?.fileSuggestion
 
   if (!fileSuggestion || fileSuggestion.type !== 'command') {
     return []
@@ -74,8 +73,6 @@ export async function executeFileSuggestionCommand(
     return []
   }
 }
-
-
 
 /**
  * Check if WorktreeCreate hooks are configured (without executing them).

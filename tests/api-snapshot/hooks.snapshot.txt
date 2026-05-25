@@ -19,8 +19,8 @@ export {
   executeConfigChangeHooks,
   executeCwdChangedHooks,
   executeFileChangedHooks,
-  hasInstructionsLoadedHook,
   executeInstructionsLoadedHooks,
+  hasInstructionsLoadedHook,
 } from './hooks/executors/config.js'
 
 export {
@@ -29,27 +29,38 @@ export {
 } from './hooks/executors/elicitation.js'
 
 export {
-  executePreToolHooks,
-  executePostToolHooks,
-  executePostToolUseFailureHooks,
+  executeNotificationHooks,
+  executeUserPromptSubmitHooks,
+} from './hooks/executors/notification.js'
+
+export {
   executePermissionDeniedHooks,
   executePermissionRequestHooks,
+  executePostToolHooks,
+  executePostToolUseFailureHooks,
+  executePreToolHooks,
 } from './hooks/executors/tool.js'
 
 export {
-  executeStopFailureHooks,
-  executeStopHooks,
+  executeSessionEndHooks,
   executeSessionStartHooks,
   executeSetupHooks,
-  executeSessionEndHooks,
+  executeStopFailureHooks,
+  executeStopHooks,
 } from './hooks/executors/lifecycle.js'
 
 export {
-  executeTeammateIdleHooks,
-  executeTaskCreatedHooks,
-  executeTaskCompletedHooks,
   executeSubagentStartHooks,
+  executeTaskCompletedHooks,
+  executeTaskCreatedHooks,
+  executeTeammateIdleHooks,
 } from './hooks/executors/teammate.js'
+
+export {
+  executeWorktreeCreateHook,
+  executeWorktreeRemoveHook,
+  hasWorktreeCreateHook,
+} from './hooks/executors/worktree.js'
 
 export {
   getPreToolHookBlockingMessage,
@@ -60,19 +71,11 @@ export {
   getUserPromptSubmitHookBlockingMessage,
 } from './hooks/messages.js'
 
-export {
-  hasWorktreeCreateHook,
-  executeWorktreeCreateHook,
-  executeWorktreeRemoveHook,
-} from './hooks/executors/worktree.js'
-
 export { createBaseHookInput, shouldSkipHookDueToTrust }
 
 export { executeFileSuggestionCommand } from './hooks/executors/fileSuggestion.js'
 
-export { executeNotificationHooks, executeUserPromptSubmitHooks } from './hooks/executors/notification.js'
-
-export { executePreCompactHooks, executePostCompactHooks } from './hooks/executors/compact.js'
+export { executePostCompactHooks, executePreCompactHooks } from './hooks/executors/compact.js'
 
 export { getMatchingHooks }
 

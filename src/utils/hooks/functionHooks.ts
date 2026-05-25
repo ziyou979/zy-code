@@ -1,17 +1,14 @@
-import type {
-  HookEvent,
-  HookInput,
-} from 'src/entrypoints/agentSdkTypes.js'
-import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
-import { createAttachmentMessage } from '../attachments.js'
-import { isAsyncHookJSONOutput } from '../../types/hooks.js'
-import type { Message, } from '../../types/message.js'
+import type { HookEvent, HookInput } from 'src/entrypoints/agentSdkTypes.js'
 import type { ToolUseContext } from '../../Tool.js'
 import type { HookCallback } from '../../types/hooks.js'
-import type { HookResult } from './types.js'
-import type { FunctionHook } from './sessionHooks.js'
+import { isAsyncHookJSONOutput } from '../../types/hooks.js'
+import type { Message } from '../../types/message.js'
+import { createAttachmentMessage } from '../attachments.js'
+import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
 import { logError } from '../log.js'
 import { processHookJSONOutput } from './commandRunner.js'
+import type { FunctionHook } from './sessionHooks.js'
+import type { HookResult } from './types.js'
 
 export async function executeFunctionHook({
   hook,

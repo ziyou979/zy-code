@@ -1,32 +1,27 @@
 import { randomUUID } from 'node:crypto'
-import type { AppState } from '../../../state/AppState.js'
-import type { AgentId } from '../../../types/ids.js'
-import type { PromptRequest, PromptResponse } from '../../../types/hooks.js'
-import { extractTextContent, getLastAssistantMessage } from '../../messages.js'
-import { getAgentTranscriptPath } from '../../sessionStorage.js'
-import { clearSessionHooks } from '../sessionHooks.js'
-// FileSuggestionCommandInput 在 ../../../types/fileSuggestion.js 实际不导出，用 any 替代
-// biome-ignore lint/suspicious/noExplicitAny: 类型缺失的临时占位
-type FileSuggestionCommandInput = any
-import { TOOL_HOOK_EXECUTION_TIMEOUT_MS, createBaseHookInput } from '../config.js'
-import { executeHooks } from '../executeEngine.js'
-import {
-  executeHooksOutsideREPL,
-} from '../outsideRepl.js'
-import { hasHookForEvent } from '../matcher.js'
-import { getSessionId } from '../../../bootstrap/state.js'
 import type {
   ExitReason,
-  SessionStartHookInput,
   SessionEndHookInput,
+  SessionStartHookInput,
   SetupHookInput,
-  StopHookInput,
   StopFailureHookInput,
+  StopHookInput,
   SubagentStopHookInput,
 } from 'src/entrypoints/agentSdkTypes.js'
+import { getSessionId } from '../../../bootstrap/state.js'
+import type { AppState } from '../../../state/AppState.js'
 import type { ToolUseContext } from '../../../Tool.js'
-import type { Message, AssistantMessage } from '../../../types/message.js'
-import type { AggregatedHookResult, } from '../types.js'
+import type { PromptRequest, PromptResponse } from '../../../types/hooks.js'
+import type { AgentId } from '../../../types/ids.js'
+import type { AssistantMessage, Message } from '../../../types/message.js'
+import { extractTextContent, getLastAssistantMessage } from '../../messages.js'
+import { getAgentTranscriptPath } from '../../sessionStorage.js'
+import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
+import { executeHooks } from '../executeEngine.js'
+import { hasHookForEvent } from '../matcher.js'
+import { executeHooksOutsideREPL } from '../outsideRepl.js'
+import { clearSessionHooks } from '../sessionHooks.js'
+import type { AggregatedHookResult } from '../types.js'
 
 export async function executeStopFailureHooks(
   lastMessage: AssistantMessage,

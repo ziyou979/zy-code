@@ -1,9 +1,5 @@
 import { feature } from 'bun:bundle'
-import type {
-  AssistantMessage,
-  Message,
-  UserMessage,
-} from '../../types/message.js'
+import type { AssistantMessage, Message, UserMessage } from '../../types/message.js'
 
 export const INTERRUPT_MESSAGE = '[Request interrupted by user]'
 export const INTERRUPT_MESSAGE_FOR_TOOL_USE = '[Request interrupted by user for tool use]'

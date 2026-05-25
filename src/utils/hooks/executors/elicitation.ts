@@ -1,26 +1,19 @@
-
-// FileSuggestionCommandInput 在 ../../../types/fileSuggestion.js 实际不导出，用 any 替代
-// biome-ignore lint/suspicious/noExplicitAny: 类型缺失的临时占位
-type FileSuggestionCommandInput = any
-import { TOOL_HOOK_EXECUTION_TIMEOUT_MS, createBaseHookInput } from '../config.js'
-import {
-  type HookOutsideReplResult,
-  executeHooksOutsideREPL,
-} from '../outsideRepl.js'
 import type {
   ElicitationHookInput,
   ElicitationResultHookInput,
 } from 'src/entrypoints/agentSdkTypes.js'
-import type { HookBlockingError } from '../types.js'
 import {
   hookJSONOutputSchema,
   isAsyncHookJSONOutput,
   isSyncHookJSONOutput,
 } from '../../../types/hooks.js'
-import type { ElicitationResponse } from '../types.js'
+import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
+import { executeHooksOutsideREPL, type HookOutsideReplResult } from '../outsideRepl.js'
 import type {
   ElicitationHookResult,
+  ElicitationResponse,
   ElicitationResultHookResult,
+  HookBlockingError,
 } from '../types.js'
 
 function parseElicitationHookOutput(

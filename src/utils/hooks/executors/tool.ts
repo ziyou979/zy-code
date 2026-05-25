@@ -1,23 +1,19 @@
-
-import type { PromptRequest, PromptResponse } from '../../../types/hooks.js'
-// FileSuggestionCommandInput 在 ../../../types/fileSuggestion.js 实际不导出，用 any 替代
-// biome-ignore lint/suspicious/noExplicitAny: 类型缺失的临时占位
-type FileSuggestionCommandInput = any
-import { TOOL_HOOK_EXECUTION_TIMEOUT_MS, createBaseHookInput } from '../config.js'
-import { executeHooks } from '../executeEngine.js'
-import { hasHookForEvent } from '../matcher.js'
-import { logForDebugging } from '../../debug.js'
-import { getSessionId } from '../../../bootstrap/state.js'
 import type {
-  PostToolUseFailureHookInput,
-  PostToolUseHookInput,
   PermissionDeniedHookInput,
-  PreToolUseHookInput,
   PermissionRequestHookInput,
   PermissionUpdate,
+  PostToolUseFailureHookInput,
+  PostToolUseHookInput,
+  PreToolUseHookInput,
 } from 'src/entrypoints/agentSdkTypes.js'
+import { getSessionId } from '../../../bootstrap/state.js'
 import type { ToolUseContext } from '../../../Tool.js'
-import type { AggregatedHookResult, } from '../types.js'
+import type { PromptRequest, PromptResponse } from '../../../types/hooks.js'
+import { logForDebugging } from '../../debug.js'
+import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
+import { executeHooks } from '../executeEngine.js'
+import { hasHookForEvent } from '../matcher.js'
+import type { AggregatedHookResult } from '../types.js'
 
 export async function* executePreToolHooks<ToolInput>(
   toolName: string,
@@ -231,7 +227,6 @@ export async function* executePermissionRequestHooks<ToolInput>(
     toolInputSummary,
   })
 }
-
 
 /**
  * Execute config change hooks when configuration files change during a session.

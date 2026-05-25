@@ -3,15 +3,12 @@
 // 注意：本文件 import 继承自原 messages.ts，可能含未使用项 — 待后续 prune。
 
 import { feature } from 'bun:bundle'
-import { randomUUID, type UUID } from 'node:crypto'
-import isObject from 'lodash-es/isObject.js'
 import last from 'lodash-es/last.js'
-import type { HookEvent, SDKAssistantMessageError } from 'src/entrypoints/agentSdkTypes.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js'
+import { quote } from 'src/shell-eval/bash/shellQuote.js'
 import { EXPLORE_AGENT } from 'src/tools/AgentTool/built-in/exploreAgent.js'
 import { PLAN_AGENT } from 'src/tools/AgentTool/built-in/planAgent.js'
 import { areExplorePlanAgentsEnabled } from 'src/tools/AgentTool/builtInAgents.js'
@@ -24,24 +21,10 @@ import { FILE_READ_TOOL_NAME, MAX_LINES_TO_READ } from 'src/tools/FileReadTool/p
 import { FileWriteTool } from 'src/tools/FileWriteTool/FileWriteTool.js'
 import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
 import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
-import type { AgentId } from 'src/types/ids.js'
-import type { DeepImmutable } from 'src/types/utils.js'
 import { getStrictToolResultPairing } from '../../bootstrap/state.js'
-import type { SpinnerMode } from '../../components/Spinner.js'
 import { NO_CONTENT_MESSAGE } from '../../constants/messages.js'
 import { OUTPUT_STYLE_CONFIG } from '../../constants/outputStyles.js'
-import {
-  COMMAND_ARGS_TAG,
-  COMMAND_MESSAGE_TAG,
-  COMMAND_NAME_TAG,
-  LOCAL_COMMAND_CAVEAT_TAG,
-  LOCAL_COMMAND_STDOUT_TAG,
-} from '../../constants/xml.js'
-import { isAutoMemoryEnabled } from '../../memdir/paths.js'
-import {
-  checkStatsigFeatureGate_CACHED_MAY_BE_STALE,
-  getFeatureValue_CACHED_MAY_BE_STALE,
-} from '../../services/analytics/growthbook.js'
+import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
   getImageTooLargeErrorMessage,
   getPdfInvalidErrorMessage,
@@ -50,8 +33,7 @@ import {
   getRequestTooLargeErrorMessage,
 } from '../../services/api/errors.js'
 import { DiagnosticTrackingService } from '../../services/diagnosticTracking.js'
-import type { AnyObject, Progress } from '../../Tool.js'
-import { findToolByName, type Tool, type Tools, toolMatchesName } from '../../Tool.js'
+import { type Tools, toolMatchesName } from '../../Tool.js'
 import {
   FileReadTool,
   type Output as FileReadToolOutput,
@@ -60,18 +42,11 @@ import { SEND_MESSAGE_TOOL_NAME } from '../../tools/SendMessageTool/constants.js
 import { TASK_CREATE_TOOL_NAME } from '../../tools/TaskCreateTool/constants.js'
 import { TASK_OUTPUT_TOOL_NAME } from '../../tools/TaskOutputTool/constants.js'
 import { TASK_UPDATE_TOOL_NAME } from '../../tools/TaskUpdateTool/constants.js'
-import { isConnectorTextBlock } from '../../types/connectorText.js'
 import type {
-  APIErrorLike,
-  AssistantContentBlock,
   ContentBlock,
-  RedactedThinkingBlock,
   TextBlock,
-  ThinkingBlock,
-  TokenUsage,
   ToolCallBlock,
   ToolResultBlock,
-  TokenUsage as Usage,
   UserContentBlock,
 } from '../../types/llm.js'
 import type {
@@ -80,77 +55,26 @@ import type {
   Message,
   MessageOrigin,
   NormalizedAssistantMessage,
-  NormalizedMessage,
   NormalizedUserMessage,
-  PartialCompactDirection,
-  ProgressMessage,
-  RequestStartEvent,
-  StopHookInfo,
-  StreamEvent,
-  SystemAgentsKilledMessage,
-  SystemAPIErrorMessage,
-  SystemAwaySummaryMessage,
-  SystemBridgeStatusMessage,
-  SystemCompactBoundaryMessage,
-  SystemInformationalMessage,
   SystemLocalCommandMessage,
-  SystemMemorySavedMessage,
   SystemMessage,
-  SystemMessageLevel,
-  SystemMicrocompactBoundaryMessage,
-  SystemPermissionRetryMessage,
-  SystemScheduledTaskFireMessage,
-  SystemStopHookSummaryMessage,
-  SystemTurnDurationMessage,
-  TombstoneMessage,
-  ToolUseSummaryMessage,
   UserMessage,
 } from '../../types/message.js'
-import type { PermissionMode } from '../../types/permissions.js'
-import { isAdvisorBlock } from '../advisor.js'
 import { isAgentSwarmsEnabled } from '../agentSwarmsEnabled.js'
-import { normalizeToolInput, normalizeToolInputForAPI } from '../api.js'
-import { count } from '../array.js'
+import { normalizeToolInputForAPI } from '../api.js'
 import { type Attachment, memoryHeader } from '../attachments.js'
-import { quote } from 'src/shell-eval/bash/shellQuote.js'
 import { getCurrentProjectConfig } from '../config.js'
 import { logAntError, logForDebugging } from '../debug.js'
-import { stripIdeContextTags } from '../displayTags.js'
 import { hasEmbeddedSearchTools } from '../embeddedTools.js'
-import { isInternalBuild } from '../envUtils.js'
-import { formatFileSize, formatNumber, formatTokens } from '../format.js'
+import { formatFileSize, formatNumber } from '../format.js'
 import { validateImagesForAPI } from '../imageValidation.js'
-import { safeParseJSON } from '../json.js'
 import { logError, logMCPDebug } from '../log.js'
-import { normalizeLegacyToolName } from '../permissions/permissionRuleParser.js'
+import { SYNTHETIC_MODEL, SYNTHETIC_TOOL_RESULT_PLACEHOLDER } from '../messages/constants.js'
 import {
-  getPewterLedgerVariant,
-  getPlanModeV2AgentCount,
-  getPlanModeV2ExploreAgentCount,
-  isPlanModeInterviewPhaseEnabled,
-} from '../planModeV2.js'
-import { jsonStringify } from '../slowOperations.js'
-import { escapeRegExp } from '../stringUtils.js'
-import { isTodoV2Enabled } from '../tasks.js'
-import { isToolReferenceBlock, isToolSearchEnabledOptimistic } from '../toolSearch.js'
-import {
-  CANCEL_MESSAGE,
-  INTERRUPT_MESSAGE,
-  INTERRUPT_MESSAGE_FOR_TOOL_USE,
-  SYNTHETIC_MODEL,
-  SYNTHETIC_TOOL_RESULT_PLACEHOLDER,
-} from '../messages/constants.js'
-import {
-  createAssistantMessage,
-  createSystemMessage,
   createToolResultMessage,
   createToolUseMessage,
   createUserMessage,
 } from '../messages/constructors.js'
-import {
-  isThinkingBlock,
-  stripToolReferenceBlocksFromUserMessage,
-} from '../messages/prune.js'
 import {
   ensureNonEmptyAssistantContent,
   filterOrphanedThinkingOnlyMessages,
@@ -164,38 +88,22 @@ import {
   smooshIntoToolResult,
 } from '../messages/normalize.js'
 import {
-  buildMessageLookups,
-  EMPTY_LOOKUPS,
-  EMPTY_STRING_SET,
-  getProgressMessagesFromLookup,
-  getSiblingToolUseIDs,
-  getSiblingToolUseIDsFromLookup,
-  getToolUseIDs,
-  hasUnresolvedHooks,
-  hasUnresolvedHooksFromLookup,
-  type MessageLookups,
-} from '../messages/lookups.js'
-import {
   deriveShortMessageId,
-  deriveUUID,
-  extractTag,
-  extractTextContent,
-  findLastCompactBoundaryIndex,
-  getContentText,
-  getMessagesAfterCompactBoundary,
-  getToolUseID,
-  getUserMessageText,
-  isCompactBoundaryMessage,
   isHookAttachmentMessage,
-  isNotEmptyMessage,
   isSystemLocalCommandMessage,
-  isThinkingMessage,
   isToolUseRequestMessage,
-  isToolUseResultMessage,
-  stripPromptXMLTags,
   type ToolUseRequestMessage,
-  type ToolUseResultMessage,
 } from '../messages/predicates.js'
+import { stripToolReferenceBlocksFromUserMessage } from '../messages/prune.js'
+import { normalizeLegacyToolName } from '../permissions/permissionRuleParser.js'
+import {
+  getPewterLedgerVariant,
+  getPlanModeV2AgentCount,
+  getPlanModeV2ExploreAgentCount,
+  isPlanModeInterviewPhaseEnabled,
+} from '../planModeV2.js'
+import { isTodoV2Enabled } from '../tasks.js'
+import { isToolReferenceBlock, isToolSearchEnabledOptimistic } from '../toolSearch.js'
 
 // 延迟导入以避免循环依赖（teammateMailbox -> teammate -> ... -> messages）
 function getTeammateMailbox(): typeof import('../teammateMailbox.js') {
@@ -203,9 +111,7 @@ function getTeammateMailbox(): typeof import('../teammateMailbox.js') {
   return require('../teammateMailbox.js')
 }
 
-
 const TOOL_REFERENCE_TURN_BOUNDARY = 'Tool loaded.'
-
 
 function isSyntheticApiErrorMessage(
   message: Message,
@@ -216,7 +122,6 @@ function isSyntheticApiErrorMessage(
     message.message.model === SYNTHETIC_MODEL
   )
 }
-
 
 // ============================================================
 // 内存优化：清理已完成 turn 的 UI-only 临时消息
@@ -422,7 +327,6 @@ export function reorderMessagesInUI(
   return result.filter((_) => _.type !== 'system' || _.subtype !== 'api_error' || _ === last)
 }
 
-
 /**
  * 构建预计算的查找表，以 O(1) 效率访问消息关系。
  * 每次渲染调用一次，然后对所有消息使用查找表。
@@ -507,7 +411,6 @@ export function reorderAttachmentsForAPI(messages: Message[]): Message[] {
   return result
 }
 
-
 /**
  * 从 tool_result 内容中剥离不再存在的工具的 tool_reference 块。
  * 处理会话保存时使用的 MCP 工具不再可用的情况
@@ -591,7 +494,6 @@ function stripUnavailableToolReferencesFromUserMessage(
   }
 }
 
-
 /**
  * 将 [id:...] 消息 ID 标签追加到用户消息的最后一个文本块。
  * 仅修改 API 发送的副本，不修改存储的消息。
@@ -649,7 +551,6 @@ function appendMessageTagToUserMessage(message: UserMessage): UserMessage {
   }
 }
 
-
 /**
  * 从用户消息的 tool_result 内容中剥离 tool_reference 块。
  * tool_reference 块仅在启用工具搜索 beta 时有效。
@@ -677,7 +578,6 @@ function contentHasToolReference(content: ReadonlyArray<ContentBlock>): boolean 
       block.content.some(isToolReferenceBlock),
   )
 }
-
 
 /**
  * 确保源自附件的消息中的所有文本内容都带有
@@ -708,7 +608,6 @@ function ensureSystemReminderWrap(msg: UserMessage): UserMessage {
   })
   return changed ? { ...msg, message: { ...msg.message, content: newContent } } : msg
 }
-
 
 /**
  * 最后一步：将任何带有 `<system-reminder>` 前缀的文本同级合并到
@@ -773,7 +672,6 @@ function smooshSystemReminderSiblings(
   })
 }
 
-
 /**
  * 从 is_error 的 tool_result 中剥离非文本块 — API 会拒绝该组合，
  * 报错 "all content must be type text if is_error is true"。
@@ -818,7 +716,6 @@ function sanitizeErrorToolResultContent(
     return { ...msg, message: { ...msg.message, content: newContent } }
   })
 }
-
 
 /**
  * 将文本块同级从包含 tool_reference 的用户消息中移走。
@@ -909,7 +806,6 @@ function relocateToolReferenceSiblings(
 
   return result
 }
-
 
 export function normalizeMessagesForAPI(
   messages: Message[],
@@ -1256,7 +1152,6 @@ export function normalizeMessagesForAPI(
   return sanitized
 }
 
-
 /**
  * 在 UserMessage 的 content[] 列表中，tool_result 块必须排在前面，
  * 以避免 "tool result must follow tool use" API 错误。
@@ -1339,11 +1234,9 @@ export function filterUnresolvedToolUses(messages: Message[]): Message[] {
   })
 }
 
-
 export function wrapInSystemReminder(content: string): string {
   return `<system-reminder>\n${content}\n</system-reminder>`
 }
-
 
 export function wrapMessagesInSystemReminder(messages: UserMessage[]): UserMessage[] {
   return messages.map((msg) => {
@@ -1378,7 +1271,6 @@ export function wrapMessagesInSystemReminder(messages: UserMessage[]): UserMessa
   })
 }
 
-
 function getPlanModeInstructions(attachment: {
   reminderType: 'full' | 'sparse'
   isSubAgent?: boolean
@@ -1394,7 +1286,6 @@ function getPlanModeInstructions(attachment: {
   return getPlanModeV2Instructions(attachment)
 }
 
-
 // --
 // Plan 文件结构实验分支。
 // 每个分支返回完整的 Phase 4 部分，使周围模板保持为纯字符串插值，内联无条件分支。
@@ -1408,7 +1299,6 @@ Goal: Write your final plan to the plan file (the only file you can edit).
 - Reference existing functions and utilities you found that should be reused, with their file paths
 - Include a verification section describing how to test the changes end-to-end (run the code, use MCP tools, run tests)`
 
-
 const PLAN_PHASE4_TRIM = `### Phase 4: Final Plan
 Goal: Write your final plan to the plan file (the only file you can edit).
 - One-line **Context**: what is being changed and why
@@ -1416,7 +1306,6 @@ Goal: Write your final plan to the plan file (the only file you can edit).
 - List the paths of files to be modified
 - Reference existing functions and utilities to reuse, with their file paths
 - End with **Verification**: the single command to run to confirm the change works (no numbered test procedures)`
-
 
 const PLAN_PHASE4_CUT = `### Phase 4: Final Plan
 Goal: Write your final plan to the plan file (the only file you can edit).
@@ -1426,7 +1315,6 @@ Goal: Write your final plan to the plan file (the only file you can edit).
 - End with **Verification**: the single command that confirms the change works
 - Most good plans are under 40 lines. Prose is a sign you are padding.`
 
-
 const PLAN_PHASE4_CAP = `### Phase 4: Final Plan
 Goal: Write your final plan to the plan file (the only file you can edit).
 - Do NOT write a Context, Background, or Overview section. The user just told you what they want.
@@ -1435,7 +1323,6 @@ Goal: Write your final plan to the plan file (the only file you can edit).
 - Reference existing functions to reuse, with file:line
 - End with the single verification command
 - **Hard limit: 40 lines.** If the plan is longer, delete prose — not file paths.`
-
 
 function getPlanPhase4Section(): string {
   const variant = getPewterLedgerVariant()
@@ -1453,7 +1340,6 @@ function getPlanPhase4Section(): string {
       return PLAN_PHASE4_CONTROL
   }
 }
-
 
 function getPlanModeV2Instructions(attachment: {
   isSubAgent?: boolean
@@ -1545,7 +1431,6 @@ NOTE: At any point in time through this workflow you should feel free to ask the
   return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
 }
 
-
 function getReadOnlyToolNames(): string {
   // Ant-native 构建将 find/grep 别名为内置的 bfs/ugrep，并从注册表中移除
   // 专用的 Glob/Grep 工具，因此改为通过 Bash 指向 find/grep。
@@ -1561,7 +1446,6 @@ function getReadOnlyToolNames(): string {
       : tools
   return filtered.join(', ')
 }
-
 
 /**
  * 基于迭代访谈的计划模式工作流。
@@ -1630,7 +1514,6 @@ Your turn should only end by either:
   return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
 }
 
-
 function getPlanModeV2SparseInstructions(attachment: { planFilePath: string }): UserMessage[] {
   const workflowDescription = isPlanModeInterviewPhaseEnabled()
     ? 'Follow iterative workflow: explore codebase, interview user, write to plan incrementally.'
@@ -1640,7 +1523,6 @@ function getPlanModeV2SparseInstructions(attachment: { planFilePath: string }): 
 
   return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
 }
-
 
 function getPlanModeV2SubAgentInstructions(attachment: {
   planFilePath: string
@@ -1660,14 +1542,12 @@ Answer the user's query comprehensively, using the ${ASK_USER_QUESTION_TOOL_NAME
   return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
 }
 
-
 function getAutoModeInstructions(attachment: { reminderType: 'full' | 'sparse' }): UserMessage[] {
   if (attachment.reminderType === 'sparse') {
     return getAutoModeSparseInstructions()
   }
   return getAutoModeFullInstructions()
 }
-
 
 function getAutoModeFullInstructions(): UserMessage[] {
   const content = `## Auto Mode Active
@@ -1684,13 +1564,11 @@ Auto mode is active. The user chose continuous, autonomous execution. You should
   return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
 }
 
-
 function getAutoModeSparseInstructions(): UserMessage[] {
   const content = `Auto mode still active (see full instructions earlier in conversation). Execute autonomously, minimize interruptions, prefer action over planning.`
 
   return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
 }
-
 
 export function normalizeAttachmentForAPI(attachment: Attachment): UserMessage[] {
   if (isAgentSwarmsEnabled()) {
@@ -1759,7 +1637,6 @@ Read the team config to discover your teammates' names. Check the task list peri
   }
 
   // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check -- teammate_mailbox/team_context/skill_discovery/bagel_console handled above
-  // biome-ignore lint/nursery/useExhaustiveSwitchCases: teammate_mailbox/team_context/max_turns_reached/skill_discovery/bagel_console handled above, can't add case for dead code elimination
   switch (attachment.type) {
     case 'directory': {
       return wrapMessagesInSystemReminder([
@@ -2473,7 +2350,6 @@ You have exited auto mode. The user may now want to interact more directly. You 
   return []
 }
 
-
 /**
  * 检查消息是否为 compact 边界标记
  */
@@ -2862,7 +2738,6 @@ export function ensureToolResultPairing(
 
   return result
 }
-
 
 /**
  * 从消息中剥离 advisor 块。当 advisor beta header 不存在时，

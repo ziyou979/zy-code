@@ -1,29 +1,20 @@
-
-// FileSuggestionCommandInput 在 ../../../types/fileSuggestion.js 实际不导出，用 any 替代
-// biome-ignore lint/suspicious/noExplicitAny: 类型缺失的临时占位
-type FileSuggestionCommandInput = any
-import { TOOL_HOOK_EXECUTION_TIMEOUT_MS, createBaseHookInput } from '../config.js'
-import {
-  type HookOutsideReplResult,
-  executeHooksOutsideREPL,
-} from '../outsideRepl.js'
 import type {
-  HookInput,
   ConfigChangeHookInput,
   CwdChangedHookInput,
   FileChangedHookInput,
+  HookInput,
   InstructionsLoadedHookInput,
 } from 'src/entrypoints/agentSdkTypes.js'
+import { getRegisteredHooks } from '../../../bootstrap/state.js'
+import { invalidateSessionEnvCache } from '../../sessionEnvironment.js'
+import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
+import { getHooksConfigFromSnapshot } from '../hooksConfigSnapshot.js'
+import { executeHooksOutsideREPL, type HookOutsideReplResult } from '../outsideRepl.js'
 import type {
   ConfigChangeSource,
   InstructionsLoadReason,
   InstructionsMemoryType,
 } from '../types.js'
-import { invalidateSessionEnvCache } from '../../sessionEnvironment.js'
-import {
-  getHooksConfigFromSnapshot,
-} from '../hooksConfigSnapshot.js'
-import { getRegisteredHooks } from '../../../bootstrap/state.js'
 
 export async function executeConfigChangeHooks(
   source: ConfigChangeSource,

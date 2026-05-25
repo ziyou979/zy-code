@@ -4,12 +4,7 @@ import { NO_CONTENT_MESSAGE } from '../../constants/messages.js'
 import { COMMAND_ARGS_TAG, COMMAND_NAME_TAG } from '../../constants/xml.js'
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import type { DeepImmutable } from '../../types/utils.js'
-import type {
-  ContentBlock,
-  ToolCallBlock,
-  ToolResultBlock,
-} from '../../types/llm.js'
+import type { ContentBlock, ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -21,6 +16,7 @@ import type {
   SystemLocalCommandMessage,
   UserMessage,
 } from '../../types/message.js'
+import type { DeepImmutable } from '../../types/utils.js'
 import { stripIdeContextTags } from '../displayTags.js'
 import { escapeRegExp } from '../stringUtils.js'
 import { INTERRUPT_MESSAGE_FOR_TOOL_USE } from './constants.js'
@@ -65,14 +61,9 @@ export function extractTag(html: string, tagName: string): string | null {
 
   const escapedTag = escapeRegExp(tagName)
 
-  const pattern = new RegExp(
-    `<${escapedTag}(?:\\s+[^>]*)?>` +
-      '([\\s\\S]*?)' +
-      `<\\/${escapedTag}>`,
-    'gi',
-  )
+  const pattern = new RegExp(`<${escapedTag}(?:\\s+[^>]*)?>([\\s\\S]*?)<\\/${escapedTag}>`, 'gi')
 
-  let match
+  let match: RegExpExecArray | null
   let depth = 0
   let lastIndex = 0
   const openingTag = new RegExp(`<${escapedTag}(?:\\s+[^>]*?)?>`, 'gi')

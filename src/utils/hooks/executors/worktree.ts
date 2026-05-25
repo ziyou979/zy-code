@@ -1,17 +1,8 @@
-
-// FileSuggestionCommandInput 在 ../../../types/fileSuggestion.js 实际不导出，用 any 替代
-// biome-ignore lint/suspicious/noExplicitAny: 类型缺失的临时占位
-type FileSuggestionCommandInput = any
-import { TOOL_HOOK_EXECUTION_TIMEOUT_MS, createBaseHookInput } from '../config.js'
-import {
-  executeHooksOutsideREPL,
-} from '../outsideRepl.js'
-import { logForDebugging } from '../../debug.js'
-import {
-  getHooksConfigFromSnapshot,
-  shouldAllowManagedHooksOnly,
-} from '../hooksConfigSnapshot.js'
 import { getRegisteredHooks } from '../../../bootstrap/state.js'
+import { logForDebugging } from '../../debug.js'
+import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
+import { getHooksConfigFromSnapshot, shouldAllowManagedHooksOnly } from '../hooksConfigSnapshot.js'
+import { executeHooksOutsideREPL } from '../outsideRepl.js'
 
 export function hasWorktreeCreateHook(): boolean {
   const snapshotHooks = getHooksConfigFromSnapshot()?.WorktreeCreate
@@ -102,5 +93,3 @@ export async function executeWorktreeRemoveHook(worktreePath: string): Promise<b
 
   return true
 }
-
-
