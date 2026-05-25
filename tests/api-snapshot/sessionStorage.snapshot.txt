@@ -97,7 +97,7 @@ export async function loadTranscriptFile(
   filePath: string,
   opts?: { keepAllLeaves?: boolean },
 ): Promise<{
-  messages: Map<UUID, TranscriptMessage>
+  messages: Map<string, TranscriptMessage>
   summaries: Map<UUID, string>
   customTitles: Map<UUID, string>
   tags: Map<UUID, string>
@@ -109,8 +109,8 @@ export async function loadTranscriptFile(
   prRepositories: Map<UUID, string>
   modes: Map<UUID, string>
   worktreeStates: Map<UUID, PersistedWorktreeSession | null>
-  fileHistorySnapshots: Map<UUID, FileHistorySnapshotMessage>
-  attributionSnapshots: Map<UUID, AttributionSnapshotMessage>
+  fileHistorySnapshots: Map<string, FileHistorySnapshotMessage>
+  attributionSnapshots: Map<string, AttributionSnapshotMessage>
   contentReplacements: Map<UUID, ContentReplacementRecord[]>
   agentContentReplacements: Map<AgentId, ContentReplacementRecord[]>
   contextCollapseCommits: ContextCollapseCommitEntry[]
@@ -198,14 +198,7 @@ export async function searchSessionsByCustomTitle(
 
 export function adoptResumedSessionFile(): void { ... }
 
-export function buildConversationChain(
-  messages: Map<UUID, TranscriptMessage>,
-  leafMessage: TranscriptMessage,
-): TranscriptMessage[] { ... }
-
 export function cacheSessionTitle(customTitle: string): void { ... }
-
-export function checkResumeConsistency(chain: Message[]): void { ... }
 
 export function cleanMessagesForLogging(
   messages: Message[],
@@ -232,10 +225,6 @@ export function getCurrentSessionTag(sessionId: UUID): string | undefined { ... 
 
 export function getCurrentSessionTitle(sessionId: SessionId): string | undefined { ... }
 
-export function getFirstMeaningfulUserMessageTextContent<T extends Message>(
-  transcript: T[],
-): string | undefined { ... }
-
 export function getSessionIdFromLog(log: LogOption): UUID | undefined { ... }
 
 export function isLiteLog(log: LogOption): boolean { ... }
@@ -243,8 +232,6 @@ export function isLiteLog(log: LogOption): boolean { ... }
 export function isLoggableMessage(m: Message): boolean { ... }
 
 export function reAppendSessionMetadata(): void { ... }
-
-export function removeExtraFields(transcript: TranscriptMessage[]): SerializedMessage[] { ... }
 
 export function resetProjectFlushStateForTesting(): void { ... }
 
@@ -302,6 +289,13 @@ export type {
   AgentMetadata,
   RemoteAgentMetadata,
 } from './sessionStorage/agentMetadata.js'
+
+export {
+  buildConversationChain,
+  checkResumeConsistency,
+  getFirstMeaningfulUserMessageTextContent,
+  removeExtraFields,
+} from './sessionStorage/chain.js'
 
 export {
   clearAgentTranscriptSubdir,

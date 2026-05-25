@@ -388,7 +388,7 @@ export async function loadMessagesFromJsonlPath(path: string): Promise<{
   sessionId: UUID | undefined
 }> {
   const { messages: byUuid, leafUuids } = await loadTranscriptFile(path)
-  let tip: (typeof byUuid extends Map<UUID, infer T> ? T : never) | null = null
+  let tip: (typeof byUuid extends Map<string, infer T> ? T : never) | null = null
   let tipTs = 0
   for (const m of byUuid.values()) {
     if (m.isSidechain || !leafUuids.has(m.uuid as any)) {
