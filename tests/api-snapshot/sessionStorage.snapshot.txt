@@ -3,140 +3,6 @@
 // Refactor invariant: this file should NOT diff after restructuring,
 // only when exports are intentionally added/removed/renamed.
 
-export async function flushSessionStorage(): Promise<void> { ... }
-
-export async function hydrateFromCCRv2InternalEvents(sessionId: string): Promise<boolean> { ... }
-
-export async function hydrateRemoteSession(
-  sessionId: string,
-  ingressUrl: string,
-): Promise<boolean> { ... }
-
-export async function linkSessionToPR(
-  sessionId: UUID,
-  prNumber: number,
-  prUrl: string,
-  prRepository: string,
-  fullPath?: string,
-): Promise<void> { ... }
-
-export async function recordAttributionSnapshot(snapshot: AttributionSnapshotMessage) { ... }
-
-export async function recordContentReplacement(
-  replacements: ContentReplacementRecord[],
-  agentId?: AgentId,
-) { ... }
-
-export async function recordContextCollapseCommit(commit: {
-  collapseId: string
-  summaryUuid: string
-  summaryContent: string
-  summary: string
-  firstArchivedUuid: string
-  lastArchivedUuid: string
-}): Promise<void> { ... }
-
-export async function recordContextCollapseSnapshot(snapshot: {
-  staged: Array<{
-    startUuid: string
-    endUuid: string
-    summary: string
-    risk: number
-    stagedAt: number
-  }>
-  armed: boolean
-  lastSpawnTokens: number
-}): Promise<void> { ... }
-
-export async function recordFileHistorySnapshot(
-  messageId: UUID,
-  snapshot: FileHistorySnapshot,
-  isSnapshotUpdate: boolean,
-) { ... }
-
-export async function recordQueueOperation(queueOp: QueueOperationMessage) { ... }
-
-export async function recordSidechainTranscript(
-  messages: Message[],
-  agentId?: string,
-  startingParentUuid?: UUID | null,
-) { ... }
-
-export async function recordTranscript(
-  messages: Message[],
-  teamInfo?: TeamInfo,
-  startingParentUuidHint?: UUID,
-  allMessages?: readonly Message[],
-): Promise<UUID | null> { ... }
-
-export async function removeTranscriptMessage(targetUuid: UUID): Promise<void> { ... }
-
-export async function resetSessionFilePointer() { ... }
-
-export async function saveAgentColor(sessionId: UUID, agentColor: string, fullPath?: string) { ... }
-
-export async function saveAgentName(
-  sessionId: UUID,
-  agentName: string,
-  fullPath?: string,
-  source: 'user' | 'auto' = 'user',
-) { ... }
-
-export async function saveCustomTitle(
-  sessionId: UUID,
-  customTitle: string,
-  fullPath?: string,
-  source: 'user' | 'auto' = 'user',
-) { ... }
-
-export async function saveTag(sessionId: UUID, tag: string, fullPath?: string) { ... }
-
-export function adoptResumedSessionFile(): void { ... }
-
-export function appendEntryToFile(fullPath: string, entry: Record<string, unknown>): void { ... }
-
-export function cacheSessionTitle(customTitle: string): void { ... }
-
-export function clearSessionMetadata(): void { ... }
-
-export function getCurrentSessionAgentColor(): string | undefined { ... }
-
-export function getCurrentSessionTag(sessionId: UUID): string | undefined { ... }
-
-export function getCurrentSessionTitle(sessionId: SessionId): string | undefined { ... }
-
-export function reAppendSessionMetadata(): void { ... }
-
-export function readFileTailSync(fullPath: string): string { ... }
-
-export function restoreSessionMetadata(meta: {
-  customTitle?: string
-  tag?: string
-  agentName?: string
-  agentColor?: string
-  agentSetting?: string
-  mode?: 'coordinator' | 'normal'
-  worktreeSession?: PersistedWorktreeSession | null
-  prNumber?: number
-  prUrl?: string
-  prRepository?: string
-}): void { ... }
-
-export function saveAgentSetting(agentSetting: string): void { ... }
-
-export function saveAiGeneratedTitle(sessionId: UUID, aiTitle: string): void { ... }
-
-export function saveMode(mode: 'coordinator' | 'normal'): void { ... }
-
-export function saveTaskSummary(sessionId: UUID, summary: string): void { ... }
-
-export function saveWorktreeState(worktreeSession: PersistedWorktreeSession | null): void { ... }
-
-export type TeamInfo = {
-  teamName?: string
-  agentName?: string
-}
-
 export type {
   AgentMetadata,
   RemoteAgentMetadata,
@@ -144,12 +10,53 @@ export type {
 
 export type { SessionLogResult } from './sessionStorage/logLoading.js'
 
+export type { TeamInfo } from './sessionStorage/transcript.js'
+
+export {
+  adoptResumedSessionFile,
+  appendEntryToFile,
+  flushSessionStorage,
+  hydrateFromCCRv2InternalEvents,
+  hydrateRemoteSession,
+  readFileTailSync,
+  recordAttributionSnapshot,
+  recordContentReplacement,
+  recordContextCollapseCommit,
+  recordContextCollapseSnapshot,
+  recordFileHistorySnapshot,
+  recordQueueOperation,
+  recordSidechainTranscript,
+  recordTranscript,
+  removeTranscriptMessage,
+  resetSessionFilePointer,
+} from './sessionStorage/transcript.js'
+
 export {
   buildConversationChain,
   checkResumeConsistency,
   getFirstMeaningfulUserMessageTextContent,
   removeExtraFields,
 } from './sessionStorage/chain.js'
+
+export {
+  cacheSessionTitle,
+  clearSessionMetadata,
+  getCurrentSessionAgentColor,
+  getCurrentSessionTag,
+  getCurrentSessionTitle,
+  linkSessionToPR,
+  reAppendSessionMetadata,
+  restoreSessionMetadata,
+  saveAgentColor,
+  saveAgentName,
+  saveAgentSetting,
+  saveAiGeneratedTitle,
+  saveCustomTitle,
+  saveMode,
+  saveTag,
+  saveTaskSummary,
+  saveWorktreeState,
+} from './sessionStorage/sessionMetadata.js'
 
 export {
   cleanMessagesForLogging,
@@ -161,6 +68,8 @@ export {
   findUnresolvedToolUse,
   getAgentTranscript,
   getLastSessionLog,
+  getLogByIndex,
+  getSessionFilesLite,
   getSessionFilesWithMtime,
   getSessionIdFromLog,
   isLiteLog,
