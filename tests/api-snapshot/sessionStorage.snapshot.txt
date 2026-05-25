@@ -3,41 +3,7 @@
 // Refactor invariant: this file should NOT diff after restructuring,
 // only when exports are intentionally added/removed/renamed.
 
-export async function doesMessageExistInSession(
-  sessionId: UUID,
-  messageUuid: UUID,
-): Promise<boolean> { ... }
-
-export async function enrichLogs(
-  allLogs: LogOption[],
-  startIndex: number,
-  count: number,
-): Promise<{ logs: LogOption[]; nextIndex: number }> { ... }
-
-export async function fetchLogs(limit?: number): Promise<LogOption[]> { ... }
-
-export async function findUnresolvedToolUse(toolUseId: string): Promise<AssistantMessage | null> { ... }
-
 export async function flushSessionStorage(): Promise<void> { ... }
-
-export async function getAgentTranscript(agentId: AgentId): Promise<{
-  messages: Message[]
-  contentReplacements: ContentReplacementRecord[]
-} | null> { ... }
-
-export async function getLastSessionLog(sessionId: UUID): Promise<LogOption | null> { ... }
-
-export async function getLogByIndex(index: number): Promise<LogOption | null> { ... }
-
-export async function getSessionFilesLite(
-  projectDir: string,
-  limit?: number,
-  projectPath?: string,
-): Promise<LogOption[]> { ... }
-
-export async function getSessionFilesWithMtime(
-  projectDir: string,
-): Promise<Map<string, { path: string; mtime: number; ctime: number; size: number }>> { ... }
 
 export async function hydrateFromCCRv2InternalEvents(sessionId: string): Promise<boolean> { ... }
 
@@ -53,72 +19,6 @@ export async function linkSessionToPR(
   prRepository: string,
   fullPath?: string,
 ): Promise<void> { ... }
-
-export async function loadAllLogsFromSessionFile(
-  sessionFile: string,
-  projectPathOverride?: string,
-): Promise<LogOption[]> { ... }
-
-export async function loadAllProjectsMessageLogs(
-  limit?: number,
-  options?: { skipIndex?: boolean; initialEnrichCount?: number },
-): Promise<LogOption[]> { ... }
-
-export async function loadAllProjectsMessageLogsProgressive(
-  limit?: number,
-  initialEnrichCount: number = INITIAL_ENRICH_COUNT,
-): Promise<SessionLogResult> { ... }
-
-export async function loadAllSubagentTranscriptsFromDisk(): Promise<{
-  [agentId: string]: Message[]
-}> { ... }
-
-export async function loadFullLog(log: LogOption): Promise<LogOption> { ... }
-
-export async function loadMessageLogs(limit?: number): Promise<LogOption[]> { ... }
-
-export async function loadSameRepoMessageLogs(
-  worktreePaths: string[],
-  limit?: number,
-  initialEnrichCount: number = INITIAL_ENRICH_COUNT,
-): Promise<LogOption[]> { ... }
-
-export async function loadSameRepoMessageLogsProgressive(
-  worktreePaths: string[],
-  limit?: number,
-  initialEnrichCount: number = INITIAL_ENRICH_COUNT,
-): Promise<SessionLogResult> { ... }
-
-export async function loadSubagentTranscripts(
-  agentIds: string[],
-): Promise<{ [agentId: string]: Message[] }> { ... }
-
-export async function loadTranscriptFile(
-  filePath: string,
-  opts?: { keepAllLeaves?: boolean },
-): Promise<{
-  messages: Map<string, TranscriptMessage>
-  summaries: Map<UUID, string>
-  customTitles: Map<UUID, string>
-  tags: Map<UUID, string>
-  agentNames: Map<UUID, string>
-  agentColors: Map<UUID, string>
-  agentSettings: Map<UUID, string>
-  prNumbers: Map<UUID, number>
-  prUrls: Map<UUID, string>
-  prRepositories: Map<UUID, string>
-  modes: Map<UUID, string>
-  worktreeStates: Map<UUID, PersistedWorktreeSession | null>
-  fileHistorySnapshots: Map<string, FileHistorySnapshotMessage>
-  attributionSnapshots: Map<string, AttributionSnapshotMessage>
-  contentReplacements: Map<UUID, ContentReplacementRecord[]>
-  agentContentReplacements: Map<AgentId, ContentReplacementRecord[]>
-  contextCollapseCommits: ContextCollapseCommitEntry[]
-  contextCollapseSnapshot: ContextCollapseSnapshotEntry | undefined
-  leafUuids: Set<UUID>
-}> { ... }
-
-export async function loadTranscriptFromFile(filePath: string): Promise<LogOption> { ... }
 
 export async function recordAttributionSnapshot(snapshot: AttributionSnapshotMessage) { ... }
 
@@ -191,45 +91,17 @@ export async function saveCustomTitle(
 
 export async function saveTag(sessionId: UUID, tag: string, fullPath?: string) { ... }
 
-export async function searchSessionsByCustomTitle(
-  query: string,
-  options?: { limit?: number; exact?: boolean },
-): Promise<LogOption[]> { ... }
-
 export function adoptResumedSessionFile(): void { ... }
 
 export function cacheSessionTitle(customTitle: string): void { ... }
 
-export function cleanMessagesForLogging(
-  messages: Message[],
-  allMessages: readonly Message[] = messages,
-): Transcript { ... }
-
-export function clearSessionMessagesCache(): void { ... }
-
 export function clearSessionMetadata(): void { ... }
-
-export function extractAgentIdsFromMessages(messages: Message[]): string[] { ... }
-
-export function extractTeammateTranscriptsFromTasks(tasks: {
-  [taskId: string]: {
-    type: string
-    identity?: { agentId: string }
-    messages?: Message[]
-  }
-}): { [agentId: string]: Message[] } { ... }
 
 export function getCurrentSessionAgentColor(): string | undefined { ... }
 
 export function getCurrentSessionTag(sessionId: UUID): string | undefined { ... }
 
 export function getCurrentSessionTitle(sessionId: SessionId): string | undefined { ... }
-
-export function getSessionIdFromLog(log: LogOption): UUID | undefined { ... }
-
-export function isLiteLog(log: LogOption): boolean { ... }
-
-export function isLoggableMessage(m: Message): boolean { ... }
 
 export function reAppendSessionMetadata(): void { ... }
 
@@ -271,15 +143,6 @@ export function setRemoteIngressUrlForTesting(url: string): void { ... }
 
 export function setSessionFileForTesting(path: string): void { ... }
 
-export type SessionLogResult = {
-  /** 已丰富的可供显示的日志 */
-  logs: LogOption[]
-  /** 用于渐进加载的完整仅 stat 列表（调用 enrichLogs 获取更多） */
-  allStatLogs: LogOption[]
-  /** allStatLogs 中渐进加载应继续的索引位置 */
-  nextIndex: number
-}
-
 export type TeamInfo = {
   teamName?: string
   agentName?: string
@@ -290,12 +153,42 @@ export type {
   RemoteAgentMetadata,
 } from './sessionStorage/agentMetadata.js'
 
+export type { SessionLogResult } from './sessionStorage/logLoading.js'
+
 export {
   buildConversationChain,
   checkResumeConsistency,
   getFirstMeaningfulUserMessageTextContent,
   removeExtraFields,
 } from './sessionStorage/chain.js'
+
+export {
+  cleanMessagesForLogging,
+  clearSessionMessagesCache,
+  doesMessageExistInSession,
+  enrichLogs,
+  extractAgentIdsFromMessages,
+  extractTeammateTranscriptsFromTasks,
+  findUnresolvedToolUse,
+  getAgentTranscript,
+  getLastSessionLog,
+  getSessionFilesWithMtime,
+  getSessionIdFromLog,
+  isLiteLog,
+  isLoggableMessage,
+  loadAllLogsFromSessionFile,
+  loadAllProjectsMessageLogs,
+  loadAllProjectsMessageLogsProgressive,
+  loadAllSubagentTranscriptsFromDisk,
+  loadFullLog,
+  loadMessageLogs,
+  loadSameRepoMessageLogs,
+  loadSameRepoMessageLogsProgressive,
+  loadSubagentTranscripts,
+  loadTranscriptFile,
+  loadTranscriptFromFile,
+  searchSessionsByCustomTitle,
+} from './sessionStorage/logLoading.js'
 
 export {
   clearAgentTranscriptSubdir,

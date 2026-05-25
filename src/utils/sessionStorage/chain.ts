@@ -105,7 +105,7 @@ import {
 const SKIP_FIRST_PROMPT_PATTERN = /^(?:\s*<[a-z][\w-]*[\s>]|\[Request interrupted by user[^\]]*\])/
 
 
-function extractFirstPrompt(transcript: TranscriptMessage[]): string {
+export function extractFirstPrompt(transcript: TranscriptMessage[]): string {
   const textContent = getFirstMeaningfulUserMessageTextContent(transcript)
   if (textContent) {
     let result = textContent.replace(/\n/g, ' ').trim()
@@ -225,7 +225,7 @@ export function removeExtraFields(transcript: TranscriptMessage[]): SerializedMe
  *
  * 原地修改 Map。
  */
-function applyPreservedSegmentRelinks(messages: Map<string, TranscriptMessage>): void {
+export function applyPreservedSegmentRelinks(messages: Map<string, TranscriptMessage>): void {
   type Seg = NonNullable<SystemCompactBoundaryMessage['compactMetadata']['preservedSegment']>
 
   // 找到绝对最后的 boundary 和最后的 seg-boundary（可能不同：
@@ -366,7 +366,7 @@ function applyPreservedSegmentRelinks(messages: Map<string, TranscriptMessage>):
  *
  * 原地修改 Map。
  */
-function applySnipRemovals(messages: Map<string, TranscriptMessage>): void {
+export function applySnipRemovals(messages: Map<string, TranscriptMessage>): void {
   // 结构检查 — snipMetadata 仅存在于 boundary 子类型上。
   // 避免使用在 excluded-strings.txt 中的子类型字面量
   // （HISTORY_SNIP 仅限 ant；字面量不得泄漏到外部构建）。
@@ -443,7 +443,7 @@ function applySnipRemovals(messages: Map<string, TranscriptMessage>): void {
  * 替代 `[...values].filter(pred).sort((a,b) => Date(b)-Date(a))[0]` 模式，
  * 该模式为 O(n log n) + 2n 次 Date 分配。
  */
-function findLatestMessage<T extends { timestamp: string }>(
+export function findLatestMessage<T extends { timestamp: string }>(
   messages: Iterable<T>,
   predicate: (m: T) => boolean,
 ): T | undefined {
@@ -672,7 +672,7 @@ export function checkResumeConsistency(chain: Message[]): void {
 /**
  * 从对话中构建文件历史快照链
  */
-function buildFileHistorySnapshotChain(
+export function buildFileHistorySnapshotChain(
   fileHistorySnapshots: Map<string, FileHistorySnapshotMessage>,
   conversation: TranscriptMessage[],
 ): FileHistorySnapshot[] {
@@ -702,7 +702,7 @@ function buildFileHistorySnapshotChain(
  * 与文件历史快照不同，归因快照完整返回，因为它们使用
  * 生成的 UUID（非消息 UUID）并表示应在 session 恢复时还原的累积状态。
  */
-function buildAttributionSnapshotChain(
+export function buildAttributionSnapshotChain(
   attributionSnapshots: Map<string, AttributionSnapshotMessage>,
   _conversation: TranscriptMessage[],
 ): AttributionSnapshotMessage[] {
@@ -777,7 +777,7 @@ function hasVisibleAssistantContent(message: TranscriptMessage): boolean {
  * - 仅包含 tool_result 块的用户消息（作为折叠组显示）
  * - 仅包含 tool_use 块的 assistant 消息（作为折叠组显示）
  */
-function countVisibleMessages(transcript: TranscriptMessage[]): number {
+export function countVisibleMessages(transcript: TranscriptMessage[]): number {
   let count = 0
   for (const message of transcript) {
     switch (message.type) {
