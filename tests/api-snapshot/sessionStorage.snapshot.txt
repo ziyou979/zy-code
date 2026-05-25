@@ -3,8 +3,6 @@
 // Refactor invariant: this file should NOT diff after restructuring,
 // only when exports are intentionally added/removed/renamed.
 
-export async function deleteRemoteAgentMetadata(taskId: string): Promise<void> { ... }
-
 export async function doesMessageExistInSession(
   sessionId: UUID,
   messageUuid: UUID,
@@ -55,8 +53,6 @@ export async function linkSessionToPR(
   prRepository: string,
   fullPath?: string,
 ): Promise<void> { ... }
-
-export async function listRemoteAgentMetadata(): Promise<RemoteAgentMetadata[]> { ... }
 
 export async function loadAllLogsFromSessionFile(
   sessionFile: string,
@@ -123,10 +119,6 @@ export async function loadTranscriptFile(
 }> { ... }
 
 export async function loadTranscriptFromFile(filePath: string): Promise<LogOption> { ... }
-
-export async function readAgentMetadata(agentId: AgentId): Promise<AgentMetadata | null> { ... }
-
-export async function readRemoteAgentMetadata(taskId: string): Promise<RemoteAgentMetadata | null> { ... }
 
 export async function recordAttributionSnapshot(snapshot: AttributionSnapshotMessage) { ... }
 
@@ -203,13 +195,6 @@ export async function searchSessionsByCustomTitle(
   query: string,
   options?: { limit?: number; exact?: boolean },
 ): Promise<LogOption[]> { ... }
-
-export async function writeAgentMetadata(agentId: AgentId, metadata: AgentMetadata): Promise<void> { ... }
-
-export async function writeRemoteAgentMetadata(
-  taskId: string,
-  metadata: RemoteAgentMetadata,
-): Promise<void> { ... }
 
 export function adoptResumedSessionFile(): void { ... }
 
@@ -299,30 +284,6 @@ export function setRemoteIngressUrlForTesting(url: string): void { ... }
 
 export function setSessionFileForTesting(path: string): void { ... }
 
-export type AgentMetadata = {
-  agentType: string
-  /** 代理以 isolation: "worktree" 方式启动时的 worktree 路径 */
-  worktreePath?: string
-  /** 来自 AgentTool 输入的原始任务描述。持久化后恢复的代理通知可以
-   * 显示原始描述而非占位符。可选 — 旧的 metadata 文件可能缺少此字段。 */
-  description?: string
-}
-
-export type RemoteAgentMetadata = {
-  taskId: string
-  remoteTaskType: string
-  /** CCR session ID — 恢复时用于从 Sessions API 获取实时状态。 */
-  sessionId: string
-  title: string
-  command: string
-  spawnedAt: number
-  toolUseId?: string
-  isLongRunning?: boolean
-  isUltraplan?: boolean
-  isRemoteReview?: boolean
-  remoteTaskMetadata?: Record<string, unknown>
-}
-
 export type SessionLogResult = {
   /** 已丰富的可供显示的日志 */
   logs: LogOption[]
@@ -337,6 +298,11 @@ export type TeamInfo = {
   agentName?: string
 }
 
+export type {
+  AgentMetadata,
+  RemoteAgentMetadata,
+} from './sessionStorage/agentMetadata.js'
+
 export {
   clearAgentTranscriptSubdir,
   getAgentTranscriptPath,
@@ -347,6 +313,15 @@ export {
   MAX_TRANSCRIPT_READ_BYTES,
   setAgentTranscriptSubdir,
 } from './sessionStorage/paths.js'
+
+export {
+  deleteRemoteAgentMetadata,
+  listRemoteAgentMetadata,
+  readAgentMetadata,
+  readRemoteAgentMetadata,
+  writeAgentMetadata,
+  writeRemoteAgentMetadata,
+} from './sessionStorage/agentMetadata.js'
 
 export {
   getNodeEnv,
