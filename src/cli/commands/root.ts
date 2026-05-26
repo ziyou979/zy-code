@@ -24,7 +24,13 @@ import { getSystemContext, getUserContext } from '../../context.js'
 import { init, initializeTelemetryAfterTrust } from '../../entrypoints/init.js'
 import { addToHistory } from '../../history.js'
 import type { Root } from '../../ink.js'
-import { launchRepl } from '../../replLauncher.js'
+import {
+  launchRemoteSessionRepl,
+  launchResumedSessionRepl,
+  runDirectConnectMode,
+  runInteractiveMode,
+  runSshMode,
+} from '../assembly/index.js'
 import {
   hasGrowthBookEnvOverride,
   initializeGrowthBook,
@@ -196,7 +202,6 @@ import {
   shouldEnableClaudeInChrome,
 } from '../../services/claudeInChrome/setup.js'
 import { loadConversationForResume } from '../../utils/conversationRecovery.js'
-import { buildDeepLinkBanner } from '../../services/deepLink/banner.js'
 import { isBareMode, isEnvTruthy } from '../../utils/envUtils.js'
 import { refreshExampleCommands } from '../../utils/exampleCommands.js'
 import type { FpsMetrics } from '../../utils/fpsTracker.js'
@@ -235,7 +240,6 @@ import {
   getSessionIdFromLog,
   loadTranscriptFromFile,
   saveAgentSetting,
-  saveMode,
   searchSessionsByCustomTitle,
   sessionIdExists,
 } from '../../utils/sessionStorage.js'
@@ -316,10 +320,6 @@ import {
 // TeleportRepoMismatchDialog、TeleportResumeWrapper 在调用处动态导入
 import { createRemoteSessionConfig } from '../../remote/RemoteSessionManager.js'
 // teleportWithProgress 在调用处动态导入
-import {
-  createDirectConnectSession,
-  DirectConnectError,
-} from '../../server/createDirectConnectSession.js'
 import { initializeLspServerManager } from '../../services/lsp/manager.js'
 import { shouldEnablePromptSuggestion } from '../../services/PromptSuggestion/promptSuggestion.js'
 import {
@@ -2796,24 +2796,14 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
         resume_duration_ms: Math.round(performance.now() - resumeStart),
       })
       resumeSucceeded = true
-      await launchRepl(
+      await launchResumedSessionRepl({
         root,
-        {
-          getFpsMetrics,
-          stats,
-          initialState: loaded.initialState,
-        },
-        {
-          ...sessionConfig,
-          mainThreadAgentDefinition: loaded.restoredAgentDef ?? mainThreadAgentDefinition,
-          initialMessages: loaded.messages,
-          initialFileHistorySnapshots: loaded.fileHistorySnapshots,
-          initialContentReplacements: loaded.contentReplacements,
-          initialAgentName: loaded.agentName,
-          initialAgentColor: loaded.agentColor,
-        },
+        appProps: { getFpsMetrics, stats, initialState: loaded.initialState },
         renderAndRun,
-      )
+        sessionConfig,
+        resumed: loaded,
+        fallbackAgentDefinition: mainThreadAgentDefinition,
+      })
     } catch (error) {
       if (!resumeSucceeded) {
         logEvent('zy_continue', {
@@ -2825,137 +2815,40 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     }
   } else if (feature('DIRECT_CONNECT') && pendingConnect?.url) {
     // `zy connect <url>` —— 完整交互式 TUI 连接到远程服务器
-    let directConnectConfig
-    try {
-      const session = await createDirectConnectSession({
-        serverUrl: pendingConnect.url,
-        authToken: pendingConnect.authToken,
-        cwd: getOriginalCwd(),
-        dangerouslySkipPermissions: pendingConnect.dangerouslySkipPermissions,
-      })
-      if (session.workDir) {
-        setOriginalCwd(session.workDir)
-        setCwdState(session.workDir)
-      }
-      setDirectConnectServerUrl(pendingConnect.url)
-      directConnectConfig = session.config
-    } catch (err) {
-      return await exitWithError(
-        root,
-        err instanceof DirectConnectError ? err.message : String(err),
-        () => gracefulShutdown(1),
-      )
-    }
-    const connectInfoMessage = createSystemMessage(
-      `Connected to server at ${pendingConnect.url}\nSession: ${directConnectConfig.sessionId}`,
-      'info',
-    )
-    await launchRepl(
+    await runDirectConnectMode({
       root,
-      {
-        getFpsMetrics,
-        stats,
-        initialState,
-      },
-      {
+      appProps: { getFpsMetrics, stats, initialState },
+      renderAndRun,
+      pendingConnect,
+      config: {
         debug: debug || debugToStderr,
         commands,
-        initialTools: [],
-        initialMessages: [connectInfoMessage],
-        mcpClients: [],
         autoConnectIdeFlag: ide,
         mainThreadAgentDefinition,
         disableSlashCommands,
-        directConnectConfig,
         thinkingConfig,
       },
-      renderAndRun,
-    )
+    })
     return
   } else if (feature('SSH_REMOTE') && pendingSSH?.host) {
     // `zy ssh <host> [dir]` —— 探测远程，如果需要则部署二进制文件，
     // 生成带有 unix-socket -R 转发到本地认证代理的 ssh，将
     // SSHSession 交给 REPL。工具在远程运行，UI 在本地渲染。
-    // `--local` 跳过探测/部署/ssh 并直接生成当前二进制文件
-    // 使用相同的环境 —— 代理/认证管道的 e2e 测试。
-    const { createSSHSession, createLocalSSHSession, SSHSessionError } = await import(
-      '../../ssh/createSSHSession.js'
-    )
-    let sshSession
-    try {
-      if (pendingSSH.local) {
-        process.stderr.write('Starting local ssh-proxy test session...\n')
-        sshSession = createLocalSSHSession({
-          cwd: pendingSSH.cwd,
-          permissionMode: pendingSSH.permissionMode,
-          dangerouslySkipPermissions: pendingSSH.dangerouslySkipPermissions,
-        })
-      } else {
-        process.stderr.write(`Connecting to ${pendingSSH.host}…\n`)
-        // 原位进度：\r + EL0（擦除到行尾）。成功时最终 \n
-        // 以便下一条消息落在新行上。当 stderr
-        // 不是 TTY 时无操作（管道/重定向）—— \r 只会发出噪音。
-        const isTTY = process.stderr.isTTY
-        let hadProgress = false
-        sshSession = await createSSHSession(
-          {
-            host: pendingSSH.host,
-            cwd: pendingSSH.cwd,
-            localVersion: MACRO.VERSION,
-            permissionMode: pendingSSH.permissionMode,
-            dangerouslySkipPermissions: pendingSSH.dangerouslySkipPermissions,
-            extraCliArgs: pendingSSH.extraCliArgs,
-          },
-          isTTY
-            ? {
-                onProgress: (msg) => {
-                  hadProgress = true
-                  process.stderr.write(`\r  ${msg}\x1b[K`)
-                },
-              }
-            : {},
-        )
-        if (hadProgress) {
-          process.stderr.write('\n')
-        }
-      }
-      setOriginalCwd(sshSession.remoteCwd)
-      setCwdState(sshSession.remoteCwd)
-      setDirectConnectServerUrl(pendingSSH.local ? 'local' : pendingSSH.host)
-    } catch (err) {
-      return await exitWithError(
-        root,
-        err instanceof SSHSessionError ? err.message : String(err),
-        () => gracefulShutdown(1),
-      )
-    }
-    const sshInfoMessage = createSystemMessage(
-      pendingSSH.local
-        ? `Local ssh-proxy test session\ncwd: ${sshSession.remoteCwd}\nAuth: unix socket → local proxy`
-        : `SSH session to ${pendingSSH.host}\nRemote cwd: ${sshSession.remoteCwd}\nAuth: unix socket -R → local proxy`,
-      'info',
-    )
-    await launchRepl(
+    await runSshMode({
       root,
-      {
-        getFpsMetrics,
-        stats,
-        initialState,
-      },
-      {
+      appProps: { getFpsMetrics, stats, initialState },
+      renderAndRun,
+      pendingSSH,
+      localVersion: MACRO.VERSION,
+      config: {
         debug: debug || debugToStderr,
         commands,
-        initialTools: [],
-        initialMessages: [sshInfoMessage],
-        mcpClients: [],
         autoConnectIdeFlag: ide,
         mainThreadAgentDefinition,
         disableSlashCommands,
-        sshSession,
         thinkingConfig,
       },
-      renderAndRun,
-    )
+    })
     return
   } else if (
     feature('KAIROS') &&
@@ -3062,27 +2955,21 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
       replBridgeEnabled: false,
     }
     const remoteCommands = filterCommandsForRemoteMode(commands)
-    await launchRepl(
+    await launchRemoteSessionRepl({
       root,
-      {
-        getFpsMetrics,
-        stats,
-        initialState: assistantInitialState,
-      },
-      {
+      appProps: { getFpsMetrics, stats, initialState: assistantInitialState },
+      renderAndRun,
+      config: {
         debug: debug || debugToStderr,
-        commands: remoteCommands,
-        initialTools: [],
-        initialMessages: [infoMessage],
-        mcpClients: [],
         autoConnectIdeFlag: ide,
         mainThreadAgentDefinition,
         disableSlashCommands,
-        remoteSessionConfig,
         thinkingConfig,
       },
-      renderAndRun,
-    )
+      remoteCommands,
+      initialMessages: [infoMessage],
+      remoteSessionConfig,
+    })
     return
   } else if (options.resume || options.fromPr || teleport || remote !== null) {
     // 处理恢复流程 —— 从文件（仅限 ant）、会话 ID 或交互式选择器恢复
@@ -3245,29 +3132,23 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
       // 预过滤命令以仅包含远程安全的命令。
       // CCR 的初始化响应可能进一步细化列表（通过 REPL 中的 handleRemoteInit）。
       const remoteCommands = filterCommandsForRemoteMode(commands)
-      await launchRepl(
+      await launchRemoteSessionRepl({
         root,
-        {
-          getFpsMetrics,
-          stats,
-          initialState: remoteInitialState,
-        },
-        {
+        appProps: { getFpsMetrics, stats, initialState: remoteInitialState },
+        renderAndRun,
+        config: {
           debug: debug || debugToStderr,
-          commands: remoteCommands,
-          initialTools: [],
-          initialMessages: initialUserMessage
-            ? [remoteInfoMessage, initialUserMessage]
-            : [remoteInfoMessage],
-          mcpClients: [],
           autoConnectIdeFlag: ide,
           mainThreadAgentDefinition,
           disableSlashCommands,
-          remoteSessionConfig,
           thinkingConfig,
         },
-        renderAndRun,
-      )
+        remoteCommands,
+        initialMessages: initialUserMessage
+          ? [remoteInfoMessage, initialUserMessage]
+          : [remoteInfoMessage],
+        remoteSessionConfig,
+      })
       return
     } else if (teleport) {
       if (teleport === true || teleport === '') {
@@ -3530,24 +3411,14 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     if (resumeData) {
       maybeActivateProactive(options)
       maybeActivateBrief(options)
-      await launchRepl(
+      await launchResumedSessionRepl({
         root,
-        {
-          getFpsMetrics,
-          stats,
-          initialState: resumeData.initialState,
-        },
-        {
-          ...sessionConfig,
-          mainThreadAgentDefinition: resumeData.restoredAgentDef ?? mainThreadAgentDefinition,
-          initialMessages: resumeData.messages,
-          initialFileHistorySnapshots: resumeData.fileHistorySnapshots,
-          initialContentReplacements: resumeData.contentReplacements,
-          initialAgentName: resumeData.agentName,
-          initialAgentColor: resumeData.agentColor,
-        },
+        appProps: { getFpsMetrics, stats, initialState: resumeData.initialState },
         renderAndRun,
-      )
+        sessionConfig,
+        resumed: resumeData,
+        fallbackAgentDefinition: mainThreadAgentDefinition,
+      })
     } else {
       // 显示交互式选择器（包括同仓库 worktrees）
       // Note: ResumeConversation loads logs internally to ensure proper GC after selection
@@ -3568,70 +3439,14 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
       )
     }
   } else {
-    // 将未解决的钩子 promise 传递给 REPL，以便它可以立即渲染
-    // 而不是阻塞约 500ms 等待 SessionStart 钩子完成。
-    // REPL 将在钩子解析时注入钩子消息，并在
-    // 首次 API 调用之前等待它们，以便模型始终看到钩子上下文。
-    const pendingHookMessages = hooksPromise && hookMessages.length === 0 ? hooksPromise : undefined
-
-    profileCheckpoint('action_after_hooks')
-    maybeActivateProactive(options)
-    maybeActivateBrief(options)
-    // 为新会话持久化当前模式，以便未来的恢复知道使用了什么模式
-    if (feature('COORDINATOR_MODE')) {
-      saveMode(coordinatorModeModule?.isCoordinatorMode() ? 'coordinator' : 'normal')
-    }
-
-    // 如果通过深度链接启动，显示来源横幅以便用户
-    // 知道会话是从外部启动的。Linux xdg-open 和
-    // 设置了"始终允许"的浏览器在没有操作系统级别
-    // 确认的情况下分派链接，所以这是用户得到的唯一信号
-    // 提示 —— 以及它暗示的工作目录 / AGENTS.md —— 来自
-    // 外部来源，而不是他们输入的内容。
-    let deepLinkBanner: ReturnType<typeof createSystemMessage> | null = null
-    if (feature('LODESTONE')) {
-      if (options.deepLinkOrigin) {
-        logEvent('zy_deep_link_opened', {
-          has_prefill: Boolean(options.prefill),
-          has_repo: Boolean(options.deepLinkRepo),
-        })
-        deepLinkBanner = createSystemMessage(
-          buildDeepLinkBanner({
-            cwd: getCwd(),
-            prefillLength: options.prefill?.length,
-            repo: options.deepLinkRepo,
-            lastFetch:
-              options.deepLinkLastFetch !== undefined
-                ? new Date(options.deepLinkLastFetch)
-                : undefined,
-          }),
-          'warning' as any,
-        )
-      } else if (options.prefill) {
-        deepLinkBanner = createSystemMessage(
-          'Launched with a pre-filled prompt — review it before pressing Enter.',
-          'warning' as any,
-        )
-      }
-    }
-    const initialMessages = deepLinkBanner
-      ? [deepLinkBanner, ...hookMessages]
-      : hookMessages.length > 0
-        ? hookMessages
-        : undefined
-    await launchRepl(
+    await runInteractiveMode({
       root,
-      {
-        getFpsMetrics,
-        stats,
-        initialState,
-      },
-      {
-        ...sessionConfig,
-        initialMessages,
-        pendingHookMessages,
-      },
+      appProps: { getFpsMetrics, stats, initialState },
       renderAndRun,
-    )
+      sessionConfig,
+      options,
+      hookMessages,
+      hooksPromise,
+    })
   }
 }
