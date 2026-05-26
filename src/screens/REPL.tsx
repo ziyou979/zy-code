@@ -11,13 +11,9 @@ import {
 } from '../bootstrap/state.js'
 import { parseTokenBudget } from '../utils/tokenBudget.js'
 import { count } from '../utils/array.js'
-import { dirname, join } from 'node:path'
-import { tmpdir } from 'node:os'
+import { dirname } from 'node:path'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- / n N Esc [ v are bare letters in transcript modal context, same class as g/G/j/k in ScrollKeybindingHandler
 import { useInput } from '../ink.js'
-import { renderMessagesToPlainText } from '../utils/exportRenderer.js'
-import { openFileInExternalEditor } from '../utils/editor.js'
-import { writeFile } from 'node:fs/promises'
 import { Box, Text, useStdin, useTheme, useTerminalFocus, useTabStatus } from '../ink.js'
 import type { TabStatusKind } from '../ink/hooks/use-tab-status.js'
 import { IdleReturnDialog } from '../components/IdleReturnDialog.js'
@@ -347,6 +343,7 @@ import { useReplProactive } from './repl/useReplProactive.js'
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
 import { useReplSearch } from './repl/useReplSearch.js'
 import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
+import { useTranscriptEditor } from './repl/useTranscriptEditor.js'
 import { useAwaySummary } from 'src/hooks/useAwaySummary.js'
 import { usePromptsFromClaudeInChrome } from 'src/hooks/usePromptsFromClaudeInChrome.js'
 import { getTipToShowOnSpinner, recordShownTip } from 'src/services/tips/tipScheduler.js'
@@ -629,21 +626,12 @@ export function REPL({
   }, [])
   const [screen, setScreen] = useState<Screen>('prompt')
   const [showAllInTranscript, setShowAllInTranscript] = useState(false)
-  // [ 强制在转录模式内走 dump-to-scrollback 路径。与
-  // ZY_CODE_NO_FLICKER=0（进程生命周期）分开 — 这是临时的，
-  // 退出转录时重置。诊断逃生通道，使终端/tmux 原生 cmd-F
-  // 可以搜索完整扁平渲染。
+  // [ 强制在转录模式内走 dump-to-scrollback 路径。退出转录时重置；
+  // useReplSearch 的 useInput.isActive 需要这个值（!dumpMode），所以 state 留在 REPL，
+  // 仅把 3 个 editor refs + useInput([/v/q) + inTranscript 退出 reset 抽到 useTranscriptEditor。
   const [dumpMode, setDumpMode] = useState(false)
-  // 面向编辑器的 v 渲染进度。内联在 footer 中 — 通知
-  // 在 PromptInput 内渲染，而 PromptInput 在转录中未挂载。
+  // 面向编辑器的 v 渲染进度。内联在 footer 中。
   const [editorStatus, setEditorStatus] = useState('')
-  // 退出转录时递增。异步 v-render 在开始时捕获此值；
-  // 如果过时，每次状态写入都无操作（用户在渲染中间离开转录 —
-  // 稳定的 setState 否则会将幽灵 toast 印入下一个会话）。
-  // 同时清除任何待处理的 4 秒自动清除。
-  const editorGenRef = useRef(0)
-  const editorTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const editorRenderingRef = useRef(false)
   const { addNotification, removeNotification } = useNotifications()
 
   // eslint-disable-next-line prefer-const
@@ -4790,95 +4778,22 @@ export function REPL({
 
   // 转录退出快捷键。模态上下文中的裸字母（没有提示竞争输入）
   // —— 与 ScrollKeybindingHandler 中的 g/G/j/k 相同类别
-  useInput(
-    (input, key, event) => {
-      if (key.ctrl || key.meta) {
-        return
-      }
-      if (input === 'q') {
-        // less: q 退出 pager。ctrl+o 切换；q 是 lineage 退出
-        handleExitTranscript()
-        event.stopImmediatePropagation()
-        return
-      }
-      if (input === '[' && !dumpMode) {
-        // 强制转储到回滚。同时展开 + 解除限制 —— 转储子集没有意义。
-        // 终端/tmux cmd-F 现在可以搜索任何内容。守卫在此
-        // （不在 isActive 中）所以 v 在 [ 之后仍然有效 —— dump-mode footer 在
-        // ~4898 连接 editorStatus，确认 v 应该保持活跃
-        setDumpMode(true)
-        setShowAllInTranscript(true)
-        event.stopImmediatePropagation()
-      } else if (input === 'v') {
-        // less 风格：v 在 $VISUAL/$EDITOR 中打开文件。渲染完整
-        // 转录（与 /export 相同的路径），写入 tmp，交出。
-        // openFileInExternalEditor 处理终端编辑器的 alt-screen 挂起/恢复；
-        // GUI 编辑器分离生成
-        event.stopImmediatePropagation()
-        // 防止双击：渲染是异步的，在完成前的第二次按下会运行
-        // 第二个并行渲染（双倍内存、两个临时文件、两次编辑器生成）。
-        // editorGenRef 仅守卫转录退出过时的情况，不守卫同会话并发
-        if (editorRenderingRef.current) {
-          return
-        }
-        editorRenderingRef.current = true
-        // 捕获 generation + 创建防过时 setter。每次写入检查 gen
-        // （转录退出增加它 —— 来自异步渲染的迟写入静默失败）
-        const gen = editorGenRef.current
-        const setStatus = (s: string): void => {
-          if (gen !== editorGenRef.current) {
-            return
-          }
-          clearTimeout(editorTimerRef.current)
-          setEditorStatus(s)
-        }
-        setStatus(`rendering ${deferredMessages.length} messages…`)
-        void (async () => {
-          try {
-            // 宽度 = 终端宽度减去 vim 的行号边栏（4 位数字 +
-            // 空格 + 余量）。最低 80。PassThrough 没有 .columns 所以
-            // 没有这个 Ink 默认 80。去除尾部空格：右对齐的时间戳
-            // 仍然在行尾留下 flexbox 空格运行
-            // eslint-disable-next-line custom-rules/prefer-use-terminal-size -- one-shot at keypress time, not a reactive render dep
-            const w = Math.max(80, (process.stdout.columns ?? 80) - 6)
-            const raw = await renderMessagesToPlainText(deferredMessages, tools, w)
-            const text = raw.replace(/[ \t]+$/gm, '')
-            const path = join(tmpdir(), `cc-transcript-${Date.now()}.txt`)
-            await writeFile(path, text)
-            const opened = openFileInExternalEditor(path)
-            setStatus(opened ? `opening ${path}` : `wrote ${path} · no $VISUAL/$EDITOR set`)
-          } catch (e) {
-            setStatus(`render failed: ${e instanceof Error ? e.message : String(e)}`)
-          }
-          editorRenderingRef.current = false
-          if (gen !== editorGenRef.current) {
-            return
-          }
-          editorTimerRef.current = setTimeout((s) => s(''), 4000, setEditorStatus)
-        })()
-      }
-    },
-    // !searchOpen: 在搜索栏中键入 'v' 或 '[' 是搜索输入，不是
-    // 命令。此处无 !dumpMode —— v 在 [ 之后应该有效（[ 处理程序
-    // 在内部自行守卫）
-    {
-      isActive: screen === 'transcript' && virtualScrollActive && !searchOpen,
-    },
-  )
-
-  // 每次转录条目使用新的 `less`。防止过时高亮匹配
-  // 不相关的普通模式文本（覆盖层是 alt-screen-global）并避免
-  // 重新进入时意外 n/N。相同的退出重置 [ dump 模式 —— 每次 ctrl+o
-  // 条目是新实例。
-  // 注意：search 部分的 reset 已迁入 useReplSearch；本 effect 只保留 editor / dump 部分。
-  useEffect(() => {
-    if (!inTranscript) {
-      editorGenRef.current++
-      clearTimeout(editorTimerRef.current)
-      setDumpMode(false)
-      setEditorStatus('')
-    }
-  }, [inTranscript])
+  // transcript 内 [ / v / q 键绑定 + 3 个 editor refs + inTranscript 退出复位 editor / dump
+  // 已抽到 useTranscriptEditor；state 留在 REPL 主体（dumpMode / editorStatus 见 line 636 / 638）
+  // 是因为 useReplSearch 的 useInput.isActive 依赖 dumpMode 值。
+  useTranscriptEditor({
+    inTranscript,
+    screen,
+    virtualScrollActive,
+    searchOpen,
+    deferredMessages,
+    tools,
+    dumpMode,
+    setDumpMode,
+    setEditorStatus,
+    setShowAllInTranscript,
+    handleExitTranscript,
+  })
   const globalKeybindingProps = {
     screen,
     setScreen,
