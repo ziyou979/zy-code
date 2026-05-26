@@ -46,7 +46,7 @@ import {
   switchSession,
   setCostStateForRestore,
 } from '../bootstrap/state.js'
-import { asSessionId, asAgentId } from '../types/ids.js'
+import { asSessionId } from '../types/ids.js'
 import { logForDebugging } from '../utils/debug.js'
 import { QueryGuard } from '../utils/QueryGuard.js'
 import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
@@ -247,7 +247,6 @@ import {
   isLoggableMessage,
   saveWorktreeState,
   saveAiGeneratedTitle,
-  getAgentTranscript,
 } from '../utils/sessionStorage.js'
 import { deserializeMessages } from '../utils/conversationRecovery.js'
 import {
@@ -344,6 +343,7 @@ import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
 import { useReplSearch } from './repl/useReplSearch.js'
 import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
 import { useTranscriptEditor } from './repl/useTranscriptEditor.js'
+import { useViewedAgentBootstrap } from './repl/useViewedAgentBootstrap.js'
 import { useAwaySummary } from 'src/hooks/useAwaySummary.js'
 import { usePromptsFromClaudeInChrome } from 'src/hooks/usePromptsFromClaudeInChrome.js'
 import { getTipToShowOnSpinner, recordShownTip } from 'src/services/tips/tipScheduler.js'
@@ -553,41 +553,10 @@ export function REPL({
   const viewingAgentTaskId = useAppState((s) => s.viewingAgentTaskId)
   const setAppState = useSetAppState()
 
-  // Bootstrap：保留了尚未加载磁盘的 local_agent → 读取
-  // sidechain JSONL 并与 stream 已追加的内容进行 UUID 合并。
-  // Stream 在保留时立即追加（不延迟）；bootstrap 填充前缀。
-  // 磁盘先于 yield 写入意味着 live 始终是 disk 的后缀。
-  const viewedLocalAgent = viewingAgentTaskId ? tasks[viewingAgentTaskId] : undefined
-  const needsBootstrap =
-    isLocalAgentTask(viewedLocalAgent) && viewedLocalAgent.retain && !viewedLocalAgent.diskLoaded
-  useEffect(() => {
-    if (!viewingAgentTaskId || !needsBootstrap) {
-      return
-    }
-    const taskId = viewingAgentTaskId
-    void getAgentTranscript(asAgentId(taskId)).then((result) => {
-      setAppState((prev) => {
-        const t = prev.tasks[taskId]
-        if (!isLocalAgentTask(t) || t.diskLoaded || !t.retain) {
-          return prev
-        }
-        const live = t.messages ?? []
-        const liveUuids = new Set(live.map((m) => m.uuid))
-        const diskOnly = result ? result.messages.filter((m) => !liveUuids.has(m.uuid)) : []
-        return {
-          ...prev,
-          tasks: {
-            ...prev.tasks,
-            [taskId]: {
-              ...t,
-              messages: [...diskOnly, ...live],
-              diskLoaded: true,
-            },
-          },
-        }
-      })
-    })
-  }, [viewingAgentTaskId, needsBootstrap, setAppState])
+  // viewed-agent sidechain JSONL 合并已抽到 useViewedAgentBootstrap：
+  // 切换到 retain=true 但尚未 diskLoaded 的 local_agent task 时，
+  // 读取磁盘前缀并与 stream live 消息按 UUID 合并。
+  useViewedAgentBootstrap()
   const store = useAppStateStore()
   const terminal = useTerminalNotification()
   const mainLoopModel = useMainLoopModel()
