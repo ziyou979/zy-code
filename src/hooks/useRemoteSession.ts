@@ -11,7 +11,7 @@ import {
   createSyntheticAssistantMessage,
   createToolStub,
 } from '../remote/remotePermissionBridge.js'
-import { convertSDKMessage, isSessionEndMessage } from '../remote/sdkMessageAdapter.js'
+import { convertSDKMessage, isSessionEndMessage } from '../remote/messageAdapter.js'
 import { useSetAppState } from '../state/AppState.js'
 import type { AppState } from '../state/AppStateStore.js'
 import type { Tool } from '../Tool.js'

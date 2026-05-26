@@ -3,12 +3,12 @@ import { randomUUID } from 'node:crypto'
 import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
 import type {
   PermissionMode,
-  SDKCompactBoundaryMessage,
-  SDKMessage,
-  SDKPermissionDenial,
-  SDKStatus,
-  SDKUserMessageReplay,
-} from 'src/entrypoints/agentSdkTypes.js'
+  BridgeCompactBoundaryMessage,
+  BridgeMessage,
+  BridgePermissionDenial,
+  BridgeStatus,
+  BridgeUserMessageReplay,
+} from 'src/types/index.js'
 import { accumulateUsage, updateUsage } from 'src/services/api/usageTracker.js'
 import type { NonNullableUsage } from 'src/services/api/logging.js'
 import { EMPTY_USAGE } from 'src/services/api/logging.js'
@@ -130,7 +130,7 @@ export type QueryEngineConfig = {
   /** 处理由 MCP 工具 -32042 错误触发的 URL 诱导请求。 */
   handleElicitation?: ToolUseContext['handleElicitation']
   includePartialMessages?: boolean
-  setSDKStatus?: (status: SDKStatus) => void
+  setSDKStatus?: (status: BridgeStatus) => void
   abortController?: AbortController
   orphanedPermission?: OrphanedPermission
   /**
@@ -159,7 +159,7 @@ export class QueryEngine {
   private config: QueryEngineConfig
   private mutableMessages: Message[]
   private abortController: AbortController
-  private permissionDenials: SDKPermissionDenial[]
+  private permissionDenials: BridgePermissionDenial[]
   private totalUsage: NonNullableUsage
   private hasHandledOrphanedPermission = false
   private readFileState: FileStateCache
@@ -181,7 +181,7 @@ export class QueryEngine {
   async *submitMessage(
     prompt: string | UserContentBlock[],
     options?: { uuid?: string; isMeta?: boolean },
-  ): AsyncGenerator<SDKMessage, void, unknown> {
+  ): AsyncGenerator<BridgeMessage, void, unknown> {
     const {
       cwd,
       commands,
@@ -544,12 +544,12 @@ export class QueryEngine {
             timestamp: msg.timestamp,
             isReplay: !msg.isCompactSummary,
             isSynthetic: msg.isMeta || msg.isVisibleInTranscriptOnly,
-          } as SDKUserMessageReplay
+          } as BridgeUserMessageReplay
         }
 
         // 本地命令输出——作为合成的 assistant 消息产生，使 RC 将其渲染为
         // assistant 样式文本而非用户气泡。以 assistant 类型（而非专用的
-        // SDKLocalCommandOutputMessage 系统子类型）发出，以便移动端客户端
+        // BridgeLocalCommandOutputMessage 系统子类型）发出，以便移动端客户端
         // 和会话入口能够解析。
         if (
           msg.type === 'system' &&
@@ -568,7 +568,7 @@ export class QueryEngine {
             session_id: getSessionId(),
             uuid: msg.uuid,
             compact_metadata: toSDKCompactMetadata(msg.compactMetadata),
-          } as SDKCompactBoundaryMessage
+          } as BridgeCompactBoundaryMessage
         }
       }
 
@@ -698,7 +698,7 @@ export class QueryEngine {
                 uuid: msgToAck.uuid,
                 timestamp: msgToAck.timestamp,
                 isReplay: true,
-              } as SDKUserMessageReplay
+              } as BridgeUserMessageReplay
             }
           }
         }
@@ -853,7 +853,7 @@ export class QueryEngine {
               uuid: ((message as any).attachment as any).source_uuid || message.uuid,
               timestamp: message.timestamp,
               isReplay: true,
-            } as SDKUserMessageReplay
+            } as BridgeUserMessageReplay
           }
           break
         case 'stream_request_start':
@@ -1219,9 +1219,9 @@ export async function* ask({
   includePartialMessages?: boolean
   handleElicitation?: ToolUseContext['handleElicitation']
   agents?: AgentDefinition[]
-  setSDKStatus?: (status: SDKStatus) => void
+  setSDKStatus?: (status: BridgeStatus) => void
   orphanedPermission?: OrphanedPermission
-}): AsyncGenerator<SDKMessage, void, unknown> {
+}): AsyncGenerator<BridgeMessage, void, unknown> {
   const engine = new QueryEngine({
     cwd,
     tools,

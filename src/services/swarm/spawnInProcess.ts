@@ -27,7 +27,7 @@ import { createAbortController } from '../../utils/abortController.js'
 import { formatAgentId } from '../../utils/agentId.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { emitTaskTerminatedSdk } from '../../utils/sdkEventQueue.js'
+import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
 import { evictTaskOutput } from '../../services/task/diskOutput.js'
 import {
   evictTerminalTask,
@@ -294,7 +294,7 @@ export function killInProcessTeammate(taskId: string, setAppState: SetAppStateFn
     // task_started bookend directly. The in-process runner's own
     // completion/failure emit guards on status==='running' so it won't
     // double-emit after seeing status:killed.
-    emitTaskTerminatedSdk(taskId, 'stopped', {
+    emitTaskTerminatedBridge(taskId, 'stopped', {
       toolUseId,
       summary: description,
     })

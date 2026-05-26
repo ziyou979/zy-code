@@ -6,7 +6,7 @@ import {
   logEvent,
 } from '../services/analytics/index.js'
 import type { ToolUseContext } from '../Tool.js'
-import type { HookProgress } from '../types/hooks.js'
+import type { HookProgress } from '../types/hooks/index.js'
 import type {
   AssistantMessage,
   Message,

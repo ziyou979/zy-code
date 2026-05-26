@@ -1,4 +1,4 @@
-import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
+import type { BridgeMessage } from '../types/index.js'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { extractErrorDetail } from './debugUtils.js'
@@ -19,7 +19,7 @@ type GitOutcome = {
 // POST /v1/sessions endpoint (discriminated union format).
 type SessionEvent = {
   type: 'event'
-  data: SDKMessage
+  data: BridgeMessage
 }
 
 /**

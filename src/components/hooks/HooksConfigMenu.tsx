@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { HookEvent } from 'src/entrypoints/agentSdkTypes'
+import type { HookEvent } from 'src/types'
 import { tSync } from 'src/i18n/index.js'
 import { useAppState, useAppStateStore } from 'src/state/AppState.js'
 import type { CommandResultDisplay } from '../../commands.js'

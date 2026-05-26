@@ -1,19 +1,19 @@
-// SDK Control Protocol Types - used by SDK builders for the bridge control protocol.
+// Bridge control protocol types — used internally for IPC (subprocess, remote-control, replBridge).
 // These are the TypeScript type equivalents of the Zod schemas in controlSchemas.ts.
 
 import type {
-  SDKMessage,
-  SDKPostTurnSummaryMessage,
-  SDKStreamlinedTextMessage,
-  SDKStreamlinedToolUseSummaryMessage,
-  SDKUserMessage,
-} from './coreTypes.generated.js'
+  BridgeMessage,
+  BridgePostTurnSummaryMessage,
+  BridgeStreamlinedTextMessage,
+  BridgeStreamlinedToolUseSummaryMessage,
+  BridgeUserMessage,
+} from './messages.js'
 
 // ============================================================
 // Control Request Subtypes
 // ============================================================
 
-export interface SDKControlInitializeRequest {
+export interface BridgeControlInitializeRequest {
   subtype: 'initialize'
   hooks?: Record<string, Array<{ matcher?: string; hookCallbackIds: string[]; timeout?: number }>>
   sdkMcpServers?: string[]
@@ -25,7 +25,7 @@ export interface SDKControlInitializeRequest {
   agentProgressSummaries?: boolean
 }
 
-export interface SDKControlInitializeResponse {
+export interface BridgeControlInitializeResponse {
   commands: Array<{ name: string; description: string }>
   agents: Array<{ name: string; description?: string }>
   output_style: string
@@ -36,11 +36,11 @@ export interface SDKControlInitializeResponse {
   fast_mode_state?: unknown
 }
 
-export interface SDKControlInterruptRequest {
+export interface BridgeControlInterruptRequest {
   subtype: 'interrupt'
 }
 
-export interface SDKControlPermissionRequest {
+export interface BridgeControlPermissionRequest {
   subtype: 'can_use_tool'
   tool_name: string
   input: Record<string, unknown>
@@ -54,35 +54,35 @@ export interface SDKControlPermissionRequest {
   description?: string
 }
 
-export interface SDKControlSetPermissionModeRequest {
+export interface BridgeControlSetPermissionModeRequest {
   subtype: 'set_permission_mode'
   mode: string
   ultraplan?: boolean
 }
 
-export interface SDKControlSetModelRequest {
+export interface BridgeControlSetModelRequest {
   subtype: 'set_model'
   model?: string
 }
 
-export interface SDKControlSetMaxThinkingTokensRequest {
+export interface BridgeControlSetMaxThinkingTokensRequest {
   subtype: 'set_max_thinking_tokens'
   max_thinking_tokens: number | null
 }
 
-export interface SDKControlMcpStatusRequest {
+export interface BridgeControlMcpStatusRequest {
   subtype: 'mcp_status'
 }
 
-export interface SDKControlMcpStatusResponse {
+export interface BridgeControlMcpStatusResponse {
   mcpServers: Array<{ name: string; status: string; error?: string }>
 }
 
-export interface SDKControlGetContextUsageRequest {
+export interface BridgeControlGetContextUsageRequest {
   subtype: 'get_context_usage'
 }
 
-export interface SDKControlGetContextUsageResponse {
+export interface BridgeControlGetContextUsageResponse {
   categories: Array<{ name: string; tokens: number; color: string; isDeferred?: boolean }>
   totalTokens: number
   maxTokens: number
@@ -111,13 +111,13 @@ export interface SDKControlGetContextUsageResponse {
   } | null
 }
 
-export interface SDKControlRewindFilesRequest {
+export interface BridgeControlRewindFilesRequest {
   subtype: 'rewind_files'
   user_message_id: string
   dry_run?: boolean
 }
 
-export interface SDKControlRewindFilesResponse {
+export interface BridgeControlRewindFilesResponse {
   canRewind: boolean
   error?: string
   filesChanged?: string[]
@@ -125,50 +125,50 @@ export interface SDKControlRewindFilesResponse {
   deletions?: number
 }
 
-export interface SDKControlCancelAsyncMessageRequest {
+export interface BridgeControlCancelAsyncMessageRequest {
   subtype: 'cancel_async_message'
   message_uuid: string
 }
 
-export interface SDKControlCancelAsyncMessageResponse {
+export interface BridgeControlCancelAsyncMessageResponse {
   cancelled: boolean
 }
 
-export interface SDKControlSeedReadStateRequest {
+export interface BridgeControlSeedReadStateRequest {
   subtype: 'seed_read_state'
   path: string
   mtime: number
 }
 
-export interface SDKControlHookCallbackRequest {
+export interface BridgeControlHookCallbackRequest {
   subtype: 'hook_callback'
   callback_id: string
   input: unknown
   tool_use_id?: string
 }
 
-export interface SDKControlMcpMessageRequest {
+export interface BridgeControlMcpMessageRequest {
   subtype: 'mcp_message'
   server_name: string
   message: unknown
 }
 
-export interface SDKControlMcpSetServersRequest {
+export interface BridgeControlMcpSetServersRequest {
   subtype: 'mcp_set_servers'
   servers: Record<string, { command: string; args: string[]; env?: Record<string, string> }>
 }
 
-export interface SDKControlMcpSetServersResponse {
+export interface BridgeControlMcpSetServersResponse {
   added: string[]
   removed: string[]
   errors: Record<string, string>
 }
 
-export interface SDKControlReloadPluginsRequest {
+export interface BridgeControlReloadPluginsRequest {
   subtype: 'reload_plugins'
 }
 
-export interface SDKControlReloadPluginsResponse {
+export interface BridgeControlReloadPluginsResponse {
   commands: Array<{ name: string; description: string }>
   agents: Array<{ name: string; description?: string }>
   plugins: Array<{ name: string; path: string; source?: string }>
@@ -176,38 +176,38 @@ export interface SDKControlReloadPluginsResponse {
   error_count: number
 }
 
-export interface SDKControlMcpReconnectRequest {
+export interface BridgeControlMcpReconnectRequest {
   subtype: 'mcp_reconnect'
   serverName: string
 }
 
-export interface SDKControlMcpToggleRequest {
+export interface BridgeControlMcpToggleRequest {
   subtype: 'mcp_toggle'
   serverName: string
   enabled: boolean
 }
 
-export interface SDKControlStopTaskRequest {
+export interface BridgeControlStopTaskRequest {
   subtype: 'stop_task'
   task_id: string
 }
 
-export interface SDKControlApplyFlagSettingsRequest {
+export interface BridgeControlApplyFlagSettingsRequest {
   subtype: 'apply_flag_settings'
   settings: Record<string, unknown>
 }
 
-export interface SDKControlGetSettingsRequest {
+export interface BridgeControlGetSettingsRequest {
   subtype: 'get_settings'
 }
 
-export interface SDKControlGetSettingsResponse {
+export interface BridgeControlGetSettingsResponse {
   effective: Record<string, unknown>
   sources: Array<{ source: string; settings: Record<string, unknown> }>
   applied?: { model: string; effort: string | null }
 }
 
-export interface SDKControlElicitationRequest {
+export interface BridgeControlElicitationRequest {
   subtype: 'elicitation'
   mcp_server_name: string
   message: string
@@ -217,45 +217,45 @@ export interface SDKControlElicitationRequest {
   requested_schema?: Record<string, unknown>
 }
 
-export type SDKControlElicitationResponse = {
+export type BridgeControlElicitationResponse = {
   action: 'accept' | 'decline' | 'cancel'
   content?: Record<string, unknown>
 }
 
-export type SDKControlRequestInner =
-  | SDKControlInitializeRequest
-  | SDKControlInterruptRequest
-  | SDKControlPermissionRequest
-  | SDKControlSetPermissionModeRequest
-  | SDKControlSetModelRequest
-  | SDKControlSetMaxThinkingTokensRequest
-  | SDKControlMcpStatusRequest
-  | SDKControlGetContextUsageRequest
-  | SDKControlHookCallbackRequest
-  | SDKControlMcpMessageRequest
-  | SDKControlRewindFilesRequest
-  | SDKControlCancelAsyncMessageRequest
-  | SDKControlSeedReadStateRequest
-  | SDKControlMcpSetServersRequest
-  | SDKControlReloadPluginsRequest
-  | SDKControlMcpReconnectRequest
-  | SDKControlMcpToggleRequest
-  | SDKControlStopTaskRequest
-  | SDKControlApplyFlagSettingsRequest
-  | SDKControlGetSettingsRequest
-  | SDKControlElicitationRequest
+export type BridgeControlRequestInner =
+  | BridgeControlInitializeRequest
+  | BridgeControlInterruptRequest
+  | BridgeControlPermissionRequest
+  | BridgeControlSetPermissionModeRequest
+  | BridgeControlSetModelRequest
+  | BridgeControlSetMaxThinkingTokensRequest
+  | BridgeControlMcpStatusRequest
+  | BridgeControlGetContextUsageRequest
+  | BridgeControlHookCallbackRequest
+  | BridgeControlMcpMessageRequest
+  | BridgeControlRewindFilesRequest
+  | BridgeControlCancelAsyncMessageRequest
+  | BridgeControlSeedReadStateRequest
+  | BridgeControlMcpSetServersRequest
+  | BridgeControlReloadPluginsRequest
+  | BridgeControlMcpReconnectRequest
+  | BridgeControlMcpToggleRequest
+  | BridgeControlStopTaskRequest
+  | BridgeControlApplyFlagSettingsRequest
+  | BridgeControlGetSettingsRequest
+  | BridgeControlElicitationRequest
 
 // ============================================================
 // Control Request / Response Envelopes
 // ============================================================
 
-export interface SDKControlRequest {
+export interface BridgeControlRequest {
   type: 'control_request'
   request_id: string
-  request: SDKControlRequestInner
+  request: BridgeControlRequestInner
 }
 
-export interface SDKControlResponse {
+export interface BridgeControlResponse {
   type: 'control_response'
   response:
     | { subtype: 'success'; request_id: string; response?: Record<string, unknown> }
@@ -263,20 +263,20 @@ export interface SDKControlResponse {
         subtype: 'error'
         request_id: string
         error: string
-        pending_permission_requests?: SDKControlRequest[]
+        pending_permission_requests?: BridgeControlRequest[]
       }
 }
 
-export interface SDKControlCancelRequest {
+export interface BridgeControlCancelRequest {
   type: 'control_cancel_request'
   request_id: string
 }
 
-export interface SDKKeepAliveMessage {
+export interface BridgeKeepAliveMessage {
   type: 'keep_alive'
 }
 
-export interface SDKUpdateEnvironmentVariablesMessage {
+export interface BridgeUpdateEnvironmentVariablesMessage {
   type: 'update_environment_variables'
   variables: Record<string, string>
 }
@@ -286,25 +286,21 @@ export interface SDKUpdateEnvironmentVariablesMessage {
 // ============================================================
 
 export type StdoutMessage =
-  | SDKMessage
-  | SDKStreamlinedTextMessage
-  | SDKStreamlinedToolUseSummaryMessage
-  | SDKPostTurnSummaryMessage
-  | SDKControlResponse
-  | SDKControlRequest
-  | SDKControlCancelRequest
-  | SDKKeepAliveMessage
+  | BridgeMessage
+  | BridgeStreamlinedTextMessage
+  | BridgeStreamlinedToolUseSummaryMessage
+  | BridgePostTurnSummaryMessage
+  | BridgeControlResponse
+  | BridgeControlRequest
+  | BridgeControlCancelRequest
+  | BridgeKeepAliveMessage
 
 export type StdinMessage =
-  | SDKUserMessage
-  | SDKControlRequest
-  | SDKControlResponse
-  | SDKKeepAliveMessage
-  | SDKUpdateEnvironmentVariablesMessage
+  | BridgeUserMessage
+  | BridgeControlRequest
+  | BridgeControlResponse
+  | BridgeKeepAliveMessage
+  | BridgeUpdateEnvironmentVariablesMessage
 
-// ============================================================
-// Re-export SDKPartialAssistantMessage for convenience
-// (some transport files import it from here instead of coreTypes)
-// ============================================================
-
-export { SDKPartialAssistantMessage } from './coreTypes.generated.js'
+// (BridgePartialAssistantMessage is exported from ./messages.js — pull it from
+// there directly; the bridge barrel re-exports both control.ts and messages.ts.)

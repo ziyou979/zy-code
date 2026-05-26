@@ -41,7 +41,7 @@ import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { parseGitCommitId } from '../../tools/shared/gitOperationTracking.js'
 import { isDeferredTool, TOOL_SEARCH_TOOL_NAME } from '../../tools/ToolSearchTool/prompt.js'
 import { getAllBaseTools } from '../../tools.js'
-import type { HookProgress } from '../../types/hooks.js'
+import type { HookProgress } from 'src/types/hooks/index.js'
 import type {
   ContentBlock,
   ToolCallBlock,

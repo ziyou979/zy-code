@@ -1,4 +1,4 @@
-import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js'
+import type { HookEvent } from 'src/types/index.js'
 import { tSync } from 'src/i18n/index.js'
 import type { HookEventMetadata } from 'src/utils/hooks/hooksConfigManager.js'
 import { Box, Text } from '../../ink.js'

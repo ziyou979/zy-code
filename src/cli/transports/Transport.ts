@@ -1,6 +1,6 @@
 // Transport Interface - base type for all transport implementations.
 
-import type { StdinMessage, StdoutMessage } from '../../entrypoints/sdk/controlTypes.js'
+import type { StdinMessage, StdoutMessage } from 'src/types/bridge/control.js'
 
 export type TransportState = 'connecting' | 'open' | 'closed' | 'error'
 

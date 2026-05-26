@@ -1,4 +1,4 @@
-import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js'
+import type { HookEvent } from 'src/types/index.js'
 import type { ToolCallBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,

@@ -16,7 +16,7 @@ import {
   createSyntheticAssistantMessage,
   createToolStub,
 } from '../remote/remotePermissionBridge.js'
-import { convertSDKMessage, isSessionEndMessage } from '../remote/sdkMessageAdapter.js'
+import { convertSDKMessage, isSessionEndMessage } from '../remote/messageAdapter.js'
 import type { SSHSession } from '../ssh/createSSHSession.js'
 // @ts-expect-error
 import type { SSHSessionManager } from '../ssh/SSHSessionManager.js'

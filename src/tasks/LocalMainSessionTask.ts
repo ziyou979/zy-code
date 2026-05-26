@@ -32,7 +32,7 @@ import { registerCleanup } from '../utils/cleanupRegistry.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logError } from '../utils/log.js'
 import { enqueuePendingNotification } from '../utils/messageQueueManager.js'
-import { emitTaskTerminatedSdk } from '../utils/sdkEventQueue.js'
+import { emitTaskTerminatedBridge } from '../utils/bridgeEventQueue.js'
 import { getAgentTranscriptPath, recordSidechainTranscript } from '../utils/sessionStorage.js'
 import {
   evictTaskOutput,
@@ -199,7 +199,7 @@ export function completeMainSessionTask(
     // guards pass; the backgrounded path sets this inside
     // enqueueMainSessionNotification's check-and-set.
     updateTaskState(taskId, setAppState, (task) => ({ ...task, notified: true }))
-    emitTaskTerminatedSdk(taskId, success ? 'completed' : 'failed', {
+    emitTaskTerminatedBridge(taskId, success ? 'completed' : 'failed', {
       toolUseId,
       summary: 'Background session',
     })
@@ -366,7 +366,7 @@ export function startBackgroundSession({
             return alreadyNotified ? task : { ...task, notified: true }
           })
           if (!alreadyNotified) {
-            emitTaskTerminatedSdk(taskId, 'stopped', {
+            emitTaskTerminatedBridge(taskId, 'stopped', {
               summary: description,
             })
           }

@@ -7,11 +7,11 @@ import type {
   StopFailureHookInput,
   StopHookInput,
   SubagentStopHookInput,
-} from 'src/entrypoints/agentSdkTypes.js'
+} from 'src/types/index.js'
 import { getSessionId } from '../../../bootstrap/state.js'
 import type { AppState } from '../../../state/AppState.js'
 import type { ToolUseContext } from '../../../Tool.js'
-import type { PromptRequest, PromptResponse } from '../../../types/hooks.js'
+import type { PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type { AgentId } from '../../../types/ids.js'
 import type { AssistantMessage, Message } from '../../../types/message.js'
 import { extractTextContent, getLastAssistantMessage } from '../../messages.js'

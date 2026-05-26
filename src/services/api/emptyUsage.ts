@@ -1,4 +1,9 @@
-import type { NonNullableUsage } from '../../entrypoints/sdk/sdkUtilityTypes.js'
+export type NonNullableUsage = {
+  inputTokens: number
+  outputTokens: number
+  cacheCreationInputTokens: number
+  cacheReadInputTokens: number
+}
 
 /**
  * 零初始化的使用量对象。从 logging.ts 中提取，

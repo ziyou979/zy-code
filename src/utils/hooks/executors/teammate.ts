@@ -5,7 +5,7 @@ import type {
   TaskCompletedHookInput,
   TaskCreatedHookInput,
   TeammateIdleHookInput,
-} from 'src/entrypoints/agentSdkTypes.js'
+} from 'src/types/index.js'
 import type { ToolUseContext } from '../../../Tool.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { executeHooks } from '../executeEngine.js'

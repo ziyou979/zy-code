@@ -1,5 +1,5 @@
-import type { SdkWorkflowProgress } from '../../types/tools.js'
-import { enqueueSdkEvent } from '../../utils/sdkEventQueue.js'
+import type { BridgeWorkflowProgress } from '../../types/tools.js'
+import { enqueueBridgeEvent } from '../../utils/bridgeEventQueue.js'
 
 /**
  * Emit a `task_progress` SDK event. Shared by background agents (per tool_use
@@ -16,9 +16,9 @@ export function emitTaskProgress(params: {
   toolUses: number
   lastToolName?: string
   summary?: string
-  workflowProgress?: SdkWorkflowProgress[]
+  workflowProgress?: BridgeWorkflowProgress[]
 }): void {
-  enqueueSdkEvent({
+  enqueueBridgeEvent({
     type: 'system',
     subtype: 'task_progress',
     task_id: params.taskId,

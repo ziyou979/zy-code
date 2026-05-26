@@ -4,7 +4,7 @@ import type {
   FileChangedHookInput,
   HookInput,
   InstructionsLoadedHookInput,
-} from 'src/entrypoints/agentSdkTypes.js'
+} from 'src/types/index.js'
 import { getRegisteredHooks } from '../../../bootstrap/state.js'
 import { invalidateSessionEnvCache } from '../../sessionEnvironment.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'

@@ -11,9 +11,9 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
-import type { SDKControlRequest, SDKControlResponse } from '../entrypoints/sdk/controlTypes.js'
-import type { SDKResultSuccess } from '../entrypoints/sdk/coreTypes.js'
+import type { BridgeMessage } from '../types/index.js'
+import type { BridgeControlRequest, BridgeControlResponse } from '../types/bridge/control.js'
+import type { BridgeResultSuccess } from '../types/index.js'
 import { logEvent } from '../services/analytics/index.js'
 import { EMPTY_USAGE } from '../services/api/emptyUsage.js'
 import type { Message } from '../types/message.js'
@@ -27,17 +27,17 @@ import type { ReplBridgeTransport } from './replBridgeTransport.js'
 
 // ─── Type guards ─────────────────────────────────────────────────────────────
 
-/** Type predicate for parsed WebSocket messages. SDKMessage is a
+/** Type predicate for parsed WebSocket messages. BridgeMessage is a
  *  discriminated union on `type` — validating the discriminant is
  *  sufficient for the predicate; callers narrow further via the union. */
-export function isSDKMessage(value: unknown): value is SDKMessage {
+export function isSDKMessage(value: unknown): value is BridgeMessage {
   return (
     value !== null && typeof value === 'object' && 'type' in value && typeof value.type === 'string'
   )
 }
 
 /** Type predicate for control_response messages from the server. */
-export function isSDKControlResponse(value: unknown): value is SDKControlResponse {
+export function isSDKControlResponse(value: unknown): value is BridgeControlResponse {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -48,7 +48,7 @@ export function isSDKControlResponse(value: unknown): value is SDKControlRespons
 }
 
 /** Type predicate for control_request messages from the server. */
-export function isSDKControlRequest(value: unknown): value is SDKControlRequest {
+export function isSDKControlRequest(value: unknown): value is BridgeControlRequest {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -128,14 +128,14 @@ export function handleIngressMessage(
   data: string,
   recentPostedUUIDs: BoundedUUIDSet,
   recentInboundUUIDs: BoundedUUIDSet,
-  onInboundMessage: ((msg: SDKMessage) => void | Promise<void>) | undefined,
-  onPermissionResponse?: ((response: SDKControlResponse) => void) | undefined,
-  onControlRequest?: ((request: SDKControlRequest) => void) | undefined,
+  onInboundMessage: ((msg: BridgeMessage) => void | Promise<void>) | undefined,
+  onPermissionResponse?: ((response: BridgeControlResponse) => void) | undefined,
+  onControlRequest?: ((request: BridgeControlRequest) => void) | undefined,
 ): void {
   try {
     const parsed: unknown = normalizeControlMessageKeys(jsonParse(data))
 
-    // control_response is not an SDKMessage — check before the type guard
+    // control_response is not an BridgeMessage — check before the type guard
     if (isSDKControlResponse(parsed)) {
       logForDebugging('[bridge:repl] Ingress message type=control_response')
       onPermissionResponse?.(parsed)
@@ -227,7 +227,7 @@ const OUTBOUND_ONLY_ERROR =
  * collaborators as params so both cores can use it.
  */
 export function handleServerControlRequest(
-  request: SDKControlRequest,
+  request: BridgeControlRequest,
   handlers: ServerControlRequestHandlers,
 ): void {
   const {
@@ -244,7 +244,7 @@ export function handleServerControlRequest(
     return
   }
 
-  let response: SDKControlResponse
+  let response: BridgeControlResponse
 
   // Outbound-only: reply error for mutable requests so zy.ai doesn't show
   // false success. initialize must still succeed (server kills the connection
@@ -377,10 +377,10 @@ export function handleServerControlRequest(
 // ─── Result message (for session archival on teardown) ───────────────────────
 
 /**
- * Build a minimal `SDKResultSuccess` message for session archival.
+ * Build a minimal `BridgeResultSuccess` message for session archival.
  * The server needs this event before a WS close to trigger archival.
  */
-export function makeResultMessage(sessionId: string): SDKResultSuccess {
+export function makeResultMessage(sessionId: string): BridgeResultSuccess {
   return {
     type: 'result',
     subtype: 'success',

@@ -1,10 +1,10 @@
 import { basename } from 'node:path'
-import type { HookEvent, HookInput } from 'src/entrypoints/agentSdkTypes.js'
+import type { HookEvent, HookInput } from 'src/types/index.js'
 import { DEFAULT_HOOK_SHELL } from 'src/shell-eval/shared/shellProvider.js'
 import { getRegisteredHooks } from '../../bootstrap/state.js'
 import type { AppState } from '../../state/AppState.js'
 import { findToolByName, type Tools } from '../../Tool.js'
-import type { HookCallback, HookCallbackMatcher } from '../../types/hooks.js'
+import type { HookCallback, HookCallbackMatcher } from 'src/types/hooks/index.js'
 import { logForDebugging } from '../debug.js'
 import {
   getLegacyToolNames,

@@ -1,23 +1,20 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { z } from 'zod/v4'
-import { lazySchema } from '../utils/lazySchema.js'
-import {
-  type HookEvent,
-  HOOK_EVENTS,
-  type HookInput,
-  type PermissionUpdate,
-} from 'src/entrypoints/agentSdkTypes.js'
+import { lazySchema } from '../../utils/lazySchema.js'
+import { type HookInput } from './payloads.js'
+import { type HookEvent, HOOK_EVENTS } from './schemas.js'
+import { type PermissionUpdate } from '../coreTypes.generated.js'
 import type {
   HookJSONOutput,
   AsyncHookJSONOutput,
   SyncHookJSONOutput,
-} from 'src/entrypoints/agentSdkTypes.js'
+} from 'src/types/index.js'
 import type { Message } from 'src/types/message.js'
 import type { PermissionResult } from 'src/utils/permissions/PermissionResult.js'
 import { permissionBehaviorSchema } from 'src/utils/permissions/PermissionRule.js'
 import { permissionUpdateSchema } from 'src/utils/permissions/PermissionUpdateSchema.js'
-import type { AppState } from '../state/AppState.js'
-import type { AttributionState } from '../utils/commitAttribution.js'
+import type { AppState } from '../../state/AppState.js'
+import type { AttributionState } from '../../utils/commitAttribution.js'
 
 export function isHookEvent(value: string): value is HookEvent {
   return HOOK_EVENTS.includes(value as HookEvent)
@@ -39,12 +36,8 @@ export const promptRequestSchema = lazySchema(() =>
   }),
 )
 
-export type PromptRequest = z.infer<ReturnType<typeof promptRequestSchema>>
-
-export type PromptResponse = {
-  prompt_response: string // request id
-  selected: string
-}
+// PromptRequest / PromptResponse types are exported from coreTypes.generated.ts;
+// the schema above lives here for runtime validation only.
 
 // Sync hook response schema
 export const syncHookResponseSchema = lazySchema(() =>

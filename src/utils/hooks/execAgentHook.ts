@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js'
+import type { HookEvent } from 'src/types/index.js'
 import { getDefaultCompactModel } from 'src/services/model/model.js'
 import { query } from '../../query.js'
 import { logEvent } from '../../services/analytics/index.js'

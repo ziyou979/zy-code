@@ -4,7 +4,7 @@
 import type { AppState } from '../state/AppState.js'
 import type { TaskStateBase } from '../Task.js'
 import { getTaskByType } from '../tasks.js'
-import { emitTaskTerminatedSdk } from '../utils/sdkEventQueue.js'
+import { emitTaskTerminatedBridge } from '../utils/bridgeEventQueue.js'
 import { isLocalShellTask } from './LocalShellTask/guards.js'
 
 export class StopTaskError extends Error {
@@ -78,7 +78,7 @@ export async function stopTask(taskId: string, context: StopTaskContext): Promis
     // task_notification SDK event — emit it directly so SDK consumers see
     // the task close.
     if (suppressed) {
-      emitTaskTerminatedSdk(taskId, 'stopped', {
+      emitTaskTerminatedBridge(taskId, 'stopped', {
         toolUseId: task.toolUseId,
         summary: task.description,
       })

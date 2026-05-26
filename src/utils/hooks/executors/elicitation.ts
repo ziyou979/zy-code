@@ -1,12 +1,12 @@
 import type {
   ElicitationHookInput,
   ElicitationResultHookInput,
-} from 'src/entrypoints/agentSdkTypes.js'
+} from 'src/types/index.js'
 import {
   hookJSONOutputSchema,
   isAsyncHookJSONOutput,
   isSyncHookJSONOutput,
-} from '../../../types/hooks.js'
+} from 'src/types/hooks/index.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { executeHooksOutsideREPL, type HookOutsideReplResult } from '../outsideRepl.js'
 import type {

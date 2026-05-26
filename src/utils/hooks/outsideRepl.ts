@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto'
-import type { HookInput } from 'src/entrypoints/agentSdkTypes.js'
+import type { HookInput } from 'src/types/index.js'
 import { getSessionId } from '../../bootstrap/state.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
 import type { AppState } from '../../state/AppState.js'
-import { isAsyncHookJSONOutput, isSyncHookJSONOutput } from '../../types/hooks.js'
+import { isAsyncHookJSONOutput, isSyncHookJSONOutput } from 'src/types/hooks/index.js'
 import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
 import { logForDebugging } from '../debug.js'
 import { isEnvTruthy } from '../envUtils.js'

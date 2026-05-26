@@ -15,7 +15,7 @@ import {
   type TeleportLocalErrorType,
 } from '../components/TeleportError.js'
 import { getOauthConfig } from '../constants/oauth.js'
-import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
+import type { BridgeMessage } from '../types/index.js'
 import type { Root } from '../ink.js'
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js'
 import { queryCompactModel } from '../services/api/compactQueries.js'
@@ -759,7 +759,7 @@ export async function teleportFromSessionsAPI(
  * Response type for polling remote session events (uses SDK events format)
  */
 export type PollRemoteSessionResponse = {
-  newEvents: SDKMessage[]
+  newEvents: BridgeMessage[]
   lastEventId: string | null
   branch?: string
   sessionStatus?: 'idle' | 'running' | 'requires_action' | 'archived'
@@ -800,7 +800,7 @@ export async function pollRemoteSessionEvents(
 
   // Cap is a safety valve against stuck cursors; steady-state is 0–1 pages.
   const MAX_EVENT_PAGES = 50
-  const sdkMessages: SDKMessage[] = []
+  const sdkMessages: BridgeMessage[] = []
   let cursor = afterId
   for (let page = 0; page < MAX_EVENT_PAGES; page++) {
     const eventsResponse = await axios.get(eventsUrl, {
@@ -825,7 +825,7 @@ export async function pollRemoteSessionEvents(
           continue
         }
         if ('session_id' in event) {
-          sdkMessages.push(event as SDKMessage)
+          sdkMessages.push(event as BridgeMessage)
         }
       }
     }

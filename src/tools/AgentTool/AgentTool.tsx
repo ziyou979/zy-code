@@ -58,7 +58,7 @@ import { getAgentModel } from '../../services/model/agent.js'
 import { permissionModeSchema } from '../../utils/permissions/PermissionMode.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import { filterDeniedAgents, getDenyRuleForAgent } from '../../utils/permissions/permissions.js'
-import { enqueueSdkEvent } from '../../utils/sdkEventQueue.js'
+import { enqueueBridgeEvent } from '../../utils/bridgeEventQueue.js'
 import { writeAgentMetadata } from '../../utils/sessionStorage.js'
 import { sleep } from '../../utils/sleep.js'
 import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
@@ -1499,11 +1499,11 @@ export const AgentTool = buildTool({
             if (foregroundTaskId) {
               unregisterAgentForeground(foregroundTaskId, rootSetAppState)
               // Notify SDK consumers (e.g. VS Code subagent panel) that this
-              // foreground agent is done. Goes through drainSdkEvents() — does
+              // foreground agent is done. Goes through drainBridgeEvents() — does
               // NOT trigger the print.ts XML task_notification parser or the LLM loop.
               if (!wasBackgrounded) {
                 const progress = getProgressUpdate(syncTracker)
-                enqueueSdkEvent({
+                enqueueBridgeEvent({
                   type: 'system',
                   subtype: 'task_notification',
                   task_id: foregroundTaskId,

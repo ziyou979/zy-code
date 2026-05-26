@@ -32,7 +32,7 @@ import {
   initTaskOutputAsSymlink,
 } from '../../services/task/diskOutput.js'
 import { PANEL_GRACE_MS, registerTask, updateTaskState } from '../../services/task/framework.js'
-import { emitTaskProgress } from '../../services/task/sdkProgress.js'
+import { emitTaskProgress } from '../../services/task/taskProgress.js'
 import type { TaskState } from '../types.js'
 export type ToolActivity = {
   toolName: string

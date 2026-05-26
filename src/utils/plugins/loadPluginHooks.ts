@@ -1,5 +1,5 @@
 import memoize from 'lodash-es/memoize.js'
-import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js'
+import type { HookEvent } from 'src/types/index.js'
 import {
   clearRegisteredPluginHooks,
   getRegisteredHooks,

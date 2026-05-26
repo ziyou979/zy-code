@@ -1,6 +1,6 @@
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
-import type { PromptRequest } from '../../types/hooks.js'
+import type { PromptRequest } from 'src/types/hooks/index.js'
 import { Select } from '../CustomSelect/select.js'
 import { PermissionDialog } from '../permissions/PermissionDialog.js'
 

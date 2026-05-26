@@ -10,7 +10,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { notifyVscodeFileUpdated } from '../../services/mcp/vscodeSdkMcp.js'
+import { notifyVscodeFileUpdated } from '../../services/mcp/vscodeMcp.js'
 import type {
   SetToolJSXFn,
   ToolCallProgress,

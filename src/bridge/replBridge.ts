@@ -38,9 +38,9 @@ import { isEnvTruthy, isInProtectedNamespace } from '../utils/envUtils.js'
 import { validateBridgeId } from './bridgeApi.js'
 import { describeAxiosError, extractHttpStatus, logBridgeSkip } from './debugUtils.js'
 import type { Message } from '../types/message.js'
-import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
+import type { BridgeMessage } from '../types/index.js'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
-import type { SDKControlRequest, SDKControlResponse } from '../entrypoints/sdk/controlTypes.js'
+import type { BridgeControlRequest, BridgeControlResponse } from '../types/bridge/control.js'
 import { createCapacityWake, type CapacitySignal } from './capacityWake.js'
 import { FlushGate } from './flushGate.js'
 import { DEFAULT_POLL_CONFIG, type PollIntervalConfig } from './pollConfigDefaults.js'
@@ -58,9 +58,9 @@ export type ReplBridgeHandle = {
   environmentId: string
   sessionIngressUrl: string
   writeMessages(messages: Message[]): void
-  writeSdkMessages(messages: SDKMessage[]): void
-  sendControlRequest(request: SDKControlRequest): void
-  sendControlResponse(response: SDKControlResponse): void
+  writeSdkMessages(messages: BridgeMessage[]): void
+  sendControlRequest(request: BridgeControlRequest): void
+  sendControlResponse(response: BridgeControlResponse): void
   sendControlCancelRequest(requestId: string): void
   sendResult(): void
   teardown(): Promise<void>
@@ -121,7 +121,7 @@ export type BridgeCoreParams = {
    */
   getCurrentTitle?: () => string
   /**
-   * Converts internal Message[] → SDKMessage[] for writeMessages() and the
+   * Converts internal Message[] → BridgeMessage[] for writeMessages() and the
    * initial-flush/drain paths. REPL wrapper passes the real toSDKMessages
    * from utils/messages/mappers.ts. Daemon callers that only use
    * writeSdkMessages() and pass no initialMessages can omit this — those
@@ -131,7 +131,7 @@ export type BridgeCoreParams = {
    * src/commands.ts via messages.ts → api.ts → prompts.ts, dragging the
    * entire command registry + React tree into the Agent SDK bundle.
    */
-  toSDKMessages?: (messages: Message[]) => SDKMessage[]
+  toSDKMessages?: (messages: Message[]) => BridgeMessage[]
   /**
    * OAuth 401 refresh handler passed to createBridgeApiClient. REPL wrapper
    * passes handleOAuth401Error; daemon passes its AuthManager's handler.
@@ -159,8 +159,8 @@ export type BridgeCoreParams = {
   // 与 InitBridgeOptions 相同的 REPL 刷新机制 — daemon 省略这些。
   initialMessages?: Message[]
   previouslyFlushedUUIDs?: Set<string>
-  onInboundMessage?: (msg: SDKMessage) => void
-  onPermissionResponse?: (response: SDKControlResponse) => void
+  onInboundMessage?: (msg: BridgeMessage) => void
+  onPermissionResponse?: (response: BridgeControlResponse) => void
   onInterrupt?: () => void
   onSetModel?: (model: string | undefined) => void
   onSetMaxThinkingTokens?: (maxTokens: number | null) => void
@@ -1077,7 +1077,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       // 共享 handleServerControlRequest 的闭包适配器——
       // 捕获 transport/currentSessionId，使下方的 transport.setOnData
       // 回调不需要将它们传递进来。
-      const onServerControlRequest = (request: SDKControlRequest): void =>
+      const onServerControlRequest = (request: BridgeControlRequest): void =>
         handleServerControlRequest(request, {
           transport,
           sessionId: currentSessionId,
@@ -1592,7 +1592,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       void transport.writeBatch(events)
     },
     writeSdkMessages(messages) {
-      // Daemon 路径：query() 已经产出 SDKMessage，跳过转换。
+      // Daemon 路径：query() 已经产出 BridgeMessage，跳过转换。
       // 仍然运行回显去重（服务器在 WS 上弹回写入）。
       // 没有 initialMessageUUIDs 过滤——daemon 没有初始消息。
       // 没有 flushGate——daemon 永远不会启动它（没有初始刷新）。
@@ -1615,7 +1615,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       const events = filtered.map((m) => ({ ...m, session_id: currentSessionId }))
       void transport.writeBatch(events)
     },
-    sendControlRequest(request: SDKControlRequest) {
+    sendControlRequest(request: BridgeControlRequest) {
       if (!transport) {
         logForDebugging('[bridge:repl] Transport not configured, skipping control_request')
         return
@@ -1624,7 +1624,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       void transport.write(event)
       logForDebugging(`[bridge:repl] Sent control_request request_id=${request.request_id}`)
     },
-    sendControlResponse(response: SDKControlResponse) {
+    sendControlResponse(response: BridgeControlResponse) {
       if (!transport) {
         logForDebugging('[bridge:repl] Transport not configured, skipping control_response')
         return

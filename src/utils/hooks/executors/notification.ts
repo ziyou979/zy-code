@@ -2,10 +2,10 @@ import { randomUUID } from 'node:crypto'
 import type {
   NotificationHookInput,
   UserPromptSubmitHookInput,
-} from 'src/entrypoints/agentSdkTypes.js'
+} from 'src/types/index.js'
 import { getSessionId } from '../../../bootstrap/state.js'
 import type { ToolUseContext } from '../../../Tool.js'
-import type { PromptRequest, PromptResponse } from '../../../types/hooks.js'
+import type { PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { executeHooks } from '../executeEngine.js'
 import { hasHookForEvent } from '../matcher.js'

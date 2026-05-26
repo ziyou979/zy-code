@@ -23,7 +23,7 @@ import {
   isBetaTracingEnabled,
   type Span,
 } from 'src/services/telemetry/sessionTracing.js'
-import type { NonNullableUsage } from '../../entrypoints/sdk/sdkUtilityTypes.js'
+import type { NonNullableUsage } from './emptyUsage.js'
 import { isAPIError, type TokenUsage as Usage } from '../../types/llm.js'
 import { consumeInvokingRequestId } from '../../utils/agentContext.js'
 import { isInternalBuild } from '../../utils/envUtils.js'

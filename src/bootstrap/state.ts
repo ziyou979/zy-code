@@ -6,9 +6,9 @@ import type { LoggerProvider } from '@opentelemetry/sdk-logs'
 import type { MeterProvider } from '@opentelemetry/sdk-metrics'
 import type { BasicTracerProvider } from '@opentelemetry/sdk-trace-base'
 import sumBy from 'lodash-es/sumBy.js'
-import type { HookEvent, ModelUsage } from 'src/entrypoints/agentSdkTypes.js'
+import type { HookEvent, ModelUsage } from 'src/types/index.js'
 import type { AgentColorName } from 'src/tools/AgentTool/agentColorManager.js'
-import type { HookCallbackMatcher } from 'src/types/hooks.js'
+import type { HookCallbackMatcher } from 'src/types/hooks/index.js'
 // 浏览器 SDK 构建的间接引用（package.json 的 "browser" 字段会替换
 // crypto.ts 为 crypto.browser.ts）。纯叶子节点重新导出 node:crypto —
 // 零循环依赖风险。路径别名导入绕过了 bootstrap-isolation 检查

@@ -1,6 +1,6 @@
 import figures from 'figures'
 import React, { useMemo, useState } from 'react'
-import type { SDKMessage } from 'src/entrypoints/agentSdkTypes.js'
+import type { BridgeMessage } from 'src/types/index.js'
 import type { ToolUseContext } from 'src/Tool.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 import type { CommandResultDisplay } from '../../commands.js'
@@ -474,7 +474,7 @@ export function RemoteSessionDetailDialog({
     if (session.isUltraplan || session.isRemoteReview) {
       return []
     }
-    return normalizeMessages(toInternalMessages(session.log as SDKMessage[]))
+    return normalizeMessages(toInternalMessages(session.log as BridgeMessage[]))
       .filter((_) => _.type !== 'progress')
       .slice(-3)
   }, [session])

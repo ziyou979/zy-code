@@ -13,21 +13,22 @@ import {
   AccountInfoSchema,
   AgentDefinitionSchema,
   AgentInfoSchema,
-  FastModeStateSchema,
-  HookEventSchema,
-  HookInputSchema,
   McpServerConfigForProcessTransportSchema,
   McpServerStatusSchema,
   ModelInfoSchema,
   PermissionModeSchema,
   PermissionUpdateSchema,
-  SDKMessageSchema,
-  SDKPostTurnSummaryMessageSchema,
-  SDKStreamlinedTextMessageSchema,
-  SDKStreamlinedToolUseSummaryMessageSchema,
-  SDKUserMessageSchema,
   SlashCommandSchema,
-} from './coreSchemas.js'
+} from '../coreSchemas.js'
+import { HookEventSchema, HookInputSchema } from '../hooks/schemas.js'
+import {
+  BridgeMessageSchema,
+  BridgePostTurnSummaryMessageSchema,
+  BridgeStreamlinedTextMessageSchema,
+  BridgeStreamlinedToolUseSummaryMessageSchema,
+  BridgeUserMessageSchema,
+  FastModeStateSchema,
+} from './messageSchemas.js'
 
 // ============================================================================
 // External Type Placeholders
@@ -40,7 +41,7 @@ export const JSONRPCMessagePlaceholder = lazySchema(() => z.unknown())
 // Hook Callback Types
 // ============================================================================
 
-export const SDKHookCallbackMatcherSchema = lazySchema(() =>
+export const BridgeHookCallbackMatcherSchema = lazySchema(() =>
   z
     .object({
       matcher: z.string().optional(),
@@ -54,11 +55,11 @@ export const SDKHookCallbackMatcherSchema = lazySchema(() =>
 // Control Request Types
 // ============================================================================
 
-export const SDKControlInitializeRequestSchema = lazySchema(() =>
+export const BridgeControlInitializeRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('initialize'),
-      hooks: z.record(HookEventSchema(), z.array(SDKHookCallbackMatcherSchema())).optional(),
+      hooks: z.record(HookEventSchema(), z.array(BridgeHookCallbackMatcherSchema())).optional(),
       sdkMcpServers: z.array(z.string()).optional(),
       jsonSchema: z.record(z.string(), z.unknown()).optional(),
       systemPrompt: z.string().optional(),
@@ -70,7 +71,7 @@ export const SDKControlInitializeRequestSchema = lazySchema(() =>
     .describe('Initializes the SDK session with hooks, MCP servers, and agent configuration.'),
 )
 
-export const SDKControlInitializeResponseSchema = lazySchema(() =>
+export const BridgeControlInitializeResponseSchema = lazySchema(() =>
   z
     .object({
       commands: z.array(SlashCommandSchema()),
@@ -87,7 +88,7 @@ export const SDKControlInitializeResponseSchema = lazySchema(() =>
     ),
 )
 
-export const SDKControlInterruptRequestSchema = lazySchema(() =>
+export const BridgeControlInterruptRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('interrupt'),
@@ -95,7 +96,7 @@ export const SDKControlInterruptRequestSchema = lazySchema(() =>
     .describe('Interrupts the currently running conversation turn.'),
 )
 
-export const SDKControlPermissionRequestSchema = lazySchema(() =>
+export const BridgeControlPermissionRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('can_use_tool'),
@@ -113,7 +114,7 @@ export const SDKControlPermissionRequestSchema = lazySchema(() =>
     .describe('Requests permission to use a tool with the given input.'),
 )
 
-export const SDKControlSetPermissionModeRequestSchema = lazySchema(() =>
+export const BridgeControlSetPermissionModeRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('set_permission_mode'),
@@ -123,7 +124,7 @@ export const SDKControlSetPermissionModeRequestSchema = lazySchema(() =>
     .describe('Sets the permission mode for tool execution handling.'),
 )
 
-export const SDKControlSetModelRequestSchema = lazySchema(() =>
+export const BridgeControlSetModelRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('set_model'),
@@ -132,7 +133,7 @@ export const SDKControlSetModelRequestSchema = lazySchema(() =>
     .describe('Sets the model to use for subsequent conversation turns.'),
 )
 
-export const SDKControlSetMaxThinkingTokensRequestSchema = lazySchema(() =>
+export const BridgeControlSetMaxThinkingTokensRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('set_max_thinking_tokens'),
@@ -141,7 +142,7 @@ export const SDKControlSetMaxThinkingTokensRequestSchema = lazySchema(() =>
     .describe('Sets the maximum number of thinking tokens for extended thinking.'),
 )
 
-export const SDKControlMcpStatusRequestSchema = lazySchema(() =>
+export const BridgeControlMcpStatusRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('mcp_status'),
@@ -149,7 +150,7 @@ export const SDKControlMcpStatusRequestSchema = lazySchema(() =>
     .describe('Requests the current status of all MCP server connections.'),
 )
 
-export const SDKControlMcpStatusResponseSchema = lazySchema(() =>
+export const BridgeControlMcpStatusResponseSchema = lazySchema(() =>
   z
     .object({
       mcpServers: z.array(McpServerStatusSchema()),
@@ -157,7 +158,7 @@ export const SDKControlMcpStatusResponseSchema = lazySchema(() =>
     .describe('Response containing the current status of all MCP server connections.'),
 )
 
-export const SDKControlGetContextUsageRequestSchema = lazySchema(() =>
+export const BridgeControlGetContextUsageRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('get_context_usage'),
@@ -185,7 +186,7 @@ const ContextGridSquareSchema = lazySchema(() =>
   }),
 )
 
-export const SDKControlGetContextUsageResponseSchema = lazySchema(() =>
+export const BridgeControlGetContextUsageResponseSchema = lazySchema(() =>
   z
     .object({
       categories: z.array(ContextCategorySchema()),
@@ -282,7 +283,7 @@ export const SDKControlGetContextUsageResponseSchema = lazySchema(() =>
     ),
 )
 
-export const SDKControlRewindFilesRequestSchema = lazySchema(() =>
+export const BridgeControlRewindFilesRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('rewind_files'),
@@ -292,7 +293,7 @@ export const SDKControlRewindFilesRequestSchema = lazySchema(() =>
     .describe('Rewinds file changes made since a specific user message.'),
 )
 
-export const SDKControlRewindFilesResponseSchema = lazySchema(() =>
+export const BridgeControlRewindFilesResponseSchema = lazySchema(() =>
   z
     .object({
       canRewind: z.boolean(),
@@ -304,7 +305,7 @@ export const SDKControlRewindFilesResponseSchema = lazySchema(() =>
     .describe('Result of a rewindFiles operation.'),
 )
 
-export const SDKControlCancelAsyncMessageRequestSchema = lazySchema(() =>
+export const BridgeControlCancelAsyncMessageRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('cancel_async_message'),
@@ -315,7 +316,7 @@ export const SDKControlCancelAsyncMessageRequestSchema = lazySchema(() =>
     ),
 )
 
-export const SDKControlCancelAsyncMessageResponseSchema = lazySchema(() =>
+export const BridgeControlCancelAsyncMessageResponseSchema = lazySchema(() =>
   z
     .object({
       cancelled: z.boolean(),
@@ -325,7 +326,7 @@ export const SDKControlCancelAsyncMessageResponseSchema = lazySchema(() =>
     ),
 )
 
-export const SDKControlSeedReadStateRequestSchema = lazySchema(() =>
+export const BridgeControlSeedReadStateRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('seed_read_state'),
@@ -337,7 +338,7 @@ export const SDKControlSeedReadStateRequestSchema = lazySchema(() =>
     ),
 )
 
-export const SDKHookCallbackRequestSchema = lazySchema(() =>
+export const BridgeHookCallbackRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('hook_callback'),
@@ -348,7 +349,7 @@ export const SDKHookCallbackRequestSchema = lazySchema(() =>
     .describe('Delivers a hook callback with its input data.'),
 )
 
-export const SDKControlMcpMessageRequestSchema = lazySchema(() =>
+export const BridgeControlMcpMessageRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('mcp_message'),
@@ -358,7 +359,7 @@ export const SDKControlMcpMessageRequestSchema = lazySchema(() =>
     .describe('Sends a JSON-RPC message to a specific MCP server.'),
 )
 
-export const SDKControlMcpSetServersRequestSchema = lazySchema(() =>
+export const BridgeControlMcpSetServersRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('mcp_set_servers'),
@@ -367,7 +368,7 @@ export const SDKControlMcpSetServersRequestSchema = lazySchema(() =>
     .describe('Replaces the set of dynamically managed MCP servers.'),
 )
 
-export const SDKControlMcpSetServersResponseSchema = lazySchema(() =>
+export const BridgeControlMcpSetServersResponseSchema = lazySchema(() =>
   z
     .object({
       added: z.array(z.string()),
@@ -377,7 +378,7 @@ export const SDKControlMcpSetServersResponseSchema = lazySchema(() =>
     .describe('Result of replacing the set of dynamically managed MCP servers.'),
 )
 
-export const SDKControlReloadPluginsRequestSchema = lazySchema(() =>
+export const BridgeControlReloadPluginsRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('reload_plugins'),
@@ -385,7 +386,7 @@ export const SDKControlReloadPluginsRequestSchema = lazySchema(() =>
     .describe('Reloads plugins from disk and returns the refreshed session components.'),
 )
 
-export const SDKControlReloadPluginsResponseSchema = lazySchema(() =>
+export const BridgeControlReloadPluginsResponseSchema = lazySchema(() =>
   z
     .object({
       commands: z.array(SlashCommandSchema()),
@@ -403,7 +404,7 @@ export const SDKControlReloadPluginsResponseSchema = lazySchema(() =>
     .describe('Refreshed commands, agents, plugins, and MCP server status after reload.'),
 )
 
-export const SDKControlMcpReconnectRequestSchema = lazySchema(() =>
+export const BridgeControlMcpReconnectRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('mcp_reconnect'),
@@ -412,7 +413,7 @@ export const SDKControlMcpReconnectRequestSchema = lazySchema(() =>
     .describe('Reconnects a disconnected or failed MCP server.'),
 )
 
-export const SDKControlMcpToggleRequestSchema = lazySchema(() =>
+export const BridgeControlMcpToggleRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('mcp_toggle'),
@@ -422,7 +423,7 @@ export const SDKControlMcpToggleRequestSchema = lazySchema(() =>
     .describe('Enables or disables an MCP server.'),
 )
 
-export const SDKControlStopTaskRequestSchema = lazySchema(() =>
+export const BridgeControlStopTaskRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('stop_task'),
@@ -431,7 +432,7 @@ export const SDKControlStopTaskRequestSchema = lazySchema(() =>
     .describe('Stops a running task.'),
 )
 
-export const SDKControlApplyFlagSettingsRequestSchema = lazySchema(() =>
+export const BridgeControlApplyFlagSettingsRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('apply_flag_settings'),
@@ -442,7 +443,7 @@ export const SDKControlApplyFlagSettingsRequestSchema = lazySchema(() =>
     ),
 )
 
-export const SDKControlGetSettingsRequestSchema = lazySchema(() =>
+export const BridgeControlGetSettingsRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('get_settings'),
@@ -450,7 +451,7 @@ export const SDKControlGetSettingsRequestSchema = lazySchema(() =>
     .describe('Returns the effective merged settings and the raw per-source settings.'),
 )
 
-export const SDKControlGetSettingsResponseSchema = lazySchema(() =>
+export const BridgeControlGetSettingsResponseSchema = lazySchema(() =>
   z
     .object({
       effective: z.record(z.string(), z.unknown()),
@@ -483,7 +484,7 @@ export const SDKControlGetSettingsResponseSchema = lazySchema(() =>
     .describe('Effective merged settings plus raw per-source settings in merge order.'),
 )
 
-export const SDKControlElicitationRequestSchema = lazySchema(() =>
+export const BridgeControlElicitationRequestSchema = lazySchema(() =>
   z
     .object({
       subtype: z.literal('elicitation'),
@@ -497,7 +498,7 @@ export const SDKControlElicitationRequestSchema = lazySchema(() =>
     .describe('Requests the SDK consumer to handle an MCP elicitation (user input request).'),
 )
 
-export const SDKControlElicitationResponseSchema = lazySchema(() =>
+export const BridgeControlElicitationResponseSchema = lazySchema(() =>
   z
     .object({
       action: z.enum(['accept', 'decline', 'cancel']),
@@ -510,37 +511,37 @@ export const SDKControlElicitationResponseSchema = lazySchema(() =>
 // Control Request/Response Wrappers
 // ============================================================================
 
-export const SDKControlRequestInnerSchema = lazySchema(() =>
+export const BridgeControlRequestInnerSchema = lazySchema(() =>
   z.union([
-    SDKControlInterruptRequestSchema(),
-    SDKControlPermissionRequestSchema(),
-    SDKControlInitializeRequestSchema(),
-    SDKControlSetPermissionModeRequestSchema(),
-    SDKControlSetModelRequestSchema(),
-    SDKControlSetMaxThinkingTokensRequestSchema(),
-    SDKControlMcpStatusRequestSchema(),
-    SDKControlGetContextUsageRequestSchema(),
-    SDKHookCallbackRequestSchema(),
-    SDKControlMcpMessageRequestSchema(),
-    SDKControlRewindFilesRequestSchema(),
-    SDKControlCancelAsyncMessageRequestSchema(),
-    SDKControlSeedReadStateRequestSchema(),
-    SDKControlMcpSetServersRequestSchema(),
-    SDKControlReloadPluginsRequestSchema(),
-    SDKControlMcpReconnectRequestSchema(),
-    SDKControlMcpToggleRequestSchema(),
-    SDKControlStopTaskRequestSchema(),
-    SDKControlApplyFlagSettingsRequestSchema(),
-    SDKControlGetSettingsRequestSchema(),
-    SDKControlElicitationRequestSchema(),
+    BridgeControlInterruptRequestSchema(),
+    BridgeControlPermissionRequestSchema(),
+    BridgeControlInitializeRequestSchema(),
+    BridgeControlSetPermissionModeRequestSchema(),
+    BridgeControlSetModelRequestSchema(),
+    BridgeControlSetMaxThinkingTokensRequestSchema(),
+    BridgeControlMcpStatusRequestSchema(),
+    BridgeControlGetContextUsageRequestSchema(),
+    BridgeHookCallbackRequestSchema(),
+    BridgeControlMcpMessageRequestSchema(),
+    BridgeControlRewindFilesRequestSchema(),
+    BridgeControlCancelAsyncMessageRequestSchema(),
+    BridgeControlSeedReadStateRequestSchema(),
+    BridgeControlMcpSetServersRequestSchema(),
+    BridgeControlReloadPluginsRequestSchema(),
+    BridgeControlMcpReconnectRequestSchema(),
+    BridgeControlMcpToggleRequestSchema(),
+    BridgeControlStopTaskRequestSchema(),
+    BridgeControlApplyFlagSettingsRequestSchema(),
+    BridgeControlGetSettingsRequestSchema(),
+    BridgeControlElicitationRequestSchema(),
   ]),
 )
 
-export const SDKControlRequestSchema = lazySchema(() =>
+export const BridgeControlRequestSchema = lazySchema(() =>
   z.object({
     type: z.literal('control_request'),
     request_id: z.string(),
-    request: SDKControlRequestInnerSchema(),
+    request: BridgeControlRequestInnerSchema(),
   }),
 )
 
@@ -557,18 +558,18 @@ export const ControlErrorResponseSchema = lazySchema(() =>
     subtype: z.literal('error'),
     request_id: z.string(),
     error: z.string(),
-    pending_permission_requests: z.array(z.lazy(() => SDKControlRequestSchema())).optional(),
+    pending_permission_requests: z.array(z.lazy(() => BridgeControlRequestSchema())).optional(),
   }),
 )
 
-export const SDKControlResponseSchema = lazySchema(() =>
+export const BridgeControlResponseSchema = lazySchema(() =>
   z.object({
     type: z.literal('control_response'),
     response: z.union([ControlResponseSchema(), ControlErrorResponseSchema()]),
   }),
 )
 
-export const SDKControlCancelRequestSchema = lazySchema(() =>
+export const BridgeControlCancelRequestSchema = lazySchema(() =>
   z
     .object({
       type: z.literal('control_cancel_request'),
@@ -577,7 +578,7 @@ export const SDKControlCancelRequestSchema = lazySchema(() =>
     .describe('Cancels a currently open control request.'),
 )
 
-export const SDKKeepAliveMessageSchema = lazySchema(() =>
+export const BridgeKeepAliveMessageSchema = lazySchema(() =>
   z
     .object({
       type: z.literal('keep_alive'),
@@ -585,7 +586,7 @@ export const SDKKeepAliveMessageSchema = lazySchema(() =>
     .describe('Keep-alive message to maintain WebSocket connection.'),
 )
 
-export const SDKUpdateEnvironmentVariablesMessageSchema = lazySchema(() =>
+export const BridgeUpdateEnvironmentVariablesMessageSchema = lazySchema(() =>
   z
     .object({
       type: z.literal('update_environment_variables'),
@@ -600,23 +601,23 @@ export const SDKUpdateEnvironmentVariablesMessageSchema = lazySchema(() =>
 
 export const StdoutMessageSchema = lazySchema(() =>
   z.union([
-    SDKMessageSchema(),
-    SDKStreamlinedTextMessageSchema(),
-    SDKStreamlinedToolUseSummaryMessageSchema(),
-    SDKPostTurnSummaryMessageSchema(),
-    SDKControlResponseSchema(),
-    SDKControlRequestSchema(),
-    SDKControlCancelRequestSchema(),
-    SDKKeepAliveMessageSchema(),
+    BridgeMessageSchema(),
+    BridgeStreamlinedTextMessageSchema(),
+    BridgeStreamlinedToolUseSummaryMessageSchema(),
+    BridgePostTurnSummaryMessageSchema(),
+    BridgeControlResponseSchema(),
+    BridgeControlRequestSchema(),
+    BridgeControlCancelRequestSchema(),
+    BridgeKeepAliveMessageSchema(),
   ]),
 )
 
 export const StdinMessageSchema = lazySchema(() =>
   z.union([
-    SDKUserMessageSchema(),
-    SDKControlRequestSchema(),
-    SDKControlResponseSchema(),
-    SDKKeepAliveMessageSchema(),
-    SDKUpdateEnvironmentVariablesMessageSchema(),
+    BridgeUserMessageSchema(),
+    BridgeControlRequestSchema(),
+    BridgeControlResponseSchema(),
+    BridgeKeepAliveMessageSchema(),
+    BridgeUpdateEnvironmentVariablesMessageSchema(),
   ]),
 )

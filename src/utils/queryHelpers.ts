@@ -1,6 +1,6 @@
 import last from 'lodash-es/last.js'
 import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
-import type { SDKMessage } from 'src/entrypoints/agentSdkTypes.js'
+import type { BridgeMessage } from 'src/types/index.js'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import { runTools } from '../services/tools/toolOrchestration.js'
 import { findToolByName, type Tool, type Tools } from '../Tool.js'
@@ -91,7 +91,7 @@ const MAX_TOOL_PROGRESS_TRACKING_ENTRIES = 100
 const TOOL_PROGRESS_THROTTLE_MS = 30000
 const toolProgressLastSentTime = new Map<string, number>()
 
-export function* normalizeMessage(message: Message): Generator<SDKMessage> {
+export function* normalizeMessage(message: Message): Generator<BridgeMessage> {
   switch (message.type) {
     case 'assistant':
       for (const _ of normalizeMessages([message])) {
@@ -207,7 +207,7 @@ export async function* handleOrphanedPermission(
   tools: Tools,
   mutableMessages: Message[],
   processUserInputContext: ProcessUserInputContext,
-): AsyncGenerator<SDKMessage, void, unknown> {
+): AsyncGenerator<BridgeMessage, void, unknown> {
   const persistSession = !isSessionPersistenceDisabled()
   const { permissionResult, assistantMessage } = orphanedPermission
   const { toolUseID } = permissionResult
@@ -289,11 +289,11 @@ export async function* handleOrphanedPermission(
     }
   }
 
-  const sdkAssistantMessage: SDKMessage = {
+  const sdkAssistantMessage: BridgeMessage = {
     ...assistantMessage,
     session_id: getSessionId(),
     parent_tool_use_id: null,
-  } as SDKMessage
+  } as BridgeMessage
   yield sdkAssistantMessage
 
   // 执行工具 - 错误由 runToolUse 内部处理
@@ -309,11 +309,11 @@ export async function* handleOrphanedPermission(
         await recordTranscript(mutableMessages)
       }
 
-      const sdkMessage: SDKMessage = {
+      const sdkMessage: BridgeMessage = {
         ...update.message,
         session_id: getSessionId(),
         parent_tool_use_id: null,
-      } as SDKMessage
+      } as BridgeMessage
 
       yield sdkMessage
     }

@@ -1,5 +1,5 @@
 import { randomUUID, type UUID } from 'node:crypto'
-import type { SDKAssistantMessageError } from 'src/entrypoints/agentSdkTypes.js'
+import type { BridgeAssistantMessageError } from 'src/types/index.js'
 import { NO_CONTENT_MESSAGE } from '../../constants/messages.js'
 import {
   COMMAND_ARGS_TAG,
@@ -80,7 +80,7 @@ function baseCreateAssistantMessage({
   content: AssistantContentBlock[]
   isApiErrorMessage?: boolean
   apiError?: AssistantMessage['apiError']
-  error?: SDKAssistantMessageError
+  error?: BridgeAssistantMessageError
   errorDetails?: string
   isVirtual?: true
   usage?: Usage
@@ -140,7 +140,7 @@ export function createAssistantAPIErrorMessage({
 }: {
   content: string
   apiError?: AssistantMessage['apiError']
-  error?: SDKAssistantMessageError
+  error?: BridgeAssistantMessageError
   errorDetails?: string
 }): AssistantMessage {
   return baseCreateAssistantMessage({

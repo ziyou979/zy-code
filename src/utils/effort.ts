@@ -6,9 +6,7 @@ import { getAPIProvider, providerHasCapability } from 'src/services/model/provid
 import { localModelHasCapability } from './settings/localModelCapabilities.js'
 import { isEnvTruthy } from './envUtils.js'
 import { isInternalBuild } from './envUtils.js'
-import type { EffortLevel } from 'src/entrypoints/sdk/runtimeTypes.js'
-
-export type { EffortLevel }
+export type EffortLevel = 'low' | 'medium' | 'high'
 
 export const EFFORT_LEVELS = ['low', 'medium', 'high', 'max'] as const as any
 

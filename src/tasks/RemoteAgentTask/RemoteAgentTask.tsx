@@ -11,7 +11,7 @@ import {
   TOOL_USE_ID_TAG,
   ULTRAPLAN_TAG,
 } from '../../constants/xml.js'
-import type { SDKAssistantMessage, SDKMessage } from '../../entrypoints/agentSdkTypes.js'
+import type { BridgeAssistantMessage, BridgeMessage } from 'src/types/index.js'
 import type { SetAppState, Task, TaskContext, TaskStateBase } from '../../Task.js'
 import { createTaskStateBase, generateTaskId } from '../../Task.js'
 import { TodoWriteTool } from '../../tools/TodoWriteTool/TodoWriteTool.js'
@@ -23,7 +23,7 @@ import { logForDebugging } from '../../utils/debug.js'
 import { logError } from '../../utils/log.js'
 import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
 import { extractTag, extractTextContent } from '../../utils/messages.js'
-import { emitTaskTerminatedSdk } from '../../utils/sdkEventQueue.js'
+import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
 import {
   deleteRemoteAgentMetadata,
   listRemoteAgentMetadata,
@@ -51,7 +51,7 @@ export type RemoteAgentTaskState = TaskStateBase & {
   command: string
   title: string
   todoList: TodoList
-  log: SDKMessage[]
+  log: BridgeMessage[]
   /**
    * Long-running agent that will not be marked as complete after the first `result`.
    */
@@ -254,7 +254,7 @@ function markTaskNotified(taskId: string, setAppState: SetAppState): boolean {
  * Extract the plan content from the remote session log.
  * Searches all assistant messages for <ultraplan>...</ultraplan> tags.
  */
-export function extractPlanFromLog(log: SDKMessage[]): string | null {
+export function extractPlanFromLog(log: BridgeMessage[]): string | null {
   // Walk backwards through assistant messages to find <ultraplan> content
   for (let i = log.length - 1; i >= 0; i--) {
     const msg = log[i]
@@ -311,7 +311,7 @@ The remote Ultraplan session did not produce a plan (${reason}). Inspect the ses
  * and prompt mode is the dev/fallback. Newest-first in both cases — the tag
  * appears once at the end of the run so reverse iteration short-circuits.
  */
-function extractReviewFromLog(log: SDKMessage[]): string | null {
+function extractReviewFromLog(log: BridgeMessage[]): string | null {
   for (let i = log.length - 1; i >= 0; i--) {
     const msg = log[i]
     // The final echo before hook exit may land in either the last
@@ -357,7 +357,7 @@ function extractReviewFromLog(log: SDKMessage[]): string | null {
 
   // Fallback: concatenate all assistant text in chronological order.
   const allText = log
-    .filter((msg): msg is SDKAssistantMessage => msg.type === 'assistant')
+    .filter((msg): msg is BridgeAssistantMessage => msg.type === 'assistant')
     .map((msg) => extractTextContent((msg.message as any).content, '\n'))
     .join('\n')
     .trim()
@@ -374,7 +374,7 @@ function extractReviewFromLog(log: SDKMessage[]): string | null {
  * would trigger the fallback and prematurely set cachedReviewContent,
  * completing the review before the actual tagged output arrives.
  */
-function extractReviewTagFromLog(log: SDKMessage[]): string | null {
+function extractReviewTagFromLog(log: BridgeMessage[]): string | null {
   // hook_progress / hook_response per-message scan (bughunter path)
   for (let i = log.length - 1; i >= 0; i--) {
     const msg = log[i]
@@ -474,9 +474,9 @@ Remote review did not produce output (${reason}). Tell the user to retry /ultrar
 /**
  * Extract todo list from SDK messages (finds last TodoWrite tool use).
  */
-function extractTodoListFromLog(log: SDKMessage[]): TodoList {
+function extractTodoListFromLog(log: BridgeMessage[]): TodoList {
   const todoListMessage = log.findLast(
-    (msg): msg is SDKAssistantMessage =>
+    (msg): msg is BridgeAssistantMessage =>
       msg.type === 'assistant' &&
       (msg.message as any).content.some(
         (block: any) => block.type === 'tool_call' && block.name === TodoWriteTool.name,
@@ -669,7 +669,7 @@ function startRemoteSessionPolling(taskId: string, context: TaskContext): () => 
   const STABLE_IDLE_POLLS = 5
   let consecutiveIdlePolls = 0
   let lastEventId: string | null = null
-  let accumulatedLog: SDKMessage[] = []
+  let accumulatedLog: BridgeMessage[] = []
   // Cached across ticks so we don't re-scan the full log. Tag appears once
   // at end of run; scanning only the delta (response.newEvents) is O(new).
   let cachedReviewContent: string | null = null
@@ -1036,7 +1036,7 @@ export const RemoteAgentTask: Task = {
     // Close the task_started bookend for SDK consumers. The poll loop's
     // early-return when status!=='running' won't emit a notification.
     if (killed) {
-      emitTaskTerminatedSdk(taskId, 'stopped', {
+      emitTaskTerminatedBridge(taskId, 'stopped', {
         toolUseId,
         summary: description,
       })

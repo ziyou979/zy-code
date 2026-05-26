@@ -92,25 +92,25 @@ import {
 import { registerCleanup } from 'src/utils/cleanupRegistry.js'
 import { createIdleTimeoutManager } from 'src/utils/idleTimeout.js'
 import type {
-  SDKStatus,
+  BridgeStatus,
   ModelInfo,
-  SDKMessage,
-  SDKUserMessage,
-  SDKUserMessageReplay,
+  BridgeMessage,
+  BridgeUserMessage,
+  BridgeUserMessageReplay,
   PermissionResult,
   McpServerConfigForProcessTransport,
   McpServerStatus,
   RewindFilesResult,
-} from 'src/entrypoints/agentSdkTypes.js'
+} from 'src/types/index.js'
 import type {
   StdoutMessage,
-  SDKControlInitializeRequest,
-  SDKControlInitializeResponse,
-  SDKControlRequest,
-  SDKControlResponse,
-  SDKControlMcpSetServersResponse,
-  SDKControlReloadPluginsResponse,
-} from 'src/entrypoints/sdk/controlTypes.js'
+  BridgeControlInitializeRequest,
+  BridgeControlInitializeResponse,
+  BridgeControlRequest,
+  BridgeControlResponse,
+  BridgeControlMcpSetServersResponse,
+  BridgeControlReloadPluginsResponse,
+} from 'src/types/bridge/control.js'
 // @ts-expect-error
 import type { PermissionMode } from '@anthropic-ai/zy-agent-sdk'
 import type { PermissionMode as InternalPermissionMode } from 'src/types/permissions.js'
@@ -164,9 +164,9 @@ import { getAccountInformation } from 'src/utils/auth.js'
 import { OAuthService } from 'src/services/oauth/index.js'
 import { installOAuthTokens } from 'src/cli/handlers/auth.js'
 import { getAPIProvider } from 'src/services/model/providers.js'
-import type { HookCallbackMatcher } from 'src/types/hooks.js'
+import type { HookCallbackMatcher } from 'src/types/hooks/index.js'
 import { AwsAuthStatusManager } from 'src/utils/awsAuthStatusManager.js'
-import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js'
+import type { HookEvent } from 'src/types/index.js'
 import {
   registerHookCallbacks,
   setInitJsonSchema,
@@ -214,7 +214,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js'
 import { getMcpPrefix } from 'src/services/mcp/mcpStringUtils.js'
 import { commandBelongsToServer, filterToolsByServer } from 'src/services/mcp/utils.js'
-import { setupVscodeSdkMcp } from 'src/services/mcp/vscodeSdkMcp.js'
+import { setupVscodeSdkMcp } from 'src/services/mcp/vscodeMcp.js'
 import { getAllMcpConfigs } from 'src/services/mcp/config.js'
 import { toInternalMessages, toSDKRateLimitInfo } from 'src/utils/messages/mappers.js'
 import { createModelSwitchBreadcrumbs } from 'src/utils/messages.js'
@@ -295,7 +295,7 @@ import { unassignTeammateTasks } from '../utils/tasks.js'
 import { getRunningTasks } from '../services/task/framework.js'
 import { isBackgroundTask } from '../tasks/types.js'
 import { stopTask } from '../tasks/stopTask.js'
-import { drainSdkEvents } from '../utils/sdkEventQueue.js'
+import { drainBridgeEvents } from '../utils/bridgeEventQueue.js'
 import { initializeGrowthBook } from '../services/analytics/growthbook.js'
 import { errorMessage, toError } from '../utils/errors.js'
 import { sleep } from '../utils/sleep.js'
@@ -435,7 +435,7 @@ export async function runHeadless(
     workload: string | undefined
     setupTrigger?: 'init' | 'maintenance' | undefined
     sessionStartHooksPromise?: ReturnType<typeof processSessionStartHooks>
-    setSDKStatus?: (status: SDKStatus) => void
+    setSDKStatus?: (status: BridgeStatus) => void
   },
 ): Promise<void> {
   if (isInternalBuild() && isEnvTruthy(process.env.ZY_CODE_EXIT_AFTER_FIRST_RENDER)) {
@@ -768,8 +768,8 @@ export async function runHeadless(
   // read for the exit code / final result. Avoid accumulating every message in
   // memory for the entire session.
   const needsFullArray = options.outputFormat === 'json' && options.verbose
-  const messages: SDKMessage[] = []
-  let lastMessage: SDKMessage | undefined
+  const messages: BridgeMessage[] = []
+  let lastMessage: BridgeMessage | undefined
   // Streamlined mode transforms messages when ZY_CODE_STREAMLINED_OUTPUT=true and using stream-json
   // Build flag gates this out of external builds; env var is the runtime opt-in for ant builds
   const transformToStreamlined =
@@ -916,7 +916,7 @@ function runHeadlessStreaming(
     includePartialMessages?: boolean | undefined
     enableAuthStatus?: boolean | undefined
     agent?: string | undefined
-    setSDKStatus?: (status: SDKStatus) => void
+    setSDKStatus?: (status: BridgeStatus) => void
     promptSuggestions?: boolean | undefined
     workload?: string | undefined
   },
@@ -1042,7 +1042,7 @@ function runHeadlessStreaming(
     })
   }
 
-  // Set up rate limit status listener to emit SDKRateLimitEvent for all status changes.
+  // Set up rate limit status listener to emit BridgeRateLimitEvent for all status changes.
   // Emitting for all statuses (including 'allowed') ensures consumers can clear warnings
   // when rate limits reset. The upstream emitStatusChange already deduplicates via isEqual.
   const rateLimitListener = (limits: ZyAILimits) => {
@@ -1143,7 +1143,7 @@ function runHeadlessStreaming(
           uuid: crumb.uuid,
           timestamp: crumb.timestamp,
           isReplay: true,
-        } satisfies SDKUserMessageReplay)
+        } satisfies BridgeUserMessageReplay)
       }
     }
   }
@@ -1158,7 +1158,7 @@ function runHeadlessStreaming(
   /**
    * Register elicitation request/completion handlers on connected MCP clients
    * that haven't been registered yet. SDK MCP servers are excluded because they
-   * route through SdkControlClientTransport. Hooks run first (matching REPL
+   * route through BridgeControlClientTransport. Hooks run first (matching REPL
    * behavior); if no hook responds, the request is forwarded to the SDK
    * consumer via the control protocol.
    */
@@ -1167,7 +1167,7 @@ function runHeadlessStreaming(
       if (connection.type !== 'connected' || elicitationRegistered.has(connection.name)) {
         continue
       }
-      // Skip SDK MCP servers — elicitation flows through SdkControlClientTransport
+      // Skip SDK MCP servers — elicitation flows through BridgeControlClientTransport
       if (connection.config.type === 'sdk') {
         continue
       }
@@ -1402,7 +1402,7 @@ function runHeadlessStreaming(
   // and background plugin installation.
   // NOTE: Nested function required - mutates closure state (sdkMcpConfigs, sdkClients, etc.)
   let mcpChangesPromise: Promise<{
-    response: SDKControlMcpSetServersResponse
+    response: BridgeControlMcpSetServersResponse
     sdkServersChanged: boolean
   }> = Promise.resolve({
     response: {
@@ -1416,13 +1416,13 @@ function runHeadlessStreaming(
   function applyMcpServerChanges(
     servers: Record<string, McpServerConfigForProcessTransport>,
   ): Promise<{
-    response: SDKControlMcpSetServersResponse
+    response: BridgeControlMcpSetServersResponse
     sdkServersChanged: boolean
   }> {
     // Serialize calls to prevent race conditions between concurrent callers
     // (background plugin install and mcp_set_servers control messages)
     const doWork = async (): Promise<{
-      response: SDKControlMcpSetServersResponse
+      response: BridgeControlMcpSetServersResponse
       sdkServersChanged: boolean
     }> => {
       const oldSdkClientNames = new Set(sdkClients.map((c) => c.name))
@@ -1438,9 +1438,9 @@ function runHeadlessStreaming(
       for (const key of Object.keys(sdkMcpConfigs)) {
         delete sdkMcpConfigs[key]
       }
-      Object.assign(sdkMcpConfigs, result.newSdkState.configs)
-      sdkClients = result.newSdkState.clients
-      sdkTools = result.newSdkState.tools
+      Object.assign(sdkMcpConfigs, result.newBridgeState.configs)
+      sdkClients = result.newBridgeState.clients
+      sdkTools = result.newBridgeState.tools
       dynamicMcpState = result.newDynamicState
 
       // Keep appState.mcp.tools in sync so subagents can see SDK MCP tools.
@@ -1819,7 +1819,7 @@ function runHeadlessStreaming(
                   parent_tool_use_id: null,
                   uuid: c.uuid,
                   isReplay: true,
-                } satisfies SDKUserMessageReplay)
+                } satisfies BridgeUserMessageReplay)
               }
             }
           }
@@ -1883,7 +1883,7 @@ function runHeadlessStreaming(
             // <status> (they're progress pings); emitting them here would
             // default to 'completed' and falsely close the task for SDK
             // consumers. Terminal bookends are now emitted directly via
-            // emitTaskTerminatedSdk, so skipping statusless events is safe.
+            // emitTaskTerminatedBridge, so skipping statusless events is safe.
             if (statusMatch) {
               output.enqueue({
                 type: 'system',
@@ -2025,7 +2025,7 @@ function runHeadlessStreaming(
 
               if (message.type === 'result') {
                 // Flush pending SDK events so they appear before result on the stream.
-                for (const event of drainSdkEvents()) {
+                for (const event of drainBridgeEvents()) {
                   output.enqueue(event)
                 }
 
@@ -2046,7 +2046,7 @@ function runHeadlessStreaming(
               } else {
                 // Flush SDK events (task_started, task_progress) so background
                 // agent progress is streamed in real-time, not batched until result.
-                for (const event of drainSdkEvents()) {
+                for (const event of drainBridgeEvents()) {
                   output.enqueue(event)
                 }
                 output.enqueue(message)
@@ -2169,7 +2169,7 @@ function runHeadlessStreaming(
       do {
         // Drain SDK events (task_started, task_progress) before command queue
         // so progress events precede task_notification on the stream.
-        for (const event of drainSdkEvents()) {
+        for (const event of drainBridgeEvents()) {
           output.enqueue(event)
         }
 
@@ -2258,7 +2258,7 @@ function runHeadlessStreaming(
         // command. The do-while drain above only runs while
         // waitingForAgents; once we're here the next drain would be the
         // top of the next run(), which won't come if input is idle.
-        for (const event of drainSdkEvents()) {
+        for (const event of drainBridgeEvents()) {
           output.enqueue(event)
         }
       }
@@ -2507,7 +2507,7 @@ function runHeadlessStreaming(
   }
 
   const sendControlResponseSuccess = (
-    message: SDKControlRequest,
+    message: BridgeControlRequest,
     response?: Record<string, unknown>,
   ) => {
     output.enqueue({
@@ -2520,7 +2520,7 @@ function runHeadlessStreaming(
     })
   }
 
-  const sendControlResponseError = (message: SDKControlRequest, errorMessage: string) => {
+  const sendControlResponseError = (message: BridgeControlRequest, errorMessage: string) => {
     output.enqueue({
       type: 'control_response',
       response: {
@@ -2843,7 +2843,7 @@ function runHeadlessStreaming(
             // Reload succeeded — gather response data best-effort so a
             // read failure doesn't mask the successful state change.
             // allSettled so one failure doesn't discard the others.
-            let plugins: SDKControlReloadPluginsResponse['plugins'] = []
+            let plugins: BridgeControlReloadPluginsResponse['plugins'] = []
             const [cmdsR, mcpR, pluginsR] = await Promise.allSettled([
               getCommands(cwd()),
               applyPluginMcpDiff(),
@@ -2883,7 +2883,7 @@ function runHeadlessStreaming(
               plugins,
               mcpServers: buildMcpServerStatuses(),
               error_count: r.error_count,
-            } satisfies SDKControlReloadPluginsResponse)
+            } satisfies BridgeControlReloadPluginsResponse)
           } catch (error) {
             sendControlResponseError(message, errorMessage(error))
           }
@@ -3781,7 +3781,7 @@ function runHeadlessStreaming(
               uuid: message.uuid,
               timestamp: message.timestamp,
               isReplay: true,
-            } as SDKUserMessageReplay)
+            } as BridgeUserMessageReplay)
           }
           // Historical dup = transcript already has this turn's output, so it
           // ran but its lifecycle was never closed (interrupted before ack).
@@ -3997,7 +3997,7 @@ export function getCanUseToolFn(
 }
 
 async function handleInitializeRequest(
-  request: SDKControlInitializeRequest,
+  request: BridgeControlInitializeRequest,
   requestId: string,
   initialized: boolean,
   output: Stream<StdoutMessage>,
@@ -4112,7 +4112,7 @@ async function handleInitializeRequest(
   if (request.jsonSchema) {
     setInitJsonSchema(request.jsonSchema)
   }
-  const initResponse: SDKControlInitializeResponse = {
+  const initResponse: BridgeControlInitializeResponse = {
     commands: commands
       .filter((cmd) => cmd.userInvocable !== false)
       .map((cmd) => ({
@@ -4811,7 +4811,7 @@ function getStructuredIO(
             content: inputPrompt,
           },
           parent_tool_use_id: null,
-        } satisfies SDKUserMessage),
+        } satisfies BridgeUserMessage),
       ])
     } else {
       // Empty string - create empty stream
@@ -4839,7 +4839,7 @@ export async function handleOrphanedPermissionResponse({
   onEnqueued,
   handledToolUseIds,
 }: {
-  message: SDKControlResponse
+  message: BridgeControlResponse
   setAppState: (f: (prev: AppState) => AppState) => void
   onEnqueued?: () => void
   handledToolUseIds: Set<string>
@@ -4918,7 +4918,7 @@ function toScopedConfig(config: McpServerConfigForProcessTransport): ScopedMcpSe
 /**
  * State for SDK MCP servers that run in the SDK process.
  */
-export type SdkMcpState = {
+export type BridgeMcpState = {
   configs: Record<string, McpSdkServerConfig>
   clients: MCPServerConnection[]
   tools: Tools
@@ -4928,8 +4928,8 @@ export type SdkMcpState = {
  * Result of handleMcpSetServers - contains new state and response data.
  */
 export type McpSetServersResult = {
-  response: SDKControlMcpSetServersResponse
-  newSdkState: SdkMcpState
+  response: BridgeControlMcpSetServersResponse
+  newBridgeState: BridgeMcpState
   newDynamicState: DynamicMcpState
   sdkServersChanged: boolean
 }
@@ -4945,7 +4945,7 @@ export type McpSetServersResult = {
  */
 export async function handleMcpSetServers(
   servers: Record<string, McpServerConfigForProcessTransport>,
-  sdkState: SdkMcpState,
+  sdkState: BridgeMcpState,
   dynamicState: DynamicMcpState,
   setAppState: (f: (prev: AppState) => AppState) => void,
 ): Promise<McpSetServersResult> {
@@ -5021,7 +5021,7 @@ export async function handleMcpSetServers(
       removed: [...sdkRemoved, ...processResult.response.removed],
       errors: { ...policyErrors, ...processResult.response.errors },
     },
-    newSdkState: {
+    newBridgeState: {
       configs: newSdkConfigs,
       clients: newSdkClients,
       tools: newSdkTools,
@@ -5040,7 +5040,7 @@ export async function reconcileMcpServers(
   currentState: DynamicMcpState,
   setAppState: (f: (prev: AppState) => AppState) => void,
 ): Promise<{
-  response: SDKControlMcpSetServersResponse
+  response: BridgeControlMcpSetServersResponse
   newState: DynamicMcpState
 }> {
   const currentNames = new Set(Object.keys(currentState.configs))

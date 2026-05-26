@@ -16,8 +16,8 @@
 import { feature } from 'bun:bundle'
 import { hostname } from 'node:os'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
-import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
-import type { SDKControlResponse } from '../entrypoints/sdk/controlTypes.js'
+import type { BridgeMessage } from '../types/index.js'
+import type { BridgeControlResponse } from '../types/bridge/control.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { getOrganizationUUID } from '../services/oauth/client.js'
 import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../services/policyLimits/index.js'
@@ -65,8 +65,8 @@ import { setCseShimGate } from './sessionIdCompat.js'
 import type { BridgeWorkerType } from './types.js'
 
 export type InitBridgeOptions = {
-  onInboundMessage?: (msg: SDKMessage) => void | Promise<void>
-  onPermissionResponse?: (response: SDKControlResponse) => void
+  onInboundMessage?: (msg: BridgeMessage) => void | Promise<void>
+  onPermissionResponse?: (response: BridgeControlResponse) => void
   onInterrupt?: () => void
   onSetModel?: (model: string | undefined) => void
   onSetMaxThinkingTokens?: (maxTokens: number | null) => void

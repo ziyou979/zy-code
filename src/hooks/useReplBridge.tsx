@@ -14,8 +14,8 @@ import type { Command } from '../commands.js'
 import { getSlashCommandToolSkills, isBridgeSafeCommand } from '../commands.js'
 import { getRemoteSessionUrl } from '../constants/product.js'
 import { useNotifications } from '../context/notifications.js'
-import type { PermissionMode, SDKMessage } from '../entrypoints/agentSdkTypes.js'
-import type { SDKControlResponse } from '../entrypoints/sdk/controlTypes.js'
+import type { PermissionMode, BridgeMessage } from '../types/index.js'
+import type { BridgeControlResponse } from '../types/bridge/control.js'
 import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
@@ -199,7 +199,7 @@ export function useReplBridge(
           // 异步是因为 file_attachments（如果存在）需要在入队 @path 前缀之前
           // 进行网络获取 + 磁盘写入。调用者不会 await——带附件的消息只是
           // 稍晚一些进入队列，这没问题（web 消息不是快速连发的）。
-          async function handleInboundMessage(msg: SDKMessage): Promise<void> {
+          async function handleInboundMessage(msg: BridgeMessage): Promise<void> {
             try {
               const fields = extractInboundMessageFields(msg)
               if (!fields) {
@@ -343,7 +343,7 @@ export function useReplBridge(
                   }
                 })
                 // 发送 system/init 使远程客户端（web/iOS/Android）获取 session 元数据。
-                // REPL 直接使用 query()——从不经过 QueryEngine 的 SDKMessage 层——
+                // REPL 直接使用 query()——从不经过 QueryEngine 的 BridgeMessage 层——
                 // 因此这是将 system/init 放到 REPL-bridge 线上的唯一路径。
                 // Skills 加载是异步的（memoized，REPL 启动后开销小）；
                 // fire-and-forget 以免阻塞连接状态转换。
@@ -441,7 +441,7 @@ export function useReplBridge(
           >()
 
           // 将收到的 control_response 消息分发给已注册的 handler
-          function handlePermissionResponse(message: SDKControlResponse): void {
+          function handlePermissionResponse(message: BridgeControlResponse): void {
             const requestId = message.response?.request_id
             if (!requestId) {
               return

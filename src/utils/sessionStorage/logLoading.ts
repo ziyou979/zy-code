@@ -1348,6 +1348,7 @@ export async function loadMessageLogs(limit?: number): Promise<LogOption[]> {
 /**
  * 从所有项目目录加载消息日志。
  * @param limit 可选的每个项目要加载的 session 文件数量限制（在无索引时使用）
+ * @param options 可选的加载选项
  * @returns 按日期排序的消息日志列表
  */
 export async function loadAllProjectsMessageLogs(

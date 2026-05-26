@@ -105,7 +105,7 @@ export type REPLToolProgress = {
 // SDK Workflow Progress
 // ============================================================
 
-export type SdkWorkflowProgress = {
+export type BridgeWorkflowProgress = {
   type: string
   index: number
   phaseIndex?: number

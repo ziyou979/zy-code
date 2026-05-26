@@ -108,7 +108,7 @@ import {
 } from '../components/permissions/PermissionRequest.js'
 import { ElicitationDialog } from '../components/mcp/ElicitationDialog.js'
 import { PromptDialog } from '../components/hooks/PromptDialog.js'
-import type { PromptRequest, PromptResponse } from '../types/hooks.js'
+import type { PromptRequest, PromptResponse } from '../types/hooks/index.js'
 import PromptInput from '../components/PromptInput/PromptInput.js'
 import { PromptInputQueuedCommands } from '../components/PromptInput/PromptInputQueuedCommands.js'
 import { useRemoteSession } from '../hooks/useRemoteSession.js'
@@ -447,7 +447,7 @@ import {
   getAutoRunCommand,
   type AutoRunIssueReason,
 } from '../utils/autoRunIssue.js'
-import type { HookProgress } from '../types/hooks.js'
+import type { HookProgress } from '../types/hooks/index.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const WebBrowserPanelModule = feature('WEB_BROWSER_TOOL')
   ? (require('../tools/WebBrowserTool/WebBrowserPanel.js') as typeof import('../tools/WebBrowserTool/WebBrowserPanel.js'))

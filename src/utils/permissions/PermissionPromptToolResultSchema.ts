@@ -20,7 +20,7 @@ export type Input = z.infer<ReturnType<typeof inputSchema>>
 // This schema is used to validate the MCP permission prompt tool
 // so we maintain it as a subset of the real PermissionDecision type
 
-// Matches PermissionDecisionClassificationSchema in entrypoints/sdk/coreSchemas.ts.
+// Matches PermissionDecisionClassificationSchema in types/coreSchemas.ts.
 // Malformed values fall through to undefined (same pattern as updatedPermissions
 // below) so a bad string from the SDK host doesn't reject the whole decision.
 const decisionClassificationField = lazySchema(() =>

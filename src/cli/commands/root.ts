@@ -2461,16 +2461,13 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     // 在无头模式下，立即启动延迟预取（没有用户输入延迟）
     // --bare / SIMPLE：startDeferredPrefetches 在内部早期返回。
     // backgroundHousekeeping（initExtractMemories、pruneShellSnapshots、
-    // cleanupOldMessageFiles）和 sdkHeapDumpMonitor 都是脚本化调用
+    // cleanupOldMessageFiles）是脚本化调用
     // 不需要的簿记 —— 下次交互会话将协调。
     if (!isBareMode()) {
       startDeferredPrefetches()
       void import('../../utils/backgroundHousekeeping.js').then((m) =>
         m.startBackgroundHousekeeping(),
       )
-      if (isInternalBuild()) {
-        void import('../../utils/sdkHeapDumpMonitor.js').then((m: any) => m.startSdkMemoryMonitor())
-      }
     }
     logSessionTelemetry()
     profileCheckpoint('before_print_import')

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js'
+import type { HookEvent } from 'src/types/index.js'
 import { getDefaultCompactModel } from 'src/services/model/model.js'
 import { queryModelWithoutStreaming } from '../../services/api/llmOrchestrator.js'
 import type { ToolUseContext } from '../../Tool.js'

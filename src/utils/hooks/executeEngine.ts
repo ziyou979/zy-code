@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import chalk from 'chalk'
-import { isAsyncHookJSONOutput, isSyncHookJSONOutput } from '../../types/hooks.js'
+import { isAsyncHookJSONOutput, isSyncHookJSONOutput } from 'src/types/hooks/index.js'
 import { createAttachmentMessage } from '../attachments.js'
 import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
 import { isEnvTruthy } from '../envUtils.js'
@@ -31,7 +31,7 @@ function getHookDefinitionsForTelemetry(
   })
 }
 
-import type { HookInput } from 'src/entrypoints/agentSdkTypes.js'
+import type { HookInput } from 'src/types/index.js'
 import { addToTurnHookDuration, getSessionId, getStatsStore } from '../../bootstrap/state.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -44,7 +44,7 @@ import {
   startHookSpan,
 } from '../../services/telemetry/sessionTracing.js'
 import type { ToolUseContext } from '../../Tool.js'
-import type { PromptRequest, PromptResponse } from '../../types/hooks.js'
+import type { PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../debug.js'
 import { errorMessage } from '../errors.js'

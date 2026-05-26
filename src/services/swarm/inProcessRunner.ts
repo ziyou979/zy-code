@@ -78,7 +78,7 @@ import {
 } from '../../utils/permissions/PermissionUpdate.js'
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
 import { hasPermissionsToUseTool } from '../../utils/permissions/permissions.js'
-import { emitTaskTerminatedSdk } from '../../utils/sdkEventQueue.js'
+import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
@@ -1353,7 +1353,7 @@ export async function runInProcessTeammate(
     // 预先设置 notified:true → 无 XML 通知 → print.ts 不会发送
     // SDK task_notification。直接关闭 task_started 收尾事件。
     if (!alreadyTerminal) {
-      emitTaskTerminatedSdk(taskId, 'completed', {
+      emitTaskTerminatedBridge(taskId, 'completed', {
         toolUseId,
         summary: identity.agentId,
       })
@@ -1402,7 +1402,7 @@ export async function runInProcessTeammate(
     evictTerminalTask(taskId, setAppState)
     // 预先设置 notified:true → 无 XML 通知 → 直接关闭 SDK 收尾事件。
     if (!alreadyTerminal) {
-      emitTaskTerminatedSdk(taskId, 'failed', {
+      emitTaskTerminatedBridge(taskId, 'failed', {
         toolUseId,
         summary: identity.agentId,
       })

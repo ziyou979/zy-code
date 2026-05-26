@@ -1,6 +1,6 @@
 import type { UUID } from 'node:crypto'
 import type React from 'react'
-import type { PermissionResult } from '../entrypoints/agentSdkTypes.js'
+import type { PermissionResult } from '../types/index.js'
 import type { Key } from '../ink.js'
 import type { PastedContent } from '../utils/config.js'
 import type { ImageDimensions } from '../utils/imageResizer.js'

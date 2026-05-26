@@ -1,4 +1,4 @@
-import type { SDKMessage } from 'src/entrypoints/agentSdkTypes.js'
+import type { BridgeMessage } from 'src/types/index.js'
 import { checkGate_CACHED_OR_BLOCKING } from '../../../services/analytics/growthbook.js'
 import { isPolicyAllowed } from '../../../services/policyLimits/index.js'
 import { detectCurrentRepositoryWithHost } from '../../../utils/detectRepository.js'
@@ -22,7 +22,7 @@ export type BackgroundRemoteSession = {
   todoList: TodoList
   title: string
   type: 'remote_session'
-  log: SDKMessage[]
+  log: BridgeMessage[]
 }
 
 /**

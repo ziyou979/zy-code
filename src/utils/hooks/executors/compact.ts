@@ -1,4 +1,4 @@
-import type { PostCompactHookInput, PreCompactHookInput } from 'src/entrypoints/agentSdkTypes.js'
+import type { PostCompactHookInput, PreCompactHookInput } from 'src/types/index.js'
 import { logForDebugging } from '../../debug.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { executeHooksOutsideREPL, hasBlockingResult } from '../outsideRepl.js'

@@ -4,7 +4,7 @@ import type {
   HookEvent,
   HookJSONOutput,
   SyncHookJSONOutput,
-} from 'src/entrypoints/agentSdkTypes.js'
+} from 'src/types/index.js'
 import { formatShellPrefixCommand } from 'src/shell-eval/bash/shellPrefix.js'
 import { getCachedPowerShellPath } from 'src/shell-eval/shared/powershellDetection.js'
 import { buildPowerShellArgs } from 'src/shell-eval/shared/powershellProvider.js'
@@ -17,7 +17,7 @@ import {
   type PromptRequest,
   type PromptResponse,
   promptRequestSchema,
-} from '../../types/hooks.js'
+} from 'src/types/hooks/index.js'
 import { createAttachmentMessage } from '../attachments.js'
 import { getCwd } from '../cwd.js'
 import { logForDebugging } from '../debug.js'

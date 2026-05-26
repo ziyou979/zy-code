@@ -8,8 +8,8 @@
  * - Strips tool list and model info from init messages
  */
 
-import type { SDKAssistantMessage } from 'src/entrypoints/agentSdkTypes.js'
-import type { StdoutMessage } from 'src/entrypoints/sdk/controlTypes.js'
+import type { BridgeAssistantMessage } from 'src/types/index.js'
+import type { StdoutMessage } from 'src/types/bridge/control.js'
 import { FILE_EDIT_TOOL_NAME } from 'src/tools/FileEditTool/constants.js'
 import { FILE_READ_TOOL_NAME } from 'src/tools/FileReadTool/prompt.js'
 import { FILE_WRITE_TOOL_NAME } from 'src/tools/FileWriteTool/prompt.js'
@@ -99,7 +99,7 @@ function getToolSummaryText(counts: ToolCounts): string | undefined {
 /**
  * Count tool uses in an assistant message and add to existing counts.
  */
-function accumulateToolUses(message: SDKAssistantMessage, counts: ToolCounts): void {
+function accumulateToolUses(message: BridgeAssistantMessage, counts: ToolCounts): void {
   const content = (message.message as any).content
   if (!Array.isArray(content)) {
     return

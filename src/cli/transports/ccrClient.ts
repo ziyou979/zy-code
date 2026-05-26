@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import type { SDKPartialAssistantMessage, StdoutMessage } from 'src/entrypoints/sdk/controlTypes.js'
+import type { BridgePartialAssistantMessage } from 'src/types/bridge/messages.js'
+import type { StdoutMessage } from 'src/types/bridge/control.js'
 import { decodeJwtExpiry } from '../../bridge/jwtUtils.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
@@ -68,7 +69,7 @@ type ClientEvent = {
 
 /**
  * Structural subset of a stream_event carrying a text_delta. Not a narrowing
- * of SDKPartialAssistantMessage — RawMessageStreamEvent's delta is a union and
+ * of BridgePartialAssistantMessage — RawMessageStreamEvent's delta is a union and
  * narrowing through two levels defeats the discriminant.
  */
 type CoalescedStreamEvent = {
@@ -86,7 +87,7 @@ type CoalescedStreamEvent = {
 /**
  * Accumulator state for text_delta coalescing. Keyed by API message ID so
  * lifetime is tied to the assistant message — cleared when the complete
- * SDKAssistantMessage arrives (writeEvent), which is reliable even when
+ * BridgeAssistantMessage arrives (writeEvent), which is reliable even when
  * abort/error paths skip content_block_stop/message_stop delivery.
  */
 export type StreamAccumulatorState = {
@@ -124,7 +125,7 @@ function scopeKey(m: { session_id: string; parent_tool_use_id: string | null }):
  * (reliable), not here on stop events (abort/error paths skip those).
  */
 export function accumulateStreamEvents(
-  buffer: SDKPartialAssistantMessage[],
+  buffer: BridgePartialAssistantMessage[],
   state: StreamAccumulatorState,
 ): EventPayload[] {
   const out: EventPayload[] = []
@@ -191,7 +192,7 @@ export function accumulateStreamEvents(
 
 /**
  * Clear accumulator entries for a completed assistant message. Called from
- * writeEvent when the SDKAssistantMessage arrives — the reliable end-of-stream
+ * writeEvent when the BridgeAssistantMessage arrives — the reliable end-of-stream
  * signal that fires even when abort/interrupt/error skip SSE stop events.
  */
 export function clearStreamAccumulatorForMessage(
@@ -262,7 +263,7 @@ export class CCRClient {
   // stream_event delay buffer — accumulates content deltas for up to
   // STREAM_EVENT_FLUSH_INTERVAL_MS before enqueueing (reduces POST count
   // and enables text_delta coalescing). Mirrors HybridTransport's pattern.
-  private streamEventBuffer: SDKPartialAssistantMessage[] = []
+  private streamEventBuffer: BridgePartialAssistantMessage[] = []
   private streamEventTimer: ReturnType<typeof setTimeout> | null = null
   // Full-so-far text accumulator. Persists across flushes so each emitted
   // text_delta event carries the complete text from the start of the block —

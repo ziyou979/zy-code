@@ -58,8 +58,8 @@ import {
 } from '../services/analytics/index.js'
 import type { ReplBridgeHandle, BridgeState } from './replBridge.js'
 import type { Message } from '../types/message.js'
-import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
-import type { SDKControlRequest, SDKControlResponse } from '../entrypoints/sdk/controlTypes.js'
+import type { BridgeMessage } from '../types/index.js'
+import type { BridgeControlRequest, BridgeControlResponse } from '../types/bridge/control.js'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
 
 const ANTHROPIC_VERSION = '2023-06-01'
@@ -84,15 +84,15 @@ export type EnvLessBridgeParams = {
   getAccessToken: () => string | undefined
   onAuth401?: (staleAccessToken: string) => Promise<boolean>
   /**
-   * Converts internal Message[] → SDKMessage[] for writeMessages() and the
+   * Converts internal Message[] → BridgeMessage[] for writeMessages() and the
    * initial-flush/drain paths. Injected rather than imported — mappers.ts
    * transitively pulls in src/commands.ts (entire command registry + React
    * tree) which would bloat bundles that don't already have it.
    */
-  toSDKMessages: (messages: Message[]) => SDKMessage[]
+  toSDKMessages: (messages: Message[]) => BridgeMessage[]
   initialHistoryCap: number
   initialMessages?: Message[]
-  onInboundMessage?: (msg: SDKMessage) => void | Promise<void>
+  onInboundMessage?: (msg: BridgeMessage) => void | Promise<void>
   /**
    * Fired on each title-worthy user message seen in writeMessages() until
    * the callback returns true (done). Mirrors replBridge.ts's onUserMessage —
@@ -103,7 +103,7 @@ export type EnvLessBridgeParams = {
    * retags internally.
    */
   onUserMessage?: (text: string, sessionId: string) => boolean
-  onPermissionResponse?: (response: SDKControlResponse) => void
+  onPermissionResponse?: (response: BridgeControlResponse) => void
   onInterrupt?: () => void
   onSetModel?: (model: string | undefined) => void
   onSetMaxThinkingTokens?: (maxTokens: number | null) => void
@@ -757,7 +757,7 @@ export async function initEnvLessBridgeCore(
       logForDebugging(`[remote-bridge] Sending ${filtered.length} message(s)`)
       void transport.writeBatch(events)
     },
-    writeSdkMessages(messages: SDKMessage[]) {
+    writeSdkMessages(messages: BridgeMessage[]) {
       const filtered = messages.filter((m) => !m.uuid || !recentPostedUUIDs.has(m.uuid))
       if (filtered.length === 0) {
         return
@@ -770,7 +770,7 @@ export async function initEnvLessBridgeCore(
       const events = filtered.map((m) => ({ ...m, session_id: sessionId }))
       void transport.writeBatch(events)
     },
-    sendControlRequest(request: SDKControlRequest) {
+    sendControlRequest(request: BridgeControlRequest) {
       if (authRecoveryInFlight) {
         logForDebugging(
           `[remote-bridge] Dropping control_request during 401 recovery: ${request.request_id}`,
@@ -784,7 +784,7 @@ export async function initEnvLessBridgeCore(
       void transport.write(event)
       logForDebugging(`[remote-bridge] Sent control_request request_id=${request.request_id}`)
     },
-    sendControlResponse(response: SDKControlResponse) {
+    sendControlResponse(response: BridgeControlResponse) {
       if (authRecoveryInFlight) {
         logForDebugging('[remote-bridge] Dropping control_response during 401 recovery')
         return

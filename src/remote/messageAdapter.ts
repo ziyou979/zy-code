@@ -1,13 +1,13 @@
 import type {
-  SDKAssistantMessage,
-  SDKCompactBoundaryMessage,
-  SDKMessage,
-  SDKPartialAssistantMessage,
-  SDKResultMessage,
-  SDKStatusMessage,
-  SDKSystemMessage,
-  SDKToolProgressMessage,
-} from '../entrypoints/agentSdkTypes.js'
+  BridgeAssistantMessage,
+  BridgeCompactBoundaryMessage,
+  BridgeMessage,
+  BridgePartialAssistantMessage,
+  BridgeResultMessage,
+  BridgeStatusMessage,
+  BridgeSystemMessage,
+  BridgeToolProgressMessage,
+} from '../types/index.js'
 import { tSync } from '../i18n/index.js'
 import type { AssistantMessage, Message, StreamEvent, SystemMessage } from '../types/message.js'
 import { logForDebugging } from '../utils/debug.js'
@@ -15,16 +15,16 @@ import { fromSDKCompactMetadata } from '../utils/messages/mappers.js'
 import { createUserMessage } from '../utils/messages.js'
 
 /**
- * Converts SDKMessage from CCR to REPL Message types.
+ * Converts BridgeMessage from CCR to REPL Message types.
  *
  * The CCR backend sends SDK-format messages via WebSocket. The REPL expects
  * internal Message types for rendering. This adapter bridges the two.
  */
 
 /**
- * Convert an SDKAssistantMessage to an AssistantMessage
+ * Convert an BridgeAssistantMessage to an AssistantMessage
  */
-function convertAssistantMessage(msg: SDKAssistantMessage): AssistantMessage {
+function convertAssistantMessage(msg: BridgeAssistantMessage): AssistantMessage {
   return {
     type: 'assistant',
     message: msg.message as any,
@@ -36,9 +36,9 @@ function convertAssistantMessage(msg: SDKAssistantMessage): AssistantMessage {
 }
 
 /**
- * Convert an SDKPartialAssistantMessage (streaming) to a StreamEvent
+ * Convert an BridgePartialAssistantMessage (streaming) to a StreamEvent
  */
-function convertStreamEvent(msg: SDKPartialAssistantMessage): StreamEvent {
+function convertStreamEvent(msg: BridgePartialAssistantMessage): StreamEvent {
   return {
     type: 'stream_event',
     event: msg.event as any,
@@ -48,9 +48,9 @@ function convertStreamEvent(msg: SDKPartialAssistantMessage): StreamEvent {
 }
 
 /**
- * Convert an SDKResultMessage to a SystemMessage
+ * Convert an BridgeResultMessage to a SystemMessage
  */
-function convertResultMessage(msg: SDKResultMessage): SystemMessage {
+function convertResultMessage(msg: BridgeResultMessage): SystemMessage {
   const isError = msg.subtype !== 'success'
   const content = isError
     ? msg.errors?.join(', ') || 'Unknown error'
@@ -67,9 +67,9 @@ function convertResultMessage(msg: SDKResultMessage): SystemMessage {
 }
 
 /**
- * Convert an SDKSystemMessage (init) to a SystemMessage
+ * Convert an BridgeSystemMessage (init) to a SystemMessage
  */
-function convertInitMessage(msg: SDKSystemMessage): SystemMessage {
+function convertInitMessage(msg: BridgeSystemMessage): SystemMessage {
   return {
     type: 'system',
     subtype: 'informational',
@@ -81,9 +81,9 @@ function convertInitMessage(msg: SDKSystemMessage): SystemMessage {
 }
 
 /**
- * Convert an SDKStatusMessage to a SystemMessage
+ * Convert an BridgeStatusMessage to a SystemMessage
  */
-function convertStatusMessage(msg: SDKStatusMessage): SystemMessage | null {
+function convertStatusMessage(msg: BridgeStatusMessage): SystemMessage | null {
   if (!msg.status) {
     return null
   }
@@ -99,11 +99,11 @@ function convertStatusMessage(msg: SDKStatusMessage): SystemMessage | null {
 }
 
 /**
- * Convert an SDKToolProgressMessage to a SystemMessage.
+ * Convert an BridgeToolProgressMessage to a SystemMessage.
  * We use a system message instead of ProgressMessage since the Progress type
  * is a complex union that requires tool-specific data we don't have from CCR.
  */
-function convertToolProgressMessage(msg: SDKToolProgressMessage): SystemMessage {
+function convertToolProgressMessage(msg: BridgeToolProgressMessage): SystemMessage {
   return {
     type: 'system',
     subtype: 'informational',
@@ -116,9 +116,9 @@ function convertToolProgressMessage(msg: SDKToolProgressMessage): SystemMessage 
 }
 
 /**
- * Convert an SDKCompactBoundaryMessage to a SystemMessage
+ * Convert an BridgeCompactBoundaryMessage to a SystemMessage
  */
-function convertCompactBoundaryMessage(msg: SDKCompactBoundaryMessage): SystemMessage {
+function convertCompactBoundaryMessage(msg: BridgeCompactBoundaryMessage): SystemMessage {
   return {
     type: 'system',
     subtype: 'compact_boundary',
@@ -131,7 +131,7 @@ function convertCompactBoundaryMessage(msg: SDKCompactBoundaryMessage): SystemMe
 }
 
 /**
- * Result of converting an SDKMessage
+ * Result of converting an BridgeMessage
  */
 export type ConvertedMessage =
   | { type: 'message'; message: Message }
@@ -154,9 +154,9 @@ type ConvertOptions = {
 }
 
 /**
- * Convert an SDKMessage to REPL message format
+ * Convert an BridgeMessage to REPL message format
  */
-export function convertSDKMessage(msg: SDKMessage, opts?: ConvertOptions): ConvertedMessage {
+export function convertSDKMessage(msg: BridgeMessage, opts?: ConvertOptions): ConvertedMessage {
   switch (msg.type) {
     case 'assistant':
       return { type: 'message', message: convertAssistantMessage(msg) }
@@ -227,7 +227,7 @@ export function convertSDKMessage(msg: SDKMessage, opts?: ConvertOptions): Conve
         }
       }
       // hook_response and other subtypes
-      logForDebugging(`[sdkMessageAdapter] Ignoring system message subtype: ${msg.subtype}`)
+      logForDebugging(`[messageAdapter] Ignoring system message subtype: ${msg.subtype}`)
       return { type: 'ignored' }
 
     case 'tool_progress':
@@ -235,47 +235,47 @@ export function convertSDKMessage(msg: SDKMessage, opts?: ConvertOptions): Conve
 
     case 'auth_status':
       // Auth status is handled separately, not converted to a display message
-      logForDebugging('[sdkMessageAdapter] Ignoring auth_status message')
+      logForDebugging('[messageAdapter] Ignoring auth_status message')
       return { type: 'ignored' }
 
     case 'tool_use_summary':
       // Tool use summaries are SDK-only events, not displayed in REPL
-      logForDebugging('[sdkMessageAdapter] Ignoring tool_use_summary message')
+      logForDebugging('[messageAdapter] Ignoring tool_use_summary message')
       return { type: 'ignored' }
 
     case 'rate_limit_event':
       // Rate limit events are SDK-only events, not displayed in REPL
-      logForDebugging('[sdkMessageAdapter] Ignoring rate_limit_event message')
+      logForDebugging('[messageAdapter] Ignoring rate_limit_event message')
       return { type: 'ignored' }
 
     default: {
       // Gracefully ignore unknown message types. The backend may send new
       // types before the client is updated; logging helps with debugging
       // without crashing or losing the session.
-      logForDebugging(`[sdkMessageAdapter] Unknown message type: ${(msg as { type: string }).type}`)
+      logForDebugging(`[messageAdapter] Unknown message type: ${(msg as { type: string }).type}`)
       return { type: 'ignored' }
     }
   }
 }
 
 /**
- * Check if an SDKMessage indicates the session has ended
+ * Check if an BridgeMessage indicates the session has ended
  */
-export function isSessionEndMessage(msg: SDKMessage): boolean {
+export function isSessionEndMessage(msg: BridgeMessage): boolean {
   return msg.type === 'result'
 }
 
 /**
- * Check if an SDKResultMessage indicates success
+ * Check if an BridgeResultMessage indicates success
  */
-export function isSuccessResult(msg: SDKResultMessage): boolean {
+export function isSuccessResult(msg: BridgeResultMessage): boolean {
   return msg.subtype === 'success'
 }
 
 /**
- * Extract the result text from a successful SDKResultMessage
+ * Extract the result text from a successful BridgeResultMessage
  */
-export function getResultText(msg: SDKResultMessage): string | null {
+export function getResultText(msg: BridgeResultMessage): string | null {
   if (msg.subtype === 'success') {
     return msg.result
   }

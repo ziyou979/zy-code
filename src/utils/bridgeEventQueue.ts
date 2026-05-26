@@ -1,7 +1,7 @@
 import type { UUID } from 'node:crypto'
 import { randomUUID } from 'node:crypto'
 import { getIsNonInteractiveSession, getSessionId } from '../bootstrap/state.js'
-import type { SdkWorkflowProgress } from '../types/tools.js'
+import type { BridgeWorkflowProgress } from '../types/tools.js'
 
 type TaskStartedEvent = {
   type: 'system'
@@ -30,15 +30,15 @@ type TaskProgressEvent = {
   // Delta batch of workflow state changes. Clients upsert by
   // `${type}:${index}` then group by phaseIndex to rebuild the phase tree,
   // same fold as collectFromEvents + groupByPhase in PhaseProgress.tsx.
-  workflow_progress?: SdkWorkflowProgress[]
+  workflow_progress?: BridgeWorkflowProgress[]
 }
 
 // Emitted when a foreground agent completes without being backgrounded.
-// Drained by drainSdkEvents() directly into the output stream — does NOT
+// Drained by drainBridgeEvents() directly into the output stream — does NOT
 // go through the print.ts XML task_notification parser and does NOT trigger
 // the LLM loop. Consumers (e.g. VS Code session.ts) use this to remove the
 // task from the subagent panel.
-type TaskNotificationSdkEvent = {
+type TaskNotificationBridgeEvent = {
   type: 'system'
   subtype: 'task_notification'
   task_id: string
@@ -65,16 +65,16 @@ type SessionStateChangedEvent = {
   state: 'idle' | 'running' | 'requires_action'
 }
 
-export type SdkEvent =
+export type BridgeEvent =
   | TaskStartedEvent
   | TaskProgressEvent
-  | TaskNotificationSdkEvent
+  | TaskNotificationBridgeEvent
   | SessionStateChangedEvent
 
 const MAX_QUEUE_SIZE = 1000
-const queue: SdkEvent[] = []
+const queue: BridgeEvent[] = []
 
-export function enqueueSdkEvent(event: SdkEvent): void {
+export function enqueueBridgeEvent(event: BridgeEvent): void {
   // SDK events are only consumed (drained) in headless/streaming mode.
   // In TUI mode they would accumulate up to the cap and never be read.
   if (!getIsNonInteractiveSession()) {
@@ -86,7 +86,7 @@ export function enqueueSdkEvent(event: SdkEvent): void {
   queue.push(event)
 }
 
-export function drainSdkEvents(): Array<SdkEvent & { uuid: UUID; session_id: string }> {
+export function drainBridgeEvents(): Array<BridgeEvent & { uuid: UUID; session_id: string }> {
   if (queue.length === 0) {
     return []
   }
@@ -109,7 +109,7 @@ export function drainSdkEvents(): Array<SdkEvent & { uuid: UUID; session_id: str
  * paths, abort branches) must call this directly so SDK consumers
  * (Scuttle's bg-task dot, VS Code subagent panel) see the task close.
  */
-export function emitTaskTerminatedSdk(
+export function emitTaskTerminatedBridge(
   taskId: string,
   status: 'completed' | 'failed' | 'stopped',
   opts?: {
@@ -119,7 +119,7 @@ export function emitTaskTerminatedSdk(
     usage?: { total_tokens: number; tool_uses: number; duration_ms: number }
   },
 ): void {
-  enqueueSdkEvent({
+  enqueueBridgeEvent({
     type: 'system',
     subtype: 'task_notification',
     task_id: taskId,

@@ -1,7 +1,7 @@
 /* eslint-disable eslint-plugin-n/no-unsupported-features/node-builtins */
 
-import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
-import type { SDKControlPermissionRequest, StdoutMessage } from '../entrypoints/sdk/controlTypes.js'
+import type { BridgeMessage } from '../types/index.js'
+import type { BridgeControlPermissionRequest, StdoutMessage } from '../types/bridge/control.js'
 import type { RemotePermissionResponse } from '../remote/RemoteSessionManager.js'
 import { logForDebugging } from '../utils/debug.js'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
@@ -15,8 +15,8 @@ export type DirectConnectConfig = {
 }
 
 export type DirectConnectCallbacks = {
-  onMessage: (message: SDKMessage) => void
-  onPermissionRequest: (request: SDKControlPermissionRequest, requestId: string) => void
+  onMessage: (message: BridgeMessage) => void
+  onPermissionRequest: (request: BridgeControlPermissionRequest, requestId: string) => void
   onConnected?: () => void
   onDisconnected?: () => void
   onError?: (error: Error) => void
@@ -115,7 +115,7 @@ export class DirectConnectSessionManager {
       return false
     }
 
-    // Must match SDKUserMessage format expected by `--input-format stream-json`
+    // Must match BridgeUserMessage format expected by `--input-format stream-json`
     const message = jsonStringify({
       type: 'user',
       message: {
@@ -134,7 +134,7 @@ export class DirectConnectSessionManager {
       return
     }
 
-    // Must match SDKControlResponse format expected by StructuredIO
+    // Must match BridgeControlResponse format expected by StructuredIO
     const response = jsonStringify({
       type: 'control_response',
       response: {
@@ -159,7 +159,7 @@ export class DirectConnectSessionManager {
       return
     }
 
-    // Must match SDKControlRequest format expected by StructuredIO
+    // Must match BridgeControlRequest format expected by StructuredIO
     const request = jsonStringify({
       type: 'control_request',
       request_id: crypto.randomUUID(),

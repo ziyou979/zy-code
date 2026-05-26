@@ -1,21 +1,21 @@
-import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
+import type { BridgeMessage } from '../types/index.js'
 import type {
-  SDKControlCancelRequest,
-  SDKControlPermissionRequest,
-  SDKControlRequest,
-  SDKControlResponse,
-} from '../entrypoints/sdk/controlTypes.js'
+  BridgeControlCancelRequest,
+  BridgeControlPermissionRequest,
+  BridgeControlRequest,
+  BridgeControlResponse,
+} from '../types/bridge/control.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logError } from '../utils/log.js'
 import { type RemoteMessageContent, sendEventToRemoteSession } from '../services/teleport/api.js'
 import { SessionsWebSocket, type SessionsWebSocketCallbacks } from './SessionsWebSocket.js'
 
 /**
- * Type guard to check if a message is an SDKMessage (not a control message)
+ * Type guard to check if a message is an BridgeMessage (not a control message)
  */
 function isSDKMessage(
-  message: SDKMessage | SDKControlRequest | SDKControlResponse | SDKControlCancelRequest,
-): message is SDKMessage {
+  message: BridgeMessage | BridgeControlRequest | BridgeControlResponse | BridgeControlCancelRequest,
+): message is BridgeMessage {
   return (
     message.type !== 'control_request' &&
     message.type !== 'control_response' &&
@@ -52,10 +52,10 @@ export type RemoteSessionConfig = {
 }
 
 export type RemoteSessionCallbacks = {
-  /** Called when an SDKMessage is received from the session */
-  onMessage: (message: SDKMessage) => void
+  /** Called when an BridgeMessage is received from the session */
+  onMessage: (message: BridgeMessage) => void
   /** Called when a permission request is received from CCR */
-  onPermissionRequest: (request: SDKControlPermissionRequest, requestId: string) => void
+  onPermissionRequest: (request: BridgeControlPermissionRequest, requestId: string) => void
   /** Called when the server cancels a pending permission request */
   onPermissionCancelled?: (requestId: string, toolUseId: string | undefined) => void
   /** Called when connection is established */
@@ -78,7 +78,7 @@ export type RemoteSessionCallbacks = {
  */
 export class RemoteSessionManager {
   private websocket: SessionsWebSocket | null = null
-  private pendingPermissionRequests: Map<string, SDKControlPermissionRequest> = new Map()
+  private pendingPermissionRequests: Map<string, BridgeControlPermissionRequest> = new Map()
 
   constructor(
     private readonly config: RemoteSessionConfig,
@@ -125,7 +125,7 @@ export class RemoteSessionManager {
    * Handle messages from WebSocket
    */
   private handleMessage(
-    message: SDKMessage | SDKControlRequest | SDKControlResponse | SDKControlCancelRequest,
+    message: BridgeMessage | BridgeControlRequest | BridgeControlResponse | BridgeControlCancelRequest,
   ): void {
     // Handle control requests (permission prompts from CCR)
     if (message.type === 'control_request') {
@@ -158,7 +158,7 @@ export class RemoteSessionManager {
   /**
    * Handle control requests from CCR (e.g., permission requests)
    */
-  private handleControlRequest(request: SDKControlRequest): void {
+  private handleControlRequest(request: BridgeControlRequest): void {
     const { request_id, request: inner } = request
 
     if (inner.subtype === 'can_use_tool') {
@@ -171,7 +171,7 @@ export class RemoteSessionManager {
       logForDebugging(
         `[RemoteSessionManager] Unsupported control request subtype: ${inner.subtype}`,
       )
-      const response: SDKControlResponse = {
+      const response: BridgeControlResponse = {
         type: 'control_response',
         response: {
           subtype: 'error',
@@ -216,7 +216,7 @@ export class RemoteSessionManager {
 
     this.pendingPermissionRequests.delete(requestId)
 
-    const response: SDKControlResponse = {
+    const response: BridgeControlResponse = {
       type: 'control_response',
       response: {
         subtype: 'success',
