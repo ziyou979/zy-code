@@ -333,6 +333,7 @@ import { FeedbackSurvey } from 'src/components/FeedbackSurvey/FeedbackSurvey.js'
 import { coordinatorModeModule, proactiveModule } from '../cli/lazyModules.js'
 import { useFrozenTranscript } from './repl/useFrozenTranscript.js'
 import { useReplActiveRemote } from './repl/useReplActiveRemote.js'
+import { useReplAwaySummary } from './repl/useReplAwaySummary.js'
 import { useStreamingThinking } from './repl/useStreamingThinking.js'
 import { useReplCallouts } from './repl/useReplCallouts.js'
 import { useReplFrustration } from './repl/useReplFrustration.js'
@@ -344,7 +345,6 @@ import { useReplSearch } from './repl/useReplSearch.js'
 import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
 import { useTranscriptEditor } from './repl/useTranscriptEditor.js'
 import { useViewedAgentBootstrap } from './repl/useViewedAgentBootstrap.js'
-import { useAwaySummary } from 'src/hooks/useAwaySummary.js'
 import { usePromptsFromClaudeInChrome } from 'src/hooks/usePromptsFromClaudeInChrome.js'
 import { getTipToShowOnSpinner, recordShownTip } from 'src/services/tips/tipScheduler.js'
 import type { Theme } from 'src/utils/theme.js'
@@ -1102,10 +1102,8 @@ export function REPL({
   // ScrollBox 直接所以每帧滚动不会重新渲染 REPL。
   const { dividerIndex, dividerYRef, onScrollAway, onRepin, jumpToNew, shiftDivider } =
     useUnseenDivider(messages.length)
-  if (feature('AWAY_SUMMARY')) {
-    // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-    useAwaySummary(messages, setMessages, isLoading)
-  }
+  // feature('AWAY_SUMMARY') 条件 require 已抽到 useReplAwaySummary。
+  useReplAwaySummary(messages, setMessages, isLoading)
   const [cursor, setCursor] = useState<MessageActionsState | null>(null)
   const cursorNavRef = useRef<MessageActionsNav | null>(null)
   // Messages 的 memoized 以便 Messages 的 React.memo 保持有效。
