@@ -109,9 +109,11 @@ bun tsc --noEmit
 
 ### LLM 适配
 
-`src/services/api/streamAdapter.ts` — Anthropic / OpenAI 统一适配层：
+`src/services/api/` — Anthropic / OpenAI 统一适配层：
+- `llmOrchestrator.ts` — 业务入口，编排请求/重试/用量；业务层只与它打交道
+- `AnthropicProviderAdapter.ts` / `OpenAIProviderAdapter.ts` — Provider 专属 SDK 适配（实现 `LLMAdapter`）
+- `conversions/anthropic.ts` / `conversions/openai.ts` — SDK 流 → `AsyncIterable<StreamEvent>` 的标准化转换
 - 业务层通过 `src/types/llm.ts` 标准类型交互，**禁止**直接导入 SDK
-- 适配器将 SDK 流 → `AsyncIterable<StreamEvent>`
 - Provider 专属字段走 `CreateParams.providerExtras`
 
 ### 关键模块
