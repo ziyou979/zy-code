@@ -13,6 +13,7 @@ import { enShell } from './en/shell.js'
 import { enStats } from './en/stats.js'
 import { enUi } from './en/ui.js'
 import { enMisc } from './en/misc.js'
+import { enPowerupLessons } from './en/powerupLessons.js'
 
 /**
  * English — base language (source of truth for keys)
@@ -38,4 +39,5 @@ export const en: TranslationResource = {
   ...enStats,
   ...enUi,
   ...enMisc,
+  ...enPowerupLessons,
 }

@@ -13,6 +13,7 @@ import { zhShell } from './zh-CN/shell.js'
 import { zhStats } from './zh-CN/stats.js'
 import { zhUi } from './zh-CN/ui.js'
 import { zhMisc } from './zh-CN/misc.js'
+import { zhPowerupLessons } from './zh-CN/powerupLessons.js'
 
 /**
  * 简体中文
@@ -38,4 +39,5 @@ export const zhCN: TranslationResource = {
   ...zhStats,
   ...zhUi,
   ...zhMisc,
+  ...zhPowerupLessons,
 }
