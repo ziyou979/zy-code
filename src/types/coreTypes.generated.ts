@@ -45,8 +45,6 @@ export type ApiKeySource = 'user' | 'project' | 'org' | 'temporary' | 'oauth'
 
 export type ConfigScope = 'local' | 'user' | 'project'
 
-export type SdkBeta = 'context-1m-2025-08-07'
-
 export interface ThinkingAdaptive {
   type: 'adaptive'
 }
