@@ -112,6 +112,4 @@ export const zhCommands: TranslationResource = {
   'commands.usage': '显示计划用量限额',
   'commands.version': '打印当前会话运行的版本',
   'commands.vim': '切换 Vim 和普通编辑模式',
-  'commands.zyApi':
-    '使用 Zy API 或 Anthropic SDK 构建应用。当代码导入 anthropic SDK 或用户询问 Zy API 时触发。',
 }

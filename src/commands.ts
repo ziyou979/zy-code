@@ -737,7 +737,6 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   'update-config': 'commands.updateConfig',
   'keybindings-help': 'commands.keybindingsHelp',
   'claude-in-chrome': 'commands.claudeInChrome',
-  'zy-api': 'commands.zyApi',
   debug: 'commands.debug',
   schedule: 'commands.schedule',
   loop: 'commands.loop',

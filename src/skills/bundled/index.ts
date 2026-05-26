@@ -65,12 +65,6 @@ export function initBundledSkills(): void {
     /* eslint-enable @typescript-eslint/no-require-imports */
     registerScheduleRemoteAgentsSkill()
   }
-  if (feature('BUILDING_CLAUDE_APPS')) {
-    /* eslint-disable @typescript-eslint/no-require-imports */
-    const { registerZyApiSkill } = require('./zyApi.js')
-    /* eslint-enable @typescript-eslint/no-require-imports */
-    registerZyApiSkill()
-  }
   if (shouldAutoEnableClaudeInChrome()) {
     registerClaudeInChromeSkill()
   }

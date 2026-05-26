@@ -26,14 +26,7 @@ bun dist/cli.js
 ### 构建
 
 ```bash
-# 完整构建（CLI + SDK）
 bun run build
-
-# 只构建 CLI
-bun run build:cli
-
-# 只构建 SDK
-bun run build:sdk
 ```
 
 构建产物输出到 `dist/`。

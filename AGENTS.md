@@ -70,9 +70,7 @@
 
 ```bash
 # 构建
-bun run build           # 完整构建（CLI + SDK） → dist/
-bun run build:cli       # 仅构建 CLI
-bun run build:sdk       # 仅构建 SDK
+bun run build           # 构建 CLI → dist/cli.js
 
 # 启动
 bun run start           # 运行已构建的 CLI（dist/cli.js）

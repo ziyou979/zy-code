@@ -119,6 +119,4 @@ export const enCommands: TranslationResource = {
   'commands.usage': 'Show plan usage limits',
   'commands.version': 'Print the version this session is running',
   'commands.vim': 'Toggle between Vim and Normal editing modes',
-  'commands.zyApi':
-    'Build apps with the Zy API or Anthropic SDK. Trigger when code imports anthropic SDK or user asks about Zy API.',
 }
