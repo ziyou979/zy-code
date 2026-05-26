@@ -155,20 +155,8 @@ import { useTeammateViewAutoExit } from '../hooks/useTeammateViewAutoExit.js'
 import { errorMessage } from '../utils/errors.js'
 import { isHumanTurn } from '../utils/messagePredicates.js'
 import { logError } from '../utils/log.js'
-// 死代码消除：条件导入
+// 语音条件 require 已抽到 ./repl/useReplVoice。
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
-const useVoiceIntegration: typeof import('../hooks/useVoiceIntegration.js').useVoiceIntegration =
-  feature('VOICE_MODE')
-    ? require('../hooks/useVoiceIntegration.js').useVoiceIntegration
-    : () => ({
-        stripTrailing: () => 0,
-        handleKeyEvent: () => {},
-        resetAnchor: () => {},
-      })
-const VoiceKeybindingHandler: typeof import('../hooks/useVoiceIntegration.js').VoiceKeybindingHandler =
-  feature('VOICE_MODE')
-    ? require('../hooks/useVoiceIntegration.js').VoiceKeybindingHandler
-    : () => null
 // 挫败感检测仅限 ant 内部使用（dogfooding）。条件 require 以便外部
 // 构建完全消除该模块（包括其两个 O(n) useMemo，每次 messages 变化时运行，
 // 以及 GrowthBook 获取）。
@@ -388,6 +376,7 @@ import { FeedbackSurvey } from 'src/components/FeedbackSurvey/FeedbackSurvey.js'
 import { useReplCallouts } from './repl/useReplCallouts.js'
 import { useReplIdeState } from './repl/useReplIdeState.js'
 import { useReplNotifications } from './repl/useReplNotifications.js'
+import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
 import { useAwaySummary } from 'src/hooks/useAwaySummary.js'
 import { usePromptsFromClaudeInChrome } from 'src/hooks/usePromptsFromClaudeInChrome.js'
 import { getTipToShowOnSpinner, recordShownTip } from 'src/services/tips/tipScheduler.js'
@@ -4601,20 +4590,12 @@ export function REPL({
     [onQuery, mainLoopModel, queryGuard.isActive],
   )
 
-  // 语音输入集成（仅 VOICE_MODE 构建）
-  const voice = feature('VOICE_MODE')
-    ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useVoiceIntegration({
-        setInputValueRaw,
-        inputValueRef,
-        insertTextRef,
-      })
-    : {
-        stripTrailing: () => 0,
-        handleKeyEvent: () => {},
-        resetAnchor: () => {},
-        interimRange: null,
-      }
+  // 语音输入集成（仅 VOICE_MODE 构建）—— 条件 require + hook fallback 见 useReplVoice。
+  const voice = useReplVoice({
+    setInputValueRaw,
+    inputValueRef,
+    insertTextRef,
+  })
   useInboxPoller({
     enabled: isAgentSwarmsEnabled(),
     isLoading,
@@ -5084,7 +5065,7 @@ export function REPL({
         />
         <GlobalKeybindingHandlers {...globalKeybindingProps} />
         {feature('VOICE_MODE') ? (
-          <VoiceKeybindingHandler
+          <ReplVoiceKeybindingHandler
             voiceHandleKeyEvent={voice.handleKeyEvent}
             stripTrailing={voice.stripTrailing}
             resetAnchor={voice.resetAnchor}
@@ -5295,7 +5276,7 @@ export function REPL({
       />
       <GlobalKeybindingHandlers {...globalKeybindingProps} />
       {feature('VOICE_MODE') ? (
-        <VoiceKeybindingHandler
+        <ReplVoiceKeybindingHandler
           voiceHandleKeyEvent={voice.handleKeyEvent}
           stripTrailing={voice.stripTrailing}
           resetAnchor={voice.resetAnchor}
