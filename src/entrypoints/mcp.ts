@@ -8,7 +8,7 @@ import {
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js'
 import { getDefaultAppState } from 'src/state/AppStateStore.js'
-import review from '../commands/review.js'
+import { reviewCommand } from '../skills/bundled/review.js'
 import type { Command } from '../commands.js'
 import { findToolByName, getEmptyToolPermissionContext, type ToolUseContext } from '../Tool.js'
 import { getTools } from '../tools.js'
@@ -26,7 +26,7 @@ import { zodToJsonSchema } from '../utils/zodToJsonSchema.js'
 type ToolInput = Tool['inputSchema']
 type ToolOutput = Tool['outputSchema']
 
-const MCP_COMMANDS: Command[] = [review]
+const MCP_COMMANDS: Command[] = [reviewCommand!]
 
 export async function startMCPServer(cwd: string, debug: boolean, verbose: boolean): Promise<void> {
   // 使用有限大小的 LRU 缓存 readFileState，防止内存无限增长

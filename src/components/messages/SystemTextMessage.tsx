@@ -2,7 +2,6 @@
 import { Box, Text } from '../../ink.js'
 import { feature } from 'bun:bundle'
 import { useState } from 'react'
-import sample from 'lodash-es/sample.js'
 import { BLACK_CIRCLE, REFERENCE_MARK, TEARDROP_ASTERISK } from '../../constants/figures.js'
 import { basename } from 'node:path'
 import { MessageResponse } from '../MessageResponse.js'
@@ -13,7 +12,6 @@ const teamMemSaved = feature('TEAMMEM')
   ? (require('./teamMemSaved.js') as typeof import('./teamMemSaved.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { getTurnCompletionVerbs } from '../../constants/turnCompletionVerbs.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import type {
   SystemMessage,
@@ -282,9 +280,7 @@ function SystemTextMessageInner({ content, addMargin, dot, color, dimColor }: an
 }
 function TurnDurationMessage({ message, addMargin }) {
   const bg = useSelectedMessageBg()
-  const [verb] = useState(
-    () => sample(getTurnCompletionVerbs()) ?? tSync('systemMessage.defaultVerb'),
-  )
+  const [verb] = useState(() => tSync('common.turnCompletionVerb'))
   const store = useAppStateStore()
   const [backgroundTaskSummary] = useState(() => {
     const tasks = store.getState().tasks

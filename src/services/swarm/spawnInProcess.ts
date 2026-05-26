@@ -13,10 +13,8 @@
  * 4. Returning spawn result for backend
  */
 
-import sample from 'lodash-es/sample.js'
 import { getSessionId } from '../../bootstrap/state.js'
-import { getSpinnerVerbs } from '../../constants/spinnerVerbs.js'
-import { getTurnCompletionVerbs } from '../../constants/turnCompletionVerbs.js'
+import { tSync } from '../../i18n/index.js'
 import type { AppState } from '../../state/AppState.js'
 import { createTaskStateBase, generateTaskId } from '../../Task.js'
 import type {
@@ -161,8 +159,8 @@ export async function spawnInProcessTeammate(
       model,
       abortController,
       awaitingPlanApproval: false,
-      spinnerVerb: sample(getSpinnerVerbs()),
-      pastTenseVerb: sample(getTurnCompletionVerbs()),
+      spinnerVerb: tSync('common.spinnerVerb'),
+      pastTenseVerb: tSync('common.turnCompletionVerb'),
       permissionMode: planModeRequired ? 'plan' : 'default',
       isIdle: false,
       shutdownRequested: false,

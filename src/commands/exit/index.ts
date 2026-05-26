@@ -4,7 +4,7 @@ const exit = {
   type: 'local-jsx',
   name: 'exit',
   aliases: ['quit'],
-  description: 'Exit the REPL',
+  description: 'Exit the CLI',
   immediate: true,
   load: () => import('./exit.js'),
 } satisfies Command

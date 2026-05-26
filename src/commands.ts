@@ -39,16 +39,15 @@ import mobile from './commands/mobile/index.js'
 import onboarding from './commands/onboarding/index.js'
 import pr_comments from './commands/pr_comments/index.js'
 import releaseNotes from './commands/release-notes/index.js'
-import rename from './commands/rename/index.js'
+import rename, { renameLocal } from './commands/rename/index.js'
 import resume from './commands/resume/index.js'
-import review, { ultrareview } from './commands/review.js'
+import { ultrareview } from './commands/review.js'
 import session from './commands/session/index.js'
 import share from './commands/share/index.js'
 import skills from './commands/skills/index.js'
 import status from './commands/status/index.js'
 import tasks from './commands/tasks/index.js'
 import teleport from './commands/teleport/index.js'
-import securityReview from './commands/security-review.js'
 import bughunter from './commands/bughunter/index.js'
 import terminalSetup from './commands/terminalSetup/index.js'
 import usage from './commands/usage/index.js'
@@ -137,14 +136,14 @@ import { isAnthropicBaseUrl } from './services/model/providers.js'
 import env from './commands/env/index.js'
 import exit from './commands/exit/index.js'
 import exportCommand from './commands/export/index.js'
-import model from './commands/model/index.js'
+import model, { modelLocal } from './commands/model/index.js'
 import tag from './commands/tag/index.js'
 import outputStyle from './commands/output-style/index.js'
 import remoteEnv from './commands/remote-env/index.js'
 import upgrade from './commands/upgrade/index.js'
 import rateLimitOptions from './commands/rate-limit-options/index.js'
 import statusline from './commands/statusline/index.js'
-import effort from './commands/effort/index.js'
+import effort, { effortLocal } from './commands/effort/index.js'
 import stats from './commands/stats/index.js'
 // insights.ts 文件为 113KB（3200 行，包含 diffLines/html 渲染）。懒加载垫片将重型模块延迟到 /insights 实际被调用时才加载。
 const usageReport: Command = {
@@ -231,6 +230,8 @@ const COMMANDS = memoize((): Command[] => [
   diff,
   doctor,
   effort,
+  // 同名 local 变体：交互模式 findCommand 命中前者，非交互过滤后只剩本项
+  effortLocal,
   exit,
   files,
   goal,
@@ -245,6 +246,8 @@ const COMMANDS = memoize((): Command[] => [
   memory,
   mobile,
   model,
+  // 同名 local 变体：交互模式 findCommand 命中前者，非交互过滤后只剩本项
+  modelLocal,
   outputStyle,
   remoteEnv,
   plugin,
@@ -253,6 +256,8 @@ const COMMANDS = memoize((): Command[] => [
   releaseNotes,
   reloadPlugins,
   rename,
+  // 同名 local 变体：仅在非交互过滤后生效（交互模式 findCommand 命中紧靠在前的 rename）
+  renameLocal,
   resume,
   session,
   skills,
@@ -263,10 +268,8 @@ const COMMANDS = memoize((): Command[] => [
   tag,
   theme,
   feedback,
-  review,
   ultrareview,
   rewind,
-  securityReview,
   terminalSetup,
   upgrade,
   rateLimitOptions,
@@ -707,10 +710,8 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   tag: 'commands.tag',
   theme: 'commands.theme',
   feedback: 'commands.feedback',
-  review: 'commands.review',
   ultrareview: 'commands.ultrareview',
   rewind: 'commands.rewind',
-  'security-review': 'commands.securityReview',
   'terminal-setup': 'commands.terminalSetup',
   upgrade: 'commands.upgrade',
   'rate-limit-options': 'commands.rateLimitOptions',

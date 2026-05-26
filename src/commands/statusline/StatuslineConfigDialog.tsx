@@ -21,6 +21,7 @@ import {
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useSettings } from '../../hooks/useSettings.js'
 import { tSync } from '../../i18n/index.js'
+import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text, useInput } from '../../ink.js'
 import { useAppState } from '../../state/AppState.js'
 import { resolveThemeSetting } from '../../utils/systemTheme.js'
@@ -264,6 +265,24 @@ function MainView({
   )
 }
 
+/**
+ * Visual-width padEnd: pads a string with spaces so its rendered width
+ * (accounting for double-cell CJK chars) equals `width` cells.
+ */
+function padVisual(s: string, width: number): string {
+  const w = stringWidth(s)
+  if (w >= width) {
+    return s
+  }
+  return s + ' '.repeat(width - w)
+}
+
+/**
+ * Single-row label for the module list. Returned as Select option `label`,
+ * which Select wraps in a <Text> — so this MUST be Text-only (no <Box>),
+ * otherwise Ink throws "<Box> can't be nested inside <Text>". Column
+ * alignment is done via space-padding instead of Box widths.
+ */
 function ModuleRow({
   module,
   theme,
@@ -276,20 +295,20 @@ function ModuleRow({
   const color = effectiveColor(module)
   const checkbox = visible ? '☑' : '☐'
   const iconCell = icon || '·'
+  const name = tSync(`statusline.module.${module.id}` as never)
+  // Column widths in terminal cells: name=14, icon=3 (with trailing space).
+  const namePadded = padVisual(name, 14)
+  const iconPadded = padVisual(iconCell, 3)
   return (
-    <Box>
-      <Text>{checkbox} </Text>
-      <Box width={12}>
-        <Text bold={visible} dimColor={!visible}>
-          {tSync(`statusline.module.${module.id}` as never)}
-        </Text>
-      </Box>
-      <Box width={3}>
-        <Text dimColor={!visible}>{iconCell}</Text>
-      </Box>
+    <Text>
+      {checkbox}{' '}
+      <Text bold={visible} dimColor={!visible}>
+        {namePadded}
+      </Text>
+      <Text dimColor={!visible}>{iconPadded}</Text>
       <Text color={resolveColor(theme, color) as never}>■</Text>
       <Text dimColor> {color}</Text>
-    </Box>
+    </Text>
   )
 }
 
@@ -305,13 +324,12 @@ function IconPickerView({
   const library = ICON_LIBRARY[module.id]
   const options = library.map((ic) => ({
     value: ic === '' ? '__none__' : ic,
+    // Text-only label (Select wraps in <Text>); pad icon to fixed cell width.
     label: (
-      <Box>
-        <Box width={3}>
-          <Text>{ic || ' '}</Text>
-        </Box>
+      <Text>
+        {padVisual(ic || ' ', 3)}
         <Text dimColor>{ic === '' ? tSync('statusline.icon.none') : ic}</Text>
-      </Box>
+      </Text>
     ),
   }))
   const current = effectiveIcon(module)
@@ -347,12 +365,14 @@ function ColorPickerView({
   const theme = getTheme(resolveThemeSetting(getGlobalConfig().theme))
   const options = COLOR_TOKENS.map((c) => ({
     value: c.token,
+    // Text-only label (Select wraps in <Text>); inline color swatch is a
+    // nested <Text color>, which is legal — only <Box> is forbidden here.
     label: (
-      <Box>
+      <Text>
         <Text color={resolveColor(theme, c.token) as never}>■ </Text>
-        <Text>{tSync(c.labelKey as never)}</Text>
+        {tSync(c.labelKey as never)}
         <Text dimColor> · {c.token}</Text>
-      </Box>
+      </Text>
     ),
   }))
   const current = effectiveColor(module)

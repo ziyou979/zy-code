@@ -1,4 +1,5 @@
 import { getAllowedSettingSources } from '../../bootstrap/state.js'
+import { tSync } from '../../i18n/index.js'
 
 /**
  * All possible sources where settings can come from
@@ -26,15 +27,15 @@ export type SettingSource = (typeof SETTING_SOURCES)[number]
 export function getSettingSourceName(source: SettingSource): string {
   switch (source) {
     case 'userSettings':
-      return 'user'
+      return tSync('commands.source.user')
     case 'projectSettings':
-      return 'project'
+      return tSync('commands.source.project')
     case 'localSettings':
-      return 'project, gitignored'
+      return tSync('commands.source.local')
     case 'flagSettings':
-      return 'cli flag'
+      return tSync('commands.source.flag')
     case 'policySettings':
-      return 'managed'
+      return tSync('commands.source.managed')
   }
 }
 

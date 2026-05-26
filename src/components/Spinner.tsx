@@ -12,11 +12,9 @@ import { getKairosActive, getUserMsgOptIn } from '../bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 import { count } from '../utils/array.js'
-import sample from 'lodash-es/sample.js'
 import { formatDuration, formatNumber } from '../utils/format.js'
 import type { Theme } from 'src/utils/theme.js'
 import { activityManager } from '../utils/activityManager.js'
-import { getSpinnerVerbs } from '../constants/spinnerVerbs.js'
 import { MessageResponse } from './MessageResponse.js'
 import { TaskListV2 } from './TaskListV2.js'
 import { useTasksV2 } from '../hooks/useTasksV2.js'
@@ -180,7 +178,7 @@ function SpinnerWithVerbInner({
   const nextTask = findNextPendingTask(tasksV2)
 
   // 使用带初始化器的 useState，在 mount 时随机选择一个 verb
-  const [randomVerb] = useState(() => sample(getSpinnerVerbs()))
+  const [randomVerb] = useState(() => tSync('common.spinnerVerb'))
 
   // Leader 自己的 verb（始终是 leader 的，无论谁被 foregrounded）
   const leaderVerb =
@@ -428,7 +426,7 @@ type BriefSpinnerProps = {
 function BriefSpinner({ mode, overrideMessage }: BriefSpinnerProps) {
   const settings = useSettings()
   const reducedMotion = settings.prefersReducedMotion ?? false
-  const [randomVerb] = useState(() => sample(getSpinnerVerbs()) ?? 'Working')
+  const [randomVerb] = useState(() => tSync('common.spinnerVerb'))
   const verb = overrideMessage ?? randomVerb
   const connStatus = useAppState((s) => s.remoteConnectionStatus)
   useEffect(() => {

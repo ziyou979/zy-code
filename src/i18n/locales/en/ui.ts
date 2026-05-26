@@ -27,6 +27,8 @@ export const enUi: TranslationResource = {
   'common.retry': 'retry',
   'common.return': 'return',
   'common.running': 'Running',
+  'common.spinnerVerb': 'Working',
+  'common.turnCompletionVerb': 'Worked',
   'common.save': 'save',
   'common.select': 'select',
   'common.selectAccept': 'accept',

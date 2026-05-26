@@ -28,6 +28,8 @@ export const zhUi: TranslationResource = {
   'common.retry': '重试',
   'common.return': '返回',
   'common.running': '运行中',
+  'common.spinnerVerb': '工作中',
+  'common.turnCompletionVerb': '处理完成',
   'common.save': '保存',
   'common.select': '选择',
   'common.selectAccept': '接受',

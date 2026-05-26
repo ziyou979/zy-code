@@ -1,9 +1,6 @@
 import figures from 'figures'
-import sample from 'lodash-es/sample.js'
 import * as React from 'react'
 import { useRef, useState } from 'react'
-import { getSpinnerVerbs } from '../../constants/spinnerVerbs.js'
-import { getTurnCompletionVerbs } from '../../constants/turnCompletionVerbs.js'
 import { useElapsedTime } from '../../hooks/useElapsedTime.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'
@@ -109,8 +106,8 @@ export function TeammateSpinnerLine({
   showPreview,
   leaderIsForegrounded,
 }: Props): React.ReactNode {
-  const [randomVerb] = useState(() => teammate.spinnerVerb ?? sample(getSpinnerVerbs()))
-  const [pastTenseVerb] = useState(() => teammate.pastTenseVerb ?? sample(getTurnCompletionVerbs()))
+  const [randomVerb] = useState(() => teammate.spinnerVerb ?? tSync('common.spinnerVerb'))
+  const [pastTenseVerb] = useState(() => teammate.pastTenseVerb ?? tSync('common.turnCompletionVerb'))
   const isHighlighted = isSelected || isForegrounded
   const treeChar = isHighlighted ? (isLast ? '╘═' : '╞═') : isLast ? '└─' : '├─'
   const nameColor = toInkColor(teammate.identity.color)

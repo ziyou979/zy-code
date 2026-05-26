@@ -1,4 +1,5 @@
 import type { LocalCommandResult } from '../../types/command.js'
+import { tSync } from '../../i18n/index.js'
 import {
   CHANGELOG_URL,
   fetchAndStoreChangelog,
@@ -9,7 +10,7 @@ import {
 function formatReleaseNotes(notes: Array<[string, string[]]>): string {
   return notes
     .map(([version, notes]) => {
-      const header = `Version ${version}:`
+      const header = tSync('releaseNotes.versionHeader', { version })
       const bulletPoints = notes.map((note) => `· ${note}`).join('\n')
       return `${header}\n${bulletPoints}`
     })
@@ -45,6 +46,6 @@ export async function call(): Promise<LocalCommandResult> {
   // Nothing available, show link
   return {
     type: 'text',
-    value: `See the full changelog at: ${CHANGELOG_URL}`,
+    value: tSync('releaseNotes.seeChangelog', { url: CHANGELOG_URL }),
   }
 }

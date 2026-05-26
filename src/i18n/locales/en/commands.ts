@@ -21,7 +21,7 @@ export const enCommands: TranslationResource = {
     'Automates your Chrome browser to interact with web pages — clicking, filling forms, screenshots, and more.',
   'commands.claudeInChrome.whenToUse':
     'When the user wants to interact with web pages, automate browser tasks, or perform browser-based actions.',
-  'commands.clear': 'Clear conversation history and free up context',
+  'commands.clear': 'Start a new session with empty context; previous session stays on disk (resumable with /resume)',
   'commands.color': 'Set the prompt bar color for this session',
   'commands.commit': 'Create a git commit',
   'commands.commitPushPr': 'Commit, push, and open a PR',
@@ -36,7 +36,7 @@ export const enCommands: TranslationResource = {
   'commands.diff': 'View uncommitted changes and per-turn diffs',
   'commands.doctor': 'Diagnose and verify your ZY Code installation and settings',
   'commands.effort': 'Set effort level for model usage',
-  'commands.exit': 'Exit the REPL',
+  'commands.exit': 'Exit the ClI',
   'commands.export': 'Export the current conversation to a file or clipboard',
   'commands.feedback': 'Submit feedback about ZY Code',
   'commands.files': 'List all files currently in context',
@@ -75,9 +75,12 @@ export const enCommands: TranslationResource = {
   'commands.remoteEnv': 'Configure the default remote environment for teleport sessions',
   'commands.remoteSetup': 'Configure remote environment setup',
   'commands.rename': 'Rename the current conversation',
+  'commands.rename.success': 'Session renamed to: {newName}',
   'commands.resume': 'Resume a previous conversation',
+  'commands.resume.cancelled': 'Resume cancelled',
   'commands.review': 'Review a pull request',
   'commands.rewind': 'Restore the code and/or conversation to a previous point',
+  'commands.securityReview': 'Complete a security review of the pending changes on the current branch',
   'commands.sandbox': 'Configure code execution sandbox',
   'commands.schedule':
     'Create, update, list, or run scheduled remote agents that execute on a cron schedule.',
@@ -91,14 +94,17 @@ export const enCommands: TranslationResource = {
     'No remote environments found, and we could not create one automatically. Visit https://zy.ai/code to set one up, then run /schedule again.',
   'commands.schedule.whenToUse':
     'When the user wants to schedule a recurring remote agent, set up automated tasks, or manage scheduled agents.',
-  'commands.securityReview':
-    'Complete a security review of the pending changes on the current branch',
   'commands.session': 'Show remote session URL and QR code',
   'commands.simplify':
     'Review changed code for reuse, quality, and efficiency, then fix any issues found.',
   'commands.skills': 'List available skills',
   'commands.source.bundled': 'bundled',
+  'commands.source.flag': 'cli flag',
+  'commands.source.local': 'project, gitignored',
+  'commands.source.managed': 'managed',
   'commands.source.plugin': 'plugin',
+  'commands.source.project': 'project',
+  'commands.source.user': 'user',
   'commands.source.workflow': 'workflow',
   'commands.stats': 'Show your ZY Code usage statistics and activity',
   'commands.status':

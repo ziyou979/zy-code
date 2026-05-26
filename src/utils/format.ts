@@ -188,7 +188,7 @@ export function formatDurationZh(
   }
   if (minutes > 0) {
     if (hide && seconds === 0) {
-      return `${minutes}分`
+      return `${minutes} 分钟`
     }
     return `${minutes} 分 ${seconds} 秒`
   }

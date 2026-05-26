@@ -692,15 +692,6 @@ export const SettingsSchema = lazySchema(() =>
           'Probability (0–1) that the session quality survey appears when eligible. 0.05 is a reasonable starting point.',
         ),
       spinnerTipsEnabled: z.boolean().optional().describe('Whether to show tips in the spinner'),
-      spinnerVerbs: z
-        .object({
-          mode: z.enum(['append', 'replace']),
-          verbs: z.array(z.string()),
-        })
-        .optional()
-        .describe(
-          'Customize spinner verbs. mode: "append" adds verbs to defaults, "replace" uses only your verbs.',
-        ),
       spinnerTipsOverride: z
         .object({
           excludeDefault: z.boolean().optional(),

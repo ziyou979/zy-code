@@ -9,6 +9,7 @@ import { MessageResponse } from '../../components/MessageResponse.js'
 import { Spinner } from '../../components/Spinner.js'
 import { useIsInsideModal } from '../../context/modalContext.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { tSync } from '../../i18n/index.js'
 import { setClipboard } from '../../ink/termio/osc.js'
 import { Box, Text } from '../../ink.js'
 import type { LocalJSXCommandCall } from '../../types/command.js'
@@ -168,7 +169,7 @@ function ResumeCommand({
     void onResume(sessionId, fullLog, 'slash_command_picker')
   }
   function handleCancel() {
-    onDone('Resume cancelled', {
+    onDone(tSync('commands.resume.cancelled'), {
       display: 'system',
     })
   }

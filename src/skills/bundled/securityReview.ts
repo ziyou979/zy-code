@@ -1,4 +1,5 @@
 import type { ToolUseContext } from '../../Tool.js'
+import { tSync } from '../../i18n/index.js'
 import { executeShellCommandsInPrompt } from '../../utils/promptShellExecution.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 
@@ -184,7 +185,7 @@ Your final reply must contain the markdown report and nothing else.`
 export function registerSecurityReviewSkill(): void {
   registerBundledSkill({
     name: 'security-review',
-    description: 'Complete a security review of the pending changes on the current branch',
+    description: tSync('commands.securityReview'),
     whenToUse:
       'When the user wants a security review of their code changes, asks to check for vulnerabilities in a PR or branch, or says things like "security review", "check for vulnerabilities", "audit this branch".',
     allowedTools: ['Bash', 'Read', 'Glob', 'Grep', 'LS', 'AgentTool'],
