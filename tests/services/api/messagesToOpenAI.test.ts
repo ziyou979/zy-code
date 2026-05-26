@@ -414,9 +414,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     const messages = [
       {
         role: 'user',
-        content: [
-          { type: 'text', text: 'hello', cache_control: { type: 'ephemeral' } },
-        ],
+        content: [{ type: 'text', text: 'hello', cache_control: { type: 'ephemeral' } }],
       },
     ]
     const result = messagesToOpenAI(messages as any)

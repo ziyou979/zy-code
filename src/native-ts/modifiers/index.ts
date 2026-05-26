@@ -43,8 +43,7 @@ function loadCGEventSource(): typeof cgEventSourceKeyState {
   try {
     // Bun FFI：dlopen 加载 CoreGraphics framework
     const { dlopen, FFIType, suffix } = require('bun:ffi') as typeof import('bun:ffi')
-    const frameworkPath =
-      '/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics'
+    const frameworkPath = '/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics'
 
     const lib = dlopen(frameworkPath, {
       CGEventSourceKeyState: {

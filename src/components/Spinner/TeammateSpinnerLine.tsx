@@ -107,7 +107,9 @@ export function TeammateSpinnerLine({
   leaderIsForegrounded,
 }: Props): React.ReactNode {
   const [randomVerb] = useState(() => teammate.spinnerVerb ?? tSync('common.spinnerVerb'))
-  const [pastTenseVerb] = useState(() => teammate.pastTenseVerb ?? tSync('common.turnCompletionVerb'))
+  const [pastTenseVerb] = useState(
+    () => teammate.pastTenseVerb ?? tSync('common.turnCompletionVerb'),
+  )
   const isHighlighted = isSelected || isForegrounded
   const treeChar = isHighlighted ? (isLast ? '╘═' : '╞═') : isLast ? '└─' : '├─'
   const nameColor = toInkColor(teammate.identity.color)

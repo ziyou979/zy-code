@@ -77,10 +77,9 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
       },
     }))
     const visible = next.find((m) => m.id === id)?.visible
-    onDone(
-      tSync(visible ? 'statusline.moduleOn' : 'statusline.moduleOff', { module: id }),
-      { display: 'system' },
-    )
+    onDone(tSync(visible ? 'statusline.moduleOn' : 'statusline.moduleOff', { module: id }), {
+      display: 'system',
+    })
     return null
   }
 

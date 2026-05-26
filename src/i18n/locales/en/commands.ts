@@ -21,7 +21,8 @@ export const enCommands: TranslationResource = {
     'Automates your Chrome browser to interact with web pages — clicking, filling forms, screenshots, and more.',
   'commands.claudeInChrome.whenToUse':
     'When the user wants to interact with web pages, automate browser tasks, or perform browser-based actions.',
-  'commands.clear': 'Start a new session with empty context; previous session stays on disk (resumable with /resume)',
+  'commands.clear':
+    'Start a new session with empty context; previous session stays on disk (resumable with /resume)',
   'commands.color': 'Set the prompt bar color for this session',
   'commands.commit': 'Create a git commit',
   'commands.commitPushPr': 'Commit, push, and open a PR',
@@ -80,7 +81,8 @@ export const enCommands: TranslationResource = {
   'commands.resume.cancelled': 'Resume cancelled',
   'commands.review': 'Review a pull request',
   'commands.rewind': 'Restore the code and/or conversation to a previous point',
-  'commands.securityReview': 'Complete a security review of the pending changes on the current branch',
+  'commands.securityReview':
+    'Complete a security review of the pending changes on the current branch',
   'commands.sandbox': 'Configure code execution sandbox',
   'commands.schedule':
     'Create, update, list, or run scheduled remote agents that execute on a cron schedule.',

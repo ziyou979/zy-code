@@ -102,70 +102,66 @@ export const getGitStatus = memoize(async (): Promise<string | null> => {
 /**
  * This context is prepended to each conversation, and cached for the duration of the conversation.
  */
-export let getSystemContext = memoize(
-  async (): Promise<{ [k: string]: string }> => {
-    const startTime = Date.now()
-    logForDiagnosticsNoPII('info', 'system_context_started')
+export let getSystemContext = memoize(async (): Promise<{ [k: string]: string }> => {
+  const startTime = Date.now()
+  logForDiagnosticsNoPII('info', 'system_context_started')
 
-    // Skip git status in CCR (unnecessary overhead on resume) or when git instructions are disabled
-    const gitStatus =
-      isEnvTruthy(process.env.ZY_CODE_REMOTE) || !shouldIncludeGitInstructions()
-        ? null
-        : await getGitStatus()
+  // Skip git status in CCR (unnecessary overhead on resume) or when git instructions are disabled
+  const gitStatus =
+    isEnvTruthy(process.env.ZY_CODE_REMOTE) || !shouldIncludeGitInstructions()
+      ? null
+      : await getGitStatus()
 
-    // Include system prompt injection if set (for cache breaking, ant-only)
-    const injection = feature('BREAK_CACHE_COMMAND') ? getSystemPromptInjection() : null
+  // Include system prompt injection if set (for cache breaking, ant-only)
+  const injection = feature('BREAK_CACHE_COMMAND') ? getSystemPromptInjection() : null
 
-    logForDiagnosticsNoPII('info', 'system_context_completed', {
-      duration_ms: Date.now() - startTime,
-      has_git_status: gitStatus !== null,
-      has_injection: injection !== null,
-    })
+  logForDiagnosticsNoPII('info', 'system_context_completed', {
+    duration_ms: Date.now() - startTime,
+    has_git_status: gitStatus !== null,
+    has_injection: injection !== null,
+  })
 
-    return {
-      ...(gitStatus && { gitStatus }),
-      ...(feature('BREAK_CACHE_COMMAND') && injection
-        ? {
-            cacheBreaker: `[CACHE_BREAKER: ${injection}]`,
-          }
-        : {}),
-    }
-  },
-)
+  return {
+    ...(gitStatus && { gitStatus }),
+    ...(feature('BREAK_CACHE_COMMAND') && injection
+      ? {
+          cacheBreaker: `[CACHE_BREAKER: ${injection}]`,
+        }
+      : {}),
+  }
+})
 
 /**
  * This context is prepended to each conversation, and cached for the duration of the conversation.
  */
-export let getUserContext = memoize(
-  async (): Promise<{ [k: string]: string }> => {
-    const startTime = Date.now()
-    logForDiagnosticsNoPII('info', 'user_context_started')
+export let getUserContext = memoize(async (): Promise<{ [k: string]: string }> => {
+  const startTime = Date.now()
+  logForDiagnosticsNoPII('info', 'user_context_started')
 
-    // ZY_CODE_DISABLE_CLAUDE_MDS: hard off, always.
-    // --bare: skip auto-discovery (cwd walk), BUT honor explicit --add-dir.
-    // --bare means "skip what I didn't ask for", not "ignore what I asked for".
-    const shouldDisableAgentsMd =
-      isEnvTruthy(process.env.ZY_CODE_DISABLE_CLAUDE_MDS) ||
-      (isBareMode() && getAdditionalDirectoriesForAgentsMd().length === 0)
-    // Await the async I/O (readFile/readdir directory walk) so the event
-    // loop yields naturally at the first fs.readFile.
-    const agentsMd = shouldDisableAgentsMd
-      ? null
-      : getAgentsMds(filterInjectedMemoryFiles(await getMemoryFiles()))
-    // Cache for the auto-mode classifier (yoloClassifier.ts reads this
-    // instead of importing agentsMd.ts directly, which would create a
-    // cycle through permissions/filesystem → permissions → yoloClassifier).
-    setCachedAgentsMdContent(agentsMd || null)
+  // ZY_CODE_DISABLE_CLAUDE_MDS: hard off, always.
+  // --bare: skip auto-discovery (cwd walk), BUT honor explicit --add-dir.
+  // --bare means "skip what I didn't ask for", not "ignore what I asked for".
+  const shouldDisableAgentsMd =
+    isEnvTruthy(process.env.ZY_CODE_DISABLE_CLAUDE_MDS) ||
+    (isBareMode() && getAdditionalDirectoriesForAgentsMd().length === 0)
+  // Await the async I/O (readFile/readdir directory walk) so the event
+  // loop yields naturally at the first fs.readFile.
+  const agentsMd = shouldDisableAgentsMd
+    ? null
+    : getAgentsMds(filterInjectedMemoryFiles(await getMemoryFiles()))
+  // Cache for the auto-mode classifier (yoloClassifier.ts reads this
+  // instead of importing agentsMd.ts directly, which would create a
+  // cycle through permissions/filesystem → permissions → yoloClassifier).
+  setCachedAgentsMdContent(agentsMd || null)
 
-    logForDiagnosticsNoPII('info', 'user_context_completed', {
-      duration_ms: Date.now() - startTime,
-      agentsMd_length: agentsMd?.length ?? 0,
-      agentsMd_disabled: Boolean(shouldDisableAgentsMd),
-    })
+  logForDiagnosticsNoPII('info', 'user_context_completed', {
+    duration_ms: Date.now() - startTime,
+    agentsMd_length: agentsMd?.length ?? 0,
+    agentsMd_disabled: Boolean(shouldDisableAgentsMd),
+  })
 
-    return {
-      ...(agentsMd && { agentsMd }),
-      currentDate: `Today's date is ${getLocalISODate()}.`,
-    }
-  },
-)
+  return {
+    ...(agentsMd && { agentsMd }),
+    currentDate: `Today's date is ${getLocalISODate()}.`,
+  }
+})

@@ -1,4 +1,3 @@
-
 import { relative } from 'node:path'
 import type { Hunk } from 'diff'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'

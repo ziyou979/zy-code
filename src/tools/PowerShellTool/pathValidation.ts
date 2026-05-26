@@ -33,7 +33,10 @@ import type {
   ParsedCommandElement,
   ParsedPowerShellCommand,
 } from '../../shell-eval/powershell/parser.js'
-import { isNullRedirectionTarget, isPowerShellParameter } from '../../shell-eval/powershell/parser.js'
+import {
+  isNullRedirectionTarget,
+  isPowerShellParameter,
+} from '../../shell-eval/powershell/parser.js'
 import { COMMON_SWITCHES, COMMON_VALUE_PARAMS } from './commonParameters.js'
 import { resolveToCanonical } from './readOnlyValidation.js'
 

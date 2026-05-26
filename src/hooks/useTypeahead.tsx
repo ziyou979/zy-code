@@ -24,7 +24,10 @@ import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import type { InlineGhostText, PromptInputMode } from '../types/textInputTypes.js'
 import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js'
 import { generateProgressiveArgumentHint, parseArguments } from '../utils/argumentSubstitution.js'
-import { getShellCompletions, type ShellCompletionType } from '../shell-eval/bash/shellCompletion.js'
+import {
+  getShellCompletions,
+  type ShellCompletionType,
+} from '../shell-eval/bash/shellCompletion.js'
 import { isTestEnv } from '../utils/envUtils.js'
 import { formatLogMetadata } from '../utils/format.js'
 import { getSessionIdFromLog, searchSessionsByCustomTitle } from '../utils/sessionStorage.js'

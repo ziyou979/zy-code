@@ -14,7 +14,11 @@ import { SessionsWebSocket, type SessionsWebSocketCallbacks } from './SessionsWe
  * Type guard to check if a message is an BridgeMessage (not a control message)
  */
 function isSDKMessage(
-  message: BridgeMessage | BridgeControlRequest | BridgeControlResponse | BridgeControlCancelRequest,
+  message:
+    | BridgeMessage
+    | BridgeControlRequest
+    | BridgeControlResponse
+    | BridgeControlCancelRequest,
 ): message is BridgeMessage {
   return (
     message.type !== 'control_request' &&
@@ -125,7 +129,11 @@ export class RemoteSessionManager {
    * Handle messages from WebSocket
    */
   private handleMessage(
-    message: BridgeMessage | BridgeControlRequest | BridgeControlResponse | BridgeControlCancelRequest,
+    message:
+      | BridgeMessage
+      | BridgeControlRequest
+      | BridgeControlResponse
+      | BridgeControlCancelRequest,
   ): void {
     // Handle control requests (permission prompts from CCR)
     if (message.type === 'control_request') {

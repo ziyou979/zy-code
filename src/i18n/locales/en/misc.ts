@@ -525,7 +525,7 @@ export const enMisc: TranslationResource = {
     'Restructure code — extract functions, rename symbols, simplify logic.',
   'powerup.refactor.title': 'Code Refactoring',
   'powerup.subtitle':
-    "Each power-up teaches one thing zy-code can do that most people miss. Open one, read it, try it, mark it done.",
+    'Each power-up teaches one thing zy-code can do that most people miss. Open one, read it, try it, mark it done.',
   'powerup.subtitleAll': 'Now go build something.',
   'powerup.test.description': 'Generate unit tests, edge-case coverage, and test fixtures.',
   'powerup.test.title': 'Test Generation',

@@ -12,10 +12,29 @@ const groupRules: Array<[string, string[]]> = [
   ['summary', ['summary', 'compactSummary']],
   ['settings', ['settings', 'wizard', 'doctor']],
   ['chat', ['chat', 'attachment', 'attachments', 'contextVis', 'contextSuggestions']],
-  ['session', ['oauth', 'worktree', 'rateLimit', 'channel', 'channels', 'desktop', 'desktopHandoff']],
+  [
+    'session',
+    ['oauth', 'worktree', 'rateLimit', 'channel', 'channels', 'desktop', 'desktopHandoff'],
+  ],
   ['shell', ['bash', 'shell', 'exitWorktree', 'computerUse']],
   ['stats', ['stats', 'costTracker', 'diagnostics']],
-  ['ui', ['common', 'dialog', 'exitFlow', 'diffDialog', 'copy', 'feedback', 'feedbackSurvey', 'exitPlanMode', 'elicitation', 'app', 'apiKey', 'export']],
+  [
+    'ui',
+    [
+      'common',
+      'dialog',
+      'exitFlow',
+      'diffDialog',
+      'copy',
+      'feedback',
+      'feedbackSurvey',
+      'exitPlanMode',
+      'elicitation',
+      'app',
+      'apiKey',
+      'export',
+    ],
+  ],
 ]
 
 function groupOf(key: string): string {
@@ -30,7 +49,12 @@ function escapeTsString(s: string): string {
   return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r')
 }
 
-function emitGroup(varPrefix: string, group: string, entries: Array<[string, string]>, outputDir: string): void {
+function emitGroup(
+  varPrefix: string,
+  group: string,
+  entries: Array<[string, string]>,
+  outputDir: string,
+): void {
   const cap = group[0]!.toUpperCase() + group.slice(1)
   const lines = [
     `import type { TranslationResource } from '../resourceTypes.js'`,
@@ -44,7 +68,13 @@ function emitGroup(varPrefix: string, group: string, entries: Array<[string, str
   writeFileSync(`src/i18n/locales/${outputDir}/${group}.ts`, lines.join('\n'))
 }
 
-function emitBarrel(exportName: string, varPrefix: string, groups: string[], outputFile: string, description: string): void {
+function emitBarrel(
+  exportName: string,
+  varPrefix: string,
+  groups: string[],
+  outputFile: string,
+  description: string,
+): void {
   const dirName = outputFile.split('.')[0]!
   const lines = [`import type { TranslationResource } from './resourceTypes.js'`]
   for (const g of groups) {
@@ -72,7 +102,14 @@ function emitBarrel(exportName: string, varPrefix: string, groups: string[], out
   writeFileSync(`src/i18n/locales/${outputFile}`, lines.join('\n'))
 }
 
-function processLocale(source: Record<string, string>, exportName: string, varPrefix: string, outputDir: string, outputFile: string, description: string): void {
+function processLocale(
+  source: Record<string, string>,
+  exportName: string,
+  varPrefix: string,
+  outputDir: string,
+  outputFile: string,
+  description: string,
+): void {
   const grouped: Record<string, Array<[string, string]>> = {}
   for (const [k, v] of Object.entries(source)) {
     const g = groupOf(k)

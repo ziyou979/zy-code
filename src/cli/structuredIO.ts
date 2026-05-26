@@ -258,7 +258,9 @@ export class StructuredIO {
       .filter((pr) => pr.request.subtype === 'can_use_tool')
   }
 
-  setUnexpectedResponseCallback(callback: (response: BridgeControlResponse) => Promise<void>): void {
+  setUnexpectedResponseCallback(
+    callback: (response: BridgeControlResponse) => Promise<void>,
+  ): void {
     this.unexpectedResponseCallback = callback
   }
 

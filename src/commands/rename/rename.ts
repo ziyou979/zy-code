@@ -17,8 +17,7 @@ export async function call(
 ): Promise<null> {
   const { message, newName, isGenerated } = await performRename(args, context)
 
-  const metaMessages =
-    newName && !isGenerated ? [buildRenameSystemReminder(newName)] : undefined
+  const metaMessages = newName && !isGenerated ? [buildRenameSystemReminder(newName)] : undefined
 
   onDone(message, { display: 'system', metaMessages })
   return null

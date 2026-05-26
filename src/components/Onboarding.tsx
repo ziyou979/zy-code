@@ -685,10 +685,7 @@ function TierModelSetup({
 
   if (phase === 'custom') {
     return (
-      <CustomModelInput
-        onSubmit={(value) => onDone(value)}
-        onBack={() => setPhase('select')}
-      />
+      <CustomModelInput onSubmit={(value) => onDone(value)} onBack={() => setPhase('select')} />
     )
   }
 

@@ -324,9 +324,7 @@ describe('messagesToAnthropic: 出站 Anthropic 消息构造', () => {
   })
 
   test('assistant content 为空字符串：转为空字符串', () => {
-    const result = messagesToAnthropic([
-      { role: 'assistant', content: '' },
-    ] as any)
+    const result = messagesToAnthropic([{ role: 'assistant', content: '' }] as any)
     expect(result[0].content).toBe('')
   })
 })

@@ -90,10 +90,7 @@ function withIcon(icon: string, body: string): string {
   return icon ? `${icon} ${body}` : body
 }
 
-type Renderer = (
-  module: ModuleConfig,
-  ctx: StatusbarContext,
-) => Segment | null
+type Renderer = (module: ModuleConfig, ctx: StatusbarContext) => Segment | null
 
 const RENDERERS: Record<ModuleId, Renderer> = {
   directory(module, ctx) {

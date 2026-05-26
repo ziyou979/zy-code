@@ -60,7 +60,11 @@ function emitDeclaration(node: ts.Node, src: string): string | null {
     return `export ${keyword} ${parts.join(', ')}`
   }
 
-  if (ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node) || ts.isEnumDeclaration(node)) {
+  if (
+    ts.isInterfaceDeclaration(node) ||
+    ts.isTypeAliasDeclaration(node) ||
+    ts.isEnumDeclaration(node)
+  ) {
     return full
   }
 

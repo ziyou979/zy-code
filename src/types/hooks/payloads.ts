@@ -392,4 +392,3 @@ export interface SyncHookJSONOutput {
 }
 
 export type HookJSONOutput = AsyncHookJSONOutput | SyncHookJSONOutput
-

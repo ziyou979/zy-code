@@ -6,11 +6,7 @@
  * of the SDK-removal cleanup. Schemas live in ./messageSchemas.ts.
  */
 
-import type {
-  ApiKeySource,
-  ModelUsage,
-  PermissionMode,
-} from '../coreTypes.generated.js'
+import type { ApiKeySource, ModelUsage, PermissionMode } from '../coreTypes.generated.js'
 
 // ============================================================================
 // SDK Message Types

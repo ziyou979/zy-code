@@ -50,7 +50,11 @@ import { Dialog } from '../design-system/Dialog.js'
 import { Select } from '../CustomSelect/index.js'
 import { OutputStylePicker } from '../OutputStylePicker.js'
 import { LanguagePicker } from '../LanguagePicker.js'
-import { getExternalAgentsMdIncludes, getMemoryFiles, hasExternalAgentsMdIncludes } from 'src/utils/agentsMd.js'
+import {
+  getExternalAgentsMdIncludes,
+  getMemoryFiles,
+  hasExternalAgentsMdIncludes,
+} from 'src/utils/agentsMd.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Byline } from '../design-system/Byline.js'

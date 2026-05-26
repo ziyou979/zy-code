@@ -16,9 +16,7 @@ for (const file of GOD_FILES) {
   test(`api-snapshot ${basename(file)} matches committed baseline`, () => {
     const snapshotPath = `tests/api-snapshot/${basename(file, '.ts')}.snapshot.txt`
     if (!existsSync(snapshotPath)) {
-      throw new Error(
-        `Snapshot file ${snapshotPath} missing. Run: bun scripts/api-snapshot.ts`,
-      )
+      throw new Error(`Snapshot file ${snapshotPath} missing. Run: bun scripts/api-snapshot.ts`)
     }
     const committed = readFileSync(snapshotPath, 'utf8')
     const actual = generateSnapshot(file)

@@ -37,7 +37,11 @@ const PERMANENT_CLOSE_CODES = new Set([
 
 type WebSocketState = 'connecting' | 'connected' | 'closed'
 
-type SessionsMessage = BridgeMessage | BridgeControlRequest | BridgeControlResponse | BridgeControlCancelRequest
+type SessionsMessage =
+  | BridgeMessage
+  | BridgeControlRequest
+  | BridgeControlResponse
+  | BridgeControlCancelRequest
 
 function isSessionsMessage(value: unknown): value is SessionsMessage {
   if (typeof value !== 'object' || value === null || !('type' in value)) {

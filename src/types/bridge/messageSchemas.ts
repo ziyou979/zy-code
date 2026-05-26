@@ -8,11 +8,7 @@
 
 import { z } from 'zod/v4'
 import { lazySchema } from '../../utils/lazySchema.js'
-import {
-  ApiKeySourceSchema,
-  ModelUsageSchema,
-  PermissionModeSchema,
-} from '../coreSchemas.js'
+import { ApiKeySourceSchema, ModelUsageSchema, PermissionModeSchema } from '../coreSchemas.js'
 
 // ============================================================================
 // External Type Placeholders

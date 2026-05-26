@@ -1,7 +1,4 @@
-import type {
-  ElicitationHookInput,
-  ElicitationResultHookInput,
-} from 'src/types/index.js'
+import type { ElicitationHookInput, ElicitationResultHookInput } from 'src/types/index.js'
 import {
   hookJSONOutputSchema,
   isAsyncHookJSONOutput,

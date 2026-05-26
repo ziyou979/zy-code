@@ -29,7 +29,10 @@ import type { AgentId } from '../../types/ids.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
 import { parseForSecurity } from '../../shell-eval/bash/ast.js'
-import { splitCommand_DEPRECATED, splitCommandWithOperators } from '../../shell-eval/bash/commands.js'
+import {
+  splitCommand_DEPRECATED,
+  splitCommandWithOperators,
+} from '../../shell-eval/bash/commands.js'
 import { detectCodeIndexingFromCommand } from '../../utils/codeIndexing.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isENOENT, ShellError } from '../../utils/errors.js'

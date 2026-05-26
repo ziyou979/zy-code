@@ -464,10 +464,7 @@ function PromptInput({
   // pill is absent, so the -1 sentinel would leave nothing visually selected.
   // In that case, skip -1 and treat 0 as the minimum selectable index.
   const hasBgTaskPill = useMemo(
-    () =>
-      Object.values(tasks).some(
-        (t) => isBackgroundTask(t) && !isPanelAgentTask(t),
-      ),
+    () => Object.values(tasks).some((t) => isBackgroundTask(t) && !isPanelAgentTask(t)),
     [tasks],
   )
   const minCoordinatorIndex = hasBgTaskPill ? -1 : 0

@@ -314,4 +314,3 @@ export interface RewindFilesResult {
   insertions?: number
   deletions?: number
 }
-

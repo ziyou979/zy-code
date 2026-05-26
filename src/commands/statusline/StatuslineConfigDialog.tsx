@@ -54,9 +54,7 @@ export function StatuslineConfigDialog({ initial, onSave, onCancel }: Props): Re
 
   // ─── Mutators (staged state only) ─────────────────────────────────────
   const toggleVisible = useCallback(() => {
-    setModules((prev) =>
-      prev.map((m) => (m.id === focusedId ? { ...m, visible: !m.visible } : m)),
-    )
+    setModules((prev) => prev.map((m) => (m.id === focusedId ? { ...m, visible: !m.visible } : m)))
   }, [focusedId])
 
   const moveFocused = useCallback(
@@ -89,9 +87,7 @@ export function StatuslineConfigDialog({ initial, onSave, onCancel }: Props): Re
 
   const setIcon = useCallback(
     (icon: string) => {
-      setModules((prev) =>
-        prev.map((m) => (m.id === focusedId ? { ...m, icon } : m)),
-      )
+      setModules((prev) => prev.map((m) => (m.id === focusedId ? { ...m, icon } : m)))
       setMode('main')
     },
     [focusedId],
@@ -99,9 +95,7 @@ export function StatuslineConfigDialog({ initial, onSave, onCancel }: Props): Re
 
   const setColor = useCallback(
     (color: string) => {
-      setModules((prev) =>
-        prev.map((m) => (m.id === focusedId ? { ...m, color } : m)),
-      )
+      setModules((prev) => prev.map((m) => (m.id === focusedId ? { ...m, color } : m)))
       setMode('main')
     },
     [focusedId],
@@ -283,13 +277,7 @@ function padVisual(s: string, width: number): string {
  * otherwise Ink throws "<Box> can't be nested inside <Text>". Column
  * alignment is done via space-padding instead of Box widths.
  */
-function ModuleRow({
-  module,
-  theme,
-}: {
-  module: ModuleConfig
-  theme: Theme
-}): React.ReactNode {
+function ModuleRow({ module, theme }: { module: ModuleConfig; theme: Theme }): React.ReactNode {
   const visible = module.visible
   const icon = effectiveIcon(module)
   const color = effectiveColor(module)

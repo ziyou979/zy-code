@@ -25,7 +25,10 @@ import { enqueuePendingNotification } from '../utils/messageQueueManager.js'
 import { ALL_MODEL_CONFIGS } from '../services/model/configs.js'
 import { updateTaskState } from '../services/task/framework.js'
 import { archiveRemoteSession, teleportToRemote } from '../utils/teleport.js'
-import { pollForApprovedExitPlanMode, UltraplanPollError } from '../services/ultraplan/ccrSession.js'
+import {
+  pollForApprovedExitPlanMode,
+  UltraplanPollError,
+} from '../services/ultraplan/ccrSession.js'
 
 // TODO(prod-hardening): OAuth token may go stale over the 30min poll;
 // consider refresh.

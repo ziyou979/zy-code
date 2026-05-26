@@ -81,7 +81,6 @@ function cachedLexer(content: string): Token[] {
   return tokens
 }
 
-
 /**
  * Renders markdown content using a hybrid approach:
  * - Tables are rendered as React components with proper flexbox layout
@@ -113,7 +112,11 @@ function MarkdownBody({ children, dimColor, highlight }: MarkdownBodyProps) {
     if (nonTableContent) {
       const trimmed = nonTableContent.trim()
       if (trimmed) {
-        elements.push(<Ansi key={elements.length} dimColor={dimColor}>{trimmed}</Ansi>)
+        elements.push(
+          <Ansi key={elements.length} dimColor={dimColor}>
+            {trimmed}
+          </Ansi>,
+        )
       }
       nonTableContent = ''
     }

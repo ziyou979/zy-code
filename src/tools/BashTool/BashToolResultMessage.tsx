@@ -104,8 +104,7 @@ export default function BashToolResultMessage({ content, verbose, timeoutMs }: P
   }
   // 当预期无输出且确实没有输出时，不展示 ⎿ 行
   const isEffectivelyEmpty = stdout.trim() === '' && stderr.trim() === '' && !cwdResetWarning
-  const shouldHideEmptyResponse =
-    noOutputExpected && !returnCodeInterpretation && !backgroundTaskId
+  const shouldHideEmptyResponse = noOutputExpected && !returnCodeInterpretation && !backgroundTaskId
   const messageResponseElement = isEffectivelyEmpty ? (
     shouldHideEmptyResponse ? null : (
       <MessageResponse height={1}>
@@ -125,7 +124,13 @@ export default function BashToolResultMessage({ content, verbose, timeoutMs }: P
   // 所有子元素为 null 时直接返回 null，避免空 Box 占据空间
   const hasCwdWarning = !!cwdResetWarning
   const hasTimeout = !!timeoutMs
-  if (!outputLineElement2 && !outputLineElement && !hasCwdWarning && !messageResponseElement && !hasTimeout) {
+  if (
+    !outputLineElement2 &&
+    !outputLineElement &&
+    !hasCwdWarning &&
+    !messageResponseElement &&
+    !hasTimeout
+  ) {
     return null
   }
   return (

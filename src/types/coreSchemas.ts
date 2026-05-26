@@ -496,4 +496,3 @@ export const RewindFilesResultSchema = lazySchema(() =>
     })
     .describe('Result of a rewindFiles operation.'),
 )
-

@@ -767,7 +767,8 @@ export const getMemoryFiles = memoize(
     const result: MemoryFileInfo[] = []
     const processedPaths = new Set<string>()
     const config = getCurrentProjectConfig()
-    const includeExternal = forceIncludeExternal || config.hasAgentsMdExternalIncludesApproved || false
+    const includeExternal =
+      forceIncludeExternal || config.hasAgentsMdExternalIncludesApproved || false
 
     // Process Managed file first (always loaded - policy settings)
     const managedAgentsMd = getMemoryPath('Managed')
@@ -1303,7 +1304,10 @@ export function hasExternalAgentsMdIncludes(files: MemoryFileInfo[]): boolean {
 
 export async function shouldShowAgentsMdExternalIncludesWarning(): Promise<boolean> {
   const config = getCurrentProjectConfig()
-  if (config.hasAgentsMdExternalIncludesApproved || config.hasAgentsMdExternalIncludesWarningShown) {
+  if (
+    config.hasAgentsMdExternalIncludesApproved ||
+    config.hasAgentsMdExternalIncludesWarningShown
+  ) {
     return false
   }
 

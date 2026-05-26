@@ -42,8 +42,7 @@ export async function performRename(
     )
     if (!generated) {
       return {
-        message:
-          'Could not generate a name: no conversation context yet. Usage: /rename <name>',
+        message: 'Could not generate a name: no conversation context yet. Usage: /rename <name>',
         newName: null,
         isGenerated: false,
       }

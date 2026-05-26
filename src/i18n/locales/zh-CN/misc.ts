@@ -515,7 +515,8 @@ export const zhMisc: TranslationResource = {
   'powerup.progressLabel': '{completed}/{total} 已解锁',
   'powerup.refactor.description': '重构代码 — 提取函数、重命名符号、简化逻辑。',
   'powerup.refactor.title': '代码重构',
-  'powerup.subtitle': '每节课介绍一项 zy-code 高频但容易被忽略的能力。打开、阅读、试一下，然后标记完成。',
+  'powerup.subtitle':
+    '每节课介绍一项 zy-code 高频但容易被忽略的能力。打开、阅读、试一下，然后标记完成。',
   'powerup.subtitleAll': 'Now go build something.',
   'powerup.test.description': '生成单元测试、边界用例覆盖和测试数据。',
   'powerup.test.title': '测试生成',

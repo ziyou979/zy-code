@@ -9,14 +9,7 @@
  * - COLOR_TOKENS is the picker library for theme color tokens.
  */
 
-export const MODULE_IDS = [
-  'directory',
-  'model',
-  'context',
-  'tokens',
-  'cost',
-  'memory',
-] as const
+export const MODULE_IDS = ['directory', 'model', 'context', 'tokens', 'cost', 'memory'] as const
 
 export type ModuleId = (typeof MODULE_IDS)[number]
 
@@ -102,9 +95,7 @@ export function effectiveColor(module: ModuleConfig): string {
  * added in code automatically appear (with their defaults) for existing
  * users — and to drop unknown ids from older configs.
  */
-export function mergeWithDefaults(
-  configured: readonly ModuleConfig[] | undefined,
-): ModuleConfig[] {
+export function mergeWithDefaults(configured: readonly ModuleConfig[] | undefined): ModuleConfig[] {
   if (!configured || configured.length === 0) {
     return DEFAULT_MODULES.map((m) => ({ ...m }))
   }

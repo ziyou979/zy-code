@@ -4,11 +4,7 @@ import { lazySchema } from '../../utils/lazySchema.js'
 import { type HookInput } from './payloads.js'
 import { type HookEvent, HOOK_EVENTS } from './schemas.js'
 import { type PermissionUpdate } from '../coreTypes.generated.js'
-import type {
-  HookJSONOutput,
-  AsyncHookJSONOutput,
-  SyncHookJSONOutput,
-} from 'src/types/index.js'
+import type { HookJSONOutput, AsyncHookJSONOutput, SyncHookJSONOutput } from 'src/types/index.js'
 import type { Message } from 'src/types/message.js'
 import type { PermissionResult } from 'src/utils/permissions/PermissionResult.js'
 import { permissionBehaviorSchema } from 'src/utils/permissions/PermissionRule.js'

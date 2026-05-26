@@ -8,10 +8,7 @@
 
 import { z } from 'zod/v4'
 import { lazySchema } from '../../utils/lazySchema.js'
-import {
-  PermissionBehaviorSchema,
-  PermissionUpdateSchema,
-} from '../coreSchemas.js'
+import { PermissionBehaviorSchema, PermissionUpdateSchema } from '../coreSchemas.js'
 import { BridgeAssistantMessageErrorSchema } from '../bridge/messageSchemas.js'
 
 // ============================================================================
@@ -663,4 +660,3 @@ export const PromptResponseSchema = lazySchema(() =>
     selected: z.string().describe('The key of the selected option'),
   }),
 )
-
