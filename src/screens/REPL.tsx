@@ -124,7 +124,6 @@ import { SpinnerWithVerb, BriefIdleStatus, type SpinnerMode } from '../component
 import { getSystemPrompt } from '../constants/prompts.js'
 import { buildEffectiveSystemPrompt } from '../utils/systemPrompt.js'
 import { getSystemContext, getUserContext } from '../context.js'
-import { getSettingsForSource } from '../utils/settings/settings.js'
 import { getMemoryFiles } from '../utils/agentsMd.js'
 import { startBackgroundHousekeeping } from '../utils/backgroundHousekeeping.js'
 import { saveCurrentSessionCosts, resetCostState, getStoredSessionCosts } from '../cost-tracker.js'
@@ -180,12 +179,6 @@ const useFrustrationDetection: typeof import('../components/FeedbackSurvey/useFr
         state: 'closed',
         handleTranscriptSelect: () => {},
       })
-// Ant 专属组织警告。条件 require 以便从外部构建中消除组织 UUID 列表
-// （其中一个 UUID 在 excluded-strings 上）。
-const useAntOrgWarningNotification: typeof import('../hooks/notifs/useAntOrgWarningNotification.js').useAntOrgWarningNotification =
-  isInternalBuild()
-    ? require('../hooks/notifs/useAntOrgWarningNotification.js').useAntOrgWarningNotification
-    : () => {}
 // 死代码消除：coordinator mode 的条件导入
 const getCoordinatorUserContext: (
   mcpClients: ReadonlyArray<{
@@ -273,7 +266,6 @@ import type { ScopedMcpServerConfig } from '../services/mcp/types.js'
 import { randomUUID, type UUID } from 'node:crypto'
 import { processSessionStartHooks } from '../utils/sessionStart.js'
 import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../utils/hooks.js'
-import { type IDESelection, useIdeSelection } from '../hooks/useIdeSelection.js'
 import { getTools, assembleToolPool } from '../tools.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import { resolveAgentTools } from '../tools/AgentTool/agentToolUtils.js'
@@ -361,13 +353,7 @@ import { useGoalMode } from '../hooks/useGoalMode.js'
 import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js'
 import { useTaskListWatcher } from '../hooks/useTaskListWatcher.js'
 import type { SandboxAskCallback, NetworkHostPattern } from '../services/sandbox/sandbox-adapter.js'
-import {
-  type IDEExtensionInstallationStatus,
-  closeOpenDiffs,
-  getConnectedIdeClient,
-  type IdeType,
-} from '../utils/ide.js'
-import { useIDEIntegration } from '../hooks/useIDEIntegration.js'
+import { closeOpenDiffs, getConnectedIdeClient } from '../utils/ide.js'
 import exit from '../commands/exit/index.js'
 import { ExitFlow } from '../components/ExitFlow.js'
 import { getCurrentWorktreeSession } from '../utils/worktree.js'
@@ -399,10 +385,10 @@ import { useFeedbackSurvey } from 'src/components/FeedbackSurvey/useFeedbackSurv
 import { useMemorySurvey } from 'src/components/FeedbackSurvey/useMemorySurvey.js'
 import { usePostCompactSurvey } from 'src/components/FeedbackSurvey/usePostCompactSurvey.js'
 import { FeedbackSurvey } from 'src/components/FeedbackSurvey/FeedbackSurvey.js'
-import { useInstallMessages } from 'src/hooks/notifs/useInstallMessages.js'
+import { useReplCallouts } from './repl/useReplCallouts.js'
+import { useReplIdeState } from './repl/useReplIdeState.js'
+import { useReplNotifications } from './repl/useReplNotifications.js'
 import { useAwaySummary } from 'src/hooks/useAwaySummary.js'
-import { useChromeExtensionNotification } from 'src/hooks/useChromeExtensionNotification.js'
-import { useOfficialMarketplaceNotification } from 'src/hooks/useOfficialMarketplaceNotification.js'
 import { usePromptsFromClaudeInChrome } from 'src/hooks/usePromptsFromClaudeInChrome.js'
 import { getTipToShowOnSpinner, recordShownTip } from 'src/services/tips/tipScheduler.js'
 import type { Theme } from 'src/utils/theme.js'
@@ -417,29 +403,14 @@ import { SANDBOX_NETWORK_ACCESS_TOOL_NAME } from 'src/cli/structuredIO.js'
 import { useFileHistorySnapshotInit } from 'src/hooks/useFileHistorySnapshotInit.js'
 import { SandboxPermissionRequest } from 'src/components/permissions/SandboxPermissionRequest.js'
 import { SandboxViolationExpandedView } from 'src/components/SandboxViolationExpandedView.js'
-import { useSettingsErrors } from 'src/hooks/notifs/useSettingsErrors.js'
 import { useMcpConnectivityStatus } from 'src/hooks/notifs/useMcpConnectivityStatus.js'
-import { useAutoModeUnavailableNotification } from 'src/hooks/notifs/useAutoModeUnavailableNotification.js'
 import { AUTO_MODE_DESCRIPTION } from 'src/components/AutoModeOptInDialog.js'
-import { useLspInitializationNotification } from 'src/hooks/notifs/useLspInitializationNotification.js'
-import { useLspPluginRecommendation } from 'src/hooks/useLspPluginRecommendation.js'
 import { LspRecommendationMenu } from 'src/components/LspRecommendation/LspRecommendationMenu.js'
-import { useZyCodeHintRecommendation } from 'src/hooks/useZyCodeHintRecommendation.js'
 import { PluginHintMenu } from '../components/Hint/PluginHintMenu.js'
-import {
-  DesktopUpsellStartup,
-  shouldShowDesktopUpsellStartup,
-} from 'src/components/DesktopUpsell/DesktopUpsellStartup.js'
-import { usePluginInstallationStatus } from 'src/hooks/notifs/usePluginInstallationStatus.js'
-import { usePluginAutoupdateNotification } from 'src/hooks/notifs/usePluginAutoupdateNotification.js'
+import { DesktopUpsellStartup } from 'src/components/DesktopUpsell/DesktopUpsellStartup.js'
 import { performStartupChecks } from 'src/utils/plugins/performStartupChecks.js'
 import { UserTextMessage } from 'src/components/messages/UserTextMessage.js'
 import { AwsAuthStatusBox } from '../components/AwsAuthStatusBox.js'
-import { useRateLimitWarningNotification } from 'src/hooks/notifs/useRateLimitWarningNotification.js'
-import { useNpmDeprecationNotification } from 'src/hooks/notifs/useNpmDeprecationNotification.js'
-import { useIDEStatusIndicator } from 'src/hooks/notifs/useIDEStatusIndicator.js'
-import { useCanSwitchToExistingSubscription } from 'src/hooks/notifs/useCanSwitchToExistingSubscription.js'
-import { useTeammateLifecycleNotification } from 'src/hooks/notifs/useTeammateShutdownNotification.js'
 import {
   AutoRunIssueNotification,
   shouldAutoRunIssue,
@@ -720,47 +691,37 @@ export function REPL({
   const trySuggestBgPRIntercept = SUGGEST_BG_PR_NOOP
   const mcpClients = useMergedClients(initialMcpClients, mcp.clients)
 
-  // IDE 集成
-  const [ideSelection, setIDESelection] = useState<IDESelection | undefined>(undefined)
-  const [ideToInstallExtension, setIDEToInstallExtension] = useState<IdeType | null>(null)
-  const [ideInstallationStatus, setIDEInstallationStatus] =
-    useState<IDEExtensionInstallationStatus | null>(null)
-  const [showIdeOnboarding, setShowIdeOnboarding] = useState(false)
-  const [showEffortCallout, setShowEffortCallout] = useState(() => {
-    // 如果 onboarding 已经持久化了 effortLevel 则不弹出
-    const settings = getSettingsForSource('userSettings')
-    return !settings?.effortLevel
-  })
-  const showRemoteCallout = useAppState((s) => s.showRemoteCallout)
-  const [showDesktopUpsellStartup, setShowDesktopUpsellStartup] = useState(() =>
-    shouldShowDesktopUpsellStartup(),
-  )
-  // 通知
-  useCanSwitchToExistingSubscription()
-  useIDEStatusIndicator({
+  // IDE 集成 —— state + useIdeSelection/useIDEIntegration/useIDEStatusIndicator 已抽到 useReplIdeState。
+  const {
     ideSelection,
-    mcpClients,
+    setIDESelection,
+    ideToInstallExtension,
+    setIDEToInstallExtension,
     ideInstallationStatus,
+    showIdeOnboarding,
+    setShowIdeOnboarding,
+  } = useReplIdeState({
+    autoConnectIdeFlag,
+    isRemoteSession,
+    mcpClients,
+    rawMcpClients: mcp.clients,
+    setDynamicMcpConfig,
   })
+  const {
+    showEffortCallout,
+    setShowEffortCallout,
+    showRemoteCallout,
+    showDesktopUpsellStartup,
+    setShowDesktopUpsellStartup,
+  } = useReplCallouts()
+  // 通知与推荐 hook 集合已抽到 useReplNotifications；
+  // useIDEStatusIndicator 已随 IDE 簇迁入 useReplIdeState；
+  // useMcpConnectivityStatus 依赖 MCP 簇 state，等 MCP container 抽出时再迁。
   useMcpConnectivityStatus({
     mcpClients,
   })
-  useAutoModeUnavailableNotification()
-  usePluginInstallationStatus()
-  usePluginAutoupdateNotification()
-  useSettingsErrors()
-  useRateLimitWarningNotification(mainLoopModel)
-  useNpmDeprecationNotification()
-  useAntOrgWarningNotification()
-  useInstallMessages()
-  useChromeExtensionNotification()
-  useOfficialMarketplaceNotification()
-  useLspInitializationNotification()
-  useTeammateLifecycleNotification()
-  const { recommendation: lspRecommendation, handleResponse: handleLspResponse } =
-    useLspPluginRecommendation()
-  const { recommendation: hintRecommendation, handleResponse: handleHintResponse } =
-    useZyCodeHintRecommendation()
+  const { lspRecommendation, handleLspResponse, hintRecommendation, handleHintResponse } =
+    useReplNotifications(mainLoopModel)
 
   // 记忆化合并的初始工具数组以防止引用变化
   const combinedInitialTools = useMemo(() => {
@@ -824,7 +785,7 @@ export function REPL({
     [disableSlashCommands, mergedCommands],
   )
   useIdeLogging(isRemoteSession ? EMPTY_MCP_CLIENTS : mcp.clients)
-  useIdeSelection(isRemoteSession ? EMPTY_MCP_CLIENTS : mcp.clients, setIDESelection)
+  // useIdeSelection 已随 IDE 簇迁入 useReplIdeState。
   const [streamMode, setStreamMode] = useState<SpinnerMode>('responding')
   // Ref 镜像使 onSubmit 可以读取最新值而无需将
   // streamMode 添加到其依赖中。streamMode 在流式传输期间
@@ -1829,14 +1790,7 @@ export function REPL({
       memorySurvey.state !== 'closed',
   )
 
-  // 初始化 IDE 集成
-  useIDEIntegration({
-    autoConnectIdeFlag,
-    ideToInstallExtension,
-    setDynamicMcpConfig,
-    setShowIdeOnboarding,
-    setIDEInstallationState: setIDEInstallationStatus,
-  })
+  // useIDEIntegration 已随 IDE 簇迁入 useReplIdeState。
   useFileHistorySnapshotInit(initialFileHistorySnapshots, fileHistory, (fileHistoryState) =>
     setAppState((prev) => ({
       ...prev,
