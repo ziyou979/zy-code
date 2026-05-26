@@ -75,8 +75,6 @@ import {
 import {
   registerLeaderToolUseConfirmQueue,
   unregisterLeaderToolUseConfirmQueue,
-  registerLeaderSetToolPermissionContext,
-  unregisterLeaderSetToolPermissionContext,
 } from '../services/swarm/leaderPermissionBridge.js'
 import { endInteractionSpan } from '../services/telemetry/sessionTracing.js'
 import { useLogMessages } from '../hooks/useLogMessages.js'
@@ -148,7 +146,7 @@ import { logError } from '../utils/log.js'
 // 语音 / 挫败感检测条件 require 已抽到 ./repl/useReplVoice、./repl/useReplFrustration。
 // getCoordinatorUserContext 改走 cli/lazyModules.coordinatorModeModule（同一份条件 require）。
 import useCanUseTool from '../hooks/useCanUseTool.js'
-import type { ToolPermissionContext, Tool } from '../Tool.js'
+import type { Tool } from '../Tool.js'
 import {
   applyPermissionUpdate,
   applyPermissionUpdates,
@@ -334,6 +332,7 @@ import { coordinatorModeModule, proactiveModule } from '../cli/lazyModules.js'
 import { useFrozenTranscript } from './repl/useFrozenTranscript.js'
 import { useReplActiveRemote } from './repl/useReplActiveRemote.js'
 import { useReplAwaySummary } from './repl/useReplAwaySummary.js'
+import { useReplToolPermissionContext } from './repl/useReplToolPermissionContext.js'
 import { useStreamingThinking } from './repl/useStreamingThinking.js'
 import { useReplCallouts } from './repl/useReplCallouts.js'
 import { useReplFrustration } from './repl/useReplFrustration.js'
@@ -2344,49 +2343,8 @@ export function REPL({
       gracefulShutdownSync(1, 'other')
     })
   }
-  const setToolPermissionContext = useCallback(
-    (
-      context: ToolPermissionContext,
-      options?: {
-        preserveMode?: boolean
-      },
-    ) => {
-      setAppState((prev) => ({
-        ...prev,
-        toolPermissionContext: {
-          ...context,
-          // 仅在显式请求时保留 coordinator 的模式。
-          // Worker 的 getAppState() 返回转换后的上下文，模式为
-          // 'acceptEdits'，不能通过权限规则更新泄漏到 coordinator 的实际
-          // state — 那些调用点传递
-          // { preserveMode: true }。用户发起的模式更改（例如，
-          // 选择"allow all edits"）不得被覆盖。
-          mode: options?.preserveMode ? prev.toolPermissionContext.mode : context.mode,
-        },
-      }))
-
-      // 权限上下文更改时，重新检查所有排队项
-      // 这处理批准 item1 时使用"不再询问"
-      // 应自动批准其他现在匹配更新规则的排队项
-      setImmediate((setToolUseConfirmQueue) => {
-        // 使用 setToolUseConfirmQueue 回调获取当前队列 state
-        // 而不是在闭包中捕获，以避免过时闭包问题
-        setToolUseConfirmQueue((currentQueue) => {
-          currentQueue.forEach((item) => {
-            void item.recheckPermission()
-          })
-          return currentQueue
-        })
-      }, setToolUseConfirmQueue)
-    },
-    [setAppState],
-  )
-
-  // 为进程内 teammate 注册 leader 的 setToolPermissionContext
-  useEffect(() => {
-    registerLeaderSetToolPermissionContext(setToolPermissionContext)
-    return () => unregisterLeaderSetToolPermissionContext()
-  }, [setToolPermissionContext])
+  // setToolPermissionContext + leader 注册 effect 已抽到 useReplToolPermissionContext。
+  const setToolPermissionContext = useReplToolPermissionContext(setToolUseConfirmQueue)
   const canUseTool = useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext)
   const requestPrompt = useCallback(
     (title: string, toolInputSummary?: string | null) =>
