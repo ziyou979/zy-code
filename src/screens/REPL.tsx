@@ -335,6 +335,7 @@ import { usePostCompactSurvey } from 'src/components/FeedbackSurvey/usePostCompa
 import { FeedbackSurvey } from 'src/components/FeedbackSurvey/FeedbackSurvey.js'
 import { coordinatorModeModule, proactiveModule } from '../cli/lazyModules.js'
 import { useFrozenTranscript } from './repl/useFrozenTranscript.js'
+import { useStreamingThinking } from './repl/useStreamingThinking.js'
 import { useReplCallouts } from './repl/useReplCallouts.js'
 import { useReplFrustration } from './repl/useReplFrustration.js'
 import { useReplIdeState } from './repl/useReplIdeState.js'
@@ -714,21 +715,8 @@ export function REPL({
   const streamModeRef = useRef(streamMode)
   streamModeRef.current = streamMode
   const [streamingToolUses, setStreamingToolUses] = useState<StreamingToolUse[]>([])
-  const [streamingThinking, setStreamingThinking] = useState<StreamingThinking | null>(null)
-
-  // 流式思考完成后 30 秒自动隐藏
-  useEffect(() => {
-    if (streamingThinking && !streamingThinking.isStreaming && streamingThinking.streamingEndedAt) {
-      const elapsed = Date.now() - streamingThinking.streamingEndedAt
-      const remaining = 30000 - elapsed
-      if (remaining > 0) {
-        const timer = setTimeout(setStreamingThinking, remaining, null)
-        return () => clearTimeout(timer)
-      } else {
-        setStreamingThinking(null)
-      }
-    }
-  }, [streamingThinking])
+  // streamingThinking state + 30 秒自动隐藏 effect 已抽到 useStreamingThinking。
+  const { streamingThinking, setStreamingThinking } = useStreamingThinking()
   const [abortController, setAbortController] = useState<AbortController | null>(null)
   // Ref，始终指向当前 abort controller，由 REPL bridge 使用
   // 在远程中断到达时中止活动查询。
@@ -2741,12 +2729,7 @@ export function REPL({
             // 每次渲染 O(n)，所以在多日会话中丢弃前一个
             // 边界之前的所有内容以保持 n 有界。
             if (isFullscreenEnvEnabled()) {
-              setMessages((old) => [
-                ...getMessagesAfterCompactBoundary(old, {
-                  includeSnipped: true,
-                }),
-                newMessage,
-              ])
+              setMessages((old) => [...getMessagesAfterCompactBoundary(old), newMessage])
             } else {
               setMessages(() => [newMessage])
             }
