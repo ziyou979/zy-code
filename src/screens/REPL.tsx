@@ -104,10 +104,7 @@ import { PromptDialog } from '../components/hooks/PromptDialog.js'
 import type { PromptRequest, PromptResponse } from '../types/hooks/index.js'
 import PromptInput from '../components/PromptInput/PromptInput.js'
 import { PromptInputQueuedCommands } from '../components/PromptInput/PromptInputQueuedCommands.js'
-import { useRemoteSession } from '../hooks/useRemoteSession.js'
-import { useDirectConnect } from '../hooks/useDirectConnect.js'
 import type { DirectConnectConfig } from '../server/directConnectManager.js'
-import { useSSHSession } from '../hooks/useSSHSession.js'
 import { useAssistantHistory } from '../hooks/useAssistantHistory.js'
 import type { SSHSession } from '../ssh/createSSHSession.js'
 import { SkillImprovementSurvey } from '../components/SkillImprovementSurvey.js'
@@ -335,6 +332,7 @@ import { usePostCompactSurvey } from 'src/components/FeedbackSurvey/usePostCompa
 import { FeedbackSurvey } from 'src/components/FeedbackSurvey/FeedbackSurvey.js'
 import { coordinatorModeModule, proactiveModule } from '../cli/lazyModules.js'
 import { useFrozenTranscript } from './repl/useFrozenTranscript.js'
+import { useReplActiveRemote } from './repl/useReplActiveRemote.js'
 import { useStreamingThinking } from './repl/useStreamingThinking.js'
 import { useReplCallouts } from './repl/useReplCallouts.js'
 import { useReplFrustration } from './repl/useReplFrustration.js'
@@ -387,7 +385,6 @@ import { useIssueFlagBanner } from '../hooks/useIssueFlagBanner.js'
 import { DevBar } from '../components/DevBar.js'
 // Session manager 已移除 - 现在使用 AppState
 import type { RemoteSessionConfig } from '../remote/RemoteSessionManager.js'
-import { REMOTE_SAFE_COMMANDS } from '../commands.js'
 import type { RemoteMessageContent } from '../services/teleport/api.js'
 import {
   FullscreenLayout,
@@ -1248,56 +1245,25 @@ export function REPL({
     | undefined
   >()
 
-  // 根据 CCR 可用斜杠命令过滤命令的回调
-  const handleRemoteInit = useCallback((remoteSlashCommands: string[]) => {
-    const remoteCommandSet = new Set(remoteSlashCommands)
-    // Keep 列出 CCR 包含的命令或在本地安全集合中的命令
-    setLocalCommands((prev) =>
-      prev.filter((cmd) => remoteCommandSet.has(cmd.name) || REMOTE_SAFE_COMMANDS.has(cmd)),
-    )
-  }, [])
   const [inProgressToolUseIDs, setInProgressToolUseIDs] = useState<Set<string>>(new Set())
   const hasInterruptibleToolInProgressRef = useRef(false)
 
-  // 远程会话 hook - 管理 --remote 模式的 WebSocket 连接和消息处理
-  const remoteSession = useRemoteSession({
-    config: remoteSessionConfig,
+  // handleRemoteInit + useRemoteSession / useDirectConnect / useSSHSession 三通道 +
+  // activeRemote 派生均已抽到 useReplActiveRemote。下游通过 `.isRemoteMode /
+  // .sendMessage / .cancelRequest` 与之统一交互。
+  const activeRemote = useReplActiveRemote({
+    remoteSessionConfig,
+    directConnectConfig,
+    sshSession,
     setMessages,
     setIsLoading: setIsExternalLoading,
-    onInit: handleRemoteInit,
     setToolUseConfirmQueue,
     tools: combinedInitialTools,
     setStreamingToolUses,
     setStreamMode,
     setInProgressToolUseIDs,
+    setLocalCommands,
   })
-
-  // 直连 hook - 管理到 zy 服务器的 WebSocket 连接，用于 `zy connect` 模式
-  const directConnect = useDirectConnect({
-    config: directConnectConfig,
-    setMessages,
-    setIsLoading: setIsExternalLoading,
-    setToolUseConfirmQueue,
-    tools: combinedInitialTools,
-  })
-
-  // SSH 会话 hook - 管理 ssh 子进程，用于 `zy ssh` 模式。
-  // 与 useDirectConnect 相同的回调形状；仅底层
-  // 传输不同（ChildProcess stdin/stdout 与 WebSocket）。
-  const sshRemote = useSSHSession({
-    session: sshSession,
-    setMessages,
-    setIsLoading: setIsExternalLoading,
-    setToolUseConfirmQueue,
-    tools: combinedInitialTools,
-  })
-
-  // 使用活动的远程模式
-  const activeRemote = sshRemote.isRemoteMode
-    ? sshRemote
-    : directConnect.isRemoteMode
-      ? directConnect
-      : remoteSession
   const [pastedContents, setPastedContents] = useState<Record<number, PastedContent>>({})
   const [submitCount, setSubmitCount] = useState(0)
   // 使用 ref 而非 state 以避免在每次流式 text_delta 时触发 React 重新渲染。spinner 通过动画定时器读取此值。
@@ -5764,7 +5730,7 @@ export function REPL({
                         setMessages((prev) => [
                           ...prev,
                           createSystemMessage(
-                            'That message is no longer in the active context (snipped or pre-compact). Choose a more recent message.',
+                            'That message is no longer in the active context (pre-compact). Choose a more recent message.',
                             'warn',
                           ),
                         ])
