@@ -55,3 +55,11 @@ export const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
   ? (require('../utils/permissions/autoModeState.js') as typeof import('../utils/permissions/autoModeState.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
+
+// 死代码消除：proactive / loop 模式（PROACTIVE 或 KAIROS 任一启用即生效）
+/* eslint-disable @typescript-eslint/no-require-imports */
+export const proactiveModule =
+  feature('PROACTIVE') || feature('KAIROS')
+    ? (require('../proactive/index.js') as typeof import('../proactive/index.js'))
+    : null
+/* eslint-enable @typescript-eslint/no-require-imports */

@@ -297,21 +297,11 @@ import {
 } from '../tasks/InProcessTeammateTask/types.js'
 import { restoreRemoteAgentTasks } from '../tasks/RemoteAgentTask/RemoteAgentTask.js'
 import { useInboxPoller } from '../hooks/useInboxPoller.js'
-// 死代码消除：loop mode 的条件导入
-/* eslint-disable @typescript-eslint/no-require-imports */
-const proactiveModule =
-  feature('PROACTIVE') || feature('KAIROS') ? require('../proactive/index.js') : null
+// proactiveModule 已抽到 cli/lazyModules.ts；useProactive 条件 require 已抽到 ./repl/useReplProactive。
+// useScheduledTasks 条件 require 已抽到 ./repl/useReplScheduledTasks。
 const PROACTIVE_NO_OP_SUBSCRIBE = (_cb: () => void) => () => {}
 const PROACTIVE_FALSE = () => false
 const SUGGEST_BG_PR_NOOP = (_p: string, _n: string): boolean => false
-const useProactive =
-  feature('PROACTIVE') || feature('KAIROS')
-    ? require('../proactive/useProactive.js').useProactive
-    : null
-const useScheduledTasks = feature('AGENT_TRIGGERS')
-  ? require('../hooks/useScheduledTasks.js').useScheduledTasks
-  : null
-/* eslint-enable @typescript-eslint/no-require-imports */
 import { useGoalMode } from '../hooks/useGoalMode.js'
 import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js'
 import { useTaskListWatcher } from '../hooks/useTaskListWatcher.js'
@@ -348,11 +338,13 @@ import { useFeedbackSurvey } from 'src/components/FeedbackSurvey/useFeedbackSurv
 import { useMemorySurvey } from 'src/components/FeedbackSurvey/useMemorySurvey.js'
 import { usePostCompactSurvey } from 'src/components/FeedbackSurvey/usePostCompactSurvey.js'
 import { FeedbackSurvey } from 'src/components/FeedbackSurvey/FeedbackSurvey.js'
-import { coordinatorModeModule } from '../cli/lazyModules.js'
+import { coordinatorModeModule, proactiveModule } from '../cli/lazyModules.js'
 import { useReplCallouts } from './repl/useReplCallouts.js'
 import { useReplFrustration } from './repl/useReplFrustration.js'
 import { useReplIdeState } from './repl/useReplIdeState.js'
 import { useReplNotifications } from './repl/useReplNotifications.js'
+import { useReplProactive } from './repl/useReplProactive.js'
+import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
 import { useReplSearch } from './repl/useReplSearch.js'
 import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
 import { useAwaySummary } from 'src/hooks/useAwaySummary.js'
@@ -4587,22 +4579,14 @@ export function REPL({
     onSubmitMessage: handleIncomingPrompt,
   })
 
-  // 来自 .zy/scheduled_tasks.json 的计划任务（CronCreate/Delete/List）
-  if (feature('AGENT_TRIGGERS')) {
-    // Assistant 模式绕过 isLoading 门控（主动 tick →
-    // Sleep → tick 循环否则会饿死调度器）。
-    // kairosEnabled 在 initialState（main.tsx）中设置一次且从不改变 —— 无需
-    // 订阅。zy_kairos_cron 运行时门控在
-    // useScheduledTasks 的 effect 内部检查（不在此处），因为将 hook 调用包装在动态
-    // 条件中会破坏 rules-of-hooks
-    const assistantMode = store.getState().kairosEnabled
-    // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-    useScheduledTasks!({
-      isLoading,
-      assistantMode,
-      setMessages,
-    })
-  }
+  // 来自 .zy/scheduled_tasks.json 的计划任务（CronCreate/Delete/List）——
+  // feature('AGENT_TRIGGERS') + 条件 require 见 useReplScheduledTasks。
+  // kairosEnabled 在 initialState（main.tsx）中设置一次且从不改变，一次性快照读取。
+  useReplScheduledTasks({
+    isLoading,
+    assistantMode: store.getState().kairosEnabled,
+    setMessages,
+  })
 
   // 注意：权限轮询现在由 useInboxPoller 处理
   // - Worker 通过邮箱消息接收权限响应
@@ -4618,10 +4602,8 @@ export function REPL({
       onSubmitTask: handleIncomingPrompt,
     })
 
-    // Loop mode: auto-tick when enabled (via /job command)
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    // biome-ignore lint/correctness/useHookAtTopLevel: conditional for dead code elimination in external builds
-    useProactive?.({
+    // Loop mode: auto-tick when enabled (via /job command) —— 条件 require 见 useReplProactive
+    useReplProactive({
       // Suppress ticks while an initial message is pending — the initial
       // message will be processed asynchronously and a premature tick would
       // race with it, causing concurrent-query enqueue of expanded skill text.
