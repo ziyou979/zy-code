@@ -15,9 +15,6 @@ import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- / n N Esc [ v are bare letters in transcript modal context, same class as g/G/j/k in ScrollKeybindingHandler
 import { useInput } from '../ink.js'
-import { useTerminalSize } from '../hooks/useTerminalSize.js'
-import { useSearchHighlight } from '../ink/hooks/use-search-highlight.js'
-import type { JumpHandle } from '../components/VirtualMessageList.js'
 import { renderMessagesToPlainText } from '../utils/exportRenderer.js'
 import { openFileInExternalEditor } from '../utils/editor.js'
 import { writeFile } from 'node:fs/promises'
@@ -376,6 +373,7 @@ import { FeedbackSurvey } from 'src/components/FeedbackSurvey/FeedbackSurvey.js'
 import { useReplCallouts } from './repl/useReplCallouts.js'
 import { useReplIdeState } from './repl/useReplIdeState.js'
 import { useReplNotifications } from './repl/useReplNotifications.js'
+import { useReplSearch } from './repl/useReplSearch.js'
 import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
 import { useAwaySummary } from 'src/hooks/useAwaySummary.js'
 import { usePromptsFromClaudeInChrome } from 'src/hooks/usePromptsFromClaudeInChrome.js'
@@ -4805,75 +4803,26 @@ export function REPL({
   // GlobalKeybindingHandlers 组件的 props（在 KeybindingSetup 内部渲染）
   const virtualScrollActive = isFullscreenEnvEnabled() && !disableVirtualScroll
 
-  // 转录搜索状态。Hook 必须无条件所以它们在此处
-  // （不在下面的 `if (screen === 'transcript')` 分支内）；isActive
-  // 门控 useInput。查询在 bar 打开/关闭之间持续，所以 n/N 在
-  // Enter 关闭 bar 后继续工作（less 语义）
-  const jumpRef = useRef<JumpHandle | null>(null)
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchCount, setSearchCount] = useState(0)
-  const [searchCurrent, setSearchCurrent] = useState(0)
-  const onSearchMatchesChange = useCallback((count: number, current: number) => {
-    setSearchCount(count)
-    setSearchCurrent(current)
-  }, [])
-  useInput(
-    (input, key, event) => {
-      if (key.ctrl || key.meta) {
-        return
-      }
-      // No Esc handling here — less has no navigating mode. Search state
-      // (highlights, n/N) is just state. Esc/q/ctrl+c → transcript:exit
-      // (ungated). Highlights clear on exit via the screen-change effect.
-      if (input === '/') {
-        // 立即捕获 scrollTop —— 打字是预览，0 匹配会跳回这里。
-        // 同步 ref 写入，在 bar 的 mount-effect 调用 setSearchQuery 之前触发
-        jumpRef.current?.setAnchor()
-        setSearchOpen(true)
-        event.stopImmediatePropagation()
-        return
-      }
-      // 按住键批处理：tokenizer 合并为 'nnn'。与 ScrollKeybindingHandler.tsx
-      // 中 modalPagerAction 相同的 uniform-batch 模式。每次重复是一步（n 不是幂等的，不像 g）
-      const c = input[0]
-      if ((c === 'n' || c === 'N') && input === c.repeat(input.length) && searchCount > 0) {
-        const fn = c === 'n' ? jumpRef.current?.nextMatch : jumpRef.current?.prevMatch
-        if (fn) {
-          for (let i = 0; i < input.length; i++) {
-            fn()
-          }
-        }
-        event.stopImmediatePropagation()
-      }
-    },
-    // 搜索需要虚拟滚动（jumpRef 驱动 VirtualMessageList）。[
-    // 杀死它，所以 !dumpMode —— 在 [ 之后没什么可跳转的
-    {
-      isActive: screen === 'transcript' && virtualScrollActive && !searchOpen && !dumpMode,
-    },
-  )
-  const { setQuery: setHighlight, scanElement, setPositions } = useSearchHighlight()
-
-  // 调整大小 → 中止搜索。Positions 以 (msg, query, WIDTH) 为键 ——
-  // 宽度变化后缓存的 positions 过时（新布局，新换行）。
-  // 清除 searchQuery 触发 VML 的 setSearchQuery('') 清除 positionsCache +
-  // setPositions(null)。bar 关闭。用户再次按 / → 全新初始化
-  const transcriptCols = useTerminalSize().columns
-  const prevColsRef = React.useRef(transcriptCols)
-  React.useEffect(() => {
-    if (prevColsRef.current !== transcriptCols) {
-      prevColsRef.current = transcriptCols
-      if (searchQuery || searchOpen) {
-        setSearchOpen(false)
-        setSearchQuery('')
-        setSearchCount(0)
-        setSearchCurrent(0)
-        jumpRef.current?.disarmSearch()
-        setHighlight('')
-      }
-    }
-  }, [transcriptCols, searchQuery, searchOpen, setHighlight])
+  // transcript 内的搜索（/ + n/N）状态与行为已抽到 useReplSearch。
+  // inTranscript 见下方第 4960 行计算，需在 search hook 之前确定，
+  // 但 React 要求 hook 顺序稳定 —— 因此我们先以同等表达式计算 inTranscript：
+  // virtualScrollActive 在前面已算出，screen 已 destructure。
+  const inTranscript = screen === 'transcript' && virtualScrollActive
+  const {
+    jumpRef,
+    searchOpen,
+    setSearchOpen,
+    searchQuery,
+    setSearchQuery,
+    searchCount,
+    setSearchCount,
+    searchCurrent,
+    setSearchCurrent,
+    onSearchMatchesChange,
+    setHighlight,
+    scanElement,
+    setPositions,
+  } = useReplSearch({ inTranscript, screen, virtualScrollActive, dumpMode })
 
   // 转录退出快捷键。模态上下文中的裸字母（没有提示竞争输入）
   // —— 与 ScrollKeybindingHandler 中的 g/G/j/k 相同类别
@@ -4956,29 +4905,16 @@ export function REPL({
   // 每次转录条目使用新的 `less`。防止过时高亮匹配
   // 不相关的普通模式文本（覆盖层是 alt-screen-global）并避免
   // 重新进入时意外 n/N。相同的退出重置 [ dump 模式 —— 每次 ctrl+o
-  // 条目是新实例
-  const inTranscript = screen === 'transcript' && virtualScrollActive
+  // 条目是新实例。
+  // 注意：search 部分的 reset 已迁入 useReplSearch；本 effect 只保留 editor / dump 部分。
   useEffect(() => {
     if (!inTranscript) {
-      setSearchQuery('')
-      setSearchCount(0)
-      setSearchCurrent(0)
-      setSearchOpen(false)
       editorGenRef.current++
       clearTimeout(editorTimerRef.current)
       setDumpMode(false)
       setEditorStatus('')
     }
   }, [inTranscript])
-  useEffect(() => {
-    setHighlight(inTranscript ? searchQuery : '')
-    // Clear the position-based CURRENT (yellow) overlay too. setHighlight
-    // only clears the scan-based inverse. Without this, the yellow box
-    // persists at its last screen coords after ctrl-c exits transcript.
-    if (!inTranscript) {
-      setPositions(null)
-    }
-  }, [inTranscript, searchQuery, setHighlight, setPositions])
   const globalKeybindingProps = {
     screen,
     setScreen,
