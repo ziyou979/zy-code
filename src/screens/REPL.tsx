@@ -334,6 +334,7 @@ import { useMemorySurvey } from 'src/components/FeedbackSurvey/useMemorySurvey.j
 import { usePostCompactSurvey } from 'src/components/FeedbackSurvey/usePostCompactSurvey.js'
 import { FeedbackSurvey } from 'src/components/FeedbackSurvey/FeedbackSurvey.js'
 import { coordinatorModeModule, proactiveModule } from '../cli/lazyModules.js'
+import { useFrozenTranscript } from './repl/useFrozenTranscript.js'
 import { useReplCallouts } from './repl/useReplCallouts.js'
 import { useReplFrustration } from './repl/useReplFrustration.js'
 import { useReplIdeState } from './repl/useReplIdeState.js'
@@ -1193,11 +1194,9 @@ export function REPL({
     )
   }
 
-  // 转录模式的冻结状态 - 存储长度而不是克隆数组以提高内存效率
-  const [frozenTranscriptState, setFrozenTranscriptState] = useState<{
-    messagesLength: number
-    streamingToolUsesLength: number
-  } | null>(null)
+  // 转录模式的冻结状态 + enter/exit 回调 + 切片派生已抽到 useFrozenTranscript。
+  // 需在 streamingToolUses（line 715）、deferredMessages（line 1226）之后调用，
+  // 见下方 useFrozenTranscript(...) 调用点。
   // 用 REPL 准备就绪之前捕获的任何早期输入初始化输入。
   // 使用懒初始化确保 PromptInput 中的光标偏移正确设置。
   const [inputValue, setInputValueRaw] = useState(() => consumeEarlyInput())
@@ -4708,18 +4707,18 @@ export function REPL({
       : `running stop hooks… ${completedCount}/${total}`
   }, [messages, isLoading])
 
-  // 进入转录模式时捕获冻结状态的回调
-  const handleEnterTranscript = useCallback(() => {
-    setFrozenTranscriptState({
-      messagesLength: messages.length,
-      streamingToolUsesLength: streamingToolUses.length,
-    })
-  }, [messages.length, streamingToolUses.length])
-
-  // 退出转录模式时清除冻结状态的回调
-  const handleExitTranscript = useCallback(() => {
-    setFrozenTranscriptState(null)
-  }, [])
+  // enter/exit transcript 回调 + transcriptMessages/transcriptStreamingToolUses 切片派生
+  // 一并由 useFrozenTranscript 提供。
+  const {
+    handleEnterTranscript,
+    handleExitTranscript,
+    transcriptMessages,
+    transcriptStreamingToolUses,
+  } = useFrozenTranscript({
+    messages,
+    streamingToolUses,
+    deferredMessages,
+  })
 
   // GlobalKeybindingHandlers 组件的 props（在 KeybindingSetup 内部渲染）
   const virtualScrollActive = isFullscreenEnvEnabled() && !disableVirtualScroll
@@ -4780,14 +4779,6 @@ export function REPL({
     // first, fires first, bubbles).
     searchBarOpen: searchOpen,
   }
-
-  // 使用冻结长度切片数组，避免克隆的内存开销
-  const transcriptMessages = frozenTranscriptState
-    ? deferredMessages.slice(0, frozenTranscriptState.messagesLength)
-    : deferredMessages
-  const transcriptStreamingToolUses = frozenTranscriptState
-    ? streamingToolUses.slice(0, frozenTranscriptState.streamingToolUsesLength)
-    : streamingToolUses
 
   // 处理 teammate 导航和后台任务管理的 shift+down。
   // 当 local-jsx 对话框（例如 /mcp）打开时守卫 onOpenBackgroundTasks ——
