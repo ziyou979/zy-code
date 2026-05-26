@@ -152,30 +152,8 @@ import { useTeammateViewAutoExit } from '../hooks/useTeammateViewAutoExit.js'
 import { errorMessage } from '../utils/errors.js'
 import { isHumanTurn } from '../utils/messagePredicates.js'
 import { logError } from '../utils/log.js'
-// 语音条件 require 已抽到 ./repl/useReplVoice。
-/* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
-// 挫败感检测仅限 ant 内部使用（dogfooding）。条件 require 以便外部
-// 构建完全消除该模块（包括其两个 O(n) useMemo，每次 messages 变化时运行，
-// 以及 GrowthBook 获取）。
-const useFrustrationDetection: typeof import('../components/FeedbackSurvey/useFrustrationDetection.js').useFrustrationDetection =
-  isInternalBuild()
-    ? require('../components/FeedbackSurvey/useFrustrationDetection.js').useFrustrationDetection
-    : () => ({
-        state: 'closed',
-        handleTranscriptSelect: () => {},
-      })
-// 死代码消除：coordinator mode 的条件导入
-const getCoordinatorUserContext: (
-  mcpClients: ReadonlyArray<{
-    name: string
-  }>,
-  scratchpadDir?: string,
-) => {
-  [k: string]: string
-} = feature('COORDINATOR_MODE')
-  ? require('../coordinator/coordinatorMode.js').getCoordinatorUserContext
-  : () => ({})
-/* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
+// 语音 / 挫败感检测条件 require 已抽到 ./repl/useReplVoice、./repl/useReplFrustration。
+// getCoordinatorUserContext 改走 cli/lazyModules.coordinatorModeModule（同一份条件 require）。
 import useCanUseTool from '../hooks/useCanUseTool.js'
 import type { ToolPermissionContext, Tool } from '../Tool.js'
 import {
@@ -370,7 +348,9 @@ import { useFeedbackSurvey } from 'src/components/FeedbackSurvey/useFeedbackSurv
 import { useMemorySurvey } from 'src/components/FeedbackSurvey/useMemorySurvey.js'
 import { usePostCompactSurvey } from 'src/components/FeedbackSurvey/usePostCompactSurvey.js'
 import { FeedbackSurvey } from 'src/components/FeedbackSurvey/FeedbackSurvey.js'
+import { coordinatorModeModule } from '../cli/lazyModules.js'
 import { useReplCallouts } from './repl/useReplCallouts.js'
+import { useReplFrustration } from './repl/useReplFrustration.js'
 import { useReplIdeState } from './repl/useReplIdeState.js'
 import { useReplNotifications } from './repl/useReplNotifications.js'
 import { useReplSearch } from './repl/useReplSearch.js'
@@ -1767,8 +1747,8 @@ export function REPL({
     enabled: !isRemoteSession,
   })
 
-  // 挫败感检测：检测到沮丧消息后显示转录共享提示
-  const frustrationDetection = useFrustrationDetection(
+  // 挫败感检测：检测到沮丧消息后显示转录共享提示（条件 require 见 useReplFrustration）
+  const frustrationDetection = useReplFrustration(
     messages,
     isLoading,
     hasActivePrompt,
@@ -3045,10 +3025,12 @@ export function REPL({
       ])
       const userContext = {
         ...baseUserContext,
-        ...getCoordinatorUserContext(
+        // 同 lazyModules.ts 的 coordinatorModeModule：feature('COORDINATOR_MODE') 关闭时
+        // module 为 null，optional chain → undefined，object spread 自动忽略。
+        ...(coordinatorModeModule?.getCoordinatorUserContext(
           freshMcpClients,
           isScratchpadEnabled() ? getScratchpadDir() : undefined,
-        ),
+        ) ?? {}),
         ...((feature('PROACTIVE') || feature('KAIROS')) &&
         proactiveModule?.isProactiveActive() &&
         !terminalFocusRef.current
