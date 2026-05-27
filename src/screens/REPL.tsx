@@ -52,13 +52,7 @@ import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 import { formatTokens, truncateToWidth } from '../utils/format.js'
 import { consumeEarlyInput } from '../utils/earlyInput.js'
 import { setMemberActive } from '../services/swarm/teamHelpers.js'
-import {
-  isSwarmWorker,
-  generateSandboxRequestId,
-  sendSandboxPermissionRequestViaMailbox,
-  sendSandboxPermissionResponseViaMailbox,
-} from '../services/swarm/permissionSync.js'
-import { registerSandboxPermissionCallback } from '../hooks/useSwarmPermissionPoller.js'
+import { sendSandboxPermissionResponseViaMailbox } from '../services/swarm/permissionSync.js'
 import { getTeamName, getAgentName } from '../utils/teammate.js'
 import { WorkerPendingPermission } from '../components/permissions/WorkerPendingPermission.js'
 import {
@@ -293,7 +287,7 @@ const SUGGEST_BG_PR_NOOP = (_p: string, _n: string): boolean => false
 import { useGoalMode } from '../hooks/useGoalMode.js'
 import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js'
 import { useTaskListWatcher } from '../hooks/useTaskListWatcher.js'
-import type { SandboxAskCallback, NetworkHostPattern } from '../services/sandbox/sandbox-adapter.js'
+import type { NetworkHostPattern } from '../services/sandbox/sandbox-adapter.js'
 import { closeOpenDiffs, getConnectedIdeClient } from '../utils/ide.js'
 import exit from '../commands/exit/index.js'
 import { ExitFlow } from '../components/ExitFlow.js'
@@ -339,6 +333,7 @@ import { useReplNotifications } from './repl/useReplNotifications.js'
 import { useReplStreamingText } from './repl/useReplStreamingText.js'
 import { useReplProactive } from './repl/useReplProactive.js'
 import { useReplQueuedCommandRestore } from './repl/useReplQueuedCommandRestore.js'
+import { useReplSandboxAsk } from './repl/useReplSandboxAsk.js'
 import { type PromptQueueItem, useReplRequestPrompt } from './repl/useReplRequestPrompt.js'
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
 import { useReplSearch } from './repl/useReplSearch.js'
@@ -356,7 +351,6 @@ import {
   useKickOffCheckAndDisableAutoModeIfNeeded,
 } from 'src/utils/permissions/bypassPermissionsKillswitch.js'
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
-import { SANDBOX_NETWORK_ACCESS_TOOL_NAME } from 'src/cli/structuredIO.js'
 import { useFileHistorySnapshotInit } from 'src/hooks/useFileHistorySnapshotInit.js'
 import { SandboxPermissionRequest } from 'src/components/permissions/SandboxPermissionRequest.js'
 import { SandboxViolationExpandedView } from 'src/components/SandboxViolationExpandedView.js'
@@ -916,11 +910,6 @@ export function REPL({
     }>
   >([])
   const [promptQueue, setPromptQueue] = useState<PromptQueueItem[]>([])
-
-  // 跟踪沙盒权限请求的 bridge 清理函数，以便
-  // 本地对话框处理程序可以在本地用户先响应时取消远程提示。
-  // 以 host 为键支持并发的同 host 请求。
-  const sandboxBridgeCleanupRef = useRef<Map<string, Array<() => void>>>(new Map())
 
   // -- 终端标题管理
   // 会话标题（通过 /rename 设置或恢复时还原）优先于
@@ -2120,160 +2109,13 @@ export function REPL({
     inputValue,
     streamMode,
   }
-  const sandboxAskCallback: SandboxAskCallback = useCallback(
-    async (hostPattern: NetworkHostPattern) => {
-      // 作为 swarm worker 运行时，通过 mailbox 将请求转发给 leader
-      if (isAgentSwarmsEnabled() && isSwarmWorker()) {
-        const requestId = generateSandboxRequestId()
-
-        // 通过 mailbox 发送请求给 leader
-        const sent = await sendSandboxPermissionRequestViaMailbox(hostPattern.host, requestId)
-        return new Promise((resolveShouldAllowHost) => {
-          if (!sent) {
-            // 如果无法通过 mailbox 发送，回退到本地处理
-            setSandboxPermissionRequestQueue((prev) => [
-              ...prev,
-              {
-                hostPattern,
-                resolvePromise: resolveShouldAllowHost,
-              },
-            ])
-            return
-          }
-
-          // leader 响应时注册回调
-          registerSandboxPermissionCallback({
-            requestId,
-            host: hostPattern.host,
-            resolve: resolveShouldAllowHost,
-          })
-
-          // 更新 AppState 以显示待处理指示器
-          setAppState((prev) => ({
-            ...prev,
-            pendingSandboxRequest: {
-              requestId,
-              host: hostPattern.host,
-            },
-          }))
-        })
-      }
-
-      // 非 worker 的正常流程：显示本地 UI 并可选地竞争
-      // 对抗 REPL bridge（远程控制）如果已连接。
-      return new Promise((resolveShouldAllowHost) => {
-        let resolved = false
-        function resolveOnce(allow: boolean): void {
-          if (resolved) {
-            return
-          }
-          resolved = true
-          resolveShouldAllowHost(allow)
-        }
-
-        // 排队本地沙盒权限对话框
-        setSandboxPermissionRequestQueue((prev) => [
-          ...prev,
-          {
-            hostPattern,
-            resolvePromise: resolveOnce,
-          },
-        ])
-
-        // REPL bridge 连接时，也将沙盒
-        // 权限请求作为 can_use_tool control_request 转发，以便
-        // 远程用户（例如在 zy.ai 上）也可以批准它。
-        if (feature('BRIDGE_MODE')) {
-          const bridgeCallbacks = store.getState().replBridgePermissionCallbacks
-          if (bridgeCallbacks) {
-            const bridgeRequestId = randomUUID()
-            bridgeCallbacks.sendRequest(
-              bridgeRequestId,
-              SANDBOX_NETWORK_ACCESS_TOOL_NAME,
-              {
-                host: hostPattern.host,
-              },
-              randomUUID(),
-              `Allow network connection to ${hostPattern.host}?`,
-            )
-            const unsubscribe = bridgeCallbacks.onResponse(bridgeRequestId, (response) => {
-              unsubscribe()
-              const allow = response.behavior === 'allow'
-              // 解析 ALL 同一 host 的待处理请求，不仅是
-              // 这个 — 镜像本地对话框处理程序模式。
-              setSandboxPermissionRequestQueue((queue) => {
-                queue
-                  .filter((item) => item.hostPattern.host === hostPattern.host)
-                  .forEach((item) => item.resolvePromise(allow))
-                return queue.filter((item) => item.hostPattern.host !== hostPattern.host)
-              })
-              // 清除此 host 的所有兄弟 bridge 订阅
-              // （其他并发的同 host 请求）然后删除。
-              const siblingCleanups = sandboxBridgeCleanupRef.current.get(hostPattern.host)
-              if (siblingCleanups) {
-                for (const fn of siblingCleanups) {
-                  fn()
-                }
-                sandboxBridgeCleanupRef.current.delete(hostPattern.host)
-              }
-            })
-
-            // 注册清理以便本地对话框处理程序可以取消
-            // 远程提示并在本地用户先响应时取消订阅。
-            const cleanup = () => {
-              unsubscribe()
-              bridgeCallbacks.cancelRequest(bridgeRequestId)
-            }
-            const existing = sandboxBridgeCleanupRef.current.get(hostPattern.host) ?? []
-            existing.push(cleanup)
-            sandboxBridgeCleanupRef.current.set(hostPattern.host, existing)
-          }
-        }
-      })
-    },
-    [setAppState, store],
-  )
-
-  // #34044：如果用户显式设置 sandbox.enabled=true 但依赖缺失，
-  // isSandboxingEnabled() 会静默返回 false。在
-  // 挂载时显示一次原因，以便用户知道他们的安全配置未被强制执行。完整
-  // 原因进入调试日志；通知指向 /sandbox 获取详情。
-  // addNotification 稳定（useCallback）所以 effect 仅触发一次。
-  useEffect(() => {
-    const reason = SandboxManager.getSandboxUnavailableReason()
-    if (!reason) {
-      return
-    }
-    if (SandboxManager.isSandboxRequired()) {
-      process.stderr.write(
-        `\nError: sandbox required but unavailable: ${reason}\n` +
-          `  sandbox.failIfUnavailable is set — refusing to start without a working sandbox.\n\n`,
-      )
-      gracefulShutdownSync(1, 'other')
-      return
-    }
-    logForDebugging(`sandbox disabled: ${reason}`, {
-      level: 'warn',
-    })
-    addNotification({
-      key: 'sandbox-unavailable',
-      jsx: (
-        <>
-          <Text color="warning">sandbox disabled</Text>
-          <Text dimColor> · /sandbox</Text>
-        </>
-      ),
-      priority: 'medium',
-    })
-  }, [addNotification])
-  if (SandboxManager.isSandboxingEnabled()) {
-    // 如果启用了沙盒（定义了 setting.sandbox，初始化管理器）
-    SandboxManager.initialize(sandboxAskCallback).catch((err) => {
-      // 初始化/验证失败 - 显示错误并退出
-      process.stderr.write(`\n❌ Sandbox Error: ${errorMessage(err)}\n`)
-      gracefulShutdownSync(1, 'other')
-    })
-  }
+  // Sandbox 询问回调 + 初始化副作用 + 不可用通知收敛到 useReplSandboxAsk。
+  // 暴露 sandboxBridgeCleanupRef 以便本地对话框 approval 路径清理同 host
+  // 的兄弟 bridge 订阅。
+  const { sandboxBridgeCleanupRef } = useReplSandboxAsk({
+    setSandboxPermissionRequestQueue,
+    addNotification,
+  })
   // setToolPermissionContext + leader 注册 effect 已抽到 useReplToolPermissionContext。
   const setToolPermissionContext = useReplToolPermissionContext(setToolUseConfirmQueue)
   const canUseTool = useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext)
