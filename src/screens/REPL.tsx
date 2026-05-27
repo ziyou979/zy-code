@@ -342,6 +342,7 @@ import { useReplStreamingText } from './repl/useReplStreamingText.js'
 import { useReplProactive } from './repl/useReplProactive.js'
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
 import { useReplSearch } from './repl/useReplSearch.js'
+import { useReplSpinnerOverride } from './repl/useReplSpinnerOverride.js'
 import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
 import { useTranscriptEditor } from './repl/useTranscriptEditor.js'
 import { useViewedAgentBootstrap } from './repl/useViewedAgentBootstrap.js'
@@ -1240,9 +1241,17 @@ export function REPL({
   } = useReplStreamingText()
 
   const [lastQueryCompletionTime, setLastQueryCompletionTime] = useState(0)
-  const [spinnerMessage, setSpinnerMessage] = useState<string | null>(null)
-  const [spinnerColor, setSpinnerColor] = useState<keyof Theme | null>(null)
-  const [spinnerShimmerColor, setSpinnerShimmerColor] = useState<keyof Theme | null>(null)
+  // Spinner 覆盖三态收敛到 useReplSpinnerOverride（写在 autoCompact 进度路径，
+  // 由 SpinnerWithVerb 的 overrideMessage/Color/ShimmerColor 读取）
+  const {
+    spinnerMessage,
+    spinnerColor,
+    spinnerShimmerColor,
+    setSpinnerMessage,
+    setSpinnerColor,
+    setSpinnerShimmerColor,
+    resetSpinnerOverride,
+  } = useReplSpinnerOverride()
   const [isMessageSelectorVisible, setIsMessageSelectorVisible] = useState(false)
   const [messageSelectorPreselect, setMessageSelectorPreselect] = useState<UserMessage | undefined>(
     undefined,
@@ -1377,9 +1386,7 @@ export function REPL({
     responseLengthRef.current = 0
     setStreamingText(null)
     setStreamingToolUses([])
-    setSpinnerMessage(null)
-    setSpinnerColor(null)
-    setSpinnerShimmerColor(null)
+    resetSpinnerOverride()
     pickNewSpinnerTip()
     endInteractionSpan()
     // 推测性 bash 分类器检查仅对当前
@@ -1393,6 +1400,7 @@ export function REPL({
     // finally）在运行时已经将 guard 转换为空闲。
     // 外部 loading（远程/后台）由那些 hooks 单独重置。
     setIsExternalLoading,
+    resetSpinnerOverride,
   ])
 
   // 会话后台 — hook 在 getToolUseContext 之后定义
@@ -2444,9 +2452,7 @@ export function REPL({
               setSpinnerMessage(tSync('spinner.compacting'))
               break
             case 'compact_end':
-              setSpinnerMessage(null)
-              setSpinnerColor(null)
-              setSpinnerShimmerColor(null)
+              resetSpinnerOverride()
               break
           }
         },
