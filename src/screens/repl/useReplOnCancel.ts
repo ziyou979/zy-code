@@ -59,7 +59,7 @@ export type UseReplOnCancelParams = {
   focusedInputDialog: FocusedInputDialog
   streamMode: SpinnerMode
   queryGuard: QueryGuard
-  skipIdleCheckRef: React.MutableRefObject<boolean>
+  skipIdleCheckRef: React.RefObject<boolean>
   streamingText: string | null
   setMessages: (action: React.SetStateAction<MessageType[]>) => void
   resetLoadingState: () => void
@@ -71,7 +71,7 @@ export type UseReplOnCancelParams = {
   setAbortController: React.Dispatch<React.SetStateAction<AbortController | null>>
   activeRemote: ActiveRemote
   mrOnTurnComplete: (messages: MessageType[], aborted: boolean) => void | Promise<void>
-  messagesRef: React.MutableRefObject<MessageType[]>
+  messagesRef: React.RefObject<MessageType[]>
 }
 
 export function useReplOnCancel(params: UseReplOnCancelParams): () => void {

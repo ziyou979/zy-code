@@ -23,9 +23,9 @@ export type ReplLoading = {
   isExternalLoading: boolean
   setIsExternalLoading: (value: boolean) => void
   resetTimingRefs: () => void
-  loadingStartTimeRef: React.MutableRefObject<number>
-  totalPausedMsRef: React.MutableRefObject<number>
-  pauseStartTimeRef: React.MutableRefObject<number | null>
+  loadingStartTimeRef: React.RefObject<number>
+  totalPausedMsRef: React.RefObject<number>
+  pauseStartTimeRef: React.RefObject<number | null>
 }
 
 export function useReplLoading(

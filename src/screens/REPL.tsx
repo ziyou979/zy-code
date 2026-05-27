@@ -332,6 +332,7 @@ import { useReplLoading } from './repl/useReplLoading.js'
 import { useReplNotifications } from './repl/useReplNotifications.js'
 import { useReplStreamingText } from './repl/useReplStreamingText.js'
 import { useReplAbortController } from './repl/useReplAbortController.js'
+import { useReplConversationId } from './repl/useReplConversationId.js'
 import { useReplOnCancel } from './repl/useReplOnCancel.js'
 import { useReplProactive } from './repl/useReplProactive.js'
 import { useReplQueuedCommandRestore } from './repl/useReplQueuedCommandRestore.js'
@@ -1237,7 +1238,8 @@ export function REPL({
   const [messageSelectorPreselect, setMessageSelectorPreselect] = useState<UserMessage | undefined>(
     undefined,
   )
-  const [conversationId, setConversationId] = useState(randomUUID())
+  // 对话 ID 命名空间收敛到 useReplConversationId（regenerate 替代多处 randomUUID）
+  const { conversationId, setConversationId, regenerateConversationId } = useReplConversationId()
 
   // 空闲返回对话框：用户在长空闲后提交时显示
   const [idleReturnPending, setIdleReturnPending] = useState<{
@@ -2373,7 +2375,7 @@ export function REPL({
             }
             // 提升 conversationId 以便 Messages.tsx 行键更改并且
             // 过时 memoized 行以压缩后内容重新挂载。
-            setConversationId(randomUUID())
+            regenerateConversationId()
             // 压缩成功 — 清除上下文阻塞标志以便 tick 恢复
             if (feature('PROACTIVE') || feature('KAIROS')) {
               proactiveModule?.setContextBlocked(false)
@@ -2543,7 +2545,7 @@ export function REPL({
         if (newMessages.some(isCompactBoundaryMessage)) {
           // 提升 conversationId 以便 Messages.tsx 行键改变且
           // 过时 memoized 行以压缩后内容重新挂载。
-          setConversationId(randomUUID())
+          regenerateConversationId()
           if (feature('PROACTIVE') || feature('KAIROS')) {
             proactiveModule?.setContextBlocked(false)
           }
@@ -3695,7 +3697,7 @@ export function REPL({
       })
       setMessages(prev.slice(0, messageIndex))
       // Careful, this has to happen after setMessages
-      setConversationId(randomUUID())
+      regenerateConversationId()
       // Reset cached microcompact state so stale pinned cache edits
       // don't reference tool_use_ids from truncated messages
       resetMicrocompactState()
@@ -5480,7 +5482,7 @@ export function REPL({
                       if (feature('PROACTIVE') || feature('KAIROS')) {
                         proactiveModule?.setContextBlocked(false)
                       }
-                      setConversationId(randomUUID())
+                      regenerateConversationId()
                       runPostCompactCleanup(context.options.querySource)
                       if ((direction as any) === 'from') {
                         const r = textForResubmit(message)
