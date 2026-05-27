@@ -331,6 +331,7 @@ import { useReplIdeState } from './repl/useReplIdeState.js'
 import { useReplLoading } from './repl/useReplLoading.js'
 import { useReplNotifications } from './repl/useReplNotifications.js'
 import { useReplStreamingText } from './repl/useReplStreamingText.js'
+import { useReplAbortController } from './repl/useReplAbortController.js'
 import { useReplProactive } from './repl/useReplProactive.js'
 import { useReplQueuedCommandRestore } from './repl/useReplQueuedCommandRestore.js'
 import { useReplSandboxAsk } from './repl/useReplSandboxAsk.js'
@@ -709,11 +710,9 @@ export function REPL({
   const [streamingToolUses, setStreamingToolUses] = useState<StreamingToolUse[]>([])
   // streamingThinking state + 30 秒自动隐藏 effect 已抽到 useStreamingThinking。
   const { streamingThinking, setStreamingThinking } = useStreamingThinking()
-  const [abortController, setAbortController] = useState<AbortController | null>(null)
-  // Ref，始终指向当前 abort controller，由 REPL bridge 使用
-  // 在远程中断到达时中止活动查询。
-  const abortControllerRef = useRef<AbortController | null>(null)
-  abortControllerRef.current = abortController
+  // abortController state + 镜像 ref 收敛到 useReplAbortController：
+  // bridge 远程中断路径需要 ref 同步读取当前 controller。
+  const { abortController, setAbortController, abortControllerRef } = useReplAbortController()
 
   // bridge 结果回调的 ref — 在 useReplBridge 初始化后设置，
   // 在 onQuery finally 块中读取以通知移动端回合已结束。
