@@ -31,7 +31,6 @@ import { useNotifications } from '../context/notifications.js'
 import { sendNotification } from '../services/notifier.js'
 import { startPreventSleep, stopPreventSleep } from '../services/preventSleep.js'
 import { useTerminalNotification } from '../ink/useTerminalNotification.js'
-import { hasCursorUpViewportYankBug } from '../ink/terminal.js'
 import {
   createFileStateCacheWithSizeLimit,
   mergeFileStateCaches,
@@ -339,6 +338,7 @@ import { useReplFrustration } from './repl/useReplFrustration.js'
 import { useReplIdeState } from './repl/useReplIdeState.js'
 import { useReplLoading } from './repl/useReplLoading.js'
 import { useReplNotifications } from './repl/useReplNotifications.js'
+import { useReplStreamingText } from './repl/useReplStreamingText.js'
 import { useReplProactive } from './repl/useReplProactive.js'
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
 import { useReplSearch } from './repl/useReplSearch.js'
@@ -1229,30 +1229,16 @@ export function REPL({
     responseLengthRef.current = f(responseLengthRef.current)
   }, [])
 
-  // 流式文本显示：每个 delta 直接设置 state（Ink 的 16ms 渲染
-  // 节流批处理快速更新）。消息到达时清除（messages.ts）
-  // 所以 displayedMessages 从 deferredMessages 原子切换到 messages。
-  const [streamingText, setStreamingText] = useState<string | null>(null)
-  const reducedMotion = useAppState((s) => s.settings.prefersReducedMotion) ?? false
-  const showStreamingText = !reducedMotion && !hasCursorUpViewportYankBug()
-  const onStreamingText = useCallback(
-    (f: (current: string | null) => string | null) => {
-      if (!showStreamingText) {
-        return
-      }
-      setStreamingText(f)
-    },
-    [showStreamingText],
-  )
+  // 流式文本：state + 派生收敛到 useReplStreamingText（onStreamingText 在
+  // reducedMotion 时吞掉调用；visibleStreamingText 取最后换行前部分逐行流式）
+  const {
+    streamingText,
+    setStreamingText,
+    onStreamingText,
+    visibleStreamingText,
+    showStreamingText,
+  } = useReplStreamingText()
 
-  // 隐藏进行中的源行以便文本逐行流式传输，而不是
-  // 逐字符。lastIndexOf 在没有换行时返回 -1，得到 '' → null。
-  // 在 showStreamingText 上守卫以便在流式传输中间切换
-  // reducedMotion 时立即隐藏流式预览。
-  const visibleStreamingText =
-    streamingText && showStreamingText
-      ? streamingText.substring(0, streamingText.lastIndexOf('\n') + 1) || null
-      : null
   const [lastQueryCompletionTime, setLastQueryCompletionTime] = useState(0)
   const [spinnerMessage, setSpinnerMessage] = useState<string | null>(null)
   const [spinnerColor, setSpinnerColor] = useState<keyof Theme | null>(null)
