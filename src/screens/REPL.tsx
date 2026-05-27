@@ -300,7 +300,6 @@ import exit from '../commands/exit/index.js'
 import { ExitFlow } from '../components/ExitFlow.js'
 import { getCurrentWorktreeSession } from '../utils/worktree.js'
 import {
-  popAllEditable,
   enqueue,
   type SetAppState,
   getCommandQueue,
@@ -340,6 +339,7 @@ import { useReplLoading } from './repl/useReplLoading.js'
 import { useReplNotifications } from './repl/useReplNotifications.js'
 import { useReplStreamingText } from './repl/useReplStreamingText.js'
 import { useReplProactive } from './repl/useReplProactive.js'
+import { useReplQueuedCommandRestore } from './repl/useReplQueuedCommandRestore.js'
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
 import { useReplSearch } from './repl/useReplSearch.js'
 import { useReplSpinnerOverride } from './repl/useReplSpinnerOverride.js'
@@ -2103,28 +2103,13 @@ export function REPL({
     void mrOnTurnComplete(messagesRef.current, true)
   }
 
-  // 取消权限请求时处理排队命令的函数
-  const handleQueuedCommandOnCancel = useCallback(() => {
-    const result = popAllEditable(inputValue, 0)
-    if (!result) {
-      return
-    }
-    setInputValue(result.text)
-    setInputMode('prompt')
-
-    // 从排队命令中恢复图像到 pastedContents
-    if (result.images.length > 0) {
-      setPastedContents((prev) => {
-        const newContents = {
-          ...prev,
-        }
-        for (const image of result.images) {
-          newContents[image.id] = image
-        }
-        return newContents
-      })
-    }
-  }, [setInputValue, inputValue])
+  // 取消权限请求时把已排队命令恢复到输入框（popAllEditable 从队列取出文本+图）
+  const handleQueuedCommandOnCancel = useReplQueuedCommandRestore({
+    inputValue,
+    setInputValue,
+    setInputMode,
+    setPastedContents,
+  })
 
   // CancelRequestHandler 属性 - 在 KeybindingSetup 内渲染
   const cancelRequestProps = {
