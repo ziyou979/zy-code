@@ -332,6 +332,7 @@ import { useReplLoading } from './repl/useReplLoading.js'
 import { useReplNotifications } from './repl/useReplNotifications.js'
 import { useReplStreamingText } from './repl/useReplStreamingText.js'
 import { useReplAbortController } from './repl/useReplAbortController.js'
+import { useReplOnCancel } from './repl/useReplOnCancel.js'
 import { useReplProactive } from './repl/useReplProactive.js'
 import { useReplQueuedCommandRestore } from './repl/useReplQueuedCommandRestore.js'
 import { useReplSandboxAsk } from './repl/useReplSandboxAsk.js'
@@ -2021,67 +2022,26 @@ export function REPL({
     }
     prevDialogRef.current = focusedInputDialog
   }, [focusedInputDialog, repinScroll])
-  function onCancel() {
-    if (focusedInputDialog === 'elicitation') {
-      // Elicitation 对话框处理自己的 Escape，关闭它不应影响任何 loading state。
-      return
-    }
-    logForDebugging(`[onCancel] focusedInputDialog=${focusedInputDialog} streamMode=${streamMode}`)
-
-    // 暂停 proactive mode 以便用户取回控制权。
-    // 他们提交下一个输入时会恢复（见 onSubmit）。
-    if (feature('PROACTIVE') || feature('KAIROS')) {
-      proactiveModule?.pauseProactive()
-    }
-    queryGuard.forceEnd()
-    skipIdleCheckRef.current = false
-
-    // 保留部分流式传输的文本以便用户可以看到
-    // 按 Esc 之前生成的内容。在 resetLoadingState 清除
-    // streamingText 之前推入，在 query.ts yield 异步中断标记之前，
-    // 给出最终顺序 [user, partial-assistant, [Request interrupted by user]]。
-    if (streamingText?.trim()) {
-      setMessages((prev) => [
-        ...prev,
-        createAssistantMessage({
-          content: streamingText,
-        }),
-      ])
-    }
-    resetLoadingState()
-
-    // 清除任何活动的 token 预算以便后备不会在
-    // 查询生成器尚未退出的过时预算上触发。
-    if (feature('TOKEN_BUDGET')) {
-      snapshotOutputTokensForTurn(null)
-    }
-    if (focusedInputDialog === 'tool-permission') {
-      // Tool use confirm 自己处理 abort 信号
-      toolUseConfirmQueue[0]?.onAbort()
-      setToolUseConfirmQueue([])
-    } else if (focusedInputDialog === 'prompt') {
-      // 拒绝所有待处理提示并清除队列
-      for (const item of promptQueue) {
-        item.reject(new Error('Prompt cancelled by user'))
-      }
-      setPromptQueue([])
-      abortController?.abort('user-cancel')
-    } else if (activeRemote.isRemoteMode) {
-      // 远程模式：发送中断信号到 CCR
-      activeRemote.cancelRequest()
-    } else {
-      abortController?.abort('user-cancel')
-    }
-
-    // 清除 controller 以便后续 Escape 按键不会看到过时的
-    // 中止信号。没有这个，canCancelRunningTask 为 false（信号
-    // 已定义但 .aborted === true），所以如果没有其他
-    // 激活条件 isActive 变为 false — 使 Escape 键绑定不活动。
-    setAbortController(null)
-
-    // forceEnd() 跳过 finally 路径 — 直接触发（aborted=true）。
-    void mrOnTurnComplete(messagesRef.current, true)
-  }
+  // onCancel 编排（Esc / Cancel 按钮）：tool-permission/prompt/remote 三路由
+  // + abortController 清理 + streamingText 保留 + token budget 复位。
+  const onCancel = useReplOnCancel({
+    focusedInputDialog,
+    streamMode,
+    queryGuard,
+    skipIdleCheckRef,
+    streamingText,
+    setMessages,
+    resetLoadingState,
+    toolUseConfirmQueue,
+    setToolUseConfirmQueue,
+    promptQueue,
+    setPromptQueue,
+    abortController,
+    setAbortController,
+    activeRemote,
+    mrOnTurnComplete,
+    messagesRef,
+  })
 
   // 取消权限请求时把已排队命令恢复到输入框（popAllEditable 从队列取出文本+图）
   const handleQueuedCommandOnCancel = useReplQueuedCommandRestore({
