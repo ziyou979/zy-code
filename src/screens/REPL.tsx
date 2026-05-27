@@ -337,6 +337,7 @@ import { useStreamingThinking } from './repl/useStreamingThinking.js'
 import { useReplCallouts } from './repl/useReplCallouts.js'
 import { useReplFrustration } from './repl/useReplFrustration.js'
 import { useReplIdeState } from './repl/useReplIdeState.js'
+import { useReplLoading } from './repl/useReplLoading.js'
 import { useReplNotifications } from './repl/useReplNotifications.js'
 import { useReplProactive } from './repl/useReplProactive.js'
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
@@ -750,26 +751,22 @@ export function REPL({
   // 可能不同步。参见 QueryGuard.ts。
   const queryGuard = React.useRef(new QueryGuard()).current
 
-  // 订阅 guard — dispatching 或 running 期间为 true。
-  // 这是"本地查询是否在飞行中"的唯一真实来源。
-  const isQueryActive = React.useSyncExternalStore(queryGuard.subscribe, queryGuard.getSnapshot)
+  // loading 簇收敛到 useReplLoading：
+  // - isQueryActive：订阅 queryGuard，本地查询是否在飞行中的唯一真实来源
+  // - isExternalLoading：远程会话/前台后台任务等非 queryGuard 路径的 loading
+  // - isLoading：上面两者的或值（只读派生）
+  // - timing refs + resetTimingRefs + setIsExternalLoading wrapper：见 hook 注释
+  const {
+    isQueryActive,
+    isLoading,
+    isExternalLoading,
+    setIsExternalLoading,
+    resetTimingRefs,
+    loadingStartTimeRef,
+    totalPausedMsRef,
+    pauseStartTimeRef,
+  } = useReplLoading(queryGuard, remoteSessionConfig?.hasInitialPrompt ?? false)
 
-  // 本地查询 guard 之外的操作的独立 loading 标志：
-  // 远程会话（useRemoteSession / useDirectConnect）和前台化
-  // 后台任务（useSessionBackgrounding）。这些不经过
-  // onQuery / queryGuard，所以需要自己的 spinner 可见性 state。
-  // 如果使用初始提示的 remote mode 则初始化为 true（CCR 正在处理）。
-  const [isExternalLoading, setIsExternalLoadingRaw] = React.useState(
-    remoteSessionConfig?.hasInitialPrompt ?? false,
-  )
-
-  // 派生：任何 loading 源活动。只读 — 无 setter。本地查询
-  // loading 由 queryGuard 驱动（reserve/tryStart/end/cancelReservation），
-  // 外部 loading 由 setIsExternalLoading 驱动。
-  const isLoading = isQueryActive || isExternalLoading
-
-  // 已过时间由 SpinnerWithVerb 从这些 ref 在每一帧计算，
-  // 避免 useInterval 重新渲染整个 REPL。
   const [userInputOnProcessing, setUserInputOnProcessingRaw] = React.useState<string | undefined>(
     undefined,
   )
@@ -783,43 +780,6 @@ export function REPL({
   // 基线保持同步，当不相关的异步消息（bridge 状态、hook
   // 结果、计划任务）在 processUserInputBase 期间到达时。
   const userMessagePendingRef = React.useRef(false)
-
-  // 精确已过时间计算的挂钟时间跟踪 ref
-  const loadingStartTimeRef = React.useRef<number>(0)
-  const totalPausedMsRef = React.useRef(0)
-  const pauseStartTimeRef = React.useRef<number | null>(null)
-  const resetTimingRefs = React.useCallback(() => {
-    loadingStartTimeRef.current = Date.now()
-    totalPausedMsRef.current = 0
-    pauseStartTimeRef.current = null
-  }, [])
-
-  // 当 isQueryActive 从 false→true 转换时内联重置 timing refs。
-  // queryGuard.reserve()（在 executeUserInput 中）在 processUserInput 的
-  // 第一个 await 之前触发，但 onQuery try 块中的 ref 重置在之后运行。
-  // 在此期间，React 用 loadingStartTimeRef=0 渲染 spinner，计算
-  // elapsedTimeMs = Date.now() - 0 ≈ 56 年。此内联重置在
-  // 首次观察到 isQueryActive 为 true 的渲染上运行 — 与首次
-  // 显示 spinner 的渲染相同 — 所以 spinner 读取时 ref 是正确的。参见 INC-4549。
-  const wasQueryActiveRef = React.useRef(false)
-  if (isQueryActive && !wasQueryActiveRef.current) {
-    resetTimingRefs()
-  }
-  wasQueryActiveRef.current = isQueryActive
-
-  // 包装 setIsExternalLoading 在转换为 true 时重置 timing refs —
-  // SpinnerWithVerb 读取这些用于已过时间，所以它们必须为
-  // 远程会话/前台任务重置（不仅是本地查询，它们在 onQuery 中重置）。
-  // 没有这个，纯远程会话会显示约 56 年的已过时间（Date.now() - 0）。
-  const setIsExternalLoading = React.useCallback(
-    (value: boolean) => {
-      setIsExternalLoadingRaw(value)
-      if (value) {
-        resetTimingRefs()
-      }
-    },
-    [resetTimingRefs],
-  )
 
   // 有 swarm teammate 运行的第一个回合的开始时间
   // 用于计算延迟消息的总已过时间（包括 teammate 执行）
