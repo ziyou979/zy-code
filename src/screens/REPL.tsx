@@ -1223,16 +1223,15 @@ export function REPL({
   } = useReplStreamingText()
 
   const [lastQueryCompletionTime, setLastQueryCompletionTime] = useState(0)
-  // Spinner 覆盖三态收敛到 useReplSpinnerOverride（写在 autoCompact 进度路径，
-  // 由 SpinnerWithVerb 的 overrideMessage/Color/ShimmerColor 读取）
+  // Spinner 覆盖三态 + onCompactProgress 适配收敛到 useReplSpinnerOverride。
+  // SpinnerWithVerb 读取 overrideMessage/Color/ShimmerColor；getToolUseContext
+  // 直接透传 onCompactProgress 给 compact 服务，不再持有具体 setter。
   const {
     spinnerMessage,
     spinnerColor,
     spinnerShimmerColor,
-    setSpinnerMessage,
-    setSpinnerColor,
-    setSpinnerShimmerColor,
     resetSpinnerOverride,
+    onCompactProgress,
   } = useReplSpinnerOverride()
   const [isMessageSelectorVisible, setIsMessageSelectorVisible] = useState(false)
   const [messageSelectorPreselect, setMessageSelectorPreselect] = useState<UserMessage | undefined>(
@@ -2198,30 +2197,7 @@ export function REPL({
         discoveredSkillNames: discoveredSkillNamesRef.current,
         setResponseLength,
         setStreamMode,
-        onCompactProgress: (event) => {
-          switch (event.type) {
-            case 'hooks_start':
-              setSpinnerColor('ZyBlue_FOR_SYSTEM_SPINNER')
-              setSpinnerShimmerColor('ZyBlueShimmer_FOR_SYSTEM_SPINNER')
-              setSpinnerMessage(
-                tSync('spinner.hooksRunning', {
-                  hookType:
-                    event.hookType === 'pre_compact'
-                      ? 'PreCompact'
-                      : event.hookType === 'post_compact'
-                        ? 'PostCompact'
-                        : 'SessionStart',
-                }),
-              )
-              break
-            case 'compact_start':
-              setSpinnerMessage(tSync('spinner.compacting'))
-              break
-            case 'compact_end':
-              resetSpinnerOverride()
-              break
-          }
-        },
+        onCompactProgress,
         setInProgressToolUseIDs,
         setHasInterruptibleToolInProgress: (v: boolean) => {
           hasInterruptibleToolInProgressRef.current = v
