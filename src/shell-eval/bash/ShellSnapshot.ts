@@ -55,30 +55,13 @@ function createArgv0ShellFunction(
 }
 
 /**
- * Creates ripgrep shell integration (alias or function)
- * @returns Object with type and the shell snippet to use
+ * 生成指向 @vscode/ripgrep 内置二进制的 shell alias 表达式。
  */
-export function createRipgrepShellIntegration(): {
-  type: 'alias' | 'function'
-  snippet: string
-} {
-  const rgCommand = ripgrepCommand()
-
-  // For embedded ripgrep (bun-internal), we need a shell function that sets argv0
-  if (rgCommand.argv0) {
-    return {
-      type: 'function',
-      snippet: createArgv0ShellFunction('rg', rgCommand.argv0, rgCommand.rgPath),
-    }
-  }
-
-  // For regular ripgrep, use a simple alias target
-  const quotedPath = quote([rgCommand.rgPath])
-  const quotedArgs = rgCommand.rgArgs.map((arg) => quote([arg]))
-  const aliasTarget =
-    rgCommand.rgArgs.length > 0 ? `${quotedPath} ${quotedArgs.join(' ')}` : quotedPath
-
-  return { type: 'alias', snippet: aliasTarget }
+export function createRipgrepShellIntegration(): string {
+  const { rgPath, rgArgs } = ripgrepCommand()
+  const quotedPath = quote([rgPath])
+  const quotedArgs = rgArgs.map((arg) => quote([arg]))
+  return rgArgs.length > 0 ? `${quotedPath} ${quotedArgs.join(' ')}` : quotedPath
 }
 
 /**
@@ -261,34 +244,23 @@ async function getZyCodeSnapshotContent(): Promise<string> {
     // Fall back to process.env.PATH if we can't get Cygwin PATH
   }
 
-  const rgIntegration = createRipgrepShellIntegration()
+  const rgAliasTarget = createRipgrepShellIntegration()
 
   let content = ''
 
-  // Check if rg is available, if not create an alias/function to bundled ripgrep
-  // We use a subshell to unalias rg before checking, so that user aliases like
-  // `alias rg='rg --smart-case'` don't shadow the real binary check. The subshell
-  // ensures we don't modify the user's aliases in the parent shell.
+  // 检查系统 rg 是否可用，不可用时写入指向 @vscode/ripgrep 内置二进制的 alias。
+  // 用子 shell unalias rg，避免用户别名（如 alias rg='rg --smart-case'）遮蔽真实二进制检测；
+  // 子 shell 同时保证不会修改父 shell 的别名。
   content += `
       # Check for rg availability
       echo "# Check for rg availability" >> "$SNAPSHOT_FILE"
       echo "if ! (unalias rg 2>/dev/null; command -v rg) >/dev/null 2>&1; then" >> "$SNAPSHOT_FILE"
   `
 
-  if (rgIntegration.type === 'function') {
-    // For embedded ripgrep, write the function definition using heredoc
-    content += `
-      cat >> "$SNAPSHOT_FILE" << 'RIPGREP_FUNC_END'
-  ${rgIntegration.snippet}
-RIPGREP_FUNC_END
-    `
-  } else {
-    // For regular ripgrep, write a simple alias
-    const escapedSnippet = rgIntegration.snippet.replace(/'/g, "'\\''")
-    content += `
+  const escapedSnippet = rgAliasTarget.replace(/'/g, "'\\''")
+  content += `
       echo '  alias rg='"'${escapedSnippet}'" >> "$SNAPSHOT_FILE"
     `
-  }
 
   content += `
       echo "fi" >> "$SNAPSHOT_FILE"

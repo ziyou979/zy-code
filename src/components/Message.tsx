@@ -185,21 +185,6 @@ function MessageImpl({
       if (message.subtype === 'microcompact_boundary') {
         return null
       }
-      if (feature('HISTORY_SNIP')) {
-        const { isSnipBoundaryMessage } =
-          require('../services/compact/snipProjection.js') as typeof import('../services/compact/snipProjection.js')
-        const { isSnipMarkerMessage } =
-          require('../services/compact/snipCompact.js') as typeof import('../services/compact/snipCompact.js')
-        if (isSnipBoundaryMessage(message)) {
-          const snipModule = require('./messages/SnipBoundaryMessage.js')
-          const { SnipBoundaryMessage } =
-            snipModule as typeof import('./messages/SnipBoundaryMessage.js')
-          return <SnipBoundaryMessage message={message} />
-        }
-        if (isSnipMarkerMessage(message)) {
-          return null
-        }
-      }
       if (message.subtype === 'local_command') {
         const localCommandContent: TextBlock = {
           type: 'text',

@@ -1,4 +1,3 @@
-import { feature } from 'bun:bundle'
 import { type UUID } from 'node:crypto'
 import isObject from 'lodash-es/isObject.js'
 import last from 'lodash-es/last.js'
@@ -157,26 +156,6 @@ export function mergeAssistantMessages(a: AssistantMessage, b: AssistantMessage)
 export function mergeUserMessages(a: UserMessage, b: UserMessage): UserMessage {
   const lastContent = normalizeUserTextContent(a.message.content)
   const currentContent = normalizeUserTextContent(b.message.content)
-  if (feature('HISTORY_SNIP')) {
-    // 合并后消息仅在所有合并消息都是 meta 时才是 meta。若任何操作数是真实用户内容，
-    // 结果不能标为 isMeta（这样 [id:] 标签会被注入并视为用户可见）。
-    // 通过完整运行时检查门控（更改 isMeta 语义影响下游 SDK harness VCR fixture 哈希），
-    // 仅在 snip 实际启用时触发。
-    const { isSnipRuntimeEnabled } =
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      require('../../services/compact/snipCompact.js') as typeof import('../../services/compact/snipCompact.js')
-    if (isSnipRuntimeEnabled()) {
-      return {
-        ...a,
-        isMeta: a.isMeta && b.isMeta ? (true as const) : undefined,
-        uuid: a.isMeta ? b.uuid : a.uuid,
-        message: {
-          ...a.message,
-          content: hoistToolResults(joinTextAtSeam(lastContent, currentContent)),
-        },
-      }
-    }
-  }
   return {
     ...a,
     // 保留非 meta 消息的 uuid，使 [id:] 标签（从 uuid 派生）在 API 调用间稳定

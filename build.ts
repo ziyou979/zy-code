@@ -39,7 +39,6 @@ const result = await Bun.build({
     'REACTIVE_COMPACT',
     'TOKEN_BUDGET',
     'CONTEXT_COLLAPSE',
-    'HISTORY_SNIP',
     'KAIROS',
     'BUILTIN_EXPLORE_PLAN_AGENTS',
     'VERIFICATION_AGENT',

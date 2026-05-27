@@ -37,10 +37,6 @@ import {
 const teamMemOps = feature('TEAMMEM')
   ? (require('./teamMemoryOps.js') as typeof import('./teamMemoryOps.js'))
   : null
-const SNIP_TOOL_NAME = feature('HISTORY_SNIP')
-  ? (require('../tools/SnipTool/prompt.js') as typeof import('../tools/SnipTool/prompt.js'))
-      .SNIP_TOOL_NAME
-  : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 /**
@@ -56,7 +52,7 @@ export type SearchOrReadResult = {
   isMemoryWrite: boolean
   /**
    * 对于应被静默吸收进 collapse 分组的元操作为 true，
-   * 不会递增任何计数（Snip、ToolSearch）。在详细模式下
+   * 不会递增任何计数（ToolSearch）。在详细模式下
    * 通过 groupMessages 迭代仍然可见。
    */
   isAbsorbedSilently: boolean
@@ -173,12 +169,9 @@ export function getToolSearchOrReadInfo(
     }
   }
 
-  // 静默吸收的元操作：Snip（上下文清理）和 ToolSearch（延迟加载工具 schema）。
-  // 两者都不应打断 collapse 分组或贡献计数，但在详细模式下仍然可见。
-  if (
-    (feature('HISTORY_SNIP') && toolName === SNIP_TOOL_NAME) ||
-    (isFullscreenEnvEnabled() && toolName === TOOL_SEARCH_TOOL_NAME)
-  ) {
+  // 静默吸收的元操作：ToolSearch（延迟加载工具 schema）。
+  // 不应打断 collapse 分组或贡献计数，但在详细模式下仍然可见。
+  if (isFullscreenEnvEnabled() && toolName === TOOL_SEARCH_TOOL_NAME) {
     return {
       isCollapsible: true,
       isSearch: false,
@@ -767,7 +760,7 @@ export function collapseReadSearchGroups(
           currentGroup.memoryWriteCount += count
         }
       } else if (toolInfo.isAbsorbedSilently) {
-        // Snip/ToolSearch 被静默吸收 — 无计数，无摘要文本。
+        // ToolSearch 被静默吸收 — 无计数，无摘要文本。
         // 在默认视图中隐藏，但在详细模式（Ctrl+O）下通过
         // CollapsedReadSearchContent 的 groupMessages 迭代可见。
       } else if (toolInfo.mcpServerName) {

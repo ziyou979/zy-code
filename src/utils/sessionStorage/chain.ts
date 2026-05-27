@@ -1,5 +1,5 @@
 // 对话链构建：从 transcript JSONL 重建 user/assistant/attachment/system 链。
-// 处理 compact boundary、snip 保留段、孤立并行 tool_result 恢复、抓首条 prompt 等。
+// 处理 compact boundary、孤立并行 tool_result 恢复、抓首条 prompt 等。
 
 import type { UUID } from 'node:crypto'
 import { logEvent } from 'src/services/analytics/index.js'
@@ -255,99 +255,6 @@ export function applyPreservedSegmentRelinks(messages: Map<string, TranscriptMes
 }
 
 /**
- * 删除 Snip 执行从内存数组中移除的消息，
- * 并跨越空隙重新链接 parentUuid。
- *
- * 与截断前缀的 compact_boundary 不同，snip 移除中间范围。
- * JSONL 是仅追加的，因此被移除的消息仍留在磁盘上，
- * 存活消息的 parentUuid 链会穿过它们。没有此过滤器，
- * buildConversationChain 会重建完整的未 snip 历史，恢复时立即
- * PTL（adamr-20260320-165831: 显示 397K → 实际 1.65M）。
- *
- * 仅删除是不够的：被移除范围之后的存活消息的
- * parentUuid 指向空隙内部。buildConversationChain 会命中
- * messages.get(undefined) 并停止，使空隙之前的所有内容成为孤儿。
- * 因此删除后我们重新链接：对每个具有悬挂 parentUuid 的存活者，
- * 通过被移除区域自己的父链接向后遍历到第一个未被移除的祖先。
- *
- * boundary 在执行时记录 removedUuids，以便我们可以在加载时
- * 重放精确的移除。没有 removedUuids 的旧 boundary 被跳过 —
- * 恢复会加载它们的 snip 前历史（修复前的行为）。
- *
- * 原地修改 Map。
- */
-export function applySnipRemovals(messages: Map<string, TranscriptMessage>): void {
-  // 结构检查 — snipMetadata 仅存在于 boundary 子类型上。
-  // 避免使用在 excluded-strings.txt 中的子类型字面量
-  // （HISTORY_SNIP 仅限 ant；字面量不得泄漏到外部构建）。
-  type WithSnipMeta = { snipMetadata?: { removedUuids?: UUID[] } }
-  const toDelete = new Set<string>()
-  for (const entry of messages.values()) {
-    const removedUuids = (entry as WithSnipMeta).snipMetadata?.removedUuids
-    if (!removedUuids) {
-      continue
-    }
-    for (const uuid of removedUuids) {
-      toDelete.add(uuid)
-    }
-  }
-  if (toDelete.size === 0) {
-    return
-  }
-
-  // 在删除之前捕获每个待删除 entry 自己的 parentUuid，以便我们可以
-  // 通过连续的已移除范围向后遍历。不在 Map 中的 entry
-  // （已缺失，例如来自先前的 compact_boundary 裁剪）不提供链接；
-  // 重新链接遍历会在空隙处停止并获取 null（链根行为 —
-  // 与 compact 在那里截断相同，实际上它确实这样做了）。
-  const deletedParent = new Map<string, UUID | null>()
-  let removedCount = 0
-  for (const uuid of toDelete) {
-    const entry = messages.get(uuid)
-    if (!entry) {
-      continue
-    }
-    deletedParent.set(uuid, entry.parentUuid)
-    messages.delete(uuid)
-    removedCount++
-  }
-
-  // 重新链接具有悬挂 parentUuid 的存活者。通过 deletedParent
-  // 向后遍历直到命中不在 toDelete 中的 UUID（或 null）。
-  // 路径压缩：解析后将解析结果种入 map，使后续共享
-  // 相同链段的存活者不必重新遍历。
-  const resolve = (start: UUID): UUID | null => {
-    const path: UUID[] = []
-    let cur: UUID | null | undefined = start
-    while (cur && toDelete.has(cur)) {
-      path.push(cur)
-      cur = deletedParent.get(cur)
-      if (cur === undefined) {
-        cur = null
-        break
-      }
-    }
-    for (const p of path) {
-      deletedParent.set(p, cur)
-    }
-    return cur
-  }
-  let relinkedCount = 0
-  for (const [uuid, msg] of messages) {
-    if (!msg.parentUuid || !toDelete.has(msg.parentUuid)) {
-      continue
-    }
-    messages.set(uuid, { ...msg, parentUuid: resolve(msg.parentUuid) })
-    relinkedCount++
-  }
-
-  logEvent('zy_snip_resume_filtered', {
-    removed_count: removedCount,
-    relinked_count: relinkedCount,
-  })
-}
-
-/**
  * O(n) 单次遍历：找到匹配谓词的最新时间戳的消息。
  * 替代 `[...values].filter(pred).sort((a,b) => Date(b)-Date(a))[0]` 模式，
  * 该模式为 O(n log n) + 2n 次 Date 分配。
@@ -538,7 +445,7 @@ function recoverOrphanedParallelToolResults(
 /**
  * 在重建的链中找到最新的 turn_duration 检查点，并将其记录的
  * messageCount 与该点的链位置进行比较。发出 zy_resume_consistency_delta
- * 用于 BigQuery 监控写入→加载往返漂移 — 即 snip/compact/并行-TR
+ * 用于 BigQuery 监控写入→加载往返漂移 — 即 compact/并行-TR
  * 操作修改内存但磁盘上的 parentUuid 遍历重建了不同集合的
  * bug 类别（adamr-20260320-165831: 显示 397K → 恢复时实际 1.65M）。
  *

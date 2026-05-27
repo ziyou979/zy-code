@@ -94,9 +94,6 @@ if (feature('TERMINAL_PANEL')) {
 if (feature('WEB_BROWSER_TOOL')) {
   require('./tools/WebBrowserTool/WebBrowserTool.js')
 }
-if (feature('HISTORY_SNIP')) {
-  require('./tools/SnipTool/SnipTool.js')
-}
 if (feature('UDS_INBOX')) {
   require('./tools/ListPeersTool/ListPeersTool.js')
 }

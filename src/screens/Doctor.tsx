@@ -312,13 +312,7 @@ export function Doctor({ onDone }: Props) {
           }
           {
             <Text>
-              └ {tSync('doctor.searchLabel')}: {searchStatusText} (
-              {diagnostic.ripgrepStatus.mode === 'embedded'
-                ? tSync('doctor.bundled')
-                : diagnostic.ripgrepStatus.mode === 'builtin'
-                  ? tSync('doctor.vendor')
-                  : diagnostic.ripgrepStatus.systemPath || tSync('doctor.system')}
-              )
+              └ {tSync('doctor.searchLabel')}: {searchStatusText} ({diagnostic.ripgrepStatus.path})
             </Text>
           }
           {diagnostic.recommendation && (

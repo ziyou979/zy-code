@@ -549,16 +549,10 @@ const MessagesImpl = ({
     // compact-boundary 过滤器只是隐藏了 ScrollBox 可以滚动到的历史。
     // 主屏幕模式保留过滤器——pre-compact 行存在于原生 scrollback 中的
     // 视口上方，重新渲染它们会触发完全重置。
-    // includeSnipped：UI 渲染保留 snipped 消息用于 scrollback
-    // （此 PR 的核心目标——UI 中保留完整历史，仅对模型过滤）。
-    // 同时避免 UUID 不匹配：normalizeMessages 派生新的 UUID，所以
-    // projectSnippedView 对原始 removedUuids 的检查会失败。
     const compactAwareMessages =
       verbose || isFullscreenEnvEnabled()
         ? normalizedMessages
-        : getMessagesAfterCompactBoundary(normalizedMessages, {
-            includeSnipped: true,
-          })
+        : getMessagesAfterCompactBoundary(normalizedMessages)
     const messagesToShowNotTruncated = reorderMessagesInUI(
       compactAwareMessages
         .filter(

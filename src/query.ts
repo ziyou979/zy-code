@@ -105,9 +105,6 @@ import { createBudgetTracker, checkTokenBudget } from './query/tokenBudget.js'
 import { count } from './utils/array.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const snipModule = feature('HISTORY_SNIP')
-  ? (require('./services/compact/snipCompact.js') as typeof import('./services/compact/snipCompact.js'))
-  : null
 const taskSummaryModule = feature('BG_SESSIONS')
   ? (require('./utils/taskSummary.js') as typeof import('./utils/taskSummary.js'))
   : null
@@ -367,22 +364,6 @@ async function* queryLoop(
       ),
     )
 
-    // 在 microcompact 之前应用 snip（两者都可以运行 — 不是互斥的）。
-    // snipTokensFreed 传入 autocompact 以便其阈值检查反映
-    // snip 移除的内容；仅 tokenCountWithEstimation 看不到它
-    // （从受保护尾部助手读取使用量，snip 对其无影响）。
-    let snipTokensFreed = 0
-    if (feature('HISTORY_SNIP')) {
-      queryCheckpoint('query_snip_start')
-      const snipResult = snipModule!.snipCompactIfNeeded(messagesForQuery)
-      messagesForQuery = snipResult.messages
-      snipTokensFreed = snipResult.tokensFreed
-      if (snipResult.boundaryMessage) {
-        yield snipResult.boundaryMessage
-      }
-      queryCheckpoint('query_snip_end')
-    }
-
     // 在 autocompact 之前应用 microcompact
     queryCheckpoint('query_microcompact_start')
     const microcompactResult = await deps.microcompact(
@@ -434,7 +415,6 @@ async function* queryLoop(
       },
       querySource,
       tracking,
-      snipTokensFreed,
     )
     queryCheckpoint('query_autocompact_end')
 
@@ -551,10 +531,6 @@ async function* queryLoop(
     // 如果压缩刚刚发生则跳过此检查 — 压缩结果已经
     // 验证低于阈值，且 tokenCountWithEstimation 会使用
     // 保留消息的陈旧 input_tokens，反映压缩前上下文大小。
-    // snip 同样存在陈旧问题：减去 snipTokensFreed（否则我们会
-    // 在 snip 让我们低于 autocompact 阈值但陈旧使用量仍高于
-    // 阻塞限制的窗口中错误地阻塞 — 在此 PR 之前该窗口
-    // 从未存在过，因为 autocompact 总是在陈旧计数上触发）。
     // 还要为 compact/session_memory 查询跳过 — 这些是分叉的 agent，
     // 继承完整对话，如果在这里阻塞会死锁（压缩 agent 需要
     // 运行来减少 token 计数）。
@@ -586,7 +562,7 @@ async function* queryLoop(
       !collapseOwnsIt
     ) {
       const { isAtBlockingLimit } = calculateTokenWarningState(
-        tokenCountWithEstimation(messagesForQuery) - snipTokensFreed,
+        tokenCountWithEstimation(messagesForQuery),
         toolUseContext.options.mainLoopModel,
       )
       if (isAtBlockingLimit) {

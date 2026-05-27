@@ -95,16 +95,6 @@ const getCoordinatorUserContext: (
   : () => ({})
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-// 死代码消除：snip 压缩的条件导入
-/* eslint-disable @typescript-eslint/no-require-imports */
-const snipModule = feature('HISTORY_SNIP')
-  ? (require('./services/compact/snipCompact.js') as typeof import('./services/compact/snipCompact.js'))
-  : null
-const snipProjection = feature('HISTORY_SNIP')
-  ? (require('./services/compact/snipProjection.js') as typeof import('./services/compact/snipProjection.js'))
-  : null
-/* eslint-enable @typescript-eslint/no-require-imports */
-
 export type QueryEngineConfig = {
   cwd: string
   tools: Tools
@@ -133,18 +123,6 @@ export type QueryEngineConfig = {
   setSDKStatus?: (status: BridgeStatus) => void
   abortController?: AbortController
   orphanedPermission?: OrphanedPermission
-  /**
-   * Snip 边界处理器：接收每个产生的 system 消息以及当前的 mutableMessages store。
-   * 如果消息不是 snip 边界则返回 undefined；否则返回重放后的 snip 结果。
-   * 当 HISTORY_SNIP 启用时由 ask() 注入，使 feature 门控的字符串保留在门控模块内部
-   *（保持 QueryEngine 无排除字符串且可测试，即使 feature() 在 bun test 下返回 false）。
-   * 仅 SDK：REPL 保留完整历史用于 UI 回滚并通过 projectSnippedView 按需投影；
-   * QueryEngine 在此处截断以限制长 headless 会话的内存使用（无需保留 UI）。
-   */
-  snipReplay?: (
-    yieldedSystemMsg: Message,
-    store: Message[],
-  ) => { messages: Message[]; executed: boolean } | undefined
 }
 
 /**
@@ -308,7 +286,7 @@ export class QueryEngine {
 
     let processUserInputContext: ProcessUserInputContext = {
       messages: this.mutableMessages,
-      // 变更消息数组的斜杠命令（如 /force-snip）会调用 setMessages(fn)。
+      // 变更消息数组的斜杠命令会调用 setMessages(fn)。
       // 在交互模式下这会写回 AppState；在打印模式下我们写回 mutableMessages，
       // 使查询循环的后续部分（:389 的 push、:392 的 snapshot）能看到结果。
       // 下方第二个 processUserInputContext（斜杠命令处理之后）保留了该 no-op——
@@ -860,19 +838,6 @@ export class QueryEngine {
           // 不产生 stream request start 消息
           break
         case 'system': {
-          // Snip 边界：在我们的 store 上重放以移除僵尸消息和过时标记。
-          // 产生的边界是一个信号，而不是要推送的数据——重放会生成自己的等效边界。
-          // 没有这一步，标记会在每个 turn 持续存在并重新触发，mutableMessages
-          // 永远不会缩小（长 SDK 会话中的内存泄漏）。子类型检查在注入的回调内部，
-          // 因此 feature 门控的字符串不会进入此文件（excluded-strings 检查）。
-          const snipResult = this.config.snipReplay?.(message, this.mutableMessages)
-          if (snipResult !== undefined) {
-            if (snipResult.executed) {
-              this.mutableMessages.length = 0
-              this.mutableMessages.push(...snipResult.messages)
-            }
-            break
-          }
           this.mutableMessages.push(message)
           // 向 SDK 产生 compact boundary 消息
           const sysMsg = message as unknown as {
@@ -1249,17 +1214,6 @@ export async function* ask({
     setSDKStatus,
     abortController,
     orphanedPermission,
-    ...(feature('HISTORY_SNIP')
-      ? {
-          snipReplay: (yielded: Message, store: Message[]) => {
-            if (!snipProjection!.isSnipBoundaryMessage(yielded)) {
-              return undefined
-            }
-            const result = snipModule!.snipCompactIfNeeded(store, { force: true })
-            return { messages: result.messages, executed: true }
-          },
-        }
-      : {}),
   })
 
   try {

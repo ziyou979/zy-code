@@ -510,6 +510,7 @@ export const enMisc: TranslationResource = {
   'powerup.debug.description':
     'Diagnose and fix bugs — trace errors, inspect state, apply patches.',
   'powerup.debug.title': 'Bug Fixing',
+  'powerup.demoLabel': 'Demo',
   'powerup.detailHint': 'y / Enter — mark complete · Esc / n — back to list',
   'powerup.docs.description':
     'Generate docs, JSDoc comments, READMEs, and architectural overviews.',

@@ -88,7 +88,6 @@ import {
   smooshIntoToolResult,
 } from '../messages/normalize.js'
 import {
-  deriveShortMessageId,
   isHookAttachmentMessage,
   isSystemLocalCommandMessage,
   isToolUseRequestMessage,
@@ -490,63 +489,6 @@ function stripUnavailableToolReferencesFromUserMessage(
           content: filteredContent,
         }
       }),
-    },
-  }
-}
-
-/**
- * 将 [id:...] 消息 ID 标签追加到用户消息的最后一个文本块。
- * 仅修改 API 发送的副本，不修改存储的消息。
- * 这使 AI 在调用 snip 工具时能引用消息 ID。
- */
-function appendMessageTagToUserMessage(message: UserMessage): UserMessage {
-  if (message.isMeta) {
-    return message
-  }
-
-  const tag = `\n[id:${deriveShortMessageId(message.uuid)}]`
-
-  const content = message.message.content
-
-  // 处理字符串内容（简单文本输入最常见）
-  if (typeof content === 'string') {
-    return {
-      ...message,
-      message: {
-        ...message.message,
-        content: content + tag,
-      },
-    }
-  }
-
-  if (!Array.isArray(content) || content.length === 0) {
-    return message
-  }
-
-  // 查找最后一个文本块
-  let lastTextIdx = -1
-  for (let i = content.length - 1; i >= 0; i--) {
-    if (content[i]!.type === 'text') {
-      lastTextIdx = i
-      break
-    }
-  }
-  if (lastTextIdx === -1) {
-    return message
-  }
-
-  const newContent = [...content]
-  const textBlock = newContent[lastTextIdx] as TextBlock
-  newContent[lastTextIdx] = {
-    ...textBlock,
-    text: textBlock.text + tag,
-  }
-
-  return {
-    ...message,
-    message: {
-      ...message.message,
-      content: newContent as typeof content,
     },
   }
 }
@@ -1127,24 +1069,6 @@ export function normalizeMessagesForAPI(
   // 无条件执行 — 捕获 smooshIntoToolResult 学会根据 is_error 过滤之前持久化的记录。
   // 不这样做的话，恢复的会话中带有 image-in-error tool_result 会无限 400。
   const sanitized = sanitizeErrorToolResultContent(smooshed)
-
-  // 为 snip 工具可见性追加消息 ID 标签（在所有合并之后，
-  // 所以标签始终与存活消息的 messageId 字段匹配）。
-  // 在测试模式下跳过 — 标签会改变消息内容哈希，破坏 VCR fixture 查找。
-  // 门控必须与 SnipTool.isEnabled() 匹配 — 不要在工具不可用时注入 [id:] 标签
-  // （会混淆模型并在每条非 meta user 消息上浪费 token）。
-  if (feature('HISTORY_SNIP') && process.env.NODE_ENV !== 'test') {
-    const { isSnipRuntimeEnabled } =
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      require('../../services/compact/snipCompact.js') as typeof import('../../services/compact/snipCompact.js')
-    if (isSnipRuntimeEnabled()) {
-      for (let i = 0; i < sanitized.length; i++) {
-        if (sanitized[i]!.type === 'user') {
-          sanitized[i] = appendMessageTagToUserMessage(sanitized[i] as UserMessage)
-        }
-      }
-    }
-  }
 
   // 发送前验证所有图片是否在 API 大小限制内
   validateImagesForAPI(sanitized)
@@ -2226,20 +2150,6 @@ You have exited auto mode. The user may now want to interact more directly. You 
         }),
       ])
     }
-    case 'context_efficiency': {
-      if (feature('HISTORY_SNIP')) {
-        const { SNIP_NUDGE_TEXT } =
-          // eslint-disable-next-line @typescript-eslint/no-require-imports
-          require('../../services/compact/snipCompact.js') as typeof import('../../services/compact/snipCompact.js')
-        return wrapMessagesInSystemReminder([
-          createUserMessage({
-            content: SNIP_NUDGE_TEXT,
-            isMeta: true,
-          }),
-        ])
-      }
-      return []
-    }
     case 'date_change': {
       return wrapMessagesInSystemReminder([
         createUserMessage({
@@ -2360,12 +2270,6 @@ You have exited auto mode. The user may now want to interact more directly. You 
 /**
  * 返回从最后一个 compact 边界开始（包含边界本身）的消息。
  * 如果不存在边界，则返回所有消息。
- *
- * 默认情况下也会过滤已截断的消息（当 HISTORY_SNIP 启用时）——
- * REPL 保留完整历史用于 UI 回滚，因此面向模型的路径需要
- * 同时应用 compact 切片和 snip 过滤。传入 `{ includeSnipped: true }`
- * 可跳过此行为（例如 REPL.tsx 全屏 compact 处理器保留
- * 已截断消息用于回滚显示）。
  *
  * 注意：边界本身是系统消息，会被 normalizeMessagesForAPI 过滤。
  */

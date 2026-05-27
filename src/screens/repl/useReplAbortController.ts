@@ -13,7 +13,7 @@ export type ReplAbortController = {
   abortController: AbortController | null
   setAbortController: React.Dispatch<React.SetStateAction<AbortController | null>>
   /** 远程中断/进程外路径用 ref 同步读取最新 controller */
-  abortControllerRef: React.MutableRefObject<AbortController | null>
+  abortControllerRef: React.RefObject<AbortController | null>
 }
 
 export function useReplAbortController(): ReplAbortController {

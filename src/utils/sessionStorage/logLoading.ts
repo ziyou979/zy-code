@@ -82,7 +82,6 @@ const SKIP_FIRST_PROMPT_PATTERN = /^(?:\s*<[a-z][\w-]*[\s>]|\[Request interrupte
 
 import {
   applyPreservedSegmentRelinks,
-  applySnipRemovals,
   buildAttributionSnapshotChain,
   buildConversationChain,
   buildFileHistorySnapshotChain,
@@ -1106,7 +1105,6 @@ export async function loadTranscriptFile(
 
   repairBrokenParentUuidChains(messages)
   applyPreservedSegmentRelinks(messages)
-  applySnipRemovals(messages)
 
   // 在加载时一次性计算叶子 UUID
   // 只有 user/assistant 消息应被视为锚定恢复的叶子。

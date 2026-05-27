@@ -169,10 +169,6 @@ export async function shouldAutoCompact(
   messages: Message[],
   model: string,
   querySource?: QuerySource,
-  // Snip 移除消息但存活的助手的用法仍然反映
-  // 压缩前的上下文，所以 tokenCountWithEstimation 看不到节省。
-  // 减去 snip 已经计算的粗略增量。
-  snipTokensFreed = 0,
 ): Promise<boolean> {
   // 递归守卫。session_memory 和 compact 是分叉代理，会导致死锁。
   if ((querySource as any) === 'session_memory' || (querySource as any) === 'compact') {
@@ -229,12 +225,12 @@ export async function shouldAutoCompact(
     }
   }
 
-  const tokenCount = tokenCountWithEstimation(messages) - snipTokensFreed
+  const tokenCount = tokenCountWithEstimation(messages)
   const threshold = getAutoCompactThreshold(model)
   const effectiveWindow = getEffectiveContextWindowSize(model)
 
   logForDebugging(
-    `autocompact: tokens=${tokenCount} threshold=${threshold} effectiveWindow=${effectiveWindow}${snipTokensFreed > 0 ? ` snipFreed=${snipTokensFreed}` : ''}`,
+    `autocompact: tokens=${tokenCount} threshold=${threshold} effectiveWindow=${effectiveWindow}`,
   )
 
   const { isAboveAutoCompactThreshold } = calculateTokenWarningState(tokenCount, model)
@@ -248,7 +244,6 @@ export async function autoCompactIfNeeded(
   cacheSafeParams: CacheSafeParams,
   querySource?: QuerySource,
   tracking?: AutoCompactTrackingState,
-  snipTokensFreed?: number,
 ): Promise<{
   wasCompacted: boolean
   compactionResult?: CompactionResult
@@ -269,7 +264,7 @@ export async function autoCompactIfNeeded(
   }
 
   const model = toolUseContext.options.mainLoopModel
-  const shouldCompact = await shouldAutoCompact(messages, model, querySource, snipTokensFreed)
+  const shouldCompact = await shouldAutoCompact(messages, model, querySource)
 
   if (!shouldCompact) {
     return { wasCompacted: false }

@@ -1,9 +1,0 @@
-import React from 'react'
-import { Text } from '../ink.js'
-
-/**
- * Renders a visual boundary marker for snipped (compacted) conversation history.
- */
-export function SnipBoundaryMessage({ message: _message }: { message: { type: string } }) {
-  return React.createElement(Text, { dimColor: true }, '--- conversation history snipped ---')
-}

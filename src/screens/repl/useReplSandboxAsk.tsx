@@ -50,7 +50,7 @@ export type UseReplSandboxAskParams = {
 
 export type UseReplSandboxAskResult = {
   /** 由本地对话框 approval 路径共享，按 host 取出兄弟 bridge 清理函数 */
-  sandboxBridgeCleanupRef: React.MutableRefObject<Map<string, Array<() => void>>>
+  sandboxBridgeCleanupRef: React.RefObject<Map<string, Array<() => void>>>
 }
 
 export function useReplSandboxAsk({

@@ -61,8 +61,7 @@ export type DiagnosticInfo = {
   packageManager?: string
   ripgrepStatus: {
     working: boolean
-    mode: 'system' | 'builtin' | 'embedded'
-    systemPath: string | null
+    path: string
   }
 }
 
@@ -552,14 +551,11 @@ export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
     }
   }
 
-  // Get ripgrep status and configuration
+  // 获取 ripgrep 路径与可用性（统一走 @vscode/ripgrep 内置二进制）
   const ripgrepStatusRaw = getRipgrepStatus()
-
-  // Provide simple ripgrep status info
   const ripgrepStatus = {
-    working: ripgrepStatusRaw.working ?? true, // Assume working if not yet tested
-    mode: ripgrepStatusRaw.mode,
-    systemPath: ripgrepStatusRaw.mode === 'system' ? ripgrepStatusRaw.path : null,
+    working: ripgrepStatusRaw.working ?? true,
+    path: ripgrepStatusRaw.path,
   }
 
   // Get package manager info if running from package manager

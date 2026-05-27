@@ -37,8 +37,6 @@ export const call: LocalCommandCall = async (args, context) => {
   const { abortController } = context
   let { messages } = context
 
-  // REPL keeps snipped messages for UI scrollback — project so the compact
-  // model doesn't summarize content that was intentionally removed.
   messages = getMessagesAfterCompactBoundary(messages)
 
   if (messages.length === 0) {

@@ -821,13 +821,6 @@ export async function getAttachments(
           ),
         ]
       : []),
-    ...(feature('HISTORY_SNIP')
-      ? [
-          maybe('context_efficiency', () =>
-            Promise.resolve(getContextEfficiencyAttachment(messages ?? [])),
-          ),
-        ]
-      : []),
   ]
 
   // 语义上仅用于主对话或不具备并发安全实现的附件
@@ -3590,33 +3583,6 @@ export function getCompactionReminderAttachment(messages: Message[], model: stri
   ]
 }
 
-/**
- * Context-efficiency nudge. Injected after every N tokens of growth without
- * a snip. Pacing is handled entirely by shouldNudgeForSnips — the 10k
- * interval resets on prior nudges, snip markers, snip boundaries, and
- * compact boundaries.
- */
-export function getContextEfficiencyAttachment(messages: Message[]): Attachment[] {
-  if (!feature('HISTORY_SNIP')) {
-    return []
-  }
-  // 门控必须与 SnipTool.isEnabled() 匹配 — 不要提示使用不在工具列表中的工具。
-  // 延迟 require 使此文件不包含 snip 字符串。
-  const { isSnipRuntimeEnabled, shouldNudgeForSnips } =
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require('../services/compact/snipCompact.js') as any as typeof import('../services/compact/snipCompact.js')
-  if (!isSnipRuntimeEnabled()) {
-    return []
-  }
-  if (!shouldNudgeForSnips(messages)) {
-    return []
-  }
-  return [
-    {
-      type: 'context_efficiency',
-    },
-  ]
-}
 function isFileReadDenied(filePath: string, toolPermissionContext: ToolPermissionContext): boolean {
   const denyRule = matchingRuleForInput(filePath, toolPermissionContext, 'read', 'deny')
   return denyRule !== null

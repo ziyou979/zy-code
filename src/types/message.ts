@@ -322,12 +322,6 @@ export interface SystemMemorySavedMessage extends BaseMessage {
   writtenPaths?: string[]
 }
 
-export interface SystemSnipBoundaryMessage extends BaseMessage {
-  type: 'system'
-  subtype: 'snip_boundary'
-  content: string
-}
-
 export type SystemMessage =
   | SystemInformationalMessage
   | SystemAPIErrorMessage
@@ -344,7 +338,6 @@ export type SystemMessage =
   | TombstoneMessage
   | SystemStopHookSummaryMessage
   | SystemMemorySavedMessage
-  | SystemSnipBoundaryMessage
 
 // ============================================================
 // Hook Result / Stream Events

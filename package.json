@@ -37,6 +37,7 @@
     "@smithy/core": "^3.23.17",
     "@smithy/node-http-handler": "^4.6.1",
     "@types/turndown": "^5.0.6",
+    "@vscode/ripgrep": "^1.18.0",
     "ajv": "^8.20.0",
     "asciichart": "^1.5.25",
     "auto-bind": "^5.0.1",

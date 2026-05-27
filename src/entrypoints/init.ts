@@ -88,15 +88,22 @@ export const init = memoize(async (): Promise<void> => {
     void Promise.all([
       import('../services/analytics/zyEventLogger.js'),
       import('../services/analytics/growthbook.js'),
-    ]).then(([fp, gb]) => {
-      fp.initializeZyEventLogging()
-      // 如果 zy_1p_event_batch_config 在会话中
-      // 途变化，重新初始化日志 provider。变化检测（isEqual）在
-      // handler 内部，因此未变化的刷新是空操作。
-      gb.onGrowthBookRefresh(() => {
-        void fp.reinitializeZyEventLoggingIfConfigChanged()
+    ])
+      .then(([fp, gb]) => {
+        fp.initializeZyEventLogging()
+        // 如果 zy_1p_event_batch_config 在会话中
+        // 途变化，重新初始化日志 provider。变化检测（isEqual）在
+        // handler 内部，因此未变化的刷新是空操作。
+        gb.onGrowthBookRefresh(() => {
+          void fp.reinitializeZyEventLoggingIfConfigChanged()
+        })
       })
-    })
+      .catch((error: unknown) => {
+        // 之前这里没有 .catch，任何 import/init 异常都会变成 unhandled rejection
+        // 静默消失，~/.zy/telemetry/zy_events.log 永远不生成。加 catch 让失败可观测。
+        const message = error instanceof Error ? error.message : String(error)
+        logForDebugging(`1P event logging init failed: ${message}`, { level: 'warn' })
+      })
     profileCheckpoint('init_after_1p_event_logging')
 
     // 如果 OAuth 账号信息尚未缓存到配置中，则填充它。这是必要的，因为

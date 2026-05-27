@@ -1,14 +1,17 @@
 import * as React from 'react'
 import { useCallback, useMemo, useState } from 'react'
-import { Markdown } from '../../components/Markdown.js'
 import { Select } from '../../components/CustomSelect/select.js'
+import { Markdown } from '../../components/Markdown.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text, useInput } from '../../ink.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { getLessonFrames } from './frames.js'
+import { LessonFrames } from './LessonFrames.js'
 
 interface PowerupLesson {
   id: string
+  i18nKey: string
   title: string
   tagline: string
   body: string
@@ -32,6 +35,7 @@ const LESSON_REGISTRY = [
 function getLessons(): PowerupLesson[] {
   return LESSON_REGISTRY.map(({ id, i18nKey }) => ({
     id,
+    i18nKey,
     title: tSync(`powerup.lesson.${i18nKey}.title`),
     tagline: tSync(`powerup.lesson.${i18nKey}.tagline`),
     body: tSync(`powerup.lesson.${i18nKey}.body`),
@@ -117,12 +121,20 @@ function PowerupApp({ onDone }: Props) {
   if (openLesson) {
     const isUnlocked = unlocked.has(openLesson.id)
     const badge = isUnlocked ? tSync('powerup.unlockedBadge') : tSync('powerup.todoBadge')
+    const frames = getLessonFrames(openLesson.i18nKey)
     return (
       <Box flexDirection="column" paddingX={1} paddingY={1}>
-        <Text bold>{openLesson.title}</Text>
+        <Text bold color="zy">
+          {openLesson.title}
+        </Text>
         <Text color="subtle">
           {openLesson.tagline} · {badge}
         </Text>
+        {frames.length > 0 && (
+          <Box marginTop={1}>
+            <LessonFrames key={openLesson.id} frames={frames} />
+          </Box>
+        )}
         <Box marginTop={1}>
           <Markdown>{openLesson.body}</Markdown>
         </Box>
@@ -141,7 +153,9 @@ function PowerupApp({ onDone }: Props) {
   return (
     <Box flexDirection="column" paddingX={1} paddingY={1}>
       <Box flexDirection="row" gap={1}>
-        <Text bold>{allDone ? tSync('powerup.titleAll') : tSync('powerup.title')}</Text>
+        <Text bold color="zy">
+          {allDone ? tSync('powerup.titleAll') : tSync('powerup.title')}
+        </Text>
         <Text color="subtle">{progressLabel}</Text>
       </Box>
       <Box marginTop={1}>

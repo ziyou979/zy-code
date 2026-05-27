@@ -315,23 +315,13 @@ export function findLastCompactBoundaryIndex<T extends Message | NormalizedMessa
 
 /**
  * 返回从最后一个 compact 边界开始（包含边界本身）的消息。
- * 不存在边界时返回所有消息。HISTORY_SNIP 启用时默认应用 snip 过滤；
- * 传入 `{ includeSnipped: true }` 跳过（REPL 全屏 compact 处理器需要原始视图）。
+ * 不存在边界时返回所有消息。
  */
 export function getMessagesAfterCompactBoundary<T extends Message | NormalizedMessage>(
   messages: T[],
-  options?: { includeSnipped?: boolean },
 ): T[] {
   const boundaryIndex = findLastCompactBoundaryIndex(messages)
-  const sliced = boundaryIndex === -1 ? messages : messages.slice(boundaryIndex)
-  if (!options?.includeSnipped && feature('HISTORY_SNIP')) {
-    /* eslint-disable @typescript-eslint/no-require-imports */
-    const { projectSnippedView } =
-      require('../../services/compact/snipProjection.js') as typeof import('../../services/compact/snipProjection.js')
-    /* eslint-enable @typescript-eslint/no-require-imports */
-    return projectSnippedView(sliced as Message[]) as T[]
-  }
-  return sliced
+  return boundaryIndex === -1 ? messages : messages.slice(boundaryIndex)
 }
 
 export function shouldShowUserMessage(
