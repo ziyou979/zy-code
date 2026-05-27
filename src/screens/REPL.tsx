@@ -236,10 +236,7 @@ import {
   saveAiGeneratedTitle,
 } from '../utils/sessionStorage.js'
 import { deserializeMessages } from '../utils/conversationRecovery.js'
-import {
-  extractReadFilesFromMessages,
-  extractBashToolsFromMessages,
-} from '../utils/queryHelpers.js'
+import { extractReadFilesFromMessages } from '../utils/queryHelpers.js'
 import { resetMicrocompactState } from '../services/compact/microCompact.js'
 import { runPostCompactCleanup } from '../services/compact/postCompactCleanup.js'
 import {
@@ -341,11 +338,11 @@ import { type PromptQueueItem, useReplRequestPrompt } from './repl/useReplReques
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
 import { useReplSearch } from './repl/useReplSearch.js'
 import { useReplSpinnerOverride } from './repl/useReplSpinnerOverride.js'
+import { useReplSpinnerTip } from './repl/useReplSpinnerTip.js'
 import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
 import { useTranscriptEditor } from './repl/useTranscriptEditor.js'
 import { useViewedAgentBootstrap } from './repl/useViewedAgentBootstrap.js'
 import { usePromptsFromClaudeInChrome } from 'src/hooks/usePromptsFromClaudeInChrome.js'
-import { getTipToShowOnSpinner, recordShownTip } from 'src/services/tips/tipScheduler.js'
 import type { Theme } from 'src/utils/theme.js'
 import {
   checkAndDisableBypassPermissionsIfNeeded,
@@ -1291,8 +1288,6 @@ export function REPL({
     createFileStateCacheWithSizeLimit(READ_FILE_STATE_CACHE_SIZE),
   )
   const readFileState = useRef(initialReadFileState)
-  const bashTools = useRef(new Set<string>())
-  const bashToolsProcessedIdx = useRef(0)
   // 会话级 skill 发现跟踪（为 zy_skill_tool_invocation 提供
   // was_discovered）。必须在 getToolUseContext 重建之间跨会话持久：
   // turn-0 发现在 onQuery 构建自己的上下文之前通过 processUserInput
@@ -1304,57 +1299,29 @@ export function REPL({
   // 下一个发现周期会重新注入它。在 clearConversation 中清除。
   const loadedNestedMemoryPathsRef = useRef(new Set<string>())
 
+  // Spinner tip 收敛到 useReplSpinnerTip：bashTools 累积 + tip 选择守卫
+  // + 回合复位 + clearConversation 路径全部内化。
+  const {
+    pickNewSpinnerTip,
+    ingestBashToolsFromMessages,
+    clearBashToolsTracking,
+    resetTipPickedThisTurn,
+  } = useReplSpinnerTip({
+    theme,
+    messagesRef,
+    readFileStateRef: readFileState,
+  })
+
   // 从消息中恢复读取文件状态的辅助函数（用于 resume 流程）
   // 这使 Zy 能够编辑在之前会话中读取的文件
-  const restoreReadFileState = useCallback((messages: MessageType[], cwd: string) => {
-    const extracted = extractReadFilesFromMessages(messages, cwd, READ_FILE_STATE_CACHE_SIZE)
-    readFileState.current = mergeFileStateCaches(readFileState.current, extracted)
-    for (const tool of extractBashToolsFromMessages(messages)) {
-      bashTools.current.add(tool)
-    }
-  }, [])
-
-  // resetLoadingState 每个回合运行两次（onQueryImpl 尾部 + onQuery finally）。
-  // 没有这个守卫，两次调用都会选择提示 → 两次 recordShownTip → 两次
-  // saveGlobalConfig 背靠背写入。在 onSubmit 中的提交时重置。
-  const tipPickedThisTurnRef = React.useRef(false)
-  const pickNewSpinnerTip = useCallback(() => {
-    if (tipPickedThisTurnRef.current) {
-      return
-    }
-    tipPickedThisTurnRef.current = true
-    const newMessages = messagesRef.current.slice(bashToolsProcessedIdx.current)
-    for (const tool of extractBashToolsFromMessages(newMessages)) {
-      bashTools.current.add(tool)
-    }
-    bashToolsProcessedIdx.current = messagesRef.current.length
-    void getTipToShowOnSpinner({
-      theme,
-      readFileState: readFileState.current,
-      bashTools: bashTools.current,
-    }).then(async (tip) => {
-      if (tip) {
-        const content = await tip.content({
-          theme,
-        })
-        setAppState((prev) => ({
-          ...prev,
-          spinnerTip: content,
-        }))
-        recordShownTip(tip)
-      } else {
-        setAppState((prev) => {
-          if (prev.spinnerTip === undefined) {
-            return prev
-          }
-          return {
-            ...prev,
-            spinnerTip: undefined,
-          }
-        })
-      }
-    })
-  }, [setAppState, theme])
+  const restoreReadFileState = useCallback(
+    (messages: MessageType[], cwd: string) => {
+      const extracted = extractReadFilesFromMessages(messages, cwd, READ_FILE_STATE_CACHE_SIZE)
+      readFileState.current = mergeFileStateCaches(readFileState.current, extracted)
+      ingestBashToolsFromMessages(messages)
+    },
+    [ingestBashToolsFromMessages],
+  )
 
   // 重置 UI loading state。不显式调用 onTurnComplete - 那应该
   // 仅在查询回合实际完成时显式调用。
@@ -2908,8 +2875,7 @@ export function REPL({
           setConversationId,
         })
         titleGenerationAttemptedRef.current = false
-        bashTools.current.clear()
-        bashToolsProcessedIdx.current = 0
+        clearBashToolsTracking()
 
         // 恢复新会话的 plan slug 以便 getPlan() 找到文件
         if (oldPlanSlug) {
@@ -3286,7 +3252,7 @@ export function REPL({
         setIDESelection(undefined)
         setSubmitCount((_) => _ + 1)
         helpers.clearBuffer()
-        tipPickedThisTurnRef.current = false
+        resetTipPickedThisTurn()
 
         // 与 setInputValue('') 在同一 React 批处理中显示占位符。
         // 跳过斜杠/bash（它们有自己的回显）、推测和远程
@@ -5056,8 +5022,7 @@ export function REPL({
                           setConversationId,
                         })
                         titleGenerationAttemptedRef.current = false
-                        bashTools.current.clear()
-                        bashToolsProcessedIdx.current = 0
+                        clearBashToolsTracking()
                       }
                       skipIdleCheckRef.current = true
                       void onSubmitRef.current(pending.input, {
