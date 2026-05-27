@@ -98,7 +98,6 @@ import {
 } from '../components/permissions/PermissionRequest.js'
 import { ElicitationDialog } from '../components/mcp/ElicitationDialog.js'
 import { PromptDialog } from '../components/hooks/PromptDialog.js'
-import type { PromptRequest, PromptResponse } from '../types/hooks/index.js'
 import PromptInput from '../components/PromptInput/PromptInput.js'
 import { PromptInputQueuedCommands } from '../components/PromptInput/PromptInputQueuedCommands.js'
 import type { DirectConnectConfig } from '../server/directConnectManager.js'
@@ -340,6 +339,7 @@ import { useReplNotifications } from './repl/useReplNotifications.js'
 import { useReplStreamingText } from './repl/useReplStreamingText.js'
 import { useReplProactive } from './repl/useReplProactive.js'
 import { useReplQueuedCommandRestore } from './repl/useReplQueuedCommandRestore.js'
+import { type PromptQueueItem, useReplRequestPrompt } from './repl/useReplRequestPrompt.js'
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
 import { useReplSearch } from './repl/useReplSearch.js'
 import { useReplSpinnerOverride } from './repl/useReplSpinnerOverride.js'
@@ -915,15 +915,7 @@ export function REPL({
       resolvePromise: (allowConnection: boolean) => void
     }>
   >([])
-  const [promptQueue, setPromptQueue] = useState<
-    Array<{
-      request: PromptRequest
-      title: string
-      toolInputSummary?: string | null
-      resolve: (response: PromptResponse) => void
-      reject: (error: Error) => void
-    }>
-  >([])
+  const [promptQueue, setPromptQueue] = useState<PromptQueueItem[]>([])
 
   // 跟踪沙盒权限请求的 bridge 清理函数，以便
   // 本地对话框处理程序可以在本地用户先响应时取消远程提示。
@@ -2285,23 +2277,9 @@ export function REPL({
   // setToolPermissionContext + leader 注册 effect 已抽到 useReplToolPermissionContext。
   const setToolPermissionContext = useReplToolPermissionContext(setToolUseConfirmQueue)
   const canUseTool = useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext)
-  const requestPrompt = useCallback(
-    (title: string, toolInputSummary?: string | null) =>
-      (request: PromptRequest): Promise<PromptResponse> =>
-        new Promise<PromptResponse>((resolve, reject) => {
-          setPromptQueue((prev) => [
-            ...prev,
-            {
-              request,
-              title,
-              toolInputSummary,
-              resolve,
-              reject,
-            },
-          ])
-        }),
-    [],
-  )
+  // requestPrompt curried 工厂：HOOK_PROMPTS 守卫下传给 getToolUseContext，
+  // 把 prompt request 推入 promptQueue 等待用户在 PromptInputDialog 答复
+  const requestPrompt = useReplRequestPrompt(setPromptQueue)
   const getToolUseContext = useCallback(
     (
       messages: MessageType[],
