@@ -317,13 +317,10 @@ import { FeedbackSurvey } from 'src/components/FeedbackSurvey/FeedbackSurvey.js'
 import { coordinatorModeModule, proactiveModule } from '../cli/lazyModules.js'
 import { useFrozenTranscript } from './repl/useFrozenTranscript.js'
 import { useReplActiveRemote } from './repl/useReplActiveRemote.js'
-import { useReplAwaySummary } from './repl/useReplAwaySummary.js'
 import { useReplToolPermissionContext } from './repl/useReplToolPermissionContext.js'
 import { useReplLoadingState } from './repl/useReplLoadingState.js'
-import { useReplCallouts } from './repl/useReplCallouts.js'
-import { useReplFrustration } from './repl/useReplFrustration.js'
 import { useReplIdeState } from './repl/useReplIdeState.js'
-import { useReplNotifications } from './repl/useReplNotifications.js'
+import { useReplNotificationsCluster } from './repl/useReplNotificationsCluster.js'
 import { useReplBackgroundQuery } from './repl/useReplBackgroundQuery.js'
 import { useReplOnCancel } from './repl/useReplOnCancel.js'
 import { useReplProactive } from './repl/useReplProactive.js'
@@ -331,7 +328,6 @@ import { useReplSandboxAsk } from './repl/useReplSandboxAsk.js'
 import { type PromptQueueItem, useReplRequestPrompt } from './repl/useReplRequestPrompt.js'
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
 import { useReplSearch } from './repl/useReplSearch.js'
-import { useReplSystemHints } from './repl/useReplSystemHints.js'
 import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
 import { useTranscriptEditor } from './repl/useTranscriptEditor.js'
 import { useViewedAgentBootstrap } from './repl/useViewedAgentBootstrap.js'
@@ -608,21 +604,11 @@ export function REPL({
     rawMcpClients: mcp.clients,
     setDynamicMcpConfig,
   })
-  const {
-    showEffortCallout,
-    setShowEffortCallout,
-    showRemoteCallout,
-    showDesktopUpsellStartup,
-    setShowDesktopUpsellStartup,
-  } = useReplCallouts()
-  // 通知与推荐 hook 集合已抽到 useReplNotifications；
-  // useIDEStatusIndicator 已随 IDE 簇迁入 useReplIdeState；
-  // useMcpConnectivityStatus 依赖 MCP 簇 state，等 MCP container 抽出时再迁。
+  // 通知 / 横幅 / 系统提示 / 挫败感 / away summary 合并调用在下方
+  // （frustration 依赖 feedbackSurvey 等 state，要在它们之后声明）
   useMcpConnectivityStatus({
     mcpClients,
   })
-  const { lspRecommendation, handleLspResponse, hintRecommendation, handleHintResponse } =
-    useReplNotifications(mainLoopModel)
 
   // 记忆化合并的初始工具数组以防止引用变化
   const combinedInitialTools = useMemo(() => {
@@ -1034,11 +1020,12 @@ export function REPL({
     rawSetMessages(next)
   }, [])
 
-  // 3 个系统提示 effects + swarm refs 收敛到 useReplSystemHints：
-  // swarm 延迟 turn-duration / auto-mode 安全警告 / worktree sparse-checkout 提示。
-  // hasRunningTeammates 在 hook 内计算并 return（showSpinner / JSX 条件也需要它）。
-  const { hasRunningTeammates, swarmStartTimeRef, swarmBudgetInfoRef } =
-    useReplSystemHints(setMessages)
+  // hasRunningTeammates 在 showSpinner 派生前需要，
+  // 同时传给 useReplNotificationsCluster 内部的 swarm turn-duration effect。
+  const hasRunningTeammates = useMemo(
+    () => getAllInProcessTeammateTasks(tasks).some((t) => t.status === 'running'),
+    [tasks],
+  )
 
   // 捕获基线消息计数与占位符文本，以便
   // 渲染可以在 displayedMessages 超过基线后隐藏它。
@@ -1057,8 +1044,7 @@ export function REPL({
   // ScrollBox 直接所以每帧滚动不会重新渲染 REPL。
   const { dividerIndex, dividerYRef, onScrollAway, onRepin, jumpToNew, shiftDivider } =
     useUnseenDivider(messages.length)
-  // feature('AWAY_SUMMARY') 条件 require 已抽到 useReplAwaySummary。
-  useReplAwaySummary(messages, setMessages, isLoading)
+  // awaySummary 已合并到 useReplNotificationsCluster
   const [cursor, setCursor] = useState<MessageActionsState | null>(null)
   const cursorNavRef = useRef<MessageActionsNav | null>(null)
   // Messages 的 memoized 以便 Messages 的 React.memo 保持有效。
@@ -1406,15 +1392,32 @@ export function REPL({
     enabled: !isRemoteSession,
   })
 
-  // 挫败感检测：检测到沮丧消息后显示转录共享提示（条件 require 见 useReplFrustration）
-  const frustrationDetection = useReplFrustration(
+  // 通知 / 横幅 / 系统提示 / 挫败感 / away summary 全簇合并
+  const {
+    lspRecommendation,
+    handleLspResponse,
+    hintRecommendation,
+    handleHintResponse,
+    showEffortCallout,
+    setShowEffortCallout,
+    showRemoteCallout,
+    showDesktopUpsellStartup,
+    setShowDesktopUpsellStartup,
+    swarmStartTimeRef,
+    swarmBudgetInfoRef,
+    frustrationDetection,
+  } = useReplNotificationsCluster({
+    mainLoopModel,
     messages,
+    setMessages,
     isLoading,
     hasActivePrompt,
-    feedbackSurvey.state !== 'closed' ||
+    hasRunningTeammates,
+    isSurveyOpen:
+      feedbackSurvey.state !== 'closed' ||
       postCompactSurvey.state !== 'closed' ||
       memorySurvey.state !== 'closed',
-  )
+  })
 
   // useIDEIntegration 已随 IDE 簇迁入 useReplIdeState。
   useFileHistorySnapshotInit(initialFileHistorySnapshots, fileHistory, (fileHistoryState) =>
