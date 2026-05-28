@@ -101,7 +101,6 @@ import { buildEffectiveSystemPrompt } from '../utils/systemPrompt.js'
 import { getSystemContext, getUserContext } from '../context.js'
 import { getMemoryFiles } from '../utils/agentsMd.js'
 import { startBackgroundHousekeeping } from '../utils/backgroundHousekeeping.js'
-import { saveCurrentSessionCosts, resetCostState, getStoredSessionCosts } from '../cost-tracker.js'
 import { useCostSummary } from '../costHook.js'
 import { useFpsMetrics } from '../context/fpsMetrics.js'
 import { useAfterFirstRender } from '../hooks/useAfterFirstRender.js'
@@ -204,8 +203,6 @@ import { maybeMarkProjectOnboardingComplete } from '../projectOnboardingState.js
 import type { MCPServerConnection } from '../services/mcp/types.js'
 import type { ScopedMcpServerConfig } from '../services/mcp/types.js'
 import { randomUUID, type UUID } from 'node:crypto'
-import { processSessionStartHooks } from '../utils/sessionStart.js'
-import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../utils/hooks.js'
 import { getTools, assembleToolPool } from '../tools.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import { resolveAgentTools } from '../tools/AgentTool/agentToolUtils.js'
@@ -215,7 +212,7 @@ import { useAppState, useSetAppState, useAppStateStore } from '../state/AppState
 import type { ImageBlock, UserContentBlock } from '../types/llm.js'
 import type { ProcessUserInputContext } from '../services/processUserInput/processUserInput.js'
 import type { PastedContent } from '../utils/config.js'
-import { copyPlanForFork, copyPlanForResume, getPlanSlug, setPlanSlug } from '../utils/plans.js'
+import { getPlanSlug, setPlanSlug } from '../utils/plans.js'
 import {
   clearSessionMetadata,
   resetSessionFilePointer,
@@ -229,7 +226,6 @@ import {
   saveWorktreeState,
   saveAiGeneratedTitle,
 } from '../utils/sessionStorage.js'
-import { deserializeMessages } from '../utils/conversationRecovery.js'
 import { extractReadFilesFromMessages } from '../utils/queryHelpers.js'
 import { resetMicrocompactState } from '../services/compact/microCompact.js'
 import {
@@ -317,6 +313,7 @@ import { useReplProactive } from './repl/useReplProactive.js'
 import { useReplSandboxAsk } from './repl/useReplSandboxAsk.js'
 import { type PromptQueueItem, useReplRequestPrompt } from './repl/useReplRequestPrompt.js'
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
+import { useReplSessionRestore } from './repl/useReplSessionRestore.js'
 import { useReplTranscript } from './repl/useReplTranscript.js'
 import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
 import { usePromptsFromClaudeInChrome } from 'src/hooks/usePromptsFromClaudeInChrome.js'
@@ -1400,269 +1397,28 @@ export function REPL({
       fileHistory: fileHistoryState,
     })),
   )
-  const resume = useCallback(
-    async (sessionId: UUID, log: LogOption, entrypoint: ResumeEntrypoint) => {
-      const resumeStart = performance.now()
-      try {
-        // 反序列化消息以正确清理对话
-        // 过滤未解析的工具使用并在需要时添加合成助手消息
-        const messages = deserializeMessages(log.messages)
-
-        // 匹配 coordinator/normal 模式到恢复的会话
-        if (feature('COORDINATOR_MODE')) {
-          /* eslint-disable @typescript-eslint/no-require-imports */
-          const coordinatorModule =
-            require('../coordinator/coordinatorMode.js') as typeof import('../coordinator/coordinatorMode.js')
-          /* eslint-enable @typescript-eslint/no-require-imports */
-          const warning = coordinatorModule.matchSessionMode(log.mode)
-          if (warning) {
-            // 模式切换后重新推导 agent 定义，以便内置 agent
-            // 反映新的 coordinator/normal 模式
-            /* eslint-disable @typescript-eslint/no-require-imports */
-            const { getAgentDefinitionsWithOverrides, getActiveAgentsFromList } =
-              require('../tools/AgentTool/loadAgentsDir.js') as typeof import('../tools/AgentTool/loadAgentsDir.js')
-            /* eslint-enable @typescript-eslint/no-require-imports */
-            getAgentDefinitionsWithOverrides.cache.clear?.()
-            const freshAgentDefs = await getAgentDefinitionsWithOverrides(getOriginalCwd())
-            setAppState((prev) => ({
-              ...prev,
-              agentDefinitions: {
-                ...freshAgentDefs,
-                allAgents: freshAgentDefs.allAgents,
-                activeAgents: getActiveAgentsFromList(freshAgentDefs.allAgents),
-              },
-            }))
-            messages.push(createSystemMessage(warning, 'warn'))
-          }
-        }
-
-        // 在恢复新会话之前为当前会话触发 SessionEnd hooks
-        // 镜像 /clear 流程（conversation.ts）。
-        const sessionEndTimeoutMs = getSessionEndHookTimeoutMs()
-        await executeSessionEndHooks('resume', {
-          getAppState: () => store.getState(),
-          setAppState,
-          signal: AbortSignal.timeout(sessionEndTimeoutMs),
-          timeoutMs: sessionEndTimeoutMs,
-        })
-
-        // 处理 resume 的 Session start hooks
-        const hookMessages = await processSessionStartHooks('resume', {
-          sessionId,
-          agentType: mainThreadAgentDefinition?.agentType,
-          model: mainLoopModel,
-        })
-
-        // 将 hook 消息追加到对话中
-        messages.push(...hookMessages)
-        // 对于 fork，生成新的 plan slug 并复制 plan 内容，以便
-        // 原始和 fork 会话不会互相覆盖 plan 文件。
-        // 对于常规 resume，重用原始会话的 plan slug。
-        if (entrypoint === 'fork') {
-          void copyPlanForFork(log, asSessionId(sessionId))
-        } else {
-          void copyPlanForResume(log, asSessionId(sessionId))
-        }
-
-        // 从恢复的对话中恢复文件历史和归属状态
-        restoreSessionStateFromLog(log, setAppState)
-        if (log.fileHistorySnapshots) {
-          void copyFileHistoryForResume(log)
-        }
-
-        // 从恢复的对话中恢复 agent 设置
-        // 始终重置为新会话的值（或清除如果没有），
-        // 匹配下面的 standaloneAgentContext 模式
-        const { agentDefinition: restoredAgent } = restoreAgentFromSession(
-          log.agentSetting,
-          initialMainThreadAgentDefinition,
-          agentDefinitions,
-        )
-        setMainThreadAgentDefinition(restoredAgent)
-        setAppState((prev) => ({
-          ...prev,
-          agent: restoredAgent?.agentType,
-        }))
-
-        // 从恢复的对话中恢复独立 agent 上下文
-        // 始终重置为新会话的值（或清除如果没有）
-        setAppState((prev) => ({
-          ...prev,
-          standaloneAgentContext: computeStandaloneAgentContext(log.agentName, log.agentColor),
-        }))
-        void updateSessionName(log.agentName)
-
-        // 从消息历史中恢复读取文件状态
-        restoreReadFileState(messages, log.projectPath ?? getOriginalCwd())
-
-        // 清除任何活动的 loading state（不在查询中所以没有 queryId）
-        resetLoadingState()
-        setAbortController(null)
-        setConversationId(sessionId)
-
-        // 在保存当前会话之前获取目标会话的成本
-        // （saveCurrentSessionCosts 会覆盖配置，所以需要先读取）
-        const targetSessionCosts = getStoredSessionCosts(sessionId)
-
-        // 保存当前会话的成本以免切换到时丢失累积成本
-        saveCurrentSessionCosts()
-
-        // 恢复目标会话之前重置成本 state 以便干净起步
-        resetCostState()
-
-        // 切换会话（id + 项目目录原子操作）。fullPath 可能指向
-        // 不同的项目（跨 worktree，/branch）；null 从
-        // 当前 originalCwd 派生。
-        switchSession(asSessionId(sessionId), log.fullPath ? dirname(log.fullPath) : null)
-        // 重命名 asciicast 录音以匹配恢复的会话 ID
-        const { renameRecordingForSession } = await import('../utils/asciicast.js')
-        await renameRecordingForSession()
-        await resetSessionFilePointer()
-
-        // 先清除然后恢复会话元数据，以便退出时通过
-        // reAppendSessionMetadata 重新追加。必须先调用 clearSessionMetadata：
-        // restoreSessionMetadata 只在值为真时设置，所以不清除的话，
-        // 没有 agent name 的会话会继承前一个会话的
-        // 缓存名称并在第一次消息时写入错误的转录。
-        clearSessionMetadata()
-        restoreSessionMetadata(log)
-        // 如果恢复后有 title（custom-title 或 ai-title），标记已完成。
-        // 否则允许从恢复的消息中重新生成。
-        if (getCurrentSessionTitle(getSessionId())) {
-          titleGenerationAttemptedRef.current = true
-        } else {
-          titleGenerationAttemptedRef.current = false
-          // 从恢复的消息中异步生成 ai-title
-          const sid = getSessionId()
-          if (sid && log.messages.length > 0) {
-            const text = log.firstPrompt || ''
-            if (text) {
-              void generateSessionTitle(text, AbortSignal.timeout(15_000)).then((title) => {
-                if (title) {
-                  saveAiGeneratedTitle(sid as import('crypto').UUID, title)
-                  cacheSessionTitle(title)
-                  forceRenderTitle((n) => n + 1)
-                }
-              })
-            }
-          }
-        }
-
-        // 退出之前 /resume 进入的任何 worktree，然后 cd 进入此
-        // 会话所在的 worktree。没有退出，从 worktree B
-        // 恢复到非 worktree C 会留下 cwd/currentWorktreeSession 过时；
-        // 恢复 B→C 其中 C 也是 worktree 会完全失败
-        // （getCurrentWorktreeSession 守卫阻止切换）。
-        //
-        // /branch 跳过：forkLog 不携带 worktreeSession，所以
-        // 这会把用户踢出他们仍在工作的 worktree。与 processResumedConversation
-        // 相同的 fork 跳过 adopt — fork 在 REPL 挂载时通过 recordTranscript
-        // 实体化自己的文件。
-        if (entrypoint !== 'fork') {
-          exitRestoredWorktree()
-          restoreWorktreeForResume(log.worktreeSession)
-          adoptResumedSessionFile()
-          void restoreRemoteAgentTasks({
-            abortController: new AbortController(),
-            getAppState: () => store.getState(),
-            setAppState,
-          })
-        } else {
-          // Fork: 与 /clear 相同的重新持久化（conversation.ts）。上面的
-          // clear 清除了 currentSessionWorktree，forkLog 不携带它，
-          // 且进程仍在相同的 worktree 中
-          const ws = getCurrentWorktreeSession()
-          if (ws) {
-            saveWorktreeState(ws)
-          }
-        }
-
-        // 持久化当前模式以便未来 resume 知道此会话的模式
-        if (feature('COORDINATOR_MODE')) {
-          /* eslint-disable @typescript-eslint/no-require-imports */
-          const { saveMode } = require('../utils/sessionStorage.js')
-          const { isCoordinatorMode } =
-            require('../coordinator/coordinatorMode.js') as typeof import('../coordinator/coordinatorMode.js')
-          /* eslint-enable @typescript-eslint/no-require-imports */
-          saveMode(isCoordinatorMode() ? 'coordinator' : 'normal')
-        }
-
-        // 恢复之前读取的目标会话成本
-        if (targetSessionCosts) {
-          setCostStateForRestore(targetSessionCosts)
-        }
-
-        // 重建恢复会话的替换 state。在
-        // setSessionId 之后运行以便任何 post-resume 的新
-        // 替换写入恢复会话的 tool-results 目录。以 ref.current 为门控：
-        // 初始挂载已经读取了功能标志，所以我们不在这里
-        // 重新读取（会话中间标志翻转在两个方向都保持不可观察）。
-        //
-        // 会话内 /branch 跳过：现有 ref 已经正确
-        // （branch 保持 tool_use_ids），所以无需重建。
-        // createFork() 确实将内容替换条目写入 forked
-        // JSONL 并带有 fork 的 sessionId，所以 `zy -r {forkId}` 也有效。
-        if (contentReplacementStateRef.current && entrypoint !== 'fork') {
-          contentReplacementStateRef.current = reconstructContentReplacementState(
-            messages,
-            log.contentReplacements ?? [],
-          )
-        }
-
-        // 将消息重置为提供的初始消息
-        // 使用回调以确保不依赖于过时 state
-        setMessages(() => messages)
-
-        // 清除任何活动的工具 JSX
-        setToolJSX(null)
-
-        // 清除输入以确保没有残留状态
-        setInputValue('')
-        logEvent('zy_session_resumed', {
-          entrypoint: entrypoint as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          success: true,
-          resume_duration_ms: Math.round(performance.now() - resumeStart),
-        })
-      } catch (error) {
-        logEvent('zy_session_resumed', {
-          entrypoint: entrypoint as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          success: false,
-        })
-        throw error
-      }
-    },
-    [
-      resetLoadingState,
-      setAppState, // 清除任何活动的工具 JSX
-      setToolJSX,
-      contentReplacementStateRef.current,
-      initialMainThreadAgentDefinition, // 将消息重置为提供的初始消息
-      // 使用回调以确保不依赖于过时 state
-      setMessages,
-      agentDefinitions,
-      contentReplacementStateRef,
-      store.getState, // 清除输入以确保没有残留状态
-      setInputValue,
-      mainThreadAgentDefinition?.agentType,
-      mainLoopModel,
-    ],
-  )
-
-  // 挂载时从 initialMessages 中提取读取文件状态
-  // 这处理 CLI 标志 resume（--resume-session）和 ResumeConversation 屏幕
-  // 其中消息作为 props 传递而不是通过 resume 回调
-  useEffect(() => {
-    if (initialMessages && initialMessages.length > 0) {
-      restoreReadFileState(initialMessages, getOriginalCwd())
-      void restoreRemoteAgentTasks({
-        abortController: new AbortController(),
-        getAppState: () => store.getState(),
-        setAppState,
-      })
-    }
-    // 仅在挂载时运行 - initialMessages 不应在组件生命周期中更改
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialMessages?.length, store.getState, setAppState, restoreReadFileState, initialMessages])
+  // 会话恢复逻辑（--continue / --resume / teleport / fork）+ initialMessages
+  // 挂载 effect 收敛到 useReplSessionRestore。返回 resume callback 传给 getToolUseContext。
+  // setAbortController 由 useReplOnCancel（下方）创建，此处用 ref 延迟绑定
+  const setAbortControllerRef = useRef<
+    React.Dispatch<React.SetStateAction<AbortController | null>>
+  >(() => {})
+  const resume = useReplSessionRestore({
+    initialMessages,
+    initialMainThreadAgentDefinition,
+    setMessages,
+    setInputValue,
+    setToolJSX,
+    setConversationId,
+    setAbortController: (v) => setAbortControllerRef.current(v),
+    mainThreadAgentDefinition,
+    setMainThreadAgentDefinition,
+    resetLoadingState,
+    restoreReadFileState,
+    titleGenerationAttemptedRef,
+    contentReplacementStateRef,
+    forceRenderTitle,
+  })
   const { status: apiKeyStatus, reverify } = useApiKeyVerification()
 
   // 自动运行 /issue state
@@ -1853,6 +1609,9 @@ export function REPL({
     setInputMode,
     setPastedContents,
   })
+
+  // 绑定 setAbortController ref（useReplSessionRestore 延迟绑定）
+  setAbortControllerRef.current = setAbortController
 
   // CancelRequestHandler 属性 - 在 KeybindingSetup 内渲染
   const cancelRequestProps = {
