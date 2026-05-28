@@ -127,7 +127,6 @@ import { TranscriptModeFooter } from '../components/TranscriptModeFooter.js'
 import { TranscriptSearchBar } from '../components/TranscriptSearchBar.js'
 import { AnimatedTerminalTitle } from '../components/AnimatedTerminalTitle.js'
 
-import { getShortcutDisplay } from '../keybindings/shortcutFormat.js'
 import { CancelRequestHandler } from '../hooks/useCancelRequest.js'
 import { useBackgroundTaskNavigation } from '../hooks/useBackgroundTaskNavigation.js'
 import { useSwarmInitialization } from '../hooks/useSwarmInitialization.js'
@@ -238,13 +237,11 @@ import {
 import { deserializeMessages } from '../utils/conversationRecovery.js'
 import { extractReadFilesFromMessages } from '../utils/queryHelpers.js'
 import { resetMicrocompactState } from '../services/compact/microCompact.js'
-import { runPostCompactCleanup } from '../services/compact/postCompactCleanup.js'
 import {
   provisionContentReplacementState,
   reconstructContentReplacementState,
   type ContentReplacementRecord,
 } from '../utils/toolResultStorage.js'
-import { partialCompactConversation } from '../services/compact/compact.js'
 import type { LogOption } from '../types/logs.js'
 import type { AgentColorName } from '../tools/AgentTool/agentColorManager.js'
 import {
@@ -319,6 +316,7 @@ import { useReplActiveRemote } from './repl/useReplActiveRemote.js'
 import { useReplToolPermissionContext } from './repl/useReplToolPermissionContext.js'
 import { useReplLoadingState } from './repl/useReplLoadingState.js'
 import { useReplIdeState } from './repl/useReplIdeState.js'
+import { handleSummarize as handleSummarizeAction } from './repl/handleSummarize.js'
 import { useReplNotificationsCluster } from './repl/useReplNotificationsCluster.js'
 import { useReplBackgroundQuery } from './repl/useReplBackgroundQuery.js'
 import { useReplOnCancel } from './repl/useReplOnCancel.js'
@@ -5084,123 +5082,22 @@ export function REPL({
                         message.uuid as any,
                       )
                     }}
-                    onSummarize={async (
-                      message: UserMessage,
-                      feedback?: string,
-                      direction: PartialCompactDirection = 'from' as any,
-                    ) => {
-                      // 投影被裁剪的消息，这样 compact 模型
-                      // 就不会有意被移除的内容进行摘要
-                      const compactMessages = getMessagesAfterCompactBoundary(messages)
-                      const messageIndex = compactMessages.indexOf(message)
-                      if (messageIndex === -1) {
-                        // 选择了被裁剪或 compact 前的消息，而选择器
-                        // 仍然显示（REPL 保留完整历史用于回滚）。
-                        // 显示为什么没有操作，而不是静默无操作
-                        setMessages((prev) => [
-                          ...prev,
-                          createSystemMessage(
-                            'That message is no longer in the active context (pre-compact). Choose a more recent message.',
-                            'warn',
-                          ),
-                        ])
-                        return
-                      }
-                      const newAbortController = createAbortController()
-                      const context = getToolUseContext(
-                        compactMessages,
-                        [],
-                        newAbortController,
-                        mainLoopModel,
-                      )
-                      const appState = context.getAppState()
-                      const defaultSysPrompt = await getSystemPrompt(
-                        context.options.tools,
-                        context.options.mainLoopModel,
-                        Array.from(
-                          (
-                            appState.toolPermissionContext as any
-                          ).additionalWorkingDirectories.keys(),
-                        ),
-                        context.options.mcpClients,
-                      )
-                      const systemPrompt = buildEffectiveSystemPrompt({
-                        mainThreadAgentDefinition: undefined,
-                        toolUseContext: context,
-                        customSystemPrompt: context.options.customSystemPrompt,
-                        defaultSystemPrompt: defaultSysPrompt,
-                        appendSystemPrompt: context.options.appendSystemPrompt,
-                      })
-                      const [userContext, systemContext] = await Promise.all([
-                        getUserContext(),
-                        getSystemContext(),
-                      ])
-                      const result = await partialCompactConversation(
-                        compactMessages,
-                        messageIndex,
-                        context,
-                        {
-                          systemPrompt,
-                          userContext,
-                          systemContext,
-                          toolUseContext: context,
-                          forkContextMessages: compactMessages,
-                        },
+                    onSummarize={(message, feedback, direction) =>
+                      handleSummarizeAction({
+                        message,
                         feedback,
                         direction,
-                      )
-                      const kept = result.messagesToKeep ?? []
-                      const ordered =
-                        (direction as any) === 'up_to'
-                          ? [...result.summaryMessages, ...kept]
-                          : [...kept, ...result.summaryMessages]
-                      const postCompact = [
-                        result.boundaryMarker,
-                        ...ordered,
-                        ...result.attachments,
-                        ...result.hookResults,
-                      ]
-                      // Fullscreen 的 'from' 保留回滚；'up_to' 不能
-                      // （old[0] 不变 + 数组增长意味着使用
-                      // useLogMessages 路径，因此边界从不持久化）。
-                      // 通过 uuid 查找，因为 old 是原始 REPL 历史，
-                      // 被裁剪的条目可能会改变投影的 messageIndex
-                      if (isFullscreenEnvEnabled() && (direction as any) === 'from') {
-                        setMessages((old) => {
-                          const rawIdx = old.findIndex((m) => m.uuid === message.uuid)
-                          return [...old.slice(0, rawIdx === -1 ? 0 : rawIdx), ...postCompact]
-                        })
-                      } else {
-                        setMessages(postCompact)
-                      }
-                      // 局部 compact 绕过 handleMessageFromStream —— 清除
-                      // 上下文阻塞标志，以便主动 tick 恢复
-                      if (feature('PROACTIVE') || feature('KAIROS')) {
-                        proactiveModule?.setContextBlocked(false)
-                      }
-                      regenerateConversationId()
-                      runPostCompactCleanup(context.options.querySource)
-                      if ((direction as any) === 'from') {
-                        const r = textForResubmit(message)
-                        if (r) {
-                          setInputValue(r.text)
-                          setInputMode(r.mode)
-                        }
-                      }
-
-                      // 显示带 ctrl+o 提示的通知
-                      const historyShortcut = getShortcutDisplay(
-                        'app:toggleTranscript',
-                        'Global',
-                        'ctrl+o',
-                      )
-                      addNotification({
-                        key: 'summarize-ctrl-o-hint',
-                        text: `Conversation summarized (${historyShortcut} for history)`,
-                        priority: 'medium',
-                        timeoutMs: 8000,
+                        messages,
+                        createAbortController,
+                        getToolUseContext,
+                        mainLoopModel,
+                        setMessages,
+                        regenerateConversationId,
+                        setInputValue,
+                        setInputMode,
+                        addNotification,
                       })
-                    }}
+                    }
                     onRestoreMessage={handleRestoreMessage}
                     onClose={() => {
                       setIsMessageSelectorVisible(false)
