@@ -319,13 +319,11 @@ import { useFrozenTranscript } from './repl/useFrozenTranscript.js'
 import { useReplActiveRemote } from './repl/useReplActiveRemote.js'
 import { useReplAwaySummary } from './repl/useReplAwaySummary.js'
 import { useReplToolPermissionContext } from './repl/useReplToolPermissionContext.js'
-import { useStreamingThinking } from './repl/useStreamingThinking.js'
+import { useReplLoadingState } from './repl/useReplLoadingState.js'
 import { useReplCallouts } from './repl/useReplCallouts.js'
 import { useReplFrustration } from './repl/useReplFrustration.js'
 import { useReplIdeState } from './repl/useReplIdeState.js'
-import { useReplLoading } from './repl/useReplLoading.js'
 import { useReplNotifications } from './repl/useReplNotifications.js'
-import { useReplStreamingText } from './repl/useReplStreamingText.js'
 import { useReplAbortController } from './repl/useReplAbortController.js'
 import { useReplBackgroundQuery } from './repl/useReplBackgroundQuery.js'
 import { useReplConversationId } from './repl/useReplConversationId.js'
@@ -336,9 +334,7 @@ import { useReplSandboxAsk } from './repl/useReplSandboxAsk.js'
 import { type PromptQueueItem, useReplRequestPrompt } from './repl/useReplRequestPrompt.js'
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
 import { useReplSearch } from './repl/useReplSearch.js'
-import { useReplSpinnerOverride } from './repl/useReplSpinnerOverride.js'
 import { useReplSystemHints } from './repl/useReplSystemHints.js'
-import { useReplSpinnerTip } from './repl/useReplSpinnerTip.js'
 import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
 import { useTranscriptEditor } from './repl/useTranscriptEditor.js'
 import { useViewedAgentBootstrap } from './repl/useViewedAgentBootstrap.js'
@@ -705,8 +701,17 @@ export function REPL({
   const streamModeRef = useRef(streamMode)
   streamModeRef.current = streamMode
   const [streamingToolUses, setStreamingToolUses] = useState<StreamingToolUse[]>([])
-  // streamingThinking state + 30 秒自动隐藏 effect 已抽到 useStreamingThinking。
-  const { streamingThinking, setStreamingThinking } = useStreamingThinking()
+  const [theme] = useTheme()
+
+  // 懒初始化 FileStateCache — LRU 构建昂贵（~170ms），useState 惰性初始化器只跑一次。
+  const [initialReadFileState] = useState(() =>
+    createFileStateCacheWithSizeLimit(READ_FILE_STATE_CACHE_SIZE),
+  )
+  const readFileState = useRef(initialReadFileState)
+  // messagesRef 提前声明以便 useReplLoadingState 引用（pickNewSpinnerTip 用）。
+  // 实际同步由下方 setMessages 的 rawSetMessages 包装处理。
+  const messagesRef = useRef<MessageType[]>(initialMessages ?? [])
+
   // abortController state + 镜像 ref 收敛到 useReplAbortController：
   // bridge 远程中断路径需要 ref 同步读取当前 controller。
   const { abortController, setAbortController, abortControllerRef } = useReplAbortController()
@@ -742,11 +747,11 @@ export function REPL({
   // 可能不同步。参见 QueryGuard.ts。
   const queryGuard = React.useRef(new QueryGuard()).current
 
-  // loading 簇收敛到 useReplLoading：
-  // - isQueryActive：订阅 queryGuard，本地查询是否在飞行中的唯一真实来源
-  // - isExternalLoading：远程会话/前台后台任务等非 queryGuard 路径的 loading
-  // - isLoading：上面两者的或值（只读派生）
-  // - timing refs + resetTimingRefs + setIsExternalLoading wrapper：见 hook 注释
+  // loading / spinner / streaming 全簇（5 个 hook 合并 + resetLoadingState 内化）。
+  // onResetAdditionalRef 在下方 setUserInputOnProcessing 等就绪后才写入实体，
+  // 避免重排大量 state 声明。resetLoadingState 在 async 回调中调用，不在 render
+  // 中同步调用，所以 ref 初始化延迟是安全的。
+  const onResetAdditionalRef = useRef<() => void>(() => {})
   const {
     isQueryActive,
     isLoading,
@@ -756,7 +761,29 @@ export function REPL({
     loadingStartTimeRef,
     totalPausedMsRef,
     pauseStartTimeRef,
-  } = useReplLoading(queryGuard, remoteSessionConfig?.hasInitialPrompt ?? false)
+    spinnerMessage,
+    spinnerColor,
+    spinnerShimmerColor,
+    onCompactProgress,
+    ingestBashToolsFromMessages,
+    clearBashToolsTracking,
+    resetTipPickedThisTurn,
+    streamingText,
+    setStreamingText,
+    onStreamingText,
+    visibleStreamingText,
+    showStreamingText,
+    streamingThinking,
+    setStreamingThinking,
+    resetLoadingState,
+  } = useReplLoadingState({
+    queryGuard,
+    initialExternalLoading: remoteSessionConfig?.hasInitialPrompt ?? false,
+    theme,
+    messagesRef,
+    readFileStateRef: readFileState,
+    onResetAdditional: () => onResetAdditionalRef.current(),
+  })
 
   const [userInputOnProcessing, setUserInputOnProcessingRaw] = React.useState<string | undefined>(
     undefined,
@@ -972,7 +999,6 @@ export function REPL({
     return () => unregisterLeaderToolUseConfirmQueue()
   }, [])
   const [messages, rawSetMessages] = useState<MessageType[]>(initialMessages ?? [])
-  const messagesRef = useRef(messages)
   // 存储已显示（如果未显示提示则为 false）的 willowMode 变体。
   // 在提示显示时捕获，以便 hint_converted 遥测报告相同的
   // 变体 — GrowthBook 值不应在会话中间更改，但读取
@@ -1204,27 +1230,7 @@ export function REPL({
     responseLengthRef.current = f(responseLengthRef.current)
   }, [])
 
-  // 流式文本：state + 派生收敛到 useReplStreamingText（onStreamingText 在
-  // reducedMotion 时吞掉调用；visibleStreamingText 取最后换行前部分逐行流式）
-  const {
-    streamingText,
-    setStreamingText,
-    onStreamingText,
-    visibleStreamingText,
-    showStreamingText,
-  } = useReplStreamingText()
-
   const [lastQueryCompletionTime, setLastQueryCompletionTime] = useState(0)
-  // Spinner 覆盖三态 + onCompactProgress 适配收敛到 useReplSpinnerOverride。
-  // SpinnerWithVerb 读取 overrideMessage/Color/ShimmerColor；getToolUseContext
-  // 直接透传 onCompactProgress 给 compact 服务，不再持有具体 setter。
-  const {
-    spinnerMessage,
-    spinnerColor,
-    spinnerShimmerColor,
-    resetSpinnerOverride,
-    onCompactProgress,
-  } = useReplSpinnerOverride()
   const [isMessageSelectorVisible, setIsMessageSelectorVisible] = useState(false)
   const [messageSelectorPreselect, setMessageSelectorPreselect] = useState<UserMessage | undefined>(
     undefined,
@@ -1273,16 +1279,6 @@ export function REPL({
   const isTerminalFocused = useTerminalFocus()
   const terminalFocusRef = useRef(isTerminalFocused)
   terminalFocusRef.current = isTerminalFocused
-  const [theme] = useTheme()
-
-  // 懒初始化：useRef(createX()) 会在每次渲染调用 createX 并
-  // 丢弃结果。LRUCache 构建在 FileStateCache 内部
-  // 很昂贵（~170ms），所以我们使用 useState 的懒初始化器来
-  // 精确创建一次，然后将稳定引用送入 useRef。
-  const [initialReadFileState] = useState(() =>
-    createFileStateCacheWithSizeLimit(READ_FILE_STATE_CACHE_SIZE),
-  )
-  const readFileState = useRef(initialReadFileState)
   // 会话级 skill 发现跟踪（为 zy_skill_tool_invocation 提供
   // was_discovered）。必须在 getToolUseContext 重建之间跨会话持久：
   // turn-0 发现在 onQuery 构建自己的上下文之前通过 processUserInput
@@ -1294,21 +1290,16 @@ export function REPL({
   // 下一个发现周期会重新注入它。在 clearConversation 中清除。
   const loadedNestedMemoryPathsRef = useRef(new Set<string>())
 
-  // Spinner tip 收敛到 useReplSpinnerTip：bashTools 累积 + tip 选择守卫
-  // + 回合复位 + clearConversation 路径全部内化。
-  const {
-    pickNewSpinnerTip,
-    ingestBashToolsFromMessages,
-    clearBashToolsTracking,
-    resetTipPickedThisTurn,
-  } = useReplSpinnerTip({
-    theme,
-    messagesRef,
-    readFileStateRef: readFileState,
-  })
+  // onResetAdditionalRef 的实体 — 此时 setUserInputOnProcessing / responseLengthRef 就绪
+  onResetAdditionalRef.current = () => {
+    setUserInputOnProcessing(undefined)
+    responseLengthRef.current = 0
+    setStreamingToolUses([])
+    endInteractionSpan()
+    clearSpeculativeChecks()
+  }
 
   // 从消息中恢复读取文件状态的辅助函数（用于 resume 流程）
-  // 这使 Zy 能够编辑在之前会话中读取的文件
   const restoreReadFileState = useCallback(
     (messages: MessageType[], cwd: string) => {
       const extracted = extractReadFilesFromMessages(messages, cwd, READ_FILE_STATE_CACHE_SIZE)
@@ -1317,35 +1308,6 @@ export function REPL({
     },
     [ingestBashToolsFromMessages],
   )
-
-  // 重置 UI loading state。不显式调用 onTurnComplete - 那应该
-  // 仅在查询回合实际完成时显式调用。
-  const resetLoadingState = useCallback(() => {
-    // isLoading 现在从 queryGuard 派生 — 无需 setter 调用。
-    // queryGuard.end()（onQuery finally）或 cancelReservation()（executeUserInput
-    // finally）在运行时已经将 guard 转换为空闲。
-    // 外部 loading（远程/后台）由那些 hooks 单独重置。
-    setIsExternalLoading(false)
-    setUserInputOnProcessing(undefined)
-    responseLengthRef.current = 0
-    setStreamingText(null)
-    setStreamingToolUses([])
-    resetSpinnerOverride()
-    pickNewSpinnerTip()
-    endInteractionSpan()
-    // 推测性 bash 分类器检查仅对当前
-    // 回合的命令有效 — 每个回合后清除以避免累积
-    // 未消耗检查（拒绝/中止路径）的 Promise 链。
-    clearSpeculativeChecks()
-  }, [
-    pickNewSpinnerTip,
-    setUserInputOnProcessing, // isLoading 现在从 queryGuard 派生 — 无需 setter 调用。
-    // queryGuard.end()（onQuery finally）或 cancelReservation()（executeUserInput
-    // finally）在运行时已经将 guard 转换为空闲。
-    // 外部 loading（远程/后台）由那些 hooks 单独重置。
-    setIsExternalLoading,
-    resetSpinnerOverride,
-  ])
 
   // 会话后台 — hook 在 getToolUseContext 之后定义
 
