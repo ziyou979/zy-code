@@ -16,7 +16,6 @@ import { dirname } from 'node:path'
 import { useInput } from '../ink.js'
 import { Box, Text, useStdin, useTheme, useTerminalFocus, useTabStatus } from '../ink.js'
 import type { TabStatusKind } from '../ink/hooks/use-tab-status.js'
-import { IdleReturnDialog } from '../components/IdleReturnDialog.js'
 import * as React from 'react'
 import {
   useEffect,
@@ -52,9 +51,7 @@ import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 import { formatTokens, truncateToWidth } from '../utils/format.js'
 import { consumeEarlyInput } from '../utils/earlyInput.js'
 import { setMemberActive } from '../services/swarm/teamHelpers.js'
-import { sendSandboxPermissionResponseViaMailbox } from '../services/swarm/permissionSync.js'
 import { getTeamName, getAgentName } from '../utils/teammate.js'
-import { WorkerPendingPermission } from '../components/permissions/WorkerPendingPermission.js'
 import {
   injectUserMessageToTeammate,
   getAllInProcessTeammateTasks,
@@ -90,8 +87,6 @@ import {
   PermissionRequest,
   type ToolUseConfirm,
 } from '../components/permissions/PermissionRequest.js'
-import { ElicitationDialog } from '../components/mcp/ElicitationDialog.js'
-import { PromptDialog } from '../components/hooks/PromptDialog.js'
 import PromptInput from '../components/PromptInput/PromptInput.js'
 import { PromptInputQueuedCommands } from '../components/PromptInput/PromptInputQueuedCommands.js'
 import type { DirectConnectConfig } from '../server/directConnectManager.js'
@@ -300,10 +295,7 @@ import {
   handleSpeculationAccept,
   type ActiveSpeculationState,
 } from '../services/PromptSuggestion/speculation.js'
-import { IdeOnboardingDialog } from '../components/IdeOnboardingDialog.js'
-import { EffortCallout } from '../components/EffortCallout.js'
 import type { EffortValue } from '../utils/effort.js'
-import { RemoteCallout } from '../components/RemoteCallout.js'
 import { activityManager } from '../utils/activityManager.js'
 import { createAbortController } from '../utils/abortController.js'
 import { MCPConnectionManager } from 'src/services/mcp/MCPConnectionManager.js'
@@ -318,6 +310,7 @@ import { useReplLoadingState } from './repl/useReplLoadingState.js'
 import { useReplIdeState } from './repl/useReplIdeState.js'
 import { handleSummarize as handleSummarizeAction } from './repl/handleSummarize.js'
 import { useReplNotificationsCluster } from './repl/useReplNotificationsCluster.js'
+import { ReplDialogDispatch } from './repl/ReplDialogDispatch.js'
 import { useReplBackgroundQuery } from './repl/useReplBackgroundQuery.js'
 import { useReplOnCancel } from './repl/useReplOnCancel.js'
 import { useReplProactive } from './repl/useReplProactive.js'
@@ -336,12 +329,8 @@ import {
 } from 'src/utils/permissions/bypassPermissionsKillswitch.js'
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { useFileHistorySnapshotInit } from 'src/hooks/useFileHistorySnapshotInit.js'
-import { SandboxPermissionRequest } from 'src/components/permissions/SandboxPermissionRequest.js'
 import { SandboxViolationExpandedView } from 'src/components/SandboxViolationExpandedView.js'
 import { useMcpConnectivityStatus } from 'src/hooks/notifs/useMcpConnectivityStatus.js'
-import { LspRecommendationMenu } from 'src/components/LspRecommendation/LspRecommendationMenu.js'
-import { PluginHintMenu } from '../components/Hint/PluginHintMenu.js'
-import { DesktopUpsellStartup } from 'src/components/DesktopUpsell/DesktopUpsellStartup.js'
 import { performStartupChecks } from 'src/utils/plugins/performStartupChecks.js'
 import { UserTextMessage } from 'src/components/messages/UserTextMessage.js'
 import { AwsAuthStatusBox } from '../components/AwsAuthStatusBox.js'
@@ -4530,410 +4519,39 @@ export function REPL({
                       <TaskListV2 tasks={tasksV2} isStandalone={true} />
                     </Box>
                   )}
-                {focusedInputDialog === 'sandbox-permission' && (
-                  <SandboxPermissionRequest
-                    key={sandboxPermissionRequestQueue[0]!.hostPattern.host}
-                    hostPattern={sandboxPermissionRequestQueue[0]!.hostPattern}
-                    onUserResponse={(response: { allow: boolean; persistToSettings: boolean }) => {
-                      const { allow, persistToSettings } = response
-                      const currentRequest = sandboxPermissionRequestQueue[0]
-                      if (!currentRequest) {
-                        return
-                      }
-                      const approvedHost = currentRequest.hostPattern.host
-                      if (persistToSettings) {
-                        const update = {
-                          type: 'addRules' as const,
-                          rules: [
-                            {
-                              toolName: WEB_FETCH_TOOL_NAME,
-                              ruleContent: `domain:${approvedHost}`,
-                            },
-                          ],
-                          behavior: (allow ? 'allow' : 'deny') as 'allow' | 'deny',
-                          destination: 'localSettings' as const,
-                        }
-                        setAppState((prev) => ({
-                          ...prev,
-                          toolPermissionContext: applyPermissionUpdate(
-                            prev.toolPermissionContext,
-                            update,
-                          ),
-                        }))
-                        persistPermissionUpdate(update)
-
-                        // 立即更新沙盒内存配置，防止竞态条件
-                        // 即待处理请求在设置更改检测前漏过
-                        SandboxManager.refreshConfig()
-                      }
-
-                      // 解析同一主机的所有待处理请求（不仅仅是第一个）
-                      // 这处理了多个并行请求来自同一域名的情况
-                      setSandboxPermissionRequestQueue((queue) => {
-                        queue
-                          .filter((item) => item.hostPattern.host === approvedHost)
-                          .forEach((item) => item.resolvePromise(allow))
-                        return queue.filter((item) => item.hostPattern.host !== approvedHost)
-                      })
-
-                      // 清理桥接订阅并取消远程提示
-                      // 因为本地用户已经响应，所以针对该主机
-                      const cleanups = sandboxBridgeCleanupRef.current.get(approvedHost)
-                      if (cleanups) {
-                        for (const fn of cleanups) {
-                          fn()
-                        }
-                        sandboxBridgeCleanupRef.current.delete(approvedHost)
-                      }
-                    }}
-                  />
-                )}
-                {focusedInputDialog === 'prompt' && (
-                  <PromptDialog
-                    key={promptQueue[0]!.request.prompt}
-                    title={promptQueue[0]!.title}
-                    toolInputSummary={promptQueue[0]!.toolInputSummary}
-                    request={promptQueue[0]!.request}
-                    onRespond={(selectedKey) => {
-                      const item = promptQueue[0]
-                      if (!item) {
-                        return
-                      }
-                      item.resolve({
-                        prompt_response: item.request.prompt,
-                        selected: selectedKey,
-                      })
-                      setPromptQueue(([, ...tail]) => tail)
-                    }}
-                    onAbort={() => {
-                      const item = promptQueue[0]
-                      if (!item) {
-                        return
-                      }
-                      item.reject(new Error('Prompt cancelled by user'))
-                      setPromptQueue(([, ...tail]) => tail)
-                    }}
-                  />
-                )}
-                {/* 在 worker 等待 leader 批准时显示待处理指示器 */}
-                {pendingWorkerRequest && (
-                  <WorkerPendingPermission
-                    toolName={pendingWorkerRequest.toolName}
-                    description={pendingWorkerRequest.description}
-                  />
-                )}
-                {/* 显示 worker 端沙盒权限的待处理指示器 */}
-                {pendingSandboxRequest && (
-                  <WorkerPendingPermission
-                    toolName="Network Access"
-                    description={`Waiting for leader to approve network access to ${pendingSandboxRequest.host}`}
-                  />
-                )}
-                {/* 来自 swarm worker 的 worker 沙盒权限请求 */}
-                {focusedInputDialog === 'worker-sandbox-permission' && (
-                  <SandboxPermissionRequest
-                    key={workerSandboxPermissions.queue[0]!.requestId}
-                    hostPattern={
-                      {
-                        host: workerSandboxPermissions.queue[0]!.host,
-                        port: undefined,
-                      } as NetworkHostPattern
-                    }
-                    onUserResponse={(response: { allow: boolean; persistToSettings: boolean }) => {
-                      const { allow, persistToSettings } = response
-                      const currentRequest = workerSandboxPermissions.queue[0]
-                      if (!currentRequest) {
-                        return
-                      }
-                      const approvedHost = currentRequest.host
-
-                      // 通过邮箱向 worker 发送响应
-                      void sendSandboxPermissionResponseViaMailbox(
-                        currentRequest.workerName,
-                        currentRequest.requestId,
-                        approvedHost,
-                        allow,
-                        teamContext?.teamName,
-                      )
-                      if (persistToSettings && allow) {
-                        const update = {
-                          type: 'addRules' as const,
-                          rules: [
-                            {
-                              toolName: WEB_FETCH_TOOL_NAME,
-                              ruleContent: `domain:${approvedHost}`,
-                            },
-                          ],
-                          behavior: 'allow' as const,
-                          destination: 'localSettings' as const,
-                        }
-                        setAppState((prev) => ({
-                          ...prev,
-                          toolPermissionContext: applyPermissionUpdate(
-                            prev.toolPermissionContext,
-                            update,
-                          ),
-                        }))
-                        persistPermissionUpdate(update)
-                        SandboxManager.refreshConfig()
-                      }
-
-                      // 从队列中移除
-                      setAppState((prev) => ({
-                        ...prev,
-                        workerSandboxPermissions: {
-                          ...prev.workerSandboxPermissions,
-                          queue: prev.workerSandboxPermissions.queue.slice(1),
-                        },
-                      }))
-                    }}
-                  />
-                )}
-                {focusedInputDialog === 'elicitation' && (
-                  <ElicitationDialog
-                    key={
-                      elicitation.queue[0]!.serverName +
-                      ':' +
-                      String(elicitation.queue[0]!.requestId)
-                    }
-                    event={elicitation.queue[0]!}
-                    onResponse={(action, content) => {
-                      const currentRequest = elicitation.queue[0]
-                      if (!currentRequest) {
-                        return
-                      }
-                      // 调用 respond 回调以解析 Promise
-                      currentRequest.respond({
-                        action,
-                        content,
-                      })
-                      // 对于 URL 接受，保留在队列中等待阶段 2
-                      const isUrlAccept =
-                        currentRequest.params.mode === 'url' && action === 'accept'
-                      if (!isUrlAccept) {
-                        setAppState((prev) => ({
-                          ...prev,
-                          elicitation: {
-                            queue: prev.elicitation.queue.slice(1),
-                          },
-                        }))
-                      }
-                    }}
-                    onWaitingDismiss={(action) => {
-                      const currentRequest = elicitation.queue[0]
-                      // 从队列中移除
-                      setAppState((prev) => ({
-                        ...prev,
-                        elicitation: {
-                          queue: prev.elicitation.queue.slice(1),
-                        },
-                      }))
-                      currentRequest?.onWaitingDismiss?.(action)
-                    }}
-                  />
-                )}
-                {focusedInputDialog === 'idle-return' && idleReturnPending && (
-                  <IdleReturnDialog
-                    idleMinutes={idleReturnPending.idleMinutes}
-                    totalInputTokens={getTotalInputTokens()}
-                    onDone={async (action) => {
-                      const pending = idleReturnPending
-                      setIdleReturnPending(null)
-                      logEvent('zy_idle_return_action', {
-                        action:
-                          action as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-                        idleMinutes: Math.round(pending.idleMinutes),
-                        messageCount: messagesRef.current.length,
-                        totalInputTokens: getTotalInputTokens(),
-                      })
-                      if (action === 'dismiss') {
-                        setInputValue(pending.input)
-                        return
-                      }
-                      if (action === 'never') {
-                        saveGlobalConfig((current) => {
-                          if (current.idleReturnDismissed) {
-                            return current
-                          }
-                          return {
-                            ...current,
-                            idleReturnDismissed: true,
-                          }
-                        })
-                      }
-                      if (action === 'clear') {
-                        const { clearConversation } = await import(
-                          '../commands/clear/conversation.js'
-                        )
-                        await clearConversation({
-                          setMessages,
-                          readFileState: readFileState.current,
-                          discoveredSkillNames: discoveredSkillNamesRef.current,
-                          loadedNestedMemoryPaths: loadedNestedMemoryPathsRef.current,
-                          getAppState: () => store.getState(),
-                          setAppState,
-                          setConversationId,
-                        })
-                        titleGenerationAttemptedRef.current = false
-                        clearBashToolsTracking()
-                      }
-                      skipIdleCheckRef.current = true
-                      void onSubmitRef.current(pending.input, {
-                        setCursorOffset: () => {},
-                        clearBuffer: () => {},
-                        resetHistory: () => {},
-                      })
-                    }}
-                  />
-                )}
-                {focusedInputDialog === 'ide-onboarding' && (
-                  <IdeOnboardingDialog
-                    onDone={() => setShowIdeOnboarding(false)}
-                    installationStatus={ideInstallationStatus}
-                  />
-                )}
-                {focusedInputDialog === 'effort-callout' && (
-                  <EffortCallout
-                    model={mainLoopModel}
-                    onDone={(selection) => {
-                      setShowEffortCallout(false)
-                      if (selection !== 'dismiss') {
-                        setAppState((prev) => ({
-                          ...prev,
-                          effortValue: selection,
-                        }))
-                      }
-                    }}
-                  />
-                )}
-                {focusedInputDialog === 'remote-callout' && (
-                  <RemoteCallout
-                    onDone={(selection) => {
-                      setAppState((prev) => {
-                        if (!prev.showRemoteCallout) {
-                          return prev
-                        }
-                        return {
-                          ...prev,
-                          showRemoteCallout: false,
-                          ...(selection === 'enable' && {
-                            replBridgeEnabled: true,
-                            replBridgeExplicit: true,
-                            replBridgeOutboundOnly: false,
-                          }),
-                        }
-                      })
-                    }}
-                  />
-                )}
-
-                {exitFlow}
-
-                {focusedInputDialog === 'plugin-hint' && hintRecommendation && (
-                  <PluginHintMenu
-                    pluginName={hintRecommendation.pluginName}
-                    pluginDescription={hintRecommendation.pluginDescription}
-                    marketplaceName={hintRecommendation.marketplaceName}
-                    sourceCommand={hintRecommendation.sourceCommand}
-                    onResponse={handleHintResponse}
-                  />
-                )}
-
-                {focusedInputDialog === 'lsp-recommendation' && lspRecommendation && (
-                  <LspRecommendationMenu
-                    pluginName={lspRecommendation.pluginName}
-                    pluginDescription={lspRecommendation.pluginDescription}
-                    fileExtension={lspRecommendation.fileExtension}
-                    onResponse={handleLspResponse}
-                  />
-                )}
-
-                {focusedInputDialog === 'desktop-upsell' && (
-                  <DesktopUpsellStartup onDone={() => setShowDesktopUpsellStartup(false)} />
-                )}
-
-                {feature('ULTRAPLAN')
-                  ? focusedInputDialog === 'ultraplan-choice' &&
-                    ultraplanPendingChoice && (
-                      <UltraplanChoiceDialog
-                        plan={ultraplanPendingChoice.plan}
-                        sessionId={ultraplanPendingChoice.sessionId}
-                        taskId={ultraplanPendingChoice.taskId}
-                        setMessages={setMessages}
-                        readFileState={readFileState.current}
-                        getAppState={() => store.getState()}
-                        setConversationId={setConversationId}
-                      />
-                    )
-                  : null}
-
-                {feature('ULTRAPLAN')
-                  ? focusedInputDialog === 'ultraplan-launch' &&
-                    ultraplanLaunchPending && (
-                      <UltraplanLaunchDialog
-                        onChoice={(choice, opts) => {
-                          const blurb = ultraplanLaunchPending.blurb
-                          setAppState((prev) =>
-                            prev.ultraplanLaunchPending
-                              ? {
-                                  ...prev,
-                                  ultraplanLaunchPending: undefined,
-                                }
-                              : prev,
-                          )
-                          if (choice === 'cancel') {
-                            return
-                          }
-                          // 使用命令的 onDone，显示 display:'skip'，在此处
-                          // 添加回显 —— 在 ~5s teleportToRemote 解析前提供即时反馈
-                          setMessages((prev) => [
-                            ...prev,
-                            createCommandInputMessage(formatCommandInputTags('ultraplan', blurb)),
-                          ])
-                          const appendStdout = (msg: string) =>
-                            setMessages((prev) => [
-                              ...prev,
-                              createCommandInputMessage(
-                                `<${LOCAL_COMMAND_STDOUT_TAG}>${escapeXml(msg)}</${LOCAL_COMMAND_STDOUT_TAG}>`,
-                              ),
-                            ])
-                          // 如果查询正在进行中，则延迟第二条消息
-                          // 使其在 assistant 回复之后到达，而不是
-                          // 夹在用户提示和回复之间
-                          const appendWhenIdle = (msg: string) => {
-                            if (!queryGuard.isActive) {
-                              appendStdout(msg)
-                              return
-                            }
-                            const unsub = queryGuard.subscribe(() => {
-                              if (queryGuard.isActive) {
-                                return
-                              }
-                              unsub()
-                              // 如果在等待期间用户停止了 ultraplan，则跳过
-                              // ——避免为已消失的会话显示过时的 "Monitoring
-                              // <url>" 消息
-                              if (!store.getState().ultraplanSessionUrl) {
-                                return
-                              }
-                              appendStdout(msg)
-                            })
-                          }
-                          // @ts-expect-error -- ant-only: launchUltraplan is conditionally imported
-                          void launchUltraplan({
-                            blurb,
-                            getAppState: () => store.getState(),
-                            setAppState,
-                            signal: createAbortController().signal,
-                            disconnectedBridge: opts?.disconnectedBridge,
-                            onSessionReady: appendWhenIdle,
-                          })
-                            .then(appendStdout)
-                            .catch(logError)
-                        }}
-                      />
-                    )
-                  : null}
+                <ReplDialogDispatch
+                  focusedInputDialog={focusedInputDialog}
+                  sandboxPermissionRequestQueue={sandboxPermissionRequestQueue}
+                  setSandboxPermissionRequestQueue={setSandboxPermissionRequestQueue}
+                  sandboxBridgeCleanupRef={sandboxBridgeCleanupRef}
+                  promptQueue={promptQueue}
+                  setPromptQueue={setPromptQueue}
+                  idleReturnPending={idleReturnPending}
+                  setIdleReturnPending={setIdleReturnPending}
+                  setInputValue={setInputValue}
+                  messagesRef={messagesRef}
+                  setMessages={setMessages}
+                  readFileState={readFileState}
+                  discoveredSkillNamesRef={discoveredSkillNamesRef}
+                  loadedNestedMemoryPathsRef={loadedNestedMemoryPathsRef}
+                  titleGenerationAttemptedRef={titleGenerationAttemptedRef}
+                  clearBashToolsTracking={clearBashToolsTracking}
+                  skipIdleCheckRef={skipIdleCheckRef}
+                  onSubmitRef={onSubmitRef}
+                  setConversationId={setConversationId}
+                  ideInstallationStatus={ideInstallationStatus}
+                  setShowIdeOnboarding={setShowIdeOnboarding}
+                  mainLoopModel={mainLoopModel}
+                  setShowEffortCallout={setShowEffortCallout}
+                  hintRecommendation={hintRecommendation}
+                  handleHintResponse={handleHintResponse}
+                  lspRecommendation={lspRecommendation}
+                  handleLspResponse={handleLspResponse}
+                  setShowDesktopUpsellStartup={setShowDesktopUpsellStartup}
+                  queryGuard={queryGuard}
+                  createAbortController={createAbortController}
+                  exitFlow={exitFlow}
+                />
 
                 {mrRender()}
 
