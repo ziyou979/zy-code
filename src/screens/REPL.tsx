@@ -338,6 +338,7 @@ import { type PromptQueueItem, useReplRequestPrompt } from './repl/useReplReques
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
 import { useReplSearch } from './repl/useReplSearch.js'
 import { useReplSpinnerOverride } from './repl/useReplSpinnerOverride.js'
+import { useReplSystemHints } from './repl/useReplSystemHints.js'
 import { useReplSpinnerTip } from './repl/useReplSpinnerTip.js'
 import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
 import { useTranscriptEditor } from './repl/useTranscriptEditor.js'
@@ -355,7 +356,6 @@ import { useFileHistorySnapshotInit } from 'src/hooks/useFileHistorySnapshotInit
 import { SandboxPermissionRequest } from 'src/components/permissions/SandboxPermissionRequest.js'
 import { SandboxViolationExpandedView } from 'src/components/SandboxViolationExpandedView.js'
 import { useMcpConnectivityStatus } from 'src/hooks/notifs/useMcpConnectivityStatus.js'
-import { AUTO_MODE_DESCRIPTION } from 'src/components/AutoModeOptInDialog.js'
 import { LspRecommendationMenu } from 'src/components/LspRecommendation/LspRecommendationMenu.js'
 import { PluginHintMenu } from '../components/Hint/PluginHintMenu.js'
 import { DesktopUpsellStartup } from 'src/components/DesktopUpsell/DesktopUpsellStartup.js'
@@ -776,16 +776,6 @@ export function REPL({
 
   // 有 swarm teammate 运行的第一个回合的开始时间
   // 用于计算延迟消息的总已过时间（包括 teammate 执行）
-  const swarmStartTimeRef = React.useRef<number | null>(null)
-  const swarmBudgetInfoRef = React.useRef<
-    | {
-        tokens: number
-        limit: number
-        nudges: number
-      }
-    | undefined
-  >(undefined)
-
   // 跟踪当前 focusedInputDialog 的 ref，用于回调中读取
   // 避免在 timer 回调中检查对话框状态时出现过时闭包
   const focusedInputDialogRef = React.useRef<ReturnType<typeof getFocusedInputDialog>>(undefined)
@@ -1024,6 +1014,13 @@ export function REPL({
     }
     rawSetMessages(next)
   }, [])
+
+  // 3 个系统提示 effects + swarm refs 收敛到 useReplSystemHints：
+  // swarm 延迟 turn-duration / auto-mode 安全警告 / worktree sparse-checkout 提示。
+  // hasRunningTeammates 在 hook 内计算并 return（showSpinner / JSX 条件也需要它）。
+  const { hasRunningTeammates, swarmStartTimeRef, swarmBudgetInfoRef } =
+    useReplSystemHints(setMessages)
+
   // 捕获基线消息计数与占位符文本，以便
   // 渲染可以在 displayedMessages 超过基线后隐藏它。
   const setUserInputOnProcessing = useCallback((input: string | undefined) => {
@@ -1353,101 +1350,6 @@ export function REPL({
   ])
 
   // 会话后台 — hook 在 getToolUseContext 之后定义
-
-  const hasRunningTeammates = useMemo(
-    () => getAllInProcessTeammateTasks(tasks).some((t) => t.status === 'running'),
-    [tasks],
-  )
-
-  // 所有 swarm teammate 完成后显示延迟回合持续时间消息
-  useEffect(() => {
-    if (!hasRunningTeammates && swarmStartTimeRef.current !== null) {
-      const totalMs = Date.now() - swarmStartTimeRef.current
-      const deferredBudget = swarmBudgetInfoRef.current
-      swarmStartTimeRef.current = null
-      swarmBudgetInfoRef.current = undefined
-      setMessages((prev) => [
-        ...prev,
-        createTurnDurationMessage(
-          totalMs,
-          deferredBudget,
-          // 仅计算 recordTranscript 将持久化的内容 — 瞬时
-          // 进度 tick 和非 ant 附件被 isLoggableMessage 过滤
-          // 且永远不会到达磁盘。使用原始 prev.length
-          // 会使 checkResumeConsistency 对每个运行了进度发射工具的
-          // 回合报告假 delta<0。
-          count(prev, isLoggableMessage),
-        ),
-      ])
-    }
-  }, [hasRunningTeammates, setMessages])
-
-  // 进入 auto mode 时显示自动权限警告
-  // （通过 Shift+Tab 切换或启动时）。防抖以避免
-  // 用户快速循环模式时闪烁。
-  // 总共仅显示 3 次跨会话。
-  const safeYoloMessageShownRef = useRef(false)
-  useEffect(() => {
-    if (feature('TRANSCRIPT_CLASSIFIER')) {
-      if (toolPermissionContext.mode !== 'auto') {
-        safeYoloMessageShownRef.current = false
-        return
-      }
-      if (safeYoloMessageShownRef.current) {
-        return
-      }
-      const config = getGlobalConfig()
-      const count = config.autoPermissionsNotificationCount ?? 0
-      if (count >= 3) {
-        return
-      }
-      const timer = setTimeout(
-        (ref, setMessages) => {
-          ref.current = true
-          saveGlobalConfig((prev) => {
-            const prevCount = prev.autoPermissionsNotificationCount ?? 0
-            if (prevCount >= 3) {
-              return prev
-            }
-            return {
-              ...prev,
-              autoPermissionsNotificationCount: prevCount + 1,
-            }
-          })
-          setMessages((prev) => [...prev, createSystemMessage(AUTO_MODE_DESCRIPTION, 'warn')])
-        },
-        800,
-        safeYoloMessageShownRef,
-        setMessages,
-      )
-      return () => clearTimeout(timer)
-    }
-  }, [toolPermissionContext.mode, setMessages])
-
-  // 如果 worktree 创建很慢且 sparse-checkout 未配置，
-  // 提示用户考虑设置 settings.worktree.sparsePaths。
-  const worktreeTipShownRef = useRef(false)
-  useEffect(() => {
-    if (worktreeTipShownRef.current) {
-      return
-    }
-    const wt = getCurrentWorktreeSession()
-    if (!wt?.creationDurationMs || wt.usedSparsePaths) {
-      return
-    }
-    if (wt.creationDurationMs < 15_000) {
-      return
-    }
-    worktreeTipShownRef.current = true
-    const secs = Math.round(wt.creationDurationMs / 1000)
-    setMessages((prev) => [
-      ...prev,
-      createSystemMessage(
-        `Worktree creation took ${secs}s. For large repos, set \`worktree.sparsePaths\` in .zy/settings.json to check out only the directories you need — e.g. \`{"worktree": {"sparsePaths": ["src", "packages/foo"]}}\`.`,
-        'info',
-      ),
-    ])
-  }, [setMessages])
 
   // 唯一活动工具是 Sleep 时隐藏 spinner
   const onlySleepToolActive = useMemo(() => {
