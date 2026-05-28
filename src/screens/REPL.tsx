@@ -294,11 +294,9 @@ import {
   type SetAppState,
   getCommandQueue,
   getCommandQueueLength,
-  removeByFilter,
 } from '../utils/messageQueueManager.js'
 import { useCommandQueue } from '../hooks/useCommandQueue.js'
 import { SessionBackgroundHint } from '../components/SessionBackgroundHint.js'
-import { startBackgroundSession } from '../tasks/LocalMainSessionTask.js'
 import { useSessionBackgrounding } from '../hooks/useSessionBackgrounding.js'
 import { diagnosticTracker } from '../services/diagnosticTracking.js'
 import {
@@ -329,6 +327,7 @@ import { useReplLoading } from './repl/useReplLoading.js'
 import { useReplNotifications } from './repl/useReplNotifications.js'
 import { useReplStreamingText } from './repl/useReplStreamingText.js'
 import { useReplAbortController } from './repl/useReplAbortController.js'
+import { useReplBackgroundQuery } from './repl/useReplBackgroundQuery.js'
 import { useReplConversationId } from './repl/useReplConversationId.js'
 import { useReplOnCancel } from './repl/useReplOnCancel.js'
 import { useReplProactive } from './repl/useReplProactive.js'
@@ -403,7 +402,6 @@ import {
 } from '../components/messageActions.js'
 import { setClipboard } from '../ink/termio/osc.js'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
-import { createAttachmentMessage, getQueuedCommandAttachments } from '../utils/attachments.js'
 
 // 为接受 MCPServerConnection[] 的 hooks 提供稳定空数组 — 避免
 // 在 remote mode 下每次渲染创建新的 [] 字面量，否则会导致
@@ -2106,82 +2104,8 @@ export function REPL({
     ],
   )
 
-  // 会话后台（Ctrl+B 后台/前台）
-  const handleBackgroundQuery = useCallback(() => {
-    // 停止前台查询以便后台查询接管
-    abortController?.abort('background')
-    // 中止子 agent 可能会产生任务完成通知。
-    // 清除任务通知以便队列处理器不会立即
-    // 启动新的前台查询；将它们转发到后台会话。
-    const removedNotifications = removeByFilter((cmd) => cmd.mode === 'task-notification')
-    void (async () => {
-      const toolUseContext = getToolUseContext(
-        messagesRef.current,
-        [],
-        new AbortController(),
-        mainLoopModel,
-      )
-      const [defaultSystemPrompt, userContext, systemContext] = await Promise.all([
-        getSystemPrompt(
-          toolUseContext.options.tools,
-          mainLoopModel,
-          Array.from(toolPermissionContext.additionalWorkingDirectories.keys()),
-          toolUseContext.options.mcpClients,
-        ),
-        getUserContext(),
-        getSystemContext(),
-      ])
-      const systemPrompt = buildEffectiveSystemPrompt({
-        mainThreadAgentDefinition,
-        toolUseContext,
-        customSystemPrompt,
-        defaultSystemPrompt,
-        appendSystemPrompt,
-      })
-      toolUseContext.renderedSystemPrompt = systemPrompt
-      const notificationAttachments = await getQueuedCommandAttachments(removedNotifications).catch(
-        () => [],
-      )
-      const notificationMessages = notificationAttachments.map(createAttachmentMessage)
-
-      // 去重：如果查询循环已经在我们将通知从队列中移除之前
-      // 将其 yield 到 messagesRef，跳过重复项。
-      // 我们使用提示文本去重因为 source_uuid 未在
-      // 任务通知 QueuedCommands 上设置（enqueuePendingNotification 调用者
-      // 不传递 uuid），所以它始终为 undefined。
-      const existingPrompts = new Set<string>()
-      for (const m of messagesRef.current) {
-        if (
-          m.type === 'attachment' &&
-          (m.attachment as any).type === 'queued_command' &&
-          (m.attachment as any).commandMode === 'task-notification' &&
-          typeof (m.attachment as any).prompt === 'string'
-        ) {
-          existingPrompts.add((m.attachment as any).prompt)
-        }
-      }
-      const uniqueNotifications = notificationMessages.filter(
-        (m) =>
-          (m.attachment as any).type === 'queued_command' &&
-          (typeof (m.attachment as any).prompt !== 'string' ||
-            !existingPrompts.has((m.attachment as any).prompt)),
-      )
-      startBackgroundSession({
-        messages: [...messagesRef.current, ...uniqueNotifications],
-        queryParams: {
-          systemPrompt,
-          userContext,
-          systemContext,
-          canUseTool: canUseTool as any,
-          toolUseContext,
-          querySource: getQuerySourceForREPL(),
-        },
-        description: terminalTitle,
-        setAppState,
-        agentDefinition: mainThreadAgentDefinition,
-      })
-    })()
-  }, [
+  // Ctrl+B 后台会话逻辑收敛到 useReplBackgroundQuery
+  const handleBackgroundQuery = useReplBackgroundQuery({
     abortController,
     mainLoopModel,
     toolPermissionContext,
@@ -2192,7 +2116,8 @@ export function REPL({
     canUseTool,
     setAppState,
     terminalTitle,
-  ])
+    messagesRef,
+  })
   const { handleBackgroundSession } = useSessionBackgrounding({
     setMessages,
     setIsLoading: setIsExternalLoading,
