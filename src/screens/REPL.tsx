@@ -315,7 +315,6 @@ import { useMemorySurvey } from 'src/components/FeedbackSurvey/useMemorySurvey.j
 import { usePostCompactSurvey } from 'src/components/FeedbackSurvey/usePostCompactSurvey.js'
 import { FeedbackSurvey } from 'src/components/FeedbackSurvey/FeedbackSurvey.js'
 import { coordinatorModeModule, proactiveModule } from '../cli/lazyModules.js'
-import { useFrozenTranscript } from './repl/useFrozenTranscript.js'
 import { useReplActiveRemote } from './repl/useReplActiveRemote.js'
 import { useReplToolPermissionContext } from './repl/useReplToolPermissionContext.js'
 import { useReplLoadingState } from './repl/useReplLoadingState.js'
@@ -327,10 +326,8 @@ import { useReplProactive } from './repl/useReplProactive.js'
 import { useReplSandboxAsk } from './repl/useReplSandboxAsk.js'
 import { type PromptQueueItem, useReplRequestPrompt } from './repl/useReplRequestPrompt.js'
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
-import { useReplSearch } from './repl/useReplSearch.js'
+import { useReplTranscript } from './repl/useReplTranscript.js'
 import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
-import { useTranscriptEditor } from './repl/useTranscriptEditor.js'
-import { useViewedAgentBootstrap } from './repl/useViewedAgentBootstrap.js'
 import { usePromptsFromClaudeInChrome } from 'src/hooks/usePromptsFromClaudeInChrome.js'
 import type { Theme } from 'src/utils/theme.js'
 import {
@@ -534,10 +531,6 @@ export function REPL({
   const viewingAgentTaskId = useAppState((s) => s.viewingAgentTaskId)
   const setAppState = useSetAppState()
 
-  // viewed-agent sidechain JSONL 合并已抽到 useViewedAgentBootstrap：
-  // 切换到 retain=true 但尚未 diskLoaded 的 local_agent task 时，
-  // 读取磁盘前缀并与 stream live 消息按 UUID 合并。
-  useViewedAgentBootstrap()
   const store = useAppStateStore()
   const terminal = useTerminalNotification()
   const mainLoopModel = useMainLoopModel()
@@ -576,12 +569,6 @@ export function REPL({
   }, [])
   const [screen, setScreen] = useState<Screen>('prompt')
   const [showAllInTranscript, setShowAllInTranscript] = useState(false)
-  // [ 强制在转录模式内走 dump-to-scrollback 路径。退出转录时重置；
-  // useReplSearch 的 useInput.isActive 需要这个值（!dumpMode），所以 state 留在 REPL，
-  // 仅把 3 个 editor refs + useInput([/v/q) + inTranscript 退出 reset 抽到 useTranscriptEditor。
-  const [dumpMode, setDumpMode] = useState(false)
-  // 面向编辑器的 v 渲染进度。内联在 footer 中。
-  const [editorStatus, setEditorStatus] = useState('')
   const { addNotification, removeNotification } = useNotifications()
 
   // eslint-disable-next-line prefer-const
@@ -4061,27 +4048,16 @@ export function REPL({
   }, [messages, isLoading])
 
   // enter/exit transcript 回调 + transcriptMessages/transcriptStreamingToolUses 切片派生
-  // 一并由 useFrozenTranscript 提供。
+  // GlobalKeybindingHandlers 组件的 props（在 KeybindingSetup 内部渲染）
+  const virtualScrollActive = isFullscreenEnvEnabled() && !disableVirtualScroll
+
+  // Transcript 全簇合并：frozen + search + editor + viewed-agent bootstrap。
+  // dumpMode / editorStatus 现在内化于 hook（消除 search ↔ editor 循环依赖）。
   const {
     handleEnterTranscript,
     handleExitTranscript,
     transcriptMessages,
     transcriptStreamingToolUses,
-  } = useFrozenTranscript({
-    messages,
-    streamingToolUses,
-    deferredMessages,
-  })
-
-  // GlobalKeybindingHandlers 组件的 props（在 KeybindingSetup 内部渲染）
-  const virtualScrollActive = isFullscreenEnvEnabled() && !disableVirtualScroll
-
-  // transcript 内的搜索（/ + n/N）状态与行为已抽到 useReplSearch。
-  // inTranscript 见下方第 4960 行计算，需在 search hook 之前确定，
-  // 但 React 要求 hook 顺序稳定 —— 因此我们先以同等表达式计算 inTranscript：
-  // virtualScrollActive 在前面已算出，screen 已 destructure。
-  const inTranscript = screen === 'transcript' && virtualScrollActive
-  const {
     jumpRef,
     searchOpen,
     setSearchOpen,
@@ -4095,25 +4071,16 @@ export function REPL({
     setHighlight,
     scanElement,
     setPositions,
-  } = useReplSearch({ inTranscript, screen, virtualScrollActive, dumpMode })
-
-  // 转录退出快捷键。模态上下文中的裸字母（没有提示竞争输入）
-  // —— 与 ScrollKeybindingHandler 中的 g/G/j/k 相同类别
-  // transcript 内 [ / v / q 键绑定 + 3 个 editor refs + inTranscript 退出复位 editor / dump
-  // 已抽到 useTranscriptEditor；state 留在 REPL 主体（dumpMode / editorStatus 见 line 636 / 638）
-  // 是因为 useReplSearch 的 useInput.isActive 依赖 dumpMode 值。
-  useTranscriptEditor({
-    inTranscript,
+    dumpMode,
+    editorStatus,
+  } = useReplTranscript({
+    messages,
+    streamingToolUses,
+    deferredMessages,
     screen,
     virtualScrollActive,
-    searchOpen,
-    deferredMessages,
     tools,
-    dumpMode,
-    setDumpMode,
-    setEditorStatus,
     setShowAllInTranscript,
-    handleExitTranscript,
   })
   const globalKeybindingProps = {
     screen,
