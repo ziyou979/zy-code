@@ -324,12 +324,9 @@ import { useReplCallouts } from './repl/useReplCallouts.js'
 import { useReplFrustration } from './repl/useReplFrustration.js'
 import { useReplIdeState } from './repl/useReplIdeState.js'
 import { useReplNotifications } from './repl/useReplNotifications.js'
-import { useReplAbortController } from './repl/useReplAbortController.js'
 import { useReplBackgroundQuery } from './repl/useReplBackgroundQuery.js'
-import { useReplConversationId } from './repl/useReplConversationId.js'
 import { useReplOnCancel } from './repl/useReplOnCancel.js'
 import { useReplProactive } from './repl/useReplProactive.js'
-import { useReplQueuedCommandRestore } from './repl/useReplQueuedCommandRestore.js'
 import { useReplSandboxAsk } from './repl/useReplSandboxAsk.js'
 import { type PromptQueueItem, useReplRequestPrompt } from './repl/useReplRequestPrompt.js'
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
@@ -712,9 +709,7 @@ export function REPL({
   // 实际同步由下方 setMessages 的 rawSetMessages 包装处理。
   const messagesRef = useRef<MessageType[]>(initialMessages ?? [])
 
-  // abortController state + 镜像 ref 收敛到 useReplAbortController：
-  // bridge 远程中断路径需要 ref 同步读取当前 controller。
-  const { abortController, setAbortController, abortControllerRef } = useReplAbortController()
+  // abortController 现已并入 useReplOnCancel（下方）
 
   // bridge 结果回调的 ref — 在 useReplBridge 初始化后设置，
   // 在 onQuery finally 块中读取以通知移动端回合已结束。
@@ -1235,8 +1230,8 @@ export function REPL({
   const [messageSelectorPreselect, setMessageSelectorPreselect] = useState<UserMessage | undefined>(
     undefined,
   )
-  // 对话 ID 命名空间收敛到 useReplConversationId（regenerate 替代多处 randomUUID）
-  const { conversationId, setConversationId, regenerateConversationId } = useReplConversationId()
+  const [conversationId, setConversationId] = useState(randomUUID())
+  const regenerateConversationId = useCallback(() => setConversationId(randomUUID()), [])
 
   // 空闲返回对话框：用户在长空闲后提交时显示
   const [idleReturnPending, setIdleReturnPending] = useState<{
@@ -1852,9 +1847,16 @@ export function REPL({
     }
     prevDialogRef.current = focusedInputDialog
   }, [focusedInputDialog, repinScroll])
-  // onCancel 编排（Esc / Cancel 按钮）：tool-permission/prompt/remote 三路由
-  // + abortController 清理 + streamingText 保留 + token budget 复位。
-  const onCancel = useReplOnCancel({
+  // onCancel 编排 + abortController state + 排队命令恢复（3 hook 合并）。
+  // abortController / setAbortController / abortControllerRef 由此 hook 创建
+  // 并在返回值暴露，多处 onQuery / handlePromptSubmit / cancelRequestProps 需要。
+  const {
+    onCancel,
+    handleQueuedCommandOnCancel,
+    abortController,
+    setAbortController,
+    abortControllerRef,
+  } = useReplOnCancel({
     focusedInputDialog,
     streamMode,
     queryGuard,
@@ -1866,15 +1868,9 @@ export function REPL({
     setToolUseConfirmQueue,
     promptQueue,
     setPromptQueue,
-    abortController,
-    setAbortController,
     activeRemote,
     mrOnTurnComplete,
     messagesRef,
-  })
-
-  // 取消权限请求时把已排队命令恢复到输入框（popAllEditable 从队列取出文本+图）
-  const handleQueuedCommandOnCancel = useReplQueuedCommandRestore({
     inputValue,
     setInputValue,
     setInputMode,
