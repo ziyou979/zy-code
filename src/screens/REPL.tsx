@@ -314,6 +314,8 @@ import { useReplSandboxAsk } from './repl/useReplSandboxAsk.js'
 import { type PromptQueueItem, useReplRequestPrompt } from './repl/useReplRequestPrompt.js'
 import { useReplScheduledTasks } from './repl/useReplScheduledTasks.js'
 import { useReplSessionRestore } from './repl/useReplSessionRestore.js'
+import { createReplStore } from '../state/ReplStore.js'
+import { ReplStoreProvider } from '../state/ReplState.js'
 import { useReplTranscript } from './repl/useReplTranscript.js'
 import { ReplVoiceKeybindingHandler, useReplVoice } from './repl/useReplVoice.js'
 import { usePromptsFromClaudeInChrome } from 'src/hooks/usePromptsFromClaudeInChrome.js'
@@ -698,6 +700,20 @@ export function REPL({
   // 其中 isLoading（React state，异步批处理）和 isQueryRunning（ref，同步）
   // 可能不同步。参见 QueryGuard.ts。
   const queryGuard = React.useRef(new QueryGuard()).current
+
+  // ── ReplStore（Phase 1 脚手架：创建但不消费）──
+  // 后续 Phase 逐步把 state 从 useState 迁入 store。
+  const [replStore] = React.useState(() =>
+    createReplStore({
+      initialMessages,
+      initialMainThreadAgentDefinition,
+      initialDynamicMcpConfig,
+      initialExternalLoading: remoteSessionConfig?.hasInitialPrompt ?? false,
+      queryGuard,
+      readFileState: readFileState.current,
+      contentReplacementState: null,
+    }),
+  )
 
   // loading / spinner / streaming 全簇（5 个 hook 合并 + resetLoadingState 内化）。
   // onResetAdditionalRef 在下方 setUserInputOnProcessing 等就绪后才写入实体，
@@ -4026,12 +4042,14 @@ export function REPL({
     // 未包装 —— 它需要原生终端回滚
     if (transcriptScrollRef) {
       return (
-        <AlternateScreen mouseTracking={isMouseTrackingEnabled()}>
-          {transcriptReturn}
-        </AlternateScreen>
+        <ReplStoreProvider store={replStore}>
+          <AlternateScreen mouseTracking={isMouseTrackingEnabled()}>
+            {transcriptReturn}
+          </AlternateScreen>
+        </ReplStoreProvider>
       )
     }
-    return transcriptReturn
+    return <ReplStoreProvider store={replStore}>{transcriptReturn}</ReplStoreProvider>
   }
 
   // 获取查看的 agent 任务（从选择器内联以获得显式数据流）。
@@ -4491,7 +4509,11 @@ export function REPL({
     </KeybindingSetup>
   )
   if (isFullscreenEnvEnabled()) {
-    return <AlternateScreen mouseTracking={isMouseTrackingEnabled()}>{mainReturn}</AlternateScreen>
+    return (
+      <ReplStoreProvider store={replStore}>
+        <AlternateScreen mouseTracking={isMouseTrackingEnabled()}>{mainReturn}</AlternateScreen>
+      </ReplStoreProvider>
+    )
   }
-  return mainReturn
+  return <ReplStoreProvider store={replStore}>{mainReturn}</ReplStoreProvider>
 }
