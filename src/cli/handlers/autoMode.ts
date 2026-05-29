@@ -7,8 +7,8 @@ import { errorMessage } from '../../utils/errors.js'
 import { getMainLoopModel, parseUserSpecifiedModel } from '../../services/model/model.js'
 import {
   type AutoModeRules,
-  buildDefaultExternalSystemPrompt,
-  getDefaultExternalAutoModeRules,
+  buildDefaultSystemPrompt,
+  getDefaultAutoModeRules,
 } from '../../utils/permissions/yoloClassifier.js'
 import { getAutoModeConfig } from '../../utils/settings/settings.js'
 import { sideQuery } from '../../utils/sideQuery.js'
@@ -19,22 +19,23 @@ function writeRules(rules: AutoModeRules): void {
 }
 
 export function autoModeDefaultsHandler(): void {
-  writeRules(getDefaultExternalAutoModeRules())
+  writeRules(getDefaultAutoModeRules())
 }
 
 /**
- * Dump the effective auto mode config: user settings where provided, external
+ * Dump the effective auto mode config: user settings where provided, template
  * defaults otherwise. Per-section REPLACE semantics — matches how
- * buildYoloSystemPrompt resolves the external template (a non-empty user
+ * buildYoloSystemPrompt resolves the permissions template (a non-empty user
  * section replaces that section's defaults entirely; an empty/absent section
  * falls through to defaults).
  */
 export function autoModeConfigHandler(): void {
   const config = getAutoModeConfig()
-  const defaults = getDefaultExternalAutoModeRules()
+  const defaults = getDefaultAutoModeRules()
   writeRules({
     allow: config?.allow?.length ? config.allow : defaults.allow,
     soft_deny: config?.soft_deny?.length ? config.soft_deny : defaults.soft_deny,
+    hard_deny: config?.hard_deny?.length ? config.hard_deny : defaults.hard_deny,
     environment: config?.environment?.length ? config.environment : defaults.environment,
   })
 }
@@ -44,10 +45,13 @@ const CRITIQUE_SYSTEM_PROMPT =
   '\n' +
   'ZY Code has an "auto mode" that uses an AI classifier to decide whether ' +
   'tool calls should be auto-approved or require user confirmation. Users can ' +
-  'write custom rules in three categories:\n' +
+  'write custom rules in four categories:\n' +
   '\n' +
   '- **allow**: Actions the classifier should auto-approve\n' +
-  '- **soft_deny**: Actions the classifier should block (require user confirmation)\n' +
+  '- **soft_deny**: Destructive/irreversible actions the classifier should block ' +
+  'unless clear user intent authorizes them\n' +
+  '- **hard_deny**: Security-boundary actions the classifier should block ' +
+  'unconditionally (user intent does not clear these)\n' +
   "- **environment**: Context about the user's setup that helps the classifier make decisions\n" +
   '\n' +
   "Your job is to critique the user's custom rules for clarity, completeness, " +
@@ -68,12 +72,13 @@ export async function autoModeCritiqueHandler(options: { model?: string }): Prom
   const hasCustomRules =
     (config?.allow?.length ?? 0) > 0 ||
     (config?.soft_deny?.length ?? 0) > 0 ||
+    (config?.hard_deny?.length ?? 0) > 0 ||
     (config?.environment?.length ?? 0) > 0
 
   if (!hasCustomRules) {
     process.stdout.write(
       'No custom auto mode rules found.\n\n' +
-        'Add rules to your settings file under autoMode.{allow, soft_deny, environment}.\n' +
+        'Add rules to your settings file under autoMode.{allow, soft_deny, hard_deny, environment}.\n' +
         'Run `zy auto-mode defaults` to see the default rules for reference.\n',
     )
     return
@@ -81,12 +86,13 @@ export async function autoModeCritiqueHandler(options: { model?: string }): Prom
 
   const model = options.model ? parseUserSpecifiedModel(options.model) : getMainLoopModel()
 
-  const defaults = getDefaultExternalAutoModeRules()
-  const classifierPrompt = buildDefaultExternalSystemPrompt()
+  const defaults = getDefaultAutoModeRules()
+  const classifierPrompt = buildDefaultSystemPrompt()
 
   const userRulesSummary =
     formatRulesForCritique('allow', config?.allow ?? [], defaults.allow) +
     formatRulesForCritique('soft_deny', config?.soft_deny ?? [], defaults.soft_deny) +
+    formatRulesForCritique('hard_deny', config?.hard_deny ?? [], defaults.hard_deny) +
     formatRulesForCritique('environment', config?.environment ?? [], defaults.environment)
 
   process.stdout.write('Analyzing your auto mode rules…\n\n')
@@ -101,15 +107,20 @@ export async function autoModeCritiqueHandler(options: { model?: string }): Prom
       max_tokens: 4096,
       messages: [
         {
-          role: 'user',
-          content:
-            'Here is the full classifier system prompt that the auto mode classifier receives:\n\n' +
-            '<classifier_system_prompt>\n' +
-            classifierPrompt +
-            '\n</classifier_system_prompt>\n\n' +
-            "Here are the user's custom rules that REPLACE the corresponding default sections:\n\n" +
-            userRulesSummary +
-            '\nPlease critique these custom rules.',
+          role: 'user' as const,
+          content: [
+            {
+              type: 'text' as const,
+              text:
+                'Here is the full classifier system prompt that the auto mode classifier receives:\n\n' +
+                '<classifier_system_prompt>\n' +
+                classifierPrompt +
+                '\n</classifier_system_prompt>\n\n' +
+                "Here are the user's custom rules that REPLACE the corresponding default sections:\n\n" +
+                userRulesSummary +
+                '\nPlease critique these custom rules.',
+            },
+          ],
         },
       ],
     })

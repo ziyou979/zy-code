@@ -844,18 +844,26 @@ export function getUseAutoModeDuringPlan(): boolean {
  * allow/deny 规则（RCE 风险）。
  */
 export function getAutoModeConfig():
-  | { allow?: string[]; soft_deny?: string[]; environment?: string[] }
+  | {
+      allow?: string[]
+      soft_deny?: string[]
+      hard_deny?: string[]
+      environment?: string[]
+    }
   | undefined {
   if (feature('TRANSCRIPT_CLASSIFIER')) {
     const schema = z.object({
       allow: z.array(z.string()).optional(),
       soft_deny: z.array(z.string()).optional(),
+      hard_deny: z.array(z.string()).optional(),
+      // 兼容旧字段：deny 等同于 soft_deny
       deny: z.array(z.string()).optional(),
       environment: z.array(z.string()).optional(),
     })
 
     const allow: string[] = []
     const soft_deny: string[] = []
+    const hard_deny: string[] = []
     const environment: string[] = []
 
     for (const source of [
@@ -876,10 +884,12 @@ export function getAutoModeConfig():
         if (result.data.soft_deny) {
           soft_deny.push(...result.data.soft_deny)
         }
-        if (isInternalBuild()) {
-          if (result.data.deny) {
-            soft_deny.push(...result.data.deny)
-          }
+        if (result.data.hard_deny) {
+          hard_deny.push(...result.data.hard_deny)
+        }
+        // 兼容旧字段：将 deny 视为 soft_deny
+        if (result.data.deny) {
+          soft_deny.push(...result.data.deny)
         }
         if (result.data.environment) {
           environment.push(...result.data.environment)
@@ -887,10 +897,16 @@ export function getAutoModeConfig():
       }
     }
 
-    if (allow.length > 0 || soft_deny.length > 0 || environment.length > 0) {
+    if (
+      allow.length > 0 ||
+      soft_deny.length > 0 ||
+      hard_deny.length > 0 ||
+      environment.length > 0
+    ) {
       return {
         ...(allow.length > 0 && { allow }),
         ...(soft_deny.length > 0 && { soft_deny }),
+        ...(hard_deny.length > 0 && { hard_deny }),
         ...(environment.length > 0 && { environment }),
       }
     }

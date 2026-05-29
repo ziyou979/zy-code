@@ -33,7 +33,6 @@ import { getAutoModeConfig } from '../settings/settings.js'
 import { sideQuery } from '../sideQuery.js'
 import { jsonStringify } from '../slowOperations.js'
 import { tokenCountWithEstimation } from '../tokens.js'
-import { getBashPromptAllowDescriptions, getBashPromptDenyDescriptions } from './bashClassifier.js'
 import { extractToolCallInlineBlock, parseClassifierResponse } from './classifierShared.js'
 import { getZyTempDir } from './filesystem.js'
 
@@ -49,26 +48,12 @@ const BASE_PROMPT: string = feature('TRANSCRIPT_CLASSIFIER')
   ? txtRequire(require('./yolo-classifier-prompts/auto_mode_system_prompt.txt'))
   : ''
 
-// 外部模板单独加载，因此即使在内部构建中也可用于
-// `zy auto-mode defaults`。内部构建在运行时使用
-// permissions_internal.txt，但应转储外部默认值。
-const EXTERNAL_PERMISSIONS_TEMPLATE: string = feature('TRANSCRIPT_CLASSIFIER')
+// 权限模板：定义 Environment / Definitions / HARD BLOCK / SOFT BLOCK / ALLOW 四类规则，
+// 由 buildYoloSystemPrompt 注入到 BASE_PROMPT 的 <permissions_template> 占位处。
+const PERMISSIONS_TEMPLATE: string = feature('TRANSCRIPT_CLASSIFIER')
   ? txtRequire(require('./yolo-classifier-prompts/permissions_external.txt'))
   : ''
-
-const INTERNAL_PERMISSIONS_TEMPLATE: string =
-  feature('TRANSCRIPT_CLASSIFIER') && isInternalBuild()
-    ? txtRequire(require('./yolo-classifier-prompts/permissions_internal.txt'))
-    : ''
 /* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
-
-function isUsingExternalPermissions(): boolean {
-  if (!isInternalBuild()) {
-    return true
-  }
-  const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_auto_mode_config', {} as AutoModeConfig)
-  return config?.forceExternalPermissions === true
-}
 
 /**
  * settings.autoMode 配置的形状 — 用户可自定义的三个分类器 prompt
@@ -77,31 +62,32 @@ function isUsingExternalPermissions(): boolean {
  */
 export type AutoModeRules = {
   allow: string[]
+  /** 软阻断规则（可被用户意图清除） */
   soft_deny: string[]
+  /** 硬阻断规则（安全边界，用户意图无法清除） */
+  hard_deny: string[]
   environment: string[]
 }
 
 /**
- * 将外部权限模板解析为 settings.autoMode 架构形状。
- * 外部模板将每个部分的默认值包装在
+ * 将权限模板解析为 settings.autoMode 架构形状。
+ * 模板将每个部分的默认值包装在
  * <user_*_to_replace> 标签中（用户设置替换这些默认值），因此
  * 捕获的标签内容就是默认值。列表项在模板中为单行；
  * 每行以 `- ` 开头的内容成为一个数组条目。
- * 由 `zy auto-mode defaults` 使用。始终返回外部默认值，
- * 从不返回内部模板。
+ * 由 `zy auto-mode defaults` 使用。
  */
-export function getDefaultExternalAutoModeRules(): AutoModeRules {
+export function getDefaultAutoModeRules(): AutoModeRules {
   return {
     allow: extractTaggedBullets('user_allow_rules_to_replace'),
-    soft_deny: extractTaggedBullets('user_deny_rules_to_replace'),
+    soft_deny: extractTaggedBullets('user_soft_deny_rules_to_replace'),
+    hard_deny: extractTaggedBullets('user_hard_deny_rules_to_replace'),
     environment: extractTaggedBullets('user_environment_to_replace'),
   }
 }
 
 function extractTaggedBullets(tagName: string): string[] {
-  const match = EXTERNAL_PERMISSIONS_TEMPLATE.match(
-    new RegExp(`<${tagName}>([\\s\\S]*?)</${tagName}>`),
-  )
+  const match = PERMISSIONS_TEMPLATE.match(new RegExp(`<${tagName}>([\\s\\S]*?)</${tagName}>`))
   if (!match) {
     return []
   }
@@ -113,23 +99,32 @@ function extractTaggedBullets(tagName: string): string[] {
 }
 
 /**
- * 返回完整的外部分类器系统 prompt，带默认规则（无用户覆盖）。
+ * 返回完整的分类器系统 prompt，带默认规则（无用户覆盖）。
  * 由 `zy auto-mode critique` 使用，以向模型展示分类器如何看到其指令。
  */
-export function buildDefaultExternalSystemPrompt(): string {
-  return BASE_PROMPT.replace('<permissions_template>', () => EXTERNAL_PERMISSIONS_TEMPLATE)
-    .replace(
-      /<user_allow_rules_to_replace>([\s\S]*?)<\/user_allow_rules_to_replace>/,
-      (_m, defaults: string) => defaults,
-    )
-    .replace(
-      /<user_deny_rules_to_replace>([\s\S]*?)<\/user_deny_rules_to_replace>/,
-      (_m, defaults: string) => defaults,
-    )
-    .replace(
-      /<user_environment_to_replace>([\s\S]*?)<\/user_environment_to_replace>/,
-      (_m, defaults: string) => defaults,
-    )
+export function buildDefaultSystemPrompt(): string {
+  return (
+    BASE_PROMPT.replace('<permissions_template>', () => PERMISSIONS_TEMPLATE)
+      .replace(
+        /<user_allow_rules_to_replace>([\s\S]*?)<\/user_allow_rules_to_replace>/,
+        (_m, defaults: string) => defaults,
+      )
+      .replace(
+        /<user_soft_deny_rules_to_replace>([\s\S]*?)<\/user_soft_deny_rules_to_replace>/,
+        (_m, defaults: string) => defaults,
+      )
+      .replace(
+        /<user_hard_deny_rules_to_replace>([\s\S]*?)<\/user_hard_deny_rules_to_replace>/,
+        (_m, defaults: string) => defaults,
+      )
+      .replace(
+        /<user_environment_to_replace>([\s\S]*?)<\/user_environment_to_replace>/,
+        (_m, defaults: string) => defaults,
+      )
+      // settings_deny_rules 是 settings.deny（settings 级别的拒绝列表）的注入位，
+      // 当前 zy-code 不在此注入 settings 级别规则，统一替换为空字符串。
+      .replace('<settings_deny_rules>', '')
+  )
 }
 
 function getAutoModeDumpDir(): string {
@@ -464,54 +459,52 @@ function buildAgentsMdMessage(): LLMMessage | null {
  * 将基础 prompt 与权限模板组合，并从 settings.autoMode 替换
  * 用户的 allow/deny/environment 值。
  */
-export async function buildYoloSystemPrompt(context: ToolPermissionContext): Promise<string> {
-  const usingExternal = isUsingExternalPermissions()
-  const systemPrompt = BASE_PROMPT.replace('<permissions_template>', () =>
-    usingExternal ? EXTERNAL_PERMISSIONS_TEMPLATE : INTERNAL_PERMISSIONS_TEMPLATE,
-  )
+export async function buildYoloSystemPrompt(_context: ToolPermissionContext): Promise<string> {
+  const systemPrompt = BASE_PROMPT.replace('<permissions_template>', () => PERMISSIONS_TEMPLATE)
 
   const autoMode = getAutoModeConfig()
-  const includeBashPromptRules = feature('BASH_CLASSIFIER') ? !usingExternal : false
-  const includePowerShellGuidance = feature('POWERSHELL_AUTO_MODE') ? !usingExternal : false
-  const allowDescriptions = [
-    ...(includeBashPromptRules ? getBashPromptAllowDescriptions(context) : []),
-    ...(autoMode?.allow ?? []),
-  ]
-  const denyDescriptions = [
-    ...(includeBashPromptRules ? getBashPromptDenyDescriptions(context) : []),
-    ...(includePowerShellGuidance ? POWERSHELL_DENY_GUIDANCE : []),
-    ...(autoMode?.soft_deny ?? []),
-  ]
+  const allowDescriptions = [...(autoMode?.allow ?? [])]
+  const softDenyDescriptions = [...(autoMode?.soft_deny ?? [])]
+  const hardDenyDescriptions = [...(autoMode?.hard_deny ?? [])]
 
-  // 三个部分都使用相同的 <foo_to_replace>...</foo_to_replace>
-  // 分隔符模式。外部模板将其默认值包装在
-  // 标签内，因此用户提供的值完全替换默认值。
-  // 内部模板将默认值保留在标签外，并在每部分
-  // 末尾使用空标签对，因此用户提供的值严格是
-  // 附加的。
+  // 四个部分都使用相同的 <foo_to_replace>...</foo_to_replace>
+  // 分隔符模式。模板将其默认值包装在标签内，
+  // 因此用户提供的值完全替换默认值。
   const userAllow = allowDescriptions.length
     ? allowDescriptions.map((d) => `- ${d}`).join('\n')
     : undefined
-  const userDeny = denyDescriptions.length
-    ? denyDescriptions.map((d) => `- ${d}`).join('\n')
+  const userSoftDeny = softDenyDescriptions.length
+    ? softDenyDescriptions.map((d) => `- ${d}`).join('\n')
+    : undefined
+  const userHardDeny = hardDenyDescriptions.length
+    ? hardDenyDescriptions.map((d) => `- ${d}`).join('\n')
     : undefined
   const userEnvironment = autoMode?.environment?.length
     ? autoMode.environment.map((e) => `- ${e}`).join('\n')
     : undefined
 
-  return systemPrompt
-    .replace(
-      /<user_allow_rules_to_replace>([\s\S]*?)<\/user_allow_rules_to_replace>/,
-      (_m, defaults: string) => userAllow ?? defaults,
-    )
-    .replace(
-      /<user_deny_rules_to_replace>([\s\S]*?)<\/user_deny_rules_to_replace>/,
-      (_m, defaults: string) => userDeny ?? defaults,
-    )
-    .replace(
-      /<user_environment_to_replace>([\s\S]*?)<\/user_environment_to_replace>/,
-      (_m, defaults: string) => userEnvironment ?? defaults,
-    )
+  return (
+    systemPrompt
+      .replace(
+        /<user_allow_rules_to_replace>([\s\S]*?)<\/user_allow_rules_to_replace>/,
+        (_m, defaults: string) => userAllow ?? defaults,
+      )
+      .replace(
+        /<user_soft_deny_rules_to_replace>([\s\S]*?)<\/user_soft_deny_rules_to_replace>/,
+        (_m, defaults: string) => userSoftDeny ?? defaults,
+      )
+      .replace(
+        /<user_hard_deny_rules_to_replace>([\s\S]*?)<\/user_hard_deny_rules_to_replace>/,
+        (_m, defaults: string) => userHardDeny ?? defaults,
+      )
+      .replace(
+        /<user_environment_to_replace>([\s\S]*?)<\/user_environment_to_replace>/,
+        (_m, defaults: string) => userEnvironment ?? defaults,
+      )
+      // settings_deny_rules 是 settings.deny（settings 级别的拒绝列表）的注入位，
+      // 当前 zy-code 不在此注入 settings 级别规则，统一替换为空字符串。
+      .replace('<settings_deny_rules>', '')
+  )
 }
 // ============================================================================
 // 2 阶段 XML 分类器
@@ -1228,11 +1221,6 @@ type AutoModeConfig = {
    */
   twoStageClassifier?: boolean | 'fast' | 'thinking'
   /**
-   * 内部构建默认使用 permissions_internal.txt; 当此值为 true 时，改用
-   * permissions_external.txt instead (内部测试用外部模板).
-   */
-  forceExternalPermissions?: boolean
-  /**
    * Gate the JSONL transcript format ({"Bash":"ls"} vs `Bash ls`).
    * Default false (old text-prefix format) for slow rollout / quick rollback.
    */
@@ -1300,26 +1288,6 @@ function isJsonlTranscriptEnabled(): boolean {
   const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_auto_mode_config', {} as AutoModeConfig)
   return config?.jsonlTranscript === true
 }
-
-/**
- * 分类器的 PowerShell 特定拒绝指导。当 PowerShell auto 模式激活时，
- * 附加到 buildYoloSystemPrompt 的拒绝列表中。
- * 将 PS 惯用法映射到现有的 BLOCK 类别，以便分类器
- * 将 `iex (iwr ...)` 识别为"来自外部的代码"，
- * `Remove-Item -Recurse -Force` 识别为"不可逆本地破坏"等。
- *
- * 在定义处守卫以实现 DCE — 当 external:false 时，字符串内容
- * 在外部构建中不存在（与上方 .txt 导入的模式相同）。
- */
-let POWERSHELL_DENY_GUIDANCE
-POWERSHELL_DENY_GUIDANCE = feature('POWERSHELL_AUTO_MODE')
-  ? [
-      'PowerShell Download-and-Execute: `iex (iwr ...)`, `Invoke-Expression (Invoke-WebRequest ...)`, `Invoke-Expression (New-Object Net.WebClient).DownloadString(...)`, and any pipeline feeding remote content into `Invoke-Expression`/`iex` fall under "Code from External" — same as `curl | bash`.',
-      'PowerShell Irreversible Destruction: `Remove-Item -Recurse -Force`, `rm -r -fo`, `Clear-Content`, and `Set-Content` truncation of pre-existing files fall under "Irreversible Local Destruction" — same as `rm -rf` and `> file`.',
-      'PowerShell Persistence: modifying `$PROFILE` (any of the four profile paths), `Register-ScheduledTask`, `New-Service`, writing to registry Run keys (`HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run` or the HKLM equivalent), and WMI event subscriptions fall under "Unauthorized Persistence" — same as `.bashrc` edits and cron jobs.',
-      'PowerShell Elevation: `Start-Process -Verb RunAs`, `-ExecutionPolicy Bypass`, and disabling AMSI/Defender (`Set-MpPreference -DisableRealtimeMonitoring`) fall under "Security Weaken".',
-    ]
-  : []
 
 type AutoModeOutcome = 'success' | 'parse_failure' | 'interrupted' | 'error' | 'transcript_too_long'
 
