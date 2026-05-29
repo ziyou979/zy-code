@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import * as React from 'react'
 import { memo, type ReactNode, useMemo, useRef } from 'react'
 import { isBridgeEnabled } from '../../bridge/bridgeEnabled.js'
-import { getBridgeStatus } from '../../bridge/bridgeStatusUtil.js'
+import { getWireStatus } from '../../bridge/bridgeStatusUtil.js'
 import { useSetPromptOverlay } from '../../context/promptOverlayContext.js'
 import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
@@ -212,7 +212,7 @@ function PromptInputFooter({
             />
           )}
           {isInternalBuild() && isUndercover() && <Text dimColor>undercover</Text>}
-          <BridgeStatusIndicator bridgeSelected={bridgeSelected} />
+          <WireStatusIndicator bridgeSelected={bridgeSelected} />
         </Box>
       </Box>
       <CoordinatorTaskPanel />
@@ -220,10 +220,10 @@ function PromptInputFooter({
   )
 }
 export default memo(PromptInputFooter)
-type BridgeStatusProps = {
+type WireStatusProps = {
   bridgeSelected: boolean
 }
-function BridgeStatusIndicator({ bridgeSelected }: BridgeStatusProps): React.ReactNode {
+function WireStatusIndicator({ bridgeSelected }: WireStatusProps): React.ReactNode {
   if (!feature('BRIDGE_MODE')) {
     return null
   }
@@ -231,19 +231,19 @@ function BridgeStatusIndicator({ bridgeSelected }: BridgeStatusProps): React.Rea
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
   const enabled = useAppState((s) => s.replBridgeEnabled)
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  const connected = useAppState((s_0) => s_0.replBridgeConnected)
+  const connected = useAppState((s_0) => s_0.replWireConnected)
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  const sessionActive = useAppState((s_1) => s_1.replBridgeSessionActive)
+  const sessionActive = useAppState((s_1) => s_1.replWireSessionActive)
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  const reconnecting = useAppState((s_2) => s_2.replBridgeReconnecting)
+  const reconnecting = useAppState((s_2) => s_2.replWireReconnecting)
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  const explicit = useAppState((s_3) => s_3.replBridgeExplicit)
+  const explicit = useAppState((s_3) => s_3.replWireExplicit)
 
   // Failed state is surfaced via notification (useReplBridge), not a footer pill.
   if (!isBridgeEnabled() || !enabled) {
     return null
   }
-  const status = getBridgeStatus({
+  const status = getWireStatus({
     error: undefined,
     connected,
     sessionActive,

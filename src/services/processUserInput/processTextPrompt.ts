@@ -4,7 +4,7 @@ import type { AttachmentMessage, SystemMessage, UserMessage } from 'src/types/me
 import { logEvent } from '../../services/analytics/index.js'
 import type { UserContentBlock } from '../../types/llm.js'
 import type { PermissionMode } from '../../types/permissions.js'
-import { createUserMessage } from '../../utils/messages.js'
+import { createUserMessage } from '../../utils/messages/constructors.js'
 import { logOTelEvent, redactIfDisabled } from '../telemetry/events.js'
 import { startInteractionSpan } from '../telemetry/sessionTracing.js'
 import { matchesKeepGoingKeyword, matchesNegativeKeyword } from '../../utils/userPromptKeywords.js'
@@ -75,8 +75,10 @@ export function processTextPrompt(
     }
   }
 
+  const contentBlocks: UserContentBlock[] =
+    typeof input === 'string' ? [{ type: 'text' as const, text: input }] : input
   const userMessage = createUserMessage({
-    content: input,
+    content: contentBlocks,
     uuid,
     permissionMode,
     isMeta: isMeta || undefined,

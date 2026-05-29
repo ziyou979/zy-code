@@ -36,7 +36,7 @@ const MAX_WORKTREE_FANOUT = 50
 
 export const BRIDGE_POINTER_TTL_MS = 4 * 60 * 60 * 1000
 
-const BridgePointerSchema = lazySchema(() =>
+const WirePointerSchema = lazySchema(() =>
   z.object({
     sessionId: z.string(),
     environmentId: z.string(),
@@ -44,9 +44,9 @@ const BridgePointerSchema = lazySchema(() =>
   }),
 )
 
-export type BridgePointer = z.infer<ReturnType<typeof BridgePointerSchema>>
+export type WirePointer = z.infer<ReturnType<typeof WirePointerSchema>>
 
-export function getBridgePointerPath(dir: string): string {
+export function getWirePointerPath(dir: string): string {
   return join(getProjectsDir(), sanitizePath(dir), 'bridge-pointer.json')
 }
 
@@ -56,8 +56,8 @@ export function getBridgePointerPath(dir: string): string {
  * the staleness clock. Best-effort — a crash-recovery file must never
  * itself cause a crash. Logs and swallows on error.
  */
-export async function writeBridgePointer(dir: string, pointer: BridgePointer): Promise<void> {
-  const path = getBridgePointerPath(dir)
+export async function writeWirePointer(dir: string, pointer: WirePointer): Promise<void> {
+  const path = getWirePointerPath(dir)
   try {
     await mkdir(dirname(path), { recursive: true })
     await writeFile(path, jsonStringify(pointer), 'utf8')
@@ -74,10 +74,10 @@ export async function writeBridgePointer(dir: string, pointer: BridgePointer): P
  * stale (mtime > 4h ago). Stale/invalid pointers are deleted so they don't
  * keep re-prompting after the backend has already GC'd the env.
  */
-export async function readBridgePointer(
+export async function readWirePointer(
   dir: string,
-): Promise<(BridgePointer & { ageMs: number }) | null> {
-  const path = getBridgePointerPath(dir)
+): Promise<(WirePointer & { ageMs: number }) | null> {
+  const path = getWirePointerPath(dir)
   let raw: string
   let mtimeMs: number
   try {
@@ -89,17 +89,17 @@ export async function readBridgePointer(
     return null
   }
 
-  const parsed = BridgePointerSchema().safeParse(safeJsonParse(raw))
+  const parsed = WirePointerSchema().safeParse(safeJsonParse(raw))
   if (!parsed.success) {
     logForDebugging(`[bridge:pointer] invalid schema, clearing: ${path}`)
-    await clearBridgePointer(dir)
+    await clearWirePointer(dir)
     return null
   }
 
   const ageMs = Math.max(0, Date.now() - mtimeMs)
   if (ageMs > BRIDGE_POINTER_TTL_MS) {
     logForDebugging(`[bridge:pointer] stale (>4h mtime), clearing: ${path}`)
-    await clearBridgePointer(dir)
+    await clearWirePointer(dir)
     return null
   }
 
@@ -120,12 +120,12 @@ export async function readBridgePointer(
  * Returns the pointer AND the dir it was found in, so the caller can clear
  * the right file on resume failure.
  */
-export async function readBridgePointerAcrossWorktrees(
+export async function readWirePointerAcrossWorktrees(
   dir: string,
-): Promise<{ pointer: BridgePointer & { ageMs: number }; dir: string } | null> {
+): Promise<{ pointer: WirePointer & { ageMs: number }; dir: string } | null> {
   // Fast path: current dir. Covers standalone bridge (always matches) and
   // REPL bridge when no worktree mutation happened.
-  const here = await readBridgePointer(dir)
+  const here = await readWirePointer(dir)
   if (here) {
     return { pointer: here, dir }
   }
@@ -149,12 +149,12 @@ export async function readBridgePointerAcrossWorktrees(
   const dirKey = sanitizePath(dir)
   const candidates = worktrees.filter((wt) => sanitizePath(wt) !== dirKey)
 
-  // Parallel stat+read. Each readBridgePointer is a stat() that ENOENTs
+  // Parallel stat+read. Each readWirePointer is a stat() that ENOENTs
   // for worktrees with no pointer (cheap) plus a ~100-byte read for the
   // rare ones that have one. Promise.all → latency ≈ slowest single stat.
   const results = await Promise.all(
     candidates.map(async (wt) => {
-      const p = await readBridgePointer(wt)
+      const p = await readWirePointer(wt)
       return p ? { pointer: p, dir: wt } : null
     }),
   )
@@ -163,7 +163,7 @@ export async function readBridgePointerAcrossWorktrees(
   // resume reconnects to the right env regardless of which worktree
   // --continue was invoked from.
   let freshest: {
-    pointer: BridgePointer & { ageMs: number }
+    pointer: WirePointer & { ageMs: number }
     dir: string
   } | null = null
   for (const r of results) {
@@ -183,8 +183,8 @@ export async function readBridgePointerAcrossWorktrees(
  * Delete the pointer. Idempotent — ENOENT is expected when the process
  * shut down clean previously.
  */
-export async function clearBridgePointer(dir: string): Promise<void> {
-  const path = getBridgePointerPath(dir)
+export async function clearWirePointer(dir: string): Promise<void> {
+  const path = getWirePointerPath(dir)
   try {
     await unlink(path)
     logForDebugging(`[bridge:pointer] cleared ${path}`)

@@ -74,9 +74,9 @@ export type SpawnMode = 'single-session' | 'worktree' | 'same-dir'
  * sends `"cowork"`, which isn't in this union. REPL code uses this narrow
  * type for its own exhaustiveness; wire-level fields accept any string.
  */
-export type BridgeWorkerType = 'zy_code' | 'zy_code_assistant'
+export type WireWorkerType = 'zy_code' | 'zy_code_assistant'
 
-export type BridgeConfig = {
+export type WireConfig = {
   dir: string
   machineName: string
   branch: string
@@ -89,7 +89,7 @@ export type BridgeConfig = {
   bridgeId: string
   /**
    * Sent as metadata.worker_type so web clients can filter by origin.
-   * Backend treats this as opaque — any string, not just BridgeWorkerType.
+   * Backend treats this as opaque — any string, not just WireWorkerType.
    */
   workerType: string
   /** Client-generated UUID for idempotent environment registration. */
@@ -128,8 +128,8 @@ export type PermissionResponseEvent = {
   }
 }
 
-export type BridgeApiClient = {
-  registerBridgeEnvironment(config: BridgeConfig): Promise<{
+export type WireApiClient = {
+  registerWireEnvironment(config: WireConfig): Promise<{
     environment_id: string
     environment_secret: string
   }>
@@ -204,8 +204,8 @@ export type SessionSpawner = {
   spawn(opts: SessionSpawnOpts, dir: string): SessionHandle
 }
 
-export type BridgeLogger = {
-  printBanner(config: BridgeConfig, environmentId: string): void
+export type WireLogger = {
+  printBanner(config: WireConfig, environmentId: string): void
   logSessionStart(sessionId: string, prompt: string): void
   logSessionComplete(sessionId: string, durationMs: number): void
   logSessionFailed(sessionId: string, error: string): void

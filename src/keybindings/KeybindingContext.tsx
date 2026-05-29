@@ -90,18 +90,18 @@ export function KeybindingProvider({
       }
     }
   }
-  const invokeAction = (action_0) => {
-    const registry_0 = handlerRegistryRef.current
-    if (!registry_0) {
+  const invokeAction = (action) => {
+    const registry = handlerRegistryRef.current
+    if (!registry) {
       return false
     }
-    const handlers_0 = registry_0.get(action_0)
-    if (!handlers_0 || handlers_0.size === 0) {
+    const handlers = registry.get(action)
+    if (!handlers || handlers.size === 0) {
       return false
     }
-    for (const registration_0 of handlers_0) {
-      if (activeContexts.has(registration_0.context)) {
-        registration_0.handler()
+    for (const registration of handlers) {
+      if (activeContexts.has(registration.context)) {
+        registration.handler()
         return true
       }
     }

@@ -135,12 +135,7 @@ export function hasTextBlocks(message: Message): boolean {
   }
   if (message.type === 'user') {
     const content = message.message.content
-    if (typeof content === 'string') {
-      return content.length > 0
-    }
-    if (Array.isArray(content)) {
-      return content.some((block) => block.type === 'text')
-    }
+    return content.some((block) => block.type === 'text')
   }
   return false
 }
@@ -446,7 +441,7 @@ function createCompactionResultFromSessionMemory(
 
   const summaryMessages = [
     createUserMessage({
-      content: summaryContent,
+      content: [{ type: 'text' as const, text: summaryContent }],
       isCompactSummary: true,
       isVisibleInTranscriptOnly: true,
     }),

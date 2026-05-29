@@ -15,8 +15,8 @@ export type {
   SandboxSettings,
 } from '../entrypoints/sandboxTypes.js'
 
-// Bridge wire/IPC protocol (messages + control)
-export * from './bridge/index.js'
+// Wire protocol (messages + control)
+export * from './wire/index.js'
 
 // Hook system (payloads + schemas + runtime)
 export * from './hooks/index.js'

@@ -6,7 +6,7 @@
  * in ./runtime.ts.
  */
 
-import type { BridgeAssistantMessageError } from '../bridge/messages.js'
+import type { WireAssistantMessageError } from '../wire/messages.js'
 import type { PermissionBehavior, PermissionUpdate } from '../coreTypes.generated.js'
 
 // ============================================================================
@@ -93,7 +93,7 @@ export type StopHookInput = BaseHookInput & {
 
 export type StopFailureHookInput = BaseHookInput & {
   hook_event_name: 'StopFailure'
-  error: BridgeAssistantMessageError
+  error: WireAssistantMessageError
   error_details?: string
   last_assistant_message?: string
 }

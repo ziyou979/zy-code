@@ -13,14 +13,14 @@
  *
  * ## Message Flow
  *
- * ### CLI → SDK (via BridgeControlClientTransport)
- * 1. CLI's MCP Client calls a tool → sends JSONRPC request to BridgeControlClientTransport
+ * ### CLI → SDK (via WireControlClientTransport)
+ * 1. CLI's MCP Client calls a tool → sends JSONRPC request to WireControlClientTransport
  * 2. Transport wraps the message in a control request with server_name and request_id
  * 3. Control request is sent via stdout to the SDK process
  * 4. SDK's StructuredIO receives the control response and routes it back to the transport
  * 5. Transport unwraps the response and returns it to the MCP Client
  *
- * ### SDK → CLI (via BridgeControlServerTransport)
+ * ### SDK → CLI (via WireControlServerTransport)
  * 1. Query receives control request with MCP message and calls transport.onmessage
  * 2. MCP server processes the message and calls transport.send() with response
  * 3. Transport calls sendMcpMessage callback with the response
@@ -29,8 +29,8 @@
  *
  * ## Key Design Points
  *
- * - BridgeControlClientTransport: StructuredIO tracks pending requests
- * - BridgeControlServerTransport: Query tracks pending requests
+ * - WireControlClientTransport: StructuredIO tracks pending requests
+ * - WireControlServerTransport: Query tracks pending requests
  * - The control request wrapper includes server_name to route to the correct SDK server
  * - The system supports multiple SDK MCP servers running simultaneously
  * - Message IDs are preserved through the entire flow for proper correlation
@@ -57,7 +57,7 @@ export type SendMcpMessageCallback = (
  * It converts MCP protocol messages into control requests that can be sent
  * through stdout/stdin to the SDK process.
  */
-export class BridgeControlClientTransport implements Transport {
+export class WireControlClientTransport implements Transport {
   private isClosed = false
 
   onclose?: () => void
@@ -106,7 +106,7 @@ export class BridgeControlClientTransport implements Transport {
  *
  * Note: Query handles all request/response correlation and async flow.
  */
-export class BridgeControlServerTransport implements Transport {
+export class WireControlServerTransport implements Transport {
   private isClosed = false
 
   constructor(private sendMcpMessage: (message: JSONRPCMessage) => void) {}

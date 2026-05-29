@@ -1,6 +1,6 @@
 import { PassThrough } from 'node:stream'
 import { URL } from 'node:url'
-import type { StdoutMessage } from 'src/types/bridge/control.js'
+import type { StdoutMessage } from 'src/types/wire/control.js'
 import { getSessionId } from '../bootstrap/state.js'
 import { getPollIntervalConfig } from '../bridge/pollConfig.js'
 import { registerCleanup } from '../utils/cleanupRegistry.js'

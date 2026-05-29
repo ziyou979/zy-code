@@ -35,9 +35,9 @@ function StaticKeybindingProvider({ children }: { children: React.ReactNode }): 
   )
 }
 
-// Upper-bound how many NormalizedMessages a Message can produce.
+// Upper-bound how many messages normalizeMessages can produce from one Message.
 // normalizeMessages splits one Message with N content blocks into N
-// NormalizedMessages — 1:1 with block count. String content = 1 block.
+// messages — 1:1 with block count. String content = 1 block.
 // AttachmentMessage etc. have no .message and normalize to ≤1.
 function normalizedUpperBound(m: Message): number {
   if (!('message' in m)) {
@@ -101,7 +101,7 @@ export async function streamRenderedMessages(
     )
 
   // renderRange indexes into the post-collapse array whose length we can't
-  // see from here — normalize splits each Message into one NormalizedMessage
+  // see from here — normalize splits each Message into one message
   // per content block (unbounded per message), collapse merges some back.
   // Ceiling is the exact normalize output count + chunkSize so the loop
   // always reaches the empty slice where break fires (collapse only shrinks).

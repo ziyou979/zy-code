@@ -6,7 +6,7 @@
  * device.
  */
 
-import type { BridgeMessage } from './bridge/messages.js'
+import type { WireMessage } from './wire/messages.js'
 
 /**
  * A user message typed on zy.ai, extracted from the bridge WS.
@@ -37,7 +37,7 @@ export type RemoteControlHandle = {
   sessionUrl: string
   environmentId: string
   bridgeSessionId: string
-  write(msg: BridgeMessage): void
+  write(msg: WireMessage): void
   sendResult(): void
   sendControlRequest(req: unknown): void
   sendControlResponse(res: unknown): void

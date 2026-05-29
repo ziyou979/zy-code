@@ -2,20 +2,20 @@ import { feature } from 'bun:bundle'
 import React, { useCallback, useEffect, useRef } from 'react'
 import { setMainLoopModelOverride } from '../bootstrap/state.js'
 import {
-  type BridgePermissionCallbacks,
-  type BridgePermissionResponse,
-  isBridgePermissionResponse,
+  type WirePermissionCallbacks,
+  type WirePermissionResponse,
+  isWirePermissionResponse,
 } from '../bridge/bridgePermissionCallbacks.js'
-import { buildBridgeConnectUrl } from '../bridge/bridgeStatusUtil.js'
+import { buildWireConnectUrl } from '../bridge/bridgeStatusUtil.js'
 import { extractInboundMessageFields } from '../bridge/inboundMessages.js'
-import type { BridgeState, ReplBridgeHandle } from '../bridge/replBridge.js'
-import { setReplBridgeHandle } from '../bridge/replBridgeHandle.js'
+import type { WireState, ReplWireHandle } from '../bridge/replBridge.js'
+import { setReplWireHandle } from '../bridge/replBridgeHandle.js'
 import type { Command } from '../commands.js'
 import { getSlashCommandToolSkills, isBridgeSafeCommand } from '../commands.js'
 import { getRemoteSessionUrl } from '../constants/product.js'
 import { useNotifications } from '../context/notifications.js'
-import type { PermissionMode, BridgeMessage } from '../types/index.js'
-import type { BridgeControlResponse } from '../types/bridge/control.js'
+import type { PermissionMode, WireMessage } from '../types/index.js'
+import type { WireControlResponse } from '../types/wire/control.js'
 import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
@@ -26,7 +26,7 @@ import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { enqueue } from '../utils/messageQueueManager.js'
 import { buildSystemInitMessage } from '../utils/messages/systemInit.js'
-import { createBridgeStatusMessage, createSystemMessage } from '../utils/messages.js'
+import { createWireStatusMessage, createSystemMessage } from '../utils/messages.js'
 import {
   getAutoModeUnavailableNotification,
   getAutoModeUnavailableReason,
@@ -67,9 +67,9 @@ export function useReplBridge(
   commands: readonly Command[],
   mainLoopModel: string,
 ): {
-  sendBridgeResult: () => void
+  sendWireResult: () => void
 } {
-  const handleRef = useRef<ReplBridgeHandle | null>(null)
+  const handleRef = useRef<ReplWireHandle | null>(null)
   const teardownPromiseRef = useRef<Promise<void> | undefined>(undefined)
   const lastWrittenIndexRef = useRef(0)
   // 记录已作为初始消息刷新的 UUID。在 bridge 重连之间持久化，
@@ -93,17 +93,17 @@ export function useReplBridge(
     ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
       useAppState((s) => s.replBridgeEnabled)
     : false
-  const replBridgeConnected = feature('BRIDGE_MODE')
+  const replWireConnected = feature('BRIDGE_MODE')
     ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useAppState((state) => state.replBridgeConnected)
+      useAppState((state) => state.replWireConnected)
     : false
   const replBridgeOutboundOnly = feature('BRIDGE_MODE')
     ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
       useAppState((state) => state.replBridgeOutboundOnly)
     : false
-  const replBridgeInitialName = feature('BRIDGE_MODE')
+  const replWireInitialName = feature('BRIDGE_MODE')
     ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useAppState((state) => state.replBridgeInitialName)
+      useAppState((state) => state.replWireInitialName)
     : undefined
 
   // 当启用状态变化时，初始化/拆除 bridge。
@@ -117,7 +117,7 @@ export function useReplBridge(
         return
       }
       const outboundOnly = replBridgeOutboundOnly
-      function notifyBridgeFailed(detail?: string): void {
+      function notifyWireFailed(detail?: string): void {
         if (outboundOnly) {
           return
         }
@@ -137,16 +137,16 @@ export function useReplBridge(
           `[bridge:repl] Hook: ${consecutiveFailuresRef.current} consecutive init failures, not retrying this session`,
         )
         // 清除 replBridgeEnabled，使 /remote-control 不会错误地
-        // 为从未连接的 bridge 显示 BridgeDisconnectDialog。
+        // 为从未连接的 bridge 显示 WireDisconnectDialog。
         const fuseHint = 'disabled after repeated failures · restart to retry'
-        notifyBridgeFailed(fuseHint)
+        notifyWireFailed(fuseHint)
         setAppState((prev) => {
-          if (prev.replBridgeError === fuseHint && !prev.replBridgeEnabled) {
+          if (prev.replWireError === fuseHint && !prev.replBridgeEnabled) {
             return prev
           }
           return {
             ...prev,
-            replBridgeError: fuseHint,
+            replWireError: fuseHint,
             replBridgeEnabled: false,
           }
         })
@@ -199,7 +199,7 @@ export function useReplBridge(
           // 异步是因为 file_attachments（如果存在）需要在入队 @path 前缀之前
           // 进行网络获取 + 磁盘写入。调用者不会 await——带附件的消息只是
           // 稍晚一些进入队列，这没问题（web 消息不是快速连发的）。
-          async function handleInboundMessage(msg: BridgeMessage): Promise<void> {
+          async function handleInboundMessage(msg: WireMessage): Promise<void> {
             try {
               const fields = extractInboundMessageFields(msg)
               if (!fields) {
@@ -260,7 +260,7 @@ export function useReplBridge(
           }
 
           // 状态变更回调——将 bridge 生命周期事件映射到 AppState。
-          function handleStateChange(state: BridgeState, detail?: string): void {
+          function handleStateChange(state: WireState, detail?: string): void {
             if (cancelled) {
               return
             }
@@ -268,25 +268,25 @@ export function useReplBridge(
               logForDebugging(
                 `[bridge:repl] Mirror state=${state}${detail ? ` detail=${detail}` : ''}`,
               )
-              // 同步 replBridgeConnected，使转发 effect 在传输层建立或断开时开始/停止写入。
+              // 同步 replWireConnected，使转发 effect 在传输层建立或断开时开始/停止写入。
               if (state === 'failed') {
                 setAppState((prev) => {
-                  if (!prev.replBridgeConnected) {
+                  if (!prev.replWireConnected) {
                     return prev
                   }
                   return {
                     ...prev,
-                    replBridgeConnected: false,
+                    replWireConnected: false,
                   }
                 })
               } else if (state === 'ready' || state === 'connected') {
                 setAppState((prev) => {
-                  if (prev.replBridgeConnected) {
+                  if (prev.replWireConnected) {
                     return prev
                   }
                   return {
                     ...prev,
-                    replBridgeConnected: true,
+                    replWireConnected: true,
                   }
                 })
               }
@@ -298,52 +298,52 @@ export function useReplBridge(
                 setAppState((prev) => {
                   const connectUrl =
                     handle && handle.environmentId !== ''
-                      ? buildBridgeConnectUrl(handle.environmentId, handle.sessionIngressUrl)
-                      : prev.replBridgeConnectUrl
+                      ? buildWireConnectUrl(handle.environmentId, handle.sessionIngressUrl)
+                      : prev.replWireConnectUrl
                   const sessionUrl = handle
                     ? getRemoteSessionUrl(handle.bridgeSessionId, handle.sessionIngressUrl)
-                    : prev.replBridgeSessionUrl
+                    : prev.replWireSessionUrl
                   const envId = handle?.environmentId
                   const sessionId = handle?.bridgeSessionId
                   if (
-                    prev.replBridgeConnected &&
-                    !prev.replBridgeSessionActive &&
-                    !prev.replBridgeReconnecting &&
-                    prev.replBridgeConnectUrl === connectUrl &&
-                    prev.replBridgeSessionUrl === sessionUrl &&
-                    prev.replBridgeEnvironmentId === envId &&
-                    prev.replBridgeSessionId === sessionId
+                    prev.replWireConnected &&
+                    !prev.replWireSessionActive &&
+                    !prev.replWireReconnecting &&
+                    prev.replWireConnectUrl === connectUrl &&
+                    prev.replWireSessionUrl === sessionUrl &&
+                    prev.replWireEnvironmentId === envId &&
+                    prev.replWireSessionId === sessionId
                   ) {
                     return prev
                   }
                   return {
                     ...prev,
-                    replBridgeConnected: true,
-                    replBridgeSessionActive: false,
-                    replBridgeReconnecting: false,
-                    replBridgeConnectUrl: connectUrl,
-                    replBridgeSessionUrl: sessionUrl,
-                    replBridgeEnvironmentId: envId,
-                    replBridgeSessionId: sessionId,
-                    replBridgeError: undefined,
+                    replWireConnected: true,
+                    replWireSessionActive: false,
+                    replWireReconnecting: false,
+                    replWireConnectUrl: connectUrl,
+                    replWireSessionUrl: sessionUrl,
+                    replWireEnvironmentId: envId,
+                    replWireSessionId: sessionId,
+                    replWireError: undefined,
                   }
                 })
                 break
               case 'connected': {
                 setAppState((prev) => {
-                  if (prev.replBridgeSessionActive) {
+                  if (prev.replWireSessionActive) {
                     return prev
                   }
                   return {
                     ...prev,
-                    replBridgeConnected: true,
-                    replBridgeSessionActive: true,
-                    replBridgeReconnecting: false,
-                    replBridgeError: undefined,
+                    replWireConnected: true,
+                    replWireSessionActive: true,
+                    replWireReconnecting: false,
+                    replWireError: undefined,
                   }
                 })
                 // 发送 system/init 使远程客户端（web/iOS/Android）获取 session 元数据。
-                // REPL 直接使用 query()——从不经过 QueryEngine 的 BridgeMessage 层——
+                // REPL 直接使用 query()——从不经过 QueryEngine 的 WireMessage 层——
                 // 因此这是将 system/init 放到 REPL-bridge 线上的唯一路径。
                 // Skills 加载是异步的（memoized，REPL 启动后开销小）；
                 // fire-and-forget 以免阻塞连接状态转换。
@@ -391,26 +391,26 @@ export function useReplBridge(
               }
               case 'reconnecting':
                 setAppState((prevState) => {
-                  if (prevState.replBridgeReconnecting) {
+                  if (prevState.replWireReconnecting) {
                     return prevState
                   }
                   return {
                     ...prevState,
-                    replBridgeReconnecting: true,
-                    replBridgeSessionActive: false,
+                    replWireReconnecting: true,
+                    replWireSessionActive: false,
                   }
                 })
                 break
               case 'failed':
                 // 清除上一次的失败dismiss计时器
                 clearTimeout(failureTimeoutRef.current)
-                notifyBridgeFailed(detail)
+                notifyWireFailed(detail)
                 setAppState((prev) => ({
                   ...prev,
-                  replBridgeError: detail,
-                  replBridgeReconnecting: false,
-                  replBridgeSessionActive: false,
-                  replBridgeConnected: false,
+                  replWireError: detail,
+                  replWireReconnecting: false,
+                  replWireSessionActive: false,
+                  replWireConnected: false,
                 }))
                 // 超时后自动禁用，使 hook 停止重试。
                 failureTimeoutRef.current = setTimeout(() => {
@@ -419,13 +419,13 @@ export function useReplBridge(
                   }
                   failureTimeoutRef.current = undefined
                   setAppState((prevState) => {
-                    if (!prevState.replBridgeError) {
+                    if (!prevState.replWireError) {
                       return prevState
                     }
                     return {
                       ...prevState,
                       replBridgeEnabled: false,
-                      replBridgeError: undefined,
+                      replWireError: undefined,
                     }
                   })
                 }, BRIDGE_FAILURE_DISMISS_MS)
@@ -437,11 +437,11 @@ export function useReplBridge(
           // 每个条目是一个等待 CCR 回复的 onResponse handler。
           const pendingPermissionHandlers = new Map<
             string,
-            (response: BridgePermissionResponse) => void
+            (response: WirePermissionResponse) => void
           >()
 
           // 将收到的 control_response 消息分发给已注册的 handler
-          function handlePermissionResponse(message: BridgeControlResponse): void {
+          function handlePermissionResponse(message: WireControlResponse): void {
             const requestId = message.response?.request_id
             if (!requestId) {
               return
@@ -459,7 +459,7 @@ export function useReplBridge(
             if (
               inner.subtype === 'success' &&
               inner.response &&
-              isBridgePermissionResponse(inner.response)
+              isWirePermissionResponse(inner.response)
             ) {
               handler(inner.response)
             }
@@ -570,7 +570,7 @@ export function useReplBridge(
             initialMessages: messages.length > 0 ? messages : undefined,
             getMessages: () => messagesRef.current,
             previouslyFlushedUUIDs: flushedUUIDsRef.current,
-            initialName: replBridgeInitialName,
+            initialName: replWireInitialName,
             perpetual,
           })
           if (cancelled) {
@@ -597,7 +597,7 @@ export function useReplBridge(
             clearTimeout(failureTimeoutRef.current)
             setAppState((prevState) => ({
               ...prevState,
-              replBridgeError: prevState.replBridgeError ?? 'check debug logs for details',
+              replWireError: prevState.replWireError ?? 'check debug logs for details',
             }))
             failureTimeoutRef.current = setTimeout(() => {
               if (cancelled) {
@@ -605,20 +605,20 @@ export function useReplBridge(
               }
               failureTimeoutRef.current = undefined
               setAppState((prevState) => {
-                if (!prevState.replBridgeError) {
+                if (!prevState.replWireError) {
                   return prevState
                 }
                 return {
                   ...prevState,
                   replBridgeEnabled: false,
-                  replBridgeError: undefined,
+                  replWireError: undefined,
                 }
               })
             }, BRIDGE_FAILURE_DISMISS_MS)
             return
           }
           handleRef.current = bridgeHandle
-          setReplBridgeHandle(bridgeHandle)
+          setReplWireHandle(bridgeHandle)
           consecutiveFailuresRef.current = 0
           // 在转发 effect 中跳过初始消息——它们已在创建时
           // 作为 session events 加载。
@@ -626,18 +626,18 @@ export function useReplBridge(
           if (outboundOnly) {
             setAppState((prevState) => {
               if (
-                prevState.replBridgeConnected &&
-                prevState.replBridgeSessionId === bridgeHandle.bridgeSessionId
+                prevState.replWireConnected &&
+                prevState.replWireSessionId === bridgeHandle.bridgeSessionId
               ) {
                 return prevState
               }
               return {
                 ...prevState,
-                replBridgeConnected: true,
-                replBridgeSessionId: bridgeHandle.bridgeSessionId,
-                replBridgeSessionUrl: undefined,
-                replBridgeConnectUrl: undefined,
-                replBridgeError: undefined,
+                replWireConnected: true,
+                replWireSessionId: bridgeHandle.bridgeSessionId,
+                replWireSessionUrl: undefined,
+                replWireConnectUrl: undefined,
+                replWireError: undefined,
               }
             })
             logForDebugging(
@@ -646,7 +646,7 @@ export function useReplBridge(
           } else {
             // 构建 bridge 权限回调，使交互式权限 handler
             // 可以在 bridge 响应和本地用户交互之间进行竞态。
-            const permissionCallbacks: BridgePermissionCallbacks = {
+            const permissionCallbacks: WirePermissionCallbacks = {
               sendRequest(
                 requestId,
                 toolName,
@@ -703,30 +703,30 @@ export function useReplBridge(
             }
             setAppState((prevState) => ({
               ...prevState,
-              replBridgePermissionCallbacks: permissionCallbacks,
+              replWirePermissionCallbacks: permissionCallbacks,
             }))
             const url = getRemoteSessionUrl(
               bridgeHandle.bridgeSessionId,
               bridgeHandle.sessionIngressUrl,
             )
-            // environmentId === '' 表示 v2 无 env 路径。buildBridgeConnectUrl
+            // environmentId === '' 表示 v2 无 env 路径。buildWireConnectUrl
             // 构建特定于 env 的连接 URL，没有 env 时不存在。
             const hasEnv = bridgeHandle.environmentId !== ''
             const connectUrl = hasEnv
-              ? buildBridgeConnectUrl(bridgeHandle.environmentId, bridgeHandle.sessionIngressUrl)
+              ? buildWireConnectUrl(bridgeHandle.environmentId, bridgeHandle.sessionIngressUrl)
               : undefined
             setAppState((prevState) => {
-              if (prevState.replBridgeConnected && prevState.replBridgeSessionUrl === url) {
+              if (prevState.replWireConnected && prevState.replWireSessionUrl === url) {
                 return prevState
               }
               return {
                 ...prevState,
-                replBridgeConnected: true,
-                replBridgeSessionUrl: url,
-                replBridgeConnectUrl: connectUrl ?? prevState.replBridgeConnectUrl,
-                replBridgeEnvironmentId: bridgeHandle.environmentId,
-                replBridgeSessionId: bridgeHandle.bridgeSessionId,
-                replBridgeError: undefined,
+                replWireConnected: true,
+                replWireSessionUrl: url,
+                replWireConnectUrl: connectUrl ?? prevState.replWireConnectUrl,
+                replWireEnvironmentId: bridgeHandle.environmentId,
+                replWireSessionId: bridgeHandle.bridgeSessionId,
+                replWireError: undefined,
               }
             })
 
@@ -742,7 +742,7 @@ export function useReplBridge(
             }
             setMessages((prevMessages) => [
               ...prevMessages,
-              createBridgeStatusMessage(
+              createWireStatusMessage(
                 url,
                 upgradeNudge
                   ? 'Please upgrade to the latest version of the Zy mobile app to see your Remote Control sessions.'
@@ -768,10 +768,10 @@ export function useReplBridge(
             `[bridge:repl] Init failed: ${errMsg}; consecutive failures: ${consecutiveFailuresRef.current}`,
           )
           clearTimeout(failureTimeoutRef.current)
-          notifyBridgeFailed(errMsg)
+          notifyWireFailed(errMsg)
           setAppState((prevState) => ({
             ...prevState,
-            replBridgeError: errMsg,
+            replWireError: errMsg,
           }))
           failureTimeoutRef.current = setTimeout(() => {
             if (cancelled) {
@@ -779,13 +779,13 @@ export function useReplBridge(
             }
             failureTimeoutRef.current = undefined
             setAppState((prevState) => {
-              if (!prevState.replBridgeError) {
+              if (!prevState.replWireError) {
                 return prevState
               }
               return {
                 ...prevState,
                 replBridgeEnabled: false,
-                replBridgeError: undefined,
+                replWireError: undefined,
               }
             })
           }, BRIDGE_FAILURE_DISMISS_MS)
@@ -807,27 +807,27 @@ export function useReplBridge(
           )
           teardownPromiseRef.current = handleRef.current.teardown()
           handleRef.current = null
-          setReplBridgeHandle(null)
+          setReplWireHandle(null)
         }
         setAppState((prevState) => {
           if (
-            !prevState.replBridgeConnected &&
-            !prevState.replBridgeSessionActive &&
-            !prevState.replBridgeError
+            !prevState.replWireConnected &&
+            !prevState.replWireSessionActive &&
+            !prevState.replWireError
           ) {
             return prevState
           }
           return {
             ...prevState,
-            replBridgeConnected: false,
-            replBridgeSessionActive: false,
-            replBridgeReconnecting: false,
-            replBridgeConnectUrl: undefined,
-            replBridgeSessionUrl: undefined,
-            replBridgeEnvironmentId: undefined,
-            replBridgeSessionId: undefined,
-            replBridgeError: undefined,
-            replBridgePermissionCallbacks: undefined,
+            replWireConnected: false,
+            replWireSessionActive: false,
+            replWireReconnecting: false,
+            replWireConnectUrl: undefined,
+            replWireSessionUrl: undefined,
+            replWireEnvironmentId: undefined,
+            replWireSessionId: undefined,
+            replWireError: undefined,
+            replWirePermissionCallbacks: undefined,
           }
         })
         lastWrittenIndexRef.current = 0
@@ -841,17 +841,17 @@ export function useReplBridge(
     addNotification,
     messages,
     store.getState,
-    replBridgeInitialName,
+    replWireInitialName,
     abortControllerRef.current?.abort,
   ])
 
   // 新消息出现时写入。
-  // 当 replBridgeConnected 变化时（bridge 完成初始化）也会重跑，
+  // 当 replWireConnected 变化时（bridge 完成初始化）也会重跑，
   // 因此 bridge 就绪之前到达的消息也会被写入。
   useEffect(() => {
     // 正向 feature() 守卫——参见第一个 useEffect 注释
     if (feature('BRIDGE_MODE')) {
-      if (!replBridgeConnected) {
+      if (!replWireConnected) {
         return
       }
       const bridgeHandle = handleRef.current
@@ -886,13 +886,13 @@ export function useReplBridge(
         bridgeHandle.writeMessages(newMessages)
       }
     }
-  }, [messages, replBridgeConnected])
-  const sendBridgeResult = useCallback(() => {
+  }, [messages, replWireConnected])
+  const sendWireResult = useCallback(() => {
     if (feature('BRIDGE_MODE')) {
       handleRef.current?.sendResult()
     }
   }, [])
   return {
-    sendBridgeResult,
+    sendWireResult,
   }
 }

@@ -1,6 +1,6 @@
 import type { Notification } from 'src/context/notifications.js'
 import type { TodoList } from 'src/services/todo/types.js'
-import type { BridgePermissionCallbacks } from '../bridge/bridgePermissionCallbacks.js'
+import type { WirePermissionCallbacks } from '../bridge/bridgePermissionCallbacks.js'
 import type { Command } from '../commands.js'
 import type { ChannelPermissionCallbacks } from '../services/mcp/channelPermissions.js'
 import type { ElicitationRequestEvent } from '../services/mcp/elicitationHandler.js'
@@ -109,26 +109,26 @@ export type AppState = DeepImmutable<{
   // 常开 bridge：期望状态（由 /config 或 footer 切换控制）
   replBridgeEnabled: boolean
   // 常开 bridge：通过 /remote-control 命令激活时为 true，由配置驱动时为 false
-  replBridgeExplicit: boolean
+  replWireExplicit: boolean
   // 仅出站模式：将事件转发到 CCR 但拒绝入站提示/控制
   replBridgeOutboundOnly: boolean
   // 常开 bridge：环境已注册 + 会话已创建（= "就绪"）
-  replBridgeConnected: boolean
+  replWireConnected: boolean
   // 常开 bridge：入站 WebSocket 已打开（= "已连接" - 用户在 zy.ai 上）
-  replBridgeSessionActive: boolean
+  replWireSessionActive: boolean
   // 常开 bridge：轮询循环处于错误退避状态（= "重新连接中"）
-  replBridgeReconnecting: boolean
+  replWireReconnecting: boolean
   // 常开 bridge：就绪状态的连接 URL（?bridge=envId）
-  replBridgeConnectUrl: string | undefined
+  replWireConnectUrl: string | undefined
   // 常开 bridge：zy.ai 上的会话 URL（连接后设置）
-  replBridgeSessionUrl: string | undefined
+  replWireSessionUrl: string | undefined
   // 常开 bridge：用于调试的 ID（在 --verbose 时在对话框中显示）
-  replBridgeEnvironmentId: string | undefined
-  replBridgeSessionId: string | undefined
+  replWireEnvironmentId: string | undefined
+  replWireSessionId: string | undefined
   // 常开 bridge：连接失败时的错误消息（在 BridgeDialog 中显示）
-  replBridgeError: string | undefined
+  replWireError: string | undefined
   // 常开 bridge：通过 `/remote-control <name>` 设置的会话名称（用作会话标题）
-  replBridgeInitialName: string | undefined
+  replWireInitialName: string | undefined
   // 常开 bridge：首次远程对话框待处理（由 /remote-control 命令设置）
   showRemoteCallout: boolean
 }> & {
@@ -420,7 +420,7 @@ export type AppState = DeepImmutable<{
   // 由 onChangeAppState 推送到 CCR external_metadata.is_ultraplan_mode。
   isUltraplanMode?: boolean
   // 常开 bridge：双向权限检查的权限回调
-  replBridgePermissionCallbacks?: BridgePermissionCallbacks
+  replWirePermissionCallbacks?: WirePermissionCallbacks
   // 渠道权限回调 —— Telegram/iMessage 等渠道的权限提示。
   // 在 interactiveHandler.ts 中通过 claim() 与本地 UI + bridge + hooks + 分类器竞争。
   // 在 useManageMCPConnections 中一次性构建。
@@ -457,17 +457,17 @@ export function getDefaultAppState(): AppState {
     remoteConnectionStatus: 'connecting',
     remoteBackgroundTaskCount: 0,
     replBridgeEnabled: false,
-    replBridgeExplicit: false,
+    replWireExplicit: false,
     replBridgeOutboundOnly: false,
-    replBridgeConnected: false,
-    replBridgeSessionActive: false,
-    replBridgeReconnecting: false,
-    replBridgeConnectUrl: undefined,
-    replBridgeSessionUrl: undefined,
-    replBridgeEnvironmentId: undefined,
-    replBridgeSessionId: undefined,
-    replBridgeError: undefined,
-    replBridgeInitialName: undefined,
+    replWireConnected: false,
+    replWireSessionActive: false,
+    replWireReconnecting: false,
+    replWireConnectUrl: undefined,
+    replWireSessionUrl: undefined,
+    replWireEnvironmentId: undefined,
+    replWireSessionId: undefined,
+    replWireError: undefined,
+    replWireInitialName: undefined,
     showRemoteCallout: false,
     toolPermissionContext: {
       ...getEmptyToolPermissionContext(),

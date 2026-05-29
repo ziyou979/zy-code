@@ -42,7 +42,7 @@ function isPermissionMode(raw: string): raw is PermissionMode {
  * Bridge is used when the feature flag is enabled; ant users always get
  * bridge. API key / 3P users fall back to native messaging.
  */
-function getChromeBridgeUrl(): string | undefined {
+function getChromeWireUrl(): string | undefined {
   const bridgeEnabled =
     isInternalBuild() || getFeatureValue_CACHED_MAY_BE_STALE('zy_copper_bridge', false)
 
@@ -71,8 +71,8 @@ function isLocalBridge(): boolean {
  */
 export function createChromeContext(env?: Record<string, string>): ClaudeForChromeContext {
   const logger = new DebugLogger()
-  const chromeBridgeUrl = getChromeBridgeUrl()
-  logger.info(`Bridge URL: ${chromeBridgeUrl ?? 'none (using native socket)'}`)
+  const chromeWireUrl = getChromeWireUrl()
+  logger.info(`Bridge URL: ${chromeWireUrl ?? 'none (using native socket)'}`)
   const rawPermissionMode =
     env?.CLAUDE_CHROME_PERMISSION_MODE ?? process.env.CLAUDE_CHROME_PERMISSION_MODE
   let initialPermissionMode: PermissionMode | undefined
@@ -120,9 +120,9 @@ export function createChromeContext(env?: Record<string, string>): ClaudeForChro
     getPersistedDeviceId: () => {
       return getGlobalConfig().chromeExtension?.pairedDeviceId
     },
-    ...(chromeBridgeUrl && {
+    ...(chromeWireUrl && {
       bridgeConfig: {
-        url: chromeBridgeUrl,
+        url: chromeWireUrl,
         getUserId: async () => {
           return getGlobalConfig().oauthAccount?.accountUuid
         },

@@ -1,15 +1,15 @@
 import type { Tools } from '../Tool.js'
 import type { ToolResultBlock } from '../types/llm.js'
 import type {
+  AssistantMessage,
+  AttachmentMessage,
   GroupedToolUseMessage,
-  NormalizedAssistantMessage,
-  NormalizedMessage,
-  NormalizedUserMessage,
-  ProgressMessage,
   RenderableMessage,
+  SystemMessage,
+  UserMessage,
 } from '../types/message.js'
 
-export type MessageWithoutProgress = Exclude<NormalizedMessage, ProgressMessage>
+export type MessageWithoutProgress = UserMessage | AssistantMessage | AttachmentMessage | SystemMessage
 
 export type GroupingResult = {
   messages: RenderableMessage[]
@@ -35,7 +35,7 @@ function getToolUseInfo(
   if (!('message' in msg) || !msg.message) {
     return null
   }
-  const assistantMsg = msg as import('../types/message.js').NormalizedAssistantMessage
+  const assistantMsg = msg as import('../types/message.js').AssistantMessage
   const firstBlock = assistantMsg.message.content[0]
   if (firstBlock && firstBlock.type === 'tool_call') {
     return {
@@ -67,20 +67,20 @@ export function applyGrouping(
   const toolsWithGrouping = getToolsWithGrouping(tools)
 
   // 第一轮遍历：按 message.id + 工具名称对工具调用进行分组
-  const groups = new Map<string, NormalizedAssistantMessage[]>()
+  const groups = new Map<string, AssistantMessage[]>()
 
   for (const msg of messages) {
     const info = getToolUseInfo(msg)
     if (info && toolsWithGrouping.has(info.toolName)) {
       const key = `${info.messageId}:${info.toolName}`
       const group = groups.get(key) ?? []
-      group.push(msg as NormalizedAssistantMessage)
+      group.push(msg as AssistantMessage)
       groups.set(key, group)
     }
   }
 
   // 识别有效分组（2 个及以上条目）并收集其工具调用 ID
-  const validGroups = new Map<string, NormalizedAssistantMessage[]>()
+  const validGroups = new Map<string, AssistantMessage[]>()
   const groupedToolUseIds = new Set<string>()
 
   for (const [key, group] of groups) {
@@ -97,7 +97,7 @@ export function applyGrouping(
 
   // 收集已分组 tool_uses 的结果消息
   // 从 tool_use_id 映射到包含该结果的用户消息
-  const resultsByToolUseId = new Map<string, NormalizedUserMessage>()
+  const resultsByToolUseId = new Map<string, UserMessage>()
 
   for (const msg of messages) {
     if (msg.type === 'user') {
@@ -126,7 +126,7 @@ export function applyGrouping(
           const firstMsg = group[0]!
 
           // 收集该分组的结果
-          const results: NormalizedUserMessage[] = []
+          const results: UserMessage[] = []
           for (const assistantMsg of group) {
             const contentBlocks = assistantMsg.message.content
             const firstBlock = contentBlocks[0]

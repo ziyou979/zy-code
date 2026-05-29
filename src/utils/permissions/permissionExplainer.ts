@@ -171,7 +171,7 @@ Explain this command in context.`
     const response = await sideQuery({
       model,
       system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userPrompt }],
+      messages: [{ role: 'user', content: [{ type: 'text' as const, text: userPrompt }] }],
       tools: [EXPLAIN_COMMAND_TOOL],
       tool_choice: { type: 'tool', name: 'explain_command' },
       signal,

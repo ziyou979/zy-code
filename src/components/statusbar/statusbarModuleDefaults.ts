@@ -32,7 +32,7 @@ export const DEFAULT_MODULES: readonly ModuleConfig[] = [
   { id: 'context', visible: true, icon: '⛁', color: 'success' },
   { id: 'tokens', visible: true, icon: '', color: 'suggestion' },
   { id: 'cost', visible: true, icon: '¥', color: 'warning' },
-  { id: 'memory', visible: true, icon: '☰', color: 'inactive' },
+  { id: 'memory', visible: true, icon: '≡', color: 'inactive' },
 ]
 
 /**

@@ -6,7 +6,7 @@ import { tSync } from '../../i18n/index.js'
 import { Ansi, Box, Text, useTheme } from '../../ink.js'
 import { findToolByName, type Tools } from '../../Tool.js'
 import { getReplPrimitiveTools } from '../../tools/REPLTool/primitiveTools.js'
-import type { CollapsedReadSearchGroup, NormalizedAssistantMessage } from '../../types/message.js'
+import type { AssistantMessage, CollapsedReadSearchGroup } from '../../types/message.js'
 import { uniq } from '../../utils/array.js'
 import { getToolUseIdsFromCollapsedGroup } from '../../utils/collapseReadSearch.js'
 import { getDisplayPath } from '../../utils/file.js'
@@ -207,12 +207,12 @@ export function CollapsedReadSearchContent({
 
   // 在 verbose 模式下，渲染每个工具使用及其 1 行结果摘要
   if (verbose) {
-    const toolUses: NormalizedAssistantMessage[] = []
+    const toolUses: AssistantMessage[] = []
     for (const msg of groupMessages) {
       if (msg.type === 'assistant') {
         toolUses.push(msg)
       } else if (msg.type === 'grouped_tool_use') {
-        toolUses.push(...(msg.message as unknown as NormalizedAssistantMessage[]))
+        toolUses.push(...(msg.message as unknown as AssistantMessage[]))
       }
     }
     return (

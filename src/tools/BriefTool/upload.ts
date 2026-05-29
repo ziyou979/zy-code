@@ -19,7 +19,7 @@ import { basename, extname } from 'node:path'
 import axios from 'axios'
 import { z } from 'zod/v4'
 
-import { getBridgeAccessToken, getBridgeBaseUrlOverride } from '../../bridge/bridgeConfig.js'
+import { getWireAccessToken, getWireBaseUrlOverride } from '../../bridge/bridgeConfig.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -63,9 +63,9 @@ function debug(msg: string): void {
  * set. Without this a staging token hits api.anthropic.com → 401 → silent
  * skip → web viewer sees inert cards with no file_uuid.
  */
-function getBridgeBaseUrl(): string {
+function getWireBaseUrl(): string {
   return (
-    getBridgeBaseUrlOverride() ?? process.env.ANTHROPIC_BASE_URL ?? getOauthConfig().BASE_API_URL
+    getWireBaseUrlOverride() ?? process.env.ANTHROPIC_BASE_URL ?? getOauthConfig().BASE_API_URL
   )
 }
 
@@ -99,7 +99,7 @@ export async function uploadBriefAttachment(
       return undefined
     }
 
-    const token = getBridgeAccessToken()
+    const token = getWireAccessToken()
     if (!token) {
       debug('skip: no oauth token')
       return undefined
@@ -113,7 +113,7 @@ export async function uploadBriefAttachment(
       return undefined
     }
 
-    const baseUrl = getBridgeBaseUrl()
+    const baseUrl = getWireBaseUrl()
     const url = `${baseUrl}/api/oauth/file_upload`
     const filename = basename(fullPath)
     const mimeType = guessMimeType(filename)

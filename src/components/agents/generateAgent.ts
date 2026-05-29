@@ -132,7 +132,7 @@ export async function generateAgent(
   const prompt = `Create an agent configuration based on this request: "${userPrompt}".${existingList}
   Return ONLY the JSON object, no other text.`
 
-  const userMessage = createUserMessage({ content: prompt })
+  const userMessage = createUserMessage({ content: [{ type: 'text' as const, text: prompt }] })
 
   // Fetch user and system contexts
   const userContext = await getUserContext()

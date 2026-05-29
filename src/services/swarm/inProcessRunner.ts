@@ -955,7 +955,7 @@ export async function runInProcessTeammate(
         ...task,
         messages: appendCappedMessage(
           task.messages,
-          createUserMessage({ content: wrappedInitialPrompt }),
+          createUserMessage({ content: [{ type: 'text' as const, text: wrappedInitialPrompt }] }),
         ),
       }),
       setAppState,
@@ -990,7 +990,7 @@ export async function runInProcessTeammate(
       // 为此迭代准备 prompt 消息
       // 第一次迭代时，从头开始
       // 后续迭代时，传递累积的消息作为上下文
-      const userMessage = createUserMessage({ content: currentPrompt })
+      const userMessage = createUserMessage({ content: [{ type: 'text' as const, text: currentPrompt }] })
       const promptMessages: Message[] = [userMessage]
 
       // 检查在构建上下文之前是否需要压缩
@@ -1278,7 +1278,7 @@ export async function runInProcessTeammate(
             waitResult.originalMessage,
           )
           // 将 shutdown 请求添加到 task.messages 用于 transcript 显示
-          appendTeammateMessage(taskId, createUserMessage({ content: currentPrompt }), setAppState)
+          appendTeammateMessage(taskId, createUserMessage({ content: [{ type: 'text' as const, text: currentPrompt }] }), setAppState)
           break
 
         case 'new_message':
@@ -1302,7 +1302,7 @@ export async function runInProcessTeammate(
             // injectUserMessageToTeammate 添加
             appendTeammateMessage(
               taskId,
-              createUserMessage({ content: currentPrompt }),
+              createUserMessage({ content: [{ type: 'text' as const, text: currentPrompt }] }),
               setAppState,
             )
           }

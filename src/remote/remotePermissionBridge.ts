@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { BridgeControlPermissionRequest } from '../types/bridge/control.js'
+import type { WireControlPermissionRequest } from '../types/wire/control.js'
 import type { Tool } from '../Tool.js'
 import type { AssistantMessage } from '../types/message.js'
 import { jsonStringify } from '../utils/slowOperations.js'
@@ -10,7 +10,7 @@ import { jsonStringify } from '../utils/slowOperations.js'
  * we don't have a real one — the tool use runs on the CCR container.
  */
 export function createSyntheticAssistantMessage(
-  request: BridgeControlPermissionRequest,
+  request: WireControlPermissionRequest,
   requestId: string,
 ): AssistantMessage {
   return {

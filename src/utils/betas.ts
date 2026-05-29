@@ -147,9 +147,6 @@ export function modelSupportsAutoMode(model: string): boolean {
     ) {
       return true
     }
-    if (isInternalBuild()) {
-      return true
-    }
     // 外部构建：仅通过 settings capability 或 GrowthBook allowModels 启用
     return false
   }

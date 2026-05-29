@@ -35,8 +35,6 @@ import type {
   AssistantMessage,
   AttachmentMessage,
   Message,
-  NormalizedAssistantMessage,
-  NormalizedUserMessage,
   UserMessage,
 } from '../types/message.js'
 import { toolToAPISchema } from './api.js'
@@ -284,7 +282,12 @@ async function countSystemTokens(effectiveSystemPrompt: readonly string[]): Prom
   }
 
   const systemTokenCounts = await Promise.all(
-    namedEntries.map(({ content }) => countTokensWithFallback([{ role: 'user', content }], [])),
+    namedEntries.map(({ content }) =>
+      countTokensWithFallback(
+        [{ role: 'user', content: [{ type: 'text' as const, text: content }] }],
+        [],
+      ),
+    ),
   )
 
   const systemPromptSections: SystemPromptSectionDetail[] = namedEntries.map((entry, i) => ({
@@ -322,7 +325,10 @@ async function countMemoryFileTokens(): Promise<{
 
   const agentsMdTokenCounts = await Promise.all(
     memoryFilesData.map(async (file) => {
-      const tokens = await countTokensWithFallback([{ role: 'user', content: file.content }], [])
+      const tokens = await countTokensWithFallback(
+        [{ role: 'user', content: [{ type: 'text' as const, text: file.content }] }],
+        [],
+      )
 
       return { file, tokens: tokens || 0 }
     }),
@@ -702,7 +708,9 @@ async function countCustomAgentTokens(agentDefinitions: {
         [
           {
             role: 'user',
-            content: [agent.agentType, agent.whenToUse].join(' '),
+            content: [
+              { type: 'text' as const, text: [agent.agentType, agent.whenToUse].join(' ') },
+            ],
           },
         ],
         [],
@@ -735,7 +743,7 @@ type MessageBreakdown = {
 }
 
 function processAssistantMessage(
-  msg: AssistantMessage | NormalizedAssistantMessage,
+  msg: AssistantMessage,
   breakdown: MessageBreakdown,
 ): void {
   // 逐个处理每个内容块
@@ -758,7 +766,7 @@ function processAssistantMessage(
 }
 
 function processUserMessage(
-  msg: UserMessage | NormalizedUserMessage,
+  msg: UserMessage,
   breakdown: MessageBreakdown,
   toolUseIdToName: Map<string, string>,
 ): void {

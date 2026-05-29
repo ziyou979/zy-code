@@ -143,7 +143,7 @@ export function autoNameSessionFromPlan(
     // end with testing steps — head-slice so Haiku sees the summary.
     [
       createUserMessage({
-        content: plan.slice(0, 1000),
+        content: [{ type: 'text' as const, text: plan.slice(0, 1000) }],
       }),
     ],
     new AbortController().signal,
@@ -434,7 +434,7 @@ export function ExitPlanModePermissionRequest({
         initialMessage: {
           message: {
             ...createUserMessage({
-              content: `Implement the following plan:\n\n${currentPlan}${verificationInstruction}${transcriptHint}${teamHint}${feedbackSuffix}`,
+              content: [{ type: 'text' as const, text: `Implement the following plan:\n\n${currentPlan}${verificationInstruction}${transcriptHint}${teamHint}${feedbackSuffix}` }],
             }),
             planContent: currentPlan,
           },

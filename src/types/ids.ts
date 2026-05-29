@@ -3,6 +3,17 @@
  * These prevent accidentally mixing up session IDs and agent IDs at compile time.
  */
 
+import type { UUID } from 'node:crypto'
+
+/**
+ * Cast a raw string to the branded UUID type.
+ * Use when interfacing with APIs that require Node's branded UUID — message.uuid
+ * fields are typed as plain `string` despite always containing UUIDs.
+ */
+export function toUUID(s: string): UUID {
+  return s as UUID
+}
+
 /**
  * A session ID uniquely identifies a ZY Code session.
  * Returned by getSessionId().

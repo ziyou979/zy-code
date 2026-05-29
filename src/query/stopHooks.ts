@@ -250,7 +250,7 @@ export async function* handleStopHooks(
       }
       if (result.blockingError) {
         const userMessage = createUserMessage({
-          content: getStopHookMessage(result.blockingError),
+          content: [{ type: 'text' as const, text: getStopHookMessage(result.blockingError) }],
           isMeta: true, // Hide from UI (shown in summary message instead)
         })
         blockingErrors.push(userMessage)
@@ -372,7 +372,9 @@ export async function* handleStopHooks(
           }
           if (result.blockingError) {
             const userMessage = createUserMessage({
-              content: getTaskCompletedHookMessage(result.blockingError),
+              content: [
+                { type: 'text' as const, text: getTaskCompletedHookMessage(result.blockingError) },
+              ],
               isMeta: true,
             })
             teammateBlockingErrors.push(userMessage)
@@ -413,7 +415,9 @@ export async function* handleStopHooks(
         }
         if (result.blockingError) {
           const userMessage = createUserMessage({
-            content: getTeammateIdleHookMessage(result.blockingError),
+            content: [
+              { type: 'text' as const, text: getTeammateIdleHookMessage(result.blockingError) },
+            ],
             isMeta: true,
           })
           teammateBlockingErrors.push(userMessage)

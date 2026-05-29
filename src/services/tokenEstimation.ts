@@ -15,7 +15,7 @@ export async function countTokensWithAPI(content: string): Promise<number | null
 
   const message: LLMMessage = {
     role: 'user',
-    content: content,
+    content: [{ type: 'text' as const, text: content }],
   }
 
   return countMessagesTokensWithAPI([message], [])

@@ -66,7 +66,7 @@ function useKeybindingWarnings(warnings, _isReload) {
       return
     }
     const errorCount = count(warnings, (w: any) => w.severity === 'error')
-    const warnCount = count(warnings, (w_0: any) => w_0.severity === 'warning')
+    const warnCount = count(warnings, (w: any) => w.severity === 'warning')
     let message
     if (errorCount > 0 && warnCount > 0) {
       message = `Found ${errorCount} keybinding ${plural(errorCount, 'error')} and ${warnCount} ${plural(warnCount, 'warning')}`
@@ -129,8 +129,8 @@ export function KeybindingSetup({ children }: Props): React.ReactNode {
   const registerActiveContext = useCallback((context: KeybindingContextName) => {
     activeContextsRef.current.add(context)
   }, [])
-  const unregisterActiveContext = useCallback((context_0: KeybindingContextName) => {
-    activeContextsRef.current.delete(context_0)
+  const unregisterActiveContext = useCallback((context: KeybindingContextName) => {
+    activeContextsRef.current.delete(context)
   }, [])
 
   // Clear chord timeout when component unmounts or chord changes
@@ -147,16 +147,11 @@ export function KeybindingSetup({ children }: Props): React.ReactNode {
       clearChordTimeout()
       if (pending !== null) {
         // Set timeout to cancel chord if not completed
-        chordTimeoutRef.current = setTimeout(
-          (pendingChordRef_0, setPendingChordState_0) => {
-            logForDebugging('[keybindings] Chord timeout - cancelling')
-            pendingChordRef_0.current = null
-            setPendingChordState_0(null)
-          },
-          CHORD_TIMEOUT_MS,
-          pendingChordRef,
-          setPendingChordState,
-        )
+        chordTimeoutRef.current = setTimeout(() => {
+          logForDebugging('[keybindings] Chord timeout - cancelling')
+          pendingChordRef.current = null
+          setPendingChordState(null)
+        }, CHORD_TIMEOUT_MS)
       }
 
       // Update ref immediately for synchronous access in resolve()
@@ -171,13 +166,13 @@ export function KeybindingSetup({ children }: Props): React.ReactNode {
     void initializeKeybindingWatcher()
 
     // Subscribe to changes
-    const unsubscribe = subscribeToKeybindingChanges((result_0) => {
+    const unsubscribe = subscribeToKeybindingChanges((result) => {
       // Any callback invocation is a reload since initial load happens
       // synchronously in useState, not via this subscription
       setIsReload(true)
-      setLoadResult(result_0)
+      setLoadResult(result)
       logForDebugging(
-        `[keybindings] Reloaded: ${result_0.bindings.length} bindings, ${result_0.warnings.length} warnings`,
+        `[keybindings] Reloaded: ${result.bindings.length} bindings, ${result.warnings.length} warnings`,
       )
     })
     return () => {
@@ -257,11 +252,11 @@ function ChordInterceptor({
         if (wasInChord) {
           const contextsSet = new Set(contexts)
           if (registry) {
-            const handlers_0 = registry.get(result.action)
-            if (handlers_0 && handlers_0.size > 0) {
-              for (const registration_0 of handlers_0) {
-                if (contextsSet.has(registration_0.context)) {
-                  registration_0.handler()
+            const handlers = registry.get(result.action)
+            if (handlers && handlers.size > 0) {
+              for (const registration of handlers) {
+                if (contextsSet.has(registration.context)) {
+                  registration.handler()
                   event.stopImmediatePropagation()
                   break
                 }

@@ -1,6 +1,6 @@
 import type { Tools } from '../../../Tool.js'
 import type { ToolResultBlock } from '../../../types/llm.js'
-import type { NormalizedUserMessage, ProgressMessage } from '../../../types/message.js'
+import type { ProgressMessage, UserMessage } from '../../../types/message.js'
 import {
   type buildMessageLookups,
   CANCEL_MESSAGE,
@@ -15,7 +15,7 @@ import { useGetToolFromMessages } from './utils.js'
 
 type Props = {
   param: ToolResultBlock
-  message: NormalizedUserMessage
+  message: UserMessage
   lookups: ReturnType<typeof buildMessageLookups>
   progressMessagesForMessage: ProgressMessage[]
   style?: 'condensed'

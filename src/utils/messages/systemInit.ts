@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import { randomUUID } from 'node:crypto'
 import { getSdkBetas, getSessionId } from 'src/bootstrap/state.js'
 import { DEFAULT_OUTPUT_STYLE_NAME } from 'src/constants/outputStyles.js'
-import type { ApiKeySource, PermissionMode, BridgeMessage } from 'src/types/index.js'
+import type { ApiKeySource, PermissionMode, WireMessage } from 'src/types/index.js'
 import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
 import { getApiKeyWithSource } from '../auth.js'
 import { getCwd } from '../cwd.js'
@@ -30,7 +30,7 @@ export type SystemInitInputs = {
 }
 
 /**
- * Build the `system/init` BridgeMessage — the first message on the SDK stream
+ * Build the `system/init` WireMessage — the first message on the SDK stream
  * carrying session metadata (cwd, tools, model, commands, etc.) that remote
  * clients use to render pickers and gate UI.
  *
@@ -39,13 +39,13 @@ export type SystemInitInputs = {
  *     stream message per query turn
  *   - useReplBridge (REPL Remote Control) — sent via writeSdkMessages() on
  *     bridge connect, since REPL uses query() directly and never hits the
- *     QueryEngine BridgeMessage layer
+ *     QueryEngine WireMessage layer
  */
-export function buildSystemInitMessage(inputs: SystemInitInputs): BridgeMessage {
+export function buildSystemInitMessage(inputs: SystemInitInputs): WireMessage {
   const settings = getInitialSettings()
   const outputStyle = settings?.outputStyle ?? DEFAULT_OUTPUT_STYLE_NAME
 
-  const initMessage: BridgeMessage = {
+  const initMessage: WireMessage = {
     type: 'system',
     subtype: 'init',
     cwd: getCwd(),

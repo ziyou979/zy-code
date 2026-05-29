@@ -52,7 +52,7 @@ export {
   createAssistantAPIErrorMessage,
   createAssistantMessage,
   createAwaySummaryMessage,
-  createBridgeStatusMessage,
+  createWireStatusMessage,
   createCommandInputMessage,
   createCompactBoundaryMessage,
   createMemorySavedMessage,

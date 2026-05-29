@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useRef } from 'react'
 import { Box, Text } from '../ink.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { logEvent } from '../services/analytics/index.js'
-import type { NormalizedUserMessage, RenderableMessage } from '../types/message.js'
+import type { RenderableMessage, UserMessage } from '../types/message.js'
 import { isEmptyMessageText, SYNTHETIC_MESSAGES } from '../utils/messages.js'
 
 const NAVIGABLE_TYPES = [
@@ -167,7 +167,7 @@ export function toolCallOf(msg: NavigableMessage):
 }
 export type MessageActionCaps = {
   copy: (text: string) => void
-  edit: (msg: NormalizedUserMessage) => Promise<void>
+  edit: (msg: UserMessage) => Promise<void>
 }
 
 // 标识构建器——保留元组类型，使 `run` 的参数可以窄化（没有这个的话数组字面量会加宽）。
@@ -449,7 +449,7 @@ export function copyTextOf(msg: NavigableMessage): string {
     }
   }
 }
-function toolResultText(r: NormalizedUserMessage): string {
+function toolResultText(r: UserMessage): string {
   const b = r.message.content[0]
   if (b?.type !== 'tool_result') {
     return ''

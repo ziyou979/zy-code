@@ -62,7 +62,9 @@ export async function execAgentHook(
 
     // Create user message directly - no need for processUserInput which would
     // trigger UserPromptSubmit hooks and cause infinite recursion
-    const userMessage = createUserMessage({ content: processedPrompt })
+    const userMessage = createUserMessage({
+      content: [{ type: 'text' as const, text: processedPrompt }],
+    })
     const agentMessages = [userMessage]
 
     logForDebugging(`Hooks: Starting agent query with ${agentMessages.length} messages`)

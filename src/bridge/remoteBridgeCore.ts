@@ -30,22 +30,22 @@
 
 import { feature } from 'bun:bundle'
 import axios from 'axios'
-import { createV2ReplTransport, type ReplBridgeTransport } from './replBridgeTransport.js'
+import { createV2ReplTransport, type ReplWireTransport } from './replBridgeTransport.js'
 import { buildCCRv2SdkUrl } from './workSecret.js'
 import { toCompatSessionId } from './sessionIdCompat.js'
 import { FlushGate } from './flushGate.js'
 import { createTokenRefreshScheduler } from './jwtUtils.js'
 import { getTrustedDeviceToken } from './trustedDevice.js'
-import { getEnvLessBridgeConfig, type EnvLessBridgeConfig } from './envLessBridgeConfig.js'
+import { getEnvLessWireConfig, type EnvLessWireConfig } from './envLessBridgeConfig.js'
 import {
   handleIngressMessage,
   handleServerControlRequest,
   makeResultMessage,
-  isEligibleBridgeMessage,
+  isEligibleWireMessage,
   extractTitleText,
   BoundedUUIDSet,
 } from './bridgeMessaging.js'
-import { logBridgeSkip } from './debugUtils.js'
+import { logWireSkip } from './debugUtils.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
 import { isInProtectedNamespace } from '../utils/envUtils.js'
@@ -56,10 +56,10 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../services/analytics/index.js'
-import type { ReplBridgeHandle, BridgeState } from './replBridge.js'
+import type { ReplWireHandle, WireState } from './replBridge.js'
 import type { Message } from '../types/message.js'
-import type { BridgeMessage } from '../types/index.js'
-import type { BridgeControlRequest, BridgeControlResponse } from '../types/bridge/control.js'
+import type { WireMessage } from '../types/index.js'
+import type { WireControlRequest, WireControlResponse } from '../types/wire/control.js'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
 
 const ANTHROPIC_VERSION = '2023-06-01'
@@ -77,38 +77,38 @@ function oauthHeaders(accessToken: string): Record<string, string> {
   }
 }
 
-export type EnvLessBridgeParams = {
+export type EnvLessWireParams = {
   baseUrl: string
   orgUUID: string
   title: string
   getAccessToken: () => string | undefined
   onAuth401?: (staleAccessToken: string) => Promise<boolean>
   /**
-   * Converts internal Message[] → BridgeMessage[] for writeMessages() and the
+   * Converts internal Message[] → WireMessage[] for writeMessages() and the
    * initial-flush/drain paths. Injected rather than imported — mappers.ts
    * transitively pulls in src/commands.ts (entire command registry + React
    * tree) which would bloat bundles that don't already have it.
    */
-  toSDKMessages: (messages: Message[]) => BridgeMessage[]
+  toSDKMessages: (messages: Message[]) => WireMessage[]
   initialHistoryCap: number
   initialMessages?: Message[]
-  onInboundMessage?: (msg: BridgeMessage) => void | Promise<void>
+  onInboundMessage?: (msg: WireMessage) => void | Promise<void>
   /**
    * Fired on each title-worthy user message seen in writeMessages() until
    * the callback returns true (done). Mirrors replBridge.ts's onUserMessage —
    * caller derives a title and PATCHes /v1/sessions/{id} so auto-started
    * sessions don't stay at the generic fallback. The caller owns the
    * derive-at-count-1-and-3 policy; the transport just keeps calling until
-   * told to stop. sessionId is the raw cse_* — updateBridgeSessionTitle
+   * told to stop. sessionId is the raw cse_* — updateWireSessionTitle
    * retags internally.
    */
   onUserMessage?: (text: string, sessionId: string) => boolean
-  onPermissionResponse?: (response: BridgeControlResponse) => void
+  onPermissionResponse?: (response: WireControlResponse) => void
   onInterrupt?: () => void
   onSetModel?: (model: string | undefined) => void
   onSetMaxThinkingTokens?: (maxTokens: number | null) => void
   onSetPermissionMode?: (mode: PermissionMode) => { ok: true } | { ok: false; error: string }
-  onStateChange?: (state: BridgeState, detail?: string) => void
+  onStateChange?: (state: WireState, detail?: string) => void
   /**
    * When true, skip opening the SSE read stream — only the CCRClient write
    * path is activated. Threaded to createV2ReplTransport and
@@ -126,9 +126,9 @@ export type EnvLessBridgeParams = {
  * failed, transport setup failed). Caller (initReplBridge) surfaces this
  * as a generic "initialization failed" state.
  */
-export async function initEnvLessBridgeCore(
-  params: EnvLessBridgeParams,
-): Promise<ReplBridgeHandle | null> {
+export async function initEnvLessWireCore(
+  params: EnvLessWireParams,
+): Promise<ReplWireHandle | null> {
   const {
     baseUrl,
     orgUUID,
@@ -150,7 +150,7 @@ export async function initEnvLessBridgeCore(
     tags,
   } = params
 
-  const cfg = await getEnvLessBridgeConfig()
+  const cfg = await getEnvLessWireConfig()
 
   // ── 1. Create session (POST /v1/code/sessions, no env_id) ───────────────
   const accessToken = getAccessToken()
@@ -166,7 +166,7 @@ export async function initEnvLessBridgeCore(
   )
   if (!createdSessionId) {
     onStateChange?.('failed', 'Session creation failed — see debug log')
-    logBridgeSkip('v2_session_create_failed', undefined, true)
+    logWireSkip('v2_session_create_failed', undefined, true)
     return null
   }
   const sessionId: string = createdSessionId
@@ -181,7 +181,7 @@ export async function initEnvLessBridgeCore(
   )
   if (!credentials) {
     onStateChange?.('failed', 'Remote credentials fetch failed — see debug log')
-    logBridgeSkip('v2_remote_creds_failed', undefined, true)
+    logWireSkip('v2_remote_creds_failed', undefined, true)
     void archiveSession(sessionId, baseUrl, accessToken, orgUUID, cfg.http_timeout_ms)
     return null
   }
@@ -193,7 +193,7 @@ export async function initEnvLessBridgeCore(
   const sessionUrl = buildCCRv2SdkUrl(credentials.api_base_url, sessionId)
   logForDebugging(`[remote-bridge] v2 session URL: ${sessionUrl}`)
 
-  let transport: ReplBridgeTransport
+  let transport: ReplWireTransport
   try {
     transport = await createV2ReplTransport({
       sessionUrl,
@@ -215,7 +215,7 @@ export async function initEnvLessBridgeCore(
       level: 'error',
     })
     onStateChange?.('failed', `Transport setup failed: ${errorMessage(err)}`)
-    logBridgeSkip('v2_transport_setup_failed', undefined, true)
+    logWireSkip('v2_transport_setup_failed', undefined, true)
     void archiveSession(sessionId, baseUrl, accessToken, orgUUID, cfg.http_timeout_ms)
     return null
   }
@@ -257,7 +257,7 @@ export async function initEnvLessBridgeCore(
   // Telemetry: why did onConnect fire? Set by rebuildTransport before
   // wireTransportCallbacks; read asynchronously by onConnect. Race-safe
   // because authRecoveryInFlight serializes rebuild callers, and a fresh
-  // initEnvLessBridgeCore() call gets a fresh closure defaulting to 'initial'.
+  // initEnvLessWireCore() call gets a fresh closure defaulting to 'initial'.
   let connectCause: ConnectCause = 'initial'
 
   // Deadline for onConnect after transport.connect(). Cleared by onConnect
@@ -571,7 +571,7 @@ export async function initEnvLessBridgeCore(
     // above) — no session reuse, no double-post risk. Unlike v1, we do NOT
     // filter by previouslyFlushedUUIDs: that set persists across REPL enable/
     // disable cycles (useRef), so it would wrongly suppress history on re-enable.
-    const eligible = msgs.filter(isEligibleBridgeMessage)
+    const eligible = msgs.filter(isEligibleWireMessage)
     const capped =
       initialHistoryCap > 0 && eligible.length > initialHistoryCap
         ? eligible.slice(-initialHistoryCap)
@@ -712,7 +712,7 @@ export async function initEnvLessBridgeCore(
     writeMessages(messages) {
       const filtered = messages.filter(
         (m) =>
-          isEligibleBridgeMessage(m) &&
+          isEligibleWireMessage(m) &&
           !initialMessageUUIDs.has(m.uuid) &&
           !recentPostedUUIDs.has(m.uuid),
       )
@@ -757,7 +757,7 @@ export async function initEnvLessBridgeCore(
       logForDebugging(`[remote-bridge] Sending ${filtered.length} message(s)`)
       void transport.writeBatch(events)
     },
-    writeSdkMessages(messages: BridgeMessage[]) {
+    writeSdkMessages(messages: WireMessage[]) {
       const filtered = messages.filter((m) => !m.uuid || !recentPostedUUIDs.has(m.uuid))
       if (filtered.length === 0) {
         return
@@ -770,7 +770,7 @@ export async function initEnvLessBridgeCore(
       const events = filtered.map((m) => ({ ...m, session_id: sessionId }))
       void transport.writeBatch(events)
     },
-    sendControlRequest(request: BridgeControlRequest) {
+    sendControlRequest(request: WireControlRequest) {
       if (authRecoveryInFlight) {
         logForDebugging(
           `[remote-bridge] Dropping control_request during 401 recovery: ${request.request_id}`,
@@ -784,7 +784,7 @@ export async function initEnvLessBridgeCore(
       void transport.write(event)
       logForDebugging(`[remote-bridge] Sent control_request request_id=${request.request_id}`)
     },
-    sendControlResponse(response: BridgeControlResponse) {
+    sendControlResponse(response: WireControlResponse) {
       if (authRecoveryInFlight) {
         logForDebugging('[remote-bridge] Dropping control_response during 401 recovery')
         return
@@ -835,7 +835,7 @@ export async function initEnvLessBridgeCore(
 async function withRetry<T>(
   fn: () => Promise<T | null>,
   label: string,
-  cfg: EnvLessBridgeConfig,
+  cfg: EnvLessWireConfig,
 ): Promise<T | null> {
   const max = cfg.init_retry_max_attempts
   for (let attempt = 1; attempt <= max; attempt++) {
@@ -867,7 +867,7 @@ import {
   fetchRemoteCredentials as fetchRemoteCredentialsRaw,
   type RemoteCredentials,
 } from './codeSessionApi.js'
-import { getBridgeBaseUrlOverride } from './bridgeConfig.js'
+import { getWireBaseUrlOverride } from './bridgeConfig.js'
 
 // CLI-side wrapper that applies the CLAUDE_BRIDGE_BASE_URL dev override and
 // injects the trusted-device token (both are env/GrowthBook reads that the
@@ -888,7 +888,7 @@ export async function fetchRemoteCredentials(
   if (!creds) {
     return null
   }
-  return getBridgeBaseUrlOverride() ? { ...creds, api_base_url: baseUrl } : creds
+  return getWireBaseUrlOverride() ? { ...creds, api_base_url: baseUrl } : creds
 }
 
 type ArchiveStatus = number | 'timeout' | 'error' | 'no_token'

@@ -1,5 +1,5 @@
-import { updateSessionBridgeId } from '../utils/concurrentSessions.js'
-import type { ReplBridgeHandle } from './replBridge.js'
+import { updateSessionWireId } from '../utils/concurrentSessions.js'
+import type { ReplWireHandle } from './replBridge.js'
 import { toCompatSessionId } from './sessionIdCompat.js'
 
 /**
@@ -13,16 +13,16 @@ import { toCompatSessionId } from './sessionIdCompat.js'
  * Set from useReplBridge.tsx when init completes; cleared on teardown.
  */
 
-let handle: ReplBridgeHandle | null = null
+let handle: ReplWireHandle | null = null
 
-export function setReplBridgeHandle(h: ReplBridgeHandle | null): void {
+export function setReplWireHandle(h: ReplWireHandle | null): void {
   handle = h
   // Publish (or clear) our bridge session ID in the session record so other
   // local peers can dedup us out of their bridge list — local is preferred.
-  void updateSessionBridgeId(getSelfBridgeCompatId() ?? null).catch(() => {})
+  void updateSessionWireId(getSelfWireCompatId() ?? null).catch(() => {})
 }
 
-export function getReplBridgeHandle(): ReplBridgeHandle | null {
+export function getReplWireHandle(): ReplWireHandle | null {
   return handle
 }
 
@@ -30,7 +30,7 @@ export function getReplBridgeHandle(): ReplBridgeHandle | null {
  * Our own bridge session ID in the session_* compat format the API returns
  * in /v1/sessions responses — or undefined if bridge isn't connected.
  */
-export function getSelfBridgeCompatId(): string | undefined {
-  const h = getReplBridgeHandle()
+export function getSelfWireCompatId(): string | undefined {
+  const h = getReplWireHandle()
   return h ? toCompatSessionId(h.bridgeSessionId) : undefined
 }

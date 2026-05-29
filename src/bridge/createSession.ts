@@ -1,4 +1,4 @@
-import type { BridgeMessage } from '../types/index.js'
+import type { WireMessage } from '../types/index.js'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { extractErrorDetail } from './debugUtils.js'
@@ -19,7 +19,7 @@ type GitOutcome = {
 // POST /v1/sessions endpoint (discriminated union format).
 type SessionEvent = {
   type: 'event'
-  data: BridgeMessage
+  data: WireMessage
 }
 
 /**
@@ -31,7 +31,7 @@ type SessionEvent = {
  *
  * Returns the session ID on success, or null if creation fails (non-fatal).
  */
-export async function createBridgeSession({
+export async function createWireSession({
   environmentId,
   title,
   events,
@@ -184,7 +184,7 @@ export async function createBridgeSession({
  * client in bridgeApi.ts uses a different beta header and no org UUID, which
  * makes the Sessions API return 404.
  */
-export async function getBridgeSession(
+export async function getWireSession(
   sessionId: string,
   opts?: { baseUrl?: string; getAccessToken?: () => string | undefined },
 ): Promise<{ environment_id?: string; title?: string } | null> {
@@ -255,7 +255,7 @@ export async function getBridgeSession(
  * timeouts, and network errors throw. Archival is best-effort during
  * cleanup; call sites wrap with .catch().
  */
-export async function archiveBridgeSession(
+export async function archiveWireSession(
   sessionId: string,
   opts?: {
     baseUrl?: string
@@ -318,7 +318,7 @@ export async function archiveBridgeSession(
  *
  * Errors are swallowed — title sync is best-effort.
  */
-export async function updateBridgeSessionTitle(
+export async function updateWireSessionTitle(
   sessionId: string,
   title: string,
   opts?: { baseUrl?: string; getAccessToken?: () => string | undefined },

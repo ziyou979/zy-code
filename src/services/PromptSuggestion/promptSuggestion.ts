@@ -318,7 +318,7 @@ export async function generateSuggestion(
   //   - skipCacheWrite (controls cache_control markers, not the cache key)
   //   - canUseTool (client-side permission check)
   const result = await runForkedAgent({
-    promptMessages: [createUserMessage({ content: prompt })],
+    promptMessages: [createUserMessage({ content: [{ type: 'text' as const, text: prompt }] })],
     cacheSafeParams, // Don't override tools/thinking settings - busts cache
     canUseTool,
     querySource: 'prompt_suggestion' as any,

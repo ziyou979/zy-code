@@ -1,18 +1,23 @@
 /**
- * Bridge wire/IPC message types.
+ * Wire protocol message types.
  *
  * TypeScript types for the messages CLI yields across process boundaries
- * (subprocess, remote-control, replBridge). Renamed from SDK*Message as part
- * of the SDK-removal cleanup. Schemas live in ./messageSchemas.ts.
+ * (subprocess, remote-control, replBridge). Schemas live in ./messageSchemas.ts.
  */
 
 import type { ApiKeySource, ModelUsage, PermissionMode } from '../coreTypes.generated.js'
+import type {
+  AssistantContentBlock,
+  LLMStreamEvent,
+  TokenUsage,
+  UserContentBlock,
+} from '../llm.js'
 
 // ============================================================================
 // SDK Message Types
 // ============================================================================
 
-export type BridgeAssistantMessageError =
+export type WireAssistantMessageError =
   | 'authentication_failed'
   | 'billing_error'
   | 'rate_limit'
@@ -21,26 +26,26 @@ export type BridgeAssistantMessageError =
   | 'unknown'
   | 'max_output_tokens'
 
-export type BridgeStatus = 'compacting' | null
+export type WireStatus = 'compacting' | null
 
-export interface BridgeUserMessage {
+export interface WireUserMessage {
   type: 'user'
-  message: unknown
+  message: { role: 'user'; content: UserContentBlock[] }
   parent_tool_use_id: string | null
   isSynthetic?: boolean
-  tool_use_result?: unknown
+  tool_use_result?: string | UserContentBlock[]
   priority?: 'now' | 'next' | 'later'
   timestamp?: string
   uuid?: string
   session_id?: string
 }
 
-export interface BridgeUserMessageReplay {
+export interface WireUserMessageReplay {
   type: 'user'
-  message: unknown
+  message: { role: 'user'; content: UserContentBlock[] }
   parent_tool_use_id: string | null
   isSynthetic?: boolean
-  tool_use_result?: unknown
+  tool_use_result?: string | UserContentBlock[]
   priority?: 'now' | 'next' | 'later'
   timestamp?: string
   uuid: string
@@ -48,7 +53,7 @@ export interface BridgeUserMessageReplay {
   isReplay: true
 }
 
-export interface BridgeRateLimitInfo {
+export interface WireRateLimitInfo {
   status: 'allowed' | 'allowed_warning' | 'rejected'
   resetsAt?: number
   rateLimitType?: 'five_hour' | 'seven_day' | 'seven_day_opus' | 'seven_day_sonnet' | 'overage'
@@ -73,43 +78,43 @@ export interface BridgeRateLimitInfo {
   surpassedThreshold?: number
 }
 
-export interface BridgeAssistantMessage {
+export interface WireAssistantMessage {
   type: 'assistant'
-  message: unknown
+  message: { role: 'assistant'; content: AssistantContentBlock[]; [key: string]: unknown }
   parent_tool_use_id: string | null
-  error?: BridgeAssistantMessageError
+  error?: WireAssistantMessageError
   uuid: string
   session_id: string
 }
 
-export interface BridgeRateLimitEvent {
+export interface WireRateLimitEvent {
   type: 'rate_limit_event'
-  rate_limit_info: BridgeRateLimitInfo
+  rate_limit_info: WireRateLimitInfo
   uuid: string
   session_id: string
 }
 
-export interface BridgeStreamlinedTextMessage {
+export interface WireStreamlinedTextMessage {
   type: 'streamlined_text'
   text: string
   session_id: string
   uuid: string
 }
 
-export interface BridgeStreamlinedToolUseSummaryMessage {
+export interface WireStreamlinedToolUseSummaryMessage {
   type: 'streamlined_tool_use_summary'
   tool_summary: string
   session_id: string
   uuid: string
 }
 
-export interface BridgePermissionDenial {
+export interface WirePermissionDenial {
   tool_name: string
   tool_use_id: string
   tool_input: Record<string, unknown>
 }
 
-export interface BridgeResultSuccess {
+export interface WireResultSuccess {
   type: 'result'
   subtype: 'success'
   duration_ms: number
@@ -119,16 +124,16 @@ export interface BridgeResultSuccess {
   result: string
   stop_reason: string | null
   total_cost_usd: number
-  usage: unknown
+  usage: TokenUsage
   modelUsage: Record<string, ModelUsage>
-  permission_denials: BridgePermissionDenial[]
-  structured_output?: unknown
+  permission_denials: WirePermissionDenial[]
+  structured_output?: Record<string, unknown>
   fast_mode_state?: FastModeState
   uuid: string
   session_id: string
 }
 
-export interface BridgeResultError {
+export interface WireResultError {
   type: 'result'
   subtype:
     | 'error_during_execution'
@@ -141,18 +146,18 @@ export interface BridgeResultError {
   num_turns: number
   stop_reason: string | null
   total_cost_usd: number
-  usage: unknown
+  usage: TokenUsage
   modelUsage: Record<string, ModelUsage>
-  permission_denials: BridgePermissionDenial[]
+  permission_denials: WirePermissionDenial[]
   errors: string[]
   fast_mode_state?: FastModeState
   uuid: string
   session_id: string
 }
 
-export type BridgeResultMessage = BridgeResultSuccess | BridgeResultError
+export type WireResultMessage = WireResultSuccess | WireResultError
 
-export interface BridgeSystemMessage {
+export interface WireSystemMessage {
   type: 'system'
   subtype: 'init'
   agents?: string[]
@@ -180,15 +185,15 @@ export interface BridgeSystemMessage {
   session_id: string
 }
 
-export interface BridgePartialAssistantMessage {
+export interface WirePartialAssistantMessage {
   type: 'stream_event'
-  event: unknown
+  event: LLMStreamEvent | { type: string; [key: string]: unknown }
   parent_tool_use_id: string | null
   uuid: string
   session_id: string
 }
 
-export interface BridgeCompactBoundaryMessage {
+export interface WireCompactBoundaryMessage {
   type: 'system'
   subtype: 'compact_boundary'
   compact_metadata: {
@@ -204,16 +209,16 @@ export interface BridgeCompactBoundaryMessage {
   session_id: string
 }
 
-export interface BridgeStatusMessage {
+export interface WireStatusMessage {
   type: 'system'
   subtype: 'status'
-  status: BridgeStatus
+  status: WireStatus
   permissionMode?: PermissionMode
   uuid: string
   session_id: string
 }
 
-export interface BridgePostTurnSummaryMessage {
+export interface WirePostTurnSummaryMessage {
   type: 'system'
   subtype: 'post_turn_summary'
   summarizes_uuid: string
@@ -229,19 +234,19 @@ export interface BridgePostTurnSummaryMessage {
   session_id: string
 }
 
-export interface BridgeAPIRetryMessage {
+export interface WireAPIRetryMessage {
   type: 'system'
   subtype: 'api_retry'
   attempt: number
   max_retries: number
   retry_delay_ms: number
   error_status: number | null
-  error: BridgeAssistantMessageError
+  error: WireAssistantMessageError
   uuid: string
   session_id: string
 }
 
-export interface BridgeLocalCommandOutputMessage {
+export interface WireLocalCommandOutputMessage {
   type: 'system'
   subtype: 'local_command_output'
   content: string
@@ -249,7 +254,7 @@ export interface BridgeLocalCommandOutputMessage {
   session_id: string
 }
 
-export interface BridgeHookStartedMessage {
+export interface WireHookStartedMessage {
   type: 'system'
   subtype: 'hook_started'
   hook_id: string
@@ -259,7 +264,7 @@ export interface BridgeHookStartedMessage {
   session_id: string
 }
 
-export interface BridgeHookProgressMessage {
+export interface WireHookProgressMessage {
   type: 'system'
   subtype: 'hook_progress'
   hook_id: string
@@ -272,7 +277,7 @@ export interface BridgeHookProgressMessage {
   session_id: string
 }
 
-export interface BridgeHookResponseMessage {
+export interface WireHookResponseMessage {
   type: 'system'
   subtype: 'hook_response'
   hook_id: string
@@ -287,7 +292,7 @@ export interface BridgeHookResponseMessage {
   session_id: string
 }
 
-export interface BridgeToolProgressMessage {
+export interface WireToolProgressMessage {
   type: 'tool_progress'
   tool_use_id: string
   tool_name: string
@@ -298,7 +303,7 @@ export interface BridgeToolProgressMessage {
   session_id: string
 }
 
-export interface BridgeAuthStatusMessage {
+export interface WireAuthStatusMessage {
   type: 'auth_status'
   isAuthenticating: boolean
   output: string[]
@@ -307,7 +312,7 @@ export interface BridgeAuthStatusMessage {
   session_id: string
 }
 
-export interface BridgeFilesPersistedEvent {
+export interface WireFilesPersistedEvent {
   type: 'system'
   subtype: 'files_persisted'
   files: Array<{
@@ -323,7 +328,7 @@ export interface BridgeFilesPersistedEvent {
   session_id: string
 }
 
-export interface BridgeTaskNotificationMessage {
+export interface WireTaskNotificationMessage {
   type: 'system'
   subtype: 'task_notification'
   task_id: string
@@ -340,7 +345,7 @@ export interface BridgeTaskNotificationMessage {
   session_id: string
 }
 
-export interface BridgeTaskStartedMessage {
+export interface WireTaskStartedMessage {
   type: 'system'
   subtype: 'task_started'
   task_id: string
@@ -353,7 +358,7 @@ export interface BridgeTaskStartedMessage {
   session_id: string
 }
 
-export interface BridgeSessionStateChangedMessage {
+export interface WireSessionStateChangedMessage {
   type: 'system'
   subtype: 'session_state_changed'
   state: 'idle' | 'running' | 'requires_action'
@@ -361,7 +366,7 @@ export interface BridgeSessionStateChangedMessage {
   session_id: string
 }
 
-export interface BridgeTaskProgressMessage {
+export interface WireTaskProgressMessage {
   type: 'system'
   subtype: 'task_progress'
   task_id: string
@@ -378,7 +383,7 @@ export interface BridgeTaskProgressMessage {
   session_id: string
 }
 
-export interface BridgeToolUseSummaryMessage {
+export interface WireToolUseSummaryMessage {
   type: 'tool_use_summary'
   summary: string
   preceding_tool_use_ids: string[]
@@ -386,7 +391,7 @@ export interface BridgeToolUseSummaryMessage {
   session_id: string
 }
 
-export interface BridgeElicitationCompleteMessage {
+export interface WireElicitationCompleteMessage {
   type: 'system'
   subtype: 'elicitation_complete'
   mcp_server_name: string
@@ -395,7 +400,7 @@ export interface BridgeElicitationCompleteMessage {
   session_id: string
 }
 
-export interface BridgePromptSuggestionMessage {
+export interface WirePromptSuggestionMessage {
   type: 'prompt_suggestion'
   suggestion: string
   uuid: string
@@ -406,7 +411,7 @@ export interface BridgePromptSuggestionMessage {
 // Session Listing Types
 // ============================================================================
 
-export interface BridgeSessionInfo {
+export interface WireSessionInfo {
   sessionId: string
   summary: string
   lastModified: number
@@ -429,34 +434,34 @@ export type FastModeState = 'off' | 'cooldown' | 'on'
 // SDK Message Union Type
 // ============================================================================
 
-export type BridgeMessage =
-  | BridgeAssistantMessage
-  | BridgeUserMessage
-  | BridgeUserMessageReplay
-  | BridgeResultMessage
-  | BridgeSystemMessage
-  | BridgePartialAssistantMessage
-  | BridgeCompactBoundaryMessage
-  | BridgeStatusMessage
-  | BridgeAPIRetryMessage
-  | BridgeLocalCommandOutputMessage
-  | BridgeHookStartedMessage
-  | BridgeHookProgressMessage
-  | BridgeHookResponseMessage
-  | BridgeToolProgressMessage
-  | BridgeAuthStatusMessage
-  | BridgeTaskNotificationMessage
-  | BridgeTaskStartedMessage
-  | BridgeTaskProgressMessage
-  | BridgeSessionStateChangedMessage
-  | BridgeFilesPersistedEvent
-  | BridgeToolUseSummaryMessage
-  | BridgeRateLimitEvent
-  | BridgeElicitationCompleteMessage
-  | BridgePromptSuggestionMessage
+export type WireMessage =
+  | WireAssistantMessage
+  | WireUserMessage
+  | WireUserMessageReplay
+  | WireResultMessage
+  | WireSystemMessage
+  | WirePartialAssistantMessage
+  | WireCompactBoundaryMessage
+  | WireStatusMessage
+  | WireAPIRetryMessage
+  | WireLocalCommandOutputMessage
+  | WireHookStartedMessage
+  | WireHookProgressMessage
+  | WireHookResponseMessage
+  | WireToolProgressMessage
+  | WireAuthStatusMessage
+  | WireTaskNotificationMessage
+  | WireTaskStartedMessage
+  | WireTaskProgressMessage
+  | WireSessionStateChangedMessage
+  | WireFilesPersistedEvent
+  | WireToolUseSummaryMessage
+  | WireRateLimitEvent
+  | WireElicitationCompleteMessage
+  | WirePromptSuggestionMessage
 
 // ============================================================================
 // Post Turn Summary Message (re-export for convenience)
 // ============================================================================
 
-export type BridgePostTurnSummaryMessageType = BridgePostTurnSummaryMessage
+export type WirePostTurnSummaryMessageType = WirePostTurnSummaryMessage

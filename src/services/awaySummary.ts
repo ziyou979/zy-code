@@ -32,7 +32,11 @@ export async function generateAwaySummary(
   try {
     const memory = await getSessionMemoryContent()
     const recent = messages.slice(-RECENT_MESSAGE_WINDOW)
-    recent.push(createUserMessage({ content: buildAwaySummaryPrompt(memory) }))
+    recent.push(
+      createUserMessage({
+        content: [{ type: 'text' as const, text: buildAwaySummaryPrompt(memory) }],
+      }),
+    )
     const response = await queryModelWithoutStreaming({
       messages: recent,
       systemPrompt: asSystemPrompt([]),

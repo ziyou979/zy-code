@@ -1,5 +1,5 @@
 import type { UUID } from 'node:crypto'
-import type { BridgeMessage } from '../types/index.js'
+import type { WireMessage } from '../types/index.js'
 import type { UserContentBlock } from '../types/llm.js'
 
 /**
@@ -12,7 +12,7 @@ import type { UserContentBlock } from '../types/llm.js'
  * 返回 undefined 表示应跳过该消息（非 user 类型、content 缺失或为空）。
  */
 export function extractInboundMessageFields(
-  msg: BridgeMessage,
+  msg: WireMessage,
 ): { content: string | Array<UserContentBlock>; uuid: UUID | undefined } | undefined {
   if (msg.type !== 'user') {
     return undefined

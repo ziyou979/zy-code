@@ -4,10 +4,8 @@ import type {
   AssistantMessage,
   AttachmentMessage,
   Message,
-  NormalizedAssistantMessage,
-  NormalizedMessage,
-  NormalizedUserMessage,
   ProgressMessage,
+  UserMessage,
 } from '../../types/message.js'
 import { count } from '../array.js'
 import type { HookAttachment, HookPermissionDecisionAttachment } from '../attachments.js'
@@ -17,7 +15,7 @@ import { getToolUseID, isHookAttachmentMessage } from './predicates.js'
 type HookAttachmentWithName = Exclude<HookAttachment, HookPermissionDecisionAttachment>
 
 function getInProgressHookCount(
-  messages: NormalizedMessage[],
+  messages: Message[],
   toolUseID: string,
   hookEvent: HookEvent,
 ): number {
@@ -32,7 +30,7 @@ function getInProgressHookCount(
 }
 
 function getResolvedHookCount(
-  messages: NormalizedMessage[],
+  messages: Message[],
   toolUseID: string,
   hookEvent: HookEvent,
 ): number {
@@ -52,7 +50,7 @@ function getResolvedHookCount(
 }
 
 export function hasUnresolvedHooks(
-  messages: NormalizedMessage[],
+  messages: Message[],
   toolUseID: string,
   hookEvent: HookEvent,
 ) {
@@ -66,7 +64,7 @@ export function hasUnresolvedHooks(
   return false
 }
 
-export function getToolResultIDs(normalizedMessages: NormalizedMessage[]): {
+export function getToolResultIDs(normalizedMessages: Message[]): {
   [toolUseID: string]: boolean
 } {
   return Object.fromEntries(
@@ -78,7 +76,7 @@ export function getToolResultIDs(normalizedMessages: NormalizedMessage[]): {
   )
 }
 
-export function getSiblingToolUseIDs(message: NormalizedMessage, messages: Message[]): Set<string> {
+export function getSiblingToolUseIDs(message: Message, messages: Message[]): Set<string> {
   const toolUseID = getToolUseID(message)
   if (!toolUseID) {
     return new Set()
@@ -114,7 +112,7 @@ export type MessageLookups = {
   inProgressHookCounts: Map<string, Map<HookEvent, number>>
   resolvedHookCounts: Map<string, Map<HookEvent, number>>
   /** 将 tool_use_id 映射到包含其 tool_result 的用户消息 */
-  toolResultByToolUseID: Map<string, NormalizedMessage>
+  toolResultByToolUseID: Map<string, Message>
   /** 将 tool_use_id 映射到 ToolCallBlock */
   toolUseByToolUseID: Map<string, ToolCallBlock>
   /** 标准化消息的总计数（用于截断指示文本） */
@@ -131,7 +129,7 @@ export type MessageLookups = {
  * hasUnresolvedHooks 的 O(n²) 行为。
  */
 export function buildMessageLookups(
-  normalizedMessages: NormalizedMessage[],
+  normalizedMessages: Message[],
   messages: Message[],
 ): MessageLookups {
   // 第一遍：按 ID 分组 assistant 消息并收集每条消息的所有工具使用 ID
@@ -168,7 +166,7 @@ export function buildMessageLookups(
   const inProgressHookCounts = new Map<string, Map<HookEvent, number>>()
   // 按 (toolUseID, hookEvent) 追踪唯一 hook 名称，以匹配 getResolvedHookCount 行为。
   const resolvedHookNames = new Map<string, Map<HookEvent, Set<string>>>()
-  const toolResultByToolUseID = new Map<string, NormalizedMessage>()
+  const toolResultByToolUseID = new Map<string, Message>()
   const resolvedToolUseIDs = new Set<string>()
   const erroredToolUseIDs = new Set<string>()
 
@@ -319,14 +317,14 @@ export const EMPTY_STRING_SET: ReadonlySet<string> = Object.freeze(new Set<strin
  * 正确的已解决/进行中/排队状态渲染。
  *
  * 每条进度消息必须有 `message` 字段，类型为
- * `AssistantMessage | NormalizedUserMessage`.
+ * `AssistantMessage | UserMessage`.
  */
 export function buildSubagentLookups(
-  messages: { message: AssistantMessage | NormalizedAssistantMessage | NormalizedUserMessage }[],
+  messages: { message: AssistantMessage | UserMessage }[],
 ): { lookups: MessageLookups; inProgressToolUseIDs: Set<string> } {
   const toolUseByToolUseID = new Map<string, ToolCallBlock>()
   const resolvedToolUseIDs = new Set<string>()
-  const toolResultByToolUseID = new Map<string, NormalizedUserMessage & { type: 'user' }>()
+  const toolResultByToolUseID = new Map<string, UserMessage & { type: 'user' }>()
 
   for (const { message: msg } of messages) {
     if (msg.type === 'assistant') {
@@ -368,7 +366,7 @@ export function buildSubagentLookups(
 
 /** 使用预计算查找表获取同级工具使用 ID。O(1)。 */
 export function getSiblingToolUseIDsFromLookup(
-  message: NormalizedMessage,
+  message: Message,
   lookups: MessageLookups,
 ): ReadonlySet<string> {
   const toolUseID = getToolUseID(message)
@@ -380,7 +378,7 @@ export function getSiblingToolUseIDsFromLookup(
 
 /** 使用预计算查找表获取消息的进度消息。O(1)。 */
 export function getProgressMessagesFromLookup(
-  message: NormalizedMessage,
+  message: Message,
   lookups: MessageLookups,
 ): ProgressMessage[] {
   const toolUseID = getToolUseID(message)
@@ -401,11 +399,11 @@ export function hasUnresolvedHooksFromLookup(
   return inProgressCount > resolvedCount
 }
 
-export function getToolUseIDs(normalizedMessages: NormalizedMessage[]): Set<string> {
+export function getToolUseIDs(normalizedMessages: Message[]): Set<string> {
   return new Set(
     normalizedMessages
       .filter(
-        (_): _ is NormalizedAssistantMessage =>
+        (_): _ is AssistantMessage =>
           _.type === 'assistant' &&
           Array.isArray(_.message.content) &&
           _.message.content[0]?.type === 'tool_call',

@@ -1,13 +1,13 @@
 import { feature } from 'bun:bundle'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
-import { getBridgeAccessToken } from '../../bridge/bridgeConfig.js'
+import { getWireAccessToken } from '../../bridge/bridgeConfig.js'
 import {
-  checkBridgeMinVersion,
-  getBridgeDisabledReason,
-  isEnvLessBridgeEnabled,
+  checkWireMinVersion,
+  getWireDisabledReason,
+  isEnvLessWireEnabled,
 } from '../../bridge/bridgeEnabled.js'
-import { checkEnvLessBridgeMinVersion } from '../../bridge/envLessBridgeConfig.js'
+import { checkEnvLessWireMinVersion } from '../../bridge/envLessBridgeConfig.js'
 import { BRIDGE_LOGIN_INSTRUCTION, REMOTE_CONTROL_DISCONNECTED_MSG } from '../../bridge/types.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { ListItem } from '../../components/design-system/ListItem.js'
@@ -41,20 +41,20 @@ type Props = {
  * 在已连接状态下再次运行 /remote-control 时，会显示一个对话框，
  * 展示会话 URL 并提供断开或继续的选项。
  */
-function BridgeToggle({ onDone, name }: Props) {
+function WireToggle({ onDone, name }: Props) {
   const setAppState = useSetAppState()
-  const replBridgeConnected = useAppState((state) => state.replBridgeConnected)
+  const replWireConnected = useAppState((state) => state.replWireConnected)
   const replBridgeEnabled = useAppState((state) => state.replBridgeEnabled)
   const replBridgeOutboundOnly = useAppState((state) => state.replBridgeOutboundOnly)
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false)
   useEffect(() => {
-    if ((replBridgeConnected || replBridgeEnabled) && !replBridgeOutboundOnly) {
+    if ((replWireConnected || replBridgeEnabled) && !replBridgeOutboundOnly) {
       setShowDisconnectDialog(true)
       return
     }
     let cancelled = false
     ;(async () => {
-      const error = await checkBridgePrerequisites()
+      const error = await checkWirePrerequisites()
       if (cancelled) {
         return
       }
@@ -75,7 +75,7 @@ function BridgeToggle({ onDone, name }: Props) {
           return {
             ...prev,
             showRemoteCallout: true,
-            replBridgeInitialName: name,
+            replWireInitialName: name,
           }
         })
         onDone('', {
@@ -93,9 +93,9 @@ function BridgeToggle({ onDone, name }: Props) {
         return {
           ...prev,
           replBridgeEnabled: true,
-          replBridgeExplicit: true,
+          replWireExplicit: true,
           replBridgeOutboundOnly: false,
-          replBridgeInitialName: name,
+          replWireInitialName: name,
         }
       })
       onDone('Remote Control connecting\u2026', {
@@ -105,9 +105,9 @@ function BridgeToggle({ onDone, name }: Props) {
     return () => {
       cancelled = true
     }
-  }, [replBridgeOutboundOnly, onDone, setAppState, replBridgeEnabled, replBridgeConnected, name])
+  }, [replBridgeOutboundOnly, onDone, setAppState, replBridgeEnabled, replWireConnected, name])
   if (showDisconnectDialog) {
-    return <BridgeDisconnectDialog onDone={onDone} />
+    return <WireDisconnectDialog onDone={onDone} />
   }
   return null
 }
@@ -117,13 +117,13 @@ function BridgeToggle({ onDone, name }: Props) {
  * 展示会话 URL，并允许用户断开连接或继续。
  */
 
-function BridgeDisconnectDialog({ onDone }: Props) {
+function WireDisconnectDialog({ onDone }: Props) {
   // @ts-expect-error
   useRegisterOverlay('bridge-disconnect-dialog')
   const setAppState = useSetAppState()
-  const sessionUrl = useAppState((s) => s.replBridgeSessionUrl)
-  const connectUrl = useAppState((state) => state.replBridgeConnectUrl)
-  const sessionActive = useAppState((state) => state.replBridgeSessionActive)
+  const sessionUrl = useAppState((s) => s.replWireSessionUrl)
+  const connectUrl = useAppState((state) => state.replWireConnectUrl)
+  const sessionActive = useAppState((state) => state.replWireSessionActive)
   const [focusIndex, setFocusIndex] = useState(2)
   const [showQR, setShowQR] = useState(false)
   const displayUrl = sessionActive ? sessionUrl : connectUrl
@@ -135,7 +135,7 @@ function BridgeDisconnectDialog({ onDone }: Props) {
       return {
         ...prev,
         replBridgeEnabled: false,
-        replBridgeExplicit: false,
+        replWireExplicit: false,
         replBridgeOutboundOnly: false,
       }
     })
@@ -213,7 +213,7 @@ function BridgeDisconnectDialog({ onDone }: Props) {
  * 在第一次尝试时就能获得准确的结果。
  */
 
-async function checkBridgePrerequisites(): Promise<string | null> {
+async function checkWirePrerequisites(): Promise<string | null> {
   // 检查组织策略 — 远程控制可能被禁用
   const { waitForPolicyLimitsToLoad, isPolicyAllowed } = await import(
     '../../services/policyLimits/index.js'
@@ -222,7 +222,7 @@ async function checkBridgePrerequisites(): Promise<string | null> {
   if (!isPolicyAllowed('allow_remote_control')) {
     return "Remote Control is disabled by your organization's policy."
   }
-  const disabledReason = await getBridgeDisabledReason()
+  const disabledReason = await getWireDisabledReason()
   if (disabledReason) {
     return disabledReason
   }
@@ -230,18 +230,18 @@ async function checkBridgePrerequisites(): Promise<string | null> {
   // 镜像 initReplBridge 中的 v1/v2 分支逻辑：仅当功能标志开启且会话非永久时，
   // 才使用无环境变量的 v2 版本。在助手模式（KAIROS）下，useReplBridge 设置 perpetual=true，
   // 强制 initReplBridge 走 v1 路径 — 因此前置条件检查必须保持一致。
-  let useV2 = isEnvLessBridgeEnabled()
+  let useV2 = isEnvLessWireEnabled()
   if (feature('KAIROS') && useV2) {
     const assistantModule = await import('../../assistant/index.js')
     if (assistantModule.isAssistantMode?.()) {
       useV2 = false
     }
   }
-  const versionError = useV2 ? await checkEnvLessBridgeMinVersion() : checkBridgeMinVersion()
+  const versionError = useV2 ? await checkEnvLessWireMinVersion() : checkWireMinVersion()
   if (versionError) {
     return versionError
   }
-  if (!getBridgeAccessToken()) {
+  if (!getWireAccessToken()) {
     return BRIDGE_LOGIN_INSTRUCTION
   }
   logForDebugging('[bridge] Prerequisites passed, enabling bridge')
@@ -253,5 +253,5 @@ export async function call(
   args: string,
 ): Promise<React.ReactNode> {
   const name = args.trim() || undefined
-  return <BridgeToggle onDone={onDone} name={name} />
+  return <WireToggle onDone={onDone} name={name} />
 }

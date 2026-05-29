@@ -17,7 +17,6 @@ import type {
   AssistantMessage,
   AttachmentMessage,
   Message,
-  NormalizedUserMessage,
   ProgressMessage,
   UserMessage,
 } from 'src/types/message.js'
@@ -253,7 +252,7 @@ async function executeForkedSlashCommand(
   // instability → component remounts → Ink rendering corruption
   // (overlapping text from stale DOM nodes).
   const createProgressMessage = (
-    message: AssistantMessage | NormalizedUserMessage,
+    message: AssistantMessage | UserMessage,
   ): ProgressMessage<AgentProgress> => {
     toolUseCounter++
     return {
@@ -349,7 +348,7 @@ async function executeForkedSlashCommand(
       }),
     }),
     createUserMessage({
-      content: `<local-command-stdout>\n${resultText}\n</local-command-stdout>`,
+      content: [{ type: 'text' as const, text: `<local-command-stdout>\n${resultText}\n</local-command-stdout>` }],
     }),
   ]
   return {
@@ -558,8 +557,8 @@ export async function processSlashCommand(
   if (
     newMessages.length === 2 &&
     newMessages[1]!.type === 'user' &&
-    typeof newMessages[1]!.message.content === 'string' &&
-    newMessages[1]!.message.content.startsWith('Unknown command:')
+    newMessages[1]!.message.content[0]?.type === 'text' &&
+    newMessages[1]!.message.content[0].text.startsWith('Unknown command:')
   ) {
     // Don't log as invalid if it looks like a common file path
     const looksLikeFilePath =
@@ -674,7 +673,7 @@ async function getMessagesForSlashCommand(
           }),
         }),
         createUserMessage({
-          content: `This skill can only be invoked by Zy, not directly by users. Ask Zy to use the "${commandName}" skill for you.`,
+          content: [{ type: 'text' as const, text: `This skill can only be invoked by Zy, not directly by users. Ask Zy to use the "${commandName}" skill for you.` }],
         }),
       ],
       shouldQuery: false,
@@ -712,7 +711,7 @@ async function getMessagesForSlashCommand(
             // Meta messages are model-visible but hidden from the user
             const metaMessages = (options?.metaMessages ?? []).map((content: string) =>
               createUserMessage({
-                content,
+                content: [{ type: 'text' as const, text: content }],
                 isMeta: true,
               }),
             )
@@ -752,10 +751,10 @@ async function getMessagesForSlashCommand(
                       }),
                       result
                         ? createUserMessage({
-                            content: `<local-command-stdout>${result}</local-command-stdout>`,
+                            content: [{ type: 'text' as const, text: `<local-command-stdout>${result}</local-command-stdout>` }],
                           })
                         : createUserMessage({
-                            content: `<local-command-stdout>${NO_CONTENT_MESSAGE}</local-command-stdout>`,
+                            content: [{ type: 'text' as const, text: `<local-command-stdout>${NO_CONTENT_MESSAGE}</local-command-stdout>` }],
                           }),
                       ...metaMessages,
                     ],
@@ -859,7 +858,7 @@ async function getMessagesForSlashCommand(
               ...(result.displayText
                 ? [
                     createUserMessage({
-                      content: `<local-command-stdout>${result.displayText}</local-command-stdout>`,
+                      content: [{ type: 'text' as const, text: `<local-command-stdout>${result.displayText}</local-command-stdout>` }],
                       // --resume looks at latest timestamp message to determine which message to resume from
                       // This is a perf optimization to avoid having to recaculcate the leaf node every time
                       // Since we're creating a bunch of synthetic messages for compact, it's important to set
@@ -964,7 +963,7 @@ async function getMessagesForSlashCommand(
                 }),
               }),
               createUserMessage({
-                content: `<local-command-stderr>${String(e)}</local-command-stderr>`,
+                content: [{ type: 'text' as const, text: `<local-command-stderr>${String(e)}</local-command-stderr>` }],
               }),
             ],
             shouldQuery: false,
@@ -1113,7 +1112,7 @@ async function getMessagesForPromptSlashCommand(
     return {
       messages: [
         createUserMessage({
-          content: metadata,
+          content: [{ type: 'text' as const, text: metadata }],
           uuid,
         }),
         createUserMessage({
@@ -1188,7 +1187,7 @@ async function getMessagesForPromptSlashCommand(
   )
   const messages = [
     createUserMessage({
-      content: metadata,
+      content: [{ type: 'text' as const, text: metadata }],
       uuid,
     }),
     createUserMessage({

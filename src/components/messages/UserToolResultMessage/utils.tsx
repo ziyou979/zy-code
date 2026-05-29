@@ -1,5 +1,5 @@
 import { HookEvent } from 'commander'
-import { NormalizedMessage, ProgressMessage } from 'src/types/message.js'
+import { Message, ProgressMessage } from 'src/types/message.js'
 import { findToolByName, Tools } from '../../../Tool.js'
 
 export function useGetToolFromMessages(
@@ -10,7 +10,7 @@ export function useGetToolFromMessages(
     progressMessagesByToolUseID?: Map<string, ProgressMessage[]>
     inProgressHookCounts?: Map<string, Map<HookEvent, number>>
     resolvedHookCounts?: Map<string, Map<HookEvent, number>>
-    toolResultByToolUseID?: Map<string, NormalizedMessage>
+    toolResultByToolUseID?: Map<string, Message>
     toolUseByToolUseID: any
     normalizedMessageCount?: number
     resolvedToolUseIDs?: Set<string>

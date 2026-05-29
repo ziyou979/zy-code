@@ -50,7 +50,7 @@ export function toCompatSessionId(id: string): string {
  *
  * Inverse of toCompatSessionId. POST /v1/environments/{id}/bridge/reconnect
  * lives below the compat layer: once ccr_v2_compat_enabled is on server-side,
- * it looks sessions up by their infra tag (`cse_*`). createBridgeSession still
+ * it looks sessions up by their infra tag (`cse_*`). createWireSession still
  * returns `session_*` (compat/convert.go:41) and that's what bridge-pointer
  * stores — so perpetual reconnect passes the wrong costume and gets "Session
  * not found" back. Same UUID, wrong tag. No-op for IDs that aren't `session_*`.

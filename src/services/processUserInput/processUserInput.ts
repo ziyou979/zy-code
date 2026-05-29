@@ -195,7 +195,7 @@ export async function processUserInput({
         : 'Operation stopped by hook'
       result.messages.push(
         createUserMessage({
-          content: message,
+          content: [{ type: 'text' as const, text: message }],
         }),
       )
       result.shouldQuery = false
@@ -397,7 +397,10 @@ async function processUserInputBase(
         const msg = `/${getCommandName(cmd)} isn't available over Remote Control.`
         return {
           messages: [
-            createUserMessage({ content: inputString, uuid }),
+            createUserMessage({
+              content: [{ type: 'text' as const, text: inputString }],
+              uuid,
+            }),
             createCommandInputMessage(`<local-command-stdout>${msg}</local-command-stdout>`),
           ],
           shouldQuery: false,
@@ -547,7 +550,7 @@ function addImageMetadataMessage(
   if (imageMetadataTexts.length > 0) {
     result.messages.push(
       createUserMessage({
-        content: imageMetadataTexts.map((text) => ({ type: 'text', text })),
+        content: imageMetadataTexts.map((text) => ({ type: 'text' as const, text })),
         isMeta: true,
       }),
     )

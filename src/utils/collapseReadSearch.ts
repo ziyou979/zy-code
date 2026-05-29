@@ -458,9 +458,9 @@ export function hasAnyToolInProgress(
 }
 
 /**
- * 获取用于显示的底层 NormalizedMessage（时间戳/模型）。
+ * 获取用于显示的底层 Message（时间戳/模型）。
  * 处理折叠分组中嵌套的 GroupedToolUseMessage。
- * 返回 NormalizedAssistantMessage 或 NormalizedUserMessage（不会是 GroupedToolUseMessage）。
+ * 返回 AssistantMessage 或 UserMessage（不会是 GroupedToolUseMessage）。
  */
 export function getDisplayMessageFromCollapsed(
   message: CollapsedReadSearchGroup,

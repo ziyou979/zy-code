@@ -9,9 +9,6 @@ import type {
   AssistantMessage,
   AttachmentMessage,
   Message,
-  NormalizedAssistantMessage,
-  NormalizedMessage,
-  NormalizedUserMessage,
   SystemCompactBoundaryMessage,
   SystemLocalCommandMessage,
   UserMessage,
@@ -90,7 +87,7 @@ export function extractTag(html: string, tagName: string): string | null {
   return null
 }
 
-export function isNotEmptyMessage(message: Message | NormalizedMessage): boolean {
+export function isNotEmptyMessage(message: Message): boolean {
   if (!message) {
     return false
   }
@@ -106,9 +103,6 @@ export function isNotEmptyMessage(message: Message | NormalizedMessage): boolean
   }
 
   const msg = message as UserMessage | AssistantMessage
-  if (typeof msg.message.content === 'string') {
-    return msg.message.content.trim().length > 0
-  }
 
   if (msg.message.content.length === 0) {
     return false
@@ -136,12 +130,12 @@ export function deriveUUID(parentUUID: string, index: number): UUID {
   return `${parentUUID.slice(0, 24)}${hex}` as UUID
 }
 
-export type ToolUseRequestMessage = NormalizedAssistantMessage & {
+export type ToolUseRequestMessage = AssistantMessage & {
   message: { content: [ToolCallBlock] }
 }
 
 export function isToolUseRequestMessage(
-  message: Message | NormalizedMessage,
+  message: Message,
 ): message is ToolUseRequestMessage {
   return (
     message.type === 'assistant' &&
@@ -150,7 +144,7 @@ export function isToolUseRequestMessage(
   )
 }
 
-export type ToolUseResultMessage = NormalizedUserMessage & {
+export type ToolUseResultMessage = UserMessage & {
   message: { content: [ToolResultBlock] }
 }
 
@@ -170,7 +164,7 @@ export function isSystemLocalCommandMessage(
 }
 
 export function isHookAttachmentMessage(
-  message: Message | NormalizedMessage,
+  message: Message,
 ): message is AttachmentMessage<Record<string, unknown>> {
   return (
     message.type === 'attachment' &&
@@ -195,7 +189,7 @@ export function isEmptyMessageText(text: string): boolean {
   return stripPromptXMLTags(text).trim() === '' || text.trim() === NO_CONTENT_MESSAGE
 }
 
-export function getToolUseID(message: NormalizedMessage): string | null {
+export function getToolUseID(message: Message): string | null {
   switch (message.type) {
     case 'attachment':
       if (isHookAttachmentMessage(message)) {
@@ -240,7 +234,7 @@ export function getAssistantMessageText(message: Message): string | null {
   return null
 }
 
-export function getUserMessageText(message: Message | NormalizedMessage): string | null {
+export function getUserMessageText(message: Message): string | null {
   if (message.type !== 'user') {
     return null
   }
@@ -296,12 +290,12 @@ export function getContentText(
 }
 
 export function isCompactBoundaryMessage(
-  message: Message | NormalizedMessage,
+  message: Message,
 ): message is SystemCompactBoundaryMessage {
   return message?.type === 'system' && message.subtype === 'compact_boundary'
 }
 
-export function findLastCompactBoundaryIndex<T extends Message | NormalizedMessage>(
+export function findLastCompactBoundaryIndex<T extends Message>(
   messages: T[],
 ): number {
   for (let i = messages.length - 1; i >= 0; i--) {
@@ -317,7 +311,7 @@ export function findLastCompactBoundaryIndex<T extends Message | NormalizedMessa
  * 返回从最后一个 compact 边界开始（包含边界本身）的消息。
  * 不存在边界时返回所有消息。
  */
-export function getMessagesAfterCompactBoundary<T extends Message | NormalizedMessage>(
+export function getMessagesAfterCompactBoundary<T extends Message>(
   messages: T[],
 ): T[] {
   const boundaryIndex = findLastCompactBoundaryIndex(messages)
@@ -325,7 +319,7 @@ export function getMessagesAfterCompactBoundary<T extends Message | NormalizedMe
 }
 
 export function shouldShowUserMessage(
-  message: NormalizedMessage,
+  message: Message,
   isTranscriptMode: boolean,
 ): boolean {
   if (message.type !== 'user') {

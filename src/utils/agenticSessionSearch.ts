@@ -277,7 +277,7 @@ Find the sessions that are most relevant to this query.`
     const response = await sideQuery({
       model,
       system: SESSION_SEARCH_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userMessage }],
+      messages: [{ role: 'user', content: [{ type: 'text' as const, text: userMessage }] }],
       signal,
       querySource: 'session_search' as any,
     })

@@ -37,8 +37,8 @@ export const NonNullableUsagePlaceholder = lazySchema(() => z.unknown())
 // SDK Message Types
 // ============================================================================
 
-export let BridgeAssistantMessageErrorSchema
-BridgeAssistantMessageErrorSchema = lazySchema(() =>
+export let WireAssistantMessageErrorSchema
+WireAssistantMessageErrorSchema = lazySchema(() =>
   z.enum([
     'authentication_failed',
     'billing_error',
@@ -50,10 +50,10 @@ BridgeAssistantMessageErrorSchema = lazySchema(() =>
   ]),
 )
 
-export const BridgeStatusSchema = lazySchema(() => z.union([z.literal('compacting'), z.null()]))
+export const WireStatusSchema = lazySchema(() => z.union([z.literal('compacting'), z.null()]))
 
-// BridgeUserMessage content without uuid/session_id
-const BridgeUserMessageContentSchema = lazySchema(() =>
+// WireUserMessage content without uuid/session_id
+const WireUserMessageContentSchema = lazySchema(() =>
   z.object({
     type: z.literal('user'),
     message: APIUserMessagePlaceholder(),
@@ -70,22 +70,22 @@ const BridgeUserMessageContentSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeUserMessageSchema = lazySchema(() =>
-  BridgeUserMessageContentSchema().extend({
+export const WireUserMessageSchema = lazySchema(() =>
+  WireUserMessageContentSchema().extend({
     uuid: UUIDPlaceholder().optional(),
     session_id: z.string().optional(),
   }),
 )
 
-export const BridgeUserMessageReplaySchema = lazySchema(() =>
-  BridgeUserMessageContentSchema().extend({
+export const WireUserMessageReplaySchema = lazySchema(() =>
+  WireUserMessageContentSchema().extend({
     uuid: UUIDPlaceholder(),
     session_id: z.string(),
     isReplay: z.literal(true),
   }),
 )
 
-export const BridgeRateLimitInfoSchema = lazySchema(() =>
+export const WireRateLimitInfoSchema = lazySchema(() =>
   z
     .object({
       status: z.enum(['allowed', 'allowed_warning', 'rejected']),
@@ -119,29 +119,29 @@ export const BridgeRateLimitInfoSchema = lazySchema(() =>
     .describe('Rate limit information for zy.ai subscription users.'),
 )
 
-export const BridgeAssistantMessageSchema = lazySchema(() =>
+export const WireAssistantMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('assistant'),
     message: APIAssistantMessagePlaceholder(),
     parent_tool_use_id: z.string().nullable(),
-    error: BridgeAssistantMessageErrorSchema().optional(),
+    error: WireAssistantMessageErrorSchema().optional(),
     uuid: UUIDPlaceholder(),
     session_id: z.string(),
   }),
 )
 
-export const BridgeRateLimitEventSchema = lazySchema(() =>
+export const WireRateLimitEventSchema = lazySchema(() =>
   z
     .object({
       type: z.literal('rate_limit_event'),
-      rate_limit_info: BridgeRateLimitInfoSchema(),
+      rate_limit_info: WireRateLimitInfoSchema(),
       uuid: UUIDPlaceholder(),
       session_id: z.string(),
     })
     .describe('Rate limit event emitted when rate limit info changes.'),
 )
 
-export const BridgeStreamlinedTextMessageSchema = lazySchema(() =>
+export const WireStreamlinedTextMessageSchema = lazySchema(() =>
   z
     .object({
       type: z.literal('streamlined_text'),
@@ -150,11 +150,11 @@ export const BridgeStreamlinedTextMessageSchema = lazySchema(() =>
       uuid: UUIDPlaceholder(),
     })
     .describe(
-      '@internal Streamlined text message - replaces BridgeAssistantMessage in streamlined output. Text content preserved, thinking and tool_use blocks removed.',
+      '@internal Streamlined text message - replaces WireAssistantMessage in streamlined output. Text content preserved, thinking and tool_use blocks removed.',
     ),
 )
 
-export const BridgeStreamlinedToolUseSummaryMessageSchema = lazySchema(() =>
+export const WireStreamlinedToolUseSummaryMessageSchema = lazySchema(() =>
   z
     .object({
       type: z.literal('streamlined_tool_use_summary'),
@@ -169,7 +169,7 @@ export const BridgeStreamlinedToolUseSummaryMessageSchema = lazySchema(() =>
     ),
 )
 
-export const BridgePermissionDenialSchema = lazySchema(() =>
+export const WirePermissionDenialSchema = lazySchema(() =>
   z.object({
     tool_name: z.string(),
     tool_use_id: z.string(),
@@ -177,7 +177,7 @@ export const BridgePermissionDenialSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeResultSuccessSchema = lazySchema(() =>
+export const WireResultSuccessSchema = lazySchema(() =>
   z.object({
     type: z.literal('result'),
     subtype: z.literal('success'),
@@ -190,7 +190,7 @@ export const BridgeResultSuccessSchema = lazySchema(() =>
     total_cost_usd: z.number(),
     usage: NonNullableUsagePlaceholder(),
     modelUsage: z.record(z.string(), ModelUsageSchema()),
-    permission_denials: z.array(BridgePermissionDenialSchema()),
+    permission_denials: z.array(WirePermissionDenialSchema()),
     structured_output: z.unknown().optional(),
     fast_mode_state: FastModeStateSchema().optional(),
     uuid: UUIDPlaceholder(),
@@ -198,7 +198,7 @@ export const BridgeResultSuccessSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeResultErrorSchema = lazySchema(() =>
+export const WireResultErrorSchema = lazySchema(() =>
   z.object({
     type: z.literal('result'),
     subtype: z.enum([
@@ -215,7 +215,7 @@ export const BridgeResultErrorSchema = lazySchema(() =>
     total_cost_usd: z.number(),
     usage: NonNullableUsagePlaceholder(),
     modelUsage: z.record(z.string(), ModelUsageSchema()),
-    permission_denials: z.array(BridgePermissionDenialSchema()),
+    permission_denials: z.array(WirePermissionDenialSchema()),
     errors: z.array(z.string()),
     fast_mode_state: FastModeStateSchema().optional(),
     uuid: UUIDPlaceholder(),
@@ -223,11 +223,11 @@ export const BridgeResultErrorSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeResultMessageSchema = lazySchema(() =>
-  z.union([BridgeResultSuccessSchema(), BridgeResultErrorSchema()]),
+export const WireResultMessageSchema = lazySchema(() =>
+  z.union([WireResultSuccessSchema(), WireResultErrorSchema()]),
 )
 
-export const BridgeSystemMessageSchema = lazySchema(() =>
+export const WireSystemMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('system'),
     subtype: z.literal('init'),
@@ -266,7 +266,7 @@ export const BridgeSystemMessageSchema = lazySchema(() =>
   }),
 )
 
-export const BridgePartialAssistantMessageSchema = lazySchema(() =>
+export const WirePartialAssistantMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('stream_event'),
     event: RawMessageStreamEventPlaceholder(),
@@ -276,7 +276,7 @@ export const BridgePartialAssistantMessageSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeCompactBoundaryMessageSchema = lazySchema(() =>
+export const WireCompactBoundaryMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('system'),
     subtype: z.literal('compact_boundary'),
@@ -303,18 +303,18 @@ export const BridgeCompactBoundaryMessageSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeStatusMessageSchema = lazySchema(() =>
+export const WireStatusMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('system'),
     subtype: z.literal('status'),
-    status: BridgeStatusSchema(),
+    status: WireStatusSchema(),
     permissionMode: PermissionModeSchema().optional(),
     uuid: UUIDPlaceholder(),
     session_id: z.string(),
   }),
 )
 
-export const BridgePostTurnSummaryMessageSchema = lazySchema(() =>
+export const WirePostTurnSummaryMessageSchema = lazySchema(() =>
   z
     .object({
       type: z.literal('system'),
@@ -336,7 +336,7 @@ export const BridgePostTurnSummaryMessageSchema = lazySchema(() =>
     ),
 )
 
-export const BridgeAPIRetryMessageSchema = lazySchema(() =>
+export const WireAPIRetryMessageSchema = lazySchema(() =>
   z
     .object({
       type: z.literal('system'),
@@ -345,7 +345,7 @@ export const BridgeAPIRetryMessageSchema = lazySchema(() =>
       max_retries: z.number(),
       retry_delay_ms: z.number(),
       error_status: z.number().nullable(),
-      error: BridgeAssistantMessageErrorSchema(),
+      error: WireAssistantMessageErrorSchema(),
       uuid: UUIDPlaceholder(),
       session_id: z.string(),
     })
@@ -354,7 +354,7 @@ export const BridgeAPIRetryMessageSchema = lazySchema(() =>
     ),
 )
 
-export const BridgeLocalCommandOutputMessageSchema = lazySchema(() =>
+export const WireLocalCommandOutputMessageSchema = lazySchema(() =>
   z
     .object({
       type: z.literal('system'),
@@ -368,7 +368,7 @@ export const BridgeLocalCommandOutputMessageSchema = lazySchema(() =>
     ),
 )
 
-export const BridgeHookStartedMessageSchema = lazySchema(() =>
+export const WireHookStartedMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('system'),
     subtype: z.literal('hook_started'),
@@ -380,7 +380,7 @@ export const BridgeHookStartedMessageSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeHookProgressMessageSchema = lazySchema(() =>
+export const WireHookProgressMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('system'),
     subtype: z.literal('hook_progress'),
@@ -395,7 +395,7 @@ export const BridgeHookProgressMessageSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeHookResponseMessageSchema = lazySchema(() =>
+export const WireHookResponseMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('system'),
     subtype: z.literal('hook_response'),
@@ -412,7 +412,7 @@ export const BridgeHookResponseMessageSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeToolProgressMessageSchema = lazySchema(() =>
+export const WireToolProgressMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('tool_progress'),
     tool_use_id: z.string(),
@@ -425,7 +425,7 @@ export const BridgeToolProgressMessageSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeAuthStatusMessageSchema = lazySchema(() =>
+export const WireAuthStatusMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('auth_status'),
     isAuthenticating: z.boolean(),
@@ -436,7 +436,7 @@ export const BridgeAuthStatusMessageSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeFilesPersistedEventSchema = lazySchema(() =>
+export const WireFilesPersistedEventSchema = lazySchema(() =>
   z.object({
     type: z.literal('system'),
     subtype: z.literal('files_persisted'),
@@ -458,7 +458,7 @@ export const BridgeFilesPersistedEventSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeTaskNotificationMessageSchema = lazySchema(() =>
+export const WireTaskNotificationMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('system'),
     subtype: z.literal('task_notification'),
@@ -479,7 +479,7 @@ export const BridgeTaskNotificationMessageSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeTaskStartedMessageSchema = lazySchema(() =>
+export const WireTaskStartedMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('system'),
     subtype: z.literal('task_started'),
@@ -499,7 +499,7 @@ export const BridgeTaskStartedMessageSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeSessionStateChangedMessageSchema = lazySchema(() =>
+export const WireSessionStateChangedMessageSchema = lazySchema(() =>
   z
     .object({
       type: z.literal('system'),
@@ -513,7 +513,7 @@ export const BridgeSessionStateChangedMessageSchema = lazySchema(() =>
     ),
 )
 
-export const BridgeTaskProgressMessageSchema = lazySchema(() =>
+export const WireTaskProgressMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('system'),
     subtype: z.literal('task_progress'),
@@ -532,7 +532,7 @@ export const BridgeTaskProgressMessageSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeToolUseSummaryMessageSchema = lazySchema(() =>
+export const WireToolUseSummaryMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('tool_use_summary'),
     summary: z.string(),
@@ -542,7 +542,7 @@ export const BridgeToolUseSummaryMessageSchema = lazySchema(() =>
   }),
 )
 
-export const BridgeElicitationCompleteMessageSchema = lazySchema(() =>
+export const WireElicitationCompleteMessageSchema = lazySchema(() =>
   z
     .object({
       type: z.literal('system'),
@@ -556,7 +556,7 @@ export const BridgeElicitationCompleteMessageSchema = lazySchema(() =>
 )
 
 /** @internal */
-export const BridgePromptSuggestionMessageSchema = lazySchema(() =>
+export const WirePromptSuggestionMessageSchema = lazySchema(() =>
   z
     .object({
       type: z.literal('prompt_suggestion'),
@@ -573,7 +573,7 @@ export const BridgePromptSuggestionMessageSchema = lazySchema(() =>
 // Session Listing Types
 // ============================================================================
 
-export const BridgeSessionInfoSchema = lazySchema(() =>
+export const WireSessionInfoSchema = lazySchema(() =>
   z
     .object({
       sessionId: z.string().describe('Unique session identifier (UUID).'),
@@ -602,32 +602,32 @@ export const BridgeSessionInfoSchema = lazySchema(() =>
     .describe('Session metadata returned by listSessions and getSessionInfo.'),
 )
 
-export const BridgeMessageSchema = lazySchema(() =>
+export const WireMessageSchema = lazySchema(() =>
   z.union([
-    BridgeAssistantMessageSchema(),
-    BridgeUserMessageSchema(),
-    BridgeUserMessageReplaySchema(),
-    BridgeResultMessageSchema(),
-    BridgeSystemMessageSchema(),
-    BridgePartialAssistantMessageSchema(),
-    BridgeCompactBoundaryMessageSchema(),
-    BridgeStatusMessageSchema(),
-    BridgeAPIRetryMessageSchema(),
-    BridgeLocalCommandOutputMessageSchema(),
-    BridgeHookStartedMessageSchema(),
-    BridgeHookProgressMessageSchema(),
-    BridgeHookResponseMessageSchema(),
-    BridgeToolProgressMessageSchema(),
-    BridgeAuthStatusMessageSchema(),
-    BridgeTaskNotificationMessageSchema(),
-    BridgeTaskStartedMessageSchema(),
-    BridgeTaskProgressMessageSchema(),
-    BridgeSessionStateChangedMessageSchema(),
-    BridgeFilesPersistedEventSchema(),
-    BridgeToolUseSummaryMessageSchema(),
-    BridgeRateLimitEventSchema(),
-    BridgeElicitationCompleteMessageSchema(),
-    BridgePromptSuggestionMessageSchema(),
+    WireAssistantMessageSchema(),
+    WireUserMessageSchema(),
+    WireUserMessageReplaySchema(),
+    WireResultMessageSchema(),
+    WireSystemMessageSchema(),
+    WirePartialAssistantMessageSchema(),
+    WireCompactBoundaryMessageSchema(),
+    WireStatusMessageSchema(),
+    WireAPIRetryMessageSchema(),
+    WireLocalCommandOutputMessageSchema(),
+    WireHookStartedMessageSchema(),
+    WireHookProgressMessageSchema(),
+    WireHookResponseMessageSchema(),
+    WireToolProgressMessageSchema(),
+    WireAuthStatusMessageSchema(),
+    WireTaskNotificationMessageSchema(),
+    WireTaskStartedMessageSchema(),
+    WireTaskProgressMessageSchema(),
+    WireSessionStateChangedMessageSchema(),
+    WireFilesPersistedEventSchema(),
+    WireToolUseSummaryMessageSchema(),
+    WireRateLimitEventSchema(),
+    WireElicitationCompleteMessageSchema(),
+    WirePromptSuggestionMessageSchema(),
   ]),
 )
 

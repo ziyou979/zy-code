@@ -221,7 +221,9 @@ export function truncateHeadForPTLRetry(
   const input =
     messages[0]?.type === 'user' &&
     messages[0].isMeta &&
-    messages[0].message.content === PTL_RETRY_MARKER
+    messages[0].message.content.length === 1 &&
+    messages[0].message.content[0]?.type === 'text' &&
+    messages[0].message.content[0].text === PTL_RETRY_MARKER
       ? messages.slice(1)
       : messages
 
@@ -258,7 +260,13 @@ export function truncateHeadForPTLRetry(
   // API 会拒绝（第一条消息必须是 role=user）。添加一个合成的 user 标记 —
   // ensureToolResultPairing 已经处理由此产生的孤立 tool_result。
   if (sliced[0]?.type === 'assistant') {
-    return [createUserMessage({ content: PTL_RETRY_MARKER, isMeta: true }), ...sliced]
+    return [
+      createUserMessage({
+        content: [{ type: 'text' as const, text: PTL_RETRY_MARKER }],
+        isMeta: true,
+      }),
+      ...sliced,
+    ]
   }
   return sliced
 }
@@ -414,7 +422,7 @@ export async function compactConversation(
 
     const compactPrompt = getCompactPrompt(customInstructions)
     const summaryRequest = createUserMessage({
-      content: compactPrompt,
+      content: [{ type: 'text' as const, text: compactPrompt }],
     })
 
     let messagesToSummarize = messages
@@ -584,7 +592,12 @@ export async function compactConversation(
     const transcriptPath = getTranscriptPath()
     const summaryMessages: UserMessage[] = [
       createUserMessage({
-        content: getCompactUserSummaryMessage(summary, suppressFollowUpQuestions, transcriptPath),
+        content: [
+          {
+            type: 'text' as const,
+            text: getCompactUserSummaryMessage(summary, suppressFollowUpQuestions, transcriptPath),
+          },
+        ],
         isCompactSummary: true,
         isVisibleInTranscriptOnly: true,
       }),
@@ -797,7 +810,7 @@ export async function partialCompactConversation(
 
     const compactPrompt = getPartialCompactPrompt(customInstructions, direction)
     const summaryRequest = createUserMessage({
-      content: compactPrompt,
+      content: [{ type: 'text' as const, text: compactPrompt }],
     })
 
     const failureMetadata = {
@@ -979,7 +992,12 @@ export async function partialCompactConversation(
     const transcriptPath = getTranscriptPath()
     const summaryMessages: UserMessage[] = [
       createUserMessage({
-        content: getCompactUserSummaryMessage(summary, false, transcriptPath),
+        content: [
+          {
+            type: 'text' as const,
+            text: getCompactUserSummaryMessage(summary, false, transcriptPath),
+          },
+        ],
         isCompactSummary: true,
         ...(messagesToKeep.length > 0
           ? {

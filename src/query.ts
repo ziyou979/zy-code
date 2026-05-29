@@ -1113,9 +1113,14 @@ async function* queryLoop(
 
         if (maxOutputTokensRecoveryCount < MAX_OUTPUT_TOKENS_RECOVERY_LIMIT) {
           const recoveryMessage = createUserMessage({
-            content:
-              `Output token limit hit. Resume directly — no apology, no recap of what you were doing. ` +
-              `Pick up mid-thought if that is where the cut happened. Break remaining work into smaller pieces.`,
+            content: [
+              {
+                type: 'text' as const,
+                text:
+                  `Output token limit hit. Resume directly — no apology, no recap of what you were doing. ` +
+                  `Pick up mid-thought if that is where the cut happened. Break remaining work into smaller pieces.`,
+              },
+            ],
             isMeta: true,
           })
 
@@ -1206,7 +1211,7 @@ async function* queryLoop(
               ...messagesForQuery,
               ...assistantMessages,
               createUserMessage({
-                content: decision.nudgeMessage,
+                content: [{ type: 'text' as const, text: decision.nudgeMessage }],
                 isMeta: true,
               }),
             ],

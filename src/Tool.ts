@@ -62,7 +62,7 @@ export type {
 
 import type { SpinnerMode } from './components/Spinner.js'
 import type { QuerySource } from './constants/querySource.js'
-import type { BridgeStatus } from 'src/types/index.js'
+import type { WireStatus } from 'src/types/index.js'
 import type { AppState } from './state/AppState.js'
 import type { HookProgress, PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type { AgentId } from './types/ids.js'
@@ -203,7 +203,7 @@ export type ToolUseContext = {
   setResponseLength: (f: (prev: number) => number) => void
   setStreamMode?: (mode: SpinnerMode) => void
   onCompactProgress?: (event: CompactProgressEvent) => void
-  setSDKStatus?: (status: BridgeStatus) => void
+  setSDKStatus?: (status: WireStatus) => void
   openMessageSelector?: () => void
   updateFileHistoryState: (updater: (prev: FileHistoryState) => FileHistoryState) => void
   updateAttributionState: (updater: (prev: AttributionState) => AttributionState) => void

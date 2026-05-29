@@ -70,11 +70,13 @@ export function projectView(
 
       // 插入摘要占位消息
       const placeholder: UserMessage = {
-        ...createUserMessage({ content: `[Earlier context collapsed]` }),
+        ...createUserMessage({
+          content: [{ type: 'text' as const, text: `[Earlier context collapsed]` }],
+        }),
         uuid: matchedRange.summaryUuid as any,
         message: {
           role: 'user',
-          content: matchedRange.summaryContent,
+          content: [{ type: 'text' as const, text: matchedRange.summaryContent }],
         },
       } as unknown as UserMessage
       result.push(placeholder as unknown as Message)
@@ -123,8 +125,15 @@ export function collapseContext(messages: readonly Message[]): Message[] {
   // 生成简单摘要
   const userTexts: string[] = []
   for (const m of toArchive) {
-    if (m.type === 'user' && typeof m.message.content === 'string') {
-      userTexts.push(m.message.content.slice(0, 100))
+    if (m.type === 'user') {
+      for (const block of m.message.content) {
+        if (block.type === 'text') {
+          userTexts.push(block.text.slice(0, 100))
+          if (userTexts.length >= 3) {
+            break
+          }
+        }
+      }
       if (userTexts.length >= 3) {
         break
       }
@@ -138,7 +147,7 @@ export function collapseContext(messages: readonly Message[]): Message[] {
 
   const collapsedMessage: UserMessage = {
     ...createUserMessage({
-      content: `[Archived ${toArchive.length} messages: ${summaryText}]`,
+      content: [{ type: 'text' as const, text: `[Archived ${toArchive.length} messages: ${summaryText}]` }],
     }),
     uuid: randomUUID() as any,
   } as unknown as UserMessage

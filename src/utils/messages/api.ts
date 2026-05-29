@@ -54,8 +54,6 @@ import type {
   AttachmentMessage,
   Message,
   MessageOrigin,
-  NormalizedAssistantMessage,
-  NormalizedUserMessage,
   SystemLocalCommandMessage,
   SystemMessage,
   UserMessage,
@@ -108,6 +106,11 @@ import { isToolReferenceBlock, isToolSearchEnabledOptimistic } from '../toolSear
 function getTeammateMailbox(): typeof import('../teammateMailbox.js') {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require('../teammateMailbox.js')
+}
+
+/** 将字符串包装为 UserContentBlock[] 文本块数组 */
+function textContent(text: string): UserContentBlock[] {
+  return [{ type: 'text' as const, text }]
 }
 
 const TOOL_REFERENCE_TURN_BOUNDARY = 'Tool loaded.'
@@ -167,20 +170,20 @@ function isSyntheticApiErrorMessage(
 // 重新排序，将结果消息移到工具使用消息之后
 export function reorderMessagesInUI(
   messages: (
-    | NormalizedUserMessage
-    | NormalizedAssistantMessage
+    | UserMessage
+    | AssistantMessage
     | AttachmentMessage
     | SystemMessage
   )[],
-  syntheticStreamingToolUseMessages: NormalizedAssistantMessage[],
-): (NormalizedUserMessage | NormalizedAssistantMessage | AttachmentMessage | SystemMessage)[] {
+  syntheticStreamingToolUseMessages: AssistantMessage[],
+): (UserMessage | AssistantMessage | AttachmentMessage | SystemMessage)[] {
   // 将工具使用 ID 映射到其相关消息
   const toolUseGroups = new Map<
     string,
     {
       toolUse: ToolUseRequestMessage | null
       preHooks: AttachmentMessage[]
-      toolResult: NormalizedUserMessage | null
+      toolResult: UserMessage | null
       postHooks: AttachmentMessage[]
     }
   >()
@@ -257,8 +260,8 @@ export function reorderMessagesInUI(
 
   // 第二遍：以正确顺序重建消息列表
   const result: (
-    | NormalizedUserMessage
-    | NormalizedAssistantMessage
+    | UserMessage
+    | AssistantMessage
     | AttachmentMessage
     | SystemMessage
   )[] = []
@@ -346,7 +349,7 @@ export function reorderMessagesInUI(
  * 能以正确的已解决/进行中/排队状态渲染。
  *
  * 每条进度消息必须有 `message` 字段，类型为
- * `AssistantMessage | NormalizedUserMessage`.
+ * `AssistantMessage | UserMessage`.
  */
 /**
  * 使用预计算查找表获取同级工具使用 ID。O(1)。
@@ -531,15 +534,6 @@ function contentHasToolReference(content: ReadonlyArray<ContentBlock>): boolean 
  */
 function ensureSystemReminderWrap(msg: UserMessage): UserMessage {
   const content = msg.message.content
-  if (typeof content === 'string') {
-    if (content.startsWith('<system-reminder>')) {
-      return msg
-    }
-    return {
-      ...msg,
-      message: { ...msg.message, content: wrapInSystemReminder(content) },
-    }
-  }
   let changed = false
   const newContent = content.map((b) => {
     if (b.type === 'text' && !b.text.startsWith('<system-reminder>')) {
@@ -835,7 +829,7 @@ export function normalizeMessagesForAPI(
           // local_command 系统消息需要作为用户消息包含
           // 以便模型能在后续轮次中引用之前的命令输出
           const userMsg = createUserMessage({
-            content: message.content,
+            content: [{ type: 'text' as const, text: message.content }],
             uuid: message.uuid,
             timestamp: message.timestamp,
           })
@@ -1164,34 +1158,23 @@ export function wrapInSystemReminder(content: string): string {
 
 export function wrapMessagesInSystemReminder(messages: UserMessage[]): UserMessage[] {
   return messages.map((msg) => {
-    if (typeof msg.message.content === 'string') {
-      return {
-        ...msg,
-        message: {
-          ...msg.message,
-          content: wrapInSystemReminder(msg.message.content),
-        },
-      }
-    } else if (Array.isArray(msg.message.content)) {
-      // 对于数组内容，将 text 块包装在 system-reminder 中
-      const wrappedContent = msg.message.content.map((block) => {
-        if (block.type === 'text') {
-          return {
-            ...block,
-            text: wrapInSystemReminder(block.text),
-          }
+    // 对于数组内容，将 text 块包装在 system-reminder 中
+    const wrappedContent = msg.message.content.map((block) => {
+      if (block.type === 'text') {
+        return {
+          ...block,
+          text: wrapInSystemReminder(block.text),
         }
-        return block
-      })
-      return {
-        ...msg,
-        message: {
-          ...msg.message,
-          content: wrappedContent,
-        },
       }
+      return block
+    })
+    return {
+      ...msg,
+      message: {
+        ...msg.message,
+        content: wrappedContent,
+      },
     }
-    return msg
   })
 }
 
@@ -1352,7 +1335,7 @@ This is critical - your turn should only end with either using the ${ASK_USER_QU
 
 NOTE: At any point in time through this workflow you should feel free to ask the user questions or clarifications using the ${ASK_USER_QUESTION_TOOL_NAME} tool. Don't make large assumptions about user intent. The goal is to present a well researched plan to the user, and tie any loose ends before implementation begins.`
 
-  return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
+  return wrapMessagesInSystemReminder([createUserMessage({ content: [{ type: 'text' as const, text: content }], isMeta: true })])
 }
 
 function getReadOnlyToolNames(): string {
@@ -1435,7 +1418,7 @@ Your turn should only end by either:
 
 **Important:** Use ${ExitPlanModeV2Tool.name} to request plan approval. Do NOT ask about plan approval via text or AskUserQuestion.`
 
-  return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
+  return wrapMessagesInSystemReminder([createUserMessage({ content: [{ type: 'text' as const, text: content }], isMeta: true })])
 }
 
 function getPlanModeV2SparseInstructions(attachment: { planFilePath: string }): UserMessage[] {
@@ -1445,7 +1428,7 @@ function getPlanModeV2SparseInstructions(attachment: { planFilePath: string }): 
 
   const content = `Plan mode still active (see full instructions earlier in conversation). Read-only except plan file (${attachment.planFilePath}). ${workflowDescription} End turns with ${ASK_USER_QUESTION_TOOL_NAME} (for clarifications) or ${ExitPlanModeV2Tool.name} (for plan approval). Never ask about plan approval via text or AskUserQuestion.`
 
-  return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
+  return wrapMessagesInSystemReminder([createUserMessage({ content: [{ type: 'text' as const, text: content }], isMeta: true })])
 }
 
 function getPlanModeV2SubAgentInstructions(attachment: {
@@ -1463,7 +1446,7 @@ ${planFileInfo}
 You should build your plan incrementally by writing to or editing this file. NOTE that this is the only file you are allowed to edit - other than this you are only allowed to take READ-ONLY actions.
 Answer the user's query comprehensively, using the ${ASK_USER_QUESTION_TOOL_NAME} tool if you need to ask the user clarifying questions. If you do use the ${ASK_USER_QUESTION_TOOL_NAME}, make sure to ask all clarifying questions you need to fully understand the user's intent before proceeding.`
 
-  return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
+  return wrapMessagesInSystemReminder([createUserMessage({ content: [{ type: 'text' as const, text: content }], isMeta: true })])
 }
 
 function getAutoModeInstructions(attachment: { reminderType: 'full' | 'sparse' }): UserMessage[] {
@@ -1485,13 +1468,13 @@ Auto mode is active. The user chose continuous, autonomous execution. You should
 5. **Do not take overly destructive actions** — Auto mode is not a license to destroy. Anything that deletes data or modifies shared or production systems still needs explicit user confirmation. If you reach such a decision point, ask and wait, or course correct to a safer method instead.
 6. **Avoid data exfiltration** — Post even routine messages to chat platforms or work tickets only if the user has directed you to. You must not share secrets (e.g. credentials, internal documentation) unless the user has explicitly authorized both that specific secret and its destination.`
 
-  return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
+  return wrapMessagesInSystemReminder([createUserMessage({ content: [{ type: 'text' as const, text: content }], isMeta: true })])
 }
 
 function getAutoModeSparseInstructions(): UserMessage[] {
   const content = `Auto mode still active (see full instructions earlier in conversation). Execute autonomously, minimize interruptions, prefer action over planning.`
 
-  return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
+  return wrapMessagesInSystemReminder([createUserMessage({ content: [{ type: 'text' as const, text: content }], isMeta: true })])
 }
 
 export function normalizeAttachmentForAPI(attachment: Attachment): UserMessage[] {
@@ -1499,7 +1482,7 @@ export function normalizeAttachmentForAPI(attachment: Attachment): UserMessage[]
     if (attachment.type === 'teammate_mailbox') {
       return [
         createUserMessage({
-          content: getTeammateMailbox().formatTeammateMessages(attachment.messages),
+          content: [{ type: 'text' as const, text: getTeammateMailbox().formatTeammateMessages(attachment.messages) }],
           isMeta: true,
         }),
       ]
@@ -1507,7 +1490,7 @@ export function normalizeAttachmentForAPI(attachment: Attachment): UserMessage[]
     if (attachment.type === 'team_context') {
       return [
         createUserMessage({
-          content: `<system-reminder>
+          content: textContent(`<system-reminder>
 # Team Coordination
 
 You are a teammate in team "${attachment.teamName}".
@@ -1532,7 +1515,7 @@ Read the team config to discover your teammates' names. Check the task list peri
   "summary": "Brief 5-10 word preview"
 }
 \`\`\`
-</system-reminder>`,
+</system-reminder>`),
           isMeta: true,
         }),
       ]
@@ -1550,10 +1533,10 @@ Read the team config to discover your teammates' names. Check the task list peri
       const lines = attachment.skills.map((s) => `- ${s.name}: ${s.description}`)
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content:
+          content: textContent(
             `Skills relevant to your task:\n\n${lines.join('\n')}\n\n` +
             `These skills encode project-specific conventions. ` +
-            `Invoke via Skill("<name>") for complete instructions.`,
+            `Invoke via Skill("<name>") for complete instructions.`),
           isMeta: true,
         }),
       ])
@@ -1578,7 +1561,7 @@ Read the team config to discover your teammates' names. Check the task list peri
     case 'edited_text_file':
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: `Note: ${attachment.filename} was modified, either by the user or by a linter. This change was intentional, so make sure to take it into account as you proceed (ie. don't revert it unless the user asks you to). Don't tell the user this, since they are already aware. Here are the relevant changes (shown with line numbers):\n${attachment.snippet}`,
+          content: textContent(`Note: ${attachment.filename} was modified, either by the user or by a linter. This change was intentional, so make sure to take it into account as you proceed (ie. don't revert it unless the user asks you to). Don't tell the user this, since they are already aware. Here are the relevant changes (shown with line numbers):\n${attachment.snippet}`),
           isMeta: true,
         }),
       ])
@@ -1602,7 +1585,7 @@ Read the team config to discover your teammates' names. Check the task list peri
             ...(attachment.truncated
               ? [
                   createUserMessage({
-                    content: `Note: The file ${attachment.filename} was too large and has been truncated to the first ${MAX_LINES_TO_READ} lines. Don't tell the user about this truncation. Use ${FileReadTool.name} to read more of the file if you need.`,
+                    content: textContent(`Note: The file ${attachment.filename} was too large and has been truncated to the first ${MAX_LINES_TO_READ} lines. Don't tell the user about this truncation. Use ${FileReadTool.name} to read more of the file if you need.`),
                     isMeta: true, // 仅 zy 可见
                   }),
                 ]
@@ -1632,7 +1615,7 @@ Read the team config to discover your teammates' names. Check the task list peri
     case 'compact_file_reference': {
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: `Note: ${attachment.filename} was read before the last conversation was summarized, but the contents are too large to include. Use ${FileReadTool.name} tool if you need to access it.`,
+          content: textContent(`Note: ${attachment.filename} was read before the last conversation was summarized, but the contents are too large to include. Use ${FileReadTool.name} tool if you need to access it.`),
           isMeta: true,
         }),
       ])
@@ -1640,12 +1623,12 @@ Read the team config to discover your teammates' names. Check the task list peri
     case 'pdf_reference': {
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content:
+          content: textContent(
             `PDF file: ${attachment.filename} (${attachment.pageCount} pages, ${formatFileSize(attachment.fileSize)}). ` +
             `This PDF is too large to read all at once. You MUST use the ${FILE_READ_TOOL_NAME} tool with the pages parameter ` +
             `to read specific page ranges (e.g., pages: "1-5"). Do NOT call ${FILE_READ_TOOL_NAME} without the pages parameter ` +
             `or it will fail. Start by reading the first few pages to understand the structure, then read more as needed. ` +
-            `Maximum 20 pages per request.`,
+            `Maximum 20 pages per request.`),
           isMeta: true,
         }),
       ])
@@ -1659,7 +1642,7 @@ Read the team config to discover your teammates' names. Check the task list peri
 
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: `The user selected the lines ${attachment.lineStart} to ${attachment.lineEnd} from ${attachment.filename}:\n${content}\n\nThis may or may not be related to the current task.`,
+          content: textContent(`The user selected the lines ${attachment.lineStart} to ${attachment.lineEnd} from ${attachment.filename}:\n${content}\n\nThis may or may not be related to the current task.`),
           isMeta: true,
         }),
       ])
@@ -1667,7 +1650,7 @@ Read the team config to discover your teammates' names. Check the task list peri
     case 'opened_file_in_ide': {
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: `The user opened the file ${attachment.filename} in the IDE. This may or may not be related to the current task.`,
+          content: textContent(`The user opened the file ${attachment.filename} in the IDE. This may or may not be related to the current task.`),
           isMeta: true,
         }),
       ])
@@ -1675,7 +1658,7 @@ Read the team config to discover your teammates' names. Check the task list peri
     case 'plan_file_reference': {
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: `A plan file exists from plan mode at: ${attachment.planFilePath}\n\nPlan contents:\n\n${attachment.planContent}\n\nIf this plan is relevant to the current work and not already complete, continue working on it.`,
+          content: textContent(`A plan file exists from plan mode at: ${attachment.planFilePath}\n\nPlan contents:\n\n${attachment.planContent}\n\nIf this plan is relevant to the current work and not already complete, continue working on it.`),
           isMeta: true,
         }),
       ])
@@ -1691,7 +1674,7 @@ Read the team config to discover your teammates' names. Check the task list peri
 
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: `The following skills were invoked in this session. Continue to follow these guidelines:\n\n${skillsContent}`,
+          content: textContent(`The following skills were invoked in this session. Continue to follow these guidelines:\n\n${skillsContent}`),
           isMeta: true,
         }),
       ])
@@ -1708,7 +1691,7 @@ Read the team config to discover your teammates' names. Check the task list peri
 
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: message,
+          content: textContent(message),
           isMeta: true,
         }),
       ])
@@ -1728,7 +1711,7 @@ Read the team config to discover your teammates' names. Check the task list peri
 
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: message,
+          content: textContent(message),
           isMeta: true,
         }),
       ])
@@ -1736,7 +1719,7 @@ Read the team config to discover your teammates' names. Check the task list peri
     case 'nested_memory': {
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: `Contents of ${attachment.content.path}:\n\n${attachment.content.content}`,
+          content: textContent(`Contents of ${attachment.content.path}:\n\n${attachment.content.content}`),
           isMeta: true,
         }),
       ])
@@ -1748,7 +1731,7 @@ Read the team config to discover your teammates' names. Check the task list peri
           // 对于早于 stored-header 字段的恢复会话，回退到重新计算。
           const header = m.header ?? memoryHeader(m.path, m.mtimeMs)
           return createUserMessage({
-            content: `${header}\n\n${m.content}`,
+            content: textContent(`${header}\n\n${m.content}`),
             isMeta: true,
           })
         }),
@@ -1764,7 +1747,7 @@ Read the team config to discover your teammates' names. Check the task list peri
       }
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: `The following skills are available for use with the Skill tool:\n\n${attachment.content}`,
+          content: textContent(`The following skills are available for use with the Skill tool:\n\n${attachment.content}`),
           isMeta: true,
         }),
       ])
@@ -1811,7 +1794,7 @@ Read the team config to discover your teammates' names. Check the task list peri
       // 字符串 prompt
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: wrapCommandText(String(attachment.prompt), origin),
+          content: textContent(wrapCommandText(String(attachment.prompt), origin)),
           ...metaProp,
           origin,
           uuid: attachment.source_uuid,
@@ -1825,7 +1808,7 @@ Read the team config to discover your teammates' names. Check the task list peri
       }
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: `${outputStyle.name} output style is active. Remember to follow the specific guidelines for this style.`,
+          content: textContent(`${outputStyle.name} output style is active. Remember to follow the specific guidelines for this style.`),
           isMeta: true,
         }),
       ])
@@ -1840,7 +1823,7 @@ Read the team config to discover your teammates' names. Check the task list peri
 
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: `<new-diagnostics>The following new diagnostic issues were detected:\n\n${diagnosticSummary}</new-diagnostics>`,
+          content: textContent(`<new-diagnostics>The following new diagnostic issues were detected:\n\n${diagnosticSummary}</new-diagnostics>`),
           isMeta: true,
         }),
       ])
@@ -1863,7 +1846,7 @@ You are returning to plan mode after having previously exited it. A plan file ex
 
 Treat this as a fresh planning session. Do not assume the existing plan is relevant without evaluating it first.`
 
-      return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
+      return wrapMessagesInSystemReminder([createUserMessage({ content: [{ type: 'text' as const, text: content }], isMeta: true })])
     }
     case 'plan_mode_exit': {
       const planReference = attachment.planExists
@@ -1873,7 +1856,7 @@ Treat this as a fresh planning session. Do not assume the existing plan is relev
 
 You have exited plan mode. You can now make edits, run tools, and take actions.${planReference}`
 
-      return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
+      return wrapMessagesInSystemReminder([createUserMessage({ content: [{ type: 'text' as const, text: content }], isMeta: true })])
     }
     case 'auto_mode': {
       return getAutoModeInstructions(attachment)
@@ -1883,11 +1866,11 @@ You have exited plan mode. You can now make edits, run tools, and take actions.$
 
 You have exited auto mode. The user may now want to interact more directly. You should ask clarifying questions when the approach is ambiguous rather than making assumptions.`
 
-      return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
+      return wrapMessagesInSystemReminder([createUserMessage({ content: [{ type: 'text' as const, text: content }], isMeta: true })])
     }
     case 'critical_system_reminder': {
       return wrapMessagesInSystemReminder([
-        createUserMessage({ content: attachment.content, isMeta: true }),
+        createUserMessage({ content: textContent(attachment.content), isMeta: true }),
       ])
     }
     case 'mcp_resource': {
@@ -1896,7 +1879,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
       if (!content?.contents || content.contents.length === 0) {
         return wrapMessagesInSystemReminder([
           createUserMessage({
-            content: `<mcp-resource server="${attachment.server}" uri="${attachment.uri}">(No content)</mcp-resource>`,
+            content: textContent(`<mcp-resource server="${attachment.server}" uri="${attachment.uri}">(No content)</mcp-resource>`),
             isMeta: true,
           }),
         ])
@@ -1950,7 +1933,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
         // 如果没有内容可以转换，则回退
         return wrapMessagesInSystemReminder([
           createUserMessage({
-            content: `<mcp-resource server="${attachment.server}" uri="${attachment.uri}">(No displayable content)</mcp-resource>`,
+            content: textContent(`<mcp-resource server="${attachment.server}" uri="${attachment.uri}">(No displayable content)</mcp-resource>`),
             isMeta: true,
           }),
         ])
@@ -1959,7 +1942,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
     case 'agent_mention': {
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: `The user has expressed a desire to invoke the agent "${attachment.agentType}". Please invoke the agent appropriately, passing in the required context to it. `,
+          content: textContent(`The user has expressed a desire to invoke the agent "${attachment.agentType}". Please invoke the agent appropriately, passing in the required context to it. `),
           isMeta: true,
         }),
       ])
@@ -1971,9 +1954,9 @@ You have exited auto mode. The user may now want to interact more directly. You 
       if (attachment.status === 'killed') {
         return [
           createUserMessage({
-            content: wrapInSystemReminder(
+            content: textContent(wrapInSystemReminder(
               `Task "${attachment.description}" (${attachment.taskId}) was stopped by the user.`,
-            ),
+            )),
             isMeta: true,
           }),
         ]
@@ -1998,7 +1981,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
         }
         return [
           createUserMessage({
-            content: wrapInSystemReminder(parts.join(' ')),
+            content: textContent(wrapInSystemReminder(parts.join(' '))),
             isMeta: true,
           }),
         ]
@@ -2026,7 +2009,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
 
       return [
         createUserMessage({
-          content: wrapInSystemReminder(messageParts.join(' ')),
+          content: textContent(wrapInSystemReminder(messageParts.join(' '))),
           isMeta: true,
         }),
       ]
@@ -2039,7 +2022,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
       if (response.systemMessage) {
         messages.push(
           createUserMessage({
-            content: response.systemMessage,
+            content: textContent(response.systemMessage),
             isMeta: true,
           }),
         )
@@ -2053,7 +2036,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
       ) {
         messages.push(
           createUserMessage({
-            content: response.hookSpecificOutput.additionalContext,
+            content: textContent(response.hookSpecificOutput.additionalContext),
             isMeta: true,
           }),
         )
@@ -2066,18 +2049,18 @@ You have exited auto mode. The user may now want to interact more directly. You 
     case 'token_usage':
       return [
         createUserMessage({
-          content: wrapInSystemReminder(
+          content: textContent(wrapInSystemReminder(
             `Token usage: ${attachment.used}/${attachment.total}; ${attachment.remaining} remaining`,
-          ),
+          )),
           isMeta: true,
         }),
       ]
     case 'budget_usd':
       return [
         createUserMessage({
-          content: wrapInSystemReminder(
+          content: textContent(wrapInSystemReminder(
             `USD budget: $${attachment.used}/$${attachment.total}; $${attachment.remaining} remaining`,
-          ),
+          )),
           isMeta: true,
         }),
       ]
@@ -2088,9 +2071,9 @@ You have exited auto mode. The user may now want to interact more directly. You 
           : formatNumber(attachment.turn)
       return [
         createUserMessage({
-          content: wrapInSystemReminder(
+          content: textContent(wrapInSystemReminder(
             `Output tokens \u2014 turn: ${turnText} \u00b7 session: ${formatNumber(attachment.session)}`,
-          ),
+          )),
           isMeta: true,
         }),
       ]
@@ -2098,9 +2081,9 @@ You have exited auto mode. The user may now want to interact more directly. You 
     case 'hook_blocking_error':
       return [
         createUserMessage({
-          content: wrapInSystemReminder(
+          content: textContent(wrapInSystemReminder(
             `${attachment.hookName} hook blocking error from command: "${attachment.blockingError.command}": ${attachment.blockingError.blockingError}`,
-          ),
+          )),
           isMeta: true,
         }),
       ]
@@ -2113,9 +2096,9 @@ You have exited auto mode. The user may now want to interact more directly. You 
       }
       return [
         createUserMessage({
-          content: wrapInSystemReminder(
+          content: textContent(wrapInSystemReminder(
             `${attachment.hookName} hook success: ${attachment.content}`,
-          ),
+          )),
           isMeta: true,
         }),
       ]
@@ -2125,9 +2108,9 @@ You have exited auto mode. The user may now want to interact more directly. You 
       }
       return [
         createUserMessage({
-          content: wrapInSystemReminder(
+          content: textContent(wrapInSystemReminder(
             `${attachment.hookName} hook additional context: ${attachment.content.join('\n')}`,
-          ),
+          )),
           isMeta: true,
         }),
       ]
@@ -2135,17 +2118,16 @@ You have exited auto mode. The user may now want to interact more directly. You 
     case 'hook_stopped_continuation':
       return [
         createUserMessage({
-          content: wrapInSystemReminder(
+          content: textContent(wrapInSystemReminder(
             `${attachment.hookName} hook stopped continuation: ${attachment.message}`,
-          ),
+          )),
           isMeta: true,
         }),
       ]
     case 'compaction_reminder': {
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content:
-            'Auto-compact is enabled. When the context window is nearly full, older messages will be automatically summarized so you can continue working seamlessly. There is no need to stop or rush \u2014 you have unlimited context through automatic compaction.',
+          content: textContent('Auto-compact is enabled. When the context window is nearly full, older messages will be automatically summarized so you can continue working seamlessly. There is no need to stop or rush \u2014 you have unlimited context through automatic compaction.'),
           isMeta: true,
         }),
       ])
@@ -2153,7 +2135,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
     case 'date_change': {
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: `The date has changed. Today's date is now ${attachment.newDate}. DO NOT mention this to the user explicitly because they are already aware.`,
+          content: textContent(`The date has changed. Today's date is now ${attachment.newDate}. DO NOT mention this to the user explicitly because they are already aware.`),
           isMeta: true,
         }),
       ])
@@ -2161,7 +2143,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
     case 'ultrathink_effort': {
       return wrapMessagesInSystemReminder([
         createUserMessage({
-          content: `The user has requested reasoning effort level: ${attachment.level}. Apply this to the current turn.`,
+          content: textContent(`The user has requested reasoning effort level: ${attachment.level}. Apply this to the current turn.`),
           isMeta: true,
         }),
       ])
@@ -2179,7 +2161,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
         )
       }
       return wrapMessagesInSystemReminder([
-        createUserMessage({ content: parts.join('\n\n'), isMeta: true }),
+        createUserMessage({ content: textContent(parts.join('\n\n')), isMeta: true }),
       ])
     }
     case 'agent_listing_delta': {
@@ -2201,7 +2183,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
         )
       }
       return wrapMessagesInSystemReminder([
-        createUserMessage({ content: parts.join('\n\n'), isMeta: true }),
+        createUserMessage({ content: textContent(parts.join('\n\n')), isMeta: true }),
       ])
     }
     case 'mcp_instructions_delta': {
@@ -2217,7 +2199,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
         )
       }
       return wrapMessagesInSystemReminder([
-        createUserMessage({ content: parts.join('\n\n'), isMeta: true }),
+        createUserMessage({ content: textContent(parts.join('\n\n')), isMeta: true }),
       ])
     }
     case 'verify_plan_reminder': {
@@ -2225,7 +2207,7 @@ You have exited auto mode. The user may now want to interact more directly. You 
       /* eslint-disable-next-line custom-rules/no-process-env-top-level */
       const toolName = process.env.ZY_CODE_VERIFY_PLAN === 'true' ? 'VerifyPlanExecution' : ''
       const content = `You have completed implementing the plan. Please call the "${toolName}" tool directly (NOT the ${AGENT_TOOL_NAME} tool or an agent) to verify that all plan items were completed correctly.`
-      return wrapMessagesInSystemReminder([createUserMessage({ content, isMeta: true })])
+      return wrapMessagesInSystemReminder([createUserMessage({ content: [{ type: 'text' as const, text: content }], isMeta: true })])
     }
     case 'already_read_file':
     case 'command_permissions':
@@ -2565,7 +2547,7 @@ export function ensureToolResultPairing(
         i++
         result.push(
           createUserMessage({
-            content: NO_CONTENT_MESSAGE,
+            content: [{ type: 'text' as const, text: NO_CONTENT_MESSAGE }],
             isMeta: true,
           }),
         )

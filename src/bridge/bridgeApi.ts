@@ -3,13 +3,13 @@ import axios from 'axios'
 import { debugBody, extractErrorDetail } from './debugUtils.js'
 import {
   BRIDGE_LOGIN_INSTRUCTION,
-  type BridgeApiClient,
-  type BridgeConfig,
+  type WireApiClient,
+  type WireConfig,
   type PermissionResponseEvent,
   type WorkResponse,
 } from './types.js'
 
-type BridgeApiDeps = {
+type WireApiDeps = {
   baseUrl: string
   getAccessToken: () => string | undefined
   runnerVersion: string
@@ -20,14 +20,14 @@ type BridgeApiDeps = {
    * handleOAuth401Error from utils/auth.ts transitively pulls in config.ts →
    * file.ts → permissions/filesystem.ts → sessionStorage.ts → commands.ts
    * (~1300 modules). Daemon callers using env-var tokens omit this — their
-   * tokens don't refresh, so 401 goes straight to BridgeFatalError.
+   * tokens don't refresh, so 401 goes straight to WireFatalError.
    */
   onAuth401?: (staleAccessToken: string) => Promise<boolean>
   /**
    * Returns the trusted device token to send as X-Trusted-Device-Token on
    * bridge API calls. Bridge sessions have SecurityTier=ELEVATED on the
    * server (CCR v2); when the server's enforcement flag is on,
-   * ConnectBridgeWorker requires a trusted device at JWT-issuance.
+   * ConnectWireWorker requires a trusted device at JWT-issuance.
    * Optional — when absent or returning undefined, the header is omitted
    * and the server falls through to its flag-off/no-op path. The CLI-side
    * gate is zy_sessions_elevated_auth_enforcement (see trustedDevice.ts).
@@ -45,7 +45,7 @@ const SAFE_ID_PATTERN = /^[a-zA-Z0-9_-]+$/
  * Prevents path traversal (e.g. `../../admin`) and injection via IDs that
  * contain slashes, dots, or other special characters.
  */
-export function validateBridgeId(id: string, label: string): string {
+export function validateWireId(id: string, label: string): string {
   if (!id || !SAFE_ID_PATTERN.test(id)) {
     throw new Error(`Invalid ${label}: contains unsafe characters`)
   }
@@ -53,19 +53,19 @@ export function validateBridgeId(id: string, label: string): string {
 }
 
 /** Fatal bridge errors that should not be retried (e.g. auth failures). */
-export class BridgeFatalError extends Error {
+export class WireFatalError extends Error {
   readonly status: number
   /** Server-provided error type, e.g. "environment_expired". */
   readonly errorType: string | undefined
   constructor(message: string, status: number, errorType?: string) {
     super(message)
-    this.name = 'BridgeFatalError'
+    this.name = 'WireFatalError'
     this.status = status
     this.errorType = errorType
   }
 }
 
-export function createBridgeApiClient(deps: BridgeApiDeps): BridgeApiClient {
+export function createWireApiClient(deps: WireApiDeps): WireApiClient {
   function debug(msg: string): void {
     deps.onDebug?.(msg)
   }
@@ -101,7 +101,7 @@ export function createBridgeApiClient(deps: BridgeApiDeps): BridgeApiClient {
    * On 401, attempts token refresh via handleOAuth401Error (same pattern as
    * withRetry.ts for v1/messages). If refresh succeeds, retries the request
    * once with the new token. If refresh fails or the retry also returns 401,
-   * the 401 response is returned for handleErrorStatus to throw BridgeFatalError.
+   * the 401 response is returned for handleErrorStatus to throw WireFatalError.
    */
   async function withOAuthRetry<T>(
     fn: (accessToken: string) => Promise<{ status: number; data: T }>,
@@ -139,8 +139,8 @@ export function createBridgeApiClient(deps: BridgeApiDeps): BridgeApiClient {
   }
 
   return {
-    async registerBridgeEnvironment(
-      config: BridgeConfig,
+    async registerWireEnvironment(
+      config: WireConfig,
     ): Promise<{ environment_id: string; environment_secret: string }> {
       debug(`[bridge:api] POST /v1/environments/bridge bridgeId=${config.bridgeId}`)
 
@@ -200,7 +200,7 @@ export function createBridgeApiClient(deps: BridgeApiDeps): BridgeApiClient {
       signal?: AbortSignal,
       reclaimOlderThanMs?: number,
     ): Promise<WorkResponse | null> {
-      validateBridgeId(environmentId, 'environmentId')
+      validateWireId(environmentId, 'environmentId')
 
       // Save and reset so errors break the "consecutive empty" streak.
       // Restored below when the response is truly empty.
@@ -246,8 +246,8 @@ export function createBridgeApiClient(deps: BridgeApiDeps): BridgeApiClient {
       workId: string,
       sessionToken: string,
     ): Promise<void> {
-      validateBridgeId(environmentId, 'environmentId')
-      validateBridgeId(workId, 'workId')
+      validateWireId(environmentId, 'environmentId')
+      validateWireId(workId, 'workId')
 
       debug(`[bridge:api] POST .../work/${workId}/ack`)
 
@@ -266,8 +266,8 @@ export function createBridgeApiClient(deps: BridgeApiDeps): BridgeApiClient {
     },
 
     async stopWork(environmentId: string, workId: string, force: boolean): Promise<void> {
-      validateBridgeId(environmentId, 'environmentId')
-      validateBridgeId(workId, 'workId')
+      validateWireId(environmentId, 'environmentId')
+      validateWireId(workId, 'workId')
 
       debug(`[bridge:api] POST .../work/${workId}/stop force=${force}`)
 
@@ -290,7 +290,7 @@ export function createBridgeApiClient(deps: BridgeApiDeps): BridgeApiClient {
     },
 
     async deregisterEnvironment(environmentId: string): Promise<void> {
-      validateBridgeId(environmentId, 'environmentId')
+      validateWireId(environmentId, 'environmentId')
 
       debug(`[bridge:api] DELETE /v1/environments/bridge/${environmentId}`)
 
@@ -309,7 +309,7 @@ export function createBridgeApiClient(deps: BridgeApiDeps): BridgeApiClient {
     },
 
     async archiveSession(sessionId: string): Promise<void> {
-      validateBridgeId(sessionId, 'sessionId')
+      validateWireId(sessionId, 'sessionId')
 
       debug(`[bridge:api] POST /v1/sessions/${sessionId}/archive`)
 
@@ -338,8 +338,8 @@ export function createBridgeApiClient(deps: BridgeApiDeps): BridgeApiClient {
     },
 
     async reconnectSession(environmentId: string, sessionId: string): Promise<void> {
-      validateBridgeId(environmentId, 'environmentId')
-      validateBridgeId(sessionId, 'sessionId')
+      validateWireId(environmentId, 'environmentId')
+      validateWireId(sessionId, 'sessionId')
 
       debug(
         `[bridge:api] POST /v1/environments/${environmentId}/bridge/reconnect session_id=${sessionId}`,
@@ -368,8 +368,8 @@ export function createBridgeApiClient(deps: BridgeApiDeps): BridgeApiClient {
       workId: string,
       sessionToken: string,
     ): Promise<{ lease_extended: boolean; state: string }> {
-      validateBridgeId(environmentId, 'environmentId')
-      validateBridgeId(workId, 'workId')
+      validateWireId(environmentId, 'environmentId')
+      validateWireId(workId, 'workId')
 
       debug(`[bridge:api] POST .../work/${workId}/heartbeat`)
 
@@ -400,7 +400,7 @@ export function createBridgeApiClient(deps: BridgeApiDeps): BridgeApiClient {
       event: PermissionResponseEvent,
       sessionToken: string,
     ): Promise<void> {
-      validateBridgeId(sessionId, 'sessionId')
+      validateWireId(sessionId, 'sessionId')
 
       debug(`[bridge:api] POST /v1/sessions/${sessionId}/events type=${event.type}`)
 
@@ -430,13 +430,13 @@ function handleErrorStatus(status: number, data: unknown, context: string): void
   const errorType = extractErrorTypeFromData(data)
   switch (status) {
     case 401:
-      throw new BridgeFatalError(
+      throw new WireFatalError(
         `${context}: Authentication failed (401)${detail ? `: ${detail}` : ''}. ${BRIDGE_LOGIN_INSTRUCTION}`,
         401,
         errorType,
       )
     case 403:
-      throw new BridgeFatalError(
+      throw new WireFatalError(
         isExpiredErrorType(errorType)
           ? 'Remote Control session has expired. Please restart with `zy remote-control` or /remote-control.'
           : `${context}: Access denied (403)${detail ? `: ${detail}` : ''}. Check your organization permissions.`,
@@ -444,14 +444,14 @@ function handleErrorStatus(status: number, data: unknown, context: string): void
         errorType,
       )
     case 404:
-      throw new BridgeFatalError(
+      throw new WireFatalError(
         detail ??
           `${context}: Not found (404). Remote Control may not be available for this organization.`,
         404,
         errorType,
       )
     case 410:
-      throw new BridgeFatalError(
+      throw new WireFatalError(
         detail ??
           'Remote Control session has expired. Please restart with `zy remote-control` or /remote-control.',
         410,
@@ -473,12 +473,12 @@ export function isExpiredErrorType(errorType: string | undefined): boolean {
 }
 
 /**
- * Check whether a BridgeFatalError is a suppressible 403 permission error.
+ * Check whether a WireFatalError is a suppressible 403 permission error.
  * These are 403 errors for scopes like 'external_poll_sessions' or operations
  * like StopWork that fail because the user's role lacks 'environments:manage'.
  * They don't affect core functionality and shouldn't be shown to users.
  */
-export function isSuppressible403(err: BridgeFatalError): boolean {
+export function isSuppressible403(err: WireFatalError): boolean {
   if (err.status !== 403) {
     return false
   }

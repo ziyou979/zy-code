@@ -84,6 +84,9 @@ const AgentsJsonSchema = lazySchema(() => z.record(z.string(), AgentJsonSchema()
 export type BaseAgentDefinition = {
   agentType: string
   whenToUse: string
+  /** Shorter description used in slim/lean spawn paths to save tokens.
+   * Falls back to whenToUse when not set. */
+  whenToUseLean?: string
   tools?: string[]
   disallowedTools?: string[]
   skills?: string[] // Skill names to preload (parsed from comma-separated frontmatter)

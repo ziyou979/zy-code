@@ -1,3 +1,4 @@
+import { isPowerShellToolEnabled } from 'src/shell-eval/shared/shellToolUtils.js'
 import { BASH_TOOL_NAME } from 'src/tools/BashTool/toolName.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from 'src/tools/ExitPlanModeTool/constants.js'
 import { FILE_EDIT_TOOL_NAME } from 'src/tools/FileEditTool/constants.js'
@@ -6,6 +7,7 @@ import { FILE_WRITE_TOOL_NAME } from 'src/tools/FileWriteTool/prompt.js'
 import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
 import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
 import { NOTEBOOK_EDIT_TOOL_NAME } from 'src/tools/NotebookEditTool/constants.js'
+import { POWERSHELL_TOOL_NAME } from 'src/tools/PowerShellTool/toolName.js'
 import { hasEmbeddedSearchTools } from 'src/utils/embeddedTools.js'
 import { isInternalBuild } from '../../../utils/envUtils.js'
 import { AGENT_TOOL_NAME } from '../constants.js'
@@ -15,12 +17,22 @@ function getExploreSystemPrompt(): string {
   // Ant-native builds alias find/grep to embedded bfs/ugrep and remove the
   // dedicated Glob/Grep tools, so point at find/grep via Bash instead.
   const embedded = hasEmbeddedSearchTools()
+  // PowerShellTool is gated to Windows + ant-default-on / external-opt-in.
+  // When enabled, the agent prefers PowerShell read-only cmdlets over bash.
+  const usePowerShell = isPowerShellToolEnabled()
+  const shellToolName = usePowerShell ? POWERSHELL_TOOL_NAME : BASH_TOOL_NAME
   const globGuidance = embedded
-    ? `- Use \`find\` via ${BASH_TOOL_NAME} for broad file pattern matching`
+    ? `- Use \`find\` via ${shellToolName} for broad file pattern matching`
     : `- Use ${GLOB_TOOL_NAME} for broad file pattern matching`
   const grepGuidance = embedded
-    ? `- Use \`grep\` via ${BASH_TOOL_NAME} for searching file contents with regex`
+    ? `- Use \`grep\` via ${shellToolName} for searching file contents with regex`
     : `- Use ${GREP_TOOL_NAME} for searching file contents with regex`
+  const readOnlyExamples = usePowerShell
+    ? 'Get-ChildItem, git status, git log, git diff, Get-Content, Select-Object -First/-Last'
+    : `ls, git status, git log, git diff, find${embedded ? ', grep' : ''}, cat, head, tail`
+  const forbiddenExamples = usePowerShell
+    ? 'New-Item, Remove-Item, Copy-Item, Move-Item, git add, git commit, npm install, pip install, Set-Content'
+    : 'mkdir, touch, rm, cp, mv, git add, git commit, npm install, pip install'
 
   return `You are a file search specialist for ZY Code, your official AI-powered CLI. You excel at thoroughly navigating and exploring codebases.
 
@@ -45,8 +57,8 @@ Guidelines:
 ${globGuidance}
 ${grepGuidance}
 - Use ${FILE_READ_TOOL_NAME} when you know the specific file path you need to read
-- Use ${BASH_TOOL_NAME} ONLY for read-only operations (ls, git status, git log, git diff, find${embedded ? ', grep' : ''}, cat, head, tail)
-- NEVER use ${BASH_TOOL_NAME} for: mkdir, touch, rm, cp, mv, git add, git commit, npm install, pip install, or any file creation/modification
+- Use ${shellToolName} ONLY for read-only operations (${readOnlyExamples})
+- NEVER use ${shellToolName} for: ${forbiddenExamples}, or any file creation/modification
 - Adapt your search approach based on the thoroughness level specified by the caller
 - Communicate your final report directly as a regular message - do NOT attempt to create files
 
@@ -60,11 +72,15 @@ Complete the user's search request efficiently and report your findings clearly.
 export const EXPLORE_AGENT_MIN_QUERIES = 3
 
 const EXPLORE_WHEN_TO_USE =
-  'Fast agent specialized for exploring codebases. Use this when you need to quickly find files by patterns (eg. "src/components/**/*.tsx"), search code for keywords (eg. "API endpoints"), or answer questions about the codebase (eg. "how do API endpoints work?"). When calling this agent, specify the desired thoroughness level: "quick" for basic searches, "medium" for moderate exploration, or "very thorough" for comprehensive analysis across multiple locations and naming conventions.'
+  'Fast read-only search agent for locating code. Use it to find files by pattern (eg. "src/components/**/*.tsx"), grep for symbols or keywords (eg. "API endpoints"), or answer "where is X defined / which files reference Y." Do NOT use it for code review, design-doc auditing, cross-file consistency checks, or open-ended analysis — it reads excerpts rather than whole files and will miss content past its read window. When calling, specify search breadth: "quick" for a single targeted lookup, "medium" for moderate exploration, or "very thorough" to search across multiple locations and naming conventions.'
+
+const EXPLORE_WHEN_TO_USE_LEAN =
+  'Read-only search agent for broad fan-out searches — when answering means sweeping many files, directories, or naming conventions and you only need the conclusion, not the file dumps. It reads excerpts rather than whole files, so it locates code; it doesn\'t review or audit it. Specify search breadth: "medium" for moderate exploration, "very thorough" for multiple locations and naming conventions.'
 
 export const EXPLORE_AGENT: BuiltInAgentDefinition = {
   agentType: 'Explore',
   whenToUse: EXPLORE_WHEN_TO_USE,
+  whenToUseLean: EXPLORE_WHEN_TO_USE_LEAN,
   disallowedTools: [
     AGENT_TOOL_NAME,
     EXIT_PLAN_MODE_TOOL_NAME,

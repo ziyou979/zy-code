@@ -20,7 +20,7 @@ import type { UserContentBlock } from '../types/llm.js'
 import { logForDebugging } from '../utils/debug.js'
 import { getZyConfigHomeDir } from '../utils/envUtils.js'
 import { lazySchema } from '../utils/lazySchema.js'
-import { getBridgeAccessToken, getBridgeBaseUrl } from './bridgeConfig.js'
+import { getWireAccessToken, getWireBaseUrl } from './bridgeConfig.js'
 
 const DOWNLOAD_TIMEOUT_MS = 30_000
 
@@ -66,7 +66,7 @@ function uploadsDir(): string {
  * undefined on any failure.
  */
 async function resolveOne(att: InboundAttachment): Promise<string | undefined> {
-  const token = getBridgeAccessToken()
+  const token = getWireAccessToken()
   if (!token) {
     debug('skip: no oauth token')
     return undefined
@@ -74,11 +74,11 @@ async function resolveOne(att: InboundAttachment): Promise<string | undefined> {
 
   let data: Buffer
   try {
-    // getOauthConfig() (via getBridgeBaseUrl) throws on a non-allowlisted
+    // getOauthConfig() (via getWireBaseUrl) throws on a non-allowlisted
     // ZY_CODE_CUSTOM_OAUTH_URL — keep it inside the try so a bad
     // FedStart URL degrades to "no @path" instead of crashing print.ts's
     // reader loop (which has no catch around the await).
-    const url = `${getBridgeBaseUrl()}/api/oauth/files/${encodeURIComponent(att.file_uuid)}/content`
+    const url = `${getWireBaseUrl()}/api/oauth/files/${encodeURIComponent(att.file_uuid)}/content`
     const response = await axios.get(url, {
       headers: { Authorization: `Bearer ${token}` },
       responseType: 'arraybuffer',

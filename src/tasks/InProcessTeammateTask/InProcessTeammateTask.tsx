@@ -94,7 +94,7 @@ export function injectUserMessageToTeammate(
       messages: appendCappedMessage(
         task.messages,
         createUserMessage({
-          content: message,
+          content: [{ type: 'text' as const, text: message }],
         }),
       ),
     }

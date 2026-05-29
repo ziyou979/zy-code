@@ -371,7 +371,9 @@ export function initExtractMemories(): void {
           : buildExtractAutoOnlyPrompt(newMessageCount, existingMemories, skipIndex)
 
       const result = await runForkedAgent({
-        promptMessages: [createUserMessage({ content: userPrompt })],
+        promptMessages: [
+          createUserMessage({ content: [{ type: 'text' as const, text: userPrompt }] }),
+        ],
         cacheSafeParams,
         canUseTool,
         querySource: 'extract_memories' as any,

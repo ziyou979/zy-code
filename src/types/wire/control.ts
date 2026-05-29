@@ -2,18 +2,18 @@
 // These are the TypeScript type equivalents of the Zod schemas in controlSchemas.ts.
 
 import type {
-  BridgeMessage,
-  BridgePostTurnSummaryMessage,
-  BridgeStreamlinedTextMessage,
-  BridgeStreamlinedToolUseSummaryMessage,
-  BridgeUserMessage,
+  WireMessage,
+  WirePostTurnSummaryMessage,
+  WireStreamlinedTextMessage,
+  WireStreamlinedToolUseSummaryMessage,
+  WireUserMessage,
 } from './messages.js'
 
 // ============================================================
 // Control Request Subtypes
 // ============================================================
 
-export interface BridgeControlInitializeRequest {
+export interface WireControlInitializeRequest {
   subtype: 'initialize'
   hooks?: Record<string, Array<{ matcher?: string; hookCallbackIds: string[]; timeout?: number }>>
   sdkMcpServers?: string[]
@@ -25,7 +25,7 @@ export interface BridgeControlInitializeRequest {
   agentProgressSummaries?: boolean
 }
 
-export interface BridgeControlInitializeResponse {
+export interface WireControlInitializeResponse {
   commands: Array<{ name: string; description: string }>
   agents: Array<{ name: string; description?: string }>
   output_style: string
@@ -36,11 +36,11 @@ export interface BridgeControlInitializeResponse {
   fast_mode_state?: unknown
 }
 
-export interface BridgeControlInterruptRequest {
+export interface WireControlInterruptRequest {
   subtype: 'interrupt'
 }
 
-export interface BridgeControlPermissionRequest {
+export interface WireControlPermissionRequest {
   subtype: 'can_use_tool'
   tool_name: string
   input: Record<string, unknown>
@@ -54,35 +54,35 @@ export interface BridgeControlPermissionRequest {
   description?: string
 }
 
-export interface BridgeControlSetPermissionModeRequest {
+export interface WireControlSetPermissionModeRequest {
   subtype: 'set_permission_mode'
   mode: string
   ultraplan?: boolean
 }
 
-export interface BridgeControlSetModelRequest {
+export interface WireControlSetModelRequest {
   subtype: 'set_model'
   model?: string
 }
 
-export interface BridgeControlSetMaxThinkingTokensRequest {
+export interface WireControlSetMaxThinkingTokensRequest {
   subtype: 'set_max_thinking_tokens'
   max_thinking_tokens: number | null
 }
 
-export interface BridgeControlMcpStatusRequest {
+export interface WireControlMcpStatusRequest {
   subtype: 'mcp_status'
 }
 
-export interface BridgeControlMcpStatusResponse {
+export interface WireControlMcpStatusResponse {
   mcpServers: Array<{ name: string; status: string; error?: string }>
 }
 
-export interface BridgeControlGetContextUsageRequest {
+export interface WireControlGetContextUsageRequest {
   subtype: 'get_context_usage'
 }
 
-export interface BridgeControlGetContextUsageResponse {
+export interface WireControlGetContextUsageResponse {
   categories: Array<{ name: string; tokens: number; color: string; isDeferred?: boolean }>
   totalTokens: number
   maxTokens: number
@@ -111,13 +111,13 @@ export interface BridgeControlGetContextUsageResponse {
   } | null
 }
 
-export interface BridgeControlRewindFilesRequest {
+export interface WireControlRewindFilesRequest {
   subtype: 'rewind_files'
   user_message_id: string
   dry_run?: boolean
 }
 
-export interface BridgeControlRewindFilesResponse {
+export interface WireControlRewindFilesResponse {
   canRewind: boolean
   error?: string
   filesChanged?: string[]
@@ -125,50 +125,50 @@ export interface BridgeControlRewindFilesResponse {
   deletions?: number
 }
 
-export interface BridgeControlCancelAsyncMessageRequest {
+export interface WireControlCancelAsyncMessageRequest {
   subtype: 'cancel_async_message'
   message_uuid: string
 }
 
-export interface BridgeControlCancelAsyncMessageResponse {
+export interface WireControlCancelAsyncMessageResponse {
   cancelled: boolean
 }
 
-export interface BridgeControlSeedReadStateRequest {
+export interface WireControlSeedReadStateRequest {
   subtype: 'seed_read_state'
   path: string
   mtime: number
 }
 
-export interface BridgeControlHookCallbackRequest {
+export interface WireControlHookCallbackRequest {
   subtype: 'hook_callback'
   callback_id: string
   input: unknown
   tool_use_id?: string
 }
 
-export interface BridgeControlMcpMessageRequest {
+export interface WireControlMcpMessageRequest {
   subtype: 'mcp_message'
   server_name: string
   message: unknown
 }
 
-export interface BridgeControlMcpSetServersRequest {
+export interface WireControlMcpSetServersRequest {
   subtype: 'mcp_set_servers'
   servers: Record<string, { command: string; args: string[]; env?: Record<string, string> }>
 }
 
-export interface BridgeControlMcpSetServersResponse {
+export interface WireControlMcpSetServersResponse {
   added: string[]
   removed: string[]
   errors: Record<string, string>
 }
 
-export interface BridgeControlReloadPluginsRequest {
+export interface WireControlReloadPluginsRequest {
   subtype: 'reload_plugins'
 }
 
-export interface BridgeControlReloadPluginsResponse {
+export interface WireControlReloadPluginsResponse {
   commands: Array<{ name: string; description: string }>
   agents: Array<{ name: string; description?: string }>
   plugins: Array<{ name: string; path: string; source?: string }>
@@ -176,38 +176,38 @@ export interface BridgeControlReloadPluginsResponse {
   error_count: number
 }
 
-export interface BridgeControlMcpReconnectRequest {
+export interface WireControlMcpReconnectRequest {
   subtype: 'mcp_reconnect'
   serverName: string
 }
 
-export interface BridgeControlMcpToggleRequest {
+export interface WireControlMcpToggleRequest {
   subtype: 'mcp_toggle'
   serverName: string
   enabled: boolean
 }
 
-export interface BridgeControlStopTaskRequest {
+export interface WireControlStopTaskRequest {
   subtype: 'stop_task'
   task_id: string
 }
 
-export interface BridgeControlApplyFlagSettingsRequest {
+export interface WireControlApplyFlagSettingsRequest {
   subtype: 'apply_flag_settings'
   settings: Record<string, unknown>
 }
 
-export interface BridgeControlGetSettingsRequest {
+export interface WireControlGetSettingsRequest {
   subtype: 'get_settings'
 }
 
-export interface BridgeControlGetSettingsResponse {
+export interface WireControlGetSettingsResponse {
   effective: Record<string, unknown>
   sources: Array<{ source: string; settings: Record<string, unknown> }>
   applied?: { model: string; effort: string | null }
 }
 
-export interface BridgeControlElicitationRequest {
+export interface WireControlElicitationRequest {
   subtype: 'elicitation'
   mcp_server_name: string
   message: string
@@ -217,45 +217,45 @@ export interface BridgeControlElicitationRequest {
   requested_schema?: Record<string, unknown>
 }
 
-export type BridgeControlElicitationResponse = {
+export type WireControlElicitationResponse = {
   action: 'accept' | 'decline' | 'cancel'
   content?: Record<string, unknown>
 }
 
-export type BridgeControlRequestInner =
-  | BridgeControlInitializeRequest
-  | BridgeControlInterruptRequest
-  | BridgeControlPermissionRequest
-  | BridgeControlSetPermissionModeRequest
-  | BridgeControlSetModelRequest
-  | BridgeControlSetMaxThinkingTokensRequest
-  | BridgeControlMcpStatusRequest
-  | BridgeControlGetContextUsageRequest
-  | BridgeControlHookCallbackRequest
-  | BridgeControlMcpMessageRequest
-  | BridgeControlRewindFilesRequest
-  | BridgeControlCancelAsyncMessageRequest
-  | BridgeControlSeedReadStateRequest
-  | BridgeControlMcpSetServersRequest
-  | BridgeControlReloadPluginsRequest
-  | BridgeControlMcpReconnectRequest
-  | BridgeControlMcpToggleRequest
-  | BridgeControlStopTaskRequest
-  | BridgeControlApplyFlagSettingsRequest
-  | BridgeControlGetSettingsRequest
-  | BridgeControlElicitationRequest
+export type WireControlRequestInner =
+  | WireControlInitializeRequest
+  | WireControlInterruptRequest
+  | WireControlPermissionRequest
+  | WireControlSetPermissionModeRequest
+  | WireControlSetModelRequest
+  | WireControlSetMaxThinkingTokensRequest
+  | WireControlMcpStatusRequest
+  | WireControlGetContextUsageRequest
+  | WireControlHookCallbackRequest
+  | WireControlMcpMessageRequest
+  | WireControlRewindFilesRequest
+  | WireControlCancelAsyncMessageRequest
+  | WireControlSeedReadStateRequest
+  | WireControlMcpSetServersRequest
+  | WireControlReloadPluginsRequest
+  | WireControlMcpReconnectRequest
+  | WireControlMcpToggleRequest
+  | WireControlStopTaskRequest
+  | WireControlApplyFlagSettingsRequest
+  | WireControlGetSettingsRequest
+  | WireControlElicitationRequest
 
 // ============================================================
 // Control Request / Response Envelopes
 // ============================================================
 
-export interface BridgeControlRequest {
+export interface WireControlRequest {
   type: 'control_request'
   request_id: string
-  request: BridgeControlRequestInner
+  request: WireControlRequestInner
 }
 
-export interface BridgeControlResponse {
+export interface WireControlResponse {
   type: 'control_response'
   response:
     | { subtype: 'success'; request_id: string; response?: Record<string, unknown> }
@@ -263,20 +263,20 @@ export interface BridgeControlResponse {
         subtype: 'error'
         request_id: string
         error: string
-        pending_permission_requests?: BridgeControlRequest[]
+        pending_permission_requests?: WireControlRequest[]
       }
 }
 
-export interface BridgeControlCancelRequest {
+export interface WireControlCancelRequest {
   type: 'control_cancel_request'
   request_id: string
 }
 
-export interface BridgeKeepAliveMessage {
+export interface WireKeepAliveMessage {
   type: 'keep_alive'
 }
 
-export interface BridgeUpdateEnvironmentVariablesMessage {
+export interface WireUpdateEnvironmentVariablesMessage {
   type: 'update_environment_variables'
   variables: Record<string, string>
 }
@@ -286,21 +286,21 @@ export interface BridgeUpdateEnvironmentVariablesMessage {
 // ============================================================
 
 export type StdoutMessage =
-  | BridgeMessage
-  | BridgeStreamlinedTextMessage
-  | BridgeStreamlinedToolUseSummaryMessage
-  | BridgePostTurnSummaryMessage
-  | BridgeControlResponse
-  | BridgeControlRequest
-  | BridgeControlCancelRequest
-  | BridgeKeepAliveMessage
+  | WireMessage
+  | WireStreamlinedTextMessage
+  | WireStreamlinedToolUseSummaryMessage
+  | WirePostTurnSummaryMessage
+  | WireControlResponse
+  | WireControlRequest
+  | WireControlCancelRequest
+  | WireKeepAliveMessage
 
 export type StdinMessage =
-  | BridgeUserMessage
-  | BridgeControlRequest
-  | BridgeControlResponse
-  | BridgeKeepAliveMessage
-  | BridgeUpdateEnvironmentVariablesMessage
+  | WireUserMessage
+  | WireControlRequest
+  | WireControlResponse
+  | WireKeepAliveMessage
+  | WireUpdateEnvironmentVariablesMessage
 
-// (BridgePartialAssistantMessage is exported from ./messages.js — pull it from
+// (WirePartialAssistantMessage is exported from ./messages.js — pull it from
 // there directly; the bridge barrel re-exports both control.ts and messages.ts.)

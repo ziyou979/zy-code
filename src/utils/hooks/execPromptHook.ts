@@ -37,7 +37,9 @@ export async function execPromptHook(
 
     // 直接创建用户消息 - 无需使用 processUserInput，
     // 否则会触发 UserPromptSubmit hooks 导致无限递归
-    const userMessage = createUserMessage({ content: processedPrompt })
+    const userMessage = createUserMessage({
+      content: [{ type: 'text' as const, text: processedPrompt }],
+    })
 
     // 如果提供了会话历史，则将其前置
     const messagesToQuery =

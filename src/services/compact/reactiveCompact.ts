@@ -159,7 +159,9 @@ export async function reactiveCompactOnPromptTooLong(
   let groupsRemaining = groups.length
 
   const compactPrompt = getCompactPrompt(options.customInstructions ?? undefined)
-  const summaryRequest = createUserMessage({ content: compactPrompt })
+  const summaryRequest = createUserMessage({
+    content: [{ type: 'text' as const, text: compactPrompt }],
+  })
 
   // Iteratively attempt summarization, dropping oldest groups on PTL failure
   for (let iteration = 0; iteration < MAX_STRIP_ITERATIONS; iteration++) {
@@ -406,7 +408,15 @@ async function buildReactiveCompactionResult({
   // Summary messages
   const summaryMessages: UserMessage[] = [
     createUserMessage({
-      content: getCompactUserSummaryMessage(formattedSummary, /* suppressFollowUpQuestions */ true),
+      content: [
+        {
+          type: 'text' as const,
+          text: getCompactUserSummaryMessage(
+            formattedSummary,
+            /* suppressFollowUpQuestions */ true,
+          ),
+        },
+      ],
       isCompactSummary: true,
       isVisibleInTranscriptOnly: true,
     }),

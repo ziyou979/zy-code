@@ -101,13 +101,9 @@ function generateLightSummary(msgs: readonly Message[]): string {
   const userMsgs = msgs.filter((m) => m.type === 'user')
   const textParts: string[] = []
   for (const m of userMsgs) {
-    if (typeof m.message.content === 'string') {
-      textParts.push(m.message.content.slice(0, 200))
-    } else if (Array.isArray(m.message.content)) {
-      for (const block of m.message.content) {
-        if (block.type === 'text') {
-          textParts.push(block.text.slice(0, 200))
-        }
+    for (const block of m.message.content) {
+      if (block.type === 'text') {
+        textParts.push(block.text.slice(0, 200))
       }
     }
     if (textParts.length >= 3) {
@@ -292,7 +288,7 @@ export async function recoverFromOverflow(
   const collapseId = nextCollapseId()
   const summaryContent = `<collapsed id="${collapseId}">${span.summary}</collapsed>`
   const placeholder = createUserMessage({
-    content: `[Earlier context collapsed: ${span.summary}]`,
+    content: [{ type: 'text' as const, text: `[Earlier context collapsed: ${span.summary}]` }],
   })
 
   // 提交折叠

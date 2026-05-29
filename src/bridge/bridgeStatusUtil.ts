@@ -28,7 +28,7 @@ export function abbreviateActivity(summary: string): string {
 }
 
 /** Build the connect URL shown when the bridge is idle. */
-export function buildBridgeConnectUrl(environmentId: string, ingressUrl?: string): string {
+export function buildWireConnectUrl(environmentId: string, ingressUrl?: string): string {
   const baseUrl = getZyAiBaseUrl(undefined, ingressUrl)
   return `${baseUrl}/code?bridge=${environmentId}`
 }
@@ -38,7 +38,7 @@ export function buildBridgeConnectUrl(environmentId: string, ingressUrl?: string
  * getRemoteSessionUrl for the cse_→session_ prefix translation, then appends
  * the v1-specific ?bridge={environmentId} query.
  */
-export function buildBridgeSessionUrl(
+export function buildWireSessionUrl(
   sessionId: string,
   environmentId: string,
   ingressUrl?: string,
@@ -97,7 +97,7 @@ export function computeShimmerSegments(
 }
 
 /** Computed bridge status label and color from connection state. */
-export type BridgeStatusInfo = {
+export type WireStatusInfo = {
   label:
     | 'Remote Control failed'
     | 'Remote Control reconnecting'
@@ -107,7 +107,7 @@ export type BridgeStatusInfo = {
 }
 
 /** Derive a status label and color from the bridge connection state. */
-export function getBridgeStatus({
+export function getWireStatus({
   error,
   connected,
   sessionActive,
@@ -117,7 +117,7 @@ export function getBridgeStatus({
   connected: boolean
   sessionActive: boolean
   reconnecting: boolean
-}): BridgeStatusInfo {
+}): WireStatusInfo {
   if (error) {
     return { label: 'Remote Control failed', color: 'error' }
   }

@@ -16,7 +16,7 @@ import { jsonStringify } from '../utils/slowOperations.js'
  * Trusted device token source for bridge (remote-control) sessions.
  *
  * Bridge sessions have SecurityTier=ELEVATED on the server (CCR v2).
- * The server gates ConnectBridgeWorker on its own flag
+ * The server gates ConnectWireWorker on its own flag
  * (sessions_elevated_auth_enforcement in Anthropic Main); this CLI-side
  * flag controls whether the CLI sends X-Trusted-Device-Token at all.
  * Two flags so rollout can be staged: flip CLI-side first (headers

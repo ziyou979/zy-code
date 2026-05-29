@@ -345,13 +345,13 @@ function PromptInput({
   const store = useAppStateStore()
   const setAppState = useSetAppState()
   const tasks = useAppState((s) => s.tasks)
-  const replBridgeConnected = useAppState((s) => s.replBridgeConnected)
-  const replBridgeExplicit = useAppState((s) => s.replBridgeExplicit)
-  const replBridgeReconnecting = useAppState((s) => s.replBridgeReconnecting)
-  // Must match BridgeStatusIndicator's render condition (PromptInputFooter.tsx) —
+  const replWireConnected = useAppState((s) => s.replWireConnected)
+  const replWireExplicit = useAppState((s) => s.replWireExplicit)
+  const replWireReconnecting = useAppState((s) => s.replWireReconnecting)
+  // Must match WireStatusIndicator's render condition (PromptInputFooter.tsx) —
   // the pill returns null for implicit-and-not-reconnecting, so nav must too,
   // otherwise bridge becomes an invisible selection stop.
-  const bridgeFooterVisible = replBridgeConnected && (replBridgeExplicit || replBridgeReconnecting)
+  const bridgeFooterVisible = replWireConnected && (replWireExplicit || replWireReconnecting)
   // Tmux pill (ant-only) — visible when there's an active tungsten session
   const hasTungstenSession = useAppState(
     (s) => isInternalBuild() && s.tungstenActiveSession !== undefined,

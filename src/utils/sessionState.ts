@@ -25,7 +25,7 @@ export type RequiresActionDetails = {
 
 import { isEnvTruthy } from './envUtils.js'
 import type { PermissionMode } from './permissions/PermissionMode.js'
-import { enqueueBridgeEvent } from './bridgeEventQueue.js'
+import { enqueueWireEvent } from './bridgeEventQueue.js'
 
 // CCR external_metadata keys — push in onChangeAppState, restore in
 // externalMetadataToAppState.
@@ -114,7 +114,7 @@ export function notifySessionStateChanged(
   // currently pins them at "Running...".
   // https://anthropic.slack.com/archives/C093BJBD1CP/p1774152406752229
   if (isEnvTruthy(process.env.ZY_CODE_EMIT_SESSION_STATE_EVENTS)) {
-    enqueueBridgeEvent({
+    enqueueWireEvent({
       type: 'system',
       subtype: 'session_state_changed',
       state,

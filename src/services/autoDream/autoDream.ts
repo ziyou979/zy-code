@@ -215,7 +215,7 @@ ${sessionIds.map((id) => `- ${id}`).join('\n')}`
       const prompt = buildConsolidationPrompt(memoryRoot, transcriptDir, extra)
 
       const result = await runForkedAgent({
-        promptMessages: [createUserMessage({ content: prompt })],
+        promptMessages: [createUserMessage({ content: [{ type: 'text' as const, text: prompt }] })],
         cacheSafeParams: createCacheSafeParams(context),
         canUseTool: createAutoMemCanUseTool(memoryRoot),
         querySource: 'auto_dream' as any,

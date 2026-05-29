@@ -16,12 +16,12 @@ import { getZyAIOAuthTokens } from '../utils/auth.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 
 /** Ant-only dev override: CLAUDE_BRIDGE_OAUTH_TOKEN, else undefined. */
-export function getBridgeTokenOverride(): string | undefined {
+export function getWireTokenOverride(): string | undefined {
   return (isInternalBuild() && process.env.CLAUDE_BRIDGE_OAUTH_TOKEN) || undefined
 }
 
 /** Ant-only dev override: CLAUDE_BRIDGE_BASE_URL, else undefined. */
-export function getBridgeBaseUrlOverride(): string | undefined {
+export function getWireBaseUrlOverride(): string | undefined {
   return (isInternalBuild() && process.env.CLAUDE_BRIDGE_BASE_URL) || undefined
 }
 
@@ -29,14 +29,14 @@ export function getBridgeBaseUrlOverride(): string | undefined {
  * Access token for bridge API calls: dev override first, then the OAuth
  * keychain. Undefined means "not logged in".
  */
-export function getBridgeAccessToken(): string | undefined {
-  return getBridgeTokenOverride() ?? getZyAIOAuthTokens()?.accessToken
+export function getWireAccessToken(): string | undefined {
+  return getWireTokenOverride() ?? getZyAIOAuthTokens()?.accessToken
 }
 
 /**
  * Base URL for bridge API calls: dev override first, then the production
  * OAuth config. Always returns a URL.
  */
-export function getBridgeBaseUrl(): string {
-  return getBridgeBaseUrlOverride() ?? getOauthConfig().BASE_API_URL
+export function getWireBaseUrl(): string {
+  return getWireBaseUrlOverride() ?? getOauthConfig().BASE_API_URL
 }

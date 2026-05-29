@@ -185,7 +185,7 @@ async function updateMagicDoc(docInfo: MagicDocInfo, context: REPLHookContext): 
   // Run Magic Docs update using runAgent with forked context
   for await (const _message of runAgent({
     agentDefinition: getMagicDocsAgent(),
-    promptMessages: [createUserMessage({ content: userPrompt })],
+    promptMessages: [createUserMessage({ content: [{ type: 'text' as const, text: userPrompt }] })],
     toolUseContext: clonedToolUseContext,
     canUseTool,
     isAsync: true,

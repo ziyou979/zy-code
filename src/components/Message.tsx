@@ -11,9 +11,9 @@ import type {
   AttachmentMessage as AttachmentMessageType,
   CollapsedReadSearchGroup as CollapsedReadSearchGroupType,
   GroupedToolUseMessage as GroupedToolUseMessageType,
-  NormalizedUserMessage,
   ProgressMessage,
   SystemMessage,
+  UserMessage,
 } from '../types/message.js'
 import { isAdvisorBlock } from '../utils/advisor.js'
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
@@ -38,7 +38,7 @@ import { ExpandShellOutputProvider } from './shell/ExpandShellOutputContext.js'
 
 export type Props = {
   message:
-    | NormalizedUserMessage
+    | UserMessage
     | AssistantMessage
     | AttachmentMessageType
     | SystemMessage

@@ -1,6 +1,6 @@
 import type { UUID } from 'node:crypto'
 import { getSessionId } from '../../bootstrap/state.js'
-import { getBridgeBaseUrlOverride, getBridgeTokenOverride } from '../../bridge/bridgeConfig.js'
+import { getWireBaseUrlOverride, getWireTokenOverride } from '../../bridge/bridgeConfig.js'
 import { tSync } from '../../i18n/index.js'
 import type { ToolUseContext } from '../../Tool.js'
 import type { LocalJSXCommandContext } from '../../types/command.js'
@@ -62,12 +62,12 @@ export async function performRename(
 
   // 同步到 zy.ai/code 远端 bridge 会话（best-effort，不阻塞）
   const appState = context.getAppState()
-  const bridgeSessionId = appState.replBridgeSessionId
+  const bridgeSessionId = appState.replWireSessionId
   if (bridgeSessionId) {
-    const tokenOverride = getBridgeTokenOverride()
-    void import('../../bridge/createSession.js').then(({ updateBridgeSessionTitle }) =>
-      updateBridgeSessionTitle(bridgeSessionId, newName, {
-        baseUrl: getBridgeBaseUrlOverride(),
+    const tokenOverride = getWireTokenOverride()
+    void import('../../bridge/createSession.js').then(({ updateWireSessionTitle }) =>
+      updateWireSessionTitle(bridgeSessionId, newName, {
+        baseUrl: getWireBaseUrlOverride(),
         getAccessToken: tokenOverride ? () => tokenOverride : undefined,
       }).catch(() => {}),
     )

@@ -1,6 +1,6 @@
 import last from 'lodash-es/last.js'
 import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
-import type { BridgeMessage } from 'src/types/index.js'
+import type { WireMessage } from 'src/types/index.js'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import { runTools } from '../services/tools/toolOrchestration.js'
 import { findToolByName, type Tool, type Tools } from '../Tool.js'
@@ -9,7 +9,7 @@ import { FILE_EDIT_TOOL_NAME } from '../tools/FileEditTool/constants.js'
 import type { Input as FileReadInput } from '../tools/FileReadTool/FileReadTool.js'
 import { FILE_READ_TOOL_NAME, FILE_UNCHANGED_STUB } from '../tools/FileReadTool/prompt.js'
 import { FILE_WRITE_TOOL_NAME } from '../tools/FileWriteTool/prompt.js'
-import type { ToolCallBlock } from '../types/llm.js'
+import type { ToolCallBlock, UserContentBlock } from '../types/llm.js'
 import type { Message } from '../types/message.js'
 import type { OrphanedPermission } from '../types/textInputTypes.js'
 import { logForDebugging } from './debug.js'
@@ -91,7 +91,7 @@ const MAX_TOOL_PROGRESS_TRACKING_ENTRIES = 100
 const TOOL_PROGRESS_THROTTLE_MS = 30000
 const toolProgressLastSentTime = new Map<string, number>()
 
-export function* normalizeMessage(message: Message): Generator<BridgeMessage> {
+export function* normalizeMessage(message: Message): Generator<WireMessage> {
   switch (message.type) {
     case 'assistant':
       for (const _ of normalizeMessages([message])) {
@@ -136,9 +136,9 @@ export function* normalizeMessage(message: Message): Generator<BridgeMessage> {
                 uuid: _.uuid,
                 timestamp: _.timestamp,
                 isSynthetic: _.isMeta || _.isVisibleInTranscriptOnly,
-                tool_use_result: _.mcpMeta
+                tool_use_result: (_.mcpMeta
                   ? { content: _.toolUseResult, ..._.mcpMeta }
-                  : _.toolUseResult,
+                  : _.toolUseResult) as string | UserContentBlock[] | undefined,
               }
               break
           }
@@ -193,7 +193,7 @@ export function* normalizeMessage(message: Message): Generator<BridgeMessage> {
           uuid: _.uuid,
           timestamp: _.timestamp,
           isSynthetic: _.isMeta || _.isVisibleInTranscriptOnly,
-          tool_use_result: _.mcpMeta ? { content: _.toolUseResult, ..._.mcpMeta } : _.toolUseResult,
+          tool_use_result: (_.mcpMeta ? { content: _.toolUseResult, ..._.mcpMeta } : _.toolUseResult) as string | UserContentBlock[] | undefined,
         }
       }
       return
@@ -207,7 +207,7 @@ export async function* handleOrphanedPermission(
   tools: Tools,
   mutableMessages: Message[],
   processUserInputContext: ProcessUserInputContext,
-): AsyncGenerator<BridgeMessage, void, unknown> {
+): AsyncGenerator<WireMessage, void, unknown> {
   const persistSession = !isSessionPersistenceDisabled()
   const { permissionResult, assistantMessage } = orphanedPermission
   const { toolUseID } = permissionResult
@@ -289,11 +289,11 @@ export async function* handleOrphanedPermission(
     }
   }
 
-  const sdkAssistantMessage: BridgeMessage = {
+  const sdkAssistantMessage: WireMessage = {
     ...assistantMessage,
     session_id: getSessionId(),
     parent_tool_use_id: null,
-  } as BridgeMessage
+  } as WireMessage
   yield sdkAssistantMessage
 
   // 执行工具 - 错误由 runToolUse 内部处理
@@ -309,11 +309,11 @@ export async function* handleOrphanedPermission(
         await recordTranscript(mutableMessages)
       }
 
-      const sdkMessage: BridgeMessage = {
+      const sdkMessage: WireMessage = {
         ...update.message,
         session_id: getSessionId(),
         parent_tool_use_id: null,
-      } as BridgeMessage
+      } as WireMessage
 
       yield sdkMessage
     }

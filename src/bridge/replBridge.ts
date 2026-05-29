@@ -1,12 +1,12 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { randomUUID } from 'node:crypto'
 import {
-  createBridgeApiClient,
-  BridgeFatalError,
+  createWireApiClient,
+  WireFatalError,
   isExpiredErrorType,
   isSuppressible403,
 } from './bridgeApi.js'
-import type { BridgeConfig, BridgeApiClient } from './types.js'
+import type { WireConfig, WireApiClient } from './types.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
 import { isInternalBuild } from '../utils/envUtils.js'
@@ -19,28 +19,28 @@ import {
   handleIngressMessage,
   handleServerControlRequest,
   makeResultMessage,
-  isEligibleBridgeMessage,
+  isEligibleWireMessage,
   extractTitleText,
   BoundedUUIDSet,
 } from './bridgeMessaging.js'
 import { decodeWorkSecret, buildSdkUrl, buildCCRv2SdkUrl, sameSessionId } from './workSecret.js'
 import { toCompatSessionId, toInfraSessionId } from './sessionIdCompat.js'
-import { updateSessionBridgeId } from '../utils/concurrentSessions.js'
+import { updateSessionWireId } from '../utils/concurrentSessions.js'
 import { getTrustedDeviceToken } from './trustedDevice.js'
 import { HybridTransport } from '../cli/transports/HybridTransport.js'
 import {
-  type ReplBridgeTransport,
+  type ReplWireTransport,
   createV1ReplTransport,
   createV2ReplTransport,
 } from './replBridgeTransport.js'
 import { updateSessionIngressAuthToken } from '../utils/sessionIngressAuth.js'
 import { isEnvTruthy, isInProtectedNamespace } from '../utils/envUtils.js'
-import { validateBridgeId } from './bridgeApi.js'
-import { describeAxiosError, extractHttpStatus, logBridgeSkip } from './debugUtils.js'
+import { validateWireId } from './bridgeApi.js'
+import { describeAxiosError, extractHttpStatus, logWireSkip } from './debugUtils.js'
 import type { Message } from '../types/message.js'
-import type { BridgeMessage } from '../types/index.js'
+import type { WireMessage } from '../types/index.js'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
-import type { BridgeControlRequest, BridgeControlResponse } from '../types/bridge/control.js'
+import type { WireControlRequest, WireControlResponse } from '../types/wire/control.js'
 import { createCapacityWake, type CapacitySignal } from './capacityWake.js'
 import { FlushGate } from './flushGate.js'
 import { DEFAULT_POLL_CONFIG, type PollIntervalConfig } from './pollConfigDefaults.js'
@@ -48,25 +48,25 @@ import { errorMessage } from '../utils/errors.js'
 import { sleep } from '../utils/sleep.js'
 import {
   wrapApiForFaultInjection,
-  registerBridgeDebugHandle,
-  clearBridgeDebugHandle,
-  injectBridgeFault,
+  registerWireDebugHandle,
+  clearWireDebugHandle,
+  injectWireFault,
 } from './bridgeDebug.js'
 
-export type ReplBridgeHandle = {
+export type ReplWireHandle = {
   bridgeSessionId: string
   environmentId: string
   sessionIngressUrl: string
   writeMessages(messages: Message[]): void
-  writeSdkMessages(messages: BridgeMessage[]): void
-  sendControlRequest(request: BridgeControlRequest): void
-  sendControlResponse(response: BridgeControlResponse): void
+  writeSdkMessages(messages: WireMessage[]): void
+  sendControlRequest(request: WireControlRequest): void
+  sendControlResponse(response: WireControlResponse): void
   sendControlCancelRequest(requestId: string): void
   sendResult(): void
   teardown(): Promise<void>
 }
 
-export type BridgeState = 'ready' | 'connected' | 'reconnecting' | 'failed'
+export type WireState = 'ready' | 'connected' | 'reconnecting' | 'failed'
 
 /**
  * Explicit-param input to initBridgeCore. Everything initReplBridge reads
@@ -74,7 +74,7 @@ export type BridgeState = 'ready' | 'connected' | 'reconnecting' | 'failed'
  * A daemon caller (Agent SDK, PR 4) that never runs main.tsx fills these
  * in itself.
  */
-export type BridgeCoreParams = {
+export type WireCoreParams = {
   dir: string
   machineName: string
   branch: string
@@ -83,7 +83,7 @@ export type BridgeCoreParams = {
   baseUrl: string
   sessionIngressUrl: string
   /**
-   * Opaque string sent as metadata.worker_type. Use BridgeWorkerType for
+   * Opaque string sent as metadata.worker_type. Use WireWorkerType for
    * the two CLI-originated values; daemon callers may send any string the
    * backend recognizes (it's just a filter key on the web side).
    */
@@ -95,8 +95,8 @@ export type BridgeCoreParams = {
    * dynamic imports — the lazy-load doesn't help, the whole REPL tree ends
    * up in the Agent SDK bundle.
    *
-   * REPL wrapper passes `createBridgeSession` from `createSession.ts`.
-   * Daemon wrapper passes `createBridgeSessionLean` from `sessionApi.ts`
+   * REPL wrapper passes `createWireSession` from `createSession.ts`.
+   * Daemon wrapper passes `createWireSessionLean` from `sessionApi.ts`
    * (HTTP-only, orgUUID+model supplied by the daemon caller).
    *
    * Receives `gitRepoUrl`+`branch` so the REPL wrapper can build the git
@@ -121,7 +121,7 @@ export type BridgeCoreParams = {
    */
   getCurrentTitle?: () => string
   /**
-   * Converts internal Message[] → BridgeMessage[] for writeMessages() and the
+   * Converts internal Message[] → WireMessage[] for writeMessages() and the
    * initial-flush/drain paths. REPL wrapper passes the real toSDKMessages
    * from utils/messages/mappers.ts. Daemon callers that only use
    * writeSdkMessages() and pass no initialMessages can omit this — those
@@ -131,9 +131,9 @@ export type BridgeCoreParams = {
    * src/commands.ts via messages.ts → api.ts → prompts.ts, dragging the
    * entire command registry + React tree into the Agent SDK bundle.
    */
-  toSDKMessages?: (messages: Message[]) => BridgeMessage[]
+  toSDKMessages?: (messages: Message[]) => WireMessage[]
   /**
-   * OAuth 401 refresh handler passed to createBridgeApiClient. REPL wrapper
+   * OAuth 401 refresh handler passed to createWireApiClient. REPL wrapper
    * passes handleOAuth401Error; daemon passes its AuthManager's handler.
    * Injected because utils/auth.ts transitively pulls in the command
    * registry via config.ts → file.ts → permissions/filesystem.ts →
@@ -156,11 +156,11 @@ export type BridgeCoreParams = {
    * default.
    */
   initialHistoryCap?: number
-  // 与 InitBridgeOptions 相同的 REPL 刷新机制 — daemon 省略这些。
+  // 与 InitWireOptions 相同的 REPL 刷新机制 — daemon 省略这些。
   initialMessages?: Message[]
   previouslyFlushedUUIDs?: Set<string>
-  onInboundMessage?: (msg: BridgeMessage) => void
-  onPermissionResponse?: (response: BridgeControlResponse) => void
+  onInboundMessage?: (msg: WireMessage) => void
+  onPermissionResponse?: (response: WireControlResponse) => void
   onInterrupt?: () => void
   onSetModel?: (model: string | undefined) => void
   onSetMaxThinkingTokens?: (maxTokens: number | null) => void
@@ -176,7 +176,7 @@ export type BridgeCoreParams = {
    * the callback lets the throw escape here.
    */
   onSetPermissionMode?: (mode: PermissionMode) => { ok: true } | { ok: false; error: string }
-  onStateChange?: (state: BridgeState, detail?: string) => void
+  onStateChange?: (state: WireState, detail?: string) => void
   /**
    * Fires on each real user message to flow through writeMessages() until
    * the callback returns true (done). Mirrors remoteBridgeCore.ts's
@@ -192,7 +192,7 @@ export type BridgeCoreParams = {
    * onFirstUserMessage (spawn-bridge, PR #21250), which stays fire-once.
    */
   onUserMessage?: (text: string, sessionId: string) => boolean
-  /** See InitBridgeOptions.perpetual. */
+  /** See InitWireOptions.perpetual. */
   perpetual?: boolean
   /**
    * Seeds lastTransportSequenceNum — the SSE event-stream high-water mark
@@ -205,11 +205,11 @@ export type BridgeCoreParams = {
 }
 
 /**
- * Superset of ReplBridgeHandle. Adds getSSESequenceNum for daemon callers
+ * Superset of ReplWireHandle. Adds getSSESequenceNum for daemon callers
  * that persist the SSE seq-num across process restarts and pass it back as
  * initialSSESequenceNum on the next start.
  */
-export type BridgeCoreHandle = ReplBridgeHandle & {
+export type WireCoreHandle = ReplWireHandle & {
   /**
    * Current SSE sequence-number high-water mark. Updates as transports
    * swap. Daemon callers persist this on shutdown and pass it back as
@@ -239,7 +239,7 @@ let initSequence = 0
  *
  * 注册或会话创建失败时返回 null。
  */
-export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCoreHandle | null> {
+export async function initBridgeCore(params: WireCoreParams): Promise<WireCoreHandle | null> {
   const {
     dir,
     machineName,
@@ -255,7 +255,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
     getCurrentTitle = () => title,
     toSDKMessages = () => {
       throw new Error(
-        'BridgeCoreParams.toSDKMessages not provided. Pass it if you use writeMessages() or initialMessages — daemon callers that only use writeSdkMessages() never hit this path.',
+        'WireCoreParams.toSDKMessages not provided. Pass it if you use writeMessages() or initialMessages — daemon callers that only use writeSdkMessages() never hit this path.',
       )
     },
     onAuth401,
@@ -279,7 +279,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
 
   // bridgePointer 导入提升：perpetual 模式在 register 之前读取它；
   // 非 perpetual 在 session create 之后写入它；两者都在 teardown 时使用 clear。
-  const { writeBridgePointer, clearBridgePointer, readBridgePointer } = await import(
+  const { writeWirePointer, clearWirePointer, readWirePointer } = await import(
     './bridgePointer.js'
   )
 
@@ -289,7 +289,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
   // teardown clear，所以它也能在干净退出后存活。只重用 'repl'
   // 指针 — 崩溃的独立 bridge（`zy remote-control`）
   // 写入 source:'standalone' 和不同的 workerType。
-  const rawPrior = perpetual ? await readBridgePointer(dir) : null
+  const rawPrior = perpetual ? await readWirePointer(dir) : null
   const prior = rawPrior?.source === 'repl' ? rawPrior : null
 
   logForDebugging(
@@ -297,7 +297,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
   )
 
   // 5. 注册 bridge 环境
-  const rawApi = createBridgeApiClient({
+  const rawApi = createWireApiClient({
     baseUrl,
     getAccessToken,
     runnerVersion: MACRO.VERSION,
@@ -309,7 +309,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
   // 故障。在外部构建中零成本（rawApi 直接传递不变）。
   const api = isInternalBuild() ? wrapApiForFaultInjection(rawApi) : rawApi
 
-  const bridgeConfig: BridgeConfig = {
+  const bridgeConfig: WireConfig = {
     dir,
     machineName,
     branch,
@@ -329,18 +329,18 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
   let environmentId: string
   let environmentSecret: string
   try {
-    const reg = await api.registerBridgeEnvironment(bridgeConfig)
+    const reg = await api.registerWireEnvironment(bridgeConfig)
     environmentId = reg.environment_id
     environmentSecret = reg.environment_secret
   } catch (err) {
-    logBridgeSkip(
+    logWireSkip(
       'registration_failed',
       `[bridge:repl] Environment registration failed: ${errorMessage(err)}`,
     )
     // 陈旧指针可能是原因（过期/删除的环境）— 清除它以便
     // 下次启动不会重试相同的死 ID。
     if (prior) {
-      await clearBridgePointer(dir)
+      await clearWirePointer(dir)
     }
     onStateChange?.('failed', errorMessage(err))
     return null
@@ -363,7 +363,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       )
       return false
     }
-    // 指针存储 createBridgeSession 返回的内容（session_*，
+    // 指针存储 createWireSession 返回的内容（session_*，
     // compat/convert.go:41）。/bridge/reconnect 是 environments 层
     // 端点 — 一旦服务器的 ccr_v2_compat_enabled 门控开启，它会
     // 通过 infra 标签（cse_*）查找会话，并对 session_* 伪装返回
@@ -394,7 +394,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
     ? await tryReconnectInPlace(prior.environmentId, prior.sessionId)
     : false
   if (prior && !reusedPriorSession) {
-    await clearBridgePointer(dir)
+    await clearWirePointer(dir)
   }
 
   // 6. 在 bridge 上创建会话。初始消息不包含为
@@ -443,7 +443,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
   // 或保持不变（perpetual 模式 — 指针在干净退出后也存活）。
   // 从相同目录运行 `zy remote-control --continue` 会检测到
   // 它并提供恢复选项。
-  await writeBridgePointer(dir, {
+  await writeWirePointer(dir, {
     sessionId: currentSessionId,
     environmentId,
     source: 'repl',
@@ -501,7 +501,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
   // 写入 CCR /worker/*）。v1/v2 选择在 onWorkReceived 中决定：
   // 由 secret.use_code_sessions 服务器驱动，CLAUDE_BRIDGE_USE_CCR_V2
   // 作为 ant-dev 覆盖。
-  let transport: ReplBridgeTransport | null = null
+  let transport: ReplWireTransport | null = null
   // 每次 onWorkReceived 时递增。在 createV2ReplTransport 的 .then()
   // 闭包中捕获以检测陈旧决议：如果两个调用在 transport 为
   // null 时竞态，两者都调用 registerWorker()（递增服务器 epoch），
@@ -639,7 +639,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
     const requestedEnvId = environmentId
     bridgeConfig.reuseEnvironmentId = requestedEnvId
     try {
-      const reg = await api.registerBridgeEnvironment(bridgeConfig)
+      const reg = await api.registerWireEnvironment(bridgeConfig)
       environmentId = reg.environment_id
       environmentSecret = reg.environment_secret
     } catch (err) {
@@ -659,12 +659,12 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       return false
     }
 
-    // 与上面相同的竞态，窗口更窄：轮询循环可能在 registerBridgeEnvironment
+    // 与上面相同的竞态，窗口更窄：轮询循环可能在 registerWireEnvironment
     // 等待期间设置了传输。在 tryReconnectInPlace/archiveSession 在服务器端
     // 销毁它之前退出。
     if (transport !== null) {
       logForDebugging(
-        '[bridge:repl] Poll loop recovered during registerBridgeEnvironment await — deferring to it',
+        '[bridge:repl] Poll loop recovered during registerWireEnvironment await — deferring to it',
       )
       environmentRecreations = 0
       return true
@@ -722,10 +722,10 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
 
     currentSessionId = newSessionId
     // 重新发布到 PID 文件，以便 peer dedup（peerRegistry.ts）获取新 ID——
-    // setReplBridgeHandle 仅在 init/teardown 时触发，不在 reconnect 时触发。
-    void updateSessionBridgeId(toCompatSessionId(newSessionId)).catch(() => {})
+    // setReplWireHandle 仅在 init/teardown 时触发，不在 reconnect 时触发。
+    void updateSessionWireId(toCompatSessionId(newSessionId)).catch(() => {})
     // 在会话交换后立即重置每个传输的状态，在任何 await 之前。
-    // 如果这在下面的 `await writeBridgePointer` 之后运行，会有一个窗口
+    // 如果这在下面的 `await writeWirePointer` 之后运行，会有一个窗口
     // 期间 handle.bridgeSessionId 已经返回会话 B 但 getSSESequenceNum()
     // 仍然返回会话 A 的序列号——daemon 在该窗口中的 persistState() 会写入
     // {bridgeSessionId: B, seq: OLD_A}，这会通过会话 ID 验证检查并完全破坏它。
@@ -745,7 +745,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
 
     // 用新 ID 重写崩溃恢复指针，以便此点之后的崩溃能恢复正确的会话。
     // （上面的原地重连路径不会触碰指针——同一个会话，同一个环境。）
-    await writeBridgePointer(dir, {
+    await writeWirePointer(dir, {
       sessionId: currentSessionId,
       environmentId,
       source: 'repl',
@@ -865,7 +865,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
         return
       }
       // doReconnect returns false (never throws) on genuine failure.
-      // The dangerous case: registerBridgeEnvironment succeeded (so
+      // The dangerous case: registerWireEnvironment succeeded (so
       // environmentId now points at a fresh valid env) but
       // createSession failed — poll loop would poll a sessionless
       // env getting null work with no errors, never hitting any
@@ -896,7 +896,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
   // 埋在 wireTransport 里面，而它本身又在 onWorkReceived 里面。
   let debugFireClose: ((code: number) => void) | null = null
   if (isInternalBuild()) {
-    registerBridgeDebugHandle({
+    registerWireDebugHandle({
       fireClose: (code) => {
         if (!debugFireClose) {
           logForDebugging('[bridge:debug] fireClose: no transport wired yet')
@@ -909,7 +909,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
         logForDebugging('[bridge:debug] forceReconnect — injecting')
         void reconnectEnvironmentWithSession()
       },
-      injectFault: injectBridgeFault,
+      injectFault: injectWireFault,
       wakePollLoop,
       describe: () =>
         `env=${environmentId} session=${currentSessionId} transport=${transport?.getStateLabel() ?? 'null'} workId=${currentWorkId ?? 'null'}`,
@@ -945,7 +945,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
     // 过期且服务器停止转发提示→daemon 日志中观察到约 25 分钟的死窗口。
     // 销毁传输 + 工作状态使 isAtCapacity()=false；循环快速轮询并在
     // 几秒内接收服务器重新分发的工作项。
-    onHeartbeatFatal: (err: BridgeFatalError) => {
+    onHeartbeatFatal: (err: WireFatalError) => {
       logForDebugging(
         `[bridge:repl] heartbeatWork fatal (status=${err.status}) — tearing down work item for fast re-dispatch`,
       )
@@ -1001,7 +1001,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       // 刷新崩溃恢复指针的 mtime。陈旧性检查文件 mtime（而非嵌入的时间戳），
       // 因此这次重写会推进时钟——超过 5 小时的会话崩溃后仍然有新鲜的指针。
       // 每次工作调度触发一次（不频繁——受用户消息速率限制）。
-      void writeBridgePointer(dir, {
+      void writeWirePointer(dir, {
         sessionId: currentSessionId,
         environmentId,
         source: 'repl',
@@ -1011,7 +1011,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       // 因为我们成对创建 env+session，不匹配表明意外的服务器端重新分配。
       //
       // 通过底层 UUID 比较，而非标记 ID 前缀。当 CCR v2 的兼容层提供会话时，
-      // createBridgeSession 从面向 v1 的 API 获取 session_*（compat/convert.go:41），
+      // createWireSession 从面向 v1 的 API 获取 session_*（compat/convert.go:41），
       // 但基础设施层在工作队列中交付 cse_*（container_manager.go:129）。
       // 相同的 UUID，不同的标记。
       if (!sameSessionId(workSessionId, currentSessionId)) {
@@ -1077,7 +1077,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       // 共享 handleServerControlRequest 的闭包适配器——
       // 捕获 transport/currentSessionId，使下方的 transport.setOnData
       // 回调不需要将它们传递进来。
-      const onServerControlRequest = (request: BridgeControlRequest): void =>
+      const onServerControlRequest = (request: WireControlRequest): void =>
         handleServerControlRequest(request, {
           transport,
           sessionId: currentSessionId,
@@ -1091,7 +1091,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
 
       // 将回调绑定到新建的传输并连接。
       // 提取出来使（同步的）v1 和（异步的）v2 构建路径可以共享相同的回调 + 刷新机制。
-      const wireTransport = (newTransport: ReplBridgeTransport): void => {
+      const wireTransport = (newTransport: ReplWireTransport): void => {
         transport = newTransport
 
         newTransport.setOnConnect(() => {
@@ -1132,7 +1132,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
             // 0 或负数限制会禁用它。
             const historyCap = initialHistoryCap
             const eligibleMessages = initialMessages.filter(
-              (m) => isEligibleBridgeMessage(m) && !previouslyFlushedUUIDs?.has(m.uuid),
+              (m) => isEligibleWireMessage(m) && !previouslyFlushedUUIDs?.has(m.uuid),
             )
             const cappedMessages =
               historyCap > 0 && eligibleMessages.length > historyCap
@@ -1342,7 +1342,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
                   // SI 已宕机约 20 分钟。唤醒轮询循环，使 SI 恢复时，
                   // 下次轮询 → onWorkReceived → 新传输 → 初始刷新成功 → onStateChange('connected')。
                   // 没有这个的话，即使在 SI 恢复后状态仍然保持 'reconnecting'——
-                  // daemon.ts:437 拒绝所有权限，useReplBridge.ts:311 保持 replBridgeSessionActive=false。
+                  // daemon.ts:437 拒绝所有权限，useReplBridge.ts:311 保持 replWireSessionActive=false。
                   // 如果宕机期间环境被归档，轮询 404 → onEnvironmentLost 恢复路径处理它。
                   wakePollLoop()
                 },
@@ -1358,7 +1358,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
   // 永久模式：每小时刷新崩溃恢复指针的 mtime。
   // onWorkReceived 刷新仅在用户提示时触发——
   // 空闲超过 4 小时的 daemon 会有陈旧的指针，下次重启会清除它
-  // would clear it (readBridgePointer TTL check) → fresh session. The
+  // would clear it (readWirePointer TTL check) → fresh session. The
   // standalone bridge (bridgeMain.ts) has an identical hourly timer.
   const pointerRefreshTimer = perpetual
     ? setInterval(() => {
@@ -1371,7 +1371,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
         if (reconnectPromise) {
           return
         }
-        void writeBridgePointer(dir, {
+        void writeWirePointer(dir, {
           sessionId: currentSessionId,
           environmentId,
           source: 'repl',
@@ -1426,7 +1426,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       process.off('SIGUSR2', sigusr2Handler)
     }
     if (isInternalBuild()) {
-      clearBridgeDebugHandle()
+      clearWireDebugHandle()
       debugFireClose = null
     }
     pollController.abort()
@@ -1453,7 +1453,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       transport = null
       flushGate.drop()
       // 刷新指针 mtime，使超过 BRIDGE_POINTER_TTL_MS（4 小时）的会话在下次启动时不显得陈旧。
-      await writeBridgePointer(dir, {
+      await writeWirePointer(dir, {
         sessionId: currentSessionId,
         environmentId,
         source: 'repl',
@@ -1504,7 +1504,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
     // 清除崩溃恢复指针——显式断开连接或干净的 REPL 退出
     // 意味着用户已完成此会话。崩溃/kill -9 永远不会到达这一行，
     // 留下指针供下次启动恢复。
-    await clearBridgePointer(dir)
+    await clearWirePointer(dir)
 
     logForDebugging(
       `[bridge:repl] Teardown complete: env=${environmentId} duration=${Date.now() - teardownStart}ms`,
@@ -1539,7 +1539,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       //  - recentPostedUUIDs：最近通过 POST 发送的消息
       const filtered = messages.filter(
         (m) =>
-          isEligibleBridgeMessage(m) &&
+          isEligibleWireMessage(m) &&
           !initialMessageUUIDs.has(m.uuid) &&
           !recentPostedUUIDs.has(m.uuid),
       )
@@ -1592,7 +1592,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       void transport.writeBatch(events)
     },
     writeSdkMessages(messages) {
-      // Daemon 路径：query() 已经产出 BridgeMessage，跳过转换。
+      // Daemon 路径：query() 已经产出 WireMessage，跳过转换。
       // 仍然运行回显去重（服务器在 WS 上弹回写入）。
       // 没有 initialMessageUUIDs 过滤——daemon 没有初始消息。
       // 没有 flushGate——daemon 永远不会启动它（没有初始刷新）。
@@ -1615,7 +1615,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       const events = filtered.map((m) => ({ ...m, session_id: currentSessionId }))
       void transport.writeBatch(events)
     },
-    sendControlRequest(request: BridgeControlRequest) {
+    sendControlRequest(request: WireControlRequest) {
       if (!transport) {
         logForDebugging('[bridge:repl] Transport not configured, skipping control_request')
         return
@@ -1624,7 +1624,7 @@ export async function initBridgeCore(params: BridgeCoreParams): Promise<BridgeCo
       void transport.write(event)
       logForDebugging(`[bridge:repl] Sent control_request request_id=${request.request_id}`)
     },
-    sendControlResponse(response: BridgeControlResponse) {
+    sendControlResponse(response: WireControlResponse) {
       if (!transport) {
         logForDebugging('[bridge:repl] Transport not configured, skipping control_response')
         return
@@ -1688,10 +1688,10 @@ async function startWorkPollLoop({
   getHeartbeatInfo,
   onHeartbeatFatal,
 }: {
-  api: BridgeApiClient
+  api: WireApiClient
   getCredentials: () => { environmentId: string; environmentSecret: string }
   signal: AbortSignal
-  onStateChange?: (state: BridgeState, detail?: string) => void
+  onStateChange?: (state: WireState, detail?: string) => void
   onWorkReceived: (
     sessionId: string,
     ingressToken: string,
@@ -1731,14 +1731,14 @@ async function startWorkPollLoop({
     sessionToken: string
   } | null
   /**
-   * 当 heartbeatWork 抛出 BridgeFatalError（401/403/404/410——
+   * 当 heartbeatWork 抛出 WireFatalError（401/403/404/410——
    * JWT 过期或工作项消失）时调用。调用者应该销毁传输
    * + 工作状态，使 isAtCapacity() 翻转为 false，循环快速轮询
    * 服务器重新分发的工作项。提供时，循环跳过
    * 容量退避睡眠（否则会导致恢复前约 10 分钟的死窗口）。
    * 省略时，回退到退避睡眠以避免紧密的轮询+心跳循环。
    */
-  onHeartbeatFatal?: (err: BridgeFatalError) => void
+  onHeartbeatFatal?: (err: WireFatalError) => void
 }): Promise<void> {
   const MAX_ENVIRONMENT_RECREATIONS = 3
 
@@ -1828,7 +1828,7 @@ async function startWorkPollLoop({
                 await api.heartbeatWork(info.environmentId, info.workId, info.sessionToken)
               } catch (err) {
                 logForDebugging(`[bridge:repl:heartbeat] Failed: ${errorMessage(err)}`)
-                if (err instanceof BridgeFatalError) {
+                if (err instanceof WireFatalError) {
                   cap.cleanup()
                   logEvent('zy_bridge_heartbeat_error', {
                     status:
@@ -1953,7 +1953,7 @@ async function startWorkPollLoop({
       if (work.data.type === 'session') {
         const workSessionId = work.data.id
         try {
-          validateBridgeId(workSessionId, 'session_id')
+          validateWireId(workSessionId, 'session_id')
         } catch {
           logForDebugging(`[bridge:repl] Invalid session_id in work: ${workSessionId}`)
           continue
@@ -1974,15 +1974,15 @@ async function startWorkPollLoop({
 
       // 检测永久的"环境已删除"错误——无论重试多少次都无法恢复。
       // 改为重新注册新环境。
-      // 在通用 BridgeFatalError 退出之前检查。pollForWork 使用
+      // 在通用 WireFatalError 退出之前检查。pollForWork 使用
       // validateStatus: s => s < 500，所以 404 总是被 handleErrorStatus()
-      // 包装成 BridgeFatalError——永远不会是 axios 形状的错误。
+      // 包装成 WireFatalError——永远不会是 axios 形状的错误。
       // 轮询端点唯一的路径参数是环境 ID；404 明确表示环境消失
       //（没有工作是 200 带 null body）。
       // 服务器发送 error.type='not_found_error'（标准 Anthropic API 形状），
       // 而不是 bridge 特定的字符串——但 status===404 是真正的信号，
       // 能经受 body 形状变化。
-      if (err instanceof BridgeFatalError && err.status === 404 && onEnvironmentLost) {
+      if (err instanceof WireFatalError && err.status === 404 && onEnvironmentLost) {
         // 如果凭证已经被并发重连（例如 WS 关闭处理程序）刷新，
         // 旧轮询的错误是预期的——跳过 onEnvironmentLost 并用新凭证重试。
         const currentEnvId = getCredentials().environmentId
@@ -2041,7 +2041,7 @@ async function startWorkPollLoop({
       }
 
       // Fatal errors (401/403/404/410) — no point retrying
-      if (err instanceof BridgeFatalError) {
+      if (err instanceof WireFatalError) {
         const isExpiry = isExpiredErrorType(err.errorType)
         const isSuppressible = isSuppressible403(err)
         logForDebugging(

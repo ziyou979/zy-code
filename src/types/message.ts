@@ -42,10 +42,9 @@ export interface BaseMessage {
 
 export interface AssistantMessage extends BaseMessage {
   type: 'assistant'
-  message: LLMAssistantMessage & {
-    container?: null
-    context_management: null | Record<string, unknown>
-  }
+  message: LLMAssistantMessage
+
+  // ── 运行时元数据 ──
   requestId?: string
   isApiErrorMessage?: boolean
   apiError?: LLMError
@@ -55,21 +54,6 @@ export interface AssistantMessage extends BaseMessage {
   advisorModel?: string
 }
 
-export interface NormalizedAssistantMessage extends BaseMessage {
-  type: 'assistant'
-  message: Omit<LLMAssistantMessage, 'content'> & {
-    role: 'assistant'
-    content: AssistantContentBlock[]
-    context_management: null | Record<string, unknown>
-  }
-  requestId?: string
-  isApiErrorMessage?: boolean
-  apiError?: LLMError
-  error?: unknown
-  isVirtual?: true
-  isMeta?: true
-  advisorModel?: string
-}
 
 // ============================================================
 // User Message
@@ -79,35 +63,10 @@ export interface UserMessage extends BaseMessage {
   type: 'user'
   message: {
     role: 'user'
-    content: string | UserContentBlock[]
-  }
-  isVirtual?: true
-  isVisibleInTranscriptOnly?: true
-  isCompactSummary?: true
-  summarizeMetadata?: {
-    messagesSummarized: number
-    userContext?: string
-    direction?: PartialCompactDirection
-  }
-  toolUseResult?: unknown
-  mcpMeta?: {
-    _meta?: Record<string, unknown>
-    structuredContent?: Record<string, unknown>
-  }
-  imagePasteIds?: number[]
-  sourceToolAssistantUUID?: UUID
-  permissionMode?: PermissionMode
-  origin?: MessageOrigin
-  /** Plan content attached when exiting plan mode ("clear context and implement" flow). */
-  planContent?: string
-}
-
-export interface NormalizedUserMessage extends BaseMessage {
-  type: 'user'
-  message: {
-    role: 'user'
     content: UserContentBlock[]
   }
+
+  // ── 运行时元数据 ──
   isVirtual?: true
   isVisibleInTranscriptOnly?: true
   isCompactSummary?: true
@@ -126,7 +85,9 @@ export interface NormalizedUserMessage extends BaseMessage {
   sourceToolUseID?: string
   permissionMode?: PermissionMode
   origin?: MessageOrigin
+  planContent?: string
 }
+
 
 // ============================================================
 // Progress Message
@@ -391,9 +352,9 @@ export interface GroupedToolUseMessage extends BaseMessage {
   type: 'grouped_tool_use'
   toolUses: ToolCallBlock[]
   toolName: string
-  messages: NormalizedAssistantMessage[]
-  results: NormalizedUserMessage[]
-  displayMessage: NormalizedAssistantMessage
+  messages: AssistantMessage[]
+  results: UserMessage[]
+  displayMessage: AssistantMessage
   messageId?: string
 }
 
@@ -411,8 +372,8 @@ export interface CollapsedReadSearchGroup extends BaseMessage {
   memorySearchCount?: number
   memoryReadCount?: number
   memoryWriteCount?: number
-  messages?: NormalizedAssistantMessage[]
-  displayMessage?: NormalizedAssistantMessage
+  messages?: AssistantMessage[]
+  displayMessage?: AssistantMessage
   mcpCallCount?: number
   bashCount?: number
   gitOpBashCount?: number
@@ -433,10 +394,10 @@ export interface CollapsedReadSearchGroup extends BaseMessage {
 export interface GroupedToolUseMessageWithMessages extends BaseMessage {
   type: 'grouped_tool_use'
   toolName: string
-  messages: NormalizedAssistantMessage[]
+  messages: AssistantMessage[]
 }
 
-export type CollapsibleMessage = NormalizedAssistantMessage | GroupedToolUseMessageWithMessages
+export type CollapsibleMessage = AssistantMessage | GroupedToolUseMessageWithMessages
 
 // ============================================================
 // Compact Metadata
@@ -469,12 +430,6 @@ export type RenderableMessage =
   | GroupedToolUseMessage
   | GroupedToolUseMessageWithMessages
 
-export type NormalizedMessage =
-  | NormalizedUserMessage
-  | NormalizedAssistantMessage
-  | ProgressMessage
-  | AttachmentMessage
-  | SystemMessage
 
 // ============================================================
 // Main Message Union

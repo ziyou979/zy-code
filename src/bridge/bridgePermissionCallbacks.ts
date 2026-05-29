@@ -1,13 +1,13 @@
 import type { PermissionUpdate } from '../utils/permissions/PermissionUpdateSchema.js'
 
-type BridgePermissionResponse = {
+type WirePermissionResponse = {
   behavior: 'allow' | 'deny'
   updatedInput?: Record<string, unknown>
   updatedPermissions?: PermissionUpdate[]
   message?: string
 }
 
-type BridgePermissionCallbacks = {
+type WirePermissionCallbacks = {
   sendRequest(
     requestId: string,
     toolName: string,
@@ -17,21 +17,21 @@ type BridgePermissionCallbacks = {
     permissionSuggestions?: PermissionUpdate[],
     blockedPath?: string,
   ): void
-  sendResponse(requestId: string, response: BridgePermissionResponse): void
+  sendResponse(requestId: string, response: WirePermissionResponse): void
   /** Cancel a pending control_request so the web app can dismiss its prompt. */
   cancelRequest(requestId: string): void
-  onResponse(requestId: string, handler: (response: BridgePermissionResponse) => void): () => void // returns unsubscribe
+  onResponse(requestId: string, handler: (response: WirePermissionResponse) => void): () => void // returns unsubscribe
 }
 
 /** Type predicate for validating a parsed control_response payload
- *  as a BridgePermissionResponse. Checks the required `behavior`
+ *  as a WirePermissionResponse. Checks the required `behavior`
  *  discriminant rather than using an unsafe `as` cast. */
-function isBridgePermissionResponse(value: unknown): value is BridgePermissionResponse {
+function isWirePermissionResponse(value: unknown): value is WirePermissionResponse {
   if (!value || typeof value !== 'object') {
     return false
   }
   return 'behavior' in value && (value.behavior === 'allow' || value.behavior === 'deny')
 }
 
-export type { BridgePermissionCallbacks, BridgePermissionResponse }
-export { isBridgePermissionResponse }
+export type { WirePermissionCallbacks, WirePermissionResponse }
+export { isWirePermissionResponse }

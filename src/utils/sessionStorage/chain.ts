@@ -541,17 +541,10 @@ function hasVisibleUserContent(message: TranscriptMessage): boolean {
     return false
   }
 
-  // 字符串内容总是可见的
-  if (typeof content === 'string') {
-    return content.trim().length > 0
-  }
-
   // 数组内容：检查文本或图片块（非 tool_result）
-  if (Array.isArray(content)) {
-    return content.some(
-      (block) => block.type === 'text' || block.type === 'image' || block.type === 'document',
-    )
-  }
+  return content.some(
+    (block) => block.type === 'text' || block.type === 'image' || block.type === 'document',
+  )
 
   return false
 }

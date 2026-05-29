@@ -100,7 +100,7 @@ export function MessageSelector({
       ...messages.filter(selectableUserMessagesFilter),
       {
         ...createUserMessage({
-          content: '',
+          content: [{ type: 'text' as const, text: '' }],
         }),
         uuid: currentUUID,
       } as UserMessage,
@@ -803,13 +803,11 @@ export function selectableUserMessagesFilter(message: Message): message is UserM
     return false
   }
   const content = message.message.content
-  const lastBlock = typeof content === 'string' ? null : content[content.length - 1]
+  const lastBlock = content[content.length - 1]
   const messageText =
-    typeof content === 'string'
-      ? content.trim()
-      : lastBlock && isTextBlock(lastBlock)
-        ? lastBlock.text.trim()
-        : ''
+    lastBlock && isTextBlock(lastBlock)
+      ? lastBlock.text.trim()
+      : ''
 
   // Filter out non-user-authored messages (command outputs, task notifications, ticks).
   if (

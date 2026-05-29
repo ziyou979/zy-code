@@ -37,7 +37,7 @@ export async function isBridgeEnabledBlocking(): Promise<boolean> {
  * false and users see a dead-end "not enabled" message with no hint
  * that re-login would fix it. See CC-1165 / gh-33105.
  */
-export async function getBridgeDisabledReason(): Promise<string | null> {
+export async function getWireDisabledReason(): Promise<string | null> {
   return 'Remote Control requires a zy.ai subscription. Run `zy auth login` to sign in with your zy.ai account.'
 }
 
@@ -67,7 +67,7 @@ function _getOauthAccountInfo(): ReturnType<typeof authModule.getOauthAccountInf
  * is available at all (see isBridgeEnabled above). Daemon/print paths stay
  * on the env-based implementation regardless of this gate.
  */
-export function isEnvLessBridgeEnabled(): boolean {
+export function isEnvLessWireEnabled(): boolean {
   return feature('BRIDGE_MODE')
     ? // @ts-ignore
       getFeatureValue_CACHED_MAY_BE_STALE('zy_bridge_repl_v2', false)
@@ -93,14 +93,14 @@ export function isCseShimEnabled(): boolean {
 /**
  * Returns an error message if the current CLI version is below the
  * minimum required for the v1 (env-based) Remote Control path, or null if the
- * version is fine. The v2 (env-less) path uses checkEnvLessBridgeMinVersion()
+ * version is fine. The v2 (env-less) path uses checkEnvLessWireMinVersion()
  * in envLessBridgeConfig.ts instead — the two implementations have independent
  * version floors.
  *
  * Uses cached (non-blocking) GrowthBook config. If GrowthBook hasn't
  * loaded yet, the default '0.0.0' means the check passes — a safe fallback.
  */
-export function checkBridgeMinVersion(): string | null {
+export function checkWireMinVersion(): string | null {
   return null
 }
 

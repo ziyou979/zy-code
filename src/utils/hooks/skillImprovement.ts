@@ -36,9 +36,6 @@ function formatRecentMessages(messages: Message[]): string {
     .map((m) => {
       const role = m.type === 'user' ? 'User' : 'Assistant'
       const content = m.message.content
-      if (typeof content === 'string') {
-        return `${role}: ${content.slice(0, 500)}`
-      }
       const text = content
         .filter((b): b is TextBlock => b.type === 'text')
         .map((b: TextBlock) => b.text)
@@ -94,7 +91,10 @@ function createSkillImprovementHook() {
 
       return [
         createUserMessage({
-          content: `You are analyzing a conversation where a user is executing a skill (a repeatable process).
+          content: [
+            {
+              type: 'text' as const,
+              text: `You are analyzing a conversation where a user is executing a skill (a repeatable process).
 Your job: identify if the user's recent messages contain preferences, requests, or corrections that should be permanently added to the skill definition for future runs.
 
 <skill_definition>
@@ -116,6 +116,8 @@ Ignore:
 
 Output a JSON array inside <updates> tags. Each item: {"section": "which step/section to modify or 'new step'", "change": "what to add/modify", "reason": "which user message prompted this"}.
 Output <updates>[]</updates> if no updates are needed.`,
+            },
+          ],
         }),
       ]
     },
@@ -205,7 +207,10 @@ export async function applySkillImprovement(
   const response = await queryModelWithoutStreaming({
     messages: [
       createUserMessage({
-        content: `You are editing a skill definition file. Apply the following improvements to the skill.
+        content: [
+          {
+            type: 'text' as const,
+            text: `You are editing a skill definition file. Apply the following improvements to the skill.
 
 <current_skill_file>
 ${currentContent}
@@ -221,6 +226,8 @@ Rules:
 - Preserve the overall format and style
 - Do not remove existing content unless an improvement explicitly replaces it
 - Output the complete updated file inside <updated_file> tags`,
+          },
+        ],
       }),
     ],
     systemPrompt: asSystemPrompt([

@@ -122,7 +122,7 @@ export function extractErrorDetail(data: unknown): string | undefined {
  * analytics event. Centralizes the event name and the AnalyticsMetadata
  * cast so call sites don't each repeat the 5-line boilerplate.
  */
-export function logBridgeSkip(reason: string, debugMsg?: string, v2?: boolean): void {
+export function logWireSkip(reason: string, debugMsg?: string, v2?: boolean): void {
   if (debugMsg) {
     logForDebugging(debugMsg)
   }

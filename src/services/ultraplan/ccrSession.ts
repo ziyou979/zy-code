@@ -1,10 +1,10 @@
 // CCR session polling for /ultraplan. Waits for an approved ExitPlanMode
 // tool_result, then extracts the plan text. Uses pollRemoteSessionEvents
-// (shared with RemoteAgentTask) for pagination + typed BridgeMessage[].
+// (shared with RemoteAgentTask) for pagination + typed WireMessage[].
 // Plan mode is set via set_permission_mode control_request in
 // teleportToRemote's CreateSession events array.
 
-import type { BridgeMessage } from 'src/types/index.js'
+import type { WireMessage } from 'src/types/index.js'
 import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
 import type { ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -60,7 +60,7 @@ export type ScanResult =
 export type UltraplanPhase = 'running' | 'needs_input' | 'plan_ready'
 
 /**
- * Pure stateful classifier for the CCR event stream. Ingests BridgeMessage[]
+ * Pure stateful classifier for the CCR event stream. Ingests WireMessage[]
  * batches (as delivered by pollRemoteSessionEvents) and returns the current
  * ExitPlanMode verdict. No I/O, no timers — feed it synthetic or recorded
  * events for unit tests and offline replay.
@@ -92,7 +92,7 @@ export class ExitPlanModeScanner {
     return id !== undefined && !this.results.has(id)
   }
 
-  ingest(newEvents: BridgeMessage[]): ScanResult {
+  ingest(newEvents: WireMessage[]): ScanResult {
     for (const m of newEvents) {
       if (m.type === 'assistant') {
         for (const block of (m.message as any).content) {
@@ -213,7 +213,7 @@ export async function pollForApprovedExitPlanMode(
     if (shouldStop?.()) {
       throw new UltraplanPollError('poll stopped by caller', 'stopped', scanner.rejectCount)
     }
-    let newEvents: BridgeMessage[]
+    let newEvents: WireMessage[]
     let sessionStatus: PollRemoteSessionResponse['sessionStatus']
     try {
       // Metadata fetch (session_status) is the needs_input signal —

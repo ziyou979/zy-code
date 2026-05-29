@@ -405,7 +405,7 @@ function getInitialState(): State {
     isRemoteMode: false,
     ...(isInternalBuild()
       ? {
-          replBridgeActive: false,
+          replWireActive: false,
         }
       : {}),
     // Direct connect server URL

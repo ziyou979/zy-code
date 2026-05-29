@@ -12,7 +12,7 @@ import type {
   PersistedWorktreeSession,
   SerializedMessage,
 } from '../types/logs.js'
-import type { Message, NormalizedMessage, NormalizedUserMessage } from '../types/message.js'
+import type { Message, UserMessage } from '../types/message.js'
 import { PERMISSION_MODES } from '../types/permissions.js'
 import { suppressNextSkillListing } from './attachments.js'
 import { copyFileHistoryForResume, type FileHistorySnapshot } from './fileHistory.js'
@@ -129,7 +129,7 @@ export type TeleportRemoteResponse = {
 
 export type TurnInterruptionState =
   | { kind: 'none' }
-  | { kind: 'interrupted_prompt'; message: NormalizedUserMessage }
+  | { kind: 'interrupted_prompt'; message: UserMessage }
 
 export type DeserializeResult = {
   messages: Message[]
@@ -172,20 +172,20 @@ export function deserializeMessagesWithInterruptDetection(
     }
 
     // 过滤未解析的 tool use 及其后续的合成消息
-    const filteredToolUses = filterUnresolvedToolUses(migratedMessages) as NormalizedMessage[]
+    const filteredToolUses = filterUnresolvedToolUses(migratedMessages) as Message[]
 
     // 过滤孤立的仅含 thinking 的 assistant 消息，这些消息在 resume 时会导致 API 错误。
     // 当流式传输为每个 content block 生成独立消息，且穿插的用户消息阻止了
     // 按 message.id 正确合并时，就会出现此情况。
     const filteredThinking = filterOrphanedThinkingOnlyMessages(
       filteredToolUses,
-    ) as NormalizedMessage[]
+    ) as Message[]
 
     // 过滤仅包含空白文本内容的 assistant 消息。
     // 当模型在 thinking 前输出 "\n\n"，而用户在流式传输中途取消时会发生此情况。
     const filteredMessages = filterWhitespaceOnlyAssistantMessages(
       filteredThinking,
-    ) as NormalizedMessage[]
+    ) as Message[]
 
     const internalState = detectTurnInterruption(filteredMessages)
 
@@ -195,7 +195,7 @@ export function deserializeMessagesWithInterruptDetection(
     if (internalState.kind === 'interrupted_turn') {
       const [continuationMessage] = normalizeMessages([
         createUserMessage({
-          content: 'Continue from where you left off.',
+          content: [{ type: 'text' as const, text: 'Continue from where you left off.' }],
           isMeta: true,
         }),
       ])
@@ -221,7 +221,7 @@ export function deserializeMessagesWithInterruptDetection(
         0,
         createAssistantMessage({
           content: NO_RESPONSE_REQUESTED,
-        }) as NormalizedMessage,
+        }) as Message,
       )
     }
 
@@ -246,7 +246,7 @@ type InternalInterruptionState = TurnInterruptionState | { kind: 'interrupted_tu
  * 在查找最后一条与轮次相关的消息时会跳过 system 和 progress 消息——
  * 它们是记账类辅助产物，不应掩盖真正的中断。附件被视为轮次的一部分予以保留。
  */
-function detectTurnInterruption(messages: NormalizedMessage[]): InternalInterruptionState {
+function detectTurnInterruption(messages: Message[]): InternalInterruptionState {
   if (messages.length === 0) {
     return { kind: 'none' }
   }
@@ -313,8 +313,8 @@ function detectTurnInterruption(messages: NormalizedMessage[]): InternalInterrup
  * 已移除了未配对的），但我们仍然向前遍历以防 system/progress 噪声穿插其中。
  */
 function isTerminalToolResult(
-  result: NormalizedUserMessage,
-  messages: NormalizedMessage[],
+  result: UserMessage,
+  messages: Message[],
   resultIdx: number,
 ): boolean {
   const content = result.message.content

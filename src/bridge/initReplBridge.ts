@@ -16,8 +16,8 @@
 import { feature } from 'bun:bundle'
 import { hostname } from 'node:os'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
-import type { BridgeMessage } from '../types/index.js'
-import type { BridgeControlResponse } from '../types/bridge/control.js'
+import type { WireMessage } from '../types/index.js'
+import type { WireControlResponse } from '../types/wire/control.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { getOrganizationUUID } from '../services/oauth/client.js'
 import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../services/policyLimits/index.js'
@@ -44,34 +44,34 @@ import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
 import { getCurrentSessionTitle, saveAiGeneratedTitle } from '../utils/sessionStorage.js'
 import { extractConversationText, generateSessionTitle } from '../utils/sessionTitle.js'
 import { generateShortWordSlug } from '../utils/words.js'
-import { getBridgeAccessToken, getBridgeBaseUrl, getBridgeTokenOverride } from './bridgeConfig.js'
+import { getWireAccessToken, getWireBaseUrl, getWireTokenOverride } from './bridgeConfig.js'
 import {
-  checkBridgeMinVersion,
+  checkWireMinVersion,
   isBridgeEnabledBlocking,
   isCseShimEnabled,
-  isEnvLessBridgeEnabled,
+  isEnvLessWireEnabled,
 } from './bridgeEnabled.js'
 import {
-  archiveBridgeSession,
-  createBridgeSession,
-  updateBridgeSessionTitle,
+  archiveWireSession,
+  createWireSession,
+  updateWireSessionTitle,
 } from './createSession.js'
-import { logBridgeSkip } from './debugUtils.js'
-import { checkEnvLessBridgeMinVersion } from './envLessBridgeConfig.js'
+import { logWireSkip } from './debugUtils.js'
+import { checkEnvLessWireMinVersion } from './envLessBridgeConfig.js'
 import { getPollIntervalConfig } from './pollConfig.js'
-import type { BridgeState, ReplBridgeHandle } from './replBridge.js'
+import type { WireState, ReplWireHandle } from './replBridge.js'
 import { initBridgeCore } from './replBridge.js'
 import { setCseShimGate } from './sessionIdCompat.js'
-import type { BridgeWorkerType } from './types.js'
+import type { WireWorkerType } from './types.js'
 
-export type InitBridgeOptions = {
-  onInboundMessage?: (msg: BridgeMessage) => void | Promise<void>
-  onPermissionResponse?: (response: BridgeControlResponse) => void
+export type InitWireOptions = {
+  onInboundMessage?: (msg: WireMessage) => void | Promise<void>
+  onPermissionResponse?: (response: WireControlResponse) => void
   onInterrupt?: () => void
   onSetModel?: (model: string | undefined) => void
   onSetMaxThinkingTokens?: (maxTokens: number | null) => void
   onSetPermissionMode?: (mode: PermissionMode) => { ok: true } | { ok: false; error: string }
-  onStateChange?: (state: BridgeState, detail?: string) => void
+  onStateChange?: (state: WireState, detail?: string) => void
   initialMessages?: Message[]
   // Explicit session name from `/remote-control <name>`. When set, overrides
   // the title derived from the conversation or /rename.
@@ -86,7 +86,7 @@ export type InitBridgeOptions = {
   // server (duplicate UUIDs across sessions cause the WS to be killed).
   // Mutated in place — newly flushed UUIDs are added after each flush.
   previouslyFlushedUUIDs?: Set<string>
-  /** See BridgeCoreParams.perpetual. */
+  /** See WireCoreParams.perpetual. */
   perpetual?: boolean
   /**
    * When true, the bridge only forwards events outbound (no SSE inbound
@@ -98,8 +98,8 @@ export type InitBridgeOptions = {
 }
 
 export async function initReplBridge(
-  options?: InitBridgeOptions,
-): Promise<ReplBridgeHandle | null> {
+  options?: InitWireOptions,
+): Promise<ReplWireHandle | null> {
   const {
     onInboundMessage,
     onPermissionResponse,
@@ -123,7 +123,7 @@ export async function initReplBridge(
 
   // 1. Runtime gate
   if (!(await isBridgeEnabledBlocking())) {
-    logBridgeSkip('not_enabled', '[bridge:repl] Skipping: bridge not enabled')
+    logWireSkip('not_enabled', '[bridge:repl] Skipping: bridge not enabled')
     return null
   }
 
@@ -135,8 +135,8 @@ export async function initReplBridge(
   // policy check so console-auth users get the actionable "/login" hint
   // instead of a misleading policy error from a stale/wrong-org cache.
   // 使用 OpenAI SDK 的平台 - 通过 settings.json 配置时跳过 OAuth 检查
-  if (!getBridgeAccessToken() && !isOpenAIProvider(getAPIProvider())) {
-    logBridgeSkip('no_oauth', '[bridge:repl] Skipping: no OAuth tokens')
+  if (!getWireAccessToken() && !isOpenAIProvider(getAPIProvider())) {
+    logWireSkip('no_oauth', '[bridge:repl] Skipping: no OAuth tokens')
     onStateChange?.('failed', '/login')
     return null
   }
@@ -144,7 +144,7 @@ export async function initReplBridge(
   // 3. Check organization policy — remote control may be disabled
   await waitForPolicyLimitsToLoad()
   if (!isPolicyAllowed('allow_remote_control')) {
-    logBridgeSkip(
+    logWireSkip(
       'policy_denied',
       '[bridge:repl] Skipping: allow_remote_control policy not allowed',
     )
@@ -153,10 +153,10 @@ export async function initReplBridge(
   }
 
   // When CLAUDE_BRIDGE_OAUTH_TOKEN is set (ant-only local dev), the bridge
-  // uses that token directly via getBridgeAccessToken() — keychain state is
+  // uses that token directly via getWireAccessToken() — keychain state is
   // irrelevant. Skip 2b/2c to preserve that decoupling: an expired keychain
   // token shouldn't block a bridge connection that doesn't use it.
-  if (!getBridgeTokenOverride()) {
+  if (!getWireTokenOverride()) {
     // 2a. Cross-process backoff. If N prior processes already saw this exact
     // dead token (matched by expiresAt), skip silently — no event, no refresh
     // attempt. The count threshold tolerates transient refresh failures (auth
@@ -208,7 +208,7 @@ export async function initReplBridge(
     // Check actual expiry instead: past-expiry AND refresh-failed → truly dead.
     const tokens = getZyAIOAuthTokens()
     if (tokens && tokens.expiresAt !== null && tokens.expiresAt <= Date.now()) {
-      logBridgeSkip(
+      logWireSkip(
         'oauth_expired_unrefreshable',
         '[bridge:repl] Skipping: OAuth token expired and refresh failed (re-login required)',
       )
@@ -231,7 +231,7 @@ export async function initReplBridge(
 
   // 4. Compute baseUrl — needed by both v1 (env-based) and v2 (env-less)
   // paths. Hoisted above the v2 gate so both can use it.
-  const baseUrl = getBridgeBaseUrl()
+  const baseUrl = getWireBaseUrl()
 
   // 5. Derive session title. Precedence: explicit initialName → /rename
   // (session storage) → last meaningful user message → generated slug.
@@ -298,18 +298,18 @@ export async function initReplBridge(
   // title is explicit (/remote-control <name> or /rename) — re-checks
   // sessionStorage at call time so /rename between messages isn't clobbered.
   // Skips count 1 if initialMessages already derived (that title is fresh);
-  // still refreshes at count 3. v2 passes cse_*; updateBridgeSessionTitle
+  // still refreshes at count 3. v2 passes cse_*; updateWireSessionTitle
   // retags internally.
   let userMessageCount = 0
-  let lastBridgeSessionId: string | undefined
+  let lastWireSessionId: string | undefined
   let genSeq = 0
   const patch = (derived: string, bridgeSessionId: string, atCount: number): void => {
     hasTitle = true
     title = derived
     logForDebugging(`[bridge:repl] derived title from message ${atCount}: ${derived}`)
-    void updateBridgeSessionTitle(bridgeSessionId, derived, {
+    void updateWireSessionTitle(bridgeSessionId, derived, {
       baseUrl,
-      getAccessToken: getBridgeAccessToken,
+      getAccessToken: getWireAccessToken,
     }).catch(() => {})
     // Persist AI title locally so /resume can display it without regeneration
     try {
@@ -322,7 +322,7 @@ export async function initReplBridge(
     }
   }
   // Fire-and-forget Haiku generation with post-await guards. Re-checks /rename
-  // (sessionStorage), v1 env-lost (lastBridgeSessionId), and same-session
+  // (sessionStorage), v1 env-lost (lastWireSessionId), and same-session
   // out-of-order resolution (genSeq — count-1's Haiku resolving after count-3
   // would clobber the richer title). generateSessionTitle never rejects.
   const generateAndPatch = (input: string, bridgeSessionId: string): void => {
@@ -332,7 +332,7 @@ export async function initReplBridge(
       if (
         generated &&
         gen === genSeq &&
-        lastBridgeSessionId === bridgeSessionId &&
+        lastWireSessionId === bridgeSessionId &&
         !getCurrentSessionTitle(getSessionId())
       ) {
         patch(generated, bridgeSessionId, atCount)
@@ -347,10 +347,10 @@ export async function initReplBridge(
     // the new session gets its own count-3 derivation; hasTitle stays true
     // (new session was created via getCurrentTitle(), which reads the count-1
     // title from this closure), so count-1 of the fresh cycle correctly skips.
-    if (lastBridgeSessionId !== undefined && lastBridgeSessionId !== bridgeSessionId) {
+    if (lastWireSessionId !== undefined && lastWireSessionId !== bridgeSessionId) {
       userMessageCount = 0
     }
-    lastBridgeSessionId = bridgeSessionId
+    lastWireSessionId = bridgeSessionId
     userMessageCount++
     if (userMessageCount === 1 && !hasTitle) {
       const placeholder = deriveTitle(text)
@@ -378,7 +378,7 @@ export async function initReplBridge(
   // archive 404s and sessions stay alive in CCR after /exit.
   const orgUUID = await getOrganizationUUID()
   if (!orgUUID) {
-    logBridgeSkip('no_org_uuid', '[bridge:repl] Skipping: no org UUID')
+    logWireSkip('no_org_uuid', '[bridge:repl] Skipping: no org UUID')
     onStateChange?.('failed', '/login')
     return null
   }
@@ -396,20 +396,20 @@ export async function initReplBridge(
   // perpetual (assistant-mode session continuity via bridge-pointer.json) is
   // env-coupled and not yet implemented here — fall back to env-based when set
   // so KAIROS users don't silently lose cross-restart continuity.
-  if (isEnvLessBridgeEnabled() && !perpetual) {
-    const versionError = await checkEnvLessBridgeMinVersion()
+  if (isEnvLessWireEnabled() && !perpetual) {
+    const versionError = await checkEnvLessWireMinVersion()
     if (versionError) {
-      logBridgeSkip('version_too_old', `[bridge:repl] Skipping: ${versionError}`, true)
+      logWireSkip('version_too_old', `[bridge:repl] Skipping: ${versionError}`, true)
       onStateChange?.('failed', 'run `zy update` to upgrade')
       return null
     }
     logForDebugging('[bridge:repl] Using env-less bridge path (zy_bridge_repl_v2)')
-    const { initEnvLessBridgeCore } = await import('./remoteBridgeCore.js')
-    return initEnvLessBridgeCore({
+    const { initEnvLessWireCore } = await import('./remoteBridgeCore.js')
+    return initEnvLessWireCore({
       baseUrl,
       orgUUID,
       title,
-      getAccessToken: getBridgeAccessToken,
+      getAccessToken: getWireAccessToken,
       onAuth401: handleOAuth401Error,
       toSDKMessages,
       initialHistoryCap,
@@ -436,9 +436,9 @@ export async function initReplBridge(
 
   // ── v1 path: env-based (register/poll/ack/heartbeat) ──────────────────
 
-  const versionError = checkBridgeMinVersion()
+  const versionError = checkWireMinVersion()
   if (versionError) {
-    logBridgeSkip('version_too_old', `[bridge:repl] Skipping: ${versionError}`)
+    logWireSkip('version_too_old', `[bridge:repl] Skipping: ${versionError}`)
     onStateChange?.('failed', 'run `zy update` to upgrade')
     return null
   }
@@ -455,7 +455,7 @@ export async function initReplBridge(
   // Assistant-mode sessions advertise a distinct worker_type so the web UI
   // can filter them into a dedicated picker. KAIROS guard keeps the
   // assistant module out of external builds entirely.
-  let workerType: BridgeWorkerType = 'zy_code'
+  let workerType: WireWorkerType = 'zy_code'
   if (feature('KAIROS')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { isAssistantMode } =
@@ -466,8 +466,8 @@ export async function initReplBridge(
     }
   }
 
-  // 6. Delegate. BridgeCoreHandle is a structural superset of
-  // ReplBridgeHandle (adds writeSdkMessages which REPL callers don't use),
+  // 6. Delegate. WireCoreHandle is a structural superset of
+  // ReplWireHandle (adds writeSdkMessages which REPL callers don't use),
   // so no adapter needed — just the narrower type on the way out.
   return initBridgeCore({
     dir: getOriginalCwd(),
@@ -478,28 +478,28 @@ export async function initReplBridge(
     baseUrl,
     sessionIngressUrl,
     workerType,
-    getAccessToken: getBridgeAccessToken,
+    getAccessToken: getWireAccessToken,
     createSession: (opts) =>
-      createBridgeSession({
+      createWireSession({
         ...opts,
         events: [],
         baseUrl,
-        getAccessToken: getBridgeAccessToken,
+        getAccessToken: getWireAccessToken,
       }),
     archiveSession: (sessionId) =>
-      archiveBridgeSession(sessionId, {
+      archiveWireSession(sessionId, {
         baseUrl,
-        getAccessToken: getBridgeAccessToken,
+        getAccessToken: getWireAccessToken,
         // gracefulShutdown.ts:407 races runCleanupFunctions against 2s.
         // Teardown also does stopWork (parallel) + deregister (sequential),
         // so archive can't have the full budget. 1.5s matches v2's
         // teardown_archive_timeout_ms default.
         timeoutMs: 1500,
       }).catch((err: unknown) => {
-        // archiveBridgeSession has no try/catch — 5xx/timeout/network throw
+        // archiveWireSession has no try/catch — 5xx/timeout/network throw
         // straight through. Previously swallowed silently, making archive
         // failures BQ-invisible and undiagnosable from debug logs.
-        logForDebugging(`[bridge:repl] archiveBridgeSession threw: ${errorMessage(err)}`, {
+        logForDebugging(`[bridge:repl] archiveWireSession threw: ${errorMessage(err)}`, {
           level: 'error',
         })
       }),

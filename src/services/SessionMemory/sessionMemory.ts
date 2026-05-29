@@ -287,7 +287,7 @@ const extractSessionMemory = sequential(async (context: REPLHookContext): Promis
   // runForkedAgent creates an isolated context to prevent mutation of parent state
   // Pass setupContext.readFileState so the forked agent can edit the memory file
   await runForkedAgent({
-    promptMessages: [createUserMessage({ content: userPrompt })],
+    promptMessages: [createUserMessage({ content: [{ type: 'text' as const, text: userPrompt }] })],
     cacheSafeParams: createCacheSafeParams(context),
     canUseTool: createMemoryFileCanUseTool(memoryPath),
     // @ts-expect-error
@@ -387,7 +387,9 @@ export async function manuallyExtractSessionMemory(
 
     // Run session memory extraction using runForkedAgent
     await runForkedAgent({
-      promptMessages: [createUserMessage({ content: userPrompt })],
+      promptMessages: [
+        createUserMessage({ content: [{ type: 'text' as const, text: userPrompt }] }),
+      ],
       cacheSafeParams: {
         systemPrompt,
         userContext,

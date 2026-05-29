@@ -44,21 +44,9 @@ export function analyzeContext(messages: Message[]): TokenStats {
   normalizedMessages.forEach((msg) => {
     const { content } = msg.message
 
-    // Not sure if this path is still used, but adding as a fallback
-    if (typeof content === 'string') {
-      const tokens = countTokens(content)
-      stats.total += tokens
-      // Check if this is a local command output
-      if (msg.type === 'user' && content.includes('local-command-stdout')) {
-        stats.localCommandOutputs += tokens
-      } else {
-        stats[msg.type === 'user' ? 'humanMessages' : 'assistantMessages'] += tokens
-      }
-    } else {
-      content.forEach((block) =>
-        processBlock(block, msg, stats, toolIdsToToolNames, readToolIdToFilePath, fileReadStats),
-      )
-    }
+    content.forEach((block) =>
+      processBlock(block, msg, stats, toolIdsToToolNames, readToolIdToFilePath, fileReadStats),
+    )
   })
 
   // Calculate duplicate file reads

@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
-import { isReplBridgeActive } from '../../bootstrap/state.js'
-import { getReplBridgeHandle } from '../../bridge/replBridgeHandle.js'
+import { isReplWireActive } from '../../bootstrap/state.js'
+import { getReplWireHandle } from '../../bridge/replBridgeHandle.js'
 import type { Tool, ToolUseContext } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { findTeammateTaskByAgentId } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
@@ -631,11 +631,11 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
           errorCode: 9,
         }
       }
-      // postInterZyMessage derives from= via getReplBridgeHandle() —
+      // postInterZyMessage derives from= via getReplWireHandle() —
       // check handle directly for the init-timing window. Also check
-      // isReplBridgeActive() to reject outbound-only (CCR mirror) mode
+      // isReplWireActive() to reject outbound-only (CCR mirror) mode
       // where the bridge is write-only and peer messaging is unsupported.
-      if (!getReplBridgeHandle() || !isReplBridgeActive()) {
+      if (!getReplWireHandle() || !isReplWireActive()) {
         return {
           result: false,
           message:
@@ -732,8 +732,8 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
         // Re-check handle — checkPermissions blocks on user approval (can be
         // minutes). validateInput's check is stale if the bridge dropped
         // during the prompt wait; without this, from="unknown" ships.
-        // Also re-check isReplBridgeActive for outbound-only mode.
-        if (!getReplBridgeHandle() || !isReplBridgeActive()) {
+        // Also re-check isReplWireActive for outbound-only mode.
+        if (!getReplWireHandle() || !isReplWireActive()) {
           return {
             data: {
               success: false,

@@ -5,7 +5,7 @@ import {
   buildActiveFooterText,
   buildIdleFooterText,
   FAILED_FOOTER_TEXT,
-  getBridgeStatus,
+  getWireStatus,
 } from '../bridge/bridgeStatusUtil.js'
 import { BRIDGE_FAILED_INDICATOR, BRIDGE_READY_INDICATOR } from '../constants/figures.js'
 import { useRegisterOverlay } from '../context/overlayContext.js'
@@ -24,15 +24,15 @@ type Props = {
 export function BridgeDialog({ onDone }: Props) {
   // @ts-expect-error
   useRegisterOverlay('bridge-dialog')
-  const connected = useAppState((state) => state.replBridgeConnected)
-  const sessionActive = useAppState((state) => state.replBridgeSessionActive)
-  const reconnecting = useAppState((state) => state.replBridgeReconnecting)
-  const connectUrl = useAppState((state) => state.replBridgeConnectUrl)
-  const sessionUrl = useAppState((state) => state.replBridgeSessionUrl)
-  const error = useAppState((state) => state.replBridgeError)
-  const explicit = useAppState((state) => state.replBridgeExplicit)
-  const environmentId = useAppState((state) => state.replBridgeEnvironmentId)
-  const sessionId = useAppState((state) => state.replBridgeSessionId)
+  const connected = useAppState((state) => state.replWireConnected)
+  const sessionActive = useAppState((state) => state.replWireSessionActive)
+  const reconnecting = useAppState((state) => state.replWireReconnecting)
+  const connectUrl = useAppState((state) => state.replWireConnectUrl)
+  const sessionUrl = useAppState((state) => state.replWireSessionUrl)
+  const error = useAppState((state) => state.replWireError)
+  const explicit = useAppState((state) => state.replWireExplicit)
+  const environmentId = useAppState((state) => state.replWireEnvironmentId)
+  const sessionId = useAppState((state) => state.replWireSessionId)
   const verbose = useAppState((state) => state.verbose)
   const setAppState = useSetAppState()
   const [showQR, setShowQR] = useState(false)
@@ -78,7 +78,7 @@ export function BridgeDialog({ onDone }: Props) {
       onDone()
     }
   })
-  const { label: statusLabel, color: statusColor } = getBridgeStatus({
+  const { label: statusLabel, color: statusColor } = getWireStatus({
     error,
     connected,
     sessionActive,

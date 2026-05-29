@@ -74,7 +74,7 @@ export interface LLMSystemMessage {
 /** user 消息 — 用户输入，可包含文本和多模态内容 */
 export interface LLMUserMessage {
   role: 'user'
-  content: string | UserContentBlock[]
+  content: UserContentBlock[]
 }
 
 /** assistant 消息 — 模型响应，可包含文本和工具调用 */
@@ -90,6 +90,8 @@ export interface LLMAssistantMessage {
 
   /** 模型使用的 token 用量 */
   usage?: TokenUsage
+  /** Anthropic context management beta — API 响应中携带，下次请求时回传 */
+  context_management?: Record<string, unknown> | null
   /** 允许运行时附加额外属性（如 stop_reason 等兼容字段） */
   [key: string]: unknown
 }

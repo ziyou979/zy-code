@@ -1,4 +1,4 @@
-import { getBridgeDebugHandle } from '../bridge/bridgeDebug.js'
+import { getWireDebugHandle } from '../bridge/bridgeDebug.js'
 import type { Command } from '../commands.js'
 import type { LocalCommandCall } from '../types/command.js'
 import { isInternalBuild } from '../utils/envUtils.js'
@@ -40,17 +40,17 @@ import { isInternalBuild } from '../utils/envUtils.js'
 
 const USAGE = `/bridge-kick <subcommand>
   close <code>              fire ws_closed with the given code (e.g. 1002)
-  poll <status> [type]      next poll throws BridgeFatalError(status, type)
+  poll <status> [type]      next poll throws WireFatalError(status, type)
   poll transient            next poll throws axios-style rejection (5xx/net)
   register fail [N]         next N registers transient-fail (default 1)
   register fatal            next register 403s (terminal)
   reconnect-session fail    next POST /bridge/reconnect fails
-  heartbeat <status>        next heartbeat throws BridgeFatalError(status)
+  heartbeat <status>        next heartbeat throws WireFatalError(status)
   reconnect                 call reconnectEnvironmentWithSession directly
   status                    print bridge state`
 
 const call: LocalCommandCall = async (args) => {
-  const h = getBridgeDebugHandle()
+  const h = getWireDebugHandle()
   if (!h) {
     return {
       type: 'text',
@@ -107,14 +107,14 @@ const call: LocalCommandCall = async (args) => {
       h.wakePollLoop()
       return {
         type: 'text',
-        value: `Next poll will throw BridgeFatalError(${status}, ${errorType}). Poll loop woken.`,
+        value: `Next poll will throw WireFatalError(${status}, ${errorType}). Poll loop woken.`,
       }
     }
 
     case 'register': {
       if (a === 'fatal') {
         h.injectFault({
-          method: 'registerBridgeEnvironment',
+          method: 'registerWireEnvironment',
           kind: 'fatal',
           status: 403,
           errorType: 'permission_error',
@@ -122,19 +122,19 @@ const call: LocalCommandCall = async (args) => {
         })
         return {
           type: 'text',
-          value: 'Next registerBridgeEnvironment will 403. Trigger with close/reconnect.',
+          value: 'Next registerWireEnvironment will 403. Trigger with close/reconnect.',
         }
       }
       const n = Number(b) || 1
       h.injectFault({
-        method: 'registerBridgeEnvironment',
+        method: 'registerWireEnvironment',
         kind: 'transient',
         status: 503,
         count: n,
       })
       return {
         type: 'text',
-        value: `Next ${n} registerBridgeEnvironment call(s) will transient-fail. Trigger with close/reconnect.`,
+        value: `Next ${n} registerWireEnvironment call(s) will transient-fail. Trigger with close/reconnect.`,
       }
     }
 

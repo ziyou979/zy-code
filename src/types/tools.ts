@@ -1,9 +1,9 @@
 // Tool Types - shared type definitions for tools.
 
 import type {
-  NormalizedAssistantMessage,
-  NormalizedMessage,
-  NormalizedUserMessage,
+  AssistantMessage,
+  Message,
+  UserMessage,
 } from './message.js'
 
 export interface ToolDefinition {
@@ -52,7 +52,7 @@ export type MCPProgress = {
 
 export type AgentToolProgress = {
   type: 'agent_progress'
-  message: NormalizedUserMessage | NormalizedAssistantMessage
+  message: UserMessage | AssistantMessage
   prompt: string
   agentId: string
 }
@@ -63,7 +63,7 @@ export type AgentToolProgress = {
 
 export type SkillToolProgress = {
   type: 'skill_progress'
-  message: NormalizedMessage
+  message: Message
   prompt: string
   agentId: string
 }
@@ -105,7 +105,7 @@ export type REPLToolProgress = {
 // SDK Workflow Progress
 // ============================================================
 
-export type BridgeWorkflowProgress = {
+export type WireWorkflowProgress = {
   type: string
   index: number
   phaseIndex?: number

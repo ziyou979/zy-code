@@ -1,4 +1,4 @@
-import type { StdoutMessage } from 'src/types/bridge/control.js'
+import type { StdoutMessage } from 'src/types/wire/control.js'
 import { CCRClient } from '../cli/transports/ccrClient.js'
 import type { HybridTransport } from '../cli/transports/HybridTransport.js'
 import { SSETransport } from '../cli/transports/SSETransport.js'
@@ -20,7 +20,7 @@ import { registerWorker } from './workSecret.js'
  * NOT through SSETransport.write() — SSETransport.write() targets the
  * Session-Ingress POST URL shape, which is wrong for CCR v2.
  */
-export type ReplBridgeTransport = {
+export type ReplWireTransport = {
   write(message: StdoutMessage): Promise<void>
   writeBatch(messages: StdoutMessage[]): Promise<void>
   close(): void
@@ -75,7 +75,7 @@ export type ReplBridgeTransport = {
  * no-op wrapper that exists only so replBridge's `transport` variable
  * has a single type.
  */
-export function createV1ReplTransport(hybrid: HybridTransport): ReplBridgeTransport {
+export function createV1ReplTransport(hybrid: HybridTransport): ReplWireTransport {
   return {
     write: (msg) => hybrid.write(msg),
     writeBatch: (msgs) => hybrid.writeBatch(msgs),
@@ -151,7 +151,7 @@ export async function createV2ReplTransport(opts: {
    * When omitted, falls back to the env var (single-session callers).
    */
   getAuthToken?: () => string | undefined
-}): Promise<ReplBridgeTransport> {
+}): Promise<ReplWireTransport> {
   const { sessionUrl, ingressToken, sessionId, initialSequenceNum, getAuthToken } = opts
 
   // Auth header builder. If getAuthToken is provided, read from it

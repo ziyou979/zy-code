@@ -2,7 +2,7 @@
  * Shared transport-layer helpers for bridge message handling.
  *
  * Extracted from replBridge.ts so both the env-based core (initBridgeCore)
- * and the env-less core (initEnvLessBridgeCore) can use the same ingress
+ * and the env-less core (initEnvLessWireCore) can use the same ingress
  * parsing, control-request handling, and echo-dedup machinery.
  *
  * Everything here is pure — no closure over bridge-specific state. All
@@ -11,9 +11,9 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import type { BridgeMessage } from '../types/index.js'
-import type { BridgeControlRequest, BridgeControlResponse } from '../types/bridge/control.js'
-import type { BridgeResultSuccess } from '../types/index.js'
+import type { WireMessage } from '../types/index.js'
+import type { WireControlRequest, WireControlResponse } from '../types/wire/control.js'
+import type { WireResultSuccess } from '../types/index.js'
 import { logEvent } from '../services/analytics/index.js'
 import { EMPTY_USAGE } from '../services/api/emptyUsage.js'
 import type { Message } from '../types/message.js'
@@ -23,21 +23,21 @@ import { stripDisplayTagsAllowEmpty } from '../utils/displayTags.js'
 import { errorMessage } from '../utils/errors.js'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
 import { jsonParse } from '../utils/slowOperations.js'
-import type { ReplBridgeTransport } from './replBridgeTransport.js'
+import type { ReplWireTransport } from './replBridgeTransport.js'
 
 // ─── Type guards ─────────────────────────────────────────────────────────────
 
-/** Type predicate for parsed WebSocket messages. BridgeMessage is a
+/** Type predicate for parsed WebSocket messages. WireMessage is a
  *  discriminated union on `type` — validating the discriminant is
  *  sufficient for the predicate; callers narrow further via the union. */
-export function isSDKMessage(value: unknown): value is BridgeMessage {
+export function isSDKMessage(value: unknown): value is WireMessage {
   return (
     value !== null && typeof value === 'object' && 'type' in value && typeof value.type === 'string'
   )
 }
 
 /** Type predicate for control_response messages from the server. */
-export function isSDKControlResponse(value: unknown): value is BridgeControlResponse {
+export function isSDKControlResponse(value: unknown): value is WireControlResponse {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -48,7 +48,7 @@ export function isSDKControlResponse(value: unknown): value is BridgeControlResp
 }
 
 /** Type predicate for control_request messages from the server. */
-export function isSDKControlRequest(value: unknown): value is BridgeControlRequest {
+export function isSDKControlRequest(value: unknown): value is WireControlRequest {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -64,7 +64,7 @@ export function isSDKControlRequest(value: unknown): value is BridgeControlReque
  * The server only wants user/assistant turns and slash-command system events;
  * everything else (tool_result, progress, etc.) is internal REPL chatter.
  */
-export function isEligibleBridgeMessage(m: Message): boolean {
+export function isEligibleWireMessage(m: Message): boolean {
   // Virtual messages (REPL inner calls) are display-only — bridge/SDK
   // consumers see the REPL tool_use/result which summarizes the work.
   if ((m.type === 'user' || m.type === 'assistant') && m.isVirtual) {
@@ -128,14 +128,14 @@ export function handleIngressMessage(
   data: string,
   recentPostedUUIDs: BoundedUUIDSet,
   recentInboundUUIDs: BoundedUUIDSet,
-  onInboundMessage: ((msg: BridgeMessage) => void | Promise<void>) | undefined,
-  onPermissionResponse?: ((response: BridgeControlResponse) => void) | undefined,
-  onControlRequest?: ((request: BridgeControlRequest) => void) | undefined,
+  onInboundMessage: ((msg: WireMessage) => void | Promise<void>) | undefined,
+  onPermissionResponse?: ((response: WireControlResponse) => void) | undefined,
+  onControlRequest?: ((request: WireControlRequest) => void) | undefined,
 ): void {
   try {
     const parsed: unknown = normalizeControlMessageKeys(jsonParse(data))
 
-    // control_response is not an BridgeMessage — check before the type guard
+    // control_response is not an WireMessage — check before the type guard
     if (isSDKControlResponse(parsed)) {
       logForDebugging('[bridge:repl] Ingress message type=control_response')
       onPermissionResponse?.(parsed)
@@ -198,7 +198,7 @@ export function handleIngressMessage(
 // ─── Server-initiated control requests ───────────────────────────────────────
 
 export type ServerControlRequestHandlers = {
-  transport: ReplBridgeTransport | null
+  transport: ReplWireTransport | null
   sessionId: string
   /**
    * When true, all mutable requests (interrupt, set_model, set_permission_mode,
@@ -227,7 +227,7 @@ const OUTBOUND_ONLY_ERROR =
  * collaborators as params so both cores can use it.
  */
 export function handleServerControlRequest(
-  request: BridgeControlRequest,
+  request: WireControlRequest,
   handlers: ServerControlRequestHandlers,
 ): void {
   const {
@@ -244,7 +244,7 @@ export function handleServerControlRequest(
     return
   }
 
-  let response: BridgeControlResponse
+  let response: WireControlResponse
 
   // Outbound-only: reply error for mutable requests so zy.ai doesn't show
   // false success. initialize must still succeed (server kills the connection
@@ -377,10 +377,10 @@ export function handleServerControlRequest(
 // ─── Result message (for session archival on teardown) ───────────────────────
 
 /**
- * Build a minimal `BridgeResultSuccess` message for session archival.
+ * Build a minimal `WireResultSuccess` message for session archival.
  * The server needs this event before a WS close to trigger archival.
  */
-export function makeResultMessage(sessionId: string): BridgeResultSuccess {
+export function makeResultMessage(sessionId: string): WireResultSuccess {
   return {
     type: 'result',
     subtype: 'success',

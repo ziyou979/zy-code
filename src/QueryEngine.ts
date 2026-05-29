@@ -3,11 +3,11 @@ import { randomUUID } from 'node:crypto'
 import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
 import type {
   PermissionMode,
-  BridgeCompactBoundaryMessage,
-  BridgeMessage,
-  BridgePermissionDenial,
-  BridgeStatus,
-  BridgeUserMessageReplay,
+  WireCompactBoundaryMessage,
+  WireMessage,
+  WirePermissionDenial,
+  WireStatus,
+  WireUserMessageReplay,
 } from 'src/types/index.js'
 import { accumulateUsage, updateUsage } from 'src/services/api/usageTracker.js'
 import type { NonNullableUsage } from 'src/services/api/logging.js'
@@ -120,7 +120,7 @@ export type QueryEngineConfig = {
   /** 处理由 MCP 工具 -32042 错误触发的 URL 诱导请求。 */
   handleElicitation?: ToolUseContext['handleElicitation']
   includePartialMessages?: boolean
-  setSDKStatus?: (status: BridgeStatus) => void
+  setSDKStatus?: (status: WireStatus) => void
   abortController?: AbortController
   orphanedPermission?: OrphanedPermission
 }
@@ -137,7 +137,7 @@ export class QueryEngine {
   private config: QueryEngineConfig
   private mutableMessages: Message[]
   private abortController: AbortController
-  private permissionDenials: BridgePermissionDenial[]
+  private permissionDenials: WirePermissionDenial[]
   private totalUsage: NonNullableUsage
   private hasHandledOrphanedPermission = false
   private readFileState: FileStateCache
@@ -159,7 +159,7 @@ export class QueryEngine {
   async *submitMessage(
     prompt: string | UserContentBlock[],
     options?: { uuid?: string; isMeta?: boolean },
-  ): AsyncGenerator<BridgeMessage, void, unknown> {
+  ): AsyncGenerator<WireMessage, void, unknown> {
     const {
       cwd,
       commands,
@@ -503,31 +503,33 @@ export class QueryEngine {
       // 使用 messagesFromUserInput（而非 replayableMessages）获取命令输出，
       // 因为 selectableUserMessagesFilter 会排除 local-command-stdout 标签。
       for (const msg of messagesFromUserInput) {
-        if (
-          msg.type === 'user' &&
-          typeof msg.message.content === 'string' &&
-          (msg.message.content.includes(`<${LOCAL_COMMAND_STDOUT_TAG}>`) ||
-            msg.message.content.includes(`<${LOCAL_COMMAND_STDERR_TAG}>`) ||
-            msg.isCompactSummary)
-        ) {
-          yield {
-            type: 'user',
-            message: {
-              ...msg.message,
-              content: stripAnsi(msg.message.content),
-            },
-            session_id: getSessionId(),
-            parent_tool_use_id: null,
-            uuid: msg.uuid,
-            timestamp: msg.timestamp,
-            isReplay: !msg.isCompactSummary,
-            isSynthetic: msg.isMeta || msg.isVisibleInTranscriptOnly,
-          } as BridgeUserMessageReplay
+        if (msg.type === 'user') {
+          const textBlock = msg.message.content.find((b: { type: string }) => b.type === 'text') as { type: 'text'; text: string } | undefined
+          const textContent = textBlock?.text ?? ''
+          if (
+            textContent.includes(`<${LOCAL_COMMAND_STDOUT_TAG}>`) ||
+            textContent.includes(`<${LOCAL_COMMAND_STDERR_TAG}>`) ||
+            msg.isCompactSummary
+          ) {
+            yield {
+              type: 'user',
+              message: {
+                ...msg.message,
+                content: msg.message.content.map((b: any) => b.type === 'text' ? { ...b, text: stripAnsi(b.text) } : b),
+              },
+              session_id: getSessionId(),
+              parent_tool_use_id: null,
+              uuid: msg.uuid,
+              timestamp: msg.timestamp,
+              isReplay: !msg.isCompactSummary,
+              isSynthetic: msg.isMeta || msg.isVisibleInTranscriptOnly,
+            } as WireUserMessageReplay
+          }
         }
 
         // 本地命令输出——作为合成的 assistant 消息产生，使 RC 将其渲染为
         // assistant 样式文本而非用户气泡。以 assistant 类型（而非专用的
-        // BridgeLocalCommandOutputMessage 系统子类型）发出，以便移动端客户端
+        // WireLocalCommandOutputMessage 系统子类型）发出，以便移动端客户端
         // 和会话入口能够解析。
         if (
           msg.type === 'system' &&
@@ -546,7 +548,7 @@ export class QueryEngine {
             session_id: getSessionId(),
             uuid: msg.uuid,
             compact_metadata: toSDKCompactMetadata(msg.compactMetadata),
-          } as BridgeCompactBoundaryMessage
+          } as WireCompactBoundaryMessage
         }
       }
 
@@ -676,7 +678,7 @@ export class QueryEngine {
                 uuid: msgToAck.uuid,
                 timestamp: msgToAck.timestamp,
                 isReplay: true,
-              } as BridgeUserMessageReplay
+              } as WireUserMessageReplay
             }
           }
         }
@@ -831,7 +833,7 @@ export class QueryEngine {
               uuid: ((message as any).attachment as any).source_uuid || message.uuid,
               timestamp: message.timestamp,
               isReplay: true,
-            } as BridgeUserMessageReplay
+            } as WireUserMessageReplay
           }
           break
         case 'stream_request_start':
@@ -1059,7 +1061,7 @@ export class QueryEngine {
       usage: this.totalUsage,
       modelUsage: getModelUsage(),
       permission_denials: this.permissionDenials,
-      structured_output: structuredOutputFromTool,
+      structured_output: structuredOutputFromTool as Record<string, unknown> | undefined,
       uuid: randomUUID(),
     }
   }
@@ -1184,9 +1186,9 @@ export async function* ask({
   includePartialMessages?: boolean
   handleElicitation?: ToolUseContext['handleElicitation']
   agents?: AgentDefinition[]
-  setSDKStatus?: (status: BridgeStatus) => void
+  setSDKStatus?: (status: WireStatus) => void
   orphanedPermission?: OrphanedPermission
-}): AsyncGenerator<BridgeMessage, void, unknown> {
+}): AsyncGenerator<WireMessage, void, unknown> {
   const engine = new QueryEngine({
     cwd,
     tools,

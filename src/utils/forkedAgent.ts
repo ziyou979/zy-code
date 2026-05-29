@@ -210,7 +210,9 @@ export async function prepareForkedCommandContext(
   }
 
   // 准备提示词消息
-  const promptMessages = [createUserMessage({ content: skillContent })]
+  const promptMessages = [
+    createUserMessage({ content: [{ type: 'text' as const, text: skillContent }] }),
+  ]
 
   return {
     skillContent,

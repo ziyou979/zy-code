@@ -849,8 +849,8 @@ export function setPromptId(id: string | null): void {
   STATE.promptId = id
 }
 
-export function isReplBridgeActive(): boolean {
-  return isInternalBuild() ? Boolean((STATE as Record<string, unknown>).replBridgeActive) : false
+export function isReplWireActive(): boolean {
+  return isInternalBuild() ? Boolean((STATE as Record<string, unknown>).replWireActive) : false
 }
 
 // 不要在此处添加更多状态 — 添加全局状态需谨慎

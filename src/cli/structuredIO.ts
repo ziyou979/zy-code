@@ -6,16 +6,16 @@ import type {
   HookInput,
   HookJSONOutput,
   PermissionUpdate,
-  BridgeMessage,
-  BridgeUserMessage,
+  WireMessage,
+  WireUserMessage,
 } from 'src/types/index.js'
-import { BridgeControlElicitationResponseSchema } from 'src/types/bridge/controlSchemas.js'
+import { WireControlElicitationResponseSchema } from 'src/types/wire/controlSchemas.js'
 import type {
-  BridgeControlRequest,
-  BridgeControlResponse,
+  WireControlRequest,
+  WireControlResponse,
   StdinMessage,
   StdoutMessage,
-} from 'src/types/bridge/control.js'
+} from 'src/types/wire/control.js'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
 import type { Tool, ToolUseContext } from 'src/Tool.js'
 import { type HookCallback, hookJSONOutputSchema } from 'src/types/hooks/index.js'
@@ -115,7 +115,7 @@ type PendingRequest<T> = {
   resolve: (result: T) => void
   reject: (error: unknown) => void
   schema?: z.Schema
-  request: BridgeControlRequest
+  request: WireControlRequest
 }
 
 /**
@@ -128,7 +128,7 @@ type PendingRequest<T> = {
 const MAX_RESOLVED_TOOL_USE_IDS = 1000
 
 export class StructuredIO {
-  readonly structuredInput: AsyncGenerator<StdinMessage | BridgeMessage>
+  readonly structuredInput: AsyncGenerator<StdinMessage | WireMessage>
   private readonly pendingRequests = new Map<string, PendingRequest<unknown>>()
 
   // CCR external_metadata read back on worker start; null when the
@@ -136,7 +136,7 @@ export class StructuredIO {
   restoredWorkerState: Promise<SessionExternalMetadata | null> = Promise.resolve(null)
 
   private inputClosed = false
-  private unexpectedResponseCallback?: (response: BridgeControlResponse) => Promise<void>
+  private unexpectedResponseCallback?: (response: WireControlResponse) => Promise<void>
 
   // Tracks tool_use IDs that have been resolved through the normal permission
   // flow (or aborted by a hook). When a duplicate control_response arrives
@@ -146,7 +146,7 @@ export class StructuredIO {
   // error from the API.
   private readonly resolvedToolUseIds = new Set<string>()
   private prependedLines: string[] = []
-  private onControlRequestSent?: (request: BridgeControlRequest) => void
+  private onControlRequestSent?: (request: WireControlRequest) => void
   private onControlRequestResolved?: (requestId: string) => void
 
   // sendRequest() and print.ts both enqueue here; the drain loop is the
@@ -165,7 +165,7 @@ export class StructuredIO {
    * Records a tool_use ID as resolved so that late/duplicate control_response
    * messages for the same tool are ignored by the orphan handler.
    */
-  private trackResolvedToolUseId(request: BridgeControlRequest): void {
+  private trackResolvedToolUseId(request: WireControlRequest): void {
     if (request.request.subtype === 'can_use_tool') {
       this.resolvedToolUseIds.add(request.request.tool_use_id)
       if (this.resolvedToolUseIds.size > MAX_RESOLVED_TOOL_USE_IDS) {
@@ -198,9 +198,9 @@ export class StructuredIO {
       `${jsonStringify({
         type: 'user',
         session_id: '',
-        message: { role: 'user', content },
+        message: { role: 'user', content: [{ type: 'text' as const, text: content }] },
         parent_tool_use_id: null,
-      } satisfies BridgeUserMessage)}\n`,
+      } satisfies WireUserMessage)}\n`,
     )
   }
 
@@ -259,7 +259,7 @@ export class StructuredIO {
   }
 
   setUnexpectedResponseCallback(
-    callback: (response: BridgeControlResponse) => Promise<void>,
+    callback: (response: WireControlResponse) => Promise<void>,
   ): void {
     this.unexpectedResponseCallback = callback
   }
@@ -272,7 +272,7 @@ export class StructuredIO {
    * Also sends a control_cancel_request to the SDK consumer so its canUseTool
    * callback is aborted via the signal — otherwise the callback hangs.
    */
-  injectControlResponse(response: BridgeControlResponse): void {
+  injectControlResponse(response: WireControlResponse): void {
     const requestId = response.response?.request_id
     if (!requestId) {
       return
@@ -309,7 +309,7 @@ export class StructuredIO {
    * is written to stdout. Used by the bridge to forward permission
    * requests to zy.ai.
    */
-  setOnControlRequestSent(callback: ((request: BridgeControlRequest) => void) | undefined): void {
+  setOnControlRequestSent(callback: ((request: WireControlRequest) => void) | undefined): void {
     this.onControlRequestSent = callback
   }
 
@@ -322,13 +322,13 @@ export class StructuredIO {
     this.onControlRequestResolved = callback
   }
 
-  private async processLine(line: string): Promise<StdinMessage | BridgeMessage | undefined> {
+  private async processLine(line: string): Promise<StdinMessage | WireMessage | undefined> {
     // Skip empty lines (e.g. from double newlines in piped stdin)
     if (!line) {
       return undefined
     }
     try {
-      const message = normalizeControlMessageKeys(jsonParse(line)) as StdinMessage | BridgeMessage
+      const message = normalizeControlMessageKeys(jsonParse(line)) as StdinMessage | WireMessage
       if (message.type === 'keep_alive') {
         // Silently ignore keep-alive messages
         return undefined
@@ -443,12 +443,12 @@ export class StructuredIO {
   }
 
   private async sendRequest<Response>(
-    request: BridgeControlRequest['request'],
+    request: WireControlRequest['request'],
     schema: z.Schema,
     signal?: AbortSignal,
     requestId: string = randomUUID(),
   ): Promise<Response> {
-    const message: BridgeControlRequest = {
+    const message: WireControlRequest = {
       type: 'control_request',
       request_id: requestId,
       request,
@@ -672,7 +672,7 @@ export class StructuredIO {
           elicitation_id: elicitationId,
           requested_schema: requestedSchema,
         },
-        BridgeControlElicitationResponseSchema(),
+        WireControlElicitationResponseSchema(),
         signal,
       )
       return result

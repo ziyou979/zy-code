@@ -36,7 +36,7 @@ export async function createCodeSession(
     response = await axios.post(
       url,
       // bridge: {} is the positive signal for the oneof runner — omitting it
-      // (or sending environment_id: "") now 400s. BridgeRunner is an empty
+      // (or sending environment_id: "") now 400s. WireRunner is an empty
       // message today; it's a placeholder for future bridge-specific options.
       { title, bridge: {}, ...(tags?.length ? { tags } : {}) },
       {

@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { buildTool, type ToolDef, toolMatchesName } from 'src/Tool.js'
-import type { Message as MessageType, NormalizedUserMessage } from 'src/types/message.js'
+import type { Message as MessageType, UserMessage } from 'src/types/message.js'
 import { getQuerySourceForAgent } from 'src/utils/promptCategory.js'
 import { z } from 'zod/v4'
 import {
@@ -58,7 +58,7 @@ import { getAgentModel } from '../../services/model/agent.js'
 import { permissionModeSchema } from '../../utils/permissions/PermissionMode.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import { filterDeniedAgents, getDenyRuleForAgent } from '../../utils/permissions/permissions.js'
-import { enqueueBridgeEvent } from '../../utils/bridgeEventQueue.js'
+import { enqueueWireEvent } from '../../utils/bridgeEventQueue.js'
 import { writeAgentMetadata } from '../../utils/sessionStorage.js'
 import { sleep } from '../../utils/sleep.js'
 import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
@@ -757,7 +757,7 @@ export const AgentTool = buildTool({
       }
       promptMessages = [
         createUserMessage({
-          content: prompt,
+          content: [{ type: 'text' as const, text: prompt }],
         }),
       ]
     }
@@ -831,7 +831,7 @@ export const AgentTool = buildTool({
     if (isForkPath && worktreeInfo) {
       promptMessages.push(
         createUserMessage({
-          content: buildWorktreeNotice(getCwd(), worktreeInfo.worktreePath),
+          content: [{ type: 'text' as const, text: buildWorktreeNotice(getCwd(), worktreeInfo.worktreePath) }],
         }),
       )
     }
@@ -1041,7 +1041,7 @@ export const AgentTool = buildTool({
           if (promptMessages.length > 0) {
             const normalizedPromptMessages = normalizeMessages(promptMessages)
             const normalizedFirstMessage = normalizedPromptMessages.find(
-              (m): m is NormalizedUserMessage => m.type === 'user',
+              (m): m is UserMessage => m.type === 'user',
             )
             if (normalizedFirstMessage && normalizedFirstMessage.type === 'user' && onProgress) {
               onProgress({
@@ -1499,11 +1499,11 @@ export const AgentTool = buildTool({
             if (foregroundTaskId) {
               unregisterAgentForeground(foregroundTaskId, rootSetAppState)
               // Notify SDK consumers (e.g. VS Code subagent panel) that this
-              // foreground agent is done. Goes through drainBridgeEvents() — does
+              // foreground agent is done. Goes through drainWireEvents() — does
               // NOT trigger the print.ts XML task_notification parser or the LLM loop.
               if (!wasBackgrounded) {
                 const progress = getProgressUpdate(syncTracker)
-                enqueueBridgeEvent({
+                enqueueWireEvent({
                   type: 'system',
                   subtype: 'task_notification',
                   task_id: foregroundTaskId,

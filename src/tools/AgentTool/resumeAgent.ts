@@ -155,7 +155,7 @@ export async function resumeAgentBackground({
 
   const runAgentParams: Parameters<typeof runAgent>[0] = {
     agentDefinition: selectedAgent,
-    promptMessages: [...resumedMessages, createUserMessage({ content: prompt })],
+    promptMessages: [...resumedMessages, createUserMessage({ content: [{ type: 'text' as const, text: prompt }] })],
     toolUseContext,
     canUseTool,
     isAsync: true,

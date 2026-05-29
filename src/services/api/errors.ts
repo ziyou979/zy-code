@@ -1,5 +1,5 @@
 import { AFK_MODE_BETA_HEADER } from 'src/constants/betas.js'
-import type { BridgeAssistantMessageError } from 'src/types/index.js'
+import type { WireAssistantMessageError } from 'src/types/index.js'
 import type { AssistantMessage, Message, UserMessage } from 'src/types/message.js'
 import { getApiKeyWithSource, getOauthAccountInfo, getZyAIOAuthTokens } from 'src/utils/auth.js'
 import { createAssistantAPIErrorMessage, NO_RESPONSE_REQUESTED } from 'src/utils/messages.js'
@@ -1023,7 +1023,7 @@ export function classifyAPIError(error: unknown): string {
   return 'unknown'
 }
 
-export function categorizeRetryableAPIError(error: APIErrorLike): BridgeAssistantMessageError {
+export function categorizeRetryableAPIError(error: APIErrorLike): WireAssistantMessageError {
   if (error.status === 529 || error.message?.includes('"type":"overloaded_error"')) {
     return 'rate_limit'
   }

@@ -90,7 +90,7 @@ async function selectRelevantMemories(
       messages: [
         {
           role: 'user',
-          content: `Query: ${query}\n\nAvailable memories:\n${manifest}${toolsSection}`,
+          content: [{ type: 'text' as const, text: `Query: ${query}\n\nAvailable memories:\n${manifest}${toolsSection}` }],
         },
       ],
       max_tokens: 256,

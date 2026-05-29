@@ -127,7 +127,7 @@ async function main(): Promise<void> {
     profileCheckpoint('cli_bridge_path')
     const { enableConfigs } = await import('../utils/config.js')
     enableConfigs()
-    const { getBridgeDisabledReason, checkBridgeMinVersion } = await import(
+    const { getWireDisabledReason, checkWireMinVersion } = await import(
       '../bridge/bridgeEnabled.js'
     )
     const { BRIDGE_LOGIN_ERROR } = await import('../bridge/types.js')
@@ -136,17 +136,17 @@ async function main(): Promise<void> {
 
     // 认证检查必须放在 GrowthBook 门控检查之前 —— 没有认证，
     // GrowthBook 没有用户上下文，会返回过期/默认的 false。
-    // getBridgeDisabledReason 会等待 GB 初始化，因此返回值是最新的
+    // getWireDisabledReason 会等待 GB 初始化，因此返回值是最新的
     //（而非过期的磁盘缓存），但 init 仍需要认证头才能工作。
     const { getZyAIOAuthTokens } = await import('../utils/auth.js')
     if (!getZyAIOAuthTokens()?.accessToken) {
       exitWithError(BRIDGE_LOGIN_ERROR)
     }
-    const disabledReason = await getBridgeDisabledReason()
+    const disabledReason = await getWireDisabledReason()
     if (disabledReason) {
       exitWithError(`Error: ${disabledReason}`)
     }
-    const versionError = checkBridgeMinVersion()
+    const versionError = checkWireMinVersion()
     if (versionError) {
       exitWithError(versionError)
     }

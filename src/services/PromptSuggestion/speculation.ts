@@ -355,7 +355,7 @@ async function generatePipelinedSuggestion(
       ...context,
       messages: [
         ...context.messages,
-        createUserMessage({ content: suggestionText }),
+        createUserMessage({ content: [{ type: 'text' as const, text: suggestionText }] }),
         ...speculatedMessages,
       ],
     }
@@ -453,7 +453,7 @@ export async function startSpeculation(
 
   try {
     const result = await runForkedAgent({
-      promptMessages: [createUserMessage({ content: suggestionText })],
+      promptMessages: [createUserMessage({ content: [{ type: 'text' as const, text: suggestionText }] })],
       cacheSafeParams: cacheSafeParams ?? createCacheSafeParams(context),
       skipTranscript: true,
       canUseTool: async (tool, input) => {
@@ -818,7 +818,7 @@ export async function handleSpeculationAccept(
     let cleanMessages = prepareMessagesForInjection(speculationMessages)
 
     // Inject user message first for instant visual feedback before any async work
-    const userMessage = createUserMessage({ content: input })
+    const userMessage = createUserMessage({ content: [{ type: 'text' as const, text: input }] })
     setMessages((prev) => [...prev, userMessage])
 
     const result = await acceptSpeculation(speculationState, setAppState, cleanMessages.length)
@@ -878,7 +878,7 @@ export async function handleSpeculationAccept(
         ...speculationState.contextRef.current,
         messages: [
           ...speculationState.contextRef.current.messages,
-          createUserMessage({ content: input }),
+          createUserMessage({ content: [{ type: 'text' as const, text: input }] }),
           ...cleanMessages,
         ],
       }

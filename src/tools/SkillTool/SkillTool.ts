@@ -660,7 +660,8 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
           // Filter out command-message since SkillTool handles display
           if (m.type === 'user' && 'message' in m) {
             const content = m.message.content
-            if (typeof content === 'string' && content.includes(`<${COMMAND_MESSAGE_TAG}>`)) {
+            const textBlock = content.find((b: { type: string }) => b.type === 'text') as { type: 'text'; text: string } | undefined
+            if (textBlock && textBlock.text.includes(`<${COMMAND_MESSAGE_TAG}>`)) {
               return false
             }
           }
@@ -985,7 +986,7 @@ async function executeRemoteSkill(
   return {
     data: { success: true, commandName, status: 'inline' },
     newMessages: tagMessagesWithToolUseID(
-      [createUserMessage({ content: finalContent, isMeta: true })],
+      [createUserMessage({ content: [{ type: 'text' as const, text: finalContent }], isMeta: true })],
       toolUseID,
     ),
   }

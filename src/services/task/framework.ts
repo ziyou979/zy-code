@@ -11,7 +11,7 @@ import type { AppState } from '../../state/AppState.js'
 import { isTerminalTaskStatus, type TaskStatus, type TaskType } from '../../Task.js'
 import type { TaskState } from '../../tasks/types.js'
 import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
-import { enqueueBridgeEvent } from '../../utils/bridgeEventQueue.js'
+import { enqueueWireEvent } from '../../utils/bridgeEventQueue.js'
 import { getTaskOutputDelta, getTaskOutputPath } from './diskOutput.js'
 
 // Standard polling interval for all tasks
@@ -99,7 +99,7 @@ export function registerTask(task: TaskState, setAppState: SetAppState): void {
     return
   }
 
-  enqueueBridgeEvent({
+  enqueueWireEvent({
     type: 'system',
     subtype: 'task_started',
     task_id: task.id,

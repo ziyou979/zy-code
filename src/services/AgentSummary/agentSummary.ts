@@ -101,7 +101,11 @@ export function startAgentSummarization(
       // forkParams.toolUseContext（onCacheSafeParams 时捕获的子代理 LIVE 状态）
       // 克隆。不需要显式覆盖。
       const result = await runForkedAgent({
-        promptMessages: [createUserMessage({ content: buildSummaryPrompt(previousSummary) })],
+        promptMessages: [
+          createUserMessage({
+            content: [{ type: 'text' as const, text: buildSummaryPrompt(previousSummary) }],
+          }),
+        ],
         cacheSafeParams: forkParams,
         canUseTool,
         querySource: 'agent_summary' as any,

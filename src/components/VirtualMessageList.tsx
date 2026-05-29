@@ -129,7 +129,7 @@ type Props = {
  * "Real" = 人类输入的内容：不是工具结果，不是 XML 包装的负载
  *（<bash-stdout>、<command-message>、<teammate-message> 等），不是元数据。
  *
- * 两种形状会到这里：NormalizedUserMessage（正常提示）和
+ * 两种形状会到这里：UserMessage（正常提示）和
  * AttachmentMessage（type==='queued_command'，在工具执行期间发送的提示——
  * 它们在下个回合作为附件被排出，参见 query.ts:1410）。两者在 UI 中都渲染为
  * ❯ 前缀的 UserTextMessage，所以两者都应该粘住。

@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto'
 import { getOauthConfig } from '../constants/oauth.js'
-import type { BridgeMessage } from '../types/index.js'
+import type { WireMessage } from '../types/index.js'
 import type {
-  BridgeControlCancelRequest,
-  BridgeControlRequest,
-  BridgeControlRequestInner,
-  BridgeControlResponse,
-} from '../types/bridge/control.js'
+  WireControlCancelRequest,
+  WireControlRequest,
+  WireControlRequestInner,
+  WireControlResponse,
+} from '../types/wire/control.js'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { logError } from '../utils/log.js'
@@ -38,10 +38,10 @@ const PERMANENT_CLOSE_CODES = new Set([
 type WebSocketState = 'connecting' | 'connected' | 'closed'
 
 type SessionsMessage =
-  | BridgeMessage
-  | BridgeControlRequest
-  | BridgeControlResponse
-  | BridgeControlCancelRequest
+  | WireMessage
+  | WireControlRequest
+  | WireControlResponse
+  | WireControlCancelRequest
 
 function isSessionsMessage(value: unknown): value is SessionsMessage {
   if (typeof value !== 'object' || value === null || !('type' in value)) {
@@ -77,7 +77,7 @@ type WebSocketLike = {
  * Protocol:
  * 1. Connect to wss://api.anthropic.com/v1/sessions/ws/{sessionId}/subscribe?organization_uuid=...
  * 2. Send auth message: { type: 'auth', credential: { type: 'oauth', token: '...' } }
- * 3. Receive BridgeMessage stream from the session
+ * 3. Receive WireMessage stream from the session
  */
 export class SessionsWebSocket {
   private ws: WebSocketLike | null = null
@@ -305,7 +305,7 @@ export class SessionsWebSocket {
   /**
    * Send a control response back to the session
    */
-  sendControlResponse(response: BridgeControlResponse): void {
+  sendControlResponse(response: WireControlResponse): void {
     if (!this.ws || this.state !== 'connected') {
       logError(new Error('[SessionsWebSocket] Cannot send: not connected'))
       return
@@ -318,13 +318,13 @@ export class SessionsWebSocket {
   /**
    * Send a control request to the session (e.g., interrupt)
    */
-  sendControlRequest(request: BridgeControlRequestInner): void {
+  sendControlRequest(request: WireControlRequestInner): void {
     if (!this.ws || this.state !== 'connected') {
       logError(new Error('[SessionsWebSocket] Cannot send: not connected'))
       return
     }
 
-    const controlRequest: BridgeControlRequest = {
+    const controlRequest: WireControlRequest = {
       type: 'control_request',
       request_id: randomUUID(),
       request,

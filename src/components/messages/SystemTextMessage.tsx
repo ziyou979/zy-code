@@ -82,7 +82,7 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
     return null
   }
   if ('subtype' in message && message.subtype === 'bridge_status') {
-    return <BridgeStatusMessage message={message} addMargin={addMargin} />
+    return <WireStatusMessage message={message} addMargin={addMargin} />
   }
   if ('subtype' in message && message.subtype === 'scheduled_task_fire') {
     return (
@@ -391,7 +391,7 @@ function _ThinkingMessage({ message, addMargin }) {
     </Box>
   )
 }
-function BridgeStatusMessage({ message, addMargin }) {
+function WireStatusMessage({ message, addMargin }) {
   const bg = useSelectedMessageBg()
   return (
     <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width={999}>

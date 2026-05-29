@@ -18,10 +18,13 @@ import type { Tools } from '../Tool.js'
 import { findToolByName } from '../Tool.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import type {
+  AssistantMessage,
+  AttachmentMessage,
   Message as MessageType,
-  NormalizedMessage,
   ProgressMessage as ProgressMessageType,
   RenderableMessage,
+  SystemMessage,
+  UserMessage,
 } from '../types/message.js'
 import { type AdvisorBlock, isAdvisorBlock } from '../utils/advisor.js'
 import { collapseBackgroundBashNotifications } from '../utils/collapseBackgroundBashNotifications.js'
@@ -556,7 +559,8 @@ const MessagesImpl = ({
     const messagesToShowNotTruncated = reorderMessagesInUI(
       compactAwareMessages
         .filter(
-          (msg): msg is Exclude<NormalizedMessage, ProgressMessageType> => msg.type !== 'progress',
+          (msg): msg is UserMessage | AssistantMessage | AttachmentMessage | SystemMessage =>
+            msg.type !== 'progress',
         )
         // CC-724：丢弃 AttachmentMessage 渲染为 null 的 attachment 消息
         // （hook_success、hook_additional_context、hook_cancelled 等）
@@ -949,7 +953,7 @@ const MessagesImpl = ({
 function expandKey(msg: RenderableMessage): string {
   return (
     (msg.type === 'assistant' || msg.type === 'user'
-      ? getToolUseID(msg as NormalizedMessage)
+      ? getToolUseID(msg as MessageType)
       : null) ?? msg.uuid
   )
 }
@@ -1044,7 +1048,7 @@ export function shouldRenderStatically(
           return lookups.resolvedToolUseIDs.has((block as any).id)
         }
       }
-      const toolUseID = getToolUseID(message as NormalizedMessage)
+      const toolUseID = getToolUseID(message as MessageType)
       if (!toolUseID) {
         return true
       }

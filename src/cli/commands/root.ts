@@ -1845,8 +1845,8 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     // 现在信任已建立且 GrowthBook 有认证头，
     // 解析 --remote-control / --rc 授权门。
     if (feature('BRIDGE_MODE') && remoteControlOption !== undefined) {
-      const { getBridgeDisabledReason } = await import('../../bridge/bridgeEnabled.js')
-      const disabledReason = await getBridgeDisabledReason()
+      const { getWireDisabledReason } = await import('../../bridge/bridgeEnabled.js')
+      const disabledReason = await getWireDisabledReason()
       remoteControl = disabledReason === null
       if (disabledReason) {
         process.stderr.write(chalk.yellow(`${disabledReason}\n--rc flag ignored.\n`))
@@ -2618,17 +2618,17 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     remoteConnectionStatus: 'connecting',
     remoteBackgroundTaskCount: 0,
     replBridgeEnabled: fullRemoteControl || ccrMirrorEnabled,
-    replBridgeExplicit: remoteControl,
+    replWireExplicit: remoteControl,
     replBridgeOutboundOnly: ccrMirrorEnabled,
-    replBridgeConnected: false,
-    replBridgeSessionActive: false,
-    replBridgeReconnecting: false,
-    replBridgeConnectUrl: undefined,
-    replBridgeSessionUrl: undefined,
-    replBridgeEnvironmentId: undefined,
-    replBridgeSessionId: undefined,
-    replBridgeError: undefined,
-    replBridgeInitialName: remoteControlName,
+    replWireConnected: false,
+    replWireSessionActive: false,
+    replWireReconnecting: false,
+    replWireConnectUrl: undefined,
+    replWireSessionUrl: undefined,
+    replWireEnvironmentId: undefined,
+    replWireSessionId: undefined,
+    replWireError: undefined,
+    replWireInitialName: remoteControlName,
     showRemoteCallout: false,
     notifications: {
       current: null,
@@ -2673,7 +2673,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     initialMessage: inputPrompt
       ? {
           message: createUserMessage({
-            content: String(inputPrompt),
+            content: [{ type: 'text' as const, text: String(inputPrompt) }],
           }),
         }
       : null,
@@ -3119,7 +3119,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
       // 如果提供了提示，从提示创建初始用户消息（CCR 回显它但我们忽略）
       const initialUserMessage = hasInitialPrompt
         ? createUserMessage({
-            content: remote,
+            content: [{ type: 'text' as const, text: remote ?? '' }],
           })
         : null
 

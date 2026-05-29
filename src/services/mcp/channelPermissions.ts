@@ -1,7 +1,7 @@
 /**
  * Permission prompts over channels (Telegram, iMessage, Discord).
  *
- * Mirrors `BridgePermissionCallbacks` — when CC hits a permission dialog,
+ * Mirrors `WirePermissionCallbacks` — when CC hits a permission dialog,
  * it ALSO sends the prompt via active channels and races the reply against
  * local UI / bridge / hooks / classifier. First resolver wins via claim().
  *
@@ -187,7 +187,7 @@ export function filterPermissionRelayClients<
  * Factory for the callbacks object. The pending Map is closed over — NOT
  * module-level (per src/AGENTS.md), NOT in AppState (functions-in-state
  * causes issues with equality/serialization). Same lifetime pattern as
- * `replBridgePermissionCallbacks`: constructed once per session inside
+ * `replWirePermissionCallbacks`: constructed once per session inside
  * a React hook, stable reference stored in AppState.
  *
  * resolve() is called from the dedicated notification handler

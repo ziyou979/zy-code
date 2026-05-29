@@ -1,12 +1,12 @@
 import type {
-  BridgeAssistantMessage,
-  BridgeCompactBoundaryMessage,
-  BridgeMessage,
-  BridgePartialAssistantMessage,
-  BridgeResultMessage,
-  BridgeStatusMessage,
-  BridgeSystemMessage,
-  BridgeToolProgressMessage,
+  WireAssistantMessage,
+  WireCompactBoundaryMessage,
+  WireMessage,
+  WirePartialAssistantMessage,
+  WireResultMessage,
+  WireStatusMessage,
+  WireSystemMessage,
+  WireToolProgressMessage,
 } from '../types/index.js'
 import { tSync } from '../i18n/index.js'
 import type { AssistantMessage, Message, StreamEvent, SystemMessage } from '../types/message.js'
@@ -15,16 +15,16 @@ import { fromSDKCompactMetadata } from '../utils/messages/mappers.js'
 import { createUserMessage } from '../utils/messages.js'
 
 /**
- * Converts BridgeMessage from CCR to REPL Message types.
+ * Converts WireMessage from CCR to REPL Message types.
  *
  * The CCR backend sends SDK-format messages via WebSocket. The REPL expects
  * internal Message types for rendering. This adapter bridges the two.
  */
 
 /**
- * Convert an BridgeAssistantMessage to an AssistantMessage
+ * Convert an WireAssistantMessage to an AssistantMessage
  */
-function convertAssistantMessage(msg: BridgeAssistantMessage): AssistantMessage {
+function convertAssistantMessage(msg: WireAssistantMessage): AssistantMessage {
   return {
     type: 'assistant',
     message: msg.message as any,
@@ -36,9 +36,9 @@ function convertAssistantMessage(msg: BridgeAssistantMessage): AssistantMessage 
 }
 
 /**
- * Convert an BridgePartialAssistantMessage (streaming) to a StreamEvent
+ * Convert an WirePartialAssistantMessage (streaming) to a StreamEvent
  */
-function convertStreamEvent(msg: BridgePartialAssistantMessage): StreamEvent {
+function convertStreamEvent(msg: WirePartialAssistantMessage): StreamEvent {
   return {
     type: 'stream_event',
     event: msg.event as any,
@@ -48,9 +48,9 @@ function convertStreamEvent(msg: BridgePartialAssistantMessage): StreamEvent {
 }
 
 /**
- * Convert an BridgeResultMessage to a SystemMessage
+ * Convert an WireResultMessage to a SystemMessage
  */
-function convertResultMessage(msg: BridgeResultMessage): SystemMessage {
+function convertResultMessage(msg: WireResultMessage): SystemMessage {
   const isError = msg.subtype !== 'success'
   const content = isError
     ? msg.errors?.join(', ') || 'Unknown error'
@@ -67,9 +67,9 @@ function convertResultMessage(msg: BridgeResultMessage): SystemMessage {
 }
 
 /**
- * Convert an BridgeSystemMessage (init) to a SystemMessage
+ * Convert an WireSystemMessage (init) to a SystemMessage
  */
-function convertInitMessage(msg: BridgeSystemMessage): SystemMessage {
+function convertInitMessage(msg: WireSystemMessage): SystemMessage {
   return {
     type: 'system',
     subtype: 'informational',
@@ -81,9 +81,9 @@ function convertInitMessage(msg: BridgeSystemMessage): SystemMessage {
 }
 
 /**
- * Convert an BridgeStatusMessage to a SystemMessage
+ * Convert an WireStatusMessage to a SystemMessage
  */
-function convertStatusMessage(msg: BridgeStatusMessage): SystemMessage | null {
+function convertStatusMessage(msg: WireStatusMessage): SystemMessage | null {
   if (!msg.status) {
     return null
   }
@@ -99,11 +99,11 @@ function convertStatusMessage(msg: BridgeStatusMessage): SystemMessage | null {
 }
 
 /**
- * Convert an BridgeToolProgressMessage to a SystemMessage.
+ * Convert an WireToolProgressMessage to a SystemMessage.
  * We use a system message instead of ProgressMessage since the Progress type
  * is a complex union that requires tool-specific data we don't have from CCR.
  */
-function convertToolProgressMessage(msg: BridgeToolProgressMessage): SystemMessage {
+function convertToolProgressMessage(msg: WireToolProgressMessage): SystemMessage {
   return {
     type: 'system',
     subtype: 'informational',
@@ -116,9 +116,9 @@ function convertToolProgressMessage(msg: BridgeToolProgressMessage): SystemMessa
 }
 
 /**
- * Convert an BridgeCompactBoundaryMessage to a SystemMessage
+ * Convert an WireCompactBoundaryMessage to a SystemMessage
  */
-function convertCompactBoundaryMessage(msg: BridgeCompactBoundaryMessage): SystemMessage {
+function convertCompactBoundaryMessage(msg: WireCompactBoundaryMessage): SystemMessage {
   return {
     type: 'system',
     subtype: 'compact_boundary',
@@ -131,7 +131,7 @@ function convertCompactBoundaryMessage(msg: BridgeCompactBoundaryMessage): Syste
 }
 
 /**
- * Result of converting an BridgeMessage
+ * Result of converting an WireMessage
  */
 export type ConvertedMessage =
   | { type: 'message'; message: Message }
@@ -154,9 +154,9 @@ type ConvertOptions = {
 }
 
 /**
- * Convert an BridgeMessage to REPL message format
+ * Convert an WireMessage to REPL message format
  */
-export function convertSDKMessage(msg: BridgeMessage, opts?: ConvertOptions): ConvertedMessage {
+export function convertSDKMessage(msg: WireMessage, opts?: ConvertOptions): ConvertedMessage {
   switch (msg.type) {
     case 'assistant':
       return { type: 'message', message: convertAssistantMessage(msg) }
@@ -188,7 +188,7 @@ export function convertSDKMessage(msg: BridgeMessage, opts?: ConvertOptions): Co
           return {
             type: 'message',
             message: createUserMessage({
-              content,
+              content: typeof content === 'string' ? [{ type: 'text' as const, text: content }] : content,
               toolUseResult: msg.tool_use_result,
               uuid: msg.uuid,
               timestamp: msg.timestamp,
@@ -259,23 +259,23 @@ export function convertSDKMessage(msg: BridgeMessage, opts?: ConvertOptions): Co
 }
 
 /**
- * Check if an BridgeMessage indicates the session has ended
+ * Check if an WireMessage indicates the session has ended
  */
-export function isSessionEndMessage(msg: BridgeMessage): boolean {
+export function isSessionEndMessage(msg: WireMessage): boolean {
   return msg.type === 'result'
 }
 
 /**
- * Check if an BridgeResultMessage indicates success
+ * Check if an WireResultMessage indicates success
  */
-export function isSuccessResult(msg: BridgeResultMessage): boolean {
+export function isSuccessResult(msg: WireResultMessage): boolean {
   return msg.subtype === 'success'
 }
 
 /**
- * Extract the result text from a successful BridgeResultMessage
+ * Extract the result text from a successful WireResultMessage
  */
-export function getResultText(msg: BridgeResultMessage): string | null {
+export function getResultText(msg: WireResultMessage): string | null {
   if (msg.subtype === 'success') {
     return msg.result
   }

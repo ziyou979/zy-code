@@ -1,6 +1,7 @@
 import figures from 'figures'
 import React, { useMemo, useState } from 'react'
-import type { BridgeMessage } from 'src/types/index.js'
+import type { WireMessage } from 'src/types/index.js'
+import type { AssistantMessage, AttachmentMessage, SystemMessage, UserMessage } from 'src/types/message.js'
 import type { ToolUseContext } from 'src/Tool.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 import type { CommandResultDisplay } from '../../commands.js'
@@ -474,8 +475,11 @@ export function RemoteSessionDetailDialog({
     if (session.isUltraplan || session.isRemoteReview) {
       return []
     }
-    return normalizeMessages(toInternalMessages(session.log as BridgeMessage[]))
-      .filter((_) => _.type !== 'progress')
+    return normalizeMessages(toInternalMessages(session.log as WireMessage[]))
+      .filter(
+        (_): _ is UserMessage | AssistantMessage | AttachmentMessage | SystemMessage =>
+          _.type !== 'progress',
+      )
       .slice(-3)
   }, [session])
   if (session.isUltraplan) {

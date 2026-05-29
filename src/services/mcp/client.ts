@@ -93,7 +93,7 @@ import { sleep } from '../../utils/sleep.js'
 import { hasMcpDiscoveryButNoToken, wrapFetchWithStepUpDetection, ZyAuthProvider } from './auth.js'
 import { getAllMcpConfigs, isMcpServerDisabled } from './config.js'
 import { getMcpServerHeaders } from './headersHelper.js'
-import { BridgeControlClientTransport } from './BridgeControlTransport.js'
+import { WireControlClientTransport } from './BridgeControlTransport.js'
 import type {
   ConnectedMCPServer,
   MCPServerConnection,
@@ -2192,7 +2192,7 @@ export async function setupSdkMcpClients(
   // 并行连接所有服务器
   const results = await Promise.allSettled(
     Object.entries(sdkMcpConfigs).map(async ([name, config]) => {
-      const transport = new BridgeControlClientTransport(name, sendMcpMessage)
+      const transport = new WireControlClientTransport(name, sendMcpMessage)
 
       const client = new Client(
         {

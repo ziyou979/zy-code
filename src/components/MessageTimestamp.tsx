@@ -1,9 +1,9 @@
 import { stringWidth } from '../ink/stringWidth.js'
 import { Box, Text } from '../ink.js'
-import type { NormalizedMessage } from '../types/message.js'
+import type { Message } from '../types/message.js'
 
 type Props = {
-  message: NormalizedMessage
+  message: Message
   isTranscriptMode: boolean
 }
 export function MessageTimestamp({ message, isTranscriptMode }: Props) {

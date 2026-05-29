@@ -9,7 +9,7 @@
 import { z } from 'zod/v4'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { PermissionBehaviorSchema, PermissionUpdateSchema } from '../coreSchemas.js'
-import { BridgeAssistantMessageErrorSchema } from '../bridge/messageSchemas.js'
+import { WireAssistantMessageErrorSchema } from '../wire/messageSchemas.js'
 
 // ============================================================================
 // Hook Types
@@ -195,7 +195,7 @@ export const StopFailureHookInputSchema = lazySchema(() =>
   BaseHookInputSchema().and(
     z.object({
       hook_event_name: z.literal('StopFailure'),
-      error: BridgeAssistantMessageErrorSchema(),
+      error: WireAssistantMessageErrorSchema(),
       error_details: z.string().optional(),
       last_assistant_message: z.string().optional(),
     }),

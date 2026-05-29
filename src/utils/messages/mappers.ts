@@ -2,21 +2,21 @@ import { randomUUID, type UUID } from 'node:crypto'
 import { getSessionId } from 'src/bootstrap/state.js'
 import { LOCAL_COMMAND_STDERR_TAG, LOCAL_COMMAND_STDOUT_TAG } from 'src/constants/xml.js'
 import type {
-  BridgeAssistantMessage,
-  BridgeCompactBoundaryMessage,
-  BridgeMessage,
-  BridgeRateLimitInfo,
+  WireAssistantMessage,
+  WireCompactBoundaryMessage,
+  WireMessage,
+  WireRateLimitInfo,
 } from 'src/types/index.js'
 import type { ZyAILimits } from 'src/services/zyAiLimits.js'
 import { EXIT_PLAN_MODE_V2_TOOL_NAME } from 'src/tools/ExitPlanModeTool/constants.js'
 import type { AssistantMessage, CompactMetadata, Message } from 'src/types/message.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 import stripAnsi from 'strip-ansi'
-import type { AssistantContentBlock } from '../../types/llm.js'
+import type { AssistantContentBlock, UserContentBlock } from '../../types/llm.js'
 import { createAssistantMessage } from '../messages.js'
 import { getPlan } from '../plans.js'
 
-export function toInternalMessages(messages: readonly DeepImmutable<BridgeMessage>[]): Message[] {
+export function toInternalMessages(messages: readonly DeepImmutable<WireMessage>[]): Message[] {
   return messages.flatMap((message) => {
     switch (message.type) {
       case 'assistant':
@@ -62,9 +62,9 @@ export function toInternalMessages(messages: readonly DeepImmutable<BridgeMessag
   })
 }
 
-type BridgeCompactMetadata = BridgeCompactBoundaryMessage['compact_metadata']
+type WireCompactMetadata = WireCompactBoundaryMessage['compact_metadata']
 
-export function toSDKCompactMetadata(meta: CompactMetadata): BridgeCompactMetadata {
+export function toSDKCompactMetadata(meta: CompactMetadata): WireCompactMetadata {
   const seg = meta.preservedSegment
   return {
     trigger: meta.trigger as any,
@@ -82,7 +82,7 @@ export function toSDKCompactMetadata(meta: CompactMetadata): BridgeCompactMetada
 /**
  * Shared SDK→internal compact_metadata converter.
  */
-export function fromSDKCompactMetadata(meta: BridgeCompactMetadata): CompactMetadata {
+export function fromSDKCompactMetadata(meta: WireCompactMetadata): CompactMetadata {
   const seg = meta.preserved_segment
   return {
     trigger: meta.trigger as any,
@@ -97,8 +97,8 @@ export function fromSDKCompactMetadata(meta: BridgeCompactMetadata): CompactMeta
   }
 }
 
-export function toSDKMessages(messages: Message[]): BridgeMessage[] {
-  return messages.flatMap((message): BridgeMessage[] => {
+export function toSDKMessages(messages: Message[]): WireMessage[] {
+  return messages.flatMap((message): WireMessage[] => {
     switch (message.type) {
       case 'assistant':
         return [
@@ -108,8 +108,7 @@ export function toSDKMessages(messages: Message[]): BridgeMessage[] {
             session_id: getSessionId(),
             parent_tool_use_id: null,
             uuid: message.uuid,
-            // @ts-expect-error
-            error: _.error as any,
+            error: message.error as any,
           },
         ]
       case 'user':
@@ -127,7 +126,7 @@ export function toSDKMessages(messages: Message[]): BridgeMessage[] {
             // so web viewers can read things like BriefTool's file_uuid
             // without it polluting model context.
             ...(message.toolUseResult !== undefined
-              ? { tool_use_result: message.toolUseResult }
+              ? { tool_use_result: message.toolUseResult as string | UserContentBlock[] }
               : {}),
           },
         ]
@@ -163,10 +162,10 @@ export function toSDKMessages(messages: Message[]): BridgeMessage[] {
 
 /**
  * Converts local command output (e.g. /voice, /cost) to a well-formed
- * BridgeAssistantMessage so downstream consumers (mobile apps, session-ingress
+ * WireAssistantMessage so downstream consumers (mobile apps, session-ingress
  * v1alpha→v1beta converter) can parse it without schema changes.
  *
- * Emitted as assistant instead of the dedicated BridgeLocalCommandOutputMessage
+ * Emitted as assistant instead of the dedicated WireLocalCommandOutputMessage
  * because the system/local_command_output subtype is unknown to:
  *   - mobile-apps Android SdkMessageTypes.kt (no local_command_output handler)
  *   - api-go session-ingress convertSystemEvent (only init/compact_boundary)
@@ -177,7 +176,7 @@ export function toSDKMessages(messages: Message[]): BridgeMessage[] {
 export function localCommandOutputToSDKAssistantMessage(
   rawContent: string,
   uuid: UUID,
-): BridgeAssistantMessage {
+): WireAssistantMessage {
   const cleanContent = stripAnsi(rawContent)
     .replace(/<local-command-stdout>([\s\S]*?)<\/local-command-stdout>/, '$1')
     .replace(/<local-command-stderr>([\s\S]*?)<\/local-command-stderr>/, '$1')
@@ -196,12 +195,12 @@ export function localCommandOutputToSDKAssistantMessage(
 }
 
 /**
- * Maps internal ZyAILimits to the SDK-facing BridgeRateLimitInfo type,
+ * Maps internal ZyAILimits to the SDK-facing WireRateLimitInfo type,
  * stripping internal-only fields like unifiedRateLimitFallbackAvailable.
  */
 export function toSDKRateLimitInfo(
   limits: ZyAILimits | undefined,
-): BridgeRateLimitInfo | undefined {
+): WireRateLimitInfo | undefined {
   if (!limits) {
     return undefined
   }

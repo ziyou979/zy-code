@@ -5,7 +5,7 @@ import { SentryErrorBoundary } from 'src/components/SentryErrorBoundary.js'
 import { Box, Text, useTheme } from '../../../ink.js'
 import { useAppState } from '../../../state/AppState.js'
 import { filterToolProgressMessages, type Tool, type Tools } from '../../../Tool.js'
-import type { NormalizedUserMessage, ProgressMessage } from '../../../types/message.js'
+import type { ProgressMessage, UserMessage } from '../../../types/message.js'
 import {
   deleteClassifierApproval,
   getClassifierApproval,
@@ -16,7 +16,7 @@ import { MessageResponse } from '../../MessageResponse.js'
 import { HookProgressMessage } from '../HookProgressMessage.js'
 
 type Props = {
-  message: NormalizedUserMessage
+  message: UserMessage
   lookups: ReturnType<typeof buildMessageLookups>
   toolUseID: string
   progressMessagesForMessage: ProgressMessage[]

@@ -136,7 +136,7 @@ export async function updateSessionName(name: string | undefined): Promise<void>
  * once (local wins). Cleared on bridge teardown so stale IDs don't
  * suppress a legitimately-remote session after reconnect.
  */
-export async function updateSessionBridgeId(bridgeSessionId: string | null): Promise<void> {
+export async function updateSessionWireId(bridgeSessionId: string | null): Promise<void> {
   await updatePidFile({ bridgeSessionId })
 }
 

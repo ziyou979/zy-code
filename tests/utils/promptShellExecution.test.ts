@@ -25,6 +25,9 @@ function setupMocks(
   mock.module('../../src/i18n/index.js', () => ({
     tSync: (key: string) => `[i18n:${key}]`,
     t: (key: string) => `[i18n:${key}]`,
+    getUiLanguage: () => 'en',
+    warmI18n: async () => {},
+    SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
   }))
 
   // 重传递依赖：BashTool、permissions、messages、toolResultStorage、shell utils

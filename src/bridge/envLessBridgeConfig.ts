@@ -2,9 +2,9 @@ import { z } from 'zod/v4'
 import { getFeatureValue_DEPRECATED } from '../services/analytics/growthbook.js'
 import { lazySchema } from '../utils/lazySchema.js'
 import { lt } from '../utils/semver.js'
-import { isEnvLessBridgeEnabled } from './bridgeEnabled.js'
+import { isEnvLessWireEnabled } from './bridgeEnabled.js'
 
-export type EnvLessBridgeConfig = {
+export type EnvLessWireConfig = {
   // withRetry — init-phase backoff (createSession, POST /bridge, recovery /bridge)
   init_retry_max_attempts: number
   init_retry_base_delay_ms: number
@@ -41,7 +41,7 @@ export type EnvLessBridgeConfig = {
   should_show_app_upgrade_message: boolean
 }
 
-export const DEFAULT_ENV_LESS_BRIDGE_CONFIG: EnvLessBridgeConfig = {
+export const DEFAULT_ENV_LESS_BRIDGE_CONFIG: EnvLessWireConfig = {
   init_retry_max_attempts: 3,
   init_retry_base_delay_ms: 500,
   init_retry_jitter_fraction: 0.25,
@@ -103,7 +103,7 @@ const envLessBridgeConfigSchema = lazySchema(() =>
 
 /**
  * Fetch the env-less bridge timing config from GrowthBook. Read once per
- * initEnvLessBridgeCore call — config is fixed for the lifetime of a bridge
+ * initEnvLessWireCore call — config is fixed for the lifetime of a bridge
  * session.
  *
  * Uses the blocking getter (not _CACHED_MAY_BE_STALE) because /remote-control
@@ -112,7 +112,7 @@ const envLessBridgeConfigSchema = lazySchema(() =>
  * value instead of the stale-on-first-read disk cache. The _DEPRECATED suffix
  * warns against startup-path usage, which this isn't.
  */
-export async function getEnvLessBridgeConfig(): Promise<EnvLessBridgeConfig> {
+export async function getEnvLessWireConfig(): Promise<EnvLessWireConfig> {
   const raw = await getFeatureValue_DEPRECATED<unknown>(
     'zy_bridge_repl_v2_config',
     DEFAULT_ENV_LESS_BRIDGE_CONFIG,
@@ -125,12 +125,12 @@ export async function getEnvLessBridgeConfig(): Promise<EnvLessBridgeConfig> {
  * Returns an error message if the current CLI version is below the minimum
  * required for the env-less (v2) bridge path, or null if the version is fine.
  *
- * v2 analogue of checkBridgeMinVersion() — reads from zy_bridge_repl_v2_config
+ * v2 analogue of checkWireMinVersion() — reads from zy_bridge_repl_v2_config
  * instead of zy_bridge_min_version so the two implementations can enforce
  * independent floors.
  */
-export async function checkEnvLessBridgeMinVersion(): Promise<string | null> {
-  const cfg = await getEnvLessBridgeConfig()
+export async function checkEnvLessWireMinVersion(): Promise<string | null> {
+  const cfg = await getEnvLessWireConfig()
   if (cfg.min_version && lt(MACRO.VERSION, cfg.min_version)) {
     return `Your version of ZY Code (${MACRO.VERSION}) is too old for Remote Control.\nVersion ${cfg.min_version} or higher is required. Run \`zy update\` to update.`
   }
@@ -144,9 +144,9 @@ export async function checkEnvLessBridgeMinVersion(): Promise<string | null> {
  * roll the v2 bridge before the app ships the new session-list query.
  */
 export async function shouldShowAppUpgradeMessage(): Promise<boolean> {
-  if (!isEnvLessBridgeEnabled()) {
+  if (!isEnvLessWireEnabled()) {
     return false
   }
-  const cfg = await getEnvLessBridgeConfig()
+  const cfg = await getEnvLessWireConfig()
   return cfg.should_show_app_upgrade_message
 }

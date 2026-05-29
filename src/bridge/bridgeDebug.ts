@@ -1,6 +1,6 @@
 import { logForDebugging } from '../utils/debug.js'
-import { BridgeFatalError } from './bridgeApi.js'
-import type { BridgeApiClient } from './types.js'
+import { WireFatalError } from './bridgeApi.js'
+import type { WireApiClient } from './types.js'
 
 /**
  * Ant-only fault injection for manually testing bridge recovery paths.
@@ -19,9 +19,9 @@ import type { BridgeApiClient } from './types.js'
  */
 
 /** One-shot fault to inject on the next matching api call. */
-type BridgeFault = {
-  method: 'pollForWork' | 'registerBridgeEnvironment' | 'reconnectSession' | 'heartbeatWork'
-  /** Fatal errors go through handleErrorStatus → BridgeFatalError. Transient
+type WireFault = {
+  method: 'pollForWork' | 'registerWireEnvironment' | 'reconnectSession' | 'heartbeatWork'
+  /** Fatal errors go through handleErrorStatus → WireFatalError. Transient
    *  errors surface as plain axios rejections (5xx / network). Recovery code
    *  distinguishes the two: fatal → teardown, transient → retry/backoff. */
   kind: 'fatal' | 'transient'
@@ -31,7 +31,7 @@ type BridgeFault = {
   count: number
 }
 
-export type BridgeDebugHandle = {
+export type WireDebugHandle = {
   /** Invoke the transport's permanent-close handler directly. Tests the
    *  ws_closed → reconnectEnvironmentWithSession escalation (#22148). */
   fireClose: (code: number) => void
@@ -39,7 +39,7 @@ export type BridgeDebugHandle = {
    *  reachable from the slash command. */
   forceReconnect: () => void
   /** Queue a fault for the next N calls to the named api method. */
-  injectFault: (fault: BridgeFault) => void
+  injectFault: (fault: WireFault) => void
   /** Abort the at-capacity sleep so an injected poll fault lands
    *  immediately instead of up to 10min later. */
   wakePollLoop: () => void
@@ -47,23 +47,23 @@ export type BridgeDebugHandle = {
   describe: () => string
 }
 
-let debugHandle: BridgeDebugHandle | null = null
-const faultQueue: BridgeFault[] = []
+let debugHandle: WireDebugHandle | null = null
+const faultQueue: WireFault[] = []
 
-export function registerBridgeDebugHandle(h: BridgeDebugHandle): void {
+export function registerWireDebugHandle(h: WireDebugHandle): void {
   debugHandle = h
 }
 
-export function clearBridgeDebugHandle(): void {
+export function clearWireDebugHandle(): void {
   debugHandle = null
   faultQueue.length = 0
 }
 
-export function getBridgeDebugHandle(): BridgeDebugHandle | null {
+export function getWireDebugHandle(): WireDebugHandle | null {
   return debugHandle
 }
 
-export function injectBridgeFault(fault: BridgeFault): void {
+export function injectWireFault(fault: WireFault): void {
   faultQueue.push(fault)
   logForDebugging(
     `[bridge:debug] Queued fault: ${fault.method} ${fault.kind}/${fault.status}${fault.errorType ? `/${fault.errorType}` : ''} ×${fault.count}`,
@@ -71,14 +71,14 @@ export function injectBridgeFault(fault: BridgeFault): void {
 }
 
 /**
- * Wrap a BridgeApiClient so each call first checks the fault queue. If a
+ * Wrap a WireApiClient so each call first checks the fault queue. If a
  * matching fault is queued, throw the specified error instead of calling
  * through. Delegates everything else to the real client.
  *
  * Only called when USER_TYPE === 'zy-super' — zero overhead in external builds.
  */
-export function wrapApiForFaultInjection(api: BridgeApiClient): BridgeApiClient {
-  function consume(method: BridgeFault['method']): BridgeFault | null {
+export function wrapApiForFaultInjection(api: WireApiClient): WireApiClient {
+  function consume(method: WireFault['method']): WireFault | null {
     const idx = faultQueue.findIndex((f) => f.method === method)
     if (idx === -1) {
       return null
@@ -91,12 +91,12 @@ export function wrapApiForFaultInjection(api: BridgeApiClient): BridgeApiClient 
     return fault
   }
 
-  function throwFault(fault: BridgeFault, context: string): never {
+  function throwFault(fault: WireFault, context: string): never {
     logForDebugging(
       `[bridge:debug] Injecting ${fault.kind} fault into ${context}: status=${fault.status} errorType=${fault.errorType ?? 'none'}`,
     )
     if (fault.kind === 'fatal') {
-      throw new BridgeFatalError(
+      throw new WireFatalError(
         `[injected] ${context} ${fault.status}`,
         fault.status,
         fault.errorType,
@@ -116,12 +116,12 @@ export function wrapApiForFaultInjection(api: BridgeApiClient): BridgeApiClient 
       }
       return api.pollForWork(envId, secret, signal, reclaimMs)
     },
-    async registerBridgeEnvironment(config) {
-      const f = consume('registerBridgeEnvironment')
+    async registerWireEnvironment(config) {
+      const f = consume('registerWireEnvironment')
       if (f) {
         throwFault(f, 'Registration')
       }
-      return api.registerBridgeEnvironment(config)
+      return api.registerWireEnvironment(config)
     },
     async reconnectSession(envId, sessionId) {
       const f = consume('reconnectSession')

@@ -77,7 +77,9 @@ Simply answer the question with the information you have.</system-reminder>
 ${question}`
 
   const agentResult = await runForkedAgent({
-    promptMessages: [createUserMessage({ content: wrappedQuestion })],
+    promptMessages: [
+      createUserMessage({ content: [{ type: 'text' as const, text: wrappedQuestion }] }),
+    ],
     // 不要覆盖 thinkingConfig — thinking 是 API 缓存键的一部分，
     // 与主线程配置不一致会导致 prompt 缓存失效。
     // 自适应 thinking 在快速问答场景下开销可忽略不计。

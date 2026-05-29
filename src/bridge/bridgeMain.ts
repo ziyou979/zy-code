@@ -21,14 +21,14 @@ import { logError } from '../utils/log.js'
 import { sleep } from '../utils/sleep.js'
 import { createAgentWorktree, removeAgentWorktree } from '../utils/worktree.js'
 import {
-  BridgeFatalError,
-  createBridgeApiClient,
+  WireFatalError,
+  createWireApiClient,
   isExpiredErrorType,
   isSuppressible403,
-  validateBridgeId,
+  validateWireId,
 } from './bridgeApi.js'
 import { formatDuration } from './bridgeStatusUtil.js'
-import { createBridgeLogger } from './bridgeUI.js'
+import { createWireLogger } from './bridgeUI.js'
 import { createCapacityWake } from './capacityWake.js'
 import { describeAxiosError } from './debugUtils.js'
 import { createTokenRefreshScheduler } from './jwtUtils.js'
@@ -38,9 +38,9 @@ import { createSessionSpawner, safeFilenameId } from './sessionRunner.js'
 import { getTrustedDeviceToken } from './trustedDevice.js'
 import {
   BRIDGE_LOGIN_ERROR,
-  type BridgeApiClient,
-  type BridgeConfig,
-  type BridgeLogger,
+  type WireApiClient,
+  type WireConfig,
+  type WireLogger,
   DEFAULT_SESSION_TIMEOUT_MS,
   type SessionDoneStatus,
   type SessionHandle,
@@ -138,13 +138,13 @@ function safeSpawn(
   }
 }
 
-export async function runBridgeLoop(
-  config: BridgeConfig,
+export async function runWireLoop(
+  config: WireConfig,
   environmentId: string,
   environmentSecret: string,
-  api: BridgeApiClient,
+  api: WireApiClient,
   spawner: SessionSpawner,
-  logger: BridgeLogger,
+  logger: WireLogger,
   signal: AbortSignal,
   backoffConfig: BackoffConfig = DEFAULT_BACKOFF,
   initialSessionId?: string,
@@ -216,7 +216,7 @@ export async function runBridgeLoop(
         logForDebugging(
           `[bridge:heartbeat] Failed for sessionId=${sessionId} workId=${workId}: ${errorMessage(err)}`,
         )
-        if (err instanceof BridgeFatalError) {
+        if (err instanceof WireFatalError) {
           logEvent('zy_bridge_heartbeat_error', {
             status:
               err.status as unknown as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -311,7 +311,7 @@ export async function runBridgeLoop(
   let generalErrorStart: number | null = null
   let lastPollErrorTime: number | null = null
   let statusUpdateTimer: ReturnType<typeof setInterval> | null = null
-  // Set by BridgeFatalError and give-up paths so the shutdown block can
+  // Set by WireFatalError and give-up paths so the shutdown block can
   // skip the resume message (resume is impossible after env expiry/auth
   // failure/sustained connection errors).
   let fatalExit = false
@@ -793,7 +793,7 @@ export async function runBridgeLoop(
         case 'session': {
           const sessionId = work.data.id
           try {
-            validateBridgeId(sessionId, 'session_id')
+            validateWireId(sessionId, 'session_id')
           } catch {
             await ackWork()
             logger.logError(`Invalid session_id received: ${sessionId}`)
@@ -972,8 +972,8 @@ export async function runBridgeLoop(
                 logger.setSessionTitle(compatSessionId, title)
                 logForDebugging(`[bridge:title] derived title for ${compatSessionId}: ${title}`)
                 void import('./createSession.js')
-                  .then(({ updateBridgeSessionTitle }) =>
-                    updateBridgeSessionTitle(compatSessionId, title, {
+                  .then(({ updateWireSessionTitle }) =>
+                    updateWireSessionTitle(compatSessionId, title, {
                       baseUrl: config.apiBaseUrl,
                     }),
                   )
@@ -1150,7 +1150,7 @@ export async function runBridgeLoop(
       }
 
       // Fatal errors (401/403) — no point retrying, auth won't fix itself
-      if (err instanceof BridgeFatalError) {
+      if (err instanceof WireFatalError) {
         fatalExit = true
         // Server-enforced expiry gets a clean status message, not an error
         if (isExpiredErrorType(err.errorType)) {
@@ -1452,8 +1452,8 @@ export async function runBridgeLoop(
   // Clear the crash-recovery pointer — the env is gone, pointer would be
   // stale. The early return above (resumable SIGINT shutdown) skips this,
   // leaving the pointer as a backup for the printed --session-id hint.
-  const { clearBridgePointer } = await import('./bridgePointer.js')
-  await clearBridgePointer(config.dir)
+  const { clearWirePointer } = await import('./bridgePointer.js')
+  await clearWirePointer(config.dir)
 
   logger.logVerbose('Environment offline.')
 }
@@ -1504,10 +1504,10 @@ function formatDelay(ms: number): string {
  * Ensures the server learns the work item ended, preventing server-side zombies.
  */
 async function stopWorkWithRetry(
-  api: BridgeApiClient,
+  api: WireApiClient,
   environmentId: string,
   workId: string,
-  logger: BridgeLogger,
+  logger: WireLogger,
   baseDelayMs = 1000,
 ): Promise<void> {
   const MAX_ATTEMPTS = 3
@@ -1521,7 +1521,7 @@ async function stopWorkWithRetry(
       return
     } catch (err) {
       // Auth/permission errors won't be fixed by retrying
-      if (err instanceof BridgeFatalError) {
+      if (err instanceof WireFatalError) {
         if (isSuppressible403(err)) {
           logForDebugging(`[bridge:work] Suppressed stopWork 403 for ${workId}: ${err.message}`)
         } else {
@@ -1553,7 +1553,7 @@ async function stopWorkWithRetry(
 function onSessionTimeout(
   sessionId: string,
   timeoutMs: number,
-  logger: BridgeLogger,
+  logger: WireLogger,
   timedOutSessions: Set<string>,
   handle: SessionHandle,
 ): void {
@@ -1830,7 +1830,7 @@ function deriveSessionTitle(text: string): string {
 /**
  * One-shot fetch of a session's title via GET /v1/sessions/{id}.
  *
- * Uses `getBridgeSession` from createSession.ts (ccr-byoc headers + org UUID)
+ * Uses `getWireSession` from createSession.ts (ccr-byoc headers + org UUID)
  * rather than the environments-level bridgeApi client, whose headers make the
  * Sessions API return 404. Returns undefined if the session has no title yet
  * or the fetch fails — the caller falls back to deriving a title from the
@@ -1840,8 +1840,8 @@ async function fetchSessionTitle(
   compatSessionId: string,
   baseUrl: string,
 ): Promise<string | undefined> {
-  const { getBridgeSession } = await import('./createSession.js')
-  const session = await getBridgeSession(compatSessionId, { baseUrl })
+  const { getWireSession } = await import('./createSession.js')
+  const session = await getWireSession(compatSessionId, { baseUrl })
   return session?.title || undefined
 }
 
@@ -1960,9 +1960,9 @@ export async function bridgeMain(args: string[]): Promise<void> {
   const { clearOAuthTokenCache, checkAndRefreshOAuthTokenIfNeeded } = await import(
     '../utils/auth.js'
   )
-  const { getBridgeAccessToken, getBridgeBaseUrl } = await import('./bridgeConfig.js')
+  const { getWireAccessToken, getWireBaseUrl } = await import('./bridgeConfig.js')
 
-  const bridgeToken = getBridgeAccessToken()
+  const bridgeToken = getWireAccessToken()
   if (!bridgeToken) {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.error(BRIDGE_LOGIN_ERROR)
@@ -2008,8 +2008,8 @@ export async function bridgeMain(args: string[]): Promise<void> {
   // KAIROS-gated at parseArgs — continueSession is always false in external
   // builds, so this block tree-shakes.
   if (feature('KAIROS') && continueSession) {
-    const { readBridgePointerAcrossWorktrees } = await import('./bridgePointer.js')
-    const found = await readBridgePointerAcrossWorktrees(dir)
+    const { readWirePointerAcrossWorktrees } = await import('./bridgePointer.js')
+    const found = await readWirePointerAcrossWorktrees(dir)
     if (!found) {
       // biome-ignore lint/suspicious/noConsole: intentional error output
       console.error(
@@ -2033,7 +2033,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
 
   // In production, baseUrl is the Anthropic API (from OAuth config).
   // CLAUDE_BRIDGE_BASE_URL overrides this for ant local dev only.
-  const baseUrl = getBridgeBaseUrl()
+  const baseUrl = getWireBaseUrl()
 
   // For non-localhost targets, require HTTPS to protect credentials.
   if (
@@ -2170,13 +2170,13 @@ export async function bridgeMain(args: string[]): Promise<void> {
   // Without --continue: a leftover pointer means the previous run didn't
   // shut down cleanly (crash, kill -9, terminal closed). Clear it so the
   // stale env doesn't linger past its relevance. Runs in all modes
-  // (clearBridgePointer is a no-op when no file exists) — covers the
+  // (clearWirePointer is a no-op when no file exists) — covers the
   // gate-transition case where a user crashed in single-session mode then
   // starts fresh in worktree mode. Only single-session mode writes new
   // pointers.
   if (!resumeSessionId) {
-    const { clearBridgePointer } = await import('./bridgePointer.js')
-    await clearBridgePointer(dir)
+    const { clearWirePointer } = await import('./bridgePointer.js')
+    await clearWirePointer(dir)
   }
 
   // Worktree mode requires either git or WorktreeCreate/WorktreeRemove hooks.
@@ -2197,9 +2197,9 @@ export async function bridgeMain(args: string[]): Promise<void> {
   const bridgeId = randomUUID()
 
   const { handleOAuth401Error } = await import('../utils/auth.js')
-  const api = createBridgeApiClient({
+  const api = createWireApiClient({
     baseUrl,
-    getAccessToken: getBridgeAccessToken,
+    getAccessToken: getWireAccessToken,
     runnerVersion: MACRO.VERSION,
     onDebug: logForDebugging,
     onAuth401: handleOAuth401Error,
@@ -2216,7 +2216,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
   let reuseEnvironmentId: string | undefined
   if (feature('KAIROS') && resumeSessionId) {
     try {
-      validateBridgeId(resumeSessionId, 'sessionId')
+      validateWireId(resumeSessionId, 'sessionId')
     } catch {
       // biome-ignore lint/suspicious/noConsole: intentional error output
       console.error(
@@ -2225,15 +2225,15 @@ export async function bridgeMain(args: string[]): Promise<void> {
       // eslint-disable-next-line custom-rules/no-process-exit
       process.exit(1)
     }
-    // Proactively refresh the OAuth token — getBridgeSession uses raw axios
+    // Proactively refresh the OAuth token — getWireSession uses raw axios
     // without the withOAuthRetry 401-refresh logic. An expired-but-present
     // token would otherwise produce a misleading "not found" error.
     await checkAndRefreshOAuthTokenIfNeeded()
     clearOAuthTokenCache()
-    const { getBridgeSession } = await import('./createSession.js')
-    const session = await getBridgeSession(resumeSessionId, {
+    const { getWireSession } = await import('./createSession.js')
+    const session = await getWireSession(resumeSessionId, {
       baseUrl,
-      getAccessToken: getBridgeAccessToken,
+      getAccessToken: getWireAccessToken,
     })
     if (!session) {
       // Session gone on server → pointer is stale. Clear it so the user
@@ -2241,8 +2241,8 @@ export async function bridgeMain(args: string[]): Promise<void> {
       // pointer alone — it's an independent file they may not even have.)
       // resumePointerDir may be a worktree sibling — clear THAT file.
       if (resumePointerDir) {
-        const { clearBridgePointer } = await import('./bridgePointer.js')
-        await clearBridgePointer(resumePointerDir)
+        const { clearWirePointer } = await import('./bridgePointer.js')
+        await clearWirePointer(resumePointerDir)
       }
       // biome-ignore lint/suspicious/noConsole: intentional error output
       console.error(
@@ -2253,8 +2253,8 @@ export async function bridgeMain(args: string[]): Promise<void> {
     }
     if (!session.environment_id) {
       if (resumePointerDir) {
-        const { clearBridgePointer } = await import('./bridgePointer.js')
-        await clearBridgePointer(resumePointerDir)
+        const { clearWirePointer } = await import('./bridgePointer.js')
+        await clearWirePointer(resumePointerDir)
       }
       // biome-ignore lint/suspicious/noConsole: intentional error output
       console.error(
@@ -2269,7 +2269,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
     )
   }
 
-  const config: BridgeConfig = {
+  const config: WireConfig = {
     dir,
     machineName,
     branch,
@@ -2298,17 +2298,17 @@ export async function bridgeMain(args: string[]): Promise<void> {
   let environmentId: string
   let environmentSecret: string
   try {
-    const reg = await api.registerBridgeEnvironment(config)
+    const reg = await api.registerWireEnvironment(config)
     environmentId = reg.environment_id
     environmentSecret = reg.environment_secret
   } catch (err) {
     logEvent('zy_bridge_registration_failed', {
-      status: err instanceof BridgeFatalError ? err.status : undefined,
+      status: err instanceof WireFatalError ? err.status : undefined,
     })
     // Registration failures are fatal — print a clean message instead of a stack trace.
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.error(
-      err instanceof BridgeFatalError && err.status === 404
+      err instanceof WireFatalError && err.status === 404
         ? 'Remote Control environments are not available for your account.'
         : `Error: ${errorMessage(err)}`,
     )
@@ -2370,13 +2370,13 @@ export async function bridgeMain(args: string[]): Promise<void> {
         // Do NOT deregister on transient reconnect failure — at this point
         // environmentId IS the session's own environment. Deregistering
         // would make retry impossible. The backend's 4h TTL cleans up.
-        const isFatal = err instanceof BridgeFatalError
+        const isFatal = err instanceof WireFatalError
         // Clear pointer only on fatal reconnect failure. Transient failures
         // ("try running the same command again") should keep the pointer so
         // next launch re-prompts — that IS the retry mechanism.
         if (resumePointerDir && isFatal) {
-          const { clearBridgePointer } = await import('./bridgePointer.js')
-          await clearBridgePointer(resumePointerDir)
+          const { clearWirePointer } = await import('./bridgePointer.js')
+          await clearWirePointer(resumePointerDir)
         }
         // biome-ignore lint/suspicious/noConsole: intentional error output
         console.error(
@@ -2432,7 +2432,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
     },
   })
 
-  const logger = createBridgeLogger({ verbose })
+  const logger = createWireLogger({ verbose })
   const { parseGitHubRepository } = await import('../utils/detectRepository.js')
   const ownerRepo = gitRepoUrl ? parseGitHubRepository(gitRepoUrl) : null
   // Use the repo name from the parsed owner/repo, or fall back to the dir basename
@@ -2515,9 +2515,9 @@ export async function bridgeMain(args: string[]): Promise<void> {
   let initialSessionId: string | null =
     feature('KAIROS') && effectiveResumeSessionId ? effectiveResumeSessionId : null
   if (preCreateSession && !(feature('KAIROS') && effectiveResumeSessionId)) {
-    const { createBridgeSession } = await import('./createSession.js')
+    const { createWireSession } = await import('./createSession.js')
     try {
-      initialSessionId = await createBridgeSession({
+      initialSessionId = await createWireSession({
         environmentId,
         title: name,
         events: [],
@@ -2525,7 +2525,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
         branch,
         signal: controller.signal,
         baseUrl,
-        getAccessToken: getBridgeAccessToken,
+        getAccessToken: getWireAccessToken,
         permissionMode,
       })
       if (initialSessionId) {
@@ -2539,7 +2539,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
   // Crash-recovery pointer: write immediately so kill -9 at any point
   // after this leaves a recoverable trail. Covers both fresh sessions and
   // resumed ones (so a second crash after resume is still recoverable).
-  // Cleared when runBridgeLoop falls through to archive+deregister; left in
+  // Cleared when runWireLoop falls through to archive+deregister; left in
   // place on the SIGINT resumable-shutdown return (backup for when the user
   // closes the terminal before copying the printed --session-id hint).
   // Refreshed hourly so a 5h+ session that crashes still has a fresh
@@ -2550,15 +2550,15 @@ export async function bridgeMain(args: string[]): Promise<void> {
   // config when they try to resume. The resumable-shutdown path is also
   // gated to single-session (line ~1254) so the pointer would be orphaned.
   if (initialSessionId && spawnMode === 'single-session') {
-    const { writeBridgePointer } = await import('./bridgePointer.js')
+    const { writeWirePointer } = await import('./bridgePointer.js')
     const pointerPayload = {
       sessionId: initialSessionId,
       environmentId,
       source: 'standalone' as const,
     }
-    await writeBridgePointer(config.dir, pointerPayload)
+    await writeWirePointer(config.dir, pointerPayload)
     pointerRefreshTimer = setInterval(
-      writeBridgePointer,
+      writeWirePointer,
       60 * 60 * 1000,
       config.dir,
       pointerPayload,
@@ -2568,7 +2568,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
   }
 
   try {
-    await runBridgeLoop(
+    await runWireLoop(
       config,
       environmentId,
       environmentSecret,
@@ -2584,7 +2584,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
         clearOAuthTokenCache()
         // Proactively refresh the token if it's expired on disk too.
         await checkAndRefreshOAuthTokenIfNeeded()
-        return getBridgeAccessToken()
+        return getWireAccessToken()
       },
     )
   } finally {
@@ -2609,19 +2609,19 @@ export async function bridgeMain(args: string[]): Promise<void> {
 // ─── 无头 bridge（daemon worker）────────────────────────────────────────────────
 
 /**
- * 由 runBridgeHeadless 抛出，用于监督器不应该重试的配置问题
+ * 由 runWireHeadless 抛出，用于监督器不应该重试的配置问题
  *（未接受信任、worktree 不可用、http 非 https）。
  * daemon worker 捕获此错误并以 EXIT_CODE_PERMANENT 退出，
  * 使监督器停放 worker 而不是在退避时重新生成它。
  */
-export class BridgeHeadlessPermanentError extends Error {
+export class WireHeadlessPermanentError extends Error {
   constructor(message: string) {
     super(message)
-    this.name = 'BridgeHeadlessPermanentError'
+    this.name = 'WireHeadlessPermanentError'
   }
 }
 
-export type HeadlessBridgeOpts = {
+export type HeadlessWireOpts = {
   dir: string
   name?: string
   spawnMode: 'same-dir' | 'worktree'
@@ -2645,8 +2645,8 @@ export type HeadlessBridgeOpts = {
  *
  * 当 `signal` 中止且轮询循环清理时干净地解析。
  */
-export async function runBridgeHeadless(
-  opts: HeadlessBridgeOpts,
+export async function runWireHeadless(
+  opts: HeadlessWireOpts,
   signal: AbortSignal,
 ): Promise<void> {
   const { dir, log } = opts
@@ -2665,7 +2665,7 @@ export async function runBridgeHeadless(
   initSinks()
 
   if (!checkHasTrustDialogAccepted()) {
-    throw new BridgeHeadlessPermanentError(
+    throw new WireHeadlessPermanentError(
       `Workspace not trusted: ${dir}. Run \`zy\` in that directory first to accept the trust dialog.`,
     )
   }
@@ -2675,14 +2675,14 @@ export async function runBridgeHeadless(
     throw new Error(BRIDGE_LOGIN_ERROR)
   }
 
-  const { getBridgeBaseUrl } = await import('./bridgeConfig.js')
-  const baseUrl = getBridgeBaseUrl()
+  const { getWireBaseUrl } = await import('./bridgeConfig.js')
+  const baseUrl = getWireBaseUrl()
   if (
     baseUrl.startsWith('http://') &&
     !baseUrl.includes('localhost') &&
     !baseUrl.includes('127.0.0.1')
   ) {
-    throw new BridgeHeadlessPermanentError(
+    throw new WireHeadlessPermanentError(
       'Remote Control base URL uses HTTP. Only HTTPS or localhost HTTP is allowed.',
     )
   }
@@ -2697,7 +2697,7 @@ export async function runBridgeHeadless(
   if (opts.spawnMode === 'worktree') {
     const worktreeAvailable = hasWorktreeCreateHook() || findGitRoot(dir) !== null
     if (!worktreeAvailable) {
-      throw new BridgeHeadlessPermanentError(
+      throw new WireHeadlessPermanentError(
         `Worktree mode requires a git repository or WorktreeCreate hooks. Directory ${dir} has neither.`,
       )
     }
@@ -2708,7 +2708,7 @@ export async function runBridgeHeadless(
   const machineName = hostname()
   const bridgeId = randomUUID()
 
-  const config: BridgeConfig = {
+  const config: WireConfig = {
     dir,
     machineName,
     branch,
@@ -2725,7 +2725,7 @@ export async function runBridgeHeadless(
     sessionTimeoutMs: opts.sessionTimeoutMs,
   }
 
-  const api = createBridgeApiClient({
+  const api = createWireApiClient({
     baseUrl,
     getAccessToken: opts.getAccessToken,
     runnerVersion: MACRO.VERSION,
@@ -2737,7 +2737,7 @@ export async function runBridgeHeadless(
   let environmentId: string
   let environmentSecret: string
   try {
-    const reg = await api.registerBridgeEnvironment(config)
+    const reg = await api.registerWireEnvironment(config)
     environmentId = reg.environment_id
     environmentSecret = reg.environment_secret
   } catch (err) {
@@ -2755,14 +2755,14 @@ export async function runBridgeHeadless(
     onDebug: log,
   })
 
-  const logger = createHeadlessBridgeLogger(log)
+  const logger = createHeadlessWireLogger(log)
   logger.printBanner(config, environmentId)
 
   let initialSessionId: string | undefined
   if (opts.createSessionOnStart) {
-    const { createBridgeSession } = await import('./createSession.js')
+    const { createWireSession } = await import('./createSession.js')
     try {
-      const sid = await createBridgeSession({
+      const sid = await createWireSession({
         environmentId,
         title: opts.name,
         events: [],
@@ -2782,7 +2782,7 @@ export async function runBridgeHeadless(
     }
   }
 
-  await runBridgeLoop(
+  await runWireLoop(
     config,
     environmentId,
     environmentSecret,
@@ -2796,8 +2796,8 @@ export async function runBridgeHeadless(
   )
 }
 
-/** BridgeLogger 适配器，将所有内容路由到单行日志函数。 */
-function createHeadlessBridgeLogger(log: (s: string) => void): BridgeLogger {
+/** WireLogger 适配器，将所有内容路由到单行日志函数。 */
+function createHeadlessWireLogger(log: (s: string) => void): WireLogger {
   const noop = (): void => {}
   return {
     printBanner: (cfg, envId) =>

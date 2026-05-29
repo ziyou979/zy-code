@@ -20,9 +20,6 @@ import type {
 import type {
   AssistantMessage,
   Message,
-  NormalizedAssistantMessage,
-  NormalizedMessage,
-  NormalizedUserMessage,
   UserMessage,
 } from '../../types/message.js'
 import { normalizeToolInput } from '../api.js'
@@ -38,18 +35,18 @@ import { isThinkingBlock } from './prune.js'
 void logAntError // placeholder retained for future warnings
 
 // 拆分消息，使每个内容块获得自己的消息
-export function normalizeMessages(messages: AssistantMessage[]): NormalizedAssistantMessage[]
-export function normalizeMessages(messages: UserMessage[]): NormalizedUserMessage[]
+export function normalizeMessages(messages: AssistantMessage[]): AssistantMessage[]
+export function normalizeMessages(messages: UserMessage[]): UserMessage[]
 export function normalizeMessages(
   messages: (AssistantMessage | UserMessage)[],
-): (NormalizedAssistantMessage | NormalizedUserMessage)[]
-export function normalizeMessages(messages: Message[]): NormalizedMessage[]
-export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
+): (AssistantMessage | UserMessage)[]
+export function normalizeMessages(messages: Message[]): Message[]
+export function normalizeMessages(messages: Message[]): Message[] {
   // isNewChain：当消息含多内容块时拆分成多条单内容块消息，
   // 此时后续消息需新生 UUID 以维持排序并防 UUID 重复。
   // 一旦遇到多块消息此标志为 true，并对所有后续消息保持为 true。
   let isNewChain = false
-  return messages.flatMap((message) => {
+  return messages.flatMap<Message>((message) => {
     switch (message.type) {
       case 'assistant': {
         const content = message.message.content
@@ -74,7 +71,7 @@ export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
             error: message.error,
             isApiErrorMessage: message.isApiErrorMessage,
             advisorModel: message.advisorModel,
-          } as NormalizedAssistantMessage
+          } as AssistantMessage
         })
       }
       case 'attachment':
@@ -94,7 +91,7 @@ export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
                 ...message.message,
                 content: [{ type: 'text', text: message.message.content }],
               },
-            } as NormalizedMessage,
+            } as UserMessage,
           ]
         }
         isNewChain = isNewChain || message.message.content.length > 1
@@ -119,7 +116,7 @@ export function normalizeMessages(messages: Message[]): NormalizedMessage[] {
               origin: message.origin,
             }),
             uuid: isNewChain ? deriveUUID(message.uuid as UUID, index) : message.uuid,
-          } as NormalizedMessage
+          } as UserMessage
         })
       }
       default:

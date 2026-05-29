@@ -599,14 +599,10 @@ function extractToolStats(log: LogOption): {
       // Check if this is an actual human message (has text) vs just tool_result
       // matching Python reference logic
       let isHumanMessage = false
-      if (typeof content === 'string' && content.trim()) {
-        isHumanMessage = true
-      } else if (Array.isArray(content)) {
-        for (const block of content) {
-          if (block.type === 'text' && 'text' in block) {
-            isHumanMessage = true
-            break
-          }
+      for (const block of content) {
+        if (block.type === 'text' && 'text' in block) {
+          isHumanMessage = true
+          break
         }
       }
 
@@ -684,20 +680,14 @@ function extractToolStats(log: LogOption): {
       }
 
       // Check for interruptions (matching Python reference)
-      if (typeof content === 'string') {
-        if (content.includes('[Request interrupted by user')) {
+      for (const block of content) {
+        if (
+          block.type === 'text' &&
+          'text' in block &&
+          (block.text as string).includes('[Request interrupted by user')
+        ) {
           userInterruptions++
-        }
-      } else if (Array.isArray(content)) {
-        for (const block of content) {
-          if (
-            block.type === 'text' &&
-            'text' in block &&
-            (block.text as string).includes('[Request interrupted by user')
-          ) {
-            userInterruptions++
-            break
-          }
+          break
         }
       }
     }
@@ -749,14 +739,10 @@ function logToSessionMeta(log: LogOption): SessionMeta {
     if (msg.type === 'user' && msg.message) {
       const content = msg.message.content
       let isHumanMessage = false
-      if (typeof content === 'string' && content.trim()) {
-        isHumanMessage = true
-      } else if (Array.isArray(content)) {
-        for (const block of content) {
-          if (block.type === 'text' && 'text' in block) {
-            isHumanMessage = true
-            break
-          }
+      for (const block of content) {
+        if (block.type === 'text' && 'text' in block) {
+          isHumanMessage = true
+          break
         }
       }
       if (isHumanMessage) {
@@ -839,13 +825,9 @@ function formatTranscriptForFacets(log: LogOption): string {
   for (const msg of log.messages) {
     if (msg.type === 'user' && msg.message) {
       const content = msg.message.content
-      if (typeof content === 'string') {
-        lines.push(`[User]: ${content.slice(0, 500)}`)
-      } else if (Array.isArray(content)) {
-        for (const block of content) {
-          if (block.type === 'text' && 'text' in block) {
-            lines.push(`[User]: ${(block.text as string).slice(0, 500)}`)
-          }
+      for (const block of content) {
+        if (block.type === 'text' && 'text' in block) {
+          lines.push(`[User]: ${(block.text as string).slice(0, 500)}`)
         }
       }
     } else if (msg.type === 'assistant' && msg.message) {
@@ -2845,10 +2827,12 @@ export async function generateUsageReport(options?: { collectRemote?: boolean })
     for (const msg of log.messages.slice(0, 5)) {
       if (msg.type === 'user' && msg.message) {
         const content = msg.message.content
-        if (typeof content === 'string') {
+        for (const block of content) {
           if (
-            content.includes('RESPOND WITH ONLY A VALID JSON OBJECT') ||
-            content.includes('record_facets')
+            block.type === 'text' &&
+            'text' in block &&
+            ((block.text as string).includes('RESPOND WITH ONLY A VALID JSON OBJECT') ||
+              (block.text as string).includes('record_facets'))
           ) {
             return true
           }

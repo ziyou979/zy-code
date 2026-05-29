@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import { randomUUID } from 'node:crypto'
 import { logForDebugging } from 'src/utils/debug.js'
 import { getAllowedChannels } from '../../../bootstrap/state.js'
-import type { BridgePermissionCallbacks } from '../../../bridge/bridgePermissionCallbacks.js'
+import type { WirePermissionCallbacks } from '../../../bridge/bridgePermissionCallbacks.js'
 import { getTerminalFocused } from '../../../ink/terminal-focus-state.js'
 import {
   CHANNEL_PERMISSION_REQUEST_METHOD,
@@ -36,7 +36,7 @@ type InteractivePermissionParams = {
   description: string
   result: PermissionDecision & { behavior: 'ask' }
   awaitAutomatedChecksBeforeDialog: boolean | undefined
-  bridgeCallbacks?: BridgePermissionCallbacks
+  bridgeCallbacks?: WirePermissionCallbacks
   channelCallbacks?: ChannelPermissionCallbacks
 }
 

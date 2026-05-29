@@ -10,8 +10,8 @@ import { logForDebugging } from '../utils/debug.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import {
   buildActiveFooterText,
-  buildBridgeConnectUrl,
-  buildBridgeSessionUrl,
+  buildWireConnectUrl,
+  buildWireSessionUrl,
   buildIdleFooterText,
   FAILED_FOOTER_TEXT,
   formatDuration,
@@ -21,7 +21,7 @@ import {
   truncatePrompt,
   wrapWithOsc8Link,
 } from './bridgeStatusUtil.js'
-import type { BridgeConfig, BridgeLogger, SessionActivity, SpawnMode } from './types.js'
+import type { WireConfig, WireLogger, SessionActivity, SpawnMode } from './types.js'
 
 const QR_OPTIONS = {
   type: 'utf8' as const,
@@ -35,10 +35,10 @@ async function generateQr(url: string): Promise<string[]> {
   return qr.split('\n').filter((line: string) => line.length > 0)
 }
 
-export function createBridgeLogger(options: {
+export function createWireLogger(options: {
   verbose: boolean
   write?: (s: string) => void
-}): BridgeLogger {
+}): WireLogger {
   const write = options.write ?? ((s: string) => process.stdout.write(s))
   const verbose = options.verbose
 
@@ -266,10 +266,10 @@ export function createBridgeLogger(options: {
   }
 
   return {
-    printBanner(config: BridgeConfig, environmentId: string): void {
+    printBanner(config: WireConfig, environmentId: string): void {
       cachedIngressUrl = config.sessionIngressUrl
       cachedEnvironmentId = environmentId
-      connectUrl = buildBridgeConnectUrl(environmentId, cachedIngressUrl)
+      connectUrl = buildWireConnectUrl(environmentId, cachedIngressUrl)
       regenerateQr(connectUrl)
 
       if (verbose) {
@@ -366,7 +366,7 @@ export function createBridgeLogger(options: {
       // Multi-session: keep footer/QR on the environment connect URL so users
       // can spawn more sessions. Per-session links are in the bullet list.
       if (sessionMax <= 1) {
-        activeSessionUrl = buildBridgeSessionUrl(sessionId, cachedEnvironmentId, cachedIngressUrl)
+        activeSessionUrl = buildWireSessionUrl(sessionId, cachedEnvironmentId, cachedIngressUrl)
         regenerateQr(activeSessionUrl)
       }
       renderStatusLine()
