@@ -99,7 +99,7 @@ function FeedbackSurveyThanks({
   setInputValue,
   onRequestFeedback,
 }: ThanksProps) {
-  const showFollowUp = onRequestFeedback && (lastResponse as any) === 'good'
+  const showFollowUp = onRequestFeedback && lastResponse === 'good'
   const followUpEnabled = Boolean(showFollowUp)
   useDebouncedDigitInput({
     inputValue,
@@ -124,7 +124,7 @@ function FeedbackSurveyThanks({
         <Text dimColor={true}>
           {tSync('feedbackSurvey.tellUsWhatWentWell', { command: feedbackCommand })}
         </Text>
-      ) : (lastResponse as any) === 'bad' ? (
+      ) : lastResponse === 'bad' ? (
         <Text dimColor={true}>{tSync('feedbackSurvey.useIssueToReport')}</Text>
       ) : (
         <Text dimColor={true}>

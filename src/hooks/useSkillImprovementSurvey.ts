@@ -56,7 +56,7 @@ export function useSkillImprovementSurvey(setMessages: SetMessages): {
         return
       }
 
-      const applied = (selected as any) !== 'dismissed'
+      const applied = selected !== 'dismissed'
 
       logEvent('zy_skill_improvement_survey', {
         event_type: 'responded' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -74,7 +74,7 @@ export function useSkillImprovementSurvey(setMessages: SetMessages): {
             ...prev,
             createSystemMessage(
               `Skill "${current.skillName}" updated with improvements.`,
-              'suggestion' as any,
+              'info',
             ),
           ])
         })

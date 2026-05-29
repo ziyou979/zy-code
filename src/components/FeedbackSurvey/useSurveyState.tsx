@@ -64,7 +64,7 @@ export function useSurveyState({
       lastResponseRef.current = selected
       // Always fire the survey response event first
       void onSelect(appearanceId.current, selected)
-      if ((selected as any) === 'dismissed') {
+      if (selected === 'dismissed') {
         setState('closed')
         setLastResponse(null)
       } else if (shouldShowTranscriptPrompt?.(selected)) {

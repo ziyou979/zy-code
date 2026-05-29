@@ -17,6 +17,7 @@ import { snapshotOutputTokensForTurn } from '../../bootstrap/state.js'
 import type { ToolUseConfirm } from '../../components/permissions/PermissionRequest.js'
 import type { SpinnerMode } from '../../components/Spinner.js'
 import type { Message as MessageType } from '../../types/message.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
 import type { PromptInputMode } from '../../types/textInputTypes.js'
 import type { PastedContent } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -50,9 +51,8 @@ export type UseReplOnCancelParams = {
   focusedInputDialog: FocusedInputDialog
   streamMode: SpinnerMode
   queryGuard: QueryGuard
-  skipIdleCheckRef: React.RefObject<boolean>
   streamingText: string | null
-  setMessages: (action: React.SetStateAction<MessageType[]>) => void
+  replStore: ReplStoreInstance
   resetLoadingState: () => void
   toolUseConfirmQueue: ToolUseConfirm[]
   setToolUseConfirmQueue: React.Dispatch<React.SetStateAction<ToolUseConfirm[]>>
@@ -60,7 +60,6 @@ export type UseReplOnCancelParams = {
   setPromptQueue: React.Dispatch<React.SetStateAction<PromptQueueItem[]>>
   activeRemote: ActiveRemote
   mrOnTurnComplete: (messages: MessageType[], aborted: boolean) => void | Promise<void>
-  messagesRef: React.RefObject<MessageType[]>
   // 排队命令恢复依赖
   inputValue: string
   setInputValue: (value: string) => void
@@ -114,10 +113,10 @@ export function useReplOnCancel(params: UseReplOnCancelParams): ReplOnCancelApi 
       proactiveModule?.pauseProactive()
     }
     params.queryGuard.forceEnd()
-    params.skipIdleCheckRef.current = false
+    params.replStore.mutable.skipIdleCheck = false
 
     if (params.streamingText?.trim()) {
-      params.setMessages((prev) => [
+      params.replStore.setMessages((prev) => [
         ...prev,
         createAssistantMessage({ content: params.streamingText! }),
       ])
@@ -144,7 +143,7 @@ export function useReplOnCancel(params: UseReplOnCancelParams): ReplOnCancelApi 
     }
 
     setAbortController(null)
-    void params.mrOnTurnComplete(params.messagesRef.current, true)
+    void params.mrOnTurnComplete(params.replStore.getState().messages, true)
   }
 
   return {

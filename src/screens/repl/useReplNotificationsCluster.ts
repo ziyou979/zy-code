@@ -171,8 +171,8 @@ export function useReplNotificationsCluster({
         return
       }
       const timer = setTimeout(
-        (ref: React.RefObject<boolean>, setMsgs: typeof setMessages) => {
-          ;(ref as any).current = true
+        (ref: { current: boolean }, setMsgs: typeof setMessages) => {
+          ref.current = true
           saveGlobalConfig((prev) => {
             const prevCount = prev.autoPermissionsNotificationCount ?? 0
             if (prevCount >= 3) {

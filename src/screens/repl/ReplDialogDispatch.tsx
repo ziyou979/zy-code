@@ -28,6 +28,7 @@ import type { NetworkHostPattern } from '../../services/sandbox/sandbox-adapter.
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { sendSandboxPermissionResponseViaMailbox } from '../../services/swarm/permissionSync.js'
 import { useAppState, useSetAppState, useAppStateStore } from '../../state/AppState.js'
+import { useReplStore } from '../../state/ReplState.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { saveGlobalConfig } from '../../utils/config.js'
 import {
@@ -44,9 +45,7 @@ import { LOCAL_COMMAND_STDOUT_TAG } from '../../constants/xml.js'
 import { escapeXml } from '../../utils/xml.js'
 import { logError } from '../../utils/log.js'
 import { getTotalInputTokens } from '../../bootstrap/state.js'
-import type { FileStateCache } from '../../utils/fileStateCache.js'
 import type { IDEExtensionInstallationStatus } from '../../utils/ide.js'
-import type { QueryGuard } from '../../utils/QueryGuard.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
 import type { FocusedInputDialog } from './useReplOnCancel.js'
 import type { PromptQueueItem } from './useReplRequestPrompt.js'
@@ -57,30 +56,10 @@ import type { ReplNotificationsCluster } from './useReplNotificationsCluster.js'
 
 export type ReplDialogDispatchProps = {
   focusedInputDialog: FocusedInputDialog
-  // sandbox
-  sandboxPermissionRequestQueue: SandboxPermRequest[]
-  setSandboxPermissionRequestQueue: React.Dispatch<React.SetStateAction<SandboxPermRequest[]>>
-  sandboxBridgeCleanupRef: React.RefObject<Map<string, Array<() => void>>>
-  // prompt
-  promptQueue: PromptQueueItem[]
-  setPromptQueue: React.Dispatch<React.SetStateAction<PromptQueueItem[]>>
-  // idle-return
-  idleReturnPending: { input: string; idleMinutes: number } | null
-  setIdleReturnPending: React.Dispatch<
-    React.SetStateAction<{ input: string; idleMinutes: number } | null>
-  >
+  sandboxWireCleanupRef: React.RefObject<Map<string, Array<() => void>>>
   setInputValue: (value: string) => void
-  messagesRef: React.RefObject<MessageType[]>
-  setMessages: (action: React.SetStateAction<MessageType[]>) => void
-  readFileState: React.RefObject<FileStateCache>
-  discoveredSkillNamesRef: React.RefObject<Set<string>>
-  loadedNestedMemoryPathsRef: React.RefObject<Set<string>>
-  titleGenerationAttemptedRef: React.RefObject<boolean>
   clearBashToolsTracking: () => void
-  skipIdleCheckRef: React.RefObject<boolean>
   onSubmitRef: React.RefObject<(input: string, helpers: PromptInputHelpers) => void>
-  setConversationId: React.Dispatch<React.SetStateAction<string>>
-  // ide / effort / hint / lsp / desktop
   ideInstallationStatus: IDEExtensionInstallationStatus | undefined
   setShowIdeOnboarding: (v: boolean) => void
   mainLoopModel: string
@@ -90,10 +69,7 @@ export type ReplDialogDispatchProps = {
   lspRecommendation: ReplNotificationsCluster['lspRecommendation']
   handleLspResponse: ReplNotificationsCluster['handleLspResponse']
   setShowDesktopUpsellStartup: (next: boolean) => void
-  // ultraplan
-  queryGuard: QueryGuard
   createAbortController: () => AbortController
-  // misc
   exitFlow: React.ReactNode
 }
 
@@ -106,24 +82,10 @@ const UltraplanLaunchDialogStub: React.FC<Record<string, unknown>> = () => null
 export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactNode {
   const {
     focusedInputDialog: dialog,
-    sandboxPermissionRequestQueue,
-    setSandboxPermissionRequestQueue,
-    sandboxBridgeCleanupRef,
-    promptQueue,
-    setPromptQueue,
-    idleReturnPending,
-    setIdleReturnPending,
+    sandboxWireCleanupRef,
     setInputValue,
-    messagesRef,
-    setMessages,
-    readFileState,
-    discoveredSkillNamesRef,
-    loadedNestedMemoryPathsRef,
-    titleGenerationAttemptedRef,
     clearBashToolsTracking,
-    skipIdleCheckRef,
     onSubmitRef,
-    setConversationId,
     ideInstallationStatus,
     setShowIdeOnboarding,
     mainLoopModel,
@@ -133,11 +95,16 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
     lspRecommendation,
     handleLspResponse,
     setShowDesktopUpsellStartup,
-    queryGuard,
     createAbortController,
     exitFlow,
   } = props
 
+  const replStore = useReplStore()
+  const rs = replStore.getState()
+  const sandboxPermissionRequestQueue = rs.sandboxPermissionRequestQueue
+  const promptQueue = rs.promptQueue
+  const idleReturnPending = rs.idleReturnPending
+  const queryGuard = replStore.mutable.queryGuard
   const setAppState = useSetAppState()
   const store = useAppStateStore()
   const workerSandboxPermissions = useAppState((s) => s.workerSandboxPermissions)
@@ -171,26 +138,27 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
         persistPermissionUpdate(update)
         SandboxManager.refreshConfig()
       }
-      setSandboxPermissionRequestQueue((queue) => {
+      replStore.setState((prev) => {
+        const queue = prev.sandboxPermissionRequestQueue
         queue
           .filter((item) => item.hostPattern.host === approvedHost)
           .forEach((item) => item.resolvePromise(allow))
-        return queue.filter((item) => item.hostPattern.host !== approvedHost)
+        return {
+          ...prev,
+          sandboxPermissionRequestQueue: queue.filter(
+            (item) => item.hostPattern.host !== approvedHost,
+          ),
+        }
       })
-      const cleanups = sandboxBridgeCleanupRef.current.get(approvedHost)
+      const cleanups = sandboxWireCleanupRef.current.get(approvedHost)
       if (cleanups) {
         for (const fn of cleanups) {
           fn()
         }
-        sandboxBridgeCleanupRef.current.delete(approvedHost)
+        sandboxWireCleanupRef.current.delete(approvedHost)
       }
     },
-    [
-      sandboxPermissionRequestQueue,
-      setSandboxPermissionRequestQueue,
-      sandboxBridgeCleanupRef,
-      setAppState,
-    ],
+    [sandboxPermissionRequestQueue, replStore, sandboxWireCleanupRef, setAppState],
   )
 
   // ── handler: worker sandbox permission ──
@@ -241,11 +209,11 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
       if (!pending) {
         return
       }
-      setIdleReturnPending(null)
+      replStore.update({ idleReturnPending: null })
       logEvent('zy_idle_return_action', {
         action: action as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         idleMinutes: Math.round(pending.idleMinutes),
-        messageCount: messagesRef.current.length,
+        messageCount: replStore.getState().messages.length,
         totalInputTokens: getTotalInputTokens(),
       })
       if (action === 'dismiss') {
@@ -263,18 +231,18 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
       if (action === 'clear') {
         const { clearConversation } = await import('../../commands/clear/conversation.js')
         await clearConversation({
-          setMessages,
-          readFileState: readFileState.current,
-          discoveredSkillNames: discoveredSkillNamesRef.current,
-          loadedNestedMemoryPaths: loadedNestedMemoryPathsRef.current,
+          setMessages: replStore.setMessages,
+          readFileState: replStore.mutable.readFileState,
+          discoveredSkillNames: replStore.mutable.discoveredSkillNames,
+          loadedNestedMemoryPaths: replStore.mutable.loadedNestedMemoryPaths,
           getAppState: () => store.getState(),
           setAppState,
-          setConversationId,
+          setConversationId: replStore.setConversationId,
         })
-        titleGenerationAttemptedRef.current = false
+        replStore.mutable.titleGenerationAttempted = false
         clearBashToolsTracking()
       }
-      skipIdleCheckRef.current = true
+      replStore.mutable.skipIdleCheck = true
       void onSubmitRef.current(pending.input, {
         setCursorOffset: () => {},
         clearBuffer: () => {},
@@ -283,19 +251,11 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
     },
     [
       idleReturnPending,
-      setIdleReturnPending,
       setInputValue,
-      messagesRef,
-      setMessages,
-      readFileState,
-      discoveredSkillNamesRef,
-      loadedNestedMemoryPathsRef,
+      replStore,
       store,
       setAppState,
-      setConversationId,
-      titleGenerationAttemptedRef,
       clearBashToolsTracking,
-      skipIdleCheckRef,
       onSubmitRef,
     ],
   )
@@ -310,12 +270,12 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
       if (choice === 'cancel' || !blurb) {
         return
       }
-      setMessages((prev) => [
+      replStore.setMessages((prev) => [
         ...prev,
         createCommandInputMessage(formatCommandInputTags('ultraplan', blurb)),
       ])
       const appendStdout = (msg: string) =>
-        setMessages((prev) => [
+        replStore.setMessages((prev) => [
           ...prev,
           createCommandInputMessage(
             `<${LOCAL_COMMAND_STDOUT_TAG}>${escapeXml(msg)}</${LOCAL_COMMAND_STDOUT_TAG}>`,
@@ -349,7 +309,7 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
         .then(appendStdout)
         .catch(logError)
     },
-    [ultraplanLaunchPending, setAppState, setMessages, queryGuard, store, createAbortController],
+    [ultraplanLaunchPending, setAppState, replStore, queryGuard, store, createAbortController],
   )
 
   return (
@@ -373,7 +333,7 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
               return
             }
             item.resolve({ prompt_response: item.request.prompt, selected: selectedKey })
-            setPromptQueue(([, ...tail]) => tail)
+            replStore.setState((p) => ({ ...p, promptQueue: p.promptQueue.slice(1) }))
           }}
           onAbort={() => {
             const item = promptQueue[0]
@@ -381,7 +341,7 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
               return
             }
             item.reject(new Error('Prompt cancelled by user'))
-            setPromptQueue(([, ...tail]) => tail)
+            replStore.setState((p) => ({ ...p, promptQueue: p.promptQueue.slice(1) }))
           }}
         />
       )}
@@ -470,7 +430,7 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
                 showRemoteCallout: false,
                 ...(selection === 'enable' && {
                   replBridgeEnabled: true,
-                  replBridgeExplicit: true,
+                  replWireExplicit: true,
                   replBridgeOutboundOnly: false,
                 }),
               }
@@ -509,10 +469,10 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
               plan={ultraplanPendingChoice.plan}
               sessionId={ultraplanPendingChoice.sessionId}
               taskId={ultraplanPendingChoice.taskId}
-              setMessages={setMessages}
-              readFileState={readFileState.current}
+              setMessages={replStore.setMessages}
+              readFileState={replStore.mutable.readFileState}
               getAppState={() => store.getState()}
-              setConversationId={setConversationId}
+              setConversationId={replStore.setConversationId}
             />
           )
         : null}

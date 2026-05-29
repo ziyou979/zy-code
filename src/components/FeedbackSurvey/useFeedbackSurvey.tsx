@@ -48,7 +48,7 @@ export function useFeedbackSurvey(
   messages: Message[],
   isLoading: boolean,
   submitCount: number,
-  surveyType: FeedbackSurveyType = 'session' as any,
+  surveyType: FeedbackSurveyType = 'feedback',
   hasActivePrompt: boolean = false,
 ): {
   state: 'closed' | 'open' | 'thanks' | 'transcript_prompt' | 'submitting' | 'submitted'
@@ -145,7 +145,7 @@ export function useFeedbackSurvey(
       void logOTelEvent('feedback_survey', {
         event_type: 'responded',
         appearance_id: appearanceId_0,
-        response: selected as any,
+        response: selected,
         survey_type: surveyType,
       })
     },
@@ -154,7 +154,7 @@ export function useFeedbackSurvey(
   const shouldShowTranscriptPrompt = useCallback(
     (selected_0: FeedbackSurveyResponse) => {
       // Only bad and good ratings trigger the transcript ask
-      if ((selected_0 as any) !== 'bad' && (selected_0 as any) !== 'good') {
+      if (selected_0 !== 'bad' && selected_0 !== 'good') {
         return false
       }
 
@@ -170,7 +170,7 @@ export function useFeedbackSurvey(
 
       // Probability gate from GrowthBook config (separate per rating)
       const probability =
-        (selected_0 as any) === 'bad'
+        selected_0 === 'bad'
           ? badTranscriptAskConfig.probability
           : goodTranscriptAskConfig.probability
       return Math.random() <= probability
@@ -180,7 +180,7 @@ export function useFeedbackSurvey(
   const onTranscriptPromptShown = useCallback(
     (appearanceId_1: string, surveyResponse: FeedbackSurveyResponse) => {
       const trigger: TranscriptShareTrigger =
-        (surveyResponse as any) === 'good' ? 'good_feedback_survey' : ('bad_feedback_survey' as any)
+        surveyResponse === 'good' ? 'good_feedback_survey' : 'bad_feedback_survey'
       logEvent('zy_feedback_survey_event', {
         event_type:
           'transcript_prompt_appeared' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -205,7 +205,7 @@ export function useFeedbackSurvey(
       surveyResponse_0: FeedbackSurveyResponse | null,
     ): Promise<boolean> => {
       const trigger_0: TranscriptShareTrigger =
-        (surveyResponse_0 as any) === 'good' ? 'good_feedback_survey' : 'bad_feedback_survey'
+        surveyResponse_0 === 'good' ? 'good_feedback_survey' : 'bad_feedback_survey'
       logEvent('zy_feedback_survey_event', {
         event_type:
           `transcript_share_${selected_1}` as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

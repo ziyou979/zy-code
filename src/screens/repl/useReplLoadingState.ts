@@ -18,6 +18,7 @@ import { tSync } from '../../i18n/index.js'
 import { hasCursorUpViewportYankBug } from '../../ink/terminal.js'
 import { getTipToShowOnSpinner, recordShownTip } from '../../services/tips/tipScheduler.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
 import type { CompactProgressEvent } from '../../Tool.js'
 import type { Message as MessageType } from '../../types/message.js'
 import type { FileStateCache } from '../../utils/fileStateCache.js'
@@ -65,8 +66,7 @@ export type UseReplLoadingStateParams = {
   queryGuard: QueryGuard
   initialExternalLoading: boolean
   theme: ThemeName
-  messagesRef: React.RefObject<MessageType[]>
-  readFileStateRef: React.RefObject<FileStateCache>
+  replStore: ReplStoreInstance
   /** REPL 侧剩余 reset 操作（responseLengthRef / setStreamingToolUses / ...） */
   onResetAdditional: () => void
 }
@@ -79,8 +79,7 @@ export function useReplLoadingState({
   queryGuard,
   initialExternalLoading,
   theme,
-  messagesRef,
-  readFileStateRef,
+  replStore,
   onResetAdditional,
 }: UseReplLoadingStateParams): ReplLoadingState {
   // ── loading ──
@@ -164,14 +163,15 @@ export function useReplLoadingState({
       return
     }
     tipPickedThisTurnRef.current = true
-    const newMessages = messagesRef.current.slice(bashToolsProcessedIdxRef.current)
+    const msgs = replStore.getState().messages
+    const newMessages = msgs.slice(bashToolsProcessedIdxRef.current)
     for (const tool of extractBashToolsFromMessages(newMessages)) {
       bashToolsRef.current.add(tool)
     }
-    bashToolsProcessedIdxRef.current = messagesRef.current.length
+    bashToolsProcessedIdxRef.current = msgs.length
     void getTipToShowOnSpinner({
       theme,
-      readFileState: readFileStateRef.current,
+      readFileState: replStore.mutable.readFileState,
       bashTools: bashToolsRef.current,
     }).then(async (tip) => {
       if (tip) {
@@ -187,7 +187,7 @@ export function useReplLoadingState({
         })
       }
     })
-  }, [setAppState, theme, messagesRef, readFileStateRef])
+  }, [setAppState, theme, replStore])
 
   const ingestBashToolsFromMessages = useCallback((messages: MessageType[]) => {
     for (const tool of extractBashToolsFromMessages(messages)) {

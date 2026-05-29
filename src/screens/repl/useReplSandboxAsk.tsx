@@ -12,7 +12,7 @@
 // 3. 在渲染中调用 SandboxManager.initialize(sandboxAskCallback)（管理器内
 //    部幂等），把回调装进沙盒适配器
 //
-// `sandboxBridgeCleanupRef` 由 hook 内部 useRef 创建并 export，因为本地
+// `sandboxWireCleanupRef` 由 hook 内部 useRef 创建并 export，因为本地
 // 对话框 approval 处理（REPL JSX 中）也要遍历清理同 host 的兄弟订阅。
 
 import { useCallback, useEffect, useRef } from 'react'
@@ -50,7 +50,7 @@ export type UseReplSandboxAskParams = {
 
 export type UseReplSandboxAskResult = {
   /** 由本地对话框 approval 路径共享，按 host 取出兄弟 bridge 清理函数 */
-  sandboxBridgeCleanupRef: React.RefObject<Map<string, Array<() => void>>>
+  sandboxWireCleanupRef: React.RefObject<Map<string, Array<() => void>>>
 }
 
 export function useReplSandboxAsk({
@@ -59,7 +59,7 @@ export function useReplSandboxAsk({
 }: UseReplSandboxAskParams): UseReplSandboxAskResult {
   const setAppState = useSetAppState()
   const store = useAppStateStore()
-  const sandboxBridgeCleanupRef = useRef<Map<string, Array<() => void>>>(new Map())
+  const sandboxWireCleanupRef = useRef<Map<string, Array<() => void>>>(new Map())
 
   const sandboxAskCallback: SandboxAskCallback = useCallback(
     async (hostPattern: NetworkHostPattern) => {
@@ -106,7 +106,7 @@ export function useReplSandboxAsk({
 
         // BRIDGE_MODE：把请求作为 can_use_tool control_request 转给远端
         if (feature('BRIDGE_MODE')) {
-          const bridgeCallbacks = store.getState().replBridgePermissionCallbacks
+          const bridgeCallbacks = store.getState().replWirePermissionCallbacks
           if (bridgeCallbacks) {
             const bridgeRequestId = randomUUID()
             bridgeCallbacks.sendRequest(
@@ -126,12 +126,12 @@ export function useReplSandboxAsk({
                   .forEach((item) => item.resolvePromise(allow))
                 return queue.filter((item) => item.hostPattern.host !== hostPattern.host)
               })
-              const siblingCleanups = sandboxBridgeCleanupRef.current.get(hostPattern.host)
+              const siblingCleanups = sandboxWireCleanupRef.current.get(hostPattern.host)
               if (siblingCleanups) {
                 for (const fn of siblingCleanups) {
                   fn()
                 }
-                sandboxBridgeCleanupRef.current.delete(hostPattern.host)
+                sandboxWireCleanupRef.current.delete(hostPattern.host)
               }
             })
 
@@ -140,9 +140,9 @@ export function useReplSandboxAsk({
               unsubscribe()
               bridgeCallbacks.cancelRequest(bridgeRequestId)
             }
-            const existing = sandboxBridgeCleanupRef.current.get(hostPattern.host) ?? []
+            const existing = sandboxWireCleanupRef.current.get(hostPattern.host) ?? []
             existing.push(cleanup)
-            sandboxBridgeCleanupRef.current.set(hostPattern.host, existing)
+            sandboxWireCleanupRef.current.set(hostPattern.host, existing)
           }
         }
       })
@@ -187,5 +187,5 @@ export function useReplSandboxAsk({
     })
   }
 
-  return { sandboxBridgeCleanupRef }
+  return { sandboxWireCleanupRef }
 }

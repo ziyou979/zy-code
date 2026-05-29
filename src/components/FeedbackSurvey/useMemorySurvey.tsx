@@ -91,7 +91,7 @@ export function useMemorySurvey(
     void logOTelEvent('feedback_survey', {
       event_type: 'responded',
       appearance_id: appearanceId_0,
-      response: selected as any,
+      response: selected,
       survey_type: 'memory',
     })
   }, [])
@@ -99,7 +99,6 @@ export function useMemorySurvey(
     if (!isInternalBuild()) {
       return false
     }
-    // @ts-expect-error -- FeedbackSurveyResponse enum comparison works at runtime
     if (selected_0 !== 'bad' && selected_0 !== 'good') {
       return false
     }

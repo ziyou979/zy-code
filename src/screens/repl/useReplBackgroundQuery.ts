@@ -13,6 +13,7 @@
 
 import { useCallback } from 'react'
 import type React from 'react'
+import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
 import { getSystemContext, getUserContext } from '../../context.js'
 import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
@@ -24,6 +25,7 @@ import { getQuerySourceForREPL } from '../../utils/promptCategory.js'
 import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { ToolPermissionContext } from '../../Tool.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
 
 export type UseReplBackgroundQueryParams = {
   abortController: AbortController | null
@@ -38,10 +40,10 @@ export type UseReplBackgroundQueryParams = {
   ) => ProcessUserInputContext
   customSystemPrompt: string | undefined
   appendSystemPrompt: string | undefined
-  canUseTool: (...args: any[]) => Promise<unknown>
+  canUseTool: CanUseToolFn
   setAppState: React.Dispatch<React.SetStateAction<any>>
   terminalTitle: string
-  messagesRef: React.RefObject<MessageType[]>
+  replStore: ReplStoreInstance
 }
 
 export function useReplBackgroundQuery({
@@ -55,14 +57,14 @@ export function useReplBackgroundQuery({
   canUseTool,
   setAppState,
   terminalTitle,
-  messagesRef,
+  replStore,
 }: UseReplBackgroundQueryParams): () => void {
   return useCallback(() => {
     abortController?.abort('background')
     const removedNotifications = removeByFilter((cmd) => cmd.mode === 'task-notification')
     void (async () => {
       const toolUseContext = getToolUseContext(
-        messagesRef.current,
+        replStore.getState().messages,
         [],
         new AbortController(),
         mainLoopModel,
@@ -90,31 +92,33 @@ export function useReplBackgroundQuery({
       )
       const notificationMessages = notificationAttachments.map(createAttachmentMessage)
 
-      // 去重：查询循环可能已把同一通知 yield 到 messagesRef
+      const currentMessages = replStore.getState().messages
       const existingPrompts = new Set<string>()
-      for (const m of messagesRef.current) {
+      for (const m of currentMessages) {
+        if (m.type !== 'attachment') continue
+        const att = m.attachment as { type?: string; commandMode?: string; prompt?: unknown }
         if (
-          m.type === 'attachment' &&
-          (m.attachment as any).type === 'queued_command' &&
-          (m.attachment as any).commandMode === 'task-notification' &&
-          typeof (m.attachment as any).prompt === 'string'
+          att.type === 'queued_command' &&
+          att.commandMode === 'task-notification' &&
+          typeof att.prompt === 'string'
         ) {
-          existingPrompts.add((m.attachment as any).prompt)
+          existingPrompts.add(att.prompt)
         }
       }
-      const uniqueNotifications = notificationMessages.filter(
-        (m) =>
-          (m.attachment as any).type === 'queued_command' &&
-          (typeof (m.attachment as any).prompt !== 'string' ||
-            !existingPrompts.has((m.attachment as any).prompt)),
-      )
+      const uniqueNotifications = notificationMessages.filter((m) => {
+        const att = m.attachment as { type?: string; prompt?: unknown }
+        return (
+          att.type === 'queued_command' &&
+          (typeof att.prompt !== 'string' || !existingPrompts.has(att.prompt))
+        )
+      })
       startBackgroundSession({
-        messages: [...messagesRef.current, ...uniqueNotifications],
+        messages: [...currentMessages, ...uniqueNotifications],
         queryParams: {
           systemPrompt,
           userContext,
           systemContext,
-          canUseTool: canUseTool as any,
+          canUseTool,
           toolUseContext,
           querySource: getQuerySourceForREPL(),
         },
@@ -134,6 +138,6 @@ export function useReplBackgroundQuery({
     canUseTool,
     setAppState,
     terminalTitle,
-    messagesRef,
+    replStore,
   ])
 }

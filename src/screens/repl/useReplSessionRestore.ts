@@ -64,24 +64,22 @@ import {
 } from '../../utils/toolResultStorage.js'
 import { getCurrentWorktreeSession } from '../../utils/worktree.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
 
 // ── 公共类型 ──────────────────────────────────────────────
 
 export type UseReplSessionRestoreParams = {
   initialMessages: MessageType[] | undefined
   initialMainThreadAgentDefinition: AgentDefinition | undefined
+  replStore: ReplStoreInstance
   // REPL local state / callbacks
-  setMessages: (action: React.SetStateAction<MessageType[]>) => void
   setInputValue: (value: string) => void
   setToolJSX: (jsx: null) => void
-  setConversationId: React.Dispatch<React.SetStateAction<string>>
   setAbortController: React.Dispatch<React.SetStateAction<AbortController | null>>
   mainThreadAgentDefinition: AgentDefinition | undefined
   setMainThreadAgentDefinition: React.Dispatch<React.SetStateAction<AgentDefinition | undefined>>
   resetLoadingState: () => void
   restoreReadFileState: (messages: MessageType[], cwd: string) => void
-  titleGenerationAttemptedRef: React.RefObject<boolean>
-  contentReplacementStateRef: React.RefObject<ContentReplacementState | null>
   forceRenderTitle: React.Dispatch<React.SetStateAction<number>>
 }
 
@@ -96,17 +94,14 @@ export type ResumeFunction = (
 export function useReplSessionRestore({
   initialMessages,
   initialMainThreadAgentDefinition,
-  setMessages,
+  replStore,
   setInputValue,
   setToolJSX,
-  setConversationId,
   setAbortController,
   mainThreadAgentDefinition,
   setMainThreadAgentDefinition,
   resetLoadingState,
   restoreReadFileState,
-  titleGenerationAttemptedRef,
-  contentReplacementStateRef,
   forceRenderTitle,
 }: UseReplSessionRestoreParams): ResumeFunction {
   const setAppState = useSetAppState()
@@ -187,7 +182,7 @@ export function useReplSessionRestore({
         restoreReadFileState(messages, log.projectPath ?? getOriginalCwd())
         resetLoadingState()
         setAbortController(null)
-        setConversationId(sessionId)
+        replStore.setConversationId(sessionId)
 
         const targetSessionCosts = getStoredSessionCosts(sessionId)
         saveCurrentSessionCosts()
@@ -201,9 +196,9 @@ export function useReplSessionRestore({
         clearSessionMetadata()
         restoreSessionMetadata(log)
         if (getCurrentSessionTitle(getSessionId())) {
-          titleGenerationAttemptedRef.current = true
+          replStore.mutable.titleGenerationAttempted = true
         } else {
-          titleGenerationAttemptedRef.current = false
+          replStore.mutable.titleGenerationAttempted = false
           const sid = getSessionId()
           if (sid && log.messages.length > 0) {
             const text = log.firstPrompt || ''
@@ -248,14 +243,14 @@ export function useReplSessionRestore({
           setCostStateForRestore(targetSessionCosts)
         }
 
-        if (contentReplacementStateRef.current && entrypoint !== 'fork') {
-          contentReplacementStateRef.current = reconstructContentReplacementState(
+        if (replStore.mutable.contentReplacementState && entrypoint !== 'fork') {
+          replStore.mutable.contentReplacementState = reconstructContentReplacementState(
             messages,
             log.contentReplacements ?? [],
           )
         }
 
-        setMessages(() => messages)
+        replStore.setMessages(() => messages)
         setToolJSX(null)
         setInputValue('')
         logEvent('zy_session_resumed', {
@@ -275,20 +270,16 @@ export function useReplSessionRestore({
       resetLoadingState,
       setAppState,
       setToolJSX,
-      contentReplacementStateRef.current,
       initialMainThreadAgentDefinition,
-      setMessages,
+      replStore,
       agentDefinitions,
-      contentReplacementStateRef,
       store.getState,
       setInputValue,
       mainThreadAgentDefinition?.agentType,
       mainLoopModel,
       setAbortController,
-      setConversationId,
       restoreReadFileState,
       setMainThreadAgentDefinition,
-      titleGenerationAttemptedRef,
       forceRenderTitle,
     ],
   )

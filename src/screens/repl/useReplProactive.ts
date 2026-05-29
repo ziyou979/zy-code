@@ -17,12 +17,10 @@ export type UseReplProactiveParams = {
   onQueueTick: (prompt: string) => void
 }
 
-/* eslint-disable @typescript-eslint/no-require-imports */
 const useProactiveLazy: typeof import('../../proactive/useProactive.js').useProactive | null =
   feature('PROACTIVE') || feature('KAIROS')
     ? require('../../proactive/useProactive.js').useProactive
     : null
-/* eslint-enable @typescript-eslint/no-require-imports */
 
 /**
  * Loop mode 自动 tick（通过 /job 命令启用）。

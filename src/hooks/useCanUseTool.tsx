@@ -36,8 +36,8 @@ export type CanUseToolFn<Input extends Record<string, unknown> = Record<string, 
   toolUseID: string,
   forceDecision?: PermissionDecision<Input>,
 ) => Promise<PermissionDecision<Input>>
-function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext) {
-  return async (tool, input, toolUseContext, assistantMessage, toolUseID, forceDecision) =>
+function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext): CanUseToolFn {
+  return (async (tool, input, toolUseContext, assistantMessage, toolUseID, forceDecision) =>
     new Promise((resolve) => {
       const ctx = createPermissionContext(
         tool,
@@ -240,7 +240,7 @@ function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext) {
                   awaitAutomatedChecksBeforeDialog:
                     appState.toolPermissionContext.awaitAutomatedChecksBeforeDialog,
                   bridgeCallbacks: feature('BRIDGE_MODE')
-                    ? appState.replBridgePermissionCallbacks
+                    ? appState.replWirePermissionCallbacks
                     : undefined,
                   channelCallbacks:
                     feature('KAIROS') || feature('KAIROS_CHANNELS')
@@ -268,6 +268,6 @@ function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext) {
         .finally(() => {
           clearClassifierChecking(toolUseID)
         })
-    })
+    })) as CanUseToolFn
 }
 export default useCanUseTool

@@ -12,10 +12,10 @@ type Props = {
 const RESPONSE_INPUTS = ['0', '1', '2', '3'] as const
 type ResponseInput = (typeof RESPONSE_INPUTS)[number]
 const inputToResponse: Record<ResponseInput, FeedbackSurveyResponse> = {
-  '0': 'dismissed' as any,
-  '1': 'bad' as any,
-  '2': 'fine' as any,
-  '3': 'good' as any,
+  '0': 'dismissed',
+  '1': 'bad',
+  '2': 'fine',
+  '3': 'good',
 } as const
 export const isValidResponseInput = (input: string): input is ResponseInput =>
   (RESPONSE_INPUTS as readonly string[]).includes(input)
