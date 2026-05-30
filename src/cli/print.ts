@@ -2211,6 +2211,110 @@ function runHeadlessStreaming(
           },
         })
       },
+      interrupt: (message) => {
+        // Track escapes for attribution (ant-only feature)
+        if (feature('COMMIT_ATTRIBUTION')) {
+          setAppState((prev) => ({
+            ...prev,
+            attribution: {
+              ...prev.attribution,
+              escapeCount: prev.attribution.escapeCount + 1,
+            },
+          }))
+        }
+        if (abortController) {
+          // 用户按 ESC（或等价的取消控制信号）— 用 'interrupt' reason。
+          abortController.abort('interrupt')
+        }
+        suggestionState.abortController?.abort()
+        suggestionState.abortController = null
+        suggestionState.lastEmitted = null
+        suggestionState.pendingSuggestion = null
+        sendControlResponseSuccess(message)
+      },
+      set_permission_mode: (message) => {
+        const m = message.request as any
+        setAppState((prev) => ({
+          ...prev,
+          toolPermissionContext: handleSetPermissionMode(
+            m as any,
+            message.request_id,
+            prev.toolPermissionContext,
+            output,
+          ),
+          isUltraplanMode: m.ultraplan ?? prev.isUltraplanMode,
+        }))
+        // handleSetPermissionMode sends the control_response; the
+        // notifySessionMetadataChanged that used to follow here is
+        // now fired by onChangeAppState (with externalized mode name).
+      },
+      mcp_status: (message) => {
+        sendControlResponseSuccess(message, {
+          mcpServers: mcp.buildMcpServerStatuses(),
+        })
+      },
+      get_context_usage: async (message) => {
+        try {
+          const appState = getAppState()
+          const data = await collectContextData({
+            messages: session.messages,
+            getAppState,
+            options: {
+              mainLoopModel: getMainLoopModel(),
+              tools: buildAllTools(appState),
+              agentDefinitions: appState.agentDefinitions,
+              customSystemPrompt: options.systemPrompt,
+              appendSystemPrompt: options.appendSystemPrompt,
+            },
+          })
+          sendControlResponseSuccess(message, { ...data })
+        } catch (error) {
+          sendControlResponseError(message, errorMessage(error))
+        }
+      },
+      mcp_message: (message) => {
+        // Handle MCP notifications from SDK servers
+        const mcpRequest = message.request as Extract<
+          WireControlRequest['request'],
+          { subtype: 'mcp_message' }
+        >
+        const sdkClient = mcp.sdkClients.find((client) => client.name === mcpRequest.server_name)
+        // Check client exists - dynamically added SDK servers may have
+        // placeholder clients with null client until updateSdkMcp() runs
+        if (sdkClient && sdkClient.type === 'connected' && sdkClient.client?.transport?.onmessage) {
+          sdkClient.client.transport.onmessage(mcpRequest.message as any)
+        }
+        sendControlResponseSuccess(message)
+      },
+      rewind_files: async (message) => {
+        const req = message.request as Extract<
+          WireControlRequest['request'],
+          { subtype: 'rewind_files' }
+        >
+        const appState = getAppState()
+        const result = await handleRewindFiles(
+          req.user_message_id as UUID,
+          appState,
+          setAppState,
+          req.dry_run ?? false,
+        )
+        if (result.canRewind || req.dry_run) {
+          sendControlResponseSuccess(message, result as any)
+        } else {
+          sendControlResponseError(message, result.error ?? 'Unexpected error')
+        }
+      },
+      cancel_async_message: (message) => {
+        const req = message.request as Extract<
+          WireControlRequest['request'],
+          { subtype: 'cancel_async_message' }
+        >
+        const targetUuid = req.message_uuid
+        const removed = dequeueAllMatching((cmd) => cmd.uuid === targetUuid)
+        sendControlResponseSuccess(message, {
+          cancelled: removed.length > 0,
+        })
+      },
     }
 
     for await (const message of structuredIO.structuredInput) {
@@ -2228,27 +2332,6 @@ function runHeadlessStreaming(
         const controlHandler = controlHandlers[requestSubtype]
         if (controlHandler) {
           await controlHandler(message)
-        } else if (requestSubtype === 'interrupt') {
-          // Track escapes for attribution (ant-only feature)
-          if (feature('COMMIT_ATTRIBUTION')) {
-            setAppState((prev) => ({
-              ...prev,
-              attribution: {
-                ...prev.attribution,
-                escapeCount: prev.attribution.escapeCount + 1,
-              },
-            }))
-          }
-          if (abortController) {
-            // 用户按 ESC（或等价的取消控制信号）— 用 'interrupt' reason，
-            // 与 cli/print.ts:1845 的 'now' 优先级新消息路径保持一致语义。
-            abortController.abort('interrupt')
-          }
-          suggestionState.abortController?.abort()
-          suggestionState.abortController = null
-          suggestionState.lastEmitted = null
-          suggestionState.pendingSuggestion = null
-          sendControlResponseSuccess(message)
         } else if (requestSubtype === 'end_session') {
           const req = message.request as { reason?: string }
           logForDebugging(`[print.ts] end_session received, reason=${req.reason ?? 'unspecified'}`)
@@ -2317,76 +2400,6 @@ function runHeadlessStreaming(
           if (hasCommandsInQueue()) {
             void run()
           }
-        } else if (message.request.subtype === 'set_permission_mode') {
-          const m = message.request as any
-          setAppState((prev) => ({
-            ...prev,
-            toolPermissionContext: handleSetPermissionMode(
-              m as any,
-              message.request_id,
-              prev.toolPermissionContext,
-              output,
-            ),
-            isUltraplanMode: m.ultraplan ?? prev.isUltraplanMode,
-          }))
-          // handleSetPermissionMode sends the control_response; the
-          // notifySessionMetadataChanged that used to follow here is
-          // now fired by onChangeAppState (with externalized mode name).
-        } else if (message.request.subtype === 'mcp_status') {
-          sendControlResponseSuccess(message, {
-            mcpServers: mcp.buildMcpServerStatuses(),
-          })
-        } else if (message.request.subtype === 'get_context_usage') {
-          try {
-            const appState = getAppState()
-            const data = await collectContextData({
-              messages: session.messages,
-              getAppState,
-              options: {
-                mainLoopModel: getMainLoopModel(),
-                tools: buildAllTools(appState),
-                agentDefinitions: appState.agentDefinitions,
-                customSystemPrompt: options.systemPrompt,
-                appendSystemPrompt: options.appendSystemPrompt,
-              },
-            })
-            sendControlResponseSuccess(message, { ...data })
-          } catch (error) {
-            sendControlResponseError(message, errorMessage(error))
-          }
-        } else if (message.request.subtype === 'mcp_message') {
-          // Handle MCP notifications from SDK servers
-          const mcpRequest = message.request
-          const sdkClient = mcp.sdkClients.find((client) => client.name === mcpRequest.server_name)
-          // Check client exists - dynamically added SDK servers may have
-          // placeholder clients with null client until updateSdkMcp() runs
-          if (
-            sdkClient &&
-            sdkClient.type === 'connected' &&
-            sdkClient.client?.transport?.onmessage
-          ) {
-            sdkClient.client.transport.onmessage(mcpRequest.message as any)
-          }
-          sendControlResponseSuccess(message)
-        } else if (message.request.subtype === 'rewind_files') {
-          const appState = getAppState()
-          const result = await handleRewindFiles(
-            message.request.user_message_id as UUID,
-            appState,
-            setAppState,
-            message.request.dry_run ?? false,
-          )
-          if (result.canRewind || message.request.dry_run) {
-            sendControlResponseSuccess(message, result as any)
-          } else {
-            sendControlResponseError(message, result.error ?? 'Unexpected error')
-          }
-        } else if (message.request.subtype === 'cancel_async_message') {
-          const targetUuid = message.request.message_uuid
-          const removed = dequeueAllMatching((cmd) => cmd.uuid === targetUuid)
-          sendControlResponseSuccess(message, {
-            cancelled: removed.length > 0,
-          })
         } else if (message.request.subtype === 'seed_read_state') {
           // Client observed a Read that was later removed from context (e.g.
           // by snip), so transcript-based seeding missed it. Queued into
