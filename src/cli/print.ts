@@ -2407,6 +2407,128 @@ function runHeadlessStreaming(
           sendControlResponseError(message, errorMessage(error))
         }
       },
+      seed_read_state: async (message) => {
+        const req = message.request as Extract<
+          WireControlRequest['request'],
+          { subtype: 'seed_read_state' }
+        >
+        // Client observed a Read that was later removed from context (e.g.
+        // by snip), so transcript-based seeding missed it. Queued into
+        // pendingSeeds; applied at the next clone-replace boundary.
+        try {
+          // expandPath: all other readFileState writers normalize (~, relative,
+          // session cwd vs process cwd). FileEditTool looks up by expandPath'd
+          // key — a verbatim client path would miss.
+          const normalizedPath = expandPath(req.path)
+          // Check disk mtime before reading content. If the file changed
+          // since the client's observation, readFile would return C_current
+          // but we'd store it with the client's M_observed — getChangedFiles
+          // then sees disk > cache.timestamp, re-reads, diffs C_current vs
+          // C_current = empty, emits no attachment, and the model is never
+          // told about the C_observed → C_current change. Skipping the seed
+          // makes Edit fail "file not read yet" → forces a fresh Read.
+          // Math.floor matches FileReadTool and getFileModificationTime.
+          const diskMtime = Math.floor((await stat(normalizedPath)).mtimeMs)
+          if (diskMtime <= req.mtime) {
+            const raw = await readFile(normalizedPath, 'utf-8')
+            // Strip BOM + normalize CRLF→LF to match readFileInRange and
+            // readFileSyncWithMetadata. FileEditTool's content-compare
+            // fallback (for Windows mtime bumps without content change)
+            // compares against LF-normalized disk reads.
+            const content = (raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw).replaceAll(
+              '\r\n',
+              '\n',
+            )
+            pendingSeeds.set(normalizedPath, {
+              content,
+              timestamp: diskMtime,
+              offset: undefined,
+              limit: undefined,
+            })
+          }
+        } catch {
+          // ENOENT etc — skip seeding but still succeed
+        }
+        sendControlResponseSuccess(message)
+      },
+      reload_plugins: async (message) => {
+        try {
+          if (
+            feature('DOWNLOAD_USER_SETTINGS') &&
+            (isEnvTruthy(process.env.ZY_CODE_REMOTE) || getIsRemoteMode())
+          ) {
+            // Re-pull user settings so enabledPlugins pushed from the
+            // user's local CLI take effect before the cache sweep.
+            const applied = await redownloadUserSettings()
+            if (applied) {
+              settingsChangeDetector.notifyChange('userSettings')
+            }
+          }
+
+          const r = await refreshActivePlugins(setAppState)
+
+          const sdkAgents = mcp.currentAgents.filter((a) => a.source === 'flagSettings')
+          mcp.currentAgents = [...r.agentDefinitions.allAgents, ...sdkAgents]
+
+          // Reload succeeded — gather response data best-effort so a
+          // read failure doesn't mask the successful state change.
+          // allSettled so one failure doesn't discard the others.
+          let plugins: WireControlReloadPluginsResponse['plugins'] = []
+          const [cmdsR, mcpR, pluginsR] = await Promise.allSettled([
+            getCommands(cwd()),
+            mcp.applyPluginMcpDiff(),
+            loadAllPluginsCacheOnly(),
+          ])
+          if (cmdsR.status === 'fulfilled') {
+            mcp.currentCommands = cmdsR.value
+          } else {
+            logError(cmdsR.reason)
+          }
+          if (mcpR.status === 'rejected') {
+            logError(mcpR.reason)
+          }
+          if (pluginsR.status === 'fulfilled') {
+            plugins = pluginsR.value.enabled.map((p) => ({
+              name: p.name,
+              path: p.path,
+              source: p.source,
+            }))
+          } else {
+            logError(pluginsR.reason)
+          }
+
+          sendControlResponseSuccess(message, {
+            commands: mcp.currentCommands
+              .filter((cmd) => cmd.userInvocable !== false)
+              .map((cmd) => ({
+                name: getCommandName(cmd),
+                description: formatDescriptionWithSource(cmd),
+                argumentHint: cmd.argumentHint || '',
+              })),
+            agents: mcp.currentAgents.map((a) => ({
+              name: a.agentType,
+              description: a.whenToUse,
+              model: a.model === 'inherit' ? undefined : a.model,
+            })),
+            plugins,
+            mcpServers: mcp.buildMcpServerStatuses(),
+            error_count: r.error_count,
+          } satisfies WireControlReloadPluginsResponse)
+        } catch (error) {
+          sendControlResponseError(message, errorMessage(error))
+        }
+      },
+      channel_enable: (message) => {
+        const currentAppState = getAppState()
+        const req = message.request as unknown as { serverName: string }
+        handleChannelEnable(
+          message.request_id,
+          req.serverName,
+          // Pool spread matches mcp_status — all three client sources.
+          [...currentAppState.mcp.clients, ...mcp.sdkClients, ...mcp.dynamicMcpState.clients],
+          output,
+        )
+      },
     }
 
     for await (const message of structuredIO.structuredInput) {
@@ -2480,111 +2602,6 @@ function runHeadlessStreaming(
           // that initialize has set up systemPrompt, agents, hooks, etc.
           if (hasCommandsInQueue()) {
             void run()
-          }
-        } else if (message.request.subtype === 'seed_read_state') {
-          // Client observed a Read that was later removed from context (e.g.
-          // by snip), so transcript-based seeding missed it. Queued into
-          // pendingSeeds; applied at the next clone-replace boundary.
-          try {
-            // expandPath: all other readFileState writers normalize (~, relative,
-            // session cwd vs process cwd). FileEditTool looks up by expandPath'd
-            // key — a verbatim client path would miss.
-            const normalizedPath = expandPath(message.request.path)
-            // Check disk mtime before reading content. If the file changed
-            // since the client's observation, readFile would return C_current
-            // but we'd store it with the client's M_observed — getChangedFiles
-            // then sees disk > cache.timestamp, re-reads, diffs C_current vs
-            // C_current = empty, emits no attachment, and the model is never
-            // told about the C_observed → C_current change. Skipping the seed
-            // makes Edit fail "file not read yet" → forces a fresh Read.
-            // Math.floor matches FileReadTool and getFileModificationTime.
-            const diskMtime = Math.floor((await stat(normalizedPath)).mtimeMs)
-            if (diskMtime <= message.request.mtime) {
-              const raw = await readFile(normalizedPath, 'utf-8')
-              // Strip BOM + normalize CRLF→LF to match readFileInRange and
-              // readFileSyncWithMetadata. FileEditTool's content-compare
-              // fallback (for Windows mtime bumps without content change)
-              // compares against LF-normalized disk reads.
-              const content = (raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw).replaceAll(
-                '\r\n',
-                '\n',
-              )
-              pendingSeeds.set(normalizedPath, {
-                content,
-                timestamp: diskMtime,
-                offset: undefined,
-                limit: undefined,
-              })
-            }
-          } catch {
-            // ENOENT etc — skip seeding but still succeed
-          }
-          sendControlResponseSuccess(message)
-        } else if (message.request.subtype === 'reload_plugins') {
-          try {
-            if (
-              feature('DOWNLOAD_USER_SETTINGS') &&
-              (isEnvTruthy(process.env.ZY_CODE_REMOTE) || getIsRemoteMode())
-            ) {
-              // Re-pull user settings so enabledPlugins pushed from the
-              // user's local CLI take effect before the cache sweep.
-              const applied = await redownloadUserSettings()
-              if (applied) {
-                settingsChangeDetector.notifyChange('userSettings')
-              }
-            }
-
-            const r = await refreshActivePlugins(setAppState)
-
-            const sdkAgents = mcp.currentAgents.filter((a) => a.source === 'flagSettings')
-            mcp.currentAgents = [...r.agentDefinitions.allAgents, ...sdkAgents]
-
-            // Reload succeeded — gather response data best-effort so a
-            // read failure doesn't mask the successful state change.
-            // allSettled so one failure doesn't discard the others.
-            let plugins: WireControlReloadPluginsResponse['plugins'] = []
-            const [cmdsR, mcpR, pluginsR] = await Promise.allSettled([
-              getCommands(cwd()),
-              mcp.applyPluginMcpDiff(),
-              loadAllPluginsCacheOnly(),
-            ])
-            if (cmdsR.status === 'fulfilled') {
-              mcp.currentCommands = cmdsR.value
-            } else {
-              logError(cmdsR.reason)
-            }
-            if (mcpR.status === 'rejected') {
-              logError(mcpR.reason)
-            }
-            if (pluginsR.status === 'fulfilled') {
-              plugins = pluginsR.value.enabled.map((p) => ({
-                name: p.name,
-                path: p.path,
-                source: p.source,
-              }))
-            } else {
-              logError(pluginsR.reason)
-            }
-
-            sendControlResponseSuccess(message, {
-              commands: mcp.currentCommands
-                .filter((cmd) => cmd.userInvocable !== false)
-                .map((cmd) => ({
-                  name: getCommandName(cmd),
-                  description: formatDescriptionWithSource(cmd),
-                  argumentHint: cmd.argumentHint || '',
-                })),
-              agents: mcp.currentAgents.map((a) => ({
-                name: a.agentType,
-                description: a.whenToUse,
-                model: a.model === 'inherit' ? undefined : a.model,
-              })),
-              plugins,
-              mcpServers: mcp.buildMcpServerStatuses(),
-              error_count: r.error_count,
-            } satisfies WireControlReloadPluginsResponse)
-          } catch (error) {
-            sendControlResponseError(message, errorMessage(error))
           }
         } else if (message.request.subtype === 'mcp_reconnect') {
           const currentAppState = getAppState()
@@ -2736,16 +2753,6 @@ function runHeadlessStreaming(
               sendControlResponseError(message, errorMessage)
             }
           }
-        } else if (requestSubtype === 'channel_enable') {
-          const currentAppState = getAppState()
-          const req = message.request as unknown as { serverName: string }
-          handleChannelEnable(
-            message.request_id,
-            req.serverName,
-            // Pool spread matches mcp_status — all three client sources.
-            [...currentAppState.mcp.clients, ...mcp.sdkClients, ...mcp.dynamicMcpState.clients],
-            output,
-          )
         } else if (requestSubtype === 'mcp_authenticate') {
           const { serverName } = message.request as any
           const currentAppState = getAppState()
