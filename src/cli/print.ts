@@ -2161,8 +2161,10 @@ function runHeadlessStreaming(
     // Phase 3: 控制消息 dispatch map(逐步迁移;未迁的 subtype 仍走下方 else-if 链)。
     // handler 为内联闭包,捕获 activeUserSpecifiedModel/options 等闭包状态;
     // message.request 是 subtype 联合,handler 内用 Extract 窄化到具体变体。
+    // 返回 'break' 的 handler(如 end_session)令外层 for-await 退出。
+    type ControlOutcome = void | 'break'
     const controlHandlers: Partial<
-      Record<string, (message: WireControlRequest) => void | Promise<void>>
+      Record<string, (message: WireControlRequest) => ControlOutcome | Promise<ControlOutcome>>
     > = {
       set_model: (message) => {
         const req = message.request as Extract<
@@ -2315,6 +2317,96 @@ function runHeadlessStreaming(
           cancelled: removed.length > 0,
         })
       },
+      end_session: (message) => {
+        const req = message.request as { reason?: string }
+        logForDebugging(`[print.ts] end_session received, reason=${req.reason ?? 'unspecified'}`)
+        if (abortController) {
+          // 会话被外部要求结束(SDK end_session 控制消息),
+          // 用专门的 reason 区分于其他用户中断路径。
+          abortController.abort('end_session')
+        }
+        suggestionState.abortController?.abort()
+        suggestionState.abortController = null
+        suggestionState.lastEmitted = null
+        suggestionState.pendingSuggestion = null
+        sendControlResponseSuccess(message)
+        return 'break'
+      },
+      mcp_set_servers: async (message) => {
+        const req = message.request as Extract<
+          WireControlRequest['request'],
+          { subtype: 'mcp_set_servers' }
+        >
+        const { response, sdkServersChanged } = await mcp.applyMcpServerChanges(req.servers)
+        sendControlResponseSuccess(message, response as any)
+        // Connect SDK servers AFTER response to avoid deadlock
+        if (sdkServersChanged) {
+          void mcp.updateSdkMcp()
+        }
+      },
+      apply_flag_settings: (message) => {
+        const req = message.request as Extract<
+          WireControlRequest['request'],
+          { subtype: 'apply_flag_settings' }
+        >
+        // Snapshot the current model before applying — we need to detect
+        // model switches so we can inject breadcrumbs and notify listeners.
+        const prevModel = getMainLoopModel()
+
+        // Merge the provided settings into the in-memory flag settings
+        const existing = getFlagSettingsInline() ?? {}
+        const incoming = req.settings
+        // Shallow-merge top-level keys; getSettingsForSource handles the deep
+        // merge with file-based flag settings via mergeWith. JSON drops
+        // `undefined`, so callers use `null` to clear a key — convert nulls
+        // to deletions so SettingsSchema().safeParse() doesn't reject.
+        const merged = { ...existing, ...incoming }
+        for (const key of Object.keys(merged)) {
+          if (merged[key as keyof typeof merged] === null) {
+            delete merged[key as keyof typeof merged]
+          }
+        }
+        setFlagSettingsInline(merged)
+        // Route through notifyChange so fanOut() resets the settings cache
+        // before listeners run (subscriber at :392 calls applySettingsChange).
+        settingsChangeDetector.notifyChange('flagSettings')
+
+        // If the incoming settings include a model change, update the override
+        // so getMainLoopModel() reflects it (override outranks the cascade).
+        if ('model' in incoming) {
+          if (incoming.model != null) {
+            setMainLoopModelOverride(String(incoming.model))
+          } else {
+            setMainLoopModelOverride(undefined)
+          }
+        }
+
+        // If the model changed, inject breadcrumbs + notify metadata listeners.
+        const newModel = getMainLoopModel()
+        if (newModel !== prevModel) {
+          activeUserSpecifiedModel = newModel
+          const modelArg = incoming.model ? String(incoming.model) : 'default'
+          notifySessionMetadataChanged({ model: newModel })
+          injectModelSwitchBreadcrumbs(modelArg, newModel)
+        }
+
+        sendControlResponseSuccess(message)
+      },
+      stop_task: async (message) => {
+        const req = message.request as Extract<
+          WireControlRequest['request'],
+          { subtype: 'stop_task' }
+        >
+        try {
+          await stopTask(req.task_id, {
+            getAppState,
+            setAppState,
+          })
+          sendControlResponseSuccess(message, {})
+        } catch (error) {
+          sendControlResponseError(message, errorMessage(error))
+        }
+      },
     }
 
     for await (const message of structuredIO.structuredInput) {
@@ -2331,21 +2423,10 @@ function runHeadlessStreaming(
         const requestSubtype: string = message.request.subtype
         const controlHandler = controlHandlers[requestSubtype]
         if (controlHandler) {
-          await controlHandler(message)
-        } else if (requestSubtype === 'end_session') {
-          const req = message.request as { reason?: string }
-          logForDebugging(`[print.ts] end_session received, reason=${req.reason ?? 'unspecified'}`)
-          if (abortController) {
-            // 会话被外部要求结束（SDK end_session 控制消息），
-            // 用专门的 reason 区分于其他用户中断路径。
-            abortController.abort('end_session')
+          const outcome = await controlHandler(message)
+          if (outcome === 'break') {
+            break // 如 end_session:退出 for-await → 下方 inputClosed 收尾
           }
-          suggestionState.abortController?.abort()
-          suggestionState.abortController = null
-          suggestionState.lastEmitted = null
-          suggestionState.pendingSuggestion = null
-          sendControlResponseSuccess(message)
-          break // exits for-await → falls through to inputClosed=true drain below
         } else if (message.request.subtype === 'initialize') {
           // SDK MCP server names from the initialize message
           // Populated by both browser and ProcessTransport sessions
@@ -2439,16 +2520,6 @@ function runHeadlessStreaming(
             // ENOENT etc — skip seeding but still succeed
           }
           sendControlResponseSuccess(message)
-        } else if (message.request.subtype === 'mcp_set_servers') {
-          const { response, sdkServersChanged } = await mcp.applyMcpServerChanges(
-            message.request.servers,
-          )
-          sendControlResponseSuccess(message, response as any)
-
-          // Connect SDK servers AFTER response to avoid deadlock
-          if (sdkServersChanged) {
-            void mcp.updateSdkMcp()
-          }
         } else if (message.request.subtype === 'reload_plugins') {
           try {
             if (
@@ -3028,74 +3099,6 @@ function runHeadlessStreaming(
               },
             }))
             sendControlResponseSuccess(message, {})
-          }
-        } else if (message.request.subtype === 'apply_flag_settings') {
-          // Snapshot the current model before applying — we need to detect
-          // model switches so we can inject breadcrumbs and notify listeners.
-          const prevModel = getMainLoopModel()
-
-          // Merge the provided settings into the in-memory flag settings
-          const existing = getFlagSettingsInline() ?? {}
-          const incoming = message.request.settings
-          // Shallow-merge top-level keys; getSettingsForSource handles
-          // the deep merge with file-based flag settings via mergeWith.
-          // JSON serialization drops `undefined`, so callers use `null`
-          // to signal "clear this key". Convert nulls to deletions so
-          // SettingsSchema().safeParse() doesn't reject the whole object
-          // (z.string().optional() accepts string | undefined, not null).
-          const merged = { ...existing, ...incoming }
-          for (const key of Object.keys(merged)) {
-            if (merged[key as keyof typeof merged] === null) {
-              delete merged[key as keyof typeof merged]
-            }
-          }
-          setFlagSettingsInline(merged)
-          // Route through notifyChange so fanOut() resets the settings cache
-          // before listeners run. The subscriber at :392 calls
-          // applySettingsChange for us. Pre-#20625 this was a direct
-          // applySettingsChange() call that relied on its own internal reset —
-          // now that the reset is centralized in fanOut, a direct call here
-          // would read stale cached settings and silently drop the update.
-          // Bonus: going through notifyChange also tells the other subscribers
-          // (loadPluginHooks, sandbox-adapter) about the change, which the
-          // previous direct call skipped.
-          settingsChangeDetector.notifyChange('flagSettings')
-
-          // If the incoming settings include a model change, update the
-          // override so getMainLoopModel() reflects it. The override has
-          // higher priority than the settings cascade in
-          // getUserSpecifiedModelSetting(), so without this update,
-          // getMainLoopModel() returns the stale override and the model
-          // change is silently ignored (matching set_model at :2811).
-          if ('model' in incoming) {
-            if (incoming.model != null) {
-              setMainLoopModelOverride(String(incoming.model))
-            } else {
-              setMainLoopModelOverride(undefined)
-            }
-          }
-
-          // If the model changed, inject breadcrumbs so the model sees the
-          // mid-conversation switch, and notify metadata listeners (CCR).
-          const newModel = getMainLoopModel()
-          if (newModel !== prevModel) {
-            activeUserSpecifiedModel = newModel
-            const modelArg = incoming.model ? String(incoming.model) : 'default'
-            notifySessionMetadataChanged({ model: newModel })
-            injectModelSwitchBreadcrumbs(modelArg, newModel)
-          }
-
-          sendControlResponseSuccess(message)
-        } else if (message.request.subtype === 'stop_task') {
-          const { task_id: taskId } = message.request
-          try {
-            await stopTask(taskId, {
-              getAppState,
-              setAppState,
-            })
-            sendControlResponseSuccess(message, {})
-          } catch (error) {
-            sendControlResponseError(message, errorMessage(error))
           }
         } else if (requestSubtype === 'generate_session_title') {
           // Fire-and-forget so the compact model call does not block the stdin loop
