@@ -2163,6 +2163,49 @@ function runHeadlessStreaming(
     // message.request 是 subtype 联合,handler 内用 Extract 窄化到具体变体。
     // 返回 'break' 的 handler(如 end_session)令外层 for-await 退出。
     type ControlOutcome = void | 'break'
+    // zy_oauth_callback 与 zy_oauth_wait_for_completion 共用此 handler:仅前者
+    // 同步注入 manual code,之后都 detach 等 flow 完成再回响应(stdin 串行,
+    // park 在此会与后续 callback 死锁)。
+    const handleZyOAuthCallback = (message: WireControlRequest): void => {
+      // subtype 联合不含 zy_oauth_* (运行期扩展);注解 string 对齐原 requestSubtype。
+      const sub: string = message.request.subtype
+      if (!zyOAuth) {
+        sendControlResponseError(message, 'No active zy_authenticate flow')
+      } else {
+        // Inject the manual code synchronously — must happen in stdin
+        // message order so a subsequent zy_authenticate doesn't
+        // replace the service before this code lands.
+        if (sub === 'zy_oauth_callback') {
+          const req = message.request as unknown as { authorizationCode: string; state: string }
+          zyOAuth.service.handleManualAuthCodeInput({
+            authorizationCode: req.authorizationCode,
+            state: req.state,
+          })
+        }
+        // Detach the await — the stdin reader is serial and blocking
+        // here deadlocks zy_oauth_wait_for_completion: flow may
+        // only resolve via a future zy_oauth_callback on stdin,
+        // which can't be read while we're parked. Capture the binding;
+        // zyOAuth is nulled in flow's own .finally.
+        const { flow } = zyOAuth
+        void flow.then(
+          () => {
+            const accountInfo = getAccountInformation()
+            sendControlResponseSuccess(message, {
+              account: {
+                email: accountInfo?.email,
+                organization: accountInfo?.organization,
+                subscriptionType: accountInfo?.subscription,
+                tokenSource: accountInfo?.tokenSource,
+                apiKeySource: accountInfo?.apiKeySource,
+                apiProvider: getAPIProvider(),
+              },
+            })
+          },
+          (error: unknown) => sendControlResponseError(message, errorMessage(error)),
+        )
+      }
+    }
     const controlHandlers: Partial<
       Record<string, (message: WireControlRequest) => ControlOutcome | Promise<ControlOutcome>>
     > = {
@@ -2748,6 +2791,326 @@ function runHeadlessStreaming(
           }
         }
       },
+      mcp_authenticate: async (message) => {
+        const { serverName } = message.request as any
+        const currentAppState = getAppState()
+        const config =
+          getMcpConfigByName(serverName) ??
+          mcpClients.find((c) => c.name === serverName)?.config ??
+          currentAppState.mcp.clients.find((c) => c.name === serverName)?.config ??
+          null
+        if (!config) {
+          sendControlResponseError(message, `Server not found: ${serverName}`)
+        } else if (config.type !== 'sse' && config.type !== 'http') {
+          sendControlResponseError(
+            message,
+            `Server type "${config.type}" does not support OAuth authentication`,
+          )
+        } else {
+          try {
+            // Abort any previous in-flight OAuth flow for this server
+            activeOAuthFlows.get(serverName)?.abort()
+            const controller = new AbortController()
+            activeOAuthFlows.set(serverName, controller)
+
+            // Capture the auth URL from the callback
+            let resolveAuthUrl: (url: string) => void
+            const authUrlPromise = new Promise<string>((resolve) => {
+              resolveAuthUrl = resolve
+            })
+
+            // Start the OAuth flow in the background
+            const oauthPromise = performMCPOAuthFlow(
+              serverName,
+              config,
+              (url) => resolveAuthUrl!(url),
+              controller.signal,
+              {
+                skipBrowserOpen: true,
+                onWaitingForCallback: (submit) => {
+                  oauthCallbackSubmitters.set(serverName, submit)
+                },
+              },
+            )
+
+            // Wait for the auth URL (or the flow to complete without needing redirect)
+            const authUrl = await Promise.race([
+              authUrlPromise,
+              oauthPromise.then(() => null as string | null),
+            ])
+
+            if (authUrl) {
+              sendControlResponseSuccess(message, {
+                authUrl,
+                requiresUserAction: true,
+              })
+            } else {
+              sendControlResponseSuccess(message, {
+                requiresUserAction: false,
+              })
+            }
+
+            // Store auth-only promise for mcp_oauth_callback_url handler.
+            // Don't swallow errors — the callback handler needs to detect
+            // auth failures and report them to the caller.
+            oauthAuthPromises.set(serverName, oauthPromise)
+
+            // Handle background completion — reconnect after auth.
+            // When manual callback is used, skip the reconnect here;
+            // the extension's handleAuthDone → mcp_reconnect handles it
+            // (which also updates mcp.dynamicMcpState for tool registration).
+            const fullFlowPromise = oauthPromise
+              .then(async () => {
+                // Don't reconnect if the server was disabled during the OAuth flow
+                if (isMcpServerDisabled(serverName)) {
+                  return
+                }
+                // Skip reconnect if the manual callback path was used —
+                // handleAuthDone will do it via mcp_reconnect (which
+                // updates mcp.dynamicMcpState for tool registration).
+                if (oauthManualCallbackUsed.has(serverName)) {
+                  return
+                }
+                // Reconnect the server after successful auth
+                const result = await reconnectMcpServerImpl(serverName, config)
+                const prefix = getMcpPrefix(serverName)
+                setAppState((prev) => ({
+                  ...prev,
+                  mcp: {
+                    ...prev.mcp,
+                    clients: prev.mcp.clients.map((c) =>
+                      c.name === serverName ? result.client : c,
+                    ),
+                    tools: [
+                      ...reject(prev.mcp.tools, (t) => t.name?.startsWith(prefix)),
+                      ...result.tools,
+                    ],
+                    commands: [
+                      ...reject(prev.mcp.commands, (c) => commandBelongsToServer(c, serverName)),
+                      ...result.commands,
+                    ],
+                    resources:
+                      result.resources && result.resources.length > 0
+                        ? {
+                            ...prev.mcp.resources,
+                            [serverName]: result.resources,
+                          }
+                        : omit(prev.mcp.resources, serverName),
+                  },
+                }))
+                // Also update mcp.dynamicMcpState so run() picks up the new tools
+                // on the next turn (run() reads mcp.dynamicMcpState, not appState)
+                mcp.dynamicMcpState = {
+                  ...mcp.dynamicMcpState,
+                  clients: [
+                    ...mcp.dynamicMcpState.clients.filter((c) => c.name !== serverName),
+                    result.client,
+                  ],
+                  tools: [
+                    ...mcp.dynamicMcpState.tools.filter((t) => !t.name?.startsWith(prefix)),
+                    ...result.tools,
+                  ],
+                }
+              })
+              .catch((error) => {
+                logForDebugging(`MCP OAuth failed for ${serverName}: ${error}`, {
+                  level: 'error',
+                })
+              })
+              .finally(() => {
+                // Clean up only if this is still the active flow
+                if (activeOAuthFlows.get(serverName) === controller) {
+                  activeOAuthFlows.delete(serverName)
+                  oauthCallbackSubmitters.delete(serverName)
+                  oauthManualCallbackUsed.delete(serverName)
+                  oauthAuthPromises.delete(serverName)
+                }
+              })
+            void fullFlowPromise
+          } catch (error) {
+            sendControlResponseError(message, errorMessage(error))
+          }
+        }
+      },
+      mcp_oauth_callback_url: async (message) => {
+        const { serverName, callbackUrl } = message.request as any
+        const submit = oauthCallbackSubmitters.get(serverName)
+        if (submit) {
+          // Validate the callback URL before submitting. The submit
+          // callback in auth.ts silently ignores URLs missing a code
+          // param, which would leave the auth promise unresolved and
+          // block the control message loop until timeout.
+          let hasCodeOrError = false
+          try {
+            const parsed = new URL(callbackUrl)
+            hasCodeOrError = parsed.searchParams.has('code') || parsed.searchParams.has('error')
+          } catch {
+            // Invalid URL
+          }
+          if (!hasCodeOrError) {
+            sendControlResponseError(
+              message,
+              'Invalid callback URL: missing authorization code. Please paste the full redirect URL including the code parameter.',
+            )
+          } else {
+            oauthManualCallbackUsed.add(serverName)
+            submit(callbackUrl)
+            // Wait for auth (token exchange) to complete before responding.
+            // Reconnect is handled by the extension via handleAuthDone →
+            // mcp_reconnect (which updates mcp.dynamicMcpState for tools).
+            const authPromise = oauthAuthPromises.get(serverName)
+            if (authPromise) {
+              try {
+                await authPromise
+                sendControlResponseSuccess(message)
+              } catch (error) {
+                sendControlResponseError(
+                  message,
+                  error instanceof Error ? error.message : 'OAuth authentication failed',
+                )
+              }
+            } else {
+              sendControlResponseSuccess(message)
+            }
+          }
+        } else {
+          sendControlResponseError(message, `No active OAuth flow for server: ${serverName}`)
+        }
+      },
+      zy_authenticate: async (message) => {
+        // Anthropic OAuth over the control channel. The SDK client owns
+        // the user's browser (we're headless in -p mode); we hand back
+        // both URLs and wait. Automatic URL → localhost listener catches
+        // the redirect if the browser is on this host; manual URL → the
+        // success page shows "code#state" for zy_oauth_callback.
+        const req = message.request as { loginWithZyAi?: boolean }
+        const loginWithZyAi = req.loginWithZyAi
+
+        // Clean up any prior flow. cleanup() closes the localhost listener
+        // and nulls the manual resolver. The prior `flow` promise is left
+        // pending (AuthCodeListener.close() does not reject) but its object
+        // graph becomes unreachable once the server handle is released and
+        // is GC'd — no fd or port is held.
+        zyOAuth?.service.cleanup()
+
+        logEvent('zy_oauth_flow_start', {
+          loginWithZyAi: loginWithZyAi ?? true,
+        })
+
+        const service = new OAuthService()
+        let urlResolver!: (urls: { manualUrl: string; automaticUrl: string }) => void
+        const urlPromise = new Promise<{
+          manualUrl: string
+          automaticUrl: string
+        }>((resolve) => {
+          urlResolver = resolve
+        })
+
+        const flow = service
+          .startOAuthFlow(
+            async (manualUrl, automaticUrl) => {
+              // automaticUrl is always defined when skipBrowserOpen is set;
+              // the signature is optional only for the existing single-arg callers.
+              urlResolver({ manualUrl, automaticUrl: automaticUrl! })
+            },
+            {
+              loginWithZyAi: loginWithZyAi ?? true,
+              skipBrowserOpen: true,
+            },
+          )
+          .then(async (tokens) => {
+            // installOAuthTokens: performLogout (clear stale state) →
+            // store profile → saveOAuthTokensIfNeeded → clearOAuthTokenCache
+            // → clearAuthRelatedCaches. After this resolves, the memoized
+            // getZyAIOAuthTokens in this process is invalidated; the
+            // next API call re-reads keychain/file and works. No respawn.
+            await installOAuthTokens(tokens)
+            logEvent('zy_oauth_success', {
+              loginWithZyAi: loginWithZyAi ?? true,
+            })
+          })
+          .finally(() => {
+            service.cleanup()
+            if (zyOAuth?.service === service) {
+              zyOAuth = null
+            }
+          })
+
+        zyOAuth = { service, flow }
+
+        // Attach the rejection handler before awaiting so a synchronous
+        // startOAuthFlow failure doesn't surface as an unhandled rejection.
+        // The zy_oauth_callback handler re-awaits flow for the manual
+        // path and surfaces the real error to the client.
+        void flow.catch((err) =>
+          logForDebugging(`zy_authenticate flow ended: ${err}`, {
+            level: 'info',
+          }),
+        )
+
+        try {
+          // Race against flow: if startOAuthFlow rejects before calling
+          // the authURLHandler (e.g. AuthCodeListener.start() fails with
+          // EACCES or fd exhaustion), urlPromise would pend forever and
+          // wedge the stdin loop. flow resolving first is unreachable in
+          // practice (it's suspended on the same urls we're waiting for).
+          const { manualUrl, automaticUrl } = await Promise.race([
+            urlPromise,
+            flow.then(() => {
+              throw new Error('OAuth flow completed without producing auth URLs')
+            }),
+          ])
+          sendControlResponseSuccess(message, {
+            manualUrl,
+            automaticUrl,
+          })
+        } catch (error) {
+          sendControlResponseError(message, errorMessage(error))
+        }
+      },
+      zy_oauth_callback: handleZyOAuthCallback,
+      zy_oauth_wait_for_completion: handleZyOAuthCallback,
+      mcp_clear_auth: async (message) => {
+        const { serverName } = message.request as any
+        const currentAppState = getAppState()
+        const config =
+          getMcpConfigByName(serverName) ??
+          mcpClients.find((c) => c.name === serverName)?.config ??
+          currentAppState.mcp.clients.find((c) => c.name === serverName)?.config ??
+          null
+        if (!config) {
+          sendControlResponseError(message, `Server not found: ${serverName}`)
+        } else if (config.type !== 'sse' && config.type !== 'http') {
+          sendControlResponseError(message, `Cannot clear auth for server type "${config.type}"`)
+        } else {
+          await revokeServerTokens(serverName, config)
+          const result = await reconnectMcpServerImpl(serverName, config)
+          const prefix = getMcpPrefix(serverName)
+          setAppState((prev) => ({
+            ...prev,
+            mcp: {
+              ...prev.mcp,
+              clients: prev.mcp.clients.map((c) => (c.name === serverName ? result.client : c)),
+              tools: [
+                ...reject(prev.mcp.tools, (t) => t.name?.startsWith(prefix)),
+                ...result.tools,
+              ],
+              commands: [
+                ...reject(prev.mcp.commands, (c) => commandBelongsToServer(c, serverName)),
+                ...result.commands,
+              ],
+              resources:
+                result.resources && result.resources.length > 0
+                  ? {
+                      ...prev.mcp.resources,
+                      [serverName]: result.resources,
+                    }
+                  : omit(prev.mcp.resources, serverName),
+            },
+          }))
+          sendControlResponseSuccess(message, {})
+        }
+      },
     }
 
     for await (const message of structuredIO.structuredInput) {
@@ -2767,360 +3130,6 @@ function runHeadlessStreaming(
           const outcome = await controlHandler(message)
           if (outcome === 'break') {
             break // 如 end_session:退出 for-await → 下方 inputClosed 收尾
-          }
-        } else if (requestSubtype === 'mcp_authenticate') {
-          const { serverName } = message.request as any
-          const currentAppState = getAppState()
-          const config =
-            getMcpConfigByName(serverName) ??
-            mcpClients.find((c) => c.name === serverName)?.config ??
-            currentAppState.mcp.clients.find((c) => c.name === serverName)?.config ??
-            null
-          if (!config) {
-            sendControlResponseError(message, `Server not found: ${serverName}`)
-          } else if (config.type !== 'sse' && config.type !== 'http') {
-            sendControlResponseError(
-              message,
-              `Server type "${config.type}" does not support OAuth authentication`,
-            )
-          } else {
-            try {
-              // Abort any previous in-flight OAuth flow for this server
-              activeOAuthFlows.get(serverName)?.abort()
-              const controller = new AbortController()
-              activeOAuthFlows.set(serverName, controller)
-
-              // Capture the auth URL from the callback
-              let resolveAuthUrl: (url: string) => void
-              const authUrlPromise = new Promise<string>((resolve) => {
-                resolveAuthUrl = resolve
-              })
-
-              // Start the OAuth flow in the background
-              const oauthPromise = performMCPOAuthFlow(
-                serverName,
-                config,
-                (url) => resolveAuthUrl!(url),
-                controller.signal,
-                {
-                  skipBrowserOpen: true,
-                  onWaitingForCallback: (submit) => {
-                    oauthCallbackSubmitters.set(serverName, submit)
-                  },
-                },
-              )
-
-              // Wait for the auth URL (or the flow to complete without needing redirect)
-              const authUrl = await Promise.race([
-                authUrlPromise,
-                oauthPromise.then(() => null as string | null),
-              ])
-
-              if (authUrl) {
-                sendControlResponseSuccess(message, {
-                  authUrl,
-                  requiresUserAction: true,
-                })
-              } else {
-                sendControlResponseSuccess(message, {
-                  requiresUserAction: false,
-                })
-              }
-
-              // Store auth-only promise for mcp_oauth_callback_url handler.
-              // Don't swallow errors — the callback handler needs to detect
-              // auth failures and report them to the caller.
-              oauthAuthPromises.set(serverName, oauthPromise)
-
-              // Handle background completion — reconnect after auth.
-              // When manual callback is used, skip the reconnect here;
-              // the extension's handleAuthDone → mcp_reconnect handles it
-              // (which also updates mcp.dynamicMcpState for tool registration).
-              const fullFlowPromise = oauthPromise
-                .then(async () => {
-                  // Don't reconnect if the server was disabled during the OAuth flow
-                  if (isMcpServerDisabled(serverName)) {
-                    return
-                  }
-                  // Skip reconnect if the manual callback path was used —
-                  // handleAuthDone will do it via mcp_reconnect (which
-                  // updates mcp.dynamicMcpState for tool registration).
-                  if (oauthManualCallbackUsed.has(serverName)) {
-                    return
-                  }
-                  // Reconnect the server after successful auth
-                  const result = await reconnectMcpServerImpl(serverName, config)
-                  const prefix = getMcpPrefix(serverName)
-                  setAppState((prev) => ({
-                    ...prev,
-                    mcp: {
-                      ...prev.mcp,
-                      clients: prev.mcp.clients.map((c) =>
-                        c.name === serverName ? result.client : c,
-                      ),
-                      tools: [
-                        ...reject(prev.mcp.tools, (t) => t.name?.startsWith(prefix)),
-                        ...result.tools,
-                      ],
-                      commands: [
-                        ...reject(prev.mcp.commands, (c) => commandBelongsToServer(c, serverName)),
-                        ...result.commands,
-                      ],
-                      resources:
-                        result.resources && result.resources.length > 0
-                          ? {
-                              ...prev.mcp.resources,
-                              [serverName]: result.resources,
-                            }
-                          : omit(prev.mcp.resources, serverName),
-                    },
-                  }))
-                  // Also update mcp.dynamicMcpState so run() picks up the new tools
-                  // on the next turn (run() reads mcp.dynamicMcpState, not appState)
-                  mcp.dynamicMcpState = {
-                    ...mcp.dynamicMcpState,
-                    clients: [
-                      ...mcp.dynamicMcpState.clients.filter((c) => c.name !== serverName),
-                      result.client,
-                    ],
-                    tools: [
-                      ...mcp.dynamicMcpState.tools.filter((t) => !t.name?.startsWith(prefix)),
-                      ...result.tools,
-                    ],
-                  }
-                })
-                .catch((error) => {
-                  logForDebugging(`MCP OAuth failed for ${serverName}: ${error}`, {
-                    level: 'error',
-                  })
-                })
-                .finally(() => {
-                  // Clean up only if this is still the active flow
-                  if (activeOAuthFlows.get(serverName) === controller) {
-                    activeOAuthFlows.delete(serverName)
-                    oauthCallbackSubmitters.delete(serverName)
-                    oauthManualCallbackUsed.delete(serverName)
-                    oauthAuthPromises.delete(serverName)
-                  }
-                })
-              void fullFlowPromise
-            } catch (error) {
-              sendControlResponseError(message, errorMessage(error))
-            }
-          }
-        } else if (requestSubtype === 'mcp_oauth_callback_url') {
-          const { serverName, callbackUrl } = message.request as any
-          const submit = oauthCallbackSubmitters.get(serverName)
-          if (submit) {
-            // Validate the callback URL before submitting. The submit
-            // callback in auth.ts silently ignores URLs missing a code
-            // param, which would leave the auth promise unresolved and
-            // block the control message loop until timeout.
-            let hasCodeOrError = false
-            try {
-              const parsed = new URL(callbackUrl)
-              hasCodeOrError = parsed.searchParams.has('code') || parsed.searchParams.has('error')
-            } catch {
-              // Invalid URL
-            }
-            if (!hasCodeOrError) {
-              sendControlResponseError(
-                message,
-                'Invalid callback URL: missing authorization code. Please paste the full redirect URL including the code parameter.',
-              )
-            } else {
-              oauthManualCallbackUsed.add(serverName)
-              submit(callbackUrl)
-              // Wait for auth (token exchange) to complete before responding.
-              // Reconnect is handled by the extension via handleAuthDone →
-              // mcp_reconnect (which updates mcp.dynamicMcpState for tools).
-              const authPromise = oauthAuthPromises.get(serverName)
-              if (authPromise) {
-                try {
-                  await authPromise
-                  sendControlResponseSuccess(message)
-                } catch (error) {
-                  sendControlResponseError(
-                    message,
-                    error instanceof Error ? error.message : 'OAuth authentication failed',
-                  )
-                }
-              } else {
-                sendControlResponseSuccess(message)
-              }
-            }
-          } else {
-            sendControlResponseError(message, `No active OAuth flow for server: ${serverName}`)
-          }
-        } else if (requestSubtype === 'zy_authenticate') {
-          // Anthropic OAuth over the control channel. The SDK client owns
-          // the user's browser (we're headless in -p mode); we hand back
-          // both URLs and wait. Automatic URL → localhost listener catches
-          // the redirect if the browser is on this host; manual URL → the
-          // success page shows "code#state" for zy_oauth_callback.
-          const req = message.request as { loginWithZyAi?: boolean }
-          const loginWithZyAi = req.loginWithZyAi
-
-          // Clean up any prior flow. cleanup() closes the localhost listener
-          // and nulls the manual resolver. The prior `flow` promise is left
-          // pending (AuthCodeListener.close() does not reject) but its object
-          // graph becomes unreachable once the server handle is released and
-          // is GC'd — no fd or port is held.
-          zyOAuth?.service.cleanup()
-
-          logEvent('zy_oauth_flow_start', {
-            loginWithZyAi: loginWithZyAi ?? true,
-          })
-
-          const service = new OAuthService()
-          let urlResolver!: (urls: { manualUrl: string; automaticUrl: string }) => void
-          const urlPromise = new Promise<{
-            manualUrl: string
-            automaticUrl: string
-          }>((resolve) => {
-            urlResolver = resolve
-          })
-
-          const flow = service
-            .startOAuthFlow(
-              async (manualUrl, automaticUrl) => {
-                // automaticUrl is always defined when skipBrowserOpen is set;
-                // the signature is optional only for the existing single-arg callers.
-                urlResolver({ manualUrl, automaticUrl: automaticUrl! })
-              },
-              {
-                loginWithZyAi: loginWithZyAi ?? true,
-                skipBrowserOpen: true,
-              },
-            )
-            .then(async (tokens) => {
-              // installOAuthTokens: performLogout (clear stale state) →
-              // store profile → saveOAuthTokensIfNeeded → clearOAuthTokenCache
-              // → clearAuthRelatedCaches. After this resolves, the memoized
-              // getZyAIOAuthTokens in this process is invalidated; the
-              // next API call re-reads keychain/file and works. No respawn.
-              await installOAuthTokens(tokens)
-              logEvent('zy_oauth_success', {
-                loginWithZyAi: loginWithZyAi ?? true,
-              })
-            })
-            .finally(() => {
-              service.cleanup()
-              if (zyOAuth?.service === service) {
-                zyOAuth = null
-              }
-            })
-
-          zyOAuth = { service, flow }
-
-          // Attach the rejection handler before awaiting so a synchronous
-          // startOAuthFlow failure doesn't surface as an unhandled rejection.
-          // The zy_oauth_callback handler re-awaits flow for the manual
-          // path and surfaces the real error to the client.
-          void flow.catch((err) =>
-            logForDebugging(`zy_authenticate flow ended: ${err}`, {
-              level: 'info',
-            }),
-          )
-
-          try {
-            // Race against flow: if startOAuthFlow rejects before calling
-            // the authURLHandler (e.g. AuthCodeListener.start() fails with
-            // EACCES or fd exhaustion), urlPromise would pend forever and
-            // wedge the stdin loop. flow resolving first is unreachable in
-            // practice (it's suspended on the same urls we're waiting for).
-            const { manualUrl, automaticUrl } = await Promise.race([
-              urlPromise,
-              flow.then(() => {
-                throw new Error('OAuth flow completed without producing auth URLs')
-              }),
-            ])
-            sendControlResponseSuccess(message, {
-              manualUrl,
-              automaticUrl,
-            })
-          } catch (error) {
-            sendControlResponseError(message, errorMessage(error))
-          }
-        } else if (
-          requestSubtype === 'zy_oauth_callback' ||
-          requestSubtype === 'zy_oauth_wait_for_completion'
-        ) {
-          if (!zyOAuth) {
-            sendControlResponseError(message, 'No active zy_authenticate flow')
-          } else {
-            // Inject the manual code synchronously — must happen in stdin
-            // message order so a subsequent zy_authenticate doesn't
-            // replace the service before this code lands.
-            if (requestSubtype === 'zy_oauth_callback') {
-              const req = message.request as unknown as { authorizationCode: string; state: string }
-              zyOAuth.service.handleManualAuthCodeInput({
-                authorizationCode: req.authorizationCode,
-                state: req.state,
-              })
-            }
-            // Detach the await — the stdin reader is serial and blocking
-            // here deadlocks zy_oauth_wait_for_completion: flow may
-            // only resolve via a future zy_oauth_callback on stdin,
-            // which can't be read while we're parked. Capture the binding;
-            // zyOAuth is nulled in flow's own .finally.
-            const { flow } = zyOAuth
-            void flow.then(
-              () => {
-                const accountInfo = getAccountInformation()
-                sendControlResponseSuccess(message, {
-                  account: {
-                    email: accountInfo?.email,
-                    organization: accountInfo?.organization,
-                    subscriptionType: accountInfo?.subscription,
-                    tokenSource: accountInfo?.tokenSource,
-                    apiKeySource: accountInfo?.apiKeySource,
-                    apiProvider: getAPIProvider(),
-                  },
-                })
-              },
-              (error: unknown) => sendControlResponseError(message, errorMessage(error)),
-            )
-          }
-        } else if (requestSubtype === 'mcp_clear_auth') {
-          const { serverName } = message.request as any
-          const currentAppState = getAppState()
-          const config =
-            getMcpConfigByName(serverName) ??
-            mcpClients.find((c) => c.name === serverName)?.config ??
-            currentAppState.mcp.clients.find((c) => c.name === serverName)?.config ??
-            null
-          if (!config) {
-            sendControlResponseError(message, `Server not found: ${serverName}`)
-          } else if (config.type !== 'sse' && config.type !== 'http') {
-            sendControlResponseError(message, `Cannot clear auth for server type "${config.type}"`)
-          } else {
-            await revokeServerTokens(serverName, config)
-            const result = await reconnectMcpServerImpl(serverName, config)
-            const prefix = getMcpPrefix(serverName)
-            setAppState((prev) => ({
-              ...prev,
-              mcp: {
-                ...prev.mcp,
-                clients: prev.mcp.clients.map((c) => (c.name === serverName ? result.client : c)),
-                tools: [
-                  ...reject(prev.mcp.tools, (t) => t.name?.startsWith(prefix)),
-                  ...result.tools,
-                ],
-                commands: [
-                  ...reject(prev.mcp.commands, (c) => commandBelongsToServer(c, serverName)),
-                  ...result.commands,
-                ],
-                resources:
-                  result.resources && result.resources.length > 0
-                    ? {
-                        ...prev.mcp.resources,
-                        [serverName]: result.resources,
-                      }
-                    : omit(prev.mcp.resources, serverName),
-              },
-            }))
-            sendControlResponseSuccess(message, {})
           }
         } else if (requestSubtype === 'generate_session_title') {
           // Fire-and-forget so the compact model call does not block the stdin loop
