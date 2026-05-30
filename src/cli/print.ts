@@ -1140,10 +1140,15 @@ function runHeadlessStreaming(
   // Bridge handle for remote-control (SDK control message).
   // Mirrors the REPL's useReplBridge hook: the handle is created when
   // `remote_control` is enabled and torn down when disabled.
-  let bridgeHandle: ReplWireHandle | null = null
-  // Cursor into session.messages — tracks how far we've forwarded.
-  // Same index-based diff as useReplBridge's lastWrittenIndexRef.
-  let bridgeLastForwardedIndex = 0
+  // 桥接句柄与转发游标收进共享容器(Phase 5a):controlLoop(写)、turnLoop(经
+  // getBridgeHandle 读)、forwardMessagesToBridge(读写)三处共享同一引用,外提后
+  // 值拷贝会读到陈旧值。
+  // lastForwardedIndex: cursor into session.messages — tracks how far we've
+  // forwarded (same index-based diff as useReplBridge's lastWrittenIndexRef).
+  const bridgeState = {
+    handle: null as ReplWireHandle | null,
+    lastForwardedIndex: 0,
+  }
 
   // Forward new messages from session.messages to the bridge.
   // Called incrementally during each turn (so zy.ai sees progress
@@ -1153,17 +1158,17 @@ function runHeadlessStreaming(
   // recentPostedUUIDs) — the index cursor here is a pre-filter to avoid
   // O(n) re-scanning of already-sent messages on every call.
   function forwardMessagesToBridge(): void {
-    if (!bridgeHandle) {
+    if (!bridgeState.handle) {
       return
     }
     // Guard against session.messages shrinking (compaction truncates it).
-    const startIndex = Math.min(bridgeLastForwardedIndex, session.messages.length)
+    const startIndex = Math.min(bridgeState.lastForwardedIndex, session.messages.length)
     const newMessages = session.messages
       .slice(startIndex)
       .filter((m) => m.type === 'user' || m.type === 'assistant')
-    bridgeLastForwardedIndex = session.messages.length
+    bridgeState.lastForwardedIndex = session.messages.length
     if (newMessages.length > 0) {
-      bridgeHandle.writeMessages(newMessages)
+      bridgeState.handle.writeMessages(newMessages)
     }
   }
 
@@ -1249,7 +1254,7 @@ function runHeadlessStreaming(
     unsubscribeAuthStatus,
     rateLimitListener,
     kickRun: () => void run(),
-    getBridgeHandle: () => bridgeHandle,
+    getBridgeHandle: () => bridgeState.handle,
   }
   run = () => runTurnLoop(turnLoopDeps)
 
@@ -2426,18 +2431,18 @@ function runHeadlessStreaming(
       remote_control: async (message) => {
         const req = message.request as unknown as { enabled: boolean }
         if (req.enabled) {
-          if (bridgeHandle) {
+          if (bridgeState.handle) {
             // Already connected
             sendControlResponseSuccess(message, {
               session_url: getRemoteSessionUrl(
-                bridgeHandle.bridgeSessionId,
-                bridgeHandle.sessionIngressUrl,
+                bridgeState.handle.bridgeSessionId,
+                bridgeState.handle.sessionIngressUrl,
               ),
               connect_url: buildWireConnectUrl(
-                bridgeHandle.environmentId,
-                bridgeHandle.sessionIngressUrl,
+                bridgeState.handle.environmentId,
+                bridgeState.handle.sessionIngressUrl,
               ),
-              environment_id: bridgeHandle.environmentId,
+              environment_id: bridgeState.handle.environmentId,
             })
           } else {
             // initReplBridge surfaces gate-failure reasons via
@@ -2513,8 +2518,8 @@ function runHeadlessStreaming(
                   bridgeFailureDetail ?? 'Remote Control initialization failed',
                 )
               } else {
-                bridgeHandle = handle
-                bridgeLastForwardedIndex = session.messages.length
+                bridgeState.handle = handle
+                bridgeState.lastForwardedIndex = session.messages.length
                 // Forward permission requests to the bridge
                 structuredIO.setOnControlRequestSent((request) => {
                   handle.sendControlRequest(request)
@@ -2539,11 +2544,11 @@ function runHeadlessStreaming(
           }
         } else {
           // Disable
-          if (bridgeHandle) {
+          if (bridgeState.handle) {
             structuredIO.setOnControlRequestSent(undefined)
             structuredIO.setOnControlRequestResolved(undefined)
-            await bridgeHandle.teardown()
-            bridgeHandle = null
+            await bridgeState.handle.teardown()
+            bridgeState.handle = null
           }
           sendControlResponseSuccess(message)
         }
