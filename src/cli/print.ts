@@ -3111,6 +3111,228 @@ function runHeadlessStreaming(
           sendControlResponseSuccess(message, {})
         }
       },
+      generate_session_title: (message) => {
+        // Fire-and-forget so the compact model call does not block the stdin loop
+        // (which would delay processing of subsequent user messages /
+        // interrupts for the duration of the API roundtrip).
+        const { description, persist } = message.request as any
+        // Reuse the live controller only if it has not already been aborted
+        // (e.g. by interrupt()); an aborted signal would cause queryCompactModel to
+        // immediately throw APIUserAbortError → {title: null}.
+        const titleSignal = (
+          abortController && !abortController.signal.aborted
+            ? abortController
+            : createAbortController()
+        ).signal
+        void (async () => {
+          try {
+            const title = await generateSessionTitle(description, titleSignal)
+            if (title && persist) {
+              try {
+                saveAiGeneratedTitle(getSessionId() as UUID, title)
+              } catch (e) {
+                logError(e)
+              }
+            }
+            sendControlResponseSuccess(message, { title })
+          } catch (e) {
+            // Unreachable in practice — generateSessionTitle wraps its
+            // own body and returns null, saveAiGeneratedTitle is wrapped
+            // above. Propagate (not swallow) so unexpected failures are
+            // visible to the SDK caller (hostComms.ts catches and logs).
+            sendControlResponseError(message, errorMessage(e))
+          }
+        })()
+      },
+      side_question: (message) => {
+        // Same fire-and-forget pattern as generate_session_title above —
+        // the forked agent's API roundtrip must not block the stdin loop.
+        //
+        // The snapshot captured by stopHooks (for querySource === 'sdk')
+        // holds the exact systemPrompt/userContext/systemContext/messages
+        // sent on the last main-thread turn. Reusing them gives a byte-
+        // identical prefix → prompt cache hit.
+        //
+        // Fallback (resume before first turn completes — no snapshot yet):
+        // rebuild from scratch. buildSideQuestionFallbackParams mirrors
+        // QueryEngine.ts:ask()'s system prompt assembly (including
+        // --system-prompt / --append-system-prompt) so the rebuilt prefix
+        // matches in the common case. May still miss the cache for
+        // coordinator mode or memory-mechanics extras — acceptable, the
+        // alternative is the side question failing entirely.
+        const { question } = message.request as any
+        void (async () => {
+          try {
+            const saved = getLastCacheSafeParams()
+            const cacheSafeParams = saved
+              ? {
+                  ...saved,
+                  // If the last turn was interrupted, the snapshot holds an
+                  // already-aborted controller; createChildAbortController in
+                  // createSubagentContext would propagate it and the fork
+                  // would die before sending a request. The controller is
+                  // not part of the cache key — swapping in a fresh one is
+                  // safe. Same guard as generate_session_title above.
+                  toolUseContext: {
+                    ...saved.toolUseContext,
+                    abortController: createAbortController(),
+                  },
+                }
+              : await buildSideQuestionFallbackParams({
+                  tools: buildAllTools(getAppState()),
+                  commands: mcp.currentCommands,
+                  mcpClients: [
+                    ...getAppState().mcp.clients,
+                    ...mcp.sdkClients,
+                    ...mcp.dynamicMcpState.clients,
+                  ],
+                  messages: session.messages,
+                  readFileState,
+                  getAppState,
+                  setAppState,
+                  customSystemPrompt: options.systemPrompt,
+                  appendSystemPrompt: options.appendSystemPrompt,
+                  thinkingConfig: options.thinkingConfig,
+                  agents: mcp.currentAgents,
+                })
+            const result = await runSideQuestion({
+              question,
+              cacheSafeParams,
+            })
+            sendControlResponseSuccess(message, { response: result.response })
+          } catch (e) {
+            sendControlResponseError(message, errorMessage(e))
+          }
+        })()
+      },
+      remote_control: async (message) => {
+        const req = message.request as unknown as { enabled: boolean }
+        if (req.enabled) {
+          if (bridgeHandle) {
+            // Already connected
+            sendControlResponseSuccess(message, {
+              session_url: getRemoteSessionUrl(
+                bridgeHandle.bridgeSessionId,
+                bridgeHandle.sessionIngressUrl,
+              ),
+              connect_url: buildWireConnectUrl(
+                bridgeHandle.environmentId,
+                bridgeHandle.sessionIngressUrl,
+              ),
+              environment_id: bridgeHandle.environmentId,
+            })
+          } else {
+            // initReplBridge surfaces gate-failure reasons via
+            // onStateChange('failed', detail) before returning null.
+            // Capture so the control-response error is actionable
+            // ("/login", "disabled by your organization's policy", etc.)
+            // instead of a generic "initialization failed".
+            let bridgeFailureDetail: string | undefined
+            try {
+              const { initReplBridge } = await import('src/bridge/initReplBridge.js')
+              const handle = await initReplBridge({
+                onInboundMessage(msg) {
+                  const fields = extractInboundMessageFields(msg)
+                  if (!fields) {
+                    return
+                  }
+                  const { content, uuid } = fields
+                  enqueue({
+                    value: content,
+                    mode: 'prompt' as const,
+                    uuid,
+                    skipSlashCommands: true,
+                  })
+                  void run()
+                },
+                onPermissionResponse(response) {
+                  // Forward bridge permission responses into the
+                  // stdin processing loop so they resolve pending
+                  // permission requests from the SDK consumer.
+                  structuredIO.injectControlResponse(response)
+                },
+                onInterrupt() {
+                  abortController?.abort()
+                },
+                onSetModel(model) {
+                  const resolved = model === 'default' ? getDefaultMainLoopModel() : model
+                  activeUserSpecifiedModel = resolved
+                  setMainLoopModelOverride(resolved)
+                },
+                onSetMaxThinkingTokens(maxTokens) {
+                  if (maxTokens === null) {
+                    options.thinkingConfig = undefined
+                  } else if (maxTokens === 0) {
+                    options.thinkingConfig = { type: 'disabled' }
+                  } else {
+                    options.thinkingConfig = {
+                      type: 'enabled',
+                      budgetTokens: maxTokens,
+                    }
+                  }
+                },
+                onStateChange(state, detail) {
+                  if (state === 'failed') {
+                    bridgeFailureDetail = detail
+                  }
+                  logForDebugging(
+                    `[bridge:sdk] State change: ${state}${detail ? ` — ${detail}` : ''}`,
+                  )
+                  output.enqueue({
+                    type: 'system' as StdoutMessage['type'],
+                    subtype: 'bridge_state' as string,
+                    state,
+                    detail,
+                    uuid: randomUUID(),
+                    session_id: getSessionId(),
+                  } as StdoutMessage)
+                },
+                initialMessages: session.messages.length > 0 ? session.messages : undefined,
+              })
+              if (!handle) {
+                sendControlResponseError(
+                  message,
+                  bridgeFailureDetail ?? 'Remote Control initialization failed',
+                )
+              } else {
+                bridgeHandle = handle
+                bridgeLastForwardedIndex = session.messages.length
+                // Forward permission requests to the bridge
+                structuredIO.setOnControlRequestSent((request) => {
+                  handle.sendControlRequest(request)
+                })
+                // Cancel stale bridge permission prompts when the SDK
+                // consumer resolves a can_use_tool request first.
+                structuredIO.setOnControlRequestResolved((requestId) => {
+                  handle.sendControlCancelRequest(requestId)
+                })
+                sendControlResponseSuccess(message, {
+                  session_url: getRemoteSessionUrl(
+                    handle.bridgeSessionId,
+                    handle.sessionIngressUrl,
+                  ),
+                  connect_url: buildWireConnectUrl(
+                    handle.environmentId,
+                    handle.sessionIngressUrl,
+                  ),
+                  environment_id: handle.environmentId,
+                })
+              }
+            } catch (err) {
+              sendControlResponseError(message, errorMessage(err))
+            }
+          }
+        } else {
+          // Disable
+          if (bridgeHandle) {
+            structuredIO.setOnControlRequestSent(undefined)
+            structuredIO.setOnControlRequestResolved(undefined)
+            await bridgeHandle.teardown()
+            bridgeHandle = null
+          }
+          sendControlResponseSuccess(message)
+        }
+      },
     }
 
     for await (const message of structuredIO.structuredInput) {
@@ -3131,98 +3353,6 @@ function runHeadlessStreaming(
           if (outcome === 'break') {
             break // 如 end_session:退出 for-await → 下方 inputClosed 收尾
           }
-        } else if (requestSubtype === 'generate_session_title') {
-          // Fire-and-forget so the compact model call does not block the stdin loop
-          // (which would delay processing of subsequent user messages /
-          // interrupts for the duration of the API roundtrip).
-          const { description, persist } = message.request as any
-          // Reuse the live controller only if it has not already been aborted
-          // (e.g. by interrupt()); an aborted signal would cause queryCompactModel to
-          // immediately throw APIUserAbortError → {title: null}.
-          const titleSignal = (
-            abortController && !abortController.signal.aborted
-              ? abortController
-              : createAbortController()
-          ).signal
-          void (async () => {
-            try {
-              const title = await generateSessionTitle(description, titleSignal)
-              if (title && persist) {
-                try {
-                  saveAiGeneratedTitle(getSessionId() as UUID, title)
-                } catch (e) {
-                  logError(e)
-                }
-              }
-              sendControlResponseSuccess(message, { title })
-            } catch (e) {
-              // Unreachable in practice — generateSessionTitle wraps its
-              // own body and returns null, saveAiGeneratedTitle is wrapped
-              // above. Propagate (not swallow) so unexpected failures are
-              // visible to the SDK caller (hostComms.ts catches and logs).
-              sendControlResponseError(message, errorMessage(e))
-            }
-          })()
-        } else if (requestSubtype === 'side_question') {
-          // Same fire-and-forget pattern as generate_session_title above —
-          // the forked agent's API roundtrip must not block the stdin loop.
-          //
-          // The snapshot captured by stopHooks (for querySource === 'sdk')
-          // holds the exact systemPrompt/userContext/systemContext/messages
-          // sent on the last main-thread turn. Reusing them gives a byte-
-          // identical prefix → prompt cache hit.
-          //
-          // Fallback (resume before first turn completes — no snapshot yet):
-          // rebuild from scratch. buildSideQuestionFallbackParams mirrors
-          // QueryEngine.ts:ask()'s system prompt assembly (including
-          // --system-prompt / --append-system-prompt) so the rebuilt prefix
-          // matches in the common case. May still miss the cache for
-          // coordinator mode or memory-mechanics extras — acceptable, the
-          // alternative is the side question failing entirely.
-          const { question } = message.request as any
-          void (async () => {
-            try {
-              const saved = getLastCacheSafeParams()
-              const cacheSafeParams = saved
-                ? {
-                    ...saved,
-                    // If the last turn was interrupted, the snapshot holds an
-                    // already-aborted controller; createChildAbortController in
-                    // createSubagentContext would propagate it and the fork
-                    // would die before sending a request. The controller is
-                    // not part of the cache key — swapping in a fresh one is
-                    // safe. Same guard as generate_session_title above.
-                    toolUseContext: {
-                      ...saved.toolUseContext,
-                      abortController: createAbortController(),
-                    },
-                  }
-                : await buildSideQuestionFallbackParams({
-                    tools: buildAllTools(getAppState()),
-                    commands: mcp.currentCommands,
-                    mcpClients: [
-                      ...getAppState().mcp.clients,
-                      ...mcp.sdkClients,
-                      ...mcp.dynamicMcpState.clients,
-                    ],
-                    messages: session.messages,
-                    readFileState,
-                    getAppState,
-                    setAppState,
-                    customSystemPrompt: options.systemPrompt,
-                    appendSystemPrompt: options.appendSystemPrompt,
-                    thinkingConfig: options.thinkingConfig,
-                    agents: mcp.currentAgents,
-                  })
-              const result = await runSideQuestion({
-                question,
-                cacheSafeParams,
-              })
-              sendControlResponseSuccess(message, { response: result.response })
-            } catch (e) {
-              sendControlResponseError(message, errorMessage(e))
-            }
-          })()
         } else if (
           (feature('PROACTIVE') || feature('KAIROS')) &&
           (message.request as { subtype: string }).subtype === 'set_proactive'
@@ -3240,133 +3370,6 @@ function runHeadlessStreaming(
             proactiveModule.deactivateProactive()
           }
           sendControlResponseSuccess(message)
-        } else if (requestSubtype === 'remote_control') {
-          const req = message.request as unknown as { enabled: boolean }
-          if (req.enabled) {
-            if (bridgeHandle) {
-              // Already connected
-              sendControlResponseSuccess(message, {
-                session_url: getRemoteSessionUrl(
-                  bridgeHandle.bridgeSessionId,
-                  bridgeHandle.sessionIngressUrl,
-                ),
-                connect_url: buildWireConnectUrl(
-                  bridgeHandle.environmentId,
-                  bridgeHandle.sessionIngressUrl,
-                ),
-                environment_id: bridgeHandle.environmentId,
-              })
-            } else {
-              // initReplBridge surfaces gate-failure reasons via
-              // onStateChange('failed', detail) before returning null.
-              // Capture so the control-response error is actionable
-              // ("/login", "disabled by your organization's policy", etc.)
-              // instead of a generic "initialization failed".
-              let bridgeFailureDetail: string | undefined
-              try {
-                const { initReplBridge } = await import('src/bridge/initReplBridge.js')
-                const handle = await initReplBridge({
-                  onInboundMessage(msg) {
-                    const fields = extractInboundMessageFields(msg)
-                    if (!fields) {
-                      return
-                    }
-                    const { content, uuid } = fields
-                    enqueue({
-                      value: content,
-                      mode: 'prompt' as const,
-                      uuid,
-                      skipSlashCommands: true,
-                    })
-                    void run()
-                  },
-                  onPermissionResponse(response) {
-                    // Forward bridge permission responses into the
-                    // stdin processing loop so they resolve pending
-                    // permission requests from the SDK consumer.
-                    structuredIO.injectControlResponse(response)
-                  },
-                  onInterrupt() {
-                    abortController?.abort()
-                  },
-                  onSetModel(model) {
-                    const resolved = model === 'default' ? getDefaultMainLoopModel() : model
-                    activeUserSpecifiedModel = resolved
-                    setMainLoopModelOverride(resolved)
-                  },
-                  onSetMaxThinkingTokens(maxTokens) {
-                    if (maxTokens === null) {
-                      options.thinkingConfig = undefined
-                    } else if (maxTokens === 0) {
-                      options.thinkingConfig = { type: 'disabled' }
-                    } else {
-                      options.thinkingConfig = {
-                        type: 'enabled',
-                        budgetTokens: maxTokens,
-                      }
-                    }
-                  },
-                  onStateChange(state, detail) {
-                    if (state === 'failed') {
-                      bridgeFailureDetail = detail
-                    }
-                    logForDebugging(
-                      `[bridge:sdk] State change: ${state}${detail ? ` — ${detail}` : ''}`,
-                    )
-                    output.enqueue({
-                      type: 'system' as StdoutMessage['type'],
-                      subtype: 'bridge_state' as string,
-                      state,
-                      detail,
-                      uuid: randomUUID(),
-                      session_id: getSessionId(),
-                    } as StdoutMessage)
-                  },
-                  initialMessages: session.messages.length > 0 ? session.messages : undefined,
-                })
-                if (!handle) {
-                  sendControlResponseError(
-                    message,
-                    bridgeFailureDetail ?? 'Remote Control initialization failed',
-                  )
-                } else {
-                  bridgeHandle = handle
-                  bridgeLastForwardedIndex = session.messages.length
-                  // Forward permission requests to the bridge
-                  structuredIO.setOnControlRequestSent((request) => {
-                    handle.sendControlRequest(request)
-                  })
-                  // Cancel stale bridge permission prompts when the SDK
-                  // consumer resolves a can_use_tool request first.
-                  structuredIO.setOnControlRequestResolved((requestId) => {
-                    handle.sendControlCancelRequest(requestId)
-                  })
-                  sendControlResponseSuccess(message, {
-                    session_url: getRemoteSessionUrl(
-                      handle.bridgeSessionId,
-                      handle.sessionIngressUrl,
-                    ),
-                    connect_url: buildWireConnectUrl(
-                      handle.environmentId,
-                      handle.sessionIngressUrl,
-                    ),
-                    environment_id: handle.environmentId,
-                  })
-                }
-              } catch (err) {
-                sendControlResponseError(message, errorMessage(err))
-              }
-            }
-          } else {
-            // Disable
-            if (bridgeHandle) {
-              structuredIO.setOnControlRequestSent(undefined)
-              structuredIO.setOnControlRequestResolved(undefined)
-              await bridgeHandle.teardown()
-              bridgeHandle = null
-            }
-            sendControlResponseSuccess(message)
-          }
         } else {
           // Unknown control request subtype — send an error response so
           // the caller doesn't hang waiting for a reply that never comes.
