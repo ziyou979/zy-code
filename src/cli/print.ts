@@ -2157,6 +2157,62 @@ function runHeadlessStreaming(
   void (async () => {
     let initialized = false
     logForDiagnosticsNoPII('info', 'cli_message_loop_started')
+
+    // Phase 3: 控制消息 dispatch map(逐步迁移;未迁的 subtype 仍走下方 else-if 链)。
+    // handler 为内联闭包,捕获 activeUserSpecifiedModel/options 等闭包状态;
+    // message.request 是 subtype 联合,handler 内用 Extract 窄化到具体变体。
+    const controlHandlers: Partial<
+      Record<string, (message: WireControlRequest) => void | Promise<void>>
+    > = {
+      set_model: (message) => {
+        const req = message.request as Extract<
+          WireControlRequest['request'],
+          { subtype: 'set_model' }
+        >
+        const requestedModel = req.model ?? 'default'
+        const model = requestedModel === 'default' ? getDefaultMainLoopModel() : requestedModel
+        activeUserSpecifiedModel = model
+        setMainLoopModelOverride(model)
+        notifySessionMetadataChanged({ model })
+        injectModelSwitchBreadcrumbs(requestedModel, model)
+        sendControlResponseSuccess(message)
+      },
+      set_max_thinking_tokens: (message) => {
+        const req = message.request as Extract<
+          WireControlRequest['request'],
+          { subtype: 'set_max_thinking_tokens' }
+        >
+        if (req.max_thinking_tokens === null) {
+          options.thinkingConfig = undefined
+        } else if (req.max_thinking_tokens === 0) {
+          options.thinkingConfig = { type: 'disabled' }
+        } else {
+          options.thinkingConfig = {
+            type: 'enabled',
+            budgetTokens: req.max_thinking_tokens,
+          }
+        }
+        sendControlResponseSuccess(message)
+      },
+      get_settings: (message) => {
+        const currentAppState = getAppState()
+        const model = getMainLoopModel()
+        // modelSupportsEffort gate matches zy.ts — applied.effort must
+        // mirror what actually goes to the API, not just what's configured.
+        const effort = modelSupportsEffort(model)
+          ? resolveAppliedEffort(model, currentAppState.effortValue)
+          : undefined
+        sendControlResponseSuccess(message, {
+          ...getSettingsWithSources(),
+          applied: {
+            model,
+            // Numeric effort (ant-only) → null; SDK schema is string-level only.
+            effort: typeof effort === 'string' ? effort : null,
+          },
+        })
+      },
+    }
+
     for await (const message of structuredIO.structuredInput) {
       // Non-user events are handled inline (no queue). started→completed in
       // the same tick carries no information, so only fire completed.
@@ -2169,7 +2225,10 @@ function runHeadlessStreaming(
 
       if (message.type === 'control_request') {
         const requestSubtype: string = message.request.subtype
-        if (requestSubtype === 'interrupt') {
+        const controlHandler = controlHandlers[requestSubtype]
+        if (controlHandler) {
+          await controlHandler(message)
+        } else if (requestSubtype === 'interrupt') {
           // Track escapes for attribution (ant-only feature)
           if (feature('COMMIT_ATTRIBUTION')) {
             setAppState((prev) => ({
@@ -2273,27 +2332,6 @@ function runHeadlessStreaming(
           // handleSetPermissionMode sends the control_response; the
           // notifySessionMetadataChanged that used to follow here is
           // now fired by onChangeAppState (with externalized mode name).
-        } else if (message.request.subtype === 'set_model') {
-          const requestedModel = message.request.model ?? 'default'
-          const model = requestedModel === 'default' ? getDefaultMainLoopModel() : requestedModel
-          activeUserSpecifiedModel = model
-          setMainLoopModelOverride(model)
-          notifySessionMetadataChanged({ model })
-          injectModelSwitchBreadcrumbs(requestedModel, model)
-
-          sendControlResponseSuccess(message)
-        } else if (message.request.subtype === 'set_max_thinking_tokens') {
-          if (message.request.max_thinking_tokens === null) {
-            options.thinkingConfig = undefined
-          } else if (message.request.max_thinking_tokens === 0) {
-            options.thinkingConfig = { type: 'disabled' }
-          } else {
-            options.thinkingConfig = {
-              type: 'enabled',
-              budgetTokens: message.request.max_thinking_tokens,
-            }
-          }
-          sendControlResponseSuccess(message)
         } else if (message.request.subtype === 'mcp_status') {
           sendControlResponseSuccess(message, {
             mcpServers: mcp.buildMcpServerStatuses(),
@@ -3035,22 +3073,6 @@ function runHeadlessStreaming(
           }
 
           sendControlResponseSuccess(message)
-        } else if (message.request.subtype === 'get_settings') {
-          const currentAppState = getAppState()
-          const model = getMainLoopModel()
-          // modelSupportsEffort gate matches zy.ts — applied.effort must
-          // mirror what actually goes to the API, not just what's configured.
-          const effort = modelSupportsEffort(model)
-            ? resolveAppliedEffort(model, currentAppState.effortValue)
-            : undefined
-          sendControlResponseSuccess(message, {
-            ...getSettingsWithSources(),
-            applied: {
-              model,
-              // Numeric effort (ant-only) → null; SDK schema is string-level only.
-              effort: typeof effort === 'string' ? effort : null,
-            },
-          })
         } else if (message.request.subtype === 'stop_task') {
           const { task_id: taskId } = message.request
           try {
