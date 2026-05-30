@@ -923,17 +923,26 @@ function runHeadlessStreaming(
   },
   turnInterruptionState?: TurnInterruptionState,
 ): AsyncIterable<StdoutMessage> {
-  let running = false
-  let runPhase:
+  type RunPhase =
     | 'draining_commands'
     | 'waiting_for_agents'
     | 'finally_flush'
     | 'finally_post_flush'
-    | undefined
-  let inputClosed = false
-  let shutdownPromptInjected = false
-  let heldBackResult: StdoutMessage | null = null
-  let abortController: AbortController | undefined
+  // 主循环可变状态容器(Phase 4a)。run() 与 run 外的并发回调(sigintHandler/
+  // stdin 循环/cron/UDS/控制 handler)共享同一引用——这些状态只此一份,值拷贝
+  // 会破坏互斥锁(running)、中断(abortController)、收尾(inputClosed)语义。
+  // readFileState 必须跨 ask() 调用持续(edit 工具依赖它作为全局状态),且会被
+  // setReadFileCache 回调整体重赋值,故收进容器而非函数局部。
+  const loopState = {
+    running: false,
+    runPhase: undefined as RunPhase | undefined,
+    inputClosed: false,
+    shutdownPromptInjected: false,
+    heldBackResult: null as StdoutMessage | null,
+    abortController: undefined as AbortController | undefined,
+    readFileState: extractReadFilesFromMessages(initialMessages, cwd(), READ_FILE_STATE_CACHE_SIZE),
+    activeUserSpecifiedModel: options.userSpecifiedModel,
+  }
   // Same queue sendRequest() enqueues to — one FIFO for everything.
   const output = structuredIO.outbound
 
@@ -942,10 +951,10 @@ function runHeadlessStreaming(
   // failsafe timer that force-exits if cleanup hangs.
   const sigintHandler = () => {
     logForDiagnosticsNoPII('info', 'shutdown_signal', { signal: 'SIGINT' })
-    if (abortController && !abortController.signal.aborted) {
+    if (loopState.abortController && !loopState.abortController.signal.aborted) {
       // 带明确 reason，配合 query.ts 主循环的白名单过滤，
       // 区分用户主动中断和 GC race 等隐式 abort。
-      abortController.abort('sigint')
+      loopState.abortController.abort('sigint')
     }
     void gracefulShutdown(0)
   }
@@ -961,8 +970,8 @@ function runHeadlessStreaming(
       }
     }
     logForDiagnosticsNoPII('info', 'run_state_at_shutdown', {
-      run_active: running,
-      run_phase: runPhase,
+      run_active: loopState.running,
+      run_phase: loopState.runPhase,
       worker_status: getSessionState(),
       internal_events_pending: structuredIO.internalEventsPending,
       bg_tasks: bg,
@@ -1064,16 +1073,6 @@ function runHeadlessStreaming(
   // 完整封闭 mutable-array(改 ask() 契约)留待后续 Phase。
   const session = createHeadlessSession({ initialMessages })
 
-  // Seed the readFileState cache from the transcript (content the model saw,
-  // with message timestamps) so getChangedFiles can detect external edits.
-  // This cache instance must persist across ask() calls, since the edit tool
-  // relies on this as a global state.
-  let readFileState = extractReadFilesFromMessages(
-    initialMessages,
-    cwd(),
-    READ_FILE_STATE_CACHE_SIZE,
-  )
-
   // Client-supplied readFileState seeds (via seed_read_state control request).
   // The stdin IIFE runs concurrently with ask() — a seed arriving mid-turn
   // would be lost to ask()'s clone-then-replace (QueryEngine.ts finally block)
@@ -1124,7 +1123,6 @@ function runHeadlessStreaming(
       ...(hasAutoMode && { supportsAutoMode: true }),
     }
   })
-  let activeUserSpecifiedModel = options.userSpecifiedModel
 
   function injectModelSwitchBreadcrumbs(modelArg: string, resolvedModel: string): void {
     const breadcrumbs = createModelSwitchBreadcrumbs(modelArg, modelDisplayString(resolvedModel))
@@ -1234,7 +1232,7 @@ function runHeadlessStreaming(
   }
 
   // Idle timeout management
-  const idleTimeout = createIdleTimeoutManager(() => !running)
+  const idleTimeout = createIdleTimeoutManager(() => !loopState.running)
 
   // Subscribe to skill changes for hot reloading
   const unsubscribeSkillChanges = skillChangeDetector.subscribe(() => {
@@ -1254,7 +1252,7 @@ function runHeadlessStreaming(
             if (
               !proactiveModule?.isProactiveActive() ||
               proactiveModule.isProactivePaused() ||
-              inputClosed
+              loopState.inputClosed
             ) {
               return
             }
@@ -1273,19 +1271,19 @@ function runHeadlessStreaming(
 
   // Abort the current operation when a 'now' priority message arrives.
   subscribeToCommandQueue(() => {
-    if (abortController && getCommandsByMaxPriority('now').length > 0) {
-      abortController.abort('interrupt')
+    if (loopState.abortController && getCommandsByMaxPriority('now').length > 0) {
+      loopState.abortController.abort('interrupt')
     }
   })
 
   let run
   run = async () => {
-    if (running) {
+    if (loopState.running) {
       return
     }
 
-    running = true
-    runPhase = undefined
+    loopState.running = true
+    loopState.runPhase = undefined
     notifySessionStateChanged('running')
     idleTimeout.stop()
 
@@ -1522,7 +1520,7 @@ function runHeadlessStreaming(
             }
           }
 
-          abortController = createAbortController()
+          loopState.abortController = createAbortController()
           const turnStartTime = feature('FILE_PERSISTENCE') ? Date.now() : undefined
 
           headlessProfilerCheckpoint('before_ask')
@@ -1548,20 +1546,20 @@ function runHeadlessStreaming(
               maxBudgetUsd: options.maxBudgetUsd,
               taskBudget: options.taskBudget,
               canUseTool,
-              userSpecifiedModel: activeUserSpecifiedModel,
+              userSpecifiedModel: loopState.activeUserSpecifiedModel,
               fallbackModel: options.fallbackModel,
               jsonSchema: getInitJsonSchema() ?? options.jsonSchema,
               mutableMessages: session.messages,
               getReadFileCache: () =>
                 pendingSeeds.size === 0
-                  ? readFileState
-                  : mergeFileStateCaches(readFileState, pendingSeeds),
+                  ? loopState.readFileState
+                  : mergeFileStateCaches(loopState.readFileState, pendingSeeds),
               setReadFileCache: (cache) => {
-                readFileState = cache
+                loopState.readFileState = cache
                 for (const [path, seed] of pendingSeeds.entries()) {
-                  const existing = readFileState.get(path)
+                  const existing = loopState.readFileState.get(path)
                   if (!existing || seed.timestamp > existing.timestamp) {
-                    readFileState.set(path, seed)
+                    loopState.readFileState.set(path, seed)
                   }
                 }
                 pendingSeeds.clear()
@@ -1570,7 +1568,7 @@ function runHeadlessStreaming(
               appendSystemPrompt: options.appendSystemPrompt,
               getAppState,
               setAppState,
-              abortController,
+              abortController: loopState.abortController,
               replayUserMessages: options.replayUserMessages,
               includePartialMessages: options.includePartialMessages,
               handleElicitation: (serverName, params, elicitSignal) =>
@@ -1615,9 +1613,9 @@ function runHeadlessStreaming(
                       isBackgroundTask(t),
                   )
                 ) {
-                  heldBackResult = message
+                  loopState.heldBackResult = message
                 } else {
-                  heldBackResult = null
+                  loopState.heldBackResult = null
                   output.enqueue(message)
                 }
               } else {
@@ -1640,7 +1638,7 @@ function runHeadlessStreaming(
           bridgeHandle?.sendResult()
 
           if (feature('FILE_PERSISTENCE') && turnStartTime !== undefined) {
-            void executeFilePersistence(turnStartTime as any, abortController.signal, (result) => {
+            void executeFilePersistence(turnStartTime as any, loopState.abortController.signal, (result) => {
               output.enqueue({
                 type: 'system' as const,
                 subtype: 'files_persisted' as const,
@@ -1701,7 +1699,7 @@ function runHeadlessStreaming(
                   // Only set lastEmitted when the suggestion is actually delivered
                   // to the consumer; deferred suggestions may be discarded before
                   // delivery if a new command arrives first.
-                  if (heldBackResult) {
+                  if (loopState.heldBackResult) {
                     suggestionState.pendingSuggestion = suggestionMsg
                     suggestionState.pendingLastEmittedEntry = {
                       text: lastEmittedEntry.text,
@@ -1750,7 +1748,7 @@ function runHeadlessStreaming(
           output.enqueue(event)
         }
 
-        runPhase = 'draining_commands'
+        loopState.runPhase = 'draining_commands'
         await drainCommandQueue()
 
         // Check for running background tasks before exiting.
@@ -1771,7 +1769,7 @@ function runHeadlessStreaming(
           if (hasRunningBg || hasMainThreadQueued) {
             waitingForAgents = true
             if (!hasMainThreadQueued) {
-              runPhase = 'waiting_for_agents'
+              loopState.runPhase = 'waiting_for_agents'
               // No commands ready yet, wait for tasks to complete
               await sleep(100)
             }
@@ -1780,9 +1778,9 @@ function runHeadlessStreaming(
         }
       } while (waitingForAgents)
 
-      if (heldBackResult) {
-        output.enqueue(heldBackResult)
-        heldBackResult = null
+      if (loopState.heldBackResult) {
+        output.enqueue(loopState.heldBackResult)
+        loopState.heldBackResult = null
         if (suggestionState.pendingSuggestion) {
           output.enqueue(suggestionState.pendingSuggestion)
           // Now that the suggestion is actually delivered, record it for acceptance tracking
@@ -1823,10 +1821,10 @@ function runHeadlessStreaming(
       gracefulShutdownSync(1)
       return
     } finally {
-      runPhase = 'finally_flush'
+      loopState.runPhase = 'finally_flush'
       // Flush pending internal events before going idle
       await structuredIO.flushInternalEvents()
-      runPhase = 'finally_post_flush'
+      loopState.runPhase = 'finally_post_flush'
       if (!isShuttingDown()) {
         notifySessionStateChanged('idle')
         // Drain so the idle session_state_changed SDK event (plus any
@@ -1839,7 +1837,7 @@ function runHeadlessStreaming(
           output.enqueue(event)
         }
       }
-      running = false
+      loopState.running = false
       // Start idle timer when we finish processing and are waiting for input
       idleTimeout.start()
     }
@@ -1851,7 +1849,7 @@ function runHeadlessStreaming(
       proactiveModule.isProactiveActive() &&
       !proactiveModule.isProactivePaused()
     ) {
-      if (peek(isMainThread) === undefined && !inputClosed) {
+      if (peek(isMainThread) === undefined && !loopState.inputClosed) {
         scheduleProactiveTick!()
         return
       }
@@ -1971,8 +1969,8 @@ function runHeadlessStreaming(
 
           // No messages - check if we need to prompt for shutdown
           // If input is closed and teammates are active, inject shutdown prompt once
-          if (inputClosed && !shutdownPromptInjected) {
-            shutdownPromptInjected = true
+          if (loopState.inputClosed && !loopState.shutdownPromptInjected) {
+            loopState.shutdownPromptInjected = true
             logForDebugging(
               '[print.ts] Input closed with active teammates, injecting shutdown prompt',
             )
@@ -1991,7 +1989,7 @@ function runHeadlessStreaming(
       }
     }
 
-    if (inputClosed) {
+    if (loopState.inputClosed) {
       // Check for active swarm that needs shutdown
       const hasActiveSwarm = await (async () => {
         // Wait for any working in-process team members to finish
@@ -2040,7 +2038,7 @@ function runHeadlessStreaming(
     const { setOnEnqueue } = require('../utils/udsMessaging.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
     setOnEnqueue(() => {
-      if (!inputClosed) {
+      if (!loopState.inputClosed) {
         void run()
       }
     })
@@ -2056,7 +2054,7 @@ function runHeadlessStreaming(
   if (feature('AGENT_TRIGGERS') && cronSchedulerModule && cronGate?.isKairosCronEnabled()) {
     cronScheduler = cronSchedulerModule.createCronScheduler({
       onFire: (prompt) => {
-        if (inputClosed) {
+        if (loopState.inputClosed) {
           return
         }
         enqueue({
@@ -2076,7 +2074,7 @@ function runHeadlessStreaming(
         })
         void run()
       },
-      isLoading: () => running || inputClosed,
+      isLoading: () => loopState.running || loopState.inputClosed,
       getJitterConfig: cronJitterConfigModule?.getCronJitterConfig,
       isKilled: () => !cronGate?.isKairosCronEnabled(),
     })
@@ -2216,7 +2214,7 @@ function runHeadlessStreaming(
         >
         const requestedModel = req.model ?? 'default'
         const model = requestedModel === 'default' ? getDefaultMainLoopModel() : requestedModel
-        activeUserSpecifiedModel = model
+        loopState.activeUserSpecifiedModel = model
         setMainLoopModelOverride(model)
         notifySessionMetadataChanged({ model })
         injectModelSwitchBreadcrumbs(requestedModel, model)
@@ -2267,9 +2265,9 @@ function runHeadlessStreaming(
             },
           }))
         }
-        if (abortController) {
+        if (loopState.abortController) {
           // 用户按 ESC（或等价的取消控制信号）— 用 'interrupt' reason。
-          abortController.abort('interrupt')
+          loopState.abortController.abort('interrupt')
         }
         suggestionState.abortController?.abort()
         suggestionState.abortController = null
@@ -2363,10 +2361,10 @@ function runHeadlessStreaming(
       end_session: (message) => {
         const req = message.request as { reason?: string }
         logForDebugging(`[print.ts] end_session received, reason=${req.reason ?? 'unspecified'}`)
-        if (abortController) {
+        if (loopState.abortController) {
           // 会话被外部要求结束(SDK end_session 控制消息),
           // 用专门的 reason 区分于其他用户中断路径。
-          abortController.abort('end_session')
+          loopState.abortController.abort('end_session')
         }
         suggestionState.abortController?.abort()
         suggestionState.abortController = null
@@ -2427,7 +2425,7 @@ function runHeadlessStreaming(
         // If the model changed, inject breadcrumbs + notify metadata listeners.
         const newModel = getMainLoopModel()
         if (newModel !== prevModel) {
-          activeUserSpecifiedModel = newModel
+          loopState.activeUserSpecifiedModel = newModel
           const modelArg = incoming.model ? String(incoming.model) : 'default'
           notifySessionMetadataChanged({ model: newModel })
           injectModelSwitchBreadcrumbs(modelArg, newModel)
@@ -3120,8 +3118,8 @@ function runHeadlessStreaming(
         // (e.g. by interrupt()); an aborted signal would cause queryCompactModel to
         // immediately throw APIUserAbortError → {title: null}.
         const titleSignal = (
-          abortController && !abortController.signal.aborted
-            ? abortController
+          loopState.abortController && !loopState.abortController.signal.aborted
+            ? loopState.abortController
             : createAbortController()
         ).signal
         void (async () => {
@@ -3187,7 +3185,7 @@ function runHeadlessStreaming(
                     ...mcp.dynamicMcpState.clients,
                   ],
                   messages: session.messages,
-                  readFileState,
+                  readFileState: loopState.readFileState,
                   getAppState,
                   setAppState,
                   customSystemPrompt: options.systemPrompt,
@@ -3252,11 +3250,11 @@ function runHeadlessStreaming(
                   structuredIO.injectControlResponse(response)
                 },
                 onInterrupt() {
-                  abortController?.abort()
+                  loopState.abortController?.abort()
                 },
                 onSetModel(model) {
                   const resolved = model === 'default' ? getDefaultMainLoopModel() : model
-                  activeUserSpecifiedModel = resolved
+                  loopState.activeUserSpecifiedModel = resolved
                   setMainLoopModelOverride(resolved)
                 },
                 onSetMaxThinkingTokens(maxTokens) {
@@ -3468,9 +3466,9 @@ function runHeadlessStreaming(
       }
       void run()
     }
-    inputClosed = true
+    loopState.inputClosed = true
     cronScheduler?.stop()
-    if (!running) {
+    if (!loopState.running) {
       // If a push-suggestion is in-flight, wait for it to emit before closing
       // the output stream (5 s safety timeout to prevent hanging).
       if (suggestionState.inflightPromise) {
