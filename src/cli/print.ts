@@ -1,8 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle'
-import { readFile, stat } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { downloadUserSettings, redownloadUserSettings } from 'src/services/settingsSync/index.js'
+import { downloadUserSettings } from 'src/services/settingsSync/index.js'
 import { StructuredIO } from 'src/cli/structuredIO.js'
 import { RemoteIO } from 'src/cli/remoteIO.js'
 import { type Command, formatDescriptionWithSource, getCommandName } from 'src/commands.js'
@@ -17,7 +16,6 @@ import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from 'src/services/analytics/index.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
 import { toolMatchesName, type Tool, type Tools } from 'src/Tool.js'
@@ -29,17 +27,13 @@ import {
 import type { Message, UserMessage } from 'src/types/message.js'
 import type { QueuedCommand } from 'src/types/textInputTypes.js'
 import {
-  dequeueAllMatching,
   enqueue,
-  hasCommandsInQueue,
   subscribeToCommandQueue,
   getCommandsByMaxPriority,
 } from 'src/utils/messageQueueManager.js'
-import { notifyCommandLifecycle } from 'src/utils/commandLifecycle.js'
 import {
   getSessionState,
   notifySessionStateChanged,
-  notifySessionMetadataChanged,
   setPermissionModeChangedListener,
   type RequiresActionDetails,
   type SessionExternalMetadata,
@@ -72,10 +66,8 @@ import {
   createFileStateCacheWithSizeLimit,
   READ_FILE_STATE_CACHE_SIZE,
 } from 'src/utils/fileStateCache.js'
-import { expandPath } from 'src/utils/path.js'
 import { extractReadFilesFromMessages } from 'src/utils/queryHelpers.js'
 import { registerHookEventHandler } from 'src/utils/hooks/hookEvents.js'
-import { finalizePendingAsyncHooks } from 'src/utils/hooks/AsyncHookRegistry.js'
 import { gracefulShutdown, gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
 import { registerCleanup } from 'src/utils/cleanupRegistry.js'
 import { createIdleTimeoutManager } from 'src/utils/idleTimeout.js'
@@ -93,24 +85,16 @@ import type {
   StdoutMessage,
   WireControlInitializeRequest,
   WireControlInitializeResponse,
-  WireControlRequest,
   WireControlResponse,
   WireControlMcpSetServersResponse,
-  WireControlReloadPluginsResponse,
 } from 'src/types/wire/control.js'
 // @ts-expect-error
 import type { PermissionMode } from '@anthropic-ai/zy-agent-sdk'
 import type { PermissionMode as InternalPermissionMode } from 'src/types/permissions.js'
 import { cwd } from 'node:process'
 import { getCwd } from 'src/utils/cwd.js'
-import omit from 'lodash-es/omit.js'
-import reject from 'lodash-es/reject.js'
 import { isPolicyAllowed } from 'src/services/policyLimits/index.js'
 import type { ReplWireHandle } from 'src/bridge/replBridge.js'
-import { getRemoteSessionUrl } from 'src/constants/product.js'
-import { buildWireConnectUrl } from 'src/bridge/bridgeStatusUtil.js'
-import { extractInboundMessageFields } from 'src/bridge/inboundMessages.js'
-import { resolveAndPrepend } from 'src/bridge/inboundAttachments.js'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
 import { hasPermissionsToUseTool } from 'src/utils/permissions/permissions.js'
 import { safeParseJSON } from 'src/utils/json.js'
@@ -118,11 +102,7 @@ import {
   outputSchema as permissionToolOutputSchema,
   permissionPromptToolResultToPermissionDecision,
 } from 'src/utils/permissions/PermissionPromptToolResultSchema.js'
-import { createAbortController } from 'src/utils/abortController.js'
 import { createCombinedAbortSignal } from 'src/utils/combinedAbortSignal.js'
-import { generateSessionTitle } from 'src/utils/sessionTitle.js'
-import { buildSideQuestionFallbackParams } from 'src/utils/queryContext.js'
-import { runSideQuestion } from 'src/utils/sideQuestion.js'
 import {
   processSessionStartHooks,
   processSetupHooks,
@@ -130,7 +110,7 @@ import {
 } from 'src/utils/sessionStart.js'
 import { DEFAULT_OUTPUT_STYLE_NAME, getAllOutputStyles } from 'src/constants/outputStyles.js'
 import { TICK_TAG } from 'src/constants/xml.js'
-import { getInitialSettings, getSettingsWithSources } from 'src/utils/settings/settings.js'
+import { getInitialSettings } from 'src/utils/settings/settings.js'
 import { settingsChangeDetector } from 'src/utils/settings/changeDetector.js'
 import { applySettingsChange } from 'src/utils/settings/applySettingsChange.js'
 import {
@@ -141,68 +121,41 @@ import {
   transitionPermissionMode,
 } from 'src/utils/permissions/permissionSetup.js'
 import { type PromptVariant } from 'src/services/PromptSuggestion/promptSuggestion.js'
-import { getLastCacheSafeParams } from 'src/utils/forkedAgent.js'
 import { getAccountInformation } from 'src/utils/auth.js'
-import { OAuthService } from 'src/services/oauth/index.js'
-import { installOAuthTokens } from 'src/cli/handlers/auth.js'
 import { getAPIProvider } from 'src/services/model/providers.js'
 import type { HookCallbackMatcher } from 'src/types/hooks/index.js'
 import { AwsAuthStatusManager } from 'src/utils/awsAuthStatusManager.js'
 import type { HookEvent } from 'src/types/index.js'
-import {
-  registerHookCallbacks,
-  setInitJsonSchema,
-  getInitJsonSchema,
-  setSdkAgentProgressSummariesEnabled,
-} from 'src/bootstrap/state.js'
+import { registerHookCallbacks, setInitJsonSchema, getInitJsonSchema } from 'src/bootstrap/state.js'
 import { createSyntheticOutputTool } from 'src/tools/SyntheticOutputTool/SyntheticOutputTool.js'
 import { parseSessionIdentifier } from 'src/utils/sessionUrl.js'
 import {
   hydrateRemoteSession,
   hydrateFromCCRv2InternalEvents,
   resetSessionFilePointer,
-  doesMessageExistInSession,
   findUnresolvedToolUse,
-  recordAttributionSnapshot,
   saveAgentSetting,
   saveMode,
-  saveAiGeneratedTitle,
   restoreSessionMetadata,
 } from 'src/utils/sessionStorage.js'
-import { incrementPromptCount } from 'src/utils/commitAttribution.js'
 import {
   connectToServer,
   clearServerCache,
   fetchToolsForClient,
   areMcpConfigsEqual,
-  reconnectMcpServerImpl,
 } from 'src/services/mcp/client.js'
-import {
-  filterMcpServersByPolicy,
-  getMcpConfigByName,
-  isMcpServerDisabled,
-  setMcpServerEnabled,
-} from 'src/services/mcp/config.js'
-import { performMCPOAuthFlow, revokeServerTokens } from 'src/services/mcp/auth.js'
-import { getMcpPrefix } from 'src/services/mcp/mcpStringUtils.js'
-import { commandBelongsToServer } from 'src/services/mcp/utils.js'
-import { toInternalMessages, toSDKRateLimitInfo } from 'src/utils/messages/mappers.js'
+import { filterMcpServersByPolicy } from 'src/services/mcp/config.js'
+import { toSDKRateLimitInfo } from 'src/utils/messages/mappers.js'
 import { createModelSwitchBreadcrumbs } from 'src/utils/messages.js'
-import { collectContextData } from 'src/commands/context/context-noninteractive.js'
 import { LOCAL_COMMAND_STDOUT_TAG } from 'src/constants/xml.js'
 import { statusListeners, type ZyAILimits } from 'src/services/zyAiLimits.js'
 import {
   getDefaultMainLoopModel,
-  getMainLoopModel,
   modelDisplayString,
   parseUserSpecifiedModel,
 } from 'src/services/model/model.js'
 import { getModelOptions } from 'src/services/model/modelOptions.js'
-import {
-  getModelEffortLevels,
-  modelSupportsEffort,
-  resolveAppliedEffort,
-} from 'src/utils/effort.js'
+import { getModelEffortLevels } from 'src/utils/effort.js'
 import { modelSupportsAdaptiveThinking } from 'src/utils/thinking.js'
 import { modelSupportsAutoMode } from 'src/utils/betas.js'
 import { ensureModelStringsInitialized } from 'src/services/model/modelStrings.js'
@@ -213,8 +166,6 @@ import {
   switchSession,
   isSessionPersistenceDisabled,
   getIsRemoteMode,
-  getFlagSettingsInline,
-  setFlagSettingsInline,
   getMainThreadAgentType,
   getAllowedChannels,
   setAllowedChannels,
@@ -244,18 +195,15 @@ import { jsonStringify } from '../utils/slowOperations.js'
 import { skillChangeDetector } from '../services/skills/skillChangeDetector.js'
 import { getCommands, clearCommandsCache } from '../commands.js'
 import { isBareMode, isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
-import { refreshActivePlugins } from '../utils/plugins/refresh.js'
-import { loadAllPluginsCacheOnly } from '../utils/plugins/pluginLoader.js'
 import { getRunningTasks } from '../services/task/framework.js'
 import { isBackgroundTask } from '../tasks/types.js'
-import { stopTask } from '../tasks/stopTask.js'
 import { initializeGrowthBook } from '../services/analytics/growthbook.js'
 import { errorMessage, toError } from '../utils/errors.js'
-import { sleep } from '../utils/sleep.js'
 import { isExtractModeActive } from '../memdir/paths.js'
 import { createHeadlessSession } from './headless/headlessSession.js'
 import { createMcpRuntime, type DynamicMcpState } from './headless/mcpRuntime.js'
 import { runTurnLoop, type TurnLoopDeps, type LoopState } from './headless/turnLoop.js'
+import { runControlLoop } from './headless/controlLoop.js'
 
 // Dead code elimination: conditional imports
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -296,10 +244,10 @@ Shut down your team and prepare your final response for the user.`
 
 // Track message UUIDs received during the current session runtime
 const MAX_RECEIVED_UUIDS = 10_000
-const receivedMessageUuids = new Set<UUID>()
+export const receivedMessageUuids = new Set<UUID>()
 const receivedMessageUuidsOrder: UUID[] = []
 
-function trackReceivedMessageUuid(uuid: UUID): boolean {
+export function trackReceivedMessageUuid(uuid: UUID): boolean {
   if (receivedMessageUuids.has(uuid)) {
     return false // duplicate
   }
@@ -1308,1403 +1256,32 @@ function runHeadlessStreaming(
     cronScheduler.start()
   }
 
-  const sendControlResponseSuccess = (
-    message: WireControlRequest,
-    response?: Record<string, unknown>,
-  ) => {
-    output.enqueue({
-      type: 'control_response',
-      response: {
-        subtype: 'success',
-        request_id: message.request_id,
-        response: response,
-      },
-    })
-  }
-
-  const sendControlResponseError = (message: WireControlRequest, errorMessage: string) => {
-    output.enqueue({
-      type: 'control_response',
-      response: {
-        subtype: 'error',
-        request_id: message.request_id,
-        error: errorMessage,
-      },
-    })
-  }
-
-  // Handle unexpected permission responses by looking up the unresolved tool
-  // call in the transcript and executing it
-  const handledOrphanedToolUseIds = new Set<string>()
-  structuredIO.setUnexpectedResponseCallback(async (message) => {
-    await handleOrphanedPermissionResponse({
-      message,
-      setAppState,
-      handledToolUseIds: handledOrphanedToolUseIds,
-      onEnqueued: () => {
-        // The first message of a session might be the orphaned permission
-        // check rather than a user prompt, so kick off the loop.
-        void run()
-      },
-    })
+  void runControlLoop({
+    loopState,
+    bridgeState,
+    structuredIO,
+    options,
+    sdkMcpConfigs,
+    getAppState,
+    setAppState,
+    output,
+    session,
+    mcp,
+    suggestionState,
+    pendingSeeds,
+    buildAllTools,
+    modelInfos,
+    commands,
+    agents,
+    mcpClients,
+    injectModelSwitchBreadcrumbs,
+    scheduleProactiveTick,
+    cronScheduler,
+    unsubscribeSkillChanges,
+    unsubscribeAuthStatus,
+    rateLimitListener,
+    kickRun: () => void run(),
   })
-
-  // Track active OAuth flows per server so we can abort a previous flow
-  // when a new mcp_authenticate request arrives for the same server.
-  const activeOAuthFlows = new Map<string, AbortController>()
-  // Track manual callback URL submit functions for active OAuth flows.
-  // Used when localhost is not reachable (e.g., browser-based IDEs).
-  const oauthCallbackSubmitters = new Map<string, (callbackUrl: string) => void>()
-  // Track servers where the manual callback was actually invoked (so the
-  // automatic reconnect path knows to skip — the extension will reconnect).
-  const oauthManualCallbackUsed = new Set<string>()
-  // Track OAuth auth-only promises so mcp_oauth_callback_url can await
-  // token exchange completion. Reconnect is handled separately by the
-  // extension via handleAuthDone → mcp_reconnect.
-  const oauthAuthPromises = new Map<string, Promise<void>>()
-
-  // In-flight OAuth flow (zy_authenticate). Single-slot: a
-  // second authenticate request cleans up the first. The service holds the
-  // PKCE verifier + localhost listener; the promise settles after
-  // installOAuthTokens — after it resolves, the in-process memoized token
-  // cache is already cleared and the next API call picks up the new creds.
-  let zyOAuth: {
-    service: OAuthService
-    flow: Promise<void>
-  } | null = null
-
-  // This is essentially spawning a parallel async task- we have two
-  // running in parallel- one reading from stdin and adding to the
-  // queue to be processed and another reading from the queue,
-  // processing and returning the result of the generation.
-  // The process is complete when the input stream completes and
-  // the last generation of the queue has complete.
-  void (async () => {
-    let initialized = false
-    logForDiagnosticsNoPII('info', 'cli_message_loop_started')
-
-    // Phase 3: 控制消息 dispatch map(逐步迁移;未迁的 subtype 仍走下方 else-if 链)。
-    // handler 为内联闭包,捕获 activeUserSpecifiedModel/options 等闭包状态;
-    // message.request 是 subtype 联合,handler 内用 Extract 窄化到具体变体。
-    // 返回 'break' 的 handler(如 end_session)令外层 for-await 退出。
-    type ControlOutcome = void | 'break'
-    // zy_oauth_callback 与 zy_oauth_wait_for_completion 共用此 handler:仅前者
-    // 同步注入 manual code,之后都 detach 等 flow 完成再回响应(stdin 串行,
-    // park 在此会与后续 callback 死锁)。
-    const handleZyOAuthCallback = (message: WireControlRequest): void => {
-      // subtype 联合不含 zy_oauth_* (运行期扩展);注解 string 对齐原 requestSubtype。
-      const sub: string = message.request.subtype
-      if (!zyOAuth) {
-        sendControlResponseError(message, 'No active zy_authenticate flow')
-      } else {
-        // Inject the manual code synchronously — must happen in stdin
-        // message order so a subsequent zy_authenticate doesn't
-        // replace the service before this code lands.
-        if (sub === 'zy_oauth_callback') {
-          const req = message.request as unknown as { authorizationCode: string; state: string }
-          zyOAuth.service.handleManualAuthCodeInput({
-            authorizationCode: req.authorizationCode,
-            state: req.state,
-          })
-        }
-        // Detach the await — the stdin reader is serial and blocking
-        // here deadlocks zy_oauth_wait_for_completion: flow may
-        // only resolve via a future zy_oauth_callback on stdin,
-        // which can't be read while we're parked. Capture the binding;
-        // zyOAuth is nulled in flow's own .finally.
-        const { flow } = zyOAuth
-        void flow.then(
-          () => {
-            const accountInfo = getAccountInformation()
-            sendControlResponseSuccess(message, {
-              account: {
-                email: accountInfo?.email,
-                organization: accountInfo?.organization,
-                subscriptionType: accountInfo?.subscription,
-                tokenSource: accountInfo?.tokenSource,
-                apiKeySource: accountInfo?.apiKeySource,
-                apiProvider: getAPIProvider(),
-              },
-            })
-          },
-          (error: unknown) => sendControlResponseError(message, errorMessage(error)),
-        )
-      }
-    }
-    const controlHandlers: Partial<
-      Record<string, (message: WireControlRequest) => ControlOutcome | Promise<ControlOutcome>>
-    > = {
-      set_model: (message) => {
-        const req = message.request as Extract<
-          WireControlRequest['request'],
-          { subtype: 'set_model' }
-        >
-        const requestedModel = req.model ?? 'default'
-        const model = requestedModel === 'default' ? getDefaultMainLoopModel() : requestedModel
-        loopState.activeUserSpecifiedModel = model
-        setMainLoopModelOverride(model)
-        notifySessionMetadataChanged({ model })
-        injectModelSwitchBreadcrumbs(requestedModel, model)
-        sendControlResponseSuccess(message)
-      },
-      set_max_thinking_tokens: (message) => {
-        const req = message.request as Extract<
-          WireControlRequest['request'],
-          { subtype: 'set_max_thinking_tokens' }
-        >
-        if (req.max_thinking_tokens === null) {
-          options.thinkingConfig = undefined
-        } else if (req.max_thinking_tokens === 0) {
-          options.thinkingConfig = { type: 'disabled' }
-        } else {
-          options.thinkingConfig = {
-            type: 'enabled',
-            budgetTokens: req.max_thinking_tokens,
-          }
-        }
-        sendControlResponseSuccess(message)
-      },
-      get_settings: (message) => {
-        const currentAppState = getAppState()
-        const model = getMainLoopModel()
-        // modelSupportsEffort gate matches zy.ts — applied.effort must
-        // mirror what actually goes to the API, not just what's configured.
-        const effort = modelSupportsEffort(model)
-          ? resolveAppliedEffort(model, currentAppState.effortValue)
-          : undefined
-        sendControlResponseSuccess(message, {
-          ...getSettingsWithSources(),
-          applied: {
-            model,
-            // Numeric effort (ant-only) → null; SDK schema is string-level only.
-            effort: typeof effort === 'string' ? effort : null,
-          },
-        })
-      },
-      interrupt: (message) => {
-        // Track escapes for attribution (ant-only feature)
-        if (feature('COMMIT_ATTRIBUTION')) {
-          setAppState((prev) => ({
-            ...prev,
-            attribution: {
-              ...prev.attribution,
-              escapeCount: prev.attribution.escapeCount + 1,
-            },
-          }))
-        }
-        if (loopState.abortController) {
-          // 用户按 ESC（或等价的取消控制信号）— 用 'interrupt' reason。
-          loopState.abortController.abort('interrupt')
-        }
-        suggestionState.abortController?.abort()
-        suggestionState.abortController = null
-        suggestionState.lastEmitted = null
-        suggestionState.pendingSuggestion = null
-        sendControlResponseSuccess(message)
-      },
-      set_permission_mode: (message) => {
-        const m = message.request as any
-        setAppState((prev) => ({
-          ...prev,
-          toolPermissionContext: handleSetPermissionMode(
-            m as any,
-            message.request_id,
-            prev.toolPermissionContext,
-            output,
-          ),
-          isUltraplanMode: m.ultraplan ?? prev.isUltraplanMode,
-        }))
-        // handleSetPermissionMode sends the control_response; the
-        // notifySessionMetadataChanged that used to follow here is
-        // now fired by onChangeAppState (with externalized mode name).
-      },
-      mcp_status: (message) => {
-        sendControlResponseSuccess(message, {
-          mcpServers: mcp.buildMcpServerStatuses(),
-        })
-      },
-      get_context_usage: async (message) => {
-        try {
-          const appState = getAppState()
-          const data = await collectContextData({
-            messages: session.messages,
-            getAppState,
-            options: {
-              mainLoopModel: getMainLoopModel(),
-              tools: buildAllTools(appState),
-              agentDefinitions: appState.agentDefinitions,
-              customSystemPrompt: options.systemPrompt,
-              appendSystemPrompt: options.appendSystemPrompt,
-            },
-          })
-          sendControlResponseSuccess(message, { ...data })
-        } catch (error) {
-          sendControlResponseError(message, errorMessage(error))
-        }
-      },
-      mcp_message: (message) => {
-        // Handle MCP notifications from SDK servers
-        const mcpRequest = message.request as Extract<
-          WireControlRequest['request'],
-          { subtype: 'mcp_message' }
-        >
-        const sdkClient = mcp.sdkClients.find((client) => client.name === mcpRequest.server_name)
-        // Check client exists - dynamically added SDK servers may have
-        // placeholder clients with null client until updateSdkMcp() runs
-        if (sdkClient && sdkClient.type === 'connected' && sdkClient.client?.transport?.onmessage) {
-          sdkClient.client.transport.onmessage(mcpRequest.message as any)
-        }
-        sendControlResponseSuccess(message)
-      },
-      rewind_files: async (message) => {
-        const req = message.request as Extract<
-          WireControlRequest['request'],
-          { subtype: 'rewind_files' }
-        >
-        const appState = getAppState()
-        const result = await handleRewindFiles(
-          req.user_message_id as UUID,
-          appState,
-          setAppState,
-          req.dry_run ?? false,
-        )
-        if (result.canRewind || req.dry_run) {
-          sendControlResponseSuccess(message, result as any)
-        } else {
-          sendControlResponseError(message, result.error ?? 'Unexpected error')
-        }
-      },
-      cancel_async_message: (message) => {
-        const req = message.request as Extract<
-          WireControlRequest['request'],
-          { subtype: 'cancel_async_message' }
-        >
-        const targetUuid = req.message_uuid
-        const removed = dequeueAllMatching((cmd) => cmd.uuid === targetUuid)
-        sendControlResponseSuccess(message, {
-          cancelled: removed.length > 0,
-        })
-      },
-      end_session: (message) => {
-        const req = message.request as { reason?: string }
-        logForDebugging(`[print.ts] end_session received, reason=${req.reason ?? 'unspecified'}`)
-        if (loopState.abortController) {
-          // 会话被外部要求结束(SDK end_session 控制消息),
-          // 用专门的 reason 区分于其他用户中断路径。
-          loopState.abortController.abort('end_session')
-        }
-        suggestionState.abortController?.abort()
-        suggestionState.abortController = null
-        suggestionState.lastEmitted = null
-        suggestionState.pendingSuggestion = null
-        sendControlResponseSuccess(message)
-        return 'break'
-      },
-      mcp_set_servers: async (message) => {
-        const req = message.request as Extract<
-          WireControlRequest['request'],
-          { subtype: 'mcp_set_servers' }
-        >
-        const { response, sdkServersChanged } = await mcp.applyMcpServerChanges(req.servers)
-        sendControlResponseSuccess(message, response as any)
-        // Connect SDK servers AFTER response to avoid deadlock
-        if (sdkServersChanged) {
-          void mcp.updateSdkMcp()
-        }
-      },
-      apply_flag_settings: (message) => {
-        const req = message.request as Extract<
-          WireControlRequest['request'],
-          { subtype: 'apply_flag_settings' }
-        >
-        // Snapshot the current model before applying — we need to detect
-        // model switches so we can inject breadcrumbs and notify listeners.
-        const prevModel = getMainLoopModel()
-
-        // Merge the provided settings into the in-memory flag settings
-        const existing = getFlagSettingsInline() ?? {}
-        const incoming = req.settings
-        // Shallow-merge top-level keys; getSettingsForSource handles the deep
-        // merge with file-based flag settings via mergeWith. JSON drops
-        // `undefined`, so callers use `null` to clear a key — convert nulls
-        // to deletions so SettingsSchema().safeParse() doesn't reject.
-        const merged = { ...existing, ...incoming }
-        for (const key of Object.keys(merged)) {
-          if (merged[key as keyof typeof merged] === null) {
-            delete merged[key as keyof typeof merged]
-          }
-        }
-        setFlagSettingsInline(merged)
-        // Route through notifyChange so fanOut() resets the settings cache
-        // before listeners run (subscriber at :392 calls applySettingsChange).
-        settingsChangeDetector.notifyChange('flagSettings')
-
-        // If the incoming settings include a model change, update the override
-        // so getMainLoopModel() reflects it (override outranks the cascade).
-        if ('model' in incoming) {
-          if (incoming.model != null) {
-            setMainLoopModelOverride(String(incoming.model))
-          } else {
-            setMainLoopModelOverride(undefined)
-          }
-        }
-
-        // If the model changed, inject breadcrumbs + notify metadata listeners.
-        const newModel = getMainLoopModel()
-        if (newModel !== prevModel) {
-          loopState.activeUserSpecifiedModel = newModel
-          const modelArg = incoming.model ? String(incoming.model) : 'default'
-          notifySessionMetadataChanged({ model: newModel })
-          injectModelSwitchBreadcrumbs(modelArg, newModel)
-        }
-
-        sendControlResponseSuccess(message)
-      },
-      stop_task: async (message) => {
-        const req = message.request as Extract<
-          WireControlRequest['request'],
-          { subtype: 'stop_task' }
-        >
-        try {
-          await stopTask(req.task_id, {
-            getAppState,
-            setAppState,
-          })
-          sendControlResponseSuccess(message, {})
-        } catch (error) {
-          sendControlResponseError(message, errorMessage(error))
-        }
-      },
-      seed_read_state: async (message) => {
-        const req = message.request as Extract<
-          WireControlRequest['request'],
-          { subtype: 'seed_read_state' }
-        >
-        // Client observed a Read that was later removed from context (e.g.
-        // by snip), so transcript-based seeding missed it. Queued into
-        // pendingSeeds; applied at the next clone-replace boundary.
-        try {
-          // expandPath: all other readFileState writers normalize (~, relative,
-          // session cwd vs process cwd). FileEditTool looks up by expandPath'd
-          // key — a verbatim client path would miss.
-          const normalizedPath = expandPath(req.path)
-          // Check disk mtime before reading content. If the file changed
-          // since the client's observation, readFile would return C_current
-          // but we'd store it with the client's M_observed — getChangedFiles
-          // then sees disk > cache.timestamp, re-reads, diffs C_current vs
-          // C_current = empty, emits no attachment, and the model is never
-          // told about the C_observed → C_current change. Skipping the seed
-          // makes Edit fail "file not read yet" → forces a fresh Read.
-          // Math.floor matches FileReadTool and getFileModificationTime.
-          const diskMtime = Math.floor((await stat(normalizedPath)).mtimeMs)
-          if (diskMtime <= req.mtime) {
-            const raw = await readFile(normalizedPath, 'utf-8')
-            // Strip BOM + normalize CRLF→LF to match readFileInRange and
-            // readFileSyncWithMetadata. FileEditTool's content-compare
-            // fallback (for Windows mtime bumps without content change)
-            // compares against LF-normalized disk reads.
-            const content = (raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw).replaceAll(
-              '\r\n',
-              '\n',
-            )
-            pendingSeeds.set(normalizedPath, {
-              content,
-              timestamp: diskMtime,
-              offset: undefined,
-              limit: undefined,
-            })
-          }
-        } catch {
-          // ENOENT etc — skip seeding but still succeed
-        }
-        sendControlResponseSuccess(message)
-      },
-      reload_plugins: async (message) => {
-        try {
-          if (
-            feature('DOWNLOAD_USER_SETTINGS') &&
-            (isEnvTruthy(process.env.ZY_CODE_REMOTE) || getIsRemoteMode())
-          ) {
-            // Re-pull user settings so enabledPlugins pushed from the
-            // user's local CLI take effect before the cache sweep.
-            const applied = await redownloadUserSettings()
-            if (applied) {
-              settingsChangeDetector.notifyChange('userSettings')
-            }
-          }
-
-          const r = await refreshActivePlugins(setAppState)
-
-          const sdkAgents = mcp.currentAgents.filter((a) => a.source === 'flagSettings')
-          mcp.currentAgents = [...r.agentDefinitions.allAgents, ...sdkAgents]
-
-          // Reload succeeded — gather response data best-effort so a
-          // read failure doesn't mask the successful state change.
-          // allSettled so one failure doesn't discard the others.
-          let plugins: WireControlReloadPluginsResponse['plugins'] = []
-          const [cmdsR, mcpR, pluginsR] = await Promise.allSettled([
-            getCommands(cwd()),
-            mcp.applyPluginMcpDiff(),
-            loadAllPluginsCacheOnly(),
-          ])
-          if (cmdsR.status === 'fulfilled') {
-            mcp.currentCommands = cmdsR.value
-          } else {
-            logError(cmdsR.reason)
-          }
-          if (mcpR.status === 'rejected') {
-            logError(mcpR.reason)
-          }
-          if (pluginsR.status === 'fulfilled') {
-            plugins = pluginsR.value.enabled.map((p) => ({
-              name: p.name,
-              path: p.path,
-              source: p.source,
-            }))
-          } else {
-            logError(pluginsR.reason)
-          }
-
-          sendControlResponseSuccess(message, {
-            commands: mcp.currentCommands
-              .filter((cmd) => cmd.userInvocable !== false)
-              .map((cmd) => ({
-                name: getCommandName(cmd),
-                description: formatDescriptionWithSource(cmd),
-                argumentHint: cmd.argumentHint || '',
-              })),
-            agents: mcp.currentAgents.map((a) => ({
-              name: a.agentType,
-              description: a.whenToUse,
-              model: a.model === 'inherit' ? undefined : a.model,
-            })),
-            plugins,
-            mcpServers: mcp.buildMcpServerStatuses(),
-            error_count: r.error_count,
-          } satisfies WireControlReloadPluginsResponse)
-        } catch (error) {
-          sendControlResponseError(message, errorMessage(error))
-        }
-      },
-      channel_enable: (message) => {
-        const currentAppState = getAppState()
-        const req = message.request as unknown as { serverName: string }
-        handleChannelEnable(
-          message.request_id,
-          req.serverName,
-          // Pool spread matches mcp_status — all three client sources.
-          [...currentAppState.mcp.clients, ...mcp.sdkClients, ...mcp.dynamicMcpState.clients],
-          output,
-        )
-      },
-      initialize: async (message) => {
-        const req = message.request as Extract<
-          WireControlRequest['request'],
-          { subtype: 'initialize' }
-        >
-        // SDK MCP server names from the initialize message
-        // Populated by both browser and ProcessTransport sessions
-        if (req.sdkMcpServers && req.sdkMcpServers.length > 0) {
-          for (const serverName of req.sdkMcpServers) {
-            // Create placeholder config for SDK MCP servers
-            // The actual server connection is managed by the SDK Query class
-            sdkMcpConfigs[serverName] = {
-              type: 'sdk',
-              name: serverName,
-            }
-          }
-        }
-
-        await handleInitializeRequest(
-          req,
-          message.request_id,
-          initialized,
-          output,
-          commands,
-          modelInfos,
-          structuredIO,
-          !!options.enableAuthStatus,
-          options,
-          agents,
-          getAppState,
-        )
-
-        // Enable prompt suggestions in AppState when SDK consumer opts in.
-        // shouldEnablePromptSuggestion() returns false for non-interactive
-        // sessions, but the SDK consumer explicitly requested suggestions.
-        if (req.promptSuggestions) {
-          setAppState((prev) => {
-            if (prev.promptSuggestionEnabled) {
-              return prev
-            }
-            return { ...prev, promptSuggestionEnabled: true }
-          })
-        }
-
-        if (
-          req.agentProgressSummaries &&
-          getFeatureValue_CACHED_MAY_BE_STALE('zy_slate_prism', true)
-        ) {
-          setSdkAgentProgressSummariesEnabled(true)
-        }
-
-        initialized = true
-
-        // If the auto-resume logic pre-enqueued a command, drain it now
-        // that initialize has set up systemPrompt, agents, hooks, etc.
-        if (hasCommandsInQueue()) {
-          void run()
-        }
-      },
-      mcp_reconnect: async (message) => {
-        const req = message.request as Extract<
-          WireControlRequest['request'],
-          { subtype: 'mcp_reconnect' }
-        >
-        const currentAppState = getAppState()
-        const { serverName } = req
-        mcp.elicitationRegistered.delete(serverName)
-        // Config-existence gate must cover the SAME sources as the
-        // operations below. SDK-injected servers (query({mcpServers:{...}}))
-        // and dynamically-added servers were missing here, so
-        // toggleMcpServer/reconnect returned "Server not found" even though
-        // the disconnect/reconnect would have worked (gh-31339 / CC-314).
-        const config =
-          getMcpConfigByName(serverName) ??
-          mcpClients.find((c) => c.name === serverName)?.config ??
-          mcp.sdkClients.find((c) => c.name === serverName)?.config ??
-          mcp.dynamicMcpState.clients.find((c) => c.name === serverName)?.config ??
-          currentAppState.mcp.clients.find((c) => c.name === serverName)?.config ??
-          null
-        if (!config) {
-          sendControlResponseError(message, `Server not found: ${serverName}`)
-        } else {
-          const result = await reconnectMcpServerImpl(serverName, config)
-          // Update appState.mcp with the new client, tools, commands, and resources
-          const prefix = getMcpPrefix(serverName)
-          setAppState((prev) => ({
-            ...prev,
-            mcp: {
-              ...prev.mcp,
-              clients: prev.mcp.clients.map((c) => (c.name === serverName ? result.client : c)),
-              tools: [
-                ...reject(prev.mcp.tools, (t) => t.name?.startsWith(prefix)),
-                ...result.tools,
-              ],
-              commands: [
-                ...reject(prev.mcp.commands, (c) => commandBelongsToServer(c, serverName)),
-                ...result.commands,
-              ],
-              resources:
-                result.resources && result.resources.length > 0
-                  ? { ...prev.mcp.resources, [serverName]: result.resources }
-                  : omit(prev.mcp.resources, serverName),
-            },
-          }))
-          // Also update mcp.dynamicMcpState so run() picks up the new tools
-          // on the next turn (run() reads mcp.dynamicMcpState, not appState)
-          mcp.dynamicMcpState = {
-            ...mcp.dynamicMcpState,
-            clients: [
-              ...mcp.dynamicMcpState.clients.filter((c) => c.name !== serverName),
-              result.client,
-            ],
-            tools: [
-              ...mcp.dynamicMcpState.tools.filter((t) => !t.name?.startsWith(prefix)),
-              ...result.tools,
-            ],
-          }
-          if (result.client.type === 'connected') {
-            mcp.registerElicitationHandlers([result.client])
-            reregisterChannelHandlerAfterReconnect(result.client)
-            sendControlResponseSuccess(message)
-          } else {
-            const errorMessage =
-              result.client.type === 'failed'
-                ? (result.client.error ?? 'Connection failed')
-                : `Server status: ${result.client.type}`
-            sendControlResponseError(message, errorMessage)
-          }
-        }
-      },
-      mcp_toggle: async (message) => {
-        const req = message.request as Extract<
-          WireControlRequest['request'],
-          { subtype: 'mcp_toggle' }
-        >
-        const currentAppState = getAppState()
-        const { serverName, enabled } = req
-        mcp.elicitationRegistered.delete(serverName)
-        // Gate must match the client-lookup spread below (which
-        // includes mcp.sdkClients and mcp.dynamicMcpState.clients). Same fix as
-        // mcp_reconnect above (gh-31339 / CC-314).
-        const config =
-          getMcpConfigByName(serverName) ??
-          mcpClients.find((c) => c.name === serverName)?.config ??
-          mcp.sdkClients.find((c) => c.name === serverName)?.config ??
-          mcp.dynamicMcpState.clients.find((c) => c.name === serverName)?.config ??
-          currentAppState.mcp.clients.find((c) => c.name === serverName)?.config ??
-          null
-
-        if (!config) {
-          sendControlResponseError(message, `Server not found: ${serverName}`)
-        } else if (!enabled) {
-          // Disabling: persist + disconnect (matches TUI toggleMcpServer behavior)
-          setMcpServerEnabled(serverName, false)
-          const client = [
-            ...mcpClients,
-            ...mcp.sdkClients,
-            ...mcp.dynamicMcpState.clients,
-            ...currentAppState.mcp.clients,
-          ].find((c) => c.name === serverName)
-          if (client && client.type === 'connected') {
-            await clearServerCache(serverName, config)
-          }
-          // Update appState.mcp to reflect disabled status and remove tools/commands/resources
-          const prefix = getMcpPrefix(serverName)
-          setAppState((prev) => ({
-            ...prev,
-            mcp: {
-              ...prev.mcp,
-              clients: prev.mcp.clients.map((c) =>
-                c.name === serverName ? { name: serverName, type: 'disabled' as const, config } : c,
-              ),
-              tools: reject(prev.mcp.tools, (t) => t.name?.startsWith(prefix)),
-              commands: reject(prev.mcp.commands, (c) => commandBelongsToServer(c, serverName)),
-              resources: omit(prev.mcp.resources, serverName),
-            },
-          }))
-          sendControlResponseSuccess(message)
-        } else {
-          // Enabling: persist + reconnect
-          setMcpServerEnabled(serverName, true)
-          const result = await reconnectMcpServerImpl(serverName, config)
-          // Update appState.mcp with the new client, tools, commands, and resources
-          // This ensures the LLM sees updated tools after enabling the server
-          const prefix = getMcpPrefix(serverName)
-          setAppState((prev) => ({
-            ...prev,
-            mcp: {
-              ...prev.mcp,
-              clients: prev.mcp.clients.map((c) => (c.name === serverName ? result.client : c)),
-              tools: [
-                ...reject(prev.mcp.tools, (t) => t.name?.startsWith(prefix)),
-                ...result.tools,
-              ],
-              commands: [
-                ...reject(prev.mcp.commands, (c) => commandBelongsToServer(c, serverName)),
-                ...result.commands,
-              ],
-              resources:
-                result.resources && result.resources.length > 0
-                  ? { ...prev.mcp.resources, [serverName]: result.resources }
-                  : omit(prev.mcp.resources, serverName),
-            },
-          }))
-          if (result.client.type === 'connected') {
-            mcp.registerElicitationHandlers([result.client])
-            reregisterChannelHandlerAfterReconnect(result.client)
-            sendControlResponseSuccess(message)
-          } else {
-            const errorMessage =
-              result.client.type === 'failed'
-                ? (result.client.error ?? 'Connection failed')
-                : `Server status: ${result.client.type}`
-            sendControlResponseError(message, errorMessage)
-          }
-        }
-      },
-      mcp_authenticate: async (message) => {
-        const { serverName } = message.request as any
-        const currentAppState = getAppState()
-        const config =
-          getMcpConfigByName(serverName) ??
-          mcpClients.find((c) => c.name === serverName)?.config ??
-          currentAppState.mcp.clients.find((c) => c.name === serverName)?.config ??
-          null
-        if (!config) {
-          sendControlResponseError(message, `Server not found: ${serverName}`)
-        } else if (config.type !== 'sse' && config.type !== 'http') {
-          sendControlResponseError(
-            message,
-            `Server type "${config.type}" does not support OAuth authentication`,
-          )
-        } else {
-          try {
-            // Abort any previous in-flight OAuth flow for this server
-            activeOAuthFlows.get(serverName)?.abort()
-            const controller = new AbortController()
-            activeOAuthFlows.set(serverName, controller)
-
-            // Capture the auth URL from the callback
-            let resolveAuthUrl: (url: string) => void
-            const authUrlPromise = new Promise<string>((resolve) => {
-              resolveAuthUrl = resolve
-            })
-
-            // Start the OAuth flow in the background
-            const oauthPromise = performMCPOAuthFlow(
-              serverName,
-              config,
-              (url) => resolveAuthUrl!(url),
-              controller.signal,
-              {
-                skipBrowserOpen: true,
-                onWaitingForCallback: (submit) => {
-                  oauthCallbackSubmitters.set(serverName, submit)
-                },
-              },
-            )
-
-            // Wait for the auth URL (or the flow to complete without needing redirect)
-            const authUrl = await Promise.race([
-              authUrlPromise,
-              oauthPromise.then(() => null as string | null),
-            ])
-
-            if (authUrl) {
-              sendControlResponseSuccess(message, {
-                authUrl,
-                requiresUserAction: true,
-              })
-            } else {
-              sendControlResponseSuccess(message, {
-                requiresUserAction: false,
-              })
-            }
-
-            // Store auth-only promise for mcp_oauth_callback_url handler.
-            // Don't swallow errors — the callback handler needs to detect
-            // auth failures and report them to the caller.
-            oauthAuthPromises.set(serverName, oauthPromise)
-
-            // Handle background completion — reconnect after auth.
-            // When manual callback is used, skip the reconnect here;
-            // the extension's handleAuthDone → mcp_reconnect handles it
-            // (which also updates mcp.dynamicMcpState for tool registration).
-            const fullFlowPromise = oauthPromise
-              .then(async () => {
-                // Don't reconnect if the server was disabled during the OAuth flow
-                if (isMcpServerDisabled(serverName)) {
-                  return
-                }
-                // Skip reconnect if the manual callback path was used —
-                // handleAuthDone will do it via mcp_reconnect (which
-                // updates mcp.dynamicMcpState for tool registration).
-                if (oauthManualCallbackUsed.has(serverName)) {
-                  return
-                }
-                // Reconnect the server after successful auth
-                const result = await reconnectMcpServerImpl(serverName, config)
-                const prefix = getMcpPrefix(serverName)
-                setAppState((prev) => ({
-                  ...prev,
-                  mcp: {
-                    ...prev.mcp,
-                    clients: prev.mcp.clients.map((c) =>
-                      c.name === serverName ? result.client : c,
-                    ),
-                    tools: [
-                      ...reject(prev.mcp.tools, (t) => t.name?.startsWith(prefix)),
-                      ...result.tools,
-                    ],
-                    commands: [
-                      ...reject(prev.mcp.commands, (c) => commandBelongsToServer(c, serverName)),
-                      ...result.commands,
-                    ],
-                    resources:
-                      result.resources && result.resources.length > 0
-                        ? {
-                            ...prev.mcp.resources,
-                            [serverName]: result.resources,
-                          }
-                        : omit(prev.mcp.resources, serverName),
-                  },
-                }))
-                // Also update mcp.dynamicMcpState so run() picks up the new tools
-                // on the next turn (run() reads mcp.dynamicMcpState, not appState)
-                mcp.dynamicMcpState = {
-                  ...mcp.dynamicMcpState,
-                  clients: [
-                    ...mcp.dynamicMcpState.clients.filter((c) => c.name !== serverName),
-                    result.client,
-                  ],
-                  tools: [
-                    ...mcp.dynamicMcpState.tools.filter((t) => !t.name?.startsWith(prefix)),
-                    ...result.tools,
-                  ],
-                }
-              })
-              .catch((error) => {
-                logForDebugging(`MCP OAuth failed for ${serverName}: ${error}`, {
-                  level: 'error',
-                })
-              })
-              .finally(() => {
-                // Clean up only if this is still the active flow
-                if (activeOAuthFlows.get(serverName) === controller) {
-                  activeOAuthFlows.delete(serverName)
-                  oauthCallbackSubmitters.delete(serverName)
-                  oauthManualCallbackUsed.delete(serverName)
-                  oauthAuthPromises.delete(serverName)
-                }
-              })
-            void fullFlowPromise
-          } catch (error) {
-            sendControlResponseError(message, errorMessage(error))
-          }
-        }
-      },
-      mcp_oauth_callback_url: async (message) => {
-        const { serverName, callbackUrl } = message.request as any
-        const submit = oauthCallbackSubmitters.get(serverName)
-        if (submit) {
-          // Validate the callback URL before submitting. The submit
-          // callback in auth.ts silently ignores URLs missing a code
-          // param, which would leave the auth promise unresolved and
-          // block the control message loop until timeout.
-          let hasCodeOrError = false
-          try {
-            const parsed = new URL(callbackUrl)
-            hasCodeOrError = parsed.searchParams.has('code') || parsed.searchParams.has('error')
-          } catch {
-            // Invalid URL
-          }
-          if (!hasCodeOrError) {
-            sendControlResponseError(
-              message,
-              'Invalid callback URL: missing authorization code. Please paste the full redirect URL including the code parameter.',
-            )
-          } else {
-            oauthManualCallbackUsed.add(serverName)
-            submit(callbackUrl)
-            // Wait for auth (token exchange) to complete before responding.
-            // Reconnect is handled by the extension via handleAuthDone →
-            // mcp_reconnect (which updates mcp.dynamicMcpState for tools).
-            const authPromise = oauthAuthPromises.get(serverName)
-            if (authPromise) {
-              try {
-                await authPromise
-                sendControlResponseSuccess(message)
-              } catch (error) {
-                sendControlResponseError(
-                  message,
-                  error instanceof Error ? error.message : 'OAuth authentication failed',
-                )
-              }
-            } else {
-              sendControlResponseSuccess(message)
-            }
-          }
-        } else {
-          sendControlResponseError(message, `No active OAuth flow for server: ${serverName}`)
-        }
-      },
-      zy_authenticate: async (message) => {
-        // Anthropic OAuth over the control channel. The SDK client owns
-        // the user's browser (we're headless in -p mode); we hand back
-        // both URLs and wait. Automatic URL → localhost listener catches
-        // the redirect if the browser is on this host; manual URL → the
-        // success page shows "code#state" for zy_oauth_callback.
-        const req = message.request as { loginWithZyAi?: boolean }
-        const loginWithZyAi = req.loginWithZyAi
-
-        // Clean up any prior flow. cleanup() closes the localhost listener
-        // and nulls the manual resolver. The prior `flow` promise is left
-        // pending (AuthCodeListener.close() does not reject) but its object
-        // graph becomes unreachable once the server handle is released and
-        // is GC'd — no fd or port is held.
-        zyOAuth?.service.cleanup()
-
-        logEvent('zy_oauth_flow_start', {
-          loginWithZyAi: loginWithZyAi ?? true,
-        })
-
-        const service = new OAuthService()
-        let urlResolver!: (urls: { manualUrl: string; automaticUrl: string }) => void
-        const urlPromise = new Promise<{
-          manualUrl: string
-          automaticUrl: string
-        }>((resolve) => {
-          urlResolver = resolve
-        })
-
-        const flow = service
-          .startOAuthFlow(
-            async (manualUrl, automaticUrl) => {
-              // automaticUrl is always defined when skipBrowserOpen is set;
-              // the signature is optional only for the existing single-arg callers.
-              urlResolver({ manualUrl, automaticUrl: automaticUrl! })
-            },
-            {
-              loginWithZyAi: loginWithZyAi ?? true,
-              skipBrowserOpen: true,
-            },
-          )
-          .then(async (tokens) => {
-            // installOAuthTokens: performLogout (clear stale state) →
-            // store profile → saveOAuthTokensIfNeeded → clearOAuthTokenCache
-            // → clearAuthRelatedCaches. After this resolves, the memoized
-            // getZyAIOAuthTokens in this process is invalidated; the
-            // next API call re-reads keychain/file and works. No respawn.
-            await installOAuthTokens(tokens)
-            logEvent('zy_oauth_success', {
-              loginWithZyAi: loginWithZyAi ?? true,
-            })
-          })
-          .finally(() => {
-            service.cleanup()
-            if (zyOAuth?.service === service) {
-              zyOAuth = null
-            }
-          })
-
-        zyOAuth = { service, flow }
-
-        // Attach the rejection handler before awaiting so a synchronous
-        // startOAuthFlow failure doesn't surface as an unhandled rejection.
-        // The zy_oauth_callback handler re-awaits flow for the manual
-        // path and surfaces the real error to the client.
-        void flow.catch((err) =>
-          logForDebugging(`zy_authenticate flow ended: ${err}`, {
-            level: 'info',
-          }),
-        )
-
-        try {
-          // Race against flow: if startOAuthFlow rejects before calling
-          // the authURLHandler (e.g. AuthCodeListener.start() fails with
-          // EACCES or fd exhaustion), urlPromise would pend forever and
-          // wedge the stdin loop. flow resolving first is unreachable in
-          // practice (it's suspended on the same urls we're waiting for).
-          const { manualUrl, automaticUrl } = await Promise.race([
-            urlPromise,
-            flow.then(() => {
-              throw new Error('OAuth flow completed without producing auth URLs')
-            }),
-          ])
-          sendControlResponseSuccess(message, {
-            manualUrl,
-            automaticUrl,
-          })
-        } catch (error) {
-          sendControlResponseError(message, errorMessage(error))
-        }
-      },
-      zy_oauth_callback: handleZyOAuthCallback,
-      zy_oauth_wait_for_completion: handleZyOAuthCallback,
-      mcp_clear_auth: async (message) => {
-        const { serverName } = message.request as any
-        const currentAppState = getAppState()
-        const config =
-          getMcpConfigByName(serverName) ??
-          mcpClients.find((c) => c.name === serverName)?.config ??
-          currentAppState.mcp.clients.find((c) => c.name === serverName)?.config ??
-          null
-        if (!config) {
-          sendControlResponseError(message, `Server not found: ${serverName}`)
-        } else if (config.type !== 'sse' && config.type !== 'http') {
-          sendControlResponseError(message, `Cannot clear auth for server type "${config.type}"`)
-        } else {
-          await revokeServerTokens(serverName, config)
-          const result = await reconnectMcpServerImpl(serverName, config)
-          const prefix = getMcpPrefix(serverName)
-          setAppState((prev) => ({
-            ...prev,
-            mcp: {
-              ...prev.mcp,
-              clients: prev.mcp.clients.map((c) => (c.name === serverName ? result.client : c)),
-              tools: [
-                ...reject(prev.mcp.tools, (t) => t.name?.startsWith(prefix)),
-                ...result.tools,
-              ],
-              commands: [
-                ...reject(prev.mcp.commands, (c) => commandBelongsToServer(c, serverName)),
-                ...result.commands,
-              ],
-              resources:
-                result.resources && result.resources.length > 0
-                  ? {
-                      ...prev.mcp.resources,
-                      [serverName]: result.resources,
-                    }
-                  : omit(prev.mcp.resources, serverName),
-            },
-          }))
-          sendControlResponseSuccess(message, {})
-        }
-      },
-      generate_session_title: (message) => {
-        // Fire-and-forget so the compact model call does not block the stdin loop
-        // (which would delay processing of subsequent user messages /
-        // interrupts for the duration of the API roundtrip).
-        const { description, persist } = message.request as any
-        // Reuse the live controller only if it has not already been aborted
-        // (e.g. by interrupt()); an aborted signal would cause queryCompactModel to
-        // immediately throw APIUserAbortError → {title: null}.
-        const titleSignal = (
-          loopState.abortController && !loopState.abortController.signal.aborted
-            ? loopState.abortController
-            : createAbortController()
-        ).signal
-        void (async () => {
-          try {
-            const title = await generateSessionTitle(description, titleSignal)
-            if (title && persist) {
-              try {
-                saveAiGeneratedTitle(getSessionId() as UUID, title)
-              } catch (e) {
-                logError(e)
-              }
-            }
-            sendControlResponseSuccess(message, { title })
-          } catch (e) {
-            // Unreachable in practice — generateSessionTitle wraps its
-            // own body and returns null, saveAiGeneratedTitle is wrapped
-            // above. Propagate (not swallow) so unexpected failures are
-            // visible to the SDK caller (hostComms.ts catches and logs).
-            sendControlResponseError(message, errorMessage(e))
-          }
-        })()
-      },
-      side_question: (message) => {
-        // Same fire-and-forget pattern as generate_session_title above —
-        // the forked agent's API roundtrip must not block the stdin loop.
-        //
-        // The snapshot captured by stopHooks (for querySource === 'sdk')
-        // holds the exact systemPrompt/userContext/systemContext/messages
-        // sent on the last main-thread turn. Reusing them gives a byte-
-        // identical prefix → prompt cache hit.
-        //
-        // Fallback (resume before first turn completes — no snapshot yet):
-        // rebuild from scratch. buildSideQuestionFallbackParams mirrors
-        // QueryEngine.ts:ask()'s system prompt assembly (including
-        // --system-prompt / --append-system-prompt) so the rebuilt prefix
-        // matches in the common case. May still miss the cache for
-        // coordinator mode or memory-mechanics extras — acceptable, the
-        // alternative is the side question failing entirely.
-        const { question } = message.request as any
-        void (async () => {
-          try {
-            const saved = getLastCacheSafeParams()
-            const cacheSafeParams = saved
-              ? {
-                  ...saved,
-                  // If the last turn was interrupted, the snapshot holds an
-                  // already-aborted controller; createChildAbortController in
-                  // createSubagentContext would propagate it and the fork
-                  // would die before sending a request. The controller is
-                  // not part of the cache key — swapping in a fresh one is
-                  // safe. Same guard as generate_session_title above.
-                  toolUseContext: {
-                    ...saved.toolUseContext,
-                    abortController: createAbortController(),
-                  },
-                }
-              : await buildSideQuestionFallbackParams({
-                  tools: buildAllTools(getAppState()),
-                  commands: mcp.currentCommands,
-                  mcpClients: [
-                    ...getAppState().mcp.clients,
-                    ...mcp.sdkClients,
-                    ...mcp.dynamicMcpState.clients,
-                  ],
-                  messages: session.messages,
-                  readFileState: loopState.readFileState,
-                  getAppState,
-                  setAppState,
-                  customSystemPrompt: options.systemPrompt,
-                  appendSystemPrompt: options.appendSystemPrompt,
-                  thinkingConfig: options.thinkingConfig,
-                  agents: mcp.currentAgents,
-                })
-            const result = await runSideQuestion({
-              question,
-              cacheSafeParams,
-            })
-            sendControlResponseSuccess(message, { response: result.response })
-          } catch (e) {
-            sendControlResponseError(message, errorMessage(e))
-          }
-        })()
-      },
-      remote_control: async (message) => {
-        const req = message.request as unknown as { enabled: boolean }
-        if (req.enabled) {
-          if (bridgeState.handle) {
-            // Already connected
-            sendControlResponseSuccess(message, {
-              session_url: getRemoteSessionUrl(
-                bridgeState.handle.bridgeSessionId,
-                bridgeState.handle.sessionIngressUrl,
-              ),
-              connect_url: buildWireConnectUrl(
-                bridgeState.handle.environmentId,
-                bridgeState.handle.sessionIngressUrl,
-              ),
-              environment_id: bridgeState.handle.environmentId,
-            })
-          } else {
-            // initReplBridge surfaces gate-failure reasons via
-            // onStateChange('failed', detail) before returning null.
-            // Capture so the control-response error is actionable
-            // ("/login", "disabled by your organization's policy", etc.)
-            // instead of a generic "initialization failed".
-            let bridgeFailureDetail: string | undefined
-            try {
-              const { initReplBridge } = await import('src/bridge/initReplBridge.js')
-              const handle = await initReplBridge({
-                onInboundMessage(msg) {
-                  const fields = extractInboundMessageFields(msg)
-                  if (!fields) {
-                    return
-                  }
-                  const { content, uuid } = fields
-                  enqueue({
-                    value: content,
-                    mode: 'prompt' as const,
-                    uuid,
-                    skipSlashCommands: true,
-                  })
-                  void run()
-                },
-                onPermissionResponse(response) {
-                  // Forward bridge permission responses into the
-                  // stdin processing loop so they resolve pending
-                  // permission requests from the SDK consumer.
-                  structuredIO.injectControlResponse(response)
-                },
-                onInterrupt() {
-                  loopState.abortController?.abort()
-                },
-                onSetModel(model) {
-                  const resolved = model === 'default' ? getDefaultMainLoopModel() : model
-                  loopState.activeUserSpecifiedModel = resolved
-                  setMainLoopModelOverride(resolved)
-                },
-                onSetMaxThinkingTokens(maxTokens) {
-                  if (maxTokens === null) {
-                    options.thinkingConfig = undefined
-                  } else if (maxTokens === 0) {
-                    options.thinkingConfig = { type: 'disabled' }
-                  } else {
-                    options.thinkingConfig = {
-                      type: 'enabled',
-                      budgetTokens: maxTokens,
-                    }
-                  }
-                },
-                onStateChange(state, detail) {
-                  if (state === 'failed') {
-                    bridgeFailureDetail = detail
-                  }
-                  logForDebugging(
-                    `[bridge:sdk] State change: ${state}${detail ? ` — ${detail}` : ''}`,
-                  )
-                  output.enqueue({
-                    type: 'system' as StdoutMessage['type'],
-                    subtype: 'bridge_state' as string,
-                    state,
-                    detail,
-                    uuid: randomUUID(),
-                    session_id: getSessionId(),
-                  } as StdoutMessage)
-                },
-                initialMessages: session.messages.length > 0 ? session.messages : undefined,
-              })
-              if (!handle) {
-                sendControlResponseError(
-                  message,
-                  bridgeFailureDetail ?? 'Remote Control initialization failed',
-                )
-              } else {
-                bridgeState.handle = handle
-                bridgeState.lastForwardedIndex = session.messages.length
-                // Forward permission requests to the bridge
-                structuredIO.setOnControlRequestSent((request) => {
-                  handle.sendControlRequest(request)
-                })
-                // Cancel stale bridge permission prompts when the SDK
-                // consumer resolves a can_use_tool request first.
-                structuredIO.setOnControlRequestResolved((requestId) => {
-                  handle.sendControlCancelRequest(requestId)
-                })
-                sendControlResponseSuccess(message, {
-                  session_url: getRemoteSessionUrl(
-                    handle.bridgeSessionId,
-                    handle.sessionIngressUrl,
-                  ),
-                  connect_url: buildWireConnectUrl(handle.environmentId, handle.sessionIngressUrl),
-                  environment_id: handle.environmentId,
-                })
-              }
-            } catch (err) {
-              sendControlResponseError(message, errorMessage(err))
-            }
-          }
-        } else {
-          // Disable
-          if (bridgeState.handle) {
-            structuredIO.setOnControlRequestSent(undefined)
-            structuredIO.setOnControlRequestResolved(undefined)
-            await bridgeState.handle.teardown()
-            bridgeState.handle = null
-          }
-          sendControlResponseSuccess(message)
-        }
-      },
-    }
-
-    for await (const message of structuredIO.structuredInput) {
-      // Non-user events are handled inline (no queue). started→completed in
-      // the same tick carries no information, so only fire completed.
-      // control_response is reported by StructuredIO.processLine (which also
-      // sees orphans that never yield here).
-      const eventId = 'uuid' in message ? message.uuid : undefined
-      if (eventId && message.type !== 'user' && message.type !== 'control_response') {
-        notifyCommandLifecycle(eventId, 'completed')
-      }
-
-      if (message.type === 'control_request') {
-        const requestSubtype: string = message.request.subtype
-        const controlHandler = controlHandlers[requestSubtype]
-        if (controlHandler) {
-          const outcome = await controlHandler(message)
-          if (outcome === 'break') {
-            break // 如 end_session:退出 for-await → 下方 inputClosed 收尾
-          }
-        } else if (
-          (feature('PROACTIVE') || feature('KAIROS')) &&
-          (message.request as { subtype: string }).subtype === 'set_proactive'
-        ) {
-          const req = message.request as unknown as {
-            subtype: string
-            enabled: boolean
-          }
-          if (req.enabled) {
-            if (!proactiveModule?.isProactiveActive()) {
-              proactiveModule.activateProactive('command')
-              scheduleProactiveTick!()
-            }
-          } else {
-            proactiveModule.deactivateProactive()
-          }
-          sendControlResponseSuccess(message)
-        } else {
-          // Unknown control request subtype — send an error response so
-          // the caller doesn't hang waiting for a reply that never comes.
-          sendControlResponseError(
-            message,
-            `Unsupported control request subtype: ${(message.request as { subtype: string }).subtype}`,
-          )
-        }
-        continue
-      } else if (message.type === 'control_response') {
-        // Replay control_response messages when replay mode is enabled
-        if (options.replayUserMessages) {
-          output.enqueue(message)
-        }
-        continue
-      } else if (message.type === 'keep_alive') {
-        // Silently ignore keep-alive messages
-        continue
-      } else if (message.type === 'update_environment_variables') {
-        // Handled in structuredIO.ts, but TypeScript needs the type guard
-        continue
-      } else if (message.type === 'assistant' || message.type === 'system') {
-        // History replay from bridge: inject into session.messages as
-        // conversation context so the model sees prior turns.
-        const internalMsgs = toInternalMessages([message])
-        session.appendMessages(...internalMsgs)
-        // Echo assistant messages back so CCR displays them
-        if (message.type === 'assistant' && options.replayUserMessages) {
-          output.enqueue(message)
-        }
-        continue
-      }
-      // After handling control, keep-alive, env-var, assistant, and system
-      // messages above, only user messages should remain.
-      if (message.type !== 'user') {
-        continue
-      }
-
-      // First prompt message implicitly initializes if not already done.
-      initialized = true
-
-      // Check for duplicate user message - skip if already processed
-      if (message.uuid) {
-        const sessionId = getSessionId() as UUID
-        const existsInSession = await doesMessageExistInSession(sessionId, message.uuid as any)
-
-        // Check both historical duplicates (from file) and runtime duplicates (this session)
-        if (existsInSession || receivedMessageUuids.has(message.uuid as any)) {
-          logForDebugging(`Skipping duplicate user message: ${message.uuid}`)
-          // Send acknowledgment for duplicate message if replay mode is enabled
-          if (options.replayUserMessages) {
-            logForDebugging(`Sending acknowledgment for duplicate user message: ${message.uuid}`)
-            output.enqueue({
-              type: 'user',
-              message: message.message,
-              session_id: sessionId,
-              parent_tool_use_id: null,
-              uuid: message.uuid,
-              timestamp: message.timestamp,
-              isReplay: true,
-            } as WireUserMessageReplay)
-          }
-          // Historical dup = transcript already has this turn's output, so it
-          // ran but its lifecycle was never closed (interrupted before ack).
-          // Runtime dups don't need this — the original enqueue path closes them.
-          if (existsInSession) {
-            notifyCommandLifecycle(message.uuid, 'completed')
-          }
-          // Don't enqueue duplicate messages for execution
-          continue
-        }
-
-        // Track this UUID to prevent runtime duplicates
-        trackReceivedMessageUuid(message.uuid as any)
-      }
-
-      enqueue({
-        mode: 'prompt' as const,
-        // file_attachments rides the protobuf catchall from the web composer.
-        // Same-ref no-op when absent (no 'file_attachments' key).
-        value: await resolveAndPrepend(message, (message.message as any).content),
-        uuid: message.uuid as any,
-        priority: message.priority,
-      })
-      // Increment prompt count for attribution tracking and save snapshot
-      // The snapshot persists promptCount so it survives compaction
-      if (feature('COMMIT_ATTRIBUTION')) {
-        setAppState((prev) => ({
-          ...prev,
-          attribution: incrementPromptCount(prev.attribution, (snapshot) => {
-            void recordAttributionSnapshot(snapshot).catch((error) => {
-              logForDebugging(`Attribution: Failed to save snapshot: ${error}`)
-            })
-          }),
-        }))
-      }
-      void run()
-    }
-    loopState.inputClosed = true
-    cronScheduler?.stop()
-    if (!loopState.running) {
-      // If a push-suggestion is in-flight, wait for it to emit before closing
-      // the output stream (5 s safety timeout to prevent hanging).
-      if (suggestionState.inflightPromise) {
-        await Promise.race([suggestionState.inflightPromise, sleep(5000)])
-      }
-      suggestionState.abortController?.abort()
-      suggestionState.abortController = null
-      await finalizePendingAsyncHooks()
-      unsubscribeSkillChanges()
-      unsubscribeAuthStatus?.()
-      statusListeners.delete(rateLimitListener)
-      output.done()
-    }
-  })()
 
   return output
 }
@@ -2865,7 +1442,7 @@ export function getCanUseToolFn(
   }
 }
 
-async function handleInitializeRequest(
+export async function handleInitializeRequest(
   request: WireControlInitializeRequest,
   requestId: string,
   initialized: boolean,
@@ -3040,7 +1617,7 @@ async function handleInitializeRequest(
   }
 }
 
-async function handleRewindFiles(
+export async function handleRewindFiles(
   userMessageId: UUID,
   appState: AppState,
   setAppState: (updater: (prev: AppState) => AppState) => void,
@@ -3085,7 +1662,7 @@ async function handleRewindFiles(
   return { canRewind: true }
 }
 
-function handleSetPermissionMode(
+export function handleSetPermissionMode(
   request: { mode: InternalPermissionMode },
   requestId: string,
   toolPermissionContext: ToolPermissionContext,
@@ -3171,7 +1748,7 @@ function handleSetPermissionMode(
  * gated separately by zy_harbor_permissions — not yet shipping on
  * interactive either.)
  */
-function handleChannelEnable(
+export function handleChannelEnable(
   requestId: string,
   serverName: string,
   connectionPool: readonly MCPServerConnection[],
