@@ -229,9 +229,8 @@ import {
 } from 'src/services/model/model.js'
 import { getModelOptions } from 'src/services/model/modelOptions.js'
 import {
+  getModelEffortLevels,
   modelSupportsEffort,
-  modelSupportsMaxEffort,
-  EFFORT_LEVELS,
   resolveAppliedEffort,
 } from 'src/utils/effort.js'
 import { modelSupportsAdaptiveThinking } from 'src/utils/thinking.js'
@@ -300,6 +299,8 @@ import { initializeGrowthBook } from '../services/analytics/growthbook.js'
 import { errorMessage, toError } from '../utils/errors.js'
 import { sleep } from '../utils/sleep.js'
 import { isExtractModeActive } from '../memdir/paths.js'
+import { createHeadlessSession } from './headless/headlessSession.js'
+import { createMcpRuntime, type DynamicMcpState } from './headless/mcpRuntime.js'
 
 // Dead code elimination: conditional imports
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -1058,10 +1059,10 @@ function runHeadlessStreaming(
   }
   statusListeners.add(rateLimitListener)
 
-  // Messages for internal tracking, directly mutated by ask(). These messages
-  // include Assistant, User, Attachment, and Progress messages.
-  // TODO: Clean up this code to avoid passing around a mutable array.
-  const mutableMessages: Message[] = initialMessages
+  // 会话消息容器(HeadlessSession)。包含 Assistant/User/Attachment/Progress 消息。
+  // ask() 仍按引用原地 push;显式 append 走 session.appendMessages()。
+  // 完整封闭 mutable-array(改 ask() 契约)留待后续 Phase。
+  const session = createHeadlessSession({ initialMessages })
 
   // Seed the readFileState cache from the transcript (content the model saw,
   // with message timestamps) so getChangedFiles can detect external edits.
@@ -1095,7 +1096,7 @@ function runHeadlessStreaming(
     // the model sees it exactly once. For mid-turn interruptions, the
     // deserialization layer transforms them into interrupted_prompt by
     // appending a synthetic "Continue from where you left off." message.
-    removeInterruptedMessage(mutableMessages, turnInterruptionState.message)
+    removeInterruptedMessage(session.messages, turnInterruptionState.message)
     enqueue({
       mode: 'prompt',
       value: turnInterruptionState.message.message.content,
@@ -1108,18 +1109,16 @@ function runHeadlessStreaming(
     const modelId = option.value === null ? 'default' : option.value
     const resolvedModel =
       modelId === 'default' ? getDefaultMainLoopModel() : parseUserSpecifiedModel(modelId)
-    const hasEffort = modelSupportsEffort(resolvedModel)
+    const effortLevels = getModelEffortLevels(resolvedModel)
     const hasAdaptiveThinking = modelSupportsAdaptiveThinking(resolvedModel)
     const hasAutoMode = modelSupportsAutoMode(resolvedModel)
     return {
       value: modelId,
       displayName: option.label,
       description: option.description,
-      ...(hasEffort && {
+      ...(effortLevels.length > 0 && {
         supportsEffort: true,
-        supportedEffortLevels: modelSupportsMaxEffort(resolvedModel)
-          ? [...EFFORT_LEVELS]
-          : EFFORT_LEVELS.filter((l) => l !== 'max'),
+        supportedEffortLevels: effortLevels,
       }),
       ...(hasAdaptiveThinking && { supportsAdaptiveThinking: true }),
       ...(hasAutoMode && { supportsAutoMode: true }),
@@ -1129,7 +1128,7 @@ function runHeadlessStreaming(
 
   function injectModelSwitchBreadcrumbs(modelArg: string, resolvedModel: string): void {
     const breadcrumbs = createModelSwitchBreadcrumbs(modelArg, modelDisplayString(resolvedModel))
-    mutableMessages.push(...breadcrumbs)
+    session.appendMessages(...breadcrumbs)
     for (const crumb of breadcrumbs) {
       const contentText = crumb.message.content.find((b: { type: string }) => b.type === 'text') as
         | { type: 'text'; text: string }
@@ -1148,206 +1147,28 @@ function runHeadlessStreaming(
     }
   }
 
-  // Cache SDK MCP clients to avoid reconnecting on each run
-  let sdkClients: MCPServerConnection[] = []
-  let sdkTools: Tools = []
+  // MCP/插件可变状态容器(Phase 2a)。7 个嵌套函数 + 控制循环共享这些状态;
+  // 函数内部通过 mcp.xxx 访问,控制循环暂时也直接读(Phase 3 再统一改路由)。
+  const mcp = createMcpRuntime({
+    structuredIO,
+    getAppState,
+    setAppState,
+    sdkMcpConfigs,
+    handleMcpSetServers,
+    initialCommands: commands,
+    initialAgents: agents,
+  })
 
-  // Track which MCP clients have had elicitation handlers registered
-  const elicitationRegistered = new Set<string>()
-
-  /**
-   * Register elicitation request/completion handlers on connected MCP clients
-   * that haven't been registered yet. SDK MCP servers are excluded because they
-   * route through WireControlClientTransport. Hooks run first (matching REPL
-   * behavior); if no hook responds, the request is forwarded to the SDK
-   * consumer via the control protocol.
-   */
-  function registerElicitationHandlers(clients: MCPServerConnection[]): void {
-    for (const connection of clients) {
-      if (connection.type !== 'connected' || elicitationRegistered.has(connection.name)) {
-        continue
-      }
-      // Skip SDK MCP servers — elicitation flows through WireControlClientTransport
-      if (connection.config.type === 'sdk') {
-        continue
-      }
-      const serverName = connection.name
-
-      // Wrapped in try/catch because setRequestHandler throws if the client wasn't
-      // created with elicitation capability declared (e.g., SDK-created clients).
-      try {
-        connection.client.setRequestHandler(ElicitRequestSchema, async (request, extra) => {
-          logMCPDebug(
-            serverName,
-            `Elicitation request received in print mode: ${jsonStringify(request)}`,
-          )
-
-          const mode = request.params.mode === 'url' ? 'url' : 'form'
-
-          logEvent('zy_mcp_elicitation_shown', {
-            mode: mode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          })
-
-          // Run elicitation hooks first — they can provide a response programmatically
-          const hookResponse = await runElicitationHooks(serverName, request.params, extra.signal)
-          if (hookResponse) {
-            logMCPDebug(serverName, `Elicitation resolved by hook: ${jsonStringify(hookResponse)}`)
-            logEvent('zy_mcp_elicitation_response', {
-              mode: mode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-              action:
-                hookResponse.action as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-            })
-            return hookResponse
-          }
-
-          // Delegate to SDK consumer via control protocol
-          const url = 'url' in request.params ? (request.params.url as string) : undefined
-          const requestedSchema =
-            'requestedSchema' in request.params
-              ? (request.params.requestedSchema as Record<string, unknown> | undefined)
-              : undefined
-
-          const elicitationId =
-            'elicitationId' in request.params
-              ? (request.params.elicitationId as string | undefined)
-              : undefined
-
-          const rawResult = await structuredIO.handleElicitation(
-            serverName,
-            request.params.message,
-            requestedSchema,
-            extra.signal,
-            mode,
-            url,
-            elicitationId,
-          )
-
-          const result = await runElicitationResultHooks(
-            serverName,
-            rawResult,
-            extra.signal,
-            mode,
-            elicitationId,
-          )
-
-          logEvent('zy_mcp_elicitation_response', {
-            mode: mode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-            action: result.action as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          })
-          return result
-        })
-
-        // Surface completion notifications to SDK consumers (URL mode)
-        connection.client.setNotificationHandler(
-          ElicitationCompleteNotificationSchema,
-          (notification) => {
-            const { elicitationId } = notification.params
-            logMCPDebug(serverName, `Elicitation completion notification: ${elicitationId}`)
-            void executeNotificationHooks({
-              message: `MCP server "${serverName}" confirmed elicitation ${elicitationId} complete`,
-              notificationType: 'elicitation_complete',
-            })
-            output.enqueue({
-              type: 'system',
-              subtype: 'elicitation_complete',
-              mcp_server_name: serverName,
-              elicitation_id: elicitationId,
-              uuid: randomUUID(),
-              session_id: getSessionId(),
-            })
-          },
-        )
-
-        elicitationRegistered.add(serverName)
-      } catch {
-        // setRequestHandler throws if the client wasn't created with
-        // elicitation capability — skip silently
-      }
-    }
-  }
-
-  async function updateSdkMcp() {
-    // Check if SDK MCP servers need to be updated (new servers added or removed)
-    const currentServerNames = new Set(Object.keys(sdkMcpConfigs))
-    const connectedServerNames = new Set(sdkClients.map((c) => c.name))
-
-    // Check if there are any differences (additions or removals)
-    const hasNewServers = Array.from(currentServerNames).some(
-      (name) => !connectedServerNames.has(name),
-    )
-    const hasRemovedServers = Array.from(connectedServerNames).some(
-      (name) => !currentServerNames.has(name),
-    )
-    // Check if any SDK clients are pending and need to be upgraded
-    const hasPendingSdkClients = sdkClients.some((c) => c.type === 'pending')
-    // Check if any SDK clients failed their handshake and need to be retried.
-    // Without this, a client that lands in 'failed' (e.g. handshake timeout on
-    // a WS reconnect race) stays failed forever — its name satisfies the
-    // connectedServerNames diff but it contributes zero tools.
-    const hasFailedSdkClients = sdkClients.some((c) => c.type === 'failed')
-
-    const haveServersChanged =
-      hasNewServers || hasRemovedServers || hasPendingSdkClients || hasFailedSdkClients
-
-    if (haveServersChanged) {
-      // Clean up removed servers
-      for (const client of sdkClients) {
-        if (!currentServerNames.has(client.name)) {
-          if (client.type === 'connected') {
-            await client.cleanup()
-          }
-        }
-      }
-
-      // Re-initialize all SDK MCP servers with current config
-      const sdkSetup = await setupSdkMcpClients(sdkMcpConfigs, (serverName, message) =>
-        structuredIO.sendMcpMessage(serverName, message),
-      )
-      sdkClients = sdkSetup.clients
-      sdkTools = sdkSetup.tools
-
-      // Store SDK MCP tools in appState so subagents can access them via
-      // assembleToolPool. Only tools are stored here — SDK clients are already
-      // merged separately in the query loop (allMcpClients) and mcp_status handler.
-      // Use both old (connectedServerNames) and new (currentServerNames) to remove
-      // stale SDK tools when servers are added or removed.
-      const allSdkNames = uniq([...connectedServerNames, ...currentServerNames])
-      setAppState((prev) => ({
-        ...prev,
-        mcp: {
-          ...prev.mcp,
-          tools: [
-            ...prev.mcp.tools.filter(
-              (t) => !allSdkNames.some((name) => t.name.startsWith(getMcpPrefix(name))),
-            ),
-            ...sdkTools,
-          ],
-        },
-      }))
-
-      // Set up the special internal VSCode MCP server if necessary.
-      setupVscodeSdkMcp(sdkClients)
-    }
-  }
-
-  void updateSdkMcp()
-
-  // State for dynamically added MCP servers (via mcp_set_servers control message)
-  // These are separate from SDK MCP servers and support all transport types
-  let dynamicMcpState: DynamicMcpState = {
-    clients: [],
-    tools: [],
-    configs: {},
-  }
+  void mcp.updateSdkMcp()
 
   // Shared tool assembly for ask() and the get_context_usage control request.
-  // Closes over the mutable sdkTools/dynamicMcpState bindings so both call
-  // sites see late-connecting servers.
+  // Closes over mcp.sdkTools/mcp.dynamicMcpState so both call sites see
+  // late-connecting servers.
   const buildAllTools = (appState: AppState): Tools => {
     const assembledTools = assembleToolPool(appState.toolPermissionContext, appState.mcp.tools)
     let allTools = uniqBy(
       mergeAndFilterTools(
-        [...tools, ...sdkTools, ...dynamicMcpState.tools],
+        [...tools, ...mcp.sdkTools, ...mcp.dynamicMcpState.tools],
         assembledTools,
         appState.toolPermissionContext.mode,
       ),
@@ -1372,11 +1193,11 @@ function runHeadlessStreaming(
   // Mirrors the REPL's useReplBridge hook: the handle is created when
   // `remote_control` is enabled and torn down when disabled.
   let bridgeHandle: ReplWireHandle | null = null
-  // Cursor into mutableMessages — tracks how far we've forwarded.
+  // Cursor into session.messages — tracks how far we've forwarded.
   // Same index-based diff as useReplBridge's lastWrittenIndexRef.
   let bridgeLastForwardedIndex = 0
 
-  // Forward new messages from mutableMessages to the bridge.
+  // Forward new messages from session.messages to the bridge.
   // Called incrementally during each turn (so zy.ai sees progress
   // and stays alive during permission waits) and again after the turn.
   //
@@ -1387,196 +1208,14 @@ function runHeadlessStreaming(
     if (!bridgeHandle) {
       return
     }
-    // Guard against mutableMessages shrinking (compaction truncates it).
-    const startIndex = Math.min(bridgeLastForwardedIndex, mutableMessages.length)
-    const newMessages = mutableMessages
+    // Guard against session.messages shrinking (compaction truncates it).
+    const startIndex = Math.min(bridgeLastForwardedIndex, session.messages.length)
+    const newMessages = session.messages
       .slice(startIndex)
       .filter((m) => m.type === 'user' || m.type === 'assistant')
-    bridgeLastForwardedIndex = mutableMessages.length
+    bridgeLastForwardedIndex = session.messages.length
     if (newMessages.length > 0) {
       bridgeHandle.writeMessages(newMessages)
-    }
-  }
-
-  // Helper to apply MCP server changes - used by both mcp_set_servers control message
-  // and background plugin installation.
-  // NOTE: Nested function required - mutates closure state (sdkMcpConfigs, sdkClients, etc.)
-  let mcpChangesPromise: Promise<{
-    response: WireControlMcpSetServersResponse
-    sdkServersChanged: boolean
-  }> = Promise.resolve({
-    response: {
-      added: [] as string[],
-      removed: [] as string[],
-      errors: {} as Record<string, string>,
-    },
-    sdkServersChanged: false,
-  })
-
-  function applyMcpServerChanges(
-    servers: Record<string, McpServerConfigForProcessTransport>,
-  ): Promise<{
-    response: WireControlMcpSetServersResponse
-    sdkServersChanged: boolean
-  }> {
-    // Serialize calls to prevent race conditions between concurrent callers
-    // (background plugin install and mcp_set_servers control messages)
-    const doWork = async (): Promise<{
-      response: WireControlMcpSetServersResponse
-      sdkServersChanged: boolean
-    }> => {
-      const oldSdkClientNames = new Set(sdkClients.map((c) => c.name))
-
-      const result = await handleMcpSetServers(
-        servers,
-        { configs: sdkMcpConfigs, clients: sdkClients, tools: sdkTools },
-        dynamicMcpState,
-        setAppState,
-      )
-
-      // Update SDK state (need to mutate sdkMcpConfigs since it's shared)
-      for (const key of Object.keys(sdkMcpConfigs)) {
-        delete sdkMcpConfigs[key]
-      }
-      Object.assign(sdkMcpConfigs, result.newWireState.configs)
-      sdkClients = result.newWireState.clients
-      sdkTools = result.newWireState.tools
-      dynamicMcpState = result.newDynamicState
-
-      // Keep appState.mcp.tools in sync so subagents can see SDK MCP tools.
-      // Use both old and new SDK client names to remove stale tools.
-      if (result.sdkServersChanged) {
-        const newSdkClientNames = new Set(sdkClients.map((c) => c.name))
-        const allSdkNames = uniq([...oldSdkClientNames, ...newSdkClientNames])
-        setAppState((prev) => ({
-          ...prev,
-          mcp: {
-            ...prev.mcp,
-            tools: [
-              ...prev.mcp.tools.filter(
-                (t) => !allSdkNames.some((name) => t.name.startsWith(getMcpPrefix(name))),
-              ),
-              ...sdkTools,
-            ],
-          },
-        }))
-      }
-
-      return {
-        response: result.response,
-        sdkServersChanged: result.sdkServersChanged,
-      }
-    }
-
-    mcpChangesPromise = mcpChangesPromise.then(doWork, doWork)
-    return mcpChangesPromise
-  }
-
-  // Build McpServerStatus[] for control responses. Shared by mcp_status and
-  // reload_plugins handlers. Reads closure state: sdkClients, dynamicMcpState.
-  function buildMcpServerStatuses(): McpServerStatus[] {
-    const currentAppState = getAppState()
-    const currentMcpClients = currentAppState.mcp.clients
-    const allMcpTools = uniqBy([...currentAppState.mcp.tools, ...dynamicMcpState.tools], 'name')
-    const existingNames = new Set([
-      ...currentMcpClients.map((c) => c.name),
-      ...sdkClients.map((c) => c.name),
-    ])
-    return [
-      ...currentMcpClients,
-      ...sdkClients,
-      ...dynamicMcpState.clients.filter((c) => !existingNames.has(c.name)),
-    ].map((connection) => {
-      let config
-      if (connection.config.type === 'sse' || connection.config.type === 'http') {
-        config = {
-          type: connection.config.type,
-          url: connection.config.url,
-          headers: connection.config.headers,
-          oauth: connection.config.oauth,
-        }
-      } else if (connection.config.type === 'zyai-proxy') {
-        config = {
-          type: 'zyai-proxy' as const,
-          url: connection.config.url,
-          id: connection.config.id,
-        }
-      } else if (connection.config.type === 'stdio' || connection.config.type === undefined) {
-        config = {
-          type: 'stdio' as const,
-          command: (connection.config as any).command,
-          args: (connection.config as any).args,
-        }
-      }
-      const serverTools =
-        connection.type === 'connected'
-          ? filterToolsByServer(allMcpTools, connection.name).map((tool) => ({
-              name: tool.mcpInfo?.toolName ?? tool.name,
-              annotations: {
-                readOnly: tool.isReadOnly({}) || undefined,
-                destructive: tool.isDestructive?.({}) || undefined,
-                openWorld: tool.isOpenWorld?.({}) || undefined,
-              },
-            }))
-          : undefined
-      // Capabilities passthrough with allowlist pre-filter. The IDE reads
-      // experimental['zy/channel'] to decide whether to show the
-      // Enable-channel prompt — only echo it if channel_enable would
-      // actually pass the allowlist. Not a security boundary (the
-      // handler re-runs the full gate); just avoids dead buttons.
-      let capabilities: { experimental?: Record<string, unknown> } | undefined
-      if (
-        (feature('KAIROS') || feature('KAIROS_CHANNELS')) &&
-        connection.type === 'connected' &&
-        connection.capabilities.experimental
-      ) {
-        const exp = { ...connection.capabilities.experimental }
-        if (
-          exp['zy/channel'] &&
-          (!isChannelsEnabled() || !isChannelAllowlisted(connection.config.pluginSource))
-        ) {
-          delete exp['zy/channel']
-        }
-        if (Object.keys(exp).length > 0) {
-          capabilities = { experimental: exp }
-        }
-      }
-      return {
-        name: connection.name,
-        status: connection.type,
-        serverInfo: connection.type === 'connected' ? connection.serverInfo : undefined,
-        error: connection.type === 'failed' ? connection.error : undefined,
-        config,
-        scope: connection.config.scope,
-        tools: serverTools,
-        capabilities,
-      }
-    })
-  }
-
-  // NOTE: Nested function required - needs closure access to applyMcpServerChanges and updateSdkMcp
-  async function installPluginsAndApplyMcpInBackground(): Promise<void> {
-    try {
-      // Join point for user settings (fired at runHeadless entry) and managed
-      // settings (fired in main.tsx preAction). downloadUserSettings() caches
-      // its promise so this awaits the same in-flight request.
-      await Promise.all([
-        feature('DOWNLOAD_USER_SETTINGS') &&
-        (isEnvTruthy(process.env.ZY_CODE_REMOTE) || getIsRemoteMode())
-          ? withDiagnosticsTiming('headless_user_settings_download', () => downloadUserSettings())
-          : Promise.resolve(),
-        withDiagnosticsTiming('headless_managed_settings_wait', () =>
-          waitForRemoteManagedSettingsToLoad(),
-        ),
-      ])
-
-      const pluginsInstalled = await installPluginsForHeadless()
-
-      if (pluginsInstalled) {
-        await applyPluginMcpDiff()
-      }
-    } catch (error) {
-      logError(error)
     }
   }
 
@@ -1584,96 +1223,24 @@ function runHeadlessStreaming(
   // Installs marketplaces from extraKnownMarketplaces and missing enabled plugins
   // ZY_CODE_SYNC_PLUGIN_INSTALL=true: resolved in run() before the first
   // query so plugins are guaranteed available on the first ask().
-  let pluginInstallPromise: Promise<void> | null = null
   // --bare / SIMPLE: skip plugin install. Scripted calls don't add plugins
   // mid-session; the next interactive run reconciles.
   if (!isBareMode()) {
     if (isEnvTruthy(process.env.ZY_CODE_SYNC_PLUGIN_INSTALL)) {
-      pluginInstallPromise = installPluginsAndApplyMcpInBackground()
+      mcp.pluginInstallPromise = mcp.installPluginsAndApplyMcpInBackground()
     } else {
-      void installPluginsAndApplyMcpInBackground()
+      void mcp.installPluginsAndApplyMcpInBackground()
     }
   }
 
   // Idle timeout management
   const idleTimeout = createIdleTimeoutManager(() => !running)
 
-  // Mutable commands and agents for hot reloading
-  let currentCommands = commands
-  let currentAgents = agents
-
-  // Clear all plugin-related caches, reload commands/agents/hooks.
-  // Called after ZY_CODE_SYNC_PLUGIN_INSTALL completes (before first query)
-  // and after non-sync background install finishes.
-  // refreshActivePlugins calls clearAllCaches() which is required because
-  // loadAllPlugins() may have run during main.tsx startup BEFORE managed
-  // settings were fetched. Without clearing, getCommands() would rebuild
-  // from a stale plugin list.
-  async function refreshPluginState(): Promise<void> {
-    // refreshActivePlugins handles the full cache sweep (clearAllCaches),
-    // reloads all plugin component loaders, writes AppState.plugins +
-    // AppState.agentDefinitions, registers hooks, and bumps mcp.pluginReconnectKey.
-    const { agentDefinitions: freshAgentDefs } = await refreshActivePlugins(setAppState)
-
-    // Headless-specific: currentCommands/currentAgents are local mutable refs
-    // captured by the query loop (REPL uses AppState instead). getCommands is
-    // fresh because refreshActivePlugins cleared its cache.
-    currentCommands = await getCommands(cwd())
-
-    // Preserve SDK-provided agents (--agents CLI flag or SDK initialize
-    // control_request) — both inject via parseAgentsFromJson with
-    // source='flagSettings'. loadMarkdownFilesForSubdir never assigns this
-    // source, so it cleanly discriminates "injected, not disk-loadable".
-    //
-    // The previous filter used a negative set-diff (!freshAgentTypes.has(a))
-    // which also matched plugin agents that were in the poisoned initial
-    // currentAgents but correctly excluded from freshAgentDefs after managed
-    // settings applied — leaking policy-blocked agents into the init message.
-    // See gh-23085: isBridgeEnabled() at Commander-definition time poisoned
-    // the settings cache before setEligibility(true) ran.
-    const sdkAgents = currentAgents.filter((a) => a.source === 'flagSettings')
-    currentAgents = [...freshAgentDefs.allAgents, ...sdkAgents]
-  }
-
-  // Re-diff MCP configs after plugin state changes. Filters to
-  // process-transport-supported types and carries SDK-mode servers through
-  // so applyMcpServerChanges' diff doesn't close their transports.
-  // Nested: needs closure access to sdkMcpConfigs, applyMcpServerChanges,
-  // updateSdkMcp.
-  async function applyPluginMcpDiff(): Promise<void> {
-    const { servers: newConfigs } = await getAllMcpConfigs()
-    const supportedConfigs: Record<string, McpServerConfigForProcessTransport> = {}
-    for (const [name, config] of Object.entries(newConfigs)) {
-      const type = config.type
-      if (
-        type === undefined ||
-        type === 'stdio' ||
-        type === 'sse' ||
-        type === 'http' ||
-        type === 'sdk'
-      ) {
-        supportedConfigs[name] = config as any
-      }
-    }
-    for (const [name, config] of Object.entries(sdkMcpConfigs)) {
-      if ((config as any).type === 'sdk' && !(name in supportedConfigs)) {
-        supportedConfigs[name] = config as any
-      }
-    }
-    const { response, sdkServersChanged } = await applyMcpServerChanges(supportedConfigs)
-    if (sdkServersChanged) {
-      void updateSdkMcp()
-    }
-    logForDebugging(
-      `Headless MCP refresh: added=${response.added.length}, removed=${response.removed.length}`,
-    )
-  }
-
   // Subscribe to skill changes for hot reloading
   const unsubscribeSkillChanges = skillChangeDetector.subscribe(() => {
     clearCommandsCache()
     void getCommands(cwd()).then((newCommands) => {
-      currentCommands = newCommands
+      mcp.currentCommands = newCommands
     })
   })
 
@@ -1725,7 +1292,7 @@ function runHeadlessStreaming(
     headlessProfilerCheckpoint('run_entry')
     // TODO(custom-tool-refactor): Should move to the init message, like browser
 
-    await updateSdkMcp()
+    await mcp.updateSdkMcp()
     headlessProfilerCheckpoint('after_updateSdkMcp')
 
     // Resolve deferred plugin installation (ZY_CODE_SYNC_PLUGIN_INSTALL).
@@ -1733,11 +1300,11 @@ function runHeadlessStreaming(
     // Awaiting here guarantees plugins are available before the first ask().
     // If ZY_CODE_SYNC_PLUGIN_INSTALL_TIMEOUT_MS is set, races against that
     // deadline and proceeds without plugins on timeout (logging an error).
-    if (pluginInstallPromise) {
+    if (mcp.pluginInstallPromise) {
       const timeoutMs = parseInt(process.env.ZY_CODE_SYNC_PLUGIN_INSTALL_TIMEOUT_MS || '', 10)
       if (timeoutMs > 0) {
         const timeout = sleep(timeoutMs).then(() => 'timeout' as const)
-        const result = await Promise.race([pluginInstallPromise, timeout])
+        const result = await Promise.race([mcp.pluginInstallPromise, timeout])
         if (result === 'timeout') {
           logError(
             new Error(
@@ -1749,12 +1316,12 @@ function runHeadlessStreaming(
           })
         }
       } else {
-        await pluginInstallPromise
+        await mcp.pluginInstallPromise
       }
-      pluginInstallPromise = null
+      mcp.pluginInstallPromise = null
 
       // Refresh commands, agents, and hooks now that plugins are installed
-      await refreshPluginState()
+      await mcp.refreshPluginState()
 
       // Set up hot-reload for plugin hooks now that the initial install is done.
       // In sync-install mode, setup.ts skips this to avoid racing with the install.
@@ -1814,7 +1381,13 @@ function runHeadlessStreaming(
               if (c.uuid && c.uuid !== command.uuid) {
                 output.enqueue({
                   type: 'user',
-                  message: { role: 'user', content: typeof c.value === 'string' ? [{ type: 'text' as const, text: c.value }] : c.value },
+                  message: {
+                    role: 'user',
+                    content:
+                      typeof c.value === 'string'
+                        ? [{ type: 'text' as const, text: c.value }]
+                        : c.value,
+                  },
                   session_id: getSessionId(),
                   parent_tool_use_id: null,
                   uuid: c.uuid,
@@ -1829,8 +1402,12 @@ function runHeadlessStreaming(
           // fresh per-command means late-connecting servers are visible on the
           // next turn. registerElicitationHandlers is idempotent (tracking set).
           const appState = getAppState()
-          const allMcpClients = [...appState.mcp.clients, ...sdkClients, ...dynamicMcpState.clients]
-          registerElicitationHandlers(allMcpClients)
+          const allMcpClients = [
+            ...appState.mcp.clients,
+            ...mcp.sdkClients,
+            ...mcp.dynamicMcpState.clients,
+          ]
+          mcp.registerElicitationHandlers(allMcpClients)
           // Channel handlers for servers allowlisted via --channels at
           // construction time (or enableChannel() mid-session). Runs every
           // turn like registerElicitationHandlers — idempotent per-client
@@ -1958,7 +1535,7 @@ function runHeadlessStreaming(
           const cmd = command
           await runWithWorkload(cmd.workload ?? options.workload, async () => {
             for await (const message of ask({
-              commands: uniqBy([...currentCommands, ...appState.mcp.commands], 'name'),
+              commands: uniqBy([...mcp.currentCommands, ...appState.mcp.commands], 'name'),
               prompt: input,
               promptUuid: cmd.uuid,
               isMeta: cmd.isMeta,
@@ -1974,7 +1551,7 @@ function runHeadlessStreaming(
               userSpecifiedModel: activeUserSpecifiedModel,
               fallbackModel: options.fallbackModel,
               jsonSchema: getInitJsonSchema() ?? options.jsonSchema,
-              mutableMessages,
+              mutableMessages: session.messages,
               getReadFileCache: () =>
                 pendingSeeds.size === 0
                   ? readFileState
@@ -2006,7 +1583,7 @@ function runHeadlessStreaming(
                   params.url,
                   'elicitationId' in params ? params.elicitationId : undefined,
                 ),
-              agents: currentAgents,
+              agents: mcp.currentAgents,
               orphanedPermission: cmd.orphanedPermission,
               setSDKStatus: (status) => {
                 output.enqueue({
@@ -2099,7 +1676,7 @@ function runHeadlessStreaming(
                 try {
                   const result = await tryGenerateSuggestion(
                     localAbort,
-                    mutableMessages,
+                    session.messages,
                     getAppState,
                     cacheSafeParams,
                     'sdk',
@@ -2719,13 +2296,13 @@ function runHeadlessStreaming(
           sendControlResponseSuccess(message)
         } else if (message.request.subtype === 'mcp_status') {
           sendControlResponseSuccess(message, {
-            mcpServers: buildMcpServerStatuses(),
+            mcpServers: mcp.buildMcpServerStatuses(),
           })
         } else if (message.request.subtype === 'get_context_usage') {
           try {
             const appState = getAppState()
             const data = await collectContextData({
-              messages: mutableMessages,
+              messages: session.messages,
               getAppState,
               options: {
                 mainLoopModel: getMainLoopModel(),
@@ -2742,7 +2319,7 @@ function runHeadlessStreaming(
         } else if (message.request.subtype === 'mcp_message') {
           // Handle MCP notifications from SDK servers
           const mcpRequest = message.request
-          const sdkClient = sdkClients.find((client) => client.name === mcpRequest.server_name)
+          const sdkClient = mcp.sdkClients.find((client) => client.name === mcpRequest.server_name)
           // Check client exists - dynamically added SDK servers may have
           // placeholder clients with null client until updateSdkMcp() runs
           if (
@@ -2812,14 +2389,14 @@ function runHeadlessStreaming(
           }
           sendControlResponseSuccess(message)
         } else if (message.request.subtype === 'mcp_set_servers') {
-          const { response, sdkServersChanged } = await applyMcpServerChanges(
+          const { response, sdkServersChanged } = await mcp.applyMcpServerChanges(
             message.request.servers,
           )
           sendControlResponseSuccess(message, response as any)
 
           // Connect SDK servers AFTER response to avoid deadlock
           if (sdkServersChanged) {
-            void updateSdkMcp()
+            void mcp.updateSdkMcp()
           }
         } else if (message.request.subtype === 'reload_plugins') {
           try {
@@ -2837,8 +2414,8 @@ function runHeadlessStreaming(
 
             const r = await refreshActivePlugins(setAppState)
 
-            const sdkAgents = currentAgents.filter((a) => a.source === 'flagSettings')
-            currentAgents = [...r.agentDefinitions.allAgents, ...sdkAgents]
+            const sdkAgents = mcp.currentAgents.filter((a) => a.source === 'flagSettings')
+            mcp.currentAgents = [...r.agentDefinitions.allAgents, ...sdkAgents]
 
             // Reload succeeded — gather response data best-effort so a
             // read failure doesn't mask the successful state change.
@@ -2846,11 +2423,11 @@ function runHeadlessStreaming(
             let plugins: WireControlReloadPluginsResponse['plugins'] = []
             const [cmdsR, mcpR, pluginsR] = await Promise.allSettled([
               getCommands(cwd()),
-              applyPluginMcpDiff(),
+              mcp.applyPluginMcpDiff(),
               loadAllPluginsCacheOnly(),
             ])
             if (cmdsR.status === 'fulfilled') {
-              currentCommands = cmdsR.value
+              mcp.currentCommands = cmdsR.value
             } else {
               logError(cmdsR.reason)
             }
@@ -2868,20 +2445,20 @@ function runHeadlessStreaming(
             }
 
             sendControlResponseSuccess(message, {
-              commands: currentCommands
+              commands: mcp.currentCommands
                 .filter((cmd) => cmd.userInvocable !== false)
                 .map((cmd) => ({
                   name: getCommandName(cmd),
                   description: formatDescriptionWithSource(cmd),
                   argumentHint: cmd.argumentHint || '',
                 })),
-              agents: currentAgents.map((a) => ({
+              agents: mcp.currentAgents.map((a) => ({
                 name: a.agentType,
                 description: a.whenToUse,
                 model: a.model === 'inherit' ? undefined : a.model,
               })),
               plugins,
-              mcpServers: buildMcpServerStatuses(),
+              mcpServers: mcp.buildMcpServerStatuses(),
               error_count: r.error_count,
             } satisfies WireControlReloadPluginsResponse)
           } catch (error) {
@@ -2890,7 +2467,7 @@ function runHeadlessStreaming(
         } else if (message.request.subtype === 'mcp_reconnect') {
           const currentAppState = getAppState()
           const { serverName } = message.request
-          elicitationRegistered.delete(serverName)
+          mcp.elicitationRegistered.delete(serverName)
           // Config-existence gate must cover the SAME sources as the
           // operations below. SDK-injected servers (query({mcpServers:{...}}))
           // and dynamically-added servers were missing here, so
@@ -2899,8 +2476,8 @@ function runHeadlessStreaming(
           const config =
             getMcpConfigByName(serverName) ??
             mcpClients.find((c) => c.name === serverName)?.config ??
-            sdkClients.find((c) => c.name === serverName)?.config ??
-            dynamicMcpState.clients.find((c) => c.name === serverName)?.config ??
+            mcp.sdkClients.find((c) => c.name === serverName)?.config ??
+            mcp.dynamicMcpState.clients.find((c) => c.name === serverName)?.config ??
             currentAppState.mcp.clients.find((c) => c.name === serverName)?.config ??
             null
           if (!config) {
@@ -2928,21 +2505,21 @@ function runHeadlessStreaming(
                     : omit(prev.mcp.resources, serverName),
               },
             }))
-            // Also update dynamicMcpState so run() picks up the new tools
-            // on the next turn (run() reads dynamicMcpState, not appState)
-            dynamicMcpState = {
-              ...dynamicMcpState,
+            // Also update mcp.dynamicMcpState so run() picks up the new tools
+            // on the next turn (run() reads mcp.dynamicMcpState, not appState)
+            mcp.dynamicMcpState = {
+              ...mcp.dynamicMcpState,
               clients: [
-                ...dynamicMcpState.clients.filter((c) => c.name !== serverName),
+                ...mcp.dynamicMcpState.clients.filter((c) => c.name !== serverName),
                 result.client,
               ],
               tools: [
-                ...dynamicMcpState.tools.filter((t) => !t.name?.startsWith(prefix)),
+                ...mcp.dynamicMcpState.tools.filter((t) => !t.name?.startsWith(prefix)),
                 ...result.tools,
               ],
             }
             if (result.client.type === 'connected') {
-              registerElicitationHandlers([result.client])
+              mcp.registerElicitationHandlers([result.client])
               reregisterChannelHandlerAfterReconnect(result.client)
               sendControlResponseSuccess(message)
             } else {
@@ -2956,15 +2533,15 @@ function runHeadlessStreaming(
         } else if (message.request.subtype === 'mcp_toggle') {
           const currentAppState = getAppState()
           const { serverName, enabled } = message.request
-          elicitationRegistered.delete(serverName)
+          mcp.elicitationRegistered.delete(serverName)
           // Gate must match the client-lookup spread below (which
-          // includes sdkClients and dynamicMcpState.clients). Same fix as
+          // includes mcp.sdkClients and mcp.dynamicMcpState.clients). Same fix as
           // mcp_reconnect above (gh-31339 / CC-314).
           const config =
             getMcpConfigByName(serverName) ??
             mcpClients.find((c) => c.name === serverName)?.config ??
-            sdkClients.find((c) => c.name === serverName)?.config ??
-            dynamicMcpState.clients.find((c) => c.name === serverName)?.config ??
+            mcp.sdkClients.find((c) => c.name === serverName)?.config ??
+            mcp.dynamicMcpState.clients.find((c) => c.name === serverName)?.config ??
             currentAppState.mcp.clients.find((c) => c.name === serverName)?.config ??
             null
 
@@ -2975,8 +2552,8 @@ function runHeadlessStreaming(
             setMcpServerEnabled(serverName, false)
             const client = [
               ...mcpClients,
-              ...sdkClients,
-              ...dynamicMcpState.clients,
+              ...mcp.sdkClients,
+              ...mcp.dynamicMcpState.clients,
               ...currentAppState.mcp.clients,
             ].find((c) => c.name === serverName)
             if (client && client.type === 'connected') {
@@ -3026,7 +2603,7 @@ function runHeadlessStreaming(
               },
             }))
             if (result.client.type === 'connected') {
-              registerElicitationHandlers([result.client])
+              mcp.registerElicitationHandlers([result.client])
               reregisterChannelHandlerAfterReconnect(result.client)
               sendControlResponseSuccess(message)
             } else {
@@ -3044,7 +2621,7 @@ function runHeadlessStreaming(
             message.request_id,
             req.serverName,
             // Pool spread matches mcp_status — all three client sources.
-            [...currentAppState.mcp.clients, ...sdkClients, ...dynamicMcpState.clients],
+            [...currentAppState.mcp.clients, ...mcp.sdkClients, ...mcp.dynamicMcpState.clients],
             output,
           )
         } else if (requestSubtype === 'mcp_authenticate') {
@@ -3114,7 +2691,7 @@ function runHeadlessStreaming(
               // Handle background completion — reconnect after auth.
               // When manual callback is used, skip the reconnect here;
               // the extension's handleAuthDone → mcp_reconnect handles it
-              // (which also updates dynamicMcpState for tool registration).
+              // (which also updates mcp.dynamicMcpState for tool registration).
               const fullFlowPromise = oauthPromise
                 .then(async () => {
                   // Don't reconnect if the server was disabled during the OAuth flow
@@ -3123,7 +2700,7 @@ function runHeadlessStreaming(
                   }
                   // Skip reconnect if the manual callback path was used —
                   // handleAuthDone will do it via mcp_reconnect (which
-                  // updates dynamicMcpState for tool registration).
+                  // updates mcp.dynamicMcpState for tool registration).
                   if (oauthManualCallbackUsed.has(serverName)) {
                     return
                   }
@@ -3154,16 +2731,16 @@ function runHeadlessStreaming(
                           : omit(prev.mcp.resources, serverName),
                     },
                   }))
-                  // Also update dynamicMcpState so run() picks up the new tools
-                  // on the next turn (run() reads dynamicMcpState, not appState)
-                  dynamicMcpState = {
-                    ...dynamicMcpState,
+                  // Also update mcp.dynamicMcpState so run() picks up the new tools
+                  // on the next turn (run() reads mcp.dynamicMcpState, not appState)
+                  mcp.dynamicMcpState = {
+                    ...mcp.dynamicMcpState,
                     clients: [
-                      ...dynamicMcpState.clients.filter((c) => c.name !== serverName),
+                      ...mcp.dynamicMcpState.clients.filter((c) => c.name !== serverName),
                       result.client,
                     ],
                     tools: [
-                      ...dynamicMcpState.tools.filter((t) => !t.name?.startsWith(prefix)),
+                      ...mcp.dynamicMcpState.tools.filter((t) => !t.name?.startsWith(prefix)),
                       ...result.tools,
                     ],
                   }
@@ -3212,7 +2789,7 @@ function runHeadlessStreaming(
               submit(callbackUrl)
               // Wait for auth (token exchange) to complete before responding.
               // Reconnect is handled by the extension via handleAuthDone →
-              // mcp_reconnect (which updates dynamicMcpState for tools).
+              // mcp_reconnect (which updates mcp.dynamicMcpState for tools).
               const authPromise = oauthAuthPromises.get(serverName)
               if (authPromise) {
                 try {
@@ -3553,20 +3130,20 @@ function runHeadlessStreaming(
                   }
                 : await buildSideQuestionFallbackParams({
                     tools: buildAllTools(getAppState()),
-                    commands: currentCommands,
+                    commands: mcp.currentCommands,
                     mcpClients: [
                       ...getAppState().mcp.clients,
-                      ...sdkClients,
-                      ...dynamicMcpState.clients,
+                      ...mcp.sdkClients,
+                      ...mcp.dynamicMcpState.clients,
                     ],
-                    messages: mutableMessages,
+                    messages: session.messages,
                     readFileState,
                     getAppState,
                     setAppState,
                     customSystemPrompt: options.systemPrompt,
                     appendSystemPrompt: options.appendSystemPrompt,
                     thinkingConfig: options.thinkingConfig,
-                    agents: currentAgents,
+                    agents: mcp.currentAgents,
                   })
               const result = await runSideQuestion({
                 question,
@@ -3676,7 +3253,7 @@ function runHeadlessStreaming(
                       session_id: getSessionId(),
                     } as StdoutMessage)
                   },
-                  initialMessages: mutableMessages.length > 0 ? mutableMessages : undefined,
+                  initialMessages: session.messages.length > 0 ? session.messages : undefined,
                 })
                 if (!handle) {
                   sendControlResponseError(
@@ -3685,7 +3262,7 @@ function runHeadlessStreaming(
                   )
                 } else {
                   bridgeHandle = handle
-                  bridgeLastForwardedIndex = mutableMessages.length
+                  bridgeLastForwardedIndex = session.messages.length
                   // Forward permission requests to the bridge
                   structuredIO.setOnControlRequestSent((request) => {
                     handle.sendControlRequest(request)
@@ -3743,10 +3320,10 @@ function runHeadlessStreaming(
         // Handled in structuredIO.ts, but TypeScript needs the type guard
         continue
       } else if (message.type === 'assistant' || message.type === 'system') {
-        // History replay from bridge: inject into mutableMessages as
+        // History replay from bridge: inject into session.messages as
         // conversation context so the model sees prior turns.
         const internalMsgs = toInternalMessages([message])
-        mutableMessages.push(...internalMsgs)
+        session.appendMessages(...internalMsgs)
         // Echo assistant messages back so CCR displays them
         if (message.type === 'assistant' && options.replayUserMessages) {
           output.enqueue(message)
@@ -4808,7 +4385,10 @@ function getStructuredIO(
           session_id: '',
           message: {
             role: 'user',
-            content: typeof inputPrompt === 'string' ? [{ type: 'text' as const, text: inputPrompt }] : inputPrompt,
+            content:
+              typeof inputPrompt === 'string'
+                ? [{ type: 'text' as const, text: inputPrompt }]
+                : inputPrompt,
           },
           parent_tool_use_id: null,
         } satisfies WireUserMessage),
@@ -4898,11 +4478,7 @@ export async function handleOrphanedPermissionResponse({
   return false
 }
 
-export type DynamicMcpState = {
-  clients: MCPServerConnection[]
-  tools: Tools
-  configs: Record<string, ScopedMcpServerConfig>
-}
+export type { DynamicMcpState } from './headless/mcpRuntime.js'
 
 /**
  * Converts a process transport config to a scoped config.

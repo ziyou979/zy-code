@@ -19,6 +19,7 @@ export const GOD_FILES = [
   'src/utils/hooks.ts',
   'src/utils/sessionStorage.ts',
   'src/utils/messages.ts',
+  'src/cli/print.ts',
 ] as const
 
 function getModifierKinds(node: ts.Node): ts.SyntaxKind[] {

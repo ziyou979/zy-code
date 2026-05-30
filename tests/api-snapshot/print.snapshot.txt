@@ -1,0 +1,107 @@
+// AUTO-GENERATED snapshot of public API for print.ts.
+// Regenerate: bun scripts/api-snapshot.ts
+// Refactor invariant: this file should NOT diff after restructuring,
+// only when exports are intentionally added/removed/renamed.
+
+export async function handleMcpSetServers(
+  servers: Record<string, McpServerConfigForProcessTransport>,
+  sdkState: WireMcpState,
+  dynamicState: DynamicMcpState,
+  setAppState: (f: (prev: AppState) => AppState) => void,
+): Promise<McpSetServersResult> { ... }
+
+export async function handleOrphanedPermissionResponse({
+  message,
+  setAppState,
+  onEnqueued,
+  handledToolUseIds,
+}: {
+  message: WireControlResponse
+  setAppState: (f: (prev: AppState) => AppState) => void
+  onEnqueued?: () => void
+  handledToolUseIds: Set<string>
+}): Promise<boolean> { ... }
+
+export async function reconcileMcpServers(
+  desiredConfigs: Record<string, McpServerConfigForProcessTransport>,
+  currentState: DynamicMcpState,
+  setAppState: (f: (prev: AppState) => AppState) => void,
+): Promise<{
+  response: WireControlMcpSetServersResponse
+  newState: DynamicMcpState
+}> { ... }
+
+export async function runHeadless(
+  inputPrompt: string | AsyncIterable<string>,
+  getAppState: () => AppState,
+  setAppState: (f: (prev: AppState) => AppState) => void,
+  commands: Command[],
+  tools: Tools,
+  sdkMcpConfigs: Record<string, McpSdkServerConfig>,
+  agents: AgentDefinition[],
+  options: {
+    continue: boolean | undefined
+    resume: string | boolean | undefined
+    resumeSessionAt: string | undefined
+    verbose: boolean | undefined
+    outputFormat: string | undefined
+    jsonSchema: Record<string, unknown> | undefined
+    permissionPromptToolName: string | undefined
+    allowedTools: string[] | undefined
+    thinkingConfig: ThinkingConfig | undefined
+    maxTurns: number | undefined
+    maxBudgetUsd: number | undefined
+    taskBudget: { total: number } | undefined
+    systemPrompt: string | undefined
+    appendSystemPrompt: string | undefined
+    userSpecifiedModel: string | undefined
+    fallbackModel: string | undefined
+    teleport: string | true | null | undefined
+    sdkUrl: string | undefined
+    replayUserMessages: boolean | undefined
+    includePartialMessages: boolean | undefined
+    forkSession: boolean | undefined
+    rewindFiles: string | undefined
+    enableAuthStatus: boolean | undefined
+    agent: string | undefined
+    workload: string | undefined
+    setupTrigger?: 'init' | 'maintenance' | undefined
+    sessionStartHooksPromise?: ReturnType<typeof processSessionStartHooks>
+    setSDKStatus?: (status: WireStatus) => void
+  },
+): Promise<void> { ... }
+
+export function canBatchWith(head: QueuedCommand, next: QueuedCommand | undefined): boolean { ... }
+
+export function createCanUseToolWithPermissionPrompt(
+  permissionPromptTool: PermissionPromptTool,
+): CanUseToolFn { ... }
+
+export function getCanUseToolFn(
+  permissionPromptToolName: string | undefined,
+  structuredIO: StructuredIO,
+  getMcpTools: () => Tool[],
+  onPermissionPrompt?: (details: RequiresActionDetails) => void,
+): CanUseToolFn { ... }
+
+export function joinPromptValues(values: PromptValue[]): PromptValue { ... }
+
+export function removeInterruptedMessage(
+  messages: Message[],
+  interruptedUserMessage: UserMessage,
+): void { ... }
+
+export type McpSetServersResult = {
+  response: WireControlMcpSetServersResponse
+  newWireState: WireMcpState
+  newDynamicState: DynamicMcpState
+  sdkServersChanged: boolean
+}
+
+export type WireMcpState = {
+  configs: Record<string, McpSdkServerConfig>
+  clients: MCPServerConnection[]
+  tools: Tools
+}
+
+export type { DynamicMcpState } from './headless/mcpRuntime.js'
