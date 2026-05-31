@@ -3,11 +3,12 @@ import { isInternalBuild } from '../utils/envUtils.js'
 
 export const CONTEXT_1M_BETA_HEADER = 'context-1m-2025-08-07'
 export const CONTEXT_MANAGEMENT_BETA_HEADER = 'context-management-2025-06-27'
-// tool search beta header 因 provider 而异(对齐 Claude Code 的 oh9()):
-// - 直连 Zy/Anthropic API + Foundry:advanced-tool-use-2025-11-20(1P)
-// - Vertex AI / Bedrock:tool-search-tool-2025-10-19(3P)
-export const TOOL_SEARCH_BETA_HEADER_1P = 'advanced-tool-use-2025-11-20'
-export const TOOL_SEARCH_BETA_HEADER_3P = 'tool-search-tool-2025-10-19'
+// tool search beta header 因端点渠道而异(取值同 Claude Code,但不沿用其 1P/3P 视角
+// ——zy 是第三方 harness,Anthropic 对 zy 并非 first-party):
+// - Anthropic 直连 Messages API + Foundry → advanced-tool-use-2025-11-20
+// - Vertex AI / Bedrock(云平台)          → tool-search-tool-2025-10-19
+export const ADVANCED_TOOL_USE_BETA_HEADER = 'advanced-tool-use-2025-11-20'
+export const TOOL_SEARCH_TOOL_BETA_HEADER = 'tool-search-tool-2025-10-19'
 export const EFFORT_BETA_HEADER = 'effort-2025-11-24'
 export const TASK_BUDGETS_BETA_HEADER = 'task-budgets-2026-03-13'
 export const TOKEN_EFFICIENT_TOOLS_BETA_HEADER = 'token-efficient-tools-2026-03-28'

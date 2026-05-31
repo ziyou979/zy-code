@@ -6,13 +6,13 @@ import {
 } from 'src/services/analytics/growthbook.js'
 import { getIsNonInteractiveSession, getSdkBetas } from '../bootstrap/state.js'
 import {
+  ADVANCED_TOOL_USE_BETA_HEADER,
   CLI_INTERNAL_BETA_HEADER,
   CONTEXT_1M_BETA_HEADER,
   CONTEXT_MANAGEMENT_BETA_HEADER,
   SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER,
   TOKEN_EFFICIENT_TOOLS_BETA_HEADER,
-  TOOL_SEARCH_BETA_HEADER_1P,
-  TOOL_SEARCH_BETA_HEADER_3P,
+  TOOL_SEARCH_TOOL_BETA_HEADER,
 } from '../constants/betas.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
 import {
@@ -137,19 +137,19 @@ export function modelSupportsAutoMode(model: string): boolean {
 }
 
 /**
- * 按当前 API provider 返回对应的 tool search beta header(对齐 Claude Code 的 oh9()):
- * - Vertex AI / Bedrock:tool-search-tool-2025-10-19(3P)
- * - 直连 Zy/Anthropic API / Foundry:advanced-tool-use-2025-11-20(1P)
+ * 按当前 API provider 返回对应的 tool search beta header(取值同 Claude Code 的 oh9()):
+ * - Vertex AI / Bedrock → tool-search-tool-2025-10-19
+ * - Anthropic 直连 Messages API / Foundry → advanced-tool-use-2025-11-20
  *
- * bedrock 这里会算出 3P 值,但调用点会把它排除在 betas 数组外(bedrock 经
+ * bedrock 这里会算出对应值,但调用点会把它排除在 betas 数组外(bedrock 经
  * extraBodyParams 而非 header 下发 beta)。
  */
 export function getToolSearchBetaHeader(): string {
   const provider = getAPIProvider()
   if (provider === 'vertex' || provider === 'bedrock') {
-    return TOOL_SEARCH_BETA_HEADER_3P
+    return TOOL_SEARCH_TOOL_BETA_HEADER
   }
-  return TOOL_SEARCH_BETA_HEADER_1P
+  return ADVANCED_TOOL_USE_BETA_HEADER
 }
 
 /**
