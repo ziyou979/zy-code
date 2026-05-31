@@ -124,9 +124,10 @@ function buildLogLabel(
     isGroupHeader?: boolean
     isChild?: boolean
     forkCount?: number
+    shortId?: string
   },
 ): string {
-  const { isGroupHeader = false, isChild = false, forkCount = 0 } = options || {}
+  const { isGroupHeader = false, isChild = false, forkCount = 0, shortId } = options || {}
 
   // TreeSelect will add the prefix, so we just need to account for its width
   const prefixWidth =
@@ -136,10 +137,16 @@ function buildLogLabel(
       ? ` (+${forkCount} other ${forkCount === 1 ? 'session' : 'sessions'})`
       : ''
   const sidechainSuffix = log.isSidechain ? ` ${tSync('logSelector.sidechain')}` : ''
+  // 标题撞车时附加 sessionId 短码以区分(仅在调用方判定为重复标题时传入)
+  const shortIdSuffix = shortId ? ` (${shortId})` : ''
   const maxSummaryWidth =
-    maxLabelWidth - prefixWidth - sidechainSuffix.length - sessionCountSuffix.length
+    maxLabelWidth -
+    prefixWidth -
+    sidechainSuffix.length -
+    sessionCountSuffix.length -
+    shortIdSuffix.length
   const truncatedSummary = normalizeAndTruncateToWidth(getLogDisplayTitle(log), maxSummaryWidth)
-  return `${truncatedSummary}${sidechainSuffix}${sessionCountSuffix}`
+  return `${truncatedSummary}${shortIdSuffix}${sidechainSuffix}${sessionCountSuffix}`
 }
 function buildLogMetadata(
   log: LogOption,
@@ -383,10 +390,15 @@ export function LogSelector({
     treeNodes = []
   } else {
     const sessionGroups = groupLogsBySessionId(displayedLogs)
+    // 不同会话(sessionId)若展示标题相同,在标题后附加 sessionId 短码以便区分
+    const duplicateGroupTitles = computeDuplicateGroupTitles(sessionGroups)
     treeNodes = Array.from(sessionGroups.entries()).map((entry) => {
       const [sessionId, groupLogs] = entry
       const latestLog = groupLogs[0]
       const indexInFiltered = displayedLogs.indexOf(latestLog)
+      const groupShortId = duplicateGroupTitles.has(getLogDisplayTitle(latestLog))
+        ? sessionId.slice(0, 8)
+        : undefined
       const snippet_0 = snippets.get(latestLog)
       const snippetStr = snippet_0 ? formatSnippet(snippet_0, highlightColor) : null
       if (groupLogs.length === 1) {
@@ -399,7 +411,7 @@ export function LogSelector({
             log: latestLog,
             indexInFiltered,
           },
-          label: buildLogLabel(latestLog, maxLabelWidth),
+          label: buildLogLabel(latestLog, maxLabelWidth, { shortId: groupShortId }),
           description: snippetStr ? `${metadata}\n  ${snippetStr}` : metadata,
           dimDescription: true,
         }
@@ -440,6 +452,7 @@ export function LogSelector({
         label: buildLogLabel(latestLog, maxLabelWidth, {
           isGroupHeader: true,
           forkCount,
+          shortId: groupShortId,
         }),
         description: snippetStr ? `${parentMetadata}\n  ${snippetStr}` : parentMetadata,
         dimDescription: true,
@@ -1203,6 +1216,30 @@ function groupLogsBySessionId(filteredLogs: LogOption[]): Map<string, LogOption[
     logs.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime()),
   )
   return groups
+}
+
+/**
+ * 计算需要消歧的标题集合:不同会话(sessionId)组若展示标题完全相同,
+ * 这些标题会被列入,调用方据此在标题后附加 sessionId 短码加以区分。
+ * 每组以最新一条日志(groupLogs[0])的展示标题为准,与列表实际渲染一致。
+ */
+export function computeDuplicateGroupTitles(sessionGroups: Map<string, LogOption[]>): Set<string> {
+  const counts = new Map<string, number>()
+  for (const groupLogs of sessionGroups.values()) {
+    const firstLog = groupLogs[0]
+    if (!firstLog) {
+      continue
+    }
+    const title = getLogDisplayTitle(firstLog)
+    counts.set(title, (counts.get(title) ?? 0) + 1)
+  }
+  const result = new Set<string>()
+  for (const [title, count] of counts) {
+    if (count > 1) {
+      result.add(title)
+    }
+  }
+  return result
 }
 
 /**
