@@ -1,5 +1,6 @@
 import figures from 'figures'
 import React, { useMemo, useState } from 'react'
+import type { ToolUseContext } from 'src/Tool.js'
 import type { WireMessage } from 'src/types/index.js'
 import type {
   AssistantMessage,
@@ -7,7 +8,6 @@ import type {
   SystemMessage,
   UserMessage,
 } from 'src/types/message.js'
-import type { ToolUseContext } from 'src/Tool.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 import type { CommandResultDisplay } from '../../commands.js'
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js'
@@ -86,18 +86,21 @@ export function formatToolUseSummary(name: string, input: unknown): string {
   }
   return name
 }
-const PHASE_LABEL = {
-  needs_input: tSync('backgroundTasks.inputRequired'),
-  plan_ready: tSync('backgroundTasks.ready'),
-} as const
-const AGENT_VERB = {
-  needs_input: tSync('backgroundTasks.waiting'),
-  plan_ready: tSync('backgroundTasks.done'),
-} as const
+// getter：惰性求值，避免模块顶层冻结翻译；语言切换后即时反应。
+const getPhaseLabel = () =>
+  ({
+    needs_input: tSync('backgroundTasks.inputRequired'),
+    plan_ready: tSync('backgroundTasks.ready'),
+  }) as const
+const getAgentVerb = () =>
+  ({
+    needs_input: tSync('backgroundTasks.waiting'),
+    plan_ready: tSync('backgroundTasks.done'),
+  }) as const
 function UltraplanSessionDetail({ session, toolUseContext, onDone, onBack, onKill }) {
   const running = session.status === 'running' || session.status === 'pending'
   const phase = session.ultraplanPhase
-  const statusText = running ? (phase ? PHASE_LABEL[phase] : 'running') : session.status
+  const statusText = running ? (phase ? getPhaseLabel()[phase] : 'running') : session.status
   const elapsedTime = useElapsedTime(session.startTime, running, 1000, 0, session.endTime)
   let spawns = 0
   let calls = 0
@@ -195,7 +198,7 @@ function UltraplanSessionDetail({ session, toolUseContext, onDone, onBack, onKil
             <Text>
               {phase === 'plan_ready' && <Text color="success">{figures.tick} </Text>}
               {agentsWorking} {agentLabel}{' '}
-              {phase ? AGENT_VERB[phase] : tSync('backgroundTasks.working')} · {toolCalls} tool{' '}
+              {phase ? getAgentVerb()[phase] : tSync('backgroundTasks.working')} · {toolCalls} tool{' '}
               {toolCallLabel}
             </Text>
           }
@@ -246,11 +249,12 @@ function UltraplanSessionDetail({ session, toolUseContext, onDone, onBack, onKil
   )
 }
 const STAGES = ['finding', 'verifying', 'synthesizing'] as const
-const STAGE_LABELS: Record<(typeof STAGES)[number], string> = {
+// getter：惰性求值，避免模块顶层冻结翻译；语言切换后即时反应。
+const getStageLabels = (): Record<(typeof STAGES)[number], string> => ({
   finding: tSync('backgroundTasks.stageFind'),
   verifying: tSync('backgroundTasks.stageVerify'),
   synthesizing: tSync('backgroundTasks.stageDedupe'),
-}
+})
 
 // Setup → Find → Verify → Dedupe 流水线。当前阶段显示为云青色，
 // 其余阶段变暗。完成后，所有阶段变暗并附加绿色 ✓。
@@ -266,9 +270,9 @@ function StagePipeline({ stage, completed, hasProgress }) {
       <React.Fragment key={stage}>
         {index > 0 && <Text dimColor={true}> → </Text>}
         {isCurrent ? (
-          <Text color="background">{STAGE_LABELS[stage]}</Text>
+          <Text color="background">{getStageLabels()[stage]}</Text>
         ) : (
-          <Text dimColor={true}>{STAGE_LABELS[stage]}</Text>
+          <Text dimColor={true}>{getStageLabels()[stage]}</Text>
         )}
       </React.Fragment>
     )

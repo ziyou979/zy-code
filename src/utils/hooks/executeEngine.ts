@@ -22,6 +22,8 @@ function getHookDefinitionsForTelemetry(
       return { type: 'prompt', prompt: hook.prompt }
     } else if (hook.type === 'http') {
       return { type: 'http', command: hook.url }
+    } else if (hook.type === 'mcp_tool') {
+      return { type: 'mcp_tool', name: `${hook.server}/${hook.tool}` }
     } else if (hook.type === 'function') {
       return { type: 'function', name: 'function' }
     } else if (hook.type === 'callback') {
@@ -31,6 +33,7 @@ function getHookDefinitionsForTelemetry(
   })
 }
 
+import type { PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type { HookInput } from 'src/types/index.js'
 import { addToTurnHookDuration, getSessionId, getStatsStore } from '../../bootstrap/state.js'
 import {
@@ -44,7 +47,6 @@ import {
   startHookSpan,
 } from '../../services/telemetry/sessionTracing.js'
 import type { ToolUseContext } from '../../Tool.js'
-import type { PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../debug.js'
 import { errorMessage } from '../errors.js'
@@ -55,6 +57,7 @@ import { execCommandHook } from './commandRunner.js'
 import { shouldSkipHookDueToTrust, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from './config.js'
 import { execAgentHook } from './execAgentHook.js'
 import { execHttpHook } from './execHttpHook.js'
+import { execMcpToolHook } from './execMcpToolHook.js'
 import { execPromptHook } from './execPromptHook.js'
 import { executeFunctionHook, executeHookCallback } from './functionHooks.js'
 import {
@@ -69,6 +72,8 @@ import {
   type MatchedHook,
 } from './matcher.js'
 import { getSessionHookCallback } from './sessionHooks.js'
+import { maybeSpillHookOutput } from './spillOutput.js'
+import { validateTerminalSequence } from './terminalSequence.js'
 import type { AggregatedHookResult, HookResult } from './types.js'
 
 export async function* executeHooks({
@@ -386,6 +391,32 @@ export async function* executeHooks({
         return
       }
 
+      if (hook.type === 'mcp_tool') {
+        if (!toolUseContext) {
+          throw new Error('ToolUseContext is required for mcp_tool hooks. This is a bug.')
+        }
+        const mcpResult = await execMcpToolHook(
+          hook,
+          hookName,
+          hookEvent,
+          jsonInput,
+          abortSignal,
+          toolUseContext,
+          toolUseID,
+        )
+        // Inject timing fields for hook visibility
+        if ((mcpResult.message as any)?.type === 'attachment') {
+          const att = (mcpResult.message as any).attachment
+          if (att.type === 'hook_success' || att.type === 'hook_non_blocking_error') {
+            att.command = hookCommand
+            att.durationMs = Date.now() - hookStartMs
+          }
+        }
+        yield mcpResult
+        cleanup?.()
+        return
+      }
+
       if (hook.type === 'http') {
         emitHookStarted(hookId, hookName, hookEvent)
 
@@ -546,6 +577,7 @@ export async function* executeHooks({
         skillRoot,
         forceSyncExecution,
         boundRequestPrompt,
+        hookInput.effort?.level,
       )
       cleanup?.()
       const durationMs = Date.now() - hookStartMs
@@ -716,7 +748,9 @@ export async function* executeHooks({
             hookName,
             toolUseID,
             hookEvent,
-            content: result.stdout.trim(),
+            // 非 JSON 的 hook stdout 会作为 content 注入模型上下文：超阈值落盘，
+            // 只留预览+路径，防止写错的 hook 撑爆上下文。
+            content: maybeSpillHookOutput(hookName, result.stdout.trim()).inline,
             stdout: result.stdout,
             stderr: result.stderr,
             exitCode: result.status,
@@ -863,6 +897,19 @@ export async function* executeHooks({
       }
     }
 
+    // 终端控制序列：所有 hook 事件的统一写入点。白名单校验后直接写 stdout
+    // （仅放行 OSC 0/9 + BEL，CSI 被丢弃，避免破坏 Ink 渲染）。
+    if (result.terminalSequence) {
+      const safe = validateTerminalSequence(result.terminalSequence)
+      if (safe) {
+        process.stdout.write(safe)
+      } else {
+        logForDebugging(
+          `Hook ${hookEvent} (${getHookDisplayText(result.hook)}) terminalSequence rejected by whitelist`,
+        )
+      }
+    }
+
     // 从 hook 收集附加上下文
     if (result.additionalContext) {
       logForDebugging(
@@ -888,6 +935,14 @@ export async function* executeHooks({
       )
       yield {
         watchPaths: result.watchPaths,
+      }
+    }
+
+    // 如果提供了 updatedToolOutput 则产出（来自 PostToolUse hook，全工具）
+    if (result.updatedToolOutput !== undefined) {
+      logForDebugging(`Hook ${hookEvent} (${getHookDisplayText(result.hook)}) replaced tool output`)
+      yield {
+        updatedToolOutput: result.updatedToolOutput,
       }
     }
 
@@ -971,6 +1026,13 @@ export async function* executeHooks({
     if (result.retry) {
       yield {
         retry: result.retry,
+      }
+    }
+    // MessageDisplay：产出显示变换/隐藏决策
+    if (result.transformedText !== undefined || result.hide !== undefined) {
+      yield {
+        ...(result.transformedText !== undefined && { transformedText: result.transformedText }),
+        ...(result.hide !== undefined && { hide: result.hide }),
       }
     }
     // 如果提供了 elicitation 响应则产出（来自 Elicitation hook）

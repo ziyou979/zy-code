@@ -8,6 +8,7 @@ import {
   getOriginalCwd,
   getUseCoworkPlugins,
 } from '../../bootstrap/state.js'
+import { setLanguage } from '../../i18n/languageStore.js'
 import { getRemoteManagedSettingsSyncFromCache } from '../../services/remoteManagedSettings/syncCacheState.js'
 import { uniq } from '../array.js'
 import { logForDebugging } from '../debug.js'
@@ -779,6 +780,10 @@ export function getSettingsWithErrors(): SettingsWithErrors {
   const result = loadSettingsFromDisk()
   profileCheckpoint('loadSettingsFromDisk_end')
   setSessionSettingsCache(result)
+  // 把生效语言推入 i18n 语言状态叶子（断环：i18n 读 store，不反向依赖 settings）。
+  // 命中缓存的快路径无需重推（设缓存时已推过）；resetSettingsCache 后的重载会再次经此推送，
+  // 因此磁盘改动 / 变更检测触发的语言变化会自动同步。
+  setLanguage(result.settings?.language)
   return result
 }
 

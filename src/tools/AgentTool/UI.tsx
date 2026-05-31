@@ -14,6 +14,12 @@ import { ToolUseLoader } from '../../components/ToolUseLoader.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { getDumpPromptsPath } from '../../services/api/dumpPrompts.js'
+import type { ModelAlias } from '../../services/model/aliases.js'
+import {
+  getMainLoopModel,
+  parseUserSpecifiedModel,
+  renderModelName,
+} from '../../services/model/model.js'
 import { findToolByName, type Tools } from '../../Tool.js'
 import type { ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
 import type { Message, ProgressMessage } from '../../types/message.js'
@@ -31,12 +37,6 @@ import {
   createAssistantMessage,
   EMPTY_LOOKUPS,
 } from '../../utils/messages.js'
-import type { ModelAlias } from '../../services/model/aliases.js'
-import {
-  getMainLoopModel,
-  parseUserSpecifiedModel,
-  renderModelName,
-} from '../../services/model/model.js'
 import type { Theme, ThemeName } from '../../utils/theme.js'
 import type { outputSchema, Progress, RemoteLaunchedOutput } from './AgentTool.js'
 import { inputSchema } from './AgentTool.js'
@@ -471,7 +471,8 @@ export function renderToolUseTag(
   }
   return <>{tags}</>
 }
-const INITIALIZING_TEXT = tSync('agent.initializing')
+// getter：惰性求值（两处渲染调用），避免模块顶层冻结翻译；语言切换后即时反应。
+const getInitializingText = () => tSync('agent.initializing')
 export function renderToolUseProgressMessage(
   progressMessages: ProgressMessage<Progress>[],
   {
@@ -494,7 +495,7 @@ export function renderToolUseProgressMessage(
   if (!progressMessages.length) {
     return (
       <MessageResponse height={1}>
-        <Text dimColor>{INITIALIZING_TEXT}</Text>
+        <Text dimColor>{getInitializingText()}</Text>
       </MessageResponse>
     )
   }
@@ -597,7 +598,7 @@ export function renderToolUseProgressMessage(
   if (displayedMessages.length === 0 && !(isTranscriptMode && prompt)) {
     return (
       <MessageResponse height={1}>
-        <Text dimColor>{INITIALIZING_TEXT}</Text>
+        <Text dimColor>{getInitializingText()}</Text>
       </MessageResponse>
     )
   }

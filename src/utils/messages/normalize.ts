@@ -1,7 +1,7 @@
 import { type UUID } from 'node:crypto'
 import isObject from 'lodash-es/isObject.js'
 import last from 'lodash-es/last.js'
-import { NO_CONTENT_MESSAGE } from '../../constants/messages.js'
+import { getNoContentMessage } from '../../constants/messages.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -607,7 +607,7 @@ export function ensureNonEmptyAssistantContent(
         ...message,
         message: {
           ...message.message,
-          content: [{ type: 'text' as const, text: NO_CONTENT_MESSAGE, citations: [] }],
+          content: [{ type: 'text' as const, text: getNoContentMessage(), citations: [] }],
         },
       }
     }

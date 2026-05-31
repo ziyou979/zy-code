@@ -18,7 +18,6 @@ import type { inputSchema, Output, Progress } from './SkillTool.js'
 
 type Input = z.infer<ReturnType<typeof inputSchema>>
 const MAX_PROGRESS_MESSAGES_TO_SHOW = 3
-const INITIALIZING_TEXT = tSync('skill.initializing')
 export function renderToolResultMessage(output: Output): React.ReactNode {
   // 处理分叉的技能结果
   if ('status' in output && output.status === 'forked') {
@@ -79,7 +78,7 @@ export function renderToolUseProgressMessage(
   if (!progressMessages.length) {
     return (
       <MessageResponse height={1}>
-        <Text dimColor>{INITIALIZING_TEXT}</Text>
+        <Text dimColor>{tSync('skill.initializing')}</Text>
       </MessageResponse>
     )
   }

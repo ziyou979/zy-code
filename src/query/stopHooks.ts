@@ -59,14 +59,10 @@ type StopHookResult = {
   preventContinuation: boolean
 }
 
-// S3-2: stop hook block cap — 连续阻止次数计数器
-const DEFAULT_STOP_HOOK_BLOCK_CAP = 8
-let _consecutiveBlockCount = 0
-
-/** 重置连续阻止计数（每轮查询开始时调用） */
-export function resetConsecutiveBlockCount(): void {
-  _consecutiveBlockCount = 0
-}
+// stop hook 连续 block 熔断在 query.ts 的查询循环里实现（State.stopHookBlockingCount
+// + getStopHookBlockCap()）：那里才是真正会死循环的路径——stop hook exit 2 返回
+// blockingErrors（preventContinuation:false），循环 continue 重试。preventContinuation
+// 路径本就 return 结束 turn，不会循环，无需在此计数。
 
 export async function* handleStopHooks(
   messagesForQuery: Message[],
@@ -194,10 +190,7 @@ export async function* handleStopHooks(
     const hookInfos: StopHookInfo[] = []
 
     for await (const result of generator) {
-      // S3-1: hook 返回的终端控制序列直接写入 stdout
-      if (result.terminalSequence) {
-        process.stdout.write(result.terminalSequence)
-      }
+      // terminalSequence 已在 executeEngine 统一校验并写 stdout（含白名单），此处不再处理。
       if (result.message) {
         yield result.message
         // Track toolUseID from progress messages and count hooks
@@ -263,17 +256,6 @@ export async function* handleStopHooks(
       if (result.preventContinuation) {
         preventedContinuation = true
         stopReason = result.stopReason || 'Stop hook prevented continuation'
-        // S3-2: stop hook block cap — 连续阻止次数超限后强制终止轮次
-        _consecutiveBlockCount++
-        const blockCap =
-          parseInt(process.env.ZY_CODE_STOP_HOOK_BLOCK_CAP || '', 10) || DEFAULT_STOP_HOOK_BLOCK_CAP
-        if (_consecutiveBlockCount >= blockCap) {
-          logForDebugging(
-            `Stop hook block cap reached: ${_consecutiveBlockCount}/${blockCap}, forcing end of turn`,
-            { level: 'warn' },
-          )
-          stopReason = `Stop hook blocked ${_consecutiveBlockCount} consecutive times (cap: ${blockCap}), ending turn`
-        }
         // Create attachment to track the stopped continuation (for structured data)
         yield createAttachmentMessage({
           type: 'hook_stopped_continuation',

@@ -739,6 +739,7 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   debug: 'commands.debug',
   schedule: 'commands.schedule',
   loop: 'commands.loop',
+  goal: 'commands.goal',
 }
 
 /**

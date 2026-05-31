@@ -1,16 +1,8 @@
 import { type ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
-import type {
-  AsyncHookJSONOutput,
-  HookEvent,
-  HookJSONOutput,
-  SyncHookJSONOutput,
-} from 'src/types/index.js'
 import { formatShellPrefixCommand } from 'src/shell-eval/bash/shellPrefix.js'
 import { getCachedPowerShellPath } from 'src/shell-eval/shared/powershellDetection.js'
 import { buildPowerShellArgs } from 'src/shell-eval/shared/powershellProvider.js'
 import { DEFAULT_HOOK_SHELL } from 'src/shell-eval/shared/shellProvider.js'
-import { getOriginalCwd, getProjectRoot } from '../../bootstrap/state.js'
-import { TaskOutput } from '../../services/task/TaskOutput.js'
 import {
   hookJSONOutputSchema,
   isAsyncHookJSONOutput,
@@ -18,6 +10,14 @@ import {
   type PromptResponse,
   promptRequestSchema,
 } from 'src/types/hooks/index.js'
+import type {
+  AsyncHookJSONOutput,
+  HookEvent,
+  HookJSONOutput,
+  SyncHookJSONOutput,
+} from 'src/types/index.js'
+import { getOriginalCwd, getProjectRoot } from '../../bootstrap/state.js'
+import { TaskOutput } from '../../services/task/TaskOutput.js'
 import { createAttachmentMessage } from '../attachments.js'
 import { getCwd } from '../cwd.js'
 import { logForDebugging } from '../debug.js'
@@ -42,6 +42,7 @@ import { findGitBashPath, windowsPathToPosixPath } from '../windowsPaths.js'
 import { registerPendingAsyncHook } from './AsyncHookRegistry.js'
 import { TOOL_HOOK_EXECUTION_TIMEOUT_MS } from './config.js'
 import { emitHookResponse, startHookProgressInterval } from './hookEvents.js'
+import { maybeSpillHookOutput } from './spillOutput.js'
 import type { ElicitationResponse, HookResult } from './types.js'
 
 function executeInBackground({
@@ -291,6 +292,11 @@ export function processHookJSONOutput({
     result.systemMessage = json.systemMessage
   }
 
+  // 终端控制序列（raw）。白名单校验延后到 executeEngine 写 stdout 前统一做。
+  if (json.terminalSequence !== undefined) {
+    result.terminalSequence = json.terminalSequence
+  }
+
   // 处理 PreToolUse 特定逻辑
   if (
     json.hookSpecificOutput?.hookEventName === 'PreToolUse' &&
@@ -364,6 +370,9 @@ export function processHookJSONOutput({
       case 'UserPromptSubmit':
         result.additionalContext = json.hookSpecificOutput.additionalContext
         break
+      case 'UserPromptExpansion':
+        result.additionalContext = json.hookSpecificOutput.additionalContext
+        break
       case 'SessionStart':
         result.additionalContext = json.hookSpecificOutput.additionalContext
         result.initialUserMessage = json.hookSpecificOutput.initialUserMessage
@@ -379,6 +388,10 @@ export function processHookJSONOutput({
         break
       case 'PostToolUse':
         result.additionalContext = json.hookSpecificOutput.additionalContext
+        // 通用结果覆盖（全工具，string），优先于 updatedMCPToolOutput
+        if (json.hookSpecificOutput.updatedToolOutput !== undefined) {
+          result.updatedToolOutput = json.hookSpecificOutput.updatedToolOutput
+        }
         // 如果提供了 updatedMCPToolOutput 则提取
         if (json.hookSpecificOutput.updatedMCPToolOutput) {
           result.updatedMCPToolOutput = json.hookSpecificOutput.updatedMCPToolOutput
@@ -387,8 +400,19 @@ export function processHookJSONOutput({
       case 'PostToolUseFailure':
         result.additionalContext = json.hookSpecificOutput.additionalContext
         break
+      case 'PostToolBatch':
+        result.additionalContext = json.hookSpecificOutput.additionalContext
+        break
       case 'PermissionDenied':
         result.retry = json.hookSpecificOutput.retry
+        break
+      case 'MessageDisplay':
+        if (json.hookSpecificOutput.transformedText !== undefined) {
+          result.transformedText = json.hookSpecificOutput.transformedText
+        }
+        if (json.hookSpecificOutput.hide !== undefined) {
+          result.hide = json.hookSpecificOutput.hide
+        }
         break
       case 'PermissionRequest':
         // 提取权限请求决策
@@ -434,6 +458,12 @@ export function processHookJSONOutput({
         }
         break
     }
+  }
+
+  // additionalContext 会被直接注入模型上下文：超阈值时落盘，只保留预览+路径，
+  // 防止写错的 hook 撑爆上下文。覆盖所有事件（含 HTTP hook 路径）。
+  if (result.additionalContext) {
+    result.additionalContext = maybeSpillHookOutput(hookName, result.additionalContext).inline
   }
 
   return {
@@ -486,6 +516,9 @@ export async function execCommandHook(
   skillRoot?: string,
   forceSyncExecution?: boolean,
   requestPrompt?: (request: PromptRequest) => Promise<PromptResponse>,
+  // 当前 turn 的 effort 等级（来自 hookInput.effort.level）。作为 $ZY_CODE_EFFORT
+  // 暴露给 hook 子进程，便于 bash hook 无需解析 stdin JSON 即可差异化逻辑。
+  effortLevel?: string,
 ): Promise<{
   stdout: string
   stderr: string
@@ -578,10 +611,15 @@ export async function execCommandHook(
     }
   }
 
-  // 在 Windows（仅 bash）上，为 .sh 脚本自动前缀 `bash`，使其
-  // 执行而非用默认文件处理器打开。PowerShell 原生运行 .ps1
-  // 文件——无需前缀。
-  if (isWindows && !isPowerShell && command.trim().match(/\.sh(\s|$|")/)) {
+  // 在 Windows（仅 bash、仅 shell form）上，为 .sh 脚本自动前缀 `bash`，使其
+  // 执行而非用默认文件处理器打开。exec form（hook.args）直接 spawn 可执行文件，
+  // 不经 shell，无需前缀。PowerShell 原生运行 .ps1 文件——无需前缀。
+  if (
+    isWindows &&
+    !isPowerShell &&
+    hook.args === undefined &&
+    command.trim().match(/\.sh(\s|$|")/)
+  ) {
     if (!command.trim().startsWith('bash ')) {
       command = `bash ${command}`
     }
@@ -602,6 +640,7 @@ export async function execCommandHook(
   const envVars: NodeJS.ProcessEnv = {
     ...subprocessEnv(),
     CLAUDE_PROJECT_DIR: toHookPath(projectDir),
+    ...(effortLevel && { ZY_CODE_EFFORT: effortLevel }),
   }
 
   // 插件和技能 hook 都设置 CLAUDE_PLUGIN_ROOT（技能使用相同
@@ -686,6 +725,16 @@ export async function execCommandHook(
       env: envVars,
       cwd: safeCwd,
       // 在 Windows 上防止显示控制台窗口（在其他平台上无效）
+      windowsHide: true,
+    }) as ChildProcessWithoutNullStreams
+  } else if (hook.args !== undefined) {
+    // Exec form：直接 spawn 可执行文件，不经 shell——路径含空格无需转义。
+    // 使用 command（已做 ${CLAUDE_PLUGIN_ROOT}/user_config 替换），跳过 .sh 前缀与
+    // ZY_CODE_SHELL_PREFIX（均为 shell-form 行为）。args 按字面传递（exec form 无 shell
+    // 展开，与 Claude Code 一致）。Windows 下用原生可执行路径（不经 Git Bash POSIX 转换）。
+    child = spawn(command, hook.args, {
+      env: envVars,
+      cwd: safeCwd,
       windowsHide: true,
     }) as ChildProcessWithoutNullStreams
   } else {

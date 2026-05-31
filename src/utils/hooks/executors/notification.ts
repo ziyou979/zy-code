@@ -1,8 +1,12 @@
 import { randomUUID } from 'node:crypto'
-import type { NotificationHookInput, UserPromptSubmitHookInput } from 'src/types/index.js'
+import type { PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
+import type {
+  NotificationHookInput,
+  UserPromptExpansionHookInput,
+  UserPromptSubmitHookInput,
+} from 'src/types/index.js'
 import { getSessionId } from '../../../bootstrap/state.js'
 import type { ToolUseContext } from '../../../Tool.js'
-import type { PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { executeHooks } from '../executeEngine.js'
 import { hasHookForEvent } from '../matcher.js'
@@ -52,6 +56,45 @@ export async function* executeUserPromptSubmitHooks(
     ...createBaseHookInput(permissionMode),
     hook_event_name: 'UserPromptSubmit',
     prompt,
+  }
+
+  yield* executeHooks({
+    hookInput,
+    toolUseID: randomUUID(),
+    signal: toolUseContext.abortController.signal,
+    timeoutMs: TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+    toolUseContext,
+    requestPrompt,
+  })
+}
+
+/**
+ * Execute UserPromptExpansion hooks: fired after @mention/$var/slash expansion, just before
+ * UserPromptSubmit. Lets hooks audit the fully expanded content the model will actually see
+ * (e.g. the contents injected by @file references), which UserPromptSubmit cannot — it only sees
+ * the original prompt text.
+ */
+export async function* executeUserPromptExpansionHooks(
+  prompt: string,
+  expandedText: string,
+  permissionMode: string,
+  toolUseContext: ToolUseContext,
+  requestPrompt?: (
+    sourceName: string,
+    toolInputSummary?: string | null,
+  ) => (request: PromptRequest) => Promise<PromptResponse>,
+): AsyncGenerator<AggregatedHookResult> {
+  const appState = toolUseContext.getAppState()
+  const sessionId = toolUseContext.agentId ?? getSessionId()
+  if (!hasHookForEvent('UserPromptExpansion', appState, sessionId)) {
+    return
+  }
+
+  const hookInput: UserPromptExpansionHookInput = {
+    ...createBaseHookInput(permissionMode),
+    hook_event_name: 'UserPromptExpansion',
+    prompt,
+    expanded_text: expandedText,
   }
 
   yield* executeHooks({

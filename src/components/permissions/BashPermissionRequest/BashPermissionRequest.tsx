@@ -10,6 +10,8 @@ import {
   logEvent,
 } from '../../../services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../../../services/analytics/metadata.js'
+import { SandboxManager } from '../../../services/sandbox/sandbox-adapter.js'
+import { getCompoundCommandPrefixesStatic } from '../../../shell-eval/bash/prefix.js'
 import { useAppState } from '../../../state/AppState.js'
 import { BashTool } from '../../../tools/BashTool/BashTool.js'
 import {
@@ -19,7 +21,6 @@ import {
 import { getDestructiveCommandWarning } from '../../../tools/BashTool/destructiveCommandWarning.js'
 import { parseSedEditCommand } from '../../../tools/BashTool/sedEditParser.js'
 import { shouldUseSandbox } from '../../../tools/BashTool/shouldUseSandbox.js'
-import { getCompoundCommandPrefixesStatic } from '../../../shell-eval/bash/prefix.js'
 import {
   createPromptRuleContent,
   generateGenericDescription,
@@ -28,7 +29,6 @@ import {
 } from '../../../utils/permissions/bashClassifier.js'
 import { extractRules } from '../../../utils/permissions/PermissionUpdate.js'
 import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js'
-import { SandboxManager } from '../../../services/sandbox/sandbox-adapter.js'
 import { Select } from '../../CustomSelect/select.js'
 import { ShimmerChar } from '../../Spinner/ShimmerChar.js'
 import { useShimmerAnimation } from '../../Spinner/useShimmerAnimation.js'
@@ -43,8 +43,6 @@ import { useShellPermissionFeedback } from '../useShellPermissionFeedback.js'
 import { logUnaryPermissionEvent } from '../utils.js'
 import { bashToolUseOptions } from './bashToolUseOptions.js'
 
-const CHECKING_TEXT = tSync('permission.attemptingAutoApprove')
-
 // Isolates the 20fps shimmer clock from BashPermissionRequestInner. Before this
 // extraction, useShimmerAnimation lived inside the 535-line Inner body, so every
 // 50ms clock tick re-rendered the entire dialog (PermissionDialog + Select +
@@ -52,6 +50,8 @@ const CHECKING_TEXT = tSync('permission.attemptingAutoApprove')
 // has a Compiler bailout (see below), so nothing was auto-memoized — the full
 // JSX tree was reconstructed 20-60 times per classifier check.
 function ClassifierCheckingSubtitle() {
+  // 组件内求值：每次渲染读当前语言，避免模块顶层冻结翻译。
+  const CHECKING_TEXT = tSync('permission.attemptingAutoApprove')
   const [ref, glimmerIndex] = useShimmerAnimation('requesting', CHECKING_TEXT, false)
   return (
     <Box ref={ref}>

@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 // ---- Mock 重依赖模块（阻断 analytics/i18n 等副作用链） ----
 function setupMocks() {
   mock.module('../../../src/constants/messages.js', () => ({
-    NO_CONTENT_MESSAGE: '[no content]',
+    getNoContentMessage: () => '[no content]',
   }))
   mock.module('../../../src/services/analytics/growthbook.js', () => ({
     getFeatureValue_CACHED_MAY_BE_STALE: (_k: string, def: unknown) => def,

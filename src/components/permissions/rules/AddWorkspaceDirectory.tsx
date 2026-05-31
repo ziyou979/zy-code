@@ -8,8 +8,8 @@ import {
 import TextInput from '../../../components/TextInput.js'
 import { Box, Text } from '../../../ink.js'
 import { useKeybinding } from '../../../keybindings/useKeybinding.js'
-import type { ToolPermissionContext } from '../../../Tool.js'
 import { getDirectoryCompletions } from '../../../services/suggestions/directoryCompletion.js'
+import type { ToolPermissionContext } from '../../../Tool.js'
 import { ConfigurableShortcutHint } from '../../ConfigurableShortcutHint.js'
 import { Select } from '../../CustomSelect/select.js'
 import { Byline } from '../../design-system/Byline.js'
@@ -24,10 +24,11 @@ type Props = {
   directoryPath?: string // When directoryPath is provided, show selection options instead of input
 }
 type RememberDirectoryOption = 'yes-session' | 'yes-remember' | 'no'
-const REMEMBER_DIRECTORY_OPTIONS: Array<{
+// getter：惰性求值，避免模块顶层冻结翻译；语言切换后即时反应。
+const getRememberDirectoryOptions = (): Array<{
   value: RememberDirectoryOption
   label: string
-}> = [
+}> => [
   {
     value: 'yes-session',
     label: tSync('permissionRules.yesForThisSession'),
@@ -206,7 +207,7 @@ export function AddWorkspaceDirectory({
             <Box flexDirection="column" gap={1}>
               <DirectoryDisplay path={directoryPath} />
               <Select
-                options={REMEMBER_DIRECTORY_OPTIONS}
+                options={getRememberDirectoryOptions()}
                 onChange={handleSelect}
                 onCancel={() => handleSelect('no')}
               />

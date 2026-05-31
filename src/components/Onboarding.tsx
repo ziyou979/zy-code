@@ -2,13 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { setupTerminal, shouldOfferTerminalSetup } from '../commands/terminalSetup/terminalSetup.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { tSync, warmI18n } from '../i18n/index.js'
+import { setLanguage } from '../i18n/languageStore.js'
 import type { UiLanguage } from '../i18n/types.js'
 import { Box, Link, Newline, Text, useTheme } from '../ink.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
+import { PROVIDER_REGISTRY } from '../services/model/providerRegistry.js'
 import { normalizeApiKeyForConfig } from '../utils/authPortable.js'
 import { saveGlobalConfig } from '../utils/config.js'
 import { toPersistableEffort } from '../utils/effort.js'
-import { PROVIDER_REGISTRY } from '../services/model/providerRegistry.js'
 import { updateSettingsForSource } from '../utils/settings/settings.js'
 import { Select } from './CustomSelect/select.js'
 import { effortLevelToSymbol } from './EffortIndicator.js'
@@ -127,6 +128,9 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   async function handleLanguageSelection(lang: UiLanguage) {
     // Save language to user settings
     updateSettingsForSource('userSettings', { language: lang === 'en' ? undefined : lang })
+    // 推送到 i18n 语言状态叶子（对标 i18next.changeLanguage）—— 必须先于 warmI18n，
+    // 因为应用内切换只 resetCache 不急加载，store 不推则 warmI18n 仍读到旧语言。
+    setLanguage(lang === 'en' ? undefined : lang)
     // Re-warm i18n cache with the new language so subsequent steps render in the selected language
     await warmI18n()
     goToNextStep()

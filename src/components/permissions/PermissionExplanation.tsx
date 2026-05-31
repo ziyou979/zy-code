@@ -13,8 +13,9 @@ import {
 import { ShimmerChar } from '../Spinner/ShimmerChar.js'
 import { useShimmerAnimation } from '../Spinner/useShimmerAnimation.js'
 
-const LOADING_MESSAGE = tSync('permission.loadingExplanation')
 function ShimmerLoadingText() {
+  // 组件内求值：每次渲染读当前语言，避免模块顶层冻结翻译。
+  const LOADING_MESSAGE = tSync('permission.loadingExplanation')
   const [ref, glimmerIndex] = useShimmerAnimation('responding', LOADING_MESSAGE, false)
   const shimmerChars = LOADING_MESSAGE.split('').map((char, index) => (
     <ShimmerChar

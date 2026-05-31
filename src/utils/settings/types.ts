@@ -19,6 +19,7 @@ export {
   HooksSchema,
   type HooksSettings,
   type HttpHook,
+  type McpToolHook,
   type PromptHook,
 } from '../../schemas/hooks.js'
 

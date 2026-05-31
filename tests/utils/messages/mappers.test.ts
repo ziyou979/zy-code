@@ -19,7 +19,7 @@ function setupMocks() {
     SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
   }))
   mock.module('../../../src/constants/messages.js', () => ({
-    NO_CONTENT_MESSAGE: '[no content]',
+    getNoContentMessage: () => '[no content]',
   }))
   mock.module('../../../src/services/analytics/growthbook.js', () => ({
     getFeatureValue_CACHED_MAY_BE_STALE: (_k: string, def: unknown) => def,
@@ -115,7 +115,10 @@ function setupMocks() {
     getModelStrings: () => null,
     getModelUsage: () => null,
     getOauthTokenFromFd: () => null,
-    getOriginalCwd: () => null,
+    // 返回有效路径而非 null：真实 getOriginalCwd 永远是字符串。null 桩会经 bun 全局 mock
+    // 注册表泄漏到并发运行的 hook 测试，使其真实 createBaseHookInput → getProjectDir(null)
+    // → sanitizePath(null) 崩溃。给个有效路径既符合真实语义，泄漏后也无害。
+    getOriginalCwd: () => '/tmp/zy-test-cwd',
     getParentSessionId: () => null,
     getPlanSlugCache: () => null,
     getPrCounter: () => null,

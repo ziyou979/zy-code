@@ -10,15 +10,13 @@ const TAB_PADDING = 2 // 标签文本前后的空格：" {tab} "
 const HASH_PREFIX_LENGTH = 1 // "#" prefix for non-All tabs
 const LEFT_ARROW_PREFIX = '← '
 const RIGHT_HINT_WITH_COUNT_PREFIX = '→'
-const RIGHT_HINT_SUFFIX = tSync('tagTabs.rightHint')
-const RIGHT_HINT_NO_COUNT = tSync('tagTabs.rightHintNoCount')
+// getter：惰性求值，避免模块顶层冻结翻译；宽度（依赖译文长度）改在渲染期计算。
+const getRightHintSuffix = () => tSync('tagTabs.rightHint')
+const getRightHintNoCount = () => tSync('tagTabs.rightHintNoCount')
 const MAX_OVERFLOW_DIGITS = 2 // 假设最多 99 个隐藏标签用于宽度计算
 
 // 计算出的宽度
 const LEFT_ARROW_WIDTH = LEFT_ARROW_PREFIX.length + MAX_OVERFLOW_DIGITS + 1 // "← NN " with gap
-const RIGHT_HINT_WIDTH_WITH_COUNT =
-  RIGHT_HINT_WITH_COUNT_PREFIX.length + MAX_OVERFLOW_DIGITS + RIGHT_HINT_SUFFIX.length // "→NN (tab to cycle)"
-const RIGHT_HINT_WIDTH_NO_COUNT = RIGHT_HINT_NO_COUNT.length
 type Props = {
   tabs: string[]
   selectedIndex: number
@@ -65,7 +63,10 @@ export function TagTabs({
   const resumeLabelWidth = resumeLabel.length + 1 // +1 for gap
 
   // 计算有多少空间用于标签（使用最坏情况的提示宽度）
-  const rightHintWidth = Math.max(RIGHT_HINT_WIDTH_WITH_COUNT, RIGHT_HINT_WIDTH_NO_COUNT)
+  const rightHintWidth = Math.max(
+    RIGHT_HINT_WITH_COUNT_PREFIX.length + MAX_OVERFLOW_DIGITS + getRightHintSuffix().length, // "→NN (tab to cycle)"
+    getRightHintNoCount().length,
+  )
   const maxTabsWidth = availableWidth - resumeLabelWidth - rightHintWidth - 2 // 2 for gaps
 
   // 将 selectedIndex 钳位到有效范围
@@ -151,10 +152,10 @@ export function TagTabs({
         <Text dimColor>
           {RIGHT_HINT_WITH_COUNT_PREFIX}
           {hiddenRight}
-          {RIGHT_HINT_SUFFIX}
+          {getRightHintSuffix()}
         </Text>
       ) : (
-        <Text dimColor>{RIGHT_HINT_NO_COUNT}</Text>
+        <Text dimColor>{getRightHintNoCount()}</Text>
       )}
     </Box>
   )

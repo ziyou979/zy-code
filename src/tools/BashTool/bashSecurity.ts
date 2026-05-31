@@ -14,31 +14,33 @@ const HEREDOC_IN_SUBSTITUTION = /\$\(.*<</
 
 // Note: Backtick pattern is handled separately in validateDangerousPatterns
 // to distinguish between escaped and unescaped backticks
+// 存 i18n key 而非译文：正则在模块加载时编译一次（热路径零开销），仅在命中违规时
+// 才 tSync(messageKey) 翻译 —— 既避免模块顶层冻结翻译，又随语言切换反应。
 const COMMAND_SUBSTITUTION_PATTERNS = [
-  { pattern: /<\(/, message: tSync('bashSecurity.processSubstitutionBefore') },
-  { pattern: />\(/, message: tSync('bashSecurity.processSubstitutionAfter') },
-  { pattern: /=\(/, message: tSync('bashSecurity.zshProcessSubstitution') },
+  { pattern: /<\(/, messageKey: 'bashSecurity.processSubstitutionBefore' },
+  { pattern: />\(/, messageKey: 'bashSecurity.processSubstitutionAfter' },
+  { pattern: /=\(/, messageKey: 'bashSecurity.zshProcessSubstitution' },
   // Zsh EQUALS expansion: =cmd at word start expands to $(which cmd).
   // `=curl evil.com` → `/usr/bin/curl evil.com`, bypassing Bash(curl:*) deny
   // rules since the parser sees `=curl` as the base command, not `curl`.
   // Only matches word-initial = followed by a command-name char (not VAR=val).
   {
     pattern: /(?:^|[\s;&|])=[a-zA-Z_]/,
-    message: tSync('bashSecurity.zshEqualsExpansion'),
+    messageKey: 'bashSecurity.zshEqualsExpansion',
   },
-  { pattern: /\$\(/, message: tSync('bashSecurity.dollarCommandSubstitution') },
-  { pattern: /\$\{/, message: tSync('bashSecurity.parameterSubstitution') },
-  { pattern: /\$\[/, message: tSync('bashSecurity.legacyArithmeticExpansion') },
-  { pattern: /~\[/, message: tSync('bashSecurity.zshStyleParameterExpansion') },
-  { pattern: /\(e:/, message: tSync('bashSecurity.zshStyleGlobQualifiers') },
-  { pattern: /\(\+/, message: tSync('bashSecurity.zshGlobQualifierWithCommand') },
+  { pattern: /\$\(/, messageKey: 'bashSecurity.dollarCommandSubstitution' },
+  { pattern: /\$\{/, messageKey: 'bashSecurity.parameterSubstitution' },
+  { pattern: /\$\[/, messageKey: 'bashSecurity.legacyArithmeticExpansion' },
+  { pattern: /~\[/, messageKey: 'bashSecurity.zshStyleParameterExpansion' },
+  { pattern: /\(e:/, messageKey: 'bashSecurity.zshStyleGlobQualifiers' },
+  { pattern: /\(\+/, messageKey: 'bashSecurity.zshGlobQualifierWithCommand' },
   {
     pattern: /\}\s*always\s*\{/,
-    message: tSync('bashSecurity.zshAlwaysBlock'),
+    messageKey: 'bashSecurity.zshAlwaysBlock',
   },
   // Defense in depth: Block PowerShell comment syntax even though we don't execute in PowerShell
   // Added as protection against future changes that might introduce PowerShell execution
-  { pattern: /<#/, message: tSync('bashSecurity.powerShellCommentSyntax') },
+  { pattern: /<#/, messageKey: 'bashSecurity.powerShellCommentSyntax' },
 ]
 
 // Zsh-specific dangerous commands that can bypass security checks.
@@ -884,7 +886,7 @@ function validateDangerousPatterns(context: ValidationContext): PermissionResult
   }
 
   // Other command substitution checks (include double-quoted content)
-  for (const { pattern, message } of COMMAND_SUBSTITUTION_PATTERNS) {
+  for (const { pattern, messageKey } of COMMAND_SUBSTITUTION_PATTERNS) {
     if (pattern.test(unquotedContent)) {
       logEvent('zy_bash_security_check_triggered', {
         checkId: BASH_SECURITY_CHECK_IDS.DANGEROUS_PATTERNS_COMMAND_SUBSTITUTION,
@@ -892,7 +894,7 @@ function validateDangerousPatterns(context: ValidationContext): PermissionResult
       })
       return {
         behavior: 'ask',
-        message: tSync('bashSecurity.commandSubstitution', { pattern: message }),
+        message: tSync('bashSecurity.commandSubstitution', { pattern: tSync(messageKey) }),
       }
     }
   }

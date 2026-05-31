@@ -1,6 +1,6 @@
 import type { ElicitResult } from '@modelcontextprotocol/sdk/types.js'
-import type { HookResultMessage } from 'src/types/message.js'
 import type { HookCallback, PermissionRequestResult } from 'src/types/hooks/index.js'
+import type { HookResultMessage } from 'src/types/message.js'
 import type { PermissionResult } from '../permissions/PermissionResult.js'
 import type { HookCommand } from '../settings/types.js'
 import type { FunctionHook } from './sessionHooks.js'
@@ -20,17 +20,25 @@ export interface HookResult {
   outcome: 'success' | 'blocking' | 'non_blocking_error' | 'cancelled'
   preventContinuation?: boolean
   stopReason?: string
+  /** 原始终端控制序列（由 executeEngine 校验后写入 stdout）。 */
+  terminalSequence?: string
   permissionBehavior?: 'ask' | 'deny' | 'allow' | 'passthrough'
   hookPermissionDecisionReason?: string
   additionalContext?: string
   initialUserMessage?: string
   updatedInput?: Record<string, unknown>
+  /** 通用工具结果覆盖（string，全工具）。优先于 updatedMCPToolOutput。 */
+  updatedToolOutput?: string
   updatedMCPToolOutput?: unknown
   permissionRequestResult?: PermissionRequestResult
   elicitationResponse?: ElicitationResponse
   watchPaths?: string[]
   elicitationResultResponse?: ElicitationResponse
   retry?: boolean
+  /** MessageDisplay：替换显示文本（display-only）。 */
+  transformedText?: string
+  /** MessageDisplay：隐藏该消息的显示。 */
+  hide?: boolean
   hook: HookCommand | HookCallback | FunctionHook
 }
 
@@ -67,18 +75,22 @@ export type AggregatedHookResult = {
   blockingError?: HookBlockingError
   preventContinuation?: boolean
   stopReason?: string
-  /** 终端控制序列（如 OSC、光标移动等），hook 返回后立即写入 stdout */
-  terminalSequence?: string
   hookPermissionDecisionReason?: string
   hookSource?: string
   permissionBehavior?: PermissionResult['behavior']
   additionalContexts?: string[]
   initialUserMessage?: string
   updatedInput?: Record<string, unknown>
+  /** 通用工具结果覆盖（string，全工具）。优先于 updatedMCPToolOutput。 */
+  updatedToolOutput?: string
   updatedMCPToolOutput?: unknown
   permissionRequestResult?: PermissionRequestResult
   watchPaths?: string[]
   elicitationResponse?: ElicitationResponse
   elicitationResultResponse?: ElicitationResponse
   retry?: boolean
+  /** MessageDisplay：替换显示文本（display-only）。 */
+  transformedText?: string
+  /** MessageDisplay：隐藏该消息的显示。 */
+  hide?: boolean
 }

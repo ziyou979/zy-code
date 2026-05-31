@@ -12,7 +12,8 @@
     "test": "bun test",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "lint:biome": "biome check --write ."
+    "lint:i18n": "bun scripts/lint-no-toplevel-i18n.ts",
+    "lint:biome": "biome check --write . && bun run lint:i18n"
   },
   "dependencies": {
     "@alcalzone/ansi-tokenize": "^0.1.3",

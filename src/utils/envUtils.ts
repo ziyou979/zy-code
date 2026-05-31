@@ -169,9 +169,25 @@ export function getScriptCaps(): number {
   return parseInt(process.env.ZY_CODE_SCRIPT_CAPS || '', 10) || 0
 }
 
-/** stop hook 连续阻止上限（默认 8） */
+/** stop hook 连续阻止上限（默认 8；显式设为 0 表示禁用熔断）。
+ *  注意不能用 `|| 8`：那会把合法的 0（禁用）误当作未设置。 */
 export function getStopHookBlockCap(): number {
-  return parseInt(process.env.ZY_CODE_STOP_HOOK_BLOCK_CAP || '', 10) || 8
+  const parsed = parseInt(process.env.ZY_CODE_STOP_HOOK_BLOCK_CAP || '', 10)
+  return Number.isNaN(parsed) ? 8 : parsed
+}
+
+/**
+ * 给定上一次连续 stop-hook block 计数，返回本次新计数与是否触发熔断。
+ * count 从 1 起算（首次 block 即 1）；到第 cap+1 次触发。cap=0 表示禁用熔断。
+ * 抽成纯函数以便单测 query 循环里的熔断判定（见 query.ts stop_hook_blocking 分支）。
+ */
+export function evaluateStopHookBlockCap(prevCount: number | undefined): {
+  nextCount: number
+  tripped: boolean
+} {
+  const nextCount = (prevCount ?? 0) + 1
+  const cap = getStopHookBlockCap()
+  return { nextCount, tripped: cap > 0 && nextCount > cap }
 }
 
 /** 版本控制模式：'git'（默认）| 'perforce' */

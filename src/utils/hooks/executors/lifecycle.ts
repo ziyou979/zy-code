@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto'
+import type { PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type {
+  BackgroundTaskInfo,
   ExitReason,
+  SessionCronInfo,
   SessionEndHookInput,
   SessionStartHookInput,
   SetupHookInput,
@@ -9,11 +12,13 @@ import type {
   SubagentStopHookInput,
 } from 'src/types/index.js'
 import { getSessionId } from '../../../bootstrap/state.js'
+import { getRunningTasks } from '../../../services/task/framework.js'
 import type { AppState } from '../../../state/AppState.js'
 import type { ToolUseContext } from '../../../Tool.js'
-import type { PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
+import { isBackgroundTask } from '../../../tasks/types.js'
 import type { AgentId } from '../../../types/ids.js'
 import type { AssistantMessage, Message } from '../../../types/message.js'
+import { hasCronTasksSync, nextCronRunMs, readCronTasks } from '../../cronTasks.js'
 import { extractTextContent, getLastAssistantMessage } from '../../messages.js'
 import { getAgentTranscriptPath } from '../../sessionStorage.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
@@ -22,6 +27,48 @@ import { hasHookForEvent } from '../matcher.js'
 import { executeHooksOutsideREPL } from '../outsideRepl.js'
 import { clearSessionHooks } from '../sessionHooks.js'
 import type { AggregatedHookResult } from '../types.js'
+
+/**
+ * 收集 Stop/SubagentStop hook input 的扩展上下文：运行中的后台任务 + 会话 cron。
+ * 仅在确有内容时返回对应字段（保持对老 hook 的向后兼容）。cron 读盘前先用
+ * hasCronTasksSync() 短路，避免每个轮次都读磁盘。
+ */
+async function collectStopHookContext(
+  appState: AppState | undefined,
+): Promise<{ background_tasks?: BackgroundTaskInfo[]; session_crons?: SessionCronInfo[] }> {
+  const out: { background_tasks?: BackgroundTaskInfo[]; session_crons?: SessionCronInfo[] } = {}
+
+  if (appState) {
+    const tasks = getRunningTasks(appState)
+      .filter(isBackgroundTask)
+      .map((t) => ({ id: t.id, type: t.type, status: t.status, description: t.description }))
+    if (tasks.length > 0) {
+      out.background_tasks = tasks
+    }
+  }
+
+  if (hasCronTasksSync()) {
+    try {
+      const now = Date.now()
+      const crons = (await readCronTasks()).map((t) => {
+        const nextMs = nextCronRunMs(t.cron, now)
+        return {
+          id: t.id,
+          schedule: t.cron,
+          ...(t.recurring !== undefined && { recurring: t.recurring }),
+          ...(nextMs != null && { next_run: new Date(nextMs).toISOString() }),
+        }
+      })
+      if (crons.length > 0) {
+        out.session_crons = crons
+      }
+    } catch {
+      // cron 文件损坏/读失败不应阻断 stop hook —— 静默跳过该字段
+    }
+  }
+
+  return out
+}
 
 export async function executeStopFailureHooks(
   lastMessage: AssistantMessage,
@@ -105,21 +152,27 @@ export async function* executeStopHooks(
       })()
     : undefined
 
+  // 让 Stop/SubagentStop hook 看到「轮次结束时还有什么在跑」：运行中的后台任务
+  // 与本会话/项目的 cron。hook 可据此决定是否阻止结束（等任务完成）或放行。
+  const stopContext = await collectStopHookContext(appState)
+
   const hookInput: StopHookInput | SubagentStopHookInput = subagentId
     ? {
-        ...createBaseHookInput(permissionMode),
+        ...createBaseHookInput(permissionMode, undefined, toolUseContext),
         hook_event_name: 'SubagentStop',
         stop_hook_active: stopHookActive,
         agent_id: subagentId,
         agent_transcript_path: getAgentTranscriptPath(subagentId),
         agent_type: agentType ?? '',
         last_assistant_message: lastAssistantText,
+        ...stopContext,
       }
     : {
-        ...createBaseHookInput(permissionMode),
+        ...createBaseHookInput(permissionMode, undefined, toolUseContext),
         hook_event_name: 'Stop',
         stop_hook_active: stopHookActive,
         last_assistant_message: lastAssistantText,
+        ...stopContext,
       }
 
   // 信任检查现已集中在 executeHooks() 中

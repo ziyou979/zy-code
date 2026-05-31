@@ -43,6 +43,9 @@ export const HOOK_EVENTS = [
   'InstructionsLoaded',
   'CwdChanged',
   'FileChanged',
+  'MessageDisplay',
+  'PostToolBatch',
+  'UserPromptExpansion',
 ] as const
 
 export type HookEvent = (typeof HOOK_EVENTS)[number]
@@ -72,6 +75,17 @@ export const BaseHookInputSchema = lazySchema(() =>
           'hook fires from within a subagent (alongside agent_id), or on the main thread ' +
           'of a session started with --agent (without agent_id).',
       ),
+    effort: z
+      .object({
+        level: z
+          .string()
+          .describe(
+            'Active effort level for the current turn, after any silent downgrade for the ' +
+              'selected model. One of: "minimal" | "low" | "medium" | "high" | "max". ' +
+              'Absent when the selected model does not support effort.',
+          ),
+      })
+      .optional(),
   }),
 )
 
@@ -106,8 +120,38 @@ export const PostToolUseHookInputSchema = lazySchema(() =>
       tool_input: z.unknown(),
       tool_response: z.unknown(),
       tool_use_id: z.string(),
+      duration_ms: z
+        .number()
+        .optional()
+        .describe(
+          'Tool execution time in milliseconds (the tool.call() duration only — excludes the ' +
+            'permission prompt and PreToolUse hooks).',
+        ),
     }),
   ),
+)
+
+export const PostToolBatchToolUseSchema = lazySchema(() =>
+  z.object({
+    tool_name: z.string(),
+    tool_use_id: z.string(),
+    status: z.enum(['success', 'error']),
+  }),
+)
+
+export const PostToolBatchHookInputSchema = lazySchema(() =>
+  BaseHookInputSchema()
+    .and(
+      z.object({
+        hook_event_name: z.literal('PostToolBatch'),
+        tool_uses: z.array(PostToolBatchToolUseSchema()),
+      }),
+    )
+    .describe(
+      'Hook input for the PostToolBatch event. Fired once after all tool calls in a single ' +
+        'assistant turn complete (after their individual PostToolUse hooks), avoiding N+1 hook ' +
+        'thrashing for parallel tool calls.',
+    ),
 )
 
 export const PostToolUseFailureHookInputSchema = lazySchema(() =>
@@ -155,6 +199,26 @@ export const UserPromptSubmitHookInputSchema = lazySchema(() =>
   ),
 )
 
+export const UserPromptExpansionHookInputSchema = lazySchema(() =>
+  BaseHookInputSchema()
+    .and(
+      z.object({
+        hook_event_name: z.literal('UserPromptExpansion'),
+        prompt: z.string().describe('The original user prompt, before expansion.'),
+        expanded_text: z
+          .string()
+          .describe(
+            'The fully expanded prompt content the model will see (after @mention/$var/slash ' +
+              'expansion, including injected @file contents).',
+          ),
+      }),
+    )
+    .describe(
+      'Hook input for the UserPromptExpansion event. Fired after @mention/$var/slash expansion and ' +
+        'just before UserPromptSubmit, so hooks can audit the actually-injected content.',
+    ),
+)
+
 export const SessionStartHookInputSchema = lazySchema(() =>
   BaseHookInputSchema().and(
     z.object({
@@ -175,6 +239,24 @@ export const SetupHookInputSchema = lazySchema(() =>
   ),
 )
 
+export const BackgroundTaskInfoSchema = lazySchema(() =>
+  z.object({
+    id: z.string(),
+    type: z.string(),
+    status: z.string(),
+    description: z.string(),
+  }),
+)
+
+export const SessionCronInfoSchema = lazySchema(() =>
+  z.object({
+    id: z.string(),
+    schedule: z.string().describe('5-field cron string (local time)'),
+    recurring: z.boolean().optional(),
+    next_run: z.string().optional().describe('ISO timestamp of the next scheduled run, if known'),
+  }),
+)
+
 export const StopHookInputSchema = lazySchema(() =>
   BaseHookInputSchema().and(
     z.object({
@@ -187,6 +269,14 @@ export const StopHookInputSchema = lazySchema(() =>
           'Text content of the last assistant message before stopping. ' +
             'Avoids the need to read and parse the transcript file.',
         ),
+      background_tasks: z
+        .array(BackgroundTaskInfoSchema())
+        .optional()
+        .describe('Currently running background tasks (shell/agent/workflow/monitor/…).'),
+      session_crons: z
+        .array(SessionCronInfoSchema())
+        .optional()
+        .describe('Scheduled cron tasks for this session/project.'),
     }),
   ),
 )
@@ -227,6 +317,14 @@ export const SubagentStopHookInputSchema = lazySchema(() =>
           'Text content of the last assistant message before stopping. ' +
             'Avoids the need to read and parse the transcript file.',
         ),
+      background_tasks: z
+        .array(BackgroundTaskInfoSchema())
+        .optional()
+        .describe('Currently running background tasks (shell/agent/workflow/monitor/…).'),
+      session_crons: z
+        .array(SessionCronInfoSchema())
+        .optional()
+        .describe('Scheduled cron tasks for this session/project.'),
     }),
   ),
 )
@@ -402,6 +500,23 @@ export const FileChangedHookInputSchema = lazySchema(() =>
   ),
 )
 
+export const MessageDisplayHookInputSchema = lazySchema(() =>
+  BaseHookInputSchema()
+    .and(
+      z.object({
+        hook_event_name: z.literal('MessageDisplay'),
+        message_id: z.string(),
+        message_role: z.enum(['assistant', 'user', 'system']),
+        text: z.string().describe('The displayable text content of the message.'),
+      }),
+    )
+    .describe(
+      'Hook input for the MessageDisplay event. Fired just before a message is rendered, so hooks ' +
+        'can transform (transformedText) or hide (hide) the displayed text. Display-only: the ' +
+        'conversation context and transcript keep the original content.',
+    ),
+)
+
 export const EXIT_REASONS = [
   'clear',
   'resume',
@@ -451,6 +566,9 @@ export const HookInputSchema = lazySchema(() =>
     WorktreeRemoveHookInputSchema(),
     CwdChangedHookInputSchema(),
     FileChangedHookInputSchema(),
+    MessageDisplayHookInputSchema(),
+    PostToolBatchHookInputSchema(),
+    UserPromptExpansionHookInputSchema(),
   ]),
 )
 
@@ -505,6 +623,9 @@ export const PostToolUseHookSpecificOutputSchema = lazySchema(() =>
   z.object({
     hookEventName: z.literal('PostToolUse'),
     additionalContext: z.string().optional(),
+    // 面向所有工具的通用结果覆盖（string）：重写 model 看到的 tool result 文本。
+    updatedToolOutput: z.string().optional(),
+    // MCP 工具专属的结构化结果覆盖（可携带 image/resource）。
     updatedMCPToolOutput: z.unknown().optional(),
   }),
 )
@@ -519,7 +640,13 @@ export const PostToolUseFailureHookSpecificOutputSchema = lazySchema(() =>
 export const PermissionDeniedHookSpecificOutputSchema = lazySchema(() =>
   z.object({
     hookEventName: z.literal('PermissionDenied'),
-    retry: z.boolean().optional(),
+    retry: z
+      .boolean()
+      .optional()
+      .describe(
+        'When true, signals that the denied tool call is now approved — the model is told it may ' +
+          'retry the call. Only honored for auto-mode classifier denials.',
+      ),
   }),
 )
 
@@ -562,10 +689,44 @@ export const FileChangedHookSpecificOutputSchema = lazySchema(() =>
   }),
 )
 
+export const MessageDisplayHookSpecificOutputSchema = lazySchema(() =>
+  z
+    .object({
+      hookEventName: z.literal('MessageDisplay'),
+      transformedText: z
+        .string()
+        .optional()
+        .describe('Replace the displayed text (display-only; does not change context/transcript).'),
+      hide: z.boolean().optional().describe('Hide the message from display entirely.'),
+    })
+    .describe('Hook-specific output for the MessageDisplay event.'),
+)
+
+export const PostToolBatchHookSpecificOutputSchema = lazySchema(() =>
+  z.object({
+    hookEventName: z.literal('PostToolBatch'),
+    additionalContext: z.string().optional(),
+  }),
+)
+
+export const UserPromptExpansionHookSpecificOutputSchema = lazySchema(() =>
+  z.object({
+    hookEventName: z.literal('UserPromptExpansion'),
+    additionalContext: z.string().optional(),
+  }),
+)
+
 export const SyncHookJSONOutputSchema = lazySchema(() =>
   z.object({
     continue: z.boolean().optional(),
     suppressOutput: z.boolean().optional(),
+    terminalSequence: z
+      .string()
+      .optional()
+      .describe(
+        '原始终端控制序列，由 zy-code 主进程写入 stdout。出于安全仅放行 OSC 0/9（窗口标题/' +
+          '桌面通知/进度）与 BEL（响铃）；CSI（光标移动/SGR/清屏）会被丢弃。',
+      ),
     stopReason: z.string().optional(),
     decision: z.enum(['approve', 'block']).optional(),
     systemMessage: z.string().optional(),
@@ -587,6 +748,9 @@ export const SyncHookJSONOutputSchema = lazySchema(() =>
         CwdChangedHookSpecificOutputSchema(),
         FileChangedHookSpecificOutputSchema(),
         WorktreeCreateHookSpecificOutputSchema(),
+        MessageDisplayHookSpecificOutputSchema(),
+        PostToolBatchHookSpecificOutputSchema(),
+        UserPromptExpansionHookSpecificOutputSchema(),
       ])
       .optional(),
   }),

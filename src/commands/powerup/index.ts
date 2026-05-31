@@ -3,12 +3,12 @@
  * 浏览课程列表 / 查看详情 / 标记完成；Esc 关闭并向对话流发送系统消息。
  */
 import type { Command } from '../../commands.js'
-import { tSync } from '../../i18n/index.js'
 
 const powerup = {
   type: 'local-jsx',
   name: 'powerup',
-  description: tSync('commands.powerup'),
+  // 英文兜底；UI 本地化经 COMMAND_DESCRIPTION_I18N_KEYS['powerup'] 渲染期翻译。
+  description: 'Interactive feature guide — learn tips & tricks',
   aliases: ['tips', 'learn'],
   load: () => import('./powerup.js'),
 } satisfies Command

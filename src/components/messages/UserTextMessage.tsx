@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { NO_CONTENT_MESSAGE } from '../../constants/messages.js'
+import { getNoContentMessage } from '../../constants/messages.js'
 import {
   COMMAND_MESSAGE_TAG,
   LOCAL_COMMAND_CAVEAT_TAG,
@@ -43,7 +43,7 @@ export function UserTextMessage({
   isTranscriptMode,
   timestamp,
 }: Props) {
-  if (param.text.trim() === NO_CONTENT_MESSAGE) {
+  if (param.text.trim() === getNoContentMessage()) {
     return null
   }
   if (planContent) {

@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import type { QuerySource } from 'src/constants/querySource.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { getContentText } from 'src/utils/messages.js'
+import { getSessionId } from '../../bootstrap/state.js'
 import {
   findCommand,
   getCommandName,
@@ -12,7 +13,7 @@ import {
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
 import type { SetToolJSXFn, ToolUseContext } from '../../Tool.js'
-import type { UserContentBlock, ImageBlock, ImageSource } from '../../types/llm.js'
+import type { ImageBlock, ImageSource, UserContentBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -31,6 +32,8 @@ import {
 import type { PastedContent } from '../../utils/config.js'
 import type { EffortValue } from '../../utils/effort.js'
 import { toArray } from '../../utils/generators.js'
+import { executeUserPromptExpansionHooks } from '../../utils/hooks/executors/notification.js'
+import { hasHookForEvent } from '../../utils/hooks/matcher.js'
 import {
   executeUserPromptSubmitHooks,
   getUserPromptSubmitHookBlockingMessage,
@@ -162,6 +165,60 @@ export async function processUserInput({
   // Execute UserPromptSubmit hooks and handle blocking
   queryCheckpoint('query_hooks_start')
   const inputMessage = getContentText(input) || ''
+
+  // UserPromptExpansion：在 @mention/$var/slash 展开之后、UserPromptSubmit 之前触发，
+  // 让 hook 审计「实际注入给模型的完整内容」（UserPromptSubmit 只能看到原始 prompt）。
+  // 先 hasHookForEvent 短路，未配置时不构造展开文本。
+  if (hasHookForEvent('UserPromptExpansion', appState, context.agentId ?? getSessionId())) {
+    const expandedText = result.messages
+      .map((m) => {
+        if (m.type === 'user' || m.type === 'assistant') {
+          return getContentText(m.message.content)
+        }
+        if (m.type === 'attachment') {
+          return JSON.stringify(m.attachment)
+        }
+        return ''
+      })
+      .filter(Boolean)
+      .join('\n')
+
+    for await (const hookResult of executeUserPromptExpansionHooks(
+      inputMessage,
+      expandedText,
+      appState.toolPermissionContext.mode,
+      context,
+      context.requestPrompt,
+    )) {
+      if ((hookResult.message as any)?.type === 'progress') {
+        continue
+      }
+      if (hookResult.blockingError) {
+        const blockingMessage = getUserPromptSubmitHookBlockingMessage(hookResult.blockingError)
+        return {
+          messages: [
+            createSystemMessage(
+              `${blockingMessage}\n\nOriginal prompt: ${input}`,
+              'warning' as any,
+            ),
+          ],
+          shouldQuery: false,
+          allowedTools: result.allowedTools,
+        }
+      }
+      if (hookResult.additionalContexts && hookResult.additionalContexts.length > 0) {
+        result.messages.push(
+          createAttachmentMessage({
+            type: 'hook_additional_context',
+            content: hookResult.additionalContexts.map(applyTruncation),
+            hookName: 'UserPromptExpansion',
+            toolUseID: `hook-${randomUUID()}`,
+            hookEvent: 'UserPromptExpansion',
+          }),
+        )
+      }
+    }
+  }
 
   for await (const hookResult of executeUserPromptSubmitHooks(
     inputMessage,

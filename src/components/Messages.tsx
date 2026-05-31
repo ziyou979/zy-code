@@ -419,7 +419,11 @@ const MessagesImpl = ({
     'Ctrl+E',
   )
   const normalizedMessages = useMemo(
-    () => normalizeMessages(messages).filter(isNotEmptyMessage),
+    () =>
+      normalizeMessages(messages)
+        .filter(isNotEmptyMessage)
+        // MessageDisplay hook 的 display-only 隐藏：仅从渲染中移除，消息仍在上下文/转录中。
+        .filter((m) => !m.displayOverride?.hide),
     [messages],
   )
 

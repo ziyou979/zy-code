@@ -1,5 +1,5 @@
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js'
-import { NO_CONTENT_MESSAGE } from '../../constants/messages.js'
+import { getNoContentMessage } from '../../constants/messages.js'
 import { Box, Text } from '../../ink.js'
 import { extractTag } from '../../utils/messages.js'
 import { Markdown } from '../Markdown.js'
@@ -20,7 +20,7 @@ export function UserLocalCommandOutputMessage({ content }: Props) {
   if (!stdout && !stderr) {
     earlyReturn = (
       <MessageResponse>
-        <Text dimColor={true}>{NO_CONTENT_MESSAGE}</Text>
+        <Text dimColor={true}>{getNoContentMessage()}</Text>
       </MessageResponse>
     )
   } else {

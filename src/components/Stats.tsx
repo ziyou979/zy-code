@@ -13,11 +13,11 @@ import type { Color } from '../ink/styles.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw j/k/arrow stats navigation
 import { Ansi, Box, Text, useInput } from '../ink.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
+import { renderModelName } from '../services/model/model.js'
 import { getGlobalConfig } from '../utils/config.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { formatDuration, formatNumber } from '../utils/format.js'
 import { generateHeatmap } from '../utils/heatmap.js'
-import { renderModelName } from '../services/model/model.js'
 import { copyAnsiToClipboard } from '../utils/screenshotClipboard.js'
 import {
   aggregateZyCodeStatsForRange,
@@ -61,11 +61,12 @@ type StatsResult =
   | {
       type: 'empty'
     }
-const DATE_RANGE_LABELS: Record<StatsDateRange, string> = {
+// getter：惰性求值，避免模块顶层冻结翻译；语言切换后即时反应。
+const getDateRangeLabels = (): Record<StatsDateRange, string> => ({
   '7d': tSync('stats.last7Days'),
   '30d': tSync('stats.last30Days'),
   all: tSync('stats.allTime'),
-}
+})
 const DATE_RANGE_ORDER: StatsDateRange[] = ['all', '7d', '30d']
 function getNextDateRange(current: StatsDateRange): StatsDateRange {
   const currentIndex = DATE_RANGE_ORDER.indexOf(current)
@@ -254,10 +255,10 @@ function DateRangeSelector({ dateRange, isLoading }: any) {
       {index > 0 && <Text dimColor={true}> · </Text>}
       {range === dateRange ? (
         <Text bold={true} color="zy">
-          {DATE_RANGE_LABELS[range]}
+          {getDateRangeLabels()[range]}
         </Text>
       ) : (
-        <Text dimColor={true}>{DATE_RANGE_LABELS[range]}</Text>
+        <Text dimColor={true}>{getDateRangeLabels()[range]}</Text>
       )}
     </Text>
   ))

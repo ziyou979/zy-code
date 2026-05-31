@@ -13,6 +13,7 @@ import {
   mcpToolDetailsForAnalytics,
   sanitizeToolNameForAnalytics,
 } from 'src/services/analytics/metadata.js'
+import type { HookProgress } from 'src/types/hooks/index.js'
 import {
   addToToolDuration,
   getCodeEditToolDecisionCounter,
@@ -23,6 +24,17 @@ import {
   isCodeEditingTool,
 } from '../../hooks/toolPermission/permissionLogging.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
+import { logOTelEvent } from '../../services/telemetry/events.js'
+import {
+  addToolContentEvent,
+  endToolBlockedOnUserSpan,
+  endToolExecutionSpan,
+  endToolSpan,
+  isBetaTracingEnabled,
+  startToolBlockedOnUserSpan,
+  startToolExecutionSpan,
+  startToolSpan,
+} from '../../services/telemetry/sessionTracing.js'
 import {
   findToolByName,
   type Tool,
@@ -41,7 +53,6 @@ import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { parseGitCommitId } from '../../tools/shared/gitOperationTracking.js'
 import { isDeferredTool, TOOL_SEARCH_TOOL_NAME } from '../../tools/ToolSearchTool/prompt.js'
 import { getAllBaseTools } from '../../tools.js'
-import type { HookProgress } from 'src/types/hooks/index.js'
 import type {
   ContentBlock,
   ToolCallBlock,
@@ -83,17 +94,6 @@ import type {
 import { startSessionActivity, stopSessionActivity } from '../../utils/sessionActivity.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { Stream } from '../../utils/stream.js'
-import { logOTelEvent } from '../../services/telemetry/events.js'
-import {
-  addToolContentEvent,
-  endToolBlockedOnUserSpan,
-  endToolExecutionSpan,
-  endToolSpan,
-  isBetaTracingEnabled,
-  startToolBlockedOnUserSpan,
-  startToolExecutionSpan,
-  startToolSpan,
-} from '../../services/telemetry/sessionTracing.js'
 import { formatError, formatZodValidationError } from '../../utils/toolErrors.js'
 import {
   processPreMappedToolResultBlock,
@@ -1416,9 +1416,15 @@ async function checkPermissionsAndCallTool(
       })
     }
 
+    // PostToolUse hook 的通用结果覆盖（updatedToolOutput，全工具，string）。在循环里捕获，
+    // 循环结束后改写已入队的 tool_result 块内容（resultingMessages 末尾才返回，改写安全）。
+    let updatedToolOutputOverride: string | undefined
+    let toolResultEntry: (typeof resultingMessages)[number] | undefined
+
     // TODO(hackyon)：重构以避免 MCP 工具与其他工具体验不一致
     if (!isMcpTool(tool)) {
       await addToolResult(toolOutput, mappedToolResultBlock)
+      toolResultEntry = resultingMessages[resultingMessages.length - 1]
     }
 
     const postToolHookInfos: StopHookInfo[] = []
@@ -1433,8 +1439,12 @@ async function checkPermissionsAndCallTool(
       requestId,
       mcpServerType,
       mcpServerBaseUrl,
+      durationMs,
     )) {
-      if ('updatedMCPToolOutput' in hookResult) {
+      if ('updatedToolOutput' in hookResult) {
+        // 通用结果覆盖（全工具）。优先于 updatedMCPToolOutput（在末尾改写最终块内容）。
+        updatedToolOutputOverride = hookResult.updatedToolOutput
+      } else if ('updatedMCPToolOutput' in hookResult) {
         if (isMcpTool(tool)) {
           toolOutput = hookResult.updatedMCPToolOutput
         }
@@ -1482,6 +1492,19 @@ async function checkPermissionsAndCallTool(
 
     if (isMcpTool(tool)) {
       await addToolResult(toolOutput)
+      toolResultEntry = resultingMessages[resultingMessages.length - 1]
+    }
+
+    // 应用 PostToolUse hook 的通用结果覆盖：改写 tool_result 块的文本内容。
+    // updatedToolOutput 优先于 updatedMCPToolOutput（最后改写最终块）。
+    if (updatedToolOutputOverride !== undefined && toolResultEntry) {
+      const content = (toolResultEntry.message as any)?.message?.content
+      if (Array.isArray(content)) {
+        const block = content.find((b: { type?: string }) => b?.type === 'tool_result')
+        if (block) {
+          block.content = updatedToolOutputOverride
+        }
+      }
     }
 
     // 当 PostToolUse hook 总耗时超过 500ms 时，在工具结果下方内联显示其耗时。

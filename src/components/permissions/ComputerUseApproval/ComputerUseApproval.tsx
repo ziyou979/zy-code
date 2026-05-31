@@ -122,11 +122,15 @@ function ComputerUseTccPanel({ tccState, onDone }) {
 // ── App allowlist panel ───────────────────────────────────────────────────
 
 type AppListOption = 'allow_all' | 'deny'
-const SENTINEL_WARNING: Record<NonNullable<ReturnType<typeof getSentinelCategory>>, string> = {
+// getter：惰性求值，避免模块顶层冻结翻译；语言切换后即时反应。
+const getSentinelWarning = (): Record<
+  NonNullable<ReturnType<typeof getSentinelCategory>>,
+  string
+> => ({
   shell: tSync('computerUse.equivalentToShellAccess'),
   filesystem: tSync('computerUse.canReadWriteAnyFile'),
   system_settings: tSync('computerUse.canChangeSystemSettings'),
-}
+})
 function ComputerUseAppListPanel({ request, onDone }) {
   const [checked] = useState(
     () =>
@@ -216,7 +220,7 @@ function ComputerUseAppListPanel({ request, onDone }) {
         {sentinel ? (
           <Text bold={true}>
             {'    '}
-            {figures.warning} {SENTINEL_WARNING[sentinel]}
+            {figures.warning} {getSentinelWarning()[sentinel]}
           </Text>
         ) : null}
       </Box>

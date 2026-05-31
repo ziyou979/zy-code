@@ -83,6 +83,7 @@ import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import { tSync } from 'src/i18n/index.js'
+import { setLanguage } from 'src/i18n/languageStore.js'
 type Props = {
   onClose: (
     result?: string,
@@ -1916,8 +1917,9 @@ export function Config({
               updateSettingsForSource('userSettings', {
                 language,
               })
-              // Warm i18n so UI text updates immediately
-              void import('src/i18n/index.js').then((m) => m.warmI18n())
+              // 推送到 i18n 语言状态叶子（对标 i18next.changeLanguage）。应用内切换不会触发
+              // settings 急加载，故必须显式推；store 监听会自动重热消息缓存使 UI 即时更新。
+              setLanguage(language)
               void logEvent('zy_language_changed', {
                 language: (language ??
                   'default') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

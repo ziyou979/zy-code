@@ -1,5 +1,5 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import { isInternalBuild } from './utils/envUtils.js'
+import { evaluateStopHookBlockCap, isInternalBuild } from './utils/envUtils.js'
 import type {
   ToolResultBlock,
   ToolCallBlock,
@@ -98,9 +98,12 @@ import type { Terminal, Continue } from './query/transitions.js'
 import { feature } from 'bun:bundle'
 import {
   getCurrentTurnTokenBudget,
+  getSessionId,
   getTurnOutputTokens,
   incrementBudgetContinuationCount,
 } from './bootstrap/state.js'
+import { executePostToolBatchHooks } from './utils/hooks/executors/tool.js'
+import { hasHookForEvent } from './utils/hooks/matcher.js'
 import { createBudgetTracker, checkTokenBudget } from './query/tokenBudget.js'
 import { count } from './utils/array.js'
 
@@ -202,6 +205,10 @@ type State = {
   maxOutputTokensOverride: number | undefined
   pendingToolUseSummary: Promise<ToolUseSummaryMessage | null> | undefined
   stopHookActive: boolean | undefined
+  // 连续 stop-hook block 计数。仅在 stop_hook_blocking 继续点递增；任何其他
+  // 继续点都不携带它（省略 → undefined → 读作 0），从而在非阻塞回合后自然清零。
+  // 用于熔断：写错/恶意的 stop hook 反复 block 会死循环烧 token。
+  stopHookBlockingCount?: number
   turnCount: number
   // 上一次迭代继续的原因。第一次迭代时为 undefined。
   // 让测试可以在不检查消息内容的情况下断言恢复路径是否触发。
@@ -293,6 +300,7 @@ async function* queryLoop(
       maxOutputTokensOverride,
       pendingToolUseSummary,
       stopHookActive,
+      stopHookBlockingCount,
       turnCount,
     } = state
 
@@ -1172,6 +1180,26 @@ async function* queryLoop(
       }
 
       if (stopHookResult.blockingErrors.length > 0) {
+        // 连续 block 熔断：写错/恶意的 stop hook 反复 block 会让会话死循环烧
+        // token。计数从 1 起算，到第 cap+1 次强制结束 turn（reason:'completed'，
+        // 不抛错，防止把整个 session 干崩）。ZY_CODE_STOP_HOOK_BLOCK_CAP 覆盖
+        // 默认 8；设为 0 禁用熔断（兼容老行为）。对齐 Claude Code 2.1.143。
+        const { nextCount: nextBlockCount, tripped } =
+          evaluateStopHookBlockCap(stopHookBlockingCount)
+        if (tripped) {
+          logEvent('zy_stop_hook_block_count', {
+            count: nextBlockCount,
+            is_subagent: Boolean(toolUseContext.agentId),
+            hit_cap: true,
+          })
+          yield createSystemMessage(
+            `A hook blocked the turn from ending ${nextBlockCount} consecutive times — overriding and ending turn. ` +
+              `For Stop/SubagentStop hooks, check stop_hook_active in the input and return success while it's true. ` +
+              `Set ZY_CODE_STOP_HOOK_BLOCK_CAP to raise this limit.`,
+            'warning' as any,
+          )
+          return { reason: 'completed' }
+        }
         const next: State = {
           messages: [...messagesForQuery, ...assistantMessages, ...stopHookResult.blockingErrors],
           toolUseContext,
@@ -1186,6 +1214,7 @@ async function* queryLoop(
           maxOutputTokensOverride: undefined,
           pendingToolUseSummary: undefined,
           stopHookActive: true,
+          stopHookBlockingCount: nextBlockCount,
           turnCount,
           transition: { reason: 'stop_hook_blocking' },
         }
@@ -1293,6 +1322,52 @@ async function* queryLoop(
       }
     }
     queryCheckpoint('query_tool_execution_end')
+
+    // PostToolBatch：一轮工具全部完成后触发一次（各工具 PostToolUse 之后），避免并行
+    // 工具调用的 N+1 hook 抖动。先 hasHookForEvent 短路，未配置时近零开销。
+    if (
+      toolUseBlocks.length > 0 &&
+      !toolUseContext.abortController.signal.aborted &&
+      hasHookForEvent(
+        'PostToolBatch',
+        updatedToolUseContext.getAppState(),
+        updatedToolUseContext.agentId ?? getSessionId(),
+      )
+    ) {
+      const batchToolUses = toolUseBlocks.map((block) => {
+        const resultMsg = toolResults.find(
+          (r) =>
+            r.type === 'user' &&
+            Array.isArray(r.message.content) &&
+            r.message.content.some((c) => c.type === 'tool_result' && c.toolCallId === block.id),
+        )
+        const resultBlock =
+          resultMsg?.type === 'user' && Array.isArray(resultMsg.message.content)
+            ? resultMsg.message.content.find(
+                (c): c is ToolResultBlock => c.type === 'tool_result' && c.toolCallId === block.id,
+              )
+            : undefined
+        return {
+          tool_name: block.name,
+          tool_use_id: block.id,
+          status: (resultBlock?.isError ? 'error' : 'success') as 'success' | 'error',
+        }
+      })
+      for await (const update of executePostToolBatchHooks(batchToolUses, updatedToolUseContext)) {
+        yield update.message
+        if (
+          update.message.type === 'attachment' &&
+          update.message.attachment.type === 'hook_stopped_continuation'
+        ) {
+          shouldPreventContinuation = true
+        }
+        toolResults.push(
+          ...normalizeMessagesForAPI([update.message], updatedToolUseContext.options.tools).filter(
+            (_) => _.type === 'user',
+          ),
+        )
+      }
+    }
 
     // 在工具调用完成后生成工具使用摘要 — 传递给下一次递归调用
     let nextPendingToolUseSummary: Promise<ToolUseSummaryMessage | null> | undefined

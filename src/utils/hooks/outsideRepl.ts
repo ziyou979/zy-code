@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { isAsyncHookJSONOutput, isSyncHookJSONOutput } from 'src/types/hooks/index.js'
 import type { HookInput } from 'src/types/index.js'
 import { getSessionId } from '../../bootstrap/state.js'
 import {
@@ -6,7 +7,6 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import type { AppState } from '../../state/AppState.js'
-import { isAsyncHookJSONOutput, isSyncHookJSONOutput } from 'src/types/hooks/index.js'
 import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
 import { logForDebugging } from '../debug.js'
 import { isEnvTruthy } from '../envUtils.js'
@@ -292,6 +292,17 @@ export async function executeHooksOutsideREPL({
           output: errorMessage,
           blocked: false,
         }
+      }
+    }
+
+    // mcp_tool hooks need the connected MCP clients from toolUseContext, which is
+    // unavailable on the outside-REPL path (lifecycle events). Not supported here.
+    if (hook.type === 'mcp_tool') {
+      return {
+        command: `${hook.server}/${hook.tool}`,
+        succeeded: false,
+        output: 'mcp_tool hooks are not yet supported outside REPL',
+        blocked: false,
       }
     }
 

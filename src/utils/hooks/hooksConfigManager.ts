@@ -250,6 +250,21 @@ export const getHookEventMetadata = memoize(
       description:
         'Input to command is JSON with file_path and event (change, add, unlink).\nCLAUDE_ENV_FILE is set — write bash exports there to apply env to subsequent BashTool commands.\nThe matcher field specifies filenames to watch in the current directory (e.g. ".envrc|.env").\nHook output can include hookSpecificOutput.watchPaths (array of absolute paths) to dynamically update the watch list.\nExit code 0 - command completes successfully\nOther exit codes - show stderr to user only',
     },
+    MessageDisplay: {
+      summary: 'Before a message is displayed',
+      description:
+        'Input to command is JSON with message_id, message_role and text.\nDisplay-only: transform or hide the rendered text without changing the conversation context or transcript.\nHook output can include hookSpecificOutput.transformedText (replace displayed text) or hookSpecificOutput.hide (boolean).\nRuns with a short timeout and fails open (original text shown on error/timeout).',
+    },
+    PostToolBatch: {
+      summary: 'After a batch of tool calls completes',
+      description:
+        'Input to command is JSON with tool_uses (array of {tool_name, tool_use_id, status}).\nFires once after all tool calls in a single assistant turn finish (after their PostToolUse hooks), avoiding N+1 thrashing for parallel tool calls.\nHook output can include hookSpecificOutput.additionalContext.\nExit code 0 - command completes successfully\nExit code 2 - show stderr to model\nOther exit codes - show stderr to user only',
+    },
+    UserPromptExpansion: {
+      summary: 'After prompt expansion, before UserPromptSubmit',
+      description:
+        'Input to command is JSON with prompt (original) and expanded_text (after @mention/$var/slash expansion, including injected @file contents).\nUse to audit what is actually injected into the model context.\nHook output can include hookSpecificOutput.additionalContext.\nExit code 0 - command completes successfully\nExit code 2 - block the prompt (show stderr to user)\nOther exit codes - show stderr to user only',
+    },
   }),
   (toolNames) => toolNames.slice().sort().join(','),
 )
@@ -287,6 +302,9 @@ export function groupHooksByEventAndMatcher(
     InstructionsLoaded: {},
     CwdChanged: {},
     FileChanged: {},
+    MessageDisplay: {},
+    PostToolBatch: {},
+    UserPromptExpansion: {},
   }
 
   const metadata = getHookEventMetadata(toolNames)

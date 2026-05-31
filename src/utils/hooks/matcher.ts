@@ -1,10 +1,10 @@
 import { basename } from 'node:path'
-import type { HookEvent, HookInput } from 'src/types/index.js'
 import { DEFAULT_HOOK_SHELL } from 'src/shell-eval/shared/shellProvider.js'
+import type { HookCallback, HookCallbackMatcher } from 'src/types/hooks/index.js'
+import type { HookEvent, HookInput } from 'src/types/index.js'
 import { getRegisteredHooks } from '../../bootstrap/state.js'
 import type { AppState } from '../../state/AppState.js'
 import { findToolByName, type Tools } from '../../Tool.js'
-import type { HookCallback, HookCallbackMatcher } from 'src/types/hooks/index.js'
 import { logForDebugging } from '../debug.js'
 import {
   getLegacyToolNames,
@@ -463,6 +463,19 @@ export async function getMatchingHooks(
           ]),
       ).values(),
     )
+    const uniqueMcpToolHooks = Array.from(
+      new Map(
+        matchedHooks
+          .filter((m) => m.hook.type === 'mcp_tool')
+          .map((m) => [
+            hookDedupKey(
+              m,
+              `${(m.hook as { server: string }).server}\0${(m.hook as { tool: string }).tool}\0${getIfCondition(m.hook as { if?: string })}`,
+            ),
+            m,
+          ]),
+      ).values(),
+    )
     const callbackHooks = matchedHooks.filter((m) => m.hook.type === 'callback')
     // 函数 hook 不需要去重——每个 callback 都是唯一的
     const functionHooks = matchedHooks.filter((m) => m.hook.type === 'function')
@@ -471,6 +484,7 @@ export async function getMatchingHooks(
       ...uniquePromptHooks,
       ...uniqueAgentHooks,
       ...uniqueHttpHooks,
+      ...uniqueMcpToolHooks,
       ...callbackHooks,
       ...functionHooks,
     ]
@@ -483,7 +497,8 @@ export async function getMatchingHooks(
         (h.hook.type === 'command' ||
           h.hook.type === 'prompt' ||
           h.hook.type === 'agent' ||
-          h.hook.type === 'http') &&
+          h.hook.type === 'http' ||
+          h.hook.type === 'mcp_tool') &&
         (h.hook as { if?: string }).if,
     )
     const ifMatcher = hasIfCondition ? await prepareIfConditionMatcher(hookInput, tools) : undefined
@@ -492,7 +507,8 @@ export async function getMatchingHooks(
         h.hook.type !== 'command' &&
         h.hook.type !== 'prompt' &&
         h.hook.type !== 'agent' &&
-        h.hook.type !== 'http'
+        h.hook.type !== 'http' &&
+        h.hook.type !== 'mcp_tool'
       ) {
         return true
       }

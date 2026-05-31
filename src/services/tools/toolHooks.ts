@@ -3,10 +3,10 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js'
+import type { HookProgress } from 'src/types/hooks/index.js'
 import type z from 'zod/v4'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { AnyObject, Tool, ToolUseContext } from '../../Tool.js'
-import type { HookProgress } from 'src/types/hooks/index.js'
 import type { AssistantMessage, AttachmentMessage, ProgressMessage } from '../../types/message.js'
 import type { PermissionDecision } from '../../types/permissions.js'
 import { createAttachmentMessage } from '../../utils/attachments.js'
@@ -30,6 +30,7 @@ import type { McpServerType, MessageUpdateLazy } from './toolExecution.js'
 
 export type PostToolUseHooksResult<Output> =
   | MessageUpdateLazy<AttachmentMessage | ProgressMessage<HookProgress>>
+  | { updatedToolOutput: string }
   | { updatedMCPToolOutput: Output }
 
 export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
@@ -42,6 +43,7 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
   requestId: string | undefined,
   mcpServerType: McpServerType,
   _mcpServerBaseUrl: string | undefined,
+  toolDurationMs?: number,
 ): AsyncGenerator<PostToolUseHooksResult<Output>> {
   const postToolStartTime = Date.now()
   try {
@@ -57,6 +59,8 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
       toolUseContext,
       permissionMode,
       toolUseContext.abortController.signal,
+      undefined,
+      toolDurationMs,
     )) {
       try {
         // 检查在 hook 执行期间是否被 abort
@@ -133,6 +137,13 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
               toolUseID: toolUseID,
               hookEvent: 'PostToolUse',
             }),
+          }
+        }
+
+        // 通用结果覆盖（全工具，string），优先于 updatedMCPToolOutput
+        if (result.updatedToolOutput !== undefined) {
+          yield {
+            updatedToolOutput: result.updatedToolOutput,
           }
         }
 
@@ -394,9 +405,7 @@ export async function resolveHookPermissionDecision(
   if (forceDecision) {
     const ruleCheck = await checkRuleBasedPermissions(tool, askInput, toolUseContext)
     if (ruleCheck?.behavior === 'deny') {
-      logForDebugging(
-        `Hook asked for ${tool.name}, but deny rule overrides: ${ruleCheck.message}`,
-      )
+      logForDebugging(`Hook asked for ${tool.name}, but deny rule overrides: ${ruleCheck.message}`)
       return { decision: ruleCheck, input: askInput }
     }
   }

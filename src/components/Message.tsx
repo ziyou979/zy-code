@@ -124,9 +124,18 @@ function MessageImpl({
           advisorModel={message.advisorModel}
         />
       )
+      // MessageDisplay hook 的 display-only 文本覆盖：替换文本块、保留 tool_use 等非文本块。
+      // 仅影响渲染，message.message.content（上下文/转录）保持原文不变。
+      const assistantBlocks =
+        message.displayOverride?.text !== undefined
+          ? [
+              { type: 'text' as const, text: message.displayOverride.text },
+              ...message.message.content.filter((b) => b.type !== 'text'),
+            ]
+          : message.message.content
       return (
         <Box flexDirection="column" width={assistantWidth}>
-          {message.message.content.map(renderAssistantBlock)}
+          {assistantBlocks.map(renderAssistantBlock)}
         </Box>
       )
     }

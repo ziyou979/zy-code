@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
-import { NO_CONTENT_MESSAGE } from '../../constants/messages.js'
+import { getNoContentMessage } from '../../constants/messages.js'
 import { COMMAND_ARGS_TAG, COMMAND_NAME_TAG } from '../../constants/xml.js'
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
@@ -116,7 +116,7 @@ export function isNotEmptyMessage(message: Message): boolean {
 
   return (
     msg.message.content[0]!.text.trim().length > 0 &&
-    msg.message.content[0]!.text !== NO_CONTENT_MESSAGE &&
+    msg.message.content[0]!.text !== getNoContentMessage() &&
     msg.message.content[0]!.text !== INTERRUPT_MESSAGE_FOR_TOOL_USE
   )
 }
@@ -176,7 +176,7 @@ export function stripPromptXMLTags(content: string): string {
 }
 
 export function isEmptyMessageText(text: string): boolean {
-  return stripPromptXMLTags(text).trim() === '' || text.trim() === NO_CONTENT_MESSAGE
+  return stripPromptXMLTags(text).trim() === '' || text.trim() === getNoContentMessage()
 }
 
 export function getToolUseID(message: Message): string | null {

@@ -6,8 +6,8 @@
  * in ./runtime.ts.
  */
 
-import type { WireAssistantMessageError } from '../wire/messages.js'
 import type { PermissionBehavior, PermissionUpdate } from '../coreTypes.generated.js'
+import type { WireAssistantMessageError } from '../wire/messages.js'
 
 // ============================================================================
 // Hook Input Types
@@ -20,6 +20,8 @@ export interface BaseHookInput {
   permission_mode?: string
   agent_id?: string
   agent_type?: string
+  /** 当前 turn 生效的 effort 等级（已含模型 silent downgrade）。模型不支持 effort 时缺省。 */
+  effort?: { level: string }
 }
 
 export type PreToolUseHookInput = BaseHookInput & {
@@ -42,6 +44,8 @@ export type PostToolUseHookInput = BaseHookInput & {
   tool_input: unknown
   tool_response: unknown
   tool_use_id: string
+  /** 工具 execute（tool.call）净时长（ms），不含权限弹窗与 PreToolUse hook。 */
+  duration_ms?: number
 }
 
 export type PostToolUseFailureHookInput = BaseHookInput & {
@@ -73,6 +77,14 @@ export type UserPromptSubmitHookInput = BaseHookInput & {
   prompt: string
 }
 
+export type UserPromptExpansionHookInput = BaseHookInput & {
+  hook_event_name: 'UserPromptExpansion'
+  /** 原始用户输入（展开前）。 */
+  prompt: string
+  /** 展开后模型实际看到的完整内容（含 @file 注入、$var/slash 展开）。 */
+  expanded_text: string
+}
+
 export type SessionStartHookInput = BaseHookInput & {
   hook_event_name: 'SessionStart'
   source: 'startup' | 'resume' | 'clear' | 'compact'
@@ -85,10 +97,28 @@ export type SetupHookInput = BaseHookInput & {
   trigger: 'init' | 'maintenance'
 }
 
+export interface BackgroundTaskInfo {
+  id: string
+  type: string
+  status: string
+  description: string
+}
+
+export interface SessionCronInfo {
+  id: string
+  /** 5-field cron string (local time) */
+  schedule: string
+  recurring?: boolean
+  /** ISO timestamp of the next scheduled run, if known */
+  next_run?: string
+}
+
 export type StopHookInput = BaseHookInput & {
   hook_event_name: 'Stop'
   stop_hook_active: boolean
   last_assistant_message?: string
+  background_tasks?: BackgroundTaskInfo[]
+  session_crons?: SessionCronInfo[]
 }
 
 export type StopFailureHookInput = BaseHookInput & {
@@ -111,6 +141,8 @@ export type SubagentStopHookInput = BaseHookInput & {
   agent_transcript_path: string
   agent_type: string
   last_assistant_message?: string
+  background_tasks?: BackgroundTaskInfo[]
+  session_crons?: SessionCronInfo[]
 }
 
 export type PreCompactHookInput = BaseHookInput & {
@@ -222,6 +254,24 @@ export type FileChangedHookInput = BaseHookInput & {
   event: 'change' | 'add' | 'unlink'
 }
 
+export type MessageDisplayHookInput = BaseHookInput & {
+  hook_event_name: 'MessageDisplay'
+  message_id: string
+  message_role: 'assistant' | 'user' | 'system'
+  text: string
+}
+
+export interface PostToolBatchToolUse {
+  tool_name: string
+  tool_use_id: string
+  status: 'success' | 'error'
+}
+
+export type PostToolBatchHookInput = BaseHookInput & {
+  hook_event_name: 'PostToolBatch'
+  tool_uses: PostToolBatchToolUse[]
+}
+
 export type ExitReason =
   | 'clear'
   | 'resume'
@@ -263,6 +313,9 @@ export type HookInput =
   | WorktreeRemoveHookInput
   | CwdChangedHookInput
   | FileChangedHookInput
+  | MessageDisplayHookInput
+  | PostToolBatchHookInput
+  | UserPromptExpansionHookInput
 
 // ============================================================================
 // Hook Output Types
@@ -286,6 +339,11 @@ export interface UserPromptSubmitHookSpecificOutput {
   additionalContext?: string
 }
 
+export interface UserPromptExpansionHookSpecificOutput {
+  hookEventName: 'UserPromptExpansion'
+  additionalContext?: string
+}
+
 export interface SessionStartHookSpecificOutput {
   hookEventName: 'SessionStart'
   additionalContext?: string
@@ -306,6 +364,8 @@ export interface SubagentStartHookSpecificOutput {
 export interface PostToolUseHookSpecificOutput {
   hookEventName: 'PostToolUse'
   additionalContext?: string
+  /** 通用工具结果覆盖（string，全工具）。重写 model 看到的 tool result，优先于 updatedMCPToolOutput。 */
+  updatedToolOutput?: string
   updatedMCPToolOutput?: unknown
 }
 
@@ -349,6 +409,19 @@ export interface FileChangedHookSpecificOutput {
   watchPaths?: string[]
 }
 
+export interface MessageDisplayHookSpecificOutput {
+  hookEventName: 'MessageDisplay'
+  /** Replace the displayed text (display-only; does not change context/transcript). */
+  transformedText?: string
+  /** Hide the message from display entirely. */
+  hide?: boolean
+}
+
+export interface PostToolBatchHookSpecificOutput {
+  hookEventName: 'PostToolBatch'
+  additionalContext?: string
+}
+
 export interface ElicitationHookSpecificOutput {
   hookEventName: 'Elicitation'
   action?: 'accept' | 'decline' | 'cancel'
@@ -369,6 +442,8 @@ export interface WorktreeCreateHookSpecificOutput {
 export interface SyncHookJSONOutput {
   continue?: boolean
   suppressOutput?: boolean
+  /** 原始终端控制序列，由主进程写入 stdout（仅放行 OSC 0/9 + BEL，CSI 被丢弃）。 */
+  terminalSequence?: string
   stopReason?: string
   decision?: 'approve' | 'block'
   systemMessage?: string
@@ -389,6 +464,9 @@ export interface SyncHookJSONOutput {
     | CwdChangedHookSpecificOutput
     | FileChangedHookSpecificOutput
     | WorktreeCreateHookSpecificOutput
+    | MessageDisplayHookSpecificOutput
+    | PostToolBatchHookSpecificOutput
+    | UserPromptExpansionHookSpecificOutput
 }
 
 export type HookJSONOutput = AsyncHookJSONOutput | SyncHookJSONOutput

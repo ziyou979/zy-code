@@ -1,14 +1,19 @@
+import { randomUUID } from 'node:crypto'
+import type { PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type {
   PermissionDeniedHookInput,
   PermissionRequestHookInput,
   PermissionUpdate,
+  PostToolBatchHookInput,
+  PostToolBatchToolUse,
   PostToolUseFailureHookInput,
   PostToolUseHookInput,
   PreToolUseHookInput,
 } from 'src/types/index.js'
 import { getSessionId } from '../../../bootstrap/state.js'
 import type { ToolUseContext } from '../../../Tool.js'
-import type { PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
+import type { Message } from '../../../types/message.js'
+import { createAttachmentMessage } from '../../attachments.js'
 import { logForDebugging } from '../../debug.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { executeHooks } from '../executeEngine.js'
@@ -80,6 +85,7 @@ export async function* executePostToolHooks<ToolInput, ToolResponse>(
   permissionMode?: string,
   signal?: AbortSignal,
   timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+  durationMs?: number,
 ): AsyncGenerator<AggregatedHookResult> {
   const hookInput: PostToolUseHookInput = {
     ...createBaseHookInput(permissionMode, undefined, toolUseContext),
@@ -88,6 +94,7 @@ export async function* executePostToolHooks<ToolInput, ToolResponse>(
     tool_input: toolInput,
     tool_response: toolResponse,
     tool_use_id: toolUseID,
+    ...(durationMs !== undefined && { duration_ms: durationMs }),
   }
 
   yield* executeHooks({
@@ -98,6 +105,65 @@ export async function* executePostToolHooks<ToolInput, ToolResponse>(
     timeoutMs,
     toolUseContext,
   })
+}
+
+/**
+ * Execute PostToolBatch hooks once after all tool calls in an assistant turn complete.
+ * 触发于各工具的 PostToolUse 之后，避免并行工具调用的 N+1 hook 抖动。本执行器自带
+ * 转换：把 hook 的 additionalContext / preventContinuation 折成消息产出，调用方
+ * （query.ts）按与 toolUpdates 相同的方式消费（yield + 推入 toolResults）。
+ */
+export async function* executePostToolBatchHooks(
+  toolUses: PostToolBatchToolUse[],
+  toolUseContext: ToolUseContext,
+  signal?: AbortSignal,
+  timeoutMs: number = TOOL_HOOK_EXECUTION_TIMEOUT_MS,
+): AsyncGenerator<{ message: Message }> {
+  const appState = toolUseContext.getAppState()
+  const sessionId = toolUseContext.agentId ?? getSessionId()
+  if (!hasHookForEvent('PostToolBatch', appState, sessionId)) {
+    return
+  }
+
+  const hookInput: PostToolBatchHookInput = {
+    ...createBaseHookInput(undefined, undefined, toolUseContext),
+    hook_event_name: 'PostToolBatch',
+    tool_uses: toolUses,
+  }
+
+  for await (const result of executeHooks({
+    hookInput,
+    toolUseID: randomUUID(),
+    signal: signal ?? toolUseContext.abortController.signal,
+    timeoutMs,
+    toolUseContext,
+  })) {
+    if (result.message) {
+      yield { message: result.message as Message }
+    }
+    if (result.additionalContexts && result.additionalContexts.length > 0) {
+      yield {
+        message: createAttachmentMessage({
+          type: 'hook_additional_context',
+          content: result.additionalContexts,
+          hookName: 'PostToolBatch',
+          toolUseID: '',
+          hookEvent: 'PostToolBatch',
+        }) as Message,
+      }
+    }
+    if (result.preventContinuation) {
+      yield {
+        message: createAttachmentMessage({
+          type: 'hook_stopped_continuation',
+          message: result.stopReason || 'Execution stopped by PostToolBatch hook',
+          hookName: 'PostToolBatch',
+          toolUseID: '',
+          hookEvent: 'PostToolBatch',
+        }) as Message,
+      }
+    }
+  }
 }
 
 /**

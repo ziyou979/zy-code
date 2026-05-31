@@ -1,6 +1,6 @@
 import { randomUUID, type UUID } from 'node:crypto'
 import type { WireAssistantMessageError } from 'src/types/index.js'
-import { NO_CONTENT_MESSAGE } from '../../constants/messages.js'
+import { getNoContentMessage } from '../../constants/messages.js'
 import {
   COMMAND_ARGS_TAG,
   COMMAND_MESSAGE_TAG,
@@ -123,7 +123,7 @@ export function createAssistantMessage({
         ? [
             {
               type: 'text' as const,
-              text: content === '' ? NO_CONTENT_MESSAGE : content,
+              text: content === '' ? getNoContentMessage() : content,
             } as AssistantContentBlock,
           ]
         : content,
@@ -146,7 +146,7 @@ export function createAssistantAPIErrorMessage({
     content: [
       {
         type: 'text' as const,
-        text: content === '' ? NO_CONTENT_MESSAGE : content,
+        text: content === '' ? getNoContentMessage() : content,
       } as AssistantContentBlock,
     ],
     isApiErrorMessage: true,
@@ -198,7 +198,7 @@ export function createUserMessage({
     type: 'user',
     message: {
       role: 'user',
-      content: content.length > 0 ? content : [{ type: 'text', text: NO_CONTENT_MESSAGE }],
+      content: content.length > 0 ? content : [{ type: 'text', text: getNoContentMessage() }],
     },
     isMeta,
     isVisibleInTranscriptOnly,

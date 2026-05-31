@@ -22,7 +22,7 @@ import { FileWriteTool } from 'src/tools/FileWriteTool/FileWriteTool.js'
 import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
 import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
 import { getStrictToolResultPairing } from '../../bootstrap/state.js'
-import { NO_CONTENT_MESSAGE } from '../../constants/messages.js'
+import { getNoContentMessage } from '../../constants/messages.js'
 import { OUTPUT_STYLE_CONFIG } from '../../constants/outputStyles.js'
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
@@ -2612,7 +2612,7 @@ export function ensureToolResultPairing(
         i++
         result.push(
           createUserMessage({
-            content: [{ type: 'text' as const, text: NO_CONTENT_MESSAGE }],
+            content: [{ type: 'text' as const, text: getNoContentMessage() }],
             isMeta: true,
           }),
         )

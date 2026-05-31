@@ -5,6 +5,7 @@ import {
 } from '../../bootstrap/state.js'
 import { checkHasTrustDialogAccepted } from '../config.js'
 import { getCwd } from '../cwd.js'
+import { type EffortValue, getCurrentHookEffortLevel } from '../effort.js'
 import { getTranscriptPathForSession } from '../sessionStorage.js'
 
 export const TOOL_HOOK_EXECUTION_TIMEOUT_MS = 10 * 60 * 1000
@@ -61,8 +62,13 @@ export function createBaseHookInput(
   permissionMode?: string,
   sessionId?: string,
   // 窄类型声明（非 ToolUseContext），以便调用者可通过结构类型直接传入
-  // toolUseContext，而无需本函数依赖 Tool.ts。
-  agentInfo?: { agentId?: string; agentType?: string },
+  // toolUseContext，而无需本函数依赖 Tool.ts。getAppState 用于读取用户经
+  // /effort 设置的 effortValue（存在 AppState，而非 env）。
+  agentInfo?: {
+    agentId?: string
+    agentType?: string
+    getAppState?: () => { effortValue?: EffortValue }
+  },
 ): {
   session_id: string
   transcript_path: string
@@ -70,11 +76,15 @@ export function createBaseHookInput(
   permission_mode?: string
   agent_id?: string
   agent_type?: string
+  effort?: { level: string }
 } {
   const resolvedSessionId = sessionId ?? getSessionId()
   // agent_type: 子代理类型（来自 toolUseContext）优先于会话的 --agent 标志。
   // Hook 通过 agent_id 是否存在来区分子代理调用与 --agent 会话中的主线程调用。
   const resolvedAgentType = agentInfo?.agentType ?? getMainThreadAgentType()
+  // effort: 取已含 silent downgrade 的实际档。有 toolUseContext 时读其 AppState
+  // 的 effortValue（用户 /effort 设置）；无（生命周期 hook）时按 env/模型默认档解析。
+  const effortLevel = getCurrentHookEffortLevel(agentInfo?.getAppState?.().effortValue)
   return {
     session_id: resolvedSessionId,
     transcript_path: getTranscriptPathForSession(resolvedSessionId),
@@ -82,5 +92,6 @@ export function createBaseHookInput(
     permission_mode: permissionMode,
     agent_id: agentInfo?.agentId,
     agent_type: resolvedAgentType,
+    ...(effortLevel && { effort: { level: effortLevel } }),
   }
 }

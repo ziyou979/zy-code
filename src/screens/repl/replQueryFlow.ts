@@ -6,134 +6,133 @@
  */
 
 import { feature } from 'bun:bundle'
+import type React from 'react'
 import {
-  snapshotOutputTokensForTurn,
-  getCurrentTurnTokenBudget,
-  getTurnOutputTokens,
   getBudgetContinuationCount,
+  getCurrentTurnTokenBudget,
+  getOriginalCwd,
+  getSessionId,
   getTotalInputTokens,
+  getTurnOutputTokens,
+  snapshotOutputTokensForTurn,
+  updateLastInteractionTime,
 } from '../../bootstrap/state.js'
-import { parseTokenBudget } from '../../utils/tokenBudget.js'
-import { count } from '../../utils/array.js'
-import type { ReplStoreInstance, ToolJSXState } from '../../state/ReplStore.js'
-import type { AppStateStore } from '../../state/AppStateStore.js'
-import type { AppState } from '../../state/AppState.js'
-import type { Message as MessageType, UserMessage } from '../../types/message.js'
-import { toUUID } from '../../types/ids.js'
-import type { PromptInputMode } from '../../types/textInputTypes.js'
-import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
-import type { Tool } from '../../Tool.js'
+import { coordinatorModeModule, proactiveModule } from '../../cli/lazyModules.js'
 import type { Command, CommandResultDisplay } from '../../commands.js'
 import { getCommandName, isCommandEnabled } from '../../commands.js'
-import type { ThinkingConfig } from '../../utils/thinking.js'
-import type { ThemeName } from '../../utils/theme.js'
-import type { MCPServerConnection } from '../../services/mcp/types.js'
-import type React from 'react'
-import type { IDEExtensionInstallationStatus, IdeType } from '../../utils/ide.js'
-import type { Notification } from '../../context/notifications.js'
-import type { TerminalNotification } from '../../ink/useTerminalNotification.js'
-import type { ScopedMcpServerConfig } from '../../services/mcp/types.js'
-import type { EffortValue } from '../../utils/effort.js'
+import {
+  messagesAfterAreOnlySynthetic,
+  selectableUserMessagesFilter,
+} from '../../components/MessageSelector.js'
+import { prependModeCharacterToInput } from '../../components/PromptInput/inputModes.js'
 import type { SpinnerMode } from '../../components/Spinner.js'
-import type { StreamingToolUse, StreamingThinking } from '../../utils/messages.js'
-import type { FileHistoryState } from '../../utils/fileHistory.js'
-import type { AttributionState } from '../../utils/commitAttribution.js'
-import type { PastedContent } from '../../utils/config.js'
-import type { ActiveSpeculationState } from '../../services/PromptSuggestion/speculation.js'
-import type { SetAppState } from '../../utils/messageQueueManager.js'
-import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
-import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-import type { ActiveRemote } from './useReplActiveRemote.js'
-import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
-import type { RemoteMessageContent } from '../../services/teleport/api.js'
-import type { IDESelection } from '../../hooks/useIdeSelection.js'
-import type { PromptQueueItem, RequestPromptFactory } from './useReplRequestPrompt.js'
-import type { UserContentBlock } from '../../types/llm.js'
-import type { CompactProgressEvent } from '../../Tool.js'
-import type { ResumeFunction } from './useReplSessionRestore.js'
-
-import { assembleToolPool, getTools } from '../../tools.js'
-import { mergeAndFilterTools } from '../../utils/toolPool.js'
-import { mergeClients } from '../../hooks/useMergedClients.js'
-import { resolveAgentTools } from '../../tools/AgentTool/agentToolUtils.js'
-import { sendNotification } from '../../services/notifier.js'
-import {
-  handleMessageFromStream,
-  isCompactBoundaryMessage,
-  getMessagesAfterCompactBoundary,
-  getContentText,
-  createUserMessage,
-  createAssistantMessage,
-  createTurnDurationMessage,
-  createCommandInputMessage,
-  formatCommandInputTags,
-  createSystemMessage,
-} from '../../utils/messages.js'
-import {
-  isEphemeralToolProgress,
-  isLoggableMessage,
-  removeTranscriptMessage,
-  saveAiGeneratedTitle,
-  cacheSessionTitle,
-} from '../../utils/sessionStorage.js'
-import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
-import { getSessionId } from '../../bootstrap/state.js'
-import { generateSessionTitle } from '../../utils/sessionTitle.js'
+import { getSystemPrompt } from '../../constants/prompts.js'
 import {
   BASH_INPUT_TAG,
   COMMAND_MESSAGE_TAG,
   COMMAND_NAME_TAG,
   LOCAL_COMMAND_STDOUT_TAG,
 } from '../../constants/xml.js'
-import { escapeXml } from '../../utils/xml.js'
-import { query } from '../../query.js'
-import { getQuerySourceForREPL } from '../../utils/promptCategory.js'
-import { getSystemPrompt } from '../../constants/prompts.js'
-import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
+import type { Notification } from '../../context/notifications.js'
 import { getSystemContext, getUserContext } from '../../context.js'
-import { queryCheckpoint, logQueryProfileReport } from '../../utils/queryProfiler.js'
-import {
-  checkAndDisableBypassPermissionsIfNeeded,
-  checkAndDisableAutoModeIfNeeded,
-} from '../../utils/permissions/bypassPermissionsKillswitch.js'
-import { getScratchpadDir, isScratchpadEnabled } from '../../utils/permissions/filesystem.js'
-import { coordinatorModeModule, proactiveModule } from '../../cli/lazyModules.js'
-import { diagnosticTracker } from '../../services/diagnosticTracking.js'
-import { closeOpenDiffs, getConnectedIdeClient } from '../../utils/ide.js'
-import { maybeMarkProjectOnboardingComplete } from '../../projectOnboardingState.js'
-import {
-  logEvent,
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-} from '../../services/analytics/index.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import { enqueue, getCommandQueueLength } from '../../utils/messageQueueManager.js'
-import { getTeamName, getAgentName } from '../../utils/teammate.js'
-import { setMemberActive } from '../../services/swarm/teamHelpers.js'
-import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
-import { getAllInProcessTeammateTasks } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
-import {
-  selectableUserMessagesFilter,
-  messagesAfterAreOnlySynthetic,
-} from '../../components/MessageSelector.js'
 import {
   addToHistory,
-  removeLastFromHistory,
   expandPastedTextRefs,
   parseReferences,
+  removeLastFromHistory,
 } from '../../history.js'
-import { prependModeCharacterToInput } from '../../components/PromptInput/inputModes.js'
-import { prependToShellHistoryCache } from '../../services/suggestions/shellHistoryCompletion.js'
-import { handlePromptSubmit } from '../../utils/handlePromptSubmit.js'
+import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
+import type { IDESelection } from '../../hooks/useIdeSelection.js'
+import { mergeClients } from '../../hooks/useMergedClients.js'
+import type { TerminalNotification } from '../../ink/useTerminalNotification.js'
+import { maybeMarkProjectOnboardingComplete } from '../../projectOnboardingState.js'
+import { query } from '../../query.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import {
+  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+  logEvent,
+} from '../../services/analytics/index.js'
+import { diagnosticTracker } from '../../services/diagnosticTracking.js'
+import type { MCPServerConnection, ScopedMcpServerConfig } from '../../services/mcp/types.js'
+import { sendNotification } from '../../services/notifier.js'
+import type { ActiveSpeculationState } from '../../services/PromptSuggestion/speculation.js'
 import { handleSpeculationAccept } from '../../services/PromptSuggestion/speculation.js'
-import { getOriginalCwd, updateLastInteractionTime } from '../../bootstrap/state.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
-import { createAbortController } from '../../utils/abortController.js'
+import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
+import { prependToShellHistoryCache } from '../../services/suggestions/shellHistoryCompletion.js'
+import { setMemberActive } from '../../services/swarm/teamHelpers.js'
 import { endInteractionSpan } from '../../services/telemetry/sessionTracing.js'
-import { fileHistoryEnabled, fileHistoryMakeSnapshot } from '../../utils/fileHistory.js'
+import type { RemoteMessageContent } from '../../services/teleport/api.js'
+import type { AppState } from '../../state/AppState.js'
+import type { AppStateStore } from '../../state/AppStateStore.js'
+import type { ReplStoreInstance, ToolJSXState } from '../../state/ReplStore.js'
+import type { CompactProgressEvent, Tool } from '../../Tool.js'
+import { getAllInProcessTeammateTasks } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
+import { resolveAgentTools } from '../../tools/AgentTool/agentToolUtils.js'
+import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
+import { assembleToolPool, getTools } from '../../tools.js'
+import { toUUID } from '../../types/ids.js'
+import type { UserContentBlock } from '../../types/llm.js'
+import type { Message as MessageType, UserMessage } from '../../types/message.js'
+import type { PromptInputMode } from '../../types/textInputTypes.js'
+import { createAbortController } from '../../utils/abortController.js'
+import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
+import { count } from '../../utils/array.js'
+import type { AttributionState } from '../../utils/commitAttribution.js'
 import { incrementPromptCount } from '../../utils/commitAttribution.js'
-import { recordAttributionSnapshot } from '../../utils/sessionStorage.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import type { PastedContent } from '../../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
+import type { EffortValue } from '../../utils/effort.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
+import type { FileHistoryState } from '../../utils/fileHistory.js'
+import { fileHistoryEnabled, fileHistoryMakeSnapshot } from '../../utils/fileHistory.js'
+import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
+import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
+import { handlePromptSubmit } from '../../utils/handlePromptSubmit.js'
+import { executeMessageDisplayHooks } from '../../utils/hooks/executors/messageDisplay.js'
+import type { IDEExtensionInstallationStatus, IdeType } from '../../utils/ide.js'
+import { closeOpenDiffs, getConnectedIdeClient } from '../../utils/ide.js'
+import type { SetAppState } from '../../utils/messageQueueManager.js'
+import { enqueue, getCommandQueueLength } from '../../utils/messageQueueManager.js'
+import type { StreamingThinking, StreamingToolUse } from '../../utils/messages.js'
+import {
+  createAssistantMessage,
+  createCommandInputMessage,
+  createSystemMessage,
+  createTurnDurationMessage,
+  createUserMessage,
+  formatCommandInputTags,
+  getContentText,
+  getMessagesAfterCompactBoundary,
+  handleMessageFromStream,
+  isCompactBoundaryMessage,
+} from '../../utils/messages.js'
+import {
+  checkAndDisableAutoModeIfNeeded,
+  checkAndDisableBypassPermissionsIfNeeded,
+} from '../../utils/permissions/bypassPermissionsKillswitch.js'
+import { getScratchpadDir, isScratchpadEnabled } from '../../utils/permissions/filesystem.js'
+import { getQuerySourceForREPL } from '../../utils/promptCategory.js'
+import { logQueryProfileReport, queryCheckpoint } from '../../utils/queryProfiler.js'
+import {
+  cacheSessionTitle,
+  isEphemeralToolProgress,
+  isLoggableMessage,
+  recordAttributionSnapshot,
+  removeTranscriptMessage,
+  saveAiGeneratedTitle,
+} from '../../utils/sessionStorage.js'
+import { generateSessionTitle } from '../../utils/sessionTitle.js'
+import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
+import { getAgentName, getTeamName } from '../../utils/teammate.js'
+import type { ThemeName } from '../../utils/theme.js'
+import type { ThinkingConfig } from '../../utils/thinking.js'
+import { parseTokenBudget } from '../../utils/tokenBudget.js'
+import { mergeAndFilterTools } from '../../utils/toolPool.js'
+import { escapeXml } from '../../utils/xml.js'
+import type { ActiveRemote } from './useReplActiveRemote.js'
+import type { PromptQueueItem, RequestPromptFactory } from './useReplRequestPrompt.js'
+import type { ResumeFunction } from './useReplSessionRestore.js'
 
 // ── QueryFlowContext ──
 
@@ -565,6 +564,18 @@ export async function runQueryImpl(
     toolUseContext,
     querySource: getQuerySourceForREPL(),
   })) {
+    // MessageDisplay hook：消息入 store（即渲染）前的异步边界。display-only —— 结果
+    // 放进 message.displayOverride 仅供渲染层读取，不改 content（上下文/转录保留原文）。
+    // 仅对非错误的 assistant 消息触发；executor 自身做 hasHookForEvent 短路 + 500ms 超时 + fail-open。
+    if (event.type === 'assistant' && !event.isApiErrorMessage) {
+      const decision = await executeMessageDisplayHooks(event, toolUseContext)
+      if (decision.hide || decision.transformedText !== undefined) {
+        event.displayOverride = {
+          ...(decision.transformedText !== undefined && { text: decision.transformedText }),
+          ...(decision.hide && { hide: true }),
+        }
+      }
+    }
     handleQueryEvent(ctx, event)
   }
   queryCheckpoint('query_end')

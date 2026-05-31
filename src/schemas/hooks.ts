@@ -10,8 +10,8 @@
 
 import { HOOK_EVENTS, type HookEvent } from 'src/types/index.js'
 import { z } from 'zod/v4'
-import { lazySchema } from '../utils/lazySchema.js'
 import { SHELL_TYPES } from '../shell-eval/shared/shellProvider.js'
+import { lazySchema } from '../utils/lazySchema.js'
 
 // Shared schema for the `if` condition field.
 // Uses permission rule syntax (e.g., "Bash(git *)", "Read(*.ts)") to filter hooks
@@ -32,6 +32,15 @@ function buildHookSchemas() {
   const BashCommandHookSchema = z.object({
     type: z.literal('command').describe('Shell command hook type'),
     command: z.string().describe('Shell command to execute'),
+    args: z
+      .array(z.string())
+      .optional()
+      .describe(
+        'Exec form (no shell): when present, `command` is the executable and `args` its ' +
+          'arguments, spawned directly without a shell — no quoting/escaping of paths with ' +
+          'spaces. Omit `args` for shell form (the full shell string in `command`). ' +
+          'Ignored for shell: "powershell".',
+      ),
     if: IfConditionSchema(),
     shell: z
       .enum(SHELL_TYPES)
@@ -145,11 +154,34 @@ function buildHookSchemas() {
     once: z.boolean().optional().describe('If true, hook runs once and is removed after execution'),
   })
 
+  const McpToolHookSchema = z.object({
+    type: z
+      .literal('mcp_tool')
+      .describe('MCP tool hook type — calls an MCP tool without spawning a subprocess'),
+    server: z.string().describe('Connected MCP server name to call'),
+    tool: z.string().describe('Tool name on that server'),
+    args: z
+      .record(z.string(), z.unknown())
+      .optional()
+      .describe(
+        'Static arguments merged onto the hook input when calling the tool (static args win). ' +
+          'The hook event JSON is passed as the base arguments.',
+      ),
+    if: IfConditionSchema(),
+    timeout: z.number().positive().optional().describe('Timeout in seconds for the MCP tool call'),
+    statusMessage: z
+      .string()
+      .optional()
+      .describe('Custom status message to display in spinner while hook runs'),
+    once: z.boolean().optional().describe('If true, hook runs once and is removed after execution'),
+  })
+
   return {
     BashCommandHookSchema,
     PromptHookSchema,
     HttpHookSchema,
     AgentHookSchema,
+    McpToolHookSchema,
   }
 }
 
@@ -157,13 +189,19 @@ function buildHookSchemas() {
  * Schema for hook command (excludes function hooks - they can't be persisted)
  */
 export const HookCommandSchema = lazySchema(() => {
-  const { BashCommandHookSchema, PromptHookSchema, AgentHookSchema, HttpHookSchema } =
-    buildHookSchemas()
+  const {
+    BashCommandHookSchema,
+    PromptHookSchema,
+    AgentHookSchema,
+    HttpHookSchema,
+    McpToolHookSchema,
+  } = buildHookSchemas()
   return z.discriminatedUnion('type', [
     BashCommandHookSchema,
     PromptHookSchema,
     AgentHookSchema,
     HttpHookSchema,
+    McpToolHookSchema,
   ])
 })
 
@@ -197,5 +235,6 @@ export type BashCommandHook = Extract<HookCommand, { type: 'command' }>
 export type PromptHook = Extract<HookCommand, { type: 'prompt' }>
 export type AgentHook = Extract<HookCommand, { type: 'agent' }>
 export type HttpHook = Extract<HookCommand, { type: 'http' }>
+export type McpToolHook = Extract<HookCommand, { type: 'mcp_tool' }>
 export type HookMatcher = z.infer<ReturnType<typeof HookMatcherSchema>>
 export type HooksSettings = Partial<Record<HookEvent, HookMatcher[]>>

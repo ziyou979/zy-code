@@ -19,10 +19,11 @@ const rgb = (r: number, g: number, b: number): Color => ({
 })
 
 // 根据 OSC 21337 使用指南的建议映射。
-const TAB_STATUS_PRESETS: Record<
+// getter：惰性求值，避免模块顶层冻结翻译；语言切换后即时反应。
+const getTabStatusPresets = (): Record<
   TabStatusKind,
   { indicator: Color; status: string; statusColor: Color }
-> = {
+> => ({
   idle: {
     indicator: rgb(0, 215, 95),
     status: tSync('spinner.idle'),
@@ -38,7 +39,7 @@ const TAB_STATUS_PRESETS: Record<
     status: 'Waiting',
     statusColor: rgb(95, 135, 255),
   },
-}
+})
 
 /**
  * 声明式设置标签页状态指示器 (OSC 21337)。
@@ -70,6 +71,6 @@ export function useTabStatus(kind: TabStatusKind | null): void {
     if (!writeRaw || !supportsTabStatus()) {
       return
     }
-    writeRaw(wrapForMultiplexer(tabStatus(TAB_STATUS_PRESETS[kind])))
+    writeRaw(wrapForMultiplexer(tabStatus(getTabStatusPresets()[kind])))
   }, [kind, writeRaw])
 }

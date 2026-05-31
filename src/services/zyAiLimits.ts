@@ -1,11 +1,11 @@
 import isEqual from 'lodash-es/isEqual.js'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
+import { getDefaultCompactModel } from '../services/model/model.js'
 import type { LLMMessage } from '../types/llm.js'
 import { type APIErrorLike, isAPIError } from '../types/llm.js'
 import { getModelBetas } from '../utils/betas.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
 import { logError } from '../utils/log.js'
-import { getDefaultCompactModel } from '../services/model/model.js'
 import { isEssentialTrafficOnly } from '../utils/privacyLevel.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from './analytics/index.js'
 import { logEvent } from './analytics/index.js'
@@ -82,16 +82,23 @@ const EARLY_WARNING_CLAIM_MAP: Record<string, RateLimitType> = {
 
 import { tSync } from '../i18n/index.js'
 
-const RATE_LIMIT_DISPLAY_NAMES: Record<RateLimitType, string> = {
-  five_hour: tSync('rateLimit.sessionLimit'),
-  seven_day: tSync('rateLimit.weeklyLimit'),
-  seven_day_opus: tSync('rateLimit.advancedLimit'),
-  seven_day_sonnet: tSync('rateLimit.standardLimit'),
-  overage: 'extra usage limit',
-}
-
+// 惰性求值：tSync 在调用时才执行，而非模块加载时。顶层调用 tSync 会在模块求值阶段
+// 触发 i18n→getInitialSettings→settings，与 settings 形成循环初始化 TDZ（见 #循环依赖）。
 export function getRateLimitDisplayName(type: RateLimitType): string {
-  return RATE_LIMIT_DISPLAY_NAMES[type] || type
+  switch (type) {
+    case 'five_hour':
+      return tSync('rateLimit.sessionLimit')
+    case 'seven_day':
+      return tSync('rateLimit.weeklyLimit')
+    case 'seven_day_opus':
+      return tSync('rateLimit.advancedLimit')
+    case 'seven_day_sonnet':
+      return tSync('rateLimit.standardLimit')
+    case 'overage':
+      return 'extra usage limit'
+    default:
+      return type
+  }
 }
 
 /**

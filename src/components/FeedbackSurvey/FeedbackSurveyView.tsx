@@ -19,12 +19,12 @@ const inputToResponse: Record<ResponseInput, FeedbackSurveyResponse> = {
 } as const
 export const isValidResponseInput = (input: string): input is ResponseInput =>
   (RESPONSE_INPUTS as readonly string[]).includes(input)
-const DEFAULT_MESSAGE = tSync('feedbackSurvey.defaultMessage')
 export function FeedbackSurveyView({
   onSelect,
   inputValue,
   setInputValue,
-  message = DEFAULT_MESSAGE,
+  // 默认参数在每次调用（渲染）时求值 → 惰性且随语言切换反应，避免模块顶层冻结。
+  message = tSync('feedbackSurvey.defaultMessage'),
 }: Props) {
   useDebouncedDigitInput({
     inputValue,

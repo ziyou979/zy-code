@@ -11,7 +11,7 @@ import {
   hasCommand,
   type PromptCommand,
 } from 'src/commands.js'
-import { NO_CONTENT_MESSAGE } from 'src/constants/messages.js'
+import { getNoContentMessage } from 'src/constants/messages.js'
 import type { SetToolJSXFn, ToolUseContext } from 'src/Tool.js'
 import type {
   AssistantMessage,
@@ -35,7 +35,7 @@ import type { Progress as AgentProgress } from '../../tools/AgentTool/AgentTool.
 import { runAgent } from '../../tools/AgentTool/runAgent.js'
 import { renderToolUseProgressMessage } from '../../tools/AgentTool/UI.js'
 import type { CommandResultDisplay } from '../../types/command.js'
-import type { UserContentBlock, TextBlock } from '../../types/llm.js'
+import type { TextBlock, UserContentBlock } from '../../types/llm.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { getAgentContext } from '../../utils/agentContext.js'
 import { createAttachmentMessage, getAttachmentMessages } from '../../utils/attachments.js'
@@ -63,7 +63,6 @@ import {
   normalizeMessages,
   prepareUserContent,
 } from '../../utils/messages.js'
-import type { ModelAlias } from '../model/aliases.js'
 import { parseToolListFromCLI } from '../../utils/permissions/permissionSetup.js'
 import { hasPermissionsToUseTool } from '../../utils/permissions/permissions.js'
 import {
@@ -76,12 +75,13 @@ import {
 } from '../../utils/settings/pluginOnlyPolicy.js'
 import { parseSlashCommand } from '../../utils/slashCommandParsing.js'
 import { sleep } from '../../utils/sleep.js'
-import { recordSkillUsage } from '../suggestions/skillUsageTracking.js'
-import { logOTelEvent, redactIfDisabled } from '../telemetry/events.js'
-import { buildPluginCommandTelemetryFields } from '../telemetry/pluginTelemetry.js'
 import { getAssistantMessageContentLength } from '../../utils/tokens.js'
 import { createAgentId } from '../../utils/uuid.js'
 import { getWorkload } from '../../utils/workloadContext.js'
+import type { ModelAlias } from '../model/aliases.js'
+import { recordSkillUsage } from '../suggestions/skillUsageTracking.js'
+import { logOTelEvent, redactIfDisabled } from '../telemetry/events.js'
+import { buildPluginCommandTelemetryFields } from '../telemetry/pluginTelemetry.js'
 import type { ProcessUserInputBaseResult, ProcessUserInputContext } from './processUserInput.js'
 
 type SlashCommandResult = ProcessUserInputBaseResult & {
@@ -772,7 +772,7 @@ async function getMessagesForSlashCommand(
                             content: [
                               {
                                 type: 'text' as const,
-                                text: `<local-command-stdout>${NO_CONTENT_MESSAGE}</local-command-stdout>`,
+                                text: `<local-command-stdout>${getNoContentMessage()}</local-command-stdout>`,
                               },
                             ],
                           }),

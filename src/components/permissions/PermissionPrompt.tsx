@@ -30,10 +30,11 @@ export type PermissionPromptProps<T extends string> = {
   question?: string | ReactNode
   toolAnalyticsContext?: ToolAnalyticsContext
 }
-const DEFAULT_PLACEHOLDERS: Record<FeedbackType, string> = {
+// getter：惰性求值，避免模块顶层冻结翻译；语言切换后即时反应。
+const getDefaultPlaceholders = (): Record<FeedbackType, string> => ({
   accept: tSync('permission.feedbackAccept'),
   reject: tSync('permission.feedbackReject'),
-}
+})
 
 /**
  * Shared component for permission prompts with optional feedback input.
@@ -76,7 +77,7 @@ export function PermissionPrompt<T extends string>({
     const { type, placeholder } = feedbackConfig
     const isInputMode = type === 'accept' ? acceptInputMode : rejectInputMode
     const onChange = type === 'accept' ? setAcceptFeedback : setRejectFeedback
-    const defaultPlaceholder = DEFAULT_PLACEHOLDERS[type]
+    const defaultPlaceholder = getDefaultPlaceholders()[type]
     if (isInputMode) {
       return {
         type: 'input' as const,

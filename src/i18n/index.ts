@@ -7,9 +7,9 @@
  *   t('tip.planModeForComplexTasks', { shortcut }) → 带插值
  */
 
-import { getInitialSettings } from '../utils/settings/settings.js'
+import { getLanguage, onLanguageChange } from './languageStore.js'
 import type { UiLanguage } from './types.js'
-import { resolveUiLanguage, SUPPORTED_UI_LANGUAGES } from './types.js'
+import { SUPPORTED_UI_LANGUAGES } from './types.js'
 
 // 懒加载的语言环境映射 — 启动时从不导入
 type LocaleLoader = () => Promise<Record<string, string>>
@@ -92,8 +92,7 @@ function interpolate(template: string, vars?: Record<string, string | number>): 
  * 预加载当前语言的翻译。启动时调用一次。
  */
 export async function warmI18n(): Promise<void> {
-  const settings = getInitialSettings()
-  const lang = resolveUiLanguage(settings.language)
+  const lang = getUiLanguage()
   await loadMessages(lang)
 
   // 始终更新同步缓存，以便 tSync 在 warmI18n 完成之前能找到翻译
@@ -106,11 +105,12 @@ export async function warmI18n(): Promise<void> {
 }
 
 /**
- * 获取当前 UI 语言（同步，从设置中读取）。
+ * 获取当前 UI 语言（同步）。读取 languageStore 这个零依赖叶子 —— O(1) 取变量，
+ * 绝不触碰 settings，因此模块顶层调用也绝不会 TDZ（断环）。语言由 settings 层
+ * 与 LanguagePicker 经 setLanguage 推入 store（对标 i18next.changeLanguage）。
  */
 export function getUiLanguage(): UiLanguage {
-  const settings = getInitialSettings()
-  return resolveUiLanguage(settings.language)
+  return getLanguage()
 }
 
 /**
@@ -132,6 +132,12 @@ export function tSync(key: string, vars?: Record<string, string | number>): stri
   const template = messages?.[key] ?? getSyncMessages()[key] ?? key
   return interpolate(template, vars)
 }
+
+// 语言变化时重新预热消息缓存（mirrors i18next：changeLanguage 触发资源加载），
+// 使运行时切换语言后同步路径（tSync）也即时拿到新语言文案，无需各调用点手动 warm。
+onLanguageChange(() => {
+  void warmI18n()
+})
 
 /**
  * 支持的 UI 语言。

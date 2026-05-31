@@ -34,6 +34,11 @@ export interface BaseMessage {
   uuid: string
   timestamp: string
   isMeta?: boolean
+  /**
+   * 运行时渲染层覆盖（MessageDisplay hook）：仅影响显示，不进对话上下文/转录。
+   * text → 渲染时替换显示文本；hide → 渲染时整条隐藏。
+   */
+  displayOverride?: { text?: string; hide?: boolean }
 }
 
 // ============================================================

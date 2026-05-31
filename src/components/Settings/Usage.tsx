@@ -240,8 +240,9 @@ type ExtraUsageSectionProps = {
   extraUsage: ExtraUsage
   maxWidth: number
 }
-const EXTRA_USAGE_SECTION_TITLE = tSync('usage.extraUsage')
 function ExtraUsageSection({ extraUsage, maxWidth }: ExtraUsageSectionProps) {
+  // 组件内求值：每次渲染读当前语言，避免模块顶层冻结翻译。
+  const EXTRA_USAGE_SECTION_TITLE = tSync('usage.extraUsage')
   const subscriptionType = getSubscriptionType()
   const isProOrMax = (subscriptionType as any) === 'pro' || (subscriptionType as any) === 'max'
   if (!isProOrMax) {

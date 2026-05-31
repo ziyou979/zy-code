@@ -3,6 +3,7 @@ import { isUltrathinkEnabled } from './thinking.js'
 import { getInitialSettings } from './settings/settings.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { getAPIProvider } from 'src/services/model/providers.js'
+import { getMainLoopModel } from 'src/services/model/model.js'
 import { getProviderEntry } from 'src/services/model/providerRegistry.js'
 import { getLocalModelEffortLevels } from './settings/localModelCapabilities.js'
 import { isEnvTruthy } from './envUtils.js'
@@ -62,6 +63,22 @@ export function getModelEffortLevels(model: string): EffortLevel[] {
 
 export function modelSupportsEffort(model: string): boolean {
   return getModelEffortLevels(model).length > 0
+}
+
+/**
+ * 当前 turn 生效的 effort 等级，供 hook input 注入与 ZY_CODE_EFFORT 环境变量使用。
+ * 取已含 silent downgrade 的实际展示档（getDisplayedEffortLevel），而非用户原始设置。
+ * 模型不支持 effort 时返回 undefined（不注入 effort 字段，对齐 Claude Code 把 effort 设为可选）。
+ *
+ * effortValue 应来自 toolUseContext.getAppState().effortValue（用户经 /effort 设置的值）。
+ * 缺省（无 toolUseContext 的生命周期 hook，如 SessionStart）时按 env/模型默认档解析。
+ */
+export function getCurrentHookEffortLevel(effortValue?: EffortValue): EffortLevel | undefined {
+  const model = getMainLoopModel()
+  if (!model || !modelSupportsEffort(model)) {
+    return undefined
+  }
+  return getDisplayedEffortLevel(model, effortValue)
 }
 
 export function modelSupportsMaxEffort(model: string): boolean {
