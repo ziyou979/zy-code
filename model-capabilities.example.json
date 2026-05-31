@@ -48,6 +48,14 @@
       "maxInputTokens": "128k",
       "maxOutputTokens": "16k",
       "costs": { "inputTokens": 2.5, "outputTokens": 10 }
+    },
+    {
+      "pattern": "claude-sonnet-4",
+      "capabilities": ["thinking", "adaptive_thinking", "structured_outputs", "context_management", "interleaved_thinking"],
+      "contextWindow": "1m",
+      "maxInputTokens": "1m",
+      "maxOutputTokens": "64k",
+      "betaHeaders": ["context-management-2025-06-27"]
     }
   ]
 }

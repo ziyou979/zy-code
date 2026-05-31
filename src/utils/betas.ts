@@ -22,6 +22,7 @@ import {
   providerHasCapability,
 } from 'src/services/model/providers.js'
 import { getContextWindowForModel } from './context.js'
+import { getLocalModelBetaHeaders } from './settings/localModelCapabilities.js'
 import { getInitialSettings } from './settings/settings.js'
 
 /**
@@ -229,6 +230,17 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   // while the restored JsonToolUseOutputParser soaks.
   if (isInternalBuild() && includeExperimentalBetas && tokenEfficientToolsEnabled) {
     betaHeaders.push(TOKEN_EFFICIENT_TOOLS_BETA_HEADER)
+  }
+
+  // 模型级 anthropic-beta:从 model-capabilities.json 的 betaHeaders 透传。按模型粒度、
+  // 用户显式 opt-in,故不经上方的 provider/feature 门控;去重避免与已添加项重复。
+  const modelBetaHeaders = getLocalModelBetaHeaders(model)
+  if (modelBetaHeaders) {
+    for (const header of modelBetaHeaders) {
+      if (header && !betaHeaders.includes(header)) {
+        betaHeaders.push(header)
+      }
+    }
   }
 
   // If ANTHROPIC_BETAS is set, split it by commas and add to betaHeaders.

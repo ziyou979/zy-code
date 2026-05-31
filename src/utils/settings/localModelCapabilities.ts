@@ -77,6 +77,13 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
         '模型支持的 effort(思考强度)档位列表。省略表示不支持设置思考强度。' +
           '优先级高于 provider 默认档位。',
       ),
+    betaHeaders: z
+      .array(z.string())
+      .optional()
+      .describe(
+        '为该模型附加的 anthropic-beta header 列表(按模型粒度透传,无需把 beta 串硬编码进代码)。' +
+          '仅在端点确实接受这些 beta 时配置——未知 beta 可能导致 400。',
+      ),
     maxOutputTokens: TokenCountSchema.optional().describe(
       '模型支持的最大输出 tokens（单次响应上限），支持数字或 "256k"、"1m" 格式',
     ),
@@ -224,6 +231,15 @@ export function localModelHasCapability(model: string, capability: ModelCapabili
 export function getLocalModelEffortLevels(model: string): EffortLevel[] | undefined {
   const entry = getLocalModelCapability(model)
   return entry?.effortLevels
+}
+
+/**
+ * 从本地配置获取该模型附加的 anthropic-beta header 列表。
+ * 未配置时返回 undefined(不附加任何额外 beta)。
+ */
+export function getLocalModelBetaHeaders(model: string): string[] | undefined {
+  const entry = getLocalModelCapability(model)
+  return entry?.betaHeaders
 }
 
 /**
