@@ -10,6 +10,8 @@
 // 回放(需凭证,打真实 API):
 //   ZY_SMOKE_SETTINGS=~/.zy/settings.json bun test tests/cli/headlessSmoke.test.ts
 
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 /** 项目根目录;spawn 时显式设 cwd 以保证 node_modules 解析正确。 */
@@ -34,42 +36,51 @@ export type HeadlessScenario = {
 /** spawn dev 模式 CLI 跑一条 headless stream-json,返回原始 stdout。 */
 export async function runHeadlessStreamJson(scenario: HeadlessScenario): Promise<string> {
   const settings = process.env.ZY_SMOKE_SETTINGS
-  const proc = Bun.spawn(
-    [
-      'bun',
-      '--preload',
-      DEV_PRELOAD,
-      DEV_ENTRY,
-      '-p',
-      scenario.prompt,
-      '--output-format',
-      'stream-json',
-      '--verbose',
-      '--bare',
-      ...(settings ? ['--settings', settings] : []),
-      ...(scenario.extraArgs ?? []),
-    ],
-    {
-      env: {
-        ...process.env,
-        NODE_ENV: 'production',
+  // 隔离会话存储:用临时 ZY_CONFIG_DIR,避免测试把会话(jsonl/meta)、history、debug
+  // 日志写进真实 ~/.zy/projects,污染 /resume 列表。getZyConfigHomeDir 据此 env
+  // 解析配置根目录;凭证仍经 --settings 显式注入,不受影响。用完即删。
+  const tmpConfigDir = mkdtempSync(join(tmpdir(), 'zy-headless-smoke-'))
+  try {
+    const proc = Bun.spawn(
+      [
+        'bun',
+        '--preload',
+        DEV_PRELOAD,
+        DEV_ENTRY,
+        '-p',
+        scenario.prompt,
+        '--output-format',
+        'stream-json',
+        '--verbose',
+        '--bare',
+        ...(settings ? ['--settings', settings] : []),
+        ...(scenario.extraArgs ?? []),
+      ],
+      {
+        env: {
+          ...process.env,
+          NODE_ENV: 'production',
+          ZY_CONFIG_DIR: tmpConfigDir,
+        },
+        cwd: PROJECT_ROOT,
+        stdout: 'pipe',
+        stderr: 'pipe',
       },
-      cwd: PROJECT_ROOT,
-      stdout: 'pipe',
-      stderr: 'pipe',
-    },
-  )
-  const [stdout, stderr] = await Promise.all([
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
-  ])
-  await proc.exited
-  if (proc.exitCode !== 0) {
-    throw new Error(
-      `headless 进程非 0 退出(code=${proc.exitCode})\n--- stderr ---\n${stderr}\n--- stdout ---\n${stdout}`,
     )
+    const [stdout, stderr] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+    ])
+    await proc.exited
+    if (proc.exitCode !== 0) {
+      throw new Error(
+        `headless 进程非 0 退出(code=${proc.exitCode})\n--- stderr ---\n${stderr}\n--- stdout ---\n${stdout}`,
+      )
+    }
+    return stdout
+  } finally {
+    rmSync(tmpConfigDir, { recursive: true, force: true })
   }
-  return stdout
 }
 
 // ── 归一化:抹掉每次运行都会变、与行为无关的字段,使 golden 可稳定比对 ──
