@@ -228,7 +228,8 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
   let initialized = false
   logForDiagnosticsNoPII('info', 'cli_message_loop_started')
 
-  // Phase 3: 控制消息 dispatch map(逐步迁移;未迁的 subtype 仍走下方 else-if 链)。
+  // Phase 3: 控制消息 dispatch map。所有 control_request subtype 均在此分发,
+  // 无 subtype 走 else-if(set_proactive 经 feature 条件 spread 也在表内)。
   // handler 为内联闭包,捕获 activeUserSpecifiedModel/options 等闭包状态;
   // message.request 是 subtype 联合,handler 内用 Extract 窄化到具体变体。
   // 返回 'break' 的 handler(如 end_session)令外层 for-await 退出。
@@ -1384,6 +1385,24 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         sendControlResponseSuccess(message)
       }
     },
+    // set_proactive 仅在 PROACTIVE/KAIROS feature 开启时注册;feature 关时此 key 不
+    // 存在,落到下方「未知 subtype」错误响应,与迁移前的内联 else-if 行为一致。
+    ...(feature('PROACTIVE') || feature('KAIROS')
+      ? {
+          set_proactive: (message: WireControlRequest): void => {
+            const req = message.request as unknown as { subtype: string; enabled: boolean }
+            if (req.enabled) {
+              if (!proactiveModule?.isProactiveActive()) {
+                proactiveModule.activateProactive('command')
+                scheduleProactiveTick!()
+              }
+            } else {
+              proactiveModule.deactivateProactive()
+            }
+            sendControlResponseSuccess(message)
+          },
+        }
+      : {}),
   }
 
   for await (const message of structuredIO.structuredInput) {
@@ -1404,26 +1423,8 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         if (outcome === 'break') {
           break // 如 end_session:退出 for-await → 下方 inputClosed 收尾
         }
-      } else if (
-        (feature('PROACTIVE') || feature('KAIROS')) &&
-        (message.request as { subtype: string }).subtype === 'set_proactive'
-      ) {
-        const req = message.request as unknown as {
-          subtype: string
-          enabled: boolean
-        }
-        if (req.enabled) {
-          if (!proactiveModule?.isProactiveActive()) {
-            proactiveModule.activateProactive('command')
-            scheduleProactiveTick!()
-          }
-        } else {
-          proactiveModule.deactivateProactive()
-        }
-        sendControlResponseSuccess(message)
       } else {
-        // Unknown control request subtype — send an error response so
-        // the caller doesn't hang waiting for a reply that never comes.
+        // 未知 control request subtype——回错误响应,避免调用方苦等不到回复。
         sendControlResponseError(
           message,
           `Unsupported control request subtype: ${(message.request as { subtype: string }).subtype}`,
