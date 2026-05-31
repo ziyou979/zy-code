@@ -29,8 +29,9 @@ import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
 import {
   getAPIProvider,
   isAnthropicBaseUrl,
-  isAnthropicModelProvider,
+  isAnthropicModel,
 } from 'src/services/model/providers.js'
+import { getMainLoopModel } from 'src/services/model/model.js'
 import { jsonStringify } from './slowOperations.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
 
@@ -175,7 +176,7 @@ export type ToolSearchMode = 'tst' | 'tst-auto' | 'standard'
  *   false / auto:100      standard
  *   (unset)               tst (default: always defer MCP and shouldDefer tools)
  */
-export function getToolSearchMode(): ToolSearchMode {
+export function getToolSearchMode(model: string = getMainLoopModel() ?? ''): ToolSearchMode {
   // ZY_CODE_DISABLE_EXPERIMENTAL_BETAS is a kill switch for beta API
   // features. Tool search emits defer_loading on tool definitions and
   // tool_reference content blocks — both require the API to accept a beta
@@ -188,10 +189,10 @@ export function getToolSearchMode(): ToolSearchMode {
     return 'standard'
   }
 
-  // defer_loading / tool_reference 由 advanced-tool-use beta 解锁,只有真正跑
-  // Claude 的 provider 才认。三方聚合端会拒绝这些 beta 形状,故对它们彻底关闭
-  // tool search(降级为全量下发工具 schema——即 tool search 之前的行为)。
-  if (!isAnthropicModelProvider()) {
+  // defer_loading / tool_reference 由 advanced-tool-use beta 解锁,只对真 Claude
+  // 模型有意义(按 model id 判断,而非 provider)。非 Claude 模型会拒绝这些 beta
+  // 形状,故对它们关闭 tool search(降级为全量下发工具 schema——tool search 之前的行为)。
+  if (!isAnthropicModel(model)) {
     return 'standard'
   }
 
@@ -460,7 +461,7 @@ export async function isToolSearchEnabled(
     return false
   }
 
-  const mode = getToolSearchMode()
+  const mode = getToolSearchMode(model)
 
   switch (mode) {
     case 'tst':

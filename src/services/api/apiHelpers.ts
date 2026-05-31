@@ -13,7 +13,7 @@ import { errorMessage } from '../../utils/errors.js'
 import { safeParseJSON } from '../../utils/json.js'
 import {
   getAPIProvider,
-  isAnthropicModelProvider,
+  isAnthropicModel,
   isOpenAIProvider,
 } from '../../services/model/providers.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
@@ -101,9 +101,9 @@ export function configureEffortParams(
   betas: string[],
   model: string,
 ): void {
-  // effort 走 anthropic 的 effort beta——只对真正跑 Claude 的 provider 下发
-  // (OpenAI 格式的 provider 经它们自己的 reasoning_effort 路径传 effort,不走这里)。
-  if (!isAnthropicModelProvider() || !modelSupportsEffort(model) || 'effort' in outputConfig) {
+  // effort 走 anthropic 的 effort beta——只对真 Claude 模型下发(OpenAI 格式的
+  // provider 经它们自己的 reasoning_effort 路径传 effort,不走这里)。
+  if (!isAnthropicModel(model) || !modelSupportsEffort(model) || 'effort' in outputConfig) {
     return
   }
 

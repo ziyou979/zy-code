@@ -17,10 +17,11 @@ import {
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
 import {
   getAPIProvider,
-  isAnthropicModelProvider,
+  isAnthropicModel,
   modelHasCapability,
   providerHasCapability,
 } from 'src/services/model/providers.js'
+import { getMainLoopModel } from 'src/services/model/model.js'
 import { getContextWindowForModel } from './context.js'
 import { getLocalModelBetaHeaders } from './settings/localModelCapabilities.js'
 import { getInitialSettings } from './settings/settings.js'
@@ -158,22 +159,22 @@ export function getToolSearchBetaHeader(): string {
  * These are betas that require specific provider capabilities
  * and may not be supported by proxies or other providers.
  */
-export function shouldIncludeExperimentalBetas(): boolean {
-  // anthropic-beta header 只对真正跑 Claude 的 provider 有意义。zy 是第三方
-  // harness——三方聚合端(只是说 anthropic 格式)会拒绝这些 beta,故按 provider
-  // 身份门控,而不是用一个它们都会声明的 capability flag。
-  return isAnthropicModelProvider() && !isEnvTruthy(process.env.ZY_CODE_DISABLE_EXPERIMENTAL_BETAS)
+export function shouldIncludeExperimentalBetas(model: string = getMainLoopModel() ?? ''): boolean {
+  // anthropic-beta header 只对真 Claude 模型有意义——按 model id 判断,而非 provider
+  // (openrouter/bedrock 等同一 provider 既可能跑 Claude 也可能跑别家)。模型不是
+  // Claude 时这些 beta 会被拒,故按模型门控。无 model 入参时取主循环模型。
+  return isAnthropicModel(model) && !isEnvTruthy(process.env.ZY_CODE_DISABLE_EXPERIMENTAL_BETAS)
 }
 
 export const getAllModelBetas = memoize((model: string): string[] => {
   const betaHeaders = []
   const isHaiku = model.toLowerCase().includes('haiku')
-  const includeExperimentalBetas = shouldIncludeExperimentalBetas()
+  const includeExperimentalBetas = shouldIncludeExperimentalBetas(model)
   if (!isHaiku) {
     if (
       isInternalBuild() &&
       process.env.ZY_CODE_ENTRYPOINT === 'cli' &&
-      isAnthropicModelProvider()
+      isAnthropicModel(model)
     ) {
       if (CLI_INTERNAL_BETA_HEADER) {
         betaHeaders.push(CLI_INTERNAL_BETA_HEADER)
@@ -181,8 +182,8 @@ export const getAllModelBetas = memoize((model: string): string[] => {
     }
   }
   // 模型配置为 1M 时解锁 1M 上下文窗口。即便是支持的模型也必需(见 opencode#12507)
-  // ——否则 API 会悄悄把输入卡在 200k,而客户端却按 1M 预算。仅 Anthropic 系 provider。
-  if (isAnthropicModelProvider() && modelSupports1MContext(model)) {
+  // ——否则 API 会悄悄把输入卡在 200k,而客户端却按 1M 预算。仅对 Claude 模型发。
+  if (isAnthropicModel(model) && modelSupports1MContext(model)) {
     betaHeaders.push(CONTEXT_1M_BETA_HEADER)
   }
   // POC: server-side connector-text summarization (anti-distillation). The
@@ -210,10 +211,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   const antOptedIntoToolClearing =
     isEnvTruthy(process.env.USE_API_CONTEXT_MANAGEMENT) && isInternalBuild()
   const thinkingPreservationEnabled = modelSupportsContextManagement(model)
-  if (
-    shouldIncludeExperimentalBetas() &&
-    (antOptedIntoToolClearing || thinkingPreservationEnabled)
-  ) {
+  if (includeExperimentalBetas && (antOptedIntoToolClearing || thinkingPreservationEnabled)) {
     betaHeaders.push(CONTEXT_MANAGEMENT_BETA_HEADER)
   }
   // strict tool use:schema.strict 字段在 api.ts 设置(由本 flag +

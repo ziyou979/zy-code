@@ -787,7 +787,7 @@ async function* queryModel(
     if (
       !afkHeaderLatched &&
       isAgenticQuery &&
-      shouldIncludeExperimentalBetas() &&
+      shouldIncludeExperimentalBetas(options.model) &&
       (autoModeStateModule?.isAutoModeActive() ?? false)
     ) {
       afkHeaderLatched = true
@@ -970,7 +970,7 @@ async function* queryModel(
     if (feature('TRANSCRIPT_CLASSIFIER')) {
       if (
         afkHeaderLatched &&
-        shouldIncludeExperimentalBetas() &&
+        shouldIncludeExperimentalBetas(options.model) &&
         isAgenticQuery &&
         !betasParams.includes(AFK_MODE_BETA_HEADER)
       ) {

@@ -73,20 +73,17 @@ export function getAPIProviderForStatsig(): AnalyticsMetadata_I_VERIFIED_THIS_IS
 }
 
 /**
- * 服务真实 Anthropic(Claude)模型的 provider —— 只有它们才认 `anthropic-beta`
- * header。三方聚合端(dashscope/zhipu/kimi/openrouter/…)只是说 anthropic *格式*,
- * 并不识别这些 beta,发过去有 400 `Unsupported beta header` 的风险,故排除。
+ * 判断模型本身是否为真 Anthropic(Claude)模型——决定 anthropic-beta header 该不该发。
+ *
+ * 按 **model id** 识别(claude/sonnet/opus/haiku,兼容 `anthropic/`、`anthropic.` 前缀),
+ * 而非按 provider:同一个 provider 既可能跑 Claude 也可能跑别家(openrouter 转 Claude、
+ * 也转 Gemini;bedrock/vertex 同理),只有模型本身是 Claude 时这些 beta 才有意义。
+ *
+ * 这是「beta 语义上适用吗」这一维;「端点接不接受 beta」是另一维(见 toolSearch 的
+ * Vertex / 代理 gate、ZY_CODE_DISABLE_EXPERIMENTAL_BETAS 逃生口)。
  */
-const ANTHROPIC_MODEL_PROVIDERS: ReadonlySet<APIProvider> = new Set<APIProvider>([
-  'anthropic',
-  'bedrock',
-  'vertex',
-  'foundry',
-])
-
-/** 仅当当前 provider 服务真实 Claude 模型时为 true(见上)。 */
-export function isAnthropicModelProvider(): boolean {
-  return ANTHROPIC_MODEL_PROVIDERS.has(getAPIProvider())
+export function isAnthropicModel(model: string): boolean {
+  return /claude|sonnet|opus|haiku/i.test(model)
 }
 
 /**
