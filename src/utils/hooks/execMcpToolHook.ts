@@ -38,9 +38,7 @@ export async function execMcpToolHook(
     }) as any,
   })
 
-  const conn = toolUseContext
-    .getAppState()
-    .mcp.clients.find((c) => c.name === hook.server)
+  const conn = toolUseContext.getAppState().mcp.clients.find((c) => c.name === hook.server)
   if (!conn || conn.type !== 'connected') {
     return failure(`MCP server "${hook.server}" is not connected`)
   }

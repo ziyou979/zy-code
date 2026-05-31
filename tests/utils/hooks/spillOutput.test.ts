@@ -15,7 +15,10 @@ let tmpRoot: string
 // 因部分 mock 缺失导出而触发 "export not found"（参见 queryEngineHarness 的同款做法）。
 async function setupMocks() {
   const state = await import('../../../src/bootstrap/state.js')
-  mock.module('../../../src/bootstrap/state.js', () => ({ ...state, getSessionId: () => 'sess-test' }))
+  mock.module('../../../src/bootstrap/state.js', () => ({
+    ...state,
+    getSessionId: () => 'sess-test',
+  }))
   const envUtils = await import('../../../src/utils/envUtils.js')
   mock.module('../../../src/utils/envUtils.js', () => ({
     ...envUtils,

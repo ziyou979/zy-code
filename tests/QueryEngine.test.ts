@@ -98,7 +98,11 @@ describe('QueryEngine.submitMessage switch 分发', () => {
       [
         streamEvent({ type: 'message_start', message: { usage: { inputTokens: 10 } } }, 's1'),
         streamEvent(
-          { type: 'message_delta', usage: { inputTokens: 10, outputTokens: 5 }, stopReason: 'end_turn' },
+          {
+            type: 'message_delta',
+            usage: { inputTokens: 10, outputTokens: 5 },
+            stopReason: 'end_turn',
+          },
           's2',
         ),
         streamEvent({ type: 'message_stop' }, 's3'),
@@ -150,7 +154,9 @@ describe('QueryEngine.submitMessage switch 分发', () => {
       { config: { replayUserMessages: true } },
     )
 
-    const replay = wire.find((m) => m.type === 'user' && (m as { uuid: string }).uuid === 'src-uuid')
+    const replay = wire.find(
+      (m) => m.type === 'user' && (m as { uuid: string }).uuid === 'src-uuid',
+    )
     expect(replay).toBeDefined()
     expect((replay as { isReplay: boolean }).isReplay).toBe(true)
     expect((replay as { message: { content: unknown } }).message.content).toEqual([
@@ -173,7 +179,9 @@ describe('QueryEngine.submitMessage switch 分发', () => {
 
     const { wire } = await runEngine([apiError, assistant('recovered')])
 
-    const retry = wire.find((m) => m.type === 'system' && (m as { subtype: string }).subtype === 'api_retry')
+    const retry = wire.find(
+      (m) => m.type === 'system' && (m as { subtype: string }).subtype === 'api_retry',
+    )
     expect(retry).toBeDefined()
     expect((retry as { attempt: number }).attempt).toBe(1)
     expect((retry as { max_retries: number }).max_retries).toBe(3)
@@ -191,7 +199,11 @@ describe('QueryEngine.submitMessage switch 分发', () => {
       compactMetadata: { trigger: 'manual', preTokens: 100 },
     } as unknown as Message
 
-    const { wire } = await runEngine([assistant('before', 'a0'), boundary, assistant('after', 'a2')])
+    const { wire } = await runEngine([
+      assistant('before', 'a0'),
+      boundary,
+      assistant('after', 'a2'),
+    ])
 
     const cb = wire.find(
       (m) => m.type === 'system' && (m as { subtype: string }).subtype === 'compact_boundary',

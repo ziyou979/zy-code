@@ -171,11 +171,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   const isHaiku = model.toLowerCase().includes('haiku')
   const includeExperimentalBetas = shouldIncludeExperimentalBetas(model)
   if (!isHaiku) {
-    if (
-      isInternalBuild() &&
-      process.env.ZY_CODE_ENTRYPOINT === 'cli' &&
-      isAnthropicModel(model)
-    ) {
+    if (isInternalBuild() && process.env.ZY_CODE_ENTRYPOINT === 'cli' && isAnthropicModel(model)) {
       if (CLI_INTERNAL_BETA_HEADER) {
         betaHeaders.push(CLI_INTERNAL_BETA_HEADER)
       }

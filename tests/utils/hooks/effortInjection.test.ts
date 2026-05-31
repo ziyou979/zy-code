@@ -30,7 +30,9 @@ async function setupMocks() {
   await spread('../../../src/utils/settings/localModelCapabilities.js', {
     getLocalModelEffortLevels: () => LEVELS,
   })
-  await spread('../../../src/services/model/providerRegistry.js', { getProviderEntry: () => undefined })
+  await spread('../../../src/services/model/providerRegistry.js', {
+    getProviderEntry: () => undefined,
+  })
   // createBaseHookInput 的轻量依赖（不影响 effort 解析）。
   await spread('../../../src/bootstrap/state.js', {
     getSessionId: () => 's1',

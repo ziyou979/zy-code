@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:wttr.in)",
+      "WebFetch(domain:www.timeanddate.com)"
+    ]
+  }
+}

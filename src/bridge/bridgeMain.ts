@@ -845,10 +845,7 @@ export async function runWireLoop(
           let workerEpoch: number | undefined
           // Server decides per-session via the work secret; env var is the
           // ant-dev override (e.g. forcing v2 before the server flag is on).
-          if (
-            secret.use_code_sessions === true ||
-            isEnvTruthy(process.env.ZY_BRIDGE_USE_CCR)
-          ) {
+          if (secret.use_code_sessions === true || isEnvTruthy(process.env.ZY_BRIDGE_USE_CCR)) {
             sdkUrl = buildCCRv2SdkUrl(config.apiBaseUrl, sessionId)
             // Retry once on transient failure (network blip, 500) before
             // permanently giving up and killing the session.

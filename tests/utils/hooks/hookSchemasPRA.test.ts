@@ -55,7 +55,9 @@ describe('PR-A schema 接受性', () => {
       ...baseInput,
       hook_event_name: 'Stop',
       stop_hook_active: false,
-      background_tasks: [{ id: 't1', type: 'local_bash', status: 'running', description: 'npm test' }],
+      background_tasks: [
+        { id: 't1', type: 'local_bash', status: 'running', description: 'npm test' },
+      ],
       session_crons: [
         { id: 'c1', schedule: '0 9 * * *', recurring: true, next_run: '2026-06-01T09:00:00.000Z' },
       ],
@@ -71,7 +73,9 @@ describe('PR-A schema 接受性', () => {
       agent_id: 'a1',
       agent_transcript_path: '/at',
       agent_type: 'general-purpose',
-      background_tasks: [{ id: 't1', type: 'local_agent', status: 'running', description: 'subtask' }],
+      background_tasks: [
+        { id: 't1', type: 'local_agent', status: 'running', description: 'subtask' },
+      ],
     })
     expect(r.success).toBe(true)
   })

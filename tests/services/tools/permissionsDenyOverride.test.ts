@@ -50,7 +50,9 @@ async function setupMocks() {
   mock.module('../../../src/utils/permissions/PermissionResult.js', () => ({
     getRuleBehaviorDescription: () => '',
   }))
-  mock.module('../../../src/utils/toolErrors.js', () => ({ formatError: (e: unknown) => String(e) }))
+  mock.module('../../../src/utils/toolErrors.js', () => ({
+    formatError: (e: unknown) => String(e),
+  }))
   mock.module('../../../src/services/mcp/utils.js', () => ({ isMcpTool: () => false }))
 }
 

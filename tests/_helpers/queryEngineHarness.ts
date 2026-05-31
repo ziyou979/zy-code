@@ -50,7 +50,9 @@ export async function installQueryEngineMocks(): Promise<void> {
     }),
   }))
 
-  const processUserInputMod = await import('../../src/services/processUserInput/processUserInput.js')
+  const processUserInputMod = await import(
+    '../../src/services/processUserInput/processUserInput.js'
+  )
   mock.module('src/services/processUserInput/processUserInput.js', () => ({
     ...processUserInputMod,
     processUserInput: async () => _processResult,
@@ -92,7 +94,12 @@ export async function installQueryEngineMocks(): Promise<void> {
   const systemInit = await import('../../src/utils/messages/systemInit.js')
   mock.module('src/utils/messages/systemInit.js', () => ({
     ...systemInit,
-    buildSystemInitMessage: () => ({ type: 'system', subtype: 'init', session_id: '', uuid: 'init' }),
+    buildSystemInitMessage: () => ({
+      type: 'system',
+      subtype: 'init',
+      session_id: '',
+      uuid: 'init',
+    }),
   }))
 }
 

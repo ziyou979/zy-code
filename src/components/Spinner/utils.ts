@@ -5,9 +5,9 @@ export function getDefaultCharacters(): string[] {
   // zycode 专属 spinner：8 点盲文累积绘制字母 Z
   // 调用方会套 [...x, ...x.reverse()] 镜像 doubling，
   // 所以这里只需返回"build"半段，反向自动产生"erase"半段，
-  // 完整循环：⠁→⠉→⠙→⠝→⡝→⣝→⣝→⡝→⠝→⠙→⠉→⠁
+  // 完整循环：→⠁→⠉→⠙→⠝→⡝→⣝→⣝→⡝→⠝→⠙→⠉→⠁→
   // 其中 ⣝（dots 1+3+4+5+7+8）= 顶横 + 右上→左下对角穿插 + 底横，即完整 Z
-  return ['⠁', '⠉', '⠙', '⠝', '⡝', '⣝']
+  return [' ', '⠁', '⠉', '⠙', '⠝', '⡝', '⣝']
 }
 
 // Interpolate between two RGB colors
