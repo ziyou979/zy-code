@@ -831,7 +831,12 @@ export const AgentTool = buildTool({
     if (isForkPath && worktreeInfo) {
       promptMessages.push(
         createUserMessage({
-          content: [{ type: 'text' as const, text: buildWorktreeNotice(getCwd(), worktreeInfo.worktreePath) }],
+          content: [
+            {
+              type: 'text' as const,
+              text: buildWorktreeNotice(getCwd(), worktreeInfo.worktreePath),
+            },
+          ],
         }),
       )
     }

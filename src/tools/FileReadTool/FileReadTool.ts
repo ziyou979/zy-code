@@ -832,7 +832,12 @@ async function callInner(
     return {
       data,
       ...(metadataText && {
-        newMessages: [createUserMessage({ content: [{ type: 'text' as const, text: metadataText }], isMeta: true })],
+        newMessages: [
+          createUserMessage({
+            content: [{ type: 'text' as const, text: metadataText }],
+            isMeta: true,
+          }),
+        ],
       }),
     }
   }

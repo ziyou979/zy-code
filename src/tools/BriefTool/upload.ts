@@ -64,9 +64,7 @@ function debug(msg: string): void {
  * skip → web viewer sees inert cards with no file_uuid.
  */
 function getWireBaseUrl(): string {
-  return (
-    getWireBaseUrlOverride() ?? process.env.ANTHROPIC_BASE_URL ?? getOauthConfig().BASE_API_URL
-  )
+  return getWireBaseUrlOverride() ?? process.env.ANTHROPIC_BASE_URL ?? getOauthConfig().BASE_API_URL
 }
 
 // /api/oauth/file_upload returns one of ChatMessage{Image,Blob,Document}FileSchema.

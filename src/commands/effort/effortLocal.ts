@@ -22,7 +22,7 @@ export const call: LocalCommandCall = async (rawArgs, context) => {
     return {
       type: 'text',
       value:
-        'Usage: /effort [low|medium|high|max|auto]\n\nEffort levels:\n- low: Quick, straightforward implementation\n- medium: Balanced approach with standard testing\n- high: Comprehensive implementation with extensive testing\n- max: Maximum capability with deepest reasoning (Opus 4.6 only)\n- auto: Use the default effort level for your model',
+        'Usage: /effort [minimal|low|medium|high|max|auto]\n\nEffort levels:\n- minimal: Fastest possible response with very brief reasoning\n- low: Quick, straightforward implementation\n- medium: Balanced approach with standard testing\n- high: Comprehensive implementation with extensive testing\n- max: Maximum capability with deepest reasoning (Opus 4.6 only)\n- auto: Use the default effort level for your model',
     }
   }
 

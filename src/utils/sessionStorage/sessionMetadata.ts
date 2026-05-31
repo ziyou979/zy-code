@@ -1,5 +1,6 @@
 // Session metadata 持久化 / 恢复：标题、标签、PR 链接、agent 名称色、模式、worktree 状态。
-// 所有 save* 通过 appendEntryToFile 写入 transcript JSONL；getCurrentSession* 读 Project 单例缓存。
+// 所有 save* 通过 updateSessionSidecar 写入 sidecar <sessionId>.meta.json（原子整体覆写,
+// 不再追加到 JSONL）；getCurrentSession* 读 Project 单例缓存。
 
 import type { UUID } from 'node:crypto'
 import {
@@ -12,7 +13,7 @@ import { type PersistedWorktreeSession } from '../../types/logs.js'
 import { updateSessionName } from '../concurrentSessions.js'
 import { getTranscriptPathForSession } from '../sessionStorage/paths.js'
 import { getProject } from '../sessionStorage/project.js'
-import { appendEntryToFile } from '../sessionStorage/transcript.js'
+import { updateSessionSidecar } from '../sessionStorage/sessionSidecar.js'
 
 /* eslint-enable custom-rules/no-sync-fs */
 
@@ -24,11 +25,7 @@ export async function saveCustomTitle(
 ) {
   // 如果未提供 fullPath 则回退到计算的路径
   const resolvedPath = fullPath ?? getTranscriptPathForSession(sessionId)
-  appendEntryToFile(resolvedPath, {
-    type: 'custom-title',
-    customTitle,
-    sessionId,
-  })
+  updateSessionSidecar(resolvedPath, { customTitle })
   // 仅为当前 session 缓存（用于即时可见性）
   if (sessionId === getSessionId()) {
     getProject().currentSessionTitle = customTitle
@@ -64,11 +61,7 @@ export async function saveCustomTitle(
  * 之后落地的竞争。
  */
 export function saveAiGeneratedTitle(sessionId: UUID, aiTitle: string): void {
-  appendEntryToFile(getTranscriptPathForSession(sessionId), {
-    type: 'ai-title',
-    aiTitle,
-    sessionId,
-  })
+  updateSessionSidecar(getTranscriptPathForSession(sessionId), { aiTitle })
 }
 
 /**
@@ -77,18 +70,15 @@ export function saveAiGeneratedTitle(sessionId: UUID, aiTitle: string): void {
  * 因此过时是可以接受的；ps 从尾部读取最新的。
  */
 export function saveTaskSummary(sessionId: UUID, summary: string): void {
-  appendEntryToFile(getTranscriptPathForSession(sessionId), {
-    type: 'task-summary',
-    summary,
-    sessionId,
-    timestamp: new Date().toISOString(),
+  updateSessionSidecar(getTranscriptPathForSession(sessionId), {
+    taskSummary: { summary, timestamp: new Date().toISOString() },
   })
 }
 
 export async function saveTag(sessionId: UUID, tag: string, fullPath?: string) {
   // 如果未提供 fullPath 则回退到计算的路径
   const resolvedPath = fullPath ?? getTranscriptPathForSession(sessionId)
-  appendEntryToFile(resolvedPath, { type: 'tag', tag, sessionId })
+  updateSessionSidecar(resolvedPath, { tag })
   // 仅为当前 session 缓存（用于即时可见性）
   if (sessionId === getSessionId()) {
     getProject().currentSessionTag = tag
@@ -108,13 +98,8 @@ export async function linkSessionToPR(
   fullPath?: string,
 ): Promise<void> {
   const resolvedPath = fullPath ?? getTranscriptPathForSession(sessionId)
-  appendEntryToFile(resolvedPath, {
-    type: 'pr-link',
-    sessionId,
-    prNumber,
-    prUrl,
-    prRepository,
-    timestamp: new Date().toISOString(),
+  updateSessionSidecar(resolvedPath, {
+    prLink: { prNumber, prUrl, prRepository, timestamp: new Date().toISOString() },
   })
   // 为当前 session 缓存，以便 reAppendSessionMetadata 可在压缩后重写
   if (sessionId === getSessionId()) {
@@ -236,7 +221,7 @@ export async function saveAgentName(
   source: 'user' | 'auto' = 'user',
 ) {
   const resolvedPath = fullPath ?? getTranscriptPathForSession(sessionId)
-  appendEntryToFile(resolvedPath, { type: 'agent-name', agentName, sessionId })
+  updateSessionSidecar(resolvedPath, { agentName })
   // 仅为当前 session 缓存（用于即时可见性）
   if (sessionId === getSessionId()) {
     getProject().currentSessionAgentName = agentName
@@ -249,11 +234,7 @@ export async function saveAgentName(
 
 export async function saveAgentColor(sessionId: UUID, agentColor: string, fullPath?: string) {
   const resolvedPath = fullPath ?? getTranscriptPathForSession(sessionId)
-  appendEntryToFile(resolvedPath, {
-    type: 'agent-color',
-    agentColor,
-    sessionId,
-  })
+  updateSessionSidecar(resolvedPath, { agentColor })
   // 仅为当前 session 缓存（用于即时可见性）
   if (sessionId === getSessionId()) {
     getProject().currentSessionAgentColor = agentColor
@@ -267,7 +248,13 @@ export async function saveAgentColor(sessionId: UUID, agentColor: string, fullPa
  * 此处仅缓存以避免在启动时创建仅含 metadata 的 session 文件。
  */
 export function saveAgentSetting(agentSetting: string): void {
-  getProject().currentSessionAgentSetting = agentSetting
+  const project = getProject()
+  project.currentSessionAgentSetting = agentSetting
+  // 文件已存在则立即落 sidecar;否则 materializeSessionFile 会通过
+  // reAppendSessionMetadata(flushSidecar) 在首条消息时写入。
+  if (project.sessionFile) {
+    updateSessionSidecar(project.sessionFile, { agentSetting })
+  }
 }
 
 /**
@@ -285,7 +272,11 @@ export function cacheSessionTitle(customTitle: string): void {
  * 此处仅缓存以避免在启动时创建仅含 metadata 的 session 文件。
  */
 export function saveMode(mode: 'coordinator' | 'normal'): void {
-  getProject().currentSessionMode = mode
+  const project = getProject()
+  project.currentSessionMode = mode
+  if (project.sessionFile) {
+    updateSessionSidecar(project.sessionFile, { mode })
+  }
 }
 
 /**
@@ -315,11 +306,8 @@ export function saveWorktreeState(worktreeSession: PersistedWorktreeSession | nu
   // 当文件已存在时急切写入（session 中进入/退出）。
   // 对于 --worktree 启动，sessionFile 为 null — materializeSessionFile
   // 将在首条消息时通过 reAppendSessionMetadata 写入。
+  // stripped 可为 null（已退出 worktree）— updateSessionSidecar 会保留该 null。
   if (project.sessionFile) {
-    appendEntryToFile(project.sessionFile, {
-      type: 'worktree-state',
-      worktreeSession: stripped,
-      sessionId: getSessionId(),
-    })
+    updateSessionSidecar(project.sessionFile, { worktreeState: stripped })
   }
 }

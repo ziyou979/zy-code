@@ -64,26 +64,15 @@ function extractMessageText(message: SerializedMessage): string {
     return ''
   }
 
-  if (typeof content === 'string') {
-    return content
-  }
-
-  if (Array.isArray(content)) {
-    return content
-      .map((block) => {
-        if (typeof block === 'string') {
-          return block
-        }
-        if ('text' in block && typeof block.text === 'string') {
-          return block.text
-        }
-        return ''
-      })
-      .filter(Boolean)
-      .join(' ')
-  }
-
-  return ''
+  return content
+    .map((block) => {
+      if ('text' in block && typeof block.text === 'string') {
+        return block.text
+      }
+      return ''
+    })
+    .filter(Boolean)
+    .join(' ')
 }
 
 /**

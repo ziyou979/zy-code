@@ -6,11 +6,12 @@ import { Box, Text } from '../ink.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { useAppState, useSetAppState } from '../state/AppState.js'
 import {
+  clampEffort,
   convertEffortValueToLevel,
   type EffortLevel,
   getDefaultEffortForModel,
+  getModelEffortLevels,
   modelSupportsEffort,
-  modelSupportsMaxEffort,
   resolvePickerEffortPersistence,
   toPersistableEffort,
 } from '../utils/effort.js'
@@ -89,10 +90,12 @@ export function ModelPicker({
   const hiddenCount = Math.max(0, selectOptions.length - visibleCount)
   const focusedModelName = selectOptions.find((option) => option.value === focusedValue)?.label
   const focusedModel = resolveOptionModel(focusedValue)
-  const focusedSupportsEffort = focusedModel ? modelSupportsEffort(focusedModel) : false
-  const focusedSupportsMax = focusedModel ? modelSupportsMaxEffort(focusedModel) : false
+  const focusedLevels = focusedModel ? getModelEffortLevels(focusedModel) : []
+  const focusedSupportsEffort = focusedLevels.length > 0
   const focusedDefaultEffort = getDefaultEffortLevelForOption(focusedValue)
-  const displayEffort = (effort as any) === 'max' && !focusedSupportsMax ? 'high' : effort
+  // 将当前选择 clamp 到聚焦模型支持的档位(例如从支持 max 的模型切到不支持的模型)。
+  const displayEffort =
+    effort && focusedLevels.length > 0 ? (clampEffort(effort, focusedLevels) ?? effort) : effort
   const handleFocus = (value) => {
     setFocusedValue(value)
     if (!hasToggledEffort && effortValue === undefined) {
@@ -103,9 +106,7 @@ export function ModelPicker({
     if (!focusedSupportsEffort) {
       return
     }
-    setEffort((prev) =>
-      cycleEffortLevel(prev ?? focusedDefaultEffort, direction, focusedSupportsMax),
-    )
+    setEffort((prev) => cycleEffortLevel(prev ?? focusedDefaultEffort, direction, focusedLevels))
     setHasToggledEffort(true)
   }
   useKeybindings(
@@ -251,14 +252,14 @@ function EffortLevelIndicator({ effort }) {
 function cycleEffortLevel(
   current: EffortLevel,
   direction: 'left' | 'right',
-  includeMax: boolean,
+  levels: readonly EffortLevel[],
 ): EffortLevel {
-  const levels: EffortLevel[] = includeMax
-    ? (['low', 'medium', 'high', 'max'] as any)
-    : ['low', 'medium', 'high']
-  // 如果当前级别不在循环中（例如切换到非 Opus 模型后的 'max'），钳位到 'high'。
+  if (levels.length === 0) {
+    return current
+  }
+  // 如果当前级别不在该模型支持的档位中（例如切换模型后），钳位到最接近的合法档。
   const idx = levels.indexOf(current)
-  const currentIndex = idx !== -1 ? idx : levels.indexOf('high')
+  const currentIndex = idx !== -1 ? idx : Math.max(0, levels.indexOf(clampEffort(current, levels)!))
   if (direction === 'right') {
     return levels[(currentIndex + 1) % levels.length]!
   } else {

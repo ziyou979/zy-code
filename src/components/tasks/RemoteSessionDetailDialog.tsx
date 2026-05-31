@@ -1,7 +1,12 @@
 import figures from 'figures'
 import React, { useMemo, useState } from 'react'
 import type { WireMessage } from 'src/types/index.js'
-import type { AssistantMessage, AttachmentMessage, SystemMessage, UserMessage } from 'src/types/message.js'
+import type {
+  AssistantMessage,
+  AttachmentMessage,
+  SystemMessage,
+  UserMessage,
+} from 'src/types/message.js'
 import type { ToolUseContext } from 'src/Tool.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 import type { CommandResultDisplay } from '../../commands.js'

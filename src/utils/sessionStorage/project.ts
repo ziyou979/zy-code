@@ -58,6 +58,7 @@ import {
   getTranscriptPathForSession,
 } from '../sessionStorage/paths.js'
 import { isChainParticipant, isTranscriptMessage } from '../sessionStorage/predicates.js'
+import { updateSessionSidecar } from '../sessionStorage/sessionSidecar.js'
 import { appendEntryToFile, readFileTailSync } from '../sessionStorage.js'
 import { extractLastJsonStringField, LITE_READ_BUF_SIZE } from '../sessionStoragePortable.js'
 import { getInitialSettings } from '../settings/settings.js'
@@ -344,6 +345,11 @@ class Project {
    * 字段（last-prompt, agent-*, mode, pr-link）无外部写入问题 —
    * 它们的缓存具有权威性。
    */
+  // 把会话级可变元数据落盘到 sidecar(<sessionId>.meta.json)。
+  // 旧实现把这些字段反复追加到 JSONL 末尾以待 64KB 尾读取;现在 sidecar 原子整体
+  // 覆写,既根除重复也无需"贴 EOF"。仍先吸收外部 SDK(VS Code)写到 JSONL 的
+  // title/tag,再合并写 sidecar(merge 保留 saveAiGeneratedTitle/saveTaskSummary
+  // 直接写入的 aiTitle/taskSummary)。
   reAppendSessionMetadata(skipTitleRefresh = false): void {
     if (!this.sessionFile) {
       return
@@ -352,28 +358,21 @@ class Project {
     if (!sessionId) {
       return
     }
+    this.refreshFromExternalWriters(skipTitleRefresh)
+    this.flushSidecar()
+  }
 
-    // 一次同步尾部读取以刷新 SDK 可变字段。使用与 readLiteMetadata
-    // 相同的 LITE_READ_BUF_SIZE 窗口。失败时返回空字符串 →
-    // extract 返回 null → 缓存是唯一真实来源。
+  // 吸收外部 SDK 直接写到 JSONL 尾部的 custom-title / tag(VS Code 等仍走 JSONL)。
+  private refreshFromExternalWriters(skipTitleRefresh: boolean): void {
+    if (!this.sessionFile) {
+      return
+    }
     const tail = readFileTailSync(this.sessionFile)
-
-    // 将任何更新的 SDK 写入的 title/tag 吸收到我们的缓存中。如果 SDK
-    // 在我们打开 session 时进行了写入，缓存是过时的 — 尾部值具有
-    // 权威性。如果尾部没有内容（被驱逐或从未外部写入），缓存保持不变。
-    //
-    // 使用 startsWith 过滤以仅匹配顶层 JSONL entry（第 0 列），
-    // 而非出现在嵌套 tool_use 输入中恰好被 JSON 序列化到消息中的
-    // "type":"tag"。
     const tailLines = tail.split('\n')
     if (!skipTitleRefresh) {
       const titleLine = tailLines.findLast((l) => l.startsWith('{"type":"custom-title"'))
       if (titleLine) {
         const tailTitle = extractLastJsonStringField(titleLine, 'customTitle')
-        // `!== undefined` 区分无匹配和空字符串匹配。
-        // renameSession 拒绝空标题，但 CLI 采用防御性策略：
-        // 外部写入 customTitle:"" 应清除缓存，使下面的重新追加
-        // 跳过它（而非复活一个过时的标题）。
         if (tailTitle !== undefined) {
           this.currentSessionTitle = tailTitle || undefined
         }
@@ -382,87 +381,39 @@ class Project {
     const tagLine = tailLines.findLast((l) => l.startsWith('{"type":"tag"'))
     if (tagLine) {
       const tailTag = extractLastJsonStringField(tagLine, 'tag')
-      // 同上：tagSession(id, null) 写入 `tag:""` 来清除。
       if (tailTag !== undefined) {
         this.currentSessionTag = tailTag || undefined
       }
     }
+  }
 
-    // lastPrompt 被重新追加，使 readLiteMetadata 可以显示用户最近在做什么。
-    // 先写入它，使 customTitle/tag 等更靠近 EOF
-    // （它们是尾部读取中更关键的字段）。
-    if (this.currentSessionLastPrompt) {
-      appendEntryToFile(this.sessionFile, {
-        type: 'last-prompt',
-        lastPrompt: this.currentSessionLastPrompt,
-        sessionId,
-      })
+  private flushSidecar(): void {
+    if (!this.sessionFile) {
+      return
     }
-    // 无条件：缓存已从上面的尾部刷新；重新追加使 entry 保持在 EOF，
-    // 这样压缩推送的内容不会驱逐它。
-    if (this.currentSessionTitle) {
-      appendEntryToFile(this.sessionFile, {
-        type: 'custom-title',
-        customTitle: this.currentSessionTitle,
-        sessionId,
-      })
-    }
-    if (this.currentSessionTag) {
-      appendEntryToFile(this.sessionFile, {
-        type: 'tag',
-        tag: this.currentSessionTag,
-        sessionId,
-      })
-    }
-    if (this.currentSessionAgentName) {
-      appendEntryToFile(this.sessionFile, {
-        type: 'agent-name',
-        agentName: this.currentSessionAgentName,
-        sessionId,
-      })
-    }
-    if (this.currentSessionAgentColor) {
-      appendEntryToFile(this.sessionFile, {
-        type: 'agent-color',
-        agentColor: this.currentSessionAgentColor,
-        sessionId,
-      })
-    }
-    if (this.currentSessionAgentSetting) {
-      appendEntryToFile(this.sessionFile, {
-        type: 'agent-setting',
-        agentSetting: this.currentSessionAgentSetting,
-        sessionId,
-      })
-    }
-    if (this.currentSessionMode) {
-      appendEntryToFile(this.sessionFile, {
-        type: 'mode',
-        mode: this.currentSessionMode,
-        sessionId,
-      })
-    }
-    if (this.currentSessionWorktree !== undefined) {
-      appendEntryToFile(this.sessionFile, {
-        type: 'worktree-state',
-        worktreeSession: this.currentSessionWorktree,
-        sessionId,
-      })
-    }
-    if (
+    const prLink =
       this.currentSessionPrNumber !== undefined &&
       this.currentSessionPrUrl &&
       this.currentSessionPrRepository
-    ) {
-      appendEntryToFile(this.sessionFile, {
-        type: 'pr-link',
-        sessionId,
-        prNumber: this.currentSessionPrNumber,
-        prUrl: this.currentSessionPrUrl,
-        prRepository: this.currentSessionPrRepository,
-        timestamp: new Date().toISOString(),
-      })
-    }
+        ? {
+            prNumber: this.currentSessionPrNumber,
+            prUrl: this.currentSessionPrUrl,
+            prRepository: this.currentSessionPrRepository,
+            timestamp: new Date().toISOString(),
+          }
+        : undefined
+    // updateSessionSidecar 跳过 undefined(不清除已有)、保留显式 null(worktree 已退出)。
+    updateSessionSidecar(this.sessionFile, {
+      customTitle: this.currentSessionTitle,
+      tag: this.currentSessionTag,
+      lastPrompt: this.currentSessionLastPrompt,
+      agentName: this.currentSessionAgentName,
+      agentColor: this.currentSessionAgentColor,
+      agentSetting: this.currentSessionAgentSetting,
+      mode: this.currentSessionMode,
+      worktreeState: this.currentSessionWorktree,
+      prLink,
+    })
   }
 
   async flush(): Promise<void> {

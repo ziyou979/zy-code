@@ -97,6 +97,7 @@ import {
   getTranscriptPath,
   getTranscriptPathForSession,
 } from '../sessionStorage/paths.js'
+import { readSessionSidecar, readSessionSidecarAsync } from '../sessionStorage/sessionSidecar.js'
 
 // 在每个调用点使用 getOriginalCwd()，而不是在模块加载时捕获。
 // 在 import 时调用 getCwd() 可能先于 bootstrap 通过 realpathSync 解析符号链接，
@@ -1106,6 +1107,53 @@ export async function loadTranscriptFile(
   repairBrokenParentUuidChains(messages)
   applyPreservedSegmentRelinks(messages)
 
+  // 加载边界归一:历史 JSONL 里 user/assistant 的 content 可能是 content-block 重构前的
+  // 纯字符串,在此统一转为 [{type:'text',text}],使下游可安全假定 content 恒为数组
+  // （这是删除散落 Array.isArray 守卫的前提）。
+  for (const msg of messages.values()) {
+    if (msg.type !== 'user' && msg.type !== 'assistant') {
+      continue
+    }
+    const content = msg.message?.content as unknown
+    if (typeof content === 'string') {
+      ;(msg.message as { content: unknown }).content = [{ type: 'text', text: content }]
+    }
+  }
+
+  // sidecar 优先:命中则用 sidecar 覆盖从 JSONL 解析出的会话级元数据(sidecar 为权威源;
+  // 未命中则保留上面 JSONL 解析的结果 —— 兼容尚未迁移的老文件)。
+  const sidecar = readSessionSidecar(filePath)
+  if (sidecar) {
+    const sid = sidecar.sessionId
+    const title = sidecar.customTitle ?? sidecar.aiTitle
+    if (title !== undefined) {
+      customTitles.set(sid, title)
+    }
+    if (sidecar.tag !== undefined) {
+      tags.set(sid, sidecar.tag)
+    }
+    if (sidecar.agentName !== undefined) {
+      agentNames.set(sid, sidecar.agentName)
+    }
+    if (sidecar.agentColor !== undefined) {
+      agentColors.set(sid, sidecar.agentColor)
+    }
+    if (sidecar.agentSetting !== undefined) {
+      agentSettings.set(sid, sidecar.agentSetting)
+    }
+    if (sidecar.mode !== undefined) {
+      modes.set(sid, sidecar.mode)
+    }
+    if (sidecar.worktreeState !== undefined) {
+      worktreeStates.set(sid, sidecar.worktreeState)
+    }
+    if (sidecar.prLink) {
+      prNumbers.set(sid, sidecar.prLink.prNumber)
+      prUrls.set(sid, sidecar.prLink.prUrl)
+      prRepositories.set(sid, sidecar.prLink.prRepository)
+    }
+  }
+
   // 在加载时一次性计算叶子 UUID
   // 只有 user/assistant 消息应被视为锚定恢复的叶子。
   // 其他消息类型（system、attachment）是 metadata 或辅助性的，
@@ -1739,7 +1787,7 @@ export function isLoggableMessage(m: Message): boolean {
 function collectReplIds(messages: readonly Message[]): Set<string> {
   const ids = new Set<string>()
   for (const m of messages) {
-    if (m.type === 'assistant' && Array.isArray(m.message.content)) {
+    if (m.type === 'assistant') {
       for (const b of m.message.content) {
         if (b.type === 'tool_call' && b.name === REPL_TOOL_NAME) {
           ids.add(b.id)
@@ -1766,8 +1814,8 @@ function transformMessagesForExternalTranscript(
   messages: Transcript,
   replIds: Set<string>,
 ): Transcript {
-  return messages.flatMap((m) => {
-    if (m.type === 'assistant' && Array.isArray(m.message.content)) {
+  return messages.flatMap((m): Transcript[number][] => {
+    if (m.type === 'assistant') {
       const content = m.message.content
       const hasRepl = content.some((b) => b.type === 'tool_call' && b.name === REPL_TOOL_NAME)
       const filtered = hasRepl
@@ -1785,7 +1833,7 @@ function transformMessagesForExternalTranscript(
       }
       return [m]
     }
-    if (m.type === 'user' && Array.isArray(m.message.content)) {
+    if (m.type === 'user') {
       const content = m.message.content
       const hasRepl = content.some((b) => b.type === 'tool_result' && replIds.has(b.toolCallId))
       const filtered = hasRepl
@@ -1803,7 +1851,7 @@ function transformMessagesForExternalTranscript(
       }
       return [m]
     }
-    // 字符串内容的 user、system、attachment
+    // system、attachment
     if ('isVirtual' in m && m.isVirtual) {
       const { isVirtual: _omit, ...rest } = m
       return [rest]
@@ -1847,23 +1895,17 @@ export async function findUnresolvedToolUse(toolUseId: string): Promise<Assistan
     // 找到工具使用但确保没有对应的结果
     for (const message of messages.values()) {
       if (message.type === 'assistant') {
-        const content = message.message.content
-        if (Array.isArray(content)) {
-          for (const block of content) {
-            if (block.type === 'tool_call' && block.id === toolUseId) {
-              toolUseMessage = message
-              break
-            }
+        for (const block of message.message.content) {
+          if (block.type === 'tool_call' && block.id === toolUseId) {
+            toolUseMessage = message
+            break
           }
         }
       } else if (message.type === 'user') {
-        const content = message.message.content
-        if (Array.isArray(content)) {
-          for (const block of content) {
-            if (block.type === 'tool_result' && block.toolCallId === toolUseId) {
-              // 找到工具结果，退出
-              return null
-            }
+        for (const block of message.message.content) {
+          if (block.type === 'tool_result' && block.toolCallId === toolUseId) {
+            // 找到工具结果，退出
+            return null
           }
         }
       }
@@ -2077,12 +2119,17 @@ async function readLiteMetadata(
     return { firstPrompt: '', isSidechain: false }
   }
 
+  // sidecar 优先:命中则会话级元数据(title/tag/summary/agentSetting/pr/lastPrompt)
+  // 直接取自小文件,无需再扫 64KB 尾部 —— 根除"元数据被消息挤出尾窗口"的退化。
+  // 未命中(老文件未迁移 / 外部 SDK 直写 JSONL)则回退到下面的 head/tail 扫描。
+  const sidecar = await readSessionSidecarAsync(filePath)
+
   // 通过字符串搜索从首行提取稳定 metadata。
   // 即使首行被截断（>64KB 消息）也有效。
   const isSidechain = head.includes('"isSidechain":true') || head.includes('"isSidechain": true')
   const projectPath = extractJsonStringField(head, 'cwd')
   const teamName = extractJsonStringField(head, 'teamName')
-  const agentSetting = extractJsonStringField(head, 'agentSetting')
+  const agentSetting = sidecar?.agentSetting ?? extractJsonStringField(head, 'agentSetting')
 
   // 优先使用 last-prompt 尾部 entry — 在写入时由 extractFirstPrompt
   // 捕获（已过滤，权威性），显示用户最近在做什么。头部扫描是
@@ -2090,6 +2137,7 @@ async function readLiteMetadata(
   // 原始字符串抓取是最后手段，用于捕获数组格式内容块
   // （VS Code <ide_selection> metadata）。
   const firstPrompt =
+    sidecar?.lastPrompt ||
     extractLastJsonStringField(tail, 'lastPrompt') ||
     extractFirstPromptFromChunk(head) ||
     extractJsonStringFieldPrefix(head, 'content', 200) ||
@@ -2101,12 +2149,14 @@ async function readLiteMetadata(
   // AI 标题（aiTitle 字段，来自 ai-title entry）。不同的字段名
   // 意味着 extractLastJsonStringField 自然消除歧义。
   const customTitle =
+    sidecar?.customTitle ??
+    sidecar?.aiTitle ??
     extractLastJsonStringField(tail, 'customTitle') ??
     extractLastJsonStringField(head, 'customTitle') ??
     extractLastJsonStringField(tail, 'aiTitle') ??
     extractLastJsonStringField(head, 'aiTitle')
-  const summary = extractLastJsonStringField(tail, 'summary')
-  const tag = extractLastJsonStringField(tail, 'tag')
+  const summary = sidecar?.taskSummary?.summary ?? extractLastJsonStringField(tail, 'summary')
+  const tag = sidecar?.tag ?? extractLastJsonStringField(tail, 'tag')
   const gitBranch =
     extractLastJsonStringField(tail, 'gitBranch') ?? extractJsonStringField(head, 'gitBranch')
 

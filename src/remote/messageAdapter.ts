@@ -188,7 +188,8 @@ export function convertSDKMessage(msg: WireMessage, opts?: ConvertOptions): Conv
           return {
             type: 'message',
             message: createUserMessage({
-              content: typeof content === 'string' ? [{ type: 'text' as const, text: content }] : content,
+              content:
+                typeof content === 'string' ? [{ type: 'text' as const, text: content }] : content,
               toolUseResult: msg.tool_use_result,
               uuid: msg.uuid,
               timestamp: msg.timestamp,

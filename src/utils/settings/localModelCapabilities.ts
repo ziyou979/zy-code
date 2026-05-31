@@ -16,6 +16,7 @@ import { getZyConfigHomeDir } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
 import { lazySchema } from '../lazySchema.js'
 import type { ProviderCapability } from 'src/services/model/providers.js'
+import type { EffortLevel } from '../effort.js'
 
 type ModelCapabilityKind = ProviderCapability | 'auto_mode'
 
@@ -59,8 +60,6 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
         z.enum([
           'thinking',
           'adaptive_thinking',
-          'effort',
-          'max_effort',
           'advisor',
           'structured_outputs',
           'context_management',
@@ -71,6 +70,13 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
         ]),
       )
       .describe('模型支持的能力列表'),
+    effortLevels: z
+      .array(z.enum(['minimal', 'low', 'medium', 'high', 'max']))
+      .optional()
+      .describe(
+        '模型支持的 effort(思考强度)档位列表。省略表示不支持设置思考强度。' +
+          '优先级高于 provider 默认档位。',
+      ),
     maxOutputTokens: TokenCountSchema.optional().describe(
       '模型支持的最大输出 tokens（单次响应上限），支持数字或 "256k"、"1m" 格式',
     ),
@@ -140,10 +146,49 @@ function getConfigPath(): string {
  * 加载本地模型能力配置文件。
  * 返回 null 表示文件不存在或解析失败。
  */
+/**
+ * 迁移垫片:旧配置在 capabilities 数组里用 'effort'/'max_effort' 布尔标记
+ * 声明思考强度能力。新 schema 已移除这两个枚举值,改用独立的 effortLevels
+ * 列表。此函数在 schema 校验前就地改写解析结果:
+ *   - capabilities 含 'effort'  → effortLevels 至少包含 [low, medium, high]
+ *   - capabilities 含 'max_effort' → effortLevels 追加 'max'
+ *   - 从 capabilities 中剔除这两个旧标记
+ * 已显式声明 effortLevels 的条目不受影响。避免老配置因严格枚举而整体校验失败。
+ */
+function migrateLegacyEffortCapabilities(parsed: unknown): void {
+  if (!parsed || typeof parsed !== 'object') {
+    return
+  }
+  const models = (parsed as { models?: unknown }).models
+  if (!Array.isArray(models)) {
+    return
+  }
+  for (const entry of models) {
+    if (!entry || typeof entry !== 'object') {
+      continue
+    }
+    const caps = (entry as { capabilities?: unknown }).capabilities
+    if (!Array.isArray(caps)) {
+      continue
+    }
+    const hasEffort = caps.includes('effort')
+    const hasMaxEffort = caps.includes('max_effort')
+    if (!hasEffort && !hasMaxEffort) {
+      continue
+    }
+    const e = entry as { capabilities: unknown[]; effortLevels?: unknown }
+    if (e.effortLevels === undefined) {
+      e.effortLevels = hasMaxEffort ? ['low', 'medium', 'high', 'max'] : ['low', 'medium', 'high']
+    }
+    e.capabilities = caps.filter((c) => c !== 'effort' && c !== 'max_effort')
+  }
+}
+
 export function loadLocalModelCapabilities(): ModelCapabilitiesFile | null {
   try {
     const raw = readFileSync(getConfigPath(), 'utf-8')
     const parsed = safeParseJSON(raw, false)
+    migrateLegacyEffortCapabilities(parsed)
     const result = ModelCapabilitiesFileSchema().safeParse(parsed)
     return result.success ? result.data : null
   } catch {
@@ -170,6 +215,15 @@ export function getLocalModelCapability(model: string): ModelCapabilityEntry | u
 export function localModelHasCapability(model: string, capability: ModelCapabilityKind): boolean {
   const entry = getLocalModelCapability(model)
   return entry?.capabilities.includes(capability as never) ?? false
+}
+
+/**
+ * 从本地配置获取模型支持的 effort 档位列表。
+ * 未配置 effortLevels 时返回 undefined(交由 provider 默认档位决定)。
+ */
+export function getLocalModelEffortLevels(model: string): EffortLevel[] | undefined {
+  const entry = getLocalModelCapability(model)
+  return entry?.effortLevels
 }
 
 /**

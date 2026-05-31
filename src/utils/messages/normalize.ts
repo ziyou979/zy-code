@@ -17,11 +17,7 @@ import type {
   ToolResultBlock,
   UserContentBlock,
 } from '../../types/llm.js'
-import type {
-  AssistantMessage,
-  Message,
-  UserMessage,
-} from '../../types/message.js'
+import type { AssistantMessage, Message, UserMessage } from '../../types/message.js'
 import { normalizeToolInput } from '../api.js'
 import { logAntError, logForDebugging } from '../debug.js'
 import { isInternalBuild } from '../envUtils.js'

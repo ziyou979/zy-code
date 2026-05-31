@@ -2,42 +2,105 @@
 import { isUltrathinkEnabled } from './thinking.js'
 import { getInitialSettings } from './settings/settings.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
-import { getAPIProvider, providerHasCapability } from 'src/services/model/providers.js'
-import { localModelHasCapability } from './settings/localModelCapabilities.js'
+import { getAPIProvider } from 'src/services/model/providers.js'
+import { getProviderEntry } from 'src/services/model/providerRegistry.js'
+import { getLocalModelEffortLevels } from './settings/localModelCapabilities.js'
 import { isEnvTruthy } from './envUtils.js'
 import { isInternalBuild } from './envUtils.js'
-export type EffortLevel = 'low' | 'medium' | 'high'
+export type EffortLevel = 'minimal' | 'low' | 'medium' | 'high' | 'max'
 
-export const EFFORT_LEVELS = ['low', 'medium', 'high', 'max'] as const as any
+export const EFFORT_LEVELS = ['minimal', 'low', 'medium', 'high', 'max'] as const
+
+/**
+ * 档位强弱顺序(由弱到强),clamp 时按此顺序寻找最近的合法档。
+ * 与 EFFORT_LEVELS 内容一致,单独导出以表明"这是有序的"语义。
+ */
+export const EFFORT_LEVEL_ORDER: readonly EffortLevel[] = [
+  'minimal',
+  'low',
+  'medium',
+  'high',
+  'max',
+]
 
 export type EffortValue = EffortLevel | number
 
-// @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
-export function modelSupportsEffort(model: string): boolean {
-  if (isEnvTruthy(process.env.ZY_CODE_ALWAYS_ENABLE_EFFORT)) {
-    return true
-  }
-  // ~/.zy/model-capabilities.json 本地配置优先
-  if (localModelHasCapability(model, 'effort')) {
-    return true
+/**
+ * 模型支持的 effort 档位列表 —— effort 能力的单一事实源。
+ * 优先级链(首个命中即返回):
+ *   1. ~/.zy/model-capabilities.json 的 effortLevels 字段(per-model 覆盖)
+ *   2. provider 默认: providerEntry.defaultEffortLevels(internal build 用 internalEffortLevels)
+ *   3. ZY_CODE_ALWAYS_ENABLE_EFFORT 环境变量强制开启 → 给一个保守全集
+ *   4. [] (不支持 effort)
+ * @[MODEL LAUNCH]: 在 ~/.zy/model-capabilities.json 为新模型配置 effortLevels
+ */
+export function getModelEffortLevels(model: string): EffortLevel[] {
+  // 1. 本地配置覆盖优先
+  const local = getLocalModelEffortLevels(model)
+  if (local && local.length > 0) {
+    return local
   }
 
-  // 对直连 API 的未知模型字符串默认返回 true。
-  // 对第三方提供商不默认返回 true，因为它们的模型字符串格式不同。
-  return providerHasCapability(getAPIProvider(), 'effort')
+  // 2. provider 默认档位(internal build 可解锁 max 等扩展档位)
+  const entry = getProviderEntry(getAPIProvider())
+  const providerLevels =
+    isInternalBuild() && entry?.internalEffortLevels
+      ? entry.internalEffortLevels
+      : entry?.defaultEffortLevels
+  if (providerLevels && providerLevels.length > 0) {
+    return [...providerLevels]
+  }
+
+  // 3. 环境变量强制开启(未指定具体档位时给保守全集)
+  if (isEnvTruthy(process.env.ZY_CODE_ALWAYS_ENABLE_EFFORT)) {
+    return isInternalBuild() ? ['low', 'medium', 'high', 'max'] : ['low', 'medium', 'high']
+  }
+
+  // 4. 不支持 effort
+  return []
 }
 
-// @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
+export function modelSupportsEffort(model: string): boolean {
+  return getModelEffortLevels(model).length > 0
+}
+
 export function modelSupportsMaxEffort(model: string): boolean {
-  // ~/.zy/model-capabilities.json 本地配置优先
-  if (localModelHasCapability(model, 'max_effort')) {
-    return true
+  return getModelEffortLevels(model).includes('max')
+}
+
+/**
+ * 将请求的 effort 档位 clamp 到模型实际支持的档位集合内。
+ * 命中则原样返回;否则按 EFFORT_LEVEL_ORDER 先向下(更弱)、再向上(更强)
+ * 找最近的合法档;supported 为空返回 undefined(表示不应发送 effort)。
+ */
+export function clampEffort(
+  requested: EffortLevel,
+  supported: readonly EffortLevel[],
+): EffortLevel | undefined {
+  if (supported.length === 0) {
+    return undefined
   }
-  // @ts-expect-error
-  if (isInternalBuild() && resolveAntModel(model)) {
-    return true
+  if (supported.includes(requested)) {
+    return requested
   }
-  return false
+  const idx = EFFORT_LEVEL_ORDER.indexOf(requested)
+  if (idx === -1) {
+    // 未知档位:返回支持集合里最强的一档
+    return EFFORT_LEVEL_ORDER.filter((l) => supported.includes(l)).at(-1)
+  }
+  // 先向下找更弱的合法档(保持现有 max→high 行为)
+  for (let i = idx - 1; i >= 0; i--) {
+    if (supported.includes(EFFORT_LEVEL_ORDER[i]!)) {
+      return EFFORT_LEVEL_ORDER[i]
+    }
+  }
+  // 再向上找更强的合法档
+  for (let i = idx + 1; i < EFFORT_LEVEL_ORDER.length; i++) {
+    if (supported.includes(EFFORT_LEVEL_ORDER[i]!)) {
+      return EFFORT_LEVEL_ORDER[i]
+    }
+  }
+  return undefined
 }
 
 export function isEffortLevel(value: string): value is EffortLevel {
@@ -69,11 +132,11 @@ export function parseEffortValue(value: unknown): EffortValue | undefined {
  * （仅接受字符串级别）不会拒绝写入。
  */
 export function toPersistableEffort(value: EffortValue | undefined): EffortLevel | undefined {
-  if (value === 'low' || value === 'medium' || value === 'high') {
+  if (value === 'minimal' || value === 'low' || value === 'medium' || value === 'high') {
     return value
   }
-  if ((value as any) === 'max' && isInternalBuild()) {
-    return value as any
+  if (value === 'max' && isInternalBuild()) {
+    return value
   }
   return undefined
 }
@@ -128,11 +191,16 @@ export function resolveAppliedEffort(
     return undefined
   }
   const resolved = envOverride ?? appStateEffortValue ?? getDefaultEffortForModel(model)
-  // API 对非 Opus-4.6 模型拒绝 'max' — 降级为 'high'。
-  if ((resolved as any) === 'max' && !modelSupportsMaxEffort(model)) {
-    return 'high'
+  if (resolved === undefined) {
+    return undefined
   }
-  return resolved
+  // 数值 effort 仅内部使用,不参与 clamp。
+  if (typeof resolved === 'number') {
+    return resolved
+  }
+  // clamp 到模型实际支持的档位集合(取代旧的写死 max→high;
+  // 不支持任何档位的模型会得到 undefined,即不发送 effort 参数)。
+  return clampEffort(resolved, getModelEffortLevels(model))
 }
 
 /**
@@ -168,7 +236,7 @@ export function convertEffortValueToLevel(value: EffortValue): EffortLevel {
     if (value <= 100) {
       return 'high'
     }
-    return 'max' as any
+    return 'max'
   }
   return 'high'
 }
@@ -181,13 +249,15 @@ export function convertEffortValueToLevel(value: EffortValue): EffortLevel {
  */
 export function getEffortLevelDescription(level: EffortLevel): string {
   switch (level) {
+    case 'minimal':
+      return 'Fastest possible response with very brief reasoning'
     case 'low':
       return 'Quick, straightforward implementation with minimal overhead'
     case 'medium':
       return 'Balanced approach with standard implementation and testing'
     case 'high':
       return 'Comprehensive implementation with extensive testing and documentation'
-    case 'max' as any:
+    case 'max':
       return 'Maximum capability with deepest reasoning (Opus 4.6 only)'
   }
 }

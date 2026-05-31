@@ -8,7 +8,7 @@ const effort = {
   type: 'local-jsx',
   name: 'effort',
   description: 'Set effort level for model usage',
-  argumentHint: '[low|medium|high|max|auto]',
+  argumentHint: '[minimal|low|medium|high|max|auto]',
   get immediate() {
     return shouldInferenceConfigCommandBeImmediate()
   },
@@ -25,7 +25,7 @@ export const effortLocal = {
   // 仅需在非交互过滤后生效，交互模式下隐藏避免重复呈现
   isHidden: true,
   description: 'Set effort level for model usage',
-  argumentHint: '[low|medium|high|max|auto]',
+  argumentHint: '[minimal|low|medium|high|max|auto]',
   load: () => import('./effortLocal.js'),
 } satisfies Command
 

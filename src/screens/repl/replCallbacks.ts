@@ -130,7 +130,10 @@ export interface RewindConversationParams {
   regenerateConversationId: () => void
 }
 
-export function rewindConversationToImpl(params: RewindConversationParams, message: UserMessage): void {
+export function rewindConversationToImpl(
+  params: RewindConversationParams,
+  message: UserMessage,
+): void {
   const prev = params.replStore.getState().messages
   const messageIndex = prev.lastIndexOf(message)
   if (messageIndex === -1) {
@@ -191,7 +194,10 @@ export interface RestoreMessageSyncParams {
   setPastedContents: (v: Record<number, PastedContent>) => void
 }
 
-export function restoreMessageSyncImpl(params: RestoreMessageSyncParams, message: UserMessage): void {
+export function restoreMessageSyncImpl(
+  params: RestoreMessageSyncParams,
+  message: UserMessage,
+): void {
   params.rewindConversationTo(message)
   const r = textForResubmit(message)
   if (r) {
@@ -200,10 +206,7 @@ export function restoreMessageSyncImpl(params: RestoreMessageSyncParams, message
   }
 
   // 恢复粘贴的图片
-  if (
-    Array.isArray(message.message.content) &&
-    message.message.content.some((block) => block.type === 'image')
-  ) {
+  if (message.message.content.some((block) => block.type === 'image')) {
     const imageBlocks: Array<ImageBlock> = message.message.content.filter(
       (block) => block.type === 'image',
     )

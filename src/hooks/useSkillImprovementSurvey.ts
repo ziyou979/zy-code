@@ -72,10 +72,7 @@ export function useSkillImprovementSurvey(setMessages: SetMessages): {
         void applySkillImprovement(current.skillName, current.updates).then(() => {
           setMessages((prev) => [
             ...prev,
-            createSystemMessage(
-              `Skill "${current.skillName}" updated with improvements.`,
-              'info',
-            ),
+            createSystemMessage(`Skill "${current.skillName}" updated with improvements.`, 'info'),
           ])
         })
       }

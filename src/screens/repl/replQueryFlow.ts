@@ -269,7 +269,8 @@ export function buildToolUseContext(
       debug: ctx.debug,
       verbose: appState.verbose,
       mainLoopModel,
-      thinkingConfig: appState.thinkingEnabled !== false ? ctx.thinkingConfig : { type: 'disabled' },
+      thinkingConfig:
+        appState.thinkingEnabled !== false ? ctx.thinkingConfig : { type: 'disabled' },
       mcpClients: mergeClients(ctx.initialMcpClients, appState.mcp.clients),
       mcpResources: appState.mcp.resources,
       ideInstallationStatus: ctx.ideInstallationStatus,

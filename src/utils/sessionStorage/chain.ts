@@ -57,18 +57,12 @@ export function getFirstMeaningfulUserMessageTextContent<T extends Message>(
       continue
     }
 
-    // 收集所有文本值。对于数组内容（在 VS Code 中很常见，其中
-    // IDE metadata 标签在用户实际 prompt 之前），遍历所有文本块，
-    // 以免遗漏隐藏在 <ide_selection>/<ide_opened_file> 块后面的
-    // 真实 prompt。
+    // 收集所有文本值。content 恒为 UserContentBlock[](加载边界已归一),遍历所有
+    // 文本块,以免遗漏隐藏在 <ide_selection>/<ide_opened_file> 块后面的真实 prompt。
     const texts: string[] = []
-    if (typeof content === 'string') {
-      texts.push(content)
-    } else if (Array.isArray(content)) {
-      for (const block of content) {
-        if (block.type === 'text' && block.text) {
-          texts.push(block.text)
-        }
+    for (const block of content) {
+      if (block.type === 'text' && block.text) {
+        texts.push(block.text)
       }
     }
 
@@ -366,7 +360,6 @@ function recoverOrphanedParallelToolResults(
     } else if (
       m.type === 'user' &&
       m.parentUuid &&
-      Array.isArray(m.message.content) &&
       m.message.content.some((b) => b.type === 'tool_result')
     ) {
       const group = toolResultsByAsst.get(m.parentUuid)
@@ -541,12 +534,10 @@ function hasVisibleUserContent(message: TranscriptMessage): boolean {
     return false
   }
 
-  // 数组内容：检查文本或图片块（非 tool_result）
+  // 文本或图片块（非 tool_result）才算可见
   return content.some(
     (block) => block.type === 'text' || block.type === 'image' || block.type === 'document',
   )
-
-  return false
 }
 
 /**
@@ -559,7 +550,7 @@ function hasVisibleAssistantContent(message: TranscriptMessage): boolean {
   }
 
   const content = message.message?.content
-  if (!content || !Array.isArray(content)) {
+  if (!content) {
     return false
   }
 

@@ -385,6 +385,22 @@ export async function resolveHookPermissionDecision(
     hookPermissionResult?.behavior === 'ask' && hookPermissionResult.updatedInput
       ? hookPermissionResult.updatedInput
       : input
+
+  // hook 的 'ask' 不得下穿 deny 规则：forceDecision 会让 canUseTool 跳过
+  // hasPermissionsToUseTool（含 getDenyRuleForTool），从而把组织级 deny
+  // 偷偷降级成弹窗。与 'allow' 分支一致，先跑规则检查，命中 deny 则直接
+  // 拒绝（不传 forceDecision）。优先级链：policy deny > hook decision > prompt。
+  // 对齐 Claude Code 2.1.101 的修复（类似 inc-4788）。
+  if (forceDecision) {
+    const ruleCheck = await checkRuleBasedPermissions(tool, askInput, toolUseContext)
+    if (ruleCheck?.behavior === 'deny') {
+      logForDebugging(
+        `Hook asked for ${tool.name}, but deny rule overrides: ${ruleCheck.message}`,
+      )
+      return { decision: ruleCheck, input: askInput }
+    }
+  }
+
   return {
     decision: await canUseTool(
       tool,

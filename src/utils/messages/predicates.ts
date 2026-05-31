@@ -43,9 +43,7 @@ export function hasToolCallsInLastAssistantTurn(messages: Message[]): boolean {
     if (message && message.type === 'assistant') {
       const assistantMessage = message as AssistantMessage
       const content = assistantMessage.message.content
-      if (Array.isArray(content)) {
-        return content.some((block) => block.type === 'tool_call')
-      }
+      return content.some((block) => block.type === 'tool_call')
     }
   }
   return false
@@ -134,14 +132,8 @@ export type ToolUseRequestMessage = AssistantMessage & {
   message: { content: [ToolCallBlock] }
 }
 
-export function isToolUseRequestMessage(
-  message: Message,
-): message is ToolUseRequestMessage {
-  return (
-    message.type === 'assistant' &&
-    Array.isArray(message.message.content) &&
-    message.message.content.some((_) => _.type === 'tool_call')
-  )
+export function isToolUseRequestMessage(message: Message): message is ToolUseRequestMessage {
+  return message.type === 'assistant' && message.message.content.some((_) => _.type === 'tool_call')
 }
 
 export type ToolUseResultMessage = UserMessage & {
@@ -151,9 +143,7 @@ export type ToolUseResultMessage = UserMessage & {
 export function isToolUseResultMessage(message: Message): message is ToolUseResultMessage {
   return (
     message.type === 'user' &&
-    ((Array.isArray(message.message.content) &&
-      message.message.content[0]?.type === 'tool_result') ||
-      Boolean(message.toolUseResult))
+    (message.message.content[0]?.type === 'tool_result' || Boolean(message.toolUseResult))
   )
 }
 
@@ -222,16 +212,13 @@ export function getAssistantMessageText(message: Message): string | null {
     return null
   }
 
-  if (Array.isArray(message.message.content)) {
-    return (
-      message.message.content
-        .filter((block) => block.type === 'text')
-        .map((block) => (block.type === 'text' ? block.text : ''))
-        .join('\n')
-        .trim() || null
-    )
-  }
-  return null
+  return (
+    message.message.content
+      .filter((block) => block.type === 'text')
+      .map((block) => (block.type === 'text' ? block.text : ''))
+      .join('\n')
+      .trim() || null
+  )
 }
 
 export function getUserMessageText(message: Message): string | null {
@@ -295,9 +282,7 @@ export function isCompactBoundaryMessage(
   return message?.type === 'system' && message.subtype === 'compact_boundary'
 }
 
-export function findLastCompactBoundaryIndex<T extends Message>(
-  messages: T[],
-): number {
+export function findLastCompactBoundaryIndex<T extends Message>(messages: T[]): number {
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i]
     if (message && isCompactBoundaryMessage(message)) {
@@ -311,17 +296,12 @@ export function findLastCompactBoundaryIndex<T extends Message>(
  * 返回从最后一个 compact 边界开始（包含边界本身）的消息。
  * 不存在边界时返回所有消息。
  */
-export function getMessagesAfterCompactBoundary<T extends Message>(
-  messages: T[],
-): T[] {
+export function getMessagesAfterCompactBoundary<T extends Message>(messages: T[]): T[] {
   const boundaryIndex = findLastCompactBoundaryIndex(messages)
   return boundaryIndex === -1 ? messages : messages.slice(boundaryIndex)
 }
 
-export function shouldShowUserMessage(
-  message: Message,
-  isTranscriptMode: boolean,
-): boolean {
+export function shouldShowUserMessage(message: Message, isTranscriptMode: boolean): boolean {
   if (message.type !== 'user') {
     return true
   }
@@ -343,9 +323,6 @@ export function isThinkingMessage(message: Message): boolean {
   if (message.type !== 'assistant') {
     return false
   }
-  if (!Array.isArray(message.message.content)) {
-    return false
-  }
   return message.message.content.every(
     (block) => block.type === 'thinking' || block.type === 'redacted_thinking',
   )
@@ -360,7 +337,7 @@ export function countToolCalls(messages: Message[], toolName: string, maxCount?:
     if (!msg) {
       continue
     }
-    if (msg.type === 'assistant' && Array.isArray(msg.message.content)) {
+    if (msg.type === 'assistant') {
       const hasToolUse = msg.message.content.some(
         (block): block is ToolCallBlock => block.type === 'tool_call' && block.name === toolName,
       )
@@ -385,7 +362,7 @@ export function hasSuccessfulToolCall(messages: Message[], toolName: string): bo
     if (!msg) {
       continue
     }
-    if (msg.type === 'assistant' && Array.isArray(msg.message.content)) {
+    if (msg.type === 'assistant') {
       const toolUse = msg.message.content.find(
         (block): block is ToolCallBlock => block.type === 'tool_call' && block.name === toolName,
       )
@@ -405,7 +382,7 @@ export function hasSuccessfulToolCall(messages: Message[], toolName: string): bo
     if (!msg) {
       continue
     }
-    if (msg.type === 'user' && Array.isArray(msg.message.content)) {
+    if (msg.type === 'user') {
       const toolResult = msg.message.content.find(
         (block): block is ToolResultBlock =>
           block.type === 'tool_result' && block.toolCallId === mostRecentToolUseId,

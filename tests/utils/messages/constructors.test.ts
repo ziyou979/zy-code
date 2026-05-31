@@ -281,7 +281,9 @@ describe('消息构造函数', () => {
 
       expect(msg.type).toBe('user')
       expect(msg.isMeta).toBe(true)
-      expect((msg.message.content[0] as { type: 'text'; text: string }).text).toContain('<local-command-caveat>')
+      expect((msg.message.content[0] as { type: 'text'; text: string }).text).toContain(
+        '<local-command-caveat>',
+      )
     })
   })
 
@@ -294,13 +296,23 @@ describe('消息构造函数', () => {
       const msg1 = createProgressMessage({
         toolUseID: 'tool-123',
         parentToolUseID: '',
-        data: { type: 'mcp_progress' as const, status: 'progress' as const, serverName: 'test', toolName: 'test' },
+        data: {
+          type: 'mcp_progress' as const,
+          status: 'progress' as const,
+          serverName: 'test',
+          toolName: 'test',
+        },
         index: 0,
       })
       const msg2 = createProgressMessage({
         toolUseID: 'tool-123',
         parentToolUseID: '',
-        data: { type: 'mcp_progress' as const, status: 'progress' as const, serverName: 'test', toolName: 'test' },
+        data: {
+          type: 'mcp_progress' as const,
+          status: 'progress' as const,
+          serverName: 'test',
+          toolName: 'test',
+        },
         index: 0,
       })
 
@@ -311,7 +323,12 @@ describe('消息构造函数', () => {
       const msg3 = createProgressMessage({
         toolUseID: 'tool-123',
         parentToolUseID: '',
-        data: { type: 'mcp_progress' as const, status: 'progress' as const, serverName: 'test', toolName: 'test' },
+        data: {
+          type: 'mcp_progress' as const,
+          status: 'progress' as const,
+          serverName: 'test',
+          toolName: 'test',
+        },
         index: 1,
       })
       expect(msg1.uuid).not.toBe(msg3.uuid)
@@ -322,13 +339,23 @@ describe('消息构造函数', () => {
       const msg = createProgressMessage({
         toolUseID: 'tu-abc',
         parentToolUseID: 'parent-xyz',
-        data: { type: 'mcp_progress' as const, status: 'completed' as const, serverName: 'test', toolName: 'test' },
+        data: {
+          type: 'mcp_progress' as const,
+          status: 'completed' as const,
+          serverName: 'test',
+          toolName: 'test',
+        },
       })
 
       expect(msg.type).toBe('progress')
       expect(msg.toolUseID).toBe('tu-abc')
       expect(msg.parentToolUseID).toBe('parent-xyz')
-      expect(msg.data).toEqual({ type: 'mcp_progress', status: 'completed', serverName: 'test', toolName: 'test' })
+      expect(msg.data).toEqual({
+        type: 'mcp_progress',
+        status: 'completed',
+        serverName: 'test',
+        toolName: 'test',
+      })
     })
   })
 

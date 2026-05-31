@@ -453,7 +453,9 @@ export async function startSpeculation(
 
   try {
     const result = await runForkedAgent({
-      promptMessages: [createUserMessage({ content: [{ type: 'text' as const, text: suggestionText }] })],
+      promptMessages: [
+        createUserMessage({ content: [{ type: 'text' as const, text: suggestionText }] }),
+      ],
       cacheSafeParams: cacheSafeParams ?? createCacheSafeParams(context),
       skipTranscript: true,
       canUseTool: async (tool, input) => {

@@ -353,7 +353,7 @@ export const ModelInfoSchema = lazySchema(() =>
       description: z.string().describe("Description of the model's capabilities"),
       supportsEffort: z.boolean().optional().describe('Whether this model supports effort levels'),
       supportedEffortLevels: z
-        .array(z.enum(['low', 'medium', 'high', 'max']))
+        .array(z.enum(['minimal', 'low', 'medium', 'high', 'max']))
         .optional()
         .describe('Available effort levels for this model'),
       supportsAdaptiveThinking: z

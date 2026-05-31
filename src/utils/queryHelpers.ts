@@ -193,7 +193,9 @@ export function* normalizeMessage(message: Message): Generator<WireMessage> {
           uuid: _.uuid,
           timestamp: _.timestamp,
           isSynthetic: _.isMeta || _.isVisibleInTranscriptOnly,
-          tool_use_result: (_.mcpMeta ? { content: _.toolUseResult, ..._.mcpMeta } : _.toolUseResult) as string | UserContentBlock[] | undefined,
+          tool_use_result: (_.mcpMeta
+            ? { content: _.toolUseResult, ..._.mcpMeta }
+            : _.toolUseResult) as string | UserContentBlock[] | undefined,
         }
       }
       return

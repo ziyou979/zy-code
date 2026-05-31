@@ -198,9 +198,7 @@ export function localCommandOutputToSDKAssistantMessage(
  * Maps internal ZyAILimits to the SDK-facing WireRateLimitInfo type,
  * stripping internal-only fields like unifiedRateLimitFallbackAvailable.
  */
-export function toSDKRateLimitInfo(
-  limits: ZyAILimits | undefined,
-): WireRateLimitInfo | undefined {
+export function toSDKRateLimitInfo(limits: ZyAILimits | undefined): WireRateLimitInfo | undefined {
   if (!limits) {
     return undefined
   }

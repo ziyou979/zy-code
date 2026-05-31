@@ -2063,7 +2063,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   const mcpClients: Awaited<typeof mcpPromise>['clients'] = []
   const mcpTools: Awaited<typeof mcpPromise>['tools'] = []
   const mcpCommands: Awaited<typeof mcpPromise>['commands'] = []
-  let thinkingEnabled = shouldEnableThinkingByDefault()
+  let thinkingEnabled = shouldEnableThinkingByDefault(effectiveModel)
   let thinkingConfig: ThinkingConfig =
     thinkingEnabled !== false
       ? {

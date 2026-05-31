@@ -13,6 +13,7 @@ import {
   EFFORT_LOW,
   EFFORT_MAX,
   EFFORT_MEDIUM,
+  EFFORT_MINIMAL,
   FORK_GLYPH,
 } from '../../constants/figures.js'
 import { getTotalCost, getTotalInputTokens, getTotalOutputTokens } from '../../cost-tracker.js'
@@ -55,6 +56,7 @@ export type StatusbarContext = {
 const BAR_WIDTH = 8
 
 const EFFORT_ICONS: Record<string, string> = {
+  minimal: EFFORT_MINIMAL,
   low: EFFORT_LOW,
   medium: EFFORT_MEDIUM,
   high: EFFORT_HIGH,
@@ -62,6 +64,7 @@ const EFFORT_ICONS: Record<string, string> = {
 }
 
 const EFFORT_I18N_KEYS: Record<string, string> = {
+  minimal: 'effort.minimal',
   low: 'effort.low',
   medium: 'effort.medium',
   high: 'effort.high',

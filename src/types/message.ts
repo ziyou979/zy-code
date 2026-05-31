@@ -54,7 +54,6 @@ export interface AssistantMessage extends BaseMessage {
   advisorModel?: string
 }
 
-
 // ============================================================
 // User Message
 // ============================================================
@@ -87,7 +86,6 @@ export interface UserMessage extends BaseMessage {
   origin?: MessageOrigin
   planContent?: string
 }
-
 
 // ============================================================
 // Progress Message
@@ -429,7 +427,6 @@ export type RenderableMessage =
   | CollapsedReadSearchGroup
   | GroupedToolUseMessage
   | GroupedToolUseMessageWithMessages
-
 
 // ============================================================
 // Main Message Union

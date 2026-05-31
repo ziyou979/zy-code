@@ -135,7 +135,9 @@ export async function buildSideQuestionFallbackParams({
       verbose: false,
       thinkingConfig:
         thinkingConfig ??
-        (shouldEnableThinkingByDefault() !== false ? { type: 'adaptive' } : { type: 'disabled' }),
+        (shouldEnableThinkingByDefault(mainLoopModel) !== false
+          ? { type: 'adaptive' }
+          : { type: 'disabled' }),
       mcpClients,
       mcpResources: {},
       isNonInteractiveSession: true,

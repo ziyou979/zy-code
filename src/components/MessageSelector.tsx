@@ -804,10 +804,7 @@ export function selectableUserMessagesFilter(message: Message): message is UserM
   }
   const content = message.message.content
   const lastBlock = content[content.length - 1]
-  const messageText =
-    lastBlock && isTextBlock(lastBlock)
-      ? lastBlock.text.trim()
-      : ''
+  const messageText = lastBlock && isTextBlock(lastBlock) ? lastBlock.text.trim() : ''
 
   // Filter out non-user-authored messages (command outputs, task notifications, ticks).
   if (

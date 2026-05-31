@@ -9,7 +9,11 @@ import type {
   UserMessage,
 } from '../types/message.js'
 
-export type MessageWithoutProgress = UserMessage | AssistantMessage | AttachmentMessage | SystemMessage
+export type MessageWithoutProgress =
+  | UserMessage
+  | AssistantMessage
+  | AttachmentMessage
+  | SystemMessage
 
 export type GroupingResult = {
   messages: RenderableMessage[]

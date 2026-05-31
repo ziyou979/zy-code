@@ -348,7 +348,12 @@ async function executeForkedSlashCommand(
       }),
     }),
     createUserMessage({
-      content: [{ type: 'text' as const, text: `<local-command-stdout>\n${resultText}\n</local-command-stdout>` }],
+      content: [
+        {
+          type: 'text' as const,
+          text: `<local-command-stdout>\n${resultText}\n</local-command-stdout>`,
+        },
+      ],
     }),
   ]
   return {
@@ -673,7 +678,12 @@ async function getMessagesForSlashCommand(
           }),
         }),
         createUserMessage({
-          content: [{ type: 'text' as const, text: `This skill can only be invoked by Zy, not directly by users. Ask Zy to use the "${commandName}" skill for you.` }],
+          content: [
+            {
+              type: 'text' as const,
+              text: `This skill can only be invoked by Zy, not directly by users. Ask Zy to use the "${commandName}" skill for you.`,
+            },
+          ],
         }),
       ],
       shouldQuery: false,
@@ -751,10 +761,20 @@ async function getMessagesForSlashCommand(
                       }),
                       result
                         ? createUserMessage({
-                            content: [{ type: 'text' as const, text: `<local-command-stdout>${result}</local-command-stdout>` }],
+                            content: [
+                              {
+                                type: 'text' as const,
+                                text: `<local-command-stdout>${result}</local-command-stdout>`,
+                              },
+                            ],
                           })
                         : createUserMessage({
-                            content: [{ type: 'text' as const, text: `<local-command-stdout>${NO_CONTENT_MESSAGE}</local-command-stdout>` }],
+                            content: [
+                              {
+                                type: 'text' as const,
+                                text: `<local-command-stdout>${NO_CONTENT_MESSAGE}</local-command-stdout>`,
+                              },
+                            ],
                           }),
                       ...metaMessages,
                     ],
@@ -858,7 +878,12 @@ async function getMessagesForSlashCommand(
               ...(result.displayText
                 ? [
                     createUserMessage({
-                      content: [{ type: 'text' as const, text: `<local-command-stdout>${result.displayText}</local-command-stdout>` }],
+                      content: [
+                        {
+                          type: 'text' as const,
+                          text: `<local-command-stdout>${result.displayText}</local-command-stdout>`,
+                        },
+                      ],
                       // --resume looks at latest timestamp message to determine which message to resume from
                       // This is a perf optimization to avoid having to recaculcate the leaf node every time
                       // Since we're creating a bunch of synthetic messages for compact, it's important to set
@@ -963,7 +988,12 @@ async function getMessagesForSlashCommand(
                 }),
               }),
               createUserMessage({
-                content: [{ type: 'text' as const, text: `<local-command-stderr>${String(e)}</local-command-stderr>` }],
+                content: [
+                  {
+                    type: 'text' as const,
+                    text: `<local-command-stderr>${String(e)}</local-command-stderr>`,
+                  },
+                ],
               }),
             ],
             shouldQuery: false,

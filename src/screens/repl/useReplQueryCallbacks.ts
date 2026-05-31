@@ -5,7 +5,7 @@
  * handleBackgroundQuery, handleBackgroundSession.
  */
 
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Message as MessageType } from '../../types/message.js'
 import type { PromptInputMode } from '../../types/textInputTypes.js'
@@ -89,6 +89,12 @@ export function useReplQueryCallbacks(params: UseReplQueryCallbacksParams) {
     setIsExternalLoading,
   } = params
 
+  // latest-ref：每次 render 同步最新 ctx，查询回调读 ctxRef.current 即可保持稳定身份
+  // 且永不读到旧闭包。queryFlowCtx 每 render 都是新对象，直接进回调 dep 会让回调每 render
+  // 重建（及其消费方的 useMemo 连锁重算），故走 ref。
+  const ctxRef = useRef(queryFlowCtx)
+  ctxRef.current = queryFlowCtx
+
   const getToolUseContext = useCallback(
     (
       messages: MessageType[],
@@ -96,8 +102,8 @@ export function useReplQueryCallbacks(params: UseReplQueryCallbacksParams) {
       abortController: AbortController,
       mainLoopModel: string,
     ): ProcessUserInputContext =>
-      buildToolUseContext(queryFlowCtx, messages, newMessages, abortController, mainLoopModel),
-    [queryFlowCtx],
+      buildToolUseContext(ctxRef.current, messages, newMessages, abortController, mainLoopModel),
+    [],
   )
 
   const handleBackgroundQuery = useReplBackgroundQuery({
@@ -124,8 +130,8 @@ export function useReplQueryCallbacks(params: UseReplQueryCallbacksParams) {
 
   const onQueryEvent = useCallback(
     (event: Parameters<typeof import('../../utils/messages.js').handleMessageFromStream>[0]) =>
-      handleQueryEvent(queryFlowCtx, event),
-    [queryFlowCtx],
+      handleQueryEvent(ctxRef.current, event),
+    [],
   )
 
   const onQueryImpl = useCallback(
@@ -139,7 +145,7 @@ export function useReplQueryCallbacks(params: UseReplQueryCallbacksParams) {
       effort?: EffortValue,
     ) =>
       runQueryImpl(
-        queryFlowCtx,
+        ctxRef.current,
         getToolUseContext,
         messagesIncludingNewMessages,
         newMessages,
@@ -149,7 +155,7 @@ export function useReplQueryCallbacks(params: UseReplQueryCallbacksParams) {
         mainLoopModelParam,
         effort,
       ),
-    [queryFlowCtx, getToolUseContext],
+    [getToolUseContext],
   )
 
   const onQuery = useCallback(
@@ -164,7 +170,7 @@ export function useReplQueryCallbacks(params: UseReplQueryCallbacksParams) {
       effort?: EffortValue,
     ): Promise<void> =>
       runQuery(
-        queryFlowCtx,
+        ctxRef.current,
         getToolUseContext,
         onQueryImpl,
         newMessages,
@@ -176,7 +182,7 @@ export function useReplQueryCallbacks(params: UseReplQueryCallbacksParams) {
         input,
         effort,
       ),
-    [queryFlowCtx, getToolUseContext, onQueryImpl],
+    [getToolUseContext, onQueryImpl],
   )
 
   const onSubmit = useCallback(
@@ -193,7 +199,7 @@ export function useReplQueryCallbacks(params: UseReplQueryCallbacksParams) {
       },
     ) => {
       const submitCtx: SubmitFlowContext = {
-        ...queryFlowCtx,
+        ...ctxRef.current,
         isLoading,
         isExternalLoading,
         inputMode,
@@ -221,10 +227,9 @@ export function useReplQueryCallbacks(params: UseReplQueryCallbacksParams) {
         options,
       )
     },
-    // commands / mainLoopModel / onBeforeQuery / replStore 已并入 queryFlowCtx，
-    // 其变化会改变 queryFlowCtx 引用，故无需单列。
+    // queryFlowCtx 部分经 ctxRef.current 读取（latest-ref），无需进 dep；
+    // 仅列 onSubmit 直接闭包的 submit-only 反应式依赖。
     [
-      queryFlowCtx,
       isLoading,
       isExternalLoading,
       inputMode,

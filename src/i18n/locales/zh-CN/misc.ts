@@ -27,6 +27,7 @@ export const zhMisc: TranslationResource = {
   'effort.max': '最大化',
   'effort.medium': '均衡',
   'effort.mediumRecommended': '均衡（推荐）',
+  'effort.minimal': '极简',
   'errorUtils.api.errorWithStatus': 'API 错误（状态码 {status}）',
   'errorUtils.connection.failed': '无法连接 API。请检查网络连接',
   'errorUtils.connection.timeout': '请求超时。请检查网络连接和代理设置',

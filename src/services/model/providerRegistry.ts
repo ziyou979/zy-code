@@ -7,6 +7,7 @@
  */
 
 import type { ProviderCapability } from './providers.js'
+import type { EffortLevel } from '../../utils/effort.js'
 
 /**
  * 模型能力标签 — 用于 onboarding 中统一渲染模型描述。
@@ -61,6 +62,19 @@ export interface ProviderEntry {
   capabilities: ProviderCapability[]
 
   /**
+   * 该 provider 默认支持的 effort(思考强度)档位列表 —— 对所有用户可见。
+   * 省略或为空数组表示该 provider 不支持设置思考强度。
+   * 模型级覆盖见 model-capabilities.json 的 effortLevels 字段(优先级更高)。
+   */
+  defaultEffortLevels?: EffortLevel[]
+
+  /**
+   * internal build 下的扩展 effort 档位列表(如解锁 'max')。
+   * 省略时 internal build 也使用 defaultEffortLevels。
+   */
+  internalEffortLevels?: EffortLevel[]
+
+  /**
    * 默认 base URL。
    * - env-or-default 类型：环境变量未设置时使用
    * - preconfigured 类型：onboarding 时保存到 configuredBaseUrl
@@ -101,17 +115,20 @@ export interface ProviderEntry {
 // 预设能力集（减少重复）
 // ---------------------------------------------------------------------------
 
-/** 完整能力集 — 适用于 Anthropic 官方 API、generic 等 */
+/** 完整能力集 — 适用于 Anthropic 官方 API、generic 等。effort 档位见 defaultEffortLevels。 */
 const FULL_CAPABILITIES: ProviderCapability[] = [
   'thinking',
   'adaptive_thinking',
-  'effort',
   'structured_outputs',
   'context_management',
   'prompt_caching',
   'web_search',
   'interleaved_thinking',
 ]
+
+/** Anthropic 系默认 effort 档位(对外不含 max,internal build 解锁 max)。 */
+const ANTHROPIC_EFFORT_LEVELS: EffortLevel[] = ['low', 'medium', 'high']
+const ANTHROPIC_EFFORT_LEVELS_INTERNAL: EffortLevel[] = ['low', 'medium', 'high', 'max']
 
 /** 标准能力集 — 适用于大多数第三方平台和本地推理引擎 */
 const STANDARD_CAPABILITIES: ProviderCapability[] = [
@@ -134,10 +151,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     id: 'dashscope',
     supportedFormats: ['anthropic', 'openai'],
     endpointType: 'env-or-default',
+    // 注:dashscope(百炼)的 OpenAI 兼容端只发 enable_thinking 开关,
+    // 不接受 effort 强度参数,故不声明 defaultEffortLevels。
     capabilities: [
       'thinking',
       'adaptive_thinking',
-      'effort',
       'structured_outputs',
       'context_management',
       'prompt_caching',
@@ -162,6 +180,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     supportedFormats: ['openai'],
     endpointType: 'preconfigured',
     capabilities: STANDARD_CAPABILITIES,
+    // DeepSeek reasoning_effort 支持 low/medium/high。
+    defaultEffortLevels: ['low', 'medium', 'high'],
     defaultBaseUrls: { openai: 'https://api.deepseek.com' },
     apiKeyLabel: 'DeepSeek API Key',
     suggestedModels: [
@@ -174,6 +194,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     supportedFormats: ['openai'],
     endpointType: 'hardcoded',
     capabilities: ['thinking', 'structured_outputs', 'context_management', 'web_search'],
+    // OpenAI reasoning_effort 原生支持 minimal/low/medium/high(无 max)。
+    defaultEffortLevels: ['minimal', 'low', 'medium', 'high'],
     activationEnvVar: 'ZY_CODE_USE_OPENAI',
     apiKeyLabel: 'OpenAI API Key',
     suggestedModels: [
@@ -319,12 +341,13 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: [
       'thinking',
       'adaptive_thinking',
-      'effort',
       'structured_outputs',
       'context_management',
       'web_search',
       'interleaved_thinking',
     ],
+    // OpenRouter reasoning.effort 支持 low/medium/high。
+    defaultEffortLevels: ['low', 'medium', 'high'],
     activationEnvVar: 'ZY_CODE_USE_OPENROUTER',
     apiKeyLabel: 'OpenRouter API Key',
     defaultBaseUrls: {
@@ -475,6 +498,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     supportedFormats: ['anthropic'],
     endpointType: 'hardcoded',
     capabilities: FULL_CAPABILITIES,
+    defaultEffortLevels: ANTHROPIC_EFFORT_LEVELS,
+    internalEffortLevels: ANTHROPIC_EFFORT_LEVELS_INTERNAL,
     apiKeyLabel: 'Anthropic API Key',
   },
   {
@@ -482,6 +507,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     supportedFormats: ['anthropic', 'openai'],
     endpointType: 'custom',
     capabilities: FULL_CAPABILITIES,
+    defaultEffortLevels: ANTHROPIC_EFFORT_LEVELS,
+    internalEffortLevels: ANTHROPIC_EFFORT_LEVELS_INTERNAL,
     activationEnvVar: 'ZY_CODE_USE_GENERIC',
     apiKeyLabel: 'API Key',
   },

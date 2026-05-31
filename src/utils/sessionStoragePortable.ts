@@ -7,7 +7,7 @@
  */
 
 import type { UUID } from 'node:crypto'
-import { open as fsOpen, readdir, realpath, stat } from 'node:fs/promises'
+import { open as fsOpen, readdir, readFile, realpath, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { getZyConfigHomeDir } from './envUtils.js'
 import { getWorktreePathsPortable } from './getWorktreePathsPortable.js'
@@ -256,11 +256,43 @@ export async function readHeadAndTail(
   }
 }
 
+/**
+ * 可移植的 sidecar 视图 —— 仅含会话列表/lite 读取需要的字段子集。
+ * 与 sessionStorage/sessionSidecar.ts 的 SessionSidecarMetadata 字段对齐,
+ * 但这里保持零内部依赖(供 VS Code 扩展共享)。
+ */
+export type PortableSessionSidecar = {
+  version: number
+  customTitle?: string
+  aiTitle?: string
+  tag?: string
+  lastPrompt?: string
+  taskSummary?: { summary: string; timestamp: string }
+}
+
+/**
+ * 读取 `<sessionId>.meta.json` sidecar(纯 readFile + JSON.parse,零内部依赖)。
+ * 未知 version / 缺失 / 损坏一律返回 null,让调用方回退到 JSONL 扫描。
+ */
+export async function readSessionSidecarPortable(
+  transcriptPath: string,
+): Promise<PortableSessionSidecar | null> {
+  try {
+    const parsed = JSON.parse(
+      await readFile(transcriptPath.replace(/\.jsonl$/, '.meta.json'), 'utf-8'),
+    ) as PortableSessionSidecar
+    return parsed?.version === 1 ? parsed : null
+  } catch {
+    return null
+  }
+}
+
 export type LiteSessionFile = {
   mtime: number
   size: number
   head: string
   tail: string
+  sidecar?: PortableSessionSidecar | null
 }
 
 /**
@@ -287,7 +319,8 @@ export async function readSessionLite(filePath: string): Promise<LiteSessionFile
         tail = buf.toString('utf8', 0, tailResult.bytesRead)
       }
 
-      return { mtime: stat.mtime.getTime(), size: stat.size, head, tail }
+      const sidecar = await readSessionSidecarPortable(filePath)
+      return { mtime: stat.mtime.getTime(), size: stat.size, head, tail, sidecar }
     } finally {
       await fh.close()
     }

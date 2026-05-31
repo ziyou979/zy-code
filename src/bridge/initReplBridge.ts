@@ -51,11 +51,7 @@ import {
   isCseShimEnabled,
   isEnvLessWireEnabled,
 } from './bridgeEnabled.js'
-import {
-  archiveWireSession,
-  createWireSession,
-  updateWireSessionTitle,
-} from './createSession.js'
+import { archiveWireSession, createWireSession, updateWireSessionTitle } from './createSession.js'
 import { logWireSkip } from './debugUtils.js'
 import { checkEnvLessWireMinVersion } from './envLessBridgeConfig.js'
 import { getPollIntervalConfig } from './pollConfig.js'
@@ -97,9 +93,7 @@ export type InitWireOptions = {
   tags?: string[]
 }
 
-export async function initReplBridge(
-  options?: InitWireOptions,
-): Promise<ReplWireHandle | null> {
+export async function initReplBridge(options?: InitWireOptions): Promise<ReplWireHandle | null> {
   const {
     onInboundMessage,
     onPermissionResponse,
@@ -144,10 +138,7 @@ export async function initReplBridge(
   // 3. Check organization policy — remote control may be disabled
   await waitForPolicyLimitsToLoad()
   if (!isPolicyAllowed('allow_remote_control')) {
-    logWireSkip(
-      'policy_denied',
-      '[bridge:repl] Skipping: allow_remote_control policy not allowed',
-    )
+    logWireSkip('policy_denied', '[bridge:repl] Skipping: allow_remote_control policy not allowed')
     onStateChange?.('failed', "disabled by your organization's policy")
     return null
   }

@@ -2,12 +2,12 @@ import type { RGBColor as RGBColorString } from '../../ink/styles.js'
 import type { RGBColor as RGBColorType } from './types.js'
 
 export function getDefaultCharacters(): string[] {
-  if (process.env.TERM === 'xterm-ghostty') {
-    return ['·', '✢', '✳', '✶', '✻', '*'] // Use * instead of ✽ for Ghostty because the latter renders in a way that's slightly offset
-  }
-  return process.platform === 'darwin'
-    ? ['·', '✢', '✳', '✶', '✻', '✽']
-    : ['·', '✢', '*', '✶', '✻', '✽']
+  // zycode 专属 spinner：8 点盲文累积绘制字母 Z
+  // 调用方会套 [...x, ...x.reverse()] 镜像 doubling，
+  // 所以这里只需返回"build"半段，反向自动产生"erase"半段，
+  // 完整循环：⠁→⠉→⠙→⠝→⡝→⣝→⣝→⡝→⠝→⠙→⠉→⠁
+  // 其中 ⣝（dots 1+3+4+5+7+8）= 顶横 + 右上→左下对角穿插 + 底横，即完整 Z
+  return ['⠁', '⠉', '⠙', '⠝', '⡝', '⣝']
 }
 
 // Interpolate between two RGB colors

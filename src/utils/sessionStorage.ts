@@ -68,11 +68,23 @@ export {
   getAgentTranscriptPath,
   getProjectDir,
   getProjectsDir,
+  getSessionMetadataPath,
+  getSessionMetadataPathFromTranscriptPath,
   getTranscriptPath,
   getTranscriptPathForSession,
   MAX_TRANSCRIPT_READ_BYTES,
   setAgentTranscriptSubdir,
 } from './sessionStorage/paths.js'
+export type {
+  SessionSidecarMetadata,
+  SessionSidecarPatch,
+} from './sessionStorage/sessionSidecar.js'
+export {
+  readSessionSidecar,
+  readSessionSidecarAsync,
+  updateSessionSidecar,
+  writeSessionSidecar,
+} from './sessionStorage/sessionSidecar.js'
 export {
   isChainParticipant,
   isEphemeralToolProgress,

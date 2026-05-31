@@ -49,11 +49,7 @@ function getResolvedHookCount(
   return uniqueHookNames.size
 }
 
-export function hasUnresolvedHooks(
-  messages: Message[],
-  toolUseID: string,
-  hookEvent: HookEvent,
-) {
+export function hasUnresolvedHooks(messages: Message[], toolUseID: string, hookEvent: HookEvent) {
   const inProgressHookCount = getInProgressHookCount(messages, toolUseID, hookEvent)
   const resolvedHookCount = getResolvedHookCount(messages, toolUseID, hookEvent)
 
@@ -85,7 +81,6 @@ export function getSiblingToolUseIDs(message: Message, messages: Message[]): Set
   const unnormalizedMessage = messages.find(
     (_): _ is AssistantMessage =>
       _.type === 'assistant' &&
-      Array.isArray(_.message.content) &&
       _.message.content.some((_) => _.type === 'tool_call' && _.id === toolUseID),
   )
   if (!unnormalizedMessage) {
@@ -99,9 +94,7 @@ export function getSiblingToolUseIDs(message: Message, messages: Message[]): Set
 
   return new Set(
     siblingMessages.flatMap((_) =>
-      (Array.isArray(_.message.content) ? _.message.content : [])
-        .filter((_) => _.type === 'tool_call')
-        .map((_) => _.id),
+      _.message.content.filter((_) => _.type === 'tool_call').map((_) => _.id),
     ),
   )
 }
@@ -143,9 +136,6 @@ export function buildMessageLookups(
       if (!toolUseIDs) {
         toolUseIDs = new Set()
         toolUseIDsByMessageID.set(id, toolUseIDs)
-      }
-      if (!Array.isArray(msg.message.content)) {
-        continue
       }
       for (const content of msg.message.content) {
         if (content.type === 'tool_call') {
@@ -319,18 +309,16 @@ export const EMPTY_STRING_SET: ReadonlySet<string> = Object.freeze(new Set<strin
  * 每条进度消息必须有 `message` 字段，类型为
  * `AssistantMessage | UserMessage`.
  */
-export function buildSubagentLookups(
-  messages: { message: AssistantMessage | UserMessage }[],
-): { lookups: MessageLookups; inProgressToolUseIDs: Set<string> } {
+export function buildSubagentLookups(messages: { message: AssistantMessage | UserMessage }[]): {
+  lookups: MessageLookups
+  inProgressToolUseIDs: Set<string>
+} {
   const toolUseByToolUseID = new Map<string, ToolCallBlock>()
   const resolvedToolUseIDs = new Set<string>()
   const toolResultByToolUseID = new Map<string, UserMessage & { type: 'user' }>()
 
   for (const { message: msg } of messages) {
     if (msg.type === 'assistant') {
-      if (!Array.isArray(msg.message.content)) {
-        continue
-      }
       for (const content of msg.message.content) {
         if (content.type === 'tool_call') {
           toolUseByToolUseID.set(content.id, content as ToolCallBlock)
@@ -404,9 +392,7 @@ export function getToolUseIDs(normalizedMessages: Message[]): Set<string> {
     normalizedMessages
       .filter(
         (_): _ is AssistantMessage =>
-          _.type === 'assistant' &&
-          Array.isArray(_.message.content) &&
-          _.message.content[0]?.type === 'tool_call',
+          _.type === 'assistant' && _.message.content[0]?.type === 'tool_call',
       )
       .map((_) => (_.message.content[0] as { id: string }).id),
   )

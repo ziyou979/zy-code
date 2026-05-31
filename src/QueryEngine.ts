@@ -27,14 +27,11 @@ import type { AppState } from './state/AppState.js'
 import { type Tools, type ToolUseContext, toolMatchesName } from './Tool.js'
 import type { AgentDefinition } from './tools/AgentTool/loadAgentsDir.js'
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from './tools/SyntheticOutputTool/SyntheticOutputTool.js'
+import { toUUID } from './types/ids.js'
 import type { UserContentBlock } from './types/llm.js'
-import type {
-  AssistantMessage,
-  Message,
-  StreamEvent,
-  ToolUseSummaryMessage,
-} from './types/message.js'
+import type { Message } from './types/message.js'
 import type { OrphanedPermission } from './types/textInputTypes.js'
+import type { Attachment } from './utils/attachments.js'
 import { createAbortController } from './utils/abortController.js'
 import type { AttributionState } from './utils/commitAttribution.js'
 import { getGlobalConfig } from './utils/config.js'
@@ -231,7 +228,7 @@ export class QueryEngine {
 
     const initialThinkingConfig: ThinkingConfig = thinkingConfig
       ? thinkingConfig
-      : shouldEnableThinkingByDefault() !== false
+      : shouldEnableThinkingByDefault(initialMainLoopModel) !== false
         ? { type: 'adaptive' }
         : { type: 'disabled' }
 
@@ -242,17 +239,16 @@ export class QueryEngine {
       defaultSystemPrompt,
       userContext: baseUserContext,
       systemContext,
-    } = (
-      (await fetchSystemPromptParts({
-        tools,
-        mainLoopModel: initialMainLoopModel,
-        additionalWorkingDirectories: Array.from(
-          (initialAppState.toolPermissionContext.additionalWorkingDirectories.keys as any)(),
-        ) as any,
-        mcpClients,
-        customSystemPrompt: customPrompt,
-      })) as any
-    )(headlessProfilerCheckpoint as any)('after_getSystemPrompt')
+    } = await fetchSystemPromptParts({
+      tools,
+      mainLoopModel: initialMainLoopModel,
+      additionalWorkingDirectories: Array.from(
+        initialAppState.toolPermissionContext.additionalWorkingDirectories.keys(),
+      ),
+      mcpClients,
+      customSystemPrompt: customPrompt,
+    })
+    headlessProfilerCheckpoint('after_getSystemPrompt')
     const userContext = {
       ...baseUserContext,
       ...getCoordinatorUserContext(
@@ -504,7 +500,9 @@ export class QueryEngine {
       // 因为 selectableUserMessagesFilter 会排除 local-command-stdout 标签。
       for (const msg of messagesFromUserInput) {
         if (msg.type === 'user') {
-          const textBlock = msg.message.content.find((b: { type: string }) => b.type === 'text') as { type: 'text'; text: string } | undefined
+          const textBlock = msg.message.content.find((b: { type: string }) => b.type === 'text') as
+            | { type: 'text'; text: string }
+            | undefined
           const textContent = textBlock?.text ?? ''
           if (
             textContent.includes(`<${LOCAL_COMMAND_STDOUT_TAG}>`) ||
@@ -515,7 +513,9 @@ export class QueryEngine {
               type: 'user',
               message: {
                 ...msg.message,
-                content: msg.message.content.map((b: any) => b.type === 'text' ? { ...b, text: stripAnsi(b.text) } : b),
+                content: msg.message.content.map((b: any) =>
+                  b.type === 'text' ? { ...b, text: stripAnsi(b.text) } : b,
+                ),
               },
               session_id: getSessionId(),
               parent_tool_use_id: null,
@@ -538,7 +538,7 @@ export class QueryEngine {
           (msg.content.includes(`<${LOCAL_COMMAND_STDOUT_TAG}>`) ||
             msg.content.includes(`<${LOCAL_COMMAND_STDERR_TAG}>`))
         ) {
-          yield localCommandOutputToSDKAssistantMessage(msg.content, msg.uuid as any)
+          yield localCommandOutputToSDKAssistantMessage(msg.content, toUUID(msg.uuid))
         }
 
         if (msg.type === 'system' && msg.subtype === 'compact_boundary') {
@@ -593,7 +593,7 @@ export class QueryEngine {
               ...prev,
               fileHistory: updater(prev.fileHistory),
             }))
-          }, message.uuid as any)
+          }, toUUID(message.uuid))
         })
     }
 
@@ -688,18 +688,13 @@ export class QueryEngine {
         turnCount++
       }
 
-      const messageType: string = message.type
-      switch (messageType) {
-        case 'tombstone':
-          // Tombstone 消息 是用于删除消息的控制信号，跳过它们
-          break
+      switch (message.type) {
         case 'assistant': {
           // 如果已设置则捕获 stopReason（合成消息）。对于流式响应，
           // 在 content_block_stop 时该值为 null；真实值会在下方通过
           // message_delta 到达（见 zy.ts 的 message_delta 处理器）。
-          const assistantMsg = message as AssistantMessage
-          if (assistantMsg.message.stopReason != null) {
-            lastStopReason = assistantMsg.message.stopReason
+          if (message.message.stopReason != null) {
+            lastStopReason = message.message.stopReason
           }
           this.mutableMessages.push(message)
           yield* normalizeMessage(message)
@@ -722,7 +717,7 @@ export class QueryEngine {
           yield* normalizeMessage(message)
           break
         case 'stream_event': {
-          const streamMsg = message as StreamEvent
+          const streamMsg = message
           if (
             streamMsg.event.type === 'message_start' ||
             streamMsg.event.type === 'response_start'
@@ -776,7 +771,7 @@ export class QueryEngine {
 
           break
         }
-        case 'attachment':
+        case 'attachment': {
           this.mutableMessages.push(message)
           // 记录内联（与上方 progress 相同的原因）
           if (persistSession) {
@@ -784,12 +779,15 @@ export class QueryEngine {
             void recordTranscript(messages)
           }
 
+          // Message 联合里 AttachmentMessage 用默认泛型 { type: string }，payload 字段不可见；
+          // 收窄到 attachments.ts 的 Attachment 联合后即可按 type 判别访问具体字段。
+          const attachment = message.attachment as Attachment
           // 从 StructuredOutput 工具调用中提取结构化输出
-          if ((message as any).attachment.type === 'structured_output') {
-            structuredOutputFromTool = ((message as any).attachment as any).data
+          if (attachment.type === 'structured_output') {
+            structuredOutputFromTool = attachment.data
           }
           // 处理来自 query.ts 的 max turns reached 信号
-          else if ((message as any).attachment.type === 'max_turns_reached') {
+          else if (attachment.type === 'max_turns_reached') {
             if (persistSession) {
               if (
                 isEnvTruthy(process.env.ZY_CODE_EAGER_FLUSH) ||
@@ -806,7 +804,7 @@ export class QueryEngine {
               duration_ms: Date.now() - startTime,
               duration_api_ms: getTotalAPIDuration(),
               isError: true,
-              num_turns: ((message as any).attachment as any).turnCount,
+              num_turns: attachment.turnCount,
               stop_reason: lastStopReason,
               session_id: getSessionId(),
               total_cost_usd: getTotalCost(),
@@ -814,44 +812,35 @@ export class QueryEngine {
               modelUsage: getModelUsage(),
               permission_denials: this.permissionDenials,
               uuid: randomUUID(),
-              errors: [
-                `Reached maximum number of turns (${((message as any).attachment as any).maxTurns})`,
-              ],
+              errors: [`Reached maximum number of turns (${attachment.maxTurns})`],
             }
             return
           }
           // 将 queued_command 附件作为 SDK 用户消息回放产生
-          else if (replayUserMessages && (message as any).attachment.type === 'queued_command') {
+          else if (replayUserMessages && attachment.type === 'queued_command') {
             yield {
               type: 'user',
               message: {
                 role: 'user' as const,
-                content: ((message as any).attachment as any).prompt,
+                content: attachment.prompt,
               },
               session_id: getSessionId(),
               parent_tool_use_id: null,
-              uuid: ((message as any).attachment as any).source_uuid || message.uuid,
+              uuid: attachment.source_uuid || message.uuid,
               timestamp: message.timestamp,
               isReplay: true,
             } as WireUserMessageReplay
           }
           break
+        }
         case 'stream_request_start':
           // 不产生 stream request start 消息
           break
         case 'system': {
           this.mutableMessages.push(message)
-          // 向 SDK 产生 compact boundary 消息
-          const sysMsg = message as unknown as {
-            subtype?: string
-            compactMetadata?: unknown
-            retryAttempt?: number
-            maxRetries?: number
-            retryInMs?: number
-            error?: import('./types/llm.js').LLMError
-            uuid: string
-          }
-          if (sysMsg.subtype === 'compact_boundary' && sysMsg.compactMetadata) {
+          // 向 SDK 产生 compact boundary 消息。message 收窄为 SystemMessage | TombstoneMessage，
+          // 按 subtype 进一步判别到具体子类型即可访问对应字段。
+          if (message.subtype === 'compact_boundary' && message.compactMetadata) {
             // 释放压缩前的消息以供 GC。边界刚刚被推送，所以它是最后一个元素。
             // query.ts 内部已使用 getMessagesAfterCompactBoundary()，因此
             // 后续只需要边界之后的消息。
@@ -869,20 +858,18 @@ export class QueryEngine {
               subtype: 'compact_boundary' as const,
               session_id: getSessionId(),
               uuid: message.uuid,
-              compact_metadata: toSDKCompactMetadata(
-                sysMsg.compactMetadata as import('./types/message.js').CompactMetadata,
-              ),
+              compact_metadata: toSDKCompactMetadata(message.compactMetadata),
             }
           }
-          if (sysMsg.subtype === 'api_error') {
+          if (message.subtype === 'api_error') {
             yield {
               type: 'system',
               subtype: 'api_retry' as const,
-              attempt: sysMsg.retryAttempt,
-              max_retries: sysMsg.maxRetries,
-              retry_delay_ms: sysMsg.retryInMs,
-              error_status: sysMsg.error?.status ?? null,
-              error: categorizeRetryableAPIError(sysMsg.error),
+              attempt: message.retryAttempt,
+              max_retries: message.maxRetries,
+              retry_delay_ms: message.retryInMs,
+              error_status: message.error?.status ?? null,
+              error: categorizeRetryableAPIError(message.error),
               session_id: getSessionId(),
               uuid: message.uuid,
             }
@@ -892,11 +879,10 @@ export class QueryEngine {
         }
         case 'tool_use_summary': {
           // 向 SDK 产生 tool use summary 消息
-          const summaryMsg = message as ToolUseSummaryMessage
           yield {
             type: 'tool_use_summary' as const,
-            summary: summaryMsg.summary,
-            preceding_tool_use_ids: summaryMsg.precedingToolUseIds,
+            summary: message.summary,
+            preceding_tool_use_ids: message.precedingToolUseIds,
             session_id: getSessionId(),
             uuid: message.uuid,
           }

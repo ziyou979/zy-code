@@ -17,6 +17,7 @@ export const enMisc: TranslationResource = {
   'effort.max': 'Max',
   'effort.medium': 'Medium',
   'effort.mediumRecommended': 'Medium (recommended)',
+  'effort.minimal': 'Minimal',
   'errorUtils.api.errorWithStatus': 'API error (status {status})',
   'errorUtils.connection.failed': 'Unable to connect to API. Check your internet connection',
   'errorUtils.connection.timeout':

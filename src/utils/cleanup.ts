@@ -177,8 +177,13 @@ export async function cleanupOldSessionFiles(): Promise<CleanupResult> {
           continue
         }
         try {
-          if (await unlinkIfOld(join(projectDir, entry.name), cutoffDate, fsImpl)) {
+          const filePath = join(projectDir, entry.name)
+          if (await unlinkIfOld(filePath, cutoffDate, fsImpl)) {
             result.messages++
+            // 删除 .jsonl 时同删其会话元数据 sidecar(<sessionId>.meta.json),best-effort
+            if (entry.name.endsWith('.jsonl')) {
+              await fsImpl.unlink(filePath.replace(/\.jsonl$/, '.meta.json')).catch(() => {})
+            }
           }
         } catch {
           result.errors++

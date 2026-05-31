@@ -434,7 +434,12 @@ export function ExitPlanModePermissionRequest({
         initialMessage: {
           message: {
             ...createUserMessage({
-              content: [{ type: 'text' as const, text: `Implement the following plan:\n\n${currentPlan}${verificationInstruction}${transcriptHint}${teamHint}${feedbackSuffix}` }],
+              content: [
+                {
+                  type: 'text' as const,
+                  text: `Implement the following plan:\n\n${currentPlan}${verificationInstruction}${transcriptHint}${teamHint}${feedbackSuffix}`,
+                },
+              ],
             }),
             planContent: currentPlan,
           },

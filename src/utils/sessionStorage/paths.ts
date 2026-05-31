@@ -40,6 +40,18 @@ export function getTranscriptPathForSession(sessionId: string): string {
   return join(projectDir, `${sessionId}.jsonl`)
 }
 
+// 会话级可变元数据 sidecar（custom-title / tag / last-prompt 等),与 .jsonl 同目录同名。
+// 镜像 getAgentMetadataPath 的 .meta.json 约定。
+export function getSessionMetadataPath(sessionId?: string): string {
+  return getSessionMetadataPathFromTranscriptPath(
+    getTranscriptPathForSession(sessionId ?? getSessionId()),
+  )
+}
+
+export function getSessionMetadataPathFromTranscriptPath(transcriptPath: string): string {
+  return transcriptPath.replace(/\.jsonl$/, '.meta.json')
+}
+
 // 50 MB — session JSONL 可增长到数 GB (inc-3930)。读取原始 transcript 的
 // 调用者必须在超过此阈值时中止以避免 OOM。
 export const MAX_TRANSCRIPT_READ_BYTES = 50 * 1024 * 1024

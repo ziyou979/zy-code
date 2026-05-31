@@ -177,15 +177,11 @@ export function deserializeMessagesWithInterruptDetection(
     // 过滤孤立的仅含 thinking 的 assistant 消息，这些消息在 resume 时会导致 API 错误。
     // 当流式传输为每个 content block 生成独立消息，且穿插的用户消息阻止了
     // 按 message.id 正确合并时，就会出现此情况。
-    const filteredThinking = filterOrphanedThinkingOnlyMessages(
-      filteredToolUses,
-    ) as Message[]
+    const filteredThinking = filterOrphanedThinkingOnlyMessages(filteredToolUses) as Message[]
 
     // 过滤仅包含空白文本内容的 assistant 消息。
     // 当模型在 thinking 前输出 "\n\n"，而用户在流式传输中途取消时会发生此情况。
-    const filteredMessages = filterWhitespaceOnlyAssistantMessages(
-      filteredThinking,
-    ) as Message[]
+    const filteredMessages = filterWhitespaceOnlyAssistantMessages(filteredThinking) as Message[]
 
     const internalState = detectTurnInterruption(filteredMessages)
 

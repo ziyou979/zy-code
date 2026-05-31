@@ -2557,12 +2557,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
       source: 'standalone' as const,
     }
     await writeWirePointer(config.dir, pointerPayload)
-    pointerRefreshTimer = setInterval(
-      writeWirePointer,
-      60 * 60 * 1000,
-      config.dir,
-      pointerPayload,
-    )
+    pointerRefreshTimer = setInterval(writeWirePointer, 60 * 60 * 1000, config.dir, pointerPayload)
     // Don't let the interval keep the process alive on its own.
     pointerRefreshTimer.unref?.()
   }
@@ -2645,10 +2640,7 @@ export type HeadlessWireOpts = {
  *
  * 当 `signal` 中止且轮询循环清理时干净地解析。
  */
-export async function runWireHeadless(
-  opts: HeadlessWireOpts,
-  signal: AbortSignal,
-): Promise<void> {
+export async function runWireHeadless(opts: HeadlessWireOpts, signal: AbortSignal): Promise<void> {
   const { dir, log } = opts
 
   // Worker 继承监督器的 CWD。先 chdir 以便 git 工具

@@ -952,9 +952,8 @@ const MessagesImpl = ({
  *  tool_result 可以同时展开），否则对 groups/thinking 使用 uuid。 */
 function expandKey(msg: RenderableMessage): string {
   return (
-    (msg.type === 'assistant' || msg.type === 'user'
-      ? getToolUseID(msg as MessageType)
-      : null) ?? msg.uuid
+    (msg.type === 'assistant' || msg.type === 'user' ? getToolUseID(msg as MessageType) : null) ??
+    msg.uuid
   )
 }
 

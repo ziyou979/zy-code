@@ -147,7 +147,9 @@ export function collapseContext(messages: readonly Message[]): Message[] {
 
   const collapsedMessage: UserMessage = {
     ...createUserMessage({
-      content: [{ type: 'text' as const, text: `[Archived ${toArchive.length} messages: ${summaryText}]` }],
+      content: [
+        { type: 'text' as const, text: `[Archived ${toArchive.length} messages: ${summaryText}]` },
+      ],
     }),
     uuid: randomUUID() as any,
   } as unknown as UserMessage

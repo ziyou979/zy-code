@@ -6,12 +6,7 @@
  */
 
 import type { ApiKeySource, ModelUsage, PermissionMode } from '../coreTypes.generated.js'
-import type {
-  AssistantContentBlock,
-  LLMStreamEvent,
-  TokenUsage,
-  UserContentBlock,
-} from '../llm.js'
+import type { AssistantContentBlock, LLMStreamEvent, TokenUsage, UserContentBlock } from '../llm.js'
 
 // ============================================================================
 // SDK Message Types

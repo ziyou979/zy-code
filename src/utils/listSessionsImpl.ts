@@ -81,7 +81,7 @@ export function parseSessionInfoFromLite(
   lite: LiteSessionFile,
   projectPath?: string,
 ): SessionInfo | null {
-  const { head, tail, mtime, size } = lite
+  const { head, tail, mtime, size, sidecar } = lite
 
   // Check first line for sidechain sessions
   const firstNewline = head.indexOf('\n')
@@ -89,9 +89,11 @@ export function parseSessionInfoFromLite(
   if (firstLine.includes('"isSidechain":true') || firstLine.includes('"isSidechain": true')) {
     return null
   }
-  // User title (customTitle) wins over AI title (aiTitle); distinct
-  // field names mean extractLastJsonStringField naturally disambiguates.
+  // Sidecar wins when present (authoritative); falls back to JSONL scan for
+  // un-migrated files. User title (customTitle) still wins over AI title.
   const customTitle =
+    sidecar?.customTitle ||
+    sidecar?.aiTitle ||
     extractLastJsonStringField(tail, 'customTitle') ||
     extractLastJsonStringField(head, 'customTitle') ||
     extractLastJsonStringField(tail, 'aiTitle') ||
@@ -113,6 +115,8 @@ export function parseSessionInfoFromLite(
   // Head scan is fallback for sessions without a last-prompt entry.
   const summary =
     customTitle ||
+    sidecar?.lastPrompt ||
+    sidecar?.taskSummary?.summary ||
     extractLastJsonStringField(tail, 'lastPrompt') ||
     extractLastJsonStringField(tail, 'summary') ||
     firstPrompt
@@ -130,7 +134,8 @@ export function parseSessionInfoFromLite(
   // collision with tool_use inputs containing a `tag` parameter (git tag,
   // Docker tags, cloud resource tags). Mirrors sessionStorage.ts:608.
   const tagLine = tail.split('\n').findLast((l) => l.startsWith('{"type":"tag"'))
-  const tag = tagLine ? extractLastJsonStringField(tagLine, 'tag') || undefined : undefined
+  const tag =
+    sidecar?.tag || (tagLine ? extractLastJsonStringField(tagLine, 'tag') || undefined : undefined)
 
   return {
     sessionId,

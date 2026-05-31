@@ -8,6 +8,11 @@ export type {
   RemoteAgentMetadata,
 } from './sessionStorage/agentMetadata.js'
 
+export type {
+  SessionSidecarMetadata,
+  SessionSidecarPatch,
+} from './sessionStorage/sessionSidecar.js'
+
 export type { SessionLogResult } from './sessionStorage/logLoading.js'
 
 export type { TeamInfo } from './sessionStorage/transcript.js'
@@ -93,6 +98,8 @@ export {
   getAgentTranscriptPath,
   getProjectDir,
   getProjectsDir,
+  getSessionMetadataPath,
+  getSessionMetadataPathFromTranscriptPath,
   getTranscriptPath,
   getTranscriptPathForSession,
   MAX_TRANSCRIPT_READ_BYTES,
@@ -120,6 +127,13 @@ export {
   isTranscriptMessage,
   sessionIdExists,
 } from './sessionStorage/predicates.js'
+
+export {
+  readSessionSidecar,
+  readSessionSidecarAsync,
+  updateSessionSidecar,
+  writeSessionSidecar,
+} from './sessionStorage/sessionSidecar.js'
 
 export {
   resetProjectFlushStateForTesting,

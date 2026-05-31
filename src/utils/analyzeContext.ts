@@ -31,12 +31,7 @@ import {
   getSkillToolInfo as getSlashCommandInfo,
 } from '../tools/SkillTool/prompt.js'
 import type { LLMMessage, ToolDefinition } from '../types/llm.js'
-import type {
-  AssistantMessage,
-  AttachmentMessage,
-  Message,
-  UserMessage,
-} from '../types/message.js'
+import type { AssistantMessage, AttachmentMessage, Message, UserMessage } from '../types/message.js'
 import { toolToAPISchema } from './api.js'
 import { getContextWindowForModel } from './context.js'
 import { getCwd } from './cwd.js'
@@ -742,10 +737,7 @@ type MessageBreakdown = {
   attachmentsByType: Map<string, number>
 }
 
-function processAssistantMessage(
-  msg: AssistantMessage,
-  breakdown: MessageBreakdown,
-): void {
+function processAssistantMessage(msg: AssistantMessage, breakdown: MessageBreakdown): void {
   // 逐个处理每个内容块
   for (const block of msg.message.content) {
     const blockStr = jsonStringify(block)

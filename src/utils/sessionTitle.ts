@@ -48,13 +48,9 @@ export function extractConversationText(messages: Message[]): string {
       continue
     }
     const content = msg.message.content
-    if (typeof content === 'string') {
-      parts.push(content)
-    } else if (Array.isArray(content)) {
-      for (const block of content) {
-        if ('type' in block && block.type === 'text' && 'text' in block) {
-          parts.push(block.text as string)
-        }
+    for (const block of content) {
+      if ('type' in block && block.type === 'text' && 'text' in block) {
+        parts.push(block.text as string)
       }
     }
   }

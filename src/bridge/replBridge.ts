@@ -279,9 +279,7 @@ export async function initBridgeCore(params: WireCoreParams): Promise<WireCoreHa
 
   // bridgePointer 导入提升：perpetual 模式在 register 之前读取它；
   // 非 perpetual 在 session create 之后写入它；两者都在 teardown 时使用 clear。
-  const { writeWirePointer, clearWirePointer, readWirePointer } = await import(
-    './bridgePointer.js'
-  )
+  const { writeWirePointer, clearWirePointer, readWirePointer } = await import('./bridgePointer.js')
 
   // Perpetual 模式：读取崩溃恢复指针并将其视为先前
   // 状态。指针在 session create 后无条件写入

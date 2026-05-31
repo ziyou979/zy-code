@@ -1,4 +1,10 @@
-import { EFFORT_HIGH, EFFORT_LOW, EFFORT_MAX, EFFORT_MEDIUM } from '../constants/figures.js'
+import {
+  EFFORT_HIGH,
+  EFFORT_LOW,
+  EFFORT_MAX,
+  EFFORT_MEDIUM,
+  EFFORT_MINIMAL,
+} from '../constants/figures.js'
 import {
   type EffortLevel,
   type EffortValue,
@@ -23,13 +29,15 @@ export function getEffortNotificationText(
 
 export function effortLevelToSymbol(level: EffortLevel): string {
   switch (level) {
+    case 'minimal':
+      return EFFORT_MINIMAL
     case 'low':
       return EFFORT_LOW
     case 'medium':
       return EFFORT_MEDIUM
     case 'high':
       return EFFORT_HIGH
-    case 'max' as any:
+    case 'max':
       return EFFORT_MAX
     default:
       // 防御性：level 可能来自远程配置。如果有未知值漏过，

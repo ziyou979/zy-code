@@ -144,7 +144,12 @@ export async function processBashCommand(
         userMessage,
         ...attachmentMessages,
         createUserMessage({
-          content: [{ type: 'text' as const, text: `<bash-stdout>${stdout}</bash-stdout><bash-stderr>${escapeXml(stderr)}</bash-stderr>` }],
+          content: [
+            {
+              type: 'text' as const,
+              text: `<bash-stdout>${stdout}</bash-stdout><bash-stderr>${escapeXml(stderr)}</bash-stderr>`,
+            },
+          ],
         }),
       ],
       shouldQuery: false,
@@ -170,7 +175,12 @@ export async function processBashCommand(
           userMessage,
           ...attachmentMessages,
           createUserMessage({
-            content: [{ type: 'text' as const, text: `<bash-stdout>${escapeXml(e.stdout)}</bash-stdout><bash-stderr>${escapeXml(e.stderr)}</bash-stderr>` }],
+            content: [
+              {
+                type: 'text' as const,
+                text: `<bash-stdout>${escapeXml(e.stdout)}</bash-stdout><bash-stderr>${escapeXml(e.stderr)}</bash-stderr>`,
+              },
+            ],
           }),
         ],
         shouldQuery: false,
@@ -182,7 +192,12 @@ export async function processBashCommand(
         userMessage,
         ...attachmentMessages,
         createUserMessage({
-          content: [{ type: 'text' as const, text: `<bash-stderr>Command failed: ${escapeXml(errorMessage(e))}</bash-stderr>` }],
+          content: [
+            {
+              type: 'text' as const,
+              text: `<bash-stderr>Command failed: ${escapeXml(errorMessage(e))}</bash-stderr>`,
+            },
+          ],
         }),
       ],
       shouldQuery: false,

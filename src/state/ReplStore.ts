@@ -214,7 +214,10 @@ export function createReplStore(params: CreateReplStoreParams): ReplStoreInstanc
     setField(key, action) {
       store.setState((prev) => ({
         ...prev,
-        [key]: typeof action === 'function' ? (action as (p: ReplState[typeof key]) => ReplState[typeof key])(prev[key]) : action,
+        [key]:
+          typeof action === 'function'
+            ? (action as (p: ReplState[typeof key]) => ReplState[typeof key])(prev[key])
+            : action,
       }))
     },
     setUserInputOnProcessing(input) {

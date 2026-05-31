@@ -14,11 +14,7 @@ import { SessionsWebSocket, type SessionsWebSocketCallbacks } from './SessionsWe
  * Type guard to check if a message is an WireMessage (not a control message)
  */
 function isSDKMessage(
-  message:
-    | WireMessage
-    | WireControlRequest
-    | WireControlResponse
-    | WireControlCancelRequest,
+  message: WireMessage | WireControlRequest | WireControlResponse | WireControlCancelRequest,
 ): message is WireMessage {
   return (
     message.type !== 'control_request' &&
@@ -129,11 +125,7 @@ export class RemoteSessionManager {
    * Handle messages from WebSocket
    */
   private handleMessage(
-    message:
-      | WireMessage
-      | WireControlRequest
-      | WireControlResponse
-      | WireControlCancelRequest,
+    message: WireMessage | WireControlRequest | WireControlResponse | WireControlCancelRequest,
   ): void {
     // Handle control requests (permission prompts from CCR)
     if (message.type === 'control_request') {

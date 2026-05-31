@@ -82,7 +82,7 @@ export function getRainbowColor(charIndex: number, shimmer: boolean = false): ke
 }
 
 // TODO(inigo): add support for probing unknown models via API error detection
-// Provider-aware thinking support detection (aligns with modelSupportsISP in betas.ts)
+// 按 provider 感知的 thinking 支持检测
 // @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsThinking(model: string): boolean {
   // ~/.zy/model-capabilities.json 本地配置优先
@@ -105,13 +105,19 @@ export function modelSupportsAdaptiveThinking(model: string): boolean {
   return providerHasCapability(provider, 'adaptive_thinking')
 }
 
-export function shouldEnableThinkingByDefault(): boolean {
+export function shouldEnableThinkingByDefault(model?: string): boolean {
   if (process.env.MAX_THINKING_TOKENS) {
     return parseInt(process.env.MAX_THINKING_TOKENS, 10) > 0
   }
 
   const { settings } = getSettingsWithErrors()
   if (settings.alwaysThinkingEnabled === false) {
+    return false
+  }
+
+  // 模型不支持 thinking 时默认不启用,避免 UI 显示"已启用"但请求侧又被
+  // modelSupportsThinking 拦截造成的状态矛盾。model 省略时维持原行为。
+  if (model !== undefined && !modelSupportsThinking(model)) {
     return false
   }
 

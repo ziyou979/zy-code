@@ -740,7 +740,11 @@ export const SettingsSchema = lazySchema(() =>
             'Defaults to 8000.',
         ),
       effortLevel: z
-        .enum(isInternalBuild() ? ['low', 'medium', 'high', 'max'] : ['low', 'medium', 'high'])
+        .enum(
+          isInternalBuild()
+            ? ['minimal', 'low', 'medium', 'high', 'max']
+            : ['minimal', 'low', 'medium', 'high'],
+        )
         .optional()
         .catch(undefined)
         .describe('Persisted effort level for supported models.'),

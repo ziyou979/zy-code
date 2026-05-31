@@ -1053,7 +1053,12 @@ async function checkPermissionsAndCallTool(
       if (hookSaysRetry) {
         resultingMessages.push({
           message: createUserMessage({
-            content: [{ type: 'text' as const, text: 'The PermissionDenied hook indicated this command is now approved. You may retry it if you would like.' }],
+            content: [
+              {
+                type: 'text' as const,
+                text: 'The PermissionDenied hook indicated this command is now approved. You may retry it if you would like.',
+              },
+            ],
             isMeta: true,
           }),
         })

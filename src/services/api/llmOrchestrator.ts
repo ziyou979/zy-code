@@ -717,7 +717,12 @@ async function* queryModel(
     if (deferredToolList) {
       messagesForAPI = [
         createUserMessage({
-          content: [{ type: 'text' as const, text: `<available-deferred-tools>\n${deferredToolList}\n</available-deferred-tools>` }],
+          content: [
+            {
+              type: 'text' as const,
+              text: `<available-deferred-tools>\n${deferredToolList}\n</available-deferred-tools>`,
+            },
+          ],
           isMeta: true,
         }),
         ...messagesForAPI,

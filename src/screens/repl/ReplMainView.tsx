@@ -20,7 +20,10 @@ import type { Screen } from '../REPL.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
 import type { FocusedInputDialog } from './useReplOnCancel.js'
 import type { ReplVoiceState } from './useReplVoice.js'
-import type { ReplFrustrationDetection, ReplNotificationsCluster } from './useReplNotificationsCluster.js'
+import type {
+  ReplFrustrationDetection,
+  ReplNotificationsCluster,
+} from './useReplNotificationsCluster.js'
 import type { Notification } from '../../context/notifications.js'
 import type { ToolPermissionContext } from '../../Tool.js'
 import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js'

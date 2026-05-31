@@ -95,11 +95,12 @@ export function isAnthropicModelProvider(): boolean {
  *
  * 添加新 provider 时，请修改 providerRegistry.ts 而非此文件。
  */
+// 注:effort（思考强度）能力已从布尔标记升级为档位列表,
+// 见 ProviderEntry.defaultEffortLevels / model-capabilities.json 的 effortLevels。
+// 此处不再有 'effort' / 'max_effort' 布尔能力。
 export type ProviderCapability =
   | 'thinking' // 扩展思考（thinking blocks）
   | 'adaptive_thinking' // 自适应思考模式
-  | 'effort' // effort 参数（low/medium/high/max）
-  | 'max_effort' // 支持最大 effort 级别
   | 'advisor' // advisor 工具支持
   | 'structured_outputs' // 严格工具 schema / 结构化输出 beta
   | 'context_management' // 上下文管理 beta（思考保留）

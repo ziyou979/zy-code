@@ -1,10 +1,6 @@
 // Tool Types - shared type definitions for tools.
 
-import type {
-  AssistantMessage,
-  Message,
-  UserMessage,
-} from './message.js'
+import type { AssistantMessage, Message, UserMessage } from './message.js'
 
 export interface ToolDefinition {
   name: string
