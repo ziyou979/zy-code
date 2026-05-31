@@ -22,7 +22,7 @@ import type { ModelName } from '../../services/model/model.js'
 import type { Message } from '../../types/message.js'
 import { calculateContextPercentages, getContextWindowForModel } from '../../utils/context.js'
 import { getCwd } from '../../utils/cwd.js'
-import { getDisplayedEffortLevel } from '../../utils/effort.js'
+import { getDisplayedEffortLevel, modelSupportsEffort } from '../../utils/effort.js'
 import { formatTokens } from '../../utils/format.js'
 import { getCurrentUsage } from '../../utils/tokens.js'
 import {
@@ -112,8 +112,11 @@ const RENDERERS: Record<ModuleId, Renderer> = {
 
   model(module, ctx) {
     const icon = effectiveIcon(module)
-    const level = getDisplayedEffortLevel(ctx.mainLoopModel, ctx.effortValue as never)
-    if (ctx.thinkingEnabled) {
+    // effort 强度仅在模型真正支持 effort 档位时显示(对齐 getModelEffortLevels
+    // 这一单一事实源)。dashscope 的 qwen 等只支持 enable_thinking 开关、不支持
+    // effort 强度的模型,即便 thinking 已开启也只显示模型名,不显示假的 high 档。
+    if (ctx.thinkingEnabled && modelSupportsEffort(ctx.mainLoopModel)) {
+      const level = getDisplayedEffortLevel(ctx.mainLoopModel, ctx.effortValue as never)
       const effortGlyph = EFFORT_ICONS[level] ?? EFFORT_MEDIUM
       const i18nKey = EFFORT_I18N_KEYS[level] ?? 'effort.medium'
       const levelName = tSync(i18nKey as never)

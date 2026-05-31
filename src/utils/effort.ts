@@ -81,9 +81,6 @@ export function getCurrentHookEffortLevel(effortValue?: EffortValue): EffortLeve
   return getDisplayedEffortLevel(model, effortValue)
 }
 
-export function modelSupportsMaxEffort(model: string): boolean {
-  return getModelEffortLevels(model).includes('max')
-}
 
 /**
  * 将请求的 effort 档位 clamp 到模型实际支持的档位集合内。
