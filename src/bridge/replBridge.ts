@@ -499,7 +499,7 @@ export async function initBridgeCore(params: WireCoreParams): Promise<WireCoreHa
   // 适配 HybridTransport（v1：WS 读取 + POST 写入
   // Session-Ingress）或 SSETransport+CCRClient（v2：SSE 读取 + POST
   // 写入 CCR /worker/*）。v1/v2 选择在 onWorkReceived 中决定：
-  // 由 secret.use_code_sessions 服务器驱动，CLAUDE_BRIDGE_USE_CCR_V2
+  // 由 secret.use_code_sessions 服务器驱动，ZY_BRIDGE_USE_CCR
   // 作为 ant-dev 覆盖。
   let transport: ReplWireTransport | null = null
   // 每次 onWorkReceived 时递增。在 createV2ReplTransport 的 .then()
@@ -1031,7 +1031,7 @@ export async function initBridgeCore(params: WireCoreParams): Promise<WireCoreHa
       //
       // 与 ZY_CODE_（子级 SDK 传输选择器，由 sessionRunner/environment-manager
       // 设置）分开，以避免在 spawn 模式中父级的 orchestrator 变量泄漏到 v1 子级的继承风险。
-      const useCcrV2 = serverUseCcrV2 || isEnvTruthy(process.env.CLAUDE_BRIDGE_USE_CCR_V2)
+      const useCcrV2 = serverUseCcrV2 || isEnvTruthy(process.env.ZY_BRIDGE_USE_CCR)
 
       // 认证是 v1 和 v2 唯一真正分歧的地方：
       //

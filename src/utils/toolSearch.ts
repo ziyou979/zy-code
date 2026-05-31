@@ -26,7 +26,11 @@ import { count } from './array.js'
 import { getContextWindowForModel } from './context.js'
 import { logForDebugging } from './debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
-import { getAPIProvider, isAnthropicBaseUrl } from 'src/services/model/providers.js'
+import {
+  getAPIProvider,
+  isAnthropicBaseUrl,
+  isAnthropicModelProvider,
+} from 'src/services/model/providers.js'
 import { jsonStringify } from './slowOperations.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
 
@@ -181,6 +185,13 @@ export function getToolSearchMode(): ToolSearchMode {
   // isToolSearchEnabledOptimistic doesn't cover.
   // github.com/anthropics/zy-code/issues/20031
   if (isEnvTruthy(process.env.ZY_CODE_DISABLE_EXPERIMENTAL_BETAS)) {
+    return 'standard'
+  }
+
+  // defer_loading / tool_reference 由 advanced-tool-use beta 解锁,只有真正跑
+  // Claude 的 provider 才认。三方聚合端会拒绝这些 beta 形状,故对它们彻底关闭
+  // tool search(降级为全量下发工具 schema——即 tool search 之前的行为)。
+  if (!isAnthropicModelProvider()) {
     return 'standard'
   }
 

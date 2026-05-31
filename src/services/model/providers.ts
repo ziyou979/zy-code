@@ -73,6 +73,23 @@ export function getAPIProviderForStatsig(): AnalyticsMetadata_I_VERIFIED_THIS_IS
 }
 
 /**
+ * 服务真实 Anthropic(Claude)模型的 provider —— 只有它们才认 `anthropic-beta`
+ * header。三方聚合端(dashscope/zhipu/kimi/openrouter/…)只是说 anthropic *格式*,
+ * 并不识别这些 beta,发过去有 400 `Unsupported beta header` 的风险,故排除。
+ */
+const ANTHROPIC_MODEL_PROVIDERS: ReadonlySet<APIProvider> = new Set<APIProvider>([
+  'anthropic',
+  'bedrock',
+  'vertex',
+  'foundry',
+])
+
+/** 仅当当前 provider 服务真实 Claude 模型时为 true(见上)。 */
+export function isAnthropicModelProvider(): boolean {
+  return ANTHROPIC_MODEL_PROVIDERS.has(getAPIProvider())
+}
+
+/**
  * Provider 级别的能力声明 —— 在 providerRegistry.ts 中按 provider 定义，
  * 可按模型进行细化。
  *

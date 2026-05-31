@@ -84,20 +84,18 @@ export class RemoteIO extends StructuredIO {
     // Get appropriate transport based on URL protocol
     this.transport = getTransportForUrl(this.url, headers, getSessionId(), refreshHeaders)
 
-    // Set up data callback
+    // 设置数据回调
     this.isBridge = process.env.ZY_CODE_ENVIRONMENT_KIND === 'bridge'
-    this.isDebug = (isDebugMode as any)()((this.transport as any).setOnData as any)?.(
-      (data: string) => {
-        this.inputStream.write(data)
-        if (this.isBridge && this.isDebug) {
-          writeToStdout(data.endsWith('\n') ? data : `${data}\n`)
-        }
-      },
-    )(
-      // Set up close callback to handle connection failures
-      this.transport as any,
-    ).setOnClose(() => {
-      // End the input stream to trigger graceful shutdown
+    this.isDebug = isDebugMode()
+    this.transport.setOnData((data: string) => {
+      this.inputStream.write(data)
+      if (this.isBridge && this.isDebug) {
+        writeToStdout(data.endsWith('\n') ? data : `${data}\n`)
+      }
+    })
+    // 设置关闭回调以处理连接失败
+    this.transport.setOnClose(() => {
+      // 结束输入流以触发优雅关闭
       this.inputStream.end()
     })
 

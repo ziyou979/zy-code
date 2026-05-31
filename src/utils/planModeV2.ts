@@ -3,9 +3,10 @@ import { getRateLimitTier } from './auth.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
 
 export function getPlanModeV2AgentCount(): number {
-  // Environment variable override takes precedence
-  if (process.env.ZY_CODE_) {
-    const count = parseInt(process.env.ZY_CODE_, 10)
+  // 环境变量覆盖优先
+  const override = process.env.ZY_CODE_PLAN_MODE_V2_AGENT_COUNT
+  if (override) {
+    const count = parseInt(override, 10)
     if (!Number.isNaN(count) && count > 0 && count <= 10) {
       return count
     }
@@ -21,8 +22,9 @@ export function getPlanModeV2AgentCount(): number {
 }
 
 export function getPlanModeV2ExploreAgentCount(): number {
-  if (process.env.ZY_CODE_) {
-    const count = parseInt(process.env.ZY_CODE_, 10)
+  const override = process.env.ZY_CODE_PLAN_MODE_V2_EXPLORE_AGENT_COUNT
+  if (override) {
+    const count = parseInt(override, 10)
     if (!Number.isNaN(count) && count > 0 && count <= 10) {
       return count
     }

@@ -14,6 +14,10 @@ export interface Transport {
   send(message: StdinMessage): void
   onMessage(handler: MessageHandler): void
   onStateChange(handler: StateChangeHandler): void
+  /** 注册原始入站数据回调(remoteIO 用它把数据喂给输入流)。 */
+  setOnData(callback: (data: string) => void): void
+  /** 注册连接关闭回调(用于触发优雅关闭)。 */
+  setOnClose(callback: (closeCode?: number) => void): void
 }
 
 export type TransportConstructor = new (options: Record<string, unknown>) => Transport

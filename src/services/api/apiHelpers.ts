@@ -11,7 +11,11 @@ import { isInternalBuild } from '../../utils/envUtils.js'
 import { validateBoundedIntEnvVar } from '../../utils/envValidation.js'
 import { errorMessage } from '../../utils/errors.js'
 import { safeParseJSON } from '../../utils/json.js'
-import { getAPIProvider, isOpenAIProvider } from '../../services/model/providers.js'
+import {
+  getAPIProvider,
+  isAnthropicModelProvider,
+  isOpenAIProvider,
+} from '../../services/model/providers.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { getLLMAdapter } from './client.js'
@@ -97,7 +101,9 @@ export function configureEffortParams(
   betas: string[],
   model: string,
 ): void {
-  if (!modelSupportsEffort(model) || 'effort' in outputConfig) {
+  // effort 走 anthropic 的 effort beta——只对真正跑 Claude 的 provider 下发
+  // (OpenAI 格式的 provider 经它们自己的 reasoning_effort 路径传 effort,不走这里)。
+  if (!isAnthropicModelProvider() || !modelSupportsEffort(model) || 'effort' in outputConfig) {
     return
   }
 

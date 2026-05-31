@@ -7,23 +7,21 @@ import {
 import { getIsNonInteractiveSession, getSdkBetas } from '../bootstrap/state.js'
 import {
   CLI_INTERNAL_BETA_HEADER,
+  CONTEXT_1M_BETA_HEADER,
   CONTEXT_MANAGEMENT_BETA_HEADER,
-  INTERLEAVED_THINKING_BETA_HEADER,
-  PROMPT_CACHING_SCOPE_BETA_HEADER,
-  REDACT_THINKING_BETA_HEADER,
-  STRUCTURED_OUTPUTS_BETA_HEADER,
   SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER,
   TOKEN_EFFICIENT_TOOLS_BETA_HEADER,
   TOOL_SEARCH_BETA_HEADER_1P,
-  WEB_SEARCH_BETA_HEADER,
-  ZY_CODE_,
+  TOOL_SEARCH_BETA_HEADER_3P,
 } from '../constants/betas.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
 import {
   getAPIProvider,
+  isAnthropicModelProvider,
   modelHasCapability,
   providerHasCapability,
 } from 'src/services/model/providers.js'
+import { getContextWindowForModel } from './context.js'
 import { getInitialSettings } from './settings/settings.js'
 
 /**
@@ -77,28 +75,6 @@ export function filterAllowedSdkBetas(sdkBetas: string[] | undefined): string[] 
 // Generally, foundry supports all direct API features;
 // however out of an abundance of caution, we do not enable any which are behind an experiment
 
-export function modelSupportsISP(model: string): boolean {
-  // 模型能力配置优先
-  if (modelHasCapability(model, 'interleaved_thinking')) {
-    return true
-  }
-  const provider = getAPIProvider()
-  // Foundry supports interleaved thinking for all models
-  if (provider === 'foundry') {
-    return true
-  }
-  if (providerHasCapability(provider, 'interleaved_thinking')) {
-    return true
-  }
-  return false
-}
-function vertexModelSupportsWebSearch(model: string): boolean {
-  if (modelHasCapability(model, 'web_search')) {
-    return true
-  }
-  return false
-}
-
 // Context management is supported on providers that declare the capability
 export function modelSupportsContextManagement(model: string): boolean {
   if (modelHasCapability(model, 'context_management')) {
@@ -112,6 +88,13 @@ export function modelSupportsContextManagement(model: string): boolean {
     return true
   }
   return false
+}
+
+// 1M 上下文模型仍需 context-1m beta header 才能解锁完整窗口——不发的话,即便
+// 是支持的模型,API 也会把输入卡在 200k(见 opencode#12507)。按配置的上下文
+// 窗口门控:凡在 model-capabilities.json 里设成 1M 的模型都带上它。
+function modelSupports1MContext(model: string): boolean {
+  return getContextWindowForModel(model) >= 1_000_000
 }
 
 // @[MODEL LAUNCH]: Add the new model ID to this list if it supports structured outputs.
@@ -154,11 +137,18 @@ export function modelSupportsAutoMode(model: string): boolean {
 }
 
 /**
- * Get the correct tool search beta header for the current API provider.
- * - Zy API / Foundry: advanced-tool-use-2025-11-20
- * - Vertex AI / Bedrock: tool-search-tool-2025-10-19
+ * 按当前 API provider 返回对应的 tool search beta header(对齐 Claude Code 的 oh9()):
+ * - Vertex AI / Bedrock:tool-search-tool-2025-10-19(3P)
+ * - 直连 Zy/Anthropic API / Foundry:advanced-tool-use-2025-11-20(1P)
+ *
+ * bedrock 这里会算出 3P 值,但调用点会把它排除在 betas 数组外(bedrock 经
+ * extraBodyParams 而非 header 下发 beta)。
  */
 export function getToolSearchBetaHeader(): string {
+  const provider = getAPIProvider()
+  if (provider === 'vertex' || provider === 'bedrock') {
+    return TOOL_SEARCH_BETA_HEADER_3P
+  }
   return TOOL_SEARCH_BETA_HEADER_1P
 }
 
@@ -168,44 +158,32 @@ export function getToolSearchBetaHeader(): string {
  * and may not be supported by proxies or other providers.
  */
 export function shouldIncludeExperimentalBetas(): boolean {
-  return (
-    providerHasCapability(getAPIProvider(), 'interleaved_thinking') &&
-    !isEnvTruthy(process.env.ZY_CODE_DISABLE_EXPERIMENTAL_BETAS)
-  )
+  // anthropic-beta header 只对真正跑 Claude 的 provider 有意义。zy 是第三方
+  // harness——三方聚合端(只是说 anthropic 格式)会拒绝这些 beta,故按 provider
+  // 身份门控,而不是用一个它们都会声明的 capability flag。
+  return isAnthropicModelProvider() && !isEnvTruthy(process.env.ZY_CODE_DISABLE_EXPERIMENTAL_BETAS)
 }
 
 export const getAllModelBetas = memoize((model: string): string[] => {
   const betaHeaders = []
   const isHaiku = model.toLowerCase().includes('haiku')
-  const provider = getAPIProvider()
   const includeExperimentalBetas = shouldIncludeExperimentalBetas()
   if (!isHaiku) {
-    betaHeaders.push(ZY_CODE_)
-    if (isInternalBuild() && process.env.ZY_CODE_ENTRYPOINT === 'cli') {
+    if (
+      isInternalBuild() &&
+      process.env.ZY_CODE_ENTRYPOINT === 'cli' &&
+      isAnthropicModelProvider()
+    ) {
       if (CLI_INTERNAL_BETA_HEADER) {
         betaHeaders.push(CLI_INTERNAL_BETA_HEADER)
       }
     }
   }
-  if (!isEnvTruthy(process.env.DISABLE_INTERLEAVED_THINKING) && modelSupportsISP(model)) {
-    betaHeaders.push(INTERLEAVED_THINKING_BETA_HEADER)
+  // 模型配置为 1M 时解锁 1M 上下文窗口。即便是支持的模型也必需(见 opencode#12507)
+  // ——否则 API 会悄悄把输入卡在 200k,而客户端却按 1M 预算。仅 Anthropic 系 provider。
+  if (isAnthropicModelProvider() && modelSupports1MContext(model)) {
+    betaHeaders.push(CONTEXT_1M_BETA_HEADER)
   }
-
-  // Skip the API-side Haiku thinking summarizer — the summary is only used
-  // for ctrl+o display, which interactive users rarely open. The API returns
-  // redacted_thinking blocks instead; AssistantRedactedThinkingMessage already
-  // renders those as a stub. SDK / print-mode keep summaries because callers
-  // may iterate over thinking content. Users can opt back in via settings.json
-  // showThinkingSummaries.
-  if (
-    includeExperimentalBetas &&
-    modelSupportsISP(model) &&
-    !getIsNonInteractiveSession() &&
-    getInitialSettings().showThinkingSummaries !== true
-  ) {
-    betaHeaders.push(REDACT_THINKING_BETA_HEADER)
-  }
-
   // POC: server-side connector-text summarization (anti-distillation). The
   // API buffers assistant text between tool calls, summarizes it, and returns
   // the summary with a signature so the original can be restored on subsequent
@@ -237,40 +215,20 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   ) {
     betaHeaders.push(CONTEXT_MANAGEMENT_BETA_HEADER)
   }
-  // Add strict tool use beta if experiment is enabled.
-  // Gate on includeExperimentalBetas: ZY_CODE_DISABLE_EXPERIMENTAL_BETAS
-  // already strips schema.strict from tool bodies at api.ts's choke point, but
-  // this header was escaping that kill switch. Proxy gateways that look like
-  // anthropic but forward to Vertex reject this header with 400.
-  // github.com/deshaw/anthropic-issues/issues/5
+  // strict tool use:schema.strict 字段在 api.ts 设置(由本 flag +
+  // modelSupportsStructuredOutputs 门控)。structured outputs 已 GA,故不发
+  // beta header——该字段作为 GA 参数直接下发。
   const strictToolsEnabled = checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_strict_tools')
   // 3P default: false. API rejects strict + token-efficient-tools together
   // (tool_use.py:139), so these are mutually exclusive — strict wins.
   const tokenEfficientToolsEnabled =
     !strictToolsEnabled && getFeatureValue_CACHED_MAY_BE_STALE('zy_json_tools_beta', false)
-  if (includeExperimentalBetas && modelSupportsStructuredOutputs(model) && strictToolsEnabled) {
-    betaHeaders.push(STRUCTURED_OUTPUTS_BETA_HEADER)
-  }
   // JSON tool_use format (FC v3) — ~4.5% output token reduction vs ANTML.
   // Sends the v2 header (2026-03-28) added in anthropics/anthropic#337072 to
   // isolate the CC A/B cohort from ~9.2M/week existing v1 senders. Ant-only
   // while the restored JsonToolUseOutputParser soaks.
   if (isInternalBuild() && includeExperimentalBetas && tokenEfficientToolsEnabled) {
     betaHeaders.push(TOKEN_EFFICIENT_TOOLS_BETA_HEADER)
-  }
-
-  // Add web search beta for Vertex Zy 4.0+ models only
-  if (provider === 'vertex' && vertexModelSupportsWebSearch(model)) {
-    betaHeaders.push(WEB_SEARCH_BETA_HEADER)
-  }
-  // Foundry only ships models that already support Web Search
-  if (provider === 'foundry') {
-    betaHeaders.push(WEB_SEARCH_BETA_HEADER)
-  }
-
-  // Always send the beta header for direct API. The header is a no-op without a scope field.
-  if (includeExperimentalBetas) {
-    betaHeaders.push(PROMPT_CACHING_SCOPE_BETA_HEADER)
   }
 
   // If ANTHROPIC_BETAS is set, split it by commas and add to betaHeaders.
@@ -307,13 +265,9 @@ export function getMergedBetas(
 ): string[] {
   const baseBetas = [...getModelBetas(model)]
 
-  // Agentic queries always need zy-code and cli-internal beta headers.
-  // For non-Haiku models these are already in baseBetas; for Haiku they're
-  // excluded by getAllModelBetas() since non-agentic Haiku calls don't need them.
+  // agentic 查询始终需要 cli-internal beta header。非 Haiku 模型它已在 baseBetas
+  // 里;Haiku 则被 getAllModelBetas() 排除(非 agentic 的 Haiku 调用用不上)。
   if (options?.isAgenticQuery) {
-    if (!baseBetas.includes(ZY_CODE_)) {
-      baseBetas.push(ZY_CODE_)
-    }
     if (
       isInternalBuild() &&
       process.env.ZY_CODE_ENTRYPOINT === 'cli' &&

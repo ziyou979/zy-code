@@ -83,12 +83,7 @@ import {
   setLastMainRequestId,
   setThinkingClearLatched,
 } from 'src/bootstrap/state.js'
-import {
-  AFK_MODE_BETA_HEADER,
-  CONTEXT_MANAGEMENT_BETA_HEADER,
-  REDACT_THINKING_BETA_HEADER,
-  STRUCTURED_OUTPUTS_BETA_HEADER,
-} from 'src/constants/betas.js'
+import { AFK_MODE_BETA_HEADER, CONTEXT_MANAGEMENT_BETA_HEADER } from 'src/constants/betas.js'
 import type { QuerySource } from 'src/constants/querySource.js'
 import type { Notification } from 'src/context/notifications.js'
 import { addToTotalSessionCost } from 'src/cost-tracker.js'
@@ -102,11 +97,7 @@ import {
   modelSupportsAdvisor,
 } from 'src/utils/advisor.js'
 import { getAgentContext } from 'src/utils/agentContext.js'
-import {
-  getToolSearchBetaHeader,
-  modelSupportsStructuredOutputs,
-  shouldIncludeExperimentalBetas,
-} from 'src/utils/betas.js'
+import { getToolSearchBetaHeader, shouldIncludeExperimentalBetas } from 'src/utils/betas.js'
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/services/claudeInChrome/common.js'
 import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claudeInChrome/prompt.js'
 import { getMaxThinkingTokensForModel } from 'src/utils/context.js'
@@ -913,17 +904,10 @@ async function* queryModel(
       betasParams,
     )
 
-    // 将 outputFormat 合并到 extraBodyParams.output_config 中，与 effort 并列
-    // 需要 structured-outputs beta header（参见 SDK 中的 messages.mjs parse()）
+    // 将 outputFormat 合并到 extraBodyParams.output_config 中，与 effort 并列。
+    // structured outputs 已 GA，作为 output_config.format 参数直接下发，不再发 beta header。
     if (options.outputFormat && !('format' in outputConfig)) {
       outputConfig.format = options.outputFormat
-      // 如果不存在且提供商支持，添加 beta header
-      if (
-        modelSupportsStructuredOutputs(options.model) &&
-        !betasParams.includes(STRUCTURED_OUTPUTS_BETA_HEADER)
-      ) {
-        betasParams.push(STRUCTURED_OUTPUTS_BETA_HEADER)
-      }
     }
 
     // 重试上下文优先，因为它会在超出上下文窗口限制时尝试纠正
@@ -967,7 +951,9 @@ async function* queryModel(
     // 如果启用，获取 API 上下文管理策略
     const contextManagement = getAPIContextManagement({
       hasThinking,
-      isRedactThinkingActive: betasParams.includes(REDACT_THINKING_BETA_HEADER),
+      // redact-thinking beta 已移除;现代模型默认就是 omitted thinking。
+      // 保留「思考块保留」(clear_thinking)作为安全默认。
+      isRedactThinkingActive: false,
       clearAllThinking: thinkingClearLatched,
     })
 

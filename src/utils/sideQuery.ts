@@ -1,5 +1,4 @@
 import { getLastApiCompletionTimestamp, setLastApiCompletionTimestamp } from '../bootstrap/state.js'
-import { STRUCTURED_OUTPUTS_BETA_HEADER } from '../constants/betas.js'
 import type { QuerySource } from '../constants/querySource.js'
 import { getCLISyspromptPrefix } from '../constants/system.js'
 import { logEvent } from '../services/analytics/index.js'
@@ -13,7 +12,7 @@ import type {
   ToolChoice,
   ToolDefinition,
 } from '../types/llm.js'
-import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
+import { getModelBetas } from './betas.js'
 import { normalizeModelStringForAPI } from 'src/services/model/model.js'
 
 export type SideQueryOptions = {
@@ -96,14 +95,8 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
   } = opts
 
   const betas = [...getModelBetas(model)]
-  // 如果使用了 outputFormat 且 provider 支持，则添加结构化输出 beta
-  if (
-    outputFormat &&
-    modelSupportsStructuredOutputs(model) &&
-    !betas.includes(STRUCTURED_OUTPUTS_BETA_HEADER)
-  ) {
-    betas.push(STRUCTURED_OUTPUTS_BETA_HEADER)
-  }
+  // structured outputs 已 GA：output_config.format 作为 GA 参数直接下发(见下方
+  // outputConfig），不再附加 beta header。
 
   const systemBlocks: TextBlock[] = [
     // 对提供自有提示词的内部分类器跳过 CLI 系统提示词前缀
