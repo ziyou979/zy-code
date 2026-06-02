@@ -76,6 +76,7 @@ type LocalCommand = {
 
 export type LocalJSXCommandContext = ToolUseContext & {
   canUseTool?: CanUseToolFn
+  invokedAs?: string
   setMessages: (updater: (prev: Message[]) => Message[]) => void
   options: {
     dynamicMcpConfig?: Record<string, ScopedMcpServerConfig>
@@ -118,11 +119,13 @@ export type LocalJSXCommandOnDone = (
 
 /**
  * The call signature for a local JSX command implementation.
+ * 第 4 参数 invokedAs：原始命令名（别名命中时保留用户输入的命令名）。
  */
 export type LocalJSXCommandCall = (
   onDone: LocalJSXCommandOnDone,
   context: ToolUseContext & LocalJSXCommandContext,
   args: string,
+  invokedAs?: string,
 ) => Promise<React.ReactNode>
 
 /**

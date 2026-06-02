@@ -6,13 +6,7 @@
 import type { UUID } from 'node:crypto'
 import type { Progress } from '../Tool.js'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
-import type {
-  AssistantContentBlock,
-  LLMAssistantMessage,
-  LLMError,
-  ToolCallBlock,
-  UserContentBlock,
-} from './llm.js'
+import type { LLMAssistantMessage, LLMError, ToolCallBlock, UserContentBlock } from './llm.js'
 
 // ============================================================
 // Core Message Types

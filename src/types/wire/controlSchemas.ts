@@ -22,12 +22,12 @@ import {
 } from '../coreSchemas.js'
 import { HookEventSchema, HookInputSchema } from '../hooks/schemas.js'
 import {
+  FastModeStateSchema,
   WireMessageSchema,
   WirePostTurnSummaryMessageSchema,
   WireStreamlinedTextMessageSchema,
   WireStreamlinedToolUseSummaryMessageSchema,
   WireUserMessageSchema,
-  FastModeStateSchema,
 } from './messageSchemas.js'
 
 // ============================================================================

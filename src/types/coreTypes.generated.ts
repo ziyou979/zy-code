@@ -247,7 +247,7 @@ export interface ModelInfo {
   displayName: string
   description: string
   supportsEffort?: boolean
-  supportedEffortLevels?: ('minimal' | 'low' | 'medium' | 'high' | 'max')[]
+  supportedEffortLevels?: ('quick' | 'light' | 'balanced' | 'thorough' | 'extreme')[]
   supportsAdaptiveThinking?: boolean
   supportsFastMode?: boolean
   supportsAutoMode?: boolean
@@ -288,7 +288,7 @@ export interface AgentDefinition {
   maxTurns?: number
   background?: boolean
   memory?: 'user' | 'project' | 'local'
-  effort?: 'low' | 'medium' | 'high' | 'max' | number
+  effort?: 'quick' | 'light' | 'balanced' | 'thorough' | 'extreme' | number
   permissionMode?: PermissionMode
 }
 
