@@ -5,10 +5,10 @@ import type { ToolPermissionContext } from 'src/Tool.js'
 import { getCwd } from 'src/utils/cwd.js'
 import { pathInAllowedWorkingPath } from 'src/utils/permissions/filesystem.js'
 import { setCwd } from 'src/utils/Shell.js'
+import { getMaxOutputLength } from '../../shell-eval/shared/outputLimits.js'
 import type { ContentBlock, ToolResultBlock } from '../../types/llm.js'
 import { shouldMaintainProjectWorkingDir } from '../../utils/envUtils.js'
 import { maybeResizeAndDownsampleImageBuffer } from '../../utils/imageResizer.js'
-import { getMaxOutputLength } from '../../shell-eval/shared/outputLimits.js'
 import { countCharInString, plural } from '../../utils/stringUtils.js'
 /**
  * Strips leading and trailing lines that contain only whitespace/newlines.

@@ -4,6 +4,7 @@ import { clearSystemPromptSections } from '../../constants/systemPromptSections.
 import { logEvent } from '../../services/analytics/index.js'
 import type { Tool } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
+import { clearMemoryFileCaches } from '../../utils/agentsMd.js'
 import { getCwd } from '../../utils/cwd.js'
 import { findCanonicalGitRoot } from '../../utils/git.js'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -15,7 +16,6 @@ import {
   getCurrentWorktreeSession,
   validateWorktreeSlug,
 } from '../../utils/worktree.js'
-import { clearMemoryFileCaches } from '../../utils/agentsMd.js'
 import { ENTER_WORKTREE_TOOL_NAME } from './constants.js'
 import { getEnterWorktreeToolPrompt } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'

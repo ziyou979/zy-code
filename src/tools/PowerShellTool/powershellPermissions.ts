@@ -4,6 +4,18 @@
  */
 
 import { resolve } from 'node:path'
+import {
+  classifyCommandName,
+  deriveSecurityFlags,
+  getAllCommandNames,
+  getFileRedirections,
+  type ParsedCommandElement,
+  type ParsedPowerShellCommand,
+  PS_TOKENIZER_DASH_CHARS,
+  parsePowerShellCommand,
+  stripModulePrefix,
+} from '../../shell-eval/powershell/parser.js'
+import { containsVulnerableUncPath } from '../../shell-eval/shared/readOnlyCommandValidation.js'
 import type { ToolPermissionContext, ToolUseContext } from '../../Tool.js'
 import type { PermissionDecisionReason, PermissionResult } from '../../types/permissions.js'
 import { getCwd } from '../../utils/cwd.js'
@@ -20,18 +32,6 @@ import {
   type ShellPermissionRule,
   suggestionForExactCommand as sharedSuggestionForExactCommand,
 } from '../../utils/permissions/shellRuleMatching.js'
-import {
-  classifyCommandName,
-  deriveSecurityFlags,
-  getAllCommandNames,
-  getFileRedirections,
-  type ParsedCommandElement,
-  type ParsedPowerShellCommand,
-  PS_TOKENIZER_DASH_CHARS,
-  parsePowerShellCommand,
-  stripModulePrefix,
-} from '../../shell-eval/powershell/parser.js'
-import { containsVulnerableUncPath } from '../../shell-eval/shared/readOnlyCommandValidation.js'
 import { isDotGitPathPS, isGitInternalPathPS } from './gitSafety.js'
 import { checkPermissionMode, isSymlinkCreatingCommand } from './modeValidation.js'
 import {

@@ -2,13 +2,13 @@ import { homedir } from 'node:os'
 import { isAbsolute, resolve } from 'node:path'
 import type { z } from 'zod/v4'
 import { tSync } from '../../i18n/index.js'
-import type { ToolPermissionContext } from '../../Tool.js'
 import type { Redirect, SimpleCommand } from '../../shell-eval/bash/ast.js'
 import {
   extractOutputRedirections,
   splitCommand_DEPRECATED,
 } from '../../shell-eval/bash/commands.js'
 import { tryParseShellCommand } from '../../shell-eval/bash/shellQuote.js'
+import type { ToolPermissionContext } from '../../Tool.js'
 import { getDirectoryForPath } from '../../utils/path.js'
 import { allWorkingDirectories } from '../../utils/permissions/filesystem.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'

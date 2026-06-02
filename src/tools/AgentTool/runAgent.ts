@@ -16,6 +16,13 @@ import { cleanupAgentTracking } from '../../services/api/promptCacheBreakDetecti
 import { connectToServer, fetchToolsForClient } from '../../services/mcp/client.js'
 import { getMcpConfigByName } from '../../services/mcp/config.js'
 import type { MCPServerConnection, ScopedMcpServerConfig } from '../../services/mcp/types.js'
+import { getAgentModel } from '../../services/model/agent.js'
+import type { ModelAlias } from '../../services/model/aliases.js'
+import {
+  isPerfettoTracingEnabled,
+  registerAgent as registerPerfettoAgent,
+  unregisterAgent as unregisterPerfettoAgent,
+} from '../../services/telemetry/perfettoTracing.js'
 import type { Tool, Tools, ToolUseContext } from '../../Tool.js'
 import { killShellTasksForAgent } from '../../tasks/LocalShellTask/killShellTasks.js'
 import type { Command } from '../../types/command.js'
@@ -45,8 +52,6 @@ import { registerFrontmatterHooks } from '../../utils/hooks/registerFrontmatterH
 import { clearSessionHooks } from '../../utils/hooks/sessionHooks.js'
 import { executeSubagentStartHooks } from '../../utils/hooks.js'
 import { createUserMessage } from '../../utils/messages.js'
-import { getAgentModel } from '../../services/model/agent.js'
-import type { ModelAlias } from '../../services/model/aliases.js'
 import {
   clearAgentTranscriptSubdir,
   recordSidechainTranscript,
@@ -58,11 +63,6 @@ import {
   isSourceAdminTrusted,
 } from '../../utils/settings/pluginOnlyPolicy.js'
 import { asSystemPrompt, type SystemPrompt } from '../../utils/systemPromptType.js'
-import {
-  isPerfettoTracingEnabled,
-  registerAgent as registerPerfettoAgent,
-  unregisterAgent as unregisterPerfettoAgent,
-} from '../../services/telemetry/perfettoTracing.js'
 import type { ContentReplacementState } from '../../utils/toolResultStorage.js'
 import { createAgentId } from '../../utils/uuid.js'
 import { resolveAgentTools } from './agentToolUtils.js'
@@ -395,7 +395,7 @@ export async function* runAgent({
       agentPermissionMode &&
       state.toolPermissionContext.mode !== 'bypassPermissions' &&
       state.toolPermissionContext.mode !== 'acceptEdits' &&
-      !(feature('TRANSCRIPT_CLASSIFIER') && state.toolPermissionContext.mode === 'auto')
+      !(true && state.toolPermissionContext.mode === 'auto')
     ) {
       toolPermissionContext = {
         ...toolPermissionContext,

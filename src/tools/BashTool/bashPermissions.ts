@@ -6,10 +6,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import type { ToolPermissionContext, ToolUseContext } from '../../Tool.js'
-import { isAbortError } from '../../types/llm.js'
-import type { PendingClassifierCheck } from '../../types/permissions.js'
-import { count } from '../../utils/array.js'
+import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import {
   checkSemantics,
   nodeTypeId,
@@ -26,6 +23,10 @@ import {
 } from '../../shell-eval/bash/commands.js'
 import { parseCommandRaw } from '../../shell-eval/bash/parser.js'
 import { tryParseShellCommand } from '../../shell-eval/bash/shellQuote.js'
+import type { ToolPermissionContext, ToolUseContext } from '../../Tool.js'
+import { isAbortError } from '../../types/llm.js'
+import type { PendingClassifierCheck } from '../../types/permissions.js'
+import { count } from '../../utils/array.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
@@ -62,7 +63,6 @@ import {
   suggestionForPrefix as sharedSuggestionForPrefix,
 } from '../../utils/permissions/shellRuleMatching.js'
 import { getPlatform } from '../../utils/platform.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { windowsPathToPosixPath } from '../../utils/windowsPaths.js'
 import { BashTool } from './BashTool.js'
@@ -1437,7 +1437,7 @@ function buildPendingClassifierCheck(
     return undefined
   }
   // Skip in auto mode - auto mode classifier handles all permission decisions
-  if (feature('TRANSCRIPT_CLASSIFIER') && toolPermissionContext.mode === 'auto') {
+  if (true && toolPermissionContext.mode === 'auto') {
     return undefined
   }
   if (toolPermissionContext.mode === 'bypassPermissions') {
@@ -1480,7 +1480,7 @@ export function startSpeculativeClassifierCheck(
   if (!isClassifierPermissionsEnabled()) {
     return false
   }
-  if (feature('TRANSCRIPT_CLASSIFIER') && toolPermissionContext.mode === 'auto') {
+  if (true && toolPermissionContext.mode === 'auto') {
     return false
   }
   if (toolPermissionContext.mode === 'bypassPermissions') {
@@ -1834,7 +1834,7 @@ export async function bashToolHasPermission(
   // Skip when in auto mode - auto mode classifier handles all permission decisions
   if (
     isClassifierPermissionsEnabled() &&
-    !(feature('TRANSCRIPT_CLASSIFIER') && appState.toolPermissionContext.mode === 'auto')
+    !(true && appState.toolPermissionContext.mode === 'auto')
   ) {
     const denyDescriptions = getBashPromptDenyDescriptions(appState.toolPermissionContext)
     const askDescriptions = getBashPromptAskDescriptions(appState.toolPermissionContext)

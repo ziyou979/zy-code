@@ -11,8 +11,6 @@ import type {
 
 type ParsedStatement = ParsedPowerShellCommand['statements'][number]
 
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { getPlatform } from '../../utils/platform.js'
 import {
   COMMON_ALIASES,
   deriveSecurityFlags,
@@ -28,6 +26,8 @@ import {
   GIT_READ_ONLY_COMMANDS,
   validateFlags,
 } from '../../shell-eval/shared/readOnlyCommandValidation.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
+import { getPlatform } from '../../utils/platform.js'
 import { COMMON_PARAMETERS } from './commonParameters.js'
 
 const DOTNET_READ_ONLY_FLAGS = new Set(['--version', '--info', '--list-runtimes', '--list-sdks'])

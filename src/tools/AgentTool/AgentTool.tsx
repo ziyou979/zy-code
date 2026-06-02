@@ -16,6 +16,8 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { clearDumpState } from '../../services/api/dumpPrompts.js'
+import { getAgentModel } from '../../services/model/agent.js'
+import { getTaskOutputPath } from '../../services/task/diskOutput.js'
 import {
   completeAgentTask as completeAsyncAgent,
   createActivityDescriptionResolver,
@@ -42,6 +44,7 @@ import { assembleToolPool } from '../../tools.js'
 import { asAgentId } from '../../types/ids.js'
 import { runWithAgentContext } from '../../utils/agentContext.js'
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
+import { enqueueWireEvent } from '../../utils/bridgeEventQueue.js'
 import { getCwd, runWithCwdOverride } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
@@ -54,16 +57,13 @@ import {
   isSyntheticMessage,
   normalizeMessages,
 } from '../../utils/messages.js'
-import { getAgentModel } from '../../services/model/agent.js'
 import { permissionModeSchema } from '../../utils/permissions/PermissionMode.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import { filterDeniedAgents, getDenyRuleForAgent } from '../../utils/permissions/permissions.js'
-import { enqueueWireEvent } from '../../utils/bridgeEventQueue.js'
 import { writeAgentMetadata } from '../../utils/sessionStorage.js'
 import { sleep } from '../../utils/sleep.js'
 import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { getTaskOutputPath } from '../../services/task/diskOutput.js'
 import { getParentSessionId, isTeammate } from '../../utils/teammate.js'
 import { isInProcessTeammate } from '../../utils/teammateContext.js'
 import { teleportToRemote } from '../../utils/teleport.js'
@@ -1267,19 +1267,17 @@ export const AgentTool = buildTool({
 
                       // Extract text from agent result content for the notification
                       let finalMessage = extractTextContent(agentResult.content, '\n')
-                      if (feature('TRANSCRIPT_CLASSIFIER')) {
-                        const backgroundedAppState = toolUseContext.getAppState()
-                        const handoffWarning = await classifyHandoffIfNeeded({
-                          agentMessages,
-                          tools: toolUseContext.options.tools,
-                          toolPermissionContext: backgroundedAppState.toolPermissionContext,
-                          abortSignal: task.abortController!.signal,
-                          subagentType: selectedAgent.agentType,
-                          totalToolUseCount: agentResult.totalToolUseCount,
-                        })
-                        if (handoffWarning) {
-                          finalMessage = `${handoffWarning}\n\n${finalMessage}`
-                        }
+                      const backgroundedAppState = toolUseContext.getAppState()
+                      const handoffWarning = await classifyHandoffIfNeeded({
+                        agentMessages,
+                        tools: toolUseContext.options.tools,
+                        toolPermissionContext: backgroundedAppState.toolPermissionContext,
+                        abortSignal: task.abortController!.signal,
+                        subagentType: selectedAgent.agentType,
+                        totalToolUseCount: agentResult.totalToolUseCount,
+                      })
+                      if (handoffWarning) {
+                        finalMessage = `${handoffWarning}\n\n${finalMessage}`
                       }
 
                       // Clean up worktree before notification so we can include it
@@ -1582,25 +1580,23 @@ export const AgentTool = buildTool({
             )
           }
           const agentResult = finalizeAgentTool(agentMessages, syncAgentId, metadata)
-          if (feature('TRANSCRIPT_CLASSIFIER')) {
-            const currentAppState = toolUseContext.getAppState()
-            const handoffWarning = await classifyHandoffIfNeeded({
-              agentMessages,
-              tools: toolUseContext.options.tools,
-              toolPermissionContext: currentAppState.toolPermissionContext,
-              abortSignal: toolUseContext.abortController.signal,
-              subagentType: selectedAgent.agentType,
-              totalToolUseCount: agentResult.totalToolUseCount,
-            })
-            if (handoffWarning) {
-              agentResult.content = [
-                {
-                  type: 'text' as const,
-                  text: handoffWarning,
-                },
-                ...agentResult.content,
-              ]
-            }
+          const currentAppState = toolUseContext.getAppState()
+          const handoffWarning = await classifyHandoffIfNeeded({
+            agentMessages,
+            tools: toolUseContext.options.tools,
+            toolPermissionContext: currentAppState.toolPermissionContext,
+            abortSignal: toolUseContext.abortController.signal,
+            subagentType: selectedAgent.agentType,
+            totalToolUseCount: agentResult.totalToolUseCount,
+          })
+          if (handoffWarning) {
+            agentResult.content = [
+              {
+                type: 'text' as const,
+                text: handoffWarning,
+              },
+              ...agentResult.content,
+            ]
           }
           return {
             data: {

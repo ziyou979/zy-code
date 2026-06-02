@@ -3,6 +3,7 @@ import { dirname } from 'node:path'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { getProjectRoot } from 'src/bootstrap/state.js'
 import { builtInCommandNames, findCommand, getCommands, type PromptCommand } from 'src/commands.js'
+import { buildPluginCommandTelemetryFields } from 'src/services/telemetry/pluginTelemetry.js'
 import type {
   Tool,
   ToolCallProgress,
@@ -26,7 +27,6 @@ import {
   isOfficialMarketplaceName,
   parsePluginIdentifier,
 } from 'src/utils/plugins/pluginIdentifier.js'
-import { buildPluginCommandTelemetryFields } from 'src/services/telemetry/pluginTelemetry.js'
 import { z } from 'zod/v4'
 import { addInvokedSkill, clearInvokedSkillsForAgent, getSessionId } from '../../bootstrap/state.js'
 import { COMMAND_MESSAGE_TAG } from '../../constants/xml.js'
@@ -36,6 +36,9 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
   logEvent,
 } from '../../services/analytics/index.js'
+import type { ModelAlias } from '../../services/model/aliases.js'
+import { resolveSkillModelOverride } from '../../services/model/model.js'
+import { recordSkillUsage } from '../../services/suggestions/skillUsageTracking.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import { getAgentContext } from '../../utils/agentContext.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
@@ -44,9 +47,6 @@ import { extractResultText, prepareForkedCommandContext } from '../../utils/fork
 import { parseFrontmatter } from '../../utils/frontmatterParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { createUserMessage, normalizeMessages } from '../../utils/messages.js'
-import type { ModelAlias } from '../../services/model/aliases.js'
-import { resolveSkillModelOverride } from '../../services/model/model.js'
-import { recordSkillUsage } from '../../services/suggestions/skillUsageTracking.js'
 import { createAgentId } from '../../utils/uuid.js'
 import { runAgent } from '../AgentTool/runAgent.js'
 import { getToolUseIDFromParentMessage, tagMessagesWithToolUseID } from '../utils.js'
@@ -663,7 +663,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
             const textBlock = content.find((b: { type: string }) => b.type === 'text') as
               | { type: 'text'; text: string }
               | undefined
-            if (textBlock && textBlock.text.includes(`<${COMMAND_MESSAGE_TAG}>`)) {
+            if (textBlock?.text.includes(`<${COMMAND_MESSAGE_TAG}>`)) {
               return false
             }
           }

@@ -6,14 +6,14 @@
  * Follows the same patterns as BashTool/modeValidation.ts.
  */
 
-import type { ToolPermissionContext } from '../../Tool.js'
-import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import type { ParsedPowerShellCommand } from '../../shell-eval/powershell/parser.js'
 import {
   deriveSecurityFlags,
   getPipelineSegments,
   PS_TOKENIZER_DASH_CHARS,
 } from '../../shell-eval/powershell/parser.js'
+import type { ToolPermissionContext } from '../../Tool.js'
+import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import {
   argLeaksValue,
   isAllowlistedPipelineTail,

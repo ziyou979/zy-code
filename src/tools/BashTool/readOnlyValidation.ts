@@ -1,16 +1,11 @@
 import type { z } from 'zod/v4'
 import { getOriginalCwd } from '../../bootstrap/state.js'
+import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import {
   extractOutputRedirections,
   splitCommand_DEPRECATED,
 } from '../../shell-eval/bash/commands.js'
 import { tryParseShellCommand } from '../../shell-eval/bash/shellQuote.js'
-import { getCwd } from '../../utils/cwd.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { isCurrentDirectoryBareGitRepo } from '../../utils/git.js'
-import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
-import { getPlatform } from '../../utils/platform.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import {
   containsVulnerableUncPath,
   DOCKER_READ_ONLY_COMMANDS,
@@ -22,6 +17,11 @@ import {
   RIPGREP_READ_ONLY_COMMANDS,
   validateFlags,
 } from '../../shell-eval/shared/readOnlyCommandValidation.js'
+import { getCwd } from '../../utils/cwd.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
+import { isCurrentDirectoryBareGitRepo } from '../../utils/git.js'
+import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
+import { getPlatform } from '../../utils/platform.js'
 import type { BashTool } from './BashTool.js'
 import { isNormalizedGitCommand } from './bashPermissions.js'
 import { bashCommandIsSafe_DEPRECATED } from './bashSecurity.js'

@@ -1,4 +1,6 @@
 import { z } from 'zod/v4'
+import { getMainLoopModel } from '../../services/model/model.js'
+import { modelHasCapability } from '../../services/model/providers.js'
 import type {
   SearchOptions,
   SearchResult as ServiceSearchResult,
@@ -9,8 +11,6 @@ import type { ContentBlock } from '../../types/llm.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
-import { getMainLoopModel } from '../../services/model/model.js'
-import { modelHasCapability } from '../../services/model/providers.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
 import { jsonStringify } from '../../utils/slowOperations.js'

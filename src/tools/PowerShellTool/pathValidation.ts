@@ -8,6 +8,14 @@
 
 import { homedir } from 'node:os'
 import { isAbsolute, resolve } from 'node:path'
+import type {
+  ParsedCommandElement,
+  ParsedPowerShellCommand,
+} from '../../shell-eval/powershell/parser.js'
+import {
+  isNullRedirectionTarget,
+  isPowerShellParameter,
+} from '../../shell-eval/powershell/parser.js'
 import type { ToolPermissionContext } from '../../Tool.js'
 import type { PermissionRule } from '../../types/permissions.js'
 import { getCwd } from '../../utils/cwd.js'
@@ -29,14 +37,6 @@ import {
   isPathInSandboxWriteAllowlist,
 } from '../../utils/permissions/pathValidation.js'
 import { getPlatform } from '../../utils/platform.js'
-import type {
-  ParsedCommandElement,
-  ParsedPowerShellCommand,
-} from '../../shell-eval/powershell/parser.js'
-import {
-  isNullRedirectionTarget,
-  isPowerShellParameter,
-} from '../../shell-eval/powershell/parser.js'
 import { COMMON_SWITCHES, COMMON_VALUE_PARAMS } from './commonParameters.js'
 import { resolveToCanonical } from './readOnlyValidation.js'
 

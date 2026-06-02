@@ -9,6 +9,10 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
+import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
+import { getTaskOutputPath } from '../../services/task/diskOutput.js'
+import { TaskOutput } from '../../services/task/TaskOutput.js'
+import { getCachedPowerShellPath } from '../../shell-eval/shared/powershellDetection.js'
 import type { SetToolJSXFn, Tool, ToolCallProgress, ValidationResult } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import {
@@ -31,13 +35,9 @@ import { getPlatform } from '../../utils/platform.js'
 import { maybeRecordPluginHint } from '../../utils/plugins/hintRecommendation.js'
 import { exec } from '../../utils/Shell.js'
 import type { ExecResult } from '../../utils/ShellCommand.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { semanticBoolean } from '../../utils/semanticBoolean.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
-import { getCachedPowerShellPath } from '../../shell-eval/shared/powershellDetection.js'
 import { EndTruncatingAccumulator } from '../../utils/stringUtils.js'
-import { getTaskOutputPath } from '../../services/task/diskOutput.js'
-import { TaskOutput } from '../../services/task/TaskOutput.js'
 import { isOutputLineTruncated } from '../../utils/terminal.js'
 import {
   buildLargeToolResultMessage,

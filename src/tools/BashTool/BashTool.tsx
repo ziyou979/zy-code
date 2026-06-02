@@ -11,6 +11,14 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { notifyVscodeFileUpdated } from '../../services/mcp/vscodeMcp.js'
+import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
+import { getTaskOutputPath } from '../../services/task/diskOutput.js'
+import { TaskOutput } from '../../services/task/TaskOutput.js'
+import { parseForSecurity } from '../../shell-eval/bash/ast.js'
+import {
+  splitCommand_DEPRECATED,
+  splitCommandWithOperators,
+} from '../../shell-eval/bash/commands.js'
 import type {
   SetToolJSXFn,
   ToolCallProgress,
@@ -28,11 +36,6 @@ import {
 import type { AgentId } from '../../types/ids.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
-import { parseForSecurity } from '../../shell-eval/bash/ast.js'
-import {
-  splitCommand_DEPRECATED,
-  splitCommandWithOperators,
-} from '../../shell-eval/bash/commands.js'
 import { detectCodeIndexingFromCommand } from '../../utils/codeIndexing.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isENOENT, ShellError } from '../../utils/errors.js'
@@ -51,12 +54,9 @@ import type { PermissionResult } from '../../utils/permissions/PermissionResult.
 import { maybeRecordPluginHint } from '../../utils/plugins/hintRecommendation.js'
 import { exec } from '../../utils/Shell.js'
 import type { ExecResult } from '../../utils/ShellCommand.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { semanticBoolean } from '../../utils/semanticBoolean.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
 import { EndTruncatingAccumulator } from '../../utils/stringUtils.js'
-import { getTaskOutputPath } from '../../services/task/diskOutput.js'
-import { TaskOutput } from '../../services/task/TaskOutput.js'
 import { isOutputLineTruncated } from '../../utils/terminal.js'
 import {
   buildLargeToolResultMessage,

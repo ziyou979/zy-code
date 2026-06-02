@@ -419,7 +419,9 @@ export function parseAgentFromJson(
       },
       source,
       ...(parsed.model ? { model: parsed.model } : {}),
-      ...(parsed.effort !== undefined ? { effort: parsed.effort } : {}),
+      ...(parsed.effort !== undefined
+        ? { effort: typeof parsed.effort === 'number' ? undefined : parsed.effort }
+        : {}),
       ...(parsed.permissionMode ? { permissionMode: parsed.permissionMode } : {}),
       ...(parsed.mcpServers && parsed.mcpServers.length > 0
         ? { mcpServers: parsed.mcpServers }

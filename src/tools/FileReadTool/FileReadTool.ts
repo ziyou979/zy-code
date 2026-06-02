@@ -15,6 +15,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   getFileExtensionForAnalytics,
 } from '../../services/analytics/metadata.js'
+import { getMainLoopModel } from '../../services/model/model.js'
 import {
   countTokensWithAPI,
   roughTokenCountEstimationForFileType,
@@ -52,7 +53,6 @@ import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
 import { isAutoMemFile } from '../../utils/memoryFileDetection.js'
 import { createUserMessage } from '../../utils/messages.js'
-import { getMainLoopModel } from '../../services/model/model.js'
 import { mapNotebookCellsToToolResult, readNotebook } from '../../utils/notebook.js'
 import { expandPath } from '../../utils/path.js'
 import { extractPDFPages, getPDFPageCount, readPDF } from '../../utils/pdf.js'

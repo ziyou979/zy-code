@@ -5,11 +5,11 @@ import { FilePathLink } from '../../components/FilePathLink.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink.js'
+import { getTaskOutputDir } from '../../services/task/diskOutput.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import { FILE_NOT_FOUND_CWD_NOTE, getDisplayPath } from '../../utils/file.js'
 import { formatFileSize } from '../../utils/format.js'
 import { getPlansDirectory } from '../../utils/plans.js'
-import { getTaskOutputDir } from '../../services/task/diskOutput.js'
 import type { Input, Output } from './FileReadTool.js'
 
 /**

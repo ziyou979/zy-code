@@ -1,9 +1,9 @@
 import { feature } from 'bun:bundle'
+import { getModelOptions } from '../../services/model/modelOptions.js'
+import { validateModel } from '../../services/model/validateModel.js'
 import { getRemoteControlAtStartup } from '../../utils/config.js'
 import { EDITOR_MODES, NOTIFICATION_CHANNELS, TEAMMATE_MODES } from '../../utils/configConstants.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
-import { getModelOptions } from '../../services/model/modelOptions.js'
-import { validateModel } from '../../services/model/validateModel.js'
 import { THEME_NAMES, THEME_SETTINGS } from '../../utils/theme.js'
 
 /** AppState keys that can be synced for immediate UI effect */
@@ -137,7 +137,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
     source: 'settings',
     type: 'string',
     description: 'Default permission mode for tool usage',
-    options: feature('TRANSCRIPT_CLASSIFIER')
+    options: true
       ? ['default', 'plan', 'acceptEdits', 'dontAsk', 'auto']
       : ['default', 'plan', 'acceptEdits', 'dontAsk'],
   },

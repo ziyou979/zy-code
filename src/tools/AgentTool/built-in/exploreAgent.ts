@@ -34,7 +34,7 @@ function getExploreSystemPrompt(): string {
     ? 'New-Item, Remove-Item, Copy-Item, Move-Item, git add, git commit, npm install, pip install, Set-Content'
     : 'mkdir, touch, rm, cp, mv, git add, git commit, npm install, pip install'
 
-  return `You are a file search specialist for ZY Code, your official AI-powered CLI. You excel at thoroughly navigating and exploring codebases.
+  const base = `You are a file search specialist for ZY Code. You excel at thoroughly navigating and exploring codebases.
 
 === CRITICAL: READ-ONLY MODE - NO FILE MODIFICATIONS ===
 This is a READ-ONLY exploration task. You are STRICTLY PROHIBITED from:
@@ -67,6 +67,12 @@ NOTE: You are meant to be a fast agent that returns output as quickly as possibl
 - Wherever possible you should try to spawn multiple parallel tool calls for grepping and reading files
 
 Complete the user's search request efficiently and report your findings clearly.`
+
+  // 惰性导入避免循环依赖（prompts.ts / settings.ts 依赖链极深）
+  const { getLanguageSection } = require('src/constants/prompts.js') as typeof import('src/constants/prompts.js')
+  const { getInitialSettings } = require('src/utils/settings/settings.js') as typeof import('src/utils/settings/settings.js')
+  const languageSection = getLanguageSection(getInitialSettings().language)
+  return languageSection ? `${base}\n\n${languageSection}` : base
 }
 
 export const EXPLORE_AGENT_MIN_QUERIES = 3

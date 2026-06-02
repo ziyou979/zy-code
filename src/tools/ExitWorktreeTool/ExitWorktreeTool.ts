@@ -9,6 +9,7 @@ import { clearSystemPromptSections } from '../../constants/systemPromptSections.
 import { logEvent } from '../../services/analytics/index.js'
 import type { Tool } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
+import { clearMemoryFileCaches } from '../../utils/agentsMd.js'
 import { count } from '../../utils/array.js'
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
 import { updateHooksConfigSnapshot } from '../../utils/hooks/hooksConfigSnapshot.js'
@@ -22,7 +23,6 @@ import {
   keepWorktree,
   killTmuxSession,
 } from '../../utils/worktree.js'
-import { clearMemoryFileCaches } from '../../utils/agentsMd.js'
 import { EXIT_WORKTREE_TOOL_NAME } from './constants.js'
 import { getExitWorktreeToolPrompt } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
