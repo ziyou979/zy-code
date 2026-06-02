@@ -59,8 +59,8 @@ const ChannelsNoticeModule =
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
-import { useAppState } from '../../state/AppState.js'
 import { renderModelSetting } from '../../services/model/model.js'
+import { useAppState } from '../../state/AppState.js'
 
 const LEFT_PANEL_MAX_WIDTH = 50
 export function Logo() {

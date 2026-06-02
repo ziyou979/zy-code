@@ -4,6 +4,13 @@ import { useExitOnCtrlCDWithKeybindings } from 'src/hooks/useExitOnCtrlCDWithKey
 import { logEvent } from 'src/services/analytics/index.js'
 import { Box, Text } from '../ink.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
+import {
+  getDefaultMainLoopModel,
+  type ModelSetting,
+  modelDisplayString,
+  parseUserSpecifiedModel,
+} from '../services/model/model.js'
+import { getModelOptions } from '../services/model/modelOptions.js'
 import { useAppState, useSetAppState } from '../state/AppState.js'
 import {
   clampEffort,
@@ -15,13 +22,6 @@ import {
   resolvePickerEffortPersistence,
   toPersistableEffort,
 } from '../utils/effort.js'
-import {
-  getDefaultMainLoopModel,
-  type ModelSetting,
-  modelDisplayString,
-  parseUserSpecifiedModel,
-} from '../services/model/model.js'
-import { getModelOptions } from '../services/model/modelOptions.js'
 import { getSettingsForSource, updateSettingsForSource } from '../utils/settings/settings.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
 import { Select } from './CustomSelect/index.js'
@@ -269,5 +269,5 @@ function cycleEffortLevel(
 function getDefaultEffortLevelForOption(value?: string): EffortLevel {
   const resolved = resolveOptionModel(value) ?? getDefaultMainLoopModel()
   const defaultValue = getDefaultEffortForModel(resolved)
-  return defaultValue !== undefined ? convertEffortValueToLevel(defaultValue) : 'high'
+  return defaultValue !== undefined ? convertEffortValueToLevel(defaultValue) : 'thorough'
 }

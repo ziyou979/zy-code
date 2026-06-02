@@ -107,7 +107,7 @@ export function UserToolSuccessMessage({
               </MessageResponse>
             )
           : null}
-        {feature('TRANSCRIPT_CLASSIFIER')
+        {true
           ? yoloReason && (
               <MessageResponse height={1}>
                 <Text dimColor>Allowed by auto mode classifier</Text>

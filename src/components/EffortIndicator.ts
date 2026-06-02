@@ -1,9 +1,9 @@
 import {
-  EFFORT_HIGH,
-  EFFORT_LOW,
-  EFFORT_MAX,
-  EFFORT_MEDIUM,
-  EFFORT_MINIMAL,
+  EFFORT_BALANCED,
+  EFFORT_EXTREME,
+  EFFORT_LIGHT,
+  EFFORT_QUICK,
+  EFFORT_THOROUGH,
 } from '../constants/figures.js'
 import {
   type EffortLevel,
@@ -29,19 +29,18 @@ export function getEffortNotificationText(
 
 export function effortLevelToSymbol(level: EffortLevel): string {
   switch (level) {
-    case 'minimal':
-      return EFFORT_MINIMAL
-    case 'low':
-      return EFFORT_LOW
-    case 'medium':
-      return EFFORT_MEDIUM
-    case 'high':
-      return EFFORT_HIGH
-    case 'max':
-      return EFFORT_MAX
+    case 'quick':
+      return EFFORT_QUICK
+    case 'light':
+      return EFFORT_LIGHT
+    case 'balanced':
+      return EFFORT_BALANCED
+    case 'thorough':
+      return EFFORT_THOROUGH
+    case 'extreme':
+    case 'orchestrate':
+      return EFFORT_EXTREME
     default:
-      // 防御性：level 可能来自远程配置。如果有未知值漏过，
-      // 渲染 high 符号而非 undefined。
-      return EFFORT_HIGH
+      return EFFORT_THOROUGH
   }
 }

@@ -41,6 +41,7 @@ import { useOptionalKeybindingContext } from '../../keybindings/KeybindingContex
 import { getShortcutDisplay } from '../../keybindings/shortcutFormat.js'
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'
 import type { MCPServerConnection } from '../../services/mcp/types.js'
+import { modelDisplayString } from '../../services/model/model.js'
 import {
   abortPromptSuggestion,
   logSuggestionSuppressed,
@@ -49,6 +50,20 @@ import {
   type ActiveSpeculationState,
   abortSpeculation,
 } from '../../services/PromptSuggestion/speculation.js'
+import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
+import { findSlashCommandPositions } from '../../services/suggestions/commandSuggestions.js'
+import {
+  findSlackChannelPositions,
+  getKnownChannelsVersion,
+  hasSlackMcpServer,
+  subscribeKnownChannels,
+} from '../../services/suggestions/slackChannelSuggestions.js'
+import { isInProcessEnabled } from '../../services/swarm/backends/registry.js'
+import { syncTeammateMode } from '../../services/swarm/teamHelpers.js'
+import {
+  findUltraplanTriggerPositions,
+  findUltrareviewTriggerPositions,
+} from '../../services/ultraplan/keyword.js'
 import { getActiveAgentForInput, getViewedTeammateTask } from '../../state/selectors.js'
 import {
   enterTeammateView,
@@ -93,7 +108,6 @@ import type { ImageDimensions } from '../../utils/imageResizer.js'
 import { cacheImagePath, storeImage } from '../../utils/imageStore.js'
 import { isMacosOptionChar, MACOS_OPTION_SPECIAL_CHARS } from '../../utils/keyboardShortcuts.js'
 import { logError } from '../../utils/log.js'
-import { modelDisplayString } from '../../services/model/model.js'
 import { setAutoModeActive } from '../../utils/permissions/autoModeState.js'
 import {
   cyclePermissionMode,
@@ -101,19 +115,9 @@ import {
 } from '../../utils/permissions/getNextPermissionMode.js'
 import { transitionPermissionMode } from '../../utils/permissions/permissionSetup.js'
 import { getPlatform } from '../../utils/platform.js'
-import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
 import { editPromptInEditor } from '../../utils/promptEditor.js'
 import { hasAutoModeOptIn } from '../../utils/settings/settings.js'
 import { findBtwTriggerPositions } from '../../utils/sideQuestion.js'
-import { findSlashCommandPositions } from '../../services/suggestions/commandSuggestions.js'
-import {
-  findSlackChannelPositions,
-  getKnownChannelsVersion,
-  hasSlackMcpServer,
-  subscribeKnownChannels,
-} from '../../services/suggestions/slackChannelSuggestions.js'
-import { isInProcessEnabled } from '../../services/swarm/backends/registry.js'
-import { syncTeammateMode } from '../../services/swarm/teamHelpers.js'
 import type { TeamSummary } from '../../utils/teamDiscovery.js'
 import { getTeammateColor } from '../../utils/teammate.js'
 import { isInProcessTeammate } from '../../utils/teammateContext.js'
@@ -126,10 +130,6 @@ import {
   isUltrathinkEnabled,
 } from '../../utils/thinking.js'
 import { findTokenBudgetPositions } from '../../utils/tokenBudget.js'
-import {
-  findUltraplanTriggerPositions,
-  findUltrareviewTriggerPositions,
-} from '../../services/ultraplan/keyword.js'
 import { AutoModeOptInDialog } from '../AutoModeOptInDialog.js'
 import { BridgeDialog } from '../BridgeDialog.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
@@ -1708,50 +1708,46 @@ function PromptInput({
     // the warning dialog once — the CLI flag should grant carousel access,
     // not bypass the safety text.
     let isEnteringAutoModeFirstTime = false
-    if (feature('TRANSCRIPT_CLASSIFIER')) {
-      isEnteringAutoModeFirstTime =
-        nextMode === 'auto' &&
-        toolPermissionContext.mode !== 'auto' &&
-        !hasAutoModeOptIn() &&
-        !viewingAgentTaskId // Only show for primary agent, not subagents
-    }
-    if (feature('TRANSCRIPT_CLASSIFIER')) {
-      if (isEnteringAutoModeFirstTime) {
-        // Store previous mode so we can revert if user declines
-        setPreviousModeBeforeAuto(toolPermissionContext.mode)
+    isEnteringAutoModeFirstTime =
+      nextMode === 'auto' &&
+      toolPermissionContext.mode !== 'auto' &&
+      !hasAutoModeOptIn() &&
+      !viewingAgentTaskId // Only show for primary agent, not subagents
+    if (isEnteringAutoModeFirstTime) {
+      // Store previous mode so we can revert if user declines
+      setPreviousModeBeforeAuto(toolPermissionContext.mode)
 
-        // Only update the UI mode label — do NOT call transitionPermissionMode
-        // or cyclePermissionMode yet; we haven't confirmed with the user.
-        setAppState((prev) => ({
-          ...prev,
-          toolPermissionContext: {
-            ...prev.toolPermissionContext,
-            mode: 'auto',
-          },
-        }))
-        setToolPermissionContext({
-          ...toolPermissionContext,
+      // Only update the UI mode label — do NOT call transitionPermissionMode
+      // or cyclePermissionMode yet; we haven't confirmed with the user.
+      setAppState((prev) => ({
+        ...prev,
+        toolPermissionContext: {
+          ...prev.toolPermissionContext,
           mode: 'auto',
-        })
+        },
+      }))
+      setToolPermissionContext({
+        ...toolPermissionContext,
+        mode: 'auto',
+      })
 
-        // Show opt-in dialog after 400ms debounce
-        if (autoModeOptInTimeoutRef.current) {
-          clearTimeout(autoModeOptInTimeoutRef.current)
-        }
-        autoModeOptInTimeoutRef.current = setTimeout(
-          (setShowAutoModeOptIn, autoModeOptInTimeoutRef) => {
-            setShowAutoModeOptIn(true)
-            autoModeOptInTimeoutRef.current = null
-          },
-          400,
-          setShowAutoModeOptIn,
-          autoModeOptInTimeoutRef,
-        )
-        if (helpOpen) {
-          setHelpOpen(false)
-        }
-        return
+      // Show opt-in dialog after 400ms debounce
+      if (autoModeOptInTimeoutRef.current) {
+        clearTimeout(autoModeOptInTimeoutRef.current)
       }
+      autoModeOptInTimeoutRef.current = setTimeout(
+        (setShowAutoModeOptIn, autoModeOptInTimeoutRef) => {
+          setShowAutoModeOptIn(true)
+          autoModeOptInTimeoutRef.current = null
+        },
+        400,
+        setShowAutoModeOptIn,
+        autoModeOptInTimeoutRef,
+      )
+      if (helpOpen) {
+        setHelpOpen(false)
+      }
+      return
     }
 
     // Dismiss auto mode opt-in dialog if showing or pending (user is cycling away).
@@ -1759,19 +1755,17 @@ function PromptInput({
     // carousel", not "decline". Reverting causes a ping-pong loop: auto reverts to
     // the prior mode, whose next mode is auto again, forever.
     // The dialog's own decline button (handleAutoModeOptInDecline) handles revert.
-    if (feature('TRANSCRIPT_CLASSIFIER')) {
-      if (showAutoModeOptIn || autoModeOptInTimeoutRef.current) {
-        if (showAutoModeOptIn) {
-          logEvent('zy_auto_mode_opt_in_dialog_decline', {})
-        }
-        setShowAutoModeOptIn(false)
-        if (autoModeOptInTimeoutRef.current) {
-          clearTimeout(autoModeOptInTimeoutRef.current)
-          autoModeOptInTimeoutRef.current = null
-        }
-        setPreviousModeBeforeAuto(null)
-        // Fall through — mode is 'auto', cyclePermissionMode below goes to 'default'.
+    if (showAutoModeOptIn || autoModeOptInTimeoutRef.current) {
+      if (showAutoModeOptIn) {
+        logEvent('zy_auto_mode_opt_in_dialog_decline', {})
       }
+      setShowAutoModeOptIn(false)
+      if (autoModeOptInTimeoutRef.current) {
+        clearTimeout(autoModeOptInTimeoutRef.current)
+        autoModeOptInTimeoutRef.current = null
+      }
+      setPreviousModeBeforeAuto(null)
+      // Fall through — mode is 'auto', cyclePermissionMode below goes to 'default'.
     }
 
     // Now that we know this is NOT the first-time auto mode path,
@@ -1827,34 +1821,32 @@ function PromptInput({
 
   // Handler for auto mode opt-in dialog acceptance
   const handleAutoModeOptInAccept = useCallback(() => {
-    if (feature('TRANSCRIPT_CLASSIFIER')) {
-      setShowAutoModeOptIn(false)
-      setPreviousModeBeforeAuto(null)
+    setShowAutoModeOptIn(false)
+    setPreviousModeBeforeAuto(null)
 
-      // Now that the user accepted, apply the full transition: activate the
-      // auto mode backend (classifier, beta headers) and strip dangerous
-      // permissions (e.g. Bash(*) always-allow rules).
-      const strippedContext = transitionPermissionMode(
-        previousModeBeforeAuto ?? toolPermissionContext.mode,
-        'auto',
-        toolPermissionContext,
-      )
-      setAppState((prev) => ({
-        ...prev,
-        toolPermissionContext: {
-          ...strippedContext,
-          mode: 'auto',
-        },
-      }))
-      setToolPermissionContext({
+    // Now that the user accepted, apply the full transition: activate the
+    // auto mode backend (classifier, beta headers) and strip dangerous
+    // permissions (e.g. Bash(*) always-allow rules).
+    const strippedContext = transitionPermissionMode(
+      previousModeBeforeAuto ?? toolPermissionContext.mode,
+      'auto',
+      toolPermissionContext,
+    )
+    setAppState((prev) => ({
+      ...prev,
+      toolPermissionContext: {
         ...strippedContext,
         mode: 'auto',
-      })
+      },
+    }))
+    setToolPermissionContext({
+      ...strippedContext,
+      mode: 'auto',
+    })
 
-      // Close help tips if they're open when auto mode is enabled
-      if (helpOpen) {
-        setHelpOpen(false)
-      }
+    // Close help tips if they're open when auto mode is enabled
+    if (helpOpen) {
+      setHelpOpen(false)
     }
   }, [
     helpOpen,
@@ -1867,35 +1859,33 @@ function PromptInput({
 
   // Handler for auto mode opt-in dialog decline
   const handleAutoModeOptInDecline = useCallback(() => {
-    if (feature('TRANSCRIPT_CLASSIFIER')) {
-      logForDebugging(
-        `[auto-mode] handleAutoModeOptInDecline: reverting to ${previousModeBeforeAuto}, setting isAutoModeAvailable=false`,
-      )
-      setShowAutoModeOptIn(false)
-      if (autoModeOptInTimeoutRef.current) {
-        clearTimeout(autoModeOptInTimeoutRef.current)
-        autoModeOptInTimeoutRef.current = null
-      }
+    logForDebugging(
+      `[auto-mode] handleAutoModeOptInDecline: reverting to ${previousModeBeforeAuto}, setting isAutoModeAvailable=false`,
+    )
+    setShowAutoModeOptIn(false)
+    if (autoModeOptInTimeoutRef.current) {
+      clearTimeout(autoModeOptInTimeoutRef.current)
+      autoModeOptInTimeoutRef.current = null
+    }
 
-      // Revert to previous mode and remove auto from the carousel
-      // for the rest of this session
-      if (previousModeBeforeAuto) {
-        setAutoModeActive(false)
-        setAppState((prev) => ({
-          ...prev,
-          toolPermissionContext: {
-            ...prev.toolPermissionContext,
-            mode: previousModeBeforeAuto,
-            isAutoModeAvailable: false,
-          },
-        }))
-        setToolPermissionContext({
-          ...toolPermissionContext,
+    // Revert to previous mode and remove auto from the carousel
+    // for the rest of this session
+    if (previousModeBeforeAuto) {
+      setAutoModeActive(false)
+      setAppState((prev) => ({
+        ...prev,
+        toolPermissionContext: {
+          ...prev.toolPermissionContext,
           mode: previousModeBeforeAuto,
           isAutoModeAvailable: false,
-        })
-        setPreviousModeBeforeAuto(null)
-      }
+        },
+      }))
+      setToolPermissionContext({
+        ...toolPermissionContext,
+        mode: previousModeBeforeAuto,
+        isAutoModeAvailable: false,
+      })
+      setPreviousModeBeforeAuto(null)
     }
   }, [previousModeBeforeAuto, toolPermissionContext, setAppState, setToolPermissionContext])
 
@@ -2458,7 +2448,7 @@ function PromptInput({
   // Memoized so the portal useEffect doesn't churn on every PromptInput render.
   const autoModeOptInDialog = useMemo(
     () =>
-      feature('TRANSCRIPT_CLASSIFIER') && showAutoModeOptIn ? (
+      true && showAutoModeOptIn ? (
         <AutoModeOptInDialog
           onAccept={handleAutoModeOptInAccept}
           onDecline={handleAutoModeOptInDecline}

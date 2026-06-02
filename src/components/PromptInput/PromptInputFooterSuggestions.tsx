@@ -11,6 +11,7 @@ export type SuggestionItem = {
   description?: string
   metadata?: unknown
   color?: keyof Theme
+  matchedAlias?: string
 }
 export type SuggestionType =
   | 'command'

@@ -9,14 +9,19 @@
 
 import { basename } from 'node:path'
 import {
-  EFFORT_HIGH,
-  EFFORT_LOW,
-  EFFORT_MAX,
-  EFFORT_MEDIUM,
-  EFFORT_MINIMAL,
+  EFFORT_BALANCED,
+  EFFORT_EXTREME,
+  EFFORT_LIGHT,
+  EFFORT_QUICK,
+  EFFORT_THOROUGH,
   FORK_GLYPH,
 } from '../../constants/figures.js'
-import { getTotalCost, getTotalInputTokens, getTotalOutputTokens } from '../../cost-tracker.js'
+import {
+  getTotalAPIDuration,
+  getTotalCost,
+  getTotalInputTokens,
+  getTotalOutputTokens,
+} from '../../cost-tracker.js'
 import { tSync } from '../../i18n/index.js'
 import type { ModelName } from '../../services/model/model.js'
 import type { Message } from '../../types/message.js'
@@ -56,19 +61,21 @@ export type StatusbarContext = {
 const BAR_WIDTH = 8
 
 const EFFORT_ICONS: Record<string, string> = {
-  minimal: EFFORT_MINIMAL,
-  low: EFFORT_LOW,
-  medium: EFFORT_MEDIUM,
-  high: EFFORT_HIGH,
-  max: EFFORT_MAX,
+  quick: EFFORT_QUICK,
+  light: EFFORT_LIGHT,
+  balanced: EFFORT_BALANCED,
+  thorough: EFFORT_THOROUGH,
+  extreme: EFFORT_EXTREME,
+  orchestrate: EFFORT_EXTREME,
 }
 
 const EFFORT_I18N_KEYS: Record<string, string> = {
-  minimal: 'effort.minimal',
-  low: 'effort.low',
-  medium: 'effort.medium',
-  high: 'effort.high',
-  max: 'effort.max',
+  quick: 'effort.quick',
+  light: 'effort.light',
+  balanced: 'effort.balanced',
+  thorough: 'effort.thorough',
+  extreme: 'effort.extreme',
+  orchestrate: 'effort.orchestrate',
 }
 
 function renderContextBar(percentage: number | null): string {
@@ -117,8 +124,8 @@ const RENDERERS: Record<ModuleId, Renderer> = {
     // effort 强度的模型,即便 thinking 已开启也只显示模型名,不显示假的 high 档。
     if (ctx.thinkingEnabled && modelSupportsEffort(ctx.mainLoopModel)) {
       const level = getDisplayedEffortLevel(ctx.mainLoopModel, ctx.effortValue as never)
-      const effortGlyph = EFFORT_ICONS[level] ?? EFFORT_MEDIUM
-      const i18nKey = EFFORT_I18N_KEYS[level] ?? 'effort.medium'
+      const effortGlyph = EFFORT_ICONS[level] ?? EFFORT_BALANCED
+      const i18nKey = EFFORT_I18N_KEYS[level] ?? 'effort.balanced'
       const levelName = tSync(i18nKey as never)
       const body = `${ctx.mainLoopModel} · ${effortGlyph} ${levelName}`
       return { text: withIcon(icon, body), colorToken: effectiveColor(module) }
@@ -159,7 +166,12 @@ const RENDERERS: Record<ModuleId, Renderer> = {
       return null
     }
     const icon = effectiveIcon(module)
-    const body = `↑ ${formatTokens(totalIn)}  ↓ ${formatTokens(totalOut)}`
+    let body = `↑ ${formatTokens(totalIn)}  ↓ ${formatTokens(totalOut)}`
+    const durationMs = getTotalAPIDuration()
+    if (totalOut > 0 && durationMs > 0) {
+      const tps = totalOut / (durationMs / 1000)
+      body += `  » ${tps >= 1000 ? `${(tps / 1000).toFixed(1)}k` : `${Math.round(tps)}`} tok/s`
+    }
     return { text: withIcon(icon, body), colorToken: effectiveColor(module) }
   },
 

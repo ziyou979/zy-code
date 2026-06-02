@@ -1,6 +1,7 @@
 import { tSync } from 'src/i18n/index.js'
 import { Select } from '../../../components/CustomSelect/select.js'
 import { Box, Text } from '../../../ink.js'
+import { SandboxManager } from '../../../services/sandbox/sandbox-adapter.js'
 import type { ToolPermissionContext } from '../../../Tool.js'
 import type {
   PermissionBehavior,
@@ -16,7 +17,6 @@ import {
   detectUnreachableRules,
   type UnreachableRule,
 } from '../../../utils/permissions/shadowedRuleDetection.js'
-import { SandboxManager } from '../../../services/sandbox/sandbox-adapter.js'
 import { type EditableSettingSource, SOURCES } from '../../../utils/settings/constants.js'
 import { getRelativeSettingsFilePathForSource } from '../../../utils/settings/settings.js'
 import { plural } from '../../../utils/stringUtils.js'

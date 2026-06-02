@@ -21,7 +21,6 @@ import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import { isUndercover } from '../../utils/undercover.js'
 import { BuiltInStatusBar } from '../BuiltInStatusBar.js'
 import { CoordinatorTaskPanel, useCoordinatorTaskCount } from '../CoordinatorAgentStatus.js'
-import { TaskStatusLine } from '../TaskStatusLine.js'
 import { Notifications } from './Notifications.js'
 import { PromptInputFooterLeftSide } from './PromptInputFooterLeftSide.js'
 import {
@@ -166,14 +165,11 @@ function PromptInputFooter({
             !exitMessage.show &&
             !isPasting &&
             settings?.builtInStatusBar?.enabled !== false && (
-              <>
-                <BuiltInStatusBar
-                  messages={messages}
-                  isLoading={isLoading}
-                  mainLoopModel={mainLoopModel}
-                />
-                <TaskStatusLine />
-              </>
+              <BuiltInStatusBar
+                messages={messages}
+                isLoading={isLoading}
+                mainLoopModel={mainLoopModel}
+              />
             )}
           <PromptInputFooterLeftSide
             exitMessage={exitMessage}

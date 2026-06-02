@@ -50,7 +50,7 @@ type OutputLineProps = {
 }
 export function OutputLine({ content, verbose, isError, isWarning, linkifyUrls }: OutputLineProps) {
   const { columns } = useTerminalSize()
-  const [theme] = useTheme()
+  const [_theme] = useTheme()
   const expandShellOutput = useExpandShellOutput()
   const inVirtualList = React.useContext(InVirtualListContext)
   const shouldShowFull = verbose || expandShellOutput

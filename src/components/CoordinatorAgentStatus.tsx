@@ -13,6 +13,7 @@ import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { Box, Text, wrapText } from '../ink.js'
+import { evictTerminalTask } from '../services/task/framework.js'
 import { type AppState, useAppState, useSetAppState } from '../state/AppState.js'
 import { enterTeammateView, exitTeammateView } from '../state/teammateViewHelpers.js'
 import {
@@ -20,7 +21,6 @@ import {
   type LocalAgentTaskState,
 } from '../tasks/LocalAgentTask/LocalAgentTask.js'
 import { formatDuration } from '../utils/format.js'
-import { evictTerminalTask } from '../services/task/framework.js'
 import { isTerminalStatus } from './tasks/taskStatusUtils.js'
 
 /**

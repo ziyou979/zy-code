@@ -18,6 +18,7 @@ import { jsonStringify } from '../../utils/slowOperations.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Byline } from '../design-system/Byline.js'
 import { ProgressBar } from '../design-system/ProgressBar.js'
+import { SessionCost } from './SessionCost.js'
 
 type LimitBarProps = {
   title: string
@@ -95,13 +96,13 @@ function LimitBar({ title, limit, maxWidth, showTimeInReset = true, extraSubtext
     )
   }
 }
-export function Usage(): React.ReactNode {
+
+// rate limit 区域独立组件，自行管理加载/错误状态
+function RateLimitSection({ maxWidth }: { maxWidth: number }) {
   const [utilization, setUtilization] = useState<Utilization | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const { columns } = useTerminalSize()
-  const availableWidth = columns - 2 // 2 for screen padding
-  const maxWidth = Math.min(availableWidth, 80)
+
   const loadUtilization = React.useCallback(async () => {
     setIsLoading(true)
     setError(null)
@@ -129,9 +130,11 @@ export function Usage(): React.ReactNode {
       setIsLoading(false)
     }
   }, [])
+
   useEffect(() => {
     void loadUtilization()
   }, [loadUtilization])
+
   useKeybinding(
     'settings:retry',
     () => {
@@ -142,6 +145,7 @@ export function Usage(): React.ReactNode {
       isActive: !!error && !isLoading,
     },
   )
+
   if (error) {
     return (
       <Box flexDirection="column" gap={1}>
@@ -158,37 +162,20 @@ export function Usage(): React.ReactNode {
               fallback="r"
               description="retry"
             />
-            <ConfigurableShortcutHint
-              action="confirm:no"
-              context="Settings"
-              fallback="Esc"
-              description="cancel"
-            />
           </Byline>
         </Text>
       </Box>
     )
   }
-  if (!utilization) {
+
+  if (isLoading || !utilization) {
     return (
-      <Box flexDirection="column" gap={1}>
+      <Box>
         <Text dimColor>{tSync('usage.loading')}</Text>
-        <Text dimColor>
-          <ConfigurableShortcutHint
-            action="confirm:no"
-            context="Settings"
-            fallback="Esc"
-            description="cancel"
-          />
-        </Text>
       </Box>
     )
   }
 
-  // Only Max and Team plans have a Sonnet limit that differs from the weekly
-  // limit (see rateLimitMessages.ts). For other plans the bar is redundant.
-  // Show for null (unknown plan) to stay consistent with rateLimitMessages.ts,
-  // which labels it "Sonnet limit" in that case.
   const subscriptionType = getSubscriptionType()
   const showSonnetBar =
     (subscriptionType as any) === 'max' ||
@@ -212,19 +199,35 @@ export function Usage(): React.ReactNode {
         ]
       : []),
   ]
-  return (
-    <Box flexDirection="column" gap={1} width="100%">
-      {limits.some(({ limit }) => limit) || <Text dimColor>{tSync('usage.subscriptionOnly')}</Text>}
 
+  const hasAnyLimit = limits.some(({ limit }) => limit)
+  if (!hasAnyLimit && !utilization.extra_usage) {
+    return null
+  }
+
+  return (
+    <>
+      {!hasAnyLimit && <Text dimColor>{tSync('usage.subscriptionOnly')}</Text>}
       {limits.map(
         ({ title, limit: rateLimit }) =>
           rateLimit && <LimitBar key={title} title={title} limit={rateLimit} maxWidth={maxWidth} />,
       )}
-
       {utilization.extra_usage && (
         <ExtraUsageSection extraUsage={utilization.extra_usage} maxWidth={maxWidth} />
       )}
+    </>
+  )
+}
 
+export function Usage(): React.ReactNode {
+  const { columns } = useTerminalSize()
+  const availableWidth = columns - 2
+  const maxWidth = Math.min(availableWidth, 80)
+
+  return (
+    <Box flexDirection="column" gap={1} width="100%">
+      <SessionCost />
+      <RateLimitSection maxWidth={maxWidth} />
       <Text dimColor>
         <ConfigurableShortcutHint
           action="confirm:no"
@@ -236,12 +239,12 @@ export function Usage(): React.ReactNode {
     </Box>
   )
 }
+
 type ExtraUsageSectionProps = {
   extraUsage: ExtraUsage
   maxWidth: number
 }
 function ExtraUsageSection({ extraUsage, maxWidth }: ExtraUsageSectionProps) {
-  // 组件内求值：每次渲染读当前语言，避免模块顶层冻结翻译。
   const EXTRA_USAGE_SECTION_TITLE = tSync('usage.extraUsage')
   const subscriptionType = getSubscriptionType()
   const isProOrMax = (subscriptionType as any) === 'pro' || (subscriptionType as any) === 'max'

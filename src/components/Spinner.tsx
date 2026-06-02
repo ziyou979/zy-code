@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { Box, Text } from '../ink.js'
 import * as React from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   computeGlimmerIndex,
   computeShimmerSegments,
@@ -129,48 +129,6 @@ function SpinnerWithVerbInner({
   const { columns } = useTerminalSize()
   const tasksV2 = useTasksV2()
 
-  // 追踪 thinking 状态：'thinking' | number（持续时间 ms）| null
-  // 每个状态至少显示 2s，以避免 UI 抖动
-  const [thinkingStatus, setThinkingStatus] = useState<'thinking' | number | null>(null)
-  const thinkingStartRef = useRef<number | null>(null)
-  useEffect(() => {
-    let showDurationTimer: ReturnType<typeof setTimeout> | null = null
-    let clearStatusTimer: ReturnType<typeof setTimeout> | null = null
-    if (mode === 'thinking') {
-      // 开始 thinking
-      if (thinkingStartRef.current === null) {
-        thinkingStartRef.current = Date.now()
-        setThinkingStatus('thinking')
-      }
-    } else if (thinkingStartRef.current !== null) {
-      // 停止 thinking - 计算持续时间并确保至少显示 2s
-      const duration = Date.now() - thinkingStartRef.current
-      const elapsed = Date.now() - thinkingStartRef.current
-      const remainingThinkingTime = Math.max(0, 2000 - elapsed)
-      thinkingStartRef.current = null
-
-      // 如果经过时间 < 2s，在剩余时间内显示"thinking..."，然后显示持续时间
-      const showDuration = (): void => {
-        setThinkingStatus(duration)
-        // 2s 后清除
-        clearStatusTimer = setTimeout(setThinkingStatus, 2000, null)
-      }
-      if (remainingThinkingTime > 0) {
-        showDurationTimer = setTimeout(showDuration, remainingThinkingTime)
-      } else {
-        showDuration()
-      }
-    }
-    return () => {
-      if (showDurationTimer) {
-        clearTimeout(showDurationTimer)
-      }
-      if (clearStatusTimer) {
-        clearTimeout(clearStatusTimer)
-      }
-    }
-  }, [mode])
-
   // 查找当前进行中的任务和下一个 pending 任务
   const currentTodo = tasksV2?.find(
     (task) => task.status !== 'pending' && task.status !== 'completed',
@@ -187,7 +145,8 @@ function SpinnerWithVerbInner({
     foregroundedTeammate && !foregroundedTeammate.isIdle
       ? (foregroundedTeammate.spinnerVerb ?? randomVerb)
       : leaderVerb
-  const message = `${effectiveVerb}…`
+  // 思考时显示"思考中"，否则显示原来的 verb
+  const message = mode === 'thinking' ? `${tSync('thinking.label')}…` : `${effectiveVerb}…`
 
   // spinner 活跃时追踪 CLI 活动
   useEffect(() => {
@@ -197,8 +156,6 @@ function SpinnerWithVerbInner({
       activityManager.endCLIActivity(operationId)
     }
   }, [mode])
-  // effort 后缀在 Spinner 中不展示（getEffortSuffix 保留供其他场景使用）
-  const effortSuffix = ''
 
   // 检查是否有运行中的 in-process teammates（两种模式都需要）
   const runningTeammates = getAllInProcessTeammateTasks(tasks).filter((t) => t.status === 'running')
@@ -359,8 +316,6 @@ function SpinnerWithVerbInner({
         teammateTokens={teammateTokens}
         foregroundedTeammate={foregroundedTeammate}
         leaderIsIdle={leaderIsIdle}
-        thinkingStatus={thinkingStatus}
-        effortSuffix={effortSuffix}
       />
       {showSpinnerTree && hasRunningTeammates ? (
         <TeammateSpinnerTree

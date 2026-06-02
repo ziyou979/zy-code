@@ -82,35 +82,34 @@ export async function showInvalidConfigDialog({ error }: InvalidConfigHandlerPro
     // 这使错误对话框即使在配置文件有 JSON 语法错误时也能显示
     theme: SAFE_ERROR_THEME_NAME,
   }
-  await new Promise<void>(async (resolve) => {
-    const { unmount } = await render(
-      <AppStateProvider>
-        <KeybindingSetup>
-          <InvalidConfigDialog
-            filePath={error.filePath}
-            errorDescription={error.message}
-            onExit={() => {
-              unmount()
-              void resolve()
-              process.exit(1)
-            }}
-            onReset={() => {
-              writeFileSync_DEPRECATED(
-                error.filePath,
-                jsonStringify(error.defaultConfig, null, 2),
-                {
-                  flush: false,
-                  encoding: 'utf8',
-                },
-              )
-              unmount()
-              void resolve()
-              process.exit(0)
-            }}
-          />
-        </KeybindingSetup>
-      </AppStateProvider>,
-      renderOptions,
-    )
+  const { unmount } = await render(
+    <AppStateProvider>
+      <KeybindingSetup>
+        <InvalidConfigDialog
+          filePath={error.filePath}
+          errorDescription={error.message}
+          onExit={() => {
+            unmount()
+            process.exit(1)
+          }}
+          onReset={() => {
+            writeFileSync_DEPRECATED(
+              error.filePath,
+              jsonStringify(error.defaultConfig, null, 2),
+              {
+                flush: false,
+                encoding: 'utf8',
+              },
+            )
+            unmount()
+            process.exit(0)
+          }}
+        />
+      </KeybindingSetup>
+    </AppStateProvider>,
+    renderOptions,
+  )
+  await new Promise<void>(() => {
+    // process.exit() in callbacks above will terminate — this Promise keeps the event loop alive
   })
 }

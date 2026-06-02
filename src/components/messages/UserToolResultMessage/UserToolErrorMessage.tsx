@@ -50,7 +50,7 @@ export function UserToolErrorMessage({
     return <RejectedToolUseMessage />
   }
   if (
-    feature('TRANSCRIPT_CLASSIFIER') &&
+    true &&
     typeof param.content === 'string' &&
     isClassifierDenial(param.content)
   ) {

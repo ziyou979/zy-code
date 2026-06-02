@@ -14,7 +14,6 @@ import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { Box, Text, useInput } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import type { ElicitationRequestEvent } from '../../services/mcp/elicitationHandler.js'
-import { openBrowser } from '../../utils/browser.js'
 import {
   getEnumLabel,
   getEnumValues,
@@ -26,6 +25,7 @@ import {
   validateElicitationInput,
   validateElicitationInputAsync,
 } from '../../services/mcp/elicitationValidation.js'
+import { openBrowser } from '../../utils/browser.js'
 import { plural } from '../../utils/stringUtils.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Byline } from '../design-system/Byline.js'

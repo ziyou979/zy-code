@@ -9,7 +9,7 @@ import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { PROVIDER_REGISTRY } from '../services/model/providerRegistry.js'
 import { normalizeApiKeyForConfig } from '../utils/authPortable.js'
 import { saveGlobalConfig } from '../utils/config.js'
-import { toPersistableEffort } from '../utils/effort.js'
+import { type EffortLevel, toPersistableEffort } from '../utils/effort.js'
 import { updateSettingsForSource } from '../utils/settings/settings.js'
 import { Select } from './CustomSelect/select.js'
 import { effortLevelToSymbol } from './EffortIndicator.js'
@@ -334,7 +334,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   // Effort step — choose how thorough model responses should be
   function handleEffortDone(effortLevel: string) {
     updateSettingsForSource('userSettings', {
-      effortLevel: toPersistableEffort(effortLevel as any),
+      effortLevel: toPersistableEffort(effortLevel as EffortLevel),
     })
     goToNextStep()
   }
@@ -347,20 +347,20 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         <Select
           options={[
             {
-              label: `${effortLevelToSymbol('medium')} ${tSync('effort.mediumRecommended')}`,
-              value: 'medium',
+              label: `${effortLevelToSymbol('balanced')} ${tSync('effort.balancedRecommended')}`,
+              value: 'balanced',
             },
             {
-              label: `${effortLevelToSymbol('high')} ${tSync('effort.high')}`,
-              value: 'high',
+              label: `${effortLevelToSymbol('thorough')} ${tSync('effort.thorough')}`,
+              value: 'thorough',
             },
             {
-              label: `${effortLevelToSymbol('low')} ${tSync('effort.low')}`,
-              value: 'low',
+              label: `${effortLevelToSymbol('light')} ${tSync('effort.light')}`,
+              value: 'light',
             },
           ]}
           onChange={(value) => handleEffortDone(value)}
-          onCancel={() => handleEffortDone('medium')}
+          onCancel={() => handleEffortDone('balanced')}
         />
         <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
       </Box>

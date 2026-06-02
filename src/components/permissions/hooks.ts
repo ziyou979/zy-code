@@ -5,15 +5,15 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js'
-import { BashTool } from 'src/tools/BashTool/BashTool.js'
+import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { splitCommand_DEPRECATED } from 'src/shell-eval/bash/commands.js'
+import { BashTool } from 'src/tools/BashTool/BashTool.js'
 import type {
   PermissionDecisionReason,
   PermissionResult,
 } from 'src/utils/permissions/PermissionResult.js'
 import { extractRules, hasRules } from 'src/utils/permissions/PermissionUpdate.js'
 import { permissionRuleValueToString } from 'src/utils/permissions/permissionRuleParser.js'
-import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import type { ToolUseConfirm } from '../../components/permissions/PermissionRequest.js'
 import { useSetAppState } from '../../state/AppState.js'
 import { env } from '../../utils/env.js'
@@ -57,7 +57,7 @@ function decisionReasonToString(decisionReason: PermissionDecisionReason | undef
     return 'No decision reason'
   }
   if (
-    (feature('BASH_CLASSIFIER') || feature('TRANSCRIPT_CLASSIFIER')) &&
+    (feature('BASH_CLASSIFIER') || true) &&
     decisionReason.type === 'classifier'
   ) {
     return `Classifier: ${decisionReason.classifier}, Reason: ${decisionReason.reason}`

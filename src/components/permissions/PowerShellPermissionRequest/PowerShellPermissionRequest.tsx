@@ -8,11 +8,11 @@ import {
   logEvent,
 } from '../../../services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../../../services/analytics/metadata.js'
+import { getCompoundCommandPrefixesStatic } from '../../../shell-eval/powershell/staticPrefix.js'
 import { getDestructiveCommandWarning } from '../../../tools/PowerShellTool/destructiveCommandWarning.js'
 import { PowerShellTool } from '../../../tools/PowerShellTool/PowerShellTool.js'
 import { isAllowlistedCommand } from '../../../tools/PowerShellTool/readOnlyValidation.js'
 import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js'
-import { getCompoundCommandPrefixesStatic } from '../../../shell-eval/powershell/staticPrefix.js'
 import { Select } from '../../CustomSelect/select.js'
 import { type UnaryEvent, usePermissionRequestLogging } from '../hooks.js'
 import { PermissionDecisionDebugInfo } from '../PermissionDecisionDebugInfo.js'

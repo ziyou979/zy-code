@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useState } from 'react'
 import { useInterval } from 'usehooks-ts'
 import { Text } from '../ink.js'
+import { getPackageManager } from '../services/nativeInstaller/packageManagers.js'
 import {
   type AutoUpdaterResult,
   getLatestVersionFromGcs,
@@ -10,7 +11,6 @@ import {
 } from '../utils/autoUpdater.js'
 import { isAutoUpdaterDisabled } from '../utils/config.js'
 import { logForDebugging } from '../utils/debug.js'
-import { getPackageManager } from '../services/nativeInstaller/packageManagers.js'
 import { gt, gte } from '../utils/semver.js'
 import { getInitialSettings } from '../utils/settings/settings.js'
 

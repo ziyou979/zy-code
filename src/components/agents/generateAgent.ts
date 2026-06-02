@@ -1,10 +1,10 @@
 import { getUserContext } from 'src/context.js'
 import { queryModelWithoutStreaming } from 'src/services/api/llmOrchestrator.js'
+import type { ModelName } from 'src/services/model/model.js'
 import { getEmptyToolPermissionContext } from 'src/Tool.js'
 import { AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
 import { prependUserContext } from 'src/utils/api.js'
 import { createUserMessage, normalizeMessagesForAPI } from 'src/utils/messages.js'
-import type { ModelName } from 'src/services/model/model.js'
 import { getLanguageSection } from '../../constants/prompts.js'
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
 import {

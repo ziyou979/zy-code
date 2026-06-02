@@ -3,6 +3,7 @@ import chalk from 'chalk'
 import figures from 'figures'
 import { tSync } from 'src/i18n/index.js'
 import { Ansi, Box, color, Text, useTheme } from '../../ink.js'
+import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { useAppState } from '../../state/AppState.js'
 import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
 import { permissionModeTitle } from '../../utils/permissions/PermissionMode.js'
@@ -14,7 +15,6 @@ import { extractRules } from '../../utils/permissions/PermissionUpdate.js'
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
 import { permissionRuleValueToString } from '../../utils/permissions/permissionRuleParser.js'
 import { detectUnreachableRules } from '../../utils/permissions/shadowedRuleDetection.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { getSettingSourceDisplayNameLowercase } from '../../utils/settings/constants.js'
 
 type PermissionDecisionInfoItemProps = {
@@ -27,7 +27,7 @@ function decisionReasonDisplayString(
   },
 ): string {
   if (
-    (feature('BASH_CLASSIFIER') || feature('TRANSCRIPT_CLASSIFIER')) &&
+    (feature('BASH_CLASSIFIER') || true) &&
     decisionReason.type === 'classifier'
   ) {
     return `${chalk.bold(decisionReason.classifier)} classifier: ${decisionReason.reason}`

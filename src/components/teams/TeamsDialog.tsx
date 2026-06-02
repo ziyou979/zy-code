@@ -9,6 +9,19 @@ import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text, useInput } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
+import { IT2_COMMAND, isInsideTmuxSync } from '../../services/swarm/backends/detection.js'
+import {
+  ensureBackendsRegistered,
+  getBackendByType,
+  getCachedBackend,
+} from '../../services/swarm/backends/registry.js'
+import type { PaneBackendType } from '../../services/swarm/backends/types.js'
+import { getSwarmSocketName, TMUX_COMMAND } from '../../services/swarm/constants.js'
+import {
+  removeMemberFromTeam,
+  setMemberMode,
+  setMultipleMemberModes,
+} from '../../services/swarm/teamHelpers.js'
 import { type AppState, useAppState, useSetAppState } from '../../state/AppState.js'
 import { getEmptyToolPermissionContext } from '../../Tool.js'
 import { AGENT_COLOR_TO_THEME_COLOR } from '../../tools/AgentTool/agentColorManager.js'
@@ -23,19 +36,6 @@ import {
   permissionModeSymbol,
 } from '../../utils/permissions/PermissionMode.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { IT2_COMMAND, isInsideTmuxSync } from '../../services/swarm/backends/detection.js'
-import {
-  ensureBackendsRegistered,
-  getBackendByType,
-  getCachedBackend,
-} from '../../services/swarm/backends/registry.js'
-import type { PaneBackendType } from '../../services/swarm/backends/types.js'
-import { getSwarmSocketName, TMUX_COMMAND } from '../../services/swarm/constants.js'
-import {
-  removeMemberFromTeam,
-  setMemberMode,
-  setMultipleMemberModes,
-} from '../../services/swarm/teamHelpers.js'
 import { listTasks, unassignTeammateTasks } from '../../utils/tasks.js'
 import {
   getTeammateStatuses,

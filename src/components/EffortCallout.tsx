@@ -33,26 +33,27 @@ export function EffortCallout({ model, onDone }: Props) {
     return () => clearTimeout(timeoutId)
   }, [handleCancel])
   const defaultEffort = getDefaultEffortForModel(model)
-  const defaultLevel = defaultEffort ? convertEffortValueToLevel(defaultEffort) : 'high'
-  const handleSelect = (value: EffortLevel) => {
-    const effortLevel = value === defaultLevel ? undefined : value
+  const defaultLevel = defaultEffort ? convertEffortValueToLevel(defaultEffort) : 'thorough'
+  const handleSelect = (value: string) => {
+    const level = value as EffortLevel
+    const effortLevel = level === defaultLevel ? undefined : level
     updateSettingsForSource('userSettings', {
       effortLevel: toPersistableEffort(effortLevel),
     })
-    onDoneRef.current(value)
+    onDoneRef.current(level)
   }
   const options = [
     {
-      label: <EffortOptionLabel level="medium" text={tSync('effort.mediumRecommended')} />,
-      value: 'medium',
+      label: <EffortOptionLabel level="balanced" text={tSync('effort.balancedRecommended')} />,
+      value: 'balanced',
     },
     {
-      label: <EffortOptionLabel level="high" text={tSync('effort.high')} />,
-      value: 'high',
+      label: <EffortOptionLabel level="thorough" text={tSync('effort.thorough')} />,
+      value: 'thorough',
     },
     {
-      label: <EffortOptionLabel level="low" text={tSync('effort.low')} />,
-      value: 'low',
+      label: <EffortOptionLabel level="light" text={tSync('effort.light')} />,
+      value: 'light',
     },
   ]
   return (
@@ -66,9 +67,9 @@ export function EffortCallout({ model, onDone }: Props) {
         {
           <Box marginBottom={1}>
             <Text dimColor={true}>
-              {<EffortIndicatorSymbol level="low" />} {tSync('effort.low')} {'\xB7'}{' '}
-              {<EffortIndicatorSymbol level="medium" />} {tSync('effort.medium')}
-              {' \xB7'} {<EffortIndicatorSymbol level="high" />} {tSync('effort.high')}
+              {<EffortIndicatorSymbol level="light" />} {tSync('effort.light')} {'\xB7'}{' '}
+              {<EffortIndicatorSymbol level="balanced" />} {tSync('effort.balanced')}
+              {' \xB7'} {<EffortIndicatorSymbol level="thorough" />} {tSync('effort.thorough')}
             </Text>
           </Box>
         }

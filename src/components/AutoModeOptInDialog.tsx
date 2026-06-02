@@ -6,9 +6,7 @@ import { updateSettingsForSource } from '../utils/settings/settings.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
 
-// NOTE: This copy is legally reviewed — do not modify without Legal team approval.
-export const AUTO_MODE_DESCRIPTION =
-  "Auto mode lets Zy handle permission prompts automatically — Zy checks each tool call for risky actions and prompt injection before executing. Actions Zy identifies as safe are executed, while actions Zy identifies as risky are blocked and Zy may try a different approach. Ideal for long-running tasks. Sessions are slightly more expensive. Zy can make mistakes that allow harmful commands to run, it's recommended to only use in isolated environments. Shift+Tab to change mode."
+export const AUTO_MODE_DESCRIPTION = tSync('autoMode.description')
 type Props = {
   onAccept(): void
   onDecline(): void
@@ -57,20 +55,16 @@ export function AutoModeOptInDialog({ onAccept, onDecline, declineExits }: Props
       {
         <Select
           options={[
-            ...(true
-              ? [
-                  {
-                    label: 'Yes, and make it my default mode',
-                    value: 'accept-default' as const,
-                  },
-                ]
-              : []),
             {
-              label: 'Yes, enable auto mode',
+              label: tSync('autoMode.acceptDefault'),
+              value: 'accept-default' as const,
+            },
+            {
+              label: tSync('autoMode.accept'),
               value: 'accept' as const,
             },
             {
-              label: declineExits ? 'No, exit' : 'No, go back',
+              label: declineExits ? tSync('autoMode.declineExit') : tSync('autoMode.declineBack'),
               value: 'decline' as const,
             },
           ]}

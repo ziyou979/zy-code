@@ -7,6 +7,7 @@ import {
 import { useInterval } from 'usehooks-ts'
 import { useUpdateNotification } from '../hooks/useUpdateNotification.js'
 import { Box, Text } from '../ink.js'
+import { removeInstalledSymlink } from '../services/nativeInstaller/index.js'
 import {
   type AutoUpdaterResult,
   getLatestVersion,
@@ -20,7 +21,6 @@ import { logForDebugging } from '../utils/debug.js'
 import { getCurrentInstallationType } from '../utils/doctorDiagnostic.js'
 import { isDevEnv, isTestEnv } from '../utils/envUtils.js'
 import { installOrUpdateZyPackage, localInstallationExists } from '../utils/localInstaller.js'
-import { removeInstalledSymlink } from '../services/nativeInstaller/index.js'
 import { gt, gte } from '../utils/semver.js'
 import { getInitialSettings } from '../utils/settings/settings.js'
 

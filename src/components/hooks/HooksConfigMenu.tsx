@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import type { HookEvent } from 'src/types'
 import { tSync } from 'src/i18n/index.js'
 import { useAppState, useAppStateStore } from 'src/state/AppState.js'
+import type { HookEvent } from 'src/types'
 import type { CommandResultDisplay } from '../../commands.js'
 import { useSettingsChange } from '../../hooks/useSettingsChange.js'
 import { Box, Text } from '../../ink.js'

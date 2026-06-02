@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import { plot as asciichart } from 'asciichart'
 import chalk from 'chalk'
 import figures from 'figures'
-import React, { Suspense, use, useEffect, useMemo, useState } from 'react'
+import React, { Suspense, use, useEffect, useMemo, useRef, useState } from 'react'
 import stripAnsi from 'strip-ansi'
 import type { CommandResultDisplay } from '../commands.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
@@ -17,7 +17,7 @@ import { renderModelName } from '../services/model/model.js'
 import { getGlobalConfig } from '../utils/config.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { formatDuration, formatNumber } from '../utils/format.js'
-import { generateHeatmap } from '../utils/heatmap.js'
+import { generateHeatmap, generateHeatmapData, type HeatmapCell } from '../utils/heatmap.js'
 import { copyAnsiToClipboard } from '../utils/screenshotClipboard.js'
 import {
   aggregateZyCodeStatsForRange,
@@ -27,9 +27,15 @@ import {
 } from '../utils/stats.js'
 import { resolveThemeSetting } from '../utils/systemTheme.js'
 import { getTheme, themeColorToAnsi } from '../utils/theme.js'
+import ScrollBox, { type ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import { Pane } from './design-system/Pane.js'
 import { Tab, Tabs, useTabHeaderFocus } from './design-system/Tabs.js'
 import { Spinner } from './Spinner.js'
+
+type InnerTabProps = {
+  isActive: boolean
+  onUp: () => void
+}
 
 function getLocale(): string {
   return getUiLanguage() === 'zh-CN' ? 'zh-CN' : 'en-US'
@@ -41,6 +47,13 @@ function formatPeakDay(dateStr: string): string {
     day: 'numeric',
   })
 }
+function HeatmapCellText({ cell }: { cell: HeatmapCell }) {
+  if (cell.intensity === 0) {
+    return <Text dimColor>{cell.char}</Text>
+  }
+  return <Text color="zy">{cell.char}</Text>
+}
+
 type Props = {
   onClose: (
     result?: string,
@@ -49,7 +62,7 @@ type Props = {
     },
   ) => void
 }
-type StatsResult =
+export type StatsResult =
   | {
       type: 'success'
       data: ZyCodeStats
@@ -77,7 +90,7 @@ function getNextDateRange(current: StatsDateRange): StatsDateRange {
  * Creates a stats loading promise that never rejects.
  * Always loads all-time stats for the heatmap.
  */
-function createAllTimeStatsPromise(): Promise<StatsResult> {
+export function createAllTimeStatsPromise(): Promise<StatsResult> {
   return aggregateZyCodeStatsForRange('all')
     .then((data): StatsResult => {
       if (!data || data.totalSessions === 0) {
@@ -114,38 +127,76 @@ export function Stats({ onClose }: Props) {
     </Suspense>
   )
 }
+
+// 可嵌入 Settings tab 的 Stats 内容（无 Pane/close 逻辑）
+export function StatsInner({ allTimeStatsPromise }: { allTimeStatsPromise?: Promise<StatsResult> }) {
+  const [allTimePromise] = useState(() => allTimeStatsPromise ?? createAllTimeStatsPromise())
+  return (
+    <Suspense
+      fallback={
+        <Box marginTop={1}>
+          <Spinner />
+          <Text> {tSync('stats.loading')}</Text>
+        </Box>
+      }
+    >
+      <StatsInnerContent allTimePromise={allTimePromise} />
+    </Suspense>
+  )
+}
+
 type StatsContentProps = {
   allTimePromise: Promise<StatsResult>
   onClose: Props['onClose']
 }
 
-/**
- * Inner component that uses React 19's use() to read the stats promise.
- * Suspends while loading all-time stats, then handles date range changes without suspending.
- */
 function StatsContent({ allTimePromise, onClose }: StatsContentProps) {
+  const handleClose = () => {
+    onClose('Stats dialog dismissed', {
+      display: 'system',
+    })
+  }
+  useKeybinding('confirm:no', handleClose, {
+    context: 'Confirmation',
+  })
+  useInput((input, key) => {
+    if (key.ctrl && (input === 'c' || input === 'd')) {
+      onClose('Stats dialog dismissed', {
+        display: 'system',
+      })
+    }
+  })
+  return (
+    <Pane color="zy">
+      <StatsInnerContent allTimePromise={allTimePromise} />
+    </Pane>
+  )
+}
+
+type StatsInnerContentProps = {
+  allTimePromise: Promise<StatsResult>
+}
+
+function StatsInnerContent({ allTimePromise }: StatsInnerContentProps) {
   const allTimeResult = use(allTimePromise)
-  const [dateRange, setDateRange] = useState('all')
-  const [statsCache, setStatsCache] = useState({} as any)
+  const [dateRange, setDateRange] = useState<StatsDateRange>('all')
+  const [statsCache, setStatsCache] = useState<Record<string, ZyCodeStats | null>>({})
   const [isLoadingFiltered, setIsLoadingFiltered] = useState(false)
   const [activeTab, setActiveTab] = useState('Overview')
-  const [copyStatus, setCopyStatus] = useState(null)
+  const [copyStatus, setCopyStatus] = useState<string | null>(null)
+  const scrollRef = useRef<ScrollBoxHandle>(null)
+  const { headerFocused: outerHeaderFocused, focusHeader: focusOuterHeader } =
+    useTabHeaderFocus()
   useEffect(() => {
-    if (dateRange === 'all') {
-      return
-    }
-    if (statsCache[dateRange]) {
+    if (dateRange === 'all' || statsCache[dateRange]) {
       return
     }
     let cancelled = false
     setIsLoadingFiltered(true)
-    aggregateZyCodeStatsForRange(dateRange as any)
+    aggregateZyCodeStatsForRange(dateRange)
       .then((data) => {
         if (!cancelled) {
-          setStatsCache((prev) => ({
-            ...prev,
-            [dateRange]: data,
-          }))
+          setStatsCache((prev) => ({ ...prev, [dateRange]: data }))
           setIsLoadingFiltered(false)
         }
       })
@@ -165,30 +216,26 @@ function StatsContent({ allTimePromise, onClose }: StatsContentProps) {
         : null
       : (statsCache[dateRange] ?? (allTimeResult.type === 'success' ? allTimeResult.data : null))
   const allTimeStats = allTimeResult.type === 'success' ? allTimeResult.data : null
-  const handleClose = () => {
-    onClose('Stats dialog dismissed', {
-      display: 'system',
-    })
-  }
-  useKeybinding('confirm:no', handleClose, {
-    context: 'Confirmation',
-  })
   useInput((input, key) => {
-    if (key.ctrl && (input === 'c' || input === 'd')) {
-      onClose('Stats dialog dismissed', {
-        display: 'system',
-      })
-    }
-    if (key.tab) {
-      setActiveTab((prev_0) => (prev_0 === 'Overview' ? 'Models' : 'Overview'))
-    }
     if (input === 'r' && !key.ctrl && !key.meta) {
-      setDateRange(getNextDateRange(dateRange as any))
+      setDateRange(getNextDateRange(dateRange))
     }
     if (key.ctrl && input === 's' && displayStats) {
-      handleScreenshot(displayStats, activeTab as any, setCopyStatus)
+      handleScreenshot(displayStats, activeTab as 'Overview' | 'Models', setCopyStatus)
     }
-  })
+    if (activeTab === 'Overview') {
+      if (key.downArrow) {
+        scrollRef.current?.scrollBy(2)
+      } else if (key.upArrow) {
+        const top = scrollRef.current?.getScrollTop() ?? 0
+        if (top > 0) {
+          scrollRef.current?.scrollBy(-2)
+        } else {
+          focusOuterHeader()
+        }
+      }
+    }
+  }, { isActive: !outerHeaderFocused })
   if (allTimeResult.type === 'error') {
     return (
       <Box marginTop={1}>
@@ -212,41 +259,46 @@ function StatsContent({ allTimePromise, onClose }: StatsContentProps) {
     )
   }
   return (
-    <Pane color="zy">
-      {
-        <Box flexDirection="row" gap={1} marginBottom={1}>
-          <Tabs title="" color="zy" defaultTab="Overview">
-            {
-              <Tab id="Overview" title={tSync('stats.overview')}>
-                <OverviewTab
-                  stats={displayStats}
-                  allTimeStats={allTimeStats}
-                  dateRange={dateRange as any}
-                  isLoading={isLoadingFiltered}
-                />
-              </Tab>
-            }
-            {
-              <Tab id="Models" title={tSync('stats.models')}>
-                <ModelsTab
-                  stats={displayStats}
-                  dateRange={dateRange as any}
-                  isLoading={isLoadingFiltered}
-                />
-              </Tab>
-            }
-          </Tabs>
-        </Box>
-      }
-      {
-        <Box paddingLeft={2}>
-          <Text dimColor={true}>
-            {tSync('stats.footer')}
-            {copyStatus ? ` · ${copyStatus}` : ''}
-          </Text>
-        </Box>
-      }
-    </Pane>
+    <Box flexDirection="column" flexGrow={1}>
+      {/* @ts-ignore — Tabs children type */}
+      <Tabs
+        color="zy"
+        selectedTab={activeTab}
+        onTabChange={setActiveTab}
+        disableNavigation={outerHeaderFocused}
+        initialHeaderFocused={true}
+      >
+        <Tab title={tSync('stats.overview')} id="Overview">
+          <ScrollBox ref={scrollRef} flexDirection="column" flexGrow={1}>
+            <OverviewTab
+              stats={displayStats}
+              allTimeStats={allTimeStats}
+              dateRange={dateRange}
+              isLoading={isLoadingFiltered}
+              isActive={!outerHeaderFocused}
+              onUp={focusOuterHeader}
+            />
+          </ScrollBox>
+        </Tab>
+        <Tab title={tSync('stats.models')} id="Models">
+          <ModelsTab
+            stats={displayStats}
+            dateRange={dateRange}
+            isLoading={isLoadingFiltered}
+            isActive={!outerHeaderFocused}
+            onUp={focusOuterHeader}
+          />
+        </Tab>
+      </Tabs>
+      <Box marginTop={1}>
+        <Text dimColor>
+          {outerHeaderFocused ? '↓ stats' : '↑ tabs'}
+          {' · '}r {tSync('stats.footer.cycleDates')}
+          {' · '}ctrl+s {tSync('stats.footer.copy')}
+          {copyStatus ? ` · ${copyStatus}` : ''}
+        </Text>
+      </Box>
+    </Box>
   )
 }
 function DateRangeSelector({ dateRange, isLoading }: any) {
@@ -274,12 +326,14 @@ function OverviewTab({
   allTimeStats,
   dateRange,
   isLoading,
+  isActive,
+  onUp,
 }: {
   stats: ZyCodeStats
   allTimeStats: ZyCodeStats
   dateRange: StatsDateRange
   isLoading: boolean
-}): React.ReactNode {
+} & InnerTabProps): React.ReactNode {
   const { columns: terminalWidth } = useTerminalSize()
 
   // Calculate favorite model and total tokens
@@ -355,17 +409,26 @@ function OverviewTab({
     }
   }
   return (
-    <Box flexDirection="column" marginTop={1}>
-      {/* Activity Heatmap - always shows all-time data */}
-      {allTimeStats.dailyActivity.length > 0 && (
-        <Box flexDirection="column" marginBottom={1}>
-          <Ansi>
-            {generateHeatmap(allTimeStats.dailyActivity, {
-              terminalWidth,
-            })}
-          </Ansi>
-        </Box>
-      )}
+    <Box flexDirection="column" marginTop={1} flexShrink={0}>
+      {/* Activity Heatmap */}
+      {allTimeStats.dailyActivity.length > 0 && (() => {
+        const hm = generateHeatmapData(allTimeStats.dailyActivity, { terminalWidth })
+        return (
+          <Box flexDirection="column" marginBottom={1} flexShrink={0}>
+            <Text>{hm.monthLabel}</Text>
+            {hm.lines.map((line, i) => (
+              <Text key={i}>
+                {line.label}
+                {line.cells.map((cell, j) => (
+                  <HeatmapCellText key={j} cell={cell} />
+                ))}
+              </Text>
+            ))}
+            <Text>{' '}</Text>
+            <Text dimColor>{hm.legendLabel}</Text>
+          </Box>
+        )
+      })()}
 
       {/* Date range selector */}
       {/* @ts-ignore */}
@@ -517,105 +580,48 @@ function OverviewTab({
   )
 }
 
-// Famous books and their approximate token counts (words * ~1.3)
-// Sorted by tokens ascending for comparison logic
+// 各国名著及大致 Token 数（英文约 words*1.3，中文约 chars*1.5）
+// 按 tokens 升序排列，用于趣味对比；name 为 i18n key
 const BOOK_COMPARISONS = [
-  {
-    name: 'The Little Prince',
-    tokens: 22000,
-  },
-  {
-    name: 'The Old Man and the Sea',
-    tokens: 35000,
-  },
-  {
-    name: 'A Christmas Carol',
-    tokens: 37000,
-  },
-  {
-    name: 'Animal Farm',
-    tokens: 39000,
-  },
-  {
-    name: 'Fahrenheit 451',
-    tokens: 60000,
-  },
-  {
-    name: 'The Great Gatsby',
-    tokens: 62000,
-  },
-  {
-    name: 'Slaughterhouse-Five',
-    tokens: 64000,
-  },
-  {
-    name: 'Brave New World',
-    tokens: 83000,
-  },
-  {
-    name: 'The Catcher in the Rye',
-    tokens: 95000,
-  },
-  {
-    name: "Harry Potter and the Philosopher's Stone",
-    tokens: 103000,
-  },
-  {
-    name: 'The Hobbit',
-    tokens: 123000,
-  },
-  {
-    name: '1984',
-    tokens: 123000,
-  },
-  {
-    name: 'To Kill a Mockingbird',
-    tokens: 130000,
-  },
-  {
-    name: 'Pride and Prejudice',
-    tokens: 156000,
-  },
-  {
-    name: 'Dune',
-    tokens: 244000,
-  },
-  {
-    name: 'Moby-Dick',
-    tokens: 268000,
-  },
-  {
-    name: 'Crime and Punishment',
-    tokens: 274000,
-  },
-  {
-    name: 'A Game of Thrones',
-    tokens: 381000,
-  },
-  {
-    name: 'Anna Karenina',
-    tokens: 468000,
-  },
-  {
-    name: 'Don Quixote',
-    tokens: 520000,
-  },
-  {
-    name: 'The Lord of the Rings',
-    tokens: 576000,
-  },
-  {
-    name: 'The Count of Monte Cristo',
-    tokens: 603000,
-  },
-  {
-    name: 'Les Misérables',
-    tokens: 689000,
-  },
-  {
-    name: 'War and Peace',
-    tokens: 730000,
-  },
+  { id: 'theLittlePrince', tokens: 22000 },
+  { id: 'theOldManAndTheSea', tokens: 35000 },
+  { id: 'aChristmasCarol', tokens: 37000 },
+  { id: 'animalFarm', tokens: 39000 },
+  { id: 'toLive', tokens: 48000 },
+  { id: 'borderTown', tokens: 50000 },
+  { id: 'fahrenheit451', tokens: 60000 },
+  { id: 'theGreatGatsby', tokens: 62000 },
+  { id: 'slaughterhouseFive', tokens: 64000 },
+  { id: 'norwegianWood', tokens: 75000 },
+  { id: 'braveNewWorld', tokens: 83000 },
+  { id: 'fortressBesieged', tokens: 88000 },
+  { id: 'theCatcherInTheRye', tokens: 95000 },
+  { id: 'camelXiangzi', tokens: 100000 },
+  { id: 'harryPotterAndThePhilosophersStone', tokens: 103000 },
+  { id: 'theHobbit', tokens: 123000 },
+  { id: 'nineteenEightyFour', tokens: 123000 },
+  { id: 'toKillAMockingbird', tokens: 130000 },
+  { id: 'theKiteRunner', tokens: 130000 },
+  { id: 'prideAndPrejudice', tokens: 156000 },
+  { id: 'whiteDeerPlain', tokens: 220000 },
+  { id: 'snowCountry', tokens: 220000 },
+  { id: 'dune', tokens: 244000 },
+  { id: 'ordinaryWorld', tokens: 260000 },
+  { id: 'mobyDick', tokens: 268000 },
+  { id: 'crimeAndPunishment', tokens: 274000 },
+  { id: 'theThreeBodyProblem', tokens: 310000 },
+  { id: 'aGameOfThrones', tokens: 381000 },
+  { id: 'journeyToTheWest', tokens: 420000 },
+  { id: 'annaKarenina', tokens: 468000 },
+  { id: 'dreamOfTheRedChamber', tokens: 470000 },
+  { id: 'donQuixote', tokens: 520000 },
+  { id: 'waterMargin', tokens: 520000 },
+  { id: 'theLordOfTheRings', tokens: 576000 },
+  { id: 'theCountOfMonteCristo', tokens: 603000 },
+  { id: 'theLegendOfTheCondorHeroes', tokens: 620000 },
+  { id: 'romanceOfTheThreeKingdoms', tokens: 650000 },
+  { id: 'lesMiserables', tokens: 689000 },
+  { id: 'warAndPeace', tokens: 730000 },
 ]
 
 // Time equivalents for session durations
@@ -666,11 +672,12 @@ function generateFunFactoid(stats: ZyCodeStats, totalTokens: number): string {
   if (totalTokens > 0) {
     const matchingBooks = BOOK_COMPARISONS.filter((book) => totalTokens >= book.tokens)
     for (const book of matchingBooks) {
+      const bookName = tSync(`stats.books.${book.id}`)
       const times = totalTokens / book.tokens
       if (times >= 2) {
-        factoids.push(tSync('stats.factTokensMore', { n: Math.floor(times), book: book.name }))
+        factoids.push(tSync('stats.factTokensMore', { n: Math.floor(times), book: bookName }))
       } else {
-        factoids.push(tSync('stats.factTokensSame', { book: book.name }))
+        factoids.push(tSync('stats.factTokensSame', { book: bookName }))
       }
     }
   }
@@ -691,8 +698,11 @@ function generateFunFactoid(stats: ZyCodeStats, totalTokens: number): string {
   const randomIndex = Math.floor(Math.random() * factoids.length)
   return factoids[randomIndex]!
 }
-function ModelsTab({ stats, dateRange, isLoading }) {
-  const { headerFocused, focusHeader } = useTabHeaderFocus()
+function ModelsTab({ stats, dateRange, isLoading, isActive, onUp }: {
+  stats: ZyCodeStats
+  dateRange: StatsDateRange
+  isLoading: boolean
+} & InnerTabProps) {
   const [scrollOffset, setScrollOffset] = useState(0)
   const { columns: terminalWidth } = useTerminalSize()
   const modelEntries = Object.entries(stats.modelUsage).sort((entryA, entryB) => {
@@ -709,13 +719,11 @@ function ModelsTab({ stats, dateRange, isLoading }) {
         if (scrollOffset > 0) {
           setScrollOffset((previousOffset) => Math.max(previousOffset - 2, 0))
         } else {
-          focusHeader()
+          onUp()
         }
       }
     },
-    {
-      isActive: !headerFocused,
-    },
+    { isActive },
   )
   if (modelEntries.length === 0) {
     return (
@@ -746,15 +754,16 @@ function ModelsTab({ stats, dateRange, isLoading }) {
   const StatsBox = Box
   const rightModelEntries = rightModels.map((entry) => {
     const [model_1, usage_1] = entry
-    // @ts-expect-error -- ModelEntry props may differ between builds
-    return <ModelEntry key={model_1} model={model_1} usage={usage_1} totalTokens={totalTokens} />
+    return <ModelEntry key={model_1} model={model_1} usage={usage_1 as ModelEntryProps['usage']} totalTokens={totalTokens} />
   })
   return (
     <Box flexDirection="column" marginTop={1}>
       {chartOutput && (
         <Box flexDirection="column" marginBottom={1}>
           <Text bold={true}>{tSync('stats.tokensPerDay')}</Text>
-          <Ansi>{chartOutput.chart}</Ansi>
+          {chartOutput.chart.split('\n').map((line, i) => (
+            <Text key={i}>{line}</Text>
+          ))}
           <Text color="subtle">{chartOutput.xAxisLabels}</Text>
           <Box>
             {chartOutput.legend.map((item, i) => (

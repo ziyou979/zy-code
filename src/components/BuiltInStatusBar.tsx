@@ -11,8 +11,8 @@ import { getGlobalConfig } from '../utils/config.js'
 import { getBranch, getIsClean } from '../utils/git.js'
 import { resolveThemeSetting } from '../utils/systemTheme.js'
 import { getTheme, type Theme } from '../utils/theme.js'
-import { mergeWithDefaults } from './statusbar/statusbarModuleDefaults.js'
 import { renderStatusbarSegments, type StatusbarContext } from './statusbar/renderSegments.js'
+import { mergeWithDefaults } from './statusbar/statusbarModuleDefaults.js'
 
 /** 分隔符宽度 */
 const SEPARATOR_WIDTH = 3 // ' │ '

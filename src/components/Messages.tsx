@@ -21,7 +21,6 @@ import type {
   AssistantMessage,
   AttachmentMessage,
   Message as MessageType,
-  ProgressMessage as ProgressMessageType,
   RenderableMessage,
   SystemMessage,
   UserMessage,

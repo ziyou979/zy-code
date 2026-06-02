@@ -2,7 +2,12 @@
 import { Box, Text } from '../../ink.js'
 import { feature } from 'bun:bundle'
 import { useState } from 'react'
-import { BLACK_CIRCLE, REFERENCE_MARK, TEARDROP_ASTERISK } from '../../constants/figures.js'
+import {
+  BLACK_CIRCLE,
+  BRAILLE_Z,
+  REFERENCE_MARK,
+  TEARDROP_ASTERISK,
+} from '../../constants/figures.js'
 import { basename } from 'node:path'
 import { MessageResponse } from '../MessageResponse.js'
 import { FilePathLink } from '../FilePathLink.js'
@@ -310,7 +315,7 @@ function TurnDurationMessage({ message, addMargin }) {
     <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
       {
         <Box minWidth={2}>
-          <Text dimColor={true}>{TEARDROP_ASTERISK}</Text>
+          <Text dimColor={true}>{BRAILLE_Z}</Text>
         </Box>
       }
       {

@@ -11,6 +11,7 @@ import { Tabs, Tab } from '../design-system/Tabs.js'
 import { Status, buildDiagnostics } from './Status.js'
 import { Config } from './Config.js'
 import { Usage } from './Usage.js'
+import { StatsTab, createAllTimeStatsPromise } from './StatsTab.js'
 import type { LocalJSXCommandContext, CommandResultDisplay } from '../../commands.js'
 type Props = {
   onClose: (
@@ -20,7 +21,7 @@ type Props = {
     },
   ) => void
   context: LocalJSXCommandContext
-  defaultTab: 'Status' | 'Config' | 'Usage' | 'Gates'
+  defaultTab: 'Status' | 'Config' | 'Usage' | 'Stats' | 'Gates'
 }
 export function Settings({ onClose, context, defaultTab }: Props) {
   const [selectedTab, setSelectedTab] = useState(defaultTab)
@@ -31,6 +32,7 @@ export function Settings({ onClose, context, defaultTab }: Props) {
   const { rows } = useModalOrTerminalSize(useTerminalSize())
   const contentHeight = insideModal ? rows + 1 : Math.max(15, Math.min(Math.floor(rows * 0.8), 30))
   const [diagnosticsPromise] = useState(() => buildDiagnostics().catch(() => []))
+  const [allTimeStatsPromise] = useState(createAllTimeStatsPromise)
   useExitOnCtrlCDWithKeybindings()
   const handleEscape = () => {
     if (tabsHidden) {
@@ -48,10 +50,10 @@ export function Settings({ onClose, context, defaultTab }: Props) {
       !(selectedTab === 'Gates' && gatesOwnsEsc),
   })
   const tabs = [
-    <Tab key="status" title={tSync('settings.statusTab')}>
+    <Tab key="status" id="Status" title={tSync('settings.statusTab')}>
       <Status context={context as any} diagnosticsPromise={diagnosticsPromise} />
     </Tab>,
-    <Tab key="config" title={tSync('settings.configTab')}>
+    <Tab key="config" id="Config" title={tSync('settings.configTab')}>
       <Suspense fallback={null}>
         <Config
           context={context as any}
@@ -62,8 +64,13 @@ export function Settings({ onClose, context, defaultTab }: Props) {
         />
       </Suspense>
     </Tab>,
-    <Tab key="usage" title={tSync('settings.usageTab')}>
+    <Tab key="usage" id="Usage" title={tSync('settings.usageTab')}>
       <Usage />
+    </Tab>,
+    <Tab key="stats" id="Stats" title={tSync('settings.statsTab')}>
+      <Suspense fallback={null}>
+        <StatsTab allTimeStatsPromise={allTimeStatsPromise} />
+      </Suspense>
     </Tab>,
     // Gates tab is disabled (behind false flag)
   ] as React.ReactElement[]
@@ -75,7 +82,7 @@ export function Settings({ onClose, context, defaultTab }: Props) {
         selectedTab={selectedTab}
         onTabChange={setSelectedTab as React.Dispatch<React.SetStateAction<string>>}
         hidden={tabsHidden}
-        initialHeaderFocused={defaultTab !== 'Config' && defaultTab !== 'Gates'}
+        initialHeaderFocused={true}
         contentHeight={tabsHidden || insideModal ? undefined : contentHeight}
       >
         {tabs}

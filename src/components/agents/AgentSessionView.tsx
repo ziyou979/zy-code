@@ -5,10 +5,11 @@
  * 逐行渲染状态图标 + 名称 + 进度摘要 + 最近活动。
  * 支持通过 enterTeammateView 进入 Peek 模式。
  */
-import { Box, Text, useInput } from '../../ink.js'
+
 import * as React from 'react'
 import { useMemo, useState } from 'react'
 import { tSync } from '../../i18n/index.js'
+import { Box, Text, useInput } from '../../ink.js'
 import type { AppState } from '../../state/AppState.js'
 import { enterTeammateView } from '../../state/teammateViewHelpers.js'
 import {

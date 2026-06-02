@@ -5,14 +5,14 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
+import { getMainLoopModel } from '../../services/model/model.js'
 import { isPolicyAllowed } from '../../services/policyLimits/index.js'
+import { logOTelEvent } from '../../services/telemetry/events.js'
 import type { Message } from '../../types/message.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { getLastAssistantMessage } from '../../utils/messages.js'
-import { getMainLoopModel } from '../../services/model/model.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
-import { logOTelEvent } from '../../services/telemetry/events.js'
 import { submitTranscriptShare, type TranscriptShareTrigger } from './submitTranscriptShare.js'
 import type { TranscriptShareResponse } from './TranscriptSharePrompt.js'
 import { useSurveyState } from './useSurveyState.js'

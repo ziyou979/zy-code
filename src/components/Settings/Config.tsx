@@ -173,7 +173,7 @@ export function Config({
   // Show auto in the default-mode dropdown when the user has opted in OR the
   // config is fully 'enabled' — even if currently circuit-broken ('disabled'),
   // an opted-in user should still see it in settings (it's a temporary state).
-  const showAutoInDefaultModePicker = feature('TRANSCRIPT_CLASSIFIER')
+  const showAutoInDefaultModePicker = true
     ? hasAutoModeOptInAnySource() || getAutoModeEnabledState() === 'enabled'
     : false
   // Chat/Transcript view picker is visible to entitled users (pass the GB
@@ -538,11 +538,11 @@ export function Config({
       value: settingsData?.permissions?.defaultMode || 'default',
       options: (() => {
         const priorityOrder: PermissionMode[] = ['default', 'plan']
-        const allModes: readonly PermissionMode[] = feature('TRANSCRIPT_CLASSIFIER')
+        const allModes: readonly PermissionMode[] = true
           ? PERMISSION_MODES
           : EXTERNAL_PERMISSION_MODES
         const excluded: PermissionMode[] = ['bypassPermissions']
-        if (feature('TRANSCRIPT_CLASSIFIER') && !showAutoInDefaultModePicker) {
+        if (true && !showAutoInDefaultModePicker) {
           excluded.push('auto')
         }
         return [
@@ -591,7 +591,7 @@ export function Config({
         })
       },
     },
-    ...(feature('TRANSCRIPT_CLASSIFIER') && showAutoInDefaultModePicker
+    ...(true && showAutoInDefaultModePicker
       ? [
           {
             id: 'useAutoModeDuringPlan',
@@ -1440,7 +1440,7 @@ export function Config({
       autoUpdatesChannel: iu?.autoUpdatesChannel,
       minimumVersion: iu?.minimumVersion,
       language: iu?.language,
-      ...(feature('TRANSCRIPT_CLASSIFIER')
+      ...(true
         ? {
             useAutoModeDuringPlan: (
               iu as
