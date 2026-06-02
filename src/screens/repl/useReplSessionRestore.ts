@@ -5,66 +5,63 @@
 // 返回 resume callback 供 getToolUseContext 传给 query engine。
 // 同时包含 initialMessages mount effect（props 传入的消息恢复 readFileState）。
 
+import { feature } from 'bun:bundle'
+import type { UUID } from 'node:crypto'
+import { dirname } from 'node:path'
 import type React from 'react'
 import { useCallback, useEffect } from 'react'
-import { feature } from 'bun:bundle'
-import { dirname } from 'node:path'
-import type { UUID } from 'node:crypto'
-import {
-  saveCurrentSessionCosts,
-  resetCostState,
-  getStoredSessionCosts,
-} from '../../cost-tracker.js'
 import { setCostStateForRestore } from '../../bootstrap/state/cost.js'
 import { switchSession } from '../../bootstrap/state/session.js'
-import { getSessionId, getOriginalCwd } from '../../bootstrap/state.js'
+import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js'
 import {
-  logEvent,
+  getStoredSessionCosts,
+  resetCostState,
+  saveCurrentSessionCosts,
+} from '../../cost-tracker.js'
+import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
+import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+  logEvent,
 } from '../../services/analytics/index.js'
-import { restoreRemoteAgentTasks } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js'
 import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
+import { restoreRemoteAgentTasks } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
+import type { ResumeEntrypoint } from '../../types/command.js'
 import { asSessionId } from '../../types/ids.js'
 import type { LogOption } from '../../types/logs.js'
-import type { ResumeEntrypoint } from '../../types/command.js'
 import type { Message as MessageType } from '../../types/message.js'
-import { copyPlanForFork, copyPlanForResume, setPlanSlug } from '../../utils/plans.js'
-import { createSystemMessage } from '../../utils/messages.js'
+import { updateSessionName } from '../../utils/concurrentSessions.js'
 import { deserializeMessages } from '../../utils/conversationRecovery.js'
-import { processSessionStartHooks } from '../../utils/sessionStart.js'
+import { copyFileHistoryForResume } from '../../utils/fileHistory.js'
 import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../../utils/hooks.js'
+import { createSystemMessage } from '../../utils/messages.js'
+import { copyPlanForFork, copyPlanForResume } from '../../utils/plans.js'
 import {
-  restoreSessionStateFromLog,
   computeStandaloneAgentContext,
-  restoreAgentFromSession,
   exitRestoredWorktree,
+  restoreAgentFromSession,
+  restoreSessionStateFromLog,
   restoreWorktreeForResume,
 } from '../../utils/sessionRestore.js'
+import { processSessionStartHooks } from '../../utils/sessionStart.js'
 import {
   clearSessionMetadata,
   restoreSessionMetadata,
 } from '../../utils/sessionStorage/sessionMetadata.js'
 import {
-  getCurrentSessionTitle,
+  adoptResumedSessionFile,
+  resetSessionFilePointer,
+} from '../../utils/sessionStorage/transcript.js'
+import {
   cacheSessionTitle,
+  getCurrentSessionTitle,
   saveAiGeneratedTitle,
   saveWorktreeState,
 } from '../../utils/sessionStorage.js'
-import {
-  resetSessionFilePointer,
-  adoptResumedSessionFile,
-} from '../../utils/sessionStorage/transcript.js'
-import { updateSessionName } from '../../utils/concurrentSessions.js'
-import { copyFileHistoryForResume } from '../../utils/fileHistory.js'
 import { generateSessionTitle } from '../../utils/sessionTitle.js'
-import {
-  reconstructContentReplacementState,
-  type ContentReplacementState,
-} from '../../utils/toolResultStorage.js'
+import { reconstructContentReplacementState } from '../../utils/toolResultStorage.js'
 import { getCurrentWorktreeSession } from '../../utils/worktree.js'
-import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
-import type { ReplStoreInstance } from '../../state/ReplStore.js'
 
 // ── 公共类型 ──────────────────────────────────────────────
 

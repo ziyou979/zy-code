@@ -1,4 +1,9 @@
 import { feature } from 'bun:bundle'
+import {
+  createPermissionRequest,
+  isSwarmWorker,
+  sendPermissionRequestViaMailbox,
+} from '../../../services/swarm/permissionSync.js'
 import type { ContentBlock } from '../../../types/llm.js'
 import type { PendingClassifierCheck } from '../../../types/permissions.js'
 import { isAgentSwarmsEnabled } from '../../../utils/agentSwarmsEnabled.js'
@@ -6,11 +11,6 @@ import { toError } from '../../../utils/errors.js'
 import { logError } from '../../../utils/log.js'
 import type { PermissionDecision } from '../../../utils/permissions/PermissionResult.js'
 import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js'
-import {
-  createPermissionRequest,
-  isSwarmWorker,
-  sendPermissionRequestViaMailbox,
-} from '../../../services/swarm/permissionSync.js'
 import { registerPermissionCallback } from '../../useSwarmPermissionPoller.js'
 import type { PermissionContext } from '../PermissionContext.js'
 import { createResolveOnce } from '../PermissionContext.js'

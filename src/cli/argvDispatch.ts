@@ -62,10 +62,14 @@ export const pendingSSH: PendingSSH | undefined = feature('SSH_REMOTE')
  * 对于无头模式（-p），重写为内部的 `open` 子命令。
  */
 async function rewriteArgvForCcUrl(): Promise<void> {
-  if (!feature('DIRECT_CONNECT')) return
+  if (!feature('DIRECT_CONNECT')) {
+    return
+  }
   const rawCliArgs = process.argv.slice(2)
   const ccIdx = rawCliArgs.findIndex((a) => a.startsWith('cc://') || a.startsWith('cc+unix://'))
-  if (ccIdx === -1 || !pendingConnect) return
+  if (ccIdx === -1 || !pendingConnect) {
+    return
+  }
 
   const ccUrl = rawCliArgs[ccIdx]!
   const { parseConnectUrl } = await import('../server/parseConnectUrl.js')
@@ -98,7 +102,9 @@ async function rewriteArgvForCcUrl(): Promise<void> {
  * 命中时直接 process.exit，不会返回。
  */
 async function rewriteArgvForDeepLink(): Promise<void> {
-  if (!feature('LODESTONE')) return
+  if (!feature('LODESTONE')) {
+    return
+  }
 
   const handleUriIdx = process.argv.indexOf('--handle-uri')
   if (handleUriIdx !== -1 && process.argv[handleUriIdx + 1]) {
@@ -133,10 +139,14 @@ async function rewriteArgvForDeepLink(): Promise<void> {
  * 根标志在子命令前（例如 `--debug assistant`）会透传到存根，打印用法说明。
  */
 function rewriteArgvForAssistant(): void {
-  if (!(feature('KAIROS') && pendingAssistantChat)) return
+  if (!(feature('KAIROS') && pendingAssistantChat)) {
+    return
+  }
 
   const rawArgs = process.argv.slice(2)
-  if (rawArgs[0] !== 'assistant') return
+  if (rawArgs[0] !== 'assistant') {
+    return
+  }
 
   const nextArg = rawArgs[1]
   if (nextArg && !nextArg.startsWith('-')) {
@@ -158,7 +168,9 @@ function rewriteArgvForAssistant(): void {
  * 返回 false 表示主流程应立即中止（已触发 gracefulShutdownSync）。
  */
 function rewriteArgvForSsh(): boolean {
-  if (!(feature('SSH_REMOTE') && pendingSSH)) return true
+  if (!(feature('SSH_REMOTE') && pendingSSH)) {
+    return true
+  }
 
   const rawCliArgs = process.argv.slice(2)
   // SSH 特定标志可以出现在主机位置参数之前（例如

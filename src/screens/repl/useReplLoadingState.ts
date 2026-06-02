@@ -12,8 +12,8 @@
 //（responseLengthRef / setStreamingToolUses / endInteractionSpan /
 // clearSpeculativeChecks / setUserInputOnProcessing）。
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type React from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { tSync } from '../../i18n/index.js'
 import { hasCursorUpViewportYankBug } from '../../ink/terminal.js'
 import { getTipToShowOnSpinner, recordShownTip } from '../../services/tips/tipScheduler.js'
@@ -21,12 +21,10 @@ import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { ReplStoreInstance } from '../../state/ReplStore.js'
 import type { CompactProgressEvent } from '../../Tool.js'
 import type { Message as MessageType } from '../../types/message.js'
-import type { FileStateCache } from '../../utils/fileStateCache.js'
+import type { StreamingThinking } from '../../utils/messages.js'
 import type { QueryGuard } from '../../utils/QueryGuard.js'
 import { extractBashToolsFromMessages } from '../../utils/queryHelpers.js'
-import type { ThemeName } from '../../utils/theme.js'
-import type { Theme } from '../../utils/theme.js'
-import type { StreamingThinking } from '../../utils/messages.js'
+import type { Theme, ThemeName } from '../../utils/theme.js'
 
 // ── 公共类型 ──────────────────────────────────────────────
 

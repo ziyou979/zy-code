@@ -9,15 +9,15 @@
 // 在返回值暴露（onQuery / handlePromptSubmit / cancelRequestProps 等多处需要）。
 // handleQueuedCommandOnCancel 作为 cancelRequestProps.popCommandFromQueue 暴露。
 
-import { useCallback, useRef, useState } from 'react'
 import { feature } from 'bun:bundle'
 import type React from 'react'
-import { proactiveModule } from '../../cli/lazyModules.js'
+import { useCallback, useRef, useState } from 'react'
 import { snapshotOutputTokensForTurn } from '../../bootstrap/state.js'
+import { proactiveModule } from '../../cli/lazyModules.js'
 import type { ToolUseConfirm } from '../../components/permissions/PermissionRequest.js'
 import type { SpinnerMode } from '../../components/Spinner.js'
-import type { Message as MessageType } from '../../types/message.js'
 import type { ReplStoreInstance } from '../../state/ReplStore.js'
+import type { Message as MessageType } from '../../types/message.js'
 import type { PromptInputMode } from '../../types/textInputTypes.js'
 import type { PastedContent } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'

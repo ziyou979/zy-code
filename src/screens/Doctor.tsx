@@ -17,6 +17,20 @@ import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeyb
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
+import {
+  cleanupStaleLocks,
+  getAllLockInfo,
+  isPidBasedLockingEnabled,
+  type LockInfo,
+} from '../services/nativeInstaller/pidLock.js'
+import {
+  TASK_MAX_OUTPUT_DEFAULT,
+  TASK_MAX_OUTPUT_UPPER_LIMIT,
+} from '../services/task/outputFormatting.js'
+import {
+  BASH_MAX_OUTPUT_DEFAULT,
+  BASH_MAX_OUTPUT_UPPER_LIMIT,
+} from '../shell-eval/shared/outputLimits.js'
 import { useAppState } from '../state/AppState.js'
 import { getPluginErrorMessage } from '../types/plugin.js'
 import { getGcsDistTags, getNpmDistTags, type NpmDistTags } from '../utils/autoUpdater.js'
@@ -24,21 +38,7 @@ import { checkContextWarnings } from '../utils/doctorContextWarnings.js'
 import { getDoctorDiagnostic } from '../utils/doctorDiagnostic.js'
 import { validateBoundedIntEnvVar } from '../utils/envValidation.js'
 import { pathExists } from '../utils/file.js'
-import {
-  cleanupStaleLocks,
-  getAllLockInfo,
-  isPidBasedLockingEnabled,
-  type LockInfo,
-} from '../services/nativeInstaller/pidLock.js'
 import { getInitialSettings } from '../utils/settings/settings.js'
-import {
-  BASH_MAX_OUTPUT_DEFAULT,
-  BASH_MAX_OUTPUT_UPPER_LIMIT,
-} from '../shell-eval/shared/outputLimits.js'
-import {
-  TASK_MAX_OUTPUT_DEFAULT,
-  TASK_MAX_OUTPUT_UPPER_LIMIT,
-} from '../services/task/outputFormatting.js'
 import { getXDGStateHome } from '../utils/xdg.js'
 
 type Props = {

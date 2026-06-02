@@ -1,7 +1,15 @@
-// Local Workflow Task module stub implementation
-// This module provides workflow task functionality for WORKFLOW_SCRIPTS feature
-
+import {
+  OUTPUT_FILE_TAG,
+  STATUS_TAG,
+  SUMMARY_TAG,
+  TASK_ID_TAG,
+  TASK_NOTIFICATION_TAG,
+} from '../../constants/xml.js'
+import { getTaskOutputPath, initTaskOutput } from '../../services/task/diskOutput.js'
+import { registerTask, updateTaskState } from '../../services/task/framework.js'
 import type { SetAppState, Task, TaskStateBase } from '../../Task.js'
+import { createTaskStateBase, generateTaskId } from '../../Task.js'
+import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
 
 export type LocalWorkflowTaskState = TaskStateBase & {
   type: 'local_workflow'
@@ -9,45 +17,100 @@ export type LocalWorkflowTaskState = TaskStateBase & {
   workflowName?: string
   scriptPath?: string
   summary?: string
-  agentCount?: number
+  agentCount: number
+  currentPhase?: string
+  phases?: Array<{ title: string; detail?: string }>
   error?: string
 }
 
-/**
- * LocalWorkflowTask class implementing the Task interface
- */
+export interface RegisterWorkflowOpts {
+  description: string
+  workflowName?: string
+  scriptPath?: string
+  toolUseId?: string
+  phases?: Array<{ title: string; detail?: string }>
+  workflowId?: string
+}
+
+export async function registerWorkflowTask(
+  setAppState: SetAppState,
+  opts: RegisterWorkflowOpts,
+): Promise<{ taskId: string; outputFile: string }> {
+  const taskId = generateTaskId('local_workflow')
+  const outputFile = await initTaskOutput(taskId)
+
+  const state: LocalWorkflowTaskState = {
+    ...createTaskStateBase(taskId, 'local_workflow', opts.description, opts.toolUseId),
+    type: 'local_workflow',
+    workflowId: opts.workflowId ?? `wf_${taskId}`,
+    workflowName: opts.workflowName,
+    scriptPath: opts.scriptPath,
+    agentCount: 0,
+    phases: opts.phases,
+    status: 'running',
+    outputFile,
+  }
+
+  registerTask(state, setAppState)
+  return { taskId, outputFile }
+}
+
+export function completeWorkflowTask(
+  taskId: string,
+  setAppState: SetAppState,
+  summary: string,
+): void {
+  updateTaskState<LocalWorkflowTaskState>(taskId, setAppState, (state) => ({
+    ...state,
+    status: 'completed',
+    summary,
+    endTime: Date.now(),
+  }))
+  enqueueWorkflowNotification(taskId, 'completed', summary)
+}
+
+export function failWorkflowTask(taskId: string, setAppState: SetAppState, error: string): void {
+  updateTaskState<LocalWorkflowTaskState>(taskId, setAppState, (state) => ({
+    ...state,
+    status: 'failed',
+    error,
+    endTime: Date.now(),
+  }))
+  enqueueWorkflowNotification(taskId, 'failed', `Workflow failed: ${error}`)
+}
+
+export function killWorkflowTask(taskId: string, setAppState: SetAppState): void {
+  updateTaskState<LocalWorkflowTaskState>(taskId, setAppState, (state) => ({
+    ...state,
+    status: 'killed',
+    endTime: Date.now(),
+  }))
+  enqueueWorkflowNotification(taskId, 'killed', 'Workflow was stopped')
+}
+
+function enqueueWorkflowNotification(
+  taskId: string,
+  status: 'completed' | 'failed' | 'killed',
+  summary: string,
+): void {
+  const outputPath = getTaskOutputPath(taskId)
+  const message = `<${TASK_NOTIFICATION_TAG}>
+<${TASK_ID_TAG}>${taskId}</${TASK_ID_TAG}>
+<task-type>local_workflow</task-type>
+<${OUTPUT_FILE_TAG}>${outputPath}</${OUTPUT_FILE_TAG}>
+<${STATUS_TAG}>${status}</${STATUS_TAG}>
+<${SUMMARY_TAG}>${summary}</${SUMMARY_TAG}>
+</${TASK_NOTIFICATION_TAG}>`
+  enqueuePendingNotification({
+    value: message,
+    mode: 'task-notification',
+  })
+}
+
 export const LocalWorkflowTask: Task = {
   name: 'LocalWorkflowTask',
   type: 'local_workflow',
-  async kill(_taskId: string, _setAppState: SetAppState): Promise<void> {
-    // Stub implementation - update task status to killed
-    // In real implementation, this would terminate the workflow process
+  async kill(taskId: string, setAppState: SetAppState): Promise<void> {
+    killWorkflowTask(taskId, setAppState)
   },
-}
-
-/**
- * Kill a workflow task
- * @param taskId - The task ID to kill
- * @param setAppState - State setter function
- */
-export async function killWorkflowTask(_taskId: string, _setAppState: SetAppState): Promise<void> {
-  // Stub implementation
-}
-
-/**
- * Skip workflow agent execution
- * @param taskId - The task ID to skip
- * @param setAppState - State setter function
- */
-export function skipWorkflowAgent(_taskId: string, _setAppState: SetAppState): void {
-  // Stub implementation
-}
-
-/**
- * Retry workflow agent execution
- * @param taskId - The task ID to retry
- * @param setAppState - State setter function
- */
-export function retryWorkflowAgent(_taskId: string, _setAppState: SetAppState): void {
-  // Stub implementation
 }

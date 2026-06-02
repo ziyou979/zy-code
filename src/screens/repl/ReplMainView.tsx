@@ -6,116 +6,106 @@
  */
 
 import { feature } from 'bun:bundle'
-import { Box } from '../../ink.js'
 import * as React from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-
-import type { Tool } from '../../Tool.js'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { Command } from '../../commands.js'
-import type { Message as MessageType, UserMessage } from '../../types/message.js'
-import type { ToolJSXState, ReplStoreInstance } from '../../state/ReplStore.js'
-import type { StreamingToolUse, StreamingThinking } from '../../utils/messages.js'
+import { AnimatedTerminalTitle } from '../../components/AnimatedTerminalTitle.js'
+import { AwsAuthStatusBox } from '../../components/AwsAuthStatusBox.js'
+import { DevBar } from '../../components/DevBar.js'
+import { ExitFlow } from '../../components/ExitFlow.js'
+import { FeedbackSurvey } from '../../components/FeedbackSurvey/FeedbackSurvey.js'
+import { useFeedbackSurvey } from '../../components/FeedbackSurvey/useFeedbackSurvey.js'
+import { useMemorySurvey } from '../../components/FeedbackSurvey/useMemorySurvey.js'
+import { usePostCompactSurvey } from '../../components/FeedbackSurvey/usePostCompactSurvey.js'
+import type { FeedbackSurveyResponse } from '../../components/FeedbackSurvey/utils.js'
+import { computeUnseenDivider, FullscreenLayout } from '../../components/FullscreenLayout.js'
+import { MessageSelector } from '../../components/MessageSelector.js'
+import { Messages } from '../../components/Messages.js'
+import type {
+  MessageActionCaps,
+  MessageActionsNav,
+  MessageActionsState,
+} from '../../components/messageActions.js'
+import {
+  MessageActionsBar,
+  MessageActionsKeybindings,
+  useMessageActions,
+} from '../../components/messageActions.js'
+import { UserTextMessage } from '../../components/messages/UserTextMessage.js'
+import { IssueFlagBanner } from '../../components/PromptInput/IssueFlagBanner.js'
+import PromptInput from '../../components/PromptInput/PromptInput.js'
+import { PromptInputQueuedCommands } from '../../components/PromptInput/PromptInputQueuedCommands.js'
+import { PermissionRequest } from '../../components/permissions/PermissionRequest.js'
+import { ScrollKeybindingHandler } from '../../components/ScrollKeybindingHandler.js'
+import { SessionBackgroundHint } from '../../components/SessionBackgroundHint.js'
+import { SkillImprovementSurvey } from '../../components/SkillImprovementSurvey.js'
+import { BriefIdleStatus, SpinnerWithVerb } from '../../components/Spinner.js'
+import { TaskListV2 } from '../../components/TaskListV2.js'
+import { TeammateViewHeader } from '../../components/TeammateViewHeader.js'
+import { useNotifications } from '../../context/notifications.js'
+import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js'
+import { CancelRequestHandler } from '../../hooks/useCancelRequest.js'
+import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
+import { CommandKeybindingHandlers } from '../../hooks/useCommandKeybindings.js'
+import { GlobalKeybindingHandlers } from '../../hooks/useGlobalKeybindings.js'
+import type { IDESelection } from '../../hooks/useIdeSelection.js'
+import { useIssueFlagBanner } from '../../hooks/useIssueFlagBanner.js'
+import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
+import { useSkillImprovementSurvey } from '../../hooks/useSkillImprovementSurvey.js'
+import { useTasksV2WithCollapseEffect } from '../../hooks/useTasksV2.js'
 import type { ScrollBoxHandle } from '../../ink/components/ScrollBox.js'
-import type { Screen } from '../REPL.js'
+import { Box } from '../../ink.js'
+import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js'
+import { MCPConnectionManager } from '../../services/mcp/MCPConnectionManager.js'
+import type { MCPServerConnection } from '../../services/mcp/types.js'
+import type { ActiveSpeculationState } from '../../services/PromptSuggestion/speculation.js'
+import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
+import { useAppState, useSetAppState } from '../../state/AppState.js'
+import { useReplState } from '../../state/ReplState.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
+import type { Tool, ToolPermissionContext } from '../../Tool.js'
+import { getAllInProcessTeammateTasks } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
+import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js'
+import { isInProcessTeammateTask } from '../../tasks/InProcessTeammateTask/types.js'
+import type { LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
+import { isLocalAgentTask } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
+import { SLEEP_TOOL_NAME } from '../../tools/SleepTool/prompt.js'
+import { toUUID } from '../../types/ids.js'
+import type { Message as MessageType, UserMessage } from '../../types/message.js'
+import type { PromptInputMode, VimMode } from '../../types/textInputTypes.js'
+import { createAbortController } from '../../utils/abortController.js'
+import {
+  AutoRunIssueNotification,
+  type AutoRunIssueReason,
+  getAutoRunCommand,
+  getAutoRunIssueReasonText,
+  shouldAutoRunIssue,
+} from '../../utils/autoRunIssue.js'
+import type { AutoUpdaterResult } from '../../utils/autoUpdater.js'
+import type { PastedContent } from '../../utils/config.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
+import { errorMessage } from '../../utils/errors.js'
+import type { FileHistoryState } from '../../utils/fileHistory.js'
+import { fileHistoryRewind } from '../../utils/fileHistory.js'
+import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
-import type { FocusedInputDialog } from './useReplOnCancel.js'
-import type { ReplVoiceState } from './useReplVoice.js'
+import type { IDEExtensionInstallationStatus } from '../../utils/ide.js'
+import type { SetAppState } from '../../utils/messageQueueManager.js'
+import { getCommandQueueLength } from '../../utils/messageQueueManager.js'
+import type { StreamingThinking } from '../../utils/messages.js'
+import type { Theme } from '../../utils/theme.js'
+import type { Screen } from '../REPL.js'
+import { handleSummarize as handleSummarizeAction } from './handleSummarize.js'
+import { ReplDialogDispatch } from './ReplDialogDispatch.js'
+import { buildMessageActionCaps, handleExitImpl, onAgentSubmitImpl } from './replCallbacks.js'
 import type {
   ReplFrustrationDetection,
   ReplNotificationsCluster,
 } from './useReplNotificationsCluster.js'
-import type { Notification } from '../../context/notifications.js'
-import type { ToolPermissionContext } from '../../Tool.js'
-import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js'
-import type { PromptInputMode } from '../../types/textInputTypes.js'
-import type { PastedContent } from '../../utils/config.js'
-import type { MCPServerConnection } from '../../services/mcp/types.js'
-import type { ScopedMcpServerConfig } from '../../services/mcp/types.js'
-import type { IDEExtensionInstallationStatus } from '../../utils/ide.js'
-import type { ActiveSpeculationState } from '../../services/PromptSuggestion/speculation.js'
-import type { SetAppState } from '../../utils/messageQueueManager.js'
-import type { IDESelection } from '../../hooks/useIdeSelection.js'
-import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
-import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js'
-import type { LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
-import type { SpinnerMode } from '../../components/Spinner.js'
-import type { VimMode } from '../../types/textInputTypes.js'
-import type { AutoUpdaterResult } from '../../utils/autoUpdater.js'
-import type {
-  MessageActionsState,
-  MessageActionsNav,
-  MessageActionCaps,
-} from '../../components/messageActions.js'
-import type { FileHistoryState } from '../../utils/fileHistory.js'
-import type { Theme } from '../../utils/theme.js'
-
-import { useAppState, useSetAppState } from '../../state/AppState.js'
-import { useReplState } from '../../state/ReplState.js'
-import { isInProcessTeammateTask } from '../../tasks/InProcessTeammateTask/types.js'
-import { isLocalAgentTask } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
-import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { SLEEP_TOOL_NAME } from '../../tools/SleepTool/prompt.js'
-import { getCommandQueueLength } from '../../utils/messageQueueManager.js'
-import { errorMessage } from '../../utils/errors.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { createAbortController } from '../../utils/abortController.js'
-import {
-  shouldAutoRunIssue,
-  getAutoRunIssueReasonText,
-  getAutoRunCommand,
-  AutoRunIssueNotification,
-  type AutoRunIssueReason,
-} from '../../utils/autoRunIssue.js'
-import { computeUnseenDivider } from '../../components/FullscreenLayout.js'
-import { handleSummarize as handleSummarizeAction } from './handleSummarize.js'
-import { buildMessageActionCaps } from './replCallbacks.js'
-import { MCPConnectionManager } from '../../services/mcp/MCPConnectionManager.js'
-
-import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js'
-import { AnimatedTerminalTitle } from '../../components/AnimatedTerminalTitle.js'
-import { GlobalKeybindingHandlers } from '../../hooks/useGlobalKeybindings.js'
-import { CommandKeybindingHandlers } from '../../hooks/useCommandKeybindings.js'
-import { CancelRequestHandler } from '../../hooks/useCancelRequest.js'
-import { ScrollKeybindingHandler } from '../../components/ScrollKeybindingHandler.js'
-import { FullscreenLayout } from '../../components/FullscreenLayout.js'
-import { PermissionRequest } from '../../components/permissions/PermissionRequest.js'
-import PromptInput from '../../components/PromptInput/PromptInput.js'
-import { PromptInputQueuedCommands } from '../../components/PromptInput/PromptInputQueuedCommands.js'
-import { Messages } from '../../components/Messages.js'
-import { SpinnerWithVerb, BriefIdleStatus } from '../../components/Spinner.js'
-import { TaskListV2 } from '../../components/TaskListV2.js'
-import { TeammateViewHeader } from '../../components/TeammateViewHeader.js'
-import { ReplDialogDispatch } from './ReplDialogDispatch.js'
+import type { FocusedInputDialog } from './useReplOnCancel.js'
+import type { ReplVoiceState } from './useReplVoice.js'
 import { ReplVoiceKeybindingHandler } from './useReplVoice.js'
-import { MessageSelector } from '../../components/MessageSelector.js'
-import {
-  useMessageActions,
-  MessageActionsKeybindings,
-  MessageActionsBar,
-} from '../../components/messageActions.js'
-import { SkillImprovementSurvey } from '../../components/SkillImprovementSurvey.js'
-import { useSkillImprovementSurvey } from '../../hooks/useSkillImprovementSurvey.js'
-import { useFeedbackSurvey } from '../../components/FeedbackSurvey/useFeedbackSurvey.js'
-import type { FeedbackSurveyResponse } from '../../components/FeedbackSurvey/utils.js'
-import { useMemorySurvey } from '../../components/FeedbackSurvey/useMemorySurvey.js'
-import { usePostCompactSurvey } from '../../components/FeedbackSurvey/usePostCompactSurvey.js'
-import { FeedbackSurvey } from '../../components/FeedbackSurvey/FeedbackSurvey.js'
-import { useTasksV2WithCollapseEffect } from '../../hooks/useTasksV2.js'
-import { useIssueFlagBanner } from '../../hooks/useIssueFlagBanner.js'
-import { IssueFlagBanner } from '../../components/PromptInput/IssueFlagBanner.js'
-import { ExitFlow } from '../../components/ExitFlow.js'
-import { SessionBackgroundHint } from '../../components/SessionBackgroundHint.js'
-import { UserTextMessage } from '../../components/messages/UserTextMessage.js'
-import { AwsAuthStatusBox } from '../../components/AwsAuthStatusBox.js'
-import { DevBar } from '../../components/DevBar.js'
-import { fileHistoryRewind } from '../../utils/fileHistory.js'
-import { getAllInProcessTeammateTasks } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
-import { onAgentSubmitImpl, handleExitImpl } from './replCallbacks.js'
-import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
-import { toUUID } from '../../types/ids.js'
-import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
-import { useNotifications } from '../../context/notifications.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const WebBrowserPanelModule = feature('WEB_BROWSER_TOOL')
@@ -412,8 +402,8 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
   const viewingAgentTaskId = useAppState((s) => s.viewingAgentTaskId)
   const elicitation = useAppState((s) => s.elicitation)
   const workerSandboxPermissions = useAppState((s) => s.workerSandboxPermissions)
-  const ultraplanPendingChoice = useAppState((s) => s.ultraplanPendingChoice)
-  const ultraplanLaunchPending = useAppState((s) => s.ultraplanLaunchPending)
+  const _ultraplanPendingChoice = useAppState((s) => s.ultraplanPendingChoice)
+  const _ultraplanLaunchPending = useAppState((s) => s.ultraplanLaunchPending)
   const setAppState = useSetAppState()
 
   // ── Local state ──
@@ -483,9 +473,13 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
   // ── onlySleepToolActive + showSpinner ──
   const onlySleepToolActive = useMemo(() => {
     const lastAssistant = messages.findLast((m) => m.type === 'assistant')
-    if (lastAssistant?.type !== 'assistant') return false
+    if (lastAssistant?.type !== 'assistant') {
+      return false
+    }
     const content = lastAssistant.message.content
-    if (!Array.isArray(content)) return false
+    if (!Array.isArray(content)) {
+      return false
+    }
     const inProgress = content.filter(
       (b) => b.type === 'tool_call' && inProgressToolUseIDs.has(b.id),
     )
@@ -582,10 +576,10 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
       setAppState,
       setInputValue,
       getToolUseContext,
-      toolPermissionContext,
       mainLoopModel,
       addNotification,
       replStore,
+      canUseTool,
     ],
   )
   const onAgentSubmit = useCallback(
@@ -639,7 +633,7 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
 
   const handleShowMessageSelector = useCallback(() => {
     setIsMessageSelectorVisible((prev) => !prev)
-  }, [])
+  }, [setIsMessageSelectorVisible])
 
   // ── Keybinding props ──
   const globalKeybindingProps = {
@@ -678,8 +672,8 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
   }
 
   // Stub components (ultraplan gate not imported)
-  const UltraplanChoiceDialog: React.FC<Record<string, unknown>> = () => null
-  const UltraplanLaunchDialog: React.FC<Record<string, unknown>> = () => null
+  const _UltraplanChoiceDialog: React.FC<Record<string, unknown>> = () => null
+  const _UltraplanLaunchDialog: React.FC<Record<string, unknown>> = () => null
 
   return (
     <KeybindingSetup>

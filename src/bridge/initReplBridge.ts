@@ -16,12 +16,13 @@
 import { feature } from 'bun:bundle'
 import { hostname } from 'node:os'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
-import type { WireMessage } from '../types/index.js'
-import type { WireControlResponse } from '../types/wire/control.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getAPIProvider, isOpenAIProvider } from '../services/model/providers.js'
 import { getOrganizationUUID } from '../services/oauth/client.js'
 import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../services/policyLimits/index.js'
+import type { WireMessage } from '../types/index.js'
 import type { Message } from '../types/message.js'
+import type { WireControlResponse } from '../types/wire/control.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getZyAIOAuthTokens,
@@ -39,7 +40,6 @@ import {
   getMessagesAfterCompactBoundary,
   isSyntheticMessage,
 } from '../utils/messages.js'
-import { getAPIProvider, isOpenAIProvider } from '../services/model/providers.js'
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
 import { getCurrentSessionTitle, saveAiGeneratedTitle } from '../utils/sessionStorage.js'
 import { extractConversationText, generateSessionTitle } from '../utils/sessionTitle.js'
@@ -55,7 +55,7 @@ import { archiveWireSession, createWireSession, updateWireSessionTitle } from '.
 import { logWireSkip } from './debugUtils.js'
 import { checkEnvLessWireMinVersion } from './envLessBridgeConfig.js'
 import { getPollIntervalConfig } from './pollConfig.js'
-import type { WireState, ReplWireHandle } from './replBridge.js'
+import type { ReplWireHandle, WireState } from './replBridge.js'
 import { initBridgeCore } from './replBridge.js'
 import { setCseShimGate } from './sessionIdCompat.js'
 import type { WireWorkerType } from './types.js'

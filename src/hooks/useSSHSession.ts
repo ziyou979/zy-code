@@ -12,11 +12,12 @@
 import { randomUUID } from 'node:crypto'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
+import { convertSDKMessage, isSessionEndMessage } from '../remote/messageAdapter.js'
 import {
   createSyntheticAssistantMessage,
   createToolStub,
 } from '../remote/remotePermissionBridge.js'
-import { convertSDKMessage, isSessionEndMessage } from '../remote/messageAdapter.js'
+import type { RemoteMessageContent } from '../services/teleport/api.js'
 import type { SSHSession } from '../ssh/createSSHSession.js'
 // @ts-expect-error
 import type { SSHSessionManager } from '../ssh/SSHSessionManager.js'
@@ -26,7 +27,6 @@ import type { Message as MessageType } from '../types/message.js'
 import type { PermissionAskDecision } from '../types/permissions.js'
 import { logForDebugging } from '../utils/debug.js'
 import { gracefulShutdown } from '../utils/gracefulShutdown.js'
-import type { RemoteMessageContent } from '../services/teleport/api.js'
 
 type UseSSHSessionResult = {
   isRemoteMode: boolean

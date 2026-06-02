@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { BoundedUUIDSet } from '../bridge/bridgeMessaging.js'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
 import type { SpinnerMode } from '../components/Spinner/types.js'
+import { convertSDKMessage, isSessionEndMessage } from '../remote/messageAdapter.js'
 import {
   type RemotePermissionResponse,
   type RemoteSessionConfig,
@@ -11,7 +12,8 @@ import {
   createSyntheticAssistantMessage,
   createToolStub,
 } from '../remote/remotePermissionBridge.js'
-import { convertSDKMessage, isSessionEndMessage } from '../remote/messageAdapter.js'
+import type { RemoteMessageContent } from '../services/teleport/api.js'
+import { updateSessionTitle } from '../services/teleport/api.js'
 import { useSetAppState } from '../state/AppState.js'
 import type { AppState } from '../state/AppStateStore.js'
 import type { Tool } from '../Tool.js'
@@ -27,8 +29,6 @@ import {
   type StreamingToolUse,
 } from '../utils/messages.js'
 import { generateSessionTitle } from '../utils/sessionTitle.js'
-import type { RemoteMessageContent } from '../services/teleport/api.js'
-import { updateSessionTitle } from '../services/teleport/api.js'
 
 // How long to wait for a response before showing a warning
 const RESPONSE_TIMEOUT_MS = 60000 // 60 seconds

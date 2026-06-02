@@ -13,25 +13,25 @@
 import { feature } from 'bun:bundle'
 import { proactiveModule } from '../../cli/lazyModules.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
+import type { Notification } from '../../context/notifications.js'
 import { getSystemContext, getUserContext } from '../../context.js'
 import { getShortcutDisplay } from '../../keybindings/shortcutFormat.js'
 import { partialCompactConversation } from '../../services/compact/compact.js'
 import { runPostCompactCleanup } from '../../services/compact/postCompactCleanup.js'
 import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
-import type { Notification } from '../../context/notifications.js'
 import type {
   Message as MessageType,
-  UserMessage,
   PartialCompactDirection,
+  UserMessage,
 } from '../../types/message.js'
 import type { PromptInputMode } from '../../types/textInputTypes.js'
+import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import {
-  getMessagesAfterCompactBoundary,
   createSystemMessage,
+  getMessagesAfterCompactBoundary,
   textForResubmit,
 } from '../../utils/messages.js'
 import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
-import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 
 export type HandleSummarizeParams = {
   message: UserMessage

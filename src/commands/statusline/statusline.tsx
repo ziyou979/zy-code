@@ -1,9 +1,9 @@
 import {
   DEFAULT_MODULES,
-  mergeWithDefaults,
   MODULE_IDS,
   type ModuleConfig,
   type ModuleId,
+  mergeWithDefaults,
 } from '../../components/statusbar/statusbarModuleDefaults.js'
 import { tSync } from '../../i18n/index.js'
 import type { LocalJSXCommandCall } from '../../types/command.js'

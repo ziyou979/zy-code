@@ -22,7 +22,7 @@ export const call: LocalCommandCall = async (rawArgs, context) => {
     return {
       type: 'text',
       value:
-        'Usage: /effort [minimal|low|medium|high|max|auto]\n\nEffort levels:\n- minimal: Fastest possible response with very brief reasoning\n- low: Quick, straightforward implementation\n- medium: Balanced approach with standard testing\n- high: Comprehensive implementation with extensive testing\n- max: Maximum capability with deepest reasoning (Opus 4.6 only)\n- auto: Use the default effort level for your model',
+        'Usage: /effort [quick|light|balanced|thorough|extreme|orchestrate|auto]\n\nEffort levels:\n- quick: Fastest response with minimal reasoning\n- light: Light reasoning, quick implementation\n- balanced: Balanced approach with standard reasoning\n- thorough: Deep reasoning with comprehensive analysis\n- extreme: Maximum reasoning depth and thoroughness\n- orchestrate: Extreme + dynamic workflow orchestration (session only)\n- auto: Use the default effort level for your model',
     }
   }
 

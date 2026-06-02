@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
 import chalk from 'chalk'
+import { setAllowedSettingSources, setFlagSettingsPath } from '../../bootstrap/state.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { setAllowedSettingSources, setFlagSettingsPath } from '../../bootstrap/state.js'
 import { eagerParseCliFlag } from '../../utils/cliArgs.js'
 import { errorMessage, isENOENT } from '../../utils/errors.js'
 import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.js'

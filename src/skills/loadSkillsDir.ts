@@ -7,6 +7,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../services/analytics/index.js'
+import { parseUserSpecifiedModel } from '../services/model/model.js'
 import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
 import type { Command, PromptCommand } from '../types/command.js'
 import { parseArgumentNames, substituteArguments } from '../utils/argumentSubstitution.js'
@@ -33,7 +34,6 @@ import {
   type MarkdownFile,
   parseSlashCommandToolsFromFrontmatter,
 } from '../utils/markdownConfigLoader.js'
-import { parseUserSpecifiedModel } from '../services/model/model.js'
 import { executeShellCommandsInPrompt } from '../utils/promptShellExecution.js'
 import type { SettingSource } from '../utils/settings/constants.js'
 import { isSettingSourceEnabled } from '../utils/settings/constants.js'

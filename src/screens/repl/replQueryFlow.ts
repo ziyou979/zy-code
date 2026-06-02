@@ -15,7 +15,6 @@ import {
   getTotalInputTokens,
   getTurnOutputTokens,
   snapshotOutputTokensForTurn,
-  updateLastInteractionTime,
 } from '../../bootstrap/state.js'
 import { coordinatorModeModule, proactiveModule } from '../../cli/lazyModules.js'
 import type { Command, CommandResultDisplay } from '../../commands.js'
@@ -25,7 +24,6 @@ import {
   selectableUserMessagesFilter,
 } from '../../components/MessageSelector.js'
 import { prependModeCharacterToInput } from '../../components/PromptInput/inputModes.js'
-import type { SpinnerMode } from '../../components/Spinner.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
 import {
   BASH_INPUT_TAG,
@@ -60,7 +58,6 @@ import { handleSpeculationAccept } from '../../services/PromptSuggestion/specula
 import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
 import { prependToShellHistoryCache } from '../../services/suggestions/shellHistoryCompletion.js'
 import { setMemberActive } from '../../services/swarm/teamHelpers.js'
-import { endInteractionSpan } from '../../services/telemetry/sessionTracing.js'
 import type { RemoteMessageContent } from '../../services/teleport/api.js'
 import type { AppState } from '../../state/AppState.js'
 import type { AppStateStore } from '../../state/AppStateStore.js'
@@ -68,8 +65,7 @@ import type { ReplStoreInstance, ToolJSXState } from '../../state/ReplStore.js'
 import type { CompactProgressEvent, Tool } from '../../Tool.js'
 import { getAllInProcessTeammateTasks } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
 import { resolveAgentTools } from '../../tools/AgentTool/agentToolUtils.js'
-import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-import { assembleToolPool, getTools } from '../../tools.js'
+import { assembleToolPool } from '../../tools.js'
 import { toUUID } from '../../types/ids.js'
 import type { UserContentBlock } from '../../types/llm.js'
 import type { Message as MessageType, UserMessage } from '../../types/message.js'
@@ -80,12 +76,11 @@ import { count } from '../../utils/array.js'
 import type { AttributionState } from '../../utils/commitAttribution.js'
 import { incrementPromptCount } from '../../utils/commitAttribution.js'
 import type { PastedContent } from '../../utils/config.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import type { EffortValue } from '../../utils/effort.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import type { FileHistoryState } from '../../utils/fileHistory.js'
-import { fileHistoryEnabled, fileHistoryMakeSnapshot } from '../../utils/fileHistory.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
 import { handlePromptSubmit } from '../../utils/handlePromptSubmit.js'
@@ -94,11 +89,9 @@ import type { IDEExtensionInstallationStatus, IdeType } from '../../utils/ide.js
 import { closeOpenDiffs, getConnectedIdeClient } from '../../utils/ide.js'
 import type { SetAppState } from '../../utils/messageQueueManager.js'
 import { enqueue, getCommandQueueLength } from '../../utils/messageQueueManager.js'
-import type { StreamingThinking, StreamingToolUse } from '../../utils/messages.js'
+import type { StreamingThinking } from '../../utils/messages.js'
 import {
-  createAssistantMessage,
   createCommandInputMessage,
-  createSystemMessage,
   createTurnDurationMessage,
   createUserMessage,
   formatCommandInputTags,
@@ -131,7 +124,7 @@ import { parseTokenBudget } from '../../utils/tokenBudget.js'
 import { mergeAndFilterTools } from '../../utils/toolPool.js'
 import { escapeXml } from '../../utils/xml.js'
 import type { ActiveRemote } from './useReplActiveRemote.js'
-import type { PromptQueueItem, RequestPromptFactory } from './useReplRequestPrompt.js'
+import type { RequestPromptFactory } from './useReplRequestPrompt.js'
 import type { ResumeFunction } from './useReplSessionRestore.js'
 
 // ── QueryFlowContext ──
@@ -519,7 +512,7 @@ export async function runQueryImpl(
   queryCheckpoint('query_context_loading_start')
   const [, , defaultSystemPrompt, baseUserContext, systemContext] = await Promise.all([
     checkAndDisableBypassPermissionsIfNeeded(ctx.toolPermissionContext, ctx.setAppState),
-    feature('TRANSCRIPT_CLASSIFIER')
+    true
       ? checkAndDisableAutoModeIfNeeded(ctx.toolPermissionContext, ctx.setAppState)
       : undefined,
     getSystemPrompt(
@@ -593,7 +586,7 @@ export async function runQueryImpl(
 
 export async function runQuery(
   ctx: QueryFlowContext,
-  getToolUseContext: (
+  _getToolUseContext: (
     messages: MessageType[],
     newMessages: MessageType[],
     abortController: AbortController,
@@ -932,7 +925,7 @@ export async function handleSubmit(
           ctx.mainLoopModel,
         )
         const mod = await matchingCommand.load()
-        const jsx = await mod.call(onDone, context, commandArgs)
+        const jsx = await mod.call(onDone, { ...context, invokedAs: commandName }, commandArgs, commandName)
 
         if (jsx && !doneWasCalled) {
           ctx.setToolJSX({

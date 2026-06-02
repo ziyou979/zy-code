@@ -11,21 +11,21 @@
 // 返回 useCallback（deps 同原 REPL）。
 // 仅暴露给 useSessionBackgrounding 的 onBackgroundQuery 入参。
 
-import { useCallback } from 'react'
 import type React from 'react'
-import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
+import { useCallback } from 'react'
 import { getSystemPrompt } from '../../constants/prompts.js'
 import { getSystemContext, getUserContext } from '../../context.js'
+import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
+import type { ToolPermissionContext } from '../../Tool.js'
 import { startBackgroundSession } from '../../tasks/LocalMainSessionTask.js'
+import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { createAttachmentMessage, getQueuedCommandAttachments } from '../../utils/attachments.js'
 import { removeByFilter } from '../../utils/messageQueueManager.js'
 import { getQuerySourceForREPL } from '../../utils/promptCategory.js'
 import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
-import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-import type { ToolPermissionContext } from '../../Tool.js'
-import type { ReplStoreInstance } from '../../state/ReplStore.js'
 
 export type UseReplBackgroundQueryParams = {
   abortController: AbortController | null
@@ -95,7 +95,9 @@ export function useReplBackgroundQuery({
       const currentMessages = replStore.getState().messages
       const existingPrompts = new Set<string>()
       for (const m of currentMessages) {
-        if (m.type !== 'attachment') continue
+        if (m.type !== 'attachment') {
+          continue
+        }
         const att = m.attachment as { type?: string; commandMode?: string; prompt?: unknown }
         if (
           att.type === 'queued_command' &&

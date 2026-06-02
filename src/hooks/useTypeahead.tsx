@@ -19,18 +19,6 @@ import {
 } from '../keybindings/KeybindingContext.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
-import { useAppState, useAppStateStore } from '../state/AppState.js'
-import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
-import type { InlineGhostText, PromptInputMode } from '../types/textInputTypes.js'
-import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js'
-import { generateProgressiveArgumentHint, parseArguments } from '../utils/argumentSubstitution.js'
-import {
-  getShellCompletions,
-  type ShellCompletionType,
-} from '../shell-eval/bash/shellCompletion.js'
-import { isTestEnv } from '../utils/envUtils.js'
-import { formatLogMetadata } from '../utils/format.js'
-import { getSessionIdFromLog, searchSessionsByCustomTitle } from '../utils/sessionStorage.js'
 import {
   applyCommandSuggestion,
   findMidInputSlashCommand,
@@ -49,6 +37,18 @@ import {
   hasSlackMcpServer,
 } from '../services/suggestions/slackChannelSuggestions.js'
 import { TEAM_LEAD_NAME } from '../services/swarm/constants.js'
+import {
+  getShellCompletions,
+  type ShellCompletionType,
+} from '../shell-eval/bash/shellCompletion.js'
+import { useAppState, useAppStateStore } from '../state/AppState.js'
+import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
+import type { InlineGhostText, PromptInputMode } from '../types/textInputTypes.js'
+import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js'
+import { generateProgressiveArgumentHint, parseArguments } from '../utils/argumentSubstitution.js'
+import { isTestEnv } from '../utils/envUtils.js'
+import { formatLogMetadata } from '../utils/format.js'
+import { getSessionIdFromLog, searchSessionsByCustomTitle } from '../utils/sessionStorage.js'
 import {
   applyFileSuggestion,
   findLongestCommonPrefix,

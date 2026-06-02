@@ -33,13 +33,12 @@ import { endInteractionSpan } from '../services/telemetry/sessionTracing.js'
 import { useLogMessages } from '../hooks/useLogMessages.js'
 import { useReplBridge } from '../hooks/useReplBridge.js'
 import { type Command } from '../commands.js'
-import type { PromptInputMode, QueuedCommand, VimMode } from '../types/textInputTypes.js'
+import type { QueuedCommand } from '../types/textInputTypes.js'
 import { useIdeLogging } from '../hooks/useIdeLogging.js'
 import type { DirectConnectConfig } from '../server/directConnectManager.js'
 import { useAssistantHistory } from '../hooks/useAssistantHistory.js'
 import type { SSHSession } from '../ssh/createSSHSession.js'
 import { useMoreRight } from '../moreright/useMoreRight.js'
-import type { SpinnerMode } from '../components/Spinner.js'
 import { startBackgroundHousekeeping } from '../utils/backgroundHousekeeping.js'
 import { useCostSummary } from '../costHook.js'
 import { useFpsMetrics } from '../context/fpsMetrics.js'
@@ -56,13 +55,8 @@ import { clearSpeculativeChecks } from '../tools/BashTool/bashPermissions.js'
 import type { AutoUpdaterResult } from '../utils/autoUpdater.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
-import {
-  type StreamingToolUse,
-  type StreamingThinking,
-  createAgentsKilledMessage,
-} from '../utils/messages.js'
+import { createAgentsKilledMessage } from '../utils/messages.js'
 import type { ThinkingConfig } from '../utils/thinking.js'
-import type { PromptInputHelpers } from '../utils/handlePromptSubmit.js'
 import { useQueueProcessor } from '../hooks/useQueueProcessor.js'
 import { useMailboxBridge } from '../hooks/useMailboxBridge.js'
 import type { Message as MessageType, UserMessage, HookResultMessage } from '../types/message.js'
@@ -78,8 +72,6 @@ import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import { resolveAgentTools } from '../tools/AgentTool/agentToolUtils.js'
 import { useMainLoopModel } from '../hooks/useMainLoopModel.js'
 import { useAppState, useSetAppState, useAppStateStore } from '../state/AppState.js'
-import type { ProcessUserInputContext } from '../services/processUserInput/processUserInput.js'
-import type { PastedContent } from '../utils/config.js'
 import { getCurrentSessionTitle } from '../utils/sessionStorage.js'
 import { extractReadFilesFromMessages } from '../utils/queryHelpers.js'
 import {
@@ -258,7 +250,7 @@ export function REPL({
     proactiveModule?.isProactiveActive ?? PROACTIVE_FALSE,
   )
 
-  const isBriefOnly = useAppState((s) => s.isBriefOnly)
+  const _isBriefOnly = useAppState((s) => s.isBriefOnly)
   const localTools = useMemo(() => getTools(toolPermissionContext), [toolPermissionContext])
   useKickOffCheckAndDisableBypassPermissionsIfNeeded()
   useKickOffCheckAndDisableAutoModeIfNeeded()
@@ -294,7 +286,9 @@ export function REPL({
   useManagePlugins({ enabled: !isRemoteSession })
 
   useEffect(() => {
-    if (isRemoteSession) return
+    if (isRemoteSession) {
+      return
+    }
     void performStartupChecks(setAppState)
   }, [setAppState, isRemoteSession])
 
@@ -437,7 +431,9 @@ export function REPL({
   useEffect(() => {
     if (isFullscreenEnvEnabled()) {
       void maybeGetTmuxMouseHint().then((hint) => {
-        if (hint) addNotification({ key: 'tmux-mouse-hint', text: hint, priority: 'low' })
+        if (hint) {
+          addNotification({ key: 'tmux-mouse-hint', text: hint, priority: 'low' })
+        }
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -509,7 +505,9 @@ export function REPL({
               : 'input needed'
 
   useEffect(() => {
-    if (feature('BG_SESSIONS')) void updateSessionActivity({ status: sessionStatus, waitingFor })
+    if (feature('BG_SESSIONS')) {
+      void updateSessionActivity({ status: sessionStatus, waitingFor })
+    }
   }, [sessionStatus, waitingFor])
 
   const tabStatusGateEnabled = getFeatureValue_CACHED_MAY_BE_STALE('zy_terminal_sidebar', false)
@@ -520,7 +518,7 @@ export function REPL({
   useEffect(() => {
     registerLeaderToolUseConfirmQueue(setToolUseConfirmQueue)
     return () => unregisterLeaderToolUseConfirmQueue()
-  }, [])
+  }, [setToolUseConfirmQueue])
 
   const hasRunningTeammates = useMemo(
     () => getAllInProcessTeammateTasks(tasks).some((t) => t.status === 'running'),
@@ -543,7 +541,9 @@ export function REPL({
   const lastMsg = messages.at(-1)
   const lastMsgIsHuman = lastMsg != null && isHumanTurn(lastMsg)
   useEffect(() => {
-    if (lastMsgIsHuman) repinScroll()
+    if (lastMsgIsHuman) {
+      repinScroll()
+    }
   }, [lastMsgIsHuman, repinScroll])
 
   const { maybeLoadOlder } = feature('KAIROS')
@@ -563,7 +563,9 @@ export function REPL({
         onRepin()
       } else {
         onScrollAway(handle)
-        if (feature('KAIROS')) maybeLoadOlder(handle)
+        if (feature('KAIROS')) {
+          maybeLoadOlder(handle)
+        }
       }
     },
     [onRepin, onScrollAway, maybeLoadOlder],
@@ -601,12 +603,14 @@ export function REPL({
     lastUserScrollTsRef,
     trySuggestBgPRIntercept: SUGGEST_BG_PR_NOOP,
   })
-  const [isExiting, setIsExiting] = useState(false)
-  const [exitFlow, setExitFlow] = useState<React.ReactNode>(null)
+  const [isExiting, _setIsExiting] = useState(false)
+  const [exitFlow, _setExitFlow] = useState<React.ReactNode>(null)
 
   useEffect(() => {
-    if (ultraplanPendingChoice && showBashesDialog) setShowBashesDialog(false)
-  }, [ultraplanPendingChoice, showBashesDialog])
+    if (ultraplanPendingChoice && showBashesDialog) {
+      setShowBashesDialog(false)
+    }
+  }, [ultraplanPendingChoice, showBashesDialog, setShowBashesDialog])
 
   // ── Remote / response length ──
   const activeRemote = useReplActiveRemote({
@@ -652,7 +656,7 @@ export function REPL({
       )
       ingestBashToolsFromMessages(messages)
     },
-    [ingestBashToolsFromMessages],
+    [ingestBashToolsFromMessages, replStore.mutable.readFileState, replStore.mutable],
   )
 
   const {
@@ -745,21 +749,32 @@ export function REPL({
   focusedInputDialogRef.current = focusedInputDialog
 
   useEffect(() => {
-    if (!isLoading) return
+    if (!isLoading) {
+      return
+    }
     const isPaused = focusedInputDialog === 'tool-permission'
     const now = Date.now()
-    if (isPaused && pauseStartTimeRef.current === null) pauseStartTimeRef.current = now
-    else if (!isPaused && pauseStartTimeRef.current !== null) {
+    if (isPaused && pauseStartTimeRef.current === null) {
+      pauseStartTimeRef.current = now
+    } else if (!isPaused && pauseStartTimeRef.current !== null) {
       totalPausedMsRef.current += now - pauseStartTimeRef.current
       pauseStartTimeRef.current = null
     }
-  }, [focusedInputDialog, isLoading])
+  }, [
+    focusedInputDialog,
+    isLoading,
+    pauseStartTimeRef.current,
+    pauseStartTimeRef,
+    totalPausedMsRef,
+  ])
 
   const prevDialogRef = useRef(focusedInputDialog)
   useLayoutEffect(() => {
     const was = prevDialogRef.current === 'tool-permission'
     const now = focusedInputDialog === 'tool-permission'
-    if (was !== now) repinScroll()
+    if (was !== now) {
+      repinScroll()
+    }
     prevDialogRef.current = focusedInputDialog
   }, [focusedInputDialog, repinScroll])
 
@@ -926,7 +941,7 @@ export function REPL({
 
   const rewindCtx = useMemo(
     () => ({ replStore, setMessages, setAppState, regenerateConversationId }),
-    [setMessages, setAppState],
+    [setMessages, setAppState, replStore, regenerateConversationId],
   )
   const rewindConversationTo = useCallback(
     (message: UserMessage) => rewindConversationToImpl(rewindCtx, message),
@@ -938,7 +953,7 @@ export function REPL({
         { rewindConversationTo, setInputValue, setInputMode, setPastedContents },
         message,
       ),
-    [rewindConversationTo, setInputValue],
+    [rewindConversationTo, setInputValue, setPastedContents, setInputMode],
   )
   restoreMessageSyncRef.current = restoreMessageSync
   const handleRestoreMessage = useCallback(
@@ -968,7 +983,9 @@ export function REPL({
       hasCountedQueueUseRef.current = false
       return
     }
-    if (hasCountedQueueUseRef.current) return
+    if (hasCountedQueueUseRef.current) {
+      return
+    }
     hasCountedQueueUseRef.current = true
     saveGlobalConfig((c) => ({ ...c, promptQueueUseCount: (c.promptQueueUseCount ?? 0) + 1 }))
   }, [queuedCommands.length])
@@ -1006,6 +1023,7 @@ export function REPL({
       setAppState,
       onBeforeQuery,
       setMessages,
+      setAbortController,
     ],
   )
   const executeQueuedInput = useCallback(
@@ -1023,7 +1041,9 @@ export function REPL({
     updateLastInteractionTime(true)
   }, [])
   useEffect(() => {
-    if (submitCount === 1) startBackgroundHousekeeping()
+    if (submitCount === 1) {
+      startBackgroundHousekeeping()
+    }
   }, [submitCount])
   useIdleNotification({
     isLoading,
@@ -1043,7 +1063,7 @@ export function REPL({
 
   const incomingPromptCtx = useMemo(
     () => ({ queryGuard, setAbortController, onQuery, mainLoopModel }),
-    [onQuery, mainLoopModel, queryGuard],
+    [onQuery, mainLoopModel, queryGuard, setAbortController],
   )
   const handleIncomingPrompt = useCallback(
     (content: string, options?: { isMeta?: boolean }) =>
@@ -1082,9 +1102,10 @@ export function REPL({
   })
 
   useEffect(() => {
-    if (queuedCommands.some((cmd) => cmd.priority === 'now'))
+    if (queuedCommands.some((cmd) => cmd.priority === 'now')) {
       abortControllerRef.current?.abort('interrupt')
-  }, [queuedCommands])
+    }
+  }, [queuedCommands, abortControllerRef.current?.abort])
 
   useEffect(() => {
     void onInit()

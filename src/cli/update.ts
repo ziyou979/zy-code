@@ -1,6 +1,11 @@
 import chalk from 'chalk'
 import { logEvent } from 'src/services/analytics/index.js'
 import {
+  installLatest as installLatestNative,
+  removeInstalledSymlink,
+} from 'src/services/nativeInstaller/index.js'
+import { getPackageManager } from 'src/services/nativeInstaller/packageManagers.js'
+import {
   getLatestVersion,
   type InstallStatus,
   installGlobalPackage,
@@ -12,11 +17,6 @@ import { getDoctorDiagnostic } from 'src/utils/doctorDiagnostic.js'
 import { isInternalBuild } from 'src/utils/envUtils.js'
 import { gracefulShutdown } from 'src/utils/gracefulShutdown.js'
 import { installOrUpdateZyPackage, localInstallationExists } from 'src/utils/localInstaller.js'
-import {
-  installLatest as installLatestNative,
-  removeInstalledSymlink,
-} from 'src/services/nativeInstaller/index.js'
-import { getPackageManager } from 'src/services/nativeInstaller/packageManagers.js'
 import { writeToStdout } from 'src/utils/process.js'
 import { gte } from 'src/utils/semver.js'
 import { getInitialSettings } from 'src/utils/settings/settings.js'

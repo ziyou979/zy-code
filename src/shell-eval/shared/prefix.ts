@@ -13,8 +13,8 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { startsWithApiErrorPrefix } from '../../services/api/errors.js'
 import { queryCompactModel } from '../../services/api/compactQueries.js'
+import { startsWithApiErrorPrefix } from '../../services/api/errors.js'
 import { memoizeWithLRU } from '../../utils/memoize.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'

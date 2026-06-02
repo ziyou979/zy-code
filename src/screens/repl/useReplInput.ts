@@ -4,9 +4,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTerminalFocus } from '../../ink.js'
-import { consumeEarlyInput } from '../../utils/earlyInput.js'
 import type { PromptInputMode, VimMode } from '../../types/textInputTypes.js'
 import type { PastedContent } from '../../utils/config.js'
+import { consumeEarlyInput } from '../../utils/earlyInput.js'
 
 const RECENT_SCROLL_REPIN_WINDOW_MS = 3000
 const PROMPT_SUPPRESSION_MS = 1500
@@ -48,7 +48,7 @@ export function useReplInput(params: UseReplInputParams) {
       setInputValueRaw(value)
       setIsPromptInputActive(value.trim().length > 0)
     },
-    [repinScroll],
+    [repinScroll, trySuggestBgPRIntercept, lastUserScrollTsRef.current],
   )
 
   // Clear suppression after user stops typing

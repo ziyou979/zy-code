@@ -189,7 +189,7 @@ function createPermissionContext(
             if (!classifierDecision) {
               return null
             }
-            if (feature('TRANSCRIPT_CLASSIFIER') && classifierDecision.type === 'classifier') {
+            if (true && classifierDecision.type === 'classifier') {
               const matchedRule = classifierDecision.reason.match(
                 /^Allowed by prompt rule: "(.+)"$/,
               )?.[1]

@@ -9,6 +9,8 @@ import {
   TOOL_USE_ID_TAG,
 } from '../../constants/xml.js'
 import { abortSpeculation } from '../../services/PromptSuggestion/speculation.js'
+import { evictTaskOutput, getTaskOutputPath } from '../../services/task/diskOutput.js'
+import { registerTask, updateTaskState } from '../../services/task/framework.js'
 import type { AppState } from '../../state/AppState.js'
 import type {
   LocalShellSpawnInput,
@@ -24,8 +26,6 @@ import { tailFile } from '../../utils/fsOperations.js'
 import { logError } from '../../utils/log.js'
 import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
 import type { ShellCommand } from '../../utils/ShellCommand.js'
-import { evictTaskOutput, getTaskOutputPath } from '../../services/task/diskOutput.js'
-import { registerTask, updateTaskState } from '../../services/task/framework.js'
 import { escapeXml } from '../../utils/xml.js'
 import { backgroundAgentTask, isLocalAgentTask } from '../LocalAgentTask/LocalAgentTask.js'
 import { isMainSessionTask } from '../LocalMainSessionTask.js'

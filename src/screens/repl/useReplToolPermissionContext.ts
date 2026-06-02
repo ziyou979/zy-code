@@ -6,8 +6,8 @@
 //
 // 内部 useSetAppState；setToolUseConfirmQueue 作为入参（recheck 路径需要遍历当前队列）。
 
-import { useCallback, useEffect } from 'react'
 import type React from 'react'
+import { useCallback, useEffect } from 'react'
 import type { ToolUseConfirm } from '../../components/permissions/PermissionRequest.js'
 import {
   registerLeaderSetToolPermissionContext,

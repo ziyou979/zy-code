@@ -9,16 +9,20 @@
 // 导出面里),作为依赖注入以避免 print.ts ←→ mcpRuntime.ts 的运行时循环导入。
 
 import { feature } from 'bun:bundle'
-import { cwd } from 'node:process'
 import { randomUUID } from 'node:crypto'
-import uniqBy from 'lodash-es/uniqBy.js'
-import { getCommands } from 'src/commands.js'
-import type { Command } from 'src/commands.js'
-import type { StructuredIO } from 'src/cli/structuredIO.js'
-import { getSessionId, getIsRemoteMode } from 'src/bootstrap/state.js'
+import { cwd } from 'node:process'
 import {
-  logEvent,
+  ElicitationCompleteNotificationSchema,
+  ElicitRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js'
+import uniqBy from 'lodash-es/uniqBy.js'
+import { getIsRemoteMode, getSessionId } from 'src/bootstrap/state.js'
+import type { StructuredIO } from 'src/cli/structuredIO.js'
+import type { Command } from 'src/commands.js'
+import { getCommands } from 'src/commands.js'
+import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+  logEvent,
 } from 'src/services/analytics/index.js'
 import { isChannelAllowlisted, isChannelsEnabled } from 'src/services/mcp/channelAllowlist.js'
 import { setupSdkMcpClients } from 'src/services/mcp/client.js'
@@ -29,19 +33,19 @@ import {
 } from 'src/services/mcp/elicitationHandler.js'
 import { getMcpPrefix } from 'src/services/mcp/mcpStringUtils.js'
 import type {
-  McpSdkServerConfig,
   MCPServerConnection,
+  McpSdkServerConfig,
   ScopedMcpServerConfig,
 } from 'src/services/mcp/types.js'
 import { filterToolsByServer } from 'src/services/mcp/utils.js'
 import { setupVscodeSdkMcp } from 'src/services/mcp/vscodeMcp.js'
-import { downloadUserSettings } from 'src/services/settingsSync/index.js'
 import { waitForRemoteManagedSettingsToLoad } from 'src/services/remoteManagedSettings/index.js'
+import { downloadUserSettings } from 'src/services/settingsSync/index.js'
+import type { AppState } from 'src/state/AppState.js'
 import type { Tools } from 'src/Tool.js'
 import type { AgentDefinition } from 'src/tools/AgentTool/loadAgentsDir.js'
 import type { McpServerConfigForProcessTransport, McpServerStatus } from 'src/types/index.js'
 import type { WireControlMcpSetServersResponse } from 'src/types/wire/control.js'
-import type { AppState } from 'src/state/AppState.js'
 import { uniq } from 'src/utils/array.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { withDiagnosticsTiming } from 'src/utils/diagLogs.js'
@@ -51,10 +55,6 @@ import { logError, logMCPDebug } from 'src/utils/log.js'
 import { installPluginsForHeadless } from 'src/utils/plugins/headlessPluginInstall.js'
 import { refreshActivePlugins } from 'src/utils/plugins/refresh.js'
 import { jsonStringify } from 'src/utils/slowOperations.js'
-import {
-  ElicitationCompleteNotificationSchema,
-  ElicitRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js'
 
 // ── 类型(从 print.ts 搬出,print.ts re-export 保持导出面不变) ──
 

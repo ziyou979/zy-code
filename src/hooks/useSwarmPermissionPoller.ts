@@ -11,18 +11,18 @@
 
 import { useCallback, useEffect, useRef } from 'react'
 import { useInterval } from 'usehooks-ts'
-import { logForDebugging } from '../utils/debug.js'
-import { errorMessage } from '../utils/errors.js'
-import {
-  type PermissionUpdate,
-  permissionUpdateSchema,
-} from '../utils/permissions/PermissionUpdateSchema.js'
 import {
   isSwarmWorker,
   type PermissionResponse,
   pollForResponse,
   removeWorkerResponse,
 } from '../services/swarm/permissionSync.js'
+import { logForDebugging } from '../utils/debug.js'
+import { errorMessage } from '../utils/errors.js'
+import {
+  type PermissionUpdate,
+  permissionUpdateSchema,
+} from '../utils/permissions/PermissionUpdateSchema.js'
 import { getAgentName, getTeamName } from '../utils/teammate.js'
 
 const POLL_INTERVAL_MS = 500

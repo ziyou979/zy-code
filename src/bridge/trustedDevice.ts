@@ -6,10 +6,10 @@ import {
   checkGate_CACHED_OR_BLOCKING,
   getFeatureValue_CACHED_MAY_BE_STALE,
 } from '../services/analytics/growthbook.js'
+import { getSecureStorage } from '../services/secureStorage/index.js'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { isEssentialTrafficOnly } from '../utils/privacyLevel.js'
-import { getSecureStorage } from '../services/secureStorage/index.js'
 import { jsonStringify } from '../utils/slowOperations.js'
 
 /**

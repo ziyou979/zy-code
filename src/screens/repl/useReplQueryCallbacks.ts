@@ -6,29 +6,29 @@
  */
 
 import { useCallback, useRef } from 'react'
+import type { IDESelection } from '../../hooks/useIdeSelection.js'
+import { useSessionBackgrounding } from '../../hooks/useSessionBackgrounding.js'
+import type { ActiveSpeculationState } from '../../services/PromptSuggestion/speculation.js'
+import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Message as MessageType } from '../../types/message.js'
 import type { PromptInputMode } from '../../types/textInputTypes.js'
-import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
-import type { EffortValue } from '../../utils/effort.js'
 import type { PastedContent } from '../../utils/config.js'
-import type { ActiveSpeculationState } from '../../services/PromptSuggestion/speculation.js'
-import type { SetAppState } from '../../utils/messageQueueManager.js'
+import type { EffortValue } from '../../utils/effort.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
-import type { ActiveRemote } from './useReplActiveRemote.js'
-import type { IDESelection } from '../../hooks/useIdeSelection.js'
+import type { SetAppState } from '../../utils/messageQueueManager.js'
 
 import {
   buildToolUseContext,
   handleQueryEvent,
-  runQueryImpl,
-  runQuery,
   handleSubmit,
   type QueryFlowContext,
+  runQuery,
+  runQueryImpl,
   type SubmitFlowContext,
 } from './replQueryFlow.js'
+import type { ActiveRemote } from './useReplActiveRemote.js'
 import { useReplBackgroundQuery } from './useReplBackgroundQuery.js'
-import { useSessionBackgrounding } from '../../hooks/useSessionBackgrounding.js'
 
 export type UseReplQueryCallbacksParams = {
   // 完整查询上下文，由 REPL 构建（消除曾经重复列举 49 字段的 param 面）
@@ -244,6 +244,12 @@ export function useReplQueryCallbacks(params: UseReplQueryCallbacksParams) {
       activeRemote.sendMessage,
       abortController,
       getToolUseContext,
+      setInputMode,
+      activeRemote,
+      setStashedPrompt,
+      setPastedContents,
+      setIDESelection,
+      resetTipPickedThisTurn,
     ],
   )
 

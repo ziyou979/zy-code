@@ -23,12 +23,12 @@ import {
   markAgentsNotified,
 } from '../tasks/LocalAgentTask/LocalAgentTask.js'
 import type { PromptInputMode, VimMode } from '../types/textInputTypes.js'
+import { emitTaskTerminatedBridge } from '../utils/bridgeEventQueue.js'
 import {
   clearCommandQueue,
   enqueuePendingNotification,
   hasCommandsInQueue,
 } from '../utils/messageQueueManager.js'
-import { emitTaskTerminatedBridge } from '../utils/bridgeEventQueue.js'
 
 /** 第二次按键用于终止所有后台 agent 的时间窗口（毫秒）。 */
 const KILL_AGENTS_CONFIRM_WINDOW_MS = 3000

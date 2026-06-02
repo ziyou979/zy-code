@@ -1,29 +1,33 @@
 import { relative } from 'node:path'
+import { getInitialMainLoopModel } from '../../bootstrap/state.js'
 import { isAnalyticsDisabled } from '../../services/analytics/config.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { isAutoUpdaterDisabled } from '../../utils/config.js'
-import { getContextWindowForModel } from '../../utils/context.js'
-import { getCwd } from '../../utils/cwd.js'
-import { hasNodeOption, isBareMode, isInProtectedNamespace } from '../../utils/envUtils.js'
-import { findGitRoot, getIsGit, getWorktreeCount } from '../../utils/git.js'
 import { getGhAuthStatus } from '../../services/github/ghAuthStatus.js'
-import { logError } from '../../utils/log.js'
-import { getInitialMainLoopModel } from '../../bootstrap/state.js'
 import { getDefaultMainLoopModel, parseUserSpecifiedModel } from '../../services/model/model.js'
-import { loadAllPluginsCacheOnly } from '../../utils/plugins/pluginLoader.js'
-import { getManagedPluginNames } from '../../utils/plugins/managedPlugins.js'
-import { getPluginSeedDirs } from '../../utils/plugins/pluginDirectories.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
 import {
   logPluginLoadErrors,
   logPluginsEnabledForSession,
 } from '../../services/telemetry/pluginTelemetry.js'
 import { logSkillsLoaded } from '../../services/telemetry/skillLoadedEvent.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isAutoUpdaterDisabled } from '../../utils/config.js'
+import { getContextWindowForModel } from '../../utils/context.js'
+import { getCwd } from '../../utils/cwd.js'
+import {
+  hasNodeOption,
+  isBareMode,
+  isInProtectedNamespace,
+  isInternalBuild,
+} from '../../utils/envUtils.js'
+import { findGitRoot, getIsGit, getWorktreeCount } from '../../utils/git.js'
+import { logError } from '../../utils/log.js'
+import { getManagedPluginNames } from '../../utils/plugins/managedPlugins.js'
+import { getPluginSeedDirs } from '../../utils/plugins/pluginDirectories.js'
+import { loadAllPluginsCacheOnly } from '../../utils/plugins/pluginLoader.js'
+import { getInitialSettings } from '../../utils/settings/settings.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
 
 /**

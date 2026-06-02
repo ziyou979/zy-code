@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import type { WirePartialAssistantMessage } from 'src/types/wire/messages.js'
 import type { StdoutMessage } from 'src/types/wire/control.js'
+import type { WirePartialAssistantMessage } from 'src/types/wire/messages.js'
 import { decodeJwtExpiry } from '../../bridge/jwtUtils.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'

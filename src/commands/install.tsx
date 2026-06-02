@@ -5,15 +5,15 @@ import type { CommandResultDisplay } from 'src/commands.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { StatusIcon } from '../components/design-system/StatusIcon.js'
 import { Box, render, Text } from '../ink.js'
-import { logForDebugging } from '../utils/debug.js'
-import { env } from '../utils/env.js'
-import { errorMessage } from '../utils/errors.js'
 import {
   checkInstall,
   cleanupNpmInstallations,
   cleanupShellAliases,
   installLatest,
 } from '../services/nativeInstaller/index.js'
+import { logForDebugging } from '../utils/debug.js'
+import { env } from '../utils/env.js'
+import { errorMessage } from '../utils/errors.js'
 import { getInitialSettings, updateSettingsForSource } from '../utils/settings/settings.js'
 
 interface InstallProps {

@@ -6,27 +6,26 @@
  * - useIdleReturnHint：超过空闲阈值时显示 /clear 提示
  */
 
+import * as React from 'react'
 import { useEffect, useMemo } from 'react'
-import { feature } from 'bun:bundle'
+import { getLastInteractionTime, getTotalInputTokens } from '../../bootstrap/state.js'
+import type { Notification } from '../../context/notifications.js'
+import type { TerminalNotification } from '../../ink/useTerminalNotification.js'
+import { Text } from '../../ink.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import {
+  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+  logEvent,
+} from '../../services/analytics/index.js'
+import { sendNotification } from '../../services/notifier.js'
+import type { ReplStoreInstance, ToolJSXState } from '../../state/ReplStore.js'
+import type { HookProgress } from '../../types/hooks/index.js'
+import type { Message as MessageType, ProgressMessage } from '../../types/message.js'
 import { count } from '../../utils/array.js'
+import { getGlobalConfig } from '../../utils/config.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { formatTokens, truncateToWidth } from '../../utils/format.js'
-import { getGlobalConfig } from '../../utils/config.js'
-import { getLastInteractionTime, getTotalInputTokens } from '../../bootstrap/state.js'
-import { sendNotification } from '../../services/notifier.js'
-import {
-  logEvent,
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-} from '../../services/analytics/index.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import type { ToolJSXState, ReplStoreInstance } from '../../state/ReplStore.js'
-import type { Message as MessageType, ProgressMessage } from '../../types/message.js'
-import type { HookProgress } from '../../types/hooks/index.js'
-import type { TerminalNotification } from '../../ink/useTerminalNotification.js'
-import type { Notification } from '../../context/notifications.js'
 import type { FocusedInputDialog } from './useReplOnCancel.js'
-import { Text } from '../../ink.js'
-import * as React from 'react'
 
 // ── useStopHookSpinnerSuffix ──
 
@@ -171,7 +170,7 @@ export function useIdleNotification(params: {
       terminal,
     )
     return () => clearTimeout(timer)
-  }, [isLoading, toolJSX, submitCount, lastQueryCompletionTime, terminal])
+  }, [isLoading, toolJSX, submitCount, lastQueryCompletionTime, terminal, focusedInputDialogRef])
 }
 
 // ── useIdleReturnHint ──
@@ -255,5 +254,12 @@ export function useIdleReturnHint(params: {
       removeNotification('idle-return-hint')
       replStore.mutable.idleHintShown = false
     }
-  }, [lastQueryCompletionTime, isLoading, addNotification, removeNotification])
+  }, [
+    lastQueryCompletionTime,
+    isLoading,
+    addNotification,
+    removeNotification,
+    replStore.mutable,
+    replStore,
+  ])
 }

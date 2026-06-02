@@ -1,3 +1,4 @@
+import { type RemoteMessageContent, sendEventToRemoteSession } from '../services/teleport/api.js'
 import type { WireMessage } from '../types/index.js'
 import type {
   WireControlCancelRequest,
@@ -7,7 +8,6 @@ import type {
 } from '../types/wire/control.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logError } from '../utils/log.js'
-import { type RemoteMessageContent, sendEventToRemoteSession } from '../services/teleport/api.js'
 import { SessionsWebSocket, type SessionsWebSocketCallbacks } from './SessionsWebSocket.js'
 
 /**

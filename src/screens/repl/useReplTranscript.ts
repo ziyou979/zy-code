@@ -9,17 +9,17 @@
 // 核心收益：dumpMode / editorStatus 从 REPL.tsx 移入本模块闭包，
 // 消除了 search ↔ editor 的循环声明顺序问题。
 
-import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import type { JumpHandle } from '../../components/VirtualMessageList.js'
-import { useInput } from '../../ink.js'
-import { useSearchHighlight } from '../../ink/hooks/use-search-highlight.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { useSearchHighlight } from '../../ink/hooks/use-search-highlight.js'
+import { useInput } from '../../ink.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import { isLocalAgentTask } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
 import type { Tools } from '../../Tool.js'
+import { isLocalAgentTask } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
 import { asAgentId } from '../../types/ids.js'
 import type { Message } from '../../types/message.js'
 import { openFileInExternalEditor } from '../../utils/editor.js'

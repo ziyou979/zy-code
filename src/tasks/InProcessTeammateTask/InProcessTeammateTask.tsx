@@ -9,6 +9,8 @@
  * 4. Can be idle (waiting for work) or active (processing)
  */
 
+import { killInProcessTeammate } from '../../services/swarm/spawnInProcess.js'
+import { updateTaskState } from '../../services/task/framework.js'
 import {
   isTerminalTaskStatus,
   type SetAppState,
@@ -18,8 +20,6 @@ import {
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { createUserMessage } from '../../utils/messages.js'
-import { killInProcessTeammate } from '../../services/swarm/spawnInProcess.js'
-import { updateTaskState } from '../../services/task/framework.js'
 import type { InProcessTeammateTaskState } from './types.js'
 import { appendCappedMessage, isInProcessTeammateTask } from './types.js'
 

@@ -4,24 +4,23 @@
  * 处理来自 CLI 参数或带上下文清除的 plan mode 退出的初始消息。
  */
 
-import { useCallback, useEffect, useRef } from 'react'
 import { feature } from 'bun:bundle'
-import type { ReplStoreInstance } from '../../state/ReplStore.js'
-import { toUUID } from '../../types/ids.js'
+import { useEffect, useRef } from 'react'
+import { getSessionId } from '../../bootstrap/state.js'
+import { buildPermissionUpdates } from '../../components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.js'
 import type { AppState } from '../../state/AppState.js'
 import type { AppStateStore } from '../../state/AppStateStore.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
+import { toUUID } from '../../types/ids.js'
 import type { Message as MessageType } from '../../types/message.js'
-import type { EffortValue } from '../../utils/effort.js'
-import type { FileHistoryState } from '../../utils/fileHistory.js'
-import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import { applyPermissionUpdates } from '../../utils/permissions/PermissionUpdate.js'
-import { buildPermissionUpdates } from '../../components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.js'
-import { stripDangerousPermissionsForAutoMode } from '../../utils/permissions/permissionSetup.js'
-import { fileHistoryEnabled, fileHistoryMakeSnapshot } from '../../utils/fileHistory.js'
-import { getSessionId } from '../../bootstrap/state.js'
-import { getPlanSlug, setPlanSlug } from '../../utils/plans.js'
 import { createAbortController } from '../../utils/abortController.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import type { FileHistoryState } from '../../utils/fileHistory.js'
+import { fileHistoryEnabled, fileHistoryMakeSnapshot } from '../../utils/fileHistory.js'
+import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
+import { applyPermissionUpdates } from '../../utils/permissions/PermissionUpdate.js'
+import { stripDangerousPermissionsForAutoMode } from '../../utils/permissions/permissionSetup.js'
+import { getPlanSlug, setPlanSlug } from '../../utils/plans.js'
 
 export interface UseReplInitialMessageParams {
   replStore: ReplStoreInstance
@@ -60,7 +59,7 @@ export function useReplInitialMessage(params: UseReplInitialMessageParams): void
     onQuery,
   } = params
 
-  const initialMessage = store.getState().initialMessage
+  const _initialMessage = store.getState().initialMessage
 
   const initialMessageRef = useRef(false)
   useEffect(() => {
@@ -103,7 +102,7 @@ export function useReplInitialMessage(params: UseReplInitialMessageParams): void
               buildPermissionUpdates(initialMsg.mode, initialMsg.allowedPrompts),
             )
           : prev.toolPermissionContext
-        if (feature('TRANSCRIPT_CLASSIFIER') && initialMsg.mode === 'auto') {
+        if (true && initialMsg.mode === 'auto') {
           updatedToolPermissionContext = stripDangerousPermissionsForAutoMode({
             ...updatedToolPermissionContext,
             mode: 'auto',
@@ -162,7 +161,6 @@ export function useReplInitialMessage(params: UseReplInitialMessageParams): void
     void processInitialMessage(pending)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    initialMessage,
     isLoading,
     setMessages,
     setAppState,
@@ -170,5 +168,13 @@ export function useReplInitialMessage(params: UseReplInitialMessageParams): void
     mainLoopModel,
     awaitPendingHooks,
     store.getState,
+    replStore.mutable.readFileState,
+    setAbortController,
+    replStore.mutable.discoveredSkillNames,
+    clearBashToolsTracking,
+    replStore.mutable.loadedNestedMemoryPaths,
+    replStore.setConversationId,
+    replStore.mutable,
+    onSubmit,
   ])
 }

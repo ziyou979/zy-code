@@ -891,7 +891,7 @@ function runHeadlessStreaming(
       newMode === 'acceptEdits' ||
       newMode === 'bypassPermissions' ||
       newMode === 'plan' ||
-      newMode === (feature('TRANSCRIPT_CLASSIFIER') && 'auto') ||
+      newMode === (true && 'auto') ||
       newMode === 'dontAsk'
     ) {
       output.enqueue({
@@ -1006,7 +1006,9 @@ function runHeadlessStreaming(
     const modelId = option.value === null ? 'default' : option.value
     const resolvedModel =
       modelId === 'default' ? getDefaultMainLoopModel() : parseUserSpecifiedModel(modelId)
-    const effortLevels = getModelEffortLevels(resolvedModel)
+    const effortLevels = getModelEffortLevels(resolvedModel).filter(
+      (l): l is Exclude<typeof l, 'orchestrate'> => l !== 'orchestrate',
+    )
     const hasAdaptiveThinking = modelSupportsAdaptiveThinking(resolvedModel)
     const hasAutoMode = modelSupportsAutoMode(resolvedModel)
     return {
@@ -1029,7 +1031,7 @@ function runHeadlessStreaming(
       const contentText = crumb.message.content.find((b: { type: string }) => b.type === 'text') as
         | { type: 'text'; text: string }
         | undefined
-      if (contentText && contentText.text.includes(`<${LOCAL_COMMAND_STDOUT_TAG}>`)) {
+      if (contentText?.text.includes(`<${LOCAL_COMMAND_STDOUT_TAG}>`)) {
         output.enqueue({
           type: 'user',
           message: crumb.message,
@@ -1697,7 +1699,7 @@ export function handleSetPermissionMode(
   }
 
   // Check if trying to switch to auto mode without the classifier gate
-  if (feature('TRANSCRIPT_CLASSIFIER') && request.mode === 'auto' && !isAutoModeGateEnabled()) {
+  if (true && request.mode === 'auto' && !isAutoModeGateEnabled()) {
     const reason = getAutoModeUnavailableReason()
     output.enqueue({
       type: 'control_response',

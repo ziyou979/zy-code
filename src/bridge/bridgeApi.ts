@@ -3,9 +3,9 @@ import axios from 'axios'
 import { debugBody, extractErrorDetail } from './debugUtils.js'
 import {
   BRIDGE_LOGIN_INSTRUCTION,
+  type PermissionResponseEvent,
   type WireApiClient,
   type WireConfig,
-  type PermissionResponseEvent,
   type WorkResponse,
 } from './types.js'
 

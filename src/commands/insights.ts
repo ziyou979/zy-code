@@ -14,6 +14,7 @@ import { extname, join } from 'node:path'
 import { diffLines } from 'diff'
 import type { Command } from '../commands.js'
 import { queryWithModel } from '../services/api/compactQueries.js'
+import { getDefaultAdvancedModel } from '../services/model/model.js'
 import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js'
 import type { LogOption } from '../types/logs.js'
 import { getZyConfigHomeDir, isInternalBuild } from '../utils/envUtils.js'
@@ -21,7 +22,6 @@ import { toError } from '../utils/errors.js'
 import { execFileNoThrow } from '../utils/execFileNoThrow.js'
 import { logError } from '../utils/log.js'
 import { extractTextContent } from '../utils/messages.js'
-import { getDefaultAdvancedModel } from '../services/model/model.js'
 import {
   getProjectsDir,
   getSessionFilesWithMtime,

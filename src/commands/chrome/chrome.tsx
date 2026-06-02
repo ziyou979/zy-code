@@ -2,13 +2,13 @@ import React, { useState } from 'react'
 import { Select } from '../../components/CustomSelect/select.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { Box, Text } from '../../ink.js'
-import { useAppState } from '../../state/AppState.js'
-import { openBrowser } from '../../utils/browser.js'
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   openInChrome,
 } from '../../services/claudeInChrome/common.js'
 import { isChromeExtensionInstalled } from '../../services/claudeInChrome/setup.js'
+import { useAppState } from '../../state/AppState.js'
+import { openBrowser } from '../../utils/browser.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { env } from '../../utils/env.js'
 import { isRunningOnHomespace } from '../../utils/envUtils.js'

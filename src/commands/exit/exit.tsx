@@ -9,7 +9,7 @@ import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
 import { getCurrentWorktreeSession } from '../../utils/worktree.js'
 
 const GOODBYE_MESSAGES = ['Goodbye!', 'See ya!', 'Bye!', 'Catch you later!']
-function getRandomGoodbyeMessage(): string {
+function _getRandomGoodbyeMessage(): string {
   return sample(GOODBYE_MESSAGES) ?? 'Goodbye!'
 }
 export async function call(onDone: LocalJSXCommandOnDone): Promise<React.ReactNode> {

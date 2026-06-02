@@ -3,8 +3,8 @@
  * critique user-written rules. Dynamically imported when `zy auto-mode ...` runs.
  */
 
-import { errorMessage } from '../../utils/errors.js'
 import { getMainLoopModel, parseUserSpecifiedModel } from '../../services/model/model.js'
+import { errorMessage } from '../../utils/errors.js'
 import {
   type AutoModeRules,
   buildDefaultSystemPrompt,

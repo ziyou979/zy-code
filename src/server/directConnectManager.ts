@@ -1,11 +1,11 @@
 /* eslint-disable eslint-plugin-n/no-unsupported-features/node-builtins */
 
-import type { WireMessage } from '../types/index.js'
-import type { WireControlPermissionRequest, StdoutMessage } from '../types/wire/control.js'
 import type { RemotePermissionResponse } from '../remote/RemoteSessionManager.js'
+import type { RemoteMessageContent } from '../services/teleport/api.js'
+import type { WireMessage } from '../types/index.js'
+import type { StdoutMessage, WireControlPermissionRequest } from '../types/wire/control.js'
 import { logForDebugging } from '../utils/debug.js'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
-import type { RemoteMessageContent } from '../services/teleport/api.js'
 
 export type DirectConnectConfig = {
   serverUrl: string

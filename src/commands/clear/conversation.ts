@@ -14,6 +14,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
+import { evictTaskOutput, initTaskOutputAsSymlink } from '../../services/task/diskOutput.js'
 import type { AppState } from '../../state/AppState.js'
 import { isInProcessTeammateTask } from '../../tasks/InProcessTeammateTask/types.js'
 import {
@@ -37,7 +38,6 @@ import {
   resetSessionFilePointer,
   saveWorktreeState,
 } from '../../utils/sessionStorage.js'
-import { evictTaskOutput, initTaskOutputAsSymlink } from '../../services/task/diskOutput.js'
 import { getCurrentWorktreeSession } from '../../utils/worktree.js'
 import { clearSessionCaches } from './caches.js'
 

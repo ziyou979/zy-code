@@ -10,27 +10,10 @@
 // 一次调用，组装所有返回值。
 
 import { feature } from 'bun:bundle'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type React from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AUTO_MODE_DESCRIPTION } from '../../components/AutoModeOptInDialog.js'
 import { shouldShowDesktopUpsellStartup } from '../../components/DesktopUpsell/DesktopUpsellStartup.js'
-import type { ModelName } from '../../services/model/model.js'
-import { getAllInProcessTeammateTasks } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
-import { useAppState } from '../../state/AppState.js'
-import type { Message as MessageType } from '../../types/message.js'
-import { count } from '../../utils/array.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { createTurnDurationMessage, createSystemMessage } from '../../utils/messages.js'
-import { isLoggableMessage } from '../../utils/sessionStorage.js'
-import { getSettingsForSource } from '../../utils/settings/settings.js'
-import type { Theme } from '../../utils/theme.js'
-import { getCurrentWorktreeSession } from '../../utils/worktree.js'
-// 通知子 hook
-import { useChromeExtensionNotification } from '../../hooks/useChromeExtensionNotification.js'
-import { useLspPluginRecommendation } from '../../hooks/useLspPluginRecommendation.js'
-import { useOfficialMarketplaceNotification } from '../../hooks/useOfficialMarketplaceNotification.js'
-import { useZyCodeHintRecommendation } from '../../hooks/useZyCodeHintRecommendation.js'
 import { useAutoModeUnavailableNotification } from '../../hooks/notifs/useAutoModeUnavailableNotification.js'
 import { useCanSwitchToExistingSubscription } from '../../hooks/notifs/useCanSwitchToExistingSubscription.js'
 import { useInstallMessages } from '../../hooks/notifs/useInstallMessages.js'
@@ -41,6 +24,21 @@ import { usePluginInstallationStatus } from '../../hooks/notifs/usePluginInstall
 import { useRateLimitWarningNotification } from '../../hooks/notifs/useRateLimitWarningNotification.js'
 import { useSettingsErrors } from '../../hooks/notifs/useSettingsErrors.js'
 import { useTeammateLifecycleNotification } from '../../hooks/notifs/useTeammateShutdownNotification.js'
+// 通知子 hook
+import { useChromeExtensionNotification } from '../../hooks/useChromeExtensionNotification.js'
+import { useLspPluginRecommendation } from '../../hooks/useLspPluginRecommendation.js'
+import { useOfficialMarketplaceNotification } from '../../hooks/useOfficialMarketplaceNotification.js'
+import { useZyCodeHintRecommendation } from '../../hooks/useZyCodeHintRecommendation.js'
+import type { ModelName } from '../../services/model/model.js'
+import { useAppState } from '../../state/AppState.js'
+import type { Message as MessageType } from '../../types/message.js'
+import { count } from '../../utils/array.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
+import { createSystemMessage, createTurnDurationMessage } from '../../utils/messages.js'
+import { isLoggableMessage } from '../../utils/sessionStorage.js'
+import { getSettingsForSource } from '../../utils/settings/settings.js'
+import { getCurrentWorktreeSession } from '../../utils/worktree.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const useAntOrgWarningNotification: typeof import('../../hooks/notifs/useAntOrgWarningNotification.js').useAntOrgWarningNotification =
@@ -157,37 +155,35 @@ export function useReplNotificationsCluster({
   // ── system hints: auto-mode 安全警告 ──
   const safeYoloMessageShownRef = useRef(false)
   useEffect(() => {
-    if (feature('TRANSCRIPT_CLASSIFIER')) {
-      if (toolPermissionMode !== 'auto') {
-        safeYoloMessageShownRef.current = false
-        return
-      }
-      if (safeYoloMessageShownRef.current) {
-        return
-      }
-      const config = getGlobalConfig()
-      const cnt = config.autoPermissionsNotificationCount ?? 0
-      if (cnt >= 3) {
-        return
-      }
-      const timer = setTimeout(
-        (ref: { current: boolean }, setMsgs: typeof setMessages) => {
-          ref.current = true
-          saveGlobalConfig((prev) => {
-            const prevCount = prev.autoPermissionsNotificationCount ?? 0
-            if (prevCount >= 3) {
-              return prev
-            }
-            return { ...prev, autoPermissionsNotificationCount: prevCount + 1 }
-          })
-          setMsgs((prev) => [...prev, createSystemMessage(AUTO_MODE_DESCRIPTION, 'warn')])
-        },
-        800,
-        safeYoloMessageShownRef,
-        setMessages,
-      )
-      return () => clearTimeout(timer)
+    if (toolPermissionMode !== 'auto') {
+      safeYoloMessageShownRef.current = false
+      return
     }
+    if (safeYoloMessageShownRef.current) {
+      return
+    }
+    const config = getGlobalConfig()
+    const cnt = config.autoPermissionsNotificationCount ?? 0
+    if (cnt >= 3) {
+      return
+    }
+    const timer = setTimeout(
+      (ref: { current: boolean }, setMsgs: typeof setMessages) => {
+        ref.current = true
+        saveGlobalConfig((prev) => {
+          const prevCount = prev.autoPermissionsNotificationCount ?? 0
+          if (prevCount >= 3) {
+            return prev
+          }
+          return { ...prev, autoPermissionsNotificationCount: prevCount + 1 }
+        })
+        setMsgs((prev) => [...prev, createSystemMessage(AUTO_MODE_DESCRIPTION, 'warn')])
+      },
+      800,
+      safeYoloMessageShownRef,
+      setMessages,
+    )
+    return () => clearTimeout(timer)
   }, [toolPermissionMode, setMessages])
 
   // ── system hints: worktree sparse-checkout 提示 ──

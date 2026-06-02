@@ -3,15 +3,6 @@ import { access } from 'node:fs/promises'
 import { tmpdir as osTmpdir } from 'node:os'
 import { join as nativeJoin } from 'node:path'
 import { join as posixJoin } from 'node:path/posix'
-import { rearrangePipeCommand } from '../bash/bashPipeCommand.js'
-import { createAndSaveSnapshot } from '../bash/ShellSnapshot.js'
-import { formatShellPrefixCommand } from '../bash/shellPrefix.js'
-import { quote } from '../bash/shellQuote.js'
-import {
-  quoteShellCommand,
-  rewriteWindowsNullRedirect,
-  shouldAddStdinRedirect,
-} from '../bash/shellQuoting.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { getPlatform } from '../../utils/platform.js'
@@ -23,6 +14,15 @@ import {
   hasTmuxToolBeenUsed,
 } from '../../utils/tmuxSocket.js'
 import { windowsPathToPosixPath } from '../../utils/windowsPaths.js'
+import { rearrangePipeCommand } from '../bash/bashPipeCommand.js'
+import { createAndSaveSnapshot } from '../bash/ShellSnapshot.js'
+import { formatShellPrefixCommand } from '../bash/shellPrefix.js'
+import { quote } from '../bash/shellQuote.js'
+import {
+  quoteShellCommand,
+  rewriteWindowsNullRedirect,
+  shouldAddStdinRedirect,
+} from '../bash/shellQuoting.js'
 import type { ShellProvider } from './shellProvider.js'
 
 /**

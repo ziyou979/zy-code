@@ -2,13 +2,13 @@
 // Extracted so runAgent.ts can kill agent-scoped bash tasks without pulling
 // React/Ink into its module graph (same rationale as guards.ts).
 
+import { evictTaskOutput } from '../../services/task/diskOutput.js'
+import { updateTaskState } from '../../services/task/framework.js'
 import type { AppState } from '../../state/AppState.js'
 import type { AgentId } from '../../types/ids.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logError } from '../../utils/log.js'
 import { dequeueAllMatching } from '../../utils/messageQueueManager.js'
-import { evictTaskOutput } from '../../services/task/diskOutput.js'
-import { updateTaskState } from '../../services/task/framework.js'
 import { isLocalShellTask } from './guards.js'
 
 type SetAppStateFn = (updater: (prev: AppState) => AppState) => void

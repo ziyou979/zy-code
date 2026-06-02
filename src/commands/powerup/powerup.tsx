@@ -73,7 +73,9 @@ function PowerupApp({ onDone }: Props) {
 
   const markDone = useCallback((id: string) => {
     setUnlocked((prev) => {
-      if (prev.has(id)) return prev
+      if (prev.has(id)) {
+        return prev
+      }
       const next = new Set(prev)
       next.add(id)
       persistUnlocked(next)
@@ -105,7 +107,9 @@ function PowerupApp({ onDone }: Props) {
   // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw y/n/Esc keystrokes inside detail view
   useInput(
     (input, key) => {
-      if (!openLesson) return
+      if (!openLesson) {
+        return
+      }
       if (key.escape || input === 'n' || input === 'N') {
         setOpenLessonId(null)
         return

@@ -9,13 +9,13 @@ import type { LocalJSXCommandContext } from '../../commands.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { AddWorkspaceDirectory } from '../../components/permissions/rules/AddWorkspaceDirectory.js'
 import { Box, Text } from '../../ink.js'
+import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
 import {
   applyPermissionUpdate,
   persistPermissionUpdate,
 } from '../../utils/permissions/PermissionUpdate.js'
 import type { PermissionUpdateDestination } from '../../utils/permissions/PermissionUpdateSchema.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { addDirHelpMessage, validateDirectoryForWorkspace } from './validation.js'
 
 function AddDirError({ message, args, onDone }) {

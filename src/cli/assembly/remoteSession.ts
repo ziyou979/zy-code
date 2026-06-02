@@ -7,8 +7,8 @@
 // 不抽 discovery / OAuth / wizard 等前置流程：那部分与各自模式深度耦合
 // （assistantModule / sessionDiscovery / teleport / bridge），强行外提收益小、回归面大。
 
-import { launchRepl } from '../../replLauncher.js'
 import type { RemoteSessionConfig } from '../../remote/RemoteSessionManager.js'
+import { launchRepl } from '../../replLauncher.js'
 import type { Props as REPLProps } from '../../screens/REPL.js'
 import type { Message as MessageType } from '../../types/message.js'
 import type { AssemblyContext, SessionConfig } from './types.js'

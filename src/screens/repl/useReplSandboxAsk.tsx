@@ -15,20 +15,21 @@
 // `sandboxWireCleanupRef` 由 hook 内部 useRef 创建并 export，因为本地
 // 对话框 approval 处理（REPL JSX 中）也要遍历清理同 host 的兄弟订阅。
 
-import { useCallback, useEffect, useRef } from 'react'
 import { feature } from 'bun:bundle'
 import { randomUUID } from 'node:crypto'
-import { Text } from '../../ink.js'
+import { useCallback, useEffect, useRef } from 'react'
 import { SANDBOX_NETWORK_ACCESS_TOOL_NAME } from '../../cli/structuredIO.js'
+import type { Notification } from '../../context/notifications.js'
 import { registerSandboxPermissionCallback } from '../../hooks/useSwarmPermissionPoller.js'
+import { Text } from '../../ink.js'
 import {
-  type SandboxAskCallback,
   type NetworkHostPattern,
+  type SandboxAskCallback,
   SandboxManager,
 } from '../../services/sandbox/sandbox-adapter.js'
 import {
-  isSwarmWorker,
   generateSandboxRequestId,
+  isSwarmWorker,
   sendSandboxPermissionRequestViaMailbox,
 } from '../../services/swarm/permissionSync.js'
 import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
@@ -36,7 +37,6 @@ import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'
-import type { Notification } from '../../context/notifications.js'
 
 export type SandboxPermissionRequest = {
   hostPattern: NetworkHostPattern

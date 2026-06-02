@@ -1,4 +1,3 @@
-import figures from 'figures'
 import * as React from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import { Select } from '../../components/CustomSelect/select.js'
@@ -14,9 +13,9 @@ import {
   effectiveColor,
   effectiveIcon,
   ICON_LIBRARY,
-  mergeWithDefaults,
   type ModuleConfig,
   type ModuleId,
+  mergeWithDefaults,
 } from '../../components/statusbar/statusbarModuleDefaults.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useSettings } from '../../hooks/useSettings.js'
@@ -24,10 +23,10 @@ import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text, useInput } from '../../ink.js'
 import { useAppState } from '../../state/AppState.js'
+import type { LocalJSXCommandOnDone } from '../../types/command.js'
+import { getGlobalConfig } from '../../utils/config.js'
 import { resolveThemeSetting } from '../../utils/systemTheme.js'
 import { getTheme, type Theme } from '../../utils/theme.js'
-import { getGlobalConfig } from '../../utils/config.js'
-import type { LocalJSXCommandOnDone } from '../../types/command.js'
 
 type Mode = 'main' | 'icon' | 'color'
 

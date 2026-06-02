@@ -20,6 +20,12 @@ import {
   TOOL_USE_ID_TAG,
 } from '../constants/xml.js'
 import { type QueryParams, query } from '../query.js'
+import {
+  evictTaskOutput,
+  getTaskOutputPath,
+  initTaskOutputAsSymlink,
+} from '../services/task/diskOutput.js'
+import { registerTask, updateTaskState } from '../services/task/framework.js'
 import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
 import type { SetAppState } from '../Task.js'
 import { createTaskStateBase } from '../Task.js'
@@ -28,18 +34,12 @@ import { asAgentId } from '../types/ids.js'
 import type { Message } from '../types/message.js'
 import { createAbortController } from '../utils/abortController.js'
 import { runWithAgentContext, type SubagentContext } from '../utils/agentContext.js'
+import { emitTaskTerminatedBridge } from '../utils/bridgeEventQueue.js'
 import { registerCleanup } from '../utils/cleanupRegistry.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logError } from '../utils/log.js'
 import { enqueuePendingNotification } from '../utils/messageQueueManager.js'
-import { emitTaskTerminatedBridge } from '../utils/bridgeEventQueue.js'
 import { getAgentTranscriptPath, recordSidechainTranscript } from '../utils/sessionStorage.js'
-import {
-  evictTaskOutput,
-  getTaskOutputPath,
-  initTaskOutputAsSymlink,
-} from '../services/task/diskOutput.js'
-import { registerTask, updateTaskState } from '../services/task/framework.js'
 import type { LocalAgentTaskState } from './LocalAgentTask/LocalAgentTask.js'
 
 // Main session tasks use LocalAgentTaskState with agentType='main-session'

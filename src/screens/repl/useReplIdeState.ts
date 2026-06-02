@@ -9,9 +9,9 @@
 
 import type React from 'react'
 import { useState } from 'react'
+import { useIDEStatusIndicator } from '../../hooks/notifs/useIDEStatusIndicator.js'
 import { useIDEIntegration } from '../../hooks/useIDEIntegration.js'
 import { type IDESelection, useIdeSelection } from '../../hooks/useIdeSelection.js'
-import { useIDEStatusIndicator } from '../../hooks/notifs/useIDEStatusIndicator.js'
 import type { MCPServerConnection, ScopedMcpServerConfig } from '../../services/mcp/types.js'
 import type { IDEExtensionInstallationStatus, IdeType } from '../../utils/ide.js'
 

@@ -1,5 +1,5 @@
-import type { LocalCommandResult } from '../../types/command.js'
 import { tSync } from '../../i18n/index.js'
+import type { LocalCommandResult } from '../../types/command.js'
 import {
   CHANGELOG_URL,
   fetchAndStoreChangelog,

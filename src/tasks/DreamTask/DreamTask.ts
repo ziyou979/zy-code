@@ -4,9 +4,9 @@
 // surfacing via the existing task registry.
 
 import { rollbackConsolidationLock } from '../../services/autoDream/consolidationLock.js'
+import { registerTask, updateTaskState } from '../../services/task/framework.js'
 import type { SetAppState, Task, TaskStateBase } from '../../Task.js'
 import { createTaskStateBase, generateTaskId } from '../../Task.js'
-import { registerTask, updateTaskState } from '../../services/task/framework.js'
 
 // Keep only the N most recent turns for live display.
 const MAX_TURNS = 30

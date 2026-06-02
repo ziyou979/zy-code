@@ -2,6 +2,9 @@ import { feature } from 'bun:bundle'
 import { randomUUID } from 'node:crypto'
 import type { ElicitResult, JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
 import type { AssistantMessage } from 'src//types/message.js'
+import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
+import type { Tool, ToolUseContext } from 'src/Tool.js'
+import { type HookCallback, hookJSONOutputSchema } from 'src/types/hooks/index.js'
 import type {
   HookInput,
   HookJSONOutput,
@@ -9,16 +12,13 @@ import type {
   WireMessage,
   WireUserMessage,
 } from 'src/types/index.js'
-import { WireControlElicitationResponseSchema } from 'src/types/wire/controlSchemas.js'
 import type {
-  WireControlRequest,
-  WireControlResponse,
   StdinMessage,
   StdoutMessage,
+  WireControlRequest,
+  WireControlResponse,
 } from 'src/types/wire/control.js'
-import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
-import type { Tool, ToolUseContext } from 'src/Tool.js'
-import { type HookCallback, hookJSONOutputSchema } from 'src/types/hooks/index.js'
+import { WireControlElicitationResponseSchema } from 'src/types/wire/controlSchemas.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
 import { AbortError } from 'src/utils/errors.js'
@@ -64,7 +64,7 @@ function serializeDecisionReason(reason: PermissionDecisionReason | undefined): 
   }
 
   if (
-    (feature('BASH_CLASSIFIER') || feature('TRANSCRIPT_CLASSIFIER')) &&
+    (feature('BASH_CLASSIFIER') || true) &&
     reason.type === 'classifier'
   ) {
     return reason.reason

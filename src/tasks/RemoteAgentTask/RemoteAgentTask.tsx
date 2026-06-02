@@ -1,3 +1,4 @@
+import type { WireAssistantMessage, WireMessage } from 'src/types/index.js'
 import { getRemoteSessionUrl } from '../../constants/product.js'
 import {
   OUTPUT_FILE_TAG,
@@ -11,26 +12,10 @@ import {
   TOOL_USE_ID_TAG,
   ULTRAPLAN_TAG,
 } from '../../constants/xml.js'
-import type { WireAssistantMessage, WireMessage } from 'src/types/index.js'
-import type { SetAppState, Task, TaskContext, TaskStateBase } from '../../Task.js'
-import { createTaskStateBase, generateTaskId } from '../../Task.js'
-import { TodoWriteTool } from '../../tools/TodoWriteTool/TodoWriteTool.js'
 import {
   type BackgroundRemoteSessionPrecondition,
   checkBackgroundRemoteSessionEligibility,
 } from '../../services/background/remote/remoteSession.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { logError } from '../../utils/log.js'
-import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
-import { extractTag, extractTextContent } from '../../utils/messages.js'
-import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
-import {
-  deleteRemoteAgentMetadata,
-  listRemoteAgentMetadata,
-  type RemoteAgentMetadata,
-  writeRemoteAgentMetadata,
-} from '../../utils/sessionStorage.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
 import {
   appendTaskOutput,
   evictTaskOutput,
@@ -39,9 +24,24 @@ import {
 } from '../../services/task/diskOutput.js'
 import { registerTask, updateTaskState } from '../../services/task/framework.js'
 import { fetchSession } from '../../services/teleport/api.js'
-import { archiveRemoteSession, pollRemoteSessionEvents } from '../../utils/teleport.js'
 import type { TodoList } from '../../services/todo/types.js'
 import type { UltraplanPhase } from '../../services/ultraplan/ccrSession.js'
+import type { SetAppState, Task, TaskContext, TaskStateBase } from '../../Task.js'
+import { createTaskStateBase, generateTaskId } from '../../Task.js'
+import { TodoWriteTool } from '../../tools/TodoWriteTool/TodoWriteTool.js'
+import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { logError } from '../../utils/log.js'
+import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
+import { extractTag, extractTextContent } from '../../utils/messages.js'
+import {
+  deleteRemoteAgentMetadata,
+  listRemoteAgentMetadata,
+  type RemoteAgentMetadata,
+  writeRemoteAgentMetadata,
+} from '../../utils/sessionStorage.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
+import { archiveRemoteSession, pollRemoteSessionEvents } from '../../utils/teleport.js'
 export type RemoteAgentTaskState = TaskStateBase & {
   type: 'remote_agent'
   remoteTaskType: RemoteTaskType

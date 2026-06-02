@@ -1,3 +1,4 @@
+import { tSync } from '../i18n/index.js'
 import type {
   WireAssistantMessage,
   WireCompactBoundaryMessage,
@@ -8,7 +9,6 @@ import type {
   WireSystemMessage,
   WireToolProgressMessage,
 } from '../types/index.js'
-import { tSync } from '../i18n/index.js'
 import type { AssistantMessage, Message, StreamEvent, SystemMessage } from '../types/message.js'
 import { logForDebugging } from '../utils/debug.js'
 import { fromSDKCompactMetadata } from '../utils/messages/mappers.js'

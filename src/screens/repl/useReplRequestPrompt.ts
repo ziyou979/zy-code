@@ -8,8 +8,8 @@
 //
 // 仅依赖 setPromptQueue 一个 setter，无其它耦合。
 
-import { useCallback } from 'react'
 import type React from 'react'
+import { useCallback } from 'react'
 import type { PromptRequest, PromptResponse } from '../../types/hooks/index.js'
 
 export type PromptQueueItem = {

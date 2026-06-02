@@ -2,31 +2,32 @@ import { feature } from 'bun:bundle'
 import React, { useCallback, useEffect, useRef } from 'react'
 import { setMainLoopModelOverride } from '../bootstrap/state.js'
 import {
+  isWirePermissionResponse,
   type WirePermissionCallbacks,
   type WirePermissionResponse,
-  isWirePermissionResponse,
 } from '../bridge/bridgePermissionCallbacks.js'
 import { buildWireConnectUrl } from '../bridge/bridgeStatusUtil.js'
 import { extractInboundMessageFields } from '../bridge/inboundMessages.js'
-import type { WireState, ReplWireHandle } from '../bridge/replBridge.js'
+import type { ReplWireHandle, WireState } from '../bridge/replBridge.js'
 import { setReplWireHandle } from '../bridge/replBridgeHandle.js'
 import type { Command } from '../commands.js'
 import { getSlashCommandToolSkills, isBridgeSafeCommand } from '../commands.js'
 import { getRemoteSessionUrl } from '../constants/product.js'
 import { useNotifications } from '../context/notifications.js'
-import type { PermissionMode, WireMessage } from '../types/index.js'
-import type { WireControlResponse } from '../types/wire/control.js'
 import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getLeaderToolUseConfirmQueue } from '../services/swarm/leaderPermissionBridge.js'
 import { useAppState, useAppStateStore, useSetAppState } from '../state/AppState.js'
+import type { PermissionMode, WireMessage } from '../types/index.js'
 import type { Message } from '../types/message.js'
+import type { WireControlResponse } from '../types/wire/control.js'
 import { getCwd } from '../utils/cwd.js'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { enqueue } from '../utils/messageQueueManager.js'
 import { buildSystemInitMessage } from '../utils/messages/systemInit.js'
-import { createWireStatusMessage, createSystemMessage } from '../utils/messages.js'
+import { createSystemMessage, createWireStatusMessage } from '../utils/messages.js'
 import {
   getAutoModeUnavailableNotification,
   getAutoModeUnavailableReason,
@@ -34,7 +35,6 @@ import {
   isBypassPermissionsModeDisabled,
   transitionPermissionMode,
 } from '../utils/permissions/permissionSetup.js'
-import { getLeaderToolUseConfirmQueue } from '../services/swarm/leaderPermissionBridge.js'
 
 /** 失败后多久自动清除 replBridgeEnabled（停止重试）。 */
 export const BRIDGE_FAILURE_DISMISS_MS = 10_000
@@ -524,7 +524,7 @@ export function useReplBridge(
                   }
                 }
               }
-              if (feature('TRANSCRIPT_CLASSIFIER') && mode === 'auto' && !isAutoModeGateEnabled()) {
+              if (true && mode === 'auto' && !isAutoModeGateEnabled()) {
                 const reason = getAutoModeUnavailableReason()
                 return {
                   ok: false,

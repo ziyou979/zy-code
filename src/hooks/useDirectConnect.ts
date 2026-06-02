@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
+import { convertSDKMessage, isSessionEndMessage } from '../remote/messageAdapter.js'
 import type { RemotePermissionResponse } from '../remote/RemoteSessionManager.js'
 import {
   createSyntheticAssistantMessage,
   createToolStub,
 } from '../remote/remotePermissionBridge.js'
-import { convertSDKMessage, isSessionEndMessage } from '../remote/messageAdapter.js'
 import {
   type DirectConnectConfig,
   DirectConnectSessionManager,
 } from '../server/directConnectManager.js'
+import type { RemoteMessageContent } from '../services/teleport/api.js'
 import type { Tool } from '../Tool.js'
 import { findToolByName } from '../Tool.js'
 import type { Message as MessageType } from '../types/message.js'
 import { logForDebugging } from '../utils/debug.js'
 import { gracefulShutdown } from '../utils/gracefulShutdown.js'
-import type { RemoteMessageContent } from '../services/teleport/api.js'
 
 type UseDirectConnectResult = {
   isRemoteMode: boolean

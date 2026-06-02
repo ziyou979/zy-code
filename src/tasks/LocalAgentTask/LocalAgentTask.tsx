@@ -11,6 +11,13 @@ import {
   WORKTREE_TAG,
 } from '../../constants/xml.js'
 import { abortSpeculation } from '../../services/PromptSuggestion/speculation.js'
+import {
+  evictTaskOutput,
+  getTaskOutputPath,
+  initTaskOutputAsSymlink,
+} from '../../services/task/diskOutput.js'
+import { PANEL_GRACE_MS, registerTask, updateTaskState } from '../../services/task/framework.js'
+import { emitTaskProgress } from '../../services/task/taskProgress.js'
 import type { AppState } from '../../state/AppState.js'
 import type { SetAppState, Task, TaskStateBase } from '../../Task.js'
 import { createTaskStateBase } from '../../Task.js'
@@ -26,13 +33,6 @@ import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { getToolSearchOrReadInfo } from '../../utils/collapseReadSearch.js'
 import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
 import { getAgentTranscriptPath } from '../../utils/sessionStorage.js'
-import {
-  evictTaskOutput,
-  getTaskOutputPath,
-  initTaskOutputAsSymlink,
-} from '../../services/task/diskOutput.js'
-import { PANEL_GRACE_MS, registerTask, updateTaskState } from '../../services/task/framework.js'
-import { emitTaskProgress } from '../../services/task/taskProgress.js'
 import type { TaskState } from '../types.js'
 export type ToolActivity = {
   toolName: string

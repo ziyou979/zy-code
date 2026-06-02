@@ -8,10 +8,10 @@
 
 import { feature } from 'bun:bundle'
 import type React from 'react'
-import type { ToolJSXState } from '../../state/ReplStore.js'
 import type { ToolUseConfirm } from '../../components/permissions/PermissionRequest.js'
-import type { PromptQueueItem } from './useReplRequestPrompt.js'
+import type { ToolJSXState } from '../../state/ReplStore.js'
 import type { FocusedInputDialog } from './useReplOnCancel.js'
+import type { PromptQueueItem } from './useReplRequestPrompt.js'
 import type { SandboxPermissionRequest } from './useReplSandboxAsk.js'
 
 export interface GetFocusedInputDialogParams {

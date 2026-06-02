@@ -51,7 +51,7 @@ export const kairosGate = feature('KAIROS')
 
 // 死代码消除：TRANSCRIPT_CLASSIFIER 自动模式 state 模块
 /* eslint-disable @typescript-eslint/no-require-imports */
-export const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
+export const autoModeStateModule = true
   ? (require('../utils/permissions/autoModeState.js') as typeof import('../utils/permissions/autoModeState.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */

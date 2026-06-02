@@ -8,10 +8,10 @@ import {
 } from 'src/services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js'
 import { getCodeEditToolDecisionCounter } from '../../bootstrap/state.js'
-import type { Tool as ToolType, ToolUseContext } from '../../Tool.js'
-import { getLanguageName } from '../../utils/cliHighlight.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { logOTelEvent } from '../../services/telemetry/events.js'
+import type { Tool as ToolType, ToolUseContext } from '../../Tool.js'
+import { getLanguageName } from '../../utils/cliHighlight.js'
 import type { PermissionApprovalSource, PermissionRejectionSource } from './PermissionContext.js'
 
 type PermissionLogContext = {
@@ -64,7 +64,7 @@ async function buildCodeEditToolAttributes(
 // Flattens structured source into a string label for analytics/OTel events
 function sourceToString(source: PermissionApprovalSource | PermissionRejectionSource): string {
   if (
-    (feature('BASH_CLASSIFIER') || feature('TRANSCRIPT_CLASSIFIER')) &&
+    (feature('BASH_CLASSIFIER') || true) &&
     source.type === 'classifier'
   ) {
     return 'classifier'
@@ -110,7 +110,7 @@ function logApprovalEvent(
     return
   }
   if (
-    (feature('BASH_CLASSIFIER') || feature('TRANSCRIPT_CLASSIFIER')) &&
+    (feature('BASH_CLASSIFIER') || true) &&
     source.type === 'classifier'
   ) {
     logEvent('zy_tool_use_granted_by_classifier', baseMetadata(messageId, tool.name, waitMs))

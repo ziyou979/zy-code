@@ -11,46 +11,43 @@
 //
 // AppState 衍生值由组件内部 useAppState 自取，REPL 只传本地 state / refs。
 
-import * as React from 'react'
 import { feature } from 'bun:bundle'
+import * as React from 'react'
+import { getTotalInputTokens } from '../../bootstrap/state.js'
 import { DesktopUpsellStartup } from '../../components/DesktopUpsell/DesktopUpsellStartup.js'
 import { EffortCallout } from '../../components/EffortCallout.js'
+import { PluginHintMenu } from '../../components/Hint/PluginHintMenu.js'
 import { PromptDialog } from '../../components/hooks/PromptDialog.js'
-import { IdleReturnDialog } from '../../components/IdleReturnDialog.js'
 import { IdeOnboardingDialog } from '../../components/IdeOnboardingDialog.js'
+import { IdleReturnDialog } from '../../components/IdleReturnDialog.js'
 import { LspRecommendationMenu } from '../../components/LspRecommendation/LspRecommendationMenu.js'
 import { ElicitationDialog } from '../../components/mcp/ElicitationDialog.js'
 import { SandboxPermissionRequest } from '../../components/permissions/SandboxPermissionRequest.js'
 import { WorkerPendingPermission } from '../../components/permissions/WorkerPendingPermission.js'
-import { PluginHintMenu } from '../../components/Hint/PluginHintMenu.js'
 import { RemoteCallout } from '../../components/RemoteCallout.js'
+import { LOCAL_COMMAND_STDOUT_TAG } from '../../constants/xml.js'
+import {
+  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+  logEvent,
+} from '../../services/analytics/index.js'
 import type { NetworkHostPattern } from '../../services/sandbox/sandbox-adapter.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { sendSandboxPermissionResponseViaMailbox } from '../../services/swarm/permissionSync.js'
-import { useAppState, useSetAppState, useAppStateStore } from '../../state/AppState.js'
+import { useAppState, useAppStateStore, useSetAppState } from '../../state/AppState.js'
 import { useReplStore } from '../../state/ReplState.js'
-import type { Message as MessageType } from '../../types/message.js'
+import { WEB_FETCH_TOOL_NAME } from '../../tools/WebFetchTool/prompt.js'
 import { saveGlobalConfig } from '../../utils/config.js'
-import {
-  logEvent,
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-} from '../../services/analytics/index.js'
+import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
+import type { IDEExtensionInstallationStatus } from '../../utils/ide.js'
+import { logError } from '../../utils/log.js'
+import { createCommandInputMessage, formatCommandInputTags } from '../../utils/messages.js'
 import {
   applyPermissionUpdate,
   persistPermissionUpdate,
 } from '../../utils/permissions/PermissionUpdate.js'
-import { WEB_FETCH_TOOL_NAME } from '../../tools/WebFetchTool/prompt.js'
-import { createCommandInputMessage, formatCommandInputTags } from '../../utils/messages.js'
-import { LOCAL_COMMAND_STDOUT_TAG } from '../../constants/xml.js'
 import { escapeXml } from '../../utils/xml.js'
-import { logError } from '../../utils/log.js'
-import { getTotalInputTokens } from '../../bootstrap/state.js'
-import type { IDEExtensionInstallationStatus } from '../../utils/ide.js'
-import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
-import type { FocusedInputDialog } from './useReplOnCancel.js'
-import type { PromptQueueItem } from './useReplRequestPrompt.js'
-import type { SandboxPermissionRequest as SandboxPermRequest } from './useReplSandboxAsk.js'
 import type { ReplNotificationsCluster } from './useReplNotificationsCluster.js'
+import type { FocusedInputDialog } from './useReplOnCancel.js'
 
 // ── Props ──────────────────────────────────────────────
 
@@ -368,7 +365,7 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
       )}
       {dialog === 'elicitation' && elicitation.queue[0] && (
         <ElicitationDialog
-          key={elicitation.queue[0].serverName + ':' + String(elicitation.queue[0].requestId)}
+          key={`${elicitation.queue[0].serverName}:${String(elicitation.queue[0].requestId)}`}
           event={elicitation.queue[0]}
           onResponse={(action, content) => {
             const currentRequest = elicitation.queue[0]

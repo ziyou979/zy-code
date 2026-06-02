@@ -11,89 +11,12 @@
  */
 
 import { feature } from 'bun:bundle'
-import { profileCheckpoint } from '../../utils/startupProfiler.js'
 import { readFileSync } from 'node:fs'
-import { Command as CommanderCommand } from '@commander-js/extra-typings'
+import { resolve } from 'node:path'
 import chalk from 'chalk'
 import mapValues from 'lodash-es/mapValues.js'
 import pickBy from 'lodash-es/pickBy.js'
 import uniqBy from 'lodash-es/uniqBy.js'
-import { getOauthConfig } from '../../constants/oauth.js'
-import { getRemoteSessionUrl } from '../../constants/product.js'
-import { getSystemContext, getUserContext } from '../../context.js'
-import { init, initializeTelemetryAfterTrust } from '../../entrypoints/init.js'
-import { addToHistory } from '../../history.js'
-import type { Root } from '../../ink.js'
-import {
-  launchRemoteSessionRepl,
-  launchResumedSessionRepl,
-  runDirectConnectMode,
-  runInteractiveMode,
-  runSshMode,
-} from '../assembly/index.js'
-import {
-  hasGrowthBookEnvOverride,
-  initializeGrowthBook,
-  refreshGrowthBookAfterAuthChange,
-} from '../../services/analytics/growthbook.js'
-import { fetchBootstrapData } from '../../services/api/bootstrap.js'
-import {
-  type DownloadResult,
-  downloadSessionFiles,
-  type FilesApiConfig,
-  parseFileSpecs,
-} from '../../services/api/filesApi.js'
-import type {
-  McpSdkServerConfig,
-  McpServerConfig,
-  ScopedMcpServerConfig,
-} from '../../services/mcp/types.js'
-import {
-  isPolicyAllowed,
-  loadPolicyLimits,
-  refreshPolicyLimits,
-  waitForPolicyLimitsToLoad,
-} from '../../services/policyLimits/index.js'
-import {
-  loadRemoteManagedSettings,
-  refreshRemoteManagedSettings,
-} from '../../services/remoteManagedSettings/index.js'
-import type { ToolInputJSONSchema } from '../../Tool.js'
-import {
-  createSyntheticOutputTool,
-  isSyntheticOutputToolEnabled,
-} from '../../tools/SyntheticOutputTool/SyntheticOutputTool.js'
-import { getTools, loadExternalTools } from '../../tools.js'
-import {
-  canUserConfigureAdvisor,
-  getInitialAdvisorSetting,
-  isAdvisorEnabled,
-  isValidAdvisorModel,
-  modelSupportsAdvisor,
-} from '../../utils/advisor.js'
-import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
-import { count, uniq } from '../../utils/array.js'
-import { installAsciicastRecorder } from '../../utils/asciicast.js'
-import { validateForceLoginOrg } from '../../utils/auth.js'
-import {
-  checkHasTrustDialogAccepted,
-  getGlobalConfig,
-  getRemoteControlAtStartup,
-  saveGlobalConfig,
-} from '../../utils/config.js'
-import { seedEarlyInput, stopCapturingEarlyInput } from '../../utils/earlyInput.js'
-import { getInitialEffortSetting, parseEffortValue } from '../../utils/effort.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { applyConfigEnvironmentVariables } from '../../utils/managedEnv.js'
-import { createSystemMessage, createUserMessage } from '../../utils/messages.js'
-import { getPlatform } from '../../utils/platform.js'
-import { getSessionIngressAuthToken } from '../../utils/sessionIngressAuth.js'
-import { jsonParse } from '../../utils/slowOperations.js'
-import { computeInitialTeamContext } from '../../services/swarm/reconnection.js'
-import { initializeWarningHandler } from '../../utils/warningHandler.js'
-import { isWorktreeModeEnabled } from '../../utils/worktreeModeEnabled.js'
-
-import { resolve } from 'node:path'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -107,30 +30,17 @@ import {
   setMainThreadAgentType,
   setTeleportedSessionInfo,
 } from '../../bootstrap/state.js'
-import { filterCommandsForRemoteMode, getCommands } from '../../commands.js'
-import type { StatsStore } from '../../context/stats.js'
-import {
-  launchAssistantInstallWizard,
-  launchAssistantSessionChooser,
-  launchInvalidSettingsDialog,
-  launchResumeChooser,
-  launchSnapshotUpdateDialog,
-  launchTeleportRepoMismatchDialog,
-  launchTeleportResumeWrapper,
-} from '../../dialogLaunchers.js'
-import { resetCursor } from '../../cli/bootstrap/cursor.js'
-import { isBeingDebugged } from '../../cli/bootstrap/debugCheck.js'
-import { runMigrations } from '../../cli/bootstrap/migrations.js'
-import { initializeEntrypoint } from '../../cli/bootstrap/entrypoint.js'
-import { eagerLoadSettings, logManagedSettings } from '../../cli/bootstrap/managedSettings.js'
+import { maybeActivateBrief } from '../../cli/activate/brief.js'
+import { maybeActivateProactive } from '../../cli/activate/proactive.js'
+import { pendingAssistantChat, pendingConnect, pendingSSH } from '../../cli/argvDispatch.js'
 import { getInputPrompt } from '../../cli/bootstrap/inputPrompt.js'
+import { logManagedSettings } from '../../cli/bootstrap/managedSettings.js'
 import { startDeferredPrefetches } from '../../cli/bootstrap/prefetch.js'
 import {
-  pendingAssistantChat,
-  pendingConnect,
-  pendingSSH,
-  rewriteArgv,
-} from '../../cli/argvDispatch.js'
+  logSessionTelemetry,
+  logStartupTelemetry,
+  logTenguInit,
+} from '../../cli/bootstrap/telemetry.js'
 import {
   assistantModule,
   autoModeStateModule,
@@ -141,31 +51,24 @@ import {
   getTeammateUtils,
   kairosGate,
 } from '../../cli/lazyModules.js'
-import {
-  applyDebugOptions,
-  applyLifecycleOptions,
-  applyPrintOptions,
-} from '../../cli/options/common.js'
-import { applyToolsAndMcpOptions } from '../../cli/options/mcpOptions.js'
-import { applyModelOptions, applyThinkingAndLimitOptions } from '../../cli/options/modelOptions.js'
-import { applyPermissionOptions } from '../../cli/options/permissionOptions.js'
-import { applyRuntimeOptions } from '../../cli/options/runtimeOptions.js'
-import { applySessionOptions } from '../../cli/options/sessionOptions.js'
-import { createSortedHelpConfig } from '../../cli/options/sortedHelp.js'
-import { registerAntCommands } from '../../cli/commands/ant.js'
-import { registerAuthCommands } from '../../cli/commands/auth.js'
-import { registerAutomationCommands } from '../../cli/commands/automation.js'
-import { registerMcpCommands } from '../../cli/commands/mcp.js'
-import { registerPluginCommands } from '../../cli/commands/plugin.js'
-import { registerUtilCommands } from '../../cli/commands/util.js'
-import { maybeActivateBrief } from '../../cli/activate/brief.js'
-import { maybeActivateProactive } from '../../cli/activate/proactive.js'
-import {
-  logSessionTelemetry,
-  logStartupTelemetry,
-  logTenguInit,
-} from '../../cli/bootstrap/telemetry.js'
 import { extractTeammateOptions, type TeammateOptions } from '../../cli/options/teammate.js'
+import { filterCommandsForRemoteMode, getCommands } from '../../commands.js'
+import { getOauthConfig } from '../../constants/oauth.js'
+import { getRemoteSessionUrl } from '../../constants/product.js'
+import type { StatsStore } from '../../context/stats.js'
+import { getSystemContext, getUserContext } from '../../context.js'
+import {
+  launchAssistantInstallWizard,
+  launchAssistantSessionChooser,
+  launchInvalidSettingsDialog,
+  launchResumeChooser,
+  launchSnapshotUpdateDialog,
+  launchTeleportRepoMismatchDialog,
+  launchTeleportResumeWrapper,
+} from '../../dialogLaunchers.js'
+import { initializeTelemetryAfterTrust } from '../../entrypoints/init.js'
+import { addToHistory } from '../../history.js'
+import type { Root } from '../../ink.js'
 import {
   exitWithError,
   exitWithMessage,
@@ -175,23 +78,17 @@ import {
 } from '../../interactiveHelpers.js'
 import { initBuiltinPlugins } from '../../plugins/bundled/index.js'
 import {
-  getMcpToolsCommandsAndResources,
-  prefetchAllMcpResources,
-} from '../../services/mcp/client.js'
-/* eslint-enable @typescript-eslint/no-require-imports */
-import { checkQuotaStatus } from '../../services/zyAiLimits.js'
-import { initBundledSkills } from '../../skills/bundled/index.js'
-import type { AgentColorName } from '../../tools/AgentTool/agentColorManager.js'
+  hasGrowthBookEnvOverride,
+  initializeGrowthBook,
+  refreshGrowthBookAfterAuthChange,
+} from '../../services/analytics/growthbook.js'
+import { fetchBootstrapData } from '../../services/api/bootstrap.js'
 import {
-  getActiveAgentsFromList,
-  getAgentDefinitionsWithOverrides,
-  isBuiltInAgent,
-  isCustomAgent,
-  parseAgentsFromJson,
-} from '../../tools/AgentTool/loadAgentsDir.js'
-import type { LogOption } from '../../types/logs.js'
-import type { Message as MessageType } from '../../types/message.js'
-import { assertMinVersion } from '../../utils/autoUpdater.js'
+  type DownloadResult,
+  downloadSessionFiles,
+  type FilesApiConfig,
+  parseFileSpecs,
+} from '../../services/api/filesApi.js'
 import {
   CLAUDE_IN_CHROME_SKILL_HINT,
   CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER,
@@ -201,15 +98,15 @@ import {
   shouldAutoEnableClaudeInChrome,
   shouldEnableClaudeInChrome,
 } from '../../services/claudeInChrome/setup.js'
-import { loadConversationForResume } from '../../utils/conversationRecovery.js'
-import { isBareMode, isEnvTruthy } from '../../utils/envUtils.js'
-import { refreshExampleCommands } from '../../utils/exampleCommands.js'
-import type { FpsMetrics } from '../../utils/fpsTracker.js'
-import { getWorktreePaths } from '../../utils/getWorktreePaths.js'
-import { getBranch, getIsGit, getWorktreeCount } from '../../utils/git.js'
-import { getGhAuthStatus } from '../../services/github/ghAuthStatus.js'
-import { safeParseJSON } from '../../utils/json.js'
-import { logError } from '../../utils/log.js'
+import {
+  getMcpToolsCommandsAndResources,
+  prefetchAllMcpResources,
+} from '../../services/mcp/client.js'
+import type {
+  McpSdkServerConfig,
+  McpServerConfig,
+  ScopedMcpServerConfig,
+} from '../../services/mcp/types.js'
 import {
   getDefaultMainLoopModel,
   getDefaultMainLoopModelSetting,
@@ -220,6 +117,62 @@ import {
 } from '../../services/model/model.js'
 import { ensureModelStringsInitialized } from '../../services/model/modelStrings.js'
 import {
+  isPolicyAllowed,
+  refreshPolicyLimits,
+  waitForPolicyLimitsToLoad,
+} from '../../services/policyLimits/index.js'
+import { refreshRemoteManagedSettings } from '../../services/remoteManagedSettings/index.js'
+import { computeInitialTeamContext } from '../../services/swarm/reconnection.js'
+/* eslint-enable @typescript-eslint/no-require-imports */
+import { checkQuotaStatus } from '../../services/zyAiLimits.js'
+import { initBundledSkills } from '../../skills/bundled/index.js'
+import type { ToolInputJSONSchema } from '../../Tool.js'
+import type { AgentColorName } from '../../tools/AgentTool/agentColorManager.js'
+import {
+  getActiveAgentsFromList,
+  getAgentDefinitionsWithOverrides,
+  isBuiltInAgent,
+  isCustomAgent,
+  parseAgentsFromJson,
+} from '../../tools/AgentTool/loadAgentsDir.js'
+import {
+  createSyntheticOutputTool,
+  isSyntheticOutputToolEnabled,
+} from '../../tools/SyntheticOutputTool/SyntheticOutputTool.js'
+import { getTools, loadExternalTools } from '../../tools.js'
+import type { LogOption } from '../../types/logs.js'
+import type { Message as MessageType } from '../../types/message.js'
+import {
+  canUserConfigureAdvisor,
+  getInitialAdvisorSetting,
+  isAdvisorEnabled,
+  isValidAdvisorModel,
+  modelSupportsAdvisor,
+} from '../../utils/advisor.js'
+import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
+import { count, uniq } from '../../utils/array.js'
+import { installAsciicastRecorder } from '../../utils/asciicast.js'
+import { validateForceLoginOrg } from '../../utils/auth.js'
+import { assertMinVersion } from '../../utils/autoUpdater.js'
+import {
+  checkHasTrustDialogAccepted,
+  getGlobalConfig,
+  getRemoteControlAtStartup,
+  saveGlobalConfig,
+} from '../../utils/config.js'
+import { loadConversationForResume } from '../../utils/conversationRecovery.js'
+import { seedEarlyInput } from '../../utils/earlyInput.js'
+import { getInitialEffortSetting, parseEffortValue } from '../../utils/effort.js'
+import { isBareMode, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { refreshExampleCommands } from '../../utils/exampleCommands.js'
+import type { FpsMetrics } from '../../utils/fpsTracker.js'
+import { getWorktreePaths } from '../../utils/getWorktreePaths.js'
+import { getBranch } from '../../utils/git.js'
+import { safeParseJSON } from '../../utils/json.js'
+import { logError } from '../../utils/log.js'
+import { applyConfigEnvironmentVariables } from '../../utils/managedEnv.js'
+import { createSystemMessage, createUserMessage } from '../../utils/messages.js'
+import {
   checkAndDisableBypassPermissions,
   initializeToolPermissionContext,
   initialPermissionModeFromCLI,
@@ -229,11 +182,11 @@ import {
   stripDangerousPermissionsForAutoMode,
   verifyAutoModeGateAccess,
 } from '../../utils/permissions/permissionSetup.js'
+import { getPlatform } from '../../utils/platform.js'
 import { cleanupOrphanedPluginVersionsInBackground } from '../../utils/plugins/cacheUtils.js'
 import { initializeVersionedPlugins } from '../../utils/plugins/installedPluginsManager.js'
-import { getManagedPluginNames } from '../../utils/plugins/managedPlugins.js'
 import { getGlobExclusionsForPluginCache } from '../../utils/plugins/orphanedPluginFilter.js'
-import { getPluginSeedDirs } from '../../utils/plugins/pluginDirectories.js'
+import { getSessionIngressAuthToken } from '../../utils/sessionIngressAuth.js'
 import { processSessionStartHooks, processSetupHooks } from '../../utils/sessionStart.js'
 import {
   cacheSessionTitle,
@@ -243,14 +196,28 @@ import {
   searchSessionsByCustomTitle,
   sessionIdExists,
 } from '../../utils/sessionStorage.js'
-import { ensureMdmSettingsLoaded } from '../../utils/settings/mdm/settings.js'
 import { getInitialSettings, getSettingsWithErrors } from '../../utils/settings/settings.js'
 import { resetSettingsCache } from '../../utils/settings/settingsCache.js'
 import type { ValidationError } from '../../utils/settings/validation.js'
+import { jsonParse } from '../../utils/slowOperations.js'
+import { profileCheckpoint } from '../../utils/startupProfiler.js'
 import { DEFAULT_TASKS_MODE_TASK_LIST_ID } from '../../utils/tasks.js'
 import { validateUuid } from '../../utils/uuid.js'
+import { isWorktreeModeEnabled } from '../../utils/worktreeModeEnabled.js'
+import {
+  launchRemoteSessionRepl,
+  launchResumedSessionRepl,
+  runDirectConnectMode,
+  runInteractiveMode,
+  runSshMode,
+} from '../assembly/index.js'
+
 // 插件启动检查现在在 REPL.tsx 中以非阻塞方式处理
 
+import {
+  CLAUDE_IN_CHROME_MCP_SERVER_NAME,
+  isClaudeInChromeMCPServer,
+} from 'src/services/claudeInChrome/common.js'
 import { logPermissionContextForAnts } from 'src/services/internalLogging.js'
 import { clearServerCache } from 'src/services/mcp/client.js'
 import {
@@ -266,10 +233,6 @@ import {
 import { excludeCommandsByServer, excludeResourcesByServer } from 'src/services/mcp/utils.js'
 import { fetchZyAIMcpConfigsIfEligible } from 'src/services/mcp/zyai.js'
 import { logContextMetrics } from 'src/utils/api.js'
-import {
-  CLAUDE_IN_CHROME_MCP_SERVER_NAME,
-  isClaudeInChromeMCPServer,
-} from 'src/services/claudeInChrome/common.js'
 import { registerCleanup } from 'src/utils/cleanupRegistry.js'
 import { createEmptyAttributionState } from 'src/utils/commitAttribution.js'
 import {
@@ -300,19 +263,12 @@ import {
   getUserMsgOptIn,
   setAllowedChannels,
   setChromeFlagOverride,
-  setClientType,
-  setCwdState,
-  setDirectConnectServerUrl,
   setInitialMainLoopModel,
-  setInlinePlugins,
-  setIsInteractive,
   setKairosActive,
   setOriginalCwd,
-  setQuestionPreviewFormat,
   setSdkBetas,
   setSessionBypassPermissionsMode,
   setSessionPersistenceDisabled,
-  setSessionSource,
   setUserMsgOptIn,
   switchSession,
 } from '../../bootstrap/state.js'
@@ -322,6 +278,7 @@ import { createRemoteSessionConfig } from '../../remote/RemoteSessionManager.js'
 // teleportWithProgress 在调用处动态导入
 import { initializeLspServerManager } from '../../services/lsp/manager.js'
 import { shouldEnablePromptSuggestion } from '../../services/PromptSuggestion/promptSuggestion.js'
+import { fetchSession, prepareApiRequest } from '../../services/teleport/api.js'
 import {
   type AppState,
   getDefaultAppState,
@@ -334,8 +291,6 @@ import { filterAllowedSdkBetas } from '../../utils/betas.js'
 import { isInBundledMode } from '../../utils/bundledMode.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { filterExistingPaths, getKnownPathsForRepo } from '../../utils/githubRepoPathMapping.js'
-import { clearPluginCache } from '../../utils/plugins/pluginLoader.js'
-import { fetchSession, prepareApiRequest } from '../../services/teleport/api.js'
 import {
   checkOutTeleportedSessionBranch,
   processMessagesForTeleportResume,
@@ -844,25 +799,23 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
 
   // 存储会话绕过权限模式以进行信任对话框检查
   setSessionBypassPermissionsMode(permissionMode === 'bypassPermissions')
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    // autoModeFlagCli 是"用户本次会话是否打算使用 auto"的信号。
-    // 当以下情况时设置：--enable-auto-mode、--permission-mode auto、解析的
-    // 模式是 auto，或设置 defaultMode 是 auto 但门拒绝它
-    //（permissionMode 解析为默认，没有明确的 CLI 覆盖）。
-    // 由 verifyAutoModeGateAccess 决定是否在
-    // auto-unavailable 时通知，以及由 zy_auto_mode_config opt-in carousel 使用。
-    if (
-      (
-        options as {
-          enableAutoMode?: boolean
-        }
-      ).enableAutoMode ||
-      permissionModeCli === 'auto' ||
-      permissionMode === 'auto' ||
-      (!permissionModeCli && isDefaultPermissionModeAuto())
-    ) {
-      autoModeStateModule?.setAutoModeFlagCli(true)
-    }
+  // autoModeFlagCli 是"用户本次会话是否打算使用 auto"的信号。
+  // 当以下情况时设置：--enable-auto-mode、--permission-mode auto、解析的
+  // 模式是 auto，或设置 defaultMode 是 auto 但门拒绝它
+  //（permissionMode 解析为默认，没有明确的 CLI 覆盖）。
+  // 由 verifyAutoModeGateAccess 决定是否在
+  // auto-unavailable 时通知，以及由 zy_auto_mode_config opt-in carousel 使用。
+  if (
+    (
+      options as {
+        enableAutoMode?: boolean
+      }
+    ).enableAutoMode ||
+    permissionModeCli === 'auto' ||
+    permissionMode === 'auto' ||
+    (!permissionModeCli && isDefaultPermissionModeAuto())
+  ) {
+    autoModeStateModule?.setAutoModeFlagCli(true)
   }
 
   // 如果提供了 MCP 配置文件/字符串，则解析它们
@@ -1240,7 +1193,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
       overlyBroadBashPermissions,
     )
   }
-  if (feature('TRANSCRIPT_CLASSIFIER') && dangerousPermissions.length > 0) {
+  if (true && dangerousPermissions.length > 0) {
     toolPermissionContext = stripDangerousPermissionsForAutoMode(toolPermissionContext)
   }
 
@@ -2295,20 +2248,18 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
 
     // 自动模式门的异步检查 —— 更正状态并在需要时禁用自动。
     // 门控在 TRANSCRIPT_CLASSIFIER（不是 USER_TYPE）以便 GrowthBook 终止开关也为外部构建运行。
-    if (feature('TRANSCRIPT_CLASSIFIER')) {
-      void verifyAutoModeGateAccess(toolPermissionContext).then(({ updateContext }) => {
-        headlessStore.setState((prev) => {
-          const nextCtx = updateContext(prev.toolPermissionContext)
-          if (nextCtx === prev.toolPermissionContext) {
-            return prev
-          }
-          return {
-            ...prev,
-            toolPermissionContext: nextCtx,
-          }
-        })
+    void verifyAutoModeGateAccess(toolPermissionContext).then(({ updateContext }) => {
+      headlessStore.setState((prev) => {
+        const nextCtx = updateContext(prev.toolPermissionContext)
+        if (nextCtx === prev.toolPermissionContext) {
+          return prev
+        }
+        return {
+          ...prev,
+          toolPermissionContext: nextCtx,
+        }
       })
-    }
+    })
 
     // 为会话持久化设置全局状态
     if (options.sessionPersistence === false) {

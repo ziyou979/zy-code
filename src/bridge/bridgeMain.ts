@@ -21,11 +21,11 @@ import { logError } from '../utils/log.js'
 import { sleep } from '../utils/sleep.js'
 import { createAgentWorktree, removeAgentWorktree } from '../utils/worktree.js'
 import {
-  WireFatalError,
   createWireApiClient,
   isExpiredErrorType,
   isSuppressible403,
   validateWireId,
+  WireFatalError,
 } from './bridgeApi.js'
 import { formatDuration } from './bridgeStatusUtil.js'
 import { createWireLogger } from './bridgeUI.js'
@@ -38,15 +38,15 @@ import { createSessionSpawner, safeFilenameId } from './sessionRunner.js'
 import { getTrustedDeviceToken } from './trustedDevice.js'
 import {
   BRIDGE_LOGIN_ERROR,
-  type WireApiClient,
-  type WireConfig,
-  type WireLogger,
   DEFAULT_SESSION_TIMEOUT_MS,
   type SessionDoneStatus,
   type SessionHandle,
   type SessionSpawner,
   type SessionSpawnOpts,
   type SpawnMode,
+  type WireApiClient,
+  type WireConfig,
+  type WireLogger,
 } from './types.js'
 import {
   buildCCRv2SdkUrl,

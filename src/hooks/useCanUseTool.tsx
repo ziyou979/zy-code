@@ -62,7 +62,7 @@ function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext): CanUse
               return
             }
             if (
-              feature('TRANSCRIPT_CLASSIFIER') &&
+              true &&
               result.decisionReason?.type === 'classifier' &&
               result.decisionReason.classifier === 'auto-mode'
             ) {
@@ -104,7 +104,7 @@ function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext): CanUse
                 },
               )
               if (
-                feature('TRANSCRIPT_CLASSIFIER') &&
+                true &&
                 result.decisionReason?.type === 'classifier' &&
                 result.decisionReason.classifier === 'auto-mode'
               ) {

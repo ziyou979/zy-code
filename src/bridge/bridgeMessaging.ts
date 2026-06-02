@@ -11,12 +11,11 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import type { WireMessage } from '../types/index.js'
-import type { WireControlRequest, WireControlResponse } from '../types/wire/control.js'
-import type { WireResultSuccess } from '../types/index.js'
 import { logEvent } from '../services/analytics/index.js'
 import { EMPTY_USAGE } from '../services/api/emptyUsage.js'
+import type { WireMessage, WireResultSuccess } from '../types/index.js'
 import type { Message } from '../types/message.js'
+import type { WireControlRequest, WireControlResponse } from '../types/wire/control.js'
 import { normalizeControlMessageKeys } from '../utils/controlMessageCompat.js'
 import { logForDebugging } from '../utils/debug.js'
 import { stripDisplayTagsAllowEmpty } from '../utils/displayTags.js'

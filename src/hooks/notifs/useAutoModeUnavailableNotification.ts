@@ -27,7 +27,7 @@ export function useAutoModeUnavailableNotification(): void {
     const prevMode = prevModeRef.current
     prevModeRef.current = mode
 
-    if (!feature('TRANSCRIPT_CLASSIFIER')) {
+    if (!true) {
       return
     }
     if (getIsRemoteMode()) {

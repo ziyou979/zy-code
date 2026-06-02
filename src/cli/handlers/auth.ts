@@ -8,6 +8,7 @@ import {
 } from '../../services/analytics/index.js'
 import { getSSLErrorHint } from '../../services/api/errorUtils.js'
 import { fetchAndStoreZyCodeFirstTokenDate } from '../../services/api/firstTokenDate.js'
+import { getAPIProvider } from '../../services/model/providers.js'
 import {
   createAndStoreApiKey,
   fetchAndStoreUserRoles,
@@ -31,7 +32,6 @@ import { logForDebugging } from '../../utils/debug.js'
 import { isRunningOnHomespace } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import { getAPIProvider } from '../../services/model/providers.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { buildAccountProperties, buildAPIProviderProperties } from '../../utils/status.js'

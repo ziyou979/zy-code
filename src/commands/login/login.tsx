@@ -57,13 +57,11 @@ export async function call(
             appState.toolPermissionContext,
             context.setAppState,
           )
-          if (feature('TRANSCRIPT_CLASSIFIER')) {
-            resetAutoModeGateCheck()
-            void checkAndDisableAutoModeIfNeeded(
-              appState.toolPermissionContext,
-              context.setAppState,
-            )
-          }
+          resetAutoModeGateCheck()
+          void checkAndDisableAutoModeIfNeeded(
+            appState.toolPermissionContext,
+            context.setAppState,
+          )
           // Increment authVersion to trigger re-fetching of auth-dependent data in hooks (e.g., MCP servers)
           context.setAppState((prev) => ({
             ...prev,

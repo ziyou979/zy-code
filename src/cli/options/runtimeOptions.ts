@@ -79,9 +79,7 @@ export function applyRuntimeOptions(program: Command<any, any, any>): void {
       () => true,
     )
   }
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    program.addOption(new Option('--enable-auto-mode', 'Opt in to auto mode').hideHelp())
-  }
+  program.addOption(new Option('--enable-auto-mode', 'Opt in to auto mode').hideHelp())
   if (feature('PROACTIVE') || feature('KAIROS')) {
     program.addOption(new Option('--proactive', 'Start in proactive autonomous mode'))
   }

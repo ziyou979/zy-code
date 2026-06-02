@@ -479,15 +479,13 @@ function handleInteractivePermission(
               : undefined
 
           // Show auto-approved transition with dimmed options
-          if (feature('TRANSCRIPT_CLASSIFIER')) {
-            ctx.updateQueueItem({
-              classifierCheckInProgress: false,
-              classifierAutoApproved: true,
-              classifierMatchedRule: matchedRule,
-            })
-          }
+          ctx.updateQueueItem({
+            classifierCheckInProgress: false,
+            classifierAutoApproved: true,
+            classifierMatchedRule: matchedRule,
+          })
 
-          if (feature('TRANSCRIPT_CLASSIFIER') && decisionReason.type === 'classifier') {
+          if (true && decisionReason.type === 'classifier') {
             if (decisionReason.classifier === 'auto-mode') {
               setYoloClassifierApproval(ctx.toolUseID, decisionReason.reason)
             } else if (matchedRule) {

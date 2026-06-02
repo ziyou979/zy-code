@@ -1,6 +1,6 @@
 import type { Command } from '../../commands.js'
-import { shouldInferenceConfigCommandBeImmediate } from '../../utils/immediateCommand.js'
 import { getMainLoopModel, renderModelName } from '../../services/model/model.js'
+import { shouldInferenceConfigCommandBeImmediate } from '../../utils/immediateCommand.js'
 
 /**
  * /model 的交互变体（默认导出）。

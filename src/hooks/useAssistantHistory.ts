@@ -8,8 +8,8 @@ import {
   type HistoryPage,
 } from '../assistant/sessionHistory.js'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
-import type { RemoteSessionConfig } from '../remote/RemoteSessionManager.js'
 import { convertSDKMessage } from '../remote/messageAdapter.js'
+import type { RemoteSessionConfig } from '../remote/RemoteSessionManager.js'
 import type { Message, SystemInformationalMessage } from '../types/message.js'
 import { logForDebugging } from '../utils/debug.js'
 

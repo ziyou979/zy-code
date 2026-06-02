@@ -10,9 +10,9 @@ import { logForDebugging } from '../utils/debug.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import {
   buildActiveFooterText,
+  buildIdleFooterText,
   buildWireConnectUrl,
   buildWireSessionUrl,
-  buildIdleFooterText,
   FAILED_FOOTER_TEXT,
   formatDuration,
   type StatusState,
@@ -21,7 +21,7 @@ import {
   truncatePrompt,
   wrapWithOsc8Link,
 } from './bridgeStatusUtil.js'
-import type { WireConfig, WireLogger, SessionActivity, SpawnMode } from './types.js'
+import type { SessionActivity, SpawnMode, WireConfig, WireLogger } from './types.js'
 
 const QR_OPTIONS = {
   type: 'utf8' as const,
