@@ -32,8 +32,6 @@ const result = await Bun.build({
   minify: false,
   splitting: false,
   features: [
-    // 启用 transcript classifier（auto mode）
-    'TRANSCRIPT_CLASSIFIER',
     // ZY Code 启用以下 Claude Code 功能
     'FORK_SUBAGENT',
     'REACTIVE_COMPACT',
@@ -42,6 +40,7 @@ const result = await Bun.build({
     'KAIROS',
     'BUILTIN_EXPLORE_PLAN_AGENTS',
     'VERIFICATION_AGENT',
+    'WORKFLOW_SCRIPTS',
   ],
   define: {
     // Treat as external build (notinternal)
