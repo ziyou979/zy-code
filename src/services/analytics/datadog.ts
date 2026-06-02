@@ -2,10 +2,10 @@ import { createHash } from 'node:crypto'
 import { appendFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { getOrCreateUserID } from '../../utils/config.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { getStaticPricingForModel } from '../../services/model/modelCapabilities.js'
 import { getAPIProvider } from '../../services/model/providers.js'
+import { getOrCreateUserID } from '../../utils/config.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { getEventMetadata } from './metadata.js'
 
 // All events that were previously sent to Datadog are now written to a local

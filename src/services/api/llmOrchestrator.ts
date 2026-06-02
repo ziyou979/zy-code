@@ -10,7 +10,6 @@ import {
 } from '../../Tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import { type ConnectorTextBlock, type ConnectorTextDelta } from '../../types/connectorText.js'
-import type { TaskBudgetParam } from './apiHelpers.js'
 import type {
   AssistantContentBlock,
   ChunkDeltaEvent,
@@ -64,10 +63,11 @@ import {
   extractQuotaStatusFromError,
   extractQuotaStatusFromHeaders,
 } from '../zyAiLimits.js'
+import type { TaskBudgetParam } from './apiHelpers.js'
 import { getLLMAdapter } from './client.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
+const autoModeStateModule = true
   ? (require('../../utils/permissions/autoModeState.js') as typeof import('../../utils/permissions/autoModeState.js'))
   : null
 
@@ -88,6 +88,8 @@ import type { QuerySource } from 'src/constants/querySource.js'
 import type { Notification } from 'src/context/notifications.js'
 import { addToTotalSessionCost } from 'src/cost-tracker.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
+import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/services/claudeInChrome/common.js'
+import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claudeInChrome/prompt.js'
 import type { AgentId } from 'src/types/ids.js'
 import {
   ADVISOR_TOOL_INSTRUCTIONS,
@@ -98,8 +100,6 @@ import {
 } from 'src/utils/advisor.js'
 import { getAgentContext } from 'src/utils/agentContext.js'
 import { getToolSearchBetaHeader, shouldIncludeExperimentalBetas } from 'src/utils/betas.js'
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/services/claudeInChrome/common.js'
-import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claudeInChrome/prompt.js'
 import { getMaxThinkingTokensForModel } from 'src/utils/context.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
@@ -120,6 +120,12 @@ import {
 } from 'src/utils/toolSearch.js'
 import { API_MAX_MEDIA_PER_REQUEST } from '../../constants/apiLimits.js'
 import { ADVISOR_BETA_HEADER } from '../../constants/betas.js'
+import { normalizeModelStringForAPI, parseUserSpecifiedModel } from '../../services/model/model.js'
+import {
+  isBetaTracingEnabled,
+  type LLMRequestNewContext,
+  startLLMRequestSpan,
+} from '../../services/telemetry/sessionTracing.js'
 import {
   formatDeferredToolLine,
   isDeferredTool,
@@ -128,14 +134,8 @@ import {
 // LLMConnectionError 用于流式超时回退时创建错误实例
 import { LLMConnectionError } from '../../types/llm.js'
 import { count } from '../../utils/array.js'
-import { normalizeModelStringForAPI, parseUserSpecifiedModel } from '../../services/model/model.js'
 import { startSessionActivity, stopSessionActivity } from '../../utils/sessionActivity.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import {
-  isBetaTracingEnabled,
-  type LLMRequestNewContext,
-  startLLMRequestSpan,
-} from '../../services/telemetry/sessionTracing.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -285,7 +285,7 @@ export async function* queryModelWithStreaming({
  * 判断是否应延迟 LSP 工具（工具以 defer_loading: true 出现），
  * 因为 LSP 初始化尚未完成。
  */
-function shouldDeferLspTool(tool: Tool): boolean {
+function _shouldDeferLspTool(tool: Tool): boolean {
   if (!('isLsp' in tool) || !tool.isLsp) {
     return false
   }
@@ -783,16 +783,14 @@ async function* queryModel(
   // 每次调用，以便非代理查询保持自己稳定的 header 集合。
 
   let afkHeaderLatched = getAfkModeHeaderLatched() === true
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    if (
-      !afkHeaderLatched &&
-      isAgenticQuery &&
-      shouldIncludeExperimentalBetas(options.model) &&
-      (autoModeStateModule?.isAutoModeActive() ?? false)
-    ) {
-      afkHeaderLatched = true
-      setAfkModeHeaderLatched(true)
-    }
+  if (
+    !afkHeaderLatched &&
+    isAgenticQuery &&
+    shouldIncludeExperimentalBetas(options.model) &&
+    (autoModeStateModule?.isAutoModeActive() ?? false)
+  ) {
+    afkHeaderLatched = true
+    setAfkModeHeaderLatched(true)
   }
 
   let cacheEditingHeaderLatched = getCacheEditingHeaderLatched() === true
@@ -967,15 +965,13 @@ async function* queryModel(
 
     // AFK 模式 beta：自动模式首次激活时锁存一次。仍由
     // isAgenticQuery 每次调用门控，以便分类器/压缩不会获得它。
-    if (feature('TRANSCRIPT_CLASSIFIER')) {
-      if (
-        afkHeaderLatched &&
-        shouldIncludeExperimentalBetas(options.model) &&
-        isAgenticQuery &&
-        !betasParams.includes(AFK_MODE_BETA_HEADER)
-      ) {
-        betasParams.push(AFK_MODE_BETA_HEADER)
-      }
+    if (
+      afkHeaderLatched &&
+      shouldIncludeExperimentalBetas(options.model) &&
+      isAgenticQuery &&
+      !betasParams.includes(AFK_MODE_BETA_HEADER)
+    ) {
+      betasParams.push(AFK_MODE_BETA_HEADER)
     }
 
     // 缓存编辑 beta：header 是会话稳定的锁存；useCachedMC

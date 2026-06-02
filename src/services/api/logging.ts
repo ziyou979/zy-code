@@ -8,22 +8,21 @@ import {
   markFirstTeleportMessageLogged,
   setLastApiCompletionTimestamp,
 } from 'src/bootstrap/state.js'
-import type { QueryChainTracking } from 'src/Tool.js'
-import { isConnectorTextBlock } from 'src/types/connectorText.js'
-import type { AssistantMessage } from 'src/types/message.js'
-import { logForDebugging } from 'src/utils/debug.js'
-import type { EffortLevel } from 'src/utils/effort.js'
-import { logError } from 'src/utils/log.js'
 import { getAPIProviderForStatsig } from 'src/services/model/providers.js'
-import type { PermissionMode } from 'src/utils/permissions/PermissionMode.js'
-import { jsonStringify } from 'src/utils/slowOperations.js'
 import { logOTelEvent } from 'src/services/telemetry/events.js'
 import {
   endLLMRequestSpan,
   isBetaTracingEnabled,
   type Span,
 } from 'src/services/telemetry/sessionTracing.js'
-import type { NonNullableUsage } from './emptyUsage.js'
+import type { QueryChainTracking } from 'src/Tool.js'
+import { isConnectorTextBlock } from 'src/types/connectorText.js'
+import type { AssistantMessage } from 'src/types/message.js'
+import { logForDebugging } from 'src/utils/debug.js'
+import type { EffortLevel } from 'src/utils/effort.js'
+import { logError } from 'src/utils/log.js'
+import type { PermissionMode } from 'src/utils/permissions/PermissionMode.js'
+import { jsonStringify } from 'src/utils/slowOperations.js'
 import { isAPIError, type TokenUsage as Usage } from '../../types/llm.js'
 import { consumeInvokingRequestId } from '../../utils/agentContext.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
@@ -32,6 +31,7 @@ import {
   logEvent,
 } from '../analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../analytics/metadata.js'
+import type { NonNullableUsage } from './emptyUsage.js'
 import { EMPTY_USAGE } from './emptyUsage.js'
 import { classifyAPIError } from './errors.js'
 import { extractConnectionErrorDetails } from './errorUtils.js'

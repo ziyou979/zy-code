@@ -1,10 +1,10 @@
 import { feature } from 'bun:bundle'
 import type { QuerySource } from 'src/constants/querySource.js'
+import { getAPIProviderForStatsig } from 'src/services/model/providers.js'
 import type { SystemAPIErrorMessage } from 'src/types/message.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logError } from 'src/utils/log.js'
 import { createSystemAPIErrorMessage } from 'src/utils/messages.js'
-import { getAPIProviderForStatsig } from 'src/services/model/providers.js'
 import {
   type APIErrorLike,
   createAbortError,

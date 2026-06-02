@@ -15,6 +15,17 @@
 
 import { getSessionId } from '../../bootstrap/state.js'
 import { tSync } from '../../i18n/index.js'
+import { evictTaskOutput } from '../../services/task/diskOutput.js'
+import {
+  evictTerminalTask,
+  registerTask,
+  STOPPED_DISPLAY_MS,
+} from '../../services/task/framework.js'
+import {
+  isPerfettoTracingEnabled,
+  registerAgent as registerPerfettoAgent,
+  unregisterAgent as unregisterPerfettoAgent,
+} from '../../services/telemetry/perfettoTracing.js'
 import type { AppState } from '../../state/AppState.js'
 import { createTaskStateBase, generateTaskId } from '../../Task.js'
 import type {
@@ -23,21 +34,10 @@ import type {
 } from '../../tasks/InProcessTeammateTask/types.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { formatAgentId } from '../../utils/agentId.js'
+import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
-import { evictTaskOutput } from '../../services/task/diskOutput.js'
-import {
-  evictTerminalTask,
-  registerTask,
-  STOPPED_DISPLAY_MS,
-} from '../../services/task/framework.js'
 import { createTeammateContext } from '../../utils/teammateContext.js'
-import {
-  isPerfettoTracingEnabled,
-  registerAgent as registerPerfettoAgent,
-  unregisterAgent as unregisterPerfettoAgent,
-} from '../../services/telemetry/perfettoTracing.js'
 import { removeMemberByAgentId } from './teamHelpers.js'
 
 type SetAppStateFn = (updater: (prev: AppState) => AppState) => void

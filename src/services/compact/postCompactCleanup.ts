@@ -2,11 +2,11 @@ import { feature } from 'bun:bundle'
 import type { QuerySource } from '../../constants/querySource.js'
 import { clearSystemPromptSections } from '../../constants/systemPromptSections.js'
 import { getUserContext } from '../../context.js'
+import { clearBetaTracingState } from '../../services/telemetry/betaSessionTracing.js'
 import { clearSpeculativeChecks } from '../../tools/BashTool/bashPermissions.js'
+import { resetGetMemoryFilesCache } from '../../utils/agentsMd.js'
 import { clearClassifierApprovals } from '../../utils/classifierApprovals.js'
 import { clearSessionMessagesCache } from '../../utils/sessionStorage.js'
-import { clearBetaTracingState } from '../../services/telemetry/betaSessionTracing.js'
-import { resetGetMemoryFilesCache } from '../../utils/agentsMd.js'
 import { resetMicrocompactState } from './microCompact.js'
 
 /**

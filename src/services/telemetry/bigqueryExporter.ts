@@ -37,8 +37,8 @@ type InternalMetricsPayload = {
 }
 
 export class BigQueryMetricsExporter implements PushMetricExporter {
-  private readonly timeout: number
   private readonly endpoint: string
+  private readonly timeout: number
   private pendingExports: Promise<void>[] = []
   private isShutdown = false
 

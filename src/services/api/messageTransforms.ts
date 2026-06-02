@@ -19,7 +19,7 @@ export function userMessageToMessageParam(
   message: UserMessage,
   addCache = false,
   enablePromptCaching: boolean,
-  querySource?: QuerySource,
+  _querySource?: QuerySource,
 ): LLMMessage {
   if (addCache) {
     if (typeof message.message.content === 'string') {
@@ -64,7 +64,7 @@ export function assistantMessageToMessageParam(
   message: AssistantMessage,
   addCache = false,
   enablePromptCaching: boolean,
-  querySource?: QuerySource,
+  _querySource?: QuerySource,
 ): LLMMessage {
   if (addCache) {
     if (typeof message.message.content === 'string') {

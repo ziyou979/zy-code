@@ -14,8 +14,8 @@ import type {
   DeltaUsage,
   LLMMessage,
   LLMResponse,
-  StopReason,
   LLMStreamEvent,
+  StopReason,
   TokenUsage,
   ToolChoice,
   ToolDefinition,
@@ -140,8 +140,9 @@ function blockToAnthropic(
   block: AssistantContentBlock | UserContentBlock | Record<string, unknown>,
 ): Record<string, unknown> {
   const b = block as any
+  const cc = b.cache_control ? { cache_control: b.cache_control } : {}
   if (b.type === 'text') {
-    return { type: 'text', text: b.text }
+    return { type: 'text', text: b.text, ...cc }
   }
   if (b.type === 'tool_call' || b.type === 'tool_use') {
     return {
@@ -149,6 +150,7 @@ function blockToAnthropic(
       id: b.id,
       name: b.name,
       input: typeof b.input === 'string' ? safeParseToolArguments(b.input) : (b.input ?? {}),
+      ...cc,
     }
   }
   if (b.type === 'thinking') {
@@ -167,10 +169,11 @@ function blockToAnthropic(
     return {
       type: 'image',
       source: { type: 'base64', media_type: mediaType, data },
+      ...cc,
     }
   }
   // 兜底：未知 block 序列化
-  return { type: 'text', text: JSON.stringify(block) }
+  return { type: 'text', text: JSON.stringify(block), ...cc }
 }
 
 function safeParseToolArguments(args: string | undefined): Record<string, unknown> {

@@ -792,8 +792,10 @@ async function getMessagesForSlashCommand(
                 {
                   ...context,
                   canUseTool,
+                  invokedAs: commandName,
                 },
                 args,
+                commandName,
               ),
             )
             .then((jsx) => {

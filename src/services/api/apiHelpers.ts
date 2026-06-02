@@ -1,21 +1,25 @@
 import { feature } from 'bun:bundle'
 import { getSessionId } from '../../bootstrap/state.js'
 import { EFFORT_BETA_HEADER, TASK_BUDGETS_BETA_HEADER } from '../../constants/betas.js'
-import { getOauthAccountInfo } from '../../utils/auth.js'
-import { shouldIncludeExperimentalBetas } from '../../utils/betas.js'
-import { getOrCreateUserID } from '../../utils/config.js'
-import { getModelMaxOutputTokens } from '../../utils/context.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { type EffortValue, modelSupportsEffort } from '../../utils/effort.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { validateBoundedIntEnvVar } from '../../utils/envValidation.js'
-import { errorMessage } from '../../utils/errors.js'
-import { safeParseJSON } from '../../utils/json.js'
 import {
   getAPIProvider,
   isAnthropicModel,
   isOpenAIProvider,
 } from '../../services/model/providers.js'
+import { getOauthAccountInfo } from '../../utils/auth.js'
+import { shouldIncludeExperimentalBetas } from '../../utils/betas.js'
+import { getOrCreateUserID } from '../../utils/config.js'
+import { getModelMaxOutputTokens } from '../../utils/context.js'
+import { logForDebugging } from '../../utils/debug.js'
+import {
+  type EffortLevel,
+  type EffortValue,
+  mapEffortToProvider,
+  modelSupportsEffort,
+} from '../../utils/effort.js'
+import { validateBoundedIntEnvVar } from '../../utils/envValidation.js'
+import { errorMessage } from '../../utils/errors.js'
+import { safeParseJSON } from '../../utils/json.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { getLLMAdapter } from './client.js'
@@ -97,28 +101,29 @@ export function getExtraBodyParams(betaHeaders?: string[]): JsonObject {
 export function configureEffortParams(
   effortValue: EffortValue | undefined,
   outputConfig: BetaOutputConfig,
-  extraBodyParams: Record<string, unknown>,
+  _extraBodyParams: Record<string, unknown>,
   betas: string[],
   model: string,
 ): void {
-  // effort 走 anthropic 的 effort beta——只对真 Claude 模型下发(OpenAI 格式的
-  // provider 经它们自己的 reasoning_effort 路径传 effort,不走这里)。
-  if (!isAnthropicModel(model) || !modelSupportsEffort(model) || 'effort' in outputConfig) {
+  if (!modelSupportsEffort(model) || 'effort' in outputConfig) {
     return
   }
 
   if (effortValue === undefined) {
-    betas.push(EFFORT_BETA_HEADER)
-  } else if (typeof effortValue === 'string') {
-    // 发送字符串 effort 级别
-    outputConfig.effort = effortValue
-    betas.push(EFFORT_BETA_HEADER)
-  } else if (isInternalBuild()) {
-    // 数值 effort 覆盖 - 仅限 ant 用户（使用 anthropic_internal）
-    const existingInternal = (extraBodyParams.anthropic_internal as Record<string, unknown>) || {}
-    extraBodyParams.anthropic_internal = {
-      ...existingInternal,
-      effort_override: effortValue,
+    // Anthropic 模型即使不指定 effort 也需要 beta header
+    if (isAnthropicModel(model)) {
+      betas.push(EFFORT_BETA_HEADER)
+    }
+    return
+  }
+
+  if (typeof effortValue === 'string') {
+    // 通过映射表将内部语义档位转为目标 provider 的 API 参数值
+    const providerId = getAPIProvider()
+    const providerValue = mapEffortToProvider(effortValue as EffortLevel, providerId)
+    outputConfig.effort = providerValue
+    if (isAnthropicModel(model)) {
+      betas.push(EFFORT_BETA_HEADER)
     }
   }
 }

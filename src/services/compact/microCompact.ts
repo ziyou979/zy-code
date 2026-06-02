@@ -1,5 +1,7 @@
 import { feature } from 'bun:bundle'
 import type { QuerySource } from '../../constants/querySource.js'
+import { getMainLoopModel } from '../../services/model/model.js'
+import { SHELL_TOOL_NAMES } from '../../shell-eval/shared/shellToolUtils.js'
 import type { ToolUseContext } from '../../Tool.js'
 import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
@@ -11,8 +13,6 @@ import { WEB_SEARCH_TOOL_NAME } from '../../tools/WebSearchTool/prompt.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { getMainLoopModel } from '../../services/model/model.js'
-import { SHELL_TOOL_NAMES } from '../../shell-eval/shared/shellToolUtils.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

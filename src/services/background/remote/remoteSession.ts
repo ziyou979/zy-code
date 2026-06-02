@@ -1,9 +1,9 @@
 import type { WireMessage } from 'src/types/index.js'
 import { checkGate_CACHED_OR_BLOCKING } from '../../../services/analytics/growthbook.js'
 import { isPolicyAllowed } from '../../../services/policyLimits/index.js'
+import type { TodoList } from '../../../services/todo/types.js'
 import { detectCurrentRepositoryWithHost } from '../../../utils/detectRepository.js'
 import { isEnvTruthy } from '../../../utils/envUtils.js'
-import type { TodoList } from '../../../services/todo/types.js'
 import {
   checkGithubAppInstalled,
   checkHasRemoteEnvironment,

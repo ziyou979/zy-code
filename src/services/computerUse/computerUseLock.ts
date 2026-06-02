@@ -4,8 +4,8 @@ import { getSessionId } from '../../bootstrap/state.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { getErrnoCode } from '../../utils/errors.js'
+import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 
 const LOCK_FILENAME = 'computer-use.lock'
 

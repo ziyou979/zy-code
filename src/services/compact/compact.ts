@@ -11,6 +11,8 @@ import { markPostCompaction } from 'src/bootstrap/state.js'
 import { getInvokedSkillsForAgent } from '../../bootstrap/state.js'
 import type { QuerySource } from '../../constants/querySource.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
+import { MEMORY_TYPE_VALUES } from '../../services/memory/types.js'
+import { getTaskOutputPath } from '../../services/task/diskOutput.js'
 import type { Tool, ToolUseContext } from '../../Tool.js'
 import type { LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
 import { FileReadTool } from '../../tools/FileReadTool/FileReadTool.js'
@@ -44,7 +46,6 @@ import { cacheToObject } from '../../utils/fileStateCache.js'
 import { type CacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.js'
 import { executePostCompactHooks, executePreCompactHooks } from '../../utils/hooks.js'
 import { logError } from '../../utils/log.js'
-import { MEMORY_TYPE_VALUES } from '../../services/memory/types.js'
 import {
   createCompactBoundaryMessage,
   createUserMessage,
@@ -66,7 +67,6 @@ import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { getTaskOutputPath } from '../../services/task/diskOutput.js'
 import {
   getTokenUsage,
   tokenCountFromLastAPIResponse,
@@ -78,12 +78,12 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
+import { getMaxOutputTokensForModel } from '../api/apiHelpers.js'
 import {
   getPromptTooLongTokenGap,
   PROMPT_TOO_LONG_ERROR_MESSAGE,
   startsWithApiErrorPrefix,
 } from '../api/errors.js'
-import { getMaxOutputTokensForModel } from '../api/apiHelpers.js'
 import { queryModelWithStreaming } from '../api/llmOrchestrator.js'
 import { notifyCompaction } from '../api/promptCacheBreakDetection.js'
 import { getRetryDelay } from '../api/withRetry.js'

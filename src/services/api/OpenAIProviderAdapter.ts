@@ -8,6 +8,7 @@
 
 import { randomUUID } from 'node:crypto'
 import OpenAI from 'openai'
+import { getMainLoopModel, normalizeModelStringForAPI } from '../../services/model/model.js'
 import type {
   CreateParams,
   LLMAdapter,
@@ -17,7 +18,6 @@ import type {
   ToolDefinition,
 } from '../../types/llm.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { getMainLoopModel, normalizeModelStringForAPI } from '../../services/model/model.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { countMessagesTokensLocally } from '../tokenEstimation.js'
 import { getOpenAIClient } from './client.js'

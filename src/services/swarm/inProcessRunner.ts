@@ -29,6 +29,10 @@ import {
   ERROR_MESSAGE_USER_ABORT,
 } from '../../services/compact/compact.js'
 import { resetMicrocompactState } from '../../services/compact/microCompact.js'
+import type { ModelAlias } from '../../services/model/aliases.js'
+import { evictTaskOutput } from '../../services/task/diskOutput.js'
+import { evictTerminalTask } from '../../services/task/framework.js'
+import { unregisterAgent as unregisterPerfettoAgent } from '../../services/telemetry/perfettoTracing.js'
 import type { AppState } from '../../state/AppState.js'
 import type { Tool, ToolUseContext } from '../../Tool.js'
 import { appendTeammateMessage } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
@@ -57,28 +61,25 @@ import { TEAM_DELETE_TOOL_NAME } from '../../tools/TeamDeleteTool/constants.js'
 import type { ContentBlock } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import type { PermissionDecision } from '../../types/permissions.js'
-import { createAssistantAPIErrorMessage, createUserMessage } from '../../utils/messages.js'
-import { evictTaskOutput } from '../../services/task/diskOutput.js'
-import { evictTerminalTask } from '../../services/task/framework.js'
-import { tokenCountWithEstimation } from '../../utils/tokens.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { type AgentContext, runWithAgentContext } from '../../utils/agentContext.js'
 import { count } from '../../utils/array.js'
+import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { cloneFileStateCache } from '../../utils/fileStateCache.js'
 import {
+  createAssistantAPIErrorMessage,
+  createUserMessage,
   SUBAGENT_REJECT_MESSAGE,
   SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX,
 } from '../../utils/messages.js'
-import type { ModelAlias } from '../../services/model/aliases.js'
 import {
   applyPermissionUpdates,
   persistPermissionUpdates,
 } from '../../utils/permissions/PermissionUpdate.js'
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
 import { hasPermissionsToUseTool } from '../../utils/permissions/permissions.js'
-import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
@@ -94,7 +95,7 @@ import {
   readMailbox,
   writeToMailbox,
 } from '../../utils/teammateMailbox.js'
-import { unregisterAgent as unregisterPerfettoAgent } from '../../services/telemetry/perfettoTracing.js'
+import { tokenCountWithEstimation } from '../../utils/tokens.js'
 import { createContentReplacementState } from '../../utils/toolResultStorage.js'
 import { TEAM_LEAD_NAME } from './constants.js'
 import {

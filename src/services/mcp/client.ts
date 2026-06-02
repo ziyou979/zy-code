@@ -86,14 +86,14 @@ const fetchMcpSkillsForClient = feature('MCP_SKILLS')
   : null
 
 import { UnauthorizedError } from '@modelcontextprotocol/sdk/client/auth.js'
+import { clearKeychainCache } from '../../services/secureStorage/macOsKeychainHelpers.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { classifyMcpToolForCollapse } from '../../tools/MCPTool/classifyForCollapse.js'
-import { clearKeychainCache } from '../../services/secureStorage/macOsKeychainHelpers.js'
 import { sleep } from '../../utils/sleep.js'
 import { hasMcpDiscoveryButNoToken, wrapFetchWithStepUpDetection, ZyAuthProvider } from './auth.js'
+import { WireControlClientTransport } from './BridgeControlTransport.js'
 import { getAllMcpConfigs, isMcpServerDisabled } from './config.js'
 import { getMcpServerHeaders } from './headersHelper.js'
-import { WireControlClientTransport } from './BridgeControlTransport.js'
 import type {
   ConnectedMCPServer,
   MCPServerConnection,
@@ -1228,107 +1228,56 @@ export const connectToServer = memoize(
               }
 
               // Wait for graceful shutdown with rapid escalation (total 500ms to keep CLI responsive)
-              await new Promise<void>(async (resolve) => {
-                let resolved = false
+              const processExited = () => {
+                try {
+                  process.kill(childPid, 0)
+                  return false
+                } catch {
+                  return true
+                }
+              }
 
-                // Set up a timer to check if process still exists
+              const waitForExit = new Promise<void>((resolve) => {
                 const checkInterval = setInterval(() => {
-                  try {
-                    // process.kill(pid, 0) checks if process exists without killing it
-                    process.kill(childPid, 0)
-                  } catch {
-                    // Process no longer exists
-                    if (!resolved) {
-                      resolved = true
-                      clearInterval(checkInterval)
-                      clearTimeout(failsafeTimeout)
-                      logMCPDebug(name, 'MCP server process exited cleanly')
-                      resolve()
-                    }
+                  if (processExited()) {
+                    clearInterval(checkInterval)
+                    logMCPDebug(name, 'MCP server process exited cleanly')
+                    resolve()
                   }
                 }, 50)
-
-                // Absolute failsafe: clear interval after 600ms no matter what
-                let failsafeTimeout
-                failsafeTimeout = setTimeout(() => {
-                  if (!resolved) {
-                    resolved = true
-                    clearInterval(checkInterval)
-                    logMCPDebug(name, 'Cleanup timeout reached, stopping process monitoring')
-                    resolve()
-                  }
-                }, 600)
-
-                try {
-                  // Wait 100ms for SIGINT to work (usually much faster)
-                  await sleep(100)
-
-                  if (!resolved) {
-                    // Check if process still exists
-                    try {
-                      process.kill(childPid, 0)
-                      // Process still exists, SIGINT failed, try SIGTERM
-                      logMCPDebug(name, 'SIGINT failed, sending SIGTERM to MCP server process')
-                      try {
-                        process.kill(childPid, 'SIGTERM')
-                      } catch (termError) {
-                        logMCPDebug(name, `Error sending SIGTERM: ${termError}`)
-                        resolved = true
-                        clearInterval(checkInterval)
-                        clearTimeout(failsafeTimeout)
-                        resolve()
-                        return
-                      }
-                    } catch {
-                      // Process already exited
-                      resolved = true
-                      clearInterval(checkInterval)
-                      clearTimeout(failsafeTimeout)
-                      resolve()
-                      return
-                    }
-
-                    // Wait 400ms for SIGTERM to work (slower than SIGINT, often used for cleanup)
-                    await sleep(400)
-
-                    if (!resolved) {
-                      // Check if process still exists
-                      try {
-                        process.kill(childPid, 0)
-                        // Process still exists, SIGTERM failed, force kill with SIGKILL
-                        logMCPDebug(name, 'SIGTERM failed, sending SIGKILL to MCP server process')
-                        try {
-                          process.kill(childPid, 'SIGKILL')
-                        } catch (killError) {
-                          logMCPDebug(name, `Error sending SIGKILL: ${killError}`)
-                        }
-                      } catch {
-                        // Process already exited
-                        resolved = true
-                        clearInterval(checkInterval)
-                        clearTimeout(failsafeTimeout)
-                        resolve()
-                      }
-                    }
-                  }
-
-                  // Final timeout - always resolve after 500ms max (total cleanup time)
-                  if (!resolved) {
-                    resolved = true
-                    clearInterval(checkInterval)
-                    clearTimeout(failsafeTimeout)
-                    resolve()
-                  }
-                } catch {
-                  // Handle any errors in the escalation sequence
-                  if (!resolved) {
-                    resolved = true
-                    clearInterval(checkInterval)
-                    clearTimeout(failsafeTimeout)
-                    resolve()
-                  }
-                }
               })
+
+              const escalateSignals = async () => {
+                await sleep(100)
+                if (processExited()) {
+                  return
+                }
+                logMCPDebug(name, 'SIGINT failed, sending SIGTERM to MCP server process')
+                try {
+                  process.kill(childPid, 'SIGTERM')
+                } catch (termError) {
+                  logMCPDebug(name, `Error sending SIGTERM: ${termError}`)
+                  return
+                }
+
+                await sleep(400)
+                if (processExited()) {
+                  return
+                }
+                logMCPDebug(name, 'SIGTERM failed, sending SIGKILL to MCP server process')
+                try {
+                  process.kill(childPid, 'SIGKILL')
+                } catch (killError) {
+                  logMCPDebug(name, `Error sending SIGKILL: ${killError}`)
+                }
+              }
+
+              const failsafe = sleep(600).then(() => {
+                logMCPDebug(name, 'Cleanup timeout reached, stopping process monitoring')
+              })
+
+              void escalateSignals()
+              await Promise.race([waitForExit, failsafe])
             }
           } catch (processError) {
             logMCPDebug(name, `Error terminating process: ${processError}`)

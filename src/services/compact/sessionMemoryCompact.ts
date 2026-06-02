@@ -2,6 +2,7 @@
  * EXPERIMENT: Session memory compaction
  */
 
+import { getMainLoopModel } from '../../services/model/model.js'
 import type { AgentId } from '../../types/ids.js'
 import type { HookResultMessage, Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -12,7 +13,6 @@ import {
   createUserMessage,
   isCompactBoundaryMessage,
 } from '../../utils/messages.js'
-import { getMainLoopModel } from '../../services/model/model.js'
 import { getSessionMemoryPath } from '../../utils/permissions/filesystem.js'
 import { processSessionStartHooks } from '../../utils/sessionStart.js'
 import { getTranscriptPath } from '../../utils/sessionStorage.js'

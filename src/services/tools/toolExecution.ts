@@ -1032,7 +1032,7 @@ async function checkPermissionsAndCallTool(
     // 在 auto 模式下分类器拒绝时运行 PermissionDenied hook。
     // 如果 hook 返回 {retry: true}，告诉模型可以重试。
     if (
-      feature('TRANSCRIPT_CLASSIFIER') &&
+      true &&
       permissionDecision.decisionReason?.type === 'classifier' &&
       permissionDecision.decisionReason.classifier === 'auto-mode'
     ) {

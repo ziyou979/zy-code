@@ -1,8 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
 import OpenAI from 'openai'
-import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/utils/auth.js'
-import { getUserAgent } from 'src/utils/http.js'
 import { getProviderEntry } from 'src/services/model/providerRegistry.js'
 import {
   getAPIProvider,
@@ -12,6 +10,8 @@ import {
   isOpenAIProvider,
   isPreconfiguredEndpointProvider,
 } from 'src/services/model/providers.js'
+import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/utils/auth.js'
+import { getUserAgent } from 'src/utils/http.js'
 import { getProxyFetchOptions } from 'src/utils/proxy.js'
 import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/state.js'
 import { getOauthConfig } from '../../constants/oauth.js'

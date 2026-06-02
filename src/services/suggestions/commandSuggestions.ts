@@ -283,6 +283,7 @@ function createCommandSuggestionItem(cmd: Command, matchedAlias?: string): Sugge
     tag: isWorkflow ? 'workflow' : undefined,
     description: fullDescription,
     metadata: cmd,
+    matchedAlias,
   }
 }
 
@@ -513,7 +514,8 @@ export function applyCommandSuggestion(
   setCursorOffset: (offset: number) => void,
   onSubmit: (value: string, isSubmittingSlashCommand?: boolean) => void,
 ): void {
-  // Extract command name and object from string or SuggestionItem metadata
+  // Extract command name and object from string or SuggestionItem metadata.
+  // 当通过别名匹配时，保留别名作为命令名（支持 invokedAs 路由）。
   let commandName: string
   let commandObj: Command | undefined
   if (typeof suggestion === 'string') {
@@ -521,9 +523,9 @@ export function applyCommandSuggestion(
     commandObj = shouldExecute ? getCommand(commandName, commands) : undefined
   } else {
     if (!isCommandMetadata(suggestion.metadata)) {
-      return // Invalid suggestion, nothing to apply
+      return
     }
-    commandName = getCommandName(suggestion.metadata)
+    commandName = suggestion.matchedAlias ?? getCommandName(suggestion.metadata)
     commandObj = suggestion.metadata
   }
 

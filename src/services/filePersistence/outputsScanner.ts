@@ -9,8 +9,8 @@
 
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { logForDebugging } from '../../utils/debug.js'
 import type { EnvironmentKind } from 'src/services/teleport/environments.js'
+import { logForDebugging } from '../../utils/debug.js'
 import type { TurnStartTime } from './types.js'
 
 /** Shared debug logger for file persistence modules */

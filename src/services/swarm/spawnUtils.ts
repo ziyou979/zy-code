@@ -2,6 +2,7 @@
  * Shared utilities for spawning teammates across different backends.
  */
 
+import { quote } from 'src/shell-eval/bash/shellQuote.js'
 import {
   getChromeFlagOverride,
   getFlagSettingsPath,
@@ -9,7 +10,6 @@ import {
   getMainLoopModelOverride,
   getSessionBypassPermissionsMode,
 } from '../../bootstrap/state.js'
-import { quote } from 'src/shell-eval/bash/shellQuote.js'
 import { isInBundledMode } from '../../utils/bundledMode.js'
 import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
 import { getTeammateModeFromSnapshot } from './backends/teammateModeSnapshot.js'

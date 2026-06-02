@@ -25,8 +25,8 @@ import type {
   DeltaUsage,
   LLMMessage,
   LLMResponse,
-  StopReason,
   LLMStreamEvent,
+  StopReason,
   TokenUsage,
   ToolChoice,
   ToolDefinition,
@@ -115,20 +115,28 @@ export function safeStringifyToolArguments(input: unknown): string {
 type AnyMessage = LLMMessage | Record<string, unknown>
 
 /**
- * 判断是否走 DeepSeek reasoning 协议。
- * DeepSeek 要求：两轮之间有 tool_call 时必须回传 reasoning_content。
- * 参考：https://api-docs.deepseek.com/zh-cn/guides/thinking_mode
+ * 判断是否支持 reasoning_content 独立字段回传协议。
+ * 支持的 provider：
+ * - DeepSeek：两轮之间有 tool_call 时必须回传，否则 400 ReasoningContentMissError
+ * - DashScope/百炼：不回传会导致 </think> 标签泄漏到 content（Qwen3.6#26）
+ * - Kimi：官方文档要求 tool calling 时保留 reasoning_content
  *
- * 判定条件：模型名含 'deepseek' 且具备 thinking 能力（由 model-capabilities 声明）。
+ * 不支持的 provider 回退为 <thinking> 文本 prepend。
  */
-function isDeepSeekReasoningModel(model: string | undefined): boolean {
+const REASONING_CONTENT_PROVIDERS = new Set(['deepseek', 'dashscope', 'kimi'])
+
+function supportsReasoningContentField(model: string | undefined): boolean {
   if (!model) {
     return false
   }
-  if (!model.toLowerCase().includes('deepseek')) {
-    return false
+  const provider = getAPIProvider()
+  if (REASONING_CONTENT_PROVIDERS.has(provider)) {
+    return true
   }
-  return localModelHasCapability(model, 'thinking')
+  if (model.toLowerCase().includes('deepseek')) {
+    return localModelHasCapability(model, 'thinking')
+  }
+  return false
 }
 
 /**
@@ -179,7 +187,11 @@ export function messagesToOpenAI(
               role: 'tool',
               tool_call_id: block.toolCallId ?? '',
               content: text || '(empty)',
-            })
+              ...(block.cache_control && { cache_control: block.cache_control }),
+            } as any)
+          } else if (block.type === 'cache_edits') {
+            // cache_edits 是缓存编辑指令，不是用户内容，直接透传
+            parts.push({ ...block } as any)
           } else if (block.type === 'text') {
             // 保留 cache_control 等额外字段（百炼/火山引擎的 OpenAI 端点支持）
             parts.push({ ...block } as OpenAI.Chat.ChatCompletionContentPart)
@@ -230,9 +242,13 @@ export function messagesToOpenAI(
         const textParts: string[] = []
         const thinkingParts: string[] = []
         const toolCalls: OpenAI.Chat.ChatCompletionMessageToolCall[] = []
+        let lastCacheControl: any = null
         for (const block of msg.content) {
           if (block.type === 'text') {
             textParts.push(block.text)
+            if ((block as any).cache_control) {
+              lastCacheControl = (block as any).cache_control
+            }
           } else if (block.type === 'tool_call' || block.type === 'tool_use') {
             toolCalls.push({
               id: block.id,
@@ -251,25 +267,28 @@ export function messagesToOpenAI(
           role: 'assistant',
         }
         // 思考内容回传策略：
-        // - DeepSeek 协议（deepseek-reasoner 等）规定：两轮之间存在 tool_call 时，
-        //   上一轮的 reasoning_content 必须作为独立字段回传，否则 400 ReasoningContentMissError。
-        //   参考：https://api-docs.deepseek.com/zh-cn/guides/thinking_mode
-        //   纯文本轮次无需回传（回传反而可能触发平台拒绝）。
-        // - 其他 provider：统一包成 <thinking> 文本 prepend 到 content 兜底。
+        // - 支持 reasoning_content 协议的 provider（DeepSeek/DashScope/Kimi）：
+        //   有 tool_call 时以独立字段回传 reasoning_content，
+        //   避免模型丢失 thinking 边界导致 </think> 泄漏（Qwen3.6#26）。
+        // - 其他 provider：包成 <thinking> 文本 prepend 到 content 兜底。
         if (thinkingParts.length > 0) {
           const thinkingText = thinkingParts.join('\n\n')
-          const isDeepSeek = isDeepSeekReasoningModel(model)
-          if (isDeepSeek && toolCalls.length > 0) {
-            // DeepSeek 协议：两轮之间有 tool_call 时，必须回传 reasoning_content
+          const useReasoningField = supportsReasoningContentField(model)
+          if (useReasoningField && toolCalls.length > 0) {
             ;(am as any).reasoning_content = thinkingText
-          } else if (!isDeepSeek) {
-            // 非 DeepSeek：包成 <thinking> 文本 prepend 到 content
+          } else if (!useReasoningField) {
             textParts.unshift(`<thinking>${thinkingText}</thinking>`)
           }
-          // DeepSeek 纯文本轮次：thinking 丢弃（官方要求）
+          // 支持 reasoning_content 的 provider 纯文本轮次：thinking 丢弃
         }
         if (textParts.length > 0) {
-          am.content = textParts.join('\n\n')
+          if (lastCacheControl) {
+            am.content = [
+              { type: 'text', text: textParts.join('\n\n'), cache_control: lastCacheControl },
+            ] as any
+          } else {
+            am.content = textParts.join('\n\n')
+          }
         }
         if (toolCalls.length > 0) {
           am.tool_calls = toolCalls
@@ -288,7 +307,112 @@ export function messagesToOpenAI(
     }
   }
 
+  // 后处理：确保 cache_control 落在最后一条 role:'user' 消息上。
+  // OpenAI 兼容 provider（DashScope/百炼/火山引擎）的缓存截断点只认
+  // system 和 user 消息；tool/assistant 上的标记会被忽略。
+  ensureCacheControlOnLastUserMessage(result)
+
   return result
+}
+
+/**
+ * 确保 cache_control 标记位于尽可能靠后的 role:'user' 消息上。
+ *
+ * DashScope/百炼/火山引擎对 Qwen3.5+ 模型只在 system 和 user 消息上
+ * 识别缓存截断点。在纯 agentic loop 场景中（用户发一条消息后模型
+ * 连续调用工具），只有一条 role:'user' 消息，所有后续内容都是
+ * assistant/tool，导致大量对话历史无法缓存。
+ *
+ * 策略：
+ * 1. 摘取 tool/assistant 消息上的 cache_control
+ * 2. 如果最后一条 user 消息后面有 >3 条消息（agentic loop），
+ *    在消息数组末尾追加一条空 user 消息作为缓存锚点
+ * 3. 否则将 cache_control 放到最后一条 user 消息上
+ */
+function ensureCacheControlOnLastUserMessage(
+  messages: OpenAI.Chat.ChatCompletionMessageParam[],
+): void {
+  // 先找最后一条 user 消息的位置
+  let lastUserIdx = -1
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if ((messages[i] as any).role === 'user') {
+      lastUserIdx = i
+      break
+    }
+  }
+  // 没有 user 消息则不处理（保留 assistant 上的 cache_control 由 provider 自行处理）
+  if (lastUserIdx === -1) {
+    return
+  }
+
+  // 检查最后 user 消息是否已有 cache_control
+  const lastUser = messages[lastUserIdx] as any
+  let existingCC: any = null
+  if (Array.isArray(lastUser.content)) {
+    const last = lastUser.content[lastUser.content.length - 1]
+    if (last && typeof last === 'object' && last.cache_control) {
+      existingCC = last.cache_control
+    }
+  }
+
+  // 从 user 消息之后的 tool/assistant 消息上摘取 cache_control
+  let cacheControl: any = existingCC
+  for (let i = messages.length - 1; i > lastUserIdx; i--) {
+    const msg = messages[i] as any
+    if (msg.cache_control) {
+      if (!cacheControl) cacheControl = msg.cache_control
+      delete msg.cache_control
+    }
+    if (Array.isArray(msg.content)) {
+      for (const block of msg.content) {
+        if (block && typeof block === 'object' && block.cache_control) {
+          if (!cacheControl) cacheControl = block.cache_control
+          delete block.cache_control
+        }
+      }
+    }
+  }
+
+  if (!cacheControl) {
+    return
+  }
+
+  // Agentic loop：最后 user 消息后面有 >3 条消息（大量 tool 循环），
+  // 在末尾追加一条空 user 消息作为缓存锚点，覆盖整个对话历史
+  if (lastUserIdx < messages.length - 4) {
+    // 清除原 user 消息上的 cache_control（避免浪费 4 标记中的一个名额）
+    if (existingCC && Array.isArray(lastUser.content)) {
+      const last = lastUser.content[lastUser.content.length - 1]
+      if (last && typeof last === 'object') {
+        delete last.cache_control
+      }
+    }
+    messages.push({
+      role: 'user',
+      content: [{ type: 'text', text: '[continue]', cache_control: cacheControl }],
+    } as any)
+    return
+  }
+
+  // 非 agentic loop：将 cache_control 放到最后 user 消息上
+  if (typeof lastUser.content === 'string') {
+    lastUser.content = [{ type: 'text', text: lastUser.content, cache_control: cacheControl }]
+  } else if (Array.isArray(lastUser.content) && lastUser.content.length > 0) {
+    const last = lastUser.content[lastUser.content.length - 1]
+    if (last && typeof last === 'object') {
+      last.cache_control = cacheControl
+    }
+  }
+}
+
+function stripCacheControlAfter(
+  messages: OpenAI.Chat.ChatCompletionMessageParam[],
+  afterIdx: number,
+): void {
+  for (let i = afterIdx + 1; i < messages.length; i++) {
+    const msg = messages[i] as any
+    delete msg.cache_control
+  }
 }
 
 export function toolsToOpenAI(
@@ -355,6 +479,10 @@ export function convertThinkingForOpenAI(
   outputConfig?: Record<string, unknown>,
 ): Record<string, unknown> {
   if (!thinking || thinking.type === 'disabled') {
+    // DashScope 部分模型默认开启思考，需显式关闭
+    if (thinking?.type === 'disabled' && getAPIProvider() === 'dashscope') {
+      return { enable_thinking: false, thinking: { type: 'disabled' } }
+    }
     return {}
   }
 
@@ -363,7 +491,19 @@ export function convertThinkingForOpenAI(
   const effort = outputConfig?.effort as string | undefined
 
   if (provider === 'dashscope') {
-    return { enable_thinking: true }
+    // 百炼托管多家模型，参数格式不统一：
+    // - Qwen 系列用 enable_thinking（+ 可选 thinking_budget）
+    // - MiniMax（稀宇直供）用 thinking 对象，不认 enable_thinking
+    // - DeepSeek V4 用 enable_thinking（+ 可选 reasoning_effort）
+    // 统一都传，各模型取自己认识的参数、忽略不认识的。
+    const result: Record<string, unknown> = {
+      enable_thinking: true,
+      thinking: { type: 'adaptive' },
+    }
+    if (effort === 'max') {
+      result.preserve_thinking = true
+    }
+    return result
   }
   if (provider === 'zhipu') {
     return { thinking: { type: 'enabled', clear_thinking: false } }
@@ -381,6 +521,11 @@ export function convertThinkingForOpenAI(
     return { reasoning: { effort: effort ?? 'medium' } }
   }
   if (provider === 'openai') {
+    return { reasoning_effort: effort ?? 'medium' }
+  }
+  if (provider === 'gemini') {
+    // Gemini OpenAI 兼容端原生支持 reasoning_effort，自动映射为
+    // thinkingLevel（Gemini 3）或 thinkingBudget（Gemini 2.5）
     return { reasoning_effort: effort ?? 'medium' }
   }
 
@@ -630,20 +775,25 @@ export async function* mapOpenAIStreamToStandard(
       }
 
       // 文本
+      // DashScope/Qwen 在 thinking 结束时可能将 </think> 标签泄漏到 content 字段，
+      // 需要在此处剥离，避免产生仅含 XML 标签的空 text block。
       if (delta.content && delta.content !== '') {
-        if (!textBlockStarted) {
-          textBlockIndex = thinkingBlockStarted ? thinkingBlockIndex + 1 : 0
-          yield {
-            type: 'chunk_start',
-            index: textBlockIndex,
-            chunk: { type: 'text', text: '' },
+        const cleaned = delta.content.replace(/<\/?(think|thinking)>/g, '').replace(/^\n+|\n+$/g, '')
+        if (cleaned) {
+          if (!textBlockStarted) {
+            textBlockIndex = thinkingBlockStarted ? thinkingBlockIndex + 1 : 0
+            yield {
+              type: 'chunk_start',
+              index: textBlockIndex,
+              chunk: { type: 'text', text: '' },
+            }
+            textBlockStarted = true
           }
-          textBlockStarted = true
-        }
-        yield {
-          type: 'chunk_delta',
-          index: textBlockIndex,
-          delta: { type: 'text_delta', text: delta.content },
+          yield {
+            type: 'chunk_delta',
+            index: textBlockIndex,
+            delta: { type: 'text_delta', text: cleaned },
+          }
         }
       }
 

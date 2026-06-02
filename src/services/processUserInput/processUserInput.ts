@@ -51,6 +51,7 @@ import {
 import { queryCheckpoint } from '../../utils/queryProfiler.js'
 import { parseSlashCommand } from '../../utils/slashCommandParsing.js'
 import { hasUltraplanKeyword, replaceUltraplanKeyword } from '../ultraplan/keyword.js'
+import { hasWorkflowKeyword } from '../workflow/keyword.js'
 import { processTextPrompt } from './processTextPrompt.js'
 export type ProcessUserInputContext = ToolUseContext & LocalJSXCommandContext
 
@@ -507,6 +508,16 @@ async function processUserInputBase(
       canUseTool,
     )
     return addImageMetadataMessage(slashResult, imageMetadataTexts)
+  }
+
+  if (
+    feature('WORKFLOW_SCRIPTS') &&
+    mode === 'prompt' &&
+    inputString !== null &&
+    !inputString.startsWith('/') &&
+    hasWorkflowKeyword(preExpansionInput ?? inputString)
+  ) {
+    logEvent('zy_workflow_keyword', {})
   }
 
   // For slash commands, attachments will be extracted within getMessagesForSlashCommand

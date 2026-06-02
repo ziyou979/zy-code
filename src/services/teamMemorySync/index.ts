@@ -37,12 +37,12 @@ import {
   PathTraversalError,
   validateTeamMemKey,
 } from '../../memdir/teamMemPaths.js'
+import { getAPIProvider, isAnthropicBaseUrl } from '../../services/model/providers.js'
 import { count } from '../../utils/array.js'
 import { checkAndRefreshOAuthTokenIfNeeded, getZyAIOAuthTokens } from '../../utils/auth.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { classifyAxiosError } from '../../utils/errors.js'
 import { getGithubRepo } from '../../utils/git.js'
-import { getAPIProvider, isAnthropicBaseUrl } from '../../services/model/providers.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'

@@ -6,8 +6,8 @@
  * 均从此注册表自动派生行为，无需额外修改。
  */
 
-import type { ProviderCapability } from './providers.js'
 import type { EffortLevel } from '../../utils/effort.js'
+import type { ProviderCapability } from './providers.js'
 
 /**
  * 模型能力标签 — 用于 onboarding 中统一渲染模型描述。
@@ -126,9 +126,9 @@ const FULL_CAPABILITIES: ProviderCapability[] = [
   'interleaved_thinking',
 ]
 
-/** Anthropic 系默认 effort 档位(对外不含 max,internal build 解锁 max)。 */
-const ANTHROPIC_EFFORT_LEVELS: EffortLevel[] = ['low', 'medium', 'high']
-const ANTHROPIC_EFFORT_LEVELS_INTERNAL: EffortLevel[] = ['low', 'medium', 'high', 'max']
+/** Anthropic 系 effort 档位（兼容旧代码引用）。新体系下由 mapEffortToProvider 处理映射。 */
+const ANTHROPIC_EFFORT_LEVELS: EffortLevel[] = ['light', 'balanced', 'thorough', 'extreme']
+const ANTHROPIC_EFFORT_LEVELS_INTERNAL: EffortLevel[] = ['light', 'balanced', 'thorough', 'extreme']
 
 /** 标准能力集 — 适用于大多数第三方平台和本地推理引擎 */
 const STANDARD_CAPABILITIES: ProviderCapability[] = [
@@ -180,8 +180,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     supportedFormats: ['openai'],
     endpointType: 'preconfigured',
     capabilities: STANDARD_CAPABILITIES,
-    // DeepSeek reasoning_effort 支持 low/medium/high。
-    defaultEffortLevels: ['low', 'medium', 'high'],
+    // DeepSeek reasoning_effort 支持 low/medium/high（映射由 mapEffortToProvider 处理）。
+    defaultEffortLevels: ['light', 'balanced', 'thorough'],
     defaultBaseUrls: { openai: 'https://api.deepseek.com' },
     apiKeyLabel: 'DeepSeek API Key',
     suggestedModels: [
@@ -194,8 +194,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     supportedFormats: ['openai'],
     endpointType: 'hardcoded',
     capabilities: ['thinking', 'structured_outputs', 'context_management', 'web_search'],
-    // OpenAI reasoning_effort 原生支持 minimal/low/medium/high(无 max)。
-    defaultEffortLevels: ['minimal', 'low', 'medium', 'high'],
+    // OpenAI reasoning_effort 支持 minimal/low/medium/high（映射由 mapEffortToProvider 处理）。
+    defaultEffortLevels: ['quick', 'light', 'balanced', 'thorough'],
     activationEnvVar: 'ZY_CODE_USE_OPENAI',
     apiKeyLabel: 'OpenAI API Key',
     suggestedModels: [
@@ -346,8 +346,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       'web_search',
       'interleaved_thinking',
     ],
-    // OpenRouter reasoning.effort 支持 low/medium/high。
-    defaultEffortLevels: ['low', 'medium', 'high'],
+    // OpenRouter reasoning.effort 支持 low/medium/high（映射由 mapEffortToProvider 处理）。
+    defaultEffortLevels: ['light', 'balanced', 'thorough'],
     activationEnvVar: 'ZY_CODE_USE_OPENROUTER',
     apiKeyLabel: 'OpenRouter API Key',
     defaultBaseUrls: {
@@ -490,6 +490,25 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { openai: 'https://integrate.api.nvidia.com/v1' },
     apiKeyLabel: 'NVIDIA API Key',
     baseUrlHint: 'https://integrate.api.nvidia.com/v1',
+  },
+
+  {
+    id: 'gemini',
+    supportedFormats: ['openai'],
+    endpointType: 'env-or-default',
+    capabilities: ['thinking', 'adaptive_thinking', 'structured_outputs', 'context_management'],
+    // Gemini reasoning_effort 支持 minimal/low/medium/high（映射由 mapEffortToProvider 处理）。
+    defaultEffortLevels: ['quick', 'light', 'balanced', 'thorough'],
+    activationEnvVar: 'ZY_CODE_USE_GEMINI',
+    apiKeyLabel: 'Google AI API Key',
+    defaultBaseUrls: {
+      openai: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+    },
+    suggestedModels: [
+      { label: 'gemini-2.5-flash', value: 'gemini-2.5-flash', tags: ['recommended', 'fast'] },
+      { label: 'gemini-2.5-pro', value: 'gemini-2.5-pro', tags: ['reasoning', 'flagship'] },
+      { label: 'gemini-3-flash', value: 'gemini-3-flash', tags: ['fast', 'balanced'] },
+    ],
   },
 
   // ── 其他 provider ────────────────────────────────────────────────────────

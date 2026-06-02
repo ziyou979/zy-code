@@ -1,11 +1,11 @@
-import type { TextBlock } from '../../types/llm.js'
-import { splitSysPromptPrefix } from '../../utils/api.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
 import {
   getDefaultAdvancedModel,
   getDefaultCompactModel,
   getDefaultStandardModel,
 } from '../../services/model/model.js'
+import type { TextBlock } from '../../types/llm.js'
+import { splitSysPromptPrefix } from '../../utils/api.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import type { SystemPrompt } from '../../utils/systemPromptType.js'
 
@@ -65,7 +65,7 @@ export function buildSystemPromptBlocks(
   systemPrompt: SystemPrompt,
   enablePromptCaching: boolean,
 ): TextBlock[] {
-  // 重要：不要再添加任何用于缓存的块，否则会收到 400 错误
+  // 静态块 + 动态块各一个 cache breakpoint（共 2 个），加上消息层 1 个，共 3/4
   return splitSysPromptPrefix(systemPrompt).map((block) => {
     return {
       type: 'text' as const,

@@ -4,12 +4,12 @@
 // Plan mode is set via set_permission_mode control_request in
 // teleportToRemote's CreateSession events array.
 
+import { isTransientNetworkError } from 'src/services/teleport/api.js'
 import type { WireMessage } from 'src/types/index.js'
 import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
 import type { ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { sleep } from '../../utils/sleep.js'
-import { isTransientNetworkError } from 'src/services/teleport/api.js'
 import { type PollRemoteSessionResponse, pollRemoteSessionEvents } from '../../utils/teleport.js'
 
 const POLL_INTERVAL_MS = 3000

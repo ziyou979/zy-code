@@ -1,6 +1,7 @@
 import type { UUID } from 'node:crypto'
 import axios, { type AxiosError } from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
+import { getOAuthHeaders } from '../../services/teleport/api.js'
 import type { Entry, TranscriptMessage } from '../../types/logs.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
@@ -10,7 +11,6 @@ import { sequential } from '../../utils/sequential.js'
 import { getSessionIngressAuthToken } from '../../utils/sessionIngressAuth.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { getOAuthHeaders } from '../../services/teleport/api.js'
 
 interface SessionIngressError {
   error?: {

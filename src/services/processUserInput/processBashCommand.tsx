@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import * as React from 'react'
 import { BashModeProgress } from 'src/components/BashModeProgress.js'
+import { resolveDefaultShell } from 'src/shell-eval/shared/resolveDefaultShell.js'
+import { isPowerShellToolEnabled } from 'src/shell-eval/shared/shellToolUtils.js'
 import type { SetToolJSXFn } from 'src/Tool.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
 import type { AttachmentMessage, SystemMessage, UserMessage } from 'src/types/message.js'
@@ -14,8 +16,6 @@ import {
   createUserMessage,
   prepareUserContent,
 } from '../../utils/messages.js'
-import { resolveDefaultShell } from 'src/shell-eval/shared/resolveDefaultShell.js'
-import { isPowerShellToolEnabled } from 'src/shell-eval/shared/shellToolUtils.js'
 import { processToolResultBlock } from '../../utils/toolResultStorage.js'
 import { escapeXml } from '../../utils/xml.js'
 import type { ProcessUserInputContext } from './processUserInput.js'

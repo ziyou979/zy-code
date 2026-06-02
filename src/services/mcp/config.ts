@@ -4,9 +4,9 @@ import { dirname, join, parse } from 'node:path'
 import mapValues from 'lodash-es/mapValues.js'
 import memoize from 'lodash-es/memoize.js'
 import { getPlatform } from 'src/utils/platform.js'
+import { isClaudeInChromeMCPServer } from '../../services/claudeInChrome/common.js'
 import type { PluginError } from '../../types/plugin.js'
 import { getPluginErrorMessage } from '../../types/plugin.js'
-import { isClaudeInChromeMCPServer } from '../../services/claudeInChrome/common.js'
 import {
   getCurrentProjectConfig,
   getGlobalConfig,

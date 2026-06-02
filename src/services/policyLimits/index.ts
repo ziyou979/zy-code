@@ -22,6 +22,7 @@ import {
   OAUTH_BETA_HEADER,
   ZY_CODE_INFERENCE_SCOPE,
 } from '../../constants/oauth.js'
+import { getAPIProvider, isAnthropicBaseUrl } from '../../services/model/providers.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getApiKeyWithSource,
@@ -32,7 +33,6 @@ import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { classifyAxiosError } from '../../utils/errors.js'
 import { safeParseJSON } from '../../utils/json.js'
-import { getAPIProvider, isAnthropicBaseUrl } from '../../services/model/providers.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
