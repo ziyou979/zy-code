@@ -29,7 +29,7 @@ export const zhCommands: TranslationResource = {
   'commands.context': '以彩色网格可视化当前上下文使用情况',
   'commands.contextNonInteractive': '显示当前上下文使用情况',
   'commands.copy': '复制 ZY 的最后一条响应到剪贴板',
-  'commands.cost': '显示当前会话的总成本和持续时间',
+  'commands.cost': '显示会话费用、计划用量和活动统计',
   'commands.debug': '为本次会话启用调试日志并帮助诊断问题。',
   'commands.desktop': '在 Zy Desktop 中继续当前会话',
   'commands.diff': '查看未提交的更改和每轮对话的 diff',
@@ -116,7 +116,10 @@ export const zhCommands: TranslationResource = {
   'commands.updateConfig':
     '通过 settings.json 配置 ZY Code。使用钩子设置自动化行为，管理权限、环境变量、插件和 MCP 服务器。',
   'commands.upgrade': '升级到 Max 以获得更高的用量限额和更多 Opus',
-  'commands.usage': '显示计划用量限额',
+  'commands.usage': '显示会话费用、计划用量和活动统计',
   'commands.version': '打印当前会话运行的版本',
   'commands.vim': '切换 Vim 和普通编辑模式',
+  'commands.workflows': '浏览动态工作流历史（运行中和已完成）',
+  'commands.workflows.empty': '本会话暂无运行中或已完成的工作流。',
+  'commands.workflows.title': '工作流：',
 }

@@ -96,6 +96,7 @@ export const zhSettings: TranslationResource = {
   'settings.showTips': '显示提示',
   'settings.showTurnDuration': '显示回合耗时',
   'settings.speculativeExecution': '推测执行',
+  'settings.statsTab': '统计',
   'settings.statusTab': '状态',
   'settings.terminalProgressBar': '终端进度条',
   'settings.theme': '主题',

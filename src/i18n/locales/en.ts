@@ -1,19 +1,20 @@
-import type { TranslationResource } from './resourceTypes.js'
-import { enMcp } from './en/mcp.js'
-import { enPermissions } from './en/permissions.js'
-import { enOnboarding } from './en/onboarding.js'
-import { enCommands } from './en/commands.js'
-import { enTasks } from './en/tasks.js'
 import { enAgents } from './en/agents.js'
-import { enSummary } from './en/summary.js'
-import { enSettings } from './en/settings.js'
 import { enChat } from './en/chat.js'
+import { enCommands } from './en/commands.js'
+import { enMcp } from './en/mcp.js'
+import { enMisc } from './en/misc.js'
+import { enOnboarding } from './en/onboarding.js'
+import { enPermissions } from './en/permissions.js'
+import { enPowerupLessons } from './en/powerupLessons.js'
 import { enSession } from './en/session.js'
+import { enSettings } from './en/settings.js'
 import { enShell } from './en/shell.js'
 import { enStats } from './en/stats.js'
+import { enSummary } from './en/summary.js'
+import { enTasks } from './en/tasks.js'
 import { enUi } from './en/ui.js'
-import { enMisc } from './en/misc.js'
-import { enPowerupLessons } from './en/powerupLessons.js'
+import { enWorkflow } from './en/workflow.js'
+import type { TranslationResource } from './resourceTypes.js'
 
 /**
  * English — base language (source of truth for keys)
@@ -40,4 +41,5 @@ export const en: TranslationResource = {
   ...enUi,
   ...enMisc,
   ...enPowerupLessons,
+  ...enWorkflow,
 }

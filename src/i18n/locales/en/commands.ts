@@ -31,7 +31,7 @@ export const enCommands: TranslationResource = {
   'commands.context': 'Visualize current context usage as a colored grid',
   'commands.contextNonInteractive': 'Show current context usage',
   'commands.copy': "Copy Zy's last response to clipboard",
-  'commands.cost': 'Show the total cost and duration of the current session',
+  'commands.cost': 'Show session cost, plan usage, and activity stats',
   'commands.debug': 'Enable debug logging for this session and help diagnose issues.',
   'commands.desktop': 'Continue the current session in Zy Desktop',
   'commands.diff': 'View uncommitted changes and per-turn diffs',
@@ -124,7 +124,10 @@ export const enCommands: TranslationResource = {
   'commands.updateConfig':
     'Configure the ZY Code harness via settings.json. Set up automated behaviors with hooks, manage permissions, env vars, plugins, and MCP servers.',
   'commands.upgrade': 'Upgrade to Max for higher rate limits and more Opus',
-  'commands.usage': 'Show plan usage limits',
+  'commands.usage': 'Show session cost, plan usage, and activity stats',
   'commands.version': 'Print the version this session is running',
   'commands.vim': 'Toggle between Vim and Normal editing modes',
+  'commands.workflows': 'Browse dynamic workflow history (running and completed)',
+  'commands.workflows.empty': 'No workflows running or completed in this session.',
+  'commands.workflows.title': 'Workflows:',
 }

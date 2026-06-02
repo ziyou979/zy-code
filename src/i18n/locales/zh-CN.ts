@@ -1,19 +1,20 @@
 import type { TranslationResource } from './resourceTypes.js'
-import { zhMcp } from './zh-CN/mcp.js'
-import { zhPermissions } from './zh-CN/permissions.js'
-import { zhOnboarding } from './zh-CN/onboarding.js'
-import { zhCommands } from './zh-CN/commands.js'
-import { zhTasks } from './zh-CN/tasks.js'
 import { zhAgents } from './zh-CN/agents.js'
-import { zhSummary } from './zh-CN/summary.js'
-import { zhSettings } from './zh-CN/settings.js'
 import { zhChat } from './zh-CN/chat.js'
+import { zhCommands } from './zh-CN/commands.js'
+import { zhMcp } from './zh-CN/mcp.js'
+import { zhMisc } from './zh-CN/misc.js'
+import { zhOnboarding } from './zh-CN/onboarding.js'
+import { zhPermissions } from './zh-CN/permissions.js'
+import { zhPowerupLessons } from './zh-CN/powerupLessons.js'
 import { zhSession } from './zh-CN/session.js'
+import { zhSettings } from './zh-CN/settings.js'
 import { zhShell } from './zh-CN/shell.js'
 import { zhStats } from './zh-CN/stats.js'
+import { zhSummary } from './zh-CN/summary.js'
+import { zhTasks } from './zh-CN/tasks.js'
 import { zhUi } from './zh-CN/ui.js'
-import { zhMisc } from './zh-CN/misc.js'
-import { zhPowerupLessons } from './zh-CN/powerupLessons.js'
+import { zhWorkflow } from './zh-CN/workflow.js'
 
 /**
  * 简体中文
@@ -40,4 +41,5 @@ export const zhCN: TranslationResource = {
   ...zhUi,
   ...zhMisc,
   ...zhPowerupLessons,
+  ...zhWorkflow,
 }
