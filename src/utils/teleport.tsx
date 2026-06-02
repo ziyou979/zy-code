@@ -7,7 +7,19 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
+import { checkGithubAppInstalled } from 'src/services/background/remote/preconditions.js'
+import { getMainLoopModel } from 'src/services/model/model.js'
 import { isPolicyAllowed } from 'src/services/policyLimits/index.js'
+import {
+  fetchSession,
+  type GitRepositoryOutcome,
+  type GitSource,
+  getBranchFromSession,
+  getOAuthHeaders,
+  type SessionResource,
+} from 'src/services/teleport/api.js'
+import { fetchEnvironments } from 'src/services/teleport/environments.js'
+import { createAndUploadGitBundle } from 'src/services/teleport/gitBundle.js'
 import { z } from 'zod/v4'
 import {
   getTeleportErrors,
@@ -15,17 +27,16 @@ import {
   type TeleportLocalErrorType,
 } from '../components/TeleportError.js'
 import { getOauthConfig } from '../constants/oauth.js'
-import type { WireMessage } from '../types/index.js'
 import type { Root } from '../ink.js'
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js'
 import { queryCompactModel } from '../services/api/compactQueries.js'
 import { getSessionLogsViaOAuth, getTeleportEvents } from '../services/api/sessionIngress.js'
 import { getOrganizationUUID } from '../services/oauth/client.js'
 import { AppStateProvider } from '../state/AppState.js'
+import type { WireMessage } from '../types/index.js'
 import type { Message, SystemMessage } from '../types/message.js'
 import type { PermissionMode } from '../types/permissions.js'
 import { checkAndRefreshOAuthTokenIfNeeded, getZyAIOAuthTokens } from './auth.js'
-import { checkGithubAppInstalled } from 'src/services/background/remote/preconditions.js'
 import { deserializeMessages, type TeleportRemoteResponse } from './conversationRecovery.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
@@ -42,21 +53,10 @@ import { findGitRoot, getDefaultBranch, getIsClean, gitExe } from './git.js'
 import { safeParseJSON } from './json.js'
 import { logError } from './log.js'
 import { createSystemMessage, createUserMessage } from './messages.js'
-import { getMainLoopModel } from 'src/services/model/model.js'
 import { isTranscriptMessage } from './sessionStorage.js'
 import { getInitialSettings } from './settings/settings.js'
 import { jsonStringify } from './slowOperations.js'
 import { asSystemPrompt } from './systemPromptType.js'
-import {
-  fetchSession,
-  type GitRepositoryOutcome,
-  type GitSource,
-  getBranchFromSession,
-  getOAuthHeaders,
-  type SessionResource,
-} from 'src/services/teleport/api.js'
-import { fetchEnvironments } from 'src/services/teleport/environments.js'
-import { createAndUploadGitBundle } from 'src/services/teleport/gitBundle.js'
 export type TeleportResult = {
   messages: Message[]
   branchName: string

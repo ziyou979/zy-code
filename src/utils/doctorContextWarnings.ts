@@ -1,17 +1,17 @@
+import { getMainLoopModel } from 'src/services/model/model.js'
+import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
 import type { Tool, ToolPermissionContext } from '../Tool.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
+import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './agentsMd.js'
 import { countMcpToolTokens } from './analyzeContext.js'
-import { getMainLoopModel } from 'src/services/model/model.js'
 import { permissionRuleValueToString } from './permissions/permissionRuleParser.js'
 import { detectUnreachableRules } from './permissions/shadowedRuleDetection.js'
-import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import {
   AGENT_DESCRIPTIONS_THRESHOLD,
   getAgentDescriptionsTotalTokens,
 } from './statusNoticeHelpers.js'
 import { plural } from './stringUtils.js'
-import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './agentsMd.js'
 
 // Thresholds (matching status notices and existing patterns)
 const MCP_TOOLS_THRESHOLD = 25_000 // 15k tokens

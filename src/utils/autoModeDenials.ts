@@ -17,7 +17,7 @@ let DENIALS: readonly AutoModeDenial[] = []
 const MAX_DENIALS = 20
 
 export function recordAutoModeDenial(denial: AutoModeDenial): void {
-  if (!feature('TRANSCRIPT_CLASSIFIER')) {
+  if (!true) {
     return
   }
   DENIALS = [denial, ...DENIALS.slice(0, MAX_DENIALS - 1)]

@@ -3,8 +3,8 @@
  */
 
 import axios from 'axios'
-import { getApiKey, getZyAIOAuthTokens, handleOAuth401Error } from './auth.js'
 import { getAPIProvider, isOpenAIProvider } from 'src/services/model/providers.js'
+import { getApiKey, getZyAIOAuthTokens, handleOAuth401Error } from './auth.js'
 import { getZyCodeUserAgent } from './userAgent.js'
 import { getWorkload } from './workloadContext.js'
 

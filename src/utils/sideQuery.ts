@@ -1,3 +1,4 @@
+import { normalizeModelStringForAPI } from 'src/services/model/model.js'
 import { getLastApiCompletionTimestamp, setLastApiCompletionTimestamp } from '../bootstrap/state.js'
 import type { QuerySource } from '../constants/querySource.js'
 import { getCLISyspromptPrefix } from '../constants/system.js'
@@ -13,7 +14,6 @@ import type {
   ToolDefinition,
 } from '../types/llm.js'
 import { getModelBetas } from './betas.js'
-import { normalizeModelStringForAPI } from 'src/services/model/model.js'
 
 export type SideQueryOptions = {
   /** 用于查询的模型 */
@@ -151,14 +151,14 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
       stopSequences: stop_sequences,
       tools: tools as any,
       toolChoice: tool_choice as any,
+      thinking: thinkingConfig,
       providerExtras: {
         anthropic: {
-          thinking: thinkingConfig,
           betas: betas.length > 0 ? betas : undefined,
           outputConfig: outputFormat ? { format: outputFormat } : undefined,
         },
       },
-    },
+    } as any,
     signal ?? new AbortController().signal,
   )
 

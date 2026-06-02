@@ -1,7 +1,13 @@
 import figures from 'figures'
 import * as React from 'react'
+import { modelDisplayString } from 'src/services/model/model.js'
+import { getAPIProvider } from 'src/services/model/providers.js'
+import { checkInstall } from 'src/services/nativeInstaller/index.js'
+import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
+import { tSync } from '../i18n/index.js'
 import { color, Text } from '../ink.js'
 import type { MCPServerConnection } from '../services/mcp/types.js'
+import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './agentsMd.js'
 import { getAccountInformation } from './auth.js'
 import { getDoctorDiagnostic } from './doctorDiagnostic.js'
 import { isInternalBuild } from './envUtils.js'
@@ -13,12 +19,8 @@ import {
   isJetBrainsIde,
   toIDEDisplayName,
 } from './ide.js'
-import { modelDisplayString } from 'src/services/model/model.js'
-import { getAPIProvider } from 'src/services/model/providers.js'
 import { getMTLSConfig } from './mtls.js'
-import { checkInstall } from 'src/services/nativeInstaller/index.js'
 import { getProxyUrl } from './proxy.js'
-import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { getSettingsWithAllErrors } from './settings/allErrors.js'
 import {
   getEnabledSettingSources,
@@ -30,7 +32,6 @@ import {
   getSettingsForSource,
 } from './settings/settings.js'
 import type { ThemeName } from './theme.js'
-import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './agentsMd.js'
 export type Property = {
   label?: string
   value: React.ReactNode | Array<string>
@@ -43,8 +44,8 @@ export function buildSandboxProperties(): Property[] {
   const isSandboxed = SandboxManager.isSandboxingEnabled()
   return [
     {
-      label: 'Bash Sandbox',
-      value: isSandboxed ? 'Enabled' : 'Disabled',
+      label: tSync('status.bashSandbox'),
+      value: isSandboxed ? tSync('status.enabled') : tSync('status.disabled'),
     },
   ]
 }
@@ -60,7 +61,7 @@ export function buildIDEProperties(
     if (ideInstallationStatus.error) {
       return [
         {
-          label: 'IDE',
+          label: tSync('status.ide'),
           value: (
             <Text>
               {color('error', theme)(figures.cross)} Error installing {ideName} {pluginOrExtension}:{' '}
@@ -76,14 +77,14 @@ export function buildIDEProperties(
         if (ideInstallationStatus.installedVersion !== ideClient.serverInfo?.version) {
           return [
             {
-              label: 'IDE',
+              label: tSync('status.ide'),
               value: `Connected to ${ideName} ${pluginOrExtension} version ${ideInstallationStatus.installedVersion} (server version: ${ideClient.serverInfo?.version})`,
             },
           ]
         } else {
           return [
             {
-              label: 'IDE',
+              label: tSync('status.ide'),
               value: `Connected to ${ideName} ${pluginOrExtension} version ${ideInstallationStatus.installedVersion}`,
             },
           ]
@@ -91,7 +92,7 @@ export function buildIDEProperties(
       } else {
         return [
           {
-            label: 'IDE',
+            label: tSync('status.ide'),
             value: `Installed ${ideName} ${pluginOrExtension}`,
           },
         ]
@@ -102,14 +103,14 @@ export function buildIDEProperties(
     if (ideClient.type === 'connected') {
       return [
         {
-          label: 'IDE',
+          label: tSync('status.ide'),
           value: `Connected to ${ideName} extension`,
         },
       ]
     } else {
       return [
         {
-          label: 'IDE',
+          label: tSync('status.ide'),
           value: `${color('error', theme)(figures.cross)} Not connected to ${ideName}`,
         },
       ]
@@ -160,7 +161,7 @@ export function buildMcpProperties(
   }
   return [
     {
-      label: 'MCP servers',
+      label: tSync('status.mcpServers'),
       value: `${parts.join(', ')} ${color('inactive', theme)('· /mcp')}`,
     },
   ]
@@ -195,25 +196,26 @@ export function buildSettingSourcesProperties(): Property[] {
         if (origin === null) {
           return null // Skip - no policy settings exist
         }
+        const base = tSync('status.settingSource.policySettings')
         switch (origin) {
           case 'remote':
-            return 'Enterprise managed settings (remote)'
+            return `${base} (remote)`
           case 'plist':
-            return 'Enterprise managed settings (plist)'
+            return `${base} (plist)`
           case 'hklm':
-            return 'Enterprise managed settings (HKLM)'
+            return `${base} (HKLM)`
           case 'file': {
             const { hasBase, hasDropIns } = getManagedFileSettingsPresence()
             if (hasBase && hasDropIns) {
-              return 'Enterprise managed settings (file + drop-ins)'
+              return `${base} (file + drop-ins)`
             }
             if (hasDropIns) {
-              return 'Enterprise managed settings (drop-ins)'
+              return `${base} (drop-ins)`
             }
-            return 'Enterprise managed settings (file)'
+            return `${base} (file)`
           }
           case 'hkcu':
-            return 'Enterprise managed settings (HKCU)'
+            return `${base} (HKCU)`
         }
       }
       return getSettingSourceDisplayNameCapitalized(source)
@@ -221,7 +223,7 @@ export function buildSettingSourcesProperties(): Property[] {
     .filter((name): name is string => name !== null)
   return [
     {
-      label: 'Setting sources',
+      label: tSync('status.settingSources'),
       value: sourceNames,
     },
   ]
@@ -257,19 +259,19 @@ export function buildAccountProperties(): Property[] {
   const properties: Property[] = []
   if (accountInfo.subscription) {
     properties.push({
-      label: 'Login method',
+      label: tSync('status.loginMethod'),
       value: `${accountInfo.subscription} Account`,
     })
   }
   if (accountInfo.tokenSource) {
     properties.push({
-      label: 'Auth token',
+      label: tSync('status.authToken'),
       value: accountInfo.tokenSource,
     })
   }
   if (accountInfo.apiKeySource) {
     properties.push({
-      label: 'API key',
+      label: tSync('status.apiKey'),
       value: accountInfo.apiKeySource,
     })
   }
@@ -277,13 +279,13 @@ export function buildAccountProperties(): Property[] {
   // Hide sensitive account info in demo mode
   if (accountInfo.organization && !process.env.IS_DEMO) {
     properties.push({
-      label: 'Organization',
+      label: tSync('status.organization'),
       value: accountInfo.organization,
     })
   }
   if (accountInfo.email && !process.env.IS_DEMO) {
     properties.push({
-      label: 'Email',
+      label: tSync('status.email'),
       value: accountInfo.email,
     })
   }
@@ -299,7 +301,7 @@ export function buildAPIProviderProperties(): Property[] {
       foundry: 'Microsoft Foundry',
     }[apiProvider]
     properties.push({
-      label: 'API provider',
+      label: tSync('status.apiProvider'),
       value: providerLabel,
     })
   }
@@ -307,7 +309,7 @@ export function buildAPIProviderProperties(): Property[] {
     const anthropicBaseUrl = process.env.ANTHROPIC_BASE_URL
     if (anthropicBaseUrl) {
       properties.push({
-        label: 'Anthropic base URL',
+        label: tSync('status.anthropicBaseUrl'),
         value: anthropicBaseUrl,
       })
     }
@@ -316,27 +318,27 @@ export function buildAPIProviderProperties(): Property[] {
   const proxyUrl = getProxyUrl()
   if (proxyUrl) {
     properties.push({
-      label: 'Proxy',
+      label: tSync('status.proxy'),
       value: proxyUrl,
     })
   }
   const mtlsConfig = getMTLSConfig()
   if (process.env.NODE_EXTRA_CA_CERTS) {
     properties.push({
-      label: 'Additional CA cert(s)',
+      label: tSync('status.additionalCaCerts'),
       value: process.env.NODE_EXTRA_CA_CERTS,
     })
   }
   if (mtlsConfig) {
     if (mtlsConfig.cert && process.env.ZY_CODE_CLIENT_CERT) {
       properties.push({
-        label: 'mTLS client cert',
+        label: tSync('status.mtlsClientCert'),
         value: process.env.ZY_CODE_CLIENT_CERT,
       })
     }
     if (mtlsConfig.key && process.env.ZY_CODE_CLIENT_KEY) {
       properties.push({
-        label: 'mTLS client key',
+        label: tSync('status.mtlsClientKey'),
         value: process.env.ZY_CODE_CLIENT_KEY,
       })
     }

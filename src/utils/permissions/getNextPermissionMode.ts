@@ -1,7 +1,5 @@
-import { feature } from 'bun:bundle'
 import type { ToolPermissionContext } from '../../Tool.js'
 import { logForDebugging } from '../debug.js'
-import { isInternalBuild } from '../envUtils.js'
 import type { PermissionMode } from './PermissionMode.js'
 import {
   getAutoModeUnavailableReason,
@@ -16,17 +14,14 @@ import {
 // (permissionSetup.ts:~559), which would silently crash the shift+tab handler
 // and leave the user stuck at the current mode.
 function canCycleToAuto(ctx: ToolPermissionContext): boolean {
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    const gateEnabled = isAutoModeGateEnabled()
-    const can = !!ctx.isAutoModeAvailable && gateEnabled
-    if (!can) {
-      logForDebugging(
-        `[auto-mode] canCycleToAuto=false: ctx.isAutoModeAvailable=${ctx.isAutoModeAvailable} isAutoModeGateEnabled=${gateEnabled} reason=${getAutoModeUnavailableReason()}`,
-      )
-    }
-    return can
+  const gateEnabled = isAutoModeGateEnabled()
+  const can = !!ctx.isAutoModeAvailable && gateEnabled
+  if (!can) {
+    logForDebugging(
+      `[auto-mode] canCycleToAuto=false: ctx.isAutoModeAvailable=${ctx.isAutoModeAvailable} isAutoModeGateEnabled=${gateEnabled} reason=${getAutoModeUnavailableReason()}`,
+    )
   }
-  return false
+  return can
 }
 
 /**
@@ -38,15 +33,11 @@ export function getNextPermissionMode(
 ): PermissionMode {
   switch (toolPermissionContext.mode) {
     case 'default':
-      // Ants skip acceptEdits and plan — auto mode replaces them
-      if (isInternalBuild()) {
-        if (toolPermissionContext.isBypassPermissionsModeAvailable) {
-          return 'bypassPermissions'
-        }
-        if (canCycleToAuto(toolPermissionContext)) {
-          return 'auto'
-        }
-        return 'default'
+      if (toolPermissionContext.isBypassPermissionsModeAvailable) {
+        return 'bypassPermissions'
+      }
+      if (canCycleToAuto(toolPermissionContext)) {
+        return 'auto'
       }
       return 'acceptEdits'
 

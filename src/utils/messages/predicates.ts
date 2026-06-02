@@ -170,9 +170,10 @@ export function isHookAttachmentMessage(
 }
 
 const STRIPPED_TAGS_RE = /<(commit_analysis|context|function_analysis|pr_analysis)>.*?<\/\1>\n?/gs
+const STRIPPED_ORPHAN_TAGS_RE = /<\/?(think|thinking)>\n?/g
 
 export function stripPromptXMLTags(content: string): string {
-  return content.replace(STRIPPED_TAGS_RE, '').trim()
+  return content.replace(STRIPPED_TAGS_RE, '').replace(STRIPPED_ORPHAN_TAGS_RE, '').trim()
 }
 
 export function isEmptyMessageText(text: string): boolean {

@@ -38,14 +38,14 @@ export function getClassifierApproval(toolUseID: string): string | undefined {
 }
 
 export function setYoloClassifierApproval(toolUseID: string, reason: string): void {
-  if (!feature('TRANSCRIPT_CLASSIFIER')) {
+  if (!true) {
     return
   }
   CLASSIFIER_APPROVALS.set(toolUseID, { classifier: 'auto-mode', reason })
 }
 
 export function getYoloClassifierApproval(toolUseID: string): string | undefined {
-  if (!feature('TRANSCRIPT_CLASSIFIER')) {
+  if (!true) {
     return undefined
   }
   const approval = CLASSIFIER_APPROVALS.get(toolUseID)
@@ -56,7 +56,7 @@ export function getYoloClassifierApproval(toolUseID: string): string | undefined
 }
 
 export function setClassifierChecking(toolUseID: string): void {
-  if (!feature('BASH_CLASSIFIER') && !feature('TRANSCRIPT_CLASSIFIER')) {
+  if (!feature('BASH_CLASSIFIER') && !true) {
     return
   }
   CLASSIFIER_CHECKING.add(toolUseID)
@@ -64,7 +64,7 @@ export function setClassifierChecking(toolUseID: string): void {
 }
 
 export function clearClassifierChecking(toolUseID: string): void {
-  if (!feature('BASH_CLASSIFIER') && !feature('TRANSCRIPT_CLASSIFIER')) {
+  if (!feature('BASH_CLASSIFIER') && !true) {
     return
   }
   CLASSIFIER_CHECKING.delete(toolUseID)

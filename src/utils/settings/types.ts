@@ -51,14 +51,14 @@ export const PermissionsSchema = lazySchema(() =>
         .optional()
         .describe('List of permission rules that should always prompt for confirmation'),
       defaultMode: z
-        .enum(feature('TRANSCRIPT_CLASSIFIER') ? PERMISSION_MODES : EXTERNAL_PERMISSION_MODES)
+        .enum(true ? PERMISSION_MODES : EXTERNAL_PERMISSION_MODES)
         .optional()
         .describe('Default permission mode when ZY Code needs access'),
       disableBypassPermissionsMode: z
         .enum(['disable'])
         .optional()
         .describe('Disable the ability to bypass permission prompts'),
-      ...(feature('TRANSCRIPT_CLASSIFIER')
+      ...(true
         ? {
             disableAutoMode: z.enum(['disable']).optional().describe('Disable auto mode'),
           }
@@ -743,8 +743,31 @@ export const SettingsSchema = lazySchema(() =>
       effortLevel: z
         .enum(
           isInternalBuild()
-            ? ['minimal', 'low', 'medium', 'high', 'max']
-            : ['minimal', 'low', 'medium', 'high'],
+            ? [
+                'quick',
+                'light',
+                'balanced',
+                'thorough',
+                'extreme',
+                'minimal',
+                'low',
+                'medium',
+                'high',
+                'xhigh',
+                'max',
+              ]
+            : [
+                'quick',
+                'light',
+                'balanced',
+                'thorough',
+                'extreme',
+                'minimal',
+                'low',
+                'medium',
+                'high',
+                'xhigh',
+              ],
         )
         .optional()
         .catch(undefined)
@@ -976,7 +999,7 @@ export const SettingsSchema = lazySchema(() =>
         .boolean()
         .optional()
         .describe('Whether the user has accepted the bypass permissions mode dialog'),
-      ...(feature('TRANSCRIPT_CLASSIFIER')
+      ...(true
         ? {
             skipAutoPermissionPrompt: z
               .boolean()

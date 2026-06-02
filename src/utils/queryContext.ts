@@ -8,6 +8,7 @@
  * 仅入口层文件从此处导入（QueryEngine.ts、cli/print.ts）。
  */
 
+import { getMainLoopModel } from 'src/services/model/model.js'
 import type { Command } from '../commands.js'
 import { getSystemPrompt } from '../constants/prompts.js'
 import { getSystemContext, getUserContext } from '../context.js'
@@ -19,7 +20,6 @@ import type { Message } from '../types/message.js'
 import { createAbortController } from './abortController.js'
 import type { FileStateCache } from './fileStateCache.js'
 import type { CacheSafeParams } from './forkedAgent.js'
-import { getMainLoopModel } from 'src/services/model/model.js'
 import { asSystemPrompt } from './systemPromptType.js'
 import { shouldEnableThinkingByDefault, type ThinkingConfig } from './thinking.js'
 

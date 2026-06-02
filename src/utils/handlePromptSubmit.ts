@@ -1,6 +1,9 @@
 import type { UUID } from 'node:crypto'
 import { logEvent } from 'src/services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/metadata.js'
+import { resolveSkillModelOverride } from 'src/services/model/model.js'
+import type { ProcessUserInputContext } from 'src/services/processUserInput/processUserInput.js'
+import { processUserInput } from 'src/services/processUserInput/processUserInput.js'
 import { type Command, getCommandName, isCommandEnabled } from '../commands.js'
 import { selectableUserMessagesFilter } from '../components/MessageSelector.js'
 import type { SpinnerMode } from '../components/Spinner/types.js'
@@ -25,9 +28,6 @@ import type { FileHistoryState } from './fileHistory.js'
 import { fileHistoryEnabled, fileHistoryMakeSnapshot } from './fileHistory.js'
 import { gracefulShutdownSync } from './gracefulShutdown.js'
 import { enqueue } from './messageQueueManager.js'
-import { resolveSkillModelOverride } from 'src/services/model/model.js'
-import type { ProcessUserInputContext } from 'src/services/processUserInput/processUserInput.js'
-import { processUserInput } from 'src/services/processUserInput/processUserInput.js'
 import type { QueryGuard } from './QueryGuard.js'
 import { queryCheckpoint, startQueryProfile } from './queryProfiler.js'
 import { runWithWorkload } from './workloadContext.js'
@@ -277,7 +277,7 @@ export async function handlePromptSubmit(params: HandlePromptSubmitParams): Prom
       }
 
       const impl = await immediateCommand.load()
-      const jsx = await impl.call(onDone, context, commandArgs)
+      const jsx = await impl.call(onDone, { ...context, invokedAs: commandName }, commandArgs, commandName)
 
       // Skip if onDone already fired — prevents stuck isLocalJSXCommand
       // (see processSlashCommand.tsx local-jsx case for full mechanism).

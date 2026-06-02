@@ -10,6 +10,7 @@ import {
   getSessionId,
   isSessionPersistenceDisabled,
 } from '../bootstrap/state.js'
+import { tSync } from '../i18n/index.js'
 import instances from '../ink/instances.js'
 import { DISABLE_KITTY_KEYBOARD, DISABLE_MODIFY_OTHER_KEYS } from '../ink/termio/csi.js'
 import {
@@ -177,7 +178,7 @@ function printResumeHint(): void {
       // 残留输入框边框/状态栏内容。每行写入前先 \r\x1b[2K 清掉整行（避免
       // "zy --resume ..."后面残留 prompt 输入框底边的 ────），结尾再 \x1b[J
       // 清掉光标以下所有残留行。
-      const line1 = chalk.dim('Resume this session with:')
+      const line1 = chalk.dim(tSync('shutdown.resumeHint'))
       const line2 = chalk.dim(`zy --resume ${resumeArg}`)
       writeSync(1, `\r\x1b[2K${line1}\n\r\x1b[2K${line2}\n\x1b[J`)
       resumeHintPrinted = true

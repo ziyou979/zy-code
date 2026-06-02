@@ -13,10 +13,10 @@
  */
 
 import memoize from 'lodash-es/memoize.js'
+import { getSecureStorage } from 'src/services/secureStorage/index.js'
 import type { LoadedPlugin } from '../../types/plugin.js'
 import { logForDebugging } from '../debug.js'
 import { logError } from '../log.js'
-import { getSecureStorage } from 'src/services/secureStorage/index.js'
 import { getInitialSettings, updateSettingsForSource } from '../settings/settings.js'
 import { type UserConfigSchema, type UserConfigValues, validateUserConfig } from './mcpbHandler.js'
 import { getPluginDataDir } from './pluginDirectories.js'

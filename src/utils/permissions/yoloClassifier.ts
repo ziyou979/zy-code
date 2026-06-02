@@ -1,6 +1,7 @@
 import { feature } from 'bun:bundle'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
+import { getMainLoopModel } from 'src/services/model/model.js'
 import { z } from 'zod/v4'
 import {
   getCachedAgentsMdContent,
@@ -28,7 +29,6 @@ import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../envUtils.js'
 import { errorMessage } from '../errors.js'
 import { lazySchema } from '../lazySchema.js'
 import { extractTextContent } from '../messages.js'
-import { getMainLoopModel } from 'src/services/model/model.js'
 import { getAutoModeConfig } from '../settings/settings.js'
 import { sideQuery } from '../sideQuery.js'
 import { jsonStringify } from '../slowOperations.js'
@@ -44,13 +44,13 @@ function txtRequire(mod: string | { default: string }): string {
   return typeof mod === 'string' ? mod : mod.default
 }
 
-const BASE_PROMPT: string = feature('TRANSCRIPT_CLASSIFIER')
+const BASE_PROMPT: string = true
   ? txtRequire(require('./yolo-classifier-prompts/auto_mode_system_prompt.txt'))
   : ''
 
 // 权限模板：定义 Environment / Definitions / HARD BLOCK / SOFT BLOCK / ALLOW 四类规则，
 // 由 buildYoloSystemPrompt 注入到 BASE_PROMPT 的 <permissions_template> 占位处。
-const PERMISSIONS_TEMPLATE: string = feature('TRANSCRIPT_CLASSIFIER')
+const PERMISSIONS_TEMPLATE: string = true
   ? txtRequire(require('./yolo-classifier-prompts/permissions_external.txt'))
   : ''
 /* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */

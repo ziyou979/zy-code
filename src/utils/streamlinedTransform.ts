@@ -8,8 +8,7 @@
  * - Strips tool list and model info from init messages
  */
 
-import type { WireAssistantMessage } from 'src/types/index.js'
-import type { StdoutMessage } from 'src/types/wire/control.js'
+import { SHELL_TOOL_NAMES } from 'src/shell-eval/shared/shellToolUtils.js'
 import { FILE_EDIT_TOOL_NAME } from 'src/tools/FileEditTool/constants.js'
 import { FILE_READ_TOOL_NAME } from 'src/tools/FileReadTool/prompt.js'
 import { FILE_WRITE_TOOL_NAME } from 'src/tools/FileWriteTool/prompt.js'
@@ -20,8 +19,9 @@ import { LSP_TOOL_NAME } from 'src/tools/LSPTool/prompt.js'
 import { NOTEBOOK_EDIT_TOOL_NAME } from 'src/tools/NotebookEditTool/constants.js'
 import { TASK_STOP_TOOL_NAME } from 'src/tools/TaskStopTool/prompt.js'
 import { WEB_SEARCH_TOOL_NAME } from 'src/tools/WebSearchTool/prompt.js'
+import type { WireAssistantMessage } from 'src/types/index.js'
+import type { StdoutMessage } from 'src/types/wire/control.js'
 import { extractTextContent } from 'src/utils/messages.js'
-import { SHELL_TOOL_NAMES } from 'src/shell-eval/shared/shellToolUtils.js'
 import { capitalize } from 'src/utils/stringUtils.js'
 
 type ToolCounts = {

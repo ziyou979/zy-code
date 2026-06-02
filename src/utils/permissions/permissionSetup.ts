@@ -23,7 +23,7 @@ import { applyPermissionRulesToPermissionContext } from './permissions.js'
 import { loadAllPermissionRulesFromDisk } from './permissionsLoader.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
+const autoModeStateModule = true
   ? (require('./autoModeState.js') as typeof import('./autoModeState.js'))
   : null
 
@@ -34,6 +34,7 @@ import {
   getDynamicConfig_BLOCKS_ON_INIT,
   getFeatureValue_CACHED_MAY_BE_STALE,
 } from 'src/services/analytics/growthbook.js'
+import { getMainLoopModel } from 'src/services/model/model.js'
 import { ToolPermissionRulesBySource } from 'src/types/permissions.ts'
 import {
   addDirHelpMessage,
@@ -52,7 +53,6 @@ import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.j
 import { modelSupportsAutoMode } from '../betas.js'
 import { logForDebugging } from '../debug.js'
 import { gracefulShutdown } from '../gracefulShutdown.js'
-import { getMainLoopModel } from 'src/services/model/model.js'
 import { CROSS_PLATFORM_CODE_EXEC, DANGEROUS_BASH_PATTERNS } from './dangerousPatterns.js'
 import type { PermissionRule, PermissionRuleSource, PermissionRuleValue } from './PermissionRule.js'
 import { type AdditionalWorkingDirectory, applyPermissionUpdate } from './PermissionUpdate.js'
@@ -573,31 +573,29 @@ export function transitionPermissionMode(
     setHasExitedPlanMode(true)
   }
 
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    if (toMode === 'plan' && fromMode !== 'plan') {
-      return prepareContextForPlanMode(context)
-    }
+  if (toMode === 'plan' && fromMode !== 'plan') {
+    return prepareContextForPlanMode(context)
+  }
 
-    // 带 auto 激活的 plan 模式算作使用了分类器（在离开侧）。
-    // isAutoModeActive() 是权威信号 — prePlanMode/strippedDangerousRules
-    // 是不可靠的代理，因为 auto 可以在 plan 中间被停用（非 opt-in
-    // 进入、transitionPlanAutoMode），而这些字段仍然保持设置/未设置。
-    const fromUsesClassifier =
-      fromMode === 'auto' ||
-      (fromMode === 'plan' && (autoModeStateModule?.isAutoModeActive() ?? false))
-    const toUsesClassifier = toMode === 'auto' // plan 进入已在上方处理
+  // 带 auto 激活的 plan 模式算作使用了分类器（在离开侧）。
+  // isAutoModeActive() 是权威信号 — prePlanMode/strippedDangerousRules
+  // 是不可靠的代理，因为 auto 可以在 plan 中间被停用（非 opt-in
+  // 进入、transitionPlanAutoMode），而这些字段仍然保持设置/未设置。
+  const fromUsesClassifier =
+    fromMode === 'auto' ||
+    (fromMode === 'plan' && (autoModeStateModule?.isAutoModeActive() ?? false))
+  const toUsesClassifier = toMode === 'auto' // plan 进入已在上方处理
 
-    if (toUsesClassifier && !fromUsesClassifier) {
-      if (!isAutoModeGateEnabled()) {
-        throw new Error('Cannot transition to auto mode: gate is not enabled')
-      }
-      autoModeStateModule?.setAutoModeActive(true)
-      context = stripDangerousPermissionsForAutoMode(context)
-    } else if (fromUsesClassifier && !toUsesClassifier) {
-      autoModeStateModule?.setAutoModeActive(false)
-      setNeedsAutoModeExitAttachment(true)
-      context = restoreDangerousPermissions(context)
+  if (toUsesClassifier && !fromUsesClassifier) {
+    if (!isAutoModeGateEnabled()) {
+      throw new Error('Cannot transition to auto mode: gate is not enabled')
     }
+    autoModeStateModule?.setAutoModeActive(true)
+    context = stripDangerousPermissionsForAutoMode(context)
+  } else if (fromUsesClassifier && !toUsesClassifier) {
+    autoModeStateModule?.setAutoModeActive(false)
+    setNeedsAutoModeExitAttachment(true)
+    context = restoreDangerousPermissions(context)
   }
 
   // 仅在有需要时才展开（保持引用相等性）
@@ -675,7 +673,7 @@ export function initialPermissionModeFromCLI({
   // 阻止 AutoModeOptInDialog 在 showSetupScreens() 中显示。
   // autoModeFlagCli 仍然将意图传递到 verifyAutoModeGateAccess，
   // 它会通知用户原因。
-  const autoModeCircuitBrokenSync = feature('TRANSCRIPT_CLASSIFIER')
+  const autoModeCircuitBrokenSync = true
     ? getAutoModeEnabledStateIfCached() === 'disabled'
     : false
 
@@ -688,7 +686,7 @@ export function initialPermissionModeFromCLI({
   }
   if (permissionModeCli) {
     const parsedMode = permissionModeFromString(permissionModeCli)
-    if (feature('TRANSCRIPT_CLASSIFIER') && parsedMode === 'auto') {
+    if (true && parsedMode === 'auto') {
       if (autoModeCircuitBrokenSync) {
         logForDebugging('auto mode circuit breaker active (cached) — falling back to default', {
           level: 'warn',
@@ -706,10 +704,10 @@ export function initialPermissionModeFromCLI({
     // （例如 bypassPermissions 否则会在远程环境中静默授予完全访问权限）。
     if (
       isEnvTruthy(process.env.ZY_CODE_REMOTE) &&
-      !['acceptEdits', 'plan', 'default'].includes(settingsMode)
+      !['acceptEdits', 'plan', 'default', 'auto'].includes(settingsMode)
     ) {
       logForDebugging(
-        `settings defaultMode "${settingsMode}" is not supported in ZY_CODE_REMOTE — only acceptEdits and plan are allowed`,
+        `settings defaultMode "${settingsMode}" is not supported in ZY_CODE_REMOTE — only acceptEdits, plan, default, and auto are allowed`,
         { level: 'warn' },
       )
       logEvent('zy_ccr_unsupported_default_mode_ignored', {
@@ -717,7 +715,7 @@ export function initialPermissionModeFromCLI({
       })
     }
     // 来自设置的 auto 模式需要与来自 CLI 的相同门控检查
-    else if (feature('TRANSCRIPT_CLASSIFIER') && settingsMode === 'auto') {
+    else if (true && settingsMode === 'auto') {
       if (autoModeCircuitBrokenSync) {
         logForDebugging('auto mode circuit breaker active (cached) — falling back to default', {
           level: 'warn',
@@ -760,7 +758,7 @@ export function initialPermissionModeFromCLI({
     result = { mode: 'default', notification }
   }
 
-  if (feature('TRANSCRIPT_CLASSIFIER') && result.mode === 'auto') {
+  if (true && result.mode === 'auto') {
     autoModeStateModule?.setAutoModeActive(true)
   }
 
@@ -919,7 +917,7 @@ export async function initializeToolPermissionContext({
   // 危险权限（如 Bash(*)、Bash(python:*)、PowerShell(iex:*)）会在分类器评估之前自动放行，
   // 从而使更安全的 YOLO 模式失去意义
   let dangerousPermissions: DangerousPermissionInfo[] = []
-  if (feature('TRANSCRIPT_CLASSIFIER') && permissionMode === 'auto') {
+  if (true && permissionMode === 'auto') {
     dangerousPermissions = findDangerousClassifierPermissions(rulesFromDisk, parsedAllowedToolsCli)
   }
 
@@ -931,7 +929,7 @@ export async function initializeToolPermissionContext({
       alwaysDenyRules: { cliArg: parsedDisallowedToolsCli },
       alwaysAskRules: {},
       isBypassPermissionsModeAvailable,
-      ...(feature('TRANSCRIPT_CLASSIFIER') ? { isAutoModeAvailable: isAutoModeGateEnabled() } : {}),
+      ...(true ? { isAutoModeAvailable: isAutoModeGateEnabled() } : {}),
     },
     rulesFromDisk,
   )
@@ -1213,7 +1211,7 @@ export function getAutoModeUnavailableReason(): AutoModeUnavailableReason | null
  */
 export type AutoModeEnabledState = 'enabled' | 'disabled' | 'opt-in'
 
-const AUTO_MODE_ENABLED_DEFAULT: AutoModeEnabledState = 'disabled'
+const AUTO_MODE_ENABLED_DEFAULT: AutoModeEnabledState = 'enabled'
 
 function parseAutoModeEnabledState(value: unknown): AutoModeEnabledState {
   if (value === 'enabled' || value === 'disabled' || value === 'opt-in') {
@@ -1336,10 +1334,8 @@ export async function checkAndDisableBypassPermissions(
 }
 
 export function isDefaultPermissionModeAuto(): boolean {
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    const settings = getInitialSettings() || {}
-    return settings.permissions?.defaultMode === 'auto'
-  }
+  const settings = getInitialSettings() || {}
+  return settings.permissions?.defaultMode === 'auto'
   return false
 }
 
@@ -1349,9 +1345,7 @@ export function isDefaultPermissionModeAuto(): boolean {
  * 在权限检查时评估，因此对配置更改是响应式的。
  */
 export function shouldPlanUseAutoMode(): boolean {
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    return hasAutoModeOptIn() && isAutoModeGateEnabled() && getUseAutoModeDuringPlan()
-  }
+  return hasAutoModeOptIn() && isAutoModeGateEnabled() && getUseAutoModeDuringPlan()
   return false
 }
 
@@ -1365,25 +1359,23 @@ export function prepareContextForPlanMode(context: ToolPermissionContext): ToolP
   if (currentMode === 'plan') {
     return context
   }
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    const planAutoMode = shouldPlanUseAutoMode()
-    if (currentMode === 'auto') {
-      if (planAutoMode) {
-        return { ...context, prePlanMode: 'auto' }
-      }
-      autoModeStateModule?.setAutoModeActive(false)
-      setNeedsAutoModeExitAttachment(true)
-      return {
-        ...restoreDangerousPermissions(context),
-        prePlanMode: 'auto',
-      }
+  const planAutoMode = shouldPlanUseAutoMode()
+  if (currentMode === 'auto') {
+    if (planAutoMode) {
+      return { ...context, prePlanMode: 'auto' }
     }
-    if (planAutoMode && currentMode !== 'bypassPermissions') {
-      autoModeStateModule?.setAutoModeActive(true)
-      return {
-        ...stripDangerousPermissionsForAutoMode(context),
-        prePlanMode: currentMode,
-      }
+    autoModeStateModule?.setAutoModeActive(false)
+    setNeedsAutoModeExitAttachment(true)
+    return {
+      ...restoreDangerousPermissions(context),
+      prePlanMode: 'auto',
+    }
+  }
+  if (planAutoMode && currentMode !== 'bypassPermissions') {
+    autoModeStateModule?.setAutoModeActive(true)
+    return {
+      ...stripDangerousPermissionsForAutoMode(context),
+      prePlanMode: currentMode,
     }
   }
   logForDebugging(`[prepareContextForPlanMode] plain plan entry, prePlanMode=${currentMode}`, {
@@ -1399,7 +1391,7 @@ export function prepareContextForPlanMode(context: ToolPermissionContext): ToolP
  * 从 applySettingsChange 调用，以便在 plan 中间切换 useAutoModeDuringPlan 立即生效。
  */
 export function transitionPlanAutoMode(context: ToolPermissionContext): ToolPermissionContext {
-  if (!feature('TRANSCRIPT_CLASSIFIER')) {
+  if (!true) {
     return context
   }
   if (context.mode !== 'plan') {

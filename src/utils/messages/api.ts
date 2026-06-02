@@ -33,6 +33,7 @@ import {
   getRequestTooLargeErrorMessage,
 } from '../../services/api/errors.js'
 import { DiagnosticTrackingService } from '../../services/diagnosticTracking.js'
+import { getWorkflowReminderContent } from '../../services/workflow/reminderContent.js'
 import { type Tools, toolMatchesName } from '../../Tool.js'
 import {
   FileReadTool,
@@ -2209,6 +2210,12 @@ You have exited auto mode. The user may now want to interact more directly. You 
           ),
           isMeta: true,
         }),
+      ])
+    }
+    case 'workflow_reminder': {
+      const text = getWorkflowReminderContent(attachment.reminderKind)
+      return wrapMessagesInSystemReminder([
+        createUserMessage({ content: textContent(text), isMeta: true }),
       ])
     }
     case 'deferred_tools_delta': {

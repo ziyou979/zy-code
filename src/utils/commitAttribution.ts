@@ -1,6 +1,7 @@
 import { createHash, randomUUID, type UUID } from 'node:crypto'
 import { stat } from 'node:fs/promises'
 import { isAbsolute, join, relative, sep } from 'node:path'
+import { type ModelName } from 'src/services/model/model.js'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
 import type { AttributionSnapshotMessage, FileAttributionState } from '../types/logs.js'
 import { getCwd } from './cwd.js'
@@ -11,7 +12,6 @@ import { isGeneratedFile } from './generatedFiles.js'
 import { getRemoteUrlForDir, resolveGitDir } from './git/gitFilesystem.js'
 import { findGitRoot, gitExe } from './git.js'
 import { logError } from './log.js'
-import { type ModelName } from 'src/services/model/model.js'
 import { sequential } from './sequential.js'
 
 /**

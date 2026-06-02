@@ -1,6 +1,8 @@
 import { homedir } from 'node:os'
 import { dirname, isAbsolute, resolve } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
+import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
+import { containsVulnerableUncPath } from 'src/shell-eval/shared/readOnlyCommandValidation.js'
 import type { ToolPermissionContext } from '../../Tool.js'
 import { getPlatform } from '../../utils/platform.js'
 import {
@@ -9,8 +11,6 @@ import {
   safeResolvePath,
 } from '../fsOperations.js'
 import { containsPathTraversal } from '../path.js'
-import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
-import { containsVulnerableUncPath } from 'src/shell-eval/shared/readOnlyCommandValidation.js'
 import {
   checkEditableInternalPath,
   checkPathSafetyForAutoEdit,

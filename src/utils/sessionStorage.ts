@@ -75,23 +75,12 @@ export {
   MAX_TRANSCRIPT_READ_BYTES,
   setAgentTranscriptSubdir,
 } from './sessionStorage/paths.js'
-export type {
-  SessionSidecarMetadata,
-  SessionSidecarPatch,
-} from './sessionStorage/sessionSidecar.js'
-export {
-  readSessionSidecar,
-  readSessionSidecarAsync,
-  updateSessionSidecar,
-  writeSessionSidecar,
-} from './sessionStorage/sessionSidecar.js'
 export {
   isChainParticipant,
   isEphemeralToolProgress,
   isTranscriptMessage,
   sessionIdExists,
 } from './sessionStorage/predicates.js'
-
 export {
   resetProjectFlushStateForTesting,
   resetProjectForTesting,
@@ -119,6 +108,16 @@ export {
   saveTaskSummary,
   saveWorktreeState,
 } from './sessionStorage/sessionMetadata.js'
+export type {
+  SessionSidecarMetadata,
+  SessionSidecarPatch,
+} from './sessionStorage/sessionSidecar.js'
+export {
+  readSessionSidecar,
+  readSessionSidecarAsync,
+  updateSessionSidecar,
+  writeSessionSidecar,
+} from './sessionStorage/sessionSidecar.js'
 export type { TeamInfo } from './sessionStorage/transcript.js'
 export {
   adoptResumedSessionFile,

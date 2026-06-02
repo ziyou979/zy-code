@@ -52,7 +52,6 @@ export {
   createAssistantAPIErrorMessage,
   createAssistantMessage,
   createAwaySummaryMessage,
-  createWireStatusMessage,
   createCommandInputMessage,
   createCompactBoundaryMessage,
   createMemorySavedMessage,
@@ -70,6 +69,7 @@ export {
   createTurnDurationMessage,
   createUserInterruptionMessage,
   createUserMessage,
+  createWireStatusMessage,
   formatCommandInputTags,
   prepareUserContent,
 } from './messages/constructors.js'

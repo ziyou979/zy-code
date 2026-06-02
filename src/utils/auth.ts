@@ -10,6 +10,16 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { getAPIProvider, isOpenAIProvider } from 'src/services/model/providers.js'
+import { getSecureStorage } from 'src/services/secureStorage/index.js'
+import {
+  clearLegacyApiKeyPrefetch,
+  getLegacyApiKeyPrefetchResult,
+} from 'src/services/secureStorage/keychainPrefetch.js'
+import {
+  clearKeychainCache,
+  getMacOsKeychainStorageServiceName,
+  getUsername,
+} from 'src/services/secureStorage/macOsKeychainHelpers.js'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { getMockSubscriptionType, shouldUseMockSubscription } from '../services/mockRateLimits.js'
 import {
@@ -42,16 +52,6 @@ import { errorMessage } from './errors.js'
 import { execSyncWithDefaults_DEPRECATED } from './execFileNoThrow.js'
 import * as lockfile from './lockfile.js'
 import { logError } from './log.js'
-import { getSecureStorage } from 'src/services/secureStorage/index.js'
-import {
-  clearLegacyApiKeyPrefetch,
-  getLegacyApiKeyPrefetchResult,
-} from 'src/services/secureStorage/keychainPrefetch.js'
-import {
-  clearKeychainCache,
-  getMacOsKeychainStorageServiceName,
-  getUsername,
-} from 'src/services/secureStorage/macOsKeychainHelpers.js'
 import { getInitialSettings, getSettingsForSource } from './settings/settings.js'
 import { sleep } from './sleep.js'
 import { jsonParse } from './slowOperations.js'

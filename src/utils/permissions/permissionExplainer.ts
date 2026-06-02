@@ -1,3 +1,4 @@
+import { getMainLoopModel } from 'src/services/model/model.js'
 import { z } from 'zod/v4'
 import { logEvent } from '../../services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../../services/analytics/metadata.js'
@@ -7,7 +8,6 @@ import { logForDebugging } from '../debug.js'
 import { errorMessage } from '../errors.js'
 import { lazySchema } from '../lazySchema.js'
 import { logError } from '../log.js'
-import { getMainLoopModel } from 'src/services/model/model.js'
 import { sideQuery } from '../sideQuery.js'
 import { jsonStringify } from '../slowOperations.js'
 

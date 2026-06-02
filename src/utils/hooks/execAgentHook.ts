@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import type { HookEvent } from 'src/types/index.js'
 import { getDefaultCompactModel } from 'src/services/model/model.js'
+import type { HookEvent } from 'src/types/index.js'
 import { query } from '../../query.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/metadata.js'

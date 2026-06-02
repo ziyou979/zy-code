@@ -12,6 +12,11 @@ import {
 } from 'src/services/analytics/index.js'
 import { prefetchAllMcpResources } from 'src/services/mcp/client.js'
 import type { ScopedMcpServerConfig } from 'src/services/mcp/types.js'
+import {
+  getAPIProvider,
+  isAnthropicBaseUrl,
+  providerHasCapability,
+} from 'src/services/model/providers.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
 import { FileEditTool } from 'src/tools/FileEditTool/FileEditTool.js'
 import { normalizeFileEditInput, stripTrailingWhitespace } from 'src/tools/FileEditTool/utils.js'
@@ -34,11 +39,6 @@ import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { isEnvTruthy } from './envUtils.js'
 import { createUserMessage } from './messages.js'
-import {
-  getAPIProvider,
-  isAnthropicBaseUrl,
-  providerHasCapability,
-} from 'src/services/model/providers.js'
 import { getFileReadIgnorePatterns, normalizePatternsToPath } from './permissions/filesystem.js'
 import { getPlan, getPlanFilePath, persistFileSnapshotIfRemote } from './plans.js'
 import { getPlatform } from './platform.js'
@@ -293,8 +293,8 @@ export function logAPIPrefix(systemPrompt: SystemPrompt): void {
  * 返回最多 4 个块：
  * - 归属标头（shouldCache: false）- 每次请求可能不同
  * - 系统提示前缀（shouldCache: false）- 内容太小，缓存收益低
- * - 边界前的静态内容（shouldCache: true）- 大块稳定内容
- * - 边界后的动态内容（shouldCache: false）- 每次请求都变化
+ * - 边界前的静态内容（shouldCache: true）- 大块稳定内容，保底缓存
+ * - 边界后的动态内容（shouldCache: true）- 同一会话内基本不变，缓存整个系统提示
  *
  * 如果没有边界标记，将所有内容视为静态（shouldCache: true）
  */
@@ -336,7 +336,7 @@ export function splitSysPromptPrefix(systemPrompt: SystemPrompt): SystemPromptBl
   }
   const dynamicJoined = dynamicBlocks.join('\n\n')
   if (dynamicJoined) {
-    result.push({ text: dynamicJoined, shouldCache: false })
+    result.push({ text: dynamicJoined, shouldCache: true })
   }
 
   if (boundaryIndex !== -1) {

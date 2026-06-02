@@ -1,5 +1,6 @@
 import { basename, dirname, join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
+import { parseUserSpecifiedModel } from 'src/services/model/model.js'
 import { getInlinePlugins, getSessionId } from '../../bootstrap/state.js'
 import type { Command } from '../../types/command.js'
 import { getPluginErrorMessage } from '../../types/plugin.js'
@@ -20,7 +21,6 @@ import {
   extractDescriptionFromMarkdown,
   parseSlashCommandToolsFromFrontmatter,
 } from '../markdownConfigLoader.js'
-import { parseUserSpecifiedModel } from 'src/services/model/model.js'
 import { executeShellCommandsInPrompt } from '../promptShellExecution.js'
 import { loadAllPluginsCacheOnly } from './pluginLoader.js'
 import {

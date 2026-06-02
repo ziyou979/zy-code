@@ -70,7 +70,7 @@ const PERMISSION_MODE_CONFIG: Partial<Record<PermissionMode, PermissionModeConfi
     color: 'error',
     external: 'dontAsk',
   },
-  ...(feature('TRANSCRIPT_CLASSIFIER')
+  ...(true
     ? {
         auto: {
           title: 'permissionMode.auto',

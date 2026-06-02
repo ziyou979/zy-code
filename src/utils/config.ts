@@ -4,6 +4,7 @@ import { unwatchFile, watchFile } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import pickBy from 'lodash-es/pickBy.js'
+import type { MemoryType } from 'src/services/memory/types.js'
 import { getOriginalCwd, getSessionTrustAccepted } from '../bootstrap/state.js'
 import { getAutoMemEntrypoint } from '../memdir/paths.js'
 import { logEvent } from '../services/analytics/index.js'
@@ -26,7 +27,6 @@ import { safeParseJSON } from './json.js'
 import { stripBOM } from './jsonRead.js'
 import * as lockfile from './lockfile.js'
 import { logError } from './log.js'
-import type { MemoryType } from 'src/services/memory/types.js'
 import { normalizePathForConfigKey } from './path.js'
 import { getEssentialTrafficOnlyReason } from './privacyLevel.js'
 import { getManagedFilePath } from './settings/managedPath.js'
@@ -40,9 +40,9 @@ const ccrAutoConnect = feature('CCR_AUTO_CONNECT')
   ? (require('../bridge/bridgeEnabled.js') as typeof import('../bridge/bridgeEnabled.js'))
   : null
 
+import type { ModelOption } from 'src/services/model/modelOptions.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { ImageDimensions } from './imageResizer.js'
-import type { ModelOption } from 'src/services/model/modelOptions.js'
 import { jsonParse, jsonStringify } from './slowOperations.js'
 
 // 重入保护：防止 getConfig → logEvent → getGlobalConfig → getConfig

@@ -1,6 +1,7 @@
 import { feature } from 'bun:bundle'
 import { open } from 'node:fs/promises'
 import { basename, dirname, join, sep } from 'node:path'
+import { SHELL_TOOL_NAMES } from 'src/shell-eval/shared/shellToolUtils.js'
 import type { ModelUsage } from 'src/types/index.js'
 import type { Entry, TranscriptMessage } from '../types/logs.js'
 import { logForDebugging } from './debug.js'
@@ -9,7 +10,6 @@ import { getFsImplementation } from './fsOperations.js'
 import { readJSONLFile } from './json.js'
 import { SYNTHETIC_MODEL } from './messages.js'
 import { getProjectsDir, isTranscriptMessage } from './sessionStorage.js'
-import { SHELL_TOOL_NAMES } from 'src/shell-eval/shared/shellToolUtils.js'
 import { jsonParse } from './slowOperations.js'
 import {
   getTodayDateString,

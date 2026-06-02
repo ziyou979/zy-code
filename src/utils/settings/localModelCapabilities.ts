@@ -11,12 +11,12 @@
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import type { ProviderCapability } from 'src/services/model/providers.js'
 import { z } from 'zod/v4'
+import type { EffortLevel } from '../effort.js'
 import { getZyConfigHomeDir } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
 import { lazySchema } from '../lazySchema.js'
-import type { ProviderCapability } from 'src/services/model/providers.js'
-import type { EffortLevel } from '../effort.js'
 
 type ModelCapabilityKind = ProviderCapability | 'auto_mode'
 
@@ -71,7 +71,7 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
       )
       .describe('模型支持的能力列表'),
     effortLevels: z
-      .array(z.enum(['minimal', 'low', 'medium', 'high', 'max']))
+      .array(z.enum(['quick', 'light', 'balanced', 'thorough', 'extreme']))
       .optional()
       .describe(
         '模型支持的 effort(思考强度)档位列表。省略表示不支持设置思考强度。' +
@@ -185,7 +185,9 @@ function migrateLegacyEffortCapabilities(parsed: unknown): void {
     }
     const e = entry as { capabilities: unknown[]; effortLevels?: unknown }
     if (e.effortLevels === undefined) {
-      e.effortLevels = hasMaxEffort ? ['low', 'medium', 'high', 'max'] : ['low', 'medium', 'high']
+      e.effortLevels = hasMaxEffort
+        ? ['light', 'balanced', 'thorough', 'extreme']
+        : ['light', 'balanced', 'thorough']
     }
     e.capabilities = caps.filter((c) => c !== 'effort' && c !== 'max_effort')
   }
@@ -208,6 +210,9 @@ export function loadLocalModelCapabilities(): ModelCapabilitiesFile | null {
  * 返回第一个匹配 pattern 的条目，未匹配返回 undefined。
  */
 export function getLocalModelCapability(model: string): ModelCapabilityEntry | undefined {
+  if (!model) {
+    return undefined
+  }
   const config = loadLocalModelCapabilities()
   if (!config) {
     return undefined

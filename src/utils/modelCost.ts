@@ -1,10 +1,10 @@
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
+import { getDefaultMainLoopModelSetting } from 'src/services/model/model.js'
+import { getStaticPricingForModel } from 'src/services/model/modelCapabilities.js'
 import { setHasUnknownModelCost } from '../bootstrap/state.js'
 import { getUiLanguage } from '../i18n/index.js'
 import type { TokenUsage as Usage } from '../types/llm.js'
-import { getDefaultMainLoopModelSetting } from 'src/services/model/model.js'
-import { getStaticPricingForModel } from 'src/services/model/modelCapabilities.js'
 
 export type ModelCosts = {
   inputTokens: number
@@ -35,7 +35,7 @@ export function getModelCosts(model: string, usage: Usage): ModelCosts {
   }
 
   const defaultModel = getDefaultMainLoopModelSetting()
-  const defaultPricing = getStaticPricingForModel(defaultModel)
+  const defaultPricing = defaultModel ? getStaticPricingForModel(defaultModel) : null
   if (defaultPricing) {
     return {
       inputTokens: defaultPricing.cost_input,

@@ -1,4 +1,6 @@
 import chalk from 'chalk'
+import { tSync } from '../i18n/index.js'
+import { stringWidth } from '../ink/stringWidth.js'
 import type { DailyActivity } from './stats.js'
 import { toDateString } from './statsCache.js'
 
@@ -42,10 +44,19 @@ export function generateHeatmap(
 ): string {
   const { terminalWidth = 80, showMonthLabels = true } = options
 
-  // Day labels take 4 characters ("Mon "), calculate weeks that fit
-  // Cap at 52 weeks (1 year) to match GitHub style
-  const dayLabelWidth = 4
-  const availableWidth = terminalWidth - dayLabelWidth
+  // 星期标签（i18n），提前计算以确定列宽
+  const dayLabels = [
+    tSync('heatmap.sun'),
+    tSync('heatmap.mon'),
+    tSync('heatmap.tue'),
+    tSync('heatmap.wed'),
+    tSync('heatmap.thu'),
+    tSync('heatmap.fri'),
+    tSync('heatmap.sat'),
+  ]
+  const dayLabelColWidth = Math.max(...dayLabels.map((l) => stringWidth(l))) + 1
+  const dayLabelPad = ' '.repeat(dayLabelColWidth)
+  const availableWidth = terminalWidth - dayLabelColWidth
   const width = Math.min(52, Math.max(10, availableWidth))
 
   // Build activity map by date
@@ -111,45 +122,62 @@ export function generateHeatmap(
   // Month labels - evenly spaced across the grid
   if (showMonthLabels) {
     const monthNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      tSync('heatmap.jan'),
+      tSync('heatmap.feb'),
+      tSync('heatmap.mar'),
+      tSync('heatmap.apr'),
+      tSync('heatmap.may'),
+      tSync('heatmap.jun'),
+      tSync('heatmap.jul'),
+      tSync('heatmap.aug'),
+      tSync('heatmap.sep'),
+      tSync('heatmap.oct'),
+      tSync('heatmap.nov'),
+      tSync('heatmap.dec'),
     ]
 
-    // Build label line with fixed-width month labels
     const uniqueMonths = monthStarts.map((m) => m.month)
     const labelWidth = Math.floor(width / Math.max(uniqueMonths.length, 1))
-    const monthLabels = uniqueMonths.map((month) => monthNames[month]!.padEnd(labelWidth)).join('')
+    const monthLabels = uniqueMonths
+      .map((month) => {
+        const name = monthNames[month]!
+        const w = stringWidth(name)
+        return name + ' '.repeat(Math.max(0, labelWidth - w))
+      })
+      .join('')
 
-    // 4 spaces for day label column prefix
-    lines.push(`    ${monthLabels}`)
+    lines.push(`${dayLabelPad}${monthLabels}`)
   }
-
-  // Day labels
-  const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
   // Grid
   for (let day = 0; day < 7; day++) {
-    // Only show labels for Mon, Wed, Fri
-    const label = [1, 3, 5].includes(day) ? dayLabels[day]!.padEnd(3) : '   '
-    const row = `${label} ${grid[day]!.join('')}`
+    let label: string
+    if ([1, 3, 5].includes(day)) {
+      const dayName = dayLabels[day]!
+      const w = stringWidth(dayName)
+      label = dayName + ' '.repeat(Math.max(0, dayLabelColWidth - w))
+    } else {
+      label = dayLabelPad
+    }
+    const row = `${label}${grid[day]!.join('')}`
     lines.push(row)
   }
 
   // Legend
+  const lessLabel = tSync('heatmap.less')
+  const moreLabel = tSync('heatmap.more')
   lines.push('')
-  lines.push(`    Less ${[ZyBlue('░'), ZyBlue('▒'), ZyBlue('▓'), ZyBlue('█')].join(' ')} More`)
+  lines.push(`${dayLabelPad}${lessLabel} ${[ZyBlue('░'), ZyBlue('▒'), ZyBlue('▓'), ZyBlue('█')].join(' ')} ${moreLabel}`)
 
   return lines.join('\n')
+}
+
+export function generateHeatmapLines(
+  dailyActivity: DailyActivity[],
+  options: HeatmapOptions = {},
+): string[] {
+  const result = generateHeatmap(dailyActivity, options)
+  return result.split('\n')
 }
 
 function getIntensity(messageCount: number, percentiles: Percentiles | null): number {
@@ -188,4 +216,117 @@ function getHeatmapChar(intensity: number): string {
     default:
       return chalk.gray('·')
   }
+}
+
+// 纯字符（无 ANSI）+ 强度值，供 Ink 原生渲染
+const INTENSITY_CHARS = ['·', '░', '▒', '▓', '█']
+function getPlainChar(intensity: number): string {
+  return INTENSITY_CHARS[intensity] ?? INTENSITY_CHARS[0]!
+}
+
+export type HeatmapCell = { char: string; intensity: number }
+export type HeatmapLine = { label: string; cells: HeatmapCell[] }
+export type HeatmapData = {
+  monthLabel: string
+  lines: HeatmapLine[]
+  legendLabel: string
+  dayLabelColWidth: number
+}
+
+export function generateHeatmapData(
+  dailyActivity: DailyActivity[],
+  options: HeatmapOptions = {},
+): HeatmapData {
+  const { terminalWidth = 80, showMonthLabels = true } = options
+
+  const dayLabels = [
+    tSync('heatmap.sun'), tSync('heatmap.mon'), tSync('heatmap.tue'),
+    tSync('heatmap.wed'), tSync('heatmap.thu'), tSync('heatmap.fri'), tSync('heatmap.sat'),
+  ]
+  const colWidth = Math.max(...dayLabels.map((l) => stringWidth(l))) + 1
+  const pad = ' '.repeat(colWidth)
+  const availableWidth = terminalWidth - colWidth
+  const width = Math.min(52, Math.max(10, availableWidth))
+
+  const activityMap = new Map<string, DailyActivity>()
+  for (const activity of dailyActivity) {
+    activityMap.set(activity.date, activity)
+  }
+  const percentiles = calculatePercentiles(dailyActivity)
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const currentWeekStart = new Date(today)
+  currentWeekStart.setDate(today.getDate() - today.getDay())
+  const startDate = new Date(currentWeekStart)
+  startDate.setDate(startDate.getDate() - (width - 1) * 7)
+
+  const grid: number[][] = Array.from({ length: 7 }, () => Array(width).fill(0))
+  const monthStarts: { month: number; week: number }[] = []
+  let lastMonth = -1
+  const currentDate = new Date(startDate)
+  for (let week = 0; week < width; week++) {
+    for (let day = 0; day < 7; day++) {
+      if (currentDate > today) {
+        grid[day]![week] = -1
+        currentDate.setDate(currentDate.getDate() + 1)
+        continue
+      }
+      const dateStr = toDateString(currentDate)
+      const activity = activityMap.get(dateStr)
+      if (day === 0) {
+        const month = currentDate.getMonth()
+        if (month !== lastMonth) {
+          monthStarts.push({ month, week })
+          lastMonth = month
+        }
+      }
+      grid[day]![week] = getIntensity(activity?.messageCount || 0, percentiles)
+      currentDate.setDate(currentDate.getDate() + 1)
+    }
+  }
+
+  // 月份标签行
+  let monthLabel = ''
+  if (showMonthLabels) {
+    const monthNames = [
+      tSync('heatmap.jan'), tSync('heatmap.feb'), tSync('heatmap.mar'),
+      tSync('heatmap.apr'), tSync('heatmap.may'), tSync('heatmap.jun'),
+      tSync('heatmap.jul'), tSync('heatmap.aug'), tSync('heatmap.sep'),
+      tSync('heatmap.oct'), tSync('heatmap.nov'), tSync('heatmap.dec'),
+    ]
+    const uniqueMonths = monthStarts.map((m) => m.month)
+    const labelW = Math.floor(width / Math.max(uniqueMonths.length, 1))
+    monthLabel = pad + uniqueMonths
+      .map((month) => {
+        const name = monthNames[month]!
+        const w = stringWidth(name)
+        return name + ' '.repeat(Math.max(0, labelW - w))
+      })
+      .join('')
+  }
+
+  // 数据行
+  const heatmapLines: HeatmapLine[] = []
+  for (let day = 0; day < 7; day++) {
+    let label: string
+    if ([1, 3, 5].includes(day)) {
+      const dayName = dayLabels[day]!
+      const w = stringWidth(dayName)
+      label = dayName + ' '.repeat(Math.max(0, colWidth - w))
+    } else {
+      label = pad
+    }
+    const cells: HeatmapCell[] = grid[day]!.map((intensity) => ({
+      char: intensity < 0 ? ' ' : getPlainChar(intensity),
+      intensity: Math.max(0, intensity),
+    }))
+    heatmapLines.push({ label, cells })
+  }
+
+  const lessLabel = tSync('heatmap.less')
+  const moreLabel = tSync('heatmap.more')
+  const legendLabel = `${pad}${lessLabel} ░ ▒ ▓ █ ${moreLabel}`
+
+  return { monthLabel, lines: heatmapLines, legendLabel, dayLabelColWidth: colWidth }
 }

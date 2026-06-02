@@ -59,7 +59,7 @@ import {
 } from '../sessionStorage/paths.js'
 import { isChainParticipant, isTranscriptMessage } from '../sessionStorage/predicates.js'
 import { updateSessionSidecar } from '../sessionStorage/sessionSidecar.js'
-import { appendEntryToFile, readFileTailSync } from '../sessionStorage.js'
+import { readFileTailSync } from '../sessionStorage.js'
 import { extractLastJsonStringField, LITE_READ_BUF_SIZE } from '../sessionStoragePortable.js'
 import { getInitialSettings } from '../settings/settings.js'
 import { jsonParse, jsonStringify } from '../slowOperations.js'

@@ -1,5 +1,10 @@
 import { feature } from 'bun:bundle'
 import { stat } from 'node:fs/promises'
+import {
+  getMainLoopModel,
+  getPublicModelDisplayName,
+  getPublicModelName,
+} from 'src/services/model/model.js'
 import { getClientType } from '../bootstrap/state.js'
 import { getRemoteSessionUrl, isRemoteSessionLocal, PRODUCT_URL } from '../constants/product.js'
 import { TERMINAL_OUTPUT_TAGS } from '../constants/xml.js'
@@ -21,11 +26,6 @@ import { logForDebugging } from './debug.js'
 import { isInternalBuild } from './envUtils.js'
 import { parseJSONL } from './json.js'
 import { logError } from './log.js'
-import {
-  getMainLoopModel,
-  getPublicModelDisplayName,
-  getPublicModelName,
-} from 'src/services/model/model.js'
 import { isMemoryFileAccess } from './sessionFileAccessHooks.js'
 import { getTranscriptPath } from './sessionStorage.js'
 import { readTranscriptForLoad } from './sessionStoragePortable.js'

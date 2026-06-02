@@ -1,8 +1,8 @@
+import { modelHasCapability } from 'src/services/model/providers.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import type { TokenUsage } from '../types/llm.js'
 import { shouldIncludeExperimentalBetas } from './betas.js'
 import { isEnvTruthy, isInternalBuild } from './envUtils.js'
-import { modelHasCapability } from 'src/services/model/providers.js'
 import { localModelHasCapability } from './settings/localModelCapabilities.js'
 import { getInitialSettings } from './settings/settings.js'
 

@@ -9,12 +9,12 @@
  * - Detect permission-related messages
  */
 
+import { updateTaskState } from 'src/services/task/framework.js'
 import type { AppState } from '../state/AppState.js'
 import {
   type InProcessTeammateTaskState,
   isInProcessTeammateTask,
 } from '../tasks/InProcessTeammateTask/types.js'
-import { updateTaskState } from 'src/services/task/framework.js'
 import {
   isPermissionResponse,
   isSandboxPermissionResponse,

@@ -2,6 +2,18 @@ import { readFile, realpath } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { delimiter, join, posix, win32 } from 'node:path'
 import { execa } from 'execa'
+import {
+  detectApk,
+  detectAsdf,
+  detectDeb,
+  detectHomebrew,
+  detectMise,
+  detectPacman,
+  detectRpm,
+  detectWinget,
+  getPackageManager,
+} from 'src/services/nativeInstaller/packageManagers.js'
+import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { checkGlobalInstallPermissions } from './autoUpdater.js'
 import { isInBundledMode } from './bundledMode.js'
 import {
@@ -19,20 +31,8 @@ import {
   isRunningFromLocalInstallation,
   localInstallationExists,
 } from './localInstaller.js'
-import {
-  detectApk,
-  detectAsdf,
-  detectDeb,
-  detectHomebrew,
-  detectMise,
-  detectPacman,
-  detectRpm,
-  detectWinget,
-  getPackageManager,
-} from 'src/services/nativeInstaller/packageManagers.js'
 import { getPlatform } from './platform.js'
 import { getRipgrepStatus } from './ripgrep.js'
-import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { getManagedFilePath } from './settings/managedPath.js'
 import { CUSTOMIZATION_SURFACES } from './settings/types.js'
 import { findValidZyAlias, findZyAlias, getShellConfigPaths } from './shellConfig.js'

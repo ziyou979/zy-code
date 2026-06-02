@@ -1,4 +1,6 @@
 import { feature } from 'bun:bundle'
+import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
+import { extractOutputRedirections } from 'src/shell-eval/bash/commands.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import {
   getToolNameForPermissionCheck,
@@ -12,12 +14,10 @@ import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
 import { isAbortError } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
-import { extractOutputRedirections } from 'src/shell-eval/bash/commands.js'
 import { logForDebugging } from '../debug.js'
 import { isInternalBuild } from '../envUtils.js'
 import { AbortError, toError } from '../errors.js'
 import { logError } from '../log.js'
-import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { getSettingSourceDisplayNameLowercase, SETTING_SOURCES } from '../settings/constants.js'
 import { plural } from '../stringUtils.js'
 import { permissionModeTitle } from './PermissionMode.js'
@@ -51,10 +51,10 @@ import {
 } from './permissionsLoader.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const classifierDecisionModule = feature('TRANSCRIPT_CLASSIFIER')
+const classifierDecisionModule = true
   ? (require('./classifierDecision.js') as typeof import('./classifierDecision.js'))
   : null
-const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
+const autoModeStateModule = true
   ? (require('./autoModeState.js') as typeof import('./autoModeState.js'))
   : null
 
@@ -124,7 +124,7 @@ export function createPermissionRequestMessage(
   // 处理不同的决策原因类型
   if (decisionReason) {
     if (
-      (feature('BASH_CLASSIFIER') || feature('TRANSCRIPT_CLASSIFIER')) &&
+      (feature('BASH_CLASSIFIER') || true) &&
       decisionReason.type === 'classifier'
     ) {
       return `Classifier '${decisionReason.classifier}' requires approval for this ${toolName} command: ${decisionReason.reason}`
@@ -445,16 +445,14 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
   // 能打断连续拒绝的记录。
   if (result.behavior === 'allow') {
     const appState = context.getAppState()
-    if (feature('TRANSCRIPT_CLASSIFIER')) {
-      const currentDenialState = context.localDenialTracking ?? appState.denialTracking
-      if (
-        appState.toolPermissionContext.mode === 'auto' &&
-        currentDenialState &&
-        currentDenialState.consecutiveDenials > 0
-      ) {
-        const newDenialState = recordSuccess(currentDenialState)
-        persistDenialState(context, newDenialState)
-      }
+    const currentDenialState = context.localDenialTracking ?? appState.denialTracking
+    if (
+      appState.toolPermissionContext.mode === 'auto' &&
+      currentDenialState &&
+      currentDenialState.consecutiveDenials > 0
+    ) {
+      const newDenialState = recordSuccess(currentDenialState)
+      persistDenialState(context, newDenialState)
     }
     return result
   }
@@ -477,7 +475,7 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
     // 应用 auto 模式：使用 AI 分类器代替提示用户
     // 在 shouldAvoidPermissionPrompts 之前检查，以便分类器在 headless 模式下也能工作
     if (
-      feature('TRANSCRIPT_CLASSIFIER') &&
+      true &&
       (appState.toolPermissionContext.mode === 'auto' ||
         (appState.toolPermissionContext.mode === 'plan' &&
           (autoModeStateModule?.isAutoModeActive() ?? false)))

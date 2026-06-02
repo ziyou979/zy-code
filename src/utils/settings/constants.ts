@@ -99,24 +99,7 @@ export function getSettingSourceDisplayNameLowercase(
 export function getSettingSourceDisplayNameCapitalized(
   source: SettingSource | 'cliArg' | 'command' | 'session',
 ): string {
-  switch (source) {
-    case 'userSettings':
-      return 'User settings'
-    case 'projectSettings':
-      return 'Shared project settings'
-    case 'localSettings':
-      return 'Project local settings'
-    case 'flagSettings':
-      return 'Command line arguments'
-    case 'policySettings':
-      return 'Enterprise managed settings'
-    case 'cliArg':
-      return 'CLI argument'
-    case 'command':
-      return 'Command configuration'
-    case 'session':
-      return 'Current session'
-  }
+  return tSync(`status.settingSource.${source}`)
 }
 
 /**

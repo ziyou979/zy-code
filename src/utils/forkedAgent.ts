@@ -18,8 +18,8 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../services/analytics/index.js'
-import { accumulateUsage, updateUsage } from '../services/api/usageTracker.js'
 import { EMPTY_USAGE, type NonNullableUsage } from '../services/api/logging.js'
+import { accumulateUsage, updateUsage } from '../services/api/usageTracker.js'
 import type { ToolUseContext } from '../Tool.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import type { AgentId } from '../types/ids.js'

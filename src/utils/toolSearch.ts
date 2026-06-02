@@ -7,6 +7,12 @@
  */
 
 import memoize from 'lodash-es/memoize.js'
+import { getMainLoopModel } from 'src/services/model/model.js'
+import {
+  getAPIProvider,
+  isAnthropicBaseUrl,
+  isAnthropicModel,
+} from 'src/services/model/providers.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -26,12 +32,6 @@ import { count } from './array.js'
 import { getContextWindowForModel } from './context.js'
 import { logForDebugging } from './debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
-import {
-  getAPIProvider,
-  isAnthropicBaseUrl,
-  isAnthropicModel,
-} from 'src/services/model/providers.js'
-import { getMainLoopModel } from 'src/services/model/model.js'
 import { jsonStringify } from './slowOperations.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
 

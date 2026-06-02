@@ -1,5 +1,6 @@
 import last from 'lodash-es/last.js'
 import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
+import type { ProcessUserInputContext } from 'src/services/processUserInput/processUserInput.js'
 import type { WireMessage } from 'src/types/index.js'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import { runTools } from '../services/tools/toolOrchestration.js'
@@ -24,7 +25,6 @@ import type {
   inputSchema as permissionToolInputSchema,
   outputSchema as permissionToolOutputSchema,
 } from './permissions/PermissionPromptToolResultSchema.js'
-import type { ProcessUserInputContext } from 'src/services/processUserInput/processUserInput.js'
 import { recordTranscript } from './sessionStorage.js'
 
 export type PermissionPromptTool = Tool<

@@ -4,7 +4,14 @@ import {
   checkStatsigFeatureGate_CACHED_MAY_BE_STALE,
   getFeatureValue_CACHED_MAY_BE_STALE,
 } from 'src/services/analytics/growthbook.js'
-import { getIsNonInteractiveSession, getSdkBetas } from '../bootstrap/state.js'
+import { getMainLoopModel } from 'src/services/model/model.js'
+import {
+  getAPIProvider,
+  isAnthropicModel,
+  modelHasCapability,
+  providerHasCapability,
+} from 'src/services/model/providers.js'
+import { getSdkBetas } from '../bootstrap/state.js'
 import {
   ADVANCED_TOOL_USE_BETA_HEADER,
   CLI_INTERNAL_BETA_HEADER,
@@ -14,17 +21,9 @@ import {
   TOKEN_EFFICIENT_TOOLS_BETA_HEADER,
   TOOL_SEARCH_TOOL_BETA_HEADER,
 } from '../constants/betas.js'
-import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
-import {
-  getAPIProvider,
-  isAnthropicModel,
-  modelHasCapability,
-  providerHasCapability,
-} from 'src/services/model/providers.js'
-import { getMainLoopModel } from 'src/services/model/model.js'
 import { getContextWindowForModel } from './context.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { getLocalModelBetaHeaders } from './settings/localModelCapabilities.js'
-import { getInitialSettings } from './settings/settings.js'
 
 /**
  * SDK-provided betas that are allowed for API key users.
@@ -114,26 +113,20 @@ export function modelSupportsStructuredOutputs(model: string): boolean {
 
 // @[MODEL LAUNCH]: Add the new model if it supports auto mode (specifically PI probes) — ask in #proj-zy-code-safety-research.
 export function modelSupportsAutoMode(model: string): boolean {
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    // Check settings-based auto_mode capability
-    if (modelHasCapability(model, 'auto_mode')) {
-      return true
-    }
-    // GrowthBook override: zy_auto_mode_config.allowModels force-enables
-    // auto mode for listed models, bypassing the denylist/allowlist below.
-    const config = getFeatureValue_CACHED_MAY_BE_STALE<{
-      allowModels?: string[]
-    }>('zy_auto_mode_config', {})
-    const rawLower = model.toLowerCase()
-    if (
-      config?.allowModels?.some(
-        (am) => am.toLowerCase() === rawLower || am.toLowerCase() === model.toLowerCase(),
-      )
-    ) {
-      return true
-    }
-    // 外部构建：仅通过 settings capability 或 GrowthBook allowModels 启用
-    return false
+  if (modelHasCapability(model, 'auto_mode')) {
+    return true
+  }
+  // GrowthBook override: zy_auto_mode_config.allowModels
+  const config = getFeatureValue_CACHED_MAY_BE_STALE<{
+    allowModels?: string[]
+  }>('zy_auto_mode_config', {})
+  const rawLower = model.toLowerCase()
+  if (
+    config?.allowModels?.some(
+      (am) => am.toLowerCase() === rawLower || am.toLowerCase() === model.toLowerCase(),
+    )
+  ) {
+    return true
   }
   return false
 }

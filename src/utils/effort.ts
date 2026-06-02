@@ -6,43 +6,146 @@ import { getAPIProvider } from 'src/services/model/providers.js'
 import { getMainLoopModel } from 'src/services/model/model.js'
 import { getProviderEntry } from 'src/services/model/providerRegistry.js'
 import { getLocalModelEffortLevels } from './settings/localModelCapabilities.js'
-import { isEnvTruthy } from './envUtils.js'
-import { isInternalBuild } from './envUtils.js'
-export type EffortLevel = 'minimal' | 'low' | 'medium' | 'high' | 'max'
+import { isEnvTruthy, isInternalBuild } from './envUtils.js'
 
-export const EFFORT_LEVELS = ['minimal', 'low', 'medium', 'high', 'max'] as const
+// ---------------------------------------------------------------------------
+// 语义化 Effort 档位体系（provider 无关）
+// ---------------------------------------------------------------------------
+
+export type PersistableEffortLevel = 'quick' | 'light' | 'balanced' | 'thorough' | 'extreme'
+export type EffortLevel = PersistableEffortLevel | 'orchestrate'
+
+export const EFFORT_LEVELS = [
+  'quick',
+  'light',
+  'balanced',
+  'thorough',
+  'extreme',
+  'orchestrate',
+] as const
 
 /**
- * 档位强弱顺序(由弱到强),clamp 时按此顺序寻找最近的合法档。
- * 与 EFFORT_LEVELS 内容一致,单独导出以表明"这是有序的"语义。
+ * 档位强弱顺序(由弱到强)。
+ * orchestrate 不在此数组中——它是「extreme + 工作流编排」的会话模式标记，不是独立强度档。
  */
 export const EFFORT_LEVEL_ORDER: readonly EffortLevel[] = [
-  'minimal',
-  'low',
-  'medium',
-  'high',
-  'max',
+  'quick',
+  'light',
+  'balanced',
+  'thorough',
+  'extreme',
 ]
 
-export type EffortValue = EffortLevel | number
+export type EffortValue = EffortLevel
+
+// ---------------------------------------------------------------------------
+// Provider 映射（内部档位 → 各家 API 参数值）
+// ---------------------------------------------------------------------------
+
+type ProviderEffortValue = string
+
+const PROVIDER_EFFORT_MAP: Record<string, Record<string, ProviderEffortValue>> = {
+  anthropic: {
+    quick: 'low',
+    light: 'low',
+    balanced: 'medium',
+    thorough: 'high',
+    extreme: 'max',
+    orchestrate: 'max',
+  },
+  openai: {
+    quick: 'minimal',
+    light: 'low',
+    balanced: 'medium',
+    thorough: 'high',
+    extreme: 'high',
+    orchestrate: 'high',
+  },
+  gemini: {
+    quick: 'minimal',
+    light: 'low',
+    balanced: 'medium',
+    thorough: 'high',
+    extreme: 'high',
+    orchestrate: 'high',
+  },
+  deepseek: {
+    quick: 'high',
+    light: 'high',
+    balanced: 'high',
+    thorough: 'high',
+    extreme: 'max',
+    orchestrate: 'max',
+  },
+  dashscope: {
+    quick: 'high',
+    light: 'high',
+    balanced: 'high',
+    thorough: 'high',
+    extreme: 'max',
+    orchestrate: 'max',
+  },
+  openrouter: {
+    quick: 'low',
+    light: 'low',
+    balanced: 'medium',
+    thorough: 'high',
+    extreme: 'high',
+    orchestrate: 'high',
+  },
+}
 
 /**
- * 模型支持的 effort 档位列表 —— effort 能力的单一事实源。
- * 优先级链(首个命中即返回):
- *   1. ~/.zy/model-capabilities.json 的 effortLevels 字段(per-model 覆盖)
- *   2. provider 默认: providerEntry.defaultEffortLevels(internal build 用 internalEffortLevels)
- *   3. ZY_CODE_ALWAYS_ENABLE_EFFORT 环境变量强制开启 → 给一个保守全集
- *   4. [] (不支持 effort)
- * @[MODEL LAUNCH]: 在 ~/.zy/model-capabilities.json 为新模型配置 effortLevels
+ * 将内部 effort 档位映射为目标 provider 的 API 参数值。
+ * 对于不在映射表中的 provider，回退到 anthropic 映射。
+ */
+export function mapEffortToProvider(effort: EffortLevel, providerId: string): ProviderEffortValue {
+  const map = PROVIDER_EFFORT_MAP[providerId] ?? PROVIDER_EFFORT_MAP.anthropic
+  const key = effort === 'orchestrate' ? 'extreme' : effort
+  return map[key] ?? 'medium'
+}
+
+// ---------------------------------------------------------------------------
+// 旧值兼容迁移
+// ---------------------------------------------------------------------------
+
+const LEGACY_EFFORT_MAP: Record<string, EffortLevel> = {
+  minimal: 'quick',
+  low: 'light',
+  medium: 'balanced',
+  high: 'thorough',
+  xhigh: 'extreme',
+  max: 'extreme',
+  ultracode: 'orchestrate',
+}
+
+/**
+ * 将旧格式 effort 值迁移为新语义档位。
+ * 已经是新格式则原样返回。
+ */
+export function migrateLegacyEffort(value: string): EffortLevel | undefined {
+  if (isEffortLevel(value)) {
+    return value
+  }
+  return LEGACY_EFFORT_MAP[value]
+}
+
+// ---------------------------------------------------------------------------
+// 模型 effort 支持检测
+// ---------------------------------------------------------------------------
+
+/**
+ * 模型是否支持 effort 功能。
+ * 优先级：本地 model-capabilities → provider 声明 → 环境变量强制。
  */
 export function getModelEffortLevels(model: string): EffortLevel[] {
-  // 1. 本地配置覆盖优先
+  // 1. 本地配置覆盖
   const local = getLocalModelEffortLevels(model)
   if (local && local.length > 0) {
     return local
   }
 
-  // 2. provider 默认档位(internal build 可解锁 max 等扩展档位)
+  // 2. provider 声明
   const entry = getProviderEntry(getAPIProvider())
   const providerLevels =
     isInternalBuild() && entry?.internalEffortLevels
@@ -52,9 +155,9 @@ export function getModelEffortLevels(model: string): EffortLevel[] {
     return [...providerLevels]
   }
 
-  // 3. 环境变量强制开启(未指定具体档位时给保守全集)
+  // 3. 环境变量强制开启
   if (isEnvTruthy(process.env.ZY_CODE_ALWAYS_ENABLE_EFFORT)) {
-    return isInternalBuild() ? ['low', 'medium', 'high', 'max'] : ['low', 'medium', 'high']
+    return [...EFFORT_LEVEL_ORDER]
   }
 
   // 4. 不支持 effort
@@ -65,14 +168,10 @@ export function modelSupportsEffort(model: string): boolean {
   return getModelEffortLevels(model).length > 0
 }
 
-/**
- * 当前 turn 生效的 effort 等级，供 hook input 注入与 ZY_CODE_EFFORT 环境变量使用。
- * 取已含 silent downgrade 的实际展示档（getDisplayedEffortLevel），而非用户原始设置。
- * 模型不支持 effort 时返回 undefined（不注入 effort 字段，对齐 Claude Code 把 effort 设为可选）。
- *
- * effortValue 应来自 toolUseContext.getAppState().effortValue（用户经 /effort 设置的值）。
- * 缺省（无 toolUseContext 的生命周期 hook，如 SessionStart）时按 env/模型默认档解析。
- */
+// ---------------------------------------------------------------------------
+// Hook effort 级别
+// ---------------------------------------------------------------------------
+
 export function getCurrentHookEffortLevel(effortValue?: EffortValue): EffortLevel | undefined {
   const model = getMainLoopModel()
   if (!model || !modelSupportsEffort(model)) {
@@ -81,12 +180,11 @@ export function getCurrentHookEffortLevel(effortValue?: EffortValue): EffortLeve
   return getDisplayedEffortLevel(model, effortValue)
 }
 
+// ---------------------------------------------------------------------------
+// Clamp（向下兼容——新体系中由 mapEffortToProvider 替代，
+// 但保留给 localModelCapabilities 等场景使用）
+// ---------------------------------------------------------------------------
 
-/**
- * 将请求的 effort 档位 clamp 到模型实际支持的档位集合内。
- * 命中则原样返回;否则按 EFFORT_LEVEL_ORDER 先向下(更弱)、再向上(更强)
- * 找最近的合法档;supported 为空返回 undefined(表示不应发送 effort)。
- */
 export function clampEffort(
   requested: EffortLevel,
   supported: readonly EffortLevel[],
@@ -99,16 +197,13 @@ export function clampEffort(
   }
   const idx = EFFORT_LEVEL_ORDER.indexOf(requested)
   if (idx === -1) {
-    // 未知档位:返回支持集合里最强的一档
     return EFFORT_LEVEL_ORDER.filter((l) => supported.includes(l)).at(-1)
   }
-  // 先向下找更弱的合法档(保持现有 max→high 行为)
   for (let i = idx - 1; i >= 0; i--) {
     if (supported.includes(EFFORT_LEVEL_ORDER[i]!)) {
       return EFFORT_LEVEL_ORDER[i]
     }
   }
-  // 再向上找更强的合法档
   for (let i = idx + 1; i < EFFORT_LEVEL_ORDER.length; i++) {
     if (supported.includes(EFFORT_LEVEL_ORDER[i]!)) {
       return EFFORT_LEVEL_ORDER[i]
@@ -116,6 +211,10 @@ export function clampEffort(
   }
   return undefined
 }
+
+// ---------------------------------------------------------------------------
+// 解析与验证
+// ---------------------------------------------------------------------------
 
 export function isEffortLevel(value: string): value is EffortLevel {
   return (EFFORT_LEVELS as readonly string[]).includes(value)
@@ -125,53 +224,40 @@ export function parseEffortValue(value: unknown): EffortValue | undefined {
   if (value === undefined || value === null || value === '') {
     return undefined
   }
-  if (typeof value === 'number' && isValidNumericEffort(value)) {
-    return value
-  }
   const str = String(value).toLowerCase()
   if (isEffortLevel(str)) {
     return str
   }
-  const numericValue = parseInt(str, 10)
-  if (!Number.isNaN(numericValue) && isValidNumericEffort(numericValue)) {
-    return numericValue
-  }
-  return undefined
+  // 兼容旧值
+  return migrateLegacyEffort(str)
 }
 
 /**
- * 数值类型仅用于模型默认值，不会被持久化。
- * 'max' 对外部用户是会话级别的（内部用户可以持久化）。
- * 写入端在保存到设置前调用此函数，以确保 Zod schema
- * （仅接受字符串级别）不会拒绝写入。
+ * orchestrate 是会话模式标记，不可持久化到 settings.json。
  */
-export function toPersistableEffort(value: EffortValue | undefined): EffortLevel | undefined {
-  if (value === 'minimal' || value === 'low' || value === 'medium' || value === 'high') {
+export function toPersistableEffort(value: EffortValue | undefined): PersistableEffortLevel | undefined {
+  if (
+    value === 'quick' ||
+    value === 'light' ||
+    value === 'balanced' ||
+    value === 'thorough' ||
+    value === 'extreme'
+  ) {
     return value
   }
-  if (value === 'max' && isInternalBuild()) {
-    return value
-  }
+  // orchestrate 是会话级，不持久化
   return undefined
 }
 
 export function getInitialEffortSetting(): EffortLevel | undefined {
-  // toPersistableEffort 在读取时为非内部用户过滤 'max'，
-  // 因此手动编辑的 settings.json 不会将会话级别的 max 泄漏到新会话中。
-  return toPersistableEffort(getInitialSettings().effortLevel as any)
+  const raw = getInitialSettings().effortLevel as string | undefined
+  if (!raw) {
+    return undefined
+  }
+  // 支持读取旧值
+  return migrateLegacyEffort(raw) ?? toPersistableEffort(raw as any)
 }
 
-/**
- * 决定当用户在 ModelPicker 中选择模型时，持久化哪个 effort 级别（如有）。
- * 保持先前通过 /effort 显式设置的选项粘性，即使它与所选模型的默认值相同；
- * 同时让纯默认值和会话临时 effort（CLI --effort、EffortCallout 默认值）
- * 回落为 undefined，以便跟随未来的模型默认值变更。
- *
- * priorPersisted 必须来自磁盘上的 userSettings
- * （getSettingsForSource('userSettings')?.effortLevel），而非合并后的设置
- * （project/policy 层会泄漏到用户的全局 settings.json），
- * 也不能来自 AppState.effortValue（包含不会写入 settings.json 的会话级别来源）。
- */
 export function resolvePickerEffortPersistence(
   picked: EffortLevel | undefined,
   modelDefault: EffortLevel,
@@ -189,17 +275,14 @@ export function getEffortEnvOverride(): EffortValue | null | undefined {
     : parseEffortValue(envOverride)
 }
 
-/**
- * 解析实际将发送给 API 的 effort 值，遵循完整的优先级链：
- *   环境变量 ZY_CODE_EFFORT_LEVEL → appState.effortValue → 模型默认值
- *
- * 当不应发送 effort 参数时返回 undefined（环境变量设为
- * 'unset'，或模型不存在默认值）。
- */
+// ---------------------------------------------------------------------------
+// 解析实际 effort（优先级链）
+// ---------------------------------------------------------------------------
+
 export function resolveAppliedEffort(
   model: string,
   appStateEffortValue: EffortValue | undefined,
-): EffortValue | undefined {
+): EffortLevel | undefined {
   const envOverride = getEffortEnvOverride()
   if (envOverride === null) {
     return undefined
@@ -208,89 +291,50 @@ export function resolveAppliedEffort(
   if (resolved === undefined) {
     return undefined
   }
-  // 数值 effort 仅内部使用,不参与 clamp。
-  if (typeof resolved === 'number') {
-    return resolved
+  if (!modelSupportsEffort(model)) {
+    return undefined
   }
-  // clamp 到模型实际支持的档位集合(取代旧的写死 max→high;
-  // 不支持任何档位的模型会得到 undefined,即不发送 effort 参数)。
-  return clampEffort(resolved, getModelEffortLevels(model))
+  return resolved
 }
 
 /**
- * 解析展示给用户的 effort 级别。对 resolveAppliedEffort 进行包装，
- * 添加 'high' 回退值（即 API 在未发送 effort 参数时使用的值）。
- * 作为状态栏和 /effort 输出的唯一事实来源（CC-1088）。
+ * 展示给用户的 effort 级别。
  */
 export function getDisplayedEffortLevel(
   model: string,
   appStateEffort: EffortValue | undefined,
 ): EffortLevel {
-  const resolved = resolveAppliedEffort(model, appStateEffort) ?? 'high'
+  const resolved = resolveAppliedEffort(model, appStateEffort) ?? 'thorough'
   return convertEffortValueToLevel(resolved)
 }
 
-export function isValidNumericEffort(value: number): boolean {
-  return Number.isInteger(value)
-}
-
 export function convertEffortValueToLevel(value: EffortValue): EffortLevel {
-  if (typeof value === 'string') {
-    // 运行时防护：值可能来自远程配置（GrowthBook），TypeScript 类型
-    // 无法帮助我们。将未知字符串强制转换为 'high'，而非不加检查地传递。
-    return isEffortLevel(value) ? value : 'high'
-  }
-  if (isInternalBuild() && typeof value === 'number') {
-    if (value <= 50) {
-      return 'low'
-    }
-    if (value <= 85) {
-      return 'medium'
-    }
-    if (value <= 100) {
-      return 'high'
-    }
-    return 'max'
-  }
-  return 'high'
+  return isEffortLevel(value) ? value : 'thorough'
 }
 
-/**
- * 获取 effort 级别的用户可见描述
- *
- * @param level 要描述的 effort 级别
- * @returns 人类可读的描述
- */
+// ---------------------------------------------------------------------------
+// 描述（用户可见，走 i18n 更好，此处作为 fallback）
+// ---------------------------------------------------------------------------
+
 export function getEffortLevelDescription(level: EffortLevel): string {
   switch (level) {
-    case 'minimal':
-      return 'Fastest possible response with very brief reasoning'
-    case 'low':
-      return 'Quick, straightforward implementation with minimal overhead'
-    case 'medium':
-      return 'Balanced approach with standard implementation and testing'
-    case 'high':
-      return 'Comprehensive implementation with extensive testing and documentation'
-    case 'max':
-      return 'Maximum capability with deepest reasoning (Opus 4.6 only)'
+    case 'quick':
+      return 'Fastest response with minimal reasoning'
+    case 'light':
+      return 'Light reasoning, quick implementation'
+    case 'balanced':
+      return 'Balanced approach with standard reasoning'
+    case 'thorough':
+      return 'Deep reasoning with comprehensive analysis'
+    case 'extreme':
+      return 'Maximum reasoning depth and thoroughness'
+    case 'orchestrate':
+      return 'Extreme reasoning + dynamic workflow orchestration (session only)'
   }
 }
 
-/**
- * 获取 effort 值（字符串和数值类型）的用户可见描述
- *
- * @param value 要描述的 effort 值
- * @returns 人类可读的描述
- */
 export function getEffortValueDescription(value: EffortValue): string {
-  if (isInternalBuild() && typeof value === 'number') {
-    return `[INNER-ONLY] Numeric effort value of ${value}`
-  }
-
-  if (typeof value === 'string') {
-    return getEffortLevelDescription(value)
-  }
-  return 'Balanced approach with standard implementation and testing'
+  return getEffortLevelDescription(value)
 }
 
 export type EffortCalloutConfig = {
@@ -313,17 +357,16 @@ export function getEffortCalloutConfig(): EffortCalloutConfig {
   }
 }
 
-// @[MODEL LAUNCH]: 更新新模型的默认 effort 级别
 export function getDefaultEffortForModel(model: string): EffortValue | undefined {
-  // 重要：未通知模型发布负责人和研究团队前，请勿更改默认 effort 级别。
-  // 默认 effort 是一个敏感设置，可能严重影响模型质量和性能表现。
-
-  // 当 ultrathink 功能开启时，默认 effort 为 medium（ultrathink 会提升到 high）
   if (isUltrathinkEnabled() && modelSupportsEffort(model)) {
-    return 'medium'
+    return 'balanced'
   }
-
-  // 回退到 undefined，意味着不设置 effort 级别。
-  // 在 API 端将解析为 high effort 级别。
   return undefined
 }
+
+export function isOrchestrateEffort(effortValue: EffortValue | undefined): boolean {
+  return effortValue === 'orchestrate'
+}
+
+// 向后兼容别名
+export const isUltracodeEffort = isOrchestrateEffort

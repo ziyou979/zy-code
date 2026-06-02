@@ -11,11 +11,11 @@
 import { chmod, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve, sep } from 'node:path'
 import axios from 'axios'
+import { parseZipModes, unzipFile } from 'src/services/dxt/zip.js'
 import { waitForScrollIdle } from '../../bootstrap/state.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/index.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { logForDebugging } from '../debug.js'
-import { parseZipModes, unzipFile } from 'src/services/dxt/zip.js'
 import { errorMessage, getErrnoCode } from '../errors.js'
 
 type SafeString = AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS

@@ -23,9 +23,9 @@ export type RequiresActionDetails = {
   input?: Record<string, unknown>
 }
 
+import { enqueueWireEvent } from './bridgeEventQueue.js'
 import { isEnvTruthy } from './envUtils.js'
 import type { PermissionMode } from './permissions/PermissionMode.js'
-import { enqueueWireEvent } from './bridgeEventQueue.js'
 
 // CCR external_metadata keys — push in onChangeAppState, restore in
 // externalMetadataToAppState.

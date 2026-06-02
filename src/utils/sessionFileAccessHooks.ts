@@ -5,7 +5,6 @@
  */
 import { feature } from 'bun:bundle'
 import { registerHookCallbacks } from '../bootstrap/state.js'
-import type { HookInput, HookJSONOutput } from '../types/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -21,6 +20,7 @@ import { GLOB_TOOL_NAME } from '../tools/GlobTool/prompt.js'
 import { GrepTool } from '../tools/GrepTool/GrepTool.js'
 import { GREP_TOOL_NAME } from '../tools/GrepTool/prompt.js'
 import type { HookCallback } from '../types/hooks/index.js'
+import type { HookInput, HookJSONOutput } from '../types/index.js'
 import {
   detectSessionFileType,
   detectSessionPatternType,

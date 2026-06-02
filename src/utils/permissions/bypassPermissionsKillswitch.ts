@@ -67,41 +67,39 @@ export async function checkAndDisableAutoModeIfNeeded(
   toolPermissionContext: ToolPermissionContext,
   setAppState: (f: (prev: AppState) => AppState) => void,
 ): Promise<void> {
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    if (autoModeCheckRan) {
-      return
-    }
-    autoModeCheckRan = true
-
-    const { updateContext, notification } = await verifyAutoModeGateAccess(toolPermissionContext)
-    setAppState((prev) => {
-      // Apply the transform to CURRENT context, not the stale snapshot we
-      // passed to verifyAutoModeGateAccess. The async GrowthBook await inside
-      // can be outrun by a mid-turn shift-tab; spreading a stale context here
-      // would revert the user's mode change.
-      const nextCtx = updateContext(prev.toolPermissionContext)
-      const newState =
-        nextCtx === prev.toolPermissionContext ? prev : { ...prev, toolPermissionContext: nextCtx }
-      if (!notification) {
-        return newState
-      }
-      return {
-        ...newState,
-        notifications: {
-          ...newState.notifications,
-          queue: [
-            ...newState.notifications.queue,
-            {
-              key: 'auto-mode-gate-notification',
-              text: notification,
-              color: 'warning' as const,
-              priority: 'high' as const,
-            },
-          ],
-        },
-      }
-    })
+  if (autoModeCheckRan) {
+    return
   }
+  autoModeCheckRan = true
+
+  const { updateContext, notification } = await verifyAutoModeGateAccess(toolPermissionContext)
+  setAppState((prev) => {
+    // Apply the transform to CURRENT context, not the stale snapshot we
+    // passed to verifyAutoModeGateAccess. The async GrowthBook await inside
+    // can be outrun by a mid-turn shift-tab; spreading a stale context here
+    // would revert the user's mode change.
+    const nextCtx = updateContext(prev.toolPermissionContext)
+    const newState =
+      nextCtx === prev.toolPermissionContext ? prev : { ...prev, toolPermissionContext: nextCtx }
+    if (!notification) {
+      return newState
+    }
+    return {
+      ...newState,
+      notifications: {
+        ...newState.notifications,
+        queue: [
+          ...newState.notifications.queue,
+          {
+            key: 'auto-mode-gate-notification',
+            text: notification,
+            color: 'warning' as const,
+            priority: 'high' as const,
+          },
+        ],
+      },
+    }
+  })
 }
 
 /**

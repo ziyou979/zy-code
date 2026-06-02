@@ -79,7 +79,7 @@ const skillSearchModules = feature('EXPERIMENTAL_SKILL_SEARCH')
         require('../services/skillSearch/prefetch.js') as typeof import('../services/skillSearch/prefetch.js'),
     }
   : null
-const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
+const autoModeStateModule = true
   ? (require('./permissions/autoModeState.js') as typeof import('./permissions/autoModeState.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -159,6 +159,8 @@ const sessionTranscriptModule = feature('KAIROS')
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { hasUltrathinkKeyword, isUltrathinkEnabled } from './thinking.js'
+import { hasWorkflowKeyword } from '../services/workflow/keyword.js'
+import { isUltracodeEffort } from './effort.js'
 import { tokenCountFromLastAPIResponse, tokenCountWithEstimation } from './tokens.js'
 import {
   getEffectiveContextWindowSize,
@@ -630,6 +632,14 @@ export type Attachment =
       removedNames: string[]
     }
   | {
+      type: 'workflow_reminder'
+      reminderKind:
+        | 'ultracode_enter_full'
+        | 'ultracode_enter_light'
+        | 'ultracode_exit'
+        | 'workflow_keyword_request'
+    }
+  | {
       type: 'bagel_console'
       errorCount: number
       warningCount: number
@@ -743,6 +753,9 @@ export async function getAttachments(
     maybe('queued_commands', () => getQueuedCommandAttachments(queuedCommands)),
     maybe('date_change', () => Promise.resolve(getDateChangeAttachments(messages))),
     maybe('ultrathink_effort', () => Promise.resolve(getUltrathinkEffortAttachment(input))),
+    maybe('workflow_reminder', () =>
+      Promise.resolve(getWorkflowReminderAttachment(input, toolUseContext)),
+    ),
     maybe('deferred_tools_delta', () =>
       Promise.resolve(
         getDeferredToolsDeltaAttachment(
@@ -781,7 +794,7 @@ export async function getAttachments(
     // 见 src/services/skillSearch/prefetch.ts。
     maybe('plan_mode', () => getPlanModeAttachments(messages, toolUseContext)),
     maybe('plan_mode_exit', () => getPlanModeExitAttachment(toolUseContext)),
-    ...(feature('TRANSCRIPT_CLASSIFIER')
+    ...(true
       ? [
           maybe('auto_mode', () => getAutoModeAttachments(messages, toolUseContext)),
           maybe('auto_mode_exit', () => getAutoModeExitAttachment(toolUseContext)),
@@ -1288,6 +1301,34 @@ function getUltrathinkEffortAttachment(input: string | null): Attachment[] {
       level: 'high',
     },
   ]
+}
+
+let ultracodeReminderCount = 0
+
+function getWorkflowReminderAttachment(
+  input: string | null,
+  toolUseContext: ToolUseContext,
+): Attachment[] {
+  if (!feature('WORKFLOW_SCRIPTS')) {
+    return []
+  }
+  const attachments: Attachment[] = []
+  const effortValue = toolUseContext.getAppState().effortValue
+
+  if (isUltracodeEffort(effortValue)) {
+    ultracodeReminderCount++
+    const kind = ultracodeReminderCount === 1 ? 'ultracode_enter_full' : 'ultracode_enter_light'
+    attachments.push({ type: 'workflow_reminder', reminderKind: kind })
+  } else if (ultracodeReminderCount > 0) {
+    ultracodeReminderCount = 0
+    attachments.push({ type: 'workflow_reminder', reminderKind: 'ultracode_exit' })
+  }
+
+  if (input && hasWorkflowKeyword(input)) {
+    attachments.push({ type: 'workflow_reminder', reminderKind: 'workflow_keyword_request' })
+  }
+
+  return attachments
 }
 
 // 为 compact.ts 导出 — 门控在两个调用点必须一致。

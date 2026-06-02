@@ -18,8 +18,7 @@ import {
   getAgentDescriptionsTotalTokens,
   AGENT_DESCRIPTIONS_THRESHOLD,
 } from './statusNoticeHelpers.js'
-import { isSupportedJetBrainsTerminal, toIDEDisplayName, getTerminalIdeType } from './ide.js'
-import { isJetBrainsPluginInstalledCachedSync } from './jetbrains.js'
+import { toIDEDisplayName, getTerminalIdeType } from './ide.js'
 
 // Types
 export type StatusNoticeType = 'warning' | 'info'
@@ -195,21 +194,9 @@ const largeAgentDescriptionsNotice: StatusNoticeDefinition = {
 const jetbrainsPluginNotice: StatusNoticeDefinition = {
   id: 'jetbrains-plugin-install',
   type: 'info',
-  isActive: (context) => {
-    // todo 暂时未实现插件，临时屏蔽一下
+  isActive: (_context) => {
+    // todo 暂时未实现插件，临时屏蔽
     return false
-    // Only show if running in JetBrains built-in terminal
-    if (!isSupportedJetBrainsTerminal()) {
-      return false
-    }
-    // Don't show if auto-install is disabled
-    const shouldAutoInstall = context.config.autoInstallIdeExtension ?? true
-    if (!shouldAutoInstall) {
-      return false
-    }
-    // Check if plugin is already installed (cached to avoid repeated filesystem checks)
-    const ideType = getTerminalIdeType()
-    return ideType !== null && !isJetBrainsPluginInstalledCachedSync(ideType)
   },
   render: () => {
     const ideType = getTerminalIdeType()

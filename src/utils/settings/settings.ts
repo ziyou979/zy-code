@@ -13,7 +13,7 @@ import { getRemoteManagedSettingsSyncFromCache } from '../../services/remoteMana
 import { uniq } from '../array.js'
 import { logForDebugging } from '../debug.js'
 import { logForDiagnosticsNoPII } from '../diagLogs.js'
-import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from '../envUtils.js'
+import { getZyConfigHomeDir, isEnvTruthy } from '../envUtils.js'
 import { getErrnoCode, isENOENT } from '../errors.js'
 import { writeFileSyncAndFlush_DEPRECATED } from '../file.js'
 import { readFileSync } from '../fileRead.js'
@@ -514,7 +514,7 @@ export function getManagedSettingsKeysForLogging(settings: SettingsJson): string
       'ask',
       'defaultMode',
       'disableBypassPermissionsMode',
-      ...(feature('TRANSCRIPT_CLASSIFIER') ? ['disableAutoMode'] : []),
+      'disableAutoMode',
       'additionalDirectories',
     ]),
     sandbox: new Set([
@@ -811,18 +811,15 @@ export function hasSkipDangerousModePermissionPrompt(): boolean {
  * projectSettings 被有意排除 - 恶意项目可能会自动绕过对话框（RCE 风险）。
  */
 export function hasAutoModeOptIn(): boolean {
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    const user = getSettingsForSource('userSettings')?.skipAutoPermissionPrompt
-    const local = getSettingsForSource('localSettings')?.skipAutoPermissionPrompt
-    const flag = getSettingsForSource('flagSettings')?.skipAutoPermissionPrompt
-    const policy = getSettingsForSource('policySettings')?.skipAutoPermissionPrompt
-    const result = !!(user || local || flag || policy)
-    logForDebugging(
-      `[auto-mode] hasAutoModeOptIn=${result} skipAutoPermissionPrompt: user=${user} local=${local} flag=${flag} policy=${policy}`,
-    )
-    return result
-  }
-  return false
+  const user = getSettingsForSource('userSettings')?.skipAutoPermissionPrompt
+  const local = getSettingsForSource('localSettings')?.skipAutoPermissionPrompt
+  const flag = getSettingsForSource('flagSettings')?.skipAutoPermissionPrompt
+  const policy = getSettingsForSource('policySettings')?.skipAutoPermissionPrompt
+  const result = !!(user || local || flag || policy)
+  logForDebugging(
+    `[auto-mode] hasAutoModeOptIn=${result} skipAutoPermissionPrompt: user=${user} local=${local} flag=${flag} policy=${policy}`,
+  )
+  return result
 }
 
 /**
@@ -831,15 +828,12 @@ export function hasAutoModeOptIn(): boolean {
  * projectSettings 被排除以防止恶意项目控制此行为。
  */
 export function getUseAutoModeDuringPlan(): boolean {
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    return (
-      getSettingsForSource('policySettings')?.useAutoModeDuringPlan !== false &&
-      getSettingsForSource('flagSettings')?.useAutoModeDuringPlan !== false &&
-      getSettingsForSource('userSettings')?.useAutoModeDuringPlan !== false &&
-      getSettingsForSource('localSettings')?.useAutoModeDuringPlan !== false
-    )
-  }
-  return true
+  return (
+    getSettingsForSource('policySettings')?.useAutoModeDuringPlan !== false &&
+    getSettingsForSource('flagSettings')?.useAutoModeDuringPlan !== false &&
+    getSettingsForSource('userSettings')?.useAutoModeDuringPlan !== false &&
+    getSettingsForSource('localSettings')?.useAutoModeDuringPlan !== false
+  )
 }
 
 /**
@@ -856,64 +850,62 @@ export function getAutoModeConfig():
       environment?: string[]
     }
   | undefined {
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    const schema = z.object({
-      allow: z.array(z.string()).optional(),
-      soft_deny: z.array(z.string()).optional(),
-      hard_deny: z.array(z.string()).optional(),
-      // 兼容旧字段：deny 等同于 soft_deny
-      deny: z.array(z.string()).optional(),
-      environment: z.array(z.string()).optional(),
-    })
+  const schema = z.object({
+    allow: z.array(z.string()).optional(),
+    soft_deny: z.array(z.string()).optional(),
+    hard_deny: z.array(z.string()).optional(),
+    // 兼容旧字段：deny 等同于 soft_deny
+    deny: z.array(z.string()).optional(),
+    environment: z.array(z.string()).optional(),
+  })
 
-    const allow: string[] = []
-    const soft_deny: string[] = []
-    const hard_deny: string[] = []
-    const environment: string[] = []
+  const allow: string[] = []
+  const soft_deny: string[] = []
+  const hard_deny: string[] = []
+  const environment: string[] = []
 
-    for (const source of [
-      'userSettings',
-      'localSettings',
-      'flagSettings',
-      'policySettings',
-    ] as const) {
-      const settings = getSettingsForSource(source)
-      if (!settings) {
-        continue
+  for (const source of [
+    'userSettings',
+    'localSettings',
+    'flagSettings',
+    'policySettings',
+  ] as const) {
+    const settings = getSettingsForSource(source)
+    if (!settings) {
+      continue
+    }
+    const result = schema.safeParse((settings as Record<string, unknown>).autoMode)
+    if (result.success) {
+      if (result.data.allow) {
+        allow.push(...result.data.allow)
       }
-      const result = schema.safeParse((settings as Record<string, unknown>).autoMode)
-      if (result.success) {
-        if (result.data.allow) {
-          allow.push(...result.data.allow)
-        }
-        if (result.data.soft_deny) {
-          soft_deny.push(...result.data.soft_deny)
-        }
-        if (result.data.hard_deny) {
-          hard_deny.push(...result.data.hard_deny)
-        }
-        // 兼容旧字段：将 deny 视为 soft_deny
-        if (result.data.deny) {
-          soft_deny.push(...result.data.deny)
-        }
-        if (result.data.environment) {
-          environment.push(...result.data.environment)
-        }
+      if (result.data.soft_deny) {
+        soft_deny.push(...result.data.soft_deny)
+      }
+      if (result.data.hard_deny) {
+        hard_deny.push(...result.data.hard_deny)
+      }
+      // 兼容旧字段：将 deny 视为 soft_deny
+      if (result.data.deny) {
+        soft_deny.push(...result.data.deny)
+      }
+      if (result.data.environment) {
+        environment.push(...result.data.environment)
       }
     }
+  }
 
-    if (
-      allow.length > 0 ||
-      soft_deny.length > 0 ||
-      hard_deny.length > 0 ||
-      environment.length > 0
-    ) {
-      return {
-        ...(allow.length > 0 && { allow }),
-        ...(soft_deny.length > 0 && { soft_deny }),
-        ...(hard_deny.length > 0 && { hard_deny }),
-        ...(environment.length > 0 && { environment }),
-      }
+  if (
+    allow.length > 0 ||
+    soft_deny.length > 0 ||
+    hard_deny.length > 0 ||
+    environment.length > 0
+  ) {
+    return {
+      ...(allow.length > 0 && { allow }),
+      ...(soft_deny.length > 0 && { soft_deny }),
+      ...(hard_deny.length > 0 && { hard_deny }),
+      ...(environment.length > 0 && { environment }),
     }
   }
   return undefined

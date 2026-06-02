@@ -1,6 +1,9 @@
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import { dirname } from 'node:path'
+import { parseUserSpecifiedModel } from 'src/services/model/model.js'
+import type { TodoList } from 'src/services/todo/types.js'
+import { TodoListSchema } from 'src/services/todo/types.js'
 import {
   getMainLoopModelOverride,
   getSessionId,
@@ -28,6 +31,7 @@ import type {
   PersistedWorktreeSession,
 } from '../types/logs.js'
 import type { Message } from '../types/message.js'
+import { clearMemoryFileCaches } from './agentsMd.js'
 import { renameRecordingForSession } from './asciicast.js'
 import {
   type AttributionState,
@@ -40,7 +44,6 @@ import { logForDebugging } from './debug.js'
 import type { FileHistorySnapshot } from './fileHistory.js'
 import { fileHistoryRestoreStateFromLog } from './fileHistory.js'
 import { createSystemMessage } from './messages.js'
-import { parseUserSpecifiedModel } from 'src/services/model/model.js'
 import { getPlansDirectory } from './plans.js'
 import { setCwd } from './Shell.js'
 import {
@@ -52,11 +55,8 @@ import {
   saveWorktreeState,
 } from './sessionStorage.js'
 import { isTodoV2Enabled } from './tasks.js'
-import type { TodoList } from 'src/services/todo/types.js'
-import { TodoListSchema } from 'src/services/todo/types.js'
 import type { ContentReplacementRecord } from './toolResultStorage.js'
 import { getCurrentWorktreeSession, restoreWorktreeSession } from './worktree.js'
-import { clearMemoryFileCaches } from './agentsMd.js'
 
 type ResumeResult = {
   messages?: Message[]

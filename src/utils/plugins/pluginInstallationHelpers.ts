@@ -8,6 +8,7 @@
 import { randomBytes } from 'node:crypto'
 import { rename, rm } from 'node:fs/promises'
 import { dirname, join, resolve, sep } from 'node:path'
+import { buildPluginTelemetryFields } from 'src/services/telemetry/pluginTelemetry.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
@@ -18,7 +19,6 @@ import { toError } from '../errors.js'
 import { getFsImplementation } from '../fsOperations.js'
 import { logError } from '../log.js'
 import { getSettingsForSource, updateSettingsForSource } from '../settings/settings.js'
-import { buildPluginTelemetryFields } from 'src/services/telemetry/pluginTelemetry.js'
 import { clearAllCaches } from './cacheUtils.js'
 import {
   formatDependencyCountSuffix,

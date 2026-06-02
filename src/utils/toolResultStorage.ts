@@ -966,7 +966,7 @@ export function reconstructContentReplacementState(
  *
  * 保持在 AgentTool.tsx 之外——该文件处于 feature() DCE 复杂度
  * 临界点，无法容忍 +1 行源代码而不静默破坏
- * 测试中的 feature('TRANSCRIPT_CLASSIFIER') 评估。
+ * 测试中的 true 评估。
  */
 export function reconstructForSubagentResume(
   parentState: ContentReplacementState | undefined,

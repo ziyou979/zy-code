@@ -32,6 +32,7 @@ import memoize from 'lodash-es/memoize.js'
 import { Lexer } from 'marked'
 import picomatch from 'picomatch'
 import { logEvent } from 'src/services/analytics/index.js'
+import type { MemoryType } from 'src/services/memory/types.js'
 import { getAdditionalDirectoriesForAgentsMd, getOriginalCwd } from '../bootstrap/state.js'
 import { truncateEntrypointContent } from '../memdir/memdir.js'
 import { getAutoMemEntrypoint, isAutoMemoryEnabled } from '../memdir/paths.js'
@@ -57,7 +58,6 @@ import {
   type InstructionsLoadReason,
   type InstructionsMemoryType,
 } from './hooks.js'
-import type { MemoryType } from 'src/services/memory/types.js'
 import { expandPath } from './path.js'
 import { pathInWorkingPath } from './permissions/filesystem.js'
 import { isSettingSourceEnabled } from './settings/constants.js'
