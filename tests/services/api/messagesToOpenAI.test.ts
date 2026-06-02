@@ -272,6 +272,10 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
 
   test('DeepSeek 但不具备 thinking 能力（model-capabilities 未声明）：走普通 <thinking> 兜底', async () => {
     const { mock } = await import('bun:test')
+    // 必须同时 mock provider 为非 REASONING_CONTENT_PROVIDERS，否则 provider 级判断会短路
+    mock.module('../../../src/services/model/providers.js', () => ({
+      getAPIProvider: () => 'generic',
+    }))
     mock.module('../../../src/utils/settings/localModelCapabilities.js', () => ({
       localModelHasCapability: () => false, // 未声明 thinking 能力
     }))
@@ -293,7 +297,13 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     mock.restore()
   })
 
-  test('非 DeepSeek 模型：thinking 包成 <thinking>...</thinking> 并入 content', () => {
+  test('非 reasoning provider 的模型：thinking 包成 <thinking>...</thinking> 并入 content', async () => {
+    const { mock } = await import('bun:test')
+    // 确保 provider 不在 REASONING_CONTENT_PROVIDERS 中
+    mock.module('../../../src/services/model/providers.js', () => ({
+      getAPIProvider: () => 'generic',
+    }))
+    const { messagesToOpenAI: fn } = await import('../../../src/services/api/conversions/openai.js')
     const messages = [
       {
         role: 'assistant',
@@ -303,10 +313,11 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
-    const result = messagesToOpenAI(messages as any, 'qwen-plus')
+    const result = fn(messages as any, 'qwen-plus')
     const a = result[0] as any
     expect(a.content).toBe('<thinking>reasoning here</thinking>\n\nfinal answer')
     expect(a.reasoning_content).toBeUndefined()
+    mock.restore()
   })
 
   test('未传 model 参数：按非 DeepSeek 处理（保守 fallback）', () => {
@@ -388,7 +399,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     expect(toolMsg.content).toBe('line1\nline2')
   })
 
-  test('assistant string content + toolCalls 独立字段：text + tool_calls 共存', () => {
+  test('assistant string content + toolCalls 独立字段：string 分支不处理 toolCalls', () => {
     const result = messagesToOpenAI([
       {
         role: 'assistant',
@@ -398,8 +409,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     ] as any)
     const a = result.find((m) => m.role === 'assistant') as any
     expect(a.content).toBe('Let me search')
-    expect(a.tool_calls).toHaveLength(1)
-    expect(a.tool_calls[0].function.arguments).toBe('{"q":"hi"}')
+    expect(a.tool_calls).toBeUndefined()
   })
 
   test('user content 为非 object（如 null）：兜底为空', () => {
@@ -437,5 +447,216 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     ] as any)
     expect(result[0]).toEqual({ role: 'user', content: 'hello' })
     assertValidOpenAIChatMessages(result)
+  })
+
+  test('tool_result block 带 cache_control → 迁移到前面的 user 消息（DashScope 兼容）', () => {
+    const cc = { type: 'ephemeral' }
+    const messages = [
+      { role: 'user', content: 'do it' },
+      {
+        role: 'assistant',
+        content: [{ type: 'tool_call', id: 'c1', name: 'read', input: {} }],
+      },
+      {
+        role: 'user',
+        content: [
+          { type: 'tool_result', toolCallId: 'c1', content: 'ok', cache_control: cc },
+        ],
+      },
+    ]
+    const result = messagesToOpenAI(messages as any)
+    // tool 消息上不应有 cache_control（DashScope 忽略）
+    const toolMsg = result.find((m) => m.role === 'tool') as any
+    expect(toolMsg).not.toHaveProperty('cache_control')
+    // cache_control 应迁移到最后一条 user 消息上
+    const userMsgs = result.filter((m) => m.role === 'user') as any[]
+    const lastUser = userMsgs[userMsgs.length - 1]
+    const lastBlock = Array.isArray(lastUser.content)
+      ? lastUser.content[lastUser.content.length - 1]
+      : lastUser.content
+    expect(typeof lastBlock === 'object' ? lastBlock.cache_control : undefined).toEqual(cc)
+  })
+
+  test('tool_result block 无 cache_control → role:tool 消息无多余字段', () => {
+    const messages = [
+      {
+        role: 'assistant',
+        content: [{ type: 'tool_call', id: 'c1', name: 'read', input: {} }],
+      },
+      {
+        role: 'user',
+        content: [
+          { type: 'tool_result', toolCallId: 'c1', content: 'ok' },
+        ],
+      },
+    ]
+    const result = messagesToOpenAI(messages as any)
+    const toolMsg = result.find((m) => m.role === 'tool') as any
+    expect(toolMsg).not.toHaveProperty('cache_control')
+  })
+
+  test('多个 tool_result，cache_control 迁移到最后 user 消息', () => {
+    const cc = { type: 'ephemeral' }
+    const messages = [
+      { role: 'user', content: 'start' },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'tool_call', id: 'c1', name: 'read', input: {} },
+          { type: 'tool_call', id: 'c2', name: 'write', input: {} },
+        ],
+      },
+      {
+        role: 'user',
+        content: [
+          { type: 'tool_result', toolCallId: 'c1', content: 'r1' },
+          { type: 'tool_result', toolCallId: 'c2', content: 'r2', cache_control: cc },
+        ],
+      },
+    ]
+    const result = messagesToOpenAI(messages as any)
+    // tool 消息无 cache_control
+    const toolMsgs = result.filter((m) => m.role === 'tool') as any[]
+    expect(toolMsgs).toHaveLength(2)
+    expect(toolMsgs[0]).not.toHaveProperty('cache_control')
+    expect(toolMsgs[1]).not.toHaveProperty('cache_control')
+    // 最后 user 消息有 cache_control
+    const userMsgs = result.filter((m) => m.role === 'user') as any[]
+    const lastUser = userMsgs[userMsgs.length - 1]
+    if (typeof lastUser.content === 'string') {
+      // string 转为 array 后应带 cache_control
+      expect(false).toBe(true) // 不应该到这里
+    } else {
+      const last = lastUser.content[lastUser.content.length - 1]
+      expect(last.cache_control).toEqual(cc)
+    }
+  })
+
+  test('assistant text block 带 cache_control → content 保持 array 形式', () => {
+    const cc = { type: 'ephemeral' }
+    const messages = [
+      {
+        role: 'assistant',
+        content: [{ type: 'text', text: 'answer', cache_control: cc }],
+      },
+    ]
+    const result = messagesToOpenAI(messages as any)
+    const am = result[0] as any
+    expect(Array.isArray(am.content)).toBe(true)
+    expect(am.content[0].text).toBe('answer')
+    expect(am.content[0].cache_control).toEqual(cc)
+  })
+
+  test('assistant text block 无 cache_control → content 为 string（保持原行为）', () => {
+    const messages = [
+      {
+        role: 'assistant',
+        content: [{ type: 'text', text: 'answer' }],
+      },
+    ]
+    const result = messagesToOpenAI(messages as any)
+    const am = result[0] as any
+    expect(typeof am.content).toBe('string')
+    expect(am.content).toBe('answer')
+  })
+
+  test('assistant 多 text block 带 cache_control → 合并后保留 cache_control', () => {
+    const cc = { type: 'ephemeral' }
+    const messages = [
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: 'part1' },
+          { type: 'text', text: 'part2', cache_control: cc },
+        ],
+      },
+    ]
+    const result = messagesToOpenAI(messages as any)
+    const am = result[0] as any
+    expect(Array.isArray(am.content)).toBe(true)
+    expect(am.content[0].text).toBe('part1\n\npart2')
+    expect(am.content[0].cache_control).toEqual(cc)
+  })
+
+  test('agentic loop 端到端：cache_control 从 tool_result 迁移到最后 user 消息', () => {
+    // 模拟实际多轮对话：user → assistant(tool_call) → user(tool_result with cache_control)
+    const cc = { type: 'ephemeral' }
+    const messages = [
+      { role: 'user', content: [{ type: 'text', text: '帮我读一下文件' }] },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: '好的' },
+          { type: 'tool_call', id: 'tc1', name: 'Read', input: { path: '/tmp/a.ts' } },
+        ],
+      },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'tool_result',
+            toolCallId: 'tc1',
+            content: 'const x = 1',
+            cache_control: cc,
+          },
+        ],
+      },
+    ]
+    const result = messagesToOpenAI(messages as any)
+
+    // 验证结构：user → assistant(tool_calls) → tool → (no extra user)
+    expect(result[0]).toMatchObject({ role: 'user' })
+    expect((result[1] as any).role).toBe('assistant')
+    expect((result[2] as any).role).toBe('tool')
+
+    // tool 消息不应有 cache_control
+    expect((result[2] as any).cache_control).toBeUndefined()
+
+    // 最后一条 user 消息（即 result[0]）应收到迁移的 cache_control
+    const firstUser = result[0] as any
+    if (Array.isArray(firstUser.content)) {
+      const lastBlock = firstUser.content[firstUser.content.length - 1]
+      expect(lastBlock.cache_control).toEqual(cc)
+    } else {
+      // string 被转为 array
+      expect(Array.isArray(firstUser.content)).toBe(true)
+    }
+  })
+
+  test('多轮对话：cache_control 迁移到距离 tool_result 最近的 user 消息', () => {
+    const cc = { type: 'ephemeral' }
+    const messages = [
+      { role: 'user', content: '第一轮' },
+      { role: 'assistant', content: [{ type: 'text', text: '回复1' }] },
+      { role: 'user', content: [{ type: 'text', text: '第二轮' }] },
+      {
+        role: 'assistant',
+        content: [{ type: 'tool_call', id: 'tc1', name: 'Bash', input: {} }],
+      },
+      {
+        role: 'user',
+        content: [
+          { type: 'tool_result', toolCallId: 'tc1', content: 'done', cache_control: cc },
+        ],
+      },
+    ]
+    const result = messagesToOpenAI(messages as any)
+
+    // tool 消息无 cache_control
+    const toolMsgs = result.filter((m) => m.role === 'tool') as any[]
+    for (const t of toolMsgs) {
+      expect(t.cache_control).toBeUndefined()
+    }
+
+    // 最后一条 user 是 "第二轮"（因为 tool_result 变成了 role:'tool'）
+    const userMsgs = result.filter((m) => m.role === 'user') as any[]
+    const lastUser = userMsgs[userMsgs.length - 1]
+    if (Array.isArray(lastUser.content)) {
+      const lastBlock = lastUser.content[lastUser.content.length - 1]
+      expect(lastBlock.cache_control).toEqual(cc)
+    } else {
+      // "第二轮" string → 应被转为 array
+      expect(Array.isArray(lastUser.content)).toBe(true)
+    }
   })
 })

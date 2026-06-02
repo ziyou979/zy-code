@@ -3,6 +3,26 @@
 // Refactor invariant: this file should NOT diff after restructuring,
 // only when exports are intentionally added/removed/renamed.
 
+export async function handleInitializeRequest(
+  request: WireControlInitializeRequest,
+  requestId: string,
+  initialized: boolean,
+  output: Stream<StdoutMessage>,
+  commands: Command[],
+  modelInfos: ModelInfo[],
+  structuredIO: StructuredIO,
+  enableAuthStatus: boolean,
+  options: {
+    systemPrompt: string | undefined
+    appendSystemPrompt: string | undefined
+    agent?: string | undefined
+    userSpecifiedModel?: string | undefined
+    [key: string]: unknown
+  },
+  agents: AgentDefinition[],
+  _getAppState: () => AppState,
+): Promise<void> { ... }
+
 export async function handleMcpSetServers(
   servers: Record<string, McpServerConfigForProcessTransport>,
   sdkState: WireMcpState,
@@ -21,6 +41,13 @@ export async function handleOrphanedPermissionResponse({
   onEnqueued?: () => void
   handledToolUseIds: Set<string>
 }): Promise<boolean> { ... }
+
+export async function handleRewindFiles(
+  userMessageId: UUID,
+  appState: AppState,
+  setAppState: (updater: (prev: AppState) => AppState) => void,
+  dryRun: boolean,
+): Promise<RewindFilesResult> { ... }
 
 export async function reconcileMcpServers(
   desiredConfigs: Record<string, McpServerConfigForProcessTransport>,
@@ -71,6 +98,12 @@ export async function runHeadless(
   },
 ): Promise<void> { ... }
 
+export const SHUTDOWN_TEAM_PROMPT = ...
+
+export const proactiveModule = ...
+
+export const receivedMessageUuids = ...
+
 export function canBatchWith(head: QueuedCommand, next: QueuedCommand | undefined): boolean { ... }
 
 export function createCanUseToolWithPermissionPrompt(
@@ -84,12 +117,30 @@ export function getCanUseToolFn(
   onPermissionPrompt?: (details: RequiresActionDetails) => void,
 ): CanUseToolFn { ... }
 
+export function handleChannelEnable(
+  requestId: string,
+  serverName: string,
+  connectionPool: readonly MCPServerConnection[],
+  output: Stream<StdoutMessage>,
+): void { ... }
+
+export function handleSetPermissionMode(
+  request: { mode: InternalPermissionMode },
+  requestId: string,
+  toolPermissionContext: ToolPermissionContext,
+  output: Stream<StdoutMessage>,
+): ToolPermissionContext { ... }
+
 export function joinPromptValues(values: PromptValue[]): PromptValue { ... }
 
 export function removeInterruptedMessage(
   messages: Message[],
   interruptedUserMessage: UserMessage,
 ): void { ... }
+
+export function reregisterChannelHandlerAfterReconnect(connection: MCPServerConnection): void { ... }
+
+export function trackReceivedMessageUuid(uuid: UUID): boolean { ... }
 
 export type McpSetServersResult = {
   response: WireControlMcpSetServersResponse

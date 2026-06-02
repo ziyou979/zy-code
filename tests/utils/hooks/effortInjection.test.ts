@@ -8,7 +8,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
 let MODEL: string | undefined = 'test-model'
-let LEVELS: string[] = ['low', 'medium', 'high']
+let LEVELS: string[] = ['light', 'balanced', 'thorough']
 
 async function spread(path: string, overrides: Record<string, unknown>) {
   const real = await import(path)
@@ -16,9 +16,6 @@ async function spread(path: string, overrides: Record<string, unknown>) {
 }
 
 async function setupMocks() {
-  // 真实导入图里有模块在顶层调用 tSync（如 commands/background、use-tab-status），
-  // 会触发 settings.ts 循环初始化 TDZ。全替换 i18n 切断（不 import 真实 i18n，避免其
-  // 自身循环初始化 TDZ）。effort 解析本身不需要 i18n。
   mock.module('../../../src/i18n/index.js', () => ({
     tSync: (k: string) => k,
     t: (k: string) => k,
@@ -33,7 +30,6 @@ async function setupMocks() {
   await spread('../../../src/services/model/providerRegistry.js', {
     getProviderEntry: () => undefined,
   })
-  // createBaseHookInput 的轻量依赖（不影响 effort 解析）。
   await spread('../../../src/bootstrap/state.js', {
     getSessionId: () => 's1',
     getMainThreadAgentType: () => undefined,
@@ -47,7 +43,7 @@ describe('3.3 effort 注入', () => {
     delete process.env.ZY_CODE_EFFORT_LEVEL
     delete process.env.ZY_CODE_ALWAYS_ENABLE_EFFORT
     MODEL = 'test-model'
-    LEVELS = ['low', 'medium', 'high']
+    LEVELS = ['light', 'balanced', 'thorough']
     await setupMocks()
   })
   afterEach(() => mock.restore())
@@ -55,47 +51,46 @@ describe('3.3 effort 注入', () => {
   describe('getCurrentHookEffortLevel', () => {
     test('模型支持 effort：返回传入档位', async () => {
       const { getCurrentHookEffortLevel } = await import('../../../src/utils/effort.js')
-      expect(getCurrentHookEffortLevel('high')).toBe('high')
-      expect(getCurrentHookEffortLevel('low')).toBe('low')
+      expect(getCurrentHookEffortLevel('thorough')).toBe('thorough')
+      expect(getCurrentHookEffortLevel('light')).toBe('light')
     })
 
-    test('请求 max 不在支持集合：silent downgrade 到 high', async () => {
+    test('请求 extreme：直接返回（映射由 provider 层处理，不做 clamp）', async () => {
       const { getCurrentHookEffortLevel } = await import('../../../src/utils/effort.js')
-      expect(getCurrentHookEffortLevel('max')).toBe('high')
+      expect(getCurrentHookEffortLevel('extreme')).toBe('extreme')
     })
 
     test('模型不支持 effort：返回 undefined', async () => {
       LEVELS = []
       const { getCurrentHookEffortLevel } = await import('../../../src/utils/effort.js')
-      expect(getCurrentHookEffortLevel('high')).toBeUndefined()
+      expect(getCurrentHookEffortLevel('thorough')).toBeUndefined()
     })
 
     test('无当前模型：返回 undefined', async () => {
       MODEL = undefined
       const { getCurrentHookEffortLevel } = await import('../../../src/utils/effort.js')
-      expect(getCurrentHookEffortLevel('high')).toBeUndefined()
+      expect(getCurrentHookEffortLevel('thorough')).toBeUndefined()
     })
   })
 
   describe('createBaseHookInput', () => {
     test('从 toolUseContext.getAppState().effortValue 读取并注入 effort', async () => {
       const { createBaseHookInput } = await import('../../../src/utils/hooks/config.js')
-      const high = createBaseHookInput(undefined, undefined, {
-        getAppState: () => ({ effortValue: 'high' }),
+      const thorough = createBaseHookInput(undefined, undefined, {
+        getAppState: () => ({ effortValue: 'thorough' }),
       })
-      expect(high.effort).toEqual({ level: 'high' })
-      // 读取的是 appState 的值：换成 low 应得 low
-      const low = createBaseHookInput(undefined, undefined, {
-        getAppState: () => ({ effortValue: 'low' }),
+      expect(thorough.effort).toEqual({ level: 'thorough' })
+      const light = createBaseHookInput(undefined, undefined, {
+        getAppState: () => ({ effortValue: 'light' }),
       })
-      expect(low.effort).toEqual({ level: 'low' })
+      expect(light.effort).toEqual({ level: 'light' })
     })
 
     test('模型不支持 effort 时不写入 effort 字段', async () => {
       LEVELS = []
       const { createBaseHookInput } = await import('../../../src/utils/hooks/config.js')
       const out = createBaseHookInput(undefined, undefined, {
-        getAppState: () => ({ effortValue: 'high' }),
+        getAppState: () => ({ effortValue: 'thorough' }),
       })
       expect('effort' in out).toBe(false)
     })

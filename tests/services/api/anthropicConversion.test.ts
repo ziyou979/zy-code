@@ -412,6 +412,98 @@ describe('blockToAnthropic（通过 buildAnthropicCreateParams 间接测）', ()
     expect(blocks[0].type).toBe('text')
     expect(blocks[0].text).toContain('unknown_block')
   })
+
+  test('text block 保留 cache_control', () => {
+    const cc = { type: 'ephemeral' }
+    const result = buildAnthropicCreateParams({
+      model: 'c',
+      maxTokens: 100,
+      messages: [
+        {
+          role: 'user',
+          content: [{ type: 'text', text: 'hello', cache_control: cc }],
+        },
+      ],
+    } as any)
+    const msg = result.messages.find((m) => m.role === 'user')!
+    const blocks = msg.content as any[]
+    expect(blocks[0].cache_control).toEqual(cc)
+  })
+
+  test('tool_use block 保留 cache_control', () => {
+    const cc = { type: 'ephemeral' }
+    const result = buildAnthropicCreateParams({
+      model: 'c',
+      maxTokens: 100,
+      messages: [
+        {
+          role: 'assistant',
+          content: [
+            { type: 'tool_use', id: 't1', name: 'read', input: {}, cache_control: cc },
+          ],
+        },
+      ],
+    } as any)
+    const msg = result.messages.find((m) => m.role === 'assistant')!
+    const blocks = msg.content as any[]
+    expect(blocks[0].cache_control).toEqual(cc)
+  })
+
+  test('无 cache_control 的 block 不添加该字段', () => {
+    const result = buildAnthropicCreateParams({
+      model: 'c',
+      maxTokens: 100,
+      messages: [
+        {
+          role: 'user',
+          content: [{ type: 'text', text: 'no cache' }],
+        },
+      ],
+    } as any)
+    const msg = result.messages.find((m) => m.role === 'user')!
+    const blocks = msg.content as any[]
+    expect(blocks[0]).not.toHaveProperty('cache_control')
+  })
+
+  test('image block 保留 cache_control', () => {
+    const cc = { type: 'ephemeral' }
+    const result = buildAnthropicCreateParams({
+      model: 'c',
+      maxTokens: 100,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'image', mimeType: 'image/png', data: 'AAA', cache_control: cc },
+          ],
+        },
+      ],
+    } as any)
+    const msg = result.messages.find((m) => m.role === 'user')!
+    const blocks = msg.content as any[]
+    expect(blocks[0].cache_control).toEqual(cc)
+  })
+
+  test('多 block 消息只有最后一个带 cache_control', () => {
+    const cc = { type: 'ephemeral' }
+    const result = buildAnthropicCreateParams({
+      model: 'c',
+      maxTokens: 100,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'first' },
+            { type: 'text', text: 'last', cache_control: cc },
+          ],
+        },
+      ],
+    } as any)
+    const msg = result.messages.find((m) => m.role === 'user')!
+    const blocks = msg.content as any[]
+    expect(blocks[0]).not.toHaveProperty('cache_control')
+    expect(blocks[1].cache_control).toEqual(cc)
+  })
 })
 
 describe('toolChoiceToAnthropic', () => {

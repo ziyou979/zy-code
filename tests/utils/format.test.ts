@@ -94,36 +94,36 @@ describe('format', () => {
   })
 
   describe('formatDurationZh（中文）', () => {
-    test('0ms → "0秒"', () => {
-      expect(formatDurationZh(0)).toBe('0秒')
+    test('0ms → "0 秒"', () => {
+      expect(formatDurationZh(0)).toBe('0 秒')
     })
 
     test('小于 1ms 才显示小数', () => {
-      expect(formatDurationZh(0.5)).toBe('0.0秒')
+      expect(formatDurationZh(0.5)).toBe('0.0 秒')
     })
 
-    test('1ms → "0秒"', () => {
-      expect(formatDurationZh(1)).toBe('0秒')
+    test('1ms → "0 秒"', () => {
+      expect(formatDurationZh(1)).toBe('0 秒')
     })
 
-    test('30s → "30秒"', () => {
-      expect(formatDurationZh(30000)).toBe('30秒')
+    test('30s → "30 秒"', () => {
+      expect(formatDurationZh(30000)).toBe('30 秒')
     })
 
-    test('90s → "1分30秒"', () => {
-      expect(formatDurationZh(90000)).toBe('1分30秒')
+    test('90s → "1 分 30 秒"', () => {
+      expect(formatDurationZh(90000)).toBe('1 分 30 秒')
     })
 
-    test('1h → "1小时0分0秒"', () => {
-      expect(formatDurationZh(3600000)).toBe('1小时0分0秒')
+    test('1h → "1 小时 0 分 0 秒"', () => {
+      expect(formatDurationZh(3600000)).toBe('1 小时 0 分 0 秒')
     })
 
-    test('hideTrailingZeros：1h → "1小时"', () => {
-      expect(formatDurationZh(3600000, { hideTrailingZeros: true })).toBe('1小时')
+    test('hideTrailingZeros：1h → "1 小时"', () => {
+      expect(formatDurationZh(3600000, { hideTrailingZeros: true })).toBe('1 小时')
     })
 
-    test('mostSignificantOnly：2d 3h → "2天"', () => {
-      expect(formatDurationZh(183600000, { mostSignificantOnly: true })).toBe('2天')
+    test('mostSignificantOnly：2d 3h → "2 天"', () => {
+      expect(formatDurationZh(183600000, { mostSignificantOnly: true })).toBe('2 天')
     })
   })
 
@@ -311,40 +311,40 @@ describe('format', () => {
   })
 
   describe('formatDurationZh 进位', () => {
-    test('119999ms → "2分0秒"', () => {
-      expect(formatDurationZh(119999)).toBe('2分0秒')
+    test('119999ms → "2 分 0 秒"', () => {
+      expect(formatDurationZh(119999)).toBe('2 分 0 秒')
     })
 
-    test('3599999ms → "1小时0分0秒"', () => {
-      expect(formatDurationZh(3599999)).toBe('1小时0分0秒')
+    test('3599999ms → "1 小时 0 分 0 秒"', () => {
+      expect(formatDurationZh(3599999)).toBe('1 小时 0 分 0 秒')
     })
 
-    test('86399999ms → "1天0小时0分"', () => {
-      expect(formatDurationZh(86399999)).toBe('1天0小时0分')
+    test('86399999ms → "1 天 0 小时 0 分"', () => {
+      expect(formatDurationZh(86399999)).toBe('1 天 0 小时 0 分')
     })
   })
 
   describe('formatDurationZh mostSignificantOnly', () => {
-    test('30m → "30分"', () => {
-      expect(formatDurationZh(1800000, { mostSignificantOnly: true })).toBe('30分')
+    test('30m → "30 分"', () => {
+      expect(formatDurationZh(1800000, { mostSignificantOnly: true })).toBe('30 分')
     })
 
-    test('1h → "1小时"', () => {
-      expect(formatDurationZh(3600000, { mostSignificantOnly: true })).toBe('1小时')
+    test('1h → "1 小时"', () => {
+      expect(formatDurationZh(3600000, { mostSignificantOnly: true })).toBe('1 小时')
     })
 
-    test('1d → "1天"', () => {
-      expect(formatDurationZh(86400000, { mostSignificantOnly: true })).toBe('1天')
+    test('1d → "1 天"', () => {
+      expect(formatDurationZh(86400000, { mostSignificantOnly: true })).toBe('1 天')
     })
   })
 
   describe('formatDurationZh hideTrailingZeros', () => {
-    test('1天0小时0分 → "1天"', () => {
-      expect(formatDurationZh(86400000, { hideTrailingZeros: true })).toBe('1天')
+    test('1 天 0 小时 0 分 → "1 天"', () => {
+      expect(formatDurationZh(86400000, { hideTrailingZeros: true })).toBe('1 天')
     })
 
-    test('1天2小时0分 → "1天2小时"', () => {
-      expect(formatDurationZh(93600000, { hideTrailingZeros: true })).toBe('1天2小时')
+    test('1 天 2 小时 0 分 → "1 天 2 小时"', () => {
+      expect(formatDurationZh(93600000, { hideTrailingZeros: true })).toBe('1 天 2 小时')
     })
   })
 })

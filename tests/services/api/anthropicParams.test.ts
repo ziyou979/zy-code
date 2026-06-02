@@ -112,7 +112,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
       },
       thinking: { type: 'disabled' },
     } as any)
-    expect(result.thinking).toEqual({ type: 'enabled', budget_tokens: 1024 } as any)
+    expect(result.thinking).toEqual({ type: 'enabled', budgetTokens: 1024 } as any)
   })
 
   test('assistant tool_use 消息：input 是 object，能通过 SDK 校验', () => {

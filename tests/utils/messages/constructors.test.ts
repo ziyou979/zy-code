@@ -75,8 +75,15 @@ function stabilize(msg: Record<string, unknown>): Record<string, unknown> {
 }
 
 describe('消息构造函数', () => {
-  beforeEach(() => {
+  let constructors: typeof import('../../../src/utils/messages/constructors.js')
+
+  beforeEach(async () => {
+    mock.restore()
     setupMocks()
+    // bun 的 mock.module 在并行运行时可能被其他文件污染 messages.js barrel，
+    // 需要用 dynamic import + 时间戳 cache buster 绕过 bun 的 module cache
+    const mod = await import(`../../../src/utils/messages/constructors.js?t=${Date.now()}`)
+    constructors = mod as typeof import('../../../src/utils/messages/constructors.js')
   })
 
   afterEach(() => {
@@ -175,9 +182,8 @@ describe('消息构造函数', () => {
   // createAssistantMessage
   // ====================================================================
   describe('createAssistantMessage', () => {
-    test('string content — 自动包装为 TextBlock', async () => {
-      const { createAssistantMessage } = await import('../../../src/utils/messages/constructors.js')
-      const msg = createAssistantMessage({ content: 'Hello' })
+    test('string content — 自动包装为 TextBlock', () => {
+      const msg = constructors.createAssistantMessage({ content: 'Hello' })
 
       expect(msg.type).toBe('assistant')
       expect(msg.message.role).toBe('assistant')
@@ -187,34 +193,30 @@ describe('消息构造函数', () => {
       expect(msg.isApiErrorMessage).toBe(false)
     })
 
-    test('空字符串 content — 回退到 NO_CONTENT_MESSAGE', async () => {
-      const { createAssistantMessage } = await import('../../../src/utils/messages/constructors.js')
-      const msg = createAssistantMessage({ content: '' })
+    test('空字符串 content — 回退到 NO_CONTENT_MESSAGE', () => {
+      const msg = constructors.createAssistantMessage({ content: '' })
 
       expect(msg.message.content).toEqual([{ type: 'text', text: '[no content]' }])
     })
 
-    test('AssistantContentBlock[] content — 保持 block 数组', async () => {
-      const { createAssistantMessage } = await import('../../../src/utils/messages/constructors.js')
+    test('AssistantContentBlock[] content — 保持 block 数组', () => {
       const blocks = [
         { type: 'text' as const, text: 'block 1' },
         { type: 'tool_call' as const, id: 'tc_1', name: 'Bash', input: {} },
       ]
-      const msg = createAssistantMessage({ content: blocks })
+      const msg = constructors.createAssistantMessage({ content: blocks })
 
       expect(msg.message.content).toEqual(blocks)
     })
 
-    test('isVirtual 正确设置', async () => {
-      const { createAssistantMessage } = await import('../../../src/utils/messages/constructors.js')
-      const msg = createAssistantMessage({ content: 'test', isVirtual: true })
+    test('isVirtual 正确设置', () => {
+      const msg = constructors.createAssistantMessage({ content: 'test', isVirtual: true })
 
       expect(msg.isVirtual).toBe(true)
     })
 
-    test('UUID 和 timestamp 自动生成', async () => {
-      const { createAssistantMessage } = await import('../../../src/utils/messages/constructors.js')
-      const msg = createAssistantMessage({ content: 'test' })
+    test('UUID 和 timestamp 自动生成', () => {
+      const msg = constructors.createAssistantMessage({ content: 'test' })
 
       expect(msg.uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
       expect(msg.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/)

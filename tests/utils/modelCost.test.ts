@@ -5,9 +5,25 @@
  * calculateUSDCost 验证缓存 token 从顶层字段正确读取并参与计费。
  * getCurrencySymbol 依赖 i18n，用 mock 测试多语言分支。
  */
-import { describe, expect, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
 describe('modelCost', () => {
+  beforeEach(() => {
+    mock.module('../../src/services/model/modelCapabilities.js', () => ({
+      getStaticPricingForModel: () => ({
+        cost_input: 30,
+        cost_output: 60,
+        cost_cache_write: 37.5,
+        cost_cache_read: 1.5,
+        cost_web_search: 10,
+      }),
+    }))
+  })
+
+  afterEach(() => {
+    mock.restore()
+  })
+
   describe('calculateCostFromTokens', () => {
     test('零用量 → 0', () => {
       const { calculateCostFromTokens } = require('../../src/utils/modelCost.js')
