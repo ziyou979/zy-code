@@ -1,6 +1,9 @@
 import { feature } from 'bun:bundle'
 import { randomUUID } from 'node:crypto'
 import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
+import type { NonNullableUsage } from 'src/services/api/logging.js'
+import { EMPTY_USAGE } from 'src/services/api/logging.js'
+import { accumulateUsage, updateUsage } from 'src/services/api/usageTracker.js'
 import type {
   PermissionMode,
   WireCompactBoundaryMessage,
@@ -9,9 +12,6 @@ import type {
   WireStatus,
   WireUserMessageReplay,
 } from 'src/types/index.js'
-import { accumulateUsage, updateUsage } from 'src/services/api/usageTracker.js'
-import type { NonNullableUsage } from 'src/services/api/logging.js'
-import { EMPTY_USAGE } from 'src/services/api/logging.js'
 import stripAnsi from 'strip-ansi'
 import type { Command } from './commands.js'
 import { getSlashCommandToolSkills } from './commands.js'
@@ -23,6 +23,11 @@ import { hasAutoMemPathOverride } from './memdir/paths.js'
 import { query } from './query.js'
 import { categorizeRetryableAPIError } from './services/api/errors.js'
 import type { MCPServerConnection } from './services/mcp/types.js'
+import { getMainLoopModel, parseUserSpecifiedModel } from './services/model/model.js'
+import {
+  type ProcessUserInputContext,
+  processUserInput,
+} from './services/processUserInput/processUserInput.js'
 import type { AppState } from './state/AppState.js'
 import { type Tools, type ToolUseContext, toolMatchesName } from './Tool.js'
 import type { AgentDefinition } from './tools/AgentTool/loadAgentsDir.js'
@@ -31,8 +36,8 @@ import { toUUID } from './types/ids.js'
 import type { UserContentBlock } from './types/llm.js'
 import type { Message } from './types/message.js'
 import type { OrphanedPermission } from './types/textInputTypes.js'
-import type { Attachment } from './utils/attachments.js'
 import { createAbortController } from './utils/abortController.js'
+import type { Attachment } from './utils/attachments.js'
 import type { AttributionState } from './utils/commitAttribution.js'
 import { getGlobalConfig } from './utils/config.js'
 import { getCwd } from './utils/cwd.js'
@@ -51,12 +56,7 @@ import {
   pruneCompletedTurnArtifacts,
   SYNTHETIC_MESSAGES,
 } from './utils/messages.js'
-import { getMainLoopModel, parseUserSpecifiedModel } from './services/model/model.js'
 import { loadAllPluginsCacheOnly } from './utils/plugins/pluginLoader.js'
-import {
-  type ProcessUserInputContext,
-  processUserInput,
-} from './services/processUserInput/processUserInput.js'
 import { fetchSystemPromptParts } from './utils/queryContext.js'
 import { setCwd } from './utils/Shell.js'
 import { flushSessionStorage, recordTranscript } from './utils/sessionStorage.js'

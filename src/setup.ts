@@ -20,9 +20,11 @@ import {
 } from './bootstrap/state.js'
 import { getCommands } from './commands.js'
 import { tSync } from './i18n/index.js'
+import { lockCurrentVersion } from './services/nativeInstaller/index.js'
 import { initSessionMemory } from './services/SessionMemory/sessionMemory.js'
 import { asSessionId } from './types/ids.js'
 import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js'
+import { clearMemoryFileCaches } from './utils/agentsMd.js'
 import { checkAndRestoreTerminalBackup } from './utils/appleTerminalBackup.js'
 import { prefetchApiKeyFromApiKeyHelperIfSafe } from './utils/auth.js'
 import { getCurrentProjectConfig, getGlobalConfig } from './utils/config.js'
@@ -41,7 +43,6 @@ import { hasWorktreeCreateHook } from './utils/hooks.js'
 import { checkAndRestoreITerm2Backup } from './utils/iTermBackup.js'
 import { logError } from './utils/log.js'
 import { getRecentActivity } from './utils/logoUtils.js'
-import { lockCurrentVersion } from './services/nativeInstaller/index.js'
 import type { PermissionMode } from './utils/permissions/PermissionMode.js'
 import { getPlanSlug } from './utils/plans.js'
 import { saveWorktreeState } from './utils/sessionStorage.js'
@@ -52,7 +53,6 @@ import {
   generateTmuxSessionName,
   worktreeBranchName,
 } from './utils/worktree.js'
-import { clearMemoryFileCaches } from './utils/agentsMd.js'
 
 export async function setup(
   cwd: string,

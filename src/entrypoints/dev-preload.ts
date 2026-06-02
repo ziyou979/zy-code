@@ -4,7 +4,7 @@
 process.env.USER_TYPE = 'external'
 process.env.ZY_DEV_TRANSCRIPT_CLASSIFIER = '1'
 
-// 注入 build features，使 feature('TRANSCRIPT_CLASSIFIER') 等在 dev 下为 true
+// 注入 build features，使 true 等在 dev 下为 true
 if (typeof Bun !== 'undefined') {
   ;(Bun as any).features = [
     ...((Bun as any).features || []),

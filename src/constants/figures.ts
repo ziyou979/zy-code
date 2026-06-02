@@ -4,6 +4,7 @@ import { env } from '../utils/env.js'
 export const BLACK_CIRCLE = env.platform === 'darwin' ? '⏺' : '●'
 export const BULLET_OPERATOR = '∙'
 export const TEARDROP_ASTERISK = '✻'
+export const BRAILLE_Z = '⣝' // braille dots shaped like letter z
 export const UP_ARROW = '\u2191' // ↑ - used for opus 1m merge notice
 export const DOWN_ARROW = '\u2193' // ↓ - used for scroll hint
 export const EFFORT_MINIMAL = '◌' // ◌ - effort level: minimal
@@ -11,6 +12,11 @@ export const EFFORT_LOW = '○' // \u25cb - effort level: low
 export const EFFORT_MEDIUM = '◐' // \u25d0 - effort level: medium
 export const EFFORT_HIGH = '●' // \u25cf - effort level: high
 export const EFFORT_MAX = '◉' // \u25c9 - effort level: max
+export const EFFORT_QUICK = EFFORT_MINIMAL
+export const EFFORT_LIGHT = EFFORT_LOW
+export const EFFORT_BALANCED = EFFORT_MEDIUM
+export const EFFORT_THOROUGH = EFFORT_HIGH
+export const EFFORT_EXTREME = EFFORT_MAX
 
 // Media/trigger status indicators
 export const PLAY_ICON = '\u25b6' // ▶

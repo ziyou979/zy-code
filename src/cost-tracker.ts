@@ -1,4 +1,5 @@
 import chalk from 'chalk'
+import type { ModelUsage } from 'src/types/index.js'
 import {
   addToTotalCostState,
   addToTotalLinesChanged,
@@ -25,7 +26,6 @@ import {
   setCostStateForRestore,
   setHasUnknownModelCost,
 } from './bootstrap/state.js'
-import type { ModelUsage } from 'src/types/index.js'
 import { tSync } from './i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -37,6 +37,7 @@ import { getCurrentProjectConfig, saveCurrentProjectConfig } from './utils/confi
 import { getContextWindowForModel, getModelMaxOutputTokens } from './utils/context.js'
 import { formatDuration, formatNumber } from './utils/format.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
+import { stringWidth } from './ink/stringWidth.js'
 import { calculateUSDCost, getCurrencySymbol } from './utils/modelCost.js'
 
 export {
@@ -169,6 +170,13 @@ function formatCost(cost: number, maxDecimalPlaces: number = 4): string {
   return `${symbol}${cost > 0.5 ? round(cost, 100).toFixed(2) : cost.toFixed(maxDecimalPlaces)}`
 }
 
+// 按显示宽度右填充（处理 CJK 双列宽字符）
+const LABEL_COL_WIDTH = 23
+function padToWidth(text: string, targetWidth: number): string {
+  const w = stringWidth(text)
+  return text + ' '.repeat(Math.max(1, targetWidth - w))
+}
+
 function formatModelUsage(): string {
   const modelUsageMap = getModelUsage()
   if (Object.keys(modelUsageMap).length === 0) {
@@ -200,8 +208,12 @@ function formatModelUsage(): string {
     accumulated.costUSD += usage.costUSD
   }
 
+  // 模型名称右对齐到 LABEL_COL_WIDTH
   let result = tSync('costTracker.usageByModel')
   for (const [shortName, usage] of Object.entries(usageByShortName)) {
+    const label = `${shortName}:`
+    const w = stringWidth(label)
+    const paddedLabel = ' '.repeat(Math.max(0, LABEL_COL_WIDTH - w)) + label
     const usageString =
       `  ${formatNumber(usage.inputTokens)} ${tSync('costTracker.input')}, ` +
       `${formatNumber(usage.outputTokens)} ${tSync('costTracker.output')}, ` +
@@ -211,7 +223,7 @@ function formatModelUsage(): string {
         ? `, ${formatNumber(usage.webSearchRequests)} ${tSync('costTracker.webSearch')}`
         : '') +
       ` (${formatCost(usage.costUSD)})`
-    result += `\n${`${shortName}:`.padStart(21)}${usageString}`
+    result += `\n${paddedLabel}${usageString}`
   }
   return result
 }
@@ -226,12 +238,17 @@ export function formatTotalCost(): string {
   const linesAdded = getTotalLinesAdded()
   const linesRemoved = getTotalLinesRemoved()
 
+  const labelCost = `${tSync('costTracker.totalCost')}:`
+  const labelApi = `${tSync('costTracker.totalDurationApi')}:`
+  const labelWall = `${tSync('costTracker.totalDurationWall')}:`
+  const labelCode = `${tSync('costTracker.totalCodeChanges')}:`
+
   return chalk.dim(
-    `${tSync('costTracker.totalCost')}            ${costDisplay}\n` +
-      `${tSync('costTracker.totalDurationApi')}  ${formatDuration(getTotalAPIDuration())}
-${tSync('costTracker.totalDurationWall')} ${formatDuration(getTotalDuration())}
-${tSync('costTracker.totalCodeChanges')}    ${tSync(linesAdded === 1 ? 'costTracker.lineAdded' : 'costTracker.linesAdded', { count: linesAdded })}, ${tSync(linesRemoved === 1 ? 'costTracker.lineRemoved' : 'costTracker.linesRemoved', { count: linesRemoved })}
-${modelUsageDisplay}`,
+    `${padToWidth(labelCost, LABEL_COL_WIDTH)}${costDisplay}\n` +
+      `${padToWidth(labelApi, LABEL_COL_WIDTH)}${formatDuration(getTotalAPIDuration())}\n` +
+      `${padToWidth(labelWall, LABEL_COL_WIDTH)}${formatDuration(getTotalDuration())}\n` +
+      `${padToWidth(labelCode, LABEL_COL_WIDTH)}${tSync(linesAdded === 1 ? 'costTracker.lineAdded' : 'costTracker.linesAdded', { count: linesAdded })}, ${tSync(linesRemoved === 1 ? 'costTracker.lineRemoved' : 'costTracker.linesRemoved', { count: linesRemoved })}\n` +
+      `${modelUsageDisplay}`,
   )
 }
 

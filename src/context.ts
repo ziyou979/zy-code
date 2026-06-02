@@ -2,13 +2,13 @@ import { feature } from 'bun:bundle'
 import memoize from 'lodash-es/memoize.js'
 import { getAdditionalDirectoriesForAgentsMd, setCachedAgentsMdContent } from './bootstrap/state.js'
 import { getLocalISODate } from './constants/common.js'
+import { filterInjectedMemoryFiles, getAgentsMds, getMemoryFiles } from './utils/agentsMd.js'
 import { logForDiagnosticsNoPII } from './utils/diagLogs.js'
 import { isBareMode, isEnvTruthy } from './utils/envUtils.js'
 import { execFileNoThrow } from './utils/execFileNoThrow.js'
 import { getBranch, getDefaultBranch, getIsGit, gitExe } from './utils/git.js'
 import { shouldIncludeGitInstructions } from './utils/gitSettings.js'
 import { logError } from './utils/log.js'
-import { filterInjectedMemoryFiles, getMemoryFiles, getAgentsMds } from './utils/agentsMd.js'
 
 const MAX_STATUS_CHARS = 2000
 
@@ -102,7 +102,7 @@ export const getGitStatus = memoize(async (): Promise<string | null> => {
 /**
  * This context is prepended to each conversation, and cached for the duration of the conversation.
  */
-export let getSystemContext = memoize(async (): Promise<{ [k: string]: string }> => {
+export const getSystemContext = memoize(async (): Promise<{ [k: string]: string }> => {
   const startTime = Date.now()
   logForDiagnosticsNoPII('info', 'system_context_started')
 
@@ -134,7 +134,7 @@ export let getSystemContext = memoize(async (): Promise<{ [k: string]: string }>
 /**
  * This context is prepended to each conversation, and cached for the duration of the conversation.
  */
-export let getUserContext = memoize(async (): Promise<{ [k: string]: string }> => {
+export const getUserContext = memoize(async (): Promise<{ [k: string]: string }> => {
   const startTime = Date.now()
   logForDiagnosticsNoPII('info', 'user_context_started')
 

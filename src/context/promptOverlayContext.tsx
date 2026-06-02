@@ -18,7 +18,7 @@
  * Split into data/setter context pairs so writers never re-render on
  * their own writes — the setter contexts are stable.
  */
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react'
+import { createContext, type ReactNode, useContext, useEffect, useLayoutEffect, useState } from 'react'
 import type { SuggestionItem } from '../components/PromptInput/PromptInputFooterSuggestions.js'
 export type PromptOverlayData = {
   suggestions: SuggestionItem[]
@@ -66,12 +66,15 @@ export function useSetPromptOverlay(data) {
 }
 
 /**
- * Register a dialog node to float above the prompt. Clears on unmount.
- * No-op outside the provider (non-fullscreen renders inline instead).
+ * 注册一个浮动在提示符上方的对话框节点，卸载时自动清除。
+ * 在 provider 外部为空操作（非全屏模式改为内联渲染）。
+ *
+ * 使用 useLayoutEffect 以确保对话框上下文在同一次 commit 中同步清除，
+ * 避免 Notifications 高度已变但对话框 portal 仍残留导致的鬼影帧。
  */
 export function useSetPromptOverlayDialog(node) {
   const set = useContext(SetDialogContext)
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!set) {
       return
     }

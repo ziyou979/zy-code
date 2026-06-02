@@ -115,7 +115,6 @@ function getMessagesForUiLanguage(uiLang: UiLanguage): Record<string, string> {
   switch (uiLang) {
     case 'zh-CN':
       return zhCNMessages
-    case 'en':
     default:
       return enMessages
   }

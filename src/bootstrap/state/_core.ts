@@ -14,12 +14,12 @@ import type { logs } from '@opentelemetry/api-logs'
 import type { LoggerProvider } from '@opentelemetry/sdk-logs'
 import type { MeterProvider } from '@opentelemetry/sdk-metrics'
 import type { BasicTracerProvider } from '@opentelemetry/sdk-trace-base'
+import type { ModelSetting } from 'src/services/model/model.js'
+import type { ModelStrings } from 'src/services/model/modelStrings.js'
 import type { AgentColorName } from 'src/tools/AgentTool/agentColorManager.js'
 import type { HookCallbackMatcher } from 'src/types/hooks/index.js'
 import type { SessionId } from 'src/types/ids.js'
 import type { HookEvent, ModelUsage } from 'src/types/index.js'
-import type { ModelSetting } from 'src/services/model/model.js'
-import type { ModelStrings } from 'src/services/model/modelStrings.js'
 // 浏览器 SDK 构建的间接引用（package.json 的 "browser" 字段会替换
 // crypto.ts 为 crypto.browser.ts）。纯叶子节点重新导出 node:crypto —
 // 零循环依赖风险。路径别名导入绕过了 bootstrap-isolation 检查

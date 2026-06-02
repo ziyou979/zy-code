@@ -2,6 +2,11 @@ import { feature } from 'bun:bundle'
 import { appendFileSync } from 'node:fs'
 import React from 'react'
 import { logEvent } from 'src/services/analytics/index.js'
+import {
+  getExternalAgentsMdIncludes,
+  getMemoryFiles,
+  shouldShowAgentsMdExternalIncludesWarning,
+} from 'src/utils/agentsMd.js'
 import { gracefulShutdown, gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
 import {
   type ChannelEntry,
@@ -11,6 +16,7 @@ import {
   setSessionTrustAccepted,
   setStatsStore,
 } from './bootstrap/state.js'
+import { startDeferredPrefetches } from './cli/bootstrap/prefetch.js'
 import type { Command } from './commands.js'
 import { createStatsStore, type StatsStore } from './context/stats.js'
 import { getSystemContext } from './context.js'
@@ -18,13 +24,14 @@ import { initializeTelemetryAfterTrust } from './entrypoints/init.js'
 import { isSynchronizedOutputSupported } from './ink/terminal.js'
 import type { RenderOptions, Root, TextProps } from './ink.js'
 import { KeybindingSetup } from './keybindings/KeybindingProviderSetup.js'
-import { startDeferredPrefetches } from './cli/bootstrap/prefetch.js'
 import {
   checkGate_CACHED_OR_BLOCKING,
   initializeGrowthBook,
   resetGrowthBook,
 } from './services/analytics/growthbook.js'
+import { updateDeepLinkTerminalPreference } from './services/deepLink/terminalPreference.js'
 import { handleMcpjsonServerApprovals } from './services/mcpServerApproval.js'
+import { getDefaultStandardModel } from './services/model/model.js'
 import { AppStateProvider } from './state/AppState.js'
 import { onChangeAppState } from './state/onChangeAppState.js'
 import { normalizeApiKeyForConfig } from './utils/authPortable.js'
@@ -34,12 +41,10 @@ import {
   getGlobalConfig,
   saveGlobalConfig,
 } from './utils/config.js'
-import { updateDeepLinkTerminalPreference } from './services/deepLink/terminalPreference.js'
 import { isEnvTruthy, isRunningOnHomespace, isTestEnv } from './utils/envUtils.js'
 import { type FpsMetrics, FpsTracker } from './utils/fpsTracker.js'
 import { updateGithubRepoPathMapping } from './utils/githubRepoPathMapping.js'
 import { applyConfigEnvironmentVariables } from './utils/managedEnv.js'
-import { getDefaultStandardModel } from './services/model/model.js'
 import type { PermissionMode } from './utils/permissions/PermissionMode.js'
 import { getBaseRenderOptions } from './utils/renderOptions.js'
 import { getSettingsWithAllErrors } from './utils/settings/allErrors.js'
@@ -47,11 +52,6 @@ import {
   hasAutoModeOptIn,
   hasSkipDangerousModePermissionPrompt,
 } from './utils/settings/settings.js'
-import {
-  getExternalAgentsMdIncludes,
-  getMemoryFiles,
-  shouldShowAgentsMdExternalIncludesWarning,
-} from 'src/utils/agentsMd.js'
 export function completeOnboarding(): void {
   saveGlobalConfig((current) => ({
     ...current,
@@ -275,21 +275,19 @@ export async function showSetupScreens(
     )
     await showSetupDialog(root, (done) => <BypassPermissionsModeDialog onAccept={done} />)
   }
-  if (feature('TRANSCRIPT_CLASSIFIER')) {
-    // Only show the opt-in dialog if auto mode actually resolved — if the
-    // gate denied it (org not allowlisted, settings disabled), showing
-    // consent for an unavailable feature is pointless. The
-    // verifyAutoModeGateAccess notification will explain why instead.
-    if (permissionMode === 'auto' && !hasAutoModeOptIn()) {
-      const { AutoModeOptInDialog } = await import('./components/AutoModeOptInDialog.js')
-      await showSetupDialog(root, (done) => (
-        <AutoModeOptInDialog
-          onAccept={done}
-          onDecline={() => gracefulShutdownSync(1)}
-          declineExits
-        />
-      ))
-    }
+  // Only show the opt-in dialog if auto mode actually resolved — if the
+  // gate denied it (org not allowlisted, settings disabled), showing
+  // consent for an unavailable feature is pointless. The
+  // verifyAutoModeGateAccess notification will explain why instead.
+  if (permissionMode === 'auto' && !hasAutoModeOptIn()) {
+    const { AutoModeOptInDialog } = await import('./components/AutoModeOptInDialog.js')
+    await showSetupDialog(root, (done) => (
+      <AutoModeOptInDialog
+        onAccept={done}
+        onDecline={() => gracefulShutdownSync(1)}
+        declineExits
+      />
+    ))
   }
 
   // --dangerously-load-development-channels confirmation. On accept, append

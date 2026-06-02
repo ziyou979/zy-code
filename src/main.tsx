@@ -25,18 +25,26 @@ startKeychainPrefetch()
 
 import { feature } from 'bun:bundle'
 import { Command as CommanderCommand } from '@commander-js/extra-typings'
-import { init } from './entrypoints/init.js'
-import { loadPolicyLimits } from './services/policyLimits/index.js'
-import { loadRemoteManagedSettings } from './services/remoteManagedSettings/index.js'
-import { stopCapturingEarlyInput } from './utils/earlyInput.js'
-import { isInternalBuild } from './utils/envUtils.js'
-import { initializeWarningHandler } from './utils/warningHandler.js'
+import {
+  setClientType,
+  setInlinePlugins,
+  setIsInteractive,
+  setQuestionPreviewFormat,
+  setSessionSource,
+} from './bootstrap/state.js'
+import { rewriteArgv } from './cli/argvDispatch.js'
 import { resetCursor } from './cli/bootstrap/cursor.js'
 import { isBeingDebugged } from './cli/bootstrap/debugCheck.js'
-import { runMigrations } from './cli/bootstrap/migrations.js'
 import { initializeEntrypoint } from './cli/bootstrap/entrypoint.js'
 import { eagerLoadSettings } from './cli/bootstrap/managedSettings.js'
-import { rewriteArgv } from './cli/argvDispatch.js'
+import { runMigrations } from './cli/bootstrap/migrations.js'
+import { registerAntCommands } from './cli/commands/ant.js'
+import { registerAuthCommands } from './cli/commands/auth.js'
+import { registerAutomationCommands } from './cli/commands/automation.js'
+import { registerMcpCommands } from './cli/commands/mcp.js'
+import { registerPluginCommands } from './cli/commands/plugin.js'
+import { rootAction } from './cli/commands/root.js'
+import { registerUtilCommands } from './cli/commands/util.js'
 import {
   applyDebugOptions,
   applyLifecycleOptions,
@@ -48,23 +56,14 @@ import { applyPermissionOptions } from './cli/options/permissionOptions.js'
 import { applyRuntimeOptions } from './cli/options/runtimeOptions.js'
 import { applySessionOptions } from './cli/options/sessionOptions.js'
 import { createSortedHelpConfig } from './cli/options/sortedHelp.js'
-import { registerAntCommands } from './cli/commands/ant.js'
-import { registerAuthCommands } from './cli/commands/auth.js'
-import { rootAction } from './cli/commands/root.js'
-import { registerAutomationCommands } from './cli/commands/automation.js'
-import { registerMcpCommands } from './cli/commands/mcp.js'
-import { registerPluginCommands } from './cli/commands/plugin.js'
-import { registerUtilCommands } from './cli/commands/util.js'
-import { isEnvTruthy } from './utils/envUtils.js'
-import { ensureMdmSettingsLoaded } from './utils/settings/mdm/settings.js'
-import {
-  setClientType,
-  setInlinePlugins,
-  setIsInteractive,
-  setQuestionPreviewFormat,
-  setSessionSource,
-} from './bootstrap/state.js'
+import { init } from './entrypoints/init.js'
+import { loadPolicyLimits } from './services/policyLimits/index.js'
+import { loadRemoteManagedSettings } from './services/remoteManagedSettings/index.js'
+import { stopCapturingEarlyInput } from './utils/earlyInput.js'
+import { isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
 import { clearPluginCache } from './utils/plugins/pluginLoader.js'
+import { ensureMdmSettingsLoaded } from './utils/settings/mdm/settings.js'
+import { initializeWarningHandler } from './utils/warningHandler.js'
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 profileCheckpoint('main_tsx_imports_loaded')

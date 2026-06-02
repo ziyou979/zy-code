@@ -60,11 +60,11 @@ export type {
   WebSearchProgress,
 }
 
+import type { HookProgress, PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
+import type { WireStatus } from 'src/types/index.js'
 import type { SpinnerMode } from './components/Spinner.js'
 import type { QuerySource } from './constants/querySource.js'
-import type { WireStatus } from 'src/types/index.js'
 import type { AppState } from './state/AppState.js'
-import type { HookProgress, PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type { AgentId } from './types/ids.js'
 import type { DeepImmutable } from './types/utils.js'
 import type { AttributionState } from './utils/commitAttribution.js'

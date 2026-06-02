@@ -19,7 +19,7 @@ import commitPushPr from './commands/commit-push-pr.js'
 import compact from './commands/compact/index.js'
 import config from './commands/config/index.js'
 import { context, contextNonInteractive } from './commands/context/index.js'
-import cost from './commands/cost/index.js'
+// /cost 已合并为 /usage 的别名，不再独立注册
 import diff from './commands/diff/index.js'
 import ctx_viz from './commands/ctx_viz/index.js'
 import doctor from './commands/doctor/index.js'
@@ -143,7 +143,7 @@ import upgrade from './commands/upgrade/index.js'
 import rateLimitOptions from './commands/rate-limit-options/index.js'
 import statusline from './commands/statusline/index.js'
 import effort, { effortLocal } from './commands/effort/index.js'
-import stats from './commands/stats/index.js'
+// /stats 已合并为 /usage 的别名（通过 invokedAs 跳转到 Stats tab）
 // insights.ts 文件为 113KB（3200 行，包含 diffLines/html 渲染）。懒加载垫片将重型模块延迟到 /insights 实际被调用时才加载。
 const usageReport: Command = {
   type: 'prompt',
@@ -224,7 +224,6 @@ const COMMANDS = memoize((): Command[] => [
   desktop,
   context,
   contextNonInteractive,
-  cost,
   diff,
   doctor,
   effort,
@@ -259,7 +258,6 @@ const COMMANDS = memoize((): Command[] => [
   resume,
   session,
   skills,
-  stats,
   status,
   statusline,
   stickers,
@@ -559,8 +557,7 @@ export const REMOTE_SAFE_COMMANDS: Set<Command> = new Set([
   theme, // 更改终端主题
   color, // 更改代理颜色
   vim, // 切换 vim 模式
-  cost, // 显示会话成本（本地成本追踪）
-  usage, // 显示使用信息
+  usage, // 显示会话成本 + 使用信息（别名 /cost）
   copy, // 复制最后一条消息
   btw, // 快速备注
   feedback, // 发送反馈
@@ -587,7 +584,6 @@ export const BRIDGE_SAFE_COMMANDS: Set<Command> = new Set(
   [
     compact, // 缩减上下文 — 在会话中从手机操作时很有用
     clear, // 清除对话记录
-    cost, // 显示会话成本
     summary, // 总结对话
     releaseNotes, // 显示变更日志
     files, // 列出跟踪的文件
@@ -674,7 +670,6 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   desktop: 'commands.desktop',
   context: 'commands.context',
   'context-noninteractive': 'commands.contextNonInteractive',
-  cost: 'commands.cost',
   diff: 'commands.diff',
   doctor: 'commands.doctor',
   effort: 'commands.effort',
@@ -701,7 +696,6 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   session: 'commands.session',
   skills: 'commands.skills',
   simplify: 'commands.simplify',
-  stats: 'commands.stats',
   status: 'commands.status',
   statusline: 'commands.statusline',
   stickers: 'commands.stickers',
