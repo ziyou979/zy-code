@@ -14,7 +14,9 @@ describe('WorkflowSemaphore', () => {
 
     // Next acquire should not resolve immediately
     let resolved = false
-    const pending = sem.acquire().then(() => { resolved = true })
+    const pending = sem.acquire().then(() => {
+      resolved = true
+    })
 
     // Give microtask queue a chance
     await new Promise((r) => setTimeout(r, 10))
@@ -55,7 +57,9 @@ describe('WorkflowSemaphore', () => {
     }
 
     let error: Error | null = null
-    const pending = sem.acquire().catch((e) => { error = e })
+    const pending = sem.acquire().catch((e) => {
+      error = e
+    })
 
     sem.abortAllWaiting()
     await pending

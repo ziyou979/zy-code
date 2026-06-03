@@ -459,9 +459,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       },
       {
         role: 'user',
-        content: [
-          { type: 'tool_result', toolCallId: 'c1', content: 'ok', cache_control: cc },
-        ],
+        content: [{ type: 'tool_result', toolCallId: 'c1', content: 'ok', cache_control: cc }],
       },
     ]
     const result = messagesToOpenAI(messages as any)
@@ -485,9 +483,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       },
       {
         role: 'user',
-        content: [
-          { type: 'tool_result', toolCallId: 'c1', content: 'ok' },
-        ],
+        content: [{ type: 'tool_result', toolCallId: 'c1', content: 'ok' }],
       },
     ]
     const result = messagesToOpenAI(messages as any)
@@ -635,9 +631,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       },
       {
         role: 'user',
-        content: [
-          { type: 'tool_result', toolCallId: 'tc1', content: 'done', cache_control: cc },
-        ],
+        content: [{ type: 'tool_result', toolCallId: 'tc1', content: 'done', cache_control: cc }],
       },
     ]
     const result = messagesToOpenAI(messages as any)

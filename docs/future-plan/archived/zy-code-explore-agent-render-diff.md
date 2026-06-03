@@ -21,7 +21,7 @@
 | PowerShell 分支白/黑名单 | 完整存在 | 完整存在 | **逐字相同** |
 | 系统 prompt 主体（READ-ONLY/strengths/guidelines） | 完整 | 完整 | 仅署名差异（`Claude Code, Anthropic` vs `ZY Code`） |
 
-→ **业务定义层**已完全对齐，差异主要在 **默认 model**：
+→ **业务定义层**已完全对齐，默认 model 也是等价的（`compact` 对应 Claude 的 `haiku`，有意分化命名）：
 
 ```js
 // Claude binary (uo5 上下文)
@@ -36,7 +36,7 @@ function KOH(H) {
 model: isInternalBuild() ? 'inherit' : 'compact',
 ```
 
-Claude Code 普通用户拿到的是 `haiku`（更快但更弱），zy-code 普通用户拿到的是 `compact`（路由到压缩主模型，能力更强但吞吐稍低）。
+Claude Code 普通用户拿到的是 `haiku`，zy-code 普通用户拿到的是 `compact`——两者是**有意的对应关系**（`compact` 即 zy-code 对 `haiku` 的本地化命名/路由），能力定位一致，非差异点。
 
 ### 1.2 二进制证据（偏移 `200,302,924` 起）
 
@@ -169,17 +169,12 @@ zy-code 实现完全相同，且 explore agent 默认走 `compact` 模型也吻�
 
 ## 4. 收敛建议
 
-### 4.1 高优（行为差）
-
-- **explore agent 默认 model**：考虑把外部用户的 `compact` 改成 `haiku`，与 Claude 拉齐——前提是评估 `haiku` 在 zy-code 私有路由网关下的可用性。或者反向：保留 `compact` 但补充一个 `zy_explore_agent_haiku` flag，让需要的用户切换。
-  - 改动点：[`exploreAgent.ts:95`](../../src/tools/AgentTool/built-in/exploreAgent.ts#L95)
-
-### 4.2 中优（UI 体验差）
+### 4.1 中优（UI 体验差）
 
 - **核对 ctrl+o 切换 transcript**：确认 [`keybindings/`](../../src/keybindings/) 中的 `app:toggleTranscript` 已注册并指向 `ctrl+o`，与 Claude 默认绑定一致。
 - **subagent hook 命名**：确认 [`hooks/`](../../src/hooks/) 中的 `PermissionRequest` / `PermissionDenied` / `MessageDisplay` / `InstructionsLoaded` 4 个事件名都已实现并在 subagent 内部 dispatch。
 
-### 4.3 低优（可观测性）
+### 4.2 低优（可观测性）
 
 - **GrowthBook flag 命名同步**：注释里"`zy_explore_agent`" → 校对 flag 是否真的注册；Claude 的 `tengu_quartz_heron` 是 internal-only flag，zy-code 不必复用。
 
@@ -443,8 +438,99 @@ bun src/entrypoints/cli.tsx
 - **风险 B**：旧用户依赖那条 `(ctrl+b 后台运行)` 提示找到后台化入口。改动后提示仍在，只是位置从工具调用区挪到 `Running N Explore agents` 行末尾，与 `(ctrl+o to expand)` 并列。
 - **回滚**：保留 `import { BackgroundHint }` 和 `PROGRESS_THRESHOLD_MS` 常量，回退 1132-1150 行恢复旧分支即可。改动局限在两个文件，无数据迁移。
 
+--
+
+## 8. Subagent 折叠视图中 Bash/Update 工具始终可见（`briefStandalone`）
+
+**用户复现现象**
+
+Claude Code 在 Explore subagent 跑的过程中，**即使在折叠视图**也会直接显示 Bash 和 Update 的摘要行：
+
+```
+⏺ Bash(mvn compile -pl helper-basic-service -am -q 2>&1 | tail -3)
+  ⎿  main_end:2026-06-03T14:25:28+08:00
+  ⎿  (timeout 3m)
+
+⏺ Update(helper-basic-service/src/main/java/com/alitrip/btriphelper/service/program/dto/StoreRouteItemDTO.java)
+  ⎿  Added 2 lines, removed 2 lines
+```
+
+以前这些内容只有在 ctrl+o 展开 transcript 后才可见。现在是**默认可见**。
+
+**根因定位**
+
+Claude binary 中的消息折叠算法 `akK`（偏移 `205,898,500` 起）有一段关键逻辑：
+
+```js
+// 从后向前遍历所有 tool_use，每种工具名只保留最后一次调用
+for (let W = z - 1; !A && W >= T; W--) {
+  let Z = H[W];
+  if (Z.type !== "assistant") continue;
+  let G = Z.message.content[0];
+  if (G?.type !== "tool_use" || j.has(G.name)) continue;
+  // ↓ 关键：如果工具有 briefStandalone=true，则豁免折叠
+  if (j.add(G.name), h4(_, G.name)?.briefStandalone) {
+    w.add(W);  // 保留此 tool_use
+    // 同时保留对应的 tool_result
+    for (let L = W + 1; L < z; L++) {
+      let k = H[L];
+      if (k.type === "assistant") break;
+      if (k.type !== "user") continue;
+      let v = k.message.content[0];
+      if (v?.type === "tool_result" && v.tool_use_id === G.id) {
+        w.add(L); break;
+      }
+    }
+  }
+}
+```
+
+`briefStandalone` 是**工具定义对象**上的布尔属性（偏移 `104,985,808`）。标记为 `true` 的工具在 brief/折叠视图中**不会被折叠到计数摘要中**，而是作为独立行保留。
+
+至少 Bash 和 Update（FileEdit）工具被标记为 `briefStandalone: true`。
+
+**zy-code 当前行为**
+
+[AgentTool/UI.tsx:565-567](../../src/tools/AgentTool/UI.tsx)：
+
+```ts
+const displayedMessages = isTranscriptMode
+  ? processedMessages
+  : processedMessages.slice(-MAX_PROGRESS_MESSAGES_TO_SHOW)  // MAX = 3
+```
+
+subagent progress 视图只简单取最后 3 条消息显示，其余全部折叠为 "N more tool uses (ctrl+o to expand)"。没有按工具类型进行"豁免"判断。
+
+**对比**
+
+| | Claude Code | zy-code |
+|---|---|---|
+| 折叠策略 | 按工具属性 `briefStandalone` 豁免关键工具 | 简单取最后 3 条 |
+| Bash 可见性 | **最后一次** Bash 调用始终可见 | 仅恰好在最后 3 条时才可见 |
+| Update 可见性 | **最后一次** Update 始终可见 | 同上 |
+| Tool 接口属性 | `briefStandalone?: boolean` | 不存在 |
+| 折叠算法位置 | 主折叠函数 `akK` | `processProgressMessages` |
+
+**对齐改动建议**
+
+1. **Tool 接口新增属性**：[Tool.ts:392](../../src/Tool.ts) 附近加 `briefStandalone?: boolean`
+2. **标记关键工具**：BashTool、FileEditTool、FileWriteTool 设为 `briefStandalone: true`
+3. **修改 subagent 折叠算法**：[AgentTool/UI.tsx:processProgressMessages](../../src/tools/AgentTool/UI.tsx) 中，在 `slice(-3)` 之前，先从后向前扫描 progress messages，对每种 `briefStandalone` 工具保留最后一次 tool_use + tool_result 独立行
+4. **主线程折叠算法对齐**：[collapseReadSearch.ts:collapseReadSearchGroups](../../src/utils/collapseReadSearch.ts) 中，对 `briefStandalone` 工具在折叠分组时保留为独立行（目前 Bash/FileEdit 在非全屏模式下已是 `isCollapsible: false`，此项可能已部分满足）
+
+**验证**
+
+```bash
+# 确认 Claude binary 中 briefStandalone 存在
+CLAUDE_BIN="$(dirname "$(readlink -f "$(which claude)")")/claude.exe"
+grep -aob 'briefStandalone' "$CLAUDE_BIN"  # 预期 2 处
+
+# 确认 zy-code 当前无此属性
+rg 'briefStandalone' src/  # 预期 0 结果
+```
+
 ---
 
 ## 附：核心结论一句话
 
-> **Explore Agent 业务定义已经 1:1 对齐**（whenToUse / whenToUseLean / PowerShell 分支 / disallowedTools / 系统 prompt 全部逐字相同），差异主要是默认 `model` 由 `haiku` 改成了 `compact`。**渲染层** 颜色主题、SDK `task_progress` 事件 schema、Done 卡片、转录切换、进度摘要管线都已经对齐；Claude 近期加的 `workflow_progress` 字段、新版 subagent hook 命名、ctrl+o 切换 transcript 也都能在 zy-code 找到对应实现。**仍存在的 3 处显著渲染差距**：(1) 缺少从 assistant 流式文本中抽取活动短语（`Exploring/Searching/...`）的管线；(2) 单 subagent 时 `hideType=true` 把 `Explore` 类型标签隐藏；(3) 跑超 2 秒后 `setToolJSX(<BackgroundHint />)` 抢占主渲染区，导致 `⏺ Explore(...)` + `⎿ Done` 标准卡片完全消失，只剩 `(ctrl+b 后台运行)` 一行。
+> **Explore Agent 业务定义已经 1:1 对齐**（whenToUse / whenToUseLean / PowerShell 分支 / disallowedTools / 系统 prompt 全部逐字相同），默认 `model` 是等价对应（`compact` = Claude 的 `haiku`，有意分化）。**渲染层** 颜色主题、SDK `task_progress` 事件 schema、Done 卡片、转录切换、进度摘要管线都已经对齐；Claude 近期加的 `workflow_progress` 字段、新版 subagent hook 命名、ctrl+o 切换 transcript 也都能在 zy-code 找到对应实现。**仍存在的 4 处显著渲染差距**：(1) 缺少从 assistant 流式文本中抽取活动短语（`Exploring/Searching/...`）的管线；(2) 单 subagent 时 `hideType=true` 把 `Explore` 类型标签隐藏；(3) 跑超 2 秒后 `setToolJSX(<BackgroundHint />)` 抢占主渲染区，导致 `⏺ Explore(...)` + `⎿ Done` 标准卡片完全消失，只剩 `(ctrl+b 后台运行)` 一行；(4) subagent 折叠视图缺少 `briefStandalone` 工具豁免机制，Bash/Update 等关键工具调用被折叠为计数摘要而非独立行显示。

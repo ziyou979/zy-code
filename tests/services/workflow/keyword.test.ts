@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'bun:test'
-import { findWorkflowTriggerPositions, hasWorkflowKeyword } from '../../../src/services/workflow/keyword.js'
+import {
+  findWorkflowTriggerPositions,
+  hasWorkflowKeyword,
+} from '../../../src/services/workflow/keyword.js'
 
 describe('workflow keyword detection', () => {
   describe('hasWorkflowKeyword', () => {

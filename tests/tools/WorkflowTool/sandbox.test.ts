@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test'
-import { parseMeta, validateScript, WorkflowScriptError } from '../../../src/tools/WorkflowTool/runtime/sandbox.js'
+import {
+  parseMeta,
+  validateScript,
+  WorkflowScriptError,
+} from '../../../src/tools/WorkflowTool/runtime/sandbox.js'
 
 describe('WorkflowTool sandbox', () => {
   describe('parseMeta', () => {

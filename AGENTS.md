@@ -74,7 +74,7 @@ bun run build           # 构建 CLI → dist/cli.js
 
 # 启动
 bun run start           # 运行已构建的 CLI（dist/cli.js）
-bun src/entrypoints/cli.tsx  # 直接运行 CLI，无需构建（开发模式）
+bun run dev             # 开发模式（需 --preload 注入 MACRO 等构建时宏）
 
 # 类型校验（更改代码后必须执行）
 bun tsc --noEmit

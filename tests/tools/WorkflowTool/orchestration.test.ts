@@ -51,11 +51,7 @@ describe('orchestration', () => {
     test('runs all thunks and collects results', async () => {
       const sem = new WorkflowSemaphore()
       const result = await parallel(
-        [
-          () => Promise.resolve('a'),
-          () => Promise.resolve('b'),
-          () => Promise.resolve('c'),
-        ],
+        [() => Promise.resolve('a'), () => Promise.resolve('b'), () => Promise.resolve('c')],
         sem,
       )
       expect(result).toEqual(['a', 'b', 'c'])

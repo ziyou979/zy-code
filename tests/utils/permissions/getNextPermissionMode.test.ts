@@ -14,11 +14,10 @@ let autoModeGateEnabled = false
 mock.module('../../../src/utils/permissions/permissionSetup.js', () => ({
   isAutoModeGateEnabled: () => autoModeGateEnabled,
   getAutoModeUnavailableReason: () => (autoModeGateEnabled ? undefined : 'disabled'),
-  transitionPermissionMode: (
-    _from: string,
-    _to: string,
-    ctx: Record<string, unknown>,
-  ) => ({ ...ctx, mode: _to }),
+  transitionPermissionMode: (_from: string, _to: string, ctx: Record<string, unknown>) => ({
+    ...ctx,
+    mode: _to,
+  }),
 }))
 mock.module('../../../src/utils/debug.js', () => ({
   logForDebugging: () => {},
@@ -50,32 +49,24 @@ describe('getNextPermissionMode', () => {
   describe('auto 模式可用时', () => {
     test('default → auto（普通用户可切换）', () => {
       autoModeGateEnabled = true
-      expect(
-        getNextPermissionMode(makeCtx('default', { isAutoModeAvailable: true })),
-      ).toBe('auto')
+      expect(getNextPermissionMode(makeCtx('default', { isAutoModeAvailable: true }))).toBe('auto')
     })
 
     test('plan → auto', () => {
       autoModeGateEnabled = true
-      expect(
-        getNextPermissionMode(makeCtx('plan', { isAutoModeAvailable: true })),
-      ).toBe('auto')
+      expect(getNextPermissionMode(makeCtx('plan', { isAutoModeAvailable: true }))).toBe('auto')
     })
 
     test('bypassPermissions → auto', () => {
       autoModeGateEnabled = true
       expect(
-        getNextPermissionMode(
-          makeCtx('bypassPermissions', { isAutoModeAvailable: true }),
-        ),
+        getNextPermissionMode(makeCtx('bypassPermissions', { isAutoModeAvailable: true })),
       ).toBe('auto')
     })
 
     test('auto → default（循环回起点）', () => {
       autoModeGateEnabled = true
-      expect(
-        getNextPermissionMode(makeCtx('auto', { isAutoModeAvailable: true })),
-      ).toBe('default')
+      expect(getNextPermissionMode(makeCtx('auto', { isAutoModeAvailable: true }))).toBe('default')
     })
   })
 
@@ -137,16 +128,16 @@ describe('getNextPermissionMode', () => {
   describe('gate 部分开启', () => {
     test('isAutoModeAvailable=true 但 gate 关闭 → 不切 auto', () => {
       autoModeGateEnabled = false
-      expect(
-        getNextPermissionMode(makeCtx('default', { isAutoModeAvailable: true })),
-      ).toBe('acceptEdits')
+      expect(getNextPermissionMode(makeCtx('default', { isAutoModeAvailable: true }))).toBe(
+        'acceptEdits',
+      )
     })
 
     test('gate 开启但 isAutoModeAvailable=false → 不切 auto', () => {
       autoModeGateEnabled = true
-      expect(
-        getNextPermissionMode(makeCtx('default', { isAutoModeAvailable: false })),
-      ).toBe('acceptEdits')
+      expect(getNextPermissionMode(makeCtx('default', { isAutoModeAvailable: false }))).toBe(
+        'acceptEdits',
+      )
     })
   })
 })

@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'bun:test'
-import { MutableWorkflowBudget, BudgetExhaustedError } from '../../../src/tools/WorkflowTool/runtime/budget.js'
+import {
+  MutableWorkflowBudget,
+  BudgetExhaustedError,
+} from '../../../src/tools/WorkflowTool/runtime/budget.js'
 
 describe('MutableWorkflowBudget', () => {
   test('null total means no limit', () => {
