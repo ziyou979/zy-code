@@ -316,23 +316,16 @@ export function messagesToOpenAI(
 }
 
 /**
- * 确保 cache_control 标记位于尽可能靠后的 role:'user' 消息上。
+ * 确保 cache_control 仅出现在最后一条 role:'user' 消息上。
  *
- * DashScope/百炼/火山引擎对 Qwen3.5+ 模型只在 system 和 user 消息上
- * 识别缓存截断点。在纯 agentic loop 场景中（用户发一条消息后模型
- * 连续调用工具），只有一条 role:'user' 消息，所有后续内容都是
- * assistant/tool，导致大量对话历史无法缓存。
- *
- * 策略：
- * 1. 摘取 tool/assistant 消息上的 cache_control
- * 2. 如果最后一条 user 消息后面有 >3 条消息（agentic loop），
- *    在消息数组末尾追加一条空 user 消息作为缓存锚点
- * 3. 否则将 cache_control 放到最后一条 user 消息上
+ * OpenAI 兼容 provider（DashScope/百炼/火山引擎）的缓存截断点只认
+ * system 和 user 消息。tool/assistant 上的标记会被忽略。
+ * 此函数将所有非 user 消息上的 cache_control 收拢到最后一条 user 消息。
  */
 function ensureCacheControlOnLastUserMessage(
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
 ): void {
-  // 先找最后一条 user 消息的位置
+  // 找最后一条 user 消息
   let lastUserIdx = -1
   for (let i = messages.length - 1; i >= 0; i--) {
     if ((messages[i] as any).role === 'user') {
@@ -340,24 +333,13 @@ function ensureCacheControlOnLastUserMessage(
       break
     }
   }
-  // 没有 user 消息则不处理（保留 assistant 上的 cache_control 由 provider 自行处理）
   if (lastUserIdx === -1) {
     return
   }
 
-  // 检查最后 user 消息是否已有 cache_control
-  const lastUser = messages[lastUserIdx] as any
-  let existingCC: any = null
-  if (Array.isArray(lastUser.content)) {
-    const last = lastUser.content[lastUser.content.length - 1]
-    if (last && typeof last === 'object' && last.cache_control) {
-      existingCC = last.cache_control
-    }
-  }
-
-  // 从 user 消息之后的 tool/assistant 消息上摘取 cache_control
-  let cacheControl: any = existingCC
-  for (let i = messages.length - 1; i > lastUserIdx; i--) {
+  // 从所有非 user 消息上摘取 cache_control
+  let cacheControl: any = null
+  for (let i = lastUserIdx + 1; i < messages.length; i++) {
     const msg = messages[i] as any
     if (msg.cache_control) {
       if (!cacheControl) cacheControl = msg.cache_control
@@ -373,28 +355,20 @@ function ensureCacheControlOnLastUserMessage(
     }
   }
 
+  // 检查 user 消息本身是否已有 cache_control
+  const lastUser = messages[lastUserIdx] as any
+  if (Array.isArray(lastUser.content)) {
+    const last = lastUser.content[lastUser.content.length - 1]
+    if (last && typeof last === 'object' && last.cache_control) {
+      return // 已有标记，无需操作
+    }
+  }
+
   if (!cacheControl) {
     return
   }
 
-  // Agentic loop：最后 user 消息后面有 >3 条消息（大量 tool 循环），
-  // 在末尾追加一条空 user 消息作为缓存锚点，覆盖整个对话历史
-  if (lastUserIdx < messages.length - 4) {
-    // 清除原 user 消息上的 cache_control（避免浪费 4 标记中的一个名额）
-    if (existingCC && Array.isArray(lastUser.content)) {
-      const last = lastUser.content[lastUser.content.length - 1]
-      if (last && typeof last === 'object') {
-        delete last.cache_control
-      }
-    }
-    messages.push({
-      role: 'user',
-      content: [{ type: 'text', text: '[continue]', cache_control: cacheControl }],
-    } as any)
-    return
-  }
-
-  // 非 agentic loop：将 cache_control 放到最后 user 消息上
+  // 将 cache_control 放到最后 user 消息的最后一个 content block 上
   if (typeof lastUser.content === 'string') {
     lastUser.content = [{ type: 'text', text: lastUser.content, cache_control: cacheControl }]
   } else if (Array.isArray(lastUser.content) && lastUser.content.length > 0) {
@@ -402,16 +376,6 @@ function ensureCacheControlOnLastUserMessage(
     if (last && typeof last === 'object') {
       last.cache_control = cacheControl
     }
-  }
-}
-
-function stripCacheControlAfter(
-  messages: OpenAI.Chat.ChatCompletionMessageParam[],
-  afterIdx: number,
-): void {
-  for (let i = afterIdx + 1; i < messages.length; i++) {
-    const msg = messages[i] as any
-    delete msg.cache_control
   }
 }
 

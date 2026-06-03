@@ -154,11 +154,18 @@ export function isCompatibleProvider(provider: APIProvider): boolean {
 
 /**
  * 判断是否为使用 OpenAI SDK 直连的 provider。
- * 这类 provider 不走 Anthropic SDK，而是直接使用 OpenAI 的 chat completions API。
+ * 双格式 provider（如 dashscope）通过 settings.apiFormat 切换。
  */
 export function isOpenAIProvider(provider: APIProvider): boolean {
   const entry = getProviderEntry(provider)
-  return entry?.supportedFormats.includes('openai') ?? false
+  if (!entry) return false
+  const supportsOpenAI = entry.supportedFormats.includes('openai')
+  const supportsAnthropic = entry.supportedFormats.includes('anthropic')
+  if (!supportsAnthropic) return supportsOpenAI
+  if (!supportsOpenAI) return false
+  // 双格式：读取用户设置，默认 openai
+  const { getInitialSettings } = require('../../utils/settings/settings.js')
+  return (getInitialSettings()?.apiFormat ?? 'openai') === 'openai'
 }
 
 /**

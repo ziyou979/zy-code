@@ -158,7 +158,7 @@ function printResumeHint(): void {
   if (process.stdout.isTTY && getIsInteractive() && !isSessionPersistenceDisabled()) {
     try {
       const sessionId = getSessionId()
-      // Don't show resume hint if no session file exists (e.g., subcommands like `zy update`)
+      // Don't show resume hint if no session file exists (e.g., subcommands like `zycode update`)
       if (!sessionIdExists(sessionId)) {
         return
       }
@@ -179,7 +179,7 @@ function printResumeHint(): void {
       // "zy --resume ..."后面残留 prompt 输入框底边的 ────），结尾再 \x1b[J
       // 清掉光标以下所有残留行。
       const line1 = chalk.dim(tSync('shutdown.resumeHint'))
-      const line2 = chalk.dim(`zy --resume ${resumeArg}`)
+      const line2 = chalk.dim(`zycode --resume ${resumeArg}`)
       writeSync(1, `\r\x1b[2K${line1}\n\r\x1b[2K${line2}\n\x1b[J`)
       resumeHintPrinted = true
     } catch {

@@ -242,6 +242,14 @@ export const SettingsSchema = lazySchema(() =>
         .enum(['anthropic', 'dashscope', 'openrouter', 'generic', 'local', 'zhipu', 'kimi'])
         .optional()
         .describe('API provider to use. Overrides onboarding config and env vars.'),
+      apiFormat: z
+        .enum(['anthropic', 'openai'])
+        .optional()
+        .describe(
+          'API protocol format for providers supporting both (dashscope, volcark, etc.). ' +
+            '"anthropic" uses independent system field + tool_result inside user messages (better caching). ' +
+            '"openai" uses chat/completions format. Default: openai.',
+        ),
       /** 配置的提供商的 API 密钥 */
       apiKey: z
         .string()

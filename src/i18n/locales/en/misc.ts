@@ -824,7 +824,7 @@ export const enMisc: TranslationResource = {
   'teleport.pressEscapeToCancel': 'Press Escape to cancel',
   'teleport.repoMismatchTitle': 'Teleport to Repo',
   'teleport.requiresAccount': 'Teleport requires a Zy.ai account.',
-  'teleport.runFromCheckout': 'Run zy --teleport from a checkout of {repo}',
+  'teleport.runFromCheckout': 'Run zycode --teleport from a checkout of {repo}',
   'teleport.stashAndContinue': 'Would you like to stash these changes and continue with teleport?',
   'teleport.stashChangesAndContinue': 'Stash changes and continue',
   'teleport.stashFailed': 'Failed to stash changes',

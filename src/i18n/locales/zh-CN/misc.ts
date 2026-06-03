@@ -824,7 +824,7 @@ export const zhMisc: TranslationResource = {
   'teleport.pressEscapeToCancel': '按 Escape 取消',
   'teleport.repoMismatchTitle': '传送到仓库',
   'teleport.requiresAccount': 'Teleport 需要 Zy.ai 账户。',
-  'teleport.runFromCheckout': '从 {repo} 的检出目录运行 zy --teleport',
+  'teleport.runFromCheckout': '从 {repo} 的检出目录运行 zycode --teleport',
   'teleport.stashAndContinue': '是否暂存这些更改并继续传送？',
   'teleport.stashChangesAndContinue': '暂存更改并继续',
   'teleport.stashFailed': '暂存更改失败',

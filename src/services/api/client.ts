@@ -145,9 +145,11 @@ export async function getAnthropicClient({
         // config not ready
       }
     }
-    // 4. Registry defaults (use openai format as default)
+    // 4. Registry defaults（根据当前格式选择对应端点）
     if (!resolvedBaseURL && registryEntry.defaultBaseUrls) {
-      resolvedBaseURL = registryEntry.defaultBaseUrls.openai
+      const format = isOpenAIProvider(apiProvider) ? 'openai' : 'anthropic'
+      resolvedBaseURL =
+        registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls.openai
     }
 
     if (resolvedBaseURL) {
@@ -183,8 +185,10 @@ export async function getAnthropicClient({
         // config not ready
       }
     }
-    if (!customBaseURL) {
-      customBaseURL = registryEntry.defaultBaseUrls?.openai
+    if (!customBaseURL && registryEntry.defaultBaseUrls) {
+      const format = isOpenAIProvider(apiProvider) ? 'openai' : 'anthropic'
+      customBaseURL =
+        registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls.openai
     }
 
     const customApiKey = apiKey || process.env.LLM_API_KEY || getApiKey()
