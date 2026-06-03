@@ -1,5 +1,5 @@
 import { z } from 'zod/v4'
-import { buildTool, type ToolDef } from '../../Tool.js'
+import { buildTool, type Tool, type ToolDef } from '../../Tool.js'
 import type { PermissionUpdate } from '../../types/permissions.js'
 import { formatFileSize } from '../../utils/format.js'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -57,7 +57,8 @@ function webFetchToolInputToPermissionRuleContent(input: { [k: string]: unknown 
   }
 }
 
-export let WebFetchTool
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export let WebFetchTool: Tool<any, any>
 WebFetchTool = buildTool({
   name: WEB_FETCH_TOOL_NAME,
   searchHint: 'fetch and extract content from a URL',

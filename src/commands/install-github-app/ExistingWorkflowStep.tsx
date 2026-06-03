@@ -20,7 +20,7 @@ export function ExistingWorkflowStep({ repoName, onSelectAction }: ExistingWorkf
       value: 'exit',
     },
   ]
-  const handleSelect = (value) => {
+  const handleSelect = (value: string) => {
     onSelectAction(value as 'update' | 'skip' | 'exit')
   }
   const handleCancel = () => {

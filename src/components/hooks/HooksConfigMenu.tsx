@@ -152,7 +152,7 @@ export function HooksConfigMenu({ toolNames, onExit }: Props) {
   const hookEventMetadata = getHookEventMetadata(combinedToolNames)
   const settings_1 = getInitialSettings()
   const hooksDisabled_1 = settings_1?.disableAllHooks === true
-  const byEvent = {}
+  const byEvent: Record<string, number> = {}
   let total = 0
   for (const [event_0, matchers] of Object.entries(hooksByEventAndMatcher)) {
     const eventCount = Object.values(matchers).reduce((sum, hooks) => sum + hooks.length, 0)
@@ -207,16 +207,17 @@ export function HooksConfigMenu({ toolNames, onExit }: Props) {
   }
   switch (modeState.mode) {
     case 'select-event': {
-      const handleSelectEvent = (event_2) => {
-        if (getMatcherMetadata(event_2, combinedToolNames) !== undefined) {
+      const handleSelectEvent = (event_2: string) => {
+        const hookEvent = event_2 as HookEvent
+        if (getMatcherMetadata(hookEvent, combinedToolNames) !== undefined) {
           setModeState({
             mode: 'select-matcher',
-            event: event_2,
+            event: hookEvent,
           })
         } else {
           setModeState({
             mode: 'select-hook',
-            event: event_2,
+            event: hookEvent,
             matcher: '',
           })
         }
@@ -236,7 +237,7 @@ export function HooksConfigMenu({ toolNames, onExit }: Props) {
     }
     case 'select-matcher': {
       const eventMetadata = hookEventMetadata[modeState.event]
-      const handleSelectMatcher = (matcher) => {
+      const handleSelectMatcher = (matcher: string) => {
         setModeState({
           mode: 'select-hook',
           event: modeState.event,
@@ -268,7 +269,7 @@ export function HooksConfigMenu({ toolNames, onExit }: Props) {
         modeState.event,
         modeState.matcher,
       )
-      const handleSelectHook = (hook) => {
+      const handleSelectHook = (hook: IndividualHookConfig) => {
         setModeState({
           mode: 'view-hook',
           event: modeState.event,

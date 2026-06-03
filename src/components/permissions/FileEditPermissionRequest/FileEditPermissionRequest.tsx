@@ -34,8 +34,10 @@ const ideDiffSupport: IDEDiffSupport<FileEditInput> = {
     return input
   },
 }
-export function FileEditPermissionRequest(props) {
-  const parseInput = (input) => FileEditTool.inputSchema.parse(input)
+export function FileEditPermissionRequest(
+  props: import('../PermissionRequest.js').PermissionRequestProps,
+) {
+  const parseInput = (input: unknown) => FileEditTool.inputSchema.parse(input)
   let _TextComponent
   let TextComponent2
   let FilePermissionDialogComponent

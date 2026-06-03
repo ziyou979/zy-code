@@ -26,7 +26,7 @@ function readConfig(): ChicagoConfig {
   return {
     ...DEFAULTS,
     ...getDynamicConfig_CACHED_MAY_BE_STALE<Partial<ChicagoConfig>>('zy_malort_pedway', DEFAULTS),
-  }
+  } as ChicagoConfig
 }
 
 // Max/Pro only for external rollout. Ant bypass so dogfooding continues

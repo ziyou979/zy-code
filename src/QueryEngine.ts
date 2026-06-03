@@ -224,7 +224,7 @@ export class QueryEngine {
     const initialAppState = getAppState()
     const initialMainLoopModel = userSpecifiedModel
       ? parseUserSpecifiedModel(userSpecifiedModel)
-      : getMainLoopModel()
+      : getMainLoopModel()!
 
     const initialThinkingConfig: ThinkingConfig = thinkingConfig
       ? thinkingConfig
@@ -865,11 +865,11 @@ export class QueryEngine {
             yield {
               type: 'system',
               subtype: 'api_retry' as const,
-              attempt: message.retryAttempt,
-              max_retries: message.maxRetries,
-              retry_delay_ms: message.retryInMs,
+              attempt: message.retryAttempt!,
+              max_retries: message.maxRetries!,
+              retry_delay_ms: message.retryInMs!,
               error_status: message.error?.status ?? null,
-              error: categorizeRetryableAPIError(message.error),
+              error: categorizeRetryableAPIError(message.error!),
               session_id: getSessionId(),
               uuid: message.uuid,
             }

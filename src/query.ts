@@ -42,7 +42,7 @@ import type {
 } from './types/message.js'
 import { logError } from './utils/log.js'
 import { PROMPT_TOO_LONG_ERROR_MESSAGE, isPromptTooLongMessage } from './services/api/errors.js'
-import { logAntError, logForDebugging } from './utils/debug.js'
+import { createDebugLog, logAntError } from './utils/debug.js'
 import {
   createUserMessage,
   createUserInterruptionMessage,
@@ -112,6 +112,8 @@ const taskSummaryModule = feature('BG_SESSIONS')
   ? (require('./utils/taskSummary.js') as typeof import('./utils/taskSummary.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
+
+const log = createDebugLog('query')
 
 function* yieldMissingToolResultBlocks(
   assistantMessages: AssistantMessage[],
@@ -291,6 +293,9 @@ async function* queryLoop(
   while (true) {
     // 每次迭代顶部解构状态。仅 toolUseContext 在迭代内重新赋值
     // （queryTracking、消息更新）；其余在继续点之间只读。
+    log(
+      `turn ${state.turnCount} begin (messages=${state.messages.length}${state.transition ? `, transition=${state.transition.reason}` : ''})`,
+    )
     let { toolUseContext } = state
     const {
       messages,
@@ -434,6 +439,9 @@ async function* queryLoop(
         compactionUsage,
       } = compactionResult
 
+      log(
+        `autocompact triggered: ${preCompactTokenCount} -> ${postCompactTokenCount} tokens (true=${truePostCompactTokenCount})`,
+      )
       logEvent('zy_auto_compact_succeeded', {
         originalMessageCount: messages.length,
         compactedMessageCount:
@@ -1074,8 +1082,8 @@ async function* queryLoop(
         // 所以钩子没有有意义的东西可以评估。在 prompt-too-long
         // 上运行 stop hooks 会产生死亡螺旋：错误 → 钩子阻塞
         // → 重试 → 错误 → …（钩子每轮注入更多 token）。
-        yield lastMessage
-        void executeStopFailureHooks(lastMessage, toolUseContext)
+        yield lastMessage!
+        void executeStopFailureHooks(lastMessage!, toolUseContext)
         return { reason: isWithheldMedia ? 'image_error' : 'prompt_too_long' }
       } else if (feature('CONTEXT_COLLAPSE') && isWithheld413) {
         // reactiveCompact 已编译掉但 contextCollapse 扣留了且
@@ -1232,7 +1240,7 @@ async function* queryLoop(
 
         if (decision.action === 'continue') {
           incrementBudgetContinuationCount()
-          logForDebugging(
+          log(
             `Token budget continuation #${decision.continuationCount}: ${decision.pct}% (${decision.turnTokens.toLocaleString()} / ${decision.budget.toLocaleString()})`,
           )
           state = {
@@ -1259,9 +1267,7 @@ async function* queryLoop(
 
         if (decision.completionEvent) {
           if (decision.completionEvent.diminishingReturns) {
-            logForDebugging(
-              `Token budget early stop: diminishing returns at ${decision.completionEvent.pct}%`,
-            )
+            log(`Token budget early stop: diminishing returns at ${decision.completionEvent.pct}%`)
           }
           logEvent('zy_token_budget_completed', {
             ...decision.completionEvent,
@@ -1271,6 +1277,7 @@ async function* queryLoop(
         }
       }
 
+      log(`turn ${turnCount} completed (no pending tool use)`)
       return { reason: 'completed' }
     }
 
@@ -1458,8 +1465,8 @@ async function* queryLoop(
         // 非预期的 abort（很可能是 GC race / WeakRef propagateAbort 残留）。
         // 记录诊断信息但不结束 turn——清掉 aborted 标记是不可能的（AbortSignal 不可逆），
         // 但我们可以选择不响应这个 abort，让循环继续。
-        logForDebugging(
-          `[query] Ignoring spurious abort with unknown reason: ${String(abortReason)} (turnCount=${turnCount}). ` +
+        log(
+          `Ignoring spurious abort with unknown reason: ${String(abortReason)} (turnCount=${turnCount}). ` +
             `This is likely a GC race in createChildAbortController and not a real user interrupt.`,
           { level: 'warn' },
         )

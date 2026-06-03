@@ -40,7 +40,13 @@ export function ComputerUseApproval({ request, onDone }: ComputerUseApprovalProp
 // ── TCC panel ─────────────────────────────────────────────────────────────
 
 type TccOption = 'open_accessibility' | 'open_screen_recording' | 'retry'
-function ComputerUseTccPanel({ tccState, onDone }) {
+function ComputerUseTccPanel({
+  tccState,
+  onDone,
+}: {
+  tccState: { accessibility: boolean; screenRecording: boolean }
+  onDone: () => void
+}) {
   const opts = []
   if (!tccState.accessibility) {
     opts.push({
@@ -59,7 +65,7 @@ function ComputerUseTccPanel({ tccState, onDone }) {
     value: 'retry',
   })
   const options = opts
-  const onChange = function onChange(value) {
+  const onChange = function onChange(value: string) {
     switch (value) {
       case 'open_accessibility': {
         execFileNoThrow(
@@ -131,11 +137,19 @@ const getSentinelWarning = (): Record<
   filesystem: tSync('computerUse.canReadWriteAnyFile'),
   system_settings: tSync('computerUse.canChangeSystemSettings'),
 })
-function ComputerUseAppListPanel({ request, onDone }) {
+function ComputerUseAppListPanel({
+  request,
+  onDone,
+}: {
+  request: any
+  onDone: (response: any) => void
+}) {
   const [checked] = useState(
     () =>
       new Set(
-        request.apps.flatMap((a) => (a.resolved && !a.alreadyGranted ? [a.resolved.bundleId] : [])),
+        request.apps.flatMap((a: any) =>
+          a.resolved && !a.alreadyGranted ? [a.resolved.bundleId] : [],
+        ),
       ),
   )
   const ALL_FLAG_KEYS = ['clipboardRead', 'clipboardWrite', 'systemKeyCombos']
@@ -156,13 +170,13 @@ function ComputerUseAppListPanel({ request, onDone }) {
       value: 'deny',
     },
   ]
-  const respond = function respond(allow) {
+  const respond = function respond(allow: boolean) {
     if (!allow) {
       onDone(DENY_ALL_RESPONSE)
       return
     }
     const now = Date.now()
-    const granted = request.apps.flatMap((a_0) =>
+    const granted = request.apps.flatMap((a_0: any) =>
       a_0.resolved && checked.has(a_0.resolved.bundleId)
         ? [
             {
@@ -174,8 +188,8 @@ function ComputerUseAppListPanel({ request, onDone }) {
         : [],
     )
     const denied = request.apps
-      .filter((a_1) => !a_1.resolved || !checked.has(a_1.resolved.bundleId))
-      .map((a_2) => ({
+      .filter((a_1: any) => !a_1.resolved || !checked.has(a_1.resolved.bundleId))
+      .map((a_2: any) => ({
         bundleId: a_2.resolved?.bundleId ?? a_2.requestedName,
         reason: a_2.resolved ? ('user_denied' as const) : ('not_installed' as const),
       }))
@@ -189,7 +203,7 @@ function ComputerUseAppListPanel({ request, onDone }) {
       flags,
     })
   }
-  const appListElements = request.apps.map((a_3) => {
+  const appListElements = request.apps.map((a_3: any) => {
     const resolved = a_3.resolved
     if (!resolved) {
       return (
@@ -253,7 +267,7 @@ function ComputerUseAppListPanel({ request, onDone }) {
           {
             <Select
               options={options}
-              onChange={(v) => respond(v === 'allow_all')}
+              onChange={(v: string) => respond(v === 'allow_all')}
               onCancel={() => respond(false)}
             />
           }

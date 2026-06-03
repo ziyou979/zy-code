@@ -7,7 +7,10 @@ async function _temp2() {
   const messages = await checkInstall()
   return messages.map(_temp)
 }
-function _temp(message, index) {
+function _temp(
+  message: { type: string; message: string; userActionRequired?: boolean },
+  index: number,
+) {
   let priority = 'low'
   if (message.type === 'error' || message.userActionRequired) {
     priority = 'high'

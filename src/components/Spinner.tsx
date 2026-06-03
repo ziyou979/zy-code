@@ -349,7 +349,7 @@ function SpinnerWithVerbInner({
                       subject: nextTask.subject,
                     })
                   : tSync('spinner.tip', {
-                      tip: effectiveTip,
+                      tip: effectiveTip ?? '',
                     })}
               </Text>
             </MessageResponse>

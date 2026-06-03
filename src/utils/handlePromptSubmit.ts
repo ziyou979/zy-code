@@ -96,7 +96,7 @@ export type HandlePromptSubmitParams = BaseExecutionParams & {
   pastedContents?: Record<number, PastedContent>
   helpers: PromptInputHelpers
   onInputChange: (value: string) => void
-  setPastedContents: React.Dispatch<React.SetStateAction<Record<number, PastedContent>>>
+  setPastedContents: (v: Record<number, PastedContent>) => void
   abortController?: AbortController | null
   addNotification?: (notification: {
     key: string
@@ -277,7 +277,12 @@ export async function handlePromptSubmit(params: HandlePromptSubmitParams): Prom
       }
 
       const impl = await immediateCommand.load()
-      const jsx = await impl.call(onDone, { ...context, invokedAs: commandName }, commandArgs, commandName)
+      const jsx = await impl.call(
+        onDone,
+        { ...context, invokedAs: commandName },
+        commandArgs,
+        commandName,
+      )
 
       // Skip if onDone already fired — prevents stuck isLocalJSXCommand
       // (see processSlashCommand.tsx local-jsx case for full mechanism).

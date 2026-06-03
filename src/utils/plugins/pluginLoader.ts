@@ -2897,8 +2897,7 @@ export const loadAllPlugins = memoize(async (): Promise<PluginLoadResult> => {
  * loadAllPlugins 在完成时预热此缓存，这样运行完整加载器的
  * 刷新路径不会从其下游仅缓存消费者得到 plugin-cache-miss。
  */
-export let loadAllPluginsCacheOnly
-loadAllPluginsCacheOnly = memoize(async (): Promise<PluginLoadResult> => {
+export const loadAllPluginsCacheOnly = memoize(async (): Promise<PluginLoadResult> => {
   if (isEnvTruthy(process.env.ZY_CODE_SYNC_PLUGIN_INSTALL)) {
     return loadAllPlugins()
   }

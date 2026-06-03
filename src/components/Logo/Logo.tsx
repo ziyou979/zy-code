@@ -72,7 +72,7 @@ export function Logo() {
   const agent = useAppState((s) => s.agent)
   const model = useMainLoopModel()
   const config = getGlobalConfig()
-  let changelog
+  let changelog: string[]
   try {
     changelog = getRecentReleaseNotesSync(3)
   } catch {

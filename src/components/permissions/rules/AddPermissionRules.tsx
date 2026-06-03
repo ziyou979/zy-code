@@ -68,7 +68,7 @@ export function AddPermissionRules({
   setToolPermissionContext,
 }: Props) {
   const allOptions = SOURCES.map(optionForPermissionSaveDestination)
-  const onSelect = (selectedValue) => {
+  const onSelect = (selectedValue: string) => {
     if (selectedValue === 'cancel') {
       onCancel()
       return

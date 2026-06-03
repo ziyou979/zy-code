@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import type { QuerySource } from 'src/constants/querySource.js'
 import { getAPIProviderForStatsig } from 'src/services/model/providers.js'
 import type { SystemAPIErrorMessage } from 'src/types/message.js'
-import { logForDebugging } from 'src/utils/debug.js'
+import { createDebugLog } from 'src/utils/debug.js'
 import { logError } from 'src/utils/log.js'
 import { createSystemAPIErrorMessage } from 'src/utils/messages.js'
 import {
@@ -32,6 +32,8 @@ import {
 import { checkMockRateLimitError, isMockRateLimitError } from '../rateLimitMocking.js'
 import { REPEATED_529_ERROR_MESSAGE } from './errors.js'
 import { extractConnectionErrorDetails } from './errorUtils.js'
+
+const retryLog = createDebugLog('api:retry')
 
 const abortError = () => createAbortError()
 
@@ -180,7 +182,7 @@ export async function* withRetry<T, TClient = unknown>(
         isStaleConnection &&
         getFeatureValue_CACHED_MAY_BE_STALE('zy_disable_keepalive_on_econnreset', false)
       ) {
-        logForDebugging('Stale connection (ECONNRESET/EPIPE) — disabling keep-alive for retry')
+        retryLog('Stale connection (ECONNRESET/EPIPE) — disabling keep-alive for retry')
         disableKeepAlive()
       }
 
@@ -206,8 +208,8 @@ export async function* withRetry<T, TClient = unknown>(
       return await operation(client, attempt, retryContext)
     } catch (error) {
       lastError = error
-      logForDebugging(
-        `API error (attempt ${attempt}/${maxRetries + 1}): ${isAPIError(error) ? `${error.status} ${error.message}` : errorMessage(error)}`,
+      retryLog(
+        `attempt ${attempt}/${maxRetries + 1} error: ${isAPIError(error) ? `${error.status} ${error.message}` : errorMessage(error)}`,
         { level: 'error' },
       )
 

@@ -23,20 +23,22 @@ export function FilesystemPermissionRequest({
   verbose,
   toolUseContext,
   workerBadge,
-}) {
+}: import('../PermissionRequest.js').PermissionRequestProps) {
   const [theme] = useTheme()
   const path = pathFromToolUse(toolUseConfirm)
   const userFacingName = toolUseConfirm.tool.userFacingName(toolUseConfirm.input as never)
   const isReadOnly = toolUseConfirm.tool.isReadOnly(toolUseConfirm.input)
   const _userFacingReadOrEdit = isReadOnly ? tSync('permission.read') : tSync('permission.edit')
   const title = isReadOnly ? tSync('permission.readFileTitle') : tSync('permission.editFile')
-  const parseInput = (input) => input as ToolInput
+  const parseInput = (input: unknown) => input as ToolInput
   if (!path) {
     return (
       <FallbackPermissionRequest
         toolUseConfirm={toolUseConfirm}
+        toolUseContext={toolUseContext}
         onDone={onDone}
         onReject={onReject}
+        verbose={verbose}
         workerBadge={workerBadge}
       />
     ) as any

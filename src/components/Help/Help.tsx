@@ -84,7 +84,7 @@ export function Help({ onClose, commands }: Props) {
             <Box marginTop={1}>
               <Text dimColor={true}>
                 {exitState.pending ? (
-                  tSync('help.pressAgainToExit', { keyName: exitState.keyName })
+                  tSync('help.pressAgainToExit', { keyName: exitState.keyName ?? '' })
                 ) : (
                   <Text italic={true}>
                     {dismissShortcut} {tSync('help.toCancel')}

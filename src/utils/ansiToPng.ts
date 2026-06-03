@@ -165,8 +165,7 @@ function fillBackground(px: Uint8Array, bg: AnsiColor): void {
 // Modern terminals render shade chars (░▒▓█) as solid blocks with opacity,
 // not the classic VGA dither pattern. Alpha-blend toward background for the
 // same look.
-let SHADE_ALPHA
-SHADE_ALPHA = {
+const SHADE_ALPHA: Record<number, number> = {
   9617: 0.25, // ░
   9618: 0.5, // ▒
   9619: 0.75, // ▓

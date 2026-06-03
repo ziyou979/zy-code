@@ -118,7 +118,7 @@ export function ExportDialog({
       )
     }
     if (exitState.pending) {
-      return <Text>{tSync('export.pressAgainToExit', { key: exitState.keyName })}</Text>
+      return <Text>{tSync('export.pressAgainToExit', { key: exitState.keyName ?? '' })}</Text>
     }
     return (
       <ConfigurableShortcutHint

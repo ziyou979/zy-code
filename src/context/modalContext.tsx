@@ -34,7 +34,7 @@ export function useIsInsideModal() {
  * component caps its visible content height — the modal's inner area is
  * smaller than the terminal.
  */
-export function useModalOrTerminalSize(fallback) {
+export function useModalOrTerminalSize(fallback: { rows: number; columns: number }) {
   const ctx = useContext(ModalContext)
   return ctx
     ? {

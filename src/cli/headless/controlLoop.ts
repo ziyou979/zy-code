@@ -78,6 +78,7 @@ import { getCommands } from '../../commands.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { refreshActivePlugins } from '../../utils/plugins/refresh.js'
 import { loadAllPluginsCacheOnly } from '../../utils/plugins/pluginLoader.js'
+import type { PluginLoadResult } from '../../types/plugin.js'
 import { stopTask } from '../../tasks/stopTask.js'
 import { errorMessage } from '../../utils/errors.js'
 import { sleep } from '../../utils/sleep.js'
@@ -116,7 +117,7 @@ export interface ControlLoopDeps {
   agents: AgentDefinition[]
   mcpClients: MCPServerConnection[]
   injectModelSwitchBreadcrumbs: (modelArg: string, resolvedModel: string) => void
-  scheduleProactiveTick: () => void
+  scheduleProactiveTick: (() => void) | undefined
   cronScheduler: import('../../utils/cronScheduler.js').CronScheduler | null
   unsubscribeSkillChanges: () => void
   unsubscribeAuthStatus: (() => void) | undefined
@@ -286,7 +287,10 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         { subtype: 'set_model' }
       >
       const requestedModel = req.model ?? 'default'
-      const model = requestedModel === 'default' ? getDefaultMainLoopModel() : requestedModel
+      const model =
+        requestedModel === 'default'
+          ? (getDefaultMainLoopModel() ?? requestedModel)
+          : requestedModel
       loopState.activeUserSpecifiedModel = model
       setMainLoopModelOverride(model)
       notifySessionMetadataChanged({ model })
@@ -312,7 +316,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
     },
     get_settings: (message) => {
       const currentAppState = getAppState()
-      const model = getMainLoopModel()
+      const model = getMainLoopModel() ?? ''
       // modelSupportsEffort gate matches zy.ts — applied.effort must
       // mirror what actually goes to the API, not just what's configured.
       const effort = modelSupportsEffort(model)
@@ -376,7 +380,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
           messages: session.messages,
           getAppState,
           options: {
-            mainLoopModel: getMainLoopModel(),
+            mainLoopModel: getMainLoopModel() ?? '',
             tools: buildAllTools(appState),
             agentDefinitions: appState.agentDefinitions,
             customSystemPrompt: options.systemPrompt,
@@ -496,12 +500,12 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       }
 
       // If the model changed, inject breadcrumbs + notify metadata listeners.
-      const newModel = getMainLoopModel()
+      const newModel = getMainLoopModel() ?? prevModel
       if (newModel !== prevModel) {
         loopState.activeUserSpecifiedModel = newModel
         const modelArg = incoming.model ? String(incoming.model) : 'default'
         notifySessionMetadataChanged({ model: newModel })
-        injectModelSwitchBreadcrumbs(modelArg, newModel)
+        injectModelSwitchBreadcrumbs(modelArg, newModel!)
       }
 
       sendControlResponseSuccess(message)
@@ -602,7 +606,8 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
           logError(mcpR.reason)
         }
         if (pluginsR.status === 'fulfilled') {
-          plugins = pluginsR.value.enabled.map((p) => ({
+          const loadResult = pluginsR.value as PluginLoadResult
+          plugins = loadResult.enabled.map((p) => ({
             name: p.name,
             path: p.path,
             source: p.source,
@@ -1393,11 +1398,11 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
             const req = message.request as unknown as { subtype: string; enabled: boolean }
             if (req.enabled) {
               if (!proactiveModule?.isProactiveActive()) {
-                proactiveModule.activateProactive('command')
+                proactiveModule!.activateProactive('command')
                 scheduleProactiveTick!()
               }
             } else {
-              proactiveModule.deactivateProactive()
+              proactiveModule!.deactivateProactive()
             }
             sendControlResponseSuccess(message)
           },

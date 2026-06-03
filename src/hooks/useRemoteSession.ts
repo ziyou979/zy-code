@@ -45,7 +45,7 @@ type UseRemoteSessionProps = {
   setToolUseConfirmQueue: React.Dispatch<React.SetStateAction<ToolUseConfirm[]>>
   tools: Tool[]
   setStreamingToolUses?: React.Dispatch<React.SetStateAction<StreamingToolUse[]>>
-  setStreamMode?: React.Dispatch<React.SetStateAction<SpinnerMode>>
+  setStreamMode?: (v: SpinnerMode) => void
   setInProgressToolUseIDs?: (f: (prev: Set<string>) => Set<string>) => void
 }
 

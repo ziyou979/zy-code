@@ -381,7 +381,7 @@ export const bashPermissionRule: (permissionRule: string) => ShellPermissionRule
  * - GOFLAGS, RUSTFLAGS, NODE_OPTIONS (can contain code execution flags)
  * - HOME, TMPDIR, SHELL, BASH_ENV (affect system behavior)
  */
-let SAFE_ENV_VARS
+let SAFE_ENV_VARS: Set<string>
 SAFE_ENV_VARS = new Set([
   // Go - build/runtime settings only
   'GOEXPERIMENT', // experimental features
@@ -451,7 +451,7 @@ SAFE_ENV_VARS = new Set([
  *
  * Based on analysis of 30 days of zy_internal_bash_tool_use_permission_request events.
  */
-let ANT_ONLY_SAFE_ENV_VARS
+let ANT_ONLY_SAFE_ENV_VARS: Set<string>
 ANT_ONLY_SAFE_ENV_VARS = new Set([
   // Kubernetes and container config (config file pointers, not execution)
   'KUBECONFIG', // kubectl config file path — controls which cluster kubectl uses
@@ -1562,7 +1562,7 @@ export async function awaitClassifierAutoApproval(
       type: 'classifier',
       classifier: 'bash_allow',
       reason: tSync('bash.permission.allowedByPromptRule', {
-        rule: classifierResult.matchedDescription,
+        rule: classifierResult.matchedDescription ?? '',
       }),
     }
   }
@@ -1635,7 +1635,7 @@ export async function executeAsyncClassifierCheck(
       type: 'classifier',
       classifier: 'bash_allow',
       reason: tSync('bash.permission.allowedByPromptRule', {
-        rule: classifierResult.matchedDescription,
+        rule: classifierResult.matchedDescription ?? '',
       }),
     })
   } else {
@@ -1884,7 +1884,7 @@ export async function bashToolHasPermission(
           decisionReason: {
             type: 'other',
             reason: tSync('bash.permission.deniedByPromptRule', {
-              rule: denyResult.matchedDescription,
+              rule: denyResult.matchedDescription ?? '',
             }),
           },
         }
@@ -1916,7 +1916,7 @@ export async function bashToolHasPermission(
           decisionReason: {
             type: 'other',
             reason: tSync('bash.permission.requiredByPromptRule', {
-              rule: askResult.matchedDescription,
+              rule: askResult.matchedDescription ?? '',
             }),
           },
           suggestions,

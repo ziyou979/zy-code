@@ -37,14 +37,14 @@ function ClaudeInChromeMenu({
   const isHomespace = false && isRunningOnHomespace()
   const chromeClient = mcpClients.find((c) => c.name === CLAUDE_IN_CHROME_MCP_SERVER_NAME)
   const isConnected = chromeClient?.type === 'connected'
-  const openUrl = function openUrl(url) {
+  const openUrl = function openUrl(url: string) {
     if (isHomespace) {
       openBrowser(url)
     } else {
       openInChrome(url)
     }
   }
-  const handleAction = function handleAction(action) {
+  const handleAction = function handleAction(action: MenuAction) {
     switch (action) {
       case 'install-extension': {
         setSelectKey((k_1) => k_1 + 1)

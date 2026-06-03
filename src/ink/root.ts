@@ -155,7 +155,7 @@ export async function createRoot({
   }
 }
 
-let getOptions
+let getOptions!: (stdout?: NodeJS.WriteStream | RenderOptions) => RenderOptions
 getOptions = (stdout: NodeJS.WriteStream | RenderOptions | undefined = {}): RenderOptions => {
   if (stdout instanceof Stream) {
     return {
@@ -167,7 +167,7 @@ getOptions = (stdout: NodeJS.WriteStream | RenderOptions | undefined = {}): Rend
   return stdout
 }
 
-let getInstance
+let getInstance!: (stdout: NodeJS.WriteStream, createInstance: () => Ink) => Ink
 getInstance = (stdout: NodeJS.WriteStream, createInstance: () => Ink): Ink => {
   let instance = instances.get(stdout)
 

@@ -11,7 +11,15 @@ import type { LocalJSXCommandOnDone } from '../../types/command.js'
 import { recursivelySanitizeUnicode } from '../../utils/sanitization.js'
 import { getCurrentSessionTag, getTranscriptPath, saveTag } from '../../utils/sessionStorage.js'
 
-function ConfirmRemoveTag({ tagName, onConfirm, onCancel }) {
+function ConfirmRemoveTag({
+  tagName,
+  onConfirm,
+  onCancel,
+}: {
+  tagName: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
   return (
     <Dialog
       title={tSync('tag.removeTitle')}
@@ -23,7 +31,7 @@ function ConfirmRemoveTag({ tagName, onConfirm, onCancel }) {
         <Box flexDirection="column" gap={1}>
           {<Text>{tSync('tag.removeDesc')}</Text>}
           <Select
-            onChange={(value) => (value === 'yes' ? onConfirm() : onCancel())}
+            onChange={(value: string) => (value === 'yes' ? onConfirm() : onCancel())}
             options={[
               {
                 label: tSync('tag.yesRemove'),
@@ -40,9 +48,15 @@ function ConfirmRemoveTag({ tagName, onConfirm, onCancel }) {
     </Dialog>
   )
 }
-function ToggleTagAndClose({ tagName, onDone }) {
+function ToggleTagAndClose({
+  tagName,
+  onDone,
+}: {
+  tagName: string
+  onDone: LocalJSXCommandOnDone
+}) {
   const [showConfirm, setShowConfirm] = React.useState(false)
-  const [sessionId, setSessionId] = React.useState(null)
+  const [sessionId, setSessionId] = React.useState<UUID | null>(null)
   const normalizedTag = recursivelySanitizeUnicode(tagName).trim()
   React.useEffect(() => {
     const id = getSessionId() as UUID
@@ -100,7 +114,7 @@ function ToggleTagAndClose({ tagName, onDone }) {
   }
   return null
 }
-function ShowHelp({ onDone }) {
+function ShowHelp({ onDone }: { onDone: LocalJSXCommandOnDone }) {
   React.useEffect(() => {
     onDone(tSync('tag.usage'), {
       display: 'system',

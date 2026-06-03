@@ -21,11 +21,11 @@ type Props = {
 }
 type LoadingState = 'loading' | 'updating' | null
 export function RemoteEnvironmentDialog({ onDone }: Props) {
-  const [loadingState, setLoadingState] = useState('loading')
-  const [environments, setEnvironments] = useState([])
-  const [selectedEnvironment, setSelectedEnvironment] = useState(null)
-  const [selectedEnvironmentSource, setSelectedEnvironmentSource] = useState(null)
-  const [error, setError] = useState(null)
+  const [loadingState, setLoadingState] = useState<string | null>('loading')
+  const [environments, setEnvironments] = useState<any[]>([])
+  const [selectedEnvironment, setSelectedEnvironment] = useState<any>(null)
+  const [selectedEnvironmentSource, setSelectedEnvironmentSource] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   useEffect(() => {
     let cancelled = false
     const fetchInfo = async function fetchInfo() {
@@ -53,7 +53,7 @@ export function RemoteEnvironmentDialog({ onDone }: Props) {
       cancelled = true
     }
   }, [])
-  const handleSelect = function handleSelect(value) {
+  const handleSelect = function handleSelect(value: string) {
     if (value === 'cancel') {
       onDone()
       return
@@ -120,7 +120,13 @@ function EnvironmentLabel({ environment }: any) {
     </Text>
   )
 }
-function SingleEnvironmentContent({ environment, onDone }) {
+function SingleEnvironmentContent({
+  environment,
+  onDone,
+}: {
+  environment: any
+  onDone: () => void
+}) {
   useKeybinding('confirm:yes', onDone, {
     context: 'Confirmation',
   })
@@ -141,10 +147,17 @@ function MultipleEnvironmentsContent({
   loadingState,
   onSelect,
   onCancel,
+}: {
+  environments: any[]
+  selectedEnvironment: any
+  selectedEnvironmentSource: string | null
+  loadingState: string | null
+  onSelect: (value: string) => void
+  onCancel: () => void
 }) {
   const sourceSuffix =
     selectedEnvironmentSource && selectedEnvironmentSource !== 'localSettings'
-      ? ` ${tSync('remoteEnv.fromSettings', { source: getSettingSourceName(selectedEnvironmentSource) })}`
+      ? ` ${tSync('remoteEnv.fromSettings', { source: getSettingSourceName(selectedEnvironmentSource as any) })}`
       : ''
   const subtitle = (
     <Text>

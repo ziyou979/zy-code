@@ -10,8 +10,10 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { getSessionId } from '../../bootstrap/state.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import { getZyConfigHomeDir } from '../envUtils.js'
+
+const hookLog = createDebugLog('hooks')
 
 const DEFAULT_INLINE_LIMIT = 50_000
 const PREVIEW_CHARS = 2_000
@@ -53,7 +55,7 @@ export function maybeSpillHookOutput(
       spillPath,
     }
   } catch (err) {
-    logForDebugging(`Hooks: failed to spill oversized output to disk: ${err}`)
+    hookLog(`Hooks: failed to spill oversized output to disk: ${err}`)
     return {
       inline:
         `Output too large (${output.length} chars) and could not be saved to disk.\n\n` +

@@ -9,7 +9,7 @@ type IdeAutoConnectDialogProps = {
   onComplete: () => void
 }
 export function IdeAutoConnectDialog({ onComplete }: IdeAutoConnectDialogProps) {
-  const handleSelect = async (value) => {
+  const handleSelect = async (value: string) => {
     const autoConnect = value === 'yes'
     saveGlobalConfig((current) => ({
       ...current,
@@ -47,7 +47,7 @@ type IdeDisableAutoConnectDialogProps = {
   onComplete: (disableAutoConnect: boolean) => void
 }
 export function IdeDisableAutoConnectDialog({ onComplete }: IdeDisableAutoConnectDialogProps) {
-  const handleSelect = (value) => {
+  const handleSelect = (value: string) => {
     const disableAutoConnect = value === 'yes'
     if (disableAutoConnect) {
       saveGlobalConfig((current) => ({

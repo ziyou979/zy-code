@@ -52,9 +52,9 @@ function SedEditPermissionRequestInner({
   ...props
 }: SedEditPermissionRequestProps) {
   const { filePath } = sedInfo
-  const { oldContent, fileExists } = use(contentPromise) as FileReadResult
+  const { oldContent, fileExists } = use(contentPromise as any) as FileReadResult
   const newContent = applySedSubstitution(oldContent, sedInfo)
-  let edits
+  let edits: Array<{ old_string: string; new_string: string; replace_all: boolean }>
   if (oldContent === newContent) {
     edits = []
   } else {
@@ -72,7 +72,7 @@ function SedEditPermissionRequestInner({
   } else {
     noChangesMessage = tSync('permission.sedPatternDidNotMatch')
   }
-  const parseInput = (input) => {
+  const parseInput = (input: unknown) => {
     const parsed = BashTool.inputSchema.parse(input)
     return {
       ...parsed,

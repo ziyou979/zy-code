@@ -4,7 +4,9 @@ import { logEvent } from '../../services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../../services/analytics/metadata.js'
 import type { AssistantMessage, Message } from '../../types/message.js'
 import { getGlobalConfig } from '../config.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
+
+const permLog = createDebugLog('permissions')
 import { errorMessage } from '../errors.js'
 import { lazySchema } from '../lazySchema.js'
 import { logError } from '../log.js'
@@ -165,7 +167,7 @@ ${conversationContext ? `\nRecent conversation context:\n${conversationContext}`
 
 Explain this command in context.`
 
-    const model = getMainLoopModel()
+    const model = getMainLoopModel()!
 
     // 使用 sideQuery 并强制工具选择，以保证结构化输出
     const response = await sideQuery({
@@ -179,14 +181,14 @@ Explain this command in context.`
     })
 
     const latencyMs = Date.now() - startTime
-    logForDebugging(
+    permLog(
       `Permission explainer: API returned in ${latencyMs}ms, stopReason=${response.stopReason}`,
     )
 
     // 从工具调用块中提取结构化数据
     const toolUseBlock = response.content.find((c) => c.type === 'tool_call')
     if (toolUseBlock && toolUseBlock.type === 'tool_call') {
-      logForDebugging(
+      permLog(
         `Permission explainer: tool input: ${jsonStringify(toolUseBlock.input).slice(0, 500)}`,
       )
       const result = RiskAssessmentSchema().safeParse(toolUseBlock.input)
@@ -204,7 +206,7 @@ Explain this command in context.`
           risk_level: RISK_LEVEL_NUMERIC[explanation.riskLevel],
           latency_ms: latencyMs,
         })
-        logForDebugging(
+        permLog(
           `Permission explainer: ${explanation.riskLevel} risk for ${toolName} (${latencyMs}ms)`,
         )
         return explanation
@@ -217,18 +219,18 @@ Explain this command in context.`
       error_type: ERROR_TYPE_PARSE,
       latency_ms: latencyMs,
     })
-    logForDebugging(`Permission explainer: no parsed output in response`)
+    permLog(`Permission explainer: no parsed output in response`)
     return null
   } catch (error) {
     const latencyMs = Date.now() - startTime
 
     // 不将已中止的请求记录为错误
     if (signal.aborted) {
-      logForDebugging(`Permission explainer: request aborted for ${toolName}`)
+      permLog(`Permission explainer: request aborted for ${toolName}`)
       return null
     }
 
-    logForDebugging(`Permission explainer error: ${errorMessage(error)}`)
+    permLog(`Permission explainer error: ${errorMessage(error)}`)
     logError(error)
     logEvent('zy_permission_explainer_error', {
       tool_name: sanitizeToolNameForAnalytics(toolName),

@@ -68,7 +68,7 @@ import type {
 } from '../../types/message.js'
 import { count } from '../../utils/array.js'
 import { createAttachmentMessage } from '../../utils/attachments.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { createDebugLog } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   AbortError,
@@ -118,6 +118,8 @@ import {
   runPostToolUseHooks,
   runPreToolUseHooks,
 } from './toolHooks.js'
+
+const toolLog = createDebugLog('tools')
 
 /** hook 总耗时达到此阈值（毫秒）才在行内展示计时汇总 */
 export const HOOK_TIMING_DISPLAY_THRESHOLD_MS = 500
@@ -333,7 +335,7 @@ export async function* runToolUse(
     if (scriptCap > 0) {
       _sessionScriptCallCount++
       if (_sessionScriptCallCount > scriptCap) {
-        logForDebugging(
+        toolLog(
           `Script call cap exceeded: ${_sessionScriptCallCount}/${scriptCap}, rejecting ${toolName}`,
           { level: 'warn' },
         )
@@ -369,7 +371,7 @@ export async function* runToolUse(
       tool = fallbackTool
     }
   }
-  const messageId = assistantMessage.message.id
+  const messageId = assistantMessage.message.id ?? ''
   const requestId = assistantMessage.requestId
   const mcpServerType = getMcpServerType(toolName, toolUseContext.options.mcpClients)
   const mcpServerBaseUrl = getMcpServerBaseUrlFromToolName(
@@ -380,7 +382,7 @@ export async function* runToolUse(
   // 检查工具是否存在
   if (!tool) {
     const sanitizedToolName = sanitizeToolNameForAnalytics(toolName)
-    logForDebugging(`Unknown tool ${toolName}: ${toolUse.id}`)
+    toolLog(`Unknown tool ${toolName}: ${toolUse.id}`, { level: 'warn' })
     logEvent('zy_tool_use_error', {
       error:
         `No such tool available: ${sanitizedToolName}` as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -638,7 +640,7 @@ async function checkPermissionsAndCallTool(
       errorContent += schemaHint
     }
 
-    logForDebugging(`${tool.name} tool input error: ${errorContent.slice(0, 200)}`)
+    toolLog(`${tool.name} input error: ${errorContent.slice(0, 200)}`, { level: 'warn' })
     logEvent('zy_tool_use_error', {
       error: 'InputValidationError' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       errorDetails: errorContent.slice(
@@ -685,7 +687,9 @@ async function checkPermissionsAndCallTool(
   // 验证输入值。每个工具有自己的验证逻辑
   const isValidCall = await tool.validateInput?.(parsedInput.data, toolUseContext)
   if (isValidCall?.result === false) {
-    logForDebugging(`${tool.name} tool validation error: ${isValidCall.message?.slice(0, 200)}`)
+    toolLog(`${tool.name} validation error: ${isValidCall.message?.slice(0, 200)}`, {
+      level: 'warn',
+    })
     logEvent('zy_tool_use_error', {
       messageID: messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       toolName: sanitizeToolNameForAnalytics(tool.name),
@@ -788,7 +792,7 @@ async function checkPermissionsAndCallTool(
     tool,
     processedInput,
     toolUseID,
-    assistantMessage.message.id,
+    messageId,
     requestId,
     mcpServerType,
     mcpServerBaseUrl,
@@ -846,7 +850,7 @@ async function checkPermissionsAndCallTool(
   const preToolHookDurationMs = Date.now() - preToolHookStart
   getStatsStore()?.observe('pre_tool_hook_duration_ms', preToolHookDurationMs)
   if (preToolHookDurationMs >= SLOW_PHASE_LOG_THRESHOLD_MS) {
-    logForDebugging(
+    toolLog(
       `Slow PreToolUse hooks: ${preToolHookDurationMs}ms for ${tool.name} (${preToolHookInfos.length} hooks)`,
       { level: 'info' },
     )
@@ -888,6 +892,8 @@ async function checkPermissionsAndCallTool(
     }
   }
 
+  toolLog(`${tool.name} start toolUseId=${toolUseID}`)
+
   startToolSpan(
     tool.name,
     toolAttributes,
@@ -916,7 +922,7 @@ async function checkPermissionsAndCallTool(
   // 仅对 auto：默认模式下该计时器会包含交互式对话框的等待时间（用户思考时间），
   // 那只是噪声。
   if (permissionDurationMs >= SLOW_PHASE_LOG_THRESHOLD_MS && permissionMode === 'auto') {
-    logForDebugging(
+    toolLog(
       `Slow permission decision: ${permissionDurationMs}ms for ${tool.name} ` +
         `(mode=${permissionMode}, behavior=${permissionDecision.behavior})`,
       { level: 'info' },
@@ -963,7 +969,9 @@ async function checkPermissionsAndCallTool(
   }
 
   if (permissionDecision.behavior !== 'allow') {
-    logForDebugging(`${tool.name} tool permission denied`)
+    toolLog(
+      `${tool.name} permission: denied (reason=${permissionDecision.decisionReason?.type ?? 'unknown'})`,
+    )
     const decisionInfo = toolUseContext.toolDecisions?.get(toolUseID)
     endToolBlockedOnUserSpan('reject', decisionInfo?.source || 'unknown')
     endToolSpan()
@@ -1067,6 +1075,9 @@ async function checkPermissionsAndCallTool(
 
     return resultingMessages
   }
+  toolLog(
+    `${tool.name} permission: allow (reason=${permissionDecision.decisionReason?.type ?? 'unknown'})`,
+  )
   logEvent('zy_tool_use_can_use_tool_allowed', {
     messageID: messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     toolName: sanitizeToolNameForAnalytics(tool.name),
@@ -1179,6 +1190,7 @@ async function checkPermissionsAndCallTool(
     )
     const durationMs = Date.now() - startTime
     addToToolDuration(durationMs)
+    toolLog(`${tool.name} completed ${durationMs}ms toolUseId=${toolUseID}`)
 
     // 启用时将工具 content/output 作为 span 事件记录
     if (result.data && typeof result.data === 'object') {
@@ -1353,7 +1365,7 @@ async function checkPermissionsAndCallTool(
         ? Math.min(metaMaxSize, MCP_META_MAX_RESULT_SIZE_CAP)
         : tool.maxResultSizeChars
       if (metaMaxSize) {
-        logForDebugging(
+        toolLog(
           `MCP _meta maxResultSizeChars override: requested=${metaMaxSize}, effective=${effectiveMaxResultSize} (cap=${MCP_META_MAX_RESULT_SIZE_CAP})`,
         )
       }
@@ -1433,7 +1445,7 @@ async function checkPermissionsAndCallTool(
       toolUseContext,
       tool,
       toolUseID,
-      assistantMessage.message.id,
+      messageId,
       processedInput,
       toolOutput,
       requestId,
@@ -1484,7 +1496,7 @@ async function checkPermissionsAndCallTool(
     }
     const postToolHookDurationMs = Date.now() - postToolHookStart
     if (postToolHookDurationMs >= SLOW_PHASE_LOG_THRESHOLD_MS) {
-      logForDebugging(
+      toolLog(
         `Slow PostToolUse hooks: ${postToolHookDurationMs}ms for ${tool.name} (${postToolHookInfos.length} hooks)`,
         { level: 'info' },
       )
@@ -1594,7 +1606,9 @@ async function checkPermissionsAndCallTool(
 
     if (!(error instanceof AbortError)) {
       const errorMsg = errorMessage(error)
-      logForDebugging(`${tool.name} tool error (${durationMs}ms): ${errorMsg.slice(0, 200)}`)
+      toolLog(
+        `${tool.name} error ${durationMs}ms toolUseId=${toolUseID}: ${errorMsg.slice(0, 200)}`,
+      )
       if (!(error instanceof ShellError)) {
         logError(error)
       }

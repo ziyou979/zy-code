@@ -231,7 +231,7 @@ async function showDiffInIDE(
   process.on('beforeExit', cleanup)
 
   // Open the diff in the IDE
-  let ideClient
+  let ideClient!: ReturnType<typeof getConnectedIdeClient>
   ideClient = getConnectedIdeClient(toolUseContext.options.mcpClients)
   try {
     const { updatedFile } = getPatchForEdits({

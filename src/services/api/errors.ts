@@ -1003,10 +1003,10 @@ export function classifyAPIError(error: unknown): string {
   // 基于状态码的回退
   if (isAPIError(error)) {
     const status = error.status
-    if (status >= 500) {
+    if (status !== undefined && status >= 500) {
       return 'server_error'
     }
-    if (status >= 400) {
+    if (status !== undefined && status >= 400) {
       return 'client_error'
     }
   }

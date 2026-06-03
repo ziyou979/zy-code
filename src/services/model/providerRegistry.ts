@@ -122,13 +122,11 @@ const FULL_CAPABILITIES: ProviderCapability[] = [
   'structured_outputs',
   'context_management',
   'prompt_caching',
-  'web_search',
   'interleaved_thinking',
 ]
 
 /** Anthropic 系 effort 档位（兼容旧代码引用）。新体系下由 mapEffortToProvider 处理映射。 */
 const ANTHROPIC_EFFORT_LEVELS: EffortLevel[] = ['light', 'balanced', 'thorough', 'extreme']
-const ANTHROPIC_EFFORT_LEVELS_INTERNAL: EffortLevel[] = ['light', 'balanced', 'thorough', 'extreme']
 
 /** 标准能力集 — 适用于大多数第三方平台和本地推理引擎 */
 const STANDARD_CAPABILITIES: ProviderCapability[] = [
@@ -137,7 +135,6 @@ const STANDARD_CAPABILITIES: ProviderCapability[] = [
   'structured_outputs',
   'context_management',
   'prompt_caching',
-  'web_search',
   'interleaved_thinking',
 ]
 
@@ -151,17 +148,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     id: 'dashscope',
     supportedFormats: ['anthropic', 'openai'],
     endpointType: 'env-or-default',
-    // 注:dashscope(百炼)的 OpenAI 兼容端只发 enable_thinking 开关,
-    // 不接受 effort 强度参数,故不声明 defaultEffortLevels。
-    capabilities: [
-      'thinking',
-      'adaptive_thinking',
-      'structured_outputs',
-      'context_management',
-      'prompt_caching',
-      'web_search',
-      'interleaved_thinking',
-    ],
+    capabilities: STANDARD_CAPABILITIES,
+    defaultEffortLevels: ['light', 'balanced', 'thorough'],
     defaultBaseUrls: {
       openai: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
       anthropic: 'https://dashscope.aliyuncs.com/apps/anthropic/',
@@ -193,7 +181,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     id: 'openai',
     supportedFormats: ['openai'],
     endpointType: 'hardcoded',
-    capabilities: ['thinking', 'structured_outputs', 'context_management', 'web_search'],
+    capabilities: ['thinking', 'structured_outputs', 'context_management'],
     // OpenAI reasoning_effort 支持 minimal/low/medium/high（映射由 mapEffortToProvider 处理）。
     defaultEffortLevels: ['quick', 'light', 'balanced', 'thorough'],
     activationEnvVar: 'ZY_CODE_USE_OPENAI',
@@ -343,7 +331,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       'adaptive_thinking',
       'structured_outputs',
       'context_management',
-      'web_search',
       'interleaved_thinking',
     ],
     // OpenRouter reasoning.effort 支持 low/medium/high（映射由 mapEffortToProvider 处理）。
@@ -518,7 +505,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: 'hardcoded',
     capabilities: FULL_CAPABILITIES,
     defaultEffortLevels: ANTHROPIC_EFFORT_LEVELS,
-    internalEffortLevels: ANTHROPIC_EFFORT_LEVELS_INTERNAL,
     apiKeyLabel: 'Anthropic API Key',
   },
   {
@@ -527,7 +513,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: 'custom',
     capabilities: FULL_CAPABILITIES,
     defaultEffortLevels: ANTHROPIC_EFFORT_LEVELS,
-    internalEffortLevels: ANTHROPIC_EFFORT_LEVELS_INTERNAL,
     activationEnvVar: 'ZY_CODE_USE_GENERIC',
     apiKeyLabel: 'API Key',
   },
@@ -551,13 +536,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     id: 'foundry',
     supportedFormats: ['anthropic'],
     endpointType: 'hardcoded',
-    capabilities: [
-      'thinking',
-      'structured_outputs',
-      'context_management',
-      'web_search',
-      'interleaved_thinking',
-    ],
+    capabilities: ['thinking', 'structured_outputs', 'context_management', 'interleaved_thinking'],
     showInOnboarding: false,
   },
 ] as const

@@ -10,7 +10,7 @@ type Props = {
   onAccept(): void
 }
 export function DevChannelsDialog({ channels, onAccept }: Props) {
-  const onChange = function onChange(value) {
+  const onChange = function onChange(value: string) {
     switch (value) {
       case 'accept': {
         onAccept()
@@ -48,7 +48,7 @@ export function DevChannelsDialog({ channels, onAccept }: Props) {
               value: 'exit',
             },
           ]}
-          onChange={(value_0) => onChange(value_0 as 'accept' | 'exit')}
+          onChange={(value_0: string) => onChange(value_0 as 'accept' | 'exit')}
         />
       }
     </Dialog>

@@ -36,7 +36,7 @@ export function OutputStylePicker({
   onCancel,
   isStandaloneCommand,
 }: OutputStylePickerProps) {
-  const [styleOptions, setStyleOptions] = useState([])
+  const [styleOptions, setStyleOptions] = useState<OptionWithDescription[]>([])
   const [isLoading, setIsLoading] = useState(true)
   useEffect(() => {
     getAllOutputStyles(getCwd())
@@ -51,7 +51,7 @@ export function OutputStylePicker({
         setIsLoading(false)
       })
   }, [])
-  const handleStyleSelect = (style) => {
+  const handleStyleSelect = (style: string) => {
     const outputStyle = style as OutputStyle
     onComplete(outputStyle)
   }

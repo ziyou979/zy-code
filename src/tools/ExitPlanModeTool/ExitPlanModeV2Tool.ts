@@ -297,8 +297,7 @@ export const ExitPlanModeV2Tool: Tool<InputSchema, Output> = buildTool({
     if (prePlanRaw === 'auto' && !(permissionSetupModule?.isAutoModeGateEnabled() ?? false)) {
       const reason = permissionSetupModule?.getAutoModeUnavailableReason() ?? 'circuit-breaker'
       gateFallbackNotification =
-        permissionSetupModule?.getAutoModeUnavailableNotification(reason) ??
-        'auto mode unavailable'
+        permissionSetupModule?.getAutoModeUnavailableNotification(reason) ?? 'auto mode unavailable'
       logForDebugging(
         `[auto-mode gate @ ExitPlanModeV2Tool] prePlanMode=${prePlanRaw} ` +
           `but gate is off (reason=${reason}) — falling back to default on plan exit`,

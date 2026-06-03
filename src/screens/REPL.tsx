@@ -328,10 +328,8 @@ export function REPL({
       queryGuard,
       titleGenerationAttempted: (initialMessages?.length ?? 0) > 0,
       readFileState: initialReadFileState,
-      contentReplacementState: provisionContentReplacementState(
-        initialMessages,
-        initialContentReplacements,
-      ),
+      contentReplacementState:
+        provisionContentReplacementState(initialMessages, initialContentReplacements) ?? null,
     }),
   )
   // 订阅整个 ReplState 而非按字段选择器：REPL 在自身派生逻辑中读取

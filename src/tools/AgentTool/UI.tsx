@@ -29,7 +29,7 @@ import {
   getSearchOrReadFromContent,
   getSearchReadSummaryText,
 } from '../../utils/collapseReadSearch.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { getDisplayPath } from '../../utils/file.js'
 import { formatDuration, formatNumber } from '../../utils/format.js'
 import {
@@ -41,9 +41,37 @@ import type { Theme, ThemeName } from '../../utils/theme.js'
 import type { outputSchema, Progress, RemoteLaunchedOutput } from './AgentTool.js'
 import { inputSchema } from './AgentTool.js'
 import { getAgentColor } from './agentColorManager.js'
+import { useKeybinding } from '../../keybindings/useKeybinding.js'
+import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
+import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
+import { backgroundAll } from '../../tasks/LocalShellTask/LocalShellTask.js'
+import { env } from '../../utils/env.js'
 import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js'
 
 const MAX_PROGRESS_MESSAGES_TO_SHOW = 3
+const MAX_BRIEF_STANDALONE_DISPLAY = 3
+
+// 在子代理运行时显示 ctrl+b 提示并注册 task:background keybinding，
+// 替代原先 AgentTool.tsx 中通过 setToolJSX 抢占渲染区的 BackgroundHint。
+function CtrlBToBackground() {
+  const store = useAppStateStore()
+  const setAppState = useSetAppState()
+  useKeybinding('task:background', () => backgroundAll(() => store.getState(), setAppState), {
+    context: 'Task',
+  })
+  const baseShortcut = useShortcutDisplay('task:background', 'Task', 'ctrl+b')
+  const shortcut =
+    env.terminal === 'tmux' && baseShortcut === 'ctrl+b' ? 'ctrl+b ctrl+b (twice)' : baseShortcut
+  if (isEnvTruthy(process.env.ZY_CODE_DISABLE_BACKGROUND_TASKS)) {
+    return null
+  }
+  return (
+    <Text dimColor>
+      {' '}
+      <KeyboardShortcutHint shortcut={shortcut} action="background" parens />
+    </Text>
+  )
+}
 
 /**
  * 守卫函数：检查 progress 数据是否包含 `message` 字段（agent_progress 或
@@ -211,6 +239,66 @@ function processProgressMessages(
   flushGroup(isAgentRunning)
   return result
 }
+
+/**
+ * 从处理后的 progress 消息中选择要在折叠视图中显示的消息。
+ * 从后向前扫描，为每种 briefStandalone 工具保留最后一次出现，
+ * 再取最后 MAX_PROGRESS_MESSAGES_TO_SHOW 条，合并去重后按原始顺序排列。
+ */
+export function selectDisplayMessages(
+  processedMessages: ProcessedMessage[],
+  tools: Tools,
+): { displayed: ProcessedMessage[]; hiddenCount: number } {
+  if (processedMessages.length <= MAX_PROGRESS_MESSAGES_TO_SHOW) {
+    return { displayed: processedMessages, hiddenCount: 0 }
+  }
+
+  const seenToolNames = new Set<string>()
+  const briefIndices = new Set<number>()
+
+  for (let i = processedMessages.length - 1; i >= 0; i--) {
+    if (briefIndices.size >= MAX_BRIEF_STANDALONE_DISPLAY) break
+    const p = processedMessages[i]!
+    if (p.type !== 'original') continue
+    const data = p.message.data
+    if (!hasProgressMessage(data)) continue
+    if (data.message.type !== 'assistant') continue
+    const content = (data.message as any).message.content[0]
+    if (content?.type !== 'tool_call' || seenToolNames.has(content.name)) continue
+    seenToolNames.add(content.name)
+    const tool = findToolByName(tools, content.name)
+    if (!tool?.briefStandalone) continue
+    briefIndices.add(i)
+  }
+
+  const tailStart = Math.max(0, processedMessages.length - MAX_PROGRESS_MESSAGES_TO_SHOW)
+  const displaySet = new Set<number>()
+  for (let i = tailStart; i < processedMessages.length; i++) {
+    displaySet.add(i)
+  }
+  for (const idx of briefIndices) {
+    displaySet.add(idx)
+  }
+
+  const sorted = [...displaySet].sort((a, b) => a - b)
+  const displayed = sorted.map((i) => processedMessages[i]!)
+
+  const hiddenCount = count(
+    processedMessages.filter((_m, i) => !displaySet.has(i)),
+    (m) => {
+      if (m.type === 'summary') {
+        return m.searchCount + m.readCount + m.replCount > 0
+      }
+      const data = m.message.data
+      if (!hasProgressMessage(data)) return false
+      return (data.message as any).message.content.some(
+        (content: any) => content.type === 'tool_call',
+      )
+    },
+  )
+  return { displayed, hiddenCount }
+}
+
 const ESTIMATED_LINES_PER_TOOL = 9
 const TERMINAL_BUFFER_LINES = 7
 type Output = z.input<ReturnType<typeof outputSchema>>
@@ -295,6 +383,69 @@ function VerboseAgentTranscript({ progressMessages, tools, verbose }: VerboseAge
   ))
   return <>{transcriptElements}</>
 }
+
+/**
+ * 完成态折叠视图：从 progress 中提取 briefStandalone 工具的最后一次调用显示。
+ * 让用户在不展开 transcript 的情况下看到关键操作。
+ */
+function BriefStandalonePreview({ progressMessages, tools, verbose }: VerboseAgentTranscriptProps) {
+  const processed = processProgressMessages(progressMessages, tools, false)
+  const { displayed, hiddenCount } = selectDisplayMessages(processed, tools)
+  if (displayed.length === 0) {
+    return null
+  }
+  const { lookups: subagentLookups, inProgressToolUseIDs } = buildSubagentLookups(
+    progressMessages
+      .filter((pm): pm is ProgressMessage<AgentToolProgress> => hasProgressMessage(pm.data))
+      .map((pm) => pm.data) as any,
+  )
+  return (
+    <SubAgentProvider>
+      {displayed.map((p) => {
+        if (p.type === 'summary') {
+          const summaryText = getSearchReadSummaryText(
+            p.searchCount,
+            p.readCount,
+            false,
+            p.replCount,
+          )
+          return (
+            <Box key={p.uuid} height={1} overflow="hidden">
+              <Text dimColor>{summaryText}</Text>
+            </Box>
+          )
+        }
+        return (
+          <MessageComponent
+            key={p.message.uuid}
+            message={p.message.data.message as any}
+            lookups={subagentLookups}
+            addMargin={false}
+            tools={tools}
+            commands={[]}
+            verbose={verbose}
+            inProgressToolUseIDs={inProgressToolUseIDs}
+            progressMessagesForMessage={[]}
+            shouldAnimate={false}
+            shouldShowDot={false}
+            style="condensed"
+            isTranscriptMode={false}
+            isStatic={true}
+          />
+        )
+      })}
+      {hiddenCount > 0 && (
+        <Text dimColor>
+          {tSync(hiddenCount === 1 ? 'agent.moreToolUses_one' : 'agent.moreToolUses_other', {
+            count: hiddenCount,
+          })}{' '}
+          <CtrlOToExpand />
+        </Text>
+      )}
+    </SubAgentProvider>
+  )
+}
+
 export function renderToolResultMessage(
   data: Output,
   progressMessagesForMessage: ProgressMessage<Progress>[],
@@ -403,7 +554,13 @@ export function renderToolResultMessage(
             verbose={verbose}
           />
         </SubAgentProvider>
-      ) : null}
+      ) : (
+        <BriefStandalonePreview
+          progressMessages={progressMessagesForMessage}
+          tools={tools}
+          verbose={verbose}
+        />
+      )}
       {isTranscriptMode && content && content.length > 0 && (
         <MessageResponse>
           <AgentResponseDisplay content={content} theme={theme} />
@@ -524,11 +681,13 @@ export function renderToolUseProgressMessage(
     let tokens = null
     if (latestAssistant?.data.message.type === 'assistant') {
       const usage = (latestAssistant.data.message as any).message.usage
-      tokens =
-        (usage?.cacheCreationInputTokens ?? 0) +
-        (usage?.cacheReadInputTokens ?? 0) +
-        (usage?.inputTokens ?? 0) +
-        (usage?.outputTokens ?? 0)
+      if (usage) {
+        tokens =
+          (usage.cacheCreationInputTokens ?? 0) +
+          (usage.cacheReadInputTokens ?? 0) +
+          (usage.inputTokens ?? 0) +
+          (usage.outputTokens ?? 0)
+      }
     }
     return {
       toolUseCount,
@@ -561,33 +720,10 @@ export function renderToolUseProgressMessage(
   // isAgentRunning=true 因为这是代理仍在运行时显示的 progress 视图
   const processedMessages = processProgressMessages(progressMessages, tools, true)
 
-  // 用于显示，取最后几条处理后的消息
-  const displayedMessages = isTranscriptMode
-    ? processedMessages
-    : processedMessages.slice(-MAX_PROGRESS_MESSAGES_TO_SHOW)
-
-  // 专门统计隐藏的工具使用次数（而不是所有消息），以匹配最终的
-  // "Done (N tool uses)" 计数。每个工具使用会生成多条 progress 消息
-  //（tool_use + tool_result + text），因此统计所有隐藏消息会导致
-  // 向用户显示的数字膨胀。
-  const hiddenMessages = isTranscriptMode
-    ? []
-    : processedMessages.slice(
-        0,
-        Math.max(0, processedMessages.length - MAX_PROGRESS_MESSAGES_TO_SHOW),
-      )
-  const hiddenToolUseCount = count(hiddenMessages, (m) => {
-    if (m.type === 'summary') {
-      return m.searchCount + m.readCount + m.replCount > 0
-    }
-    const data = m.message.data
-    if (!hasProgressMessage(data)) {
-      return false
-    }
-    return (data.message as any).message.content.some(
-      (content: any) => content.type === 'tool_call',
-    )
-  })
+  // 用于显示：transcript 模式展示全部，折叠模式使用 briefStandalone 豁免算法
+  const { displayed: displayedMessages, hiddenCount: hiddenToolUseCount } = isTranscriptMode
+    ? { displayed: processedMessages, hiddenCount: 0 }
+    : selectDisplayMessages(processedMessages, tools)
   const firstData = progressMessages[0]?.data
   const prompt = firstData && hasProgressMessage(firstData) ? firstData.prompt : undefined
 
@@ -665,6 +801,7 @@ export function renderToolUseProgressMessage(
             <CtrlOToExpand />
           </Text>
         )}
+        <CtrlBToBackground />
       </Box>
     </MessageResponse>
   )
@@ -758,11 +895,13 @@ function calculateAgentStats(progressMessages: ProgressMessage<Progress>[]): {
   let tokens = null
   if (latestAssistant?.data.message.type === 'assistant') {
     const usage = (latestAssistant.data.message as any).message.usage
-    tokens =
-      (usage?.cacheCreationInputTokens ?? 0) +
-      (usage?.cacheReadInputTokens ?? 0) +
-      (usage?.inputTokens ?? 0) +
-      (usage?.outputTokens ?? 0)
+    if (usage) {
+      tokens =
+        (usage.cacheCreationInputTokens ?? 0) +
+        (usage.cacheReadInputTokens ?? 0) +
+        (usage.inputTokens ?? 0) +
+        (usage.outputTokens ?? 0)
+    }
   }
   return {
     toolUseCount,
@@ -878,8 +1017,7 @@ export function renderGroupedAgentToolUse(
           {allComplete ? (
             allAsync ? (
               <>
-                <Text bold>{toolUses.length}</Text>{' '}
-                {tSync('agent.backgroundAgentsLaunched', { count: toolUses.length })}{' '}
+                <Text bold>{toolUses.length}</Text> {tSync('agent.backgroundAgentsLaunched')}{' '}
                 <Text dimColor>
                   <KeyboardShortcutHint shortcut="↓" action="manage" parens />
                 </Text>
@@ -889,25 +1027,30 @@ export function renderGroupedAgentToolUse(
                 <Text bold>{toolUses.length}</Text>{' '}
                 {commonType
                   ? tSync('agent.agentsFinished', {
-                      count: toolUses.length,
-                      type: `${commonType} agents`,
+                      type: commonType,
                     })
-                  : tSync('agent.agentsFinishedNoType', { count: toolUses.length })}
+                  : tSync('agent.agentsFinishedNoType')}
               </>
             )
           ) : (
             <>
-              {tSync('agent.runningPrefix')} <Text bold>{toolUses.length}</Text>{' '}
+              {tSync('agent.runningPrefix')}
+              {tSync('agent.runningPrefix') ? ' ' : ''}
+              <Text bold>{toolUses.length}</Text>{' '}
               {commonType
                 ? tSync('agent.runningAgents', {
-                    count: toolUses.length,
-                    type: `${commonType} agents`,
+                    type: commonType,
                   })
-                : tSync('agent.runningAgentsNoType', { count: toolUses.length })}
+                : tSync('agent.runningAgentsNoType')}
             </>
           )}{' '}
         </Text>
-        {!allAsync && <CtrlOToExpand />}
+        {!allAsync && (
+          <>
+            <CtrlOToExpand />
+            {anyUnresolved && <CtrlBToBackground />}
+          </>
+        )}
       </Box>
       {agentStats.map((stat, index) => (
         <AgentProgressLine
@@ -948,7 +1091,11 @@ export function userFacingName(
     if (input.subagent_type === 'worker') {
       return tSync('agent.defaultName')
     }
-    return input.subagent_type
+    // 优先使用内置 agent 类型的 i18n 翻译，自定义类型回退到原始名称
+    const i18nKey = `agent.builtInType.${input.subagent_type}` as const
+    const translated = tSync(i18nKey as any)
+    // tSync 找不到 key 时返回 key 本身，据此判断是否存在翻译
+    return translated !== i18nKey ? translated : input.subagent_type
   }
   return tSync('agent.defaultName')
 }

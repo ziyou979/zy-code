@@ -36,7 +36,7 @@ const BOX_CHARS = {
  * Truncates content that exceeds maxLines with an indicator.
  * The parent component should pass maxLines based on its available height budget.
  */
-export function PreviewBox(props) {
+export function PreviewBox(props: PreviewBoxProps) {
   const settings = useSettings()
   if (settings.syntaxHighlightingDisabled) {
     return <PreviewBoxBody {...props} highlight={null} />
@@ -47,12 +47,19 @@ export function PreviewBox(props) {
     </Suspense>
   )
 }
-function PreviewBoxWithHighlight(props) {
+function PreviewBoxWithHighlight(props: PreviewBoxProps) {
   const highlightPromise = getCliHighlightPromise()
   const highlight = use(highlightPromise)
   return <PreviewBoxBody {...props} highlight={highlight} />
 }
-function PreviewBoxBody({ content, maxLines, minHeight, minWidth = 40, maxWidth, highlight }) {
+function PreviewBoxBody({
+  content,
+  maxLines,
+  minHeight,
+  minWidth = 40,
+  maxWidth,
+  highlight,
+}: PreviewBoxProps & { highlight: any }) {
   const { columns: terminalWidth } = useTerminalSize()
   const [theme] = useTheme()
   const effectiveMaxWidth = maxWidth ?? terminalWidth - 4

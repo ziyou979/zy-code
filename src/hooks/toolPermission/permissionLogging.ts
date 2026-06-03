@@ -63,10 +63,7 @@ async function buildCodeEditToolAttributes(
 
 // Flattens structured source into a string label for analytics/OTel events
 function sourceToString(source: PermissionApprovalSource | PermissionRejectionSource): string {
-  if (
-    (feature('BASH_CLASSIFIER') || true) &&
-    source.type === 'classifier'
-  ) {
+  if ((feature('BASH_CLASSIFIER') || true) && source.type === 'classifier') {
     return 'classifier'
   }
   switch (source.type) {
@@ -109,10 +106,7 @@ function logApprovalEvent(
     logEvent('zy_tool_use_granted_in_config', baseMetadata(messageId, tool.name, undefined))
     return
   }
-  if (
-    (feature('BASH_CLASSIFIER') || true) &&
-    source.type === 'classifier'
-  ) {
+  if ((feature('BASH_CLASSIFIER') || true) && source.type === 'classifier') {
     logEvent('zy_tool_use_granted_by_classifier', baseMetadata(messageId, tool.name, waitMs))
     return
   }

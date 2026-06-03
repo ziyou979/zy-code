@@ -13,7 +13,8 @@ type LinePart = {
 }
 export function HighlightedInput({ text, highlights }: Props) {
   const segments = segmentTextByHighlights(text, highlights)
-  const lines = [[]]
+  const lines: Array<Array<{ text: string; highlight: TextHighlight | undefined; start: number }>> =
+    [[]]
   let pos = 0
   for (const segment of segments) {
     const parts = segment.text.split('\n')
@@ -78,8 +79,8 @@ export function HighlightedInput({ text, highlights }: Props) {
                     char={char}
                     index={segmentPart.start + charIndex}
                     glimmerIndex={glimmerIndex}
-                    messageColor={segmentPart.highlight.color}
-                    shimmerColor={segmentPart.highlight.shimmerColor}
+                    messageColor={segmentPart.highlight!.color!}
+                    shimmerColor={segmentPart.highlight!.shimmerColor!}
                   />
                 ))}
               </Text>

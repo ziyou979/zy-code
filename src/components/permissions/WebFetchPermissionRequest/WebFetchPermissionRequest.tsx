@@ -27,7 +27,7 @@ export function WebFetchPermissionRequest({
   onReject,
   verbose,
   workerBadge,
-}) {
+}: import('../PermissionRequest.js').PermissionRequestProps) {
   const [theme] = useTheme()
   const { url } = toolUseConfirm.input as {
     url: string
@@ -59,7 +59,7 @@ export function WebFetchPermissionRequest({
     value: 'no',
   })
   const options = result
-  const onChange = function onChange(newValue) {
+  const onChange = function onChange(newValue: string) {
     switch (newValue) {
       case 'yes': {
         logUnaryPermissionEvent('tool_use_single', toolUseConfirm, 'accept')

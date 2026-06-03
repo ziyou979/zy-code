@@ -208,7 +208,10 @@ function streamOnOpen(this: StreamState, fd: number): void {
   })
 }
 
-function streamOnData(this: StreamState, chunk: string): void {
+function streamOnData(this: StreamState, rawChunk: string | Buffer): void {
+  // Stream is opened with encoding: 'utf-8', so data arrives as string.
+  // The union type accounts for the general 'data' event signature.
+  let chunk: string = typeof rawChunk === 'string' ? rawChunk : rawChunk.toString('utf-8')
   if (this.isFirstChunk) {
     this.isFirstChunk = false
     if (chunk.charCodeAt(0) === 0xfeff) {

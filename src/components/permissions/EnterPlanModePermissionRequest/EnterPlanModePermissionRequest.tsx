@@ -9,9 +9,15 @@ import { useAppState } from '../../../state/AppState.js'
 import { isPlanModeInterviewPhaseEnabled } from '../../../utils/planModeV2.js'
 import { Select } from '../../CustomSelect/index.js'
 import { PermissionDialog } from '../PermissionDialog.js'
-export function EnterPlanModePermissionRequest({ toolUseConfirm, onDone, onReject, workerBadge }) {
+import type { PermissionRequestProps } from '../PermissionRequest.js'
+export function EnterPlanModePermissionRequest({
+  toolUseConfirm,
+  onDone,
+  onReject,
+  workerBadge,
+}: PermissionRequestProps) {
   const toolPermissionContextMode = useAppState((s) => s.toolPermissionContext.mode)
-  const handleResponse = function handleResponse(value) {
+  const handleResponse = function handleResponse(value: string) {
     if (value === 'yes') {
       logEvent('zy_plan_enter', {
         interviewPhaseEnabled: isPlanModeInterviewPhaseEnabled(),

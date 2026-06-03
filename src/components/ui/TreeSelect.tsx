@@ -123,15 +123,15 @@ export function TreeSelect({
 }: TreeSelectProps<any>) {
   const [internalExpandedIds, setInternalExpandedIds] = React.useState(new Set<string>())
   const isProgrammaticFocusRef = React.useRef(false)
-  const lastFocusedIdRef = React.useRef(null)
-  const isExpanded = (nodeId) => {
+  const lastFocusedIdRef = React.useRef<string | null>(null)
+  const isExpanded = (nodeId: string) => {
     if (isNodeExpanded) {
       return isNodeExpanded(nodeId)
     }
     return internalExpandedIds.has(nodeId)
   }
-  const result = []
-  function traverse(node, depth, parentId) {
+  const result: any[] = []
+  function traverse(node: any, depth: number, parentId: string | null) {
     const hasChildren = !!node.children && node.children.length > 0
     const nodeIsExpanded = isExpanded(node.id)
     result.push({
@@ -151,11 +151,11 @@ export function TreeSelect({
     traverse(node_0, 0, null)
   }
   const flattenedNodes = result
-  const defaultGetParentPrefix = (isExpanded_0) => (isExpanded_0 ? '\u25BC ' : '\u25B6 ')
-  const defaultGetChildPrefix = (_depth) => '  \u25B8 '
+  const defaultGetParentPrefix = (isExpanded_0: boolean) => (isExpanded_0 ? '\u25BC ' : '\u25B6 ')
+  const defaultGetChildPrefix = (_depth: number) => '  \u25B8 '
   const parentPrefixFn = getParentPrefix ?? defaultGetParentPrefix
   const childPrefixFn = getChildPrefix ?? defaultGetChildPrefix
-  const buildLabel = (flatNode) => {
+  const buildLabel = (flatNode: any) => {
     let prefix = ''
     if (flatNode.hasChildren) {
       prefix = parentPrefixFn(flatNode.isExpanded)
@@ -175,8 +175,9 @@ export function TreeSelect({
   const map = new Map()
   flattenedNodes.forEach((fn) => map.set(fn.node.id, fn.node))
   const nodeMap = map
-  const findFlattenedNode = (nodeId_0) => flattenedNodes.find((fn_0) => fn_0.node.id === nodeId_0)
-  const toggleExpand = (nodeId_1, shouldExpand) => {
+  const findFlattenedNode = (nodeId_0: string) =>
+    flattenedNodes.find((fn_0: any) => fn_0.node.id === nodeId_0)
+  const toggleExpand = (nodeId_1: string, shouldExpand: boolean) => {
     const flatNode_1 = findFlattenedNode(nodeId_1)
     if (!flatNode_1?.hasChildren) {
       return
@@ -199,22 +200,23 @@ export function TreeSelect({
       }
     }
   }
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: any) => {
     if (!focusNodeId || isDisabled) {
       return
     }
-    const flatNode_2 = findFlattenedNode(focusNodeId)
+    const focusId = String(focusNodeId)
+    const flatNode_2 = findFlattenedNode(focusId)
     if (!flatNode_2) {
       return
     }
     if (e.key === 'right' && flatNode_2.hasChildren) {
       e.preventDefault()
-      toggleExpand(focusNodeId, true)
+      toggleExpand(focusId, true)
     } else {
       if (e.key === 'left') {
         if (flatNode_2.hasChildren && flatNode_2.isExpanded) {
           e.preventDefault()
-          toggleExpand(focusNodeId, false)
+          toggleExpand(focusId, false)
         } else {
           if (flatNode_2.parentId !== undefined) {
             e.preventDefault()
@@ -231,14 +233,14 @@ export function TreeSelect({
       }
     }
   }
-  const handleChange = (nodeId_2) => {
+  const handleChange = (nodeId_2: string) => {
     const node_1 = nodeMap.get(nodeId_2)
     if (!node_1) {
       return
     }
     onSelect(node_1)
   }
-  const handleFocus = (nodeId_3) => {
+  const handleFocus = (nodeId_3: string) => {
     if (isProgrammaticFocusRef.current) {
       isProgrammaticFocusRef.current = false
       return

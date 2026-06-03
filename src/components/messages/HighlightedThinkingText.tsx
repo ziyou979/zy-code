@@ -34,7 +34,7 @@ export function HighlightedThinkingText({ text, useBriefLayout, timestamp }: Pro
     )
   }
   let parts
-  let earlyReturn
+  let earlyReturn: React.ReactNode | symbol
   earlyReturn = Symbol.for('react.early_return_sentinel')
   const triggers = isUltrathinkEnabled() ? findThinkingTriggerPositions(text) : []
   if (triggers.length === 0) {
@@ -73,7 +73,7 @@ export function HighlightedThinkingText({ text, useBriefLayout, timestamp }: Pro
     }
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   return (
     <Text>

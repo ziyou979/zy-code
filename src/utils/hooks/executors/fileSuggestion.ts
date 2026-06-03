@@ -5,7 +5,7 @@ import { shouldSkipHookDueToTrust } from '../config.js'
 // 该 hook 当前不读取字段，因此用 unknown 占位。
 type FileSuggestionCommandInput = unknown
 
-import { logForDebugging } from '../../debug.js'
+import { createDebugLog } from '../../debug.js'
 import { getInitialSettings, getSettingsForSource } from '../../settings/settings.js'
 import { jsonStringify } from '../../slowOperations.js'
 import { execCommandHook } from '../commandRunner.js'
@@ -13,6 +13,8 @@ import {
   shouldAllowManagedHooksOnly,
   shouldDisableAllHooksIncludingManaged,
 } from '../hooksConfigSnapshot.js'
+
+const hookLog = createDebugLog('hooks')
 
 export async function executeFileSuggestionCommand(
   fileSuggestionInput: FileSuggestionCommandInput,
@@ -27,7 +29,7 @@ export async function executeFileSuggestionCommand(
   // SECURITY: ALL hooks require workspace trust in interactive mode
   // This centralized check prevents RCE vulnerabilities for all current and future hooks
   if (shouldSkipHookDueToTrust()) {
-    logForDebugging(`Skipping FileSuggestion command execution - workspace trust not accepted`)
+    hookLog(`Skipping FileSuggestion command execution - workspace trust not accepted`)
     return []
   }
 
@@ -67,7 +69,7 @@ export async function executeFileSuggestionCommand(
       .map((line) => line.trim())
       .filter(Boolean)
   } catch (error) {
-    logForDebugging(`File suggestion helper failed: ${error}`, {
+    hookLog(`File suggestion helper failed: ${error}`, {
       level: 'error',
     })
     return []

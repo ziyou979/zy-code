@@ -6,9 +6,7 @@ export function General() {
     <Box flexDirection="column" paddingY={1} gap={1}>
       {
         <Box>
-          <Text>
-            {tSync('help.description')}
-          </Text>
+          <Text>{tSync('help.description')}</Text>
         </Box>
       }
       <Box flexDirection="column">

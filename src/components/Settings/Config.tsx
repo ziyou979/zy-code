@@ -2202,7 +2202,7 @@ function teammateModelDisplayString(value: string | null | undefined): string {
   }
   return modelDisplayString(value)
 }
-const THEME_LABELS = {
+const THEME_LABELS: Record<string, string> = {
   auto: 'Auto (match terminal)',
   dark: 'Dark mode',
   light: 'Light mode',
@@ -2211,7 +2211,7 @@ const THEME_LABELS = {
   'dark-ansi': 'Dark mode (ANSI colors only)',
   'light-ansi': 'Light mode (ANSI colors only)',
 }
-function NotifChannelLabel({ value }) {
+function NotifChannelLabel({ value }: { value: string }) {
   switch (value) {
     case 'auto': {
       return 'Auto'

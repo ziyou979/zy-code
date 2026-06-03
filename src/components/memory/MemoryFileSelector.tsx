@@ -129,10 +129,10 @@ export function MemoryFileSelector({ onSelect, onCancel }: Props) {
       value: `${OPEN_FOLDER_PREFIX}${getAutoMemPath()}`,
       description: '',
     })
-    if (feature('TEAMMEM') && teamMemPaths.isTeamMemoryEnabled()) {
+    if (feature('TEAMMEM') && teamMemPaths?.isTeamMemoryEnabled()) {
       folderOptions.push({
         label: 'Open team memory folder',
-        value: `${OPEN_FOLDER_PREFIX}${teamMemPaths.getTeamMemPath()}`,
+        value: `${OPEN_FOLDER_PREFIX}${teamMemPaths!.getTeamMemPath()}`,
         description: '',
       })
     }
@@ -160,7 +160,7 @@ export function MemoryFileSelector({ onSelect, onCancel }: Props) {
       (t: any) => (t as any).type === 'dream' && (t as any).status === 'running',
     ),
   )
-  const [lastDreamAt, setLastDreamAt] = useState(null)
+  const [lastDreamAt, setLastDreamAt] = useState<number | null>(null)
   useEffect(() => {
     if (!showDreamRow) {
       return
@@ -174,7 +174,7 @@ export function MemoryFileSelector({ onSelect, onCancel }: Props) {
       : lastDreamAt === 0
         ? 'never'
         : `last ran ${formatRelativeTimeAgo(new Date(lastDreamAt))}`
-  const [focusedToggle, setFocusedToggle] = useState(null)
+  const [focusedToggle, setFocusedToggle] = useState<number | null>(null)
   const toggleFocused = focusedToggle !== null
   const lastToggleIndex = showDreamRow ? 1 : 0
   const handleToggleAutoMemory = function handleToggleAutoMemory() {
@@ -262,7 +262,7 @@ export function MemoryFileSelector({ onSelect, onCancel }: Props) {
           defaultFocusValue={initialPath}
           options={memoryOptions}
           isDisabled={toggleFocused}
-          onChange={(value) => {
+          onChange={(value: string) => {
             if (value.startsWith(OPEN_FOLDER_PREFIX)) {
               const folderPath = value.slice(OPEN_FOLDER_PREFIX.length)
               mkdir(folderPath, {

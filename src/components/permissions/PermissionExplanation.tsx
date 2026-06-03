@@ -82,10 +82,10 @@ function createExplanationPromise(
  * Creates the fetch promise lazily (only when user hits Ctrl+E)
  * to avoid consuming tokens for explanations users never view.
  */
-export function usePermissionExplainerUI(props) {
+export function usePermissionExplainerUI(props: any) {
   const enabled = isPermissionExplainerEnabled()
   const [visible, setVisible] = useState(false)
-  const [promise, setPromise] = useState(null)
+  const [promise, setPromise] = useState<Promise<PermissionExplanationType | null> | null>(null)
   useKeybinding(
     'confirm:toggleExplanation',
     () => {
@@ -114,7 +114,7 @@ export function usePermissionExplainerUI(props) {
  * Suspends while loading, returns null on error.
  */
 
-function ExplanationResult({ promise }) {
+function ExplanationResult({ promise }: { promise: Promise<PermissionExplanationType | null> }) {
   const explanation = use(promise)
   if (!explanation) {
     return (
@@ -148,7 +148,13 @@ function ExplanationResult({ promise }) {
 /**
  * Content component - shows loading (via Suspense) or explanation when visible
  */
-export function PermissionExplainerContent({ visible, promise }) {
+export function PermissionExplainerContent({
+  visible,
+  promise,
+}: {
+  visible: boolean
+  promise: Promise<PermissionExplanationType | null> | null
+}) {
   if (!visible || !promise) {
     return null
   }

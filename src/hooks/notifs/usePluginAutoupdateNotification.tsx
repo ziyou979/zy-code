@@ -12,7 +12,7 @@ import { onPluginsAutoUpdated } from '../../utils/plugins/pluginAutoupdate.js'
  */
 export function usePluginAutoupdateNotification() {
   const { addNotification } = useNotifications()
-  const [updatedPlugins, setUpdatedPlugins] = useState([])
+  const [updatedPlugins, setUpdatedPlugins] = useState<string[]>([])
   useEffect(() => {
     if (getIsRemoteMode()) {
       return

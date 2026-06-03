@@ -48,7 +48,7 @@ import {
 } from '../../services/telemetry/sessionTracing.js'
 import type { ToolUseContext } from '../../Tool.js'
 import type { Message } from '../../types/message.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import { errorMessage } from '../errors.js'
 import { all } from '../generators.js'
 import { logError } from '../log.js'
@@ -75,6 +75,8 @@ import { getSessionHookCallback } from './sessionHooks.js'
 import { maybeSpillHookOutput } from './spillOutput.js'
 import { validateTerminalSequence } from './terminalSequence.js'
 import type { AggregatedHookResult, HookResult } from './types.js'
+
+const hookLog = createDebugLog('hooks')
 
 export async function* executeHooks({
   hookInput,
@@ -119,7 +121,7 @@ export async function* executeHooks({
   // SECURITY: ALL hooks require workspace trust in interactive mode
   // This centralized check prevents RCE vulnerabilities for all current and future hooks
   if (shouldSkipHookDueToTrust()) {
-    logForDebugging(`Skipping ${hookName} hook execution - workspace trust not accepted`)
+    hookLog(`Skipping ${hookName} hook execution - workspace trust not accepted`)
     return
   }
 
@@ -864,7 +866,7 @@ export async function* executeHooks({
 
     // 尽早检查 preventContinuation
     if (result.preventContinuation) {
-      logForDebugging(
+      hookLog(
         `Hook ${hookEvent} (${getHookDisplayText(result.hook)}) requested preventContinuation`,
       )
       yield {
@@ -904,7 +906,7 @@ export async function* executeHooks({
       if (safe) {
         process.stdout.write(safe)
       } else {
-        logForDebugging(
+        hookLog(
           `Hook ${hookEvent} (${getHookDisplayText(result.hook)}) terminalSequence rejected by whitelist`,
         )
       }
@@ -912,7 +914,7 @@ export async function* executeHooks({
 
     // 从 hook 收集附加上下文
     if (result.additionalContext) {
-      logForDebugging(
+      hookLog(
         `Hook ${hookEvent} (${getHookDisplayText(result.hook)}) provided additionalContext (${result.additionalContext.length} chars)`,
       )
       yield {
@@ -921,7 +923,7 @@ export async function* executeHooks({
     }
 
     if (result.initialUserMessage) {
-      logForDebugging(
+      hookLog(
         `Hook ${hookEvent} (${getHookDisplayText(result.hook)}) provided initialUserMessage (${result.initialUserMessage.length} chars)`,
       )
       yield {
@@ -930,7 +932,7 @@ export async function* executeHooks({
     }
 
     if (result.watchPaths && result.watchPaths.length > 0) {
-      logForDebugging(
+      hookLog(
         `Hook ${hookEvent} (${getHookDisplayText(result.hook)}) provided ${result.watchPaths.length} watchPaths`,
       )
       yield {
@@ -940,7 +942,7 @@ export async function* executeHooks({
 
     // 如果提供了 updatedToolOutput 则产出（来自 PostToolUse hook，全工具）
     if (result.updatedToolOutput !== undefined) {
-      logForDebugging(`Hook ${hookEvent} (${getHookDisplayText(result.hook)}) replaced tool output`)
+      hookLog(`Hook ${hookEvent} (${getHookDisplayText(result.hook)}) replaced tool output`)
       yield {
         updatedToolOutput: result.updatedToolOutput,
       }
@@ -948,9 +950,7 @@ export async function* executeHooks({
 
     // 如果提供了 updatedMCPToolOutput 则产出（来自 PostToolUse hook）
     if (result.updatedMCPToolOutput) {
-      logForDebugging(
-        `Hook ${hookEvent} (${getHookDisplayText(result.hook)}) replaced MCP tool output`,
-      )
+      hookLog(`Hook ${hookEvent} (${getHookDisplayText(result.hook)}) replaced MCP tool output`)
       yield {
         updatedMCPToolOutput: result.updatedMCPToolOutput,
       }
@@ -958,7 +958,7 @@ export async function* executeHooks({
 
     // 按优先级检查权限行为：deny > ask > allow
     if (result.permissionBehavior) {
-      logForDebugging(
+      hookLog(
         `Hook ${hookEvent} (${getHookDisplayText(result.hook)}) returned permissionDecision: ${result.permissionBehavior}${result.hookPermissionDecisionReason ? ` (reason: ${result.hookPermissionDecisionReason})` : ''}`,
       )
       // 应用优先级规则
@@ -993,7 +993,7 @@ export async function* executeHooks({
           ? result.updatedInput
           : undefined
       if (updatedInput) {
-        logForDebugging(
+        hookLog(
           `Hook ${hookEvent} (${getHookDisplayText(result.hook)}) modified tool input keys: [${Object.keys(updatedInput).join(', ')}]`,
         )
       }
@@ -1009,7 +1009,7 @@ export async function* executeHooks({
     // This allows hooks to modify input without making a permission decision
     // Note: Check result.permissionBehavior (this hook's behavior), not the aggregated permissionBehavior
     if (result.updatedInput && result.permissionBehavior === undefined) {
-      logForDebugging(
+      hookLog(
         `Hook ${hookEvent} (${getHookDisplayText(result.hook)}) modified tool input keys: [${Object.keys(result.updatedInput).join(', ')}]`,
       )
       yield {

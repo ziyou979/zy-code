@@ -1,3 +1,4 @@
+import type React from 'react'
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js'
 import { useTheme } from '../../../ink.js'
 import { filterToolProgressMessages, type Tool, type Tools } from '../../../Tool.js'
@@ -32,7 +33,7 @@ export function UserToolRejectMessage({
     return <FallbackToolUseRejectedMessage />
   }
   let fallbackToolUseRejectedMessageElement
-  let earlyReturn
+  let earlyReturn: React.ReactNode | symbol
   earlyReturn = Symbol.for('react.early_return_sentinel')
   const parsedInput = tool.inputSchema.safeParse(input)
   if (!parsedInput.success) {
@@ -50,7 +51,7 @@ export function UserToolRejectMessage({
     }) ?? <FallbackToolUseRejectedMessage />
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   return fallbackToolUseRejectedMessageElement
 }

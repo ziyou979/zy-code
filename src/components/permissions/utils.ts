@@ -6,7 +6,7 @@ export function logUnaryPermissionEvent(
   completion_type: CompletionType,
   {
     assistantMessage: {
-      message: { id: message_id },
+      message: { id: message_id = '' },
     },
   }: ToolUseConfirm,
   event: 'accept' | 'reject',

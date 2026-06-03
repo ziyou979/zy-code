@@ -172,7 +172,7 @@ function PowerupApp({ onDone }: Props) {
           options={options}
           defaultFocusValue={focusId}
           onFocus={setFocusId}
-          onChange={(id) => setOpenLessonId(id)}
+          onChange={(id: string) => setOpenLessonId(id)}
           onCancel={close}
           hideIndexes
           visibleOptionCount={lessons.length}

@@ -97,10 +97,26 @@ const getAgentVerb = () =>
     needs_input: tSync('backgroundTasks.waiting'),
     plan_ready: tSync('backgroundTasks.done'),
   }) as const
-function UltraplanSessionDetail({ session, toolUseContext, onDone, onBack, onKill }) {
+function UltraplanSessionDetail({
+  session,
+  toolUseContext,
+  onDone,
+  onBack,
+  onKill,
+}: {
+  session: any
+  toolUseContext: any
+  onDone: (...args: any[]) => void
+  onBack?: () => void
+  onKill?: () => void
+}) {
   const running = session.status === 'running' || session.status === 'pending'
   const phase = session.ultraplanPhase
-  const statusText = running ? (phase ? getPhaseLabel()[phase] : 'running') : session.status
+  const statusText = running
+    ? phase
+      ? (getPhaseLabel() as any)[phase]
+      : 'running'
+    : session.status
   const elapsedTime = useElapsedTime(session.startTime, running, 1000, 0, session.endTime)
   let spawns = 0
   let calls = 0
@@ -154,7 +170,7 @@ function UltraplanSessionDetail({ session, toolUseContext, onDone, onBack, onKil
                 value: 'back' as const,
               },
             ]}
-            onChange={(v) => {
+            onChange={(v: string) => {
               if (v === 'stop') {
                 onKill?.()
                 goBackOrClose()
@@ -198,8 +214,8 @@ function UltraplanSessionDetail({ session, toolUseContext, onDone, onBack, onKil
             <Text>
               {phase === 'plan_ready' && <Text color="success">{figures.tick} </Text>}
               {agentsWorking} {agentLabel}{' '}
-              {phase ? getAgentVerb()[phase] : tSync('backgroundTasks.working')} · {toolCalls} tool{' '}
-              {toolCallLabel}
+              {phase ? (getAgentVerb() as any)[phase] : tSync('backgroundTasks.working')} ·{' '}
+              {toolCalls} tool {toolCallLabel}
             </Text>
           }
           {lastToolCall && <Text dimColor={true}>{lastToolCall}</Text>}
@@ -261,8 +277,16 @@ const getStageLabels = (): Record<(typeof STAGES)[number], string> => ({
 // "Setup" 标签在编排器写入第一个进度快照前显示
 //（容器启动 + 仓库克隆），这样 0 发现的显示不会
 // 看起来像卡住的查找器。
-function StagePipeline({ stage, completed, hasProgress }) {
-  const currentIdx = stage ? STAGES.indexOf(stage) : -1
+function StagePipeline({
+  stage,
+  completed,
+  hasProgress,
+}: {
+  stage: string | undefined
+  completed: boolean
+  hasProgress: boolean
+}) {
+  const currentIdx = stage ? STAGES.indexOf(stage as any) : -1
   const inSetup = !completed && !hasProgress
   const stageElements = STAGES.map((stage, index) => {
     const isCurrent = !completed && !inSetup && index === currentIdx
@@ -315,7 +339,17 @@ function reviewCountsLine(session: DeepImmutable<RemoteAgentTaskState>): string 
   return formatReviewStageCounts(p.stage, p.bugsFound, verified, refuted)
 }
 type MenuAction = 'open' | 'stop' | 'back' | 'dismiss'
-function ReviewSessionDetail({ session, onDone, onBack, onKill }) {
+function ReviewSessionDetail({
+  session,
+  onDone,
+  onBack,
+  onKill,
+}: {
+  session: any
+  onDone: (...args: any[]) => void
+  onBack?: () => void
+  onKill?: () => void
+}) {
   const completed = session.status === 'completed'
   const running = session.status === 'running' || session.status === 'pending'
   const [confirmingStop, setConfirmingStop] = useState(false)

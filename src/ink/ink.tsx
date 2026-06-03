@@ -1879,7 +1879,12 @@ export default class Ink {
       // don't stack-overflow.
       if (reentered) {
         const encoding = typeof encodingOrCb === 'string' ? encodingOrCb : undefined
-        return originalWrite.call(stderr, chunk, encoding, callback)
+        return originalWrite.call(
+          stderr,
+          chunk,
+          encoding,
+          callback as ((err?: Error | null) => void) | undefined,
+        )
       }
       reentered = true
       try {

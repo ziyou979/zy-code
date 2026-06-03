@@ -317,11 +317,11 @@ export function FullscreenLayout({
   onPillClick,
 }: Props) {
   const { rows: terminalRows, columns } = useTerminalSize()
-  const [stickyPrompt, setStickyPrompt] = useState(null)
+  const [stickyPrompt, setStickyPrompt] = useState<StickyPrompt | null>(null)
   const chromeCtx = {
     setStickyPrompt,
   }
-  const subscribe = (listener) => scrollRef?.current?.subscribe(listener) ?? _temp
+  const subscribe = (listener: () => void) => scrollRef?.current?.subscribe(listener) ?? _temp
   const pillVisible = useSyncExternalStore(subscribe, () => {
     const s = scrollRef?.current
     const dividerY = dividerYRef?.current
@@ -441,7 +441,7 @@ export function FullscreenLayout({
 // 用户之前认为聊天卡死的死区）。
 
 function _temp() {}
-function NewMessagesPill({ count, onClick }) {
+function NewMessagesPill({ count, onClick }: { count: number; onClick?: () => void }) {
   const [hover, setHover] = useState(false)
   return (
     <Box position="absolute" bottom={0} left={0} right={0} justifyContent="center">
@@ -474,7 +474,7 @@ function NewMessagesPill({ count, onClick }) {
 // 会在滚动过程中每次 sticky prompt 切换时将 ScrollBox 移动 1 行——即使 scrollTop
 // 未变，内容也会在屏幕上跳动（DECSTBM 区域顶部随 ScrollBox 移动，diff 引擎
 // 认为"所有内容都移动了"）。固定高度保持 ScrollBox 锚定；只有头部文本变化，而非其框体。
-function StickyPromptHeader({ text, onClick }) {
+function StickyPromptHeader({ text, onClick }: { text: string; onClick?: () => void }) {
   const [hover, setHover] = useState(false)
   return (
     <Box

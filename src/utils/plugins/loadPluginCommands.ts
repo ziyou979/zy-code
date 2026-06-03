@@ -3,7 +3,7 @@ import memoize from 'lodash-es/memoize.js'
 import { parseUserSpecifiedModel } from 'src/services/model/model.js'
 import { getInlinePlugins, getSessionId } from '../../bootstrap/state.js'
 import type { Command } from '../../types/command.js'
-import { getPluginErrorMessage } from '../../types/plugin.js'
+import { getPluginErrorMessage, type LoadedPlugin, type PluginError } from '../../types/plugin.js'
 import { parseArgumentNames, substituteArguments } from '../argumentSubstitution.js'
 import { logForDebugging } from '../debug.js'
 import { EFFORT_LEVELS, parseEffortValue } from '../effort.js'
@@ -375,13 +375,13 @@ export const getPluginCommands = memoize(async (): Promise<Command[]> => {
 
   if (errors.length > 0) {
     logForDebugging(
-      `Plugin loading errors: ${errors.map((e) => getPluginErrorMessage(e)).join(', ')}`,
+      `Plugin loading errors: ${errors.map((e: PluginError) => getPluginErrorMessage(e)).join(', ')}`,
     )
   }
 
   // Process plugins in parallel; each plugin has its own loadedPaths scope
   const perPluginCommands = await Promise.all(
-    enabled.map(async (plugin): Promise<Command[]> => {
+    enabled.map(async (plugin: LoadedPlugin): Promise<Command[]> => {
       // Track loaded file paths to prevent duplicates within this plugin
       const loadedPaths = new Set<string>()
       const pluginCommands: Command[] = []
@@ -421,7 +421,7 @@ export const getPluginCommands = memoize(async (): Promise<Command[]> => {
         // Process all commandsPaths in parallel. isDuplicatePath is synchronous
         // (check-and-add), so concurrent access to loadedPaths is safe.
         const pathResults = await Promise.all(
-          plugin.commandsPaths.map(async (commandPath): Promise<Command[]> => {
+          plugin.commandsPaths.map(async (commandPath: string): Promise<Command[]> => {
             try {
               const fs = getFsImplementation()
               const stats = await fs.stat(commandPath)
@@ -478,7 +478,7 @@ export const getPluginCommands = memoize(async (): Promise<Command[]> => {
                       const fullMetadataPath = join(plugin.path, (metadata as any).source)
                       if (commandPath === fullMetadataPath) {
                         commandName = `${plugin.name}:${name}`
-                        metadataOverride = metadata
+                        metadataOverride = metadata as CommandMetadata
                         break
                       }
                     }
@@ -782,7 +782,7 @@ export const getPluginSkills = memoize(async (): Promise<Command[]> => {
 
   if (errors.length > 0) {
     logForDebugging(
-      `Plugin loading errors: ${errors.map((e) => getPluginErrorMessage(e)).join(', ')}`,
+      `Plugin loading errors: ${errors.map((e: PluginError) => getPluginErrorMessage(e)).join(', ')}`,
     )
   }
 
@@ -790,7 +790,7 @@ export const getPluginSkills = memoize(async (): Promise<Command[]> => {
 
   // Process plugins in parallel; each plugin has its own loadedPaths scope
   const perPluginSkills = await Promise.all(
-    enabled.map(async (plugin): Promise<Command[]> => {
+    enabled.map(async (plugin: LoadedPlugin): Promise<Command[]> => {
       // Track loaded file paths to prevent duplicates within this plugin
       const loadedPaths = new Set<string>()
       const pluginSkills: Command[] = []
@@ -833,7 +833,7 @@ export const getPluginSkills = memoize(async (): Promise<Command[]> => {
         // Process all skillsPaths in parallel. isDuplicatePath is synchronous
         // (check-and-add), so concurrent access to loadedPaths is safe.
         const pathResults = await Promise.all(
-          plugin.skillsPaths.map(async (skillPath): Promise<Command[]> => {
+          plugin.skillsPaths.map(async (skillPath: string): Promise<Command[]> => {
             try {
               logForDebugging(`Loading from skillPath: ${skillPath} for plugin ${plugin.name}`)
               const skills = await loadSkillsFromDirectory(

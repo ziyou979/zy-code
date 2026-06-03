@@ -62,7 +62,9 @@ export function MCPToolDetailView({ tool, server, onBack }: Props) {
       onCancel={onBack}
       inputGuide={(exitState) =>
         exitState.pending ? (
-          <Text>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</Text>
+          <Text>
+            {tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName ?? '' })}
+          </Text>
         ) : (
           <ConfigurableShortcutHint
             action="confirm:no"

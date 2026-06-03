@@ -187,7 +187,7 @@ export const insertBeforeNode = (
   markDirty(node)
 }
 
-export let removeChildNode
+export let removeChildNode: (node: DOMElement, removeNode: DOMNode) => void
 removeChildNode = (node: DOMElement, removeNode: DOMNode): void => {
   if (removeNode.yogaNode) {
     removeNode.parentNode?.yogaNode?.removeChild(removeNode.yogaNode)
@@ -308,7 +308,11 @@ export const createTextNode = (text: string): TextNode => {
   return node
 }
 
-let measureTextNode
+let measureTextNode: (
+  node: DOMNode,
+  width: number,
+  widthMode: LayoutMeasureMode,
+) => { width: number; height: number }
 measureTextNode = (
   node: DOMNode,
   width: number,
@@ -355,7 +359,7 @@ measureTextNode = (
 // ink-raw-ansi 节点保存预渲染的 ANSI 字符串及其已知尺寸。
 // 无需 stringWidth、无需换行、无需制表符展开 — 生产者（例如 ColorDiff）
 // 已经以目标宽度包裹，每行正好是一个终端行。
-let measureRawAnsiNode
+let measureRawAnsiNode: (node: DOMElement) => { width: number; height: number }
 measureRawAnsiNode = (
   node: DOMElement,
 ): {
@@ -370,7 +374,7 @@ measureRawAnsiNode = (
  * 将节点及其所有祖先节点标记为 dirty 以进行重新渲染。
  * 如果是文本节点，还会标记 yoga dirty 以进行文本重新测量。
  */
-export let markDirty
+export let markDirty: (node?: DOMNode) => void
 markDirty = (node?: DOMNode): void => {
   let current: DOMNode | undefined = node
   let markedYoga = false
@@ -406,7 +410,7 @@ export const scheduleRenderFrom = (node?: DOMNode): void => {
   }
 }
 
-export let setTextNodeValue
+export let setTextNodeValue: (node: TextNode, text: string) => void
 setTextNodeValue = (node: TextNode, text: string): void => {
   if (typeof text !== 'string') {
     text = String(text)

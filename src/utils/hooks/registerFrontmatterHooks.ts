@@ -1,8 +1,10 @@
 import type { AppState } from 'src/state/AppState.js'
 import { HOOK_EVENTS, type HookEvent } from 'src/types/index.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import type { HooksSettings } from '../settings/types.js'
 import { addSessionHook } from './sessionHooks.js'
+
+const hookLog = createDebugLog('hooks')
 
 /**
  * Register hooks from frontmatter (agent or skill) into session-scoped hooks.
@@ -39,7 +41,7 @@ export function registerFrontmatterHooks(
     let targetEvent: HookEvent = event
     if (isAgent && event === 'Stop') {
       targetEvent = 'SubagentStop'
-      logForDebugging(
+      hookLog(
         `Converting Stop hook to SubagentStop for ${sourceName} (subagents trigger SubagentStop)`,
       )
     }
@@ -60,7 +62,7 @@ export function registerFrontmatterHooks(
   }
 
   if (hookCount > 0) {
-    logForDebugging(
+    hookLog(
       `Registered ${hookCount} frontmatter hook(s) from ${sourceName} for session ${sessionId}`,
     )
   }

@@ -63,10 +63,7 @@ function serializeDecisionReason(reason: PermissionDecisionReason | undefined): 
     return undefined
   }
 
-  if (
-    (feature('BASH_CLASSIFIER') || true) &&
-    reason.type === 'classifier'
-  ) {
+  if ((feature('BASH_CLASSIFIER') || true) && reason.type === 'classifier') {
     return reason.reason
   }
   switch (reason.type) {

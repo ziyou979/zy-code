@@ -28,7 +28,7 @@ export function RemoveWorkspaceDirectory({
     setPermissionContext(updatedContext)
     onRemove()
   }
-  const handleSelect = (value) => {
+  const handleSelect = (value: string) => {
     if (value === 'yes') {
       handleRemove()
     } else {

@@ -72,7 +72,9 @@ function ClassifierCheckingSubtitle() {
     </Box>
   )
 }
-export function BashPermissionRequest(props) {
+export function BashPermissionRequest(
+  props: import('../PermissionRequest.js').PermissionRequestProps,
+) {
   const { toolUseConfirm, toolUseContext, onDone, onReject, verbose, workerBadge } = props
   let sedInfo
   let command: string

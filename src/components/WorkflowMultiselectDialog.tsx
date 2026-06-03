@@ -46,13 +46,13 @@ function renderInputGuide(exitState: ExitState): React.ReactNode {
 }
 export function WorkflowMultiselectDialog({ onSubmit, defaultSelections }: Props) {
   const [showError, setShowError] = useState(false)
-  const handleSubmit = (selectedValues) => {
+  const handleSubmit = (selectedValues: string[]) => {
     if (selectedValues.length === 0) {
       setShowError(true)
       return
     }
     setShowError(false)
-    onSubmit(selectedValues)
+    onSubmit(selectedValues as any)
   }
   const handleChange = () => {
     setShowError(false)

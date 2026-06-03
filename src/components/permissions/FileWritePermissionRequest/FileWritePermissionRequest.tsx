@@ -44,8 +44,10 @@ const ideDiffSupport: IDEDiffSupport<FileWriteToolInput> = {
     return input
   },
 }
-export function FileWritePermissionRequest(props) {
-  const parseInput = (input) => FileWriteTool.inputSchema.parse(input)
+export function FileWritePermissionRequest(
+  props: import('../PermissionRequest.js').PermissionRequestProps,
+) {
+  const parseInput = (input: unknown) => FileWriteTool.inputSchema.parse(input)
   const parsed = parseInput(props.toolUseConfirm.input)
   const { file_path, content } = parsed
   let fileInfo

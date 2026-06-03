@@ -1005,7 +1005,9 @@ function runHeadlessStreaming(
   const modelInfos = modelOptions.map((option) => {
     const modelId = option.value === null ? 'default' : option.value
     const resolvedModel =
-      modelId === 'default' ? getDefaultMainLoopModel() : parseUserSpecifiedModel(modelId)
+      modelId === 'default'
+        ? (getDefaultMainLoopModel() ?? modelId)
+        : parseUserSpecifiedModel(modelId)
     const effortLevels = getModelEffortLevels(resolvedModel).filter(
       (l): l is Exclude<typeof l, 'orchestrate'> => l !== 'orchestrate',
     )
@@ -1181,7 +1183,7 @@ function runHeadlessStreaming(
     }
   })
 
-  let run
+  let run: () => Promise<void>
   // Phase 4b: 主循环已外提到 turnLoop.ts。deps 注入全部闭包依赖;loopState 共享
   // 可变状态;kickRun 处理自递归;getBridgeHandle 取活引用(remote_control 会重赋值)。
   const turnLoopDeps: TurnLoopDeps = {

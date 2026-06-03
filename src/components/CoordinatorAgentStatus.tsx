@@ -39,7 +39,6 @@ export function getVisibleAgentTasks(tasks: AppState['tasks']): LocalAgentTaskSt
 export function CoordinatorTaskPanel(): React.ReactNode {
   const tasks = useAppState((s) => s.tasks)
   const viewingAgentTaskId = useAppState((s_0) => s_0.viewingAgentTaskId)
-  const agentNameRegistry = useAppState((s_1) => s_1.agentNameRegistry)
   const coordinatorTaskIndex = useAppState((s_2) => s_2.coordinatorTaskIndex)
   const tasksSelected = useAppState((s_3) => s_3.footerSelection === 'tasks')
   const selectedIndex = tasksSelected ? coordinatorTaskIndex : undefined
@@ -74,13 +73,6 @@ export function CoordinatorTaskPanel(): React.ReactNode {
     )
     return () => clearInterval(interval)
   }, [hasTasks, setAppState])
-  const nameByAgentId = React.useMemo(() => {
-    const inv = new Map<string, string>()
-    for (const [n, id] of agentNameRegistry) {
-      inv.set(id, n)
-    }
-    return inv
-  }, [agentNameRegistry])
   if (visibleTasks.length === 0) {
     return null
   }
@@ -95,7 +87,6 @@ export function CoordinatorTaskPanel(): React.ReactNode {
         <AgentLine
           key={task.id}
           task={task}
-          name={nameByAgentId.get(task.id)}
           isSelected={selectedIndex === i + 1}
           isViewed={viewingAgentTaskId === task.id}
           onClick={() => enterTeammateView(task.id, setAppState)}
@@ -120,7 +111,15 @@ export function useCoordinatorTaskCount() {
     return visible.length === 0 ? 0 : visible.length + 1
   }, [tasks])
 }
-function MainLine({ isSelected, isViewed, onClick }) {
+function MainLine({
+  isSelected,
+  isViewed,
+  onClick,
+}: {
+  isSelected: boolean
+  isViewed: boolean
+  onClick: () => void
+}) {
   const { columns } = useTerminalSize()
   const [hover, setHover] = React.useState(false)
   const highlighted = isSelected || hover
@@ -143,14 +142,20 @@ function MainLine({ isSelected, isViewed, onClick }) {
     </Box>
   )
 }
+// 获取 agent 类型的 i18n 显示标签，自定义类型 fallback 为原始 agentType
+function getAgentTypeLabel(agentType: string): string {
+  const key = `coordinator.agentType.${agentType}`
+  const translated = tSync(key)
+  return translated !== key ? translated : agentType
+}
+
 type AgentLineProps = {
   task: LocalAgentTaskState
-  name?: string
   isSelected?: boolean
   isViewed?: boolean
   onClick?: () => void
 }
-function AgentLine({ task, name, isSelected, isViewed, onClick }: AgentLineProps) {
+function AgentLine({ task, isSelected, isViewed, onClick }: AgentLineProps) {
   const { columns } = useTerminalSize()
   const [hover, setHover] = React.useState(false)
   const isRunning = !isTerminalStatus(task.status)
@@ -167,9 +172,10 @@ function AgentLine({ task, name, isSelected, isViewed, onClick }: AgentLineProps
   const prefix = highlighted ? `${figures.pointer} ` : '  '
   const bullet = isViewed ? BLACK_CIRCLE : figures.circle
   const dim = !highlighted && !isViewed
-  const namePart = name ? `${name}  ` : ''
+  const typeLabel = getAgentTypeLabel(task.agentType)
+  const typeLabelPart = `${typeLabel}  `
   // 描述左侧消耗的宽度 + 右侧 elapsed 占用宽度，剩下的空间留给描述与 gap
-  const leftWidth = stringWidth(prefix) + stringWidth(bullet) + 1 + stringWidth(namePart)
+  const leftWidth = stringWidth(prefix) + stringWidth(bullet) + 1 + stringWidth(typeLabelPart)
   const rightWidth = stringWidth(elapsed)
   const availableForDesc = Math.max(0, columns - leftWidth - rightWidth - 1)
   const truncated = wrapText(displayDescription, availableForDesc, 'truncate-end')
@@ -179,12 +185,10 @@ function AgentLine({ task, name, isSelected, isViewed, onClick }: AgentLineProps
       <Text dimColor={dim} bold={isViewed}>
         {prefix}
         {bullet}{' '}
-        {name && (
-          <Text dimColor={false} bold={true}>
-            {name}
-            {'  '}
-          </Text>
-        )}
+        <Text dimColor={false} bold={true}>
+          {typeLabel}
+          {'  '}
+        </Text>
         {truncated}
         {' '.repeat(gap)}
         {elapsed}

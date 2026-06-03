@@ -56,10 +56,10 @@ export function CommandKeybindingHandlers({ onSubmit, isActive = true }: Props) 
     }
     commandActions = actions
   }
-  const map = {}
+  const map: Record<string, () => void> = {}
   for (const action of commandActions) {
-    const commandName = action.slice(8)
-    map[action] = () => {
+    const commandName = (action as string).slice(8)
+    map[action as string] = () => {
       onSubmit(`/${commandName}`, NOOP_HELPERS, undefined, {
         fromKeybinding: true,
       })

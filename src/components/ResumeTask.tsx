@@ -209,13 +209,13 @@ export function ResumeTask({ onSelect, onCancel, isEmbedded = false }: Props): R
         <Select
           visibleOptionCount={maxVisibleOptions}
           options={options}
-          onChange={(value) => {
+          onChange={(value: string) => {
             const session_1 = sessions.find((s) => s.id === value)
             if (session_1) {
               onSelect(session_1)
             }
           }}
-          onFocus={(value_0) => {
+          onFocus={(value_0: string) => {
             const index = options.findIndex((o) => o.value === value_0)
             if (index >= 0) {
               setFocusedIndex(index + 1)

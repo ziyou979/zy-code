@@ -131,7 +131,7 @@ export function buildMessageLookups(
   const toolUseByToolUseID = new Map<string, ToolCallBlock>()
   for (const msg of messages) {
     if (msg.type === 'assistant') {
-      const id = msg.message.id
+      const id = msg.message.id ?? ''
       let toolUseIDs = toolUseIDsByMessageID.get(id)
       if (!toolUseIDs) {
         toolUseIDs = new Set()

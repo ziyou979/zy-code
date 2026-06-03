@@ -85,7 +85,7 @@ export function buildPluginDetailsMenuOptions(
 /**
  * Key hint component for plugin selection screens
  */
-export function PluginSelectionKeyHint({ hasSelection }) {
+export function PluginSelectionKeyHint({ hasSelection }: { hasSelection: boolean }) {
   return (
     <Box marginTop={1}>
       <Text dimColor={true} italic={true}>

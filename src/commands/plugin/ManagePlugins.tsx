@@ -289,7 +289,7 @@ function PluginComponentsDisplay({
         }
         const marketplaceData = await getMarketplace(marketplace)
         // Find the plugin entry in the array
-        const pluginEntry = marketplaceData.plugins.find((p) => p.name === plugin.name)
+        const pluginEntry = marketplaceData.plugins.find((p: any) => p.name === plugin.name)
         if (pluginEntry) {
           // Combine commands from both sources
           const commandPathList = []
@@ -488,7 +488,7 @@ async function checkIfLocalPlugin(
   marketplaceName: string,
 ): Promise<string | null> {
   const marketplace = await getMarketplace(marketplaceName)
-  const entry = marketplace?.plugins.find((p) => p.name === pluginName)
+  const entry = marketplace?.plugins.find((p: any) => p.name === pluginName)
   if (entry && typeof entry.source === 'string') {
     return `Local plugins cannot be updated remotely. To update, modify the source at: ${entry.source}`
   }

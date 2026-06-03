@@ -12,7 +12,7 @@ type Props = {
   showWorktree: boolean
 }
 export function ExitFlow({ showWorktree, onDone, onCancel }: Props) {
-  const onExit = async function onExit(resultMessage) {
+  const onExit = async function onExit(resultMessage?: string) {
     onDone(resultMessage ?? getRandomGoodbyeMessage())
     await gracefulShutdown(0, 'prompt_input_exit')
   }

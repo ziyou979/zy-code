@@ -231,8 +231,7 @@ export function _resetLinuxCopyCache(): void {
 /**
  * OSC 命令编号
  */
-export let OSC
-OSC = {
+export const OSC = {
   SET_TITLE_AND_ICON: 0,
   SET_ICON: 1,
   SET_TITLE: 2,
@@ -427,8 +426,7 @@ function osc8Id(url: string): string {
 }
 
 /** 结束超链接（OSC 8） */
-export let LINK_END
-LINK_END = osc(OSC.HYPERLINK, '', '')
+export const LINK_END = osc(OSC.HYPERLINK, '', '')
 
 // iTerm2 OSC 9 子命令
 

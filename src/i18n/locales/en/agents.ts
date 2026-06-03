@@ -1,10 +1,12 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const enAgents: TranslationResource = {
-  'agent.agentsFinished': '{count} {type} finished',
-  'agent.agentsFinishedNoType': '{count} agents finished',
+  'agent.agentsFinished': '{type} agents finished',
+  'agent.agentsFinishedNoType': 'agents finished',
   'agent.apiCallsOnly': '[ANT-ONLY] API calls: {path}',
-  'agent.backgroundAgentsLaunched': '{count} background agents launched',
+  'agent.backgroundAgentsLaunched': 'background agents launched',
+  'agent.builtInType.Explore': 'Explore',
+  'agent.builtInType.Plan': 'Plan',
   'agent.backgrounded': 'Backgrounded agent',
   'agent.defaultName': 'Agent',
   'agent.done': 'Done',
@@ -15,8 +17,8 @@ export const enAgents: TranslationResource = {
   'agent.prompt': 'Prompt:',
   'agent.remoteLaunched': 'Remote agent launched',
   'agent.response': 'Response:',
-  'agent.runningAgents': 'Running {count} {type}…',
-  'agent.runningAgentsNoType': 'Running {count} agents…',
+  'agent.runningAgents': '{type} agents…',
+  'agent.runningAgentsNoType': 'agents…',
   'agent.runningPrefix': 'Running',
   'agent.toolUse_one': 'tool use',
   'agent.toolUse_other': 'tool uses',

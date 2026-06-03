@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js'
+import type { SuggestionItem } from '../../PromptInput/PromptInputFooterSuggestions.js'
 import { tSync } from 'src/i18n/index.js'
 import { useDebounceCallback } from 'usehooks-ts'
 import {
@@ -45,7 +47,7 @@ const getRememberDirectoryOptions = (): Array<{
 function PermissionDescription() {
   return <Text dimColor={true}>{tSync('permissionRules.workspacePermissionDescription')}</Text>
 }
-function DirectoryDisplay({ path }) {
+function DirectoryDisplay({ path }: { path: string }) {
   return (
     <Box flexDirection="column" paddingX={2} gap={1}>
       {<Text color="permission">{path}</Text>}
@@ -53,7 +55,21 @@ function DirectoryDisplay({ path }) {
     </Box>
   )
 }
-function DirectoryInput({ value, onChange, onSubmit, error, suggestions, selectedSuggestion }) {
+function DirectoryInput({
+  value,
+  onChange,
+  onSubmit,
+  error,
+  suggestions,
+  selectedSuggestion,
+}: {
+  value: string
+  onChange: (v: string) => void
+  onSubmit: (v: string) => void
+  error: string | null
+  suggestions: SuggestionItem[]
+  selectedSuggestion: number
+}) {
   return (
     <Box flexDirection="column">
       {<Text>{tSync('permissionRules.enterDirectoryPath')}</Text>}
@@ -91,10 +107,10 @@ export function AddWorkspaceDirectory({
   directoryPath,
 }: Props) {
   const [directoryInput, setDirectoryInput] = useState('')
-  const [error, setError] = useState(null)
-  const [suggestions, setSuggestions] = useState([])
+  const [error, setError] = useState<string | null>(null)
+  const [suggestions, setSuggestions] = useState<SuggestionItem[]>([])
   const [selectedSuggestion, setSelectedSuggestion] = useState(0)
-  const fetchSuggestions = async (path) => {
+  const fetchSuggestions = async (path: string) => {
     if (!path) {
       setSuggestions([])
       setSelectedSuggestion(0)
@@ -108,12 +124,12 @@ export function AddWorkspaceDirectory({
   useEffect(() => {
     debouncedFetchSuggestions(directoryInput)
   }, [directoryInput, debouncedFetchSuggestions])
-  const applySuggestion = (suggestion) => {
+  const applySuggestion = (suggestion: SuggestionItem) => {
     const newPath = `${suggestion.id}/`
     setDirectoryInput(newPath)
     setError(null)
   }
-  const handleSubmit = async (newPath_0) => {
+  const handleSubmit = async (newPath_0: string) => {
     const result = await validateDirectoryForWorkspace(newPath_0, permissionContext)
     if (result.resultType === 'success') {
       onAddDirectory(result.absolutePath, false)
@@ -124,7 +140,7 @@ export function AddWorkspaceDirectory({
   useKeybinding('confirm:no', onCancel, {
     context: 'Settings',
   })
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (suggestions.length > 0) {
       if (e.key === 'tab') {
         e.preventDefault()
@@ -154,7 +170,7 @@ export function AddWorkspaceDirectory({
       }
     }
   }
-  const handleSelect = (value) => {
+  const handleSelect = (value: string) => {
     if (!directoryPath) {
       return
     }
@@ -187,7 +203,9 @@ export function AddWorkspaceDirectory({
               : (exitState) =>
                   exitState.pending ? (
                     <Text>
-                      {tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}
+                      {tSync('permissionRules.pressAgainToExit', {
+                        keyName: exitState.keyName ?? '',
+                      })}
                     </Text>
                   ) : (
                     <Byline>

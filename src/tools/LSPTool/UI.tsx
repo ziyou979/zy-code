@@ -61,7 +61,19 @@ const OPERATION_LABELS: Record<
 /**
  * 用于 LSP 结果摘要的可复用组件，支持折叠/展开视图
  */
-function LSPResultSummary({ operation, resultCount, fileCount, content, verbose }) {
+function LSPResultSummary({
+  operation,
+  resultCount,
+  fileCount,
+  content,
+  verbose,
+}: {
+  operation: keyof typeof OPERATION_LABELS
+  resultCount: number
+  fileCount: number
+  content: string
+  verbose: boolean
+}) {
   const labelConfig = OPERATION_LABELS[operation] || {
     singular: tSync('lsp.result_one'),
     plural: tSync('lsp.result_other'),

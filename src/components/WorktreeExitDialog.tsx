@@ -127,16 +127,16 @@ export function WorktreeExitDialog({ onDone, onCancel }: Props): React.ReactNode
       if (hasTmux) {
         setResultMessage(
           tSync('worktree.keptWithPathAndTmux', {
-            path: worktreeSession.worktreePath,
-            branch: worktreeSession.worktreeBranch,
-            tmux: worktreeSession.tmuxSessionName,
+            path: worktreeSession.worktreePath ?? '',
+            branch: worktreeSession.worktreeBranch ?? '',
+            tmux: worktreeSession.tmuxSessionName ?? '',
           }),
         )
       } else {
         setResultMessage(
           tSync('worktree.keptWithPath', {
-            path: worktreeSession.worktreePath,
-            branch: worktreeSession.worktreeBranch,
+            path: worktreeSession.worktreePath ?? '',
+            branch: worktreeSession.worktreeBranch ?? '',
           }),
         )
       }
@@ -157,8 +157,8 @@ export function WorktreeExitDialog({ onDone, onCancel }: Props): React.ReactNode
       getPlansDirectory.cache.clear?.()
       setResultMessage(
         tSync('worktree.keptWithPathTmuxKilled', {
-          path: worktreeSession.worktreePath,
-          branch: worktreeSession.worktreeBranch,
+          path: worktreeSession.worktreePath ?? '',
+          branch: worktreeSession.worktreeBranch ?? '',
         }),
       )
       setStatus('done')
@@ -199,7 +199,7 @@ export function WorktreeExitDialog({ onDone, onCancel }: Props): React.ReactNode
           tSync('worktree.removedWithCommits', {
             commitCount,
             commitLabel: tSync(commitCount === 1 ? 'worktree.commit_one' : 'worktree.commit_other'),
-            branch: worktreeSession.worktreeBranch,
+            branch: worktreeSession.worktreeBranch ?? '',
             wasWere: tSync(commitCount === 1 ? 'worktree.was' : 'worktree.were'),
             tmuxNote,
           }),
@@ -236,7 +236,7 @@ export function WorktreeExitDialog({ onDone, onCancel }: Props): React.ReactNode
       </Box>
     )
   }
-  const branchName = worktreeSession.worktreeBranch
+  const branchName = worktreeSession.worktreeBranch ?? ''
   const hasUncommitted = changes.length > 0
   const hasCommits = commitCount > 0
   let subtitle = ''
@@ -282,8 +282,8 @@ export function WorktreeExitDialog({ onDone, onCancel }: Props): React.ReactNode
           label: tSync('worktree.keepWorktreeAndTmux'),
           value: 'keep-with-tmux',
           description: tSync('worktree.keepWorktreeAndTmuxDesc', {
-            path: worktreeSession.worktreePath,
-            tmux: worktreeSession.tmuxSessionName,
+            path: worktreeSession.worktreePath ?? '',
+            tmux: worktreeSession.tmuxSessionName ?? '',
           }),
         },
         {

@@ -756,8 +756,7 @@ export const SyncHookJSONOutputSchema = lazySchema(() =>
   }),
 )
 
-export let ElicitationHookSpecificOutputSchema
-ElicitationHookSpecificOutputSchema = lazySchema(() =>
+export const ElicitationHookSpecificOutputSchema = lazySchema(() =>
   z
     .object({
       hookEventName: z.literal('Elicitation'),
@@ -769,8 +768,7 @@ ElicitationHookSpecificOutputSchema = lazySchema(() =>
     ),
 )
 
-export let ElicitationResultHookSpecificOutputSchema
-ElicitationResultHookSpecificOutputSchema = lazySchema(() =>
+export const ElicitationResultHookSpecificOutputSchema = lazySchema(() =>
   z
     .object({
       hookEventName: z.literal('ElicitationResult'),
@@ -782,8 +780,7 @@ ElicitationResultHookSpecificOutputSchema = lazySchema(() =>
     ),
 )
 
-export let WorktreeCreateHookSpecificOutputSchema
-WorktreeCreateHookSpecificOutputSchema = lazySchema(() =>
+export const WorktreeCreateHookSpecificOutputSchema = lazySchema(() =>
   z
     .object({
       hookEventName: z.literal('WorktreeCreate'),

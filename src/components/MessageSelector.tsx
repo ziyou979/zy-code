@@ -451,8 +451,8 @@ export function MessageSelector({
                 isDisabled={isRestoring}
                 options={getRestoreOptions(!!canRestoreCode_0)}
                 defaultFocusValue={canRestoreCode_0 ? 'both' : 'conversation'}
-                onFocus={(value) => setSelectedRestoreOption(value as RestoreOption)}
-                onChange={(value_0) => onSelectRestoreOption(value_0 as RestoreOption)}
+                onFocus={(value: string) => setSelectedRestoreOption(value as RestoreOption)}
+                onChange={(value_0: string) => onSelectRestoreOption(value_0 as RestoreOption)}
                 onCancel={() => (preselectedMessage ? onClose() : setMessageToRestore(undefined))}
               />
             )}
@@ -541,7 +541,7 @@ export function MessageSelector({
         {!messageToRestore && (
           <Text dimColor italic>
             {exitState.pending ? (
-              tSync('messageSelector.pressAgainToExit', { keyName: exitState.keyName })
+              tSync('messageSelector.pressAgainToExit', { keyName: exitState.keyName ?? '' })
             ) : (
               <>
                 {!error && hasMessagesToSelect && <>{tSync('messageSelector.enterToContinue')} </>}
@@ -568,7 +568,15 @@ function getRestoreOptionConversationText(option: RestoreOption): string {
       return tSync('messageSelector.conversationUnchanged')
   }
 }
-function RestoreOptionDescription({ selectedRestoreOption, canRestoreCode, diffStatsForRestore }) {
+function RestoreOptionDescription({
+  selectedRestoreOption,
+  canRestoreCode,
+  diffStatsForRestore,
+}: {
+  selectedRestoreOption: any
+  canRestoreCode: boolean
+  diffStatsForRestore: any
+}) {
   const showCodeRestore =
     canRestoreCode && (selectedRestoreOption === 'both' || selectedRestoreOption === 'code')
   const getRestoreOptionConversationTextResult =
@@ -587,7 +595,7 @@ function RestoreOptionDescription({ selectedRestoreOption, canRestoreCode, diffS
     </Box>
   )
 }
-function RestoreCodeConfirmation({ diffStatsForRestore }) {
+function RestoreCodeConfirmation({ diffStatsForRestore }: { diffStatsForRestore: any }) {
   if (diffStatsForRestore === undefined) {
     return
   }
@@ -619,7 +627,7 @@ function RestoreCodeConfirmation({ diffStatsForRestore }) {
     </Text>
   )
 }
-function DiffStatsText({ diffStats }) {
+function DiffStatsText({ diffStats }: { diffStats: any }) {
   if (!diffStats?.filesChanged) {
     return
   }
@@ -630,7 +638,19 @@ function DiffStatsText({ diffStats }) {
     </>
   )
 }
-function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRight }) {
+function UserMessageOption({
+  userMessage,
+  color,
+  dimColor,
+  isCurrent,
+  paddingRight,
+}: {
+  userMessage: any
+  color?: any
+  dimColor?: boolean
+  isCurrent: boolean
+  paddingRight?: number
+}) {
   const { columns } = useTerminalSize()
   if (isCurrent) {
     return (
@@ -643,13 +663,13 @@ function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRig
   }
   const content = userMessage.message.content
   const lastBlock = typeof content === 'string' ? null : content[content.length - 1]
-  let TextComponent
-  let BoxComponent
+  let TextComponent!: typeof Text
+  let BoxComponent!: typeof Box
   let textColor
   let textDimColor
   let truncateResult
 
-  let earlyReturn = Symbol.for('react.early_return_sentinel')
+  let earlyReturn: React.ReactNode | symbol = Symbol.for('react.early_return_sentinel')
   const rawMessageText =
     typeof content === 'string'
       ? content.trim()
@@ -658,7 +678,6 @@ function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRig
         : '(no prompt)'
   const messageText = stripDisplayTags(rawMessageText)
   if (isEmptyMessageText(messageText)) {
-    // @ts-expect-error
     earlyReturn = (
       <Box flexDirection="row" width="100%">
         <Text italic={true} color={color} dimColor={dimColor}>
@@ -670,7 +689,6 @@ function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRig
     if (messageText.includes('<bash-input>')) {
       const input = extractTag(messageText, 'bash-input')
       if (input) {
-        // @ts-expect-error
         earlyReturn = (
           <Box flexDirection="row" width="100%">
             {<Text color="bashBorder">!</Text>}
@@ -688,7 +706,6 @@ function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRig
       const isSkillFormat = extractTag(messageText, 'skill-format') === 'true'
       if (commandMessage) {
         if (isSkillFormat) {
-          // @ts-expect-error
           earlyReturn = (
             <Box flexDirection="row" width="100%">
               <Text color={color} dimColor={dimColor}>
@@ -697,7 +714,6 @@ function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRig
             </Box>
           )
         } else {
-          // @ts-expect-error
           earlyReturn = (
             <Box flexDirection="row" width="100%">
               <Text color={color} dimColor={dimColor}>
@@ -718,7 +734,7 @@ function UserMessageOption({ userMessage, color, dimColor, isCurrent, paddingRig
       : messageText.slice(0, 500).split('\n').slice(0, 4).join('\n')
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   return (
     <BoxComponent flexDirection={'row'} width={'100%'}>

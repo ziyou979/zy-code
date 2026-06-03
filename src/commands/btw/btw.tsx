@@ -9,7 +9,7 @@ import { getSystemPrompt } from '../../constants/prompts.js'
 import { useModalOrTerminalSize } from '../../context/modalContext.js'
 import { getSystemContext, getUserContext } from '../../context.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
-import ScrollBox from '../../ink/components/ScrollBox.js'
+import ScrollBox, { type ScrollBoxHandle } from '../../ink/components/ScrollBox.js'
 import { Box, Text } from '../../ink.js'
 import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
@@ -21,6 +21,7 @@ import { type CacheSafeParams, getLastCacheSafeParams } from '../../utils/forked
 import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'
 import { runSideQuestion } from '../../utils/sideQuestion.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
+import { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 
 type BtwComponentProps = {
   question: string
@@ -35,14 +36,14 @@ type BtwComponentProps = {
 const CHROME_ROWS = 5
 const OUTER_CHROME_ROWS = 6
 const SCROLL_LINES = 3
-function BtwSideQuestion({ question, context, onDone }) {
-  const [response, setResponse] = useState(null)
-  const [error, setError] = useState(null)
+function BtwSideQuestion({ question, context, onDone }: BtwComponentProps) {
+  const [response, setResponse] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [frame, setFrame] = useState(0)
-  const scrollRef = useRef(null)
+  const scrollRef = useRef<ScrollBoxHandle | null>(null)
   const { rows } = useModalOrTerminalSize(useTerminalSize())
   useInterval(() => setFrame((f) => f + 1), response || error ? null : 80)
-  const handleKeyDown = function handleKeyDown(e) {
+  const handleKeyDown = function handleKeyDown(e: KeyboardEvent) {
     if (
       e.key === 'escape' ||
       e.key === 'return' ||

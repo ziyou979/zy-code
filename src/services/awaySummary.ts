@@ -45,7 +45,7 @@ export async function generateAwaySummary(
       signal,
       options: {
         getToolPermissionContext: async () => getEmptyToolPermissionContext(),
-        model: getDefaultCompactModel(),
+        model: getDefaultCompactModel() ?? '',
         toolChoice: undefined,
         isNonInteractiveSession: false,
         hasAppendSystemPrompt: false,

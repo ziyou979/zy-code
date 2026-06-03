@@ -63,7 +63,10 @@ export function AppStateProvider({ children, initialState, onChangeAppState }: P
       }))
     }
   }, [store.setState, store.getState])
-  const onSettingsChange = useEffectEvent((source) => applySettingsChange(source, store.setState))
+  const onSettingsChange = useEffectEvent(
+    (source: import('../utils/settings/constants.js').SettingSource) =>
+      applySettingsChange(source, store.setState),
+  )
   useSettingsChange(onSettingsChange)
   return (
     <HasAppStateContext.Provider value={true}>
@@ -140,7 +143,9 @@ const NOOP_SUBSCRIBE = () => () => {}
  * useAppState 的安全版本，如果在 AppStateProvider 外部调用则返回 undefined。
  * 适用于可能在 AppStateProvider 不可用的上下文中渲染的组件。
  */
-export function useAppStateMaybeOutsideOfProvider(selector) {
+export function useAppStateMaybeOutsideOfProvider<T>(
+  selector: (state: AppState) => T,
+): T | undefined {
   const store = useContext(AppStoreContext)
   return useSyncExternalStore(store ? store.subscribe : NOOP_SUBSCRIBE, () =>
     store ? selector(store.getState()) : undefined,

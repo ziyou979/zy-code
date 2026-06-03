@@ -31,9 +31,11 @@ export function collapseHookSummaries(messages: RenderableMessage[]): Renderable
       } else {
         result.push({
           ...msg,
-          hookCount: group.reduce((sum, m) => sum + m.hookCount, 0),
+          hookCount: group.reduce((sum, m) => sum + (m.hookCount ?? 0), 0),
           hookInfos: group.flatMap((m) => m.hookInfos),
-          hookErrors: group.flatMap((m) => m.hookErrors),
+          hookErrors: group
+            .flatMap((m) => m.hookErrors)
+            .filter((e): e is string => e !== undefined),
           preventedContinuation: group.some((m) => m.preventedContinuation),
           hasOutput: group.some((m) => m.hasOutput),
           // Parallel tool calls' hooks overlap; max is closest to wall-clock.

@@ -41,7 +41,8 @@ type UseZyCodeHintRecommendationResult = {
 export function useZyCodeHintRecommendation() {
   const pendingHint = React.useSyncExternalStore(subscribeToPendingHint, getPendingHintSnapshot)
   const { addNotification } = useNotifications()
-  const { recommendation, clearRecommendation, tryResolve } = usePluginRecommendationBase()
+  const { recommendation, clearRecommendation, tryResolve } =
+    usePluginRecommendationBase<PluginHintRecommendation>()
   React.useEffect(() => {
     if (!pendingHint) {
       return
@@ -60,7 +61,7 @@ export function useZyCodeHintRecommendation() {
       return resolved
     })
   }, [pendingHint, tryResolve])
-  const handleResponse = (response) => {
+  const handleResponse = (response: 'yes' | 'no' | 'disable') => {
     if (!recommendation) {
       return
     }

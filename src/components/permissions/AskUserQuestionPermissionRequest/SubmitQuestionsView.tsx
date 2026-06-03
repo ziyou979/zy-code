@@ -88,7 +88,7 @@ export function SubmitQuestionsView({
                       value: 'cancel',
                     },
                   ]}
-                  onChange={(value) => onFinalResponse(value as 'submit' | 'cancel')}
+                  onChange={(value: string) => onFinalResponse(value as 'submit' | 'cancel')}
                   onCancel={() => onFinalResponse('cancel')}
                 />
               </Box>

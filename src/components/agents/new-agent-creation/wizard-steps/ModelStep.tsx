@@ -7,7 +7,7 @@ import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
 import { ModelSelector } from '../../ModelSelector.js'
 export function ModelStep() {
   const { goNext, goBack, updateWizardData, wizardData } = useWizard()
-  const handleComplete = (model) => {
+  const handleComplete = (model: string | undefined) => {
     updateWizardData({
       selectedModel: model,
     })

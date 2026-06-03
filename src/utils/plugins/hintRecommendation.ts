@@ -101,7 +101,7 @@ export function maybeRecordPluginHint(hint: ZyCodeHint): void {
   setPendingHint(hint)
 }
 
-let triedThisSession
+let triedThisSession: Set<string>
 triedThisSession = new Set<string>()
 
 /** Test-only reset. */

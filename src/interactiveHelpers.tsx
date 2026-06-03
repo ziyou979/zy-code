@@ -282,11 +282,7 @@ export async function showSetupScreens(
   if (permissionMode === 'auto' && !hasAutoModeOptIn()) {
     const { AutoModeOptInDialog } = await import('./components/AutoModeOptInDialog.js')
     await showSetupDialog(root, (done) => (
-      <AutoModeOptInDialog
-        onAccept={done}
-        onDecline={() => gracefulShutdownSync(1)}
-        declineExits
-      />
+      <AutoModeOptInDialog onAccept={done} onDecline={() => gracefulShutdownSync(1)} declineExits />
     ))
   }
 

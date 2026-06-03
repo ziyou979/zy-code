@@ -209,7 +209,7 @@ export function BrowseMarketplace({
             const currentMarketplace = await getMarketplace(marketplaceName)
             if (currentMarketplace) {
               const foundPluginEntry = currentMarketplace.plugins.find(
-                (p) => p.name === targetPlugin,
+                (p: any) => p.name === targetPlugin,
               )
               if (foundPluginEntry) {
                 const pluginId = createPluginId(foundPluginEntry.name, marketplaceName)

@@ -184,7 +184,7 @@ export async function pruneRemovedPluginHooks(): Promise<void> {
     return
   }
   const { enabled } = await loadAllPluginsCacheOnly()
-  const enabledRoots = new Set(enabled.map((p) => p.path))
+  const enabledRoots = new Set(enabled.map((p: { path: string }) => p.path))
 
   // Re-read after the await: a concurrent loadPluginHooks() (hot-reload)
   // could have swapped STATE.registeredHooks during the gap. Holding the

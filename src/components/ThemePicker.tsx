@@ -44,7 +44,6 @@ export function ThemePicker({
   const syntaxHighlightingDisabled =
     useAppState((s) => s.settings.syntaxHighlightingDisabled) ?? false
   const setAppState = useSetAppState()
-  // @ts-expect-error
   useRegisterKeybindingContext('ThemePicker')
   const syntaxToggleShortcut = useShortcutDisplay(
     'theme:toggleSyntaxHighlighting',
@@ -127,10 +126,10 @@ export function ThemePicker({
           {
             <Select
               options={themeOptions}
-              onFocus={(setting) => {
+              onFocus={(setting: string) => {
                 setPreviewTheme(setting as ThemeSetting)
               }}
-              onChange={(setting_0) => {
+              onChange={(setting_0: string) => {
                 savePreview()
                 onThemeSelect(setting_0 as ThemeSetting)
               }}
@@ -226,7 +225,7 @@ export function ThemePicker({
               <Box>
                 <Text dimColor={true} italic={true}>
                   {exitState.pending ? (
-                    tSync('themePicker.exitAgain', { key: exitState.keyName })
+                    tSync('themePicker.exitAgain', { key: exitState.keyName ?? '' })
                   ) : (
                     <Byline>
                       <KeyboardShortcutHint shortcut="Enter" action="select" />

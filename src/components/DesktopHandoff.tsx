@@ -35,8 +35,10 @@ type Props = {
   ) => void
 }
 export function DesktopHandoff({ onDone }: Props) {
-  const [state, setState] = useState('checking')
-  const [error, setError] = useState(null)
+  const [state, setState] = useState<
+    'checking' | 'flushing' | 'opening' | 'success' | 'error' | 'prompt-download'
+  >('checking')
+  const [error, setError] = useState<string | null>(null)
   const [downloadMessage, setDownloadMessage] = useState('')
   useInput((input) => {
     if (state === 'error') {
@@ -103,7 +105,7 @@ export function DesktopHandoff({ onDone }: Props) {
   if (state === 'error') {
     return (
       <Box flexDirection="column" paddingX={2}>
-        {<Text color="error">{tSync('desktopHandoff.errorLabel', { error })}</Text>}
+        {<Text color="error">{tSync('desktopHandoff.errorLabel', { error: error ?? '' })}</Text>}
         {<Text dimColor={true}>{tSync('desktopHandoff.pressAnyKey')}</Text>}
       </Box>
     )

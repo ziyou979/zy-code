@@ -84,7 +84,7 @@ async function selectRelevantMemories(
 
   try {
     const result = await sideQuery({
-      model: getDefaultStandardModel(),
+      model: getDefaultStandardModel()!,
       system: SELECT_MEMORIES_SYSTEM_PROMPT,
       skipSystemPromptPrefix: true,
       messages: [

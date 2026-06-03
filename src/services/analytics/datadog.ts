@@ -283,7 +283,7 @@ const NUM_USER_BUCKETS = 30
  * This allows us to estimate the number of unique users by counting unique buckets,
  * while preserving user privacy and reducing cardinality.
  */
-let getUserBucket
+let getUserBucket: () => number
 getUserBucket = memoize((): number => {
   const userId = getOrCreateUserID()
   const hash = createHash('sha256').update(userId).digest('hex')

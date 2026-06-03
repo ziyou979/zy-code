@@ -59,7 +59,7 @@ const DoctorLazy = React.lazy(() =>
     default: m.Doctor,
   })),
 )
-function DoctorWithPlugins({ onDone }) {
+function DoctorWithPlugins({ onDone }: { onDone: () => void }) {
   useManagePlugins()
   return (
     <React.Suspense fallback={null}>

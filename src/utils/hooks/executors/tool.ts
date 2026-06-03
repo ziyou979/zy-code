@@ -14,11 +14,13 @@ import { getSessionId } from '../../../bootstrap/state.js'
 import type { ToolUseContext } from '../../../Tool.js'
 import type { Message } from '../../../types/message.js'
 import { createAttachmentMessage } from '../../attachments.js'
-import { logForDebugging } from '../../debug.js'
+import { createDebugLog } from '../../debug.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { executeHooks } from '../executeEngine.js'
 import { hasHookForEvent } from '../matcher.js'
 import type { AggregatedHookResult } from '../types.js'
+
+const hookLog = createDebugLog('hooks')
 
 export async function* executePreToolHooks<ToolInput>(
   toolName: string,
@@ -40,7 +42,7 @@ export async function* executePreToolHooks<ToolInput>(
     return
   }
 
-  logForDebugging(`executePreToolHooks called for tool: ${toolName}`, {
+  hookLog(`executePreToolHooks called for tool: ${toolName}`, {
     level: 'verbose',
   })
 
@@ -272,7 +274,7 @@ export async function* executePermissionRequestHooks<ToolInput>(
   ) => (request: PromptRequest) => Promise<PromptResponse>,
   toolInputSummary?: string | null,
 ): AsyncGenerator<AggregatedHookResult> {
-  logForDebugging(`executePermissionRequestHooks called for tool: ${toolName}`)
+  hookLog(`executePermissionRequestHooks called for tool: ${toolName}`)
 
   const hookInput: PermissionRequestHookInput = {
     ...createBaseHookInput(permissionMode, undefined, toolUseContext),

@@ -8,6 +8,7 @@ import { exitWithError } from '../../interactiveHelpers.js'
 import { launchRepl } from '../../replLauncher.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
 import { createSystemMessage } from '../../utils/messages.js'
+import type { SSHSession } from '../../ssh/createSSHSession.js'
 import type { AssemblyContext, SessionConfig } from './types.js'
 
 // 与 cli/argvDispatch.ts:pendingSSH 同形态（仅本模块依赖到的字段）。
@@ -46,11 +47,11 @@ export async function runSshMode({
   const { createSSHSession, createLocalSSHSession, SSHSessionError } = await import(
     '../../ssh/createSSHSession.js'
   )
-  let sshSession
+  let sshSession: SSHSession
   try {
     if (pendingSSH.local) {
       process.stderr.write('Starting local ssh-proxy test session...\n')
-      sshSession = createLocalSSHSession({
+      sshSession = await createLocalSSHSession({
         cwd: pendingSSH.cwd,
         permissionMode: pendingSSH.permissionMode,
         dangerouslySkipPermissions: pendingSSH.dangerouslySkipPermissions,
@@ -73,7 +74,7 @@ export async function runSshMode({
         },
         isTTY
           ? {
-              onProgress: (msg) => {
+              onProgress: (msg: string) => {
                 hadProgress = true
                 process.stderr.write(`\r  ${msg}\x1b[K`)
               },

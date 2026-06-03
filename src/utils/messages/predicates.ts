@@ -205,6 +205,8 @@ export function getToolUseID(message: Message): string | null {
       return message.toolUseID
     case 'system':
       return message.subtype === 'informational' ? (message.toolUseID ?? null) : null
+    default:
+      return null
   }
 }
 

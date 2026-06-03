@@ -33,7 +33,7 @@ export function PermissionRuleInput({
   })
   const { columns } = useTerminalSize()
   const textInputColumns = columns - 6
-  const handleSubmit = (value) => {
+  const handleSubmit = (value: string) => {
     const trimmedValue = value.trim()
     if (trimmedValue.length === 0) {
       return
@@ -99,7 +99,7 @@ export function PermissionRuleInput({
         <Box marginLeft={3}>
           {exitState.pending ? (
             <Text dimColor={true}>
-              {tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}
+              {tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName ?? '' })}
             </Text>
           ) : (
             <Text dimColor={true}>{tSync('permissionRules.enterSubmitEscCancel')}</Text>

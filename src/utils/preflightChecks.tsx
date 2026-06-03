@@ -75,7 +75,7 @@ interface PreflightStepProps {
   onSuccess: () => void
 }
 export function PreflightStep({ onSuccess }: PreflightStepProps) {
-  const [result, setResult] = useState(null)
+  const [result, setResult] = useState<PreflightCheckResult | null>(null)
   const [isChecking, setIsChecking] = useState(true)
   const showSpinner = useTimeout(1000) && isChecking
   useEffect(() => {

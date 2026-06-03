@@ -132,7 +132,7 @@ export function AssistantTextMessage({
             {highDemandMessage}
             <Text>
               To continue immediately, use /model to switch to{' '}
-              {renderModelName(getDefaultStandardModel())} and continue coding.
+              {renderModelName(getDefaultStandardModel()!)} and continue coding.
             </Text>
           </Box>
         </MessageResponse>

@@ -1,3 +1,4 @@
+import type React from 'react'
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js'
 import { getNoContentMessage } from '../../constants/messages.js'
 import { Box, Text } from '../../ink.js'
@@ -13,7 +14,7 @@ type ContentProps = {
 }
 export function UserLocalCommandOutputMessage({ content }: Props) {
   let lines
-  let earlyReturn
+  let earlyReturn: React.ReactNode | symbol
   earlyReturn = Symbol.for('react.early_return_sentinel')
   const stdout = extractTag(content, 'local-command-stdout')
   const stderr = extractTag(content, 'local-command-stderr')
@@ -33,7 +34,7 @@ export function UserLocalCommandOutputMessage({ content }: Props) {
     }
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   return lines
 }

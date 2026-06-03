@@ -11,8 +11,15 @@ import { PermissionDialog } from './PermissionDialog.js'
 import { PermissionPrompt } from './PermissionPrompt.js'
 import { PermissionRuleExplanation } from './PermissionRuleExplanation.js'
 
+import type { PermissionRequestProps } from './PermissionRequest.js'
+
 type FallbackOptionValue = 'yes' | 'yes-dont-ask-again' | 'no'
-export function FallbackPermissionRequest({ toolUseConfirm, onDone, onReject, workerBadge }) {
+export function FallbackPermissionRequest({
+  toolUseConfirm,
+  onDone,
+  onReject,
+  workerBadge,
+}: PermissionRequestProps) {
   const [theme] = useTheme()
   const originalUserFacingName = toolUseConfirm.tool.userFacingName(toolUseConfirm.input as never)
   const userFacingName = originalUserFacingName.endsWith(' (MCP)')
@@ -23,7 +30,7 @@ export function FallbackPermissionRequest({ toolUseConfirm, onDone, onReject, wo
     language_name: 'none',
   }
   usePermissionRequestLogging(toolUseConfirm, unaryEvent as any)
-  const handleSelect = (value, feedback) => {
+  const handleSelect = (value: string, feedback?: string) => {
     switch (value) {
       case 'yes': {
         logUnaryEvent({
@@ -31,7 +38,7 @@ export function FallbackPermissionRequest({ toolUseConfirm, onDone, onReject, wo
           event: 'accept',
           metadata: {
             language_name: 'none',
-            message_id: toolUseConfirm.assistantMessage.message.id,
+            message_id: toolUseConfirm.assistantMessage.message.id ?? '',
             platform: env.platform,
           },
         })
@@ -45,7 +52,7 @@ export function FallbackPermissionRequest({ toolUseConfirm, onDone, onReject, wo
           event: 'accept',
           metadata: {
             language_name: 'none',
-            message_id: toolUseConfirm.assistantMessage.message.id,
+            message_id: toolUseConfirm.assistantMessage.message.id ?? '',
             platform: env.platform,
           },
         })
@@ -70,7 +77,7 @@ export function FallbackPermissionRequest({ toolUseConfirm, onDone, onReject, wo
           event: 'reject',
           metadata: {
             language_name: 'none',
-            message_id: toolUseConfirm.assistantMessage.message.id,
+            message_id: toolUseConfirm.assistantMessage.message.id ?? '',
             platform: env.platform,
           },
         })
@@ -86,7 +93,7 @@ export function FallbackPermissionRequest({ toolUseConfirm, onDone, onReject, wo
       event: 'reject',
       metadata: {
         language_name: 'none',
-        message_id: toolUseConfirm.assistantMessage.message.id,
+        message_id: toolUseConfirm.assistantMessage.message.id ?? '',
         platform: env.platform,
       },
     })

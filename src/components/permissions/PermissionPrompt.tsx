@@ -93,7 +93,7 @@ export function PermissionPrompt<T extends string>({
       value,
     }
   })
-  const handleInputModeToggle = (value_0) => {
+  const handleInputModeToggle = (value_0: string) => {
     const option = options.find((opt_1) => opt_1.value === value_0)
     if (!option?.feedbackConfig) {
       return
@@ -126,7 +126,7 @@ export function PermissionPrompt<T extends string>({
       }
     }
   }
-  const handleSelect = (value_1) => {
+  const handleSelect = (value_1: string) => {
     const option_0 = options.find((opt_2) => opt_2.value === value_1)
     if (!option_0) {
       return
@@ -158,9 +158,9 @@ export function PermissionPrompt<T extends string>({
         }
       }
     }
-    onSelect(value_1, feedback)
+    onSelect(value_1 as T, feedback)
   }
-  const handlers = {}
+  const handlers: Record<string, () => void> = {}
   for (const opt_3 of options) {
     if (opt_3.keybinding) {
       handlers[opt_3.keybinding] = () => handleSelect(opt_3.value)
@@ -195,7 +195,7 @@ export function PermissionPrompt<T extends string>({
           inlineDescriptions={true}
           onChange={handleSelect}
           onCancel={handleCancel}
-          onFocus={(value_2) => {
+          onFocus={(value_2: string) => {
             const newOption = options.find((opt_4) => opt_4.value === value_2)
             if (
               newOption?.feedbackConfig?.type !== 'accept' &&
@@ -211,7 +211,7 @@ export function PermissionPrompt<T extends string>({
             ) {
               setRejectInputMode(false)
             }
-            setFocusedValue(value_2)
+            setFocusedValue(value_2 as any)
           }}
           onInputModeToggle={handleInputModeToggle}
         />

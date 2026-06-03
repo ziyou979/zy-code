@@ -358,7 +358,7 @@ export function initializeZyEventLogging(): void {
   // IMPORTANT: We must get the logger from our local provider, not logs.getLogger()
   // because logs.getLogger() returns a logger from the global provider, which is
   // separate and used for customer telemetry.
-  zyEventLogger = zyEventLoggerProvider.getLogger('com.anthropic.zy_code.events', MACRO.VERSION)
+  zyEventLogger = zyEventLoggerProvider!.getLogger('com.anthropic.zy_code.events', MACRO.VERSION)
 }
 
 /**

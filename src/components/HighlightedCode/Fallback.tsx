@@ -63,7 +63,7 @@ export function HighlightedCodeFallback({
     </Text>
   )
 }
-function Highlighted({ codeWithSpaces, language }) {
+function Highlighted({ codeWithSpaces, language }: { codeWithSpaces: string; language: string }) {
   const highlightPromise = getCliHighlightPromise()
   const hl = use(highlightPromise)
   let out

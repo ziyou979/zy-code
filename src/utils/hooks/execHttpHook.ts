@@ -1,13 +1,15 @@
 import axios from 'axios'
 import type { HookEvent } from 'src/types/index.js'
 import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import { errorMessage } from '../errors.js'
 import { getProxyUrl, shouldBypassProxy } from '../proxy.js'
 // Import as namespace so spyOn works in tests (direct imports bypass spies)
 import * as settingsModule from '../settings/settings.js'
 import type { HttpHook } from '../settings/types.js'
 import { ssrfGuardedLookup } from './ssrfGuard.js'
+
+const hookLog = createDebugLog('hooks')
 
 const DEFAULT_HTTP_HOOK_TIMEOUT_MS = 10 * 60 * 1000 // 10 minutes (matches TOOL_HOOK_EXECUTION_TIMEOUT_MS)
 
@@ -93,10 +95,9 @@ function interpolateEnvVars(value: string, allowedEnvVars: ReadonlySet<string>):
     (_, braced, unbraced) => {
       const varName = braced ?? unbraced
       if (!allowedEnvVars.has(varName)) {
-        logForDebugging(
-          `Hooks: env var $${varName} not in allowedEnvVars, skipping interpolation`,
-          { level: 'warn' },
-        )
+        hookLog(`Hooks: env var $${varName} not in allowedEnvVars, skipping interpolation`, {
+          level: 'warn',
+        })
         return ''
       }
       return process.env[varName] ?? ''
@@ -137,7 +138,7 @@ export async function execHttpHook(
     const matched = policy.allowedUrls.some((p) => urlMatchesPattern(hook.url, p))
     if (!matched) {
       const msg = `HTTP hook blocked: ${hook.url} does not match any pattern in allowedHttpHookUrls`
-      logForDebugging(msg, { level: 'warn' })
+      hookLog(msg, { level: 'warn' })
       return { ok: false, body: '', error: msg }
     }
   }
@@ -178,13 +179,11 @@ export async function execHttpHook(
       !sandboxProxy && getProxyUrl() !== undefined && !shouldBypassProxy(hook.url)
 
     if (sandboxProxy) {
-      logForDebugging(
-        `Hooks: HTTP hook POST to ${hook.url} (via sandbox proxy :${sandboxProxy.port})`,
-      )
+      hookLog(`Hooks: HTTP hook POST to ${hook.url} (via sandbox proxy :${sandboxProxy.port})`)
     } else if (envProxyActive) {
-      logForDebugging(`Hooks: HTTP hook POST to ${hook.url} (via env-var proxy)`)
+      hookLog(`Hooks: HTTP hook POST to ${hook.url} (via env-var proxy)`)
     } else {
-      logForDebugging(`Hooks: HTTP hook POST to ${hook.url}`)
+      hookLog(`Hooks: HTTP hook POST to ${hook.url}`)
     }
 
     const response = await axios.post<string>(hook.url, jsonInput, {
@@ -208,9 +207,7 @@ export async function execHttpHook(
     cleanup()
 
     const body = response.data ?? ''
-    logForDebugging(
-      `Hooks: HTTP hook response status ${response.status}, body length ${body.length}`,
-    )
+    hookLog(`Hooks: HTTP hook response status ${response.status}, body length ${body.length}`)
 
     return {
       ok: response.status >= 200 && response.status < 300,
@@ -225,7 +222,7 @@ export async function execHttpHook(
     }
 
     const errorMsg = errorMessage(error)
-    logForDebugging(`Hooks: HTTP hook error: ${errorMsg}`, { level: 'error' })
+    hookLog(`Hooks: HTTP hook error: ${errorMsg}`, { level: 'error' })
     return { ok: false, body: '', error: errorMsg }
   }
 }

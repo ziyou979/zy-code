@@ -68,11 +68,7 @@ NOTE: You are meant to be a fast agent that returns output as quickly as possibl
 
 Complete the user's search request efficiently and report your findings clearly.`
 
-  // 惰性导入避免循环依赖（prompts.ts / settings.ts 依赖链极深）
-  const { getLanguageSection } = require('src/constants/prompts.js') as typeof import('src/constants/prompts.js')
-  const { getInitialSettings } = require('src/utils/settings/settings.js') as typeof import('src/utils/settings/settings.js')
-  const languageSection = getLanguageSection(getInitialSettings().language)
-  return languageSection ? `${base}\n\n${languageSection}` : base
+  return base
 }
 
 export const EXPLORE_AGENT_MIN_QUERIES = 3
@@ -96,8 +92,7 @@ export const EXPLORE_AGENT: BuiltInAgentDefinition = {
   ],
   source: 'built-in',
   baseDir: 'built-in',
-  // Ants get inherit to use the main agent's model; external users get compact for speed
-  // Note: For ants, getAgentModel() checks zy_explore_agent GrowthBook flag at runtime
+  // TODO 后面改成配置，让用户可选继承还是 compact
   model: isInternalBuild() ? 'inherit' : 'compact',
   // Explore is a fast read-only search agent — it doesn't need commit/PR/lint
   // rules from AGENTS.md. The main agent has full context and interprets results.

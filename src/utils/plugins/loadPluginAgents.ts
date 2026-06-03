@@ -222,7 +222,7 @@ export const loadPluginAgents = memoize(async (): Promise<AgentDefinition[]> => 
 
   if (errors.length > 0) {
     logForDebugging(
-      `Plugin loading errors: ${errors.map((e) => getPluginErrorMessage(e)).join(', ')}`,
+      `Plugin loading errors: ${errors.map((e: import('../../types/plugin.js').PluginError) => getPluginErrorMessage(e)).join(', ')}`,
     )
   }
 
@@ -264,7 +264,7 @@ export const loadPluginAgents = memoize(async (): Promise<AgentDefinition[]> => 
         // Process all agentsPaths in parallel. isDuplicatePath is synchronous
         // (check-and-add), so concurrent access to loadedPaths is safe.
         const pathResults = await Promise.all(
-          plugin.agentsPaths.map(async (agentPath): Promise<AgentDefinition[]> => {
+          plugin.agentsPaths.map(async (agentPath: string): Promise<AgentDefinition[]> => {
             try {
               const fs = getFsImplementation()
               const stats = await fs.stat(agentPath)

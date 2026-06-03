@@ -1,5 +1,6 @@
 import figures from 'figures'
 import { Box, Text } from '../../ink.js'
+import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { getAgentModelDisplay } from '../../services/model/agent.js'
 import type { Tools } from '../../Tool.js'
@@ -22,7 +23,7 @@ export function AgentDetail({ agent, tools, onBack }: Props) {
   useKeybinding('confirm:no', onBack, {
     context: 'Confirmation',
   })
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'return') {
       e.preventDefault()
       onBack()

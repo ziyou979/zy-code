@@ -207,7 +207,7 @@ export async function verifyApiKey(
 // https://platform.zy.com/docs/en/api/errors#long-requests
 // SDK 的 21333 令牌上限由 10 分钟 × 128k 令牌/小时推导，但我们
 // 通过设置客户端级超时绕过它，因此可以设置更高的上限。
-export let MAX_NON_STREAMING_TOKENS
+export let MAX_NON_STREAMING_TOKENS: number
 MAX_NON_STREAMING_TOKENS = 64_000
 
 /**

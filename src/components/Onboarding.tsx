@@ -136,8 +136,8 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
     goToNextStep()
   }
 
-  function handleThemeSelection(newTheme: ReturnType<typeof useTheme>[0]) {
-    setTheme(newTheme)
+  function handleThemeSelection(newTheme: string) {
+    setTheme(newTheme as any)
     goToNextStep()
   }
 
@@ -162,7 +162,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
               description: tSync('onboarding.language.chinese'),
             },
           ]}
-          onChange={(value) => {
+          onChange={(value: string) => {
             void handleLanguageSelection(value as UiLanguage)
           }}
           onCancel={() => {
@@ -359,7 +359,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
               value: 'light',
             },
           ]}
-          onChange={(value) => handleEffortDone(value)}
+          onChange={(value: string) => handleEffortDone(value)}
           onCancel={() => handleEffortDone('balanced')}
         />
         <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
@@ -426,7 +426,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
                 { label: tSync('onboarding.terminalSetup.yes'), value: 'install' },
                 { label: tSync('onboarding.terminalSetup.no'), value: 'no' },
               ]}
-              onChange={(value) => {
+              onChange={(value: string) => {
                 if (value === 'install') {
                   void setupTerminal(theme)
                     .catch(() => {})
@@ -439,7 +439,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
             />
             <Text dimColor>
               {exitState.pending
-                ? tSync('onboarding.pressAgainToExit', { key: exitState.keyName })
+                ? tSync('onboarding.pressAgainToExit', { key: exitState.keyName ?? '' })
                 : tSync('onboarding.enterToConfirmSkip')}
             </Text>
           </Box>
@@ -478,7 +478,9 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         {currentStep?.component}
         {exitState.pending && (
           <Box padding={1}>
-            <Text dimColor>{tSync('onboarding.pressAgainToExit', { key: exitState.keyName })}</Text>
+            <Text dimColor>
+              {tSync('onboarding.pressAgainToExit', { key: exitState.keyName ?? '' })}
+            </Text>
           </Box>
         )}
       </Box>
@@ -564,7 +566,7 @@ function ApiKeyInput({
               label: apiKeyLabel,
               value: 'input',
               placeholder: 'sk-...',
-              onChange: (value) => {
+              onChange: (value: string) => {
                 apiKeyRef.current = value
               },
               allowEmptySubmitToCancel: true,
@@ -609,7 +611,7 @@ function CustomModelInput({
               label: tSync('onboarding.modelNameLabel'),
               value: 'input',
               placeholder: tSync('onboarding.modelNamePlaceholder'),
-              onChange: (value) => {
+              onChange: (value: string) => {
                 valueRef.current = value
               },
               allowEmptySubmitToCancel: true,

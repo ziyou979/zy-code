@@ -1,5 +1,6 @@
 import figures from 'figures'
 import { useState } from 'react'
+import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../ink.js'
 import {
   AGENT_COLOR_TO_THEME_COLOR,
@@ -18,7 +19,7 @@ type Props = {
 export function ColorPicker({ agentName, currentColor = 'automatic', onConfirm }: Props) {
   const initialIndex = COLOR_OPTIONS.indexOf(currentColor)
   const [selectedIndex, setSelectedIndex] = useState(Math.max(0, initialIndex))
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'up') {
       e.preventDefault()
       setSelectedIndex((prev) => (prev > 0 ? prev - 1 : COLOR_OPTIONS.length - 1))

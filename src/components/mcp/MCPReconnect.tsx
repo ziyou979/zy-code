@@ -21,7 +21,7 @@ export function MCPReconnect({ serverName, onComplete }: Props) {
   const store = useAppStateStore()
   const reconnectMcpServer = useMcpReconnect()
   const [isReconnecting, setIsReconnecting] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
   useEffect(() => {
     const attemptReconnect = async function attemptReconnect() {
       try {

@@ -198,7 +198,7 @@ export async function initReplBridge(options?: InitWireOptions): Promise<ReplWir
     // falsely trip a buffered check; the still-valid token would connect fine.
     // Check actual expiry instead: past-expiry AND refresh-failed → truly dead.
     const tokens = getZyAIOAuthTokens()
-    if (tokens && tokens.expiresAt !== null && tokens.expiresAt <= Date.now()) {
+    if (tokens && tokens.expiresAt != null && tokens.expiresAt <= Date.now()) {
       logWireSkip(
         'oauth_expired_unrefreshable',
         '[bridge:repl] Skipping: OAuth token expired and refresh failed (re-login required)',

@@ -1,4 +1,4 @@
-import React, { type Ref, useEffect, useRef, useState } from 'react'
+import React, { type Ref, useEffect, useRef, useState, type RefObject } from 'react'
 import type { Except } from 'type-fest'
 import type { DOMElement } from '../dom.js'
 import type { Styles } from '../styles.js'
@@ -36,7 +36,7 @@ function Button({ onAction, tabIndex = 0, autoFocus, children, ref, ...style }: 
   const [isFocused, setIsFocused] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [isActive, setIsActive] = useState(false)
-  const activeTimer = useRef(null)
+  const activeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(
     () => () => {
       if (activeTimer.current) {
@@ -45,7 +45,7 @@ function Button({ onAction, tabIndex = 0, autoFocus, children, ref, ...style }: 
     },
     [],
   )
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: import('../events/keyboard-event.js').KeyboardEvent) => {
     if (e.key === 'return' || e.key === ' ') {
       e.preventDefault()
       setIsActive(true)
@@ -56,11 +56,11 @@ function Button({ onAction, tabIndex = 0, autoFocus, children, ref, ...style }: 
       activeTimer.current = setTimeout((setter) => setter(false), 100, setIsActive)
     }
   }
-  const handleClick = (_e) => {
+  const handleClick = (_e: unknown) => {
     onAction()
   }
-  const handleFocus = (_event) => setIsFocused(true)
-  const handleBlur = (_event) => setIsFocused(false)
+  const handleFocus = (_event: unknown) => setIsFocused(true)
+  const handleBlur = (_event: unknown) => setIsFocused(false)
   const handleMouseEnter = () => setIsHovered(true)
   const handleMouseLeave = () => setIsHovered(false)
   const state = {

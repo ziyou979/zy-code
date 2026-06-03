@@ -20,7 +20,7 @@ export function agentsMdExternalIncludesDialog({
   React.useEffect(() => {
     logEvent('zy_agents_md_includes_dialog_shown', {})
   }, [])
-  const handleSelection = (value) => {
+  const handleSelection = (value: string) => {
     if (value === 'no') {
       logEvent('zy_agents_md_external_includes_dialog_declined', {})
       saveCurrentProjectConfig((current) => ({
@@ -78,7 +78,7 @@ export function agentsMdExternalIncludesDialog({
               value: 'no',
             },
           ]}
-          onChange={(value_0) => handleSelection(value_0 as 'yes' | 'no')}
+          onChange={(value_0: string) => handleSelection(value_0 as 'yes' | 'no')}
         />
       }
     </Dialog>

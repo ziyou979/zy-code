@@ -268,7 +268,7 @@ export const NotebookEditTool = buildTool({
     const fullPath = isAbsolute(notebook_path) ? notebook_path : resolve(getCwd(), notebook_path)
 
     if (fileHistoryEnabled()) {
-      await fileHistoryTrackEdit(updateFileHistoryState, fullPath, parentMessage.uuid as any)
+      await fileHistoryTrackEdit(updateFileHistoryState, fullPath, parentMessage!.uuid as any)
     }
 
     try {
@@ -330,9 +330,12 @@ export const NotebookEditTool = buildTool({
         }
       }
 
-      const language = (notebook.metadata.language_info as any)?.name ?? 'python'
+      const language = (notebook.metadata?.language_info as any)?.name ?? 'python'
       let new_cell_id
-      if (notebook.nbformat > 4 || (notebook.nbformat === 4 && notebook.nbformat_minor >= 5)) {
+      if (
+        (notebook.nbformat ?? 0) > 4 ||
+        (notebook.nbformat === 4 && (notebook.nbformat_minor ?? 0) >= 5)
+      ) {
         if (edit_mode === 'insert') {
           new_cell_id = Math.random().toString(36).substring(2, 15)
         } else if (cell_id !== null) {

@@ -79,6 +79,8 @@ export function isNavigableMessage(msg: NavigableMessage): boolean {
           return true
       }
       return false
+    default:
+      return false
   }
 }
 type PrimaryInput = {
@@ -134,7 +136,8 @@ const PRIMARY_INPUT = {
   },
   Tmux: {
     label: 'command',
-    extract: (i) => (Array.isArray(i.args) ? `tmux ${i.args.join(' ')}` : undefined),
+    extract: (i: Record<string, unknown>) =>
+      Array.isArray(i.args) ? `tmux ${(i.args as string[]).join(' ')}` : undefined,
   },
 }
 
@@ -205,7 +208,8 @@ export const MESSAGE_ACTIONS = [
   action({
     key: 'p',
     // `!` safe: applies() guarantees toolName ∈ PRIMARY_INPUT.
-    label: (s) => `copy ${PRIMARY_INPUT[s.toolName!]!.label}`,
+    label: (s) =>
+      `copy ${(PRIMARY_INPUT as Record<string, { label: string }>)[s.toolName!]!.label}`,
     types: ['grouped_tool_use', 'assistant'],
     applies: (s) => s.toolName != null && s.toolName in PRIMARY_INPUT,
     run: (m, c) => {
@@ -213,7 +217,12 @@ export const MESSAGE_ACTIONS = [
       if (!tc) {
         return
       }
-      const val = PRIMARY_INPUT[tc.name]?.extract(tc.input)
+      const val = (
+        PRIMARY_INPUT as Record<
+          string,
+          { label: string; extract: (i: Record<string, unknown>) => string | undefined }
+        >
+      )[tc.name]?.extract(tc.input)
       if (val) {
         c.copy(val)
       }
@@ -333,7 +342,13 @@ export function useMessageActions(
 }
 
 // 必须挂载在 <KeybindingSetup> 内部。
-export function MessageActionsKeybindings({ handlers, isActive }) {
+export function MessageActionsKeybindings({
+  handlers,
+  isActive,
+}: {
+  handlers: Record<string, () => void>
+  isActive: boolean
+}) {
   useKeybindings(handlers, {
     context: 'MessageActions',
     isActive,
@@ -342,7 +357,7 @@ export function MessageActionsKeybindings({ handlers, isActive }) {
 }
 
 // 仅 borderTop 的 Box 匹配 PromptInput 的 ─── 线，以保持稳定的页脚高度。
-export function MessageActionsBar({ cursor }) {
+export function MessageActionsBar({ cursor }: { cursor: MessageActionsState }) {
   const applicable = MESSAGE_ACTIONS.filter((a) => isApplicable(a, cursor))
   const actionItems = applicable.map((action, i) => {
     const label = typeof action.label === 'function' ? action.label(cursor) : action.label
@@ -414,7 +429,14 @@ export function copyTextOf(msg: NavigableMessage): string {
         return (b as any).text
       }
       const tc = toolCallOf(msg)
-      return tc ? (PRIMARY_INPUT[tc.name]?.extract(tc.input) ?? '') : ''
+      return tc
+        ? ((
+            PRIMARY_INPUT as Record<
+              string,
+              { extract: (i: Record<string, unknown>) => string | undefined }
+            >
+          )[tc.name]?.extract(tc.input) ?? '')
+        : ''
     }
     case 'grouped_tool_use':
       return (msg as any).results.map(toolResultText).filter(Boolean).join('\n\n')
@@ -431,12 +453,12 @@ export function copyTextOf(msg: NavigableMessage): string {
         .join('\n\n')
     case 'system':
       if ('content' in msg) {
-        return msg.content
+        return String(msg.content)
       }
       if ('error' in msg) {
         return String(msg.error)
       }
-      return msg.subtype
+      return msg.subtype as string
     case 'attachment': {
       const a = msg.attachment
       if (a.type === 'queued_command') {
@@ -447,6 +469,8 @@ export function copyTextOf(msg: NavigableMessage): string {
       }
       return `[${a.type}]`
     }
+    default:
+      return ''
   }
 }
 function toolResultText(r: UserMessage): string {

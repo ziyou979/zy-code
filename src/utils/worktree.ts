@@ -558,11 +558,13 @@ async function performPostCreationSetup(repoRoot: string, worktreePath: string):
     const worktreeHooksDir = hooksPath === huskyPath ? join(worktreePath, '.husky') : undefined
     void import('./postCommitAttribution.js')
       .then((m) =>
-        (m as any).installPrepareCommitMsgHook(worktreePath, worktreeHooksDir).catch((error) => {
-          logForDebugging(`Failed to install attribution hook in worktree: ${error}`)
-        }),
+        (m as any)
+          .installPrepareCommitMsgHook(worktreePath, worktreeHooksDir)
+          .catch((error: unknown) => {
+            logForDebugging(`Failed to install attribution hook in worktree: ${error}`)
+          }),
       )
-      .catch((error) => {
+      .catch((error: unknown) => {
         // Dynamic import() itself rejected (module load failure). The inner
         // .catch above only handles installPrepareCommitMsgHook rejection —
         // without this outer handler an import failure would surface as an

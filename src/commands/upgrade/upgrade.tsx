@@ -16,7 +16,7 @@ export async function call(
         startingMessage={
           'Starting new login following /upgrade. Exit with Ctrl-C to use existing account.'
         }
-        onDone={(success) => {
+        onDone={(success: boolean) => {
           context.onChangeAPIKey()
           onDone(success ? 'Login successful' : 'Login interrupted')
         }}

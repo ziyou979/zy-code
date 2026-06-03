@@ -11,7 +11,15 @@ import { getPlan, getPlanFilePath } from '../../utils/plans.js'
 import { editFileInEditor } from '../../utils/promptEditor.js'
 import { renderToString } from '../../utils/staticRender.js'
 
-function PlanDisplay({ planContent, planPath, editorName }) {
+function PlanDisplay({
+  planContent,
+  planPath,
+  editorName,
+}: {
+  planContent: string
+  planPath: string
+  editorName?: string
+}) {
   return (
     <Box flexDirection="column">
       {<Text bold={true}>Current Plan</Text>}

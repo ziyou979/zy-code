@@ -40,7 +40,7 @@ import {
 import { getMemoryPath } from '../../utils/config.js'
 import { COMPACT_MAX_OUTPUT_TOKENS } from '../../utils/context.js'
 import { analyzeContext, tokenStatsToStatsigMetrics } from '../../utils/contextAnalysis.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { createDebugLog } from '../../utils/debug.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
 import { cacheToObject } from '../../utils/fileStateCache.js'
 import { type CacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.js'
@@ -98,6 +98,8 @@ import {
   getCompactUserSummaryMessage,
   getPartialCompactPrompt,
 } from './prompt.js'
+
+const compactLog = createDebugLog('compact')
 
 export const POST_COMPACT_MAX_FILES_TO_RESTORE = 5
 export const POST_COMPACT_TOKEN_BUDGET = 50_000
@@ -385,6 +387,10 @@ export async function compactConversation(
     }
 
     const preCompactTokenCount = tokenCountWithEstimation(messages)
+    const compactStart = Date.now()
+    compactLog(
+      `triggered reason=${isAutoCompact ? 'auto' : 'manual'} tokens=${preCompactTokenCount} messages=${messages.length}`,
+    )
 
     const appState = context.getAppState()
     void logPermissionContextForAnts(appState.toolPermissionContext, 'summary')
@@ -475,8 +481,8 @@ export async function compactConversation(
     }
 
     if (!summary) {
-      logForDebugging(
-        `Compact failed: no summary text in response. Response: ${jsonStringify(summaryResponse)}`,
+      compactLog(
+        `failed: no summary text in response. Response: ${jsonStringify(summaryResponse)}`,
         { level: 'error' },
       )
       logEvent('zy_compact_failed', {
@@ -705,6 +711,10 @@ export async function compactConversation(
     ]
       .filter(Boolean)
       .join('\n')
+
+    compactLog(
+      `completed ${Date.now() - compactStart}ms tokens=${preCompactTokenCount}→${truePostCompactTokenCount} messages=${messages.length}`,
+    )
 
     return {
       boundaryMarker,
@@ -1183,8 +1193,8 @@ async function streamCompactSummary({
           }
           return assistantMsg
         }
-        logForDebugging(
-          `Compact cache sharing: no text in response, falling back. Response: ${jsonStringify(assistantMsg)}`,
+        compactLog(
+          `cache sharing: no text in response, falling back. Response: ${jsonStringify(assistantMsg)}`,
           { level: 'warn' },
         )
         logEvent('zy_compact_cache_sharing_fallback', {
@@ -1318,8 +1328,8 @@ async function streamCompactSummary({
         continue
       }
 
-      logForDebugging(
-        `Compact streaming failed after ${attempt} attempts. hasStartedStreaming=${hasStartedStreaming}`,
+      compactLog(
+        `streaming failed after ${attempt} attempts. hasStartedStreaming=${hasStartedStreaming}`,
         { level: 'error' },
       )
       logEvent('zy_compact_failed', {

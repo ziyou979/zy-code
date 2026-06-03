@@ -155,10 +155,10 @@ function StopHookSummaryMessage({
   isTranscriptMode?: boolean
 }) {
   const bg = useSelectedMessageBg()
-  const { hookCount, hookInfos, hookErrors, preventedContinuation, stopReason } = message
+  const { hookCount = 0, hookInfos, hookErrors = [], preventedContinuation, stopReason } = message
   const { columns } = useTerminalSize()
-  const totalDurationMs =
-    message.totalDurationMs ?? hookInfos.reduce((sum, h) => sum + (h.durationMs ?? 0), 0)
+  const totalDurationMs: number =
+    message.totalDurationMs ?? hookInfos.reduce((sum: number, h) => sum + (h.durationMs ?? 0), 0)
   if (hookErrors.length === 0 && !preventedContinuation && !message.hookLabel) {
     return null
   }
@@ -168,7 +168,9 @@ function StopHookSummaryMessage({
       isTranscriptMode &&
       hookInfos.map((info, idx) => {
         const durationStr =
-          false && info.durationMs !== undefined ? ` (${formatSecondsShort(info.durationMs)})` : ''
+          false && info.durationMs !== undefined
+            ? ` (${formatSecondsShort(info.durationMs ?? 0)})`
+            : ''
         return (
           <Text key={`cmd-${idx}`} dimColor={true}>
             {'     \u23BF '}
@@ -200,7 +202,7 @@ function StopHookSummaryMessage({
     hookInfos.map((info_0, idx_0) => {
       const durationStr_0 =
         false && info_0.durationMs !== undefined
-          ? ` (${formatSecondsShort(info_0.durationMs)})`
+          ? ` (${formatSecondsShort(info_0.durationMs ?? 0)})`
           : ''
       return (
         <Text key={`cmd-${idx_0}`} dimColor={true}>
@@ -283,7 +285,7 @@ function SystemTextMessageInner({ content, addMargin, dot, color, dimColor }: an
     </Box>
   )
 }
-function TurnDurationMessage({ message, addMargin }) {
+function TurnDurationMessage({ message, addMargin }: { message: any; addMargin: boolean }) {
   const bg = useSelectedMessageBg()
   const [verb] = useState(() => tSync('common.turnCompletionVerb'))
   const store = useAppStateStore()
@@ -336,8 +338,8 @@ function MemorySavedMessage({
   addMargin: boolean
 }) {
   const bg = useSelectedMessageBg()
-  const { writtenPaths } = message
-  const team = feature('TEAMMEM') ? teamMemSaved.teamMemSavedPart(message) : null
+  const { writtenPaths = [] } = message
+  const team = feature('TEAMMEM') ? teamMemSaved!.teamMemSavedPart(message) : null
   const privateCount = writtenPaths.length - (team?.count ?? 0)
   const teamSegment = team?.segment
   const parts = [
@@ -364,7 +366,7 @@ function MemorySavedMessage({
     </Box>
   )
 }
-function MemoryFileRow({ path }) {
+function MemoryFileRow({ path }: { path: string }) {
   const [hover, setHover] = useState(false)
   const fileName = basename(path)
   return (
@@ -383,7 +385,7 @@ function MemoryFileRow({ path }) {
     </MessageResponse>
   )
 }
-function _ThinkingMessage({ message, addMargin }) {
+function _ThinkingMessage({ message, addMargin }: { message: any; addMargin: boolean }) {
   const bg = useSelectedMessageBg()
   return (
     <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
@@ -396,7 +398,7 @@ function _ThinkingMessage({ message, addMargin }) {
     </Box>
   )
 }
-function WireStatusMessage({ message, addMargin }) {
+function WireStatusMessage({ message, addMargin }: { message: any; addMargin: boolean }) {
   const bg = useSelectedMessageBg()
   return (
     <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width={999}>

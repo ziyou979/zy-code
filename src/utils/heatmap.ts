@@ -167,7 +167,9 @@ export function generateHeatmap(
   const lessLabel = tSync('heatmap.less')
   const moreLabel = tSync('heatmap.more')
   lines.push('')
-  lines.push(`${dayLabelPad}${lessLabel} ${[ZyBlue('░'), ZyBlue('▒'), ZyBlue('▓'), ZyBlue('█')].join(' ')} ${moreLabel}`)
+  lines.push(
+    `${dayLabelPad}${lessLabel} ${[ZyBlue('░'), ZyBlue('▒'), ZyBlue('▓'), ZyBlue('█')].join(' ')} ${moreLabel}`,
+  )
 
   return lines.join('\n')
 }
@@ -198,7 +200,7 @@ function getIntensity(messageCount: number, percentiles: Percentiles | null): nu
 }
 
 // Zy blue color (hex #5b9bd5)
-let ZyBlue
+let ZyBlue: ReturnType<typeof chalk.hex>
 ZyBlue = chalk.hex('#5b9bd5')
 
 function getHeatmapChar(intensity: number): string {
@@ -240,8 +242,13 @@ export function generateHeatmapData(
   const { terminalWidth = 80, showMonthLabels = true } = options
 
   const dayLabels = [
-    tSync('heatmap.sun'), tSync('heatmap.mon'), tSync('heatmap.tue'),
-    tSync('heatmap.wed'), tSync('heatmap.thu'), tSync('heatmap.fri'), tSync('heatmap.sat'),
+    tSync('heatmap.sun'),
+    tSync('heatmap.mon'),
+    tSync('heatmap.tue'),
+    tSync('heatmap.wed'),
+    tSync('heatmap.thu'),
+    tSync('heatmap.fri'),
+    tSync('heatmap.sat'),
   ]
   const colWidth = Math.max(...dayLabels.map((l) => stringWidth(l))) + 1
   const pad = ' '.repeat(colWidth)
@@ -290,20 +297,30 @@ export function generateHeatmapData(
   let monthLabel = ''
   if (showMonthLabels) {
     const monthNames = [
-      tSync('heatmap.jan'), tSync('heatmap.feb'), tSync('heatmap.mar'),
-      tSync('heatmap.apr'), tSync('heatmap.may'), tSync('heatmap.jun'),
-      tSync('heatmap.jul'), tSync('heatmap.aug'), tSync('heatmap.sep'),
-      tSync('heatmap.oct'), tSync('heatmap.nov'), tSync('heatmap.dec'),
+      tSync('heatmap.jan'),
+      tSync('heatmap.feb'),
+      tSync('heatmap.mar'),
+      tSync('heatmap.apr'),
+      tSync('heatmap.may'),
+      tSync('heatmap.jun'),
+      tSync('heatmap.jul'),
+      tSync('heatmap.aug'),
+      tSync('heatmap.sep'),
+      tSync('heatmap.oct'),
+      tSync('heatmap.nov'),
+      tSync('heatmap.dec'),
     ]
     const uniqueMonths = monthStarts.map((m) => m.month)
     const labelW = Math.floor(width / Math.max(uniqueMonths.length, 1))
-    monthLabel = pad + uniqueMonths
-      .map((month) => {
-        const name = monthNames[month]!
-        const w = stringWidth(name)
-        return name + ' '.repeat(Math.max(0, labelW - w))
-      })
-      .join('')
+    monthLabel =
+      pad +
+      uniqueMonths
+        .map((month) => {
+          const name = monthNames[month]!
+          const w = stringWidth(name)
+          return name + ' '.repeat(Math.max(0, labelW - w))
+        })
+        .join('')
   }
 
   // 数据行

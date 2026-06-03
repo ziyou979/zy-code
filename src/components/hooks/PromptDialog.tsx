@@ -30,7 +30,7 @@ export function PromptDialog({ title, toolInputSummary, request, onRespond, onAb
         <Box flexDirection="column" paddingY={1}>
           <Select
             options={options}
-            onChange={(value) => {
+            onChange={(value: string) => {
               onRespond(value)
             }}
           />

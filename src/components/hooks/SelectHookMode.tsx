@@ -61,7 +61,7 @@ export function SelectHookMode({
         <Box flexDirection="column">
           <Select
             options={hookOptions}
-            onChange={(value) => {
+            onChange={(value: string) => {
               const index_0 = parseInt(value, 10)
               const hook_0 = hooksForSelectedMatcher[index_0]
               if (hook_0) {

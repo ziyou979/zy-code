@@ -1,3 +1,4 @@
+import type React from 'react'
 import { REFRESH_ARROW } from '../../constants/figures.js'
 import { Box, Text } from '../../ink.js'
 import type { TextBlock } from '../../types/llm.js'
@@ -61,11 +62,11 @@ function formatUri(uri: string): string {
 }
 export function UserResourceUpdateMessage({ addMargin, param }: Props) {
   const { text } = param
-  let BoxComponent
+  let BoxComponent!: typeof Box
 
   let conditionalValue
   let mappedItems
-  let earlyReturn
+  let earlyReturn: React.ReactNode | symbol
   earlyReturn = Symbol.for('react.early_return_sentinel')
   const updates = parseUpdates(text)
   if (updates.length === 0) {
@@ -87,7 +88,7 @@ export function UserResourceUpdateMessage({ addMargin, param }: Props) {
     ))
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   return (
     <BoxComponent flexDirection={'column'} marginTop={conditionalValue}>

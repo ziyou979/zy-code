@@ -28,7 +28,7 @@ export function useIDEIntegration({
   setIDEInstallationState,
 }: UseIDEIntegrationProps) {
   useEffect(() => {
-    const addIde = function addIde(ide) {
+    const addIde = function addIde(ide: import('../utils/ide.js').DetectedIDEInfo | null) {
       if (!ide) {
         return
       }

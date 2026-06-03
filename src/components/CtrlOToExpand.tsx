@@ -11,7 +11,7 @@ import { InVirtualListContext } from './messageActions.js'
 // 类似于 MessageResponseContext，这帮助我们避免在子 agent 输出中显示
 // 太多 "(ctrl+o to expand)" 提示
 const SubAgentContext = React.createContext(false)
-export function SubAgentProvider({ children }) {
+export function SubAgentProvider({ children }: { children: React.ReactNode }) {
   return <SubAgentContext.Provider value={true}>{children}</SubAgentContext.Provider>
 }
 export function CtrlOToExpand() {

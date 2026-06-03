@@ -11,6 +11,7 @@ import {
   getPythonApiInstructions,
   installIt2,
   markIt2SetupComplete,
+  type PythonPackageManager,
   setPreferTmuxOverIterm2,
   verifyIt2Setup,
 } from './backends/it2Setup.js'
@@ -30,8 +31,8 @@ type Props = {
 }
 export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
   const [step, setStep] = useState('initial')
-  const [packageManager, setPackageManager] = useState(null)
-  const [error, setError] = useState(null)
+  const [packageManager, setPackageManager] = useState<PythonPackageManager | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const exitState = useExitOnCtrlCDWithKeybindings()
   useEffect(() => {
     detectPythonPackageManager().then((pm) => {
@@ -146,7 +147,7 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
         <Box marginTop={1}>
           <Select
             options={options}
-            onChange={(value) => {
+            onChange={(value: string) => {
               switch (value) {
                 case 'install': {
                   handleInstall()
@@ -213,7 +214,7 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
         <Box marginTop={1}>
           <Select
             options={installOptions}
-            onChange={(selectedValue) => {
+            onChange={(selectedValue: string) => {
               switch (selectedValue) {
                 case 'retry': {
                   handleInstall()
@@ -298,7 +299,7 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
         <Box marginTop={1}>
           <Select
             options={enableOptions}
-            onChange={(selectedValue) => {
+            onChange={(selectedValue: string) => {
               switch (selectedValue) {
                 case 'retry': {
                   setStep('verifying')

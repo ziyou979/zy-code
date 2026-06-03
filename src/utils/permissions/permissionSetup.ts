@@ -51,7 +51,7 @@ import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { getToolsForDefaultPreset, parseToolPreset } from '../../tools.js'
 import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.js'
 import { modelSupportsAutoMode } from '../betas.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import { gracefulShutdown } from '../gracefulShutdown.js'
 import { CROSS_PLATFORM_CODE_EXEC, DANGEROUS_BASH_PATTERNS } from './dangerousPatterns.js'
 import type { PermissionRule, PermissionRuleSource, PermissionRuleValue } from './PermissionRule.js'
@@ -62,6 +62,8 @@ import {
   permissionRuleValueFromString,
   permissionRuleValueToString,
 } from './permissionRuleParser.js'
+
+const permLog = createDebugLog('permissions')
 
 /**
  * 检查 Bash 权限规则在 auto 模式下是否危险。
@@ -499,7 +501,7 @@ export function stripDangerousPermissionsForAutoMode(
     }
   }
   for (const permission of dangerousPermissions) {
-    logForDebugging(
+    permLog(
       `Ignoring dangerous permission ${permission.ruleDisplay} from ${permission.sourceDisplay} (bypasses classifier)`,
     )
   }
@@ -673,9 +675,7 @@ export function initialPermissionModeFromCLI({
   // 阻止 AutoModeOptInDialog 在 showSetupScreens() 中显示。
   // autoModeFlagCli 仍然将意图传递到 verifyAutoModeGateAccess，
   // 它会通知用户原因。
-  const autoModeCircuitBrokenSync = true
-    ? getAutoModeEnabledStateIfCached() === 'disabled'
-    : false
+  const autoModeCircuitBrokenSync = true ? getAutoModeEnabledStateIfCached() === 'disabled' : false
 
   // 模式按优先级排序
   const orderedModes: PermissionMode[] = []
@@ -688,7 +688,7 @@ export function initialPermissionModeFromCLI({
     const parsedMode = permissionModeFromString(permissionModeCli)
     if (true && parsedMode === 'auto') {
       if (autoModeCircuitBrokenSync) {
-        logForDebugging('auto mode circuit breaker active (cached) — falling back to default', {
+        permLog('auto mode circuit breaker active (cached) — falling back to default', {
           level: 'warn',
         })
       } else {
@@ -706,7 +706,7 @@ export function initialPermissionModeFromCLI({
       isEnvTruthy(process.env.ZY_CODE_REMOTE) &&
       !['acceptEdits', 'plan', 'default', 'auto'].includes(settingsMode)
     ) {
-      logForDebugging(
+      permLog(
         `settings defaultMode "${settingsMode}" is not supported in ZY_CODE_REMOTE — only acceptEdits, plan, default, and auto are allowed`,
         { level: 'warn' },
       )
@@ -717,7 +717,7 @@ export function initialPermissionModeFromCLI({
     // 来自设置的 auto 模式需要与来自 CLI 的相同门控检查
     else if (true && settingsMode === 'auto') {
       if (autoModeCircuitBrokenSync) {
-        logForDebugging('auto mode circuit breaker active (cached) — falling back to default', {
+        permLog('auto mode circuit breaker active (cached) — falling back to default', {
           level: 'warn',
         })
       } else {
@@ -733,12 +733,12 @@ export function initialPermissionModeFromCLI({
   for (const mode of orderedModes) {
     if (mode === 'bypassPermissions' && disableBypassPermissionsMode) {
       if (growthBookDisableBypassPermissionsMode) {
-        logForDebugging('bypassPermissions mode is disabled by Statsig gate', {
+        permLog('bypassPermissions mode is disabled by Statsig gate', {
           level: 'warn',
         })
         notification = 'Bypass permissions mode was disabled by your organization policy'
       } else {
-        logForDebugging('bypassPermissions mode is disabled by settings', {
+        permLog('bypassPermissions mode is disabled by settings', {
           level: 'warn',
         })
         notification = 'Bypass permissions mode was disabled by settings'
@@ -1028,7 +1028,7 @@ export async function verifyAutoModeGateAccess(
   autoModeStateModule?.setAutoModeCircuitBroken(enabledState === 'disabled' || disabledBySettings)
 
   // 轮播可用性：未被熔断、未被设置禁用、模型支持，且（已启用或已 opt-in）
-  const mainModel = getMainLoopModel()
+  const mainModel = getMainLoopModel()!
   const modelSupported = modelSupportsAutoMode(mainModel)
   let carouselAvailable = false
   if (enabledState !== 'disabled' && !disabledBySettings && modelSupported) {
@@ -1037,7 +1037,7 @@ export async function verifyAutoModeGateAccess(
   // canEnterAuto 门控显式进入（--permission-mode auto、defaultMode: auto）
   // — 显式进入本身就是一种 opt-in，因此我们仅基于熔断器 + 设置 + 模型进行阻止
   const canEnterAuto = enabledState !== 'disabled' && !disabledBySettings && modelSupported
-  logForDebugging(
+  permLog(
     `[auto-mode] verifyAutoModeGateAccess: enabledState=${enabledState} disabledBySettings=${disabledBySettings} model=${mainModel} modelSupported=${modelSupported} carouselAvailable=${carouselAvailable} canEnterAuto=${canEnterAuto}`,
   )
 
@@ -1053,7 +1053,7 @@ export async function verifyAutoModeGateAccess(
   // 在 await 之后才运行）。
   const setAvailable = (ctx: ToolPermissionContext, available: boolean): ToolPermissionContext => {
     if (ctx.isAutoModeAvailable !== available) {
-      logForDebugging(
+      permLog(
         `[auto-mode] verifyAutoModeGateAccess setAvailable: ${ctx.isAutoModeAvailable} -> ${available}`,
       )
     }
@@ -1068,18 +1068,17 @@ export async function verifyAutoModeGateAccess(
   let reason: AutoModeUnavailableReason
   if (disabledBySettings) {
     reason = 'settings'
-    logForDebugging('auto mode disabled: disableAutoMode in settings', {
+    permLog('auto mode disabled: disableAutoMode in settings', {
       level: 'warn',
     })
   } else if (enabledState === 'disabled') {
     reason = 'circuit-breaker'
-    logForDebugging(
-      'auto mode disabled: zy_auto_mode_config.enabled === "disabled" (circuit breaker)',
-      { level: 'warn' },
-    )
+    permLog('auto mode disabled: zy_auto_mode_config.enabled === "disabled" (circuit breaker)', {
+      level: 'warn',
+    })
   } else {
     reason = 'model'
-    logForDebugging(`auto mode disabled: model ${getMainLoopModel()} does not support auto mode`, {
+    permLog(`auto mode disabled: model ${getMainLoopModel()} does not support auto mode`, {
       level: 'warn',
     })
   }
@@ -1094,7 +1093,7 @@ export async function verifyAutoModeGateAccess(
   // 我们在这里踢出他们。
   const kickOutOfAutoIfNeeded = (ctx: ToolPermissionContext): ToolPermissionContext => {
     const inAuto = ctx.mode === 'auto'
-    logForDebugging(
+    permLog(
       `[auto-mode] kickOutOfAutoIfNeeded applying: ctx.mode=${ctx.mode} ctx.prePlanMode=${ctx.prePlanMode} reason=${reason}`,
     )
     // 带 auto 激活的 plan 模式：来自 prePlanMode='auto'（从 auto 进入）或 opt-in（存在 strippedDangerousRules）。
@@ -1181,7 +1180,7 @@ export function isAutoModeGateEnabled(): boolean {
   if (isAutoModeDisabledBySettings()) {
     return false
   }
-  return modelSupportsAutoMode(getMainLoopModel())
+  return modelSupportsAutoMode(getMainLoopModel()!)
 }
 
 /**
@@ -1195,7 +1194,7 @@ export function getAutoModeUnavailableReason(): AutoModeUnavailableReason | null
   if (autoModeStateModule?.isAutoModeCircuitBroken() ?? false) {
     return 'circuit-breaker'
   }
-  if (!modelSupportsAutoMode(getMainLoopModel())) {
+  if (!modelSupportsAutoMode(getMainLoopModel()!)) {
     return 'model'
   }
   return null
@@ -1326,7 +1325,7 @@ export async function checkAndDisableBypassPermissions(
   }
 
   // 门控已启用，需要禁用 bypassPermissions 模式
-  logForDebugging('bypassPermissions mode is being disabled by Statsig gate (async check)', {
+  permLog('bypassPermissions mode is being disabled by Statsig gate (async check)', {
     level: 'warn',
   })
 
@@ -1378,7 +1377,7 @@ export function prepareContextForPlanMode(context: ToolPermissionContext): ToolP
       prePlanMode: currentMode,
     }
   }
-  logForDebugging(`[prepareContextForPlanMode] plain plan entry, prePlanMode=${currentMode}`, {
+  permLog(`[prepareContextForPlanMode] plain plan entry, prePlanMode=${currentMode}`, {
     level: 'info',
   })
   return { ...context, prePlanMode: currentMode }

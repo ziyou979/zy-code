@@ -500,7 +500,7 @@ export function clearCommandPrefixCaches(): void {
 
 const COMMAND_LIST_SEPARATORS = new Set<ControlOperator>(['&&', '||', ';', ';;', '|'])
 
-let ALL_SUPPORTED_CONTROL_OPERATORS
+let ALL_SUPPORTED_CONTROL_OPERATORS: Set<ControlOperator>
 ALL_SUPPORTED_CONTROL_OPERATORS = new Set<ControlOperator>([
   ...COMMAND_LIST_SEPARATORS,
   '>&',

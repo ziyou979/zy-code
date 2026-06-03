@@ -2,6 +2,7 @@ import { feature } from 'bun:bundle'
 import figures from 'figures'
 import * as React from 'react'
 import { SentryErrorBoundary } from 'src/components/SentryErrorBoundary.js'
+import { tSync } from '../../../i18n/index.js'
 import { Box, Text, useTheme } from '../../../ink.js'
 import { useAppState } from '../../../state/AppState.js'
 import { filterToolProgressMessages, type Tool, type Tools } from '../../../Tool.js'
@@ -100,9 +101,8 @@ export function UserToolSuccessMessage({
           ? classifierRule && (
               <MessageResponse height={1}>
                 <Text dimColor>
-                  <Text color="success">{figures.tick}</Text>
-                  {' Auto-approved \u00b7 matched '}
-                  {`"${classifierRule}"`}
+                  <Text color="success">{figures.tick}</Text>{' '}
+                  {tSync('permission.autoApprovedMatched', { rule: classifierRule })}
                 </Text>
               </MessageResponse>
             )
@@ -110,7 +110,7 @@ export function UserToolSuccessMessage({
         {true
           ? yoloReason && (
               <MessageResponse height={1}>
-                <Text dimColor>Allowed by auto mode classifier</Text>
+                <Text dimColor>{tSync('permission.allowedByAutoModeClassifier')}</Text>
               </MessageResponse>
             )
           : null}

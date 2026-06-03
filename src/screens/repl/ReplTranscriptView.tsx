@@ -63,7 +63,7 @@ export interface ReplTranscriptViewProps {
   tools: readonly Tool[]
   commands: Command[]
   // Scroll
-  scrollRef: React.RefObject<ScrollBoxHandle>
+  scrollRef: React.RefObject<ScrollBoxHandle | null>
   // Search
   jumpRef: React.RefObject<JumpHandle | null>
   searchOpen: boolean
@@ -245,14 +245,14 @@ export function ReplTranscriptView(props: ReplTranscriptViewProps): React.ReactN
               <TranscriptModeFooter
                 showAllInTranscript={showAllInTranscript}
                 virtualScroll={true}
-                status={editorStatus || undefined}
+                status={editorStatus || ''}
                 searchBadge={
                   searchQuery && searchCount > 0
                     ? {
                         current: searchCurrent,
                         count: searchCount,
                       }
-                    : undefined
+                    : null
                 }
               />
             )
@@ -267,8 +267,8 @@ export function ReplTranscriptView(props: ReplTranscriptViewProps): React.ReactN
             showAllInTranscript={showAllInTranscript}
             virtualScroll={false}
             suppressShowAll={dumpMode}
-            status={editorStatus || undefined}
-            searchBadge={undefined}
+            status={editorStatus || ''}
+            searchBadge={null}
           />
         </>
       )}

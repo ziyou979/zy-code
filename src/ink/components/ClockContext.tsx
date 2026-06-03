@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from 'react'
+import React, { createContext, useEffect, useState } from 'react'
 import { FRAME_INTERVAL_MS } from '../constants.js'
 import { useTerminalFocus } from '../hooks/use-terminal-focus.js'
 export type Clock = {
@@ -83,7 +83,7 @@ const BLURRED_TICK_INTERVAL_MS = FRAME_INTERVAL_MS * 2
 // 独立组件，避免 App.tsx 在创建时钟时重新渲染。
 // 时钟值是稳定的（通过 useState 只创建一次），因此 provider
 // 本身不会导致消费者重新渲染。
-export function ClockProvider({ children }) {
+export function ClockProvider({ children }: { children: React.ReactNode }) {
   const [clock] = useState(() => createClock(FRAME_INTERVAL_MS))
   const focused = useTerminalFocus()
   useEffect(() => {

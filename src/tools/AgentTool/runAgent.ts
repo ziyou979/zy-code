@@ -593,7 +593,7 @@ export async function* runAgent({
 
       initialMessages.push(
         createUserMessage({
-          content: [{ type: 'text', text: metadata }, ...content],
+          content: [{ type: 'text', text: metadata }, ...(content as any[])],
           isMeta: true,
         }),
       )

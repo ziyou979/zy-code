@@ -60,7 +60,7 @@ export function MemoryStep() {
           value: 'local',
         },
       ]
-  const handleSelect = (value) => {
+  const handleSelect = (value: string) => {
     const memory = value === 'none' ? undefined : (value as AgentMemoryScope)
     const agentType = (wizardData.finalAgent as any)?.agentType
     updateWizardData({

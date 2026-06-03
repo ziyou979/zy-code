@@ -365,7 +365,7 @@ export function Feedback({
       isCancelActive={step !== 'userInput'}
       inputGuide={(exitState) =>
         exitState.pending ? (
-          <Text>{tSync('export.pressAgainToExit', { key: exitState.keyName })}</Text>
+          <Text>{tSync('export.pressAgainToExit', { key: exitState.keyName ?? '' })}</Text>
         ) : step === 'userInput' ? (
           <Byline>
             <KeyboardShortcutHint shortcut="Enter" action="continue" />

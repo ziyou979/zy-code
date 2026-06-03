@@ -733,10 +733,10 @@ const dynamicSkills = new Map<string, Command>()
 // --- Conditional skills (path-filtered) ---
 
 // Skills with paths frontmatter that haven't been activated yet
-let conditionalSkills
+let conditionalSkills: Map<string, Command>
 conditionalSkills = new Map<string, Command>()
 // Names of skills that have been activated (survives cache clears within a session)
-let activatedConditionalSkillNames
+let activatedConditionalSkillNames: Set<string>
 activatedConditionalSkillNames = new Set<string>()
 
 // Signal fired when dynamic skills are loaded

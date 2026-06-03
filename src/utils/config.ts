@@ -1461,8 +1461,7 @@ function getConfig<A>(file: string, createDefault: () => A, throwOnInvalid?: boo
 }
 
 // 缓存的函数，用于获取配置查找的项目路径
-export let getProjectPathForConfig
-getProjectPathForConfig = memoize((): string => {
+export const getProjectPathForConfig = memoize((): string => {
   const originalCwd = getOriginalCwd()
   const gitRoot = findCanonicalGitRoot(originalCwd)
 

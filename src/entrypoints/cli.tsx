@@ -68,7 +68,7 @@ async function main(): Promise<void> {
     const { getSystemPrompt, SYSTEM_PROMPT_DYNAMIC_BOUNDARY } = await import(
       '../constants/prompts.js'
     )
-    const prompt = await getSystemPrompt([], model)
+    const prompt = await getSystemPrompt([], model!)
 
     // --exclude-dynamic-system-prompt-sections: 仅输出静态区（boundary 之前），
     // 改进跨用户 prompt 缓存对比。

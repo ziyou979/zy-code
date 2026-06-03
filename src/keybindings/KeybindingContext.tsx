@@ -70,8 +70,9 @@ export function KeybindingProvider({
   handlerRegistryRef,
   children,
 }: ProviderProps) {
-  const getDisplay = (action, context) => getBindingDisplayText(action, context, bindings)
-  const registerHandler = (registration) => {
+  const getDisplay = (action: string, context: KeybindingContextName) =>
+    getBindingDisplayText(action, context, bindings)
+  const registerHandler = (registration: HandlerRegistration) => {
     const registry = handlerRegistryRef.current
     if (!registry) {
       return _temp
@@ -79,7 +80,7 @@ export function KeybindingProvider({
     if (!registry.has(registration.action)) {
       registry.set(registration.action, new Set())
     }
-    registry.get(registration.action).add(registration)
+    registry.get(registration.action)!.add(registration)
     return () => {
       const handlers = registry.get(registration.action)
       if (handlers) {
@@ -90,7 +91,7 @@ export function KeybindingProvider({
       }
     }
   }
-  const invokeAction = (action) => {
+  const invokeAction = (action: string) => {
     const registry = handlerRegistryRef.current
     if (!registry) {
       return false
@@ -108,7 +109,7 @@ export function KeybindingProvider({
     return false
   }
   const value = {
-    resolve: (input, key, contexts) =>
+    resolve: (input: string, key: Key, contexts: KeybindingContextName[]) =>
       resolveKeyWithChordState(input, key, contexts, bindings, pendingChordRef.current),
     setPendingChord,
     getDisplayText: getDisplay,
@@ -154,7 +155,10 @@ export function useOptionalKeybindingContext() {
  * }
  * ```
  */
-export function useRegisterKeybindingContext(context, isActiveArg) {
+export function useRegisterKeybindingContext(
+  context: KeybindingContextName,
+  isActiveArg?: boolean,
+) {
   const isActive = isActiveArg === undefined ? true : isActiveArg
   const keybindingContext = useOptionalKeybindingContext()
   useLayoutEffect(() => {

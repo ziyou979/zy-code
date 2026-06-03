@@ -36,7 +36,7 @@ type Props = {
  */
 export function Byline({ children }: Props) {
   let mappedItems
-  let earlyReturn
+  let earlyReturn: React.ReactNode | symbol
   earlyReturn = Symbol.for('react.early_return_sentinel')
   const validChildren = Children.toArray(children)
   if (validChildren.length === 0) {
@@ -50,7 +50,7 @@ export function Byline({ children }: Props) {
     ))
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   return <>{mappedItems}</>
 }

@@ -1,10 +1,12 @@
 import type { AppState } from 'src/state/AppState.js'
 import { HOOK_EVENTS, type HookEvent } from 'src/types/index.js'
 import type { Message } from 'src/types/message.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import type { AggregatedHookResult } from '../hooks.js'
 import type { HookCommand } from '../settings/types.js'
 import { isHookEqual } from './hooksSettings.js'
+
+const hookLog = createDebugLog('hooks')
 
 type OnHookSuccess = (hook: HookCommand | FunctionHook, result: AggregatedHookResult) => void
 
@@ -143,7 +145,7 @@ export function removeFunctionHook(
     return prev
   })
 
-  logForDebugging(`Removed function hook ${hookId} for event ${event} in session ${sessionId}`)
+  hookLog(`Removed function hook ${hookId} for event ${event} in session ${sessionId}`)
 }
 
 /**
@@ -195,7 +197,7 @@ function addHookToSession(
     return prev
   })
 
-  logForDebugging(`Added session hook for event ${event} in session ${sessionId}`)
+  hookLog(`Added session hook for event ${event} in session ${sessionId}`)
 }
 
 /**
@@ -239,7 +241,7 @@ export function removeSessionHook(
     return prev
   })
 
-  logForDebugging(`Removed session hook for event ${event} in session ${sessionId}`)
+  hookLog(`Removed session hook for event ${event} in session ${sessionId}`)
 }
 
 // Extended hook matcher that includes optional skillRoot for skill-scoped hooks
@@ -410,5 +412,5 @@ export function clearSessionHooks(
     return prev
   })
 
-  logForDebugging(`Cleared all session hooks for session ${sessionId}`)
+  hookLog(`Cleared all session hooks for session ${sessionId}`)
 }

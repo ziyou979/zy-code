@@ -351,7 +351,15 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
     return <FallbackToolUseErrorMessage result={result} verbose={verbose} />
   },
 } satisfies ToolDef<InputSchema, TaskOutputToolOutput>)
-function TaskOutputResultDisplay({ content, verbose = false, theme }) {
+function TaskOutputResultDisplay({
+  content,
+  verbose = false,
+  theme,
+}: {
+  content: TaskOutputToolOutput | string
+  verbose?: boolean
+  theme: string
+}) {
   const expandShortcut = useShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
   const result = typeof content === 'string' ? jsonParse(content) : content
   if (!result.task) {
@@ -370,7 +378,6 @@ function TaskOutputResultDisplay({ content, verbose = false, theme }) {
       dangerouslyDisableSandbox: true,
       returnCodeInterpretation: task.error,
     }
-    // @ts-expect-error
     return <BashToolResultMessage content={bashOut} verbose={verbose} />
   }
   if (task.task_type === 'local_agent') {

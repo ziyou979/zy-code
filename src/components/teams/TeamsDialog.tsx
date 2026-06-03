@@ -70,7 +70,6 @@ type DialogLevel =
  */
 export function TeamsDialog({ initialTeams, onDone }: Props): React.ReactNode {
   // Register as overlay so CancelRequestHandler doesn't intercept escape
-  // @ts-expect-error
   useRegisterOverlay('teams-dialog')
 
   // initialTeams is derived from teamContext in PromptInput (no filesystem I/O)
@@ -400,7 +399,7 @@ function TeammateDetailView({ teammate, teamName, onCancel }: TeammateDetailView
   const themeColor = teammate.color
     ? AGENT_COLOR_TO_THEME_COLOR[teammate.color as keyof typeof AGENT_COLOR_TO_THEME_COLOR]
     : undefined
-  const [teammateTasks, setTeammateTasks] = useState([])
+  const [teammateTasks, setTeammateTasks] = useState<any[]>([])
   useEffect(() => {
     let cancelled = false
     listTasks(teamName).then((allTasks) => {

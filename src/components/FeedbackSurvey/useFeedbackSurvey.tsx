@@ -253,7 +253,7 @@ export function useFeedbackSurvey(
     if (config.onForModels.includes('*')) {
       return true
     }
-    return config.onForModels.includes(currentModel)
+    return config.onForModels.includes(currentModel!)
   }, [config.onForModels, currentModel])
   const shouldOpen = useMemo(() => {
     if (state !== 'closed') {

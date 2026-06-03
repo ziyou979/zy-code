@@ -8,7 +8,7 @@ import {
 } from '../../services/analytics/index.js'
 import type { AppState } from '../../state/AppState.js'
 import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import { isEnvTruthy } from '../envUtils.js'
 import { logError } from '../log.js'
 import { jsonStringify } from '../slowOperations.js'
@@ -22,6 +22,8 @@ import {
   getPluginHookCounts,
   isInternalHook,
 } from './matcher.js'
+
+const hookLog = createDebugLog('hooks')
 
 export type HookOutsideReplResult = {
   command: string
@@ -72,14 +74,14 @@ export async function executeHooksOutsideREPL({
   const hookEvent = hookInput.hook_event_name
   const hookName = matchQuery ? `${hookEvent}:${matchQuery}` : hookEvent
   if (shouldDisableAllHooksIncludingManaged()) {
-    logForDebugging(`Skipping hooks for ${hookName} due to 'disableAllHooks' managed setting`)
+    hookLog(`Skipping hooks for ${hookName} due to 'disableAllHooks' managed setting`)
     return []
   }
 
   // SECURITY: ALL hooks require workspace trust in interactive mode
   // This centralized check prevents RCE vulnerabilities for all current and future hooks
   if (shouldSkipHookDueToTrust()) {
-    logForDebugging(`Skipping ${hookName} hook execution - workspace trust not accepted`)
+    hookLog(`Skipping ${hookName} hook execution - workspace trust not accepted`)
     return []
   }
 
@@ -138,7 +140,7 @@ export async function executeHooksOutsideREPL({
         cleanup?.()
 
         if (isAsyncHookJSONOutput(json)) {
-          logForDebugging(`${hookName} [callback] returned async response, returning empty output`)
+          hookLog(`${hookName} [callback] returned async response, returning empty output`)
           return {
             command: 'callback',
             succeeded: true,
@@ -155,7 +157,7 @@ export async function executeHooksOutsideREPL({
             : json.systemMessage || ''
         const blocked = isSyncHookJSONOutput(json) && json.decision === 'block'
 
-        logForDebugging(`${hookName} [callback] completed successfully`)
+        hookLog(`${hookName} [callback] completed successfully`)
 
         return {
           command: 'callback',
@@ -167,7 +169,7 @@ export async function executeHooksOutsideREPL({
         cleanup?.()
 
         const errorMessage = error instanceof Error ? error.message : String(error)
-        logForDebugging(`${hookName} [callback] failed to run: ${errorMessage}`, { level: 'error' })
+        hookLog(`${hookName} [callback] failed to run: ${errorMessage}`, { level: 'error' })
         return {
           command: 'callback',
           succeeded: false,
@@ -221,7 +223,7 @@ export async function executeHooksOutsideREPL({
         const httpResult = await execHttpHook(hook, hookEvent, jsonInput, signal)
 
         if (httpResult.aborted) {
-          logForDebugging(`${hookName} [${hook.url}] cancelled`)
+          hookLog(`${hookName} [${hook.url}] cancelled`)
           return {
             command: hook.url,
             succeeded: false,
@@ -232,7 +234,7 @@ export async function executeHooksOutsideREPL({
 
         if (httpResult.error || !httpResult.ok) {
           const errMsg = httpResult.error || `HTTP ${httpResult.statusCode} from ${hook.url}`
-          logForDebugging(`${hookName} [${hook.url}] failed: ${errMsg}`, {
+          hookLog(`${hookName} [${hook.url}] failed: ${errMsg}`, {
             level: 'error',
           })
           return {
@@ -251,7 +253,7 @@ export async function executeHooksOutsideREPL({
           throw new Error(httpValidationError)
         }
         if (httpJson && !isAsyncHookJSONOutput(httpJson)) {
-          logForDebugging(`Parsed JSON output from HTTP hook: ${jsonStringify(httpJson)}`, {
+          hookLog(`Parsed JSON output from HTTP hook: ${jsonStringify(httpJson)}`, {
             level: 'verbose',
           })
         }
@@ -283,7 +285,7 @@ export async function executeHooksOutsideREPL({
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error)
-        logForDebugging(`${hookName} [${hook.url}] failed to run: ${errorMessage}`, {
+        hookLog(`${hookName} [${hook.url}] failed to run: ${errorMessage}`, {
           level: 'error',
         })
         return {
@@ -328,7 +330,7 @@ export async function executeHooksOutsideREPL({
       cleanup?.()
 
       if (result.aborted) {
-        logForDebugging(`${hookName} [${hook.command}] cancelled`)
+        hookLog(`${hookName} [${hook.command}] cancelled`)
         return {
           command: hook.command,
           succeeded: false,
@@ -337,7 +339,7 @@ export async function executeHooksOutsideREPL({
         }
       }
 
-      logForDebugging(`${hookName} [${hook.command}] completed with status ${result.status}`)
+      hookLog(`${hookName} [${hook.command}] completed with status ${result.status}`)
 
       // 解析 JSON 以获取要输出的消息。
       const { json, validationError } = parseHookOutput(result.stdout)
@@ -346,7 +348,7 @@ export async function executeHooksOutsideREPL({
         throw new Error(validationError)
       }
       if (json && !isAsyncHookJSONOutput(json)) {
-        logForDebugging(`Parsed JSON output from hook: ${jsonStringify(json)}`, {
+        hookLog(`Parsed JSON output from hook: ${jsonStringify(json)}`, {
           level: 'verbose',
         })
       }
@@ -385,7 +387,7 @@ export async function executeHooksOutsideREPL({
       cleanup?.()
 
       const errorMessage = error instanceof Error ? error.message : String(error)
-      logForDebugging(`${hookName} [${hook.command}] failed to run: ${errorMessage}`, {
+      hookLog(`${hookName} [${hook.command}] failed to run: ${errorMessage}`, {
         level: 'error',
       })
       return {

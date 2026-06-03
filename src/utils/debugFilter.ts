@@ -4,6 +4,7 @@ export type DebugFilter = {
   include: string[]
   exclude: string[]
   isExclusive: boolean
+  minLevel?: string
 }
 
 /**
@@ -28,25 +29,39 @@ export const parseDebugFilter = memoize((filterString?: string): DebugFilter | n
     return null
   }
 
+  // Extract level filter (e.g., "warn+" or "error+")
+  let minLevel: string | undefined
+  const levelPattern = /^(verbose|debug|info|warn|error)\+$/
+  const categoryFilters = filters.filter((f) => {
+    const match = f.match(levelPattern)
+    if (match) {
+      minLevel = match[1]
+      return false
+    }
+    return true
+  })
+
+  // If only a level filter was provided, return early
+  if (categoryFilters.length === 0) {
+    return { include: [], exclude: [], isExclusive: false, minLevel }
+  }
+
   // Check for mixed inclusive/exclusive filters
-  const hasExclusive = filters.some((f) => f.startsWith('!'))
-  const hasInclusive = filters.some((f) => !f.startsWith('!'))
+  const hasExclusive = categoryFilters.some((f) => f.startsWith('!'))
+  const hasInclusive = categoryFilters.some((f) => !f.startsWith('!'))
 
   if (hasExclusive && hasInclusive) {
-    // For now, we'll treat this as an error case and show all messages
-    // Log error using logForDebugging to avoid console.error lint rule
-    // We'll import and use it later when the circular dependency is resolved
-    // For now, just return null silently
     return null
   }
 
   // Clean up filters (remove ! prefix) and normalize
-  const cleanFilters = filters.map((f) => f.replace(/^!/, '').toLowerCase())
+  const cleanFilters = categoryFilters.map((f) => f.replace(/^!/, '').toLowerCase())
 
   return {
     include: hasExclusive ? [] : cleanFilters,
     exclude: hasExclusive ? cleanFilters : [],
     isExclusive: hasExclusive,
+    minLevel,
   }
 })
 

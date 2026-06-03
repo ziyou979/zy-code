@@ -49,7 +49,7 @@ export type UseReplActiveRemoteParams = {
   setToolUseConfirmQueue: React.Dispatch<React.SetStateAction<ToolUseConfirm[]>>
   tools: Tool[]
   setStreamingToolUses: React.Dispatch<React.SetStateAction<StreamingToolUse[]>>
-  setStreamMode: React.Dispatch<React.SetStateAction<SpinnerMode>>
+  setStreamMode: (v: SpinnerMode) => void
   setInProgressToolUseIDs: (f: (prev: Set<string>) => Set<string>) => void
   /** CCR 握手返回的远程斜杠命令列表，用于过滤本地命令 */
   setLocalCommands: React.Dispatch<React.SetStateAction<Command[]>>

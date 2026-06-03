@@ -20,7 +20,7 @@ import { getOriginalCwd, getProjectRoot } from '../../bootstrap/state.js'
 import { TaskOutput } from '../../services/task/TaskOutput.js'
 import { createAttachmentMessage } from '../attachments.js'
 import { getCwd } from '../cwd.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import { logForDiagnosticsNoPII } from '../diagLogs.js'
 import { errorMessage, getErrnoCode } from '../errors.js'
 import { pathExists } from '../file.js'
@@ -44,6 +44,8 @@ import { TOOL_HOOK_EXECUTION_TIMEOUT_MS } from './config.js'
 import { emitHookResponse, startHookProgressInterval } from './hookEvents.js'
 import { maybeSpillHookOutput } from './spillOutput.js'
 import type { ElicitationResponse, HookResult } from './types.js'
+
+const hookLog = createDebugLog('hooks')
 
 function executeInBackground({
   processId,
@@ -132,7 +134,7 @@ function validateHookJson(
   const parsed = jsonParse(jsonString)
   const validation = hookJSONOutputSchema().safeParse(parsed)
   if (validation.success) {
-    logForDebugging('Successfully parsed and validated hook JSON output')
+    hookLog('Successfully parsed and validated hook JSON output')
     return { json: validation.data as any }
   }
   const errors = validation.error.issues
@@ -150,7 +152,7 @@ export function parseHookOutput(stdout: string): {
 } {
   const trimmed = stdout.trim()
   if (!trimmed.startsWith('{')) {
-    logForDebugging('Hook output does not start with {, treating as plain text')
+    hookLog('Hook output does not start with {, treating as plain text')
     return { plainText: stdout }
   }
 
@@ -189,10 +191,10 @@ export function parseHookOutput(stdout: string): {
       null,
       2,
     )}`
-    logForDebugging(errorMessage)
+    hookLog(errorMessage)
     return { plainText: stdout, validationError: errorMessage }
   } catch (e) {
-    logForDebugging(`Failed to parse hook output as JSON: ${e}`)
+    hookLog(`Failed to parse hook output as JSON: ${e}`)
     return { plainText: stdout }
   }
 }
@@ -206,14 +208,14 @@ export function parseHttpHookOutput(body: string): {
   if (trimmed === '') {
     const validation = hookJSONOutputSchema().safeParse({})
     if (validation.success) {
-      logForDebugging('HTTP hook returned empty body, treating as empty JSON object')
+      hookLog('HTTP hook returned empty body, treating as empty JSON object')
       return { json: validation.data as any }
     }
   }
 
   if (!trimmed.startsWith('{')) {
     const validationError = `HTTP hook must return JSON, but got non-JSON response body: ${trimmed.length > 200 ? `${trimmed.slice(0, 200)}\u2026` : trimmed}`
-    logForDebugging(validationError)
+    hookLog(validationError)
     return { validationError }
   }
 
@@ -222,11 +224,11 @@ export function parseHttpHookOutput(body: string): {
     if ('json' in result) {
       return result
     }
-    logForDebugging(result.validationError)
+    hookLog(result.validationError)
     return result
   } catch (e) {
     const validationError = `HTTP hook must return valid JSON, but parsing failed: ${e}`
-    logForDebugging(validationError)
+    hookLog(validationError)
     return { validationError }
   }
 }
@@ -689,7 +691,7 @@ export async function execCommandHook(
   const hookCwd = getCwd()
   const safeCwd = (await pathExists(hookCwd)) ? hookCwd : getOriginalCwd()
   if (safeCwd !== hookCwd) {
-    logForDebugging(`Hooks: cwd ${hookCwd} not found, falling back to original cwd`, {
+    hookLog(`Hooks: cwd ${hookCwd} not found, falling back to original cwd`, {
       level: 'warn',
     })
   }
@@ -761,7 +763,7 @@ export async function execCommandHook(
 
   if ((hook.async || hook.asyncRewake) && !forceSyncExecution) {
     const processId = `async_hook_${child.pid}`
-    logForDebugging(`Hooks: Config-based async hook, backgrounding process ${processId}`)
+    hookLog(`Hooks: Config-based async hook, backgrounding process ${processId}`)
 
     // 在后台化之前写入 stdin，以便 hook 接收到输入。
     // 尾部换行符与同步路径（L1000）一致。如果没有它，
@@ -846,7 +848,7 @@ export async function execCommandHook(
           const validation = promptRequestSchema().safeParse(parsed)
           if (validation.success) {
             processedPromptLines.add(trimmed)
-            logForDebugging(`Hooks: Detected prompt request from hook: ${trimmed}`)
+            hookLog(`Hooks: Detected prompt request from hook: ${trimmed}`)
             // 链式处理以序列化 prompt 响应
             const promptReq = validation.data
             const reqPrompt = requestPrompt
@@ -855,7 +857,7 @@ export async function execCommandHook(
                 const response = await reqPrompt(promptReq)
                 child.stdin.write(`${jsonStringify(response)}\n`, 'utf8')
               } catch (err) {
-                logForDebugging(`Hooks: Prompt request handling failed: ${err}`)
+                hookLog(`Hooks: Prompt request handling failed: ${err}`)
                 // 用户取消或 prompt 失败——关闭 stdin 以防 hook
                 // 进程挂起等待输入
                 child.stdin.destroy()
@@ -879,13 +881,13 @@ export async function execCommandHook(
         return
       }
       initialResponseChecked = true
-      logForDebugging(`Hooks: Checking first line for async: ${firstLine}`)
+      hookLog(`Hooks: Checking first line for async: ${firstLine}`)
       try {
         const parsed = jsonParse(firstLine)
-        logForDebugging(`Hooks: Parsed initial response: ${jsonStringify(parsed)}`)
+        hookLog(`Hooks: Parsed initial response: ${jsonStringify(parsed)}`)
         if (isAsyncHookJSONOutput(parsed) && !forceSyncExecution) {
           const processId = `async_hook_${child.pid}`
-          logForDebugging(`Hooks: Detected async hook, backgrounding process ${processId}`)
+          hookLog(`Hooks: Detected async hook, backgrounding process ${processId}`)
 
           const backgrounded = executeInBackground({
             processId,
@@ -907,14 +909,14 @@ export async function execCommandHook(
             })
           }
         } else if (isAsyncHookJSONOutput(parsed) && forceSyncExecution) {
-          logForDebugging(
+          hookLog(
             `Hooks: Detected async hook but forceSyncExecution is true, waiting for completion`,
           )
         } else {
-          logForDebugging(`Hooks: Initial response is not async, continuing normal processing`)
+          hookLog(`Hooks: Initial response is not async, continuing normal processing`)
         }
       } catch (e) {
-        logForDebugging(`Hooks: Failed to parse initial response as JSON: ${e}`)
+        hookLog(`Hooks: Failed to parse initial response as JSON: ${e}`)
       }
     }
   })
@@ -956,7 +958,7 @@ export async function execCommandHook(
           if (!requestPrompt) {
             reject(err)
           } else {
-            logForDebugging(`Hooks: stdin error during prompt flow (likely process exited): ${err}`)
+            hookLog(`Hooks: stdin error during prompt flow (likely process exited): ${err}`)
           }
         })
         // Explicitly specify UTF-8 encoding to ensure proper handling of Unicode characters
@@ -1035,7 +1037,7 @@ export async function execCommandHook(
     diagExitCode = 1
 
     if (code === 'EPIPE') {
-      logForDebugging('EPIPE error while writing to hook stdin (hook command likely closed early)')
+      hookLog('EPIPE error while writing to hook stdin (hook command likely closed early)')
       const errMsg = 'Hook command closed stdin before hook input was fully written (EPIPE)'
       return {
         stdout: '',

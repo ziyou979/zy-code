@@ -100,7 +100,7 @@ export async function startMCPServer(cwd: string, debug: boolean, verbose: boole
         options: {
           commands: MCP_COMMANDS,
           tools,
-          mainLoopModel: getMainLoopModel(),
+          mainLoopModel: getMainLoopModel()!,
           thinkingConfig: { type: 'disabled' },
           mcpClients: [],
           mcpResources: {},

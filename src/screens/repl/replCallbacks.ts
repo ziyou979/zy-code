@@ -41,7 +41,7 @@ import { createAbortController } from '../../utils/abortController.js'
 import { getMemoryFiles } from '../../utils/agentsMd.js'
 import { isBgSession } from '../../utils/concurrentSessions.js'
 import type { PastedContent } from '../../utils/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { createDebugLog } from '../../utils/debug.js'
 import type { EffortValue } from '../../utils/effort.js'
 import { errorMessage } from '../../utils/errors.js'
 import type { FileHistoryState } from '../../utils/fileHistory.js'
@@ -53,6 +53,8 @@ import { createUserMessage, textForResubmit } from '../../utils/messages.js'
 import { getQuerySourceForREPL } from '../../utils/promptCategory.js'
 import type { QueryGuard } from '../../utils/QueryGuard.js'
 import { getCurrentWorktreeSession } from '../../utils/worktree.js'
+
+const log = createDebugLog('repl')
 
 // ── onAgentSubmit ──
 
@@ -99,7 +101,7 @@ export async function onAgentSubmitImpl(
         ),
         canUseTool: params.canUseTool,
       }).catch((err) => {
-        logForDebugging(`resumeAgentBackground failed: ${errorMessage(err)}`)
+        log(`resumeAgentBackground failed: ${errorMessage(err)}`)
         params.addNotification({
           key: `resume-agent-failed-${task.id}`,
           jsx: React.createElement(
@@ -285,7 +287,7 @@ export interface ExecuteQueuedInputParams {
   ) => ProcessUserInputContext
   messages: MessageType[]
   mainLoopModel: string
-  ideSelection: IDESelection | null
+  ideSelection: IDESelection | undefined
   setUserInputOnProcessing: (v: string | undefined) => void
   setAbortController: React.Dispatch<React.SetStateAction<AbortController | null>>
   onQuery: (
@@ -398,9 +400,9 @@ export async function onInitImpl(params: OnInitParams): Promise<void> {
           `  [${f.type}] ${f.path} (${f.content.length} chars)${f.parent ? ` (included by ${f.parent})` : ''}`,
       )
       .join('\n')
-    logForDebugging(`Loaded ${memoryFiles.length} AGENTS.md/rules files:\n${fileList}`)
+    log(`Loaded ${memoryFiles.length} AGENTS.md/rules files:\n${fileList}`)
   } else {
-    logForDebugging('No AGENTS.md/rules files found')
+    log('No AGENTS.md/rules files found')
   }
   for (const file of memoryFiles) {
     params.replStore.mutable.readFileState.set(file.path, {

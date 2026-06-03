@@ -46,7 +46,10 @@ import {
 } from 'src/services/mcp/config.js'
 import type { AppState } from 'src/state/AppState.js'
 import type { PluginError } from 'src/types/plugin.js'
-import { logForDebugging } from 'src/utils/debug.js'
+import { createDebugLog } from 'src/utils/debug.js'
+
+const mcpLog = createDebugLog('mcp')
+
 import { getAllowedChannels } from '../../bootstrap/state.js'
 import { useNotifications } from '../../context/notifications.js'
 import { useAppState, useAppStateStore, useSetAppState } from '../../state/AppState.js'
@@ -307,7 +310,7 @@ export function useManageMCPConnections(
             const configType = client.config.type ?? 'stdio'
 
             clearServerCache(client.name, client.config).catch(() => {
-              logForDebugging(`Failed to invalidate the server cache: ${client.name}`)
+              mcpLog(`Failed to invalidate the server cache: ${client.name}`)
             })
 
             // TODO: This really isn't great: ideally we'd check appstate as the source of truth
@@ -617,7 +620,7 @@ export function useManageMCPConnections(
                 ])
                 updateServer({
                   ...client,
-                  commands: [...mcpPrompts, ...mcpSkills],
+                  commands: [...mcpPrompts, ...mcpSkills] as Command[],
                 })
                 // MCP skills changed — invalidate skill-search index so
                 // next discovery rebuilds with the new set.
@@ -659,7 +662,7 @@ export function useManageMCPConnections(
                     updateServer({
                       ...client,
                       resources: newResources,
-                      commands: [...mcpPrompts, ...mcpSkills],
+                      commands: [...mcpPrompts, ...mcpSkills] as Command[],
                     })
                     // MCP skills changed — invalidate skill-search index so
                     // next discovery rebuilds with the new set.

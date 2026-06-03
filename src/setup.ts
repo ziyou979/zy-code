@@ -243,7 +243,9 @@ export async function setup(
       } else {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.error(
-          chalk.yellow(tSync('setup.tmuxSessionCreateFailed', { error: tmuxResult.error })),
+          chalk.yellow(
+            tSync('setup.tmuxSessionCreateFailed', { error: tmuxResult.error ?? 'unknown' }),
+          ),
         )
       }
     }

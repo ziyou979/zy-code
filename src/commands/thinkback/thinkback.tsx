@@ -4,6 +4,7 @@ import { execa } from 'execa'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import type { CommandResultDisplay } from '../../commands.js'
+import type { LocalJSXCommandOnDone } from '../../types/command.js'
 import { Select } from '../../components/CustomSelect/select.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { Spinner } from '../../components/Spinner.js'
@@ -296,7 +297,17 @@ function ThinkbackInstaller({
 }
 type MenuAction = 'play' | 'edit' | 'fix' | 'regenerate'
 type GenerativeAction = Exclude<MenuAction, 'play'>
-function ThinkbackMenu({ onDone, onAction, skillDir, hasGenerated }) {
+function ThinkbackMenu({
+  onDone,
+  onAction,
+  skillDir,
+  hasGenerated,
+}: {
+  onDone: LocalJSXCommandOnDone
+  onAction: (action: GenerativeAction) => void
+  skillDir: string
+  hasGenerated: boolean
+}) {
   const [hasSelected, setHasSelected] = useState(false)
   const options = hasGenerated
     ? [
@@ -328,7 +339,7 @@ function ThinkbackMenu({ onDone, onAction, skillDir, hasGenerated }) {
           description: tSync('thinkback.generateAnimation'),
         },
       ]
-  const handleSelect = function handleSelect(value) {
+  const handleSelect = function handleSelect(value: MenuAction) {
     setHasSelected(true)
     if (value === 'play') {
       playAnimation(skillDir).then(() => {
@@ -375,15 +386,15 @@ const FIX_PROMPT =
   'Use the Skill tool to invoke the "thinkback" skill with mode=fix to fix validation or rendering errors in my existing ZY Code year in review animation. Run the validator, identify errors, and fix them. When the animation is ready, tell the user to run /think-back again to play it.'
 const REGENERATE_PROMPT =
   'Use the Skill tool to invoke the "thinkback" skill with mode=regenerate to create a completely new ZY Code year in review animation from scratch. Delete the existing animation and start fresh. When the animation is ready, tell the user to run /think-back again to play it.'
-function ThinkbackFlow({ onDone }) {
+function ThinkbackFlow({ onDone }: { onDone: LocalJSXCommandOnDone }) {
   const [installComplete, setInstallComplete] = useState(false)
-  const [installError, setInstallError] = useState(null)
-  const [skillDir, setSkillDir] = useState(null)
-  const [hasGenerated, setHasGenerated] = useState(null)
+  const [installError, setInstallError] = useState<string | null>(null)
+  const [skillDir, setSkillDir] = useState<string | null>(null)
+  const [hasGenerated, setHasGenerated] = useState<boolean | null>(null)
   const handleReady = function handleReady() {
     setInstallComplete(true)
   }
-  const handleError = (message) => {
+  const handleError = (message: string) => {
     setInstallError(message)
     onDone(tSync('thinkback.errorWithThinkback', { message }), {
       display: 'system',
@@ -411,8 +422,8 @@ function ThinkbackFlow({ onDone }) {
       setHasGenerated(exists)
     })
   }, [skillDir])
-  const handleAction = function handleAction(action) {
-    const prompts = {
+  const handleAction = function handleAction(action: GenerativeAction) {
+    const prompts: Record<GenerativeAction, string> = {
       edit: EDIT_PROMPT,
       fix: FIX_PROMPT,
       regenerate: REGENERATE_PROMPT,

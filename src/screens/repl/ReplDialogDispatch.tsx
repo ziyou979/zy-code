@@ -57,7 +57,7 @@ export type ReplDialogDispatchProps = {
   setInputValue: (value: string) => void
   clearBashToolsTracking: () => void
   onSubmitRef: React.RefObject<(input: string, helpers: PromptInputHelpers) => void>
-  ideInstallationStatus: IDEExtensionInstallationStatus | undefined
+  ideInstallationStatus: IDEExtensionInstallationStatus | null
   setShowIdeOnboarding: (v: boolean) => void
   mainLoopModel: string
   setShowEffortCallout: (next: boolean) => void

@@ -38,7 +38,7 @@ export function MethodStep() {
         <Select
           key="method-select"
           options={methodOptions}
-          onChange={(value) => {
+          onChange={(value: string) => {
             const method = value as 'generate' | 'manual'
             updateWizardData({
               method,

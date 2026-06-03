@@ -340,12 +340,12 @@ export function getSnippetForTwoFileDiff(fileAContents: string, fileBContents: s
   }
 
   const full = (patch as any).hunks
-    .map((_) => ({
+    .map((_: any) => ({
       startLine: _.oldStart,
       content: _.lines
         // Filter out deleted lines AND diff metadata lines
-        .filter((_) => !_.startsWith('-') && !_.startsWith('\\'))
-        .map((_) => _.slice(1))
+        .filter((_: string) => !_.startsWith('-') && !_.startsWith('\\'))
+        .map((_: string) => _.slice(1))
         .join('\n'),
     }))
     .map(addLineNumbers)

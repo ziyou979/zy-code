@@ -18,7 +18,15 @@ import {
 import type { PermissionUpdateDestination } from '../../utils/permissions/PermissionUpdateSchema.js'
 import { addDirHelpMessage, validateDirectoryForWorkspace } from './validation.js'
 
-function AddDirError({ message, args, onDone }) {
+function AddDirError({
+  message,
+  args,
+  onDone,
+}: {
+  message: string
+  args: string
+  onDone: () => void
+}) {
   useEffect(() => {
     const timer = setTimeout(onDone, 0)
     return () => clearTimeout(timer)

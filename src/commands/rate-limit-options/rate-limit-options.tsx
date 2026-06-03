@@ -25,7 +25,7 @@ type RateLimitOptionsMenuProps = {
   context: ToolUseContext & LocalJSXCommandContext
 }
 function RateLimitOptionsMenu({ onDone, context }: RateLimitOptionsMenuProps) {
-  const [subCommandJSX, setSubCommandJSX] = useState(null)
+  const [subCommandJSX, setSubCommandJSX] = useState<React.ReactNode>(null)
   const _zyAiLimits = useZyAiLimits()
   const _rateLimitTier = getRateLimitTier()
   const _hasExtraUsageEnabled = getOauthAccountInfo()?.hasExtraUsageEnabled === true
@@ -55,7 +55,7 @@ function RateLimitOptionsMenu({ onDone, context }: RateLimitOptionsMenuProps) {
       display: 'skip',
     })
   }
-  const handleSelect = function handleSelect(value) {
+  const handleSelect = function handleSelect(value: RateLimitOptionsMenuOptionType) {
     if (value === 'upgrade') {
       logEvent('zy_rate_limit_options_menu_select_upgrade', {})
       upgradeCall(onDone, context).then((jsx) => {

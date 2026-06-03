@@ -67,6 +67,9 @@ import type { TaskBudgetParam } from './apiHelpers.js'
 import { getLLMAdapter } from './client.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
+const apiLog = createDebugLog('api')
+const streamLog = createDebugLog('api:stream')
+
 const autoModeStateModule = true
   ? (require('../../utils/permissions/autoModeState.js') as typeof import('../../utils/permissions/autoModeState.js'))
   : null
@@ -101,7 +104,7 @@ import {
 import { getAgentContext } from 'src/utils/agentContext.js'
 import { getToolSearchBetaHeader, shouldIncludeExperimentalBetas } from 'src/utils/betas.js'
 import { getMaxThinkingTokensForModel } from 'src/utils/context.js'
-import { logForDebugging } from 'src/utils/debug.js'
+import { createDebugLog, logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
 import { type EffortValue } from 'src/utils/effort.js'
 import { headlessProfilerCheckpoint } from 'src/utils/headlessProfiler.js'
@@ -240,7 +243,7 @@ export async function queryModelWithoutStreaming({
 }): Promise<AssistantMessage> {
   // 存储助手消息但继续消费生成器以确保
   // logAPISuccessAndDuration 被调用（在所有 yield 之后发生）
-  let assistantMessage: AssistantMessage
+  let assistantMessage: AssistantMessage | undefined
   for await (const message of withStreamingVCR(messages, async function* () {
     yield* queryModel(messages, systemPrompt, thinkingConfig, tools, signal, options)
   })) {
@@ -1096,6 +1099,10 @@ async function* queryModel(
         const params = paramsFromContext(context)
         captureAPIRequest(params as unknown as CreateParams, options.querySource) // 捕获用于 bug 报告
 
+        apiLog(
+          `request start model=${options.model} messages=${messagesForAPI.length} tools=${filteredTools.length} attempt=${attempt}`,
+        )
+
         maxOutputTokens = (params as { max_tokens: number }).max_tokens
 
         // 在 fetch 发出前立即触发。下方的 .withResponse()
@@ -1144,7 +1151,7 @@ async function* queryModel(
 
       // 产出 API 错误消息（流具有 'controller' 属性，而错误消息没有）
       if (!('controller' in e.value)) {
-        yield e.value
+        yield e.value as SystemAPIErrorMessage
       }
     } while (!e.done)
     stream = e.value as AsyncIterable<StreamEvent>
@@ -1190,7 +1197,7 @@ async function* queryModel(
       // 始终启用流式停滞检测：显式看门狗模式使用配置超时，否则使用 5 分钟兜底
       streamIdleWarningTimer = setTimeout(
         (warnMs) => {
-          logForDebugging(`Streaming idle warning: no chunks received for ${warnMs / 1000}s`, {
+          streamLog(`idle warning: no chunks received for ${warnMs / 1000}s`, {
             level: 'warn',
           })
           logForDiagnosticsNoPII('warn', 'cli_streaming_idle_warning')
@@ -1201,8 +1208,8 @@ async function* queryModel(
       streamIdleTimer = setTimeout(() => {
         streamIdleAborted = true
         streamWatchdogFiredAt = performance.now()
-        logForDebugging(
-          `Streaming idle timeout: no chunks received for ${STREAM_IDLE_TIMEOUT_MS / 1000}s, aborting stream`,
+        streamLog(
+          `idle timeout: no chunks received for ${STREAM_IDLE_TIMEOUT_MS / 1000}s, aborting stream`,
           { level: 'error' },
         )
         logForDiagnosticsNoPII('error', 'cli_streaming_idle_timeout')
@@ -1236,8 +1243,8 @@ async function* queryModel(
           if (timeSinceLastEvent > STALL_THRESHOLD_MS) {
             stallCount++
             totalStallTime += timeSinceLastEvent
-            logForDebugging(
-              `Streaming stall detected: ${(timeSinceLastEvent / 1000).toFixed(1)}s gap between events (stall #${stallCount})`,
+            streamLog(
+              `stall detected: ${(timeSinceLastEvent / 1000).toFixed(1)}s gap between events (stall #${stallCount})`,
               { level: 'warn' },
             )
             logEvent('zy_streaming_stall', {
@@ -1254,7 +1261,7 @@ async function* queryModel(
         lastEventTime = now
 
         if (isFirstChunk) {
-          logForDebugging('Stream started - received first chunk')
+          streamLog(`first chunk ${Date.now() - start}ms`)
           queryCheckpoint('query_first_chunk_received')
           if (!options.agentId) {
             headlessProfilerCheckpoint('first_chunk')
@@ -1748,9 +1755,12 @@ async function* queryModel(
         } else {
           // SDK 抛出了 APIUserAbortError 但我们的信号未被中止
           // 这意味着是 SDK 内部超时
-          logForDebugging(`Streaming timeout (SDK abort): ${streamingError.message}`, {
-            level: 'error',
-          })
+          logForDebugging(
+            `Streaming timeout (SDK abort): ${streamingError instanceof Error ? streamingError.message : String(streamingError)}`,
+            {
+              level: 'error',
+            },
+          )
           // 为超时抛出更具体的错误
           throw new LLMConnectionError('Request timed out')
         }
@@ -2072,10 +2082,12 @@ async function* queryModel(
     // 所以必须在这里跟踪才能在 yield 处被 .return() 捕获。
     if (fallbackMessage) {
       const fallbackUsage = fallbackMessage.message.usage
-      usage = updateUsage(EMPTY_USAGE, fallbackUsage)
-      stopReason = fallbackMessage.message.stopReason
-      const fallbackCost = calculateUSDCost(resolvedModel, fallbackUsage)
-      costUSD += addToTotalSessionCost(fallbackCost, fallbackUsage, options.model)
+      if (fallbackUsage) {
+        usage = updateUsage(EMPTY_USAGE, fallbackUsage)
+        const fallbackCost = calculateUSDCost(resolvedModel, fallbackUsage)
+        costUSD += addToTotalSessionCost(fallbackCost, fallbackUsage, options.model)
+      }
+      stopReason = fallbackMessage.message.stopReason ?? null
     }
   }
 
@@ -2102,6 +2114,12 @@ async function* queryModel(
   //（上下文窗口限制内的整个会话）。
   const logMessageCount = messagesForAPI.length
   const logMessageTokens = tokenCountFromLastAPIResponse(messagesForAPI)
+
+  const totalDurationMs = Date.now() - startIncludingRetries
+  apiLog(
+    `request completed ${totalDurationMs}ms model=${options.model} tokens=in:${usage.inputTokens ?? 0}/out:${usage.outputTokens ?? 0}/cache:${usage.cacheReadInputTokens ?? 0} stop=${stopReason ?? 'unknown'} ttft=${ttftMs}ms`,
+  )
+
   void options.getToolPermissionContext().then((permissionContext) => {
     logAPISuccessAndDuration({
       model:

@@ -389,6 +389,8 @@ export type Tool<
   }
   isOpenWorld?(input: z.infer<Input>): boolean
   requiresUserInteraction?(): boolean
+  /** 折叠视图中保留此工具最后一次调用为独立行（不折叠进 "N more" 计数）*/
+  briefStandalone?: boolean
   isMcp?: boolean
   isLsp?: boolean
   /**

@@ -1,4 +1,7 @@
-import { logForDebugging } from 'src/utils/debug.js'
+import { createDebugLog } from 'src/utils/debug.js'
+
+const mcpLog = createDebugLog('mcp')
+
 import { isInternalBuild } from 'src/utils/envUtils.js'
 import { z } from 'zod/v4'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -53,7 +56,7 @@ export function notifyVscodeFileUpdated(
     })
     .catch((error: Error) => {
       // Do not throw if the notification failed
-      logForDebugging(`[VSCode] Failed to send file_updated notification: ${error.message}`)
+      mcpLog(`[VSCode] Failed to send file_updated notification: ${error.message}`)
     })
 }
 

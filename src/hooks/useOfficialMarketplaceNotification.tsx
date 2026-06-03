@@ -12,7 +12,7 @@ export function useOfficialMarketplaceNotification() {
 }
 async function _temp() {
   const result = await checkAndInstallOfficialMarketplace()
-  const notifs = []
+  const notifs: import('../context/notifications.js').Notification[] = []
   if (result.configSaveFailed) {
     logForDebugging('Showing marketplace config save failure notification')
     notifs.push({

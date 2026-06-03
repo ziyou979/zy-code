@@ -16,7 +16,7 @@ export function getRelativeMemoryPath(path: string): string {
   }
   return relativeToHome || relativeToCwd || path
 }
-export function MemoryUpdateNotification({ memoryPath }) {
+export function MemoryUpdateNotification({ memoryPath }: { memoryPath: string }) {
   const displayPath = getRelativeMemoryPath(memoryPath)
   return (
     <Box flexDirection="column" flexGrow={1}>

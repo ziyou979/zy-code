@@ -76,7 +76,7 @@ export function SelectMatcherMode({
         <Box flexDirection="column">
           <Select
             options={matcherOptions}
-            onChange={(value) => {
+            onChange={(value: string) => {
               onSelect(value)
             }}
             onCancel={onCancel}

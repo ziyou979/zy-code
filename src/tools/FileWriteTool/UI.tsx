@@ -38,7 +38,15 @@ export function countLines(content: string): number {
   const parts = content.split(EOL)
   return content.endsWith(EOL) ? parts.length - 1 : parts.length
 }
-function FileWriteToolCreatedMessage({ filePath, content, verbose }) {
+function FileWriteToolCreatedMessage({
+  filePath,
+  content,
+  verbose,
+}: {
+  filePath: string
+  content: string
+  verbose: boolean
+}) {
   const { columns } = useTerminalSize()
   const contentWithFallback = content || tSync('fileWrite.noContent')
   const numLines = countLines(content)
@@ -176,7 +184,17 @@ type RejectionDiffData =
   | {
       type: 'error'
     }
-function WriteRejectionDiff({ filePath, content, style, verbose }) {
+function WriteRejectionDiff({
+  filePath,
+  content,
+  style,
+  verbose,
+}: {
+  filePath: string
+  content: string
+  style?: 'condensed'
+  verbose: boolean
+}) {
   const [dataPromise] = useState(() => loadRejectionDiff(filePath, content))
   const firstLine = content.split('\n')[0] ?? null
   const createFallback = (
@@ -203,7 +221,21 @@ function WriteRejectionDiff({ filePath, content, style, verbose }) {
     </Suspense>
   )
 }
-function WriteRejectionBody({ promise, filePath, firstLine, createFallback, style, verbose }) {
+function WriteRejectionBody({
+  promise,
+  filePath,
+  firstLine,
+  createFallback,
+  style,
+  verbose,
+}: {
+  promise: Promise<RejectionDiffData>
+  filePath: string
+  firstLine: string | null
+  createFallback: React.ReactNode
+  style?: 'condensed'
+  verbose: boolean
+}) {
   const data: any = use(promise)
   if (data.type === 'create') {
     return createFallback

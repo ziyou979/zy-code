@@ -1166,7 +1166,7 @@ function PromptInput({
     },
     [],
   )
-  let onSubmit
+  let onSubmit!: (inputParam: string, isSubmittingSlashCommand?: boolean) => Promise<void>
   onSubmit = useCallback(
     async (inputParam: string, isSubmittingSlashCommand = false) => {
       inputParam = inputParam.trimEnd()
@@ -1499,7 +1499,7 @@ function PromptInput({
   )
 
   // Function to get the queued command for editing. Returns true if commands were popped.
-  let popAllCommandsFromQueue
+  let popAllCommandsFromQueue!: () => boolean
   popAllCommandsFromQueue = useCallback((): boolean => {
     const result = popAllEditable(input, cursorOffset)
     if (!result) {

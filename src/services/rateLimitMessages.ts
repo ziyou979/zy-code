@@ -161,9 +161,9 @@ function getLimitReachedText(limits: ZyAILimits, model: string): string {
     if (resetsAt && limits.overageResetsAt) {
       // Both timestamps present - use the earlier one
       if (resetsAt < limits.overageResetsAt) {
-        overageResetMessage = ` · ${tSync('rateLimit.resetsAt', { time: resetTime })}`
+        overageResetMessage = ` · ${tSync('rateLimit.resetsAt', { time: resetTime! })}`
       } else {
-        overageResetMessage = ` · ${tSync('rateLimit.resetsAt', { time: overageResetTime })}`
+        overageResetMessage = ` · ${tSync('rateLimit.resetsAt', { time: overageResetTime! })}`
       }
     } else if (resetTime) {
       overageResetMessage = ` · ${tSync('rateLimit.resetsAt', { time: resetTime })}`

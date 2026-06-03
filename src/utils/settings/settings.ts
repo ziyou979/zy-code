@@ -895,12 +895,7 @@ export function getAutoModeConfig():
     }
   }
 
-  if (
-    allow.length > 0 ||
-    soft_deny.length > 0 ||
-    hard_deny.length > 0 ||
-    environment.length > 0
-  ) {
+  if (allow.length > 0 || soft_deny.length > 0 || hard_deny.length > 0 || environment.length > 0) {
     return {
       ...(allow.length > 0 && { allow }),
       ...(soft_deny.length > 0 && { soft_deny }),

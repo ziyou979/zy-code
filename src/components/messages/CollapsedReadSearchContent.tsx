@@ -54,7 +54,7 @@ function VerboseToolUse({
 }: Props) {
   const bg = useSelectedMessageBg()
   let boxElement
-  let earlyReturn
+  let earlyReturn: React.ReactNode | symbol
   earlyReturn = Symbol.for('react.early_return_sentinel')
   const tool =
     findToolByName(tools, content.name) ?? findToolByName(getReplPrimitiveTools(), content.name)
@@ -106,7 +106,7 @@ function VerboseToolUse({
     )
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   return boxElement
 }
@@ -133,7 +133,8 @@ export function CollapsedReadSearchContent({
   const [theme] = useTheme()
   const toolUseIds = getToolUseIdsFromCollapsedGroup(message)
   const anyError = toolUseIds.some((id) => lookups.erroredToolUseIDs.has(id))
-  const hasMemoryOps = memorySearchCount > 0 || memoryReadCount > 0 || memoryWriteCount > 0
+  const hasMemoryOps =
+    (memorySearchCount ?? 0) > 0 || (memoryReadCount ?? 0) > 0 || (memoryWriteCount ?? 0) > 0
   const hasTeamMemoryOps = feature('TEAMMEM')
     ? teamMemCollapsed!.checkHasTeamMemOps(message)
     : false
@@ -146,9 +147,9 @@ export function CollapsedReadSearchContent({
   const maxListCountRef = useRef(0)
   const maxMcpCountRef = useRef(0)
   const maxBashCountRef = useRef(0)
-  maxReadCountRef.current = Math.max(maxReadCountRef.current, rawReadCount)
-  maxSearchCountRef.current = Math.max(maxSearchCountRef.current, rawSearchCount)
-  maxListCountRef.current = Math.max(maxListCountRef.current, rawListCount)
+  maxReadCountRef.current = Math.max(maxReadCountRef.current, rawReadCount ?? 0)
+  maxSearchCountRef.current = Math.max(maxSearchCountRef.current, rawSearchCount ?? 0)
+  maxListCountRef.current = Math.max(maxListCountRef.current, rawListCount ?? 0)
   maxMcpCountRef.current = Math.max(maxMcpCountRef.current, message.mcpCallCount ?? 0)
   maxBashCountRef.current = Math.max(maxBashCountRef.current, message.bashCount ?? 0)
   const readCount = maxReadCountRef.current
@@ -166,7 +167,7 @@ export function CollapsedReadSearchContent({
     searchCount > 0 ||
     readCount > 0 ||
     listCount > 0 ||
-    replCount > 0 ||
+    (replCount ?? 0) > 0 ||
     mcpCallCount > 0 ||
     bashCount > 0 ||
     gitOpBashCount > 0
@@ -208,7 +209,7 @@ export function CollapsedReadSearchContent({
   // 在 verbose 模式下，渲染每个工具使用及其 1 行结果摘要
   if (verbose) {
     const toolUses: AssistantMessage[] = []
-    for (const msg of groupMessages) {
+    for (const msg of groupMessages ?? []) {
       if (msg.type === 'assistant') {
         toolUses.push(msg)
       } else if (msg.type === 'grouped_tool_use') {
@@ -429,10 +430,10 @@ export function CollapsedReadSearchContent({
       </Text>,
     )
   }
-  if (replCount > 0) {
+  if ((replCount ?? 0) > 0) {
     const replKey = isActiveGroup ? 'summary.repl.active' : 'summary.repl.done'
     const replUnit = tSync(replCount === 1 ? 'summary.repl.time_one' : 'summary.repl.time_other', {
-      count: replCount,
+      count: replCount ?? 0,
     })
     if (nonMemParts.length > 0) {
       nonMemParts.push(<Text key="comma-repl">, </Text>)
@@ -440,7 +441,7 @@ export function CollapsedReadSearchContent({
     nonMemParts.push(
       <Text key="repl">
         {tSync(replKey, {
-          count: replCount,
+          count: replCount ?? 0,
           unit: replUnit,
         })}
       </Text>,
@@ -500,13 +501,13 @@ export function CollapsedReadSearchContent({
   // 构建 memory 部分（auto-memory）——在 nonMemParts 之后渲染
   const hasPrecedingNonMem = nonMemParts.length > 0
   const memParts: React.ReactNode[] = []
-  if (memoryReadCount > 0) {
+  if ((memoryReadCount ?? 0) > 0) {
     const isFirst_5 = !hasPrecedingNonMem && memParts.length === 0
     const phase = isActiveGroup ? 'active' : 'done'
     const position = isFirst_5 ? 'first' : 'sub'
     const mrKey = `summary.memoryRead.${phase}.${position}`
     const mrUnit = tSync(memoryReadCount === 1 ? 'summary.memory_one' : 'summary.memory_other', {
-      count: memoryReadCount,
+      count: memoryReadCount ?? 0,
     })
     if (!isFirst_5) {
       memParts.push(<Text key="comma-mr">, </Text>)
@@ -514,13 +515,13 @@ export function CollapsedReadSearchContent({
     memParts.push(
       <Text key="mem-read">
         {tSync(mrKey, {
-          count: memoryReadCount,
+          count: memoryReadCount ?? 0,
           unit: mrUnit,
         })}
       </Text>,
     )
   }
-  if (memorySearchCount > 0) {
+  if ((memorySearchCount ?? 0) > 0) {
     const isFirst_6 = !hasPrecedingNonMem && memParts.length === 0
     const phase = isActiveGroup ? 'active' : 'done'
     const position = isFirst_6 ? 'first' : 'sub'
@@ -530,13 +531,13 @@ export function CollapsedReadSearchContent({
     }
     memParts.push(<Text key="mem-search">{tSync(msKey)}</Text>)
   }
-  if (memoryWriteCount > 0) {
+  if ((memoryWriteCount ?? 0) > 0) {
     const isFirst_7 = !hasPrecedingNonMem && memParts.length === 0
     const phase = isActiveGroup ? 'active' : 'done'
     const position = isFirst_7 ? 'first' : 'sub'
     const mwKey = `summary.memoryWrite.${phase}.${position}`
     const mwUnit = tSync(memoryWriteCount === 1 ? 'summary.memory_one' : 'summary.memory_other', {
-      count: memoryWriteCount,
+      count: memoryWriteCount ?? 0,
     })
     if (!isFirst_7) {
       memParts.push(<Text key="comma-mw">, </Text>)
@@ -544,7 +545,7 @@ export function CollapsedReadSearchContent({
     memParts.push(
       <Text key="mem-write">
         {tSync(mwKey, {
-          count: memoryWriteCount,
+          count: memoryWriteCount ?? 0,
           unit: mwUnit,
         })}
       </Text>,

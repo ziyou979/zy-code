@@ -652,7 +652,7 @@ export function DiscoverPlugins({
         <Box marginBottom={1}>
           <Text bold>Discover plugins</Text>
         </Box>
-        <EmptyStateMessage reason={emptyReason} />
+        <EmptyStateMessage reason={emptyReason!} />
         <Box marginTop={1}>
           <Text dimColor italic>
             Esc to go back
@@ -829,7 +829,7 @@ function DiscoverPluginsKeyHint({ hasSelection, canToggle }: any) {
 /**
  * Context-aware empty state message for the Discover screen
  */
-function EmptyStateMessage({ reason }) {
+function EmptyStateMessage({ reason }: { reason: string }) {
   switch (reason) {
     case 'git-not-installed':
       return (

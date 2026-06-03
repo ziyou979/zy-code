@@ -12,7 +12,13 @@ const TITLE_ANIMATION_INTERVAL_MS = 960
  * entire REPL tree. Before extraction, the tick was ~1 REPL render/sec for
  * the duration of every turn, dragging PromptInput and friends along.
  */
-export function AnimatedTerminalTitle({ isAnimating, title, disabled, noPrefix }) {
+type Props = {
+  isAnimating: boolean
+  title: string
+  disabled?: boolean
+  noPrefix?: boolean
+}
+export function AnimatedTerminalTitle({ isAnimating, title, disabled, noPrefix }: Props) {
   const terminalFocused = useTerminalFocus()
   const [frame, setFrame] = useState(0)
   useEffect(() => {

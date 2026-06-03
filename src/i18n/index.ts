@@ -54,8 +54,7 @@ function getSyncMessages(): Record<string, string> {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       _syncMessages = require('./locales/en.js').en
     } else {
-      const loader = localeLoaders[lang]
-      if (loader) {
+      if (lang in localeLoaders) {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const localeModule = require(`./locales/${lang}.js`)
         _syncMessages = lang === 'zh-CN' ? localeModule.zhCN : localeModule[lang]
@@ -68,7 +67,7 @@ function getSyncMessages(): Record<string, string> {
     _syncMessages = {}
   }
   _syncMessagesLang = lang
-  return _syncMessages
+  return _syncMessages ?? {}
 }
 
 /**

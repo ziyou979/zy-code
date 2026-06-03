@@ -5,5 +5,5 @@ import { getAPIProvider } from '../../services/model/providers.js'
 // use the default model. Must be provider-aware so Bedrock/Vertex/Foundry customers get
 // the correct model ID.
 export function getHardcodedTeammateModelFallback(): string {
-  return QWEN_3_6_PLUS_CONFIG[getAPIProvider()]
+  return QWEN_3_6_PLUS_CONFIG.config[getAPIProvider()]
 }

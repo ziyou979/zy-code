@@ -6,7 +6,7 @@ import type { ToolUseContext } from '../../Tool.js'
 import type { Message } from '../../types/message.js'
 import { createAttachmentMessage } from '../attachments.js'
 import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import { errorMessage } from '../errors.js'
 import type { HookResult } from '../hooks.js'
 import { safeParseJSON } from '../json.js'
@@ -14,6 +14,8 @@ import { createUserMessage, extractTextContent } from '../messages.js'
 import type { PromptHook } from '../settings/types.js'
 import { asSystemPrompt } from '../systemPromptType.js'
 import { addArgumentsToPrompt, hookResponseSchema } from './hookHelpers.js'
+
+const hookLog = createDebugLog('hooks')
 
 /**
  * 使用 LLM 执行基于 prompt 的 hook
@@ -33,7 +35,7 @@ export async function execPromptHook(
   try {
     // 将 $ARGUMENTS 替换为 JSON 输入
     const processedPrompt = addArgumentsToPrompt(hook.prompt, jsonInput)
-    logForDebugging(`Hooks: Processing prompt hook with prompt: ${processedPrompt}`)
+    hookLog(`Hooks: Processing prompt hook with prompt: ${processedPrompt}`)
 
     // 直接创建用户消息 - 无需使用 processUserInput，
     // 否则会触发 UserPromptSubmit hooks 导致无限递归
@@ -45,7 +47,7 @@ export async function execPromptHook(
     const messagesToQuery =
       messages && messages.length > 0 ? [...messages, userMessage] : [userMessage]
 
-    logForDebugging(`Hooks: Querying model with ${messagesToQuery.length} messages`)
+    hookLog(`Hooks: Querying model with ${messagesToQuery.length} messages`)
 
     // 使用 Haiku 模型进行查询
     const hookTimeoutMs = hook.timeout ? hook.timeout * 1000 : 30000
@@ -73,7 +75,7 @@ Your response must be a JSON object matching one of the following schemas:
             const appState = toolUseContext.getAppState()
             return appState.toolPermissionContext
           },
-          model: hook.model ?? getDefaultCompactModel(),
+          model: hook.model ?? getDefaultCompactModel()!,
           toolChoice: undefined,
           isNonInteractiveSession: true,
           hasAppendSystemPrompt: false,
@@ -106,11 +108,11 @@ Your response must be a JSON object matching one of the following schemas:
       toolUseContext.setResponseLength((length) => length + content.length)
 
       const fullResponse = content.trim()
-      logForDebugging(`Hooks: Model response: ${fullResponse}`)
+      hookLog(`Hooks: Model response: ${fullResponse}`)
 
       const json = safeParseJSON(fullResponse)
       if (!json) {
-        logForDebugging(`Hooks: error parsing response as JSON: ${fullResponse}`)
+        hookLog(`Hooks: error parsing response as JSON: ${fullResponse}`)
         return {
           hook,
           outcome: 'non_blocking_error',
@@ -128,7 +130,7 @@ Your response must be a JSON object matching one of the following schemas:
 
       const parsed = hookResponseSchema().safeParse(json)
       if (!parsed.success) {
-        logForDebugging(
+        hookLog(
           `Hooks: model response does not conform to expected schema: ${parsed.error.message}`,
         )
         return {
@@ -148,7 +150,7 @@ Your response must be a JSON object matching one of the following schemas:
 
       // 条件未满足
       if (!parsed.data.ok) {
-        logForDebugging(`Hooks: Prompt hook condition was not met: ${parsed.data.reason}`)
+        hookLog(`Hooks: Prompt hook condition was not met: ${parsed.data.reason}`)
         return {
           hook,
           outcome: 'blocking',
@@ -162,7 +164,7 @@ Your response must be a JSON object matching one of the following schemas:
       }
 
       // 条件已满足
-      logForDebugging(`Hooks: Prompt hook condition was met`)
+      hookLog(`Hooks: Prompt hook condition was met`)
       return {
         hook,
         outcome: 'success',
@@ -187,7 +189,7 @@ Your response must be a JSON object matching one of the following schemas:
     }
   } catch (error) {
     const errorMsg = errorMessage(error)
-    logForDebugging(`Hooks: Prompt hook error: ${errorMsg}`)
+    hookLog(`Hooks: Prompt hook error: ${errorMsg}`)
     return {
       hook,
       outcome: 'non_blocking_error',

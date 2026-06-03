@@ -58,7 +58,7 @@ function IDEScreen({
       }
     }
   }
-  const ideCounts = availableIDEs.reduce((acc, ide) => {
+  const ideCounts = availableIDEs.reduce<Record<string, number>>((acc, ide) => {
     acc[ide.name] = (acc[ide.name] || 0) + 1
     return acc
   }, {})
@@ -123,7 +123,7 @@ function IDEScreen({
               defaultValue={selectedValue}
               defaultFocusValue={selectedValue}
               options={options}
-              onChange={(selectedValue) => {
+              onChange={(selectedValue: string) => {
                 setSelectedValue(selectedValue)
                 handleSelectIDE(selectedValue)
               }}
@@ -180,7 +180,7 @@ type IDEOpenSelectionProps = {
 function IDEOpenSelection({ availableIDEs, onSelectIDE, onDone }: IDEOpenSelectionProps) {
   const defaultPort = availableIDEs[0]?.port?.toString() ?? ''
   const [selectedValue, setSelectedValue] = useState(defaultPort)
-  const handleSelectIDE = (value) => {
+  const handleSelectIDE = (value: string) => {
     const selectedIDE = availableIDEs.find((ide) => ide.port === parseInt(value, 10))
     onSelectIDE(selectedIDE)
   }
@@ -200,7 +200,7 @@ function IDEOpenSelection({ availableIDEs, onSelectIDE, onDone }: IDEOpenSelecti
           defaultValue={selectedValue}
           defaultFocusValue={selectedValue}
           options={options}
-          onChange={(selectedValue) => {
+          onChange={(selectedValue: string) => {
             setSelectedValue(selectedValue)
             handleSelectIDE(selectedValue)
           }}
@@ -211,10 +211,10 @@ function IDEOpenSelection({ availableIDEs, onSelectIDE, onDone }: IDEOpenSelecti
 }
 function RunningIDESelector({ runningIDEs, onSelectIDE, onDone }: any) {
   const [selectedValue, setSelectedValue] = useState(runningIDEs[0] ?? '')
-  const handleSelectIDE = (value) => {
+  const handleSelectIDE = (value: string) => {
     onSelectIDE(value as any)
   }
-  const options = runningIDEs.map((ide) => ({
+  const options = runningIDEs.map((ide: string) => ({
     label: toIDEDisplayName(ide),
     value: ide,
   }))
@@ -229,7 +229,7 @@ function RunningIDESelector({ runningIDEs, onSelectIDE, onDone }: any) {
         <Select
           defaultFocusValue={selectedValue}
           options={options}
-          onChange={(value_0) => {
+          onChange={(value_0: string) => {
             setSelectedValue(value_0)
             handleSelectIDE(value_0)
           }}

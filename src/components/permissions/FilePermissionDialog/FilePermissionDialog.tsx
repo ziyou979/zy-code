@@ -211,7 +211,7 @@ export function FilePermissionDialog<T extends ToolInput = ToolInput>({
           <Select
             options={options}
             inlineDescriptions
-            onChange={(value) => {
+            onChange={(value: string) => {
               const selected = options.find((opt) => opt.value === value)
               if (selected) {
                 // For reject option
@@ -234,7 +234,7 @@ export function FilePermissionDialog<T extends ToolInput = ToolInput>({
                 type: 'reject',
               })
             }
-            onFocus={(value_0) => setFocusedOption(value_0)}
+            onFocus={(value_0: string) => setFocusedOption(value_0)}
             onInputModeToggle={handleInputModeToggle}
           />
         </Box>

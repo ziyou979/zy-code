@@ -158,7 +158,7 @@ export interface TurnLoopDeps {
   buildAllTools: (appState: AppState) => Tools
   forwardMessagesToBridge: () => void
   idleTimeout: ReturnType<typeof createIdleTimeoutManager>
-  scheduleProactiveTick: () => void
+  scheduleProactiveTick: (() => void) | undefined
   unsubscribeSkillChanges: () => void
   unsubscribeAuthStatus: (() => void) | undefined
   rateLimitListener: (limits: ZyAILimits) => void

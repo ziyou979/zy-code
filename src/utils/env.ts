@@ -413,8 +413,7 @@ function isSSHSession(): boolean {
   return !!(process.env.SSH_CONNECTION || process.env.SSH_CLIENT || process.env.SSH_TTY)
 }
 
-export let env
-env = {
+export const env = {
   hasInternetAccess,
   isCI: isEnvTruthy(process.env.CI),
   platform: (['win32', 'darwin'].includes(process.platform)

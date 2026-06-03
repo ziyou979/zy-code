@@ -77,7 +77,7 @@ export function ShellDetailDialog({ shell, onDone, onKillShell, onBack }: Props)
       context: 'Confirmation',
     },
   )
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: import('../../ink/events/keyboard-event.js').KeyboardEvent) => {
     if (e.key === ' ') {
       e.preventDefault()
       onDone('Shell details dismissed', {

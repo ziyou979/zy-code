@@ -13,8 +13,8 @@ type Props = {
  * Allows user to choose whether to downgrade or stay on current version.
  */
 export function ChannelDowngradeDialog({ currentVersion, onChoice }: Props) {
-  const handleSelect = function handleSelect(value) {
-    onChoice(value)
+  const handleSelect = function handleSelect(value: string) {
+    onChoice(value as ChannelDowngradeChoice)
   }
   const handleCancel = function handleCancel() {
     onChoice('cancel')

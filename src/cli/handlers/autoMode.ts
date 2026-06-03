@@ -84,7 +84,7 @@ export async function autoModeCritiqueHandler(options: { model?: string }): Prom
     return
   }
 
-  const model = options.model ? parseUserSpecifiedModel(options.model) : getMainLoopModel()
+  const model = options.model ? parseUserSpecifiedModel(options.model) : (getMainLoopModel() ?? '')
 
   const defaults = getDefaultAutoModeRules()
   const classifierPrompt = buildDefaultSystemPrompt()

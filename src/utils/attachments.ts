@@ -2518,7 +2518,7 @@ async function getSkillListingAttachments(toolUseContext: ToolUseContext): Promi
   }
 
   // 查找尚未发送的技能
-  const newSkills = allCommands.filter((cmd) => !sent.has(cmd.name))
+  const newSkills = allCommands.filter((cmd: Command) => !sent.has(cmd.name))
   if (newSkills.length === 0) {
     return []
   }

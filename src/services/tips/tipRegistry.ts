@@ -254,7 +254,7 @@ const externalTips: Tip[] = [
     id: 'vscode-command-install',
     content: async () => {
       const command = env.terminal === 'vscode' ? 'code' : env.terminal
-      return tSync('tip.vscodeCommandInstall', { command })
+      return tSync('tip.vscodeCommandInstall', { command: command ?? '' })
     },
     cooldownSessions: 0,
     async isRelevant() {
@@ -410,7 +410,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'desktop-shortcut',
-    content: async (ctx) => {
+    content: async (ctx: TipContext) => {
       const blue = color('suggestion', ctx.theme)
       const text = tSync('tip.desktopShortcut', { shortcut: '/desktop' })
       return text.replace('/desktop', blue('/desktop'))
@@ -453,26 +453,26 @@ const externalTips: Tip[] = [
   },
   {
     id: 'frontend-design-plugin',
-    content: async (ctx) => {
+    content: async (ctx: TipContext) => {
       const blue = color('suggestion', ctx.theme)
       const command = blue(`/plugin install frontend-design@${OFFICIAL_MARKETPLACE_NAME}`)
       return tSync('tip.frontendDesignPlugin', { command })
     },
     cooldownSessions: 3,
-    isRelevant: async (context) =>
+    isRelevant: async (context: TipContext | undefined) =>
       isMarketplacePluginRelevant('frontend-design', context, {
         filePath: /\.(html|css|htm)$/i,
       }),
   },
   {
     id: 'vercel-plugin',
-    content: async (ctx) => {
+    content: async (ctx: TipContext) => {
       const blue = color('suggestion', ctx.theme)
       const command = blue(`/plugin install vercel@${OFFICIAL_MARKETPLACE_NAME}`)
       return tSync('tip.vercelPlugin', { command })
     },
     cooldownSessions: 3,
-    isRelevant: async (context) =>
+    isRelevant: async (context: TipContext | undefined) =>
       isMarketplacePluginRelevant('vercel', context, {
         filePath: /(?:^|[/\\])vercel\.json$/i,
         cli: ['vercel'],
@@ -480,7 +480,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'effort-high-nudge',
-    content: async (ctx) => {
+    content: async (ctx: TipContext) => {
       const blue = color('suggestion', ctx.theme)
       const cmd = blue('/effort high')
       const variant = getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
@@ -496,7 +496,7 @@ const externalTips: Tip[] = [
       if (!isDirectApiClient()) {
         return false
       }
-      if (!modelSupportsEffort(getMainLoopModel())) {
+      if (!modelSupportsEffort(getMainLoopModel() ?? '')) {
         return false
       }
       if (getSettingsForSource('policySettings')?.effortLevel !== undefined) {
@@ -517,7 +517,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'subagent-fanout-nudge',
-    content: async (ctx) => {
+    content: async (ctx: TipContext) => {
       const blue = color('suggestion', ctx.theme)
       const variant = getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
         'zy_tern_alloy',
@@ -540,7 +540,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'loop-command-nudge',
-    content: async (ctx) => {
+    content: async (ctx: TipContext) => {
       const blue = color('suggestion', ctx.theme)
       const variant = getFeatureValue_CACHED_MAY_BE_STALE<'off' | 'copy_a' | 'copy_b'>(
         'zy_timber_lark',

@@ -161,7 +161,7 @@ Output <updates>[]</updates> if no updates are needed.`,
       }
     },
 
-    getModel: getDefaultCompactModel,
+    getModel: () => getDefaultCompactModel()!,
   }
 
   return createApiQueryHook(config)
@@ -238,7 +238,7 @@ Rules:
     signal: createAbortController().signal,
     options: {
       getToolPermissionContext: async () => getEmptyToolPermissionContext(),
-      model: getDefaultCompactModel(),
+      model: getDefaultCompactModel()!,
       toolChoice: undefined,
       isNonInteractiveSession: false,
       hasAppendSystemPrompt: false,

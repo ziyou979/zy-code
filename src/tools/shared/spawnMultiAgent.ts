@@ -61,13 +61,15 @@ import { formatAgentId } from '../../utils/agentId.js'
 import { isInBundledMode } from '../../utils/bundledMode.js'
 import { getGlobalConfig } from '../../utils/config.js'
 import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { createDebugLog } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
 import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
 import { writeToMailbox } from '../../utils/teammateMailbox.js'
 import type { CustomAgentDefinition } from '../AgentTool/loadAgentsDir.js'
 import { isCustomAgent } from '../AgentTool/loadAgentsDir.js'
+
+const agentLog = createDebugLog('agent')
 
 function getDefaultTeammateModel(leaderModel: string | null): string {
   const configured = getGlobalConfig().teammateDefaultModel
@@ -854,7 +856,7 @@ async function handleSpawnInProcess(
     if (foundAgent && isCustomAgent(foundAgent)) {
       agentDefinition = foundAgent
     }
-    logForDebugging(`[handleSpawnInProcess] agent_type=${agent_type}, found=${!!agentDefinition}`)
+    agentLog(`spawn type=${agent_type} found=${!!agentDefinition}`)
   }
 
   // Spawn in-process teammate
@@ -874,8 +876,8 @@ async function handleSpawnInProcess(
   }
 
   // Debug: log what spawn returned
-  logForDebugging(
-    `[handleSpawnInProcess] spawn result: taskId=${result.taskId}, hasContext=${!!result.teammateContext}, hasAbort=${!!result.abortController}`,
+  agentLog(
+    `spawn result: taskId=${result.taskId} hasContext=${!!result.teammateContext} hasAbort=${!!result.abortController}`,
   )
 
   // Start the agent execution loop (fire-and-forget)
@@ -903,7 +905,7 @@ async function handleSpawnInProcess(
       abortController: result.abortController,
       invokingRequestId: input.invokingRequestId,
     })
-    logForDebugging(`[handleSpawnInProcess] Started agent execution for ${teammateId}`)
+    agentLog(`started execution id=${teammateId} name=${sanitizedName}`)
   }
 
   // Track the teammate in AppState's teamContext
@@ -1026,9 +1028,7 @@ async function handleSpawn(
     if (getTeammateModeFromSnapshot() !== 'auto') {
       throw error
     }
-    logForDebugging(
-      `[handleSpawn] No pane backend available, falling back to in-process: ${errorMessage(error)}`,
-    )
+    agentLog(`no pane backend available, falling back to in-process: ${errorMessage(error)}`)
     // Record the fallback so isInProcessEnabled() reflects the actual mode
     // (fixes banner and other UI that would otherwise show tmux attach commands).
     markInProcessFallback()

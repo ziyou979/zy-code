@@ -56,10 +56,7 @@ function decisionReasonToString(decisionReason: PermissionDecisionReason | undef
   if (!decisionReason) {
     return 'No decision reason'
   }
-  if (
-    (feature('BASH_CLASSIFIER') || true) &&
-    decisionReason.type === 'classifier'
-  ) {
+  if ((feature('BASH_CLASSIFIER') || true) && decisionReason.type === 'classifier') {
     return `Classifier: ${decisionReason.classifier}, Reason: ${decisionReason.reason}`
   }
   switch (decisionReason.type) {
@@ -189,7 +186,7 @@ export function usePermissionRequestLogging(
       event: 'response',
       metadata: {
         language_name: unaryEvent.language_name,
-        message_id: toolUseConfirm.assistantMessage.message.id,
+        message_id: toolUseConfirm.assistantMessage.message.id ?? '',
         platform: env.platform,
       },
     })

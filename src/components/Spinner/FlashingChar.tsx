@@ -10,7 +10,7 @@ type Props = {
 }
 export function FlashingChar({ char, flashOpacity, messageColor, shimmerColor }: Props) {
   const [themeName] = useTheme()
-  let earlyReturn = Symbol.for('react.early_return_sentinel')
+  let earlyReturn: React.ReactNode | symbol = Symbol.for('react.early_return_sentinel')
   const theme = getTheme(themeName)
   const baseColorStr = theme[messageColor]
   const shimmerColorStr = theme[shimmerColor]
@@ -21,7 +21,7 @@ export function FlashingChar({ char, flashOpacity, messageColor, shimmerColor }:
     earlyReturn = (<Text color={toRGBColor(interpolated)}>{char}</Text>) as any
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   const shouldUseShimmer = flashOpacity > 0.5
   return <Text color={shouldUseShimmer ? shimmerColor : messageColor}>{char}</Text>

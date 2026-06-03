@@ -1,3 +1,4 @@
+import type React from 'react'
 import { Box, Text } from '../../ink.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 export function SandboxDoctorSection() {
@@ -8,7 +9,7 @@ export function SandboxDoctorSection() {
     return null
   }
   let boxElement
-  let earlyReturn
+  let earlyReturn: React.ReactNode | symbol
   earlyReturn = Symbol.for('react.early_return_sentinel')
   const depCheck = SandboxManager.checkDependencies()
   const hasErrors = depCheck.errors.length > 0
@@ -39,7 +40,7 @@ export function SandboxDoctorSection() {
     )
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   return boxElement
 }

@@ -37,7 +37,7 @@ export function NotebookEditToolUseRejectedMessage({
                 {displayPath}
               </Text>
             }
-            {<Text color="subtle"> {tSync('notebookEdit.atCell', { cellId: cell_id })}</Text>}
+            {<Text color="subtle"> {tSync('notebookEdit.atCell', { cellId: cell_id ?? '' })}</Text>}
           </Box>
         }
         {edit_mode !== 'delete' && (

@@ -1,3 +1,4 @@
+import type React from 'react'
 import { feature } from 'bun:bundle'
 import chalk from 'chalk'
 import figures from 'figures'
@@ -26,10 +27,7 @@ function decisionReasonDisplayString(
     type: Exclude<PermissionDecisionReason['type'], 'subcommandResults'>
   },
 ): string {
-  if (
-    (feature('BASH_CLASSIFIER') || true) &&
-    decisionReason.type === 'classifier'
-  ) {
+  if ((feature('BASH_CLASSIFIER') || true) && decisionReason.type === 'classifier') {
     return `${chalk.bold(decisionReason.classifier)} classifier: ${decisionReason.reason}`
   }
   switch (decisionReason.type) {
@@ -114,7 +112,7 @@ function SuggestedRules({ suggestions }: any) {
   let TextComponent
   let joinedString
 
-  let earlyReturn
+  let earlyReturn: React.ReactNode | symbol
   earlyReturn = Symbol.for('react.early_return_sentinel')
   const rules = extractRules(suggestions)
   if (rules.length === 0) {
@@ -130,7 +128,7 @@ function SuggestedRules({ suggestions }: any) {
     AnsiComponent = Ansi
     joinedString = rules.map((rule) => chalk.bold(permissionRuleValueToString(rule))).join(', ')
     if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-      return earlyReturn
+      return earlyReturn as unknown as React.ReactNode
     }
     return (
       <TextComponent>
@@ -140,7 +138,7 @@ function SuggestedRules({ suggestions }: any) {
     )
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   return null
 }
@@ -188,7 +186,7 @@ function SuggestionDisplay({ suggestions, width }: Props) {
     )
   }
   let boxElement
-  let earlyReturn
+  let earlyReturn: React.ReactNode | symbol
   earlyReturn = Symbol.for('react.early_return_sentinel')
   const rules = extractRules(suggestions)
   const directories = extractDirectories(suggestions)
@@ -257,11 +255,17 @@ function SuggestionDisplay({ suggestions, width }: Props) {
     )
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   return boxElement
 }
-export function PermissionDecisionDebugInfo({ permissionResult, toolName }) {
+export function PermissionDecisionDebugInfo({
+  permissionResult,
+  toolName,
+}: {
+  permissionResult: any
+  toolName: string
+}) {
   const toolPermissionContext = useAppState((s) => s.toolPermissionContext)
   const decisionReason = permissionResult.decisionReason
   const suggestions = 'suggestions' in permissionResult ? permissionResult.suggestions : undefined

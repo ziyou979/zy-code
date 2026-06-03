@@ -1,6 +1,7 @@
 import figures from 'figures'
 import { useState } from 'react'
 import { tSync } from '../../../i18n/index.js'
+import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../../ink.js'
 import { useAppState } from '../../../state/AppState.js'
 import type { Question } from '../../../tools/AskUserQuestionTool/AskUserQuestionTool.js'
@@ -86,7 +87,7 @@ export function QuestionView({
   const [isOtherFocused, setIsOtherFocused] = useState(false)
   const editor = getExternalEditor()
   const editorName = editor ? toIDEDisplayName(editor) : null
-  const handleFocus = (value) => {
+  const handleFocus = (value: string) => {
     const isOther = value === '__other__'
     setIsOtherFocused(isOther)
     onTextInputFocus(isOther)
@@ -97,7 +98,7 @@ export function QuestionView({
   const handleUpFromFooter = () => {
     setIsFooterFocused(false)
   }
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (!isFooterFocused) {
       return
     }
@@ -161,7 +162,7 @@ export function QuestionView({
       ? tSync('permissionRules.typeSomethingMulti')
       : tSync('permissionRules.typeSomething'),
     initialValue: initialTextInputValue,
-    onChange: (value_0) => {
+    onChange: (value_0: string) => {
       onUpdateQuestionState(
         questionText,
         {
@@ -278,7 +279,7 @@ export function QuestionView({
                       defaultValue={
                         questionStates[question.question]?.selectedValue as string | undefined
                       }
-                      onChange={(value_1) => {
+                      onChange={(value_1: string) => {
                         onUpdateQuestionState(
                           questionText,
                           {

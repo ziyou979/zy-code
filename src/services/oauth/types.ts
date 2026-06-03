@@ -16,8 +16,12 @@ export interface OAuthProfile {
 
 export interface OAuthTokens {
   accessToken: string
-  refreshToken?: string
+  refreshToken?: string | null
   expiresIn?: number
+  expiresAt?: number | null
+  scopes?: string[]
+  subscriptionType?: string | null
+  rateLimitTier?: string | null
 }
 
 export type SubscriptionType = 'free' | 'plus' | 'pro' | 'enterprise' | 'api'

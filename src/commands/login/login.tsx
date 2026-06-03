@@ -27,7 +27,7 @@ export async function call(
 ): Promise<React.ReactNode> {
   return (
     <Login
-      onDone={async (success) => {
+      onDone={async (success: boolean) => {
         context.onChangeAPIKey()
         // Signature-bearing blocks (thinking, connector_text) are bound to the API key —
         // strip them so the new key doesn't reject stale signatures.
@@ -58,10 +58,7 @@ export async function call(
             context.setAppState,
           )
           resetAutoModeGateCheck()
-          void checkAndDisableAutoModeIfNeeded(
-            appState.toolPermissionContext,
-            context.setAppState,
-          )
+          void checkAndDisableAutoModeIfNeeded(appState.toolPermissionContext, context.setAppState)
           // Increment authVersion to trigger re-fetching of auth-dependent data in hooks (e.g., MCP servers)
           context.setAppState((prev) => ({
             ...prev,
@@ -73,7 +70,10 @@ export async function call(
     />
   )
 }
-export function Login(props) {
+export function Login(props: {
+  onDone: (success: boolean, model?: string) => void
+  startingMessage?: string
+}) {
   const mainLoopModel = useMainLoopModel()
   return (
     <Dialog
@@ -82,7 +82,7 @@ export function Login(props) {
       color="permission"
       inputGuide={(exitState) =>
         exitState.pending ? (
-          <Text>{tSync('login.pressAgainExit', { keyName: exitState.keyName })}</Text>
+          <Text>{tSync('login.pressAgainExit', { keyName: exitState.keyName ?? '' })}</Text>
         ) : (
           <ConfigurableShortcutHint
             action="confirm:no"

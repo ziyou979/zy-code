@@ -7,6 +7,10 @@ export async function call(
   args?: string,
 ): Promise<React.ReactNode> {
   return (
-    <PluginSettings onComplete={onDone} args={args} showMcpRedirectMessage={undefined as any} />
+    <PluginSettings
+      onComplete={onDone}
+      args={args ?? ''}
+      showMcpRedirectMessage={undefined as any}
+    />
   )
 }

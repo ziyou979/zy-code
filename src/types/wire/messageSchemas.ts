@@ -37,8 +37,7 @@ export const NonNullableUsagePlaceholder = lazySchema(() => z.unknown())
 // SDK Message Types
 // ============================================================================
 
-export let WireAssistantMessageErrorSchema
-WireAssistantMessageErrorSchema = lazySchema(() =>
+export const WireAssistantMessageErrorSchema = lazySchema(() =>
   z.enum([
     'authentication_failed',
     'billing_error',
@@ -631,8 +630,7 @@ export const WireMessageSchema = lazySchema(() =>
   ]),
 )
 
-export let FastModeStateSchema
-FastModeStateSchema = lazySchema(() =>
+export const FastModeStateSchema = lazySchema(() =>
   z
     .enum(['off', 'cooldown', 'on'])
     .describe('Fast mode state: off, in cooldown after rate limit, or actively enabled.'),

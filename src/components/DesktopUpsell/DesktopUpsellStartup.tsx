@@ -61,7 +61,7 @@ export function DesktopUpsellStartup({ onDone }: Props) {
   if (showHandoff) {
     return <DesktopHandoff onDone={() => onDone()} />
   }
-  const handleSelect = function handleSelect(value) {
+  const handleSelect = function handleSelect(value: string) {
     switch (value) {
       case 'try': {
         setShowHandoff(true)

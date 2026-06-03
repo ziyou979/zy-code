@@ -1,7 +1,9 @@
 import type { PostCompactHookInput, PreCompactHookInput } from 'src/types/index.js'
-import { logForDebugging } from '../../debug.js'
+import { createDebugLog } from '../../debug.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { executeHooksOutsideREPL, hasBlockingResult } from '../outsideRepl.js'
+
+const hookLog = createDebugLog('hooks')
 
 export async function executePreCompactHooks(
   compactData: {
@@ -36,7 +38,7 @@ export async function executePreCompactHooks(
   // 检查是否有 hook 请求阻止压缩（退出码 2 或 JSON {"decision":"block"}）
   if (hasBlockingResult(results)) {
     const blockingHook = results.find((r) => r.blocked)
-    logForDebugging(
+    hookLog(
       `PreCompact hook blocked compaction: [${blockingHook?.command}] output=${blockingHook?.output}`,
     )
     return { blocked: true }

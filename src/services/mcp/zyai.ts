@@ -7,7 +7,10 @@ import {
 } from 'src/services/analytics/index.js'
 import { getZyAIOAuthTokens } from 'src/utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from 'src/utils/config.js'
-import { logForDebugging } from 'src/utils/debug.js'
+import { createDebugLog } from 'src/utils/debug.js'
+
+const mcpLog = createDebugLog('mcp')
+
 import { isEnvDefinedFalsy } from 'src/utils/envUtils.js'
 import { clearMcpAuthCache } from './client.js'
 import { normalizeNameForMCP } from './normalization.js'
@@ -40,7 +43,7 @@ export const fetchZyAIMcpConfigsIfEligible = memoize(
   async (): Promise<Record<string, ScopedMcpServerConfig>> => {
     try {
       if (isEnvDefinedFalsy(process.env.ENABLE_CLAUDEAI_MCP_SERVERS)) {
-        logForDebugging('[zyai-mcp] Disabled via env var')
+        mcpLog('[zyai-mcp] Disabled via env var')
         logEvent('zy_Zyai_mcp_eligibility', {
           state: 'disabled_env_var' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
@@ -49,7 +52,7 @@ export const fetchZyAIMcpConfigsIfEligible = memoize(
 
       const tokens = getZyAIOAuthTokens()
       if (!tokens?.accessToken) {
-        logForDebugging('[zyai-mcp] No access token')
+        mcpLog('[zyai-mcp] No access token')
         logEvent('zy_Zyai_mcp_eligibility', {
           state: 'no_oauth_token' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
@@ -58,7 +61,7 @@ export const fetchZyAIMcpConfigsIfEligible = memoize(
 
       // Check for user:mcp_servers scope directly.
       if (!tokens.scopes?.includes('user:mcp_servers')) {
-        logForDebugging(
+        mcpLog(
           `[zyai-mcp] Missing user:mcp_servers scope (scopes=${tokens.scopes?.join(',') || 'none'})`,
         )
         logEvent('zy_Zyai_mcp_eligibility', {
@@ -70,7 +73,7 @@ export const fetchZyAIMcpConfigsIfEligible = memoize(
       const baseUrl = getOauthConfig().BASE_API_URL
       const url = `${baseUrl}/v1/mcp_servers?limit=1000`
 
-      logForDebugging(`[zyai-mcp] Fetching from ${url}`)
+      mcpLog(`[zyai-mcp] Fetching from ${url}`)
 
       const response = await axios.get<ZyAIMcpServersResponse>(url, {
         headers: {
@@ -111,13 +114,13 @@ export const fetchZyAIMcpConfigsIfEligible = memoize(
         }
       }
 
-      logForDebugging(`[zyai-mcp] Fetched ${Object.keys(configs).length} servers`)
+      mcpLog(`[zyai-mcp] Fetched ${Object.keys(configs).length} servers`)
       logEvent('zy_Zyai_mcp_eligibility', {
         state: 'eligible' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
       return configs
     } catch {
-      logForDebugging(`[zyai-mcp] Fetch failed`)
+      mcpLog(`[zyai-mcp] Fetch failed`)
       return {}
     }
   },

@@ -75,7 +75,7 @@ function OverridesSelect({ onComplete, currentMode }: any) {
       value: 'closed',
     },
   ]
-  const handleSelect = async function handleSelect(value) {
+  const handleSelect = async function handleSelect(value: string) {
     const mode = value as OverrideMode
     await SandboxManager.setSandboxSettings({
       allowUnsandboxedCommands: mode === 'open',

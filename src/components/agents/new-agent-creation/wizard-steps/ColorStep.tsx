@@ -14,7 +14,7 @@ export function ColorStep() {
   useKeybinding('confirm:no', goBack, {
     context: 'Confirmation',
   })
-  const handleConfirm = (color) => {
+  const handleConfirm = (color: AgentColorName | undefined) => {
     updateWizardData({
       selectedColor: color,
       finalAgent: {

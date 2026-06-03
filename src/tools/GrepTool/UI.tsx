@@ -20,6 +20,13 @@ function SearchResultSummary({
   secondaryLabel,
   content,
   verbose,
+}: {
+  count: number
+  countLabel: string
+  secondaryCount?: number
+  secondaryLabel?: string
+  content: string
+  verbose: boolean
 }) {
   const pluralizedLabel = count === 0 || count > 1 ? countLabel : countLabel.slice(0, -1)
   const primaryText = (
@@ -137,7 +144,7 @@ export function renderToolResultMessage(
         countLabel={tSync('grep.lines_other')}
         secondaryCount={0}
         secondaryLabel=""
-        content={content}
+        content={content ?? ''}
         verbose={verbose}
       />
     )
@@ -149,7 +156,7 @@ export function renderToolResultMessage(
         countLabel={tSync('grep.matches_other')}
         secondaryCount={numFiles}
         secondaryLabel={tSync('grep.files_other')}
-        content={content}
+        content={content ?? ''}
         verbose={verbose}
       />
     )

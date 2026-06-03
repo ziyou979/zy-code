@@ -260,7 +260,7 @@ Find the sessions that are most relevant to this query.`
   logForDebugging(`Agentic search prompt (first 500 chars): ${userMessage.slice(0, 500)}...`)
 
   try {
-    const model = getDefaultCompactModel()
+    const model = getDefaultCompactModel()!
     logForDebugging(`Agentic search using model: ${model}`)
 
     const response = await sideQuery({

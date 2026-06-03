@@ -16,7 +16,7 @@ export type Props = {
 }
 export function ThinkingToggle({ currentValue, onSelect, onCancel, isMidConversation }: Props) {
   const exitState = useExitOnCtrlCDWithKeybindings()
-  const [confirmationPending, setConfirmationPending] = useState(null)
+  const [confirmationPending, setConfirmationPending] = useState<boolean | null>(null)
   const options = [
     {
       value: 'true',
@@ -54,7 +54,7 @@ export function ThinkingToggle({ currentValue, onSelect, onCancel, isMidConversa
       isActive: confirmationPending !== null,
     },
   )
-  const handleSelectChange = function handleSelectChange(value) {
+  const handleSelectChange = function handleSelectChange(value: string) {
     const selected = value === 'true'
     if (isMidConversation && selected !== currentValue) {
       setConfirmationPending(selected)
@@ -96,7 +96,7 @@ export function ThinkingToggle({ currentValue, onSelect, onCancel, isMidConversa
       {
         <Text dimColor={true} italic={true}>
           {exitState.pending ? (
-            tSync('thinkingToggle.pressAgainToExit', { key: exitState.keyName })
+            tSync('thinkingToggle.pressAgainToExit', { key: exitState.keyName ?? '' })
           ) : confirmationPending !== null ? (
             <Byline>
               <KeyboardShortcutHint shortcut="Enter" action="confirm" />

@@ -123,7 +123,7 @@ export async function unzipFile(zipData: Buffer): Promise<Record<string, Uint8Ar
   }
 
   const result = unzipSync(new Uint8Array(zipData), {
-    filter: (file) => {
+    filter: (file: { name: string; originalSize: number }) => {
       const validationResult = validateZipFile(file, state)
       if (!validationResult.isValid) {
         throw new Error(validationResult.error!)

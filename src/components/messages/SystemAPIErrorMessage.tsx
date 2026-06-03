@@ -12,7 +12,7 @@ type Props = {
   verbose: boolean
 }
 export function SystemAPIErrorMessage({ message, verbose }: Props) {
-  const { retryAttempt, error, retryInMs, maxRetries } = message
+  const { retryAttempt = 0, error, retryInMs = 0, maxRetries } = message
   const hidden = retryAttempt < 4
   const [countdownMs, setCountdownMs] = useState(0)
   const done = countdownMs >= retryInMs
@@ -22,6 +22,9 @@ export function SystemAPIErrorMessage({ message, verbose }: Props) {
   }
   const second = Math.round((retryInMs - countdownMs) / 1000)
   const retryInSecondsLive = Math.max(0, second)
+  if (!error) {
+    return null
+  }
   const formatted = formatAPIError(error)
   const truncated = !verbose && formatted.length > MAX_API_ERROR_CHARS
   const text = truncated ? `${formatted.slice(0, MAX_API_ERROR_CHARS)}\u2026` : formatted

@@ -205,7 +205,7 @@ export function handleMessageFromStream(
         case 'tool_use': {
           onSetStreamMode('tool-input')
           const contentBlock = message.event.content_block
-          const index = message.event.index
+          const index = message.event.index ?? 0
           onStreamingToolUses((_) => [
             ..._,
             {

@@ -35,12 +35,12 @@ import { escapeXmlAttr as escapeHtml } from '../utils/xml.js'
 
 // Model for facet extraction and summarization (advanced - best quality)
 function getAnalysisModel(): string {
-  return getDefaultAdvancedModel()
+  return getDefaultAdvancedModel()!
 }
 
 // Model for narrative insights (advanced - best quality)
 function getInsightsModel(): string {
-  return getDefaultAdvancedModel()
+  return getDefaultAdvancedModel()!
 }
 
 // ============================================================================

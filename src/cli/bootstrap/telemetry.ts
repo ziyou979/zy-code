@@ -27,6 +27,7 @@ import { logError } from '../../utils/log.js'
 import { getManagedPluginNames } from '../../utils/plugins/managedPlugins.js'
 import { getPluginSeedDirs } from '../../utils/plugins/pluginDirectories.js'
 import { loadAllPluginsCacheOnly } from '../../utils/plugins/pluginLoader.js'
+import type { LoadedPlugin, PluginError, PluginLoadResult } from '../../types/plugin.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
 
@@ -42,13 +43,13 @@ export function logSessionTelemetry(): void {
   }
   const model = parseUserSpecifiedModel(fallbackModel)
   void logSkillsLoaded(getCwd(), getContextWindowForModel(model))
-  void loadAllPluginsCacheOnly()
+  void (loadAllPluginsCacheOnly() as Promise<PluginLoadResult>)
     .then(({ enabled, errors }) => {
       const managedNames = getManagedPluginNames()
       logPluginsEnabledForSession(enabled, managedNames, getPluginSeedDirs())
       logPluginLoadErrors(errors, managedNames)
     })
-    .catch((err) => logError(err))
+    .catch((err: unknown) => logError(err))
 }
 
 function getCertEnvVarTelemetry(): Record<string, boolean> {

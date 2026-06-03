@@ -51,7 +51,8 @@ export function useLspPluginRecommendation(): UseLspPluginRecommendationResult {
   const trackedFiles = useAppState((s) => s.fileHistory.trackedFiles)
   const { addNotification } = useNotifications()
   const checkedFilesRef = React.useRef(new Set())
-  const { recommendation, clearRecommendation, tryResolve } = usePluginRecommendationBase()
+  const { recommendation, clearRecommendation, tryResolve } =
+    usePluginRecommendationBase<NonNullable<LspRecommendationState>>()
   React.useEffect(() => {
     tryResolve(async () => {
       if (hasShownLspRecommendationThisSession()) {
@@ -88,7 +89,7 @@ export function useLspPluginRecommendation(): UseLspPluginRecommendationResult {
       return null
     })
   }, [trackedFiles, tryResolve])
-  const handleResponse = (response) => {
+  const handleResponse = (response: 'yes' | 'no' | 'never' | 'disable') => {
     if (!recommendation) {
       return
     }

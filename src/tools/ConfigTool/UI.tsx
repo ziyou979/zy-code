@@ -21,7 +21,7 @@ export function renderToolResultMessage(content: Output): React.ReactNode {
   if (!content.success) {
     return (
       <MessageResponse>
-        <Text color="error">{tSync('toolConfig.failed', { error: content.error })}</Text>
+        <Text color="error">{tSync('toolConfig.failed', { error: content.error ?? '' })}</Text>
       </MessageResponse>
     )
   }
@@ -38,7 +38,7 @@ export function renderToolResultMessage(content: Output): React.ReactNode {
     <MessageResponse>
       <Text>
         {tSync('toolConfig.setValue', {
-          setting: content.setting,
+          setting: content.setting ?? '',
           value: jsonStringify(content.newValue),
         })}
       </Text>

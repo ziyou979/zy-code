@@ -123,7 +123,7 @@ async function checkMcpTools(
 
   try {
     // Use the existing countMcpToolTokens function from analyzeContext
-    const model = getMainLoopModel()
+    const model = getMainLoopModel()!
     const { mcpToolTokens, mcpToolDetails } = await countMcpToolTokens(
       tools,
       getToolPermissionContext,

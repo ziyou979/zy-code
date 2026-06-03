@@ -30,14 +30,14 @@ import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js'
 
 function createStderrLogger(): any {
   return {
-    error: (msg, ...args) =>
+    error: (msg: string, ...args: unknown[]) =>
       // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
       console.error('[SDK ERROR]', msg, ...args),
     // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
-    warn: (msg, ...args) => console.error('[SDK WARN]', msg, ...args),
+    warn: (msg: string, ...args: unknown[]) => console.error('[SDK WARN]', msg, ...args),
     // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
-    info: (msg, ...args) => console.error('[SDK INFO]', msg, ...args),
-    debug: (msg, ...args) =>
+    info: (msg: string, ...args: unknown[]) => console.error('[SDK INFO]', msg, ...args),
+    debug: (msg: string, ...args: unknown[]) =>
       // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
       console.error('[SDK DEBUG]', msg, ...args),
   }
@@ -187,8 +187,7 @@ export async function getAnthropicClient({
     }
     if (!customBaseURL && registryEntry.defaultBaseUrls) {
       const format = isOpenAIProvider(apiProvider) ? 'openai' : 'anthropic'
-      customBaseURL =
-        registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls.openai
+      customBaseURL = registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls.openai
     }
 
     const customApiKey = apiKey || process.env.LLM_API_KEY || getApiKey()
@@ -271,9 +270,9 @@ export async function getOpenAIClient(options?: {
   if (!resolvedApiKey) {
     // custom-endpoint provider（ollama 等）优先取 LLM_API_KEY
     if (isCustomEndpointProvider(apiProvider)) {
-      resolvedApiKey = process.env.LLM_API_KEY || getApiKey()
+      resolvedApiKey = process.env.LLM_API_KEY || getApiKey() || undefined
     } else {
-      resolvedApiKey = getApiKey()
+      resolvedApiKey = getApiKey() ?? undefined
     }
   }
 

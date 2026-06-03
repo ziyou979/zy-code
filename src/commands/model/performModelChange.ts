@@ -35,7 +35,7 @@ function isKnownAlias(model: string): boolean {
 
 /** 渲染模型显示名（含 default 标注），与 jsx 端一致 */
 export function renderModelLabel(model: string | null): string {
-  const rendered = renderDefaultModelSetting(model ?? getDefaultMainLoopModelSetting())
+  const rendered = renderDefaultModelSetting((model ?? getDefaultMainLoopModelSetting())!)
   return model === null ? `${rendered}${tSync('modelCommand.default')}` : rendered
 }
 

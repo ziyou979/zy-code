@@ -20,7 +20,15 @@ export function checkHasTeamMemOps(message: CollapsedReadSearchGroup): boolean {
  * 此模块仅在 feature('TEAMMEM') 为 true 时加载，
  * 因此 DCE 会在 external 构建中完全移除它。
  */
-export function TeamMemCountParts({ message, isActiveGroup, hasPrecedingParts }) {
+export function TeamMemCountParts({
+  message,
+  isActiveGroup,
+  hasPrecedingParts,
+}: {
+  message: CollapsedReadSearchGroup
+  isActiveGroup?: boolean
+  hasPrecedingParts: boolean
+}) {
   const tmReadCount = message.teamMemoryReadCount ?? 0
   const tmSearchCount = message.teamMemorySearchCount ?? 0
   const tmWriteCount = message.teamMemoryWriteCount ?? 0

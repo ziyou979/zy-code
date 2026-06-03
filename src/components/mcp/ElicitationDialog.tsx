@@ -107,7 +107,7 @@ function formatDateDisplay(isoValue: string, schema: PrimitiveSchemaDefinition):
     return isoValue
   }
 }
-export function ElicitationDialog({ event, onResponse, onWaitingDismiss }) {
+export function ElicitationDialog({ event, onResponse, onWaitingDismiss }: Props) {
   if (event.params.mode === 'url') {
     return (
       <ElicitationURLDialog
@@ -239,7 +239,6 @@ function ElicitationFormDialog({
 
   // Text fields are always in edit mode when focused — no Enter-to-edit step.
   const isEditingTextField = currentFieldIsText && !focusedButton
-  // @ts-expect-error
   useRegisterOverlay('elicitation')
   useNotifyAfterTimeout('ZY Code needs your input', 'elicitation_dialog')
 
@@ -1102,7 +1101,9 @@ function ElicitationFormDialog({
       isCancelActive={(!currentField || !!focusedButton) && !expandedAccordion}
       inputGuide={(exitState) =>
         exitState.pending ? (
-          <Text>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</Text>
+          <Text>
+            {tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName ?? '' })}
+          </Text>
         ) : (
           <Byline>
             <ConfigurableShortcutHint
@@ -1182,7 +1183,6 @@ function ElicitationURLDialog({
   >('accept')
   const showCancel = waitingState?.showCancel ?? false
   useNotifyAfterTimeout('ZY Code needs your input', 'elicitation_url_dialog')
-  // @ts-expect-error
   useRegisterOverlay('elicitation-url')
 
   // Keep refs in sync for use in abort handler (avoids re-registering listener)
@@ -1283,7 +1283,9 @@ function ElicitationURLDialog({
         isCancelActive
         inputGuide={(exitState) =>
           exitState.pending ? (
-            <Text>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</Text>
+            <Text>
+              {tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName ?? '' })}
+            </Text>
           ) : (
             <Byline>
               <ConfigurableShortcutHint
@@ -1357,7 +1359,9 @@ function ElicitationURLDialog({
       isCancelActive
       inputGuide={(exitState_0) =>
         exitState_0.pending ? (
-          <Text>{tSync('permissionRules.pressAgainToExit', { keyName: exitState_0.keyName })}</Text>
+          <Text>
+            {tSync('permissionRules.pressAgainToExit', { keyName: exitState_0.keyName ?? '' })}
+          </Text>
         ) : (
           <Byline>
             <ConfigurableShortcutHint

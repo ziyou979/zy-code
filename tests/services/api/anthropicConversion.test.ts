@@ -438,9 +438,7 @@ describe('blockToAnthropic（通过 buildAnthropicCreateParams 间接测）', ()
       messages: [
         {
           role: 'assistant',
-          content: [
-            { type: 'tool_use', id: 't1', name: 'read', input: {}, cache_control: cc },
-          ],
+          content: [{ type: 'tool_use', id: 't1', name: 'read', input: {}, cache_control: cc }],
         },
       ],
     } as any)
@@ -473,9 +471,7 @@ describe('blockToAnthropic（通过 buildAnthropicCreateParams 间接测）', ()
       messages: [
         {
           role: 'user',
-          content: [
-            { type: 'image', mimeType: 'image/png', data: 'AAA', cache_control: cc },
-          ],
+          content: [{ type: 'image', mimeType: 'image/png', data: 'AAA', cache_control: cc }],
         },
       ],
     } as any)
@@ -701,7 +697,7 @@ describe('safeParseToolArguments（通过 buildAnthropicCreateParams 间接测�
         },
       ],
     } as any)
-    const msg = result.messages.find((m) => m.role === 'assistant')
+    const msg = result.messages.find((m) => m.role === 'assistant')!
     const blocks = msg.content as any[]
     expect(blocks[0].input).toEqual({ x: 1 })
   })
@@ -717,7 +713,7 @@ describe('safeParseToolArguments（通过 buildAnthropicCreateParams 间接测�
         },
       ],
     } as any)
-    const msg = result.messages.find((m) => m.role === 'assistant')
+    const msg = result.messages.find((m) => m.role === 'assistant')!
     const blocks = msg.content as any[]
     // JSON.parse('42') 是 number，不是 object → safeParse 返回 {}
     expect(blocks[0].input).toEqual({})
@@ -734,7 +730,7 @@ describe('safeParseToolArguments（通过 buildAnthropicCreateParams 间接测�
         },
       ],
     } as any)
-    const msg = result.messages.find((m) => m.role === 'assistant')
+    const msg = result.messages.find((m) => m.role === 'assistant')!
     const blocks = msg.content as any[]
     expect(blocks[0].input).toEqual({})
   })
@@ -750,7 +746,7 @@ describe('safeParseToolArguments（通过 buildAnthropicCreateParams 间接测�
         },
       ],
     } as any)
-    const msg = result.messages.find((m) => m.role === 'assistant')
+    const msg = result.messages.find((m) => m.role === 'assistant')!
     const blocks = msg.content as any[]
     expect(blocks[0].input).toEqual({})
   })

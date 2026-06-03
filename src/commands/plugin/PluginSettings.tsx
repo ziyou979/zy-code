@@ -30,7 +30,7 @@ import type { ViewState } from './types.js'
 import { ValidatePlugin } from './ValidatePlugin.js'
 
 type TabId = 'discover' | 'installed' | 'marketplaces' | 'errors'
-function MarketplaceList({ onComplete }) {
+function MarketplaceList({ onComplete }: { onComplete: (result: string) => void }) {
   useEffect(() => {
     const loadList = async function loadList() {
       try {
@@ -371,13 +371,23 @@ function removeExtraMarketplace(
     }
   }
 }
-function ErrorsTabContent({ setViewState, setActiveTab, markPluginsChanged }) {
+function ErrorsTabContent({
+  setViewState,
+  setActiveTab,
+  markPluginsChanged,
+}: {
+  setViewState: (state: ViewState) => void
+  setActiveTab: (tab: TabId) => void
+  markPluginsChanged: () => void
+}) {
   const errors = useAppState((s) => s.plugins.errors)
   const installationStatus = useAppState((state) => state.plugins.installationStatus)
   const setAppState = useSetAppState()
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [actionMessage, setActionMessage] = useState(null)
-  const [marketplaceLoadFailures, setMarketplaceLoadFailures] = useState([])
+  const [actionMessage, setActionMessage] = useState<string | null>(null)
+  const [marketplaceLoadFailures, setMarketplaceLoadFailures] = useState<
+    { name: string; error: string }[]
+  >([])
   useEffect(() => {
     ;(async () => {
       try {
@@ -703,7 +713,15 @@ function getInitialTab(viewState: ViewState): TabId {
   }
   return 'discover'
 }
-export function PluginSettings({ onComplete, args, showMcpRedirectMessage }) {
+export function PluginSettings({
+  onComplete,
+  args,
+  showMcpRedirectMessage,
+}: {
+  onComplete: (result?: string) => void
+  args: string
+  showMcpRedirectMessage?: boolean
+}) {
   const parsedCommand = parsePluginArgs(args)
   const initialViewState = getInitialViewState(parsedCommand)
   const [viewState, setViewState] = useState(initialViewState)
@@ -713,8 +731,8 @@ export function PluginSettings({ onComplete, args, showMcpRedirectMessage }) {
     viewState.type === 'add-marketplace' ? viewState.initialValue || '' : '',
   )
   const [cursorOffset, setCursorOffset] = useState(0)
-  const [error, setError] = useState(null)
-  const [result, setResult] = useState(null)
+  const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<string | null>(null)
   const [childSearchActive, setChildSearchActive] = useState(false)
   const setAppState = useSetAppState()
   const pluginErrorCount = useAppState((s) => {
@@ -745,7 +763,7 @@ export function PluginSettings({ onComplete, args, showMcpRedirectMessage }) {
           },
     )
   }
-  const handleTabChange = (tabId) => {
+  const handleTabChange = (tabId: string) => {
     const tab = tabId as TabId
     setActiveTab(tab)
     setError(null)

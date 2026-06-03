@@ -5,6 +5,7 @@ import type { Command } from '../../commands.js'
 import { BLACK_CIRCLE } from '../../constants/figures.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text, useTheme } from '../../ink.js'
+import type { AppState } from '../../state/AppState.js'
 import { useAppStateMaybeOutsideOfProvider } from '../../state/AppState.js'
 import { findToolByName, type Tool, type ToolProgressData, type Tools } from '../../Tool.js'
 import type { ToolCallBlock } from '../../types/llm.js'
@@ -50,14 +51,14 @@ export function AssistantToolUseMessage({
   const [theme] = useTheme()
   const bg = useSelectedMessageBg()
   const pendingWorkerRequest = useAppStateMaybeOutsideOfProvider(
-    (state) => state.pendingWorkerRequest,
+    (state: AppState) => state.pendingWorkerRequest,
   )
   const isClassifierCheckingRaw = useIsClassifierChecking(param.id)
   const permissionMode = useAppStateMaybeOutsideOfProvider(
-    (state_0) => state_0.toolPermissionContext.mode,
+    (state_0: AppState) => state_0.toolPermissionContext.mode,
   )
   const hasStrippedRules = useAppStateMaybeOutsideOfProvider(
-    (state_1) => !!state_1.toolPermissionContext.strippedDangerousRules,
+    (state_1: AppState) => !!state_1.toolPermissionContext.strippedDangerousRules,
   )
   const isAutoClassifier =
     permissionMode === 'auto' || (permissionMode === 'plan' && hasStrippedRules)

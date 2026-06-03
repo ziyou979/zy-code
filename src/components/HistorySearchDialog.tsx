@@ -27,7 +27,6 @@ type Item = {
   age: string
 }
 export function HistorySearchDialog({ initialQuery, onSelect, onCancel }: Props): React.ReactNode {
-  // @ts-expect-error
   useRegisterOverlay('history-search')
   const { columns } = useTerminalSize()
   const [items, setItems] = useState<Item[] | null>(null)

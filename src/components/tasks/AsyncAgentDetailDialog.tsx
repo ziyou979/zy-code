@@ -38,7 +38,7 @@ export function AsyncAgentDetailDialog({ agent, onDone, onKillAgent, onBack }: P
       context: 'Confirmation',
     },
   )
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: import('../../ink/events/keyboard-event.js').KeyboardEvent) => {
     if (e.key === ' ') {
       e.preventDefault()
       onDone()
@@ -95,20 +95,17 @@ export function AsyncAgentDetailDialog({ agent, onDone, onKillAgent, onBack }: P
       }
     </Text>
   )
+  const recentActivities = agent.progress?.recentActivities
   const progressSection = agent.status === 'running' &&
-    agent.progress?.recentActivities &&
-    agent.progress.recentActivities.length > 0 && (
+    recentActivities &&
+    recentActivities.length > 0 && (
       <Box flexDirection="column">
         <Text bold={true} dimColor={true}>
           {tSync('backgroundTasks.progress')}
         </Text>
-        {agent.progress.recentActivities.map((activity, i) => (
-          <Text
-            key={i}
-            dimColor={i < agent.progress.recentActivities.length - 1}
-            wrap="truncate-end"
-          >
-            {i === agent.progress.recentActivities.length - 1 ? '\u203A ' : '  '}
+        {recentActivities.map((activity, i) => (
+          <Text key={i} dimColor={i < recentActivities.length - 1} wrap="truncate-end">
+            {i === recentActivities.length - 1 ? '\u203A ' : '  '}
             {renderToolActivity(activity, tools, theme)}
           </Text>
         ))}

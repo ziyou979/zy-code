@@ -44,7 +44,7 @@ export function InProcessTeammateDetailDialog({
       context: 'Confirmation',
     },
   )
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: import('../../ink/events/keyboard-event.js').KeyboardEvent) => {
     if (e.key === ' ') {
       e.preventDefault()
       onDone()
@@ -113,20 +113,17 @@ export function InProcessTeammateDetailDialog({
       }
     </Text>
   )
+  const tmRecentActivities = teammate.progress?.recentActivities
   const progressSection = teammate.status === 'running' &&
-    teammate.progress?.recentActivities &&
-    teammate.progress.recentActivities.length > 0 && (
+    tmRecentActivities &&
+    tmRecentActivities.length > 0 && (
       <Box flexDirection="column">
         <Text bold={true} dimColor={true}>
           {tSync('backgroundTasks.progress')}
         </Text>
-        {teammate.progress.recentActivities.map((activity, index) => (
-          <Text
-            key={index}
-            dimColor={index < teammate.progress.recentActivities.length - 1}
-            wrap="truncate-end"
-          >
-            {index === teammate.progress.recentActivities.length - 1 ? '\u203A ' : '  '}
+        {tmRecentActivities.map((activity, index) => (
+          <Text key={index} dimColor={index < tmRecentActivities.length - 1} wrap="truncate-end">
+            {index === tmRecentActivities.length - 1 ? '\u203A ' : '  '}
             {renderToolActivity(activity, tools, theme)}
           </Text>
         ))}

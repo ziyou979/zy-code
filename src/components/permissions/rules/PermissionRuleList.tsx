@@ -68,7 +68,7 @@ function getRuleBehaviorLabel(ruleBehavior: PermissionBehavior): string {
 // Component for showing tool details and managing the interactive deletion workflow
 function RuleDetails({ rule, onDelete, onCancel }: RuleSourceTextProps) {
   const exitState = useExitOnCtrlCDWithKeybindings()
-  useKeybinding('confirm:no', onCancel, {
+  useKeybinding('confirm:no', onCancel ?? (() => {}), {
     context: 'Confirmation',
   })
   const ruleValueString = permissionRuleValueToString(rule.ruleValue)
@@ -140,7 +140,7 @@ function RuleDetails({ rule, onDelete, onCancel }: RuleSourceTextProps) {
           {<Text>{tSync('permission.deletePermissionRule')}</Text>}
           {
             <Select
-              onChange={(_) => (_ === 'yes' ? onDelete() : onCancel())}
+              onChange={(_: string) => (_ === 'yes' ? onDelete?.() : onCancel?.())}
               onCancel={onCancel}
               options={[
                 {
@@ -176,7 +176,7 @@ type RulesTabContentProps = {
 }
 
 // Component for rendering rules tab content with full width support
-function RulesTabContent(props) {
+function RulesTabContent(props: RulesTabContentProps) {
   const {
     options,
     searchQuery,
@@ -242,19 +242,21 @@ function PermissionRulesTab({
       {
         <Text>
           {
-            {
-              allow: tSync('permissionRules.allowedToolsSubtitle'),
-              ask: tSync('permissionRules.askToolsSubtitle'),
-              deny: tSync('permissionRules.deniedToolsSubtitle'),
-            }[tab]
+            (
+              {
+                allow: tSync('permissionRules.allowedToolsSubtitle'),
+                ask: tSync('permissionRules.askToolsSubtitle'),
+                deny: tSync('permissionRules.deniedToolsSubtitle'),
+              } as Record<string, string>
+            )[tab!]
           }
         </Text>
       }
       {
         <TabContentComponent
-          options={rulesOptions.options}
-          onSelect={(v) => handleToolSelect(v, tab)}
           {...rulesProps}
+          options={rulesOptions.options}
+          onSelect={(v: string) => handleToolSelect(v, tab!)}
         />
       }
     </TabContainer>
@@ -276,27 +278,30 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
   const autoModeDenials = getAutoModeDenials()
   const hasDenials = autoModeDenials.length > 0
   const defaultTab = initialTab ?? (hasDenials ? 'recent' : 'allow')
-  const [changes, setChanges] = useState([])
+  const [changes, setChanges] = useState<string[]>([])
   const toolPermissionContext = useAppState((s) => s.toolPermissionContext)
   const setAppState = useSetAppState()
   const isTerminalFocused = useTerminalFocus()
-  const denialStateRef = useRef({
+  const denialStateRef = useRef<any>({
     approved: new Set(),
     retry: new Set(),
     denials: [],
   })
-  const handleDenialStateChange = (newState) => {
+  const handleDenialStateChange = (newState: any) => {
     denialStateRef.current = newState
   }
-  const [selectedRule, setSelectedRule] = useState()
-  const [lastFocusedRuleKey, setLastFocusedRuleKey] = useState()
-  const [addingRuleToTab, setAddingRuleToTab] = useState(null)
-  const [validatedRule, setValidatedRule] = useState(null)
+  const [selectedRule, setSelectedRule] = useState<PermissionRule | undefined>()
+  const [lastFocusedRuleKey, setLastFocusedRuleKey] = useState<string | undefined>()
+  const [addingRuleToTab, setAddingRuleToTab] = useState<TabType | null>(null)
+  const [validatedRule, setValidatedRule] = useState<{
+    ruleValue: any
+    ruleBehavior: PermissionBehavior
+  } | null>(null)
   const [isAddingWorkspaceDirectory, setIsAddingWorkspaceDirectory] = useState(false)
-  const [removingDirectory, setRemovingDirectory] = useState(null)
+  const [removingDirectory, setRemovingDirectory] = useState<string | null>(null)
   const [isSearchMode, setIsSearchMode] = useState(false)
   const [headerFocused, setHeaderFocused] = useState(true)
-  const handleHeaderFocusChange = (focused) => {
+  const handleHeaderFocusChange = (focused: boolean) => {
     setHeaderFocused(focused)
   }
   const allowRulesMap = new Map()
@@ -314,7 +319,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
     askRulesMap.set(jsonStringify(askRule), askRule)
   })
   const askRulesByKey = askRulesMap
-  const getRulesOptions = (tab, searchQueryParam) => {
+  const getRulesOptions = (tab: TabType, searchQueryParam?: string) => {
     const query = searchQueryParam === undefined ? '' : searchQueryParam
     const rulesByKey = (() => {
       switch (tab) {
@@ -386,7 +391,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
       setIsSearchMode(false)
     },
   })
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: import('../../../ink/events/keyboard-event.js').KeyboardEvent) => {
     if (!isSearchModeActive) {
       return
     }
@@ -416,11 +421,8 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
       }
     }
   }
-  const handleToolSelect = (selectedValue, tab) => {
-    const {
-      rulesByKey,
-      // @ts-expect-error
-    } = getRulesOptions(tab)
+  const handleToolSelect = (selectedValue: string, tab: TabType) => {
+    const { rulesByKey } = getRulesOptions(tab)
     if (selectedValue === 'add-new-rule') {
       setAddingRuleToTab(tab)
       return
@@ -432,14 +434,14 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
   const handleRuleInputCancel = () => {
     setAddingRuleToTab(null)
   }
-  const handleRuleInputSubmit = (ruleValue, ruleBehavior) => {
+  const handleRuleInputSubmit = (ruleValue: any, ruleBehavior: PermissionBehavior) => {
     setValidatedRule({
       ruleValue,
       ruleBehavior,
     })
     setAddingRuleToTab(null)
   }
-  const handleAddRulesSuccess = (rules, unreachable) => {
+  const handleAddRulesSuccess = (rules: PermissionRule[], unreachable?: any[]) => {
     setValidatedRule(null)
     for (const rule of rules) {
       setChanges((prev) => [
@@ -465,10 +467,10 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
     setValidatedRule(null)
   }
   const handleRequestAddDirectory = () => setIsAddingWorkspaceDirectory(true)
-  const handleRequestRemoveDirectory = (path) => setRemovingDirectory(path)
+  const handleRequestRemoveDirectory = (path: string) => setRemovingDirectory(path)
   const handleRulesCancel = () => {
     const denialState = denialStateRef.current
-    const denialsFor = (set) =>
+    const denialsFor = (set: Set<any>) =>
       Array.from(set)
         .map((idx) => denialState.denials[idx as any])
         .filter((d) => d !== undefined)
@@ -505,10 +507,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
     if (!selectedRule) {
       return
     }
-    const {
-      options: options_0,
-      // @ts-expect-error
-    } = getRulesOptions((selectedRule as any).ruleBehavior as TabType)
+    const { options: options_0 } = getRulesOptions((selectedRule as any).ruleBehavior as TabType)
     const selectedKey = jsonStringify(selectedRule)
     const ruleKeys = options_0
       .filter((opt) => opt.value !== 'add-new-rule')
@@ -704,7 +703,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
             <Box marginTop={1} paddingLeft={1}>
               <Text dimColor={true}>
                 {exitState.pending ? (
-                  tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })
+                  tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName ?? '' })
                 ) : headerFocused ? (
                   <>←/→ tab switch · ↓ return · Esc cancel</>
                 ) : isSearchMode ? (

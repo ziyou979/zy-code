@@ -1,5 +1,7 @@
 import type { ToolPermissionContext } from '../../Tool.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
+
+const permLog = createDebugLog('permissions')
 import type { PermissionMode } from './PermissionMode.js'
 import {
   getAutoModeUnavailableReason,
@@ -17,7 +19,7 @@ function canCycleToAuto(ctx: ToolPermissionContext): boolean {
   const gateEnabled = isAutoModeGateEnabled()
   const can = !!ctx.isAutoModeAvailable && gateEnabled
   if (!can) {
-    logForDebugging(
+    permLog(
       `[auto-mode] canCycleToAuto=false: ctx.isAutoModeAvailable=${ctx.isAutoModeAvailable} isAutoModeGateEnabled=${gateEnabled} reason=${getAutoModeUnavailableReason()}`,
     )
   }

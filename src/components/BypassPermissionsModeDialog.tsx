@@ -13,7 +13,7 @@ export function BypassPermissionsModeDialog({ onAccept }: Props) {
   React.useEffect(() => {
     logEvent('zy_bypass_permissions_mode_dialog_shown', {})
   }, [])
-  const onChange = function onChange(value) {
+  const onChange = function onChange(value: string) {
     switch (value) {
       case 'accept': {
         logEvent('zy_bypass_permissions_mode_dialog_accept', {})
@@ -64,7 +64,7 @@ export function BypassPermissionsModeDialog({ onAccept }: Props) {
             value: 'accept',
           },
         ]}
-        onChange={(value_0) => onChange(value_0 as 'accept' | 'decline')}
+        onChange={(value_0: string) => onChange(value_0 as 'accept' | 'decline')}
       />
     </Dialog>
   )

@@ -606,8 +606,8 @@ export const PowerShellTool = buildTool({
               fullOutput: progress.fullOutput,
               elapsedTimeSeconds: progress.elapsedTimeSeconds,
               totalLines: progress.totalLines,
-              totalBytes: progress.totalBytes,
-              timeoutMs: progress.timeoutMs,
+              totalBytes: progress.totalBytes ?? 0,
+              timeoutMs: progress.timeoutMs ?? 0,
               taskId: progress.taskId,
             },
           })

@@ -25,7 +25,7 @@ export async function getAllLspServers(): Promise<{
     // Each plugin is independent — results are merged in original order so
     // Object.assign collision precedence (later plugins win) is preserved.
     const results = await Promise.all(
-      plugins.map(async (plugin) => {
+      plugins.map(async (plugin: any) => {
         const errors: PluginError[] = []
         try {
           const scopedServers = await getPluginLspServers(plugin, errors)

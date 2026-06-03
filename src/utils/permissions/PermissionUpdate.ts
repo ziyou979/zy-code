@@ -2,7 +2,9 @@ import { posix } from 'node:path'
 import type { ToolPermissionContext } from '../../Tool.js'
 // Types extracted to src/types/permissions.ts to break import cycles
 import type { AdditionalWorkingDirectory, WorkingDirectorySource } from '../../types/permissions.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
+
+const permLog = createDebugLog('permissions')
 import type { EditableSettingSource } from '../settings/constants.js'
 import { getSettingsForSource, updateSettingsForSource } from '../settings/settings.js'
 import { jsonStringify } from '../slowOperations.js'
@@ -49,7 +51,7 @@ export function applyPermissionUpdate(
 ): ToolPermissionContext {
   switch (update.type) {
     case 'setMode':
-      logForDebugging(`Applying permission update: Setting mode to '${update.mode}'`)
+      permLog(`Applying permission update: Setting mode to '${update.mode}'`)
       return {
         ...context,
         mode: update.mode,
@@ -57,7 +59,7 @@ export function applyPermissionUpdate(
 
     case 'addRules': {
       const ruleStrings = update.rules.map((rule) => permissionRuleValueToString(rule))
-      logForDebugging(
+      permLog(
         `Applying permission update: Adding ${update.rules.length} ${update.behavior} rule(s) to destination '${update.destination}': ${jsonStringify(ruleStrings)}`,
       )
 
@@ -80,7 +82,7 @@ export function applyPermissionUpdate(
 
     case 'replaceRules': {
       const ruleStrings = update.rules.map((rule) => permissionRuleValueToString(rule))
-      logForDebugging(
+      permLog(
         `Replacing all ${update.behavior} rules for destination '${update.destination}' with ${update.rules.length} rule(s): ${jsonStringify(ruleStrings)}`,
       )
 
@@ -102,7 +104,7 @@ export function applyPermissionUpdate(
     }
 
     case 'addDirectories': {
-      logForDebugging(
+      permLog(
         `Applying permission update: Adding ${update.directories.length} director${update.directories.length === 1 ? 'y' : 'ies'} with destination '${update.destination}': ${jsonStringify(update.directories)}`,
       )
       const newAdditionalDirs = new Map(context.additionalWorkingDirectories)
@@ -120,7 +122,7 @@ export function applyPermissionUpdate(
 
     case 'removeRules': {
       const ruleStrings = update.rules.map((rule) => permissionRuleValueToString(rule))
-      logForDebugging(
+      permLog(
         `Applying permission update: Removing ${update.rules.length} ${update.behavior} rule(s) from source '${update.destination}': ${jsonStringify(ruleStrings)}`,
       )
 
@@ -147,7 +149,7 @@ export function applyPermissionUpdate(
     }
 
     case 'removeDirectories': {
-      logForDebugging(
+      permLog(
         `Applying permission update: Removing ${update.directories.length} director${update.directories.length === 1 ? 'y' : 'ies'}: ${jsonStringify(update.directories)}`,
       )
       const newAdditionalDirs = new Map(context.additionalWorkingDirectories)
@@ -202,11 +204,11 @@ export function persistPermissionUpdate(update: PermissionUpdate): void {
     return
   }
 
-  logForDebugging(`Persisting permission update: ${update.type} to source '${update.destination}'`)
+  permLog(`Persisting permission update: ${update.type} to source '${update.destination}'`)
 
   switch (update.type) {
     case 'addRules': {
-      logForDebugging(
+      permLog(
         `Persisting ${update.rules.length} ${update.behavior} rule(s) to ${update.destination}`,
       )
       addPermissionRulesToSettings(
@@ -220,7 +222,7 @@ export function persistPermissionUpdate(update: PermissionUpdate): void {
     }
 
     case 'addDirectories': {
-      logForDebugging(
+      permLog(
         `Persisting ${update.directories.length} director${update.directories.length === 1 ? 'y' : 'ies'} to ${update.destination}`,
       )
       const existingSettings = getSettingsForSource(update.destination)
@@ -242,7 +244,7 @@ export function persistPermissionUpdate(update: PermissionUpdate): void {
 
     case 'removeRules': {
       // Handle rule removal
-      logForDebugging(
+      permLog(
         `Removing ${update.rules.length} ${update.behavior} rule(s) from ${update.destination}`,
       )
       const existingSettings = getSettingsForSource(update.destination)
@@ -266,7 +268,7 @@ export function persistPermissionUpdate(update: PermissionUpdate): void {
     }
 
     case 'removeDirectories': {
-      logForDebugging(
+      permLog(
         `Removing ${update.directories.length} director${update.directories.length === 1 ? 'y' : 'ies'} from ${update.destination}`,
       )
       const existingSettings = getSettingsForSource(update.destination)
@@ -285,7 +287,7 @@ export function persistPermissionUpdate(update: PermissionUpdate): void {
     }
 
     case 'setMode': {
-      logForDebugging(`Persisting mode '${update.mode}' to ${update.destination}`)
+      permLog(`Persisting mode '${update.mode}' to ${update.destination}`)
       updateSettingsForSource(update.destination, {
         permissions: {
           defaultMode: update.mode,
@@ -295,7 +297,7 @@ export function persistPermissionUpdate(update: PermissionUpdate): void {
     }
 
     case 'replaceRules': {
-      logForDebugging(
+      permLog(
         `Replacing all ${update.behavior} rules in ${update.destination} with ${update.rules.length} rule(s)`,
       )
       const ruleStrings = update.rules.map(permissionRuleValueToString)

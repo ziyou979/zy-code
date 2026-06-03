@@ -34,7 +34,7 @@
         "useBlockStatements": "error"
       },
       "suspicious": {
-        "noExplicitAny": "off",
+        "noExplicitAny": "warn",
         "noAssignInExpressions": "off"
       },
       "complexity": {

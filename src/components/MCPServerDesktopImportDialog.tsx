@@ -18,7 +18,7 @@ type Props = {
 }
 export function MCPServerDesktopImportDialog({ servers, scope, onDone }: Props) {
   const serverNames = Object.keys(servers)
-  const [existingServers, setExistingServers] = useState({})
+  const [existingServers, setExistingServers] = useState<Record<string, any>>({})
   useEffect(() => {
     getAllMcpConfigs().then((existingConfigs) => {
       const { servers: existingServerConfigs } = existingConfigs
@@ -26,7 +26,7 @@ export function MCPServerDesktopImportDialog({ servers, scope, onDone }: Props) 
     })
   }, [])
   const collisions = serverNames.filter((name) => existingServers[name] !== undefined)
-  const onSubmit = async function onSubmit(selectedServers) {
+  const onSubmit = async function onSubmit(selectedServers: string[]) {
     let importedCount = 0
     for (const serverName of selectedServers) {
       const serverConfig = servers[serverName]
@@ -46,8 +46,8 @@ export function MCPServerDesktopImportDialog({ servers, scope, onDone }: Props) 
     done(importedCount)
   }
   const [theme] = useTheme()
-  let done
-  done = (importedCount) => {
+  let done!: (importedCount: number) => void
+  done = (importedCount: number) => {
     if (importedCount > 0) {
       writeToStdout(
         `\n${color('success', theme)(tSync('mcp.importSuccess', { count: importedCount, unit: tSync(importedCount === 1 ? 'mcp.importServer_one' : 'mcp.importServer_other'), scope }))}\n`,

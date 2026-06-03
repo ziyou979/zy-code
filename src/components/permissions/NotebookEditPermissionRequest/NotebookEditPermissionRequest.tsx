@@ -8,8 +8,10 @@ import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDial
 import { NotebookEditToolDiff } from './NotebookEditToolDiff.js'
 
 type NotebookEditInput = z.infer<typeof NotebookEditTool.inputSchema>
-export function NotebookEditPermissionRequest(props) {
-  const parseInput = (input) => {
+export function NotebookEditPermissionRequest(
+  props: import('../PermissionRequest.js').PermissionRequestProps,
+) {
+  const parseInput = (input: unknown) => {
     const result = NotebookEditTool.inputSchema.safeParse(input)
     if (!result.success) {
       logError(new Error(`Failed to parse notebook edit input: ${result.error.message}`))

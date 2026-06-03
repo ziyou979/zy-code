@@ -14,9 +14,11 @@ import { PermissionPrompt } from '../PermissionPrompt.js'
 import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js'
 
 type SkillOptionValue = 'yes' | 'yes-exact' | 'yes-prefix' | 'no'
-export function SkillPermissionRequest(props) {
+export function SkillPermissionRequest(
+  props: import('../PermissionRequest.js').PermissionRequestProps,
+) {
   const { toolUseConfirm, onDone, onReject, workerBadge } = props
-  const parseInput = (input) => {
+  const parseInput = (input: unknown) => {
     const result = SkillTool.inputSchema.safeParse(input)
     if (!result.success) {
       logError(new Error(`Failed to parse skill tool input: ${result.error.message}`))
@@ -84,7 +86,7 @@ export function SkillPermissionRequest(props) {
     toolName: sanitizedToolName,
     isMcp: toolUseConfirm.tool.isMcp ?? false,
   }
-  const handleSelect = (value, feedback) => {
+  const handleSelect = (value: string, feedback?: string) => {
     switch (value) {
       case 'yes': {
         logUnaryEvent({
@@ -92,7 +94,7 @@ export function SkillPermissionRequest(props) {
           event: 'accept',
           metadata: {
             language_name: 'none',
-            message_id: toolUseConfirm.assistantMessage.message.id,
+            message_id: toolUseConfirm.assistantMessage.message.id ?? '',
             platform: env.platform,
           },
         })
@@ -106,7 +108,7 @@ export function SkillPermissionRequest(props) {
           event: 'accept',
           metadata: {
             language_name: 'none',
-            message_id: toolUseConfirm.assistantMessage.message.id,
+            message_id: toolUseConfirm.assistantMessage.message.id ?? '',
             platform: env.platform,
           },
         })
@@ -132,7 +134,7 @@ export function SkillPermissionRequest(props) {
           event: 'accept',
           metadata: {
             language_name: 'none',
-            message_id: toolUseConfirm.assistantMessage.message.id,
+            message_id: toolUseConfirm.assistantMessage.message.id ?? '',
             platform: env.platform,
           },
         })
@@ -160,7 +162,7 @@ export function SkillPermissionRequest(props) {
           event: 'reject',
           metadata: {
             language_name: 'none',
-            message_id: toolUseConfirm.assistantMessage.message.id,
+            message_id: toolUseConfirm.assistantMessage.message.id ?? '',
             platform: env.platform,
           },
         })
@@ -176,7 +178,7 @@ export function SkillPermissionRequest(props) {
       event: 'reject',
       metadata: {
         language_name: 'none',
-        message_id: toolUseConfirm.assistantMessage.message.id,
+        message_id: toolUseConfirm.assistantMessage.message.id ?? '',
         platform: env.platform,
       },
     })
@@ -206,7 +208,7 @@ export function SkillPermissionRequest(props) {
           }
           {
             <PermissionPrompt
-              options={options}
+              options={options as import('../PermissionPrompt.js').PermissionPromptOption<string>[]}
               onSelect={handleSelect}
               onCancel={handleCancel}
               toolAnalyticsContext={toolAnalyticsContext}

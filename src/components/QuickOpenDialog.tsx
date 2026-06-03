@@ -26,14 +26,13 @@ const PREVIEW_LINES = 20
  * Fuzzy file finder with a syntax-highlighted preview of the focused file.
  */
 export function QuickOpenDialog({ onDone, onInsert }: Props) {
-  // @ts-expect-error
   useRegisterOverlay('quick-open')
   const { columns, rows } = useTerminalSize()
   const visibleResults = Math.min(VISIBLE_RESULTS, Math.max(4, rows - 14))
-  const [results, setResults] = useState([])
+  const [results, setResults] = useState<string[]>([])
   const [query, setQuery] = useState('')
-  const [focusedPath, setFocusedPath] = useState(undefined)
-  const [preview, setPreview] = useState(null)
+  const [focusedPath, setFocusedPath] = useState<string | undefined>(undefined)
+  const [preview, setPreview] = useState<{ path: string; content: string } | null>(null)
   const queryGenRef = useRef(0)
   useEffect(
     () => () => {
@@ -44,7 +43,7 @@ export function QuickOpenDialog({ onDone, onInsert }: Props) {
   )
   const previewOnRight = columns >= 120
   const effectivePreviewLines = previewOnRight ? VISIBLE_RESULTS - 1 : PREVIEW_LINES
-  const handleQueryChange = (q) => {
+  const handleQueryChange = (q: string) => {
     setQuery(q)
     const gen = (queryGenRef.current = queryGenRef.current + 1)
     if (!q.trim()) {
@@ -95,7 +94,7 @@ export function QuickOpenDialog({ onDone, onInsert }: Props) {
     ? Math.max(20, Math.floor((columns - 10) * 0.4))
     : Math.max(20, columns - 8)
   const previewWidth = previewOnRight ? Math.max(40, columns - maxPathWidth - 14) : columns - 6
-  const handleOpen = (p_1) => {
+  const handleOpen = (p_1: string) => {
     const opened = openFileInExternalEditor(path.resolve(getCwd(), p_1))
     logEvent('zy_quick_open_select', {
       result_count: results.length,
@@ -103,7 +102,7 @@ export function QuickOpenDialog({ onDone, onInsert }: Props) {
     })
     onDone()
   }
-  const handleInsert = (p_2, mention) => {
+  const handleInsert = (p_2: string, mention: boolean) => {
     onInsert(mention ? `@${p_2} ` : `${p_2} `)
     logEvent('zy_quick_open_insert', {
       result_count: results.length,

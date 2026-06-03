@@ -74,12 +74,12 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
       ] as any,
     } as any)
     expect(result.tools).toHaveLength(2)
-    expect(result.tools[0]).toEqual({
+    expect(result.tools![0]).toEqual({
       name: 't1',
       description: 'desc1',
       input_schema: { type: 'object', properties: { a: { type: 'string' } } },
     })
-    expect(result.tools[1]).toEqual({
+    expect(result.tools![1]).toEqual({
       name: 't2',
       description: 'desc2',
       input_schema: { type: 'object', properties: { b: { type: 'number' } } },

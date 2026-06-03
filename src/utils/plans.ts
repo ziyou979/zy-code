@@ -76,8 +76,7 @@ export function clearAllPlanSlugs(): void {
 // and permission checks. Inputs (initial settings + cwd) are fixed at startup, so the
 // mkdirSync result is stable for the session. Without memoization, each rendered tool
 // message triggers a mkdirSync syscall (regressed in #20005).
-export let getPlansDirectory
-getPlansDirectory = memoize(function getPlansDirectory(): string {
+export const getPlansDirectory = memoize(function getPlansDirectory(): string {
   const settings = getInitialSettings()
   const settingsDir = settings.plansDirectory
   let plansPath: string

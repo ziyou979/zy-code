@@ -46,7 +46,6 @@ export type SpinnerAnimationRowProps = {
   foregroundedTeammate: InProcessTeammateTaskState | undefined
   /** Leader's turn has completed. Suppresses stall-red since responseLengthRef/hasActiveTools track leader state only. */
   leaderIsIdle?: boolean
-
 }
 
 /**
@@ -177,7 +176,9 @@ export function SpinnerAnimationRow({
   const availableSpace = columns - messageWidth - 5
   const showTimer = wantsTimerAndTokens && availableSpace > timerWidth
   const showTokens =
-    wantsTimerAndTokens && totalTokens > 0 && availableSpace > (showTimer ? timerWidth + sep : 0) + tokensWidth
+    wantsTimerAndTokens &&
+    totalTokens > 0 &&
+    availableSpace > (showTimer ? timerWidth + sep : 0) + tokensWidth
 
   // === Build status parts ===
   const parts = [

@@ -13,7 +13,7 @@ export function PromptStep() {
   const { goNext, goBack, updateWizardData, wizardData } = useWizard()
   const [systemPrompt, setSystemPrompt] = useState((wizardData.systemPrompt as any) || '')
   const [cursorOffset, setCursorOffset] = useState((systemPrompt as any).length)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
   useKeybinding('confirm:no', goBack, {
     context: 'Settings',
   })

@@ -13,7 +13,7 @@ export function DescriptionStep() {
   const { goNext, goBack, updateWizardData, wizardData } = useWizard()
   const [whenToUse, setWhenToUse] = useState<string>((wizardData.whenToUse || '') as string)
   const [cursorOffset, setCursorOffset] = useState(whenToUse.length)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
   useKeybinding('confirm:no', goBack, {
     context: 'Settings',
   })
@@ -27,7 +27,7 @@ export function DescriptionStep() {
   useKeybinding('chat:externalEditor', handleExternalEditor, {
     context: 'Chat',
   })
-  const handleSubmit = (value) => {
+  const handleSubmit = (value: string) => {
     const trimmedValue = value.trim()
     if (!trimmedValue) {
       setError(tSync('wizard.descriptionRequired'))

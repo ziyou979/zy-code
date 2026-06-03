@@ -232,7 +232,7 @@ export function Select({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [inputValues, setInputValues] = useState(() => {
     const initialMap = new Map()
-    options.forEach((option) => {
+    options.forEach((option: any) => {
       if (option.type === 'input' && option.initialValue) {
         initialMap.set(option.value, option.initialValue)
       }
@@ -294,10 +294,10 @@ export function Select({
       return false
     },
   })
-  let BoxComponent
+  let BoxComponent!: typeof Box
   let containerResult
   let mappedItems
-  let earlyReturn
+  let earlyReturn: React.ReactNode | symbol
   earlyReturn = Symbol.for('react.early_return_sentinel')
   const styles = {
     container: () => ({
@@ -811,7 +811,7 @@ export function Select({
     }
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   return <BoxComponent {...containerResult}>{mappedItems}</BoxComponent>
 }

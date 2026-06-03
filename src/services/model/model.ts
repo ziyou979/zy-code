@@ -179,13 +179,13 @@ export function parseUserSpecifiedModel(modelInput: ModelName | ModelAlias): Mod
 
   // 直接解析 tier 别名到对应模型
   if (normalizedModel === 'advanced') {
-    return getModelByTier('advanced')
+    return getModelByTier('advanced') ?? modelInputTrimmed
   }
   if (normalizedModel === 'standard') {
-    return getModelByTier('standard')
+    return getModelByTier('standard') ?? modelInputTrimmed
   }
   if (normalizedModel === 'compact') {
-    return getModelByTier('compact')
+    return getModelByTier('compact') ?? modelInputTrimmed
   }
 
   // 从 settings 中解析自定义模型别名

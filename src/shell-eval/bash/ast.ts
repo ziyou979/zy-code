@@ -2354,7 +2354,7 @@ const READ_DATA_FLAGS = new Set(['-p', '-d', '-n', '-N', '-t', '-u', '-i'])
 
 // Use `.*` not `[^/]*` — Linux resolves `..` in procfs, so
 // `/proc/self/../self/environ` works and must be caught.
-let PROC_ENVIRON_RE
+let PROC_ENVIRON_RE: RegExp
 PROC_ENVIRON_RE = /\/proc\/.*\/environ/
 
 /**
@@ -2362,7 +2362,7 @@ PROC_ENVIRON_RE = /\/proc\/.*\/environ/
  * Downstream stripSafeWrappers re-tokenizes .text line-by-line and treats `#`
  * after a newline as a comment, hiding arguments that follow.
  */
-let NEWLINE_HASH_RE
+let NEWLINE_HASH_RE: RegExp
 NEWLINE_HASH_RE = /\n[ \t]*#/
 
 export type SemanticCheckResult = { ok: true } | { ok: false; reason: string }

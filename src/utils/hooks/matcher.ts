@@ -5,7 +5,7 @@ import type { HookEvent, HookInput } from 'src/types/index.js'
 import { getRegisteredHooks } from '../../bootstrap/state.js'
 import type { AppState } from '../../state/AppState.js'
 import { findToolByName, type Tools } from '../../Tool.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import {
   getLegacyToolNames,
   normalizeLegacyToolName,
@@ -25,6 +25,8 @@ import {
   getSessionHooks,
   type SessionDerivedHookMatcher,
 } from './sessionHooks.js'
+
+const hookLog = createDebugLog('hooks')
 
 function matchesPattern(matchQuery: string, matcher: string): boolean {
   if (!matcher || matcher === '*') {
@@ -56,7 +58,7 @@ function matchesPattern(matchQuery: string, matcher: string): boolean {
     return false
   } catch {
     // 如果正则表达式无效，记录错误并返回 false
-    logForDebugging(`Invalid regex pattern in hook matcher: ${matcher}`)
+    hookLog(`Invalid regex pattern in hook matcher: ${matcher}`)
     return false
   }
 }
@@ -348,10 +350,10 @@ export async function getMatchingHooks(
         break
     }
 
-    logForDebugging(`Getting matching hook commands for ${hookEvent} with query: ${matchQuery}`, {
+    hookLog(`Getting matching hook commands for ${hookEvent} with query: ${matchQuery}`, {
       level: 'verbose',
     })
-    logForDebugging(`Found ${hookMatchers.length} hook matchers in settings`, {
+    hookLog(`Found ${hookMatchers.length} hook matchers in settings`, {
       level: 'verbose',
     })
 
@@ -517,7 +519,7 @@ export async function getMatchingHooks(
         return true
       }
       if (!ifMatcher) {
-        logForDebugging(
+        hookLog(
           `Hook if condition "${ifCondition}" cannot be evaluated for non-tool event ${hookInput.hook_event_name}`,
         )
         return false
@@ -525,7 +527,7 @@ export async function getMatchingHooks(
       if (ifMatcher(ifCondition)) {
         return true
       }
-      logForDebugging(`Skipping hook due to if condition "${ifCondition}" not matching`)
+      hookLog(`Skipping hook due to if condition "${ifCondition}" not matching`)
       return false
     })
 
@@ -536,7 +538,7 @@ export async function getMatchingHooks(
       hookEvent === 'SessionStart' || hookEvent === 'Setup'
         ? ifFilteredHooks.filter((h) => {
             if (h.hook.type === 'http') {
-              logForDebugging(
+              hookLog(
                 `Skipping HTTP hook ${(h.hook as { url: string }).url} — HTTP hooks are not supported for ${hookEvent}`,
               )
               return false
@@ -545,7 +547,7 @@ export async function getMatchingHooks(
           })
         : ifFilteredHooks
 
-    logForDebugging(
+    hookLog(
       `Matched ${filteredHooks.length} unique hooks for query "${matchQuery || 'no match query'}" (${matchedHooks.length} before deduplication)`,
       { level: 'verbose' },
     )

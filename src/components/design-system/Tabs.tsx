@@ -102,7 +102,7 @@ export function Tabs({
     return () => setOptInCount((n_0) => n_0 - 1)
   }
   const optedIn = optInCount > 0
-  const handleTabChange = (offset) => {
+  const handleTabChange = (offset: number) => {
     const newIndex = (selectedTabIndex + tabs.length + offset) % tabs.length
     const newTabId = tabs[newIndex]?.[0]
     if (isControlled && onTabChange && newTabId) {
@@ -122,7 +122,7 @@ export function Tabs({
       isActive: !hidden && !disableNavigation && headerFocused,
     },
   )
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: { key: string; preventDefault: () => void }) => {
     if (!headerFocused || !optedIn || hidden) {
       return
     }

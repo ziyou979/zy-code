@@ -91,16 +91,20 @@ export function buildSessionContext(): ComputerUseSessionContext {
     // `_dialogSignal`（工具完成后关闭对话框）在这里不相关：`setToolJSX` 会阻塞工具调用，
     // 因此对话框不会超出其存活时间。Ctrl+C 才是关键，
     // `runPermissionDialog` 从每调用 ref 的 abortController 中连接。
-    onPermissionRequest: (req, _dialogSignal) => runPermissionDialog(req),
+    onPermissionRequest: (req: CuPermissionRequest, _dialogSignal: AbortSignal) =>
+      runPermissionDialog(req),
     // 包负责合并（去重复 + 指定为真的标志）。我们只需持久化。
-    onAllowedAppsChanged: (apps, flags) =>
+    onAllowedAppsChanged: (
+      apps: readonly { bundleId: string; displayName: string; grantedAt: number }[],
+      flags: { clipboardRead: boolean; clipboardWrite: boolean; systemKeyCombos: boolean },
+    ) =>
       tuc().setAppState((prev) => {
         const cu = prev.computerUseMcpState
         const prevApps = cu?.allowedApps
         const prevFlags = cu?.grantFlags
         const sameApps =
           prevApps?.length === apps.length &&
-          apps.every((a, i) => prevApps[i]?.bundleId === a.bundleId)
+          apps.every((a, i) => prevApps![i]?.bundleId === a.bundleId)
         const sameFlags =
           prevFlags?.clipboardRead === flags.clipboardRead &&
           prevFlags?.clipboardWrite === flags.clipboardWrite &&
@@ -116,14 +120,14 @@ export function buildSessionContext(): ComputerUseSessionContext {
               },
             }
       }),
-    onAppsHidden: (ids) => {
+    onAppsHidden: (ids: string[]) => {
       if (ids.length === 0) {
         return
       }
       tuc().setAppState((prev) => {
         const cu = prev.computerUseMcpState
         const existing = cu?.hiddenDuringTurn
-        if (existing && ids.every((id) => existing.has(id))) {
+        if (existing && ids.every((id: string) => existing.has(id))) {
           return prev
         }
         return {
@@ -139,13 +143,13 @@ export function buildSessionContext(): ComputerUseSessionContext {
     // （已 pin 的显示器拔出）——pin 语义上已失效，清除它
     // 和 app-set 键，下次进行追踪链。当 autoResolve 为 true 时，
     // onDisplayResolvedForApps 会在同一节拍重新设置该键。
-    onResolvedDisplayUpdated: (id) =>
+    onResolvedDisplayUpdated: (id: number) =>
       tuc().setAppState((prev) => {
         const cu = prev.computerUseMcpState
         if (
           cu?.selectedDisplayId === id &&
-          !cu.displayPinnedByModel &&
-          cu.displayResolvedForApps === undefined
+          !cu?.displayPinnedByModel &&
+          cu?.displayResolvedForApps === undefined
         ) {
           return prev
         }
@@ -161,7 +165,7 @@ export function buildSessionContext(): ComputerUseSessionContext {
       }),
     // switch_display(name) 会 pin ；switch_display("auto") 会 unpin 并清除
     // app-set 键，下一次截图自动重新解析。
-    onDisplayPinned: (id) =>
+    onDisplayPinned: (id: number | undefined) =>
       tuc().setAppState((prev) => {
         const cu = prev.computerUseMcpState
         const pinned = id !== undefined
@@ -183,7 +187,7 @@ export function buildSessionContext(): ComputerUseSessionContext {
           },
         }
       }),
-    onDisplayResolvedForApps: (key) =>
+    onDisplayResolvedForApps: (key: string | undefined) =>
       tuc().setAppState((prev) => {
         const cu = prev.computerUseMcpState
         if (cu?.displayResolvedForApps === key) {
@@ -197,7 +201,15 @@ export function buildSessionContext(): ComputerUseSessionContext {
           },
         }
       }),
-    onScreenshotCaptured: (dims) =>
+    onScreenshotCaptured: (dims: {
+      width: number
+      height: number
+      displayWidth: number
+      displayHeight: number
+      displayId?: number
+      originX?: number
+      originY?: number
+    }) =>
       tuc().setAppState((prev) => {
         const cu = prev.computerUseMcpState
         const p = cu?.lastScreenshotDims
@@ -311,7 +323,7 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
     // 类型也允许 audio/resource，但 CU 的 handleToolCall 永远不会发出
     // 这些；默写将它们强制转换为空文本。
     const data = Array.isArray(result.content)
-      ? result.content.map((item) =>
+      ? result.content.map((item: any) =>
           item.type === 'image'
             ? {
                 type: 'image' as const,

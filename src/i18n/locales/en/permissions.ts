@@ -148,6 +148,8 @@ export const enPermissions: TranslationResource = {
   'permission.autoApproved': 'Auto-approved',
   'permission.bashCommand': 'Bash command',
   'permission.bashCommandUnsandboxed': 'Bash command (unsandboxed)',
+  'permission.allowedByAutoModeClassifier': 'Allowed by auto mode classifier',
+  'permission.autoApprovedMatched': 'Auto-approved · matched "{rule}"',
   'permission.cancel': 'cancel',
   'permission.classifierDescriptionPlaceholder': 'describe what to allow...',
   'permission.commaAnd': ', and',
@@ -158,6 +160,8 @@ export const enPermissions: TranslationResource = {
   'permission.ctrlEToExplain': 'ctrl+e to {explain}',
   'permission.ctrlEToHide': 'ctrl+e to {hide}',
   'permission.deleteAllowedTool': 'Delete allowed tool?',
+  'permission.deniedByAutoModeClassifier':
+    'Denied by auto mode classifier {bullet} /feedback if incorrect',
   'permission.deleteAskTool': 'Delete ask tool?',
   'permission.deleteCellFrom': 'delete this cell from',
   'permission.deleteDeniedTool': 'Delete denied tool?',

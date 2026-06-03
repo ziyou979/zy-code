@@ -380,7 +380,7 @@ export function normalizeContentFromAPI(
           if (parsed === null && block.input.length > 0) {
             // TET/FC-v3 诊断：流式 tool 输入 JSON 解析失败。回退到 {}。
             logEvent('zy_tool_input_json_parse_fail', {
-              toolName: sanitizeToolNameForAnalytics(block.name),
+              toolName: sanitizeToolNameForAnalytics(block.name ?? ''),
               inputLen: block.input.length,
             })
             if (isInternalBuild()) {
@@ -396,7 +396,7 @@ export function normalizeContentFromAPI(
 
         // 应用 tool-specific 修正
         if (typeof normalizedInput === 'object' && normalizedInput !== null) {
-          const tool = findToolByName(tools, block.name)
+          const tool = findToolByName(tools, block.name ?? '')
           if (tool) {
             try {
               normalizedInput = normalizeToolInput(

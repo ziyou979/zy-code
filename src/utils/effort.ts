@@ -235,7 +235,9 @@ export function parseEffortValue(value: unknown): EffortValue | undefined {
 /**
  * orchestrate 是会话模式标记，不可持久化到 settings.json。
  */
-export function toPersistableEffort(value: EffortValue | undefined): PersistableEffortLevel | undefined {
+export function toPersistableEffort(
+  value: EffortValue | undefined,
+): PersistableEffortLevel | undefined {
   if (
     value === 'quick' ||
     value === 'light' ||

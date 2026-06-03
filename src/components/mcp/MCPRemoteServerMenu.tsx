@@ -730,7 +730,7 @@ export function MCPRemoteServerMenu({
           <Box marginTop={1}>
             <Select
               options={menuOptions}
-              onChange={async (value_0) => {
+              onChange={async (value_0: string) => {
                 switch (value_0) {
                   case 'tools':
                     onViewTools()
@@ -787,7 +787,7 @@ export function MCPRemoteServerMenu({
       <Box marginTop={1}>
         <Text dimColor italic>
           {exitState.pending ? (
-            tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })
+            tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName ?? '' })
           ) : (
             <Byline>
               <KeyboardShortcutHint shortcut="↑↓" action="navigate" />

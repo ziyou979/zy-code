@@ -193,7 +193,7 @@ function StatusbarPreview({ modules }: { modules: readonly ModuleConfig[] }): Re
     messages: [],
     mainLoopModel,
     effortValue,
-    thinkingEnabled,
+    thinkingEnabled: thinkingEnabled ?? false,
     branch: 'main',
     gitClean: true,
     memoryRss: 312 * 1024 * 1024,

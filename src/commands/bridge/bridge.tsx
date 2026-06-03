@@ -118,7 +118,6 @@ function WireToggle({ onDone, name }: Props) {
  */
 
 function WireDisconnectDialog({ onDone }: Props) {
-  // @ts-expect-error
   useRegisterOverlay('bridge-disconnect-dialog')
   const setAppState = useSetAppState()
   const sessionUrl = useAppState((s) => s.replWireSessionUrl)

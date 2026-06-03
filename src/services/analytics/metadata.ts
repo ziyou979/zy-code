@@ -693,7 +693,7 @@ function buildProcessMetrics(): ProcessMetrics | undefined {
 export async function getEventMetadata(
   options: EnrichMetadataOptions = {},
 ): Promise<EventMetadata> {
-  const model = options.model ? String(options.model) : getMainLoopModel()
+  const model = options.model ? String(options.model) : (getMainLoopModel() ?? '')
   const betas = typeof options.betas === 'string' ? options.betas : getModelBetas(model).join(',')
   const [envContext, repoRemoteHash] = await Promise.all([buildEnvContext(), getRepoRemoteHash()])
   const processMetrics = buildProcessMetrics()

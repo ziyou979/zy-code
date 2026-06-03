@@ -121,9 +121,9 @@ export interface ReplMainViewProps {
   replStore: ReplStoreInstance
   // Screen state
   screen: Screen
-  setScreen: (s: Screen) => void
+  setScreen: React.Dispatch<React.SetStateAction<Screen>>
   showAllInTranscript: boolean
-  setShowAllInTranscript: (v: boolean) => void
+  setShowAllInTranscript: React.Dispatch<React.SetStateAction<boolean>>
   // Keybinding flags
   titleIsAnimating: boolean
   terminalTitle: string
@@ -139,7 +139,7 @@ export interface ReplMainViewProps {
   inputValue: string
   setInputValue: (v: string) => void
   inputMode: PromptInputMode
-  setInputMode: (v: PromptInputMode) => void
+  setInputMode: React.Dispatch<React.SetStateAction<PromptInputMode>>
   stashedPrompt:
     | { text: string; cursorOffset: number; pastedContents: Record<number, PastedContent> }
     | undefined
@@ -149,7 +149,7 @@ export interface ReplMainViewProps {
       | undefined,
   ) => void
   pastedContents: Record<number, PastedContent>
-  setPastedContents: (v: Record<number, PastedContent>) => void
+  setPastedContents: React.Dispatch<React.SetStateAction<Record<number, PastedContent>>>
   vimMode: VimMode
   setVimMode: (v: VimMode) => void
   showBashesDialog: string | boolean
@@ -157,7 +157,7 @@ export interface ReplMainViewProps {
   isSearchingHistory: boolean
   setIsSearchingHistory: (v: boolean) => void
   isHelpOpen: boolean
-  setIsHelpOpen: (v: boolean) => void
+  setIsHelpOpen: React.Dispatch<React.SetStateAction<boolean>>
   insertTextRef: React.RefObject<{
     insert: (text: string) => void
     setInputWithCursor: (value: string, cursor: number) => void
@@ -167,7 +167,7 @@ export interface ReplMainViewProps {
   scrollRef: React.RefObject<ScrollBoxHandle | null>
   modalScrollRef: React.RefObject<ScrollBoxHandle | null>
   composedOnScroll: (sticky: boolean, handle: ScrollBoxHandle) => void
-  dividerYRef: React.MutableRefObject<number>
+  dividerYRef: React.RefObject<number | null>
   unseenDivider: ReturnType<typeof computeUnseenDivider>
   jumpToNew: (handle: ScrollBoxHandle | null) => void
   repinScroll: () => void

@@ -17,7 +17,7 @@ export function renderToolResultMessage(
 ): React.ReactNode {
   return (
     <Box flexDirection="column">
-      <Text>{tSync('toolEnterWorktree.switched', { branch: output.worktreeBranch })}</Text>
+      <Text>{tSync('toolEnterWorktree.switched', { branch: output.worktreeBranch ?? '' })}</Text>
       <Text dimColor>{output.worktreePath}</Text>
     </Box>
   )

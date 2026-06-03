@@ -25,7 +25,7 @@ export function TeleportError({
   onComplete,
   errorsToIgnore = EMPTY_ERRORS_TO_IGNORE,
 }: TeleportErrorProps) {
-  const [currentError, setCurrentError] = useState(null)
+  const [currentError, setCurrentError] = useState<string | null>(null)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
   const checkErrors = async () => {
     const currentErrors = await getTeleportErrors()
@@ -57,7 +57,7 @@ export function TeleportError({
   const handleLoginWithZyAI = () => {
     setIsLoggingIn(true)
   }
-  const handleLoginDialogSelect = (value) => {
+  const handleLoginDialogSelect = (value: string) => {
     if (value === 'login') {
       handleLoginWithZyAI()
     } else {

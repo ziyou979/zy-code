@@ -79,6 +79,7 @@ export type FileWriteToolInput = InputSchema
 
 export const FileWriteTool = buildTool({
   name: FILE_WRITE_TOOL_NAME,
+  briefStandalone: true,
   searchHint: 'create or overwrite files',
   maxResultSizeChars: 100_000,
   strict: true,
@@ -236,7 +237,7 @@ export const FileWriteTool = buildTool({
       // Backup captures pre-edit content — safe to call before the staleness
       // check (idempotent v1 backup keyed on content hash; if staleness fails
       // later we just have an unused backup, not corrupt state).
-      await fileHistoryTrackEdit(updateFileHistoryState, fullFilePath, parentMessage.uuid as any)
+      await fileHistoryTrackEdit(updateFileHistoryState, fullFilePath, parentMessage!.uuid as any)
     }
 
     // Load current state and confirm no changes since last read.

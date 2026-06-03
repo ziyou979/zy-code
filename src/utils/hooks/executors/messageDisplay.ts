@@ -3,11 +3,13 @@ import type { MessageDisplayHookInput } from 'src/types/index.js'
 import { getSessionId } from '../../../bootstrap/state.js'
 import type { ToolUseContext } from '../../../Tool.js'
 import type { AssistantMessage } from '../../../types/message.js'
-import { logForDebugging } from '../../debug.js'
+import { createDebugLog } from '../../debug.js'
 import { extractTextContent } from '../../messages.js'
 import { createBaseHookInput } from '../config.js'
 import { executeHooks } from '../executeEngine.js'
 import { hasHookForEvent } from '../matcher.js'
+
+const hookLog = createDebugLog('hooks')
 
 /**
  * MessageDisplay hook：渲染阶段最终拦截点。让 hook 改写显示文本（脱敏/折叠）或隐藏
@@ -68,7 +70,7 @@ export async function executeMessageDisplayHooks(
     }
   } catch (err) {
     // fail-open：回退原文，避免 hook 故障吞掉/闪烁模型输出
-    logForDebugging(`MessageDisplay hook failed; displaying original message: ${err}`)
+    hookLog(`MessageDisplay hook failed; displaying original message: ${err}`)
     return {}
   }
   return out

@@ -9,7 +9,7 @@ type Props = {
   onDone(approved: boolean): void
 }
 export function ApproveApiKey({ apiKeyTruncated, onDone }: Props) {
-  const onChange = function onChange(value) {
+  const onChange = function onChange(value: string) {
     switch (value) {
       case 'yes': {
         saveGlobalConfig((current_0) => ({
@@ -57,7 +57,7 @@ export function ApproveApiKey({ apiKeyTruncated, onDone }: Props) {
               value: 'no',
             },
           ]}
-          onChange={(value_0) => onChange(value_0 as 'yes' | 'no')}
+          onChange={(value_0: string) => onChange(value_0 as 'yes' | 'no')}
           onCancel={() => onChange('no')}
         />
       }

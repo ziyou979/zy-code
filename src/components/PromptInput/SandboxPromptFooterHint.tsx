@@ -4,7 +4,7 @@ import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 export function SandboxPromptFooterHint() {
   const [recentViolationCount, setRecentViolationCount] = useState(0)
-  const timerRef = useRef(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const detailsShortcut = useShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
   useEffect(() => {
     if (!SandboxManager.isSandboxingEnabled()) {

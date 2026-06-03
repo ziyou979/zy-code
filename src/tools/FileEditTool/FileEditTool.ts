@@ -68,6 +68,7 @@ const MAX_EDIT_FILE_SIZE = 1024 * 1024 * 1024 // 1 GiB (stat bytes)
 
 export const FileEditTool = buildTool({
   name: FILE_EDIT_TOOL_NAME,
+  briefStandalone: true,
   searchHint: 'modify file contents in place',
   maxResultSizeChars: 100_000,
   strict: true,
@@ -395,7 +396,7 @@ export const FileEditTool = buildTool({
       await fileHistoryTrackEdit(
         updateFileHistoryState,
         absoluteFilePath,
-        parentMessage.uuid as any,
+        parentMessage!.uuid as any,
       )
     }
 

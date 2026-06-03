@@ -37,7 +37,7 @@ export function MessageResponse({ children, height }: Props) {
 // 此上下文用于确定消息响应是否
 // 作为另一个 MessageResponse 的后代渲染。我们用它
 // 来避免渲染嵌套的 ⎿ 字符。
-let MessageResponseContext
+let MessageResponseContext: React.Context<boolean>
 MessageResponseContext = React.createContext(false)
 function MessageResponseProvider({ children }: Props) {
   return <MessageResponseContext.Provider value={true}>{children}</MessageResponseContext.Provider>

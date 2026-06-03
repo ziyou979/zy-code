@@ -304,8 +304,7 @@ export const PermissionResultSchema = lazySchema(() =>
   ]),
 )
 
-export let PermissionModeSchema
-PermissionModeSchema = lazySchema(() =>
+export const PermissionModeSchema = lazySchema(() =>
   z
     .enum(['default', 'acceptEdits', 'bypassPermissions', 'plan', 'dontAsk'])
     .describe(

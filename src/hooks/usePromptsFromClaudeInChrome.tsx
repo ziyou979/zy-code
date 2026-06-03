@@ -27,7 +27,10 @@ const _ClaudeInChromePromptNotificationSchema = lazySchema(() =>
  * A hook that listens for prompt notifications from the Zy for Chrome extension,
  * enqueues them as user prompts, and syncs permission mode changes to the extension.
  */
-export function usePromptsFromClaudeInChrome(mcpClients, toolPermissionMode) {
+export function usePromptsFromClaudeInChrome(
+  mcpClients: MCPServerConnection[],
+  toolPermissionMode: string,
+) {
   useRef(undefined)
   useEffect(_temp, [])
   useEffect(() => {

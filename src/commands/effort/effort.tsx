@@ -129,7 +129,7 @@ export function executeEffort(args: string): EffortCommandResult {
   }
   return setEffortValue(normalized)
 }
-function ShowCurrentEffort(props) {
+function ShowCurrentEffort(props: { onDone: LocalJSXCommandOnDone }) {
   const { onDone } = props
   const effortValue = useAppState((s) => s.effortValue)
   const model = useMainLoopModel()
@@ -137,7 +137,13 @@ function ShowCurrentEffort(props) {
   onDone(message)
   return null
 }
-function ApplyEffortAndClose({ result, onDone }) {
+function ApplyEffortAndClose({
+  result,
+  onDone,
+}: {
+  result: EffortCommandResult
+  onDone: LocalJSXCommandOnDone
+}) {
   const setAppState = useSetAppState()
   const { effortUpdate, message } = result
   React.useEffect(() => {

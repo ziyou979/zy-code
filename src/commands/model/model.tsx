@@ -16,9 +16,9 @@ import {
 import { isModelAllowed } from '../../services/model/modelAllowlist.js'
 import { validateModel } from '../../services/model/validateModel.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import type { LocalJSXCommandCall } from '../../types/command.js'
+import type { LocalJSXCommandCall, LocalJSXCommandOnDone } from '../../types/command.js'
 
-function ModelPickerWrapper({ onDone }) {
+function ModelPickerWrapper({ onDone }: { onDone: LocalJSXCommandOnDone }) {
   const mainLoopModel = useAppState((s) => s.mainLoopModel)
   const mainLoopModelForSession = useAppState((state) => state.mainLoopModelForSession)
   const setAppState = useSetAppState()
@@ -31,7 +31,7 @@ function ModelPickerWrapper({ onDone }) {
       display: 'system',
     })
   }
-  const handleSelect = function handleSelect(model, effort) {
+  const handleSelect = function handleSelect(model: string | null, effort?: string) {
     logEvent('zy_model_command_menu', {
       action: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       from_model: mainLoopModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -132,7 +132,7 @@ function SetModelAndClose({
 function isKnownAlias(model: string): boolean {
   return (MODEL_ALIASES as readonly string[]).includes(model.toLowerCase().trim())
 }
-function ShowModelAndClose(props) {
+function ShowModelAndClose(props: { onDone: LocalJSXCommandOnDone }) {
   const { onDone } = props
   const mainLoopModel = useAppState((state) => state.mainLoopModel)
   const mainLoopModelForSession = useAppState((state) => state.mainLoopModelForSession)
@@ -175,6 +175,6 @@ export const call: LocalJSXCommandCall = async (onDone, _context, args) => {
   return <ModelPickerWrapper onDone={onDone} />
 }
 function renderModelLabel(model: string | null): string {
-  const rendered = renderDefaultModelSetting(model ?? getDefaultMainLoopModelSetting())
+  const rendered = renderDefaultModelSetting((model ?? getDefaultMainLoopModelSetting())!)
   return model === null ? `${rendered}${tSync('modelCommand.default')}` : rendered
 }

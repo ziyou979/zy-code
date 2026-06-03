@@ -19,7 +19,7 @@ export function ManagedSettingsSecurityDialog({ settings, onAccept, onReject }: 
   useKeybinding('confirm:no', onReject, {
     context: 'Confirmation',
   })
-  const onChange = function onChange(value) {
+  const onChange = function onChange(value: string) {
     if (value === 'exit') {
       onReject()
       return
@@ -62,14 +62,14 @@ export function ManagedSettingsSecurityDialog({ settings, onAccept, onReject }: 
                   value: 'exit',
                 },
               ]}
-              onChange={(selectedValue) => onChange(selectedValue as 'accept' | 'exit')}
+              onChange={(selectedValue: string) => onChange(selectedValue as 'accept' | 'exit')}
               onCancel={() => onChange('exit')}
             />
           }
           {
             <Text dimColor={true}>
               {exitState.pending
-                ? tSync('managedSettings.pressAgainToExit', { keyName: exitState.keyName })
+                ? tSync('managedSettings.pressAgainToExit', { keyName: exitState.keyName ?? '' })
                 : tSync('managedSettings.enterConfirmEscExit')}
             </Text>
           }

@@ -13,6 +13,12 @@ export function TranscriptModeFooter({
   searchBadge,
   suppressShowAll = false,
   status,
+}: {
+  showAllInTranscript: boolean
+  virtualScroll: boolean
+  searchBadge: { current: number; count: number } | null
+  suppressShowAll?: boolean
+  status: string
 }) {
   const toggleShortcut = useShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
   const showAllShortcut = useShortcutDisplay('transcript:toggleShowAll', 'Transcript', 'ctrl+e')

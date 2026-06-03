@@ -157,8 +157,11 @@ function addCachedCostToTotalSessionCost(message: AssistantMessage | StreamEvent
   if (message.type === 'stream_event') {
     return
   }
-  const model = message.message.model
+  const model = message.message.model ?? ''
   const usage = message.message.usage
+  if (!usage) {
+    return
+  }
   const costUSD = calculateUSDCost(model, usage)
   addToTotalSessionCost(costUSD, usage, model)
 }

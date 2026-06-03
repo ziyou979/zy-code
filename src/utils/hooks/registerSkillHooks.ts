@@ -1,8 +1,10 @@
 import type { AppState } from 'src/state/AppState.js'
 import { HOOK_EVENTS } from 'src/types/index.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import type { HooksSettings } from '../settings/types.js'
 import { addSessionHook, removeSessionHook } from './sessionHooks.js'
+
+const hookLog = createDebugLog('hooks')
 
 /**
  * Registers hooks from a skill's frontmatter as session hooks.
@@ -37,9 +39,7 @@ export function registerSkillHooks(
         // For once: true hooks, use onHookSuccess callback to remove after execution
         const onHookSuccess = hook.once
           ? () => {
-              logForDebugging(
-                `Removing one-shot hook for event ${eventName} in skill '${skillName}'`,
-              )
+              hookLog(`Removing one-shot hook for event ${eventName} in skill '${skillName}'`)
               removeSessionHook(setAppState, sessionId, eventName, hook)
             }
           : undefined
@@ -59,6 +59,6 @@ export function registerSkillHooks(
   }
 
   if (registeredCount > 0) {
-    logForDebugging(`Registered ${registeredCount} hooks from skill '${skillName}'`)
+    hookLog(`Registered ${registeredCount} hooks from skill '${skillName}'`)
   }
 }

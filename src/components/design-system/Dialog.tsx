@@ -48,7 +48,7 @@ export function Dialog({
     isActive: isCancelActive,
   })
   const defaultInputGuide = exitState.pending ? (
-    <Text>{tSync('dialog.pressAgainToExit', { keyName: exitState.keyName })}</Text>
+    <Text>{tSync('dialog.pressAgainToExit', { keyName: exitState.keyName ?? '' })}</Text>
   ) : (
     <Byline>
       <KeyboardShortcutHint shortcut="Enter" action="confirm" />

@@ -30,6 +30,11 @@ export function applyDebugOptions(cmd: Command<any, any>): Command<any, any> {
       'Write debug logs to a specific file path (implicitly enables debug mode)',
       () => true,
     )
+    .addOption(
+      new Option('--debug-format <format>', 'Debug output format: text (default) or json')
+        .choices(['text', 'json'])
+        .hideHelp(),
+    )
     .option('--verbose', 'Override verbose mode setting from config', () => true)
     .option(
       '--mcp-debug',

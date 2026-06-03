@@ -75,7 +75,6 @@ import {
   removeAgentWorktree,
 } from '../../utils/worktree.js'
 import { BASH_TOOL_NAME } from '../BashTool/toolName.js'
-import { BackgroundHint } from '../BashTool/UI.js'
 import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'
 import { spawnTeammate } from '../shared/spawnMultiAgent.js'
 import { setAgentColor } from './agentColorManager.js'
@@ -128,9 +127,6 @@ const proactiveModule =
     ? (require('../../proactive/index.js') as typeof import('../../proactive/index.js'))
     : null
 /* eslint-enable @typescript-eslint/no-require-imports */
-
-// Progress display constants (for showing background hint)
-const PROGRESS_THRESHOLD_MS = 2000 // Show background hint after 2 seconds
 
 // Check if background tasks are disabled at module load time
 const isBackgroundTasksDisabled =
@@ -719,7 +715,7 @@ export const AgentTool = buildTool({
           appendSystemPrompt: toolUseContext.options.appendSystemPrompt,
         })
       }
-      promptMessages = buildForkedMessages(prompt, assistantMessage)
+      promptMessages = buildForkedMessages(prompt, assistantMessage!)
     } else {
       try {
         const additionalWorkingDirectories = Array.from(
@@ -844,7 +840,7 @@ export const AgentTool = buildTool({
       agentDefinition: selectedAgent,
       promptMessages,
       toolUseContext,
-      canUseTool,
+      canUseTool: canUseTool!,
       isAsync: shouldRunAsync,
       querySource:
         toolUseContext.options.querySource ??
@@ -1050,7 +1046,7 @@ export const AgentTool = buildTool({
             )
             if (normalizedFirstMessage && normalizedFirstMessage.type === 'user' && onProgress) {
               onProgress({
-                toolUseID: `agent_${assistantMessage.message.id}`,
+                toolUseID: `agent_${assistantMessage!.message.id}`,
                 data: {
                   message: normalizedFirstMessage,
                   type: 'agent_progress',
@@ -1090,8 +1086,6 @@ export const AgentTool = buildTool({
             cancelAutoBackground = registration.cancelAutoBackground
           }
 
-          // Track if we've shown the background hint UI
-          let backgroundHintShown = false
           // Track if the agent was backgrounded (cleanup handled by backgrounded finally)
           let wasBackgrounded = false
           // Per-scope stop function — NOT shared with the backgrounded closure.
@@ -1130,25 +1124,6 @@ export const AgentTool = buildTool({
           } = {}
           try {
             while (true) {
-              const elapsed = Date.now() - agentStartTime
-
-              // Show background hint after threshold (but task is already registered)
-              // Skip if background tasks are disabled
-              if (
-                !isBackgroundTasksDisabled &&
-                !backgroundHintShown &&
-                elapsed >= PROGRESS_THRESHOLD_MS &&
-                toolUseContext.setToolJSX
-              ) {
-                backgroundHintShown = true
-                toolUseContext.setToolJSX({
-                  jsx: <BackgroundHint />,
-                  shouldHidePromptInput: false,
-                  shouldContinueAnimation: true,
-                  showSpinner: true,
-                })
-              }
-
               // Race between next message and background signal
               // If background tasks are disabled, just await the next message directly
               const nextMessagePromise = agentIterator.next()
@@ -1447,7 +1422,7 @@ export const AgentTool = buildTool({
                   // Forward progress updates
                   if (onProgress) {
                     onProgress({
-                      toolUseID: `agent_${assistantMessage.message.id}`,
+                      toolUseID: `agent_${assistantMessage!.message.id}`,
                       data: {
                         message: m as any,
                         type: 'agent_progress',
@@ -1488,7 +1463,7 @@ export const AgentTool = buildTool({
             // Store the error to handle after cleanup
             syncAgentError = toError(error)
           } finally {
-            // Clear the background hint UI
+            // 防御性清理 toolJSX 状态
             if (toolUseContext.setToolJSX) {
               toolUseContext.setToolJSX(null)
             }

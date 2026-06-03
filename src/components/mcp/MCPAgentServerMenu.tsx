@@ -130,7 +130,9 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
       onCancel={onCancel}
       inputGuide={(exitState) =>
         exitState.pending ? (
-          <Text>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</Text>
+          <Text>
+            {tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName ?? '' })}
+          </Text>
         ) : (
           <Byline>
             <KeyboardShortcutHint shortcut="↑↓" action="navigate" />
@@ -209,7 +211,7 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
       <Box>
         <Select
           options={menuOptions}
-          onChange={async (value) => {
+          onChange={async (value: string) => {
             switch (value) {
               case 'auth':
                 await handleAuthenticate()

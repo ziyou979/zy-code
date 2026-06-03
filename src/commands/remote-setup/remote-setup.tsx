@@ -191,7 +191,7 @@ function Web({ onDone }: { onDone: LocalJSXCommandOnDone }) {
             value: 'cancel',
           },
         ]}
-        onChange={(value) => {
+        onChange={(value: string) => {
           if (value === 'send') {
             void handleConfirm(token)
           } else {

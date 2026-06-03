@@ -97,13 +97,13 @@ export function ModelPicker({
   // 将当前选择 clamp 到聚焦模型支持的档位(例如从支持 max 的模型切到不支持的模型)。
   const displayEffort =
     effort && focusedLevels.length > 0 ? (clampEffort(effort, focusedLevels) ?? effort) : effort
-  const handleFocus = (value) => {
+  const handleFocus = (value: string) => {
     setFocusedValue(value)
     if (!hasToggledEffort && effortValue === undefined) {
       setEffort(getDefaultEffortLevelForOption(value))
     }
   }
-  const handleCycleEffort = (direction) => {
+  const handleCycleEffort = (direction: 'left' | 'right') => {
     if (!focusedSupportsEffort) {
       return
     }
@@ -119,7 +119,7 @@ export function ModelPicker({
       context: 'ModelPicker',
     },
   )
-  const handleSelect = function handleSelect(selectedValue) {
+  const handleSelect = function handleSelect(selectedValue: string) {
     logEvent('zy_model_command_menu_effort', {
       effort: effort as any,
     })
@@ -161,11 +161,7 @@ export function ModelPicker({
                   {tSync('modelPicker.selectModel')}
                 </Text>
               }
-              {
-                <Text dimColor={true}>
-                  {headerText ?? tSync('modelPicker.description')}
-                </Text>
-              }
+              {<Text dimColor={true}>{headerText ?? tSync('modelPicker.description')}</Text>}
               {sessionModel && (
                 <Text dimColor={true}>
                   {tSync('modelPicker.currentlyUsing', {
@@ -205,9 +201,7 @@ export function ModelPicker({
                 <Text dimColor={true}>
                   <EffortLevelIndicator effort={displayEffort} />{' '}
                   {tSync('modelPicker.effortLabel', { effort: capitalize(displayEffort) })}
-                  {displayEffort === focusedDefaultEffort
-                    ? tSync('modelPicker.effortDefault')
-                    : ''}{' '}
+                  {displayEffort === focusedDefaultEffort ? tSync('modelPicker.effortDefault') : ''}{' '}
                   <Text color="subtle">{tSync('modelPicker.adjustHint')}</Text>
                 </Text>
               ) : (
@@ -226,7 +220,7 @@ export function ModelPicker({
       {isStandaloneCommand && (
         <Text dimColor={true} italic={true}>
           {exitState.pending ? (
-            <>{tSync('modelPicker.pressAgainToExit', { key: exitState.keyName })}</>
+            <>{tSync('modelPicker.pressAgainToExit', { key: exitState.keyName ?? '' })}</>
           ) : (
             <Byline>
               <KeyboardShortcutHint shortcut="Enter" action="confirm" />
@@ -254,7 +248,7 @@ function resolveOptionModel(value?: string): string | undefined {
   }
   return value === NO_PREFERENCE ? getDefaultMainLoopModel() : parseUserSpecifiedModel(value)
 }
-function EffortLevelIndicator({ effort }) {
+function EffortLevelIndicator({ effort }: { effort: any }) {
   const effortSymbol = effortLevelToSymbol(effort ?? 'low')
   return <Text color={effort ? 'zy' : 'subtle'}>{effortSymbol}</Text>
 }
@@ -276,7 +270,7 @@ function cycleEffortLevel(
   }
 }
 function getDefaultEffortLevelForOption(value?: string): EffortLevel {
-  const resolved = resolveOptionModel(value) ?? getDefaultMainLoopModel()
+  const resolved = resolveOptionModel(value) ?? getDefaultMainLoopModel()!
   const defaultValue = getDefaultEffortForModel(resolved)
   return defaultValue !== undefined ? convertEffortValueToLevel(defaultValue) : 'thorough'
 }

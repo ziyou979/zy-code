@@ -294,8 +294,7 @@ let lastAddedEntry: LogEntry | null = null
 // Timestamps of entries already flushed to disk that should be skipped when
 // reading. Used by removeLastFromHistory when the entry has raced past the
 // pending buffer. Session-scoped (module state resets on process restart).
-let skippedTimestamps
-skippedTimestamps = new Set<number>()
+let skippedTimestamps: Set<number> = new Set<number>()
 
 // Core flush logic - writes pending entries to disk
 async function immediateFlushHistory(): Promise<void> {

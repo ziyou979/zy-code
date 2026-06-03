@@ -53,12 +53,12 @@ export function peekForStdinData(stream: NodeJS.EventEmitter, ms: number): Promi
       stream.off('data', onFirstData)
       void resolve(timedOut)
     }
-    let onEnd
+    let onEnd: () => void
     onEnd = () => done(false)
-    let onFirstData
+    let onFirstData: () => void
     onFirstData = () => clearTimeout(peek)
     // eslint-disable-next-line no-restricted-syntax -- 不是 sleep：将超时与流的 end/data 事件进行竞争
-    let peek
+    let peek: NodeJS.Timeout
     peek = setTimeout(done, ms, true)
     stream.once('end', onEnd)
     stream.once('data', onFirstData)

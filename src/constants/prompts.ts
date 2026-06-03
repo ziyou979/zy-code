@@ -510,11 +510,13 @@ export async function enhanceSystemPromptWithEnvDetails(
       ? getDiscoverSkillsGuidance()
       : null
   const envInfo = await computeEnvInfo(model, additionalWorkingDirectories)
+  const languageSection = getLanguageSection(getInitialSettings().language)
   return [
     ...existingSystemPrompt,
     notes,
     ...(discoverSkillsGuidance !== null ? [discoverSkillsGuidance] : []),
     envInfo,
+    ...(languageSection !== null ? [languageSection] : []),
   ]
 }
 

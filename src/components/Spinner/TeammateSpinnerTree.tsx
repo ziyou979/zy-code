@@ -28,11 +28,11 @@ export function TeammateSpinnerTree({
   const tasks = useAppState((s) => s.tasks)
   const viewingAgentTaskId = useAppState((s_0) => s_0.viewingAgentTaskId)
   const showTeammateMessagePreview = useAppState((s_1) => s_1.showTeammateMessagePreview)
-  let BoxComponent
+  let BoxComponent!: typeof Box
   let isHideSelected
 
   let mappedItems
-  let earlyReturn
+  let earlyReturn: React.ReactNode | symbol
   earlyReturn = Symbol.for('react.early_return_sentinel')
   const teammateTasks = getRunningTeammatesSorted(tasks)
   if (teammateTasks.length === 0) {
@@ -89,7 +89,7 @@ export function TeammateSpinnerTree({
     ))
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   return (
     <BoxComponent flexDirection={'column'} marginTop={1}>

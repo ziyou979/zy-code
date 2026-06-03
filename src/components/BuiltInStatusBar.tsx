@@ -92,7 +92,7 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
       messages,
       mainLoopModel,
       effortValue,
-      thinkingEnabled,
+      thinkingEnabled: thinkingEnabled ?? false,
       branch,
       gitClean,
       memoryRss,

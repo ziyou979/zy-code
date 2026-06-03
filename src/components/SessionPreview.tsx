@@ -19,7 +19,7 @@ type Props = {
   onSelect: (log: LogOption) => void
 }
 export function SessionPreview({ log, onExit, onSelect }: Props) {
-  const [fullLog, setFullLog] = React.useState(null)
+  const [fullLog, setFullLog] = React.useState<LogOption | null>(null)
   React.useEffect(() => {
     setFullLog(null)
     if (isLiteLog(log)) {

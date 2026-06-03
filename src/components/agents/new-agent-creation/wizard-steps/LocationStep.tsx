@@ -39,7 +39,7 @@ export function LocationStep() {
         <Select
           key="location-select"
           options={locationOptions}
-          onChange={(value) => {
+          onChange={(value: string) => {
             updateWizardData({
               location: value as SettingSource,
             })

@@ -14,7 +14,10 @@ import {
   saveGlobalConfig,
 } from '../../utils/config.js'
 import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { createDebugLog } from '../../utils/debug.js'
+
+const mcpLog = createDebugLog('mcp')
+
 import { getErrnoCode } from '../../utils/errors.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { safeParseJSON } from '../../utils/json.js'
@@ -241,7 +244,7 @@ export function dedupPluginMcpServers(
     }
     const manualDup = manualSigs.get(sig)
     if (manualDup !== undefined) {
-      logForDebugging(
+      mcpLog(
         `Suppressing plugin MCP server "${name}": duplicates manually-configured "${manualDup}"`,
       )
       suppressed.push({ name, duplicateOf: manualDup })
@@ -249,7 +252,7 @@ export function dedupPluginMcpServers(
     }
     const pluginDup = seenPluginSigs.get(sig)
     if (pluginDup !== undefined) {
-      logForDebugging(
+      mcpLog(
         `Suppressing plugin MCP server "${name}": duplicates earlier plugin server "${pluginDup}"`,
       )
       suppressed.push({ name, duplicateOf: pluginDup })
@@ -298,9 +301,7 @@ export function dedupZyAIMcpServers(
     const sig = getMcpServerSignature(config)
     const manualDup = sig !== null ? manualSigs.get(sig) : undefined
     if (manualDup !== undefined) {
-      logForDebugging(
-        `Suppressing zy.ai connector "${name}": duplicates manually-configured "${manualDup}"`,
-      )
+      mcpLog(`Suppressing zy.ai connector "${name}": duplicates manually-configured "${manualDup}"`)
       suppressed.push({ name, duplicateOf: manualDup })
       continue
     }
@@ -834,7 +835,7 @@ export function getProjectMcpConfigsFromCwd(): {
       (e) => !e.message.startsWith('MCP config file not found'),
     )
     if (nonMissingErrors.length > 0) {
-      logForDebugging(
+      mcpLog(
         `MCP config errors for ${mcpJsonPath}: ${jsonStringify(nonMissingErrors.map((e) => e.message))}`,
         { level: 'error' },
       )
@@ -899,7 +900,7 @@ export function getMcpConfigsByScope(scope: 'project' | 'user' | 'local' | 'ente
             (e) => !e.message.startsWith('MCP config file not found'),
           )
           if (nonMissingErrors.length > 0) {
-            logForDebugging(
+            mcpLog(
               `MCP config errors for ${mcpJsonPath}: ${jsonStringify(nonMissingErrors.map((e) => e.message))}`,
               { level: 'error' },
             )
@@ -972,7 +973,7 @@ export function getMcpConfigsByScope(scope: 'project' | 'user' | 'local' | 'ente
           (e) => !e.message.startsWith('MCP config file not found'),
         )
         if (nonMissingErrors.length > 0) {
-          logForDebugging(
+          mcpLog(
             `Enterprise MCP config errors for ${enterpriseMcpPath}: ${jsonStringify(nonMissingErrors.map((e) => e.message))}`,
             { level: 'error' },
           )
@@ -1092,14 +1093,14 @@ export async function getZyCodeMcpConfigs(
         // 插件不存在或不可用 — 这很常见，不一定是错误
         // 插件系统会在可能时处理安装
         const errorType = error.type
-        logForDebugging(`Plugin not available for MCP: ${error.source} - error type: ${errorType}`)
+        mcpLog(`Plugin not available for MCP: ${error.source} - error type: ${errorType}`)
       }
     }
   }
 
   // 并行处理已启用插件的 MCP 服务器
   const pluginServerResults = await Promise.all(
-    pluginResult.enabled.map((plugin) => getPluginMcpServers(plugin, mcpErrors)),
+    pluginResult.enabled.map((plugin: any) => getPluginMcpServers(plugin, mcpErrors)),
   )
   for (const servers of pluginServerResults) {
     if (servers) {
@@ -1356,7 +1357,7 @@ export function parseMcpConfigFromFilePath(params: {
         ],
       }
     }
-    logForDebugging(`MCP config read error for ${filePath} (scope=${scope}): ${error}`, {
+    mcpLog(`MCP config read error for ${filePath} (scope=${scope}): ${error}`, {
       level: 'error',
     })
     return {
@@ -1379,7 +1380,7 @@ export function parseMcpConfigFromFilePath(params: {
   const parsedJson = safeParseJSON(configContent)
 
   if (!parsedJson) {
-    logForDebugging(
+    mcpLog(
       `MCP config is not valid JSON: ${filePath} (scope=${scope}, length=${configContent.length}, first100=${jsonStringify(configContent.slice(0, 100))})`,
       { level: 'error' },
     )
@@ -1408,7 +1409,7 @@ export function parseMcpConfigFromFilePath(params: {
   })
 }
 
-export let doesEnterpriseMcpConfigExist
+export let doesEnterpriseMcpConfigExist: () => boolean
 doesEnterpriseMcpConfigExist = memoize((): boolean => {
   const { config } = parseMcpConfigFromFilePath({
     filePath: getEnterpriseMcpFilePath(),

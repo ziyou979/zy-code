@@ -18,7 +18,14 @@
  * Split into data/setter context pairs so writers never re-render on
  * their own writes — the setter contexts are stable.
  */
-import { createContext, type ReactNode, useContext, useEffect, useLayoutEffect, useState } from 'react'
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react'
 import type { SuggestionItem } from '../components/PromptInput/PromptInputFooterSuggestions.js'
 export type PromptOverlayData = {
   suggestions: SuggestionItem[]
@@ -30,9 +37,9 @@ const DataContext = createContext<PromptOverlayData | null>(null)
 const SetContext = createContext<Setter<PromptOverlayData> | null>(null)
 const DialogContext = createContext<ReactNode>(null)
 const SetDialogContext = createContext<Setter<ReactNode> | null>(null)
-export function PromptOverlayProvider({ children }) {
-  const [data, setData] = useState(null)
-  const [dialog, setDialog] = useState(null)
+export function PromptOverlayProvider({ children }: { children: ReactNode }) {
+  const [data, setData] = useState<PromptOverlayData | null>(null)
+  const [dialog, setDialog] = useState<ReactNode>(null)
   return (
     <SetContext.Provider value={setData}>
       <SetDialogContext.Provider value={setDialog}>
@@ -54,7 +61,7 @@ export function usePromptOverlayDialog() {
  * Register suggestion data for the floating overlay. Clears on unmount.
  * No-op outside the provider (non-fullscreen renders inline instead).
  */
-export function useSetPromptOverlay(data) {
+export function useSetPromptOverlay(data: PromptOverlayData | null) {
   const set = useContext(SetContext)
   useEffect(() => {
     if (!set) {
@@ -72,7 +79,7 @@ export function useSetPromptOverlay(data) {
  * 使用 useLayoutEffect 以确保对话框上下文在同一次 commit 中同步清除，
  * 避免 Notifications 高度已变但对话框 portal 仍残留导致的鬼影帧。
  */
-export function useSetPromptOverlayDialog(node) {
+export function useSetPromptOverlayDialog(node: ReactNode) {
   const set = useContext(SetDialogContext)
   useLayoutEffect(() => {
     if (!set) {

@@ -153,7 +153,7 @@ export function useAssistantHistory({ config, setMessages, scrollRef, onPrepend 
     }
     // config identity is stable (created once in main.tsx, never recreated)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, config.sessionId, config, prepend])
+  }, [enabled, config?.sessionId, config, prepend])
 
   const loadOlder = useCallback(async () => {
     if (!enabled || inflightRef.current) {

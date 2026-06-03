@@ -17,12 +17,12 @@ type Props = {
 export function TypeStep(_props: Props) {
   const { goNext, goBack, updateWizardData, wizardData } = useWizard()
   const [agentType, setAgentType] = useState((wizardData.agentType as any) || '')
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
   const [cursorOffset, setCursorOffset] = useState((agentType as any).length)
   useKeybinding('confirm:no', goBack, {
     context: 'Settings',
   })
-  const handleSubmit = (value) => {
+  const handleSubmit = (value: string) => {
     const trimmedValue = value.trim()
     const validationError = validateAgentType(trimmedValue)
     if (validationError) {

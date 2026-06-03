@@ -11,7 +11,7 @@ type TaskStatusTextProps = {
 
 export function TaskStatusText({ status, label, suffix }: TaskStatusTextProps) {
   const displayLabel = label ?? status
-  let color: keyof Theme
+  let color: keyof Theme | undefined
   switch (status) {
     case 'completed':
       color = 'success'

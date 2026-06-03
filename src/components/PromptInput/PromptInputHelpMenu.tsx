@@ -11,7 +11,12 @@ import { getNewlineInstructions } from './utils.js'
 function formatShortcut(shortcut: string): string {
   return shortcut.replace(/\+/g, ' + ')
 }
-export function PromptInputHelpMenu(props) {
+export function PromptInputHelpMenu(props: {
+  dimColor?: boolean
+  fixedWidth?: number | boolean
+  gap?: number
+  paddingX?: number
+}) {
   const { dimColor, fixedWidth, gap, paddingX } = props
   const transcriptShortcutRaw = useShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
   const transcriptShortcut = formatShortcut(transcriptShortcutRaw)

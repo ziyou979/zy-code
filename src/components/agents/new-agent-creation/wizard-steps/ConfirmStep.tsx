@@ -1,4 +1,5 @@
 import { tSync } from '../../../../i18n/index.js'
+import type { KeyboardEvent } from '../../../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../../../ink.js'
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js'
 import { isAutoMemoryEnabled } from '../../../../memdir/paths.js'
@@ -6,6 +7,7 @@ import { getAgentModelDisplay } from '../../../../services/model/agent.js'
 import type { Tools } from '../../../../Tool.js'
 import { getMemoryScopeDisplay } from '../../../../tools/AgentTool/agentMemory.js'
 import type { AgentDefinition } from '../../../../tools/AgentTool/loadAgentsDir.js'
+import type { SettingSource } from '../../../../utils/settings/constants.js'
 import { truncateToWidth } from '../../../../utils/format.js'
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
 import { Byline } from '../../../design-system/Byline.js'
@@ -28,7 +30,7 @@ export function ConfirmStep({ tools, existingAgents, onSave, onSaveAndEdit, erro
   useKeybinding('confirm:no', goBack, {
     context: 'Confirmation',
   })
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 's' || e.key === 'return') {
       e.preventDefault()
       onSave()
@@ -39,11 +41,11 @@ export function ConfirmStep({ tools, existingAgents, onSave, onSaveAndEdit, erro
       }
     }
   }
-  const agent = wizardData.finalAgent
+  const agent = wizardData.finalAgent!
   const validation = validateAgent(agent, tools, existingAgents)
   const systemPromptPreview = truncateToWidth(agent.getSystemPrompt(), 240)
   const whenToUsePreview = truncateToWidth(agent.whenToUse, 240)
-  const getToolsDisplay = (toolNames) => {
+  const getToolsDisplay = (toolNames: string[] | undefined) => {
     if (toolNames === undefined) {
       return tSync('wizard.allTools')
     }
@@ -64,7 +66,7 @@ export function ConfirmStep({ tools, existingAgents, onSave, onSaveAndEdit, erro
     </Text>
   ) : null
   const agentFilePath = getNewRelativeAgentFilePath({
-    source: wizardData.location,
+    source: wizardData.location ?? 'projectSettings',
     agentType: agent.agentType,
   })
   const toolsDisplay = getToolsDisplay(agent.tools)

@@ -34,8 +34,8 @@ import {
 import { useAppState } from '../state/AppState.js'
 import { getPluginErrorMessage } from '../types/plugin.js'
 import { getGcsDistTags, getNpmDistTags, type NpmDistTags } from '../utils/autoUpdater.js'
-import { checkContextWarnings } from '../utils/doctorContextWarnings.js'
-import { getDoctorDiagnostic } from '../utils/doctorDiagnostic.js'
+import { checkContextWarnings, type ContextWarnings } from '../utils/doctorContextWarnings.js'
+import { getDoctorDiagnostic, type DiagnosticInfo } from '../utils/doctorDiagnostic.js'
 import { validateBoundedIntEnvVar } from '../utils/envValidation.js'
 import { pathExists } from '../utils/file.js'
 import { getInitialSettings } from '../utils/settings/settings.js'
@@ -99,10 +99,10 @@ export function Doctor({ onDone }: Props) {
   const pluginsErrors = useAppState((state) => state.plugins.errors)
   useExitOnCtrlCDWithKeybindings()
   const tools = mcpTools || []
-  const [diagnostic, setDiagnostic] = useState(null)
-  const [agentInfo, setAgentInfo] = useState(null)
-  const [contextWarnings, setContextWarnings] = useState(null)
-  const [versionLockInfo, setVersionLockInfo] = useState(null)
+  const [diagnostic, setDiagnostic] = useState<DiagnosticInfo | null>(null)
+  const [agentInfo, setAgentInfo] = useState<AgentInfo | null>(null)
+  const [contextWarnings, setContextWarnings] = useState<ContextWarnings | null>(null)
+  const [versionLockInfo, setVersionLockInfo] = useState<VersionLockInfo | null>(null)
   const validationErrors = useSettingsErrors()
   const distTagsPromise = getDoctorDiagnostic().then((diag) => {
     const fetchDistTags = diag.installationType === 'native' ? getGcsDistTags : getNpmDistTags

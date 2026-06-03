@@ -8,7 +8,9 @@
 
 import { HOOK_EVENTS } from 'src/types/index.js'
 
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
+
+const hookLog = createDebugLog('hooks')
 
 /**
  * Hook events that are always emitted regardless of the includeHookEvents
@@ -159,7 +161,7 @@ export function emitHookResponse(data: {
   // Always log full hook output to debug log for verbose mode debugging
   const outputToLog = data.stdout || data.stderr || data.output
   if (outputToLog) {
-    logForDebugging(`Hook ${data.hookName} (${data.hookEvent}) ${data.outcome}:\n${outputToLog}`)
+    hookLog(`Hook ${data.hookName} (${data.hookEvent}) ${data.outcome}:\n${outputToLog}`)
   }
 
   if (!shouldEmit(data.hookEvent)) {

@@ -14,7 +14,7 @@ export function Ratchet({ children, lock = 'always' }: Props) {
   const innerRef = useRef(null)
   const maxHeight = useRef(0)
   const [minHeight, setMinHeight] = useState(0)
-  const outerRef = (el) => {
+  const outerRef = (el: any) => {
     viewportRef(el)
   }
   const engaged = lock === 'always' || !isVisible

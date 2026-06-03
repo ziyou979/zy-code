@@ -334,7 +334,7 @@ export function ContextVisualization({ data }: Props) {
                 <Text dimColor={true}>{formatTokens(tool.tokens)} tokens</Text>
               </Box>
             ))}
-            {deferredBuiltinTools
+            {deferredBuiltinTools!
               .filter((tool) => tool.isLoaded)
               .map((tool, index) => (
                 <Box key={`def-${index}`}>
@@ -343,10 +343,10 @@ export function ContextVisualization({ data }: Props) {
                 </Box>
               ))}
           </Box>
-          {hasDeferredBuiltinTools && deferredBuiltinTools.some((tool) => !tool.isLoaded) && (
+          {hasDeferredBuiltinTools && deferredBuiltinTools!.some((tool) => !tool.isLoaded) && (
             <Box flexDirection="column" marginTop={1}>
               <Text dimColor={true}>Available</Text>
-              {deferredBuiltinTools
+              {deferredBuiltinTools!
                 .filter((tool) => !tool.isLoaded)
                 .map((tool, index) => (
                   <Box key={index}>
@@ -360,7 +360,7 @@ export function ContextVisualization({ data }: Props) {
       {systemPromptSections && systemPromptSections.length > 0 && false && (
         <Box flexDirection="column" marginTop={1}>
           <Text bold={true}>[INNER-ONLY] System prompt sections</Text>
-          {systemPromptSections.map((section, index) => (
+          {systemPromptSections!.map((section, index) => (
             <Box key={index}>
               <Text>└ {section.name}: </Text>
               <Text dimColor={true}>{formatTokens(section.tokens)} tokens</Text>
@@ -419,31 +419,33 @@ export function ContextVisualization({ data }: Props) {
           <Box flexDirection="column" marginLeft={1}>
             <Box>
               <Text>Tool calls: </Text>
-              <Text dimColor={true}>{formatTokens(messageBreakdown.toolCallTokens)} tokens</Text>
+              <Text dimColor={true}>{formatTokens(messageBreakdown!.toolCallTokens)} tokens</Text>
             </Box>
             <Box>
               <Text>Tool results: </Text>
-              <Text dimColor={true}>{formatTokens(messageBreakdown.toolResultTokens)} tokens</Text>
+              <Text dimColor={true}>{formatTokens(messageBreakdown!.toolResultTokens)} tokens</Text>
             </Box>
             <Box>
               <Text>Attachments: </Text>
-              <Text dimColor={true}>{formatTokens(messageBreakdown.attachmentTokens)} tokens</Text>
+              <Text dimColor={true}>{formatTokens(messageBreakdown!.attachmentTokens)} tokens</Text>
             </Box>
             <Box>
               <Text>Assistant messages (non-tool): </Text>
               <Text dimColor={true}>
-                {formatTokens(messageBreakdown.assistantMessageTokens)} tokens
+                {formatTokens(messageBreakdown!.assistantMessageTokens)} tokens
               </Text>
             </Box>
             <Box>
               <Text>User messages (non-tool-result): </Text>
-              <Text dimColor={true}>{formatTokens(messageBreakdown.userMessageTokens)} tokens</Text>
+              <Text dimColor={true}>
+                {formatTokens(messageBreakdown!.userMessageTokens)} tokens
+              </Text>
             </Box>
           </Box>
-          {messageBreakdown.toolCallsByType.length > 0 && (
+          {messageBreakdown!.toolCallsByType.length > 0 && (
             <Box flexDirection="column" marginTop={1}>
               <Text bold={true}>[INNER-ONLY] Top tools</Text>
-              {messageBreakdown.toolCallsByType.slice(0, 5).map((tool, index) => (
+              {messageBreakdown!.toolCallsByType.slice(0, 5).map((tool, index) => (
                 <Box key={index} marginLeft={1}>
                   <Text>└ {tool.name}: </Text>
                   <Text dimColor={true}>
@@ -453,10 +455,10 @@ export function ContextVisualization({ data }: Props) {
               ))}
             </Box>
           )}
-          {messageBreakdown.attachmentsByType.length > 0 && (
+          {messageBreakdown!.attachmentsByType.length > 0 && (
             <Box flexDirection="column" marginTop={1}>
               <Text bold={true}>[INNER-ONLY] Top attachments</Text>
-              {messageBreakdown.attachmentsByType.slice(0, 5).map((attachment, index) => (
+              {messageBreakdown!.attachmentsByType.slice(0, 5).map((attachment, index) => (
                 <Box key={index} marginLeft={1}>
                   <Text>└ {attachment.name}: </Text>
                   <Text dimColor={true}>{formatTokens(attachment.tokens)} tokens</Text>

@@ -1,4 +1,5 @@
 import { feature } from 'bun:bundle'
+// @ts-expect-error -- no declaration file for asciichart
 import { plot as asciichart } from 'asciichart'
 import chalk from 'chalk'
 import figures from 'figures'
@@ -129,7 +130,11 @@ export function Stats({ onClose }: Props) {
 }
 
 // 可嵌入 Settings tab 的 Stats 内容（无 Pane/close 逻辑）
-export function StatsInner({ allTimeStatsPromise }: { allTimeStatsPromise?: Promise<StatsResult> }) {
+export function StatsInner({
+  allTimeStatsPromise,
+}: {
+  allTimeStatsPromise?: Promise<StatsResult>
+}) {
   const [allTimePromise] = useState(() => allTimeStatsPromise ?? createAllTimeStatsPromise())
   return (
     <Suspense
@@ -185,8 +190,7 @@ function StatsInnerContent({ allTimePromise }: StatsInnerContentProps) {
   const [activeTab, setActiveTab] = useState('Overview')
   const [copyStatus, setCopyStatus] = useState<string | null>(null)
   const scrollRef = useRef<ScrollBoxHandle>(null)
-  const { headerFocused: outerHeaderFocused, focusHeader: focusOuterHeader } =
-    useTabHeaderFocus()
+  const { headerFocused: outerHeaderFocused, focusHeader: focusOuterHeader } = useTabHeaderFocus()
   useEffect(() => {
     if (dateRange === 'all' || statsCache[dateRange]) {
       return
@@ -216,26 +220,29 @@ function StatsInnerContent({ allTimePromise }: StatsInnerContentProps) {
         : null
       : (statsCache[dateRange] ?? (allTimeResult.type === 'success' ? allTimeResult.data : null))
   const allTimeStats = allTimeResult.type === 'success' ? allTimeResult.data : null
-  useInput((input, key) => {
-    if (input === 'r' && !key.ctrl && !key.meta) {
-      setDateRange(getNextDateRange(dateRange))
-    }
-    if (key.ctrl && input === 's' && displayStats) {
-      handleScreenshot(displayStats, activeTab as 'Overview' | 'Models', setCopyStatus)
-    }
-    if (activeTab === 'Overview') {
-      if (key.downArrow) {
-        scrollRef.current?.scrollBy(2)
-      } else if (key.upArrow) {
-        const top = scrollRef.current?.getScrollTop() ?? 0
-        if (top > 0) {
-          scrollRef.current?.scrollBy(-2)
-        } else {
-          focusOuterHeader()
+  useInput(
+    (input, key) => {
+      if (input === 'r' && !key.ctrl && !key.meta) {
+        setDateRange(getNextDateRange(dateRange))
+      }
+      if (key.ctrl && input === 's' && displayStats) {
+        handleScreenshot(displayStats, activeTab as 'Overview' | 'Models', setCopyStatus)
+      }
+      if (activeTab === 'Overview') {
+        if (key.downArrow) {
+          scrollRef.current?.scrollBy(2)
+        } else if (key.upArrow) {
+          const top = scrollRef.current?.getScrollTop() ?? 0
+          if (top > 0) {
+            scrollRef.current?.scrollBy(-2)
+          } else {
+            focusOuterHeader()
+          }
         }
       }
-    }
-  }, { isActive: !outerHeaderFocused })
+    },
+    { isActive: !outerHeaderFocused },
+  )
   if (allTimeResult.type === 'error') {
     return (
       <Box marginTop={1}>
@@ -411,24 +418,25 @@ function OverviewTab({
   return (
     <Box flexDirection="column" marginTop={1} flexShrink={0}>
       {/* Activity Heatmap */}
-      {allTimeStats.dailyActivity.length > 0 && (() => {
-        const hm = generateHeatmapData(allTimeStats.dailyActivity, { terminalWidth })
-        return (
-          <Box flexDirection="column" marginBottom={1} flexShrink={0}>
-            <Text>{hm.monthLabel}</Text>
-            {hm.lines.map((line, i) => (
-              <Text key={i}>
-                {line.label}
-                {line.cells.map((cell, j) => (
-                  <HeatmapCellText key={j} cell={cell} />
-                ))}
-              </Text>
-            ))}
-            <Text>{' '}</Text>
-            <Text dimColor>{hm.legendLabel}</Text>
-          </Box>
-        )
-      })()}
+      {allTimeStats.dailyActivity.length > 0 &&
+        (() => {
+          const hm = generateHeatmapData(allTimeStats.dailyActivity, { terminalWidth })
+          return (
+            <Box flexDirection="column" marginBottom={1} flexShrink={0}>
+              <Text>{hm.monthLabel}</Text>
+              {hm.lines.map((line, i) => (
+                <Text key={i}>
+                  {line.label}
+                  {line.cells.map((cell, j) => (
+                    <HeatmapCellText key={j} cell={cell} />
+                  ))}
+                </Text>
+              ))}
+              <Text> </Text>
+              <Text dimColor>{hm.legendLabel}</Text>
+            </Box>
+          )
+        })()}
 
       {/* Date range selector */}
       {/* @ts-ignore */}
@@ -698,7 +706,13 @@ function generateFunFactoid(stats: ZyCodeStats, totalTokens: number): string {
   const randomIndex = Math.floor(Math.random() * factoids.length)
   return factoids[randomIndex]!
 }
-function ModelsTab({ stats, dateRange, isLoading, isActive, onUp }: {
+function ModelsTab({
+  stats,
+  dateRange,
+  isLoading,
+  isActive,
+  onUp,
+}: {
   stats: ZyCodeStats
   dateRange: StatsDateRange
   isLoading: boolean
@@ -754,7 +768,14 @@ function ModelsTab({ stats, dateRange, isLoading, isActive, onUp }: {
   const StatsBox = Box
   const rightModelEntries = rightModels.map((entry) => {
     const [model_1, usage_1] = entry
-    return <ModelEntry key={model_1} model={model_1} usage={usage_1 as ModelEntryProps['usage']} totalTokens={totalTokens} />
+    return (
+      <ModelEntry
+        key={model_1}
+        model={model_1}
+        usage={usage_1 as ModelEntryProps['usage']}
+        totalTokens={totalTokens}
+      />
+    )
   })
   return (
     <Box flexDirection="column" marginTop={1}>

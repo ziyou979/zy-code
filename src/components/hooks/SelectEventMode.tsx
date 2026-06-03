@@ -54,7 +54,10 @@ export function SelectEventMode({
     <Dialog title={tSync('hooks.title')} subtitle={subtitle} onCancel={onCancel}>
       {
         <Box flexDirection="column">
-          <Select options={eventOptions} onChange={(value) => onSelectEvent(value as HookEvent)} />
+          <Select
+            options={eventOptions}
+            onChange={(value: string) => onSelectEvent(value as HookEvent)}
+          />
         </Box>
       }
     </Dialog>

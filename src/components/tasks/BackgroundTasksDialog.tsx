@@ -67,14 +67,14 @@ type Props = {
 // WORKFLOW_SCRIPTS 仅限 ant（build_flags.yaml）。静态导入会泄漏约 1.3K 行到外部构建中。
 // 使用 feature() + require 门控，这样打包器可以对分支进行死代码消除。
 /* eslint-disable @typescript-eslint/no-require-imports */
-const WorkflowDetailDialog = null
-const workflowTaskModule = null
-const killWorkflowTask = null
-const skipWorkflowAgent = null
-const retryWorkflowAgent = null
-const monitorMcpModule = null
-const killMonitorMcp = null
-const MonitorMcpDetailDialog = null
+const WorkflowDetailDialog: any = null
+const workflowTaskModule: any = null
+const killWorkflowTask: any = null
+const skipWorkflowAgent: any = null
+const retryWorkflowAgent: any = null
+const monitorMcpModule: any = null
+const killMonitorMcp: any = null
+const MonitorMcpDetailDialog: any = null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 // 辅助函数：获取过滤后的后台任务（排除已前置的 local_agent）
@@ -126,7 +126,6 @@ export function BackgroundTasksDialog({
   const [selectedIndex, setSelectedIndex] = useState<number>(0)
 
   // 注册为模态覆盖层，这样此对话框打开时父级 Chat 快捷键（上/下键翻历史）会被禁用
-  // @ts-expect-error
   useRegisterOverlay('background-tasks-dialog')
 
   // 将排序和分类的项目一起 memo 化以确保引用稳定
@@ -556,7 +555,7 @@ export function BackgroundTasksDialog({
       return (
         <Text>
           {tSync('backgroundTasks.pressAgainToExit', {
-            key: exitState.keyName,
+            key: exitState.keyName ?? '',
           })}
         </Text>
       )

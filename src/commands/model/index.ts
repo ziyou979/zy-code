@@ -10,7 +10,7 @@ const model = {
   type: 'local-jsx',
   name: 'model',
   get description() {
-    return `Set the AI model for ZY Code (currently ${renderModelName(getMainLoopModel())})`
+    return `Set the AI model for ZY Code (currently ${renderModelName(getMainLoopModel()!)})`
   },
   argumentHint: '[model]',
   get immediate() {

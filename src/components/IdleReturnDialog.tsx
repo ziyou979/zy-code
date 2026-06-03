@@ -39,7 +39,7 @@ export function IdleReturnDialog({ idleMinutes, totalInputTokens, onDone }: Prop
               label: tSync('idleReturn.neverAsk'),
             },
           ]}
-          onChange={(value) => onDone(value)}
+          onChange={(value: string) => onDone(value as IdleReturnAction)}
         />
       }
     </Dialog>

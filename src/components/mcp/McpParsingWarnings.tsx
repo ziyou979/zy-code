@@ -5,7 +5,15 @@ import { describeMcpConfigFilePath, getScopeLabel } from 'src/services/mcp/utils
 import type { ValidationError } from 'src/utils/settings/validation.js'
 import { Box, Link, Text } from '../../ink.js'
 
-function McpConfigErrorSection({ scope, parsingErrors, warnings }) {
+function McpConfigErrorSection({
+  scope,
+  parsingErrors,
+  warnings,
+}: {
+  scope: ConfigScope
+  parsingErrors: ValidationError[]
+  warnings: ValidationError[]
+}) {
   const hasErrors = parsingErrors.length > 0
   const hasWarnings = warnings.length > 0
   if (!hasErrors && !hasWarnings) {

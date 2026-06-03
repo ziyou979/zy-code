@@ -119,7 +119,7 @@ export function createLSPClient(serverName: string, onCrash?: (error: Error) => 
             cleanup()
             reject(error)
           }
-          let cleanup
+          let cleanup: () => void
           cleanup = (): void => {
             spawnedProcess.removeListener('spawn', onSpawn)
             spawnedProcess.removeListener('error', onError)

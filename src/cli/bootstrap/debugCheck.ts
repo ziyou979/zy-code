@@ -33,9 +33,9 @@ export function isBeingDebugged(): boolean {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const inspector = (global as any).require('inspector')
     const hasInspectorUrl = !!inspector.url()
-    return hasInspectorUrl || hasInspectArg || hasInspectEnv
+    return hasInspectorUrl || hasInspectArg || !!hasInspectEnv
   } catch {
     // 忽略错误，回退到参数检测
-    return hasInspectArg || hasInspectEnv
+    return hasInspectArg || !!hasInspectEnv
   }
 }

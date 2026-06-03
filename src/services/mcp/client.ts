@@ -44,7 +44,10 @@ import {
   handleOAuth401Error,
 } from '../../utils/auth.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { createDebugLog } from '../../utils/debug.js'
+
+const mcpLog = createDebugLog('mcp')
+
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import {
   errorMessage,
@@ -746,7 +749,7 @@ export const connectToServer = memoize(
         const context = createChromeContext(serverRef.env)
         inProcessServer = createZyForChromeMcpServer(context) as any
         const [clientTransport, serverTransport] = createLinkedTransportPair()
-        await inProcessServer.connect(serverTransport)
+        await inProcessServer!.connect(serverTransport)
         transport = clientTransport
         logMCPDebug(name, `In-process Chrome MCP server started`)
       } else if (
@@ -763,7 +766,7 @@ export const connectToServer = memoize(
         const { createLinkedTransportPair } = await import('./InProcessTransport.js')
         inProcessServer = await createComputerUseMcpServerForCli()
         const [clientTransport, serverTransport] = createLinkedTransportPair()
-        await inProcessServer.connect(serverTransport)
+        await inProcessServer!.connect(serverTransport)
         transport = clientTransport
         logMCPDebug(name, `In-process Computer Use MCP server started`)
       } else if ((serverRef as any).type === 'stdio' || !(serverRef as any).type) {
@@ -986,7 +989,7 @@ export const connectToServer = memoize(
           serverVersion: serverVersion || 'unknown',
         })}`,
       )
-      logForDebugging(
+      mcpLog(
         `[MCP] Server "${name}" connected with subscribe=${!!capabilities?.resources?.subscribe}`,
       )
 
@@ -1453,8 +1456,7 @@ export function mcpToolInputToAutoClassifierInput(
   return keys.length > 0 ? keys.map((k) => `${k}=${String(input[k])}`).join(' ') : toolName
 }
 
-export let fetchToolsForClient
-fetchToolsForClient = memoizeWithLRU(
+export let fetchToolsForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<Tool[]> => {
     if (client.type !== 'connected') {
       return []
@@ -1550,7 +1552,7 @@ fetchToolsForClient = memoizeWithLRU(
               parentMessage,
               onProgress?: ToolCallProgress<MCPProgress>,
             ) {
-              const toolUseId = extractToolUseId(parentMessage)
+              const toolUseId = parentMessage ? extractToolUseId(parentMessage) : undefined
               const meta = toolUseId ? { 'zycode/toolUseId': toolUseId } : {}
 
               // Emit progress when tool starts
@@ -1693,8 +1695,7 @@ fetchToolsForClient = memoizeWithLRU(
   MCP_FETCH_CACHE_SIZE,
 )
 
-export let fetchResourcesForClient
-fetchResourcesForClient = memoizeWithLRU(
+export let fetchResourcesForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<ServerResource[]> => {
     if (client.type !== 'connected') {
       return []
@@ -1728,8 +1729,7 @@ fetchResourcesForClient = memoizeWithLRU(
   MCP_FETCH_CACHE_SIZE,
 )
 
-export let fetchCommandsForClient
-fetchCommandsForClient = memoizeWithLRU(
+export let fetchCommandsForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<Command[]> => {
     if (client.type !== 'connected') {
       return []
@@ -1855,14 +1855,14 @@ export async function reconnectMcpServerImpl(
         : Promise.resolve([]),
       supportsResources ? fetchResourcesForClient(client) : Promise.resolve([]),
     ])
-    const commands = [...mcpCommands, ...mcpSkills]
+    const commands: Command[] = [...mcpCommands, ...mcpSkills] as Command[]
 
     // 检查是否需要添加资源工具
     const resourceTools: Tool[] = []
     if (supportsResources) {
       // 仅当没有其他服务器有资源工具时才添加
       const hasResourceTools = [ListMcpResourcesTool, ReadMcpResourceTool].some((tool) =>
-        tools.some((t) => toolMatchesName(t, tool.name)),
+        tools.some((t: Tool) => toolMatchesName(t, tool.name)),
       )
       if (!hasResourceTools) {
         resourceTools.push(ListMcpResourcesTool, ReadMcpResourceTool)
@@ -2015,7 +2015,7 @@ export async function getMcpToolsCommandsAndResources(
         // 如果支持则获取资源
         supportsResources ? fetchResourcesForClient(client) : Promise.resolve([]),
       ])
-      const commands = [...mcpCommands, ...mcpSkills]
+      const commands: Command[] = [...mcpCommands, ...mcpSkills] as Command[]
 
       // 如果此服务器支持资源且我们尚未添加资源工具，
       // 将此客户端的工具包含资源工具

@@ -107,7 +107,7 @@ export function renderToolResultMessage({ cell_id, new_source, error }: Output):
   return (
     <MessageResponse>
       <Box flexDirection="column">
-        <Text>{tSync('notebookEdit.updatedCell', { cellId: cell_id })}</Text>
+        <Text>{tSync('notebookEdit.updatedCell', { cellId: cell_id ?? '' })}</Text>
         <Box marginLeft={2}>
           <HighlightedCode code={new_source} filePath="notebook.py" />
         </Box>

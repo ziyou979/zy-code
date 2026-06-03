@@ -1003,7 +1003,7 @@ export class Node {
   }
 }
 
-let DEFAULT_CONFIG
+let DEFAULT_CONFIG!: Config
 DEFAULT_CONFIG = createConfig()
 
 const CACHE_SLOTS = 4

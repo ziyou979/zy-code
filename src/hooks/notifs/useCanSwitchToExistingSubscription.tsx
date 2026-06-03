@@ -42,10 +42,10 @@ async function _temp2() {
     priority: 'low',
   }
 }
-function _temp(current) {
+function _temp(current: import('../../utils/config.js').GlobalConfig) {
   return {
     ...current,
-    subscriptionNoticeCount: (current.subscriptionNoticeCount ?? 0) + 1,
+    subscriptionNoticeCount: ((current as any).subscriptionNoticeCount ?? 0) + 1,
   }
 }
 async function getExistingZySubscription(): Promise<'Max' | 'Pro' | null> {

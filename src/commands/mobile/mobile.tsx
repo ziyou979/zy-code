@@ -5,6 +5,7 @@ import { Pane } from '../../components/design-system/Pane.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
+import { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 
 type Platform = 'ios' | 'android'
 type Props = {
@@ -24,8 +25,8 @@ const PLATFORMS: Record<
   },
 }
 function MobileQRCode({ onDone }: Props) {
-  const [platform, setPlatform] = useState('ios')
-  const [qrCodes, setQrCodes] = useState({
+  const [platform, setPlatform] = useState<Platform>('ios')
+  const [qrCodes, setQrCodes] = useState<Record<Platform, string>>({
     ios: '',
     android: '',
   })
@@ -56,7 +57,7 @@ function MobileQRCode({ onDone }: Props) {
   useKeybinding('confirm:no', handleClose, {
     context: 'Confirmation',
   })
-  const handleKeyDown = function handleKeyDown(e) {
+  const handleKeyDown = function handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'q' || (e.ctrl && e.key === 'c')) {
       e.preventDefault()
       onDone()
@@ -67,8 +68,8 @@ function MobileQRCode({ onDone }: Props) {
       setPlatform((prev) => (prev === 'ios' ? 'android' : 'ios'))
     }
   }
-  const lines = qrCode.split('\n').filter((line: string | any[]) => line.length > 0)
-  const qrCodeLines = lines.map((line, i) => <Text key={i}>{line}</Text>)
+  const lines = qrCode.split('\n').filter((line: string) => line.length > 0)
+  const qrCodeLines = lines.map((line: string, i: number) => <Text key={i}>{line}</Text>)
   return (
     <Pane>
       {

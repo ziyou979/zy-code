@@ -77,7 +77,7 @@ import type { AttributionState } from '../../utils/commitAttribution.js'
 import { incrementPromptCount } from '../../utils/commitAttribution.js'
 import type { PastedContent } from '../../utils/config.js'
 import { getGlobalConfig } from '../../utils/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { createDebugLog } from '../../utils/debug.js'
 import type { EffortValue } from '../../utils/effort.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import type { FileHistoryState } from '../../utils/fileHistory.js'
@@ -126,6 +126,8 @@ import { escapeXml } from '../../utils/xml.js'
 import type { ActiveRemote } from './useReplActiveRemote.js'
 import type { RequestPromptFactory } from './useReplRequestPrompt.js'
 import type { ResumeFunction } from './useReplSessionRestore.js'
+
+const log = createDebugLog('query')
 
 // ── QueryFlowContext ──
 
@@ -321,7 +323,7 @@ export function buildToolUseContext(
     resume: ctx.resume,
     setConversationId: ctx.replStore.setConversationId,
     requestPrompt: feature('HOOK_PROMPTS') ? ctx.requestPrompt : undefined,
-    contentReplacementState: ctx.replStore.mutable.contentReplacementState,
+    contentReplacementState: ctx.replStore.mutable.contentReplacementState ?? undefined,
   }
 }
 
@@ -512,9 +514,7 @@ export async function runQueryImpl(
   queryCheckpoint('query_context_loading_start')
   const [, , defaultSystemPrompt, baseUserContext, systemContext] = await Promise.all([
     checkAndDisableBypassPermissionsIfNeeded(ctx.toolPermissionContext, ctx.setAppState),
-    true
-      ? checkAndDisableAutoModeIfNeeded(ctx.toolPermissionContext, ctx.setAppState)
-      : undefined,
+    true ? checkAndDisableAutoModeIfNeeded(ctx.toolPermissionContext, ctx.setAppState) : undefined,
     getSystemPrompt(
       freshTools,
       mainLoopModelParam,
@@ -925,7 +925,12 @@ export async function handleSubmit(
           ctx.mainLoopModel,
         )
         const mod = await matchingCommand.load()
-        const jsx = await mod.call(onDone, { ...context, invokedAs: commandName }, commandArgs, commandName)
+        const jsx = await mod.call(
+          onDone,
+          { ...context, invokedAs: commandName },
+          commandArgs,
+          commandName,
+        )
 
         if (jsx && !doneWasCalled) {
           ctx.setToolJSX({
@@ -1022,7 +1027,7 @@ export async function handleSubmit(
         ...prev,
         attribution: incrementPromptCount(prev.attribution, (snapshot) => {
           void recordAttributionSnapshot(snapshot).catch((error) => {
-            logForDebugging(`Attribution: Failed to save snapshot: ${error}`)
+            log(`Attribution: Failed to save snapshot: ${error}`)
           })
         }),
       }))

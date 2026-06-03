@@ -93,7 +93,7 @@ export function TrustDialog({ onDone, commands }: Props) {
     hasOtelHeadersHelper,
     hasDangerousEnvVars,
   ])
-  const onChange = function onChange(value) {
+  const onChange = function onChange(value: string) {
     if (value === 'exit') {
       gracefulShutdownSync(1)
       return
@@ -159,14 +159,14 @@ export function TrustDialog({ onDone, commands }: Props) {
                 value: 'exit',
               },
             ]}
-            onChange={(value_0) => onChange(value_0 as 'enable_all' | 'exit')}
+            onChange={(value_0: string) => onChange(value_0 as 'enable_all' | 'exit')}
             onCancel={() => onChange('exit')}
           />
         }
         {
           <Text dimColor={true}>
             {exitState.pending
-              ? tSync('trustDialog.pressAgainToExit', { key: exitState.keyName })
+              ? tSync('trustDialog.pressAgainToExit', { key: exitState.keyName ?? '' })
               : tSync('trustDialog.enterToConfirm')}
           </Text>
         }

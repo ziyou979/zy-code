@@ -246,6 +246,9 @@ export function getParentCacheSuppressReason(
   }
 
   const usage = lastAssistantMessage.message.usage
+  if (!usage) {
+    return null
+  }
   const inputTokens = usage.inputTokens
   const cacheWriteTokens = usage.cacheCreationInputTokens ?? 0
   // The fork re-processes the parent's output (never cached) plus its own prompt.

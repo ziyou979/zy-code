@@ -599,9 +599,9 @@ function collectCandidatesByMessage(messages: Message[]): ToolResultCandidate[][
     if (message.type === 'user') {
       current.push(...collectCandidatesFromMessage(message))
     } else if (message.type === 'assistant') {
-      if (!seenAsstIds.has(message.message.id)) {
+      if (!seenAsstIds.has(message.message.id ?? '')) {
         flush()
-        seenAsstIds.add(message.message.id)
+        seenAsstIds.add(message.message.id ?? '')
       }
     }
     // progress/attachment/system 被 normalizeMessagesForAPI 过滤或合并——

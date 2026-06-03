@@ -68,7 +68,7 @@ export function SkillsMenu({ onExit, commands }: Props) {
         cmd.loadedFrom === 'plugin' ||
         cmd.loadedFrom === 'mcp'),
   )
-  const groups = {
+  const groups: Record<string, Command[]> = {
     policySettings: [],
     userSettings: [],
     projectSettings: [],
@@ -114,7 +114,7 @@ export function SkillsMenu({ onExit, commands }: Props) {
       </Dialog>
     )
   }
-  const renderSkill = (skill_0) => {
+  const renderSkill = (skill_0: any) => {
     const estimatedTokens = estimateSkillFrontmatterTokens(skill_0)
     const _tokenDisplay = `~${formatTokens(estimatedTokens)}`
     const pluginName =
@@ -129,13 +129,13 @@ export function SkillsMenu({ onExit, commands }: Props) {
       </Box>
     )
   }
-  const renderSkillGroup = (source_0) => {
+  const renderSkillGroup = (source_0: SkillSource) => {
     const groupSkills = skillsBySource[source_0]
     if (groupSkills.length === 0) {
       return null
     }
     const title = getSourceTitle(source_0)
-    const subtitle = getSourceSubtitle(source_0, groupSkills)
+    const subtitle = getSourceSubtitle(source_0, groupSkills as any)
     return (
       <Box flexDirection="column" key={source_0}>
         <Box>
@@ -144,7 +144,7 @@ export function SkillsMenu({ onExit, commands }: Props) {
           </Text>
           {subtitle && <Text dimColor={true}> ({subtitle})</Text>}
         </Box>
-        {groupSkills.map((skill_1) => renderSkill(skill_1))}
+        {groupSkills.map((skill_1: Command) => renderSkill(skill_1))}
       </Box>
     )
   }

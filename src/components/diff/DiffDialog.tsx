@@ -93,7 +93,6 @@ export function DiffDialog({ messages, onDone }: Props) {
       prevSourceIndex.current = sourceIndex
     }
   }, [sourceIndex])
-  // @ts-expect-error
   useRegisterOverlay('diff-dialog')
   useKeybindings(
     {
@@ -210,7 +209,7 @@ export function DiffDialog({ messages, onDone }: Props) {
       color="background"
       inputGuide={(exitState) =>
         exitState.pending ? (
-          <Text>{tSync('diffDialog.pressAgainToExit', { keyName: exitState.keyName })}</Text>
+          <Text>{tSync('diffDialog.pressAgainToExit', { keyName: exitState.keyName ?? '' })}</Text>
         ) : viewMode === 'list' ? (
           <Byline>
             {sources.length > 1 && <Text>{tSync('diffDialog.sourceNav')}</Text>}

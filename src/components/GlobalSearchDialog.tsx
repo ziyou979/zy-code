@@ -36,19 +36,20 @@ const MAX_TOTAL_MATCHES = 500
  * Debounced ripgrep search across the workspace.
  */
 export function GlobalSearchDialog({ onDone, onInsert }: Props) {
-  // @ts-expect-error
   useRegisterOverlay('global-search')
   const { columns, rows } = useTerminalSize()
   const previewOnRight = columns >= 140
   const visibleResults = Math.min(VISIBLE_RESULTS, Math.max(4, rows - 14))
-  const [matches, setMatches] = useState([])
+  const [matches, setMatches] = useState<Match[]>([])
   const [truncated, setTruncated] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [query, setQuery] = useState('')
-  const [focused, setFocused] = useState(undefined)
-  const [preview, setPreview] = useState(null)
-  const abortRef = useRef(null)
-  const timeoutRef = useRef(null)
+  const [focused, setFocused] = useState<Match | undefined>(undefined)
+  const [preview, setPreview] = useState<{ file: string; line: number; content: string } | null>(
+    null,
+  )
+  const abortRef = useRef<AbortController | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(
     () => () => {
       if (timeoutRef.current) {
@@ -89,7 +90,7 @@ export function GlobalSearchDialog({ onDone, onInsert }: Props) {
       })
     return () => controller.abort()
   }, [focused])
-  const handleQueryChange = (q) => {
+  const handleQueryChange = (q: string) => {
     setQuery(q)
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -122,7 +123,7 @@ export function GlobalSearchDialog({ onDone, onInsert }: Props) {
             if (controller_1.signal.aborted) {
               return
             }
-            const parsed = []
+            const parsed: Match[] = []
             for (const line of lines) {
               const m_1 = parseRipgrepLine(line)
               if (!m_1) {
@@ -177,7 +178,7 @@ export function GlobalSearchDialog({ onDone, onInsert }: Props) {
   const maxPathWidth = Math.max(20, Math.floor(listWidth * 0.4))
   const maxTextWidth = Math.max(20, listWidth - maxPathWidth - 4)
   const previewWidth = previewOnRight ? Math.max(40, columns - listWidth - 14) : columns - 6
-  const handleOpen = (m_3) => {
+  const handleOpen = (m_3: Match) => {
     const opened = openFileInExternalEditor(resolvePath(getCwd(), m_3.file), m_3.line)
     logEvent('zy_global_search_select', {
       result_count: matches.length,
@@ -185,7 +186,7 @@ export function GlobalSearchDialog({ onDone, onInsert }: Props) {
     })
     onDone()
   }
-  const handleInsert = (m_4, mention) => {
+  const handleInsert = (m_4: Match, mention: boolean) => {
     onInsert(mention ? `@${m_4.file}#L${m_4.line} ` : `${m_4.file}:${m_4.line} `)
     logEvent('zy_global_search_insert', {
       result_count: matches.length,

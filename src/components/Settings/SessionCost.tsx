@@ -46,9 +46,7 @@ function ModelUsageSection() {
           `${formatNumber(usage.cacheCreationInputTokens)} ${tSync('costTracker.cacheWrite')}`,
         ]
         if (usage.webSearchRequests > 0) {
-          parts.push(
-            `${formatNumber(usage.webSearchRequests)} ${tSync('costTracker.webSearch')}`,
-          )
+          parts.push(`${formatNumber(usage.webSearchRequests)} ${tSync('costTracker.webSearch')}`)
         }
         const usageStr = `${parts.join(', ')} (${formatCost(usage.costUSD)})`
         return (
@@ -56,7 +54,7 @@ function ModelUsageSection() {
             <Box width={LABEL_COL_WIDTH} justifyContent="flex-end">
               <Text dimColor>{`${model}:`}</Text>
             </Box>
-            <Text>  {usageStr}</Text>
+            <Text> {usageStr}</Text>
           </Box>
         )
       })}

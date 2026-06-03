@@ -24,8 +24,8 @@ export function AutoUpdaterWrapper({
   showSuccessMessage,
   verbose,
 }: Props) {
-  const [useNativeInstaller, setUseNativeInstaller] = React.useState(null)
-  const [isPackageManager, setIsPackageManager] = React.useState(null)
+  const [useNativeInstaller, setUseNativeInstaller] = React.useState<boolean | null>(null)
+  const [isPackageManager, setIsPackageManager] = React.useState<boolean | null>(null)
   React.useEffect(() => {
     const checkInstallation = async function checkInstallation() {
       if (feature('SKIP_DETECTION_WHEN_AUTOUPDATES_DISABLED') && isAutoUpdaterDisabled()) {

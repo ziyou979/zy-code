@@ -73,7 +73,7 @@ export const call: LocalCommandCall = async (args, context) => {
     // Reactive-only mode: route /compact through the reactive path.
     // Checked after session-memory (that path is cheap and orthogonal).
     if ((reactiveCompact as any)?.isReactiveOnlyMode()) {
-      return await compactViaReactive(messages, context, customInstructions, reactiveCompact)
+      return await compactViaReactive(messages, context, customInstructions, reactiveCompact!)
     }
 
     // Fall back to traditional compaction

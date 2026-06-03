@@ -66,7 +66,7 @@ export function getAttributionTexts(): AttributionTexts {
   // @[MODEL LAUNCH]: 更新下方硬编码的回退模型名称（防止代号泄漏）。
   // 对内部仓库，使用真实模型名称。对外部仓库，
   // 无法识别的模型回退到 "ZY (qwen3.6-plus)" 以避免泄漏代号。
-  const model = getMainLoopModel()
+  const model = getMainLoopModel()!
   const isKnownPublicModel = getPublicModelDisplayName(model) !== null
   const modelName =
     isInternalModelRepoCached() || isKnownPublicModel ? getPublicModelName(model) : 'ZY (unknown)'
@@ -335,7 +335,7 @@ export async function getEnhancedPRAttribution(getAppState: () => AppState): Pro
   )
 
   // 获取短模型名称，对非内部仓库进行脱敏处理
-  const rawModelName = getMainLoopModel()
+  const rawModelName = getMainLoopModel()!
   const shortModelName = isInternal ? rawModelName : sanitizeModelName(rawModelName)
 
   // 如果没有署名数据，返回默认值

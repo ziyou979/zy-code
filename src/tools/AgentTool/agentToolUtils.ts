@@ -302,7 +302,9 @@ export function finalizeAgentTool(
     }
   }
 
-  const totalTokens = getTokenCountFromUsage(lastAssistantMessage.message.usage)
+  const totalTokens = lastAssistantMessage.message.usage
+    ? getTokenCountFromUsage(lastAssistantMessage.message.usage)
+    : 0
   const totalToolUseCount = countToolUses(agentMessages)
 
   logEvent('zy_agent_tool_completed', {
@@ -337,6 +339,12 @@ export function finalizeAgentTool(
     usage: {
       inputTokens: lastAssistantMessage.message.usage?.inputTokens ?? 0,
       outputTokens: lastAssistantMessage.message.usage?.outputTokens ?? 0,
+      cacheCreationInputTokens:
+        lastAssistantMessage.message.usage?.cacheCreationInputTokens ?? null,
+      cacheReadInputTokens: lastAssistantMessage.message.usage?.cacheReadInputTokens ?? null,
+      serverToolUse: null,
+      serviceTier: null,
+      cacheCreation: null,
     },
   }
 }

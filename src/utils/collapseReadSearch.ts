@@ -427,7 +427,7 @@ function getToolUseIdsFromMessage(msg: RenderableMessage): string[] {
   }
   if (msg.type === 'grouped_tool_use') {
     return (msg as any).messages
-      .map((m) => {
+      .map((m: any) => {
         const content = m.message.content[0]
         return content.type === 'tool_call' ? content.id : ''
       })
@@ -466,11 +466,14 @@ export function getDisplayMessageFromCollapsed(
   message: CollapsedReadSearchGroup,
 ): Exclude<CollapsibleMessage, { type: 'grouped_tool_use' }> {
   const firstMsg = message.displayMessage
+  if (!firstMsg) {
+    throw new Error('CollapsedReadSearchGroup has no displayMessage')
+  }
   const msgType: string = firstMsg.type
   if (msgType === 'grouped_tool_use') {
     return (firstMsg as unknown as GroupedToolUseMessage).displayMessage
   }
-  return firstMsg
+  return firstMsg as Exclude<CollapsibleMessage, { type: 'grouped_tool_use' }>
 }
 
 /**
@@ -854,7 +857,7 @@ export function collapseReadSearchGroups(
       }
     } else if (currentGroup.messages.length > 0 && isPreToolHookSummary(msg)) {
       // 将 PreToolUse hook 摘要吸收到分组中，而非延迟输出
-      currentGroup.hookCount += msg.hookCount
+      currentGroup.hookCount += msg.hookCount!
       currentGroup.hookTotalMs +=
         msg.totalDurationMs ??
         msg.hookInfos.reduce((sum, h) => sum + ((h as any).durationMs ?? 0), 0)

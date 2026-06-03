@@ -140,7 +140,10 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
     const leadAgentType = agent_type || TEAM_LEAD_NAME
     // Get the team lead's current model from AppState (handles session model, settings, CLI override)
     const leadModel = parseUserSpecifiedModel(
-      appState.mainLoopModelForSession ?? appState.mainLoopModel ?? getDefaultMainLoopModel(),
+      appState.mainLoopModelForSession ??
+        appState.mainLoopModel ??
+        getDefaultMainLoopModel() ??
+        'standard',
     )
 
     const teamFilePath = getTeamFilePath(finalTeamName)

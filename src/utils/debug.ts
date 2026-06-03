@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { appendFile, mkdir, symlink, unlink } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { format } from 'node:util'
@@ -20,6 +21,62 @@ const LEVEL_ORDER: Record<DebugLogLevel, number> = {
   info: 2,
   warn: 3,
   error: 4,
+}
+
+// --- DebugContext: 轻量关联上下文，用于关联并发请求/agent 的日志 ---
+
+export type DebugContext = {
+  reqId?: string
+  turnId?: number
+}
+
+const debugContextStorage = new AsyncLocalStorage<DebugContext>()
+
+export function getDebugContext(): DebugContext | undefined {
+  return debugContextStorage.getStore()
+}
+
+export function runWithDebugContext<T>(ctx: DebugContext, fn: () => T): T {
+  return debugContextStorage.run(ctx, fn)
+}
+
+export function setDebugContextField(field: Partial<DebugContext>): void {
+  const current = debugContextStorage.getStore()
+  if (current) {
+    Object.assign(current, field)
+  }
+}
+
+function formatDebugContextPrefix(): string {
+  const ctx = debugContextStorage.getStore()
+  let agentLabel: string | undefined
+  try {
+    // 懒加载避免循环依赖，getAgentContext 来自 agentContext.ts
+    const { getAgentContext } = require('./agentContext.js')
+    const agentCtx = getAgentContext()
+    if (agentCtx) {
+      agentLabel =
+        agentCtx.agentType === 'teammate' ? agentCtx.agentName : agentCtx.subagentName || 'subagent'
+    }
+  } catch {
+    // agentContext 尚未加载
+  }
+
+  if (!ctx && !agentLabel) {
+    return ''
+  }
+
+  const parts: string[] = []
+  if (agentLabel) {
+    parts.push(`agent=${agentLabel}`)
+  }
+  if (ctx?.turnId !== undefined) {
+    parts.push(`turn=${ctx.turnId}`)
+  }
+  if (ctx?.reqId) {
+    parts.push(`req=${ctx.reqId}`)
+  }
+  return parts.length > 0 ? `[${parts.join(' ')}] ` : ''
 }
 
 /**
@@ -49,7 +106,9 @@ export const isDebugMode = memoize((): boolean => {
     // Also check for --debug=pattern syntax
     process.argv.some((arg) => arg.startsWith('--debug=')) ||
     // --debug-file implicitly enables debug mode
-    getDebugFilePath() !== null
+    getDebugFilePath() !== null ||
+    // --debug-format=json implicitly enables debug mode
+    getDebugOutputFormat() === 'json'
   )
 })
 
@@ -79,12 +138,26 @@ export const getDebugFilter = memoize((): DebugFilter | null => {
   return parseDebugFilter(filterPattern)
 })
 
-export let isDebugToStdErr
+export let isDebugToStdErr: (() => boolean) & { cache: { clear?(): void } }
 isDebugToStdErr = memoize((): boolean => {
   return process.argv.includes('--debug-to-stderr') || process.argv.includes('-d2e')
 })
 
-export let getDebugFilePath
+export type DebugOutputFormat = 'text' | 'json'
+
+export const getDebugOutputFormat = memoize((): DebugOutputFormat => {
+  for (let i = 0; i < process.argv.length; i++) {
+    if (process.argv[i] === '--debug-format' && process.argv[i + 1] === 'json') {
+      return 'json'
+    }
+    if (process.argv[i] === '--debug-format=json') {
+      return 'json'
+    }
+  }
+  return 'text'
+})
+
+export let getDebugFilePath: (() => string | null) & { cache: { clear?(): void } }
 getDebugFilePath = memoize((): string | null => {
   for (let i = 0; i < process.argv.length; i++) {
     const arg = process.argv[i]!
@@ -209,13 +282,51 @@ export function logForDebugging(
   if (!shouldLogDebugMessage(message)) {
     return
   }
+  const filter = getDebugFilter()
+  if (filter?.minLevel && LEVEL_ORDER[level] < LEVEL_ORDER[filter.minLevel as DebugLogLevel]) {
+    return
+  }
 
   // Multiline messages break the jsonl output format, so make any multiline messages JSON.
   if (hasFormattedOutput && message.includes('\n')) {
     message = jsonStringify(message)
   }
   const timestamp = new Date().toISOString()
-  const output = `${timestamp} [${level.toUpperCase()}] ${message.trim()}\n`
+  const ctxPrefix = formatDebugContextPrefix()
+
+  let output: string
+  if (getDebugOutputFormat() === 'json') {
+    const entry: Record<string, unknown> = { t: timestamp, l: level, m: message.trim() }
+    const ctx = debugContextStorage.getStore()
+    let agentLabel: string | undefined
+    try {
+      const { getAgentContext } = require('./agentContext.js')
+      const agentCtx = getAgentContext()
+      if (agentCtx) {
+        agentLabel =
+          agentCtx.agentType === 'teammate'
+            ? agentCtx.agentName
+            : agentCtx.subagentName || 'subagent'
+      }
+    } catch {
+      // not loaded yet
+    }
+    if (ctx || agentLabel) {
+      entry.ctx = {
+        ...(agentLabel && { agent: agentLabel }),
+        ...(ctx?.turnId !== undefined && { turn: ctx.turnId }),
+        ...(ctx?.reqId && { req: ctx.reqId }),
+      }
+    }
+    const bracketMatch = message.match(/^\[([^\]]+)]/)
+    if (bracketMatch?.[1]) {
+      entry.cat = bracketMatch[1]
+    }
+    output = jsonStringify(entry) + '\n'
+  } else {
+    output = `${timestamp} [${level.toUpperCase()}] ${ctxPrefix}${message.trim()}\n`
+  }
+
   if (isDebugToStdErr()) {
     writeToStderr(output)
     return
@@ -225,10 +336,11 @@ export function logForDebugging(
 }
 
 export function getDebugLogPath(): string {
+  const ext = getDebugOutputFormat() === 'json' ? '.jsonl' : '.txt'
   return (
     getDebugFilePath() ??
     process.env.ZY_CODE_DEBUG_LOGS_DIR ??
-    join(getZyConfigHomeDir(), 'debug', `${getSessionId()}.txt`)
+    join(getZyConfigHomeDir(), 'debug', `${getSessionId()}${ext}`)
   )
 }
 
@@ -236,7 +348,7 @@ export function getDebugLogPath(): string {
  * Updates the latest debug log symlink to point to the current debug log file.
  * Creates or updates a symlink at ~/.zy/debug/latest
  */
-let updateLatestDebugLogSymlink
+let updateLatestDebugLogSymlink: (() => Promise<void>) & { cache: { clear?(): void } }
 updateLatestDebugLogSymlink = memoize(async (): Promise<void> => {
   try {
     const debugLogPath = getDebugLogPath()
@@ -262,6 +374,38 @@ export function logAntError(context: string, error: unknown): void {
     logForDebugging(`[INNER-ONLY] ${context} stack trace:\n${error.stack}`, {
       level: 'error',
     })
+  }
+}
+
+/**
+ * 创建带固定 category 前缀的 debug 日志函数。
+ * 每个模块在顶部调用一次即可：`const log = createDebugLog('api')`
+ */
+export function createDebugLog(category: string) {
+  return function debugLog(message: string, options?: { level?: DebugLogLevel }): void {
+    logForDebugging(`[${category}] ${message}`, { level: options?.level ?? 'debug' })
+  }
+}
+
+/**
+ * 计时包装器，自动记录异步操作的耗时到 debug 日志。
+ */
+export async function withDebugTiming<T>(
+  category: string,
+  operation: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const start = performance.now()
+  try {
+    const result = await fn()
+    logForDebugging(`[${category}] ${operation} ${Math.round(performance.now() - start)}ms`)
+    return result
+  } catch (e) {
+    logForDebugging(
+      `[${category}] ${operation} FAILED ${Math.round(performance.now() - start)}ms`,
+      { level: 'error' },
+    )
+    throw e
   }
 }
 

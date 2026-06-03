@@ -19,6 +19,8 @@ import { logError } from '../../../utils/log.js'
 import { applyMarkdown } from '../../../utils/markdown.js'
 import { isPlanModeInterviewPhaseEnabled } from '../../../utils/planModeV2.js'
 import { getPlanFilePath } from '../../../utils/plans.js'
+import type { PermissionRequestProps } from '../PermissionRequest.js'
+import type { CliHighlight } from '../../../utils/cliHighlight.js'
 import { QuestionView } from './QuestionView.js'
 import { SubmitQuestionsView } from './SubmitQuestionsView.js'
 import { useMultipleChoiceState } from './use-multiple-choice-state.js'
@@ -27,7 +29,7 @@ const MIN_CONTENT_HEIGHT = 12
 const MIN_CONTENT_WIDTH = 40
 // Lines used by chrome around the content area (nav bar, title, footer, help text, etc.)
 const CONTENT_CHROME_OVERHEAD = 15
-export function AskUserQuestionPermissionRequest(props) {
+export function AskUserQuestionPermissionRequest(props: PermissionRequestProps) {
   const settings = useSettings()
   if (settings.syntaxHighlightingDisabled) {
     return <AskUserQuestionPermissionRequestBody {...props} highlight={null} />
@@ -38,12 +40,17 @@ export function AskUserQuestionPermissionRequest(props) {
     </Suspense>
   )
 }
-function AskUserQuestionWithHighlight(props) {
+function AskUserQuestionWithHighlight(props: PermissionRequestProps) {
   const highlightPromise = getCliHighlightPromise()
   const highlight = use(highlightPromise)
   return <AskUserQuestionPermissionRequestBody {...props} highlight={highlight} />
 }
-function AskUserQuestionPermissionRequestBody({ toolUseConfirm, onDone, onReject, highlight }) {
+function AskUserQuestionPermissionRequestBody({
+  toolUseConfirm,
+  onDone,
+  onReject,
+  highlight,
+}: PermissionRequestProps & { highlight: CliHighlight | null }) {
   const result = AskUserQuestionTool.inputSchema.safeParse(toolUseConfirm.input)
   const questions = result.success ? result.data.questions || [] : []
   const { rows: terminalRows } = useTerminalSize()
@@ -89,19 +96,21 @@ function AskUserQuestionPermissionRequestBody({ toolUseConfirm, onDone, onReject
   // 不会出现渲染重叠（旧内容未被完全覆盖）
   const globalOuterMinHeight = maxAllowedHeight
   const metadataSource = result.success ? result.data.metadata?.source : undefined
-  const [pastedContentsByQuestion, setPastedContentsByQuestion] = useState({})
+  const [pastedContentsByQuestion, setPastedContentsByQuestion] = useState<
+    Record<string, Record<number, PastedContent>>
+  >({})
   const nextPasteIdRef = useRef(0)
   const onImagePaste = function onImagePaste(
-    questionText,
-    base64Image,
-    mediaType,
-    filename,
-    dimensions,
-    _sourcePath,
+    questionText: string,
+    base64Image: string,
+    mediaType: string,
+    filename: string,
+    dimensions: any,
+    _sourcePath: string,
   ) {
     nextPasteIdRef.current = nextPasteIdRef.current + 1
     const pasteId = nextPasteIdRef.current
-    const newContent = {
+    const newContent: PastedContent = {
       id: pasteId,
       type: 'image',
       content: base64Image,
@@ -119,7 +128,7 @@ function AskUserQuestionPermissionRequestBody({ toolUseConfirm, onDone, onReject
       },
     }))
   }
-  const onRemoveImage = (questionText_0, id) => {
+  const onRemoveImage = (questionText_0: string, id: number) => {
     setPastedContentsByQuestion((prev_0) => {
       const questionContents = {
         ...(prev_0[questionText_0] ?? {}),
@@ -131,7 +140,7 @@ function AskUserQuestionPermissionRequestBody({ toolUseConfirm, onDone, onReject
       }
     })
   }
-  const allImageAttachments = Object.values(pastedContentsByQuestion)
+  const allImageAttachments: PastedContent[] = Object.values(pastedContentsByQuestion)
     .flatMap((contents) => Object.values(contents))
     .filter((c) => c.type === 'image')
   const toolPermissionContextMode = useAppState((s) => s.toolPermissionContext.mode)
@@ -228,7 +237,7 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
       imageBlocks_0 && imageBlocks_0.length > 0 ? imageBlocks_0 : undefined,
     )
   }
-  const submitAnswers = async (answersToSubmit) => {
+  const submitAnswers = async (answersToSubmit: Record<string, string>) => {
     if (metadataSource) {
       logEvent('zy_ask_user_question_accepted', {
         source: metadataSource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -238,7 +247,7 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
         interviewPhaseEnabled: isInPlanMode && isPlanModeInterviewPhaseEnabled(),
       })
     }
-    const annotations = {}
+    const annotations: Record<string, any> = {}
     for (const q_3 of questions) {
       const answer_1 = answersToSubmit[q_3.question]
       const notes = questionStates[q_3.question]?.textInputValue
@@ -273,7 +282,12 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
       contentBlocks && contentBlocks.length > 0 ? contentBlocks : undefined,
     )
   }
-  const handleQuestionAnswer = (questionText_1, label, textInput, shouldAdvance) => {
+  const handleQuestionAnswer = (
+    questionText_1: string,
+    label: string | string[],
+    textInput?: string,
+    shouldAdvance?: boolean,
+  ) => {
     const _advanceToNext = shouldAdvance === undefined ? true : shouldAdvance
     let answer_2
     const isMultiSelect = Array.isArray(label)
@@ -307,7 +321,7 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
     }
     setAnswer(questionText_1, answer_2, shouldAdvance)
   }
-  const handleFinalResponse = function handleFinalResponse(value) {
+  const handleFinalResponse = function handleFinalResponse(value: string) {
     if (value === 'cancel') {
       handleCancel()
       return
@@ -360,7 +374,14 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
         onRespondToZy={handleRespondToZy}
         onFinishPlanInterview={handleFinishPlanInterview}
         onImagePaste={(base64, mediaType_0, filename_0, dims, path) =>
-          onImagePaste(currentQuestion.question, base64, mediaType_0, filename_0, dims, path)
+          onImagePaste(
+            currentQuestion.question,
+            base64,
+            mediaType_0 ?? '',
+            filename_0 ?? '',
+            dims,
+            path ?? '',
+          )
         }
         pastedContents={pastedContentsByQuestion[currentQuestion.question] ?? {}}
         onRemoveImage={(id_0) => onRemoveImage(currentQuestion.question, id_0)}

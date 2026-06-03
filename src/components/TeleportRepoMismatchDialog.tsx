@@ -20,9 +20,9 @@ export function TeleportRepoMismatchDialog({
   onCancel,
 }: Props) {
   const [availablePaths, setAvailablePaths] = useState(initialPaths)
-  const [errorMessage, setErrorMessage] = useState(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [validating, setValidating] = useState(false)
-  const handleChange = async (value) => {
+  const handleChange = async (value: string) => {
     if (value === 'cancel') {
       onCancel()
       return
@@ -64,7 +64,7 @@ export function TeleportRepoMismatchDialog({
               <Text> {tSync('teleport.validatingRepo')}</Text>
             </Box>
           ) : (
-            <Select options={options} onChange={(value_0) => void handleChange(value_0)} />
+            <Select options={options} onChange={(value_0: string) => void handleChange(value_0)} />
           )}
         </>
       ) : (

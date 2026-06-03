@@ -191,13 +191,13 @@ function parsePatternCommand(
  * Extracts paths from command arguments for different path commands.
  * Each command has specific logic for how it handles paths and flags.
  */
-export let PATH_EXTRACTORS
+export let PATH_EXTRACTORS: Record<PathCommand, (args: string[]) => string[]>
 PATH_EXTRACTORS = {
   // cd: special case - all args form one path
-  cd: (args) => (args.length === 0 ? [homedir()] : [args.join(' ')]),
+  cd: (args: string[]) => (args.length === 0 ? [homedir()] : [args.join(' ')]),
 
   // ls: filter flags, default to current dir
-  ls: (args) => {
+  ls: (args: string[]) => {
     const paths = filterOutFlags(args)
     return paths.length > 0 ? paths : ['.']
   },
@@ -210,7 +210,7 @@ PATH_EXTRACTORS = {
   // predicates resolve to paths within cwd (allowed), so no false blocks for
   // legitimate use. The over-inclusion ensures attack paths like
   // `find -- -/../../etc` are caught.
-  find: (args) => {
+  find: (args: string[]) => {
     const paths: string[] = []
     const pathFlags = new Set([
       '-newer',
@@ -304,16 +304,16 @@ PATH_EXTRACTORS = {
   md5sum: filterOutFlags,
 
   // tr: special case - skip character sets
-  tr: (args) => {
+  tr: (args: string[]) => {
     const hasDelete = args.some(
-      (a) => a === '-d' || a === '--delete' || (a.startsWith('-') && a.includes('d')),
+      (a: string) => a === '-d' || a === '--delete' || (a.startsWith('-') && a.includes('d')),
     )
     const nonFlags = filterOutFlags(args)
     return nonFlags.slice(hasDelete ? 1 : 2) // Skip SET1 or SET1+SET2
   },
 
   // grep: pattern then paths, defaults to stdin
-  grep: (args) => {
+  grep: (args: string[]) => {
     const flags = new Set([
       '-e',
       '--regexp',
@@ -334,14 +334,14 @@ PATH_EXTRACTORS = {
     ])
     const paths = parsePatternCommand(args, flags)
     // Special: if -r/-R flag present and no paths, use current dir
-    if (paths.length === 0 && args.some((a) => ['-r', '-R', '--recursive'].includes(a))) {
+    if (paths.length === 0 && args.some((a: string) => ['-r', '-R', '--recursive'].includes(a))) {
       return ['.']
     }
     return paths
   },
 
   // rg: pattern then paths, defaults to current dir
-  rg: (args) => {
+  rg: (args: string[]) => {
     const flags = new Set([
       '-e',
       '--regexp',
@@ -369,7 +369,7 @@ PATH_EXTRACTORS = {
   },
 
   // sed: processes files in-place or reads from stdin
-  sed: (args) => {
+  sed: (args: string[]) => {
     const paths: string[] = []
     let skipNext = false
     let scriptFound = false
@@ -432,7 +432,7 @@ PATH_EXTRACTORS = {
   // jq: filter then file paths (similar to grep)
   // The jq command structure is: jq [flags] filter [files...]
   // If no files are provided, jq reads from stdin
-  jq: (args) => {
+  jq: (args: string[]) => {
     const paths: string[] = []
     const flagsWithArgs = new Set([
       '-e',
@@ -492,7 +492,7 @@ PATH_EXTRACTORS = {
   },
 
   // git: handle subcommands that access arbitrary files outside the repository
-  git: (args) => {
+  git: (args: string[]) => {
     // git diff --no-index is special - it explicitly compares files outside git's control
     // This flag allows git diff to compare any two files on the filesystem, not just
     // files within the repository, which is why it needs path validation

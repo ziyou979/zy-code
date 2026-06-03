@@ -31,15 +31,20 @@ function hasMessageAfterBoundary(messages: Message[], boundaryUuid: string): boo
   }
   return false
 }
-export function usePostCompactSurvey(messages, isLoading, hasActivePromptParam, surveyConfig) {
+export function usePostCompactSurvey(
+  messages: Message[],
+  isLoading: boolean,
+  hasActivePromptParam: boolean | undefined,
+  surveyConfig: { enabled?: boolean } | undefined,
+) {
   const hasActivePrompt = hasActivePromptParam === undefined ? false : hasActivePromptParam
   const { enabled: surveyEnabled } = surveyConfig === undefined ? {} : surveyConfig
   const enabled = surveyEnabled === undefined ? true : surveyEnabled
-  const [gateEnabled, setGateEnabled] = useState(null)
+  const [gateEnabled, setGateEnabled] = useState<boolean | null>(null)
   const initialBoundarySet = new Set()
   const seenCompactBoundaries = useRef(initialBoundarySet)
-  const pendingCompactBoundaryUuid = useRef(null)
-  const onOpen = (appearanceId) => {
+  const pendingCompactBoundaryUuid = useRef<string | null>(null)
+  const onOpen = (appearanceId: string) => {
     const smCompactionEnabled = shouldUseSessionMemoryCompaction()
     logEvent('zy_post_compact_survey_event', {
       event_type: 'appeared' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -53,7 +58,7 @@ export function usePostCompactSurvey(messages, isLoading, hasActivePromptParam, 
       survey_type: 'post_compact',
     })
   }
-  const onSelect = (appearanceId_0, selected) => {
+  const onSelect = (appearanceId_0: string, selected: string) => {
     const smCompactionEnabled_0 = shouldUseSessionMemoryCompaction()
     logEvent('zy_post_compact_survey_event', {
       event_type: 'responded' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

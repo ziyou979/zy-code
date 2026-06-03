@@ -39,7 +39,7 @@ export function MCPSettings({ onComplete }: Props) {
   }>({
     type: 'list',
   })
-  const [servers, setServers] = React.useState([])
+  const [servers, setServers] = React.useState<any[]>([])
   const agentMcpServers = extractAgentMcpServers(agentDefinitions.allAgents)
   const filteredClients = mcpClients
     .filter((client) => client.name !== 'ide')
@@ -127,12 +127,12 @@ export function MCPSettings({ onComplete }: Props) {
     case 'list': {
       let handleSelectAgentServer
       let handleSelectServer
-      handleSelectServer = (server) =>
+      handleSelectServer = (server: any) =>
         setViewState({
           type: 'server-menu',
           server,
         } as any)
-      handleSelectAgentServer = (agentServer) =>
+      handleSelectAgentServer = (agentServer: any) =>
         setViewState({
           type: 'agent-server-menu',
           agentServer,
@@ -207,7 +207,7 @@ export function MCPSettings({ onComplete }: Props) {
     case 'server-tools': {
       let handleSelectTool
       let handleBack
-      handleBack = (_, index) =>
+      handleBack = (_: any, index: number) =>
         setViewState({
           type: 'server-tool-detail',
           server: (viewState as any).server,

@@ -13,7 +13,7 @@ import type { Message } from '../../types/message.js'
 import { createAbortController } from '../abortController.js'
 import { createAttachmentMessage } from '../attachments.js'
 import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import { errorMessage } from '../errors.js'
 import type { HookResult } from '../hooks.js'
 import { createUserMessage, handleMessageFromStream } from '../messages.js'
@@ -29,6 +29,8 @@ import {
   registerStructuredOutputEnforcement,
 } from './hookHelpers.js'
 import { clearSessionHooks } from './sessionHooks.js'
+
+const hookLog = createDebugLog('hooks')
 
 /**
  * Execute an agent-based hook using a multi-turn LLM query
@@ -58,7 +60,7 @@ export async function execAgentHook(
   try {
     // Replace $ARGUMENTS with the JSON input
     const processedPrompt = addArgumentsToPrompt(hook.prompt, jsonInput)
-    logForDebugging(`Hooks: Processing agent hook with prompt: ${processedPrompt}`)
+    hookLog(`Hooks: Processing agent hook with prompt: ${processedPrompt}`)
 
     // Create user message directly - no need for processUserInput which would
     // trigger UserPromptSubmit hooks and cause infinite recursion
@@ -67,7 +69,7 @@ export async function execAgentHook(
     })
     const agentMessages = [userMessage]
 
-    logForDebugging(`Hooks: Starting agent query with ${agentMessages.length} messages`)
+    hookLog(`Hooks: Starting agent query with ${agentMessages.length} messages`)
 
     // Setup timeout and combine with parent signal
     const hookTimeoutMs = hook.timeout ? hook.timeout * 1000 : 60000
@@ -111,7 +113,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
 - ok: false with reason if the condition is not met`,
       ])
 
-      const model = hook.model ?? getDefaultCompactModel()
+      const model = hook.model ?? getDefaultCompactModel()!
       const MAX_AGENT_TURNS = 50
 
       // Create unique agentId for this hook agent
@@ -186,7 +188,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
           // Check if we've hit the turn limit
           if (turnCount >= MAX_AGENT_TURNS) {
             hitMaxTurns = true
-            logForDebugging(`Hooks: Agent turn ${turnCount} hit max turns, aborting`)
+            hookLog(`Hooks: Agent turn ${turnCount} hit max turns, aborting`)
             hookAbortController.abort()
             break
           }
@@ -197,9 +199,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
           const parsed = hookResponseSchema().safeParse((message.attachment as any).data)
           if (parsed.success) {
             structuredOutputResult = parsed.data
-            logForDebugging(
-              `Hooks: Got structured output: ${jsonStringify(structuredOutputResult)}`,
-            )
+            hookLog(`Hooks: Got structured output: ${jsonStringify(structuredOutputResult)}`)
             // Got structured output, abort and exit
             hookAbortController.abort()
             break
@@ -217,7 +217,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
       if (!structuredOutputResult) {
         // If we hit max turns, just log and return cancelled (no UI message)
         if (hitMaxTurns) {
-          logForDebugging(`Hooks: Agent hook did not complete within ${MAX_AGENT_TURNS} turns`)
+          hookLog(`Hooks: Agent hook did not complete within ${MAX_AGENT_TURNS} turns`)
           logEvent('zy_agent_stop_hook_max_turns', {
             durationMs: Date.now() - hookStartTime,
             turnCount,
@@ -231,7 +231,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
 
         // For other cases (e.g., agent finished without calling structured output tool),
         // just log and return cancelled (don't show error to user)
-        logForDebugging(`Hooks: Agent hook did not return structured output`)
+        hookLog(`Hooks: Agent hook did not return structured output`)
         logEvent('zy_agent_stop_hook_error', {
           durationMs: Date.now() - hookStartTime,
           turnCount,
@@ -246,7 +246,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
 
       // Return result based on structured output
       if (!structuredOutputResult.ok) {
-        logForDebugging(`Hooks: Agent hook condition was not met: ${structuredOutputResult.reason}`)
+        hookLog(`Hooks: Agent hook condition was not met: ${structuredOutputResult.reason}`)
         return {
           hook,
           outcome: 'blocking',
@@ -258,7 +258,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
       }
 
       // Condition was met
-      logForDebugging(`Hooks: Agent hook condition was met`)
+      hookLog(`Hooks: Agent hook condition was met`)
       logEvent('zy_agent_stop_hook_success', {
         durationMs: Date.now() - hookStartTime,
         turnCount,
@@ -289,7 +289,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
     }
   } catch (error) {
     const errorMsg = errorMessage(error)
-    logForDebugging(`Hooks: Agent hook error: ${errorMsg}`)
+    hookLog(`Hooks: Agent hook error: ${errorMsg}`)
     logEvent('zy_agent_stop_hook_error', {
       durationMs: Date.now() - hookStartTime,
       errorType: 2, // 2 = general error

@@ -155,7 +155,7 @@ export const _sdkOutputSchema = outputSchema
 export type Question = z.infer<ReturnType<typeof questionSchema>>
 export type QuestionOption = z.infer<ReturnType<typeof questionOptionSchema>>
 export type Output = z.infer<OutputSchema>
-function AskUserQuestionResultMessage({ answers }) {
+function AskUserQuestionResultMessage({ answers }: { answers: Record<string, string> }) {
   return (
     <Box flexDirection="column" marginTop={1}>
       {

@@ -1,5 +1,6 @@
 import figures from 'figures'
 import React, { useState } from 'react'
+import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { mcpInfoFromString } from 'src/services/mcp/mcpStringUtils.js'
 import { isMcpTool } from 'src/services/mcp/utils.js'
 import type { Tool, Tools } from 'src/Tool.js'
@@ -128,7 +129,7 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }: Prop
   const selectedSet = new Set(validSelectedTools)
   const isAllSelected =
     validSelectedTools.length === customAgentTools.length && customAgentTools.length > 0
-  const handleToggleTool = (toolName) => {
+  const handleToggleTool = (toolName: string) => {
     if (!toolName) {
       return
     }
@@ -138,7 +139,7 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }: Prop
         : [...current, toolName],
     )
   }
-  const handleToggleTools = (toolNames_0, select) => {
+  const handleToggleTools = (toolNames_0: string[], select: boolean) => {
     setSelectedTools((current_0) => {
       if (select) {
         const toolsToAdd = toolNames_0.filter((name) => !current_0.includes(name))
@@ -186,7 +187,7 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }: Prop
     }
   })
   const toolsByBucket = buckets
-  const createBucketToggleAction = (bucketTools) => {
+  const createBucketToggleAction = (bucketTools: Tool[]) => {
     const selected = count(bucketTools, (tool: any) => selectedSet.has(tool.name))
     const needsSelection = selected < bucketTools.length
     return () => {
@@ -194,7 +195,14 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }: Prop
       handleToggleTools(toolNames_1, needsSelection)
     }
   }
-  const navigableItems = []
+  const navigableItems: Array<{
+    id: string
+    label: string
+    action: () => void
+    isContinue?: boolean
+    isToggle?: boolean
+    isHeader?: boolean
+  }> = []
   navigableItems.push({
     id: 'continue',
     label: tSync('agents.toolSelector.continue'),
@@ -316,7 +324,7 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }: Prop
   useKeybinding('confirm:no', handleCancel, {
     context: 'Confirmation',
   })
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'return') {
       e.preventDefault()
       const item = navigableItems[focusIndex]

@@ -199,7 +199,7 @@ export function createChromeContext(env?: Record<string, string>): ClaudeForChro
         }
       },
     }),
-    trackEvent: (eventName, metadata) => {
+    trackEvent: (eventName: string, metadata: Record<string, unknown> | undefined) => {
       const safeMetadata: {
         [key: string]:
           | boolean

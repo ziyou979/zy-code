@@ -1,10 +1,12 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const zhAgents: TranslationResource = {
-  'agent.agentsFinished': '{count} 个{type}已完成',
-  'agent.agentsFinishedNoType': '{count} 个 agent 已完成',
+  'agent.agentsFinished': '个{type}智能体已完成',
+  'agent.agentsFinishedNoType': '个智能体已完成',
   'agent.apiCallsOnly': '[INNER-ONLY] API 调用：{path}',
-  'agent.backgroundAgentsLaunched': '已启动 {count} 个后台 agent',
+  'agent.backgroundAgentsLaunched': '个后台智能体已启动',
+  'agent.builtInType.Explore': '探索',
+  'agent.builtInType.Plan': '规划',
   'agent.backgrounded': '后台 agent',
   'agent.defaultName': 'Agent',
   'agent.done': '完成',
@@ -15,9 +17,9 @@ export const zhAgents: TranslationResource = {
   'agent.prompt': '提示：',
   'agent.remoteLaunched': '远程 agent 已启动',
   'agent.response': '响应：',
-  'agent.runningAgents': '正在运行 {count} 个{type}…',
-  'agent.runningAgentsNoType': '正在运行 {count} 个 agent…',
-  'agent.runningPrefix': '运行中',
+  'agent.runningAgents': '个{type}智能体运行中…',
+  'agent.runningAgentsNoType': '个智能体运行中…',
+  'agent.runningPrefix': '',
   'agent.toolUse_one': '次工具使用',
   'agent.toolUse_other': '次工具使用',
   'agent.unitTokens': '个token',

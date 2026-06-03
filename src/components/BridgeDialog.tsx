@@ -22,7 +22,6 @@ type Props = {
   onDone: () => void
 }
 export function BridgeDialog({ onDone }: Props) {
-  // @ts-expect-error
   useRegisterOverlay('bridge-dialog')
   const connected = useAppState((state) => state.replWireConnected)
   const sessionActive = useAppState((state) => state.replWireSessionActive)

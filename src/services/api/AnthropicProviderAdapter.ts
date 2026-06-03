@@ -72,7 +72,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
 
     return {
       stream: anthropicStreamToStandard(rawStream),
-      requestId: result.request_id,
+      requestId: result.request_id ?? undefined,
       response: undefined,
     }
   }
@@ -91,7 +91,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
         stream: false as const,
         model: normalizeModelStringForAPI(params.model),
       },
-      { signal, timeout },
+      { signal, ...(timeout !== undefined && { timeout }) },
     )
     return anthropicResponseToStandard(result, params.model)
   }
@@ -119,7 +119,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
 
   async countTokens(messages: LLMMessage[], tools: ToolDefinition[]): Promise<number | null> {
     try {
-      const model = getMainLoopModel()
+      const model = getMainLoopModel() ?? ''
       const betas = getModelBetas(model)
       const containsThinking = this.hasThinkingBlocks(messages)
 
@@ -190,7 +190,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
 
   async verifyApiKey(apiKey: string): Promise<boolean> {
     try {
-      const model = getMainLoopModel()
+      const model = getMainLoopModel() ?? ''
       const betas = getModelBetas(model)
       const client = await getAnthropicClient({
         apiKey,

@@ -8,7 +8,10 @@ import { Box, Text } from '../../ink.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { Tools } from '../../Tool.js'
 import { resolveAgentOverrides } from '../../tools/AgentTool/agentDisplay.js'
-import { getActiveAgentsFromList } from '../../tools/AgentTool/loadAgentsDir.js'
+import {
+  getActiveAgentsFromList,
+  type AgentDefinition,
+} from '../../tools/AgentTool/loadAgentsDir.js'
 import { toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import type { SettingSource } from '../../utils/settings/constants.js'
@@ -51,7 +54,7 @@ export function AgentsMenu({ tools, onExit }: Props) {
   const toolPermissionContext = useAppState((s) => s.toolPermissionContext)
   const setAppState = useSetAppState()
   const { allAgents, activeAgents: agents } = agentDefinitions
-  const [changes, setChanges] = useState([])
+  const [changes, setChanges] = useState<string[]>([])
   const mergedTools = useMergedTools(tools, mcpTools, toolPermissionContext)
   useExitOnCtrlCDWithKeybindings()
   const builtInAgents = allAgents.filter((agent) => agent.source === 'built-in')
@@ -71,14 +74,14 @@ export function AgentsMenu({ tools, onExit }: Props) {
     plugin: pluginAgents,
     all: allAgents,
   }
-  const handleAgentCreated = (message) => {
+  const handleAgentCreated = (message: string) => {
     setChanges((prev) => [...prev, message])
     setModeState({
       mode: 'list-agents',
       source: 'all',
     })
   }
-  const handleAgentDeleted = async (agentToDelete) => {
+  const handleAgentDeleted = async (agentToDelete: AgentDefinition) => {
     try {
       await deleteAgentFromFile(agentToDelete)
       setAppState((state) => {
@@ -129,7 +132,7 @@ export function AgentsMenu({ tools, onExit }: Props) {
           display: changes.length === 0 ? 'system' : undefined,
         })
       }
-      const handleSelectAgent = (agent) =>
+      const handleSelectAgent = (agent: AgentDefinition) =>
         setModeState({
           mode: 'agent-menu',
           agent,
@@ -173,7 +176,7 @@ export function AgentsMenu({ tools, onExit }: Props) {
       )
     }
     case 'agent-menu': {
-      const findAgent = (agent) =>
+      const findAgent = (agent: AgentDefinition) =>
         agent.agentType === modeState.agent.agentType && agent.source === modeState.agent.source
       const freshAgent = allAgents.find(findAgent)
       const agentToUse = freshAgent || modeState.agent
@@ -202,7 +205,7 @@ export function AgentsMenu({ tools, onExit }: Props) {
         value: 'back',
       }
       const menuItems = [viewOption, ...editOptions, backOption]
-      const handleMenuSelect = (value) => {
+      const handleMenuSelect = (value: string) => {
         switch (value) {
           case 'view': {
             setModeState({
@@ -262,7 +265,7 @@ export function AgentsMenu({ tools, onExit }: Props) {
       )
     }
     case 'view-agent': {
-      const findAgent = (agent) =>
+      const findAgent = (agent: AgentDefinition) =>
         agent.agentType === modeState.agent.agentType && agent.source === modeState.agent.source
       const freshAgent = allAgents.find(findAgent)
       const agentToDisplay = freshAgent || modeState.agent
@@ -320,7 +323,7 @@ export function AgentsMenu({ tools, onExit }: Props) {
           </Text>
         </Box>
       )
-      const handleDeleteConfirm = (value) => {
+      const handleDeleteConfirm = (value: string) => {
         switch (value) {
           case 'yes': {
             handleAgentDeleted(modeState.agent)
@@ -352,13 +355,13 @@ export function AgentsMenu({ tools, onExit }: Props) {
       )
     }
     case 'edit-agent': {
-      const findAgent = (agent) =>
+      const findAgent = (agent: AgentDefinition) =>
         agent.agentType === modeState.agent.agentType && agent.source === modeState.agent.source
       const freshAgent = allAgents.find(findAgent)
       const agentToEdit = freshAgent || modeState.agent
       const editTitle = tSync('agents.editAgentTitle', { name: agentToEdit.agentType })
       const handleBack = () => setModeState(modeState.previousMode)
-      const handleSaved = (message) => {
+      const handleSaved = (message: string) => {
         handleAgentCreated(message)
         setModeState(modeState.previousMode)
       }

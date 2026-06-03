@@ -49,7 +49,7 @@ export type HandleSummarizeParams = {
   setMessages: (action: React.SetStateAction<MessageType[]>) => void
   regenerateConversationId: () => void
   setInputValue: (value: string) => void
-  setInputMode: React.Dispatch<React.SetStateAction<PromptInputMode>>
+  setInputMode: (v: PromptInputMode) => void
   addNotification: (n: Notification) => void
 }
 

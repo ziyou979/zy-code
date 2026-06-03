@@ -807,7 +807,7 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
               agentId,
               prompt: input.message,
               toolUseContext: context,
-              canUseTool,
+              canUseTool: canUseTool!,
               invokingRequestId: assistantMessage?.requestId,
             })
             return {
@@ -834,7 +834,7 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
               agentId,
               prompt: input.message,
               toolUseContext: context,
-              canUseTool,
+              canUseTool: canUseTool!,
               invokingRequestId: assistantMessage?.requestId,
             })
             return {

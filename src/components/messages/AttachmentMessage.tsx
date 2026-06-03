@@ -436,7 +436,7 @@ function TaskStatusMessage({ attachment }: any) {
   }
   return <GenericTaskStatus attachment={attachment} />
 }
-function GenericTaskStatus({ attachment }) {
+function GenericTaskStatus({ attachment }: any) {
   const bg = useSelectedMessageBg()
   const statusText =
     attachment.status === 'completed'
@@ -457,7 +457,7 @@ function GenericTaskStatus({ attachment }) {
     </Box>
   )
 }
-function TeammateTaskStatus({ attachment }) {
+function TeammateTaskStatus({ attachment }: any) {
   const bg = useSelectedMessageBg()
   const task = useAppState((s) => s.tasks[attachment.taskId])
   if (task?.type !== 'in_process_teammate') {

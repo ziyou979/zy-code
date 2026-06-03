@@ -14,7 +14,7 @@ import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
 import { isAbortError } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import { isInternalBuild } from '../envUtils.js'
 import { AbortError, toError } from '../errors.js'
 import { logError } from '../log.js'
@@ -93,6 +93,8 @@ import {
 } from './denialTracking.js'
 import { classifyYoloAction, formatActionForClassifier } from './yoloClassifier.js'
 
+const permLog = createDebugLog('permissions')
+
 const PERMISSION_RULE_SOURCES = [
   ...SETTING_SOURCES,
   'cliArg',
@@ -123,10 +125,7 @@ export function createPermissionRequestMessage(
 ): string {
   // 处理不同的决策原因类型
   if (decisionReason) {
-    if (
-      (feature('BASH_CLASSIFIER') || true) &&
-      decisionReason.type === 'classifier'
-    ) {
+    if ((feature('BASH_CLASSIFIER') || true) && decisionReason.type === 'classifier') {
       return `Classifier '${decisionReason.classifier}' requires approval for this ${toolName} command: ${decisionReason.reason}`
     }
     switch (decisionReason.type) {
@@ -406,7 +405,7 @@ async function runPermissionRequestHooksForHeadlessAgent(
       }
       if (decision.behavior === 'deny') {
         if (decision.interrupt) {
-          logForDebugging(`Hook interrupt: tool=${tool.name} hookMessage=${decision.message}`)
+          permLog(`Hook interrupt: tool=${tool.name} hookMessage=${decision.message}`)
           context.abortController.abort()
         }
         return {
@@ -534,7 +533,7 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
             },
           }
         }
-        logForDebugging(
+        permLog(
           `Skipping auto mode classifier for ${tool.name}: tool requires explicit user permission`,
         )
         return result
@@ -568,7 +567,7 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
           if (acceptEditsResult.behavior === 'allow') {
             const newDenialState = recordSuccess(denialState)
             persistDenialState(context, newDenialState)
-            logForDebugging(
+            permLog(
               `Skipping auto mode classifier for ${tool.name}: would be allowed in acceptEdits mode`,
             )
             logEvent('zy_auto_mode_decision', {
@@ -605,9 +604,7 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
       if (classifierDecisionModule!.isAutoModeAllowlistedTool(tool.name)) {
         const newDenialState = recordSuccess(denialState)
         persistDenialState(context, newDenialState)
-        logForDebugging(
-          `Skipping auto mode classifier for ${tool.name}: tool is on the safe allowlist`,
-        )
+        permLog(`Skipping auto mode classifier for ${tool.name}: tool is on the safe allowlist`)
         logEvent('zy_auto_mode_decision', {
           decision: 'allowed' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           toolName: sanitizeToolNameForAnalytics(tool.name),
@@ -745,7 +742,7 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
               'Agent aborted: auto mode classifier transcript exceeded context window in headless mode',
             )
           }
-          logForDebugging(
+          permLog(
             'Auto mode classifier transcript too long, falling back to normal permission handling',
             { level: 'warn' },
           )
@@ -762,10 +759,9 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
         // zy_iron_gate_closed 门控。
         if (classifierResult.unavailable) {
           if (getFeatureValue_CACHED_MAY_BE_STALE('zy_iron_gate_closed', true)) {
-            logForDebugging(
-              'Auto mode classifier unavailable, denying with retry guidance (fail closed)',
-              { level: 'warn' },
-            )
+            permLog('Auto mode classifier unavailable, denying with retry guidance (fail closed)', {
+              level: 'warn',
+            })
             return {
               behavior: 'deny',
               decisionReason: {
@@ -777,7 +773,7 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
             }
           }
           // 失败开放：回退到正常权限处理
-          logForDebugging(
+          permLog(
             'Auto mode classifier unavailable, falling back to normal permission handling (fail open)',
             { level: 'warn' },
           )
@@ -788,7 +784,7 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
         const newDenialState = recordDenial(denialState)
         persistDenialState(context, newDenialState)
 
-        logForDebugging(`Auto mode classifier blocked action: ${classifierResult.reason}`, {
+        permLog(`Auto mode classifier blocked action: ${classifierResult.reason}`, {
           level: 'warn',
         })
 
@@ -931,7 +927,7 @@ function handleDenialLimitExceeded(
     throw new AbortError('Agent aborted: too many classifier denials in headless mode')
   }
 
-  logForDebugging(`Classifier denial limit exceeded, falling back to prompting: ${warning}`, {
+  permLog(`Classifier denial limit exceeded, falling back to prompting: ${warning}`, {
     level: 'warn',
   })
 
@@ -1203,7 +1199,7 @@ async function hasPermissionsToUseToolInner(
       : toolPermissionResult
 
   if (result.behavior === 'ask' && result.suggestions) {
-    logForDebugging(
+    permLog(
       `Permission suggestions for ${tool.name}: ${jsonStringify(result.suggestions, null, 2)}`,
     )
   }

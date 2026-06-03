@@ -2,6 +2,7 @@ import figures from 'figures'
 import * as React from 'react'
 import type { SettingSource } from 'src/utils/settings/constants.js'
 import { tSync } from '../../i18n/index.js'
+import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../ink.js'
 import type { ResolvedAgent } from '../../tools/AgentTool/agentDisplay.js'
 import {
@@ -25,10 +26,10 @@ type Props = {
   changes?: string[]
 }
 export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, changes }: Props) {
-  const [selectedAgent, setSelectedAgent] = React.useState(null)
+  const [selectedAgent, setSelectedAgent] = React.useState<ResolvedAgent | null>(null)
   const [isCreateNewSelected, setIsCreateNewSelected] = React.useState(true)
   const sortedAgents = [...agents].sort(compareAgentsByName)
-  const getOverrideInfo = (agent) => ({
+  const getOverrideInfo = (agent: ResolvedAgent) => ({
     isOverridden: !!agent.overriddenBy,
     overriddenBy: agent.overriddenBy || null,
   })
@@ -42,7 +43,7 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
       </Text>
     </Box>
   )
-  const renderAgent = (agent_0) => {
+  const renderAgent = (agent_0: ResolvedAgent) => {
     const isBuiltIn = agent_0.source === 'built-in'
     const isSelected =
       !isBuiltIn &&
@@ -104,7 +105,7 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
       }
     }
   }, [selectableAgentsInOrder, selectedAgent, isCreateNewSelected, onCreateNew])
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'return') {
       e.preventDefault()
       if (isCreateNewSelected && onCreateNew) {
@@ -154,7 +155,7 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
       }
     }
   }
-  const renderBuiltInAgentsSection = (titleText) => {
+  const renderBuiltInAgentsSection = (titleText: string | undefined) => {
     const title =
       titleText === undefined
         ? `${tSync('agents.builtInAgents')} ${tSync('agents.builtInAlwaysAvailable')}`
@@ -169,7 +170,7 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
       </Box>
     )
   }
-  const renderAgentGroup = (title_0, groupAgents) => {
+  const renderAgentGroup = (title_0: string, groupAgents: ResolvedAgent[]) => {
     if (!groupAgents.length) {
       return null
     }

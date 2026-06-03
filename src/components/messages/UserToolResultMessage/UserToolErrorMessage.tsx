@@ -1,5 +1,6 @@
 import { feature } from 'bun:bundle'
 import { BULLET_OPERATOR } from '../../../constants/figures.js'
+import { tSync } from '../../../i18n/index.js'
 import { Text } from '../../../ink.js'
 import { filterToolProgressMessages, type Tool, type Tools } from '../../../Tool.js'
 import type { ToolResultBlock } from '../../../types/llm.js'
@@ -49,15 +50,11 @@ export function UserToolErrorMessage({
   ) {
     return <RejectedToolUseMessage />
   }
-  if (
-    true &&
-    typeof param.content === 'string' &&
-    isClassifierDenial(param.content)
-  ) {
+  if (true && typeof param.content === 'string' && isClassifierDenial(param.content)) {
     return (
       <MessageResponse height={1}>
         <Text dimColor={true}>
-          Denied by auto mode classifier {BULLET_OPERATOR} /feedback if incorrect
+          {tSync('permission.deniedByAutoModeClassifier', { bullet: BULLET_OPERATOR })}
         </Text>
       </MessageResponse>
     )

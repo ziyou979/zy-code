@@ -19,7 +19,7 @@ type Props = {
 }
 export function MCPToolListView({ server, onSelectTool, onBack }: Props) {
   const mcpTools = useAppState((s) => s.mcp.tools)
-  let serverTools
+  let serverTools: ReturnType<typeof filterToolsByServer>
   if ((server as any).client.type !== 'connected') {
     serverTools = []
   } else {
@@ -57,7 +57,9 @@ export function MCPToolListView({ server, onSelectTool, onBack }: Props) {
       onCancel={onBack}
       inputGuide={(exitState) =>
         exitState.pending ? (
-          <Text>{tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })}</Text>
+          <Text>
+            {tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName ?? '' })}
+          </Text>
         ) : (
           <Byline>
             <KeyboardShortcutHint shortcut={'\u2191\u2193'} action="navigate" />
@@ -77,7 +79,7 @@ export function MCPToolListView({ server, onSelectTool, onBack }: Props) {
       ) : (
         <Select
           options={toolOptions}
-          onChange={(value) => {
+          onChange={(value: string) => {
             const index_0 = parseInt(value, 10)
             const tool_0 = serverTools[index_0]
             if (tool_0) {

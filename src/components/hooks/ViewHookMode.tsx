@@ -92,6 +92,8 @@ function getContentFieldLabel(config: IndividualHookConfig['config']): string {
       return tSync('hooks.promptLabel')
     case 'http':
       return tSync('hooks.urlLabel')
+    case 'mcp_tool':
+      return 'MCP Tool'
   }
 }
 
@@ -109,5 +111,7 @@ function getContentFieldValue(config: IndividualHookConfig['config']): string {
       return config.prompt
     case 'http':
       return config.url
+    case 'mcp_tool':
+      return `${config.server}/${config.tool}`
   }
 }

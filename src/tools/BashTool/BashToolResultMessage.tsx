@@ -1,3 +1,4 @@
+import type React from 'react'
 import { removeSandboxViolationTags } from 'src/services/sandbox/sandbox-ui-utils.js'
 import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
@@ -74,17 +75,16 @@ export default function BashToolResultMessage({ content, verbose, timeoutMs }: P
   } = content
   const stdout = rawStdout === undefined ? '' : rawStdout
   const stdErrWithViolations = rawStderr === undefined ? '' : rawStderr
-  let BoxComponent
+  let BoxComponent!: typeof Box
 
   let outputLineElement
-  let earlyReturn = Symbol.for('react.early_return_sentinel')
+  let earlyReturn: React.ReactNode | symbol = Symbol.for('react.early_return_sentinel')
   const { cleanedStderr: stderrWithoutViolations } = extractSandboxViolations(stdErrWithViolations)
   let stderr: string
-  let cwdResetWarning: string | undefined
+  let cwdResetWarning: string | null
   ;({ cleanedStderr: stderr, cwdResetWarning } = extractCwdResetWarning(stderrWithoutViolations))
   let outputLineElement2
   if (isImage) {
-    // @ts-expect-error
     earlyReturn = (
       <MessageResponse height={1}>
         <Text dimColor={true}>{tSync('bash.imageDetected')}</Text>
@@ -100,7 +100,7 @@ export default function BashToolResultMessage({ content, verbose, timeoutMs }: P
       stderr.trim() !== '' ? <OutputLine content={stderr} verbose={verbose} isError={true} /> : null
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   // 当预期无输出且确实没有输出时，不展示 ⎿ 行
   const isEffectivelyEmpty = stdout.trim() === '' && stderr.trim() === '' && !cwdResetWarning

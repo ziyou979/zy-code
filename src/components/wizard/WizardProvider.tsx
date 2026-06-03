@@ -18,7 +18,7 @@ export function WizardProvider({
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [wizardData, setWizardData] = useState(initialData)
   const [isCompleted, setIsCompleted] = useState(false)
-  const [navigationHistory, setNavigationHistory] = useState([])
+  const [navigationHistory, setNavigationHistory] = useState<number[]>([])
   useExitOnCtrlCDWithKeybindings()
   useEffect(() => {
     if (isCompleted) {
@@ -53,7 +53,7 @@ export function WizardProvider({
       }
     }
   }
-  const goToStep = (index) => {
+  const goToStep = (index: number) => {
     if (index >= 0 && index < steps.length) {
       setNavigationHistory((prev_3) => [...prev_3, currentStepIndex])
       setCurrentStepIndex(index)
@@ -65,8 +65,8 @@ export function WizardProvider({
       onCancel()
     }
   }
-  const updateWizardData = (updates) => {
-    setWizardData((prev_4) => ({
+  const updateWizardData = (updates: Record<string, any>) => {
+    setWizardData((prev_4: Record<string, any>) => ({
       ...prev_4,
       ...updates,
     }))

@@ -102,7 +102,7 @@ function MessageImpl({
     }
     case 'assistant': {
       const assistantWidth = containerWidth ?? '100%'
-      const renderAssistantBlock = (_, index) => (
+      const renderAssistantBlock = (_: any, index: number) => (
         <AssistantMessageBlock
           key={index}
           param={_ as any}
@@ -144,7 +144,7 @@ function MessageImpl({
         const compactScreen = isTranscriptMode ? 'transcript' : 'prompt'
         return <CompactSummary message={message as any} screen={compactScreen} />
       }
-      const imageIndices = []
+      const imageIndices: (string | number)[] = []
       let imagePosition = 0
       for (const param of message.message.content) {
         if (param.type === 'image') {

@@ -84,7 +84,7 @@ export async function buildDiagnostics(): Promise<Diagnostic[]> {
     ...(await buildMemoryDiagnostics()),
   ]
 }
-function PropertyValue({ value }) {
+function PropertyValue({ value }: { value: any }) {
   if (Array.isArray(value)) {
     const textItems = value.map((item, i) => (
       <Text key={i}>
@@ -157,7 +157,7 @@ export function Status({ context, diagnosticsPromise }: Props) {
     </Box>
   )
 }
-function Diagnostics({ promise }) {
+function Diagnostics({ promise }: { promise: Promise<any> }) {
   const diagnostics = use(promise)
   if ((diagnostics as any).length === 0) {
     return null

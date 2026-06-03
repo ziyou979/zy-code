@@ -32,7 +32,7 @@ export class WebSocketTransport implements Transport {
           nws.removeEventListener('error', onError)
           resolve()
         }
-        let onError
+        let onError!: (event: Event) => void
         onError = (event: Event) => {
           nws.removeEventListener('open', onOpen)
           nws.removeEventListener('error', onError)

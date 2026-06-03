@@ -28,7 +28,7 @@ function InvalidConfigDialog({
   onExit,
   onReset,
 }: InvalidConfigDialogProps) {
-  const handleSelect = (value) => {
+  const handleSelect = (value: string) => {
     if (value === 'exit') {
       onExit()
     } else {
@@ -93,14 +93,10 @@ export async function showInvalidConfigDialog({ error }: InvalidConfigHandlerPro
             process.exit(1)
           }}
           onReset={() => {
-            writeFileSync_DEPRECATED(
-              error.filePath,
-              jsonStringify(error.defaultConfig, null, 2),
-              {
-                flush: false,
-                encoding: 'utf8',
-              },
-            )
+            writeFileSync_DEPRECATED(error.filePath, jsonStringify(error.defaultConfig, null, 2), {
+              flush: false,
+              encoding: 'utf8',
+            })
             unmount()
             process.exit(0)
           }}

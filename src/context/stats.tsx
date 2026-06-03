@@ -127,19 +127,19 @@ export function useStats() {
   }
   return store
 }
-export function useCounter(name) {
+export function useCounter(name: string) {
   const store = useStats()
-  return (value) => store.increment(name, value)
+  return (value?: number) => store.increment(name, value)
 }
-export function useGauge(name) {
+export function useGauge(name: string) {
   const store = useStats()
-  return (value) => store.set(name, value)
+  return (value: number) => store.set(name, value)
 }
-export function useTimer(name) {
+export function useTimer(name: string) {
   const store = useStats()
-  return (value) => store.observe(name, value)
+  return (value: number) => store.observe(name, value)
 }
-export function useSet(name) {
+export function useSet(name: string) {
   const store = useStats()
-  return (value) => store.add(name, value)
+  return (value: string) => store.add(name, value)
 }

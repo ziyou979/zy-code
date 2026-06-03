@@ -122,7 +122,7 @@ async function executeForkedSkill(
   const forkedSanitizedName = isBuiltIn || isBundled || isOfficialSkill ? commandName : 'custom'
 
   const wasDiscoveredField =
-    feature('EXPERIMENTAL_SKILL_SEARCH') && remoteSkillModules.isSkillSearchEnabled()
+    feature('EXPERIMENTAL_SKILL_SEARCH') && remoteSkillModules!.isSkillSearchEnabled()
       ? {
           was_discovered: context.discoveredSkillNames?.has(commandName) ?? false,
         }
@@ -332,9 +332,9 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     // `_canonical_<slug>` names before local command lookup since remote
     // skills are not in the local command registry.
     if (feature('EXPERIMENTAL_SKILL_SEARCH') && isInternalBuild()) {
-      const slug = remoteSkillModules.stripCanonicalPrefix(normalizedCommandName)
+      const slug = remoteSkillModules!.stripCanonicalPrefix(normalizedCommandName)
       if (slug !== null) {
-        const meta = remoteSkillModules.getDiscoveredRemoteSkill(slug)
+        const meta = remoteSkillModules!.getDiscoveredRemoteSkill(slug)
         if (!meta) {
           return {
             result: false,
@@ -433,7 +433,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     // deny rule is honored (same pattern as safe-properties auto-allow below).
     // The skill content itself is canonical/curated, not user-authored.
     if (feature('EXPERIMENTAL_SKILL_SEARCH') && isInternalBuild()) {
-      const slug = remoteSkillModules.stripCanonicalPrefix(commandName)
+      const slug = remoteSkillModules!.stripCanonicalPrefix(commandName)
       if (slug !== null) {
         return {
           behavior: 'allow',
@@ -536,9 +536,9 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     // Remote skills are declarative markdown so no slash-command expansion
     // (no !command substitution, no $ARGUMENTS interpolation) is needed.
     if (feature('EXPERIMENTAL_SKILL_SEARCH') && isInternalBuild()) {
-      const slug = remoteSkillModules.stripCanonicalPrefix(commandName)
+      const slug = remoteSkillModules!.stripCanonicalPrefix(commandName)
       if (slug !== null) {
-        return executeRemoteSkill(slug, commandName, parentMessage, context)
+        return executeRemoteSkill(slug, commandName, parentMessage!, context)
       }
     }
 
@@ -555,8 +555,8 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
         commandName,
         args,
         context,
-        canUseTool,
-        parentMessage,
+        canUseTool!,
+        parentMessage!,
         onProgress,
       )
     }
@@ -587,7 +587,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     const sanitizedCommandName = isBuiltIn || isBundled || isOfficialSkill ? commandName : 'custom'
 
     const wasDiscoveredField =
-      feature('EXPERIMENTAL_SKILL_SEARCH') && remoteSkillModules.isSkillSearchEnabled()
+      feature('EXPERIMENTAL_SKILL_SEARCH') && remoteSkillModules!.isSkillSearchEnabled()
         ? {
             was_discovered: context.discoveredSkillNames?.has(commandName) ?? false,
           }
@@ -648,7 +648,9 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     })
 
     // Get the tool use ID from the parent message for linking newMessages
-    const toolUseID = getToolUseIDFromParentMessage(parentMessage, SKILL_TOOL_NAME)
+    const toolUseID = parentMessage
+      ? getToolUseIDFromParentMessage(parentMessage, SKILL_TOOL_NAME)
+      : undefined
 
     // Tag user messages with sourceToolUseID so they stay transient until this tool resolves
     const newMessages = tagMessagesWithToolUseID(
@@ -886,7 +888,7 @@ async function executeRemoteSkill(
   parentMessage: AssistantMessage,
   context: ToolUseContext,
 ): Promise<ToolResult<Output>> {
-  const { getDiscoveredRemoteSkill, loadRemoteSkill, logRemoteSkillLoaded } = remoteSkillModules
+  const { getDiscoveredRemoteSkill, loadRemoteSkill, logRemoteSkillLoaded } = remoteSkillModules!
 
   // validateInput already confirmed this slug is in session state, but we
   // re-fetch here to get the URL. If it's somehow gone (e.g., state cleared
@@ -898,10 +900,11 @@ async function executeRemoteSkill(
     )
   }
 
-  const urlScheme = extractUrlScheme(meta.url)
-  let loadResult
+  const url = meta.url ?? ''
+  const urlScheme = extractUrlScheme(url)
+  let loadResult: unknown
   try {
-    loadResult = await loadRemoteSkill(slug, meta.url)
+    loadResult = await loadRemoteSkill(slug, url)
   } catch (e) {
     const msg = errorMessage(e)
     logRemoteSkillLoaded({
@@ -914,7 +917,16 @@ async function executeRemoteSkill(
     throw new Error(`Failed to load remote skill ${slug}: ${msg}`)
   }
 
-  const { cacheHit, latencyMs, skillPath, content, fileCount, totalBytes, fetchMethod } = loadResult
+  const { cacheHit, latencyMs, skillPath, content, fileCount, totalBytes, fetchMethod } =
+    loadResult as {
+      cacheHit: boolean
+      latencyMs: number
+      skillPath: string
+      content: string
+      fileCount?: number
+      totalBytes?: number
+      fetchMethod?: string
+    }
 
   logRemoteSkillLoaded({
     slug,

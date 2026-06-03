@@ -24,7 +24,7 @@ import type {
 } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import type { ClassifierUsage, YoloClassifierResult } from '../../types/permissions.js'
-import { isDebugMode, logForDebugging } from '../debug.js'
+import { createDebugLog, isDebugMode } from '../debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../envUtils.js'
 import { errorMessage } from '../errors.js'
 import { lazySchema } from '../lazySchema.js'
@@ -35,6 +35,8 @@ import { jsonStringify } from '../slowOperations.js'
 import { tokenCountWithEstimation } from '../tokens.js'
 import { extractToolCallInlineBlock, parseClassifierResponse } from './classifierShared.js'
 import { getZyTempDir } from './filesystem.js'
+
+const permLog = createDebugLog('permissions:classifier')
 
 // 死代码消除：auto 模式分类器 prompt 的条件导入。
 // 在构建时，bundler 将 .txt 文件内联为字符串字面量。在测试时，
@@ -161,7 +163,7 @@ async function maybeDumpAutoMode(
       jsonStringify(response, null, 2),
       'utf-8',
     )
-    logForDebugging(`Dumped auto mode req/res to ${getAutoModeDumpDir()}/${base}.{req,res}.json`)
+    permLog(`Dumped auto mode req/res to ${getAutoModeDumpDir()}/${base}.{req,res}.json`)
   } catch {
     // Ignore errors
   }
@@ -227,7 +229,7 @@ async function dumpErrorPrompts(
       `=== SYSTEM PROMPT ===\n${systemPrompt}\n\n` +
       `=== USER PROMPT (transcript) ===\n${userPrompt}\n`
     await writeFile(path, content, 'utf-8')
-    logForDebugging(`Dumped auto mode classifier error prompts to ${path}`)
+    permLog(`Dumped auto mode classifier error prompts to ${path}`)
     return path
   } catch {
     return null
@@ -381,7 +383,7 @@ function toCompactBlock(
     try {
       encoded = tool.toAutoClassifierInput(input) ?? input
     } catch (e) {
-      logForDebugging(`toAutoClassifierInput failed for ${block.name}: ${errorMessage(e)}`)
+      permLog(`toAutoClassifierInput failed for ${block.name}: ${errorMessage(e)}`)
       logEvent('zy_auto_mode_malformed_tool_input', {
         toolName: block.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
@@ -866,7 +868,7 @@ async function classifyYoloActionXml(
     }
   } catch (error) {
     if (signal.aborted) {
-      logForDebugging('Auto mode classifier (XML): aborted by user')
+      permLog('Auto mode classifier (XML): aborted by user')
       logAutoModeOutcome('interrupted', model, { classifierType })
       return {
         shouldBlock: true,
@@ -878,7 +880,7 @@ async function classifyYoloActionXml(
       }
     }
     const tooLong = detectPromptTooLong(error)
-    logForDebugging(`Auto mode classifier (XML) error: ${errorMessage(error)}`, {
+    permLog(`Auto mode classifier (XML) error: ${errorMessage(error)}`, {
       level: 'warn',
     })
     const errorDumpPath =
@@ -997,7 +999,7 @@ export async function classifyYoloAction(
   const classifierTokensEst = Math.round(classifierChars / 4)
   const mainLoopTokens = tokenCountWithEstimation(messages)
   if (isDebugMode()) {
-    logForDebugging(
+    permLog(
       `[auto-mode] context comparison: ` +
         `mainLoopTokens=${mainLoopTokens} ` +
         `classifierChars=${classifierChars} ` +
@@ -1008,7 +1010,7 @@ export async function classifyYoloAction(
         `transcriptEntries=${transcriptEntries.length} ` +
         `messages=${messages.length}`,
     )
-    logForDebugging(
+    permLog(
       `[auto-mode] new action being classified: ` +
         `${actionCompact.length > 500 ? `${actionCompact.slice(0, 500)}…` : actionCompact}`,
     )
@@ -1086,7 +1088,7 @@ export async function classifyYoloAction(
     const classifierInputTokens =
       usage.inputTokens + usage.cacheReadInputTokens + usage.cacheCreationInputTokens
     if (isDebugMode()) {
-      logForDebugging(
+      permLog(
         `[auto-mode] API usage: ` +
           `actualInputTokens=${classifierInputTokens} ` +
           `(uncached=${usage.inputTokens} ` +
@@ -1105,7 +1107,7 @@ export async function classifyYoloAction(
     )
 
     if (!toolCallInlineBlock) {
-      logForDebugging('Auto mode classifier: No tool call block found', {
+      permLog('Auto mode classifier: No tool call block found', {
         level: 'warn',
       })
       logAutoModeOutcome('parse_failure', model, { failureKind: 'no_tool_use' })
@@ -1124,7 +1126,7 @@ export async function classifyYoloAction(
     // 使用共享工具解析响应
     const parsed = parseClassifierResponse(toolCallInlineBlock, yoloClassifierResponseSchema())
     if (!parsed) {
-      logForDebugging('Auto mode classifier: Invalid response schema', {
+      permLog('Auto mode classifier: Invalid response schema', {
         level: 'warn',
       })
       logAutoModeOutcome('parse_failure', model, {
@@ -1165,7 +1167,7 @@ export async function classifyYoloAction(
     return classifierResult
   } catch (error) {
     if (signal.aborted) {
-      logForDebugging('Auto mode classifier: aborted by user')
+      permLog('Auto mode classifier: aborted by user')
       logAutoModeOutcome('interrupted', model)
       return {
         shouldBlock: true,
@@ -1175,7 +1177,7 @@ export async function classifyYoloAction(
       }
     }
     const tooLong = detectPromptTooLong(error)
-    logForDebugging(`Auto mode classifier error: ${errorMessage(error)}`, {
+    permLog(`Auto mode classifier error: ${errorMessage(error)}`, {
       level: 'warn',
     })
     const errorDumpPath =
@@ -1243,7 +1245,7 @@ function getClassifierModel(): string {
   if (config?.model) {
     return config.model
   }
-  return getMainLoopModel()
+  return getMainLoopModel()!
 }
 
 /**

@@ -14,7 +14,7 @@ import { render, useApp } from '../ink.js'
  * before exiting. This is more robust than process.nextTick() for React 19's
  * async render cycle.
  */
-function RenderOnceAndExit({ children }) {
+function RenderOnceAndExit({ children }: { children: React.ReactNode }) {
   const { exit } = useApp()
   useLayoutEffect(() => {
     const timer = setTimeout(exit, 0)
@@ -48,10 +48,7 @@ function extractFirstFrame(output: string): string {
 /**
  * Renders a React node to a string with ANSI escape codes (for terminal output).
  */
-export async function renderToAnsiString(
-  node: React.ReactNode,
-  columns?: number,
-): Promise<string> {
+export async function renderToAnsiString(node: React.ReactNode, columns?: number): Promise<string> {
   let output = ''
 
   const stream = new PassThrough()

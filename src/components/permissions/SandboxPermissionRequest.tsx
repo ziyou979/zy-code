@@ -15,7 +15,7 @@ export function SandboxPermissionRequest({
   onUserResponse,
 }: SandboxPermissionRequestProps) {
   const { host } = networkHost
-  const onSelect = function onSelect(value) {
+  const onSelect = function onSelect(value: string) {
     switch (value) {
       case 'yes': {
         onUserResponse({

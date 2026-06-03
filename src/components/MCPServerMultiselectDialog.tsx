@@ -15,7 +15,7 @@ type Props = {
   onDone(): void
 }
 export function MCPServerMultiselectDialog({ serverNames, onDone }: Props) {
-  const onSubmit = function onSubmit(selectedServers) {
+  const onSubmit = function onSubmit(selectedServers: string[]) {
     const currentSettings = getInitialSettings() || {}
     const enabledServers = currentSettings.enabledMcpjsonServers || []
     const disabledServers = currentSettings.disabledMcpjsonServers || []

@@ -22,7 +22,7 @@ import { preconnectAnthropicApi } from '../utils/apiPreconnect.js'
 import { applyExtraCACertsFromConfig } from '../utils/caCertsConfig.js'
 import { registerCleanup } from '../utils/cleanupRegistry.js'
 import { enableConfigs, recordFirstStartTime } from '../utils/config.js'
-import { logForDebugging } from '../utils/debug.js'
+import { createDebugLog } from '../utils/debug.js'
 import { detectCurrentRepository } from '../utils/detectRepository.js'
 import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
 import { initJetBrainsDetection } from '../utils/envDynamic.js'
@@ -42,6 +42,8 @@ import { ensureScratchpadDir, isScratchpadEnabled } from '../utils/permissions/f
 import { configureGlobalAgents } from '../utils/proxy.js'
 import { getTelemetryAttributes } from '../utils/telemetryAttributes.js'
 import { setShellIfWindows } from '../utils/windowsPaths.js'
+
+const log = createDebugLog('init')
 
 // initializeZyEventLogging 动态导入以延迟加载 OpenTelemetry sdk-logs/resources
 
@@ -102,7 +104,7 @@ export const init = memoize(async (): Promise<void> => {
         // 之前这里没有 .catch，任何 import/init 异常都会变成 unhandled rejection
         // 静默消失，~/.zy/telemetry/zy_events.log 永远不生成。加 catch 让失败可观测。
         const message = error instanceof Error ? error.message : String(error)
-        logForDebugging(`1P event logging init failed: ${message}`, { level: 'warn' })
+        log(`1P event logging init failed: ${message}`, { level: 'warn' })
       })
     profileCheckpoint('init_after_1p_event_logging')
 
@@ -110,9 +112,9 @@ export const init = memoize(async (): Promise<void> => {
     // 通过 VSCode 扩展登录时可能未填充 OAuth 账号信息。
     // 包裹在 try-catch 中以防止 OAuth 错误阻塞初始化过程
     void populateOAuthAccountInfoIfNeeded().catch((_error) => {
-      logForDebugging('OAuth account info population failed during init', {
+      log('OAuth account info population failed during init', {
         level: 'warn',
-      } as any)
+      })
     })
     profileCheckpoint('init_after_oauth_populate')
 
@@ -139,21 +141,21 @@ export const init = memoize(async (): Promise<void> => {
 
     // 配置全局 mTLS 设置
     const mtlsStart = Date.now()
-    logForDebugging('[init] configureGlobalMTLS starting')
+    log('[init] configureGlobalMTLS starting')
     configureGlobalMTLS()
     logForDiagnosticsNoPII('info', 'init_mtls_configured', {
       duration_ms: Date.now() - mtlsStart,
     })
-    logForDebugging('[init] configureGlobalMTLS complete')
+    log('[init] configureGlobalMTLS complete')
 
     // 配置全局 HTTP 代理（proxy 和/或 mTLS）
     const proxyStart = Date.now()
-    logForDebugging('[init] configureGlobalAgents starting')
+    log('[init] configureGlobalAgents starting')
     configureGlobalAgents()
     logForDiagnosticsNoPII('info', 'init_proxy_configured', {
       duration_ms: Date.now() - proxyStart,
     })
-    logForDebugging('[init] configureGlobalAgents complete')
+    log('[init] configureGlobalAgents complete')
     profileCheckpoint('init_network_configured')
 
     // 预连接到 Anthropic API —— 将 TCP+TLS 握手（约 100-200ms）
@@ -178,7 +180,7 @@ export const init = memoize(async (): Promise<void> => {
         registerUpstreamProxyEnvFn(getUpstreamProxyEnv)
         await initUpstreamProxy()
       } catch (err) {
-        logForDebugging(
+        log(
           `[init] upstreamproxy init failed: ${err instanceof Error ? err.message : String(err)}; continuing without proxy`,
           { level: 'warn' },
         )
@@ -249,29 +251,27 @@ export function initializeTelemetryAfterTrust(): void {
     // 下面的异步路径仍会执行，但 doInitializeTelemetry() 会防止重复初始化。
     if (getIsNonInteractiveSession() && isBetaTracingEnabled()) {
       void doInitializeTelemetry().catch((error) => {
-        logForDebugging(
-          `[3P telemetry] Eager telemetry init failed (beta tracing): ${errorMessage(error)}`,
-          { level: 'error' },
-        )
+        log(`[3P telemetry] Eager telemetry init failed (beta tracing): ${errorMessage(error)}`, {
+          level: 'error',
+        })
       })
     }
-    logForDebugging('[3P telemetry] Waiting for remote managed settings before telemetry init')
+    log('[3P telemetry] Waiting for remote managed settings before telemetry init')
     void waitForRemoteManagedSettingsToLoad()
       .then(async () => {
-        logForDebugging('[3P telemetry] Remote managed settings loaded, initializing telemetry')
+        log('[3P telemetry] Remote managed settings loaded, initializing telemetry')
         // 在初始化遥测之前重新应用环境变量，以获取远程设置。
         applyConfigEnvironmentVariables()
         await doInitializeTelemetry()
       })
       .catch((error) => {
-        logForDebugging(
-          `[3P telemetry] Telemetry init failed (remote settings path): ${errorMessage(error)}`,
-          { level: 'error' },
-        )
+        log(`[3P telemetry] Telemetry init failed (remote settings path): ${errorMessage(error)}`, {
+          level: 'error',
+        })
       })
   } else {
     void doInitializeTelemetry().catch((error) => {
-      logForDebugging(`[3P telemetry] Telemetry init failed: ${errorMessage(error)}`, {
+      log(`[3P telemetry] Telemetry init failed: ${errorMessage(error)}`, {
         level: 'error',
       })
     })

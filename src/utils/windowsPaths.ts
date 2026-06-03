@@ -95,8 +95,7 @@ export function setShellIfWindows(): void {
 /**
  * Find the path where `bash.exe` included with git-bash exists, exiting the process if not found.
  */
-export let findGitBashPath
-findGitBashPath = memoize((): string => {
+export const findGitBashPath = memoize((): string => {
   if (process.env.ZY_CODE_GIT_BASH_PATH) {
     if (checkPathExists(process.env.ZY_CODE_GIT_BASH_PATH)) {
       return process.env.ZY_CODE_GIT_BASH_PATH

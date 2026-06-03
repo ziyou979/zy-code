@@ -35,7 +35,7 @@ export function TeleportResumeWrapper({
       source: source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
   }, [source])
-  const handleSelect = async (session) => {
+  const handleSelect = async (session: any) => {
     const result = await resumeSession(session)
     if (result) {
       onComplete(result)
@@ -64,7 +64,7 @@ export function TeleportResumeWrapper({
             <Text bold={true}>Resuming session…</Text>
           </Box>
         }
-        <Text dimColor={true}>Loading "{selectedSession.title}"…</Text>
+        <Text dimColor={true}>Loading "{(selectedSession as any).title}"…</Text>
       </Box>
     )
   }

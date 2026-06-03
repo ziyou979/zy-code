@@ -100,7 +100,7 @@ export async function buildSideQuestionFallbackParams({
   thinkingConfig: ThinkingConfig | undefined
   agents: AgentDefinition[]
 }): Promise<CacheSafeParams> {
-  const mainLoopModel = getMainLoopModel()
+  const mainLoopModel = getMainLoopModel()!
   const appState = getAppState()
 
   const { defaultSystemPrompt, userContext, systemContext } = (await fetchSystemPromptParts({

@@ -372,9 +372,7 @@ export function ExitPlanModePermissionRequest({
     // Clear-context options: set pending plan implementation and reject the dialog
     // The REPL will handle context clear and trigger a fresh query
     // Keep-context options skip this block and go through the normal flow below
-    const isResumeAutoOption = true
-      ? value === 'yes-resume-auto-mode'
-      : false
+    const isResumeAutoOption = true ? value === 'yes-resume-auto-mode' : false
     const isKeepContextOption =
       value === 'yes-accept-edits-keep-context' ||
       value === 'yes-default-keep-context' ||
@@ -389,11 +387,7 @@ export function ExitPlanModePermissionRequest({
         mode = 'bypassPermissions'
       } else if (value === 'yes-accept-edits') {
         mode = 'acceptEdits'
-      } else if (
-        true &&
-        value === 'yes-auto-clear-context' &&
-        isAutoModeGateEnabled()
-      ) {
+      } else if (true && value === 'yes-auto-clear-context' && isAutoModeGateEnabled()) {
         // REPL's processInitialMessage handles stripDangerousPermissions + mode,
         // but does NOT set autoModeActive. Gate-off falls through to 'default'.
         mode = 'auto'
@@ -458,11 +452,7 @@ export function ExitPlanModePermissionRequest({
     // Handle auto keep-context option — needs special handling because
     // buildPermissionUpdates maps auto to 'default' via toExternalPermissionMode.
     // We set the mode directly via setAppState and sync the bootstrap state.
-    if (
-      true &&
-      value === 'yes-resume-auto-mode' &&
-      isAutoModeGateEnabled()
-    ) {
+    if (true && value === 'yes-resume-auto-mode' && isAutoModeGateEnabled()) {
       logEvent('zy_plan_exit', {
         planLengthChars: currentPlan.length,
         outcome: value as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -627,7 +617,7 @@ export function ExitPlanModePermissionRequest({
         <Box marginTop={1}>
           <Select
             options={options}
-            onChange={(v) => void handleResponseRef.current(v)}
+            onChange={(v: string) => void handleResponseRef.current(v as any)}
             onCancel={() => handleCancelRef.current?.()}
             onImagePaste={onImagePaste}
             pastedContents={pastedContents}
@@ -908,7 +898,7 @@ function getContextUsedPercent(
     return null
   }
   const runtimeModel = getMainLoopModel()
-  const contextWindowSize = getContextWindowForModel(runtimeModel)
+  const contextWindowSize = getContextWindowForModel(runtimeModel ?? '')
   const { used } = calculateContextPercentages(
     {
       inputTokens: usage.inputTokens,

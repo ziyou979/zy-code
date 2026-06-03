@@ -286,7 +286,7 @@ export function registerMcpCommands(program: Command<any, any, any>): void {
           const { runConnectHeadless } = await import('../../server/connectHeadless.js')
           const prompt = typeof opts.print === 'string' ? opts.print : ''
           const interactive = opts.print === true
-          await runConnectHeadless(connectConfig, prompt, opts.outputFormat, interactive)
+          await runConnectHeadless(connectConfig, prompt, opts.outputFormat ?? '', interactive)
         },
       )
   }

@@ -474,7 +474,7 @@ function OAuthStatusMessage({
         <Box>
           <Select
             options={options}
-            onChange={(value_0) => {
+            onChange={(value_0: string) => {
               if (value_0 === 'platform') {
                 logEvent('zy_oauth_platform_selected', {})
                 setOAuthStatus({

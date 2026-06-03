@@ -17,7 +17,7 @@ import type {
   StreamResult,
   ToolDefinition,
 } from '../../types/llm.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { createDebugLog } from '../../utils/debug.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { countMessagesTokensLocally } from '../tokenEstimation.js'
 import { getOpenAIClient } from './client.js'
@@ -26,6 +26,8 @@ import {
   mapOpenAIStreamToStandard,
   openAIResponseToStandard,
 } from './conversions/openai.js'
+
+const log = createDebugLog('openai')
 
 export class OpenAIProviderAdapter implements LLMAdapter {
   readonly name = 'openai'
@@ -54,13 +56,13 @@ export class OpenAIProviderAdapter implements LLMAdapter {
   ): Promise<StreamResult> {
     const client = await this.getClient()
     const requestParams = buildOpenAIRequestParams(params)
-    logForDebugging(
-      `[OpenAI] Streaming request: model=${params.model}, messages=${
+    log(
+      `Streaming request: model=${params.model}, messages=${
         (requestParams.messages as unknown[] | undefined)?.length ?? 0
       }`,
     )
-    logForDebugging(
-      `[OpenAI] Streaming request params summary: ${jsonStringify({
+    log(
+      `Streaming request params summary: ${jsonStringify({
         model: requestParams.model,
         messagesCount: (requestParams.messages as unknown[] | undefined)?.length ?? 0,
         toolsCount: (requestParams.tools as unknown[] | undefined)?.length ?? 0,
@@ -93,13 +95,13 @@ export class OpenAIProviderAdapter implements LLMAdapter {
   ): Promise<LLMResponse> {
     const client = await this.getClient()
     const requestParams = buildOpenAIRequestParams(params)
-    logForDebugging(
-      `[OpenAI] Non-streaming request: model=${params.model}, messages=${
+    log(
+      `Non-streaming request: model=${params.model}, messages=${
         (requestParams.messages as unknown[] | undefined)?.length ?? 0
       }`,
     )
-    logForDebugging(
-      `[OpenAI] Non-streaming request params summary: ${jsonStringify({
+    log(
+      `Non-streaming request params summary: ${jsonStringify({
         model: requestParams.model,
         messagesCount: (requestParams.messages as unknown[] | undefined)?.length ?? 0,
         toolsCount: (requestParams.tools as unknown[] | undefined)?.length ?? 0,
@@ -122,11 +124,11 @@ export class OpenAIProviderAdapter implements LLMAdapter {
 
   async countTokens(messages: LLMMessage[], tools: ToolDefinition[]): Promise<number | null> {
     try {
-      const model = getMainLoopModel()
+      const model = getMainLoopModel() ?? ''
       const normalizedModel = normalizeModelStringForAPI(model)
       return countMessagesTokensLocally(messages, tools, normalizedModel)
     } catch (error) {
-      logForDebugging(`[OpenAI] countTokens error: ${error}`)
+      log(`countTokens error: ${error}`)
       return null
     }
   }

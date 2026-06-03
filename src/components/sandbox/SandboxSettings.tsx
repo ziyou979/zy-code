@@ -66,7 +66,7 @@ export function SandboxSettings({ onComplete, depCheck }: Props) {
       value: 'disabled',
     },
   ]
-  const handleSelect = async function handleSelect(value) {
+  const handleSelect = async function handleSelect(value: string) {
     const mode = value as SandboxMode
     switch (mode) {
       case 'auto-allow': {

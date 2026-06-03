@@ -742,7 +742,9 @@ export async function* mapOpenAIStreamToStandard(
       // DashScope/Qwen 在 thinking 结束时可能将 </think> 标签泄漏到 content 字段，
       // 需要在此处剥离，避免产生仅含 XML 标签的空 text block。
       if (delta.content && delta.content !== '') {
-        const cleaned = delta.content.replace(/<\/?(think|thinking)>/g, '').replace(/^\n+|\n+$/g, '')
+        const cleaned = delta.content
+          .replace(/<\/?(think|thinking)>/g, '')
+          .replace(/^\n+|\n+$/g, '')
         if (cleaned) {
           if (!textBlockStarted) {
             textBlockIndex = thinkingBlockStarted ? thinkingBlockIndex + 1 : 0

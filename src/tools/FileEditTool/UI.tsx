@@ -212,7 +212,21 @@ type RejectionDiffData = {
   firstLine: string | null
   fileContent: string | undefined
 }
-function EditRejectionDiff({ filePath, oldString, newString, replaceAll, style, verbose }) {
+function EditRejectionDiff({
+  filePath,
+  oldString,
+  newString,
+  replaceAll,
+  style,
+  verbose,
+}: {
+  filePath: string
+  oldString: string
+  newString: string
+  replaceAll: boolean
+  style?: 'condensed'
+  verbose: boolean
+}) {
   const [dataPromise] = useState(() =>
     loadRejectionDiff(filePath, oldString, newString, replaceAll),
   )
@@ -238,7 +252,17 @@ function EditRejectionDiff({ filePath, oldString, newString, replaceAll, style, 
     </Suspense>
   )
 }
-function EditRejectionBody({ promise, filePath, style, verbose }) {
+function EditRejectionBody({
+  promise,
+  filePath,
+  style,
+  verbose,
+}: {
+  promise: Promise<RejectionDiffData>
+  filePath: string
+  style?: 'condensed'
+  verbose: boolean
+}) {
   const { patch, firstLine, fileContent } = use(promise as any) as any
   return (
     <FileEditToolUseRejectedMessage

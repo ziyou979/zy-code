@@ -2,6 +2,9 @@ import { feature } from 'bun:bundle'
 import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
 import type { Tool as ToolType, ToolUseContext } from '../Tool.js'
+import type React from 'react'
+import type { SetToolPermissionContextFn } from '../services/swarm/leaderPermissionBridge.js'
+import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
 import {
   consumeSpeculativeClassifierCheck,
   peekSpeculativeClassifierCheck,
@@ -36,7 +39,10 @@ export type CanUseToolFn<Input extends Record<string, unknown> = Record<string, 
   toolUseID: string,
   forceDecision?: PermissionDecision<Input>,
 ) => Promise<PermissionDecision<Input>>
-function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext): CanUseToolFn {
+function useCanUseTool(
+  setToolUseConfirmQueue: React.Dispatch<React.SetStateAction<ToolUseConfirm[]>>,
+  setToolPermissionContext: SetToolPermissionContextFn,
+): CanUseToolFn {
   return (async (tool, input, toolUseContext, assistantMessage, toolUseID, forceDecision) =>
     new Promise((resolve) => {
       const ctx = createPermissionContext(

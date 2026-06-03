@@ -18,6 +18,7 @@ import type { AssistantMessage, Message } from '../../types/message.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { extractTextContent, stripPromptXMLTags } from '../../utils/messages.js'
 import { countCharInString } from '../../utils/stringUtils.js'
+import { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 
 const COPY_DIR = join(tmpdir(), 'zy')
 const RESPONSE_FILENAME = 'response.md'
@@ -134,7 +135,7 @@ type PickerProps = {
 }
 type PickerSelection = number | 'full' | 'always'
 function CopyPicker({ fullText, codeBlocks, messageAge, onDone }: PickerProps) {
-  const focusedRef = useRef('full')
+  const focusedRef = useRef<PickerSelection>('full')
   const options = [
     {
       label: tSync('copy.fullResponse'),
@@ -161,7 +162,7 @@ function CopyPicker({ fullText, codeBlocks, messageAge, onDone }: PickerProps) {
       description: tSync('copy.alwaysCopyDesc'),
     },
   ]
-  const getSelectionContent = function getSelectionContent(selected) {
+  const getSelectionContent = function getSelectionContent(selected: PickerSelection) {
     if (selected === 'full' || selected === 'always') {
       return {
         text: fullText,
@@ -175,7 +176,7 @@ function CopyPicker({ fullText, codeBlocks, messageAge, onDone }: PickerProps) {
       blockIndex: selected,
     }
   }
-  const handleSelect = async function handleSelect(selected_0) {
+  const handleSelect = async function handleSelect(selected_0: PickerSelection) {
     const content = getSelectionContent(selected_0)
     if (selected_0 === 'always') {
       if (!getGlobalConfig().copyFullResponse) {
@@ -201,7 +202,7 @@ function CopyPicker({ fullText, codeBlocks, messageAge, onDone }: PickerProps) {
     const result_0 = await copyOrWriteToFile(content.text, content.filename)
     onDone(result_0)
   }
-  const handleWrite = async function handleWrite(selected_1) {
+  const handleWrite = async function handleWrite(selected_1: PickerSelection) {
     const content_0 = getSelectionContent(selected_1)
     logEvent('zy_copy', {
       selected_block: content_0.blockIndex,
@@ -213,10 +214,14 @@ function CopyPicker({ fullText, codeBlocks, messageAge, onDone }: PickerProps) {
       const filePath = await writeToFile(content_0.text, content_0.filename)
       onDone(tSync('copy.writtenTo', { filePath }))
     } catch (e) {
-      onDone(tSync('copy.writeFailed', { error: e instanceof Error ? e.message : e }))
+      onDone(
+        tSync('copy.writeFailed', {
+          error: e instanceof Error ? e.message : (e as string | number),
+        }),
+      )
     }
   }
-  const handleKeyDown = function handleKeyDown(keyboardEvent) {
+  const handleKeyDown = function handleKeyDown(keyboardEvent: KeyboardEvent) {
     if (keyboardEvent.key === 'w') {
       keyboardEvent.preventDefault()
       handleWrite(focusedRef.current)
@@ -230,10 +235,10 @@ function CopyPicker({ fullText, codeBlocks, messageAge, onDone }: PickerProps) {
           <Select
             options={options}
             hideIndexes={false}
-            onFocus={(value) => {
+            onFocus={(value: PickerSelection) => {
               focusedRef.current = value
             }}
-            onChange={(selected_2) => {
+            onChange={(selected_2: PickerSelection) => {
               handleSelect(selected_2)
             }}
             onCancel={() => {

@@ -60,7 +60,7 @@ function buildNestedTree(errors: ValidationError[]): TreeNode {
 /**
  * Groups and displays validation errors using treeify with deduplication
  */
-export function ValidationErrorsList({ errors }) {
+export function ValidationErrorsList({ errors }: { errors: any[] }) {
   const [themeName] = useTheme()
   if (errors.length === 0) {
     return null
@@ -76,7 +76,7 @@ export function ValidationErrorsList({ errors }) {
   const sortedFiles = Object.keys(errorsByFile).sort()
   const fileErrorElements = sortedFiles.map((fileName) => {
     const fileErrors = errorsByFile[fileName] || []
-    fileErrors.sort((a, b) => {
+    fileErrors.sort((a: any, b: any) => {
       if (!a.path && b.path) {
         return -1
       }
@@ -87,7 +87,7 @@ export function ValidationErrorsList({ errors }) {
     })
     const errorTree = buildNestedTree(fileErrors)
     const suggestionPairs = new Map()
-    fileErrors.forEach((fileError) => {
+    fileErrors.forEach((fileError: any) => {
       if (fileError.suggestion || fileError.docLink) {
         const key = `${fileError.suggestion || ''}|${fileError.docLink || ''}`
         if (!suggestionPairs.has(key)) {

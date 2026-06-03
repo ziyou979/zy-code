@@ -34,7 +34,7 @@ export async function fetchUtilization(): Promise<Utilization | null> {
 
   // OAuth 令牌过期时跳过 API 调用，避免 401 错误
   const tokens = getZyAIOAuthTokens()
-  if (tokens && isOAuthTokenExpired(tokens.expiresAt)) {
+  if (tokens && isOAuthTokenExpired(tokens.expiresAt ?? null)) {
     return null
   }
 

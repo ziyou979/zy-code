@@ -66,7 +66,7 @@ export function ShowInIDEPrompt({
               <Select
                 options={options}
                 inlineDescriptions={true}
-                onChange={(value) => {
+                onChange={(value: string) => {
                   const selected = options.find((opt) => opt.value === value)
                   if (selected) {
                     if (selected.option.type === 'reject') {
@@ -90,7 +90,7 @@ export function ShowInIDEPrompt({
                     input,
                   )
                 }
-                onFocus={(optionValue) => setFocusedOption(optionValue)}
+                onFocus={(optionValue: string) => setFocusedOption(optionValue)}
                 onInputModeToggle={onInputModeToggle}
               />
             }

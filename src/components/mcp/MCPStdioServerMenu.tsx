@@ -177,7 +177,7 @@ export function MCPStdioServerMenu({
           <Box marginTop={1}>
             <Select
               options={menuOptions}
-              onChange={async (value) => {
+              onChange={async (value: string) => {
                 if (value === 'tools') {
                   onViewTools()
                 } else if (value === 'reconnectMcpServer') {
@@ -206,7 +206,7 @@ export function MCPStdioServerMenu({
       <Box marginTop={1}>
         <Text dimColor italic>
           {exitState.pending ? (
-            tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName })
+            tSync('permissionRules.pressAgainToExit', { keyName: exitState.keyName ?? '' })
           ) : (
             <Byline>
               <KeyboardShortcutHint shortcut="↑↓" action="navigate" />

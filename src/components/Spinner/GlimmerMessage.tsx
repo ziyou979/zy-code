@@ -30,7 +30,7 @@ export function GlimmerMessage({
   stalledIntensity = 0,
 }: Props) {
   const [themeName] = useTheme()
-  let earlyReturn
+  let earlyReturn: React.ReactNode | symbol
   earlyReturn = Symbol.for('react.early_return_sentinel')
   const theme = getTheme(themeName)
   const segs = []
@@ -94,7 +94,7 @@ export function GlimmerMessage({
     }
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn
+    return earlyReturn as React.ReactNode
   }
   const shimmerStart = glimmerIndex - 1
   const shimmerEnd = glimmerIndex + 1

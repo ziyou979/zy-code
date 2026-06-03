@@ -823,8 +823,8 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   if (mcpConfig && mcpConfig.length > 0) {
     // 处理 mcpConfig 数组
     const processedConfigs = mcpConfig
-      .map((config) => config.trim())
-      .filter((config) => config.length > 0)
+      .map((config: string) => config.trim())
+      .filter((config: string) => config.length > 0)
     let allConfigs: Record<string, McpServerConfig> = {}
     const allErrors: ValidationError[] = []
     for (const configItem of processedConfigs) {
@@ -2770,7 +2770,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
       root,
       appProps: { getFpsMetrics, stats, initialState },
       renderAndRun,
-      pendingConnect,
+      pendingConnect: { ...pendingConnect, url: pendingConnect.url! },
       config: {
         debug: debug || debugToStderr,
         commands,
@@ -2789,7 +2789,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
       root,
       appProps: { getFpsMetrics, stats, initialState },
       renderAndRun,
-      pendingSSH,
+      pendingSSH: { ...pendingSSH, host: pendingSSH.host! },
       localVersion: MACRO.VERSION,
       config: {
         debug: debug || debugToStderr,
@@ -2889,14 +2889,14 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     setUserMsgOptIn(true)
     setIsRemoteMode(true)
     const remoteSessionConfig = createRemoteSessionConfig(
-      targetSessionId,
+      targetSessionId!,
       getAccessToken,
       apiCreds.orgUUID,
       /* hasInitialPrompt */ false,
       /* viewerOnly */ true,
     )
     const infoMessage = createSystemMessage(
-      `Attached to assistant session ${targetSessionId.slice(0, 8)}…`,
+      `Attached to assistant session ${targetSessionId!.slice(0, 8)}…`,
       'info',
     )
     const assistantInitialState: AppState = {

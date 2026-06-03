@@ -17,7 +17,7 @@ export function AutoModeOptInDialog({ onAccept, onDecline, declineExits }: Props
   React.useEffect(() => {
     logEvent('zy_auto_mode_opt_in_dialog_shown', {})
   }, [])
-  const onChange = function onChange(value) {
+  const onChange = function onChange(value: string) {
     switch (value) {
       case 'accept': {
         logEvent('zy_auto_mode_opt_in_dialog_accept', {})
@@ -68,7 +68,9 @@ export function AutoModeOptInDialog({ onAccept, onDecline, declineExits }: Props
               value: 'decline' as const,
             },
           ]}
-          onChange={(value_0) => onChange(value_0 as 'accept' | 'accept-default' | 'decline')}
+          onChange={(value_0: string) =>
+            onChange(value_0 as 'accept' | 'accept-default' | 'decline')
+          }
           onCancel={onDecline}
         />
       }

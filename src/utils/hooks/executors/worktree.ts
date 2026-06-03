@@ -1,8 +1,10 @@
 import { getRegisteredHooks } from '../../../bootstrap/state.js'
-import { logForDebugging } from '../../debug.js'
+import { createDebugLog } from '../../debug.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { getHooksConfigFromSnapshot, shouldAllowManagedHooksOnly } from '../hooksConfigSnapshot.js'
 import { executeHooksOutsideREPL } from '../outsideRepl.js'
+
+const hookLog = createDebugLog('hooks')
 
 export function hasWorktreeCreateHook(): boolean {
   const snapshotHooks = getHooksConfigFromSnapshot()?.WorktreeCreate
@@ -85,7 +87,7 @@ export async function executeWorktreeRemoveHook(worktreePath: string): Promise<b
 
   for (const result of results) {
     if (!result.succeeded) {
-      logForDebugging(`WorktreeRemove hook failed [${result.command}]: ${result.output.trim()}`, {
+      hookLog(`WorktreeRemove hook failed [${result.command}]: ${result.output.trim()}`, {
         level: 'error',
       })
     }

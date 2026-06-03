@@ -50,7 +50,7 @@ export function formatReviewStageCounts(
 // Per-character rainbow gradient, same treatment as the ultraplan keyword.
 // The phase offset lets the gradient cycle — so the colors sweep along the
 // text on each animation frame instead of being static.
-function RainbowText({ text, phase = 0 }) {
+function RainbowText({ text, phase = 0 }: { text: string; phase?: number }) {
   return (
     <>
       {[...text].map((ch, i) => (
@@ -79,7 +79,7 @@ function useSmoothCount(target: number, time: number, snap: boolean): number {
   }
   return displayed.current
 }
-function ReviewRainbowLine({ session }) {
+function ReviewRainbowLine({ session }: { session: any }) {
   const settings = useSettings()
   const reducedMotion = settings.prefersReducedMotion ?? false
   const p = session.reviewProgress
@@ -122,7 +122,7 @@ function ReviewRainbowLine({ session }) {
     </>
   )
 }
-export function RemoteSessionProgress({ session }) {
+export function RemoteSessionProgress({ session }: { session: any }) {
   if (session.isRemoteReview) {
     return <ReviewRainbowLine session={session} />
   }

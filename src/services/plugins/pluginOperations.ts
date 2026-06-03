@@ -325,7 +325,7 @@ export async function installPluginOp(
     for (const [mktName, mktConfig] of Object.entries(marketplaces)) {
       try {
         const marketplace = await getMarketplace(mktName)
-        const pluginEntry = marketplace.plugins.find((p) => p.name === pluginName)
+        const pluginEntry = marketplace.plugins.find((p: { name: string }) => p.name === pluginName)
         if (pluginEntry) {
           foundPlugin = pluginEntry
           foundMarketplace = mktName

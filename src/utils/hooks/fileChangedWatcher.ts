@@ -1,7 +1,7 @@
 import { isAbsolute, join } from 'node:path'
 import chokidar, { type FSWatcher } from 'chokidar'
 import { registerCleanup } from '../cleanupRegistry.js'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
 import { errorMessage } from '../errors.js'
 import {
   executeCwdChangedHooks,
@@ -10,6 +10,8 @@ import {
 } from '../hooks.js'
 import { clearCwdEnvFiles } from '../sessionEnvironment.js'
 import { getHooksConfigFromSnapshot } from './hooksConfigSnapshot.js'
+
+const hookLog = createDebugLog('hooks')
 
 let watcher: FSWatcher | null = null
 let currentCwd: string
@@ -67,7 +69,7 @@ function resolveWatchPaths(config?: ReturnType<typeof getHooksConfigFromSnapshot
 }
 
 function startWatching(paths: string[]): void {
-  logForDebugging(`FileChanged: watching ${paths.length} paths`)
+  hookLog(`FileChanged: watching ${paths.length} paths`)
   watcher = chokidar.watch(paths, {
     persistent: true,
     ignoreInitial: true,
@@ -80,7 +82,7 @@ function startWatching(paths: string[]): void {
 }
 
 function handleFileEvent(path: string, event: 'change' | 'add' | 'unlink'): void {
-  logForDebugging(`FileChanged: ${event} ${path}`)
+  hookLog(`FileChanged: ${event} ${path}`)
   void executeFileChangedHooks(path, event)
     .then(({ results, watchPaths, systemMessages }) => {
       if (watchPaths.length > 0) {
@@ -97,7 +99,7 @@ function handleFileEvent(path: string, event: 'change' | 'add' | 'unlink'): void
     })
     .catch((e) => {
       const msg = errorMessage(e)
-      logForDebugging(`FileChanged hook failed: ${msg}`, {
+      hookLog(`FileChanged hook failed: ${msg}`, {
         level: 'error',
       })
       notifyCallback?.(msg, true)
@@ -148,7 +150,7 @@ export async function onCwdChangedForHooks(oldCwd: string, newCwd: string): Prom
   await clearCwdEnvFiles()
   const hookResult = await executeCwdChangedHooks(oldCwd, newCwd).catch((e) => {
     const msg = errorMessage(e)
-    logForDebugging(`CwdChanged hook failed: ${msg}`, {
+    hookLog(`CwdChanged hook failed: ${msg}`, {
       level: 'error',
     })
     notifyCallback?.(msg, true)

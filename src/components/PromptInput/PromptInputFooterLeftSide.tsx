@@ -87,7 +87,7 @@ function ProactiveCountdown() {
     proactiveModule?.getNextTickAt ?? NULL,
     NULL,
   )
-  const [remainingSeconds, setRemainingSeconds] = useState(null)
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null)
   useEffect(() => {
     if (nextTickAt === null) {
       setRemainingSeconds(null)

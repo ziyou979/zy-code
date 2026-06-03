@@ -159,7 +159,12 @@ async function runWorkflowAgent(
 
   const canUseTool = async () => ({ allowed: true as const })
 
-  const result = await AgentTool.call(input as any, ctx.toolUseContext, canUseTool as any, undefined)
+  const result = await AgentTool.call(
+    input as any,
+    ctx.toolUseContext,
+    canUseTool as any,
+    undefined,
+  )
 
   if (!result?.data) {
     return null

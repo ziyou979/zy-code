@@ -670,43 +670,44 @@ export function isGcpAuthRefreshFromProjectSettings(): boolean {
 }
 
 /** @private 请使用 {@link getApiKey} 或 {@link getApiKeyWithSource} */
-export let getApiKeyFromConfigOrMacOSKeychain
-getApiKeyFromConfigOrMacOSKeychain = memoize((): { key: string; source: ApiKeySource } | null => {
-  if (isBareMode()) {
-    return null
-  }
-  // TODO: 迁移到 SecureStorage
-  if (process.platform === 'darwin') {
-    // keychainPrefetch.ts 在 main.tsx 顶层与模块导入并行触发此读取。
-    // 如果已完成，使用该结果而非在此处生成同步 `security` 子进程（约 33ms）。
-    const prefetch = getLegacyApiKeyPrefetchResult()
-    if (prefetch) {
-      if (prefetch.stdout) {
-        return { key: prefetch.stdout, source: '/login managed key' }
-      }
-      // 预取完成但没有 key——回退到 config，而非 keychain。
-    } else {
-      const storageServiceName = getMacOsKeychainStorageServiceName()
-      try {
-        const result = execSyncWithDefaults_DEPRECATED(
-          `security find-generic-password -a $USER -w -s "${storageServiceName}"`,
-        )
-        if (result) {
-          return { key: result, source: '/login managed key' }
+export const getApiKeyFromConfigOrMacOSKeychain = memoize(
+  (): { key: string; source: ApiKeySource } | null => {
+    if (isBareMode()) {
+      return null
+    }
+    // TODO: 迁移到 SecureStorage
+    if (process.platform === 'darwin') {
+      // keychainPrefetch.ts 在 main.tsx 顶层与模块导入并行触发此读取。
+      // 如果已完成，使用该结果而非在此处生成同步 `security` 子进程（约 33ms）。
+      const prefetch = getLegacyApiKeyPrefetchResult()
+      if (prefetch) {
+        if (prefetch.stdout) {
+          return { key: prefetch.stdout, source: '/login managed key' }
         }
-      } catch (e) {
-        logError(e)
+        // 预取完成但没有 key——回退到 config，而非 keychain。
+      } else {
+        const storageServiceName = getMacOsKeychainStorageServiceName()
+        try {
+          const result = execSyncWithDefaults_DEPRECATED(
+            `security find-generic-password -a $USER -w -s "${storageServiceName}"`,
+          )
+          if (result) {
+            return { key: result, source: '/login managed key' }
+          }
+        } catch (e) {
+          logError(e)
+        }
       }
     }
-  }
 
-  const config = getGlobalConfig()
-  if (!config.primaryApiKey) {
-    return null
-  }
+    const config = getGlobalConfig()
+    if (!config.primaryApiKey) {
+      return null
+    }
 
-  return { key: config.primaryApiKey, source: '/login managed key' }
-})
+    return { key: config.primaryApiKey, source: '/login managed key' }
+  },
+)
 
 function isValidApiKey(apiKey: string): boolean {
   // 仅允许字母数字、短横线和下划线
@@ -863,8 +864,7 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
   }
 }
 
-export let getZyAIOAuthTokens
-getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
+export const getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
   // --bare：仅 API key 模式。无 OAuth token，无 keychain，无凭据文件。
   if (isBareMode()) {
     return null
@@ -1037,7 +1037,7 @@ async function _checkAndRefreshOAuthTokenIfNeededImpl(
   // 如果 force=true 则跳过此检查（服务器已告知 token 无效）
   const tokens = getZyAIOAuthTokens()
   if (!force) {
-    if (!tokens?.refreshToken || !isOAuthTokenExpired(tokens.expiresAt)) {
+    if (!tokens?.refreshToken || !isOAuthTokenExpired(tokens.expiresAt ?? null)) {
       return false
     }
   }
@@ -1223,7 +1223,7 @@ export function getSubscriptionType(): SubscriptionType | null {
     return null
   }
 
-  return oauthTokens.subscriptionType ?? null
+  return (oauthTokens.subscriptionType as SubscriptionType | undefined) ?? null
 }
 
 export function getRateLimitTier(): string | null {

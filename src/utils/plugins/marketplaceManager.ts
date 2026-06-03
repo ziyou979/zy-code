@@ -2024,8 +2024,7 @@ export async function getMarketplaceCacheOnly(name: string): Promise<PluginMarke
  * @param name - 要获取的 marketplace 名称
  * @returns marketplace 对象或如果未找到/失败则返回 null
  */
-export let getMarketplace
-getMarketplace = memoize(async (name: string): Promise<PluginMarketplace> => {
+export const getMarketplace = memoize(async (name: string): Promise<PluginMarketplace> => {
   const config = await loadKnownMarketplacesConfig()
   const entry = config[name]
 

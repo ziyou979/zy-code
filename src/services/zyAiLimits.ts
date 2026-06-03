@@ -209,7 +209,7 @@ export function emitStatusChange(limits: ZyAILimits) {
 }
 
 async function makeTestQuery() {
-  const model = getDefaultCompactModel()
+  const model = getDefaultCompactModel() ?? ''
   const messages: LLMMessage[] = [
     { role: 'user', content: [{ type: 'text' as const, text: 'quota' }] },
   ]

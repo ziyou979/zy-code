@@ -148,11 +148,12 @@ const RENDERERS: Record<ModuleId, Renderer> = {
       currentUsage.inputTokens +
       currentUsage.cacheCreationInputTokens +
       currentUsage.cacheReadInputTokens
-    const bar = renderContextBar(percentages.used)
+    const usedPct = percentages.used ?? 0
+    const bar = renderContextBar(usedPct)
     // Dynamic color override: context warning levels take precedence over
     // user-configured color so the user notices when nearing the limit.
     const dynamicColor =
-      percentages.used >= 75 ? 'error' : percentages.used >= 50 ? 'warning' : effectiveColor(module)
+      usedPct >= 75 ? 'error' : usedPct >= 50 ? 'warning' : effectiveColor(module)
     return {
       text: withIcon(icon, `${formatTokens(usedTokens)}/${formatTokens(contextWindowSize)} ${bar}`),
       colorToken: dynamicColor,

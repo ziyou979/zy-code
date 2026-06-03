@@ -24,7 +24,7 @@ export function getDefaultOptionForUser(): ModelOption {
     value: null,
     label: tSync('modelOption.defaultRecommended'),
     description: tSync('modelOption.useDefault', {
-      model: renderDefaultModelSetting(getDefaultMainLoopModelSetting()),
+      model: renderDefaultModelSetting(getDefaultMainLoopModelSetting() ?? ''),
     }),
   }
 }

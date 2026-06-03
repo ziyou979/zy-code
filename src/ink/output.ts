@@ -433,7 +433,7 @@ export default class Output {
             }
 
             if (clipHorizontally) {
-              lines = lines.map((line) => {
+              lines = lines.map((line: string) => {
                 const from = x < clip.x1! ? clip.x1! - x : 0
                 const width = stringWidth(line)
                 const to = x + width > clip.x2! ? clip.x2! - x : width

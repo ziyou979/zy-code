@@ -1084,5 +1084,7 @@ export function shouldRenderStatically(
       // （在 transcript 模式下，我们已经在函数顶部返回了 true）
       return false
     }
+    default:
+      return true
   }
 }

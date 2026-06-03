@@ -32,7 +32,7 @@ export function RecentDenialsTab({ onHeaderFocusChange, onStateChange }: Props) 
       denials,
     })
   }, [approved, retry, denials, onStateChange])
-  const handleSelect = (value) => {
+  const handleSelect = (value: string) => {
     const idx = Number(value)
     setApproved((prev) => {
       const next = new Set(prev)
@@ -44,7 +44,7 @@ export function RecentDenialsTab({ onHeaderFocusChange, onStateChange }: Props) 
       return next
     })
   }
-  const handleFocus = (focusedValue) => {
+  const handleFocus = (focusedValue: string) => {
     setFocusedIdx(Number(focusedValue))
   }
   useInput(

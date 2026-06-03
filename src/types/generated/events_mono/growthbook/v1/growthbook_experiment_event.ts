@@ -57,8 +57,7 @@ function createBaseGrowthbookExperimentEvent(): GrowthbookExperimentEvent {
   }
 }
 
-export let GrowthbookExperimentEvent
-GrowthbookExperimentEvent = {
+export const GrowthbookExperimentEvent = {
   fromJSON(object: any): GrowthbookExperimentEvent {
     return {
       event_id: isSet(object.event_id) ? globalThis.String(object.event_id) : '',

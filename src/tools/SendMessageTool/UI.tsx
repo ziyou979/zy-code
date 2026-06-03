@@ -10,8 +10,8 @@ export function renderToolUseMessage(input: Partial<Input>): React.ReactNode {
   }
   if (input.message.type === 'plan_approval_response') {
     return input.message.approve
-      ? tSync('toolSendMessage.approvePlan', { from: input.to })
-      : tSync('toolSendMessage.rejectPlan', { from: input.to })
+      ? tSync('toolSendMessage.approvePlan', { from: input.to ?? '' })
+      : tSync('toolSendMessage.rejectPlan', { from: input.to ?? '' })
   }
   return null
 }

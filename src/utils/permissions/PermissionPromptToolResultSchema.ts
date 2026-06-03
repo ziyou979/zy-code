@@ -1,6 +1,8 @@
 import type { Tool, ToolUseContext } from 'src/Tool.js'
 import z from 'zod/v4'
-import { logForDebugging } from '../debug.js'
+import { createDebugLog } from '../debug.js'
+
+const permLog = createDebugLog('permissions')
 import { lazySchema } from '../lazySchema.js'
 import type { PermissionDecision, PermissionDecisionReason } from './PermissionResult.js'
 import { applyPermissionUpdates, persistPermissionUpdates } from './PermissionUpdate.js'
@@ -37,7 +39,7 @@ const PermissionAllowResultSchema = lazySchema(() =>
       .array(permissionUpdateSchema())
       .optional()
       .catch((ctx) => {
-        logForDebugging(
+        permLog(
           `Malformed updatedPermissions from SDK host ignored: ${ctx.error.issues[0]?.message ?? 'unknown'}`,
           { level: 'warn' },
         )
@@ -100,9 +102,7 @@ export function permissionPromptToolResultToPermissionDecision(
       decisionReason,
     }
   } else if (result.behavior === 'deny' && result.interrupt) {
-    logForDebugging(
-      `SDK permission prompt deny+interrupt: tool=${tool.name} message=${result.message}`,
-    )
+    permLog(`SDK permission prompt deny+interrupt: tool=${tool.name} message=${result.message}`)
     toolUseContext.abortController.abort()
   }
   return {

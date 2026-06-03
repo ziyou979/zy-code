@@ -26,7 +26,7 @@ export function VoiceIndicator(props: Props) {
   }
   return <VoiceIndicatorImpl {...props} />
 }
-function VoiceIndicatorImpl({ voiceState }) {
+function VoiceIndicatorImpl({ voiceState }: { voiceState: string }) {
   switch (voiceState) {
     case 'recording': {
       return <Text dimColor={true}>listening…</Text>

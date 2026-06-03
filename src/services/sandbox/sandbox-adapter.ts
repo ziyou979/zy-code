@@ -366,7 +366,7 @@ let worktreeMainRepoPath: string | null | undefined
 
 // Bare-repo files at cwd that didn't exist at config time and should be
 // scrubbed if they appear after a sandboxed command. See anthropics/zy-code#29316.
-let bareGitRepoScrubPaths
+let bareGitRepoScrubPaths: string[]
 bareGitRepoScrubPaths = []
 
 /**

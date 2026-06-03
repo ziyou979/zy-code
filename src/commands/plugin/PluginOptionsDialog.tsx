@@ -70,7 +70,7 @@ export function PluginOptionsDialog({
   onCancel,
 }: Props) {
   const fields = Object.keys(configSchema)
-  const initialFor = (key) => {
+  const initialFor = (key: string) => {
     if (configSchema[key]?.sensitive === true) {
       return ''
     }

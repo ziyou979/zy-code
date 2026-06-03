@@ -174,7 +174,7 @@ export function LogSelector({
   showAllProjects = false,
   onToggleAllProjects,
   onAgenticSearch,
-}) {
+}: LogSelectorProps) {
   const terminalSize = useTerminalSize()
   const columns = forceWidth ?? terminalSize.columns
   const exitState = useExitOnCtrlCDWithKeybindings(onCancel)
@@ -183,9 +183,9 @@ export function LogSelector({
   const _isDeepSearchEnabled = false
   const [themeName] = useTheme()
   const theme = getTheme(themeName)
-  const highlightColor = (text) => applyColor(text, theme.warning as Color)
+  const highlightColor = (text: string) => applyColor(text, theme.warning as Color)
   const _isAgenticSearchEnabled = false
-  const [currentBranch, setCurrentBranch] = React.useState(null)
+  const [currentBranch, setCurrentBranch] = React.useState<string | null>(null)
   const [branchFilterEnabled, setBranchFilterEnabled] = React.useState(false)
   const [showAllWorktrees, setShowAllWorktrees] = React.useState(false)
   const [hasMultipleWorktrees, setHasMultipleWorktrees] = React.useState(false)
@@ -194,17 +194,17 @@ export function LogSelector({
   const [renameCursorOffset, setRenameCursorOffset] = React.useState(0)
   const initialExpandedSet = new Set()
   const [expandedGroupSessionIds, setExpandedGroupSessionIds] = React.useState(initialExpandedSet)
-  const [focusedNode, setFocusedNode] = React.useState(null)
+  const [focusedNode, setFocusedNode] = React.useState<any>(null)
   const [focusedIndex, setFocusedIndex] = React.useState(1)
   const [viewMode, setViewMode] = React.useState('list')
-  const [previewLog, setPreviewLog] = React.useState(null)
-  const prevFocusedIdRef = React.useRef(null)
+  const [previewLog, setPreviewLog] = React.useState<LogOption | null>(null)
+  const prevFocusedIdRef = React.useRef<string | null>(null)
   const [selectedTagIndex, setSelectedTagIndex] = React.useState(0)
   const [agenticSearchState, setAgenticSearchState] = React.useState<AgenticSearchState>({
     status: 'idle',
   })
   const [isAgenticSearchOptionFocused, setIsAgenticSearchOptionFocused] = React.useState(false)
-  const agenticSearchAbortRef = React.useRef(null)
+  const agenticSearchAbortRef = React.useRef<AbortController | null>(null)
   const {
     query: searchQuery,
     setQuery: setSearchQuery,
@@ -236,7 +236,10 @@ export function LogSelector({
     const timeoutId = setTimeout(setDebouncedDeepSearchQuery, 300, deferredSearchQuery)
     return () => clearTimeout(timeoutId)
   }, [deferredSearchQuery])
-  const [deepSearchResults, setDeepSearchResults] = React.useState(null)
+  const [deepSearchResults, setDeepSearchResults] = React.useState<{
+    query: string
+    results: Array<{ log: LogOption; score?: number; searchableText?: string }>
+  } | null>(null)
   const [isSearching, setIsSearching] = React.useState(false)
   React.useEffect(() => {
     getBranch().then((branch) => setCurrentBranch(branch))
@@ -318,9 +321,14 @@ export function LogSelector({
       return
     }
     const timeoutId_0 = setTimeout(
-      (fuseIndex_0, debouncedDeepSearchQuery_0, setDeepSearchResults_0, setIsSearching_0) => {
+      (
+        fuseIndex_0: any,
+        debouncedDeepSearchQuery_0: any,
+        setDeepSearchResults_0: any,
+        setIsSearching_0: any,
+      ) => {
         const results = fuseIndex_0.search(debouncedDeepSearchQuery_0)
-        results.sort((a, b) => {
+        results.sort((a: any, b: any) => {
           const aTime = new Date(a.item.log.modified).getTime()
           const bTime = new Date(b.item.log.modified).getTime()
           const timeDiff = bTime - aTime
@@ -330,7 +338,7 @@ export function LogSelector({
           return (a.score ?? 1) - (b.score ?? 1)
         })
         setDeepSearchResults_0({
-          results: results.map((r) => ({
+          results: results.map((r: any) => ({
             log: r.item.log,
             score: r.score,
             searchableText: r.item.searchableText,
@@ -385,7 +393,7 @@ export function LogSelector({
     displayedLogs = filteredLogs
   }
   const maxLabelWidth = Math.max(30, columns - 4)
-  let treeNodes
+  let treeNodes: any[]
   if (!isResumeWithRenameEnabled) {
     treeNodes = []
   } else {
@@ -460,7 +468,7 @@ export function LogSelector({
       }
     })
   }
-  let flatOptions
+  let flatOptions: any[]
   if (isResumeWithRenameEnabled) {
     flatOptions = []
   } else {
@@ -548,7 +556,7 @@ export function LogSelector({
       query_length: searchQuery.length,
     })
     try {
-      const results_0 = await onAgenticSearch(searchQuery, logs, abortController.signal)
+      const results_0 = await onAgenticSearch!(searchQuery, logs, abortController.signal)
       if (abortController.signal.aborted) {
         return
       }
@@ -561,13 +569,13 @@ export function LogSelector({
         query_length: searchQuery.length,
         results_count: results_0.length,
       })
-    } catch (error) {
+    } catch (error: unknown) {
       if (abortController.signal.aborted) {
         return
       }
       setAgenticSearchState({
         status: 'error',
-        message: error instanceof Error ? error.message : tSync('logSelector.searchFailed'),
+        message: (error as Error)?.message ?? tSync('logSelector.searchFailed'),
       })
       logEvent('zy_agentic_search_error', {
         query_length: searchQuery.length,
@@ -614,7 +622,7 @@ export function LogSelector({
       }
     }
   }, [agenticSearchState.status, isResumeWithRenameEnabled, treeNodes, displayedLogs])
-  const handleFlatOptionsSelectFocus = (value) => {
+  const handleFlatOptionsSelectFocus = (value: string) => {
     const index_1 = parseInt(value, 10)
     const log_11 = displayedLogs[index_1]
     if (!log_11 || prevFocusedIdRef.current === index_1.toString()) {
@@ -631,7 +639,7 @@ export function LogSelector({
     })
     setFocusedIndex(index_1 + 1)
   }
-  const handleTreeSelectFocus = (node) => {
+  const handleTreeSelectFocus = (node: any) => {
     setFocusedNode(node)
     const index_2 = displayedLogs.findIndex(
       (log_12) => getSessionIdFromLog(log_12) === getSessionIdFromLog(node.value.log),
@@ -1007,7 +1015,7 @@ export function LogSelector({
       ) : (
         <Select
           options={flatOptions}
-          onChange={(value_0) => {
+          onChange={(value_0: string) => {
             const itemIndex = parseInt(value_0, 10)
             const log_13 = displayedLogs[itemIndex]
             if (log_13) {
@@ -1028,7 +1036,7 @@ export function LogSelector({
           {exitState.pending ? (
             <Text dimColor={true}>
               {tSync('logSelector.pressAgainToExit', {
-                key: exitState.keyName,
+                key: exitState.keyName ?? '',
               })}
             </Text>
           ) : viewMode === 'rename' ? (

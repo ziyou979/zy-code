@@ -5,12 +5,12 @@ import { getRateLimitWarning, getUsingOverageText } from 'src/services/zyAiLimit
 import { useZyAiLimits } from 'src/services/zyAiLimitsHook.js'
 import { hasZyAiBillingAccess } from 'src/utils/billing.js'
 import { getIsRemoteMode } from '../../bootstrap/state.js'
-export function useRateLimitWarningNotification(model) {
+export function useRateLimitWarningNotification(model: string) {
   const { addNotification } = useNotifications()
   const zyAiLimits = useZyAiLimits()
   const rateLimitWarning = getRateLimitWarning(zyAiLimits, model)
   const usingOverageText = getUsingOverageText(zyAiLimits)
-  const shownWarningRef = useRef(null)
+  const shownWarningRef = useRef<string | null>(null)
   const hasBillingAccess = hasZyAiBillingAccess()
   const isTeamOrEnterprise = false
   const [hasShownOverageNotification, setHasShownOverageNotification] = useState(false)
