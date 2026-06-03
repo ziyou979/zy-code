@@ -119,7 +119,7 @@ export const enOnboarding: TranslationResource = {
     'Try setting environment variable COLORTERM=truecolor for richer colors',
   'tip.colorWhenMultiSessions':
     'Running multiple ZY Code sessions? Use /color and /rename to tell them apart at a glance.',
-  'tip.continue': 'Run zy --continue or zy --resume to resume a conversation',
+  'tip.continue': 'Run zycode --continue or zycode --resume to resume a conversation',
   'tip.customAgents':
     'Use /agents to optimize specific tasks. Eg. Software Architect, Code Writer, Code Reviewer',
   'tip.customCommands':

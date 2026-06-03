@@ -268,7 +268,7 @@ function Install({ onDone, force, target }: InstallProps): React.ReactNode {
             <Box marginTop={1}>
               <Text dimColor>Next: Run </Text>
               <Text color="zy" bold>
-                zy --help
+                zycode --help
               </Text>
               <Text dimColor> to get started</Text>
             </Box>

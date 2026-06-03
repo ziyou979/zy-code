@@ -1494,9 +1494,9 @@ const READONLY_COMMAND_REGEXES = new Set([
   // Also allow optional 2>&1 stderr redirection at the end
   /^echo(?:\s+(?:'[^']*'|"[^"$<>\n\r]*"|[^|;&`$(){}><#\\!"'\s]+))*(?:\s+2>&1)?\s*$/,
 
-  // Zy CLI help
-  /^zy -h$/,
-  /^zy --help$/,
+  // Zycode CLI help
+  /^zycode -h$/,
+  /^zycode --help$/,
 
   // Git readonly commands are now handled via COMMAND_ALLOWLIST with explicit flag validation
   // (git status, git blame, git ls-files, git config --get, git remote, git tag, git branch)

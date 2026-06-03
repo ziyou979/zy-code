@@ -47,9 +47,9 @@ type ProviderEffortValue = string
 const PROVIDER_EFFORT_MAP: Record<string, Record<string, ProviderEffortValue>> = {
   anthropic: {
     quick: 'low',
-    light: 'low',
-    balanced: 'medium',
-    thorough: 'high',
+    light: 'medium',
+    balanced: 'high',
+    thorough: 'xhigh',
     extreme: 'max',
     orchestrate: 'max',
   },

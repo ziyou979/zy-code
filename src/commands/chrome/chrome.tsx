@@ -161,9 +161,9 @@ function ClaudeInChromeMenu({
               )}
               <Text>
                 <Text dimColor={true}>Usage: </Text>
-                <Text>zy --chrome</Text>
+                <Text>zycode --chrome</Text>
                 <Text dimColor={true}> or </Text>
-                <Text>zy --no-chrome</Text>
+                <Text>zycode --no-chrome</Text>
               </Text>
               <Text dimColor={true}>
                 Site-level permissions are inherited from the Chrome extension. Manage permissions

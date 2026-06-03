@@ -36,7 +36,7 @@ function SessionInfo({ onDone }: Props) {
     return (
       <Pane>
         <Text color="warning">
-          Not in remote mode. Start with `zy --remote` to use this command.
+          Not in remote mode. Start with `zycode --remote` to use this command.
         </Text>
         <Text dimColor={true}>(press esc to close)</Text>
       </Pane>

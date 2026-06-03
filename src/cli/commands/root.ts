@@ -2987,7 +2987,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
       if (!isRemoteTuiEnabled && !hasInitialPrompt) {
         return await exitWithError(
           root,
-          'Error: --remote requires a description.\nUsage: zy --remote "your task description"',
+          'Error: --remote requires a description.\nUsage: zycode --remote "your task description"',
           () => gracefulShutdown(1),
         )
       }
@@ -3023,7 +3023,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
         // 原始行为：打印会话信息并退出
         process.stdout.write(`Created remote session: ${createdSession.title}\n`)
         process.stdout.write(`View: ${getRemoteSessionUrl(createdSession.id)}?m=0\n`)
-        process.stdout.write(`Resume with: zy --teleport ${createdSession.id}\n`)
+        process.stdout.write(`Resume with: zycode --teleport ${createdSession.id}\n`)
         await gracefulShutdown(0)
         process.exit(0)
       }
@@ -3148,9 +3148,9 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
               } else {
                 // 没有已知路径 —— 显示原始错误
                 throw new TeleportOperationError(
-                  `You must run zy --teleport ${teleport} from a checkout of ${sessionRepo}.`,
+                  `You must run zycode --teleport ${teleport} from a checkout of ${sessionRepo}.`,
                   chalk.red(
-                    `You must run zy --teleport ${teleport} from a checkout of ${chalk.bold(sessionRepo)}.\n`,
+                    `You must run zycode --teleport ${teleport} from a checkout of ${chalk.bold(sessionRepo)}.\n`,
                   ),
                 )
               }

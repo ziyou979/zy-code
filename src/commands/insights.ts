@@ -1385,7 +1385,7 @@ Include 3 friction categories with 2 examples each.`,
    - Good for: auto-formatting code, running type checks, enforcing conventions
 
 4. **Headless Mode**: Run Zy non-interactively from scripts and CI/CD.
-   - How to use: \`zy -p "fix lint errors" --allowedTools "Edit,Read,Bash"\`
+   - How to use: \`zycode -p "fix lint errors" --allowedTools "Edit,Read,Bash"\`
    - Good for: CI/CD integration, batch code fixes, automated reviews
 
 5. **Task Agents**: Zy spawns focused sub-agents for complex exploration or parallel work.

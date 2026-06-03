@@ -114,7 +114,7 @@ export const zhOnboarding: TranslationResource = {
   'tip.clearContext': '切换话题时使用 /clear 可以释放上下文',
   'tip.colortermTruecolor': '尝试设置环境变量 COLORTERM=truecolor 以获得更丰富的颜色',
   'tip.colorWhenMultiSessions': '同时运行多个 ZY Code 会话？使用 /color 和 /rename 来区分它们。',
-  'tip.continue': '运行 zy --continue 或 zy --resume 恢复之前的对话',
+  'tip.continue': '运行 zycode --continue 或 zycode --resume 恢复之前的对话',
   'tip.customAgents': '使用 /agents 优化特定任务，例如：软件架构师、代码编写者、代码审查者',
   'tip.customCommands':
     '在项目的 .zy/skills/ 或 ~/.zy/skills/ 中添加 .md 文件来创建技能，适用于任何项目',
