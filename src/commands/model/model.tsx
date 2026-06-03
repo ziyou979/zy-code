@@ -3,6 +3,7 @@ import * as React from 'react'
 import type { CommandResultDisplay } from '../../commands.js'
 import { ModelPicker } from '../../components/ModelPicker.js'
 import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml.js'
+import { tSync } from '../../i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -26,7 +27,7 @@ function ModelPickerWrapper({ onDone }) {
       action: 'cancel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     const displayModel = renderModelLabel(mainLoopModel)
-    onDone(`Kept model as ${chalk.bold(displayModel)}`, {
+    onDone(tSync('modelCommand.kept', { model: chalk.bold(displayModel) }), {
       display: 'system',
     })
   }
@@ -41,9 +42,12 @@ function ModelPickerWrapper({ onDone }) {
       mainLoopModel: model,
       mainLoopModelForSession: null,
     }))
-    let message = `Set model to ${chalk.bold(renderModelLabel(model))}`
+    let message = tSync('modelCommand.set', { model: chalk.bold(renderModelLabel(model)) })
     if (effort !== undefined) {
-      message = `${message} with ${chalk.bold(effort)} effort`
+      message = tSync('modelCommand.setWithEffort', {
+        model: chalk.bold(renderModelLabel(model)),
+        effort: chalk.bold(effort),
+      })
     }
     onDone(message)
   }
@@ -74,7 +78,7 @@ function SetModelAndClose({
   React.useEffect(() => {
     async function handleModelChange(): Promise<void> {
       if (model && !isModelAllowed(model)) {
-        onDone(`Model '${model}' is not available. Your organization restricts model selection.`, {
+        onDone(tSync('modelCommand.notAvailable', { model }), {
           display: 'system',
         })
         return
@@ -100,12 +104,12 @@ function SetModelAndClose({
         if (valid) {
           setModel(model)
         } else {
-          onDone(error_0 || `Model '${model}' not found`, {
+          onDone(error_0 || tSync('modelCommand.notFound', { model }), {
             display: 'system',
           })
         }
       } catch (error) {
-        onDone(`Failed to validate model: ${(error as Error).message}`, {
+        onDone(tSync('modelCommand.validateFailed', { error: (error as Error).message }), {
           display: 'system',
         })
       }
@@ -116,7 +120,9 @@ function SetModelAndClose({
         mainLoopModel: modelValue,
         mainLoopModelForSession: null,
       }))
-      const message = `Set model to ${chalk.bold(renderModelLabel(modelValue))}`
+      const message = tSync('modelCommand.set', {
+        model: chalk.bold(renderModelLabel(modelValue)),
+      })
       onDone(message)
     }
     void handleModelChange()
@@ -135,10 +141,14 @@ function ShowModelAndClose(props) {
   const effortInfo = effortValue !== undefined ? ` (effort: ${effortValue})` : ''
   if (mainLoopModelForSession) {
     onDone(
-      `Current model: ${chalk.bold(renderModelLabel(mainLoopModelForSession))} (session override from plan mode)\nBase model: ${displayModel}${effortInfo}`,
+      tSync('modelCommand.currentSessionOverride', {
+        model: chalk.bold(renderModelLabel(mainLoopModelForSession)),
+        base: displayModel,
+        effort: effortInfo,
+      }),
     )
   } else {
-    onDone(`Current model: ${displayModel}${effortInfo}`)
+    onDone(tSync('modelCommand.current', { model: displayModel }) + effortInfo)
   }
   return null
 }
@@ -151,7 +161,7 @@ export const call: LocalJSXCommandCall = async (onDone, _context, args) => {
     return <ShowModelAndClose onDone={onDone} />
   }
   if (COMMON_HELP_ARGS.includes(args)) {
-    onDone('Run /model to open the model selection menu, or /model [modelName] to set the model.', {
+    onDone(tSync('modelCommand.help'), {
       display: 'system',
     })
     return
@@ -166,5 +176,5 @@ export const call: LocalJSXCommandCall = async (onDone, _context, args) => {
 }
 function renderModelLabel(model: string | null): string {
   const rendered = renderDefaultModelSetting(model ?? getDefaultMainLoopModelSetting())
-  return model === null ? `${rendered} (default)` : rendered
+  return model === null ? `${rendered}${tSync('modelCommand.default')}` : rendered
 }

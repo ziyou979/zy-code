@@ -1,4 +1,5 @@
 import { getInitialMainLoopModel } from '../../bootstrap/state.js'
+import { tSync } from '../../i18n/index.js'
 import { getGlobalConfig } from '../../utils/config.js'
 import { getLocalModelCapability } from '../../utils/settings/localModelCapabilities.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
@@ -21,8 +22,10 @@ export type ModelOption = {
 export function getDefaultOptionForUser(): ModelOption {
   return {
     value: null,
-    label: 'Default (recommended)',
-    description: `Use the default model (currently ${renderDefaultModelSetting(getDefaultMainLoopModelSetting())})`,
+    label: tSync('modelOption.defaultRecommended'),
+    description: tSync('modelOption.useDefault', {
+      model: renderDefaultModelSetting(getDefaultMainLoopModelSetting()),
+    }),
   }
 }
 
@@ -52,10 +55,9 @@ function getStandardOption(): ModelOption {
   return (
     getTierOption('standard') ?? {
       value: 'standard',
-      label: 'Standard',
-      description: 'Standard tier · Best for everyday tasks',
-      descriptionForModel:
-        'Standard tier - best for everyday tasks. Generally recommended for most coding tasks',
+      label: tSync('modelOption.standard'),
+      description: tSync('modelOption.standardDesc'),
+      descriptionForModel: tSync('modelOption.standardDescForModel'),
     }
   )
 }
@@ -64,9 +66,9 @@ function getAdvancedOption(): ModelOption {
   return (
     getTierOption('advanced') ?? {
       value: 'advanced',
-      label: 'Advanced',
-      description: 'Advanced tier · Most capable for complex work',
-      descriptionForModel: 'Advanced tier - most capable for complex work',
+      label: tSync('modelOption.advanced'),
+      description: tSync('modelOption.advancedDesc'),
+      descriptionForModel: tSync('modelOption.advancedDescForModel'),
     }
   )
 }
@@ -75,10 +77,9 @@ function getCompactOption(): ModelOption {
   return (
     getTierOption('compact') ?? {
       value: 'compact',
-      label: 'Compact',
-      description: 'Compact tier · Fastest for quick answers',
-      descriptionForModel:
-        'Compact tier - faster and lower cost, but less capable than standard tier. Use for simple tasks.',
+      label: tSync('modelOption.compact'),
+      description: tSync('modelOption.compactDesc'),
+      descriptionForModel: tSync('modelOption.compactDescForModel'),
     }
   )
 }
@@ -90,7 +91,7 @@ function getModelOptionsBase(): ModelOption[] {
     const customModelOptions: ModelOption[] = settings.customModels.map((m) => ({
       value: m.alias,
       label: m.label ?? m.alias,
-      description: m.description ?? `Custom model (${m.model})`,
+      description: m.description ?? tSync('modelOption.customModelDesc', { model: m.model }),
     }))
     return [getDefaultOptionForUser(), ...customModelOptions]
   }
@@ -125,7 +126,8 @@ export function getModelOptions(): ModelOption[] {
       value: envCustomModel,
       label: process.env.ZY_CODE_CUSTOM_MODEL_OPTION_NAME ?? envCustomModel,
       description:
-        process.env.ZY_CODE_CUSTOM_MODEL_OPTION_DESCRIPTION ?? `Custom model (${envCustomModel})`,
+        process.env.ZY_CODE_CUSTOM_MODEL_OPTION_DESCRIPTION ??
+        tSync('modelOption.customModelDesc', { model: envCustomModel }),
     })
   }
 
@@ -153,7 +155,7 @@ export function getModelOptions(): ModelOption[] {
       options.push({
         value: customModel,
         label: customModel,
-        description: 'Custom model',
+        description: tSync('modelOption.customModel'),
       })
     }
   }

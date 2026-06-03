@@ -1,3 +1,4 @@
+import { tSync } from '../../i18n/index.js'
 import { MODEL_ALIASES } from '../../services/model/aliases.js'
 import {
   getDefaultMainLoopModelSetting,
@@ -35,7 +36,7 @@ function isKnownAlias(model: string): boolean {
 /** 渲染模型显示名（含 default 标注），与 jsx 端一致 */
 export function renderModelLabel(model: string | null): string {
   const rendered = renderDefaultModelSetting(model ?? getDefaultMainLoopModelSetting())
-  return model === null ? `${rendered} (default)` : rendered
+  return model === null ? `${rendered}${tSync('modelCommand.default')}` : rendered
 }
 
 /** 显示当前模型 + effort（mainLoopModelForSession 优先）
@@ -64,8 +65,7 @@ export async function resolveModelChange(rawArgs: string): Promise<ModelDecision
   if (COMMON_HELP_ARGS.includes(args)) {
     return {
       kind: 'info',
-      message:
-        'Run /model to open the model selection menu, or /model [modelName] to set the model.',
+      message: tSync('modelCommand.help'),
     }
   }
 
@@ -88,7 +88,7 @@ export async function resolveModelChange(rawArgs: string): Promise<ModelDecision
   if (model && !isModelAllowed(model)) {
     return {
       kind: 'reject',
-      message: `Model '${model}' is not available. Your organization restricts model selection.`,
+      message: tSync('modelCommand.notAvailable', { model }),
     }
   }
 
@@ -111,11 +111,11 @@ export async function resolveModelChange(rawArgs: string): Promise<ModelDecision
         message: `Set model to ${renderModelLabel(model)}`,
       }
     }
-    return { kind: 'reject', message: error || `Model '${model}' not found` }
+    return { kind: 'reject', message: error || tSync('modelCommand.notFound', { model }) }
   } catch (err) {
     return {
       kind: 'reject',
-      message: `Failed to validate model: ${(err as Error).message}`,
+      message: tSync('modelCommand.validateFailed', { error: (err as Error).message }),
     }
   }
 }

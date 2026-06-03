@@ -24,6 +24,7 @@ import {
 } from '../utils/effort.js'
 import { getSettingsForSource, updateSettingsForSource } from '../utils/settings/settings.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
+import { tSync } from '../i18n/index.js'
 import { Select } from './CustomSelect/index.js'
 import { Byline } from './design-system/Byline.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
@@ -73,7 +74,7 @@ export function ModelPicker({
       {
         value: initial,
         label: initialModelDisplay,
-        description: 'Current model',
+        description: tSync('modelPicker.currentModel'),
       },
     ]
   } else {
@@ -157,19 +158,19 @@ export function ModelPicker({
             <Box marginBottom={1} flexDirection="column">
               {
                 <Text color="remember" bold={true}>
-                  Select model
+                  {tSync('modelPicker.selectModel')}
                 </Text>
               }
               {
                 <Text dimColor={true}>
-                  {headerText ??
-                    'Switch between Zy models. Applies to this session and future ZY Code sessions. For other/previous model names, specify with --model.'}
+                  {headerText ?? tSync('modelPicker.description')}
                 </Text>
               }
               {sessionModel && (
                 <Text dimColor={true}>
-                  Currently using {modelDisplayString(sessionModel)} for this session (set by plan
-                  mode). Selecting a model will undo this.
+                  {tSync('modelPicker.currentlyUsing', {
+                    model: modelDisplayString(sessionModel),
+                  })}
                 </Text>
               )}
             </Box>
@@ -191,7 +192,9 @@ export function ModelPicker({
               }
               {hiddenCount > 0 && (
                 <Box paddingLeft={3}>
-                  <Text dimColor={true}>and {hiddenCount} more…</Text>
+                  <Text dimColor={true}>
+                    {tSync('modelPicker.andMore', { count: hiddenCount })}
+                  </Text>
                 </Box>
               )}
             </Box>
@@ -200,14 +203,20 @@ export function ModelPicker({
             <Box marginBottom={1} flexDirection="column">
               {focusedSupportsEffort ? (
                 <Text dimColor={true}>
-                  <EffortLevelIndicator effort={displayEffort} /> {capitalize(displayEffort)} effort
-                  {displayEffort === focusedDefaultEffort ? ' (default)' : ''}{' '}
-                  <Text color="subtle">← → to adjust</Text>
+                  <EffortLevelIndicator effort={displayEffort} />{' '}
+                  {tSync('modelPicker.effortLabel', { effort: capitalize(displayEffort) })}
+                  {displayEffort === focusedDefaultEffort
+                    ? tSync('modelPicker.effortDefault')
+                    : ''}{' '}
+                  <Text color="subtle">{tSync('modelPicker.adjustHint')}</Text>
                 </Text>
               ) : (
                 <Text color="subtle">
-                  <EffortLevelIndicator effort={undefined} /> Effort not supported
-                  {focusedModelName ? ` for ${focusedModelName}` : ''}
+                  <EffortLevelIndicator effort={undefined} />{' '}
+                  {tSync('modelPicker.effortNotSupported')}
+                  {focusedModelName
+                    ? tSync('modelPicker.effortNotSupportedFor', { modelName: focusedModelName })
+                    : ''}
                 </Text>
               )}
             </Box>
@@ -217,7 +226,7 @@ export function ModelPicker({
       {isStandaloneCommand && (
         <Text dimColor={true} italic={true}>
           {exitState.pending ? (
-            <>Press {exitState.keyName} again to exit</>
+            <>{tSync('modelPicker.pressAgainToExit', { key: exitState.keyName })}</>
           ) : (
             <Byline>
               <KeyboardShortcutHint shortcut="Enter" action="confirm" />
