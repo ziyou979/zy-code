@@ -1,4 +1,5 @@
 import { Box, Text } from '../../ink.js'
+import { tSync } from '../../i18n/index.js'
 import { PromptInputHelpMenu } from '../PromptInput/PromptInputHelpMenu.js'
 export function General() {
   return (
@@ -6,14 +7,13 @@ export function General() {
       {
         <Box>
           <Text>
-            Zy understands your codebase, makes edits with your permission, and executes commands —
-            right from your terminal.
+            {tSync('help.description')}
           </Text>
         </Box>
       }
       <Box flexDirection="column">
         <Box>
-          <Text bold={true}>Shortcuts</Text>
+          <Text bold={true}>{tSync('help.shortcutsTitle')}</Text>
         </Box>
         <PromptInputHelpMenu gap={2} fixedWidth={true} />
       </Box>
