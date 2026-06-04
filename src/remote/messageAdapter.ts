@@ -9,7 +9,14 @@ import type {
   WireSystemMessage,
   WireToolProgressMessage,
 } from '../types/index.js'
-import type { AssistantMessage, Message, StreamEvent, SystemMessage } from '../types/message.js'
+import type { LLMAssistantMessage } from '../types/llm.js'
+import type {
+  AssistantMessage,
+  Message,
+  StreamEvent,
+  SystemMessage,
+  SystemMessageLevel,
+} from '../types/message.js'
 import { logForDebugging } from '../utils/debug.js'
 import { fromSDKCompactMetadata } from '../utils/messages/mappers.js'
 import { createUserMessage } from '../utils/messages.js'
@@ -27,8 +34,7 @@ import { createUserMessage } from '../utils/messages.js'
 function convertAssistantMessage(msg: WireAssistantMessage): AssistantMessage {
   return {
     type: 'assistant',
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    message: msg.message as any,
+    message: msg.message as LLMAssistantMessage,
     uuid: msg.uuid,
     requestId: undefined,
     timestamp: new Date().toISOString(),
@@ -42,14 +48,10 @@ function convertAssistantMessage(msg: WireAssistantMessage): AssistantMessage {
 function convertStreamEvent(msg: WirePartialAssistantMessage): StreamEvent {
   return {
     type: 'stream_event',
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    event: msg.event as any,
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    uuid: (msg as any).uuid,
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    timestamp: (msg as any).timestamp,
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  } as any
+    event: msg.event as StreamEvent['event'],
+    uuid: msg.uuid,
+    timestamp: new Date().toISOString(),
+  }
 }
 
 /**
@@ -65,8 +67,7 @@ function convertResultMessage(msg: WireResultMessage): SystemMessage {
     type: 'system',
     subtype: 'informational',
     content,
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    level: (isError ? 'warning' : 'info') as any,
+    level: (isError ? 'warn' : 'info') as SystemMessageLevel,
     uuid: msg.uuid,
     timestamp: new Date().toISOString(),
   }
@@ -168,8 +169,7 @@ export function convertSDKMessage(msg: WireMessage, opts?: ConvertOptions): Conv
       return { type: 'message', message: convertAssistantMessage(msg) }
 
     case 'user': {
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      const content = (msg.message as any)?.content
+      const content = msg.message?.content
       // Tool result messages from the remote server need to be converted so
       // they render and collapse like local tool results. Detect via content
       // shape (tool_result blocks) — parent_tool_use_id is NOT reliable: the

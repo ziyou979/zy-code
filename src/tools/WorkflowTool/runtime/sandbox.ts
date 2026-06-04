@@ -42,10 +42,10 @@ export function parseMeta(source: string): WorkflowMeta {
     // Pure literal constraint: evaluate as expression (no variables/functions)
     const evalScript = new Script(`(${metaMatch[1]})`, { filename: 'meta-parse' })
     meta = evalScript.runInNewContext({})
-  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
     throw new WorkflowScriptError(
-      `Failed to parse meta: ${err.message}. The meta object must be a pure literal (no variables, function calls, spreads, or template interpolation).`,
+      `Failed to parse meta: ${msg}. The meta object must be a pure literal (no variables, function calls, spreads, or template interpolation).`,
     )
   }
 
@@ -129,7 +129,7 @@ export async function executeWorkflowScript(opts: SandboxOptions): Promise<Workf
     nameOrRef: string | { scriptPath: string },
     // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
     childArgs?: any,
-  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
+    // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
   ): Promise<any> => {
     if (nestingDepth >= 1) {
       throw new Error(
@@ -151,9 +151,9 @@ export async function executeWorkflowScript(opts: SandboxOptions): Promise<Workf
       const { readFileSync } = await import('node:fs')
       try {
         childSource = readFileSync(nameOrRef.scriptPath, 'utf-8')
-      // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-      } catch (err: any) {
-        throw new Error(`Cannot read workflow script at ${nameOrRef.scriptPath}: ${err.message}`)
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err)
+        throw new Error(`Cannot read workflow script at ${nameOrRef.scriptPath}: ${msg}`)
       }
     } else {
       throw new Error('workflow() requires a name string or {scriptPath: string}.')

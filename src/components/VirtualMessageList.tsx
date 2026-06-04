@@ -14,7 +14,7 @@ import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import type { DOMElement } from '../ink/dom.js'
 import type { MatchPosition } from '../ink/render-to-screen.js'
 import { Box } from '../ink.js'
-import type { RenderableMessage } from '../types/message.js'
+import { isAttachmentMessage, isUserMessage, type RenderableMessage } from '../types/message.js'
 import { TextHoverColorContext } from './design-system/ThemedText.js'
 import { ScrollChromeContext } from './FullscreenLayout.js'
 
@@ -29,6 +29,7 @@ import {
   type MessageActionsNav,
   type MessageActionsState,
   type NavigableMessage,
+  type NavigableType,
   stripSystemReminders,
   toolCallOf,
 } from './messageActions.js'
@@ -155,33 +156,31 @@ function stickyPromptText(msg: RenderableMessage): string | null {
 }
 function computeStickyPromptText(msg: RenderableMessage): string | null {
   let raw: string | null = null
-  if (msg.type === 'user') {
+  if (isUserMessage(msg)) {
     if (msg.isMeta || msg.isVisibleInTranscriptOnly) {
       return null
     }
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    const block = msg.message.content[0] as any
+    const block = msg.message.content[0]
     if (block?.type !== 'text') {
       return null
     }
     raw = block.text
-  } else if (
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    (msg as any).type === 'attachment' &&
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    (msg as any).attachment.type === 'queued_command' &&
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    (msg as any).attachment.commandMode !== 'task-notification' &&
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    !(msg as any).attachment.isMeta
-  ) {
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    const p = (msg as any).attachment.prompt
-    raw =
-      typeof p === 'string'
-        ? p
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        : p.flatMap((b: any) => (b.type === 'text' ? [b.text] : [])).join('\n')
+  } else if (isAttachmentMessage(msg)) {
+    const att = msg.attachment as {
+      type: string
+      commandMode?: string
+      isMeta?: boolean
+      prompt?: string | Array<{ type: string; text?: string }>
+    }
+    if (att.type === 'queued_command' && att.commandMode !== 'task-notification' && !att.isMeta) {
+      const p = att.prompt
+      raw =
+        typeof p === 'string'
+          ? p
+          : Array.isArray(p)
+            ? p.flatMap((b) => (b.type === 'text' && b.text ? [b.text] : [])).join('\n')
+            : null
+    }
   }
   if (raw === null) {
     return null
@@ -329,8 +328,7 @@ export function VirtualMessageList({
     const select = (m: NavigableMessage) =>
       setCursor?.({
         uuid: m.uuid,
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        msgType: m.type as any,
+        msgType: m.type as NavigableType,
         expanded: false,
         toolName: toolCallOf(m)?.name,
       })

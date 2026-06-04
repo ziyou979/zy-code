@@ -129,10 +129,7 @@ export function restoreSessionStateFromLog(
     /* eslint-disable @typescript-eslint/no-require-imports */
     ;(
       require('../services/contextCollapse/persist.js') as typeof import('../services/contextCollapse/persist.js')
-    ).restoreFromEntries(
-      result.contextCollapseCommits ?? [],
-      result.contextCollapseSnapshot,
-    )
+    ).restoreFromEntries(result.contextCollapseCommits ?? [], result.contextCollapseSnapshot)
     /* eslint-enable @typescript-eslint/no-require-imports */
   }
 
@@ -415,7 +412,6 @@ export async function processResumedConversation(
   if (feature('COORDINATOR_MODE')) {
     modeWarning = context.modeApi?.matchSessionMode(result.mode)
     if (modeWarning) {
-      // @ts-expect-error
       result.messages.push(createSystemMessage(modeWarning, 'warning'))
     }
   }
@@ -473,10 +469,7 @@ export async function processResumedConversation(
     /* eslint-disable @typescript-eslint/no-require-imports */
     ;(
       require('../services/contextCollapse/persist.js') as typeof import('../services/contextCollapse/persist.js')
-    ).restoreFromEntries(
-      result.contextCollapseCommits ?? [],
-      result.contextCollapseSnapshot,
-    )
+    ).restoreFromEntries(result.contextCollapseCommits ?? [], result.contextCollapseSnapshot)
     /* eslint-enable @typescript-eslint/no-require-imports */
   }
 

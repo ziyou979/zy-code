@@ -289,19 +289,18 @@ function getCollapsibleToolInfo(
     }
   }
   if (msg.type === 'grouped_tool_use') {
-    // 对于分组工具调用，检查第一条消息的 input
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const firstContent = (msg as any).messages[0]?.message.content[0]
-    const info = getSearchOrReadFromContent(
-      firstContent
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        ? { type: 'tool_call', name: (msg as any).toolName, input: firstContent.input }
-        : undefined,
-      tools,
-    )
-    if (info && firstContent?.type === 'tool_call') {
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      return { name: (msg as any).toolName, input: firstContent.input, ...info }
+    // 对于分组工具调用，检查第一条消息的 input。
+    // type === 'grouped_tool_use' 收窄为 GroupedToolUseMessage | GroupedToolUseMessageWithMessages，
+    // 两者均有 .messages 和 .toolName。
+    const firstContent = msg.messages[0]?.message.content[0]
+    if (firstContent?.type === 'tool_call') {
+      const info = getSearchOrReadFromContent(
+        { type: 'tool_call', name: msg.toolName, input: firstContent.input },
+        tools,
+      )
+      if (info) {
+        return { name: msg.toolName, input: firstContent.input, ...info }
+      }
     }
   }
   return null
@@ -336,12 +335,10 @@ function isNonCollapsibleToolUse(msg: RenderableMessage, tools: Tools): boolean 
     }
   }
   if (msg.type === 'grouped_tool_use') {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const firstContent = (msg as any).messages[0]?.message.content[0]
+    const firstContent = msg.messages[0]?.message.content[0]
     if (
       firstContent?.type === 'tool_call' &&
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      !isToolSearchOrRead((msg as any).toolName, firstContent.input, tools)
+      !isToolSearchOrRead(msg.toolName, firstContent.input, tools)
     ) {
       return true
     }
@@ -391,12 +388,10 @@ function isCollapsibleToolUse(msg: RenderableMessage, tools: Tools): msg is Coll
     )
   }
   if (msg.type === 'grouped_tool_use') {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const firstContent = (msg as any).messages[0]?.message.content[0]
+    const firstContent = msg.messages[0]?.message.content[0]
     return (
       firstContent?.type === 'tool_call' &&
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      isToolSearchOrRead((msg as any).toolName, firstContent.input, tools)
+      isToolSearchOrRead(msg.toolName, firstContent.input, tools)
     )
   }
   return false
@@ -433,12 +428,10 @@ function getToolUseIdsFromMessage(msg: RenderableMessage): string[] {
     }
   }
   if (msg.type === 'grouped_tool_use') {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    return (msg as any).messages
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      .map((m: any) => {
+    return msg.messages
+      .map((m) => {
         const content = m.message.content[0]
-        return content.type === 'tool_call' ? content.id : ''
+        return content?.type === 'tool_call' ? content.id : ''
       })
       .filter(Boolean)
   }
@@ -490,8 +483,7 @@ export function getDisplayMessageFromCollapsed(
  */
 function countToolUses(msg: RenderableMessage): number {
   if (msg.type === 'grouped_tool_use') {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    return (msg as any).messages.length
+    return msg.messages.length
   }
   return 1
 }
@@ -530,20 +522,17 @@ function getFilePathsFromReadMessage(msg: RenderableMessage): string[] {
  * 扫描 bash 工具结果中的 commit SHA 和 PR URL，并推入分组累加器。
  * 仅对 tool_use_id 已记录在 bashCommands 中（非搜索/读取类 bash）的结果调用。
  */
-function scanBashResultForGitOps(msg: CollapsibleMessage, group: GroupAccumulator): void {
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  if ((msg as any).type !== 'user') {
+function scanBashResultForGitOps(msg: RenderableMessage, group: GroupAccumulator): void {
+  if (msg.type !== 'user') {
     return
   }
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  const out = (msg as any).toolUseResult as { stdout?: string; stderr?: string } | undefined
+  const out = msg.toolUseResult as { stdout?: string; stderr?: string } | undefined
   if (!out?.stdout && !out?.stderr) {
     return
   }
   // git push 将 ref 更新写入 stderr — 两个输出流都需扫描。
   const combined = `${out.stdout ?? ''}\n${out.stderr ?? ''}`
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  for (const c of (msg as any).message.content) {
+  for (const c of msg.message.content) {
     if (c.type !== 'tool_result') {
       continue
     }
@@ -672,8 +661,10 @@ function createCollapsedGroup(group: GroupAccumulator): CollapsedReadSearchGroup
   const teamMemSearchCount = feature('TEAMMEM') ? (group.teamMemorySearchCount ?? 0) : 0
   const teamMemReadCount = feature('TEAMMEM') ? (group.teamMemoryReadFilePaths?.size ?? 0) : 0
   const teamMemWriteCount = feature('TEAMMEM') ? (group.teamMemoryWriteCount ?? 0) : 0
-  const result = {
-    type: 'collapsed_read_search',
+  const result: CollapsedReadSearchGroup = {
+    type: 'collapsed_read_search' as const,
+    content: '',
+    collapsedCount: group.messages.length,
     // 减去 memory + 团队 memory 计数，使常规计数仅反映非 memory 操作
     searchCount: Math.max(0, group.searchCount - group.memorySearchCount - teamMemSearchCount),
     readCount: Math.max(0, totalReadCount - toolMemoryReadCount - teamMemReadCount),
@@ -685,61 +676,40 @@ function createCollapsedGroup(group: GroupAccumulator): CollapsedReadSearchGroup
     memorySearchCount: group.memorySearchCount,
     memoryReadCount,
     memoryWriteCount: group.memoryWriteCount,
+    teamMemorySearchCount: feature('TEAMMEM') ? teamMemSearchCount : 0,
+    teamMemoryReadCount: feature('TEAMMEM') ? teamMemReadCount : 0,
+    teamMemoryWriteCount: feature('TEAMMEM') ? teamMemWriteCount : 0,
     readFilePaths: nonMemReadFilePaths,
     searchArgs: group.nonMemSearchArgs,
     latestDisplayHint: group.latestDisplayHint,
-    messages: group.messages,
-    displayMessage: firstMsg,
+    messages: group.messages as CollapsedReadSearchGroup['messages'],
+    displayMessage: firstMsg as CollapsedReadSearchGroup['displayMessage'],
     uuid: `collapsed-${firstMsg.uuid}` as UUID,
     timestamp: firstMsg.timestamp,
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  } as any as CollapsedReadSearchGroup
-  if (feature('TEAMMEM')) {
-    result.teamMemorySearchCount = teamMemSearchCount
-    result.teamMemoryReadCount = teamMemReadCount
-    result.teamMemoryWriteCount = teamMemWriteCount
-  }
-  if ((group.mcpCallCount ?? 0) > 0) {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    ;(result as any).mcpCallCount = group.mcpCallCount
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    ;(result as any).mcpServerNames = [...(group.mcpServerNames ?? [])]
-  }
-  if (isFullscreenEnvEnabled()) {
-    if ((group.bashCount ?? 0) > 0) {
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      ;(result as any).bashCount = group.bashCount
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      ;(result as any).gitOpBashCount = group.gitOpBashCount
-    }
-    if ((group.commits?.length ?? 0) > 0) {
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      ;(result as any).commits = group.commits
-    }
-    if ((group.pushes?.length ?? 0) > 0) {
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      ;(result as any).pushes = group.pushes
-    }
-    if ((group.branches?.length ?? 0) > 0) {
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      ;(result as any).branches = group.branches
-    }
-    if ((group.prs?.length ?? 0) > 0) {
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      ;(result as any).prs = group.prs
-    }
-  }
-  if (group.hookCount > 0) {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    ;(result as any).hookTotalMs = group.hookTotalMs
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    ;(result as any).hookCount = group.hookCount
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    ;(result as any).hookInfos = group.hookInfos
-  }
-  if (group.relevantMemories && group.relevantMemories.length > 0) {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    ;(result as any).relevantMemories = group.relevantMemories
+    // 可选字段：根据条件填充
+    ...((group.mcpCallCount ?? 0) > 0 && {
+      mcpCallCount: group.mcpCallCount,
+      mcpServerNames: [...(group.mcpServerNames ?? [])],
+    }),
+    ...(isFullscreenEnvEnabled() &&
+      (group.bashCount ?? 0) > 0 && {
+        bashCount: group.bashCount,
+        gitOpBashCount: group.gitOpBashCount,
+      }),
+    ...(isFullscreenEnvEnabled() && (group.commits?.length ?? 0) > 0 && { commits: group.commits }),
+    ...(isFullscreenEnvEnabled() && (group.pushes?.length ?? 0) > 0 && { pushes: group.pushes }),
+    ...(isFullscreenEnvEnabled() &&
+      (group.branches?.length ?? 0) > 0 && { branches: group.branches }),
+    ...(isFullscreenEnvEnabled() && (group.prs?.length ?? 0) > 0 && { prs: group.prs }),
+    ...(group.hookCount > 0 && {
+      hookTotalMs: group.hookTotalMs,
+      hookCount: group.hookCount,
+      hookInfos: group.hookInfos,
+    }),
+    ...(group.relevantMemories &&
+      group.relevantMemories.length > 0 && {
+        relevantMemories: group.relevantMemories,
+      }),
   }
   return result
 }
@@ -885,9 +855,7 @@ export function collapseReadSearchGroups(
       // 将 PreToolUse hook 摘要吸收到分组中，而非延迟输出
       currentGroup.hookCount += msg.hookCount!
       currentGroup.hookTotalMs +=
-        msg.totalDurationMs ??
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        msg.hookInfos.reduce((sum, h) => sum + ((h as any).durationMs ?? 0), 0)
+        msg.totalDurationMs ?? msg.hookInfos.reduce((sum, h) => sum + (h.durationMs ?? 0), 0)
       currentGroup.hookInfos.push(...msg.hookInfos)
     } else if (
       currentGroup.messages.length > 0 &&
@@ -902,8 +870,10 @@ export function collapseReadSearchGroups(
       // createCollapsedGroup 在 readCount 减法之后将 .length 添加到
       // memoryReadCount。
       currentGroup.relevantMemories ??= []
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      currentGroup.relevantMemories.push(...(msg.attachment as any).memories)
+      const memAtt = msg.attachment as unknown as {
+        memories: { path: string; content: string; mtimeMs: number }[]
+      }
+      currentGroup.relevantMemories.push(...memAtt.memories)
     } else if (shouldSkipMessage(msg)) {
       // 对于可跳过的消息（thinking、附件、系统消息）不刷新分组。
       // 如果分组正在进行中，将这些消息延迟到折叠分组之后输出。

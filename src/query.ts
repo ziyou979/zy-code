@@ -141,8 +141,7 @@ function* yieldMissingToolResultBlocks(
           },
         ],
         toolUseResult: errorMessage,
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        sourceToolAssistantUUID: assistantMessage.uuid as any,
+        sourceToolAssistantUUID: assistantMessage.uuid as import('node:crypto').UUID,
       })
     }
   }
@@ -174,8 +173,9 @@ const MAX_OUTPUT_TOKENS_RECOVERY_LIMIT = 3
  * 与 reactiveCompact.isWithheldPromptTooLong 对应。
  */
 function isWithheldMaxOutputTokens(msg: unknown): msg is AssistantMessage {
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  return (msg as any)?.type === 'assistant' && (msg as any).apiError === 'max_output_tokens'
+  // apiError 运行时为字符串 'max_output_tokens'（见 llmOrchestrator.ts）
+  const m = msg as Partial<AssistantMessage> | undefined
+  return m?.type === 'assistant' && (m.apiError as unknown) === 'max_output_tokens'
 }
 
 export type QueryParams = {
@@ -325,8 +325,8 @@ async function* queryLoop(
       toolUseContext,
     )
 
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    yield { type: 'stream_request_start' } as any as any
+    // StreamRequestStartEvent 信号 — 仅用于触发流式请求开始
+    yield { type: 'stream_request_start' } as unknown as StreamEvent
 
     queryCheckpoint('query_fn_entry')
 
@@ -659,8 +659,14 @@ async function* queryLoop(
               // 这些部分消息（尤其是 thinking 块）有无效签名，
               // 会导致 "thinking blocks cannot be modified" API 错误。
               for (const msg of assistantMessages) {
-                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-                yield { type: 'tombstone' as any, message: msg } as any
+                yield {
+                  type: 'system',
+                  subtype: 'tombstone',
+                  content: '',
+                  message: msg,
+                  uuid: msg.uuid,
+                  timestamp: msg.timestamp,
+                } as TombstoneMessage
               }
               logEvent('zy_orphaned_messages_tombstoned', {
                 orphanedMessageCount: assistantMessages.length,
@@ -877,8 +883,7 @@ async function* queryLoop(
             // 以便用户无需 verbose 模式就能看到通知。
             yield createSystemMessage(
               `Switched to ${renderModelName(innerError.fallbackModel)} due to high demand for ${renderModelName(innerError.originalModel)}`,
-              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-              'warning' as any,
+              'warn',
             )
 
             continue
@@ -1225,8 +1230,7 @@ async function* queryLoop(
             `A hook blocked the turn from ending ${nextBlockCount} consecutive times — overriding and ending turn. ` +
               `For Stop/SubagentStop hooks, check stop_hook_active in the input and return success while it's true. ` +
               `Set ZY_CODE_STOP_HOOK_BLOCK_CAP to raise this limit.`,
-            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-            'warning' as any,
+            'warn',
           )
           return { reason: 'completed' }
         }

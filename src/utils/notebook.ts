@@ -4,8 +4,8 @@ import type { ImageBlock, TextBlock, ToolResultBlock } from '../types/llm.js'
 import type { NotebookCell, NotebookContent } from '../types/notebook.js'
 
 // 本地类型声明 —— Jupyter notebook JSON 原始格式
-// biome-ignore lint/suspicious/noExplicitAny: Jupyter notebook JSON 字段类型多样
-type JupyterRawCell = Record<string, any>
+// Jupyter notebook JSON 原始单元格 — 字段类型多样，使用 unknown 替代 any
+type JupyterRawCell = Record<string, unknown>
 
 interface NotebookCellOutput {
   output_type: string
@@ -112,13 +112,13 @@ function processCell(
   codeLanguage: string,
   includeLargeOutputs: boolean,
 ): NotebookCellSource {
-  const raw = cell as JupyterRawCell
+  const raw = cell as unknown as JupyterRawCell
   const cellId = cell.id ?? `cell-${index}`
   const cellData: NotebookCellSource = {
     cellType: raw.cell_type as string,
     source: Array.isArray(cell.source) ? cell.source.join('') : cell.source,
     execution_count:
-      raw.cell_type === 'code' ? raw.execution_count || undefined : undefined,
+      raw.cell_type === 'code' ? (raw.execution_count as number) || undefined : undefined,
     cell_id: cellId,
   }
   // Avoid giving text cells the code language.
@@ -128,7 +128,9 @@ function processCell(
 
   if (raw.cell_type === 'code' && cell.outputs?.length) {
     const rawOutputs = cell.outputs as unknown as NotebookCellOutput[]
-    const outputs = rawOutputs.map(processOutput).filter((o): o is NotebookCellSourceOutput => o !== undefined)
+    const outputs = rawOutputs
+      .map(processOutput)
+      .filter((o): o is NotebookCellSourceOutput => o !== undefined)
     if (!includeLargeOutputs && isLargeOutputs(outputs)) {
       cellData.outputs = [
         {
@@ -194,7 +196,9 @@ export async function readNotebook(
   const buffer = await getFsImplementation().readFileBytes(fullPath)
   const content = buffer.toString('utf-8')
   const notebook = jsonParse(content) as NotebookContent
-  const language = (notebook.metadata as Record<string, Record<string, string>> | undefined)?.language_info?.name ?? 'python'
+  const language =
+    (notebook.metadata as Record<string, Record<string, string>> | undefined)?.language_info
+      ?.name ?? 'python'
   if (cellId) {
     const cell = notebook.cells.find((c) => c.id === cellId)
     if (!cell) {

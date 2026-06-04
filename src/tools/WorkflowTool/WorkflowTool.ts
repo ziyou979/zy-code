@@ -71,9 +71,9 @@ function persistScript(source: string, name: string): string {
 function loadScript(scriptPath: string): string {
   try {
     return readFileSync(scriptPath, 'utf-8')
-  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-  } catch (err: any) {
-    throw new WorkflowScriptError(`Cannot read script at ${scriptPath}: ${err.message}`)
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    throw new WorkflowScriptError(`Cannot read script at ${scriptPath}: ${msg}`)
   }
 }
 
@@ -151,10 +151,10 @@ export const WorkflowTool = buildTool({
     let meta
     try {
       meta = parseMeta(source)
-    // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err)
       return {
-        data: { status: 'error', message: err.message } satisfies Output,
+        data: { status: 'error', message: errMsg } satisfies Output,
       }
     }
 
@@ -314,10 +314,13 @@ async function executeWorkflowAsync(
       : tSync('workflow.completed', { count: String(result.agentCount) })
 
     completeWorkflowTask(taskId, setAppState, summary)
-  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-  } catch (err: any) {
+  } catch (err: unknown) {
     const errorMsg =
-      err instanceof WorkflowScriptError ? err.message : (err?.message ?? 'Unknown error')
+      err instanceof WorkflowScriptError
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : 'Unknown error'
     failWorkflowTask(taskId, setAppState, errorMsg)
   }
 }

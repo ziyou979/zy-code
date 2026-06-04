@@ -83,14 +83,12 @@ export async function runInteractiveMode({
               ? new Date(options.deepLinkLastFetch)
               : undefined,
         }),
-        // biome-ignore lint/suspicious/noExplicitAny: 沿用原 root.ts 写法，文案类型在 createSystemMessage 内只接受字面量并集
-        'warning' as any,
+        'warning',
       )
     } else if (options.prefill) {
       deepLinkBanner = createSystemMessage(
         'Launched with a pre-filled prompt — review it before pressing Enter.',
-        // biome-ignore lint/suspicious/noExplicitAny: 同上
-        'warning' as any,
+        'warning',
       )
     }
   }

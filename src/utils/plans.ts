@@ -296,14 +296,8 @@ function recoverPlanFromMessages(log: LogOption): string | null {
 
     if (msg.type === 'user') {
       const userMsg = msg as UserMessage
-      if (
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        typeof (userMsg as any).planContent === 'string' &&
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        (userMsg as any).planContent.length > 0
-      ) {
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        return (userMsg as any).planContent
+      if (typeof userMsg.planContent === 'string' && userMsg.planContent.length > 0) {
+        return userMsg.planContent
       }
     }
 
@@ -333,17 +327,12 @@ function findFileSnapshotEntry(
     if (
       msg?.type === 'system' &&
       'subtype' in msg &&
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      (msg as any).subtype === ('file_snapshot' as any) &&
+      // SystemFileSnapshotMessage 不在 SystemMessage 联合中，需通过 unknown 桥接
+      (msg as unknown as SystemFileSnapshotMessage).subtype === 'file_snapshot' &&
       'snapshotFiles' in msg
     ) {
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      const files = (msg as any).snapshotFiles as Array<{
-        key: string
-        path: string
-        content: string
-      }>
-      return files.find((f) => f.key === key)
+      const snapshot = msg as unknown as SystemFileSnapshotMessage
+      return snapshot.snapshotFiles.find((f) => f.key === key)
     }
   }
   return undefined
@@ -375,21 +364,19 @@ export async function persistFileSnapshotIfRemote(): Promise<void> {
       return
     }
 
-    const message = {
+    const message: SystemFileSnapshotMessage = {
       type: 'system',
       subtype: 'file_snapshot',
       content: 'File snapshot',
-      level: 'info',
       isMeta: true,
       timestamp: new Date().toISOString(),
       uuid: randomUUID(),
       snapshotFiles,
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    } as any
+    }
 
     const { recordTranscript } = await import('./sessionStorage.js')
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    await recordTranscript([message] as any)
+    // SystemFileSnapshotMessage 不在 Message 联合中，需通过 unknown 桥接
+    await recordTranscript([message as unknown as import('src/types/message.js').Message])
   } catch (error) {
     logError(error)
   }

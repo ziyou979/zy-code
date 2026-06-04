@@ -163,7 +163,6 @@ export function useSSHSession({
           content: `SSH connection dropped — reconnecting (attempt ${attempt}/${max})...`,
           timestamp: new Date().toISOString(),
           uuid: randomUUID(),
-          // @ts-expect-error
           level: 'warning',
         }
         setMessages((prev) => [...prev, msg])

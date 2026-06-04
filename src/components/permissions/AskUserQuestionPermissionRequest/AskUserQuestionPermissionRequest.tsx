@@ -250,8 +250,7 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
         interviewPhaseEnabled: isInPlanMode && isPlanModeInterviewPhaseEnabled(),
       })
     }
-    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-    const annotations: Record<string, any> = {}
+    const annotations: Record<string, unknown> = {}
     for (const q_3 of questions) {
       const answer_1 = answersToSubmit[q_3.question]
       const notes = questionStates[q_3.question]?.textInputValue
@@ -308,7 +307,7 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
         if (label === '__other__') {
           const questionImages_0 = Object.values(
             pastedContentsByQuestion[questionText_1] ?? {},
-          // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
+            // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
           ).filter((c_1: any) => c_1.type === 'image')
           answer_2 = questionImages_0.length > 0 ? '(Image attached)' : label
         } else {

@@ -245,8 +245,7 @@ export function ResumeConversation({
               activeAgents: getActiveAgentsFromList(freshAgentDefs.allAgents),
             },
           }))
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          result_3.messages.push(createSystemMessage(warning, 'warning' as any))
+          result_3.messages.push(createSystemMessage(warning, 'warning'))
         }
       }
       if (result_3.sessionId && !forkSession) {
@@ -367,7 +366,7 @@ export function ResumeConversation({
         thinkingConfig={thinkingConfig}
         onTurnComplete={onTurnComplete}
       />
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     ) as any
   }
   if (loading) {

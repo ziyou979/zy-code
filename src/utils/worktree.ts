@@ -558,8 +558,7 @@ async function performPostCreationSetup(repoRoot: string, worktreePath: string):
     const worktreeHooksDir = hooksPath === huskyPath ? join(worktreePath, '.husky') : undefined
     void import('./postCommitAttribution.js')
       .then((m) =>
-        // biome-ignore lint/suspicious/noExplicitAny: 动态导入的模块类型不完善
-        (m as Record<string, any>)
+        (m as { installPrepareCommitMsgHook: (path: string, hooksDir?: string) => Promise<void> })
           .installPrepareCommitMsgHook(worktreePath, worktreeHooksDir)
           .catch((error: unknown) => {
             logForDebugging(`Failed to install attribution hook in worktree: ${error}`)

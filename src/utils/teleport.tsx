@@ -75,15 +75,13 @@ export type TeleportProgressCallback = (step: TeleportProgressStep) => void
  */
 function createTeleportResumeSystemMessage(branchError: Error | null): SystemMessage {
   if (branchError === null) {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    return createSystemMessage('Session resumed', 'suggestion' as any)
+    return createSystemMessage('Session resumed', 'suggestion')
   }
   const formattedError =
     branchError instanceof TeleportOperationError
       ? branchError.formattedMessage
       : branchError.message
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  return createSystemMessage(`Session resumed without branch: ${formattedError}`, 'warning' as any)
+  return createSystemMessage(`Session resumed without branch: ${formattedError}`, 'warning')
 }
 
 /**

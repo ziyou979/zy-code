@@ -74,8 +74,7 @@ export const SendUserFileTool = buildTool({
     try {
       const fs = await import('node:fs/promises')
       const path = await import('node:path')
-      // biome-ignore lint/suspicious/noExplicitAny: 适配层类型处理
-      const cwd = (context as Record<string, any>).cwd || process.cwd()
+      const cwd = ((context as Record<string, unknown>).cwd as string) || process.cwd()
       const filePath = path.join(cwd, file_name)
       await fs.writeFile(filePath, content, 'utf-8')
       return { data: { file_name, success: true } }

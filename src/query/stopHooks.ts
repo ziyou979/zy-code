@@ -206,7 +206,7 @@ export async function* handleStopHooks(
             hookInfos.push({
               command: progressData.command,
               promptText: progressData.promptText,
-            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
+              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
             } as any)
           }
         }
@@ -299,8 +299,7 @@ export async function* handleStopHooks(
         preventedContinuation,
         stopReason,
         hasOutput,
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        'suggestion' as any,
+        'suggestion',
         stopHookToolUseID,
       )
 
@@ -460,8 +459,7 @@ export async function* handleStopHooks(
     })
     // Yield a system message that is not visible to the model for the user
     // to debug their hook.
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    yield createSystemMessage(`Stop hook failed: ${errorMessage(error)}`, 'warning' as any)
+    yield createSystemMessage(`Stop hook failed: ${errorMessage(error)}`, 'warning')
     return { blockingErrors: [], preventContinuation: false }
   }
 }

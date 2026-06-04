@@ -325,7 +325,7 @@ export function useRemoteSession({
           message: request.description ?? `${request.tool_name} requires permission`,
           suggestions: request.permission_suggestions,
           blockedPath: request.blocked_path,
-        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
+          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
         } as any
 
         const toolUseConfirm: ToolUseConfirm = {
@@ -501,8 +501,7 @@ export function useRemoteSession({
             // Add a warning message to the conversation
             const warningMessage = createSystemMessage(
               'Remote session may be unresponsive. Attempting to reconnect…',
-              // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-              'warning' as any,
+              'warning',
             )
             setMessages((prev) => [...prev, warningMessage])
 

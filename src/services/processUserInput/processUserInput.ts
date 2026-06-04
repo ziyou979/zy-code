@@ -199,11 +199,7 @@ export async function processUserInput({
         const blockingMessage = getUserPromptSubmitHookBlockingMessage(hookResult.blockingError)
         return {
           messages: [
-            createSystemMessage(
-              `${blockingMessage}\n\nOriginal prompt: ${input}`,
-              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-              'warning' as any,
-            ),
+            createSystemMessage(`${blockingMessage}\n\nOriginal prompt: ${input}`, 'warning'),
           ],
           shouldQuery: false,
           allowedTools: result.allowedTools,
@@ -241,8 +237,7 @@ export async function processUserInput({
       return {
         messages: [
           // TODO: Make this an attachment message
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          createSystemMessage(`${blockingMessage}\n\nOriginal prompt: ${input}`, 'warning' as any),
+          createSystemMessage(`${blockingMessage}\n\nOriginal prompt: ${input}`, 'warning'),
         ],
         shouldQuery: false,
         allowedTools: result.allowedTools,
@@ -295,7 +290,7 @@ export async function processUserInput({
               // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
               content: applyTruncation((hookResult.message as any).attachment.content),
             },
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
+            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           } as any)
           break
         default:

@@ -134,7 +134,7 @@ export type AttachmentMessageType = AttachmentMessage
 // System Messages
 // ============================================================
 
-export type SystemMessageLevel = 'info' | 'warn' | 'error'
+export type SystemMessageLevel = 'info' | 'warn' | 'warning' | 'error' | 'suggestion'
 
 export interface SystemInformationalMessage extends BaseMessage {
   type: 'system'
@@ -428,6 +428,66 @@ export type RenderableMessage =
   | CollapsedReadSearchGroup
   | GroupedToolUseMessage
   | GroupedToolUseMessageWithMessages
+
+// ============================================================
+// RenderableMessage 类型守卫
+// ============================================================
+
+export function isUserMessage(msg: RenderableMessage): msg is UserMessage {
+  return msg.type === 'user'
+}
+
+export function isAssistantMessage(msg: RenderableMessage): msg is AssistantMessage {
+  return msg.type === 'assistant'
+}
+
+export function isSystemMessage(msg: RenderableMessage): msg is SystemMessage {
+  return msg.type === 'system' || msg.type === 'tool_use_summary'
+}
+
+export function isProgressMessage(msg: RenderableMessage): msg is ProgressMessage {
+  return msg.type === 'progress'
+}
+
+export function isAttachmentMessage(msg: RenderableMessage): msg is AttachmentMessage {
+  return msg.type === 'attachment'
+}
+
+export function isHookResultMessage(msg: RenderableMessage): msg is HookResultMessage {
+  return msg.type === 'hook_result'
+}
+
+export function isCollapsedReadSearchGroup(
+  msg: RenderableMessage,
+): msg is CollapsedReadSearchGroup {
+  return msg.type === 'collapsed_read_search'
+}
+
+export function isGroupedToolUseMessage(msg: RenderableMessage): msg is GroupedToolUseMessage {
+  return msg.type === 'grouped_tool_use' && 'results' in msg && 'displayMessage' in msg
+}
+
+export function isGroupedToolUseMessageWithMessages(
+  msg: RenderableMessage,
+): msg is GroupedToolUseMessageWithMessages {
+  return msg.type === 'grouped_tool_use' && !('results' in msg)
+}
+
+export function isStopHookSummaryMessage(
+  msg: RenderableMessage,
+): msg is SystemStopHookSummaryMessage {
+  return msg.type === 'system' && 'subtype' in msg && msg.subtype === 'stop_hook_summary'
+}
+
+export function isCompactBoundaryMessage(
+  msg: RenderableMessage,
+): msg is SystemCompactBoundaryMessage {
+  return msg.type === 'system' && 'subtype' in msg && msg.subtype === 'compact_boundary'
+}
+
+export function isTurnDurationMessage(msg: RenderableMessage): msg is SystemTurnDurationMessage {
+  return msg.type === 'system' && 'subtype' in msg && msg.subtype === 'turn_duration'
+}
 
 // ============================================================
 // Main Message Union

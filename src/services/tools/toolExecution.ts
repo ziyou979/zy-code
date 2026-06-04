@@ -820,7 +820,7 @@ async function checkPermissionsAndCallTool(
             preToolHookInfos.push({
               command: att.command,
               durationMs: att.durationMs,
-            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
+              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
             } as any)
           }
         }
@@ -876,8 +876,7 @@ async function checkPermissionsAndCallTool(
           false,
           undefined,
           false,
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          'suggestion' as any,
+          'suggestion',
           undefined,
           'PreToolUse',
           preToolHookDurationMs,
@@ -1484,7 +1483,7 @@ async function checkPermissionsAndCallTool(
             postToolHookInfos.push({
               command: att.command,
               durationMs: att.durationMs,
-            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
+              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
             } as any)
           }
         }
@@ -1501,7 +1500,7 @@ async function checkPermissionsAndCallTool(
             postToolHookInfos.push({
               command: att.command,
               durationMs: att.durationMs,
-            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
+              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
             } as any)
           }
         }
@@ -1545,8 +1544,7 @@ async function checkPermissionsAndCallTool(
             false,
             undefined,
             false,
-            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-            'suggestion' as any,
+            'suggestion',
             undefined,
             'PostToolUse',
             postToolHookDurationMs,
