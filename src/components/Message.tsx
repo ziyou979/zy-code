@@ -352,7 +352,8 @@ function AssistantMessageBlock({
     }
   }
   switch (param.type) {
-    case 'tool_use': {
+    case 'tool_use':
+    case 'tool_call': {
       return (
         <AssistantToolUseMessage
           param={param}

@@ -228,7 +228,12 @@ export function addCacheBreakpoints(
   // 倒数第二个消息：那是最后的共享前缀点，因此写入对 mycro
   // 是空合并（条目已存在），分叉也不会在 KVCC 中留下自己的尾部。
   // Dense 页面无论如何都会通过新哈希被引用计数并保留。
-  const markerIndex = skipCacheWrite ? messages.length - 2 : messages.length - 1
+  // 跳过末尾的 isMeta 消息（如 max_output_tokens recovery），它们不会被持久化到
+  // 会话历史中，在此处打缓存标记会导致下一轮前缀不匹配、缓存失效。
+  let markerIndex = skipCacheWrite ? messages.length - 2 : messages.length - 1
+  while (markerIndex > 0 && messages[markerIndex]?.isMeta) {
+    markerIndex--
+  }
   const result = messages.map((msg, index) => {
     const addCache = index === markerIndex
     if (msg.type === 'user') {

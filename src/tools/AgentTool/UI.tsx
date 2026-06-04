@@ -394,43 +394,34 @@ function BriefStandalonePreview({ progressMessages, tools }: VerboseAgentTranscr
   if (displayed.length === 0) {
     return null
   }
+  const lines: { key: string; text: string }[] = []
+  for (const p of displayed) {
+    if (p.type === 'summary') {
+      lines.push({
+        key: p.uuid,
+        text: getSearchReadSummaryText(p.searchCount, p.readCount, false, p.replCount),
+      })
+      continue
+    }
+    const data = p.message.data
+    if (!hasProgressMessage(data) || data.message.type !== 'assistant') continue
+    const block = data.message.message.content[0]
+    if (!block || block.type !== 'tool_call') continue
+    const tool = findToolByName(tools, block.name)
+    const name = tool?.userFacingName?.(block.input) ?? block.name
+    const summary = tool?.getToolUseSummary?.(block.input)
+    lines.push({ key: p.message.uuid, text: summary ? `${name}(${summary})` : name })
+  }
+  if (lines.length === 0) {
+    return null
+  }
   return (
-    <>
-      {displayed.map((p) => {
-        if (p.type === 'summary') {
-          const summaryText = getSearchReadSummaryText(
-            p.searchCount,
-            p.readCount,
-            false,
-            p.replCount,
-          )
-          return (
-            <Box key={p.uuid} height={1} overflow="hidden">
-              <Text dimColor>{summaryText}</Text>
-            </Box>
-          )
-        }
-        // 直接渲染工具名+摘要，绕过 MessageComponent 不支持 tool_call 的问题
-        const data = p.message.data
-        if (!hasProgressMessage(data) || data.message.type !== 'assistant') {
-          return null
-        }
-        const content = data.message.message.content[0]
-        if (!content || content.type !== 'tool_call') {
-          return null
-        }
-        const tool = findToolByName(tools, content.name)
-        const displayName = tool?.userFacingName?.(content.input) ?? content.name
-        const summary = tool?.getToolUseSummary?.(content.input)
-        return (
-          <Box key={p.message.uuid} height={1} overflow="hidden">
-            <Text dimColor>
-              {displayName}
-              {summary ? `(${summary})` : ''}
-            </Text>
-          </Box>
-        )
-      })}
+    <Box flexDirection="column">
+      {lines.map((l) => (
+        <MessageResponse key={l.key} height={1}>
+          <Text dimColor>{l.text}</Text>
+        </MessageResponse>
+      ))}
       {hiddenCount > 0 && (
         <Text dimColor>
           {tSync(hiddenCount === 1 ? 'agent.moreToolUses_one' : 'agent.moreToolUses_other', {
@@ -439,7 +430,7 @@ function BriefStandalonePreview({ progressMessages, tools }: VerboseAgentTranscr
           <CtrlOToExpand />
         </Text>
       )}
-    </>
+    </Box>
   )
 }
 
