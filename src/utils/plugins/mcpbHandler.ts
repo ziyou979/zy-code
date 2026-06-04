@@ -138,6 +138,7 @@ export function loadMcpServerUserConfig(
     const settings = getInitialSettings()
     const nonSensitive = settings.pluginConfigs?.[pluginId]?.mcpServers?.[serverName]
 
+    // biome-ignore lint/suspicious/noExplicitAny: SecureStorage 内部 read() 方法未在类型中声明
     const sensitive = (getSecureStorage() as any).read()?.pluginSecrets?.[
       serverSecretsKey(pluginId, serverName)
     ]
@@ -214,6 +215,7 @@ export function saveMcpServerUserConfig(
     // sensitive→false and they're being written to settings.json now. Without
     // this, loadMcpServerUserConfig's merge would let the stale secureStorage
     // value win on next read.
+    // biome-ignore lint/suspicious/noExplicitAny: SecureStorage 内部 read()/write() 方法未在类型中声明
     const storage = getSecureStorage() as any
     const k = serverSecretsKey(pluginId, serverName)
     const existingInSecureStorage = storage.read()?.pluginSecrets?.[k] ?? undefined

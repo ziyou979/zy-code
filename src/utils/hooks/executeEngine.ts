@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import chalk from 'chalk'
-import { isAsyncHookJSONOutput, isSyncHookJSONOutput } from 'src/types/hooks/index.js'
+import { isAsyncHookJSONOutput, isSyncHookJSONOutput, type SyncHookJSONOutput } from 'src/types/hooks/index.js'
 import { createAttachmentMessage } from '../attachments.js'
 import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
 import { isEnvTruthy } from '../envUtils.js'
@@ -47,7 +47,7 @@ import {
   startHookSpan,
 } from '../../services/telemetry/sessionTracing.js'
 import type { ToolUseContext } from '../../Tool.js'
-import type { Message } from '../../types/message.js'
+import type { HookResultMessage, Message } from '../../types/message.js'
 import { createDebugLog } from '../debug.js'
 import { errorMessage } from '../errors.js'
 import { all } from '../generators.js'
@@ -77,6 +77,16 @@ import { validateTerminalSequence } from './terminalSequence.js'
 import type { AggregatedHookResult, HookResult } from './types.js'
 
 const hookLog = createDebugLog('hooks')
+
+/**
+ * 将 createAttachmentMessage 的返回值转换为 HookResultMessage。
+ * hook 引擎构造的消息在运行时是 AttachmentMessage 但需要作为
+ * HookResultMessage 传递给调用方。
+ */
+// biome-ignore lint/suspicious/noExplicitAny: AttachmentMessage → HookResultMessage 跨类型桥接
+function hookAttachment(attachment: Record<string, unknown>): any {
+  return createAttachmentMessage(attachment as Parameters<typeof createAttachmentMessage>[0])
+}
 
 export async function* executeHooks({
   hookInput,
@@ -214,8 +224,9 @@ export async function* executeHooks({
   // Yield progress messages for each hook before execution
   for (const { hook } of matchingHooks) {
     yield {
+      // biome-ignore lint/suspicious/noExplicitAny: hook 引擎消息构造需要动态类型
       message: {
-        type: 'progress' as any,
+        type: 'progress',
         data: {
           type: 'hook_progress',
           hookEvent,
@@ -231,7 +242,7 @@ export async function* executeHooks({
         toolUseID,
         timestamp: new Date().toISOString(),
         uuid: randomUUID(),
-      } as any,
+      } as unknown as HookResultMessage,
     }
   }
 
@@ -279,13 +290,13 @@ export async function* executeHooks({
     if (hook.type === 'function') {
       if (!messages) {
         yield {
-          message: createAttachmentMessage({
+          message: hookAttachment({
             type: 'hook_error_during_execution',
             hookName,
             toolUseID,
             hookEvent,
             content: 'Messages not provided for function hook',
-          }) as any,
+          }),
           outcome: 'non_blocking_error',
           hook,
         }
@@ -318,15 +329,15 @@ export async function* executeHooks({
       const jsonInputRes = getJsonInput()
       if (!jsonInputRes.ok) {
         yield {
-          message: createAttachmentMessage({
+          message: hookAttachment({
             type: 'hook_error_during_execution',
             hookName,
             toolUseID,
             hookEvent,
-            content: `Failed to prepare hook input: ${errorMessage((jsonInputRes as any).error)}`,
+            content: `Failed to prepare hook input: ${errorMessage((jsonInputRes as { ok: false; error: unknown }).error)}`,
             command: hookCommand,
             durationMs: Date.now() - hookStartMs,
-          }) as any,
+          }),
           outcome: 'non_blocking_error',
           hook,
         }
@@ -350,7 +361,9 @@ export async function* executeHooks({
           toolUseID,
         )
         // Inject timing fields for hook visibility
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时消息类型可能是 AttachmentMessage
         if ((promptResult.message as any)?.type === 'attachment') {
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时消息类型可能是 AttachmentMessage
           const att = (promptResult.message as any).attachment
           if (att.type === 'hook_success' || att.type === 'hook_non_blocking_error') {
             att.command = hookCommand
@@ -381,7 +394,9 @@ export async function* executeHooks({
           'agent_type' in hookInput ? (hookInput.agent_type as string) : undefined,
         )
         // Inject timing fields for hook visibility
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时消息类型可能是 AttachmentMessage
         if ((agentResult.message as any)?.type === 'attachment') {
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时消息类型可能是 AttachmentMessage
           const att = (agentResult.message as any).attachment
           if (att.type === 'hook_success' || att.type === 'hook_non_blocking_error') {
             att.command = hookCommand
@@ -407,7 +422,9 @@ export async function* executeHooks({
           toolUseID,
         )
         // Inject timing fields for hook visibility
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时消息类型可能是 AttachmentMessage
         if ((mcpResult.message as any)?.type === 'attachment') {
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时消息类型可能是 AttachmentMessage
           const att = (mcpResult.message as any).attachment
           if (att.type === 'hook_success' || att.type === 'hook_non_blocking_error') {
             att.command = hookCommand
@@ -440,12 +457,12 @@ export async function* executeHooks({
             outcome: 'cancelled',
           })
           yield {
-            message: createAttachmentMessage({
+            message: hookAttachment({
               type: 'hook_cancelled',
               hookName,
               toolUseID,
               hookEvent,
-            }) as any,
+            }),
             outcome: 'cancelled' as const,
             hook,
           }
@@ -465,7 +482,7 @@ export async function* executeHooks({
             outcome: 'error',
           })
           yield {
-            message: createAttachmentMessage({
+            message: hookAttachment({
               type: 'hook_non_blocking_error',
               hookName,
               toolUseID,
@@ -473,7 +490,7 @@ export async function* executeHooks({
               stderr,
               stdout: '',
               exitCode: httpResult.statusCode ?? 0,
-            }) as any,
+            }),
             outcome: 'non_blocking_error' as const,
             hook,
           }
@@ -497,7 +514,7 @@ export async function* executeHooks({
             outcome: 'error',
           })
           yield {
-            message: createAttachmentMessage({
+            message: hookAttachment({
               type: 'hook_non_blocking_error',
               hookName,
               toolUseID,
@@ -505,7 +522,7 @@ export async function* executeHooks({
               stderr: `JSON validation failed: ${httpValidationError}`,
               stdout: httpResult.body,
               exitCode: httpResult.statusCode ?? 0,
-            }) as any,
+            }),
             outcome: 'non_blocking_error' as const,
             hook,
           }
@@ -533,7 +550,7 @@ export async function* executeHooks({
 
         if (httpJson) {
           const processed = processHookJSONOutput({
-            json: httpJson as any,
+            json: httpJson as SyncHookJSONOutput,
             command: hook.url,
             hookName,
             toolUseID,
@@ -604,14 +621,14 @@ export async function* executeHooks({
           outcome: 'cancelled',
         })
         yield {
-          message: createAttachmentMessage({
+          message: hookAttachment({
             type: 'hook_cancelled',
             hookName,
             toolUseID,
             hookEvent,
             command: hookCommand,
             durationMs,
-          }) as any,
+          }),
           outcome: 'cancelled' as const,
           hook,
         }
@@ -633,7 +650,7 @@ export async function* executeHooks({
           outcome: 'error',
         })
         yield {
-          message: createAttachmentMessage({
+          message: hookAttachment({
             type: 'hook_non_blocking_error',
             hookName,
             toolUseID,
@@ -643,7 +660,7 @@ export async function* executeHooks({
             exitCode: 1,
             command: hookCommand,
             durationMs,
-          }) as any,
+          }),
           outcome: 'non_blocking_error' as const,
           hook,
         }
@@ -696,7 +713,7 @@ export async function* executeHooks({
           yield {
             ...processed,
             message: (processed.message ||
-              createAttachmentMessage({
+              hookAttachment({
                 type: 'hook_success',
                 hookName,
                 toolUseID,
@@ -707,7 +724,7 @@ export async function* executeHooks({
                 exitCode: result.status,
                 command: hookCommand,
                 durationMs,
-              })) as any,
+              })),
             outcome: 'success' as const,
             hook,
           }
@@ -745,7 +762,7 @@ export async function* executeHooks({
           outcome: 'success',
         })
         yield {
-          message: createAttachmentMessage({
+          message: hookAttachment({
             type: 'hook_success',
             hookName,
             toolUseID,
@@ -758,7 +775,7 @@ export async function* executeHooks({
             exitCode: result.status,
             command: hookCommand,
             durationMs,
-          }) as any,
+          }),
           outcome: 'success' as const,
           hook,
         }
@@ -801,7 +818,7 @@ export async function* executeHooks({
         outcome: 'error',
       })
       yield {
-        message: createAttachmentMessage({
+        message: hookAttachment({
           type: 'hook_non_blocking_error',
           hookName,
           toolUseID,
@@ -811,7 +828,7 @@ export async function* executeHooks({
           exitCode: result.status,
           command: hookCommand,
           durationMs,
-        }) as any,
+        }),
         outcome: 'non_blocking_error' as const,
         hook,
       }
@@ -832,7 +849,7 @@ export async function* executeHooks({
         outcome: 'error',
       })
       yield {
-        message: createAttachmentMessage({
+        message: hookAttachment({
           type: 'hook_non_blocking_error',
           hookName,
           toolUseID,
@@ -842,7 +859,7 @@ export async function* executeHooks({
           exitCode: 1,
           command: hookCommand,
           durationMs: Date.now() - hookStartMs,
-        }) as any,
+        }),
         outcome: 'non_blocking_error' as const,
         hook,
       }
@@ -889,13 +906,13 @@ export async function* executeHooks({
     // 如果存在，单独产出系统消息
     if (result.systemMessage) {
       yield {
-        message: createAttachmentMessage({
+        message: hookAttachment({
           type: 'hook_system_message',
           content: result.systemMessage,
           hookName,
           toolUseID,
           hookEvent,
-        }) as any,
+        }),
       }
     }
 

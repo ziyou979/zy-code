@@ -69,7 +69,10 @@ export function TeleportProgress({ currentStep, sessionId }: Props) {
           </Text>
         </Box>
         <Text dimColor={isPending} bold={isCurrent}>
-          {tSync(step.i18nKey as any)}
+          {
+            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
+            tSync(step.i18nKey as any)
+          }
         </Text>
       </Box>
     )

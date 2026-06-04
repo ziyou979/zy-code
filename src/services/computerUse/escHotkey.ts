@@ -27,7 +27,8 @@ export function registerEscHotkey(onEscape: () => void): boolean {
     return true
   }
   const cu = requireComputerUseSwift()
-  if (!(cu as any).hotkey.registerEscape(onEscape)) {
+  if (!// biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
+(cu as any).hotkey.registerEscape(onEscape)) {
     // CGEvent.tapCreate failed — typically missing Accessibility permission.
     // CU still works, just without ESC abort. Mirrors Cowork's escAbort.ts:81.
     logForDebugging('[cu-esc] registerEscape returned false', { level: 'warn' })
@@ -44,7 +45,8 @@ export function unregisterEscHotkey(): void {
     return
   }
   try {
-    ;(requireComputerUseSwift() as any).hotkey.unregister()
+    ;// biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
+(requireComputerUseSwift() as any).hotkey.unregister()
   } finally {
     releasePump()
     registered = false
@@ -56,5 +58,6 @@ export function notifyExpectedEscape(): void {
   if (!registered) {
     return // @ts-ignore
   }
-  ;(requireComputerUseSwift() as any).hotkey.notifyExpectedEscape()
+  ;// biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
+(requireComputerUseSwift() as any).hotkey.notifyExpectedEscape()
 }

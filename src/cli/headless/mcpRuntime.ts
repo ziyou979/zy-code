@@ -393,7 +393,9 @@ export class McpRuntime {
       } else if (connection.config.type === 'stdio' || connection.config.type === undefined) {
         config = {
           type: 'stdio' as const,
+          // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
           command: (connection.config as any).command,
+          // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
           args: (connection.config as any).args,
         }
       }
@@ -505,11 +507,14 @@ export class McpRuntime {
         type === 'http' ||
         type === 'sdk'
       ) {
+        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
         supportedConfigs[name] = config as any
       }
     }
     for (const [name, config] of Object.entries(this.sdkMcpConfigs)) {
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       if ((config as any).type === 'sdk' && !(name in supportedConfigs)) {
+        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
         supportedConfigs[name] = config as any
       }
     }

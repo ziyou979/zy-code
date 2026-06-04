@@ -398,6 +398,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
       //（最多约 5 秒）。--assistant 完全跳过此门（守护进程是
       // 预先授权的）。
       kairosEnabled =
+        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
         getAssistant().isAssistantForced() || (await (kairosGate as any).isKairosEnabled())
       if (kairosEnabled) {
         const opts = options as {
@@ -1825,6 +1826,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
           // @ts-expect-error
           buildMergePrompt,
         } = await import('../../components/agents/SnapshotUpdateDialog.js')
+        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
         const mergePrompt = (buildMergePrompt as any)(agentDef.agentType, agentDef.memory!)
         inputPrompt = inputPrompt ? `${mergePrompt}\n\n${inputPrompt}` : mergePrompt
       }
@@ -1864,6 +1866,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     // 在入门培训之后运行，以便托管设置和登录状态完全加载。
     const orgValidation = await validateForceLoginOrg()
     if (!orgValidation.valid) {
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       await exitWithError(root, (orgValidation as any).message)
     }
   }
@@ -2196,6 +2199,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     // 验证非交互会话的 org 限制
     const orgValidation = await validateForceLoginOrg()
     if (!orgValidation.valid) {
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       process.stderr.write(`${(orgValidation as any).message}\n`)
       process.exit(1)
     }
@@ -2677,6 +2681,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   // sessionDataUploader.ts 中的每轮认证逻辑优雅地处理未认证
   // 状态（每轮重新检查，所以会话中间的认证恢复有效）。
   const uploaderReady = sessionUploaderPromise
+    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
     ? sessionUploaderPromise.then((mod: any) => mod.createSessionTurnUploader()).catch(() => null)
     : null
   const sessionConfig = {
@@ -2810,6 +2815,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     // 连接远程助手会话。代理循环在远程运行；此
     // 进程流式传输实时事件并 POST 消息。历史是懒惰
     // 加载的，由 useAssistantHistory 在滚动向上时加载（此处无阻塞获取）。
+    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
     const { discoverAssistantSessions } = await import('../../assistant/sessionDiscovery.js' as any)
     let targetSessionId = pendingAssistantChat.sessionId
 

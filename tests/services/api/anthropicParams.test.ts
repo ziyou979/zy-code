@@ -18,10 +18,14 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
       model: 'claude-3-5-sonnet',
       maxTokens: 4096,
       messages: [
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         { role: 'system', content: 'You are helpful' } as any,
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         { role: 'user', content: 'hi' } as any,
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         { role: 'assistant', content: 'hello' } as any,
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     expect(result.model).toBe('claude-3-5-sonnet')
     expect(result.max_tokens).toBe(4096)
@@ -29,7 +33,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
     expect(result.messages).toHaveLength(2)
     expect(result.messages[0].role).toBe('user')
     expect(result.messages[1].role).toBe('assistant')
-    assertValidAnthropicCreateParams(result)
+    assertValidAnthropicCreateParams(result as unknown as Record<string, unknown>)
   })
 
   test('多条 system 消息：被合并成一段（双换行分隔）', () => {
@@ -37,10 +41,14 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
       model: 'claude-3',
       maxTokens: 100,
       messages: [
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         { role: 'system', content: 'Rule 1' } as any,
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         { role: 'system', content: 'Rule 2' } as any,
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         { role: 'user', content: 'go' } as any,
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     expect(result.system).toBe('Rule 1\n\nRule 2')
   })
@@ -49,8 +57,10 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
     const result = buildAnthropicCreateParams({
       model: 'claude',
       maxTokens: 100,
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       messages: [{ role: 'user', content: 'hi' } as any],
       system: 'legacy system',
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     expect(result.system).toBe('legacy system')
   })
@@ -59,6 +69,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
     const result = buildAnthropicCreateParams({
       model: 'c',
       maxTokens: 100,
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       messages: [{ role: 'user', content: 'x' } as any],
       tools: [
         {
@@ -71,7 +82,9 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
           description: 'desc2',
           inputSchema: { type: 'object', properties: { b: { type: 'number' } } },
         },
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ] as any,
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     expect(result.tools).toHaveLength(2)
     expect(result.tools![0]).toEqual({
@@ -90,11 +103,13 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
     const result = buildAnthropicCreateParams({
       model: 'c',
       maxTokens: 100,
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       messages: [{ role: 'user', content: 'hi' } as any],
       temperature: 0.5,
       topP: 0.9,
       stopSequences: ['END'],
       metadata: { user_id: 'u1' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     expect(result.temperature).toBe(0.5)
     expect(result.top_p).toBe(0.9)
@@ -106,12 +121,16 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
     const result = buildAnthropicCreateParams({
       model: 'c',
       maxTokens: 100,
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       messages: [{ role: 'user', content: 'hi' } as any],
       providerExtras: {
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         anthropic: { thinking: { type: 'enabled', budgetTokens: 1024 } as any },
       },
       thinking: { type: 'disabled' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect(result.thinking).toEqual({ type: 'enabled', budgetTokens: 1024 } as any)
   })
 
@@ -120,6 +139,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
       model: 'c',
       maxTokens: 100,
       messages: [
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         { role: 'user', content: 'go' } as any,
         {
           role: 'assistant',
@@ -131,10 +151,12 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
               input: { query: 'ant' },
             },
           ],
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         } as any,
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
-    assertValidAnthropicCreateParams(result)
+    assertValidAnthropicCreateParams(result as unknown as Record<string, unknown>)
   })
 
   test('CRITICAL 防线：tool_use input 是 string 时，A2 conversions/anthropic.ts 主动 safeParse 成 object', () => {
@@ -145,6 +167,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
       model: 'c',
       maxTokens: 100,
       messages: [
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         { role: 'user', content: 'go' } as any,
         {
           role: 'assistant',
@@ -156,12 +179,16 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
               input: '{"q":"hi"}', // ← 字符串形态
             },
           ],
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         } as any,
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     // 不抛错：input 已被自动转为 object
-    assertValidAnthropicCreateParams(params)
+    assertValidAnthropicCreateParams(params as unknown as Record<string, unknown>)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const assistantMsg = params.messages.find((m: any) => m.role === 'assistant')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const toolUseBlock = (assistantMsg as any).content[0]
     expect(toolUseBlock.type).toBe('tool_use')
     expect(typeof toolUseBlock.input).toBe('object')
@@ -172,9 +199,13 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
     const result = buildAnthropicCreateParams({
       model: 'c',
       maxTokens: 100,
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       messages: [{ role: 'user', content: 'hi' } as any],
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       extra_body: { custom_flag: true } as any,
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result as any).custom_flag).toBe(true)
   })
 })

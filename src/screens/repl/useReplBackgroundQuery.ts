@@ -41,6 +41,7 @@ export type UseReplBackgroundQueryParams = {
   customSystemPrompt: string | undefined
   appendSystemPrompt: string | undefined
   canUseTool: CanUseToolFn
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   setAppState: React.Dispatch<React.SetStateAction<any>>
   terminalTitle: string
   replStore: ReplStoreInstance

@@ -213,15 +213,19 @@ export async function createAndUploadGitBundle(
     const bundle = await _bundleWithFallback(gitRoot, bundlePath, maxBytes, hasWip, opts?.signal)
 
     if (!bundle.ok) {
+      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
       logForDebugging(`[gitBundle] ${(bundle as any).error}`)
       logEvent('zy_ccr_bundle_upload', {
+        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
         outcome: (bundle as any)
           .failReason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         max_bytes: maxBytes,
       })
       return {
         success: false,
+        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
         error: (bundle as any).error,
+        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
         failReason: (bundle as any).failReason,
       }
     }
@@ -235,6 +239,7 @@ export async function createAndUploadGitBundle(
       logEvent('zy_ccr_bundle_upload', {
         outcome: 'failed' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
+      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
       return { success: false, error: (upload as any).error }
     }
 

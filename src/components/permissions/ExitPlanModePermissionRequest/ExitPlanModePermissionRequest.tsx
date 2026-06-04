@@ -617,6 +617,7 @@ export function ExitPlanModePermissionRequest({
         <Box marginTop={1}>
           <Select
             options={options}
+            // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
             onChange={(v: string) => void handleResponseRef.current(v as any)}
             onCancel={() => handleCancelRef.current?.()}
             onImagePaste={onImagePaste}

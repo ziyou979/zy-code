@@ -259,6 +259,7 @@ export function gateChannelServer(
     // one entry doesn't leak allowlist-bypass to --channels entries.
     if (!entry.dev) {
       const { entries, source } = getEffectiveChannelAllowlist(
+        // biome-ignore lint/suspicious/noExplicitAny: 参数占位符
         undefined as any,
         policy?.allowedChannelPlugins,
       )

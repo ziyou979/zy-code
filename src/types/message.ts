@@ -22,7 +22,7 @@ export type MessageOrigin =
   | { kind: 'task-notification' }
   | { kind: 'coordinator' }
 
-export type PartialCompactDirection = 'forward' | 'backward'
+export type PartialCompactDirection = 'forward' | 'backward' | 'from' | 'up_to'
 
 export interface BaseMessage {
   uuid: string
@@ -314,8 +314,8 @@ export interface StreamEvent extends BaseMessage {
   type: 'stream_event'
   event: {
     type: string
-    content_block?: any
-    delta?: any
+    content_block?: unknown
+    delta?: unknown
     index?: number
     [key: string]: unknown
   }
@@ -410,6 +410,8 @@ export interface CompactMetadata {
     tailUuid: string
   }
   messagesSummarized?: number
+  /** 压缩前已发现的 deferred tool 名称列表 */
+  preCompactDiscoveredTools?: string[]
 }
 
 // ============================================================

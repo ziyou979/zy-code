@@ -727,6 +727,7 @@ export async function getAttachments(
         !options?.skipSkillDiscovery
           ? [
               maybe('skill_discovery', () =>
+                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                 (skillSearchModules.prefetch as any).getTurnZeroSkillDiscovery(
                   input,
                   messages ?? [],
@@ -811,6 +812,7 @@ export async function getAttachments(
           // 它与 leader 共享 AppState.teamContext，因此 isTeamLead 解析为
           // true，它会将 leader 的 DM 读取并标记为已读作为临时附件，
           // 静默窃取本应作为永久轮次传递的消息。
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           ...((querySource as any) === 'session_memory'
             ? []
             : [
@@ -872,6 +874,7 @@ export async function getAttachments(
     ...userAttachmentResults.flat(),
     ...threadAttachmentResults.flat(),
     ...mainThreadAttachmentResults.flat(),
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   ].filter((a) => a !== undefined && a !== null) as any
 }
 async function maybe<A>(label: string, f: () => Promise<A[]>): Promise<A[]> {
@@ -1421,9 +1424,11 @@ export function getAgentListingDeltaAttachment(
     if (msg.attachment.type !== 'agent_listing_delta') {
       continue
     }
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     for (const t of (msg.attachment as any).addedTypes) {
       announced.add(t)
     }
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     for (const t of (msg.attachment as any).removedTypes) {
       announced.delete(t)
     }
@@ -2076,6 +2081,7 @@ export function collectSurfacedMemories(messages: ReadonlyArray<Message>): {
   let totalBytes = 0
   for (const m of messages) {
     if (m.type === 'attachment' && m.attachment.type === 'relevant_memories') {
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       for (const mem of (m.attachment as any).memories) {
         paths.add(mem.path)
         totalBytes += mem.content.length
@@ -2574,6 +2580,7 @@ export function extractAtMentionedFiles(content: string): string[] {
   // 提取普通提及
   const regularMatchArray = content.match(regularAtMentionRegex) || []
   regularMatchArray.forEach((match) => {
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     const filename = (match as any).slice((match as any).indexOf('@') + 1)
     // 如果以引号开头则不包含（已作为引号处理）
     if (!filename.startsWith('"')) {
@@ -2950,6 +2957,7 @@ export function createAttachmentMessage(attachment: Attachment): AttachmentMessa
     type: 'attachment',
     uuid: randomUUID(),
     timestamp: new Date().toISOString(),
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   } as any
 }
 function getTodoReminderTurnCounts(messages: Message[]): {

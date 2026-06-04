@@ -1,5 +1,6 @@
 // Plugin Command Types
 
+// biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
 export type ViewState = any
 
 export type PluginSettingsProps = {

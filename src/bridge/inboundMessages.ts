@@ -17,6 +17,7 @@ export function extractInboundMessageFields(
   if (msg.type !== 'user') {
     return undefined
   }
+  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
   const content = (msg.message as any)?.content
   if (!content) {
     return undefined

@@ -67,6 +67,7 @@ type WireCompactMetadata = WireCompactBoundaryMessage['compact_metadata']
 export function toSDKCompactMetadata(meta: CompactMetadata): WireCompactMetadata {
   const seg = meta.preservedSegment
   return {
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     trigger: meta.trigger as any,
     pre_tokens: meta.preTokens,
     ...(seg && {
@@ -85,6 +86,7 @@ export function toSDKCompactMetadata(meta: CompactMetadata): WireCompactMetadata
 export function fromSDKCompactMetadata(meta: WireCompactMetadata): CompactMetadata {
   const seg = meta.preserved_segment
   return {
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     trigger: meta.trigger as any,
     preTokens: meta.pre_tokens,
     ...(seg && {
@@ -108,6 +110,7 @@ export function toSDKMessages(messages: Message[]): WireMessage[] {
             session_id: getSessionId(),
             parent_tool_use_id: null,
             uuid: message.uuid,
+            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
             error: message.error as any,
           },
         ]
@@ -151,6 +154,7 @@ export function toSDKMessages(messages: Message[]): WireMessage[] {
           (message.content.includes(`<${LOCAL_COMMAND_STDOUT_TAG}>`) ||
             message.content.includes(`<${LOCAL_COMMAND_STDERR_TAG}>`))
         ) {
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           return [localCommandOutputToSDKAssistantMessage(message.content, message.uuid as any)]
         }
         return []

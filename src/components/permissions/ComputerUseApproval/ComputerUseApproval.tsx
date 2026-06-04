@@ -27,8 +27,10 @@ const DENY_ALL_RESPONSE: CuPermissionResponse = {
  * app allowlist + grant-flags panel.
  */
 export function ComputerUseApproval({ request, onDone }: ComputerUseApprovalProps) {
+  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
   return (request as any).tccState ? (
     <ComputerUseTccPanel
+      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
       tccState={(request as any).tccState}
       onDone={() => onDone(DENY_ALL_RESPONSE)}
     />
@@ -141,12 +143,15 @@ function ComputerUseAppListPanel({
   request,
   onDone,
 }: {
+  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
   request: any
+  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
   onDone: (response: any) => void
 }) {
   const [checked] = useState(
     () =>
       new Set(
+        // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
         request.apps.flatMap((a: any) =>
           a.resolved && !a.alreadyGranted ? [a.resolved.bundleId] : [],
         ),
@@ -176,6 +181,7 @@ function ComputerUseAppListPanel({
       return
     }
     const now = Date.now()
+    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
     const granted = request.apps.flatMap((a_0: any) =>
       a_0.resolved && checked.has(a_0.resolved.bundleId)
         ? [
@@ -188,7 +194,9 @@ function ComputerUseAppListPanel({
         : [],
     )
     const denied = request.apps
+      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
       .filter((a_1: any) => !a_1.resolved || !checked.has(a_1.resolved.bundleId))
+      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
       .map((a_2: any) => ({
         bundleId: a_2.resolved?.bundleId ?? a_2.requestedName,
         reason: a_2.resolved ? ('user_denied' as const) : ('not_installed' as const),
@@ -203,6 +211,7 @@ function ComputerUseAppListPanel({
       flags,
     })
   }
+  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
   const appListElements = request.apps.map((a_3: any) => {
     const resolved = a_3.resolved
     if (!resolved) {

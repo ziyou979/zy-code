@@ -39,6 +39,7 @@ export function ColorStep() {
   }
   return (
     <WizardDialogLayout
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       subtitle={tSync('wizard.chooseColor') as any}
       footerText={
         <Byline>
@@ -56,6 +57,7 @@ export function ColorStep() {
       <Box>
         <ColorPicker
           agentName={String(wizardData.agentType || 'agent')}
+          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
           currentColor={'automatic' as any}
           onConfirm={handleConfirm}
         />

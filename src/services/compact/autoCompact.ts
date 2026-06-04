@@ -171,7 +171,7 @@ export async function shouldAutoCompact(
   querySource?: QuerySource,
 ): Promise<boolean> {
   // 递归守卫。session_memory 和 compact 是分叉代理，会导致死锁。
-  if ((querySource as any) === 'session_memory' || (querySource as any) === 'compact') {
+  if (querySource === 'session_memory' || querySource === 'compact') {
     return false
   }
   // marble_origami 是 ctx-agent — 如果它的上下文爆炸并且
@@ -180,7 +180,7 @@ export async function shouldAutoCompact(
   // 放在 feature() 内以便该字符串从外部构建中 DCE
   // （在 excluded-strings.txt 中）。
   if (feature('CONTEXT_COLLAPSE')) {
-    if ((querySource as any) === 'marble_origami') {
+    if (querySource === 'marble_origami') {
       return false
     }
   }
@@ -294,7 +294,7 @@ export async function autoCompactIfNeeded(
     // BQ 2026-03-01：缺少此项使 20% 的 zy_prompt_cache_break 事件
     // 成为误报（systemPromptChanged=true, timeSinceLastAssistantMsg=-1）。
     if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
-      notifyCompaction((querySource ?? 'compact') as any, toolUseContext.agentId)
+      notifyCompaction(querySource ?? 'compact', toolUseContext.agentId)
     }
     markPostCompaction()
     return {

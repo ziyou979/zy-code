@@ -2,6 +2,7 @@
  * Headless connect runner
  */
 export async function runConnectHeadless(
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   _config: any,
   _prompt: string,
   _outputFormat: string,

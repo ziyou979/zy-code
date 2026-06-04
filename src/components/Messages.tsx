@@ -587,8 +587,10 @@ const MessagesImpl = ({
     const briefFiltered =
       briefToolNames.length > 0 && !isTranscriptMode
         ? isBriefOnly
+          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
           ? filterForBriefTool(messagesToShowNotTruncated as any, briefToolNames)
           : dropTextToolNames.length > 0
+            // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
             ? dropTextInBriefTurns(messagesToShowNotTruncated as any, dropTextToolNames)
             : messagesToShowNotTruncated
         : messagesToShowNotTruncated
@@ -597,6 +599,7 @@ const MessagesImpl = ({
       : briefFiltered
     const hasTruncatedMessages =
       shouldTruncate && briefFiltered.length > MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const { messages: groupedMessages } = applyGrouping(messagesToShow as any, tools, verbose)
     const collapsed = collapseBackgroundBashNotifications(
       collapseHookSummaries(
@@ -604,6 +607,7 @@ const MessagesImpl = ({
       ),
       verbose,
     )
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const lookups = buildMessageLookups(normalizedMessages, messagesToShow as any)
     const hiddenMessageCount =
       messagesToShowNotTruncated.length - MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE
@@ -1046,7 +1050,9 @@ export function shouldRenderStatically(
     case 'assistant': {
       if (message.type === 'assistant') {
         const block = message.message.content[0]
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         if ((block as any)?.type === 'server_tool_use') {
+          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
           return lookups.resolvedToolUseIDs.has((block as any).id)
         }
       }

@@ -64,6 +64,7 @@ export function runPostCompactCleanup(querySource?: QuerySource): void {
   // cacheUtils resets. See compactConversation() for full rationale.
   clearBetaTracingState()
   if (feature('COMMIT_ATTRIBUTION')) {
+    // biome-ignore lint/suspicious/noExplicitAny: 动态模块加载
     void import('../../utils/attributionHooks.js').then((m) => (m as any).sweepFileContentCache())
   }
   clearSessionMessagesCache()

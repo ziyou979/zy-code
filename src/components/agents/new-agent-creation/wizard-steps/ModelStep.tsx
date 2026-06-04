@@ -30,6 +30,7 @@ export function ModelStep() {
       }
     >
       <ModelSelector
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         initialModel={wizardData.selectedModel as any}
         onComplete={handleComplete}
         onCancel={goBack}

@@ -56,6 +56,7 @@ export type HandleSummarizeParams = {
 export async function handleSummarize({
   message,
   feedback,
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   direction = 'from' as any,
   messages,
   createAbortController,
@@ -86,6 +87,7 @@ export async function handleSummarize({
   const defaultSysPrompt = await getSystemPrompt(
     context.options.tools,
     context.options.mainLoopModel,
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     Array.from((appState.toolPermissionContext as any).additionalWorkingDirectories.keys()),
     context.options.mcpClients,
   )
@@ -114,6 +116,7 @@ export async function handleSummarize({
 
   const kept = result.messagesToKeep ?? []
   const ordered =
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     (direction as any) === 'up_to'
       ? [...result.summaryMessages, ...kept]
       : [...kept, ...result.summaryMessages]
@@ -124,6 +127,7 @@ export async function handleSummarize({
     ...result.hookResults,
   ]
 
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   if (isFullscreenEnvEnabled() && (direction as any) === 'from') {
     setMessages((old) => {
       const rawIdx = old.findIndex((m) => m.uuid === message.uuid)
@@ -139,6 +143,7 @@ export async function handleSummarize({
   regenerateConversationId()
   runPostCompactCleanup(context.options.querySource)
 
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   if ((direction as any) === 'from') {
     const r = textForResubmit(message)
     if (r) {

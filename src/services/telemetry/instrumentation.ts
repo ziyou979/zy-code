@@ -155,6 +155,7 @@ async function getOtlpReaders() {
           // Lazy-import to keep @grpc/grpc-js (~700KB) out of the telemetry chunk
           // when the protocol is http/protobuf (ant default) or http/json.
           const { OTLPMetricExporter } = await import(
+            // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
             '@opentelemetry/exporter-metrics-otlp-grpc' as any
           )
           exporters.push(new OTLPMetricExporter())
@@ -162,6 +163,7 @@ async function getOtlpReaders() {
         }
         case 'http/json': {
           const { OTLPMetricExporter } = await import(
+            // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
             '@opentelemetry/exporter-metrics-otlp-http' as any
           )
           exporters.push(new OTLPMetricExporter(httpConfig))
@@ -169,6 +171,7 @@ async function getOtlpReaders() {
         }
         case 'http/protobuf': {
           const { OTLPMetricExporter } = await import(
+            // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
             '@opentelemetry/exporter-metrics-otlp-proto' as any
           )
           exporters.push(new OTLPMetricExporter(httpConfig))
@@ -180,6 +183,7 @@ async function getOtlpReaders() {
           )
       }
     } else if (exporterType === 'prometheus') {
+      // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
       const { PrometheusExporter } = await import('@opentelemetry/exporter-prometheus' as any)
       exporters.push(new PrometheusExporter())
     } else {
@@ -221,16 +225,19 @@ async function getOtlpLogExporters() {
 
       switch (protocol) {
         case 'grpc': {
+          // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
           const { OTLPLogExporter } = await import('@opentelemetry/exporter-logs-otlp-grpc' as any)
           exporters.push(new OTLPLogExporter())
           break
         }
         case 'http/json': {
+          // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
           const { OTLPLogExporter } = await import('@opentelemetry/exporter-logs-otlp-http' as any)
           exporters.push(new OTLPLogExporter(httpConfig))
           break
         }
         case 'http/protobuf': {
+          // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
           const { OTLPLogExporter } = await import('@opentelemetry/exporter-logs-otlp-proto' as any)
           exporters.push(new OTLPLogExporter(httpConfig))
           break
@@ -265,6 +272,7 @@ async function getOtlpTraceExporters() {
       switch (protocol) {
         case 'grpc': {
           const { OTLPTraceExporter } = await import(
+            // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
             '@opentelemetry/exporter-trace-otlp-grpc' as any
           )
           exporters.push(new OTLPTraceExporter())
@@ -272,6 +280,7 @@ async function getOtlpTraceExporters() {
         }
         case 'http/json': {
           const { OTLPTraceExporter } = await import(
+            // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
             '@opentelemetry/exporter-trace-otlp-http' as any
           )
           exporters.push(new OTLPTraceExporter(httpConfig))
@@ -279,6 +288,7 @@ async function getOtlpTraceExporters() {
         }
         case 'http/protobuf': {
           const { OTLPTraceExporter } = await import(
+            // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
             '@opentelemetry/exporter-trace-otlp-proto' as any
           )
           exporters.push(new OTLPTraceExporter(httpConfig))
@@ -364,6 +374,7 @@ async function initializeBetaTracing(
         scheduledDelayMillis: DEFAULT_LOGS_EXPORT_INTERVAL_MS,
       }),
     ],
+  // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
   } as any)
 
   logs.setGlobalLoggerProvider(loggerProvider)
@@ -544,6 +555,7 @@ export async function initializeTelemetry() {
               ),
             }),
         ),
+      // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
       } as any)
 
       // Register the logger provider globally

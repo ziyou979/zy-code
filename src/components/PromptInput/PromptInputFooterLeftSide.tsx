@@ -299,7 +299,9 @@ function ModeIndicator({
     !isInProcessEnabled() &&
     teamContext !== undefined &&
     count(
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       Object.values(teamContext.teammates) as any[],
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       (teammate: any) => teammate.name !== 'team-lead',
     ) > 0
   if (mode === 'bash') {
@@ -338,6 +340,7 @@ function ModeIndicator({
   const hasInProcessTeammates =
     !showSpinnerTree &&
     hasBackgroundTasks &&
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     (Object.values(tasks) as any[]).some((task: any) => task.type === 'in_process_teammate')
   const hasTeammatePills = hasInProcessTeammates || (!showSpinnerTree && isViewingTeammate)
 

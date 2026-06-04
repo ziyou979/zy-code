@@ -104,8 +104,11 @@ function UltraplanSessionDetail({
   onBack,
   onKill,
 }: {
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   session: any
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   toolUseContext: any
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   onDone: (...args: any[]) => void
   onBack?: () => void
   onKill?: () => void
@@ -114,6 +117,7 @@ function UltraplanSessionDetail({
   const phase = session.ultraplanPhase
   const statusText = running
     ? phase
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       ? (getPhaseLabel() as any)[phase]
       : 'running'
     : session.status
@@ -214,7 +218,7 @@ function UltraplanSessionDetail({
             <Text>
               {phase === 'plan_ready' && <Text color="success">{figures.tick} </Text>}
               {agentsWorking} {agentLabel}{' '}
-              {phase ? (getAgentVerb() as any)[phase] : tSync('backgroundTasks.working')} ·{' '}
+              {phase ? (getAgentVerb() as Record<string, string>)[phase] : tSync('backgroundTasks.working')} ·{' '}
               {toolCalls} tool {toolCallLabel}
             </Text>
           }
@@ -240,6 +244,7 @@ function UltraplanSessionDetail({
                   value: 'back' as const,
                 },
               ]}
+              // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
               onChange={(selectedAction: any) => {
                 switch (selectedAction) {
                   case 'open': {
@@ -286,6 +291,7 @@ function StagePipeline({
   completed: boolean
   hasProgress: boolean
 }) {
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const currentIdx = stage ? STAGES.indexOf(stage as any) : -1
   const inSetup = !completed && !hasProgress
   const stageElements = STAGES.map((stage, index) => {
@@ -345,7 +351,9 @@ function ReviewSessionDetail({
   onBack,
   onKill,
 }: {
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   session: any
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   onDone: (...args: any[]) => void
   onBack?: () => void
   onKill?: () => void

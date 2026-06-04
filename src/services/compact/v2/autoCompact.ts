@@ -143,7 +143,7 @@ export async function autoCompactIfNeededV2(
     setLastSummarizedMessageId(undefined)
     runPostCompactCleanup(querySource)
     if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
-      notifyCompaction((querySource ?? 'compact') as any, toolUseContext.agentId)
+      notifyCompaction(querySource ?? 'compact', toolUseContext.agentId)
     }
     markPostCompaction()
     return {

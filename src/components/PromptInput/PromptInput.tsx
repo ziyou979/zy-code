@@ -517,7 +517,9 @@ function PromptInput({
       return []
     }
     const teammateCount = count(
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       Object.values(teamContext.teammates) as any[],
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       (t: any) => t.name !== 'team-lead',
     )
     return [
@@ -534,6 +536,7 @@ function PromptInput({
   // Which pills render below the input box. Order here IS the nav order
   // (down/right = forward, up/left = back).
   const runningTaskCount = useMemo(
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     () => count(Object.values(tasks) as any[], (t: any) => t.status === 'running'),
     [tasks],
   )
@@ -711,8 +714,11 @@ function PromptInput({
       const name = match[2]
 
       // Check if this name matches a team member
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       const member = memberValues.find((t: any) => t.name === name)
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       if ((member as any)?.color) {
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         const themeColor = AGENT_COLOR_TO_THEME_COLOR[(member as any).color as AgentColorName]
         if (themeColor) {
           highlights.push({
@@ -1250,6 +1256,7 @@ function PromptInput({
             clearBuffer()
             resetHistory()
             return
+          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
           } else if ((result as any).error === 'no_team_context') {
             // No team context - fall through to normal prompt submission
           } else {

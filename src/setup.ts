@@ -91,7 +91,9 @@ export async function setup(
     // （特别是 SessionStart）才能派生并快照 process.env。
     if (feature('UDS_INBOX')) {
       const m = await import('./utils/udsMessaging.js')
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       await (m as any).startUdsMessaging(
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         messagingSocketPath ?? (m as any).getDefaultUdsSocketPath(),
         { isExplicit: messagingSocketPath !== undefined },
       )
@@ -329,6 +331,7 @@ export async function setup(
       // 延迟到下一个 tick，使 git 子进程在首次渲染后运行，
       // 而不是在 setup() 微任务窗口期间运行。
       setImmediate(() => {
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         void import('./utils/attributionHooks.js').then((m: any) => {
           m.registerAttributionHooks() // 注册归因追踪 hooks（仅 ant 功能）
         })

@@ -168,6 +168,7 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
           },
           state.workflowAction === 'skip',
           state.selectedWorkflows,
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           state.authType as any,
           {
             useCurrentRepo: state.useCurrentRepo,

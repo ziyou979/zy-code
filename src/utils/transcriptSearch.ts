@@ -85,17 +85,19 @@ function computeSearchText(msg: RenderableMessage): string {
       // relevant_memories renders full m.content in transcript mode
       // (AttachmentMessage.tsx <Ansi>{m.content}</Ansi>). Visible but
       // unsearchable without this — [ dump finds it, / doesn't.
-      if ((msg.attachment as any).type === 'relevant_memories') {
-        raw = (msg.attachment as any).memories.map((m: any) => m.content).join('\n')
+      // biome-ignore lint/suspicious/noExplicitAny: AttachmentMessage 的 attachment 字段无精确判别联合
+      const att = msg.attachment as any
+      if (att.type === 'relevant_memories') {
+        raw = att.memories.map((m: { content: string }) => m.content).join('\n')
       } else if (
         // Mid-turn prompts — queued while an agent is running. Render via
         // UserTextMessage (AttachmentMessage.tsx:~348). stickyPromptText
         // (VirtualMessageList.tsx:~103) has the same guards — mirror here.
-        (msg.attachment as any).type === 'queued_command' &&
-        (msg.attachment as any).commandMode !== 'task-notification' &&
-        !(msg.attachment as any).isMeta
+        att.type === 'queued_command' &&
+        att.commandMode !== 'task-notification' &&
+        !att.isMeta
       ) {
-        const p = (msg.attachment as any).prompt
+        const p = att.prompt
         raw =
           typeof p === 'string'
             ? p
@@ -111,8 +113,10 @@ function computeSearchText(msg: RenderableMessage): string {
       // relevant_memories attachments are absorbed into collapse groups
       // (collapseReadSearch.ts); their content is visible in transcript mode
       // via CollapsedReadSearchContent, so mirror it here for / search.
-      if ((msg as any).relevantMemories) {
-        raw = (msg as any).relevantMemories.map((m: any) => m.content).join('\n')
+      // biome-ignore lint/suspicious/noExplicitAny: collapsed_read_search 类型无精确定义
+      const collapsed = msg as any
+      if (collapsed.relevantMemories) {
+        raw = collapsed.relevantMemories.map((m: { content: string }) => m.content).join('\n')
       }
       break
     }

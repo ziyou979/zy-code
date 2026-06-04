@@ -299,6 +299,7 @@ describe('toSDKMessages', () => {
   test('user message → BridgeUserMessage', async () => {
     const { toSDKMessages } = await import('../../../src/utils/messages/mappers.js')
     const messages = [makeUserMsg('hello')]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toSDKMessages(messages as any)
 
     expect(result).toHaveLength(1)
@@ -311,11 +312,13 @@ describe('toSDKMessages', () => {
     const { toSDKMessages } = await import('../../../src/utils/messages/mappers.js')
     const blocks = [{ type: 'text', text: 'response' }]
     const messages = [makeAssistantMsg(blocks)]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toSDKMessages(messages as any)
 
     expect(result).toHaveLength(1)
     expect(result[0].type).toBe('assistant')
     expect(result[0].session_id).toBe('test-session-001')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const bridgeMsg = result[0] as any
     expect(bridgeMsg.message.content).toEqual(blocks)
   })
@@ -323,24 +326,30 @@ describe('toSDKMessages', () => {
   test('isMeta 映射为 isSynthetic', async () => {
     const { toSDKMessages } = await import('../../../src/utils/messages/mappers.js')
     const messages = [makeUserMsg('meta msg', { isMeta: true })]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toSDKMessages(messages as any)
 
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[0] as any).isSynthetic).toBe(true)
   })
 
   test('isVisibleInTranscriptOnly 映射为 isSynthetic', async () => {
     const { toSDKMessages } = await import('../../../src/utils/messages/mappers.js')
     const messages = [makeUserMsg('transcript only', { isVisibleInTranscriptOnly: true })]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toSDKMessages(messages as any)
 
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[0] as any).isSynthetic).toBe(true)
   })
 
   test('toolUseResult 映射为 tool_use_result', async () => {
     const { toSDKMessages } = await import('../../../src/utils/messages/mappers.js')
     const messages = [makeUserMsg('result', { toolUseResult: { output: 'done' } })]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toSDKMessages(messages as any)
 
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[0] as any).tool_use_result).toEqual({ output: 'done' })
   })
 
@@ -360,12 +369,16 @@ describe('toSDKMessages', () => {
         },
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toSDKMessages(messages as any)
 
     expect(result).toHaveLength(1)
     expect(result[0].type).toBe('system')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[0] as any).subtype).toBe('compact_boundary')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[0] as any).compact_metadata.pre_tokens).toBe(50000)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[0] as any).compact_metadata.trigger).toBe('auto')
   })
 
@@ -381,6 +394,7 @@ describe('toSDKMessages', () => {
         timestamp: '2024-01-01T00:00:00.000Z',
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toSDKMessages(messages as any)
 
     expect(result).toHaveLength(0)
@@ -398,6 +412,7 @@ describe('toSDKMessages', () => {
         parentToolUseID: '',
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toSDKMessages(messages as any)
 
     expect(result).toHaveLength(0)
@@ -422,6 +437,7 @@ describe('toInternalMessages', () => {
         session_id: 'sess-001',
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toInternalMessages(bridgeMessages as any)
 
     expect(result).toHaveLength(1)
@@ -445,10 +461,12 @@ describe('toInternalMessages', () => {
         timestamp: '2024-01-01T00:00:00.000Z',
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toInternalMessages(bridgeMessages as any)
 
     expect(result).toHaveLength(1)
     expect(result[0].type).toBe('user')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[0] as any).isMeta).toBe(true) // isSynthetic → isMeta
   })
 
@@ -466,12 +484,16 @@ describe('toInternalMessages', () => {
         },
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toInternalMessages(bridgeMessages as any)
 
     expect(result).toHaveLength(1)
     expect(result[0].type).toBe('system')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[0] as any).subtype).toBe('compact_boundary')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[0] as any).compactMetadata.trigger).toBe('manual')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[0] as any).compactMetadata.preTokens).toBe(30000)
   })
 
@@ -485,6 +507,7 @@ describe('toInternalMessages', () => {
         session_id: 'sess-001',
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toInternalMessages(bridgeMessages as any)
 
     expect(result).toHaveLength(0)
@@ -506,6 +529,7 @@ describe('compact metadata 双向转换', () => {
         tailUuid: 'tail-001',
       },
     }
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toSDKCompactMetadata(meta as any)
 
     expect(result.trigger).toBe('auto')
@@ -548,6 +572,7 @@ describe('compact metadata 双向转换', () => {
         tailUuid: 't',
       },
     }
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const sdk = toSDKCompactMetadata(original as any)
     const roundTripped = fromSDKCompactMetadata(sdk)
 
@@ -569,6 +594,7 @@ describe('toSDKRateLimitInfo', () => {
       utilization: 0.85,
       overageStatus: 'allowed' as const,
     }
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = toSDKRateLimitInfo(limits as any)
 
     expect(result).toBeDefined()

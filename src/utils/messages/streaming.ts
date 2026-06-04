@@ -188,13 +188,14 @@ export function handleMessageFromStream(
       return
 
     // 旧格式（向后兼容）
-    case 'content_block_start':
+    case 'content_block_start': {
       onStreamingText?.(() => null)
-      if (feature('CONNECTOR_TEXT') && isConnectorTextBlock(message.event.content_block)) {
+      const block = message.event.content_block as { type: string; [k: string]: unknown }
+      if (feature('CONNECTOR_TEXT') && isConnectorTextBlock(block)) {
         onSetStreamMode('responding')
         return
       }
-      switch (message.event.content_block.type) {
+      switch (block.type) {
         case 'thinking':
         case 'redacted_thinking':
           onSetStreamMode('thinking')
@@ -204,7 +205,7 @@ export function handleMessageFromStream(
           return
         case 'tool_use': {
           onSetStreamMode('tool-input')
-          const contentBlock = message.event.content_block
+          const contentBlock = block as unknown as ToolCallBlock
           const index = message.event.index ?? 0
           onStreamingToolUses((_) => [
             ..._,
@@ -231,19 +232,21 @@ export function handleMessageFromStream(
           return
       }
       return
-    case 'content_block_delta':
-      switch (message.event.delta.type) {
+    }
+    case 'content_block_delta': {
+      const delta = message.event.delta as { type: string; text?: string; partialJson?: string; thinking?: string; [k: string]: unknown }
+      switch (delta.type) {
         case 'text_delta': {
-          const deltaText = message.event.delta.text
+          const deltaText = delta.text!
           onUpdateLength(deltaText)
           onStreamingText?.((text) => (text ?? '') + deltaText)
           return
         }
         case 'input_json_delta': {
           // 标准层统一使用驼峰 partialJson（见 types/llm.ts ToolCallInputDelta）
-          const delta = message.event.delta.partialJson ?? ''
+          const partialJson = delta.partialJson ?? ''
           const index = message.event.index
-          onUpdateLength(delta)
+          onUpdateLength(partialJson)
           onStreamingToolUses((_) => {
             const element = _.find((_) => _.index === index)
             if (!element) {
@@ -253,14 +256,14 @@ export function handleMessageFromStream(
               ..._.filter((_) => _ !== element),
               {
                 ...element,
-                unparsedToolInput: element.unparsedToolInput + delta,
+                unparsedToolInput: element.unparsedToolInput + partialJson,
               },
             ]
           })
           return
         }
         case 'thinking_delta':
-          onUpdateLength(message.event.delta.thinking)
+          onUpdateLength(delta.thinking!)
           return
         case 'signature_delta':
           // Signature 是加密认证字符串，不是模型输出。将其排除在 onUpdateLength 之外
@@ -269,6 +272,7 @@ export function handleMessageFromStream(
         default:
           return
       }
+    }
     case 'content_block_stop':
       return
     case 'message_delta':

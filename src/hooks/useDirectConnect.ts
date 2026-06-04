@@ -88,6 +88,7 @@ export function useDirectConnect({
 
         const syntheticMessage = createSyntheticAssistantMessage(request, requestId)
 
+        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
         const permissionResult: any = {
           behavior: 'ask',
           message: request.description ?? `${request.tool_name} requires permission`,
@@ -96,11 +97,14 @@ export function useDirectConnect({
         }
 
         const toolUseConfirm = {
+          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
           assistantMessage: syntheticMessage as any,
+          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
           permissionUpdates: [] as any,
           tool,
           description: request.description ?? `${request.tool_name} requires permission`,
           input: request.input,
+          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
           toolUseContext: {} as any,
           toolUseID: request.tool_use_id,
           permissionResult,

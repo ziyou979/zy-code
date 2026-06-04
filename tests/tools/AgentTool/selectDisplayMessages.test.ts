@@ -60,6 +60,7 @@ const mockTools = [
 describe('selectDisplayMessages', () => {
   test('消息数少于阈值时原样返回', () => {
     const messages = [makeToolCallMessage('Read', '1'), makeToolCallMessage('Grep', '2')]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = selectDisplayMessages(messages as any, mockTools)
     expect(result.displayed).toHaveLength(2)
     expect(result.hiddenCount).toBe(0)
@@ -79,9 +80,11 @@ describe('selectDisplayMessages', () => {
       makeToolCallMessage('Read', '8'),
       makeToolCallMessage('Grep', '9'),
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = selectDisplayMessages(messages as any, mockTools)
 
     // 应包含 Bash (index 1) + 最后 3 条 (index 7, 8, 9)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const uuids = result.displayed.map((m: any) =>
       m.type === 'original' ? m.message.uuid : m.uuid,
     )
@@ -103,8 +106,10 @@ describe('selectDisplayMessages', () => {
       makeToolCallMessage('Grep', '6'),
       makeToolCallMessage('Read', '7'),
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = selectDisplayMessages(messages as any, mockTools)
 
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const uuids = result.displayed.map((m: any) =>
       m.type === 'original' ? m.message.uuid : m.uuid,
     )
@@ -134,11 +139,13 @@ describe('selectDisplayMessages', () => {
       makeToolCallMessage('Read', '7'),
       makeToolCallMessage('Read', '8'),
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = selectDisplayMessages(messages as any, toolsWithMany)
 
     // 最后 3 条 + 最多 3 个 briefStandalone = 最多 6 条
     // NotebookEdit (index 3)、Write (index 2)、Edit (index 1) 从后往前扫描先命中
     // Bash (index 0) 超出上限不保留
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const uuids = result.displayed.map((m: any) =>
       m.type === 'original' ? m.message.uuid : m.uuid,
     )
@@ -155,8 +162,10 @@ describe('selectDisplayMessages', () => {
       makeToolCallMessage('Read', '5'),
       makeToolCallMessage('Read', '6'),
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = selectDisplayMessages(messages as any, mockTools)
 
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const uuids = result.displayed.map((m: any) =>
       m.type === 'original' ? m.message.uuid : m.uuid,
     )
@@ -176,6 +185,7 @@ describe('selectDisplayMessages', () => {
       makeToolCallMessage('Read', '5'),
       makeToolCallMessage('Read', '6'),
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = selectDisplayMessages(messages as any, mockTools)
 
     // 隐藏了 index 0 (tool_call)、1 (text, 不计)、2 (tool_call)、3 (summary)
@@ -190,10 +200,12 @@ describe('selectDisplayMessages', () => {
       makeToolCallMessage('Read', '3'),
       makeToolCallMessage('Read', '4'),
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = selectDisplayMessages(messages as any, mockTools)
 
     // Bash (index 2) 在最后 3 条 (index 2, 3, 4) 中，不会重复
     expect(result.displayed.length).toBe(3)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const uuids = result.displayed.map((m: any) =>
       m.type === 'original' ? m.message.uuid : m.uuid,
     )

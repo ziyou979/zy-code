@@ -94,8 +94,8 @@ export default function BashToolResultMessage({ content, verbose, timeoutMs }: P
     BoxComponent = Box
 
     outputLineElement2 = (
-      stdout.trim() !== '' ? <OutputLine content={stdout as any} verbose={verbose} /> : null
-    ) as any
+      stdout.trim() !== '' ? <OutputLine content={stdout} verbose={verbose} /> : null
+    ) as React.ReactNode
     outputLineElement =
       stderr.trim() !== '' ? <OutputLine content={stderr} verbose={verbose} isError={true} /> : null
   }

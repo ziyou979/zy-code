@@ -6,6 +6,7 @@
  * - 设置未定义或为 false 时不阻止
  */
 import { afterEach, describe, expect, test } from 'bun:test'
+import type { ToolUseContext } from '../../src/Tool.js'
 
 /**
  * 统一注册所有传递依赖模块的 mock，阻断重依赖链加载。
@@ -64,7 +65,7 @@ describe('promptShellExecution', () => {
       )
 
       const textWithShell = 'Hello !`ls -la` world'
-      const fakeContext = {} as any
+      const fakeContext = {} as unknown as ToolUseContext
 
       await expect(
         executeShellCommandsInPrompt(textWithShell, fakeContext, 'test-skill'),
@@ -80,7 +81,7 @@ describe('promptShellExecution', () => {
       )
 
       const plainText = 'Hello world, no shell commands here'
-      const fakeContext = {} as any
+      const fakeContext = {} as unknown as ToolUseContext
 
       const result = await executeShellCommandsInPrompt(plainText, fakeContext, 'test-skill')
       expect(result).toBe(plainText)
@@ -95,7 +96,7 @@ describe('promptShellExecution', () => {
       )
 
       const plainText = 'Just some regular text'
-      const fakeContext = {} as any
+      const fakeContext = {} as unknown as ToolUseContext
 
       const result = await executeShellCommandsInPrompt(plainText, fakeContext, 'test-skill')
       expect(result).toBe(plainText)

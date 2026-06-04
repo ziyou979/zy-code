@@ -60,6 +60,7 @@ function buildNestedTree(errors: ValidationError[]): TreeNode {
 /**
  * Groups and displays validation errors using treeify with deduplication
  */
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 export function ValidationErrorsList({ errors }: { errors: any[] }) {
   const [themeName] = useTheme()
   if (errors.length === 0) {
@@ -76,6 +77,7 @@ export function ValidationErrorsList({ errors }: { errors: any[] }) {
   const sortedFiles = Object.keys(errorsByFile).sort()
   const fileErrorElements = sortedFiles.map((fileName) => {
     const fileErrors = errorsByFile[fileName] || []
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     fileErrors.sort((a: any, b: any) => {
       if (!a.path && b.path) {
         return -1
@@ -87,6 +89,7 @@ export function ValidationErrorsList({ errors }: { errors: any[] }) {
     })
     const errorTree = buildNestedTree(fileErrors)
     const suggestionPairs = new Map()
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     fileErrors.forEach((fileError: any) => {
       if (fileError.suggestion || fileError.docLink) {
         const key = `${fileError.suggestion || ''}|${fileError.docLink || ''}`

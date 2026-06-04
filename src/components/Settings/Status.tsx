@@ -84,6 +84,7 @@ export async function buildDiagnostics(): Promise<Diagnostic[]> {
     ...(await buildMemoryDiagnostics()),
   ]
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function PropertyValue({ value }: { value: any }) {
   if (Array.isArray(value)) {
     const textItems = value.map((item, i) => (
@@ -157,11 +158,14 @@ export function Status({ context, diagnosticsPromise }: Props) {
     </Box>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function Diagnostics({ promise }: { promise: Promise<any> }) {
   const diagnostics = use(promise)
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   if ((diagnostics as any).length === 0) {
     return null
   }
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const diagnosticElements = (diagnostics as any).map((diagnostic: any, i: number) => (
     <Box key={i} flexDirection="row" gap={1} paddingX={1}>
       <Text color="error">{figures.warning}</Text>

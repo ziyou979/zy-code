@@ -100,6 +100,7 @@ export async function loadPluginLspServers(
   // 2. Check manifest.lspServers field
   if (plugin.manifest.lspServers) {
     const manifestServers = await loadLspServersFromManifest(
+      // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
       plugin.manifest.lspServers as any,
       plugin.path,
       plugin.name,
@@ -191,6 +192,7 @@ async function loadLspServersFromManifest(
       for (const [serverName, config] of Object.entries(decl)) {
         const result = LspServerConfigSchema().safeParse(config)
         if (result.success) {
+          // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
           servers[serverName] = result.data as any
         } else {
           const errorMsg = `LSP config validation failed for inline server "${serverName}" in plugin ${pluginName}: ${result.error.message}`
@@ -265,7 +267,9 @@ export function resolvePluginLspEnvironment(
   resolved.env = resolvedEnv
 
   // Resolve workspaceFolder if present
+  // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
   if ((resolved as any).workspaceFolder) {
+    // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
     ;(resolved as any).workspaceFolder = resolveValue((resolved as any).workspaceFolder)
   }
 
@@ -297,6 +301,7 @@ export function addPluginScopeToLspServers(
       ...config,
       scope: 'dynamic', // Use dynamic scope for plugin servers
       source: pluginName,
+    // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
     } as any
   }
 

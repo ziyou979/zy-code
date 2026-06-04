@@ -88,6 +88,7 @@ export class StreamingToolExecutor {
               },
             ],
             toolUseResult: `Error: No such tool available: ${block.name}`,
+            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
             sourceToolAssistantUUID: assistantMessage.uuid as any,
           }),
         ],
@@ -166,6 +167,7 @@ export class StreamingToolExecutor {
           },
         ],
         toolUseResult: 'User rejected tool use',
+        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
         sourceToolAssistantUUID: assistantMessage.uuid as any,
       })
     }
@@ -181,6 +183,7 @@ export class StreamingToolExecutor {
           },
         ],
         toolUseResult: 'Streaming fallback - tool execution discarded',
+        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
         sourceToolAssistantUUID: assistantMessage.uuid as any,
       })
     }
@@ -198,6 +201,7 @@ export class StreamingToolExecutor {
         },
       ],
       toolUseResult: msg,
+      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
       sourceToolAssistantUUID: assistantMessage.uuid as any,
     })
   }

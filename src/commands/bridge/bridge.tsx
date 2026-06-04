@@ -181,12 +181,12 @@ function WireDisconnectDialog({ onDone }: Props) {
     <DialogComponent title={'Remote Control'} onCancel={handleContinue} hideInputGuide={true}>
       {
         <ContainerBox flexDirection={'column'} gap={1}>
-          {<Text>This session is available via Remote Control{displayUrlText as any}.</Text>}
+          {<Text>This session is available via Remote Control{displayUrlText}.</Text>}
           <QRCodeDisplay displayUrl={displayUrl} showQR={showQR} />
           {
             <Box flexDirection="column">
               {
-                <ListItem isFocused={isFirstOptionFocused as any}>
+                <ListItem isFocused={isFirstOptionFocused}>
                   {<Text>Disconnect this session</Text>}
                 </ListItem>
               }

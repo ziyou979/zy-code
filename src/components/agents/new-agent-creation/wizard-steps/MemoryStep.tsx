@@ -62,11 +62,13 @@ export function MemoryStep() {
       ]
   const handleSelect = (value: string) => {
     const memory = value === 'none' ? undefined : (value as AgentMemoryScope)
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const agentType = (wizardData.finalAgent as any)?.agentType
     updateWizardData({
       selectedMemory: memory,
       finalAgent: wizardData.finalAgent
         ? {
+            // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
             ...(wizardData.finalAgent as any),
             memory,
             getSystemPrompt:

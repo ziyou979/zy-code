@@ -22,7 +22,7 @@ import {
 } from '../../services/model/model.js'
 import { findToolByName, type Tools } from '../../Tool.js'
 import type { ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
-import type { Message, ProgressMessage } from '../../types/message.js'
+import type { AssistantMessage, Message, ProgressMessage, UserMessage } from '../../types/message.js'
 import type { AgentToolProgress } from '../../types/tools.js'
 import { count } from '../../utils/array.js'
 import {
@@ -193,7 +193,7 @@ function processProgressMessages(
   for (const msg of agentMessages) {
     // 跟踪遇到的 tool_use 块
     if (msg.data.message.type === 'assistant') {
-      for (const c of (msg.data.message as any).message.content) {
+      for (const c of (msg.data.message as AssistantMessage).message.content) {
         if (c.type === 'tool_call') {
           toolUseByID.set(c.id, c as ToolCallBlock)
         }
@@ -263,7 +263,7 @@ export function selectDisplayMessages(
     const data = p.message.data
     if (!hasProgressMessage(data)) continue
     if (data.message.type !== 'assistant') continue
-    const content = (data.message as any).message.content[0]
+    const content = (data.message as AssistantMessage).message.content[0]
     if (content?.type !== 'tool_call' || seenToolNames.has(content.name)) continue
     seenToolNames.add(content.name)
     const tool = findToolByName(tools, content.name)
@@ -291,8 +291,8 @@ export function selectDisplayMessages(
       }
       const data = m.message.data
       if (!hasProgressMessage(data)) return false
-      return (data.message as any).message.content.some(
-        (content: any) => content.type === 'tool_call',
+      return (data.message as AssistantMessage).message.content.some(
+        (content) => content.type === 'tool_call',
       )
     },
   )
@@ -388,19 +388,14 @@ function VerboseAgentTranscript({ progressMessages, tools, verbose }: VerboseAge
  * 完成态折叠视图：从 progress 中提取 briefStandalone 工具的最后一次调用显示。
  * 让用户在不展开 transcript 的情况下看到关键操作。
  */
-function BriefStandalonePreview({ progressMessages, tools, verbose }: VerboseAgentTranscriptProps) {
+function BriefStandalonePreview({ progressMessages, tools }: VerboseAgentTranscriptProps) {
   const processed = processProgressMessages(progressMessages, tools, false)
   const { displayed, hiddenCount } = selectDisplayMessages(processed, tools)
   if (displayed.length === 0) {
     return null
   }
-  const { lookups: subagentLookups, inProgressToolUseIDs } = buildSubagentLookups(
-    progressMessages
-      .filter((pm): pm is ProgressMessage<AgentToolProgress> => hasProgressMessage(pm.data))
-      .map((pm) => pm.data) as any,
-  )
   return (
-    <SubAgentProvider>
+    <>
       {displayed.map((p) => {
         if (p.type === 'summary') {
           const summaryText = getSearchReadSummaryText(
@@ -415,23 +410,25 @@ function BriefStandalonePreview({ progressMessages, tools, verbose }: VerboseAge
             </Box>
           )
         }
+        // 直接渲染工具名+摘要，绕过 MessageComponent 不支持 tool_call 的问题
+        const data = p.message.data
+        if (!hasProgressMessage(data) || data.message.type !== 'assistant') {
+          return null
+        }
+        const content = data.message.message.content[0]
+        if (!content || content.type !== 'tool_call') {
+          return null
+        }
+        const tool = findToolByName(tools, content.name)
+        const displayName = tool?.userFacingName?.(content.input) ?? content.name
+        const summary = tool?.getToolUseSummary?.(content.input)
         return (
-          <MessageComponent
-            key={p.message.uuid}
-            message={p.message.data.message as any}
-            lookups={subagentLookups}
-            addMargin={false}
-            tools={tools}
-            commands={[]}
-            verbose={verbose}
-            inProgressToolUseIDs={inProgressToolUseIDs}
-            progressMessagesForMessage={[]}
-            shouldAnimate={false}
-            shouldShowDot={false}
-            style="condensed"
-            isTranscriptMode={false}
-            isStatic={true}
-          />
+          <Box key={p.message.uuid} height={1} overflow="hidden">
+            <Text dimColor>
+              {displayName}
+              {summary ? `(${summary})` : ''}
+            </Text>
+          </Box>
         )
       })}
       {hiddenCount > 0 && (
@@ -442,7 +439,7 @@ function BriefStandalonePreview({ progressMessages, tools, verbose }: VerboseAge
           <CtrlOToExpand />
         </Text>
       )}
-    </SubAgentProvider>
+    </>
   )
 }
 
@@ -525,11 +522,13 @@ export function renderToolResultMessage(
   const completionMessage = `${tSync('agent.done')} (${result.join(' · ')})`
   const finalAssistantMessage = createAssistantMessage({
     content: completionMessage,
+    // biome-ignore lint/suspicious/noExplicitAny: 适配层类型处理 — 需要额外的分析字段
     usage: {
       ...usage,
       inference_geo: null,
       iterations: null,
       speed: null,
+    // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
     } as any,
   })
   return (
@@ -671,8 +670,8 @@ export function renderToolUseProgressMessage(
       if (!hasProgressMessage(msg.data)) {
         return false
       }
-      const message = msg.data.message as any
-      return message.message.content.some((content: any) => content.type === 'tool_call')
+      const message = msg.data.message as AssistantMessage
+      return message.message.content.some((content) => content.type === 'tool_call')
     })
     const latestAssistant = progressMessages.findLast(
       (msg): msg is ProgressMessage<AgentToolProgress> =>
@@ -680,7 +679,7 @@ export function renderToolUseProgressMessage(
     )
     let tokens = null
     if (latestAssistant?.data.message.type === 'assistant') {
-      const usage = (latestAssistant.data.message as any).message.usage
+      const usage = (latestAssistant.data.message as AssistantMessage).message.usage
       if (usage) {
         tokens =
           (usage.cacheCreationInputTokens ?? 0) +
@@ -742,7 +741,7 @@ export function renderToolUseProgressMessage(
     buildSubagentLookups(
       progressMessages
         .filter((pm): pm is ProgressMessage<AgentToolProgress> => hasProgressMessage(pm.data))
-        .map((pm) => pm.data) as any,
+        .map((pm) => pm.data),
     )
   return (
     <MessageResponse>
@@ -775,7 +774,7 @@ export function renderToolUseProgressMessage(
             return (
               <MessageComponent
                 key={processed.message.uuid}
-                message={processed.message.data.message as any}
+                message={(processed.message.data as AgentToolProgress).message}
                 lookups={subagentLookups}
                 addMargin={false}
                 tools={tools}
@@ -894,7 +893,7 @@ function calculateAgentStats(progressMessages: ProgressMessage<Progress>[]): {
   )
   let tokens = null
   if (latestAssistant?.data.message.type === 'assistant') {
-    const usage = (latestAssistant.data.message as any).message.usage
+    const usage = (latestAssistant.data.message as AssistantMessage).message.usage
     if (usage) {
       tokens =
         (usage.cacheCreationInputTokens ?? 0) +
@@ -1093,6 +1092,7 @@ export function userFacingName(
     }
     // 优先使用内置 agent 类型的 i18n 翻译，自定义类型回退到原始名称
     const i18nKey = `agent.builtInType.${input.subagent_type}` as const
+    // biome-ignore lint/suspicious/noExplicitAny: 动态 i18n 键需要绕过类型约束
     const translated = tSync(i18nKey as any)
     // tSync 找不到 key 时返回 key 本身，据此判断是否存在翻译
     return translated !== i18nKey ? translated : input.subagent_type
@@ -1126,7 +1126,7 @@ export function extractLastToolInfo(
       continue
     }
     if (pm.data.message.type === 'assistant') {
-      for (const c of (pm.data.message as any).message.content) {
+      for (const c of (pm.data.message as AssistantMessage).message.content) {
         if (c.type === 'tool_call') {
           toolUseByID.set(c.id, c as ToolCallBlock)
         }

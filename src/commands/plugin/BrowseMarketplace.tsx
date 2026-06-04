@@ -157,6 +157,7 @@ export function BrowseMarketplace({
           if (marketplace) {
             // Count how many plugins from this marketplace are installed
             const installedFromThisMarketplace = count(marketplace.plugins, (plugin) =>
+              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
               isPluginInstalled(createPluginId((plugin as any).name, name)),
             )
             marketplaceInfos.push({
@@ -209,6 +210,7 @@ export function BrowseMarketplace({
             const currentMarketplace = await getMarketplace(marketplaceName)
             if (currentMarketplace) {
               const foundPluginEntry = currentMarketplace.plugins.find(
+                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                 (p: any) => p.name === targetPlugin,
               )
               if (foundPluginEntry) {
@@ -384,6 +386,7 @@ export function BrowseMarketplace({
         failureCount++
         newFailedPlugins.push({
           name: pluginToInstall.entry.name,
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           reason: (installResult as any).error,
         })
       }
@@ -455,6 +458,7 @@ export function BrowseMarketplace({
       })
     } else {
       setIsInstalling(false)
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       setInstallError((installResult as any).error)
     }
   }

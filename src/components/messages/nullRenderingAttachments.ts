@@ -38,7 +38,9 @@ const NULL_RENDERING_TYPES = [
   'auto_mode',
   'auto_mode_exit',
   'output_token_usage',
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   'pen_mode_enter' as any,
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   'pen_mode_exit' as any,
   'verify_plan_reminder',
   'current_session_memory',
@@ -50,6 +52,7 @@ export type NullRenderingAttachmentType = (typeof NULL_RENDERING_TYPES)[number]
 
 const NULL_RENDERING_ATTACHMENT_TYPES: ReadonlySet<Attachment['type']> = new Set(
   NULL_RENDERING_TYPES,
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 ) as any
 
 /**
@@ -61,6 +64,7 @@ const NULL_RENDERING_ATTACHMENT_TYPES: ReadonlySet<Attachment['type']> = new Set
  */
 export function isNullRenderingAttachment(msg: Message): boolean {
   return (
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     msg.type === 'attachment' && NULL_RENDERING_ATTACHMENT_TYPES.has(msg.attachment.type as any)
   )
 }

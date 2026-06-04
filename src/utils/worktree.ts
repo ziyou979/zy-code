@@ -558,7 +558,8 @@ async function performPostCreationSetup(repoRoot: string, worktreePath: string):
     const worktreeHooksDir = hooksPath === huskyPath ? join(worktreePath, '.husky') : undefined
     void import('./postCommitAttribution.js')
       .then((m) =>
-        (m as any)
+        // biome-ignore lint/suspicious/noExplicitAny: 动态导入的模块类型不完善
+        (m as Record<string, any>)
           .installPrepareCommitMsgHook(worktreePath, worktreeHooksDir)
           .catch((error: unknown) => {
             logForDebugging(`Failed to install attribution hook in worktree: ${error}`)
@@ -1224,7 +1225,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
       )
       if (!result.existed) {
         // biome-ignore lint/suspicious/noConsole: intentional console output
-        console.log(`Created worktree: ${worktreeDir} (based on ${(result as any).baseBranch})`)
+        console.log(`Created worktree: ${worktreeDir} (based on ${result.baseBranch})`)
         await performPostCreationSetup(repoRoot, worktreeDir)
       }
     } catch (error) {

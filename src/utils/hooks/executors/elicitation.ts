@@ -42,23 +42,28 @@ function parseElicitationHookOutput(
 
   try {
     const parsed = hookJSONOutputSchema().parse(JSON.parse(trimmed))
+    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
     if (isAsyncHookJSONOutput(parsed as any)) {
       return {}
     }
+    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
     if (!isSyncHookJSONOutput(parsed as any)) {
       return {}
     }
 
     // 检查顶层 decision: 'block'（退出码 0 + JSON block）
+    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
     if ((parsed as any).decision === 'block' || result.blocked) {
       return {
         blockingError: {
+          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
           blockingError: (parsed as any).reason || 'Elicitation blocked by hook',
           command: result.command,
         },
       }
     }
 
+    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
     const specific = (parsed as any).hookSpecificOutput
     if (!specific || specific.hookEventName !== expectedEventName) {
       return {}
@@ -81,6 +86,7 @@ function parseElicitationHookOutput(
     if (specific.action === 'decline') {
       out.blockingError = {
         blockingError:
+          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
           (parsed as any).reason ||
           (expectedEventName === 'Elicitation'
             ? 'Elicitation denied by hook'

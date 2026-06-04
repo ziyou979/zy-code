@@ -39,9 +39,13 @@ type AgentSource = SettingSource | 'built-in' | 'plugin'
 type ModeState =
   | { mode: 'list-agents'; source: AgentSource | 'all' }
   | { mode: 'create-agent' }
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   | { mode: 'agent-menu'; agent: any; previousMode: ModeState }
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   | { mode: 'view-agent'; agent: any; previousMode: ModeState }
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   | { mode: 'edit-agent'; agent: any; previousMode: ModeState }
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   | { mode: 'delete-confirm'; agent: any; previousMode: ModeState }
 
 export function AgentsMenu({ tools, onExit }: Props) {

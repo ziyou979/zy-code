@@ -66,7 +66,9 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
         // 检查在 hook 执行期间是否被 abort
         // 重要：每个 hook 发出一条 cancelled 事件
         if (
+          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           (result.message as any)?.type === 'attachment' &&
+          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           (result.message as any).attachment.type === 'hook_cancelled'
         ) {
           logEvent('zy_post_tool_hooks_cancelled', {
@@ -94,10 +96,13 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
         if (
           result.message &&
           !(
+            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
             (result.message as any).type === 'attachment' &&
+            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
             (result.message as any).attachment.type === 'hook_blocking_error'
           )
         ) {
+          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           yield { message: result.message as any }
         }
 
@@ -223,7 +228,9 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
       try {
         // 检查在 hook 执行期间是否被 abort
         if (
+          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           (result.message as any)?.type === 'attachment' &&
+          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           (result.message as any).attachment.type === 'hook_cancelled'
         ) {
           logEvent('zy_post_tool_failure_hooks_cancelled', {
@@ -248,10 +255,13 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
         if (
           result.message &&
           !(
+            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
             (result.message as any).type === 'attachment' &&
+            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
             (result.message as any).attachment.type === 'hook_blocking_error'
           )
         ) {
+          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           yield { message: result.message as any }
         }
 
@@ -465,6 +475,7 @@ export async function* runPreToolUseHooks(
     )) {
       try {
         if (result.message) {
+          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           yield { type: 'message', message: { message: result.message as any } }
         }
         if (result.blockingError) {

@@ -204,6 +204,7 @@ function AgentPill({ name, color, isSelected, isViewed, isIdle, onClick }: Agent
     </Box>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function SummaryPill({ selected, onClick, children }: any) {
   const [hover, setHover] = useState(false)
   const label = (

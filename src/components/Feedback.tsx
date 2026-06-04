@@ -3,6 +3,7 @@ import axios from 'axios'
 import * as React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { getLastAPIRequest } from 'src/bootstrap/state.js'
+import type { QuerySource } from 'src/constants/querySource.js'
 import { getOauthConfig } from 'src/constants/oauth.js'
 import { tSync } from 'src/i18n/index.js'
 import {
@@ -580,7 +581,7 @@ async function generateTitle(description: string, abortSignal: AbortSignal): Pro
         toolChoice: undefined,
         isNonInteractiveSession: false,
         agents: [],
-        querySource: 'feedback' as any as any,
+        querySource: 'feedback' as QuerySource,
         mcpTools: [],
       },
     })

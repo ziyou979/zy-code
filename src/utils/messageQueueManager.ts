@@ -279,6 +279,7 @@ export function remove(commandsToRemove: QueuedCommand[]): void {
   }
 
   for (const _cmd of commandsToRemove) {
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     logOperation('remove' as any)
   }
 }
@@ -298,6 +299,7 @@ export function removeByFilter(predicate: (cmd: QueuedCommand) => boolean): Queu
   if (removed.length > 0) {
     notifySubscribers()
     for (const _cmd of removed) {
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       logOperation('remove' as any)
     }
   }
@@ -330,6 +332,7 @@ export function resetCommandQueue(): void {
 // Editable mode helpers
 // ============================================================================
 
+// biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
 const NON_EDITABLE_MODES = new Set<PromptInputMode>(['task-notification'] as any)
 
 export function isPromptInputModeEditable(mode: PromptInputMode): mode is EditablePromptInputMode {
@@ -449,6 +452,7 @@ export function popAllEditable(
   }
 
   for (const command of editable) {
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     logOperation('popAll' as any, typeof command.value === 'string' ? command.value : undefined)
   }
 

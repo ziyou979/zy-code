@@ -404,7 +404,7 @@ function TaskOutputResultDisplay({
                           {
                             text: task.result,
                           },
-                        ] as any
+                        ]
                       }
                       theme={theme}
                     />

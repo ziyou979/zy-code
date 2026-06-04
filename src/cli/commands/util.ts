@@ -75,7 +75,7 @@ export function registerUtilCommands(program: Command<any, any, any>): void {
           },
         ) => {
           const { rollback } = await import('../rollback.js')
-          await rollback(target ?? '', options)
+          await rollback(target ?? '', (options ?? {}) as Record<string, unknown>)
         },
       )
   }

@@ -42,7 +42,9 @@ import { VoiceModeNotice } from './VoiceModeNotice.js'
 import { Zy } from './Zy.js'
 
 // Type declarations for missing components
+// biome-ignore lint/suspicious/noExplicitAny: 占位组件，永远不会被渲染（dead code）
 const GateOverridesWarning: any = null
+// biome-ignore lint/suspicious/noExplicitAny: 占位组件，永远不会被渲染（dead code）
 const ExperimentEnrollmentNotice: any = null
 
 // Conditional require so ChannelsNotice.tsx tree-shakes when both flags are

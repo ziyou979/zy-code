@@ -811,38 +811,39 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
   success: boolean
   warning?: string
 } {
-  if (!shouldUseZyAIAuth((tokens as any).scopes)) {
+  if (!shouldUseZyAIAuth(tokens.scopes)) {
     logEvent('zy_oauth_tokens_not_Zy_ai', {})
     return { success: true }
   }
 
   // 跳过仅推理用途的 token（它们来自环境变量）
-  if (!tokens.refreshToken || !(tokens as any).expiresAt) {
+  if (!tokens.refreshToken || !tokens.expiresAt) {
     logEvent('zy_oauth_tokens_inference_only', {})
     return { success: true }
   }
 
-  const secureStorage = getSecureStorage()
-  const storageBackend = (secureStorage as any)
+  // biome-ignore lint/suspicious/noExplicitAny: SecureStorage 接口不包含 name/read/update，运行时实现有扩展方法
+  const secureStorage = getSecureStorage() as any
+  const storageBackend = secureStorage
     .name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
 
   try {
-    const storageData = (secureStorage as any).read() || {}
+    const storageData = secureStorage.read() || {}
     const existingOauth = storageData.zyAiOauth
 
     storageData.zyAiOauth = {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      expiresAt: (tokens as any).expiresAt,
-      scopes: (tokens as any).scopes,
+      expiresAt: tokens.expiresAt,
+      scopes: tokens.scopes,
       // refreshOAuthToken 中的 profile 获取会吞掉错误，在临时故障
       // （网络、5xx、限流）时返回 null。不要用 null 覆盖有效的已存储
       // 订阅——回退到已有值。
-      subscriptionType: (tokens as any).subscriptionType ?? existingOauth?.subscriptionType ?? null,
-      rateLimitTier: (tokens as any).rateLimitTier ?? existingOauth?.rateLimitTier ?? null,
+      subscriptionType: tokens.subscriptionType ?? existingOauth?.subscriptionType ?? null,
+      rateLimitTier: tokens.rateLimitTier ?? existingOauth?.rateLimitTier ?? null,
     }
 
-    const updateStatus = (secureStorage as any).update(storageData)
+    const updateStatus = secureStorage.update(storageData)
 
     if (updateStatus.success) {
       logEvent('zy_oauth_tokens_saved', { storageBackend })
@@ -881,12 +882,13 @@ export const getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
       scopes: ['user:inference'],
       subscriptionType: null,
       rateLimitTier: null,
-    } as any
+    }
   }
 
   try {
-    const secureStorage = getSecureStorage()
-    const storageData = (secureStorage as any).read()
+    // biome-ignore lint/suspicious/noExplicitAny: SecureStorage 接口不包含 read 方法，运行时实现有扩展方法
+    const secureStorage = getSecureStorage() as any
+    const storageData = secureStorage.read()
     const oauthData = storageData?.zyAiOauth
 
     if (!oauthData?.accessToken) {
@@ -1001,8 +1003,9 @@ export async function getZyAIOAuthTokensAsync(): Promise<OAuthTokens | null> {
   }
 
   try {
-    const secureStorage = getSecureStorage()
-    const storageData = await (secureStorage as any).readAsync()
+    // biome-ignore lint/suspicious/noExplicitAny: SecureStorage 接口不包含 readAsync 方法，运行时实现有扩展方法
+    const secureStorage = getSecureStorage() as any
+    const storageData = await secureStorage.readAsync()
     const oauthData = storageData?.zyAiOauth
     if (!oauthData?.accessToken) {
       return null
@@ -1046,7 +1049,7 @@ async function _checkAndRefreshOAuthTokenIfNeededImpl(
     return false
   }
 
-  if (!shouldUseZyAIAuth((tokens as any).scopes)) {
+  if (!shouldUseZyAIAuth(tokens.scopes)) {
     return false
   }
 
@@ -1055,7 +1058,7 @@ async function _checkAndRefreshOAuthTokenIfNeededImpl(
   getZyAIOAuthTokens.cache?.clear?.()
   clearKeychainCache()
   const freshTokens = await getZyAIOAuthTokensAsync()
-  if (!freshTokens?.refreshToken || !isOAuthTokenExpired((freshTokens as any).expiresAt)) {
+  if (!freshTokens?.refreshToken || !isOAuthTokenExpired(freshTokens.expiresAt ?? null)) {
     return false
   }
 
@@ -1095,7 +1098,7 @@ async function _checkAndRefreshOAuthTokenIfNeededImpl(
     getZyAIOAuthTokens.cache?.clear?.()
     clearKeychainCache()
     const lockedTokens = await getZyAIOAuthTokensAsync()
-    if (!lockedTokens?.refreshToken || !isOAuthTokenExpired((lockedTokens as any).expiresAt)) {
+    if (!lockedTokens?.refreshToken || !isOAuthTokenExpired(lockedTokens.expiresAt ?? null)) {
       logEvent('zy_oauth_token_refresh_race_resolved', {})
       return false
     }
@@ -1105,9 +1108,9 @@ async function _checkAndRefreshOAuthTokenIfNeededImpl(
       // 对于 Zy.ai 订阅用户，省略 scopes 以使用默认的
       // ZY_CODE_OAUTH_SCOPES——这允许在刷新时扩展 scope
       // （例如添加 user:file_upload）而无需重新登录。
-      scopes: shouldUseZyAIAuth((lockedTokens as any).scopes)
+      scopes: shouldUseZyAIAuth(lockedTokens.scopes)
         ? undefined
-        : (lockedTokens as any).scopes,
+        : lockedTokens.scopes,
     })
     saveOAuthTokensIfNeeded(refreshedTokens)
 
@@ -1121,7 +1124,7 @@ async function _checkAndRefreshOAuthTokenIfNeededImpl(
     getZyAIOAuthTokens.cache?.clear?.()
     clearKeychainCache()
     const currentTokens = await getZyAIOAuthTokensAsync()
-    if (currentTokens && !isOAuthTokenExpired((currentTokens as any).expiresAt)) {
+    if (currentTokens && !isOAuthTokenExpired(currentTokens.expiresAt ?? null)) {
       logEvent('zy_oauth_token_refresh_race_recovered', {})
       return true
     }
@@ -1199,10 +1202,10 @@ export function hasOpusAccess(): boolean {
   const subscriptionType = getSubscriptionType()
 
   return (
-    (subscriptionType as any) === 'max' ||
-    (subscriptionType as any) === 'enterprise' ||
-    (subscriptionType as any) === 'team' ||
-    (subscriptionType as any) === 'pro' ||
+    (subscriptionType as string) === 'max' ||
+    (subscriptionType as string) === 'enterprise' ||
+    (subscriptionType as string) === 'team' ||
+    (subscriptionType as string) === 'pro' ||
     // subscriptionType === null 涵盖了 API 用户以及订阅用户尚未填充
     // 订阅类型的情况。对于这些订阅用户，在不确定时不应限制其 Opus 访问权限。
     subscriptionType === null
@@ -1241,7 +1244,7 @@ export function getRateLimitTier(): string | null {
 export function getSubscriptionName(): string {
   const subscriptionType = getSubscriptionType()
 
-  switch (subscriptionType as any) {
+  switch (subscriptionType as string) {
     case 'enterprise':
       return 'ZY Enterprise'
     case 'team':
@@ -1351,7 +1354,7 @@ export function getOtelHeadersFromHelper(): Record<string, string> {
 
 // @ts-expect-error
 function isConsumerPlan(plan: SubscriptionType): plan is 'max' | 'pro' {
-  return (plan as any) === 'max' || (plan as any) === 'pro'
+  return (plan as string) === 'max' || (plan as string) === 'pro'
 }
 
 export function isConsumerSubscriber(): boolean {
@@ -1376,8 +1379,8 @@ export function getAccountInformation() {
   const { source: authTokenSource } = getAuthTokenSource()
   const accountInfo: UserAccountInfo = {}
   if (
-    (authTokenSource as any) === 'ZY_CODE_OAUTH_TOKEN' ||
-    (authTokenSource as any) === 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
+    (authTokenSource as string) === 'ZY_CODE_OAUTH_TOKEN' ||
+    (authTokenSource as string) === 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
   ) {
     accountInfo.tokenSource = authTokenSource
   } else if (isZyAISubscriber()) {
@@ -1448,8 +1451,8 @@ export async function validateForceLoginOrg(): Promise<OrgValidationResult> {
   // ~/.zy.json 中缓存的 org UUID 是用户可写的，不可信任。
   const { source } = getAuthTokenSource()
   const isEnvVarToken =
-    (source as any) === 'ZY_CODE_OAUTH_TOKEN' ||
-    (source as any) === 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
+    (source as string) === 'ZY_CODE_OAUTH_TOKEN' ||
+    (source as string) === 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
 
   const profile = await getOauthProfileFromOauthToken(tokens.accessToken)
   if (!profile) {
@@ -1465,14 +1468,14 @@ export async function validateForceLoginOrg(): Promise<OrgValidationResult> {
     }
   }
 
-  const tokenOrgUuid = (profile as any).organization.uuid
+  const tokenOrgUuid = (profile as unknown as { organization: { uuid: string } }).organization.uuid
   if (tokenOrgUuid === requiredOrgUuid) {
     return { valid: true }
   }
 
   if (isEnvVarToken) {
     const envVarName =
-      (source as any) === 'ZY_CODE_OAUTH_TOKEN'
+      (source as string) === 'ZY_CODE_OAUTH_TOKEN'
         ? 'ZY_CODE_OAUTH_TOKEN'
         : 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
     return {

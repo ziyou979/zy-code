@@ -28,6 +28,7 @@ import { assertValidOpenAIChatMessages } from '../../_helpers/sdkValidators.js'
 import { accumulateStream } from '../../_helpers/streamAccumulator.js'
 
 // 给 normalizeContentFromAPI 喂一个空 tools 集合即可（它只会查 findToolByName，找不到就跳过 normalize）
+// biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
 const EMPTY_TOOLS: any[] = []
 
 describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求体', () => {
@@ -56,7 +57,9 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
     expect(toolBlock.input).toBe('{"city":"Hangzhou"}')
 
     // ---- 步骤 4：normalize 应该把字符串 input parse 回对象 ----
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const normalized = normalizeContentFromAPI(accumulated.contentBlocks as any, EMPTY_TOOLS as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const normalizedTool = normalized[0] as any
     // 这是 DashScope 400 的根因关键点：normalize 后必须是 object
     expect(typeof normalizedTool.input).toBe('object')
@@ -72,6 +75,7 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
         content: 'Sunny, 20°C',
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const openAIMessages = messagesToOpenAI(nextRoundMessages as any)
 
     // 用 SDK 协议校验器硬验
@@ -79,6 +83,7 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
 
     // 找到 assistant tool_call，验证 arguments 是合法 JSON 对象的字符串（不是双重转义、不是空、不是 string of string）
     const assistantMsg = openAIMessages.find((m) => m.role === 'assistant')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const toolCalls = (assistantMsg as any).tool_calls
     expect(toolCalls).toHaveLength(1)
     expect(toolCalls[0].function.arguments).toBe('{"city":"Hangzhou"}')
@@ -103,13 +108,16 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
     }
     expect(toolBlock.input).toBe('{"q":"hello world"}')
 
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const normalized = normalizeContentFromAPI(accumulated.contentBlocks as any, EMPTY_TOOLS as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((normalized[0] as any).input).toEqual({ q: 'hello world' })
 
     const next = [
       { role: 'assistant', content: normalized },
       { role: 'tool', toolCallId: 'call_002', content: 'ok' },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const openAIMessages = messagesToOpenAI(next as any)
     assertValidOpenAIChatMessages(openAIMessages)
   })
@@ -132,13 +140,16 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
     expect(accumulated.contentBlocks[0]!.type).toBe('text')
     expect(accumulated.contentBlocks[1]!.type).toBe('tool_call')
 
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const normalized = normalizeContentFromAPI(accumulated.contentBlocks as any, EMPTY_TOOLS as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((normalized[1] as any).input).toEqual({ city: 'Beijing' })
 
     const next = [
       { role: 'assistant', content: normalized },
       { role: 'tool', toolCallId: 'call_003', content: 'cold' },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const openAIMessages = messagesToOpenAI(next as any)
     assertValidOpenAIChatMessages(openAIMessages)
   })
@@ -164,8 +175,11 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
     )
     expect(accumulated.contentBlocks).toHaveLength(2)
 
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const normalized = normalizeContentFromAPI(accumulated.contentBlocks as any, EMPTY_TOOLS as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((normalized[0] as any).input).toEqual({ x: 1 })
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((normalized[1] as any).input).toEqual({ y: 2 })
 
     const next = [
@@ -173,8 +187,10 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
       { role: 'tool', toolCallId: 'call_a', content: 'a-result' },
       { role: 'tool', toolCallId: 'call_b', content: 'b-result' },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const openAIMessages = messagesToOpenAI(next as any)
     assertValidOpenAIChatMessages(openAIMessages)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const assistantMsg = openAIMessages.find((m) => m.role === 'assistant')! as any
     expect(assistantMsg.tool_calls).toHaveLength(2)
     expect(JSON.parse(assistantMsg.tool_calls[0].function.arguments)).toEqual({ x: 1 })
@@ -195,21 +211,26 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
     const accumulated = await accumulateStream(
       mapOpenAIStreamToStandard(chunksToStream(chunks), 'qwen-plus'),
     )
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const block = accumulated.contentBlocks[0]! as any
     expect(typeof block.input).toBe('string')
     expect(block.input).toBe('')
 
     // normalize 后应该是 {}（safeParseJSON('') === null → ?? {} → {}）
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const normalized = normalizeContentFromAPI(accumulated.contentBlocks as any, EMPTY_TOOLS as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((normalized[0] as any).input).toEqual({})
 
     const next = [
       { role: 'assistant', content: normalized },
       { role: 'tool', toolCallId: 'call_void', content: 'done' },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const openAIMessages = messagesToOpenAI(next as any)
     // 关键断言：arguments 不能是空字符串、不能是 undefined、必须是合法 JSON 对象的字符串
     assertValidOpenAIChatMessages(openAIMessages)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const assistantMsg = openAIMessages.find((m) => m.role === 'assistant')! as any
     expect(assistantMsg.tool_calls[0].function.arguments).toBe('{}')
   })
@@ -236,6 +257,7 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
       mapOpenAIStreamToStandard(chunksToStream(chunks), 'qwen-plus'),
     )
     // 故意跳过 normalize：contentBlocks 中的 input 仍是字符串
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const toolBlock = accumulated.contentBlocks[0] as any
     expect(typeof toolBlock.input).toBe('string')
 
@@ -243,7 +265,9 @@ describe('E2E: OpenAI 流式 tool_call → 累积 → normalize → 回传请求
       { role: 'assistant', content: accumulated.contentBlocks },
       { role: 'tool', toolCallId: 'call_skip_normalize', content: 'sunny' },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const openAIMessages = messagesToOpenAI(next as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const assistantMsg = openAIMessages.find((m) => m.role === 'assistant')! as any
     const argStr = assistantMsg.tool_calls[0].function.arguments
     // 关键：A2 兜底防线起效，arguments 是合法 JSON 对象的字符串，不是双重转义

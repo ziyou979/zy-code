@@ -739,6 +739,7 @@ export const connectToServer = memoize(
         transport = new StreamableHTTPClientTransport(new URL(proxyUrl), transportOptions)
         logMCPDebug(name, `zy.ai proxy transport created successfully`)
       } else if (
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         ((serverRef as any).type === 'stdio' || !(serverRef as any).type) &&
         isClaudeInChromeMCPServer(name)
       ) {
@@ -747,6 +748,7 @@ export const connectToServer = memoize(
         const { createZyForChromeMcpServer } = await import('@ant/claude-for-chrome-mcp')
         const { createLinkedTransportPair } = await import('./InProcessTransport.js')
         const context = createChromeContext(serverRef.env)
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         inProcessServer = createZyForChromeMcpServer(context) as any
         const [clientTransport, serverTransport] = createLinkedTransportPair()
         await inProcessServer!.connect(serverTransport)
@@ -754,6 +756,7 @@ export const connectToServer = memoize(
         logMCPDebug(name, `In-process Chrome MCP server started`)
       } else if (
         feature('CHICAGO_MCP') &&
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         ((serverRef as any).type === 'stdio' || !(serverRef as any).type) &&
         isComputerUseMCPServer!(name)
       ) {
@@ -769,6 +772,7 @@ export const connectToServer = memoize(
         await inProcessServer!.connect(serverTransport)
         transport = clientTransport
         logMCPDebug(name, `In-process Computer Use MCP server started`)
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
       } else if ((serverRef as any).type === 'stdio' || !(serverRef as any).type) {
         const finalCommand = process.env.ZY_CODE_SHELL_PREFIX || serverRef.command
         const finalArgs = process.env.ZY_CODE_SHELL_PREFIX
@@ -784,6 +788,7 @@ export const connectToServer = memoize(
           stderr: 'pipe', // 防止 MCP 服务器的错误输出打印到 UI
         })
       } else {
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         throw new Error(`Unsupported server type: ${(serverRef as any).type}`)
       }
 

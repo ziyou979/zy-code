@@ -9,8 +9,8 @@ describe('orchestration', () => {
       const result = await pipeline(
         [1, 2, 3],
         sem,
-        (item) => item * 2,
-        (item) => item + 1,
+        (item) => (item as number) * 2,
+        (item) => (item as number) + 1,
       )
       expect(result).toEqual([3, 5, 7])
     })
@@ -24,7 +24,7 @@ describe('orchestration', () => {
           if (item === 2) throw new Error('boom')
           return item
         },
-        (item) => item * 10,
+        (item) => (item as number) * 10,
       )
       expect(result).toEqual([10, null, 30])
     })
@@ -34,7 +34,7 @@ describe('orchestration', () => {
       const result = await pipeline(
         ['a', 'b'],
         sem,
-        (item) => item.toUpperCase(),
+        (item) => (item as string).toUpperCase(),
         (prev, original, idx) => `${prev}-${original}-${idx}`,
       )
       expect(result).toEqual(['A-a-0', 'B-b-1'])

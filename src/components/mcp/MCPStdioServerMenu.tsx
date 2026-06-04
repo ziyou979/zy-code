@@ -40,6 +40,8 @@ export function MCPStdioServerMenu({
   onComplete,
   borderless = false,
 }: Props): React.ReactNode {
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理，StdioServerInfo 运行时包含额外字段
+  const srv = server as any
   const [theme] = useTheme()
   const exitState = useExitOnCtrlCDWithKeybindings()
   const mcp = useAppState((s) => s.mcp)
@@ -47,7 +49,7 @@ export function MCPStdioServerMenu({
   const toggleMcpServer = useMcpToggleEnabled()
   const [isReconnecting, setIsReconnecting] = useState(false)
   const handleToggleEnabled = React.useCallback(async () => {
-    const wasEnabled = (server as any).client.type !== 'disabled'
+    const wasEnabled = srv.client.type !== 'disabled'
     try {
       await toggleMcpServer(server.name)
       // Return to the server list so user can continue managing other servers
@@ -62,7 +64,7 @@ export function MCPStdioServerMenu({
         }),
       )
     }
-  }, [(server as any).client.type, server.name, toggleMcpServer, onCancel, onComplete])
+  }, [srv.client.type, server.name, toggleMcpServer, onCancel, onComplete])
   const capitalizedServerName = capitalize(String(server.name))
 
   // Count MCP prompts for this server (skills are shown in /skills, not here)
@@ -70,7 +72,7 @@ export function MCPStdioServerMenu({
   const menuOptions = []
 
   // Only show "View tools" if server is not disabled and has tools
-  if ((server as any).client.type !== 'disabled' && serverToolsCount > 0) {
+  if (srv.client.type !== 'disabled' && serverToolsCount > 0) {
     menuOptions.push({
       label: tSync('mcp.viewTools'),
       value: 'tools',
@@ -78,14 +80,14 @@ export function MCPStdioServerMenu({
   }
 
   // Only show reconnect option if the server is not disabled
-  if ((server as any).client.type !== 'disabled') {
+  if (srv.client.type !== 'disabled') {
     menuOptions.push({
       label: tSync('mcp.reconnect'),
       value: 'reconnectMcpServer',
     })
   }
   menuOptions.push({
-    label: (server as any).client.type !== 'disabled' ? tSync('mcp.disable') : tSync('mcp.enable'),
+    label: srv.client.type !== 'disabled' ? tSync('mcp.disable') : tSync('mcp.enable'),
     value: 'toggle-enabled',
   })
 
@@ -118,15 +120,15 @@ export function MCPStdioServerMenu({
         <Box flexDirection="column" gap={0}>
           <Box>
             <Text bold>{tSync('mcp.statusLabel')} </Text>
-            {(server as any).client.type === 'disabled' ? (
+            {srv.client.type === 'disabled' ? (
               <Text>
                 {color('inactive', theme)(figures.radioOff)} {tSync('mcp.disabled')}
               </Text>
-            ) : (server as any).client.type === 'connected' ? (
+            ) : srv.client.type === 'connected' ? (
               <Text>
                 {color('success', theme)(figures.tick)} {tSync('mcp.connected')}
               </Text>
-            ) : (server as any).client.type === 'pending' ? (
+            ) : srv.client.type === 'pending' ? (
               <>
                 <Text dimColor>{figures.radioOff}</Text>
                 <Text> {tSync('mcp.connecting')}</Text>
@@ -140,13 +142,13 @@ export function MCPStdioServerMenu({
 
           <Box>
             <Text bold>{tSync('mcp.commandLabel')} </Text>
-            <Text dimColor>{(server as any).config.command}</Text>
+            <Text dimColor>{srv.config.command}</Text>
           </Box>
 
-          {(server as any).config.args && (server as any).config.args.length > 0 && (
+          {srv.config.args && srv.config.args.length > 0 && (
             <Box>
               <Text bold>{tSync('mcp.argsLabel')} </Text>
-              <Text dimColor>{(server as any).config.args.join(' ')}</Text>
+              <Text dimColor>{srv.config.args.join(' ')}</Text>
             </Box>
           )}
 
@@ -157,7 +159,7 @@ export function MCPStdioServerMenu({
             </Text>
           </Box>
 
-          {(server as any).client.type === 'connected' && (
+          {srv.client.type === 'connected' && (
             <CapabilitiesSection
               serverToolsCount={serverToolsCount}
               serverPromptsCount={serverCommandsCount}
@@ -165,7 +167,7 @@ export function MCPStdioServerMenu({
             />
           )}
 
-          {(server as any).client.type === 'connected' && serverToolsCount > 0 && (
+          {srv.client.type === 'connected' && serverToolsCount > 0 && (
             <Box>
               <Text bold>{tSync('mcp.toolsLabel')} </Text>
               <Text dimColor>{tSync('mcp.toolsCount', { count: serverToolsCount })}</Text>

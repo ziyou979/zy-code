@@ -249,7 +249,6 @@ const extractSessionMemory = sequential(async (context: REPLHookContext): Promis
   const { messages, toolUseContext, querySource } = context
 
   // Only run session memory on main REPL thread
-  // @ts-expect-error
   if (querySource !== 'repl_main_thread') {
     // Don't log this - it's expected for subagents, teammates, etc.
     return
@@ -290,7 +289,6 @@ const extractSessionMemory = sequential(async (context: REPLHookContext): Promis
     promptMessages: [createUserMessage({ content: [{ type: 'text' as const, text: userPrompt }] })],
     cacheSafeParams: createCacheSafeParams(context),
     canUseTool: createMemoryFileCanUseTool(memoryPath),
-    // @ts-expect-error
     querySource: 'session_memory',
     forkLabel: 'session_memory',
     overrides: { readFileState: setupContext.readFileState },
@@ -398,7 +396,6 @@ export async function manuallyExtractSessionMemory(
         forkContextMessages: messages,
       },
       canUseTool: createMemoryFileCanUseTool(memoryPath),
-      // @ts-expect-error
       querySource: 'session_memory',
       forkLabel: 'session_memory_manual',
       overrides: { readFileState: setupContext.readFileState },

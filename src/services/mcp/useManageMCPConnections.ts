@@ -483,6 +483,7 @@ export function useManageMCPConnections(
                       value: wrapChannelMessage(client.name, content, meta),
                       priority: 'next',
                       isMeta: true,
+                      // biome-ignore lint/suspicious/noExplicitAny: 扩展 InputOrigin 类型
                       origin: { kind: 'channel', server: client.name } as any,
                       skipSlashCommands: true,
                     })

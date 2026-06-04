@@ -20,6 +20,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       { role: 'system', content: 'You are helpful.' },
       { role: 'user', content: 'Hi' },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
     expect(result).toHaveLength(2)
     expect(result[0]).toEqual({ role: 'system', content: 'You are helpful.' })
@@ -28,7 +29,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
   })
 
   test('user 消息为字符串和数组形式，处理一致', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const r1 = messagesToOpenAI([{ role: 'user', content: 'hi' }] as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const r2 = messagesToOpenAI([{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] as any)
     expect(r1[0]).toEqual({ role: 'user', content: 'hi' })
     expect(r2[0]).toEqual({ role: 'user', content: 'hi' })
@@ -50,8 +53,10 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       },
       { role: 'tool', toolCallId: 'call_1', content: 'result' },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
     assertValidOpenAIChatMessages(result)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const a = result.find((m) => m.role === 'assistant') as any
     expect(a.content).toBe('Let me check.')
     expect(a.tool_calls).toHaveLength(1)
@@ -76,7 +81,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const a = result.find((m) => m.role === 'assistant') as any
     expect(a.tool_calls).toHaveLength(1)
     expect(a.tool_calls[0].id).toBe('call_v1')
@@ -97,8 +104,10 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       { role: 'tool', toolCallId: 'a', content: 'ra' },
       { role: 'tool', toolCallId: 'b', content: 'rb' },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
     assertValidOpenAIChatMessages(result)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const a = result.find((m) => m.role === 'assistant') as any
     expect(a.tool_calls).toHaveLength(2)
     expect(JSON.parse(a.tool_calls[0].function.arguments)).toEqual({ x: 1 })
@@ -112,7 +121,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         content: [{ type: 'tool_call', id: 'c1', name: 'noop' }],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const a = result.find((m) => m.role === 'assistant') as any
     expect(a.tool_calls[0].function.arguments).toBe('{}')
   })
@@ -135,7 +146,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const a = result.find((m) => m.role === 'assistant') as any
     const argStr = a.tool_calls[0].function.arguments
     // 关键：A2 重构后 arguments 是合法 JSON 对象的字符串，不再双重转义
@@ -161,7 +174,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const a = result.find((m) => m.role === 'assistant') as any
     const parsed = JSON.parse(a.tool_calls[0].function.arguments)
     expect(parsed).toEqual({ raw: 'not a json at all' })
@@ -182,6 +197,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
     expect(result).toHaveLength(2)
     expect(result[0]).toEqual({
@@ -209,8 +225,11 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         content: [{ type: 'image', mimeType: 'image/jpeg', data: 'BBB' }],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const u1 = result[0] as any
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const u2 = result[1] as any
     expect(u1.content).toEqual([
       { type: 'text', text: 'see this' },
@@ -239,7 +258,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = fn(messages as any, 'deepseek-reasoner')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const a = result[0] as any
     expect(a.reasoning_content).toBe('reasoning here')
     expect(a.content).toBeUndefined()
@@ -263,7 +284,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = fn(messages as any, 'deepseek-reasoner')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const a = result[0] as any
     expect(a.content).toBe('final answer')
     expect(a.reasoning_content).toBeUndefined()
@@ -289,7 +312,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = fn(messages as any, 'deepseek-chat')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const a = result[0] as any
     // 没声明 thinking 能力 → 按非 DeepSeek 处理，<thinking> 入 content
     expect(a.content).toBe('<thinking>r</thinking>')
@@ -313,7 +338,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = fn(messages as any, 'qwen-plus')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const a = result[0] as any
     expect(a.content).toBe('<thinking>reasoning here</thinking>\n\nfinal answer')
     expect(a.reasoning_content).toBeUndefined()
@@ -330,7 +357,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const a = result[0] as any
     expect(a.content).toBe('<thinking>r</thinking>\n\nans')
   })
@@ -345,6 +374,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       { role: 'tool', toolCallId: 'c', content: 'cold' },
       { role: 'assistant', content: 'It is cold in BJ.' },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
     assertValidOpenAIChatMessages(result)
     expect(result.map((m) => m.role)).toEqual(['user', 'assistant', 'tool', 'assistant'])
@@ -355,12 +385,15 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       { role: 'assistant', content: [{ type: 'tool_call', id: 'c', name: 'n', input: {} }] },
       { role: 'tool', toolCallId: 'c', content: '' },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const t = result.find((m) => m.role === 'tool') as any
     expect(t.content).toBe('(empty)')
   })
 
   test('user content 非 string 非 array（如数字）：兜底为空', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI([{ role: 'user', content: 123 }] as any)
     expect(result[0].content).toBe('')
   })
@@ -371,6 +404,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         role: 'user',
         content: [{ type: 'unknown_block', foo: 'bar' }],
       },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
     expect(result[0].content).toBe('')
   })
@@ -394,7 +428,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
           },
         ],
       },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const toolMsg = result.find((m) => m.role === 'tool') as any
     expect(toolMsg.content).toBe('line1\nline2')
   })
@@ -406,13 +442,16 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         content: 'Let me search',
         toolCalls: [{ id: 'c1', name: 'search', arguments: '{"q":"hi"}' }],
       },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const a = result.find((m) => m.role === 'assistant') as any
     expect(a.content).toBe('Let me search')
     expect(a.tool_calls).toBeUndefined()
   })
 
   test('user content 为非 object（如 null）：兜底为空', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI([{ role: 'user', content: null }] as any)
     expect(result[0].content).toBe('')
   })
@@ -427,8 +466,10 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         content: [{ type: 'text', text: 'hello', cache_control: { type: 'ephemeral' } }],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
     expect(result).toHaveLength(1)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const m = result[0] as any
     expect(m.role).toBe('user')
     expect(Array.isArray(m.content)).toBe(true)
@@ -444,6 +485,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
   test('user 单 text block 不带 cache_control：仍压扁成 string（保持原行为）', () => {
     const result = messagesToOpenAI([
       { role: 'user', content: [{ type: 'text', text: 'hello' }] },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
     expect(result[0]).toEqual({ role: 'user', content: 'hello' })
     assertValidOpenAIChatMessages(result)
@@ -462,11 +504,14 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         content: [{ type: 'tool_result', toolCallId: 'c1', content: 'ok', cache_control: cc }],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
     // tool 消息上不应有 cache_control（DashScope 忽略）
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const toolMsg = result.find((m) => m.role === 'tool') as any
     expect(toolMsg).not.toHaveProperty('cache_control')
     // cache_control 应迁移到最后一条 user 消息上
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const userMsgs = result.filter((m) => m.role === 'user') as any[]
     const lastUser = userMsgs[userMsgs.length - 1]
     const lastBlock = Array.isArray(lastUser.content)
@@ -486,7 +531,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         content: [{ type: 'tool_result', toolCallId: 'c1', content: 'ok' }],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const toolMsg = result.find((m) => m.role === 'tool') as any
     expect(toolMsg).not.toHaveProperty('cache_control')
   })
@@ -510,13 +557,16 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
     // tool 消息无 cache_control
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const toolMsgs = result.filter((m) => m.role === 'tool') as any[]
     expect(toolMsgs).toHaveLength(2)
     expect(toolMsgs[0]).not.toHaveProperty('cache_control')
     expect(toolMsgs[1]).not.toHaveProperty('cache_control')
     // 最后 user 消息有 cache_control
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const userMsgs = result.filter((m) => m.role === 'user') as any[]
     const lastUser = userMsgs[userMsgs.length - 1]
     if (typeof lastUser.content === 'string') {
@@ -536,7 +586,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         content: [{ type: 'text', text: 'answer', cache_control: cc }],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const am = result[0] as any
     expect(Array.isArray(am.content)).toBe(true)
     expect(am.content[0].text).toBe('answer')
@@ -550,7 +602,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         content: [{ type: 'text', text: 'answer' }],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const am = result[0] as any
     expect(typeof am.content).toBe('string')
     expect(am.content).toBe('answer')
@@ -567,7 +621,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const am = result[0] as any
     expect(Array.isArray(am.content)).toBe(true)
     expect(am.content[0].text).toBe('part1\n\npart2')
@@ -598,17 +654,22 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         ],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
 
     // 验证结构：user → assistant(tool_calls) → tool → (no extra user)
     expect(result[0]).toMatchObject({ role: 'user' })
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[1] as any).role).toBe('assistant')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[2] as any).role).toBe('tool')
 
     // tool 消息不应有 cache_control
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[2] as any).cache_control).toBeUndefined()
 
     // 最后一条 user 消息（即 result[0]）应收到迁移的 cache_control
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const firstUser = result[0] as any
     if (Array.isArray(firstUser.content)) {
       const lastBlock = firstUser.content[firstUser.content.length - 1]
@@ -634,15 +695,18 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         content: [{ type: 'tool_result', toolCallId: 'tc1', content: 'done', cache_control: cc }],
       },
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToOpenAI(messages as any)
 
     // tool 消息无 cache_control
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const toolMsgs = result.filter((m) => m.role === 'tool') as any[]
     for (const t of toolMsgs) {
       expect(t.cache_control).toBeUndefined()
     }
 
     // 最后一条 user 是 "第二轮"（因为 tool_result 变成了 role:'tool'）
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const userMsgs = result.filter((m) => m.role === 'user') as any[]
     const lastUser = userMsgs[userMsgs.length - 1]
     if (Array.isArray(lastUser.content)) {

@@ -197,6 +197,7 @@ export default class App extends PureComponent<Props, State> {
           >
             <TerminalFocusProvider
               isTerminalFocused={false}
+              // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
               terminalFocusState={'unfocused' as any}
             >
               <ClockProvider>

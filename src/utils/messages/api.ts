@@ -216,6 +216,7 @@ export function reorderMessagesInUI(
             postHooks: [],
           })
         }
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         toolUseGroups.get(toolUseID)!.preHooks.push(hookMsg as any)
         continue
       }
@@ -249,6 +250,7 @@ export function reorderMessagesInUI(
             postHooks: [],
           })
         }
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         toolUseGroups.get(toolUseID)!.postHooks.push(hookMsg as any)
       }
     }
@@ -993,6 +995,7 @@ export function normalizeMessagesForAPI(
           return
         }
         case 'attachment': {
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           const rawAttachmentMessage = normalizeAttachmentForAPI(message.attachment as any)
           const attachmentMessage = checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_chair_sermon')
             ? rawAttachmentMessage.map(ensureSystemReminderWrap)

@@ -308,6 +308,7 @@ function StatsInnerContent({ allTimePromise }: StatsInnerContentProps) {
     </Box>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function DateRangeSelector({ dateRange, isLoading }: any) {
   const dateRangeElements = DATE_RANGE_ORDER.map((range, index) => (
     <Text key={range}>
@@ -720,7 +721,9 @@ function ModelsTab({
   const [scrollOffset, setScrollOffset] = useState(0)
   const { columns: terminalWidth } = useTerminalSize()
   const modelEntries = Object.entries(stats.modelUsage).sort((entryA, entryB) => {
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const [, a]: [string, any] = entryA
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const [, b]: [string, any] = entryB
     return b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens)
   })
@@ -747,6 +750,7 @@ function ModelsTab({
     )
   }
   const totalTokens = modelEntries.reduce((sum, entry) => {
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const [, usage]: [string, any] = entry
     return sum + usage.inputTokens + usage.outputTokens
   }, 0)

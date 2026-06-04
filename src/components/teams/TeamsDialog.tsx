@@ -399,6 +399,7 @@ function TeammateDetailView({ teammate, teamName, onCancel }: TeammateDetailView
   const themeColor = teammate.color
     ? AGENT_COLOR_TO_THEME_COLOR[teammate.color as keyof typeof AGENT_COLOR_TO_THEME_COLOR]
     : undefined
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const [teammateTasks, setTeammateTasks] = useState<any[]>([])
   useEffect(() => {
     let cancelled = false

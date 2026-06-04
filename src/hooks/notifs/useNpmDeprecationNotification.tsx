@@ -4,6 +4,7 @@ import { isEnvTruthy } from 'src/utils/envUtils.js'
 import { tSync } from '../../i18n/index.js'
 import { useStartupNotification } from './useStartupNotification.js'
 export function useNpmDeprecationNotification() {
+  // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
   useStartupNotification(_temp as any)
 }
 async function _temp() {

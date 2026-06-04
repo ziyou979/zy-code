@@ -194,7 +194,7 @@ export function LogSelector({
   const [renameCursorOffset, setRenameCursorOffset] = React.useState(0)
   const initialExpandedSet = new Set()
   const [expandedGroupSessionIds, setExpandedGroupSessionIds] = React.useState(initialExpandedSet)
-  const [focusedNode, setFocusedNode] = React.useState<any>(null)
+  const [focusedNode, setFocusedNode] = React.useState<LogTreeNode | null>(null)
   const [focusedIndex, setFocusedIndex] = React.useState(1)
   const [viewMode, setViewMode] = React.useState('list')
   const [previewLog, setPreviewLog] = React.useState<LogOption | null>(null)
@@ -322,13 +322,13 @@ export function LogSelector({
     }
     const timeoutId_0 = setTimeout(
       (
-        fuseIndex_0: any,
-        debouncedDeepSearchQuery_0: any,
-        setDeepSearchResults_0: any,
-        setIsSearching_0: any,
+        fuseIndex_0: { search(q: string): Array<{ item: { log: LogOption; searchableText?: string }; score?: number }> },
+        debouncedDeepSearchQuery_0: string,
+        setDeepSearchResults_0: typeof setDeepSearchResults,
+        setIsSearching_0: typeof setIsSearching,
       ) => {
         const results = fuseIndex_0.search(debouncedDeepSearchQuery_0)
-        results.sort((a: any, b: any) => {
+        results.sort((a: { item: { log: LogOption }; score?: number }, b: { item: { log: LogOption }; score?: number }) => {
           const aTime = new Date(a.item.log.modified).getTime()
           const bTime = new Date(b.item.log.modified).getTime()
           const timeDiff = bTime - aTime
@@ -338,7 +338,7 @@ export function LogSelector({
           return (a.score ?? 1) - (b.score ?? 1)
         })
         setDeepSearchResults_0({
-          results: results.map((r: any) => ({
+          results: results.map((r: { item: { log: LogOption; searchableText?: string }; score?: number }) => ({
             log: r.item.log,
             score: r.score,
             searchableText: r.item.searchableText,
@@ -393,7 +393,7 @@ export function LogSelector({
     displayedLogs = filteredLogs
   }
   const maxLabelWidth = Math.max(30, columns - 4)
-  let treeNodes: any[]
+  let treeNodes: LogTreeNode[]
   if (!isResumeWithRenameEnabled) {
     treeNodes = []
   } else {
@@ -468,7 +468,7 @@ export function LogSelector({
       }
     })
   }
-  let flatOptions: any[]
+  let flatOptions: Array<{ label: string; description: string; dimDescription: boolean; value: string }>
   if (isResumeWithRenameEnabled) {
     flatOptions = []
   } else {
@@ -639,7 +639,7 @@ export function LogSelector({
     })
     setFocusedIndex(index_1 + 1)
   }
-  const handleTreeSelectFocus = (node: any) => {
+  const handleTreeSelectFocus = (node: LogTreeNode) => {
     setFocusedNode(node)
     const index_2 = displayedLogs.findIndex(
       (log_12) => getSessionIdFromLog(log_12) === getSessionIdFromLog(node.value.log),

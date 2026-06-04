@@ -60,10 +60,9 @@ function createSkillImprovementHook() {
   let lastAnalyzedIndex = 0
 
   const config: ApiQueryHookConfig<SkillUpdate[]> = {
-    name: 'skill_improvement' as any,
+    name: 'skill_improvement',
 
     async shouldRun(context) {
-      // @ts-expect-error
       if (context.querySource !== 'repl_main_thread') {
         return false
       }

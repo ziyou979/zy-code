@@ -108,7 +108,7 @@ export function startAgentSummarization(
         ],
         cacheSafeParams: forkParams,
         canUseTool,
-        querySource: 'agent_summary' as any,
+        querySource: 'agent_summary',
         forkLabel: 'agent_summary',
         overrides: { abortController: summaryAbortController },
         skipTranscript: true,

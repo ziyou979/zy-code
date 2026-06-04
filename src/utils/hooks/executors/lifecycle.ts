@@ -96,6 +96,7 @@ export async function executeStopFailureHooks(
   const hookInput: StopFailureHookInput = {
     ...createBaseHookInput(undefined, undefined, toolUseContext),
     hook_event_name: 'StopFailure',
+    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
     error: error as any,
     error_details: lastMessage.errorDetails,
     last_assistant_message: lastAssistantText,
@@ -105,6 +106,7 @@ export async function executeStopFailureHooks(
     getAppState: toolUseContext?.getAppState,
     hookInput,
     timeoutMs,
+    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
     matchQuery: error as any,
   })
 }

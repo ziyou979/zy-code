@@ -22,7 +22,9 @@ type Props = {
 type LoadingState = 'loading' | 'updating' | null
 export function RemoteEnvironmentDialog({ onDone }: Props) {
   const [loadingState, setLoadingState] = useState<string | null>('loading')
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const [environments, setEnvironments] = useState<any[]>([])
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const [selectedEnvironment, setSelectedEnvironment] = useState<any>(null)
   const [selectedEnvironmentSource, setSelectedEnvironmentSource] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -112,11 +114,12 @@ export function RemoteEnvironmentDialog({ onDone }: Props) {
     />
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function EnvironmentLabel({ environment }: any) {
   return (
     <Text>
-      {figures.tick} Using {<Text bold={true}>{(environment as any).name}</Text>}{' '}
-      {<Text dimColor={true}>({(environment as any).environment_id})</Text>}
+      {figures.tick} Using {<Text bold={true}>{environment.name}</Text>}{' '}
+      {<Text dimColor={true}>({environment.environment_id})</Text>}
     </Text>
   )
 }
@@ -124,6 +127,7 @@ function SingleEnvironmentContent({
   environment,
   onDone,
 }: {
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   environment: any
   onDone: () => void
 }) {
@@ -148,7 +152,9 @@ function MultipleEnvironmentsContent({
   onSelect,
   onCancel,
 }: {
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   environments: any[]
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   selectedEnvironment: any
   selectedEnvironmentSource: string | null
   loadingState: string | null
@@ -157,6 +163,7 @@ function MultipleEnvironmentsContent({
 }) {
   const sourceSuffix =
     selectedEnvironmentSource && selectedEnvironmentSource !== 'localSettings'
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       ? ` ${tSync('remoteEnv.fromSettings', { source: getSettingSourceName(selectedEnvironmentSource as any) })}`
       : ''
   const subtitle = (

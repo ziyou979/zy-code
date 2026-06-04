@@ -7,6 +7,7 @@ import { getProjectRoot, getSessionId } from '../../bootstrap/state.js'
 import { getCommand, getSkillToolCommands, hasCommand } from '../../commands.js'
 import { DEFAULT_AGENT_PROMPT, enhanceSystemPromptWithEnvDetails } from '../../constants/prompts.js'
 import type { QuerySource } from '../../constants/querySource.js'
+import type { UserContentBlock } from '../../types/llm.js'
 import { getSystemContext, getUserContext } from '../../context.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { query } from '../../query.js'
@@ -470,7 +471,7 @@ export async function* runAgent({
     : resolveAgentTools(agentDefinition, availableTools, isAsync).resolvedTools
 
   const additionalWorkingDirectories = Array.from(
-    (appState.toolPermissionContext.additionalWorkingDirectories as any).keys(),
+    appState.toolPermissionContext.additionalWorkingDirectories.keys(),
   )
 
   const agentSystemPrompt = override?.systemPrompt
@@ -480,7 +481,7 @@ export async function* runAgent({
           agentDefinition,
           toolUseContext,
           resolvedAgentModel,
-          additionalWorkingDirectories as any,
+          additionalWorkingDirectories,
           resolvedTools,
         ),
       )
@@ -593,7 +594,7 @@ export async function* runAgent({
 
       initialMessages.push(
         createUserMessage({
-          content: [{ type: 'text', text: metadata }, ...(content as any[])],
+          content: [{ type: 'text' as const, text: metadata }, ...(content as UserContentBlock[])],
           isMeta: true,
         }),
       )
@@ -691,7 +692,7 @@ export async function* runAgent({
   }).catch((_err) => logForDebugging(`Failed to write agent metadata: ${_err}`))
 
   // Track the last recorded message UUID for parent chain continuity
-  let lastRecordedUuid: UUID | null = (initialMessages.at(-1)?.uuid as any) ?? null
+  let lastRecordedUuid: UUID | null = (initialMessages.at(-1)?.uuid as UUID | undefined) ?? null
 
   // 子代理空闲超时：10 分钟无任何消息则自动中止，防止挂起
   const SUBAGENT_IDLE_TIMEOUT_MS = 10 * 60 * 1000
@@ -752,7 +753,7 @@ export async function* runAgent({
           logForDebugging(`Failed to record sidechain transcript: ${err}`),
         )
         if (message.type !== 'progress') {
-          lastRecordedUuid = message.uuid as any
+          lastRecordedUuid = message.uuid as UUID
         }
         yield message
       }
@@ -813,7 +814,7 @@ export async function* runAgent({
     if (feature('MONITOR_TOOL')) {
       const mcpMod =
         require('../../tasks/MonitorMcpTask/MonitorMcpTask.js') as typeof import('../../tasks/MonitorMcpTask/MonitorMcpTask.js')
-      ;(mcpMod as any).killMonitorMcpTasksForAgent(
+      mcpMod.killMonitorMcpTasksForAgent(
         agentId,
         toolUseContext.getAppState,
         rootSetAppState,

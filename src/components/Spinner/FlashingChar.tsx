@@ -18,7 +18,7 @@ export function FlashingChar({ char, flashOpacity, messageColor, shimmerColor }:
   const shimmerRGB = shimmerColorStr ? parseRGB(shimmerColorStr) : null
   if (baseRGB && shimmerRGB) {
     const interpolated = interpolateColor(baseRGB, shimmerRGB, flashOpacity)
-    earlyReturn = (<Text color={toRGBColor(interpolated)}>{char}</Text>) as any
+    earlyReturn = (<Text color={toRGBColor(interpolated)}>{char}</Text>) as React.ReactNode
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
     return earlyReturn as React.ReactNode

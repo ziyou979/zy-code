@@ -191,6 +191,7 @@ export async function processUserInput({
       context,
       context.requestPrompt,
     )) {
+      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
       if ((hookResult.message as any)?.type === 'progress') {
         continue
       }
@@ -200,6 +201,7 @@ export async function processUserInput({
           messages: [
             createSystemMessage(
               `${blockingMessage}\n\nOriginal prompt: ${input}`,
+              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
               'warning' as any,
             ),
           ],
@@ -228,6 +230,7 @@ export async function processUserInput({
     context.requestPrompt,
   )) {
     // We only care about the result
+    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
     if ((hookResult.message as any)?.type === 'progress') {
       continue
     }
@@ -238,6 +241,7 @@ export async function processUserInput({
       return {
         messages: [
           // TODO: Make this an attachment message
+          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           createSystemMessage(`${blockingMessage}\n\nOriginal prompt: ${input}`, 'warning' as any),
         ],
         shouldQuery: false,
@@ -275,8 +279,10 @@ export async function processUserInput({
 
     // TODO: Clean this up
     if (hookResult.message) {
+      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
       switch ((hookResult.message as any).attachment.type) {
         case 'hook_success':
+          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           if (!(hookResult.message as any).attachment.content) {
             // Skip if there is no content
             break
@@ -284,12 +290,16 @@ export async function processUserInput({
           result.messages.push({
             ...hookResult.message,
             attachment: {
+              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
               ...(hookResult.message as any).attachment,
+              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
               content: applyTruncation((hookResult.message as any).attachment.content),
             },
+          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           } as any)
           break
         default:
+          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           result.messages.push(hookResult.message as any)
           break
       }

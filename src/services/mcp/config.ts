@@ -1100,6 +1100,7 @@ export async function getZyCodeMcpConfigs(
 
   // 并行处理已启用插件的 MCP 服务器
   const pluginServerResults = await Promise.all(
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     pluginResult.enabled.map((plugin: any) => getPluginMcpServers(plugin, mcpErrors)),
   )
   for (const servers of pluginServerResults) {
@@ -1294,8 +1295,11 @@ export function parseMcpConfig(params: {
     if (
       getPlatform() === 'windows' &&
       (!configToCheck.type || configToCheck.type === 'stdio') &&
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
       ((configToCheck as any).command === 'npx' ||
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         (configToCheck as any).command.endsWith('\\npx') ||
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         (configToCheck as any).command.endsWith('/npx'))
     ) {
       errors.push({

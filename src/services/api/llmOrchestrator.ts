@@ -369,8 +369,10 @@ export async function* executeNonStreamingRequest(
     initialConsecutive529Errors?: number
     querySource?: QuerySource
   },
+  // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
   paramsFromContext: (context: RetryContext) => any,
   onAttempt: (attempt: number, start: number, maxOutputTokens: number) => void,
+  // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
   captureRequest: (params: any) => void,
   /**
    * 此回退正在恢复的失败流式尝试的请求 ID。
@@ -485,8 +487,8 @@ async function* queryModel(
     options.querySource.startsWith('repl_main_thread') ||
     options.querySource.startsWith('agent:') ||
     options.querySource === 'sdk' ||
-    (options.querySource as any) === 'hook_agent' ||
-    (options.querySource as any) === 'verification_agent'
+    options.querySource === 'hook_agent' ||
+    options.querySource === 'verification_agent'
   const betas = getMergedBetas(options.model, { isAgenticQuery })
 
   // 启用 advisor 时始终发送 advisor beta header，以便
@@ -604,7 +606,9 @@ async function* queryModel(
   let cachedMCEnabled = false
   let cacheEditingBetaHeader = ''
   if (feature('CACHED_MICROCOMPACT')) {
+    // biome-ignore lint/suspicious/noExplicitAny: 动态模块加载
     const cachedMicrocompact = (await import('../compact/cachedMicrocompact.js')) as any
+    // biome-ignore lint/suspicious/noExplicitAny: 动态模块加载
     const betas = (await import('src/constants/betas.js')) as any
     const isCachedMicrocompactEnabled = cachedMicrocompact.isCachedMicrocompactEnabled
     const isModelSupportedForCacheEditing = cachedMicrocompact.isModelSupportedForCacheEditing
@@ -802,7 +806,7 @@ async function* queryModel(
       !cacheEditingHeaderLatched &&
       cachedMCEnabled &&
       getAPIProvider() === 'anthropic' &&
-      (options.querySource as any) === 'repl_main_thread'
+      options.querySource === 'repl_main_thread'
     ) {
       cacheEditingHeaderLatched = true
       setCacheEditingHeaderLatched(true)
@@ -924,7 +928,7 @@ async function* queryModel(
 
     const hasThinking =
       thinkingConfig.type !== 'disabled' && !isEnvTruthy(process.env.ZY_CODE_DISABLE_THINKING)
-    let thinking: any | undefined
+    let thinking: { type: 'adaptive' } | { type: 'enabled'; budget_tokens: number } | undefined
 
     // 重要：不要更改下面的自适应与预算 thinking 选择，
     // 除非通知模型发布 DRI 和研究团队。这是一个敏感的
@@ -938,7 +942,7 @@ async function* queryModel(
         // thinking 而不设预算。
         thinking = {
           type: 'adaptive',
-        } as any
+        }
       } else {
         // 对于不支持自适应 thinking 的模型，使用默认
         // thinking 预算，除非明确指定。
@@ -950,7 +954,7 @@ async function* queryModel(
         thinking = {
           budget_tokens: thinkingBudget,
           type: 'enabled',
-        } as any
+        }
       }
     }
 
@@ -983,11 +987,11 @@ async function* queryModel(
     const useCachedMC =
       cachedMCEnabled &&
       getAPIProvider() === 'anthropic' &&
-      (options.querySource as any) === 'repl_main_thread'
+      options.querySource === 'repl_main_thread'
     if (
       cacheEditingHeaderLatched &&
       getAPIProvider() === 'anthropic' &&
-      (options.querySource as any) === 'repl_main_thread' &&
+      options.querySource === 'repl_main_thread' &&
       !betasParams.includes(cacheEditingBetaHeader)
     ) {
       betasParams.push(cacheEditingBetaHeader)
@@ -1431,7 +1435,7 @@ async function* queryModel(
                     })
                     throw new Error('Content block is not a thinking block')
                   }
-                  contentBlock.signature = (delta as any).signature
+                  contentBlock.signature = (delta as unknown as { signature: string }).signature
                   break
                 case 'thinking_delta':
                   if (contentBlock.type !== 'thinking') {
@@ -1528,7 +1532,7 @@ async function* queryModel(
                 }
               : undefined
 
-            usage = updateUsage(usage, usageForUpdate)
+            usage = updateUsage(usage, usageForUpdate as Partial<NonNullableUsage> | undefined)
             // 从 response_delta 捕获 research（仅限内部使用）。
             // 始终用最新值覆盖。同时回写到已产出的消息，
             // 因为 message_delta 在 content_block_stop 之后到达。
@@ -1901,6 +1905,7 @@ async function* queryModel(
       // 404 在分配 streamRequestId 之前在 .withResponse() 处抛出，
       // 且 CannotRetryError 意味着每次重试都失败——所以从错误 header 中获取
       // 失败的请求 ID。
+      // biome-ignore lint/suspicious/noExplicitAny: SDK 扩展字段 requestID 未在类型中声明
       const failedRequestId = (errorFromRetry.originalError as any).requestID ?? 'unknown'
       logForDebugging('Streaming endpoint returned 404, falling back to non-streaming mode', {
         level: 'warn',
@@ -1975,11 +1980,13 @@ async function* queryModel(
           extractQuotaStatusFromError(error)
         }
 
+        // biome-ignore lint/suspicious/noExplicitAny: SDK 扩展字段 requestID/error 未在类型中声明
+        const errorAny = error as any
         const requestId =
           streamRequestId ||
-          (isAPIError(error) ? (error as any).requestID : undefined) ||
+          (isAPIError(error) ? errorAny.requestID : undefined) ||
           (isAPIError(error)
-            ? ((error as any).error as { request_id?: string })?.request_id
+            ? (errorAny.error as { request_id?: string })?.request_id
             : undefined)
 
         logAPIError({
@@ -2029,12 +2036,14 @@ async function* queryModel(
         extractQuotaStatusFromError(error)
       }
 
+      // biome-ignore lint/suspicious/noExplicitAny: SDK 扩展字段 requestID/error 未在类型中声明
+      const errorAny2 = error as any
       // 从流、错误头或错误体中提取 requestId
       const requestId =
         streamRequestId ||
-        (isAPIError(error) ? (error as any).requestID : undefined) ||
+        (isAPIError(error) ? errorAny2.requestID : undefined) ||
         (isAPIError(error)
-          ? ((error as any).error as { request_id?: string })?.request_id
+          ? (errorAny2.error as { request_id?: string })?.request_id
           : undefined)
 
       logAPIError({

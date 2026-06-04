@@ -175,7 +175,7 @@ export async function runEngine(
     ...opts.config,
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造，QueryEngineConfig 字段过多
   const engine = new QueryEngine(config as any)
 
   const wire: WireMessage[] = []

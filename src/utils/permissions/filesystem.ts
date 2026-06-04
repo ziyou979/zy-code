@@ -618,6 +618,7 @@ export function checkPathSafetyForAutoEdit(
 }
 
 export function allWorkingDirectories(context: ToolPermissionContext): Set<string> {
+  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
   return new Set([getOriginalCwd(), ...(context.additionalWorkingDirectories as any).keys()])
 }
 
@@ -1207,11 +1208,14 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
       : generateSuggestions(path, 'write', toolPermissionContext, pathsToCheck)
     return {
       behavior: 'ask',
+      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
       message: (safetyCheck as any).message,
       suggestions: safetySuggestions,
       decisionReason: {
         type: 'safetyCheck',
+        // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
         reason: (safetyCheck as any).message,
+        // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
         classifierApprovable: (safetyCheck as any).classifierApprovable,
       },
     }

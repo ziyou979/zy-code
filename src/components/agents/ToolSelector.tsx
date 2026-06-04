@@ -188,9 +188,11 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }: Prop
   })
   const toolsByBucket = buckets
   const createBucketToggleAction = (bucketTools: Tool[]) => {
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const selected = count(bucketTools, (tool: any) => selectedSet.has(tool.name))
     const needsSelection = selected < bucketTools.length
     return () => {
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       const toolNames_1 = bucketTools.map((tool: any) => tool.name)
       handleToggleTools(toolNames_1, needsSelection)
     }

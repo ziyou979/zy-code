@@ -221,7 +221,7 @@ MAX_NON_STREAMING_TOKENS = 64_000
 export function adjustParamsForNonStreaming<
   T extends {
     max_tokens: number
-    thinking?: any
+    thinking?: { type: string; budget_tokens?: number }
   },
 >(params: T, maxTokensCap: number): T {
   const cappedMaxTokens = Math.min(params.max_tokens, maxTokensCap)

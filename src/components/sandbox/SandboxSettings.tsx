@@ -23,6 +23,7 @@ type Props = {
 type SandboxModeTabProps = {
   showSocketWarning: boolean
   options: { label: string; value: string }[]
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   onSelect: (value: any) => Promise<void>
   onComplete: (result?: string, options?: { display?: CommandResultDisplay }) => void
 }

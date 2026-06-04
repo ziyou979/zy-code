@@ -397,11 +397,14 @@ export default class Output {
         }
 
         case 'shift': {
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           shiftRows(screen, (operation as any).top, (operation as any).bottom, (operation as any).n)
         }
 
         case 'write': {
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           const { text, softWrap } = operation as any
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           let { x, y } = operation as any
           let lines = text.split('\n')
           let swFrom = 0

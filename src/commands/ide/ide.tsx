@@ -209,9 +209,11 @@ function IDEOpenSelection({ availableIDEs, onSelectIDE, onDone }: IDEOpenSelecti
     </Dialog>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
 function RunningIDESelector({ runningIDEs, onSelectIDE, onDone }: any) {
   const [selectedValue, setSelectedValue] = useState(runningIDEs[0] ?? '')
   const handleSelectIDE = (value: string) => {
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     onSelectIDE(value as any)
   }
   const options = runningIDEs.map((ide: string) => ({
@@ -238,6 +240,7 @@ function RunningIDESelector({ runningIDEs, onSelectIDE, onDone }: any) {
     </Dialog>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
 function InstallOnMount({ ide, onInstall }: any) {
   useEffect(() => {
     onInstall(ide)
@@ -348,7 +351,9 @@ export async function call(
       // Show selector when multiple IDEs are running
       return (
         <RunningIDESelector
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           runningIDEs={runningIDEs as any}
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           onSelectIDE={onInstall as any}
           onDone={() => {
             onDone(tSync('ide.noIdeSelected'), {
@@ -360,6 +365,7 @@ export async function call(
         />
       )
     } else if (runningIDEs.length === 1) {
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       return <InstallOnMount ide={runningIDEs[0]! as any} onInstall={onInstall as any} as any />
     }
   }

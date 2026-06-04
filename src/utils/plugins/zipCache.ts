@@ -207,8 +207,8 @@ export async function createZipFromDirectory(sourceDir: string): Promise<Uint8Ar
   const visited = new Set<string>()
   await collectFilesForZip(sourceDir, '', files, visited)
 
-  // @ts-expect-error
-  const { zipSync } = (await import('fflate')) as any
+  // @ts-expect-error -- fflate 类型声明不完整
+  const { zipSync } = (await import('fflate')) as { zipSync: (data: Record<string, unknown>, opts?: { level: number }) => Uint8Array }
   const zipData = zipSync(files, { level: 6 })
   logForDebugging(
     `Created ZIP from ${sourceDir}: ${Object.keys(files).length} files, ${zipData.length} bytes`,

@@ -208,7 +208,7 @@ export function logEventToZy(
     return
   }
 
-  if (!zyEventLogger || isSinkKilled('zyEvent' as any)) {
+  if (!zyEventLogger || isSinkKilled('zyEvent')) {
     return
   }
 
@@ -244,7 +244,7 @@ export function logGrowthBookExperimentToZy(data: GrowthBookExperimentData): voi
     return
   }
 
-  if (!zyEventLogger || isSinkKilled('zyEvent' as any)) {
+  if (!zyEventLogger || isSinkKilled('zyEvent')) {
     return
   }
 
@@ -343,6 +343,7 @@ export function initializeZyEventLogging(): void {
   // Events are written to ~/.zy/telemetry/zy_events.log
   // instead of being sent to the remote /api/event_logging/batch endpoint.
   const eventLoggingExporter = new LocalFileExporter()
+  // biome-ignore lint/suspicious/noExplicitAny: 第三方 API 构造函数签名不完善
   zyEventLoggerProvider = new (LoggerProvider as any)({
     resource,
     processors: [

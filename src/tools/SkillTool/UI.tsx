@@ -11,7 +11,7 @@ import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import type { Tools } from '../../Tool.js'
 import type { ToolResultBlock } from '../../types/llm.js'
-import type { ProgressMessage } from '../../types/message.js'
+import type { AssistantMessage, ProgressMessage, UserMessage } from '../../types/message.js'
 import { buildSubagentLookups, EMPTY_LOOKUPS } from '../../utils/messages.js'
 import { plural } from '../../utils/stringUtils.js'
 import type { inputSchema, Output, Progress } from './SkillTool.js'
@@ -89,16 +89,16 @@ export function renderToolUseProgressMessage(
     : progressMessages.slice(-MAX_PROGRESS_MESSAGES_TO_SHOW)
   const hiddenCount = progressMessages.length - displayedMessages.length
   const { inProgressToolUseIDs } = buildSubagentLookups(
-    progressMessages.map((pm) => pm.data) as any,
+    progressMessages.map((pm) => pm.data) as { message: AssistantMessage | UserMessage }[],
   )
   return (
     <MessageResponse>
       <Box flexDirection="column">
         <SubAgentProvider>
-          {displayedMessages.map((progressMessage: any) => (
+          {displayedMessages.map((progressMessage: ProgressMessage<Progress>) => (
             <Box key={progressMessage.uuid} height={1} overflow="hidden">
               <MessageComponent
-                message={progressMessage.data.message as any}
+                message={progressMessage.data.message as AssistantMessage | UserMessage}
                 lookups={EMPTY_LOOKUPS}
                 addMargin={false}
                 tools={tools}

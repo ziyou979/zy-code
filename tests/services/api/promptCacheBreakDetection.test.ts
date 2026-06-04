@@ -30,18 +30,21 @@ describe('promptCacheBreakDetection', () => {
 
   describe('notifyCacheDeletion', () => {
     test('无对应 source → 不抛错', () => {
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect(() => notifyCacheDeletion('repl_main_thread' as any)).not.toThrow()
     })
   })
 
   describe('notifyCompaction', () => {
     test('无对应 source → 不抛错', () => {
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect(() => notifyCompaction('repl_main_thread' as any)).not.toThrow()
     })
   })
 
   describe('cleanupAgentTracking', () => {
     test('删除不存在的 agentId → 不抛错', () => {
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect(() => cleanupAgentTracking('non-existent' as any)).not.toThrow()
     })
   })
@@ -60,6 +63,7 @@ describe('promptCacheBreakDetection', () => {
             inputSchema: { type: 'object', properties: {} },
           },
         ],
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         querySource: 'repl_main_thread' as any,
         model: 'claude-3',
       })
@@ -94,6 +98,7 @@ describe('promptCacheBreakDetection', () => {
             inputSchema: { type: 'object' as const, properties: {} },
           },
         ],
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         querySource: 'repl_main_thread' as any,
         model: 'claude-3',
       }
@@ -104,9 +109,11 @@ describe('promptCacheBreakDetection', () => {
       recordPromptState(snapshot)
       // 调用 checkResponse — 因无变更应跳过
       await checkResponseForCacheBreak(
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         'repl_main_thread' as any,
         1000, // cacheReadTokens
         200, // cacheCreationTokens
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] as any,
       )
 
@@ -133,7 +140,9 @@ describe('promptCacheBreakDetection', () => {
       )
       const baseSnapshot = {
         system: [{ type: 'text' as const, text: 'Original system prompt.' }],
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         toolSchemas: [] as any[],
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         querySource: 'repl_main_thread' as any,
         model: 'claude-3',
       }
@@ -141,6 +150,7 @@ describe('promptCacheBreakDetection', () => {
       recordPromptState(baseSnapshot)
 
       // 首次 checkResponse 只记录基线（prevCacheRead），第二次才检测
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       await checkResponseForCacheBreak('repl_main_thread' as any, 2000, 0, [])
 
       // 变更 system prompt
@@ -151,9 +161,11 @@ describe('promptCacheBreakDetection', () => {
 
       // 第二次 checkResponse: 缓存读取下降 → 触发检测
       await checkResponseForCacheBreak(
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         'repl_main_thread' as any,
         500, // 从 2000 降到 500 (>5%)，触发检测
         100,
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] as any,
       )
 
@@ -180,22 +192,28 @@ describe('promptCacheBreakDetection', () => {
       )
       recordPromptState({
         system: [{ type: 'text' as const, text: 'prompt' }],
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         toolSchemas: [] as any[],
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         querySource: 'repl_main_thread' as any,
         model: 'claude-3-opus',
       })
 
       // 首次 checkResponse — 设基线
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       await checkResponseForCacheBreak('repl_main_thread' as any, 3000, 0, [])
 
       // 换模型
       recordPromptState({
         system: [{ type: 'text' as const, text: 'prompt' }],
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         toolSchemas: [] as any[],
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         querySource: 'repl_main_thread' as any,
         model: 'claude-3-sonnet',
       })
 
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       await checkResponseForCacheBreak('repl_main_thread' as any, 500, 100, [])
 
       mock.restore()
@@ -221,15 +239,19 @@ describe('promptCacheBreakDetection', () => {
       )
       recordPromptState({
         system: [{ type: 'text' as const, text: 'prompt' }],
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         toolSchemas: [] as any[],
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         querySource: 'repl_main_thread' as any,
         model: 'claude-3',
       })
 
       // 首次基线
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       await checkResponseForCacheBreak('repl_main_thread' as any, 1000, 0, [])
 
       // 没有变更，缓存读取相近（>= 95%）
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       await checkResponseForCacheBreak('repl_main_thread' as any, 980, 0, [])
 
       mock.restore()

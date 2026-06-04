@@ -43,7 +43,7 @@ function normalizedUpperBound(m: Message): number {
   if (!('message' in m)) {
     return 1
   }
-  const c = (m.message as any).content
+  const c = (m.message as { content?: unknown }).content
   return Array.isArray(c) ? c.length : 1
 }
 

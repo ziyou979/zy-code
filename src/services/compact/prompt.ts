@@ -270,11 +270,9 @@ const NO_TOOLS_TRAILER =
 
 export function getPartialCompactPrompt(
   customInstructions?: string,
-  // @ts-expect-error
   direction: PartialCompactDirection = 'from',
 ): string {
   const template =
-    // @ts-expect-error
     direction === 'up_to' ? PARTIAL_COMPACT_UP_TO_PROMPT : PARTIAL_COMPACT_PROMPT
   let prompt = NO_TOOLS_PREAMBLE + template
 

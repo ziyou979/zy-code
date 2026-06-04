@@ -1,3 +1,4 @@
+import type { QuerySource } from 'src/constants/querySource.js'
 import { getUserContext } from 'src/context.js'
 import { queryModelWithoutStreaming } from 'src/services/api/llmOrchestrator.js'
 import type { ModelName } from 'src/services/model/model.js'
@@ -165,7 +166,7 @@ export async function generateAgent(
       agents: [],
       isNonInteractiveSession: false,
       hasAppendSystemPrompt: false,
-      querySource: 'agent_creation' as any,
+      querySource: 'agent_creation' as QuerySource,
       mcpTools: [],
     },
   })

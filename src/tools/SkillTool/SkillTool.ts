@@ -203,7 +203,7 @@ async function executeForkedSkill(
       },
       canUseTool,
       isAsync: false,
-      querySource: 'agent:custom' as any,
+      querySource: 'agent:custom' as const,
       model: command.model as ModelAlias | undefined,
       availableTools: context.options.tools,
       override: { agentId },

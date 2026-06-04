@@ -553,13 +553,16 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
 
         if (feature('FILE_PERSISTENCE') && turnStartTime !== undefined) {
           void executeFilePersistence(
+            // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
             turnStartTime as any,
             loopState.abortController.signal,
             (result) => {
               output.enqueue({
                 type: 'system' as const,
                 subtype: 'files_persisted' as const,
+                // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
                 files: result.files as any,
+                // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
                 failed: result.failed as any,
                 processed_at: new Date().toISOString(),
                 uuid: randomUUID(),

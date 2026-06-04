@@ -27,12 +27,12 @@ export function FileEditToolUpdatedMessage({
 }: Props) {
   const { columns } = useTerminalSize()
   const numAdditions = structuredPatch.reduce(
-    (acc, hunk) => acc + count(hunk.lines, (_) => (_ as any).startsWith('+')),
+    (acc, hunk) => acc + count(hunk.lines, (_) => (_ as string).startsWith('+')),
     0,
   )
   const numRemovals = structuredPatch.reduce(
     (removalCount, hunk) =>
-      removalCount + count(hunk.lines, (line) => (line as any).startsWith('-')),
+      removalCount + count(hunk.lines, (line) => (line as string).startsWith('-')),
     0,
   )
   const text = (

@@ -2,6 +2,7 @@
  * EXPERIMENT: Session memory compaction
  */
 
+import type { UUID } from 'node:crypto'
 import { getMainLoopModel } from '../../services/model/model.js'
 import type { AgentId } from '../../types/ids.js'
 import type { HookResultMessage, Message } from '../../types/message.js'
@@ -420,11 +421,10 @@ function createCompactionResultFromSessionMemory(
   const boundaryMarker = createCompactBoundaryMessage(
     'auto',
     preCompactTokenCount ?? 0,
-    messages[messages.length - 1]?.uuid as any,
+    messages[messages.length - 1]?.uuid as UUID | undefined,
   )
   const preCompactDiscovered = extractDiscoveredToolNames(messages)
   if (preCompactDiscovered.size > 0) {
-    // @ts-expect-error
     boundaryMarker.compactMetadata.preCompactDiscoveredTools = [...preCompactDiscovered].sort()
   }
 
@@ -453,7 +453,7 @@ function createCompactionResultFromSessionMemory(
   return {
     boundaryMarker: annotateBoundaryWithPreservedSegment(
       boundaryMarker,
-      summaryMessages[summaryMessages.length - 1]!.uuid as any,
+      summaryMessages[summaryMessages.length - 1]!.uuid as UUID,
       messagesToKeep,
     ),
     summaryMessages,

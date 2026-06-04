@@ -7,8 +7,9 @@ import type { Tool } from '../../Tool.js'
 export function clearSessionsWithTungstenUsage(): void {}
 export function resetInitializationState(): void {}
 
+// biome-ignore lint/suspicious/noExplicitAny: 存根工具 — 外部构建永不激活
 export const TungstenTool: Tool = {
-  inputSchema: z.object({}) as any,
+  inputSchema: z.object({}),
   async call() {
     return { data: '' }
   },
@@ -24,7 +25,7 @@ export const TungstenTool: Tool = {
     toolCallId: toolUseID,
     content: [],
   }),
-} as any
+} as unknown as Tool
 
 // 插件化注册
 import { toolRegistry } from '../registry.js'

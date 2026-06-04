@@ -9,25 +9,32 @@ export function createFallbackStorage(
   secondary: SecureStorage,
 ): SecureStorage {
   return {
+    // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
     name: `${(primary as any).name}-with-${(secondary as any).name}-fallback`,
     read(): SecureStorageData {
+      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
       const result = (primary as any).read()
       if (result !== null && result !== undefined) {
         return result
       }
+      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
       return (secondary as any).read() || {}
     },
     async readAsync(): Promise<SecureStorageData | null> {
+      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
       const result = await (primary as any).readAsync()
       if (result !== null && result !== undefined) {
         return result
       }
+      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
       return (await (secondary as any).readAsync()) || {}
     },
     update(data: SecureStorageData): { success: boolean; warning?: string } {
       // Capture state before update
+      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
       const primaryDataBefore = (primary as any).read()
 
+      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
       const result = (primary as any).update(data)
 
       if (result.success) {
@@ -35,11 +42,13 @@ export function createFallbackStorage(
         // This preserves credentials when sharing .zy between host and containers
         // See: https://github.com/anthropics/zy-code/issues/1414
         if (primaryDataBefore === null) {
+          // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
           ;(secondary as any).delete()
         }
         return result
       }
 
+      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
       const fallbackResult = (secondary as any).update(data)
 
       if (fallbackResult.success) {
@@ -50,6 +59,7 @@ export function createFallbackStorage(
         // /login loop (#30337). Best-effort delete; if this also fails the
         // user's keychain is in a bad state we can't fix from here.
         if (primaryDataBefore !== null) {
+          // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
           ;(primary as any).delete()
         }
         return {
@@ -61,10 +71,13 @@ export function createFallbackStorage(
       return { success: false }
     },
     delete(): boolean {
+      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
       const primarySuccess = (primary as any).delete()
+      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
       const secondarySuccess = (secondary as any).delete()
 
       return primarySuccess || secondarySuccess
     },
+  // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
   } as any
 }

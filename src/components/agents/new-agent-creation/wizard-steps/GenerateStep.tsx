@@ -15,6 +15,7 @@ import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
 import { generateAgent } from '../../generateAgent.js'
 import type { AgentWizardData } from '../types.js'
 export function GenerateStep(): ReactNode {
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const { updateWizardData, goBack, goToStep, wizardData } = useWizard<AgentWizardData>() as any
   const [prompt, setPrompt] = useState(wizardData.generationPrompt || '')
   const [isGenerating, setIsGenerating] = useState(false)

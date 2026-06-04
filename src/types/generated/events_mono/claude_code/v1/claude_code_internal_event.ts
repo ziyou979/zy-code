@@ -134,6 +134,7 @@ function createBaseGitHubActionsMetadata(): GitHubActionsMetadata {
 }
 
 export const GitHubActionsMetadata = {
+  // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
   fromJSON(object: any): GitHubActionsMetadata {
     return {
       actor_id: isSet(object.actor_id) ? globalThis.String(object.actor_id) : '',
@@ -145,6 +146,7 @@ export const GitHubActionsMetadata = {
   },
 
   toJSON(message: GitHubActionsMetadata): unknown {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     const obj: any = {}
     if (message.actor_id !== undefined) {
       obj.actor_id = message.actor_id
@@ -159,6 +161,7 @@ export const GitHubActionsMetadata = {
   },
 
   create<I extends Exact<DeepPartial<GitHubActionsMetadata>, I>>(base?: I): GitHubActionsMetadata {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     return GitHubActionsMetadata.fromPartial(base ?? ({} as any))
   },
   fromPartial<I extends Exact<DeepPartial<GitHubActionsMetadata>, I>>(
@@ -213,6 +216,7 @@ function createBaseEnvironmentMetadata(): EnvironmentMetadata {
 }
 
 export const EnvironmentMetadata = {
+  // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
   fromJSON(object: any): EnvironmentMetadata {
     return {
       platform: isSet(object.platform) ? globalThis.String(object.platform) : '',
@@ -265,6 +269,7 @@ export const EnvironmentMetadata = {
         ? globalThis.String(object.claude_code_remote_session_id)
         : '',
       tags: globalThis.Array.isArray(object?.tags)
+        // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
         ? object.tags.map((e: any) => globalThis.String(e))
         : [],
       deployment_environment: isSet(object.deployment_environment)
@@ -290,6 +295,7 @@ export const EnvironmentMetadata = {
   },
 
   toJSON(message: EnvironmentMetadata): unknown {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     const obj: any = {}
     if (message.platform !== undefined) {
       obj.platform = message.platform
@@ -400,6 +406,7 @@ export const EnvironmentMetadata = {
   },
 
   create<I extends Exact<DeepPartial<EnvironmentMetadata>, I>>(base?: I): EnvironmentMetadata {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     return EnvironmentMetadata.fromPartial(base ?? ({} as any))
   },
   fromPartial<I extends Exact<DeepPartial<EnvironmentMetadata>, I>>(
@@ -458,6 +465,7 @@ function createBaseSlackContext(): SlackContext {
 }
 
 export const SlackContext = {
+  // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
   fromJSON(object: any): SlackContext {
     return {
       slack_team_id: isSet(object.slack_team_id) ? globalThis.String(object.slack_team_id) : '',
@@ -472,6 +480,7 @@ export const SlackContext = {
   },
 
   toJSON(message: SlackContext): unknown {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     const obj: any = {}
     if (message.slack_team_id !== undefined) {
       obj.slack_team_id = message.slack_team_id
@@ -489,6 +498,7 @@ export const SlackContext = {
   },
 
   create<I extends Exact<DeepPartial<SlackContext>, I>>(base?: I): SlackContext {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     return SlackContext.fromPartial(base ?? ({} as any))
   },
   fromPartial<I extends Exact<DeepPartial<SlackContext>, I>>(object: I): SlackContext {
@@ -536,6 +546,7 @@ function createBaseZyCodeInternalEvent(): ZyCodeInternalEvent {
 }
 
 export const ZyCodeInternalEvent = {
+  // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
   fromJSON(object: any): ZyCodeInternalEvent {
     return {
       event_name: isSet(object.event_name) ? globalThis.String(object.event_name) : '',
@@ -591,6 +602,7 @@ export const ZyCodeInternalEvent = {
   },
 
   toJSON(message: ZyCodeInternalEvent): unknown {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     const obj: any = {}
     if (message.event_name !== undefined) {
       obj.event_name = message.event_name
@@ -683,6 +695,7 @@ export const ZyCodeInternalEvent = {
   },
 
   create<I extends Exact<DeepPartial<ZyCodeInternalEvent>, I>>(base?: I): ZyCodeInternalEvent {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     return ZyCodeInternalEvent.fromPartial(base ?? ({} as any))
   },
   fromPartial<I extends Exact<DeepPartial<ZyCodeInternalEvent>, I>>(
@@ -756,6 +769,7 @@ function fromTimestamp(t: Timestamp): Date {
   return new globalThis.Date(millis)
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
 function fromJsonTimestamp(o: any): Date {
   if (o instanceof globalThis.Date) {
     return o
@@ -766,11 +780,13 @@ function fromJsonTimestamp(o: any): Date {
   }
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
 function isSet(value: any): boolean {
   return value !== null && value !== undefined
 }
 
 interface MessageFns<T> {
+  // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
   fromJSON(object: any): T
   toJSON(message: T): unknown
   create<I extends Exact<DeepPartial<T>, I>>(base?: I): T

@@ -33,7 +33,7 @@ export function createAgentFunction(ctx: WorkflowAgentContext) {
   let chainKey = ''
   let hasMissed = false
 
-  return async function agent(prompt: string, opts?: AgentOpts): Promise<any> {
+  return async function agent(prompt: string, opts?: AgentOpts): Promise<unknown> {
     if (ctx.abortSignal.aborted) {
       return null
     }
@@ -41,7 +41,7 @@ export function createAgentFunction(ctx: WorkflowAgentContext) {
     ctx.budget.checkBudget()
 
     // 计算缓存键
-    const currentKey = ctx.journal ? computeAgentKey(prompt, opts as any, chainKey) : ''
+    const currentKey = ctx.journal ? computeAgentKey(prompt, opts as Record<string, unknown> | undefined, chainKey) : ''
     if (ctx.journal) {
       chainKey = currentKey
     }
@@ -91,8 +91,8 @@ export function createAgentFunction(ctx: WorkflowAgentContext) {
       }
 
       return result
-    } catch (err: any) {
-      if (err?.name === 'AbortError' || ctx.abortSignal.aborted) {
+    } catch (err: unknown) {
+      if ((err instanceof Error && err.name === 'AbortError') || ctx.abortSignal.aborted) {
         return null
       }
       throw err
@@ -107,7 +107,7 @@ function buildSchemaPromptSuffix(schema: object): string {
   return `\n\n---\nIMPORTANT: Your final response MUST be a single valid JSON object matching this schema. Output ONLY the JSON — no markdown fences, no explanation before or after.\n\nJSON Schema:\n${schemaStr}`
 }
 
-function parseStructuredOutput(rawResult: any, _schema: object): any {
+function parseStructuredOutput(rawResult: unknown, _schema: object): unknown {
   const text = typeof rawResult === 'string' ? rawResult : JSON.stringify(rawResult)
 
   // 尝试从响应中提取 JSON
@@ -140,7 +140,7 @@ async function runWorkflowAgent(
   prompt: string,
   opts: AgentOpts | undefined,
   ctx: WorkflowAgentContext,
-): Promise<any> {
+): Promise<unknown> {
   const { AgentTool } = await import('../../AgentTool/AgentTool.js')
 
   let effectivePrompt = prompt
@@ -159,9 +159,12 @@ async function runWorkflowAgent(
 
   const canUseTool = async () => ({ allowed: true as const })
 
+  // biome-ignore lint/suspicious/noExplicitAny: 适配层类型处理 — AgentTool.call 的输入/回调类型不完全匹配
   const result = await AgentTool.call(
+    // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
     input as any,
     ctx.toolUseContext,
+    // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
     canUseTool as any,
     undefined,
   )
@@ -170,8 +173,8 @@ async function runWorkflowAgent(
     return null
   }
 
-  const data = result.data as any
-  let rawResult: any
+  const data = result.data as Record<string, unknown>
+  let rawResult: unknown
   if (typeof data === 'string') {
     rawResult = data
   } else if (data.result) {

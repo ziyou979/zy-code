@@ -146,6 +146,7 @@ export function useRemoteSession({
           parts.push(`subtype=${sdkMessage.subtype}`)
         }
         if (sdkMessage.type === 'user') {
+          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
           const c = (sdkMessage.message as any)?.content
           parts.push(`content=${Array.isArray(c) ? c.map((b) => b.type).join(',') : typeof c}`)
         }
@@ -228,6 +229,7 @@ export function useRemoteSession({
         // and inProcessRunner.ts; without this the set grows unbounded for the
         // session lifetime (BQ: CCR cohort shows 5.2x higher RSS slope).
         if (setInProgressToolUseIDs && sdkMessage.type === 'user') {
+          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
           const content = (sdkMessage.message as any)?.content
           if (Array.isArray(content)) {
             const resultIds: string[] = []
@@ -323,6 +325,7 @@ export function useRemoteSession({
           message: request.description ?? `${request.tool_name} requires permission`,
           suggestions: request.permission_suggestions,
           blockedPath: request.blocked_path,
+        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
         } as any
 
         const toolUseConfirm: ToolUseConfirm = {
@@ -498,6 +501,7 @@ export function useRemoteSession({
             // Add a warning message to the conversation
             const warningMessage = createSystemMessage(
               'Remote session may be unresponsive. Attempting to reconnect…',
+              // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
               'warning' as any,
             )
             setMessages((prev) => [...prev, warningMessage])

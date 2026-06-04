@@ -466,8 +466,8 @@ export function getHeader(error: APIErrorLike, name: string): string | null {
   if (!headers) {
     return null
   }
-  if (typeof (headers as any).get === 'function') {
-    return (headers as any).get(name) ?? null
+  if (typeof (headers as { get?: (name: string) => string | null }).get === 'function') {
+    return (headers as { get: (name: string) => string | null }).get(name) ?? null
   }
   return (headers as Record<string, string>)[name] ?? null
 }
@@ -479,7 +479,7 @@ export function getHeader(error: APIErrorLike, name: string): string | null {
 export function isAPIError(error: unknown): error is APIErrorLike {
   return (
     error instanceof LLMError ||
-    (error instanceof Error && 'status' in error && typeof (error as any).status === 'number')
+    (error instanceof Error && 'status' in error && typeof (error as { status: unknown }).status === 'number')
   )
 }
 
@@ -586,7 +586,7 @@ export function getErrorStatus(error: unknown): number | undefined {
     return error.status
   }
   if (error instanceof Error && 'status' in error) {
-    return (error as any).status
+    return (error as { status: number }).status
   }
   return undefined
 }
@@ -609,14 +609,15 @@ export function getErrorHeader(error: unknown, name: string): string | null {
     return error.headers[name] ?? null
   }
   if (error instanceof Error && 'headers' in error) {
-    const headers = (error as any).headers
+    const headers = (error as { headers: HeadersLike | undefined }).headers
     if (!headers) {
       return null
     }
-    if (typeof headers.get === 'function') {
-      return headers.get(name) ?? null
+    if (typeof (headers as { get?: (name: string) => string | null }).get === 'function') {
+      return (headers as { get: (name: string) => string | null }).get(name) ?? null
     }
-    return headers[name] ?? null
+    const rec: Record<string, string> = headers as Record<string, string>
+    return rec[name] ?? null
   }
   return null
 }

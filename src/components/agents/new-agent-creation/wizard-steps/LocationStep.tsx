@@ -8,6 +8,7 @@ import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHin
 import { useWizard } from '../../../wizard/index.js'
 import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
 export function LocationStep() {
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const { goNext, updateWizardData, cancel } = useWizard() as any
   const locationOptions = [
     {

@@ -419,8 +419,10 @@ export class StructuredIO {
       if (message.type === 'assistant' || message.type === 'system') {
         return message
       }
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       if ((message.message as any).role !== 'user') {
         exitWithMessage(
+          // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
           `Error: Expected message role 'user', got '${(message.message as any).role}'`,
         )
       }

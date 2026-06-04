@@ -111,7 +111,8 @@ export function validateZipFile(
  * when this module is reached via the plugin loader chain.
  */
 export async function unzipFile(zipData: Buffer): Promise<Record<string, Uint8Array>> {
-  // @ts-expect-error
+  // @ts-expect-error 动态模块
+  // biome-ignore lint/suspicious/noExplicitAny: 动态模块加载
   const { unzipSync } = (await import('fflate')) as any
   const compressedSize = zipData.length
 

@@ -56,6 +56,7 @@ export const call: LocalCommandCall = async (args, context) => {
         // Reset cache read baseline so the post-compact drop isn't flagged
         // as a break. compactConversation does this internally; SM-compact doesn't.
         if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
+          // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
           notifyCompaction((context.options.querySource ?? 'compact') as any, context.agentId)
         }
         markPostCompaction()
@@ -72,6 +73,7 @@ export const call: LocalCommandCall = async (args, context) => {
 
     // Reactive-only mode: route /compact through the reactive path.
     // Checked after session-memory (that path is cheap and orthogonal).
+    // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
     if ((reactiveCompact as any)?.isReactiveOnlyMode()) {
       return await compactViaReactive(messages, context, customInstructions, reactiveCompact!)
     }
@@ -160,6 +162,7 @@ async function compactViaReactive(
     context.setResponseLength?.(() => 0)
     context.onCompactProgress?.({ type: 'compact_start' })
 
+    // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
     const outcome = await (reactive as any).reactiveCompactOnPromptTooLong(
       messages,
       cacheSafeParams,
@@ -238,6 +241,7 @@ async function getCacheSharingParams(
   const defaultSysPrompt = await getSystemPrompt(
     context.options.tools,
     context.options.mainLoopModel,
+    // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
     Array.from((appState.toolPermissionContext.additionalWorkingDirectories as any).keys()),
     context.options.mcpClients,
   )

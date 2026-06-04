@@ -43,6 +43,7 @@ export function applySettingsChange(
   updateHooksConfigSnapshot()
 
   setAppState((prev) => {
+    // biome-ignore lint/suspicious/noExplicitAny: ToolPermissionContext 的 readonly 变体与 mutable 版本不兼容
     let newContext = syncPermissionRulesFromDisk(prev.toolPermissionContext, updatedRules) as any
 
     // Ant-only: re-strip overly broad Bash allow rules after settings sync
@@ -77,6 +78,7 @@ export function applySettingsChange(
       // watcher that would resync AppState), so effortChanged would
       // be true and we'd wipe a session-scoped value held in effortValue.
       ...(effortChanged && newEffort !== undefined ? { effortValue: newEffort } : {}),
+      // biome-ignore lint/suspicious/noExplicitAny: ToolPermissionContext readonly 变体不兼容
     } as any
   })
 }

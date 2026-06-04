@@ -4,6 +4,7 @@
  * 这些函数是纯函数或接近纯函数，测试成本低、价值高。
  */
 import { describe, expect, test } from 'bun:test'
+import type { ToolDefinition } from '../../../src/types/llm.js'
 import {
   convertOutputFormatToResponseFormat,
   openAIDeltaUsageToStandard,
@@ -43,13 +44,13 @@ describe('toolsToOpenAI', () => {
 
   test('工具定义带 input_schema（v1 旧名）→ 兼容', () => {
     const result = toolsToOpenAI([
-      { name: 'f', description: 'd', input_schema: { type: 'object', properties: {} } } as any,
+      { name: 'f', description: 'd', input_schema: { type: 'object', properties: {} } } as unknown as ToolDefinition,
     ])
     expect(result![0].function.parameters).toEqual({ type: 'object', properties: {} })
   })
 
   test('工具定义无 schema → 默认空 object', () => {
-    const result = toolsToOpenAI([{ name: 'f', description: 'd' } as any])
+    const result = toolsToOpenAI([{ name: 'f', description: 'd' } as unknown as ToolDefinition])
     expect(result![0].function.parameters).toEqual({ type: 'object', properties: {} })
   })
 })
@@ -75,7 +76,7 @@ describe('toolChoiceToOpenAI', () => {
   })
 
   test('未知 type → undefined', () => {
-    expect(toolChoiceToOpenAI({ type: 'unknown' } as any)).toBeUndefined()
+    expect(toolChoiceToOpenAI({ type: 'unknown' } as unknown as Parameters<typeof toolChoiceToOpenAI>[0])).toBeUndefined()
   })
 })
 
@@ -124,7 +125,7 @@ describe('convertOutputFormatToResponseFormat', () => {
   test('已知 type 但不是 json_object/json_schema → 原样返回', () => {
     expect(
       convertOutputFormatToResponseFormat({
-        format: { type: 'text' } as any,
+        format: { type: 'text' } as unknown as { type: 'json_object' },
       }),
     ).toEqual({ type: 'text' })
   })

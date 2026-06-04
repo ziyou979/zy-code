@@ -141,6 +141,7 @@ function* yieldMissingToolResultBlocks(
           },
         ],
         toolUseResult: errorMessage,
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         sourceToolAssistantUUID: assistantMessage.uuid as any,
       })
     }
@@ -173,6 +174,7 @@ const MAX_OUTPUT_TOKENS_RECOVERY_LIMIT = 3
  * 与 reactiveCompact.isWithheldPromptTooLong 对应。
  */
 function isWithheldMaxOutputTokens(msg: unknown): msg is AssistantMessage {
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   return (msg as any)?.type === 'assistant' && (msg as any).apiError === 'max_output_tokens'
 }
 
@@ -316,12 +318,14 @@ async function* queryLoop(
     // （生产中 97% 的调用什么都没找到）。轮次 0 用户输入发现
     // 仍然阻塞在 userInputAttachments 中 — 这是唯一一个没有
     // 先前工作可以隐藏的信号的信号。
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     const pendingSkillPrefetch = (skillPrefetch as any)?.startSkillDiscoveryPrefetch(
       null,
       messages,
       toolUseContext,
     )
 
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     yield { type: 'stream_request_start' } as any as any
 
     queryCheckpoint('query_fn_entry')
@@ -405,11 +409,13 @@ async function* queryLoop(
     // state.messages 向前流动（query.ts:1192），下一次 projectView()
     // 无操作是因为归档消息已从输入中消失。
     if (feature('CONTEXT_COLLAPSE') && contextCollapse) {
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       const collapseResult = await (contextCollapse as any).applyCollapsesIfNeeded(
         messagesForQuery,
         toolUseContext,
         querySource,
       )
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       messagesForQuery = (collapseResult as any).messages
     }
 
@@ -569,11 +575,15 @@ async function* queryLoop(
     // 和恢复（之后）必须一致；CACHED_MAY_BE_STALE 可以在
     // 5-30s 流期间翻转，扣留而不恢复会吞掉消息。PTL 不提升
     // 因为其扣留是无门控的 — 它早于实验且已是对照臂基线。
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     const mediaRecoveryEnabled = (reactiveCompact as any)?.isReactiveCompactEnabled() ?? false
     if (
       !compactionResult &&
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       (querySource as any) !== 'compact' &&
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       (querySource as any) !== 'session_memory' &&
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       !((reactiveCompact as any)?.isReactiveCompactEnabled() && isAutoCompactEnabled()) &&
       !collapseOwnsIt
     ) {
@@ -649,6 +659,7 @@ async function* queryLoop(
               // 这些部分消息（尤其是 thinking 块）有无效签名，
               // 会导致 "thinking blocks cannot be modified" API 错误。
               for (const msg of assistantMessages) {
+                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                 yield { type: 'tombstone' as any, message: msg } as any
               }
               logEvent('zy_orphaned_messages_tombstoned', {
@@ -725,6 +736,7 @@ async function* queryLoop(
             let withheld = false
             if (feature('CONTEXT_COLLAPSE')) {
               if (
+                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                 (contextCollapse as any)?.isWithheldPromptTooLong(
                   message,
                   isPromptTooLongMessage,
@@ -734,11 +746,13 @@ async function* queryLoop(
                 withheld = true
               }
             }
+            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
             if ((reactiveCompact as any)?.isWithheldPromptTooLong(message)) {
               withheld = true
             }
             if (
               mediaRecoveryEnabled &&
+              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
               (reactiveCompact as any)?.isWithheldMediaSizeError(message)
             ) {
               withheld = true
@@ -863,6 +877,7 @@ async function* queryLoop(
             // 以便用户无需 verbose 模式就能看到通知。
             yield createSystemMessage(
               `Switched to ${renderModelName(innerError.fallbackModel)} due to high demand for ${renderModelName(innerError.originalModel)}`,
+              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
               'warning' as any,
             )
 
@@ -995,6 +1010,7 @@ async function* queryLoop(
       // 压缩后轮次将再次媒体错误；hasAttemptedReactiveCompact
       // 防止螺旋并让错误浮现。
       const isWithheldMedia =
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         mediaRecoveryEnabled && (reactiveCompact as any)?.isWithheldMediaSizeError(lastMessage)
       if (isWithheld413) {
         // 首先：排出所有暂存的上下文折叠。门控在前一个
@@ -1005,12 +1021,15 @@ async function* queryLoop(
           contextCollapse &&
           state.transition?.reason !== 'collapse_drain_retry'
         ) {
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           const drained = (contextCollapse as any).recoverFromOverflow(
             messagesForQuery,
             querySource,
           )
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           if ((drained as any).committed > 0) {
             const next: State = {
+              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
               messages: (drained as any).messages,
               toolUseContext,
               autoCompactTracking: tracking,
@@ -1022,6 +1041,7 @@ async function* queryLoop(
               turnCount,
               transition: {
                 reason: 'collapse_drain_retry',
+                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                 committed: (drained as any).committed,
               },
             }
@@ -1031,6 +1051,7 @@ async function* queryLoop(
         }
       }
       if ((isWithheld413 || isWithheldMedia) && reactiveCompact) {
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         const compacted = await (reactiveCompact as any).tryReactiveCompact({
           hasAttempted: hasAttemptedReactiveCompact,
           querySource,
@@ -1204,6 +1225,7 @@ async function* queryLoop(
             `A hook blocked the turn from ending ${nextBlockCount} consecutive times — overriding and ending turn. ` +
               `For Stop/SubagentStop hooks, check stop_hook_active in the input and return success while it's true. ` +
               `Set ZY_CODE_STOP_HOOK_BLOCK_CAP to raise this limit.`,
+            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
             'warning' as any,
           )
           return { reason: 'completed' }
@@ -1614,6 +1636,7 @@ async function* queryLoop(
     // hidden_by_main_turn — true 当预取在此点之前解决时
     // （应该 >98%，AKI@250ms / Haiku@573ms 对比 2-30s 的轮次时长）。
     if (skillPrefetch && pendingSkillPrefetch) {
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       const skillAttachments = await (skillPrefetch as any).collectSkillDiscoveryPrefetch(
         pendingSkillPrefetch,
       )

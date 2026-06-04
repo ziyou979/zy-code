@@ -30,13 +30,16 @@ export function getTransportForUrl(
       sseUrl.protocol = 'http:'
     }
     sseUrl.pathname = `${sseUrl.pathname.replace(/\/$/, '')}/worker/events/stream`
+    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
     return new SSETransport(sseUrl, headers, sessionId, refreshHeaders) as any
   }
 
   if (url.protocol === 'ws:' || url.protocol === 'wss:') {
     if (isEnvTruthy(process.env.ZY_CODE_)) {
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       return new HybridTransport(url, headers, sessionId, refreshHeaders) as any
     }
+    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
     return new WebSocketTransport(url, headers, sessionId, refreshHeaders) as any
   } else {
     throw new Error(`Unsupported protocol: ${url.protocol}`)

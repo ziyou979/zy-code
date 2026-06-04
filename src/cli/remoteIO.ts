@@ -216,6 +216,7 @@ export class RemoteIO extends StructuredIO {
     if (this.ccrClient) {
       await this.ccrClient.writeEvent(message)
     } else {
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       await (this.transport as any).write(message)
     }
     if (this.isBridge) {
@@ -233,6 +234,7 @@ export class RemoteIO extends StructuredIO {
       clearInterval(this.keepAliveTimer)
       this.keepAliveTimer = null
     }
+    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
     ;(this.transport as any).close()
     this.inputStream.end()
   }

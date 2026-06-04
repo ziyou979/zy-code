@@ -51,6 +51,7 @@ describe('anthropicLLMStreamEventToStandard: 单事件映射', () => {
       type: 'content_block_start',
       index: 0,
       content_block: { type: 'text', text: '' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     }) as any
     expect(e.type).toBe('chunk_start')
     expect(e.index).toBe(0)
@@ -62,6 +63,7 @@ describe('anthropicLLMStreamEventToStandard: 单事件映射', () => {
       type: 'content_block_start',
       index: 1,
       content_block: { type: 'tool_use', id: 'tu', name: 'fn', input: {} },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     }) as any
     expect(e.type).toBe('chunk_start')
     expect(e.chunk.type).toBe('tool_call')
@@ -74,6 +76,7 @@ describe('anthropicLLMStreamEventToStandard: 单事件映射', () => {
       type: 'content_block_start',
       index: 0,
       content_block: { type: 'thinking', thinking: 'hmm', signature: 'sig' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     }) as any
     expect(e.chunk.type).toBe('thinking')
     expect(e.chunk.thinking).toBe('hmm')
@@ -85,6 +88,7 @@ describe('anthropicLLMStreamEventToStandard: 单事件映射', () => {
       type: 'content_block_delta',
       index: 1,
       delta: { type: 'input_json_delta', partial_json: '{"q":' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     }) as any
     expect(e.type).toBe('chunk_delta')
     expect(e.delta).toEqual({ type: 'input_json_delta', partialJson: '{"q":' })
@@ -95,6 +99,7 @@ describe('anthropicLLMStreamEventToStandard: 单事件映射', () => {
       type: 'content_block_delta',
       index: 0,
       delta: { type: 'text_delta', text: 'hi' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     }) as any
     expect(e.delta).toEqual({ type: 'text_delta', text: 'hi' })
   })
@@ -104,8 +109,10 @@ describe('anthropicLLMStreamEventToStandard: 单事件映射', () => {
       type: 'content_block_delta',
       index: 0,
       delta: { type: 'thinking_delta', thinking: 'so' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     }) as any
     expect(e.delta.type).toBe('thinking_delta')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((e.delta as any).thinking).toBe('so')
   })
 
@@ -114,6 +121,7 @@ describe('anthropicLLMStreamEventToStandard: 单事件映射', () => {
       type: 'message_delta',
       delta: { stop_reason: 'tool_use' },
       usage: { output_tokens: 12 },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     }) as any
     expect(e.type).toBe('response_delta')
     expect(e.stopReason).toBe('tool_use')
@@ -132,7 +140,7 @@ describe('anthropicLLMStreamEventToStandard: 单事件映射', () => {
 })
 
 describe('anthropicStreamToStandard: 整体流转换', () => {
-  async function* fakeStream(): AsyncIterable<any> {
+  async function* fakeStream(): AsyncIterable<unknown> {
     yield { type: 'message_start', message: { id: 'm', model: 'claude' } }
     yield {
       type: 'content_block_start',
@@ -164,8 +172,10 @@ describe('anthropicStreamToStandard: 整体流转换', () => {
       'response_delta',
       'response_stop',
     ])
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const start = events[1] as any
     expect(start.chunk.type).toBe('tool_call')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const delta = events[2] as any
     expect(delta.delta.partialJson).toBe('{"a":1}')
   })
@@ -242,6 +252,7 @@ describe('messagesToAnthropic: 出站 Anthropic 消息构造', () => {
       { role: 'system', content: 'You are helpful.' },
       { role: 'user', content: 'hi' },
       { role: 'assistant', content: 'hello' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
     // system 消息被过滤（由顶层 system 字段处理）
     expect(result).toHaveLength(2)
@@ -254,11 +265,13 @@ describe('messagesToAnthropic: 出站 Anthropic 消息构造', () => {
       { role: 'assistant', content: [{ type: 'tool_call', id: 'c', name: 'f', input: {} }] },
       { role: 'tool', toolCallId: 'c', content: 'result' },
       { role: 'user', content: 'continue' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
     // tool 消息被嵌入 user 消息中
     expect(result).toHaveLength(2)
     expect(result[0].role).toBe('assistant')
     expect(result[1].role).toBe('user')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const userContent = result[1].content as any[]
     expect(userContent[0].type).toBe('tool_result')
     expect(userContent[0].tool_use_id).toBe('c')
@@ -272,7 +285,9 @@ describe('messagesToAnthropic: 出站 Anthropic 消息构造', () => {
       { role: 'assistant', content: [{ type: 'tool_call', id: 'c', name: 'f', input: {} }] },
       { role: 'tool', toolCallId: 'c', content: 'error', isError: true },
       { role: 'user', content: '' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const userContent = result[1].content as any[]
     expect(userContent[0].is_error).toBe(true)
   })
@@ -281,13 +296,16 @@ describe('messagesToAnthropic: 出站 Anthropic 消息构造', () => {
     const result = messagesToAnthropic([
       { role: 'assistant', content: [{ type: 'tool_call', id: 'c', name: 'f', input: {} }] },
       { role: 'tool', toolCallId: 'c', content: 'result' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
     expect(result).toHaveLength(2)
     expect(result[1].role).toBe('user')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[1].content as any[])[0].type).toBe('tool_result')
   })
 
   test('user 消息内容为空数组：返回空数组', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToAnthropic([{ role: 'user', content: [] }] as any)
     expect(result[0].content).toEqual([])
   })
@@ -298,7 +316,9 @@ describe('messagesToAnthropic: 出站 Anthropic 消息构造', () => {
         role: 'assistant',
         content: [{ type: 'tool_call', id: 'c', name: 'f', input: {} }],
       },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const content = result[0].content as any[]
     expect(content[0].type).toBe('tool_use')
     expect(content[0].id).toBe('c')
@@ -315,7 +335,9 @@ describe('messagesToAnthropic: 出站 Anthropic 消息构造', () => {
           { type: 'tool_call', id: 'c', name: 'f', input: { x: 1 } },
         ],
       },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const content = result[0].content as any[]
     expect(content).toHaveLength(2)
     expect(content[0]).toEqual({ type: 'text', text: 'Let me check' })
@@ -324,6 +346,7 @@ describe('messagesToAnthropic: 出站 Anthropic 消息构造', () => {
   })
 
   test('assistant content 为空字符串：转为空字符串', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToAnthropic([{ role: 'assistant', content: '' }] as any)
     expect(result[0].content).toBe('')
   })
@@ -343,8 +366,10 @@ describe('blockToAnthropic（通过 buildAnthropicCreateParams 间接测）', ()
           ],
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     const msg = result.messages.find((m) => m.role === 'assistant')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const blocks = msg.content as any[]
     expect(blocks[0].type).toBe('thinking')
     expect(blocks[0].thinking).toBe('reasoning...')
@@ -365,8 +390,10 @@ describe('blockToAnthropic（通过 buildAnthropicCreateParams 间接测）', ()
           ],
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     const msg = result.messages.find((m) => m.role === 'user')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const blocks = msg.content as any[]
     expect(blocks[1].type).toBe('image')
     expect(blocks[1].source).toEqual({
@@ -389,8 +416,10 @@ describe('blockToAnthropic（通过 buildAnthropicCreateParams 间接测）', ()
           ],
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     const msg = result.messages.find((m) => m.role === 'assistant')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const blocks = msg.content as any[]
     expect(blocks[0].type).toBe('redacted_thinking')
     expect(blocks[0].data).toBe('redacted')
@@ -406,8 +435,10 @@ describe('blockToAnthropic（通过 buildAnthropicCreateParams 间接测）', ()
           content: [{ type: 'unknown_block', foo: 'bar' }],
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     const msg = result.messages.find((m) => m.role === 'assistant')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const blocks = msg.content as any[]
     expect(blocks[0].type).toBe('text')
     expect(blocks[0].text).toContain('unknown_block')
@@ -424,8 +455,10 @@ describe('blockToAnthropic（通过 buildAnthropicCreateParams 间接测）', ()
           content: [{ type: 'text', text: 'hello', cache_control: cc }],
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     const msg = result.messages.find((m) => m.role === 'user')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const blocks = msg.content as any[]
     expect(blocks[0].cache_control).toEqual(cc)
   })
@@ -441,8 +474,10 @@ describe('blockToAnthropic（通过 buildAnthropicCreateParams 间接测）', ()
           content: [{ type: 'tool_use', id: 't1', name: 'read', input: {}, cache_control: cc }],
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     const msg = result.messages.find((m) => m.role === 'assistant')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const blocks = msg.content as any[]
     expect(blocks[0].cache_control).toEqual(cc)
   })
@@ -457,8 +492,10 @@ describe('blockToAnthropic（通过 buildAnthropicCreateParams 间接测）', ()
           content: [{ type: 'text', text: 'no cache' }],
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     const msg = result.messages.find((m) => m.role === 'user')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const blocks = msg.content as any[]
     expect(blocks[0]).not.toHaveProperty('cache_control')
   })
@@ -474,8 +511,10 @@ describe('blockToAnthropic（通过 buildAnthropicCreateParams 间接测）', ()
           content: [{ type: 'image', mimeType: 'image/png', data: 'AAA', cache_control: cc }],
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     const msg = result.messages.find((m) => m.role === 'user')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const blocks = msg.content as any[]
     expect(blocks[0].cache_control).toEqual(cc)
   })
@@ -494,8 +533,10 @@ describe('blockToAnthropic（通过 buildAnthropicCreateParams 间接测）', ()
           ],
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     const msg = result.messages.find((m) => m.role === 'user')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const blocks = msg.content as any[]
     expect(blocks[0]).not.toHaveProperty('cache_control')
     expect(blocks[1].cache_control).toEqual(cc)
@@ -523,6 +564,7 @@ describe('toolChoiceToAnthropic', () => {
   })
 
   test('未知 type → undefined', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect(toolChoiceToAnthropic({ type: 'unknown' } as any)).toBeUndefined()
   })
 })
@@ -603,6 +645,7 @@ describe('anthropicLLMStreamEventToStandard: 未覆盖的分支', () => {
       type: 'content_block_start',
       index: 0,
       content_block: { type: 'redacted_thinking', data: 'encrypted' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     }) as any
     expect(e.chunk.type).toBe('redacted_thinking')
     expect(e.chunk.data).toBe('encrypted')
@@ -613,6 +656,7 @@ describe('anthropicLLMStreamEventToStandard: 未覆盖的分支', () => {
       type: 'content_block_start',
       index: 1,
       content_block: { type: 'server_tool_use', id: 'st_1', name: 'server_fn', input: { x: 1 } },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     }) as any
     expect(e.chunk.type).toBe('server_tool_use')
     expect(e.chunk.id).toBe('st_1')
@@ -625,6 +669,7 @@ describe('anthropicLLMStreamEventToStandard: 未覆盖的分支', () => {
       type: 'content_block_delta',
       index: 0,
       delta: { type: 'signature_delta', signature: 'sig_val' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     }) as any
     expect(e.delta.type).toBe('signature_delta')
     expect(e.delta.signature).toBe('sig_val')
@@ -635,6 +680,7 @@ describe('anthropicLLMStreamEventToStandard: 未覆盖的分支', () => {
       type: 'content_block_delta',
       index: 0,
       delta: { type: '__unknown_delta__', text: 'x' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     }) as any
     expect(e.delta.type).toBe('text_delta')
   })
@@ -662,15 +708,18 @@ describe('messagesToAnthropic: tool → assistant（无 user 介入）', () => {
       { role: 'assistant', content: [{ type: 'tool_call', id: 'c', name: 'f', input: {} }] },
       { role: 'tool', toolCallId: 'c', content: 'result' },
       { role: 'assistant', content: 'Continuing...' },
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
     // tool 消息被 assistant 之前 flush 为一条 user 消息
     // 结果: [assistant(tool_use), user(tool_result), assistant(continuing)]
     expect(result).toHaveLength(3)
     expect(result[0].role).toBe('assistant')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[0].content as any[])[0].type).toBe('tool_use')
 
     // 第二条是 flush 出来的 user 消息
     expect(result[1].role).toBe('user')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result[1].content as any[])[0].type).toBe('tool_result')
 
     expect(result[2].role).toBe('assistant')
@@ -680,6 +729,7 @@ describe('messagesToAnthropic: tool → assistant（无 user 介入）', () => {
 
 describe('assistantContentToAnthropic: null content 无 toolCalls', () => {
   test('content 为 null 且无 toolCalls → 空字符串', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = messagesToAnthropic([{ role: 'assistant', content: null }] as any)
     expect(result[0].content).toBe('')
   })
@@ -696,8 +746,10 @@ describe('safeParseToolArguments（通过 buildAnthropicCreateParams 间接测�
           content: [{ type: 'tool_call', id: 'c', name: 'f', input: { x: 1 } }],
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     const msg = result.messages.find((m) => m.role === 'assistant')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const blocks = msg.content as any[]
     expect(blocks[0].input).toEqual({ x: 1 })
   })
@@ -712,8 +764,10 @@ describe('safeParseToolArguments（通过 buildAnthropicCreateParams 间接测�
           content: [{ type: 'tool_call', id: 'c', name: 'f', input: '42' }],
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     const msg = result.messages.find((m) => m.role === 'assistant')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const blocks = msg.content as any[]
     // JSON.parse('42') 是 number，不是 object → safeParse 返回 {}
     expect(blocks[0].input).toEqual({})
@@ -729,8 +783,10 @@ describe('safeParseToolArguments（通过 buildAnthropicCreateParams 间接测�
           content: [{ type: 'tool_call', id: 'c', name: 'f', input: '"just a string"' }],
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     const msg = result.messages.find((m) => m.role === 'assistant')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const blocks = msg.content as any[]
     expect(blocks[0].input).toEqual({})
   })
@@ -745,8 +801,10 @@ describe('safeParseToolArguments（通过 buildAnthropicCreateParams 间接测�
           content: [{ type: 'tool_call', id: 'c', name: 'f', input: '{broken' }],
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     const msg = result.messages.find((m) => m.role === 'assistant')!
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const blocks = msg.content as any[]
     expect(blocks[0].input).toEqual({})
   })

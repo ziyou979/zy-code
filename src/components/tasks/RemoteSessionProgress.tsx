@@ -79,6 +79,7 @@ function useSmoothCount(target: number, time: number, snap: boolean): number {
   }
   return displayed.current
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function ReviewRainbowLine({ session }: { session: any }) {
   const settings = useSettings()
   const reducedMotion = settings.prefersReducedMotion ?? false
@@ -122,6 +123,7 @@ function ReviewRainbowLine({ session }: { session: any }) {
     </>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 export function RemoteSessionProgress({ session }: { session: any }) {
   if (session.isRemoteReview) {
     return <ReviewRainbowLine session={session} />
@@ -140,9 +142,12 @@ export function RemoteSessionProgress({ session }: { session: any }) {
       </Text>
     )
   }
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   if (!(session as any).todoList.length) {
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     return <Text dimColor={true}>{(session as any).status}…</Text>
   }
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const completed = count((session as any).todoList, (_: any) => _.status === 'completed')
   const total = session.todoList.length
   return (

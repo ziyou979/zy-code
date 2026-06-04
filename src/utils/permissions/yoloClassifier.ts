@@ -288,6 +288,7 @@ export function buildTranscriptEntries(messages: Message[]): TranscriptEntry[] {
   const transcript: TranscriptEntry[] = []
   for (const msg of messages) {
     if (msg.type === 'attachment' && msg.attachment.type === 'queued_command') {
+      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
       const prompt = (msg.attachment as any).prompt
       let text: string | null = null
       if (typeof prompt === 'string') {
@@ -728,8 +729,10 @@ async function classifyYoloActionXml(
         maxRetries: getDefaultMaxRetries(),
         signal,
         ...(mode !== 'fast' && { stop_sequences: ['</block>'] }),
+        // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
         querySource: 'auto_mode' as any,
       }
+      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
       const stage1Raw = await sideQuery(stage1Opts as any)
       stage1DurationMs = Date.now() - stage1Start
       stage1Usage = extractUsage(stage1Raw)
@@ -808,8 +811,10 @@ async function classifyYoloActionXml(
       messages: [...prefixMessages, { role: 'user' as const, content: stage2Content }],
       maxRetries: getDefaultMaxRetries(),
       signal,
+      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
       querySource: 'auto_mode' as any,
     }
+    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
     const stage2Raw = await sideQuery(stage2Opts as any)
     const stage2DurationMs = Date.now() - stage2Start
     const stage2Usage = extractUsage(stage2Raw)
@@ -1068,8 +1073,10 @@ export async function classifyYoloAction(
       },
       maxRetries: getDefaultMaxRetries(),
       signal,
+      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
       querySource: 'auto_mode' as any,
     }
+    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
     const result = await sideQuery(sideQueryOpts as any)
     void maybeDumpAutoMode(sideQueryOpts, result, start)
     setLastClassifierRequests([sideQueryOpts])
@@ -1102,6 +1109,7 @@ export async function classifyYoloAction(
 
     // 使用共享工具提取结果
     const toolCallInlineBlock = extractToolCallInlineBlock(
+      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
       result.content as any,
       YOLO_CLASSIFIER_TOOL_NAME,
     )

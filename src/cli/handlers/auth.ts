@@ -46,6 +46,7 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
 
   // 如果有预获取的用户资料则复用，否则重新获取
   const profile =
+    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
     (tokens as any).profile ?? (await getOauthProfileFromOauthToken(tokens.accessToken))
   if (profile) {
     storeOAuthAccountInfo({
@@ -58,11 +59,15 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
       subscriptionCreatedAt: profile.organization.subscription_created_at ?? undefined,
       accountCreatedAt: profile.account.created_at,
     })
+  // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
   } else if ((tokens as any).tokenAccount) {
     // 当用户资料端点失败时，回退使用令牌交换的账户数据
     storeOAuthAccountInfo({
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       accountUuid: (tokens as any).tokenAccount.uuid,
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       emailAddress: (tokens as any).tokenAccount.emailAddress,
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       organizationUuid: (tokens as any).tokenAccount.organizationUuid,
     })
   }
@@ -82,6 +87,7 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
     logForDebugging(String(err), { level: 'error' }),
   )
 
+  // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
   if (shouldUseZyAIAuth((tokens as any).scopes)) {
     await fetchAndStoreZyCodeFirstTokenDate().catch((err) =>
       logForDebugging(String(err), { level: 'error' }),
@@ -140,7 +146,9 @@ export async function authLogin({
       await installOAuthTokens(tokens)
 
       const orgResult = await validateForceLoginOrg()
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       if (!(orgResult as any).valid) {
+        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
         process.stderr.write(`${(orgResult as any).message}\n`)
         process.exit(1)
       }
@@ -155,6 +163,7 @@ export async function authLogin({
       })
 
       logEvent('zy_oauth_success', {
+        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
         loginWithZyAi: shouldUseZyAIAuth((tokens as any).scopes),
       })
       process.stdout.write(`${tSync('auth.login.successful')}\n`)
@@ -194,7 +203,9 @@ export async function authLogin({
     await installOAuthTokens(result)
 
     const orgResult = await validateForceLoginOrg()
+    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
     if (!(orgResult as any).valid) {
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       process.stderr.write(`${(orgResult as any).message}\n`)
       process.exit(1)
     }

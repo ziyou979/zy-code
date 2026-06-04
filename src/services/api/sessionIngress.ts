@@ -72,7 +72,7 @@ async function appendSessionLogImpl(
       })
 
       if (response.status === 200 || response.status === 201) {
-        lastUuidMap.set(sessionId, entry.uuid as any)
+        lastUuidMap.set(sessionId, entry.uuid as UUID)
         logForDebugging(`已成功持久化会话 ${sessionId} 的日志条目`)
         return true
       }
@@ -82,9 +82,9 @@ async function appendSessionLogImpl(
         // 处理条目已存储但客户端收到错误响应的场景，
         // 导致 lastUuidMap 过期
         const serverLastUuid = response.headers['x-last-uuid']
-        if (serverLastUuid === (entry.uuid as any)) {
+        if (serverLastUuid === (entry.uuid as UUID)) {
           // 我们的条目就是服务器上的最后一条——之前已成功存储
-          lastUuidMap.set(sessionId, entry.uuid as any)
+          lastUuidMap.set(sessionId, entry.uuid as UUID)
           logForDebugging(`会话条目 ${entry.uuid} 已存在于服务器，从过期状态恢复`)
           logForDiagnosticsNoPII('info', 'session_persist_recovered_from_409')
           return true
@@ -205,7 +205,7 @@ export async function getSessionLogs(sessionId: string, url: string): Promise<En
     // 更新 lastUuid 为最后一条的 UUID
     const lastEntry = logs.at(-1)
     if (lastEntry && 'uuid' in lastEntry && lastEntry.uuid) {
-      lastUuidMap.set(sessionId, lastEntry.uuid as any)
+      lastUuidMap.set(sessionId, lastEntry.uuid as UUID)
     }
   }
 

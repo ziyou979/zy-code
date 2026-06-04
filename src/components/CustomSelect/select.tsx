@@ -227,12 +227,13 @@ export function Select({
   onImagePaste,
   pastedContents,
   onRemoveImage,
-}: any) {
+}: // biome-ignore lint/suspicious/noExplicitAny: 泛型组件内部转发，无法避免 any
+SelectProps<any>) {
   const [imagesSelected, setImagesSelected] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [inputValues, setInputValues] = useState(() => {
     const initialMap = new Map()
-    options.forEach((option: any) => {
+    options.forEach((option: OptionWithDescription<unknown>) => {
       if (option.type === 'input' && option.initialValue) {
         initialMap.set(option.value, option.initialValue)
       }
@@ -281,11 +282,11 @@ export function Select({
     onEnterImageSelection: () => {
       if (
         pastedContents &&
-        Object.values(pastedContents).some((content: any) => (content as any).type === 'image')
+        Object.values(pastedContents).some((content) => content.type === 'image')
       ) {
         const imageCount = count(
           Object.values(pastedContents),
-          (content: any) => (content as any).type === 'image',
+          (content) => content.type === 'image',
         )
         setImagesSelected(true)
         setSelectedImageIndex(imageCount - 1)
@@ -346,7 +347,7 @@ export function Select({
                   const hasImageAttachments =
                     pastedContents &&
                     Object.values(pastedContents).some(
-                      (content: any) => (content as any).type === 'image',
+                      (content) => content.type === 'image',
                     )
                   if (inputValue.trim() || hasImageAttachments || option.allowEmptySubmitToCancel) {
                     onChange?.(option.value)
@@ -458,7 +459,7 @@ export function Select({
                 onSubmit={(value_2) => {
                   const hasImageAttachments_0 =
                     pastedContents &&
-                    Object.values(pastedContents).some((c_2: any) => (c_2 as any).type === 'image')
+                    Object.values(pastedContents).some((c_2) => c_2.type === 'image')
                   if (
                     value_2.trim() ||
                     hasImageAttachments_0 ||
@@ -706,7 +707,7 @@ export function Select({
                 const hasImageAttachments =
                   pastedContents &&
                   Object.values(pastedContents).some(
-                    (content: any) => (content as any).type === 'image',
+                    (content) => content.type === 'image',
                   )
                 if (newValue.trim() || hasImageAttachments || option.allowEmptySubmitToCancel) {
                   onChange?.(option.value)
@@ -821,7 +822,7 @@ export function Select({
 // ListItem, so it declares the native cursor directly. Parks the cursor
 // on the pointer indicator so screen readers / magnifiers track focus.
 
-function TwoColumnRow({ isFocused, children }: any) {
+function TwoColumnRow({ isFocused, children }: { isFocused: boolean; children: React.ReactNode }) {
   const cursorRef = useDeclaredCursor({
     line: 0,
     column: 0,

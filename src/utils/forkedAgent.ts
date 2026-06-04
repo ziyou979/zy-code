@@ -509,7 +509,7 @@ export async function runForkedAgent({
     )
     // 跟踪最后记录的消息 UUID 用于父级链连续性
     lastRecordedUuid =
-      initialMessages.length > 0 ? (initialMessages[initialMessages.length - 1]!.uuid as any) : null
+      initialMessages.length > 0 ? (initialMessages[initialMessages.length - 1]!.uuid as UUID) : null
   }
 
   // 使用隔离上下文运行查询循环（保留缓存安全参数）
@@ -529,7 +529,7 @@ export async function runForkedAgent({
       // 从 message_delta 流事件中提取真实用量（每次 API 调用的最终用量）
       if (message.type === 'stream_event') {
         if ('event' in message && message.event?.type === 'message_delta' && message.event.usage) {
-          const turnUsage = updateUsage({ ...EMPTY_USAGE }, message.event.usage as any)
+          const turnUsage = updateUsage({ ...EMPTY_USAGE }, message.event.usage)
           totalUsage = accumulateUsage(totalUsage, turnUsage)
         }
         continue
@@ -550,7 +550,7 @@ export async function runForkedAgent({
           logForDebugging(`Forked agent [${forkLabel}] failed to record transcript: ${err}`),
         )
         if (msg.type !== 'progress') {
-          lastRecordedUuid = msg.uuid as any
+          lastRecordedUuid = msg.uuid as UUID
         }
       }
     }
@@ -618,10 +618,14 @@ function logForkAgentQueryEvent({
     outputTokens: totalUsage.outputTokens,
     cacheReadInputTokens: totalUsage.cacheReadInputTokens,
     cacheCreationInputTokens: totalUsage.cacheCreationInputTokens,
-    serviceTier: (totalUsage as any)
+    serviceTier: (totalUsage as unknown as Record<string, unknown>)
       .service_tier as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    cacheCreationEphemeral1hTokens: (totalUsage as any).cache_creation?.ephemeral_1h_input_tokens,
-    cacheCreationEphemeral5mTokens: (totalUsage as any).cache_creation?.ephemeral_5m_input_tokens,
+    cacheCreationEphemeral1hTokens: (
+      totalUsage as unknown as Record<string, Record<string, number>>
+    ).cache_creation?.ephemeral_1h_input_tokens,
+    cacheCreationEphemeral5mTokens: (
+      totalUsage as unknown as Record<string, Record<string, number>>
+    ).cache_creation?.ephemeral_5m_input_tokens,
 
     // 派生指标
     cacheHitRate,

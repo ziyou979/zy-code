@@ -23,7 +23,7 @@ export function setupComputerUseMCP(): {
   allowedTools: string[]
 } {
   const allowedTools = buildComputerUseTools(CLI_CU_CAPABILITIES, getChicagoCoordinateMode()).map(
-    (t) => buildMcpToolName(COMPUTER_USE_MCP_SERVER_NAME, (t as any).name),
+    (t) => buildMcpToolName(COMPUTER_USE_MCP_SERVER_NAME, (t as unknown as { name: string }).name),
   )
 
   // command/args 永远不会被实际执行 —— client.ts 通过名称拦截并使用

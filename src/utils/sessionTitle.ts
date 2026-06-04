@@ -118,7 +118,7 @@ export async function generateSessionTitle(
       },
       signal,
       options: {
-        querySource: 'generate_session_title' as any,
+        querySource: 'generate_session_title',
         agents: [],
         // 反映实际会话模式——本模块既从 SDK print 路径（非交互式）调用，
         // 也从 CCR 远程会话路径通过 useRemoteSession（交互式）调用。

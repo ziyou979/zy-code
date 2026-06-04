@@ -85,7 +85,8 @@ export async function handleUrlSchemeLaunch(): Promise<number | null> {
   }
 
   try {
-    // @ts-expect-error
+    // @ts-expect-error 动态模块
+    // biome-ignore lint/suspicious/noExplicitAny: 动态模块加载
     const { waitForUrlEvent } = (await import('url-handler-napi')) as any
     const url = waitForUrlEvent(5000)
     if (!url) {

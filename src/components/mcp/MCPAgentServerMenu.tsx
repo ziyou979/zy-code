@@ -31,6 +31,8 @@ type Props = {
  * For HTTP/SSE servers, this allows pre-authentication before using the agent.
  */
 export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props): React.ReactNode {
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理，AgentMcpServerInfo 运行时包含额外动态字段
+  const srv = agentServer as any
   const [theme] = useTheme()
   const [isAuthenticating, setIsAuthenticating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -55,7 +57,7 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
     isActive: isAuthenticating,
   })
   const handleAuthenticate = useCallback(async () => {
-    if (!(agentServer as any).needsAuth || !(agentServer as any).url) {
+    if (!srv.needsAuth || !srv.url) {
       return
     }
     setIsAuthenticating(true)
@@ -65,16 +67,16 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
     try {
       // Create a temporary config for OAuth
       const tempConfig = {
-        type: (agentServer as any).transport as 'http' | 'sse',
-        url: (agentServer as any).url,
+        type: srv.transport as 'http' | 'sse',
+        url: srv.url,
       }
       await performMCPOAuthFlow(
-        (agentServer as any).name,
+        srv.name,
         tempConfig,
         setAuthorizationUrl,
         controller.signal,
       )
-      onComplete?.(tSync('mcp.authSuccessfulConnected', { serverName: (agentServer as any).name }))
+      onComplete?.(tSync('mcp.authSuccessfulConnected', { serverName: srv.name }))
     } catch (err) {
       // Don't show error if it was a cancellation
       if (err instanceof Error && !(err instanceof AuthenticationCancelledError)) {
@@ -85,12 +87,12 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
       authAbortControllerRef.current = null
     }
   }, [agentServer, onComplete])
-  const capitalizedServerName = capitalize(String((agentServer as any).name))
+  const capitalizedServerName = capitalize(String(srv.name))
   if (isAuthenticating) {
     return (
       <Box flexDirection="column" gap={1} padding={1}>
         <Text color="zy">
-          {tSync('mcp.authenticatingWith', { serverName: (agentServer as any).name })}
+          {tSync('mcp.authenticatingWith', { serverName: srv.name })}
         </Text>
         <Box>
           <Spinner />
@@ -111,9 +113,9 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
   const menuOptions = []
 
   // Only show authenticate option for HTTP/SSE servers
-  if ((agentServer as any).needsAuth) {
+  if (srv.needsAuth) {
     menuOptions.push({
-      label: (agentServer as any).isAuthenticated
+      label: srv.isAuthenticated
         ? tSync('mcp.reauthenticate')
         : tSync('mcp.authenticate'),
       value: 'auth',
@@ -150,26 +152,26 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
       <Box flexDirection="column" gap={0}>
         <Box>
           <Text bold>{tSync('mcp.typeLabel')} </Text>
-          <Text dimColor>{(agentServer as any).transport}</Text>
+          <Text dimColor>{srv.transport}</Text>
         </Box>
 
-        {(agentServer as any).url && (
+        {srv.url && (
           <Box>
             <Text bold>{tSync('mcp.urlLabel')} </Text>
-            <Text dimColor>{(agentServer as any).url}</Text>
+            <Text dimColor>{srv.url}</Text>
           </Box>
         )}
 
-        {(agentServer as any).command && (
+        {srv.command && (
           <Box>
             <Text bold>{tSync('mcp.commandLabel')} </Text>
-            <Text dimColor>{(agentServer as any).command}</Text>
+            <Text dimColor>{srv.command}</Text>
           </Box>
         )}
 
         <Box>
           <Text bold>{tSync('mcp.usedByLabel')} </Text>
-          <Text dimColor>{(agentServer as any).sourceAgents.join(', ')}</Text>
+          <Text dimColor>{srv.sourceAgents.join(', ')}</Text>
         </Box>
 
         <Box marginTop={1}>
@@ -179,10 +181,10 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
           </Text>
         </Box>
 
-        {(agentServer as any).needsAuth && (
+        {srv.needsAuth && (
           <Box>
             <Text bold>{tSync('mcp.authLabel')} </Text>
-            {(agentServer as any).isAuthenticated ? (
+            {srv.isAuthenticated ? (
               <Text>
                 {color('success', theme)(figures.tick)} {tSync('mcp.authenticated')}
               </Text>

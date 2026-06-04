@@ -70,6 +70,7 @@ export function useSSHSession({
     logForDebugging('[useSSHSession] wiring SSH session manager')
 
     const manager = session.createManager({
+      // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
       onMessage: (sdkMessage: any) => {
         if (isSessionEndMessage(sdkMessage)) {
           setIsLoading(false)
@@ -90,6 +91,7 @@ export function useSSHSession({
           setMessages((prev) => [...prev, converted.message])
         }
       },
+      // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
       onPermissionRequest: (request: any, requestId: any) => {
         logForDebugging(`[useSSHSession] permission request: ${request.tool_name}`)
 

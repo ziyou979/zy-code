@@ -108,6 +108,7 @@ export async function call(
         onCancel={() => {
           onDone('Did not add a working directory.')
         }}
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         directoryPath={undefined as any}
       />
     )

@@ -165,6 +165,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
         systemContext: {},
         canUseTool: hasPermissionsToUseTool,
         toolUseContext: agentToolUseContext,
+        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
         querySource: 'hook_agent' as any,
       })) {
         // Process stream events to update response length in the spinner
@@ -196,6 +197,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
 
         // Check for structured output in attachments
         if (message.type === 'attachment' && message.attachment.type === 'structured_output') {
+          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
           const parsed = hookResponseSchema().safeParse((message.attachment as any).data)
           if (parsed.success) {
             structuredOutputResult = parsed.data
@@ -273,6 +275,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
           toolUseID: effectiveToolUseID,
           hookEvent,
           content: '',
+        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
         }) as any,
       }
     } catch (error) {
@@ -306,6 +309,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
         stderr: `Error executing agent hook: ${errorMsg}`,
         stdout: '',
         exitCode: 1,
+      // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
       }) as any,
     }
   }

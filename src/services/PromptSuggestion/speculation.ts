@@ -234,11 +234,12 @@ export function prepareMessagesForInjection(messages: Message[]): Message[] {
 
   return messages
     .map((msg) => {
-      if (!('message' in msg) || !Array.isArray((msg.message as any).content)) {
+      if (!('message' in msg) || !Array.isArray((msg.message as Record<string, unknown>).content)) {
         return msg
       }
-      const content = ((msg.message as any).content as any[]).filter(keep)
-      if (content.length === (msg.message as any).content.length) {
+      const msgContent = (msg.message as Record<string, unknown>).content as Array<{ type: string; id?: string; tool_use_id?: string; text?: string }>
+      const content = msgContent.filter(keep)
+      if (content.length === msgContent.length) {
         return msg
       }
       if (content.length === 0) {
@@ -247,8 +248,7 @@ export function prepareMessagesForInjection(messages: Message[]): Message[] {
       // Drop messages where all remaining blocks are whitespace-only text
       // (API rejects these with 400: "text content blocks must contain non-whitespace text")
       const hasNonWhitespaceContent = content.some(
-        (b: { type: string; text?: string }) =>
-          b.type !== 'text' || (b.text !== undefined && b.text.trim() !== ''),
+        (b) => b.type !== 'text' || (b.text !== undefined && b.text.trim() !== ''),
       )
       if (!hasNonWhitespaceContent) {
         return null
@@ -293,7 +293,7 @@ function createSpeculationFeedbackMessage(
 
   return createSystemMessage(
     `[INNER-ONLY] ${parts.join(' · ')} · ${savedText}${sessionSuffix}`,
-    'warning' as any,
+    'warn',
   )
 }
 
@@ -617,8 +617,8 @@ export async function startSpeculation(
           'speculation_unknown_tool',
         )
       },
-      querySource: 'speculation' as any,
-      forkLabel: 'speculation' as any,
+      querySource: 'speculation',
+      forkLabel: 'speculation',
       maxTurns: MAX_SPECULATION_TURNS,
       overrides: { abortController, requireCanUseTool: true },
       onMessage: (msg) => {

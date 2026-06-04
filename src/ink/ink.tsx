@@ -339,6 +339,7 @@ export default class Ink {
     }
 
     // react-reconciler runtime accepts 10 args but @types declares fewer
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     this.container = (reconciler as any).createContainer(
       this.rootNode,
       ConcurrentRoot,

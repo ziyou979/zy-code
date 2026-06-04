@@ -57,7 +57,7 @@ export async function* all<A>(
       promises.add(next(generator))
       // TODO: Clean this up
       if (value !== undefined) {
-        yield value as any
+        yield value as A
       }
     } else if (waiting.length > 0) {
       // Start a new generator when one finishes

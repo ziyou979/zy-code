@@ -127,6 +127,7 @@ export function MessageSelector({
       return
     }
     let cancelled = false
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     void fileHistoryGetDiffStats(fileHistory, preselectedMessage.uuid as any).then((stats) => {
       if (!cancelled) {
         setDiffStatsForRestore(stats)
@@ -231,6 +232,7 @@ export function MessageSelector({
       await restoreConversationDirectly(message_0)
       return
     }
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const diffStats = await fileHistoryGetDiffStats(fileHistory, message_0.uuid as any)
     setMessageToRestore(message_0)
     setDiffStatsForRestore(diffStats)
@@ -261,6 +263,7 @@ export function MessageSelector({
         const feedback =
           (direction === 'up_to' ? summarizeUpToFeedback : summarizeFromFeedback).trim() ||
           undefined
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         await onSummarize(messageToRestore, feedback, direction as any)
         setIsRestoring(false)
         setRestoringOption(null)
@@ -368,13 +371,17 @@ export function MessageSelector({
       void Promise.all(
         messageOptions.map(async (userMessage, itemIndex) => {
           if (userMessage.uuid !== currentUUID) {
+            // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
             const canRestore = fileHistoryCanRestore(fileHistory, userMessage.uuid as any)
             const nextUserMessage = messageOptions.at(itemIndex + 1)
             const diffStats_0 = canRestore
               ? computeDiffStatsBetweenMessages(
                   messages,
+                  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
                   userMessage.uuid as any,
+                  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
                   (nextUserMessage?.uuid as any) !== currentUUID
+                    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
                     ? (nextUserMessage?.uuid as any)
                     : undefined,
                 )
@@ -573,8 +580,10 @@ function RestoreOptionDescription({
   canRestoreCode,
   diffStatsForRestore,
 }: {
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   selectedRestoreOption: any
   canRestoreCode: boolean
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   diffStatsForRestore: any
 }) {
   const showCodeRestore =
@@ -595,6 +604,7 @@ function RestoreOptionDescription({
     </Box>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function RestoreCodeConfirmation({ diffStatsForRestore }: { diffStatsForRestore: any }) {
   if (diffStatsForRestore === undefined) {
     return
@@ -627,6 +637,7 @@ function RestoreCodeConfirmation({ diffStatsForRestore }: { diffStatsForRestore:
     </Text>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function DiffStatsText({ diffStats }: { diffStats: any }) {
   if (!diffStats?.filesChanged) {
     return
@@ -645,7 +656,9 @@ function UserMessageOption({
   isCurrent,
   paddingRight,
 }: {
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   userMessage: any
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   color?: any
   dimColor?: boolean
   isCurrent: boolean

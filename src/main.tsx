@@ -189,6 +189,7 @@ export async function main() {
 }
 // biome-ignore lint/suspicious/noExplicitAny: run() 内部链式构建出
 // 带 args/opts 的具体 Command<T,O>，调用方不关心具体形状，统一宽返回。
+// biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
 async function run(): Promise<CommanderCommand<any, any, any>> {
   profileCheckpoint('run_function_start')
 

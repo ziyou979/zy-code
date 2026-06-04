@@ -7,6 +7,7 @@ import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHin
 import { useWizard } from '../../../wizard/index.js'
 import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
 export function MethodStep() {
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const { goNext, goBack, updateWizardData, goToStep } = useWizard() as any
   const methodOptions = [
     {

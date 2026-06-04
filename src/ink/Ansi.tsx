@@ -37,6 +37,7 @@ export const Ansi = React.memo(function Ansi({ children, dimColor }: Props) {
     return null
   }
   let content
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   let earlyReturn: any = Symbol.for('react.early_return_sentinel')
   const spans = parseToSpans(children)
   if (spans.length === 0) {

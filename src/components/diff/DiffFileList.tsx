@@ -43,8 +43,11 @@ export function DiffFileList({ files, selectedIndex }: Props) {
   const mappedItems = visibleFiles.map((file, index) => (
     <FileItem
       key={file.path}
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       file={file as any}
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       isSelected={startIndex + index === (selectedIndex as any)}
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       maxPathWidth={maxPathWidth as any}
     />
   ))
@@ -66,8 +69,9 @@ export function DiffFileList({ files, selectedIndex }: Props) {
     </BoxComponent>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function FileItem({ file, isSelected, maxPathWidth }: any) {
-  const displayPath = truncateStartToWidth((file as any).path, maxPathWidth)
+  const displayPath = truncateStartToWidth(file.path, maxPathWidth)
   const pointer = isSelected ? `${figures.pointer} ` : '  '
   const line = `${pointer}${displayPath}`
   return (
@@ -78,26 +82,27 @@ function FileItem({ file, isSelected, maxPathWidth }: any) {
         </Text>
       }
       {<Box flexGrow={1} />}
-      {<FileStats file={file as any} isSelected={isSelected as any} />}
+      {<FileStats file={file} isSelected={isSelected} />}
     </Box>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function FileStats({ file, isSelected }: any) {
-  if ((file as any).isUntracked) {
+  if (file.isUntracked) {
     return (
       <Text dimColor={!isSelected} italic={true}>
         untracked
       </Text>
     )
   }
-  if ((file as any).isBinary) {
+  if (file.isBinary) {
     return (
       <Text dimColor={!isSelected} italic={true}>
         Binary file
       </Text>
     )
   }
-  if ((file as any).isLargeFile) {
+  if (file.isLargeFile) {
     return (
       <Text dimColor={!isSelected} italic={true}>
         Large file modified
@@ -106,18 +111,18 @@ function FileStats({ file, isSelected }: any) {
   }
   return (
     <Text>
-      {(file as any).linesAdded > 0 && (
+      {file.linesAdded > 0 && (
         <Text color="diffAddedWord" bold={isSelected}>
-          +{(file as any).linesAdded}
+          +{file.linesAdded}
         </Text>
       )}
-      {(file as any).linesAdded > 0 && (file as any).linesRemoved > 0 && ' '}
-      {(file as any).linesRemoved > 0 && (
+      {file.linesAdded > 0 && file.linesRemoved > 0 && ' '}
+      {file.linesRemoved > 0 && (
         <Text color="diffRemovedWord" bold={isSelected}>
-          -{(file as any).linesRemoved}
+          -{file.linesRemoved}
         </Text>
       )}
-      {(file as any).isTruncated && <Text dimColor={!isSelected}> (truncated)</Text>}
+      {file.isTruncated && <Text dimColor={!isSelected}> (truncated)</Text>}
     </Text>
   )
 }

@@ -120,6 +120,7 @@ function buildAgentParts(agents: TaskState[], columns: number): string[] {
   for (const agent of agents.slice(0, MAX_INLINE_AGENTS)) {
     if (agent.type === 'in_process_teammate') {
       // Swarm teammate
+      // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
       const teammate = agent as any
       const name = teammate.identity?.agentName ?? 'agent'
       const isIdle = teammate.isIdle === true

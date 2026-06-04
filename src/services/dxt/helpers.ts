@@ -20,7 +20,7 @@ export async function validateManifest(manifestJson: unknown): Promise<McpbManif
     const errors = parseResult.error.flatten()
     const errorMessages = [
       ...Object.entries(errors.fieldErrors).map(
-        ([field, errs]) => `${field}: ${(errs as any)?.join(', ')}`,
+        ([field, errs]) => `${field}: ${(errs as string[] | undefined)?.join(', ')}`,
       ),
       ...(errors.formErrors || []),
     ]

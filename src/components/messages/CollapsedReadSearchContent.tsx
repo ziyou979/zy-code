@@ -37,7 +37,9 @@ type Props = {
   lookups: ReturnType<typeof buildMessageLookups>
   /** True if this is the currently active collapsed group (last one, still loading) */
   isActiveGroup?: boolean
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   content?: any
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   theme?: any
 }
 
@@ -73,11 +75,13 @@ function VerboseToolUse({
     const userFacingName = tool.userFacingName(input)
     const toolUseMessage = input
       ? tool.renderToolUseMessage(input, {
+          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
           theme: theme as any,
           verbose: true,
         })
       : null
     boxElement = (
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       <Box key={content.id} flexDirection="column" marginTop={1} backgroundColor={bg as any}>
         <Box flexDirection="row">
           {
@@ -98,6 +102,7 @@ function VerboseToolUse({
             {tool.renderToolResultMessage?.(toolResult, [], {
               verbose: true,
               tools,
+              // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
               theme: theme as any,
             })}
           </Box>
@@ -190,7 +195,9 @@ export function CollapsedReadSearchContent({
         continue
       }
       const latest = lookups.progressMessagesByToolUseID.get(id_0)?.at(-1)?.data
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       if ((latest as any)?.type === 'repl_tool_call' && (latest as any).phase === 'start') {
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         const input = (latest as any).toolInput as {
           command?: string
           pattern?: string
@@ -200,6 +207,7 @@ export function CollapsedReadSearchContent({
           input.file_path ??
           (input.pattern ? `"${input.pattern}"` : undefined) ??
           input.command ??
+          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
           (latest as any).toolName
       }
     }
@@ -231,7 +239,9 @@ export function CollapsedReadSearchContent({
               lookups={lookups}
               inProgressToolUseIDs={inProgressToolUseIDs}
               shouldAnimate={shouldAnimate}
+              // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
               theme={theme as any}
+              // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
               message={msg_0.message as any}
               verbose={verbose}
             />
@@ -244,7 +254,8 @@ export function CollapsedReadSearchContent({
               {message.hookCount === 1 ? 'hook' : 'hooks'} (
               {formatSecondsShort(message.hookTotalMs ?? 0)})
             </Text>
-            {message.hookInfos.map((info: any, idx: any) => (
+            {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
+            {message.hookInfos.map((info: any, idx: number) => (
               <Text key={`hook-${idx}`} dimColor>
                 {'     ⎿ '}
                 {info.command} ({formatSecondsShort(info.durationMs ?? 0)})
@@ -252,6 +263,7 @@ export function CollapsedReadSearchContent({
             ))}
           </>
         )}
+        {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
         {message.relevantMemories?.map((m: any) => (
           <Box key={m.path} flexDirection="column" marginTop={1}>
             <Text dimColor>
@@ -327,7 +339,9 @@ export function CollapsedReadSearchContent({
   if (isFullscreenEnvEnabled() && message.commits?.length) {
     for (const kind of ['committed', 'amended', 'cherryPicked'] as const) {
       const shas = message.commits
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         .filter((c: any) => c.kind === kind.replace('Picked', '-picked'))
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         .map((c_0: any) => c_0.sha)
       if (shas.length) {
         pushPart(kind, kind, <Text bold>{shas.join(', ')}</Text>)
@@ -335,6 +349,7 @@ export function CollapsedReadSearchContent({
     }
   }
   if (isFullscreenEnvEnabled() && message.pushes?.length) {
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const branches = uniq(message.pushes.map((p: any) => p.branch))
     pushPart('push', 'pushedTo', <Text bold>{branches.join(', ')}</Text>)
   }
@@ -449,6 +464,7 @@ export function CollapsedReadSearchContent({
   }
   if (mcpCallCount > 0) {
     const serverLabel =
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       message.mcpServerNames?.map((n: any) => n.replace(/^zy\.ai /, '')).join(', ') || 'MCP'
     const isFirst_3 = nonMemParts.length === 0
     const phase = isActiveGroup ? 'active' : 'done'
@@ -552,6 +568,7 @@ export function CollapsedReadSearchContent({
     )
   }
   return (
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     <Box flexDirection="column" marginTop={1} backgroundColor={bg as any}>
       <Box flexDirection="row">
         {isActiveGroup ? (
@@ -564,6 +581,7 @@ export function CollapsedReadSearchContent({
           {memParts}
           {feature('TEAMMEM')
             ? teamMemCollapsed!.TeamMemCountParts({
+                // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
                 message: message as any,
                 isActiveGroup,
                 hasPrecedingParts: hasPrecedingNonMem || memParts.length > 0,

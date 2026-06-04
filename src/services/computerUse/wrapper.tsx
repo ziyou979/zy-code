@@ -80,9 +80,13 @@ export function buildSessionContext(): ComputerUseSessionContext {
       return d
         ? ({
             ...d,
+            // biome-ignore lint/suspicious/noExplicitAny: 第三方类型不完善
             displayId: (d as any).displayId ?? 0,
+            // biome-ignore lint/suspicious/noExplicitAny: 第三方类型不完善
             originX: (d as any).originX ?? 0,
+            // biome-ignore lint/suspicious/noExplicitAny: 第三方类型不完善
             originY: (d as any).originY ?? 0,
+            // biome-ignore lint/suspicious/noExplicitAny: 第三方类型不完善
           } as any)
         : undefined
     },
@@ -290,6 +294,7 @@ function getOrBind(): Binding {
   const ctx = buildSessionContext()
   binding = {
     ctx,
+    // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
     dispatch: (bindSessionContext as any)(
       getComputerUseHostAdapter(),
       getChicagoCoordinateMode(),
@@ -310,6 +315,7 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
   const call: CallOverride = async (args, context: ToolUseContext) => {
     currentToolUseContext = context
     const { dispatch } = getOrBind()
+    // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
     const dispatchResult = (await dispatch(toolName, args)) as any
     const { telemetry, ...result } = dispatchResult
     if (telemetry?.error_kind) {
@@ -323,6 +329,7 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
     // 类型也允许 audio/resource，但 CU 的 handleToolCall 永远不会发出
     // 这些；默写将它们强制转换为空文本。
     const data = Array.isArray(result.content)
+      // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
       ? result.content.map((item: any) =>
           item.type === 'image'
             ? {

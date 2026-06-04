@@ -353,10 +353,12 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       sendControlResponseSuccess(message)
     },
     set_permission_mode: (message) => {
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       const m = message.request as any
       setAppState((prev) => ({
         ...prev,
         toolPermissionContext: handleSetPermissionMode(
+          // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
           m as any,
           message.request_id,
           prev.toolPermissionContext,
@@ -402,6 +404,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       // Check client exists - dynamically added SDK servers may have
       // placeholder clients with null client until updateSdkMcp() runs
       if (sdkClient && sdkClient.type === 'connected' && sdkClient.client?.transport?.onmessage) {
+        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
         sdkClient.client.transport.onmessage(mcpRequest.message as any)
       }
       sendControlResponseSuccess(message)
@@ -419,6 +422,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         req.dry_run ?? false,
       )
       if (result.canRewind || req.dry_run) {
+        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
         sendControlResponseSuccess(message, result as any)
       } else {
         sendControlResponseError(message, result.error ?? 'Unexpected error')
@@ -456,6 +460,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         { subtype: 'mcp_set_servers' }
       >
       const { response, sdkServersChanged } = await mcp.applyMcpServerChanges(req.servers)
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       sendControlResponseSuccess(message, response as any)
       // Connect SDK servers AFTER response to avoid deadlock
       if (sdkServersChanged) {
@@ -860,6 +865,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       }
     },
     mcp_authenticate: async (message) => {
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       const { serverName } = message.request as any
       const currentAppState = getAppState()
       const config =
@@ -999,6 +1005,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       }
     },
     mcp_oauth_callback_url: async (message) => {
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       const { serverName, callbackUrl } = message.request as any
       const submit = oauthCallbackSubmitters.get(serverName)
       if (submit) {
@@ -1137,6 +1144,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
     zy_oauth_callback: handleZyOAuthCallback,
     zy_oauth_wait_for_completion: handleZyOAuthCallback,
     mcp_clear_auth: async (message) => {
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       const { serverName } = message.request as any
       const currentAppState = getAppState()
       const config =
@@ -1178,6 +1186,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       // Fire-and-forget so the compact model call does not block the stdin loop
       // (which would delay processing of subsequent user messages /
       // interrupts for the duration of the API roundtrip).
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       const { description, persist } = message.request as any
       // Reuse the live controller only if it has not already been aborted
       // (e.g. by interrupt()); an aborted signal would cause queryCompactModel to
@@ -1223,6 +1232,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       // matches in the common case. May still miss the cache for
       // coordinator mode or memory-mechanics extras — acceptable, the
       // alternative is the side question failing entirely.
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       const { question } = message.request as any
       void (async () => {
         try {
@@ -1471,9 +1481,11 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
     // Check for duplicate user message - skip if already processed
     if (message.uuid) {
       const sessionId = getSessionId() as UUID
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       const existsInSession = await doesMessageExistInSession(sessionId, message.uuid as any)
 
       // Check both historical duplicates (from file) and runtime duplicates (this session)
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       if (existsInSession || receivedMessageUuids.has(message.uuid as any)) {
         logForDebugging(`Skipping duplicate user message: ${message.uuid}`)
         // Send acknowledgment for duplicate message if replay mode is enabled
@@ -1500,6 +1512,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       }
 
       // Track this UUID to prevent runtime duplicates
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       trackReceivedMessageUuid(message.uuid as any)
     }
 
@@ -1507,7 +1520,9 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       mode: 'prompt' as const,
       // file_attachments rides the protobuf catchall from the web composer.
       // Same-ref no-op when absent (no 'file_attachments' key).
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       value: await resolveAndPrepend(message, (message.message as any).content),
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       uuid: message.uuid as any,
       priority: message.priority,
     })

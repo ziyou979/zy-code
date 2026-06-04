@@ -29,6 +29,7 @@ export function FallbackPermissionRequest({
     completion_type: 'tool_use_single',
     language_name: 'none',
   }
+  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
   usePermissionRequestLogging(toolUseConfirm, unaryEvent as any)
   const handleSelect = (value: string, feedback?: string) => {
     switch (value) {
@@ -118,6 +119,7 @@ export function FallbackPermissionRequest({
         <Text>
           {tSync('permission.yesDontAskAgainCommands', { name: userFacingName, cwd: originalCwd })}
         </Text>
+      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
       ) as any,
       value: 'yes-dont-ask-again',
       feedbackConfig: {

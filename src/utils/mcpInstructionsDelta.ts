@@ -67,10 +67,11 @@ export function getMcpInstructionsDelta(
       continue
     }
     midCount++
-    for (const n of (msg.attachment as any).addedNames) {
+    const delta = msg.attachment as unknown as { addedNames: string[]; removedNames: string[] }
+    for (const n of delta.addedNames) {
       announced.add(n)
     }
-    for (const n of (msg.attachment as any).removedNames) {
+    for (const n of delta.removedNames) {
       announced.delete(n)
     }
   }

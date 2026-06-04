@@ -99,7 +99,7 @@ export function TeammateSpinnerTree({
     </BoxComponent>
   )
 }
-function HideRow({ isSelected }: any) {
+function HideRow({ isSelected }: { isSelected: boolean | undefined }) {
   return (
     <Box paddingLeft={3}>
       {

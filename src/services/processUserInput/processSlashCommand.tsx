@@ -209,7 +209,7 @@ async function executeForkedSlashCommand(
         },
         canUseTool,
         isAsync: true,
-        querySource: 'agent:custom' as any,
+        querySource: 'agent:custom',
         model: command.model as ModelAlias | undefined,
         availableTools: freshTools,
         override: {
@@ -258,6 +258,7 @@ async function executeForkedSlashCommand(
     return {
       type: 'progress',
       data: {
+        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
         message: message as any,
         type: 'agent_progress',
         prompt: skillContent,
@@ -297,7 +298,7 @@ async function executeForkedSlashCommand(
       },
       canUseTool,
       isAsync: false,
-      querySource: 'agent:custom' as any,
+      querySource: 'agent:custom',
       model: command.model as ModelAlias | undefined,
       availableTools: context.options.tools,
     })) {
@@ -909,6 +910,7 @@ async function getMessagesForSlashCommand(
             // (UUIDs never repeat, so they're never looked up).
             resetMicrocompactState()
             return {
+              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
               messages: buildPostCompactMessages(compactionResultWithSlashMessages) as any,
               shouldQuery: false,
               command,
@@ -1193,6 +1195,7 @@ async function getMessagesForPromptSlashCommand(
     imageContentBlocks.length > 0 || precedingInputBlocks.length > 0
       ? [...imageContentBlocks, ...precedingInputBlocks, ...result]
       : result
+  // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
   ) as any
 
   // Extract attachments from command arguments (@-mentions, MCP resources,
@@ -1211,6 +1214,7 @@ async function getMessagesForPromptSlashCommand(
       [],
       // queuedCommands - handled by query.ts for mid-turn attachments
       context.messages,
+      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
       'repl_main_thread' as any,
       {
         skipSkillDiscovery: true,

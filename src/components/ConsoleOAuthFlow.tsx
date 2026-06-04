@@ -277,8 +277,8 @@ export function ConsoleOAuthFlow({
       } else {
         await installOAuthTokens(result)
         const orgResult = await validateForceLoginOrg()
-        if (!(orgResult as any).valid) {
-          throw new Error((orgResult as any).message)
+        if (!orgResult.valid) {
+          throw new Error(!orgResult.valid ? orgResult.message : '')
         }
         setOAuthStatus({
           state: 'success',

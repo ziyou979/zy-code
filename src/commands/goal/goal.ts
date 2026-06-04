@@ -64,6 +64,7 @@ function buildGoalMetaMessage(condition: string): string {
 /**
  * 设置目标：注册 Stop hook + 写入 activeGoal 状态
  */
+// biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
 function setGoal(condition: string, setAppState: (f: (prev: any) => any) => void): string | null {
   const gate = checkGates()
   if (gate !== null) {
@@ -83,6 +84,7 @@ function setGoal(condition: string, setAppState: (f: (prev: any) => any) => void
     setAt: Date.now(),
     tokensAtStart: getTotalInputTokens(),
   }
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   setAppState((prev: any) => ({ ...prev, activeGoal: goalState }))
 
   logEvent('zy_stop_hook_added', {
@@ -98,7 +100,9 @@ function setGoal(condition: string, setAppState: (f: (prev: any) => any) => void
  * 返回被清除的 condition（无活跃目标时返回 null）
  */
 function clearGoal(
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   setAppState: (f: (prev: any) => any) => void,
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   getAppState: () => any,
 ): string | null {
   const state = getAppState()
@@ -110,6 +114,7 @@ function clearGoal(
   clearGoalHooks(setAppState, activeGoal.condition)
 
   // 清除 activeGoal 状态
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   setAppState((prev: any) => ({ ...prev, activeGoal: undefined }))
 
   logEvent('zy_stop_hook_removed', {})
@@ -121,6 +126,7 @@ function clearGoal(
 /**
  * 移除当前 goal 的 Stop hook
  */
+// biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
 function clearGoalHooks(setAppState: (f: (prev: any) => any) => void, condition?: string): void {
   if (!condition) {
     return

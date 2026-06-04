@@ -5,6 +5,7 @@
 // would resolve to scripts/external-stubs/src/types/ (doesn't exist).
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
 type M = any
 export function useMoreRight(_args: {
   enabled: boolean

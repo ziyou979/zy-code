@@ -38,9 +38,11 @@ function makeCompletion(args: {
               function: { name: tc.name, arguments: tc.arguments },
             })),
           }),
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         } as any,
         finish_reason: args.finishReason ?? 'stop',
         logprobs: null,
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       } as any,
     ],
     usage: {
@@ -68,6 +70,7 @@ describe('openAIResponseToStandard: 入站 OpenAI 非流式', () => {
       'gpt-4',
     )
     expect(r.content).toHaveLength(1)
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const block = r.content[0] as any
     expect(block.type).toBe('tool_call')
     expect(block.id).toBe('c1')
@@ -91,18 +94,22 @@ describe('openAIResponseToStandard: 入站 OpenAI 非流式', () => {
     )
     expect(r.content).toHaveLength(3)
     expect(r.content[0]).toEqual({ type: 'text', text: 'thinking...' })
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((r.content[1] as any).input).toEqual({ x: 1 })
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((r.content[2] as any).input).toEqual({ y: 2 })
   })
 
   test('arguments 为 undefined（OpenAI 偶发会缺）：fallback 为 {}', () => {
     const r = openAIResponseToStandard(
       makeCompletion({
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         toolCalls: [{ id: 'c', name: 'f', arguments: undefined as any }],
         finishReason: 'tool_calls',
       }),
       'gpt-4',
     )
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((r.content[0] as any).input).toEqual({})
   })
 

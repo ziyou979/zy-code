@@ -77,6 +77,7 @@ export function DiffDialog({ messages, onDone }: Props) {
     })),
   ]
   const currentSource = sources[sourceIndex]
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const currentTurn = currentSource?.type === 'turn' ? (currentSource as any).turn : null
   const diffData = currentTurn ? turnDiffToDiffData(currentTurn) : gitDiffData
   const selectedFile = diffData.files[selectedIndex]
@@ -165,6 +166,7 @@ export function DiffDialog({ messages, onDone }: Props) {
           const label =
             source.type === 'current'
               ? tSync('diffDialog.current')
+              // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
               : `T${(source as any).turn.turnIndex}`
           return (
             <Text key={i} dimColor={!isSelected} bold={isSelected}>

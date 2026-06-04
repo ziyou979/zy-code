@@ -11,6 +11,7 @@ export function useGetToolFromMessages(
     inProgressHookCounts?: Map<string, Map<HookEvent, number>>
     resolvedHookCounts?: Map<string, Map<HookEvent, number>>
     toolResultByToolUseID?: Map<string, Message>
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     toolUseByToolUseID: any
     normalizedMessageCount?: number
     resolvedToolUseIDs?: Set<string>

@@ -3,11 +3,38 @@ import { formatOutput } from '../tools/BashTool/utils.js'
 import type { ImageBlock, TextBlock, ToolResultBlock } from '../types/llm.js'
 import type { NotebookCell, NotebookContent } from '../types/notebook.js'
 
-// Local type declarations for missing exports
-type NotebookCellOutput = any
-type NotebookCellSource = any
-type NotebookCellSourceOutput = any
-type NotebookOutputImage = any
+// 本地类型声明 —— Jupyter notebook JSON 原始格式
+// biome-ignore lint/suspicious/noExplicitAny: Jupyter notebook JSON 字段类型多样
+type JupyterRawCell = Record<string, any>
+
+interface NotebookCellOutput {
+  output_type: string
+  text?: string | string[]
+  data?: Record<string, unknown>
+  ename?: string
+  evalue?: string
+  traceback?: string[]
+}
+
+interface NotebookCellSource {
+  cellType: string
+  source: string
+  execution_count?: number
+  cell_id: string
+  language?: string
+  outputs?: NotebookCellSourceOutput[]
+}
+
+interface NotebookCellSourceOutput {
+  output_type: string
+  text?: string
+  image?: NotebookOutputImage
+}
+
+interface NotebookOutputImage {
+  mediaType: string
+  image_data: string
+}
 
 import { getFsImplementation } from './fsOperations.js'
 import { expandPath } from './path.js'
@@ -54,7 +81,7 @@ function extractImage(data: Record<string, unknown>): NotebookOutputImage | unde
   return undefined
 }
 
-function processOutput(output: NotebookCellOutput) {
+function processOutput(output: NotebookCellOutput): NotebookCellSourceOutput | undefined {
   switch (output.output_type) {
     case 'stream':
       return {
@@ -65,17 +92,18 @@ function processOutput(output: NotebookCellOutput) {
     case 'display_data':
       return {
         output_type: output.output_type,
-        text: processOutputText(output.data?.['text/plain']),
-        image: output.data && extractImage(output.data),
+        text: processOutputText(output.data?.['text/plain'] as string | string[] | undefined),
+        image: output.data ? extractImage(output.data) : undefined,
       }
     case 'error':
       return {
         output_type: output.output_type,
         text: processOutputText(
-          `${output.ename}: ${output.evalue}\n${output.traceback.join('\n')}`,
+          `${output.ename}: ${output.evalue}\n${(output.traceback ?? []).join('\n')}`,
         ),
       }
   }
+  return undefined
 }
 
 function processCell(
@@ -84,21 +112,23 @@ function processCell(
   codeLanguage: string,
   includeLargeOutputs: boolean,
 ): NotebookCellSource {
+  const raw = cell as JupyterRawCell
   const cellId = cell.id ?? `cell-${index}`
   const cellData: NotebookCellSource = {
-    cellType: (cell as any).cell_type,
+    cellType: raw.cell_type as string,
     source: Array.isArray(cell.source) ? cell.source.join('') : cell.source,
     execution_count:
-      (cell as any).cell_type === 'code' ? (cell as any).execution_count || undefined : undefined,
+      raw.cell_type === 'code' ? raw.execution_count || undefined : undefined,
     cell_id: cellId,
   }
   // Avoid giving text cells the code language.
-  if ((cell as any).cell_type === 'code') {
+  if (raw.cell_type === 'code') {
     cellData.language = codeLanguage
   }
 
-  if ((cell as any).cell_type === 'code' && cell.outputs?.length) {
-    const outputs = cell.outputs.map(processOutput)
+  if (raw.cell_type === 'code' && cell.outputs?.length) {
+    const rawOutputs = cell.outputs as unknown as NotebookCellOutput[]
+    const outputs = rawOutputs.map(processOutput).filter((o): o is NotebookCellSourceOutput => o !== undefined)
     if (!includeLargeOutputs && isLargeOutputs(outputs)) {
       cellData.outputs = [
         {
@@ -164,7 +194,7 @@ export async function readNotebook(
   const buffer = await getFsImplementation().readFileBytes(fullPath)
   const content = buffer.toString('utf-8')
   const notebook = jsonParse(content) as NotebookContent
-  const language = (notebook.metadata as any)?.language_info?.name ?? 'python'
+  const language = (notebook.metadata as Record<string, Record<string, string>> | undefined)?.language_info?.name ?? 'python'
   if (cellId) {
     const cell = notebook.cells.find((c) => c.id === cellId)
     if (!cell) {

@@ -513,6 +513,7 @@ export class QueryEngine {
               type: 'user',
               message: {
                 ...msg.message,
+                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                 content: msg.message.content.map((b: any) =>
                   b.type === 'text' ? { ...b, text: stripAnsi(b.text) } : b,
                 ),

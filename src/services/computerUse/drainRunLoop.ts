@@ -18,6 +18,7 @@ let pump: ReturnType<typeof setInterval> | undefined
 let pending = 0
 
 function drainTick(cu: ReturnType<typeof requireComputerUseSwift>): void {
+  // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
   ;(cu as any)._drainMainRunLoop()
 }
 

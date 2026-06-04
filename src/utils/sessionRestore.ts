@@ -130,8 +130,8 @@ export function restoreSessionStateFromLog(
     ;(
       require('../services/contextCollapse/persist.js') as typeof import('../services/contextCollapse/persist.js')
     ).restoreFromEntries(
-      (result.contextCollapseCommits as any) ?? [],
-      result.contextCollapseSnapshot as any,
+      result.contextCollapseCommits ?? [],
+      result.contextCollapseSnapshot,
     )
     /* eslint-enable @typescript-eslint/no-require-imports */
   }
@@ -474,8 +474,8 @@ export async function processResumedConversation(
     ;(
       require('../services/contextCollapse/persist.js') as typeof import('../services/contextCollapse/persist.js')
     ).restoreFromEntries(
-      (result.contextCollapseCommits as any) ?? [],
-      result.contextCollapseSnapshot as any,
+      result.contextCollapseCommits ?? [],
+      result.contextCollapseSnapshot,
     )
     /* eslint-enable @typescript-eslint/no-require-imports */
   }

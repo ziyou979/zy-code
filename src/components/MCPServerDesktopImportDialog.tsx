@@ -18,7 +18,7 @@ type Props = {
 }
 export function MCPServerDesktopImportDialog({ servers, scope, onDone }: Props) {
   const serverNames = Object.keys(servers)
-  const [existingServers, setExistingServers] = useState<Record<string, any>>({})
+  const [existingServers, setExistingServers] = useState<Record<string, McpServerConfig>>({})
   useEffect(() => {
     getAllMcpConfigs().then((existingConfigs) => {
       const { servers: existingServerConfigs } = existingConfigs

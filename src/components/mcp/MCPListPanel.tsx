@@ -174,8 +174,10 @@ export function MCPListPanel({
       context: 'Confirmation',
     },
   )
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const getServerIndex = (targetServer: any) =>
     selectableItems.findIndex((item) => item.type === 'server' && item.server === targetServer)
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const getAgentServerIndex = (targetAgentServer: any) =>
     selectableItems.findIndex(
       (item) => item.type === 'agent-server' && item.agentServer === targetAgentServer,
@@ -185,6 +187,7 @@ export function MCPListPanel({
   if (servers.length === 0 && agentServers.length === 0) {
     return null
   }
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const renderServerItem = (server: any) => {
     const index = getServerIndex(server)
     const isSelected = selectedIndex === index
@@ -231,6 +234,7 @@ export function MCPListPanel({
       </Box>
     )
   }
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const renderAgentServerItem = (agentServer: any) => {
     const index = getAgentServerIndex(agentServer)
     const isSelected = selectedIndex === index

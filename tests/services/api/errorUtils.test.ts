@@ -31,6 +31,7 @@ describe('errorUtils', () => {
 
     test('Error 含 SSL 错误码 → 识别为 SSL 错误', () => {
       const err = new Error('self signed cert')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(err as any).code = 'DEPTH_ZERO_SELF_SIGNED_CERT'
       const result = extractConnectionErrorDetails(err)
       expect(result).not.toBe(null)
@@ -40,6 +41,7 @@ describe('errorUtils', () => {
 
     test('Error 含非 SSL 错误码 → isSSLError 为 false', () => {
       const err = new Error('timeout')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(err as any).code = 'ETIMEDOUT'
       const result = extractConnectionErrorDetails(err)
       expect(result).not.toBe(null)
@@ -49,6 +51,7 @@ describe('errorUtils', () => {
 
     test('遍历 cause 链找到根错误码', () => {
       const root = new Error('root error')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(root as any).code = 'ECONNREFUSED'
 
       const mid = new Error('mid error')
@@ -65,6 +68,7 @@ describe('errorUtils', () => {
 
     test('cause 链中找到 code（深度 3，在范围内）', () => {
       const root = new Error('root')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(root as any).code = 'ECONNREFUSED'
 
       let err = root
@@ -92,6 +96,7 @@ describe('errorUtils', () => {
 
     test('circular cause 不会死循环', () => {
       const err = new Error('circular')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(err as any).code = 'ECIRCULAR'
       err.cause = err // 自引用
       const result = extractConnectionErrorDetails(err)
@@ -104,7 +109,9 @@ describe('errorUtils', () => {
   describe('formatAPIError', () => {
     test('ETIMEDOUT 错误 → 超时提示', () => {
       const err = new Error('timed out')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(err as any).code = 'ETIMEDOUT'
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBeTruthy()
       expect(typeof result).toBe('string')
@@ -112,7 +119,9 @@ describe('errorUtils', () => {
 
     test('SSL 自签名证书错误 → 对应 SSL 提示', () => {
       const err = new Error('self signed')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(err as any).code = 'DEPTH_ZERO_SELF_SIGNED_CERT'
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBeTruthy()
       expect(typeof result).toBe('string')
@@ -120,7 +129,9 @@ describe('errorUtils', () => {
 
     test('SSL 证书过期 → 对应 SSL 提示', () => {
       const err = new Error('cert expired')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(err as any).code = 'CERT_HAS_EXPIRED'
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBeTruthy()
       expect(typeof result).toBe('string')
@@ -128,6 +139,7 @@ describe('errorUtils', () => {
 
     test('Connection error 无 code → 连接失败提示', () => {
       const err = new Error('Connection error.')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBeTruthy()
       expect(typeof result).toBe('string')
@@ -135,6 +147,7 @@ describe('errorUtils', () => {
 
     test('普通 API 错误 → 返回 message', () => {
       const err = new Error('rate limit exceeded')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBe('rate limit exceeded')
     })
@@ -146,6 +159,7 @@ describe('errorUtils', () => {
           error: { message: 'Bad Request' },
         },
       }
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBe('Bad Request')
     })
@@ -157,12 +171,14 @@ describe('errorUtils', () => {
           message: 'Internal server error',
         },
       }
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBe('Internal server error')
     })
 
     test('无 message 无嵌套错误 → 回退 status 消息', () => {
       const err = { status: 503 }
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBeTruthy()
       expect(typeof result).toBe('string')
@@ -170,6 +186,7 @@ describe('errorUtils', () => {
 
     test('HTML 消息被清理（提取 title）', () => {
       const err = new Error('<!DOCTYPE html><html><head><title>CloudFlare</title></head></html>')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBe('CloudFlare')
     })
@@ -178,6 +195,7 @@ describe('errorUtils', () => {
   describe('getSSLErrorHint', () => {
     test('SSL 错误 → 返回提示字符串', () => {
       const err = new Error('ssl error')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(err as any).code = 'DEPTH_ZERO_SELF_SIGNED_CERT'
       const result = getSSLErrorHint(err)
       expect(result).toBeTruthy()
@@ -186,6 +204,7 @@ describe('errorUtils', () => {
 
     test('非 SSL 错误 → null', () => {
       const err = new Error('timeout')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(err as any).code = 'ETIMEDOUT'
       expect(getSSLErrorHint(err)).toBe(null)
     })
@@ -218,7 +237,9 @@ describe('errorUtils', () => {
     for (const code of sslCodes) {
       test(`${code} → 返回提示字符串`, () => {
         const err = new Error(`ssl: ${code}`)
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         ;(err as any).code = code
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         const result = formatAPIError(err as any)
         expect(result).toBeTruthy()
         expect(typeof result).toBe('string')
@@ -235,6 +256,7 @@ describe('errorUtils', () => {
           },
         },
       }
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBe('CloudFlare Block')
     })
@@ -245,6 +267,7 @@ describe('errorUtils', () => {
           message: '<!DOCTYPE html><html><head><title>Proxy Error</title></head></html>',
         },
       }
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBe('Proxy Error')
     })
@@ -258,6 +281,7 @@ describe('errorUtils', () => {
           },
         },
       }
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBeTruthy()
     })
@@ -269,6 +293,7 @@ describe('errorUtils', () => {
           message: '<!DOCTYPE html><html><head></head></html>', // 浅层 path，无 title
         },
       }
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBeTruthy()
     })
@@ -277,7 +302,9 @@ describe('errorUtils', () => {
   describe('formatAPIError: connection error with code', () => {
     test('Connection error + 非 SSL code → 包含 code', () => {
       const err = new Error('Connection error.')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(err as any).code = 'ECONNREFUSED'
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBeTruthy()
       expect(typeof result).toBe('string')
@@ -285,6 +312,7 @@ describe('errorUtils', () => {
 
     test('Connection error + 无 code → 通用连接失败', () => {
       const err = new Error('Connection error.')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = formatAPIError(err as any)
       expect(result).toBeTruthy()
       expect(typeof result).toBe('string')

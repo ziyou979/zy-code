@@ -1,3 +1,4 @@
+import type { UUID } from 'node:crypto'
 import { dirname, sep } from 'node:path'
 import { logEvent } from 'src/services/analytics/index.js'
 import { z } from 'zod/v4'
@@ -237,7 +238,7 @@ export const FileWriteTool = buildTool({
       // Backup captures pre-edit content — safe to call before the staleness
       // check (idempotent v1 backup keyed on content hash; if staleness fails
       // later we just have an unused backup, not corrupt state).
-      await fileHistoryTrackEdit(updateFileHistoryState, fullFilePath, parentMessage!.uuid as any)
+      await fileHistoryTrackEdit(updateFileHistoryState, fullFilePath, parentMessage!.uuid as UUID)
     }
 
     // Load current state and confirm no changes since last read.

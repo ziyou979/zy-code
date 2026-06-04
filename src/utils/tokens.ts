@@ -255,13 +255,19 @@ export function tokenCountWithEstimation(messages: readonly Message[]): number {
         }
       }
       return (
-        getTokenCountFromUsage(usage as any) +
+        getTokenCountFromUsage(usage) +
         Math.round(
-          roughTokenCountEstimationForMessages(messages.slice(i + 1) as any) * correctionFactor,
+          roughTokenCountEstimationForMessages(
+            messages.slice(i + 1) as ReadonlyArray<{ type: string; message?: { content?: unknown } }>,
+          ) * correctionFactor,
         )
       )
     }
     i--
   }
-  return Math.round(roughTokenCountEstimationForMessages(messages as any) * correctionFactor)
+  return Math.round(
+    roughTokenCountEstimationForMessages(
+      messages as ReadonlyArray<{ type: string; message?: { content?: unknown } }>,
+    ) * correctionFactor,
+  )
 }

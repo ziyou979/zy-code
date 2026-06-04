@@ -82,6 +82,7 @@ function createExplanationPromise(
  * Creates the fetch promise lazily (only when user hits Ctrl+E)
  * to avoid consuming tokens for explanations users never view.
  */
+// biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
 export function usePermissionExplainerUI(props: any) {
   const enabled = isPermissionExplainerEnabled()
   const [visible, setVisible] = useState(false)
@@ -123,21 +124,21 @@ function ExplanationResult({ promise }: { promise: Promise<PermissionExplanation
       </Box>
     )
   }
-  const riskColor = getRiskColor((explanation as any).riskLevel)
-  const riskLabel = getRiskLabel((explanation as any).riskLevel)
+  const riskColor = getRiskColor(explanation.riskLevel)
+  const riskLabel = getRiskLabel(explanation.riskLevel)
   return (
     <Box flexDirection="column" marginTop={1}>
-      {<Text>{(explanation as any).explanation}</Text>}
+      {<Text>{explanation.explanation}</Text>}
       {
         <Box marginTop={1}>
-          <Text>{(explanation as any).reasoning}</Text>
+          <Text>{explanation.reasoning}</Text>
         </Box>
       }
       {
         <Box marginTop={1}>
           <Text>
             {<Text color={riskColor}>{riskLabel}:</Text>}
-            {<Text> {(explanation as any).risk}</Text>}
+            {<Text> {explanation.risk}</Text>}
           </Text>
         </Box>
       }

@@ -48,8 +48,10 @@ beforeAll(async () => {
   ))
 })
 
+// biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
 const ctx = { getAppState: () => ({}), abortController: { signal: undefined } } as any
 const assistantMsg = (text: string) =>
+  // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
   ({ uuid: 'u1', message: { content: text ? [{ type: 'text', text }] : [] } }) as any
 
 describe('4.1 MessageDisplay schema', () => {

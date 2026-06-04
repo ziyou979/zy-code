@@ -36,6 +36,7 @@ export function SkillPermissionRequest(
   const unaryEvent = {
     completion_type: 'tool_use_single',
     language_name: 'none',
+  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
   } as any
   usePermissionRequestLogging(toolUseConfirm, unaryEvent)
   const originalCwd = getOriginalCwd()

@@ -112,6 +112,7 @@ const collectFromRemoteHost: (
         const projectsDir = join(tempDir, 'projects')
         let projectDirents: Awaited<ReturnType<typeof readdir>>
         try {
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           projectDirents = (await readdir(projectsDir, { withFileTypes: true })) as any
         } catch {
           return result
@@ -120,6 +121,7 @@ const collectFromRemoteHost: (
         // Merge into destination (parallel per project directory)
         await Promise.all(
           projectDirents.map(async (dirent) => {
+            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
             const projectName = (dirent as any).name
             const projectPath = join(projectsDir, projectName)
 
@@ -140,18 +142,23 @@ const collectFromRemoteHost: (
             // Copy session files (skip existing)
             let files: Awaited<ReturnType<typeof readdir>>
             try {
+              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
               files = (await readdir(projectPath, { withFileTypes: true })) as any
             } catch {
               return
             }
             await Promise.all(
               files.map(async (fileDirent) => {
+                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                 const fileName = (fileDirent as any).name
+                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                 if (!(fileName as any).endsWith('.jsonl')) {
                   return
                 }
 
+                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                 const srcFile = join(projectPath, fileName as any)
+                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                 const destFile = join(destProjectPath, fileName as any)
 
                 try {
@@ -866,6 +873,7 @@ async function summarizeTranscriptChunk(chunk: string): Promise<string> {
       signal: new AbortController().signal,
       options: {
         model: getAnalysisModel(),
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         querySource: 'insights' as any,
         agents: [],
         isNonInteractiveSession: true,
@@ -1004,6 +1012,7 @@ RESPOND WITH ONLY A VALID JSON OBJECT matching this schema:
       signal: new AbortController().signal,
       options: {
         model: getAnalysisModel(),
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         querySource: 'insights' as any,
         agents: [],
         isNonInteractiveSession: true,
@@ -1558,6 +1567,7 @@ async function generateSectionInsight(
       signal: new AbortController().signal,
       options: {
         model: getInsightsModel(),
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         querySource: 'insights' as any,
         agents: [],
         isNonInteractiveSession: true,
@@ -2739,6 +2749,7 @@ async function scanAllSessions(): Promise<LiteSessionInfo[]> {
 
   let dirents: Awaited<ReturnType<typeof readdir>>
   try {
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     dirents = (await readdir(projectsDir, { withFileTypes: true })) as any
   } catch {
     return []
@@ -2746,6 +2757,7 @@ async function scanAllSessions(): Promise<LiteSessionInfo[]> {
 
   const projectDirs = dirents
     .filter((dirent) => dirent.isDirectory())
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     .map((dirent) => join(projectsDir, (dirent as any).name))
 
   const allSessions: LiteSessionInfo[] = []

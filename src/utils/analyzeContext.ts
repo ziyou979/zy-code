@@ -230,7 +230,7 @@ export async function countToolDefinitionTokens(
       }),
     ),
   )
-  const result = await countTokensWithFallback([], toolSchemas as any)
+  const result = await countTokensWithFallback([], toolSchemas)
   if (result === null || result === 0) {
     const toolNames = tools.map((t) => t.name).join(', ')
     logForDebugging(
@@ -264,11 +264,11 @@ async function countSystemTokens(effectiveSystemPrompt: readonly string[]): Prom
   const namedEntries: Array<{ name: string; content: string }> = [
     ...effectiveSystemPrompt
       .filter(
-        (content) => (content as any).length > 0 && content !== SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
+        (content) => content.length > 0 && content !== SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
       )
       .map((content) => ({ name: extractSectionName(content), content })),
     ...Object.entries(systemContext)
-      .filter(([, content]) => (content as any).length > 0)
+      .filter(([, content]) => content.length > 0)
       .map(([name, content]) => ({ name, content })),
   ]
 
@@ -855,8 +855,8 @@ async function approximateMessageTokens(messages: Message[]): Promise<MessageBre
         }
       }
       return _.message
-    }) as any,
-    [] as any,
+    }) as LLMMessage[],
+    [],
   )
 
   breakdown.totalTokens = approximateMessageTokens ?? 0

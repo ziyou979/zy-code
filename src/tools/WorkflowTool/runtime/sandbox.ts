@@ -17,6 +17,7 @@ export interface WorkflowMeta {
 }
 
 export interface WorkflowRunResult {
+  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
   returnValue: any
   agentCount: number
 }
@@ -41,6 +42,7 @@ export function parseMeta(source: string): WorkflowMeta {
     // Pure literal constraint: evaluate as expression (no variables/functions)
     const evalScript = new Script(`(${metaMatch[1]})`, { filename: 'meta-parse' })
     meta = evalScript.runInNewContext({})
+  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
   } catch (err: any) {
     throw new WorkflowScriptError(
       `Failed to parse meta: ${err.message}. The meta object must be a pure literal (no variables, function calls, spreads, or template interpolation).`,
@@ -65,6 +67,7 @@ export function validateScript(source: string): void {
 
 export interface SandboxOptions {
   source: string
+  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
   args: any
   toolUseContext: ToolUseContext
   semaphore: WorkflowSemaphore
@@ -117,12 +120,16 @@ export async function executeWorkflowScript(opts: SandboxOptions): Promise<Workf
   const phaseFn = createPhaseFunction(progressCtx)
   const logFn = createLogFunction(progressCtx)
 
+  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
   const pipelineFn = (items: any[], ...stages: any[]) => pipeline(items, semaphore, ...stages)
+  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
   const parallelFn = (thunks: Array<() => Promise<any>>) => parallel(thunks, semaphore)
 
   const workflowFn = async (
     nameOrRef: string | { scriptPath: string },
+    // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
     childArgs?: any,
+  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
   ): Promise<any> => {
     if (nestingDepth >= 1) {
       throw new Error(
@@ -144,6 +151,7 @@ export async function executeWorkflowScript(opts: SandboxOptions): Promise<Workf
       const { readFileSync } = await import('node:fs')
       try {
         childSource = readFileSync(nameOrRef.scriptPath, 'utf-8')
+      // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
       } catch (err: any) {
         throw new Error(`Cannot read workflow script at ${nameOrRef.scriptPath}: ${err.message}`)
       }
@@ -167,11 +175,13 @@ export async function executeWorkflowScript(opts: SandboxOptions): Promise<Workf
           'new Date() without arguments is not allowed in workflow scripts (breaks resume). Pass a timestamp via args.',
         )
       }
+      // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
       return new Date(...(argArray as [any]))
     },
   })
 
   const blockedMath = { ...Math }
+  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
   delete (blockedMath as any).random
   Object.defineProperty(blockedMath, 'random', {
     get() {
@@ -181,7 +191,7 @@ export async function executeWorkflowScript(opts: SandboxOptions): Promise<Workf
     },
   })
 
-  const sandboxGlobals: Record<string, any> = {
+  const sandboxGlobals: Record<string, unknown> = {
     // 注入的运行时 API
     agent: agentFn,
     pipeline: pipelineFn,

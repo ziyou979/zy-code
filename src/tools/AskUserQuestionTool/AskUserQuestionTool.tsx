@@ -170,7 +170,7 @@ function AskUserQuestionResultMessage({ answers }: { answers: Record<string, str
             const [questionText, answer] = entry
             return (
               <Text key={questionText} color="inactive">
-                · {questionText} → {answer as any}
+                · {questionText} → {answer}
               </Text>
             )
           })}

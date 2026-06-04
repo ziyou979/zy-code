@@ -95,7 +95,7 @@ export class ExitPlanModeScanner {
   ingest(newEvents: WireMessage[]): ScanResult {
     for (const m of newEvents) {
       if (m.type === 'assistant') {
-        for (const block of (m.message as any).content) {
+        for (const block of (m.message as unknown as { content: { type: string }[] }).content) {
           if (block.type !== 'tool_call') {
             continue
           }
@@ -105,7 +105,7 @@ export class ExitPlanModeScanner {
           }
         }
       } else if (m.type === 'user') {
-        const content = (m.message as any).content
+        const content = (m.message as unknown as { content: unknown }).content
         if (!Array.isArray(content)) {
           continue
         }

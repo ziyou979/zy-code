@@ -57,8 +57,8 @@ function webFetchToolInputToPermissionRuleContent(input: { [k: string]: unknown 
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export let WebFetchTool: Tool<any, any>
+// biome-ignore lint/suspicious/noExplicitAny: 适配层类型处理
+export let WebFetchTool: Tool<any, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 WebFetchTool = buildTool({
   name: WEB_FETCH_TOOL_NAME,
   searchHint: 'fetch and extract content from a URL',

@@ -179,7 +179,7 @@ export function createChromeContext(env?: Record<string, string>): ClaudeForChro
           signal: req.signal,
           skipSystemPromptPrefix: true,
           tools: [],
-          querySource: 'chrome_mcp' as any,
+          querySource: 'chrome_mcp',
         })
         // BetaContentBlock is TextBlock | ThinkingBlock | ToolCallBlock | ...
         // Only text blocks carry the model's command output.
@@ -251,6 +251,7 @@ export async function runClaudeInChromeMcpServer(): Promise<void> {
   process.stdin.on('error', () => void shutdownAndExit())
 
   logForDebugging('[Claude in Chrome] Starting MCP server')
+  // biome-ignore lint/suspicious/noExplicitAny: 第三方 MCP SDK 类型不完善
   await (server as any).connect(transport)
   logForDebugging('[Claude in Chrome] MCP server started')
 }

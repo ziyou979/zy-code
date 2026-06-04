@@ -6,7 +6,9 @@ process.env.ZY_DEV_TRANSCRIPT_CLASSIFIER = '1'
 
 // 注入 build features，使 true 等在 dev 下为 true
 if (typeof Bun !== 'undefined') {
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   ;(Bun as any).features = [
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     ...((Bun as any).features || []),
     'TRANSCRIPT_CLASSIFIER',
     'FORK_SUBAGENT',

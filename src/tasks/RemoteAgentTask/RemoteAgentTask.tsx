@@ -261,6 +261,7 @@ export function extractPlanFromLog(log: WireMessage[]): string | null {
     if (msg?.type !== 'assistant') {
       continue
     }
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     const fullText = extractTextContent((msg.message as any).content, '\n')
     const plan = extractTag(fullText, ULTRAPLAN_TAG)
     if (plan?.trim()) {
@@ -332,6 +333,7 @@ function extractReviewFromLog(log: WireMessage[]): string | null {
     if (msg?.type !== 'assistant') {
       continue
     }
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     const fullText = extractTextContent((msg.message as any).content, '\n')
     const tagged = extractTag(fullText, REMOTE_REVIEW_TAG)
     if (tagged?.trim()) {
@@ -358,6 +360,7 @@ function extractReviewFromLog(log: WireMessage[]): string | null {
   // Fallback: concatenate all assistant text in chronological order.
   const allText = log
     .filter((msg): msg is WireAssistantMessage => msg.type === 'assistant')
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     .map((msg) => extractTextContent((msg.message as any).content, '\n'))
     .join('\n')
     .trim()
@@ -395,6 +398,7 @@ function extractReviewTagFromLog(log: WireMessage[]): string | null {
     if (msg?.type !== 'assistant') {
       continue
     }
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     const fullText = extractTextContent((msg.message as any).content, '\n')
     const tagged = extractTag(fullText, REMOTE_REVIEW_TAG)
     if (tagged?.trim()) {
@@ -478,14 +482,18 @@ function extractTodoListFromLog(log: WireMessage[]): TodoList {
   const todoListMessage = log.findLast(
     (msg): msg is WireAssistantMessage =>
       msg.type === 'assistant' &&
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       (msg.message as any).content.some(
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         (block: any) => block.type === 'tool_call' && block.name === TodoWriteTool.name,
       ),
   )
   if (!todoListMessage) {
     return []
   }
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   const input = (todoListMessage.message as any).content.find(
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     (block: any) => block.type === 'tool_call' && block.name === TodoWriteTool.name,
   )?.input
   if (!input) {
@@ -695,8 +703,11 @@ function startRemoteSessionPolling(taskId: string, context: TaskContext): () => 
         const deltaText = response.newEvents
           .map((msg) => {
             if (msg.type === 'assistant') {
+              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
               return (msg.message as any).content
+                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                 .filter((block: any) => block.type === 'text')
+                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                 .map((block: any) => ('text' in block ? block.text : ''))
                 .join('\n')
             }

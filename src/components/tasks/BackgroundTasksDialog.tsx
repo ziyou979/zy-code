@@ -67,13 +67,21 @@ type Props = {
 // WORKFLOW_SCRIPTS 仅限 ant（build_flags.yaml）。静态导入会泄漏约 1.3K 行到外部构建中。
 // 使用 feature() + require 门控，这样打包器可以对分支进行死代码消除。
 /* eslint-disable @typescript-eslint/no-require-imports */
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 const WorkflowDetailDialog: any = null
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 const workflowTaskModule: any = null
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 const killWorkflowTask: any = null
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 const skipWorkflowAgent: any = null
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 const retryWorkflowAgent: any = null
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 const monitorMcpModule: any = null
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 const killMonitorMcp: any = null
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 const MonitorMcpDetailDialog: any = null
 /* eslint-enable @typescript-eslint/no-require-imports */
 

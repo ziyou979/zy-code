@@ -11,13 +11,16 @@ import { useWizard } from '../../../wizard/index.js'
 import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
 export function PromptStep() {
   const { goNext, goBack, updateWizardData, wizardData } = useWizard()
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const [systemPrompt, setSystemPrompt] = useState((wizardData.systemPrompt as any) || '')
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const [cursorOffset, setCursorOffset] = useState((systemPrompt as any).length)
   const [error, setError] = useState<string | null>(null)
   useKeybinding('confirm:no', goBack, {
     context: 'Settings',
   })
   const handleExternalEditor = async () => {
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const result = await editPromptInEditor(systemPrompt as any)
     if (result.content !== null) {
       setSystemPrompt(result.content)
@@ -28,6 +31,7 @@ export function PromptStep() {
     context: 'Chat',
   })
   const handleSubmit = () => {
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const trimmedPrompt = (systemPrompt as any).trim()
     if (!trimmedPrompt) {
       setError(tSync('wizard.promptRequired'))
@@ -35,6 +39,7 @@ export function PromptStep() {
     }
     setError(null)
     updateWizardData({
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       systemPrompt: trimmedPrompt as any,
     })
     goNext()

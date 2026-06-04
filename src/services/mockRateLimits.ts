@@ -77,6 +77,7 @@ let mockEnabled = false
 let mockHeaderless429Message: string | null = null
 let mockSubscriptionType: SubscriptionType | null = null
 // Default subscription type for mock testing
+// biome-ignore lint/suspicious/noExplicitAny: 模拟测试中使用的扩展订阅类型
 const DEFAULT_MOCK_SUBSCRIPTION: SubscriptionType = 'max' as any
 
 // Track individual exceeded limits with their reset times

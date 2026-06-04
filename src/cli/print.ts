@@ -1578,8 +1578,10 @@ export async function handleInitializeRequest(
     })),
     output_style: outputStyle,
     available_output_styles: Object.keys(availableOutputStyles),
+    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
     models: modelInfos as any,
     account: {
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       email: (accountInfo as any)?.email,
       organization: accountInfo?.organization,
       subscriptionType: accountInfo?.subscription,
@@ -1589,6 +1591,7 @@ export async function handleInitializeRequest(
       // other fields are all absent. apiProvider disambiguates "not logged
       // in" (direct API + tokenSource:none) from "3P, login not applicable".
       apiProvider: getAPIProvider(),
+    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
     } as any,
     pid: process.pid,
   }
@@ -1598,6 +1601,7 @@ export async function handleInitializeRequest(
     response: {
       subtype: 'success',
       request_id: requestId,
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
       response: initResponse as any,
     },
   })
@@ -1835,6 +1839,7 @@ export function handleChannelEnable(
         value: wrapChannelMessage(serverName, content, meta),
         priority: 'next',
         isMeta: true,
+        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
         origin: { kind: 'channel', server: serverName } as any,
         skipSlashCommands: true,
       })
@@ -1908,6 +1913,7 @@ export function reregisterChannelHandlerAfterReconnect(connection: MCPServerConn
         value: wrapChannelMessage(connection.name, content, meta),
         priority: 'next',
         isMeta: true,
+        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
         origin: { kind: 'channel', server: connection.name } as any,
         skipSlashCommands: true,
       })

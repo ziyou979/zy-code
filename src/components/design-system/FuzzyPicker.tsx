@@ -268,7 +268,8 @@ function List({
   getKey,
   renderItem,
   emptyText,
-}: ListProps<any>) {
+}: // biome-ignore lint/suspicious/noExplicitAny: 泛型组件内部转发，无法避免 any
+ListProps<any>) {
   if (visible.length === 0) {
     return (
       <Box height={visibleCount} flexShrink={0}>

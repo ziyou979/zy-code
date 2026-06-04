@@ -1,6 +1,7 @@
 import { checkInstall } from 'src/services/nativeInstaller/index.js'
 import { useStartupNotification } from './useStartupNotification.js'
 export function useInstallMessages() {
+  // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
   useStartupNotification(_temp2 as any)
 }
 async function _temp2() {

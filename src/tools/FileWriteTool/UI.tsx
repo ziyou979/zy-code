@@ -1,5 +1,6 @@
 import type { ToolResultBlock } from '../../types/llm.js'
 
+// biome-ignore lint/suspicious/noExplicitAny: diff 库的 StructuredPatchHunk 类型不兼容
 type StructuredPatchHunk = any
 
 import { isAbsolute, relative, resolve } from 'node:path'
@@ -236,7 +237,8 @@ function WriteRejectionBody({
   style?: 'condensed'
   verbose: boolean
 }) {
-  const data: any = use(promise)
+  // biome-ignore lint/suspicious/noExplicitAny: React.use 对 Promise 的类型推断不完整
+  const data: RejectionDiffData = use(promise as Promise<any>)
   if (data.type === 'create') {
     return createFallback
   }

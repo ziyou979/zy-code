@@ -450,8 +450,10 @@ export async function initReplBridge(options?: InitWireOptions): Promise<ReplWir
   if (feature('KAIROS')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { isAssistantMode } =
+      // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
       require('../assistant/index.js') as any as typeof import('../assistant/index.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
+    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
     if ((isAssistantMode as any)?.() as any) {
       workerType = 'zy_code_assistant'
     }

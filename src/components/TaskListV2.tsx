@@ -99,9 +99,12 @@ export function TaskListV2({ tasks, isStandalone = false }: Props): React.ReactN
   const teammateColors: Record<string, keyof Theme> = {}
   if (isAgentSwarmsEnabled() && teamContext?.teammates) {
     for (const teammate of Object.values(teamContext.teammates)) {
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       if ((teammate as any).color) {
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         const themeColor = AGENT_COLOR_TO_THEME_COLOR[(teammate as any).color as AgentColorName]
         if (themeColor) {
+          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
           teammateColors[(teammate as any).name] = themeColor
         }
       }

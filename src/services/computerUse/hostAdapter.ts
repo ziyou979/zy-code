@@ -1,6 +1,8 @@
 import type {} from '@ant/computer-use-mcp/types'
 
+// biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
 type ComputerUseHostAdapter = any
+// biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
 type Logger = any
 
 import { DebugLogger } from '../../utils/debug.js'
@@ -30,8 +32,10 @@ export function getComputerUseHostAdapter(): ComputerUseHostAdapter {
     }),
     ensureOsPermissions: async () => {
       const cu = requireComputerUseSwift()
-      const accessibility = (cu as any).tcc.checkAccessibility()
-      const screenRecording = (cu as any).tcc.checkScreenRecording()
+      // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
+      const cuAny = cu as any
+      const accessibility = cuAny.tcc.checkAccessibility()
+      const screenRecording = cuAny.tcc.checkScreenRecording()
       return accessibility && screenRecording
         ? { granted: true }
         : { granted: false, accessibility, screenRecording }

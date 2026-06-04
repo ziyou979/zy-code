@@ -63,7 +63,7 @@ export const SleepTool = buildTool({
     const clampedDuration = Math.min(Math.max(duration, 0), 3600)
     const ms = clampedDuration * 1000
     try {
-      await sleep(ms, (context as any).signal)
+      await sleep(ms, (context as Record<string, unknown>).signal as AbortSignal | undefined)
       return { data: { slept: clampedDuration, interrupted: false } }
     } catch {
       return { data: { slept: clampedDuration, interrupted: true } }

@@ -22,9 +22,13 @@ import { logForDebugging } from '../../utils/debug.js'
 import { getOauthProfileFromOauthToken } from './getOauthProfile.js'
 import type { OAuthProfileResponse, OAuthTokens, SubscriptionType } from './types.js'
 
+// biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth API 响应类型不完善
 type OAuthTokenExchangeResponse = any
+// biome-ignore lint/suspicious/noExplicitAny: 第三方 API 响应类型不完善
 type UserRolesResponse = any
+// biome-ignore lint/suspicious/noExplicitAny: 第三方 API 响应类型不完善
 type RateLimitTier = any
+// biome-ignore lint/suspicious/noExplicitAny: 第三方 API 响应类型不完善
 type BillingType = any
 
 /**
@@ -242,6 +246,7 @@ export async function refreshOAuthToken(
             organizationUuid: data.organization?.uuid,
           }
         : undefined,
+      // biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth API 响应类型不完善
     } as any
   } catch (error) {
     const responseBody =
@@ -339,22 +344,24 @@ export async function fetchProfileInfo(accessToken: string): Promise<{
   rawProfile?: OAuthProfileResponse
 }> {
   const profile = await getOauthProfileFromOauthToken(accessToken)
-  const orgType = (profile as any)?.organization?.organization_type
+  // biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth API 响应类型不完善
+  const p = profile as any
+  const orgType = p?.organization?.organization_type
 
   // Reuse the logic from fetchSubscriptionType
   let subscriptionType: SubscriptionType | null = null
   switch (orgType) {
     case 'zy_max':
-      subscriptionType = 'max' as any
+      subscriptionType = 'max' as SubscriptionType
       break
     case 'zy_pro':
-      subscriptionType = 'pro' as any
+      subscriptionType = 'pro' as SubscriptionType
       break
     case 'zy_enterprise':
-      subscriptionType = 'enterprise' as any
+      subscriptionType = 'enterprise' as SubscriptionType
       break
     case 'zy_team':
-      subscriptionType = 'team' as any
+      subscriptionType = 'team' as SubscriptionType
       break
     default:
       // Return null for unknown organization types
@@ -372,21 +379,21 @@ export async function fetchProfileInfo(accessToken: string): Promise<{
     subscriptionCreatedAt?: string
   } = {
     subscriptionType,
-    rateLimitTier: (profile as any)?.organization?.rate_limit_tier ?? null,
-    hasExtraUsageEnabled: (profile as any)?.organization?.has_extra_usage_enabled ?? null,
-    billingType: (profile as any)?.organization?.billing_type ?? null,
+    rateLimitTier: p?.organization?.rate_limit_tier ?? null,
+    hasExtraUsageEnabled: p?.organization?.has_extra_usage_enabled ?? null,
+    billingType: p?.organization?.billing_type ?? null,
   }
 
-  if ((profile as any)?.account?.display_name) {
-    result.displayName = (profile as any).account.display_name
+  if (p?.account?.display_name) {
+    result.displayName = p.account.display_name
   }
 
-  if ((profile as any)?.account?.created_at) {
-    result.accountCreatedAt = (profile as any).account.created_at
+  if (p?.account?.created_at) {
+    result.accountCreatedAt = p.account.created_at
   }
 
-  if ((profile as any)?.organization?.subscription_created_at) {
-    result.subscriptionCreatedAt = (profile as any).organization.subscription_created_at
+  if (p?.organization?.subscription_created_at) {
+    result.subscriptionCreatedAt = p.organization.subscription_created_at
   }
 
   logEvent('zy_oauth_profile_fetch_success', {})
@@ -412,6 +419,7 @@ export async function getOrganizationUUID(): Promise<string | null> {
     return null
   }
   const profile = await getOauthProfileFromOauthToken(accessToken)
+  // biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth API 响应类型不完善
   const profileOrgUUID = (profile as any)?.organization?.uuid
   if (!profileOrgUUID) {
     return null
@@ -454,7 +462,9 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
   } catch (error) {
     logForDebugging('OAuth token refresh skipped during init', {
       level: 'warn',
-      error: error as any as any,
+      // biome-ignore lint/suspicious/noExplicitAny: 错误对象类型不确定
+      error: error as any,
+      // biome-ignore lint/suspicious/noExplicitAny: 第三方 API 日志参数类型不完善
     } as any)
     return false
   }
@@ -476,22 +486,26 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
     try {
       const profile = await getOauthProfileFromOauthToken(tokens.accessToken)
       if (profile) {
+        // biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth API 响应类型不完善
+        const prof = profile as any
         storeOAuthAccountInfo({
-          accountUuid: (profile as any).account.uuid,
-          emailAddress: (profile as any).account.email,
-          organizationUuid: (profile as any).organization.uuid,
-          displayName: (profile as any).account.display_name || undefined,
-          hasExtraUsageEnabled: (profile as any).organization.has_extra_usage_enabled ?? false,
-          billingType: (profile as any).organization.billing_type ?? undefined,
-          accountCreatedAt: (profile as any).account.created_at,
-          subscriptionCreatedAt: (profile as any).organization.subscription_created_at ?? undefined,
+          accountUuid: prof.account.uuid,
+          emailAddress: prof.account.email,
+          organizationUuid: prof.organization.uuid,
+          displayName: prof.account.display_name || undefined,
+          hasExtraUsageEnabled: prof.organization.has_extra_usage_enabled ?? false,
+          billingType: prof.organization.billing_type ?? undefined,
+          accountCreatedAt: prof.account.created_at,
+          subscriptionCreatedAt: prof.organization.subscription_created_at ?? undefined,
         })
         return true
       }
     } catch (error) {
       logForDebugging('OAuth profile fetch skipped during init', {
         level: 'warn',
-        error: error as any as any,
+        // biome-ignore lint/suspicious/noExplicitAny: 错误对象类型不确定
+        error: error as any,
+        // biome-ignore lint/suspicious/noExplicitAny: 第三方 API 日志参数类型不完善
       } as any)
     }
   }

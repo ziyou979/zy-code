@@ -634,7 +634,7 @@ export const AgentTool = buildTool({
     if (isInternalBuild() && effectiveIsolation === 'remote') {
       const eligibility = await checkRemoteAgentEligibility()
       if (!eligibility.eligible) {
-        const reasons = (eligibility as any).errors.map(formatPreconditionError).join('\n')
+        const reasons = eligibility.errors.map(formatPreconditionError).join('\n')
         throw new Error(`Cannot launch remote agent:\n${reasons}`)
       }
       let bundleFailHint: string | undefined
@@ -699,12 +699,12 @@ export const AgentTool = buildTool({
           ? appState.agentDefinitions.activeAgents.find((a) => a.agentType === appState.agent)
           : undefined
         const additionalWorkingDirectories = Array.from(
-          (appState.toolPermissionContext as any).additionalWorkingDirectories.keys(),
+          appState.toolPermissionContext.additionalWorkingDirectories.keys(),
         )
         const defaultSystemPrompt = await getSystemPrompt(
           toolUseContext.options.tools,
           toolUseContext.options.mainLoopModel,
-          additionalWorkingDirectories as string[],
+          additionalWorkingDirectories,
           toolUseContext.options.mcpClients,
         )
         forkParentSystemPrompt = buildEffectiveSystemPrompt({
@@ -719,7 +719,7 @@ export const AgentTool = buildTool({
     } else {
       try {
         const additionalWorkingDirectories = Array.from(
-          (appState.toolPermissionContext as any).additionalWorkingDirectories.keys(),
+          appState.toolPermissionContext.additionalWorkingDirectories.keys(),
         )
 
         // All agents have getSystemPrompt - pass toolUseContext to all
@@ -1412,8 +1412,11 @@ export const AgentTool = buildTool({
                   toolUseContext.setResponseLength((len) => len + contentLength)
                 }
               }
-              const normalizedNew: any[] = normalizeMessages([message]) as any
+              const normalizedNew = normalizeMessages([message])
               for (const m of normalizedNew) {
+                if (m.type !== 'assistant' && m.type !== 'user') {
+                  continue
+                }
                 for (const content of m.message.content) {
                   if (content.type !== 'tool_call' && content.type !== 'tool_result') {
                     continue
@@ -1424,7 +1427,7 @@ export const AgentTool = buildTool({
                     onProgress({
                       toolUseID: `agent_${assistantMessage!.message.id}`,
                       data: {
-                        message: m as any,
+                        message: m,
                         type: 'agent_progress',
                         // prompt only needed on first progress message (UI.tsx:624
                         // reads progressMessages[0]). Omit here to avoid duplication.

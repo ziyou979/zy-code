@@ -103,15 +103,15 @@ export async function buildSideQuestionFallbackParams({
   const mainLoopModel = getMainLoopModel()!
   const appState = getAppState()
 
-  const { defaultSystemPrompt, userContext, systemContext } = (await fetchSystemPromptParts({
+  const { defaultSystemPrompt, userContext, systemContext } = await fetchSystemPromptParts({
     tools,
     mainLoopModel,
     additionalWorkingDirectories: Array.from(
-      (appState.toolPermissionContext.additionalWorkingDirectories as any).keys(),
+      appState.toolPermissionContext.additionalWorkingDirectories.keys(),
     ),
     mcpClients,
     customSystemPrompt,
-  })) as any
+  })
 
   const systemPrompt = asSystemPrompt([
     ...(customSystemPrompt !== undefined ? [customSystemPrompt] : defaultSystemPrompt),

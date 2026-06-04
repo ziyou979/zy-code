@@ -215,7 +215,7 @@ async function loadLogList(path: string): Promise<LogOption[]> {
   }
   const logData = await Promise.all(
     files.map(async (file, i) => {
-      const fullPath = join(path, (file as any).name)
+      const fullPath = join(path, String(file.name))
       const content = await readFile(fullPath, { encoding: 'utf8' })
       const messages = jsonParse(content) as SerializedMessage[]
       const firstMessage = messages[0]

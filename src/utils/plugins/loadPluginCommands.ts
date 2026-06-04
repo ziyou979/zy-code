@@ -474,7 +474,9 @@ export const getPluginCommands = memoize(async (): Promise<Command[]> => {
                   // Find metadata by matching the command's absolute path to the metadata source
                   // Convert metadata.source (relative to plugin root) to absolute path for comparison
                   for (const [name, metadata] of Object.entries(plugin.commandsMetadata)) {
+                    // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
                     if ((metadata as any).source) {
+                      // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
                       const fullMetadataPath = join(plugin.path, (metadata as any).source)
                       if (commandPath === fullMetadataPath) {
                         commandName = `${plugin.name}:${name}`
@@ -554,10 +556,12 @@ export const getPluginCommands = memoize(async (): Promise<Command[]> => {
       if (plugin.commandsMetadata) {
         for (const [name, metadata] of Object.entries(plugin.commandsMetadata)) {
           // Only process entries with inline content (no source)
+          // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
           if ((metadata as any).content && !(metadata as any).source) {
             try {
               // Parse inline content for frontmatter
               const { frontmatter, content: markdownContent } = parseFrontmatter(
+                // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
                 (metadata as any).content,
                 `<inline:${plugin.name}:${name}>`,
               )
@@ -565,16 +569,24 @@ export const getPluginCommands = memoize(async (): Promise<Command[]> => {
               // Apply metadata overrides to frontmatter
               const finalFrontmatter: FrontmatterData = {
                 ...frontmatter,
+                // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
                 ...((metadata as any).description && {
+                  // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
                   description: (metadata as any).description,
                 }),
+                // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
                 ...((metadata as any).argumentHint && {
+                  // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
                   'argument-hint': (metadata as any).argumentHint,
                 }),
+                // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
                 ...((metadata as any).model && {
+                  // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
                   model: (metadata as any).model,
                 }),
+                // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
                 ...((metadata as any).allowedTools && {
+                  // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
                   'allowed-tools': (metadata as any).allowedTools.join(','),
                 }),
               }

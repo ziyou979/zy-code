@@ -51,6 +51,7 @@ export async function accumulateStream(
         break
       }
       case 'chunk_start': {
+        // biome-ignore lint/suspicious/noExplicitAny: 流事件 chunk 字段类型不完整
         const startChunk = (part as any).chunk
         switch (startChunk.type) {
           case 'tool_use':
@@ -90,6 +91,7 @@ export async function accumulateStream(
               .join(',')}`,
           )
         }
+        // biome-ignore lint/suspicious/noExplicitAny: 流事件 delta 字段类型不完整
         const delta = part.delta as any
         switch (delta.type) {
           case 'text_delta':

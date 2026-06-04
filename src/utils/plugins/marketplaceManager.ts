@@ -165,7 +165,7 @@ export function getDeclaredMarketplaces(): Record<string, DeclaredMarketplace> {
     ...implicit,
     ...getAddDirExtraMarketplaces(),
     ...(getInitialSettings().extraKnownMarketplaces ?? {}),
-  } as any
+  } as Record<string, DeclaredMarketplace>
 }
 
 /**

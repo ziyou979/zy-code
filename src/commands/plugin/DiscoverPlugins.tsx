@@ -274,6 +274,7 @@ export function DiscoverPlugins({
         failureCount++
         newFailedPlugins.push({
           name: plugin_0.entry.name,
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           reason: (result as any).error,
         })
       }
@@ -340,6 +341,7 @@ export function DiscoverPlugins({
       })
     } else {
       setIsInstalling(false)
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       setInstallError((result_0 as any).error)
     }
   }
@@ -776,11 +778,13 @@ export function DiscoverPlugins({
           hasSelection: selectedForInstall.size > 0,
           canToggle:
             selectedIndex < filteredPlugins.length && !filteredPlugins[selectedIndex]?.isInstalled,
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         } as any)}
       />
     </Box>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
 function DiscoverPluginsKeyHint({ hasSelection, canToggle }: any) {
   return (
     <Box marginTop={1}>

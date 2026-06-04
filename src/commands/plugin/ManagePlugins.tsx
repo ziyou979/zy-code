@@ -289,6 +289,7 @@ function PluginComponentsDisplay({
         }
         const marketplaceData = await getMarketplace(marketplace)
         // Find the plugin entry in the array
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         const pluginEntry = marketplaceData.plugins.find((p: any) => p.name === plugin.name)
         if (pluginEntry) {
           // Combine commands from both sources
@@ -488,6 +489,7 @@ async function checkIfLocalPlugin(
   marketplaceName: string,
 ): Promise<string | null> {
   const marketplace = await getMarketplace(marketplaceName)
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   const entry = marketplace?.plugins.find((p: any) => p.name === pluginName)
   if (entry && typeof entry.source === 'string') {
     return `Local plugins cannot be updated remotely. To update, modify the source at: ${entry.source}`
@@ -519,6 +521,7 @@ function buildServerInfoFromClient(mcpClient: MCPServerConnection): ServerInfo {
       scope: configScope,
       transport: 'stdio',
       config: mcpClient.config as McpStdioServerConfig,
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     } as any
   } else if (configType === 'sse') {
     return {
@@ -528,6 +531,7 @@ function buildServerInfoFromClient(mcpClient: MCPServerConnection): ServerInfo {
       transport: 'sse',
       isAuthenticated: undefined,
       config: mcpClient.config as McpSSEServerConfig,
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     } as any
   } else if (configType === 'http') {
     return {
@@ -537,6 +541,7 @@ function buildServerInfoFromClient(mcpClient: MCPServerConnection): ServerInfo {
       transport: 'http',
       isAuthenticated: undefined,
       config: mcpClient.config as McpHTTPServerConfig,
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     } as any
   } else {
     return {
@@ -546,6 +551,7 @@ function buildServerInfoFromClient(mcpClient: MCPServerConnection): ServerInfo {
       transport: 'zyai-proxy',
       isAuthenticated: undefined,
       config: mcpClient.config as McpZyAIProxyServerConfig,
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     } as any
   }
 }
@@ -2443,6 +2449,7 @@ export function ManagePlugins({
         scope: scope_5,
         transport: 'stdio',
         config: client_3.config as McpStdioServerConfig,
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       } as any
       return (
         <MCPStdioServerMenu
@@ -2462,6 +2469,7 @@ export function ManagePlugins({
         transport: 'sse',
         isAuthenticated: undefined,
         config: client_3.config as McpSSEServerConfig,
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       } as any
       return (
         <MCPRemoteServerMenu
@@ -2481,6 +2489,7 @@ export function ManagePlugins({
         transport: 'http',
         isAuthenticated: undefined,
         config: client_3.config as McpHTTPServerConfig,
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       } as any
       return (
         <MCPRemoteServerMenu
@@ -2500,6 +2509,7 @@ export function ManagePlugins({
         transport: 'zyai-proxy',
         isAuthenticated: undefined,
         config: client_3.config as McpZyAIProxyServerConfig,
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       } as any
       return (
         <MCPRemoteServerMenu

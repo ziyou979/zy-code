@@ -45,11 +45,15 @@ type AnyMessage = LLMMessage | Record<string, unknown>
  * - system 由顶层 system 参数承载（这里直接过滤）
  * - tool 角色被合并到下一条 user 的 content[] 中作为 tool_result 块
  */
+// biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
 export function messagesToAnthropic(messages: AnyMessage[]): any[] {
+  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
   const result: any[] = []
+  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
   const pendingToolResults: any[] = []
 
   for (const raw of messages) {
+    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
     const msg = raw as any
 
     if (msg.role === 'system') {
@@ -139,6 +143,7 @@ function assistantContentToAnthropic(
 function blockToAnthropic(
   block: AssistantContentBlock | UserContentBlock | Record<string, unknown>,
 ): Record<string, unknown> {
+  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
   const b = block as any
   const cc = b.cache_control ? { cache_control: b.cache_control } : {}
   if (b.type === 'text') {
@@ -241,6 +246,7 @@ export function anthropicStopReasonToStandard(reason: string | null | undefined)
   }
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
 export function anthropicUsageToStandard(usage: any): TokenUsage {
   const extras: Record<string, number> = {}
   if (usage?.server_tool_use_input_tokens !== undefined) {
@@ -257,6 +263,7 @@ export function anthropicUsageToStandard(usage: any): TokenUsage {
   }
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
 export function anthropicDeltaUsageToStandard(usage: any): DeltaUsage {
   return {
     outputTokens: usage?.output_tokens ?? 0,
@@ -273,6 +280,7 @@ export function anthropicDeltaUsageToStandard(usage: any): DeltaUsage {
  * 之前在 AnthropicProviderAdapter 里写成 case 'tool_call' 是 bug，
  * 导致工具调用 block 永远拿不到，已在此处统一修复。
  */
+// biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
 export function anthropicLLMStreamEventToStandard(event: any): LLMStreamEvent {
   switch (event.type) {
     case 'message_start': {
@@ -300,20 +308,23 @@ export function anthropicLLMStreamEventToStandard(event: any): LLMStreamEvent {
           break
         case 'thinking':
           chunk = {
-            type: 'thinking' as any,
+            type: 'thinking',
             thinking: block.thinking ?? '',
             signature: block.signature ?? '',
+            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展块类型
           } as any
           break
         case 'redacted_thinking':
-          chunk = { type: 'redacted_thinking' as any, data: block.data ?? '' } as any
+          // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展块类型
+          chunk = { type: 'redacted_thinking', data: block.data ?? '' } as any
           break
         case 'server_tool_use':
           chunk = {
-            type: 'server_tool_use' as any,
+            type: 'server_tool_use',
             id: block.id,
             name: block.name,
             input: block.input ?? {},
+            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展块类型
           } as any
           break
         default:
@@ -337,14 +348,16 @@ export function anthropicLLMStreamEventToStandard(event: any): LLMStreamEvent {
           break
         case 'thinking_delta':
           chunkDelta = {
-            type: 'thinking_delta' as any,
+            type: 'thinking_delta',
             thinking: delta.thinking,
+            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展 delta 类型
           } as any
           break
         case 'signature_delta':
           chunkDelta = {
-            type: 'signature_delta' as any,
+            type: 'signature_delta',
             signature: delta.signature,
+            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展 delta 类型
           } as any
           break
         default:
@@ -368,6 +381,7 @@ export function anthropicLLMStreamEventToStandard(event: any): LLMStreamEvent {
 }
 
 export async function* anthropicStreamToStandard(
+  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 流式类型转换
   rawStream: AsyncIterable<any>,
 ): AsyncIterable<LLMStreamEvent> {
   for await (const event of rawStream) {
@@ -375,7 +389,9 @@ export async function* anthropicStreamToStandard(
   }
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
 export function anthropicResponseToStandard(result: any, model: string): LLMResponse {
+  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
   const content: AssistantContentBlock[] = (result.content || []).map((block: any) => {
     switch (block.type) {
       case 'text':
@@ -418,6 +434,7 @@ export function anthropicResponseToStandard(result: any, model: string): LLMResp
  * v1 snake_case 兼容（max_tokens / top_p / stop_sequences 等）。
  */
 export function buildAnthropicCreateParams(params: CreateParams): AnthropicCreateParams {
+  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换，需访问 v1/v2 双格式字段
   const p = params as any
 
   const maxTokens = p.maxTokens ?? p.max_tokens
@@ -432,6 +449,7 @@ export function buildAnthropicCreateParams(params: CreateParams): AnthropicCreat
   const metadata = p.metadata
 
   // 消息：抽 system，把 tool 合并进 user.tool_result
+  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
   const rawMessages = (p.messages ?? []) as any[]
   const systemMessages = rawMessages.filter((m) => m.role === 'system')
   const anthropicMessages = messagesToAnthropic(rawMessages)

@@ -31,6 +31,7 @@ export function isBeingDebugged(): boolean {
   try {
     // 动态导入更好但是异步的 —— 改用全局对象
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
     const inspector = (global as any).require('inspector')
     const hasInspectorUrl = !!inspector.url()
     return hasInspectorUrl || hasInspectArg || !!hasInspectEnv

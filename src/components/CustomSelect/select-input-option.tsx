@@ -108,9 +108,10 @@ export function SelectInputOption({
   selectedImageIndex = 0,
   onImagesSelectedChange,
   onSelectedImageIndexChange,
-}: Props<any>) {
+}: // biome-ignore lint/suspicious/noExplicitAny: 泛型组件内部转发，无法避免 any
+Props<any>) {
   const imageAttachments = pastedContents
-    ? Object.values(pastedContents).filter((c: any) => (c as any).type === 'image')
+    ? Object.values(pastedContents).filter((c) => c.type === 'image')
     : []
   const showLabel = showLabelProp || option.showLabelWithValue === true
   const [cursorOffset, setCursorOffset] = useState(inputValue.length)
@@ -155,7 +156,7 @@ export function SelectInputOption({
     'attachments:remove',
     () => {
       if (imageAttachments.length > 0 && onRemoveImage) {
-        onRemoveImage((imageAttachments.at(-1) as any).id)
+        onRemoveImage(imageAttachments.at(-1)!.id)
       }
     },
     {
@@ -183,9 +184,9 @@ export function SelectInputOption({
         }
       },
       'attachments:remove': () => {
-        const img = imageAttachments[selectedImageIndex] as any
+        const img = imageAttachments[selectedImageIndex]
         if (img && onRemoveImage) {
-          onRemoveImage((img as any).id)
+          onRemoveImage(img.id)
           if (imageAttachments.length <= 1) {
             onImagesSelectedChange?.(false)
           } else {
@@ -328,10 +329,10 @@ export function SelectInputOption({
       )}
       {imageAttachments.length > 0 && (
         <Box flexDirection="row" gap={1} paddingLeft={descriptionPaddingLeft}>
-          {imageAttachments.map((img_0: any, idx) => (
+          {imageAttachments.map((img_0, idx) => (
             <ClickableImageRef
-              key={(img_0 as any).id}
-              imageId={(img_0 as any).id}
+              key={img_0.id}
+              imageId={img_0.id}
               isSelected={!!imagesSelected && idx === selectedImageIndex}
             />
           ))}

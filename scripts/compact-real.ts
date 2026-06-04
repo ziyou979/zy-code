@@ -167,6 +167,7 @@ function simpleToInternal(msg: SimpleMessage, index: number): InternalMessage {
   }
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: 脚本工具类型处理
 function transcriptToInternal(obj: any): InternalMessage | null {
   // ZY-Code session transcript 格式
   if (obj.type === 'user' || obj.type === 'assistant') {
@@ -312,6 +313,7 @@ function realReactiveCompact(
   }
 
   // 用真实 groupMessagesByApiRound 分组
+  // biome-ignore lint/suspicious/noExplicitAny: 脚本工具类型处理
   const groups = groupMessagesByApiRound(messages as any) as unknown as InternalMessage[][]
 
   if (groups.length < 2) {
@@ -365,6 +367,7 @@ function realReactiveCompact(
 // ════════════════════════════════════════════════════════════════════════════
 
 function analyzeCacheImpact(messages: InternalMessage[], bpt: number) {
+  // biome-ignore lint/suspicious/noExplicitAny: 脚本工具类型处理
   const groups = groupMessagesByApiRound(messages as any) as unknown as InternalMessage[][]
 
   // 计算每个 group 的 token 增量
@@ -498,6 +501,7 @@ interface CompactionEvent {
 }
 
 function simulateProgressiveCompaction(messages: InternalMessage[], bpt: number) {
+  // biome-ignore lint/suspicious/noExplicitAny: 脚本工具类型处理
   const groups = groupMessagesByApiRound(messages as any) as unknown as InternalMessage[][]
   const groupTokens = groups.map((g) => totalTokensForMessages(g, bpt))
 
@@ -927,6 +931,7 @@ function main() {
   const totalToks = totalTokensForMessages(messages, bpt)
 
   // 用真实 groupMessagesByApiRound 分组
+  // biome-ignore lint/suspicious/noExplicitAny: 脚本工具类型处理
   const groups = groupMessagesByApiRound(messages as any) as unknown as InternalMessage[][]
 
   printSection('📊 对话概览')
@@ -1046,6 +1051,7 @@ function main() {
 
   // Reactive 强制执行
   const forceReactive = (() => {
+    // biome-ignore lint/suspicious/noExplicitAny: 脚本工具类型处理
     const g = groupMessagesByApiRound(messages as any) as unknown as InternalMessage[][]
     if (g.length < 2) return null
     const keepCount = Math.max(2, Math.ceil(g.length / 3))

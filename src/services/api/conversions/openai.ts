@@ -155,6 +155,7 @@ export function messagesToOpenAI(
   const result: OpenAI.Chat.ChatCompletionMessageParam[] = []
 
   for (const raw of messages) {
+    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
     const msg = raw as any
     switch (msg.role) {
       case 'system':
@@ -181,6 +182,7 @@ export function messagesToOpenAI(
               typeof block.content === 'string'
                 ? block.content
                 : Array.isArray(block.content)
+                  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
                   ? block.content.map((c: any) => (c.type === 'text' ? c.text : '')).join('\n')
                   : ''
             toolResults.push({
@@ -188,9 +190,11 @@ export function messagesToOpenAI(
               tool_call_id: block.toolCallId ?? '',
               content: text || '(empty)',
               ...(block.cache_control && { cache_control: block.cache_control }),
+            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
             } as any)
           } else if (block.type === 'cache_edits') {
             // cache_edits 是缓存编辑指令，不是用户内容，直接透传
+            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
             parts.push({ ...block } as any)
           } else if (block.type === 'text') {
             // 保留 cache_control 等额外字段（百炼/火山引擎的 OpenAI 端点支持）
@@ -242,11 +246,14 @@ export function messagesToOpenAI(
         const textParts: string[] = []
         const thinkingParts: string[] = []
         const toolCalls: OpenAI.Chat.ChatCompletionMessageToolCall[] = []
+        // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
         let lastCacheControl: any = null
         for (const block of msg.content) {
           if (block.type === 'text') {
             textParts.push(block.text)
+            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
             if ((block as any).cache_control) {
+              // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
               lastCacheControl = (block as any).cache_control
             }
           } else if (block.type === 'tool_call' || block.type === 'tool_use') {
@@ -275,6 +282,7 @@ export function messagesToOpenAI(
           const thinkingText = thinkingParts.join('\n\n')
           const useReasoningField = supportsReasoningContentField(model)
           if (useReasoningField && toolCalls.length > 0) {
+            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段 reasoning_content
             ;(am as any).reasoning_content = thinkingText
           } else if (!useReasoningField) {
             textParts.unshift(`<thinking>${thinkingText}</thinking>`)
@@ -285,6 +293,7 @@ export function messagesToOpenAI(
           if (lastCacheControl) {
             am.content = [
               { type: 'text', text: textParts.join('\n\n'), cache_control: lastCacheControl },
+            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
             ] as any
           } else {
             am.content = textParts.join('\n\n')
@@ -328,6 +337,7 @@ function ensureCacheControlOnLastUserMessage(
   // 找最后一条 user 消息
   let lastUserIdx = -1
   for (let i = messages.length - 1; i >= 0; i--) {
+    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
     if ((messages[i] as any).role === 'user') {
       lastUserIdx = i
       break
@@ -338,8 +348,10 @@ function ensureCacheControlOnLastUserMessage(
   }
 
   // 从所有非 user 消息上摘取 cache_control
+  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
   let cacheControl: any = null
   for (let i = lastUserIdx + 1; i < messages.length; i++) {
+    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
     const msg = messages[i] as any
     if (msg.cache_control) {
       if (!cacheControl) cacheControl = msg.cache_control
@@ -356,6 +368,7 @@ function ensureCacheControlOnLastUserMessage(
   }
 
   // 检查 user 消息本身是否已有 cache_control
+  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
   const lastUser = messages[lastUserIdx] as any
   if (Array.isArray(lastUser.content)) {
     const last = lastUser.content[lastUser.content.length - 1]
@@ -391,6 +404,7 @@ export function toolsToOpenAI(
       name: tool.name ?? '',
       description: tool.description ?? '',
       parameters: (tool.inputSchema ??
+        // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
         (tool as any).input_schema ?? {
           type: 'object',
           properties: {},
@@ -610,8 +624,10 @@ function extractOpenAICacheTokens(usage: OpenAI.CompletionUsage | undefined | nu
   if (rawUsage && typeof rawUsage.cache_creation_input_tokens === 'number') {
     cacheCreationInputTokens = rawUsage.cache_creation_input_tokens as number
   } else if (
+    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
     typeof (usage?.prompt_tokens_details as any)?.cache_creation_input_tokens === 'number'
   ) {
+    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
     cacheCreationInputTokens = (usage!.prompt_tokens_details as any).cache_creation_input_tokens
   }
 
@@ -838,6 +854,7 @@ export async function* mapOpenAIStreamToStandard(
  * providerExtras.openai / extra_body 顶层透传、model 字符串规范化。
  */
 export function buildOpenAIRequestParams(params: CreateParams): OpenAICreateParams {
+  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换，需访问 v1/v2 双格式字段
   const p = params as any
   const openAIMessages = messagesToOpenAI(p.messages ?? [], p.model)
   const openaiExtras = p.providerExtras?.openai
@@ -845,12 +862,14 @@ export function buildOpenAIRequestParams(params: CreateParams): OpenAICreatePara
   // 系统提示：buildSystemPromptBlocks 生成的 TextBlock[] 带有 cache_control，
   // 注入为 messages 数组中的 system 角色消息
   if (p.system && Array.isArray(p.system) && p.system.length > 0) {
+    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
     openAIMessages.unshift({ role: 'system', content: p.system } as any)
   }
 
   // OpenAI 原生工具（如 web_search_preview），注入到 tools 数组顶部
   const openaiNativeTools = openaiExtras?._web_search_tool ? [openaiExtras._web_search_tool] : []
   const cleanedExtras = openaiExtras ? { ...openaiExtras } : {}
+  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
   delete (cleanedExtras as any)._web_search_tool
 
   // response_format：providerExtras 优先；否则尝试从 outputConfig 转

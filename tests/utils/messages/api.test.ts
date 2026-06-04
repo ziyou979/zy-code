@@ -104,8 +104,10 @@ describe('normalizeMessagesForAPI — 核心行为', () => {
       makeProgressMsg(),
       makeAssistantMsg([{ type: 'text', text: 'reply' }]),
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = normalizeMessagesForAPI(messages as any)
 
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect(result.find((m: any) => m.type === 'progress')).toBeUndefined()
   })
 
@@ -116,12 +118,16 @@ describe('normalizeMessagesForAPI — 核心行为', () => {
       makeUserMsg('virtual', { isVirtual: true }),
       makeAssistantMsg([{ type: 'text', text: 'reply' }]),
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = normalizeMessagesForAPI(messages as any)
 
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const userMsgs = result.filter((m: any) => m.type === 'user')
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const hasVirtual = userMsgs.some((m: any) => {
       const content = m.message.content
       if (typeof content === 'string') return content.includes('virtual')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       return Array.isArray(content) && content.some((b: any) => b.text?.includes('virtual'))
     })
     expect(hasVirtual).toBe(false)
@@ -134,8 +140,10 @@ describe('normalizeMessagesForAPI — 核心行为', () => {
       makeUserMsg('second'),
       makeAssistantMsg([{ type: 'text', text: 'reply' }]),
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = normalizeMessagesForAPI(messages as any)
 
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const userMsgs = result.filter((m: any) => m.type === 'user')
     expect(userMsgs).toHaveLength(1)
   })
@@ -155,8 +163,10 @@ describe('normalizeMessagesForAPI — 核心行为', () => {
       },
       makeAssistantMsg([{ type: 'text', text: 'reply' }]),
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = normalizeMessagesForAPI(messages as any)
 
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect(result.find((m: any) => m.type === 'system')).toBeUndefined()
   })
 
@@ -168,8 +178,10 @@ describe('normalizeMessagesForAPI — 核心行为', () => {
       makeUserMsg([{ type: 'tool_result', toolCallId: 'tc-1', content: 'result' }]),
       makeAssistantMsg([{ type: 'text', text: 'part 2' }], { messageId: 'same-id' }),
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = normalizeMessagesForAPI(messages as any)
 
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const asstMsgs = result.filter((m: any) => m.type === 'assistant')
     expect(asstMsgs).toHaveLength(1)
     expect(asstMsgs[0].message.content).toHaveLength(2)
@@ -189,9 +201,11 @@ describe('normalizeMessagesForAPI — 核心行为', () => {
       makeAssistantMsg([{ type: 'text', text: 'r1' }]),
       makeUserMsg('c'),
     ]
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const result = normalizeMessagesForAPI(messages as any)
 
     // 连续 user 合并后，应该只有 user, assistant, user 交替
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const types = result.map((m: any) => m.type)
     for (let i = 1; i < types.length; i++) {
       expect(types[i]).not.toBe(types[i - 1])

@@ -91,6 +91,7 @@ export async function* handleStopHooks(
   // Outside the prompt-suggestion gate: the REPL /btw command and the
   // side_question SDK control_request both read this snapshot, and neither
   // depends on prompt suggestions being enabled.
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   if ((querySource as any) === 'repl_main_thread' || querySource === 'sdk') {
     saveCacheSafeParams(createCacheSafeParams(stopHookContext))
   }
@@ -194,7 +195,9 @@ export async function* handleStopHooks(
       if (result.message) {
         yield result.message
         // Track toolUseID from progress messages and count hooks
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         if ((result.message as any).type === 'progress' && (result.message as any).toolUseID) {
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           stopHookToolUseID = (result.message as any).toolUseID
           hookCount++
           // Extract hook command and prompt text from progress data
@@ -203,11 +206,14 @@ export async function* handleStopHooks(
             hookInfos.push({
               command: progressData.command,
               promptText: progressData.promptText,
+            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
             } as any)
           }
         }
         // Track errors and output from attachments
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         if ((result.message as any).type === 'attachment') {
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           const attachment = (result.message as any).attachment
           if (
             'hookEvent' in attachment &&
@@ -231,10 +237,13 @@ export async function* handleStopHooks(
             if ('durationMs' in attachment && 'command' in attachment) {
               const info = hookInfos.find(
                 (i) =>
+                  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                   (i as any).command === (attachment as any).command &&
+                  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                   (i as any).durationMs === undefined,
               )
               if (info) {
+                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
                 ;(info as any).durationMs = (attachment as any).durationMs
               }
             }
@@ -290,6 +299,7 @@ export async function* handleStopHooks(
         preventedContinuation,
         stopReason,
         hasOutput,
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         'suggestion' as any,
         stopHookToolUseID,
       )
@@ -347,7 +357,9 @@ export async function* handleStopHooks(
 
         for await (const result of taskCompletedGenerator) {
           if (result.message) {
+            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
             if ((result.message as any).type === 'progress' && (result.message as any).toolUseID) {
+              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
               teammateHookToolUseID = (result.message as any).toolUseID
             }
             yield result.message
@@ -390,7 +402,9 @@ export async function* handleStopHooks(
 
       for await (const result of teammateIdleGenerator) {
         if (result.message) {
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           if ((result.message as any).type === 'progress' && (result.message as any).toolUseID) {
+            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
             teammateHookToolUseID = (result.message as any).toolUseID
           }
           yield result.message
@@ -446,6 +460,7 @@ export async function* handleStopHooks(
     })
     // Yield a system message that is not visible to the model for the user
     // to debug their hook.
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     yield createSystemMessage(`Stop hook failed: ${errorMessage(error)}`, 'warning' as any)
     return { blockingErrors: [], preventContinuation: false }
   }

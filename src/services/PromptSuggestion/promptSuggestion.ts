@@ -180,7 +180,7 @@ export async function tryGenerateSuggestion(
 }
 
 export async function executePromptSuggestion(context: REPLHookContext): Promise<void> {
-  if ((context.querySource as any) !== 'repl_main_thread') {
+  if (context.querySource !== 'repl_main_thread') {
     return
   }
 
@@ -324,7 +324,7 @@ export async function generateSuggestion(
     promptMessages: [createUserMessage({ content: [{ type: 'text' as const, text: prompt }] })],
     cacheSafeParams, // Don't override tools/thinking settings - busts cache
     canUseTool,
-    querySource: 'prompt_suggestion' as any,
+    querySource: 'prompt_suggestion',
     forkLabel: 'prompt_suggestion',
     overrides: {
       abortController,

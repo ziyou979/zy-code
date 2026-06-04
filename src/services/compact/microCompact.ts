@@ -87,6 +87,7 @@ export function getPinnedCacheEdits(): import('./cachedMicrocompact.js').PinnedC
   if (!cachedMCState) {
     return []
   }
+  // biome-ignore lint/suspicious/noExplicitAny: CachedMCState 类型不包含运行时动态字段
   return (cachedMCState as any).pinnedEdits
 }
 
@@ -99,6 +100,7 @@ export function pinCacheEdits(
   block: import('./cachedMicrocompact.js').CacheEditsBlock,
 ): void {
   if (cachedMCState) {
+    // biome-ignore lint/suspicious/noExplicitAny: CachedMCState 类型不包含运行时动态字段
     ;(cachedMCState as any).pinnedEdits.push({ userMessageIndex, block })
   }
 }
@@ -132,9 +134,10 @@ function calculateToolResultTokens(block: ToolResultBlock): number {
 
   // TextBlock | ImageBlock | DocumentBlock 数组
   return block.content.reduce((sum, item) => {
-    if ((item as any).type === 'text') {
-      return sum + roughTokenCountEstimation((item as any).text)
-    } else if ((item as any).type === 'image' || (item as any).type === 'document') {
+    const typedItem = item as { type: string; text?: string }
+    if (typedItem.type === 'text') {
+      return sum + roughTokenCountEstimation(typedItem.text ?? '')
+    } else if (typedItem.type === 'image' || typedItem.type === 'document') {
       // 图片/文档无论格式约为 2000 token
       return sum + IMAGE_MAX_TOKEN_SIZE
     }
@@ -253,9 +256,11 @@ export async function microcompactMessages(
   if (feature('CACHED_MICROCOMPACT')) {
     const mod = await getCachedMCModule()
     const model = toolUseContext?.options.mainLoopModel ?? getMainLoopModel()
+    // biome-ignore lint/suspicious/noExplicitAny: 动态模块加载，方法签名不在静态类型中
+    const modAny = mod as any
     if (
-      (mod as any).isCachedMicrocompactEnabled() &&
-      (mod as any).isModelSupportedForCacheEditing(model) &&
+      modAny.isCachedMicrocompactEnabled() &&
+      modAny.isModelSupportedForCacheEditing(model) &&
       isMainThreadSource(querySource)
     ) {
       return await cachedMicrocompactPath(messages, querySource)
@@ -285,7 +290,11 @@ async function cachedMicrocompactPath(
 ): Promise<MicrocompactResult> {
   const mod = await getCachedMCModule()
   const state = ensureCachedMCState()
-  const config = (mod as any).getCachedMCConfig()
+  // biome-ignore lint/suspicious/noExplicitAny: 动态模块加载，方法签名不在静态类型中
+  const modApi = mod as any
+  // biome-ignore lint/suspicious/noExplicitAny: CachedMCState 运行时字段不在静态类型中
+  const stateAny = state as any
+  const config = modApi.getCachedMCConfig()
 
   const compactableToolIds = new Set(collectCompactableToolIds(messages))
   // 第二遍：按用户消息分组注册工具结果
@@ -296,21 +305,21 @@ async function cachedMicrocompactPath(
         if (
           block.type === 'tool_result' &&
           compactableToolIds.has(block.toolCallId) &&
-          !(state as any).registeredTools.has(block.toolCallId)
+          !stateAny.registeredTools.has(block.toolCallId)
         ) {
-          ;(mod as any).registerToolResult(state, block.toolCallId)
+          modApi.registerToolResult(state, block.toolCallId)
           groupIds.push(block.toolCallId)
         }
       }
-      ;(mod as any).registerToolMessage(state, groupIds)
+      modApi.registerToolMessage(state, groupIds)
     }
   }
 
-  const toolsToDelete = (mod as any).getToolResultsToDelete(state)
+  const toolsToDelete = modApi.getToolResultsToDelete(state)
 
   if (toolsToDelete.length > 0) {
     // 为 API 层创建并排队 cache_edits 块
-    const cacheEdits = (mod as any).createCacheEditsBlock(state, toolsToDelete)
+    const cacheEdits = modApi.createCacheEditsBlock(state, toolsToDelete)
     if (cacheEdits) {
       pendingCacheEdits = cacheEdits
     }
@@ -325,7 +334,7 @@ async function cachedMicrocompactPath(
       deletedToolIds: toolsToDelete.join(
         ',',
       ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      activeToolCount: (state as any).toolOrder.length - (state as any).deletedRefs.size,
+      activeToolCount: stateAny.toolOrder.length - stateAny.deletedRefs.size,
       triggerType: 'auto' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       threshold: config.triggerThreshold,
       keepRecent: config.keepRecent,
@@ -339,7 +348,7 @@ async function cachedMicrocompactPath(
       // 传递实际的 querySource——isMainThreadSource 现在使用前缀匹配，
       // 输出样式变体会进入此处，而 getTrackingKey 以完整源字符串为键，
       // 非 'repl_main_thread' 前缀。
-      notifyCacheDeletion((querySource ?? 'repl_main_thread') as any)
+      notifyCacheDeletion(querySource ?? 'repl_main_thread')
     }
 
     // 返回未修改的消息——cache_reference 和 cache_edits 在 API 层添加

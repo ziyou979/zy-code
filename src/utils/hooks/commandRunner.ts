@@ -135,6 +135,7 @@ function validateHookJson(
   const validation = hookJSONOutputSchema().safeParse(parsed)
   if (validation.success) {
     hookLog('Successfully parsed and validated hook JSON output')
+    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
     return { json: validation.data as any }
   }
   const errors = validation.error.issues
@@ -209,6 +210,7 @@ export function parseHttpHookOutput(body: string): {
     const validation = hookJSONOutputSchema().safeParse({})
     if (validation.success) {
       hookLog('HTTP hook returned empty body, treating as empty JSON object')
+      // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
       return { json: validation.data as any }
     }
   }
@@ -477,6 +479,7 @@ export function processHookJSONOutput({
           toolUseID,
           hookEvent,
           blockingError: result.blockingError,
+        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
         }) as any)
       : createAttachmentMessage({
           type: 'hook_success',

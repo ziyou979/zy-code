@@ -209,7 +209,7 @@ function MCPTextOutput({
     )
   }
   if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn as any
+    return earlyReturn as React.ReactNode
   }
   let earlyReturn2: React.ReactNode | symbol = Symbol.for('react.early_return_sentinel')
   const flat = tryFlattenJson(content)
@@ -239,9 +239,9 @@ function MCPTextOutput({
     )
   }
   if (earlyReturn2 !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn2 as any
+    return earlyReturn2 as React.ReactNode
   }
-  return <OutputLine content={content as any} verbose={verbose} linkifyUrls={true} />
+  return <OutputLine content={content} verbose={verbose} linkifyUrls={true} />
 }
 
 /**

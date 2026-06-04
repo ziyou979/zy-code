@@ -1,6 +1,6 @@
-import { structuredPatch } from 'diff'
+import { type Hunk, structuredPatch } from 'diff'
 
-type StructuredPatchHunk = any
+type StructuredPatchHunk = Hunk
 
 import { logEvent } from 'src/services/analytics/index.js'
 import { getLocCounter } from '../bootstrap/state.js'
@@ -60,11 +60,11 @@ export function countLinesChanged(patch: StructuredPatchHunk[], newFileContent?:
     numAdditions = newFileContent.split(/\r?\n/).length
   } else {
     numAdditions = patch.reduce(
-      (acc, hunk) => acc + count(hunk.lines, (_: any) => _.startsWith('+')),
+      (acc, hunk) => acc + count(hunk.lines, (line: string) => line.startsWith('+')),
       0,
     )
     numRemovals = patch.reduce(
-      (acc, hunk) => acc + count(hunk.lines, (_: any) => _.startsWith('-')),
+      (acc, hunk) => acc + count(hunk.lines, (line: string) => line.startsWith('-')),
       0,
     )
   }
@@ -93,7 +93,7 @@ export function getPatchFromContents({
   ignoreWhitespace?: boolean
   singleHunk?: boolean
 }): StructuredPatchHunk[] {
-  const result = (structuredPatch as any)(
+  const result = structuredPatch(
     filePath,
     filePath,
     escapeForDiff(oldContent),
@@ -104,14 +104,14 @@ export function getPatchFromContents({
       ignoreWhitespace,
       context: singleHunk ? 100_000 : CONTEXT_LINES,
       timeout: DIFF_TIMEOUT_MS,
-    },
+    } as Record<string, unknown>,
   )
   if (!result) {
     return []
   }
-  return (result as any).hunks.map((_: any) => ({
-    ..._,
-    lines: _.lines.map(unescapeFromDiff),
+  return result.hunks.map((hunk) => ({
+    ...hunk,
+    lines: hunk.lines.map(unescapeFromDiff),
   }))
 }
 
@@ -138,7 +138,7 @@ export function getPatchForDisplay({
   ignoreWhitespace?: boolean
 }): StructuredPatchHunk[] {
   const preparedFileContents = escapeForDiff(convertLeadingTabsToSpaces(fileContents))
-  const result = (structuredPatch as any)(
+  const result = structuredPatch(
     filePath,
     filePath,
     preparedFileContents,
@@ -160,13 +160,13 @@ export function getPatchForDisplay({
       context: CONTEXT_LINES,
       ignoreWhitespace,
       timeout: DIFF_TIMEOUT_MS,
-    },
+    } as Record<string, unknown>,
   )
   if (!result) {
     return []
   }
-  return (result as any).hunks.map((_: any) => ({
-    ..._,
-    lines: _.lines.map(unescapeFromDiff),
+  return result.hunks.map((hunk) => ({
+    ...hunk,
+    lines: hunk.lines.map(unescapeFromDiff),
   }))
 }

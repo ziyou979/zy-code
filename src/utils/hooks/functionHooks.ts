@@ -2,7 +2,7 @@ import type { HookCallback } from 'src/types/hooks/index.js'
 import { isAsyncHookJSONOutput } from 'src/types/hooks/index.js'
 import type { HookEvent, HookInput } from 'src/types/index.js'
 import type { ToolUseContext } from '../../Tool.js'
-import type { Message } from '../../types/message.js'
+import type { HookResultMessage, Message } from '../../types/message.js'
 import { createAttachmentMessage } from '../attachments.js'
 import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
 import { logError } from '../log.js'
@@ -99,7 +99,7 @@ export async function executeFunctionHook({
         toolUseID,
         hookEvent,
         content: error instanceof Error ? error.message : 'Function hook execution error',
-      }) as any,
+      }) as unknown as HookResultMessage,
       outcome: 'non_blocking_error',
       hook,
     }

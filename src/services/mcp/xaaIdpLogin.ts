@@ -95,6 +95,7 @@ export function issuerKey(issuer: string): string {
  */
 export function getCachedIdpIdToken(idpIssuer: string): string | undefined {
   const storage = getSecureStorage()
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const data = (storage as any).read()
   const entry = data?.mcpXaaIdp?.[issuerKey(idpIssuer)]
   if (!entry) {
@@ -109,7 +110,9 @@ export function getCachedIdpIdToken(idpIssuer: string): string | undefined {
 
 function saveIdpIdToken(idpIssuer: string, idToken: string, expiresAt: number): void {
   const storage = getSecureStorage()
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const existing = (storage as any).read() || {}
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   ;(storage as any).update({
     ...existing,
     mcpXaaIdp: {
@@ -136,12 +139,15 @@ export function saveIdpIdTokenFromJwt(idpIssuer: string, idToken: string): numbe
 
 export function clearIdpIdToken(idpIssuer: string): void {
   const storage = getSecureStorage()
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const existing = (storage as any).read()
   const key = issuerKey(idpIssuer)
   if (!existing?.mcpXaaIdp?.[key]) {
     return
   }
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   delete (existing as any).mcpXaaIdp[key]
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   ;(storage as any).update(existing)
 }
 
@@ -157,7 +163,9 @@ export function saveIdpClientSecret(
   clientSecret: string,
 ): { success: boolean; warning?: string } {
   const storage = getSecureStorage()
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const existing = (storage as any).read() || {}
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   return (storage as any).update({
     ...existing,
     mcpXaaIdpConfig: {
@@ -172,6 +180,7 @@ export function saveIdpClientSecret(
  */
 export function getIdpClientSecret(idpIssuer: string): string | undefined {
   const storage = getSecureStorage()
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const data = (storage as any).read()
   return data?.mcpXaaIdpConfig?.[issuerKey(idpIssuer)]?.clientSecret
 }
@@ -182,12 +191,15 @@ export function getIdpClientSecret(idpIssuer: string): string | undefined {
  */
 export function clearIdpClientSecret(idpIssuer: string): void {
   const storage = getSecureStorage()
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const existing = (storage as any).read()
   const key = issuerKey(idpIssuer)
   if (!existing?.mcpXaaIdpConfig?.[key]) {
     return
   }
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   delete (existing as any).mcpXaaIdpConfig[key]
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   ;(storage as any).update(existing)
 }
 

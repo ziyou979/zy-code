@@ -68,6 +68,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
       )
       .withResponse()
 
+    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 流式类型转换
     const rawStream = result.data as unknown as AsyncIterable<any>
 
     return {
@@ -135,6 +136,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
           anthropicMessages.length > 0 ? anthropicMessages : [{ role: 'user', content: 'foo' }],
         ...(anthropicTools &&
           anthropicTools.length > 0 && {
+            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 工具类型转换
             tools: anthropicTools as any,
           }),
         ...(betas.length > 0 && { betas }),
@@ -167,6 +169,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
         stream: false as const,
         model: normalizeModelStringForAPI(params.model),
       })
+      // biome-ignore lint/suspicious/noExplicitAny: SDK APIPromise.asResponse() 未在类型中暴露
       return await (apiPromise as any).asResponse()
     } catch (error) {
       logError(error)

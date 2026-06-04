@@ -263,14 +263,15 @@ function EditRejectionBody({
   style?: 'condensed'
   verbose: boolean
 }) {
-  const { patch, firstLine, fileContent } = use(promise as any) as any
+  // biome-ignore lint/suspicious/noExplicitAny: React.use 对 Promise 的类型推断不完整
+  const data = use(promise as Promise<any>) as RejectionDiffData
   return (
     <FileEditToolUseRejectedMessage
       file_path={filePath}
       operation="update"
-      patch={patch as any}
-      firstLine={firstLine as any}
-      fileContent={fileContent as any}
+      patch={data.patch}
+      firstLine={data.firstLine}
+      fileContent={data.fileContent}
       style={style}
       verbose={verbose}
     />

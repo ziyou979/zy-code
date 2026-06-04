@@ -37,10 +37,13 @@ beforeAll(async () => {
 const ctx = {
   getAppState: () => ({}),
   abortController: { signal: undefined },
+// biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
 } as any
 const toolUses = [{ tool_name: 'Bash', tool_use_id: 't1', status: 'success' as const }]
 
+// biome-ignore lint/suspicious/noExplicitAny: 测试收集动态 hook 输出
 async function collect(): Promise<any[]> {
+  // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
   const out: any[] = []
   for await (const u of executePostToolBatchHooks(toolUses, ctx)) {
     out.push(u)

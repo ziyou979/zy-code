@@ -103,6 +103,7 @@ export function clearSessionCaches(preservedAgentIds: ReadonlySet<string> = new 
   // Clear attribution caches (file content cache, pending bash states)
   // Dynamic import to preserve dead code elimination for COMMIT_ATTRIBUTION feature flag
   if (feature('COMMIT_ATTRIBUTION')) {
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     void import('../../utils/attributionHooks.js').then((mod: any) => mod.clearAttributionCaches())
   }
   // Clear repository detection caches

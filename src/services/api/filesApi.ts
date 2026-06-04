@@ -110,7 +110,7 @@ async function retryWithBackoff<T>(
       return result.value
     }
 
-    lastError = (result as any).error || `${operation} 失败`
+    lastError = (result as unknown as { error?: string }).error || `${operation} 失败`
     logDebug(`${operation} 第 ${attempt}/${MAX_RETRIES} 次尝试失败：${lastError}`)
 
     if (attempt < MAX_RETRIES) {

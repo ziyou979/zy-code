@@ -166,7 +166,9 @@ function countUserPromptsFromEntries(entries: ReadonlyArray<Entry>): number {
   const nonSidechain = entries.filter(
     (entry) => entry.type === 'user' && !('isSidechain' in entry && entry.isSidechain),
   )
-  return countUserPromptsInMessages(nonSidechain as any)
+  return countUserPromptsInMessages(
+    nonSidechain as ReadonlyArray<{ type: string; message?: { content?: unknown } }>,
+  )
 }
 
 /**

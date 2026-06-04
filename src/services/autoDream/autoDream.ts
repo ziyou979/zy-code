@@ -218,7 +218,7 @@ ${sessionIds.map((id) => `- ${id}`).join('\n')}`
         promptMessages: [createUserMessage({ content: [{ type: 'text' as const, text: prompt }] })],
         cacheSafeParams: createCacheSafeParams(context),
         canUseTool: createAutoMemCanUseTool(memoryRoot),
-        querySource: 'auto_dream' as any,
+        querySource: 'auto_dream',
         forkLabel: 'auto_dream',
         skipTranscript: true,
         overrides: { abortController },
@@ -232,7 +232,8 @@ ${sessionIds.map((id) => `- ${id}`).join('\n')}`
       if (appendSystemMessage && isDreamTask(dreamState) && dreamState.filesTouched.length > 0) {
         appendSystemMessage({
           ...createMemorySavedMessage(dreamState.filesTouched),
-          // @ts-expect-error
+            // @ts-expect-error 扩展消息字段
+          // biome-ignore lint/suspicious/noExplicitAny: 扩展消息字段
           verb: 'Improved' as any,
         })
       }

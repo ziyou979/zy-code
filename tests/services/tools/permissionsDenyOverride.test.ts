@@ -61,9 +61,12 @@ async function importSUT() {
   return mod.resolveHookPermissionDecision
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
 const tool = { name: 'Bash' } as any
 const input = { command: 'rm -rf /' }
+// biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
 const toolUseContext = { requireCanUseTool: false, getAppState: () => ({}) } as any
+// biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
 const assistantMessage = {} as any
 const toolUseID = 'tu_1'
 
@@ -87,13 +90,16 @@ describe('3.2 deny 覆盖 PreToolUse hook 的 ask', () => {
     let canUseToolCalls = 0
     const canUseTool = async () => {
       canUseToolCalls++
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       return { behavior: 'ask' } as any
     }
     const out = await resolveHookPermissionDecision(
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       { behavior: 'ask' } as any,
       tool,
       input,
       toolUseContext,
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       canUseTool as any,
       assistantMessage,
       toolUseID,
@@ -116,14 +122,17 @@ describe('3.2 deny 覆盖 PreToolUse hook 的 ask', () => {
       forceDecision: unknown,
     ) => {
       receivedForceDecision = forceDecision
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       return { behavior: 'ask' } as any
     }
     const askResult = { behavior: 'ask', message: 'hook says ask' }
     const out = await resolveHookPermissionDecision(
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       askResult as any,
       tool,
       input,
       toolUseContext,
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       canUseTool as any,
       assistantMessage,
       toolUseID,
@@ -145,6 +154,7 @@ describe('3.2 deny 覆盖 PreToolUse hook 的 ask', () => {
       forceDecision: unknown,
     ) => {
       receivedForceDecision = forceDecision
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       return { behavior: 'allow' } as any
     }
     const out = await resolveHookPermissionDecision(
@@ -152,6 +162,7 @@ describe('3.2 deny 覆盖 PreToolUse hook 的 ask', () => {
       tool,
       input,
       toolUseContext,
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       canUseTool as any,
       assistantMessage,
       toolUseID,

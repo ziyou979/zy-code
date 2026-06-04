@@ -64,6 +64,8 @@ export function MCPRemoteServerMenu({
   onComplete,
   borderless = false,
 }: Props): React.ReactNode {
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理，SSE/HTTP/ZyAI 类型运行时包含额外字段
+  const srv = server as any
   const [theme] = useTheme()
   const exitState = useExitOnCtrlCDWithKeybindings()
   const { columns: terminalColumns } = useTerminalSize()
@@ -109,8 +111,10 @@ export function MCPRemoteServerMenu({
   // 1. It has OAuth tokens (server.isAuthenticated), OR
   // 2. It's connected and has tools (meaning it's working via some auth mechanism)
   const isEffectivelyAuthenticated =
-    (server as any).isAuthenticated ||
-    ((server as any).client.type === 'connected' && serverToolsCount > 0)
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    srv.isAuthenticated ||
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    (srv.client.type === 'connected' && serverToolsCount > 0)
   const reconnectMcpServer = useMcpReconnect()
   const handleZyAIAuthComplete = React.useCallback(async () => {
     setIsZyAIAuthenticating(false)
@@ -140,8 +144,10 @@ export function MCPRemoteServerMenu({
   }, [reconnectMcpServer, server.name, onComplete])
   const handleZyAIClearAuthComplete = React.useCallback(async () => {
     await clearServerCache(server.name, {
-      ...(server as any).config,
-      scope: (server as any).scope,
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+      ...srv.config,
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+      scope: srv.scope,
     })
     setAppState((prev) => {
       const newClients = prev.mcp.clients.map((c) =>
@@ -171,7 +177,8 @@ export function MCPRemoteServerMenu({
     setIsZyAIClearingAuth(false)
     setZyAIClearAuthUrl(null)
     setZyAIClearAuthBrowserOpened(false)
-  }, [server.name, (server as any).config, (server as any).scope, setAppState, onComplete])
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+  }, [server.name, srv.config, srv.scope, setAppState, onComplete])
 
   // Escape to cancel authentication flow
   useKeybinding(
@@ -260,12 +267,16 @@ export function MCPRemoteServerMenu({
     const accountInfo = getOauthAccountInfo()
     const orgUuid = accountInfo?.organizationUuid
     let authUrl: string
-    if (orgUuid && (server as any).config.type === 'zyai-proxy' && (server as any).config.id) {
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    if (orgUuid && srv.config.type === 'zyai-proxy' && srv.config.id) {
       // Use the direct auth URL with org and server IDs
       // Replace 'mcprs' prefix with 'mcpsrv' if present
-      const serverId = (server as any).config.id.startsWith('mcprs')
-        ? `mcpsrv${(server as any).config.id.slice(5)}`
-        : (server as any).config.id
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+      const serverId = srv.config.id.startsWith('mcprs')
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+        ? `mcpsrv${srv.config.id.slice(5)}`
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+        : srv.config.id
       const productSurface = encodeURIComponent(process.env.ZY_CODE_ENTRYPOINT || 'cli')
       authUrl = `${zyAiBaseUrl}/api/organizations/${orgUuid}/mcp/start-auth/${serverId}?product_surface=${productSurface}`
     } else {
@@ -276,16 +287,19 @@ export function MCPRemoteServerMenu({
     setIsZyAIAuthenticating(true)
     logEvent('zy_Zyai_mcp_auth_started', {})
     await openBrowser(authUrl)
-  }, [(server as any).config])
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+  }, [srv.config])
   const handleZyAIClearAuth = React.useCallback(() => {
     setIsZyAIClearingAuth(true)
     logEvent('zy_Zyai_mcp_clear_auth_started', {})
   }, [])
   const handleToggleEnabled = React.useCallback(async () => {
-    const wasEnabled = (server as any).client.type !== 'disabled'
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    const wasEnabled = srv.client.type !== 'disabled'
     try {
       await toggleMcpServer(server.name)
-      if ((server as any).config.type === 'zyai-proxy') {
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+      if (srv.config.type === 'zyai-proxy') {
         logEvent('zy_Zyai_mcp_toggle', {
           new_state: (wasEnabled
             ? 'disabled'
@@ -306,15 +320,18 @@ export function MCPRemoteServerMenu({
       )
     }
   }, [
-    (server as any).client.type,
-    (server as any).config.type,
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    srv.client.type,
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    srv.config.type,
     server.name,
     toggleMcpServer,
     onCancel,
     onComplete,
   ])
   const handleAuthenticate = React.useCallback(async () => {
-    if ((server as any).config.type === 'zyai-proxy') {
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    if (srv.config.type === 'zyai-proxy') {
       return
     }
     setIsAuthenticating(true)
@@ -324,15 +341,19 @@ export function MCPRemoteServerMenu({
     try {
       // Revoke existing tokens if re-authenticating, but preserve step-up
       // auth state so the next OAuth flow can reuse cached scope/discovery.
-      if ((server as any).isAuthenticated && (server as any).config) {
-        await revokeServerTokens(server.name, (server as any).config, {
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+      if (srv.isAuthenticated && srv.config) {
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+        await revokeServerTokens(server.name, srv.config, {
           preserveStepUpState: true,
         })
       }
-      if ((server as any).config) {
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+      if (srv.config) {
         await performMCPOAuthFlow(
           server.name,
-          (server as any).config,
+          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+          srv.config,
           setAuthorizationUrl,
           controller.signal,
           {
@@ -342,7 +363,8 @@ export function MCPRemoteServerMenu({
           },
         )
         logEvent('zy_mcp_auth_config_authenticate', {
-          wasAuthenticated: (server as any).isAuthenticated,
+          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+          wasAuthenticated: srv.isAuthenticated,
         })
         const result_0 = await reconnectMcpServer(server.name)
         if (result_0.client.type === 'connected') {
@@ -370,26 +392,33 @@ export function MCPRemoteServerMenu({
       setCallbackUrlInput('')
     }
   }, [
-    (server as any).isAuthenticated,
-    (server as any).config,
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    srv.isAuthenticated,
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    srv.config,
     server.name,
     onComplete,
     reconnectMcpServer,
     isEffectivelyAuthenticated,
   ])
   const handleClearAuth = async () => {
-    if ((server as any).config.type === 'zyai-proxy') {
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    if (srv.config.type === 'zyai-proxy') {
       return
     }
-    if ((server as any).config) {
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    if (srv.config) {
       // First revoke the authentication tokens and clear all auth state
-      await revokeServerTokens(server.name, (server as any).config)
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+      await revokeServerTokens(server.name, srv.config)
       logEvent('zy_mcp_auth_config_clear', {})
 
       // Disconnect the client and clear the cache
       await clearServerCache(server.name, {
-        ...(server as any).config,
-        scope: (server as any).scope,
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+        ...srv.config,
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+        scope: srv.scope,
       })
 
       // Update app state to remove the disconnected server's tools, commands, and resources
@@ -425,7 +454,8 @@ export function MCPRemoteServerMenu({
     // one will open. If IdP login IS needed, authorizationUrl populates and
     // the URL fallback block below still renders.
     const authCopy =
-      (server as any).config.type !== 'zyai-proxy' && (server as any).config.oauth?.xaa
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+      srv.config.type !== 'zyai-proxy' && srv.config.oauth?.xaa
         ? ` ${tSync('mcp.authViaIdentityProvider')}`
         : ` ${tSync('mcp.browserWillOpen')}`
     return (
@@ -580,25 +610,30 @@ export function MCPRemoteServerMenu({
   const menuOptions = []
 
   // If server is disabled, show Enable first as the primary action
-  if ((server as any).client.type === 'disabled') {
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+  if (srv.client.type === 'disabled') {
     menuOptions.push({
       label: tSync('mcp.enable'),
       value: 'toggle-enabled',
     })
   }
-  if ((server as any).client.type === 'connected' && serverToolsCount > 0) {
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+  if (srv.client.type === 'connected' && serverToolsCount > 0) {
     menuOptions.push({
       label: tSync('mcp.viewTools'),
       value: 'tools',
     })
   }
-  if ((server as any).config.type === 'zyai-proxy') {
-    if ((server as any).client.type === 'connected') {
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+  if (srv.config.type === 'zyai-proxy') {
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    if (srv.client.type === 'connected') {
       menuOptions.push({
         label: tSync('mcp.clearAuthentication'),
         value: 'zyai-clear-auth',
       })
-    } else if ((server as any).client.type !== 'disabled') {
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    } else if (srv.client.type !== 'disabled') {
       menuOptions.push({
         label: tSync('mcp.authenticate'),
         value: 'zyai-auth',
@@ -622,8 +657,10 @@ export function MCPRemoteServerMenu({
       })
     }
   }
-  if ((server as any).client.type !== 'disabled') {
-    if ((server as any).client.type !== 'needs-auth') {
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+  if (srv.client.type !== 'disabled') {
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    if (srv.client.type !== 'needs-auth') {
       menuOptions.push({
         label: tSync('mcp.reconnect'),
         value: 'reconnectMcpServer',
@@ -652,20 +689,20 @@ export function MCPRemoteServerMenu({
         <Box flexDirection="column" gap={0}>
           <Box>
             <Text bold>{tSync('mcp.statusLabel')} </Text>
-            {(server as any).client.type === 'disabled' ? (
+            {srv.client.type === 'disabled' ? (
               <Text>
                 {color('inactive', theme)(figures.radioOff)} {tSync('mcp.disabled')}
               </Text>
-            ) : (server as any).client.type === 'connected' ? (
+            ) : srv.client.type === 'connected' ? (
               <Text>
                 {color('success', theme)(figures.tick)} {tSync('mcp.connected')}
               </Text>
-            ) : (server as any).client.type === 'pending' ? (
+            ) : srv.client.type === 'pending' ? (
               <>
                 <Text dimColor>{figures.radioOff}</Text>
                 <Text> {tSync('mcp.connecting')}</Text>
               </>
-            ) : (server as any).client.type === 'needs-auth' ? (
+            ) : srv.client.type === 'needs-auth' ? (
               <Text>
                 {color('warning', theme)(figures.triangleUpOutline)}{' '}
                 {tSync('mcp.needsAuthentication')}
@@ -677,7 +714,7 @@ export function MCPRemoteServerMenu({
             )}
           </Box>
 
-          {(server as any).transport !== 'zyai-proxy' && (
+          {srv.transport !== 'zyai-proxy' && (
             <Box>
               <Text bold>{tSync('mcp.authLabel')} </Text>
               {isEffectivelyAuthenticated ? (
@@ -694,15 +731,15 @@ export function MCPRemoteServerMenu({
 
           <Box>
             <Text bold>{tSync('mcp.urlLabel')} </Text>
-            <Text dimColor>{(server as any).config.url}</Text>
+            <Text dimColor>{srv.config.url}</Text>
           </Box>
 
           <Box>
             <Text bold>{tSync('mcp.configLocationLabel')} </Text>
-            <Text dimColor>{describeMcpConfigFilePath((server as any).scope)}</Text>
+            <Text dimColor>{describeMcpConfigFilePath(srv.scope)}</Text>
           </Box>
 
-          {(server as any).client.type === 'connected' && (
+          {srv.client.type === 'connected' && (
             <CapabilitiesSection
               serverToolsCount={serverToolsCount}
               serverPromptsCount={serverCommandsCount}
@@ -710,7 +747,7 @@ export function MCPRemoteServerMenu({
             />
           )}
 
-          {(server as any).client.type === 'connected' && serverToolsCount > 0 && (
+          {srv.client.type === 'connected' && serverToolsCount > 0 && (
             <Box>
               <Text bold>{tSync('mcp.toolsLabel')} </Text>
               <Text dimColor>{tSync('mcp.toolsCount', { count: serverToolsCount })}</Text>
@@ -752,7 +789,8 @@ export function MCPRemoteServerMenu({
                     setIsReconnecting(true)
                     try {
                       const result_1 = await reconnectMcpServer(server.name)
-                      if ((server as any).config.type === 'zyai-proxy') {
+                      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+                      if (srv.config.type === 'zyai-proxy') {
                         logEvent('zy_Zyai_mcp_reconnect', {
                           success: result_1.client.type === 'connected',
                         })
@@ -760,7 +798,8 @@ export function MCPRemoteServerMenu({
                       const { message: message_0 } = handleReconnectResult(result_1, server.name)
                       onComplete?.(message_0)
                     } catch (err_2) {
-                      if ((server as any).config.type === 'zyai-proxy') {
+                      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+                      if (srv.config.type === 'zyai-proxy') {
                         logEvent('zy_Zyai_mcp_reconnect', {
                           success: false,
                         })

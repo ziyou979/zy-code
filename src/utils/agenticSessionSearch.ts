@@ -268,7 +268,7 @@ Find the sessions that are most relevant to this query.`
       system: SESSION_SEARCH_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: [{ type: 'text' as const, text: userMessage }] }],
       signal,
-      querySource: 'session_search' as any,
+      querySource: 'session_search',
     })
 
     // Extract the text content from the response

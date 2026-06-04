@@ -484,6 +484,7 @@ export function createStopHookSummaryMessage(
     toolUseID,
     hookLabel,
     totalDurationMs,
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   } as any
 }
 
@@ -616,7 +617,9 @@ export function createSystemAPIErrorMessage(
     type: 'system',
     subtype: 'api_error',
     level: 'error',
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     cause: (error as any).cause instanceof Error ? (error as any).cause : undefined,
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     error: error as any,
     retryInMs,
     retryAttempt,

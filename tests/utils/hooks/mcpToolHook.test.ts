@@ -42,7 +42,9 @@ const ctxWith = (connected: boolean) =>
     getAppState: () => ({
       mcp: { clients: connected ? [{ name: 'srv', type: 'connected', client: {} }] : [] },
     }),
+  // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
   }) as any
+// biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
 const run = (toolUseCtx: any, jsonInput = '{"hook_event_name":"PostToolUse","tool_name":"Bash"}') =>
   execMcpToolHook(hook, 'PostToolUse:Bash', 'PostToolUse', jsonInput, undefined, toolUseCtx, 'tu1')
 

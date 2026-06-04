@@ -45,6 +45,7 @@ export const CCR_TERMS_URL = 'https://code.zy.com/docs/en/zy-code-on-the-web'
 function getUltraplanModel(): string {
   return getFeatureValue_CACHED_MAY_BE_STALE(
     'zy_ultraplan_model',
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     (ALL_MODEL_CONFIGS as any).opus46?.anthropic ?? Object.values(ALL_MODEL_CONFIGS)[0]?.anthropic,
   )
 }
@@ -390,10 +391,13 @@ async function launchDetached(opts: {
     if (!eligibility.eligible) {
       logEvent('zy_ultraplan_create_failed', {
         reason: 'precondition' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         precondition_errors: (eligibility as any).errors
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           .map((e: any) => e.type)
           .join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       const reasons = ((eligibility as any).errors as any[]).map(formatPreconditionError).join('\n')
       enqueuePendingNotification({
         value: `ultraplan: cannot launch remote session —\n${reasons}`,

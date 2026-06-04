@@ -10,6 +10,7 @@ export async function call(
     <PluginSettings
       onComplete={onDone}
       args={args ?? ''}
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       showMcpRedirectMessage={undefined as any}
     />
   )

@@ -83,7 +83,7 @@ export const HighlightedCode = memo(function HighlightedCode({
     </Box>
   )
 })
-function CodeLine({ line, gutterWidth }: any) {
+function CodeLine({ line, gutterWidth }: { line: string; gutterWidth: number }) {
   const gutter = sliceAnsi(line, 0, gutterWidth)
   const content = sliceAnsi(line, gutterWidth)
   return (

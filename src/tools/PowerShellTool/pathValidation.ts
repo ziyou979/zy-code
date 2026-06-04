@@ -781,8 +781,8 @@ function isPathAllowed(
         allowed: false,
         decisionReason: {
           type: 'safetyCheck',
-          reason: (safetyCheck as any).message,
-          classifierApprovable: (safetyCheck as any).classifierApprovable,
+          reason: safetyCheck.message,
+          classifierApprovable: safetyCheck.classifierApprovable,
         },
       }
     }

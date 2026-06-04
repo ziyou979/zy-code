@@ -167,7 +167,7 @@ export function assertValidOpenAIChatCompletion(
 /**
  * 校验 Anthropic messages.create 参数是否符合 SDK 协议。
  */
-export function assertValidAnthropicCreateParams(params: Record<string, any>): void {
+export function assertValidAnthropicCreateParams(params: Record<string, unknown>): void {
   if (typeof params !== 'object' || params === null) {
     throw new Error('params must be object')
   }

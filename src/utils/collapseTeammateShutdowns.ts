@@ -1,11 +1,15 @@
+import type { Attachment } from './attachments.js'
 import type { AttachmentMessage, RenderableMessage } from '../types/message.js'
 
 function isTeammateShutdownAttachment(msg: RenderableMessage): msg is AttachmentMessage {
+  if (msg.type !== 'attachment') {
+    return false
+  }
+  const att = msg.attachment as Attachment
   return (
-    msg.type === 'attachment' &&
-    (msg.attachment as any).type === 'task_status' &&
-    (msg.attachment as any).taskType === 'in_process_teammate' &&
-    (msg.attachment as any).status === 'completed'
+    att.type === 'task_status' &&
+    att.taskType === 'in_process_teammate' &&
+    att.status === 'completed'
   )
 }
 
@@ -35,7 +39,7 @@ export function collapseTeammateShutdowns(messages: RenderableMessage[]): Render
           attachment: {
             type: 'teammate_shutdown_batch',
             count,
-          } as any,
+          } as unknown as AttachmentMessage['attachment'],
         })
       }
     } else {

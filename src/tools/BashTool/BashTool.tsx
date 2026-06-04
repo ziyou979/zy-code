@@ -1,4 +1,5 @@
 import { feature } from 'bun:bundle'
+import type { UUID } from 'node:crypto'
 import { copyFile, stat as fsStat, truncate as fsTruncate, link } from 'node:fs/promises'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
 import type { AppState } from 'src/state/AppState.js'
@@ -583,7 +584,7 @@ async function applySedEdit(
     await fileHistoryTrackEdit(
       toolUseContext.updateFileHistoryState,
       absoluteFilePath,
-      parentMessage.uuid as any,
+      parentMessage.uuid as UUID,
     )
   }
 

@@ -847,13 +847,13 @@ async function callInner(
     if (pages) {
       const parsedRange = parsePDFPageRange(pages)
       const extractResult = await extractPDFPages(resolvedFilePath, parsedRange ?? undefined)
-      if (!(extractResult as any).success) {
-        throw new Error((extractResult as any).error.message)
+      if (!extractResult.success) {
+        throw new Error(extractResult.error.message)
       }
       logEvent('zy_pdf_page_extraction', {
         success: true,
-        pageCount: (extractResult as any).data.file.count,
-        fileSize: (extractResult as any).data.file.originalSize,
+        pageCount: extractResult.data.file.count,
+        fileSize: extractResult.data.file.originalSize,
         hasPageRange: true,
       })
       logFileOperation({
@@ -862,11 +862,11 @@ async function callInner(
         filePath: fullFilePath,
         content: `PDF pages ${pages}`,
       })
-      const entries = await readdir((extractResult as any).data.file.outputDir)
+      const entries = await readdir(extractResult.data.file.outputDir)
       const imageFiles = entries.filter((f) => f.endsWith('.jpg')).sort()
       const imageBlocks = await Promise.all(
         imageFiles.map(async (f) => {
-          const imgPath = path.join((extractResult as any).data.file.outputDir, f)
+          const imgPath = path.join(extractResult.data.file.outputDir, f)
           const imgBuffer = await readFileAsync(imgPath)
           const resized = await maybeResizeAndDownsampleImageBuffer(
             imgBuffer,
@@ -881,7 +881,7 @@ async function callInner(
         }),
       )
       return {
-        data: (extractResult as any).data,
+        data: extractResult.data,
         ...(imageBlocks.length > 0 && {
           newMessages: [createUserMessage({ content: imageBlocks, isMeta: true })],
         }),
@@ -906,13 +906,13 @@ async function callInner(
       if (extractResult.success) {
         logEvent('zy_pdf_page_extraction', {
           success: true,
-          pageCount: (extractResult as any).data.file.count,
-          fileSize: (extractResult as any).data.file.originalSize,
+          pageCount: extractResult.data.file.count,
+          fileSize: extractResult.data.file.originalSize,
         })
       } else {
         logEvent('zy_pdf_page_extraction', {
           success: false,
-          available: (extractResult as any).error.reason !== 'unavailable',
+          available: extractResult.error.reason !== 'unavailable',
           fileSize: stats.size,
         })
       }
@@ -927,10 +927,10 @@ async function callInner(
     }
 
     const readResult = await readPDF(resolvedFilePath)
-    if (!(readResult as any).success) {
-      throw new Error((readResult as any).error.message)
+    if (!readResult.success) {
+      throw new Error(readResult.error.message)
     }
-    const pdfData = (readResult as any).data
+    const pdfData = readResult.data
     logFileOperation({
       operation: 'read',
       tool: 'FileReadTool',

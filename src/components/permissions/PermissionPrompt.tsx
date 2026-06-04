@@ -211,6 +211,7 @@ export function PermissionPrompt<T extends string>({
             ) {
               setRejectInputMode(false)
             }
+            // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
             setFocusedValue(value_2 as any)
           }}
           onInputModeToggle={handleInputModeToggle}

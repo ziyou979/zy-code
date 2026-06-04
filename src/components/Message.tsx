@@ -1,6 +1,7 @@
 import { feature } from 'bun:bundle'
 import * as React from 'react'
-import type { TextBlock } from 'src/types/llm.ts'
+import type { AssistantContentBlock, TextBlock, UserContentBlock } from 'src/types/llm.ts'
+import type { Attachment } from 'src/utils/attachments.js'
 import type { Command } from '../commands.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { Box } from '../ink.js'
@@ -94,7 +95,7 @@ function MessageImpl({
       return (
         <AttachmentMessage
           addMargin={addMargin}
-          attachment={message.attachment as any}
+          attachment={message.attachment as Attachment}
           verbose={verbose}
           isTranscriptMode={isTranscriptMode}
         />
@@ -102,10 +103,10 @@ function MessageImpl({
     }
     case 'assistant': {
       const assistantWidth = containerWidth ?? '100%'
-      const renderAssistantBlock = (_: any, index: number) => (
+      const renderAssistantBlock = (block: AssistantContentBlock, index: number) => (
         <AssistantMessageBlock
           key={index}
-          param={_ as any}
+          param={block}
           addMargin={addMargin}
           tools={tools}
           commands={commands}
@@ -115,12 +116,12 @@ function MessageImpl({
           shouldAnimate={shouldAnimate}
           shouldShowDot={shouldShowDot}
           width={width}
-          inProgressToolCallCount={inProgressToolUseIDs.size as any}
+          inProgressToolCallCount={inProgressToolUseIDs.size}
           isTranscriptMode={isTranscriptMode}
           lookups={lookups}
           onOpenRateLimitOptions={onOpenRateLimitOptions}
-          thinkingBlockId={`${message.uuid}:${index}` as any}
-          lastThinkingBlockId={lastThinkingBlockId as any}
+          thinkingBlockId={`${message.uuid}:${index}`}
+          lastThinkingBlockId={lastThinkingBlockId}
           advisorModel={message.advisorModel}
         />
       )
@@ -142,9 +143,9 @@ function MessageImpl({
     case 'user': {
       if (message.isCompactSummary) {
         const compactScreen = isTranscriptMode ? 'transcript' : 'prompt'
-        return <CompactSummary message={message as any} screen={compactScreen} />
+        return <CompactSummary message={message} screen={compactScreen} />
       }
-      const imageIndices: (string | number)[] = []
+      const imageIndices: number[] = []
       let imagePosition = 0
       for (const param of message.message.content) {
         if (param.type === 'image') {
@@ -158,16 +159,16 @@ function MessageImpl({
       const isLatestBashOutput = latestBashOutputUUID === message.uuid
       const userWidth = containerWidth ?? '100%'
       const userContent = message.message.content.map((contentBlock, index) => (
-        <UserMessage
+        <UserMessageContent
           key={index}
-          message={message as any}
+          message={message}
           addMargin={addMargin}
           tools={tools}
           progressMessagesForMessage={progressMessagesForMessage}
-          param={contentBlock as any}
+          param={contentBlock}
           style={style}
           verbose={verbose}
-          imageIndex={imageIndices[index] as any}
+          imageIndex={imageIndices[index] as number}
           isUserContinuation={isUserContinuation}
           lookups={lookups}
           isTranscriptMode={isTranscriptMode}
@@ -246,7 +247,20 @@ function MessageImpl({
     }
   }
 }
-function UserMessage({
+type UserMessageContentProps = {
+  message: UserMessage
+  addMargin: boolean
+  tools: Tools
+  progressMessagesForMessage: ProgressMessage[]
+  param: UserContentBlock
+  style?: 'condensed'
+  verbose: boolean
+  imageIndex: number
+  isUserContinuation: boolean
+  lookups: ReturnType<typeof buildMessageLookups>
+  isTranscriptMode: boolean
+}
+function UserMessageContent({
   message,
   addMargin,
   tools,
@@ -258,14 +272,14 @@ function UserMessage({
   isUserContinuation,
   lookups,
   isTranscriptMode,
-}: any) {
+}: UserMessageContentProps) {
   const { columns } = useTerminalSize()
   switch (param.type) {
     case 'text': {
       return (
         <UserTextMessage
           addMargin={addMargin}
-          param={param as any}
+          param={param as TextBlock}
           verbose={verbose}
           planContent={message.planContent}
           isTranscriptMode={isTranscriptMode}
@@ -275,13 +289,15 @@ function UserMessage({
     }
     case 'image': {
       const shouldAddMargin = addMargin && !isUserContinuation
-      return <UserImageMessage imageId={imageIndex as any} addMargin={shouldAddMargin} />
+      return <UserImageMessage imageId={imageIndex as number} addMargin={shouldAddMargin} />
     }
     case 'tool_result': {
       const toolResultWidth = columns - 5
       return (
         <UserToolResultMessage
+          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
           param={param as any}
+          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
           message={message as any}
           lookups={lookups}
           progressMessagesForMessage={progressMessagesForMessage}
@@ -316,6 +332,7 @@ function AssistantMessageBlock({
   thinkingBlockId,
   lastThinkingBlockId,
   advisorModel,
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 }: any) {
   if (feature('CONNECTOR_TEXT')) {
     if (isConnectorTextBlock(param)) {
@@ -435,6 +452,7 @@ export function areMessagePropsEqual(prev: Props, next: Props): boolean {
   // 否则每次 streaming thinking 开始/停止时，scrollback 中的每条消息都会重新渲染 (CC-941)
   if (
     prev.lastThinkingBlockId !== next.lastThinkingBlockId &&
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     hasThinkingContent(next.message as any)
   ) {
     return false

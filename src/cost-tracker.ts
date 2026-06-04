@@ -272,6 +272,7 @@ function addToTotalModelUsage(cost: number, usage: Usage, model: string): ModelU
   modelUsage.outputTokens += usage.outputTokens
   modelUsage.cacheReadInputTokens += usage.cacheReadInputTokens ?? 0
   modelUsage.cacheCreationInputTokens += usage.cacheCreationInputTokens ?? 0
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   modelUsage.webSearchRequests += (usage as any).server_tool_use?.web_search_requests ?? 0
   modelUsage.costUSD += cost
   modelUsage.contextWindow = getContextWindowForModel(model)

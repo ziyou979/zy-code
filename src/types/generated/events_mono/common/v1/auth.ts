@@ -18,6 +18,7 @@ function createBasePublicApiAuth(): PublicApiAuth {
 }
 
 export const PublicApiAuth = {
+  // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
   fromJSON(object: any): PublicApiAuth {
     return {
       account_id: isSet(object.account_id) ? globalThis.Number(object.account_id) : 0,
@@ -29,6 +30,7 @@ export const PublicApiAuth = {
   },
 
   toJSON(message: PublicApiAuth): unknown {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     const obj: any = {}
     if (message.account_id !== undefined) {
       obj.account_id = Math.round(message.account_id)
@@ -43,6 +45,7 @@ export const PublicApiAuth = {
   },
 
   create<I extends Exact<DeepPartial<PublicApiAuth>, I>>(base?: I): PublicApiAuth {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     return PublicApiAuth.fromPartial(base ?? ({} as any))
   },
   fromPartial<I extends Exact<DeepPartial<PublicApiAuth>, I>>(object: I): PublicApiAuth {
@@ -73,11 +76,13 @@ type Exact<P, I extends P> = P extends Builtin
       [K in Exclude<keyof I, KeysOfUnion<P>>]: never
     }
 
+// biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
 function isSet(value: any): boolean {
   return value !== null && value !== undefined
 }
 
 interface MessageFns<T> {
+  // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
   fromJSON(object: any): T
   toJSON(message: T): unknown
   create<I extends Exact<DeepPartial<T>, I>>(base?: I): T

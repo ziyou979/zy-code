@@ -80,8 +80,8 @@ describe('WorkflowSemaphore', () => {
     let error: Error | null = null
     try {
       await sem.acquire()
-    } catch (e: any) {
-      error = e
+    } catch (e: unknown) {
+      error = e as Error
     }
 
     expect(error).not.toBeNull()

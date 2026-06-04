@@ -813,7 +813,8 @@ export function getAssistantMessageFromError(
   // 连接错误（非超时）——使用 formatAPIError 获取详细消息
   if (isConnectionError(error)) {
     return createAssistantAPIErrorMessage({
-      content: `${API_ERROR_MESSAGE_PREFIX}: ${formatAPIError(error as any)}`,
+      // biome-ignore lint/suspicious/noExplicitAny: 连接错误类型不完善，需强制转换
+    content: `${API_ERROR_MESSAGE_PREFIX}: ${formatAPIError(error as any)}`,
       error: 'unknown',
     })
   }
@@ -842,14 +843,17 @@ function get3PModelFallbackSuggestion(model: string): string | undefined {
   const m = model.toLowerCase()
   // 如果失败的模型看起来像 Opus 4.6 变体，建议回退到前一版本
   if (m.includes('opus-4-6') || m.includes('opus_4_6')) {
+    // biome-ignore lint/suspicious/noExplicitAny: ModelKey 可能不包含此回退模型键
     return (getModelStrings() as any).opus41
   }
   // 如果失败的模型看起来像 Sonnet 4.6 变体，建议回退到 4.5
   if (m.includes('sonnet-4-6') || m.includes('sonnet_4_6')) {
+    // biome-ignore lint/suspicious/noExplicitAny: ModelKey 可能不包含此回退模型键
     return (getModelStrings() as any).sonnet45
   }
   // 如果失败的模型看起来像 Sonnet 4.5 变体，建议回退到 4.0
   if (m.includes('sonnet-4-5') || m.includes('sonnet_4_5')) {
+    // biome-ignore lint/suspicious/noExplicitAny: ModelKey 可能不包含此回退模型键
     return (getModelStrings() as any).sonnet40
   }
   return undefined
@@ -1013,7 +1017,7 @@ export function classifyAPIError(error: unknown): string {
 
   // 连接错误——优先检查 SSL/TLS 问题
   if (isConnectionError(error)) {
-    const connectionDetails = extractConnectionErrorDetails(error as any)
+    const connectionDetails = extractConnectionErrorDetails(error)
     if (connectionDetails?.isSSLError) {
       return 'ssl_cert_error'
     }

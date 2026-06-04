@@ -58,6 +58,7 @@ function createBaseGrowthbookExperimentEvent(): GrowthbookExperimentEvent {
 }
 
 export const GrowthbookExperimentEvent = {
+  // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
   fromJSON(object: any): GrowthbookExperimentEvent {
     return {
       event_id: isSet(object.event_id) ? globalThis.String(object.event_id) : '',
@@ -82,6 +83,7 @@ export const GrowthbookExperimentEvent = {
   },
 
   toJSON(message: GrowthbookExperimentEvent): unknown {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     const obj: any = {}
     if (message.event_id !== undefined) {
       obj.event_id = message.event_id
@@ -125,6 +127,7 @@ export const GrowthbookExperimentEvent = {
   create<I extends Exact<DeepPartial<GrowthbookExperimentEvent>, I>>(
     base?: I,
   ): GrowthbookExperimentEvent {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     return GrowthbookExperimentEvent.fromPartial(base ?? ({} as any))
   },
   fromPartial<I extends Exact<DeepPartial<GrowthbookExperimentEvent>, I>>(
@@ -175,6 +178,7 @@ function fromTimestamp(t: Timestamp): Date {
   return new globalThis.Date(millis)
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
 function fromJsonTimestamp(o: any): Date {
   if (o instanceof globalThis.Date) {
     return o
@@ -185,11 +189,13 @@ function fromJsonTimestamp(o: any): Date {
   }
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
 function isSet(value: any): boolean {
   return value !== null && value !== undefined
 }
 
 interface MessageFns<T> {
+  // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
   fromJSON(object: any): T
   toJSON(message: T): unknown
   create<I extends Exact<DeepPartial<T>, I>>(base?: I): T

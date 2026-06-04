@@ -75,10 +75,10 @@ export const SubscribePRTool = buildTool({
       const existingSubscriptions =
         ((appState as Record<string, unknown>).prSubscriptions as string[] | undefined) ?? []
       if (!existingSubscriptions.includes(pr_url)) {
-        context.setAppState((prev: any) => ({
+        context.setAppState((prev) => ({
           ...prev,
           prSubscriptions: [...existingSubscriptions, pr_url],
-        }))
+        } as typeof prev))
       }
       return { data: { subscribed: true, pr_url } }
     } catch {

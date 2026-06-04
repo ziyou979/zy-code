@@ -7,11 +7,11 @@ import type { WorkflowSemaphore } from './concurrency.js'
 export async function pipeline<T>(
   items: T[],
   _semaphore: WorkflowSemaphore,
-  ...stages: Array<(prevResult: any, originalItem: T, index: number) => any>
-): Promise<any[]> {
+  ...stages: Array<(prevResult: unknown, originalItem: T, index: number) => unknown>
+): Promise<unknown[]> {
   return Promise.all(
     items.map(async (item, index) => {
-      let result: any = item
+      let result: unknown = item
       for (const stage of stages) {
         try {
           result = await stage(result, item, index)
@@ -32,9 +32,9 @@ export async function pipeline<T>(
  * 失败的 thunk → null（调用本身不会 reject）。
  */
 export async function parallel(
-  thunks: Array<() => Promise<any>>,
+  thunks: Array<() => Promise<unknown>>,
   _semaphore: WorkflowSemaphore,
-): Promise<any[]> {
+): Promise<unknown[]> {
   const results = await Promise.allSettled(thunks.map((fn) => fn()))
   return results.map((r) => (r.status === 'fulfilled' ? r.value : null))
 }

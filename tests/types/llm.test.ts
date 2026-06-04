@@ -32,6 +32,7 @@ describe('llm 类型守卫', () => {
 
     test('Error + status → true（鸭子类型）', () => {
       const err = new Error('bad request')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(err as any).status = 400
       expect(isAPIError(err)).toBe(true)
     })
@@ -108,6 +109,7 @@ describe('llm 类型守卫', () => {
 
     test('Error + status → status', () => {
       const err = new Error('bad')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(err as any).status = 500
       expect(getErrorStatus(err)).toBe(500)
     })
@@ -149,12 +151,14 @@ describe('llm 类型守卫', () => {
 
     test('Error + headers get 方法 → 使用 get', () => {
       const err = new Error('test')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(err as any).headers = { get: (n: string) => n }
       expect(getErrorHeader(err, 'x-request-id')).toBe('x-request-id')
     })
 
     test('Error + headers 普通对象 → 键访问', () => {
       const err = new Error('test')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ;(err as any).headers = { 'x-request-id': 'abc' }
       expect(getErrorHeader(err, 'x-request-id')).toBe('abc')
     })
@@ -167,11 +171,13 @@ describe('llm 类型守卫', () => {
   describe('getHeader（兼容 Headers 实例和普通对象）', () => {
     test('对象含 get 方法时使用 get', () => {
       const error = { headers: { get: (n: string) => `val-${n}` } }
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect(getHeader(error as any, 'foo')).toBe('val-foo')
     })
 
     test('普通对象使用键访问', () => {
       const error = { headers: { 'content-type': 'application/json' } }
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect(getHeader(error as any, 'content-type')).toBe('application/json')
     })
 
@@ -182,6 +188,7 @@ describe('llm 类型守卫', () => {
 
     test('get 返回 undefined 时回退 null', () => {
       const error = { headers: { get: () => undefined } }
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect(getHeader(error as any, 'foo')).toBe(null)
     })
   })

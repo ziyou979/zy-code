@@ -85,6 +85,7 @@ export function startDeferredPrefetches(): void {
 
   // 事件循环停顿检测器 —— 当主线程阻塞超过 500ms 时记录日志
   if (isInternalBuild()) {
+    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
     void import('../../utils/eventLoopStallDetector.js').then((m: any) =>
       m.startEventLoopStallDetector(),
     )

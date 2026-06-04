@@ -145,7 +145,7 @@ function isExcludedModel(model: string): boolean {
  * logged via zy_api_success for analytics.
  */
 function getTrackingKey(querySource: QuerySource, agentId?: AgentId): string | null {
-  if ((querySource as any) === 'compact') {
+  if (querySource === 'compact') {
     return 'repl_main_thread'
   }
   for (const prefix of TRACKED_SOURCE_PREFIXES) {

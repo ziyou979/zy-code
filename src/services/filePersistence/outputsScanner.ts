@@ -83,6 +83,7 @@ export async function findModifiedFiles(
     if (entry.isFile()) {
       // entry.parentPath is available in Node 20+, fallback to entry.path for older versions
       const parentPath = getEntryParentPath(entry, outputsDir)
+      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
       filePaths.push(path.join(parentPath, (entry as any).name))
     }
   }
@@ -112,6 +113,7 @@ export async function findModifiedFiles(
   // Filter to files modified since turn start
   const modifiedFiles: string[] = []
   for (const result of statResults) {
+    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
     if (result && result.mtimeMs >= (turnStartTime as any)) {
       modifiedFiles.push(result.filePath)
     }

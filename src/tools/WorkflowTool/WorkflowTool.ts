@@ -71,6 +71,7 @@ function persistScript(source: string, name: string): string {
 function loadScript(scriptPath: string): string {
   try {
     return readFileSync(scriptPath, 'utf-8')
+  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
   } catch (err: any) {
     throw new WorkflowScriptError(`Cannot read script at ${scriptPath}: ${err.message}`)
   }
@@ -90,6 +91,7 @@ export const WorkflowTool = buildTool({
       const appState = context.getAppState()
       const tasks = appState.tasks ?? {}
       for (const [tid, task] of Object.entries(tasks)) {
+        // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
         const t = task as any
         if (
           t.type === 'local_workflow' &&
@@ -149,6 +151,7 @@ export const WorkflowTool = buildTool({
     let meta
     try {
       meta = parseMeta(source)
+    // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
     } catch (err: any) {
       return {
         data: { status: 'error', message: err.message } satisfies Output,
@@ -168,9 +171,11 @@ export const WorkflowTool = buildTool({
 
     // resume 时清理旧的已完成 task 条目
     if (resumeFromRunId) {
+      // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
       setAppState((prev: any) => {
         const tasks = { ...prev.tasks }
         for (const [tid, task] of Object.entries(tasks)) {
+          // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
           const t = task as any
           if (
             t.type === 'local_workflow' &&
@@ -259,10 +264,12 @@ export const WorkflowTool = buildTool({
 
 async function executeWorkflowAsync(
   source: string,
+  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
   args: any,
   toolUseContext: ToolUseContext,
   taskId: string,
   outputFile: string,
+  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
   setAppState: (f: (prev: any) => any) => void,
   _meta: { name: string; description: string },
   journal: WorkflowJournal,
@@ -307,6 +314,7 @@ async function executeWorkflowAsync(
       : tSync('workflow.completed', { count: String(result.agentCount) })
 
     completeWorkflowTask(taskId, setAppState, summary)
+  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
   } catch (err: any) {
     const errorMsg =
       err instanceof WorkflowScriptError ? err.message : (err?.message ?? 'Unknown error')

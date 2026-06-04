@@ -147,8 +147,10 @@ function Web({ onDone }: { onDone: LocalJSXCommandOnDone }) {
     if (!result.ok) {
       logEvent('zy_remote_setup_result', {
         result: 'import_failed' as SafeString,
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         error_kind: (result as any).error.kind as SafeString,
       })
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       onDone(errorMessage((result as any).error, getCodeWebUrl()))
       return
     }

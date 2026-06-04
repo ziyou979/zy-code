@@ -121,12 +121,15 @@ export function ModelPicker({
   )
   const handleSelect = function handleSelect(selectedValue: string) {
     logEvent('zy_model_command_menu_effort', {
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       effort: effort as any,
     })
     if (!skipSettingsWrite) {
       const effortLevel = resolvePickerEffortPersistence(
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         effort as any,
         getDefaultEffortLevelForOption(selectedValue),
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         getSettingsForSource('userSettings')?.effortLevel as any,
         hasToggledEffort,
       )
@@ -248,6 +251,7 @@ function resolveOptionModel(value?: string): string | undefined {
   }
   return value === NO_PREFERENCE ? getDefaultMainLoopModel() : parseUserSpecifiedModel(value)
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function EffortLevelIndicator({ effort }: { effort: any }) {
   const effortSymbol = effortLevelToSymbol(effort ?? 'low')
   return <Text color={effort ? 'zy' : 'subtle'}>{effortSymbol}</Text>

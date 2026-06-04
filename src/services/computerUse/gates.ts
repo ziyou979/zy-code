@@ -16,6 +16,7 @@ const DEFAULTS: ChicagoConfig = {
   hideBeforeAction: true,
   autoTargetDisplay: true,
   clipboardGuard: true,
+  // biome-ignore lint/suspicious/noExplicitAny: 第三方类型不完善
   coordinateMode: 'pixels' as any,
 }
 

@@ -31,6 +31,7 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 import {
+  type Attachment,
   createAttachmentMessage,
   generateFileAttachment,
   getAgentListingDeltaAttachment,
@@ -149,7 +150,7 @@ export function stripImagesFromMessages(messages: Message[]): Message[] {
             toolHasMedia = true
             return { type: 'text' as const, text: '[image]' }
           }
-          if ((item.type as any) === 'document') {
+          if ((item.type as string) === 'document') {
             toolHasMedia = true
             return { type: 'text' as const, text: '[document]' }
           }
@@ -240,7 +241,7 @@ export function truncateHeadForPTLRetry(
     let acc = 0
     dropCount = 0
     for (const g of groups) {
-      acc += roughTokenCountEstimationForMessages(g as any)
+      acc += roughTokenCountEstimationForMessages(g as readonly { type: string; message?: { content?: unknown }; attachment?: Attachment }[])
       dropCount++
       if (acc >= tokenGap) {
         break
@@ -583,14 +584,14 @@ export async function compactConversation(
     const boundaryMarker = createCompactBoundaryMessage(
       isAutoCompact ? 'auto' : 'manual',
       preCompactTokenCount ?? 0,
-      messages.at(-1)?.uuid as any,
+      messages.at(-1)?.uuid as UUID | undefined,
     )
     // 携带已加载工具的状态 — 摘要不保留 tool_reference 块，
     // 所以压缩后的 schema 过滤器需要这个信息来继续向 API
     // 发送已加载的 deferred tool schema。
     const preCompactDiscovered = extractDiscoveredToolNames(messages)
     if (preCompactDiscovered.size > 0) {
-      ;(boundaryMarker.compactMetadata as any).preCompactDiscoveredTools = [
+      boundaryMarker.compactMetadata.preCompactDiscoveredTools = [
         ...preCompactDiscovered,
       ].sort()
     }
@@ -623,7 +624,7 @@ export async function compactConversation(
       ...summaryMessages,
       ...postCompactFileAttachments,
       ...hookMessages,
-    ] as any)
+    ] as unknown as readonly { type: string; message?: { content?: unknown }; attachment?: Attachment }[])
 
     // 提取压缩 API 用量指标
     const compactionUsage = getTokenUsage(summaryResponse)
@@ -677,7 +678,7 @@ export async function compactConversation(
 
     // 重置 cache 读取基线，这样压缩后的 drop 不会被标记为 break
     if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
-      notifyCompaction((context.options.querySource ?? 'compact') as any, context.agentId)
+      notifyCompaction(context.options.querySource ?? 'compact', context.agentId)
     }
     markPostCompaction()
 
@@ -756,11 +757,11 @@ export async function partialCompactConversation(
   context: ToolUseContext,
   cacheSafeParams: CacheSafeParams,
   userFeedback?: string,
-  direction: PartialCompactDirection = 'from' as any,
+  direction: PartialCompactDirection = 'from',
 ): Promise<CompactionResult> {
   try {
     const messagesToSummarize =
-      (direction as any) === 'up_to'
+      direction === 'up_to'
         ? allMessages.slice(0, pivotIndex)
         : allMessages.slice(pivotIndex)
     // 'up_to' 必须移除旧的压缩边界/摘要：对于 'up_to'，
@@ -769,7 +770,7 @@ export async function partialCompactConversation(
     // 'from' 则保留它们：summary_B 位于保留内容之后（反向扫描仍然有效），
     // 而且移除旧摘要会丢失其覆盖的历史。
     const messagesToKeep =
-      (direction as any) === 'up_to'
+      direction === 'up_to'
         ? allMessages
             .slice(pivotIndex)
             .filter(
@@ -782,7 +783,7 @@ export async function partialCompactConversation(
 
     if (messagesToSummarize.length === 0) {
       throw new Error(
-        (direction as any) === 'up_to'
+        direction === 'up_to'
           ? 'Nothing to summarize before the selected message.'
           : 'Nothing to summarize after the selected message.',
       )
@@ -831,9 +832,9 @@ export async function partialCompactConversation(
 
     // 'up_to' 前缀直接命中 cache；'from' 发送全部（尾部不会 cache）。
     // PTL 重试会破坏 cache 前缀但能让用户继续操作（CC-1180）。
-    let apiMessages = (direction as any) === ('up_to' as any) ? messagesToSummarize : allMessages
+    let apiMessages = direction === 'up_to' ? messagesToSummarize : allMessages
     let retryCacheSafeParams =
-      (direction as any) === 'up_to'
+      direction === 'up_to'
         ? { ...cacheSafeParams, forkContextMessages: messagesToSummarize }
         : cacheSafeParams
     let summaryResponse: AssistantMessage
@@ -980,13 +981,13 @@ export async function partialCompactConversation(
     // progress 消息无法记录日志，所以 forkSessionImpl 会将
     // 指向 progress 消息的 logicalParentUuid 置空。两个方向都跳过它们。
     const lastPreCompactUuid =
-      (direction as any) === 'up_to'
+      direction === 'up_to'
         ? allMessages.slice(0, pivotIndex).findLast((m) => m.type !== 'progress')?.uuid
         : messagesToKeep.at(-1)?.uuid
     const boundaryMarker = createCompactBoundaryMessage(
       'manual',
       preCompactTokenCount ?? 0,
-      lastPreCompactUuid as any,
+      lastPreCompactUuid as UUID | undefined,
       userFeedback,
       messagesToSummarize.length,
     )
@@ -994,7 +995,7 @@ export async function partialCompactConversation(
     // 比追踪每个工具在哪个半区更简单。
     const preCompactDiscovered = extractDiscoveredToolNames(allMessages)
     if (preCompactDiscovered.size > 0) {
-      ;(boundaryMarker.compactMetadata as any).preCompactDiscoveredTools = [
+      boundaryMarker.compactMetadata.preCompactDiscoveredTools = [
         ...preCompactDiscovered,
       ].sort()
     }
@@ -1022,7 +1023,7 @@ export async function partialCompactConversation(
     ]
 
     if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
-      notifyCompaction((context.options.querySource ?? 'compact') as any, context.agentId)
+      notifyCompaction(context.options.querySource ?? 'compact', context.agentId)
     }
     markPostCompaction()
 
@@ -1048,14 +1049,14 @@ export async function partialCompactConversation(
 
     // 'from'：前缀保留 → 用 boundary；'up_to'：后缀 → 用最后一条摘要
     const anchorUuid =
-      (direction as any) === 'up_to'
+      direction === 'up_to'
         ? (summaryMessages.at(-1)?.uuid ?? boundaryMarker.uuid)
         : boundaryMarker.uuid
     return {
       boundaryMarker: annotateBoundaryWithPreservedSegment(
         boundaryMarker,
-        anchorUuid as any,
-        messagesToKeep as any as any,
+        anchorUuid as UUID,
+        messagesToKeep,
       ),
       summaryMessages,
       messagesToKeep,
@@ -1158,7 +1159,7 @@ async function streamCompactSummary({
           promptMessages: [summaryRequest],
           cacheSafeParams,
           canUseTool: createCompactCanUseTool(),
-          querySource: 'compact' as any,
+          querySource: 'compact',
           forkLabel: 'compact',
           maxTurns: 1,
           skipCacheWrite: true,
@@ -1274,7 +1275,7 @@ async function streamCompactSummary({
             COMPACT_MAX_OUTPUT_TOKENS,
             getMaxOutputTokensForModel(context.options.mainLoopModel),
           ),
-          querySource: 'compact' as any,
+          querySource: 'compact',
           agents: context.options.agentDefinitions.activeAgents,
           mcpTools: [],
           effortValue: appState.effortValue,
@@ -1286,27 +1287,29 @@ async function streamCompactSummary({
       while (!next.done) {
         const event = next.value
 
+        // biome-ignore lint/suspicious/noExplicitAny: 流式事件联合类型无法精确表达，需运行时判别
+        const ev = event as any
         if (
           !hasStartedStreaming &&
-          (event as any).type === 'stream_event' &&
-          (event as any).event.type === 'content_block_start' &&
-          (event as any).event.content_block.type === 'text'
+          ev.type === 'stream_event' &&
+          ev.event.type === 'content_block_start' &&
+          ev.event.content_block.type === 'text'
         ) {
           hasStartedStreaming = true
           context.setStreamMode?.('responding')
         }
 
         if (
-          (event as any).type === 'stream_event' &&
-          (event as any).event.type === 'content_block_delta' &&
-          (event as any).event.delta.type === 'text_delta'
+          ev.type === 'stream_event' &&
+          ev.event.type === 'content_block_delta' &&
+          ev.event.delta.type === 'text_delta'
         ) {
-          const charactersStreamed = (event as any).event.delta.text.length
+          const charactersStreamed = (ev.event.delta.text as string).length
           context.setResponseLength?.((length) => length + charactersStreamed)
         }
 
-        if ((event as any).type === 'assistant') {
-          response = event as any
+        if (ev.type === 'assistant') {
+          response = ev as AssistantMessage
         }
 
         next = await streamIter.next()

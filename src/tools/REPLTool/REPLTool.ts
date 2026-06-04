@@ -77,7 +77,8 @@ export const REPLTool = buildTool({
       const { promisify } = await import('node:util')
       const execAsync = promisify(exec)
 
-      const cwd = (context as any).cwd || process.cwd()
+      // biome-ignore lint/suspicious/noExplicitAny: 适配层类型处理
+      const cwd = (context as Record<string, any>).cwd || process.cwd()
       const { stdout, stderr } = await execAsync(commands, {
         cwd,
         maxBuffer: 10 * 1024 * 1024,

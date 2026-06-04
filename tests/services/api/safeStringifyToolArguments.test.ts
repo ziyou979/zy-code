@@ -26,7 +26,9 @@ function serializeInput(input: unknown): string {
       content: [{ type: 'tool_call', id: 'c', name: 'f', input }],
     },
   ]
+  // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
   const result = messagesToOpenAI(messages as any)
+  // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
   const a = result.find((m) => m.role === 'assistant') as any
   return a.tool_calls[0].function.arguments
 }
@@ -99,16 +101,19 @@ describe('safeStringifyToolArguments（通过 messagesToOpenAI 间接测）', ()
   })
 
   test('循环引用对象 → JSON.stringify 抛错 → 回退 "{}"', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const obj: any = { a: 1 }
     obj.self = obj
     expect(safeStringifyToolArguments(obj)).toBe('{}')
   })
 
   test('循环引用作为数组元素 → 包装抛错 → 回退 "{}"', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const obj: any = {}
     obj.self = obj
     // 数组输入走 typeof input === 'object' 但 Array.isArray 为 true → 非对象分支
     // 所以改为测试原始值中 JSON.stringify 抛错的情况
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect(safeStringifyToolArguments(BigInt(1) as any)).toBe('{}')
   })
 })

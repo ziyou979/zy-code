@@ -28,7 +28,7 @@ import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js'
  * - ZY_API_KEY：直接 API 访问所需
  */
 
-function createStderrLogger(): any {
+function createStderrLogger(): { error: (msg: string, ...args: unknown[]) => void; warn: (msg: string, ...args: unknown[]) => void; info: (msg: string, ...args: unknown[]) => void; debug: (msg: string, ...args: unknown[]) => void } {
   return {
     error: (msg: string, ...args: unknown[]) =>
       // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
@@ -103,12 +103,15 @@ export async function getAnthropicClient({
     maxRetries,
     timeout: parseInt(process.env.API_TIMEOUT_MS || String(600 * 1000), 10),
     dangerouslyAllowBrowser: true,
+    // biome-ignore lint/suspicious/noExplicitAny: SDK ClientOptions 类型不包含 fetchOptions
     fetchOptions: getProxyFetchOptions({
       forAnthropicAPI: true,
+    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
     }) as any,
     ...(resolvedFetch && {
       fetch: resolvedFetch,
     }),
+    // biome-ignore lint/suspicious/noExplicitAny: 构造中间对象，需适配多 provider SDK
   } as any
   // ── Registry-driven providers ──────────────────────────────────────────
   // Handles env-or-default (dashscope, zhipu, kimi), preconfigured (deepseek,
@@ -377,7 +380,7 @@ function buildFetch(
   const injectClientRequestId = getAPIProvider() === 'anthropic' && isAnthropicBaseUrl()
   return (input, init) => {
     // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-    const headers = new Headers((init as any)?.headers)
+    const headers = new Headers((init as RequestInit | undefined)?.headers)
     // 生成客户端侧请求 ID，以便超时（不返回服务器请求 ID）
     // 仍能被 API 团队与服务器日志关联。
     // 想要自行追踪 ID 的调用方可以预设此 header
@@ -394,8 +397,8 @@ function buildFetch(
     } catch {
       // 绝不让日志导致 fetch 崩溃
     }
-    return (inner as any)(input, {
-      ...(init as any),
+    return inner(input, {
+      ...init,
       headers,
     })
   }

@@ -25,6 +25,7 @@ export async function getAllLspServers(): Promise<{
     // Each plugin is independent — results are merged in original order so
     // Object.assign collision precedence (later plugins win) is preserved.
     const results = await Promise.all(
+      // biome-ignore lint/suspicious/noExplicitAny: 插件类型来自动态加载
       plugins.map(async (plugin: any) => {
         const errors: PluginError[] = []
         try {

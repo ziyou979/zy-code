@@ -17,6 +17,7 @@ function getChromeFlag(): boolean | undefined {
   return undefined
 }
 export function useChromeExtensionNotification() {
+  // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
   useStartupNotification(_temp as any)
 }
 async function _temp() {

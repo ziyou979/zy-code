@@ -35,7 +35,7 @@ export function cleanupStream(stream: AsyncIterable<StreamEvent> | undefined): v
  */
 export function updateUsage(
   usage: Readonly<NonNullableUsage>,
-  partUsage: any | undefined,
+  partUsage: Partial<NonNullableUsage> | undefined,
 ): NonNullableUsage {
   if (!partUsage) {
     return { ...usage }

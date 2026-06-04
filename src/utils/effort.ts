@@ -257,7 +257,7 @@ export function getInitialEffortSetting(): EffortLevel | undefined {
     return undefined
   }
   // 支持读取旧值
-  return migrateLegacyEffort(raw) ?? toPersistableEffort(raw as any)
+  return migrateLegacyEffort(raw) ?? toPersistableEffort(raw as EffortValue)
 }
 
 export function resolvePickerEffortPersistence(

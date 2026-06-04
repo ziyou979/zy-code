@@ -337,6 +337,7 @@ export function hasMcpDiscoveryButNoToken(
     return false
   }
   const serverKey = getServerKey(serverName, serverConfig)
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const entry = (getSecureStorage() as any).read()?.mcpOAuth?.[serverKey]
   return entry !== undefined && !entry.accessToken && !entry.refreshToken
 }
@@ -438,6 +439,7 @@ export async function revokeServerTokens(
   serverConfig: McpSSEServerConfig | McpHTTPServerConfig,
   { preserveStepUpState = false }: { preserveStepUpState?: boolean } = {},
 ): Promise<void> {
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const storage = getSecureStorage() as any
   const existingData = storage.read()
   if (!existingData?.mcpOAuth) {
@@ -572,6 +574,7 @@ export function clearServerTokensFromLocalStorage(
   serverName: string,
   serverConfig: McpSSEServerConfig | McpHTTPServerConfig,
 ): void {
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const storage = getSecureStorage() as any
   const existingData = storage.read()
   if (!existingData?.mcpOAuth) {
@@ -640,6 +643,7 @@ async function performMCPXaaAuth(
     // 用于调试 serverKey 不匹配的诊断上下文。仅在
     // 错误路径上计算，因此成功时无性能开销。
     const wantedKey = getServerKey(serverName, serverConfig)
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     const haveKeys = Object.keys((getSecureStorage() as any).read()?.mcpOAuthClientConfig ?? {})
     const headersForLogging = Object.fromEntries(
       Object.entries(serverConfig.headers ?? {}).map(([k, v]) =>
@@ -739,6 +743,7 @@ async function performMCPXaaAuth(
     // 通过与普通 OAuth 相同的存储路径保存 token。我们直接写入
     //（而非 ZyAuthProvider.saveTokens）以避免仅为写入相同键而
     // 实例化整个提供者。
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     const storage = getSecureStorage() as any
     const existingData = storage.read() || {}
     const serverKey = getServerKey(serverName, serverConfig)
@@ -845,6 +850,7 @@ export async function performMCPOAuthFlow(
   // 清除 token 前先检查缓存的 step-up scope 和资源元数据 URL。
   // 传输附加的认证提供者在收到 step-up 401 时持久化 scope，
   // 因此我们可以在此使用它而无需发出额外的探测请求。
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const storage = getSecureStorage() as any
   const serverKey = getServerKey(serverName, serverConfig)
   const cachedEntry = storage.read()?.mcpOAuth?.[serverKey]
@@ -1221,6 +1227,7 @@ export async function performMCPOAuthFlow(
       }
       // If client not found, clear the stored client ID and suggest retry
       if (error.errorCode === 'invalid_client' && error.message.includes('Client not found')) {
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         const storage = getSecureStorage() as any
         const existingData = storage.read() || {}
         const serverKey = getServerKey(serverName, serverConfig)
@@ -1384,6 +1391,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
   }
 
   async clientInformation(): Promise<OAuthClientInformation | undefined> {
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     const storage = getSecureStorage() as any
     const data = storage.read()
     const serverKey = getServerKey(this.serverName, this.serverConfig)
@@ -1415,6 +1423,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
   }
 
   async saveClientInformation(clientInformation: OAuthClientInformationFull): Promise<void> {
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     const storage = getSecureStorage() as any
     const existingData = storage.read() || {}
     const serverKey = getServerKey(this.serverName, this.serverConfig)
@@ -1447,6 +1456,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
     // _commonHeaders on every request, and forcing a cache miss would trigger
     // a blocking spawnSync(`security find-generic-password`) 30-40x/sec.
     // See CPU profile: spawnSync was 7.2% of total CPU after PR #19436.
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     const storage = getSecureStorage() as any
     const data = await storage.readAsync()
     const serverKey = getServerKey(this.serverName, this.serverConfig)
@@ -1590,6 +1600,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
 
   async saveTokens(tokens: OAuthTokens): Promise<void> {
     this._pendingStepUpScope = undefined
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     const storage = getSecureStorage() as any
     const existingData = storage.read() || {}
     const serverKey = getServerKey(this.serverName, this.serverConfig)
@@ -1692,6 +1703,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
       // 只展开现有数据；如果之前没有 performMCPXaaAuth 运行，
       // revokeServerTokens 稍后会读到 tokenData.clientId 为 undefined
       // 并发送缺少 client_id 的 RFC 7009 请求，严格 AS 会拒绝。
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
       const storage = getSecureStorage() as any
       const existingData = storage.read() || {}
       const serverKey = getServerKey(this.serverName, this.serverConfig)
@@ -1765,6 +1777,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
     // 用 !handleRedirection 守卫以避免在普通认证流程中持久化
     //（scope 可能来自元数据 scopes_supported 而非 401）。
     if (this._scopes && !this.handleRedirection) {
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
       const storage = getSecureStorage() as any
       const existingData = storage.read() || {}
       const serverKey = getServerKey(this.serverName, this.serverConfig)
@@ -1829,6 +1842,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
   async invalidateCredentials(
     scope: 'all' | 'client' | 'tokens' | 'verifier' | 'discovery',
   ): Promise<void> {
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     const storage = getSecureStorage() as any
     const existingData = storage.read()
     if (!existingData?.mcpOAuth) {
@@ -1868,6 +1882,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
   }
 
   async saveDiscoveryState(state: OAuthDiscoveryState): Promise<void> {
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     const storage = getSecureStorage() as any
     const existingData = storage.read() || {}
     const serverKey = getServerKey(this.serverName, this.serverConfig)
@@ -1908,6 +1923,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
   }
 
   async discoveryState(): Promise<OAuthDiscoveryState | undefined> {
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     const storage = getSecureStorage() as any
     const data = storage.read()
     const serverKey = getServerKey(this.serverName, this.serverConfig)
@@ -2002,6 +2018,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
     try {
       // 获取锁后重新读取 token — 另一个进程可能已刷新
       clearKeychainCache()
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
       const storage = getSecureStorage() as any
       const data = storage.read()
       const tokenData = data?.mcpOAuth?.[serverKey]
@@ -2141,6 +2158,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
         if (error instanceof InvalidGrantError) {
           logMCPDebug(this.serverName, `Token refresh failed with invalid_grant: ${error.message}`)
           clearKeychainCache()
+          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
           const storage = getSecureStorage() as any
           const data = storage.read()
           const serverKey = getServerKey(this.serverName, this.serverConfig)
@@ -2240,6 +2258,7 @@ export function saveMcpClientSecret(
   serverConfig: McpSSEServerConfig | McpHTTPServerConfig,
   clientSecret: string,
 ): void {
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const storage = getSecureStorage() as any
   const existingData = storage.read() || {}
   const serverKey = getServerKey(serverName, serverConfig)
@@ -2256,6 +2275,7 @@ export function clearMcpClientConfig(
   serverName: string,
   serverConfig: McpSSEServerConfig | McpHTTPServerConfig,
 ): void {
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const storage = getSecureStorage() as any
   const existingData = storage.read()
   if (!existingData?.mcpOAuthClientConfig) {
@@ -2272,6 +2292,7 @@ export function getMcpClientConfig(
   serverName: string,
   serverConfig: McpSSEServerConfig | McpHTTPServerConfig,
 ): { clientSecret?: string } | undefined {
+  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   const storage = getSecureStorage() as any
   const data = storage.read()
   const serverKey = getServerKey(serverName, serverConfig)

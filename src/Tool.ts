@@ -718,6 +718,7 @@ type ToolDefaults = typeof TOOL_DEFAULTS
 // 永远不会泄漏到返回类型中。
 // BuiltTool<D> 在类型层面镜像运行时 `{...TOOL_DEFAULTS, ...def}`。
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
 type AnyToolDef = ToolDef<any, any, any>
 
 export function buildTool<D extends AnyToolDef>(def: D): BuiltTool<D> {

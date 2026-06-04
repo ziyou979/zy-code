@@ -42,6 +42,7 @@ export async function generateSessionName(
       },
       signal,
       options: {
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         querySource: 'rename_generate_name' as any,
         agents: [],
         isNonInteractiveSession: false,

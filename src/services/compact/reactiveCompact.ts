@@ -177,7 +177,7 @@ export async function reactiveCompactOnPromptTooLong(
           forkContextMessages: messagesToSummarize,
         },
         canUseTool: createCompactCanUseTool(),
-        querySource: 'compact' as any,
+        querySource: 'compact',
         forkLabel: 'reactive_compact',
         maxTurns: 1,
         skipCacheWrite: true,
@@ -265,6 +265,7 @@ export async function reactiveCompactOnPromptTooLong(
       }
       logError(error as Error)
       logEvent('zy_reactive_compact_error', {
+        // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
         error: String(error) as any,
         iteration,
       })
@@ -313,6 +314,7 @@ export async function tryReactiveCompact(params: {
     })
 
     if (!outcome.ok) {
+      // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
       logForDebugging(`reactiveCompact: tryReactiveCompact failed: ${(outcome as any).reason}`)
       return null
     }
@@ -322,7 +324,7 @@ export async function tryReactiveCompact(params: {
     suppressCompactWarning()
 
     if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
-      notifyCompaction((params.querySource ?? 'compact') as any)
+      notifyCompaction(params.querySource ?? 'compact')
     }
     markPostCompaction()
 
@@ -398,6 +400,7 @@ async function buildReactiveCompactionResult({
   const messagesToKeep = groupsRemaining < groups.length ? preservedGroups.flat() : undefined
 
   // Boundary marker
+  // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
   const lastMessageUuid = (messages.at(-1)?.uuid as any) ?? undefined
   const boundaryMarker = createCompactBoundaryMessage(
     trigger === 'manual' ? 'manual' : 'auto',
@@ -430,6 +433,7 @@ async function buildReactiveCompactionResult({
     context.options.tools,
     context.options.mainLoopModel,
     preservedMessages,
+    // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
     { callSite: 'reactive_compact' as any },
   )) {
     attachments.push(createAttachmentMessage(att))
@@ -459,6 +463,7 @@ async function buildReactiveCompactionResult({
     // Hook failures should not block compaction
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
   const compactionUsage = getTokenUsage(assistantMsg as any)
   const postCompactTokenCount = tokenCountFromLastAPIResponse([assistantMsg])
 

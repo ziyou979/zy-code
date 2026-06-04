@@ -6,7 +6,7 @@ import type {
   SearchResult as ServiceSearchResult,
 } from '../../services/search/index.js'
 import { createFallbackSearchProvider } from '../../services/search/index.js'
-import { buildTool, type ToolDef } from '../../Tool.js'
+import { buildTool, type ToolCallProgress, type ToolDef } from '../../Tool.js'
 import type { ContentBlock } from '../../types/llm.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -269,7 +269,7 @@ async function searchViaLocalProvider(
   allowed_domains?: string[],
   blocked_domains?: string[],
   maxResults = DEFAULT_MAX_RESULTS,
-  onProgress?: any,
+  onProgress?: ToolCallProgress<WebSearchProgress>,
 ): Promise<ServiceSearchResult[]> {
   logForDebugging('[WebSearch:Local] Using DuckDuckGo fallback')
 
@@ -312,8 +312,8 @@ function _parseResultsFromText(
 
   // 拼接所有文本块
   const text = contentBlocks
-    .filter((b) => b.type === 'text')
-    .map((b) => (b as any).text ?? '')
+    .filter((b): b is ContentBlock & { type: 'text'; text: string } => b.type === 'text')
+    .map((b) => b.text ?? '')
     .join('\n')
 
   if (!text) {

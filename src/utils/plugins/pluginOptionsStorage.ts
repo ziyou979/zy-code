@@ -57,6 +57,7 @@ export const loadPluginOptions = memoize((pluginId: string): PluginOptionValues 
   // and the next hook/MCP-load after that eats a fresh spawn.
   const storage = getSecureStorage()
   const sensitive =
+    // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
     (storage as any).read()?.pluginSecrets?.[pluginId] ?? ({} as Record<string, string>)
 
   // secureStorage wins on collision — schema determines destination so
@@ -101,6 +102,7 @@ export function savePluginOptions(
   // secureStorage FIRST — if keychain fails, throw before touching
   // settings.json so old plaintext (if any) stays as fallback.
   const storage = getSecureStorage()
+  // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
   const existingInSecureStorage = (storage as any).read()?.pluginSecrets?.[pluginId] ?? undefined
   const secureScrubbed = existingInSecureStorage
     ? Object.fromEntries(
@@ -112,6 +114,7 @@ export function savePluginOptions(
     existingInSecureStorage &&
     Object.keys(secureScrubbed).length !== Object.keys(existingInSecureStorage).length
   if (Object.keys(sensitive).length > 0 || needSecureScrub) {
+    // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
     const existing = (storage as any).read() ?? {}
     if (!existing.pluginSecrets) {
       existing.pluginSecrets = {}
@@ -120,6 +123,7 @@ export function savePluginOptions(
       ...secureScrubbed,
       ...sensitive,
     }
+    // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
     const result = (storage as any).update(existing)
     if (!result.success) {
       const err = new Error(
@@ -224,6 +228,7 @@ export function deletePluginOptions(pluginId: string): void {
   // plugin IDs are `name@marketplace`, never contain `/`, so
   // startsWith(`${id}/`) can't false-positive on a different plugin.
   const storage = getSecureStorage()
+  // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
   const existing = (storage as any).read()
   if (existing?.pluginSecrets) {
     const prefix = `${pluginId}/`
@@ -231,6 +236,7 @@ export function deletePluginOptions(pluginId: string): void {
       ([k]) => k !== pluginId && !k.startsWith(prefix),
     )
     if (survivingEntries.length !== Object.keys(existing.pluginSecrets).length) {
+      // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
       const result = (storage as any).update({
         ...existing,
         pluginSecrets:

@@ -120,6 +120,7 @@ export function TreeSelect({
   getParentPrefix,
   getChildPrefix,
   onUpFromFirstItem,
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 }: TreeSelectProps<any>) {
   const [internalExpandedIds, setInternalExpandedIds] = React.useState(new Set<string>())
   const isProgrammaticFocusRef = React.useRef(false)
@@ -130,7 +131,9 @@ export function TreeSelect({
     }
     return internalExpandedIds.has(nodeId)
   }
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const result: any[] = []
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   function traverse(node: any, depth: number, parentId: string | null) {
     const hasChildren = !!node.children && node.children.length > 0
     const nodeIsExpanded = isExpanded(node.id)
@@ -155,6 +158,7 @@ export function TreeSelect({
   const defaultGetChildPrefix = (_depth: number) => '  \u25B8 '
   const parentPrefixFn = getParentPrefix ?? defaultGetParentPrefix
   const childPrefixFn = getChildPrefix ?? defaultGetChildPrefix
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const buildLabel = (flatNode: any) => {
     let prefix = ''
     if (flatNode.hasChildren) {
@@ -176,6 +180,7 @@ export function TreeSelect({
   flattenedNodes.forEach((fn) => map.set(fn.node.id, fn.node))
   const nodeMap = map
   const findFlattenedNode = (nodeId_0: string) =>
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     flattenedNodes.find((fn_0: any) => fn_0.node.id === nodeId_0)
   const toggleExpand = (nodeId_1: string, shouldExpand: boolean) => {
     const flatNode_1 = findFlattenedNode(nodeId_1)
@@ -200,6 +205,7 @@ export function TreeSelect({
       }
     }
   }
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const handleKeyDown = (e: any) => {
     if (!focusNodeId || isDisabled) {
       return

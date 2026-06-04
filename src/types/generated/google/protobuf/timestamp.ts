@@ -118,6 +118,7 @@ function createBaseTimestamp(): Timestamp {
 }
 
 export const Timestamp = {
+  // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
   fromJSON(object: any): Timestamp {
     return {
       seconds: isSet(object.seconds) ? globalThis.Number(object.seconds) : 0,
@@ -126,6 +127,7 @@ export const Timestamp = {
   },
 
   toJSON(message: Timestamp): unknown {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     const obj: any = {}
     if (message.seconds !== undefined) {
       obj.seconds = Math.round(message.seconds)
@@ -137,6 +139,7 @@ export const Timestamp = {
   },
 
   create<I extends Exact<DeepPartial<Timestamp>, I>>(base?: I): Timestamp {
+    // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
     return Timestamp.fromPartial(base ?? ({} as any))
   },
   fromPartial<I extends Exact<DeepPartial<Timestamp>, I>>(object: I): Timestamp {
@@ -166,11 +169,13 @@ type Exact<P, I extends P> = P extends Builtin
       [K in Exclude<keyof I, KeysOfUnion<P>>]: never
     }
 
+// biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
 function isSet(value: any): boolean {
   return value !== null && value !== undefined
 }
 
 interface MessageFns<T> {
+  // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
   fromJSON(object: any): T
   toJSON(message: T): unknown
   create<I extends Exact<DeepPartial<T>, I>>(base?: I): T

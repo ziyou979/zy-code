@@ -57,7 +57,7 @@ export async function validateModel(model: string): Promise<{ valid: boolean; er
       model: normalizedModel,
       max_tokens: 1,
       maxRetries: 0,
-      querySource: 'model_validation' as any,
+      querySource: 'model_validation',
       messages: [
         {
           role: 'user',
@@ -105,6 +105,7 @@ function handleValidationError(
     }
 
     // Check error body for model-specific errors
+    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
     const errorBody = (error as any).error as unknown
     if (
       errorBody &&
@@ -140,12 +141,15 @@ function get3PFallbackSuggestion(model: string): string | undefined {
   }
   const lowerModel = model.toLowerCase()
   if (lowerModel.includes('opus-4-6') || lowerModel.includes('opus_4_6')) {
+    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
     return (getModelStrings() as any).opus41
   }
   if (lowerModel.includes('sonnet-4-6') || lowerModel.includes('sonnet_4_6')) {
+    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
     return (getModelStrings() as any).sonnet45
   }
   if (lowerModel.includes('sonnet-4-5') || lowerModel.includes('sonnet_4_5')) {
+    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
     return (getModelStrings() as any).sonnet40
   }
   return undefined

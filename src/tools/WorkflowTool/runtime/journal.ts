@@ -21,7 +21,7 @@ interface JournalResultEntry {
   type: 'result'
   key: string
   agentId: string
-  result: any
+  result: unknown
 }
 
 type JournalEntry = JournalStartedEntry | JournalResultEntry
@@ -29,7 +29,7 @@ type JournalEntry = JournalStartedEntry | JournalResultEntry
 // --- Journal 索引 ---
 
 export interface JournalIndex {
-  results: Map<string, { agentId: string; result: any }>
+  results: Map<string, { agentId: string; result: unknown }>
   started: Map<string, JournalStartedEntry[]>
 }
 
@@ -39,12 +39,12 @@ export interface JournalIndex {
  * 从 opts 中提取影响缓存的白名单字段，稳定序列化。
  * 与逆向结果一致：仅 schema/model/isolation/agentType 参与键计算。
  */
-function serializeOpts(opts: Record<string, any> | undefined): string {
+function serializeOpts(opts: Record<string, unknown> | undefined): string {
   if (!opts) {
     return '{}'
   }
   const whitelist = ['schema', 'model', 'isolation', 'agentType']
-  const filtered: Record<string, any> = {}
+  const filtered: Record<string, unknown> = {}
   for (const key of whitelist) {
     const val = opts[key]
     if (val === undefined || typeof val === 'function') {
@@ -55,14 +55,14 @@ function serializeOpts(opts: Record<string, any> | undefined): string {
   return JSON.stringify(sortKeys(filtered))
 }
 
-function sortKeys(obj: any): any {
+function sortKeys(obj: unknown): unknown {
   if (Array.isArray(obj)) {
     return obj.map(sortKeys)
   }
   if (obj && typeof obj === 'object') {
-    const sorted: Record<string, any> = {}
+    const sorted: Record<string, unknown> = {}
     for (const k of Object.keys(obj).sort()) {
-      sorted[k] = sortKeys(obj[k])
+      sorted[k] = sortKeys((obj as Record<string, unknown>)[k])
     }
     return sorted
   }
@@ -75,7 +75,7 @@ function sortKeys(obj: any): any {
  */
 export function computeAgentKey(
   prompt: string,
-  opts: Record<string, any> | undefined,
+  opts: Record<string, unknown> | undefined,
   prevKey: string,
 ): string {
   const hash = createHash('sha256')
@@ -109,14 +109,14 @@ export class WorkflowJournal {
     let content: string
     try {
       content = await readFile(this.filePath, 'utf-8')
-    } catch (err: any) {
-      if (err.code === 'ENOENT') {
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'code' in err && err.code === 'ENOENT') {
         return { results: new Map(), started: new Map() }
       }
       throw err
     }
 
-    const results = new Map<string, { agentId: string; result: any }>()
+    const results = new Map<string, { agentId: string; result: unknown }>()
     const started = new Map<string, JournalStartedEntry[]>()
 
     for (const line of content.split('\n')) {
@@ -149,7 +149,7 @@ export class WorkflowJournal {
     await appendFile(this.filePath, `${JSON.stringify(entry)}\n`, 'utf-8').catch(() => {})
   }
 
-  async appendResult(key: string, agentId: string, result: any): Promise<void> {
+  async appendResult(key: string, agentId: string, result: unknown): Promise<void> {
     await this.ensureDir()
     const entry: JournalResultEntry = { type: 'result', key, agentId, result }
     await appendFile(this.filePath, `${JSON.stringify(entry)}\n`, 'utf-8').catch(() => {})

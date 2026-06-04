@@ -297,9 +297,12 @@ function recoverPlanFromMessages(log: LogOption): string | null {
     if (msg.type === 'user') {
       const userMsg = msg as UserMessage
       if (
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         typeof (userMsg as any).planContent === 'string' &&
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         (userMsg as any).planContent.length > 0
       ) {
+        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         return (userMsg as any).planContent
       }
     }
@@ -330,9 +333,11 @@ function findFileSnapshotEntry(
     if (
       msg?.type === 'system' &&
       'subtype' in msg &&
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       (msg as any).subtype === ('file_snapshot' as any) &&
       'snapshotFiles' in msg
     ) {
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       const files = (msg as any).snapshotFiles as Array<{
         key: string
         path: string
@@ -379,9 +384,11 @@ export async function persistFileSnapshotIfRemote(): Promise<void> {
       timestamp: new Date().toISOString(),
       uuid: randomUUID(),
       snapshotFiles,
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     } as any
 
     const { recordTranscript } = await import('./sessionStorage.js')
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     await recordTranscript([message] as any)
   } catch (error) {
     logError(error)

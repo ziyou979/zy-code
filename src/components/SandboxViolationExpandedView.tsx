@@ -17,6 +17,7 @@ function formatTime(date: Date): string {
 
 import { getPlatform } from 'src/utils/platform.js'
 export function SandboxViolationExpandedView() {
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const [violations, setViolations] = useState<any[]>([])
   const [totalCount, setTotalCount] = useState(0)
   useEffect(() => {

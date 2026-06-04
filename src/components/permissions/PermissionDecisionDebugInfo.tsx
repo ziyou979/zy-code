@@ -82,6 +82,7 @@ function PermissionDecisionInfoItem({ title, decisionReason }: PermissionDecisio
                       </Text>
                     )}
                   {result.behavior === 'ask' && (
+                    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
                     <SuggestedRules suggestions={(result as any).suggestions} />
                   )}
                 </Box>
@@ -107,6 +108,7 @@ function PermissionDecisionInfoItem({ title, decisionReason }: PermissionDecisio
     </Box>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
 function SuggestedRules({ suggestions }: any) {
   let AnsiComponent
   let TextComponent
@@ -145,6 +147,7 @@ function SuggestedRules({ suggestions }: any) {
 type Props = {
   permissionResult: PermissionDecision
   toolName?: string // Filter unreachable rules to this tool
+  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
   suggestions?: any
   width?: number
 }
@@ -263,6 +266,7 @@ export function PermissionDecisionDebugInfo({
   permissionResult,
   toolName,
 }: {
+  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
   permissionResult: any
   toolName: string
 }) {
@@ -300,15 +304,15 @@ export function PermissionDecisionDebugInfo({
               <Text dimColor={true}>{tSync('permissionDebug.behavior')} </Text>
             </Box>
           }
-          <Text>{(permissionResult as any).behavior}</Text>
+          <Text>{permissionResult.behavior}</Text>
         </Box>
       }
-      {(permissionResult as any).behavior !== 'allow' && (
+      {permissionResult.behavior !== 'allow' && (
         <Box flexDirection="row">
           <Box justifyContent="flex-end" minWidth={10}>
             <Text dimColor={true}>{tSync('permissionDebug.message')} </Text>
           </Box>
-          <Text>{(permissionResult as any).message}</Text>
+          <Text>{permissionResult.message}</Text>
         </Box>
       )}
       {
@@ -327,8 +331,10 @@ export function PermissionDecisionDebugInfo({
       }
       {
         <SuggestionDisplay
+          // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
           suggestions={suggestions as any}
           width={10}
+          // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
           permissionResult={permissionResult as any}
         />
       }

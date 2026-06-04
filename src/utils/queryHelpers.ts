@@ -2,6 +2,7 @@ import last from 'lodash-es/last.js'
 import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
 import type { ProcessUserInputContext } from 'src/services/processUserInput/processUserInput.js'
 import type { WireMessage } from 'src/types/index.js'
+import type { WireAssistantMessageError } from '../types/wire/messages.js'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import { runTools } from '../services/tools/toolOrchestration.js'
 import { findToolByName, type Tool, type Tools } from '../Tool.js'
@@ -105,7 +106,7 @@ export function* normalizeMessage(message: Message): Generator<WireMessage> {
           parent_tool_use_id: null,
           session_id: getSessionId(),
           uuid: _.uuid,
-          error: _.error as any,
+          error: _.error as WireAssistantMessageError,
         }
       }
       return
@@ -124,7 +125,7 @@ export function* normalizeMessage(message: Message): Generator<WireMessage> {
                 parent_tool_use_id: message.parentToolUseID,
                 session_id: getSessionId(),
                 uuid: _.uuid,
-                error: _.error as any,
+                error: _.error as WireAssistantMessageError,
               }
               break
             case 'user':

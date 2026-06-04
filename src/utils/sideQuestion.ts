@@ -89,7 +89,7 @@ ${question}`
       message: 'Side questions cannot use tools',
       decisionReason: { type: 'other' as const, reason: 'side_question' },
     }),
-    querySource: 'side_question' as any,
+    querySource: 'side_question',
     forkLabel: 'side_question',
     maxTurns: 1, // 仅单轮 - 不进入工具调用循环
     // 没有后续请求会共享此后缀；跳过缓存写入。

@@ -67,7 +67,9 @@ interface PlatformConfig {
 function getPlatforms(): PlatformConfig[] {
   return PROVIDER_REGISTRY.filter((entry) => entry.showInOnboarding !== false).map((entry) => {
     // Resolve i18n labels — convention: onboarding.platform.{id} / {id}Desc
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const i18nLabel = tSync(`onboarding.platform.${entry.id}` as any)
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const i18nDesc = tSync(`onboarding.platform.${entry.id}Desc` as any)
     // For 'local' provider, apiKeyLabel is also i18n
     const apiKeyLabel =
@@ -80,6 +82,7 @@ function getPlatforms(): PlatformConfig[] {
       label: model.label,
       value: model.value,
       description: model.tags?.length
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         ? model.tags.map((tag) => tSync(`model.tag.${tag}` as any)).join(' · ')
         : '',
     }))
@@ -137,6 +140,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   }
 
   function handleThemeSelection(newTheme: string) {
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     setTheme(newTheme as any)
     goToNextStep()
   }

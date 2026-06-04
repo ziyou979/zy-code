@@ -97,10 +97,12 @@ describe('normalizeMessages', () => {
     test('string content → TextBlock 转换', async () => {
       const { normalizeMessages } = await import('../../../src/utils/messages/normalize.js')
       const msgs = [makeUserMsg('Hello world')]
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result: any[] = normalizeMessages(msgs as any)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('user')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const content = (result[0] as any).message.content
       expect(content).toEqual([{ type: 'text', text: 'Hello world' }])
     })
@@ -109,9 +111,11 @@ describe('normalizeMessages', () => {
       const { normalizeMessages } = await import('../../../src/utils/messages/normalize.js')
       const blocks = [{ type: 'text', text: 'single block' }]
       const msgs = [makeUserMsg(blocks)]
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = normalizeMessages(msgs as any)
 
       expect(result).toHaveLength(1)
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect((result[0] as any).message.content).toEqual(blocks)
       // UUID 不变（单 block 不触发 isNewChain）
       expect(result[0].uuid).toBe('user-uuid-0001')
@@ -125,15 +129,20 @@ describe('normalizeMessages', () => {
         { type: 'text', text: 'block 3' },
       ]
       const msgs = [makeUserMsg(blocks)]
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = normalizeMessages(msgs as any)
 
       expect(result).toHaveLength(3)
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       result.forEach((msg: any) => {
         expect(msg.type).toBe('user')
         expect(msg.message.content).toHaveLength(1)
       })
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect((result[0] as any).message.content[0].text).toBe('block 1')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect((result[1] as any).message.content[0].text).toBe('block 2')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect((result[2] as any).message.content[0].text).toBe('block 3')
     })
 
@@ -146,6 +155,7 @@ describe('normalizeMessages', () => {
       const singleBlock = makeUserMsg([{ type: 'text', text: 'c' }], {
         uuid: 'user-uuid-0002',
       })
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = normalizeMessages([multiBlock, singleBlock] as any)
 
       expect(result).toHaveLength(3)
@@ -162,12 +172,15 @@ describe('normalizeMessages', () => {
         { type: 'text', text: 'caption' },
       ]
       const msg = makeUserMsg(blocks, { imagePasteIds: [42] })
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = normalizeMessages([msg] as any)
 
       expect(result).toHaveLength(2)
       // image block 应该获得 imagePasteId
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect((result[0] as any).imagePasteIds).toEqual([42])
       // text block 不应该有 imagePasteId
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect((result[1] as any).imagePasteIds).toBeUndefined()
     })
 
@@ -190,6 +203,7 @@ describe('normalizeMessages', () => {
         toolUseID: 'tu-1',
         parentToolUseID: '',
       }
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result: any[] = normalizeMessages([systemMsg, progressMsg] as any)
 
       expect(result).toHaveLength(2)
@@ -206,16 +220,20 @@ describe('normalizeMessages', () => {
         { type: 'tool_call', id: 'tc-1', name: 'Bash', input: {} },
       ]
       const msgs = [makeAssistantMsg(blocks)]
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = normalizeMessages(msgs as any)
 
       expect(result).toHaveLength(2)
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect((result[0] as any).message.content).toEqual([blocks[0]])
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect((result[1] as any).message.content).toEqual([blocks[1]])
     })
 
     test('非数组 content → 空数组', async () => {
       const { normalizeMessages } = await import('../../../src/utils/messages/normalize.js')
       const msgs = [{ ...makeAssistantMsg([]), message: { role: 'assistant', content: 'string' } }]
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = normalizeMessages(msgs as any)
 
       expect(result).toHaveLength(0)
@@ -228,10 +246,13 @@ describe('normalizeMessages', () => {
   describe('mergeUserMessages', () => {
     test('两个 string 消息 — 接缝处加换行', async () => {
       const { mergeUserMessages } = await import('../../../src/utils/messages/normalize.js')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const a = makeUserMsg('first') as any
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const b = makeUserMsg('second') as any
       const result = mergeUserMessages(a, b)
 
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const content = result.message.content as any[]
       expect(Array.isArray(content)).toBe(true)
       // 第一个文本块末尾应有 \n
@@ -241,7 +262,9 @@ describe('normalizeMessages', () => {
 
     test('保留非 meta 消息的 uuid', async () => {
       const { mergeUserMessages } = await import('../../../src/utils/messages/normalize.js')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const a = makeUserMsg('a', { uuid: 'uuid-a' }) as any
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const b = makeUserMsg('b', { uuid: 'uuid-b' }) as any
       const result = mergeUserMessages(a, b)
 
@@ -250,7 +273,9 @@ describe('normalizeMessages', () => {
 
     test('meta 消息使用后续 uuid', async () => {
       const { mergeUserMessages } = await import('../../../src/utils/messages/normalize.js')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const a = makeUserMsg('a', { uuid: 'uuid-a', isMeta: true }) as any
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const b = makeUserMsg('b', { uuid: 'uuid-b' }) as any
       const result = mergeUserMessages(a, b)
 
@@ -264,12 +289,16 @@ describe('normalizeMessages', () => {
   describe('mergeAssistantMessages', () => {
     test('合并两个助手消息的 content', async () => {
       const { mergeAssistantMessages } = await import('../../../src/utils/messages/normalize.js')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const a = makeAssistantMsg([{ type: 'text', text: 'part 1' }]) as any
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const b = makeAssistantMsg([{ type: 'text', text: 'part 2' }]) as any
       const result = mergeAssistantMessages(a, b)
 
       expect(result.message.content).toHaveLength(2)
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect((result.message.content[0] as any).text).toBe('part 1')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect((result.message.content[1] as any).text).toBe('part 2')
     })
   })
@@ -281,17 +310,20 @@ describe('normalizeMessages', () => {
     test('包含 tool_result block 的 user 消息 → true', async () => {
       const { isToolResultMessage } = await import('../../../src/utils/messages/normalize.js')
       const msg = makeUserMsg([{ type: 'tool_result', toolCallId: 'tc-1', content: 'result' }])
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect(isToolResultMessage(msg as any)).toBe(true)
     })
 
     test('string content → false', async () => {
       const { isToolResultMessage } = await import('../../../src/utils/messages/normalize.js')
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect(isToolResultMessage(makeUserMsg('hello') as any)).toBe(false)
     })
 
     test('assistant 消息 → false', async () => {
       const { isToolResultMessage } = await import('../../../src/utils/messages/normalize.js')
       const msg = makeAssistantMsg([{ type: 'text', text: 'hi' }])
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect(isToolResultMessage(msg as any)).toBe(false)
     })
   })
@@ -349,9 +381,11 @@ describe('normalizeMessages', () => {
           { type: 'thinking', thinking: 'should be removed' },
         ]),
       ]
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = filterTrailingThinkingFromLastAssistant(msgs as any)
 
       expect(result).toHaveLength(1)
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const content = (result[0] as any).message.content
       expect(content).toHaveLength(1)
       expect(content[0].type).toBe('text')
@@ -362,8 +396,10 @@ describe('normalizeMessages', () => {
         '../../../src/utils/messages/normalize.js'
       )
       const msgs = [makeUserMsg('hello')]
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = filterTrailingThinkingFromLastAssistant(msgs as any)
 
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect(result).toEqual(msgs as any)
     })
   })
@@ -377,6 +413,7 @@ describe('normalizeMessages', () => {
         '../../../src/utils/messages/normalize.js'
       )
       const msgs = [makeAssistantMsg([{ type: 'text', text: '   \n\n  ' }]), makeUserMsg('next')]
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = filterWhitespaceOnlyAssistantMessages(msgs as any)
 
       expect(result).toHaveLength(1)
@@ -388,6 +425,7 @@ describe('normalizeMessages', () => {
         '../../../src/utils/messages/normalize.js'
       )
       const msgs = [makeAssistantMsg([{ type: 'text', text: 'real content' }])]
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = filterWhitespaceOnlyAssistantMessages(msgs as any)
 
       expect(result).toHaveLength(1)
@@ -403,9 +441,11 @@ describe('normalizeMessages', () => {
         '../../../src/utils/messages/normalize.js'
       )
       const msgs = [makeAssistantMsg([]), makeUserMsg('next')]
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = ensureNonEmptyAssistantContent(msgs as any)
 
       expect(result).toHaveLength(2)
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const content = (result[0] as any).message.content
       expect(content).toHaveLength(1)
       expect(content[0].text).toBe('[no content]')
@@ -416,10 +456,12 @@ describe('normalizeMessages', () => {
         '../../../src/utils/messages/normalize.js'
       )
       const msgs = [makeUserMsg('prev'), makeAssistantMsg([])]
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = ensureNonEmptyAssistantContent(msgs as any)
 
       // 最后一条 assistant 允许空 content
       expect(result).toHaveLength(2)
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect((result[1] as any).message.content).toEqual([])
     })
   })
@@ -435,6 +477,7 @@ describe('normalizeMessages', () => {
         makeUserMsg('second'),
         makeAssistantMsg([{ type: 'text', text: 'reply' }]),
       ]
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = mergeAdjacentUserMessages(msgs as any)
 
       expect(result).toHaveLength(2)
@@ -449,6 +492,7 @@ describe('normalizeMessages', () => {
         makeAssistantMsg([{ type: 'text', text: 'r' }]),
         makeUserMsg('b'),
       ]
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = mergeAdjacentUserMessages(msgs as any)
 
       expect(result).toHaveLength(3)

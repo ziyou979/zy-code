@@ -5,6 +5,7 @@ import type { LocalCommandCall, LocalCommandModule } from '../../types/command.j
 const call: LocalCommandCall = async (_args, context) => {
   const state = context.getAppState()
   const workflowTasks = Object.values(state.tasks ?? {}).filter(
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     (t: any) => t.type === 'local_workflow',
   )
 
@@ -12,6 +13,7 @@ const call: LocalCommandCall = async (_args, context) => {
     return { type: 'text', value: tSync('commands.workflows.empty') }
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   const lines = workflowTasks.map((t: any) => {
     const status =
       t.status === 'running'

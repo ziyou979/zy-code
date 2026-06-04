@@ -53,6 +53,7 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
       <Box
         flexDirection="row"
         marginTop={addMargin ? 1 : 0}
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         backgroundColor={bg as any}
         width="100%"
       >
@@ -70,11 +71,13 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
       <Box
         flexDirection="row"
         marginTop={addMargin ? 1 : 0}
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         backgroundColor={bg as any}
         width="100%"
       >
         {
           <Box minWidth={2}>
+            {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
             <Text color={'error' as any}>{BLACK_CIRCLE}</Text>
           </Box>
         }
@@ -91,6 +94,7 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
   }
   if ('subtype' in message && message.subtype === 'scheduled_task_fire') {
     return (
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       <Box marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
         {
           <Text dimColor={true}>
@@ -103,6 +107,7 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
   if ('subtype' in message && message.subtype === 'permission_retry') {
     const joinedCommands = message.commands.join(', ')
     return (
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       <Box marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
         {<Text dimColor={true}>{TEARDROP_ASTERISK} </Text>}
         {<Text>Allowed </Text>}
@@ -137,6 +142,7 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
         content={content}
         addMargin={addMargin}
         dot={'level' in message && message.level !== 'info'}
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         color={'level' in message && message.level === 'warning' ? ('warning' as any) : undefined}
         dimColor={'level' in message && message.level === 'info'}
       />
@@ -223,6 +229,7 @@ function StopHookSummaryMessage({
       </Text>
     ))
   return (
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
       {
         <Box minWidth={2}>
@@ -260,14 +267,17 @@ function StopHookSummaryMessage({
     </Box>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function SystemTextMessageInner({ content, addMargin, dot, color, dimColor }: any) {
   const { columns } = useTerminalSize()
   const bg = useSelectedMessageBg()
   const trimmedContent = content.trim()
   return (
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
       {dot && (
         <Box minWidth={2}>
+          {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
           <Text color={color as any} dimColor={dimColor}>
             {BLACK_CIRCLE}
           </Text>
@@ -276,6 +286,7 @@ function SystemTextMessageInner({ content, addMargin, dot, color, dimColor }: an
       {
         <Box flexDirection="column" width={columns - 10}>
           {
+            // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
             <Text color={color as any} dimColor={dimColor} wrap="wrap">
               {trimmedContent}
             </Text>
@@ -285,6 +296,7 @@ function SystemTextMessageInner({ content, addMargin, dot, color, dimColor }: an
     </Box>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function TurnDurationMessage({ message, addMargin }: { message: any; addMargin: boolean }) {
   const bg = useSelectedMessageBg()
   const [verb] = useState(() => tSync('common.turnCompletionVerb'))
@@ -314,6 +326,7 @@ function TurnDurationMessage({ message, addMargin }: { message: any; addMargin: 
       count: backgroundTaskSummary,
     })
   return (
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
       {
         <Box minWidth={2}>
@@ -349,6 +362,7 @@ function MemorySavedMessage({
   const memorySummaryText = parts.join(' · ')
   const fileRowElements = writtenPaths.map((p) => <MemoryFileRow key={p} path={p} />)
   return (
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     <Box flexDirection="column" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any}>
       {
         <Box flexDirection="row">
@@ -385,9 +399,11 @@ function MemoryFileRow({ path }: { path: string }) {
     </MessageResponse>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function _ThinkingMessage({ message, addMargin }: { message: any; addMargin: boolean }) {
   const bg = useSelectedMessageBg()
   return (
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
       {
         <Box minWidth={2}>
@@ -398,15 +414,18 @@ function _ThinkingMessage({ message, addMargin }: { message: any; addMargin: boo
     </Box>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function WireStatusMessage({ message, addMargin }: { message: any; addMargin: boolean }) {
   const bg = useSelectedMessageBg()
   return (
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width={999}>
       {<Box minWidth={2} />}
       {
         <Box flexDirection="column">
           {
             <Text>
+              {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
               <ThemedText color={'suggestion' as any}>/remote-control</ThemedText> is active. Code
               in CLI or at
             </Text>

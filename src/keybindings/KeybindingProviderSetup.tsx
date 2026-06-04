@@ -66,7 +66,9 @@ function useKeybindingWarnings(warnings: KeybindingWarning[], _isReload: boolean
       removeNotification('keybinding-config-warning')
       return
     }
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     const errorCount = count(warnings, (w: any) => w.severity === 'error')
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     const warnCount = count(warnings, (w: any) => w.severity === 'warning')
     let message
     if (errorCount > 0 && warnCount > 0) {

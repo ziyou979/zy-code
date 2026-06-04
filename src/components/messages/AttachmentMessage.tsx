@@ -212,6 +212,7 @@ export function AttachmentMessage({
       // 匹配 CollapsedReadSearchContent 的样式：
       // 2 空格缩进、dim 文本、仅计数——文件名/内容在 ctrl+o 中查看。
       return (
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         <Box flexDirection="column" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any}>
           <Box flexDirection="row">
             <Box minWidth={2} />
@@ -397,6 +398,7 @@ export function AttachmentMessage({
       return <TaskStatusMessage attachment={attachment} />
     case 'teammate_shutdown_batch':
       return (
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         <Box flexDirection="row" width="100%" marginTop={1} backgroundColor={bg as any}>
           <Text dimColor>{BLACK_CIRCLE} </Text>
           <Text dimColor>
@@ -414,6 +416,7 @@ export function AttachmentMessage({
       // skill_discovery 和 teammate_mailbox 在 switch 之前的
       // 运行时门控块中处理（feature() / isAgentSwarmsEnabled()），TS 无法
       // 对其进行窄化——在此处通过类型联合排除（仅编译时，无 emit）。
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       ;(attachment as any).type satisfies
         | NullRenderingAttachmentType
         | 'skill_discovery'
@@ -427,6 +430,7 @@ type TaskStatusAttachment = Extract<
     type: 'task_status'
   }
 >
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function TaskStatusMessage({ attachment }: any) {
   if (false && attachment.status === 'killed') {
     return null
@@ -436,6 +440,7 @@ function TaskStatusMessage({ attachment }: any) {
   }
   return <GenericTaskStatus attachment={attachment} />
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function GenericTaskStatus({ attachment }: any) {
   const bg = useSelectedMessageBg()
   const statusText =
@@ -447,6 +452,7 @@ function GenericTaskStatus({ attachment }: any) {
           ? tSync('attachment.stillRunning')
           : attachment.status
   return (
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     <Box flexDirection="row" width="100%" marginTop={1} backgroundColor={bg as any}>
       {<Text dimColor={true}>{BLACK_CIRCLE} </Text>}
       {
@@ -457,6 +463,7 @@ function GenericTaskStatus({ attachment }: any) {
     </Box>
   )
 }
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function TeammateTaskStatus({ attachment }: any) {
   const bg = useSelectedMessageBg()
   const task = useAppState((s) => s.tasks[attachment.taskId])
@@ -466,6 +473,7 @@ function TeammateTaskStatus({ attachment }: any) {
   const agentColor = toInkColor(task.identity.color)
   const statusText = attachment.status === 'completed' ? 'shut down gracefully' : attachment.status
   return (
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     <Box flexDirection="row" width="100%" marginTop={1} backgroundColor={bg as any}>
       {<Text dimColor={true}>{BLACK_CIRCLE} </Text>}
       {
@@ -487,17 +495,22 @@ function TeammateTaskStatus({ attachment }: any) {
 function Line({
   dimColor = true,
   children,
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   color = undefined as any,
 }: {
   dimColor?: boolean
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   children: any
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   color?: any
 }) {
   const bg = useSelectedMessageBg()
   return (
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     <Box backgroundColor={bg as any}>
       {
         <MessageResponse>
+          {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
           <Text color={color as any} dimColor={dimColor} wrap="wrap">
             {children}
           </Text>

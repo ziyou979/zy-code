@@ -45,6 +45,7 @@ async function _temp2() {
 function _temp(current: import('../../utils/config.js').GlobalConfig) {
   return {
     ...current,
+    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
     subscriptionNoticeCount: ((current as any).subscriptionNoticeCount ?? 0) + 1,
   }
 }
@@ -53,9 +54,11 @@ async function getExistingZySubscription(): Promise<'Max' | 'Pro' | null> {
   if (!profile) {
     return null
   }
+  // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
   if ((profile as any).account.has_Zy_max) {
     return 'Max'
   }
+  // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
   if ((profile as any).account.has_Zy_pro) {
     return 'Pro'
   }

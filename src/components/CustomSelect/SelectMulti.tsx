@@ -78,7 +78,8 @@ export function SelectMulti({
   onImagePaste,
   pastedContents,
   onRemoveImage,
-}: SelectMultiProps<any>) {
+}: // biome-ignore lint/suspicious/noExplicitAny: 泛型组件需要 any 以兼容多种调用方
+SelectMultiProps<any>) {
   const defaultValue = defaultValueProp
   const state = useMultiSelectState({
     isDisabled,

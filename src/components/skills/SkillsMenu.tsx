@@ -78,6 +78,7 @@ export function SkillsMenu({ onExit, commands }: Props) {
     mcp: [],
   }
   for (const skill of skills) {
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const source = (skill as any).source as SkillSource
     if (source in groups) {
       groups[source].push(skill)
@@ -114,6 +115,7 @@ export function SkillsMenu({ onExit, commands }: Props) {
       </Dialog>
     )
   }
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const renderSkill = (skill_0: any) => {
     const estimatedTokens = estimateSkillFrontmatterTokens(skill_0)
     const _tokenDisplay = `~${formatTokens(estimatedTokens)}`
@@ -135,6 +137,7 @@ export function SkillsMenu({ onExit, commands }: Props) {
       return null
     }
     const title = getSourceTitle(source_0)
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const subtitle = getSourceSubtitle(source_0, groupSkills as any)
     return (
       <Box flexDirection="column" key={source_0}>

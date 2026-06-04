@@ -576,7 +576,7 @@ export function extractDiscoveredToolNames(messages: Message[]): Set<string> {
     // check rather than isCompactBoundaryMessage — utils/messages.ts imports
     // from this file, so importing back would be circular.
     if (msg.type === 'system' && msg.subtype === 'compact_boundary') {
-      const carried = (msg.compactMetadata as any)?.preCompactDiscoveredTools
+      const carried = msg.compactMetadata?.preCompactDiscoveredTools
       if (carried) {
         for (const name of carried) {
           discoveredTools.add(name)
@@ -688,10 +688,11 @@ export function getDeferredToolsDelta(
       continue
     }
     dtdCount++
-    for (const n of (msg.attachment as any).addedNames) {
+    const delta = msg.attachment as unknown as { addedNames: string[]; removedNames: string[] }
+    for (const n of delta.addedNames) {
       announced.add(n)
     }
-    for (const n of (msg.attachment as any).removedNames) {
+    for (const n of delta.removedNames) {
       announced.delete(n)
     }
   }

@@ -1,3 +1,4 @@
+import type { UUID } from 'node:crypto'
 import { dirname, isAbsolute, sep } from 'node:path'
 import { logEvent } from 'src/services/analytics/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
@@ -396,7 +397,7 @@ export const FileEditTool = buildTool({
       await fileHistoryTrackEdit(
         updateFileHistoryState,
         absoluteFilePath,
-        parentMessage!.uuid as any,
+        parentMessage!.uuid as UUID,
       )
     }
 

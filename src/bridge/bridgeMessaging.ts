@@ -316,6 +316,7 @@ export function handleServerControlRequest(
       // see daemonBridge.ts), return an error verdict rather than a silent
       // false-success: the mode is never actually applied in that context,
       // so success would lie to the client.
+      // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
       const verdict = onSetPermissionMode?.(request.request.mode as any) ?? {
         ok: false,
         error:
@@ -335,6 +336,7 @@ export function handleServerControlRequest(
           response: {
             subtype: 'error',
             request_id: request.request_id,
+            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
             error: (verdict as any).error,
           },
         }

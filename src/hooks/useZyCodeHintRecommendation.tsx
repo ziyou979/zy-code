@@ -90,6 +90,7 @@ export function useZyCodeHintRecommendation() {
               trigger: 'hint',
             })
             if (!result.success) {
+              // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
               throw new Error((result as any).error)
             }
           },

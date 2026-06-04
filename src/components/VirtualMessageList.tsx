@@ -159,21 +159,28 @@ function computeStickyPromptText(msg: RenderableMessage): string | null {
     if (msg.isMeta || msg.isVisibleInTranscriptOnly) {
       return null
     }
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const block = msg.message.content[0] as any
     if (block?.type !== 'text') {
       return null
     }
     raw = block.text
   } else if (
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     (msg as any).type === 'attachment' &&
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     (msg as any).attachment.type === 'queued_command' &&
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     (msg as any).attachment.commandMode !== 'task-notification' &&
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     !(msg as any).attachment.isMeta
   ) {
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const p = (msg as any).attachment.prompt
     raw =
       typeof p === 'string'
         ? p
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         : p.flatMap((b: any) => (b.type === 'text' ? [b.text] : [])).join('\n')
   }
   if (raw === null) {
@@ -322,6 +329,7 @@ export function VirtualMessageList({
     const select = (m: NavigableMessage) =>
       setCursor?.({
         uuid: m.uuid,
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         msgType: m.type as any,
         expanded: false,
         toolName: toolCallOf(m)?.name,

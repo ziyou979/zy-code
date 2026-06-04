@@ -1,4 +1,5 @@
 import { feature } from 'bun:bundle'
+import type { UUID } from 'node:crypto'
 import { extname, isAbsolute, resolve } from 'node:path'
 import { fileHistoryEnabled, fileHistoryTrackEdit } from 'src/utils/fileHistory.js'
 import { z } from 'zod/v4'
@@ -268,7 +269,7 @@ export const NotebookEditTool = buildTool({
     const fullPath = isAbsolute(notebook_path) ? notebook_path : resolve(getCwd(), notebook_path)
 
     if (fileHistoryEnabled()) {
-      await fileHistoryTrackEdit(updateFileHistoryState, fullPath, parentMessage!.uuid as any)
+      await fileHistoryTrackEdit(updateFileHistoryState, fullPath, parentMessage!.uuid as UUID)
     }
 
     try {
@@ -330,7 +331,7 @@ export const NotebookEditTool = buildTool({
         }
       }
 
-      const language = (notebook.metadata?.language_info as any)?.name ?? 'python'
+      const language = (notebook.metadata?.language_info as Record<string, unknown> | undefined)?.name as string ?? 'python'
       let new_cell_id
       if (
         (notebook.nbformat ?? 0) > 4 ||
@@ -347,37 +348,39 @@ export const NotebookEditTool = buildTool({
         // Delete the specified cell
         notebook.cells.splice(cellIndex, 1)
       } else if (edit_mode === 'insert') {
-        let new_cell: NotebookCell
+        // biome-ignore lint/suspicious/noExplicitAny: ipynb 格式需要 metadata/execution_count 等 NotebookCell 接口未覆盖的字段
+        let new_cell: any
         if (cell_type === 'markdown') {
           new_cell = {
-            cellType: 'markdown' as any,
+            cellType: 'markdown',
             id: new_cell_id,
             source: new_source,
-            metadata: {} as any,
-          } as any
+            metadata: {},
+          }
         } else {
           new_cell = {
-            cellType: 'code' as any,
+            cellType: 'code',
             id: new_cell_id,
             source: new_source,
-            metadata: {} as any,
-            execution_count: null as any,
+            metadata: {},
+            execution_count: null,
             outputs: [],
-          } as any
+          }
         }
         // Insert the new cell
-        notebook.cells.splice(cellIndex, 0, new_cell)
+        notebook.cells.splice(cellIndex, 0, new_cell as NotebookCell)
       } else {
         // Find the specified cell
-        const targetCell = notebook.cells[cellIndex]! // validateInput ensures cell_number is in bounds
+        // biome-ignore lint/suspicious/noExplicitAny: ipynb 运行时对象包含接口未声明的额外字段
+        const targetCell = notebook.cells[cellIndex]! as any
         targetCell.source = new_source
-        if ((targetCell as any).cellType === 'code') {
+        if (targetCell.cellType === 'code') {
           // Reset execution count and clear outputs since cell was modified
-          ;(targetCell as any).execution_count = null
+          targetCell.execution_count = null
           targetCell.outputs = []
         }
-        if (cell_type && cell_type !== (targetCell as any).cellType) {
-          ;(targetCell as any).cellType = cell_type
+        if (cell_type && cell_type !== targetCell.cellType) {
+          targetCell.cellType = cell_type
         }
       }
       // Write back to file

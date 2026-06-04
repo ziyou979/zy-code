@@ -219,7 +219,7 @@ async function handleSessionFileAccess(
       scope !== null &&
       (input.tool_name === FILE_EDIT_TOOL_NAME || input.tool_name === FILE_WRITE_TOOL_NAME)
     ) {
-      ;(memoryShapeTelemetry as any)!.logMemoryWriteShape(
+      ;(memoryShapeTelemetry as NonNullable<typeof memoryShapeTelemetry>).logMemoryWriteShape(
         input.tool_name,
         input.tool_input,
         filePath,

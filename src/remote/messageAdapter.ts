@@ -27,6 +27,7 @@ import { createUserMessage } from '../utils/messages.js'
 function convertAssistantMessage(msg: WireAssistantMessage): AssistantMessage {
   return {
     type: 'assistant',
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     message: msg.message as any,
     uuid: msg.uuid,
     requestId: undefined,
@@ -41,9 +42,13 @@ function convertAssistantMessage(msg: WireAssistantMessage): AssistantMessage {
 function convertStreamEvent(msg: WirePartialAssistantMessage): StreamEvent {
   return {
     type: 'stream_event',
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     event: msg.event as any,
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     uuid: (msg as any).uuid,
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     timestamp: (msg as any).timestamp,
+  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   } as any
 }
 
@@ -60,6 +65,7 @@ function convertResultMessage(msg: WireResultMessage): SystemMessage {
     type: 'system',
     subtype: 'informational',
     content,
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     level: (isError ? 'warning' : 'info') as any,
     uuid: msg.uuid,
     timestamp: new Date().toISOString(),
@@ -162,6 +168,7 @@ export function convertSDKMessage(msg: WireMessage, opts?: ConvertOptions): Conv
       return { type: 'message', message: convertAssistantMessage(msg) }
 
     case 'user': {
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       const content = (msg.message as any)?.content
       // Tool result messages from the remote server need to be converted so
       // they render and collapse like local tool results. Detect via content

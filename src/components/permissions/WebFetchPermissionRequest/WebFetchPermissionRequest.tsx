@@ -37,6 +37,7 @@ export function WebFetchPermissionRequest({
   const unaryEvent = {
     completion_type: 'tool_use_single',
     language_name: 'none',
+  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
   } as any
   usePermissionRequestLogging(toolUseConfirm, unaryEvent)
   const showAlwaysAllowOptions = shouldShowAlwaysAllowOptions()
@@ -50,6 +51,7 @@ export function WebFetchPermissionRequest({
     result.push({
       label: (
         <Text>{tSync('permission.yesDontAskAgainDomain', { domain: hostname })}</Text>
+      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
       ) as any,
       value: 'yes-dont-ask-again-domain',
     })

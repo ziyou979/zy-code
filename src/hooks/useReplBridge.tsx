@@ -189,7 +189,9 @@ export function useReplBridge(
           // pointer（仅用于崩溃恢复）。
           let perpetual = false
           if (feature('KAIROS')) {
+            // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
             const { isAssistantMode } = await import('../assistant/index.js' as any)
+            // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
             perpetual = (isAssistantMode as any)()
           }
 

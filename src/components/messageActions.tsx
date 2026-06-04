@@ -43,16 +43,19 @@ export function isNavigableMessage(msg: NavigableMessage): boolean {
       if (msg.isMeta || msg.isCompactSummary) {
         return false
       }
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       const b = msg.message.content[0] as any
       if (b?.type !== 'text') {
         return false
       }
       // 中断等——合成的，不是用户创作的。
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       if (SYNTHETIC_MESSAGES.has((b as any).text)) {
         return false
       }
       // 与 VirtualMessageList sticky-prompt 相同的过滤器：XML 包装的
       //（命令扩展、bash 输出等）不是真正的提示。
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       return !stripSystemReminders((b as any).text).startsWith('<')
     }
     case 'system':
@@ -63,6 +66,7 @@ export function isNavigableMessage(msg: NavigableMessage): boolean {
         case 'memory_saved':
         case 'agents_killed':
         case 'away_summary':
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         case 'thinking' as any:
           return false
       }
@@ -158,9 +162,11 @@ export function toolCallOf(msg: NavigableMessage):
     }
   }
   if (msg.type === 'grouped_tool_use') {
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     const b = (msg as any).messages[0]?.message.content[0]
     if (b?.type === 'tool_call') {
       return {
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         name: (msg as any).toolName,
         input: b.input as Record<string, unknown>,
       }
@@ -197,6 +203,7 @@ export const MESSAGE_ACTIONS = [
     key: 'enter',
     label: 'edit',
     types: ['user'],
+    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     run: (m, c) => void c.edit(m as any),
   }),
   action({
@@ -420,12 +427,17 @@ export function stripSystemReminders(text: string): string {
 export function copyTextOf(msg: NavigableMessage): string {
   switch (msg.type) {
     case 'user': {
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       const b = msg.message.content[0] as any
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       return (b as any)?.type === 'text' ? stripSystemReminders((b as any).text) : ''
     }
     case 'assistant': {
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       const b = msg.message.content[0] as any
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       if ((b as any)?.type === 'text') {
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         return (b as any).text
       }
       const tc = toolCallOf(msg)
@@ -439,9 +451,12 @@ export function copyTextOf(msg: NavigableMessage): string {
         : ''
     }
     case 'grouped_tool_use':
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       return (msg as any).results.map(toolResultText).filter(Boolean).join('\n\n')
     case 'collapsed_read_search':
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       return (msg as any).messages
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         .flatMap((m: any) =>
           m.type === 'user'
             ? [toolResultText(m)]
@@ -462,9 +477,11 @@ export function copyTextOf(msg: NavigableMessage): string {
     case 'attachment': {
       const a = msg.attachment
       if (a.type === 'queued_command') {
+        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         const p = (a as any).prompt
         return typeof p === 'string'
           ? p
+          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
           : p.flatMap((b: any) => (b.type === 'text' ? [b.text] : [])).join('\n')
       }
       return `[${a.type}]`

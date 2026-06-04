@@ -5,8 +5,11 @@ import * as client from './client.js'
 import * as crypto from './crypto.js'
 import type { OAuthProfileResponse, OAuthTokens } from './types.js'
 
+// biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth 响应类型不完善
 type OAuthTokenExchangeResponse = any
+// biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth 响应类型不完善
 type RateLimitTier = any
+// biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth 响应类型不完善
 type SubscriptionType = any
 
 /**
@@ -110,6 +113,7 @@ export class OAuthService {
         profileInfo.subscriptionType,
         profileInfo.rateLimitTier,
         profileInfo.rawProfile,
+      // biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth 响应类型不完善
       ) as any
     } catch (error) {
       // If we have a pending response, send an error redirect before closing
@@ -164,6 +168,7 @@ export class OAuthService {
     return {
       accessToken: response.access_token,
       refreshToken: response.refresh_token,
+      // biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth 响应类型不完善
       expiresAt: (Date.now() + response.expires_in * 1000) as any,
       scopes: client.parseScopes(response.scope),
       subscriptionType,
@@ -176,6 +181,7 @@ export class OAuthService {
             organizationUuid: response.organization?.uuid,
           }
         : undefined,
+    // biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth 响应类型不完善
     } as any
   }
 

@@ -1767,7 +1767,7 @@ export async function bashToolHasPermission(
       }
       const decisionReason: PermissionDecisionReason = {
         type: 'other' as const,
-        reason: (sem as any).reason,
+        reason: sem.reason,
       }
       return {
         behavior: 'ask',
@@ -1798,7 +1798,7 @@ export async function bashToolHasPermission(
     if (!parseResult.success) {
       const decisionReason = {
         type: 'other' as const,
-        reason: tSync('bash.permission.malformedSyntax', { error: (parseResult as any).error }),
+        reason: tSync('bash.permission.malformedSyntax', { error: parseResult.error }),
       }
       return {
         behavior: 'ask',

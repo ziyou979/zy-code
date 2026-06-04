@@ -94,7 +94,7 @@ export function setupClaudeInChrome(): {
   systemPrompt: string
 } {
   const isNativeBuild = isInBundledMode()
-  const allowedTools = BROWSER_TOOLS.map((tool) => `mcp__claude-in-chrome__${(tool as any).name}`)
+  const allowedTools = BROWSER_TOOLS.map((tool) => `mcp__claude-in-chrome__${(tool as unknown as { name: string }).name}`)
 
   const env: Record<string, string> = {}
   if (getSessionBypassPermissionsMode()) {

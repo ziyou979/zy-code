@@ -55,6 +55,7 @@ export function SandboxOverridesTab({ onComplete }: Props) {
 // Split so useTabHeaderFocus() only runs when the Select renders. Calling it
 // above the early returns registers a down-arrow opt-in even when we return
 // static text — pressing ↓ then blurs the header with no way back.
+// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function OverridesSelect({ onComplete, currentMode }: any) {
   const [theme] = useTheme()
   const { headerFocused, focusHeader } = useTabHeaderFocus()

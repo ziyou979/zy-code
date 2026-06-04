@@ -100,7 +100,7 @@ function getToolSummaryText(counts: ToolCounts): string | undefined {
  * Count tool uses in an assistant message and add to existing counts.
  */
 function accumulateToolUses(message: WireAssistantMessage, counts: ToolCounts): void {
-  const content = (message.message as any).content
+  const content = message.message.content
   if (!Array.isArray(content)) {
     return
   }
@@ -123,7 +123,7 @@ export function createStreamlinedTransformer(): (message: StdoutMessage) => Stdo
   return function transformToStreamlined(message: StdoutMessage): StdoutMessage | null {
     switch (message.type) {
       case 'assistant': {
-        const content = (message.message as any).content
+        const content = message.message.content
         const text = Array.isArray(content) ? extractTextContent(content, '\n').trim() : ''
 
         // Accumulate tool counts from this message

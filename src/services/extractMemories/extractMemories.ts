@@ -376,7 +376,7 @@ export function initExtractMemories(): void {
         ],
         cacheSafeParams,
         canUseTool,
-        querySource: 'extract_memories' as any,
+        querySource: 'extract_memories',
         forkLabel: 'extract_memories',
         // The extractMemories subagent does not need to record to transcript.
         // Doing so can create race conditions with the main thread.

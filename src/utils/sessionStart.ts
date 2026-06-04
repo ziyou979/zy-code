@@ -155,7 +155,7 @@ export async function processSessionStartHooks(
       toolUseID: 'SessionStart',
       hookEvent: 'SessionStart',
     })
-    hookMessages.push(contextMessage as any)
+    hookMessages.push(contextMessage as unknown as HookResultMessage)
   }
 
   return hookMessages
@@ -208,7 +208,7 @@ export async function processSetupHooks(
       toolUseID: 'Setup',
       hookEvent: 'Setup',
     })
-    hookMessages.push(contextMessage as any)
+    hookMessages.push(contextMessage as unknown as HookResultMessage)
   }
 
   return hookMessages

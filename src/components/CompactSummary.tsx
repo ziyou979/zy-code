@@ -33,7 +33,7 @@ export function CompactSummary({ message, screen }: Props) {
                     {tSync('compactSummary.summarizedMessages', {
                       count: metadata.messagesSummarized,
                     })}{' '}
-                    {(metadata.direction as any) === 'up_to'
+                    {(metadata.direction as string) === 'up_to'
                       ? tSync('compactSummary.upToPoint')
                       : tSync('compactSummary.fromPoint')}
                   </Text>
