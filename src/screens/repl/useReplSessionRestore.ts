@@ -48,11 +48,11 @@ import { processSessionStartHooks } from '../../utils/sessionStart.js'
 import {
   clearSessionMetadata,
   restoreSessionMetadata,
-} from '../../utils/sessionStorage/sessionMetadata.js'
+} from '../../services/sessionStorage/sessionMetadata.js'
 import {
   adoptResumedSessionFile,
   resetSessionFilePointer,
-} from '../../utils/sessionStorage/transcript.js'
+} from '../../services/sessionStorage/transcript.js'
 import {
   cacheSessionTitle,
   getCurrentSessionTitle,
