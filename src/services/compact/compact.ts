@@ -241,7 +241,9 @@ export function truncateHeadForPTLRetry(
     let acc = 0
     dropCount = 0
     for (const g of groups) {
-      acc += roughTokenCountEstimationForMessages(g as readonly { type: string; message?: { content?: unknown }; attachment?: Attachment }[])
+      acc += roughTokenCountEstimationForMessages(
+        g as readonly { type: string; message?: { content?: unknown }; attachment?: Attachment }[],
+      )
       dropCount++
       if (acc >= tokenGap) {
         break
@@ -591,9 +593,7 @@ export async function compactConversation(
     // 发送已加载的 deferred tool schema。
     const preCompactDiscovered = extractDiscoveredToolNames(messages)
     if (preCompactDiscovered.size > 0) {
-      boundaryMarker.compactMetadata.preCompactDiscoveredTools = [
-        ...preCompactDiscovered,
-      ].sort()
+      boundaryMarker.compactMetadata.preCompactDiscoveredTools = [...preCompactDiscovered].sort()
     }
 
     const transcriptPath = getTranscriptPath()
@@ -624,7 +624,11 @@ export async function compactConversation(
       ...summaryMessages,
       ...postCompactFileAttachments,
       ...hookMessages,
-    ] as unknown as readonly { type: string; message?: { content?: unknown }; attachment?: Attachment }[])
+    ] as unknown as readonly {
+      type: string
+      message?: { content?: unknown }
+      attachment?: Attachment
+    }[])
 
     // 提取压缩 API 用量指标
     const compactionUsage = getTokenUsage(summaryResponse)
@@ -761,9 +765,7 @@ export async function partialCompactConversation(
 ): Promise<CompactionResult> {
   try {
     const messagesToSummarize =
-      direction === 'up_to'
-        ? allMessages.slice(0, pivotIndex)
-        : allMessages.slice(pivotIndex)
+      direction === 'up_to' ? allMessages.slice(0, pivotIndex) : allMessages.slice(pivotIndex)
     // 'up_to' 必须移除旧的压缩边界/摘要：对于 'up_to'，
     // summary_B 位于保留内容之前，所以 kept 中的陈旧 boundary_A
     // 会在 findLastCompactBoundaryIndex 的反向扫描中胜出并丢弃 summary_B。
@@ -995,9 +997,7 @@ export async function partialCompactConversation(
     // 比追踪每个工具在哪个半区更简单。
     const preCompactDiscovered = extractDiscoveredToolNames(allMessages)
     if (preCompactDiscovered.size > 0) {
-      boundaryMarker.compactMetadata.preCompactDiscoveredTools = [
-        ...preCompactDiscovered,
-      ].sort()
+      boundaryMarker.compactMetadata.preCompactDiscoveredTools = [...preCompactDiscovered].sort()
     }
 
     const transcriptPath = getTranscriptPath()

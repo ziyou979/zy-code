@@ -22,7 +22,12 @@ import {
 } from '../../services/model/model.js'
 import { findToolByName, type Tools } from '../../Tool.js'
 import type { ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
-import type { AssistantMessage, Message, ProgressMessage, UserMessage } from '../../types/message.js'
+import type {
+  AssistantMessage,
+  Message,
+  ProgressMessage,
+  UserMessage,
+} from '../../types/message.js'
 import type { AgentToolProgress } from '../../types/tools.js'
 import { count } from '../../utils/array.js'
 import {
@@ -151,11 +156,36 @@ function processProgressMessages(
 ): ProcessedMessage[] {
   // 仅对 ant 进行处理
   if (!isInternalBuild()) {
+    // 构建 tool_use 查找表
+    const toolUseByID = new Map<string, ToolCallBlock>()
+    for (const m of messages) {
+      if (!hasProgressMessage(m.data)) continue
+      if (m.data.message.type === 'assistant') {
+        for (const c of (m.data.message as AssistantMessage).message.content) {
+          if (c.type === 'tool_call') {
+            toolUseByID.set(c.id, c as ToolCallBlock)
+          }
+        }
+      }
+    }
+
     return messages
-      .filter(
-        (m): m is ProgressMessage<AgentToolProgress> =>
-          hasProgressMessage(m.data) && m.data.message.type !== 'user',
-      )
+      .filter((m): m is ProgressMessage<AgentToolProgress> => {
+        if (!hasProgressMessage(m.data)) return false
+        if (m.data.message.type === 'assistant') return true
+        // 保留 briefStandalone 工具的 tool_result
+        if (m.data.message.type === 'user') {
+          const content = m.data.message.message.content[0]
+          if (content?.type === 'tool_result') {
+            const toolUse = toolUseByID.get(content.toolCallId)
+            if (toolUse) {
+              const tool = findToolByName(tools, toolUse.name)
+              if (tool?.briefStandalone) return true
+            }
+          }
+        }
+        return false
+      })
       .map((m) => ({
         type: 'original',
         message: m,
@@ -248,13 +278,27 @@ function processProgressMessages(
 export function selectDisplayMessages(
   processedMessages: ProcessedMessage[],
   tools: Tools,
-): { displayed: ProcessedMessage[]; hiddenCount: number } {
+): { displayed: ProcessedMessage[]; hiddenCount: number; toolCallToResult: Map<string, number> } {
   if (processedMessages.length <= MAX_PROGRESS_MESSAGES_TO_SHOW) {
-    return { displayed: processedMessages, hiddenCount: 0 }
+    return { displayed: processedMessages, hiddenCount: 0, toolCallToResult: new Map() }
   }
 
   const seenToolNames = new Set<string>()
   const briefIndices = new Set<number>()
+  const toolCallToResult = new Map<string, number>()
+
+  // 首先建立 toolCallId -> result index 的映射
+  for (let i = 0; i < processedMessages.length; i++) {
+    const p = processedMessages[i]!
+    if (p.type !== 'original') continue
+    const data = p.message.data
+    if (!hasProgressMessage(data)) continue
+    if (data.message.type !== 'user') continue
+    const content = data.message.message.content[0]
+    if (content?.type === 'tool_result') {
+      toolCallToResult.set(content.toolCallId, i)
+    }
+  }
 
   for (let i = processedMessages.length - 1; i >= 0; i--) {
     if (briefIndices.size >= MAX_BRIEF_STANDALONE_DISPLAY) break
@@ -296,7 +340,7 @@ export function selectDisplayMessages(
       )
     },
   )
-  return { displayed, hiddenCount }
+  return { displayed, hiddenCount, toolCallToResult }
 }
 
 const ESTIMATED_LINES_PER_TOOL = 9
@@ -390,17 +434,20 @@ function VerboseAgentTranscript({ progressMessages, tools, verbose }: VerboseAge
  */
 function BriefStandalonePreview({ progressMessages, tools }: VerboseAgentTranscriptProps) {
   const processed = processProgressMessages(progressMessages, tools, false)
-  const { displayed, hiddenCount } = selectDisplayMessages(processed, tools)
+  const { displayed, hiddenCount, toolCallToResult } = selectDisplayMessages(processed, tools)
   if (displayed.length === 0) {
     return null
   }
-  const lines: { key: string; text: string }[] = []
+  const elements: React.ReactNode[] = []
   for (const p of displayed) {
     if (p.type === 'summary') {
-      lines.push({
-        key: p.uuid,
-        text: getSearchReadSummaryText(p.searchCount, p.readCount, false, p.replCount),
-      })
+      elements.push(
+        <MessageResponse key={p.uuid} height={1}>
+          <Text dimColor>
+            {getSearchReadSummaryText(p.searchCount, p.readCount, false, p.replCount)}
+          </Text>
+        </MessageResponse>,
+      )
       continue
     }
     const data = p.message.data
@@ -410,18 +457,41 @@ function BriefStandalonePreview({ progressMessages, tools }: VerboseAgentTranscr
     const tool = findToolByName(tools, block.name)
     const name = tool?.userFacingName?.(block.input) ?? block.name
     const summary = tool?.getToolUseSummary?.(block.input)
-    lines.push({ key: p.message.uuid, text: summary ? `${name}(${summary})` : name })
+    elements.push(
+      <MessageResponse key={p.message.uuid} height={1}>
+        <Text dimColor>{summary ? `${name}(${summary})` : name}</Text>
+      </MessageResponse>,
+    )
+
+    // 查找对应的 tool_result 并渲染
+    const resultIndex = toolCallToResult.get(block.id)
+    if (resultIndex !== undefined && tool?.renderToolResultMessage) {
+      const resultMsg = processed[resultIndex]
+      if (resultMsg && resultMsg.type === 'original') {
+        const resultData = resultMsg.message.data
+        if (hasProgressMessage(resultData) && resultData.message.type === 'user') {
+          const toolUseResult = resultData.message.toolUseResult
+          if (toolUseResult !== undefined) {
+            const rendered = tool.renderToolResultMessage(toolUseResult, [], {
+              verbose: false,
+              theme: 'dark',
+              tools,
+              isTranscriptMode: false,
+            })
+            if (rendered) {
+              elements.push(<Box key={`${p.message.uuid}-result`}>{rendered}</Box>)
+            }
+          }
+        }
+      }
+    }
   }
-  if (lines.length === 0) {
+  if (elements.length === 0) {
     return null
   }
   return (
     <Box flexDirection="column">
-      {lines.map((l) => (
-        <MessageResponse key={l.key} height={1}>
-          <Text dimColor>{l.text}</Text>
-        </MessageResponse>
-      ))}
+      {elements}
       {hiddenCount > 0 && (
         <Text dimColor>
           {tSync(hiddenCount === 1 ? 'agent.moreToolUses_one' : 'agent.moreToolUses_other', {
@@ -519,7 +589,7 @@ export function renderToolResultMessage(
       inference_geo: null,
       iterations: null,
       speed: null,
-    // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
+      // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
     } as any,
   })
   return (
@@ -1081,15 +1151,12 @@ export function userFacingName(
     if (input.subagent_type === 'worker') {
       return tSync('agent.defaultName')
     }
-    // 优先使用内置 agent 类型的 i18n 翻译，自定义类型回退到原始名称
-    const i18nKey = `agent.builtInType.${input.subagent_type}` as const
-    // biome-ignore lint/suspicious/noExplicitAny: 动态 i18n 键需要绕过类型约束
-    const translated = tSync(i18nKey as any)
-    // tSync 找不到 key 时返回 key 本身，据此判断是否存在翻译
-    return translated !== i18nKey ? translated : input.subagent_type
+    // 内置 agent 类型和 Bash、Read、Edit 一样都是专有名词，直接显示
+    return input.subagent_type
   }
   return tSync('agent.defaultName')
 }
+
 export function userFacingNameBackgroundColor(
   input:
     | Partial<{

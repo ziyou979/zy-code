@@ -394,11 +394,13 @@ export default class Output {
               rowStart = row + 1
             }
           }
+          continue
         }
 
         case 'shift': {
           // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           shiftRows(screen, (operation as any).top, (operation as any).bottom, (operation as any).n)
+          continue
         }
 
         case 'write': {

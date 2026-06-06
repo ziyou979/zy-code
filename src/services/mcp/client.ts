@@ -772,7 +772,7 @@ export const connectToServer = memoize(
         await inProcessServer!.connect(serverTransport)
         transport = clientTransport
         logMCPDebug(name, `In-process Computer Use MCP server started`)
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
       } else if ((serverRef as any).type === 'stdio' || !(serverRef as any).type) {
         const finalCommand = process.env.ZY_CODE_SHELL_PREFIX || serverRef.command
         const finalArgs = process.env.ZY_CODE_SHELL_PREFIX

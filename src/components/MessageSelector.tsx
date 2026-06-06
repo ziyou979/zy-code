@@ -381,8 +381,8 @@ export function MessageSelector({
                   userMessage.uuid as any,
                   // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
                   (nextUserMessage?.uuid as any) !== currentUUID
-                    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-                    ? (nextUserMessage?.uuid as any)
+                    ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+                      (nextUserMessage?.uuid as any)
                     : undefined,
                 )
               : undefined

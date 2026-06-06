@@ -455,17 +455,19 @@ export function copyTextOf(msg: NavigableMessage): string {
       return (msg as any).results.map(toolResultText).filter(Boolean).join('\n\n')
     case 'collapsed_read_search':
       // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      return (msg as any).messages
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        .flatMap((m: any) =>
-          m.type === 'user'
-            ? [toolResultText(m)]
-            : m.type === 'grouped_tool_use'
-              ? m.results.map(toolResultText)
-              : [],
-        )
-        .filter(Boolean)
-        .join('\n\n')
+      return (
+        (msg as any).messages
+          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+          .flatMap((m: any) =>
+            m.type === 'user'
+              ? [toolResultText(m)]
+              : m.type === 'grouped_tool_use'
+                ? m.results.map(toolResultText)
+                : [],
+          )
+          .filter(Boolean)
+          .join('\n\n')
+      )
     case 'system':
       if ('content' in msg) {
         return String(msg.content)
@@ -481,8 +483,8 @@ export function copyTextOf(msg: NavigableMessage): string {
         const p = (a as any).prompt
         return typeof p === 'string'
           ? p
-          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          : p.flatMap((b: any) => (b.type === 'text' ? [b.text] : [])).join('\n')
+          : // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+            p.flatMap((b: any) => (b.type === 'text' ? [b.text] : [])).join('\n')
       }
       return `[${a.type}]`
     }

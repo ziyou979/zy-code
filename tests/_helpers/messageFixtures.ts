@@ -42,9 +42,7 @@ export function createTestMessage(
  *   { role: 'tool', toolCallId: 'c', content: 'done' },
  * )
  */
-export function createTestMessages(
-  ...specs: Array<Record<string, unknown>>
-): LLMMessage[] {
+export function createTestMessages(...specs: Array<Record<string, unknown>>): LLMMessage[] {
   // biome-ignore lint/suspicious/noExplicitAny: 工厂函数集中处理类型转换
   return specs as any
 }

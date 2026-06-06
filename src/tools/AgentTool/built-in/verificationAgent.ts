@@ -132,7 +132,7 @@ const VERIFICATION_WHEN_TO_USE =
   'Use this agent to verify that implementation work is correct before reporting completion. Invoke after non-trivial tasks (3+ file edits, backend/API changes, infrastructure changes). Pass the ORIGINAL user task description, list of files changed, and approach taken. The agent runs builds, tests, linters, and checks to produce a PASS/FAIL/PARTIAL verdict with evidence.'
 
 export const VERIFICATION_AGENT: BuiltInAgentDefinition = {
-  agentType: 'verification',
+  agentType: 'Verification',
   whenToUse: VERIFICATION_WHEN_TO_USE,
   color: 'red',
   background: true,

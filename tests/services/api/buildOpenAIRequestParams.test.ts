@@ -17,7 +17,7 @@ describe('buildOpenAIRequestParams', () => {
       model: 'gpt-4',
       maxTokens: 4096,
       messages: [{ role: 'user', content: 'hi' }],
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
 
     expect(result.model).toBe('gpt-4')
@@ -35,7 +35,7 @@ describe('buildOpenAIRequestParams', () => {
       messages: [{ role: 'user', content: 'hi' }],
       topP: 0.9,
       stopSequences: ['END', 'STOP'],
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
 
     expect(result.top_p).toBe(0.9)
@@ -49,7 +49,7 @@ describe('buildOpenAIRequestParams', () => {
       messages: [{ role: 'user', content: 'hi' }],
       tools: [{ name: 'search', description: 'Search', inputSchema: { type: 'object' } }],
       toolChoice: { type: 'auto' },
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
 
     expect(result.tools).toHaveLength(1)
@@ -68,7 +68,7 @@ describe('buildOpenAIRequestParams', () => {
           user: 'user-123',
         },
       },
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
 
     // _web_search_tool 被剥离出 cleanedExtras
@@ -88,7 +88,7 @@ describe('buildOpenAIRequestParams', () => {
           _web_search_tool: { type: 'web_search_preview' },
         },
       },
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
 
     expect(result.tools).toHaveLength(1)
@@ -102,7 +102,7 @@ describe('buildOpenAIRequestParams', () => {
       maxTokens: 100,
       messages: [{ role: 'user', content: 'hi' }],
       extra_body: { custom_flag: true },
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
 
     // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
@@ -119,7 +119,7 @@ describe('buildOpenAIRequestParams', () => {
           response_format: { type: 'json_object' },
         },
       },
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
 
     expect(result.response_format).toEqual({ type: 'json_object' })
@@ -133,7 +133,7 @@ describe('buildOpenAIRequestParams', () => {
       output_config: {
         format: { type: 'json_object' },
       },
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
 
     expect(result.response_format).toEqual({ type: 'json_object' })

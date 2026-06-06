@@ -203,14 +203,14 @@ describe('mapOpenAIStreamToStandard: 入站 OpenAI 流式映射', () => {
     const thinkingDeltas = events.filter(
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       (e: any) => e.type === 'chunk_delta' && e.delta.type === 'thinking_delta',
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ) as any[]
     expect(thinkingDeltas.every((d) => d.index === thinkStart!.index)).toBe(true)
     // input_json_delta 必须挂在 tool 那个 index
     const inputDeltas = events.filter(
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       (e: any) => e.type === 'chunk_delta' && e.delta.type === 'input_json_delta',
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ) as any[]
     expect(inputDeltas.every((d) => d.index === toolStart!.index)).toBe(true)
   })

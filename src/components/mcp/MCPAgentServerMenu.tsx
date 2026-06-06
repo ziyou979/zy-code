@@ -70,12 +70,7 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
         type: srv.transport as 'http' | 'sse',
         url: srv.url,
       }
-      await performMCPOAuthFlow(
-        srv.name,
-        tempConfig,
-        setAuthorizationUrl,
-        controller.signal,
-      )
+      await performMCPOAuthFlow(srv.name, tempConfig, setAuthorizationUrl, controller.signal)
       onComplete?.(tSync('mcp.authSuccessfulConnected', { serverName: srv.name }))
     } catch (err) {
       // Don't show error if it was a cancellation
@@ -91,9 +86,7 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
   if (isAuthenticating) {
     return (
       <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="zy">
-          {tSync('mcp.authenticatingWith', { serverName: srv.name })}
-        </Text>
+        <Text color="zy">{tSync('mcp.authenticatingWith', { serverName: srv.name })}</Text>
         <Box>
           <Spinner />
           <Text> {tSync('mcp.browserWillOpen')}</Text>
@@ -115,9 +108,7 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
   // Only show authenticate option for HTTP/SSE servers
   if (srv.needsAuth) {
     menuOptions.push({
-      label: srv.isAuthenticated
-        ? tSync('mcp.reauthenticate')
-        : tSync('mcp.authenticate'),
+      label: srv.isAuthenticated ? tSync('mcp.reauthenticate') : tSync('mcp.authenticate'),
       value: 'auth',
     })
   }

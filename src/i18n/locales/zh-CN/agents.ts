@@ -5,8 +5,6 @@ export const zhAgents: TranslationResource = {
   'agent.agentsFinishedNoType': '个智能体已完成',
   'agent.apiCallsOnly': '[INNER-ONLY] API 调用：{path}',
   'agent.backgroundAgentsLaunched': '个后台智能体已启动',
-  'agent.builtInType.Explore': '探索',
-  'agent.builtInType.Plan': '规划',
   'agent.backgrounded': '后台 agent',
   'agent.defaultName': 'Agent',
   'agent.done': '完成',

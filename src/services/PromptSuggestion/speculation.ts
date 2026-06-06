@@ -237,7 +237,12 @@ export function prepareMessagesForInjection(messages: Message[]): Message[] {
       if (!('message' in msg) || !Array.isArray((msg.message as Record<string, unknown>).content)) {
         return msg
       }
-      const msgContent = (msg.message as Record<string, unknown>).content as Array<{ type: string; id?: string; tool_use_id?: string; text?: string }>
+      const msgContent = (msg.message as Record<string, unknown>).content as Array<{
+        type: string
+        id?: string
+        tool_use_id?: string
+        text?: string
+      }>
       const content = msgContent.filter(keep)
       if (content.length === msgContent.length) {
         return msg

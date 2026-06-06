@@ -59,7 +59,7 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
       subscriptionCreatedAt: profile.organization.subscription_created_at ?? undefined,
       accountCreatedAt: profile.account.created_at,
     })
-  // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
+    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
   } else if ((tokens as any).tokenAccount) {
     // 当用户资料端点失败时，回退使用令牌交换的账户数据
     storeOAuthAccountInfo({

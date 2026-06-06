@@ -275,7 +275,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
           toolUseID: effectiveToolUseID,
           hookEvent,
           content: '',
-        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
+          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
         }) as any,
       }
     } catch (error) {
@@ -309,7 +309,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
         stderr: `Error executing agent hook: ${errorMsg}`,
         stdout: '',
         exitCode: 1,
-      // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
+        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
       }) as any,
     }
   }

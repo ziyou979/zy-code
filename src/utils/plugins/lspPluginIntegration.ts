@@ -301,7 +301,7 @@ export function addPluginScopeToLspServers(
       ...config,
       scope: 'dynamic', // Use dynamic scope for plugin servers
       source: pluginName,
-    // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
+      // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
     } as any
   }
 

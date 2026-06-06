@@ -117,8 +117,8 @@ function UltraplanSessionDetail({
   const phase = session.ultraplanPhase
   const statusText = running
     ? phase
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      ? (getPhaseLabel() as any)[phase]
+      ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+        (getPhaseLabel() as any)[phase]
       : 'running'
     : session.status
   const elapsedTime = useElapsedTime(session.startTime, running, 1000, 0, session.endTime)
@@ -218,8 +218,10 @@ function UltraplanSessionDetail({
             <Text>
               {phase === 'plan_ready' && <Text color="success">{figures.tick} </Text>}
               {agentsWorking} {agentLabel}{' '}
-              {phase ? (getAgentVerb() as Record<string, string>)[phase] : tSync('backgroundTasks.working')} ·{' '}
-              {toolCalls} tool {toolCallLabel}
+              {phase
+                ? (getAgentVerb() as Record<string, string>)[phase]
+                : tSync('backgroundTasks.working')}{' '}
+              · {toolCalls} tool {toolCallLabel}
             </Text>
           }
           {lastToolCall && <Text dimColor={true}>{lastToolCall}</Text>}

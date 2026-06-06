@@ -2,13 +2,23 @@
 import { readFileSync, writeFileSync } from 'fs'
 import { execSync } from 'child_process'
 
-const excludeDirs = ['src/services/', 'src/components/', 'src/tools/', 'src/commands/', 'src/utils/', 'src/types/generated/']
+const excludeDirs = [
+  'src/services/',
+  'src/components/',
+  'src/tools/',
+  'src/commands/',
+  'src/utils/',
+  'src/types/generated/',
+]
 
 // Get all current errors
-const output = execSync('npx biome lint --only=suspicious/noExplicitAny --max-diagnostics=5000 2>&1', { encoding: 'utf8', maxBuffer: 1024 * 1024 * 10 })
-const lines = output.split('\n').filter(l => {
+const output = execSync(
+  'npx biome lint --only=suspicious/noExplicitAny --max-diagnostics=5000 2>&1',
+  { encoding: 'utf8', maxBuffer: 1024 * 1024 * 10 },
+)
+const lines = output.split('\n').filter((l) => {
   if (!l.startsWith('src/')) return false
-  return !excludeDirs.some(d => l.startsWith(d))
+  return !excludeDirs.some((d) => l.startsWith(d))
 })
 
 // Parse file:line pairs

@@ -322,27 +322,38 @@ export function LogSelector({
     }
     const timeoutId_0 = setTimeout(
       (
-        fuseIndex_0: { search(q: string): Array<{ item: { log: LogOption; searchableText?: string }; score?: number }> },
+        fuseIndex_0: {
+          search(
+            q: string,
+          ): Array<{ item: { log: LogOption; searchableText?: string }; score?: number }>
+        },
         debouncedDeepSearchQuery_0: string,
         setDeepSearchResults_0: typeof setDeepSearchResults,
         setIsSearching_0: typeof setIsSearching,
       ) => {
         const results = fuseIndex_0.search(debouncedDeepSearchQuery_0)
-        results.sort((a: { item: { log: LogOption }; score?: number }, b: { item: { log: LogOption }; score?: number }) => {
-          const aTime = new Date(a.item.log.modified).getTime()
-          const bTime = new Date(b.item.log.modified).getTime()
-          const timeDiff = bTime - aTime
-          if (Math.abs(timeDiff) > DATE_TIE_THRESHOLD_MS) {
-            return timeDiff
-          }
-          return (a.score ?? 1) - (b.score ?? 1)
-        })
+        results.sort(
+          (
+            a: { item: { log: LogOption }; score?: number },
+            b: { item: { log: LogOption }; score?: number },
+          ) => {
+            const aTime = new Date(a.item.log.modified).getTime()
+            const bTime = new Date(b.item.log.modified).getTime()
+            const timeDiff = bTime - aTime
+            if (Math.abs(timeDiff) > DATE_TIE_THRESHOLD_MS) {
+              return timeDiff
+            }
+            return (a.score ?? 1) - (b.score ?? 1)
+          },
+        )
         setDeepSearchResults_0({
-          results: results.map((r: { item: { log: LogOption; searchableText?: string }; score?: number }) => ({
-            log: r.item.log,
-            score: r.score,
-            searchableText: r.item.searchableText,
-          })),
+          results: results.map(
+            (r: { item: { log: LogOption; searchableText?: string }; score?: number }) => ({
+              log: r.item.log,
+              score: r.score,
+              searchableText: r.item.searchableText,
+            }),
+          ),
           query: debouncedDeepSearchQuery_0,
         })
         setIsSearching_0(false)
@@ -468,7 +479,12 @@ export function LogSelector({
       }
     })
   }
-  let flatOptions: Array<{ label: string; description: string; dimDescription: boolean; value: string }>
+  let flatOptions: Array<{
+    label: string
+    description: string
+    dimDescription: boolean
+    value: string
+  }>
   if (isResumeWithRenameEnabled) {
     flatOptions = []
   } else {

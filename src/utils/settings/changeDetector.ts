@@ -19,6 +19,7 @@ import {
 } from './mdm/settings.js'
 import { getSettingsFilePathForSource } from './settings.js'
 import { resetSettingsCache } from './settingsCache.js'
+import { getStatuslineConfigPath } from './statuslineConfig.js'
 
 /**
  * Time in milliseconds to wait for file writes to stabilize before processing.
@@ -257,6 +258,22 @@ async function getWatchTargets(): Promise<{
     // Drop-in directory doesn't exist, that's fine
   }
 
+  // 监听 statusline.json（独立配置文件，映射到 userSettings 源）
+  const statuslinePath = getStatuslineConfigPath()
+  const statuslineDir = platformPath.dirname(statuslinePath)
+  if (!dirToSettingsFiles.has(statuslineDir)) {
+    dirToSettingsFiles.set(statuslineDir, new Set())
+  }
+  dirToSettingsFiles.get(statuslineDir)!.add(statuslinePath)
+  try {
+    const stats = await stat(statuslinePath)
+    if (stats.isFile()) {
+      dirsWithExistingFiles.add(statuslineDir)
+    }
+  } catch {
+    // 文件不存在，不影响监听
+  }
+
   return { dirs: [...dirsWithExistingFiles], settingsFiles, dropInDir }
 }
 
@@ -371,6 +388,12 @@ function handleDelete(path: string): void {
 function getSourceForPath(path: string): SettingSource | undefined {
   // Normalize path because chokidar uses forward slashes on Windows
   const normalizedPath = platformPath.normalize(path)
+
+  // statusline.json 映射到 userSettings 源
+  const statuslinePath = getStatuslineConfigPath()
+  if (normalizedPath === statuslinePath) {
+    return 'userSettings'
+  }
 
   // Check if the path is inside the managed-settings.d/ drop-in directory
   const dropInDir = getManagedSettingsDropInDir()

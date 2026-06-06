@@ -135,14 +135,14 @@ export function MCPSettings({ onComplete }: Props) {
         setViewState({
           type: 'server-menu',
           server,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         } as any)
       // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
       handleSelectAgentServer = (agentServer: any) =>
         setViewState({
           type: 'agent-server-menu',
           agentServer,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         } as any)
       let listPanel
       listPanel = (
@@ -171,14 +171,14 @@ export function MCPSettings({ onComplete }: Props) {
             type: 'server-tools',
             // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
             server: (viewState as any).server,
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+            // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
           } as any)
         let handleCancel
         handleCancel = () =>
           setViewState({
             type: 'list',
             defaultTab,
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+            // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
           } as any)
         let stdioMenu
         stdioMenu = (
@@ -199,14 +199,14 @@ export function MCPSettings({ onComplete }: Props) {
             type: 'server-tools',
             // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
             server: (viewState as any).server,
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+            // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
           } as any)
         let handleCancel
         handleCancel = () =>
           setViewState({
             type: 'list',
             defaultTab,
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+            // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
           } as any)
         let remoteMenu
         remoteMenu = (
@@ -232,14 +232,14 @@ export function MCPSettings({ onComplete }: Props) {
           // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
           server: (viewState as any).server,
           toolIndex: index,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         } as any)
       handleSelectTool = () =>
         setViewState({
           type: 'server-menu',
           // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
           server: (viewState as any).server,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         } as any)
       let toolListView
       toolListView = (
@@ -264,7 +264,7 @@ export function MCPSettings({ onComplete }: Props) {
           type: 'server-tools',
           // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
           server: (viewState as any).server,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         } as any)
         return null
       }
@@ -274,7 +274,7 @@ export function MCPSettings({ onComplete }: Props) {
           type: 'server-tools',
           // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
           server: (viewState as any).server,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         } as any)
       let toolDetailView
       toolDetailView = (
@@ -289,7 +289,7 @@ export function MCPSettings({ onComplete }: Props) {
         setViewState({
           type: 'list',
           defaultTab: 'Agents',
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
         } as any)
       let agentServerMenu
       agentServerMenu = (

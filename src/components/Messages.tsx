@@ -587,11 +587,11 @@ const MessagesImpl = ({
     const briefFiltered =
       briefToolNames.length > 0 && !isTranscriptMode
         ? isBriefOnly
-          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          ? filterForBriefTool(messagesToShowNotTruncated as any, briefToolNames)
+          ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+            filterForBriefTool(messagesToShowNotTruncated as any, briefToolNames)
           : dropTextToolNames.length > 0
-            // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-            ? dropTextInBriefTurns(messagesToShowNotTruncated as any, dropTextToolNames)
+            ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+              dropTextInBriefTurns(messagesToShowNotTruncated as any, dropTextToolNames)
             : messagesToShowNotTruncated
         : messagesToShowNotTruncated
     const messagesToShow = shouldTruncate

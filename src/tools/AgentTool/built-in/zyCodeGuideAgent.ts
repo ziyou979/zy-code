@@ -14,7 +14,7 @@ import type { AgentDefinition, BuiltInAgentDefinition } from '../loadAgentsDir.j
 const ZY_CODE_DOCS_MAP_URL = 'https://code.zy.com/docs/en/zy_code_docs_map.md'
 const CDP_DOCS_MAP_URL = 'https://platform.zy.com/llms.txt'
 
-export const ZY_CODE_GUIDE_AGENT_TYPE = 'zy-code-guide'
+export const GUIDE_AGENT_TYPE = 'Guide'
 
 function getZyCodeGuideBasePrompt(): string {
   // Ant-native builds alias find/grep to embedded bfs/ugrep and remove the
@@ -87,7 +87,7 @@ function getFeedbackGuideline(): string {
 }
 
 export const ZY_CODE_GUIDE_AGENT: BuiltInAgentDefinition = {
-  agentType: ZY_CODE_GUIDE_AGENT_TYPE,
+  agentType: GUIDE_AGENT_TYPE,
   whenToUse: `Use this agent when the user asks questions ("Can ZY...", "Does ZY...", "How do I...") about: (1) ZY Code (the CLI tool) - features, hooks, slash commands, MCP servers, settings, IDE integrations, keyboard shortcuts; (2) LLM Agent SDK - building custom agents; (3) LLM API (formerly Anthropic API) - API usage, tool use, Anthropic SDK usage. **IMPORTANT:** Before spawning a new agent, check if there is already a running or recently completed guide agent that you can continue via ${SEND_MESSAGE_TOOL_NAME}.`,
   // Ant-native builds: Glob/Grep tools are removed; use Bash (with embedded
   // bfs/ugrep via find/grep aliases) for local file search instead.

@@ -1,6 +1,10 @@
 import { randomUUID } from 'node:crypto'
 import chalk from 'chalk'
-import { isAsyncHookJSONOutput, isSyncHookJSONOutput, type SyncHookJSONOutput } from 'src/types/hooks/index.js'
+import {
+  isAsyncHookJSONOutput,
+  isSyncHookJSONOutput,
+  type SyncHookJSONOutput,
+} from 'src/types/hooks/index.js'
 import { createAttachmentMessage } from '../attachments.js'
 import { createCombinedAbortSignal } from '../combinedAbortSignal.js'
 import { isEnvTruthy } from '../envUtils.js'
@@ -712,7 +716,8 @@ export async function* executeHooks({
           })
           yield {
             ...processed,
-            message: (processed.message ||
+            message:
+              processed.message ||
               hookAttachment({
                 type: 'hook_success',
                 hookName,
@@ -724,7 +729,7 @@ export async function* executeHooks({
                 exitCode: result.status,
                 command: hookCommand,
                 durationMs,
-              })),
+              }),
             outcome: 'success' as const,
             hook,
           }

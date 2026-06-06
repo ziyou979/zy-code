@@ -38,11 +38,11 @@ function makeCompletion(args: {
               function: { name: tc.name, arguments: tc.arguments },
             })),
           }),
-        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+          // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         } as any,
         finish_reason: args.finishReason ?? 'stop',
         logprobs: null,
-      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       } as any,
     ],
     usage: {

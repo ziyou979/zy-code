@@ -234,7 +234,13 @@ export function handleMessageFromStream(
       return
     }
     case 'content_block_delta': {
-      const delta = message.event.delta as { type: string; text?: string; partialJson?: string; thinking?: string; [k: string]: unknown }
+      const delta = message.event.delta as {
+        type: string
+        text?: string
+        partialJson?: string
+        thinking?: string
+        [k: string]: unknown
+      }
       switch (delta.type) {
         case 'text_delta': {
           const deltaText = delta.text!

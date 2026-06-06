@@ -360,7 +360,12 @@ export async function* withRetry<T, TClient = unknown>(
             throw createAbortError()
           }
           if (isAPIError(error)) {
-            yield createSystemAPIErrorMessage(error as APIErrorLike, remaining, reportedAttempt, maxRetries)
+            yield createSystemAPIErrorMessage(
+              error as APIErrorLike,
+              remaining,
+              reportedAttempt,
+              maxRetries,
+            )
           }
           const chunk = Math.min(remaining, HEARTBEAT_INTERVAL_MS)
           await sleep(chunk, options.signal, { abortError })
@@ -387,7 +392,9 @@ function getRetryAfter(error: unknown): string | null {
   return (
     ((error as { headers?: { 'retry-after'?: string } }).headers?.['retry-after'] ||
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-      ((error as { headers?: { get?: (name: string) => string | null } }).headers?.get?.('retry-after'))) ??
+      (error as { headers?: { get?: (name: string) => string | null } }).headers?.get?.(
+        'retry-after',
+      )) ??
     null
   )
 }

@@ -52,7 +52,7 @@ export type NullRenderingAttachmentType = (typeof NULL_RENDERING_TYPES)[number]
 
 const NULL_RENDERING_ATTACHMENT_TYPES: ReadonlySet<Attachment['type']> = new Set(
   NULL_RENDERING_TYPES,
-// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 ) as any
 
 /**

@@ -121,7 +121,7 @@ export async function runFilePersistence(
           // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           filename: outputsDir as any,
           error: errorMessage(error),
-        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
+          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
         } as any,
       ],
     }
@@ -167,7 +167,7 @@ async function executeBYOCPersistence(
           // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
           filename: outputsDir as any,
           error: `Too many files modified (${modifiedFiles.length}). Maximum: ${FILE_COUNT_LIMIT}.`,
-        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
+          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
         } as any,
       ],
     }
@@ -203,7 +203,7 @@ async function executeBYOCPersistence(
         filename: result.path as any,
         // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
         file_id: result.fileId as any,
-      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
+        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
       } as any)
     } else {
       failedFiles.push({
@@ -211,7 +211,7 @@ async function executeBYOCPersistence(
         filename: result.path as any,
         // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
         error: (result as any).error,
-      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
+        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
       } as any)
     }
   }

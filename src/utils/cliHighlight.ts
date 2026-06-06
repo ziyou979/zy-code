@@ -26,7 +26,8 @@ async function loadCliHighlight(): Promise<CliHighlight | null> {
     const cliHighlight = await import('cli-highlight')
     // cache hit — cli-highlight already loaded highlight.js
     const highlightJs = await import('highlight.js')
-    loadedGetLanguage = (highlightJs as Record<string, unknown>).getLanguage as typeof loadedGetLanguage
+    loadedGetLanguage = (highlightJs as Record<string, unknown>)
+      .getLanguage as typeof loadedGetLanguage
     return {
       highlight: cliHighlight.highlight,
       supportsLanguage: cliHighlight.supportsLanguage,

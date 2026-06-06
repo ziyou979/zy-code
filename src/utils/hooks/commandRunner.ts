@@ -479,7 +479,7 @@ export function processHookJSONOutput({
           toolUseID,
           hookEvent,
           blockingError: result.blockingError,
-        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
+          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
         }) as any)
       : createAttachmentMessage({
           type: 'hook_success',

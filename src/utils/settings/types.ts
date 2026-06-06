@@ -576,6 +576,7 @@ export const SettingsSchema = lazySchema(() =>
             'marketplace allowlist, everything else blocked here.',
         ),
       // 底部内置状态栏，显示 effort、上下文、模型、token、git 信息
+      // DEPRECATED: 已迁移到 ~/.zy/statusline.json，保留此字段用于向后兼容
       builtInStatusBar: z
         .object({
           enabled: z.boolean().optional(),
@@ -602,7 +603,7 @@ export const SettingsSchema = lazySchema(() =>
         // unrelated user config. /statusline can then re-customize.
         .catch(undefined)
         .describe(
-          'Built-in status bar at the bottom of the screen. Shows effort level, context usage, model name, token usage, and git branch.',
+          'DEPRECATED: Use ~/.zy/statusline.json instead. Built-in status bar at the bottom of the screen. Shows effort level, context usage, model name, token usage, and git branch. This field is kept for backward compatibility and will be auto-migrated to statusline.json on first use.',
         ),
       // 使用市场优先格式的已启用插件
       enabledPlugins: z

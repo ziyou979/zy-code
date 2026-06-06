@@ -1422,7 +1422,9 @@ async function checkPermissionsAndCallTool(
           content: contentBlocks,
           imagePasteIds: allowImageIds,
           toolUseResult:
-            toolUseContext.agentId && !toolUseContext.preserveToolUseResults
+            toolUseContext.agentId &&
+            !toolUseContext.preserveToolUseResults &&
+            !tool.briefStandalone
               ? undefined
               : toolUseResult,
           mcpMeta: toolUseContext.agentId ? undefined : mcpMeta,

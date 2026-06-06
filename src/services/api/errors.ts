@@ -814,7 +814,7 @@ export function getAssistantMessageFromError(
   if (isConnectionError(error)) {
     return createAssistantAPIErrorMessage({
       // biome-ignore lint/suspicious/noExplicitAny: 连接错误类型不完善，需强制转换
-    content: `${API_ERROR_MESSAGE_PREFIX}: ${formatAPIError(error as any)}`,
+      content: `${API_ERROR_MESSAGE_PREFIX}: ${formatAPIError(error as any)}`,
       error: 'unknown',
     })
   }

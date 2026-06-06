@@ -814,11 +814,7 @@ export async function* runAgent({
     if (feature('MONITOR_TOOL')) {
       const mcpMod =
         require('../../tasks/MonitorMcpTask/MonitorMcpTask.js') as typeof import('../../tasks/MonitorMcpTask/MonitorMcpTask.js')
-      mcpMod.killMonitorMcpTasksForAgent(
-        agentId,
-        toolUseContext.getAppState,
-        rootSetAppState,
-      )
+      mcpMod.killMonitorMcpTasksForAgent(agentId, toolUseContext.getAppState, rootSetAppState)
     }
     /* eslint-enable @typescript-eslint/no-require-imports */
   }

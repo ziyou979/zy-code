@@ -258,7 +258,10 @@ export function tokenCountWithEstimation(messages: readonly Message[]): number {
         getTokenCountFromUsage(usage) +
         Math.round(
           roughTokenCountEstimationForMessages(
-            messages.slice(i + 1) as ReadonlyArray<{ type: string; message?: { content?: unknown } }>,
+            messages.slice(i + 1) as ReadonlyArray<{
+              type: string
+              message?: { content?: unknown }
+            }>,
           ) * correctionFactor,
         )
       )

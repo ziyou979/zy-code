@@ -41,7 +41,9 @@ export function createAgentFunction(ctx: WorkflowAgentContext) {
     ctx.budget.checkBudget()
 
     // 计算缓存键
-    const currentKey = ctx.journal ? computeAgentKey(prompt, opts as Record<string, unknown> | undefined, chainKey) : ''
+    const currentKey = ctx.journal
+      ? computeAgentKey(prompt, opts as Record<string, unknown> | undefined, chainKey)
+      : ''
     if (ctx.journal) {
       chainKey = currentKey
     }

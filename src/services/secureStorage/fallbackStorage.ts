@@ -78,6 +78,6 @@ export function createFallbackStorage(
 
       return primarySuccess || secondarySuccess
     },
-  // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
+    // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
   } as any
 }

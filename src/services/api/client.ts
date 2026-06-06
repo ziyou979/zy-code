@@ -28,7 +28,12 @@ import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js'
  * - ZY_API_KEY：直接 API 访问所需
  */
 
-function createStderrLogger(): { error: (msg: string, ...args: unknown[]) => void; warn: (msg: string, ...args: unknown[]) => void; info: (msg: string, ...args: unknown[]) => void; debug: (msg: string, ...args: unknown[]) => void } {
+function createStderrLogger(): {
+  error: (msg: string, ...args: unknown[]) => void
+  warn: (msg: string, ...args: unknown[]) => void
+  info: (msg: string, ...args: unknown[]) => void
+  debug: (msg: string, ...args: unknown[]) => void
+} {
   return {
     error: (msg: string, ...args: unknown[]) =>
       // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
@@ -106,7 +111,7 @@ export async function getAnthropicClient({
     // biome-ignore lint/suspicious/noExplicitAny: SDK ClientOptions 类型不包含 fetchOptions
     fetchOptions: getProxyFetchOptions({
       forAnthropicAPI: true,
-    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
+      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
     }) as any,
     ...(resolvedFetch && {
       fetch: resolvedFetch,

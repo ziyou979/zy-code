@@ -3,7 +3,10 @@
     "allow": [
       "WebSearch",
       "WebFetch(domain:wttr.in)",
-      "WebFetch(domain:www.timeanddate.com)"
+      "WebFetch(domain:www.timeanddate.com)",
+      "Bash(bun run:*)",
+      "Bash(bun tsc:*)",
+      "Bash(grep -h \"agentType:\" src/tools/AgentTool/built-in/*.ts)"
     ]
   }
 }

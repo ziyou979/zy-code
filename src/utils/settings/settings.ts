@@ -42,6 +42,7 @@ import {
   setCachedSettingsForSource,
   setSessionSettingsCache,
 } from './settingsCache.js'
+import { loadStatuslineConfig } from './statuslineConfig.js'
 import { type SettingsJson, SettingsSchema } from './types.js'
 import {
   filterInvalidPermissionRules,
@@ -710,6 +711,18 @@ function loadSettingsFromDisk(): SettingsWithErrors {
       source_count: seenFiles.size,
       error_count: allErrors.length,
     })
+
+    // 加载 statusline.json（独立配置文件，最高优先级覆盖 builtInStatusBar）
+    const statuslineConfig = loadStatuslineConfig()
+    if (statuslineConfig) {
+      mergedSettings = {
+        ...mergedSettings,
+        builtInStatusBar: {
+          enabled: statuslineConfig.enabled,
+          modules: statuslineConfig.modules,
+        },
+      }
+    }
 
     return { settings: mergedSettings, errors: allErrors }
   } finally {

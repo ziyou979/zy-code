@@ -9,7 +9,7 @@ import { execSync } from 'node:child_process'
 // 获取所有 noExplicitAny 错误的文件和行号
 const output = execSync(
   'npx biome lint --only=suspicious/noExplicitAny --max-diagnostics=5000 2>&1',
-  { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 }
+  { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 },
 )
 
 // 解析格式: src/utils/foo.ts:123:45 lint/suspicious/noExplicitAny
@@ -26,7 +26,9 @@ while ((match = regex.exec(output)) !== null) {
   errors.get(file).add(line)
 }
 
-console.log(`Found ${Array.from(errors.values()).reduce((s, set) => s + set.size, 0)} errors across ${errors.size} files`)
+console.log(
+  `Found ${Array.from(errors.values()).reduce((s, set) => s + set.size, 0)} errors across ${errors.size} files`,
+)
 
 // 为每个文件的每一行添加 biome-ignore 注释
 for (const [file, lineNumbers] of errors) {

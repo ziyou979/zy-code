@@ -39,7 +39,7 @@ export function ShowInIDEPrompt({
   focusedOption,
   yesInputMode,
   noInputMode,
-// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 }: Props<any>) {
   const saveFileHint = isSupportedVSCodeTerminal() && (
     <Text dimColor={true}>{tSync('permission.saveFileToContinue')}</Text>

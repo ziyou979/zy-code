@@ -269,8 +269,8 @@ export const EnvironmentMetadata = {
         ? globalThis.String(object.claude_code_remote_session_id)
         : '',
       tags: globalThis.Array.isArray(object?.tags)
-        // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
-        ? object.tags.map((e: any) => globalThis.String(e))
+        ? // biome-ignore lint/suspicious/noExplicitAny: protobuf 生成代码
+          object.tags.map((e: any) => globalThis.String(e))
         : [],
       deployment_environment: isSet(object.deployment_environment)
         ? globalThis.String(object.deployment_environment)

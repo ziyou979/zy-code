@@ -25,7 +25,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
         // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         { role: 'assistant', content: 'hello' } as any,
       ],
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     expect(result.model).toBe('claude-3-5-sonnet')
     expect(result.max_tokens).toBe(4096)
@@ -48,7 +48,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
         // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         { role: 'user', content: 'go' } as any,
       ],
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     expect(result.system).toBe('Rule 1\n\nRule 2')
   })
@@ -60,7 +60,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       messages: [{ role: 'user', content: 'hi' } as any],
       system: 'legacy system',
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     expect(result.system).toBe('legacy system')
   })
@@ -82,9 +82,9 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
           description: 'desc2',
           inputSchema: { type: 'object', properties: { b: { type: 'number' } } },
         },
-      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       ] as any,
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     expect(result.tools).toHaveLength(2)
     expect(result.tools![0]).toEqual({
@@ -109,7 +109,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
       topP: 0.9,
       stopSequences: ['END'],
       metadata: { user_id: 'u1' },
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     expect(result.temperature).toBe(0.5)
     expect(result.top_p).toBe(0.9)
@@ -128,7 +128,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
         anthropic: { thinking: { type: 'enabled', budgetTokens: 1024 } as any },
       },
       thinking: { type: 'disabled' },
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect(result.thinking).toEqual({ type: 'enabled', budgetTokens: 1024 } as any)
@@ -151,10 +151,10 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
               input: { query: 'ant' },
             },
           ],
-        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+          // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         } as any,
       ],
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     assertValidAnthropicCreateParams(result as unknown as Record<string, unknown>)
   })
@@ -179,10 +179,10 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
               input: '{"q":"hi"}', // ← 字符串形态
             },
           ],
-        // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+          // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
         } as any,
       ],
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     // 不抛错：input 已被自动转为 object
     assertValidAnthropicCreateParams(params as unknown as Record<string, unknown>)
@@ -203,7 +203,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
       messages: [{ role: 'user', content: 'hi' } as any],
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       extra_body: { custom_flag: true } as any,
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result as any).custom_flag).toBe(true)

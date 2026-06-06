@@ -97,9 +97,11 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
           result.message &&
           !(
             // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-            (result.message as any).type === 'attachment' &&
-            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-            (result.message as any).attachment.type === 'hook_blocking_error'
+            (
+              (result.message as any).type === 'attachment' &&
+              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
+              (result.message as any).attachment.type === 'hook_blocking_error'
+            )
           )
         ) {
           // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
@@ -256,9 +258,11 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
           result.message &&
           !(
             // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-            (result.message as any).type === 'attachment' &&
-            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-            (result.message as any).attachment.type === 'hook_blocking_error'
+            (
+              (result.message as any).type === 'attachment' &&
+              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
+              (result.message as any).attachment.type === 'hook_blocking_error'
+            )
           )
         ) {
           // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配

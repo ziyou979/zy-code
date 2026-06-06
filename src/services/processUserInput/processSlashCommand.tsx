@@ -1195,8 +1195,8 @@ async function getMessagesForPromptSlashCommand(
     imageContentBlocks.length > 0 || precedingInputBlocks.length > 0
       ? [...imageContentBlocks, ...precedingInputBlocks, ...result]
       : result
-  // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
   ) as any
+  // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
 
   // Extract attachments from command arguments (@-mentions, MCP resources,
   // agent mentions in SKILL.md). skipSkillDiscovery prevents the SKILL.md

@@ -4,10 +4,11 @@ import { readFileSync, writeFileSync } from 'node:fs'
 
 let output = ''
 try {
-  output = execSync(
-    'npx biome lint --only=suspicious/noExplicitAny --max-diagnostics=5000',
-    { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'] },
-  )
+  output = execSync('npx biome lint --only=suspicious/noExplicitAny --max-diagnostics=5000', {
+    encoding: 'utf8',
+    maxBuffer: 10 * 1024 * 1024,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  })
 } catch (e) {
   output = (e.stdout ?? '') + (e.stderr ?? '')
 }
@@ -62,7 +63,10 @@ for (const [file, lineNumbers] of errors) {
     const idx = lineNum - 1 - removedCount
     if (idx <= 0 || idx >= lines.length) continue
     const prevLine = lines[idx - 1].trim()
-    if (prevLine.startsWith('// ' + IGNORE_TAG) || prevLine.startsWith('// biome-ignore lint/suspicious/noExplicitAny:')) {
+    if (
+      prevLine.startsWith('// ' + IGNORE_TAG) ||
+      prevLine.startsWith('// biome-ignore lint/suspicious/noExplicitAny:')
+    ) {
       lines.splice(idx - 1, 1)
       removedCount++
     }
@@ -78,10 +82,11 @@ for (const [file, lineNumbers] of errors) {
 // 重新扫描
 let output2 = ''
 try {
-  output2 = execSync(
-    'npx biome lint --only=suspicious/noExplicitAny --max-diagnostics=5000',
-    { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'] },
-  )
+  output2 = execSync('npx biome lint --only=suspicious/noExplicitAny --max-diagnostics=5000', {
+    encoding: 'utf8',
+    maxBuffer: 10 * 1024 * 1024,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  })
 } catch (e) {
   output2 = (e.stdout ?? '') + (e.stderr ?? '')
 }

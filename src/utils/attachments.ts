@@ -874,7 +874,7 @@ export async function getAttachments(
     ...userAttachmentResults.flat(),
     ...threadAttachmentResults.flat(),
     ...mainThreadAttachmentResults.flat(),
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   ].filter((a) => a !== undefined && a !== null) as any
 }
 async function maybe<A>(label: string, f: () => Promise<A[]>): Promise<A[]> {
@@ -2957,7 +2957,7 @@ export function createAttachmentMessage(attachment: Attachment): AttachmentMessa
     type: 'attachment',
     uuid: randomUUID(),
     timestamp: new Date().toISOString(),
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   } as any
 }
 function getTodoReminderTurnCounts(messages: Message[]): {

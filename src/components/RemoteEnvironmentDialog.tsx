@@ -163,8 +163,8 @@ function MultipleEnvironmentsContent({
 }) {
   const sourceSuffix =
     selectedEnvironmentSource && selectedEnvironmentSource !== 'localSettings'
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      ? ` ${tSync('remoteEnv.fromSettings', { source: getSettingSourceName(selectedEnvironmentSource as any) })}`
+      ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+        ` ${tSync('remoteEnv.fromSettings', { source: getSettingSourceName(selectedEnvironmentSource as any) })}`
       : ''
   const subtitle = (
     <Text>

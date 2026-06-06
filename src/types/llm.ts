@@ -479,7 +479,9 @@ export function getHeader(error: APIErrorLike, name: string): string | null {
 export function isAPIError(error: unknown): error is APIErrorLike {
   return (
     error instanceof LLMError ||
-    (error instanceof Error && 'status' in error && typeof (error as { status: unknown }).status === 'number')
+    (error instanceof Error &&
+      'status' in error &&
+      typeof (error as { status: unknown }).status === 'number')
   )
 }
 

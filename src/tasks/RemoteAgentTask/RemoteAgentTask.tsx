@@ -704,12 +704,14 @@ function startRemoteSessionPolling(taskId: string, context: TaskContext): () => 
           .map((msg) => {
             if (msg.type === 'assistant') {
               // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-              return (msg.message as any).content
-                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-                .filter((block: any) => block.type === 'text')
-                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-                .map((block: any) => ('text' in block ? block.text : ''))
-                .join('\n')
+              return (
+                (msg.message as any).content
+                  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
+                  .filter((block: any) => block.type === 'text')
+                  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
+                  .map((block: any) => ('text' in block ? block.text : ''))
+                  .join('\n')
+              )
             }
             return jsonStringify(msg)
           })

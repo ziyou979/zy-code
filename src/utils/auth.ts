@@ -824,8 +824,8 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
 
   // biome-ignore lint/suspicious/noExplicitAny: SecureStorage 接口不包含 name/read/update，运行时实现有扩展方法
   const secureStorage = getSecureStorage() as any
-  const storageBackend = secureStorage
-    .name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
+  const storageBackend =
+    secureStorage.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
 
   try {
     const storageData = secureStorage.read() || {}
@@ -1108,9 +1108,7 @@ async function _checkAndRefreshOAuthTokenIfNeededImpl(
       // 对于 Zy.ai 订阅用户，省略 scopes 以使用默认的
       // ZY_CODE_OAUTH_SCOPES——这允许在刷新时扩展 scope
       // （例如添加 user:file_upload）而无需重新登录。
-      scopes: shouldUseZyAIAuth(lockedTokens.scopes)
-        ? undefined
-        : lockedTokens.scopes,
+      scopes: shouldUseZyAIAuth(lockedTokens.scopes) ? undefined : lockedTokens.scopes,
     })
     saveOAuthTokensIfNeeded(refreshedTokens)
 

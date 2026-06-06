@@ -1591,7 +1591,7 @@ export async function handleInitializeRequest(
       // other fields are all absent. apiProvider disambiguates "not logged
       // in" (direct API + tokenSource:none) from "3P, login not applicable".
       apiProvider: getAPIProvider(),
-    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
+      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
     } as any,
     pid: process.pid,
   }

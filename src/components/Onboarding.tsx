@@ -82,8 +82,8 @@ function getPlatforms(): PlatformConfig[] {
       label: model.label,
       value: model.value,
       description: model.tags?.length
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        ? model.tags.map((tag) => tSync(`model.tag.${tag}` as any)).join(' · ')
+        ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+          model.tags.map((tag) => tSync(`model.tag.${tag}` as any)).join(' · ')
         : '',
     }))
 

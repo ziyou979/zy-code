@@ -177,7 +177,7 @@ export function MCPRemoteServerMenu({
     setIsZyAIClearingAuth(false)
     setZyAIClearAuthUrl(null)
     setZyAIClearAuthBrowserOpened(false)
-  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   }, [server.name, srv.config, srv.scope, setAppState, onComplete])
 
   // Escape to cancel authentication flow
@@ -273,10 +273,10 @@ export function MCPRemoteServerMenu({
       // Replace 'mcprs' prefix with 'mcpsrv' if present
       // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
       const serverId = srv.config.id.startsWith('mcprs')
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        ? `mcpsrv${srv.config.id.slice(5)}`
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        : srv.config.id
+        ? // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+          `mcpsrv${srv.config.id.slice(5)}`
+        : // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+          srv.config.id
       const productSurface = encodeURIComponent(process.env.ZY_CODE_ENTRYPOINT || 'cli')
       authUrl = `${zyAiBaseUrl}/api/organizations/${orgUuid}/mcp/start-auth/${serverId}?product_surface=${productSurface}`
     } else {
@@ -287,7 +287,7 @@ export function MCPRemoteServerMenu({
     setIsZyAIAuthenticating(true)
     logEvent('zy_Zyai_mcp_auth_started', {})
     await openBrowser(authUrl)
-  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   }, [srv.config])
   const handleZyAIClearAuth = React.useCallback(() => {
     setIsZyAIClearingAuth(true)
@@ -632,7 +632,7 @@ export function MCPRemoteServerMenu({
         label: tSync('mcp.clearAuthentication'),
         value: 'zyai-clear-auth',
       })
-    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     } else if (srv.client.type !== 'disabled') {
       menuOptions.push({
         label: tSync('mcp.authenticate'),

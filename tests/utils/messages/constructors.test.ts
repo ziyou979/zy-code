@@ -101,7 +101,9 @@ describe('消息构造函数', () => {
 
       expect(stable.type).toBe('user')
       expect((stable.message as Record<string, unknown>).role).toBe('user')
-      expect((stable.message as Record<string, unknown>).content).toEqual([{ type: 'text', text: 'Hello world' }])
+      expect((stable.message as Record<string, unknown>).content).toEqual([
+        { type: 'text', text: 'Hello world' },
+      ])
       expect(stable.uuid).toBe('<UUID>')
       expect(stable.timestamp).toBe('<TIMESTAMP>')
     })
@@ -422,7 +424,11 @@ describe('消息构造函数', () => {
       const { createCompactBoundaryMessage } = await import(
         '../../../src/utils/messages/constructors.js'
       )
-      const msg = createCompactBoundaryMessage('manual', 30000, 'last-uuid-123' as unknown as undefined)
+      const msg = createCompactBoundaryMessage(
+        'manual',
+        30000,
+        'last-uuid-123' as unknown as undefined,
+      )
 
       expect(msg.compactMetadata.trigger).toBe('manual')
       expect((msg as unknown as Record<string, unknown>).logicalParentUuid).toBe('last-uuid-123')

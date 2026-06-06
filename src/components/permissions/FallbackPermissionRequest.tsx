@@ -119,7 +119,7 @@ export function FallbackPermissionRequest({
         <Text>
           {tSync('permission.yesDontAskAgainCommands', { name: userFacingName, cwd: originalCwd })}
         </Text>
-      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
+        // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
       ) as any,
       value: 'yes-dont-ask-again',
       feedbackConfig: {

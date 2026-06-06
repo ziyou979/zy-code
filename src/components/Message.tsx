@@ -332,7 +332,7 @@ function AssistantMessageBlock({
   thinkingBlockId,
   lastThinkingBlockId,
   advisorModel,
-// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 }: any) {
   if (feature('CONNECTOR_TEXT')) {
     if (isConnectorTextBlock(param)) {

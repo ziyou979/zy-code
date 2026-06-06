@@ -346,9 +346,7 @@ SelectProps<any>) {
                 onSubmit={(inputValue) => {
                   const hasImageAttachments =
                     pastedContents &&
-                    Object.values(pastedContents).some(
-                      (content) => content.type === 'image',
-                    )
+                    Object.values(pastedContents).some((content) => content.type === 'image')
                   if (inputValue.trim() || hasImageAttachments || option.allowEmptySubmitToCancel) {
                     onChange?.(option.value)
                   } else {
@@ -706,9 +704,7 @@ SelectProps<any>) {
               onSubmit={(newValue) => {
                 const hasImageAttachments =
                   pastedContents &&
-                  Object.values(pastedContents).some(
-                    (content) => content.type === 'image',
-                  )
+                  Object.values(pastedContents).some((content) => content.type === 'image')
                 if (newValue.trim() || hasImageAttachments || option.allowEmptySubmitToCancel) {
                   onChange?.(option.value)
                 } else {

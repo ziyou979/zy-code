@@ -263,9 +263,7 @@ async function countSystemTokens(effectiveSystemPrompt: readonly string[]): Prom
   // 跳过空字符串和全局缓存边界标记
   const namedEntries: Array<{ name: string; content: string }> = [
     ...effectiveSystemPrompt
-      .filter(
-        (content) => content.length > 0 && content !== SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
-      )
+      .filter((content) => content.length > 0 && content !== SYSTEM_PROMPT_DYNAMIC_BOUNDARY)
       .map((content) => ({ name: extractSectionName(content), content })),
     ...Object.entries(systemContext)
       .filter(([, content]) => content.length > 0)

@@ -13,7 +13,7 @@ export function WizardProvider({
   children,
   title,
   showStepCounter = true,
-// biome-ignore lint/suspicious/noExplicitAny: Ink 渲染层类型兼容
+  // biome-ignore lint/suspicious/noExplicitAny: Ink 渲染层类型兼容
 }: WizardProviderProps<any>) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [wizardData, setWizardData] = useState(initialData)

@@ -135,21 +135,21 @@ function MessageRowImpl({
     // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     (hasAnyToolInProgress(msg as any, inProgressToolUseIDs) || (isLoading && !hasContentAfter))
   const displayMsg = isGrouped
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    ? (msg as any).displayMessage
+    ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+      (msg as any).displayMessage
     : isCollapsed
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      ? getDisplayMessageFromCollapsed(msg as any)
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      : (msg as any)
+      ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+        getDisplayMessageFromCollapsed(msg as any)
+      : // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+        (msg as any)
   const progressMessagesForMessage =
     // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     isGrouped || isCollapsed ? [] : getProgressMessagesFromLookup(msg as any, lookups)
   const siblingToolUseIDs =
     isGrouped || isCollapsed
       ? EMPTY_STRING_SET
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      : getSiblingToolUseIDsFromLookup(msg as any, lookups)
+      : // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+        getSiblingToolUseIDsFromLookup(msg as any, lookups)
   const isStatic = shouldRenderStatically(
     // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     msg as any,

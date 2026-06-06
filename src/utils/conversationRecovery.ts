@@ -354,7 +354,11 @@ export function restoreSkillStateFromMessages(messages: Message[]): void {
       continue
     }
     if (message.attachment.type === 'invoked_skills') {
-      for (const skill of (message.attachment as unknown as { skills: Array<{ name: string; path: string; content: string }> }).skills) {
+      for (const skill of (
+        message.attachment as unknown as {
+          skills: Array<{ name: string; path: string; content: string }>
+        }
+      ).skills) {
         if (skill.name && skill.path && skill.content) {
           // resume 仅发生在主会话中，因此 agentId 为 null
           addInvokedSkill(skill.name, skill.path, skill.content, null)
@@ -460,7 +464,11 @@ export async function loadConversationForResume(
       if (feature('BG_SESSIONS')) {
         try {
           const udsClient = await import('./udsClient.js')
-          const live = await (udsClient as unknown as { listAllLiveSessions: () => Promise<Array<{ kind?: string; sessionId?: string }>> }).listAllLiveSessions()
+          const live = await (
+            udsClient as unknown as {
+              listAllLiveSessions: () => Promise<Array<{ kind?: string; sessionId?: string }>>
+            }
+          ).listAllLiveSessions()
           skip = new Set(
             live.flatMap((s: { kind?: string; sessionId?: string }) =>
               s.kind && s.kind !== 'interactive' && s.sessionId ? [s.sessionId] : [],

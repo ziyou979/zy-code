@@ -3,6 +3,7 @@ import { tSync } from 'src/i18n/index.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { fileHistoryEnabled } from 'src/utils/fileHistory.js'
 import { getInitialSettings, getSettingsForSource } from 'src/utils/settings/settings.js'
+import { loadStatuslineConfig } from 'src/utils/settings/statuslineConfig.js'
 import { shouldOfferTerminalSetup } from '../../commands/terminalSetup/terminalSetup.js'
 import { color } from '../../components/design-system/color.js'
 import { getShortcutDisplay } from '../../keybindings/shortcutFormat.js'
@@ -227,7 +228,11 @@ const externalTips: Tip[] = [
     content: async () =>
       'Use /statusline to toggle the built-in status bar showing effort, context usage, model, tokens, and git branch',
     cooldownSessions: 25,
-    isRelevant: async () => getInitialSettings().builtInStatusBar === undefined,
+    isRelevant: async () => {
+      const statuslineConfig = loadStatuslineConfig()
+      if (statuslineConfig) return false
+      return getInitialSettings().builtInStatusBar === undefined
+    },
   },
   {
     id: 'prompt-queue',

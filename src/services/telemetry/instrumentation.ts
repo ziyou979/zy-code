@@ -374,7 +374,7 @@ async function initializeBetaTracing(
         scheduledDelayMillis: DEFAULT_LOGS_EXPORT_INTERVAL_MS,
       }),
     ],
-  // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
+    // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
   } as any)
 
   logs.setGlobalLoggerProvider(loggerProvider)
@@ -555,7 +555,7 @@ export async function initializeTelemetry() {
               ),
             }),
         ),
-      // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
+        // biome-ignore lint/suspicious/noExplicitAny: 遥测 SDK 类型不完善
       } as any)
 
       // Register the logger provider globally

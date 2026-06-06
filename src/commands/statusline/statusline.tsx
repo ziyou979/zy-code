@@ -7,22 +7,36 @@ import {
 } from '../../components/statusbar/statusbarModuleDefaults.js'
 import { tSync } from '../../i18n/index.js'
 import type { LocalJSXCommandCall } from '../../types/command.js'
-import { getInitialSettings, updateSettingsForSource } from '../../utils/settings/settings.js'
+import { getInitialSettings } from '../../utils/settings/settings.js'
+import { resetSettingsCache } from '../../utils/settings/settingsCache.js'
+import {
+  getEffectiveStatuslineConfig,
+  saveStatuslineConfig,
+} from '../../utils/settings/statuslineConfig.js'
 import { createStatuslineDialog } from './StatuslineConfigDialog.js'
+
+/**
+ * 写入 statusline.json 并刷新 settings 缓存，使 useSettings() 能获取最新值
+ */
+function writeStatuslineAndRefresh(config: {
+  enabled: boolean
+  modules?: ModuleConfig[]
+}): void {
+  saveStatuslineConfig(config)
+  resetSettingsCache()
+}
 
 export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   const settings = getInitialSettings()
-  const currentConfig = settings.builtInStatusBar ?? {}
-  const currentlyEnabled = currentConfig.enabled !== false
+  const effectiveConfig = getEffectiveStatuslineConfig(settings.builtInStatusBar)
+  const currentlyEnabled = effectiveConfig.enabled !== false
 
   const argsLower = args.trim().toLowerCase()
 
   // ─── /statusline reset → 恢复默认 ─────────────────────────────────────
   if (argsLower === 'reset') {
     const defaults = DEFAULT_MODULES.map((m) => ({ ...m }))
-    updateSettingsForSource('userSettings', {
-      builtInStatusBar: { enabled: true, modules: defaults },
-    })
+    writeStatuslineAndRefresh({ enabled: true, modules: defaults })
     context.setAppState((prev) => ({
       ...prev,
       settings: {
@@ -37,9 +51,7 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   // ─── /statusline on|off → 显式开关 ────────────────────────────────────
   if (argsLower === 'on' || argsLower === 'off') {
     const enable = argsLower === 'on'
-    updateSettingsForSource('userSettings', {
-      builtInStatusBar: { ...currentConfig, enabled: enable },
-    })
+    writeStatuslineAndRefresh({ ...effectiveConfig, enabled: enable })
     context.setAppState((prev) => ({
       ...prev,
       settings: {
@@ -59,13 +71,11 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   // ─── /statusline <module> → 切换单个模块 ──────────────────────────────
   if ((MODULE_IDS as readonly string[]).includes(argsLower)) {
     const id = argsLower as ModuleId
-    const merged = mergeWithDefaults(currentConfig.modules)
+    const merged = mergeWithDefaults(effectiveConfig.modules)
     const next: ModuleConfig[] = merged.map((m) =>
-      m.id === id ? { ...m, visible: !m.visible } : m,
+      m.id === id ? { ...m, visible: !m.visible } : m
     )
-    updateSettingsForSource('userSettings', {
-      builtInStatusBar: { ...currentConfig, modules: next },
-    })
+    writeStatuslineAndRefresh({ ...effectiveConfig, enabled: true, modules: next })
     context.setAppState((prev) => ({
       ...prev,
       settings: {
@@ -86,9 +96,7 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   // ─── 无参数 → 弹出交互式对话框 ────────────────────────────────────────
   if (!currentlyEnabled) {
     // 未启用时先启用，再打开 dialog
-    updateSettingsForSource('userSettings', {
-      builtInStatusBar: { ...currentConfig, enabled: true },
-    })
+    writeStatuslineAndRefresh({ ...effectiveConfig, enabled: true })
     context.setAppState((prev) => ({
       ...prev,
       settings: {
@@ -99,9 +107,7 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   }
 
   return createStatuslineDialog(onDone, (next) => {
-    updateSettingsForSource('userSettings', {
-      builtInStatusBar: { enabled: true, modules: next },
-    })
+    writeStatuslineAndRefresh({ ...effectiveConfig, enabled: true, modules: next })
     context.setAppState((prev) => ({
       ...prev,
       settings: {

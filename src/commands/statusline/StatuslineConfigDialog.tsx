@@ -25,6 +25,7 @@ import { Box, Text, useInput } from '../../ink.js'
 import { useAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
 import { getGlobalConfig } from '../../utils/config.js'
+import { getEffectiveStatuslineConfig } from '../../utils/settings/statuslineConfig.js'
 import { resolveThemeSetting } from '../../utils/systemTheme.js'
 import { getTheme, type Theme } from '../../utils/theme.js'
 
@@ -71,6 +72,28 @@ export function StatuslineConfigDialog({ initial, onSave, onCancel }: Props): Re
     },
     [focusedId],
   )
+
+  const moveFocusedToTop = useCallback(() => {
+    setModules((prev) => {
+      const idx = prev.findIndex((m) => m.id === focusedId)
+      if (idx <= 0) return prev
+      const next = prev.slice()
+      const [item] = next.splice(idx, 1)
+      next.unshift(item!)
+      return next
+    })
+  }, [focusedId])
+
+  const moveFocusedToBottom = useCallback(() => {
+    setModules((prev) => {
+      const idx = prev.findIndex((m) => m.id === focusedId)
+      if (idx < 0 || idx === prev.length - 1) return prev
+      const next = prev.slice()
+      const [item] = next.splice(idx, 1)
+      next.push(item!)
+      return next
+    })
+  }, [focusedId])
 
   const resetFocused = useCallback(() => {
     setModules((prev) =>
@@ -136,6 +159,14 @@ export function StatuslineConfigDialog({ initial, onSave, onCancel }: Props): Re
       }
       if (input === 'K' || (key.shift && key.upArrow)) {
         moveFocused(-1)
+        return
+      }
+      if (input === 'g') {
+        moveFocusedToTop()
+        return
+      }
+      if (input === 'G') {
+        moveFocusedToBottom()
         return
       }
     },
@@ -235,9 +266,9 @@ function MainView({
   const theme = getTheme(resolveThemeSetting(getGlobalConfig().theme))
   const options = useMemo(
     () =>
-      modules.map((m) => ({
+      modules.map((m, index) => ({
         value: m.id,
-        label: <ModuleRow module={m} theme={theme} />,
+        label: <ModuleRow module={m} theme={theme} index={index} total={modules.length} />,
       })),
     [modules, theme],
   )
@@ -276,25 +307,37 @@ function padVisual(s: string, width: number): string {
  * otherwise Ink throws "<Box> can't be nested inside <Text>". Column
  * alignment is done via space-padding instead of Box widths.
  */
-function ModuleRow({ module, theme }: { module: ModuleConfig; theme: Theme }): React.ReactNode {
+function ModuleRow({
+  module,
+  theme,
+  index,
+  total,
+}: { module: ModuleConfig; theme: Theme; index: number; total: number }): React.ReactNode {
   const visible = module.visible
   const icon = effectiveIcon(module)
   const color = effectiveColor(module)
   const checkbox = visible ? '☑' : '☐'
   const iconCell = icon || '·'
   const name = tSync(`statusline.module.${module.id}` as never)
+  // 位置编号（3 字符宽，如 "1. "）
+  const posLabel = `${index + 1}.`
+  const posPadded = padVisual(posLabel, 3)
+  // 方向箭头（2 字符宽）
+  const arrows = index === 0 ? '↓' : index === total - 1 ? '↑' : '↕'
   // Column widths in terminal cells: name=14, icon=3 (with trailing space).
   const namePadded = padVisual(name, 14)
   const iconPadded = padVisual(iconCell, 3)
   return (
     <Text>
       {checkbox}{' '}
+      <Text dimColor>{posPadded}</Text>
       <Text bold={visible} dimColor={!visible}>
         {namePadded}
       </Text>
       <Text dimColor={!visible}>{iconPadded}</Text>
       <Text color={resolveColor(theme, color) as never}>■</Text>
       <Text dimColor> {color}</Text>
+      <Text dimColor> {arrows}</Text>
     </Text>
   )
 }

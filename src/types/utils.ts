@@ -5,8 +5,8 @@ export type DeepImmutable<T> =
     ? ReadonlyMap<K, V>
     : T extends Set<infer U>
       ? ReadonlySet<U>
-      // biome-ignore lint/suspicious/noExplicitAny: 工具类型需要匹配任意函数签名
-  : T extends (...args: any[]) => any
+      : // biome-ignore lint/suspicious/noExplicitAny: 工具类型需要匹配任意函数签名
+        T extends (...args: any[]) => any
         ? T
         : T extends object
           ? { readonly [K in keyof T]: DeepImmutable<T[K]> }

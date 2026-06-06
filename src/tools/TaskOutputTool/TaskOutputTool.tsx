@@ -399,13 +399,11 @@ function TaskOutputResultDisplay({
                 {task.result && (
                   <Box marginTop={1}>
                     <AgentResponseDisplay
-                      content={
-                        [
-                          {
-                            text: task.result,
-                          },
-                        ]
-                      }
+                      content={[
+                        {
+                          text: task.result,
+                        },
+                      ]}
                       theme={theme}
                     />
                   </Box>

@@ -125,7 +125,7 @@ Your response must be a JSON object matching one of the following schemas:
             stderr: 'JSON validation failed',
             stdout: fullResponse,
             exitCode: 1,
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
+            // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
           }) as any,
         }
       }
@@ -146,7 +146,7 @@ Your response must be a JSON object matching one of the following schemas:
             stderr: `Schema validation failed: ${parsed.error.message}`,
             stdout: fullResponse,
             exitCode: 1,
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
+            // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
           }) as any,
         }
       }
@@ -177,7 +177,7 @@ Your response must be a JSON object matching one of the following schemas:
           toolUseID: effectiveToolUseID,
           hookEvent,
           content: '',
-        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
+          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
         }) as any,
       }
     } catch (error) {
@@ -205,7 +205,7 @@ Your response must be a JSON object matching one of the following schemas:
         stderr: `Error executing prompt hook: ${errorMsg}`,
         stdout: '',
         exitCode: 1,
-      // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
+        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
       }) as any,
     }
   }

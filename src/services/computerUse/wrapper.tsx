@@ -329,8 +329,8 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
     // 类型也允许 audio/resource，但 CU 的 handleToolCall 永远不会发出
     // 这些；默写将它们强制转换为空文本。
     const data = Array.isArray(result.content)
-      // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
-      ? result.content.map((item: any) =>
+      ? // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
+        result.content.map((item: any) =>
           item.type === 'image'
             ? {
                 type: 'image' as const,

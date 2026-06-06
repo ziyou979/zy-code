@@ -1256,7 +1256,7 @@ function PromptInput({
             clearBuffer()
             resetHistory()
             return
-          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+            // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
           } else if ((result as any).error === 'no_team_context') {
             // No team context - fall through to normal prompt submission
           } else {

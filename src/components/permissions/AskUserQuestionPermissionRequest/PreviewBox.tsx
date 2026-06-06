@@ -59,7 +59,7 @@ function PreviewBoxBody({
   minWidth = 40,
   maxWidth,
   highlight,
-// biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
+  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
 }: PreviewBoxProps & { highlight: any }) {
   const { columns: terminalWidth } = useTerminalSize()
   const [theme] = useTheme()

@@ -113,7 +113,7 @@ export class OAuthService {
         profileInfo.subscriptionType,
         profileInfo.rateLimitTier,
         profileInfo.rawProfile,
-      // biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth 响应类型不完善
+        // biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth 响应类型不完善
       ) as any
     } catch (error) {
       // If we have a pending response, send an error redirect before closing
@@ -181,7 +181,7 @@ export class OAuthService {
             organizationUuid: response.organization?.uuid,
           }
         : undefined,
-    // biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth 响应类型不完善
+      // biome-ignore lint/suspicious/noExplicitAny: 第三方 OAuth 响应类型不完善
     } as any
   }
 

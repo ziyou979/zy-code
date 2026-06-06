@@ -744,7 +744,12 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
         /* eslint-disable @typescript-eslint/no-require-imports */
         const { postInterZyMessage } = require('../../bridge/peerSessions.js')
         /* eslint-enable @typescript-eslint/no-require-imports */
-        const result = await (postInterZyMessage as (target: string, message: string) => Promise<{ ok: boolean; error?: string }>)(addr.target, input.message)
+        const result = await (
+          postInterZyMessage as (
+            target: string,
+            message: string,
+          ) => Promise<{ ok: boolean; error?: string }>
+        )(addr.target, input.message)
         const preview = input.summary || truncate(input.message, 50)
         return {
           data: {
@@ -760,7 +765,10 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
         const { sendToUdsSocket } = require('../../utils/udsClient.js')
         /* eslint-enable @typescript-eslint/no-require-imports */
         try {
-          await (sendToUdsSocket as (target: string, message: string) => Promise<void>)(addr.target, input.message)
+          await (sendToUdsSocket as (target: string, message: string) => Promise<void>)(
+            addr.target,
+            input.message,
+          )
           const preview = input.summary || truncate(input.message, 50)
           return {
             data: {

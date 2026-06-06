@@ -120,7 +120,7 @@ export function TreeSelect({
   getParentPrefix,
   getChildPrefix,
   onUpFromFirstItem,
-// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 }: TreeSelectProps<any>) {
   const [internalExpandedIds, setInternalExpandedIds] = React.useState(new Set<string>())
   const isProgrammaticFocusRef = React.useRef(false)

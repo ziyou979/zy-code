@@ -25,7 +25,15 @@ export function reasoningChunk(reasoning: string, model = 'qwen-plus'): Chunk {
     object: 'chat.completion.chunk',
     created: 0,
     model,
-    choices: [{ index: 0, delta: { reasoning_content: reasoning } as unknown as OpenAI.Chat.Completions.ChatCompletionChunk.Choice.Delta, finish_reason: null }],
+    choices: [
+      {
+        index: 0,
+        delta: {
+          reasoning_content: reasoning,
+        } as unknown as OpenAI.Chat.Completions.ChatCompletionChunk.Choice.Delta,
+        finish_reason: null,
+      },
+    ],
   }
 }
 

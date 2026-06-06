@@ -778,7 +778,7 @@ export function DiscoverPlugins({
           hasSelection: selectedForInstall.size > 0,
           canToggle:
             selectedIndex < filteredPlugins.length && !filteredPlugins[selectedIndex]?.isInstalled,
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
+          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
         } as any)}
       />
     </Box>

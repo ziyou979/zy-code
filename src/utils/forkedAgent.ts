@@ -197,12 +197,12 @@ export async function prepareForkedCommandContext(
   // 创建带有允许工具的修改后的上下文
   const modifiedGetAppState = createGetAppStateWithAllowedTools(context.getAppState, allowedTools)
 
-  // 如果指定了 command.agent 则使用，否则使用 'general-purpose'
-  const agentTypeName = command.agent ?? 'general-purpose'
+  // 如果指定了 command.agent 则使用，否则使用 'General'
+  const agentTypeName = command.agent ?? 'General'
   const agents = context.options.agentDefinitions.activeAgents
   const baseAgent =
     agents.find((a) => a.agentType === agentTypeName) ??
-    agents.find((a) => a.agentType === 'general-purpose') ??
+    agents.find((a) => a.agentType === 'General') ??
     agents[0]
 
   if (!baseAgent) {
@@ -509,7 +509,9 @@ export async function runForkedAgent({
     )
     // 跟踪最后记录的消息 UUID 用于父级链连续性
     lastRecordedUuid =
-      initialMessages.length > 0 ? (initialMessages[initialMessages.length - 1]!.uuid as UUID) : null
+      initialMessages.length > 0
+        ? (initialMessages[initialMessages.length - 1]!.uuid as UUID)
+        : null
   }
 
   // 使用隔离上下文运行查询循环（保留缓存安全参数）

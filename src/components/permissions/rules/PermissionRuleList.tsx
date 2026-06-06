@@ -595,7 +595,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
             type: 'addDirectories' as const,
             directories: [path_0],
             destination,
-          // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
+            // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
           } as any
           const updatedContext = applyPermissionUpdate(
             toolPermissionContext,
@@ -655,7 +655,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
     getRulesOptions,
     handleToolSelect,
     onHeaderFocusChange: handleHeaderFocusChange,
-  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
+    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
   } as any
   const isHidden =
     !!selectedRule ||

@@ -210,7 +210,7 @@ ${agentListSection}
 ${
   forkEnabled
     ? `When using the ${AGENT_TOOL_NAME} tool, specify a subagent_type to use a specialized agent, or omit it to fork yourself — a fork inherits your full conversation context.`
-    : `When using the ${AGENT_TOOL_NAME} tool, specify a subagent_type parameter to select which agent type to use. If omitted, the general-purpose agent is used.`
+    : `When using the ${AGENT_TOOL_NAME} tool, specify a subagent_type parameter to select which agent type to use. If omitted, the General agent is used.`
 }`
 
   // Coordinator mode gets the slim prompt -- the coordinator system prompt

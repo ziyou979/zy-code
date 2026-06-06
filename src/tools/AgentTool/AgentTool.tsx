@@ -238,7 +238,7 @@ type InputSchema = ReturnType<typeof inputSchema>
 
 // Explicit type widens the schema inference to always include all optional
 // fields even when .omit() strips them for gating (cwd, run_in_background).
-// subagent_type is optional; call() defaults it to general-purpose when the
+// subagent_type is optional; call() defaults it to General when the
 // fork gate is off, or routes to the fork path when the gate is on.
 type AgentToolInput = z.infer<ReturnType<typeof baseInputSchema>> & {
   name?: string
@@ -454,7 +454,7 @@ export const AgentTool = buildTool({
     // Fork subagent experiment routing:
     // - subagent_type set: use it (explicit wins)
     // - subagent_type omitted, gate on: fork path (undefined)
-    // - subagent_type omitted, gate off: default general-purpose
+    // - subagent_type omitted, gate off: default General
     const effectiveType =
       subagent_type ?? (isForkSubagentEnabled() ? undefined : GENERAL_PURPOSE_AGENT.agentType)
     const isForkPath = effectiveType === undefined

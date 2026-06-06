@@ -5,8 +5,6 @@ export const enAgents: TranslationResource = {
   'agent.agentsFinishedNoType': 'agents finished',
   'agent.apiCallsOnly': '[ANT-ONLY] API calls: {path}',
   'agent.backgroundAgentsLaunched': 'background agents launched',
-  'agent.builtInType.Explore': 'Explore',
-  'agent.builtInType.Plan': 'Plan',
   'agent.backgrounded': 'Backgrounded agent',
   'agent.defaultName': 'Agent',
   'agent.done': 'Done',

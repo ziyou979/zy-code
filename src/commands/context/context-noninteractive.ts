@@ -49,7 +49,7 @@ export async function collectContextData(context: CollectContextDataInput): Prom
   const { messages: compactedMessages } = (await microcompactMessages(
     apiView,
     undefined,
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
+    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   )) as any as {
     messages: Message[]
   }

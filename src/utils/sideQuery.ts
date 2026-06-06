@@ -136,7 +136,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
     allMessages.push({
       role: 'system',
       content: systemBlocks.map((b) => b.text).join('\n\n'),
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     } as any)
   }
   for (const m of messages) {
@@ -161,7 +161,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
           outputConfig: outputFormat ? { format: outputFormat } : undefined,
         },
       },
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
+      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     } as any,
     signal ?? new AbortController().signal,
   )

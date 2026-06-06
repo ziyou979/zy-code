@@ -35,7 +35,7 @@ export async function execMcpToolHook(
       stderr,
       stdout: '',
       exitCode: 1,
-    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
+      // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
     }) as any,
   })
 
@@ -84,7 +84,7 @@ export async function execMcpToolHook(
         toolUseID: id,
         hookEvent,
         content: '',
-      // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
+        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
       }) as any,
     }
   } catch (error) {

@@ -37,7 +37,7 @@ beforeAll(async () => {
 const ctx = {
   getAppState: () => ({}),
   abortController: { signal: undefined },
-// biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+  // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
 } as any
 const toolUses = [{ tool_name: 'Bash', tool_use_id: 't1', status: 'success' as const }]
 

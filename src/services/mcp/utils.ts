@@ -489,7 +489,7 @@ export function extractAgentMcpServers(agents: AgentDefinition[]): AgentMcpServe
         transport: 'stdio',
         command: config.command,
         needsAuth: false,
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
       } as any)
     } else if (isSSEConfig(config)) {
       result.push({
@@ -499,7 +499,7 @@ export function extractAgentMcpServers(agents: AgentDefinition[]): AgentMcpServe
         transport: 'sse',
         url: config.url,
         needsAuth: true,
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
       } as any)
     } else if (isHTTPConfig(config)) {
       result.push({
@@ -509,7 +509,7 @@ export function extractAgentMcpServers(agents: AgentDefinition[]): AgentMcpServe
         transport: 'http',
         url: config.url,
         needsAuth: true,
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
       } as any)
     } else if (isWebSocketConfig(config)) {
       result.push({
@@ -519,7 +519,7 @@ export function extractAgentMcpServers(agents: AgentDefinition[]): AgentMcpServe
         transport: 'ws',
         url: config.url,
         needsAuth: false,
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
       } as any)
     }
     // Skip unsupported transport types (sdk, zyai-proxy, sse-ide, ws-ide)

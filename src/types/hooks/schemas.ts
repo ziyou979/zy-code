@@ -71,7 +71,7 @@ export const BaseHookInputSchema = lazySchema(() =>
       .string()
       .optional()
       .describe(
-        'Agent type name (e.g., "general-purpose", "code-reviewer"). Present when the ' +
+        'Agent type name (e.g., "General", "code-reviewer"). Present when the ' +
           'hook fires from within a subagent (alongside agent_id), or on the main thread ' +
           'of a session started with --agent (without agent_id).',
       ),
