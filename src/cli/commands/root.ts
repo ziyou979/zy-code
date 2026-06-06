@@ -306,20 +306,129 @@ import {
   parsePRReference,
 } from '../../utils/worktree.js'
 
-// biome-ignore lint/suspicious/noExplicitAny: action 回调 options 跨函数边界类型链不可保留
-export async function rootAction(prompt: string | undefined, options: any): Promise<void> {
+// Commander action 回调传入的 options。字段来自 main.tsx 中 .option() 注册
+// 以及 feature() 门控的动态选项。所有字段可选（commander 未传时为 undefined）。
+export interface RootActionOptions {
+  // 模式控制
+  bare?: boolean
+  print?: boolean | string
+  init?: boolean
+  initOnly?: boolean
+  maintenance?: boolean
+  continue?: boolean
+  resume?: boolean | string
+  forkSession?: boolean
+  fromPr?: boolean | string
+
+  // 模型与推理
+  model?: string
+  thinking?: 'adaptive' | 'enabled' | 'disabled'
+  maxThinkingTokens?: number
+  effort?: string
+  advisor?: string
+
+  // 输入/输出
+  inputFormat?: string
+  outputFormat?: string
+  verbose?: boolean
+  jsonSchema?: string
+  prefill?: string
+  name?: string
+  replayUserMessages?: boolean
+  sessionPersistence?: boolean
+
+  // 系统提示
+  systemPrompt?: string
+  systemPromptFile?: string
+  appendSystemPrompt?: string
+  appendSystemPromptFile?: string
+
+  // 工具与权限
+  disableSlashCommands?: boolean
+  strictMcpConfig?: boolean
+  permissionPromptTool?: string
+  enableAutoMode?: boolean
+  enableAuthStatus?: boolean
+
+  // 代理
+  agent?: string
+  agents?: string
+  agentId?: string
+
+  // 限制
+  maxTurns?: number
+  maxBudgetUsd?: number
+  taskBudget?: number
+
+  // 远程/桥接
+  sdkUrl?: string
+  remote?: string | true
+  remoteControl?: string | true
+  rc?: string | true
+  teleport?: string | true
+  messagingSocketPath?: string
+
+  // 工作区
+  worktree?: boolean | string
+  tmux?: boolean
+  resumeSessionAt?: string
+  rewindFiles?: string
+
+  // Kairos/团队
+  assistant?: boolean
+  brief?: boolean
+  proactive?: boolean
+  channels?: string[]
+  dangerouslyLoadDevelopmentChannels?: string[]
+
+  // 调试
+  debug?: boolean
+  debugToStderr?: boolean
+
+  // 权限
+  dangerouslySkipPermissions?: boolean
+  allowDangerouslySkipPermissions?: boolean
+  permissionMode?: string
+
+  // 工具列表（CLI --tools / --allowed-tools / --disallowed-tools）
+  tools?: string[]
+  allowedTools?: string[]
+  disallowedTools?: string[]
+
+  // MCP
+  mcpConfig?: string[]
+  addDir?: string[]
+
+  // 模型
+  fallbackModel?: string
+
+  // SDK / 集成
+  betas?: string[]
+  ide?: boolean
+  sessionId?: string
+  includeHookEvents?: boolean
+  includePartialMessages?: boolean
+
+  // 其他
+  chrome?: boolean
+  tasks?: boolean | string
+  file?: string[]
+  workload?: string
+
+  // feature() 门控的选项可能以 [key: string] 形式存在
+  [key: string]: unknown
+}
+
+export async function rootAction(
+  prompt: string | undefined,
+  options: RootActionOptions,
+): Promise<void> {
   profileCheckpoint('action_handler_start')
 
   // --bare = 一键最小模式。设置 SIMPLE 以便所有现有的
   // 门控触发（AGENTS.md、skills、hooks 在 executeHooks 中、agent
   // 目录遍历）。必须在 setup() / 任何门控工作运行之前设置。
-  if (
-    (
-      options as {
-        bare?: boolean
-      }
-    ).bare
-  ) {
+  if (options.bare) {
     process.env.ZY_CODE_SIMPLE = '1'
   }
 
@@ -356,15 +465,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   let assistantTeamContext:
     | Awaited<ReturnType<typeof getAssistant>['initializeAssistantTeam']>
     | undefined
-  if (
-    feature('KAIROS') &&
-    (
-      options as {
-        assistant?: boolean
-      }
-    ).assistant &&
-    assistantModule
-  ) {
+  if (feature('KAIROS') && options.assistant && assistantModule) {
     // --assistant（Agent SDK 守护进程模式）：在
     // isAssistantMode() 在下面运行之前强制锁定。守护进程已经检查过
     // 权限 —— 不要让子进程重新检查 zy_kairos。
@@ -378,11 +479,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     // 意味着我们是一个生成的队友（extractTeammateOptions 在
     // 约 170 行后运行，所以检查原始 commander 选项）—— 不要
     // 重新初始化团队或覆盖 teammateMode/proactive/brief。
-    !(
-      options as {
-        agentId?: unknown
-      }
-    ).agentId &&
+    !options.agentId &&
     kairosGate
   ) {
     if (!checkHasTrustDialogAccepted()) {
@@ -401,10 +498,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
         // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
         getAssistant().isAssistantForced() || (await (kairosGate as any).isKairosEnabled())
       if (kairosEnabled) {
-        const opts = options as {
-          brief?: boolean
-        }
-        opts.brief = true
+        options.brief = true
         setKairosActive(true)
         // 预播种一个进程内团队，以便 Agent(name: "foo") 生成
         // 队友时不需要 TeamCreate。必须在 setup() 捕获
@@ -461,13 +555,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   const disableSlashCommands = options.disableSlashCommands || false
 
   // 提取任务模式选项（仅限 ant）
-  const tasksOption =
-    isInternalBuild() &&
-    (
-      options as {
-        tasks?: boolean | string
-      }
-    ).tasks
+  const tasksOption = isInternalBuild() && options.tasks
   const taskListId = tasksOption
     ? typeof tasksOption === 'string'
       ? tasksOption
@@ -479,13 +567,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
 
   // 提取 worktree 选项
   // worktree 可以是 true（不带值的标志）或字符串（自定义名称或 PR 引用）
-  const worktreeOption = isWorktreeModeEnabled()
-    ? (
-        options as {
-          worktree?: boolean | string
-        }
-      ).worktree
-    : undefined
+  const worktreeOption = isWorktreeModeEnabled() ? options.worktree : undefined
   let worktreeName = typeof worktreeOption === 'string' ? worktreeOption : undefined
   const worktreeEnabled = worktreeOption !== undefined
 
@@ -500,13 +582,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   }
 
   // 提取 tmux 选项（需要 --worktree）
-  const tmuxEnabled =
-    isWorktreeModeEnabled() &&
-    (
-      options as {
-        tmux?: boolean
-      }
-    ).tmux === true
+  const tmuxEnabled = isWorktreeModeEnabled() && options.tmux === true
 
   // 验证 tmux 选项
   if (tmuxEnabled) {
@@ -569,12 +645,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   }
 
   // 提取远程 SDK 选项
-  const sdkUrl =
-    (
-      options as {
-        sdkUrl?: string
-      }
-    ).sdkUrl ?? undefined
+  const sdkUrl = options.sdkUrl ?? undefined
 
   // 允许环境变量启用部分消息（用于沙箱网关的 baku）
   const effectiveIncludePartialMessages =
@@ -607,33 +678,14 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   }
 
   // 提取 teleport 选项
-  const teleport =
-    (
-      options as {
-        teleport?: string | true
-      }
-    ).teleport ?? null
+  const teleport = options.teleport ?? null
 
   // 提取 remote 选项（如果没有提供描述可以为 true，或为字符串）
-  const remoteOption = (
-    options as {
-      remote?: string | true
-    }
-  ).remote
+  const remoteOption = options.remote
   const remote = remoteOption === true ? '' : (remoteOption ?? null)
 
   // 提取 --remote-control / --rc 标志（在交互会话中启用桥接）
-  const remoteControlOption =
-    (
-      options as {
-        remoteControl?: string | true
-      }
-    ).remoteControl ??
-    (
-      options as {
-        rc?: string | true
-      }
-    ).rc
+  const remoteControlOption = options.remoteControl ?? options.rc
   // 实际的桥接检查延迟到 showSetupScreens() 之后，以便
   // 建立信任且 GrowthBook 有认证头。
   let remoteControl = false
@@ -677,11 +729,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   }
 
   // 如果通过 --file 标志指定了文件资源，则下载它们
-  const fileSpecs = (
-    options as {
-      file?: string[]
-    }
-  ).file
+  const fileSpecs = options.file
   if (fileSpecs && fileSpecs.length > 0) {
     // 获取会话入口令牌（由 EnvManager 通过 ZY_CODE_SESSION_ACCESS_TOKEN 提供）
     const sessionToken = getSessionIngressAuthToken()
@@ -807,11 +855,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   // 由 verifyAutoModeGateAccess 决定是否在
   // auto-unavailable 时通知，以及由 zy_auto_mode_config opt-in carousel 使用。
   if (
-    (
-      options as {
-        enableAutoMode?: boolean
-      }
-    ).enableAutoMode ||
+    options.enableAutoMode ||
     permissionModeCli === 'auto' ||
     permissionMode === 'auto' ||
     (!permissionModeCli && isDefaultPermissionModeAuto())
@@ -938,12 +982,9 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   }
 
   // 提取 Claude in Chrome 选项并强制 zy.ai 订阅者检查（除非用户是 ant）
-  const chromeOpts = options as {
-    chrome?: boolean
-  }
   // 存储明确的 CLI 标志以便队友可以继承它
-  setChromeFlagOverride(chromeOpts.chrome)
-  const enableClaudeInChrome = shouldEnableClaudeInChrome(chromeOpts.chrome) && isInternalBuild()
+  setChromeFlagOverride(options.chrome)
+  const enableClaudeInChrome = shouldEnableClaudeInChrome(options.chrome) && isInternalBuild()
   const autoEnableClaudeInChrome = !enableClaudeInChrome && shouldAutoEnableClaudeInChrome()
   if (enableClaudeInChrome) {
     const platform = getPlatform()
@@ -1101,12 +1142,8 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
       }
       return entries
     }
-    const channelOpts = options as {
-      channels?: string[]
-      dangerouslyLoadDevelopmentChannels?: string[]
-    }
-    const rawChannels = channelOpts.channels
-    const rawDev = channelOpts.dangerouslyLoadDevelopmentChannels
+    const rawChannels = options.channels
+    const rawDev = options.dangerouslyLoadDevelopmentChannels
     // 始终解析 + 设置。ChannelsNotice 读取 getAllowedChannels() 并
     // 在启动屏幕中渲染适当的分支（disabled/noAuth/policyBlocked/
     // listening）。gateChannelServer() 强制执行。
@@ -1357,13 +1394,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   logForDebugging('[STARTUP] Running setup()...')
   const setupStart = Date.now()
   const { setup } = await import('../../setup.js')
-  const messagingSocketPath = feature('UDS_INBOX')
-    ? (
-        options as {
-          messagingSocketPath?: string
-        }
-      ).messagingSocketPath
-    : undefined
+  const messagingSocketPath = feature('UDS_INBOX') ? options.messagingSocketPath : undefined
   // 并行化 setup() 与命令+代理加载。setup() 的约 28ms 主要是
   // startUdsMessaging（socket 绑定，约 20ms）—— 不是磁盘绑定的，所以它
   // 不与 getCommands 的文件读取竞争。在 !worktreeEnabled 门控，
@@ -1408,11 +1439,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   let effectiveReplayUserMessages = !!options.replayUserMessages
   if (feature('UDS_INBOX')) {
     if (!effectiveReplayUserMessages && outputFormat === 'stream-json') {
-      effectiveReplayUserMessages = !!(
-        options as {
-          messagingSocketPath?: string
-        }
-      ).messagingSocketPath
+      effectiveReplayUserMessages = !!options.messagingSocketPath
     }
   }
   if (getIsNonInteractiveSession()) {
@@ -1612,13 +1639,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     : ''
   let advisorModel: string | undefined
   if (isAdvisorEnabled()) {
-    const advisorOption = canUserConfigureAdvisor()
-      ? (
-          options as {
-            advisor?: string
-          }
-        ).advisor
-      : undefined
+    const advisorOption = canUserConfigureAdvisor() ? options.advisor : undefined
     if (advisorOption) {
       logForDebugging(`[AdvisorTool] --advisor ${advisorOption}`)
       if (!modelSupportsAdvisor(resolvedInitialModel)) {
@@ -1725,12 +1746,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   // 并与委托指令冲突。
   if (
     (feature('PROACTIVE') || feature('KAIROS')) &&
-    ((
-      options as {
-        proactive?: boolean
-      }
-    ).proactive ||
-      isEnvTruthy(process.env.ZY_CODE_PROACTIVE)) &&
+    (options.proactive || isEnvTruthy(process.env.ZY_CODE_PROACTIVE)) &&
     !coordinatorModeModule?.isCoordinatorMode()
   ) {
     /* eslint-disable @typescript-eslint/no-require-imports */
@@ -2070,7 +2086,7 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
     verbose,
     debug,
     debugToStderr,
-    print: print ?? false,
+    print: !!print,
     outputFormat: outputFormat ?? 'text',
     inputFormat: inputFormat ?? 'text',
     numAllowedTools: allowedTools.length,
@@ -2681,8 +2697,8 @@ export async function rootAction(prompt: string | undefined, options: any): Prom
   // sessionDataUploader.ts 中的每轮认证逻辑优雅地处理未认证
   // 状态（每轮重新检查，所以会话中间的认证恢复有效）。
   const uploaderReady = sessionUploaderPromise
-    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-    ? sessionUploaderPromise.then((mod: any) => mod.createSessionTurnUploader()).catch(() => null)
+    ? // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
+      sessionUploaderPromise.then((mod: any) => mod.createSessionTurnUploader()).catch(() => null)
     : null
   const sessionConfig = {
     debug: debug || debugToStderr,
