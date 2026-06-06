@@ -5,7 +5,10 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/grow
 import { getAPIProvider, getProviderEffortMapping } from 'src/services/model/providers.js'
 import { getMainLoopModel } from 'src/services/model/model.js'
 import { getProviderEntry } from 'src/services/model/providerRegistry.js'
-import { getLocalModelEffortLevels } from './settings/localModelCapabilities.js'
+import {
+  getLocalModelEffortLevels,
+  getLocalModelEffortMap,
+} from './settings/localModelCapabilities.js'
 import { isEnvTruthy, isInternalBuild } from './envUtils.js'
 
 // ---------------------------------------------------------------------------
@@ -55,11 +58,23 @@ const DEFAULT_EFFORT_MAPPING: Record<string, string> = {
 
 /**
  * 将内部 effort 档位映射为目标 provider 的 API 参数值。
- * 优先读取 providerRegistry 中的 effortMapping，未声明时回退到 anthropic 映射。
+ * 优先级：模型级 effortMap（model-capabilities.json）→ provider 级 effortMapping → anthropic 默认。
  */
-export function mapEffortToProvider(effort: EffortLevel, providerId: string): string {
-  const map = getProviderEffortMapping(providerId) ?? DEFAULT_EFFORT_MAPPING
+export function mapEffortToProvider(
+  effort: EffortLevel,
+  providerId: string,
+  model?: string,
+): string {
   const key = effort === 'orchestrate' ? 'extreme' : effort
+  // 1. 模型级映射（用户本地配置优先）
+  if (model) {
+    const modelMap = getLocalModelEffortMap(model)
+    if (modelMap && key in modelMap) {
+      return modelMap[key]!
+    }
+  }
+  // 2. Provider 级映射 → 3. 默认
+  const map = getProviderEffortMapping(providerId) ?? DEFAULT_EFFORT_MAPPING
   return map[key] ?? 'medium'
 }
 

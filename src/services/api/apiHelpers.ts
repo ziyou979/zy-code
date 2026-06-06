@@ -120,7 +120,7 @@ export function configureEffortParams(
   if (typeof effortValue === 'string') {
     // 通过映射表将内部语义档位转为目标 provider 的 API 参数值
     const providerId = getAPIProvider()
-    const providerValue = mapEffortToProvider(effortValue as EffortLevel, providerId)
+    const providerValue = mapEffortToProvider(effortValue as EffortLevel, providerId, model)
     outputConfig.effort = providerValue
     if (isAnthropicModel(model)) {
       betas.push(EFFORT_BETA_HEADER)

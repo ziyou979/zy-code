@@ -77,6 +77,13 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
         '模型支持的 effort(思考强度)档位列表。省略表示不支持设置思考强度。' +
           '优先级高于 provider 默认档位。',
       ),
+    effortMap: z
+      .record(z.string(), z.string())
+      .optional()
+      .describe(
+        '模型级 effort 档位→API 参数值映射。优先级高于 provider 级 effortMapping。' +
+          '例如 { "light": "high", "balanced": "high", "thorough": "max" }。',
+      ),
     betaHeaders: z
       .array(z.string())
       .optional()
@@ -236,6 +243,15 @@ export function localModelHasCapability(model: string, capability: ModelCapabili
 export function getLocalModelEffortLevels(model: string): EffortLevel[] | undefined {
   const entry = getLocalModelCapability(model)
   return entry?.effortLevels
+}
+
+/**
+ * 从本地配置获取模型级 effort 映射表（内部档位→API 参数值）。
+ * 未配置 effortMap 时返回 undefined（交由 provider 级映射决定）。
+ */
+export function getLocalModelEffortMap(model: string): Record<string, string> | undefined {
+  const entry = getLocalModelCapability(model)
+  return entry?.effortMap
 }
 
 /**
