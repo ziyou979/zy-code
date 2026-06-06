@@ -1,8 +1,48 @@
 # Provider 与模型能力配置改进方案
 
 > 参考项目：[pi](https://github.com/earendil-works/pi-mono) (`packages/ai`)
+> 最后更新：2026-06-06
 >
-> 本文档整理 pi 在 Provider 架构和模型能力配置上值得 zy-code 借鉴的设计，按优先级排列。
+> 本文档整理 Provider 架构改进方向，标注已完成项，对未完成项给出可执行方案。
+
+---
+
+## 已完成的改进
+
+### ~~2. 声明式 compat 兼容层~~ ✅
+
+2026-06 完成。在 `providerRegistry.ts` 中新增 `OpenAICompat` 接口和 `effortMapping` 字段。
+
+**当前 `OpenAICompat` 接口**（`src/services/model/providerRegistry.ts`）：
+
+```typescript
+interface OpenAICompat {
+  thinking?: {
+    enable: (effort: string | undefined, model?: string) => Record<string, unknown>
+    disable?: Record<string, unknown>
+    supportsPreserveThinking?: boolean
+  }
+  supportsReasoningContent?: boolean
+  stripThinkingTags?: boolean
+}
+```
+
+**声明式化进度**：
+
+| 维度 | 状态 | 字段 |
+|------|------|------|
+| thinking 参数适配（7 provider） | ✅ | `OpenAICompat.thinking` |
+| effort 映射（7 provider） | ✅ | `ProviderEntry.effortMapping` |
+| reasoning_content 回传（3 provider） | ✅ | `OpenAICompat.supportsReasoningContent` |
+| think 标签剥离（1 provider） | ✅ | `OpenAICompat.stripThinkingTags` |
+
+`conversions/openai.ts` 中 **0 处** provider 名称硬编码条件分支。仅保留 3 处 `deepseek` 模型名启发式兜底（generic provider 接入场景）。
+
+### ~~5. API error 探测 thinking 能力~~ ✅
+
+原在 `zy-code-todo-stub-cc-analysis.md` 中，与本方案强关联。2026-06 完成。
+
+`src/services/api/modelCapabilityProbe.ts`：API 返回 "thinking not supported" 时自动降级运行时缓存。优先级链：`model-capabilities.json` → API error 运行时降级 → provider 默认能力。
 
 ---
 
@@ -10,66 +50,31 @@
 
 ### 现状
 
-zy-code 只有 `AnthropicProviderAdapter` 和 `OpenAIProviderAdapter` 两个 adapter，所有 provider 必须走这两条路径之一。同一个 `OpenAIProviderAdapter` 要处理 dashscope、deepseek、ollama 等行为差异巨大的平台，差异通过散落的 `if/else` 处理。
+zy-code 有 `AnthropicProviderAdapter` 和 `OpenAIProviderAdapter` 两个 adapter。26 个 provider 全部通过 `isOpenAIProvider()` 二选一。双格式 provider（dashscope/zhipu/kimi 等）通过 `settings.apiFormat` 切换。
 
-### pi 的做法
+声明式 compat 层已消除了 `conversions/openai.ts` 中的 provider 条件分支，但 `llmOrchestrator.ts` 中仍有 5 处 provider 名称判断：
 
-pi 将 `Api`（协议）和 `Provider`（厂商）分为独立维度。一个模型同时携带 `api: "openai-completions"` 和 `provider: "deepseek"`——流处理逻辑按 `api` 分发，鉴权/计费/UI 按 `provider` 分发。
-
-已有的 `Api` 类型：
-
-- `openai-completions` — 服务于 deepseek、groq、together、nvidia、xai 等 20+ provider
-- `openai-responses` — OpenAI Responses API
-- `anthropic-messages` — Anthropic / OpenRouter / Fireworks 等
-- `bedrock-converse-stream` — AWS Bedrock 原生协议
-- `google-generative-ai` / `google-vertex` — Google 原生协议
-- `mistral-conversations` — Mistral 原生协议
-
-新增 provider 不需要新 adapter——只要协议是已有 `Api` 之一，只需注册模型即可。
+| 行号 | 判断 | 用途 |
+|------|------|------|
+| 597 | `!== 'bedrock'` | bedrock 的 tool search beta 走 extraBodyParams |
+| 809/990/994 | `=== 'anthropic'` | cached microcompact 仅 anthropic 启用 |
+| 1125 | `=== 'anthropic' && isAnthropicBaseUrl()` | client request ID 追踪仅直连 API |
 
 ### 改进方向
 
-引入 `Api` 层，将当前两个 adapter 拆分为按协议组织的流处理实现。provider 退化为模型元数据的一部分，不再承担协议分发职责。
-
----
-
-## 2. 声明式 compat 兼容层
-
-### 现状
-
-各 provider 的 OpenAI-compatible API 差异（如 dashscope 只接受 `enable_thinking` 开关而不接受 `reasoning_effort` 参数）通过 adapter 内部的条件分支处理，新增 provider 时需要修改 adapter 逻辑。
-
-### pi 的做法
-
-pi 定义了 `OpenAICompletionsCompat` 接口（15+ 字段），每个模型在生成时携带自己的 `compat` 覆盖，运行时与 URL-based auto-detection 合并：
+**不建议做全面的 Api 层重构**（收益不匹配复杂度）。当前两个 adapter 已经稳定，compat 层处理了 OpenAI 侧的差异。`llmOrchestrator.ts` 中的 5 处判断是 Anthropic 专属特性（cache microcompact、client request ID），不属于"provider 差异"而是"Anthropic 专有功能门控"，可以通过 `ProviderCapability` 声明式化：
 
 ```typescript
-interface OpenAICompletionsCompat {
-  supportsStore?: boolean;
-  supportsDeveloperRole?: boolean;
-  supportsReasoningEffort?: boolean;
-  supportsUsageInStreaming?: boolean;
-  maxTokensField?: "max_completion_tokens" | "max_tokens";
-  requiresToolResultName?: boolean;
-  requiresAssistantAfterToolResult?: boolean;
-  requiresThinkingAsText?: boolean;
-  requiresReasoningContentOnAssistantMessages?: boolean;
-  thinkingFormat?: "openai" | "openrouter" | "deepseek" | "together" | "zai" | "qwen" | ...;
-  supportsStrictMode?: boolean;
-  cacheControlFormat?: "anthropic";
-  sendSessionAffinityHeaders?: boolean;
-  supportsLongCacheRetention?: boolean;
-  // ...
-}
+// 在 ProviderCapability 联合类型中新增：
+| 'cached_microcompact'    // 支持缓存编辑 microcompact
+| 'client_request_id'      // 支持 client request ID 追踪
 ```
 
-Anthropic 侧同理有 `AnthropicMessagesCompat`（`supportsEagerToolInputStreaming`、`supportsTemperature`、`forceAdaptiveThinking` 等）。
+然后 `llmOrchestrator.ts` 中用 `providerHasCapability(provider, 'cached_microcompact')` 替代 `=== 'anthropic'`。
 
-协议实现代码通过读取 `compat` 字段决定行为，而非判断 provider 名称。新增 provider 只需声明其 compat 配置。
+### 优先级
 
-### 改进方向
-
-将 OpenAI adapter 中散落的 provider 差异判断提取为声明式 compat 配置，挂载在模型或 provider 注册表上。adapter 逻辑只读 compat 字段，不依赖 provider 名称。
+**低** — 当前 5 处判断是稳定的 Anthropic 专属逻辑，不随 provider 增加而增长。
 
 ---
 
@@ -77,68 +82,92 @@ Anthropic 侧同理有 `AnthropicMessagesCompat`（`supportsEagerToolInputStream
 
 ### 现状
 
-zy-code 的模型是裸字符串 `ModelName = string`。运行时需要调用 `getAPIProvider()`、`getMainLoopModel()`、`modelHasCapability()`、`getLocalModelCapability()`、`getStaticPricingForModel()` 等多个函数拼凑信息，依赖全局状态（settings、环境变量、缓存文件）。
+模型仍是裸字符串。运行时通过 5+ 个全局函数拼凑信息：
 
-### pi 的做法
-
-pi 的 `Model<TApi>` 是完整的自描述值对象：
-
-```typescript
-interface Model<TApi extends Api> {
-  id: string;
-  name: string;
-  api: TApi;
-  provider: Provider;
-  baseUrl: string;
-  reasoning: boolean;
-  thinkingLevelMap?: ThinkingLevelMap;
-  input: ("text" | "image")[];
-  cost: { input: number; output: number; cacheRead: number; cacheWrite: number };
-  contextWindow: number;
-  maxTokens: number;
-  headers?: Record<string, string>;
-  compat?: OpenAICompletionsCompat | AnthropicMessagesCompat;
-}
+```
+getAPIProvider()          → provider ID
+getMainLoopModel()        → 模型名
+modelHasCapability()      → 能力查询（先查 json，再查 registry）
+getProviderEntry()        → 注册表条目
+getProviderCompat()       → compat 配置
+mapEffortToProvider()     → effort 映射
+getModelMaxInputTokens()  → token 限制
+getModelCostsFromSettings() → 定价
 ```
 
-调用方拿到一个 `Model` 对象就能直接发起 stream 请求，不需要再查询 provider registry、settings 或环境变量。
+每个调用点都要独立解析。`llmOrchestrator.ts` 的 `paramsFromContext` 在每次 API 调用前重复执行这些查询。
 
-### 改进方向
+### 改进方案
 
-定义结构化的 `ResolvedModel` 类型，在模型选择时一次性解析所有信息（provider、base URL、能力、费用、compat），后续流程只传递该对象。
+定义 `ResolvedModel` 类型，在模型选择时一次性解析：
+
+```typescript
+// src/services/model/resolvedModel.ts
+
+interface ResolvedModel {
+  id: string                          // 原始模型名
+  normalizedId: string                // API 规范化后的模型名
+  provider: APIProvider               // 解析后的 provider
+  baseUrl: string                     // 最终 base URL
+  capabilities: Set<ProviderCapability>  // 合并后的能力集
+  effortMapping: Record<string, string>  // 合并后的 effort 映射
+  openaiCompat?: OpenAICompat         // compat 配置
+  contextWindow?: number              // 上下文窗口
+  maxOutputTokens?: number            // 最大输出 token
+  maxThinkingTokens?: number          // 最大思考 token
+  costs?: ModelCosts                  // 定价
+}
+
+function resolveModel(modelName: string): ResolvedModel
+```
+
+**实施路径**（渐进式，不一次全改）：
+
+1. 先建 `ResolvedModel` 类型和 `resolveModel()` 函数
+2. 在 `llmOrchestrator.ts` 的 `paramsFromContext` 入口处调用一次，替换后续的散落查询
+3. 逐步把 `ResolvedModel` 向上传播（`QueryParams` → `query.ts` → `QueryEngine.ts`）
+4. 最终 `convertThinkingForOpenAI` 等函数直接读 `resolvedModel.openaiCompat`，不再调用 `getProviderEntry`
+
+### 优先级
+
+**P0** — 消除全局状态依赖，简化调用链，为后续所有改进奠基。预估 3-5 天。
 
 ---
 
-## 4. 模型级 thinkingLevelMap
+## 4. 模型级 effortMap
 
 ### 现状
 
-zy-code 的 effort 映射是 provider 级别的 `PROVIDER_EFFORT_MAP`（anthropic、openai、deepseek 各一个映射表），无法区分同一 provider 下不同模型的 effort 支持差异。`model-capabilities.json` 的 `effortLevels` 只声明"支持哪些档位"，不声明"映射到什么 API 值"。
+effort 映射分两层：
+- `ProviderEntry.effortMapping`（provider 级）：声明内部档位→API 参数值
+- `model-capabilities.json` 的 `effortLevels`（模型级）：只声明"支持哪些档位"，不声明映射值
 
-### pi 的做法
+同一 provider 下不同模型的 effort 支持可能不同（如 DashScope 托管 Qwen/MiniMax/DeepSeek V4），但映射表是 provider 级的，无法精确控制。
 
-每个模型携带 `thinkingLevelMap`，精确声明该模型支持哪些 thinking level 以及映射到什么 API 参数值：
+### 改进方案
 
-```typescript
-// 示例：Claude Opus 4.7
-thinkingLevelMap: { xhigh: "xhigh" }
+扩展 `model-capabilities.json` 的 schema，新增 `effortMap` 字段：
 
-// 示例：Together DeepSeek-V4-Pro
-thinkingLevelMap: { minimal: null, low: null, medium: null, high: "high", xhigh: null }
-
-// 示例：OpenAI gpt-5.5-pro
-thinkingLevelMap: { off: null, minimal: null, low: null }
+```jsonc
+// ~/.zy/model-capabilities.json
+{
+  "models": [{
+    "pattern": "deepseek-v4",
+    "effortLevels": ["light", "balanced", "thorough"],
+    "effortMap": {
+      "light": "high",
+      "balanced": "high",
+      "thorough": "max"
+    }
+  }]
+}
 ```
 
-- 缺失的 key 使用 provider 默认行为
-- `null` 表示该级别不可用
-- 字符串值表示实际传给 API 的参数
+`mapEffortToProvider()` 查找链改为：模型级 `effortMap` → provider 级 `effortMapping` → anthropic 默认。
 
-`getSupportedThinkingLevels()` 和 `clampThinkingLevel()` 直接从这个 map 派生。
+### 优先级
 
-### 改进方向
-
-扩展 `model-capabilities.json` 的 `effortLevels`，从简单的档位列表升级为 `effortMap`，同时声明档位和对应的 API 参数值。或在 `ResolvedModel` 上计算挂载。
+**P1** — 在 ResolvedModel 完成后自然落地。预估 1 天。
 
 ---
 
@@ -146,24 +175,35 @@ thinkingLevelMap: { off: null, minimal: null, low: null }
 
 ### 现状
 
-zy-code 的消息转换分散在 `conversions/anthropic.ts`（500 行）和 `conversions/openai.ts`（936 行）中，每种格式各自处理格式差异。
+`conversions/openai.ts`（896 行）和 `conversions/anthropic.ts`（518 行）各自独立处理：
+- thinking block 兼容
+- tool call/result 配对
+- 消息格式规范化
 
-### pi 的做法
+两个文件没有共享的预处理步骤。跨模型切换时（如从 Anthropic 切到 OpenAI 兼容模型），thinking signature 失效、orphaned tool call 等问题由各自的 conversion 独立处理。
 
-pi 有统一的 `transformMessages()` 预处理层，在发送给任何 provider 之前处理跨 provider 兼容问题：
+### 改进方案
 
-- **跨模型 thinking block 兼容**：不同模型的回复重放时，thinking signature 只对同模型有效，跨模型自动降级为 text block
-- **redacted thinking 处理**：加密思维链只在同模型重放时保留，跨模型时丢弃
-- **orphaned tool call 合成**：对话中断后自动插入合成 tool result，避免 API 格式错误
-- **image downgrade**：模型不支持图片时自动替换为 placeholder 文本
-- **tool call ID 规范化**：OpenAI 生成 450+ 字符的 ID，Anthropic 要求 `^[a-zA-Z0-9_-]+$` 且最长 64 字符，统一预处理
-- **error/aborted 消息过滤**：自动跳过不完整的 assistant 消息，避免 API 错误
+提取 `src/services/api/conversions/preprocess.ts`，在任一 conversion 之前统一执行：
 
-这一层与具体协议无关，所有 provider 共享。
+```typescript
+export function preprocessMessagesForAPI(
+  messages: Message[],
+  targetModel: ResolvedModel,
+  sourceModel?: string,
+): Message[] {
+  let result = messages
+  result = stripInvalidThinkingSignatures(result, targetModel)
+  result = synthesizeOrphanedToolResults(result)
+  result = filterAbortedAssistantMessages(result)
+  result = downgradeUnsupportedImages(result, targetModel)
+  return result
+}
+```
 
-### 改进方向
+### 优先级
 
-提取一个 provider 无关的消息预处理层，在 `conversions/` 之前统一执行。将当前两个 conversion 文件中重复的兼容逻辑上移。
+**P1** — 需要 ResolvedModel 作为前置。预估 3-5 天。当前两个 conversion 文件各自处理这些问题（且都处理得正确），改进的主要收益是减少重复和统一行为。
 
 ---
 
@@ -171,31 +211,15 @@ pi 有统一的 `transformMessages()` 预处理层，在发送给任何 provider
 
 ### 现状
 
-zy-code 的 `LLMAdapter` 接口是 provider 无关的，`CreateParams` 是通用的，类型层面无法区分 Anthropic 参数和 OpenAI 参数。
+`LLMAdapter` 接口和 `CreateParams` 是 provider 无关的通用类型。`buildOpenAIRequestParams` 和 `buildAnthropicCreateParams` 的入参类型相同，类型系统无法区分。
 
-### pi 的做法
+### 改进方案
 
-通过 TypeScript 泛型实现 `Model<TApi>` 与 `compat`、`StreamFunction` 的编译时绑定：
+需要 ResolvedModel 完成后，通过泛型约束实现编译时检查。当前收益不大（adapter 选择已经稳定），留到 ResolvedModel 落地后评估。
 
-```typescript
-// compat 类型随 api 自动确定
-compat?: TApi extends "openai-completions" ? OpenAICompletionsCompat
-        : TApi extends "anthropic-messages" ? AnthropicMessagesCompat
-        : never;
+### 优先级
 
-// stream 函数签名与 api/options 类型绑定
-type StreamFunction<TApi, TOptions> = (
-  model: Model<TApi>,
-  context: Context,
-  options?: TOptions,
-) => AssistantMessageEventStream;
-```
-
-错误的 api/model/options 组合在编译时就会报错。
-
-### 改进方向
-
-为不同协议的请求参数和响应定义独立类型，通过泛型约束避免运行时的 adapter 类型混淆。
+**P2** — 依赖 ResolvedModel。
 
 ---
 
@@ -203,22 +227,24 @@ type StreamFunction<TApi, TOptions> = (
 
 ### 现状
 
-zy-code 没有可编程的 mock provider，测试要么依赖真实 API 调用，要么需要外部 mock 框架。
+测试通过 `bun:test` 的 `mock.module` mock 各模块，存在跨文件缓存污染问题（已在声明式 compat 测试中遇到并修复）。没有可编程的 mock provider。
 
-### pi 的做法
+### 改进方案
 
-pi 的 `FauxProvider` 可以：
+实现 `src/services/api/__test__/fauxProvider.ts`：
 
-- 注册到标准 api-registry，走正常的 stream 分发路径
-- 编排预设响应序列（text、thinking、tool call 任意组合）
-- 按 token 模拟流式输出延迟
-- 队列耗尽时自动报错
+```typescript
+export function createFauxProvider(responses: FauxResponse[]): {
+  adapter: LLMAdapter
+  entry: ProviderEntry
+}
+```
 
-整个 coding-agent 测试套件无需真实 API 调用、无需 API key、无需网络。
+注册到标准 adapter 路径，通过 `QueryDeps` 注入（`deps.ts` 已预留扩展点）。无需 mock.module，消除跨文件污染问题。
 
-### 改进方向
+### 优先级
 
-实现一个可注册到标准 adapter 路径的 mock provider，支持预设响应队列和流式模拟，用于单元测试和集成测试。
+**P2** — 当前测试已能工作（`overrideProvider` 参数注入），但 FauxProvider 会显著改善集成测试体验。预估 2 天。
 
 ---
 
@@ -226,33 +252,40 @@ pi 的 `FauxProvider` 可以：
 
 ### 现状
 
-zy-code 的模型信息来自 `configs.ts` 手动注册或 `model-capabilities.json` 用户配置，新模型/价格变更需要手动更新。
+模型信息来自：
+- `providerRegistry.ts` 的 `suggestedModels`（手动维护，约 26 个 provider × 2-4 个推荐模型）
+- `model-capabilities.json`（用户本地配置）
+- `configs.ts` 中的静态定价
 
-### pi 的做法
+新模型发布或价格变更需要手动更新代码。
 
-pi 的 `generate-models.ts` 脚本从上游 API 自动拉取模型列表和元数据：
+### 改进方案
 
-- [models.dev](https://models.dev) API — 通用模型目录
-- NVIDIA NIM API — NVIDIA 模型列表
-- Vercel AI Gateway API — 网关支持的模型
+编写 `scripts/generate-models.ts`，从各平台 API 拉取模型列表：
 
-拉取后应用本地规则（compat 覆盖、thinkingLevelMap、cost 修正），生成 `models.generated.ts`（964 个模型）。上游价格变更只需重新运行脚本。
+| 平台 | API | 数据 |
+|------|-----|------|
+| DashScope | `dashscope.aliyuncs.com/api/v1/models` | 模型列表 + 定价 |
+| DeepSeek | `api.deepseek.com/models` | 模型列表 |
+| OpenAI | `api.openai.com/v1/models` | 模型列表 |
+| OpenRouter | `openrouter.ai/api/v1/models` | 模型列表 + 定价 + 能力 |
 
-### 改进方向
+生成 `src/services/model/models.generated.ts`，在构建时 import。手动维护的 `suggestedModels` 保留作为 onboarding 推荐，但模型能力和定价从生成文件读取。
 
-编写脚本从 dashscope、deepseek 等平台的公开 API 或文档自动拉取模型元数据，减少手动维护成本。
+### 优先级
+
+**P2** — 减少手动维护成本，但当前模型变更频率可控。预估 2-3 天。
 
 ---
 
-## 优先级建议
+## 落地顺序
 
-| 优先级 | 改进项 | 收益 | 复杂度 |
-|--------|--------|------|--------|
-| P0 | 声明式 compat 兼容层 | 消除 adapter 中散落的 provider 条件分支，新增 provider 更简单 | 中 |
-| P0 | 模型作为自描述值对象 | 消除全局状态依赖，简化调用链 | 中 |
-| P1 | API 协议与 Provider 解耦 | 架构层面改进，支持原生 Google/Bedrock 等协议 | 高 |
-| P1 | 模型级 thinkingLevelMap | 精确控制每个模型的 effort 行为 | 低 |
-| P1 | 统一消息转换层 | 减少 conversions 重复逻辑，提升跨模型切换稳定性 | 中 |
-| P2 | 类型安全的 API 关联 | 编译时捕获 api/model/options 类型错误 | 中 |
-| P2 | Faux Provider | 测试无需真实 API，加速 CI | 低 |
-| P2 | 模型元数据自动生成 | 减少手动维护，自动跟踪上游变更 | 低 |
+```
+1. [P0] ResolvedModel 值对象 — 消除全局状态依赖（3-5 天）
+2. [P1] 模型级 effortMap — 在 ResolvedModel 上扩展（1 天）
+3. [P1] 统一消息预处理层 — 减少 conversions 重复（3-5 天）
+4. [P2] Faux Provider — 改善测试体验（2 天）
+5. [P2] 模型元数据自动生成 — 减少手动维护（2-3 天）
+6. [P2] 类型安全 API 关联 — 编译时检查（依赖 ResolvedModel）
+7. [低] llmOrchestrator 的 5 处 provider 判断 → ProviderCapability 声明式
+```
