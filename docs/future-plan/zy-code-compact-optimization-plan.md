@@ -907,9 +907,17 @@ CC 的实际调度链：
 
 ---
 
-## 六、优化方案（按 ROI 排序，已剔除已完成项）
+## 六、优化方案（按 ROI 排序）
+
+> 最后更新：2026-06-06
 
 ### P0 — 立即落地（每项 1-3 天）
+
+#### ~~P0.3 Rapid Refill Breaker~~ ✅ 已完成
+
+2026-06 在 `src/services/compact/v2/autoCompact.ts` 中实现。常量 `RAPID_REFILL_TURNS=3`、`MAX_RAPID_REFILLS=3`，连续 3 次在 3 轮内重新触发压缩时熔断。通过 `ZY_COMPACT_V2=1` 环境变量启用。
+
+---
 
 #### P0.1 Observation Masking 中间层（来源：JetBrains/SWE-agent 研究）
 
@@ -1330,23 +1338,27 @@ interface AuditMetrics {
 
 ## 七、实施路线图（修正版）
 
+> 最后更新：2026-06-06。P0.3 已完成，其余按优先级排列。
+
 ```
-Week 1 — P0 集中落地：
-  Day 1-2: P0.3 Rapid Refill Breaker（最小、用作 onboarding）
-  Day 3-4: P0.1 Observation Masking（独立模块）
-  Day 5-7: P0.2 Pre-Compact Memory Flush（关键耦合）
-  Day 8-10: P0.4 大工具结果文件化（涉及多个 Tool）
+已完成：
+  ✅ P0.3 Rapid Refill Breaker（v2/autoCompact.ts，3+3 阈值）
+
+Week 1 — P0 剩余项：
+  Day 1-2: P0.1 Observation Masking（独立模块，70% 阈值）
+  Day 3-4: P0.2 Pre-Compact Memory Flush（SM 联动）
+  Day 5-7: P0.4 大工具结果文件化（BashTool/GrepTool 输出落盘）
 
 Week 2 — P1 增强：
-  Day 11-12: P1.1 Handoff Framing（prompt 微调）
-  Day 13-15: P1.2 User Message Preservation（reactive 流程）
-  Day 16-17: P1.3 Post-Compact Goal Re-injection
-  Day 18:    P1.5 Collapse 健康度审计开始（数据收集，跑一周）
+  Day 8-9:  P1.1 Handoff Framing（prompt 微调，~20 行改动）
+  Day 10-12: P1.2 User Message Preservation（reactive 流程）
+  Day 13-14: P1.3 Post-Compact Goal Re-injection
+  Day 15:    P1.5 Collapse 健康度审计开始（数据收集，跑一周）
 
 Week 3-4 — P1.4 Precomputed Compact + 评估：
-  Day 19-25: precomputedCompact.ts + autoCompact 集成
-  Day 26-28: 端到端 580 轮 dataset 上跑 A/B
-  Day 29-30: 看审计数据决定 Collapse 是否要降级
+  Day 16-22: precomputedCompact.ts + autoCompact 集成
+  Day 23-25: 端到端 580 轮 dataset 上跑 A/B
+  Day 26-28: 看审计数据决定 Collapse 是否要降级
 ```
 
 ---
@@ -1382,28 +1394,28 @@ Week 3-4 — P1.4 Precomputed Compact + 评估：
 
 - 原研究文档：[`claude-code-compact-strategies.md`](./claude-code-compact-strategies.md)
 - CC 二进制反向得到的精确常量、阈值表、伪代码均见 §一、§二、§四、§五
-- 现有 zy-code 压缩栈代码地图：
+- 现有 zy-code 压缩栈代码地图（2026-06-06 实测行数）：
 
 ```
 src/services/
 ├── compact/
-│   ├── autoCompact.ts          (350) ← P0.2, P0.3 改动点
-│   ├── reactiveCompact.ts      (466) ← P1.2 改动点
-│   ├── compact.ts              (1608)
-│   ├── prompt.ts               (369)  ← P1.1 改动点
-│   ├── snipCompact.ts          (138)  // 0.8 阈值
-│   ├── microCompact.ts         (499)
-│   ├── sessionMemoryCompact.ts (593)  ← P0.2 改动点
-│   ├── postCompactCleanup.ts   (70)   ← P1.3 扩展点
-│   ├── observationMask.ts      ← P0.1 新文件
-│   ├── toolResultExternalizer.ts ← P0.4 新文件
-│   └── precomputedCompact.ts   ← P1.4 新文件
+│   ├── autoCompact.ts          (345) ← P0.2 改动点
+│   ├── v2/autoCompact.ts       (188) ← P0.3 ✅ 已实现（Rapid Refill Breaker）
+│   ├── reactiveCompact.ts      (481) ← P1.2 改动点
+│   ├── compact.ts              (1640)
+│   ├── prompt.ts               (362) ← P1.1 改动点
+│   ├── microCompact.ts         (508)
+│   ├── sessionMemoryCompact.ts (586) ← P0.2 改动点
+│   ├── postCompactCleanup.ts   (71)  ← P1.3 扩展点
+│   ├── observationMask.ts      ← P0.1 待新建
+│   ├── toolResultExternalizer.ts ← P0.4 待新建
+│   └── precomputedCompact.ts   ← P1.4 待新建
 ├── contextCollapse/
-│   ├── index.ts                (373)
-│   ├── operations.ts           (147)
-│   └── persist.ts              (75)   // P1.5 审计目标
+│   ├── index.ts                (372)
+│   ├── operations.ts           (160)
+│   └── persist.ts              (75)  // P1.5 审计目标
 └── SessionMemory/
-    ├── sessionMemory.ts        (465)
+    ├── sessionMemory.ts        (464)
     ├── sessionMemoryUtils.ts   (201)
     └── prompts.ts              (304)
 ```

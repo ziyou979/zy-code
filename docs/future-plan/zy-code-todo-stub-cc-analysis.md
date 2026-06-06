@@ -297,15 +297,13 @@ request_id
 
 ## 总结
 
-| 优先级 | TODO 项 | 行动建议 |
-|---|---|---|
-| 🟢 高 | API error 探测 thinking | 直接复刻 CC 的两条正则，自建 `modelCapabilityProbe.ts`，约半天工作量。 |
-| 🟡 中 | installedPluginsManager 缓存 | 先建空壳解除 TODO，再分阶段补齐。CC 已有完整参考实现可对照符号表反推。 |
-| ⚪ 低 | NPM marketplace 源 | 与上游持平，可暂缓。 |
-| ⚪ 低 | Prompt / Agent stop hook (outsideRepl) | 与上游持平，业务必要性弱，建议跟随上游。 |
+> 最后更新：2026-06-06
 
-> 引用 zy-code 仓库源文件：
-> - [src/utils/hooks/outsideRepl.ts](file:///Users/zy979/IdeaProjects/zy-code/src/utils/hooks/outsideRepl.ts)
-> - [src/utils/plugins/marketplaceManager.ts](file:///Users/zy979/IdeaProjects/zy-code/src/utils/plugins/marketplaceManager.ts)
-> - [src/utils/plugins/pluginLoader.ts](file:///Users/zy979/IdeaProjects/zy-code/src/utils/plugins/pluginLoader.ts)
-> - [src/utils/thinking.ts](file:///Users/zy979/IdeaProjects/zy-code/src/utils/thinking.ts)
+| 优先级 | TODO 项 | 状态 | 说明 |
+|---|---|---|---|
+| ~~🟢 高~~ | ~~API error 探测 thinking~~ | ✅ 已完成 | 2026-06 实现 `src/services/api/modelCapabilityProbe.ts`，含 7 个测试 |
+| ~~🟡 中~~ | ~~installedPluginsManager 缓存~~ | ✅ 已完成 | `src/utils/plugins/installedPluginsManager.ts` 已存在 |
+| ⚪ 低 | NPM marketplace 源 | ❌ 未做 | 与 CC 上游持平（同为 throw stub），暂缓 |
+| ⚪ 低 | Prompt / Agent stop hook (outsideRepl) | ❌ 未做 | 与 CC 上游持平（同为兜底字符串），跟随上游 |
+
+剩余 2 项均为低优先级，与 Claude Code 主线保持一致（都未实现）。无需主动补齐。
