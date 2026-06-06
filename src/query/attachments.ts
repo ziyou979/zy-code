@@ -21,7 +21,7 @@ const taskSummaryModule = feature('BG_SESSIONS')
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-// -- result type
+// -- 结果类型
 
 export interface AttachmentInjectionResult {
   toolResults: (UserMessage | AttachmentMessage)[]
@@ -29,7 +29,7 @@ export interface AttachmentInjectionResult {
   consumedCommandUuids: string[]
 }
 
-// -- main
+// -- 主函数
 
 export async function* injectAttachments(
   messagesForQuery: Message[],

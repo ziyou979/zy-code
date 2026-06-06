@@ -144,7 +144,7 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
 
   // 处理恢复流程 —— 从文件（仅限 ant）、会话 ID 或交互式选择器恢复
 
-  // Clear stale caches before resuming to ensure fresh file/skill discovery
+  // 恢复前清除过时缓存，确保文件/技能发现为最新
   const { clearSessionCaches } = await import('../../commands/clear/caches.js')
   clearSessionCaches()
   let messages: MessageType[] | null = null
@@ -159,10 +159,10 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
   // 处理 --from-pr 标志
   if (options.fromPr) {
     if (options.fromPr === true) {
-      // Show all sessions with linked PRs
+      // 显示所有关联 PR 的会话
       filterByPr = true
     } else if (typeof options.fromPr === 'string') {
-      // Could be a PR number or URL
+      // 可能是 PR 编号或 URL
       filterByPr = options.fromPr
     }
   }
@@ -185,8 +185,8 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
     }
   }
 
-  // --remote and --teleport both create/resume ZY Code Web (ZYR) sessions.
-  // Remote Control (--rc) is a separate feature gated in initReplBridge.ts.
+  // --remote 和 --teleport 都创建/恢复 ZY Code Web (ZYR) 会话。
+  // Remote Control (--rc) 是独立的功能，门控在 initReplBridge.ts 中。
   if (remote !== null || teleport) {
     await waitForPolicyLimitsToLoad()
     if (!isPolicyAllowed('allow_remote_sessions')) {
@@ -403,7 +403,7 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
   }
   if (isInternalBuild()) {
     if (options.resume && typeof options.resume === 'string' && !maybeSessionId) {
-      // Check for ccshare URL (e.g. https://go/ccshare/boris-20260311-211036)
+      // 检查 ccshare URL（如 https://go/ccshare/boris-20260311-211036）
       const {
         // @ts-expect-error
         parseCcshareId,
@@ -455,13 +455,13 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
           const resumeStart = performance.now()
           let logOption
           try {
-            // Attempt to load as a transcript file; ENOENT falls through to session-ID handling
+            // 尝试作为转录文件加载；ENOENT 回退到会话 ID 处理
             logOption = await loadTranscriptFromFile(resolvedPath)
           } catch (error) {
             if (!isENOENT(error)) {
               throw error
             }
-            // ENOENT: not a file path — fall through to session-ID handling
+            // ENOENT：不是文件路径 — 回退到会话 ID 处理
           }
           if (logOption) {
             const result = await loadConversationForResume(logOption, undefined /* sourceFile */)
@@ -589,7 +589,7 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
     })
   } else {
     // 显示交互式选择器（包括同仓库 worktrees）
-    // Note: ResumeConversation loads logs internally to ensure proper GC after selection
+    // ResumeConversation 内部加载日志以确保选择后正确 GC
     await launchResumeChooser(
       root,
       {

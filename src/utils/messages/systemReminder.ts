@@ -9,7 +9,11 @@ export function wrapInSystemReminder(content: string): string {
 
 export function wrapMessagesInSystemReminder(messages: UserMessage[]): UserMessage[] {
   return messages.map((msg) => {
-    const wrappedContent = msg.message.content.map((block) => {
+    const content = msg.message.content
+    if (!Array.isArray(content)) {
+      return msg
+    }
+    const wrappedContent = content.map((block) => {
       if (block.type === 'text') {
         return {
           ...block,

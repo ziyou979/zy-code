@@ -18,7 +18,7 @@ const contextCollapse = feature('CONTEXT_COLLAPSE')
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-// -- result type
+// -- 结果类型
 
 export interface PreprocessResult {
   messagesForQuery: Message[]
@@ -29,7 +29,7 @@ export interface PreprocessResult {
   pendingCacheEdits: PendingCacheEdits | undefined
 }
 
-// -- main
+// -- 主函数
 
 export async function preprocessMessages(
   messages: Message[],
@@ -91,16 +91,18 @@ export async function preprocessMessages(
     : undefined
   queryCheckpoint('query_microcompact_end')
 
-  // 4. Context Collapse
-  if (feature('CONTEXT_COLLAPSE') && contextCollapse) {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const collapseResult = await (contextCollapse as any).applyCollapsesIfNeeded(
-      messagesForQuery,
-      updatedToolUseContext,
-      querySource,
-    )
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    messagesForQuery = (collapseResult as any).messages
+  // 4. Context Collapse — 投射折叠视图
+  if (feature('CONTEXT_COLLAPSE')) {
+    if (contextCollapse) {
+      // biome-ignore lint/suspicious/noExplicitAny: feature() 条件 require 的动态模块
+      const collapseResult = await (contextCollapse as any).applyCollapsesIfNeeded(
+        messagesForQuery,
+        updatedToolUseContext,
+        querySource,
+      )
+      // biome-ignore lint/suspicious/noExplicitAny: feature() 条件 require 的动态模块
+      messagesForQuery = (collapseResult as any).messages
+    }
   }
 
   return {

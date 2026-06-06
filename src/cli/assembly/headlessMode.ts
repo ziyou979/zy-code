@@ -189,8 +189,7 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
   // 验证非交互会话的 org 限制
   const orgValidation = await validateForceLoginOrg()
   if (!orgValidation.valid) {
-    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-    process.stderr.write(`${(orgValidation as any).message}\n`)
+    process.stderr.write(`${orgValidation.message}\n`)
     process.exit(1)
   }
 
@@ -344,10 +343,9 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
         logForDebugging(
           `[MCP] Lazy dedup: suppressing ${suppressed.size} plugin server(s) that duplicate zy.ai connectors: ${[...suppressed].join(', ')}`,
         )
-        // Disconnect before filtering from state. Only connected
-        // servers need cleanup — clearServerCache on a never-connected
-        // server triggers a real connect just to kill it (memoize
-        // cache-miss path, see useManageMCPConnections.ts:870).
+        // 从状态过滤前先断开连接。只有已连接的服务器需要清理 —
+        // 对未连接的服务器调用 clearServerCache 会触发一次真实连接
+        // 然后立即终止（memoize 缓存未命中路径）。
         for (const c of headlessStore.getState().mcp.clients) {
           if (!suppressed.has(c.name) || c.type !== 'connected') {
             continue

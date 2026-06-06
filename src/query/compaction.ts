@@ -14,7 +14,7 @@ import type { QueryDeps } from './deps.js'
 
 const log = createDebugLog('query:compaction')
 
-// -- result type
+// -- 结果类型
 
 export interface CompactionOutcome {
   messagesForQuery: Message[]
@@ -24,7 +24,7 @@ export interface CompactionOutcome {
   fullSystemPrompt: SystemPrompt
 }
 
-// -- main
+// -- 主函数
 
 export async function* runCompaction(
   messagesForQuery: Message[],

@@ -9,7 +9,7 @@ function isWithheldMaxOutputTokens(msg: unknown): msg is AssistantMessage {
   return m?.type === 'assistant' && (m.apiError as unknown) === 'max_output_tokens'
 }
 
-// -- decision types
+// -- 决策类型
 
 export type RecoveryDecision =
   | { action: 'collapse_drain' }
@@ -32,7 +32,7 @@ export interface RecoveryContext {
   maxOutputTokensRecoveryCount: number
 }
 
-// -- main
+// -- 主函数
 
 export function diagnoseRecovery(ctx: RecoveryContext): RecoveryDecision {
   const { lastMessage } = ctx

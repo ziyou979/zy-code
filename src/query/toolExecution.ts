@@ -21,7 +21,7 @@ import { getSessionId } from '../bootstrap/state.js'
 import { queryCheckpoint } from '../utils/queryProfiler.js'
 import type { QueryConfig } from './config.js'
 
-// -- result type
+// -- 结果类型
 
 export interface ToolExecutionResult {
   toolResults: (UserMessage | AttachmentMessage)[]
@@ -30,7 +30,7 @@ export interface ToolExecutionResult {
   nextPendingToolUseSummary: Promise<ToolUseSummaryMessage | null> | undefined
 }
 
-// -- main
+// -- 主函数
 
 export async function* executeToolsAndBatch(
   toolUseBlocks: ToolCallBlock[],
