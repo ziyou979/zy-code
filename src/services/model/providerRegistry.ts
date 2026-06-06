@@ -130,6 +130,19 @@ export interface OpenAICompat {
     /** 是否支持 preserve_thinking（effort=max 时启用） */
     supportsPreserveThinking?: boolean
   }
+
+  /**
+   * 是否支持 reasoning_content 独立字段回传（assistant 消息中 thinking 作为单独字段）。
+   * true：有 tool_call 时以 reasoning_content 字段回传 thinking。
+   * false/省略：包装为 `<thinking>...</thinking>` 文本 prepend 到 content。
+   */
+  supportsReasoningContent?: boolean
+
+  /**
+   * 是否需要从流式 content 中剥离泄漏的 think/thinking 标签。
+   * DashScope/Qwen 模型在 thinking 结束时可能将 `</think>` 标签泄漏到 content 字段。
+   */
+  stripThinkingTags?: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -197,6 +210,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
         disable: { enable_thinking: false, thinking: { type: 'disabled' } },
         supportsPreserveThinking: true,
       },
+      supportsReasoningContent: true,
+      stripThinkingTags: true,
     },
   },
   {
@@ -224,6 +239,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       thinking: {
         enable: (effort) => ({ reasoning_effort: effort ?? 'medium' }),
       },
+      supportsReasoningContent: true,
     },
   },
   {
@@ -301,6 +317,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
           return { enable_thinking: true }
         },
       },
+      supportsReasoningContent: true,
     },
   },
   {

@@ -117,23 +117,18 @@ type AnyMessage = LLMMessage | Record<string, unknown>
 
 /**
  * 判断是否支持 reasoning_content 独立字段回传协议。
- * 支持的 provider：
- * - DeepSeek：两轮之间有 tool_call 时必须回传，否则 400 ReasoningContentMissError
- * - DashScope/百炼：不回传会导致 </think> 标签泄漏到 content（Qwen3.6#26）
- * - Kimi：官方文档要求 tool calling 时保留 reasoning_content
- *
- * 不支持的 provider 回退为 <thinking> 文本 prepend。
+ * 通过 providerRegistry 的 openaiCompat.supportsReasoningContent 声明。
+ * 兜底：模型名含 'deepseek' 时检查 localModelCapabilities。
  */
-const REASONING_CONTENT_PROVIDERS = new Set(['deepseek', 'dashscope', 'kimi'])
-
 function supportsReasoningContentField(model: string | undefined): boolean {
   if (!model) {
     return false
   }
-  const provider = getAPIProvider()
-  if (REASONING_CONTENT_PROVIDERS.has(provider)) {
+  const compat = getProviderEntry(getAPIProvider())?.openaiCompat
+  if (compat?.supportsReasoningContent) {
     return true
   }
+  // 兜底：模型名含 deepseek 但通过 generic/siliconflow 等未声明 compat 的 provider 接入时
   if (model.toLowerCase().includes('deepseek')) {
     return localModelHasCapability(model, 'thinking')
   }
@@ -688,12 +683,13 @@ export async function* mapOpenAIStreamToStandard(
   stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>,
   model: string,
 ): AsyncIterable<LLMStreamEvent> {
+  const streamCompat = getProviderEntry(getAPIProvider())?.openaiCompat
   const messageId = randomUUID()
   let textBlockIndex = 0
   const toolBlockIndices = new Map<number, number>()
   let textBlockStarted = false
   const toolBlocksStarted = new Map<number, boolean>()
-  // 百炼深度思考：reasoning_content 需要独立的 thinking block
+  // 深度思考：reasoning_content 需要独立的 thinking block
   let thinkingBlockStarted = false
   const thinkingBlockIndex = 0
   // 最终 stop_reason 和 usage（usage 可能在独立的 usage-only chunk 中到达）
@@ -730,12 +726,12 @@ export async function* mapOpenAIStreamToStandard(
       }
 
       // 文本
-      // DashScope/Qwen 在 thinking 结束时可能将 </think> 标签泄漏到 content 字段，
-      // 需要在此处剥离，避免产生仅含 XML 标签的空 text block。
+      // 部分 provider（如 DashScope/Qwen）在 thinking 结束时可能将 </think> 标签泄漏到 content，
+      // 通过 openaiCompat.stripThinkingTags 声明，在此处剥离避免产生仅含 XML 标签的空 text block。
       if (delta.content && delta.content !== '') {
-        const cleaned = delta.content
-          .replace(/<\/?(think|thinking)>/g, '')
-          .replace(/^\n+|\n+$/g, '')
+        const cleaned = streamCompat?.stripThinkingTags
+          ? delta.content.replace(/<\/?(think|thinking)>/g, '').replace(/^\n+|\n+$/g, '')
+          : delta.content
         if (cleaned) {
           if (!textBlockStarted) {
             textBlockIndex = thinkingBlockStarted ? thinkingBlockIndex + 1 : 0
