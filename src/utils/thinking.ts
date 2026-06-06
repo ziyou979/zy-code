@@ -3,6 +3,10 @@ import type { Theme } from './theme.js'
 import { feature } from 'bun:bundle'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { getAPIProvider, providerHasCapability } from 'src/services/model/providers.js'
+import {
+  probedModelSupportsAdaptiveThinking,
+  probedModelSupportsThinking,
+} from '../services/api/modelCapabilityProbe.js'
 import { localModelHasCapability } from './settings/localModelCapabilities.js'
 import { getSettingsWithErrors } from './settings/settings.js'
 
@@ -81,26 +85,30 @@ export function getRainbowColor(charIndex: number, shimmer: boolean = false): ke
   return colors[charIndex % colors.length]!
 }
 
-// TODO(inigo): add support for probing unknown models via API error detection
 // 按 provider 感知的 thinking 支持检测
+// 优先级链：本地 model-capabilities.json → API error 运行时降级表 → provider 默认能力
 // @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsThinking(model: string): boolean {
-  // ~/.zy/model-capabilities.json 本地配置优先
   if (localModelHasCapability(model, 'thinking')) {
     return true
   }
-  // 未知模型：根据 Provider 能力决定
+  const probed = probedModelSupportsThinking(model)
+  if (probed !== undefined) {
+    return probed
+  }
   const provider = getAPIProvider()
   return providerHasCapability(provider, 'thinking')
 }
 
 // @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsAdaptiveThinking(model: string): boolean {
-  // ~/.zy/model-capabilities.json 本地配置优先
   if (localModelHasCapability(model, 'adaptive_thinking')) {
     return true
   }
-  // 未知模型：根据 Provider 能力决定
+  const probed = probedModelSupportsAdaptiveThinking(model)
+  if (probed !== undefined) {
+    return probed
+  }
   const provider = getAPIProvider()
   return providerHasCapability(provider, 'adaptive_thinking')
 }

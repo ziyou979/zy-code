@@ -183,6 +183,7 @@ import {
   checkResponseForCacheBreak,
   recordPromptState,
 } from './promptCacheBreakDetection.js'
+import { probeThinkingFromError } from './modelCapabilityProbe.js'
 import { cleanupStream, updateUsage } from './usageTracker.js'
 import {
   CannotRetryError,
@@ -1978,6 +1979,7 @@ async function* queryModel(
 
         if (isAPIError(error)) {
           extractQuotaStatusFromError(error)
+          probeThinkingFromError(errorModel, error.message)
         }
 
         // biome-ignore lint/suspicious/noExplicitAny: SDK 扩展字段 requestID/error 未在类型中声明
@@ -1985,9 +1987,7 @@ async function* queryModel(
         const requestId =
           streamRequestId ||
           (isAPIError(error) ? errorAny.requestID : undefined) ||
-          (isAPIError(error)
-            ? (errorAny.error as { request_id?: string })?.request_id
-            : undefined)
+          (isAPIError(error) ? (errorAny.error as { request_id?: string })?.request_id : undefined)
 
         logAPIError({
           error,
@@ -2031,9 +2031,9 @@ async function* queryModel(
         errorModel = errorFromRetry.retryContext.model
       }
 
-      // 如果是限流错误，从错误头中提取配额状态
       if (isAPIError(error)) {
         extractQuotaStatusFromError(error)
+        probeThinkingFromError(errorModel, error.message)
       }
 
       // biome-ignore lint/suspicious/noExplicitAny: SDK 扩展字段 requestID/error 未在类型中声明
@@ -2042,9 +2042,7 @@ async function* queryModel(
       const requestId =
         streamRequestId ||
         (isAPIError(error) ? errorAny2.requestID : undefined) ||
-        (isAPIError(error)
-          ? (errorAny2.error as { request_id?: string })?.request_id
-          : undefined)
+        (isAPIError(error) ? (errorAny2.error as { request_id?: string })?.request_id : undefined)
 
       logAPIError({
         error,
