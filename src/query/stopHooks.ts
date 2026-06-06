@@ -17,6 +17,7 @@ import type {
   ToolUseSummaryMessage,
 } from '../types/message.js'
 import { type HookAttachment, createAttachmentMessage } from '../utils/attachments.js'
+import { tSync } from '../i18n/index.js'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import type { REPLHookContext } from '../utils/hooks/postSamplingHooks.js'
@@ -275,7 +276,7 @@ export async function* handleStopHooks(
         const expandShortcut = getShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
         toolUseContext.addNotification?.({
           key: 'stop-hook-error',
-          text: `Stop hook error occurred \u00b7 ${expandShortcut} to see`,
+          text: tSync('notification.stopHookError', { shortcut: expandShortcut }),
           priority: 'immediate',
         })
       }
