@@ -3,22 +3,15 @@ import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../services/analyti
 import type { SessionId } from '../types/ids.js'
 import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 
-// -- config
-
-// Immutable values snapshotted once at query() entry. Separating these from
-// the per-iteration State struct and the mutable ToolUseContext makes future
-// step() extraction tractable — a pure reducer can take (state, event, config)
-// where config is plain data.
-//
-// Intentionally excludes feature() gates — those are tree-shaking boundaries
-// and must stay inline at the guarded blocks for dead-code elimination.
+// 在 query() 入口处一次性快照的不可变值。
+// 与每次迭代的 State 和可变的 ToolUseContext 分离，便于后续提取为纯 reducer。
+// 不包含 feature() 门控 — 它们是 tree-shaking 边界，必须留在被保护的代码块内联。
 export type QueryConfig = {
   sessionId: SessionId
 
-  // Runtime gates (env/statsig). NOT feature() gates — see above.
+  // 运行时门控（env/statsig），不是 feature() 门控。
   gates: {
-    // Statsig — CACHED_MAY_BE_STALE already admits staleness, so snapshotting
-    // once per query() call stays within the existing contract.
+    // CACHED_MAY_BE_STALE 已声明可能过期，每次 query() 快照一次符合契约。
     streamingToolExecution: boolean
     emitToolUseSummaries: boolean
     isAnt: boolean

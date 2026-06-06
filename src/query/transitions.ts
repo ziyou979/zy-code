@@ -1,22 +1,14 @@
-/**
- * Terminal state — the query loop has reached a final state and should stop.
- * Callers attach an arbitrary `reason` string plus optional metadata.
- */
+/** 终止态 — 查询循环到达最终状态，应停止。 */
 export type Terminal = {
   reason: string
   [key: string]: unknown
 }
 
-/**
- * Continue state — the query loop should keep running.
- * Callers attach an arbitrary `reason` string plus optional metadata.
- */
+/** 继续态 — 查询循环应继续运行。 */
 export type Continue = {
   reason: string
   [key: string]: unknown
 }
 
-/**
- * Union type for query transition states.
- */
+/** 查询状态转移联合类型。 */
 export type TransitionState = Terminal | Continue

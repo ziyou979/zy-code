@@ -91,31 +91,23 @@ export async function* handleStopHooks(
     toolUseContext,
     querySource,
   }
-  // Only save params for main session queries — subagents must not overwrite.
-  // Outside the prompt-suggestion gate: the REPL /btw command and the
-  // side_question SDK control_request both read this snapshot, and neither
-  // depends on prompt suggestions being enabled.
+  // 仅主会话查询保存参数，子代理不得覆盖。
+  // 在 prompt-suggestion 门控之外：REPL /btw 和 SDK side_question 都读此快照。
   if (querySource === 'repl_main_thread' || querySource === 'sdk') {
     saveCacheSafeParams(createCacheSafeParams(stopHookContext))
   }
 
-  // Template job classification: when running as a dispatched job, classify
-  // state after each turn. Gate on repl_main_thread so background forks
-  // (extract-memories, auto-dream) don't pollute the timeline with their own
-  // assistant messages. Await the classifier so state.json is written before
-  // the turn returns — otherwise `zy list` shows stale state for the gap.
-  // Env key hardcoded (vs importing JOB_ENV_KEY from jobs/state) to match the
-  // require()-gated jobs/ import pattern above; spawn.test.ts asserts the
-  // string matches.
+  // 模板任务分类：作为调度任务运行时，每轮结束后分类状态。
+  // 限定 repl_main_thread 以防后台 fork（extract-memories/auto-dream）污染时间线。
+  // 等待分类器完成以确保 state.json 在轮次返回前写入。
   if (
     feature('TEMPLATES') &&
     process.env.CLAUDE_JOB_DIR &&
     querySource.startsWith('repl_main_thread') &&
     !toolUseContext.agentId
   ) {
-    // Full turn history — assistantMessages resets each queryLoop iteration,
-    // so tool calls from earlier iterations (Agent spawn, then summary) need
-    // messagesForQuery to be visible in the tool-call summary.
+    // 完整轮次历史 — assistantMessages 每次 queryLoop 迭代重置，
+    // 早期迭代的工具调用需要 messagesForQuery 才能出现在摘要中。
     const turnAssistantMessages = stopHookContext.messages.filter(
       (m): m is AssistantMessage => m.type === 'assistant',
     )
@@ -132,18 +124,13 @@ export async function* handleStopHooks(
       new Promise<void>((r) => setTimeout(r, 60_000).unref()),
     ])
   }
-  // --bare / SIMPLE: skip background bookkeeping (prompt suggestion,
-  // memory extraction, auto-dream). Scripted -p calls don't want auto-memory
-  // or forked agents contending for resources during shutdown.
+  // --bare 模式跳过后台记账（prompt suggestion、memory extraction、auto-dream）。
   if (!isBareMode()) {
-    // Inline env check for dead code elimination in external builds
     if (!isEnvDefinedFalsy(process.env.ZY_CODE_ENABLE_PROMPT_SUGGESTION)) {
       void executePromptSuggestion(stopHookContext)
     }
     if (feature('EXTRACT_MEMORIES') && !toolUseContext.agentId && isExtractModeActive()) {
-      // Fire-and-forget in both interactive and non-interactive. For -p/SDK,
-      // print.ts drains the in-flight promise after flushing the response
-      // but before gracefulShutdownSync (see drainPendingExtraction).
+      // 发射即忘。-p/SDK 模式下 print.ts 在 gracefulShutdownSync 前 drain。
       void extractMemoriesModule!.executeExtractMemories(
         stopHookContext,
         toolUseContext.appendSystemMessage,
@@ -154,17 +141,14 @@ export async function* handleStopHooks(
     }
   }
 
-  // chicago MCP: auto-unhide + lock release at turn end.
-  // Main thread only — the CU lock is a process-wide module-level variable,
-  // so a subagent's stopHooks releasing it leaves the main thread's cleanup
-  // seeing isLockHeldLocally()===false → no exit notification, and unhides
-  // mid-turn. Subagents don't start CU sessions so this is a pure skip.
+  // chicago MCP：轮次结束时自动取消隐藏 + 释放锁。
+  // 仅主线程 — CU 锁是进程级模块变量，子代理释放会导致主线程清理失效。
   if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
     try {
       const { cleanupComputerUseAfterTurn } = await import('../services/computerUse/cleanup.js')
       await cleanupComputerUseAfterTurn(toolUseContext)
     } catch {
-      // Failures are silent — this is dogfooding cleanup, not critical path
+      // 清理失败静默忽略，非关键路径
     }
   }
 
@@ -184,7 +168,7 @@ export async function* handleStopHooks(
       toolUseContext.agentType,
     )
 
-    // Consume all progress messages and get blocking errors
+    // 消费所有 progress 消息并收集 blocking error
     let stopHookToolUseID = ''
     let hookCount = 0
     let preventedContinuation = false
@@ -237,19 +221,18 @@ export async function* handleStopHooks(
       if (result.blockingError) {
         const userMessage = createUserMessage({
           content: [{ type: 'text' as const, text: getStopHookMessage(result.blockingError) }],
-          isMeta: true, // Hide from UI (shown in summary message instead)
+          isMeta: true, // 对 UI 隐藏（在 summary message 中展示）
         })
         blockingErrors.push(userMessage)
         yield userMessage
         hasOutput = true
-        // Add to hookErrors so it appears in the summary
         hookErrors.push(result.blockingError.blockingError)
       }
-      // Check if hook wants to prevent continuation
+      // hook 请求阻止继续
       if (result.preventContinuation) {
         preventedContinuation = true
         stopReason = result.stopReason || 'Stop hook prevented continuation'
-        // Create attachment to track the stopped continuation (for structured data)
+        // 生成 attachment 记录阻止继续（结构化数据）
         yield createAttachmentMessage({
           type: 'hook_stopped_continuation',
           message: stopReason,
@@ -259,7 +242,7 @@ export async function* handleStopHooks(
         })
       }
 
-      // Check if we were aborted during hook execution
+      // hook 执行期间被中断
       if (toolUseContext.abortController.signal.aborted) {
         logEvent('zy_pre_stop_hooks_cancelled', {
           queryChainId: toolUseContext.queryTracking
@@ -274,7 +257,7 @@ export async function* handleStopHooks(
       }
     }
 
-    // Create summary system message if hooks ran
+    // hook 执行后生成摘要系统消息
     if (hookCount > 0) {
       yield createStopHookSummaryMessage(
         hookCount,
@@ -287,7 +270,7 @@ export async function* handleStopHooks(
         stopHookToolUseID,
       )
 
-      // Send notification about errors (shown in verbose/transcript mode via ctrl+o)
+      // 发送错误通知（在 verbose/transcript 模式通过 ctrl+o 查看）
       if (hookErrors.length > 0) {
         const expandShortcut = getShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
         toolUseContext.addNotification?.({
@@ -302,23 +285,22 @@ export async function* handleStopHooks(
       return { blockingErrors: [], preventContinuation: true }
     }
 
-    // Collect blocking errors from stop hooks
+    // 收集 stop hook 的 blocking error
     if (blockingErrors.length > 0) {
       return { blockingErrors, preventContinuation: false }
     }
 
-    // After Stop hooks pass, run TeammateIdle and TaskCompleted hooks if this is a teammate
+    // Stop hook 通过后，若为 teammate 则执行 TaskCompleted 和 TeammateIdle hook
     if (isTeammate()) {
       const teammateName = getAgentName() ?? ''
       const teamName = getTeamName() ?? ''
       const teammateBlockingErrors: Message[] = []
       let teammatePreventedContinuation = false
       let teammateStopReason: string | undefined
-      // Each hook executor generates its own toolUseID — capture from progress
-      // messages (same pattern as stopHookToolUseID at L142), not the Stop ID.
+      // 每个 hook executor 生成独立的 toolUseID，从 progress 消息中捕获。
       let teammateHookToolUseID = ''
 
-      // Run TaskCompleted hooks for any in-progress tasks owned by this teammate
+      // 为该 teammate 拥有的进行中任务执行 TaskCompleted hook
       const taskListId = getTaskListId()
       const tasks = await listTasks(taskListId)
       const inProgressTasks = tasks.filter(
@@ -355,7 +337,7 @@ export async function* handleStopHooks(
             teammateBlockingErrors.push(userMessage)
             yield userMessage
           }
-          // Match Stop hook behavior: allow preventContinuation/stopReason
+          // 与 Stop hook 行为一致：支持 preventContinuation/stopReason
           if (result.preventContinuation) {
             teammatePreventedContinuation = true
             teammateStopReason = result.stopReason || 'TaskCompleted hook prevented continuation'
@@ -373,7 +355,7 @@ export async function* handleStopHooks(
         }
       }
 
-      // Run TeammateIdle hooks
+      // 执行 TeammateIdle hook
       const teammateIdleGenerator = executeTeammateIdleHooks(
         teammateName,
         teamName,
@@ -398,7 +380,7 @@ export async function* handleStopHooks(
           teammateBlockingErrors.push(userMessage)
           yield userMessage
         }
-        // Match Stop hook behavior: allow preventContinuation/stopReason
+        // 与 Stop hook 行为一致：支持 preventContinuation/stopReason
         if (result.preventContinuation) {
           teammatePreventedContinuation = true
           teammateStopReason = result.stopReason || 'TeammateIdle hook prevented continuation'
@@ -437,8 +419,7 @@ export async function* handleStopHooks(
         ?.chainId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       queryDepth: toolUseContext.queryTracking?.depth,
     })
-    // Yield a system message that is not visible to the model for the user
-    // to debug their hook.
+    // 产出系统消息供用户调试 hook（对模型不可见）。
     yield createSystemMessage(`Stop hook failed: ${errorMessage(error)}`, 'warning')
     return { blockingErrors: [], preventContinuation: false }
   }
