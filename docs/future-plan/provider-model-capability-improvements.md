@@ -281,11 +281,11 @@ export function createFauxProvider(responses: FauxResponse[]): {
 ## 落地顺序
 
 ```
-1. [P0] ResolvedModel 值对象 — 消除全局状态依赖（3-5 天）
-2. [P1] 模型级 effortMap — 在 ResolvedModel 上扩展（1 天）
-3. [P1] 统一消息预处理层 — 减少 conversions 重复（3-5 天）
-4. [P2] Faux Provider — 改善测试体验（2 天）
-5. [P2] 模型元数据自动生成 — 减少手动维护（2-3 天）
-6. [P2] 类型安全 API 关联 — 编译时检查（依赖 ResolvedModel）
+1. [P0] ResolvedModel 值对象 — ✅ Phase 1 完成（llmOrchestrator 内部使用）
+2. [P1] 模型级 effortMap — ✅ 完成（model-capabilities.json schema + 三层查找链）
+3. [P1] 统一消息预处理层 — ❌ 不做（两个 conversion 无实际重复逻辑，预处理已在 apiNormalize.ts 统一）
+4. [P2] Faux Provider — 待做（改善测试体验，2 天）
+5. [P2] 模型元数据自动生成 — 待做（减少手动维护，2-3 天）
+6. [P2] 类型安全 API 关联 — 待做（依赖 ResolvedModel 完全推广）
 7. [低] llmOrchestrator 的 5 处 provider 判断 → ProviderCapability 声明式
 ```
