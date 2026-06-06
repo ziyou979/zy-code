@@ -4,6 +4,7 @@
 export { runDirectConnectMode } from './directConnectMode.js'
 export { runInteractiveMode } from './interactiveMode.js'
 export { launchRemoteSessionRepl } from './remoteSession.js'
+export { dispatchResumeMode } from './resumeDispatch.js'
 export { launchResumedSessionRepl } from './resumedSession.js'
 export { runSshMode } from './sshMode.js'
 export type {
