@@ -13,6 +13,8 @@
 - ~~缺少架构导航图~~ → `docs/architecture-map.md` 已建立
 - ~~文档与代码漂移~~ → AGENTS.md / architecture.md 已同步更新
 - ~~query.ts 部分拆分~~ → 已抽出 `query/{config,deps,stopHooks,tokenBudget,transitions}.ts`（共 673 行）
+- ~~query.ts 继续拆分~~ → 2026-06 新增 `query/{preprocess,compaction,toolExecution,attachments,recovery}.ts`，query.ts 从 1745→1332 行（-24%），常开 feature flag 门控已清理
+- ~~utils/messages/api.ts 拆分~~ → 2026-06 拆为 `apiNormalize.ts`(981) + `attachmentApi.ts`(1556) + `systemReminder.ts`(29) + `api.ts`(20 行 barrel reexport)
 
 ---
 
@@ -73,98 +75,9 @@ src/query/
 └── attachments.ts        (新)  — 阶段 11: 附件注入 + queue 消费 + memory/skill prefetch 消费
 ```
 
-**每个新模块的合约**：
+已提取的模块及签名参见 `src/query/{preprocess,compaction,toolExecution,attachments,recovery}.ts`。
 
-```typescript
-// preprocess.ts
-export async function preprocessMessages(
-  messagesForQuery: Message[],
-  toolUseContext: ToolUseContext,
-  querySource: QuerySource,
-  deps: QueryDeps,
-): Promise<{ messages: Message[]; pendingCacheEdits?: PendingCacheEdits }>
-
-// compaction.ts
-export async function* runAutoCompaction(
-  messagesForQuery: Message[],
-  toolUseContext: ToolUseContext,
-  params: CompactionParams,
-  tracking: AutoCompactTrackingState | undefined,
-): AsyncGenerator<Message, CompactionOutcome>
-
-// modelCall.ts
-export async function* callModelWithFallback(
-  messagesForQuery: Message[],
-  params: ModelCallParams,
-): AsyncGenerator<StreamEvent | Message, ModelCallResult>
-
-// recovery.ts
-export function tryRecoverFromError(
-  lastMessage: AssistantMessage,
-  state: RecoveryState,
-): RecoveryDecision  // { action: 'collapse_drain' | 'reactive_compact' | 'escalate' | 'multi_turn' | 'surface_error' }
-
-// toolExecution.ts
-export async function* executeToolsAndBatch(
-  toolUseBlocks: ToolCallBlock[],
-  assistantMessages: AssistantMessage[],
-  toolUseContext: ToolUseContext,
-  config: QueryConfig,
-): AsyncGenerator<Message | ToolUseSummaryMessage, ToolExecutionResult>
-
-// attachments.ts
-export async function* injectAttachments(
-  params: AttachmentInjectionParams,
-): AsyncGenerator<Message, AttachmentResult>
-```
-
-**拆分后 query.ts 骨架**（预计 ~400 行）：
-
-```typescript
-async function* queryLoop(params, consumedCommandUuids) {
-  let state = initState(params)
-  const config = buildQueryConfig()
-  using pendingMemoryPrefetch = startRelevantMemoryPrefetch(...)
-
-  while (true) {
-    const { messages, toolUseContext, ... } = state
-
-    // 阶段 1: 初始化
-    const pendingSkillPrefetch = startSkillPrefetch(...)
-
-    // 阶段 2: 预处理
-    let messagesForQuery = await preprocessMessages(messages, toolUseContext, querySource, deps)
-
-    // 阶段 3: 压缩
-    const compactionOutcome = yield* runAutoCompaction(messagesForQuery, ...)
-    if (compactionOutcome.compacted) { messagesForQuery = compactionOutcome.messages }
-
-    // 阶段 4: 阻塞检查
-    if (shouldBlock(messagesForQuery, ...)) { return { reason: 'blocking_limit' } }
-
-    // 阶段 5: 模型调用
-    const modelResult = yield* callModelWithFallback(messagesForQuery, ...)
-
-    // 阶段 6-7: 错误与中断处理
-    if (modelResult.aborted) { return handleAbort(...) }
-
-    // 阶段 8: 恢复/终结
-    if (!modelResult.needsFollowUp) {
-      const recovery = tryRecoverFromError(...)
-      // 各恢复路径 → state = ...; continue
-      // 无恢复 → stop hooks → return
-    }
-
-    // 阶段 9-10: 工具执行
-    const toolResult = yield* executeToolsAndBatch(...)
-    if (toolResult.aborted || toolResult.hookStopped) { return ... }
-
-    // 阶段 11: 附件 + 继续
-    yield* injectAttachments(...)
-    state = buildNextState(...)
-  }
-}
-```
+queryLoop 现在按"预处理 → 压缩 → 阻塞检查 → 模型调用 → 恢复 → 工具执行 → 附件"的阶段调用各子模块，主体约 1332 行。
 
 ### 实施步骤（建议分 3 个 PR）
 
@@ -373,22 +286,10 @@ src/utils/messages/
 ```
 优先级排序（结合日常开发 pain point）：
 
-1. [高]  query.ts 拆分 — PR-1: preprocess+compaction（最小风险，立即减少认知负荷）
-2. [高]  query.ts 拆分 — PR-2: modelCall+recovery（核心恢复逻辑独立化）
-3. [高]  query.ts 拆分 — PR-3: toolExecution+attachments
-4. [中]  root.ts 瘦身 — PR-1~2: toolRegistry + pluginSetup（减少合并冲突）
-5. [中]  Feature flag 清理 — 识别常开 flag 并移除门控（一次性收益）
-6. [中]  root.ts 瘦身 — PR-3~4: teamCapabilities + sessionBootstrap
-7. [低]  utils/messages/api.ts 拆分
-8. [低]  扩展点诊断视图
-9. [低]  服务层 compact/collapse 合并
+1. [完成] query.ts 拆分 — preprocess+compaction+toolExecution+attachments+recovery（1745→1332 行）
+2. [完成] Feature flag 清理 — 移除 REACTIVE_COMPACT/TOKEN_BUDGET/CONTEXT_COLLAPSE 常开门控
+3. [完成] utils/messages/api.ts 拆分 — apiNormalize+attachmentApi+systemReminder（2718→20 行 barrel）
+4. [中]  root.ts 瘦身 — 耦合度高（options:any 贯穿全文），需要先类型化 options 再拆分
+5. [低]  扩展点诊断视图
+6. [低]  服务层 compact/collapse 合并
 ```
-
-**预估总工作量**：~8-12 天（纯重构，不含新功能）
-
-**验收标准**：
-- 每个 PR 后 `bun tsc --noEmit` 无错
-- 全量测试通过（`bun test`）
-- 无行为变更（纯提取重构）
-- query.ts 最终 ≤ 500 行
-- root.ts 最终 ≤ 2200 行
