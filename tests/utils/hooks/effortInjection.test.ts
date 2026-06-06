@@ -27,8 +27,11 @@ async function setupMocks() {
   await spread('../../../src/utils/settings/localModelCapabilities.js', {
     getLocalModelEffortLevels: () => LEVELS,
   })
-  await spread('../../../src/services/model/providerRegistry.js', {
-    getProviderEntry: () => undefined,
+  // 不 mock providerRegistry（mock.restore 无法可靠恢复 ESM 缓存会导致跨文件污染）。
+  // 改为 mock providers.js 的 getAPIProvider 返回不存在的 provider，
+  // 让 getProviderEntry 自然返回 undefined，effort 走 localModelCapabilities 路径。
+  await spread('../../../src/services/model/providers.js', {
+    getAPIProvider: () => 'test-no-effort-provider',
   })
   await spread('../../../src/bootstrap/state.js', {
     getSessionId: () => 's1',
