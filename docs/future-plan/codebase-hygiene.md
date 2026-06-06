@@ -7,7 +7,13 @@
 
 ## 已完成
 
-无（新建文档）
+### ~~1. `stopHooks.ts` 消除 as any~~ ✅
+
+2026-06 完成。消除全部 13 行（18 处）`as any`。根因修复：`AggregatedHookResult.message` 从 `HookResultMessage` 拓宽为 `Message`，8 个文件级联修复。新增 `isHookAttachment()` 类型守卫。`StopHookInfo` 构造补全必填字段，移除死数据 `promptText`。
+
+### ~~2. `query/` 英文注释翻译~~ ✅
+
+2026-06 完成。4 个文件共 36 处英文注释翻译为中文。用户可见通知文案 `Stop hook error occurred` 迁移到 i18n（`notification.stopHookError`）。`prevented continuation` 默认值因同时用于结构化数据和模型上下文，暂保持英文。
 
 ---
 
