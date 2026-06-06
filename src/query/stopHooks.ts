@@ -16,7 +16,7 @@ import type {
   TombstoneMessage,
   ToolUseSummaryMessage,
 } from '../types/message.js'
-import { createAttachmentMessage } from '../utils/attachments.js'
+import { type HookAttachment, createAttachmentMessage } from '../utils/attachments.js'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import type { REPLHookContext } from '../utils/hooks/postSamplingHooks.js'
@@ -59,6 +59,10 @@ type StopHookResult = {
   preventContinuation: boolean
 }
 
+function isHookAttachment(attachment: { type: string }): attachment is HookAttachment {
+  return 'hookEvent' in attachment
+}
+
 // stop hook 连续 block 熔断在 query.ts 的查询循环里实现（State.stopHookBlockingCount
 // + getStopHookBlockCap()）：那里才是真正会死循环的路径——stop hook exit 2 返回
 // blockingErrors（preventContinuation:false），循环 continue 重试。preventContinuation
@@ -91,8 +95,7 @@ export async function* handleStopHooks(
   // Outside the prompt-suggestion gate: the REPL /btw command and the
   // side_question SDK control_request both read this snapshot, and neither
   // depends on prompt suggestions being enabled.
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  if ((querySource as any) === 'repl_main_thread' || querySource === 'sdk') {
+  if (querySource === 'repl_main_thread' || querySource === 'sdk') {
     saveCacheSafeParams(createCacheSafeParams(stopHookContext))
   }
 
@@ -194,57 +197,38 @@ export async function* handleStopHooks(
       // terminalSequence 已在 executeEngine 统一校验并写 stdout（含白名单），此处不再处理。
       if (result.message) {
         yield result.message
-        // Track toolUseID from progress messages and count hooks
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        if ((result.message as any).type === 'progress' && (result.message as any).toolUseID) {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          stopHookToolUseID = (result.message as any).toolUseID
+        if (result.message.type === 'progress' && result.message.toolUseID) {
+          stopHookToolUseID = result.message.toolUseID
           hookCount++
-          // Extract hook command and prompt text from progress data
           const progressData = result.message.data as HookProgress
           if (progressData.command) {
             hookInfos.push({
+              hookName: progressData.hookName,
+              status: 'running',
               command: progressData.command,
-              promptText: progressData.promptText,
-              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-            } as any)
+            })
           }
         }
-        // Track errors and output from attachments
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        if ((result.message as any).type === 'attachment') {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          const attachment = (result.message as any).attachment
-          if (
-            'hookEvent' in attachment &&
-            (attachment.hookEvent === 'Stop' || attachment.hookEvent === 'SubagentStop')
-          ) {
+        if (result.message.type === 'attachment' && isHookAttachment(result.message.attachment)) {
+          const { attachment } = result.message
+          if (attachment.hookEvent === 'Stop' || attachment.hookEvent === 'SubagentStop') {
             if (attachment.type === 'hook_non_blocking_error') {
               hookErrors.push(attachment.stderr || `Exit code ${attachment.exitCode}`)
-              // Non-blocking errors always have output
               hasOutput = true
             } else if (attachment.type === 'hook_error_during_execution') {
               hookErrors.push(attachment.content)
               hasOutput = true
             } else if (attachment.type === 'hook_success') {
-              // Check if successful hook produced any stdout/stderr
               if (attachment.stdout?.trim() || attachment.stderr?.trim()) {
                 hasOutput = true
               }
             }
-            // Extract per-hook duration for timing visibility.
-            // Hooks run in parallel; match by command + first unassigned entry.
             if ('durationMs' in attachment && 'command' in attachment) {
               const info = hookInfos.find(
-                (i) =>
-                  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-                  (i as any).command === (attachment as any).command &&
-                  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-                  (i as any).durationMs === undefined,
+                (i) => i.command === attachment.command && i.durationMs === undefined,
               )
               if (info) {
-                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-                ;(info as any).durationMs = (attachment as any).durationMs
+                info.durationMs = attachment.durationMs
               }
             }
           }
@@ -356,10 +340,8 @@ export async function* handleStopHooks(
 
         for await (const result of taskCompletedGenerator) {
           if (result.message) {
-            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-            if ((result.message as any).type === 'progress' && (result.message as any).toolUseID) {
-              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-              teammateHookToolUseID = (result.message as any).toolUseID
+            if (result.message.type === 'progress' && result.message.toolUseID) {
+              teammateHookToolUseID = result.message.toolUseID
             }
             yield result.message
           }
@@ -401,10 +383,8 @@ export async function* handleStopHooks(
 
       for await (const result of teammateIdleGenerator) {
         if (result.message) {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          if ((result.message as any).type === 'progress' && (result.message as any).toolUseID) {
-            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-            teammateHookToolUseID = (result.message as any).toolUseID
+          if (result.message.type === 'progress' && result.message.toolUseID) {
+            teammateHookToolUseID = result.message.toolUseID
           }
           yield result.message
         }

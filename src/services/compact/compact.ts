@@ -23,7 +23,6 @@ import { createAbortError } from '../../types/llm.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
-  HookResultMessage,
   Message,
   PartialCompactDirection,
   SystemCompactBoundaryMessage,
@@ -286,7 +285,7 @@ export interface CompactionResult {
   boundaryMarker: SystemMessage
   summaryMessages: UserMessage[]
   attachments: AttachmentMessage[]
-  hookResults: HookResultMessage[]
+  hookResults: Message[]
   messagesToKeep?: Message[]
   userDisplayMessage?: string
   preCompactTokenCount?: number

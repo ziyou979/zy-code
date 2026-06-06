@@ -5,7 +5,7 @@
 import type { UUID } from 'node:crypto'
 import { getMainLoopModel } from '../../services/model/model.js'
 import type { AgentId } from '../../types/ids.js'
-import type { HookResultMessage, Message } from '../../types/message.js'
+import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -412,7 +412,7 @@ function createCompactionResultFromSessionMemory(
   messages: Message[],
   sessionMemory: string,
   messagesToKeep: Message[],
-  hookResults: HookResultMessage[],
+  hookResults: Message[],
   transcriptPath: string,
   agentId?: AgentId,
 ): CompactionResult {

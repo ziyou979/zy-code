@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
-import type { HookResultMessage, Message } from '../types/message.js'
+import type { Message } from '../types/message.js'
 
 /**
  * Manages deferred SessionStart hook messages so the REPL can render
@@ -10,7 +10,7 @@ import type { HookResultMessage, Message } from '../types/message.js'
  * request to ensure the model always sees hook context.
  */
 export function useDeferredHookMessages(
-  pendingHookMessages: Promise<HookResultMessage[]> | undefined,
+  pendingHookMessages: Promise<Message[]> | undefined,
   setMessages: (action: React.SetStateAction<Message[]>) => void,
 ): () => Promise<void> {
   const pendingRef = useRef(pendingHookMessages ?? null)

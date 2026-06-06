@@ -1,5 +1,5 @@
 import { getMainThreadAgentType } from '../bootstrap/state.js'
-import type { HookResultMessage } from '../types/message.js'
+import type { Message } from '../types/message.js'
 import { createAttachmentMessage } from './attachments.js'
 import { logForDebugging } from './debug.js'
 import { withDiagnosticsTiming } from './diagLogs.js'
@@ -18,11 +18,7 @@ type SessionStartHooksOptions = {
 }
 
 // Set by processSessionStartHooks when a hook emits initialUserMessage;
-// consumed once by takeInitialUserMessage. This side channel avoids changing
-// the Promise<HookResultMessage[]> return type that main.tsx and print.ts
-// both already await on (sessionStartHooksPromise is kicked in main.tsx and
-// joined later — rippling a structural return-type change through that
-// handoff would touch five callsites for what is a print-mode-only value).
+// consumed once by takeInitialUserMessage.
 let pendingInitialUserMessage: string | undefined
 
 export function takeInitialUserMessage(): string | undefined {
@@ -35,14 +31,14 @@ export function takeInitialUserMessage(): string | undefined {
 export async function processSessionStartHooks(
   source: 'startup' | 'resume' | 'clear' | 'compact',
   { sessionId, agentType, model, forceSyncExecution }: SessionStartHooksOptions = {},
-): Promise<HookResultMessage[]> {
+): Promise<Message[]> {
   // --bare skips all hooks. executeHooks already early-returns under --bare
   // (hooks.ts:1861), but this skips the loadPluginHooks() await below too —
   // no point loading plugin hooks that'll never run.
   if (isBareMode()) {
     return []
   }
-  const hookMessages: HookResultMessage[] = []
+  const hookMessages: Message[] = []
   const additionalContexts: string[] = []
   const allWatchPaths: string[] = []
 
@@ -155,7 +151,7 @@ export async function processSessionStartHooks(
       toolUseID: 'SessionStart',
       hookEvent: 'SessionStart',
     })
-    hookMessages.push(contextMessage as unknown as HookResultMessage)
+    hookMessages.push(contextMessage)
   }
 
   return hookMessages
@@ -164,12 +160,12 @@ export async function processSessionStartHooks(
 export async function processSetupHooks(
   trigger: 'init' | 'maintenance',
   { forceSyncExecution }: { forceSyncExecution?: boolean } = {},
-): Promise<HookResultMessage[]> {
+): Promise<Message[]> {
   // Same rationale as processSessionStartHooks above.
   if (isBareMode()) {
     return []
   }
-  const hookMessages: HookResultMessage[] = []
+  const hookMessages: Message[] = []
   const additionalContexts: string[] = []
 
   if (shouldAllowManagedHooksOnly()) {
@@ -208,7 +204,7 @@ export async function processSetupHooks(
       toolUseID: 'Setup',
       hookEvent: 'Setup',
     })
-    hookMessages.push(contextMessage as unknown as HookResultMessage)
+    hookMessages.push(contextMessage)
   }
 
   return hookMessages

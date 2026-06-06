@@ -59,7 +59,7 @@ import { createAgentsKilledMessage } from '../utils/messages.js'
 import type { ThinkingConfig } from '../utils/thinking.js'
 import { useQueueProcessor } from '../hooks/useQueueProcessor.js'
 import { useMailboxBridge } from '../hooks/useMailboxBridge.js'
-import type { Message as MessageType, UserMessage, HookResultMessage } from '../types/message.js'
+import type { Message as MessageType, UserMessage } from '../types/message.js'
 import { useMergedClients } from '../hooks/useMergedClients.js'
 import { useMergedTools } from '../hooks/useMergedTools.js'
 import { useMergedCommands } from '../hooks/useMergedCommands.js'
@@ -153,7 +153,7 @@ export type Props = {
   debug: boolean
   initialTools: Tool[]
   initialMessages?: MessageType[]
-  pendingHookMessages?: Promise<HookResultMessage[]>
+  pendingHookMessages?: Promise<MessageType[]>
   initialFileHistorySnapshots?: FileHistorySnapshot[]
   initialContentReplacements?: ContentReplacementRecord[]
   initialAgentName?: string

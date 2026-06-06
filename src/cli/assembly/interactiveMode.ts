@@ -5,7 +5,7 @@ import { feature } from 'bun:bundle'
 import { launchRepl } from '../../replLauncher.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { buildDeepLinkBanner } from '../../services/deepLink/banner.js'
-import type { HookResultMessage } from '../../types/message.js'
+import type { Message } from '../../types/message.js'
 import { getCwd } from '../../utils/cwd.js'
 import { createSystemMessage } from '../../utils/messages.js'
 import { saveMode } from '../../utils/sessionStorage.js'
@@ -32,9 +32,9 @@ export type InteractiveModeParams = AssemblyContext & {
   options: InteractiveModeOptions
   // SessionStart hooks 注入的初始消息和异步 promise，
   // hookMessages 已就绪时为同步注入；hooksPromise 仅在尚未就绪时透传给 REPL。
-  hookMessages: HookResultMessage[]
+  hookMessages: Message[]
   // 与 root.ts:2044 一致：未触发钩子时为 null，触发后是 Promise，已落到数组后允许传 undefined。
-  hooksPromise: Promise<HookResultMessage[]> | null | undefined
+  hooksPromise: Promise<Message[]> | null | undefined
 }
 
 export async function runInteractiveMode({

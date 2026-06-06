@@ -4,7 +4,6 @@ import type { QuerySource } from '../../constants/querySource.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
-  HookResultMessage,
   Message,
   UserMessage,
 } from '../../types/message.js'
@@ -452,7 +451,7 @@ async function buildReactiveCompactionResult({
 
   // Execute PostCompact hooks
   let hookUserDisplayMessage: string | undefined
-  const hookResults: HookResultMessage[] = []
+  const hookResults: Message[] = []
   try {
     const hookResult = await executePostCompactHooks(
       { trigger, compactSummary: formattedSummary },
