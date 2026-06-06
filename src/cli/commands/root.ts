@@ -186,6 +186,7 @@ import {
   runInteractiveMode,
   runSshMode,
 } from '../assembly/index.js'
+import type { RootActionOptions } from '../assembly/types.js'
 
 // 插件启动检查现在在 REPL.tsx 中以非阻塞方式处理
 
@@ -252,119 +253,6 @@ import {
   isTmuxAvailable,
   parsePRReference,
 } from '../../utils/worktree.js'
-
-// Commander action 回调传入的 options。字段来自 main.tsx 中 .option() 注册
-// 以及 feature() 门控的动态选项。所有字段可选（commander 未传时为 undefined）。
-export interface RootActionOptions {
-  // 模式控制
-  bare?: boolean
-  print?: boolean | string
-  init?: boolean
-  initOnly?: boolean
-  maintenance?: boolean
-  continue?: boolean
-  resume?: boolean | string
-  forkSession?: boolean
-  fromPr?: boolean | string
-
-  // 模型与推理
-  model?: string
-  thinking?: 'adaptive' | 'enabled' | 'disabled'
-  maxThinkingTokens?: number
-  effort?: string
-  advisor?: string
-
-  // 输入/输出
-  inputFormat?: string
-  outputFormat?: string
-  verbose?: boolean
-  jsonSchema?: string
-  prefill?: string
-  name?: string
-  replayUserMessages?: boolean
-  sessionPersistence?: boolean
-
-  // 系统提示
-  systemPrompt?: string
-  systemPromptFile?: string
-  appendSystemPrompt?: string
-  appendSystemPromptFile?: string
-
-  // 工具与权限
-  disableSlashCommands?: boolean
-  strictMcpConfig?: boolean
-  permissionPromptTool?: string
-  enableAutoMode?: boolean
-  enableAuthStatus?: boolean
-
-  // 代理
-  agent?: string
-  agents?: string
-  agentId?: string
-
-  // 限制
-  maxTurns?: number
-  maxBudgetUsd?: number
-  taskBudget?: number
-
-  // 远程/桥接
-  sdkUrl?: string
-  remote?: string | true
-  remoteControl?: string | true
-  rc?: string | true
-  teleport?: string | true
-  messagingSocketPath?: string
-
-  // 工作区
-  worktree?: boolean | string
-  tmux?: boolean
-  resumeSessionAt?: string
-  rewindFiles?: string
-
-  // Kairos/团队
-  assistant?: boolean
-  brief?: boolean
-  proactive?: boolean
-  channels?: string[]
-  dangerouslyLoadDevelopmentChannels?: string[]
-
-  // 调试
-  debug?: boolean
-  debugToStderr?: boolean
-
-  // 权限
-  dangerouslySkipPermissions?: boolean
-  allowDangerouslySkipPermissions?: boolean
-  permissionMode?: string
-
-  // 工具列表（CLI --tools / --allowed-tools / --disallowed-tools）
-  tools?: string[]
-  allowedTools?: string[]
-  disallowedTools?: string[]
-
-  // MCP
-  mcpConfig?: string[]
-  addDir?: string[]
-
-  // 模型
-  fallbackModel?: string
-
-  // SDK / 集成
-  betas?: string[]
-  ide?: boolean
-  sessionId?: string
-  includeHookEvents?: boolean
-  includePartialMessages?: boolean
-
-  // 其他
-  chrome?: boolean
-  tasks?: boolean | string
-  file?: string[]
-  workload?: string
-
-  // feature() 门控的选项可能以 [key: string] 形式存在
-  [key: string]: unknown
-}
 
 export async function rootAction(
   prompt: string | undefined,

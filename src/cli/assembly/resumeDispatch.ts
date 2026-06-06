@@ -71,7 +71,7 @@ import {
 } from '../../utils/teleport.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
 import { validateUuid } from '../../utils/uuid.js'
-import type { RootActionOptions } from '../commands/root.js'
+import type { RootActionOptions } from './types.js'
 import { launchRemoteSessionRepl } from './remoteSession.js'
 import { launchResumedSessionRepl } from './resumedSession.js'
 import type { RenderAndRun, SessionConfig } from './types.js'
