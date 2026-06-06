@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { getAPIProvider, isAnthropicBaseUrl } from 'src/services/model/providers.js'
+import { resolveModel } from 'src/services/model/resolvedModel.js'
 import { getCLISyspromptPrefix } from '../../constants/system.js'
 import {
   type QueryChainTracking,
@@ -103,7 +104,6 @@ import {
 } from 'src/utils/advisor.js'
 import { getAgentContext } from 'src/utils/agentContext.js'
 import { getToolSearchBetaHeader, shouldIncludeExperimentalBetas } from 'src/utils/betas.js'
-import { getMaxThinkingTokensForModel } from 'src/utils/context.js'
 import { createDebugLog, logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
 import { type EffortValue } from 'src/utils/effort.js'
@@ -111,11 +111,7 @@ import { headlessProfilerCheckpoint } from 'src/utils/headlessProfiler.js'
 import { isMcpInstructionsDeltaEnabled } from 'src/utils/mcpInstructionsDelta.js'
 import { calculateUSDCost } from 'src/utils/modelCost.js'
 import { endQueryProfile, queryCheckpoint } from 'src/utils/queryProfiler.js'
-import {
-  modelSupportsAdaptiveThinking,
-  modelSupportsThinking,
-  type ThinkingConfig,
-} from 'src/utils/thinking.js'
+import { type ThinkingConfig } from 'src/utils/thinking.js'
 import {
   extractDiscoveredToolNames,
   isDeferredToolsDeltaEnabled,
@@ -159,7 +155,6 @@ import {
   configureTaskBudgetParams,
   getAPIMetadata,
   getExtraBodyParams,
-  getMaxOutputTokensForModel,
   MAX_NON_STREAMING_TOKENS,
 } from './apiHelpers.js'
 import { buildSystemPromptBlocks, getPromptCachingEnabled } from './cacheControl.js'
@@ -481,6 +476,7 @@ async function* queryModel(
   // 同时天然处理回滚/撤销，因为被移除的消息不在数组中。
   const previousRequestId = getPreviousRequestIdFromMessages(messages)
 
+  const resolved = resolveModel(options.model)
   const resolvedModel = options.model
 
   queryCheckpoint('query_tool_schema_build_start')
@@ -505,10 +501,7 @@ async function* queryModel(
 
     const advisorExperiment = getExperimentAdvisorModels()
     if (advisorExperiment !== undefined) {
-      if (
-        normalizeModelStringForAPI(advisorExperiment.baseModel) ===
-        normalizeModelStringForAPI(options.model)
-      ) {
+      if (normalizeModelStringForAPI(advisorExperiment.baseModel) === resolved.apiModelId) {
         // 如果基础模型匹配，覆盖 advisor 模型。只有在用户无法
         // 自行配置时，我们才应该有实验模型。
         advisorOption = advisorExperiment.advisorModel
@@ -923,9 +916,7 @@ async function* queryModel(
 
     // 重试上下文优先，因为它会在超出上下文窗口限制时尝试纠正
     const maxOutputTokens =
-      retryContext?.maxTokensOverride ||
-      options.maxOutputTokensOverride ||
-      getMaxOutputTokensForModel(options.model)
+      retryContext?.maxTokensOverride || options.maxOutputTokensOverride || resolved.maxOutputTokens
 
     const hasThinking =
       thinkingConfig.type !== 'disabled' && !isEnvTruthy(process.env.ZY_CODE_DISABLE_THINKING)
@@ -934,10 +925,10 @@ async function* queryModel(
     // 重要：不要更改下面的自适应与预算 thinking 选择，
     // 除非通知模型发布 DRI 和研究团队。这是一个敏感的
     // 设置，会极大影响模型质量和打磨。
-    if (hasThinking && modelSupportsThinking(options.model)) {
+    if (hasThinking && resolved.supportsThinking) {
       if (
         !isEnvTruthy(process.env.ZY_CODE_DISABLE_ADAPTIVE_THINKING) &&
-        modelSupportsAdaptiveThinking(options.model)
+        resolved.supportsAdaptiveThinking
       ) {
         // 对于支持自适应 thinking 的模型，始终使用自适应
         // thinking 而不设预算。
@@ -947,7 +938,7 @@ async function* queryModel(
       } else {
         // 对于不支持自适应 thinking 的模型，使用默认
         // thinking 预算，除非明确指定。
-        let thinkingBudget = getMaxThinkingTokensForModel(options.model)
+        let thinkingBudget = resolved.maxThinkingTokens
         if (thinkingConfig.type === 'enabled' && thinkingConfig.budgetTokens !== undefined) {
           thinkingBudget = thinkingConfig.budgetTokens
         }
@@ -1006,7 +997,7 @@ async function* queryModel(
     lastRequestBetas = betasParams
 
     return {
-      model: normalizeModelStringForAPI(options.model),
+      model: resolved.apiModelId,
       messages: addCacheBreakpoints(
         messagesForAPI,
         enablePromptCaching,
