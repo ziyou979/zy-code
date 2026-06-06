@@ -44,7 +44,11 @@ describe('toolsToOpenAI', () => {
 
   test('工具定义带 input_schema（v1 旧名）→ 兼容', () => {
     const result = toolsToOpenAI([
-      { name: 'f', description: 'd', input_schema: { type: 'object', properties: {} } } as unknown as ToolDefinition,
+      {
+        name: 'f',
+        description: 'd',
+        input_schema: { type: 'object', properties: {} },
+      } as unknown as ToolDefinition,
     ])
     expect(result![0].function.parameters).toEqual({ type: 'object', properties: {} })
   })
@@ -76,7 +80,11 @@ describe('toolChoiceToOpenAI', () => {
   })
 
   test('未知 type → undefined', () => {
-    expect(toolChoiceToOpenAI({ type: 'unknown' } as unknown as Parameters<typeof toolChoiceToOpenAI>[0])).toBeUndefined()
+    expect(
+      toolChoiceToOpenAI({ type: 'unknown' } as unknown as Parameters<
+        typeof toolChoiceToOpenAI
+      >[0]),
+    ).toBeUndefined()
   })
 })
 
@@ -195,166 +203,78 @@ describe('openAIFinishReasonToStandard', () => {
 
 describe('convertThinkingForOpenAI', () => {
   const thinkingEnabled = { type: 'enabled' as const, budgetTokens: 1024 }
+  // 通过第 4 参数 overrideProvider 直接指定 provider，避免 mock.module 跨文件缓存污染
+  const { convertThinkingForOpenAI: fn } =
+    require('../../../src/services/api/conversions/openai.js') as typeof import('../../../src/services/api/conversions/openai.js')
 
   test('undefined thinking → {}', () => {
-    const { convertThinkingForOpenAI } = require('../../../src/services/api/conversions/openai.js')
-    expect(convertThinkingForOpenAI(undefined, 'gpt-4')).toEqual({})
+    expect(fn(undefined, 'gpt-4')).toEqual({})
   })
 
-  test('disabled thinking → dashscope 显式关闭 / 其他 provider 空对象', async () => {
-    const { mock } = await import('bun:test')
-    // 非 DashScope provider：返回 {}
-    mock.module('../../../src/services/model/providers.js', () => ({
-      getAPIProvider: () => 'openai',
-    }))
-    const { convertThinkingForOpenAI: fn1 } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
-    expect(fn1({ type: 'disabled' }, 'gpt-4')).toEqual({})
-    mock.restore()
-
-    // DashScope provider：需显式关闭
-    mock.module('../../../src/services/model/providers.js', () => ({
-      getAPIProvider: () => 'dashscope',
-    }))
-    const { convertThinkingForOpenAI: fn2 } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
-    expect(fn2({ type: 'disabled' }, 'qwen-max')).toEqual({
+  test('disabled thinking → dashscope 显式关闭 / 其他 provider 空对象', () => {
+    expect(fn({ type: 'disabled' }, 'gpt-4', undefined, 'openai')).toEqual({})
+    expect(fn({ type: 'disabled' }, 'qwen-max', undefined, 'dashscope')).toEqual({
       enable_thinking: false,
       thinking: { type: 'disabled' },
     })
-    mock.restore()
   })
 
-  test('dashscope → { enable_thinking: true, thinking: { type: "adaptive" } }', async () => {
-    const { mock } = await import('bun:test')
-    mock.module('../../../src/services/model/providers.js', () => ({
-      getAPIProvider: () => 'dashscope',
-    }))
-    const { convertThinkingForOpenAI: fn } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
-    expect(fn(thinkingEnabled, 'qwen-max')).toEqual({
+  test('dashscope → { enable_thinking: true, thinking: { type: "adaptive" } }', () => {
+    expect(fn(thinkingEnabled, 'qwen-max', undefined, 'dashscope')).toEqual({
       enable_thinking: true,
       thinking: { type: 'adaptive' },
     })
-    mock.restore()
   })
 
-  test('zhipu → { thinking: { type: "enabled", clear_thinking: false } }', async () => {
-    const { mock } = await import('bun:test')
-    mock.module('../../../src/services/model/providers.js', () => ({
-      getAPIProvider: () => 'zhipu',
-    }))
-    const { convertThinkingForOpenAI: fn } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
-    expect(fn(thinkingEnabled, 'glm-4')).toEqual({
+  test('zhipu → { thinking: { type: "enabled", clear_thinking: false } }', () => {
+    expect(fn(thinkingEnabled, 'glm-4', undefined, 'zhipu')).toEqual({
       thinking: { type: 'enabled', clear_thinking: false },
     })
-    mock.restore()
   })
 
-  test('kimi 带 thinking 模型 → chat_template_args', async () => {
-    const { mock } = await import('bun:test')
-    mock.module('../../../src/services/model/providers.js', () => ({
-      getAPIProvider: () => 'kimi',
-    }))
-    const { convertThinkingForOpenAI: fn } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
-    expect(fn(thinkingEnabled, 'kimi-k2-thinking')).toEqual({
+  test('kimi 带 thinking 模型 → chat_template_args', () => {
+    expect(fn(thinkingEnabled, 'kimi-k2-thinking', undefined, 'kimi')).toEqual({
       chat_template_args: { enable_thinking: true },
     })
-    mock.restore()
   })
 
-  test('kimi 普通模型 → { enable_thinking: true }', async () => {
-    const { mock } = await import('bun:test')
-    mock.module('../../../src/services/model/providers.js', () => ({
-      getAPIProvider: () => 'kimi',
-    }))
-    const { convertThinkingForOpenAI: fn } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
-    expect(fn(thinkingEnabled, 'moonshot-v1')).toEqual({ enable_thinking: true })
-    mock.restore()
+  test('kimi 普通模型 → { enable_thinking: true }', () => {
+    expect(fn(thinkingEnabled, 'moonshot-v1', undefined, 'kimi')).toEqual({
+      enable_thinking: true,
+    })
   })
 
-  test('deepseek → reasoning_effort', async () => {
-    const { mock } = await import('bun:test')
-    mock.module('../../../src/services/model/providers.js', () => ({
-      getAPIProvider: () => 'deepseek',
-    }))
-    const { convertThinkingForOpenAI: fn } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
-    expect(fn(thinkingEnabled, 'deepseek-reasoner')).toEqual({ reasoning_effort: 'medium' })
-    mock.restore()
+  test('deepseek → reasoning_effort', () => {
+    expect(fn(thinkingEnabled, 'deepseek-reasoner', undefined, 'deepseek')).toEqual({
+      reasoning_effort: 'medium',
+    })
   })
 
-  test('deepseek 带 effort → reasoning_effort: effort', async () => {
-    const { mock } = await import('bun:test')
-    mock.module('../../../src/services/model/providers.js', () => ({
-      getAPIProvider: () => 'deepseek',
-    }))
-    const { convertThinkingForOpenAI: fn } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
-    expect(fn(thinkingEnabled, 'deepseek-reasoner', { effort: 'high' })).toEqual({
+  test('deepseek 带 effort → reasoning_effort: effort', () => {
+    expect(fn(thinkingEnabled, 'deepseek-reasoner', { effort: 'high' }, 'deepseek')).toEqual({
       reasoning_effort: 'high',
     })
-    mock.restore()
   })
 
-  test('openrouter → { reasoning: { effort } }', async () => {
-    const { mock } = await import('bun:test')
-    mock.module('../../../src/services/model/providers.js', () => ({
-      getAPIProvider: () => 'openrouter',
-    }))
-    const { convertThinkingForOpenAI: fn } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
-    expect(fn(thinkingEnabled, 'anthropic/claude-sonnet')).toEqual({
+  test('openrouter → { reasoning: { effort } }', () => {
+    expect(fn(thinkingEnabled, 'anthropic/claude-sonnet', undefined, 'openrouter')).toEqual({
       reasoning: { effort: 'medium' },
     })
-    mock.restore()
   })
 
-  test('openai → reasoning_effort', async () => {
-    const { mock } = await import('bun:test')
-    mock.module('../../../src/services/model/providers.js', () => ({
-      getAPIProvider: () => 'openai',
-    }))
-    const { convertThinkingForOpenAI: fn } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
-    expect(fn(thinkingEnabled, 'o3-mini')).toEqual({ reasoning_effort: 'medium' })
-    mock.restore()
+  test('openai → reasoning_effort', () => {
+    expect(fn(thinkingEnabled, 'o3-mini', undefined, 'openai')).toEqual({
+      reasoning_effort: 'medium',
+    })
   })
 
-  test('未知 provider 但模型名含 reasoning → { enable_thinking: true }', async () => {
-    const { mock } = await import('bun:test')
-    mock.module('../../../src/services/model/providers.js', () => ({
-      getAPIProvider: () => 'unknown-provider',
-    }))
-    const { convertThinkingForOpenAI: fn } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
-    expect(fn(thinkingEnabled, 'my-reasoning-model')).toEqual({ enable_thinking: true })
-    mock.restore()
+  test('未知 provider 但模型名含 reasoning → { enable_thinking: true }', () => {
+    expect(fn(thinkingEnabled, 'my-reasoning-model', undefined, 'unknown-provider')).toEqual({
+      enable_thinking: true,
+    })
   })
 
-  test('未知 provider + 普通模型名 → {}', async () => {
-    const { mock } = await import('bun:test')
-    mock.module('../../../src/services/model/providers.js', () => ({
-      getAPIProvider: () => 'unknown-provider',
-    }))
-    const { convertThinkingForOpenAI: fn } = await import(
-      '../../../src/services/api/conversions/openai.js'
-    )
-    expect(fn(thinkingEnabled, 'gpt-4')).toEqual({})
-    mock.restore()
+  test('未知 provider + 普通模型名 → {}', () => {
+    expect(fn(thinkingEnabled, 'gpt-4', undefined, 'unknown-provider')).toEqual({})
   })
 })

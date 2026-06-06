@@ -6,7 +6,7 @@ import {
   localModelHasCapability,
   parseTokenCount,
 } from '../../utils/settings/localModelCapabilities.js'
-import { getProviderEntry, PROVIDER_REGISTRY } from './providerRegistry.js'
+import { type OpenAICompat, getProviderEntry, PROVIDER_REGISTRY } from './providerRegistry.js'
 
 /**
  * 所有已注册的 provider ID 的联合类型。
@@ -232,4 +232,22 @@ export function getModelCostsFromSettings(
     }
   | undefined {
   return getLocalModelCosts(model, currentInputTokens)
+}
+
+/**
+ * 获取 provider 的 OpenAI 兼容协议差异声明。
+ * 消息转换层通过此配置决定行为，而非判断 provider 名称。
+ */
+export function getProviderCompat(provider?: string): OpenAICompat | undefined {
+  const entry = getProviderEntry(provider ?? getAPIProvider())
+  return entry?.openaiCompat
+}
+
+/**
+ * 获取 provider 的 effort 映射表（内部档位 → API 参数值）。
+ * 未声明时返回 undefined，调用方应回退到 anthropic 映射。
+ */
+export function getProviderEffortMapping(provider?: string): Record<string, string> | undefined {
+  const entry = getProviderEntry(provider ?? getAPIProvider())
+  return entry?.effortMapping
 }

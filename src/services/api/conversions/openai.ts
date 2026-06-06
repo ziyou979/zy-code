@@ -43,6 +43,7 @@ export interface OpenAICreateParams extends ChatCompletionCreateParamsBase {
 
 import { normalizeModelStringForAPI } from '../../../services/model/model.js'
 import { getAPIProvider } from '../../../services/model/providers.js'
+import { getProviderEntry } from '../../../services/model/providerRegistry.js'
 import { localModelHasCapability } from '../../../utils/settings/localModelCapabilities.js'
 
 interface DashScopeChatCompletionDelta {
@@ -182,15 +183,15 @@ export function messagesToOpenAI(
               typeof block.content === 'string'
                 ? block.content
                 : Array.isArray(block.content)
-                  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
-                  ? block.content.map((c: any) => (c.type === 'text' ? c.text : '')).join('\n')
+                  ? // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
+                    block.content.map((c: any) => (c.type === 'text' ? c.text : '')).join('\n')
                   : ''
             toolResults.push({
               role: 'tool',
               tool_call_id: block.toolCallId ?? '',
               content: text || '(empty)',
               ...(block.cache_control && { cache_control: block.cache_control }),
-            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
+              // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
             } as any)
           } else if (block.type === 'cache_edits') {
             // cache_edits 是缓存编辑指令，不是用户内容，直接透传
@@ -293,7 +294,7 @@ export function messagesToOpenAI(
           if (lastCacheControl) {
             am.content = [
               { type: 'text', text: textParts.join('\n\n'), cache_control: lastCacheControl },
-            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
+              // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
             ] as any
           } else {
             am.content = textParts.join('\n\n')
@@ -455,58 +456,32 @@ export function convertThinkingForOpenAI(
   thinking: { type: string; budgetTokens?: number } | undefined,
   model: string,
   outputConfig?: Record<string, unknown>,
+  overrideProvider?: string,
 ): Record<string, unknown> {
+  const provider = overrideProvider ?? getAPIProvider()
+  const compat = getProviderEntry(provider)?.openaiCompat
+
   if (!thinking || thinking.type === 'disabled') {
-    // DashScope 部分模型默认开启思考，需显式关闭
-    if (thinking?.type === 'disabled' && getAPIProvider() === 'dashscope') {
-      return { enable_thinking: false, thinking: { type: 'disabled' } }
+    // 部分 provider（如 DashScope）默认开启思考，需显式关闭
+    if (thinking?.type === 'disabled' && compat?.thinking?.disable) {
+      return compat.thinking.disable
     }
     return {}
   }
 
-  const provider = getAPIProvider()
-  const modelLower = model.toLowerCase()
   const effort = outputConfig?.effort as string | undefined
 
-  if (provider === 'dashscope') {
-    // 百炼托管多家模型，参数格式不统一：
-    // - Qwen 系列用 enable_thinking（+ 可选 thinking_budget）
-    // - MiniMax（稀宇直供）用 thinking 对象，不认 enable_thinking
-    // - DeepSeek V4 用 enable_thinking（+ 可选 reasoning_effort）
-    // 统一都传，各模型取自己认识的参数、忽略不认识的。
-    const result: Record<string, unknown> = {
-      enable_thinking: true,
-      thinking: { type: 'adaptive' },
+  // 优先使用注册表中的声明式配置
+  if (compat?.thinking) {
+    const params = compat.thinking.enable(effort, model)
+    if (compat.thinking.supportsPreserveThinking && effort === 'max') {
+      return { ...params, preserve_thinking: true }
     }
-    if (effort === 'max') {
-      result.preserve_thinking = true
-    }
-    return result
-  }
-  if (provider === 'zhipu') {
-    return { thinking: { type: 'enabled', clear_thinking: false } }
-  }
-  if (provider === 'kimi') {
-    if (modelLower.includes('kimi-k2-thinking') || modelLower.includes('k2-thinking')) {
-      return { chat_template_args: { enable_thinking: true } }
-    }
-    return { enable_thinking: true }
-  }
-  if (provider === 'deepseek') {
-    return { reasoning_effort: effort ?? 'medium' }
-  }
-  if (provider === 'openrouter') {
-    return { reasoning: { effort: effort ?? 'medium' } }
-  }
-  if (provider === 'openai') {
-    return { reasoning_effort: effort ?? 'medium' }
-  }
-  if (provider === 'gemini') {
-    // Gemini OpenAI 兼容端原生支持 reasoning_effort，自动映射为
-    // thinkingLevel（Gemini 3）或 thinkingBudget（Gemini 2.5）
-    return { reasoning_effort: effort ?? 'medium' }
+    return params
   }
 
+  // 兜底：模型名启发式（用于未注册 compat 的 provider）
+  const modelLower = model.toLowerCase()
   if (
     modelLower.includes('reasoning') ||
     modelLower.includes('r1') ||

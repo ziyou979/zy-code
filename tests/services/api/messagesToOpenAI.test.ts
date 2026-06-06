@@ -296,7 +296,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
   test('DeepSeek 但不具备 thinking 能力（model-capabilities 未声明）：走普通 <thinking> 兜底', async () => {
     const { mock } = await import('bun:test')
     // 必须同时 mock provider 为非 REASONING_CONTENT_PROVIDERS，否则 provider 级判断会短路
+    const realProviders = await import('../../../src/services/model/providers.js')
     mock.module('../../../src/services/model/providers.js', () => ({
+      ...realProviders,
       getAPIProvider: () => 'generic',
     }))
     mock.module('../../../src/utils/settings/localModelCapabilities.js', () => ({
@@ -325,7 +327,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
   test('非 reasoning provider 的模型：thinking 包成 <thinking>...</thinking> 并入 content', async () => {
     const { mock } = await import('bun:test')
     // 确保 provider 不在 REASONING_CONTENT_PROVIDERS 中
+    const realProviders = await import('../../../src/services/model/providers.js')
     mock.module('../../../src/services/model/providers.js', () => ({
+      ...realProviders,
       getAPIProvider: () => 'generic',
     }))
     const { messagesToOpenAI: fn } = await import('../../../src/services/api/conversions/openai.js')
@@ -404,7 +408,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         role: 'user',
         content: [{ type: 'unknown_block', foo: 'bar' }],
       },
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
     expect(result[0].content).toBe('')
   })
@@ -428,7 +432,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
           },
         ],
       },
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
     // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const toolMsg = result.find((m) => m.role === 'tool') as any
@@ -442,7 +446,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
         content: 'Let me search',
         toolCalls: [{ id: 'c1', name: 'search', arguments: '{"q":"hi"}' }],
       },
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
     // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     const a = result.find((m) => m.role === 'assistant') as any
@@ -485,7 +489,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
   test('user 单 text block 不带 cache_control：仍压扁成 string（保持原行为）', () => {
     const result = messagesToOpenAI([
       { role: 'user', content: [{ type: 'text', text: 'hello' }] },
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     ] as any)
     expect(result[0]).toEqual({ role: 'user', content: 'hello' })
     assertValidOpenAIChatMessages(result)

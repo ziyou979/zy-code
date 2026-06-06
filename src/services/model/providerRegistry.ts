@@ -109,6 +109,27 @@ export interface ProviderEntry {
 
   /** 是否在 onboarding 平台列表中显示，默认 true。基础设施 provider（bedrock 等）设为 false */
   showInOnboarding?: boolean
+
+  /** OpenAI 兼容协议的 provider 差异声明。消息转换层读取此配置而非判断 provider 名称 */
+  openaiCompat?: OpenAICompat
+
+  /** 内部 effort 档位 → provider API 参数值的映射表。省略时回退到 anthropic 映射 */
+  effortMapping?: Record<string, string>
+}
+
+/**
+ * OpenAI 兼容 provider 的差异行为声明。
+ * 协议实现代码通过读取 compat 字段决定行为，新增 provider 只需声明配置。
+ */
+export interface OpenAICompat {
+  thinking?: {
+    /** 启用 thinking 时传给 API 的参数。effort 为映射后的 provider 参数值，model 为模型名 */
+    enable: (effort: string | undefined, model?: string) => Record<string, unknown>
+    /** 显式禁用 thinking 时传给 API 的参数（省略则不传） */
+    disable?: Record<string, unknown>
+    /** 是否支持 preserve_thinking（effort=max 时启用） */
+    supportsPreserveThinking?: boolean
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -162,6 +183,21 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       { label: 'qwen3.5-plus', value: 'qwen3.5-plus', tags: ['reasoning'] },
       { label: 'qwen3.5-flash', value: 'qwen3.5-flash', tags: ['fast', 'lightweight'] },
     ],
+    effortMapping: {
+      quick: 'high',
+      light: 'high',
+      balanced: 'high',
+      thorough: 'high',
+      extreme: 'max',
+      orchestrate: 'max',
+    },
+    openaiCompat: {
+      thinking: {
+        enable: () => ({ enable_thinking: true, thinking: { type: 'adaptive' } }),
+        disable: { enable_thinking: false, thinking: { type: 'disabled' } },
+        supportsPreserveThinking: true,
+      },
+    },
   },
   {
     id: 'deepseek',
@@ -176,6 +212,19 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       { label: 'deepseek-chat', value: 'deepseek-chat', tags: ['recommended', 'balanced'] },
       { label: 'deepseek-reasoner', value: 'deepseek-reasoner', tags: ['reasoning'] },
     ],
+    effortMapping: {
+      quick: 'high',
+      light: 'high',
+      balanced: 'high',
+      thorough: 'high',
+      extreme: 'max',
+      orchestrate: 'max',
+    },
+    openaiCompat: {
+      thinking: {
+        enable: (effort) => ({ reasoning_effort: effort ?? 'medium' }),
+      },
+    },
   },
   {
     id: 'openai',
@@ -190,6 +239,19 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       { label: 'gpt-4o', value: 'gpt-4o', tags: ['recommended', 'balanced'] },
       { label: 'gpt-4o-mini', value: 'gpt-4o-mini', tags: ['fast', 'lightweight'] },
     ],
+    effortMapping: {
+      quick: 'minimal',
+      light: 'low',
+      balanced: 'medium',
+      thorough: 'high',
+      extreme: 'high',
+      orchestrate: 'high',
+    },
+    openaiCompat: {
+      thinking: {
+        enable: (effort) => ({ reasoning_effort: effort ?? 'medium' }),
+      },
+    },
   },
   {
     id: 'zhipu',
@@ -207,6 +269,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       { label: 'glm-4-plus', value: 'glm-4-plus', tags: ['recommended', 'balanced'] },
       { label: 'glm-4-flash', value: 'glm-4-flash', tags: ['fast'] },
     ],
+    openaiCompat: {
+      thinking: {
+        enable: () => ({ thinking: { type: 'enabled', clear_thinking: false } }),
+      },
+    },
   },
   {
     id: 'kimi',
@@ -224,6 +291,17 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       { label: 'moonshot-v1', value: 'moonshot-v1', tags: ['recommended'] },
       { label: 'moonshot-v1-8k', value: 'moonshot-v1-8k', tags: ['lightweight'] },
     ],
+    openaiCompat: {
+      thinking: {
+        enable: (_effort, model) => {
+          const m = (model ?? '').toLowerCase()
+          if (m.includes('kimi-k2-thinking') || m.includes('k2-thinking')) {
+            return { chat_template_args: { enable_thinking: true } }
+          }
+          return { enable_thinking: true }
+        },
+      },
+    },
   },
   {
     id: 'siliconflow',
@@ -355,6 +433,19 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
         tags: ['fast', 'budget'],
       },
     ],
+    effortMapping: {
+      quick: 'low',
+      light: 'low',
+      balanced: 'medium',
+      thorough: 'high',
+      extreme: 'high',
+      orchestrate: 'high',
+    },
+    openaiCompat: {
+      thinking: {
+        enable: (effort) => ({ reasoning: { effort: effort ?? 'medium' } }),
+      },
+    },
   },
   {
     id: 'together',
@@ -496,6 +587,19 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       { label: 'gemini-2.5-pro', value: 'gemini-2.5-pro', tags: ['reasoning', 'flagship'] },
       { label: 'gemini-3-flash', value: 'gemini-3-flash', tags: ['fast', 'balanced'] },
     ],
+    effortMapping: {
+      quick: 'minimal',
+      light: 'low',
+      balanced: 'medium',
+      thorough: 'high',
+      extreme: 'high',
+      orchestrate: 'high',
+    },
+    openaiCompat: {
+      thinking: {
+        enable: (effort) => ({ reasoning_effort: effort ?? 'medium' }),
+      },
+    },
   },
 
   // ── 其他 provider ────────────────────────────────────────────────────────
@@ -506,6 +610,14 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: FULL_CAPABILITIES,
     defaultEffortLevels: ANTHROPIC_EFFORT_LEVELS,
     apiKeyLabel: 'Anthropic API Key',
+    effortMapping: {
+      quick: 'low',
+      light: 'medium',
+      balanced: 'high',
+      thorough: 'xhigh',
+      extreme: 'max',
+      orchestrate: 'max',
+    },
   },
   {
     id: 'generic',

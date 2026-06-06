@@ -2,7 +2,7 @@
 import { isUltrathinkEnabled } from './thinking.js'
 import { getInitialSettings } from './settings/settings.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
-import { getAPIProvider } from 'src/services/model/providers.js'
+import { getAPIProvider, getProviderEffortMapping } from 'src/services/model/providers.js'
 import { getMainLoopModel } from 'src/services/model/model.js'
 import { getProviderEntry } from 'src/services/model/providerRegistry.js'
 import { getLocalModelEffortLevels } from './settings/localModelCapabilities.js'
@@ -40,67 +40,25 @@ export type EffortValue = EffortLevel
 
 // ---------------------------------------------------------------------------
 // Provider 映射（内部档位 → 各家 API 参数值）
+// 映射表声明在 providerRegistry.ts 的 effortMapping 字段中。
 // ---------------------------------------------------------------------------
 
-type ProviderEffortValue = string
-
-const PROVIDER_EFFORT_MAP: Record<string, Record<string, ProviderEffortValue>> = {
-  anthropic: {
-    quick: 'low',
-    light: 'medium',
-    balanced: 'high',
-    thorough: 'xhigh',
-    extreme: 'max',
-    orchestrate: 'max',
-  },
-  openai: {
-    quick: 'minimal',
-    light: 'low',
-    balanced: 'medium',
-    thorough: 'high',
-    extreme: 'high',
-    orchestrate: 'high',
-  },
-  gemini: {
-    quick: 'minimal',
-    light: 'low',
-    balanced: 'medium',
-    thorough: 'high',
-    extreme: 'high',
-    orchestrate: 'high',
-  },
-  deepseek: {
-    quick: 'high',
-    light: 'high',
-    balanced: 'high',
-    thorough: 'high',
-    extreme: 'max',
-    orchestrate: 'max',
-  },
-  dashscope: {
-    quick: 'high',
-    light: 'high',
-    balanced: 'high',
-    thorough: 'high',
-    extreme: 'max',
-    orchestrate: 'max',
-  },
-  openrouter: {
-    quick: 'low',
-    light: 'low',
-    balanced: 'medium',
-    thorough: 'high',
-    extreme: 'high',
-    orchestrate: 'high',
-  },
+// anthropic 的映射作为回退默认值
+const DEFAULT_EFFORT_MAPPING: Record<string, string> = {
+  quick: 'low',
+  light: 'medium',
+  balanced: 'high',
+  thorough: 'xhigh',
+  extreme: 'max',
+  orchestrate: 'max',
 }
 
 /**
  * 将内部 effort 档位映射为目标 provider 的 API 参数值。
- * 对于不在映射表中的 provider，回退到 anthropic 映射。
+ * 优先读取 providerRegistry 中的 effortMapping，未声明时回退到 anthropic 映射。
  */
-export function mapEffortToProvider(effort: EffortLevel, providerId: string): ProviderEffortValue {
-  const map = PROVIDER_EFFORT_MAP[providerId] ?? PROVIDER_EFFORT_MAP.anthropic
+export function mapEffortToProvider(effort: EffortLevel, providerId: string): string {
+  const map = getProviderEffortMapping(providerId) ?? DEFAULT_EFFORT_MAPPING
   const key = effort === 'orchestrate' ? 'extreme' : effort
   return map[key] ?? 'medium'
 }
