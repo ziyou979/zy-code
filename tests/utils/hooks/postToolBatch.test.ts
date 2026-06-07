@@ -19,19 +19,19 @@ beforeAll(async () => {
     warmI18n: async () => {},
     SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
   }))
-  mock.module('../../../src/utils/hooks/executeEngine.js', () => ({
+  mock.module('../../../src/services/hooks/executeEngine.js', () => ({
     executeHooks: async function* () {
       for (const r of QUEUED) {
         yield r
       }
     },
   }))
-  const matcher = await import('../../../src/utils/hooks/matcher.js')
-  mock.module('../../../src/utils/hooks/matcher.js', () => ({
+  const matcher = await import('../../../src/services/hooks/matcher.js')
+  mock.module('../../../src/services/hooks/matcher.js', () => ({
     ...matcher,
     hasHookForEvent: () => HAS_HOOK,
   }))
-  ;({ executePostToolBatchHooks } = await import('../../../src/utils/hooks/executors/tool.js'))
+  ;({ executePostToolBatchHooks } = await import('../../../src/services/hooks/executors/tool.js'))
 })
 
 const ctx = {

@@ -26,7 +26,7 @@ beforeAll(async () => {
     warmI18n: async () => {},
     SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
   }))
-  mock.module('../../../src/utils/hooks/executeEngine.js', () => ({
+  mock.module('../../../src/services/hooks/executeEngine.js', () => ({
     executeHooks: async function* () {
       if (THROW) {
         throw new Error('boom')
@@ -36,15 +36,15 @@ beforeAll(async () => {
       }
     },
   }))
-  const matcher = await import('../../../src/utils/hooks/matcher.js')
-  mock.module('../../../src/utils/hooks/matcher.js', () => ({
+  const matcher = await import('../../../src/services/hooks/matcher.js')
+  mock.module('../../../src/services/hooks/matcher.js', () => ({
     ...matcher,
     hasHookForEvent: () => HAS_HOOK,
   }))
 
   S = await import('../../../src/types/hooks/schemas.js')
   ;({ executeMessageDisplayHooks } = await import(
-    '../../../src/utils/hooks/executors/messageDisplay.js'
+    '../../../src/services/hooks/executors/messageDisplay.js'
   ))
 })
 
