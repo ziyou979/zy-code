@@ -5,7 +5,7 @@
  * 其他 OSC（如 8 超链接）、裸文本、含任何非白名单片段的混合串。
  */
 import { describe, expect, test } from 'bun:test'
-import { validateTerminalSequence } from '../../../src/utils/hooks/terminalSequence.js'
+import { validateTerminalSequence } from '../../../src/services/hooks/terminalSequence.js'
 
 const BEL = '\x07'
 const ESC = '\x1b'

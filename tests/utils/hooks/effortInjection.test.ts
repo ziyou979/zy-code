@@ -78,7 +78,7 @@ describe('3.3 effort 注入', () => {
 
   describe('createBaseHookInput', () => {
     test('从 toolUseContext.getAppState().effortValue 读取并注入 effort', async () => {
-      const { createBaseHookInput } = await import('../../../src/utils/hooks/config.js')
+      const { createBaseHookInput } = await import('../../../src/services/hooks/config.js')
       const thorough = createBaseHookInput(undefined, undefined, {
         getAppState: () => ({ effortValue: 'thorough' }),
       })
@@ -91,7 +91,7 @@ describe('3.3 effort 注入', () => {
 
     test('模型不支持 effort 时不写入 effort 字段', async () => {
       LEVELS = []
-      const { createBaseHookInput } = await import('../../../src/utils/hooks/config.js')
+      const { createBaseHookInput } = await import('../../../src/services/hooks/config.js')
       const out = createBaseHookInput(undefined, undefined, {
         getAppState: () => ({ effortValue: 'thorough' }),
       })
