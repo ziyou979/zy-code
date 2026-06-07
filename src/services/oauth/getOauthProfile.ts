@@ -1,8 +1,8 @@
 import axios from 'axios'
 import { getOauthConfig } from 'src/constants/oauth.js'
 import type { OAuthProfileResponse } from 'src/services/oauth/types.js'
-import { getApiKey } from 'src/utils/auth.js'
-import { getGlobalConfig } from 'src/utils/config.js'
+import { getApiKey } from '../auth/auth.js'
+import { getGlobalConfig } from '../config/config.js'
 import { logError } from 'src/utils/log.js'
 export async function getOauthProfileFromApiKey(): Promise<OAuthProfileResponse | undefined> {
   // Assumes interactive session

@@ -8,7 +8,7 @@ import {
   getOauthAccountInfo,
   getSubscriptionType,
   isOverageProvisioningAllowed,
-} from '../utils/auth.js'
+} from './auth/auth.js'
 import { hasZyAiBillingAccess } from '../utils/billing.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { formatResetTime } from '../utils/format.js'

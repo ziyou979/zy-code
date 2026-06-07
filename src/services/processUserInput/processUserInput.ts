@@ -28,8 +28,8 @@ import {
   type AgentMentionAttachment,
   createAttachmentMessage,
   getAttachmentMessages,
-} from '../../utils/attachments.js'
-import type { PastedContent } from '../../utils/config.js'
+} from '../attachments/attachments.js'
+import type { PastedContent } from '../config/config.js'
 import type { EffortValue } from '../../utils/effort.js'
 import { toArray } from '../../utils/generators.js'
 import { executeUserPromptExpansionHooks } from '../../utils/hooks/executors/notification.js'
@@ -37,7 +37,7 @@ import { hasHookForEvent } from '../../utils/hooks/matcher.js'
 import {
   executeUserPromptSubmitHooks,
   getUserPromptSubmitHookBlockingMessage,
-} from '../../utils/hooks.js'
+} from '../hooks.js'
 import {
   createImageMetadataText,
   maybeResizeAndDownsampleImageBlock,

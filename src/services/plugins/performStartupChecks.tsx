@@ -1,6 +1,6 @@
 import { performBackgroundPluginInstallations } from './PluginInstallationManager.js'
 import type { AppState } from '../../state/AppState.js'
-import { checkHasTrustDialogAccepted } from '../../utils/config.js'
+import { checkHasTrustDialogAccepted } from '../config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { clearMarketplacesCache, registerSeedMarketplaces } from './marketplaceManager.js'
 import { clearPluginCache } from './pluginLoader.js'

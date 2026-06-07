@@ -9,14 +9,14 @@ import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { AnyObject, Tool, ToolUseContext } from '../../Tool.js'
 import type { AssistantMessage, AttachmentMessage, ProgressMessage } from '../../types/message.js'
 import type { PermissionDecision } from '../../types/permissions.js'
-import { createAttachmentMessage } from '../../utils/attachments.js'
+import { createAttachmentMessage } from '../attachments/attachments.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {
   executePostToolHooks,
   executePostToolUseFailureHooks,
   executePreToolHooks,
   getPreToolHookBlockingMessage,
-} from '../../utils/hooks.js'
+} from '../hooks.js'
 import { logError } from '../../utils/log.js'
 import {
   getRuleBehaviorDescription,

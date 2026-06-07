@@ -12,11 +12,11 @@ import {
   getAgentListingDeltaAttachment,
   getDeferredToolsDeltaAttachment,
   getMcpInstructionsDeltaAttachment,
-} from '../../utils/attachments.js'
+} from '../attachments/attachments.js'
 import { logForDebugging } from '../../utils/debug.js'
 import type { CacheSafeParams } from '../../utils/forkedAgent.js'
 import { runForkedAgent } from '../../utils/forkedAgent.js'
-import { executePostCompactHooks } from '../../utils/hooks.js'
+import { executePostCompactHooks } from '../hooks.js'
 import { logError } from '../../utils/log.js'
 import {
   createCompactBoundaryMessage,

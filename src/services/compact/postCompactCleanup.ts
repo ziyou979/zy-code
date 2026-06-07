@@ -6,7 +6,7 @@ import { clearBetaTracingState } from '../../services/telemetry/betaSessionTraci
 import { clearSpeculativeChecks } from '../../tools/BashTool/bashPermissions.js'
 import { resetGetMemoryFilesCache } from '../../utils/agentsMd.js'
 import { clearClassifierApprovals } from '../../utils/classifierApprovals.js'
-import { clearSessionMessagesCache } from '../../utils/sessionStorage.js'
+import { clearSessionMessagesCache } from '../sessionStorage.js'
 import { resetMicrocompactState } from './microCompact.js'
 
 /**

@@ -16,7 +16,7 @@ import {
 } from '../../utils/messages.js'
 import { getSessionMemoryPath } from '../../utils/permissions/filesystem.js'
 import { processSessionStartHooks } from '../../utils/sessionStart.js'
-import { getTranscriptPath } from '../../utils/sessionStorage.js'
+import { getTranscriptPath } from '../sessionStorage.js'
 import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
 import { extractDiscoveredToolNames } from '../../utils/toolSearch.js'
 import {

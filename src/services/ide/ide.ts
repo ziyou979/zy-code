@@ -10,7 +10,7 @@ import { logEvent } from 'src/services/analytics/index.js'
 import { getIsScrollDraining, getOriginalCwd } from '../../bootstrap/state.js'
 import { callIdeRpc } from '../mcp/mcpToolCall.js'
 import type { ConnectedMCPServer, MCPServerConnection } from '../mcp/types.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { env } from '../../utils/env.js'
 import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
 import {

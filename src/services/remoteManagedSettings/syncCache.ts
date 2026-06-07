@@ -8,7 +8,7 @@
 
 import { ZY_CODE_INFERENCE_SCOPE } from '../../constants/oauth.js'
 import { getAPIProvider, isAnthropicBaseUrl } from '../../services/model/providers.js'
-import { getApiKeyWithSource, getZyAIOAuthTokens } from '../../utils/auth.js'
+import { getApiKeyWithSource, getZyAIOAuthTokens } from '../auth/auth.js'
 
 import { resetSyncCache as resetLeafCache, setEligibility } from './syncCacheState.js'
 

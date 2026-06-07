@@ -224,7 +224,95 @@ CC 167 在 StylePool 新增：`needsCompaction()`, `compact()`, `lastStyleLiveSi
 
 #### P1 — 中优先级
 
-**2.2.5 frameSink 外部帧消费**
+**2.2.5 鼠标点击展开工具结果（Click-to-Expand）**
+
+CC 167 新增：消息行级 `onClick` / `onMouseEnter` / `onMouseLeave` 事件处理 + `expandedSet` 状态管理
+
+功能：在全屏模式下，用户可用鼠标点击折叠行（如 "Thought for 19s, searched for 2 patterns, read 2 files, ran 1 shell command"）展开对应明细。
+
+**核心实现（逆向提取）**：
+
+1. **gv3 消息行 Wrapper 组件**：每条消息被独立包裹，携带 onClick/hover 事件：
+```javascript
+function gv3({itemKey, msg, expanded, hovered, clickable, onClickK, onEnterK, onLeaveK, ...}) {
+  return <Box
+    backgroundColor={hovered ? "userMessageBackgroundHover" : undefined}
+    paddingBottom={hovered ? 1 : undefined}
+    onClick={clickable ? (e) => {
+      if (e.hyperlinkUrl) return e.allowDefault()  // 超链接优先
+      onClickK(itemKey, e.cellIsBlank)             // 传递 key + 空白判定
+    } : undefined}
+    onMouseEnter={clickable ? () => onEnterK(itemKey) : undefined}
+    onMouseLeave={clickable ? () => onLeaveK(itemKey) : undefined}
+    hoverIgnoresBlankCells={!expanded}  // 未展开时空白区不响应 hover
+  >
+    {renderItem(msg)}
+  </Box>
+}
+```
+
+2. **isItemClickable 判定逻辑**（决定哪些消息行可点击）：
+```javascript
+const isItemClickable = useCallback((msg) => {
+  // 1. collapsed_read_search 类型始终可点击
+  if (msg.type === "collapsed_read_search") return true
+  // 2. goal_status 附件（有 reason 时）
+  if (msg.type === "attachment") {
+    if (verbose || isTranscriptMode) return false
+    return msg.attachment?.type === "goal_status" && !!msg.attachment.reason
+  }
+  // 3. advisor_tool_result
+  if (msg.type === "assistant") { /* advisor_tool_result 检查 */ }
+  // 4. 工具结果：由工具自身的 isResultTruncated() 决定
+  if (msg.type !== "user") return false
+  let content = msg.message.content[0]
+  if (content?.type !== "tool_result") return false
+  if (content.is_error) return hasContent(content.content)
+  let toolName = lookupToolUseById(content.tool_use_id)?.name
+  return findTool(tools, toolName)?.isResultTruncated?.(msg.toolUseResult, {columns}) ?? false
+}, [tools, verbose, isTranscriptMode])
+```
+
+3. **expandedSet 状态管理**（点击 toggle 单条消息）：
+```javascript
+const [expandedSet, setExpandedSet] = useState(() => new Set())
+
+const onItemClick = useCallback((key) => {
+  setExpandedSet((prev) => {
+    let next = new Set(prev)
+    if (next.has(key)) next.delete(key)  // 再次点击折叠
+    else next.add(key)                    // 首次点击展开
+    return next
+  })
+}, [])
+
+// VirtualMessageList 中，空白单元格不触发
+const handleClick = useCallback((key, isBlank) => {
+  if (!isBlank) onItemClick(key)  // cellIsBlank 保护
+}, [])
+```
+
+4. **渲染联动**：展开状态注入 verbose 参数：
+```javascript
+// Messages 组件中，展开的消息获得 verbose=true
+verbose={verbose || isItemExpanded(msg) || (cursor?.expanded && idx === selectedIdx)}
+```
+
+**关键设计要点**：
+- **粒度**：每条消息独立 toggle，点击 A 不影响 B 的展开状态
+- **cellIsBlank 保护**：点击行内空白区域不触发展开，避免误操作
+- **超链接优先**：`e.hyperlinkUrl` 存在时放行默认行为，不展开
+- **hover 反馈**：`backgroundColor: "userMessageBackgroundHover"` + paddingBottom
+- **hoverIgnoresBlankCells**：未展开时空白区不响应 hover，已展开时全行响应（便于折叠）
+
+**改进方案**：
+- 在 `src/components/Messages.tsx` 中新增 `expandedSet` 状态 + `isItemExpanded()` / `onItemClick()` 回调
+- 修改消息渲染：展开时传 `verbose=true`
+- 在消息行外层组件添加 Ink Box `onClick` / `onMouseEnter` / `onMouseLeave`
+- 在 `src/Tool.ts` 的 Tool 接口中确认 `isResultTruncated()` 方法已存在（用于判定可点击性）
+- 新增 `collapsed_read_search` 消息类型的可点击支持
+
+**2.2.6 frameSink 外部帧消费**
 
 CC 167 新增字段：`frameSink`
 
@@ -238,7 +326,7 @@ CC 167 新增字段：`frameSink`
 - 在 commit 后调用 `frameSink(currScreen)`
 - 为 bridge 远程会话提供帧转发接口
 
-**2.2.6 Overlay 签名追踪**
+**2.2.7 Overlay 签名追踪**
 
 CC 167 新增字段：`prevOverlaySig`
 
@@ -251,7 +339,7 @@ CC 167 新增字段：`prevOverlaySig`
 - 在 commit 阶段计算 overlay 子树的简单 hash
 - 如果签名未变则跳过 overlay 层的 diff 输出
 
-**2.2.7 Full Repaint Sentinel**
+**2.2.8 Full Repaint Sentinel**
 
 CC 167 新增：`fullRepaintSentinelScreen`, `altScreenFullRepaint`
 
@@ -266,7 +354,7 @@ CC 167 新增：`fullRepaintSentinelScreen`, `altScreenFullRepaint`
 
 #### P2 — 低优先级
 
-**2.2.8 LIVE_COUNTS 调试**
+**2.2.9 LIVE_COUNTS 调试**
 
 CC 167 新增：`LIVE_COUNTS`, `liveCountsEnabled`, `LIVE_COUNTS_INTERVAL_MS`
 
@@ -277,7 +365,7 @@ CC 167 新增：`LIVE_COUNTS`, `liveCountsEnabled`, `LIVE_COUNTS_INTERVAL_MS`
 - 每 30 秒打印 Pool 统计到 stderr
 - 仅 debug 构建启用
 
-**2.2.9 nativeCursor / bgWorkerForceShowCursor**
+**2.2.10 nativeCursor / bgWorkerForceShowCursor**
 
 CC 167 新增字段：`nativeCursor`, `bgWorkerForceShowCursor`
 
@@ -414,7 +502,31 @@ function isAltScreenDisabled(): boolean {
 
 在 `enterAltScreen()` / `exitAltScreen()` 中检查此标志。
 
-#### Task 2.3：tmux focus-events 提示
+#### Task 2.3：鼠标点击展开（Click-to-Expand）
+
+**目标**：用户可点击折叠的工具结果行展开明细，无需键盘操作。
+
+**改动文件**：
+- `src/components/Messages.tsx` — 新增 `expandedSet` 状态 + `isItemClickable` / `onItemClick` 回调
+- `src/components/Message.tsx` — 消息行 wrapper 添加 onClick/hover props
+- `src/Tool.ts` — 确认 `isResultTruncated()` 方法签名
+
+**实现要点**：
+1. `expandedSet = new Set<string>()` 管理展开的消息 key（uuid）
+2. `isItemClickable(msg)` 判定：
+   - `collapsed_read_search` 类型 → true
+   - tool_result + `tool.isResultTruncated()` → true
+   - 其他 → false
+3. 消息行 wrapper 添加 Ink Box props：
+   - `onClick` — cellIsBlank 保护 + 超链接优先
+   - `onMouseEnter` / `onMouseLeave` — hover 背景色
+   - `hoverIgnoresBlankCells={!expanded}`
+4. 展开状态注入渲染：`verbose={verbose || isItemExpanded(msg)}`
+5. 粒度为单条消息独立 toggle
+
+**依赖**：SGR 鼠标协议（已有）、`isResultTruncated()` 方法（已有）
+
+#### Task 2.4：tmux focus-events 提示
 
 **目标**：解决 tmux 用户焦点跟踪不生效的问题。
 
@@ -580,6 +692,7 @@ function isFullscreenActive(): boolean {
 | P0 | Windows+SSH 自动检测 | 0.5d | 无 |
 | P1 | `/tui` 命令 + 热切换 | 5d | settings 持久化 |
 | P1 | `DISABLE_ALTERNATE_SCREEN` | 1d | 无 |
+| P1 | 鼠标点击展开（Click-to-Expand） | 3d | SGR 鼠标（已有） |
 | P1 | tmux focus-events 提示 | 1d | 无 |
 | P1 | 背景会话强制全屏 | 1d | 无 |
 | P1 | 分辨率函数 reason 改造 | 2d | 无 |
@@ -591,4 +704,166 @@ function isFullscreenActive(): boolean {
 | P2 | LIVE_COUNTS | 1d | 无 |
 | P2 | 遥测增强 | 2d | resolution 改造 |
 
-**总计**：约 33 人天。P0 可在 1 周内完成，P0+P1 约 3 周，全部约 5 周。
+**总计**：约 36 人天。P0 可在 1 周内完成，P0+P1 约 3-4 周，全部约 5-6 周。
+
+---
+
+## 七、Bash 工具调用折叠渲染机制（逆向确认）
+
+> 新版 CC 167 中 Bash 工具调用不再直接渲染输出，而是折叠到 "Ran N shell commands" 摘要行中，
+> 点击后展开明细。以下为逆向提取的完整实现链路。
+
+### 7.1 整体数据流
+
+```
+消息流 → wSK() collapseReadSearchGroups → collapsed_read_search 消息
+                                              ↓
+                                    CollapsedReadSearchContent 组件渲染
+                                              ↓
+                            点击 → expandedSet toggle → verbose=true → 展开明细
+```
+
+### 7.2 Bash 折叠的前提条件
+
+**仅在全屏模式下生效** — `A9()` (即 `isFullscreenEnvEnabled()`) 为 true 时：
+
+```javascript
+// uIH() — 判定工具是否可折叠
+// Jv = [dq, B9] = ["Bash", "PowerShell"]
+const isCollapsible = result.isSearch || result.isRead || isList
+return {
+  isCollapsible: isCollapsible || (A9() ? Jv.includes(toolName) : false),
+  isSearch: result.isSearch,
+  isRead: result.isRead,
+  isList,
+  isBash: A9() ? !isCollapsible && Jv.includes(toolName) : undefined,
+  // ...
+}
+```
+
+**逻辑**：
+- 非全屏模式：Bash 工具 `isCollapsible: false`，正常独立渲染（与 zy-code 经典模式一致）
+- 全屏模式：非搜索/读取类 Bash 命令标记为 `isCollapsible: true, isBash: true`
+- 搜索/读取类 Bash 命令（如 `grep`、`cat`）仍计入 `searchCount`/`readCount`，不计入 `bashCount`
+
+### 7.3 消息分组逻辑（wSK / collapseReadSearchGroups）
+
+连续的可折叠工具调用被合并为一个 `collapsed_read_search` 分组。
+
+`GroupAccumulator` 中的 bash 相关字段：
+```typescript
+{
+  bashCount: number        // 非搜索/读取类 Bash 命令计数
+  bashCommands: Map<string, string>  // tool_use_id → command 字符串
+  gitOpBashCount: number   // git 操作类 Bash 命令（commit/push/pr）
+  commits: []              // 从 Bash stdout 解析的 commit SHA
+  pushes: []               // 从 Bash stdout 解析的 push 信息
+  branches: []             // merge/rebase 操作
+  prs: []                  // PR 创建/合并等
+}
+```
+
+**分组规则**：
+```javascript
+if (A9() && toolInfo.isBash) {
+  currentGroup.bashCount = (currentGroup.bashCount ?? 0) + toolUseCount
+  // 记录 command 字符串用于后续 git 操作解析
+  if (input?.command) {
+    currentGroup.latestDisplayHint = truncateCommand(input.command)
+    for (const id of toolUseIds) {
+      currentGroup.bashCommands?.set(id, input.command)
+    }
+  }
+}
+```
+
+**Git 操作解析**（从 tool_result 的 stdout 中提取）：
+```javascript
+// 当 tool_result 到达时，扫描 bash 输出
+function extractGitOps(toolResult, group) {
+  const output = (toolResult.stdout ?? '') + (toolResult.stderr ?? '')
+  const { commit, push, branch, pr } = parseGitOutput(command, output)
+  if (commit) group.commits.push(commit)
+  if (push) group.pushes.push(push)
+  // ...
+  if (commit || push || branch || pr) group.gitOpBashCount++
+}
+```
+
+### 7.4 渲染逻辑（CollapsedReadSearchContent 组件）
+
+生成摘要行时，按以下顺序拼接短语：
+
+```
+[Thought for Xs], [edited N files (+A/-R)], [committed abc123], [pushed to main],
+[searched for N patterns], [read N files], [listed N directories], [REPL'd N times],
+[called MCP N times], [called N tools], [ran N shell commands]
+```
+
+**Bash 部分的渲染**：
+```javascript
+if (A9() && bashCount > 0) {
+  const isFirst = nonMemParts.length === 0
+  const verb = isActiveGroup
+    ? (isFirst ? "Running" : "running")
+    : (isFirst ? "Ran" : "ran")
+  // 输出: "Ran 3 shell commands" / "running 1 shell command"
+  parts.push(<Text key="bash">
+    {verb} <Text bold>{bashCount}</Text> shell {bashCount === 1 ? "command" : "commands"}
+  </Text>)
+}
+```
+
+**进行中的实时反馈**：
+- 当 Bash 仍在执行时，显示经过时间和已输出行数：
+```javascript
+// 检测 bash_progress / powershell_progress 进度消息
+if (elapsedTimeSeconds >= 2) {
+  suffix = totalLines > 0
+    ? ` (${formatDuration(elapsed)} · ${totalLines} ${totalLines === 1 ? "line" : "lines"})`
+    : ` (${formatDuration(elapsed)})`
+}
+```
+
+**gitOpBashCount 去重**：
+```javascript
+// 被归类为 git 操作的 bash 命令不重复计入 "ran N shell commands"
+const bashCount = Math.max(0, maxBashCountRef.current - gitOpBashCount)
+```
+
+### 7.5 点击展开后的详情渲染
+
+展开后（`verbose=true`）：
+```javascript
+if (verbose) {
+  // 渲染分组内每个工具调用的完整信息
+  return <Box flexDirection="column">
+    {groupMessages.map((msg) => {
+      const content = msg.message.content[0]
+      if (content?.type === "thinking") return <ThinkingBlock .../>
+      if (content?.type !== "tool_use") return null
+      return <ToolUseDetailView key={content.id} content={content} tools={tools} ... />
+    })}
+    {/* PreToolUse hooks 信息 */}
+    {message.hookInfos && ...}
+    {/* Recalled memories */}
+    {message.relevantMemories?.map(...)}
+  </Box>
+}
+```
+
+### 7.6 与 zy-code 的对比
+
+| 方面 | CC 167 | zy-code 当前 |
+|------|--------|-------------|
+| Bash 折叠逻辑 | ✅ 全屏时折叠 | ✅ 已同步 |
+| `bashCount` 字段 | ✅ | ✅ 已有 |
+| `gitOpBashCount` 去重 | ✅ | ✅ 已有 |
+| `bashCommands` Map | ✅ | ✅ 已有 |
+| Git 操作解析（commit/push/pr） | ✅ | ✅ 已有 |
+| "Ran N shell commands" 渲染 | ✅ | ✅ 已有（i18n key） |
+| 进行中时间/行数显示 | ✅ | ✅ 已有 |
+| 点击展开明细 | ✅ `expandedSet` | ✅ 已有（依赖 2.2.5 Click-to-Expand） |
+| 经典模式独立渲染 | ✅ 非全屏时不折叠 | ✅ 一致 |
+
+**结论**：zy-code 已从 v2.1.88 基线后的某次同步中完整实现了 Bash 折叠功能。核心逻辑与 CC 167 对齐，无需额外实现。唯一需确保的是 Click-to-Expand（2.2.5）功能完整实现后，用户才能通过鼠标点击展开 Bash 命令的详情。

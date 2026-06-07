@@ -1,6 +1,6 @@
 import { countTokensLocally } from '../services/tokenizer/index.js'
 import type { LLMMessage, ToolDefinition } from '../types/llm.js'
-import type { Attachment } from '../utils/attachments.js'
+import type { Attachment } from './attachments/attachments.js'
 import { logError } from '../utils/log.js'
 import { normalizeAttachmentForAPI } from '../utils/messages.js'
 import { jsonStringify } from '../utils/slowOperations.js'

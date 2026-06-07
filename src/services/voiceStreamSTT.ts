@@ -18,7 +18,7 @@ import {
   checkAndRefreshOAuthTokenIfNeeded,
   getZyAIOAuthTokens,
   isAuthEnabled,
-} from '../utils/auth.js'
+} from './auth/auth.js'
 import { logForDebugging } from '../utils/debug.js'
 import { getUserAgent } from '../utils/http.js'
 import { logError } from '../utils/log.js'

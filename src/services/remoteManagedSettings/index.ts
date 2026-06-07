@@ -19,7 +19,7 @@ import {
   checkAndRefreshOAuthTokenIfNeeded,
   getApiKeyWithSource,
   getZyAIOAuthTokens,
-} from '../../utils/auth.js'
+} from '../auth/auth.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { classifyAxiosError, getErrnoCode } from '../../utils/errors.js'

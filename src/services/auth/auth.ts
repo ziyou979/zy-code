@@ -45,7 +45,7 @@ import {
   checkHasTrustDialogAccepted,
   getGlobalConfig,
   saveGlobalConfig,
-} from '../../utils/config.js'
+} from '../config/config.js'
 import { logAntError, logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'

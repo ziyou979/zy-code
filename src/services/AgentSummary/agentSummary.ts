@@ -16,7 +16,7 @@ import { logForDebugging } from '../../utils/debug.js'
 import { type CacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.js'
 import { logError } from '../../utils/log.js'
 import { createUserMessage } from '../../utils/messages.js'
-import { getAgentTranscript } from '../../utils/sessionStorage.js'
+import { getAgentTranscript } from '../sessionStorage.js'
 
 const SUMMARY_INTERVAL_MS = 30_000
 
