@@ -177,8 +177,10 @@ function blockToAnthropic(
       ...cc,
     }
   }
-  // 兜底：未知 block 序列化
-  return { type: 'text', text: JSON.stringify(block), ...cc }
+  // 兜底：未知 block 序列化 — 剥离 cache_control / cache_reference 等缓存元字段，
+  // 避免它们泄漏进 text 内容，导致下一轮移除标记时文本变化、缓存前缀失效。
+  const { cache_control: _cc, cache_reference: _cr, ...cleanBlock } = b
+  return { type: 'text', text: JSON.stringify(cleanBlock), ...cc }
 }
 
 function safeParseToolArguments(args: string | undefined): Record<string, unknown> {

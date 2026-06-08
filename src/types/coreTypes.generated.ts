@@ -247,7 +247,7 @@ export interface ModelInfo {
   displayName: string
   description: string
   supportsEffort?: boolean
-  supportedEffortLevels?: ('quick' | 'light' | 'balanced' | 'thorough' | 'extreme')[]
+  supportedEffortLevels?: ('off' | 'quick' | 'light' | 'balanced' | 'thorough' | 'extreme')[]
   supportsAdaptiveThinking?: boolean
   supportsFastMode?: boolean
   supportsAutoMode?: boolean

@@ -109,6 +109,10 @@ export function configureEffortParams(
     return
   }
 
+  if (effortValue === 'off') {
+    return
+  }
+
   if (effortValue === undefined) {
     // Anthropic 模型即使不指定 effort 也需要 beta header
     if (isAnthropicModel(model)) {

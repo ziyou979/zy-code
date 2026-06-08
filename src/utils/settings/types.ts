@@ -753,6 +753,7 @@ export const SettingsSchema = lazySchema(() =>
         .enum(
           isInternalBuild()
             ? [
+                'off',
                 'quick',
                 'light',
                 'balanced',
@@ -766,6 +767,7 @@ export const SettingsSchema = lazySchema(() =>
                 'max',
               ]
             : [
+                'off',
                 'quick',
                 'light',
                 'balanced',

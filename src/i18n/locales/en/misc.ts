@@ -23,6 +23,7 @@ export const enMisc: TranslationResource = {
   'effort.defaultDialogDescription':
     'Effort determines how long model thinks for when completing your task. We recommend balanced effort for most tasks to balance speed and intelligence and maximize rate limits. Use ultrathink to trigger thorough effort when needed.',
   'effort.defaultDialogTitle': 'We recommend balanced effort',
+  'effort.off': 'Off',
   'effort.quick': 'Quick',
   'effort.light': 'Light',
   'effort.balanced': 'Balanced',

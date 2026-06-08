@@ -160,7 +160,7 @@ const FULL_CAPABILITIES: ProviderCapability[] = [
 ]
 
 /** Anthropic 系 effort 档位（兼容旧代码引用）。新体系下由 mapEffortToProvider 处理映射。 */
-const ANTHROPIC_EFFORT_LEVELS: EffortLevel[] = ['light', 'balanced', 'thorough', 'extreme']
+const ANTHROPIC_EFFORT_LEVELS: EffortLevel[] = ['off', 'light', 'balanced', 'thorough', 'extreme']
 
 /** 标准能力集 — 适用于大多数第三方平台和本地推理引擎 */
 const STANDARD_CAPABILITIES: ProviderCapability[] = [
@@ -183,7 +183,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     supportedFormats: ['anthropic', 'openai'],
     endpointType: 'env-or-default',
     capabilities: STANDARD_CAPABILITIES,
-    defaultEffortLevels: ['light', 'balanced', 'thorough'],
+    defaultEffortLevels: ['off', 'balanced', 'extreme'],
     defaultBaseUrls: {
       openai: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
       anthropic: 'https://dashscope.aliyuncs.com/apps/anthropic/',
@@ -197,6 +197,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       { label: 'qwen3.5-flash', value: 'qwen3.5-flash', tags: ['fast', 'lightweight'] },
     ],
     effortMapping: {
+      off: 'off',
       quick: 'high',
       light: 'high',
       balanced: 'high',
@@ -220,7 +221,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: 'preconfigured',
     capabilities: STANDARD_CAPABILITIES,
     // DeepSeek reasoning_effort 支持 low/medium/high（映射由 mapEffortToProvider 处理）。
-    defaultEffortLevels: ['light', 'balanced', 'thorough'],
+    defaultEffortLevels: ['off', 'light', 'balanced', 'thorough'],
     defaultBaseUrls: { openai: 'https://api.deepseek.com' },
     apiKeyLabel: 'DeepSeek API Key',
     suggestedModels: [
@@ -228,6 +229,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       { label: 'deepseek-reasoner', value: 'deepseek-reasoner', tags: ['reasoning'] },
     ],
     effortMapping: {
+      off: 'off',
       quick: 'high',
       light: 'high',
       balanced: 'high',
@@ -248,7 +250,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: 'hardcoded',
     capabilities: ['thinking', 'structured_outputs', 'context_management'],
     // OpenAI reasoning_effort 支持 minimal/low/medium/high（映射由 mapEffortToProvider 处理）。
-    defaultEffortLevels: ['quick', 'light', 'balanced', 'thorough'],
+    defaultEffortLevels: ['off', 'quick', 'light', 'balanced', 'thorough'],
     activationEnvVar: 'ZY_CODE_USE_OPENAI',
     apiKeyLabel: 'OpenAI API Key',
     suggestedModels: [
@@ -256,6 +258,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       { label: 'gpt-4o-mini', value: 'gpt-4o-mini', tags: ['fast', 'lightweight'] },
     ],
     effortMapping: {
+      off: 'off',
       quick: 'minimal',
       light: 'low',
       balanced: 'medium',
@@ -429,7 +432,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       'interleaved_thinking',
     ],
     // OpenRouter reasoning.effort 支持 low/medium/high（映射由 mapEffortToProvider 处理）。
-    defaultEffortLevels: ['light', 'balanced', 'thorough'],
+    defaultEffortLevels: ['off', 'light', 'balanced', 'thorough'],
     activationEnvVar: 'ZY_CODE_USE_OPENROUTER',
     apiKeyLabel: 'OpenRouter API Key',
     defaultBaseUrls: {
@@ -451,6 +454,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       },
     ],
     effortMapping: {
+      off: 'off',
       quick: 'low',
       light: 'low',
       balanced: 'medium',
@@ -593,7 +597,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: 'env-or-default',
     capabilities: ['thinking', 'adaptive_thinking', 'structured_outputs', 'context_management'],
     // Gemini reasoning_effort 支持 minimal/low/medium/high（映射由 mapEffortToProvider 处理）。
-    defaultEffortLevels: ['quick', 'light', 'balanced', 'thorough'],
+    defaultEffortLevels: ['off', 'quick', 'light', 'balanced', 'thorough'],
     activationEnvVar: 'ZY_CODE_USE_GEMINI',
     apiKeyLabel: 'Google AI API Key',
     defaultBaseUrls: {
@@ -605,6 +609,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       { label: 'gemini-3-flash', value: 'gemini-3-flash', tags: ['fast', 'balanced'] },
     ],
     effortMapping: {
+      off: 'off',
       quick: 'minimal',
       light: 'low',
       balanced: 'medium',
@@ -628,6 +633,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultEffortLevels: ANTHROPIC_EFFORT_LEVELS,
     apiKeyLabel: 'Anthropic API Key',
     effortMapping: {
+      off: 'off',
       quick: 'low',
       light: 'medium',
       balanced: 'high',

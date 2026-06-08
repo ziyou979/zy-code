@@ -33,6 +33,7 @@ export const zhMisc: TranslationResource = {
   'effort.defaultDialogDescription':
     '努力度决定模型在完成任务时思考的时长。对于大多数任务，建议使用均衡努力度以平衡速度与智能，并最大化速率限制。需要更强推理时，请使用 ultrathink 触发深度努力度。',
   'effort.defaultDialogTitle': '推荐使用均衡努力度',
+  'effort.off': '关闭',
   'effort.quick': '极速',
   'effort.light': '轻量',
   'effort.balanced': '均衡',
@@ -447,7 +448,7 @@ export const zhMisc: TranslationResource = {
   'notif.zyaiConnectorsUnavailable': '{count} 个 zy.ai 连接器不可用',
   'notif.zyaiConnectorUnavailable': '{count} 个 zy.ai 连接器不可用',
   'prompts.languageSection.body':
-    '用中文进行推理和回复。保持代码、标识符、文件路径和引用文本不变。',
+    '回复和思考内容使用中文，保持代码、标识符、文件路径和引用文本不变。',
   'outputStyle.hint': '这将改变 ZY Code 与你交流的方式',
   'outputStyle.loading': '正在加载输出风格…',
   'outputStyle.title': '首选输出风格',

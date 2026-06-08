@@ -15,10 +15,11 @@ import { isEnvTruthy, isInternalBuild } from './envUtils.js'
 // 语义化 Effort 档位体系（provider 无关）
 // ---------------------------------------------------------------------------
 
-export type PersistableEffortLevel = 'quick' | 'light' | 'balanced' | 'thorough' | 'extreme'
+export type PersistableEffortLevel = 'off' | 'quick' | 'light' | 'balanced' | 'thorough' | 'extreme'
 export type EffortLevel = PersistableEffortLevel | 'orchestrate'
 
 export const EFFORT_LEVELS = [
+  'off',
   'quick',
   'light',
   'balanced',
@@ -32,6 +33,7 @@ export const EFFORT_LEVELS = [
  * orchestrate 不在此数组中——它是「extreme + 工作流编排」的会话模式标记，不是独立强度档。
  */
 export const EFFORT_LEVEL_ORDER: readonly EffortLevel[] = [
+  'off',
   'quick',
   'light',
   'balanced',
@@ -48,6 +50,7 @@ export type EffortValue = EffortLevel
 
 // anthropic 的映射作为回退默认值
 const DEFAULT_EFFORT_MAPPING: Record<string, string> = {
+  off: 'off',
   quick: 'low',
   light: 'medium',
   balanced: 'high',
@@ -212,6 +215,7 @@ export function toPersistableEffort(
   value: EffortValue | undefined,
 ): PersistableEffortLevel | undefined {
   if (
+    value === 'off' ||
     value === 'quick' ||
     value === 'light' ||
     value === 'balanced' ||
@@ -293,6 +297,8 @@ export function convertEffortValueToLevel(value: EffortValue): EffortLevel {
 
 export function getEffortLevelDescription(level: EffortLevel): string {
   switch (level) {
+    case 'off':
+      return 'Thinking disabled — fastest mode without any reasoning'
     case 'quick':
       return 'Fastest response with minimal reasoning'
     case 'light':

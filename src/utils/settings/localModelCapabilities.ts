@@ -71,7 +71,7 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
       )
       .describe('模型支持的能力列表'),
     effortLevels: z
-      .array(z.enum(['quick', 'light', 'balanced', 'thorough', 'extreme']))
+      .array(z.enum(['off', 'quick', 'light', 'balanced', 'thorough', 'extreme']))
       .optional()
       .describe(
         '模型支持的 effort(思考强度)档位列表。省略表示不支持设置思考强度。' +

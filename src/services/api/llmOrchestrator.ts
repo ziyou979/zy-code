@@ -918,9 +918,16 @@ async function* queryModel(
     const maxOutputTokens =
       retryContext?.maxTokensOverride || options.maxOutputTokensOverride || resolved.maxOutputTokens
 
+    const effortOff = effort === 'off'
     const hasThinking =
-      thinkingConfig.type !== 'disabled' && !isEnvTruthy(process.env.ZY_CODE_DISABLE_THINKING)
-    let thinking: { type: 'adaptive' } | { type: 'enabled'; budget_tokens: number } | undefined
+      !effortOff &&
+      thinkingConfig.type !== 'disabled' &&
+      !isEnvTruthy(process.env.ZY_CODE_DISABLE_THINKING)
+    let thinking:
+      | { type: 'adaptive' }
+      | { type: 'enabled'; budget_tokens: number }
+      | { type: 'disabled' }
+      | undefined
 
     // 重要：不要更改下面的自适应与预算 thinking 选择，
     // 除非通知模型发布 DRI 和研究团队。这是一个敏感的
@@ -948,6 +955,10 @@ async function* queryModel(
           type: 'enabled',
         }
       }
+    }
+
+    if (effortOff && resolved.supportsThinking) {
+      thinking = { type: 'disabled' }
     }
 
     // 如果启用，获取 API 上下文管理策略

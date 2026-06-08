@@ -7,6 +7,7 @@ export const TEARDROP_ASTERISK = '✻'
 export const BRAILLE_Z = '⣝' // braille dots shaped like letter z
 export const UP_ARROW = '\u2191' // ↑ - used for opus 1m merge notice
 export const DOWN_ARROW = '\u2193' // ↓ - used for scroll hint
+export const EFFORT_OFF = '⊘' // ⊘ - effort level: off (thinking disabled)
 export const EFFORT_MINIMAL = '◌' // ◌ - effort level: minimal
 export const EFFORT_LOW = '○' // \u25cb - effort level: low
 export const EFFORT_MEDIUM = '◐' // \u25d0 - effort level: medium

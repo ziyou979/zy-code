@@ -2,6 +2,7 @@ import {
   EFFORT_BALANCED,
   EFFORT_EXTREME,
   EFFORT_LIGHT,
+  EFFORT_OFF,
   EFFORT_QUICK,
   EFFORT_THOROUGH,
 } from '../constants/figures.js'
@@ -29,6 +30,8 @@ export function getEffortNotificationText(
 
 export function effortLevelToSymbol(level: EffortLevel): string {
   switch (level) {
+    case 'off':
+      return EFFORT_OFF
     case 'quick':
       return EFFORT_QUICK
     case 'light':
