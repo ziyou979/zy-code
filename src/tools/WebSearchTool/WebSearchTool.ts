@@ -1,6 +1,5 @@
 import { z } from 'zod/v4'
 import { getMainLoopModel } from '../../services/model/model.js'
-import { modelHasCapability } from '../../services/model/providers.js'
 import type {
   SearchOptions,
   SearchResult as ServiceSearchResult,
@@ -88,11 +87,8 @@ export const WebSearchTool = buildTool({
     return summary ? `Searching for ${summary}` : 'Searching the web'
   },
   isEnabled() {
-    const model = getMainLoopModel()
-    if (!model) {
-      return false
-    }
-    return modelHasCapability(model, 'web_search')
+    // web_search 是 zy-code 框架内置能力，不依赖 provider 支持
+    return !!getMainLoopModel()
   },
   get inputSchema(): InputSchema {
     return inputSchema()
