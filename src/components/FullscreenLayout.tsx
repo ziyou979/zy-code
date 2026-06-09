@@ -18,6 +18,7 @@ import {
   usePromptOverlayDialog,
 } from '../context/promptOverlayContext.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
+import { tSync } from '../i18n/index.js'
 import ScrollBox, { type ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import instances from '../ink/instances.js'
 import { Box, Text } from '../ink.js'
@@ -456,7 +457,12 @@ function NewMessagesPill({ count, onClick }: { count: number; onClick?: () => vo
             dimColor={true}
           >
             {' '}
-            {count > 0 ? `${count} new ${plural(count, 'message')}` : 'Jump to bottom'}{' '}
+            {count > 0
+              ? tSync('fullscreen.newMessages', {
+                  count,
+                  unit: plural(count, tSync('fullscreen.newMessageUnit_one'), tSync('fullscreen.newMessageUnit_other')),
+                })
+              : tSync('fullscreen.jumpToBottom')}{' '}
             {figures.arrowDown}{' '}
           </Text>
         }
