@@ -80,8 +80,8 @@ export function getBytesPerTokenForLanguage(language?: string): number {
 
 /**
  * 使用本地 tokenizer 对消息列表进行 token 计数。
- * 将消息内容序列化为文本后用 js-tiktoken 计数。
- * 这比 API 调用更快且不消耗配额，但对非 OpenAI 模型有 5-10% 的误差。
+ * 将消息内容序列化为文本后用内置 BPE tokenizer 引擎计数。
+ * 每个模型家族使用原生 tokenizer 数据，实现精确计数。
  */
 export function countMessagesTokensLocally(
   messages: LLMMessage[],

@@ -62,7 +62,6 @@
     "https-proxy-agent": "^8.0.0",
     "ignore": "^7.0.5",
     "indent-string": "^5.0.0",
-    "js-tiktoken": "^1.0.21",
     "jsonc-parser": "^3.3.1",
     "lodash-es": "^4.18.1",
     "lru-cache": "^11.3.6",

@@ -1,202 +1,190 @@
 /**
  * 统一的本地 Tokenizer 模块。
  *
- * 基于 js-tiktoken 实现本地 token 计数，支持多模型家族：
- * - OpenAI GPT-4: cl100k_base
- * - OpenAI GPT-4o/o1/o3: o200k_base
- * - Claude 系列: cl100k_base（近似，误差约 5-10%）
- * - DeepSeek/Qwen/Llama3/GLM-4/Kimi 等: cl100k_base（近似）
+ * 从项目打包的 gzip 压缩 tokenizer 数据加载，使用内置 BPE 引擎
+ * 解析（engine.js，从 transformers.js 提取的精简子集）。tokenizer 数据从 HuggingFace 下载，
+ * 由 scripts/download-tokenizers.ts 管理更新。
  *
- * 对于没有公开 JS tokenizer 的模型，使用 cl100k_base 作为近似编码，
- * 因为大多数现代 LLM 的 BPE 词表大小和分词粒度与 cl100k_base 接近。
+ * 支持的模型家族（精确分词）：
+ * - OpenAI: GPT-4, GPT-4o, GPT-3.5
+ * - Claude
+ * - Qwen 全系列（共用 tokenizer）
+ * - DeepSeek-V3 / R1
+ * - Llama 3.x / 4.x
+ * - GLM-4 / GLM-5
+ * - Kimi / Moonshot
+ * - MiniMax
+ * - Gemini / Gemma
+ * - Mistral / Mixtral / Codestral
+ * - Cohere Command-R
+ *
+ * 未覆盖的模型回退到 GPT-4 tokenizer（cl100k_base 等价）。
  */
 
-import { encodingForModel, getEncoding, type TiktokenModel } from 'js-tiktoken'
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { gunzipSync } from 'node:zlib'
+import { PreTrainedTokenizer } from './engine.js'
 
 // ============================================================================
 // 类型定义
 // ============================================================================
 
-/** js-tiktoken 支持的编码名称 */
-type TiktokenEncoding = 'cl100k_base' | 'o200k_base' | 'p50k_base' | 'r50k_base' | 'gpt2'
+/** Tokenizer key 常量对象，防止拼写错误 */
+const TOKENIZER_KEYS = {
+  gpt4o: 'gpt4o',
+  gpt4: 'gpt4',
+  gpt35turbo: 'gpt35turbo',
+  claude: 'claude',
+  deepseek: 'deepseek',
+  qwen: 'qwen',
+  llama3: 'llama3',
+  glm: 'glm',
+  moonshot: 'moonshot',
+  minimax: 'minimax',
+  gemini: 'gemini',
+  gemma: 'gemma',
+  mistral: 'mistral',
+  cohere: 'cohere',
+} as const
 
-/** 编码器实例缓存，避免重复初始化 */
-const encoderCache = new Map<TiktokenEncoding, ReturnType<typeof getEncoding>>()
+type TokenizerKey = (typeof TOKENIZER_KEYS)[keyof typeof TOKENIZER_KEYS]
+
+export type { TokenizerKey }
+
+type Tokenizer = PreTrainedTokenizer
+
+const tokenizerCache = new Map<TokenizerKey, Tokenizer>()
+
+function resolveDataDir(): string {
+  // 构建后: dist/tokenizer-data/（import.meta.dir = dist/）
+  const bundled = join(import.meta.dir, 'tokenizer-data')
+  if (existsSync(bundled)) return bundled
+  // 开发环境: src/services/tokenizer/data/（import.meta.dir = src/services/tokenizer/）
+  return join(import.meta.dir, 'data')
+}
+
+const DATA_DIR = resolveDataDir()
 
 // ============================================================================
-// 模型 → 编码映射
+// 模型 → tokenizer 数据文件映射
 // ============================================================================
 
-/**
- * 模型名称前缀 → tiktoken 编码的映射。
- * 按前缀匹配，优先匹配更长的前缀。
- */
-const MODEL_PREFIX_TO_ENCODING: Array<[string, TiktokenEncoding]> = [
-  // OpenAI 系列 — 精确匹配
-  ['gpt-4o', 'o200k_base'],
-  ['gpt-4-turbo', 'cl100k_base'],
-  ['gpt-4', 'cl100k_base'],
-  ['gpt-3.5', 'cl100k_base'],
-  ['o1', 'o200k_base'],
-  ['o3', 'o200k_base'],
-  ['o4', 'o200k_base'],
-  ['chatgpt-4o', 'o200k_base'],
-
-  // Claude 系列 — 近似（tokenizer 未公开，cl100k_base 误差约 5-10%）
-  ['claude', 'cl100k_base'],
-
-  // DeepSeek — 近似（BBPE 128K 词表，cl100k_base 是最接近的公开编码）
-  ['deepseek', 'cl100k_base'],
-
-  // Qwen — 近似（BBPE 151K 词表）
-  ['qwen', 'cl100k_base'],
-
-  // Llama 3 — 近似（tiktoken 128K 词表，与 cl100k_base 接近）
-  ['llama-3', 'cl100k_base'],
-  ['llama3', 'cl100k_base'],
-  ['llama-4', 'cl100k_base'],
-  ['llama4', 'cl100k_base'],
-  ['meta-llama', 'cl100k_base'],
-
-  // GLM-4 / 智谱 — 近似（tiktoken 150K 词表）
-  ['glm', 'cl100k_base'],
-  ['chatglm', 'cl100k_base'],
-
-  // Kimi / Moonshot — 近似（tiktoken 163K 词表）
-  ['moonshot', 'cl100k_base'],
-  ['kimi', 'cl100k_base'],
-
-  // MiniMax
-  ['minimax', 'cl100k_base'],
-  ['abab', 'cl100k_base'],
-
-  // 华为盘古
-  ['pangu', 'cl100k_base'],
-
-  // 百度文心
-  ['ernie', 'cl100k_base'],
-
-  // 混元
-  ['hunyuan', 'cl100k_base'],
-
-  // Gemini — 近似（SentencePiece 256K 词表，差异较大但 cl100k 仍是最佳近似）
-  ['gemini', 'cl100k_base'],
-  ['gemma', 'cl100k_base'],
-
-  // Mistral
-  ['mistral', 'cl100k_base'],
-  ['mixtral', 'cl100k_base'],
-  ['codestral', 'cl100k_base'],
-
-  // Cohere
-  ['command', 'cl100k_base'],
+const MODEL_PREFIX_TO_TOKENIZER: Array<[string, TokenizerKey]> = [
+  ['gpt-4o', TOKENIZER_KEYS.gpt4o],
+  ['chatgpt-4o', TOKENIZER_KEYS.gpt4o],
+  ['o1', TOKENIZER_KEYS.gpt4o],
+  ['o3', TOKENIZER_KEYS.gpt4o],
+  ['o4', TOKENIZER_KEYS.gpt4o],
+  ['gpt-4-turbo', TOKENIZER_KEYS.gpt4],
+  ['gpt-4', TOKENIZER_KEYS.gpt4],
+  ['gpt-3.5', TOKENIZER_KEYS.gpt35turbo],
+  ['claude', TOKENIZER_KEYS.claude],
+  ['deepseek', TOKENIZER_KEYS.deepseek],
+  ['qwen', TOKENIZER_KEYS.qwen],
+  ['llama-4', TOKENIZER_KEYS.llama3],
+  ['llama4', TOKENIZER_KEYS.llama3],
+  ['llama-3', TOKENIZER_KEYS.llama3],
+  ['llama3', TOKENIZER_KEYS.llama3],
+  ['meta-llama', TOKENIZER_KEYS.llama3],
+  ['glm', TOKENIZER_KEYS.glm],
+  ['chatglm', TOKENIZER_KEYS.glm],
+  ['moonshot', TOKENIZER_KEYS.moonshot],
+  ['kimi', TOKENIZER_KEYS.moonshot],
+  ['minimax', TOKENIZER_KEYS.minimax],
+  ['abab', TOKENIZER_KEYS.minimax],
+  ['gemini', TOKENIZER_KEYS.gemini],
+  ['gemma', TOKENIZER_KEYS.gemma],
+  ['mistral', TOKENIZER_KEYS.mistral],
+  ['mixtral', TOKENIZER_KEYS.mistral],
+  ['codestral', TOKENIZER_KEYS.mistral],
+  ['command', TOKENIZER_KEYS.cohere],
+  // pangu / ernie / hunyuan 等无专属 tokenizer 的模型走 DEFAULT_TOKENIZER 兜底
 ]
 
-/** 默认编码，用于无法识别的模型 */
-const DEFAULT_ENCODING: TiktokenEncoding = 'cl100k_base'
+const DEFAULT_TOKENIZER: TokenizerKey = TOKENIZER_KEYS.gpt4
 
 // ============================================================================
 // 核心函数
 // ============================================================================
 
 /**
- * 根据模型名称获取对应的 tiktoken 编码名称。
+ * 查找匹配的 tokenizer 条目
  */
-export function getEncodingForModel(modelName: string): TiktokenEncoding {
+function findMatchingTokenizer(modelName: string): [string, TokenizerKey] | undefined {
   const lowerModel = modelName.toLowerCase()
-
-  // 先尝试 js-tiktoken 内置的模型映射（精确匹配 OpenAI 模型）
-  try {
-    encodingForModel(lowerModel as TiktokenModel)
-    // encodingForModel 成功意味着这是一个已知的 OpenAI 模型
-    if (
-      lowerModel.includes('gpt-4o') ||
-      lowerModel.startsWith('o1') ||
-      lowerModel.startsWith('o3') ||
-      lowerModel.startsWith('o4') ||
-      lowerModel.includes('chatgpt-4o')
-    ) {
-      return 'o200k_base'
-    }
-    return 'cl100k_base'
-  } catch {
-    // 不是 OpenAI 内置模型，走前缀匹配
-  }
-
-  for (const [prefix, encoding] of MODEL_PREFIX_TO_ENCODING) {
-    if (lowerModel.startsWith(prefix) || lowerModel.includes(prefix)) {
-      return encoding
-    }
-  }
-
-  return DEFAULT_ENCODING
+  return MODEL_PREFIX_TO_TOKENIZER.find(([prefix]) => lowerModel.includes(prefix))
 }
 
 /**
- * 获取或创建指定编码的 encoder 实例（带缓存）。
+ * 根据模型名称获取对应的 tokenizer 数据文件标识符。
  */
-function getEncoder(encoding: TiktokenEncoding): ReturnType<typeof getEncoding> {
-  let encoder = encoderCache.get(encoding)
-  if (!encoder) {
-    encoder = getEncoding(encoding)
-    encoderCache.set(encoding, encoder)
+export function getTokenizerKeyForModel(modelName: string): TokenizerKey {
+  return findMatchingTokenizer(modelName)?.[1] ?? DEFAULT_TOKENIZER
+}
+
+/**
+ * 从打包的 gzip 文件加载 tokenizer 实例（带缓存）。
+ */
+function getTokenizer(tokenizerKey: TokenizerKey): Tokenizer {
+  let tokenizer = tokenizerCache.get(tokenizerKey)
+  if (!tokenizer) {
+    try {
+      const jsonGz = readFileSync(join(DATA_DIR, `${tokenizerKey}.tokenizer.json.gz`))
+      const configGz = readFileSync(join(DATA_DIR, `${tokenizerKey}.tokenizer_config.json.gz`))
+      const tokenizerJSON = JSON.parse(gunzipSync(jsonGz).toString())
+      const tokenizerConfig = JSON.parse(gunzipSync(configGz).toString())
+      tokenizer = new PreTrainedTokenizer(tokenizerJSON, tokenizerConfig)
+      tokenizerCache.set(tokenizerKey, tokenizer)
+    } catch (error) {
+      throw new Error(
+        `Failed to load tokenizer "${tokenizerKey}" from ${DATA_DIR}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+    }
   }
-  return encoder
+  return tokenizer
 }
 
 /**
  * 使用本地 tokenizer 计算文本的 token 数量。
- *
- * @param text - 要计数的文本
- * @param model - 模型名称，用于选择合适的编码
- * @returns token 数量
+ * 为每个模型家族加载原生 tokenizer 数据，实现精确计数。
  */
 export function countTokensLocally(text: string, model: string): number {
   if (!text) {
     return 0
   }
 
-  const encoding = getEncodingForModel(model)
-  const encoder = getEncoder(encoding)
-  return encoder.encode(text).length
+  const tokenizerKey = getTokenizerKeyForModel(model)
+  const tokenizer = getTokenizer(tokenizerKey)
+  return tokenizer.encode(text).length
 }
 
 /**
  * 使用本地 tokenizer 批量计算多段文本的 token 数量。
- * 比多次调用 countTokensLocally 更高效，因为只初始化一次 encoder。
- *
- * @param texts - 要计数的文本数组
- * @param model - 模型名称
- * @returns 总 token 数量
  */
 export function countTokensBatchLocally(texts: string[], model: string): number {
   if (texts.length === 0) {
     return 0
   }
 
-  const encoding = getEncodingForModel(model)
-  const encoder = getEncoder(encoding)
+  const tokenizerKey = getTokenizerKeyForModel(model)
+  const tokenizer = getTokenizer(tokenizerKey)
 
   let total = 0
   for (const text of texts) {
     if (text) {
-      total += encoder.encode(text).length
+      total += tokenizer.encode(text).length
     }
   }
   return total
 }
 
 /**
- * 判断指定模型的本地 tokenizer 是否为精确匹配（而非近似）。
- * 只有 OpenAI 官方模型的编码是精确的，其他模型都是近似。
+ * 判断指定模型的本地 tokenizer 是否为精确匹配。
+ * 在映射表中有明确匹配的模型返回 true，仅走 DEFAULT 兜底的返回 false。
  */
 export function isExactTokenizer(model: string): boolean {
-  const lowerModel = model.toLowerCase()
-  return (
-    lowerModel.startsWith('gpt-') ||
-    lowerModel.startsWith('o1') ||
-    lowerModel.startsWith('o3') ||
-    lowerModel.startsWith('o4') ||
-    lowerModel.startsWith('chatgpt-')
-  )
+  return findMatchingTokenizer(model) !== undefined
 }

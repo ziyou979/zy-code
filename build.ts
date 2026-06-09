@@ -6,6 +6,7 @@
  * which DCEs internal-only code paths (BRIDGE_MODE, DAEMON, etc.).
  */
 
+import { cpSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
 const root = import.meta.dir
@@ -116,6 +117,13 @@ if (!result.success) {
   }
   process.exit(1)
 }
+
+// 复制 tokenizer 数据到 dist/（运行时从 import.meta.dir 加载）
+cpSync(
+  join(srcDir, 'services/tokenizer/data'),
+  join(outDir, 'tokenizer-data'),
+  { recursive: true },
+)
 
 console.log(`Build succeeded: ${result.outputs.length} output(s)`)
 for (const out of result.outputs) {
