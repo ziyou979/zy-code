@@ -119,8 +119,6 @@ export class StylePool {
   private styles: AnsiCode[][] = []
   private transitionCache = new Map<number, string>()
   readonly none: number
-  /** 上次 compact 或 updateLiveSize 时记录的活跃样式数 */
-  lastLiveSize = 0
 
   constructor() {
     this.none = this.intern([])
@@ -271,69 +269,27 @@ export class StylePool {
     return id
   }
 
-  /**
-   * 池是否需要压缩。当总样式数超过活跃样式数的 3 倍时触发——
-   * 稳态渲染通常只用 <200 个样式，但叠加缓存和过期的主题变体
-   * 会让 styles[] 持续增长。
-   */
   poolSize(): number {
     return this.styles.length
   }
 
-  needsCompaction(): boolean {
-    return this.lastLiveSize > 0 && this.styles.length > this.lastLiveSize * 3
-  }
-
   /**
-   * 压缩池：只保留 liveIds 中的样式，丢弃其余。返回
-   * oldEncodedId→newEncodedId 的映射表（调用者用它 remap 屏幕缓冲区），
-   * 或 null（如果没有实际可回收的条目）。
+   * 释放派生缓存（transitionCache / inverseCache / currentMatchCache /
+   * selectionBgCache）。styles[] 和 ids Map 保持不变——所有已分配的
+   * style ID 仍然有效，渲染器和屏幕缓冲区无需任何更新。
    *
-   * 压缩后所有叠加缓存失效——调用者应触发 full repaint。
+   * transitionCache 是主要的内存消耗者：它为每对 (fromId, toId)
+   * 缓存一个预序列化的 ANSI 过渡字符串，规模是 O(N²)。清理后
+   * 按需重新计算，对用户不可见（transition() 本身是纯函数）。
+   *
+   * 定期调用（如每 5 分钟）即可将长会话的内存增长限制在
+   * 可控范围内，同时完全避免 style ID 重映射带来的渲染风险。
    */
-  compact(liveIds: Set<number>): Map<number, number> | null {
-    // none（编码 ID = 0）始终保留
-    liveIds.add(this.none)
-    if (liveIds.size >= this.styles.length) {
-      this.lastLiveSize = liveIds.size
-      return null
-    }
-
-    const oldStyles = this.styles
-    const newStyles: AnsiCode[][] = []
-    const newIds = new Map<string, number>()
-    const remap = new Map<number, number>()
-
-    // none 必须最先处理，确保它保持在 rawIdx=0 → encodedId=0
-    const orderedIds = [this.none, ...[...liveIds].filter((id) => id !== this.none)]
-    for (const encodedId of orderedIds) {
-      const rawIdx = encodedId >>> 1
-      const visBit = encodedId & 1
-      if (rawIdx >= oldStyles.length) {
-        continue
-      }
-      const styles = oldStyles[rawIdx]!
-      const key = styles.length === 0 ? '' : styles.map((s) => s.code).join('\0')
-
-      let newEncoded = newIds.get(key)
-      if (newEncoded === undefined) {
-        const newRawIdx = newStyles.length
-        newStyles.push(styles)
-        newEncoded = (newRawIdx << 1) | visBit
-        newIds.set(key, newEncoded)
-      }
-      remap.set(encodedId, newEncoded)
-    }
-
-    this.styles = newStyles
-    this.ids = newIds
+  clearCaches(): void {
     this.transitionCache.clear()
     this.inverseCache.clear()
     this.currentMatchCache.clear()
     this.selectionBgCache.clear()
-    this.lastLiveSize = newStyles.length
-
-    return remap
   }
 }
 
@@ -499,30 +455,6 @@ export function collectLiveStyleIds(screen: Screen): Set<number> {
     live.add(word1 >>> STYLE_SHIFT)
   }
   return live
-}
-
-/**
- * 用映射表替换屏幕缓冲区中所有单元格的 styleId。
- * remap 的 key/value 都是编码 ID（含 bit0）。
- */
-export function remapScreenStyleIds(screen: Screen, remap: Map<number, number>): void {
-  const cells = screen.cells
-  const total = screen.width * screen.height
-  for (let i = 0; i < total; i++) {
-    const ci = (i << 1) | 1
-    const word1 = cells[ci]!
-    const oldStyleId = word1 >>> STYLE_SHIFT
-    const newStyleId = remap.get(oldStyleId)
-    if (newStyleId !== undefined && newStyleId !== oldStyleId) {
-      // 保留 hyperlinkId 和 width 位段，只替换 styleId
-      cells[ci] = (newStyleId << STYLE_SHIFT) | (word1 & ((1 << STYLE_SHIFT) - 1))
-    }
-  }
-  // 同步更新 emptyStyleId
-  const newEmpty = remap.get(screen.emptyStyleId)
-  if (newEmpty !== undefined) {
-    screen.emptyStyleId = newEmpty
-  }
 }
 
 function isEmptyCellByIndex(screen: Screen, index: number): boolean {

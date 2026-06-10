@@ -1,5 +1,5 @@
 /**
- * StylePool 压缩测试：验证 compact/needsCompaction/collectLiveStyleIds/remapScreenStyleIds。
+ * StylePool 测试：验证 intern / poolSize / clearCaches / collectLiveStyleIds。
  */
 import { describe, expect, test } from 'bun:test'
 import type { AnsiCode } from '@alcalzone/ansi-tokenize'
@@ -9,14 +9,12 @@ import {
   StylePool,
   collectLiveStyleIds,
   createScreen,
-  remapScreenStyleIds,
   setCellAt,
 } from '../../src/ink/screen.js'
 
 const RED: AnsiCode = { type: 'ansi', code: '\x1b[31m', endCode: '\x1b[39m' }
 const GREEN: AnsiCode = { type: 'ansi', code: '\x1b[32m', endCode: '\x1b[39m' }
 const BLUE: AnsiCode = { type: 'ansi', code: '\x1b[34m', endCode: '\x1b[39m' }
-const BOLD: AnsiCode = { type: 'ansi', code: '\x1b[1m', endCode: '\x1b[22m' }
 const BG_YELLOW: AnsiCode = { type: 'ansi', code: '\x1b[43m', endCode: '\x1b[49m' }
 
 describe('StylePool', () => {
@@ -42,99 +40,98 @@ describe('StylePool', () => {
     })
   })
 
-  describe('needsCompaction', () => {
-    test('lastLiveSize=0 时返回 false', () => {
-      const pool = new StylePool()
-      pool.lastLiveSize = 0
-      expect(pool.needsCompaction()).toBe(false)
-    })
-
-    test('总量 <= 活跃量*3 时返回 false', () => {
-      const pool = new StylePool()
-      pool.intern([RED])
-      pool.intern([GREEN])
-      pool.intern([BLUE])
-      pool.lastLiveSize = 2
-      // poolSize=4, lastLiveSize=2, 4 <= 6 → false
-      expect(pool.needsCompaction()).toBe(false)
-    })
-
-    test('总量 > 活跃量*3 时返回 true', () => {
-      const pool = new StylePool()
-      for (let i = 0; i < 10; i++) {
-        pool.intern([{ type: 'ansi', code: `\x1b[${30 + i}m`, endCode: '\x1b[39m' }])
-      }
-      pool.lastLiveSize = 2
-      // poolSize=11, lastLiveSize=2, 11 > 6 → true
-      expect(pool.needsCompaction()).toBe(true)
-    })
-  })
-
-  describe('compact', () => {
-    test('只保留 liveIds 中的样式', () => {
+  describe('intern 编码 ID', () => {
+    test('仅前景色的样式获得偶数 ID（visBit=0）', () => {
       const pool = new StylePool()
       const redId = pool.intern([RED])
-      const greenId = pool.intern([GREEN])
-      pool.intern([BLUE])
-      pool.intern([BOLD])
-
-      const liveIds = new Set([redId, greenId])
-      const remap = pool.compact(liveIds)
-
-      expect(remap).not.toBeNull()
-      // none + red + green = 3
-      expect(pool.poolSize()).toBe(3)
+      expect(redId & 1).toBe(0)
     })
 
-    test('none 始终保留在 ID 0', () => {
+    test('带背景色的样式获得奇数 ID（visBit=1）', () => {
       const pool = new StylePool()
-      pool.intern([RED])
-      pool.intern([GREEN])
-      const liveIds = new Set([pool.intern([RED])])
-      pool.compact(liveIds)
+      const bgId = pool.intern([BG_YELLOW])
+      expect(bgId & 1).toBe(1)
+    })
+
+    test('none 的编码 ID 始终为 0', () => {
+      const pool = new StylePool()
       expect(pool.none).toBe(0)
       expect(pool.get(pool.none)).toEqual([])
     })
+  })
 
-    test('compact 后 transition 仍然正确', () => {
+  describe('transition', () => {
+    test('相同 ID 的 transition 为空字符串', () => {
+      const pool = new StylePool()
+      const redId = pool.intern([RED])
+      expect(pool.transition(redId, redId)).toBe('')
+    })
+
+    test('不同 ID 的 transition 包含 ANSI 序列', () => {
       const pool = new StylePool()
       const redId = pool.intern([RED])
       const greenId = pool.intern([GREEN])
-      pool.intern([BLUE])
-      pool.intern([BOLD])
-
-      const liveIds = new Set([redId, greenId])
-      const remap = pool.compact(liveIds)!
-
-      const newRedId = remap.get(redId)!
-      const newGreenId = remap.get(greenId)!
-
-      // transition 应该生成有效的 ANSI 序列
-      const trans = pool.transition(newRedId, newGreenId)
+      const trans = pool.transition(redId, greenId)
       expect(trans.length).toBeGreaterThan(0)
       expect(trans).toContain('\x1b[32m')
     })
 
-    test('所有样式都活跃时返回 null', () => {
+    test('transition 结果被缓存', () => {
       const pool = new StylePool()
-      const id1 = pool.intern([RED])
-      const id2 = pool.intern([GREEN])
-      const liveIds = new Set([pool.none, id1, id2])
-      const remap = pool.compact(liveIds)
-      expect(remap).toBeNull()
+      const redId = pool.intern([RED])
+      const greenId = pool.intern([GREEN])
+      const trans1 = pool.transition(redId, greenId)
+      const trans2 = pool.transition(redId, greenId)
+      expect(trans1).toBe(trans2) // 同一引用
+    })
+  })
+
+  describe('clearCaches', () => {
+    test('clearCaches 后 transition 仍然正确（按需重算）', () => {
+      const pool = new StylePool()
+      const redId = pool.intern([RED])
+      const greenId = pool.intern([GREEN])
+      const before = pool.transition(redId, greenId)
+
+      pool.clearCaches()
+
+      const after = pool.transition(redId, greenId)
+      expect(after).toBe(before) // 值相等（重新计算）
     })
 
-    test('compact 更新 lastLiveSize', () => {
+    test('clearCaches 不改变 poolSize', () => {
       const pool = new StylePool()
       pool.intern([RED])
       pool.intern([GREEN])
       pool.intern([BLUE])
-      pool.intern([BOLD])
-      pool.intern([BG_YELLOW])
+      const sizeBefore = pool.poolSize()
 
-      const liveIds = new Set([pool.intern([RED])])
-      pool.compact(liveIds)
-      expect(pool.lastLiveSize).toBe(2) // none + red
+      pool.clearCaches()
+
+      expect(pool.poolSize()).toBe(sizeBefore)
+    })
+
+    test('clearCaches 不改变已有的 style ID', () => {
+      const pool = new StylePool()
+      const redId = pool.intern([RED])
+      const greenId = pool.intern([GREEN])
+
+      pool.clearCaches()
+
+      // 用同样的样式再 intern，应返回相同的 ID
+      expect(pool.intern([RED])).toBe(redId)
+      expect(pool.intern([GREEN])).toBe(greenId)
+    })
+
+    test('clearCaches 后 withInverse 按需重算', () => {
+      const pool = new StylePool()
+      const redId = pool.intern([RED])
+      const invBefore = pool.withInverse(redId)
+
+      pool.clearCaches()
+
+      const invAfter = pool.withInverse(redId)
+      expect(invAfter).toBe(invBefore) // 相同的编码 ID
     })
   })
 })
@@ -154,28 +151,9 @@ describe('collectLiveStyleIds', () => {
     setCellAt(screen, 2, 0, { char: 'c', styleId: redId, width: 0, hyperlink: undefined })
 
     const live = collectLiveStyleIds(screen)
-    // none (空单元格) + red + green
-    expect(live.has(0)).toBe(true) // emptyStyleId (none=0)
+    expect(live.has(0)).toBe(true) // none
     expect(live.has(redId)).toBe(true)
     expect(live.has(greenId)).toBe(true)
-  })
-})
-
-describe('remapScreenStyleIds', () => {
-  test('用映射表替换屏幕中所有 styleId', () => {
-    const stylePool = new StylePool()
-    const charPool = new CharPool()
-    const hyperlinkPool = new HyperlinkPool()
-    const screen = createScreen(2, 1, stylePool, charPool, hyperlinkPool)
-
-    const oldRedId = stylePool.intern([RED])
-    setCellAt(screen, 0, 0, { char: 'x', styleId: oldRedId, width: 0, hyperlink: undefined })
-
-    const remap = new Map([[oldRedId, 42]])
-    remapScreenStyleIds(screen, remap)
-
-    const live = collectLiveStyleIds(screen)
-    expect(live.has(42)).toBe(true)
-    expect(live.has(oldRedId)).toBe(false)
+    expect(live.size).toBe(3) // none + red + green（空单元格都是 none）
   })
 })

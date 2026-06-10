@@ -51,7 +51,6 @@ import {
   HyperlinkPool,
   isEmptyCellAt,
   migrateScreenPools,
-  remapScreenStyleIds,
   StylePool,
 } from './screen.js'
 import { applySearchHighlight } from './searchHighlight.js'
@@ -1841,26 +1840,17 @@ export default class Ink {
     this.backFrame.screen.charPool = this.charPool
     this.backFrame.screen.hyperlinkPool = this.hyperlinkPool
 
-    // StylePool 压缩：收集活跃样式并回收未使用的条目
-    const liveIds = collectLiveStyleIds(this.frontFrame.screen)
-    // 合并 backFrame 的活跃样式（resetScreen 可能未清除所有内容）
-    for (const id of collectLiveStyleIds(this.backFrame.screen)) {
-      liveIds.add(id)
-    }
-    this.stylePool.lastLiveSize = liveIds.size
-    if (this.stylePool.needsCompaction()) {
-      const remap = this.stylePool.compact(liveIds)
-      if (remap) {
-        remapScreenStyleIds(this.frontFrame.screen, remap)
-        remapScreenStyleIds(this.backFrame.screen, remap)
-        this.needsEraseBeforePaint = true
-      }
-    }
+    // StylePool：释放派生缓存（transitionCache 等），不修改 styles/ids。
+    // styles[] 是 append-only 但线性增长（O(N)，典型 <1000 条目）；
+    // transitionCache 是 O(N²)，是长会话内存增长的主因。
+    // 定期清理缓存即可有效控制内存，且完全不涉及 ID 重映射——
+    // 渲染器和屏幕缓冲区中的 style ID 始终有效。
+    this.stylePool.clearCaches()
 
-    // LIVE_COUNTS 调试输出：ZY_CODE_LIVE_COUNTS=1 时打印各池统计
     if (isEnvTruthy(process.env.ZY_CODE_LIVE_COUNTS)) {
+      const liveCount = collectLiveStyleIds(this.frontFrame.screen).size
       logForDebugging(
-        `[LIVE_COUNTS] char=${this.charPool.poolSize()} hyperlink=${this.hyperlinkPool.poolSize()} style=${this.stylePool.poolSize()} styleLive=${liveIds.size}`,
+        `[LIVE_COUNTS] char=${this.charPool.poolSize()} hyperlink=${this.hyperlinkPool.poolSize()} style=${this.stylePool.poolSize()} styleLive=${liveCount}`,
       )
     }
   }
