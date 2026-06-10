@@ -71,6 +71,12 @@ export function isSynchronizedOutputSupported(): boolean {
     return false
   }
 
+  // JetBrains IDE 内置终端（JediTerm）不支持 DEC 2026 和 DECSTBM。
+  // TERM_PROGRAM 可能从父进程（如 iTerm2）继承，导致误判。
+  if (process.env.TERMINAL_EMULATOR?.includes('JetBrains')) {
+    return false
+  }
+
   const termProgram = process.env.TERM_PROGRAM
   const term = process.env.TERM
 

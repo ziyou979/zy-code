@@ -460,7 +460,11 @@ function NewMessagesPill({ count, onClick }: { count: number; onClick?: () => vo
             {count > 0
               ? tSync('fullscreen.newMessages', {
                   count,
-                  unit: plural(count, tSync('fullscreen.newMessageUnit_one'), tSync('fullscreen.newMessageUnit_other')),
+                  unit: plural(
+                    count,
+                    tSync('fullscreen.newMessageUnit_one'),
+                    tSync('fullscreen.newMessageUnit_other'),
+                  ),
                 })
               : tSync('fullscreen.jumpToBottom')}{' '}
             {figures.arrowDown}{' '}

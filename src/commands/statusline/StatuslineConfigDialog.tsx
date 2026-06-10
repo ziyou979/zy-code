@@ -312,7 +312,12 @@ function ModuleRow({
   theme,
   index,
   total,
-}: { module: ModuleConfig; theme: Theme; index: number; total: number }): React.ReactNode {
+}: {
+  module: ModuleConfig
+  theme: Theme
+  index: number
+  total: number
+}): React.ReactNode {
   const visible = module.visible
   const icon = effectiveIcon(module)
   const color = effectiveColor(module)
@@ -329,8 +334,7 @@ function ModuleRow({
   const iconPadded = padVisual(iconCell, 3)
   return (
     <Text>
-      {checkbox}{' '}
-      <Text dimColor>{posPadded}</Text>
+      {checkbox} <Text dimColor>{posPadded}</Text>
       <Text bold={visible} dimColor={!visible}>
         {namePadded}
       </Text>

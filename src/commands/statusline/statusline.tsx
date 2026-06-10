@@ -18,10 +18,7 @@ import { createStatuslineDialog } from './StatuslineConfigDialog.js'
 /**
  * 写入 statusline.json 并刷新 settings 缓存，使 useSettings() 能获取最新值
  */
-function writeStatuslineAndRefresh(config: {
-  enabled: boolean
-  modules?: ModuleConfig[]
-}): void {
+function writeStatuslineAndRefresh(config: { enabled: boolean; modules?: ModuleConfig[] }): void {
   saveStatuslineConfig(config)
   resetSettingsCache()
 }
@@ -73,7 +70,7 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
     const id = argsLower as ModuleId
     const merged = mergeWithDefaults(effectiveConfig.modules)
     const next: ModuleConfig[] = merged.map((m) =>
-      m.id === id ? { ...m, visible: !m.visible } : m
+      m.id === id ? { ...m, visible: !m.visible } : m,
     )
     writeStatuslineAndRefresh({ ...effectiveConfig, enabled: true, modules: next })
     context.setAppState((prev) => ({
