@@ -43,20 +43,14 @@ export function isNavigableMessage(msg: NavigableMessage): boolean {
       if (msg.isMeta || msg.isCompactSummary) {
         return false
       }
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      const b = msg.message.content[0] as any
+      const b = msg.message.content[0] as { type: string; text?: string }
       if (b?.type !== 'text') {
         return false
       }
-      // 中断等——合成的，不是用户创作的。
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      if (SYNTHETIC_MESSAGES.has((b as any).text)) {
+      if (SYNTHETIC_MESSAGES.has(b.text ?? '')) {
         return false
       }
-      // 与 VirtualMessageList sticky-prompt 相同的过滤器：XML 包装的
-      //（命令扩展、bash 输出等）不是真正的提示。
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      return !stripSystemReminders((b as any).text).startsWith('<')
+      return !stripSystemReminders(b.text ?? '').startsWith('<')
     }
     case 'system':
       // biome-ignore lint/nursery/useExhaustiveSwitchCases: blocklist — fallthrough return-true is the design
@@ -66,8 +60,7 @@ export function isNavigableMessage(msg: NavigableMessage): boolean {
         case 'memory_saved':
         case 'agents_killed':
         case 'away_summary':
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        case 'thinking' as any:
+        case 'thinking' as string:
           return false
       }
       return true
@@ -162,12 +155,11 @@ export function toolCallOf(msg: NavigableMessage):
     }
   }
   if (msg.type === 'grouped_tool_use') {
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    const b = (msg as any).messages[0]?.message.content[0]
+    const grouped = msg as import('../types/message.js').GroupedToolUseMessage
+    const b = grouped.messages[0]?.message.content[0]
     if (b?.type === 'tool_call') {
       return {
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        name: (msg as any).toolName,
+        name: grouped.toolName,
         input: b.input as Record<string, unknown>,
       }
     }
@@ -204,7 +196,7 @@ export const MESSAGE_ACTIONS = [
     label: 'edit',
     types: ['user'],
     // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    run: (m, c) => void c.edit(m as any),
+    run: (m, c) => void c.edit(m as UserMessage),
   }),
   action({
     key: 'c',
@@ -427,18 +419,13 @@ export function stripSystemReminders(text: string): string {
 export function copyTextOf(msg: NavigableMessage): string {
   switch (msg.type) {
     case 'user': {
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      const b = msg.message.content[0] as any
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      return (b as any)?.type === 'text' ? stripSystemReminders((b as any).text) : ''
+      const b = msg.message.content[0] as { type: string; text?: string }
+      return b?.type === 'text' ? stripSystemReminders(b.text ?? '') : ''
     }
     case 'assistant': {
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      const b = msg.message.content[0] as any
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      if ((b as any)?.type === 'text') {
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        return (b as any).text
+      const b = msg.message.content[0] as { type: string; text?: string }
+      if (b?.type === 'text') {
+        return b.text ?? ''
       }
       const tc = toolCallOf(msg)
       return tc
@@ -451,23 +438,21 @@ export function copyTextOf(msg: NavigableMessage): string {
         : ''
     }
     case 'grouped_tool_use':
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      return (msg as any).results.map(toolResultText).filter(Boolean).join('\n\n')
+      return (msg as import('../types/message.js').GroupedToolUseMessage).results
+        .map(toolResultText)
+        .filter(Boolean)
+        .join('\n\n')
     case 'collapsed_read_search':
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      return (
-        (msg as any).messages
-          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          .flatMap((m: any) =>
-            m.type === 'user'
-              ? [toolResultText(m)]
-              : m.type === 'grouped_tool_use'
-                ? m.results.map(toolResultText)
-                : [],
-          )
-          .filter(Boolean)
-          .join('\n\n')
-      )
+      return ((msg as import('../types/message.js').CollapsedReadSearchGroup).messages ?? [])
+        .flatMap((m: { type: string; results?: UserMessage[] }) =>
+          m.type === 'user'
+            ? [toolResultText(m as UserMessage)]
+            : m.type === 'grouped_tool_use'
+              ? (m.results ?? []).map(toolResultText)
+              : [],
+        )
+        .filter(Boolean)
+        .join('\n\n')
     case 'system':
       if ('content' in msg) {
         return String(msg.content)
@@ -479,12 +464,11 @@ export function copyTextOf(msg: NavigableMessage): string {
     case 'attachment': {
       const a = msg.attachment
       if (a.type === 'queued_command') {
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        const p = (a as any).prompt
+        // biome-ignore lint/suspicious/noExplicitAny: Attachment 联合窄化后 prompt 字段不可见
+        const p = (a as any).prompt as string | Array<{ type: string; text?: string }>
         return typeof p === 'string'
           ? p
-          : // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-            p.flatMap((b: any) => (b.type === 'text' ? [b.text] : [])).join('\n')
+          : p.flatMap((b) => (b.type === 'text' ? [b.text ?? ''] : [])).join('\n')
       }
       return `[${a.type}]`
     }

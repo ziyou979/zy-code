@@ -1,6 +1,6 @@
 # 项目架构待改进点
 
-> 最后更新：2026-06-06
+> 最后更新：2026-06-10
 > 基于当前仓库代码结构实测分析。
 
 ## 已完成的改进（归档记录）
@@ -20,38 +20,15 @@
 - ~~Plan/Auto Mode 迁移~~ → 从 `utils/` 迁到 `services/modeInstructions/{planMode,autoMode}.ts`（修复 AGENTS.md §12 违规）
 - ~~root.ts 瘦身~~ → 3409→2443 行（-28%），`options: any` 类型化为 `RootActionOptions`（70 字段），20 处 `as {}` 断言清除，新增 `assembly/{resumeDispatch,assistantChatMode,headlessMode}.ts` 3 个模块
 - ~~AGENTS.md 规约修复~~ → 20 处英文注释、`as any`、`Array.isArray` 守卫、`feature()` 宏
+- ~~扩展点诊断视图~~ → `src/services/diagnostics/extensionInventory.ts`，`/status` Status tab 展示 commands/tools/plugins/skills/mcp 扩展数量
+- ~~compact/contextCollapse 合并~~ → `contextCollapse/` 移入 `compact/contextCollapse/`，原位 barrel re-export
+- ~~attachmentApi.ts 拆分~~ → `ensureToolResultPairing`（300 行）提取至 `attachmentApi/toolResultPairing.ts`，下游直接引用新位置，原文件 1223→889 行
 
 ---
 
 ## 仍可改进的方向
 
-### 1. 扩展点诊断视图
-
-**现状**：同时存在 Commands/Tools/Plugins/Skills/MCP 5 套扩展机制，用户无法一览当前加载了哪些扩展。
-
-**方案**：新建 `src/services/diagnostics/extensionInventory.ts`，导出 `getExtensionInventory()` 收集所有激活扩展的名称/来源/状态，给 `/status` 命令的 Status tab 使用。
-
-**优先级**：低 — 各扩展面独立运作良好。
-
-### 2. compact/contextCollapse 合并
-
-**现状**：`services/contextCollapse/`（595 行）和 `services/compact/`（4000+ 行）在 `query.ts` 中总是联动出现。collapse 是 compact 的零 LLM 层级。
-
-**方案**：将 `contextCollapse/` 移入 `compact/` 作为子目录。
-
-**优先级**：低 — 目录结构不影响开发效率。
-
-### 3. attachmentApi.ts 进一步拆分
-
-**现状**：`utils/messages/attachmentApi.ts` 仍有 1223 行（Plan/Auto Mode 已迁出），超出 800 行限制。剩余内容是 `normalizeAttachmentForAPI`（~830 行的 40+ case switch）和 `ensureToolResultPairing`（~300 行）。
-
-**方案**：按 attachment type 分组拆分 switch：
-- `attachmentApi/toolResult.ts` — tool_result/tool_use 相关 case
-- `attachmentApi/fileChange.ts` — edited_text_file/file_reference 相关 case
-- `attachmentApi/hook.ts` — hook_result/hook_error 相关 case
-- `attachmentApi/index.ts` — switch 入口 + ensureToolResultPairing
-
-**优先级**：低 — switch 内各 case 独立，不常同时修改多个 case。
+（无。所有已识别的改进项均已完成或归入"不再建议"。）
 
 ---
 

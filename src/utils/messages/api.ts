@@ -13,8 +13,5 @@ export {
 export { wrapInSystemReminder, wrapMessagesInSystemReminder } from './systemReminder.js'
 
 // 从 attachmentApi.ts 重新导出公共 API
-export {
-  normalizeAttachmentForAPI,
-  ensureToolResultPairing,
-  wrapCommandText,
-} from './attachmentApi.js'
+export { normalizeAttachmentForAPI, wrapCommandText } from './attachmentApi.js'
+export { ensureToolResultPairing } from './attachmentApi/toolResultPairing.js'

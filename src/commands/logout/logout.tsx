@@ -20,7 +20,6 @@ export async function performLogout({ clearOnboarding = false }): Promise<void> 
 
   // Wipe all secure storage data on logout
   const secureStorage = getSecureStorage()
-  // @ts-expect-error
   secureStorage.delete()
   await clearAuthRelatedCaches()
   saveGlobalConfig((current) => {

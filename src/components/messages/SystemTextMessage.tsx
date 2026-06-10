@@ -54,6 +54,7 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
         flexDirection="row"
         marginTop={addMargin ? 1 : 0}
         // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+        // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
         backgroundColor={bg as any}
         width="100%"
       >
@@ -72,13 +73,18 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
         flexDirection="row"
         marginTop={addMargin ? 1 : 0}
         // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+        // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
         backgroundColor={bg as any}
         width="100%"
       >
         {
           <Box minWidth={2}>
             {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
-            <Text color={'error' as any}>{BLACK_CIRCLE}</Text>
+            <Text // biome-ignore lint/suspicious/noExplicitAny: Ink Color 类型不含 theme 颜色
+              color={'error' as any}
+            >
+              {BLACK_CIRCLE}
+            </Text>
           </Box>
         }
         {<Text dimColor={true}>All background agents stopped</Text>}
@@ -95,7 +101,11 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
   if ('subtype' in message && message.subtype === 'scheduled_task_fire') {
     return (
       // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      <Box marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
+      <Box
+        marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
+        backgroundColor={bg as any}
+        width="100%"
+      >
         {
           <Text dimColor={true}>
             {TEARDROP_ASTERISK} {message.content}
@@ -108,7 +118,11 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
     const joinedCommands = message.commands.join(', ')
     return (
       // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      <Box marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
+      <Box
+        marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
+        backgroundColor={bg as any}
+        width="100%"
+      >
         {<Text dimColor={true}>{TEARDROP_ASTERISK} </Text>}
         {<Text>Allowed </Text>}
         {<Text bold={true}>{joinedCommands}</Text>}
@@ -143,7 +157,12 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
         addMargin={addMargin}
         dot={'level' in message && message.level !== 'info'}
         // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        color={'level' in message && message.level === 'warning' ? ('warning' as any) : undefined}
+        color={
+          'level' in message && message.level === 'warning'
+            ? // biome-ignore lint/suspicious/noExplicitAny: Ink Color 类型不含 theme 颜色
+              ('warning' as any)
+            : undefined
+        }
         dimColor={'level' in message && message.level === 'info'}
       />
     </Box>
@@ -230,7 +249,12 @@ function StopHookSummaryMessage({
     ))
   return (
     // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
+    <Box
+      flexDirection="row"
+      marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
+      backgroundColor={bg as any}
+      width="100%"
+    >
       {
         <Box minWidth={2}>
           <Text>{BLACK_CIRCLE}</Text>
@@ -274,11 +298,19 @@ function SystemTextMessageInner({ content, addMargin, dot, color, dimColor }: an
   const trimmedContent = content.trim()
   return (
     // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
+    <Box
+      flexDirection="row"
+      marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
+      backgroundColor={bg as any}
+      width="100%"
+    >
       {dot && (
         <Box minWidth={2}>
           {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
-          <Text color={color as any} dimColor={dimColor}>
+          <Text // biome-ignore lint/suspicious/noExplicitAny: Ink Color 类型不含 theme 颜色
+            color={color as any}
+            dimColor={dimColor}
+          >
             {BLACK_CIRCLE}
           </Text>
         </Box>
@@ -287,7 +319,11 @@ function SystemTextMessageInner({ content, addMargin, dot, color, dimColor }: an
         <Box flexDirection="column" width={columns - 10}>
           {
             // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-            <Text color={color as any} dimColor={dimColor} wrap="wrap">
+            <Text // biome-ignore lint/suspicious/noExplicitAny: Ink Color 类型不含 theme 颜色
+              color={color as any}
+              dimColor={dimColor}
+              wrap="wrap"
+            >
               {trimmedContent}
             </Text>
           }
@@ -327,7 +363,12 @@ function TurnDurationMessage({ message, addMargin }: { message: any; addMargin: 
     })
   return (
     // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
+    <Box
+      flexDirection="row"
+      marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
+      backgroundColor={bg as any}
+      width="100%"
+    >
       {
         <Box minWidth={2}>
           <Text dimColor={true}>{BRAILLE_Z}</Text>
@@ -363,7 +404,11 @@ function MemorySavedMessage({
   const fileRowElements = writtenPaths.map((p) => <MemoryFileRow key={p} path={p} />)
   return (
     // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    <Box flexDirection="column" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any}>
+    <Box
+      flexDirection="column"
+      marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
+      backgroundColor={bg as any}
+    >
       {
         <Box flexDirection="row">
           {
@@ -404,7 +449,12 @@ function _ThinkingMessage({ message, addMargin }: { message: any; addMargin: boo
   const bg = useSelectedMessageBg()
   return (
     // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width="100%">
+    <Box
+      flexDirection="row"
+      marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
+      backgroundColor={bg as any}
+      width="100%"
+    >
       {
         <Box minWidth={2}>
           <Text dimColor={true}>{TEARDROP_ASTERISK}</Text>
@@ -419,15 +469,24 @@ function WireStatusMessage({ message, addMargin }: { message: any; addMargin: bo
   const bg = useSelectedMessageBg()
   return (
     // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    <Box flexDirection="row" marginTop={addMargin ? 1 : 0} backgroundColor={bg as any} width={999}>
+    <Box
+      flexDirection="row"
+      marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
+      backgroundColor={bg as any}
+      width={999}
+    >
       {<Box minWidth={2} />}
       {
         <Box flexDirection="column">
           {
             <Text>
               {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
-              <ThemedText color={'suggestion' as any}>/remote-control</ThemedText> is active. Code
-              in CLI or at
+              <ThemedText // biome-ignore lint/suspicious/noExplicitAny: Ink Color 类型不含 theme 颜色
+                color={'suggestion' as any}
+              >
+                /remote-control
+              </ThemedText>{' '}
+              is active. Code in CLI or at
             </Text>
           }
           {<Link url={message.url}>{message.url}</Link>}

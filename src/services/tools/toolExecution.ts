@@ -1,3 +1,4 @@
+import type { UUID } from 'node:crypto'
 import { feature } from 'bun:bundle'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -351,7 +352,7 @@ export async function* runToolUse(
             ],
             toolUseResult: `Error: Script call limit exceeded (${scriptCap} per session)`,
             // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-            sourceToolAssistantUUID: assistantMessage.uuid as any,
+            sourceToolAssistantUUID: assistantMessage.uuid as UUID,
           }),
         }
         return
@@ -417,7 +418,7 @@ export async function* runToolUse(
         ],
         toolUseResult: `Error: No such tool available: ${toolName}`,
         // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-        sourceToolAssistantUUID: assistantMessage.uuid as any,
+        sourceToolAssistantUUID: assistantMessage.uuid as UUID,
       }),
     }
     return
@@ -454,7 +455,7 @@ export async function* runToolUse(
           content: [content],
           toolUseResult: CANCEL_MESSAGE,
           // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          sourceToolAssistantUUID: assistantMessage.uuid as any,
+          sourceToolAssistantUUID: assistantMessage.uuid as UUID,
         }),
       }
       return
@@ -492,7 +493,7 @@ export async function* runToolUse(
         ],
         toolUseResult: detailedError,
         // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-        sourceToolAssistantUUID: assistantMessage.uuid as any,
+        sourceToolAssistantUUID: assistantMessage.uuid as UUID,
       }),
     }
   }
@@ -683,7 +684,7 @@ async function checkPermissionsAndCallTool(
           ],
           toolUseResult: `InputValidationError: ${parsedInput.error.message}`,
           // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          sourceToolAssistantUUID: assistantMessage.uuid as any,
+          sourceToolAssistantUUID: assistantMessage.uuid as UUID,
         }),
       },
     ]
@@ -730,7 +731,7 @@ async function checkPermissionsAndCallTool(
           ],
           toolUseResult: `Error: ${isValidCall.message}`,
           // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          sourceToolAssistantUUID: assistantMessage.uuid as any,
+          sourceToolAssistantUUID: assistantMessage.uuid as UUID,
         }),
       },
     ]
@@ -818,10 +819,11 @@ async function checkPermissionsAndCallTool(
             att.durationMs !== undefined
           ) {
             preToolHookInfos.push({
-              command: att.command,
-              durationMs: att.durationMs,
-              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-            } as any)
+              hookName: String(att.command),
+              status: 'success',
+              command: att.command as string,
+              durationMs: att.durationMs as number,
+            })
           }
         }
         break
@@ -849,7 +851,7 @@ async function checkPermissionsAndCallTool(
             content: [createToolResultStopMessage(toolUseID)],
             toolUseResult: `Error: ${stopReason}`,
             // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-            sourceToolAssistantUUID: assistantMessage.uuid as any,
+            sourceToolAssistantUUID: assistantMessage.uuid as UUID,
           }),
         })
         return resultingMessages
@@ -1042,7 +1044,7 @@ async function checkPermissionsAndCallTool(
         imagePasteIds: rejectImageIds,
         toolUseResult: `Error: ${errorMessage}`,
         // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-        sourceToolAssistantUUID: assistantMessage.uuid as any,
+        sourceToolAssistantUUID: assistantMessage.uuid as UUID,
       }),
     })
 
@@ -1429,7 +1431,7 @@ async function checkPermissionsAndCallTool(
               : toolUseResult,
           mcpMeta: toolUseContext.agentId ? undefined : mcpMeta,
           // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          sourceToolAssistantUUID: assistantMessage.uuid as any,
+          sourceToolAssistantUUID: assistantMessage.uuid as UUID,
         }),
         contextModifier: toolContextModifier
           ? {
@@ -1483,10 +1485,11 @@ async function checkPermissionsAndCallTool(
             att.durationMs !== undefined
           ) {
             postToolHookInfos.push({
-              command: att.command,
-              durationMs: att.durationMs,
-              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-            } as any)
+              hookName: String(att.command),
+              status: 'success',
+              command: att.command as string,
+              durationMs: att.durationMs as number,
+            })
           }
         }
       } else {
@@ -1500,10 +1503,11 @@ async function checkPermissionsAndCallTool(
             att.durationMs !== undefined
           ) {
             postToolHookInfos.push({
-              command: att.command,
-              durationMs: att.durationMs,
-              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-            } as any)
+              hookName: String(att.command),
+              status: 'success',
+              command: att.command as string,
+              durationMs: att.durationMs as number,
+            })
           }
         }
       }
@@ -1524,10 +1528,11 @@ async function checkPermissionsAndCallTool(
     // 应用 PostToolUse hook 的通用结果覆盖：改写 tool_result 块的文本内容。
     // updatedToolOutput 优先于 updatedMCPToolOutput（最后改写最终块）。
     if (updatedToolOutputOverride !== undefined && toolResultEntry) {
-      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-      const content = (toolResultEntry.message as any)?.message?.content
+      type ContentItem = { type?: string; content?: string | unknown[] }
+      const msg = toolResultEntry.message as { type: string; message?: { content?: ContentItem[] } }
+      const content = msg.type === 'user' ? msg.message?.content : undefined
       if (Array.isArray(content)) {
-        const block = content.find((b: { type?: string }) => b?.type === 'tool_result')
+        const block = content.find((b) => b?.type === 'tool_result')
         if (block) {
           block.content = updatedToolOutputOverride
         }
@@ -1711,7 +1716,7 @@ async function checkPermissionsAndCallTool(
               ? error.mcpMeta
               : undefined,
           // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          sourceToolAssistantUUID: assistantMessage.uuid as any,
+          sourceToolAssistantUUID: assistantMessage.uuid as UUID,
         }),
       },
       ...hookMessages,

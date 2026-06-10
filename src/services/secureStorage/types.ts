@@ -1,9 +1,11 @@
 // Secure Storage Types
 
 export interface SecureStorage {
-  get(key: string): Promise<string | null>
-  set(key: string, value: string): Promise<void>
-  delete(key: string): Promise<void>
+  read(): SecureStorageData | null
+  readAsync(): Promise<SecureStorageData | null>
+  update(data: SecureStorageData): { success: boolean; warning?: string }
+  delete(): Promise<void>
 }
 
-export type SecureStorageData = Record<string, string>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type SecureStorageData = Record<string, any>

@@ -5,6 +5,7 @@ import type { LocalJSXCommandContext } from '../../commands.js'
 import { useIsInsideModal } from '../../context/modalContext.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text, useTheme } from '../../ink.js'
+import { getExtensionInventory } from '../../services/diagnostics/extensionInventory.js'
 import { type AppState, useAppState } from '../../state/AppState.js'
 import { getCwd } from '../../utils/cwd.js'
 import { getCurrentSessionTitle } from '../../utils/sessionStorage.js'
@@ -115,6 +116,7 @@ export function Status({ context, diagnosticsPromise }: Props) {
     theme,
     context,
   })
+  const extensionsPromise = getExtensionInventory(getCwd())
   const sections = [primarySection, secondarySection]
   const grow = useIsInsideModal() ? 1 : undefined
   const sectionElements = sections.map(
@@ -141,6 +143,11 @@ export function Status({ context, diagnosticsPromise }: Props) {
           {
             <Suspense fallback={null}>
               <Diagnostics promise={diagnosticsPromise} />
+            </Suspense>
+          }
+          {
+            <Suspense fallback={null}>
+              <Extensions promise={extensionsPromise} />
             </Suspense>
           }
         </Box>
@@ -176,6 +183,39 @@ function Diagnostics({ promise }: { promise: Promise<any> }) {
     <Box flexDirection="column" paddingBottom={1}>
       {<Text bold={true}>{tSync('status.diagnostics')}</Text>}
       {diagnosticElements}
+    </Box>
+  )
+}
+
+function Extensions({
+  promise,
+}: {
+  promise: Promise<import('../../services/diagnostics/extensionInventory.js').ExtensionInventory>
+}) {
+  const inventory = use(promise)
+  const parts: string[] = []
+  if (inventory.commands.length) {
+    parts.push(`${inventory.commands.length} ${tSync('status.extensions.commands')}`)
+  }
+  if (inventory.tools.length) {
+    parts.push(`${inventory.tools.length} ${tSync('status.extensions.tools')}`)
+  }
+  if (inventory.plugins.length) {
+    parts.push(`${inventory.plugins.length} ${tSync('status.extensions.plugins')}`)
+  }
+  if (inventory.skills.length) {
+    parts.push(`${inventory.skills.length} ${tSync('status.extensions.skills')}`)
+  }
+  if (inventory.mcp.length) {
+    parts.push(`${inventory.mcp.length} ${tSync('status.extensions.mcp')}`)
+  }
+  if (!parts.length) {
+    return null
+  }
+  return (
+    <Box flexDirection="row" gap={1} flexShrink={0}>
+      <Text bold={true}>{tSync('status.extensions')}:</Text>
+      <Text>{parts.join(', ')}</Text>
     </Box>
   )
 }

@@ -222,6 +222,33 @@ export type WireControlElicitationResponse = {
   content?: Record<string, unknown>
 }
 
+export interface WireControlMcpAuthenticateRequest {
+  subtype: 'mcp_authenticate'
+  serverName: string
+}
+
+export interface WireControlMcpOAuthCallbackUrlRequest {
+  subtype: 'mcp_oauth_callback_url'
+  serverName: string
+  callbackUrl: string
+}
+
+export interface WireControlMcpClearAuthRequest {
+  subtype: 'mcp_clear_auth'
+  serverName: string
+}
+
+export interface WireControlGenerateSessionTitleRequest {
+  subtype: 'generate_session_title'
+  description: string
+  persist?: boolean
+}
+
+export interface WireControlAskSideQuestionRequest {
+  subtype: 'ask_side_question'
+  question: string
+}
+
 export type WireControlRequestInner =
   | WireControlInitializeRequest
   | WireControlInterruptRequest
@@ -244,6 +271,11 @@ export type WireControlRequestInner =
   | WireControlApplyFlagSettingsRequest
   | WireControlGetSettingsRequest
   | WireControlElicitationRequest
+  | WireControlMcpAuthenticateRequest
+  | WireControlMcpOAuthCallbackUrlRequest
+  | WireControlMcpClearAuthRequest
+  | WireControlGenerateSessionTitleRequest
+  | WireControlAskSideQuestionRequest
 
 // ============================================================
 // Control Request / Response Envelopes

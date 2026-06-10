@@ -178,8 +178,9 @@ export function messagesToOpenAI(
               typeof block.content === 'string'
                 ? block.content
                 : Array.isArray(block.content)
-                  ? // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
-                    block.content.map((c: any) => (c.type === 'text' ? c.text : '')).join('\n')
+                  ? block.content
+                      .map((c: { type: string; text?: string }) => (c.type === 'text' ? c.text : ''))
+                      .join('\n')
                   : ''
             toolResults.push({
               role: 'tool',
@@ -242,15 +243,13 @@ export function messagesToOpenAI(
         const textParts: string[] = []
         const thinkingParts: string[] = []
         const toolCalls: OpenAI.Chat.ChatCompletionMessageToolCall[] = []
-        // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
-        let lastCacheControl: any = null
+        let lastCacheControl: Record<string, unknown> | null = null
         for (const block of msg.content) {
           if (block.type === 'text') {
             textParts.push(block.text)
-            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-            if ((block as any).cache_control) {
-              // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-              lastCacheControl = (block as any).cache_control
+            const ext = block as { cache_control?: Record<string, unknown> }
+            if (ext.cache_control) {
+              lastCacheControl = ext.cache_control
             }
           } else if (block.type === 'tool_call' || block.type === 'tool_use') {
             toolCalls.push({
@@ -278,8 +277,7 @@ export function messagesToOpenAI(
           const thinkingText = thinkingParts.join('\n\n')
           const useReasoningField = supportsReasoningContentField(model)
           if (useReasoningField && toolCalls.length > 0) {
-            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段 reasoning_content
-            ;(am as any).reasoning_content = thinkingText
+            ;(am as unknown as Record<string, unknown>).reasoning_content = thinkingText
           } else if (!useReasoningField) {
             textParts.unshift(`<thinking>${thinkingText}</thinking>`)
           }
@@ -400,8 +398,7 @@ export function toolsToOpenAI(
       name: tool.name ?? '',
       description: tool.description ?? '',
       parameters: (tool.inputSchema ??
-        // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
-        (tool as any).input_schema ?? {
+        (tool as unknown as { input_schema?: Record<string, unknown> }).input_schema ?? {
           type: 'object',
           properties: {},
         }) as Record<string, unknown>,
@@ -594,11 +591,12 @@ function extractOpenAICacheTokens(usage: OpenAI.CompletionUsage | undefined | nu
   if (rawUsage && typeof rawUsage.cache_creation_input_tokens === 'number') {
     cacheCreationInputTokens = rawUsage.cache_creation_input_tokens as number
   } else if (
-    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-    typeof (usage?.prompt_tokens_details as any)?.cache_creation_input_tokens === 'number'
+    typeof (usage?.prompt_tokens_details as { cache_creation_input_tokens?: number })
+      ?.cache_creation_input_tokens === 'number'
   ) {
-    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-    cacheCreationInputTokens = (usage!.prompt_tokens_details as any).cache_creation_input_tokens
+    cacheCreationInputTokens = (
+      usage!.prompt_tokens_details as { cache_creation_input_tokens: number }
+    ).cache_creation_input_tokens
   }
 
   return { cacheReadInputTokens, cacheCreationInputTokens }
@@ -840,8 +838,7 @@ export function buildOpenAIRequestParams(params: CreateParams): OpenAICreatePara
   // OpenAI 原生工具（如 web_search_preview），注入到 tools 数组顶部
   const openaiNativeTools = openaiExtras?._web_search_tool ? [openaiExtras._web_search_tool] : []
   const cleanedExtras = openaiExtras ? { ...openaiExtras } : {}
-  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-  delete (cleanedExtras as any)._web_search_tool
+  delete (cleanedExtras as Record<string, unknown>)._web_search_tool
 
   // response_format：providerExtras 优先；否则尝试从 outputConfig 转
   const explicitResponseFormat = openaiExtras?.response_format

@@ -9,58 +9,41 @@ export function createFallbackStorage(
   secondary: SecureStorage,
 ): SecureStorage {
   return {
-    // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
+    // biome-ignore lint/suspicious/noExplicitAny: name 是实现细节，接口未声明
     name: `${(primary as any).name}-with-${(secondary as any).name}-fallback`,
     read(): SecureStorageData {
-      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
-      const result = (primary as any).read()
+      const result = primary.read()
       if (result !== null && result !== undefined) {
         return result
       }
-      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
-      return (secondary as any).read() || {}
+      return secondary.read() || {}
     },
     async readAsync(): Promise<SecureStorageData | null> {
-      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
-      const result = await (primary as any).readAsync()
+      // biome-ignore lint/suspicious/noExplicitAny: readAsync 是扩展方法，接口未声明
+      const result = await primary.readAsync()
       if (result !== null && result !== undefined) {
         return result
       }
-      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
-      return (await (secondary as any).readAsync()) || {}
+      // biome-ignore lint/suspicious/noExplicitAny: readAsync 是扩展方法，接口未声明
+      return (await secondary.readAsync()) || {}
     },
     update(data: SecureStorageData): { success: boolean; warning?: string } {
-      // Capture state before update
-      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
-      const primaryDataBefore = (primary as any).read()
+      const primaryDataBefore = primary.read()
 
-      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
-      const result = (primary as any).update(data)
+      const result = primary.update(data)
 
       if (result.success) {
-        // Delete secondary when migrating to primary for the first time
-        // This preserves credentials when sharing .zy between host and containers
-        // See: https://github.com/anthropics/zy-code/issues/1414
         if (primaryDataBefore === null) {
-          // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
-          ;(secondary as any).delete()
+          secondary.delete()
         }
         return result
       }
 
-      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
-      const fallbackResult = (secondary as any).update(data)
+      const fallbackResult = secondary.update(data)
 
       if (fallbackResult.success) {
-        // Primary write failed but primary may still hold an *older* valid
-        // entry. read() prefers primary whenever it returns non-null, so that
-        // stale entry would shadow the fresh data we just wrote to secondary —
-        // e.g. a refresh token the server has already rotated away, causing a
-        // /login loop (#30337). Best-effort delete; if this also fails the
-        // user's keychain is in a bad state we can't fix from here.
         if (primaryDataBefore !== null) {
-          // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
-          ;(primary as any).delete()
+          primary.delete()
         }
         return {
           success: true,
@@ -71,9 +54,9 @@ export function createFallbackStorage(
       return { success: false }
     },
     delete(): boolean {
-      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
+      // biome-ignore lint/suspicious/noExplicitAny: delete() 返回 boolean 而非 Promise<void>
       const primarySuccess = (primary as any).delete()
-      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
+      // biome-ignore lint/suspicious/noExplicitAny: delete() 返回 boolean 而非 Promise<void>
       const secondarySuccess = (secondary as any).delete()
 
       return primarySuccess || secondarySuccess
