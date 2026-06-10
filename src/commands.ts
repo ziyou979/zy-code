@@ -714,6 +714,7 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   'terminal-setup': 'commands.terminalSetup',
   upgrade: 'commands.upgrade',
   'rate-limit-options': 'commands.rateLimitOptions',
+  tui: 'commands.tui',
   usage: 'commands.usage',
   insights: 'commands.insights',
   vim: 'commands.vim',
