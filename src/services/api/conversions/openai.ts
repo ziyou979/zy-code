@@ -179,7 +179,9 @@ export function messagesToOpenAI(
                 ? block.content
                 : Array.isArray(block.content)
                   ? block.content
-                      .map((c: { type: string; text?: string }) => (c.type === 'text' ? c.text : ''))
+                      .map((c: { type: string; text?: string }) =>
+                        c.type === 'text' ? c.text : '',
+                      )
                       .join('\n')
                   : ''
             toolResults.push({
