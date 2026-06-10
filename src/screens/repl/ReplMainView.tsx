@@ -240,6 +240,8 @@ export interface ReplMainViewProps {
   showRemoteCallout: boolean
   showDesktopUpsellStartup: boolean
   setShowDesktopUpsellStartup: (v: boolean) => void
+  showFullscreenUpsell: boolean
+  setShowFullscreenUpsell: (v: boolean) => void
   lspRecommendation: ReplNotificationsCluster['lspRecommendation']
   handleLspResponse: ReplNotificationsCluster['handleLspResponse']
   hintRecommendation: ReplNotificationsCluster['hintRecommendation']
@@ -348,6 +350,8 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
     showRemoteCallout,
     showDesktopUpsellStartup,
     setShowDesktopUpsellStartup,
+    showFullscreenUpsell,
+    setShowFullscreenUpsell,
     lspRecommendation,
     handleLspResponse,
     hintRecommendation,
@@ -839,6 +843,7 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
                   lspRecommendation={lspRecommendation}
                   handleLspResponse={handleLspResponse}
                   setShowDesktopUpsellStartup={setShowDesktopUpsellStartup}
+                  setShowFullscreenUpsell={setShowFullscreenUpsell}
                   createAbortController={createAbortController}
                   exitFlow={exitFlow}
                 />

@@ -34,6 +34,7 @@ export interface GetFocusedInputDialogParams {
   showRemoteCallout: boolean
   lspRecommendation: unknown
   hintRecommendation: unknown
+  showFullscreenUpsell: boolean
   showDesktopUpsellStartup: boolean
 }
 
@@ -114,6 +115,11 @@ export function getFocusedInputDialog(p: GetFocusedInputDialogParams): FocusedIn
   // 来自 CLI/SDK stderr 的插件提示（与 LSP 推荐相同优先级）
   if (allowDialogsWithAnimation && p.hintRecommendation) {
     return 'plugin-hint'
+  }
+
+  // 全屏模式推荐（最多 3 次启动）
+  if (allowDialogsWithAnimation && p.showFullscreenUpsell) {
+    return 'fullscreen-upsell'
   }
 
   // 桌面应用推荐（最多 3 次启动，最低优先级）

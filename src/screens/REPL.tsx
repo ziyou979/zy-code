@@ -139,8 +139,10 @@ import { useUnseenDivider, computeUnseenDivider } from '../components/Fullscreen
 import {
   isFullscreenEnvEnabled,
   maybeGetTmuxMouseHint,
+  maybeGetTmuxFocusHint,
   isMouseTrackingEnabled,
 } from '../utils/fullscreen.js'
+import { useFullscreenDownsell } from '../hooks/notifs/useFullscreenDownsell.js'
 import { AlternateScreen } from '../ink/components/AlternateScreen.js'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import { ReplMainView } from './repl/ReplMainView.js'
@@ -433,9 +435,16 @@ export function REPL({
           addNotification({ key: 'tmux-mouse-hint', text: hint, priority: 'low' })
         }
       })
+      void maybeGetTmuxFocusHint().then((hint) => {
+        if (hint) {
+          addNotification({ key: 'tmux-focus-hint', text: hint, priority: 'low' })
+        }
+      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addNotification])
+
+  useFullscreenDownsell(addNotification)
 
   const localJSXCommandRef = useRef<(ToolJSXState & { isLocalJSXCommand: true }) | null>(null)
   const updateToolJSX = useCallback(
@@ -684,6 +693,8 @@ export function REPL({
     showRemoteCallout,
     showDesktopUpsellStartup,
     setShowDesktopUpsellStartup,
+    showFullscreenUpsell,
+    setShowFullscreenUpsell,
     swarmStartTimeRef,
     swarmBudgetInfoRef,
     frustrationDetection,
@@ -739,6 +750,7 @@ export function REPL({
     showRemoteCallout,
     lspRecommendation,
     hintRecommendation,
+    showFullscreenUpsell,
     showDesktopUpsellStartup,
   })
   const hasSuppressedDialogs =
@@ -1310,6 +1322,8 @@ export function REPL({
       showRemoteCallout={showRemoteCallout}
       showDesktopUpsellStartup={showDesktopUpsellStartup}
       setShowDesktopUpsellStartup={setShowDesktopUpsellStartup}
+      showFullscreenUpsell={showFullscreenUpsell}
+      setShowFullscreenUpsell={setShowFullscreenUpsell}
       lspRecommendation={lspRecommendation}
       handleLspResponse={handleLspResponse}
       hintRecommendation={hintRecommendation}

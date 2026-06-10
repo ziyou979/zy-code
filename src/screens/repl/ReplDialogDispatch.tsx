@@ -15,6 +15,7 @@ import { feature } from 'bun:bundle'
 import * as React from 'react'
 import { getTotalInputTokens } from '../../bootstrap/state.js'
 import { DesktopUpsellStartup } from '../../components/DesktopUpsell/DesktopUpsellStartup.js'
+import { FullscreenUpsellDialog } from '../../components/FullscreenUpsell/FullscreenUpsellDialog.js'
 import { EffortCallout } from '../../components/EffortCallout.js'
 import { PluginHintMenu } from '../../components/Hint/PluginHintMenu.js'
 import { PromptDialog } from '../../components/hooks/PromptDialog.js'
@@ -66,6 +67,7 @@ export type ReplDialogDispatchProps = {
   lspRecommendation: ReplNotificationsCluster['lspRecommendation']
   handleLspResponse: ReplNotificationsCluster['handleLspResponse']
   setShowDesktopUpsellStartup: (next: boolean) => void
+  setShowFullscreenUpsell: (next: boolean) => void
   createAbortController: () => AbortController
   exitFlow: React.ReactNode
 }
@@ -92,6 +94,7 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
     lspRecommendation,
     handleLspResponse,
     setShowDesktopUpsellStartup,
+    setShowFullscreenUpsell,
     createAbortController,
     exitFlow,
   } = props
@@ -454,6 +457,9 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
           fileExtension={lspRecommendation.fileExtension}
           onResponse={handleLspResponse}
         />
+      )}
+      {dialog === 'fullscreen-upsell' && (
+        <FullscreenUpsellDialog onDone={() => setShowFullscreenUpsell(false)} />
       )}
       {dialog === 'desktop-upsell' && (
         <DesktopUpsellStartup onDone={() => setShowDesktopUpsellStartup(false)} />

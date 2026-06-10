@@ -685,26 +685,26 @@ function isFullscreenActive(): boolean {
 
 ## 六、实施优先级总览
 
-| 优先级 | Task | 预估工作量 | 依赖 |
-|:--:|------|:--:|------|
-| P0 | StylePool 压缩 | 3d | 无 |
-| P0 | Alt Screen 交接协议 | 3d | 无 |
-| P0 | Windows+SSH 自动检测 | 0.5d | 无 |
-| P1 | `/tui` 命令 + 热切换 | 5d | settings 持久化 |
-| P1 | `DISABLE_ALTERNATE_SCREEN` | 1d | 无 |
-| P1 | 鼠标点击展开（Click-to-Expand） | 3d | SGR 鼠标（已有） |
-| P1 | tmux focus-events 提示 | 1d | 无 |
-| P1 | 背景会话强制全屏 | 1d | 无 |
-| P1 | 分辨率函数 reason 改造 | 2d | 无 |
-| P2 | Upsell 对话框 | 3d | `/tui` 命令 |
-| P2 | Downsell 提示 + 自动毕业 | 2d | `/tui` 命令 |
-| P2 | Feature Flag 灰度 | 1d | resolution 改造 |
-| P2 | 屏幕阅读器模式 | 5d | 无 |
-| P2 | frameSink | 2d | 无 |
-| P2 | LIVE_COUNTS | 1d | 无 |
-| P2 | 遥测增强 | 2d | resolution 改造 |
+| 优先级 | Task | 预估工作量 | 依赖 | 状态 |
+|:--:|------|:--:|------|:--:|
+| P0 | StylePool 压缩 | 3d | 无 | ✅ 已完成 |
+| P0 | Alt Screen 交接协议 | 3d | 无 | ✅ 已有等价（`reenterAltScreen` + `handleResume` + `reassertTerminalModes`） |
+| P0 | Windows+SSH 自动检测 | 0.5d | 无 | ✅ 已完成 |
+| P1 | `/tui` 命令 + 热切换 | 5d | settings 持久化 | ✅ Step A 已完成（配置持久化 MVP），Step B（relaunch/resume）待后续 |
+| P1 | `DISABLE_ALTERNATE_SCREEN` | 1d | 无 | ✅ 已完成 |
+| P1 | 鼠标点击展开（Click-to-Expand） | 3d | SGR 鼠标（已有） | ✅ 已有等价（`expandedKeys` + `VirtualItem`） |
+| P1 | tmux focus-events 提示 | 1d | 无 | ✅ 已完成 |
+| P1 | 背景会话强制全屏 | 1d | 无 | ✅ 已完成 |
+| P1 | 分辨率函数 reason 改造 | 2d | 无 | ✅ 已完成 |
+| P2 | Upsell 对话框 | 3d | `/tui` 命令 | ✅ 已完成 |
+| P2 | Downsell 提示 + 自动毕业 | 2d | `/tui` 命令 | ✅ 已完成 |
+| P2 | Feature Flag 灰度 | 1d | resolution 改造 | ✅ 已完成 |
+| P2 | 屏幕阅读器模式 | 5d | 无 | ⏳ 延后（需用户研究，当前 `ZY_CODE_ACCESSIBILITY=1` 提供基本支持） |
+| P2 | frameSink | 2d | 无 | ✅ 已有等价（`options.onFrame` 回调） |
+| P2 | LIVE_COUNTS | 1d | 无 | ✅ 已完成 |
+| P2 | 遥测增强 | 2d | resolution 改造 | ✅ 已完成 |
 
-**总计**：约 36 人天。P0 可在 1 周内完成，P0+P1 约 3-4 周，全部约 5-6 周。
+**实施进度**：除屏幕阅读器模式（需用户研究）和 `/tui` relaunch/resume（Step B）外，所有差异项均已实现或确认已有等价能力。
 
 ---
 

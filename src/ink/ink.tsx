@@ -10,8 +10,9 @@ import { onExit } from 'signal-exit'
 import { flushInteractionTime } from 'src/bootstrap/state.js'
 import { getYogaCounters } from 'src/native-ts/yoga-layout/index.js'
 import { logForDebugging } from 'src/utils/debug.js'
+import { isAlternateScreenDisabled } from 'src/utils/fullscreen.js'
 import { logError } from 'src/utils/log.js'
-import { isDevEnv } from '../utils/envUtils.js'
+import { isDevEnv, isEnvTruthy } from '../utils/envUtils.js'
 import { colorize } from './colorize.js'
 import App from './components/App.js'
 import type {
@@ -45,10 +46,12 @@ import {
   CellWidth,
   CharPool,
   cellAt,
+  collectLiveStyleIds,
   createScreen,
   HyperlinkPool,
   isEmptyCellAt,
   migrateScreenPools,
+  remapScreenStyleIds,
   StylePool,
 } from './screen.js'
 import { applySearchHighlight } from './searchHighlight.js'
@@ -1136,6 +1139,14 @@ export default class Ink {
    * stays true. ENTER_ALT_SCREEN is a terminal-side no-op if already in alt.
    */
   private reenterAltScreen(): void {
+    if (isAlternateScreenDisabled()) {
+      // 逻辑 alt-screen：跳过物理 DEC 1049，仅重置帧缓冲 + 鼠标
+      if (this.altScreenMouseTracking) {
+        this.options.stdout.write(ENABLE_MOUSE_TRACKING)
+      }
+      this.resetFramesForAltScreen()
+      return
+    }
     this.options.stdout.write(
       ENTER_ALT_SCREEN +
         ERASE_SCREEN +
@@ -1734,7 +1745,7 @@ export default class Ink {
     // terminals that don't support them.
     /* eslint-disable custom-rules/no-sync-fs -- process exiting; async writes would be dropped */
     if (this.options.stdout.isTTY) {
-      if (this.altScreenActive) {
+      if (this.altScreenActive && !isAlternateScreenDisabled()) {
         // <AlternateScreen>'s unmount effect won't run during signal-exit.
         // Exit alt screen FIRST so other cleanup sequences go to the main screen.
         writeSync(1, EXIT_ALT_SCREEN)
@@ -1829,6 +1840,29 @@ export default class Ink {
     // them at the new pools so the next frame's IDs are comparable.
     this.backFrame.screen.charPool = this.charPool
     this.backFrame.screen.hyperlinkPool = this.hyperlinkPool
+
+    // StylePool 压缩：收集活跃样式并回收未使用的条目
+    const liveIds = collectLiveStyleIds(this.frontFrame.screen)
+    // 合并 backFrame 的活跃样式（resetScreen 可能未清除所有内容）
+    for (const id of collectLiveStyleIds(this.backFrame.screen)) {
+      liveIds.add(id)
+    }
+    this.stylePool.lastLiveSize = liveIds.size
+    if (this.stylePool.needsCompaction()) {
+      const remap = this.stylePool.compact(liveIds)
+      if (remap) {
+        remapScreenStyleIds(this.frontFrame.screen, remap)
+        remapScreenStyleIds(this.backFrame.screen, remap)
+        this.needsEraseBeforePaint = true
+      }
+    }
+
+    // LIVE_COUNTS 调试输出：ZY_CODE_LIVE_COUNTS=1 时打印各池统计
+    if (isEnvTruthy(process.env.ZY_CODE_LIVE_COUNTS)) {
+      logForDebugging(
+        `[LIVE_COUNTS] char=${this.charPool.poolSize()} hyperlink=${this.hyperlinkPool.poolSize()} style=${this.stylePool.poolSize()} styleLive=${liveIds.size}`,
+      )
+    }
   }
   patchConsole(): () => void {
     // biome-ignore lint/suspicious/noConsole: intentionally patching global console

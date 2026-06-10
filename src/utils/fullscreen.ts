@@ -1,11 +1,16 @@
 import { spawnSync } from 'node:child_process'
 import { getIsInteractive } from '../bootstrap/state.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getGlobalConfig } from '../services/config/config.js'
+import { isBgSession } from './concurrentSessions.js'
 import { logForDebugging } from './debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { execFileNoThrow } from './execFileNoThrow.js'
 
 let loggedTmuxCcDisable = false
+let loggedWindowsSshDisable = false
 let checkedTmuxMouseHint = false
+let checkedTmuxFocusHint = false
 
 /**
  * Cached result from `tmux display-message -p '#{client_control_mode}'`.
@@ -118,21 +123,68 @@ export function _resetTmuxControlModeProbeForTesting(): void {
 }
 
 /**
- * Runtime env-var check only. Ants default to on (ZY_CODE_NO_FLICKER=0
- * to opt out); external users default to off (ZY_CODE_NO_FLICKER=1 to
- * opt in).
+ * 检测 Windows 客户端通过 SSH 连接的场景。ConPTY 在这种环境下
+ * 与 alt-screen 的兼容性差（重绘、鼠标事件等问题）。
+ *
+ * 两种触发路径：
+ * 1. 本机是 Windows（process.platform === 'win32'）且处于 SSH 会话
+ * 2. 远端检测到 Windows Terminal 的 WT_SESSION 环境变量通过 SSH env
+ *    forwarding 泄漏过来（本机不一定是 Windows）
  */
-export function isFullscreenEnvEnabled(): boolean {
-  // Explicit user opt-out always wins.
-  if (isEnvDefinedFalsy(process.env.ZY_CODE_NO_FLICKER)) {
-    return false
-  }
-  // Explicit opt-in overrides auto-detection (escape hatch).
-  if (isEnvTruthy(process.env.ZY_CODE_NO_FLICKER)) {
+function isWindowsOverSsh(): boolean {
+  const isSsh = !!(process.env.SSH_CONNECTION || process.env.SSH_CLIENT || process.env.SSH_TTY)
+  if (process.platform === 'win32' && isSsh) {
     return true
   }
-  // Auto-disable under tmux -CC: alt-screen + mouse tracking corrupts
-  // terminal state on double-click and mouse wheel is dead.
+  // WT_SESSION 是 Windows Terminal 设置的环境变量，有时通过 SSH
+  // env forwarding（SendEnv/AcceptEnv）传播到远端
+  if (isSsh && process.env.WT_SESSION) {
+    return true
+  }
+  return false
+}
+
+/**
+ * 全屏分辨率的决策原因。每个值对应 isFullscreenEnvEnabled() 中的
+ * 一个分支，可直接用于遥测归因。
+ */
+export type FullscreenReason =
+  | 'bg_forced_on'
+  | 'env_off'
+  | 'env_on'
+  | 'tmux_cc_auto_off'
+  | 'win_ssh_auto_off'
+  | 'settings_on'
+  | 'settings_off'
+  | 'feature_flag_on'
+  | 'feature_flag_off'
+  | 'internal_default'
+  | 'external_default_off'
+
+export type FullscreenResolution = {
+  enabled: boolean
+  reason: FullscreenReason
+}
+
+/**
+ * 解析全屏模式的最终决策及原因。判断优先级：
+ * 1. bg_forced_on — 后台会话无条件全屏
+ * 2. env_off / env_on — 环境变量显式控制
+ * 3. tmux_cc_auto_off — tmux -CC 自动禁用
+ * 4. win_ssh_auto_off — Windows+SSH 自动禁用
+ * 5. settings_on / settings_off — 用户持久化偏好（/tui 命令）
+ * 6. internal_default / external_default_off — 构建类型默认值
+ */
+export function resolveFullscreenEnabled(): FullscreenResolution {
+  if (isBgSession()) {
+    return { enabled: true, reason: 'bg_forced_on' }
+  }
+  if (isEnvDefinedFalsy(process.env.ZY_CODE_NO_FLICKER)) {
+    return { enabled: false, reason: 'env_off' }
+  }
+  if (isEnvTruthy(process.env.ZY_CODE_NO_FLICKER)) {
+    return { enabled: true, reason: 'env_on' }
+  }
   if (isTmuxControlMode()) {
     if (!loggedTmuxCcDisable) {
       loggedTmuxCcDisable = true
@@ -140,9 +192,42 @@ export function isFullscreenEnvEnabled(): boolean {
         'fullscreen disabled: tmux -CC (iTerm2 integration mode) detected · set ZY_CODE_NO_FLICKER=1 to override',
       )
     }
-    return false
+    return { enabled: false, reason: 'tmux_cc_auto_off' }
   }
-  return isInternalBuild()
+  if (isWindowsOverSsh()) {
+    if (!loggedWindowsSshDisable) {
+      loggedWindowsSshDisable = true
+      logForDebugging(
+        'fullscreen disabled: Windows-over-SSH detected · set ZY_CODE_NO_FLICKER=1 to override',
+      )
+    }
+    return { enabled: false, reason: 'win_ssh_auto_off' }
+  }
+  // 用户通过 /tui 命令设置的持久化偏好
+  const tuiPref = getGlobalConfig().tui
+  if (tuiPref === 'fullscreen') {
+    return { enabled: true, reason: 'settings_on' }
+  }
+  if (tuiPref === 'default') {
+    return { enabled: false, reason: 'settings_off' }
+  }
+  if (isInternalBuild()) {
+    return { enabled: true, reason: 'internal_default' }
+  }
+  // Feature flag 灰度推广：服务端控制外部用户百分比
+  if (getFeatureValue_CACHED_MAY_BE_STALE<boolean>('zy_fullscreen_rollout', false)) {
+    return { enabled: true, reason: 'feature_flag_on' }
+  }
+  return { enabled: false, reason: 'external_default_off' }
+}
+
+/**
+ * Runtime env-var check only. Ants default to on (ZY_CODE_NO_FLICKER=0
+ * to opt out); external users default to off (ZY_CODE_NO_FLICKER=1 to
+ * opt in).
+ */
+export function isFullscreenEnvEnabled(): boolean {
+  return resolveFullscreenEnabled().enabled
 }
 
 /**
@@ -219,8 +304,52 @@ export async function maybeGetTmuxMouseHint(): Promise<string | null> {
   return "tmux detected · scroll with PgUp/PgDn · or add 'set -g mouse on' to ~/.tmux.conf for wheel scroll"
 }
 
+/**
+ * True when the user wants fullscreen features (virtualized scroll, mouse)
+ * but NOT the physical alt-screen buffer — preserving native terminal
+ * scrollback. Set ZY_CODE_DISABLE_ALTERNATE_SCREEN=1 to enable.
+ */
+export function isAlternateScreenDisabled(): boolean {
+  return isEnvTruthy(process.env.ZY_CODE_DISABLE_ALTERNATE_SCREEN)
+}
+
+/**
+ * One-time hint for tmux users in fullscreen with `focus-events` off.
+ *
+ * tmux 默认关闭 focus-events，导致终端标签页焦点变化无法传递给
+ * zy-code（DECSET 1004 的 focus-in/focus-out 事件被 tmux 拦截）。
+ * 提示用户在 ~/.tmux.conf 中添加 `set -g focus-events on`。
+ *
+ * Fire-and-forget from REPL startup. Returns the hint text once per
+ * session if TMUX is set, fullscreen is active, and tmux's current
+ * `focus-events` option is off; null otherwise.
+ */
+export async function maybeGetTmuxFocusHint(): Promise<string | null> {
+  if (!process.env.TMUX) {
+    return null
+  }
+  if (!isFullscreenActive() || isTmuxControlMode()) {
+    return null
+  }
+  if (checkedTmuxFocusHint) {
+    return null
+  }
+  checkedTmuxFocusHint = true
+  // -gv 只返回全局值，避免 -Av 输出带 "focus-events " 前缀
+  const { stdout, code } = await execFileNoThrow('tmux', ['show', '-gv', 'focus-events'], {
+    useCwd: false,
+    timeout: 2000,
+  })
+  if (code !== 0 || stdout.trim() === 'on') {
+    return null
+  }
+  return "tmux: add 'set -g focus-events on' to ~/.tmux.conf for better tab focus tracking"
+}
+
 /** Test-only: reset module-level once-per-session flags. */
 export function _resetForTesting(): void {
   loggedTmuxCcDisable = false
+  loggedWindowsSshDisable = false
   checkedTmuxMouseHint = false
+  checkedTmuxFocusHint = false
 }

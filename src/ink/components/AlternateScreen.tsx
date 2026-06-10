@@ -7,6 +7,7 @@ import {
   EXIT_ALT_SCREEN,
 } from '../termio/dec.js'
 import { TerminalWriteContext } from '../useTerminalNotification.js'
+import { isAlternateScreenDisabled } from '../../utils/fullscreen.js'
 import Box from './Box.js'
 import { TerminalSizeContext } from './TerminalSizeContext.js'
 
@@ -30,14 +31,33 @@ type Props = PropsWithChildren<{
  * 通过 `setAltScreenActive()` 通知 Ink 实例，使渲染器保持光标在视口内
  * （防止光标恢复时的换行符滚动内容），并且如果组件自身的卸载未执行，
  * signal-exit 清理可以退出备用屏幕。
+ *
+ * 当 ZY_CODE_DISABLE_ALTERNATE_SCREEN=1 时，跳过物理 alt-screen 的
+ * 进入/退出，但仍设置逻辑状态（视口限制、光标约束、鼠标追踪），
+ * 从而保留 native terminal scrollback。
  */
 export function AlternateScreen({ children, mouseTracking = true }: Props) {
   const size = useContext(TerminalSizeContext)
   const writeRaw = useContext(TerminalWriteContext)
+  const skipPhysicalAltScreen = isAlternateScreenDisabled()
   useInsertionEffect(() => {
     const ink = instances.get(process.stdout)
     if (!writeRaw) {
       return
+    }
+    if (skipPhysicalAltScreen) {
+      // 仅设置逻辑 alt-screen 状态 + 鼠标追踪，跳过物理 DEC 1049
+      if (mouseTracking) {
+        writeRaw(ENABLE_MOUSE_TRACKING)
+      }
+      ink?.setAltScreenActive(true, mouseTracking)
+      return () => {
+        ink?.setAltScreenActive(false)
+        ink?.clearTextSelection()
+        if (mouseTracking) {
+          writeRaw(DISABLE_MOUSE_TRACKING)
+        }
+      }
     }
     writeRaw(`${ENTER_ALT_SCREEN}\x1B[2J\x1B[H${mouseTracking ? ENABLE_MOUSE_TRACKING : ''}`)
     ink?.setAltScreenActive(true, mouseTracking)
@@ -46,7 +66,7 @@ export function AlternateScreen({ children, mouseTracking = true }: Props) {
       ink?.clearTextSelection()
       writeRaw((mouseTracking ? DISABLE_MOUSE_TRACKING : '') + EXIT_ALT_SCREEN)
     }
-  }, [writeRaw, mouseTracking])
+  }, [writeRaw, mouseTracking, skipPhysicalAltScreen])
   const terminalRows = size?.rows ?? 24
   return (
     <Box flexDirection="column" height={terminalRows} width="100%" flexShrink={0}>

@@ -42,6 +42,7 @@ export type FocusedInputDialog =
   | 'remote-callout'
   | 'lsp-recommendation'
   | 'plugin-hint'
+  | 'fullscreen-upsell'
   | 'desktop-upsell'
   | 'ultraplan-choice'
   | 'ultraplan-launch'

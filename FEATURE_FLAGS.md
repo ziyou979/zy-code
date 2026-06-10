@@ -85,6 +85,14 @@
 | `zy_vscode_onboarding` | gate | VSCode onboarding 功能 | `src/services/mcp/vscodeSdkMcp.ts` |
 | `zy_browser_support` | N/A | Browser support 相关功能 | `src/services/mcp/vscodeSdkMcp.ts` |
 
+## 全屏 / TUI
+
+| Flag | 默认值 | 说明 | 文件 |
+|------|--------|------|------|
+| `zy_fullscreen_rollout` | `false` | 控制外部用户全屏模式灰度推广百分比 | `src/utils/fullscreen.ts` |
+
+---
+
 ## 分析 / 遥测
 
 | Flag | 默认值 | 说明 | 文件 |
@@ -115,3 +123,10 @@
 | `zy_mcp_start` | MCP 服务启动 | `src/cli/handlers/mcp.tsx` |
 | `zy_worktree_created` | worktree 创建 | `src/setup.ts` |
 | `zy_managed_settings_loaded` | 托管设置加载 | `src/main.tsx` |
+| `zy_tui_command` | `/tui` 命令执行（含 from/to） | `src/commands/tui/tui.ts` |
+| `zy_fullscreen_upsell_shown` | 全屏 upsell 对话框展示 | `src/components/FullscreenUpsell/FullscreenUpsellDialog.tsx` |
+| `zy_fullscreen_upsell_accepted` | 全屏 upsell 用户确认 | `src/components/FullscreenUpsell/FullscreenUpsellDialog.tsx` |
+| `zy_fullscreen_upsell_dismissed` | 全屏 upsell 用户选择不再询问 | `src/components/FullscreenUpsell/FullscreenUpsellDialog.tsx` |
+| `zy_fullscreen_downsell_shown` | 全屏 downsell 提示展示 | `src/hooks/notifs/useFullscreenDownsell.ts` |
+| `zy_fullscreen_downsell_persisted` | 全屏 downsell 自动毕业 | `src/hooks/notifs/useFullscreenDownsell.ts` |
+| `zy_editor_mode_changed` | 编辑器模式切换 | `src/commands/vim/vim.ts` |

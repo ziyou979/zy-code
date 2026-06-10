@@ -14,6 +14,7 @@ import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { AUTO_MODE_DESCRIPTION } from '../../components/AutoModeOptInDialog.js'
 import { shouldShowDesktopUpsellStartup } from '../../components/DesktopUpsell/DesktopUpsellStartup.js'
+import { shouldShowFullscreenUpsell } from '../../components/FullscreenUpsell/FullscreenUpsellDialog.js'
 import { useAutoModeUnavailableNotification } from '../../hooks/notifs/useAutoModeUnavailableNotification.js'
 import { useCanSwitchToExistingSubscription } from '../../hooks/notifs/useCanSwitchToExistingSubscription.js'
 import { useInstallMessages } from '../../hooks/notifs/useInstallMessages.js'
@@ -74,6 +75,8 @@ export type ReplNotificationsCluster = {
   showRemoteCallout: boolean
   showDesktopUpsellStartup: boolean
   setShowDesktopUpsellStartup: (next: boolean) => void
+  showFullscreenUpsell: boolean
+  setShowFullscreenUpsell: (next: boolean) => void
   // 系统提示 + swarm（hasRunningTeammates 由 REPL 侧计算，此处不重复暴露）
   swarmStartTimeRef: React.RefObject<number | null>
   swarmBudgetInfoRef: React.RefObject<{ tokens: number; limit: number; nudges: number } | undefined>
@@ -130,6 +133,9 @@ export function useReplNotificationsCluster({
   const showRemoteCallout = useAppState((s) => s.showRemoteCallout)
   const [showDesktopUpsellStartup, setShowDesktopUpsellStartup] = useState(() =>
     shouldShowDesktopUpsellStartup(),
+  )
+  const [showFullscreenUpsell, setShowFullscreenUpsell] = useState(() =>
+    shouldShowFullscreenUpsell(),
   )
 
   // ── system hints: swarm turn-duration ──
@@ -234,6 +240,8 @@ export function useReplNotificationsCluster({
     showRemoteCallout,
     showDesktopUpsellStartup,
     setShowDesktopUpsellStartup,
+    showFullscreenUpsell,
+    setShowFullscreenUpsell,
     swarmStartTimeRef,
     swarmBudgetInfoRef,
     frustrationDetection,

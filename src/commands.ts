@@ -50,6 +50,7 @@ import tasks from './commands/tasks/index.js'
 import teleport from './commands/teleport/index.js'
 import bughunter from './commands/bughunter/index.js'
 import terminalSetup from './commands/terminalSetup/index.js'
+import tui from './commands/tui/index.js'
 import usage from './commands/usage/index.js'
 import theme from './commands/theme/index.js'
 import vim from './commands/vim/index.js'
@@ -269,6 +270,7 @@ const COMMANDS = memoize((): Command[] => [
   terminalSetup,
   upgrade,
   rateLimitOptions,
+  tui,
   usage,
   usageReport,
   vim,
@@ -560,6 +562,7 @@ export const REMOTE_SAFE_COMMANDS: Set<Command> = new Set([
   help, // 显示帮助
   theme, // 更改终端主题
   color, // 更改代理颜色
+  tui, // 切换全屏 TUI 模式
   vim, // 切换 vim 模式
   usage, // 显示会话成本 + 使用信息（别名 /cost）
   copy, // 复制最后一条消息

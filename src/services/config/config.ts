@@ -236,6 +236,7 @@ export type GlobalConfig = {
   oauthAccount?: AccountInfo
   iterm2KeyBindingInstalled?: boolean // 旧版 — 保留以兼容旧版本
   editorMode?: EditorMode
+  tui?: 'fullscreen' | 'default' // 用户持久化的渲染模式偏好（/tui 命令）
   bypassPermissionsModeAccepted?: boolean
   hasUsedBackslashReturn?: boolean
   autoCompactEnabled: boolean // 是否启用 auto-compact
@@ -361,6 +362,11 @@ export type GlobalConfig = {
   // Desktop 升级弹窗启动弹窗追踪
   desktopUpsellSeenCount?: number // 总展示次数（最多 3 次）
   desktopUpsellDismissed?: boolean // 已选择"不再询问"
+
+  // 全屏模式推广追踪
+  fullscreenUpsellSeenCount?: number // upsell 对话框展示次数（最多 3 次）
+  fullscreenUpsellDismissed?: boolean // 已选择"不再询问"
+  fullscreenDownsellSeenCount?: number // downsell 提示条展示次数（5 次后静默毕业）
 
   // 空闲返回弹窗追踪
   idleReturnDismissed?: boolean // 已选择"不再询问"
@@ -558,6 +564,7 @@ export const GLOBAL_CONFIG_KEYS = [
   'preferredNotifChannel',
   'shiftEnterKeyBindingInstalled',
   'editorMode',
+  'tui',
   'hasUsedBackslashReturn',
   'autoCompactEnabled',
   'showTurnDuration',
