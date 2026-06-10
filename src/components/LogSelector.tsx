@@ -2,6 +2,7 @@ import chalk from 'chalk'
 import figures from 'figures'
 import React from 'react'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
+import { useModalOrTerminalSize } from '../context/modalContext.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useSearchInput } from '../hooks/useSearchInput.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
@@ -176,7 +177,8 @@ export function LogSelector({
   onAgenticSearch,
 }: LogSelectorProps) {
   const terminalSize = useTerminalSize()
-  const columns = forceWidth ?? terminalSize.columns
+  const modalAwareSize = useModalOrTerminalSize(terminalSize)
+  const columns = forceWidth || modalAwareSize.columns
   const exitState = useExitOnCtrlCDWithKeybindings(onCancel)
   const isTerminalFocused = useTerminalFocus()
   const isResumeWithRenameEnabled = isCustomTitleEnabled()
@@ -888,7 +890,7 @@ export function LogSelector({
     <Box flexDirection="column" height={maxHeight - 1}>
       {
         <Box flexShrink={0}>
-          <Divider color="suggestion" />
+          <Divider color="suggestion" width={columns} />
         </Box>
       }
       {
