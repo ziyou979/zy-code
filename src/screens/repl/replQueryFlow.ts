@@ -338,6 +338,17 @@ export function handleQueryEvent(
   handleMessageFromStream(
     event,
     (newMessage) => {
+      if (
+        newMessage.type === 'assistant' &&
+        ctx.replStore.mutable.lastThinkingDurationMs > 0 &&
+        Array.isArray(newMessage.message.content) &&
+        newMessage.message.content.some(
+          (b) => b.type === 'thinking' || b.type === 'redacted_thinking',
+        )
+      ) {
+        newMessage.thinkingDurationMs = ctx.replStore.mutable.lastThinkingDurationMs
+        ctx.replStore.mutable.lastThinkingDurationMs = 0
+      }
       if (isCompactBoundaryMessage(newMessage)) {
         if (isFullscreenEnvEnabled()) {
           ctx.replStore.setMessages((old) => [...getMessagesAfterCompactBoundary(old), newMessage])

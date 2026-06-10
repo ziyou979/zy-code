@@ -85,6 +85,8 @@ export type ReplMutable = {
   userMessagePending: boolean
   sendWireResult: () => void
   restoreMessageSync: (m: UserMessage) => void
+  thinkingStartMs: number
+  lastThinkingDurationMs: number
 }
 
 // ── Store 类型（base Store + mutable + actions）──
@@ -177,6 +179,8 @@ export function createReplStore(params: CreateReplStoreParams): ReplStoreInstanc
     userMessagePending: false,
     sendWireResult: () => {},
     restoreMessageSync: () => {},
+    thinkingStartMs: 0,
+    lastThinkingDurationMs: 0,
   }
 
   const instance: ReplStoreInstance = {
@@ -230,6 +234,12 @@ export function createReplStore(params: CreateReplStoreParams): ReplStoreInstanc
       store.setState((prev) => ({ ...prev, userInputOnProcessing: input }))
     },
     setStreamMode(mode) {
+      const prev = store.getState().streamMode
+      if (mode === 'thinking' && prev !== 'thinking') {
+        mutable.thinkingStartMs = Date.now()
+      } else if (mode !== 'thinking' && prev === 'thinking' && mutable.thinkingStartMs > 0) {
+        mutable.lastThinkingDurationMs = Date.now() - mutable.thinkingStartMs
+      }
       instance.update({ streamMode: mode })
     },
     setStreamingToolUses(toolUses) {

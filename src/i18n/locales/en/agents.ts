@@ -20,7 +20,6 @@ export const enAgents: TranslationResource = {
   'agent.runningPrefix': 'Running',
   'agent.toolUse_one': 'tool use',
   'agent.toolUse_other': 'tool uses',
-  'agent.unitTokens': 'tokens',
   'agentProgress.done': 'Done',
   'agentProgress.initializing': 'Initializing…',
   'agentProgress.runningBackground': 'Running in the background',

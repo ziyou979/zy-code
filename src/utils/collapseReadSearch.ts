@@ -729,12 +729,18 @@ export function collapseReadSearchGroups(
   const result: RenderableMessage[] = []
   let currentGroup = createEmptyGroup()
   let deferredSkippable: RenderableMessage[] = []
+  let pendingThinkingDurationMs: number | undefined
 
   function flushGroup(): void {
     if (currentGroup.messages.length === 0) {
       return
     }
-    result.push(createCollapsedGroup(currentGroup))
+    const group = createCollapsedGroup(currentGroup)
+    if (pendingThinkingDurationMs !== undefined) {
+      group.thinkingDurationMs = pendingThinkingDurationMs
+      pendingThinkingDurationMs = undefined
+    }
+    result.push(group)
     for (const deferred of deferredSkippable) {
       result.push(deferred)
     }
@@ -743,6 +749,13 @@ export function collapseReadSearchGroups(
   }
 
   for (const msg of messages) {
+    // 在类型窄化前提取 thinking duration，以便附加到后续的折叠分组
+    // 累加而非覆盖：一次 turn 中多段 thinking（被 tool_use 打断）全部计入
+    if (msg.type === 'assistant' && msg.thinkingDurationMs) {
+      const capped = Math.min(msg.thinkingDurationMs, 600_000)
+      pendingThinkingDurationMs = (pendingThinkingDurationMs ?? 0) + capped
+    }
+
     if (isCollapsibleToolUse(msg, tools)) {
       // 这是一个可折叠的工具调用 - 类型谓词将类型收窄为 CollapsibleMessage
       const toolInfo = getCollapsibleToolInfo(msg, tools)!

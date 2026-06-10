@@ -3,16 +3,21 @@ import { basename } from 'node:path'
 import React, { useRef } from 'react'
 import { useMinDisplayTime } from '../../hooks/useMinDisplayTime.js'
 import { tSync } from '../../i18n/index.js'
-import { Ansi, Box, Text, useTheme } from '../../ink.js'
+import { Ansi, Box, Text, useAnimationFrame, useTheme } from '../../ink.js'
 import { findToolByName, type Tools } from '../../Tool.js'
 import { getReplPrimitiveTools } from '../../tools/REPLTool/primitiveTools.js'
 import type { AssistantMessage, CollapsedReadSearchGroup } from '../../types/message.js'
 import { uniq } from '../../utils/array.js'
 import { getToolUseIdsFromCollapsedGroup } from '../../utils/collapseReadSearch.js'
 import { getDisplayPath } from '../../utils/file.js'
-import { formatDuration, formatSecondsShort } from '../../utils/format.js'
+import {
+  formatDuration,
+  formatSecondsShort,
+  getLocalizedDurationFormatter,
+} from '../../utils/format.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import type { buildMessageLookups } from '../../utils/messages.js'
+import { useReplStore } from '../../state/ReplState.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
 import { useSelectedMessageBg } from '../messageActions.js'
 import { PrBadge } from '../PrBadge.js'
@@ -41,6 +46,20 @@ type Props = {
   content?: any
   // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   theme?: any
+}
+
+/**
+ * 全屏模式下 thinking 实时计时。
+ * 对应 CC 的 C13 组件：baseMs + (now - thinkingStartMs) 递增显示。
+ */
+function ThinkingDurationTick({ baseMs }: { baseMs: number }): React.ReactNode {
+  const store = useReplStore()
+  const [, time] = useAnimationFrame(1000)
+  void time
+  const startMs = store.mutable.thinkingStartMs
+  const live = startMs > 0 ? Date.now() - startMs : 0
+  const fmt = getLocalizedDurationFormatter()
+  return <Text bold>{fmt(Math.max(1000, baseMs + live))}</Text>
 }
 
 /** 在 verbose 模式下渲染单个工具使用 */
@@ -125,6 +144,7 @@ export function CollapsedReadSearchContent({
   isActiveGroup,
 }: Props): React.ReactNode {
   const bg = useSelectedMessageBg()
+  const store = useReplStore()
   const {
     searchCount: rawSearchCount,
     readCount: rawReadCount,
@@ -319,9 +339,37 @@ export function CollapsedReadSearchContent({
     }
   }
 
-  // 首先构建非 memory 部分（search、read、repl、mcp、bash）——这些在 memory 之前渲染，
-  // 这样行读起来是 "Ran 3 bash commands, recalled 1 memory"。
+  // 首先构建非 memory 部分（thinking、search、read、repl、mcp、bash）——这些在 memory 之前渲染，
+  // 这样行读起来是 "Thought 12.3s, ran 3 bash commands, recalled 1 memory"。
   const nonMemParts: React.ReactNode[] = []
+
+  // 思考时长引领行首（无 git 操作时）
+  // 正在思考（streamMode === 'thinking'）&& fullscreen → 实时 tick "正在思考 Xs"
+  // 完成后 → 静态 "思考了 Xs"（下限 1s）
+  const thinkingMs = message.thinkingDurationMs ?? 0
+  const isCurrentlyThinking = store.getState().streamMode === 'thinking'
+  const showThinkingTick = isActiveGroup && isFullscreenEnvEnabled() && isCurrentlyThinking
+  if (thinkingMs > 0 || showThinkingTick) {
+    const isFirst = nonMemParts.length === 0
+    const position = isFirst ? 'first' : 'sub'
+    if (showThinkingTick) {
+      const label = tSync(`summary.thinking.active.${position}`, { duration: '' }).trimEnd()
+      nonMemParts.push(
+        <Text key="thinking">
+          {label} <ThinkingDurationTick baseMs={thinkingMs} />
+        </Text>,
+      )
+    } else {
+      const fmt = getLocalizedDurationFormatter()
+      nonMemParts.push(
+        <Text key="thinking">
+          {tSync(`summary.thinking.done.${position}`, {
+            duration: fmt(Math.max(1000, thinkingMs)),
+          })}
+        </Text>,
+      )
+    }
+  }
 
   // Git 操作引领行首——它们是关键的产出结果。
   function pushPart(key: string, verbKey: string, body: React.ReactNode): void {

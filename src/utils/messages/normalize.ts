@@ -67,6 +67,9 @@ export function normalizeMessages(messages: Message[]): Message[] {
             error: message.error,
             isApiErrorMessage: message.isApiErrorMessage,
             advisorModel: message.advisorModel,
+            ...(message.thinkingDurationMs !== undefined && {
+              thinkingDurationMs: message.thinkingDurationMs,
+            }),
           } as AssistantMessage
         })
       }

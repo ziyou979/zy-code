@@ -69,4 +69,8 @@ export const enSummary: TranslationResource = {
   'summary.search.done.sub': 'searched for {count} {unit}',
   'summary.search.pattern_one': 'pattern',
   'summary.search.pattern_other': 'patterns',
+  'summary.thinking.active.first': 'Thinking for {duration}',
+  'summary.thinking.active.sub': 'thinking for {duration}',
+  'summary.thinking.done.first': 'Thought for {duration}',
+  'summary.thinking.done.sub': 'thought for {duration}',
 }

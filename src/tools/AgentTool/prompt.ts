@@ -249,7 +249,7 @@ When NOT to use the ${AGENT_TOOL_NAME} tool:
 ${whenNotToUseSection}
 
 Usage notes:
-- Always include a short description (3-5 words) summarizing what the agent will do${concurrencyNote}
+- Always include a short description (3-5 words) summarizing what the agent will do. The description is displayed to the user — follow the # Language section and write it in the user's language${concurrencyNote}
 - When the agent is done, it will return a single message back to you. The result returned by the agent is not visible to the user. To show the user the result, you should send a text message back to the user with a concise summary of the result.${
     // eslint-disable-next-line custom-rules/no-process-env-top-level
     !isEnvTruthy(process.env.ZY_CODE_DISABLE_BACKGROUND_TASKS) &&

@@ -51,6 +51,7 @@ export interface AssistantMessage extends BaseMessage {
   errorDetails?: string
   isVirtual?: true
   advisorModel?: string
+  thinkingDurationMs?: number
 }
 
 // ============================================================
@@ -386,6 +387,7 @@ export interface CollapsedReadSearchGroup extends BaseMessage {
   branches?: unknown[]
   prs?: unknown[]
   mcpServerNames?: string[]
+  thinkingDurationMs?: number
 }
 
 export interface GroupedToolUseMessageWithMessages extends BaseMessage {

@@ -69,4 +69,8 @@ export const zhSummary: TranslationResource = {
   'summary.search.done.sub': '根据 {count} 个{unit}搜索完成',
   'summary.search.pattern_one': '匹配模式',
   'summary.search.pattern_other': '匹配模式',
+  'summary.thinking.active.first': '正在思考 {duration}',
+  'summary.thinking.active.sub': '思考 {duration}',
+  'summary.thinking.done.first': '思考了 {duration}',
+  'summary.thinking.done.sub': '思考了 {duration}',
 }

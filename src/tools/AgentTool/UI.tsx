@@ -36,7 +36,7 @@ import {
 } from '../../utils/collapseReadSearch.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { getDisplayPath } from '../../utils/file.js'
-import { formatDuration, formatNumber } from '../../utils/format.js'
+import { formatNumber, getLocalizedDurationFormatter } from '../../utils/format.js'
 import {
   buildSubagentLookups,
   createAssistantMessage,
@@ -577,8 +577,8 @@ export function renderToolResultMessage(
     totalToolUseCount === 1
       ? `1 ${tSync('agent.toolUse_one')}`
       : `${totalToolUseCount} ${tSync('agent.toolUse_other')}`,
-    `${formatNumber(totalTokens)} ${tSync('agent.unitTokens')}`,
-    formatDuration(totalDurationMs),
+    `${formatNumber(totalTokens)} tokens`,
+    getLocalizedDurationFormatter()(totalDurationMs),
   ]
   const completionMessage = `${tSync('agent.done')} (${result.join(' · ')})`
   const finalAssistantMessage = createAssistantMessage({
