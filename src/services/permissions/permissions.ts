@@ -2,10 +2,7 @@ import { feature } from 'bun:bundle'
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { extractOutputRedirections } from 'src/shell-eval/bash/commands.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
-import {
-  getToolNameForPermissionCheck,
-  mcpInfoFromString,
-} from '../mcp/mcpStringUtils.js'
+import { getToolNameForPermissionCheck, mcpInfoFromString } from '../mcp/mcpStringUtils.js'
 import type { Tool, ToolPermissionContext, ToolUseContext } from '../../Tool.js'
 import { AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
 import { shouldUseSandbox } from '../../tools/BashTool/shouldUseSandbox.js'
@@ -18,7 +15,10 @@ import { createDebugLog } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { AbortError, toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import { getSettingSourceDisplayNameLowercase, SETTING_SOURCES } from '../../utils/settings/constants.js'
+import {
+  getSettingSourceDisplayNameLowercase,
+  SETTING_SOURCES,
+} from '../../utils/settings/constants.js'
 import { plural } from '../../utils/stringUtils.js'
 import { permissionModeTitle } from './PermissionMode.js'
 import type {

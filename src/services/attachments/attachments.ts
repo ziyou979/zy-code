@@ -95,7 +95,10 @@ import { AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
 import { formatAgentLine, shouldInjectAgentListInMessages } from '../../tools/AgentTool/prompt.js'
 import { filterDeniedAgents } from '../../utils/permissions/permissions.js'
 import { mcpInfoFromString } from '../mcp/mcpStringUtils.js'
-import { matchingRuleForInput, pathInAllowedWorkingPath } from '../../utils/permissions/filesystem.js'
+import {
+  matchingRuleForInput,
+  pathInAllowedWorkingPath,
+} from '../../utils/permissions/filesystem.js'
 import {
   generateTaskAttachments,
   applyTaskOffsetsAndEvictions,
@@ -138,11 +141,11 @@ import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/services/claudeInChrome/co
 import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claudeInChrome/prompt.js'
 import type { MCPServerConnection } from '../mcp/types.js'
 import type { HookEvent, SyncHookJSONOutput } from 'src/types/index.js'
-import { checkForAsyncHookResponses, removeDeliveredAsyncHooks } from '../../utils/hooks/AsyncHookRegistry.js'
 import {
-  checkForLSPDiagnostics,
-  clearAllLSPDiagnostics,
-} from '../lsp/LSPDiagnosticRegistry.js'
+  checkForAsyncHookResponses,
+  removeDeliveredAsyncHooks,
+} from '../../utils/hooks/AsyncHookRegistry.js'
+import { checkForLSPDiagnostics, clearAllLSPDiagnostics } from '../lsp/LSPDiagnosticRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { extractTextContent, getUserMessageText, isThinkingMessage } from '../../utils/messages.js'
 import { isHumanTurn } from '../../utils/messagePredicates.js'
@@ -151,8 +154,9 @@ import { feature } from 'bun:bundle'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const BRIEF_TOOL_NAME: string | null =
   feature('KAIROS') || feature('KAIROS_BRIEF')
-    ? (require('../../tools/BriefTool/prompt.js') as typeof import('../../tools/BriefTool/prompt.js'))
-        .BRIEF_TOOL_NAME
+    ? (
+        require('../../tools/BriefTool/prompt.js') as typeof import('../../tools/BriefTool/prompt.js')
+      ).BRIEF_TOOL_NAME
     : null
 const sessionTranscriptModule = feature('KAIROS')
   ? (require('../sessionTranscript/sessionTranscript.js') as typeof import('../sessionTranscript/sessionTranscript.js'))
@@ -162,10 +166,7 @@ import { hasUltrathinkKeyword, isUltrathinkEnabled } from '../../utils/thinking.
 import { hasWorkflowKeyword } from '../workflow/keyword.js'
 import { isUltracodeEffort } from '../../utils/effort.js'
 import { tokenCountFromLastAPIResponse, tokenCountWithEstimation } from '../../utils/tokens.js'
-import {
-  getEffectiveContextWindowSize,
-  isAutoCompactEnabled,
-} from '../compact/autoCompact.js'
+import { getEffectiveContextWindowSize, isAutoCompactEnabled } from '../compact/autoCompact.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   hasInstructionsLoadedHook,

@@ -34,10 +34,7 @@ import type { EffortValue } from '../../utils/effort.js'
 import { toArray } from '../../utils/generators.js'
 import { executeUserPromptExpansionHooks } from '../../utils/hooks/executors/notification.js'
 import { hasHookForEvent } from '../../utils/hooks/matcher.js'
-import {
-  executeUserPromptSubmitHooks,
-  getUserPromptSubmitHookBlockingMessage,
-} from '../hooks.js'
+import { executeUserPromptSubmitHooks, getUserPromptSubmitHookBlockingMessage } from '../hooks.js'
 import {
   createImageMetadataText,
   maybeResizeAndDownsampleImageBlock,

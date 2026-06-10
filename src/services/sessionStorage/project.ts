@@ -52,15 +52,14 @@ import { isCompactBoundaryMessage } from '../../utils/messages.js'
 import { getFirstMeaningfulUserMessageTextContent } from './chain.js'
 import { getEntrypoint, getNodeEnv, getUserType } from './env.js'
 import { getSessionMessages, MAX_TOMBSTONE_REWRITE_BYTES } from './logLoading.js'
-import {
-  getAgentTranscriptPath,
-  getTranscriptPath,
-  getTranscriptPathForSession,
-} from './paths.js'
+import { getAgentTranscriptPath, getTranscriptPath, getTranscriptPathForSession } from './paths.js'
 import { isChainParticipant, isTranscriptMessage } from './predicates.js'
 import { updateSessionSidecar } from './sessionSidecar.js'
 import { readFileTailSync } from './transcript.js'
-import { extractLastJsonStringField, LITE_READ_BUF_SIZE } from '../../utils/sessionStoragePortable.js'
+import {
+  extractLastJsonStringField,
+  LITE_READ_BUF_SIZE,
+} from '../../utils/sessionStoragePortable.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import type { ContentReplacementRecord } from '../../utils/toolResultStorage.js'

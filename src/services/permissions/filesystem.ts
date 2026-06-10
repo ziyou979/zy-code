@@ -20,12 +20,20 @@ import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
 import { getCwd } from '../../utils/cwd.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { getFsImplementation, getPathsForPermissionCheck } from '../../utils/fsOperations.js'
-import { containsPathTraversal, expandPath, getDirectoryForPath, sanitizePath } from '../../utils/path.js'
+import {
+  containsPathTraversal,
+  expandPath,
+  getDirectoryForPath,
+  sanitizePath,
+} from '../../utils/path.js'
 import { getPlanSlug, getPlansDirectory } from '../../utils/plans.js'
 import { getPlatform } from '../../utils/platform.js'
 import { getProjectDir } from '../../utils/sessionStorage.js'
 import { SETTING_SOURCES } from '../../utils/settings/constants.js'
-import { getSettingsFilePathForSource, getSettingsRootPathForSource } from '../../utils/settings/settings.js'
+import {
+  getSettingsFilePathForSource,
+  getSettingsRootPathForSource,
+} from '../../utils/settings/settings.js'
 import { getToolResultsDir } from '../../utils/toolResultStorage.js'
 import { windowsPathToPosixPath } from '../../utils/windowsPaths.js'
 import type { PermissionDecision, PermissionResult } from './PermissionResult.js'

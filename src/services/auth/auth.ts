@@ -22,11 +22,7 @@ import {
 } from 'src/services/secureStorage/macOsKeychainHelpers.js'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import { getMockSubscriptionType, shouldUseMockSubscription } from '../mockRateLimits.js'
-import {
-  isOAuthTokenExpired,
-  refreshOAuthToken,
-  shouldUseZyAIAuth,
-} from '../oauth/client.js'
+import { isOAuthTokenExpired, refreshOAuthToken, shouldUseZyAIAuth } from '../oauth/client.js'
 import { getOauthProfileFromOauthToken } from '../oauth/getOauthProfile.js'
 import type { OAuthTokens, SubscriptionType } from '../oauth/types.js'
 import {

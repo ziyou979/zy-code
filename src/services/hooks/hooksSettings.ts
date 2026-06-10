@@ -5,7 +5,10 @@ import { getSessionId } from '../../bootstrap/state.js'
 import type { AppState } from '../../state/AppState.js'
 import type { EditableSettingSource } from '../../utils/settings/constants.js'
 import { SOURCES } from '../../utils/settings/constants.js'
-import { getSettingsFilePathForSource, getSettingsForSource } from '../../utils/settings/settings.js'
+import {
+  getSettingsFilePathForSource,
+  getSettingsForSource,
+} from '../../utils/settings/settings.js'
 import type { HookCommand, HookMatcher } from '../../utils/settings/types.js'
 import { getSessionHooks } from './sessionHooks.js'
 

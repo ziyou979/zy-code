@@ -26,7 +26,13 @@ import memoize from 'lodash-es/memoize.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
-import { ConfigParseError, errorMessage, getErrnoCode, isENOENT, toError } from '../../utils/errors.js'
+import {
+  ConfigParseError,
+  errorMessage,
+  getErrnoCode,
+  isENOENT,
+  toError,
+} from '../../utils/errors.js'
 import { execFileNoThrow, execFileNoThrowWithCwd } from '../../utils/execFileNoThrow.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { gitExe } from '../../utils/git.js'

@@ -37,7 +37,10 @@ import type { WireMessage } from '../../types/index.js'
 import type { Message, SystemMessage } from '../../types/message.js'
 import type { PermissionMode } from '../../types/permissions.js'
 import { checkAndRefreshOAuthTokenIfNeeded, getZyAIOAuthTokens } from '../../utils/auth.js'
-import { deserializeMessages, type TeleportRemoteResponse } from '../../utils/conversationRecovery.js'
+import {
+  deserializeMessages,
+  type TeleportRemoteResponse,
+} from '../../utils/conversationRecovery.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {

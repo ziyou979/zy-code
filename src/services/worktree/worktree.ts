@@ -18,7 +18,13 @@ import {
   resolveGitDir,
   resolveRef,
 } from '../../utils/git/gitFilesystem.js'
-import { findCanonicalGitRoot, findGitRoot, getBranch, getDefaultBranch, gitExe } from '../../utils/git.js'
+import {
+  findCanonicalGitRoot,
+  findGitRoot,
+  getBranch,
+  getDefaultBranch,
+  gitExe,
+} from '../../utils/git.js'
 import {
   executeWorktreeCreateHook,
   executeWorktreeRemoveHook,
@@ -26,7 +32,10 @@ import {
 } from '../../utils/hooks.js'
 import { containsPathTraversal } from '../../utils/path.js'
 import { getPlatform } from '../../utils/platform.js'
-import { getInitialSettings, getRelativeSettingsFilePathForSource } from '../../utils/settings/settings.js'
+import {
+  getInitialSettings,
+  getRelativeSettingsFilePathForSource,
+} from '../../utils/settings/settings.js'
 import { sleep } from '../../utils/sleep.js'
 
 const VALID_WORKTREE_SLUG_SEGMENT = /^[a-zA-Z0-9._-]+$/

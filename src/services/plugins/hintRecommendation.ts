@@ -18,7 +18,11 @@ import {
 } from '../analytics/index.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { hasShownHintThisSession, setPendingHint, type ZyCodeHint } from '../../utils/zyCodeHints.js'
+import {
+  hasShownHintThisSession,
+  setPendingHint,
+  type ZyCodeHint,
+} from '../../utils/zyCodeHints.js'
 import { isPluginInstalled } from './installedPluginsManager.js'
 import { getPluginById } from './marketplaceManager.js'
 import { isOfficialMarketplaceName, parsePluginIdentifier } from './pluginIdentifier.js'

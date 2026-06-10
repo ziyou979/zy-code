@@ -55,7 +55,13 @@ import type {
 } from '../../types/plugin.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
-import { errorMessage, getErrnoPath, isENOENT, isFsInaccessible, toError } from '../../utils/errors.js'
+import {
+  errorMessage,
+  getErrnoPath,
+  isENOENT,
+  isFsInaccessible,
+  toError,
+} from '../../utils/errors.js'
 import { execFileNoThrow, execFileNoThrowWithCwd } from '../../utils/execFileNoThrow.js'
 import { pathExists } from '../../utils/file.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
