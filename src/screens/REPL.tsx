@@ -553,6 +553,17 @@ export function REPL({
     }
   }, [lastMsgIsHuman, repinScroll])
 
+  // /clear 或 /new 后会话重置：在全屏模式下把视口滚回顶部，
+  // 使欢迎页（Logo）立即出现在可视区，而不是停留在上一次会话的滚动位置。
+  // 仅在消息为空时触发，避免干扰 /resume 等批量 setMessages+setConversationId 的场景
+  // （恢复会话中 messages 已被填充，条件不满足）。
+  useEffect(() => {
+    if (isFullscreenEnvEnabled() && messages.length === 0) {
+      scrollRef.current?.scrollTo(0)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId])
+
   const { maybeLoadOlder } = feature('KAIROS')
     ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
       useAssistantHistory({

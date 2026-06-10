@@ -8,7 +8,8 @@
       "Bash(bun tsc:*)",
       "Bash(grep -h \"agentType:\" src/tools/AgentTool/built-in/*.ts)",
       "Bash(git stash:*)",
-      "Bash(gh pr:*)"
+      "Bash(gh pr:*)",
+      "Bash(bun test:*)"
     ]
   }
 }
