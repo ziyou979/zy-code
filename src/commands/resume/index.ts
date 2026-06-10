@@ -1,11 +1,12 @@
+import { tSync } from '../../i18n/index.js'
 import type { Command } from '../../commands.js'
 
 const resume: Command = {
   type: 'local-jsx',
   name: 'resume',
-  description: 'Resume a previous conversation',
+  description: tSync('commands.resume'),
   aliases: ['continue'],
-  argumentHint: '[conversation id or search term]',
+  argumentHint: tSync('commands.resume.argumentHint'),
   load: () => import('./resume.js'),
 }
 
