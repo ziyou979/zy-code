@@ -84,11 +84,20 @@ describe('getTokenizerKeyForModel', () => {
 describe('isExactTokenizer', () => {
   test('已覆盖的模型返回 true', () => {
     const covered = [
-      'gpt-4o', 'gpt-4', 'gpt-3.5-turbo',
-      'claude-3.5-sonnet', 'qwen3-plus', 'deepseek-chat',
-      'llama-3.1-70b', 'glm-4-plus', 'moonshot-v1',
-      'minimax-text-01', 'gemini-2.5-pro', 'gemma-3-1b',
-      'mistral-large', 'command-r-plus',
+      'gpt-4o',
+      'gpt-4',
+      'gpt-3.5-turbo',
+      'claude-3.5-sonnet',
+      'qwen3-plus',
+      'deepseek-chat',
+      'llama-3.1-70b',
+      'glm-4-plus',
+      'moonshot-v1',
+      'minimax-text-01',
+      'gemini-2.5-pro',
+      'gemma-3-1b',
+      'mistral-large',
+      'command-r-plus',
     ]
     for (const model of covered) {
       expect(isExactTokenizer(model)).toBe(true)
@@ -179,10 +188,20 @@ describe('精确性验证', () => {
     // -- 混合 --
     { model: 'gpt-4o', text: '你好世界 Hello World', expected: 4, label: 'GPT-4o 中英混合' },
     { model: 'qwen3-plus', text: '你好世界 Hello World', expected: 4, label: 'Qwen 中英混合' },
-    { model: 'claude-3.5-sonnet', text: '你好世界 Hello World', expected: 7, label: 'Claude 中英混合' },
+    {
+      model: 'claude-3.5-sonnet',
+      text: '你好世界 Hello World',
+      expected: 7,
+      label: 'Claude 中英混合',
+    },
     { model: 'llama-3.1-70b', text: '你好世界 Hello World', expected: 6, label: 'Llama3 中英混合' },
     { model: 'moonshot-v1', text: '你好世界 Hello World', expected: 4, label: 'Moonshot 中英混合' },
-    { model: 'gemini-2.5-pro', text: '你好世界 Hello World', expected: 5, label: 'Gemini 中英混合' },
+    {
+      model: 'gemini-2.5-pro',
+      text: '你好世界 Hello World',
+      expected: 5,
+      label: 'Gemini 中英混合',
+    },
 
     // -- 代码 --
     {

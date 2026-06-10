@@ -25,9 +25,9 @@ const Callable = /** @type {any} */ (
        * @returns {*} The result of calling the '_call' method.
        */
       let closure = function (...args) {
-        return closure._call(...args);
-      };
-      return Object.setPrototypeOf(closure, new.target.prototype);
+        return closure._call(...args)
+      }
+      return Object.setPrototypeOf(closure, new.target.prototype)
     }
 
     /**
@@ -38,10 +38,10 @@ const Callable = /** @type {any} */ (
      * @throws {Error} If the subclass does not implement the `_call` method.
      */
     _call(...args) {
-      throw Error("Must implement _call method in subclass");
+      throw Error('Must implement _call method in subclass')
     }
   }
-);
+)
 
 /**
  * Efficient Heap-based Implementation of a Priority Queue.
@@ -54,16 +54,16 @@ class PriorityQueue {
    * @param {function(any, any): boolean} comparator Comparator function to determine priority. Defaults to a MaxHeap.
    */
   constructor(comparator = (a, b) => a > b, maxSize = Infinity) {
-    this._heap = [];
-    this._comparator = comparator;
-    this._maxSize = maxSize;
+    this._heap = []
+    this._comparator = comparator
+    this._maxSize = maxSize
   }
 
   /**
    * The size of the queue
    */
   get size() {
-    return this._heap.length;
+    return this._heap.length
   }
 
   /**
@@ -71,7 +71,7 @@ class PriorityQueue {
    * @returns {boolean} `true` if the queue is empty, `false` otherwise.
    */
   isEmpty() {
-    return this.size === 0;
+    return this.size === 0
   }
 
   /**
@@ -79,7 +79,7 @@ class PriorityQueue {
    * @returns {any} The highest priority element in the queue.
    */
   peek() {
-    return this._heap[0];
+    return this._heap[0]
   }
 
   /**
@@ -88,7 +88,7 @@ class PriorityQueue {
    * @returns {number} The new size of the queue.
    */
   push(...values) {
-    return this.extend(values);
+    return this.extend(values)
   }
 
   /**
@@ -99,21 +99,21 @@ class PriorityQueue {
   extend(values) {
     for (const value of values) {
       if (this.size < this._maxSize) {
-        this._heap.push(value);
-        this._siftUp();
+        this._heap.push(value)
+        this._siftUp()
       } else {
         // Get index of value with the lowest priority
-        const smallest = this._smallest();
+        const smallest = this._smallest()
 
         // If the new value has higher priority than the smallest value in the heap
         // then replace the smallest value with the new value and update the heap
         if (this._comparator(value, this._heap[smallest])) {
-          this._heap[smallest] = value;
-          this._siftUpFrom(smallest);
+          this._heap[smallest] = value
+          this._siftUpFrom(smallest)
         }
       }
     }
-    return this.size;
+    return this.size
   }
 
   /**
@@ -121,14 +121,14 @@ class PriorityQueue {
    * @returns {any} The element with the highest priority in the queue.
    */
   pop() {
-    const poppedValue = this.peek();
-    const bottom = this.size - 1;
+    const poppedValue = this.peek()
+    const bottom = this.size - 1
     if (bottom > 0) {
-      this._swap(0, bottom);
+      this._swap(0, bottom)
     }
-    this._heap.pop();
-    this._siftDown();
-    return poppedValue;
+    this._heap.pop()
+    this._siftDown()
+    return poppedValue
   }
 
   /**
@@ -137,10 +137,10 @@ class PriorityQueue {
    * @returns {*} The replaced value.
    */
   replace(value) {
-    const replacedValue = this.peek();
-    this._heap[0] = value;
-    this._siftDown();
-    return replacedValue;
+    const replacedValue = this.peek()
+    this._heap[0] = value
+    this._siftDown()
+    return replacedValue
   }
 
   /**
@@ -150,7 +150,7 @@ class PriorityQueue {
    * @private
    */
   _parent(i) {
-    return ((i + 1) >>> 1) - 1;
+    return ((i + 1) >>> 1) - 1
   }
 
   /**
@@ -160,7 +160,7 @@ class PriorityQueue {
    * @private
    */
   _left(i) {
-    return (i << 1) + 1;
+    return (i << 1) + 1
   }
 
   /**
@@ -170,7 +170,7 @@ class PriorityQueue {
    * @private
    */
   _right(i) {
-    return (i + 1) << 1;
+    return (i + 1) << 1
   }
 
   /**
@@ -181,7 +181,7 @@ class PriorityQueue {
    * @private
    */
   _greater(i, j) {
-    return this._comparator(this._heap[i], this._heap[j]);
+    return this._comparator(this._heap[i], this._heap[j])
   }
 
   /**
@@ -191,9 +191,9 @@ class PriorityQueue {
    * @private
    */
   _swap(i, j) {
-    const temp = this._heap[i];
-    this._heap[i] = this._heap[j];
-    this._heap[j] = temp;
+    const temp = this._heap[i]
+    this._heap[i] = this._heap[j]
+    this._heap[j] = temp
   }
 
   /**
@@ -202,7 +202,7 @@ class PriorityQueue {
    * @private
    */
   _siftUp() {
-    this._siftUpFrom(this.size - 1);
+    this._siftUpFrom(this.size - 1)
   }
 
   /**
@@ -211,8 +211,8 @@ class PriorityQueue {
    */
   _siftUpFrom(node) {
     while (node > 0 && this._greater(node, this._parent(node))) {
-      this._swap(node, this._parent(node));
-      node = this._parent(node);
+      this._swap(node, this._parent(node))
+      node = this._parent(node)
     }
   }
 
@@ -222,18 +222,17 @@ class PriorityQueue {
    * @private
    */
   _siftDown() {
-    let node = 0;
+    let node = 0
     while (
       (this._left(node) < this.size && this._greater(this._left(node), node)) ||
       (this._right(node) < this.size && this._greater(this._right(node), node))
     ) {
       const maxChild =
-        this._right(node) < this.size &&
-        this._greater(this._right(node), this._left(node))
+        this._right(node) < this.size && this._greater(this._right(node), this._left(node))
           ? this._right(node)
-          : this._left(node);
-      this._swap(node, maxChild);
-      node = maxChild;
+          : this._left(node)
+      this._swap(node, maxChild)
+      node = maxChild
     }
   }
 
@@ -243,7 +242,7 @@ class PriorityQueue {
    * @private
    */
   _smallest() {
-    return 2 ** Math.floor(Math.log2(this.size)) - 1;
+    return 2 ** Math.floor(Math.log2(this.size)) - 1
   }
 }
 
@@ -258,7 +257,7 @@ class DictionarySplitter {
    * @param {string[]} dictionary The dictionary of words to use for splitting.
    */
   constructor(dictionary) {
-    this.trie = this._buildTrie(dictionary);
+    this.trie = this._buildTrie(dictionary)
   }
 
   /**
@@ -268,15 +267,15 @@ class DictionarySplitter {
    * @private
    */
   _buildTrie(dictionary) {
-    const trie = Object.create(null);
+    const trie = Object.create(null)
     for (const word of dictionary) {
-      let node = trie;
+      let node = trie
       for (let i = 0; i < word.length; ++i) {
-        node = node[word[i]] ??= Object.create(null);
+        node = node[word[i]] ??= Object.create(null)
       }
-      node.end = word;
+      node.end = word
     }
-    return trie;
+    return trie
   }
 
   /**
@@ -285,39 +284,39 @@ class DictionarySplitter {
    * @returns {string[]} An array of tokens.
    */
   split(text) {
-    const result = [];
-    const n = text.length;
-    let start = 0;
-    let i = 0;
+    const result = []
+    const n = text.length
+    let start = 0
+    let i = 0
 
     while (i < n) {
-      let node = this.trie;
-      let match = null;
-      let j = i;
+      let node = this.trie
+      let match = null
+      let j = i
 
       while (j < n && (node = node[text[j]])) {
         if (node.end) {
           // Always keep the last (i.e., longest) match.
-          match = node.end;
+          match = node.end
         }
-        ++j;
+        ++j
       }
 
       if (match) {
         if (i > start) {
-          result.push(text.slice(start, i));
+          result.push(text.slice(start, i))
         }
-        result.push(match);
-        i += match.length;
-        start = i;
+        result.push(match)
+        i += match.length
+        start = i
       } else {
-        ++i;
+        ++i
       }
     }
     if (start < n) {
-      result.push(text.slice(start));
+      result.push(text.slice(start))
     }
-    return result;
+    return result
   }
 }
 
@@ -332,8 +331,8 @@ class LRUCache {
    * @param {number} capacity The maximum number of items the cache can hold.
    */
   constructor(capacity) {
-    this.capacity = capacity;
-    this.cache = new Map();
+    this.capacity = capacity
+    this.cache = new Map()
   }
 
   /**
@@ -342,11 +341,11 @@ class LRUCache {
    * @returns {any} The value associated with the key, or undefined if the key does not exist.
    */
   get(key) {
-    if (!this.cache.has(key)) return undefined;
-    const value = this.cache.get(key);
-    this.cache.delete(key);
-    this.cache.set(key, value);
-    return value;
+    if (!this.cache.has(key)) return undefined
+    const value = this.cache.get(key)
+    this.cache.delete(key)
+    this.cache.set(key, value)
+    return value
   }
 
   /**
@@ -358,11 +357,11 @@ class LRUCache {
    */
   put(key, value) {
     if (this.cache.has(key)) {
-      this.cache.delete(key);
+      this.cache.delete(key)
     }
-    this.cache.set(key, value);
+    this.cache.set(key, value)
     if (this.cache.size > this.capacity) {
-      this.cache.delete(this.cache.keys().next().value);
+      this.cache.delete(this.cache.keys().next().value)
     }
   }
 
@@ -370,7 +369,7 @@ class LRUCache {
    * Clears the cache.
    */
   clear() {
-    this.cache.clear();
+    this.cache.clear()
   }
 }
 
@@ -380,7 +379,7 @@ class LRUCache {
  * @returns {string} The escaped string.
  */
 function escapeRegExp(string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /**
@@ -389,7 +388,7 @@ function escapeRegExp(string) {
  * @returns {Array} The merged array.
  */
 function mergeArrays(...arrs) {
-  return Array.prototype.concat.apply([], arrs);
+  return Array.prototype.concat.apply([], arrs)
 }
 
 // ============================================================================
@@ -405,22 +404,22 @@ function mergeArrays(...arrs) {
  * @returns {string[]} The split string.
  */
 function regexSplit(text, regex) {
-  const result = [];
-  let prev = 0;
+  const result = []
+  let prev = 0
   for (const match of text.matchAll(regex)) {
-    const fullMatch = match[0];
+    const fullMatch = match[0]
     if (prev < match.index) {
-      result.push(text.slice(prev, match.index));
+      result.push(text.slice(prev, match.index))
     }
     if (fullMatch.length > 0) {
-      result.push(fullMatch);
+      result.push(fullMatch)
     }
-    prev = match.index + fullMatch.length;
+    prev = match.index + fullMatch.length
   }
   if (prev < text.length) {
-    result.push(text.slice(prev));
+    result.push(text.slice(prev))
   }
-  return result;
+  return result
 }
 
 /**
@@ -436,21 +435,21 @@ function createPattern(pattern, invert = true) {
     // This isn't an issue when creating the regex w/o the 'u' flag, but it is when the 'u' flag is used.
     // For this reason, it is necessary to remove these backslashes before creating the regex.
     // See https://stackoverflow.com/a/63007777/13989043 for more information
-    let regex = pattern.Regex.replace(/\\([#&~])/g, "$1"); // TODO: add more characters to this list if necessary
+    let regex = pattern.Regex.replace(/\\([#&~])/g, '$1') // TODO: add more characters to this list if necessary
 
     // We also handle special cases where the regex contains invalid (non-JS compatible) syntax.
     for (const [key, value] of PROBLEMATIC_REGEX_MAP) {
-      regex = regex.replaceAll(key, value);
+      regex = regex.replaceAll(key, value)
     }
 
-    return new RegExp(regex, "gu");
+    return new RegExp(regex, 'gu')
   } else if (pattern.String !== undefined) {
-    const escaped = escapeRegExp(pattern.String);
+    const escaped = escapeRegExp(pattern.String)
     // NOTE: if invert is true, we wrap the pattern in a group so that it is kept when performing .split()
-    return new RegExp(invert ? escaped : `(${escaped})`, "gu");
+    return new RegExp(invert ? escaped : `(${escaped})`, 'gu')
   } else {
-    console.warn("Unknown pattern type:", pattern);
-    return null;
+    console.warn('Unknown pattern type:', pattern)
+    return null
   }
 }
 
@@ -460,7 +459,7 @@ function createPattern(pattern, invert = true) {
  * @returns {Map<string, any>} The map.
  */
 function objectToMap(obj) {
-  return new Map(Object.entries(obj));
+  return new Map(Object.entries(obj))
 }
 
 /**
@@ -471,43 +470,37 @@ function objectToMap(obj) {
  * @private
  */
 function fuse_unk(arr, tokens_to_ids, unk_token_id) {
-  const fused = [];
-  let i = 0;
+  const fused = []
+  let i = 0
   while (i < arr.length) {
-    fused.push(arr[i]);
+    fused.push(arr[i])
     if ((tokens_to_ids.get(arr[i]) ?? unk_token_id) !== unk_token_id) {
-      ++i;
-      continue;
+      ++i
+      continue
     }
 
-    while (
-      ++i < arr.length &&
-      (tokens_to_ids.get(arr[i]) ?? unk_token_id) === unk_token_id
-    ) {
+    while (++i < arr.length && (tokens_to_ids.get(arr[i]) ?? unk_token_id) === unk_token_id) {
       if (tokens_to_ids.get(fused.at(-1)) !== unk_token_id) {
-        fused[fused.length - 1] += arr[i];
+        fused[fused.length - 1] += arr[i]
       }
     }
   }
 
-  return fused;
+  return fused
 }
 
-const BLOOM_SPLIT_CHARS = ".,!?…。，、।۔،";
+const BLOOM_SPLIT_CHARS = '.,!?…。，、।۔،'
 
 // A mapping of regex patterns to their equivalent (but possibly longer) JS-compatible versions.
 const PROBLEMATIC_REGEX_MAP = new Map([
   // This uses the case insensitive group modifier, which is not supported in JavaScript.
   // When parsing the regex, an "Invalid group" error is thrown.
-  [
-    "(?i:'s|'t|'re|'ve|'m|'ll|'d)",
-    "(?:'([sS]|[tT]|[rR][eE]|[vV][eE]|[mM]|[lL][lL]|[dD]))",
-  ],
+  ["(?i:'s|'t|'re|'ve|'m|'ll|'d)", "(?:'([sS]|[tT]|[rR][eE]|[vV][eE]|[mM]|[lL][lL]|[dD]))"],
 
   // Used to override the default (invalid) regex of the bloom pretokenizer.
   // For more information, see https://github.com/huggingface/transformers.js/issues/94
   [` ?[^(\\s|[${BLOOM_SPLIT_CHARS}])]+`, ` ?[^\\s${BLOOM_SPLIT_CHARS}]+`],
-]);
+])
 
 /**
  * Returns list of utf-8 byte and a mapping to unicode strings.
@@ -521,30 +514,30 @@ const BYTES_TO_UNICODE = (() => {
 
   const bs = [
     ...Array.from(
-      { length: "~".charCodeAt(0) - "!".charCodeAt(0) + 1 },
-      (_, i) => i + "!".charCodeAt(0)
+      { length: '~'.charCodeAt(0) - '!'.charCodeAt(0) + 1 },
+      (_, i) => i + '!'.charCodeAt(0),
     ),
     ...Array.from(
-      { length: "¬".charCodeAt(0) - "¡".charCodeAt(0) + 1 },
-      (_, i) => i + "¡".charCodeAt(0)
+      { length: '¬'.charCodeAt(0) - '¡'.charCodeAt(0) + 1 },
+      (_, i) => i + '¡'.charCodeAt(0),
     ),
     ...Array.from(
-      { length: "ÿ".charCodeAt(0) - "®".charCodeAt(0) + 1 },
-      (_, i) => i + "®".charCodeAt(0)
+      { length: 'ÿ'.charCodeAt(0) - '®'.charCodeAt(0) + 1 },
+      (_, i) => i + '®'.charCodeAt(0),
     ),
-  ];
-  const cs = bs.slice();
-  let n = 0;
+  ]
+  const cs = bs.slice()
+  let n = 0
   for (let b = 0; b < 256; ++b) {
     if (!bs.includes(b)) {
-      bs.push(b);
-      cs.push(256 + n);
-      n += 1;
+      bs.push(b)
+      cs.push(256 + n)
+      n += 1
     }
   }
-  const ccs = cs.map((n) => String.fromCharCode(n));
-  return Object.fromEntries(bs.map((b, i) => [b, ccs[i]]));
-})();
+  const ccs = cs.map((n) => String.fromCharCode(n))
+  return Object.fromEntries(bs.map((b, i) => [b, ccs[i]]))
+})()
 
 /**
  * Helper function for padding values of an object, which are each arrays.
@@ -557,14 +550,11 @@ const BYTES_TO_UNICODE = (() => {
  */
 function padHelper(item, length, value_fn, side) {
   for (const key of Object.keys(item)) {
-    const diff = length - item[key].length;
-    const value = value_fn(key);
+    const diff = length - item[key].length
+    const value = value_fn(key)
 
-    const padData = new Array(diff).fill(value);
-    item[key] =
-      side === "right"
-        ? mergeArrays(item[key], padData)
-        : mergeArrays(padData, item[key]);
+    const padData = new Array(diff).fill(value)
+    item[key] = side === 'right' ? mergeArrays(item[key], padData) : mergeArrays(padData, item[key])
   }
 }
 
@@ -579,7 +569,7 @@ function truncateHelper(item, length) {
   // Setting .length to a lower value truncates the array in-place:
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/length
   for (const key of Object.keys(item)) {
-    item[key].length = length;
+    item[key].length = length
   }
 }
 
@@ -606,13 +596,13 @@ class AddedToken {
    * @param {boolean} [config.special=false] Whether this token is special.
    */
   constructor(config) {
-    this.content = config.content;
-    this.id = config.id;
-    this.single_word = config.single_word ?? false;
-    this.lstrip = config.lstrip ?? false;
-    this.rstrip = config.rstrip ?? false;
-    this.special = config.special ?? false;
-    this.normalized = config.normalized ?? null;
+    this.content = config.content
+    this.id = config.id
+    this.single_word = config.single_word ?? false
+    this.lstrip = config.lstrip ?? false
+    this.rstrip = config.rstrip ?? false
+    this.special = config.special ?? false
+    this.normalized = config.normalized ?? null
   }
 }
 
@@ -630,24 +620,24 @@ class TokenizerModel extends Callable {
    * @param {Object} config The configuration object for the TokenizerModel.
    */
   constructor(config) {
-    super();
-    this.config = config;
+    super()
+    this.config = config
 
     /** @type {string[]} */
-    this.vocab = [];
+    this.vocab = []
 
     /**
      * A mapping of tokens to ids.
      * @type {Map<string, number>}
      */
-    this.tokens_to_ids = new Map();
+    this.tokens_to_ids = new Map()
 
-    this.unk_token_id = undefined;
-    this.unk_token = undefined;
-    this.end_of_word_suffix = undefined;
+    this.unk_token_id = undefined
+    this.unk_token = undefined
+    this.end_of_word_suffix = undefined
 
     /** @type {boolean} Whether to fuse unknown tokens when encoding. Defaults to false. */
-    this.fuse_unk = this.config.fuse_unk ?? false;
+    this.fuse_unk = this.config.fuse_unk ?? false
   }
 
   /**
@@ -659,20 +649,20 @@ class TokenizerModel extends Callable {
    */
   static fromConfig(config, ...args) {
     switch (config.type) {
-      case "BPE":
-        return new BPE(config);
+      case 'BPE':
+        return new BPE(config)
 
       default:
         if (config.vocab && !Array.isArray(config.vocab)) {
           if (
-            Object.hasOwn(config, "continuing_subword_prefix") &&
-            Object.hasOwn(config, "unk_token") &&
-            Object.hasOwn(config, "merges")
+            Object.hasOwn(config, 'continuing_subword_prefix') &&
+            Object.hasOwn(config, 'unk_token') &&
+            Object.hasOwn(config, 'merges')
           ) {
-            return new BPE(config);
+            return new BPE(config)
           }
         }
-        throw new Error(`Unknown TokenizerModel type: ${config.type}`);
+        throw new Error(`Unknown TokenizerModel type: ${config.type}`)
     }
   }
 
@@ -682,12 +672,12 @@ class TokenizerModel extends Callable {
    * @returns {string[]} The encoded tokens.
    */
   _call(tokens) {
-    tokens = this.encode(tokens);
+    tokens = this.encode(tokens)
     if (this.fuse_unk) {
       // Fuse unknown tokens
-      tokens = fuse_unk(tokens, this.tokens_to_ids, this.unk_token_id);
+      tokens = fuse_unk(tokens, this.tokens_to_ids, this.unk_token_id)
     }
-    return tokens;
+    return tokens
   }
 
   /**
@@ -697,7 +687,7 @@ class TokenizerModel extends Callable {
    * @throws Will throw an error if not implemented in a subclass.
    */
   encode(tokens) {
-    throw Error("encode should be implemented in subclass.");
+    throw Error('encode should be implemented in subclass.')
   }
 
   /**
@@ -706,7 +696,7 @@ class TokenizerModel extends Callable {
    * @returns {number[]} The converted token IDs.
    */
   convert_tokens_to_ids(tokens) {
-    return tokens.map((t) => this.tokens_to_ids.get(t) ?? this.unk_token_id);
+    return tokens.map((t) => this.tokens_to_ids.get(t) ?? this.unk_token_id)
   }
 
   /**
@@ -715,7 +705,7 @@ class TokenizerModel extends Callable {
    * @returns {string[]} The converted tokens.
    */
   convert_ids_to_tokens(ids) {
-    return ids.map((i) => this.vocab[i] ?? this.unk_token);
+    return ids.map((i) => this.vocab[i] ?? this.unk_token)
   }
 }
 
@@ -749,62 +739,62 @@ class BPE extends TokenizerModel {
    * @param {boolean} [config.ignore_merges=false] Whether or not to match tokens with the vocab before using merges.
    */
   constructor(config) {
-    super(config);
+    super(config)
 
     /** @type {Map<string, number>} */
-    this.tokens_to_ids = objectToMap(config.vocab);
+    this.tokens_to_ids = objectToMap(config.vocab)
 
-    this.unk_token_id = this.tokens_to_ids.get(config.unk_token);
-    this.unk_token = config.unk_token;
+    this.unk_token_id = this.tokens_to_ids.get(config.unk_token)
+    this.unk_token = config.unk_token
 
-    this.vocab = new Array(this.tokens_to_ids.size);
+    this.vocab = new Array(this.tokens_to_ids.size)
     for (const [key, value] of this.tokens_to_ids) {
-      this.vocab[value] = key;
+      this.vocab[value] = key
     }
 
     // Tokenizers >= 0.20.0 serializes BPE merges as a [string, string][] instead of a string[],
     // which resolves the ambiguity for merges containing spaces.
-    const use_new_merge_format = Array.isArray(config.merges[0]);
+    const use_new_merge_format = Array.isArray(config.merges[0])
 
     /** @type {[string, string][]} */
     this.merges = use_new_merge_format
       ? /** @type {[string, string][]} */ (config.merges)
       : /** @type {string[]} */ (config.merges).map(
-          (x) => /** @type {[string, string]} */ (x.split(" ", 2))
-        );
-    this.bpe_ranks = new Map(this.merges.map((x, i) => [JSON.stringify(x), i]));
+          (x) => /** @type {[string, string]} */ (x.split(' ', 2)),
+        )
+    this.bpe_ranks = new Map(this.merges.map((x, i) => [JSON.stringify(x), i]))
 
-    this.end_of_word_suffix = config.end_of_word_suffix;
+    this.end_of_word_suffix = config.end_of_word_suffix
 
     // NOTE: `continuing_subword_suffix` is custom (to support `BlenderbotSmallTokenizer`)
-    this.continuing_subword_suffix = config.continuing_subword_suffix ?? null;
+    this.continuing_subword_suffix = config.continuing_subword_suffix ?? null
 
-    this.byte_fallback = this.config.byte_fallback ?? false;
+    this.byte_fallback = this.config.byte_fallback ?? false
 
     if (this.byte_fallback) {
-      this.text_encoder = new TextEncoder();
+      this.text_encoder = new TextEncoder()
     }
 
-    this.ignore_merges = this.config.ignore_merges ?? false;
+    this.ignore_merges = this.config.ignore_merges ?? false
 
     /**
      * The maximum length we should cache in a model.
      * Strings that are too long have minimal chances to cache hit anyway
      */
-    this.max_length_to_cache = 256;
+    this.max_length_to_cache = 256
 
     /**
      * The default capacity for a `BPE`'s internal cache.
      */
-    this.cache_capacity = 10000;
-    this.cache = new LRUCache(this.cache_capacity);
+    this.cache_capacity = 10000
+    this.cache = new LRUCache(this.cache_capacity)
   }
 
   /**
    * Clears the cache.
    */
   clear_cache() {
-    this.cache.clear();
+    this.cache.clear()
   }
 
   /**
@@ -815,24 +805,24 @@ class BPE extends TokenizerModel {
    */
   bpe(token) {
     if (token.length === 0) {
-      return [];
+      return []
     }
 
-    const cached = this.cache.get(token);
+    const cached = this.cache.get(token)
     if (cached !== undefined) {
-      return cached;
+      return cached
     }
 
-    const word = Array.from(token);
+    const word = Array.from(token)
     if (this.end_of_word_suffix) {
-      word[word.length - 1] += this.end_of_word_suffix;
+      word[word.length - 1] += this.end_of_word_suffix
     }
 
-    let result = [];
+    let result = []
     if (word.length > 1) {
       // Create a priority queue to store the nodes that will be merged.
       // The comparator function compares the scores of the nodes.
-      const queue = new PriorityQueue((a, b) => a.score < b.score);
+      const queue = new PriorityQueue((a, b) => a.score < b.score)
 
       // Construct a doubly-linked list of nodes that will be inserted into the priority queue,
       // starting with the individual characters. We also populate each node with a positional
@@ -842,50 +832,50 @@ class BPE extends TokenizerModel {
         bias: 0,
         prev: null,
         next: null,
-      };
+      }
 
-      let previousNode = startingNode;
+      let previousNode = startingNode
       for (let i = 1; i < word.length; ++i) {
         const currentNode = {
           bias: i / word.length, // Add fractional component to break ties
           token: word[i],
           prev: previousNode,
           next: null,
-        };
-        previousNode.next = currentNode;
-        this._add_node(queue, previousNode);
-        previousNode = currentNode;
+        }
+        previousNode.next = currentNode
+        this._add_node(queue, previousNode)
+        previousNode = currentNode
       }
 
       while (!queue.isEmpty()) {
         // Get the next node with the highest priority
-        const node = queue.pop();
+        const node = queue.pop()
 
         // Check that this merge is still possible
-        if (node.deleted || !node.next || node.next.deleted) continue;
+        if (node.deleted || !node.next || node.next.deleted) continue
 
         // Here, we mark the current node (left side of the merge) and the next node (right side of the merge) as deleted.
         // This is because they will both be replaced by a new node representing the merge result.
-        node.deleted = true;
-        node.next.deleted = true;
+        node.deleted = true
+        node.next.deleted = true
 
         // Next, we fix the node that comes before the current node (i.e., left side of the merge).
         if (node.prev) {
           // Make a shallow copy of the previous node
-          const newPreviousNode = { ...node.prev };
+          const newPreviousNode = { ...node.prev }
 
           // Mark the old previous node as deleted. This avoids erroneous merges later,
           // because there may still be references to this node in the priority queue.
-          node.prev.deleted = true;
-          node.prev = newPreviousNode;
+          node.prev.deleted = true
+          node.prev = newPreviousNode
 
           // Update the reference of the previous node, by pointing its previous node to this new previous node.
           if (newPreviousNode.prev) {
-            newPreviousNode.prev.next = newPreviousNode;
+            newPreviousNode.prev.next = newPreviousNode
           } else {
             // If the previous of the previous node does not exist, it means that
             // `newPreviousNode` must be the new `startingNode`.
-            startingNode = newPreviousNode;
+            startingNode = newPreviousNode
           }
         }
 
@@ -895,51 +885,47 @@ class BPE extends TokenizerModel {
           bias: node.bias,
           prev: node.prev,
           next: node.next.next,
-        };
+        }
 
         // We now consider where we can add the new merged node to the priority queue:
         // 1. prev <-> merged
         if (merged.prev) {
-          merged.prev.next = merged;
-          this._add_node(queue, merged.prev);
+          merged.prev.next = merged
+          this._add_node(queue, merged.prev)
         } else {
           // If `merged.prev` does not exist, then `merged` must be the new `startingNode`.
-          startingNode = merged;
+          startingNode = merged
         }
 
         // 2. merged <-> next
         if (merged.next) {
-          merged.next.prev = merged;
-          this._add_node(queue, merged);
+          merged.next.prev = merged
+          this._add_node(queue, merged)
         }
       }
 
       // Traverse the linked list, starting from the `startingNode`, and collect the tokens.
-      for (
-        let currentNode = startingNode;
-        currentNode !== null;
-        currentNode = currentNode.next
-      ) {
-        result.push(currentNode.token);
+      for (let currentNode = startingNode; currentNode !== null; currentNode = currentNode.next) {
+        result.push(currentNode.token)
       }
     } else {
-      result = word;
+      result = word
     }
 
     // Possibly append suffix
     if (this.continuing_subword_suffix) {
       // Do not append suffix to the last token
       for (let i = 0; i < result.length - 1; ++i) {
-        result[i] += this.continuing_subword_suffix;
+        result[i] += this.continuing_subword_suffix
       }
     }
 
     if (token.length < this.max_length_to_cache) {
       // Save the result to the cache
-      this.cache.put(token, result);
+      this.cache.put(token, result)
     }
 
-    return result;
+    return result
   }
 
   /**
@@ -952,12 +938,10 @@ class BPE extends TokenizerModel {
     // `score` is a measure of the merge priority: lower means higher priority
     // We use the BPE rank as a measure of priority (i.e., the local of the merge in the merges list)
     // We also add a fractional component to the score to break ties (with the earlier character having higher priority)
-    const rank = this.bpe_ranks.get(
-      JSON.stringify([node.token, node.next.token])
-    );
+    const rank = this.bpe_ranks.get(JSON.stringify([node.token, node.next.token]))
     if (rank !== undefined) {
-      node.score = rank + node.bias;
-      queue.push(node);
+      node.score = rank + node.bias
+      queue.push(node)
     }
   }
 
@@ -967,37 +951,37 @@ class BPE extends TokenizerModel {
    * @returns {string[]} The resulting subword tokens after applying the BPE algorithm to the input sequence of tokens.
    */
   encode(tokens) {
-    const outputTokens = [];
+    const outputTokens = []
 
     for (const token of tokens) {
       if (this.ignore_merges && this.tokens_to_ids.has(token)) {
-        outputTokens.push(token);
-        continue;
+        outputTokens.push(token)
+        continue
       }
-      const bpe_token_list = this.bpe(token);
+      const bpe_token_list = this.bpe(token)
 
       for (const t of bpe_token_list) {
         if (this.tokens_to_ids.has(t)) {
-          outputTokens.push(t);
+          outputTokens.push(t)
         } else if (this.byte_fallback) {
           const byteTokens = Array.from(this.text_encoder.encode(t)).map(
-            (x) => `<0x${x.toString(16).toUpperCase().padStart(2, "0")}>`
-          );
+            (x) => `<0x${x.toString(16).toUpperCase().padStart(2, '0')}>`,
+          )
           if (byteTokens.every((x) => this.tokens_to_ids.has(x))) {
             // Ensure the byte tokens are actually in the vocabulary, otherwise
             // we fall back to the unknown token. For more information, see
             // https://github.com/huggingface/transformers/issues/28096.
-            outputTokens.push(...byteTokens);
+            outputTokens.push(...byteTokens)
           } else {
-            outputTokens.push(this.unk_token);
+            outputTokens.push(this.unk_token)
           }
         } else {
-          outputTokens.push(this.unk_token);
+          outputTokens.push(this.unk_token)
         }
       }
     }
 
-    return outputTokens;
+    return outputTokens
   }
 }
 
@@ -1014,8 +998,8 @@ class Normalizer extends Callable {
    * @param {Object} config The configuration object for the normalizer.
    */
   constructor(config) {
-    super();
-    this.config = config;
+    super()
+    this.config = config
   }
 
   /**
@@ -1025,19 +1009,19 @@ class Normalizer extends Callable {
    * @returns {Normalizer} A Normalizer object.
    */
   static fromConfig(config) {
-    if (config === null) return null;
+    if (config === null) return null
     switch (config.type) {
-      case "Sequence":
-        return new NormalizerSequence(config);
-      case "Replace":
-        return new Replace(config);
-      case "NFC":
-        return new NFC(config);
-      case "NFKC":
-        return new NFKC(config);
+      case 'Sequence':
+        return new NormalizerSequence(config)
+      case 'Replace':
+        return new Replace(config)
+      case 'NFC':
+        return new NFC(config)
+      case 'NFKC':
+        return new NFKC(config)
       default:
-        console.warn(`Unknown Normalizer type: ${config.type}, returning null`);
-        return null;
+        console.warn(`Unknown Normalizer type: ${config.type}, returning null`)
+        return null
     }
   }
 
@@ -1049,7 +1033,7 @@ class Normalizer extends Callable {
    * @throws {Error} If this method is not implemented in a subclass.
    */
   normalize(text) {
-    throw Error("normalize should be implemented in subclass.");
+    throw Error('normalize should be implemented in subclass.')
   }
 
   /**
@@ -1058,7 +1042,7 @@ class Normalizer extends Callable {
    * @returns {string} The normalized text.
    */
   _call(text) {
-    return this.normalize(text);
+    return this.normalize(text)
   }
 }
 
@@ -1073,10 +1057,8 @@ class Replace extends Normalizer {
    * @returns {string} The normalized text after replacing the pattern with the content.
    */
   normalize(text) {
-    const pattern = createPattern(this.config.pattern);
-    return pattern === null
-      ? text
-      : text.replaceAll(pattern, this.config.content);
+    const pattern = createPattern(this.config.pattern)
+    return pattern === null ? text : text.replaceAll(pattern, this.config.content)
   }
 }
 
@@ -1090,7 +1072,7 @@ class UnicodeNormalizer extends Normalizer {
    * @type {string} The Unicode normalization form to apply.
    * Should be one of: 'NFC', 'NFD', 'NFKC', or 'NFKD'.
    */
-  form = undefined;
+  form = undefined
 
   /**
    * Normalize the input text by applying Unicode normalization.
@@ -1098,8 +1080,8 @@ class UnicodeNormalizer extends Normalizer {
    * @returns {string} The normalized text.
    */
   normalize(text) {
-    text = text.normalize(this.form);
-    return text;
+    text = text.normalize(this.form)
+    return text
   }
 }
 
@@ -1109,7 +1091,7 @@ class UnicodeNormalizer extends Normalizer {
  * @extends UnicodeNormalizer
  */
 class NFC extends UnicodeNormalizer {
-  form = "NFC";
+  form = 'NFC'
 }
 
 /**
@@ -1118,7 +1100,7 @@ class NFC extends UnicodeNormalizer {
  * @extends UnicodeNormalizer
  */
 class NFKC extends UnicodeNormalizer {
-  form = "NFKC";
+  form = 'NFKC'
 }
 
 /**
@@ -1132,8 +1114,8 @@ class NormalizerSequence extends Normalizer {
    * @param {Object[]} config.normalizers An array of Normalizer configuration objects.
    */
   constructor(config) {
-    super(config);
-    this.normalizers = config.normalizers.map((x) => Normalizer.fromConfig(x));
+    super(config)
+    this.normalizers = config.normalizers.map((x) => Normalizer.fromConfig(x))
   }
   /**
    * Apply a sequence of Normalizers to the input text.
@@ -1142,8 +1124,8 @@ class NormalizerSequence extends Normalizer {
    */
   normalize(text) {
     return this.normalizers.reduce((t, normalizer) => {
-      return normalizer ? normalizer.normalize(t) : t;
-    }, text);
+      return normalizer ? normalizer.normalize(t) : t
+    }, text)
   }
 }
 
@@ -1165,20 +1147,20 @@ class PreTokenizer extends Callable {
    * @returns {PreTokenizer} An instance of a subclass of `PreTokenizer`.
    */
   static fromConfig(config) {
-    if (config === null) return null;
+    if (config === null) return null
 
     switch (config.type) {
-      case "Sequence":
-        return new PreTokenizerSequence(config);
-      case "ByteLevel":
-        return new ByteLevelPreTokenizer(config);
-      case "Split":
-        return new SplitPreTokenizer(config);
-      case "Digits":
-        return new DigitsPreTokenizer(config);
+      case 'Sequence':
+        return new PreTokenizerSequence(config)
+      case 'ByteLevel':
+        return new ByteLevelPreTokenizer(config)
+      case 'Split':
+        return new SplitPreTokenizer(config)
+      case 'Digits':
+        return new DigitsPreTokenizer(config)
       default:
-        console.warn(`Unknown PreTokenizer type: ${config.type}, returning null`);
-        return null;
+        console.warn(`Unknown PreTokenizer type: ${config.type}, returning null`)
+        return null
     }
   }
 
@@ -1192,7 +1174,7 @@ class PreTokenizer extends Callable {
    * @throws {Error} If the method is not implemented in the subclass.
    */
   pre_tokenize_text(text, options) {
-    throw Error("pre_tokenize_text should be implemented in subclass.");
+    throw Error('pre_tokenize_text should be implemented in subclass.')
   }
 
   /**
@@ -1206,7 +1188,7 @@ class PreTokenizer extends Callable {
       Array.isArray(text)
         ? text.map((x) => this.pre_tokenize_text(x, options))
         : this.pre_tokenize_text(text, options)
-    ).flat();
+    ).flat()
   }
 
   /**
@@ -1216,7 +1198,7 @@ class PreTokenizer extends Callable {
    * @returns {string[]} An array of pre-tokens.
    */
   _call(text, options) {
-    return this.pre_tokenize(text, options);
+    return this.pre_tokenize(text, options)
   }
 }
 
@@ -1230,32 +1212,31 @@ class ByteLevelPreTokenizer extends PreTokenizer {
    * @param {Object} config The configuration object.
    */
   constructor(config) {
-    super();
-    this.config = config;
+    super()
+    this.config = config
 
     /**
      * @type {boolean} Whether to add a leading space to the first word.
      * This allows to treat the leading word just as any other word.
      */
-    this.add_prefix_space = this.config.add_prefix_space;
+    this.add_prefix_space = this.config.add_prefix_space
 
     /**
      * @type {boolean} Whether the post processing step should trim offsets
      * to avoid including whitespaces.
      * @todo Use this in the pretokenization step.
      */
-    this.trim_offsets = this.config.trim_offsets;
+    this.trim_offsets = this.config.trim_offsets
 
     /**
      * @type {boolean} Whether to use the standard GPT2 regex for whitespace splitting.
      * Set it to False if you want to use your own splitting. Defaults to true.
      */
-    this.use_regex = this.config.use_regex ?? true;
-    this.pattern =
-      /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu;
+    this.use_regex = this.config.use_regex ?? true
+    this.pattern = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu
 
-    this.byte_encoder = BYTES_TO_UNICODE;
-    this.text_encoder = new TextEncoder();
+    this.byte_encoder = BYTES_TO_UNICODE
+    this.text_encoder = new TextEncoder()
   }
 
   /**
@@ -1266,20 +1247,17 @@ class ByteLevelPreTokenizer extends PreTokenizer {
    */
   pre_tokenize_text(text, options) {
     // Add a leading space if the option is enabled
-    if (this.add_prefix_space && !text.startsWith(" ")) {
-      text = " " + text;
+    if (this.add_prefix_space && !text.startsWith(' ')) {
+      text = ' ' + text
     }
 
     // Split on whitespace and punctuation
-    const tokens = this.use_regex ? text.match(this.pattern) || [] : [text];
+    const tokens = this.use_regex ? text.match(this.pattern) || [] : [text]
 
     // Maps all our bytes to unicode strings, avoiding control tokens of the BPE (spaces in our case)
     return tokens.map((token) =>
-      Array.from(
-        this.text_encoder.encode(token),
-        (byte) => this.byte_encoder[byte]
-      ).join("")
-    );
+      Array.from(this.text_encoder.encode(token), (byte) => this.byte_encoder[byte]).join(''),
+    )
   }
 }
 
@@ -1301,11 +1279,11 @@ class SplitPreTokenizer extends PreTokenizer {
    * @param {boolean} config.invert Whether to split (invert=false) or match (invert=true) the pattern.
    */
   constructor(config) {
-    super();
-    this.config = config;
+    super()
+    this.config = config
     // TODO support all behaviours (config.behavior)
 
-    this.pattern = createPattern(this.config.pattern, this.config.invert);
+    this.pattern = createPattern(this.config.pattern, this.config.invert)
   }
 
   /**
@@ -1316,15 +1294,15 @@ class SplitPreTokenizer extends PreTokenizer {
    */
   pre_tokenize_text(text, options) {
     if (this.pattern === null) {
-      return [];
+      return []
     }
 
     if (this.config.invert) {
-      return text.match(this.pattern) || [];
-    } else if (this.config.behavior?.toLowerCase() === "removed") {
-      return text.split(this.pattern).filter((x) => x);
+      return text.match(this.pattern) || []
+    } else if (this.config.behavior?.toLowerCase() === 'removed') {
+      return text.split(this.pattern).filter((x) => x)
     } else {
-      return regexSplit(text, this.pattern);
+      return regexSplit(text, this.pattern)
     }
   }
 }
@@ -1339,14 +1317,12 @@ class DigitsPreTokenizer extends PreTokenizer {
    * @param {boolean} config.individual_digits Whether to split on individual digits.
    */
   constructor(config) {
-    super();
-    this.config = config;
+    super()
+    this.config = config
 
     // Construct a pattern which matches the rust implementation:
-    const digit_pattern = `[^\\d]+|\\d${
-      this.config.individual_digits ? "" : "+"
-    }`;
-    this.pattern = new RegExp(digit_pattern, "gu");
+    const digit_pattern = `[^\\d]+|\\d${this.config.individual_digits ? '' : '+'}`
+    this.pattern = new RegExp(digit_pattern, 'gu')
   }
 
   /**
@@ -1356,7 +1332,7 @@ class DigitsPreTokenizer extends PreTokenizer {
    * @returns {string[]} An array of tokens.
    */
   pre_tokenize_text(text, options) {
-    return text.match(this.pattern) || [];
+    return text.match(this.pattern) || []
   }
 }
 
@@ -1371,10 +1347,8 @@ class PreTokenizerSequence extends PreTokenizer {
    * @param {Object[]} config.pretokenizers An array of pre-tokenizer configurations.
    */
   constructor(config) {
-    super();
-    this.tokenizers = config.pretokenizers.map((x) =>
-      PreTokenizer.fromConfig(x)
-    );
+    super()
+    this.tokenizers = config.pretokenizers.map((x) => PreTokenizer.fromConfig(x))
   }
 
   /**
@@ -1387,10 +1361,10 @@ class PreTokenizerSequence extends PreTokenizer {
     // Use reduce to apply each tokenizer to the text
     return this.tokenizers.reduce(
       (preTokenizedText, tokenizer) => {
-        return tokenizer ? tokenizer.pre_tokenize(preTokenizedText, options) : preTokenizedText;
+        return tokenizer ? tokenizer.pre_tokenize(preTokenizedText, options) : preTokenizedText
       },
-      [text]
-    );
+      [text],
+    )
   }
 }
 
@@ -1400,96 +1374,96 @@ class PreTokenizerSequence extends PreTokenizer {
 
 class PostProcessor extends Callable {
   constructor(config) {
-    super();
-    this.config = config;
+    super()
+    this.config = config
   }
 
   static fromConfig(config) {
-    if (config === null) return null;
+    if (config === null) return null
     switch (config.type) {
       case 'TemplateProcessing':
-        return new TemplateProcessing(config);
+        return new TemplateProcessing(config)
       case 'ByteLevel':
-        return new ByteLevelPostProcessor(config);
+        return new ByteLevelPostProcessor(config)
       case 'Sequence':
-        return new PostProcessorSequence(config);
+        return new PostProcessorSequence(config)
       default:
-        return null;
+        return null
     }
   }
 
   post_process(tokens, ...args) {
-    throw Error('post_process should be implemented in subclass.');
+    throw Error('post_process should be implemented in subclass.')
   }
 
   _call(tokens, ...args) {
-    return this.post_process(tokens, ...args);
+    return this.post_process(tokens, ...args)
   }
 }
 
 class TemplateProcessing extends PostProcessor {
   constructor(config) {
-    super(config);
-    this.single = config.single;
-    this.pair = config.pair;
+    super(config)
+    this.single = config.single
+    this.pair = config.pair
   }
 
   post_process(tokens, tokens_pair = null, { add_special_tokens = true } = {}) {
-    const type = tokens_pair === null ? this.single : this.pair;
-    let processedTokens = [];
-    let types = [];
+    const type = tokens_pair === null ? this.single : this.pair
+    let processedTokens = []
+    let types = []
     for (const item of type) {
       if ('SpecialToken' in item) {
         if (add_special_tokens) {
-          processedTokens.push(item.SpecialToken.id);
-          types.push(item.SpecialToken.type_id);
+          processedTokens.push(item.SpecialToken.id)
+          types.push(item.SpecialToken.type_id)
         }
       } else if ('Sequence' in item) {
         if (item.Sequence.id === 'A') {
-          processedTokens = mergeArrays(processedTokens, tokens);
-          types = mergeArrays(types, new Array(tokens.length).fill(item.Sequence.type_id));
+          processedTokens = mergeArrays(processedTokens, tokens)
+          types = mergeArrays(types, new Array(tokens.length).fill(item.Sequence.type_id))
         } else if (item.Sequence.id === 'B') {
-          processedTokens = mergeArrays(processedTokens, tokens_pair);
-          types = mergeArrays(types, new Array(tokens_pair.length).fill(item.Sequence.type_id));
+          processedTokens = mergeArrays(processedTokens, tokens_pair)
+          types = mergeArrays(types, new Array(tokens_pair.length).fill(item.Sequence.type_id))
         }
       }
     }
-    return { tokens: processedTokens, token_type_ids: types };
+    return { tokens: processedTokens, token_type_ids: types }
   }
 }
 
 class ByteLevelPostProcessor extends PostProcessor {
   post_process(tokens, tokens_pair = null) {
     if (tokens_pair) {
-      tokens = mergeArrays(tokens, tokens_pair);
+      tokens = mergeArrays(tokens, tokens_pair)
     }
-    return { tokens };
+    return { tokens }
   }
 }
 
 class PostProcessorSequence extends PostProcessor {
   constructor(config) {
-    super(config);
-    this.processors = config.processors.map((x) => PostProcessor.fromConfig(x));
+    super(config)
+    this.processors = config.processors.map((x) => PostProcessor.fromConfig(x))
   }
 
   post_process(tokens, tokens_pair = null, options = {}) {
-    let token_type_ids;
+    let token_type_ids
     for (const processor of this.processors) {
       if (processor instanceof ByteLevelPostProcessor) {
-        const output = processor.post_process(tokens);
-        tokens = output.tokens;
+        const output = processor.post_process(tokens)
+        tokens = output.tokens
         if (tokens_pair) {
-          const pair_output = processor.post_process(tokens_pair);
-          tokens_pair = pair_output.tokens;
+          const pair_output = processor.post_process(tokens_pair)
+          tokens_pair = pair_output.tokens
         }
       } else {
-        const output = processor.post_process(tokens, tokens_pair, options);
-        tokens = output.tokens;
-        token_type_ids = output.token_type_ids;
+        const output = processor.post_process(tokens, tokens_pair, options)
+        tokens = output.tokens
+        token_type_ids = output.token_type_ids
       }
     }
-    return { tokens, token_type_ids };
+    return { tokens, token_type_ids }
   }
 }
 
@@ -1508,13 +1482,13 @@ class Decoder extends Callable {
    * @param {Object} config The configuration object.
    */
   constructor(config) {
-    super();
-    this.config = config;
+    super()
+    this.config = config
 
     /** @type {AddedToken[]} */
-    this.added_tokens = [];
-    this.end_of_word_suffix = null;
-    this.trim_offsets = config.trim_offsets;
+    this.added_tokens = []
+    this.end_of_word_suffix = null
+    this.trim_offsets = config.trim_offsets
   }
 
   /**
@@ -1525,9 +1499,9 @@ class Decoder extends Callable {
    * @returns {Decoder|null} A decoder instance, or null.
    */
   static fromConfig(config) {
-    if (config === null) return null;
+    if (config === null) return null
     // Encode-only engine does not need decoders.
-    return null;
+    return null
   }
 
   /**
@@ -1537,7 +1511,7 @@ class Decoder extends Callable {
    * @returns {string} The decoded string.
    */
   _call(tokens) {
-    return this.decode(tokens);
+    return this.decode(tokens)
   }
 
   /**
@@ -1546,7 +1520,7 @@ class Decoder extends Callable {
    * @returns {string} The decoded string.
    */
   decode(tokens) {
-    return this.decode_chain(tokens).join("");
+    return this.decode_chain(tokens).join('')
   }
 
   /**
@@ -1556,7 +1530,7 @@ class Decoder extends Callable {
    * @returns {string[]} The decoded list of tokens.
    */
   decode_chain(tokens) {
-    throw Error("`decode_chain` should be implemented in subclass.");
+    throw Error('`decode_chain` should be implemented in subclass.')
   }
 }
 
@@ -1579,115 +1553,103 @@ class Decoder extends Callable {
  */
 
 class PreTrainedTokenizer extends Callable {
-  return_token_type_ids = false;
+  return_token_type_ids = false
 
-  padding_side = "right";
+  padding_side = 'right'
   /**
    * Create a new PreTrainedTokenizer instance.
    * @param {Object} tokenizerJSON The JSON of the tokenizer.
    * @param {Object} tokenizerConfig The config of the tokenizer.
    */
   constructor(tokenizerJSON, tokenizerConfig) {
-    super();
+    super()
 
-    this.config = tokenizerConfig;
+    this.config = tokenizerConfig
 
     // Construct parts of the tokenizer from the JSON
     /**
      * @type {Normalizer | null}
      */
-    this.normalizer = Normalizer.fromConfig(tokenizerJSON.normalizer);
-    this.pre_tokenizer = PreTokenizer.fromConfig(tokenizerJSON.pre_tokenizer);
-    this.model = TokenizerModel.fromConfig(
-      tokenizerJSON.model,
-      tokenizerConfig
-    );
-    this.post_processor = PostProcessor.fromConfig(
-      tokenizerJSON.post_processor
-    );
-    this.decoder = Decoder.fromConfig(tokenizerJSON.decoder);
+    this.normalizer = Normalizer.fromConfig(tokenizerJSON.normalizer)
+    this.pre_tokenizer = PreTokenizer.fromConfig(tokenizerJSON.pre_tokenizer)
+    this.model = TokenizerModel.fromConfig(tokenizerJSON.model, tokenizerConfig)
+    this.post_processor = PostProcessor.fromConfig(tokenizerJSON.post_processor)
+    this.decoder = Decoder.fromConfig(tokenizerJSON.decoder)
 
     // Add added_tokens to model
-    this.special_tokens = [];
-    this.all_special_ids = [];
+    this.special_tokens = []
+    this.all_special_ids = []
 
     /** @type {AddedToken[]} */
-    this.added_tokens = [];
+    this.added_tokens = []
     for (const addedToken of tokenizerJSON.added_tokens) {
-      const token = new AddedToken(addedToken);
-      this.added_tokens.push(token);
+      const token = new AddedToken(addedToken)
+      this.added_tokens.push(token)
 
-      this.model.tokens_to_ids.set(token.content, token.id);
-      this.model.vocab[token.id] = token.content;
+      this.model.tokens_to_ids.set(token.content, token.id)
+      this.model.vocab[token.id] = token.content
 
       if (token.special) {
-        this.special_tokens.push(token.content);
-        this.all_special_ids.push(token.id);
+        this.special_tokens.push(token.content)
+        this.all_special_ids.push(token.id)
       }
     }
 
     // Update additional_special_tokens
-    this.additional_special_tokens =
-      tokenizerConfig.additional_special_tokens ?? [];
-    this.special_tokens.push(...this.additional_special_tokens);
-    this.special_tokens = [...new Set(this.special_tokens)]; // Remove duplicates
+    this.additional_special_tokens = tokenizerConfig.additional_special_tokens ?? []
+    this.special_tokens.push(...this.additional_special_tokens)
+    this.special_tokens = [...new Set(this.special_tokens)] // Remove duplicates
 
     if (this.decoder) {
       // Slight hack, but it prevents code duplication:
-      this.decoder.added_tokens = this.added_tokens;
+      this.decoder.added_tokens = this.added_tokens
 
       // Another slight hack to add `end_of_word_suffix` (if present) to the decoder
       // This is needed for cases where BPE model and ByteLevel decoder are used
       // For more information, see https://github.com/huggingface/transformers.js/issues/74
-      this.decoder.end_of_word_suffix = this.model.end_of_word_suffix;
+      this.decoder.end_of_word_suffix = this.model.end_of_word_suffix
     }
 
-    this.added_tokens_splitter = new DictionarySplitter(
-      this.added_tokens.map((x) => x.content)
-    );
+    this.added_tokens_splitter = new DictionarySplitter(this.added_tokens.map((x) => x.content))
 
     /** @type {Map<string, AddedToken>} */
-    this.added_tokens_map = new Map(
-      this.added_tokens.map((x) => [x.content, x])
-    );
+    this.added_tokens_map = new Map(this.added_tokens.map((x) => [x.content, x]))
 
     // Set mask token if present (otherwise will be undefined, which is fine)
-    this.mask_token = this.getToken("mask_token");
-    this.mask_token_id = this.model.tokens_to_ids.get(this.mask_token);
+    this.mask_token = this.getToken('mask_token')
+    this.mask_token_id = this.model.tokens_to_ids.get(this.mask_token)
 
-    this.pad_token = this.getToken("pad_token", "eos_token");
-    this.pad_token_id = this.model.tokens_to_ids.get(this.pad_token);
+    this.pad_token = this.getToken('pad_token', 'eos_token')
+    this.pad_token_id = this.model.tokens_to_ids.get(this.pad_token)
 
-    this.sep_token = this.getToken("sep_token");
-    this.sep_token_id = this.model.tokens_to_ids.get(this.sep_token);
+    this.sep_token = this.getToken('sep_token')
+    this.sep_token_id = this.model.tokens_to_ids.get(this.sep_token)
 
-    this.unk_token = this.getToken("unk_token");
-    this.unk_token_id = this.model.tokens_to_ids.get(this.unk_token);
+    this.unk_token = this.getToken('unk_token')
+    this.unk_token_id = this.model.tokens_to_ids.get(this.unk_token)
 
-    this.bos_token = this.getToken("bos_token");
-    this.bos_token_id = this.model.tokens_to_ids.get(this.bos_token);
+    this.bos_token = this.getToken('bos_token')
+    this.bos_token_id = this.model.tokens_to_ids.get(this.bos_token)
 
-    this.eos_token = this.getToken("eos_token");
-    this.eos_token_id = this.model.tokens_to_ids.get(this.eos_token);
+    this.eos_token = this.getToken('eos_token')
+    this.eos_token_id = this.model.tokens_to_ids.get(this.eos_token)
 
-    this.model_max_length = tokenizerConfig.model_max_length;
+    this.model_max_length = tokenizerConfig.model_max_length
 
     /** @type {boolean} Whether or not to strip the text when tokenizing (removing excess spaces before and after the string). */
-    this.remove_space = tokenizerConfig.remove_space;
+    this.remove_space = tokenizerConfig.remove_space
 
-    this.clean_up_tokenization_spaces =
-      tokenizerConfig.clean_up_tokenization_spaces ?? true;
-    this.do_lowercase_and_remove_accent =
-      tokenizerConfig.do_lowercase_and_remove_accent ?? false;
+    this.clean_up_tokenization_spaces = tokenizerConfig.clean_up_tokenization_spaces ?? true
+    this.do_lowercase_and_remove_accent = tokenizerConfig.do_lowercase_and_remove_accent ?? false
 
     if (tokenizerConfig.padding_side) {
-      this.padding_side = tokenizerConfig.padding_side;
+      this.padding_side = tokenizerConfig.padding_side
     }
 
-    this.add_bos_token = tokenizerConfig.add_bos_token;
-    this.add_eos_token = tokenizerConfig.add_eos_token;
+    this.add_bos_token = tokenizerConfig.add_bos_token
+    this.add_eos_token = tokenizerConfig.add_eos_token
 
-    this.legacy = false;
+    this.legacy = false
   }
 
   /**
@@ -1699,21 +1661,21 @@ class PreTrainedTokenizer extends Callable {
    */
   getToken(...keys) {
     for (const key of keys) {
-      const item = this.config[key];
+      const item = this.config[key]
 
-      if (!item) continue;
+      if (!item) continue
 
-      if (typeof item === "object") {
-        if (item.__type === "AddedToken") {
-          return item.content;
+      if (typeof item === 'object') {
+        if (item.__type === 'AddedToken') {
+          return item.content
         } else {
-          throw Error(`Unknown token: ${item}`);
+          throw Error(`Unknown token: ${item}`)
         }
       } else {
-        return item;
+        return item
       }
     }
-    return null;
+    return null
   }
 
   /**
@@ -1740,23 +1702,23 @@ class PreTrainedTokenizer extends Callable {
       truncation = null,
       max_length = null,
       return_token_type_ids = null,
-    } = {}
+    } = {},
   ) {
-    const isBatched = Array.isArray(text);
+    const isBatched = Array.isArray(text)
 
     /** @type {EncodingSingle[]} */
-    let encodedTokens;
+    let encodedTokens
 
     if (isBatched) {
       if (text.length === 0) {
-        throw Error("text array must be non-empty");
+        throw Error('text array must be non-empty')
       }
 
       if (text_pair !== null) {
         if (!Array.isArray(text_pair)) {
-          throw Error("text_pair must also be an array");
+          throw Error('text_pair must also be an array')
         } else if (text.length !== text_pair.length) {
-          throw Error("text and text_pair must have the same length");
+          throw Error('text and text_pair must have the same length')
         }
 
         encodedTokens = text.map((t, i) =>
@@ -1764,22 +1726,22 @@ class PreTrainedTokenizer extends Callable {
             text_pair: text_pair[i],
             add_special_tokens,
             return_token_type_ids,
-          })
-        );
+          }),
+        )
       } else {
         encodedTokens = text.map((x) =>
-          this._encode_plus(x, { add_special_tokens, return_token_type_ids })
-        );
+          this._encode_plus(x, { add_special_tokens, return_token_type_ids }),
+        )
       }
     } else {
       if (text === null || text === undefined) {
-        throw Error("text may not be null or undefined");
+        throw Error('text may not be null or undefined')
       }
 
       if (Array.isArray(text_pair)) {
         throw Error(
-          "When specifying `text_pair`, since `text` is a string, `text_pair` must also be a string (i.e., not an array)."
-        );
+          'When specifying `text_pair`, since `text` is a string, `text_pair` must also be a string (i.e., not an array).',
+        )
       }
 
       // For single input, we just wrap in an array, and then unwrap later.
@@ -1789,24 +1751,24 @@ class PreTrainedTokenizer extends Callable {
           add_special_tokens,
           return_token_type_ids,
         }),
-      ];
+      ]
     }
     // At this point, `encodedTokens` is batched, of shape [batch_size, tokens].
     // However, array may be jagged. So, we may need pad to max_length.
     if (max_length === null) {
-      max_length = this.model_max_length;
+      max_length = this.model_max_length
     } else if (truncation === null) {
       if (padding === true) {
         console.warn(
-          "`max_length` is ignored when `padding: true` and there is no truncation strategy. " +
-            "To pad to max length, use `padding: 'max_length'`."
-        );
-        max_length = this.model_max_length;
+          '`max_length` is ignored when `padding: true` and there is no truncation strategy. ' +
+            "To pad to max length, use `padding: 'max_length'`.",
+        )
+        max_length = this.model_max_length
       } else if (padding === false) {
         console.warn(
-          "Truncation was not explicitly activated but `max_length` is provided a specific value, please use `truncation: true` to explicitly truncate examples to max length."
-        );
-        truncation = true;
+          'Truncation was not explicitly activated but `max_length` is provided a specific value, please use `truncation: true` to explicitly truncate examples to max length.',
+        )
+        truncation = true
       }
     }
 
@@ -1814,25 +1776,25 @@ class PreTrainedTokenizer extends Callable {
     // but padding: true has to calculate max_length from the sequences
     if (padding === true) {
       // Inline max: find the longest input_ids length
-      let maxLen = 0;
+      let maxLen = 0
       for (const enc of encodedTokens) {
-        if (enc.input_ids.length > maxLen) maxLen = enc.input_ids.length;
+        if (enc.input_ids.length > maxLen) maxLen = enc.input_ids.length
       }
-      max_length = Math.min(maxLen, max_length ?? Infinity);
+      max_length = Math.min(maxLen, max_length ?? Infinity)
     }
 
     // Ensure it is less than model max length
-    max_length = Math.min(max_length, this.model_max_length ?? Infinity);
+    max_length = Math.min(max_length, this.model_max_length ?? Infinity)
 
     if (padding || truncation) {
       // Perform padding and/or truncation
       for (let i = 0; i < encodedTokens.length; ++i) {
         if (encodedTokens[i].input_ids.length === max_length) {
-          continue;
+          continue
         } else if (encodedTokens[i].input_ids.length > max_length) {
           // possibly truncate
           if (truncation) {
-            truncateHelper(encodedTokens[i], max_length);
+            truncateHelper(encodedTokens[i], max_length)
           }
         } else {
           // t.length < max_length
@@ -1841,29 +1803,29 @@ class PreTrainedTokenizer extends Callable {
             padHelper(
               encodedTokens[i],
               max_length,
-              (key) => (key === "input_ids" ? this.pad_token_id : 0),
-              this.padding_side
-            );
+              (key) => (key === 'input_ids' ? this.pad_token_id : 0),
+              this.padding_side,
+            )
           }
         }
       }
     }
 
-    const result = {};
+    const result = {}
 
     // Always return plain arrays (no Tensor)
     for (const key of Object.keys(encodedTokens[0])) {
-      result[key] = encodedTokens.map((x) => x[key]);
+      result[key] = encodedTokens.map((x) => x[key])
     }
 
     // If not batched input, we unwrap
     if (!isBatched) {
       for (const key of Object.keys(result)) {
-        result[key] = result[key][0];
+        result[key] = result[key][0]
       }
     }
 
-    return /** @type {BatchEncoding} */ (result);
+    return /** @type {BatchEncoding} */ (result)
   }
 
   /**
@@ -1873,45 +1835,45 @@ class PreTrainedTokenizer extends Callable {
    * @returns {string[]|null} The encoded tokens.
    */
   _encode_text(text) {
-    if (text === null) return null;
+    if (text === null) return null
 
     // Actual function which does encoding, for a single text
     // First, we take care of special tokens. Needed to avoid issues arising from
     // normalization and/or pretokenization (which may not preserve special tokens)
-    const sections = this.added_tokens_splitter.split(text);
+    const sections = this.added_tokens_splitter.split(text)
 
     // Process left/right stripping of added tokens
     for (let i = 0; i < sections.length; ++i) {
-      const addedToken = this.added_tokens_map.get(sections[i]);
+      const addedToken = this.added_tokens_map.get(sections[i])
       if (addedToken) {
         if (addedToken.lstrip && i > 0) {
-          sections[i - 1] = sections[i - 1].trimEnd();
+          sections[i - 1] = sections[i - 1].trimEnd()
         }
         if (addedToken.rstrip && i < sections.length - 1) {
-          sections[i + 1] = sections[i + 1].trimStart();
+          sections[i + 1] = sections[i + 1].trimStart()
         }
       }
     }
 
     const tokens = sections.flatMap((x, section_index) => {
-      if (x.length === 0) return [];
-      if (this.added_tokens_map.has(x)) return [x]; // Return added tokens unchanged
+      if (x.length === 0) return []
+      if (this.added_tokens_map.has(x)) return [x] // Return added tokens unchanged
 
       if (this.remove_space === true) {
-        x = x.trim().split(/\s+/).join(" ");
+        x = x.trim().split(/\s+/).join(' ')
       }
       if (this.do_lowercase_and_remove_accent) {
-        x = x.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+        x = x.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')
       }
 
       if (this.normalizer !== null) {
-        x = this.normalizer(x);
+        x = this.normalizer(x)
       }
 
       // If, after normalization, this section is empty (e.g., trimming whitespace),
       // we return an empty array
       if (x.length === 0) {
-        return [];
+        return []
       }
 
       const sectionTokens =
@@ -1919,14 +1881,14 @@ class PreTrainedTokenizer extends Callable {
           ? this.pre_tokenizer(x, {
               section_index,
             })
-          : [x];
+          : [x]
 
-      const tokens = this.model(sectionTokens);
+      const tokens = this.model(sectionTokens)
 
-      return tokens;
-    });
+      return tokens
+    })
 
-    return tokens;
+    return tokens
   }
 
   /**
@@ -1942,30 +1904,23 @@ class PreTrainedTokenizer extends Callable {
    */
   _encode_plus(
     text,
-    {
-      text_pair = null,
-      add_special_tokens = true,
-      return_token_type_ids = null,
-    } = {}
+    { text_pair = null, add_special_tokens = true, return_token_type_ids = null } = {},
   ) {
     const { tokens, token_type_ids } = this._tokenize_helper(text, {
       pair: text_pair,
       add_special_tokens,
-    });
+    })
 
-    const input_ids = this.model.convert_tokens_to_ids(tokens);
+    const input_ids = this.model.convert_tokens_to_ids(tokens)
 
     const result = {
       input_ids,
       attention_mask: new Array(input_ids.length).fill(1),
-    };
-    if (
-      (return_token_type_ids ?? this.return_token_type_ids) &&
-      token_type_ids
-    ) {
-      result.token_type_ids = token_type_ids;
     }
-    return result;
+    if ((return_token_type_ids ?? this.return_token_type_ids) && token_type_ids) {
+      result.token_type_ids = token_type_ids
+    }
+    return result
   }
 
   /**
@@ -1977,12 +1932,12 @@ class PreTrainedTokenizer extends Callable {
    * @returns {{tokens: string[], token_type_ids?: number[]}} An object containing the tokens and optionally the token type IDs.
    */
   _tokenize_helper(text, { pair = null, add_special_tokens = false } = {}) {
-    const tokens = this._encode_text(text);
-    const tokens2 = this._encode_text(pair);
+    const tokens = this._encode_text(text)
+    const tokens2 = this._encode_text(pair)
 
     return this.post_processor
       ? this.post_processor(tokens, tokens2, { add_special_tokens })
-      : { tokens: mergeArrays(tokens ?? [], tokens2 ?? []) };
+      : { tokens: mergeArrays(tokens ?? [], tokens2 ?? []) }
   }
 
   /**
@@ -1994,7 +1949,7 @@ class PreTrainedTokenizer extends Callable {
    * @returns {string[]} The list of tokens.
    */
   tokenize(text, { pair = null, add_special_tokens = false } = {}) {
-    return this._tokenize_helper(text, { pair, add_special_tokens }).tokens;
+    return this._tokenize_helper(text, { pair, add_special_tokens }).tokens
   }
 
   /**
@@ -2007,19 +1962,12 @@ class PreTrainedTokenizer extends Callable {
    * @param {boolean} [options.return_token_type_ids=null] Whether to return token_type_ids.
    * @returns {number[]} An array of token IDs representing the encoded text(s).
    */
-  encode(
-    text,
-    {
-      text_pair = null,
-      add_special_tokens = true,
-      return_token_type_ids = null,
-    } = {}
-  ) {
+  encode(text, { text_pair = null, add_special_tokens = true, return_token_type_ids = null } = {}) {
     return this._encode_plus(text, {
       text_pair,
       add_special_tokens,
       return_token_type_ids,
-    }).input_ids;
+    }).input_ids
   }
 }
 

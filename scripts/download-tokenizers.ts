@@ -77,8 +77,11 @@ function hfRawUrl(repo: string, filename: string): string {
 }
 
 async function fetchWithRetry(url: string, retries = MAX_RETRIES): Promise<Response> {
-  const proxy = process.env.HTTP_PROXY || process.env.HTTPS_PROXY ||
-    process.env.http_proxy || process.env.https_proxy
+  const proxy =
+    process.env.HTTP_PROXY ||
+    process.env.HTTPS_PROXY ||
+    process.env.http_proxy ||
+    process.env.https_proxy
 
   for (let i = 0; i < retries; i++) {
     try {
@@ -93,17 +96,14 @@ async function fetchWithRetry(url: string, retries = MAX_RETRIES): Promise<Respo
       if (i === retries - 1) throw err
       const delay = 1000 + i * 1000
       console.log(`  重试 ${i + 1}/${retries} (${delay}ms)...`)
-      await new Promise(r => setTimeout(r, delay))
+      await new Promise((r) => setTimeout(r, delay))
     }
   }
   throw new Error('unreachable')
 }
 
 async function downloadFile(repo: string, filename: string): Promise<Buffer> {
-  const urls = [
-    hfDownloadUrl(repo, filename),
-    hfRawUrl(repo, filename),
-  ]
+  const urls = [hfDownloadUrl(repo, filename), hfRawUrl(repo, filename)]
 
   for (const url of urls) {
     try {
@@ -173,7 +173,7 @@ async function main() {
   console.log('\n完成!')
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error(err)
   process.exit(1)
 })

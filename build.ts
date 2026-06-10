@@ -119,11 +119,7 @@ if (!result.success) {
 }
 
 // 复制 tokenizer 数据到 dist/（运行时从 import.meta.dir 加载）
-cpSync(
-  join(srcDir, 'services/tokenizer/data'),
-  join(outDir, 'tokenizer-data'),
-  { recursive: true },
-)
+cpSync(join(srcDir, 'services/tokenizer/data'), join(outDir, 'tokenizer-data'), { recursive: true })
 
 console.log(`Build succeeded: ${result.outputs.length} output(s)`)
 for (const out of result.outputs) {
