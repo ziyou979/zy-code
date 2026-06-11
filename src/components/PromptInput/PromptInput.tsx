@@ -2455,7 +2455,7 @@ function PromptInput({
   // Memoized so the portal useEffect doesn't churn on every PromptInput render.
   const autoModeOptInDialog = useMemo(
     () =>
-      true && showAutoModeOptIn ? (
+      showAutoModeOptIn ? (
         <AutoModeOptInDialog
           onAccept={handleAutoModeOptInAccept}
           onDecline={handleAutoModeOptInDecline}

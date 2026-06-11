@@ -3,7 +3,7 @@ import { z } from 'zod/v4'
 import { SandboxSettingsSchema } from '../../entrypoints/sandboxTypes.js'
 import { isEnvTruthy, isInternalBuild } from '../envUtils.js'
 import { lazySchema } from '../lazySchema.js'
-import { EXTERNAL_PERMISSION_MODES, PERMISSION_MODES } from '../permissions/PermissionMode.js'
+import { PERMISSION_MODES } from '../permissions/PermissionMode.js'
 import { MarketplaceSourceSchema } from '../plugins/schemas.js'
 import { ZY_CODE_SETTINGS_SCHEMA_URL } from './constants.js'
 import { PermissionRuleSchema } from './permissionValidation.js'
@@ -51,7 +51,7 @@ export const PermissionsSchema = lazySchema(() =>
         .optional()
         .describe('List of permission rules that should always prompt for confirmation'),
       defaultMode: z
-        .enum(true ? PERMISSION_MODES : EXTERNAL_PERMISSION_MODES)
+        .enum(PERMISSION_MODES)
         .optional()
         .describe('Default permission mode when ZY Code needs access'),
       disableBypassPermissionsMode: z

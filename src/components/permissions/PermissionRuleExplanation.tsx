@@ -1,4 +1,3 @@
-import { feature } from 'bun:bundle'
 import chalk from 'chalk'
 import { Ansi, Box, Text } from '../../ink.js'
 import { useAppState } from '../../state/AppState.js'
@@ -26,7 +25,7 @@ function stringsForDecisionReason(
   if (!reason) {
     return null
   }
-  if ((feature('BASH_CLASSIFIER') || true) && reason.type === 'classifier') {
+  if (reason.type === 'classifier') {
     if (reason.classifier === 'auto-mode') {
       return {
         reasonString: `Auto mode classifier requires confirmation for this ${toolType}.\n${reason.reason}`,

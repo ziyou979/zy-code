@@ -40,7 +40,6 @@ import {
 } from '../../cli/bootstrap/telemetry.js'
 import {
   assistantModule,
-  autoModeStateModule,
   coordinatorModeModule,
   getAssistant,
   getTeammateModeSnapshot,
@@ -48,6 +47,7 @@ import {
   getTeammateUtils,
   kairosGate,
 } from '../../cli/lazyModules.js'
+import { setAutoModeFlagCli } from '../../services/permissions/autoModeState.js'
 import { extractTeammateOptions, type TeammateOptions } from '../../cli/options/teammate.js'
 import { filterCommandsForRemoteMode, getCommands } from '../../commands.js'
 import { getOauthConfig } from '../../constants/oauth.js'
@@ -695,7 +695,7 @@ export async function rootAction(
     permissionMode === 'auto' ||
     (!permissionModeCli && isDefaultPermissionModeAuto())
   ) {
-    autoModeStateModule?.setAutoModeFlagCli(true)
+    setAutoModeFlagCli(true)
   }
 
   // 如果提供了 MCP 配置文件/字符串，则解析它们

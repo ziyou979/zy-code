@@ -49,11 +49,9 @@ import {
   type PermissionRuleFromEditableSettings,
   shouldAllowManagedPermissionRulesOnly,
 } from './permissionsLoader.js'
+import { isAutoModeAllowlistedTool } from './classifierDecision.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const classifierDecisionModule = true
-  ? (require('./classifierDecision.js') as typeof import('./classifierDecision.js'))
-  : null
 const autoModeStateModule = true
   ? (require('./autoModeState.js') as typeof import('./autoModeState.js'))
   : null
@@ -474,10 +472,9 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
     // 应用 auto 模式：使用 AI 分类器代替提示用户
     // 在 shouldAvoidPermissionPrompts 之前检查，以便分类器在 headless 模式下也能工作
     if (
-      true &&
-      (appState.toolPermissionContext.mode === 'auto' ||
-        (appState.toolPermissionContext.mode === 'plan' &&
-          (autoModeStateModule?.isAutoModeActive() ?? false)))
+      appState.toolPermissionContext.mode === 'auto' ||
+      (appState.toolPermissionContext.mode === 'plan' &&
+        (autoModeStateModule?.isAutoModeActive() ?? false))
     ) {
       // 不可被分类器批准的 safetyCheck 决策对所有自动批准路径都免疫：
       // acceptEdits 快速路径、安全工具白名单和分类器。步骤 1g 仅保护
@@ -601,7 +598,7 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
 
       // 白名单中的工具是安全的，不需要 YOLO 分类。
       // 使用安全工具白名单跳过不必要的分类器 API 调用。
-      if (classifierDecisionModule!.isAutoModeAllowlistedTool(tool.name)) {
+      if (isAutoModeAllowlistedTool(tool.name)) {
         const newDenialState = recordSuccess(denialState)
         persistDenialState(context, newDenialState)
         permLog(`Skipping auto mode classifier for ${tool.name}: tool is on the safe allowlist`)

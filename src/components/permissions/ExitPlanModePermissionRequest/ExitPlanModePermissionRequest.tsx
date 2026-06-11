@@ -372,7 +372,7 @@ export function ExitPlanModePermissionRequest({
     // Clear-context options: set pending plan implementation and reject the dialog
     // The REPL will handle context clear and trigger a fresh query
     // Keep-context options skip this block and go through the normal flow below
-    const isResumeAutoOption = true ? value === 'yes-resume-auto-mode' : false
+    const isResumeAutoOption = value === 'yes-resume-auto-mode'
     const isKeepContextOption =
       value === 'yes-accept-edits-keep-context' ||
       value === 'yes-default-keep-context' ||
@@ -387,7 +387,7 @@ export function ExitPlanModePermissionRequest({
         mode = 'bypassPermissions'
       } else if (value === 'yes-accept-edits') {
         mode = 'acceptEdits'
-      } else if (true && value === 'yes-auto-clear-context' && isAutoModeGateEnabled()) {
+      } else if (value === 'yes-auto-clear-context' && isAutoModeGateEnabled()) {
         // REPL's processInitialMessage handles stripDangerousPermissions + mode,
         // but does NOT set autoModeActive. Gate-off falls through to 'default'.
         mode = 'auto'
@@ -452,7 +452,7 @@ export function ExitPlanModePermissionRequest({
     // Handle auto keep-context option — needs special handling because
     // buildPermissionUpdates maps auto to 'default' via toExternalPermissionMode.
     // We set the mode directly via setAppState and sync the bootstrap state.
-    if (true && value === 'yes-resume-auto-mode' && isAutoModeGateEnabled()) {
+    if (value === 'yes-resume-auto-mode' && isAutoModeGateEnabled()) {
       logEvent('zy_plan_exit', {
         planLengthChars: currentPlan.length,
         outcome: value as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -842,7 +842,7 @@ export function buildPlanApprovalOptions({
   const options: OptionWithDescription<ResponseValue>[] = []
   const usedLabel = usedPercent !== null ? ` (${usedPercent}% ${tSync('planMode.usedLabel')})` : ''
   if (showClearContext) {
-    if (true && isAutoModeAvailable) {
+    if (isAutoModeAvailable) {
       options.push({
         label: tSync('planMode.yesClearContext', { usedLabel }),
         value: 'yes-auto-clear-context',
@@ -861,7 +861,7 @@ export function buildPlanApprovalOptions({
   }
 
   // Slot 2: keep-context with elevated mode (same priority: auto > bypass > edits).
-  if (true && isAutoModeAvailable) {
+  if (isAutoModeAvailable) {
     options.push({
       label: tSync('planMode.yesAutoMode'),
       value: 'yes-resume-auto-mode',

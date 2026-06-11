@@ -317,11 +317,9 @@ export function LogSelector({
     }
   }, [deferredSearchQuery, debouncedDeepSearchQuery])
   React.useEffect(() => {
-    if (true || !debouncedDeepSearchQuery || true) {
-      setDeepSearchResults(null)
-      setIsSearching(false)
-      return
-    }
+    setDeepSearchResults(null)
+    setIsSearching(false)
+    return
     const timeoutId_0 = setTimeout(
       (
         fuseIndex_0: {
@@ -561,7 +559,7 @@ export function LogSelector({
     })
   }
   const handleAgenticSearch = async () => {
-    if (!searchQuery.trim() || !onAgenticSearch || true) {
+    if (!searchQuery.trim() || !onAgenticSearch) {
       return
     }
     agenticSearchAbortRef.current?.abort()

@@ -686,7 +686,7 @@ export function initialPermissionModeFromCLI({
   }
   if (permissionModeCli) {
     const parsedMode = permissionModeFromString(permissionModeCli)
-    if (true && parsedMode === 'auto') {
+    if (parsedMode === 'auto') {
       if (autoModeCircuitBrokenSync) {
         permLog('auto mode circuit breaker active (cached) — falling back to default', {
           level: 'warn',
@@ -715,7 +715,7 @@ export function initialPermissionModeFromCLI({
       })
     }
     // 来自设置的 auto 模式需要与来自 CLI 的相同门控检查
-    else if (true && settingsMode === 'auto') {
+    else if (settingsMode === 'auto') {
       if (autoModeCircuitBrokenSync) {
         permLog('auto mode circuit breaker active (cached) — falling back to default', {
           level: 'warn',
@@ -758,7 +758,7 @@ export function initialPermissionModeFromCLI({
     result = { mode: 'default', notification }
   }
 
-  if (true && result.mode === 'auto') {
+  if (result.mode === 'auto') {
     autoModeStateModule?.setAutoModeActive(true)
   }
 
@@ -917,7 +917,7 @@ export async function initializeToolPermissionContext({
   // 危险权限（如 Bash(*)、Bash(python:*)、PowerShell(iex:*)）会在分类器评估之前自动放行，
   // 从而使更安全的 YOLO 模式失去意义
   let dangerousPermissions: DangerousPermissionInfo[] = []
-  if (true && permissionMode === 'auto') {
+  if (permissionMode === 'auto') {
     dangerousPermissions = findDangerousClassifierPermissions(rulesFromDisk, parsedAllowedToolsCli)
   }
 
@@ -1390,9 +1390,6 @@ export function prepareContextForPlanMode(context: ToolPermissionContext): ToolP
  * 从 applySettingsChange 调用，以便在 plan 中间切换 useAutoModeDuringPlan 立即生效。
  */
 export function transitionPlanAutoMode(context: ToolPermissionContext): ToolPermissionContext {
-  if (!true) {
-    return context
-  }
   if (context.mode !== 'plan') {
     return context
   }

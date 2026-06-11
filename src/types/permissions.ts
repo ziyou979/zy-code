@@ -6,7 +6,6 @@
  * to avoid circular dependencies.
  */
 
-import { feature } from 'bun:bundle'
 import type { ContentBlock } from './llm.js'
 
 // ============================================================================
@@ -30,19 +29,9 @@ export type PermissionMode = InternalPermissionMode
 
 // Runtime validation set: modes that are user-addressable (settings.json
 // defaultMode, --permission-mode CLI flag, conversation recovery).
-//
-// true 是编译时 DCE 开关（build.ts features），
-// 在开发模式（bun run）下始终为 false。设置环境变量
-// ZY_DEV_TRANSCRIPT_CLASSIFIER=1 可在开发模式下强制启用 auto 模式。
-let _hasTranscriptClassifier = false
-_hasTranscriptClassifier = true
-// eslint-disable-next-line custom-rules/safe-env-boolean-check
-if (process.env.ZY_DEV_TRANSCRIPT_CLASSIFIER === '1') {
-  _hasTranscriptClassifier = true
-}
 export const INTERNAL_PERMISSION_MODES = [
   ...EXTERNAL_PERMISSION_MODES,
-  ...(_hasTranscriptClassifier ? (['auto'] as const) : ([] as const)),
+  'auto',
 ] as const satisfies readonly PermissionMode[]
 
 export const PERMISSION_MODES = INTERNAL_PERMISSION_MODES

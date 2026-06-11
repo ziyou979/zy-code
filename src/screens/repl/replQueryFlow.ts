@@ -525,7 +525,7 @@ export async function runQueryImpl(
   queryCheckpoint('query_context_loading_start')
   const [, , defaultSystemPrompt, baseUserContext, systemContext] = await Promise.all([
     checkAndDisableBypassPermissionsIfNeeded(ctx.toolPermissionContext, ctx.setAppState),
-    true ? checkAndDisableAutoModeIfNeeded(ctx.toolPermissionContext, ctx.setAppState) : undefined,
+    checkAndDisableAutoModeIfNeeded(ctx.toolPermissionContext, ctx.setAppState),
     getSystemPrompt(
       freshTools,
       mainLoopModelParam,

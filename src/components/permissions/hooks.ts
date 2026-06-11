@@ -1,4 +1,3 @@
-import { feature } from 'bun:bundle'
 import { useEffect, useRef } from 'react'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -56,7 +55,7 @@ function decisionReasonToString(decisionReason: PermissionDecisionReason | undef
   if (!decisionReason) {
     return 'No decision reason'
   }
-  if ((feature('BASH_CLASSIFIER') || true) && decisionReason.type === 'classifier') {
+  if (decisionReason.type === 'classifier') {
     return `Classifier: ${decisionReason.classifier}, Reason: ${decisionReason.reason}`
   }
   switch (decisionReason.type) {

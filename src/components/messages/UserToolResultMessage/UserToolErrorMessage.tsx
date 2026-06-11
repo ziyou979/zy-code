@@ -50,7 +50,7 @@ export function UserToolErrorMessage({
   ) {
     return <RejectedToolUseMessage />
   }
-  if (true && typeof param.content === 'string' && isClassifierDenial(param.content)) {
+  if (typeof param.content === 'string' && isClassifierDenial(param.content)) {
     return (
       <MessageResponse height={1}>
         <Text dimColor={true}>

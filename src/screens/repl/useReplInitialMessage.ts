@@ -102,7 +102,7 @@ export function useReplInitialMessage(params: UseReplInitialMessageParams): void
               buildPermissionUpdates(initialMsg.mode, initialMsg.allowedPrompts),
             )
           : prev.toolPermissionContext
-        if (true && initialMsg.mode === 'auto') {
+        if (initialMsg.mode === 'auto') {
           updatedToolPermissionContext = stripDangerousPermissionsForAutoMode({
             ...updatedToolPermissionContext,
             mode: 'auto',

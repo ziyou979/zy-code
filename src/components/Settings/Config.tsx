@@ -25,7 +25,6 @@ import {
   permissionModeFromString,
   toExternalPermissionMode,
   isExternalPermissionMode,
-  EXTERNAL_PERMISSION_MODES,
   PERMISSION_MODES,
   type ExternalPermissionMode,
   type PermissionMode,
@@ -538,11 +537,9 @@ export function Config({
       value: settingsData?.permissions?.defaultMode || 'default',
       options: (() => {
         const priorityOrder: PermissionMode[] = ['default', 'plan']
-        const allModes: readonly PermissionMode[] = true
-          ? PERMISSION_MODES
-          : EXTERNAL_PERMISSION_MODES
+        const allModes: readonly PermissionMode[] = PERMISSION_MODES
         const excluded: PermissionMode[] = ['bypassPermissions']
-        if (true && !showAutoInDefaultModePicker) {
+        if (!showAutoInDefaultModePicker) {
           excluded.push('auto')
         }
         return [
@@ -591,7 +588,7 @@ export function Config({
         })
       },
     },
-    ...(true && showAutoInDefaultModePicker
+    ...(showAutoInDefaultModePicker
       ? [
           {
             id: 'useAutoModeDuringPlan',

@@ -1,4 +1,3 @@
-import { feature } from 'bun:bundle'
 import z from 'zod/v4'
 import { PAUSE_ICON } from '../../constants/figures.js'
 // 类型定义已提取到 src/types/permissions.ts 以打破导入循环
@@ -70,17 +69,13 @@ const PERMISSION_MODE_CONFIG: Partial<Record<PermissionMode, PermissionModeConfi
     color: 'error',
     external: 'dontAsk',
   },
-  ...(true
-    ? {
-        auto: {
-          title: 'permissionMode.auto',
-          shortTitle: 'permissionMode.autoShort',
-          symbol: '⏵⏵',
-          color: 'warning' as ModeColorKey,
-          external: 'default' as ExternalPermissionMode,
-        },
-      }
-    : {}),
+  auto: {
+    title: 'permissionMode.auto',
+    shortTitle: 'permissionMode.autoShort',
+    symbol: '⏵⏵',
+    color: 'warning' as ModeColorKey,
+    external: 'default' as ExternalPermissionMode,
+  },
 }
 
 /**

@@ -1,5 +1,4 @@
 import type React from 'react'
-import { feature } from 'bun:bundle'
 import chalk from 'chalk'
 import figures from 'figures'
 import { tSync } from 'src/i18n/index.js'
@@ -27,7 +26,7 @@ function decisionReasonDisplayString(
     type: Exclude<PermissionDecisionReason['type'], 'subcommandResults'>
   },
 ): string {
-  if ((feature('BASH_CLASSIFIER') || true) && decisionReason.type === 'classifier') {
+  if (decisionReason.type === 'classifier') {
     return `${chalk.bold(decisionReason.classifier)} classifier: ${decisionReason.reason}`
   }
   switch (decisionReason.type) {
