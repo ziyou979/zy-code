@@ -11,7 +11,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
-import { gzipSync } from 'node:zlib'
+import { brotliCompressSync, constants } from 'node:zlib'
 
 const DATA_DIR = join(import.meta.dir, '..', 'src', 'services', 'tokenizer', 'data')
 const FORCE = process.argv.includes('--force')
@@ -28,7 +28,7 @@ const SOURCES: TokenizerSource[] = [
   // OpenAI
   { key: 'gpt4o', repo: 'Xenova/gpt-4o' },
   { key: 'gpt4', repo: 'Xenova/gpt-4' },
-  { key: 'gpt35turbo', repo: 'Xenova/gpt-3.5-turbo' },
+  // gpt35turbo 已合并到 gpt4（主词表相同，gpt-3.5 前缀在 index.ts 中直接映射到 gpt4 key）
 
   // Claude
   {
@@ -123,10 +123,10 @@ async function downloadFile(repo: string, filename: string): Promise<Buffer> {
 }
 
 async function processSource(source: TokenizerSource): Promise<void> {
-  const tokenizerGz = join(DATA_DIR, `${source.key}.tokenizer.json.gz`)
-  const configGz = join(DATA_DIR, `${source.key}.tokenizer_config.json.gz`)
+  const tokenizerBr = join(DATA_DIR, `${source.key}.tokenizer.json.br`)
+  const configBr = join(DATA_DIR, `${source.key}.tokenizer_config.json.br`)
 
-  if (!FORCE && existsSync(tokenizerGz) && existsSync(configGz)) {
+  if (!FORCE && existsSync(tokenizerBr) && existsSync(configBr)) {
     console.log(`[${source.key}] 已存在，跳过`)
     return
   }
@@ -136,7 +136,9 @@ async function processSource(source: TokenizerSource): Promise<void> {
   try {
     const tokenizerData = await downloadFile(source.repo, 'tokenizer.json')
     console.log(`  tokenizer.json: ${(tokenizerData.length / 1024 / 1024).toFixed(1)}MB`)
-    writeFileSync(tokenizerGz, gzipSync(tokenizerData, { level: 9 }))
+    writeFileSync(tokenizerBr, brotliCompressSync(tokenizerData, {
+      params: { [constants.BROTLI_PARAM_QUALITY]: 11 },
+    }))
 
     let configData: Buffer
     if (source.tokenizerConfigOverride) {
@@ -149,14 +151,16 @@ async function processSource(source: TokenizerSource): Promise<void> {
         console.log(`  tokenizer_config.json 不存在，使用默认配置`)
       }
     }
-    writeFileSync(configGz, gzipSync(configData, { level: 9 }))
+    writeFileSync(configBr, brotliCompressSync(configData, {
+      params: { [constants.BROTLI_PARAM_QUALITY]: 11 },
+    }))
 
-    const gzSize = readFileSync(tokenizerGz).length
-    console.log(`  完成: ${(gzSize / 1024 / 1024).toFixed(1)}MB (gzip)`)
+    const brSize = readFileSync(tokenizerBr).length
+    console.log(`  完成: ${(brSize / 1024 / 1024).toFixed(1)}MB (brotli)`)
   } catch (err) {
     console.error(`[${source.key}] 下载失败: ${(err as Error).message}`)
-    if (existsSync(tokenizerGz)) unlinkSync(tokenizerGz)
-    if (existsSync(configGz)) unlinkSync(configGz)
+    if (existsSync(tokenizerBr)) unlinkSync(tokenizerBr)
+    if (existsSync(configBr)) unlinkSync(configBr)
   }
 }
 

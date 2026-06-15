@@ -23,7 +23,7 @@
 
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { gunzipSync } from 'node:zlib'
+import { brotliDecompressSync } from 'node:zlib'
 import { PreTrainedTokenizer } from './engine.js'
 
 // ============================================================================
@@ -34,7 +34,7 @@ import { PreTrainedTokenizer } from './engine.js'
 const TOKENIZER_KEYS = {
   gpt4o: 'gpt4o',
   gpt4: 'gpt4',
-  gpt35turbo: 'gpt35turbo',
+  // gpt35turbo 复用 gpt4 词表（二者主词表相同，仅差 2 个 special token）
   claude: 'claude',
   deepseek: 'deepseek',
   qwen: 'qwen',
@@ -78,7 +78,7 @@ const MODEL_PREFIX_TO_TOKENIZER: Array<[string, TokenizerKey]> = [
   ['o4', TOKENIZER_KEYS.gpt4o],
   ['gpt-4-turbo', TOKENIZER_KEYS.gpt4],
   ['gpt-4', TOKENIZER_KEYS.gpt4],
-  ['gpt-3.5', TOKENIZER_KEYS.gpt35turbo],
+  ['gpt-3.5', TOKENIZER_KEYS.gpt4],
   ['claude', TOKENIZER_KEYS.claude],
   ['deepseek', TOKENIZER_KEYS.deepseek],
   ['qwen', TOKENIZER_KEYS.qwen],
@@ -130,17 +130,17 @@ function getTokenizer(tokenizerKey: TokenizerKey): Tokenizer {
   let tokenizer = tokenizerCache.get(tokenizerKey)
   if (!tokenizer) {
     try {
-      const jsonGz = readFileSync(join(DATA_DIR, `${tokenizerKey}.tokenizer.json.gz`))
-      const configGz = readFileSync(join(DATA_DIR, `${tokenizerKey}.tokenizer_config.json.gz`))
-      const tokenizerJSON = JSON.parse(gunzipSync(jsonGz).toString())
-      const tokenizerConfig = JSON.parse(gunzipSync(configGz).toString())
+      const jsonBr = readFileSync(join(DATA_DIR, `${tokenizerKey}.tokenizer.json.br`))
+      const configBr = readFileSync(join(DATA_DIR, `${tokenizerKey}.tokenizer_config.json.br`))
+      const tokenizerJSON = JSON.parse(brotliDecompressSync(jsonBr).toString())
+      const tokenizerConfig = JSON.parse(brotliDecompressSync(configBr).toString())
       tokenizer = new PreTrainedTokenizer(tokenizerJSON, tokenizerConfig)
       tokenizerCache.set(tokenizerKey, tokenizer)
     } catch (error) {
       throw new Error(
         `Failed to load tokenizer "${tokenizerKey}" from ${DATA_DIR}: ${
           error instanceof Error ? error.message : String(error)
-        }`,
+        }. Expected .br files (brotli-compressed).`,
       )
     }
   }
