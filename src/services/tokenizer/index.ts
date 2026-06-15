@@ -6,7 +6,7 @@
  * 由 scripts/download-tokenizers.ts 管理更新。
  *
  * 支持的模型家族（精确分词）：
- * - OpenAI: GPT-4, GPT-4o, GPT-3.5
+ * - OpenAI: GPT-5, GPT-4.1, GPT-4o, GPT-4, GPT-3.5（gpt-5/4.1/4o 共用 o200k_base 词表）
  * - Claude
  * - Qwen 全系列（共用 tokenizer）
  * - DeepSeek-V3 / R1
@@ -32,9 +32,8 @@ import { PreTrainedTokenizer } from './engine.js'
 
 /** Tokenizer key 常量对象，防止拼写错误 */
 const TOKENIZER_KEYS = {
-  gpt4o: 'gpt4o',
-  gpt4: 'gpt4',
-  // gpt35turbo 复用 gpt4 词表（二者主词表相同，仅差 2 个 special token）
+  o200k_base: 'o200k_base',
+  cl100k_base: 'cl100k_base',
   claude: 'claude',
   deepseek: 'deepseek',
   qwen: 'qwen',
@@ -71,14 +70,17 @@ const DATA_DIR = resolveDataDir()
 // ============================================================================
 
 const MODEL_PREFIX_TO_TOKENIZER: Array<[string, TokenizerKey]> = [
-  ['gpt-4o', TOKENIZER_KEYS.gpt4o],
-  ['chatgpt-4o', TOKENIZER_KEYS.gpt4o],
-  ['o1', TOKENIZER_KEYS.gpt4o],
-  ['o3', TOKENIZER_KEYS.gpt4o],
-  ['o4', TOKENIZER_KEYS.gpt4o],
-  ['gpt-4-turbo', TOKENIZER_KEYS.gpt4],
-  ['gpt-4', TOKENIZER_KEYS.gpt4],
-  ['gpt-3.5', TOKENIZER_KEYS.gpt4],
+  // gpt-5 全家族（含 gpt-5.5、gpt-5-turbo 等变体）统一使用 o200k_base 词表
+  ['gpt-5', TOKENIZER_KEYS.o200k_base],
+  ['gpt-4.1', TOKENIZER_KEYS.o200k_base],
+  ['gpt-4o', TOKENIZER_KEYS.o200k_base],
+  ['chatgpt-4o', TOKENIZER_KEYS.o200k_base],
+  ['o1', TOKENIZER_KEYS.o200k_base],
+  ['o3', TOKENIZER_KEYS.o200k_base],
+  ['o4', TOKENIZER_KEYS.o200k_base],
+  ['gpt-4-turbo', TOKENIZER_KEYS.cl100k_base],
+  ['gpt-4', TOKENIZER_KEYS.cl100k_base],
+  ['gpt-3.5', TOKENIZER_KEYS.cl100k_base],
   ['claude', TOKENIZER_KEYS.claude],
   ['deepseek', TOKENIZER_KEYS.deepseek],
   ['qwen', TOKENIZER_KEYS.qwen],
@@ -102,7 +104,7 @@ const MODEL_PREFIX_TO_TOKENIZER: Array<[string, TokenizerKey]> = [
   // pangu / ernie / hunyuan 等无专属 tokenizer 的模型走 DEFAULT_TOKENIZER 兜底
 ]
 
-const DEFAULT_TOKENIZER: TokenizerKey = TOKENIZER_KEYS.gpt4
+const DEFAULT_TOKENIZER: TokenizerKey = TOKENIZER_KEYS.cl100k_base
 
 // ============================================================================
 // 核心函数

@@ -2,7 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3a92499a-523b-4bb4-af7b-1c00e297050b" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.aone_copilot/rules/zy-code.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/download-tokenizers.ts" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/download-tokenizers.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/tokenizer/data/gpt4.tokenizer.json.br" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/tokenizer/data/gpt4.tokenizer_config.json.br" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/tokenizer/data/gpt4o.tokenizer.json.br" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/tokenizer/data/gpt4o.tokenizer_config.json.br" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/tokenizer/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/tokenizer/index.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,31 +39,21 @@
   <component name="ProjectViewState">
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/zy979/IdeaProjects/zy-code&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;bun&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "main",
+    "javascript.preferred.runtime.type.id": "bun",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/zy979/IdeaProjects/zy-code",
+    "nodejs_package_manager_path": "bun",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
-  <component name="RunManager">
-    <configuration default="true" type="JetRunConfigurationType">
-      <module name="zy-code" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
-      <module name="zy-code" />
-      <option name="filePath" />
-      <method v="2" />
-    </configuration>
-  </component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -74,6 +71,9 @@
       <updated>1781508974657</updated>
       <workItem from="1781508976213" duration="210000" />
       <workItem from="1781509238383" duration="33000" />
+      <workItem from="1781512607706" duration="5017000" />
+      <workItem from="1781527108846" duration="16000" />
+      <workItem from="1781527219778" duration="1498000" />
     </task>
     <servers />
   </component>

@@ -26,9 +26,9 @@ interface TokenizerSource {
 
 const SOURCES: TokenizerSource[] = [
   // OpenAI
-  { key: 'gpt4o', repo: 'Xenova/gpt-4o' },
-  { key: 'gpt4', repo: 'Xenova/gpt-4' },
-  // gpt35turbo 已合并到 gpt4（主词表相同，gpt-3.5 前缀在 index.ts 中直接映射到 gpt4 key）
+  { key: 'o200k_base', repo: 'Xenova/gpt-4o' },
+  { key: 'cl100k_base', repo: 'Xenova/gpt-4' },
+  // gpt35turbo 已合并到 cl100k_base（主词表相同，gpt-3.5 前缀在 index.ts 中直接映射到 cl100k_base）
 
   // Claude
   {
