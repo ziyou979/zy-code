@@ -1,5 +1,5 @@
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/index.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   getLocalModelCapability,
   getLocalModelCosts,
@@ -57,14 +57,7 @@ export function getAPIProvider(): APIProvider {
     return configured
   }
 
-  // 3. 检查注册表中的激活环境变量
-  for (const entry of PROVIDER_REGISTRY) {
-    if (entry.activationEnvVar && isEnvTruthy(process.env[entry.activationEnvVar])) {
-      return entry.id as APIProvider
-    }
-  }
-
-  // 4. 默认使用 anthropic
+  // 3. 默认使用 anthropic
   return 'anthropic'
 }
 

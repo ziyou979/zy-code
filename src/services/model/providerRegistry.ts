@@ -88,9 +88,6 @@ export interface ProviderEntry {
   /** 覆盖 base URL 的环境变量名（仅 env-or-default 类型，如 DASHSCOPE_BASE_URL） */
   baseUrlEnvVar?: string
 
-  /** 激活该 provider 的环境变量名（如 ZY_CODE_USE_DASHSCOPE） */
-  activationEnvVar?: string
-
   // -- Onboarding UI 元数据 --------------------------------------------------
 
   /** onboarding 中显示的 API Key 标签（如 "DashScope API Key"） */
@@ -179,6 +176,53 @@ const STANDARD_CAPABILITIES: ProviderCapability[] = [
 export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   // ── 云端 AI 平台（有预设 base URL） ──────────────────────────────────────
   {
+    id: 'anthropic',
+    supportedFormats: ['anthropic'],
+    endpointType: 'hardcoded',
+    capabilities: STANDARD_CAPABILITIES,
+    defaultEffortLevels: ['off', 'light', 'balanced', 'thorough', 'extreme'],
+    apiKeyLabel: 'Anthropic API Key',
+    suggestedModels: [
+      { label: 'claude-sonnet-4-6', value: 'claude-sonnet-4-6', tags: ['recommended', 'balanced'] },
+      { label: 'claude-opus-4-8', value: 'claude-opus-4-8', tags: ['flagship'] },
+      { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tags: ['fast', 'budget'] },
+    ],
+    effortMapping: {
+      off: 'off',
+      quick: 'low',
+      light: 'medium',
+      balanced: 'high',
+      thorough: 'xhigh',
+      extreme: 'max',
+      orchestrate: 'max',
+    },
+  },
+  {
+    id: 'mimo',
+    supportedFormats: ['anthropic', 'openai'],
+    endpointType: 'env-or-default',
+    capabilities: STANDARD_CAPABILITIES,
+    defaultEffortLevels: ['off', 'balanced', 'extreme'],
+    defaultBaseUrls: {
+      openai: 'https://api.xiaomimimo.com/v1',
+      anthropic: 'https://api.xiaomimimo.com/anthropic',
+    },
+    baseUrlEnvVar: 'MIMO_BASE_URL',
+    apiKeyLabel: 'MiMo API Key',
+    suggestedModels: [
+      { label: 'mimo-v2.5-pro', value: 'mimo-v2.5-pro', tags: ['flagship', 'reasoning'] },
+      { label: 'mimo-v2.5', value: 'mimo-v2.5', tags: ['recommended', 'balanced'] },
+      { label: 'mimo-v2-flash', value: 'mimo-v2-flash', tags: ['fast', 'lightweight'] },
+    ],
+    openaiCompat: {
+      thinking: {
+        enable: () => ({ thinking: { type: 'enabled' } }),
+        disable: { thinking: { type: 'disabled' } },
+      },
+      supportsReasoningContent: true,
+    },
+  },
+  {
     id: 'dashscope',
     supportedFormats: ['anthropic', 'openai'],
     endpointType: 'env-or-default',
@@ -189,7 +233,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       anthropic: 'https://dashscope.aliyuncs.com/apps/anthropic/',
     },
     baseUrlEnvVar: 'DASHSCOPE_BASE_URL',
-    activationEnvVar: 'ZY_CODE_USE_DASHSCOPE',
     apiKeyLabel: 'DashScope API Key',
     suggestedModels: [
       { label: 'qwen3.6-plus', value: 'qwen3.6-plus', tags: ['recommended', 'balanced'] },
@@ -251,7 +294,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: ['thinking', 'structured_outputs', 'context_management'],
     // OpenAI reasoning_effort 支持 minimal/low/medium/high（映射由 mapEffortToProvider 处理）。
     defaultEffortLevels: ['off', 'quick', 'light', 'balanced', 'thorough'],
-    activationEnvVar: 'ZY_CODE_USE_OPENAI',
     apiKeyLabel: 'OpenAI API Key',
     suggestedModels: [
       { label: 'gpt-4o', value: 'gpt-4o', tags: ['recommended', 'balanced'] },
@@ -282,7 +324,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       anthropic: 'https://open.bigmodel.cn/api/anthropic',
     },
     baseUrlEnvVar: 'ZHIPU_BASE_URL',
-    activationEnvVar: 'ZY_CODE_USE_ZHIPU',
     apiKeyLabel: 'ZHIPU API Key',
     suggestedModels: [
       { label: 'glm-4-plus', value: 'glm-4-plus', tags: ['recommended', 'balanced'] },
@@ -304,7 +345,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       anthropic: 'https://api.moonshot.cn/anthropic',
     },
     baseUrlEnvVar: 'KIMI_BASE_URL',
-    activationEnvVar: 'ZY_CODE_USE_KIMI',
     apiKeyLabel: 'Kimi API Key',
     suggestedModels: [
       { label: 'moonshot-v1', value: 'moonshot-v1', tags: ['recommended'] },
@@ -433,7 +473,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     ],
     // OpenRouter reasoning.effort 支持 low/medium/high（映射由 mapEffortToProvider 处理）。
     defaultEffortLevels: ['off', 'light', 'balanced', 'thorough'],
-    activationEnvVar: 'ZY_CODE_USE_OPENROUTER',
     apiKeyLabel: 'OpenRouter API Key',
     defaultBaseUrls: {
       openai: 'https://openrouter.ai/api/v1',
@@ -598,7 +637,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: ['thinking', 'adaptive_thinking', 'structured_outputs', 'context_management'],
     // Gemini reasoning_effort 支持 minimal/low/medium/high（映射由 mapEffortToProvider 处理）。
     defaultEffortLevels: ['off', 'quick', 'light', 'balanced', 'thorough'],
-    activationEnvVar: 'ZY_CODE_USE_GEMINI',
     apiKeyLabel: 'Google AI API Key',
     defaultBaseUrls: {
       openai: 'https://generativelanguage.googleapis.com/v1beta/openai/',
@@ -626,29 +664,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
 
   // ── 其他 provider ────────────────────────────────────────────────────────
   {
-    id: 'anthropic',
-    supportedFormats: ['anthropic'],
-    endpointType: 'hardcoded',
-    capabilities: FULL_CAPABILITIES,
-    defaultEffortLevels: ANTHROPIC_EFFORT_LEVELS,
-    apiKeyLabel: 'Anthropic API Key',
-    effortMapping: {
-      off: 'off',
-      quick: 'low',
-      light: 'medium',
-      balanced: 'high',
-      thorough: 'xhigh',
-      extreme: 'max',
-      orchestrate: 'max',
-    },
-  },
-  {
     id: 'generic',
     supportedFormats: ['anthropic', 'openai'],
     endpointType: 'custom',
     capabilities: FULL_CAPABILITIES,
     defaultEffortLevels: ANTHROPIC_EFFORT_LEVELS,
-    activationEnvVar: 'ZY_CODE_USE_GENERIC',
     apiKeyLabel: 'API Key',
   },
 
