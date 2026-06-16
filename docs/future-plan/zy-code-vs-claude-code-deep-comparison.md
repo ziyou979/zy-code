@@ -1024,7 +1024,602 @@ CC 支持多个终端打开同一个对话（通过 `claude agents` 面板或 `c
 
 **本质**：不是"同步滚动位置"，而是 **PTY 终端代理**。Worker 进程运行在 daemon 管理的伪终端中，daemon 捕获原始终端字节流，分发给所有已连接的客户端。所有客户端看到完全相同的终端内容。
 
-### CC Daemon 控制协议（Unix Domain Socket）
+---
+
+### CC 提取实现：1. Daemon 启动与冷启动交互
+
+> 二进制偏移 `~213664283`（`FU` 函数）+ `~213960000`（`rF_` 冷启动交互函数）
+
+```js
+// FU({ onStarting, forceTransient, askInstall })
+// 确保 daemon 在运行。如果不存在，询问用户是否安装为 service
+async function rF_() {
+  let H = await FU({ onStarting: iF_ });  // iF_ = () => stderr.write("Starting daemon…")
+  if (H.ok || !H.askInstall) return H;
+  // TTY 交互：询问用户安装方式
+  process.stderr.write(
+    `No background daemon is running.\n` +
+    `Installing it as a service keeps the background daemon running across reboot\n` +
+    `so 'claude agents' stays available.`
+  );
+  let answer = await readline.question(
+    "Install as a service now? [y/N/never, or 'once' just for now] "
+  );
+  // 分支：yes → 安装 service + 启动, once → 临时 daemon, never → 标记已忽略
+  switch (answer) {
+    case "yes":
+      await wB_();  // 写 service 文件
+      let result = await jB_({ jsonPath: bu(), logPath: vLH() });
+      if (!result.ok) return FU({ forceTransient: true });  // 降级为临时
+      return await waitForReachable(45000);  // 等待 daemon 可达
+    case "once":
+      return FU({ forceTransient: true });
+    case "never":
+      W6((q) => q.daemonInstallPromptDismissed ? q : { ...q, daemonInstallPromptDismissed: true });
+      return FU({ forceTransient: true });
+  }
+}
+```
+
+**僵尸 daemon 检测**（偏移 `~213500000`）：
+```js
+async function zombieDetect() {
+  let H = await KG().catch(() => null);  // 读 daemon PID 文件
+  if (!H || Date.now() - H.startedAt <= 5000) return null;
+  let ping = await Zj({ proto: ZO, op: "ping" }, { timeoutMs: 1000 });
+  // 如果能 ping 通 → daemon 活着，无需操作
+  if (ping.ok || ping.code === "ETIMEOUT") {
+    c("tengu_bg_daemon_zombie_false_positive", { ... });
+    return null;
+  }
+  // ping 不通但 PID 文件存在 → 僵尸 daemon
+  let sockExists = await lstat(Ya()).then(() => true, () => false);
+  c("tengu_bg_daemon_zombie_restart", { pid: H.pid, sock_exists: sockExists });
+  await r3_(H.pid);  // 发信号重启
+}
+```
+
+---
+
+### CC 提取实现：2. Roster 读写（Worker 注册表）
+
+> 二进制偏移 `~214160000`（`zd` 读 / `qcO` 写 / `HO_` 原子更新）
+
+```js
+// roster.json 路径: z6H() → <configDir>/daemon/roster.json
+// 最大 8MB (常量 _cO = 8388608)
+
+// 初始空 roster
+function PB_() {
+  return { proto: ZO, supervisorPid: process.pid, updatedAt: Date.now(), workers: {} };
+}
+
+// 读 roster（带校验和容错）
+async function zd(H) {
+  let _;
+  try {
+    let K = await lstat(z6H());
+    if (!K.isFile() || K.size > _cO) {
+      // 文件过大 → 隔离（quarantine）而非删除
+      if (K.isFile()) await nF6();  // rename → roster.json.corrupt.<timestamp>
+      else await rm(z6H(), { recursive: true, force: true });
+      return { ...PB_(), parseFailed: true };
+    }
+    _ = JSON.parse(await readFile(z6H(), "utf8"));
+  } catch (K) {
+    if (ENOENT(K)) return PB_();  // 不存在 → 空 roster
+    await nF6();  // 损坏 → 隔离
+    return { ...PB_(), parseFailed: true };
+  }
+  let q = RosterSchema.safeParse(_);  // Zod schema 校验
+  if (q.success) return q.data;
+  // 校验失败 → 记录 orphaned worker 数量
+  c("tengu_bg_roster_parse_failed", { orphaned: countWorkers(_), quarantined: 1 });
+  await nF6();
+  return { ...PB_(), parseFailed: true };
+}
+
+// 原子写入 roster
+async function qcO(H) {
+  let _ = z6H();
+  await mkdir(dirname(_), { recursive: true, mode: 0o700 });
+  await atomicWrite(_, JSON.stringify(H, null, 2), 0o600);
+}
+
+// 原子更新（读→修改→写，通过 mutex 序列化）
+function HO_(H) {  // H = (roster) => modifiedRoster
+  let _ = mutex.then(async () => {
+    let q = await zd();
+    let K = H(q) ?? q;
+    K.supervisorPid = process.pid;
+    K.updatedAt = Date.now();
+    await qcO(K);
+  });
+  mutex = _.catch(() => {});
+  return _;
+}
+```
+
+**Roster Schema（Zod）**（偏移 `~212826000`）：
+```js
+// 每个 worker 的字段
+RosterWorkerSchema = z.object({
+  pid: z.number(),
+  procStart: z.number(),
+  sessionId: z.string(),
+  rendezvousSock: z.string(),    // 会话握手 socket 路径
+  ptySock: z.string(),           // PTY 字节流 socket 路径
+  messagingSock: z.string(),     // 结构化消息 socket 路径
+  rvAuth: z.string().optional(), // rendezvous 认证密钥
+  ptyAuth: z.string().optional(),
+  cliVersion: z.string().optional(),
+  startedAt: z.number(),
+  attempt: z.number().optional(),
+  cwd: z.string(),
+  worktreePath: z.string().optional(),
+  dispatch: z.object({ ... }),   // 启动参数
+  short: z.string(),             // 短 ID（用于 URL 和显示）
+  nonce: z.string(),
+  cols: z.number(),
+  rows: z.number(),
+  source: z.string().optional(), // "respawn" | "left_arrow" | ...
+  launch: z.object({ mode: z.enum(["exec","resume"]), sessionId, fork, flagArgs, ... }),
+  ...
+});
+
+RosterSchema = z.object({
+  proto: z.number(),
+  supervisorPid: z.number(),
+  updatedAt: z.number(),
+  workers: z.record(z.string().regex(shortIdRegex), RosterWorkerSchema)
+});
+```
+
+---
+
+### CC 提取实现：3. Control Socket 客户端（UDS 请求/响应）
+
+> 二进制偏移 `~214158000`
+
+```js
+// Mj({ proto, op, ...params }, { timeoutMs })
+// 单次请求-响应（用于 ping, list, leases, has 等）
+async function Mj(H, _) {
+  let timeoutMs = _?.timeoutMs ?? 5000;
+  let socket = net.connect(Ya());  // Ya() → control socket 路径
+  let resolved = false;
+  let resolve = (val) => { if (resolved) return; resolved = true; /* resolve promise */ };
+  
+  socket.setTimeout(timeoutMs, () => resolve({ ok: false, code: "ETIMEOUT", error: "timeout" }));
+  socket.on("error", (err) => resolve({ ok: false, code: "ENOCONN", error: String(err) }));
+  socket.once("connect", () => {
+    socket.write(JSON.stringify(H) + "\n");  // 发送 JSON + 换行符
+  });
+  
+  let decoder = new StringDecoder("utf8");
+  let buffer = "";
+  socket.on("data", (chunk) => {
+    buffer += decoder.write(chunk);
+    let idx = buffer.indexOf("\n");  // 以换行符为消息边界
+    if (idx < 0) return;
+    let line = buffer.slice(0, idx);
+    try { resolve(JSON.parse(line)); }
+    catch (e) { resolve({ ok: false, code: "ENOCONN", error: String(e) }); }
+  });
+  socket.once("close", () => {
+    if (!resolved) resolve({ ok: false, code: "ENOCONN", error: "connection dropped" });
+  });
+}
+```
+
+**Subscribe 客户端**（偏移 `~214158720`）：
+```js
+// VK4(shortId, tail, onData, onDone)
+// 长连接订阅 worker 输出流
+function VK4(H, _, q, K) {
+  let socket = net.connect(Ya());
+  socket.setTimeout(10000, () => {
+    // 10秒无响应 → daemon 可能卡死
+    K(`${daemonName()} did not respond — it may be stalled${suggestRestart("restart")}`);
+    socket.destroy();
+  });
+  socket.on("connect", () => {
+    socket.write(JSON.stringify({
+      proto: ZO,
+      op: "subscribe",
+      short: H,   // 会话短 ID
+      tail: _      // 是否 tail 模式（从头 vs 从尾）
+    }) + "\n");
+  });
+  
+  let cleanup = lineReader(socket, (line) => {
+    let parsed = JSON.parse(line);
+    if ("ok" in parsed && parsed.ok === false) K(parsed.error);
+    else q(parsed);  // 回调处理每条消息
+  });
+  
+  return () => { /* cleanup: destroy socket */ };
+}
+```
+
+**Lease 客户端**（偏移 `~214157000`）：
+```js
+// lF6(label) — 自动重连的 daemon 保活
+function lF6(H) {
+  let clientInfo = { label: H, cwd: process.cwd(), pid: process.pid };
+  let stopped = false, socket = null, reconnectTimer = null;
+  
+  let connect = () => {
+    if (stopped) return;
+    try { socket = net.connect(Ya()); }
+    catch { socket = null; reconnectTimer = setTimeout(connect, 1000); reconnectTimer.unref(); return; }
+    socket.on("error", () => socket?.destroy());
+    socket.once("connect", () => {
+      socket.write(JSON.stringify({ proto: ZO, op: "lease", client: clientInfo }) + "\n");
+    });
+    socket.on("data", () => {});  // 忽略响应
+    socket.once("close", () => {
+      if (socket = null, stopped) return;
+      reconnectTimer = setTimeout(connect, 1000);  // 断线自动重连
+      reconnectTimer.unref();
+    });
+    socket.unref();  // 不阻止进程退出
+  };
+  connect();
+  return () => { stopped = true; if (reconnectTimer) clearTimeout(reconnectTimer); socket?.destroy(); };
+}
+```
+
+---
+
+### CC 提取实现：4. Daemon 控制 Socket 服务端（请求分发）
+
+> 二进制偏移 `~219350000`（大 switch/case）
+
+```js
+// 每个客户端连接到达 daemon 时的分发逻辑
+socket.on("data", (raw) => {
+  let j = JSON.parse(raw);
+  
+  // 协议版本校验
+  if (j.proto !== ZO)
+    return respond({ ok: false, error: "protocol mismatch", code: "EPROTO",
+      serverProto: ZO, serverVersion: VERSION });
+  
+  let X = RequestSchema.safeParse(j);
+  if (!X.success)
+    return respond({ ok: false, error: `malformed request: ${X.error}`, code: "EUNKNOWN" });
+  
+  switch (X.op) {
+    case "ping": case "nudge": case "yield":
+    case "lease": case "leases": case "shutdown":
+      return;  // 由上层处理
+    
+    case "list":
+      return respond({
+        ok: true, op: "list",
+        jobs: Array.from(workers.values()).map((P) =>
+          P.isKilling || P.isRetiring ? { ...P.record, dying: true } : P.record
+        )
+      });
+    
+    case "has": {
+      let P = workers.get(X.short);
+      return respond({
+        ok: true, op: "has",
+        alive: P !== undefined && isAlive(P),
+        present: P !== undefined,
+        ready: P !== undefined && !P.isBooting
+      });
+    }
+    
+    case "reply": {
+      // 权限检查：daemon control key 匹配
+      if (!verifyAuth(X.auth, controlKey))
+        return respond({ ok: false, error: "reply rejected: control key mismatch", code: "EAUTH" });
+      let P = workers.get(X.short);
+      if (!P || P.isRetiring || P.isKilling || P.record.outcome)
+        return respond({ ok: false, error: "job not found", code: "ENOJOB" });
+      if (!await P.reply(X.text))
+        return respond({ ok: false, error: "job isn't accepting replies", code: "ENOREPLY" });
+      return respond({ ok: true, op: "reply" });
+    }
+    
+    case "kill": {
+      let P = workers.get(X.short);
+      if (!P) return respond({ ok: false, error: "job not found", code: "ENOJOB" });
+      P.kill(X.signal ?? "SIGTERM");
+      return respond({ ok: true, op: "kill" });
+    }
+    
+    case "resize": {
+      let P = workers.get(X.short);
+      if (!P) return respond({ ok: false, error: "job not found", code: "ENOJOB" });
+      if (X.attachId) {
+        let attacher = P.attachers.get(X.attachId);
+        if (!attacher) return respond({ ok: true, op: "resize" });
+        attacher.cols = X.cols;
+        attacher.rows = X.rows;
+        if (attacher.repaint) attacher.repaint();
+      } else {
+        P.resize(X.cols, X.rows);  // 直接 resize worker PTY
+      }
+      return respond({ ok: true, op: "resize" });
+    }
+    
+    case "dispatch": {
+      // 需要 control key 认证
+      if (!verifyAuth(X.auth, controlKey))
+        return respond({ ok: false, error: "dispatch rejected: no control key", code: "EAUTH" });
+      await sleep(0);  // yield 到事件循环
+      return dispatchJob(workers, socket, "dispatch", X.d.short, X.d.nonce, X.timeoutMs, X.d);
+    }
+    
+    case "attach": { /* 见下方 */ }
+  }
+});
+```
+
+---
+
+### CC 提取实现：5. Attach / Kick / Stream（核心同步逻辑）
+
+> 二进制偏移 `~219353327`（`case "attach"` 分支）
+
+```js
+case "attach": {
+  // 1. 认证检查
+  if (X.auth === undefined)
+    log("[bg-attach] legacy client (no control key) — allowed via peerUid", "warn");
+  else if (!verifyAuth(X.auth, controlKey))
+    return respond({ ok: false, error: "attach rejected: control key mismatch", code: "EAUTH" });
+  
+  let P = workers.get(X.short);
+  if (!P || P.isKilling || (P.record.outcome && P.dispatch.launch.mode !== "exec"))
+    return respond({ ok: false, error: "job not found", code: "ENOJOB" });
+  if (P.isUnverified)
+    return respond({ ok: false, error: "worker unverified — restart supervisor", code: "EUNVERIFIED" });
+  if (P.isRetiring)
+    return respond({ ok: false, error: "job is retiring; retry attach", code: "ERESPAWNING" });
+  
+  // 2. Legacy worker 自动 respawn（旧版 PTY 模式 → 新版 worker-owned PTY）
+  if (P.record.legacy) {
+    c("tengu_bg_attach_legacy_autorespawn", {});
+    P.kill("SIGTERM");
+    respawnWorker(P.dispatch, ...);
+    return respond({ ok: false, error: "legacy job respawning; retry attach", code: "ERESPAWNING" });
+  }
+  
+  // 3. 版本倾斜检测 → 自动 respawn 到新版本
+  if (P.record.cliVersion && P.record.cliVersion !== CURRENT_VERSION && shouldRespawnOnSkew()) {
+    let result = await P.respawnIfIdleStale(undefined, "attach");
+    if (result.respawned || result.reason === "in-progress")
+      return respond({ ok: false, error: "job is restarting on updated CC; retry", code: "ERESPAWNING" });
+  }
+  
+  // 4. 发送初始状态给客户端
+  respond(socket, null);
+  socket.write(JSON.stringify({
+    ok: true, op: "attach",
+    decModes: P.decModeSnapshot(),  // 当前 DEC 终端模式快照
+    via: P.via,
+    tempo: P.record.tempo,
+    state: P.record.state
+  }) + "\n");
+  c("tengu_bg_attach", {
+    tempo: P.record.tempo, state: P.record.state,
+    via: P.via, attachers: P.attachers.size
+  });
+  
+  // 5. 流式转发：订阅 worker 的 onStream
+  let VT_RESET = ...;
+  let SET_TITLE = ...;
+  let buffer = [], bufSize = 0, header = "", flushed = false;
+  let flush = (force) => {
+    if (buffer === null) return;
+    let b = buffer; buffer = null;
+    if (force && !socket.destroyed) for (let chunk of b) socket.write(chunk);
+  };
+  
+  // 重绘检测：缓冲直到看到完整帧（VT_RESET + SET_TITLE_AND_ICON）
+  let stallTimer = setTimeout(() => {
+    let stillBuffering = buffer !== null && bufSize === 0;
+    let holdingFrame = X.holdingFrame === true;
+    if (!holdingFrame) flush(true);
+    if (stillBuffering && !socket.destroyed) {
+      let state = P.record.state;
+      let msg = (state === "starting" || state === "resuming" || state === "adopted" || state === "crashed")
+        ? "Session is starting — it will appear once ready. Ctrl+Z to detach"
+        : "Waiting for session to redraw… Ctrl+Z to detach";
+      socket.write(dim(`\n${msg}\n`));
+    }
+    // 卡住检测：每秒检查一次
+    stallCheck = setInterval(() => {
+      tick++;
+      if (stallThreshold > 0 && tick >= stallThreshold && !P.isKilling && !P.isRetiring) {
+        clearInterval(stallCheck);
+        // 尝试 respawn
+        if (P.dispatch.attachStallRespawns >= 2) {
+          P.kill("SIGKILL", "failed", "session keeps stalling at startup");
+          return;
+        }
+        socket.write("Session not responding — restarting it…");
+        respawnStale(P, socket, ...);
+      }
+      // 按 attacher 尺寸重绘
+      let info = P.attachers.get(attachKey);
+      P.resizeForRepaint(info?.cols ?? X.cols, info?.rows ?? X.rows);
+    }, 1000);
+    stallCheck.unref();
+  }, 500);
+  
+  // 流订阅
+  let unsub = P.onStream.subscribe((chunk) => {
+    if (socket.destroyed) return;
+    gotData = true;
+    if (buffer !== null) {
+      let combined = header + chunk;
+      if (combined.includes(VT_RESET) || combined.includes(SET_TITLE)) {
+        // 检测到完整帧 → 立即刷新
+        clearInterval(stallCheck);
+        let full = chunk.includes(VT_RESET) || chunk.includes(SET_TITLE) ? chunk : combined;
+        flush(false);
+        socket.write(P.decModeSnapshot().map(applyDecMode).join("") + full);
+        return;
+      }
+      buffer.push(chunk);
+      bufSize += chunk.length;
+      header = combined.slice(-6);  // 保留最后 6 字节做边界检测
+      if (bufSize > 65536) flush(true);  // 超过 64KB 强制刷新
+      return;
+    }
+    // 正常模式：直接转发
+    if (socket.writableLength > MAX_BACKPRESSURE) { socket.destroy(); return; }
+    socket.write(chunk);
+  });
+  
+  // 重绘完成信号
+  let unsubRepaint = P.onRepaintDone.subscribe(() => { flush(); flush(true); });
+  
+  // 6. KICK 机制 — Windows 上踢掉所有已连接客户端
+  if (platform() === "win32")
+    for (let attacher of P.attachers.values()) attacher.kick();
+  
+  // 7. 注册 attacher + kick 旧连接
+  let attachKey = X.attachId ?? socket;
+  P.attachers.set(attachKey, {
+    cols: X.cols, rows: X.rows, caps: X.caps,
+    deliver: (data) => { if (!socket.destroyed) socket.write(data); },
+    kick: () => {
+      c("tengu_bg_attach_kick", {});
+      clearInterval(stallCheck);
+      clearTimeout(stallTimer);
+      unsub();
+      unsubRepaint();
+      socket.removeAllListeners("data");
+      if (!socket.destroyed) {
+        socket.write("EKICKED: Session opened in another window\n");
+        socket.end();
+      }
+      P.attachers.delete(attachKey);
+    }
+  });
+}
+```
+
+---
+
+### CC 提取实现：6. Worker 类方法清单
+
+> 二进制偏移 `~216263000`（Worker class 方法表）
+
+```
+getPhase              — 获取 worker 当前阶段
+transitionTo          — 状态机转换
+shutdownWorker        — 关闭 worker
+respawnIfIdleStale    — 如果 idle 且版本过旧则 respawn
+sigtermWorker         — 发送 SIGTERM
+isClaimed             — 是否已被客户端认领
+socketAuth            — socket 认证
+buildClaimFrame       — 构建 claim 帧
+adopt                 — 收养一个孤儿 worker
+unverified            — 标记为未验证
+tail                  — tail 模式读取
+ringSnapshot          — 环形缓冲区快照
+preInitErrorTail      — 初始化前错误的 tail
+decModeSnapshot       — DEC 终端模式快照（attach 时发送给客户端）
+noteActivity          — 记录活动时间
+shiftGraceClocksForward — 延长宽限期
+seedFocus             — 设置焦点
+resize                — resize worker PTY
+resizeForRepaint      — 按 attacher 尺寸重绘
+signalPtyPgrp         — 向 PTY 进程组发信号
+rosterEntry           — 写入 roster.json 的条目
+cappedDispatch        — 限流分发
+replay                — 重放会话历史
+settleCwd             — 确认 CWD
+buildBridgeReattachEnvFromState — 构建 bridge 重连环境变量
+scheduleRespawn       — 调度 respawn
+settle                — 等待 worker 稳定
+connectRv             — 连接 rendezvous socket
+startPidPoll          — 开始 PID 轮询（检测 worker 进程退出）
+pidRecycled           — PID 是否已被回收
+checkPid              — 检查 PID 存活
+clearLiveness         — 清除存活标志
+```
+
+---
+
+### CC 提取实现：7. FleetView TUI 入口
+
+> 二进制偏移 `~132988000`（`WRT` / `rc4` 函数）
+
+```js
+// claude agents 命令的主循环
+async function WRT(ink, options) {
+  // 注册信号处理（stdin 缓冲 + Ctrl+C）
+  let inputBuffer = [];
+  process.stdin.on("readable", () => { /* 缓冲输入 */ });
+  
+  // 进入 FleetView 主循环
+  for (;;) {
+    let result = await new Promise((resolve) => {
+      ink.render(
+        <AltScreen>
+          <MouseTracking>
+            <AppStateProvider onChange={({ newState }) => savedState = newState}>
+              <KeyboardProvider>
+                <FleetViewLayout>
+                  <nc4
+                    onAction={resolve}
+                    initialJobId={selectedJobId}
+                    initialQuery={query}
+                    initialCollapsed={collapsed}
+                    cwdFilter={cwdFilter}
+                    dispatchDefaults={defaults}
+                  />
+                </FleetViewLayout>
+              </KeyboardProvider>
+            </AppStateProvider>
+          </MouseTracking>
+        </AltScreen>
+      );
+    });
+    
+    if (result.type === "done") break;
+    if (result.type === "open") {
+      // 用户选择了会话 → attach
+      let short = result.job.id;
+      let respawn = await respawnJob(short, { knownState: result.job.state });
+      if (respawn.ok || respawn.alive) {
+        let attachResult = await attachJob(short);
+        // attach 返回后 → 重新挂载 FleetView 列表
+        // (用户 Ctrl+Z detach 或 EKICKED 后回到这里)
+      }
+    }
+  }
+}
+```
+
+**左箭头后台化**（偏移 `~132994672`，`tc4` 函数）：
+```js
+// 在当前会话中按 ← 键 → 后台化当前会话 + 打开 FleetView
+async function tc4(query, ...) {
+  let intent = parseIntent();
+  // 1. 为当前会话创建 jobDir
+  let { short, jobDir } = await createJobDir(uuid, { ...intent, cwd: worktreePath });
+  // 2. 保存当前会话状态到 jobDir
+  flushBridge(); bridge.teardown({ skipArchive: true });
+  // 3. spawn 后台 worker（接管当前会话）
+  spawnInBackground(intent, query, ...);
+  // 4. 进入 FleetView
+  await enterFleetView(short);
+}
+```
+
+---
+
+### CC Daemon 控制协议汇总
 
 | 操作 | 说明 |
 |---|---|
@@ -1032,62 +1627,20 @@ CC 支持多个终端打开同一个对话（通过 `claude agents` 面板或 `c
 | `lease` | 客户端注册保活（label, cwd, pid） |
 | `leases` | 列出活跃客户端 |
 | `list` | 列出所有后台任务（jobs） |
-| `has` | 检查会话是否存在 |
+| `has` | 检查会话是否存在（alive/present/ready） |
 | `subscribe` | 订阅会话输出流（含 `tail` 选项） |
-| `attach` | 附加到运行中的会话 |
-| `resize` | 同步终端尺寸变更 |
-| `reply` | 回复 peek 请求（peek-reply 机制） |
-| `kill` | 终止后台任务 |
+| `attach` | 附加到运行中的会话（含 auth + decModeSnapshot + stream） |
+| `resize` | 同步终端尺寸变更（按 attachId 或全局） |
+| `reply` | 回复 peek 请求（peek-reply 机制，需 auth） |
+| `dispatch` | 分发新任务（需 auth） |
+| `kill` | 终止后台任务（支持指定 signal） |
+| `respawn-stale` | 如果 idle 且版本过旧则 respawn |
+| `await-ack` | 等待 worker 确认 |
 | `yield` | 让出控制权 |
 | `nudge` | 唤醒空闲会话 |
 | `shutdown` | 关闭 daemon |
 
-### Attach / Kick 机制（关键）
-
-当客户端通过 `op: "attach"` 连接到已有会话时：
-
-1. **发送初始状态**：daemon 向新客户端发送 `decModeSnapshot()`（DEC 终端模式）和当前 `tempo`/`state`
-2. **流式转发**：订阅 worker 的 `onStream`，将原始字节流写入客户端 socket
-3. **重绘等待**：缓冲输出直到检测到完整帧（`VT_RESET` + `SET_TITLE_AND_ICON`），然后刷新缓冲区
-4. **终端尺寸同步**：通过 `P.resizeForRepaint(cols, rows)` 按客户端尺寸重绘
-
-**Kick 机制**：
-- **Unix**：同一 `attachId` 只能有一个活跃连接，新客户端 attach 时旧连接收到 `EKICKED: Session opened in another window` 后被断开
-- **Windows**：**所有**已连接客户端同时被 kick（`for(let t of P.attachers.values()) t.kick()`）
-- 被 kick 的客户端可通过 FleetView 重新选择会话
-
-### 关键数据结构
-
-```js
-// roster.json — daemon 的 worker 注册表
-{
-  proto: 2,
-  supervisorPid: process.pid,
-  updatedAt: Date.now(),
-  workers: {
-    [shortId]: {
-      pid, procStart, sessionId,
-      rendezvousSock, ptySock, messagingSock,  // 三个 UDS socket
-      cliVersion, startedAt, cols, rows,
-      dispatch, short, nonce, mode, ...
-    }
-  }
-}
-```
-
-**三 Socket 架构**（每个 worker）：
-- `rendezvousSock` — 会话握手/交接
-- `ptySock` — PTY 字节流（终端 I/O）
-- `messagingSock` — 结构化消息（权限请求、状态更新）
-
-### FleetView TUI
-
-`claude agents` 命令打开 FleetView 面板：
-- 列出所有后台/活跃会话，按状态分组（working / review / blocked / done）
-- 选择会话 → 全屏 attach → 实时查看对话内容
-- `Ctrl+Z` 可 detach 回到 FleetView 列表
-- `←`（左箭头）可在当前会话中打开 FleetView 并后台化当前会话
-- 支持 `@mention`、`ctrl+t` 置顶、`ctrl+r` 重命名、`ctrl+s` 切换视图
+---
 
 ### zy-code 现状
 
@@ -1110,13 +1663,16 @@ CC 支持多个终端打开同一个对话（通过 `claude agents` 面板或 `c
 | 组件 | 估计工作量 | 优先级 |
 |---|---|---|
 | Daemon 进程（常驻后台，UDS 控制协议） | 高（2-3 周） | P1 |
-| Roster（worker 注册表 + JSON 持久化） | 中（3-5 天） | P1 |
+| Roster（worker 注册表 + JSON 持久化 + Zod 校验） | 中（3-5 天） | P1 |
 | PTY 管理（spawn worker in PTY，捕获字节流） | 高（1-2 周） | P1 |
-| Attach/Kick 机制（多客户端连接 + 踢出） | 中（1 周） | P2 |
-| Subscribe/Tail 流式转发 | 中（1 周） | P2 |
-| FleetView TUI（会话列表面板） | 高（2-3 周） | P2 |
-| Resize 同步 | 低（2-3 天） | P2 |
+| Attach/Kick 机制（多客户端连接 + 踢出 + 帧检测） | 中（1 周） | P2 |
+| Subscribe/Tail 流式转发（含背压控制） | 中（1 周） | P2 |
+| FleetView TUI（会话列表面板 + 状态分组） | 高（2-3 周） | P2 |
+| Resize 同步（按 attacher 尺寸重绘） | 低（2-3 天） | P2 |
+| Lease 客户端（自动重连保活） | 低（1-2 天） | P2 |
+| 版本倾斜检测 + 自动 respawn | 中（3-5 天） | P3 |
 | Alt-screen handoff | 中（3-5 天） | P3 |
+| Legacy worker 自动迁移 | 中（3-5 天） | P3 |
 
 **总计**：约 6-10 周工作量，是一个完整的子系统。
 
