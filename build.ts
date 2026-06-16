@@ -88,6 +88,9 @@ const result = await Bun.build({
     'image-processor-napi',
     // Dynamic-import-only SDK extensions
     '@azure/identity',
+    '@aws-sdk/client-sts',
+    '@aws-sdk/credential-provider-node',
+    '@aws-sdk/credential-providers',
     // Lazy-loaded packages (dynamic import only)
     '@anthropic-ai/mcpb',
     '@smithy/core',

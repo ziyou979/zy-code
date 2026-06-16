@@ -95,6 +95,9 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@aws-sdk/client-sts": "^3.936.0",
+    "@aws-sdk/credential-provider-node": "^3.936.0",
+    "@aws-sdk/credential-providers": "^3.936.0",
     "@biomejs/biome": "^2.4.14",
     "@types/diff": "^7.0.2",
     "@types/lodash-es": "^4.17.12",

@@ -1,4 +1,3 @@
-import { exec } from 'node:child_process'
 import { mkdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import chalk from 'chalk'
@@ -20,7 +19,6 @@ import {
   getMacOsKeychainStorageServiceName,
   getUsername,
 } from 'src/services/secureStorage/macOsKeychainHelpers.js'
-import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import { getMockSubscriptionType, shouldUseMockSubscription } from '../mockRateLimits.js'
 import { isOAuthTokenExpired, refreshOAuthToken, shouldUseZyAIAuth } from '../oauth/client.js'
 import { getOauthProfileFromOauthToken } from '../oauth/getOauthProfile.js'
@@ -33,8 +31,6 @@ import {
   maybeRemoveApiKeyFromMacOSKeychainThrows,
   normalizeApiKeyForConfig,
 } from '../../utils/authPortable.js'
-import { checkStsCallerIdentity, isValidAwsStsOutput } from '../../utils/aws.js'
-import { AwsAuthStatusManager } from '../../utils/awsAuthStatusManager.js'
 import { clearBetasCaches } from '../../utils/betas.js'
 import {
   type AccountInfo,
@@ -257,56 +253,6 @@ function isApiKeyHelperFromProjectOrLocalSettings(): boolean {
 }
 
 /**
- * 从 settings 中获取已配置的 awsAuthRefresh
- */
-function getConfiguredAwsAuthRefresh(): string | undefined {
-  const mergedSettings = getInitialSettings() || {}
-  return mergedSettings.awsAuthRefresh
-}
-
-/**
- * 检查已配置的 awsAuthRefresh 是否来自项目设置
- */
-export function isAwsAuthRefreshFromProjectSettings(): boolean {
-  const awsAuthRefresh = getConfiguredAwsAuthRefresh()
-  if (!awsAuthRefresh) {
-    return false
-  }
-
-  const projectSettings = getSettingsForSource('projectSettings')
-  const localSettings = getSettingsForSource('localSettings')
-  return (
-    projectSettings?.awsAuthRefresh === awsAuthRefresh ||
-    localSettings?.awsAuthRefresh === awsAuthRefresh
-  )
-}
-
-/**
- * 从 settings 中获取已配置的 awsCredentialExport
- */
-function getConfiguredAwsCredentialExport(): string | undefined {
-  const mergedSettings = getInitialSettings() || {}
-  return mergedSettings.awsCredentialExport
-}
-
-/**
- * 检查已配置的 awsCredentialExport 是否来自项目设置
- */
-export function isAwsCredentialExportFromProjectSettings(): boolean {
-  const awsCredentialExport = getConfiguredAwsCredentialExport()
-  if (!awsCredentialExport) {
-    return false
-  }
-
-  const projectSettings = getSettingsForSource('projectSettings')
-  const localSettings = getSettingsForSource('localSettings')
-  return (
-    projectSettings?.awsCredentialExport === awsCredentialExport ||
-    localSettings?.awsCredentialExport === awsCredentialExport
-  )
-}
-
-/**
  * 计算 API key helper 缓存的 TTL（毫秒）
  * 如果设置了有效的 ZY_CODE_API_KEY_HELPER_TTL_MS 环境变量则使用该值，
  * 否则默认为 5 分钟
@@ -474,170 +420,6 @@ export function prefetchApiKeyFromApiKeyHelperIfSafe(isNonInteractiveSession: bo
     return
   }
   void getApiKeyFromApiKeyHelper(isNonInteractiveSession)
-}
-
-/**
- * 运行 awsAuthRefresh 执行交互式认证（例如 aws sso login）
- * 实时输出流以便用户查看
- */
-async function _runAwsAuthRefresh(): Promise<boolean> {
-  const awsAuthRefresh = getConfiguredAwsAuthRefresh()
-
-  if (!awsAuthRefresh) {
-    return false // 未配置，视为成功
-  }
-
-  // 安全检查：检查 awsAuthRefresh 是否来自项目设置
-  if (isAwsAuthRefreshFromProjectSettings()) {
-    // 检查此项目是否已建立信任
-    const hasTrust = checkHasTrustDialogAccepted()
-    if (!hasTrust && !getIsNonInteractiveSession()) {
-      const error = new Error(
-        `Security: awsAuthRefresh executed before workspace trust is confirmed. If you see this message, post in ${MACRO.FEEDBACK_CHANNEL}.`,
-      )
-      logAntError('awsAuthRefresh invoked before trust check', error)
-      logEvent('zy_awsAuthRefresh_missing_trust', {})
-      return false
-    }
-  }
-
-  try {
-    logForDebugging('Fetching AWS caller identity for AWS auth refresh command')
-    await checkStsCallerIdentity()
-    logForDebugging('Fetched AWS caller identity, skipping AWS auth refresh command')
-    return false
-  } catch {
-    // 仅在 caller-identity 调用失败时才执行刷新
-    return refreshAwsAuth(awsAuthRefresh)
-  }
-}
-
-// AWS 认证刷新命令的超时时间（3 分钟）。
-// 足以完成基于浏览器的 SSO 流程，又不至于无限期挂起。
-const AWS_AUTH_REFRESH_TIMEOUT_MS = 3 * 60 * 1000
-
-export function refreshAwsAuth(awsAuthRefresh: string): Promise<boolean> {
-  logForDebugging('Running AWS auth refresh command')
-  // 开始追踪认证状态
-  const authStatusManager = AwsAuthStatusManager.getInstance()
-  authStatusManager.startAuthentication()
-
-  return new Promise((resolve) => {
-    const refreshProc = exec(awsAuthRefresh, {
-      timeout: AWS_AUTH_REFRESH_TIMEOUT_MS,
-    })
-    refreshProc.stdout!.on('data', (data) => {
-      const output = data.toString().trim()
-      if (output) {
-        // 将输出添加到状态管理器以供 UI 展示
-        authStatusManager.addOutput(output)
-        // 同时记录调试日志
-        logForDebugging(output, { level: 'debug' })
-      }
-    })
-
-    refreshProc.stderr!.on('data', (data) => {
-      const error = data.toString().trim()
-      if (error) {
-        authStatusManager.setError(error)
-        logForDebugging(error, { level: 'error' })
-      }
-    })
-
-    refreshProc.on('close', (code, signal) => {
-      if (code === 0) {
-        logForDebugging('AWS auth refresh completed successfully')
-        authStatusManager.endAuthentication(true)
-        void resolve(true)
-      } else {
-        const timedOut = signal === 'SIGTERM'
-        const message = timedOut
-          ? chalk.red(
-              'AWS auth refresh timed out after 3 minutes. Run your auth command manually in a separate terminal.',
-            )
-          : chalk.red('Error running awsAuthRefresh (in settings or ~/.zy.json):')
-        // biome-ignore lint/suspicious/noConsole:: intentional console output
-        console.error(message)
-        authStatusManager.endAuthentication(false)
-        void resolve(false)
-      }
-    })
-  })
-}
-
-/**
- * 运行 awsCredentialExport 获取凭据并设置环境变量
- * 期望返回包含 AWS 凭据的 JSON 输出
- */
-async function _getAwsCredsFromCredentialExport(): Promise<{
-  accessKeyId: string
-  secretAccessKey: string
-  sessionToken: string
-} | null> {
-  const awsCredentialExport = getConfiguredAwsCredentialExport()
-
-  if (!awsCredentialExport) {
-    return null
-  }
-
-  // 安全检查：检查 awsCredentialExport 是否来自项目设置
-  if (isAwsCredentialExportFromProjectSettings()) {
-    // 检查此项目是否已建立信任
-    const hasTrust = checkHasTrustDialogAccepted()
-    if (!hasTrust && !getIsNonInteractiveSession()) {
-      const error = new Error(
-        `Security: awsCredentialExport executed before workspace trust is confirmed. If you see this message, post in ${MACRO.FEEDBACK_CHANNEL}.`,
-      )
-      logAntError('awsCredentialExport invoked before trust check', error)
-      logEvent('zy_awsCredentialExport_missing_trust', {})
-      return null
-    }
-  }
-
-  try {
-    logForDebugging('Fetching AWS caller identity for credential export command')
-    await checkStsCallerIdentity()
-    logForDebugging('Fetched AWS caller identity, skipping AWS credential export command')
-    return null
-  } catch {
-    // 仅在 caller-identity 调用失败时才执行导出
-    try {
-      logForDebugging('Running AWS credential export command')
-      const result = await execa(awsCredentialExport, {
-        shell: true,
-        reject: false,
-      })
-      if (result.exitCode !== 0 || !result.stdout) {
-        throw new Error('awsCredentialExport did not return a valid value')
-      }
-
-      // 解析 aws sts 命令的 JSON 输出
-      const awsOutput = jsonParse(result.stdout.trim())
-
-      if (!isValidAwsStsOutput(awsOutput)) {
-        throw new Error('awsCredentialExport did not return valid AWS STS output structure')
-      }
-
-      logForDebugging('AWS credentials retrieved from awsCredentialExport')
-      return {
-        accessKeyId: awsOutput.Credentials.AccessKeyId,
-        secretAccessKey: awsOutput.Credentials.SecretAccessKey,
-        sessionToken: awsOutput.Credentials.SessionToken,
-      }
-    } catch (e) {
-      const message = chalk.red(
-        'Error getting AWS credentials from awsCredentialExport (in settings or ~/.zy.json):',
-      )
-      if (e instanceof Error) {
-        // biome-ignore lint/suspicious/noConsole:: intentional console output
-        console.error(message, e.message)
-      } else {
-        // biome-ignore lint/suspicious/noConsole:: intentional console output
-        console.error(message, e)
-      }
-      return null
-    }
-  }
 }
 
 /**
