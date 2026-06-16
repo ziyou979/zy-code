@@ -9,7 +9,9 @@
       "Bash(grep -h \"agentType:\" src/tools/AgentTool/built-in/*.ts)",
       "Bash(git stash:*)",
       "Bash(gh pr:*)",
-      "Bash(bun test:*)"
+      "Bash(bun test:*)",
+      "Bash(ls -lt ~/.zy/sessions/*.json)",
+      "Bash(git:*)"
     ]
   }
 }
