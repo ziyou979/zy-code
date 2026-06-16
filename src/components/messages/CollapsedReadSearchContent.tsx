@@ -22,6 +22,7 @@ import { CtrlOToExpand } from '../CtrlOToExpand.js'
 import { useSelectedMessageBg } from '../messageActions.js'
 import { PrBadge } from '../PrBadge.js'
 import { ToolUseLoader } from '../ToolUseLoader.js'
+import { AssistantThinkingMessage } from './AssistantThinkingMessage.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemCollapsed = feature('TEAMMEM')
@@ -33,6 +34,12 @@ const teamMemCollapsed = feature('TEAMMEM')
 //（bash 命令、文件读取、搜索模式）才是可读的，而不是
 // 在一帧内闪烁消失。
 const MIN_HINT_DISPLAY_MS = 700
+const MAX_THINKING_SUMMARY_CHARS = 300
+
+function truncateThinkingSummary(summary: string, maxChars: number): string {
+  return summary.length > maxChars ? `${summary.slice(0, maxChars - 1)}…` : summary
+}
+
 type Props = {
   message: CollapsedReadSearchGroup
   inProgressToolUseIDs: Set<string>
@@ -196,6 +203,8 @@ export function CollapsedReadSearchContent({
     mcpCallCount > 0 ||
     bashCount > 0 ||
     gitOpBashCount > 0
+  // 纯 thinking 折叠块（无任何工具调用计数）也可能存在
+  const hasThinkingContent = (message.thinkingDurationMs ?? 0) > 0 || message.latestThinkingSummary !== undefined
   const readPaths = message.readFilePaths
   const searchArgs = message.searchArgs as string[] | undefined
   let incomingHint = message.latestDisplayHint
@@ -232,22 +241,38 @@ export function CollapsedReadSearchContent({
       }
     }
   }
-  const displayedHint = useMinDisplayTime(incomingHint, MIN_HINT_DISPLAY_MS)
+  const fallbackHint = useMinDisplayTime(incomingHint, MIN_HINT_DISPLAY_MS)
+  const displayedHint =
+    isActiveGroup && message.latestThinkingSummary
+      ? truncateThinkingSummary(message.latestThinkingSummary, MAX_THINKING_SUMMARY_CHARS)
+      : fallbackHint
 
   // 在 verbose 模式下，渲染每个工具使用及其 1 行结果摘要
   if (verbose) {
-    const toolUses: AssistantMessage[] = []
+    const items: AssistantMessage[] = []
     for (const msg of groupMessages ?? []) {
       if (msg.type === 'assistant') {
-        toolUses.push(msg)
+        items.push(msg)
       } else if (msg.type === 'grouped_tool_use') {
-        toolUses.push(...(msg.message as unknown as AssistantMessage[]))
+        items.push(...(msg.message as unknown as AssistantMessage[]))
       }
     }
     return (
       <Box flexDirection="column">
-        {toolUses.map((msg_0) => {
+        {items.map((msg_0) => {
           const content = msg_0.message.content[0]
+          // 在工具调用之间内联渲染 thinking 块
+          if (content?.type === 'thinking' && content.thinking) {
+            return (
+              <AssistantThinkingMessage
+                key={msg_0.uuid}
+                param={content}
+                addMargin={true}
+                isTranscriptMode={true}
+                verbose={true}
+              />
+            )
+          }
           if (content?.type !== 'tool_call') {
             return null
           }
@@ -303,9 +328,8 @@ export function CollapsedReadSearchContent({
   // 非 verbose 模式：活跃时显示带闪烁灰点的计数，完成后显示绿点
   // 活跃时使用现在时，完成后使用过去时
 
-  // 防御性检查：如果所有计数都为 0，不渲染折叠组
-  // 正常操作中不应该发生，但处理了边界情况
-  if (!hasMemoryOps && !hasTeamMemoryOps && !hasNonMemoryOps) {
+  // 防御性检查：如果所有计数都为 0 且无 thinking 内容，不渲染折叠组
+  if (!hasMemoryOps && !hasTeamMemoryOps && !hasNonMemoryOps && !hasThinkingContent) {
     return null
   }
 

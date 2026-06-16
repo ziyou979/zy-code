@@ -46,13 +46,11 @@ export function AssistantThinkingMessage({
     )
   }
   return (
-    <Box flexDirection="column" gap={1} marginTop={addMargin ? 1 : 0} width="100%">
-      {<Text dimColor={true} italic={true}>{`\u2234 ${tSync('assistantThinking.thinking')}`}</Text>}
-      {
-        <Box paddingLeft={2}>
-          <Markdown dimColor={true}>{thinking}</Markdown>
-        </Box>
-      }
+    <Box flexDirection="column" marginTop={addMargin ? 1 : 0} width="100%">
+      <Box flexDirection="row">
+        <Text dimColor={true} italic={true}>{'\u2234 '}</Text>
+        <Markdown dimColor={true}>{thinking}</Markdown>
+      </Box>
     </Box>
   )
 }

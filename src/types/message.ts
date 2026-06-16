@@ -388,6 +388,10 @@ export interface CollapsedReadSearchGroup extends BaseMessage {
   prs?: unknown[]
   mcpServerNames?: string[]
   thinkingDurationMs?: number
+  /** 从相邻消息 timestamp 差值计算的思考时长（毫秒） */
+  thoughtForMs?: number
+  /** 最近一次 thinking 块的文本摘要（截断），用于活跃分组提示 */
+  latestThinkingSummary?: string
 }
 
 export interface GroupedToolUseMessageWithMessages extends BaseMessage {

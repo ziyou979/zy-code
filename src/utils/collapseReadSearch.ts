@@ -17,6 +17,7 @@ import {
 import { TOOL_SEARCH_TOOL_NAME } from '../tools/ToolSearchTool/prompt.js'
 import type { ContentBlock } from '../types/llm.js'
 import type {
+  AssistantMessage,
   CollapsedReadSearchGroup,
   CollapsibleMessage,
   GroupedToolUseMessage,
@@ -346,6 +347,28 @@ function isNonCollapsibleToolUse(msg: RenderableMessage, tools: Tools): boolean 
   return false
 }
 
+/**
+ * 检查不可折叠工具是否为"静默"工具（UI 不可见）。
+ * 静默工具的 renderToolUseMessage() 返回 null，在折叠摘要中不应打断分组，
+ * 而应被静默吸收到当前分组中，避免产生孤立的纯思考折叠块。
+ */
+function isSilentNonCollapsibleToolUse(msg: RenderableMessage, tools: Tools): boolean {
+  if (!isNonCollapsibleToolUse(msg, tools)) return false
+  // 提取工具名
+  let toolName: string | undefined
+  if (msg.type === 'assistant') {
+    const content = msg.message.content[0]
+    if (content?.type === 'tool_call') toolName = content.name
+  } else if (msg.type === 'grouped_tool_use') {
+    toolName = msg.toolName
+  }
+  if (!toolName) return false
+  const tool = findToolByName(tools, toolName) ?? findToolByName(getReplPrimitiveTools(), toolName)
+  if (!tool) return false
+  // 工具的 renderToolUseMessage 返回 null 意味着 UI 不可见
+  return tool.renderToolUseMessage == null
+}
+
 function isPreToolHookSummary(msg: RenderableMessage): msg is SystemStopHookSummaryMessage {
   return (
     msg.type === 'system' && msg.subtype === 'stop_hook_summary' && msg.hookLabel === 'PreToolUse'
@@ -353,14 +376,36 @@ function isPreToolHookSummary(msg: RenderableMessage): msg is SystemStopHookSumm
 }
 
 /**
+ * 检查消息是否为普通 thinking 块（非 redacted_thinking）。
+ */
+function isThinkingBlock(msg: RenderableMessage): boolean {
+  if (msg.type === 'assistant') {
+    const content = msg.message.content[0]
+    return content?.type === 'thinking' && !!content.thinking?.trim()
+  }
+  return false
+}
+
+/**
+ * 从 assistant 消息中提取 thinking 文本。
+ */
+function extractThinkingText(msg: RenderableMessage): string | undefined {
+  if (msg.type === 'assistant') {
+    const content = msg.message.content[0]
+    if (content?.type === 'thinking') return content.thinking
+  }
+  return undefined
+}
+
+/**
  * 检查消息是否应被跳过（不打断分组，直接透传）。
- * 包括 thinking 块、redacted thinking、附件等。
+ * 包括 redacted_thinking、附件、系统消息等。
  */
 function shouldSkipMessage(msg: RenderableMessage): boolean {
   if (msg.type === 'assistant') {
     const content = msg.message.content[0]
-    // 跳过 thinking 块和其他非文本、非工具内容
-    if (content && (content.type === 'thinking' || content.type === 'redacted_thinking')) {
+    // redacted_thinking 是加密内容，无可见文本，跳过
+    if (content && content.type === 'redacted_thinking') {
       return true
     }
   }
@@ -415,6 +460,22 @@ function isCollapsibleToolResult(
     )
   }
   return false
+}
+
+/**
+ * 检查工具结果是否全部属于已被标记为静默吸收的 tool_use。
+ */
+function isSilentToolResult(
+  msg: RenderableMessage,
+  absorbedSilentToolUseIds: Set<string>,
+): boolean {
+  if (msg.type !== 'user') {
+    return false
+  }
+  const toolResults = (msg.message.content as ContentBlock[]).filter(
+    (c): c is { type: 'tool_result'; toolCallId: string } => c.type === 'tool_result',
+  )
+  return toolResults.length > 0 && toolResults.every((r) => absorbedSilentToolUseIds.has(r.toolCallId))
 }
 
 /**
@@ -597,6 +658,10 @@ type GroupAccumulator = {
   hookTotalMs: number
   hookCount: number
   hookInfos: StopHookInfo[]
+  // 从相邻消息 timestamp 差值计算的 thinking 时长
+  thoughtForMs?: number
+  // 最近一次 thinking 文本摘要
+  latestThinkingSummary?: string
   // 吸收到本分组中的 relevant_memories 附件（自动注入的
   // memory，非显式 Read 调用）。路径同步到 readFilePaths +
   // memoryReadFilePaths，以确保内联 "recalled N memories" 文本准确。
@@ -710,6 +775,10 @@ function createCollapsedGroup(group: GroupAccumulator): CollapsedReadSearchGroup
       group.relevantMemories.length > 0 && {
         relevantMemories: group.relevantMemories,
       }),
+    ...(group.thoughtForMs !== undefined && { thoughtForMs: group.thoughtForMs }),
+    ...(group.latestThinkingSummary !== undefined && {
+      latestThinkingSummary: group.latestThinkingSummary,
+    }),
   }
   return result
 }
@@ -730,14 +799,18 @@ export function collapseReadSearchGroups(
   let currentGroup = createEmptyGroup()
   let deferredSkippable: RenderableMessage[] = []
   let pendingThinkingDurationMs: number | undefined
+  const absorbedSilentToolUseIds = new Set<string>()
 
   function flushGroup(): void {
     if (currentGroup.messages.length === 0) {
       return
     }
     const group = createCollapsedGroup(currentGroup)
-    if (pendingThinkingDurationMs !== undefined) {
-      group.thinkingDurationMs = pendingThinkingDurationMs
+    // 合并从消息属性读取的 thinkingDurationMs 与从 timestamp 差值计算的 thoughtForMs，取较大值
+    const existingMs = pendingThinkingDurationMs ?? 0
+    const computedMs = group.thoughtForMs ?? 0
+    if (existingMs > 0 || computedMs > 0) {
+      group.thinkingDurationMs = Math.max(existingMs, computedMs)
       pendingThinkingDurationMs = undefined
     }
     result.push(group)
@@ -748,12 +821,33 @@ export function collapseReadSearchGroups(
     currentGroup = createEmptyGroup()
   }
 
+  let lastTimestamp: string | undefined
   for (const msg of messages) {
     // 在类型窄化前提取 thinking duration，以便附加到后续的折叠分组
     // 累加而非覆盖：一次 turn 中多段 thinking（被 tool_use 打断）全部计入
     if (msg.type === 'assistant' && msg.thinkingDurationMs) {
       const capped = Math.min(msg.thinkingDurationMs, 600_000)
       pendingThinkingDurationMs = (pendingThinkingDurationMs ?? 0) + capped
+    }
+
+    // 将普通 thinking 块保留在折叠分组中，展开 verbose 模式时可见
+    if (isThinkingBlock(msg)) {
+      if (msg.type === 'assistant') {
+        const thinkingText = extractThinkingText(msg)
+        if (thinkingText) {
+          currentGroup.latestThinkingSummary = thinkingText.trim().replace(/\s+/g, ' ')
+        }
+        if (lastTimestamp !== undefined && msg.timestamp) {
+          const elapsed = Date.parse(msg.timestamp) - Date.parse(lastTimestamp)
+          if (Number.isFinite(elapsed) && elapsed > 0) {
+            currentGroup.thoughtForMs =
+              (currentGroup.thoughtForMs ?? 0) + Math.min(elapsed, 600_000)
+          }
+        }
+        currentGroup.messages.push(msg)
+      }
+      lastTimestamp = msg.timestamp
+      continue
     }
 
     if (isCollapsibleToolUse(msg, tools)) {
@@ -858,6 +952,8 @@ export function collapseReadSearchGroups(
       }
 
       currentGroup.messages.push(msg)
+    } else if (isSilentToolResult(msg, absorbedSilentToolUseIds)) {
+      // 静默工具的 tool_result：不打断分组，不加入 messages，直接吸收
     } else if (isCollapsibleToolResult(msg, currentGroup.toolUseIds)) {
       currentGroup.messages.push(msg)
       // 扫描 bash 结果中的 commit SHA / PR URL 以在摘要中展示
@@ -906,6 +1002,12 @@ export function collapseReadSearchGroups(
       // 助手文本打断分组
       flushGroup()
       result.push(msg)
+    } else if (isSilentNonCollapsibleToolUse(msg, tools)) {
+      // 静默工具（UI 不可见）：不增加计数，不打断分组，不加入 group.messages。
+      // 追踪 toolUseId 以跳过对应的 tool_result。
+      for (const id of getToolUseIdsFromMessage(msg)) {
+        absorbedSilentToolUseIds.add(id)
+      }
     } else if (isNonCollapsibleToolUse(msg, tools)) {
       // 不可折叠的工具调用打断分组
       flushGroup()
@@ -915,6 +1017,7 @@ export function collapseReadSearchGroups(
       flushGroup()
       result.push(msg)
     }
+    lastTimestamp = msg.timestamp
   }
 
   flushGroup()
