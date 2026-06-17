@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useRef, useState } from 'react'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
-import { useTerminalViewport } from '../../ink/hooks/use-terminal-viewport.js'
 import type { DOMElement } from '../../ink/dom.js'
+import { useTerminalViewport } from '../../ink/hooks/use-terminal-viewport.js'
 import { Box, measureElement } from '../../ink.js'
 
 type Props = {

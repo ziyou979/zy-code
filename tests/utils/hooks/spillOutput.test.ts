@@ -4,10 +4,11 @@
  * 超过 inline 阈值时写盘并返回三段式提示（大小+路径+预览）；不超过时原样 inline。
  * ZY_CODE_HOOK_OUTPUT_INLINE_LIMIT 覆盖默认 50000。
  */
+
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
 let tmpRoot: string
 

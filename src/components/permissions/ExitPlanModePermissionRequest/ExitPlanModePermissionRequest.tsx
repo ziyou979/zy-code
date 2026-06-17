@@ -203,7 +203,7 @@ export function ExitPlanModePermissionRequest({
         isBypassPermissionsModeAvailable,
         onFeedbackChange: setPlanFeedback,
       }),
-    [showClearContext, usage, mode, isAutoModeAvailable, isBypassPermissionsModeAvailable],
+    [showClearContext, mode, isAutoModeAvailable, isBypassPermissionsModeAvailable],
   )
   function onImagePaste(
     base64Image: string,

@@ -2,7 +2,6 @@ import { feature } from 'bun:bundle'
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { extractOutputRedirections } from 'src/shell-eval/bash/commands.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
-import { getToolNameForPermissionCheck, mcpInfoFromString } from '../mcp/mcpStringUtils.js'
 import type { Tool, ToolPermissionContext, ToolUseContext } from '../../Tool.js'
 import { AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
 import { shouldUseSandbox } from '../../tools/BashTool/shouldUseSandbox.js'
@@ -20,6 +19,8 @@ import {
   SETTING_SOURCES,
 } from '../../utils/settings/constants.js'
 import { plural } from '../../utils/stringUtils.js'
+import { getToolNameForPermissionCheck, mcpInfoFromString } from '../mcp/mcpStringUtils.js'
+import { isAutoModeAllowlistedTool } from './classifierDecision.js'
 import { permissionModeTitle } from './PermissionMode.js'
 import type {
   PermissionAskDecision,
@@ -49,7 +50,6 @@ import {
   type PermissionRuleFromEditableSettings,
   shouldAllowManagedPermissionRulesOnly,
 } from './permissionsLoader.js'
-import { isAutoModeAllowlistedTool } from './classifierDecision.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const autoModeStateModule = true
@@ -63,12 +63,6 @@ import {
   getTotalInputTokens,
   getTotalOutputTokens,
 } from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
-import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  logEvent,
-} from '../analytics/index.js'
-import { sanitizeToolNameForAnalytics } from '../analytics/metadata.js'
 import { clearClassifierChecking, setClassifierChecking } from '../../utils/classifierApprovals.js'
 import { isInProtectedNamespace } from '../../utils/envUtils.js'
 import { executePermissionRequestHooks } from '../../utils/hooks.js'
@@ -81,6 +75,12 @@ import {
 import { calculateCostFromTokens } from '../../utils/modelCost.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { jsonStringify } from '../../utils/slowOperations.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import {
+  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+  logEvent,
+} from '../analytics/index.js'
+import { sanitizeToolNameForAnalytics } from '../analytics/metadata.js'
 import {
   createDenialTrackingState,
   DENIAL_LIMITS,

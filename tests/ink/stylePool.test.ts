@@ -5,10 +5,10 @@ import { describe, expect, test } from 'bun:test'
 import type { AnsiCode } from '@alcalzone/ansi-tokenize'
 import {
   CharPool,
-  HyperlinkPool,
-  StylePool,
   collectLiveStyleIds,
   createScreen,
+  HyperlinkPool,
+  StylePool,
   setCellAt,
 } from '../../src/ink/screen.js'
 

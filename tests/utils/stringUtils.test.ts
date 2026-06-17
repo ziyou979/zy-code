@@ -14,9 +14,9 @@
  */
 import { describe, expect, test } from 'bun:test'
 import {
-  EndTruncatingAccumulator,
   capitalize,
   countCharInString,
+  EndTruncatingAccumulator,
   escapeRegExp,
   firstLineOf,
   normalizeFullWidthDigits,

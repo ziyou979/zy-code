@@ -31,8 +31,9 @@ export type ModelTag =
  * 支持的 API 消息格式：
  * - `'anthropic'` — Anthropic Messages API 格式
  * - `'openai'`    — 直接使用 OpenAI SDK（不走 Anthropic SDK）
+ * - `'google'`    — Google Generative AI 原生 API 格式（Gemini）
  */
-export type ApiFormat = 'anthropic' | 'openai'
+export type ApiFormat = 'anthropic' | 'openai' | 'google'
 
 /**
  * Provider 在运行时如何解析 base URL：
@@ -51,6 +52,7 @@ export interface ProviderEntry {
    * 该 provider 支持的 API 消息格式列表。
    * - `['anthropic']`        — 仅 Anthropic 格式
    * - `['openai']`           — 使用 OpenAI SDK 直连
+   * - `['google']`           — 使用 Google Generative AI 原生格式
    * - `['anthropic', 'openai']` — 双格式，用户在 onboarding 时选择
    */
   supportedFormats: ApiFormat[]
@@ -78,11 +80,12 @@ export interface ProviderEntry {
    * 默认 base URL。
    * - env-or-default 类型：环境变量未设置时使用
    * - preconfigured 类型：onboarding 时保存到 configuredBaseUrl
-   * - 双格式 provider：按 'openai' 和 'anthropic' 分别配置
+   * - 多格式 provider：按 'openai'、'anthropic'、'google' 分别配置
    */
   defaultBaseUrls?: {
     openai?: string
     anthropic?: string
+    google?: string
   }
 
   /** 覆盖 base URL 的环境变量名（仅 env-or-default 类型，如 DASHSCOPE_BASE_URL） */
@@ -109,6 +112,9 @@ export interface ProviderEntry {
 
   /** OpenAI 兼容协议的 provider 差异声明。消息转换层读取此配置而非判断 provider 名称 */
   openaiCompat?: OpenAICompat
+
+  /** Google Generative AI 原生协议的 provider 差异声明 */
+  googleCompat?: GoogleCompat
 
   /** 内部 effort 档位 → provider API 参数值的映射表。省略时回退到 anthropic 映射 */
   effortMapping?: Record<string, string>
@@ -140,6 +146,22 @@ export interface OpenAICompat {
    * DashScope/Qwen 模型在 thinking 结束时可能将 `</think>` 标签泄漏到 content 字段。
    */
   stripThinkingTags?: boolean
+}
+
+/**
+ * Google Generative AI 原生协议的 provider 差异行为声明。
+ * 与 OpenAICompat 类似，但针对 Google API 的 thinkingConfig 等特有字段。
+ */
+export interface GoogleCompat {
+  thinking?: {
+    /**
+     * 启用 thinking 时传给 API 的 thinkingConfig 参数。
+     * effort 为映射后的内部档位值（off/light/balanced/thorough/extreme）。
+     */
+    enable: (effort: string | undefined, model?: string) => Record<string, unknown>
+    /** 显式禁用 thinking 时传给 API 的参数 */
+    disable?: Record<string, unknown>
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -632,13 +654,14 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
 
   {
     id: 'gemini',
-    supportedFormats: ['openai'],
+    supportedFormats: ['google', 'openai'],
     endpointType: 'env-or-default',
     capabilities: ['thinking', 'adaptive_thinking', 'structured_outputs', 'context_management'],
     // Gemini reasoning_effort 支持 minimal/low/medium/high（映射由 mapEffortToProvider 处理）。
     defaultEffortLevels: ['off', 'quick', 'light', 'balanced', 'thorough'],
     apiKeyLabel: 'Google AI API Key',
     defaultBaseUrls: {
+      google: 'https://generativelanguage.googleapis.com/v1beta',
       openai: 'https://generativelanguage.googleapis.com/v1beta/openai/',
     },
     suggestedModels: [
@@ -658,6 +681,29 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     openaiCompat: {
       thinking: {
         enable: (effort) => ({ reasoning_effort: effort ?? 'medium' }),
+      },
+    },
+    googleCompat: {
+      thinking: {
+        enable: (effort) => {
+          if (!effort || effort === 'off') {
+            return { thinkingConfig: { thinkingBudget: 0, includeThoughts: false } }
+          }
+          const levelMap: Record<string, string> = {
+            quick: 'MINIMAL',
+            light: 'LOW',
+            balanced: 'MEDIUM',
+            thorough: 'HIGH',
+            extreme: 'HIGH',
+          }
+          return {
+            thinkingConfig: {
+              thinkingBudget: -1,
+              thinkingLevel: levelMap[effort] ?? 'MEDIUM',
+              includeThoughts: true,
+            },
+          }
+        },
       },
     },
   },

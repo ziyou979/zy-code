@@ -1,4 +1,5 @@
 import { type PropsWithChildren, useContext, useInsertionEffect } from 'react'
+import { isAlternateScreenDisabled } from '../../utils/fullscreen.js'
 import instances from '../instances.js'
 import {
   DISABLE_MOUSE_TRACKING,
@@ -7,7 +8,6 @@ import {
   EXIT_ALT_SCREEN,
 } from '../termio/dec.js'
 import { TerminalWriteContext } from '../useTerminalNotification.js'
-import { isAlternateScreenDisabled } from '../../utils/fullscreen.js'
 import Box from './Box.js'
 import { TerminalSizeContext } from './TerminalSizeContext.js'
 

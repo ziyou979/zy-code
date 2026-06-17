@@ -1,10 +1,10 @@
 import { countTokensLocally } from '../services/tokenizer/index.js'
 import type { LLMMessage, ToolDefinition } from '../types/llm.js'
-import type { Attachment } from './attachments/attachments.js'
 import { logError } from '../utils/log.js'
 import { normalizeAttachmentForAPI } from '../utils/messages.js'
 import { jsonStringify } from '../utils/slowOperations.js'
 import { getLLMAdapter } from './api/client.js'
+import type { Attachment } from './attachments/attachments.js'
 import { withTokenCountVCR } from './vcr.js'
 
 export async function countTokensWithAPI(content: string): Promise<number | null> {

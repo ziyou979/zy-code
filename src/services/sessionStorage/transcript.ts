@@ -6,7 +6,6 @@ import { closeSync, fstatSync, openSync, readSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { getOriginalCwd, getSessionId, switchSession } from '../../bootstrap/state.js'
-import * as sessionIngress from '../api/sessionIngress.js'
 import { type AgentId, asAgentId, asSessionId } from '../../types/ids.js'
 import type { AttributionSnapshotMessage } from '../../types/logs.js'
 import type { Message } from '../../types/message.js'
@@ -15,6 +14,10 @@ import { logForDebugging } from '../../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import type { FileHistorySnapshot } from '../../utils/fileHistory.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
+import { LITE_READ_BUF_SIZE } from '../../utils/sessionStoragePortable.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
+import type { ContentReplacementRecord } from '../../utils/toolResultStorage.js'
+import * as sessionIngress from '../api/sessionIngress.js'
 import { cleanMessagesForLogging, getSessionMessages } from './logLoading.js'
 import {
   getAgentTranscriptPath,
@@ -24,9 +27,6 @@ import {
 } from './paths.js'
 import { isChainParticipant } from './predicates.js'
 import { getProject } from './project.js'
-import { LITE_READ_BUF_SIZE } from '../../utils/sessionStoragePortable.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import type { ContentReplacementRecord } from '../../utils/toolResultStorage.js'
 
 export type TeamInfo = {
   teamName?: string

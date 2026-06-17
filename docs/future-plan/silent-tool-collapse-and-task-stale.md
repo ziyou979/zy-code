@@ -4,12 +4,14 @@
 
 ### 现象
 
-用户看到两个连续折叠块，中间没有其他可见内容：
+用户看到两个/三个连续折叠块，中间没有其他可见内容：
 
 ```
-思考了 2 分 20 秒, 根据 5 个匹配模式搜索完成, 读取了 4 个文件, 列出了 3 个目录, 运行了 3 条命令
+思考了 18 秒
 
-思考了 1 分 15 秒
+思考了 2 分 35 秒, 根据 1 个匹配模式搜索完成, 读取了 7 个文件
+
+思考了 1 分 31 秒, 读取了 1 个文件
 ```
 
 ### 根因
@@ -27,7 +29,29 @@
 
 **关键**：`TaskCreate` 的 `renderToolUseMessage()` 返回 `null`，在 UI 上完全不可见，但它是"不可折叠工具"（`isNonCollapsibleToolUse`），会触发 `flushGroup()` 打断当前折叠分组。
 
-后续的 thinking 块被孤立到新的空分组中，最终产生仅含思考内容的折叠块，而前一个折叠块和后一个折叠块之间在 UI 上看不到任何内容——因为 TaskCreate/TaskUpdate/TaskList/TaskGet 都是静默工具。
+#### 实际发现的 Bug（已修复）
+
+在接入 `isSilentNonCollapsibleToolUse` 后，从 session `c0b27db0` 的 JSONL 追踪发现静默工具仍然打断分组。根因是 `isSilentNonCollapsibleToolUse` 的判断逻辑错误：
+
+```typescript
+// 原代码（错误）
+return tool.renderToolUseMessage == null  // ← 永远 false！
+```
+
+`renderToolUseMessage` 是 `Tool` 的**必需属性**（类型签名无 `?`），每个工具都定义了这个方法，即使它返回 null。所以 `== null` 检查的是属性是否存在，而非函数返回值——永远返回 false，导致所有静默工具走 `isNonCollapsibleToolUse` → `flushGroup()`。
+
+**修复**：调用函数并检查返回值：
+
+```typescript
+try {
+  const rendered = tool.renderToolUseMessage({}, { theme: 'light', verbose: false })
+  return rendered === null
+} catch {
+  return false
+}
+```
+
+此修复已应用到 `src/utils/collapseReadSearch.ts` 第 369 行。
 
 ### CC 的做法（从二进制逆向提取）
 
@@ -135,21 +159,45 @@ function isSilentNonCollapsibleToolUse(msg: RenderableMessage, tools: Tools): bo
   const tool = findToolByName(tools, toolName) ?? findToolByName(getReplPrimitiveTools(), toolName)
   if (!tool) return false
   // renderToolUseMessage 返回 null 的工具是静默工具
-  return tool.renderToolUseMessage == null
+  // 注意：renderToolUseMessage 是必需属性，不能用 == null 检查属性是否存在
+  // 必须调用函数并检查返回值
+  try {
+    const rendered = tool.renderToolUseMessage({}, { theme: 'light', verbose: false })
+    return rendered === null
+  } catch {
+    return false
+  }
 }
 ```
 
-> **注意**：方案 B 已在代码中实现（`isSilentNonCollapsibleToolUse` 函数存在于 `collapseReadSearch.ts`），
-> 但主循环中尚未使用该函数——仍需完成接入。
+> **状态**：方案 B 已在代码中实现并接入主循环，但 `renderToolUseMessage == null` 判断有 bug（见上方），已修复为调用函数检查返回值。
 
 ### 涉及的静默工具
 
-| 工具 | renderToolUseMessage | shouldDefer | 说明 |
-|---|---|---|---|
-| TaskCreate | null | true | 创建任务 |
-| TaskUpdate | null | true | 更新任务状态 |
-| TaskList | null | true | 列出任务 |
-| TaskGet | null | true | 获取单个任务 |
+| 工具 | renderToolUseMessage | 说明 |
+|---|---|---|
+| TaskCreate | null | 创建任务 |
+| TaskUpdate | null | 更新任务状态 |
+| TaskList | null | 列出任务 |
+| TaskGet | null | 获取单个任务 |
+| TaskStop | '' | 停止任务（注意返回空字符串而非 null） |
+| TodoWrite | null | 更新 todo 列表 |
+| ToolSearch | null | 延迟加载工具 schema |
+| AskUserQuestion | null | 向用户提问 |
+| PushNotification | null | 推送通知 |
+| CtxInspect | null | 检查上下文 |
+| Monitor | null | 监控文件变化 |
+| Sleep | null | 等待 |
+| SubscribePR | null | 订阅 PR |
+| SuggestBackgroundPR | null | 建议 PR |
+| SendUserFile | null | 发送文件 |
+| ExitPlanMode | null | 退出计划模式 |
+| EnterPlanMode | null | 进入计划模式 |
+| TestingPermission | null | 测试权限 |
+| REPL | null | REPL 命令 |
+
+> **注意**：`TaskStop` 和 `BriefTool` 返回空字符串 `''` 而非 `null`，不会被 `isSilentNonCollapsibleToolUse` 识别为静默工具。
+> 但 `''` 在 React 中不渲染任何内容，理论上也应静默吸收。
 
 ### 影响范围
 

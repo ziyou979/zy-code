@@ -29,22 +29,12 @@ import type {
   SystemMessage,
   UserMessage,
 } from '../../types/message.js'
-import {
-  type Attachment,
-  createAttachmentMessage,
-  generateFileAttachment,
-  getAgentListingDeltaAttachment,
-  getDeferredToolsDeltaAttachment,
-  getMcpInstructionsDeltaAttachment,
-} from '../attachments/attachments.js'
-import { getMemoryPath } from '../config/config.js'
 import { COMPACT_MAX_OUTPUT_TOKENS } from '../../utils/context.js'
 import { analyzeContext, tokenStatsToStatsigMetrics } from '../../utils/contextAnalysis.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
 import { cacheToObject } from '../../utils/fileStateCache.js'
 import { type CacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.js'
-import { executePostCompactHooks, executePreCompactHooks } from '../hooks.js'
 import { logError } from '../../utils/log.js'
 import {
   createCompactBoundaryMessage,
@@ -62,7 +52,6 @@ import {
   sendSessionActivitySignal,
 } from '../../utils/sessionActivity.js'
 import { processSessionStartHooks } from '../../utils/sessionStart.js'
-import { getTranscriptPath, reAppendSessionMetadata } from '../sessionStorage.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -87,7 +76,18 @@ import {
 import { queryModelWithStreaming } from '../api/llmOrchestrator.js'
 import { notifyCompaction } from '../api/promptCacheBreakDetection.js'
 import { getRetryDelay } from '../api/withRetry.js'
+import {
+  type Attachment,
+  createAttachmentMessage,
+  generateFileAttachment,
+  getAgentListingDeltaAttachment,
+  getDeferredToolsDeltaAttachment,
+  getMcpInstructionsDeltaAttachment,
+} from '../attachments/attachments.js'
+import { getMemoryPath } from '../config/config.js'
+import { executePostCompactHooks, executePreCompactHooks } from '../hooks.js'
 import { logPermissionContextForAnts } from '../internalLogging.js'
+import { getTranscriptPath, reAppendSessionMetadata } from '../sessionStorage.js'
 import {
   roughTokenCountEstimation,
   roughTokenCountEstimationForMessages,

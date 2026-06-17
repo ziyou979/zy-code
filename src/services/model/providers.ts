@@ -6,7 +6,12 @@ import {
   localModelHasCapability,
   parseTokenCount,
 } from '../../utils/settings/localModelCapabilities.js'
-import { type OpenAICompat, getProviderEntry, PROVIDER_REGISTRY } from './providerRegistry.js'
+import {
+  type ApiFormat,
+  getProviderEntry,
+  type OpenAICompat,
+  PROVIDER_REGISTRY,
+} from './providerRegistry.js'
 
 /**
  * 所有已注册的 provider ID 的联合类型。
@@ -146,19 +151,59 @@ export function isCompatibleProvider(provider: APIProvider): boolean {
 }
 
 /**
+ * 返回 provider 当前实际生效的 API 消息格式。
+ *
+ * 优先级：
+ * 1. 用户显式设置的 `settings.apiFormat`（若 provider 支持）
+ * 2. provider 注册表声明的 `supportedFormats[0]`（默认首选格式）
+ *
+ * 若 provider 不存在或不支持任何格式，返回 null。
+ */
+export function getEffectiveApiFormat(provider: APIProvider): ApiFormat | null {
+  const entry = getProviderEntry(provider)
+  if (!entry || entry.supportedFormats.length === 0) {
+    return null
+  }
+
+  const supported = new Set(entry.supportedFormats)
+
+  // 1. 用户显式设置优先
+  try {
+    const { getInitialSettings } = require('../../utils/settings/settings.js')
+    const format = getInitialSettings()?.apiFormat
+    if (format && supported.has(format)) {
+      return format
+    }
+  } catch {
+    // settings 尚未就绪，继续按默认值推导
+  }
+
+  // 2. 默认使用注册表中声明的第一个格式
+  return entry.supportedFormats[0]
+}
+
+/**
  * 判断是否为使用 OpenAI SDK 直连的 provider。
  * 双格式 provider（如 dashscope）通过 settings.apiFormat 切换。
  */
 export function isOpenAIProvider(provider: APIProvider): boolean {
-  const entry = getProviderEntry(provider)
-  if (!entry) return false
-  const supportsOpenAI = entry.supportedFormats.includes('openai')
-  const supportsAnthropic = entry.supportedFormats.includes('anthropic')
-  if (!supportsAnthropic) return supportsOpenAI
-  if (!supportsOpenAI) return false
-  // 双格式：读取用户设置，默认 openai
-  const { getInitialSettings } = require('../../utils/settings/settings.js')
-  return (getInitialSettings()?.apiFormat ?? 'openai') === 'openai'
+  return getEffectiveApiFormat(provider) === 'openai'
+}
+
+/**
+ * 判断是否为使用 Google Generative AI 原生 API 的 provider。
+ * Gemini 默认使用 google 格式，可通过 settings.apiFormat 切换回 openai。
+ */
+export function isGoogleProvider(provider: APIProvider): boolean {
+  return getEffectiveApiFormat(provider) === 'google'
+}
+
+/**
+ * 判断是否为使用 Anthropic SDK / Anthropic 兼容消息格式的 provider。
+ * 双格式 provider（如 dashscope）通过 settings.apiFormat 切换为 openai 时返回 false。
+ */
+export function isAnthropicProvider(provider: APIProvider): boolean {
+  return getEffectiveApiFormat(provider) === 'anthropic'
 }
 
 /**

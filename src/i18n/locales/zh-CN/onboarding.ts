@@ -7,6 +7,9 @@ export const zhOnboarding: TranslationResource = {
   'onboarding.apiFormat.openai': 'OpenAI 格式',
   'onboarding.apiFormat.openaiDesc':
     '使用 OpenAI Chat Completions API 格式（适用于 vLLM、LiteLLM 等）',
+  'onboarding.apiFormat.google': 'Google 格式',
+  'onboarding.apiFormat.googleDesc':
+    '使用 Google Generative AI 原生 API 格式（适用于 Gemini 模型）',
   'onboarding.apiFormatDescription': '为你的自定义 API 端点选择请求格式。',
   'onboarding.baseUrlLabel': '基础 URL',
   'onboarding.confirmBack': 'Enter 确认 · 9 返回',

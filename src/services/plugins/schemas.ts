@@ -1,7 +1,7 @@
 import { z } from 'zod/v4'
 import { HooksSchema } from '../../schemas/hooks.js'
-import { McpServerConfigSchema } from '../mcp/types.js'
 import { lazySchema } from '../../utils/lazySchema.js'
+import { McpServerConfigSchema } from '../mcp/types.js'
 
 /**
  * 抵御官方市场仿冒的第一层防御。

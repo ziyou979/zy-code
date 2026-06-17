@@ -1,7 +1,11 @@
 import { AFK_MODE_BETA_HEADER } from 'src/constants/betas.js'
 import { getDefaultMainLoopModelSetting } from 'src/services/model/model.js'
 import { getModelStrings } from 'src/services/model/modelStrings.js'
-import { getAPIProvider, isOpenAIProvider } from 'src/services/model/providers.js'
+import {
+  getAPIProvider,
+  isAnthropicProvider,
+  isOpenAIProvider,
+} from 'src/services/model/providers.js'
 import type { WireAssistantMessageError } from 'src/types/index.js'
 import type { AssistantMessage, Message, UserMessage } from 'src/types/message.js'
 import { getApiKeyWithSource, getOauthAccountInfo, getZyAIOAuthTokens } from 'src/utils/auth.js'
@@ -127,7 +131,7 @@ export const INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL = 'Invalid API key · Fix ex
  * 导入时未加载的 settings.json。
  */
 export function getInvalidApiKeyErrorMessage(): string {
-  return isOpenAIProvider(getAPIProvider()) ? '' : 'Not logged in · Please run /login'
+  return isAnthropicProvider(getAPIProvider()) ? 'Not logged in · Please run /login' : ''
 }
 export const ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH =
   'Your API key belongs to a disabled organization · Unset the environment variable to use your subscription instead'
@@ -719,7 +723,7 @@ export function getAssistantMessageFromError(
     // 合并到同一个 source 值下，且在 CCR 模式下 OAuth 尽管有
     // 环境变量仍保持活跃。这三个守卫确保我们仅在环境变量
     // 实际设置且实际在线路上时才归咎于环境变量。
-    if (source === 'settingsApiKey' && process.env.ZY_API_KEY && true) {
+    if (source === 'settingsApiKey' && process.env.ZY_API_KEY) {
       const hasStoredOAuth = getZyAIOAuthTokens()?.accessToken != null
       // 不是 'authentication_failed'——这会触发 VS Code 的 showLogin()，但
       // 登录无法修复此问题（已批准的环境变量会持续覆盖 OAuth）。修复

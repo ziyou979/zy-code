@@ -1461,7 +1461,7 @@ export function mcpToolInputToAutoClassifierInput(
   return keys.length > 0 ? keys.map((k) => `${k}=${String(input[k])}`).join(' ') : toolName
 }
 
-export let fetchToolsForClient = memoizeWithLRU(
+export const fetchToolsForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<Tool[]> => {
     if (client.type !== 'connected') {
       return []
@@ -1700,7 +1700,7 @@ export let fetchToolsForClient = memoizeWithLRU(
   MCP_FETCH_CACHE_SIZE,
 )
 
-export let fetchResourcesForClient = memoizeWithLRU(
+export const fetchResourcesForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<ServerResource[]> => {
     if (client.type !== 'connected') {
       return []
@@ -1734,7 +1734,7 @@ export let fetchResourcesForClient = memoizeWithLRU(
   MCP_FETCH_CACHE_SIZE,
 )
 
-export let fetchCommandsForClient = memoizeWithLRU(
+export const fetchCommandsForClient = memoizeWithLRU(
   async (client: MCPServerConnection): Promise<Command[]> => {
     if (client.type !== 'connected') {
       return []

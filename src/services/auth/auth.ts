@@ -8,7 +8,11 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { getAPIProvider, isOpenAIProvider } from 'src/services/model/providers.js'
+import {
+  getAPIProvider,
+  isAnthropicProvider,
+  isOpenAIProvider,
+} from 'src/services/model/providers.js'
 import { getSecureStorage } from 'src/services/secureStorage/index.js'
 import {
   clearLegacyApiKeyPrefetch,
@@ -19,10 +23,6 @@ import {
   getMacOsKeychainStorageServiceName,
   getUsername,
 } from 'src/services/secureStorage/macOsKeychainHelpers.js'
-import { getMockSubscriptionType, shouldUseMockSubscription } from '../mockRateLimits.js'
-import { isOAuthTokenExpired, refreshOAuthToken, shouldUseZyAIAuth } from '../oauth/client.js'
-import { getOauthProfileFromOauthToken } from '../oauth/getOauthProfile.js'
-import type { OAuthTokens, SubscriptionType } from '../oauth/types.js'
 import {
   getApiKeyFromFileDescriptor,
   getOAuthTokenFromFileDescriptor,
@@ -32,12 +32,6 @@ import {
   normalizeApiKeyForConfig,
 } from '../../utils/authPortable.js'
 import { clearBetasCaches } from '../../utils/betas.js'
-import {
-  type AccountInfo,
-  checkHasTrustDialogAccepted,
-  getGlobalConfig,
-  saveGlobalConfig,
-} from '../config/config.js'
 import { logAntError, logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -48,6 +42,16 @@ import { getInitialSettings, getSettingsForSource } from '../../utils/settings/s
 import { sleep } from '../../utils/sleep.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { clearToolSchemaCache } from '../../utils/toolSchemaCache.js'
+import {
+  type AccountInfo,
+  checkHasTrustDialogAccepted,
+  getGlobalConfig,
+  saveGlobalConfig,
+} from '../config/config.js'
+import { getMockSubscriptionType, shouldUseMockSubscription } from '../mockRateLimits.js'
+import { isOAuthTokenExpired, refreshOAuthToken, shouldUseZyAIAuth } from '../oauth/client.js'
+import { getOauthProfileFromOauthToken } from '../oauth/getOauthProfile.js'
+import type { OAuthTokens, SubscriptionType } from '../oauth/types.js'
 
 /** API key helper 缓存的默认 TTL，单位毫秒（5 分钟） */
 const DEFAULT_API_KEY_HELPER_TTL = 5 * 60 * 1000
@@ -1148,8 +1152,8 @@ export type UserAccountInfo = {
 
 export function getAccountInformation() {
   const apiProvider = getAPIProvider()
-  // 仅为 Anthropic 直连或使用 OpenAI SDK 的 provider 提供账户信息
-  if (apiProvider !== 'anthropic' && !isOpenAIProvider(apiProvider)) {
+  // 仅为 Anthropic 直连或使用 OpenAI SDK 的 provider 提供账户信息（Google 等平台使用自身认证）
+  if (!isAnthropicProvider(apiProvider) && !isOpenAIProvider(apiProvider)) {
     return undefined
   }
   const { source: authTokenSource } = getAuthTokenSource()

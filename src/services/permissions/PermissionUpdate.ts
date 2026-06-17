@@ -5,6 +5,7 @@ import type { AdditionalWorkingDirectory, WorkingDirectorySource } from '../../t
 import { createDebugLog } from '../../utils/debug.js'
 
 const permLog = createDebugLog('permissions')
+
 import type { EditableSettingSource } from '../../utils/settings/constants.js'
 import { getSettingsForSource, updateSettingsForSource } from '../../utils/settings/settings.js'
 import { jsonStringify } from '../../utils/slowOperations.js'

@@ -13,6 +13,8 @@ import { MessageResponse } from '../../components/MessageResponse.js'
 import { ToolUseLoader } from '../../components/ToolUseLoader.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
+import { useKeybinding } from '../../keybindings/useKeybinding.js'
+import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
 import { getDumpPromptsPath } from '../../services/api/dumpPrompts.js'
 import type { ModelAlias } from '../../services/model/aliases.js'
 import {
@@ -20,7 +22,9 @@ import {
   parseUserSpecifiedModel,
   renderModelName,
 } from '../../services/model/model.js'
+import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
 import { findToolByName, type Tools } from '../../Tool.js'
+import { backgroundAll } from '../../tasks/LocalShellTask/LocalShellTask.js'
 import type { ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,
@@ -34,6 +38,7 @@ import {
   getSearchOrReadFromContent,
   getSearchReadSummaryText,
 } from '../../utils/collapseReadSearch.js'
+import { env } from '../../utils/env.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { getDisplayPath } from '../../utils/file.js'
 import { formatNumber, getLocalizedDurationFormatter } from '../../utils/format.js'
@@ -46,11 +51,6 @@ import type { Theme, ThemeName } from '../../utils/theme.js'
 import type { outputSchema, Progress, RemoteLaunchedOutput } from './AgentTool.js'
 import { inputSchema } from './AgentTool.js'
 import { getAgentColor } from './agentColorManager.js'
-import { useKeybinding } from '../../keybindings/useKeybinding.js'
-import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
-import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
-import { backgroundAll } from '../../tasks/LocalShellTask/LocalShellTask.js'
-import { env } from '../../utils/env.js'
 import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js'
 
 const MAX_PROGRESS_MESSAGES_TO_SHOW = 3

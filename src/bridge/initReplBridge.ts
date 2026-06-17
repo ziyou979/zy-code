@@ -17,7 +17,11 @@ import { feature } from 'bun:bundle'
 import { hostname } from 'node:os'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import { getAPIProvider, isOpenAIProvider } from '../services/model/providers.js'
+import {
+  getAPIProvider,
+  isAnthropicProvider,
+  isOpenAIProvider,
+} from '../services/model/providers.js'
 import { getOrganizationUUID } from '../services/oauth/client.js'
 import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../services/policyLimits/index.js'
 import type { WireMessage } from '../types/index.js'
@@ -128,8 +132,8 @@ export async function initReplBridge(options?: InitWireOptions): Promise<ReplWir
   // 2. Check OAuth — must be signed in with zy.ai. Runs before the
   // policy check so console-auth users get the actionable "/login" hint
   // instead of a misleading policy error from a stale/wrong-org cache.
-  // 使用 OpenAI SDK 的平台 - 通过 settings.json 配置时跳过 OAuth 检查
-  if (!getWireAccessToken() && !isOpenAIProvider(getAPIProvider())) {
+  // 仅 Anthropic 直连平台需要 OAuth；OpenAI / Google / 本地引擎等平台跳过
+  if (!getWireAccessToken() && isAnthropicProvider(getAPIProvider())) {
     logWireSkip('no_oauth', '[bridge:repl] Skipping: no OAuth tokens')
     onStateChange?.('failed', '/login')
     return null

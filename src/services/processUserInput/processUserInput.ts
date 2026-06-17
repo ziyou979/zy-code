@@ -24,17 +24,10 @@ import type {
 } from '../../types/message.js'
 import type { PermissionMode } from '../../types/permissions.js'
 import { isValidImagePaste, type PromptInputMode } from '../../types/textInputTypes.js'
-import {
-  type AgentMentionAttachment,
-  createAttachmentMessage,
-  getAttachmentMessages,
-} from '../attachments/attachments.js'
-import type { PastedContent } from '../config/config.js'
 import type { EffortValue } from '../../utils/effort.js'
 import { toArray } from '../../utils/generators.js'
 import { executeUserPromptExpansionHooks } from '../../utils/hooks/executors/notification.js'
 import { hasHookForEvent } from '../../utils/hooks/matcher.js'
-import { executeUserPromptSubmitHooks, getUserPromptSubmitHookBlockingMessage } from '../hooks.js'
 import {
   createImageMetadataText,
   maybeResizeAndDownsampleImageBlock,
@@ -47,6 +40,13 @@ import {
 } from '../../utils/messages.js'
 import { queryCheckpoint } from '../../utils/queryProfiler.js'
 import { parseSlashCommand } from '../../utils/slashCommandParsing.js'
+import {
+  type AgentMentionAttachment,
+  createAttachmentMessage,
+  getAttachmentMessages,
+} from '../attachments/attachments.js'
+import type { PastedContent } from '../config/config.js'
+import { executeUserPromptSubmitHooks, getUserPromptSubmitHookBlockingMessage } from '../hooks.js'
 import { hasUltraplanKeyword, replaceUltraplanKeyword } from '../ultraplan/keyword.js'
 import { hasWorkflowKeyword } from '../workflow/keyword.js'
 import { processTextPrompt } from './processTextPrompt.js'

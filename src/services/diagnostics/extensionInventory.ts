@@ -1,7 +1,7 @@
 import { getCommands } from '../../commands.js'
 import { toolRegistry } from '../../tools/registry.js'
-import { loadAllPluginsCacheOnly } from '../plugins/pluginLoader.js'
 import { getAllMcpConfigs } from '../mcp/config.js'
+import { loadAllPluginsCacheOnly } from '../plugins/pluginLoader.js'
 
 export type ExtensionEntry = {
   name: string

@@ -14,6 +14,7 @@
         "@anthropic-ai/sdk": "^0.39.0",
         "@azure/identity": "^4.13.1",
         "@commander-js/extra-typings": "^13.1.0",
+        "@google/generative-ai": "^0.24.1",
         "@growthbook/growthbook": "^1.6.5",
         "@modelcontextprotocol/sdk": "^1.29.0",
         "@opentelemetry/api": "^1.9.1",
@@ -225,6 +226,8 @@
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.4.14", "https://registry.npmmirror.com/@biomejs/cli-win32-x64/-/cli-win32-x64-2.4.14.tgz", { "os": "win32", "cpu": "x64" }, "sha512-WL0EG5qE+EAKomGXbf2g6VnSKJhTL3tXC0QRzWRwA5VpjxNYa6H4P7ZWfymbGE4IhZZQi1KXQ2R0YjwInmz2fA=="],
 
     "@commander-js/extra-typings": ["@commander-js/extra-typings@13.1.0", "https://registry.anpm.alibaba-inc.com/@commander-js/extra-typings/-/extra-typings-13.1.0.tgz", { "peerDependencies": { "commander": "~13.1.0" } }, "sha512-q5P52BYb1hwVWE6dtID7VvuJWrlfbCv4klj7BjUUOqMz4jbSZD4C9fJ9lRjL2jnBGTg+gDDlaXN51rkWcLk4fg=="],
+
+    "@google/generative-ai": ["@google/generative-ai@0.24.1", "https://registry.npmmirror.com/@google/generative-ai/-/generative-ai-0.24.1.tgz", {}, "sha512-MqO+MLfM6kjxcKoy0p1wRzG3b4ZZXtPI+z2IE26UogS2Cm/XHO+7gGRBh6gcJsOiIVoH93UwKvW4HdgiOZCy9Q=="],
 
     "@growthbook/growthbook": ["@growthbook/growthbook@1.6.5", "https://registry.anpm.alibaba-inc.com/@growthbook/growthbook/-/growthbook-1.6.5.tgz", { "dependencies": { "dom-mutator": "^0.6.0" } }, "sha512-mUaMsgeUTpRIUOTn33EUXHRK6j7pxBjwqH4WpQyq+pukjd1AIzWlEa6w7i6bInJUcweGgP2beXZmaP6b6UPn7A=="],
 

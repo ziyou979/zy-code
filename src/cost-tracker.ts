@@ -27,6 +27,7 @@ import {
   setHasUnknownModelCost,
 } from './bootstrap/state.js'
 import { tSync } from './i18n/index.js'
+import { stringWidth } from './ink/stringWidth.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -37,7 +38,6 @@ import { getCurrentProjectConfig, saveCurrentProjectConfig } from './utils/confi
 import { getContextWindowForModel, getModelMaxOutputTokens } from './utils/context.js'
 import { formatDuration, formatNumber } from './utils/format.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
-import { stringWidth } from './ink/stringWidth.js'
 import { calculateUSDCost, getCurrencySymbol } from './utils/modelCost.js'
 
 export {

@@ -1,19 +1,19 @@
 import { feature } from 'bun:bundle'
+import type { QuerySource } from '../constants/querySource.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/index.js'
 import { logEvent } from '../services/analytics/index.js'
-import { SLEEP_TOOL_NAME } from '../tools/SleepTool/prompt.js'
 import type { ToolUseContext } from '../Tool.js'
+import { SLEEP_TOOL_NAME } from '../tools/SleepTool/prompt.js'
 import type { ToolCallBlock } from '../types/llm.js'
 import type { AssistantMessage, AttachmentMessage, Message, UserMessage } from '../types/message.js'
-import { getAttachmentMessages, createAttachmentMessage } from '../utils/attachments.js'
+import { count } from '../utils/array.js'
+import { createAttachmentMessage, getAttachmentMessages } from '../utils/attachments.js'
 import { notifyCommandLifecycle } from '../utils/commandLifecycle.js'
 import {
-  remove as removeFromQueue,
   getCommandsByMaxPriority,
   isSlashCommand,
+  remove as removeFromQueue,
 } from '../utils/messageQueueManager.js'
-import { count } from '../utils/array.js'
-import type { QuerySource } from '../constants/querySource.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const taskSummaryModule = feature('BG_SESSIONS')

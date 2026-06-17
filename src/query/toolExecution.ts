@@ -1,11 +1,12 @@
+import { getSessionId } from '../bootstrap/state.js'
+import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/index.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { StreamingToolExecutor } from '../services/tools/StreamingToolExecutor.js'
 import { runTools } from '../services/tools/toolOrchestration.js'
 import { generateToolUseSummary } from '../services/toolUseSummary/toolUseSummaryGenerator.js'
 import type { ToolUseContext } from '../Tool.js'
-import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
-import type { ToolCallBlock, ToolResultBlock, TextBlock } from '../types/llm.js'
+import type { TextBlock, ToolCallBlock, ToolResultBlock } from '../types/llm.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -13,11 +14,9 @@ import type {
   ToolUseSummaryMessage,
   UserMessage,
 } from '../types/message.js'
-import { normalizeMessagesForAPI } from '../utils/messages.js'
-import { createToolUseSummaryMessage } from '../utils/messages.js'
 import { executePostToolBatchHooks } from '../utils/hooks/executors/tool.js'
 import { hasHookForEvent } from '../utils/hooks/matcher.js'
-import { getSessionId } from '../bootstrap/state.js'
+import { createToolUseSummaryMessage, normalizeMessagesForAPI } from '../utils/messages.js'
 import { queryCheckpoint } from '../utils/queryProfiler.js'
 import type { QueryConfig } from './config.js'
 

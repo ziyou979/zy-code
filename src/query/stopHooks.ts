@@ -1,4 +1,5 @@
 import { feature } from 'bun:bundle'
+import { tSync } from '../i18n/index.js'
 import { getShortcutDisplay } from '../keybindings/shortcutFormat.js'
 import { isExtractModeActive } from '../memdir/paths.js'
 import {
@@ -16,8 +17,7 @@ import type {
   TombstoneMessage,
   ToolUseSummaryMessage,
 } from '../types/message.js'
-import { type HookAttachment, createAttachmentMessage } from '../utils/attachments.js'
-import { tSync } from '../i18n/index.js'
+import { createAttachmentMessage, type HookAttachment } from '../utils/attachments.js'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import type { REPLHookContext } from '../utils/hooks/postSamplingHooks.js'

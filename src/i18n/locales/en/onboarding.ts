@@ -7,6 +7,9 @@ export const enOnboarding: TranslationResource = {
   'onboarding.apiFormat.openai': 'OpenAI format',
   'onboarding.apiFormat.openaiDesc':
     'Uses OpenAI Chat Completions API format (for vLLM, LiteLLM, etc.)',
+  'onboarding.apiFormat.google': 'Google format',
+  'onboarding.apiFormat.googleDesc':
+    'Uses Google Generative AI native API format (for Gemini models)',
   'onboarding.apiFormatDescription': 'Choose the request format for your custom API endpoint.',
   'onboarding.baseUrlLabel': 'Base URL',
   'onboarding.confirmBack': 'Enter to confirm · 9 to go back',

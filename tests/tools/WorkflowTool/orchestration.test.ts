@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { pipeline, parallel } from '../../../src/tools/WorkflowTool/runtime/orchestration.js'
 import { WorkflowSemaphore } from '../../../src/tools/WorkflowTool/runtime/concurrency.js'
+import { parallel, pipeline } from '../../../src/tools/WorkflowTool/runtime/orchestration.js'
 
 describe('orchestration', () => {
   describe('pipeline', () => {

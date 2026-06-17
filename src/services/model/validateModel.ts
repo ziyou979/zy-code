@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { MODEL_ALIASES } from './aliases.js'
 import { isModelAllowed } from './modelAllowlist.js'
-import { getAPIProvider, isOpenAIProvider } from './providers.js'
+import { getAPIProvider, isAnthropicProvider, isOpenAIProvider } from './providers.js'
 import { sideQuery } from '../../utils/sideQuery.js'
 import { isAPIError, isConnectionError, getErrorStatus } from '../../types/llm.js'
 import { getModelStrings } from './modelStrings.js'
@@ -48,10 +48,10 @@ export async function validateModel(model: string): Promise<{ valid: boolean; er
   try {
     const apiProvider = getAPIProvider()
 
-    // 使用 OpenAI SDK 的平台不支持 cache_control 参数
-    const messageContent = isOpenAIProvider(apiProvider)
-      ? [{ type: 'text' as const, text: 'Hi' }]
-      : [{ type: 'text' as const, text: 'Hi', cache_control: { type: 'ephemeral' as const } }]
+    // 仅 Anthropic 原生格式支持 cache_control 参数
+    const messageContent = isAnthropicProvider(apiProvider)
+      ? [{ type: 'text' as const, text: 'Hi', cache_control: { type: 'ephemeral' as const } }]
+      : [{ type: 'text' as const, text: 'Hi' }]
 
     await sideQuery({
       model: normalizedModel,

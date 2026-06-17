@@ -1,13 +1,13 @@
-export * from '../services/hooks.js'
+export type { HookOutsideReplResult } from '../services/hooks/outsideRepl.js'
 export type {
   AggregatedHookResult,
-  ElicitationResponse,
-  HookBlockingError,
-  HookResult,
   ConfigChangeSource,
   ElicitationHookResult,
+  ElicitationResponse,
   ElicitationResultHookResult,
+  HookBlockingError,
+  HookResult,
   InstructionsLoadReason,
   InstructionsMemoryType,
 } from '../services/hooks/types.js'
-export type { HookOutsideReplResult } from '../services/hooks/outsideRepl.js'
+export * from '../services/hooks.js'

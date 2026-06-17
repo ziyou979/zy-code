@@ -10,16 +10,6 @@ import {
 import { checkGithubAppInstalled } from 'src/services/background/remote/preconditions.js'
 import { getMainLoopModel } from 'src/services/model/model.js'
 import { isPolicyAllowed } from 'src/services/policyLimits/index.js'
-import {
-  fetchSession,
-  type GitRepositoryOutcome,
-  type GitSource,
-  getBranchFromSession,
-  getOAuthHeaders,
-  type SessionResource,
-} from './api.js'
-import { fetchEnvironments } from './environments.js'
-import { createAndUploadGitBundle } from './gitBundle.js'
 import { z } from 'zod/v4'
 import {
   getTeleportErrors,
@@ -29,9 +19,6 @@ import {
 import { getOauthConfig } from '../../constants/oauth.js'
 import type { Root } from '../../ink.js'
 import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js'
-import { queryCompactModel } from '../api/compactQueries.js'
-import { getSessionLogsViaOAuth, getTeleportEvents } from '../api/sessionIngress.js'
-import { getOrganizationUUID } from '../oauth/client.js'
 import { AppStateProvider } from '../../state/AppState.js'
 import type { WireMessage } from '../../types/index.js'
 import type { Message, SystemMessage } from '../../types/message.js'
@@ -60,6 +47,19 @@ import { isTranscriptMessage } from '../../utils/sessionStorage.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
+import { queryCompactModel } from '../api/compactQueries.js'
+import { getSessionLogsViaOAuth, getTeleportEvents } from '../api/sessionIngress.js'
+import { getOrganizationUUID } from '../oauth/client.js'
+import {
+  fetchSession,
+  type GitRepositoryOutcome,
+  type GitSource,
+  getBranchFromSession,
+  getOAuthHeaders,
+  type SessionResource,
+} from './api.js'
+import { fetchEnvironments } from './environments.js'
+import { createAndUploadGitBundle } from './gitBundle.js'
 export type TeleportResult = {
   messages: Message[]
   branchName: string

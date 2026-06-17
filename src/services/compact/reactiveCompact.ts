@@ -7,16 +7,9 @@ import type {
   Message,
   UserMessage,
 } from '../../types/message.js'
-import {
-  createAttachmentMessage,
-  getAgentListingDeltaAttachment,
-  getDeferredToolsDeltaAttachment,
-  getMcpInstructionsDeltaAttachment,
-} from '../attachments/attachments.js'
 import { logForDebugging } from '../../utils/debug.js'
 import type { CacheSafeParams } from '../../utils/forkedAgent.js'
 import { runForkedAgent } from '../../utils/forkedAgent.js'
-import { executePostCompactHooks } from '../hooks.js'
 import { logError } from '../../utils/log.js'
 import {
   createCompactBoundaryMessage,
@@ -41,6 +34,13 @@ import {
   PROMPT_TOO_LONG_ERROR_MESSAGE,
 } from '../api/errors.js'
 import { notifyCompaction } from '../api/promptCacheBreakDetection.js'
+import {
+  createAttachmentMessage,
+  getAgentListingDeltaAttachment,
+  getDeferredToolsDeltaAttachment,
+  getMcpInstructionsDeltaAttachment,
+} from '../attachments/attachments.js'
+import { executePostCompactHooks } from '../hooks.js'
 import { isAutoCompactEnabled } from './autoCompact.js'
 import type { CompactionResult } from './compact.js'
 import {

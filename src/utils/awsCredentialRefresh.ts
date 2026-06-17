@@ -15,11 +15,7 @@ import chalk from 'chalk'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { logEvent } from '../services/analytics/index.js'
 import { checkHasTrustDialogAccepted } from '../services/config/config.js'
-import {
-  checkStsCallerIdentity,
-  clearAwsIniCache,
-  isValidAwsStsOutput,
-} from './aws.js'
+import { checkStsCallerIdentity, clearAwsIniCache, isValidAwsStsOutput } from './aws.js'
 import { AwsAuthStatusManager } from './awsAuthStatusManager.js'
 import { logAntError, logForDebugging } from './debug.js'
 import { execSyncWithDefaults_DEPRECATED } from './execFileNoThrow.js'
@@ -233,8 +229,7 @@ async function getAwsCredsFromCredentialExport(): Promise<AwsRefreshedCredential
       logForDebugging('AWS credentials retrieved from awsCredentialExport')
 
       const expirationStr = awsOutput.Credentials.Expiration
-      const expirationMs =
-        typeof expirationStr === 'string' ? Date.parse(expirationStr) : NaN
+      const expirationMs = typeof expirationStr === 'string' ? Date.parse(expirationStr) : NaN
 
       return {
         accessKeyId: awsOutput.Credentials.AccessKeyId,

@@ -24,6 +24,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
 } from 'react'
 import type { SuggestionItem } from '../components/PromptInput/PromptInputFooterSuggestions.js'
@@ -78,6 +79,12 @@ export function useSetPromptOverlay(data: PromptOverlayData | null) {
  *
  * 使用 useLayoutEffect 以确保对话框上下文在同一次 commit 中同步清除，
  * 避免 Notifications 高度已变但对话框 portal 仍残留导致的鬼影帧。
+ *
+ * cleanup 使用 queueMicrotask 延迟执行 set(null)：
+ * 直接在 useLayoutEffect cleanup 中调用 setState 会在 commit 阶段创建
+ * 嵌套更新，在全屏模式下可能与其他 useLayoutEffect 清理交互，
+ * 触发 "Maximum update depth exceeded" 崩溃。
+ * 注意：依赖变化时取消前一个微任务，避免错误清除新值。
  */
 export function useSetPromptOverlayDialog(node: ReactNode) {
   const set = useContext(SetDialogContext)

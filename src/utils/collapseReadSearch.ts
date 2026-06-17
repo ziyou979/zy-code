@@ -366,7 +366,17 @@ function isSilentNonCollapsibleToolUse(msg: RenderableMessage, tools: Tools): bo
   const tool = findToolByName(tools, toolName) ?? findToolByName(getReplPrimitiveTools(), toolName)
   if (!tool) return false
   // 工具的 renderToolUseMessage 返回 null 意味着 UI 不可见
-  return tool.renderToolUseMessage == null
+  // 注意：renderToolUseMessage 是 Tool 的必需属性（无 ? ），每个工具都定义了它。
+  // 检查属性 == null 只能判断属性是否存在（永远 false），需要调用函数
+  // 并判断返回值是否为 null 才能识别"静默工具"。
+  try {
+    const rendered = tool.renderToolUseMessage({}, { theme: 'light', verbose: false })
+    return rendered === null
+  } catch {
+    // 某些工具的 renderToolUseMessage 可能因缺少必要 input 抛出异常，
+    // 这种情况下视为非静默工具
+    return false
+  }
 }
 
 function isPreToolHookSummary(msg: RenderableMessage): msg is SystemStopHookSummaryMessage {
@@ -475,7 +485,9 @@ function isSilentToolResult(
   const toolResults = (msg.message.content as ContentBlock[]).filter(
     (c): c is { type: 'tool_result'; toolCallId: string } => c.type === 'tool_result',
   )
-  return toolResults.length > 0 && toolResults.every((r) => absorbedSilentToolUseIds.has(r.toolCallId))
+  return (
+    toolResults.length > 0 && toolResults.every((r) => absorbedSilentToolUseIds.has(r.toolCallId))
+  )
 }
 
 /**

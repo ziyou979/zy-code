@@ -16,7 +16,6 @@ import {
 } from '../../utils/messages.js'
 import { getSessionMemoryPath } from '../../utils/permissions/filesystem.js'
 import { processSessionStartHooks } from '../../utils/sessionStart.js'
-import { getTranscriptPath } from '../sessionStorage.js'
 import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
 import { extractDiscoveredToolNames } from '../../utils/toolSearch.js'
 import {
@@ -30,6 +29,7 @@ import {
   getSessionMemoryContent,
   waitForSessionMemoryExtraction,
 } from '../SessionMemory/sessionMemoryUtils.js'
+import { getTranscriptPath } from '../sessionStorage.js'
 import {
   annotateBoundaryWithPreservedSegment,
   buildPostCompactMessages,

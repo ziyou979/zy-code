@@ -4,6 +4,7 @@ import React, { useRef } from 'react'
 import { useMinDisplayTime } from '../../hooks/useMinDisplayTime.js'
 import { tSync } from '../../i18n/index.js'
 import { Ansi, Box, Text, useAnimationFrame, useTheme } from '../../ink.js'
+import { useReplStore } from '../../state/ReplState.js'
 import { findToolByName, type Tools } from '../../Tool.js'
 import { getReplPrimitiveTools } from '../../tools/REPLTool/primitiveTools.js'
 import type { AssistantMessage, CollapsedReadSearchGroup } from '../../types/message.js'
@@ -17,7 +18,6 @@ import {
 } from '../../utils/format.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import type { buildMessageLookups } from '../../utils/messages.js'
-import { useReplStore } from '../../state/ReplState.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
 import { useSelectedMessageBg } from '../messageActions.js'
 import { PrBadge } from '../PrBadge.js'
@@ -204,7 +204,8 @@ export function CollapsedReadSearchContent({
     bashCount > 0 ||
     gitOpBashCount > 0
   // 纯 thinking 折叠块（无任何工具调用计数）也可能存在
-  const hasThinkingContent = (message.thinkingDurationMs ?? 0) > 0 || message.latestThinkingSummary !== undefined
+  const hasThinkingContent =
+    (message.thinkingDurationMs ?? 0) > 0 || message.latestThinkingSummary !== undefined
   const readPaths = message.readFilePaths
   const searchArgs = message.searchArgs as string[] | undefined
   let incomingHint = message.latestDisplayHint

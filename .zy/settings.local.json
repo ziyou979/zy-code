@@ -11,7 +11,8 @@
       "Bash(gh pr:*)",
       "Bash(bun test:*)",
       "Bash(ls -lt ~/.zy/sessions/*.json)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(node:*)"
     ]
   }
 }

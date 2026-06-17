@@ -4,6 +4,7 @@ import { EFFORT_BETA_HEADER, TASK_BUDGETS_BETA_HEADER } from '../../constants/be
 import {
   getAPIProvider,
   isAnthropicModel,
+  isAnthropicProvider,
   isOpenAIProvider,
 } from '../../services/model/providers.js'
 import { getOauthAccountInfo } from '../../utils/auth.js'
@@ -194,8 +195,8 @@ export async function verifyApiKey(
   apiKey: string,
   isNonInteractiveSession: boolean,
 ): Promise<boolean> {
-  // 使用 OpenAI SDK 的平台（百炼、Ollama、智谱、Kimi、OpenAI 等）- 跳过验证
-  if (isOpenAIProvider(getAPIProvider())) {
+  // 仅 Anthropic SDK 平台需要验证；OpenAI / Google / 本地推理引擎等平台跳过
+  if (!isAnthropicProvider(getAPIProvider())) {
     return true
   }
   // 如果在打印模式（非交互会话）下运行，跳过 API 验证

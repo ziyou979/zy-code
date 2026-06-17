@@ -7,13 +7,13 @@ import { logError } from 'src/utils/log.js'
 import { createSystemAPIErrorMessage } from 'src/utils/messages.js'
 import {
   type APIErrorLike,
-  LLMError,
   createAbortError,
   getErrorHeader,
   getErrorStatus,
   getErrorMessage as getLLMErrorMessage,
   isAPIError,
   isConnectionError,
+  LLMError,
 } from '../../types/llm.js'
 import {
   clearApiKeyHelperCache,

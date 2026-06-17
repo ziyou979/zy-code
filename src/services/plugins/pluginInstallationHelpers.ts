@@ -9,16 +9,16 @@ import { randomBytes } from 'node:crypto'
 import { rename, rm } from 'node:fs/promises'
 import { dirname, join, resolve, sep } from 'node:path'
 import { buildPluginTelemetryFields } from 'src/services/telemetry/pluginTelemetry.js'
-import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
-  logEvent,
-} from '../analytics/index.js'
 import { getCwd } from '../../utils/cwd.js'
 import { toError } from '../../utils/errors.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { logError } from '../../utils/log.js'
 import { getSettingsForSource, updateSettingsForSource } from '../../utils/settings/settings.js'
+import {
+  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+  type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
+  logEvent,
+} from '../analytics/index.js'
 import { clearAllCaches } from './cacheUtils.js'
 import {
   formatDependencyCountSuffix,

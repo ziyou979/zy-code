@@ -7,14 +7,8 @@ import pickBy from 'lodash-es/pickBy.js'
 import type { MemoryType } from 'src/services/memory/types.js'
 import { getOriginalCwd, getSessionTrustAccepted } from '../../bootstrap/state.js'
 import { getAutoMemEntrypoint } from '../../memdir/paths.js'
-import { logEvent } from '../analytics/index.js'
-import type { McpServerConfig } from '../mcp/types.js'
-import type {
-  // @ts-expect-error
-  BillingType,
-} from '../oauth/types.js'
-import { getCwd } from '../../utils/cwd.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
+import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { getGlobalZyFile } from '../../utils/env.js'
@@ -31,6 +25,12 @@ import { normalizePathForConfigKey } from '../../utils/path.js'
 import { getEssentialTrafficOnlyReason } from '../../utils/privacyLevel.js'
 import { getManagedFilePath } from '../../utils/settings/managedPath.js'
 import type { ThemeSetting } from '../../utils/theme.js'
+import { logEvent } from '../analytics/index.js'
+import type { McpServerConfig } from '../mcp/types.js'
+import type {
+  // @ts-expect-error
+  BillingType,
+} from '../oauth/types.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemPaths = feature('TEAMMEM')
@@ -458,7 +458,7 @@ export type GlobalConfig = {
   // Teammate 启动模式: 'auto' | 'tmux' | 'in-process'
   teammateMode?: 'auto' | 'tmux' | 'in-process' // 如何启动 teammate（默认: 'auto'）
   // 新 teammate 的默认模型（当工具调用未传递模型时）。
-  // undefined = 硬编码 Opus（向后兼容）；null = leader 的模型；string = 模型别名/ID。
+  // undefined = 用户配置的 advanced 模型；null = leader 的模型；string = 模型别名/ID。
   teammateDefaultModel?: string | null
 
   // PR 状态页脚配置（通过 GrowthBook 特性开关）

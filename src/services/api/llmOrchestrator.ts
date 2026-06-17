@@ -173,12 +173,12 @@ import {
   type NonNullableUsage,
 } from './logging.js'
 import { addCacheBreakpoints, stripExcessMediaItems } from './messageTransforms.js'
+import { probeThinkingFromError } from './modelCapabilityProbe.js'
 import {
   CACHE_TTL_1HOUR_MS,
   checkResponseForCacheBreak,
   recordPromptState,
 } from './promptCacheBreakDetection.js'
-import { probeThinkingFromError } from './modelCapabilityProbe.js'
 import { cleanupStream, updateUsage } from './usageTracker.js'
 import {
   CannotRetryError,

@@ -3,15 +3,14 @@
 
 // 从 apiNormalize.ts 重新导出公共 API
 export {
-  reorderMessagesInUI,
-  reorderAttachmentsForAPI,
-  normalizeMessagesForAPI,
   filterUnresolvedToolUses,
+  normalizeMessagesForAPI,
+  reorderAttachmentsForAPI,
+  reorderMessagesInUI,
 } from './apiNormalize.js'
-
-// 从 systemReminder.ts 重新导出公共 API
-export { wrapInSystemReminder, wrapMessagesInSystemReminder } from './systemReminder.js'
+export { ensureToolResultPairing } from './attachmentApi/toolResultPairing.js'
 
 // 从 attachmentApi.ts 重新导出公共 API
 export { normalizeAttachmentForAPI, wrapCommandText } from './attachmentApi.js'
-export { ensureToolResultPairing } from './attachmentApi/toolResultPairing.js'
+// 从 systemReminder.ts 重新导出公共 API
+export { wrapInSystemReminder, wrapMessagesInSystemReminder } from './systemReminder.js'

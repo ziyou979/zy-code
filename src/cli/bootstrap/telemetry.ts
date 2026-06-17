@@ -13,6 +13,7 @@ import {
   logPluginsEnabledForSession,
 } from '../../services/telemetry/pluginTelemetry.js'
 import { logSkillsLoaded } from '../../services/telemetry/skillLoadedEvent.js'
+import type { LoadedPlugin, PluginError, PluginLoadResult } from '../../types/plugin.js'
 import { isAutoUpdaterDisabled } from '../../utils/config.js'
 import { getContextWindowForModel } from '../../utils/context.js'
 import { getCwd } from '../../utils/cwd.js'
@@ -27,7 +28,6 @@ import { logError } from '../../utils/log.js'
 import { getManagedPluginNames } from '../../utils/plugins/managedPlugins.js'
 import { getPluginSeedDirs } from '../../utils/plugins/pluginDirectories.js'
 import { loadAllPluginsCacheOnly } from '../../utils/plugins/pluginLoader.js'
-import type { LoadedPlugin, PluginError, PluginLoadResult } from '../../types/plugin.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
 

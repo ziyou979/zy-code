@@ -15,11 +15,6 @@ import { createHash } from 'node:crypto'
 import { open, unlink } from 'node:fs/promises'
 import axios from 'axios'
 import { getOauthConfig, OAUTH_BETA_HEADER } from '../../constants/oauth.js'
-import {
-  checkAndRefreshOAuthTokenIfNeeded,
-  getApiKeyWithSource,
-  getZyAIOAuthTokens,
-} from '../auth/auth.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { classifyAxiosError, getErrnoCode } from '../../utils/errors.js'
@@ -29,6 +24,11 @@ import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 import { getRetryDelay } from '../api/withRetry.js'
+import {
+  checkAndRefreshOAuthTokenIfNeeded,
+  getApiKeyWithSource,
+  getZyAIOAuthTokens,
+} from '../auth/auth.js'
 import { checkManagedSettingsSecurity, handleSecurityCheckResult } from './securityCheck.jsx'
 import { isRemoteManagedSettingsEligible, resetSyncCache } from './syncCache.js'
 import {

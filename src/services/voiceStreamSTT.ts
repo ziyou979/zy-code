@@ -14,17 +14,17 @@
 import type { ClientRequest, IncomingMessage } from 'node:http'
 import WebSocket from 'ws'
 import { getOauthConfig } from '../constants/oauth.js'
-import {
-  checkAndRefreshOAuthTokenIfNeeded,
-  getZyAIOAuthTokens,
-  isAuthEnabled,
-} from './auth/auth.js'
 import { logForDebugging } from '../utils/debug.js'
 import { getUserAgent } from '../utils/http.js'
 import { logError } from '../utils/log.js'
 import { getWebSocketTLSOptions } from '../utils/mtls.js'
 import { getWebSocketProxyAgent, getWebSocketProxyUrl } from '../utils/proxy.js'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
+import {
+  checkAndRefreshOAuthTokenIfNeeded,
+  getZyAIOAuthTokens,
+  isAuthEnabled,
+} from './auth/auth.js'
 
 const KEEPALIVE_MSG = '{"type":"KeepAlive"}'
 const CLOSE_STREAM_MSG = '{"type":"CloseStream"}'

@@ -8,7 +8,7 @@ import { afterEach, describe, expect, mock, test } from 'bun:test'
 // 可变的 mock 状态（测试之间重置）
 let mockIsBgSession = false
 let mockIsInternalBuild = false
-let mockTuiConfig: 'fullscreen' | 'default' | undefined = undefined
+let mockTuiConfig: 'fullscreen' | 'default' | undefined
 let mockFeatureFlag = false
 
 // 阻断所有传递依赖

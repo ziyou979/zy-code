@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { type StatsResult, StatsInner } from '../Stats.js'
+import { StatsInner, type StatsResult } from '../Stats.js'
 
 export { createAllTimeStatsPromise } from '../Stats.js'
 

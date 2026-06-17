@@ -4,14 +4,14 @@
 
 import { feature } from 'bun:bundle'
 import { quote } from 'src/shell-eval/bash/shellQuote.js'
-import { getAutoModeInstructions } from '../../services/modeInstructions/autoMode.js'
-import { getPlanModeInstructions } from '../../services/modeInstructions/planMode.js'
 import { AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
 import { ExitPlanModeV2Tool } from 'src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.js'
 import { FILE_READ_TOOL_NAME, MAX_LINES_TO_READ } from 'src/tools/FileReadTool/prompt.js'
 import { OUTPUT_STYLE_CONFIG } from '../../constants/outputStyles.js'
 import { DiagnosticTrackingService } from '../../services/diagnosticTracking.js'
+import { getAutoModeInstructions } from '../../services/modeInstructions/autoMode.js'
+import { getPlanModeInstructions } from '../../services/modeInstructions/planMode.js'
 import { getWorkflowReminderContent } from '../../services/workflow/reminderContent.js'
 import {
   FileReadTool,

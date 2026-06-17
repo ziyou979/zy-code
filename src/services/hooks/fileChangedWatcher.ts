@@ -3,10 +3,10 @@ import chokidar, { type FSWatcher } from 'chokidar'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import { executeCwdChangedHooks, executeFileChangedHooks } from './executors/config.js'
-import { type HookOutsideReplResult } from './outsideRepl.js'
 import { clearCwdEnvFiles } from '../../utils/sessionEnvironment.js'
+import { executeCwdChangedHooks, executeFileChangedHooks } from './executors/config.js'
 import { getHooksConfigFromSnapshot } from './hooksConfigSnapshot.js'
+import { type HookOutsideReplResult } from './outsideRepl.js'
 
 const hookLog = createDebugLog('hooks')
 

@@ -13,8 +13,8 @@
 // 测试体内 await runEngine(scriptedMessages, opts)。
 
 import { mock } from 'bun:test'
-import type { Message } from '../../src/types/message.js'
 import type { WireMessage } from '../../src/types/index.js'
+import type { Message } from '../../src/types/message.js'
 
 // 由 runEngine 在每次调用前设置，被 fake query() 读取。
 let _script: Message[] = []

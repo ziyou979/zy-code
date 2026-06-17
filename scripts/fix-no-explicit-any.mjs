@@ -1,10 +1,10 @@
 #!/usr/bin/env node
+import { execSync } from 'node:child_process'
 /**
  * 为 src/utils/ 目录下所有 noExplicitAny biome lint 错误添加 biome-ignore 注释。
  * 仅处理没有已有 biome-ignore 注释的行。
  */
 import { readFileSync, writeFileSync } from 'node:fs'
-import { execSync } from 'node:child_process'
 
 // 获取所有 noExplicitAny 错误的文件和行号
 const output = execSync(

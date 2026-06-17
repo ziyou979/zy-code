@@ -23,11 +23,6 @@ import {
   ZY_CODE_INFERENCE_SCOPE,
 } from '../../constants/oauth.js'
 import { getAPIProvider, isAnthropicBaseUrl } from '../../services/model/providers.js'
-import {
-  checkAndRefreshOAuthTokenIfNeeded,
-  getApiKeyWithSource,
-  getZyAIOAuthTokens,
-} from '../auth/auth.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
@@ -38,6 +33,11 @@ import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 import { getRetryDelay } from '../api/withRetry.js'
+import {
+  checkAndRefreshOAuthTokenIfNeeded,
+  getApiKeyWithSource,
+  getZyAIOAuthTokens,
+} from '../auth/auth.js'
 import {
   type PolicyLimitsFetchResult,
   type PolicyLimitsResponse,
