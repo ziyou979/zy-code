@@ -1871,14 +1871,13 @@ export async function rootAction(
   const mcpTools: Awaited<typeof mcpPromise>['tools'] = []
   const mcpCommands: Awaited<typeof mcpPromise>['commands'] = []
   let thinkingEnabled = shouldEnableThinkingByDefault(effectiveModel)
-  let thinkingConfig: ThinkingConfig =
-    thinkingEnabled
-      ? {
-          type: 'adaptive',
-        }
-      : {
-          type: 'disabled',
-        }
+  let thinkingConfig: ThinkingConfig = thinkingEnabled
+    ? {
+        type: 'adaptive',
+      }
+    : {
+        type: 'disabled',
+      }
   if (options.thinking === 'adaptive' || options.thinking === 'enabled') {
     thinkingEnabled = true
     thinkingConfig = {

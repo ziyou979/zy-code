@@ -208,29 +208,32 @@ export function ExitPlanModePermissionRequest({
   // useCallback 包裹以确保引用稳定——onImagePaste 被列入 stickyFooter
   // useEffect 的依赖数组，如果不稳定会导致 setStickyFooter → 重渲染 →
   // onImagePaste 新引用 → effect 重跑 → 无限循环（Maximum update depth exceeded）
-  const onImagePaste = useCallback((
-    base64Image: string,
-    mediaType?: string,
-    filename?: string,
-    dimensions?: ImageDimensions,
-    _sourcePath?: string,
-  ) => {
-    const pasteId = nextPasteIdRef.current++
-    const newContent: PastedContent = {
-      id: pasteId,
-      type: 'image',
-      content: base64Image,
-      mediaType: mediaType || 'image/png',
-      filename: filename || 'Pasted image',
-      dimensions,
-    }
-    cacheImagePath(newContent)
-    void storeImage(newContent)
-    setPastedContents((prev) => ({
-      ...prev,
-      [pasteId]: newContent,
-    }))
-  }, [])
+  const onImagePaste = useCallback(
+    (
+      base64Image: string,
+      mediaType?: string,
+      filename?: string,
+      dimensions?: ImageDimensions,
+      _sourcePath?: string,
+    ) => {
+      const pasteId = nextPasteIdRef.current++
+      const newContent: PastedContent = {
+        id: pasteId,
+        type: 'image',
+        content: base64Image,
+        mediaType: mediaType || 'image/png',
+        filename: filename || 'Pasted image',
+        dimensions,
+      }
+      cacheImagePath(newContent)
+      void storeImage(newContent)
+      setPastedContents((prev) => ({
+        ...prev,
+        [pasteId]: newContent,
+      }))
+    },
+    [],
+  )
   const onRemoveImage = useCallback((id: number) => {
     setPastedContents((prev) => {
       const next = {

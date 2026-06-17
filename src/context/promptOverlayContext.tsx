@@ -18,14 +18,7 @@
  * Split into data/setter context pairs so writers never re-render on
  * their own writes — the setter contexts are stable.
  */
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react'
 import type { SuggestionItem } from '../components/PromptInput/PromptInputFooterSuggestions.js'
 import { logForDebugging } from '../utils/debug.js'
 export type PromptOverlayData = {
