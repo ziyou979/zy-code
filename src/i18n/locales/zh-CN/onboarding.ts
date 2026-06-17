@@ -13,7 +13,7 @@ export const zhOnboarding: TranslationResource = {
   'onboarding.defaultApiKeyLabel': 'API Key',
   'onboarding.effort.desc':
     '你希望 ZY Code 的回答有多深入？均衡模式兼顾质量与速度，推荐使用。后续可通过 /effort 更改。',
-  'onboarding.effort.title': '选择回答努力度',
+  'onboarding.effort.title': '选择回答思考强度',
   'onboarding.enterApiKey': '输入 {apiKeyLabel}',
   'onboarding.enterModelName': '输入模型名称',
   'onboarding.enterToConfirm': 'Enter 确认 · Esc 退出',

@@ -31,8 +31,8 @@ export const zhMisc: TranslationResource = {
   'devChannels.useChannels': '请使用 --channels 运行已批准的通道列表。',
   'devChannels.warning': '警告：加载开发通道',
   'effort.defaultDialogDescription':
-    '努力度决定模型在完成任务时思考的时长。对于大多数任务，建议使用均衡努力度以平衡速度与智能，并最大化速率限制。需要更强推理时，请使用 ultrathink 触发深度努力度。',
-  'effort.defaultDialogTitle': '推荐使用均衡努力度',
+    '思考强度决定模型在完成任务时思考的时长。对于大多数任务，建议使用均衡思考强度以平衡速度与智能，并最大化速率限制。需要更强推理时，请使用 ultrathink 触发深度思考强度。',
+  'effort.defaultDialogTitle': '推荐使用均衡思考强度',
   'effort.off': '关闭',
   'effort.quick': '极速',
   'effort.light': '轻量',
@@ -401,9 +401,9 @@ export const zhMisc: TranslationResource = {
   'modelPicker.description':
     '为 ZY Code 切换模型。适用于本次会话和未来的 ZY Code 会话。如需使用其他/旧版模型名称，请通过 --model 指定。',
   'modelPicker.effortDefault': '（默认）',
-  'modelPicker.effortLabel': '{effort} 努力度',
-  'modelPicker.effortNotSupported': '不支持努力度',
-  'modelPicker.effortNotSupportedFor': '不支持 {modelName} 的努力度',
+  'modelPicker.effortLabel': '{effort} 思考强度',
+  'modelPicker.effortNotSupported': '',
+  'modelPicker.effortNotSupportedFor': ' {modelName} 不支持思考强度',
   'modelPicker.pressAgainToExit': '再按一次 {key} 退出',
   'modelPicker.selectModel': '选择模型',
   'modelCommand.current': '当前模型：{model}',
