@@ -10,6 +10,7 @@ import {
   ZY_CODE_INFERENCE_SCOPE,
   ZY_CODE_OAUTH_SCOPES,
 } from '../../constants/oauth.js'
+import { logForDebugging } from '../../utils/debug.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getZyAIOAuthTokens,
@@ -18,7 +19,6 @@ import {
 } from '../auth/auth.js'
 import type { AccountInfo } from '../config/config.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
 import { getOauthProfileFromOauthToken } from './getOauthProfile.js'
 import type { OAuthProfileResponse, OAuthTokens, SubscriptionType } from './types.js'
 

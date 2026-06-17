@@ -1,12 +1,13 @@
 import { getMainLoopModel } from 'src/services/model/model.js'
 import { z } from 'zod/v4'
-import { logEvent } from '../analytics/index.js'
-import { sanitizeToolNameForAnalytics } from '../analytics/metadata.js'
 import type { AssistantMessage, Message } from '../../types/message.js'
 import { getGlobalConfig } from '../../utils/config.js'
 import { createDebugLog } from '../../utils/debug.js'
+import { logEvent } from '../analytics/index.js'
+import { sanitizeToolNameForAnalytics } from '../analytics/metadata.js'
 
 const permLog = createDebugLog('permissions')
+
 import { errorMessage } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'

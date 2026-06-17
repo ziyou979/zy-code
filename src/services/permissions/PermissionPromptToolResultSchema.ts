@@ -3,6 +3,7 @@ import z from 'zod/v4'
 import { createDebugLog } from '../../utils/debug.js'
 
 const permLog = createDebugLog('permissions')
+
 import { lazySchema } from '../../utils/lazySchema.js'
 import type { PermissionDecision, PermissionDecisionReason } from './PermissionResult.js'
 import { applyPermissionUpdates, persistPermissionUpdates } from './PermissionUpdate.js'

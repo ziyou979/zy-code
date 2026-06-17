@@ -13,9 +13,9 @@
 import { describe, expect, test } from 'bun:test'
 import {
   anthropicDeltaUsageToStandard,
+  anthropicLLMStreamEventToStandard,
   anthropicResponseToStandard,
   anthropicStopReasonToStandard,
-  anthropicLLMStreamEventToStandard,
   anthropicStreamToStandard,
   anthropicUsageToStandard,
   buildAnthropicCreateParams,

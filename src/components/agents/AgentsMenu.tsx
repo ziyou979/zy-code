@@ -9,8 +9,8 @@ import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { Tools } from '../../Tool.js'
 import { resolveAgentOverrides } from '../../tools/AgentTool/agentDisplay.js'
 import {
-  getActiveAgentsFromList,
   type AgentDefinition,
+  getActiveAgentsFromList,
 } from '../../tools/AgentTool/loadAgentsDir.js'
 import { toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'

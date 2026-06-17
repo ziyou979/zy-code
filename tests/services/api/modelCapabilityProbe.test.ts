@@ -1,9 +1,9 @@
-import { describe, test, expect, beforeEach } from 'bun:test'
+import { beforeEach, describe, expect, test } from 'bun:test'
 import {
-  probeThinkingFromError,
-  probedModelSupportsThinking,
-  probedModelSupportsAdaptiveThinking,
   _resetForTesting,
+  probedModelSupportsAdaptiveThinking,
+  probedModelSupportsThinking,
+  probeThinkingFromError,
 } from 'src/services/api/modelCapabilityProbe.js'
 
 describe('modelCapabilityProbe', () => {

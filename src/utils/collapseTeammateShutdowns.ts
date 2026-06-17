@@ -1,5 +1,5 @@
-import type { Attachment } from './attachments.js'
 import type { AttachmentMessage, RenderableMessage } from '../types/message.js'
+import type { Attachment } from './attachments.js'
 
 function isTeammateShutdownAttachment(msg: RenderableMessage): msg is AttachmentMessage {
   if (msg.type !== 'attachment') {

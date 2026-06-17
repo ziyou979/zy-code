@@ -76,7 +76,7 @@ import {
   getCliTeammateModeOverride,
   clearCliTeammateModeOverride,
 } from '../../services/swarm/backends/teammateModeSnapshot.js'
-import { getHardcodedTeammateModelFallback } from '../../services/swarm/teammateModel.js'
+import { getTeammateModelFallback } from '../../services/swarm/teammateModel.js'
 import { useSearchInput } from '../../hooks/useSearchInput.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 
@@ -1796,7 +1796,7 @@ export function Config({
               setTabsHidden(false)
               // First-open-then-Enter from unset: picker highlights "Default"
               // (initial=null) and confirming would write null, silently
-              // switching Opus-fallback → follow-leader. Treat as no-op.
+              // switching advanced-fallback → follow-leader. Treat as no-op.
               if (globalConfig.teammateDefaultModel === undefined && model_1 === null) {
                 return
               }
@@ -2192,7 +2192,7 @@ export function Config({
 }
 function teammateModelDisplayString(value: string | null | undefined): string {
   if (value === undefined) {
-    return modelDisplayString(getHardcodedTeammateModelFallback())
+    return modelDisplayString(getTeammateModelFallback())
   }
   if (value === null) {
     return "Default (leader's model)"

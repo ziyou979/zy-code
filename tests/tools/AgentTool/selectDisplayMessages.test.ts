@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { selectDisplayMessages } from '../../../src/tools/AgentTool/UI.js'
 import type { Tools } from '../../../src/Tool.js'
+import { selectDisplayMessages } from '../../../src/tools/AgentTool/UI.js'
 
 // 构造最小化的 ProcessedMessage 用于测试
 function makeToolCallMessage(name: string, id: string) {

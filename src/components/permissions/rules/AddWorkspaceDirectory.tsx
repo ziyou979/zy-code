@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react'
-import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js'
-import type { SuggestionItem } from '../../PromptInput/PromptInputFooterSuggestions.js'
 import { tSync } from 'src/i18n/index.js'
 import { useDebounceCallback } from 'usehooks-ts'
 import {
@@ -8,6 +6,7 @@ import {
   validateDirectoryForWorkspace,
 } from '../../../commands/add-dir/validation.js'
 import TextInput from '../../../components/TextInput.js'
+import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../../ink.js'
 import { useKeybinding } from '../../../keybindings/useKeybinding.js'
 import { getDirectoryCompletions } from '../../../services/suggestions/directoryCompletion.js'
@@ -17,6 +16,7 @@ import { Select } from '../../CustomSelect/select.js'
 import { Byline } from '../../design-system/Byline.js'
 import { Dialog } from '../../design-system/Dialog.js'
 import { KeyboardShortcutHint } from '../../design-system/KeyboardShortcutHint.js'
+import type { SuggestionItem } from '../../PromptInput/PromptInputFooterSuggestions.js'
 import { PromptInputFooterSuggestions } from '../../PromptInput/PromptInputFooterSuggestions.js'
 
 type Props = {

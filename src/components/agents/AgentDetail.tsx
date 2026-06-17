@@ -1,6 +1,6 @@
 import figures from 'figures'
-import { Box, Text } from '../../ink.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
+import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { getAgentModelDisplay } from '../../services/model/agent.js'
 import type { Tools } from '../../Tool.js'

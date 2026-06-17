@@ -12,17 +12,17 @@ import { FILE_READ_TOOL_NAME } from 'src/tools/FileReadTool/prompt.js'
 import { FileWriteTool } from 'src/tools/FileWriteTool/FileWriteTool.js'
 import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
 import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
+import type { UserMessage } from '../../types/message.js'
 import { getCurrentProjectConfig } from '../../utils/config.js'
 import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
+import { createUserMessage } from '../../utils/messages/constructors.js'
+import { wrapMessagesInSystemReminder } from '../../utils/messages/systemReminder.js'
 import {
   getPewterLedgerVariant,
   getPlanModeV2AgentCount,
   getPlanModeV2ExploreAgentCount,
   isPlanModeInterviewPhaseEnabled,
 } from '../../utils/planModeV2.js'
-import type { UserMessage } from '../../types/message.js'
-import { createUserMessage } from '../../utils/messages/constructors.js'
-import { wrapMessagesInSystemReminder } from '../../utils/messages/systemReminder.js'
 
 // ------------------------------------------------------------------
 // Plan Phase 4 变体（pewter-ledger 实验分支）

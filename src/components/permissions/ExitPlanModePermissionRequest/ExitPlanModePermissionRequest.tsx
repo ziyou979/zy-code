@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import figures from 'figures'
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
 import { tSync } from 'src/i18n/index.js'
 import {
@@ -203,15 +203,18 @@ export function ExitPlanModePermissionRequest({
         isBypassPermissionsModeAvailable,
         onFeedbackChange: setPlanFeedback,
       }),
-    [showClearContext, usage, mode, isAutoModeAvailable, isBypassPermissionsModeAvailable],
+    [showClearContext, mode, isAutoModeAvailable, isBypassPermissionsModeAvailable],
   )
-  function onImagePaste(
+  // useCallback 包裹以确保引用稳定——onImagePaste 被列入 stickyFooter
+  // useEffect 的依赖数组，如果不稳定会导致 setStickyFooter → 重渲染 →
+  // onImagePaste 新引用 → effect 重跑 → 无限循环（Maximum update depth exceeded）
+  const onImagePaste = useCallback((
     base64Image: string,
     mediaType?: string,
     filename?: string,
     dimensions?: ImageDimensions,
     _sourcePath?: string,
-  ) {
+  ) => {
     const pasteId = nextPasteIdRef.current++
     const newContent: PastedContent = {
       id: pasteId,
@@ -227,7 +230,7 @@ export function ExitPlanModePermissionRequest({
       ...prev,
       [pasteId]: newContent,
     }))
-  }
+  }, [])
   const onRemoveImage = useCallback((id: number) => {
     setPastedContents((prev) => {
       const next = {
@@ -599,9 +602,25 @@ export function ExitPlanModePermissionRequest({
     toolUseConfirm.onReject()
   }
   const useStickyFooter = !isEmpty && !!setStickyFooter
-  useLayoutEffect(() => {
+  // 诊断计数器：记录 stickyFooter effect 运行次数，便于排查无限循环
+  const stickyFooterRunCount = useRef(0)
+  // 使用 useEffect 而非 useLayoutEffect：避免在 commit 阶段调用 setStickyFooter
+  // 创建嵌套更新。之前的 useLayoutEffect + queueMicrotask 方案治标不治本——
+  // 真正的根因是 onImagePaste 未用 useCallback 导致每次渲染引用都变。
+  useEffect(() => {
     if (!useStickyFooter) {
       return
+    }
+    // 诊断日志：记录 effect 运行，便于排查无限循环
+    stickyFooterRunCount.current++
+    const runCount = stickyFooterRunCount.current
+    process.stderr.write(
+      `[diag:stickyFooter] effect run #${runCount} deps={options:${options.length} pastedContents:${Object.keys(pastedContents).length} showSaveMessage:${String(showSaveMessage)}}\n`,
+    )
+    if (runCount > 5) {
+      process.stderr.write(
+        `[diag:stickyFooter] WARNING: effect ran ${runCount} times — possible infinite loop!\n`,
+      )
     }
     setStickyFooter(
       <Box
@@ -645,8 +664,11 @@ export function ExitPlanModePermissionRequest({
         )}
       </Box>,
     )
-    return () => setStickyFooter(null)
-    // onImagePaste/onRemoveImage are stable (useCallback/useRef-backed above)
+    return () => {
+      process.stderr.write(`[diag:stickyFooter] cleanup run #${runCount}\n`)
+      setStickyFooter(null)
+    }
+    // onImagePaste 已用 useCallback 包裹（空依赖，稳定引用）
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     useStickyFooter,

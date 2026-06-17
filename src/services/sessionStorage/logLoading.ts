@@ -12,7 +12,6 @@ import { logEvent } from 'src/services/analytics/index.js'
 import { getOriginalCwd, getSessionId, getSessionProjectDir } from '../../bootstrap/state.js'
 import { builtInCommandNames } from '../../commands.js'
 import { COMMAND_NAME_TAG, TICK_TAG } from '../../constants/xml.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
 import { type AgentId, asAgentId } from '../../types/ids.js'
 import type { AttributionSnapshotMessage } from '../../types/logs.js'
@@ -41,8 +40,6 @@ import { getWorktreePaths } from '../../utils/getWorktreePaths.js'
 import { parseJSONL } from '../../utils/json.js'
 import { extractTag, isCompactBoundaryMessage } from '../../utils/messages.js'
 import { sanitizePath } from '../../utils/path.js'
-import { getUserType } from './env.js'
-import { isLegacyProgressEntry, isTranscriptMessage } from './predicates.js'
 import {
   extractJsonStringField,
   extractLastJsonStringField,
@@ -54,6 +51,9 @@ import {
 import { jsonParse } from '../../utils/slowOperations.js'
 import type { ContentReplacementRecord } from '../../utils/toolResultStorage.js'
 import { validateUuid } from '../../utils/uuid.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { getUserType } from './env.js'
+import { isLegacyProgressEntry, isTranscriptMessage } from './predicates.js'
 
 type Transcript = (UserMessage | AssistantMessage | AttachmentMessage | SystemMessage)[]
 

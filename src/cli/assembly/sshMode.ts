@@ -6,9 +6,9 @@
 import { setCwdState, setDirectConnectServerUrl, setOriginalCwd } from '../../bootstrap/state.js'
 import { exitWithError } from '../../interactiveHelpers.js'
 import { launchRepl } from '../../replLauncher.js'
+import type { SSHSession } from '../../ssh/createSSHSession.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
 import { createSystemMessage } from '../../utils/messages.js'
-import type { SSHSession } from '../../ssh/createSSHSession.js'
 import type { AssemblyContext, SessionConfig } from './types.js'
 
 // 与 cli/argvDispatch.ts:pendingSSH 同形态（仅本模块依赖到的字段）。

@@ -3,8 +3,8 @@ import axios from 'axios'
 import * as React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { getLastAPIRequest } from 'src/bootstrap/state.js'
-import type { QuerySource } from 'src/constants/querySource.js'
 import { getOauthConfig } from 'src/constants/oauth.js'
+import type { QuerySource } from 'src/constants/querySource.js'
 import { tSync } from 'src/i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

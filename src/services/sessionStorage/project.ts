@@ -21,7 +21,6 @@ import {
   getSessionId,
   isSessionPersistenceDisabled,
 } from '../../bootstrap/state.js'
-import * as sessionIngress from '../api/sessionIngress.js'
 import { type AgentId, asAgentId } from '../../types/ids.js'
 import type { AttributionSnapshotMessage } from '../../types/logs.js'
 import {
@@ -49,13 +48,6 @@ import { getBranch } from '../../utils/git.js'
 import { gracefulShutdownSync, isShuttingDown } from '../../utils/gracefulShutdown.js'
 import { logError } from '../../utils/log.js'
 import { isCompactBoundaryMessage } from '../../utils/messages.js'
-import { getFirstMeaningfulUserMessageTextContent } from './chain.js'
-import { getEntrypoint, getNodeEnv, getUserType } from './env.js'
-import { getSessionMessages, MAX_TOMBSTONE_REWRITE_BYTES } from './logLoading.js'
-import { getAgentTranscriptPath, getTranscriptPath, getTranscriptPathForSession } from './paths.js'
-import { isChainParticipant, isTranscriptMessage } from './predicates.js'
-import { updateSessionSidecar } from './sessionSidecar.js'
-import { readFileTailSync } from './transcript.js'
 import {
   extractLastJsonStringField,
   LITE_READ_BUF_SIZE,
@@ -63,6 +55,14 @@ import {
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import type { ContentReplacementRecord } from '../../utils/toolResultStorage.js'
+import * as sessionIngress from '../api/sessionIngress.js'
+import { getFirstMeaningfulUserMessageTextContent } from './chain.js'
+import { getEntrypoint, getNodeEnv, getUserType } from './env.js'
+import { getSessionMessages, MAX_TOMBSTONE_REWRITE_BYTES } from './logLoading.js'
+import { getAgentTranscriptPath, getTranscriptPath, getTranscriptPathForSession } from './paths.js'
+import { isChainParticipant, isTranscriptMessage } from './predicates.js'
+import { updateSessionSidecar } from './sessionSidecar.js'
+import { readFileTailSync } from './transcript.js'
 
 // 在模块层级缓存 MACRO.VERSION，用于规避 bun --define 在异步上下文中的 bug
 // 参见: https://github.com/oven-sh/bun/issues/26168

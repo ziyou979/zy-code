@@ -17,8 +17,6 @@ import {
   setTeleportedSessionInfo,
   switchSession,
 } from '../../bootstrap/state.js'
-import { maybeActivateBrief } from '../activate/brief.js'
-import { maybeActivateProactive } from '../activate/proactive.js'
 import { filterCommandsForRemoteMode } from '../../commands.js'
 import { getRemoteSessionUrl } from '../../constants/product.js'
 import type { StatsStore } from '../../context/stats.js'
@@ -30,19 +28,19 @@ import {
 import type { Root } from '../../ink.js'
 import { exitWithError } from '../../interactiveHelpers.js'
 import { createRemoteSessionConfig } from '../../remote/RemoteSessionManager.js'
-import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../../services/policyLimits/index.js'
 import type { DownloadResult } from '../../services/api/filesApi.js'
+import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../../services/policyLimits/index.js'
 import { fetchSession, prepareApiRequest } from '../../services/teleport/api.js'
 import type { AppState } from '../../state/AppStateStore.js'
-import { asSessionId } from '../../types/ids.js'
-import type { Command } from '../../types/command.js'
-import type { LogOption } from '../../types/logs.js'
-import type { Message as MessageType } from '../../types/message.js'
 import type { AgentColorName } from '../../tools/AgentTool/agentColorManager.js'
 import type {
   AgentDefinition,
   AgentDefinitionsResult,
 } from '../../tools/AgentTool/loadAgentsDir.js'
+import type { Command } from '../../types/command.js'
+import { asSessionId } from '../../types/ids.js'
+import type { LogOption } from '../../types/logs.js'
+import type { Message as MessageType } from '../../types/message.js'
 import { count } from '../../utils/array.js'
 import { loadConversationForResume } from '../../utils/conversationRecovery.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -55,13 +53,13 @@ import { filterExistingPaths, getKnownPathsForRepo } from '../../utils/githubRep
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
 import { logError } from '../../utils/log.js'
 import { createSystemMessage, createUserMessage } from '../../utils/messages.js'
+import { setCwd } from '../../utils/Shell.js'
 import { type ProcessedResume, processResumedConversation } from '../../utils/sessionRestore.js'
 import {
   getSessionIdFromLog,
   loadTranscriptFromFile,
   searchSessionsByCustomTitle,
 } from '../../utils/sessionStorage.js'
-import { setCwd } from '../../utils/Shell.js'
 import {
   checkOutTeleportedSessionBranch,
   processMessagesForTeleportResume,
@@ -71,10 +69,11 @@ import {
 } from '../../utils/teleport.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
 import { validateUuid } from '../../utils/uuid.js'
-import type { RootActionOptions } from './types.js'
+import { maybeActivateBrief } from '../activate/brief.js'
+import { maybeActivateProactive } from '../activate/proactive.js'
 import { launchRemoteSessionRepl } from './remoteSession.js'
 import { launchResumedSessionRepl } from './resumedSession.js'
-import type { RenderAndRun, SessionConfig } from './types.js'
+import type { RenderAndRun, RootActionOptions, SessionConfig } from './types.js'
 
 // processResumedConversation 第三参数的上下文类型。
 // CoordinatorModeApi 在 sessionRestore.ts 中是私有类型，这里用结构兼容。

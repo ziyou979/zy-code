@@ -2,9 +2,9 @@ import type { AppState } from 'src/state/AppState.js'
 import { HOOK_EVENTS, type HookEvent } from 'src/types/index.js'
 import type { Message } from 'src/types/message.js'
 import { createDebugLog } from '../../utils/debug.js'
-import type { AggregatedHookResult } from './types.js'
 import type { HookCommand } from '../../utils/settings/types.js'
 import { isHookEqual } from './hooksSettings.js'
+import type { AggregatedHookResult } from './types.js'
 
 const hookLog = createDebugLog('hooks')
 

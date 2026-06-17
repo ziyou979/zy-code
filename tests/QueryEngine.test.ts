@@ -4,8 +4,7 @@
 // WireMessage 序列 / 终态 result），作为把 switch(messageType:string) 重构成
 // switch(message.type) 的安全网——重构前后这批断言都必须通过。
 
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { mock } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 import type { Message } from '../src/types/message.js'
 import { installQueryEngineMocks, runEngine } from './_helpers/queryEngineHarness.js'
 

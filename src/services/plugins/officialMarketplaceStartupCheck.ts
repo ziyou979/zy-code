@@ -9,13 +9,13 @@
  */
 
 import { join } from 'node:path'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
-import { logEvent } from '../analytics/index.js'
-import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { logEvent } from '../analytics/index.js'
+import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { checkGitAvailable, markGitUnavailable } from './gitAvailability.js'
 import { isSourceAllowedByPolicy } from './marketplaceHelpers.js'
 import {

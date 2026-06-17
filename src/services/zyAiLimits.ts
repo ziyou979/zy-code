@@ -4,12 +4,12 @@ import { getDefaultCompactModel } from '../services/model/model.js'
 import type { LLMMessage } from '../types/llm.js'
 import { type APIErrorLike, isAPIError } from '../types/llm.js'
 import { getModelBetas } from '../utils/betas.js'
-import { getGlobalConfig, saveGlobalConfig } from './config/config.js'
 import { logError } from '../utils/log.js'
 import { isEssentialTrafficOnly } from '../utils/privacyLevel.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from './analytics/index.js'
 import { logEvent } from './analytics/index.js'
 import { getLLMAdapter } from './api/client.js'
+import { getGlobalConfig, saveGlobalConfig } from './config/config.js'
 import { processRateLimitHeaders, shouldProcessRateLimits } from './rateLimitMocking.js'
 
 /**

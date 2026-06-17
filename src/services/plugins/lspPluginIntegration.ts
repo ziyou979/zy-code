@@ -1,13 +1,13 @@
 import { readFile } from 'node:fs/promises'
 import { join, relative, resolve } from 'node:path'
 import { z } from 'zod/v4'
-import type { LspServerConfig, ScopedLspServerConfig } from '../lsp/types.js'
-import { expandEnvVarsInString } from '../mcp/envExpansion.js'
 import type { LoadedPlugin, PluginError } from '../../types/plugin.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isENOENT, toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { jsonParse } from '../../utils/slowOperations.js'
+import type { LspServerConfig, ScopedLspServerConfig } from '../lsp/types.js'
+import { expandEnvVarsInString } from '../mcp/envExpansion.js'
 import { getPluginDataDir } from './pluginDirectories.js'
 import {
   getPluginStorageId,

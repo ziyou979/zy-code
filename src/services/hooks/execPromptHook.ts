@@ -8,12 +8,12 @@ import { createAttachmentMessage } from '../../utils/attachments.js'
 import { createCombinedAbortSignal } from '../../utils/combinedAbortSignal.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import type { HookResult } from './types.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { createUserMessage, extractTextContent } from '../../utils/messages.js'
 import type { PromptHook } from '../../utils/settings/types.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 import { addArgumentsToPrompt, hookResponseSchema } from './hookHelpers.js'
+import type { HookResult } from './types.js'
 
 const hookLog = createDebugLog('hooks')
 

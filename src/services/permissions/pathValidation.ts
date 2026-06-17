@@ -4,13 +4,13 @@ import memoize from 'lodash-es/memoize.js'
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { containsVulnerableUncPath } from 'src/shell-eval/shared/readOnlyCommandValidation.js'
 import type { ToolPermissionContext } from '../../Tool.js'
-import { getPlatform } from '../../utils/platform.js'
 import {
   getFsImplementation,
   getPathsForPermissionCheck,
   safeResolvePath,
 } from '../../utils/fsOperations.js'
 import { containsPathTraversal } from '../../utils/path.js'
+import { getPlatform } from '../../utils/platform.js'
 import {
   checkEditableInternalPath,
   checkPathSafetyForAutoEdit,

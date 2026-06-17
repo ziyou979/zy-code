@@ -23,6 +23,14 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
+import {
+  clearSessionMetadata,
+  restoreSessionMetadata,
+} from '../../services/sessionStorage/sessionMetadata.js'
+import {
+  adoptResumedSessionFile,
+  resetSessionFilePointer,
+} from '../../services/sessionStorage/transcript.js'
 import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
 import type { ReplStoreInstance } from '../../state/ReplStore.js'
 import { restoreRemoteAgentTasks } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js'
@@ -45,14 +53,6 @@ import {
   restoreWorktreeForResume,
 } from '../../utils/sessionRestore.js'
 import { processSessionStartHooks } from '../../utils/sessionStart.js'
-import {
-  clearSessionMetadata,
-  restoreSessionMetadata,
-} from '../../services/sessionStorage/sessionMetadata.js'
-import {
-  adoptResumedSessionFile,
-  resetSessionFilePointer,
-} from '../../services/sessionStorage/transcript.js'
 import {
   cacheSessionTitle,
   getCurrentSessionTitle,

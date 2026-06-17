@@ -11,7 +11,6 @@ import { safeParseJSON } from '../../utils/json.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { ALL_MODEL_CONFIGS_WITH_COSTS } from './configs.js'
 import {
   getAPIProvider,
   getModelCostsFromSettings,
@@ -87,10 +86,8 @@ const loadCache = memoize(
 )
 
 /**
- * 获取模型的定价信息。解析顺序：
- * 1. settings.json 中用户定义的 modelCapabilities 费用
- * 2. 静态配置注册表（ALL_MODEL_CONFIGS_WITH_COSTS）
- * 两者均无定价时返回 null。
+ * 获取模型的定价信息。优先从 settings.json 中用户定义的 modelCapabilities 读取，
+ * 无用户配置时返回 null。
  *
  * @param currentInputTokens 当前累计输入 token 总量（用于阶梯费用定价）
  */
@@ -104,34 +101,17 @@ export function getStaticPricingForModel(
   cost_cache_read: number
   cost_web_search: number
 } | null {
-  // 优先级 1：用户 settings（支持阶梯费用）
   const userCosts = getModelCostsFromSettings(model, currentInputTokens)
-  if (userCosts) {
-    return {
-      cost_input: userCosts.inputTokens,
-      cost_output: userCosts.outputTokens,
-      cost_cache_write: userCosts.promptCacheWriteTokens,
-      cost_cache_read: userCosts.promptCacheReadTokens,
-      cost_web_search: userCosts.webSearchRequests,
-    }
+  if (!userCosts) {
+    return null
   }
-
-  // 优先级 2：静态配置注册表
-  const lower = model.toLowerCase()
-  for (const entry of Object.values(ALL_MODEL_CONFIGS_WITH_COSTS)) {
-    const canonical = entry.config.anthropic.toLowerCase()
-    if (lower === canonical || lower.includes(canonical)) {
-      const c = entry.costs
-      return {
-        cost_input: c.inputTokens,
-        cost_output: c.outputTokens,
-        cost_cache_write: c.promptCacheWriteTokens,
-        cost_cache_read: c.promptCacheReadTokens,
-        cost_web_search: c.webSearchRequests,
-      }
-    }
+  return {
+    cost_input: userCosts.inputTokens,
+    cost_output: userCosts.outputTokens,
+    cost_cache_write: userCosts.promptCacheWriteTokens,
+    cost_cache_read: userCosts.promptCacheReadTokens,
+    cost_web_search: userCosts.webSearchRequests,
   }
-  return null
 }
 
 /**

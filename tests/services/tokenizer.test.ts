@@ -6,8 +6,8 @@
  */
 import { describe, expect, test } from 'bun:test'
 import {
-  countTokensLocally,
   countTokensBatchLocally,
+  countTokensLocally,
   getTokenizerKeyForModel,
   isExactTokenizer,
   type TokenizerKey,

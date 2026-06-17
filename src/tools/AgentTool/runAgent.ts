@@ -7,7 +7,6 @@ import { getProjectRoot, getSessionId } from '../../bootstrap/state.js'
 import { getCommand, getSkillToolCommands, hasCommand } from '../../commands.js'
 import { DEFAULT_AGENT_PROMPT, enhanceSystemPromptWithEnvDetails } from '../../constants/prompts.js'
 import type { QuerySource } from '../../constants/querySource.js'
-import type { UserContentBlock } from '../../types/llm.js'
 import { getSystemContext, getUserContext } from '../../context.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { query } from '../../query.js'
@@ -28,6 +27,7 @@ import type { Tool, Tools, ToolUseContext } from '../../Tool.js'
 import { killShellTasksForAgent } from '../../tasks/LocalShellTask/killShellTasks.js'
 import type { Command } from '../../types/command.js'
 import type { AgentId } from '../../types/ids.js'
+import type { UserContentBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,
   Message,
@@ -396,7 +396,7 @@ export async function* runAgent({
       agentPermissionMode &&
       state.toolPermissionContext.mode !== 'bypassPermissions' &&
       state.toolPermissionContext.mode !== 'acceptEdits' &&
-      !(true && state.toolPermissionContext.mode === 'auto')
+      state.toolPermissionContext.mode !== 'auto'
     ) {
       toolPermissionContext = {
         ...toolPermissionContext,

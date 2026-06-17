@@ -23,10 +23,11 @@ import {
   type ReactNode,
   useContext,
   useEffect,
-  useLayoutEffect,
+  useRef,
   useState,
 } from 'react'
 import type { SuggestionItem } from '../components/PromptInput/PromptInputFooterSuggestions.js'
+import { logForDebugging } from '../utils/debug.js'
 export type PromptOverlayData = {
   suggestions: SuggestionItem[]
   selectedSuggestion: number
@@ -76,16 +77,21 @@ export function useSetPromptOverlay(data: PromptOverlayData | null) {
  * 注册一个浮动在提示符上方的对话框节点，卸载时自动清除。
  * 在 provider 外部为空操作（非全屏模式改为内联渲染）。
  *
- * 使用 useLayoutEffect 以确保对话框上下文在同一次 commit 中同步清除，
- * 避免 Notifications 高度已变但对话框 portal 仍残留导致的鬼影帧。
+ * 使用 useEffect 而非 useLayoutEffect：避免在 commit 阶段调用 set(node)
+ * 创建嵌套更新。useEffect 的 cleanup 在 paint 后执行，set(null) 不会
+ * 与其他 effect 清理交互触发 "Maximum update depth exceeded" 崩溃。
+ * 同类函数 useSetPromptOverlay 也使用 useEffect，保持一致。
  */
 export function useSetPromptOverlayDialog(node: ReactNode) {
   const set = useContext(SetDialogContext)
-  useLayoutEffect(() => {
+  // 诊断计数器：记录 effect 运行次数，便于排查无限循环
+  useEffect(() => {
     if (!set) {
       return
     }
     set(node)
-    return () => set(null)
+    return () => {
+      set(null)
+    }
   }, [set, node])
 }

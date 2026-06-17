@@ -9,7 +9,7 @@
  * 支持 HTTP_PROXY / HTTPS_PROXY 代理。
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { brotliCompressSync, constants } from 'node:zlib'
 
@@ -136,9 +136,12 @@ async function processSource(source: TokenizerSource): Promise<void> {
   try {
     const tokenizerData = await downloadFile(source.repo, 'tokenizer.json')
     console.log(`  tokenizer.json: ${(tokenizerData.length / 1024 / 1024).toFixed(1)}MB`)
-    writeFileSync(tokenizerBr, brotliCompressSync(tokenizerData, {
-      params: { [constants.BROTLI_PARAM_QUALITY]: 11 },
-    }))
+    writeFileSync(
+      tokenizerBr,
+      brotliCompressSync(tokenizerData, {
+        params: { [constants.BROTLI_PARAM_QUALITY]: 11 },
+      }),
+    )
 
     let configData: Buffer
     if (source.tokenizerConfigOverride) {
@@ -151,9 +154,12 @@ async function processSource(source: TokenizerSource): Promise<void> {
         console.log(`  tokenizer_config.json 不存在，使用默认配置`)
       }
     }
-    writeFileSync(configBr, brotliCompressSync(configData, {
-      params: { [constants.BROTLI_PARAM_QUALITY]: 11 },
-    }))
+    writeFileSync(
+      configBr,
+      brotliCompressSync(configData, {
+        params: { [constants.BROTLI_PARAM_QUALITY]: 11 },
+      }),
+    )
 
     const brSize = readFileSync(tokenizerBr).length
     console.log(`  完成: ${(brSize / 1024 / 1024).toFixed(1)}MB (brotli)`)

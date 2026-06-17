@@ -329,6 +329,18 @@ export interface ProviderExtras {
   }
   /** OpenAI 专属：structured outputs、parallel tool calls 等 */
   openai?: Record<string, unknown>
+  /** Google 专属：thinkingConfig、safetySettings 等 */
+  google?: {
+    thinkingConfig?: {
+      thinkingBudget?: number
+      thinkingLevel?: string
+      includeThoughts?: boolean
+    }
+    safetySettings?: Array<{
+      category: string
+      threshold: string
+    }>
+  }
   /** 其他 provider 的扩展空间 */
   [key: string]: unknown
 }

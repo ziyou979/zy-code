@@ -50,7 +50,7 @@ import {
   isInsideTmux,
   sendCommandToPane,
 } from '../../services/swarm/teammateLayoutManager.js'
-import { getHardcodedTeammateModelFallback } from '../../services/swarm/teammateModel.js'
+import { getTeammateModelFallback } from '../../services/swarm/teammateModel.js'
 import { registerTask } from '../../services/task/framework.js'
 import { quote } from '../../shell-eval/bash/shellQuote.js'
 import type { AppState } from '../../state/AppState.js'
@@ -75,12 +75,12 @@ function getDefaultTeammateModel(leaderModel: string | null): string {
   const configured = getGlobalConfig().teammateDefaultModel
   if (configured === null) {
     // User picked "Default" in the /config picker — follow the leader.
-    return leaderModel ?? getHardcodedTeammateModelFallback()
+    return leaderModel ?? getTeammateModelFallback()
   }
   if (configured !== undefined) {
     return parseUserSpecifiedModel(configured)
   }
-  return getHardcodedTeammateModelFallback()
+  return getTeammateModelFallback()
 }
 
 /**

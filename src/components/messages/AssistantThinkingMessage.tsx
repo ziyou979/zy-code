@@ -48,7 +48,9 @@ export function AssistantThinkingMessage({
   return (
     <Box flexDirection="column" marginTop={addMargin ? 1 : 0} width="100%">
       <Box flexDirection="row">
-        <Text dimColor={true} italic={true}>{'\u2234 '}</Text>
+        <Text dimColor={true} italic={true}>
+          {'\u2234 '}
+        </Text>
         <Markdown dimColor={true}>{thinking}</Markdown>
       </Box>
     </Box>

@@ -1,13 +1,13 @@
 // 模型信息值对象 —— 在模型选择时一次性解析所有信息，后续流程只传该对象。
 // 消除对全局状态（settings、env、缓存文件）的反复查询。
 
-import { getMaxOutputTokensForModel } from '../api/apiHelpers.js'
 import { getContextWindowForModel, getMaxThinkingTokensForModel } from '../../utils/context.js'
 import { modelSupportsEffort } from '../../utils/effort.js'
 import { modelSupportsAdaptiveThinking, modelSupportsThinking } from '../../utils/thinking.js'
-import { type APIProvider, getAPIProvider, isAnthropicModel } from './providers.js'
+import { getMaxOutputTokensForModel } from '../api/apiHelpers.js'
 import { normalizeModelStringForAPI } from './model.js'
-import { type OpenAICompat, getProviderEntry } from './providerRegistry.js'
+import { getProviderEntry, type OpenAICompat } from './providerRegistry.js'
+import { type APIProvider, getAPIProvider, isAnthropicModel } from './providers.js'
 
 export interface ResolvedModel {
   /** 原始模型名（用户指定） */

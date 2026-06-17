@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+
 /**
  * 真实压缩策略对比演示
  *
@@ -14,8 +15,8 @@
  * 使用与生产代码完全相同的分组算法，而非模拟。
  */
 
-import { readFileSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 
 // ════════════════════════════════════════════════════════════════════════════
 // 直接 import 项目中真实的分组算法（零外部依赖）

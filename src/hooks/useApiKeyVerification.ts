@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { verifyApiKey } from '../services/api/apiHelpers.js'
-import { getAPIProvider, isOpenAIProvider } from '../services/model/providers.js'
+import { getAPIProvider, isAnthropicProvider } from '../services/model/providers.js'
 import { getApiKeyFromApiKeyHelper, getApiKeyWithSource, isAuthEnabled } from '../utils/auth.js'
 export type VerificationStatus = 'loading' | 'valid' | 'invalid' | 'missing' | 'error'
 export type ApiKeyVerificationResult = {
@@ -11,8 +11,8 @@ export type ApiKeyVerificationResult = {
 }
 export function useApiKeyVerification(): ApiKeyVerificationResult {
   const [status, setStatus] = useState<VerificationStatus>(() => {
-    // 使用 OpenAI SDK 的平台
-    if (isOpenAIProvider(getAPIProvider())) {
+    // 仅 Anthropic SDK 平台需要走 zy API key / OAuth 验证；其他平台直接视为 valid
+    if (!isAnthropicProvider(getAPIProvider())) {
       return 'valid'
     }
     if (!isAuthEnabled()) {
@@ -32,8 +32,8 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
   })
   const [error, setError] = useState<Error | null>(null)
   const verify = useCallback(async (): Promise<void> => {
-    // 使用 OpenAI SDK 的平台 - 通过 settings.json 配置时跳过验证
-    if (isOpenAIProvider(getAPIProvider())) {
+    // 仅 Anthropic SDK 平台需要走 zy API key / OAuth 验证；其他平台直接视为 valid
+    if (!isAnthropicProvider(getAPIProvider())) {
       setStatus('valid')
       return
     }

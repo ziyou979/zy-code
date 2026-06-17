@@ -10,7 +10,6 @@
  * but users can disable it per-marketplace.
  */
 
-import { updatePluginOp } from './pluginOperations.js'
 import { shouldSkipPluginAutoupdate } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -27,6 +26,7 @@ import {
   refreshMarketplace,
 } from './marketplaceManager.js'
 import { parsePluginIdentifier } from './pluginIdentifier.js'
+import { updatePluginOp } from './pluginOperations.js'
 import { isMarketplaceAutoUpdate, type PluginScope } from './schemas.js'
 
 /**

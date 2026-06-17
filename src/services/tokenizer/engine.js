@@ -24,9 +24,7 @@ const Callable = /** @type {any} */ (
        * @param {...any} args Zero or more arguments to pass to the '_call' method.
        * @returns {*} The result of calling the '_call' method.
        */
-      let closure = function (...args) {
-        return closure._call(...args)
-      }
+      const closure = (...args) => closure._call(...args)
       return Object.setPrototypeOf(closure, new.target.prototype)
     }
 
@@ -1790,7 +1788,6 @@ class PreTrainedTokenizer extends Callable {
       // Perform padding and/or truncation
       for (let i = 0; i < encodedTokens.length; ++i) {
         if (encodedTokens[i].input_ids.length === max_length) {
-          continue
         } else if (encodedTokens[i].input_ids.length > max_length) {
           // possibly truncate
           if (truncation) {

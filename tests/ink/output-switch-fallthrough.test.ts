@@ -7,10 +7,10 @@ import { describe, expect, test } from 'bun:test'
 import Output from '../../src/ink/output.js'
 import {
   CharPool,
-  HyperlinkPool,
-  StylePool,
   charInCellAt,
   createScreen,
+  HyperlinkPool,
+  StylePool,
   setCellAt,
 } from '../../src/ink/screen.js'
 

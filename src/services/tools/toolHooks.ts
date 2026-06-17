@@ -9,14 +9,7 @@ import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { AnyObject, Tool, ToolUseContext } from '../../Tool.js'
 import type { AssistantMessage, AttachmentMessage, ProgressMessage } from '../../types/message.js'
 import type { PermissionDecision } from '../../types/permissions.js'
-import { createAttachmentMessage } from '../attachments/attachments.js'
 import { logForDebugging } from '../../utils/debug.js'
-import {
-  executePostToolHooks,
-  executePostToolUseFailureHooks,
-  executePreToolHooks,
-  getPreToolHookBlockingMessage,
-} from '../hooks.js'
 import { logError } from '../../utils/log.js'
 import {
   getRuleBehaviorDescription,
@@ -25,6 +18,13 @@ import {
 } from '../../utils/permissions/PermissionResult.js'
 import { checkRuleBasedPermissions } from '../../utils/permissions/permissions.js'
 import { formatError } from '../../utils/toolErrors.js'
+import { createAttachmentMessage } from '../attachments/attachments.js'
+import {
+  executePostToolHooks,
+  executePostToolUseFailureHooks,
+  executePreToolHooks,
+  getPreToolHookBlockingMessage,
+} from '../hooks.js'
 import { isMcpTool } from '../mcp/utils.js'
 import type { McpServerType, MessageUpdateLazy } from './toolExecution.js'
 

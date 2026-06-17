@@ -1,6 +1,7 @@
 // Script to add biome-ignore comments for noExplicitAny errors in target scope
-import { readFileSync, writeFileSync } from 'fs'
+
 import { execSync } from 'child_process'
+import { readFileSync, writeFileSync } from 'fs'
 
 const excludeDirs = [
   'src/services/',

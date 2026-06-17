@@ -4,7 +4,6 @@
  * 这些函数是纯函数或接近纯函数，测试成本低、价值高。
  */
 import { describe, expect, test } from 'bun:test'
-import type { ToolDefinition } from '../../../src/types/llm.js'
 import {
   convertOutputFormatToResponseFormat,
   openAIDeltaUsageToStandard,
@@ -12,6 +11,7 @@ import {
   toolChoiceToOpenAI,
   toolsToOpenAI,
 } from '../../../src/services/api/conversions/openai.js'
+import type { ToolDefinition } from '../../../src/types/llm.js'
 
 describe('toolsToOpenAI', () => {
   test('undefined → undefined', () => {

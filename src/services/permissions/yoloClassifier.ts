@@ -9,11 +9,6 @@ import {
   getSessionId,
   setLastClassifierRequests,
 } from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
-import { logEvent } from '../analytics/index.js'
-import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../analytics/metadata.js'
-import { parsePromptTooLongTokenCounts } from '../api/errors.js'
-import { getDefaultMaxRetries } from '../api/withRetry.js'
 import type { Tool, ToolPermissionContext, Tools } from '../../Tool.js'
 import type {
   ImageBlock,
@@ -33,6 +28,11 @@ import { getAutoModeConfig } from '../../utils/settings/settings.js'
 import { sideQuery } from '../../utils/sideQuery.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { logEvent } from '../analytics/index.js'
+import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../analytics/metadata.js'
+import { parsePromptTooLongTokenCounts } from '../api/errors.js'
+import { getDefaultMaxRetries } from '../api/withRetry.js'
 import { extractToolCallInlineBlock, parseClassifierResponse } from './classifierShared.js'
 import { getZyTempDir } from './filesystem.js'
 

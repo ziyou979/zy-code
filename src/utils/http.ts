@@ -3,7 +3,11 @@
  */
 
 import axios from 'axios'
-import { getAPIProvider, isOpenAIProvider } from 'src/services/model/providers.js'
+import {
+  getAPIProvider,
+  isAnthropicProvider,
+  isOpenAIProvider,
+} from 'src/services/model/providers.js'
 import { getApiKey, getZyAIOAuthTokens, handleOAuth401Error } from './auth.js'
 import { getZyCodeUserAgent } from './userAgent.js'
 import { getWorkload } from './workloadContext.js'
@@ -62,8 +66,10 @@ export type AuthHeaders = {
  * 支持百炼 DashScope API Key
  */
 export function getAuthHeaders(): AuthHeaders {
-  // 使用 OpenAI SDK 的平台（百炼、Ollama、智谱、Kimi 等）
-  if (isOpenAIProvider(getAPIProvider())) {
+  const apiProvider = getAPIProvider()
+
+  // 使用 OpenAI SDK 的平台（百炼、Ollama、智谱、Kimi、OpenAI 等）
+  if (isOpenAIProvider(apiProvider)) {
     const apiKey = getApiKey()
     if (apiKey) {
       return {
@@ -74,18 +80,22 @@ export function getAuthHeaders(): AuthHeaders {
     }
   }
 
-  // 使用 API key 认证
-  const apiKey = getApiKey()
-  if (!apiKey) {
-    return {
-      headers: {},
-      error: 'No API key available',
+  // Anthropic 原生 / 兼容端点使用 x-api-key
+  if (isAnthropicProvider(apiProvider)) {
+    const apiKey = getApiKey()
+    if (apiKey) {
+      return {
+        headers: {
+          'x-api-key': apiKey,
+        },
+      }
     }
   }
+
+  // Google 等平台使用各自 SDK 的认证机制，不由此处提供通用 headers
   return {
-    headers: {
-      'x-api-key': apiKey,
-    },
+    headers: {},
+    error: 'No API key available',
   }
 }
 

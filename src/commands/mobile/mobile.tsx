@@ -2,10 +2,10 @@ import { toString as qrToString } from 'qrcode'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { Pane } from '../../components/design-system/Pane.js'
+import { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
-import { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 
 type Platform = 'ios' | 'android'
 type Props = {

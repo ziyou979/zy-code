@@ -8,12 +8,12 @@
  * for UI reason/text only. If re-introduced, serve from downloads.zy.ai.
  */
 
-import { uninstallPluginOp } from './pluginOperations.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { loadInstalledPluginsV2 } from './installedPluginsManager.js'
 import { getMarketplace, loadKnownMarketplacesConfigSafe } from './marketplaceManager.js'
 import { addFlaggedPlugin, getFlaggedPlugins, loadFlaggedPlugins } from './pluginFlagging.js'
+import { uninstallPluginOp } from './pluginOperations.js'
 import type { InstalledPluginsFileV2, PluginMarketplace } from './schemas.js'
 
 /**

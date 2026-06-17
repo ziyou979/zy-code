@@ -42,8 +42,8 @@ export interface OpenAICreateParams extends ChatCompletionCreateParamsBase {
 }
 
 import { normalizeModelStringForAPI } from '../../../services/model/model.js'
-import { getAPIProvider } from '../../../services/model/providers.js'
 import { getProviderEntry } from '../../../services/model/providerRegistry.js'
+import { getAPIProvider } from '../../../services/model/providers.js'
 import { localModelHasCapability } from '../../../utils/settings/localModelCapabilities.js'
 
 interface DashScopeChatCompletionDelta {

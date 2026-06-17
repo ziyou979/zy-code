@@ -1,5 +1,5 @@
-import { tSync } from '../../i18n/index.js'
 import type { Command } from '../../commands.js'
+import { tSync } from '../../i18n/index.js'
 
 const resume: Command = {
   type: 'local-jsx',

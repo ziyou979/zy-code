@@ -10,6 +10,7 @@ import { useModalOrTerminalSize } from '../../context/modalContext.js'
 import { getSystemContext, getUserContext } from '../../context.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import ScrollBox, { type ScrollBoxHandle } from '../../ink/components/ScrollBox.js'
+import { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../ink.js'
 import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
@@ -21,7 +22,6 @@ import { type CacheSafeParams, getLastCacheSafeParams } from '../../utils/forked
 import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'
 import { runSideQuestion } from '../../utils/sideQuestion.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 
 type BtwComponentProps = {
   question: string

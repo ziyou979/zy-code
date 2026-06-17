@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { Box, Text } from '../../ink.js'
 import { tSync } from '../../i18n/index.js'
+import { Box, Text } from '../../ink.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'

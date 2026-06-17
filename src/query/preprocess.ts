@@ -1,15 +1,15 @@
 import { feature } from 'bun:bundle'
+import type { QuerySource } from '../constants/querySource.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/index.js'
 import type { AutoCompactTrackingState } from '../services/compact/autoCompact.js'
 import type { PendingCacheEdits } from '../services/compact/microCompact.js'
 import type { ToolUseContext } from '../Tool.js'
-import type { QuerySource } from '../constants/querySource.js'
 import type { Message } from '../types/message.js'
+import { logError } from '../utils/log.js'
 import { getMessagesAfterCompactBoundary } from '../utils/messages.js'
 import { queryCheckpoint } from '../utils/queryProfiler.js'
 import { recordContentReplacement } from '../utils/sessionStorage.js'
 import { applyToolResultBudget } from '../utils/toolResultStorage.js'
-import { logError } from '../utils/log.js'
 import type { QueryDeps } from './deps.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -52,7 +52,7 @@ export async function preprocessMessages(
   const queryChainIdForAnalytics =
     queryTracking.chainId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
 
-  let updatedToolUseContext: ToolUseContext = {
+  const updatedToolUseContext: ToolUseContext = {
     ...toolUseContext,
     queryTracking,
   }

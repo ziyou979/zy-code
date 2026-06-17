@@ -8,9 +8,6 @@ import capitalize from 'lodash-es/capitalize.js'
 import memoize from 'lodash-es/memoize.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { getIsScrollDraining, getOriginalCwd } from '../../bootstrap/state.js'
-import { callIdeRpc } from '../mcp/mcpToolCall.js'
-import type { ConnectedMCPServer, MCPServerConnection } from '../mcp/types.js'
-import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { env } from '../../utils/env.js'
 import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
 import {
@@ -24,6 +21,9 @@ import { isJetBrainsPluginInstalledCached } from '../../utils/jetbrains.js'
 import { logError } from '../../utils/log.js'
 import { getPlatform } from '../../utils/platform.js'
 import { lt } from '../../utils/semver.js'
+import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
+import { callIdeRpc } from '../mcp/mcpToolCall.js'
+import type { ConnectedMCPServer, MCPServerConnection } from '../mcp/types.js'
 
 // Lazy: IdeOnboardingDialog.tsx pulls React/ink; only needed in interactive onboarding path
 /* eslint-disable @typescript-eslint/no-require-imports */

@@ -2,6 +2,7 @@ import type { ToolPermissionContext } from '../../Tool.js'
 import { createDebugLog } from '../../utils/debug.js'
 
 const permLog = createDebugLog('permissions')
+
 import type { PermissionMode } from './PermissionMode.js'
 import {
   getAutoModeUnavailableReason,

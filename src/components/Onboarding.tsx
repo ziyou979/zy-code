@@ -54,6 +54,7 @@ interface PlatformConfig {
   defaultBaseUrls?: {
     openai?: string
     anthropic?: string
+    google?: string
   }
 }
 
@@ -201,13 +202,15 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
     // Resolve base URL from platform defaults based on supported formats
     let baseUrl: string | undefined
     if (platform?.defaultBaseUrls) {
-      // If provider supports openai, use openai base URL; otherwise use anthropic base URL
-      const supportsNativeOpenai = PROVIDER_REGISTRY.find(
-        (e) => e.id === platform.provider,
-      )?.supportedFormats.includes('openai')
-      baseUrl = supportsNativeOpenai
-        ? platform.defaultBaseUrls.openai
-        : platform.defaultBaseUrls.anthropic
+      // Priority: google > openai > anthropic (based on provider's supportedFormats order)
+      const entry = PROVIDER_REGISTRY.find((e) => e.id === platform.provider)
+      const formats = entry?.supportedFormats ?? ['anthropic']
+      const primaryFormat = formats[0]
+      baseUrl =
+        platform.defaultBaseUrls[primaryFormat] ??
+        platform.defaultBaseUrls.openai ??
+        platform.defaultBaseUrls.google ??
+        platform.defaultBaseUrls.anthropic
     }
 
     saveGlobalConfig((current) => ({

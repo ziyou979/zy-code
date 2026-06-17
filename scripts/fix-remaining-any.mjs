@@ -52,7 +52,7 @@ const IGNORE_TAG = 'biome-ignore lint/suspicious/noExplicitAny:'
 
 let totalFixed = 0
 for (const [file, lineNumbers] of errors) {
-  let content = readFileSync(file, 'utf8')
+  const content = readFileSync(file, 'utf8')
   const lines = content.split('\n')
   const reason = getReason(file)
 

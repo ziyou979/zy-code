@@ -1,4 +1,4 @@
-import React, { type Ref, useEffect, useRef, useState, type RefObject } from 'react'
+import React, { type Ref, type RefObject, useEffect, useRef, useState } from 'react'
 import type { Except } from 'type-fest'
 import type { DOMElement } from '../dom.js'
 import type { Styles } from '../styles.js'

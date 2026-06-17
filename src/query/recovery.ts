@@ -1,6 +1,6 @@
-import type { AssistantMessage } from '../types/message.js'
-import { isPromptTooLongMessage } from '../services/api/errors.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { isPromptTooLongMessage } from '../services/api/errors.js'
+import type { AssistantMessage } from '../types/message.js'
 
 const MAX_OUTPUT_TOKENS_RECOVERY_LIMIT = 3
 
@@ -86,4 +86,4 @@ export function diagnoseRecovery(ctx: RecoveryContext): RecoveryDecision {
   return { action: 'no_recovery_needed' }
 }
 
-export { MAX_OUTPUT_TOKENS_RECOVERY_LIMIT, isWithheldMaxOutputTokens }
+export { isWithheldMaxOutputTokens, MAX_OUTPUT_TOKENS_RECOVERY_LIMIT }

@@ -1,15 +1,15 @@
 import { join } from 'node:path'
+import type { LoadedPlugin, PluginError } from '../../types/plugin.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { errorMessage, isENOENT } from '../../utils/errors.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
+import { jsonParse } from '../../utils/slowOperations.js'
 import { expandEnvVarsInString } from '../mcp/envExpansion.js'
 import {
   type McpServerConfig,
   McpServerConfigSchema,
   type ScopedMcpServerConfig,
 } from '../mcp/types.js'
-import type { LoadedPlugin, PluginError } from '../../types/plugin.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { errorMessage, isENOENT } from '../../utils/errors.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { jsonParse } from '../../utils/slowOperations.js'
 import {
   isMcpbSource,
   loadMcpbFile,

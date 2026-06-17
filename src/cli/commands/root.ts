@@ -47,7 +47,6 @@ import {
   getTeammateUtils,
   kairosGate,
 } from '../../cli/lazyModules.js'
-import { setAutoModeFlagCli } from '../../services/permissions/autoModeState.js'
 import { extractTeammateOptions, type TeammateOptions } from '../../cli/options/teammate.js'
 import { filterCommandsForRemoteMode, getCommands } from '../../commands.js'
 import { getOauthConfig } from '../../constants/oauth.js'
@@ -105,6 +104,7 @@ import {
   parseUserSpecifiedModel,
 } from '../../services/model/model.js'
 import { ensureModelStringsInitialized } from '../../services/model/modelStrings.js'
+import { setAutoModeFlagCli } from '../../services/permissions/autoModeState.js'
 import { refreshPolicyLimits } from '../../services/policyLimits/index.js'
 import { refreshRemoteManagedSettings } from '../../services/remoteManagedSettings/index.js'
 import { computeInitialTeamContext } from '../../services/swarm/reconnection.js'
@@ -1066,7 +1066,7 @@ export async function rootAction(
       overlyBroadBashPermissions,
     )
   }
-  if (true && dangerousPermissions.length > 0) {
+  if (dangerousPermissions.length > 0) {
     toolPermissionContext = stripDangerousPermissionsForAutoMode(toolPermissionContext)
   }
 
@@ -1872,7 +1872,7 @@ export async function rootAction(
   const mcpCommands: Awaited<typeof mcpPromise>['commands'] = []
   let thinkingEnabled = shouldEnableThinkingByDefault(effectiveModel)
   let thinkingConfig: ThinkingConfig =
-    thinkingEnabled !== false
+    thinkingEnabled
       ? {
           type: 'adaptive',
         }

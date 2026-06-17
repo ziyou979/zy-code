@@ -12,7 +12,11 @@ import {
   getApiKeyFromConfigOrMacOSKeychain,
   getAuthTokenSource,
 } from './auth.js'
-import { getAPIProvider, isOpenAIProvider } from 'src/services/model/providers.js'
+import {
+  getAPIProvider,
+  isAnthropicProvider,
+  isOpenAIProvider,
+} from 'src/services/model/providers.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import {
   getAgentDescriptionsTotalTokens,
@@ -86,8 +90,8 @@ const apiKeyConflictNotice: StatusNoticeDefinition = {
   id: 'api-key-conflict',
   type: 'warning',
   isActive: () => {
-    // 使用 OpenAI SDK 的平台忽略 ZY_API_KEY 的冲突检查
-    if (isOpenAIProvider(getAPIProvider())) {
+    // Anthropic 直连平台才涉及 Anthropic Console key 冲突；OpenAI / Google 等平台忽略
+    if (!isAnthropicProvider(getAPIProvider())) {
       return false
     }
 
@@ -118,8 +122,8 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
   id: 'both-auth-methods',
   type: 'warning',
   isActive: () => {
-    // 使用 OpenAI SDK 的平台忽略 ZY_API_KEY 的冲突检查
-    if (isOpenAIProvider(getAPIProvider())) {
+    // Anthropic 直连平台才涉及 OAuth / API key 双认证冲突；OpenAI / Google 等平台忽略
+    if (!isAnthropicProvider(getAPIProvider())) {
       return false
     }
 

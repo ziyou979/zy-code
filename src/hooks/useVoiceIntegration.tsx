@@ -4,10 +4,10 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useNotifications } from '../context/notifications.js'
 import { useIsModalOverlayActive } from '../context/overlayContext.js'
 import {
-  type VoiceState,
   useGetVoiceState,
   useSetVoiceState,
   useVoiceState,
+  type VoiceState,
 } from '../context/voice.js'
 import { KeyboardEvent } from '../ink/events/keyboard-event.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- backward-compat bridge until REPL wires handleKeyDown to <Box onKeyDown>

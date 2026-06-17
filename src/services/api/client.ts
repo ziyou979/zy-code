@@ -1,12 +1,15 @@
 import { randomUUID } from 'node:crypto'
 import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import OpenAI from 'openai'
 import { getProviderEntry } from 'src/services/model/providerRegistry.js'
 import {
   getAPIProvider,
   isAnthropicBaseUrl,
+  isAnthropicProvider,
   isCustomEndpointProvider,
   isEnvOrDefaultProvider,
+  isGoogleProvider,
   isOpenAIProvider,
   isPreconfiguredEndpointProvider,
 } from 'src/services/model/providers.js'
@@ -19,6 +22,7 @@ import type { LLMAdapter } from '../../types/llm.js'
 import { isDebugToStdErr, logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { AnthropicProviderAdapter } from './AnthropicProviderAdapter.js'
+import { GoogleProviderAdapter } from './GoogleProviderAdapter.js'
 import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js'
 
 /**
@@ -155,7 +159,7 @@ export async function getAnthropicClient({
     }
     // 4. Registry defaults（根据当前格式选择对应端点）
     if (!resolvedBaseURL && registryEntry.defaultBaseUrls) {
-      const format = isOpenAIProvider(apiProvider) ? 'openai' : 'anthropic'
+      const format = isAnthropicProvider(apiProvider) ? 'anthropic' : 'openai'
       resolvedBaseURL =
         registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls.openai
     }
@@ -194,7 +198,7 @@ export async function getAnthropicClient({
       }
     }
     if (!customBaseURL && registryEntry.defaultBaseUrls) {
-      const format = isOpenAIProvider(apiProvider) ? 'openai' : 'anthropic'
+      const format = isAnthropicProvider(apiProvider) ? 'anthropic' : 'openai'
       customBaseURL = registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls.openai
     }
 
@@ -334,6 +338,80 @@ export async function getOpenAIClient(options?: {
   })
 }
 
+// ============================================================================
+// Google Generative AI SDK 客户端创建
+// ============================================================================
+
+/**
+ * 创建 Google Generative AI SDK 客户端实例。
+ *
+ * 与 getOpenAIClient / getAnthropicClient 共享相同的基础设施：
+ * - 共享 headers（X-Claude-Code-Session-Id、User-Agent 等）
+ * - baseUrl 优先级：传入值 → provider-specific env → GOOGLE_BASE_URL → LLM_BASE_URL
+ *   → configuredBaseUrl → registry.defaultBaseUrls.google → generativelanguage.googleapis.com
+ */
+export async function getGoogleClient(options?: {
+  apiKey?: string
+  baseURL?: string
+}): Promise<{ client: GoogleGenerativeAI; baseURL: string }> {
+  const apiProvider = getAPIProvider()
+  const registryEntry = getProviderEntry(apiProvider)
+
+  // ── API Key ────────────────────────────────────────────────────────────
+  let resolvedApiKey = options?.apiKey
+  if (!resolvedApiKey) {
+    if (isCustomEndpointProvider(apiProvider)) {
+      resolvedApiKey = process.env.LLM_API_KEY || getApiKey() || undefined
+    } else {
+      resolvedApiKey = getApiKey() ?? undefined
+    }
+  }
+  if (!resolvedApiKey) {
+    throw new Error('Google API key not found. Set GOOGLE_API_KEY or configure in onboarding.')
+  }
+
+  // ── Base URL ───────────────────────────────────────────────────────────
+  let resolvedBaseURL = options?.baseURL
+  if (!resolvedBaseURL) {
+    // 1. Provider-specific env var
+    if (registryEntry?.baseUrlEnvVar && process.env[registryEntry.baseUrlEnvVar]) {
+      resolvedBaseURL = process.env[registryEntry.baseUrlEnvVar]
+    }
+    // 2. Generic env vars
+    if (!resolvedBaseURL && process.env.GOOGLE_BASE_URL) {
+      resolvedBaseURL = process.env.GOOGLE_BASE_URL
+    }
+    if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
+      resolvedBaseURL = process.env.LLM_BASE_URL
+    }
+    // 3. Onboarding config (configuredBaseUrl)
+    if (!resolvedBaseURL) {
+      try {
+        const { getGlobalConfig } = await import('../../utils/config.js')
+        resolvedBaseURL = getGlobalConfig().configuredBaseUrl
+      } catch {
+        // config not ready
+      }
+    }
+    // 4. Registry defaults
+    if (!resolvedBaseURL && registryEntry?.defaultBaseUrls) {
+      resolvedBaseURL = registryEntry.defaultBaseUrls.google
+    }
+    // 5. Fallback
+    if (!resolvedBaseURL) {
+      resolvedBaseURL = 'https://generativelanguage.googleapis.com/v1beta'
+    }
+  }
+
+  logForDebugging(
+    `[API:request] Creating Google client, baseURL=${resolvedBaseURL}, ` +
+      `provider=${apiProvider}`,
+  )
+
+  const client = new GoogleGenerativeAI(resolvedApiKey)
+  return { client, baseURL: resolvedBaseURL }
+}
+
 async function configureApiKeyHeaders(
   headers: Record<string, string>,
   isNonInteractiveSession: boolean,
@@ -426,10 +504,20 @@ export function getLLMAdapter(options?: {
 }): LLMAdapter {
   const apiProvider = getAPIProvider()
 
+  // Google 原生格式优先检查（最具体）
+  if (isGoogleProvider(apiProvider)) {
+    return new GoogleProviderAdapter()
+  }
+
   if (isOpenAIProvider(apiProvider)) {
     // 客户端创建委托给 getOpenAIClient()（懒加载），不再手动传参
     return new OpenAIProviderAdapter()
   }
 
+  if (isAnthropicProvider(apiProvider)) {
+    return new AnthropicProviderAdapter(options?.anthropicClient)
+  }
+
+  // 兜底：所有已知 provider 均已按 effective format 分派，此处不可达
   return new AnthropicProviderAdapter(options?.anthropicClient)
 }

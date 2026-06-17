@@ -243,12 +243,14 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .describe('API provider to use. Overrides onboarding config and env vars.'),
       apiFormat: z
-        .enum(['anthropic', 'openai'])
+        .enum(['anthropic', 'openai', 'google'])
         .optional()
         .describe(
-          'API protocol format for providers supporting both (dashscope, volcark, etc.). ' +
+          'API protocol format for providers supporting multiple formats. ' +
             '"anthropic" uses independent system field + tool_result inside user messages (better caching). ' +
-            '"openai" uses chat/completions format. Default: openai.',
+            '"openai" uses chat/completions format. ' +
+            '"google" uses Google Generative AI native format (for Gemini models). ' +
+            'Default: depends on provider (google for Gemini, openai for others).',
         ),
       /** 配置的提供商的 API 密钥 */
       apiKey: z

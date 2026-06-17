@@ -7,8 +7,8 @@
  *
  * 主动更新快照：bun scripts/api-snapshot.ts
  */
-import { test, expect } from 'bun:test'
-import { readFileSync, existsSync } from 'node:fs'
+import { expect, test } from 'bun:test'
+import { existsSync, readFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { GOD_FILES, generateSnapshot } from '../../scripts/api-snapshot.js'
 

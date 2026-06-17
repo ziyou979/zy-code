@@ -15,7 +15,6 @@ import { createAttachmentMessage } from '../../utils/attachments.js'
 import { createCombinedAbortSignal } from '../../utils/combinedAbortSignal.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import type { HookResult } from './types.js'
 import { createUserMessage, handleMessageFromStream } from '../../utils/messages.js'
 import { hasPermissionsToUseTool } from '../../utils/permissions/permissions.js'
 import { getAgentTranscriptPath, getTranscriptPath } from '../../utils/sessionStorage.js'
@@ -29,6 +28,7 @@ import {
   registerStructuredOutputEnforcement,
 } from './hookHelpers.js'
 import { clearSessionHooks } from './sessionHooks.js'
+import type { HookResult } from './types.js'
 
 const hookLog = createDebugLog('hooks')
 

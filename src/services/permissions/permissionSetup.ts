@@ -40,19 +40,19 @@ import {
   addDirHelpMessage,
   validateDirectoryForWorkspace,
 } from '../../commands/add-dir/validation.js'
-import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  logEvent,
-} from '../analytics/index.js'
 import { AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { getToolsForDefaultPreset, parseToolPreset } from '../../tools.js'
-import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.js'
 import { modelSupportsAutoMode } from '../../utils/betas.js'
 import { createDebugLog } from '../../utils/debug.js'
+import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
+import {
+  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+  logEvent,
+} from '../analytics/index.js'
 import { CROSS_PLATFORM_CODE_EXEC, DANGEROUS_BASH_PATTERNS } from './dangerousPatterns.js'
 import type { PermissionRule, PermissionRuleSource, PermissionRuleValue } from './PermissionRule.js'
 import { type AdditionalWorkingDirectory, applyPermissionUpdate } from './PermissionUpdate.js'

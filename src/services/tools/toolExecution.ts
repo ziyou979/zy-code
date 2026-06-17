@@ -1,5 +1,5 @@
-import type { UUID } from 'node:crypto'
 import { feature } from 'bun:bundle'
+import type { UUID } from 'node:crypto'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -68,7 +68,6 @@ import type {
   StopHookInfo,
 } from '../../types/message.js'
 import { count } from '../../utils/array.js'
-import { createAttachmentMessage } from '../attachments/attachments.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import {
@@ -78,7 +77,6 @@ import {
   ShellError,
   TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from '../../utils/errors.js'
-import { executePermissionDeniedHooks } from '../hooks.js'
 import { logError } from '../../utils/log.js'
 import {
   CANCEL_MESSAGE,
@@ -105,6 +103,8 @@ import {
   isToolSearchEnabledOptimistic,
   isToolSearchToolAvailable,
 } from '../../utils/toolSearch.js'
+import { createAttachmentMessage } from '../attachments/attachments.js'
+import { executePermissionDeniedHooks } from '../hooks.js'
 import {
   McpAuthError,
   McpToolCallError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
