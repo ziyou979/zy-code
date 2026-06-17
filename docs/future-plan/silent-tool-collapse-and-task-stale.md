@@ -40,16 +40,29 @@ return tool.renderToolUseMessage == null  // ← 永远 false！
 
 `renderToolUseMessage` 是 `Tool` 的**必需属性**（类型签名无 `?`），每个工具都定义了这个方法，即使它返回 null。所以 `== null` 检查的是属性是否存在，而非函数返回值——永远返回 false，导致所有静默工具走 `isNonCollapsibleToolUse` → `flushGroup()`。
 
-**修复**：调用函数并检查返回值：
+**修复**：调用函数并检查返回值。注意不能传 `{}` 作为 input，因为 `FileEditTool`/`FileWriteTool` 等工具在 `file_path` 为空时会返回 `null`（流式传输早期可能只有部分参数），导致这些本应可见的编辑工具被误判为静默工具、不在 UI 展示。
 
 ```typescript
+let toolInput: unknown
+if (msg.type === 'assistant') {
+  const content = msg.message.content[0]
+  if (content?.type === 'tool_call') toolInput = content.input
+} else if (msg.type === 'grouped_tool_use') {
+  const firstContent = msg.messages[0]?.message.content[0]
+  if (firstContent?.type === 'tool_call') toolInput = firstContent.input
+}
 try {
-  const rendered = tool.renderToolUseMessage({}, { theme: 'light', verbose: false })
+  const rendered = tool.renderToolUseMessage(toolInput as Record<string, unknown>, {
+    theme: 'light',
+    verbose: false,
+  })
   return rendered === null
 } catch {
   return false
 }
 ```
+
+**副作用**：`FileEditTool` 和 `FileWriteTool` 的 `renderToolUseMessage` 在缺少 `file_path` 时返回 `null`。由于 `isSilentNonCollapsibleToolUse` 是在消息到达时立即判断，此时 input 已经包含 `file_path`（工具调用参数已完整），所以不会被误判。如果传空 input `{}`，就会被误判为静默工具，导致 Edit 不展示。
 
 此修复已应用到 `src/utils/collapseReadSearch.ts` 第 369 行。
 
@@ -160,9 +173,20 @@ function isSilentNonCollapsibleToolUse(msg: RenderableMessage, tools: Tools): bo
   if (!tool) return false
   // renderToolUseMessage 返回 null 的工具是静默工具
   // 注意：renderToolUseMessage 是必需属性，不能用 == null 检查属性是否存在
-  // 必须调用函数并检查返回值
+  // 必须调用函数并检查返回值，且必须使用消息中的真实 input
+  let toolInput: unknown
+  if (msg.type === 'assistant') {
+    const content = msg.message.content[0]
+    if (content?.type === 'tool_call') toolInput = content.input
+  } else if (msg.type === 'grouped_tool_use') {
+    const firstContent = msg.messages[0]?.message.content[0]
+    if (firstContent?.type === 'tool_call') toolInput = firstContent.input
+  }
   try {
-    const rendered = tool.renderToolUseMessage({}, { theme: 'light', verbose: false })
+    const rendered = tool.renderToolUseMessage(toolInput as Record<string, unknown>, {
+      theme: 'light',
+      verbose: false,
+    })
     return rendered === null
   } catch {
     return false

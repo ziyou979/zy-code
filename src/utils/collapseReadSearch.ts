@@ -365,12 +365,25 @@ function isSilentNonCollapsibleToolUse(msg: RenderableMessage, tools: Tools): bo
   if (!toolName) return false
   const tool = findToolByName(tools, toolName) ?? findToolByName(getReplPrimitiveTools(), toolName)
   if (!tool) return false
-  // 工具的 renderToolUseMessage 返回 null 意味着 UI 不可见
+  // 工具的 renderToolUseMessage 返回 null 意味着 UI 不可见。
   // 注意：renderToolUseMessage 是 Tool 的必需属性（无 ? ），每个工具都定义了它。
-  // 检查属性 == null 只能判断属性是否存在（永远 false），需要调用函数
+  // 检查属性 == null 只能判断属性是否存在（永远 false ），需要调用函数
   // 并判断返回值是否为 null 才能识别"静默工具"。
+  // 必须使用消息中的真实 input（而非 {} ），因为 FileEditTool 等工具在
+  // file_path 为空时会返回 null，导致被误识别为静默工具。
+  let toolInput: unknown
+  if (msg.type === 'assistant') {
+    const content = msg.message.content[0]
+    if (content?.type === 'tool_call') toolInput = content.input
+  } else if (msg.type === 'grouped_tool_use') {
+    const firstContent = msg.messages[0]?.message.content[0]
+    if (firstContent?.type === 'tool_call') toolInput = firstContent.input
+  }
   try {
-    const rendered = tool.renderToolUseMessage({}, { theme: 'light', verbose: false })
+    const rendered = tool.renderToolUseMessage(toolInput as Record<string, unknown>, {
+      theme: 'light',
+      verbose: false,
+    })
     return rendered === null
   } catch {
     // 某些工具的 renderToolUseMessage 可能因缺少必要 input 抛出异常，
