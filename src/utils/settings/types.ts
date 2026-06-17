@@ -237,9 +237,38 @@ export const SettingsSchema = lazySchema(() =>
         .string()
         .optional()
         .describe('Path to a script that outputs authentication values'),
-      /** API 提供商：'anthropic'、'dashscope'、'openrouter'、'generic'、'local'、'zhipu'、'kimi' */
+      /** API 提供商：取值需与 src/services/model/providerRegistry.ts 中的 provider id 对齐 */
       provider: z
-        .enum(['anthropic', 'dashscope', 'openrouter', 'generic', 'local', 'zhipu', 'kimi'])
+        .enum([
+          'anthropic',
+          'mimo',
+          'dashscope',
+          'deepseek',
+          'openai',
+          'zhipu',
+          'kimi',
+          'siliconflow',
+          'volcark',
+          'tencentlke',
+          'minimax',
+          'baiduqianfan',
+          'huaweicloud',
+          'openrouter',
+          'together',
+          'groq',
+          'fireworks',
+          'perplexity',
+          'ollama',
+          'lmstudio',
+          'llamacpp',
+          'nvidia-nim',
+          'gemini',
+          'generic',
+          'bedrock',
+          'vertex',
+          'foundry',
+          'local',
+        ])
         .optional()
         .describe('API provider to use. Overrides onboarding config and env vars.'),
       apiFormat: z

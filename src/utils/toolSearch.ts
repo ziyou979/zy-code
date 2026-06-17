@@ -196,13 +196,6 @@ export function getToolSearchMode(model: string = getMainLoopModel() ?? ''): Too
     return 'standard'
   }
 
-  // Vertex 的 Anthropic 端点不接受 tool-search beta header(会 400),默认关闭;
-  // 显式 ENABLE_TOOL_SEARCH 可强开(待 Vertex 支持后切回)。对齐 Claude Code yv() 的
-  // Vertex gate。纯端点层判断,与模型无关,故直接用 getAPIProvider()。
-  if (!process.env.ENABLE_TOOL_SEARCH && getAPIProvider() === 'vertex') {
-    return 'standard'
-  }
-
   const value = process.env.ENABLE_TOOL_SEARCH
 
   // Handle auto:N syntax - check edge cases first

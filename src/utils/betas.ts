@@ -81,11 +81,7 @@ export function modelSupportsContextManagement(model: string): boolean {
   if (modelHasCapability(model, 'context_management')) {
     return true
   }
-  const provider = getAPIProvider()
-  if (provider === 'foundry') {
-    return true
-  }
-  if (providerHasCapability(provider, 'context_management')) {
+  if (providerHasCapability(getAPIProvider(), 'context_management')) {
     return true
   }
   return false

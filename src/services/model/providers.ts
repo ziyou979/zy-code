@@ -23,7 +23,7 @@ export type APIProvider = (typeof PROVIDER_REGISTRY)[number]['id']
  * 从 settings（zy.json）中获取已配置的 API provider。
  * 未配置时返回 null。
  */
-function getSettingsProvider(): Exclude<APIProvider, 'bedrock' | 'vertex' | 'foundry'> | null {
+function getSettingsProvider(): APIProvider | null {
   try {
     const { getInitialSettings } =
       require('../../utils/settings/settings.js') as typeof import('../../utils/settings/settings.js')
@@ -38,7 +38,7 @@ function getSettingsProvider(): Exclude<APIProvider, 'bedrock' | 'vertex' | 'fou
  * 从 onboarding 配置中获取已配置的 API provider。
  * 如果配置尚未就绪（启动早期）或未配置，则返回 null。
  */
-function getConfiguredProvider(): Exclude<APIProvider, 'bedrock' | 'vertex' | 'foundry'> | null {
+function getConfiguredProvider(): APIProvider | null {
   try {
     const { getGlobalConfig } =
       require('../../utils/config.js') as typeof import('../../utils/config.js')
