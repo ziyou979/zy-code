@@ -738,6 +738,9 @@ function renderNodeToOutput(
             node.stickyScroll = true
           }
         }
+        // followDelta：sticky follow 导致的 scrollTop 移动量。
+        // ink.tsx 用此 delta 平移活跃文本选择
+        //（原生终端行为：视图滚动，高亮随文本上移）。
         const followDelta = (node.scrollTop ?? 0) - scrollTopBeforeFollow
         if (followDelta > 0) {
           const vpTop = node.scrollViewportTop ?? 0
@@ -909,9 +912,8 @@ function renderNodeToOutput(
             )
             output.unclip()
 
-            // 第二遍：重新渲染稳定行中屏幕
-            // 位置与偏移后旧像素位置不匹配的子节点。
-            // 覆盖两种情况：
+            // 第二遍：重新渲染稳定行中屏幕位置与偏移后旧像素位置
+            // 不匹配的子节点。覆盖三种情况：
             //   1. 脏子节点 — 内容变化，无论位置如何 blitted 像素都是
             //      陈旧的。
             //   2. 中间增长点下方的干净子节点 — 当上方脏的
@@ -921,11 +923,14 @@ function renderNodeToOutput(
             //      screenY-delta（错误）；它们应保持在 screenY。没有
             //      这个，流式时 spinner/tmux-monitor 会在偏移位置
             //      残留（如三重 spinner、pill 重复）。
+            //   3. 宽度变化后 Yoga 重新布局但 React 未标记 dirty 的
+            //      子节点 — 缓存的 top/height 已陈旧，必须校验并
+            //      重新渲染，否则会出现空行或重影。
             //   对于底部追加（常见情况），所有干净子节点都在
             //   增长点上方；它们的 screenY 减少了 delta 且
-            //   偏移将它们放到了正确位置 — 此处跳过，保持
+            //   偏移将它们放到正确位置 — 此处跳过，保持
             //   快速路径。
-            if (dirtyChildren) {
+            {
               const edgeTopLocal = edgeTop - contentY
               const edgeBottomLocal = edgeBottom + 1 - contentY
               const spaces = ' '.repeat(w)
@@ -944,15 +949,7 @@ function renderNodeToOutput(
               let cumHeightShift = 0
               for (const childNode of content.childNodes) {
                 const childElem = childNode as DOMElement
-                const isDirty = dirtyChildren.has(childNode)
-                if (!isDirty && cumHeightShift === 0) {
-                  if (nodeCache.has(childElem)) {
-                    continue
-                  }
-                  // 未缓存 = 上一帧被裁剪，现在重新进入。blit
-                  // 从未绘制它 → 落入 yoga + 渲染。
-                  // 高度不变（干净），因此 cumHeightShift 保持 0。
-                }
+                const isDirty = dirtyChildren !== null && dirtyChildren.has(childNode)
                 const cy = childElem.yogaNode
                 if (!cy) {
                   continue
@@ -960,6 +957,25 @@ function renderNodeToOutput(
                 const childTop = cy.getComputedTop()
                 const childH = cy.getComputedHeight()
                 const childBottom = childTop + childH
+                const screenY = Math.floor(contentY + childTop)
+                // 宽度变化时，Yoga 会重新计算所有子节点的 top/height，即使
+                // React 没有标记 dirty。这里不能仅凭 cumHeightShift===0 和
+                // 有缓存就跳过，否则 clean 子节点的陈旧 cached.y 会让 blit
+                // 把它放到错误位置，留下空行或重影。必须验证缓存的
+                // top/height 与当前 Yoga 一致，或 blit 后的 screenY 正确。
+                if (!isDirty && cumHeightShift === 0) {
+                  const childCached = nodeCache.get(childElem)
+                  if (
+                    childCached &&
+                    childCached.top === childTop &&
+                    childCached.height === childH
+                  ) {
+                    continue
+                  }
+                  // 未缓存 = 上一帧被裁剪，现在重新进入。blit
+                  // 从未绘制它 → 落入 yoga + 渲染。
+                  // 高度不变（干净），因此 cumHeightShift 保持 0。
+                }
                 if (isDirty) {
                   const prev = nodeCache.get(childElem)
                   cumHeightShift += childH - (prev ? prev.height : 0)
@@ -972,9 +988,8 @@ function renderNodeToOutput(
                 if (childTop >= edgeTopLocal && childBottom <= edgeBottomLocal) {
                   continue
                 }
-                const screenY = Math.floor(contentY + childTop)
                 // 到达此处的干净子节点有 cumHeightShift ≠ 0 或
-                // 无缓存。精确重新检查：cached.y − delta 是
+                // 缓存不一致。精确重新检查：cached.y − delta 是
                 // 偏移留下旧像素的位置；如果它等于新 screenY 则
                 // blit 正确（偏移在此子节点重新平衡，或
                 // yogaTop 恰好抵消）。无缓存 → blit 从未
@@ -1355,14 +1370,28 @@ function renderScrolledChildren(
     const cy = childElem.yogaNode
     if (cy) {
       const cached = nodeCache.get(childElem)
+      const yogaTop = cy.getComputedTop()
+      const yogaHeight = cy.getComputedHeight()
       let top: number
       let height: number
-      if (cached?.top !== undefined && !childElem.dirty && cumHeightShift === 0) {
+      // 宽度变化时，Yoga 会重新计算所有子节点的高度/位置，即使
+      // React 没有把它们标记为 dirty。只依赖 dirty 标志会让干净兄弟
+      // 节点使用陈旧的 cached.top，导致裁剪判断错误（摘要被误裁掉、
+      // 出现空行）。因此 cumHeightShift===0 且子节点不 dirty 时，仍要
+      // 校验缓存的 top/height 与当前 Yoga 是否一致；不一致则回退到
+      // 读取 Yoga 并刷新缓存。
+      if (
+        cached?.top !== undefined &&
+        !childElem.dirty &&
+        cumHeightShift === 0 &&
+        cached.top === yogaTop &&
+        cached.height === yogaHeight
+      ) {
         top = cached.top
         height = cached.height
       } else {
-        top = cy.getComputedTop()
-        height = cy.getComputedHeight()
+        top = yogaTop
+        height = yogaHeight
         if (childElem.dirty) {
           cumHeightShift += height - (cached ? cached.height : 0)
         }
@@ -1372,6 +1401,7 @@ function renderScrolledChildren(
         // 会留下陈旧的 tops，在下帧误触发。
         if (cached) {
           cached.top = top
+          cached.height = height
         }
       }
       const bottom = top + height

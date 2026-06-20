@@ -189,14 +189,17 @@ export class LogUpdate {
     // 终端清除操作无法将回滚区内容拉入可视区域，因此需要完整重置。
     // 使用 <=（而非 <）是因为即使下一个高度等于视口高度，
     // 前一次渲染的回滚深度与全新渲染也不同。
-    if (prevHadScrollback && nextFitsViewport && isShrinking) {
+    // alt-screen 模式下跳过：alt buffer 无终端回滚区。
+    if (!altScreen && prevHadScrollback && nextFitsViewport && isShrinking) {
       logForDebugging(
         `Full reset (shrink->below): prevHeight=${prev.screen.height}, nextHeight=${next.screen.height}, viewport=${prev.viewport.height}`,
       )
       return fullResetSequence_CAUSES_FLICKER(next, 'offscreen', stylePool)
     }
 
+    // alt-screen 模式下跳过回滚区变化检测。
     if (
+      !altScreen &&
       prev.screen.height >= prev.viewport.height &&
       prev.screen.height > 0 &&
       cursorAtBottom &&
@@ -238,7 +241,8 @@ export class LogUpdate {
 
       // eraseLines 仅在视口内有效 —— 无法清除回滚区。
       // 如果需要清除的行数超出视口容量，说明有些行在回滚区中，需要完整重置。
-      if (linesToClear > prev.viewport.height) {
+      // alt-screen 模式下跳过：alt buffer 无回滚区。
+      if (!altScreen && linesToClear > prev.viewport.height) {
         return fullResetSequence_CAUSES_FLICKER(next, 'offscreen', this.options.stylePool)
       }
 

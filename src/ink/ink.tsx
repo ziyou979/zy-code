@@ -208,6 +208,10 @@ export default class Ink {
   // Fired alongside the terminal repaint whenever the selection mutates
   // so UI (e.g. footer hints) can react to selection appearing/clearing.
   private readonly selectionListeners = new Set<() => void>()
+  /** VtPlusPlus 帧拦截器。返回 true 跳过 log.render diff。 */
+  frameSink: ((frame: Frame, stylePool: StylePool) => boolean) | null = null
+  /** VtPlusPlus 渲染器重置回调。外部编辑器退出后调用。 */
+  vtppReset: (() => void) | null = null
   // DOM nodes currently under the pointer (mode-1003 motion). Held here
   // so App.tsx's handleMouseEvent is stateless — dispatchHover diffs
   // against this set and mutates it in place.
@@ -512,6 +516,7 @@ export default class Ink {
     this.resumeStdin()
     if (this.altScreenActive) {
       this.resetFramesForAltScreen()
+      this.vtppReset?.()
     } else {
       this.repaint()
     }
@@ -716,6 +721,38 @@ export default class Ink {
       prevFrame = {
         ...this.frontFrame,
         cursor: ALT_SCREEN_ANCHOR_CURSOR,
+      }
+    }
+    // VtPlusPlus frameSink：alt-screen 模式下优先交给 frameSink 处理。
+    if (this.frameSink && this.altScreenActive) {
+      const handled = this.frameSink(frame, this.stylePool)
+      if (handled) {
+        this.backFrame = this.frontFrame
+        this.frontFrame = frame
+        if (frame.scrollDrainPending && !this.drainTimer) {
+          this.drainTimer = setTimeout(() => {
+            this.drainTimer = null
+            this.scheduleRender()
+          }, FRAME_INTERVAL_MS)
+        }
+        // 光标定位：将终端光标停泊在输入框位置，使 IME 预编辑文本
+        // 和屏幕阅读器能跟随输入。frameSink 跳过 writeDiffToTerminal，
+        // 但光标定位逻辑必须执行，否则输入文字出现在错误位置。
+        const decl = this.cursorDeclaration
+        const rect = decl !== null ? nodeCache.get(decl.node) : undefined
+        if (decl !== null && rect !== undefined) {
+          const row = Math.min(Math.max(rect.y + decl.relativeY + 1, 1), terminalRows)
+          const col = Math.min(Math.max(rect.x + decl.relativeX + 1, 1), terminalWidth)
+          this.options.stdout.write(cursorPosition(row, col))
+          this.displayCursor = {
+            x: rect.x + decl.relativeX,
+            y: rect.y + decl.relativeY,
+          }
+        } else {
+          this.displayCursor = null
+        }
+        this.options.onFrame?.({ durationMs: performance.now() - renderStart, flickers: [] })
+        return
       }
     }
     const tDiff = performance.now()

@@ -6,6 +6,7 @@ import React, {
   type RefObject,
   useCallback,
   useEffect,
+  useInsertionEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -21,6 +22,7 @@ import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'
 import ScrollBox, { type ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import instances from '../ink/instances.js'
+import { VtPlusPlusRenderer } from '../ink/vtplus/VtPlusPlusRenderer.js'
 import { Box, Text } from '../ink.js'
 import type { Message } from '../types/message.js'
 import { openBrowser, openPath } from '../utils/browser.js'
@@ -352,6 +354,30 @@ export function FullscreenLayout({
       ink.onHyperlinkClick = undefined
     }
   }, [])
+  // CC 对齐：useInsertionEffect 只创建一次实例，useLayoutEffect 处理 resize。
+  const vtppRef = useRef<VtPlusPlusRenderer | null>(null)
+  useInsertionEffect(() => {
+    if (!isFullscreenEnvEnabled()) return
+    const ink = instances.get(process.stdout)
+    if (!ink) return
+    const vtpp = new VtPlusPlusRenderer(process.stdout, columns, terminalRows)
+    vtpp.setup()
+    vtppRef.current = vtpp
+    ink.frameSink = (frame, stylePool) => {
+      return vtpp.renderFrame(frame.screen, stylePool)
+    }
+    ink.vtppReset = () => vtpp.reset()
+    return () => {
+      ink.frameSink = null
+      ink.vtppReset = null
+      vtppRef.current = null
+      vtpp.restore()
+    }
+  }, [])
+  // CC 对齐：resize 时复用实例，调用 handleResize 清屏 + 重置状态
+  useLayoutEffect(() => {
+    vtppRef.current?.handleResize(columns, terminalRows)
+  }, [columns, terminalRows])
   if (isFullscreenEnvEnabled()) {
     const sticky = hideSticky ? null : stickyPrompt
     const headerPrompt = sticky != null && sticky !== 'clicked' && overlay == null ? sticky : null
