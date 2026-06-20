@@ -12,7 +12,11 @@
       "Bash(bun test:*)",
       "Bash(ls -lt ~/.zy/sessions/*.json)",
       "Bash(git:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(__NEW_LINE_b1d7c0c6b5497b89__ git:*)",
+      "Bash(/tmp/test-import.ts:*)",
+      "Bash(bun /tmp/test-import.ts)",
+      "Bash(bun:*)"
     ]
   }
 }
