@@ -1,6 +1,5 @@
 import { AFK_MODE_BETA_HEADER } from 'src/constants/betas.js'
 import { getDefaultMainLoopModelSetting } from 'src/services/model/model.js'
-import { getModelStrings } from 'src/services/model/modelStrings.js'
 import {
   getAPIProvider,
   isAnthropicProvider,
@@ -801,15 +800,11 @@ export function getAssistantMessageFromError(
   }
 
   // 404 未找到——通常意味着所选模型不存在或不可用。
-  // 引导用户使用 /model 以便选择有效的模型。
-  // 对于第三方用户，建议一个特定的回退模型。
+  // 引导用户使用 /model 或 --model 选择有效的模型。
   if (isAPIError(error) && error.status === 404) {
     const switchCmd = getIsNonInteractiveSession() ? '--model' : '/model'
-    const fallbackSuggestion = get3PModelFallbackSuggestion(model)
     return createAssistantAPIErrorMessage({
-      content: fallbackSuggestion
-        ? `The model ${model} is not available on your ${getAPIProvider()} deployment. Try ${switchCmd} to switch to ${fallbackSuggestion}, or ask your admin to enable this model.`
-        : `There's an issue with the selected model (${model}). It may not exist or you may not have access to it. Run ${switchCmd} to pick a different model.`,
+      content: `There's an issue with the selected model (${model}). It may not exist or you may not have access to it. Run ${switchCmd} to pick a different model.`,
       error: 'invalid_request',
     })
   }
@@ -833,34 +828,6 @@ export function getAssistantMessageFromError(
     content: API_ERROR_MESSAGE_PREFIX,
     error: 'unknown',
   })
-}
-
-/**
- * 对于第三方用户，当所选模型不可用时建议回退模型。
- * 返回模型名称建议，如果没有适用建议则返回 undefined。
- */
-function get3PModelFallbackSuggestion(model: string): string | undefined {
-  if (getAPIProvider() === 'anthropic') {
-    return undefined
-  }
-  // @[MODEL LAUNCH]: 为新模型 → 之前版本添加第三方用户的回退建议链
-  const m = model.toLowerCase()
-  // 如果失败的模型看起来像 Opus 4.6 变体，建议回退到前一版本
-  if (m.includes('opus-4-6') || m.includes('opus_4_6')) {
-    // biome-ignore lint/suspicious/noExplicitAny: ModelKey 可能不包含此回退模型键
-    return (getModelStrings() as any).opus41
-  }
-  // 如果失败的模型看起来像 Sonnet 4.6 变体，建议回退到 4.5
-  if (m.includes('sonnet-4-6') || m.includes('sonnet_4_6')) {
-    // biome-ignore lint/suspicious/noExplicitAny: ModelKey 可能不包含此回退模型键
-    return (getModelStrings() as any).sonnet45
-  }
-  // 如果失败的模型看起来像 Sonnet 4.5 变体，建议回退到 4.0
-  if (m.includes('sonnet-4-5') || m.includes('sonnet_4_5')) {
-    // biome-ignore lint/suspicious/noExplicitAny: ModelKey 可能不包含此回退模型键
-    return (getModelStrings() as any).sonnet40
-  }
-  return undefined
 }
 
 /**

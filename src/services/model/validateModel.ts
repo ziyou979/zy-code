@@ -4,7 +4,6 @@ import { isModelAllowed } from './modelAllowlist.js'
 import { getAPIProvider, isAnthropicProvider, isOpenAIProvider } from './providers.js'
 import { sideQuery } from '../../utils/sideQuery.js'
 import { isAPIError, isConnectionError, getErrorStatus } from '../../types/llm.js'
-import { getModelStrings } from './modelStrings.js'
 
 // Cache valid models to avoid repeated API calls
 const validModelCache = new Map<string, boolean>()
@@ -80,11 +79,9 @@ function handleValidationError(
 ): { valid: boolean; error: string } {
   // NotFoundError (404) means the model doesn't exist
   if (isAPIError(error) && getErrorStatus(error) === 404) {
-    const fallback = get3PFallbackSuggestion(modelName)
-    const suggestion = fallback ? `. Try '${fallback}' instead` : ''
     return {
       valid: false,
-      error: `Model '${modelName}' not found${suggestion}`,
+      error: `Model '${modelName}' not found`,
     }
   }
 
@@ -129,28 +126,4 @@ function handleValidationError(
     valid: false,
     error: `Unable to validate model: ${errorMessage}`,
   }
-}
-
-// @[MODEL LAUNCH]: Add a fallback suggestion chain for the new model → previous version
-/**
- * Suggest a fallback model for 3P users when the selected model is unavailable.
- */
-function get3PFallbackSuggestion(model: string): string | undefined {
-  if (getAPIProvider() === 'anthropic') {
-    return undefined
-  }
-  const lowerModel = model.toLowerCase()
-  if (lowerModel.includes('opus-4-6') || lowerModel.includes('opus_4_6')) {
-    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-    return (getModelStrings() as any).opus41
-  }
-  if (lowerModel.includes('sonnet-4-6') || lowerModel.includes('sonnet_4_6')) {
-    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-    return (getModelStrings() as any).sonnet45
-  }
-  if (lowerModel.includes('sonnet-4-5') || lowerModel.includes('sonnet_4_5')) {
-    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-    return (getModelStrings() as any).sonnet40
-  }
-  return undefined
 }

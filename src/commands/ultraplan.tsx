@@ -8,7 +8,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../services/analytics/index.js'
-import { ALL_MODEL_CONFIGS } from '../services/model/configs.js'
+import { getUltraplanModel } from '../services/ultraplan/model.js'
 import { updateTaskState } from '../services/task/framework.js'
 import {
   pollForApprovedExitPlanMode,
@@ -36,19 +36,6 @@ import { archiveRemoteSession, teleportToRemote } from '../utils/teleport.js'
 // Multi-agent exploration is slow; 30min timeout.
 const ULTRAPLAN_TIMEOUT_MS = 30 * 60 * 1000
 export const CCR_TERMS_URL = 'https://code.zy.com/docs/en/zy-code-on-the-web'
-
-// CCR runs against the direct API — use the canonical ID, not the
-// provider-specific string getModelStrings() would return (which may be a
-// Bedrock ARN or Vertex ID on the local CLI). Read at call time, not module
-// load: the GrowthBook cache is empty at import and `/config` Gates can flip
-// it between invocations.
-function getUltraplanModel(): string {
-  return getFeatureValue_CACHED_MAY_BE_STALE(
-    'zy_ultraplan_model',
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    (ALL_MODEL_CONFIGS as any).opus46?.anthropic ?? Object.values(ALL_MODEL_CONFIGS)[0]?.anthropic,
-  )
-}
 
 // prompt.txt is wrapped in <system-reminder> so the CCR browser hides
 // scaffolding (CLI_BLOCK_TAGS dropped by stripSystemNotifications)

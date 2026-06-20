@@ -4,48 +4,48 @@ import {
 } from 'src/bootstrap/state.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 
-import {
-  ALL_MODEL_CONFIGS,
-  CANONICAL_ID_TO_KEY,
-  type CanonicalModelId,
-  type ModelKey,
-} from './configs.js'
-import { type APIProvider, getAPIProvider } from './providers.js'
-
 /**
- * Maps each model version to its provider-specific model ID string.
- * Derived from ALL_MODEL_CONFIGS — adding a model there extends this type.
+ * User-configured mapping from canonical model ID to provider-specific model ID.
+ * Derived entirely from `settings.modelOverrides`.
  */
-export type ModelStrings = Record<ModelKey, string>
+export type ModelStrings = Record<string, string>
 
-const MODEL_KEYS = Object.keys(ALL_MODEL_CONFIGS) as ModelKey[]
-
-function getBuiltinModelStrings(provider: APIProvider): ModelStrings {
-  const out = {} as ModelStrings
-  for (const key of MODEL_KEYS) {
-    out[key] = ALL_MODEL_CONFIGS[key][provider]
+function getModelOverrides(): ModelStrings {
+  try {
+    return getInitialSettings().modelOverrides ?? {}
+  } catch {
+    return {}
   }
-  return out
+}
+
+function initModelStrings(): ModelStrings {
+  const overrides = getModelOverrides()
+  setModelStringsState(overrides)
+  return overrides
 }
 
 /**
- * Layer user-configured modelOverrides (from settings.json) on top of the
- * provider-derived model strings. Overrides map canonical model IDs to
- * arbitrary provider-specific strings — typically Bedrock inference profile ARNs.
+ * Get the current model overrides map (canonical model ID -> provider-specific model ID).
+ * Safe to call during module init.
  */
-function applyModelOverrides(ms: ModelStrings): ModelStrings {
-  const overrides = getInitialSettings().modelOverrides
-  if (!overrides) {
-    return ms
+export function getModelStrings(): ModelStrings {
+  const ms = getModelStringsState()
+  if (ms === null) {
+    return initModelStrings()
   }
-  const out = { ...ms }
-  for (const [canonicalId, override] of Object.entries(overrides)) {
-    const key = CANONICAL_ID_TO_KEY[canonicalId as CanonicalModelId]
-    if (key && override) {
-      out[key] = override
-    }
+  return ms
+}
+
+/**
+ * Ensure model strings are initialized.
+ * Retained for callers that currently await it.
+ */
+export async function ensureModelStringsInitialized(): Promise<void> {
+  const ms = getModelStringsState()
+  if (ms !== null) {
+    return
   }
-  return out
+  setModelStringsState(getModelOverrides())
 }
 
 /**
@@ -70,34 +70,4 @@ export function resolveOverriddenModel(modelId: string): string {
     }
   }
   return modelId
-}
-
-function initModelStrings(): void {
-  const ms = getModelStringsState()
-  if (ms !== null) {
-    // Already initialized
-    return
-  }
-  setModelStringsState(getBuiltinModelStrings(getAPIProvider()))
-}
-
-export function getModelStrings(): ModelStrings {
-  const ms = getModelStringsState()
-  if (ms === null) {
-    initModelStrings()
-    return applyModelOverrides(getBuiltinModelStrings(getAPIProvider()))
-  }
-  return applyModelOverrides(ms)
-}
-
-/**
- * Ensure model strings are fully initialized.
- * Call this before generating model options to ensure correct region strings.
- */
-export async function ensureModelStringsInitialized(): Promise<void> {
-  const ms = getModelStringsState()
-  if (ms !== null) {
-    return
-  }
-  setModelStringsState(getBuiltinModelStrings(getAPIProvider()))
 }
