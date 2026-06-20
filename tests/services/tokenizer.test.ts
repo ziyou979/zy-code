@@ -20,15 +20,15 @@ import {
 describe('getTokenizerKeyForModel', () => {
   const cases: Array<[string, string]> = [
     // OpenAI
-    ['gpt-4o-2024-08-06', 'gpt4o'],
-    ['gpt-4o-mini', 'gpt4o'],
-    ['chatgpt-4o-latest', 'gpt4o'],
-    ['o1-preview', 'gpt4o'],
-    ['o3-mini', 'gpt4o'],
-    ['o4-mini', 'gpt4o'],
-    ['gpt-4-turbo-2024-04-09', 'gpt4'],
-    ['gpt-4-0613', 'gpt4'],
-    ['gpt-3.5-turbo', 'gpt35turbo'],
+    ['gpt-4o-2024-08-06', 'o200k_base'],
+    ['gpt-4o-mini', 'o200k_base'],
+    ['chatgpt-4o-latest', 'o200k_base'],
+    ['o1-preview', 'o200k_base'],
+    ['o3-mini', 'o200k_base'],
+    ['o4-mini', 'o200k_base'],
+    ['gpt-4-turbo-2024-04-09', 'cl100k_base'],
+    ['gpt-4-0613', 'cl100k_base'],
+    ['gpt-3.5-turbo', 'cl100k_base'],
     // Claude
     ['claude-3.5-sonnet-20241022', 'claude'],
     ['claude-sonnet-4-20250514', 'claude'],
@@ -66,10 +66,10 @@ describe('getTokenizerKeyForModel', () => {
     // Cohere
     ['command-r-plus', 'cohere'],
     // Fallback
-    ['pangu-pro', 'gpt4'],
-    ['ernie-4.5-8k', 'gpt4'],
-    ['hunyuan-turbos', 'gpt4'],
-    ['some-unknown-model', 'gpt4'],
+    ['pangu-pro', 'cl100k_base'],
+    ['ernie-4.5-8k', 'cl100k_base'],
+    ['hunyuan-turbos', 'cl100k_base'],
+    ['some-unknown-model', 'cl100k_base'],
   ]
 
   test.each(cases)('%s → %s', (model, expected) => {

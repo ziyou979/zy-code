@@ -4,6 +4,7 @@
  * 用 mock.module 替换整个依赖链中的模块，阻断传递加载。
  */
 import { afterEach, describe, expect, mock, test } from 'bun:test'
+import * as realEnvUtils from '../../src/utils/envUtils.js'
 
 // 可变的 mock 状态（测试之间重置）
 let mockIsBgSession = false
@@ -51,8 +52,7 @@ mock.module('../../src/utils/concurrentSessions.js', () => ({
 }))
 
 mock.module('../../src/utils/envUtils.js', () => ({
-  isEnvTruthy: (v: unknown) => v === '1' || v === 'true' || v === true,
-  isEnvDefinedFalsy: (v: unknown) => v === '0' || v === 'false',
+  ...realEnvUtils,
   isInternalBuild: () => mockIsInternalBuild,
 }))
 
