@@ -191,13 +191,19 @@ export function useVirtualScroll(
   const prevRangeRef = useRef<readonly [number, number] | null>(null)
   const freezeRendersRef = useRef(0)
   if (prevColumns.current !== columns) {
-    const ratio = prevColumns.current / columns
+    // 宽度变化时清空 heightCache：旧高度在新宽度下不正确
+    //（由窄到宽时旧高度偏大 → topSpacer 过大 → 内容被推到视口下方 → 空行）。
+    // 清空后所有项目用 PESSIMISTIC_HEIGHT=1，topSpacer=0，内容从顶部开始。
+    // useDeferredValue 将大量 fresh mount 延迟到后台渲染（非阻塞）。
+    // skipMeasurement 跳过第一帧测量（Yoga 仍是旧宽度的布局）。
     prevColumns.current = columns
-    for (const [k, h] of heightCache.current) {
-      heightCache.current.set(k, Math.max(1, Math.round(h * ratio)))
-    }
+    heightCache.current.clear()
     offsetVersionRef.current++
     skipMeasurementRef.current = true
+    // 冻结挂载范围 2 帧：第 1 帧 skipMeasurement（Yoga 仍是旧宽度布局），
+    // 第 2 帧 useLayoutEffect 读取新宽度下的 Yoga 高度写入 heightCache，
+    // 第 3 帧用准确高度正常重算。不冻结则所有项目用 PESSIMISTIC_HEIGHT=1，
+    // 范围跳变导致大量 mount/unmount（每个 ~3ms）→ 可见闪烁 + 空行。
     freezeRendersRef.current = 2
   }
   const frozenRange = freezeRendersRef.current > 0 ? prevRangeRef.current : null

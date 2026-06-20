@@ -66,10 +66,6 @@ export type ScrollBoxHandle = {
 }
 export type ScrollBoxProps = Except<Styles, 'textWrap' | 'overflow' | 'overflowX' | 'overflowY'> & {
   ref?: Ref<ScrollBoxHandle>
-  /**
-   * 为 true 时，内容增长时自动将滚动位置钉在底部。
-   * 可通过 scrollTo/scrollBy 手动解除粘性。
-   */
   stickyScroll?: boolean
 }
 
