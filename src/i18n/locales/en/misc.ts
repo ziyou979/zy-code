@@ -622,6 +622,8 @@ export const enMisc: TranslationResource = {
   'promptInput.thinkingOn': 'Thinking on',
   'promptInput.ultraplanLaunch':
     'This prompt will launch an ultraplan session in ZY Code on the web',
+  'ultraplan.noModelConfigured':
+    'No model configured for /ultraplan. Set models.advanced or models.standard in settings.',
   'promptInput.ultrareviewRun':
     'Run /ultrareview after Zy finishes to review these changes in the cloud',
   'promptInput.waitingForPermission': 'Waiting for permission…',

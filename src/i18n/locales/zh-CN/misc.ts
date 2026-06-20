@@ -608,6 +608,8 @@ export const zhMisc: TranslationResource = {
   'promptInput.thinkingOff': '思考模式已关闭',
   'promptInput.thinkingOn': '思考模式已开启',
   'promptInput.ultraplanLaunch': '此提示将在 ZY Code 网页版中启动 ultraplan 会话',
+  'ultraplan.noModelConfigured':
+    '未为 /ultraplan 配置模型。请在设置中配置 models.advanced 或 models.standard。',
   'promptInput.ultrareviewRun': 'Zy 完成后运行 /ultrareview 在云端审查这些更改',
   'promptInput.waitingForPermission': '等待权限审批…',
   'quickOpen.action': '在编辑器中打开',

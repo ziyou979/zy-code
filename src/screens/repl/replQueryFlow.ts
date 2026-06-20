@@ -731,11 +731,10 @@ export async function runQuery(
 
       const turnDurationMs =
         Date.now() - ctx.loadingStartTimeRef.current - ctx.totalPausedMsRef.current
-      if (
-        (turnDurationMs > 30000 || budgetInfo !== undefined) &&
-        !abortController.signal.aborted &&
-        !ctx.proactiveActive
-      ) {
+      // CC 行为对齐：仅在实际发起模型查询时（shouldQuery=true）才生成 turn_duration 消息。
+      // /clear、/model、/compact 等本地命令 shouldQuery=false，不应显示"处理完成"。
+      // 旧代码无条件生成导致 /clear 后出现"⣝ 处理完成，耗时 0 秒"。
+      if (shouldQuery && !abortController.signal.aborted && !ctx.proactiveActive) {
         const hasRunningSwarmAgents = getAllInProcessTeammateTasks(
           ctx.appStore.getState().tasks,
         ).some((t) => t.status === 'running')
