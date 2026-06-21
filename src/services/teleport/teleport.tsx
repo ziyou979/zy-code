@@ -23,7 +23,11 @@ import { AppStateProvider } from '../../state/AppState.js'
 import type { WireMessage } from '../../types/index.js'
 import type { Message, SystemMessage } from '../../types/message.js'
 import type { PermissionMode } from '../../types/permissions.js'
-import { checkAndRefreshOAuthTokenIfNeeded, getZyAIOAuthTokens } from '../../utils/auth.js'
+import {
+  checkAndRefreshOAuthTokenIfNeeded,
+  getOrganizationUUID,
+  getZyAIOAuthTokens,
+} from '../../utils/auth.js'
 import {
   deserializeMessages,
   type TeleportRemoteResponse,
@@ -49,7 +53,6 @@ import { jsonStringify } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 import { queryCompactModel } from '../api/compactQueries.js'
 import { getSessionLogsViaOAuth, getTeleportEvents } from '../api/sessionIngress.js'
-import { getOrganizationUUID } from '../oauth/client.js'
 import {
   fetchSession,
   type GitRepositoryOutcome,

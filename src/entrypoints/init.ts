@@ -7,7 +7,7 @@ import { getIsNonInteractiveSession } from 'src/bootstrap/state.js'
 import type { AttributedCounter } from '../bootstrap/state.js'
 import { getSessionCounter, setMeter } from '../bootstrap/state.js'
 import { shutdownLspServerManager } from '../services/lsp/manager.js'
-import { populateOAuthAccountInfoIfNeeded } from '../services/oauth/client.js'
+import { populateOAuthAccountInfoIfNeeded } from '../utils/auth.js'
 import {
   initializePolicyLimitsLoadingPromise,
   isPolicyLimitsEligible,

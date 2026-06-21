@@ -81,9 +81,7 @@ export function TeleportError({
     case 'needsLogin': {
       if (isLoggingIn) {
         let loginFlowContent
-        loginFlowContent = (
-          <ConsoleOAuthFlow onDone={handleLoginComplete} mode="login" forceLoginMethod="zyai" />
-        )
+        loginFlowContent = <ConsoleOAuthFlow onDone={handleLoginComplete} />
         return loginFlowContent
       }
       let dialogContent

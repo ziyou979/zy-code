@@ -40,9 +40,6 @@ import { runSideQuestion } from 'src/utils/sideQuestion.js'
 import { getSettingsWithSources } from 'src/utils/settings/settings.js'
 import { settingsChangeDetector } from 'src/utils/settings/changeDetector.js'
 import { getLastCacheSafeParams } from 'src/utils/forkedAgent.js'
-import { getAccountInformation } from 'src/utils/auth.js'
-import { OAuthService } from 'src/services/oauth/index.js'
-import { installOAuthTokens } from 'src/cli/handlers/auth.js'
 import { getAPIProvider } from 'src/services/model/providers.js'
 import { setSdkAgentProgressSummariesEnabled } from 'src/bootstrap/state.js'
 import {
@@ -211,16 +208,6 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
   // extension via handleAuthDone → mcp_reconnect.
   const oauthAuthPromises = new Map<string, Promise<void>>()
 
-  // In-flight OAuth flow (zy_authenticate). Single-slot: a
-  // second authenticate request cleans up the first. The service holds the
-  // PKCE verifier + localhost listener; the promise settles after
-  // installOAuthTokens — after it resolves, the in-process memoized token
-  // cache is already cleared and the next API call picks up the new creds.
-  let zyOAuth: {
-    service: OAuthService
-    flow: Promise<void>
-  } | null = null
-
   // This is essentially spawning a parallel async task- we have two
   // running in parallel- one reading from stdin and adding to the
   // queue to be processed and another reading from the queue,
@@ -236,49 +223,6 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
   // message.request 是 subtype 联合,handler 内用 Extract 窄化到具体变体。
   // 返回 'break' 的 handler(如 end_session)令外层 for-await 退出。
   type ControlOutcome = void | 'break'
-  // zy_oauth_callback 与 zy_oauth_wait_for_completion 共用此 handler:仅前者
-  // 同步注入 manual code,之后都 detach 等 flow 完成再回响应(stdin 串行,
-  // park 在此会与后续 callback 死锁)。
-  const handleZyOAuthCallback = (message: WireControlRequest): void => {
-    // subtype 联合不含 zy_oauth_* (运行期扩展);注解 string 对齐原 requestSubtype。
-    const sub: string = message.request.subtype
-    if (!zyOAuth) {
-      sendControlResponseError(message, 'No active zy_authenticate flow')
-    } else {
-      // Inject the manual code synchronously — must happen in stdin
-      // message order so a subsequent zy_authenticate doesn't
-      // replace the service before this code lands.
-      if (sub === 'zy_oauth_callback') {
-        const req = message.request as unknown as { authorizationCode: string; state: string }
-        zyOAuth.service.handleManualAuthCodeInput({
-          authorizationCode: req.authorizationCode,
-          state: req.state,
-        })
-      }
-      // Detach the await — the stdin reader is serial and blocking
-      // here deadlocks zy_oauth_wait_for_completion: flow may
-      // only resolve via a future zy_oauth_callback on stdin,
-      // which can't be read while we're parked. Capture the binding;
-      // zyOAuth is nulled in flow's own .finally.
-      const { flow } = zyOAuth
-      void flow.then(
-        () => {
-          const accountInfo = getAccountInformation()
-          sendControlResponseSuccess(message, {
-            account: {
-              email: accountInfo?.email,
-              organization: accountInfo?.organization,
-              subscriptionType: accountInfo?.subscription,
-              tokenSource: accountInfo?.tokenSource,
-              apiKeySource: accountInfo?.apiKeySource,
-              apiProvider: getAPIProvider(),
-            },
-          })
-        },
-        (error: unknown) => sendControlResponseError(message, errorMessage(error)),
-      )
-    }
-  }
   const controlHandlers: Partial<
     Record<string, (message: WireControlRequest) => ControlOutcome | Promise<ControlOutcome>>
   > = {
@@ -1049,98 +993,13 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       }
     },
     zy_authenticate: async (message) => {
-      // Anthropic OAuth over the control channel. The SDK client owns
-      // the user's browser (we're headless in -p mode); we hand back
-      // both URLs and wait. Automatic URL → localhost listener catches
-      // the redirect if the browser is on this host; manual URL → the
-      // success page shows "code#state" for zy_oauth_callback.
-      const req = message.request as { loginWithZyAi?: boolean }
-      const loginWithZyAi = req.loginWithZyAi
-
-      // Clean up any prior flow. cleanup() closes the localhost listener
-      // and nulls the manual resolver. The prior `flow` promise is left
-      // pending (AuthCodeListener.close() does not reject) but its object
-      // graph becomes unreachable once the server handle is released and
-      // is GC'd — no fd or port is held.
-      zyOAuth?.service.cleanup()
-
-      logEvent('zy_oauth_flow_start', {
-        loginWithZyAi: loginWithZyAi ?? true,
-      })
-
-      const service = new OAuthService()
-      let urlResolver!: (urls: { manualUrl: string; automaticUrl: string }) => void
-      const urlPromise = new Promise<{
-        manualUrl: string
-        automaticUrl: string
-      }>((resolve) => {
-        urlResolver = resolve
-      })
-
-      const flow = service
-        .startOAuthFlow(
-          async (manualUrl, automaticUrl) => {
-            // automaticUrl is always defined when skipBrowserOpen is set;
-            // the signature is optional only for the existing single-arg callers.
-            urlResolver({ manualUrl, automaticUrl: automaticUrl! })
-          },
-          {
-            loginWithZyAi: loginWithZyAi ?? true,
-            skipBrowserOpen: true,
-          },
-        )
-        .then(async (tokens) => {
-          // installOAuthTokens: performLogout (clear stale state) →
-          // store profile → saveOAuthTokensIfNeeded → clearOAuthTokenCache
-          // → clearAuthRelatedCaches. After this resolves, the memoized
-          // getZyAIOAuthTokens in this process is invalidated; the
-          // next API call re-reads keychain/file and works. No respawn.
-          await installOAuthTokens(tokens)
-          logEvent('zy_oauth_success', {
-            loginWithZyAi: loginWithZyAi ?? true,
-          })
-        })
-        .finally(() => {
-          service.cleanup()
-          if (zyOAuth?.service === service) {
-            zyOAuth = null
-          }
-        })
-
-      zyOAuth = { service, flow }
-
-      // Attach the rejection handler before awaiting so a synchronous
-      // startOAuthFlow failure doesn't surface as an unhandled rejection.
-      // The zy_oauth_callback handler re-awaits flow for the manual
-      // path and surfaces the real error to the client.
-      void flow.catch((err) =>
-        logForDebugging(`zy_authenticate flow ended: ${err}`, {
-          level: 'info',
-        }),
+      // 多 Provider OAuth 模式下，headless 控制通道不支持直接 OAuth 登录。
+      // 请使用 `zy auth login --provider <provider>` 进行交互式登录。
+      sendControlResponseError(
+        message,
+        'OAuth login via control channel is not supported in multi-provider mode. Please use `zy auth login --provider <provider>` instead.',
       )
-
-      try {
-        // Race against flow: if startOAuthFlow rejects before calling
-        // the authURLHandler (e.g. AuthCodeListener.start() fails with
-        // EACCES or fd exhaustion), urlPromise would pend forever and
-        // wedge the stdin loop. flow resolving first is unreachable in
-        // practice (it's suspended on the same urls we're waiting for).
-        const { manualUrl, automaticUrl } = await Promise.race([
-          urlPromise,
-          flow.then(() => {
-            throw new Error('OAuth flow completed without producing auth URLs')
-          }),
-        ])
-        sendControlResponseSuccess(message, {
-          manualUrl,
-          automaticUrl,
-        })
-      } catch (error) {
-        sendControlResponseError(message, errorMessage(error))
-      }
     },
-    zy_oauth_callback: handleZyOAuthCallback,
-    zy_oauth_wait_for_completion: handleZyOAuthCallback,
     mcp_clear_auth: async (message) => {
       const { serverName } = message.request as { serverName: string }
       const currentAppState = getAppState()

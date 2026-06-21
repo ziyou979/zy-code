@@ -31,9 +31,7 @@ async function _temp() {
     notifs.push({
       key: 'marketplace-installed',
       jsx: (
-        <Text color="success">
-          ✓ ZY marketplace installed · /plugin to see available plugins
-        </Text>
+        <Text color="success">✓ ZY marketplace installed · /plugin to see available plugins</Text>
       ),
       priority: 'immediate',
       timeoutMs: 7000,
@@ -44,9 +42,7 @@ async function _temp() {
       notifs.push({
         key: 'marketplace-install-failed',
         jsx: (
-          <Text color="warning">
-            Failed to install ZY marketplace · Will retry on next startup
-          </Text>
+          <Text color="warning">Failed to install ZY marketplace · Will retry on next startup</Text>
         ),
         priority: 'immediate',
         timeoutMs: 8000,

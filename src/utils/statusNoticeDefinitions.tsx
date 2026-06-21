@@ -155,7 +155,7 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
         </Box>
         <Box flexDirection="column" marginLeft={3}>
           <Text color="warning">
-            · Trying to use {authTokenInfo.source === 'zy.ai' ? 'zy.ai' : authTokenInfo.source}?{' '}
+            · Trying to use {authTokenInfo.source === 'oauth' ? 'OAuth' : authTokenInfo.source}?{' '}
             {apiKeySource === 'settingsApiKey'
               ? 'Unset the ZY_API_KEY environment variable, or zy /logout then say "No" to the API key approval before login.'
               : apiKeySource === 'apiKeyHelper'
@@ -164,8 +164,8 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
           </Text>
           <Text color="warning">
             · Trying to use {apiKeySource}?{' '}
-            {authTokenInfo.source === 'zy.ai'
-              ? 'zy /logout to sign out of zy.ai.'
+            {authTokenInfo.source === 'oauth'
+              ? 'zy /logout to sign out of your OAuth provider.'
               : `Unset the ${authTokenInfo.source} environment variable.`}
           </Text>
         </Box>

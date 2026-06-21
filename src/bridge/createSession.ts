@@ -53,7 +53,7 @@ export async function createWireSession({
   permissionMode?: string
 }): Promise<string | null> {
   const { getZyAIOAuthTokens } = await import('../utils/auth.js')
-  const { getOrganizationUUID } = await import('../services/oauth/client.js')
+  const { getOrganizationUUID } = await import('../utils/auth.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
   const { getOAuthHeaders } = await import('../services/teleport/api.js')
   const { parseGitHubRepository } = await import('../utils/detectRepository.js')
@@ -189,7 +189,7 @@ export async function getWireSession(
   opts?: { baseUrl?: string; getAccessToken?: () => string | undefined },
 ): Promise<{ environment_id?: string; title?: string } | null> {
   const { getZyAIOAuthTokens } = await import('../utils/auth.js')
-  const { getOrganizationUUID } = await import('../services/oauth/client.js')
+  const { getOrganizationUUID } = await import('../utils/auth.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
   const { getOAuthHeaders } = await import('../services/teleport/api.js')
   const { default: axios } = await import('axios')
@@ -264,7 +264,7 @@ export async function archiveWireSession(
   },
 ): Promise<void> {
   const { getZyAIOAuthTokens } = await import('../utils/auth.js')
-  const { getOrganizationUUID } = await import('../services/oauth/client.js')
+  const { getOrganizationUUID } = await import('../utils/auth.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
   const { getOAuthHeaders } = await import('../services/teleport/api.js')
   const { default: axios } = await import('axios')
@@ -324,7 +324,7 @@ export async function updateWireSessionTitle(
   opts?: { baseUrl?: string; getAccessToken?: () => string | undefined },
 ): Promise<void> {
   const { getZyAIOAuthTokens } = await import('../utils/auth.js')
-  const { getOrganizationUUID } = await import('../services/oauth/client.js')
+  const { getOrganizationUUID } = await import('../utils/auth.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
   const { getOAuthHeaders } = await import('../services/teleport/api.js')
   const { default: axios } = await import('axios')

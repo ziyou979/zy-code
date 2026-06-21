@@ -1,4 +1,3 @@
-import { getOauthProfileFromApiKey } from 'src/services/oauth/getOauthProfile.js'
 import { Text } from '../../ink.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
@@ -8,20 +7,19 @@ const MAX_SHOW_COUNT = 3
 
 /**
  * Hook to check if the user has a subscription on Console but isn't logged into it.
+ *
+ * 多 Provider OAuth 模式下不再通过 zy.ai profile API 检查订阅状态。
  */
 export function useCanSwitchToExistingSubscription() {
   // @ts-expect-error
   useStartupNotification(_temp2)
 }
 
-/**
- * Checks if the user has a subscription but is not currently logged into it.
- * This helps inform users they should run /login to access their subscription.
- */
 async function _temp2() {
   if ((getGlobalConfig().subscriptionNoticeCount ?? 0) >= MAX_SHOW_COUNT) {
     return null
   }
+  // 多 Provider OAuth 模式下无法检查 zy.ai 订阅状态
   const subscriptionType = await getExistingZySubscription()
   if (subscriptionType === null) {
     return null
@@ -50,17 +48,6 @@ function _temp(current: import('../../utils/config.js').GlobalConfig) {
   }
 }
 async function getExistingZySubscription(): Promise<'Max' | 'Pro' | null> {
-  const profile = await getOauthProfileFromApiKey()
-  if (!profile) {
-    return null
-  }
-  // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-  if ((profile as any).account.has_Zy_max) {
-    return 'Max'
-  }
-  // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-  if ((profile as any).account.has_Zy_pro) {
-    return 'Pro'
-  }
+  // 多 Provider OAuth 模式下不支持检查 zy.ai 订阅状态
   return null
 }

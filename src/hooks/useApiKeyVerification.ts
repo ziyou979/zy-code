@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { verifyApiKey } from '../services/api/apiHelpers.js'
-import { getAPIProvider, isAnthropicProvider } from '../services/model/providers.js'
 import { getApiKeyFromApiKeyHelper, getApiKeyWithSource, isAuthEnabled } from '../utils/auth.js'
 export type VerificationStatus = 'loading' | 'valid' | 'invalid' | 'missing' | 'error'
 export type ApiKeyVerificationResult = {
@@ -11,10 +10,6 @@ export type ApiKeyVerificationResult = {
 }
 export function useApiKeyVerification(): ApiKeyVerificationResult {
   const [status, setStatus] = useState<VerificationStatus>(() => {
-    // 仅 Anthropic SDK 平台需要走 zy API key / OAuth 验证；其他平台直接视为 valid
-    if (!isAnthropicProvider(getAPIProvider())) {
-      return 'valid'
-    }
     if (!isAuthEnabled()) {
       return 'valid'
     }
@@ -32,11 +27,6 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
   })
   const [error, setError] = useState<Error | null>(null)
   const verify = useCallback(async (): Promise<void> => {
-    // 仅 Anthropic SDK 平台需要走 zy API key / OAuth 验证；其他平台直接视为 valid
-    if (!isAnthropicProvider(getAPIProvider())) {
-      setStatus('valid')
-      return
-    }
     if (!isAuthEnabled()) {
       setStatus('valid')
       return
@@ -51,23 +41,15 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
         setError(new Error('API key helper did not return a valid key'))
         return
       }
-      const newStatus = 'missing'
-      setStatus(newStatus)
+      setStatus('missing')
       return
     }
     try {
       const isValid = await verifyApiKey(apiKey, false)
-      const newStatus = isValid ? 'valid' : 'invalid'
-      setStatus(newStatus)
-      return
-    } catch (error) {
-      // This happens when there an error response from the API but it's not an invalid API key error
-      // In this case, we still mark the API key as invalid - but we also log the error so we can
-      // display it to the user to be more helpful
-      setError(error as Error)
-      const newStatus = 'error'
-      setStatus(newStatus)
-      return
+      setStatus(isValid ? 'valid' : 'invalid')
+    } catch (verifyError) {
+      setError(verifyError as Error)
+      setStatus('error')
     }
   }, [])
   return {

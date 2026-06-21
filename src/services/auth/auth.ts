@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import chalk from 'chalk'
 import { execa } from 'execa'
 import memoize from 'lodash-es/memoize.js'
-import { ZY_CODE_PROFILE_SCOPE } from 'src/constants/oauth.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -49,9 +48,20 @@ import {
   saveGlobalConfig,
 } from '../config/config.js'
 import { getMockSubscriptionType, shouldUseMockSubscription } from '../mockRateLimits.js'
-import { isOAuthTokenExpired, refreshOAuthToken, shouldUseZyAIAuth } from '../oauth/client.js'
-import { getOauthProfileFromOauthToken } from '../oauth/getOauthProfile.js'
 import type { OAuthTokens, SubscriptionType } from '../oauth/types.js'
+import {
+  clearAllOAuthCredentials,
+  clearOAuthCredentialsCache,
+  getActiveOAuthApiKeySync,
+  getActiveOAuthProvider,
+  getActiveOAuthProviderInfo,
+  getOAuthCredentials,
+  getOAuthCredentialsAsync,
+  isActiveOAuthTokenExpired,
+  refreshActiveOAuthToken,
+  saveOAuthCredentials,
+} from '../oauth/oauthStorage.js'
+import { getOAuthProvider } from '../oauth/providers/index.js'
 
 /** API key helper 缓存的默认 TTL，单位毫秒（5 分钟） */
 const DEFAULT_API_KEY_HELPER_TTL = 5 * 60 * 1000
@@ -92,7 +102,16 @@ export function isAuthEnabled(): boolean {
   }
 
   const { hasToken } = getAuthTokenSource()
-  return hasToken
+  if (hasToken) {
+    return true
+  }
+
+  // 检查多 Provider OAuth 登录
+  if (getActiveOAuthProvider()) {
+    return true
+  }
+
+  return false
 }
 
 /** 认证 token 的来源（如有）。 */
@@ -138,15 +157,21 @@ export function getAuthTokenSource() {
     return { source: 'apiKeyHelper' as const, hasToken: true }
   }
 
-  const oauthTokens = getZyAIOAuthTokens()
-  if (shouldUseZyAIAuth(oauthTokens?.scopes) && oauthTokens?.accessToken) {
-    return { source: 'zy.ai' as const, hasToken: true }
+  // 检查多 Provider OAuth
+  const activeOAuthProvider = getActiveOAuthProvider()
+  if (activeOAuthProvider) {
+    return { source: 'oauth' as const, hasToken: true }
   }
 
   return { source: 'none' as const, hasToken: false }
 }
 
-export type ApiKeySource = 'settingsApiKey' | 'apiKeyHelper' | '/login managed key' | 'none'
+export type ApiKeySource =
+  | 'settingsApiKey'
+  | 'apiKeyHelper'
+  | '/login managed key'
+  | 'oauth'
+  | 'none'
 
 export function getApiKey(): null | string {
   const { key } = getApiKeyWithSource()
@@ -214,6 +239,12 @@ export function getApiKeyWithSource(opts: { skipRetrievingKeyFromApiKeyHelper?: 
       key: getApiKeyFromApiKeyHelperCached(),
       source: 'apiKeyHelper',
     }
+  }
+
+  // 检查多 Provider OAuth（新增）
+  const oauthApiKey = getActiveOAuthApiKeySync()
+  if (oauthApiKey) {
+    return { key: oauthApiKey, source: 'oauth' as const }
   }
 
   const apiKeyFromConfigOrMacOSKeychain = getApiKeyFromConfigOrMacOSKeychain()
@@ -588,67 +619,12 @@ async function maybeRemoveApiKeyFromMacOSKeychain(): Promise<void> {
   }
 }
 
-// 将 OAuth token 存储到安全存储中
-export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
-  success: boolean
-  warning?: string
-} {
-  if (!shouldUseZyAIAuth(tokens.scopes)) {
-    logEvent('zy_oauth_tokens_not_Zy_ai', {})
-    return { success: true }
-  }
-
-  // 跳过仅推理用途的 token（它们来自环境变量）
-  if (!tokens.refreshToken || !tokens.expiresAt) {
-    logEvent('zy_oauth_tokens_inference_only', {})
-    return { success: true }
-  }
-
-  // biome-ignore lint/suspicious/noExplicitAny: SecureStorage 接口不包含 name/read/update，运行时实现有扩展方法
-  const secureStorage = getSecureStorage() as any
-  const storageBackend =
-    secureStorage.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
-
-  try {
-    const storageData = secureStorage.read() || {}
-    const existingOauth = storageData.zyAiOauth
-
-    storageData.zyAiOauth = {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      expiresAt: tokens.expiresAt,
-      scopes: tokens.scopes,
-      // refreshOAuthToken 中的 profile 获取会吞掉错误，在临时故障
-      // （网络、5xx、限流）时返回 null。不要用 null 覆盖有效的已存储
-      // 订阅——回退到已有值。
-      subscriptionType: tokens.subscriptionType ?? existingOauth?.subscriptionType ?? null,
-      rateLimitTier: tokens.rateLimitTier ?? existingOauth?.rateLimitTier ?? null,
-    }
-
-    const updateStatus = secureStorage.update(storageData)
-
-    if (updateStatus.success) {
-      logEvent('zy_oauth_tokens_saved', { storageBackend })
-    } else {
-      logEvent('zy_oauth_tokens_save_failed', { storageBackend })
-    }
-
-    getZyAIOAuthTokens.cache?.clear?.()
-    clearBetasCaches()
-    clearToolSchemaCache()
-    return updateStatus
-  } catch (error) {
-    logError(error)
-    logEvent('zy_oauth_tokens_save_exception', {
-      storageBackend,
-      error: errorMessage(error) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-    return { success: false, warning: 'Failed to save OAuth tokens' }
-  }
-}
-
+/**
+ * 获取当前 OAuth access token（兼容层）。
+ * 从新的多 Provider OAuth 存储中读取活跃 provider 的 access token。
+ * 外部模块通过 utils/auth.ts 导入此函数获取当前 token。
+ */
 export const getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
-  // --bare：仅 API key 模式。无 OAuth token，无 keychain，无凭据文件。
   if (isBareMode()) {
     return null
   }
@@ -656,7 +632,6 @@ export const getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
   // 检查文件描述符中的 OAuth token
   const oauthTokenFromFd = getOAuthTokenFromFileDescriptor()
   if (oauthTokenFromFd) {
-    // 返回仅推理用途的 token（refresh 和过期时间未知）
     return {
       accessToken: oauthTokenFromFd,
       refreshToken: null,
@@ -667,22 +642,41 @@ export const getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
     }
   }
 
-  try {
-    // biome-ignore lint/suspicious/noExplicitAny: SecureStorage 接口不包含 read 方法，运行时实现有扩展方法
-    const secureStorage = getSecureStorage() as any
-    const storageData = secureStorage.read()
-    const oauthData = storageData?.zyAiOauth
-
-    if (!oauthData?.accessToken) {
-      return null
-    }
-
-    return oauthData
-  } catch (error) {
-    logError(error)
+  // 从新的多 Provider OAuth 存储读取
+  const apiKey = getActiveOAuthApiKeySync()
+  if (!apiKey) {
     return null
   }
+
+  const providerId = getActiveOAuthProvider()
+  if (!providerId) {
+    return null
+  }
+
+  const credentials = getOAuthCredentials(providerId)
+  if (!credentials) {
+    return null
+  }
+
+  return {
+    accessToken: credentials.access,
+    refreshToken: credentials.refresh,
+    expiresAt: credentials.expires || null,
+    scopes: [],
+    subscriptionType: null,
+    rateLimitTier: null,
+  }
 })
+
+/**
+ * 检查 OAuth token 是否已过期（含 5 分钟安全余量）。
+ */
+export function isOAuthTokenExpired(expiresAt: number | null): boolean {
+  if (!expiresAt) {
+    return false
+  }
+  return Date.now() >= expiresAt - 5 * 60 * 1000
+}
 
 /**
  * 清除所有 OAuth token 缓存。在 401 错误时调用此方法以确保
@@ -693,28 +687,7 @@ export const getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
 export function clearOAuthTokenCache(): void {
   getZyAIOAuthTokens.cache?.clear?.()
   clearKeychainCache()
-}
-
-let lastCredentialsMtimeMs = 0
-
-// 跨进程过期问题：另一个 CC 实例可能将新 token 写入磁盘（refresh 或 /login），
-// 但本进程的 memoize 会永久缓存。如果没有这个检查，终端 1 的 /login 修复了
-// 终端 1；终端 2 的 /login 随后在服务端撤销终端 1 的 token，
-// 而终端 1 的 memoize 永远不会重新读取——导致无限 /login 循环（CC-1096, GH#24317）。
-async function invalidateOAuthCacheIfDiskChanged(): Promise<void> {
-  try {
-    const { mtimeMs } = await stat(join(getZyConfigHomeDir(), '.credentials.json'))
-    if (mtimeMs !== lastCredentialsMtimeMs) {
-      lastCredentialsMtimeMs = mtimeMs
-      clearOAuthTokenCache()
-    }
-  } catch {
-    // ENOENT — macOS keychain 路径（文件在迁移时被删除）。仅清除
-    // memoize 使其委托给 keychain 缓存的 30s TTL，而非在其上层
-    // 永久缓存。`security find-generic-password` 约 15ms；
-    // 受 keychain 缓存限制每 30s 最多一次。
-    getZyAIOAuthTokens.cache?.clear?.()
-  }
+  clearOAuthCredentialsCache()
 }
 
 // 飞行中去重：当 N 个 zy.ai 代理连接器同时以相同 token 触发 401 时
@@ -751,52 +724,26 @@ export function handleOAuth401Error(failedAccessToken: string): Promise<boolean>
 }
 
 async function handleOAuth401ErrorImpl(failedAccessToken: string): Promise<boolean> {
-  // 清除缓存并从 keychain 重新读取（异步——同步读取每次调用阻塞约 100ms）
-  clearOAuthTokenCache()
-  const currentTokens = await getZyAIOAuthTokensAsync()
-
-  if (!currentTokens?.refreshToken) {
-    return false
-  }
-
-  // 如果 keychain 中有不同的 token，说明另一个标签页已刷新——直接使用
-  if (currentTokens.accessToken !== failedAccessToken) {
-    logEvent('zy_oauth_401_recovered_from_keychain', {})
-    return true
-  }
-
-  // 相同 token 失败——强制刷新，绕过本地过期检查
-  return checkAndRefreshOAuthTokenIfNeeded(0, true)
-}
-
-/**
- * 异步读取 OAuth token，避免阻塞 keychain 读取。
- * 对文件描述符 token 委托给同步 memoize 版本（不访问 keychain），
- * 仅对存储读取使用异步方式。
- */
-export async function getZyAIOAuthTokensAsync(): Promise<OAuthTokens | null> {
-  if (isBareMode()) {
-    return null
-  }
-
-  // FD token 是同步的，不访问 keychain
-  if (getOAuthTokenFromFileDescriptor()) {
-    return getZyAIOAuthTokens()
-  }
-
-  try {
-    // biome-ignore lint/suspicious/noExplicitAny: SecureStorage 接口不包含 readAsync 方法，运行时实现有扩展方法
-    const secureStorage = getSecureStorage() as any
-    const storageData = await secureStorage.readAsync()
-    const oauthData = storageData?.zyAiOauth
-    if (!oauthData?.accessToken) {
-      return null
+  // 首先检查是否是多 Provider OAuth
+  const activeProvider = getActiveOAuthProvider()
+  if (activeProvider) {
+    // 多 Provider OAuth 401 处理：强制刷新 token
+    clearOAuthCredentialsCache()
+    const credentials = getOAuthCredentials(activeProvider)
+    if (!credentials) {
+      return false
     }
-    return oauthData
-  } catch (error) {
-    logError(error)
-    return null
+    // 检查 keychain 中是否有不同的 token（另一个进程可能已刷新）
+    if (credentials.access !== failedAccessToken) {
+      logEvent('zy_oauth_401_recovered_from_keychain', {})
+      return true
+    }
+    // 相同 token 失败——强制刷新
+    return checkAndRefreshOAuthTokenIfNeeded(0, true)
   }
+
+  // 无活跃 OAuth provider，无法处理 401
+  return false
 }
 
 // 用于去重并发调用的飞行中 Promise
@@ -804,116 +751,33 @@ const _pendingRefreshCheck: Promise<boolean> | null = null
 
 export function checkAndRefreshOAuthTokenIfNeeded(
   _retryCount = 0,
-  _force = false,
+  force = false,
 ): Promise<boolean> {
-  // 跳过 OAuth 检查，直接返回 false 以避免 "Invalid code" 错误
-  return Promise.resolve(false)
+  // 统一使用多 Provider OAuth 刷新
+  return _checkAndRefreshMultiProviderOAuthTokenImpl(force)
 }
 
-async function _checkAndRefreshOAuthTokenIfNeededImpl(
-  retryCount: number,
-  force: boolean,
-): Promise<boolean> {
-  const MAX_RETRIES = 5
-
-  await invalidateOAuthCacheIfDiskChanged()
-
-  // 首先使用缓存值检查 token 是否已过期
-  // 如果 force=true 则跳过此检查（服务器已告知 token 无效）
-  const tokens = getZyAIOAuthTokens()
-  if (!force) {
-    if (!tokens?.refreshToken || !isOAuthTokenExpired(tokens.expiresAt ?? null)) {
-      return false
-    }
-  }
-
-  if (!tokens?.refreshToken) {
-    return false
-  }
-
-  if (!shouldUseZyAIAuth(tokens.scopes)) {
-    return false
-  }
-
-  // 异步重新读取 token 以检查是否仍然过期
-  // 另一个进程可能已经刷新了它们
-  getZyAIOAuthTokens.cache?.clear?.()
-  clearKeychainCache()
-  const freshTokens = await getZyAIOAuthTokensAsync()
-  if (!freshTokens?.refreshToken || !isOAuthTokenExpired(freshTokens.expiresAt ?? null)) {
-    return false
-  }
-
-  // token 仍然过期，尝试获取锁并刷新
-  const ZyDir = getZyConfigHomeDir()
-  await mkdir(ZyDir, { recursive: true })
-
-  let release
+/**
+ * 多 Provider OAuth token 刷新实现。
+ * 检查活跃 provider 的 token 是否过期，过期则刷新。
+ */
+async function _checkAndRefreshMultiProviderOAuthTokenImpl(force: boolean): Promise<boolean> {
   try {
-    logEvent('zy_oauth_token_refresh_lock_acquiring', {})
-    release = await lockfile.lock(ZyDir)
-    logEvent('zy_oauth_token_refresh_lock_acquired', {})
-  } catch (err) {
-    if ((err as { code?: string }).code === 'ELOCKED') {
-      // 另一个进程持有锁，如果未超过最大重试次数则重试
-      if (retryCount < MAX_RETRIES) {
-        logEvent('zy_oauth_token_refresh_lock_retry', {
-          retryCount: retryCount + 1,
-        })
-        // 重试前等待一段时间
-        await sleep(1000 + Math.random() * 1000)
-        return _checkAndRefreshOAuthTokenIfNeededImpl(retryCount + 1, force)
+    if (!force) {
+      // 检查 token 是否已过期
+      if (!isActiveOAuthTokenExpired()) {
+        return false
       }
-      logEvent('zy_oauth_token_refresh_lock_retry_limit_reached', {
-        maxRetries: MAX_RETRIES,
-      })
-      return false
     }
-    logError(err)
-    logEvent('zy_oauth_token_refresh_lock_error', {
-      error: errorMessage(err) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-    return false
-  }
-  try {
-    // 获取锁后再检查一次
-    getZyAIOAuthTokens.cache?.clear?.()
-    clearKeychainCache()
-    const lockedTokens = await getZyAIOAuthTokensAsync()
-    if (!lockedTokens?.refreshToken || !isOAuthTokenExpired(lockedTokens.expiresAt ?? null)) {
-      logEvent('zy_oauth_token_refresh_race_resolved', {})
-      return false
+    // 强制刷新或 token 已过期，执行刷新
+    const refreshed = await refreshActiveOAuthToken()
+    if (refreshed) {
+      clearOAuthCredentialsCache()
     }
-
-    logEvent('zy_oauth_token_refresh_starting', {})
-    const refreshedTokens = await refreshOAuthToken(lockedTokens.refreshToken, {
-      // 对于 Zy.ai 订阅用户，省略 scopes 以使用默认的
-      // ZY_CODE_OAUTH_SCOPES——这允许在刷新时扩展 scope
-      // （例如添加 user:file_upload）而无需重新登录。
-      scopes: shouldUseZyAIAuth(lockedTokens.scopes) ? undefined : lockedTokens.scopes,
-    })
-    saveOAuthTokensIfNeeded(refreshedTokens)
-
-    // 刷新 token 后清除缓存
-    getZyAIOAuthTokens.cache?.clear?.()
-    clearKeychainCache()
-    return true
+    return refreshed
   } catch (error) {
     logError(error)
-
-    getZyAIOAuthTokens.cache?.clear?.()
-    clearKeychainCache()
-    const currentTokens = await getZyAIOAuthTokensAsync()
-    if (currentTokens && !isOAuthTokenExpired(currentTokens.expiresAt ?? null)) {
-      logEvent('zy_oauth_token_refresh_race_recovered', {})
-      return true
-    }
-
     return false
-  } finally {
-    logEvent('zy_oauth_token_refresh_lock_releasing', {})
-    await release()
-    logEvent('zy_oauth_token_refresh_lock_released', {})
   }
 }
 
@@ -926,7 +790,8 @@ async function _checkAndRefreshOAuthTokenIfNeededImpl(
  * 对 /api/oauth/profile、bootstrap 等产生 403 风暴。
  */
 export function hasProfileScope(): boolean {
-  return getZyAIOAuthTokens()?.scopes?.includes(ZY_CODE_PROFILE_SCOPE) ?? false
+  // 多 Provider OAuth 模式下不使用 profile scope
+  return false
 }
 
 export function isDirectApiClient(): boolean {
@@ -993,32 +858,17 @@ export function hasOpusAccess(): boolean {
 }
 
 export function getSubscriptionType(): SubscriptionType | null {
-  // 首先检查模拟订阅类型（仅 ANT 内部测试）
+  // 首先检查模拟订阅类型（仅内部测试）
   if (shouldUseMockSubscription()) {
     return getMockSubscriptionType()
   }
-
-  if (!isAuthEnabled()) {
-    return null
-  }
-  const oauthTokens = getZyAIOAuthTokens()
-  if (!oauthTokens) {
-    return null
-  }
-
-  return (oauthTokens.subscriptionType as SubscriptionType | undefined) ?? null
+  // 多 Provider OAuth 模式下不支持订阅类型
+  return null
 }
 
 export function getRateLimitTier(): string | null {
-  if (!isAuthEnabled()) {
-    return null
-  }
-  const oauthTokens = getZyAIOAuthTokens()
-  if (!oauthTokens) {
-    return null
-  }
-
-  return oauthTokens.rateLimitTier ?? null
+  // 多 Provider OAuth 模式下不支持速率限制层级
+  return null
 }
 
 export function getSubscriptionName(): string {
@@ -1158,32 +1008,20 @@ export function getAccountInformation() {
   }
   const { source: authTokenSource } = getAuthTokenSource()
   const accountInfo: UserAccountInfo = {}
-  if (
-    (authTokenSource as string) === 'ZY_CODE_OAUTH_TOKEN' ||
-    (authTokenSource as string) === 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
-  ) {
-    accountInfo.tokenSource = authTokenSource
-  } else if (isZyAISubscriber()) {
-    accountInfo.subscription = getSubscriptionName()
-  } else {
-    accountInfo.tokenSource = authTokenSource
-  }
+  accountInfo.tokenSource = authTokenSource
+
   const { key: apiKey, source: apiKeySource } = getApiKeyWithSource()
   if (apiKey) {
     accountInfo.apiKeySource = apiKeySource
   }
 
-  // 如果使用外部 API key 或 auth token，我们不知道组织信息
-  if (authTokenSource === 'zy.ai' || apiKeySource === '/login managed key') {
-    // 从 OAuth 账户信息获取组织名称
-    const orgName = getOauthAccountInfo()?.organizationName
-    if (orgName) {
-      accountInfo.organization = orgName
-    }
+  // 从 OAuth 账户信息获取组织名称和邮箱
+  const oauthAccount = getOauthAccountInfo()
+  if (oauthAccount?.organizationName) {
+    accountInfo.organization = oauthAccount.organizationName
   }
-  const email = getOauthAccountInfo()?.emailAddress
-  if ((authTokenSource === 'zy.ai' || apiKeySource === '/login managed key') && email) {
-    accountInfo.email = email
+  if (oauthAccount?.emailAddress) {
+    accountInfo.email = oauthAccount.emailAddress
   }
   return accountInfo
 }
@@ -1195,15 +1033,11 @@ export type OrgValidationResult = { valid: true } | { valid: false; message: str
 
 /**
  * 验证当前 OAuth token 是否属于托管设置中 `forceLoginOrgUUID` 所要求的组织。
- * 返回结果对象而非抛出异常，以便调用方选择如何呈现错误。
  *
- * 安全关闭：如果设置了 `forceLoginOrgUUID` 但无法确定 token 的组织
- * （网络错误、缺少 profile 数据），验证将失败。
+ * 多 Provider OAuth 模式下无法通过 zy.ai profile 端点验证组织，
+ * 仅在有缓存的组织 UUID 时进行比对。
  */
 export async function validateForceLoginOrg(): Promise<OrgValidationResult> {
-  // `zy ssh` 远程：真实认证在本地机器上，由代理注入。
-  // 占位 token 无法针对 profile 端点进行验证。
-  // 本地端在建立会话之前已执行此检查。
   if (process.env.ANTHROPIC_UNIX_SOCKET) {
     return { valid: true }
   }
@@ -1217,65 +1051,49 @@ export async function validateForceLoginOrg(): Promise<OrgValidationResult> {
     return { valid: true }
   }
 
-  // 在访问 profile 端点前确保 access token 是最新的。
-  // 对环境变量 token 无操作（refreshToken 为 null）。
-  await checkAndRefreshOAuthTokenIfNeeded()
-
-  const tokens = getZyAIOAuthTokens()
-  if (!tokens) {
+  // 从缓存的账户信息中获取组织 UUID
+  const orgUuid = getGlobalConfig().oauthAccount?.organizationUuid
+  if (!orgUuid) {
+    // 无法验证——安全关闭
     return { valid: true }
   }
 
-  // 始终从 profile 端点获取权威的 org UUID。
-  // 即使是 keychain 来源的 token 也需要服务端验证：
-  // ~/.zy.json 中缓存的 org UUID 是用户可写的，不可信任。
-  const { source } = getAuthTokenSource()
-  const isEnvVarToken =
-    (source as string) === 'ZY_CODE_OAUTH_TOKEN' ||
-    (source as string) === 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
-
-  const profile = await getOauthProfileFromOauthToken(tokens.accessToken)
-  if (!profile) {
-    // 安全关闭——无法验证组织
-    return {
-      valid: false,
-      message:
-        `Unable to verify organization for the current authentication token.\n` +
-        `This machine requires organization ${requiredOrgUuid} but the profile could not be fetched.\n` +
-        `This may be a network error, or the token may lack the user:profile scope required for\n` +
-        `verification (tokens from 'zy setup-token' do not include this scope).\n` +
-        `Try again, or obtain a full-scope token via 'zy auth login'.`,
-    }
-  }
-
-  const tokenOrgUuid = (profile as unknown as { organization: { uuid: string } }).organization.uuid
-  if (tokenOrgUuid === requiredOrgUuid) {
+  if (orgUuid === requiredOrgUuid) {
     return { valid: true }
-  }
-
-  if (isEnvVarToken) {
-    const envVarName =
-      (source as string) === 'ZY_CODE_OAUTH_TOKEN'
-        ? 'ZY_CODE_OAUTH_TOKEN'
-        : 'ZY_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
-    return {
-      valid: false,
-      message:
-        `The ${envVarName} environment variable provides a token for a\n` +
-        `different organization than required by this machine's managed settings.\n\n` +
-        `Required organization: ${requiredOrgUuid}\n` +
-        `Token organization:   ${tokenOrgUuid}\n\n` +
-        `Remove the environment variable or obtain a token for the correct organization.`,
-    }
   }
 
   return {
     valid: false,
     message:
-      `Your authentication token belongs to organization ${tokenOrgUuid},\n` +
+      `Your authentication token belongs to organization ${orgUuid},\n` +
       `but this machine requires organization ${requiredOrgUuid}.\n\n` +
       `Please log in with the correct organization: zy auth login`,
   }
 }
 
 class GcpCredentialsTimeoutError extends Error {}
+
+/**
+ * 获取当前用户的组织 UUID。
+ * 从全局配置中读取缓存的组织信息，多 Provider OAuth 模式下不再调用 zy.ai profile API。
+ */
+export async function getOrganizationUUID(): Promise<string | null> {
+  const orgUUID = getGlobalConfig().oauthAccount?.organizationUuid
+  return orgUUID ?? null
+}
+
+/**
+ * 填充 OAuth 账户信息（如果尚未缓存）。
+ * 多 Provider OAuth 模式下此函数为空操作，账户信息在登录时由 provider 直接保存。
+ */
+export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
+  return false
+}
+
+// 重新导出多 Provider OAuth 工具函数，供外部模块使用
+export {
+  getActiveOAuthProviderInfo,
+  getActiveOAuthProvider,
+  saveOAuthCredentials,
+  clearAllOAuthCredentials,
+} from '../oauth/oauthStorage.js'

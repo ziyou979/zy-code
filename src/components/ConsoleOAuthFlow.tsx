@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { tSync } from 'src/i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { installOAuthTokens } from '../cli/handlers/auth.js'
+import { tSync } from 'src/i18n/index.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { setClipboard } from '../ink/termio/osc.js'
 import { useTerminalNotification } from '../ink/useTerminalNotification.js'
@@ -12,10 +11,15 @@ import { Box, Link, Text } from '../ink.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { getSSLErrorHint } from '../services/api/errorUtils.js'
 import { sendNotification } from '../services/notifier.js'
-import { OAuthService } from '../services/oauth/index.js'
-import { getOauthAccountInfo, validateForceLoginOrg } from '../utils/auth.js'
+import { getOAuthProviders } from '../services/oauth/providers/index.js'
+import type {
+  OAuthLoginCallbacks,
+  OAuthProviderInterface,
+  OAuthSelectOption,
+} from '../services/oauth/providers/types.js'
+import { getActiveOAuthProviderInfo, saveOAuthCredentials } from '../services/oauth/oauthStorage.js'
+import { openBrowser } from '../utils/browser.js'
 import { logError } from '../utils/log.js'
-import { getInitialSettings } from '../utils/settings/settings.js'
 import { Select } from './CustomSelect/select.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 import { Spinner } from './Spinner.js'
@@ -24,95 +28,43 @@ import TextInput from './TextInput.js'
 type Props = {
   onDone(): void
   startingMessage?: string
-  mode?: 'login' | 'setup-token'
-  forceLoginMethod?: 'zyai' | 'console'
 }
+
+// ─── 登录流程状态 ───────────────────────────────────────────────────────────
+
 type OAuthStatus =
-  | {
-      state: 'idle'
-    } // Initial state, waiting to select login method
-  | {
-      state: 'platform_setup'
-    } // Show platform setup info (Bedrock/Vertex/Foundry)
-  | {
-      state: 'ready_to_start'
-    } // Flow started, waiting for browser to open
-  | {
-      state: 'waiting_for_login'
-      url: string
-    } // Browser opened, waiting for user to login
-  | {
-      state: 'creating_api_key'
-    } // Got access token, creating API key
-  | {
-      state: 'about_to_retry'
-      nextState: OAuthStatus
-    }
-  | {
-      state: 'success'
-      token?: string
-    }
-  | {
-      state: 'error'
-      message: string
-      toRetry?: OAuthStatus
-    }
+  | { state: 'idle' }
+  | { state: 'platform_setup' }
+  | { state: 'waiting_for_login'; url: string }
+  | { state: 'device_code_waiting'; userCode: string; verificationUri: string }
+  | { state: 'select_login_method'; options: OAuthSelectOption[]; message: string }
+  | { state: 'prompt_input'; message: string; placeholder?: string }
+  | { state: 'progress'; message: string }
+  | { state: 'about_to_retry'; nextState: OAuthStatus }
+  | { state: 'success' }
+  | { state: 'error'; message: string; toRetry?: OAuthStatus }
+
 const PASTE_HERE_MSG = 'Paste code here if prompted > '
-export function ConsoleOAuthFlow({
-  onDone,
-  startingMessage,
-  mode = 'login',
-  forceLoginMethod: forceLoginMethodProp,
-}: Props): React.ReactNode {
-  const settings = getInitialSettings() || {}
-  const forceLoginMethod = forceLoginMethodProp ?? settings.forceLoginMethod
-  const orgUUID = settings.forceLoginOrgUUID
-  const forcedMethodMessage =
-    forceLoginMethod === 'zyai'
-      ? tSync('oauth.forceLoginMethod.zyai')
-      : forceLoginMethod === 'console'
-        ? tSync('oauth.forceLoginMethod.console')
-        : null
+
+export function ConsoleOAuthFlow({ onDone, startingMessage }: Props): React.ReactNode {
   const terminal = useTerminalNotification()
-  const [oauthStatus, setOAuthStatus] = useState<OAuthStatus>(() => {
-    if (mode === 'setup-token') {
-      return {
-        state: 'ready_to_start',
-      }
-    }
-    if (forceLoginMethod === 'zyai' || forceLoginMethod === 'console') {
-      return {
-        state: 'ready_to_start',
-      }
-    }
-    return {
-      state: 'idle',
-    }
-  })
+  const [oauthStatus, setOAuthStatus] = useState<OAuthStatus>({ state: 'idle' })
   const [pastedCode, setPastedCode] = useState('')
   const [cursorOffset, setCursorOffset] = useState(0)
-  const [oauthService] = useState(() => new OAuthService())
-  const [loginWithZyAi, setLoginWithZyAi] = useState(() => {
-    // Use Zy AI auth for setup-token mode to support user:inference scope
-    return mode === 'setup-token' || forceLoginMethod === 'zyai'
-  })
-  // After a few seconds we suggest the user to copy/paste url if the
-  // browser did not open automatically. In this flow we expect the user to
-  // copy the code from the browser and paste it in the terminal
   const [showPastePrompt, setShowPastePrompt] = useState(false)
   const [urlCopied, setUrlCopied] = useState(false)
   const textInputColumns = useTerminalSize().columns - PASTE_HERE_MSG.length - 1
 
-  // Log forced login method on mount
-  useEffect(() => {
-    if (forceLoginMethod === 'zyai') {
-      logEvent('zy_oauth_Zyai_forced', {})
-    } else if (forceLoginMethod === 'console') {
-      logEvent('zy_oauth_console_forced', {})
-    }
-  }, [forceLoginMethod])
+  // 多 Provider 回调的 Promise resolver refs
+  const promptResolverRef = useRef<((value: string) => void) | null>(null)
+  const manualCodeResolverRef = useRef<((value: string) => void) | null>(null)
+  const selectResolverRef = useRef<((value: string | undefined) => void) | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
-  // Retry logic
+  // 可用的 OAuth Provider 列表
+  const oauthProviders = getOAuthProviders()
+
+  // 重试逻辑
   useEffect(() => {
     if (oauthStatus.state === 'about_to_retry') {
       const timer = setTimeout(setOAuthStatus, 1000, oauthStatus.nextState)
@@ -120,28 +72,23 @@ export function ConsoleOAuthFlow({
     }
   }, [oauthStatus])
 
-  // Handle Enter to continue on success state
+  // 成功时按 Enter 继续
   useKeybinding(
     'confirm:yes',
     () => {
-      logEvent('zy_oauth_success', {
-        loginWithZyAi,
-      })
       onDone()
     },
     {
       context: 'Confirmation',
-      isActive: oauthStatus.state === 'success' && mode !== 'setup-token',
+      isActive: oauthStatus.state === 'success',
     },
   )
 
-  // Handle Enter to continue from platform setup
+  // 平台设置页按 Enter 返回
   useKeybinding(
     'confirm:yes',
     () => {
-      setOAuthStatus({
-        state: 'idle',
-      })
+      setOAuthStatus({ state: 'idle' })
     },
     {
       context: 'Confirmation',
@@ -149,16 +96,13 @@ export function ConsoleOAuthFlow({
     },
   )
 
-  // Handle Enter to retry on error state
+  // 错误时按 Enter 重试
   useKeybinding(
     'confirm:yes',
     () => {
       if (oauthStatus.state === 'error' && oauthStatus.toRetry) {
         setPastedCode('')
-        setOAuthStatus({
-          state: 'about_to_retry',
-          nextState: oauthStatus.toRetry,
-        })
+        setOAuthStatus({ state: 'about_to_retry', nextState: oauthStatus.toRetry })
       }
     },
     {
@@ -166,6 +110,8 @@ export function ConsoleOAuthFlow({
       isActive: oauthStatus.state === 'error' && !!oauthStatus.toRetry,
     },
   )
+
+  // URL 复制快捷键
   useEffect(() => {
     if (
       pastedCode === 'c' &&
@@ -183,174 +129,155 @@ export function ConsoleOAuthFlow({
       setPastedCode('')
     }
   }, [pastedCode, oauthStatus, showPastePrompt, urlCopied])
+
+  // ─── 手动代码提交 ──────────────────────────────────────────────────────
   async function handleSubmitCode(value: string, url: string) {
     try {
-      // Expecting format "authorizationCode#state" from the authorization callback URL
-      const [authorizationCode, state] = value.split('#')
-      if (!authorizationCode || !state) {
-        setOAuthStatus({
-          state: 'error',
-          message: tSync('oauth.invalidCode'),
-          toRetry: {
-            state: 'waiting_for_login',
-            url,
-          },
-        })
+      logEvent('zy_oauth_manual_entry', {})
+
+      // 通过 resolver 返回手动输入
+      if (manualCodeResolverRef.current) {
+        manualCodeResolverRef.current(value)
+        manualCodeResolverRef.current = null
         return
       }
 
-      // Track which path the user is taking (manual code entry)
-      logEvent('zy_oauth_manual_entry', {})
-      oauthService.handleManualAuthCodeInput({
-        authorizationCode,
-        state,
+      setOAuthStatus({
+        state: 'error',
+        message: tSync('oauth.invalidCode'),
+        toRetry: { state: 'waiting_for_login', url },
       })
     } catch (err: unknown) {
       logError(err)
       setOAuthStatus({
         state: 'error',
         message: (err as Error).message,
-        toRetry: {
-          state: 'waiting_for_login',
-          url,
-        },
+        toRetry: { state: 'waiting_for_login', url },
       })
     }
   }
-  const startOAuth = useCallback(async () => {
-    try {
-      logEvent('zy_oauth_flow_start', {
-        loginWithZyAi,
-      })
-      const result = await oauthService
-        .startOAuthFlow(
-          async (url_0) => {
-            setOAuthStatus({
-              state: 'waiting_for_login',
-              url: url_0,
-            })
-            setTimeout(setShowPastePrompt, 3000, true)
-          },
-          {
-            loginWithZyAi,
-            inferenceOnly: mode === 'setup-token',
-            expiresIn: mode === 'setup-token' ? 365 * 24 * 60 * 60 : undefined,
-            // 1 year for setup-token
-            orgUUID,
-          },
-        )
-        .catch((err_1) => {
-          const isTokenExchangeError = err_1.message.includes('Token exchange failed')
-          // Enterprise TLS proxies (Zscaler et al.) intercept the token
-          // exchange POST and cause cryptic SSL errors. Surface an
-          // actionable hint so the user isn't stuck in a login loop.
-          const sslHint_0 = getSSLErrorHint(err_1)
+
+  // ─── 多 Provider OAuth 登录流程 ──────────────────────────────────────────
+  const startMultiProviderLogin = useCallback(
+    async (provider: OAuthProviderInterface) => {
+      abortControllerRef.current = new AbortController()
+
+      const callbacks: OAuthLoginCallbacks = {
+        onAuth: (info) => {
+          setOAuthStatus({ state: 'waiting_for_login', url: info.url })
+          void openBrowser(info.url)
+          setTimeout(setShowPastePrompt, 3000, true)
+        },
+        onDeviceCode: (info) => {
           setOAuthStatus({
-            state: 'error',
-            message:
-              sslHint_0 ??
-              (isTokenExchangeError
-                ? 'Failed to exchange authorization code for access token. Please try again.'
-                : err_1.message),
-            toRetry:
-              mode === 'setup-token'
-                ? {
-                    state: 'ready_to_start',
-                  }
-                : {
-                    state: 'idle',
-                  },
+            state: 'device_code_waiting',
+            userCode: info.userCode,
+            verificationUri: info.verificationUri,
           })
-          logEvent('zy_oauth_token_exchange_error', {
-            error: err_1.message,
-            ssl_error: sslHint_0 !== null,
+          void openBrowser(info.verificationUri)
+        },
+        onPrompt: (prompt) => {
+          return new Promise<string>((resolve) => {
+            promptResolverRef.current = resolve
+            setOAuthStatus({
+              state: 'prompt_input',
+              message: prompt.message,
+              placeholder: prompt.placeholder,
+            })
           })
-          throw err_1
+        },
+        onProgress: (message) => {
+          setOAuthStatus({ state: 'progress', message })
+        },
+        onManualCodeInput: () => {
+          return new Promise<string>((resolve) => {
+            manualCodeResolverRef.current = resolve
+          })
+        },
+        onSelect: (prompt) => {
+          return new Promise<string | undefined>((resolve) => {
+            selectResolverRef.current = resolve
+            setOAuthStatus({
+              state: 'select_login_method',
+              options: prompt.options,
+              message: prompt.message,
+            })
+          })
+        },
+        signal: abortControllerRef.current.signal,
+      }
+
+      try {
+        logEvent('zy_oauth_multi_provider_login_start', {
+          providerId: provider.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
-      if (mode === 'setup-token') {
-        // For setup-token mode, return the OAuth access token directly (it can be used as an API key)
-        // Don't save to keychain - the token is displayed for manual use with ZY_CODE_OAUTH_TOKEN
-        setOAuthStatus({
-          state: 'success',
-          token: result.accessToken,
-        })
-      } else {
-        await installOAuthTokens(result)
-        const orgResult = await validateForceLoginOrg()
-        if (!orgResult.valid) {
-          throw new Error(!orgResult.valid ? orgResult.message : '')
+
+        const credentials = await provider.login(callbacks)
+
+        // 保存凭证
+        const saveResult = saveOAuthCredentials(provider.id, credentials)
+        if (!saveResult.success) {
+          logEvent('zy_oauth_multi_provider_save_failed', {
+            providerId: provider.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          })
         }
-        setOAuthStatus({
-          state: 'success',
+
+        logEvent('zy_oauth_multi_provider_login_success', {
+          providerId: provider.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
+
+        setOAuthStatus({ state: 'success' })
         void sendNotification(
-          {
-            message: 'ZY Code login successful',
-            notificationType: 'auth_success',
-          },
+          { message: 'ZY Code login successful', notificationType: 'auth_success' },
           terminal,
         )
+      } catch (err) {
+        const errorMessage = (err as Error).message
+        const sslHint = getSSLErrorHint(err)
+        setOAuthStatus({
+          state: 'error',
+          message: sslHint ?? errorMessage,
+          toRetry: { state: 'idle' },
+        })
+        logEvent('zy_oauth_multi_provider_login_error', {
+          providerId: provider.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          error: errorMessage as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          ssl_error: sslHint !== null,
+        })
+      } finally {
+        promptResolverRef.current = null
+        manualCodeResolverRef.current = null
+        selectResolverRef.current = null
+        abortControllerRef.current = null
+        setShowPastePrompt(false)
       }
-    } catch (err_0) {
-      const errorMessage = (err_0 as Error).message
-      const sslHint = getSSLErrorHint(err_0)
-      setOAuthStatus({
-        state: 'error',
-        message: sslHint ?? errorMessage,
-        toRetry: {
-          state: mode === 'setup-token' ? 'ready_to_start' : 'idle',
-        },
-      })
-      logEvent('zy_oauth_error', {
-        error: errorMessage as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        ssl_error: sslHint !== null,
-      })
-    }
-  }, [oauthService, loginWithZyAi, mode, orgUUID, terminal])
-  const pendingOAuthStartRef = useRef(false)
-  useEffect(() => {
-    if (oauthStatus.state === 'ready_to_start' && !pendingOAuthStartRef.current) {
-      pendingOAuthStartRef.current = true
-      process.nextTick(
-        (
-          startOAuth_0: () => Promise<void>,
-          pendingOAuthStartRef_0: React.MutableRefObject<boolean>,
-        ) => {
-          void startOAuth_0()
-          pendingOAuthStartRef_0.current = false
-        },
-        startOAuth,
-        pendingOAuthStartRef,
-      )
-    }
-  }, [oauthStatus.state, startOAuth])
+    },
+    [terminal],
+  )
 
-  // Auto-exit for setup-token mode
-  useEffect(() => {
-    if (mode === 'setup-token' && oauthStatus.state === 'success') {
-      // Delay to ensure static content is fully rendered before exiting
-      const timer_0 = setTimeout(
-        (loginWithZyAi_0, onDone_0) => {
-          logEvent('zy_oauth_success', {
-            loginWithZyAi: loginWithZyAi_0,
-          })
-          // Don't clear terminal so the token remains visible
-          onDone_0()
-        },
-        500,
-        loginWithZyAi,
-        onDone,
-      )
-      return () => clearTimeout(timer_0)
-    }
-  }, [mode, oauthStatus, loginWithZyAi, onDone])
-
-  // Cleanup OAuth service when component unmounts
+  // 清理
   useEffect(() => {
     return () => {
-      oauthService.cleanup()
+      abortControllerRef.current?.abort()
     }
-  }, [oauthService])
+  }, [])
+
+  // ─── prompt_input 状态的文本提交 ──────────────────────────────────────
+  function handlePromptSubmit(value: string) {
+    if (promptResolverRef.current) {
+      promptResolverRef.current(value)
+      promptResolverRef.current = null
+    }
+  }
+
+  // ─── select_login_method 状态的选择处理 ──────────────────────────────
+  function handleSelectMethod(value: string) {
+    if (selectResolverRef.current) {
+      selectResolverRef.current(value)
+      selectResolverRef.current = null
+    }
+  }
+
   return (
     <Box flexDirection="column" gap={1}>
       {oauthStatus.state === 'waiting_for_login' && showPastePrompt && (
@@ -370,23 +297,10 @@ export function ConsoleOAuthFlow({
           </Link>
         </Box>
       )}
-      {mode === 'setup-token' && oauthStatus.state === 'success' && oauthStatus.token && (
-        <Box key="tokenOutput" flexDirection="column" gap={1} paddingTop={1}>
-          <Text color="success">{tSync('oauth.tokenCreatedSuccess')}</Text>
-          <Box flexDirection="column" gap={1}>
-            <Text>{tSync('oauth.yourTokenLabel')}</Text>
-            <Text color="warning">{oauthStatus.token}</Text>
-            <Text dimColor>{tSync('oauth.storeTokenSecurely')}</Text>
-            <Text dimColor>{tSync('oauth.useTokenBySetting')}</Text>
-          </Box>
-        </Box>
-      )}
       <Box paddingLeft={1} flexDirection="column" gap={1}>
         <OAuthStatusMessage
           oauthStatus={oauthStatus}
-          mode={mode}
           startingMessage={startingMessage}
-          forcedMethodMessage={forcedMethodMessage}
           showPastePrompt={showPastePrompt}
           pastedCode={pastedCode}
           setPastedCode={setPastedCode}
@@ -395,17 +309,21 @@ export function ConsoleOAuthFlow({
           textInputColumns={textInputColumns}
           handleSubmitCode={handleSubmitCode}
           setOAuthStatus={setOAuthStatus}
-          setLoginWithZyAi={setLoginWithZyAi}
+          oauthProviders={oauthProviders}
+          onSelectProvider={startMultiProviderLogin}
+          onPromptSubmit={handlePromptSubmit}
+          onSelectMethod={handleSelectMethod}
         />
       </Box>
     </Box>
   )
 }
+
+// ─── 状态渲染组件 ─────────────────────────────────────────────────────────
+
 type OAuthStatusMessageProps = {
   oauthStatus: OAuthStatus
-  mode: 'login' | 'setup-token'
   startingMessage: string | undefined
-  forcedMethodMessage: string | null
   showPastePrompt: boolean
   pastedCode: string
   setPastedCode: (value: string) => void
@@ -414,13 +332,15 @@ type OAuthStatusMessageProps = {
   textInputColumns: number
   handleSubmitCode: (value: string, url: string) => void
   setOAuthStatus: (status: OAuthStatus) => void
-  setLoginWithZyAi: (value: boolean) => void
+  oauthProviders: OAuthProviderInterface[]
+  onSelectProvider: (provider: OAuthProviderInterface) => void
+  onPromptSubmit: (value: string) => void
+  onSelectMethod: (value: string) => void
 }
+
 function OAuthStatusMessage({
   oauthStatus,
-  mode,
   startingMessage,
-  forcedMethodMessage,
   showPastePrompt,
   pastedCode,
   setPastedCode,
@@ -429,36 +349,38 @@ function OAuthStatusMessage({
   textInputColumns,
   handleSubmitCode,
   setOAuthStatus,
-  setLoginWithZyAi,
+  oauthProviders,
+  onSelectProvider,
+  onPromptSubmit,
+  onSelectMethod,
 }: OAuthStatusMessageProps) {
   switch (oauthStatus.state) {
     case 'idle': {
-      const message = startingMessage ? startingMessage : tSync('oauth.introMessage')
+      const message = startingMessage ?? tSync('oauth.selectProvider')
       const heading = <Text bold={true}>{message}</Text>
-      const subtitle = <Text>{tSync('oauth.selectLoginMethod')}</Text>
-      const zyaiOption = {
+
+      const providerOptions = oauthProviders.map((provider) => ({
         label: (
           <Text>
-            {tSync('oauth.zyaiOptionLabel')}{' '}
-            <Text dimColor={true}>{tSync('oauth.zyaiOptionDesc')}</Text>
+            {provider.name}
             {'\n'}
           </Text>
         ),
-        value: 'zyai',
-      }
-      const consoleOption = {
-        label: (
-          <Text>
-            {tSync('oauth.consoleOptionLabel')}{' '}
-            <Text dimColor={true}>{tSync('oauth.consoleOptionDesc')}</Text>
-            {'\n'}
-          </Text>
-        ),
-        value: 'console',
-      }
+        value: `oauth:${provider.id}`,
+      }))
+
       const options = [
-        zyaiOption,
-        consoleOption,
+        ...providerOptions,
+        {
+          label: (
+            <Text>
+              {tSync('oauth.providerApikey')}{' '}
+              <Text dimColor={true}>{tSync('oauth.providerApikeyDesc')}</Text>
+              {'\n'}
+            </Text>
+          ),
+          value: 'apikey',
+        },
         {
           label: (
             <Text>
@@ -470,37 +392,34 @@ function OAuthStatusMessage({
           value: 'platform',
         },
       ]
-      const selectBox = (
-        <Box>
-          <Select
-            options={options}
-            onChange={(value_0: string) => {
-              if (value_0 === 'platform') {
-                logEvent('zy_oauth_platform_selected', {})
-                setOAuthStatus({
-                  state: 'platform_setup',
-                })
-              } else {
-                setOAuthStatus({
-                  state: 'ready_to_start',
-                })
-                if (value_0 === 'zyai') {
-                  logEvent('zy_oauth_Zyai_selected', {})
-                  setLoginWithZyAi(true)
-                } else {
-                  logEvent('zy_oauth_console_selected', {})
-                  setLoginWithZyAi(false)
-                }
-              }
-            }}
-          />
-        </Box>
-      )
+
       return (
         <Box flexDirection="column" gap={1} marginTop={1}>
           {heading}
-          {subtitle}
-          {selectBox}
+          <Box>
+            <Select
+              options={options}
+              onChange={(value: string) => {
+                if (value === 'platform') {
+                  logEvent('zy_oauth_platform_selected', {})
+                  setOAuthStatus({ state: 'platform_setup' })
+                } else if (value === 'apikey') {
+                  logEvent('zy_oauth_apikey_selected', {})
+                  setOAuthStatus({ state: 'platform_setup' })
+                } else if (value.startsWith('oauth:')) {
+                  const providerId = value.slice(6)
+                  const provider = oauthProviders.find((p) => p.id === providerId)
+                  if (provider) {
+                    logEvent('zy_oauth_provider_selected', {
+                      providerId:
+                        provider.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                    })
+                    onSelectProvider(provider)
+                  }
+                }
+              }}
+            />
+          </Box>
         </Box>
       )
     }
@@ -509,42 +428,33 @@ function OAuthStatusMessage({
       const description1 = <Text>{tSync('oauth.thirdPartyPlatformsDesc')}</Text>
       const description2 = <Text>{tSync('oauth.thirdPartyPlatformsEnterpriseHint')}</Text>
       const docHeading = <Text bold={true}>{tSync('oauth.documentation')}</Text>
-      const bedrockLink = (
-        <Text>
-          · {tSync('oauth.bedrockLabel')}:{' '}
-          <Link url="https://code.zy.com/docs/en/amazon-bedrock">
-            https://code.zy.com/docs/en/amazon-bedrock
-          </Link>
-        </Text>
-      )
-      const foundryLink = (
-        <Text>
-          · {tSync('oauth.foundryLabel')}:{' '}
-          <Link url="https://code.zy.com/docs/en/microsoft-foundry">
-            https://code.zy.com/docs/en/microsoft-foundry
-          </Link>
-        </Text>
-      )
-      const linksBox = (
-        <Box flexDirection="column" marginTop={1}>
-          {docHeading}
-          {bedrockLink}
-          {foundryLink}
-          <Text>
-            · {tSync('oauth.vertexLabel')}:{' '}
-            <Link url="https://code.zy.com/docs/en/google-vertex-ai">
-              https://code.zy.com/docs/en/google-vertex-ai
-            </Link>
-          </Text>
-        </Box>
-      )
       return (
         <Box flexDirection="column" gap={1} marginTop={1}>
           {heading}
           <Box flexDirection="column" gap={1}>
             {description1}
             {description2}
-            {linksBox}
+            <Box flexDirection="column" marginTop={1}>
+              {docHeading}
+              <Text>
+                · {tSync('oauth.bedrockLabel')}:{' '}
+                <Link url="https://code.zy.com/docs/en/amazon-bedrock">
+                  https://code.zy.com/docs/en/amazon-bedrock
+                </Link>
+              </Text>
+              <Text>
+                · {tSync('oauth.foundryLabel')}:{' '}
+                <Link url="https://code.zy.com/docs/en/microsoft-foundry">
+                  https://code.zy.com/docs/en/microsoft-foundry
+                </Link>
+              </Text>
+              <Text>
+                · {tSync('oauth.vertexLabel')}:{' '}
+                <Link url="https://code.zy.com/docs/en/google-vertex-ai">
+                  https://code.zy.com/docs/en/google-vertex-ai
+                </Link>
+              </Text>
+            </Box>
             <Box marginTop={1}>
               <Text dimColor={true}>{tSync('oauth.pressEnterToGoBack')}</Text>
             </Box>
@@ -553,11 +463,6 @@ function OAuthStatusMessage({
       )
     }
     case 'waiting_for_login': {
-      const forcedMsgBox = forcedMethodMessage && (
-        <Box>
-          <Text dimColor={true}>{forcedMethodMessage}</Text>
-        </Box>
-      )
       const openingBrowserBox = !showPastePrompt && (
         <Box>
           <Spinner />
@@ -580,21 +485,80 @@ function OAuthStatusMessage({
       )
       return (
         <Box flexDirection="column" gap={1}>
-          {forcedMsgBox}
           {openingBrowserBox}
           {pasteInputBox}
         </Box>
       )
     }
-    case 'creating_api_key':
+    case 'device_code_waiting': {
       return (
         <Box flexDirection="column" gap={1}>
           <Box>
             <Spinner />
-            <Text>{tSync('oauth.creatingApiKey')}</Text>
+            <Text>{tSync('oauth.deviceCodeWaiting')}</Text>
+          </Box>
+          <Box flexDirection="column" gap={1} paddingLeft={1}>
+            <Text bold={true}>
+              {tSync('oauth.deviceCodeUserCode', { code: oauthStatus.userCode })}
+            </Text>
+            <Text dimColor>
+              {tSync('oauth.deviceCodeVisit', { url: oauthStatus.verificationUri })}
+            </Text>
           </Box>
         </Box>
       )
+    }
+    case 'select_login_method': {
+      const options = oauthStatus.options.map((opt) => ({
+        label: (
+          <Text>
+            {opt.label}
+            {'\n'}
+          </Text>
+        ),
+        value: opt.id,
+      }))
+      return (
+        <Box flexDirection="column" gap={1} marginTop={1}>
+          <Text bold={true}>{oauthStatus.message}</Text>
+          <Box>
+            <Select
+              options={options}
+              onChange={(value: string) => {
+                onSelectMethod(value)
+              }}
+            />
+          </Box>
+        </Box>
+      )
+    }
+    case 'prompt_input': {
+      return (
+        <Box flexDirection="column" gap={1} marginTop={1}>
+          <Text bold={true}>{oauthStatus.message}</Text>
+          <Box>
+            <TextInput
+              value={pastedCode}
+              onChange={setPastedCode}
+              onSubmit={onPromptSubmit}
+              cursorOffset={cursorOffset}
+              onChangeCursorOffset={setCursorOffset}
+              columns={textInputColumns}
+            />
+          </Box>
+        </Box>
+      )
+    }
+    case 'progress': {
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Box>
+            <Spinner />
+            <Text>{oauthStatus.message}</Text>
+          </Box>
+        </Box>
+      )
+    }
     case 'about_to_retry':
       return (
         <Box flexDirection="column" gap={1}>
@@ -602,18 +566,17 @@ function OAuthStatusMessage({
         </Box>
       )
     case 'success': {
-      const loginInfo =
-        mode === 'setup-token' && oauthStatus.token ? null : (
-          <>
-            {getOauthAccountInfo()?.emailAddress ? (
-              <Text dimColor={true}>
-                {tSync('oauth.loggedInAs')} <Text>{getOauthAccountInfo()?.emailAddress}</Text>
-              </Text>
-            ) : null}
-            <Text color="success">{tSync('oauth.loginSuccessful')}</Text>
-          </>
-        )
-      return <Box flexDirection="column">{loginInfo}</Box>
+      const providerInfo = getActiveOAuthProviderInfo()
+      return (
+        <Box flexDirection="column">
+          {providerInfo && (
+            <Text dimColor={true}>
+              {tSync('oauth.loggedInAs')} <Text>{providerInfo.name}</Text>
+            </Text>
+          )}
+          <Text color="success">{tSync('oauth.loginSuccessful')}</Text>
+        </Box>
+      )
     }
     case 'error': {
       const errorMsg = (

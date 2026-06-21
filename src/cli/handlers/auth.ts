@@ -1,216 +1,101 @@
 /* eslint-disable custom-rules/no-process-exit -- CLI 子命令处理器有意退出 */
 
-import { clearAuthRelatedCaches, performLogout } from '../../commands/logout/logout.js'
+import { performLogout } from '../../commands/logout/logout.js'
 import { tSync } from '../../i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
 import { getSSLErrorHint } from '../../services/api/errorUtils.js'
-import { fetchAndStoreZyCodeFirstTokenDate } from '../../services/api/firstTokenDate.js'
 import { getAPIProvider } from '../../services/model/providers.js'
+import { getOAuthProvider, getOAuthProviders } from '../../services/oauth/providers/index.js'
 import {
-  createAndStoreApiKey,
-  fetchAndStoreUserRoles,
-  refreshOAuthToken,
-  shouldUseZyAIAuth,
-  storeOAuthAccountInfo,
-} from '../../services/oauth/client.js'
-import { getOauthProfileFromOauthToken } from '../../services/oauth/getOauthProfile.js'
-import { OAuthService } from '../../services/oauth/index.js'
-import type { OAuthTokens } from '../../services/oauth/types.js'
-import {
-  clearOAuthTokenCache,
-  getApiKeyWithSource,
-  getAuthTokenSource,
-  getOauthAccountInfo,
-  saveOAuthTokensIfNeeded,
-  validateForceLoginOrg,
-} from '../../utils/auth.js'
-import { saveGlobalConfig } from '../../utils/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+  saveOAuthCredentials,
+  clearOAuthCredentialsCache,
+  getActiveOAuthProvider,
+  getActiveOAuthProviderInfo,
+} from '../../services/oauth/oauthStorage.js'
+import type { OAuthCredentials, OAuthLoginCallbacks } from '../../services/oauth/providers/types.js'
+import { openBrowser } from '../../utils/browser.js'
+import { getApiKeyWithSource, getAuthTokenSource } from '../../utils/auth.js'
 import { isRunningOnHomespace } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { buildAccountProperties, buildAPIProviderProperties } from '../../utils/status.js'
 
 /**
- * 获取令牌后的共享逻辑。保存令牌、获取用户资料/角色，
- * 并设置本地认证状态。
+ * 使用多 Provider OAuth 流程登录（CLI 版本）。
+ * 通过控制台 I/O 实现 OAuthLoginCallbacks。
  */
-export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
-  // 在保存新凭据前清除旧状态
-  await performLogout({ clearOnboarding: false })
-
-  // 如果有预获取的用户资料则复用，否则重新获取
-  const profile =
-    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-    (tokens as any).profile ?? (await getOauthProfileFromOauthToken(tokens.accessToken))
-  if (profile) {
-    storeOAuthAccountInfo({
-      accountUuid: profile.account.uuid,
-      emailAddress: profile.account.email,
-      organizationUuid: profile.organization.uuid,
-      displayName: profile.account.display_name || undefined,
-      hasExtraUsageEnabled: profile.organization.has_extra_usage_enabled ?? undefined,
-      billingType: profile.organization.billing_type ?? undefined,
-      subscriptionCreatedAt: profile.organization.subscription_created_at ?? undefined,
-      accountCreatedAt: profile.account.created_at,
-    })
-    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-  } else if ((tokens as any).tokenAccount) {
-    // 当用户资料端点失败时，回退使用令牌交换的账户数据
-    storeOAuthAccountInfo({
-      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-      accountUuid: (tokens as any).tokenAccount.uuid,
-      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-      emailAddress: (tokens as any).tokenAccount.emailAddress,
-      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-      organizationUuid: (tokens as any).tokenAccount.organizationUuid,
-    })
-  }
-
-  const storageResult = saveOAuthTokensIfNeeded(tokens)
-  clearOAuthTokenCache()
-
-  if (storageResult.warning) {
-    logEvent('zy_oauth_storage_warning', {
-      warning: storageResult.warning as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-  }
-
-  // 角色和首次令牌日期对于有限范围的令牌可能会失败（例如仅推理用途的 setup-token）。
-  // 它们不是核心认证所必需的。
-  await fetchAndStoreUserRoles(tokens.accessToken).catch((err) =>
-    logForDebugging(String(err), { level: 'error' }),
-  )
-
-  // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-  if (shouldUseZyAIAuth((tokens as any).scopes)) {
-    await fetchAndStoreZyCodeFirstTokenDate().catch((err) =>
-      logForDebugging(String(err), { level: 'error' }),
-    )
-  } else {
-    // API 密钥创建对控制台用户至关重要——允许抛出异常。
-    const apiKey = await createAndStoreApiKey(tokens.accessToken)
-    if (!apiKey) {
-      throw new Error(tSync('auth.installOAuth.apiKeyCreationFailed'))
-    }
-  }
-
-  await clearAuthRelatedCaches()
-}
-
-export async function authLogin({
-  email,
-  sso,
-  console: useConsole,
-  zyai,
-}: {
-  email?: string
-  sso?: boolean
-  console?: boolean
-  zyai?: boolean
-}): Promise<void> {
-  if (useConsole && zyai) {
-    process.stderr.write(`${tSync('auth.login.consoleZyaiMutualExclusive')}\n`)
+async function authLoginWithProvider(providerId: string): Promise<void> {
+  const provider = getOAuthProvider(providerId)
+  if (!provider) {
+    const available = getOAuthProviders()
+      .map((p) => p.id)
+      .join(', ')
+    process.stderr.write(`Unknown provider: ${providerId}\nAvailable providers: ${available}\n`)
     process.exit(1)
   }
 
-  const settings = getInitialSettings()
-  // forceLoginMethod 是硬性约束（企业设置）——与 ConsoleOAuthFlow 行为一致。
-  // 若未设置，--console 选择控制台；--zyai（或无标志）选择 zy.ai。
-  const loginWithZyAi = settings.forceLoginMethod
-    ? settings.forceLoginMethod === 'zyai'
-    : !useConsole
-  const orgUUID = settings.forceLoginOrgUUID
-
-  // 快速路径：如果通过环境变量提供了刷新令牌，则跳过浏览器
-  // OAuth 流程，直接用刷新令牌换取访问令牌。
-  const envRefreshToken = process.env.ZY_CODE_OAUTH_REFRESH_TOKEN
-  if (envRefreshToken) {
-    const envScopes = process.env.ZY_CODE_OAUTH_SCOPES
-    if (!envScopes) {
-      process.stderr.write(`${tSync('auth.login.scopesRequired')}\n`)
-      process.exit(1)
-    }
-
-    const scopes = envScopes.split(/\s+/).filter(Boolean)
-
-    try {
-      logEvent('zy_login_from_refresh_token', {})
-
-      const tokens = await refreshOAuthToken(envRefreshToken, { scopes })
-      await installOAuthTokens(tokens)
-
-      const orgResult = await validateForceLoginOrg()
-      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-      if (!(orgResult as any).valid) {
-        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-        process.stderr.write(`${(orgResult as any).message}\n`)
-        process.exit(1)
-      }
-
-      // 标记引导完成——交互式路径通过 Onboarding 组件处理此步骤，
-      // 但环境变量路径跳过了该组件。
-      saveGlobalConfig((current) => {
-        if (current.hasCompletedOnboarding) {
-          return current
-        }
-        return { ...current, hasCompletedOnboarding: true }
-      })
-
-      logEvent('zy_oauth_success', {
-        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-        loginWithZyAi: shouldUseZyAIAuth((tokens as any).scopes),
-      })
-      process.stdout.write(`${tSync('auth.login.successful')}\n`)
-      process.exit(0)
-    } catch (err) {
-      logError(err)
-      const sslHint = getSSLErrorHint(err)
-      process.stderr.write(
-        tSync('auth.login.failed', { error: errorMessage(err) }) +
-          '\n' +
-          (sslHint ? `${sslHint}\n` : ''),
-      )
-      process.exit(1)
-    }
-  }
-
-  const resolvedLoginMethod = sso ? 'sso' : undefined
-
-  const oauthService = new OAuthService()
+  const readline = await import('node:readline/promises')
+  const { stdin, stdout } = process
+  const rl = readline.createInterface({ input: stdin, output: stdout })
 
   try {
-    logEvent('zy_oauth_flow_start', { loginWithZyAi })
+    logEvent('zy_oauth_provider_login_start', {
+      providerId: providerId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    })
 
-    const result = await oauthService.startOAuthFlow(
-      async (url) => {
-        process.stdout.write(`${tSync('auth.login.openingBrowser')}\n`)
-        process.stdout.write(`${tSync('auth.login.visitUrl', { url })}\n`)
+    process.stdout.write(`Logging in with ${provider.name}...\n`)
+
+    const callbacks: OAuthLoginCallbacks = {
+      onAuth: async (info) => {
+        process.stdout.write(`\n${tSync('oauth.openingBrowserToSignIn')}\n`)
+        process.stdout.write(`${info.url}\n`)
+        await openBrowser(info.url)
       },
-      {
-        loginWithZyAi,
-        loginHint: email,
-        loginMethod: resolvedLoginMethod,
-        orgUUID,
+      onDeviceCode: async (info) => {
+        process.stdout.write(`\n${tSync('oauth.deviceCodeUserCode', { code: info.userCode })}\n`)
+        process.stdout.write(`${tSync('oauth.deviceCodeVisit', { url: info.verificationUri })}\n`)
+        await openBrowser(info.verificationUri)
       },
-    )
-
-    await installOAuthTokens(result)
-
-    const orgResult = await validateForceLoginOrg()
-    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-    if (!(orgResult as any).valid) {
-      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-      process.stderr.write(`${(orgResult as any).message}\n`)
-      process.exit(1)
+      onPrompt: async (prompt) => {
+        const answer = await rl.question(
+          `${prompt.message}${prompt.placeholder ? ` (${prompt.placeholder})` : ''} `,
+        )
+        return answer
+      },
+      onManualCodeInput: async () => {
+        const answer = await rl.question('Paste the authorization code: ')
+        return answer
+      },
+      onSelect: async (prompt) => {
+        process.stdout.write(`\n${prompt.message}\n`)
+        prompt.options.forEach((opt, i) => {
+          process.stdout.write(`  ${i + 1}. ${opt.label}\n`)
+        })
+        const answer = await rl.question(`${tSync('oauth.selectProvider')} `)
+        const idx = parseInt(answer, 10) - 1
+        if (idx >= 0 && idx < prompt.options.length) {
+          return prompt.options[idx].id
+        }
+        return prompt.options[0]?.id ?? ''
+      },
+      onProgress: (message) => {
+        process.stdout.write(`${message}\n`)
+      },
     }
 
-    logEvent('zy_oauth_success', { loginWithZyAi })
+    const credentials: OAuthCredentials = await provider.login(callbacks)
+
+    // 保存凭证
+    await saveOAuthCredentials(provider.id, credentials)
+    clearOAuthCredentialsCache()
+
+    logEvent('zy_oauth_provider_login_success', {
+      providerId: providerId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    })
 
     process.stdout.write(`${tSync('auth.login.successful')}\n`)
     process.exit(0)
@@ -224,32 +109,47 @@ export async function authLogin({
     )
     process.exit(1)
   } finally {
-    oauthService.cleanup()
+    rl.close()
   }
+}
+
+export async function authLogin({ provider }: { provider?: string } = {}): Promise<void> {
+  if (!provider) {
+    // 未指定 provider，列出可用 provider
+    const providers = getOAuthProviders()
+    process.stderr.write('Available providers:\n')
+    for (const p of providers) {
+      process.stderr.write(`  ${p.id} - ${p.name}\n`)
+    }
+    process.stderr.write('\nUsage: zy auth login --provider <provider>\n')
+    process.exit(1)
+  }
+
+  return authLoginWithProvider(provider)
 }
 
 export async function authStatus(opts: { json?: boolean; text?: boolean }): Promise<void> {
   const { source: authTokenSource, hasToken } = getAuthTokenSource()
   const { source: apiKeySource } = getApiKeyWithSource()
   const hasApiKeyEnvVar = !!process.env.ZY_API_KEY && !isRunningOnHomespace()
-  const oauthAccount = getOauthAccountInfo()
-  const using3P = false
-  const loggedIn = hasToken || apiKeySource !== 'none' || hasApiKeyEnvVar || using3P
+  const loggedIn = hasToken || apiKeySource !== 'none' || hasApiKeyEnvVar
+
+  // 检查多 Provider OAuth
+  const activeOAuthProvider = getActiveOAuthProvider()
+  const activeOAuthProviderInfo = getActiveOAuthProviderInfo()
 
   // 确定认证方式
   let authMethod: string = 'none'
-  if (using3P) {
-    authMethod = 'third_party'
-  } else if (authTokenSource === 'zy.ai') {
-    authMethod = 'zy.ai'
+  if (activeOAuthProvider) {
+    authMethod = `oauth:${activeOAuthProvider}`
   } else if (authTokenSource === 'apiKeyHelper') {
     authMethod = 'api_key_helper'
   } else if (authTokenSource !== 'none') {
     authMethod = 'oauth_token'
   } else if (apiKeySource === 'settingsApiKey' || hasApiKeyEnvVar) {
     authMethod = 'api_key'
-  } else if (apiKeySource === '/login managed key') {
-    authMethod = 'zy.ai'
+  } else if (apiKeySource === 'oauth') {
+    authMethod = 'oauth'
   }
 
   if (opts.text) {
@@ -290,10 +190,9 @@ export async function authStatus(opts: { json?: boolean; text?: boolean }): Prom
     if (resolvedApiKeySource) {
       output.apiKeySource = resolvedApiKeySource
     }
-    if (authMethod === 'zy.ai') {
-      output.email = oauthAccount?.emailAddress ?? null
-      output.orgId = oauthAccount?.organizationUuid ?? null
-      output.orgName = oauthAccount?.organizationName ?? null
+    if (activeOAuthProvider) {
+      output.oauthProvider = activeOAuthProvider
+      output.oauthProviderName = activeOAuthProviderInfo?.name ?? null
     }
 
     process.stdout.write(`${jsonStringify(output, null, 2)}\n`)

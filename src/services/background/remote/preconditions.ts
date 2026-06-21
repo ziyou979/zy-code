@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { getOauthConfig } from 'src/constants/oauth.js'
-import { getOrganizationUUID } from 'src/services/oauth/client.js'
 import { getOAuthHeaders } from 'src/services/teleport/api.js'
 import { fetchEnvironments } from 'src/services/teleport/environments.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../../services/analytics/growthbook.js'
@@ -9,7 +8,7 @@ import { logForDebugging } from '../../../utils/debug.js'
 import { detectCurrentRepository } from '../../../utils/detectRepository.js'
 import { errorMessage } from '../../../utils/errors.js'
 import { findGitRoot, getIsClean } from '../../../utils/git.js'
-import { getZyAIOAuthTokens } from '../../auth/auth.js'
+import { getOrganizationUUID, getZyAIOAuthTokens } from '../../auth/auth.js'
 
 /**
  * Checks if user needs to log in with Zy.ai

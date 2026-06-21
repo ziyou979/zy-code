@@ -7,10 +7,10 @@ export function PluginTrustWarning() {
     <Box marginBottom={1}>
       {<Text color="zy">{figures.warning} </Text>}
       <Text dimColor={true} italic={true}>
-        Make sure you trust a plugin before installing, updating, or using it. ZY does not
-        control what MCP servers, files, or other software are included in plugins and cannot verify
-        that they will work as intended or that they won't change. See each plugin's homepage for
-        more information.{customMessage ? ` ${customMessage}` : ''}
+        Make sure you trust a plugin before installing, updating, or using it. ZY does not control
+        what MCP servers, files, or other software are included in plugins and cannot verify that
+        they will work as intended or that they won't change. See each plugin's homepage for more
+        information.{customMessage ? ` ${customMessage}` : ''}
       </Text>
     </Box>
   )

@@ -1,12 +1,7 @@
 import { feature } from 'bun:bundle'
 import { getSessionId } from '../../bootstrap/state.js'
 import { EFFORT_BETA_HEADER, TASK_BUDGETS_BETA_HEADER } from '../../constants/betas.js'
-import {
-  getAPIProvider,
-  isAnthropicModel,
-  isAnthropicProvider,
-  isOpenAIProvider,
-} from '../../services/model/providers.js'
+import { getAPIProvider, isAnthropicModel } from '../../services/model/providers.js'
 import { getOauthAccountInfo } from '../../utils/auth.js'
 import { shouldIncludeExperimentalBetas } from '../../utils/betas.js'
 import { getOrCreateUserID } from '../../utils/config.js'
@@ -195,10 +190,6 @@ export async function verifyApiKey(
   apiKey: string,
   isNonInteractiveSession: boolean,
 ): Promise<boolean> {
-  // 仅 Anthropic SDK 平台需要验证；OpenAI / Google / 本地推理引擎等平台跳过
-  if (!isAnthropicProvider(getAPIProvider())) {
-    return true
-  }
   // 如果在打印模式（非交互会话）下运行，跳过 API 验证
   if (isNonInteractiveSession) {
     return true

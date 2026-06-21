@@ -1,4 +1,5 @@
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/index.js'
+import { getActiveOAuthProviderInfo } from '../oauth/oauthStorage.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   getLocalModelCapability,
@@ -50,7 +51,13 @@ function getConfiguredProvider(): APIProvider | null {
 }
 
 export function getAPIProvider(): APIProvider {
-  // 1. 优先检查 settings.json (zy.json) 中配置的平台
+  // 0. 优先检查多 Provider OAuth 登录的活跃 provider
+  const oauthProvider = getActiveOAuthProviderInfo()
+  if (oauthProvider?.apiProvider) {
+    return oauthProvider.apiProvider as APIProvider
+  }
+
+  // 1. 检查 settings.json (zy.json) 中配置的平台
   const settingsProvider = getSettingsProvider()
   if (settingsProvider) {
     return settingsProvider
@@ -64,6 +71,18 @@ export function getAPIProvider(): APIProvider {
 
   // 3. 默认使用 anthropic
   return 'anthropic'
+}
+
+/**
+ * 获取活跃 OAuth provider 的 API 消息格式。
+ * 如果没有活跃的 OAuth provider，返回 null。
+ */
+export function getOAuthApiFormat(): ApiFormat | null {
+  const oauthProvider = getActiveOAuthProviderInfo()
+  if (!oauthProvider?.apiFormat) {
+    return null
+  }
+  return oauthProvider.apiFormat
 }
 
 export function getAPIProviderForStatsig(): AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS {

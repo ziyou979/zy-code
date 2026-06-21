@@ -133,7 +133,27 @@ export class OpenAIProviderAdapter implements LLMAdapter {
     }
   }
 
-  async verifyApiKey(_apiKey: string): Promise<boolean> {
-    return true
+  async verifyApiKey(apiKey: string): Promise<boolean> {
+    try {
+      const model = getMainLoopModel() ?? ''
+      const client = await getOpenAIClient({ apiKey, maxRetries: 3 })
+      await client.chat.completions.create({
+        model: normalizeModelStringForAPI(model),
+        max_tokens: 1,
+        messages: [{ role: 'user', content: 'test' }],
+      })
+      return true
+    } catch (error) {
+      if (error instanceof OpenAI.AuthenticationError) {
+        return false
+      }
+      if (
+        error instanceof Error &&
+        /invalid|unauthorized|authentication|api.key/i.test(error.message)
+      ) {
+        return false
+      }
+      throw error
+    }
   }
 }

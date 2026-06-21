@@ -22,13 +22,13 @@ import {
   isAnthropicProvider,
   isOpenAIProvider,
 } from '../services/model/providers.js'
-import { getOrganizationUUID } from '../services/oauth/client.js'
 import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../services/policyLimits/index.js'
 import type { WireMessage } from '../types/index.js'
 import type { Message } from '../types/message.js'
 import type { WireControlResponse } from '../types/wire/control.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
+  getOrganizationUUID,
   getZyAIOAuthTokens,
   handleOAuth401Error,
 } from '../utils/auth.js'
