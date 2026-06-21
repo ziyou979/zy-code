@@ -220,6 +220,18 @@ function getSessionSpecificGuidanceSection(
   return ['## Session-specific guidance', ...prependBullets(items)].join('\n')
 }
 
+/**
+ * 行为指南：代码风格匹配 + 不可逆操作确认/诚实报告。
+ * 语义独立于 Harness 与 Text output，单独成节插入两者之间，
+ * 避免合并导致职责不清。
+ */
+function getBehaviorGuidelinesSection(): string {
+  return `# Working principles
+Write code that reads like the surrounding code: match its comment density, naming, and idiom.
+
+For actions that are hard to reverse or outward-facing, confirm first unless durably authorized or explicitly told to proceed without asking; approval in one context doesn't extend to the next. Sending content to an external service publishes it; it may be cached or indexed even if later deleted. Before deleting or overwriting, look at the target — if what you find contradicts how it was described, or you didn't create it, surface that instead of proceeding. Report outcomes faithfully: if tests fail, say so with the output; if a step was skipped, say that; when something is done and verified, state it plainly without hedging.`
+}
+
 function getTextOutputSection(): string {
   return `# Text output (does not apply to tool calls)
 Assume users can't see most tool calls or thinking — only your text output. Before your first tool call, state in one sentence what you're about to do. While working, give short updates at key moments: when you find something, when you change direction, or when you hit a blocker. Brief is good — silent is not. One sentence per update is almost always enough.
@@ -232,7 +244,7 @@ End-of-turn summary: one or two sentences. What changed and what's next. Nothing
 
 Match responses to the task: a simple question gets a direct answer, not headers and sections.
 
-In code: default to writing no comments. Never write multi-paragraph docstrings or multi-line comment blocks — one short line max. Don't create planning, decision, or analysis documents unless the user asks for them — work from conversation context, not intermediate files.`
+In code: write comments by default — explain non-obvious logic, intent, and trade-offs. Match the surrounding code's comment density and style; follow the project's comment-language convention. Don't create planning, decision, or analysis documents unless the user asks for them — work from conversation context, not intermediate files.`
 }
 
 export async function getSystemPrompt(
@@ -324,6 +336,7 @@ ${CYBER_RISK_INSTRUCTION}`,
     // --- Static content (cacheable) ---
     getSimpleIntroSection(outputStyleConfig),
     getHarnessSection(),
+    getBehaviorGuidelinesSection(),
     getTextOutputSection(),
     getLanguageSection(settings.language),
     // === BOUNDARY MARKER - DO NOT MOVE OR REMOVE ===
