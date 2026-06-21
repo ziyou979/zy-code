@@ -224,7 +224,7 @@ export async function toolToAPISchema(
   }
 
   // ZY_CODE_DISABLE_EXPERIMENTAL_BETAS 是实验性 API 形状的总开关。
-  // 代理网关（ANTHROPIC_BASE_URL → LiteLLM → Bedrock）会以
+  // 代理网关（ZY_CODE_BASE_URL → LiteLLM → Bedrock）会以
   // "Extra inputs are not permitted" 拒绝像 defer_loading 这样的字段。
   // 每个字段上方的门控分散且并非所有提供商都知道，因此这在所有工具
   // 模式经过的唯一瓶颈点处剥离不在基础工具允许列表中的所有内容

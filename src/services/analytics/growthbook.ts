@@ -413,7 +413,7 @@ function isGrowthBookEnabled(): boolean {
 }
 
 /**
- * Hostname of ANTHROPIC_BASE_URL when it points at a non-Anthropic proxy.
+ * Hostname of ZY_CODE_BASE_URL when it points at a non-Anthropic proxy.
  *
  * Enterprise-proxy deployments (Epic, Marble, etc.) typically use
  * apiKeyHelper auth, which means isAuthEnabled() returns false and
@@ -425,7 +425,7 @@ function isGrowthBookEnabled(): boolean {
  * is absent for direct-API users. Hostname only — no path/query/creds.
  */
 export function getApiBaseUrlHost(): string | undefined {
-  const baseUrl = process.env.ANTHROPIC_BASE_URL
+  const baseUrl = process.env.ZY_CODE_BASE_URL
   if (!baseUrl) {
     return undefined
   }

@@ -92,7 +92,8 @@ export function buildInheritedCliFlags(options?: {
  */
 const TEAMMATE_ENV_VARS = [
   // Custom API endpoint
-  'ANTHROPIC_BASE_URL',
+  'ZY_CODE_BASE_URL',
+  'ANTHROPIC_BASE_URL', // 向后兼容
   // Config directory override
   'ZY_CONFIG_DIR',
   // CCR marker — teammates need this for CCR-aware code paths. Auth finds

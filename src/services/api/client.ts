@@ -142,8 +142,8 @@ export async function getAnthropicClient({
       resolvedBaseURL = process.env[registryEntry.baseUrlEnvVar]
     }
     // 2. Generic env vars
-    if (!resolvedBaseURL && process.env.ANTHROPIC_BASE_URL) {
-      resolvedBaseURL = process.env.ANTHROPIC_BASE_URL
+    if (!resolvedBaseURL && process.env.ZY_CODE_BASE_URL) {
+      resolvedBaseURL = process.env.ZY_CODE_BASE_URL
     }
     if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
       resolvedBaseURL = process.env.LLM_BASE_URL

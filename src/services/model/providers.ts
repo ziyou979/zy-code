@@ -116,12 +116,12 @@ export function providerHasCapability(
 }
 
 /**
- * 检查 ANTHROPIC_BASE_URL 是否为 Anthropic API 地址。
+ * 检查 ZY_CODE_BASE_URL 是否为 Anthropic API 地址。
  * 未设置（使用默认 API）或指向 api.anthropic.com 时返回 true
  * （内部构建还允许 api-staging.anthropic.com）。
  */
 export function isAnthropicBaseUrl(): boolean {
-  const baseUrl = process.env.ANTHROPIC_BASE_URL
+  const baseUrl = process.env.ZY_CODE_BASE_URL
   if (!baseUrl) {
     return true
   }

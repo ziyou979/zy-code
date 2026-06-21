@@ -306,7 +306,7 @@ export function buildAPIProviderProperties(): Property[] {
     })
   }
   if (apiProvider === 'anthropic') {
-    const anthropicBaseUrl = process.env.ANTHROPIC_BASE_URL
+    const anthropicBaseUrl = process.env.ZY_CODE_BASE_URL
     if (anthropicBaseUrl) {
       properties.push({
         label: tSync('status.anthropicBaseUrl'),

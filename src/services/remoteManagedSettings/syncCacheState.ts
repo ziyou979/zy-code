@@ -14,7 +14,7 @@
  * false（不符合资格 — 返回 null）、true（继续）。managedEnv.ts
  * 在读取 policySettings 之前调用 isRemoteManagedSettingsEligible() —
  * 在应用 userSettings/flagSettings 环境变量之后，因此检查能看到
- * 配置提供的 ZY_CODE_USE_BEDROCK/ANTHROPIC_BASE_URL。该调用计算一次
+ * 配置提供的 ZY_CODE_USE_BEDROCK/ZY_CODE_BASE_URL。该调用计算一次
  * 并通过 setEligibility() 将结果镜像到这里。每次后续读取都会命中
  * 缓存的布尔值，而不是重新运行 auth 链。
  */

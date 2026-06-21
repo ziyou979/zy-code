@@ -373,7 +373,7 @@ export function meetsAvailabilityRequirement(cmd: Command): boolean {
         return false
       case 'console':
         // Console API key user = direct API customer (not 3P, not zy.ai).
-        // Excludes 3P (Bedrock/Vertex/Foundry) who don't set ANTHROPIC_BASE_URL
+        // Excludes 3P (Bedrock/Vertex/Foundry) who don't set ZY_CODE_BASE_URL
         // and gateway users who proxy through a custom base URL.
         if (isAnthropicBaseUrl()) {
           return true

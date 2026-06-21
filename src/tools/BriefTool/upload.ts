@@ -57,14 +57,14 @@ function debug(msg: string): void {
 /**
  * Base URL for uploads. Must match the host the token is valid for.
  *
- * Subprocess hosts (cowork) pass ANTHROPIC_BASE_URL alongside
+ * Subprocess hosts (cowork) pass ZY_CODE_BASE_URL alongside
  * ZY_CODE_OAUTH_TOKEN — prefer that since getOauthConfig() only
  * returns staging when USE_STAGING_OAUTH is set, which such hosts don't
  * set. Without this a staging token hits api.anthropic.com → 401 → silent
  * skip → web viewer sees inert cards with no file_uuid.
  */
 function getWireBaseUrl(): string {
-  return getWireBaseUrlOverride() ?? process.env.ANTHROPIC_BASE_URL ?? getOauthConfig().BASE_API_URL
+  return getWireBaseUrlOverride() ?? process.env.ZY_CODE_BASE_URL ?? getOauthConfig().BASE_API_URL
 }
 
 // /api/oauth/file_upload returns one of ChatMessage{Image,Blob,Document}FileSchema.

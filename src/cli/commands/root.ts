@@ -581,10 +581,10 @@ export async function rootAction(
     const fileSessionId = process.env.ZY_CODE_REMOTE_SESSION_ID || getSessionId()
     const files = parseFileSpecs(fileSpecs)
     if (files.length > 0) {
-      // 如果设置了 ANTHROPIC_BASE_URL（由 EnvManager 设置），否则使用 OAuth 配置
+      // 如果设置了 ZY_CODE_BASE_URL（由 EnvManager 设置），否则使用 OAuth 配置
       // 这确保在所有环境中与会话入口 API 保持一致
       const config: FilesApiConfig = {
-        baseUrl: process.env.ANTHROPIC_BASE_URL || getOauthConfig().BASE_API_URL,
+        baseUrl: process.env.ZY_CODE_BASE_URL || getOauthConfig().BASE_API_URL,
         oauthToken: sessionToken,
         sessionId: fileSessionId,
       }

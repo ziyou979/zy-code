@@ -15,7 +15,8 @@ const PROVIDER_MANAGED_ENV_VARS = new Set([
   // The flag itself — settings can't unset it once the host set it
   'ZY_CODE_PROVIDER_MANAGED_BY_HOST',
   // Endpoint config (base URLs, project/resource identifiers)
-  'ANTHROPIC_BASE_URL',
+  'ZY_CODE_BASE_URL',
+  'ANTHROPIC_BASE_URL', // 向后兼容
   // Auth
   'ZY_API_KEY',
   'ANTHROPIC_AUTH_TOKEN',
@@ -64,7 +65,7 @@ export const DANGEROUS_SHELL_SETTINGS = [
  * Dangerous env vars (NOT in this list):
  *
  * === REDIRECT TO ATTACKER-CONTROLLED SERVER ===
- * - ANTHROPIC_BASE_URL, ANTHROPIC_BEDROCK_BASE_URL, ANTHROPIC_VERTEX_BASE_URL
+ * - ZY_CODE_BASE_URL (formerly ANTHROPIC_BASE_URL), ANTHROPIC_BEDROCK_BASE_URL, ANTHROPIC_VERTEX_BASE_URL
  * - HTTP_PROXY, HTTPS_PROXY, NO_PROXY, http_proxy, https_proxy, no_proxy
  * - OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_LOGS_ENDPOINT, OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
  *

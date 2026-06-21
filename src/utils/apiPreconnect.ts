@@ -13,7 +13,7 @@
  * Called from init.ts AFTER applyExtraCACertsFromConfig() + configureGlobalAgents()
  * so settings.json env vars are applied and the TLS cert store is finalized.
  * The early cli.tsx call site was removed — it ran before settings.json loaded,
- * so ANTHROPIC_BASE_URL/proxy/mTLS in settings would be invisible and preconnect
+ * so ZY_CODE_BASE_URL/proxy/mTLS in settings would be invisible and preconnect
  * would warm the wrong pool (or worse, lock BoringSSL's cert store before
  * NODE_EXTRA_CA_CERTS was applied).
  *
@@ -47,9 +47,9 @@ export function preconnectAnthropicApi(): void {
   }
 
   // Use configured base URL (staging, local, or custom gateway). Covers
-  // ANTHROPIC_BASE_URL env + USE_STAGING_OAUTH + USE_LOCAL_OAUTH in one lookup.
+  // ZY_CODE_BASE_URL env + USE_STAGING_OAUTH + USE_LOCAL_OAUTH in one lookup.
   // NODE_EXTRA_CA_CERTS no longer a skip — init.ts applied it before this fires.
-  const baseUrl = process.env.ANTHROPIC_BASE_URL || getOauthConfig().BASE_API_URL
+  const baseUrl = process.env.ZY_CODE_BASE_URL || getOauthConfig().BASE_API_URL
 
   // Fire and forget. HEAD means no response body — the connection is eligible
   // for keep-alive pool reuse immediately after headers arrive. 10s timeout

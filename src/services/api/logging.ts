@@ -87,7 +87,7 @@ const GATEWAY_FINGERPRINTS: Partial<Record<KnownGateway, { prefixes: string[] }>
 }
 
 // 使用提供商自有域名（非自托管）的网关，因此
-// ANTHROPIC_BASE_URL 主机名是可靠的信号，即使没有
+// ZY_CODE_BASE_URL 主机名是可靠的信号，即使没有
 // 特征性响应头也能识别。
 const GATEWAY_HOST_SUFFIXES: Partial<Record<KnownGateway, string[]>> = {
   // https://docs.databricks.com/aws/en/ai-gateway/
@@ -136,10 +136,10 @@ function detectGateway({
 
 function getAnthropicEnvMetadata() {
   return {
-    ...(process.env.ANTHROPIC_BASE_URL
+    ...(process.env.ZY_CODE_BASE_URL
       ? {
           baseUrl: process.env
-            .ANTHROPIC_BASE_URL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+            .ZY_CODE_BASE_URL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
     ...(process.env.ZY_CODE_MODEL
@@ -148,10 +148,10 @@ function getAnthropicEnvMetadata() {
             .ZY_CODE_MODEL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    ...(process.env.ANTHROPIC_SMALL_FAST_MODEL
+    ...(process.env.ZY_COMPACT_MODEL
       ? {
           envSmallFastModel: process.env
-            .ANTHROPIC_SMALL_FAST_MODEL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+            .ZY_COMPACT_MODEL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
   }
@@ -262,7 +262,7 @@ export function logAPIError({
 }): void {
   const gateway = detectGateway({
     headers: headers,
-    baseUrl: process.env.ANTHROPIC_BASE_URL,
+    baseUrl: process.env.ZY_CODE_BASE_URL,
   })
 
   const errStr = getErrorMessage(error)
@@ -605,7 +605,7 @@ export function logAPISuccessAndDuration({
 }): void {
   const gateway = detectGateway({
     headers,
-    baseUrl: process.env.ANTHROPIC_BASE_URL,
+    baseUrl: process.env.ZY_CODE_BASE_URL,
   })
 
   let textContentLength: number | undefined
