@@ -57,10 +57,13 @@ claude-tap --tap-no-launch --tap-proxy-mode forward
 #   🔍 claude-tap v0.1.71 forward proxy on http://0.0.0.0:58437
 #      CA cert: /Users/zy979/.claude-tap/ca.pem
 
-# 终端 2（端口和 CA 路径从终端 1 输出抄）
+# mac 终端 2（端口和 CA 路径从终端 1 输出抄）
 HTTPS_PROXY=http://127.0.0.1:58437 \
 NODE_EXTRA_CA_CERTS=/Users/zy979/.claude-tap/ca.pem \
 zycode
+
+# win 终端2
+$env:HTTPS_PROXY="http://127.0.0.1:58437"; $env:NODE_EXTRA_CA_CERTS="C:\Users\zy979\.claude-tap\ca.pem"; zycode
 ```
 
 > `0.0.0.0` 表示监听所有网卡，本机访问写 `127.0.0.1` 即可。

@@ -52,7 +52,7 @@
     "cli-highlight": "^2.1.11",
     "code-excerpt": "^4.0.0",
     "commander": "^13.1.0",
-    "diff": "^7.0.0",
+    "diff": "^8.0.3",
     "emoji-regex": "^10.6.0",
     "env-paths": "^3.0.0",
     "execa": "^9.6.1",
