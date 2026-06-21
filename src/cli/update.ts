@@ -121,7 +121,7 @@ export async function update() {
         writeToStdout(`Update available: ${MACRO.VERSION} → ${latest}\n`)
         writeToStdout('\n')
         writeToStdout('To update, run:\n')
-        writeToStdout(`${chalk.bold('  winget upgrade Anthropic.ZyCode')}\n`)
+        writeToStdout(`${chalk.bold('  winget upgrade ZY.ZyCode')}\n`)
       } else {
         writeToStdout('Zy is up to date!\n')
       }

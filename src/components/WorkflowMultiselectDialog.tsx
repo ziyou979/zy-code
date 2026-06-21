@@ -76,8 +76,8 @@ export function WorkflowMultiselectDialog({ onSubmit, defaultSelections }: Props
         <Box>
           <Text dimColor={true}>
             More workflow examples (issue triage, CI fixes, etc.) at:{' '}
-            <Link url="https://github.com/anthropics/zy-code-action/blob/main/examples/">
-              https://github.com/anthropics/zy-code-action/blob/main/examples/
+            <Link url="https://github.com/zy-ai/zy-code-action/blob/main/examples/">
+              https://github.com/zy-ai/zy-code-action/blob/main/examples/
             </Link>
           </Text>
         </Box>

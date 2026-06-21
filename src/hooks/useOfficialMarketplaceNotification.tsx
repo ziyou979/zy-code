@@ -32,7 +32,7 @@ async function _temp() {
       key: 'marketplace-installed',
       jsx: (
         <Text color="success">
-          ✓ Anthropic marketplace installed · /plugin to see available plugins
+          ✓ ZY marketplace installed · /plugin to see available plugins
         </Text>
       ),
       priority: 'immediate',
@@ -45,7 +45,7 @@ async function _temp() {
         key: 'marketplace-install-failed',
         jsx: (
           <Text color="warning">
-            Failed to install Anthropic marketplace · Will retry on next startup
+            Failed to install ZY marketplace · Will retry on next startup
           </Text>
         ),
         priority: 'immediate',

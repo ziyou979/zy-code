@@ -122,7 +122,7 @@ async function rewriteArgvForDeepLink(): Promise<void> {
   // 正面信号 —— 比用启发式方法导入和猜测更便宜。
   if (
     process.platform === 'darwin' &&
-    process.env.__CFBundleIdentifier === 'com.anthropic.zy-code-url-handler'
+    process.env.__CFBundleIdentifier === 'com.zy.zy-code-url-handler'
   ) {
     const { enableConfigs } = await import('../utils/config.js')
     enableConfigs()

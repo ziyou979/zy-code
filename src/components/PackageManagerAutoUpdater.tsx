@@ -67,7 +67,7 @@ export function PackageManagerAutoUpdater({ verbose }: Props) {
     packageManager === 'homebrew'
       ? 'brew upgrade zy-code'
       : packageManager === 'winget'
-        ? 'winget upgrade Anthropic.ZyCode'
+        ? 'winget upgrade ZY.ZyCode'
         : packageManager === 'apk'
           ? 'apk upgrade zy-code'
           : 'your package manager update command'

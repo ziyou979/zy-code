@@ -89,7 +89,7 @@ import type {
   WireControlMcpSetServersResponse,
 } from 'src/types/wire/control.js'
 // @ts-expect-error
-import type { PermissionMode } from '@anthropic-ai/zy-agent-sdk'
+import type { PermissionMode } from '@zy-ai/agent-sdk'
 import type { PermissionMode as InternalPermissionMode } from 'src/types/permissions.js'
 import { cwd } from 'node:process'
 import { getCwd } from 'src/utils/cwd.js'

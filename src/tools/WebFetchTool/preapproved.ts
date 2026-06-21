@@ -12,11 +12,11 @@
 // that sandbox network restrictions require explicit user permission rules.
 
 export const PREAPPROVED_HOSTS = new Set([
-  // Anthropic
+  // ZY
   'platform.zy.com',
   'code.zy.com',
   'modelcontextprotocol.io',
-  'github.com/anthropics',
+  'github.com/zy-ai',
   'agentskills.io',
 
   // Top Programming Languages

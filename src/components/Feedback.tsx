@@ -45,8 +45,8 @@ import TextInput from './TextInput.js'
 // This value was determined experimentally by testing the URL length limit
 const GITHUB_URL_LIMIT = 7250
 const GITHUB_ISSUES_REPO_URL = isInternalBuild()
-  ? 'https://github.com/anthropics/zy-cli-internal/issues'
-  : 'https://github.com/anthropics/zy-code/issues'
+  ? 'https://github.com/zy-ai/zy-cli-internal/issues'
+  : 'https://github.com/zy-ai/zy-code/issues'
 type Props = {
   abortSignal: AbortSignal
   messages: Message[]
@@ -562,7 +562,7 @@ async function generateTitle(description: string, abortSignal: AbortSignal): Pro
     const response = await queryCompactModel({
       systemPrompt: asSystemPrompt([
         'Generate a concise, technical issue title (max 80 chars) for a public GitHub issue based on this bug report for ZY Code.',
-        'ZY Code is an agentic coding CLI based on the Anthropic API.',
+        'ZY Code is an agentic coding CLI based on the LLM API.',
         'The title should:',
         '- Include the type of issue [Bug] or [Feature Request] as the first thing in the title',
         '- Be concise, specific and descriptive of the actual problem',
@@ -570,9 +570,9 @@ async function generateTitle(description: string, abortSignal: AbortSignal): Pro
         '- For error messages, extract the key error (e.g., "Missing Tool Result Block" rather than the full message)',
         '- Be direct and clear for developers to understand the problem',
         '- If you cannot determine a clear issue, use "Bug Report: [brief description]"',
-        '- Any LLM API errors are from the Anthropic API, not from any other model provider',
+        '- Any LLM API errors are from the LLM API, not from any other model provider',
         'Your response will be directly used as the title of the Github issue, and as such should not contain any other commentary or explaination',
-        'Examples of good titles include: "[Bug] Auto-Compact triggers to soon", "[Bug] Anthropic API Error: Missing Tool Result Block", "[Bug] Error: Invalid Model Name for Opus"',
+        'Examples of good titles include: "[Bug] Auto-Compact triggers to soon", "[Bug] API Error: Missing Tool Result Block", "[Bug] Error: Invalid Model Name for Opus"',
       ]),
       userPrompt: description,
       signal: abortSignal,

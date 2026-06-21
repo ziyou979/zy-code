@@ -10,7 +10,7 @@ import { join } from 'node:path'
 import { isInternalBuild } from '../../envUtils.js'
 
 /** macOS preference domain for ZY Code MDM profiles. */
-export const MACOS_PREFERENCE_DOMAIN = 'com.anthropic.zycode'
+export const MACOS_PREFERENCE_DOMAIN = 'com.zy.zycode'
 
 /**
  * Windows registry key paths for ZY Code MDM policies.
