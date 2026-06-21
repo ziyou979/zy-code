@@ -32,14 +32,14 @@ import { loadAllPlugins } from '../../utils/plugins/pluginLoader.js'
 import { installSelectedPlugins } from '../../utils/plugins/pluginStartupCheck.js'
 
 // Marketplace and plugin identifiers - varies by user type
-const INTERNAL_MARKETPLACE_NAME = 'zy-code-marketplace'
-const INTERNAL_MARKETPLACE_REPO = 'anthropics/zy-code-marketplace'
-const OFFICIAL_MARKETPLACE_REPO = 'anthropics/zy-plugins-official'
+const ANTHROPIC_MARKETPLACE_NAME = 'claude-code-marketplace'
+const INTERNAL_MARKETPLACE_REPO = 'anthropics/claude-code-marketplace'
+const ANTHROPIC_MARKETPLACE_REPO = 'anthropics/claude-plugins-official'
 function getMarketplaceName(): string {
-  return isInternalBuild() ? INTERNAL_MARKETPLACE_NAME : OFFICIAL_MARKETPLACE_NAME
+  return isInternalBuild() ? ANTHROPIC_MARKETPLACE_NAME : OFFICIAL_MARKETPLACE_NAME
 }
 function getMarketplaceRepo(): string {
-  return isInternalBuild() ? INTERNAL_MARKETPLACE_REPO : OFFICIAL_MARKETPLACE_REPO
+  return isInternalBuild() ? INTERNAL_MARKETPLACE_REPO : ANTHROPIC_MARKETPLACE_REPO
 }
 function getPluginId(): string {
   return `thinkback@${getMarketplaceName()}`
