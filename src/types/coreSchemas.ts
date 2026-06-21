@@ -361,7 +361,6 @@ export const ModelInfoSchema = lazySchema(() =>
         .describe(
           'Whether this model supports adaptive thinking (Zy decides when and how much to think)',
         ),
-      supportsFastMode: z.boolean().optional().describe('Whether this model supports fast mode'),
       supportsAutoMode: z.boolean().optional().describe('Whether this model supports auto mode'),
     })
     .describe('Information about an available model.'),

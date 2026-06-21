@@ -33,7 +33,6 @@ export interface WireControlInitializeResponse {
   models: Array<{ id: string; displayName: string }>
   account: { type: string; name?: string }
   pid?: number
-  fast_mode_state?: unknown
 }
 
 export interface WireControlInterruptRequest {

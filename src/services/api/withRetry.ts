@@ -579,13 +579,6 @@ function getMaxRetries(options: RetryOptions): number {
   return options.maxRetries ?? getDefaultMaxRetries()
 }
 
-let _DEFAULT_FAST_MODE_FALLBACK_HOLD_MS
-_DEFAULT_FAST_MODE_FALLBACK_HOLD_MS = 30 * 60 * 1000 // 30 minutes
-let _SHORT_RETRY_THRESHOLD_MS
-_SHORT_RETRY_THRESHOLD_MS = 20 * 1000 // 20 seconds
-let _MIN_COOLDOWN_MS
-_MIN_COOLDOWN_MS = 10 * 60 * 1000 // 10 minutes
-
 function _getRetryAfterMs(error: APIErrorLike): number | null {
   const retryAfter = getRetryAfter(error)
   if (retryAfter) {

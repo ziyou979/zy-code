@@ -249,7 +249,6 @@ export interface ModelInfo {
   supportsEffort?: boolean
   supportedEffortLevels?: ('off' | 'quick' | 'light' | 'balanced' | 'thorough' | 'extreme')[]
   supportsAdaptiveThinking?: boolean
-  supportsFastMode?: boolean
   supportsAutoMode?: boolean
 }
 

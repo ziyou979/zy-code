@@ -123,7 +123,6 @@ export interface WireResultSuccess {
   modelUsage: Record<string, ModelUsage>
   permission_denials: WirePermissionDenial[]
   structured_output?: Record<string, unknown>
-  fast_mode_state?: FastModeState
   uuid: string
   session_id: string
 }
@@ -145,7 +144,6 @@ export interface WireResultError {
   modelUsage: Record<string, ModelUsage>
   permission_denials: WirePermissionDenial[]
   errors: string[]
-  fast_mode_state?: FastModeState
   uuid: string
   session_id: string
 }
@@ -175,7 +173,6 @@ export interface WireSystemMessage {
     path: string
     source?: string
   }>
-  fast_mode_state?: FastModeState
   uuid: string
   session_id: string
 }
@@ -418,12 +415,6 @@ export interface WireSessionInfo {
   tag?: string
   createdAt?: number
 }
-
-// ============================================================================
-// Fast Mode State
-// ============================================================================
-
-export type FastModeState = 'off' | 'cooldown' | 'on'
 
 // ============================================================================
 // SDK Message Union Type

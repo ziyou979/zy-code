@@ -22,7 +22,6 @@ import {
 } from '../coreSchemas.js'
 import { HookEventSchema, HookInputSchema } from '../hooks/schemas.js'
 import {
-  FastModeStateSchema,
   WireMessageSchema,
   WirePostTurnSummaryMessageSchema,
   WireStreamlinedTextMessageSchema,
@@ -81,7 +80,6 @@ export const WireControlInitializeResponseSchema = lazySchema(() =>
       models: z.array(ModelInfoSchema()),
       account: AccountInfoSchema(),
       pid: z.number().optional().describe('@internal CLI process PID for tmux socket isolation'),
-      fast_mode_state: FastModeStateSchema().optional(),
     })
     .describe(
       'Response from session initialization with available commands, models, and account info.',

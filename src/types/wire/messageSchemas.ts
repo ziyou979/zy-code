@@ -191,7 +191,6 @@ export const WireResultSuccessSchema = lazySchema(() =>
     modelUsage: z.record(z.string(), ModelUsageSchema()),
     permission_denials: z.array(WirePermissionDenialSchema()),
     structured_output: z.unknown().optional(),
-    fast_mode_state: FastModeStateSchema().optional(),
     uuid: UUIDPlaceholder(),
     session_id: z.string(),
   }),
@@ -216,7 +215,6 @@ export const WireResultErrorSchema = lazySchema(() =>
     modelUsage: z.record(z.string(), ModelUsageSchema()),
     permission_denials: z.array(WirePermissionDenialSchema()),
     errors: z.array(z.string()),
-    fast_mode_state: FastModeStateSchema().optional(),
     uuid: UUIDPlaceholder(),
     session_id: z.string(),
   }),
@@ -259,7 +257,6 @@ export const WireSystemMessageSchema = lazySchema(() =>
           ),
       }),
     ),
-    fast_mode_state: FastModeStateSchema().optional(),
     uuid: UUIDPlaceholder(),
     session_id: z.string(),
   }),
@@ -628,10 +625,4 @@ export const WireMessageSchema = lazySchema(() =>
     WireElicitationCompleteMessageSchema(),
     WirePromptSuggestionMessageSchema(),
   ]),
-)
-
-export const FastModeStateSchema = lazySchema(() =>
-  z
-    .enum(['off', 'cooldown', 'on'])
-    .describe('Fast mode state: off, in cooldown after rate limit, or actively enabled.'),
 )
