@@ -1,4 +1,3 @@
-// @ts-expect-error
 import type { StructuredPatchHunk } from 'diff'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'

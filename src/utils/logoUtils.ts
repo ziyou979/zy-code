@@ -12,7 +12,7 @@ import { gt } from './semver.js'
 import { loadMessageLogs } from './sessionStorage.js'
 import { getInitialSettings } from './settings/settings.js'
 
-// Layout constants
+// 布局常量
 const MAX_LEFT_WIDTH = 50
 const MAX_USERNAME_LENGTH = 20
 const BORDER_PADDING = 4
@@ -28,7 +28,7 @@ export type LayoutDimensions = {
 }
 
 /**
- * Determines the layout mode based on terminal width
+ * 根据终端宽度确定布局模式
  */
 export function getLayoutMode(columns: number): LayoutMode {
   if (columns >= 70) {
@@ -38,7 +38,7 @@ export function getLayoutMode(columns: number): LayoutMode {
 }
 
 /**
- * Calculates layout dimensions for the Logo component
+ * 计算 Logo 组件的布局尺寸
  */
 export function calculateLayoutDimensions(
   columns: number,
@@ -56,7 +56,7 @@ export function calculateLayoutDimensions(
       columns - BORDER_PADDING,
     )
 
-    // Recalculate right width if we had to cap the total
+    // 如果总宽度被限制，重新计算右侧宽度
     if (totalWidth < leftWidth + rightWidth + DIVIDER_WIDTH + CONTENT_PADDING) {
       rightWidth = totalWidth - leftWidth - DIVIDER_WIDTH - CONTENT_PADDING
     }
@@ -64,7 +64,7 @@ export function calculateLayoutDimensions(
     return { leftWidth, rightWidth, totalWidth }
   }
 
-  // Vertical mode
+  // 垂直布局
   const totalWidth = Math.min(columns - BORDER_PADDING, MAX_LEFT_WIDTH + 20)
   return {
     leftWidth: totalWidth,
@@ -74,7 +74,7 @@ export function calculateLayoutDimensions(
 }
 
 /**
- * Calculates optimal left panel width based on content
+ * 根据内容计算左侧面板的最优宽度
  */
 export function calculateOptimalLeftWidth(
   welcomeMessage: string,
@@ -85,13 +85,13 @@ export function calculateOptimalLeftWidth(
     stringWidth(welcomeMessage),
     stringWidth(truncatedCwd),
     stringWidth(modelLine),
-    20, // Minimum for clawd art
+    20, // 给 clawd 图案留出的最小宽度
   )
   return Math.min(contentWidth + 4, MAX_LEFT_WIDTH) // +4 for padding
 }
 
 /**
- * Formats the welcome message based on username
+ * 根据用户名格式化欢迎语
  */
 export function formatWelcomeMessage(username: string | null): string {
   if (!username || username.length > MAX_USERNAME_LENGTH) {
@@ -101,8 +101,8 @@ export function formatWelcomeMessage(username: string | null): string {
 }
 
 /**
- * Truncates a path in the middle if it's too long.
- * Width-aware: uses stringWidth() for correct CJK/emoji measurement.
+ * 路径过长时从中间截断。
+ * 按宽度感知：使用 stringWidth() 正确测量 CJK/emoji 宽度。
  */
 export function truncatePath(path: string, maxLength: number): string {
   if (stringWidth(path) <= maxLength) {
@@ -111,7 +111,7 @@ export function truncatePath(path: string, maxLength: number): string {
 
   const separator = '/'
   const ellipsis = '…'
-  const ellipsisWidth = 1 // '…' is always 1 column
+  const ellipsisWidth = 1 // 省略号固定占 1 列
   const separatorWidth = 1
 
   const parts = path.split(separator)
@@ -120,33 +120,33 @@ export function truncatePath(path: string, maxLength: number): string {
   const firstWidth = stringWidth(first)
   const lastWidth = stringWidth(last)
 
-  // Only one part, so show as much of it as we can
+  // 只有一段，尽量完整展示
   if (parts.length === 1) {
     return truncateToWidth(path, maxLength)
   }
 
-  // We don't have enough space to show the last part, so truncate it
-  // But since firstPart is empty (unix) we don't want the extra ellipsis
+  // 空间不足以展示最后一段，因此截断它
+  // 首段为空（Unix 路径），不需要额外的省略号
   if (first === '' && ellipsisWidth + separatorWidth + lastWidth >= maxLength) {
     return `${separator}${truncateToWidth(last, Math.max(1, maxLength - separatorWidth))}`
   }
 
-  // We have a first part so let's show the ellipsis and truncate last part
+  // 存在首段，展示省略号并截断末段
   if (first !== '' && ellipsisWidth * 2 + separatorWidth + lastWidth >= maxLength) {
     return `${ellipsis}${separator}${truncateToWidth(last, Math.max(1, maxLength - ellipsisWidth - separatorWidth))}`
   }
 
-  // Truncate first and leave last
+  // 截断首段，保留末段
   if (parts.length === 2) {
     const availableForFirst = maxLength - ellipsisWidth - separatorWidth - lastWidth
     return `${truncateToWidthNoEllipsis(first, availableForFirst)}${ellipsis}${separator}${last}`
   }
 
-  // Now we start removing middle parts
+  // 开始移除中间段
 
   let available = maxLength - firstWidth - lastWidth - ellipsisWidth - 2 * separatorWidth
 
-  // Just the first and last are too long, so truncate first
+  // 首尾段都太长，截断首段
   if (available <= 0) {
     const availableForFirst = Math.max(
       0,
@@ -156,7 +156,7 @@ export function truncatePath(path: string, maxLength: number): string {
     return `${truncatedFirst}${separator}${ellipsis}${separator}${last}`
   }
 
-  // Try to keep as many middle parts as possible
+  // 尽量保留更多中间段
   const middleParts = []
   for (let i = parts.length - 2; i > 0; i--) {
     const part = parts[i]
@@ -175,15 +175,15 @@ export function truncatePath(path: string, maxLength: number): string {
   return `${first}${separator}${ellipsis}${separator}${middleParts.join(separator)}${separator}${last}`
 }
 
-// Simple cache for preloaded activity
+// 预加载会话记录的简单缓存
 let cachedActivity: LogOption[] = []
 let cachePromise: Promise<LogOption[]> | null = null
 
 /**
- * Preloads recent conversations for display in Logo v2
+ * 预加载最近会话记录，供 Logo v2 展示
  */
 export async function getRecentActivity(): Promise<LogOption[]> {
-  // Return existing promise if already loading
+  // 如果已经在加载，直接返回已有的 Promise
   if (cachePromise) {
     return cachePromise
   }
@@ -220,57 +220,51 @@ export async function getRecentActivity(): Promise<LogOption[]> {
 }
 
 /**
- * Gets cached activity synchronously
+ * 同步获取缓存的会话记录
  */
 export function getRecentActivitySync(): LogOption[] {
   return cachedActivity
 }
 
 /**
- * Formats release notes for display, with smart truncation
- */
-export function formatReleaseNoteForDisplay(note: string, maxWidth: number): string {
-  // Simply truncate at the max width, same as Recent Activity descriptions
-  return truncate(note, maxWidth)
-}
-
-/**
  * 获取当前 provider 的展示名称
  */
+const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
+  anthropic: 'Anthropic',
+  ark: '火山方舟',
+  bedrock: 'AWS Bedrock',
+  dashscope: '阿里云百炼',
+  deepseek: '深度求索',
+  fireworks: 'Fireworks',
+  foundry: 'Microsoft Foundry',
+  generic: '自定义',
+  groq: 'Groq',
+  kimi: '月之暗面',
+  lmstudio: 'LM Studio',
+  llamacpp: 'llama.cpp',
+  mimo: '小米',
+  minimax: '稀宇科技',
+  nim: 'Nvidia Nim',
+  ollama: 'Ollama',
+  openai: 'OpenAI',
+  openrouter: 'OpenRouter',
+  pangu: '华为盘古',
+  perplexity: 'Perplexity',
+  qianfan: '百度千帆',
+  siliconflow: '硅基流动',
+  tencent: '腾讯混元',
+  together: 'Together AI',
+  vertex: 'Google Vertex AI',
+  zhipu: '智谱',
+}
+
 function getProviderDisplayName(): string {
   const provider = getAPIProvider()
-  const names: Record<string, string> = {
-    dashscope: 'DashScope',
-    deepseek: 'DeepSeek',
-    openai: 'OpenAI',
-    zhipu: 'ZHIPU AI',
-    kimi: 'Kimi',
-    siliconflow: 'SiliconFlow',
-    volcark: '火山引擎 ARK',
-    tencentlke: '腾讯云',
-    minimax: 'MiniMax',
-    baiduqianfan: '百度千帆',
-    huaweicloud: '华为云',
-    openrouter: 'OpenRouter',
-    together: 'Together AI',
-    groq: 'Groq',
-    fireworks: 'Fireworks',
-    perplexity: 'Perplexity',
-    ollama: 'Ollama',
-    lmstudio: 'LM Studio',
-    llamacpp: 'llama.cpp',
-    'nvidia-nim': 'NVIDIA NIM',
-    anthropic: 'Anthropic',
-    generic: '自定义',
-    bedrock: 'AWS Bedrock',
-    vertex: 'Google Vertex AI',
-    foundry: 'Microsoft Foundry',
-  }
-  return names[provider] ?? provider
+  return PROVIDER_DISPLAY_NAMES[provider] ?? provider
 }
 
 /**
- * Gets the common logo display data used by both Logo and CondensedLogo
+ * 获取 Logo 与 CondensedLogo 共用的展示数据
  */
 export function getLogoDisplayData(): {
   version: string
@@ -294,7 +288,7 @@ export function getLogoDisplayData(): {
 }
 
 /**
- * Determines how to display model and provider information based on available width
+ * 根据可用宽度决定模型与 provider 的展示方式
  */
 export function formatModelAndProvider(
   modelName: string,
@@ -328,12 +322,12 @@ export function formatModelAndProvider(
 }
 
 /**
- * Gets recent release notes for Logo v2 display
- * For ants, uses commits bundled at build time
- * For external users, uses public changelog
+ * 获取 Logo v2 展示的最近发布说明。
+ * 内部构建使用构建时打包的提交记录。
+ * 外部用户使用公开更新日志。
  */
 export function getRecentReleaseNotesSync(maxItems: number): string[] {
-  // For ants, use bundled changelog
+  // 内部构建使用打包的更新日志
   if (isInternalBuild()) {
     const changelog = MACRO.VERSION_CHANGELOG
     if (changelog) {
@@ -355,11 +349,11 @@ export function getRecentReleaseNotesSync(maxItems: number): string[] {
     return []
   }
 
-  // Get notes from recent versions
+  // 从最近的版本获取更新说明
   const allNotes: string[] = []
   const versions = Object.keys(parsed)
     .sort((a, b) => (gt(a, b) ? -1 : 1))
-    .slice(0, 3) // Look at top 3 recent versions
+    .slice(0, 3) // 只看最近的 3 个版本
 
   for (const version of versions) {
     const notes = parsed[version]
@@ -368,6 +362,6 @@ export function getRecentReleaseNotesSync(maxItems: number): string[] {
     }
   }
 
-  // Return raw notes without filtering or premature truncation
+  // 返回原始说明，不做过滤或过早截断
   return allNotes.slice(0, maxItems)
 }

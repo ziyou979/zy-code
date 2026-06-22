@@ -1,6 +1,4 @@
-import { type Hunk, structuredPatch } from 'diff'
-
-type StructuredPatchHunk = Hunk
+import { type StructuredPatchHunk, structuredPatch } from 'diff'
 
 import { logEvent } from 'src/services/analytics/index.js'
 import { getLocCounter } from '../bootstrap/state.js'

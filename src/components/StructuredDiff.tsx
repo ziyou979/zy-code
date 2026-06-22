@@ -1,4 +1,3 @@
-// @ts-expect-error
 import type { StructuredPatchHunk } from 'diff'
 import { memo } from 'react'
 import { useSettings } from '../hooks/useSettings.js'

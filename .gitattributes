@@ -1,0 +1,37 @@
+# 默认使用 LF 换行符，Git 自动判断文本文件
+* text=auto eol=lf
+
+# 显式将常见文本后缀标记为文本，确保换行符规范化
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.sh text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.txt text eol=lf
+
+# 显式标记二进制文件，防止换行符规范化
+*.br binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.otf binary
+*.mp3 binary
+*.mp4 binary
+*.webm binary
+*.zip binary
+*.tar binary
+*.gz binary

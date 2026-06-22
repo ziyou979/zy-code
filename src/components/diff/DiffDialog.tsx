@@ -1,4 +1,3 @@
-// @ts-expect-error
 import type { StructuredPatchHunk } from 'diff'
 import { useEffect, useRef, useState } from 'react'
 import type { CommandResultDisplay } from '../../commands.js'

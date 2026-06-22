@@ -1,4 +1,3 @@
-// @ts-expect-error TS2724
 import type { StructuredPatchHunk } from 'diff'
 import * as React from 'react'
 import { Suspense, use, useState } from 'react'
