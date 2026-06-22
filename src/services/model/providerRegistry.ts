@@ -128,8 +128,10 @@ export interface OpenAICompat {
   thinking?: {
     /** 启用 thinking 时传给 API 的参数。effort 为映射后的 provider 参数值，model 为模型名 */
     enable: (effort: string | undefined, model?: string) => Record<string, unknown>
-    /** 显式禁用 thinking 时传给 API 的参数（省略则不传） */
-    disable?: Record<string, unknown>
+    /** 显式禁用 thinking 时传给 API 的参数（省略则不传），支持按模型动态生成 */
+    disable?:
+      | Record<string, unknown>
+      | ((effort: string | undefined, model?: string) => Record<string, unknown>)
     /** 是否支持 preserve_thinking（effort=max 时启用） */
     supportsPreserveThinking?: boolean
   }
@@ -272,8 +274,24 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     openaiCompat: {
       thinking: {
-        enable: () => ({ enable_thinking: true, thinking: { type: 'adaptive' } }),
-        disable: { enable_thinking: false, thinking: { type: 'disabled' } },
+        // DashScope 平台统一使用 thinking.type 控制思考模式，避免与
+        // enable_thinking 混发导致 API 冲突。按模型区分 type 值：
+        // - MiniMax/MiniMax-M3 用 'adaptive'（模型自主判断）
+        // - 其余模型（Qwen/DeepSeek/Kimi/GLM 等）用 'enabled'
+        enable: (_effort, model) => {
+          const m = (model ?? '').toLowerCase()
+          if (m.includes('minimax') || m.includes('m3')) {
+            return { thinking: { type: 'adaptive' } }
+          }
+          return { thinking: { type: 'enabled' } }
+        },
+        disable: (_effort, model) => {
+          const m = (model ?? '').toLowerCase()
+          if (m.includes('minimax') || m.includes('m3')) {
+            return { thinking: { type: 'disabled' } }
+          }
+          return { thinking: { type: 'disabled' } }
+        },
         supportsPreserveThinking: true,
       },
       supportsReasoningContent: true,

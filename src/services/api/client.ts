@@ -149,10 +149,17 @@ export async function getAnthropicClient({
       resolvedBaseURL = process.env.LLM_BASE_URL
     }
     // 3. Onboarding config (configuredBaseUrl)
-    if (!resolvedBaseURL) {
+    // 仅 generic provider 需要从 onboarding 配置读取 URL（它没有 registry 默认值）；
+    // env-or-default / preconfigured provider 有 format-specific 的 registry 默认值，
+    // onboarding 写入的 configuredBaseUrl 是冗余的，且可能在切换 provider 后残留旧值
+    // （如之前配置 llama.cpp 的 localhost 地址），导致覆盖当前 provider 的正确 URL
+    if (!resolvedBaseURL && apiProvider === 'generic') {
       try {
         const { getGlobalConfig } = await import('../../utils/config.js')
-        resolvedBaseURL = getGlobalConfig().configuredBaseUrl
+        const cfg = getGlobalConfig()
+        if (cfg.configuredProvider === apiProvider) {
+          resolvedBaseURL = cfg.configuredBaseUrl
+        }
       } catch {
         // config not ready
       }
@@ -171,11 +178,16 @@ export async function getAnthropicClient({
       }
       const providerConfig: ConstructorParameters<typeof Anthropic>[0] = {
         apiKey: resolvedApiKey,
+        // 显式置空 authToken，避免 SDK 自动读取 ANTHROPIC_AUTH_TOKEN
+        // 与非 Anthropic provider 的 apiKey 鉴权冲突
+        authToken: null,
         baseURL: resolvedBaseURL,
         defaultHeaders: providerHeaders,
         maxRetries: ARGS.maxRetries,
         timeout: ARGS.timeout,
         dangerouslyAllowBrowser: ARGS.dangerouslyAllowBrowser,
+        // 传入代理 / mTLS 配置，否则 Windows 下走代理的网络环境会直连超时
+        fetchOptions: getProxyFetchOptions(),
         ...(ARGS.fetch && { fetch: ARGS.fetch }),
         ...(isDebugToStdErr() && { logger: createStderrLogger() }),
       }
@@ -192,7 +204,12 @@ export async function getAnthropicClient({
     } else {
       try {
         const { getGlobalConfig } = await import('../../utils/config.js')
-        customBaseURL = getGlobalConfig().configuredBaseUrl
+        const cfg = getGlobalConfig()
+        // 仅当 configuredBaseUrl 属于当前 provider 时才使用，
+        // 避免之前配置的其他 provider（如 llama.cpp）的 URL 残留覆盖
+        if (cfg.configuredProvider === apiProvider) {
+          customBaseURL = cfg.configuredBaseUrl
+        }
       } catch {
         // config not ready
       }
@@ -209,11 +226,15 @@ export async function getAnthropicClient({
     }
     const providerAnthropicConfig: ConstructorParameters<typeof Anthropic>[0] = {
       apiKey: customApiKey,
+      // 显式置空 authToken，避免 SDK 自动读取 ANTHROPIC_AUTH_TOKEN
+      authToken: null,
       baseURL: customBaseURL,
       defaultHeaders: customEndpointHeaders,
       maxRetries: ARGS.maxRetries,
       timeout: ARGS.timeout,
       dangerouslyAllowBrowser: ARGS.dangerouslyAllowBrowser,
+      // 传入代理 / mTLS 配置，与默认 Anthropic 客户端行为保持一致
+      fetchOptions: getProxyFetchOptions(),
       ...(ARGS.fetch && { fetch: ARGS.fetch }),
       ...(isDebugToStdErr() && { logger: createStderrLogger() }),
     }
@@ -248,7 +269,7 @@ export async function getAnthropicClient({
  * 与 getAnthropicClient 共享相同的基础设施：
  * - 共享 headers（X-Claude-Code-Session-Id、User-Agent、ZY_CODE_CUSTOM_HEADERS 等）
  * - baseUrl 优先级：传入值 → provider-specific env → OPENAI_BASE_URL → LLM_BASE_URL
- *   → configuredBaseUrl → registry.defaultBaseUrls.openai → api.openai.com/v1
+ *   → (仅 custom-endpoint/generic 且 provider 匹配时) configuredBaseUrl → registry.defaultBaseUrls.openai → api.openai.com/v1
  * - proxy 配置（getProxyFetchOptions）
  * - debug logger（isDebugToStdErr）
  * - timeout 配置（API_TIMEOUT_MS）
@@ -303,10 +324,15 @@ export async function getOpenAIClient(options?: {
       resolvedBaseURL = process.env.LLM_BASE_URL
     }
     // 3. Onboarding config (configuredBaseUrl)
-    if (!resolvedBaseURL) {
+    // 仅 custom-endpoint / generic provider 且 configuredProvider 匹配时使用，
+    // 避免跨 provider 残留的旧 URL（如 llama.cpp 的 localhost）覆盖当前 provider 的默认 URL
+    if (!resolvedBaseURL && (isCustomEndpointProvider(apiProvider) || apiProvider === 'generic')) {
       try {
         const { getGlobalConfig } = await import('../../utils/config.js')
-        resolvedBaseURL = getGlobalConfig().configuredBaseUrl
+        const cfg = getGlobalConfig()
+        if (cfg.configuredProvider === apiProvider) {
+          resolvedBaseURL = cfg.configuredBaseUrl
+        }
       } catch {
         // config not ready
       }
@@ -328,12 +354,14 @@ export async function getOpenAIClient(options?: {
       `provider=${apiProvider}, customHeaders=${!!process.env.ZY_CODE_CUSTOM_HEADERS}`,
   )
 
+  const openAIFetch = buildProxiedFetch()
   return new OpenAI({
     apiKey: resolvedApiKey || '',
     baseURL: resolvedBaseURL,
     timeout,
     maxRetries: options?.maxRetries ?? 3,
     defaultHeaders,
+    ...(openAIFetch && { fetch: openAIFetch }),
     ...(isDebugToStdErr() && { logger: createStderrLogger() }),
   })
 }
@@ -348,7 +376,7 @@ export async function getOpenAIClient(options?: {
  * 与 getOpenAIClient / getAnthropicClient 共享相同的基础设施：
  * - 共享 headers（X-Claude-Code-Session-Id、User-Agent 等）
  * - baseUrl 优先级：传入值 → provider-specific env → GOOGLE_BASE_URL → LLM_BASE_URL
- *   → configuredBaseUrl → registry.defaultBaseUrls.google → generativelanguage.googleapis.com
+ *   → (仅 custom-endpoint/generic 且 provider 匹配时) configuredBaseUrl → registry.defaultBaseUrls.google → generativelanguage.googleapis.com
  */
 export async function getGoogleClient(options?: {
   apiKey?: string
@@ -385,10 +413,15 @@ export async function getGoogleClient(options?: {
       resolvedBaseURL = process.env.LLM_BASE_URL
     }
     // 3. Onboarding config (configuredBaseUrl)
-    if (!resolvedBaseURL) {
+    // 仅 custom-endpoint / generic provider 且 configuredProvider 匹配时使用，
+    // 避免跨 provider 残留的旧 URL 覆盖当前 provider 的默认 URL
+    if (!resolvedBaseURL && (isCustomEndpointProvider(apiProvider) || apiProvider === 'generic')) {
       try {
         const { getGlobalConfig } = await import('../../utils/config.js')
-        resolvedBaseURL = getGlobalConfig().configuredBaseUrl
+        const cfg = getGlobalConfig()
+        if (cfg.configuredProvider === apiProvider) {
+          resolvedBaseURL = cfg.configuredBaseUrl
+        }
       } catch {
         // config not ready
       }
@@ -485,6 +518,24 @@ function buildFetch(
       headers,
     })
   }
+}
+
+/**
+ * 构建 OpenAI SDK 的 fetch 覆盖，注入代理 / mTLS 选项。
+ * OpenAI SDK 不支持 fetchOptions，故通过 fetch 覆盖实现，
+ * 与 Anthropic SDK 的 getProxyFetchOptions 行为对齐。
+ * 无代理 / mTLS 配置时返回 undefined，交由 SDK 使用默认 fetch。
+ */
+function buildProxiedFetch():
+  | ((input: string | URL | Request, init?: RequestInit) => Promise<Response>)
+  | undefined {
+  const proxyOpts = getProxyFetchOptions()
+  if (Object.keys(proxyOpts).length === 0) {
+    return undefined
+  }
+  const inner = globalThis.fetch
+  // biome-ignore lint/suspicious/noExplicitAny: 代理选项（dispatcher/proxy/tls）是平台扩展，非标准 RequestInit
+  return (input, init) => inner(input, { ...init, ...proxyOpts } as any)
 }
 
 /**
