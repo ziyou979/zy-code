@@ -458,7 +458,10 @@ export function convertThinkingForOpenAI(
   if (!thinking || thinking.type === 'disabled') {
     // 部分 provider（如 DashScope）默认开启思考，需显式关闭
     if (thinking?.type === 'disabled' && compat?.thinking?.disable) {
-      return compat.thinking.disable
+      const disableParams = compat.thinking.disable
+      return typeof disableParams === 'function'
+        ? disableParams(outputConfig?.effort as string | undefined, model)
+        : disableParams
     }
     return {}
   }
