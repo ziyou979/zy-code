@@ -64,9 +64,11 @@ describe('getNextPermissionMode', () => {
       ).toBe('auto')
     })
 
-    test('auto → default（循环回起点）', () => {
+    test('auto → acceptEdits（可继续切到 plan）', () => {
       autoModeGateEnabled = true
-      expect(getNextPermissionMode(makeCtx('auto', { isAutoModeAvailable: true }))).toBe('default')
+      expect(getNextPermissionMode(makeCtx('auto', { isAutoModeAvailable: true }))).toBe(
+        'acceptEdits',
+      )
     })
   })
 
