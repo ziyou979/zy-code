@@ -298,7 +298,7 @@ export function buildAPIProviderProperties(): Property[] {
     const providerLabel = {
       bedrock: 'AWS Bedrock',
       vertex: 'Google Vertex AI',
-      foundry: 'Microsoft Foundry',
+      azure: 'Microsoft Azure',
     }[apiProvider]
     properties.push({
       label: tSync('status.apiProvider'),

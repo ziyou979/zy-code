@@ -25,9 +25,10 @@ const MAX_RELEASE_NOTES_SHOWN = 5
  * 2. We fetch the changelog in the background and store it in config
  * 3. Next time the user starts ZY Code, the cached changelog is available immediately
  */
-export const CHANGELOG_URL = 'https://github.com/anthropics/zy-code/blob/main/CHANGELOG.md'
+// TODO 更换为zy的更新日志
+export const CHANGELOG_URL = 'https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md'
 const RAW_CHANGELOG_URL =
-  'https://raw.githubusercontent.com/anthropics/zy-code/refs/heads/main/CHANGELOG.md'
+  'https://raw.githubusercontent.com/anthropics/claude-code/refs/heads/main/CHANGELOG.md'
 
 /**
  * Get the path for the cached changelog file.

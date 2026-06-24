@@ -443,9 +443,9 @@ function OAuthStatusMessage({
                 </Link>
               </Text>
               <Text>
-                · {tSync('oauth.foundryLabel')}:{' '}
-                <Link url="https://code.zy.com/docs/en/microsoft-foundry">
-                  https://code.zy.com/docs/en/microsoft-foundry
+                · {tSync('oauth.azureLabel')}:{' '}
+                <Link url="https://code.zy.com/docs/en/microsoft-azure">
+                  https://code.zy.com/docs/en/microsoft-azure
                 </Link>
               </Text>
               <Text>
