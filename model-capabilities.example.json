@@ -3,7 +3,10 @@
   "models": [
     {
       "pattern": "qwen3.6-max-preview",
-      "capabilities": ["thinking", "structured_outputs", "context_management", "interleaved_thinking", "auto_mode"],
+      "capabilities": ["thinking", "structured_outputs", "auto_mode"],
+      "promptCaching": "explicit",
+      "effortLevels": ["off", "balanced", "extreme"],
+      "preserveThinking": "optional",
       "contextWindow": "200k",
       "maxInputTokens": "200k",
       "maxOutputTokens": "64k",
@@ -17,7 +20,10 @@
     },
     {
       "pattern": "qwen3.6-plus",
-      "capabilities": ["thinking", "structured_outputs", "context_management", "interleaved_thinking", "auto_mode"],
+      "capabilities": ["thinking", "structured_outputs", "auto_mode"],
+      "promptCaching": "implicit",
+      "effortLevels": ["off", "balanced"],
+      "preserveThinking": "always",
       "contextWindow": "200k",
       "maxInputTokens": "200k",
       "maxOutputTokens": 64000,
@@ -51,7 +57,9 @@
     },
     {
       "pattern": "claude-sonnet-4",
-      "capabilities": ["thinking", "adaptive_thinking", "structured_outputs", "context_management", "interleaved_thinking"],
+      "capabilities": ["thinking", "adaptive_thinking", "structured_outputs"],
+      "promptCaching": "explicit",
+      "preserveThinking": "always",
       "contextWindow": "1m",
       "maxInputTokens": "1m",
       "maxOutputTokens": "64k",

@@ -18,7 +18,15 @@ import { getZyConfigHomeDir } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
 import { lazySchema } from '../lazySchema.js'
 
-type ModelCapabilityKind = ProviderCapability | 'auto_mode'
+/**
+ * 模型能力类型（独立于 ProviderCapability）
+ * 这些能力在 model-capabilities.json 中配置，不再依赖 provider 级别声明。
+ */
+export type ModelCapabilityKind =
+  | 'thinking' // 扩展思考（thinking blocks）
+  | 'adaptive_thinking' // 自适应思考模式
+  | 'structured_outputs' // 严格工具 schema / 结构化输出
+  | 'auto_mode' // 自动模式
 
 /**
  * 解析 token 数量字符串，支持 "256k"、"1m"、"4096" 等格式。
@@ -60,16 +68,19 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
         z.enum([
           'thinking',
           'adaptive_thinking',
-          'advisor',
           'structured_outputs',
-          'context_management',
-          'prompt_caching',
-          'web_search',
-          'interleaved_thinking',
           'auto_mode',
         ]),
       )
       .describe('模型支持的能力列表'),
+    promptCaching: z
+      .enum(['implicit', 'explicit'])
+      .optional()
+      .describe(
+        'prompt 缓存模式。' +
+          "'implicit'：隐式缓存，由 provider 自动管理。" +
+          "'explicit'：显式缓存，需要 cache_control 标记。",
+      ),
     effortLevels: z
       .array(z.enum(['off', 'quick', 'light', 'balanced', 'thorough', 'extreme']))
       .optional()
@@ -83,6 +94,14 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
       .describe(
         '模型级 effort 档位→API 参数值映射。优先级高于 provider 级 effortMapping。' +
           '例如 { "light": "high", "balanced": "high", "thorough": "max" }。',
+      ),
+    preserveThinking: z
+      .enum(['optional', 'always'])
+      .optional()
+      .describe(
+        '思考块回传模式。' +
+          "'optional'：可选，effort 额外增一档时回传。" +
+          "'always'：必传，始终回传。",
       ),
     betaHeaders: z
       .array(z.string())
@@ -237,6 +256,15 @@ export function localModelHasCapability(model: string, capability: ModelCapabili
 }
 
 /**
+ * 从本地配置获取模型的 prompt 缓存模式。
+ * 返回 'implicit'（隐式缓存）、'explicit'（显式缓存）或 undefined（不支持）。
+ */
+export function getModelPromptCachingMode(model: string): 'implicit' | 'explicit' | undefined {
+  const entry = getLocalModelCapability(model)
+  return entry?.promptCaching
+}
+
+/**
  * 从本地配置获取模型支持的 effort 档位列表。
  * 未配置 effortLevels 时返回 undefined(交由 provider 默认档位决定)。
  */
@@ -252,6 +280,15 @@ export function getLocalModelEffortLevels(model: string): EffortLevel[] | undefi
 export function getLocalModelEffortMap(model: string): Record<string, string> | undefined {
   const entry = getLocalModelCapability(model)
   return entry?.effortMap
+}
+
+/**
+ * 从本地配置获取模型的 preserve_thinking 传递模式。
+ * 未配置时返回 undefined（不支持 preserve_thinking）。
+ */
+export function getLocalModelPreserveThinking(model: string): 'optional' | 'always' | undefined {
+  const entry = getLocalModelCapability(model)
+  return entry?.preserveThinking
 }
 
 /**

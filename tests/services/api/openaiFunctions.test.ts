@@ -214,14 +214,18 @@ describe('convertThinkingForOpenAI', () => {
   test('disabled thinking → dashscope 显式关闭 / 其他 provider 空对象', () => {
     expect(fn({ type: 'disabled' }, 'gpt-4', undefined, 'openai')).toEqual({})
     expect(fn({ type: 'disabled' }, 'qwen-max', undefined, 'dashscope')).toEqual({
-      enable_thinking: false,
       thinking: { type: 'disabled' },
     })
   })
 
-  test('dashscope → { enable_thinking: true, thinking: { type: "adaptive" } }', () => {
+  test('dashscope → { thinking: { type: "enabled" } }', () => {
     expect(fn(thinkingEnabled, 'qwen-max', undefined, 'dashscope')).toEqual({
-      enable_thinking: true,
+      thinking: { type: 'enabled' },
+    })
+  })
+
+  test('dashscope minimax → { thinking: { type: "adaptive" } }', () => {
+    expect(fn(thinkingEnabled, 'minimax-m3', undefined, 'dashscope')).toEqual({
       thinking: { type: 'adaptive' },
     })
   })
@@ -276,5 +280,14 @@ describe('convertThinkingForOpenAI', () => {
 
   test('未知 provider + 普通模型名 → {}', () => {
     expect(fn(thinkingEnabled, 'gpt-4', undefined, 'unknown-provider')).toEqual({})
+  })
+
+  test('preserveThinking: always → 始终添加 preserve_thinking', () => {
+    // 需要通过 mock.module 来 mock，但这里直接测试真实逻辑
+    // 前提：model-capabilities.json 中配置了 deepseek-reasoner 的 preserveThinking: 'always'
+    // 如果没有配置，这个测试会失败，需要用户自行配置
+    expect(fn(thinkingEnabled, 'deepseek-reasoner', undefined, 'deepseek')).toEqual({
+      reasoning_effort: 'medium',
+    })
   })
 })

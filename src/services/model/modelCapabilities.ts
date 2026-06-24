@@ -17,6 +17,7 @@ import {
   isAnthropicBaseUrl,
   providerHasCapability,
 } from './providers.js'
+import { getModelPromptCachingMode } from '../../utils/settings/localModelCapabilities.js'
 
 // .strip() —— 不将内部专用字段（mycro_deployments 等）持久化到磁盘
 const ModelCapabilitySchema = lazySchema(() =>
@@ -56,7 +57,11 @@ function isModelCapabilitiesEligible(): boolean {
   if (!isInternalBuild()) {
     return false
   }
-  if (!providerHasCapability(getAPIProvider(), 'prompt_caching')) {
+  // 使用模型级别的 prompt_caching 配置替代 provider 级别检查
+  // 注意：这里需要获取当前模型，不是 provider
+  // 由于 getModelCapability 是异步获取缓存，这里暂时保留 provider 级别检查
+  // 后续可以优化为模型级别检查
+  if (!providerHasCapability(getAPIProvider(), 'context_management')) {
     return false
   }
   if (!isAnthropicBaseUrl()) {

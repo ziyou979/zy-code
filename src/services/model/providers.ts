@@ -4,13 +4,14 @@ import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   getLocalModelCapability,
   getLocalModelCosts,
+  type ModelCapabilityKind,
   localModelHasCapability,
   parseTokenCount,
 } from '../../utils/settings/localModelCapabilities.js'
 import {
   type ApiFormat,
   getProviderEntry,
-  type OpenAICompat,
+  type OpenAiAttr,
   PROVIDER_REGISTRY,
 } from './providerRegistry.js'
 
@@ -110,17 +111,13 @@ export function isAnthropicModel(model: string): boolean {
  * 添加新 provider 时，请修改 providerRegistry.ts 而非此文件。
  */
 // 注:effort（思考强度）能力已从布尔标记升级为档位列表,
-// 见 ProviderEntry.defaultEffortLevels / model-capabilities.json 的 effortLevels。
+// 见 ProviderEntry.effortMapping / model-capabilities.json 的 effortLevels。
 // 此处不再有 'effort' / 'max_effort' 布尔能力。
+// 注:模型能力（thinking、adaptive_thinking、structured_outputs、prompt_caching）
+// 已移至 model-capabilities.json 配置，ProviderCapability 仅保留 provider 级能力。
 export type ProviderCapability =
-  | 'thinking' // 扩展思考（thinking blocks）
-  | 'adaptive_thinking' // 自适应思考模式
-  | 'advisor' // advisor 工具支持
-  | 'structured_outputs' // 严格工具 schema / 结构化输出 beta
-  | 'context_management' // 上下文管理 beta（思考保留）
-  | 'prompt_caching' // cache_control / prompt 缓存 beta
-  | 'web_search' // 网络搜索工具
-  | 'interleaved_thinking' // 交错思考（ISP）beta
+  | 'context_management' // 上下文管理 beta（Anthropic 特有，后续由框架层实现）
+  | 'advisor' // advisor 工具支持（Anthropic 特有）
 
 /** 按 provider 的能力声明 —— 从 PROVIDER_REGISTRY 自动生成。 */
 const PROVIDER_CAPABILITIES: Record<string, Set<ProviderCapability>> = Object.fromEntries(
@@ -166,7 +163,8 @@ export function isCompatibleProvider(provider: APIProvider): boolean {
   if (!entry) {
     return false
   }
-  return entry.endpointType !== 'hardcoded' || !['bedrock', 'vertex', 'foundry'].includes(entry.id)
+  // bedrock、vertex、azure 使用 Anthropic 格式但不走 Anthropic SDK
+  return !['bedrock', 'vertex', 'azure'].includes(entry.id)
 }
 
 /**
@@ -231,25 +229,15 @@ export function isAnthropicProvider(provider: APIProvider): boolean {
  */
 export function isCustomEndpointProvider(provider: APIProvider): boolean {
   const entry = getProviderEntry(provider)
-  return entry?.endpointType === 'custom' && entry.id !== 'generic'
+  return entry?.endpointType.includes('custom') === true && entry.id !== 'generic'
 }
 
 /**
- * 判断是否为在 onboarding 时预配置 base URL 的 provider。
- * 这类 provider 的 base URL 会在 onboarding 时保存到 configuredBaseUrl。
+ * 判断是否为支持环境变量覆盖 base URL 的 provider。
  */
-export function isPreconfiguredEndpointProvider(provider: APIProvider): boolean {
+export function isEnvEndpointProvider(provider: APIProvider): boolean {
   const entry = getProviderEntry(provider)
-  return entry?.endpointType === 'preconfigured'
-}
-
-/**
- * 判断是否为从环境变量或默认值解析 base URL 的 provider。
- * 这类 provider 有专门的客户端创建逻辑。
- */
-export function isEnvOrDefaultProvider(provider: APIProvider): boolean {
-  const entry = getProviderEntry(provider)
-  return entry?.endpointType === 'env-or-default'
+  return entry?.endpointType.includes('env') === true
 }
 
 /**
@@ -257,15 +245,13 @@ export function isEnvOrDefaultProvider(provider: APIProvider): boolean {
  * 模型能力配置已从 settings.json 独立出来。
  *
  * 用法：用 `modelHasCapability(model, 'thinking')` 替代硬编码的模型判断。
+ * 注意：仅查询模型级别配置，不再 fallback 到 provider。
  */
 export function modelHasCapability(
   model: string,
-  capability: ProviderCapability | 'auto_mode',
+  capability: ModelCapabilityKind,
 ): boolean {
-  if (localModelHasCapability(model, capability)) {
-    return true
-  }
-  return providerHasCapability(getAPIProvider(), capability as ProviderCapability)
+  return localModelHasCapability(model, capability)
 }
 
 export function getModelMaxInputTokens(model: string): number | undefined {
@@ -292,12 +278,12 @@ export function getModelCostsFromSettings(
 }
 
 /**
- * 获取 provider 的 OpenAI 兼容协议差异声明。
+ * 获取 provider 的 OpenAI 兼容协议扩展属性。
  * 消息转换层通过此配置决定行为，而非判断 provider 名称。
  */
-export function getProviderCompat(provider?: string): OpenAICompat | undefined {
+export function getProviderAttr(provider?: string): OpenAiAttr | undefined {
   const entry = getProviderEntry(provider ?? getAPIProvider())
-  return entry?.openaiCompat
+  return entry?.openaiAttr
 }
 
 /**

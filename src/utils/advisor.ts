@@ -1,9 +1,8 @@
-import { modelHasCapability } from 'src/services/model/providers.js'
+import { getAPIProvider, providerHasCapability } from 'src/services/model/providers.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import type { TokenUsage } from '../types/llm.js'
 import { shouldIncludeExperimentalBetas } from './betas.js'
 import { isEnvTruthy, isInternalBuild } from './envUtils.js'
-import { localModelHasCapability } from './settings/localModelCapabilities.js'
 import { getInitialSettings } from './settings/settings.js'
 
 // The SDK does not yet have types for advisor blocks.
@@ -79,12 +78,8 @@ export function getExperimentAdvisorModels():
 
 // @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsAdvisor(model: string): boolean {
-  // settings.json 配置优先
-  if (modelHasCapability(model, 'advisor')) {
-    return true
-  }
-  // ~/.zy/model-capabilities.json 本地配置
-  if (localModelHasCapability(model, 'advisor')) {
+  // advisor 是 provider 级能力（Anthropic 特有）
+  if (providerHasCapability(getAPIProvider(), 'advisor')) {
     return true
   }
   // 内部构建默认开启
@@ -93,12 +88,8 @@ export function modelSupportsAdvisor(model: string): boolean {
 
 // @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function isValidAdvisorModel(model: string): boolean {
-  // settings.json 配置优先
-  if (modelHasCapability(model, 'advisor')) {
-    return true
-  }
-  // ~/.zy/model-capabilities.json 本地配置
-  if (localModelHasCapability(model, 'advisor')) {
+  // advisor 是 provider 级能力（Anthropic 特有）
+  if (providerHasCapability(getAPIProvider(), 'advisor')) {
     return true
   }
   // 内部构建默认开启

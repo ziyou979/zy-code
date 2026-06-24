@@ -17,6 +17,7 @@ import {
   isAnthropicBaseUrl,
   providerHasCapability,
 } from 'src/services/model/providers.js'
+import { getModelPromptCachingMode } from './settings/localModelCapabilities.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
 import { FileEditTool } from 'src/tools/FileEditTool/FileEditTool.js'
 import { normalizeFileEditInput, stripTrailingWhitespace } from 'src/tools/FileEditTool/utils.js'
@@ -191,7 +192,8 @@ export async function toolToAPISchema(
     // 仅限于直接 api.anthropic.com：代理（LiteLLM 等）和 Bedrock/Vertex
     // 在 Zy 4.5 中以 400 错误拒绝此字段。见 GH#32742，PR #21729。
     if (
-      providerHasCapability(getAPIProvider(), 'prompt_caching') &&
+      options.model &&
+      getModelPromptCachingMode(options.model) === 'explicit' &&
       isAnthropicBaseUrl() &&
       (getFeatureValue_CACHED_MAY_BE_STALE('zy_fgts', false) ||
         isEnvTruthy(process.env.ZY_CODE_ENABLE_FINE_GRAINED_TOOL_STREAMING))

@@ -96,8 +96,8 @@ export function modelSupportsThinking(model: string): boolean {
   if (probed !== undefined) {
     return probed
   }
-  const provider = getAPIProvider()
-  return providerHasCapability(provider, 'thinking')
+  // 移除 provider 级别 fallback，能力仅从模型配置查询
+  return false
 }
 
 // @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
@@ -109,8 +109,8 @@ export function modelSupportsAdaptiveThinking(model: string): boolean {
   if (probed !== undefined) {
     return probed
   }
-  const provider = getAPIProvider()
-  return providerHasCapability(provider, 'adaptive_thinking')
+  // 移除 provider 级别 fallback，能力仅从模型配置查询
+  return false
 }
 
 export function shouldEnableThinkingByDefault(model?: string): boolean {

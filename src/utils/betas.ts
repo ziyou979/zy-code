@@ -73,18 +73,13 @@ export function filterAllowedSdkBetas(sdkBetas: string[] | undefined): string[] 
   return allowed.length > 0 ? allowed : undefined
 }
 
-// Generally, foundry supports all direct API features;
+// Generally, azure supports all direct API features;
 // however out of an abundance of caution, we do not enable any which are behind an experiment
 
 // Context management is supported on providers that declare the capability
 export function modelSupportsContextManagement(model: string): boolean {
-  if (modelHasCapability(model, 'context_management')) {
-    return true
-  }
-  if (providerHasCapability(getAPIProvider(), 'context_management')) {
-    return true
-  }
-  return false
+  // context_management 是 provider 级能力，仅通过 provider 检查
+  return providerHasCapability(getAPIProvider(), 'context_management')
 }
 
 // 1M 上下文模型仍需 context-1m beta header 才能解锁完整窗口——不发的话,即便
@@ -96,15 +91,8 @@ function modelSupports1MContext(model: string): boolean {
 
 // @[MODEL LAUNCH]: Add the new model ID to this list if it supports structured outputs.
 export function modelSupportsStructuredOutputs(model: string): boolean {
-  if (modelHasCapability(model, 'structured_outputs')) {
-    return true
-  }
-  const provider = getAPIProvider()
-  // Structured outputs only supported on providers that declare the capability
-  if (!providerHasCapability(provider, 'structured_outputs')) {
-    return false
-  }
-  return true
+  // 移除 provider 级别 fallback，能力仅从模型配置查询
+  return modelHasCapability(model, 'structured_outputs')
 }
 
 // @[MODEL LAUNCH]: Add the new model if it supports auto mode (specifically PI probes) — ask in #proj-zy-code-safety-research.

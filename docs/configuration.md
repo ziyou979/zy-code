@@ -165,9 +165,10 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
       "pattern": "claude-sonnet-4",            // 必填:大小写不敏感子串匹配 model id
       "capabilities": [                         // 必填:能力列表
         "thinking", "adaptive_thinking", "structured_outputs",
-        "context_management", "interleaved_thinking", "prompt_caching",
-        "web_search", "advisor", "auto_mode"
+        "auto_mode"
       ],
+      "promptCaching": "explicit",              // 可选:prompt 缓存模式("implicit"|"explicit")
+      "preserveThinking": "always",             // 可选:思考块回传模式("optional"|"always")
       "effortLevels": ["low","medium","high"],  // 可选:effort 档位(省略=不支持设 effort)
       "betaHeaders": ["context-management-2025-06-27"], // 可选:附加 anthropic-beta(见 §5)
       "contextWindow": "1m",                    // 可选:上下文窗口(数字或 "200k"/"1m")
