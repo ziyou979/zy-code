@@ -9,7 +9,7 @@ import {
   getLocalModelEffortLevels,
   getLocalModelEffortMap,
 } from './settings/localModelCapabilities.js'
-import { isEnvTruthy, isInternalBuild } from './envUtils.js'
+import { isEnvTruthy } from './envUtils.js'
 
 // ---------------------------------------------------------------------------
 // 语义化 Effort 档位体系（provider 无关）
@@ -48,26 +48,16 @@ export type EffortValue = EffortLevel
 // 映射表声明在 providerRegistry.ts 的 effortMapping 字段中。
 // ---------------------------------------------------------------------------
 
-// anthropic 的映射作为回退默认值
-const DEFAULT_EFFORT_MAPPING: Record<string, string> = {
-  off: 'off',
-  quick: 'low',
-  light: 'medium',
-  balanced: 'high',
-  thorough: 'xhigh',
-  extreme: 'max',
-  orchestrate: 'max',
-}
-
 /**
  * 将内部 effort 档位映射为目标 provider 的 API 参数值。
- * 优先级：模型级 effortMap（model-capabilities.json）→ provider 级 effortMapping → anthropic 默认。
+ * 优先级：模型级 effortMap（model-capabilities.json）→ provider 级 effortMapping。
+ * 没有配置 effortMapping 的 provider 不支持 effort，返回 undefined。
  */
 export function mapEffortToProvider(
   effort: EffortLevel,
   providerId: string,
   model?: string,
-): string {
+): string | undefined {
   const key = effort === 'orchestrate' ? 'extreme' : effort
   // 1. 模型级映射（用户本地配置优先）
   if (model) {
@@ -76,34 +66,9 @@ export function mapEffortToProvider(
       return modelMap[key]!
     }
   }
-  // 2. Provider 级映射 → 3. 默认
-  const map = getProviderEffortMapping(providerId) ?? DEFAULT_EFFORT_MAPPING
-  return map[key] ?? 'medium'
-}
-
-// ---------------------------------------------------------------------------
-// 旧值兼容迁移
-// ---------------------------------------------------------------------------
-
-const LEGACY_EFFORT_MAP: Record<string, EffortLevel> = {
-  minimal: 'quick',
-  low: 'light',
-  medium: 'balanced',
-  high: 'thorough',
-  xhigh: 'extreme',
-  max: 'extreme',
-  ultracode: 'orchestrate',
-}
-
-/**
- * 将旧格式 effort 值迁移为新语义档位。
- * 已经是新格式则原样返回。
- */
-export function migrateLegacyEffort(value: string): EffortLevel | undefined {
-  if (isEffortLevel(value)) {
-    return value
-  }
-  return LEGACY_EFFORT_MAP[value]
+  // 2. Provider 级映射
+  const map = getProviderEffortMapping(providerId)
+  return map?.[key]
 }
 
 // ---------------------------------------------------------------------------
@@ -121,14 +86,10 @@ export function getModelEffortLevels(model: string): EffortLevel[] {
     return local
   }
 
-  // 2. provider 声明
+  // 2. provider 声明（effortMapping 的 key 即为支持的档位）
   const entry = getProviderEntry(getAPIProvider())
-  const providerLevels =
-    isInternalBuild() && entry?.internalEffortLevels
-      ? entry.internalEffortLevels
-      : entry?.defaultEffortLevels
-  if (providerLevels && providerLevels.length > 0) {
-    return [...providerLevels]
+  if (entry?.effortMapping) {
+    return Object.keys(entry.effortMapping) as EffortLevel[]
   }
 
   // 3. 环境变量强制开启
@@ -204,8 +165,7 @@ export function parseEffortValue(value: unknown): EffortValue | undefined {
   if (isEffortLevel(str)) {
     return str
   }
-  // 兼容旧值
-  return migrateLegacyEffort(str)
+  return undefined
 }
 
 /**
@@ -233,8 +193,7 @@ export function getInitialEffortSetting(): EffortLevel | undefined {
   if (!raw) {
     return undefined
   }
-  // 支持读取旧值
-  return migrateLegacyEffort(raw) ?? toPersistableEffort(raw as EffortValue)
+  return toPersistableEffort(raw as EffortValue)
 }
 
 export function resolvePickerEffortPersistence(

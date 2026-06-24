@@ -3,8 +3,7 @@
  *
  * 重点关注：
  * - isEffortLevel 类型守卫
- * - parseEffortValue 含旧值兼容
- * - migrateLegacyEffort 旧→新映射
+ * - parseEffortValue 解析验证
  * - clampEffort 向下/向上搜索逻辑
  * - toPersistableEffort 过滤 orchestrate
  * - convertEffortValueToLevel / isOrchestrateEffort
@@ -20,7 +19,6 @@ import {
   getEffortLevelDescription,
   isEffortLevel,
   isOrchestrateEffort,
-  migrateLegacyEffort,
   type PersistableEffortLevel,
   parseEffortValue,
   resolvePickerEffortPersistence,
@@ -38,7 +36,7 @@ describe('effort', () => {
     test('无效值返回 false', () => {
       expect(isEffortLevel('invalid')).toBe(false)
       expect(isEffortLevel('')).toBe(false)
-      expect(isEffortLevel('medium')).toBe(false) // 旧值
+      expect(isEffortLevel('medium')).toBe(false) // 旧值不再支持
     })
   })
 
@@ -54,12 +52,12 @@ describe('effort', () => {
       expect(parseEffortValue('Quick')).toBe('quick')
     })
 
-    test('旧值自动迁移', () => {
-      expect(parseEffortValue('medium')).toBe('balanced')
-      expect(parseEffortValue('high')).toBe('thorough')
-      expect(parseEffortValue('max')).toBe('extreme')
-      expect(parseEffortValue('low')).toBe('light')
-      expect(parseEffortValue('minimal')).toBe('quick')
+    test('旧值返回 undefined', () => {
+      expect(parseEffortValue('medium')).toBeUndefined()
+      expect(parseEffortValue('high')).toBeUndefined()
+      expect(parseEffortValue('max')).toBeUndefined()
+      expect(parseEffortValue('low')).toBeUndefined()
+      expect(parseEffortValue('minimal')).toBeUndefined()
     })
 
     test('null/undefined/空字符串返回 undefined', () => {
@@ -70,26 +68,6 @@ describe('effort', () => {
 
     test('完全无效值返回 undefined', () => {
       expect(parseEffortValue('garbage')).toBeUndefined()
-    })
-  })
-
-  describe('migrateLegacyEffort', () => {
-    test('已经是新格式直接返回', () => {
-      expect(migrateLegacyEffort('balanced')).toBe('balanced')
-    })
-
-    test('旧格式映射', () => {
-      expect(migrateLegacyEffort('minimal')).toBe('quick')
-      expect(migrateLegacyEffort('low')).toBe('light')
-      expect(migrateLegacyEffort('medium')).toBe('balanced')
-      expect(migrateLegacyEffort('high')).toBe('thorough')
-      expect(migrateLegacyEffort('xhigh')).toBe('extreme')
-      expect(migrateLegacyEffort('max')).toBe('extreme')
-      expect(migrateLegacyEffort('ultracode')).toBe('orchestrate')
-    })
-
-    test('未知值返回 undefined', () => {
-      expect(migrateLegacyEffort('unknown')).toBeUndefined()
     })
   })
 
