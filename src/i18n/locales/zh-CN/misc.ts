@@ -5,7 +5,7 @@ export const zhMisc: TranslationResource = {
   'assistantThinking.thinking': '思考中…',
   'autoMode.title': '启用自动模式？',
   'autoMode.description':
-    '自动模式让 ZY code 自动处理权限提示——Zy 会在执行前检查每个工具调用是否存在风险操作或提示词注入。ZY code 判定安全的操作会直接执行，判定有风险的操作会被阻止并尝试其他方案。适合长时间运行的任务。会话成本略高。ZY code 可能出错导致有害命令被执行，建议仅在隔离环境中使用。按 Shift+Tab 切换模式。',
+    '自动模式让 ZY code 自动处理权限提示——ZY code 会在执行前检查每个工具调用是否存在风险操作或提示词注入，判定安全的操作会直接执行，判定有风险的操作会被阻止并尝试其他方案。适合长时间运行的任务，会话成本略高，有可能出错导致有害命令被执行，建议仅在隔离环境中使用。按 Shift+Tab 切换模式。',
   'autoMode.acceptDefault': '是，并设为默认模式',
   'autoMode.accept': '是，启用自动模式',
   'autoMode.declineExit': '否，退出',

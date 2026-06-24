@@ -54,7 +54,7 @@ export const enSession: TranslationResource = {
   'oauth.errorPrefix': 'OAuth error:',
   'oauth.forceLoginMethod.console': 'Login method pre-selected: API Usage Billing',
   'oauth.forceLoginMethod.zyai': 'Login method pre-selected: Subscription Plan (Zy Pro/Max)',
-  'oauth.foundryLabel': 'Microsoft Foundry',
+  'oauth.azureLabel': 'Microsoft Azure',
   'oauth.introMessage':
     'ZY Code can be used with your Zy subscription or billed based on API usage through your Console account.',
   'oauth.invalidCode': 'Invalid code. Please make sure the full code was copied',
@@ -62,7 +62,7 @@ export const enSession: TranslationResource = {
   'oauth.loginSuccessful': 'Login successful. Press Enter to continue…',
   'oauth.openingBrowserToSignIn': 'Opening browser to sign in…',
   'oauth.pasteCodePrompt': 'Paste code here if prompted',
-  'oauth.platformOptionDesc': 'Amazon Bedrock, Microsoft Foundry, or Vertex AI',
+  'oauth.platformOptionDesc': 'Amazon Bedrock, Microsoft Azure, or Vertex AI',
   'oauth.platformOptionLabel': '3rd-party platform ·',
   'oauth.pressEnterToGoBack': 'Press Enter to go back',
   'oauth.pressEnterToRetry': 'Press Enter to retry.',
@@ -70,7 +70,7 @@ export const enSession: TranslationResource = {
   'oauth.selectLoginMethod': 'Select login method:',
   'oauth.storeTokenSecurely': "Store this token securely. You won't be able to see it again.",
   'oauth.thirdPartyPlatformsDesc':
-    'You can use ZY Code with Amazon Bedrock, Microsoft Foundry, or Google Vertex AI.',
+    'You can use ZY Code with Amazon Bedrock, Microsoft Azure, or Google Vertex AI.',
   'oauth.thirdPartyPlatformsEnterpriseHint':
     'These options are typically used for enterprise deployments.',
   'oauth.tokenCreatedSuccess': '✓ Long-lived authentication token created successfully!',
