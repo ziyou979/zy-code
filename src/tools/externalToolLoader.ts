@@ -4,6 +4,11 @@
  * 运行时扫描 ~/.zy/tools/ 目录，动态 import 用户定义的工具，
  * 通过 adaptExternalTool() 包装后注册到 toolRegistry。
  * 加载失败不阻塞启动，仅记录警告日志。
+ *
+ * 外部工具覆盖机制：
+ * 当外部工具与内置工具同名时（如 name: 'WebSearch'），
+ * 内置工具可通过 hasExternalToolOverride() 检测并自动禁用，
+ * 外部工具自动生效，实现用户自定义工具替换官方工具的能力。
  */
 import { existsSync, readdirSync, statSync } from 'node:fs'
 import { extname, join } from 'node:path'
@@ -12,6 +17,20 @@ import { getZyConfigHomeDir } from '../utils/envUtils.js'
 import { logError } from '../utils/log.js'
 import { adaptExternalTool, type ExternalToolDefinition } from './externalToolAdapter.js'
 import { toolRegistry } from './registry.js'
+
+/** 已加载的外部工具名称集合，用于覆盖检测 */
+const externalToolNames = new Set<string>()
+
+/**
+ * 检查指定名称是否已被外部工具覆盖。
+ * 内置工具可调用此函数决定是否禁用自身。
+ *
+ * @param name - 工具名称
+ * @returns true 如果存在同名的外部工具
+ */
+export function hasExternalToolOverride(name: string): boolean {
+  return externalToolNames.has(name)
+}
 
 /** ~/.zy/tools/ 目录路径 */
 function getExternalToolsDir(): string {
@@ -134,6 +153,7 @@ export async function loadExternalTools(): Promise<number> {
 
       const tool = adaptExternalTool(definition)
       toolRegistry.register(tool)
+      externalToolNames.add(definition.name)
       loadedNames.add(definition.name)
       loadedCount++
     } catch (error) {
