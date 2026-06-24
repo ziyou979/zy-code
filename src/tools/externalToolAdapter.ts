@@ -27,6 +27,8 @@ export interface ExternalToolDefinition {
   inputSchema: ToolInputJSONSchema
   /** 工具执行函数，返回字符串或可序列化对象 */
   call(args: Record<string, unknown>): Promise<string | Record<string, unknown>>
+  /** 是否启用（默认 true，设为 false 可快捷关闭此工具） */
+  enabled?: boolean
   /** 是否只读（默认 true，安全优先） */
   isReadOnly?: boolean
   /** ToolSearch 搜索关键词提示 */

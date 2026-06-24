@@ -141,6 +141,11 @@ export async function loadExternalTools(): Promise<number> {
         continue
       }
 
+      // enabled: false 时跳过加载，快捷关闭工具
+      if (definition.enabled === false) {
+        continue
+      }
+
       // 检查名称冲突
       if (loadedNames.has(definition.name)) {
         logError(
