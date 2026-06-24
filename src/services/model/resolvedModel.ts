@@ -6,7 +6,7 @@ import { modelSupportsEffort } from '../../utils/effort.js'
 import { modelSupportsAdaptiveThinking, modelSupportsThinking } from '../../utils/thinking.js'
 import { getMaxOutputTokensForModel } from '../api/apiHelpers.js'
 import { normalizeModelStringForAPI } from './model.js'
-import { getProviderEntry, type OpenAICompat } from './providerRegistry.js'
+import { getProviderEntry, type OpenAiAttr } from './providerRegistry.js'
 import { type APIProvider, getAPIProvider, isAnthropicModel } from './providers.js'
 
 export interface ResolvedModel {
@@ -28,8 +28,8 @@ export interface ResolvedModel {
   maxThinkingTokens: number
   /** 上下文窗口大小 */
   contextWindow: number
-  /** OpenAI 兼容协议差异配置 */
-  openaiCompat?: OpenAICompat
+  /** OpenAI 兼容协议扩展属性 */
+  openaiAttr?: OpenAiAttr
   /** effort 档位→API 参数值映射 */
   effortMapping?: Record<string, string>
   /** 是否为 Anthropic 模型（影响 beta header、effort 参数格式等） */
@@ -54,7 +54,7 @@ export function resolveModel(modelName: string): ResolvedModel {
     maxOutputTokens: getMaxOutputTokensForModel(modelName),
     maxThinkingTokens: getMaxThinkingTokensForModel(modelName),
     contextWindow: getContextWindowForModel(modelName),
-    openaiCompat: entry?.openaiCompat,
+    openaiAttr: entry?.openaiAttr,
     effortMapping: entry?.effortMapping,
     isAnthropic: isAnthropicModel(modelName),
   }

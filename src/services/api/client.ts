@@ -8,10 +8,9 @@ import {
   isAnthropicBaseUrl,
   isAnthropicProvider,
   isCustomEndpointProvider,
-  isEnvOrDefaultProvider,
+  isEnvEndpointProvider,
   isGoogleProvider,
   isOpenAIProvider,
-  isPreconfiguredEndpointProvider,
 } from 'src/services/model/providers.js'
 import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/utils/auth.js'
 import { getUserAgent } from 'src/utils/http.js'
@@ -128,11 +127,10 @@ export async function getAnthropicClient({
   const apiProvider = getAPIProvider()
   const registryEntry = getProviderEntry(apiProvider)
 
+  // 处理有默认值的 provider（endpointType 包含 'default'）
   if (
     registryEntry &&
-    (isEnvOrDefaultProvider(apiProvider) ||
-      isPreconfiguredEndpointProvider(apiProvider) ||
-      apiProvider === 'generic')
+    (registryEntry.endpointType.includes('default') || apiProvider === 'generic')
   ) {
     const resolvedApiKey = getApiKey()
     let resolvedBaseURL: string | undefined
@@ -195,7 +193,7 @@ export async function getAnthropicClient({
     }
   }
 
-  // 本地推理引擎（ollama、lmstudio、llamacpp、nvidia-nim 等）
+  // 本地推理引擎（ollama、lmstudio、llamacpp、nim 等）
   if (isCustomEndpointProvider(apiProvider) && registryEntry) {
     // 优先级：环境变量 > onboarding 配置 > registry 默认值
     let customBaseURL: string | undefined

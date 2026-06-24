@@ -44,7 +44,7 @@ export interface OpenAICreateParams extends ChatCompletionCreateParamsBase {
 import { normalizeModelStringForAPI } from '../../../services/model/model.js'
 import { getProviderEntry } from '../../../services/model/providerRegistry.js'
 import { getAPIProvider } from '../../../services/model/providers.js'
-import { localModelHasCapability } from '../../../utils/settings/localModelCapabilities.js'
+import { getLocalModelPreserveThinking, localModelHasCapability } from '../../../utils/settings/localModelCapabilities.js'
 
 interface DashScopeChatCompletionDelta {
   content?: string | null
@@ -117,18 +117,19 @@ type AnyMessage = LLMMessage | Record<string, unknown>
 
 /**
  * 判断是否支持 reasoning_content 独立字段回传协议。
- * 通过 providerRegistry 的 openaiCompat.supportsReasoningContent 声明。
+ * 通过 model-capabilities.json 的 preserveThinking 字段声明。
  * 兜底：模型名含 'deepseek' 时检查 localModelCapabilities。
  */
 function supportsReasoningContentField(model: string | undefined): boolean {
   if (!model) {
     return false
   }
-  const compat = getProviderEntry(getAPIProvider())?.openaiCompat
-  if (compat?.supportsReasoningContent) {
+  // 从模型级别配置获取 preserveThinking
+  const preserveThinking = getLocalModelPreserveThinking(model)
+  if (preserveThinking) {
     return true
   }
-  // 兜底：模型名含 deepseek 但通过 generic/siliconflow 等未声明 compat 的 provider 接入时
+  // 兜底：模型名含 deepseek 但通过 generic/siliconflow 等未声明配置的 provider 接入时
   if (model.toLowerCase().includes('deepseek')) {
     return localModelHasCapability(model, 'thinking')
   }
@@ -453,12 +454,12 @@ export function convertThinkingForOpenAI(
   overrideProvider?: string,
 ): Record<string, unknown> {
   const provider = overrideProvider ?? getAPIProvider()
-  const compat = getProviderEntry(provider)?.openaiCompat
+  const attr = getProviderEntry(provider)?.openaiAttr
 
   if (!thinking || thinking.type === 'disabled') {
     // 部分 provider（如 DashScope）默认开启思考，需显式关闭
-    if (thinking?.type === 'disabled' && compat?.thinking?.disable) {
-      const disableParams = compat.thinking.disable
+    if (thinking?.type === 'disabled' && attr?.thinking?.disable) {
+      const disableParams = attr.thinking.disable
       return typeof disableParams === 'function'
         ? disableParams(outputConfig?.effort as string | undefined, model)
         : disableParams
@@ -469,15 +470,26 @@ export function convertThinkingForOpenAI(
   const effort = outputConfig?.effort as string | undefined
 
   // 优先使用注册表中的声明式配置
-  if (compat?.thinking) {
-    const params = compat.thinking.enable(effort, model)
-    if (compat.thinking.supportsPreserveThinking && effort === 'max') {
+  if (attr?.thinking) {
+    const params = attr.thinking.enable(effort, model)
+
+    // 从模型级别配置获取思考块回传模式
+    const preserveThinking = getLocalModelPreserveThinking(model)
+
+    // 必传模式：始终回传（mimo、deepseek）
+    if (preserveThinking === 'always') {
       return { ...params, preserve_thinking: true }
     }
+
+    // 可选模式：effort 为 extreme 时回传（dashscope、zhipu）
+    if (preserveThinking === 'optional' && effort === 'extreme') {
+      return { ...params, preserve_thinking: true }
+    }
+
     return params
   }
 
-  // 兜底：模型名启发式（用于未注册 compat 的 provider）
+  // 兜底：模型名启发式（用于未注册 attr 的 provider）
   const modelLower = model.toLowerCase()
   if (
     modelLower.includes('reasoning') ||
@@ -686,7 +698,7 @@ export async function* mapOpenAIStreamToStandard(
   stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>,
   model: string,
 ): AsyncIterable<LLMStreamEvent> {
-  const streamCompat = getProviderEntry(getAPIProvider())?.openaiCompat
+  const streamAttr = getProviderEntry(getAPIProvider())?.openaiAttr
   const messageId = randomUUID()
   let textBlockIndex = 0
   const toolBlockIndices = new Map<number, number>()
@@ -730,9 +742,9 @@ export async function* mapOpenAIStreamToStandard(
 
       // 文本
       // 部分 provider（如 DashScope/Qwen）在 thinking 结束时可能将 </think> 标签泄漏到 content，
-      // 通过 openaiCompat.stripThinkingTags 声明，在此处剥离避免产生仅含 XML 标签的空 text block。
+      // 通过 openaiAttr.stripThinkingTags 声明，在此处剥离避免产生仅含 XML 标签的空 text block。
       if (delta.content && delta.content !== '') {
-        const cleaned = streamCompat?.stripThinkingTags
+        const cleaned = streamAttr?.stripThinkingTags
           ? delta.content.replace(/<\/?(think|thinking)>/g, '').replace(/^\n+|\n+$/g, '')
           : delta.content
         if (cleaned) {

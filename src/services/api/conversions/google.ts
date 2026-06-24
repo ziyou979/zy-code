@@ -16,8 +16,6 @@
 
 import { randomUUID } from 'node:crypto'
 import { normalizeModelStringForAPI } from '../../../services/model/model.js'
-import { getProviderEntry } from '../../../services/model/providerRegistry.js'
-import { getAPIProvider } from '../../../services/model/providers.js'
 import type {
   AssistantContentBlock,
   CreateParams,
@@ -407,19 +405,24 @@ export function buildGoogleRequestParams(params: CreateParams): GoogleGenerateCo
   const providerExtras = params.providerExtras
   if (providerExtras?.google?.thinkingConfig) {
     generationConfig.thinkingConfig = providerExtras.google.thinkingConfig as GoogleThinkingConfig
-  } else {
-    // 从 registry 的 googleCompat 获取 thinking 配置
-    const entry = getProviderEntry(getAPIProvider())
-    if (entry?.googleCompat?.thinking) {
-      const effortLevel =
-        providerExtras?.anthropic?.thinking?.type === 'enabled'
-          ? 'balanced'
-          : providerExtras?.anthropic?.thinking?.type === 'disabled'
-            ? 'off'
-            : undefined
-      const thinkingConfig = entry.googleCompat.thinking.enable(effortLevel, params.model)
-      if (thinkingConfig.thinkingConfig) {
-        generationConfig.thinkingConfig = thinkingConfig.thinkingConfig as GoogleThinkingConfig
+  } else if (providerExtras?.anthropic?.thinking) {
+    // Gemini 原生协议：将 anthropic thinking 参数转换为 thinkingConfig
+    const thinking = providerExtras.anthropic.thinking
+    if (thinking.type === 'disabled') {
+      generationConfig.thinkingConfig = { thinkingBudget: 0, includeThoughts: false }
+    } else if (thinking.type === 'enabled') {
+      const levelMap: Record<string, string> = {
+        quick: 'MINIMAL',
+        light: 'LOW',
+        balanced: 'MEDIUM',
+        thorough: 'HIGH',
+        extreme: 'HIGH',
+      }
+      const effort = (thinking as { effort?: string }).effort
+      generationConfig.thinkingConfig = {
+        thinkingBudget: -1,
+        thinkingLevel: levelMap[effort ?? 'balanced'] ?? 'MEDIUM',
+        includeThoughts: true,
       }
     }
   }
