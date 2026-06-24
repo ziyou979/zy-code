@@ -7,6 +7,14 @@
  * 对齐 Claude Code 2.1.101。
  */
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
+import * as realAnalytics from '../../../src/services/analytics/index.js'
+import * as realAnalyticsMetadata from '../../../src/services/analytics/metadata.js'
+import * as realDebug from '../../../src/utils/debug.js'
+import * as realHooks from '../../../src/utils/hooks.js'
+import * as realLog from '../../../src/utils/log.js'
+import * as realPermissionResult from '../../../src/utils/permissions/PermissionResult.js'
+import * as realToolErrors from '../../../src/utils/toolErrors.js'
+import * as realMcpUtils from '../../../src/services/mcp/utils.js'
 
 // checkRuleBasedPermissions 的可控返回值（每个 case 单独设置）+ 调用计数。
 const ruleCheck: { result: unknown; calls: number } = { result: null, calls: 0 }
@@ -34,26 +42,30 @@ async function setupMocks() {
     },
   }))
   // toolHooks 在 import 时会加载的其余运行时依赖 —— 与本测试逻辑无关，桩掉即可。
-  mock.module('../../../src/services/analytics/index.js', () => ({ logEvent: () => {} }))
+  // spread 原始模块避免污染其他测试的模块缓存。
+  mock.module('../../../src/services/analytics/index.js', () => ({ ...realAnalytics, logEvent: () => {} }))
   mock.module('../../../src/services/analytics/metadata.js', () => ({
+    ...realAnalyticsMetadata,
     sanitizeToolNameForAnalytics: (n: string) => n,
   }))
-  mock.module('../../../src/utils/attachments.js', () => ({ createAttachmentMessage: () => ({}) }))
-  mock.module('../../../src/utils/debug.js', () => ({ logForDebugging: () => {} }))
+  mock.module('../../../src/utils/debug.js', () => ({ ...realDebug, logForDebugging: () => {} }))
   mock.module('../../../src/utils/hooks.js', () => ({
+    ...realHooks,
     executePostToolHooks: async function* () {},
     executePostToolUseFailureHooks: async function* () {},
     executePreToolHooks: async function* () {},
     getPreToolHookBlockingMessage: () => undefined,
   }))
-  mock.module('../../../src/utils/log.js', () => ({ logError: () => {} }))
+  mock.module('../../../src/utils/log.js', () => ({ ...realLog, logError: () => {} }))
   mock.module('../../../src/utils/permissions/PermissionResult.js', () => ({
+    ...realPermissionResult,
     getRuleBehaviorDescription: () => '',
   }))
   mock.module('../../../src/utils/toolErrors.js', () => ({
+    ...realToolErrors,
     formatError: (e: unknown) => String(e),
   }))
-  mock.module('../../../src/services/mcp/utils.js', () => ({ isMcpTool: () => false }))
+  mock.module('../../../src/services/mcp/utils.js', () => ({ ...realMcpUtils, isMcpTool: () => false }))
 }
 
 async function importSUT() {

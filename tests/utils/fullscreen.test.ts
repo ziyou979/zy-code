@@ -5,6 +5,11 @@
  */
 import { afterEach, describe, expect, mock, test } from 'bun:test'
 import * as realEnvUtils from '../../src/utils/envUtils.js'
+import * as realDebug from '../../src/utils/debug.js'
+import * as realExecFileNoThrow from '../../src/utils/execFileNoThrow.js'
+import * as realGrowthbook from '../../src/services/analytics/growthbook.js'
+import * as realConfig from '../../src/services/config/config.js'
+import * as realConcurrentSessions from '../../src/utils/concurrentSessions.js'
 
 // 可变的 mock 状态（测试之间重置）
 let mockIsBgSession = false
@@ -12,7 +17,7 @@ let mockIsInternalBuild = false
 let mockTuiConfig: 'fullscreen' | 'default' | undefined
 let mockFeatureFlag = false
 
-// 阻断所有传递依赖
+// 阻断所有传递依赖（spread 原始模块避免污染其他测试）
 mock.module('../../src/i18n/index.js', () => ({
   tSync: (k: string) => k,
   t: (k: string) => k,
@@ -22,25 +27,27 @@ mock.module('../../src/i18n/index.js', () => ({
 }))
 
 mock.module('../../src/utils/debug.js', () => ({
+  ...realDebug,
   logForDebugging: () => {},
 }))
 
+// 保留原始模块的所有导出，只覆盖 fullscreen 逻辑依赖的几个函数
+import * as realState from '../../src/bootstrap/state.js'
 mock.module('../../src/bootstrap/state.js', () => ({
+  ...realState,
   getIsInteractive: () => true,
-  addSlowOperation: () => {},
-  flushInteractionTime: () => {},
-  getSessionId: () => 'test',
-  getTotalInputTokens: () => 0,
   getCwdState: () => ({ cwd: '/' }),
 }))
 
 mock.module('../../src/services/analytics/growthbook.js', () => ({
+  ...realGrowthbook,
   getFeatureValue_CACHED_MAY_BE_STALE: () => mockFeatureFlag,
   getDynamicConfig_CACHED_MAY_BE_STALE: <T>(_k: string, d: T) => d,
   checkGate_CACHED_OR_BLOCKING: async () => false,
 }))
 
 mock.module('../../src/services/config/config.js', () => ({
+  ...realConfig,
   getGlobalConfig: () => ({ tui: mockTuiConfig }),
   saveGlobalConfig: () => {},
   getGlobalConfigWriteCount: () => 0,
@@ -48,6 +55,7 @@ mock.module('../../src/services/config/config.js', () => ({
 }))
 
 mock.module('../../src/utils/concurrentSessions.js', () => ({
+  ...realConcurrentSessions,
   isBgSession: () => mockIsBgSession,
 }))
 
@@ -57,6 +65,7 @@ mock.module('../../src/utils/envUtils.js', () => ({
 }))
 
 mock.module('../../src/utils/execFileNoThrow.js', () => ({
+  ...realExecFileNoThrow,
   execFileNoThrow: async () => ({ stdout: '', code: 1 }),
 }))
 
@@ -178,14 +187,29 @@ describe('isFullscreenActive', () => {
 })
 
 describe('isWindowsOverSsh 检测', () => {
-  test('SSH + WT_SESSION → 禁用全屏', async () => {
+  const savedPlatform = process.platform
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: savedPlatform })
+  })
+
+  test('win32 + SSH → 禁用全屏（路径1：platform 判断）', async () => {
+    Object.defineProperty(process, 'platform', { value: 'win32' })
+    process.env.SSH_TTY = '/dev/pts/0'
+    const { resolveFullscreenEnabled } = await getModule()
+    expect(resolveFullscreenEnabled().reason).toBe('win_ssh_auto_off')
+  })
+
+  test('非 win32 + SSH + WT_SESSION → 禁用全屏（路径2：WT_SESSION 泄漏）', async () => {
+    Object.defineProperty(process, 'platform', { value: 'linux' })
     process.env.SSH_TTY = '/dev/pts/0'
     process.env.WT_SESSION = 'guid'
     const { resolveFullscreenEnabled } = await getModule()
     expect(resolveFullscreenEnabled().reason).toBe('win_ssh_auto_off')
   })
 
-  test('SSH 但无 WT_SESSION 且非 win32 → 不触发', async () => {
+  test('非 win32 + SSH 但无 WT_SESSION → 不触发', async () => {
+    Object.defineProperty(process, 'platform', { value: 'linux' })
     process.env.SSH_TTY = '/dev/pts/0'
     const { resolveFullscreenEnabled } = await getModule()
     expect(resolveFullscreenEnabled().reason).not.toBe('win_ssh_auto_off')
