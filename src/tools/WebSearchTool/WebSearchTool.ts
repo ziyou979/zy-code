@@ -4,8 +4,9 @@ import type {
   SearchOptions,
   SearchResult as ServiceSearchResult,
 } from '../../services/search/index.js'
-import { createFallbackSearchProvider } from '../../services/search/index.js'
+import { createSearchProvider } from '../../services/search/index.js'
 import { buildTool, type ToolCallProgress, type ToolDef } from '../../Tool.js'
+import { hasExternalToolOverride } from '../externalToolLoader.js'
 import type { ContentBlock } from '../../types/llm.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -88,7 +89,11 @@ export const WebSearchTool = buildTool({
   },
   isEnabled() {
     // web_search 是 zy-code 框架内置能力，不依赖 provider 支持
-    return !!getMainLoopModel()
+    // 当用户在 ~/.zy/tools/ 注册同名外部工具时，自动禁用内置版本
+    if (!getMainLoopModel()) {
+      return false
+    }
+    return !hasExternalToolOverride(WEB_SEARCH_TOOL_NAME)
   },
   get inputSchema(): InputSchema {
     return inputSchema()
@@ -162,9 +167,6 @@ export const WebSearchTool = buildTool({
 
     try {
       logForDebugging(`[WebSearch] query="${query}"`)
-      logForDebugging(
-        '[WebSearch] Using local DuckDuckGo fallback; model-provider web search is not used as tool result source',
-      )
 
       const searchResults = await searchViaLocalProvider(
         query,
@@ -257,7 +259,7 @@ export const WebSearchTool = buildTool({
 } satisfies ToolDef<InputSchema, Output, WebSearchProgress>)
 
 // ---------------------------------------------------------------------------
-// 本地 DuckDuckGo 兜底搜索
+// 内置搜索 provider
 // ---------------------------------------------------------------------------
 
 async function searchViaLocalProvider(
@@ -267,9 +269,9 @@ async function searchViaLocalProvider(
   maxResults = DEFAULT_MAX_RESULTS,
   onProgress?: ToolCallProgress<WebSearchProgress>,
 ): Promise<ServiceSearchResult[]> {
-  logForDebugging('[WebSearch:Local] Using DuckDuckGo fallback')
+  const provider = createSearchProvider()
 
-  const provider = createFallbackSearchProvider()
+  logForDebugging(`[WebSearch:Local] Using ${provider.id} provider`)
 
   const searchOptions: SearchOptions = {
     maxResults,

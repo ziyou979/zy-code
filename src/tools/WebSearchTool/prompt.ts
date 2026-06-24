@@ -9,7 +9,7 @@ export function getWebSearchPrompt(): string {
 - Provides up-to-date information for current events and recent data
 - Returns search result information formatted as search result blocks, including links as markdown hyperlinks
 - Use this tool for accessing information beyond the AI's knowledge cutoff
-- Searches are performed automatically by ZY Code locally using a configured search engine (Google, Bing, DuckDuckGo, Baidu, etc.)
+- Searches are performed automatically by ZY Code using the configured search service
 
 CRITICAL REQUIREMENT - You MUST follow this:
   - After answering the user's question, you MUST include a "Sources:" section at the end of your response
