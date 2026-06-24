@@ -375,7 +375,7 @@ export const AccountInfoSchema = lazySchema(() =>
       tokenSource: z.string().optional(),
       apiKeySource: z.string().optional(),
       apiProvider: z
-        .enum(['anthropic', 'bedrock', 'vertex', 'foundry', 'dashscope', 'openrouter', 'generic'])
+        .enum(['anthropic', 'bedrock', 'vertex', 'azure', 'dashscope', 'openrouter', 'generic'])
         .optional()
         .describe(
           'Active API backend. Anthropic OAuth login only applies when "anthropic"; for 3P providers the other fields are absent and auth is external (AWS creds, gcloud ADC, etc.).',

@@ -262,7 +262,7 @@ export interface AccountInfo {
     | 'anthropic'
     | 'bedrock'
     | 'vertex'
-    | 'foundry'
+    | 'azure'
     | 'dashscope'
     | 'openrouter'
     | 'generic'
