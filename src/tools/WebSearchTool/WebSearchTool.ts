@@ -1,10 +1,5 @@
 import { z } from 'zod/v4'
 import { getMainLoopModel } from '../../services/model/model.js'
-import type {
-  SearchOptions,
-  SearchResult as ServiceSearchResult,
-} from '../../services/search/index.js'
-import { createSearchProvider } from '../../services/search/index.js'
 import { buildTool, type ToolCallProgress, type ToolDef } from '../../Tool.js'
 import { hasExternalToolOverride } from '../externalToolLoader.js'
 import type { ContentBlock } from '../../types/llm.js'
@@ -22,6 +17,7 @@ import {
   renderToolUseProgressMessage,
 } from './UI.js'
 
+const SEARCH_API_URL = 'http://search.zy.ai:8089'
 const DEFAULT_MAX_RESULTS = 8
 const MAX_ALLOWED_RESULTS = 20
 
@@ -88,11 +84,10 @@ export const WebSearchTool = buildTool({
     return summary ? `Searching for ${summary}` : 'Searching the web'
   },
   isEnabled() {
-    // web_search 是 zy-code 框架内置能力，不依赖 provider 支持
-    // 当用户在 ~/.zy/tools/ 注册同名外部工具时，自动禁用内置版本
     if (!getMainLoopModel()) {
       return false
     }
+    // 当用户在 ~/.zy/tools/ 注册同名外部工具时，自动禁用内置版本
     return !hasExternalToolOverride(WEB_SEARCH_TOOL_NAME)
   },
   get inputSchema(): InputSchema {
@@ -154,58 +149,55 @@ export const WebSearchTool = buildTool({
     const { query, allowed_domains, blocked_domains } = input
     const maxResults = getMaxResults(input)
 
-    // 发送进度：搜索开始
     if (onProgress) {
       onProgress({
         toolUseID: 'search-start',
-        data: {
-          type: 'query_update',
-          query,
-        },
+        data: { type: 'query_update', query },
       })
     }
 
     try {
       logForDebugging(`[WebSearch] query="${query}"`)
 
-      const searchResults = await searchViaLocalProvider(
+      const searchResults = await executeSearch(
         query,
         allowed_domains,
         blocked_domains,
         maxResults,
-        onProgress,
       )
 
       logForDebugging(
         `[WebSearch] Got ${searchResults.length} results in ${((performance.now() - startTime) / 1000).toFixed(2)}s`,
       )
 
-      const endTime = performance.now()
-      const durationSeconds = (endTime - startTime) / 1000
+      if (onProgress) {
+        onProgress({
+          toolUseID: 'search-results',
+          data: {
+            type: 'search_results_received',
+            resultCount: searchResults.length,
+            query,
+          },
+        })
+      }
 
-      // 格式化为兼容输出格式
+      const durationSeconds = (performance.now() - startTime) / 1000
       const results: Array<SearchResult | string> = []
 
       if (searchResults.length > 0) {
         results.push({
           toolCallId: `search-${Date.now()}`,
-          content: searchResults.map((result) => ({
-            title: result.title,
-            url: result.url,
-            snippet: result.snippet,
+          content: searchResults.map((r) => ({
+            title: r.title,
+            url: r.url,
+            snippet: r.content,
           })),
         })
       } else {
         results.push('No results found for this query.')
       }
 
-      return {
-        data: {
-          query,
-          results,
-          durationSeconds,
-        },
-      }
+      return { data: { query, results, durationSeconds } }
     } catch (error) {
       logError(error)
       logForDebugging(
@@ -213,9 +205,7 @@ export const WebSearchTool = buildTool({
         { level: 'error' },
       )
 
-      const endTime = performance.now()
-      const durationSeconds = (endTime - startTime) / 1000
-
+      const durationSeconds = (performance.now() - startTime) / 1000
       const errorMessage = error instanceof Error ? error.message : 'Unknown search error'
 
       return {
@@ -248,7 +238,7 @@ export const WebSearchTool = buildTool({
     })
 
     formattedOutput +=
-      '\nREMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.'
+      '\nREMINDER: You MUST include the sources links in your response to the user using markdown hyperlinks.'
 
     return {
       toolCallId: toolUseID,
@@ -259,42 +249,75 @@ export const WebSearchTool = buildTool({
 } satisfies ToolDef<InputSchema, Output, WebSearchProgress>)
 
 // ---------------------------------------------------------------------------
-// 内置搜索 provider
+// 内置搜索：请求 ZY Search API
 // ---------------------------------------------------------------------------
 
-async function searchViaLocalProvider(
+interface SearchResponseItem {
+  title: string
+  url: string
+  content?: string
+}
+
+async function executeSearch(
   query: string,
-  allowed_domains?: string[],
-  blocked_domains?: string[],
+  allowedDomains?: string[],
+  blockedDomains?: string[],
   maxResults = DEFAULT_MAX_RESULTS,
-  onProgress?: ToolCallProgress<WebSearchProgress>,
-): Promise<ServiceSearchResult[]> {
-  const provider = createSearchProvider()
+): Promise<SearchResponseItem[]> {
+  const params = new URLSearchParams({
+    q: query,
+    format: 'json',
+    categories: 'general',
+    safesearch: '0',
+  })
 
-  logForDebugging(`[WebSearch:Local] Using ${provider.id} provider`)
-
-  const searchOptions: SearchOptions = {
-    maxResults,
-    allowedDomains: allowed_domains,
-    blockedDomains: blocked_domains,
+  if (allowedDomains?.length) {
+    const siteQueries = allowedDomains.map((d) => `site:${d}`)
+    params.set('q', `${query} ${siteQueries.join(' OR ')}`)
   }
 
-  const searchResults = await provider.search(query, searchOptions)
+  const url = `${SEARCH_API_URL}/search?${params.toString()}`
 
-  logForDebugging(`[WebSearch:Local] Got ${searchResults.length} results from ${provider.id}`)
+  logForDebugging(`[WebSearch] Fetching ${url}`)
 
-  if (onProgress) {
-    onProgress({
-      toolUseID: 'search-results',
-      data: {
-        type: 'search_results_received',
-        resultCount: searchResults.length,
-        query,
-      },
+  const response = await fetch(url, {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(15000),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Web search failed: ${response.status} ${response.statusText}`)
+  }
+
+  const data = await response.json()
+
+  if (!data.results || !Array.isArray(data.results)) {
+    return []
+  }
+
+  const results: SearchResponseItem[] = []
+
+  for (const item of data.results) {
+    if (results.length >= maxResults) break
+    if (!item.title || !item.url) continue
+
+    if (blockedDomains?.length) {
+      try {
+        const hostname = new URL(item.url).hostname
+        if (blockedDomains.some((d) => hostname.includes(d))) continue
+      } catch {
+        // URL 解析失败，保留结果
+      }
+    }
+
+    results.push({
+      title: item.title.trim(),
+      url: item.url,
+      content: item.content?.trim(),
     })
   }
 
-  return searchResults
+  return results
 }
 
 // ---------------------------------------------------------------------------
@@ -305,10 +328,9 @@ function _parseResultsFromText(
   contentBlocks: ContentBlock[],
   _query: string,
   blockedDomains?: string[],
-): ServiceSearchResult[] {
-  const results: ServiceSearchResult[] = []
+): SearchResponseItem[] {
+  const results: SearchResponseItem[] = []
 
-  // 拼接所有文本块
   const text = contentBlocks
     .filter((b): b is ContentBlock & { type: 'text'; text: string } => b.type === 'text')
     .map((b) => b.text ?? '')
@@ -318,49 +340,37 @@ function _parseResultsFromText(
     return results
   }
 
-  // 尝试从文本中提取 URL 和标题
-  // 模型通常会以 markdown 链接格式返回：[Title](URL)
   const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g
   let match
   while ((match = linkRegex.exec(text)) !== null) {
     const title = match[1].trim()
     const url = match[2].trim()
 
-    if (!title || !url) {
-      continue
-    }
+    if (!title || !url) continue
 
-    // 域名黑名单过滤
-    if (blockedDomains && blockedDomains.length > 0) {
+    if (blockedDomains?.length) {
       try {
         const hostname = new URL(url).hostname
-        if (blockedDomains.some((d) => hostname.includes(d))) {
-          continue
-        }
+        if (blockedDomains.some((d) => hostname.includes(d))) continue
       } catch {
-        // URL 解析失败，保留结果
+        // ignore
       }
     }
 
     results.push({ title, url })
   }
 
-  // 如果没有找到 markdown 链接，尝试提取裸 URL
   if (results.length === 0) {
     const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`[\]]+)/g
     let urlMatch
     while ((urlMatch = urlRegex.exec(text)) !== null) {
       const url = urlMatch[1]
-      if (!url) {
-        continue
-      }
+      if (!url) continue
 
-      if (blockedDomains && blockedDomains.length > 0) {
+      if (blockedDomains?.length) {
         try {
           const hostname = new URL(url).hostname
-          if (blockedDomains.some((d) => hostname.includes(d))) {
-            continue
-          }
+          if (blockedDomains.some((d) => hostname.includes(d))) continue
         } catch {
           continue
         }

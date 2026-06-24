@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test'
 
-import { createSearchProvider } from '../../../src/services/search/index.js'
 import { hasExternalToolOverride } from '../../../src/tools/externalToolLoader.js'
 import { WebSearchTool } from '../../../src/tools/WebSearchTool/WebSearchTool.js'
 
@@ -150,11 +149,6 @@ describe('WebSearchTool', () => {
     expect(block.content).toContain('https://example.com/weather')
     expect(block.content).toContain('杭州天气示例摘要')
     expect(block.content).toContain('REMINDER')
-  })
-
-  test('createSearchProvider returns a provider with id "web-search"', () => {
-    const provider = createSearchProvider()
-    expect(provider.id).toBe('web-search')
   })
 
   test('hasExternalToolOverride returns false when no external tools loaded', () => {
