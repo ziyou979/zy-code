@@ -2349,11 +2349,12 @@ function PromptInput({
   // state (like notifications) changes. This prevents the inline model picker
   // from visually "jumping" when notifications arrive.
   const handleModelSelect = useCallback(
-    (model: string | null, _effort: EffortLevel | undefined) => {
+    (model: string | null, effort: EffortLevel | undefined) => {
       setAppState((prev) => ({
         ...prev,
         mainLoopModel: model,
         mainLoopModelForSession: null,
+        effortValue: effort,
       }))
       setShowModelPicker(false)
       const message = `Model set to ${modelDisplayString(model)}`

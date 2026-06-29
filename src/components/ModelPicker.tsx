@@ -124,15 +124,16 @@ export function ModelPicker({
       // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       effort: effort as any,
     })
+    const defaultEffort = getDefaultEffortLevelForOption(selectedValue)
+    const effortLevel = resolvePickerEffortPersistence(
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+      effort as any,
+      defaultEffort,
+      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
+      getSettingsForSource('userSettings')?.effortLevel as any,
+      hasToggledEffort,
+    )
     if (!skipSettingsWrite) {
-      const effortLevel = resolvePickerEffortPersistence(
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        effort as any,
-        getDefaultEffortLevelForOption(selectedValue),
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        getSettingsForSource('userSettings')?.effortLevel as any,
-        hasToggledEffort,
-      )
       const persistable = toPersistableEffort(effortLevel)
       if (persistable !== undefined) {
         updateSettingsForSource('userSettings', {
@@ -146,7 +147,7 @@ export function ModelPicker({
     }
     const selectedModel = resolveOptionModel(selectedValue)
     const selectedEffort =
-      hasToggledEffort && selectedModel && modelSupportsEffort(selectedModel) ? effort : undefined
+      selectedModel && modelSupportsEffort(selectedModel) ? effortLevel : undefined
     if (selectedValue === NO_PREFERENCE) {
       onSelect(null, selectedEffort)
       return

@@ -1250,6 +1250,10 @@ export class MeasuredText {
       const segmentWidth = stringWidth(segment)
 
       if (currentWidth + segmentWidth > targetWidth) {
+        // 宽字符右半边：光标应放在字符之后（与 offsetAtDisplayWidth 一致）
+        if (segmentWidth > 1 && targetWidth >= currentWidth + Math.ceil(segmentWidth / 2)) {
+          currentOffset = index + segment.length
+        }
         break
       }
 
@@ -1282,6 +1286,13 @@ export class MeasuredText {
       const segmentWidth = stringWidth(segment)
 
       if (currentWidth + segmentWidth > targetWidth) {
+        // 宽字符（如中文）占 2 列。点击右半边时（targetWidth 超过字符中点），
+        // 光标应放在字符之后（end），与终端标准行为一致。
+        // JediTerm 等终端报告的鼠标坐标可落在字符中间任意列，
+        // 而非对齐到字符边界，因此需要此判断。
+        if (segmentWidth > 1 && targetWidth >= currentWidth + Math.ceil(segmentWidth / 2)) {
+          return end
+        }
         return start
       }
       currentWidth += segmentWidth

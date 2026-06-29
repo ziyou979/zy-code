@@ -243,17 +243,12 @@ export function CollapsedReadSearchContent({
     }
   }
   const fallbackHint = useMinDisplayTime(incomingHint, MIN_HINT_DISPLAY_MS)
-  // 活跃分组优先显示工具输入提示（文件路径、搜索模式等），
-  // 让用户知道"现在正在做什么"；没有工具提示时才回退到 thinking 摘要。
-  // 非活跃分组则优先显示 thinking 摘要（用于完成后回顾）。
-  const displayedHint = isActiveGroup
-    ? (fallbackHint ??
-      (message.latestThinkingSummary
-        ? truncateThinkingSummary(message.latestThinkingSummary, MAX_THINKING_SUMMARY_CHARS)
-        : undefined))
-    : message.latestThinkingSummary
-      ? truncateThinkingSummary(message.latestThinkingSummary, MAX_THINKING_SUMMARY_CHARS)
-      : fallbackHint
+  // 统一优先级：思考摘要优先，没有思考摘要时回退到工具提示。
+  // 这样"当前在处理什么就展示什么"——思考时展示思考内容，执行工具时展示工具信息。
+  const thinkingSummary = message.latestThinkingSummary
+    ? truncateThinkingSummary(message.latestThinkingSummary, MAX_THINKING_SUMMARY_CHARS)
+    : undefined
+  const displayedHint = thinkingSummary ?? fallbackHint
 
   // 在 verbose 模式下，渲染每个工具使用及其 1 行结果摘要
   if (verbose) {
