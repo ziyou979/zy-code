@@ -3,8 +3,10 @@ import {
   EFFORT_EXTREME,
   EFFORT_LIGHT,
   EFFORT_OFF,
+  EFFORT_ON,
   EFFORT_QUICK,
   EFFORT_THOROUGH,
+  EFFORT_ULTRA,
 } from '../constants/figures.js'
 import {
   type EffortLevel,
@@ -32,6 +34,8 @@ export function effortLevelToSymbol(level: EffortLevel): string {
   switch (level) {
     case 'off':
       return EFFORT_OFF
+    case 'on':
+      return EFFORT_ON
     case 'quick':
       return EFFORT_QUICK
     case 'light':
@@ -43,6 +47,8 @@ export function effortLevelToSymbol(level: EffortLevel): string {
     case 'extreme':
     case 'orchestrate':
       return EFFORT_EXTREME
+    case 'ultra':
+      return EFFORT_ULTRA
     default:
       return EFFORT_THOROUGH
   }

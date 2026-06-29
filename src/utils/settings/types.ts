@@ -785,11 +785,13 @@ export const SettingsSchema = lazySchema(() =>
           isInternalBuild()
             ? [
                 'off',
+                'on',
                 'quick',
                 'light',
                 'balanced',
                 'thorough',
                 'extreme',
+                'ultra',
                 'minimal',
                 'low',
                 'medium',
@@ -799,11 +801,13 @@ export const SettingsSchema = lazySchema(() =>
               ]
             : [
                 'off',
+                'on',
                 'quick',
                 'light',
                 'balanced',
                 'thorough',
                 'extreme',
+                'ultra',
                 'minimal',
                 'low',
                 'medium',

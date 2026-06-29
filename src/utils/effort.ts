@@ -8,6 +8,7 @@ import { getProviderEntry } from 'src/services/model/providerRegistry.js'
 import {
   getLocalModelEffortLevels,
   getLocalModelEffortMap,
+  getLocalModelPreserveThinking,
 } from './settings/localModelCapabilities.js'
 import { isEnvTruthy } from './envUtils.js'
 
@@ -15,16 +16,26 @@ import { isEnvTruthy } from './envUtils.js'
 // 语义化 Effort 档位体系（provider 无关）
 // ---------------------------------------------------------------------------
 
-export type PersistableEffortLevel = 'off' | 'quick' | 'light' | 'balanced' | 'thorough' | 'extreme'
+export type PersistableEffortLevel =
+  | 'off'
+  | 'on' // 思考开启（无特定强度，不走 provider 映射）
+  | 'quick'
+  | 'light'
+  | 'balanced'
+  | 'thorough'
+  | 'extreme'
+  | 'ultra' // 最强思考 + 回传 thinking 块（preserve: optional 时自动追加）
 export type EffortLevel = PersistableEffortLevel | 'orchestrate'
 
 export const EFFORT_LEVELS = [
   'off',
+  'on',
   'quick',
   'light',
   'balanced',
   'thorough',
   'extreme',
+  'ultra',
   'orchestrate',
 ] as const
 
@@ -34,11 +45,13 @@ export const EFFORT_LEVELS = [
  */
 export const EFFORT_LEVEL_ORDER: readonly EffortLevel[] = [
   'off',
+  'on',
   'quick',
   'light',
   'balanced',
   'thorough',
   'extreme',
+  'ultra',
 ]
 
 export type EffortValue = EffortLevel
@@ -52,13 +65,22 @@ export type EffortValue = EffortLevel
  * 将内部 effort 档位映射为目标 provider 的 API 参数值。
  * 优先级：模型级 effortMap（model-capabilities.json）→ provider 级 effortMapping。
  * 没有配置 effortMapping 的 provider 不支持 effort，返回 undefined。
+ *
+ * "on" 是特殊档位，表示"思考开启，无特定强度"——直接返回 "on"，不走映射链。
+ * 由各 provider 的 openaiAttr.thinking.enable() 处理为合理默认值。
  */
 export function mapEffortToProvider(
   effort: EffortLevel,
   providerId: string,
   model?: string,
 ): string | undefined {
-  const key = effort === 'orchestrate' ? 'extreme' : effort
+  // "on" 是 toggle 模式的开启档，不走 provider 映射
+  if (effort === 'on') {
+    return 'on'
+  }
+  // "ultra" 复用 "extreme" 的 provider 映射（最强思考强度）
+  // "orchestrate" 同理
+  const key = effort === 'orchestrate' || effort === 'ultra' ? 'extreme' : effort
   // 1. 模型级映射（用户本地配置优先）
   if (model) {
     const modelMap = getLocalModelEffortMap(model)
@@ -78,12 +100,25 @@ export function mapEffortToProvider(
 /**
  * 模型是否支持 effort 功能。
  * 优先级：本地 model-capabilities → provider 声明 → 环境变量强制。
+ *
+ * 当 preserve === 'optional' 且 effort 列表中无 'ultra' 时，
+ * 自动追加 'ultra' 档位（最强思考 + 回传 thinking 块）。
  */
 export function getModelEffortLevels(model: string): EffortLevel[] {
   // 1. 本地配置覆盖
   const local = getLocalModelEffortLevels(model)
   if (local && local.length > 0) {
-    return local
+    const levels = [...local] as EffortLevel[]
+
+    // preserve: "optional" 需要 ultra 来触发 preserve_thinking 回传
+    if (!levels.includes('ultra')) {
+      const preserve = getLocalModelPreserveThinking(model)
+      if (preserve === 'optional') {
+        levels.push('ultra')
+      }
+    }
+
+    return levels
   }
 
   // 2. provider 声明（effortMapping 的 key 即为支持的档位）
@@ -258,6 +293,8 @@ export function getEffortLevelDescription(level: EffortLevel): string {
   switch (level) {
     case 'off':
       return 'Thinking disabled — fastest mode without any reasoning'
+    case 'on':
+      return 'Thinking enabled — no specific intensity level'
     case 'quick':
       return 'Fastest response with minimal reasoning'
     case 'light':
@@ -268,6 +305,8 @@ export function getEffortLevelDescription(level: EffortLevel): string {
       return 'Deep reasoning with comprehensive analysis'
     case 'extreme':
       return 'Maximum reasoning depth and thoroughness'
+    case 'ultra':
+      return 'Maximum thinking intensity with thought block preservation'
     case 'orchestrate':
       return 'Extreme reasoning + dynamic workflow orchestration (session only)'
   }

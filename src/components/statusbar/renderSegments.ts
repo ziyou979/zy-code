@@ -12,8 +12,11 @@ import {
   EFFORT_BALANCED,
   EFFORT_EXTREME,
   EFFORT_LIGHT,
+  EFFORT_OFF,
+  EFFORT_ON,
   EFFORT_QUICK,
   EFFORT_THOROUGH,
+  EFFORT_ULTRA,
   FORK_GLYPH,
 } from '../../constants/figures.js'
 import {
@@ -61,20 +64,26 @@ export type StatusbarContext = {
 const BAR_WIDTH = 8
 
 const EFFORT_ICONS: Record<string, string> = {
+  off: EFFORT_OFF,
+  on: EFFORT_ON,
   quick: EFFORT_QUICK,
   light: EFFORT_LIGHT,
   balanced: EFFORT_BALANCED,
   thorough: EFFORT_THOROUGH,
   extreme: EFFORT_EXTREME,
+  ultra: EFFORT_ULTRA,
   orchestrate: EFFORT_EXTREME,
 }
 
 const EFFORT_I18N_KEYS: Record<string, string> = {
+  off: 'effort.off',
+  on: 'effort.on',
   quick: 'effort.quick',
   light: 'effort.light',
   balanced: 'effort.balanced',
   thorough: 'effort.thorough',
   extreme: 'effort.extreme',
+  ultra: 'effort.ultra',
   orchestrate: 'effort.orchestrate',
 }
 

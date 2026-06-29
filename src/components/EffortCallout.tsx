@@ -6,6 +6,7 @@ import {
   EffortLevel,
   getDefaultEffortForModel,
   getEffortCalloutConfig,
+  getModelEffortLevels,
   toPersistableEffort,
 } from '../utils/effort.js'
 import { updateSettingsForSource } from '../utils/settings/settings.js'
@@ -42,20 +43,31 @@ export function EffortCallout({ model, onDone }: Props) {
     })
     onDoneRef.current(level)
   }
-  const options = [
-    {
-      label: <EffortOptionLabel level="balanced" text={tSync('effort.balancedRecommended')} />,
-      value: 'balanced',
-    },
-    {
-      label: <EffortOptionLabel level="thorough" text={tSync('effort.thorough')} />,
-      value: 'thorough',
-    },
-    {
-      label: <EffortOptionLabel level="light" text={tSync('effort.light')} />,
-      value: 'light',
-    },
-  ]
+
+  // 根据模型配置的 effort levels 动态生成选项
+  const modelEffortLevels = getModelEffortLevels(model)
+  const effortLabels: Record<string, string> = {
+    off: tSync('effort.off') || 'Off — thinking disabled',
+    on: tSync('effort.on') || 'On — thinking enabled',
+    quick: tSync('effort.quick') || 'Quick',
+    light: tSync('effort.light') || 'Light',
+    balanced: tSync('effort.balanced') || 'Balanced',
+    thorough: tSync('effort.thorough') || 'Thorough',
+    extreme: tSync('effort.extreme') || 'Extreme',
+    ultra: tSync('effort.ultra') || 'Ultra — max thinking + preserve',
+  }
+
+  const options = modelEffortLevels
+    .filter((level) => level !== 'orchestrate')
+    .map((level) => ({
+      label: (
+        <EffortOptionLabel
+          level={level}
+          text={effortLabels[level] ?? level}
+        />
+      ),
+      value: level,
+    }))
   return (
     <PermissionDialog title={tSync(defaultEffortConfig.dialogTitle)}>
       <Box flexDirection="column" paddingX={2} paddingY={1}>
