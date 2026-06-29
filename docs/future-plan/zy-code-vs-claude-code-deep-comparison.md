@@ -1,11 +1,12 @@
-# zy-code vs Claude Code v2.1.177 深度对比报告
+# zy-code vs Claude Code v2.1.187 深度对比报告
 
-> **分析日期**：2026-06-15
-> **CC 二进制**：`/Users/zy979/.nvm/versions/node/v24.14.1/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe` (215MB)
-> **CC 版本**：2.1.177 · 构建日期 2026-06-13
-> **CC 上次分析版本**：2.1.169（2026-06-09）
-> **zy-code 源码**：`/Users/zy979/IdeaProjects/zy-code/src/`
-> **变更范围**：v2.1.170 ~ v2.1.177（含 changelog + 二进制提取）
+> **分析日期**：2026-06-25
+> **CC 二进制**：`/d/nvm/nvm4w/nodejs/node_global/node_modules/@anthropic-ai/claude-code/bin/claude.exe` (226MB)
+> **CC 版本**：2.1.187 · 构建日期 2026-06-24
+> **CC 上次分析版本**：2.1.177（2026-06-15）
+> **zy-code 源码**：`E:\Project Collection\TS Project\zy-code\src\`
+> **变更范围**：v2.1.170 ~ v2.1.187（含 changelog + 二进制提取）
+>   - **本次新增**：v2.1.178 ~ v2.1.187（10 个版本，7 个公开 changelog 条目）
 
 ---
 
@@ -36,8 +37,12 @@
 23. [Artifact 系统 🆕](#二十三artifact-系统)
 23B. [Agent-Team / Swarm 系统](#二十三bagent-team--swarm-系统对比)
 23C. [多终端会话同步 🆕](#二十三c多终端会话同步daemon--pty-proxy)
+23D. [Sandbox 凭证隔离 🆕](#二十三dsandbox-凭证隔离v21187)
+23E. [HTTP Hooks 与托管管控 🆕](#二十三ehttp-hooks-与托管管控v21178)
+23F. [后台会话空闲调度 🆕](#二十三f后台会话空闲调度v21186)
 24. [zy-code 独有优势](#二十四zy-code-独有优势)
 25. [优先级建议](#二十五优先级建议)
+26. [v2.1.178 → v2.1.187 增量变更 🆕](#二十六v21178--v21187-增量变更汇总)
 
 ---
 
@@ -761,23 +766,49 @@ zy-code 有 57 个工具目录，其中**已对齐**的包括：
 
 ## 十八、设置系统差异
 
-### CC 独有能力
+> **v2.1.187 更新**：经核实 zy-code 的 settings schema（`src/utils/settings/types.ts`，1212 行）已对齐 CC 绝大多数企业级设置项。本节按 v2.1.178-187 增量重新校准。
 
-| CC 设置 | 说明 |
-|---------|------|
-| `autoMode` (三级规则) | allow/soft_deny/hard_deny 规则 |
-| `ssh.connections` | SSH host/port/identity 配置 |
-| `sessionRecap` | 会话回顾配置 |
-| `pluginMarketplace` | 插件市场管理 |
-| `promptCacheTTL` | Prompt Cache TTL 配置 |
-| 5 级设置源 | user < project < local < flag < policy |
-| MCP server allowlist/denylist | 企业级 MCP 管控 |
-| 🆕 `enforceAvailableModels` | 管理设置：强制模型白名单，阻止 Default 解析到非白名单模型（2.1.175） |
-| 🆕 `disableBundledSkills` | 隐藏内置 skill/workflow/命令（2.1.169，偏移 `82076144`） |
-| 🆕 `footerLinksRegexes` | 正则匹配 footer 链接徽章（2.1.176，偏移 `82077328`） |
-| 🆕 `wheelScrollAccelerationEnabled` | 鼠标滚轮加速开关（2.1.174，偏移 `82080464`） |
-| 🆕 `availableModels` | 模型白名单，配合 `enforceAvailableModels` 使用（66 处引用） |
-| 🆕 `opusplan` | Opus Plan 模式模型设置，支持 `[1m]` 上下文（偏移 `82916864`） |
+### CC 独有能力（zy-code 仍缺失）
+
+| CC 设置 | 说明 | CC 版本 |
+|---------|------|---------|
+| `autoMode` (三级规则) | allow/soft_deny/hard_deny 规则 | 早期 |
+| `ssh.connections` | SSH host/port/identity 配置 | 早期 |
+| `sessionRecap` | 会话回顾配置 | 早期 |
+| `pluginMarketplace` | 独立插件市场管理子项 | 早期 |
+| `attribution.sessionUrl` | 提交/PR 追加 claude.ai session 链接（默认 true） | 🆕 2.1.181（偏移 `208269332`） |
+| `sandbox.credentials` | 阻止沙箱命令读取凭证文件和密钥环境变量 | 🆕 2.1.187（偏移 `90224256`） |
+| `sandbox.allowAppleEvents` | macOS 沙箱命令发送 Apple Events（`open`/`osascript`） | 🆕 2.1.179（偏移 `90448088`） |
+| `respondToBashCommands` | 输入框 `!` bash 命令后是否触发 Claude 响应 | 🆕 2.1.179（偏移 `90196360`） |
+| `enforceAvailableModels` | 强制模型白名单约束（阻止 Default 解析到非白名单） | 2.1.175 |
+| `disableBundledSkills` | 隐藏内置 skill/workflow/命令 | 2.1.169（偏移 `82076144`） |
+| `footerLinksRegexes` | 正则匹配 footer 链接徽章 | 2.1.176（偏移 `82077328`） |
+| `wheelScrollAccelerationEnabled` | 鼠标滚轮加速开关 | 2.1.174（偏移 `82080464`） |
+| `opusplan` | Opus Plan 模式模型设置，支持 `[1m]` 上下文 | 2.1.176（偏移 `82916864`） |
+
+### zy-code 已对齐的设置（经 v2.1.187 校准）
+
+zy-code 的 `src/utils/settings/types.ts` 已实现的 CC 企业级设置项：
+
+| 设置项 | zy-code 行号 | 状态 |
+|--------|-------------|------|
+| `attribution`（含 commit/pr） | L373-394 | ✅ 缺 `sessionUrl` 子字段 |
+| `availableModels` | L411-420 | ✅ |
+| `modelOverrides` | L421-428 | ✅ zy-code 独有增强 |
+| `customModels` | L430-456 | ✅ |
+| `allowedMcpServers` / `deniedMcpServers` | L474-491 | ✅ |
+| `defaultShell`（bash/powershell） | L528-534 | ✅ 🆕 2.1.178 对齐 |
+| `allowManagedHooksOnly` | L536-542 | ✅ 🆕 2.1.178 对齐 |
+| `allowedHttpHookUrls` | L544-553 | ✅ 🆕 2.1.178 对齐 |
+| `httpHookAllowedEnvVars` | L555-563 | ✅ 🆕 2.1.178 对齐 |
+| `allowManagedPermissionRulesOnly` | L565-571 | ✅ |
+| `allowManagedMcpServersOnly` | L573-580 | ✅ |
+| `strictPluginOnlyCustomization` | L582-608 | ✅ zy-code 独有 |
+| `extraKnownMarketplaces` | L647-674 | ✅ |
+| `strictKnownMarketplaces` / `blockedMarketplaces` | L677-696 | ✅ |
+| `forceLoginMethod` / `forceLoginOrgUUID` | L698-705 | ✅ zy-code 独有（zyai/console） |
+| `promptCacheTTL` | L828+ | ✅ |
+| `sandbox.*`（含 enableWeakerNestedSandbox 等） | `entrypoints/sandboxTypes.ts` | ⚠️ 缺 `credentials`/`allowAppleEvents` |
 
 ### CC 二进制偏移
 
@@ -786,16 +817,27 @@ zy-code 有 57 个工具目录，其中**已对齐**的包括：
 | `cachePlugin` | `78408048`, `83374976` |
 | `bundled plugin` | `88082704`, `101745888` |
 | `outputStyles` folder | `108013680` |
+| 🆕 `sandbox.credentials` | `90224256`, `208300571` |
+| 🆕 `sandbox.allowAppleEvents` | `90448088`, `208200717` |
+| 🆕 `respondToBashCommands` | `90196360`, `208276794` |
+| 🆕 `attribution.sessionUrl` | `208269332` |
+| 🆕 `allowedHttpHookUrls` | `90196440`, `208277180` |
+| 🆕 `httpHookAllowedEnvVars` | `90196480`, `208277572` |
+| 🆕 `allowManagedHooksOnly` | `90196400`, `208277000` |
 
 ### zy-code 已有设置
 
-**文件**：`src/tools/ConfigTool/supportedSettings.ts`（239 行）
+**文件**：`src/utils/settings/types.ts`（1212 行，含完整 zod schema）+ `src/entrypoints/sandboxTypes.ts`（152 行）
 
-约 20 个设置项：theme, provider, editorMode, verbose, preferredNotifChannel, autoCompactEnabled, autoMemoryEnabled, autoDreamEnabled, fileCheckpointingEnabled, showTurnDuration, terminalProgressBarEnabled, todoFeatureEnabled, model, mainLoopModel, models.advanced/standard/compact, alwaysThinkingEnabled, permissions.defaultMode, language, teammateMode
+zy-code settings schema 已远超早期报告记录的"20 个设置项"。除上表对齐 CC 的企业级设置外，**zy-code 独有**：
 
-**zy-code 独有**：
 - 多 provider 支持（anthropic/dashscope/openrouter/generic）
 - 分层模型系统（advanced/standard/compact）
+- `modelOverrides`：Anthropic 模型 ID → provider 特定 ID 映射（如 Bedrock inference profile ARN）
+- `forceLoginMethod` / `forceLoginOrgUUID`：强制登录方式和组织
+- `builtInStatusBar`：可配置的内置状态栏模块（已迁移到 statusline.json）
+- `defaultMaxOutputTokenRatio` / `minDefaultMaxOutputTokens`：精细 token 配额控制
+- `feedbackSurveyRate` / `spinnerTipsOverride`：反馈调查和 spinner tips 自定义
 
 ---
 
@@ -1678,6 +1720,185 @@ async function tc4(query, ...) {
 
 ---
 
+## 二十三D、Sandbox 凭证隔离（v2.1.187）
+
+> **v2.1.187 新增**（changelog + 二进制提取 `sandbox.credentials` 偏移 `90224256`）
+
+### CC 实现
+
+CC 2.1.187 新增 `sandbox.credentials` 设置，在沙箱内运行的命令被阻止读取凭证文件和密钥环境变量：
+
+```javascript
+// settings schema（偏移 208300571 附近）
+sandbox: {
+  credentials: {
+    // 阻止沙箱命令读取凭证文件（如 ~/.aws/credentials, ~/.ssh/id_*）
+    // 阻止沙箱命令读取密钥环境变量（如 AWS_SECRET_ACCESS_KEY, ANTHROPIC_API_KEY）
+    // 用途：防止沙箱化命令（如 Bash 工具）意外泄漏或上传凭证
+  }
+}
+```
+
+**安全模型**：sandbox 的 filesystem deny 规则默认不阻止 `~/.aws`、`~/.ssh` 等敏感路径（否则很多工具无法工作）。`credentials` 是显式开关，让管理员在不破坏 sandbox 兼容性的前提下加固凭证保护。
+
+### v2.1.179 相关：`sandbox.allowAppleEvents`
+
+CC 2.1.179 同步引入 `sandbox.allowAppleEvents`（偏移 `90448088`）：
+
+```javascript
+allowAppleEvents: z.boolean().optional().describe(
+  "macOS only: Allow sandboxed commands to send Apple Events " +
+  "(and look up the appleeventsd Mach service). " +
+  "Needed for `open`, `osascript`, and browser-based auth flows that open URLs. " +
+  "**Removes code-execution isolation** — sandboxed commands can launch other " +
+  "applications unsandboxed with no user prompt, and can script running apps " +
+  "(e.g. Terminal) subject to the user's per-app TCC automation consent. " +
+  "Only honored from user, managed/policy, or CLI (--settings) settings — " +
+  "project settings are ignored. Default: false"
+)
+```
+
+### zy-code 现状
+
+**文件**：`src/entrypoints/sandboxTypes.ts` L88-141（`SandboxSettingsSchema`）
+
+zy-code 的 sandbox schema 已实现大部分字段：
+
+| 字段 | zy-code | 状态 |
+|------|---------|------|
+| `enabled` | ✅ L92 | 对齐 |
+| `failIfUnavailable` | ✅ L93 | 对齐 |
+| `autoAllowBashIfSandboxed` | ✅ L110 | 对齐 |
+| `allowUnsandboxedCommands` | ✅ L111 | 对齐 |
+| `network`（含 allowedDomains 等） | ✅ `SandboxNetworkConfigSchema` | 对齐 |
+| `filesystem`（含 deniedPaths 等） | ✅ `SandboxFilesystemConfigSchema` | 对齐 |
+| `ignoreViolations` | ✅ L121 | 对齐 |
+| `enableWeakerNestedSandbox` | ✅ L122 | 对齐 |
+| `enableWeakerNetworkIsolation` | ✅ L123 | 对齐 |
+| `excludedCommands` | ✅ L132 | 对齐 |
+| `ripgrep`（command/args） | ✅ L133 | 对齐 |
+| `bwrapPath` | ❌ 缺失 | Linux/WSL bwrap 路径覆盖 |
+| `socatPath` | ❌ 缺失 | socat 路径覆盖 |
+| **`credentials`** | ❌ **缺失** | 🆕 v2.1.187 凭证隔离 |
+| **`allowAppleEvents`** | ❌ **缺失** | 🆕 v2.1.179 Apple Events |
+
+**缺失影响**：
+- `credentials`：zy-code 沙箱化的 Bash 命令仍可读取 `~/.aws/credentials`、密钥环境变量，存在凭证泄漏风险
+- `allowAppleEvents`：仅影响 macOS，zy-code 在 Windows 优先环境下影响较小，但企业 macOS 部署需要 `open`/`osascript` 时会受限
+
+---
+
+## 二十三E、HTTP Hooks 与托管管控（v2.1.178）
+
+> **v2.1.178 新增**（changelog + 二进制提取，zy-code 已对齐）
+
+### CC 实现
+
+CC 2.1.178 引入完整的 **HTTP hooks** 机制，并通过三个设置项实现企业级托管管控：
+
+1. **`allowedHttpHookUrls`**（偏移 `90196440`）：URL 模式白名单，支持 `*` 通配符
+2. **`httpHookAllowedEnvVars`**（偏移 `90196480`）：可插值到请求头的环境变量名白名单
+3. **`allowManagedHooksOnly`**（偏移 `90196400`）：仅运行 managed-settings.json 中定义的 hooks
+
+```javascript
+// settings schema（偏移 208276794 附近）
+allowedHttpHookUrls: z.array(z.string()).optional().describe(
+  'Allowlist of URL patterns that HTTP hooks may target. ' +
+  'Supports * as a wildcard (e.g. "https://hooks.example.com/*"). ' +
+  'When set, HTTP hooks with non-matching URLs are blocked. ' +
+  'If undefined, all URLs are allowed. If empty array, no HTTP hooks are allowed. ' +
+  'Arrays merge across settings sources (same semantics as allowedMcpServers).'
+),
+httpHookAllowedEnvVars: z.array(z.string()).optional().describe(
+  'Allowlist of environment variable names HTTP hooks may interpolate into headers. ' +
+  'When set, each hook\'s effective allowedEnvVars is the intersection with this list.'
+),
+allowManagedHooksOnly: z.boolean().optional().describe(
+  'When true (and set in managed settings), only hooks from managed settings run. ' +
+  'User, project, and local hooks are ignored.'
+),
+```
+
+**安全语义**：
+- HTTP hooks 是新的 hook 类型（除 command hooks 外），向指定 URL 发送 POST 请求
+- 默认情况下，HTTP hooks 可访问任意 URL 并插值任意环境变量 → 企业安全风险
+- 三个设置项提供分层管控：URL 白名单 → 环境变量白名单 → 完全托管模式
+- "Arrays merge across settings sources"：数组跨设置源合并（同 `allowedMcpServers` 语义）
+
+### zy-code 现状：✅ **已完整对齐**
+
+zy-code 已实现全部三个设置项和相关执行逻辑：
+
+| 实现点 | zy-code 文件 | 状态 |
+|--------|-------------|------|
+| `allowedHttpHookUrls` schema | `src/utils/settings/types.ts` L544-553 | ✅ |
+| `httpHookAllowedEnvVars` schema | `src/utils/settings/types.ts` L555-563 | ✅ |
+| `allowManagedHooksOnly` schema | `src/utils/settings/types.ts` L536-542 | ✅ |
+| HTTP hook 执行器 | `src/services/hooks/execHttpHook.ts` | ✅ |
+| URL 白名单校验 | `src/services/hooks/execHttpHook.ts` L57, L140 | ✅ |
+| 环境变量插值限制 | `src/services/hooks/execHttpHook.ts` L58 | ✅ |
+| Hook 配置快照（托管过滤） | `src/services/hooks/hooksConfigSnapshot.ts` L12 | ✅ |
+| UI 策略受限提示 | `src/components/hooks/HooksConfigMenu.tsx` L62, L71 | ✅ |
+| `/goal` 受限检查 | `src/commands/goal/goal.ts` L36 | ✅ |
+
+**关键实现**（`src/services/hooks/execHttpHook.ts`）：
+
+```typescript
+const DEFAULT_HTTP_HOOK_TIMEOUT_MS = 10 * 60 * 1000 // 10 分钟
+
+// URL 白名单校验
+if (settings.allowedHttpHookUrls && !matchesPattern(hook.url, settings.allowedHttpHookUrls)) {
+  const msg = `HTTP hook blocked: ${hook.url} does not match any pattern in allowedHttpHookUrls`
+  // ...
+}
+
+// 环境变量插值限制（intersection 语义）
+allowedEnvVars: settings.httpHookAllowedEnvVars,
+```
+
+**结论**：zy-code 在 HTTP hooks 企业管控方面**与 CC 完全对齐**，甚至在 UI 提示（`HooksConfigMenu.tsx` 的 `restrictedByPolicy` 状态）上更完善。
+
+---
+
+## 二十三F、后台会话空闲调度（v2.1.186）
+
+> **v2.1.186 相关**（daemon `seedFocus` 焦点改进 + 空闲会话背景化）
+
+### CC 实现
+
+CC 2.1.186 改进了 daemon 的焦点管理（`seedFocus`，偏移 `220802523`、`220804018`）：
+
+```javascript
+// Worker adopt 时初始化焦点状态
+if (t.ptySock) {
+  s.wirePty(ZQn(t.ptySock, t.pid, s.procStart, s.dispatch.short, void 0, s.ptyAuth));
+  s.ptyCols = 0;
+  s.seedFocus(false);  // 新增：adopt 时不抢占焦点
+}
+```
+
+配合空闲会话背景化机制（`CLAUDE_CODE_IDLE_THRESHOLD_MINUTES`、`CLAUDE_CODE_IDLE_TOKEN_THRESHOLD`，偏移 `86849200`、`86849248`）：
+
+- 会话空闲超过阈值（默认分钟数）且 token 用量超阈值时，提示用户是否后台化
+- 后台化后会话进入 daemon roster，可通过 `claude agents` 重新 attach
+
+### zy-code 现状：✅ **部分对齐（idle 检测已有，daemon 背景化缺失）**
+
+| 能力 | zy-code | 状态 |
+|------|---------|------|
+| `ZY_CODE_IDLE_THRESHOLD_MINUTES` | ✅ `replQueryFlow.ts` L966, `useReplEffects.ts` L205 | 对齐（默认 75 分钟） |
+| `ZY_CODE_IDLE_TOKEN_THRESHOLD` | ✅ `replQueryFlow.ts` L967, `useReplEffects.ts` L201 | 对齐（默认 100K tokens） |
+| 空闲返回提示（dialog） | ✅ `replQueryFlow.ts` L979 | 对齐 |
+| `ZY_CODE_IS_COWORK` | ✅ `QueryEngine.ts` L402 等 6 处 | 对齐 |
+| `ZY_CODE_INVESTIGATE_FIRST` | ✅ 环境变量存在 | 对齐 |
+| `ZY_CODE_LOOP_PERSISTENT` | ✅ 环境变量存在 | 对齐 |
+| **daemon 背景化（seedFocus）** | ❌ 缺失 | 见二十三C |
+| **`claude agents` 重连** | ❌ 缺失 | 见二十三C |
+
+**结论**：zy-code 的**空闲检测层已完整对齐**（环境变量 + dialog 提示），但缺少 CC 的 daemon 背景化执行层（这属于二十三C 的多终端会话同步子系统）。
+
+---
+
 ## 二十四、zy-code 独有优势
 
 以下能力为 zy-code 独有，CC 不具备或不如 zy-code：
@@ -1738,7 +1959,7 @@ async function tc4(query, ...) {
 
 ## 二十五、优先级建议
 
-> **v2.1.177 更新**：根据 2.1.170-2.1.177 变更调整优先级
+> **v2.1.187 更新**：根据 2.1.170-2.1.187 变更调整优先级。已移除 v2.1.178-187 中 zy-code 已对齐的项（HTTP hooks 托管管控、idle 空闲检测等）。
 
 ### P0（最高优先级）
 
@@ -1747,6 +1968,7 @@ async function tc4(query, ...) {
 | **Refusal Fallback** | 中 | `src/services/api/errors.ts` L1046 | 在 `getErrorMessageIfRefusal` 中添加 fallback model 切换逻辑，复用 `withRetry.ts` 中已有的 `FallbackTriggeredError` |
 | **Streaming Watchdog Auto-retry** | 低 | `src/services/api/llmOrchestrator.ts` L1215 | watchdog abort 后自动重新建立流式连接重试 |
 | **Non-streaming Fallback** | 中 | `src/services/api/llmOrchestrator.ts` | 流式 watchdog 触发后，回退到非流式请求 |
+| 🆕 **sandbox.credentials** | 低 | `src/entrypoints/sandboxTypes.ts` | v2.1.187 凭证隔离：在 sandbox schema 添加 `credentials` 字段，filesystem deny 规则扩展到 `~/.aws`、`~/.ssh`、密钥环境变量 |
 
 ### P1
 
@@ -1760,8 +1982,11 @@ async function tc4(query, ...) {
 | **Safe Mode** | 低 | `src/cli/` | 添加 `ZY_CODE_SAFE_MODE` + `--safe-mode` CLI flag，禁用部分功能 |
 | 🆕 **Fable 5 模型配置** | 低 | `src/constants/` | 添加 Fable 5 模型能力声明和 model-capabilities 配置 |
 | 🆕 **Sub-agent 嵌套** | 中 | `src/coordinator/` | 支持 sub-agent 自嵌套 spawn（maxDepth=5）— 注：zy-code 已有 `spawnMultiAgent.ts`，需确认是否已有深度限制 |
-| 🆕 **enforceAvailableModels** | 中 | `src/tools/ConfigTool/` | 管理设置强制模型白名单 |
+| 🆕 **enforceAvailableModels** | 中 | `src/utils/settings/types.ts` | zy-code 已有 `availableModels`，需补充 `enforceAvailableModels` 强制开关 |
 | 🆕 **disableBundledSkills** | 低 | `src/skills/` | 隐藏内置 skill/workflow/命令的环境变量和设置 |
+| 🆕 **attribution.sessionUrl** | 低 | `src/utils/settings/types.ts` L373 | v2.1.181：在 attribution schema 添加 `sessionUrl: z.boolean()` 子字段 |
+| 🆕 **respondToBashCommands** | 低 | `src/utils/settings/types.ts` + 输入框逻辑 | v2.1.179：输入框 `!` bash 命令后是否触发 Claude 响应 |
+| 🆕 **sandbox.allowAppleEvents** | 低 | `src/entrypoints/sandboxTypes.ts` | v2.1.179：macOS Apple Events 开关（Windows 优先环境下低优先） |
 
 ### P2
 
@@ -1772,7 +1997,7 @@ async function tc4(query, ...) {
 | **RETRY_WATCHDOG env** | 低 | `ZY_CODE_RETRY_WATCHDOG` 环境变量 |
 | **缺失命令补齐** | 中 | `/scroll-speed`、`/stop`、`/recap`、`/fast` |
 | **缺失工具补齐** | 中 | `NotebookRead`、`Cd` |
-| **Daemon 进程** | 高 | 实现 `src/daemon/main.ts`，支持 daemon.lock + 冷启动优化 |
+| **Daemon 进程** | 高 | 实现 `src/daemon/main.ts`，支持 daemon.lock + 冷启动优化（详见二十三C/二十三F） |
 | **Session Resume 高级参数** | 中 | 补齐 `RESUME_FROM_SESSION`、`RESUME_PROMPT`、`RESUME_THRESHOLD_MINUTES`、`RESUME_TOKEN_THRESHOLD` |
 | **ENABLE_BYTE_WATCHDOG** | 中 | 字节级流式看门狗（区别于时间级 watchdog） |
 | **ENABLE_CRASH_REPORTING** | 中 | 崩溃自动报告机制 |
@@ -1783,6 +2008,7 @@ async function tc4(query, ...) {
 | 🆕 **Agent-Team 设置补齐** | 低 | `isolatePeerMachines`、`autoUploadSessions` 设置项 |
 | 🆕 **Cowork Plugin Authoring** | 中 | CC 有内置 skill 指导 Cowork 插件创作，zy-code 需补充 |
 | 🆕 **多终端会话同步** | 极高 | Daemon + PTY Proxy + FleetView TUI（详见二十三C），约 6-10 周工作量 |
+| 🆕 **sandbox.bwrapPath / socatPath** | 低 | Linux/WSL bwrap 和 socat 路径覆盖（v2.1.178-187 补全） |
 
 ### P3
 
@@ -1863,6 +2089,18 @@ async function tc4(query, ...) {
 | 🆕 `CLAUDE_CODE_DISABLE_LEGACY_MODEL_REMAP` | `78636784` | ❌ 缺失 |
 | 🆕 `CLAUDE_CODE_DISABLE_FAST_MODE` | `78636848` | ❌ 缺失 |
 | 🆕 `CLAUDE_CODE_DISABLE_1M_CONTEXT` | `78636896` | ❌ 缺失 |
+| 🆕 `CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT` | `86848904` | ❌ 缺失（v2.1.178+） |
+| 🆕 `CLAUDE_CODE_MCP_ALLOWLIST_ENV` | `86848960` | ❌ 缺失（v2.1.178+） |
+| 🆕 `CLAUDE_CODE_MID_CONVERSATION_SYSTEM` | `86848848` | ❌ 缺失（v2.1.178+） |
+| 🆕 `CLAUDE_CODE_MOCK_REMOTE_SETTINGS` | `86848800` | ❌ 缺失（测试用） |
+| 🆕 `CLAUDE_CODE_INVESTIGATE_FIRST` | `86849152` | ✅ `ZY_CODE_INVESTIGATE_FIRST`（v2.1.178+） |
+| 🆕 `CLAUDE_CODE_IDLE_TOKEN_THRESHOLD` | `86849200` | ✅ `ZY_CODE_IDLE_TOKEN_THRESHOLD`（v2.1.186） |
+| 🆕 `CLAUDE_CODE_IDLE_THRESHOLD_MINUTES` | `86849248` | ✅ `ZY_CODE_IDLE_THRESHOLD_MINUTES`（v2.1.186） |
+| 🆕 `CLAUDE_CODE_IS_COWORK` | `86849112` | ✅ `ZY_CODE_IS_COWORK`（v2.1.178+） |
+| 🆕 `CLAUDE_CODE_LOOP_PERSISTENT` | `86849064` | ✅ `ZY_CODE_LOOP_PERSISTENT`（v2.1.178+） |
+| 🆕 `CLAUDE_CODE_IDE_HOST_OVERRIDE` | `86849304` | ❌ 缺失（v2.1.178+） |
+| 🆕 `CLAUDE_CODE_HOST_PLATFORM` | `86849352` | ❌ 缺失（v2.1.178+） |
+| 🆕 `CLAUDE_CODE_MANAGED_SETTINGS_PATH` | `86849008` | ❌ 缺失（v2.1.178+） |
 
 ## 附录：CC 关键遥测事件偏移
 
@@ -1880,9 +2118,9 @@ async function tc4(query, ...) {
 | `PostToolBatch` | `78429783`, `90327600` |
 | `PROMPT_CACHING` | `78294694`, `78294983` |
 
-## 附录：v2.1.170 → v2.1.177 Changelog 摘要
+## 附录：v2.1.170 → v2.1.187 Changelog 摘要
 
-以下变更来自 GitHub CHANGELOG.md（v2.1.177 的 CLI changelog 尚未发布）：
+> **v2.1.187 更新**：新增 v2.1.178 ~ v2.1.187 变更
 
 ### 2.1.170 — Fable 5 发布
 - 引入 **Claude Fable 5**：Mythos-class 模型，能力超过所有此前公开可用模型
@@ -1918,3 +2156,94 @@ async function tc4(query, ...) {
 - `/copy` 和鼠标选择 copy 在 tmux over SSH 修复
 - Remote Control 多项修复
 - Background session 多项修复
+
+### 🆕 2.1.178 — HTTP Hooks + 企业管控
+- **`allowedHttpHookUrls`** 设置：HTTP hooks 可访问的 URL 模式白名单（支持 `*` 通配符）
+- **`httpHookAllowedEnvVars`** 设置：HTTP hooks 可插值到请求头的环境变量名白名单
+- **`allowManagedHooksOnly`** 设置：仅运行 managed-settings.json 中定义的 hooks
+- **`allowManagedPermissionRulesOnly`** 设置：仅使用 managed-settings 的权限规则
+- **`allowManagedMcpServersOnly`** 设置：仅从 managed-settings 读取 MCP 白名单
+- **`allowManagedMcpServersFromClaudeAi`** 设置：允许 claude.ai 云 MCP 连接器与 managed-mcp.json 共存
+- **`respondToBashCommands`** 设置：输入框 `!` bash 命令后是否触发 Claude 响应
+- **`sandbox.allowAppleEvents`** 设置：macOS 允许沙箱命令发送 Apple Events（`open`/`osascript`）
+- MCP 工具空闲超时 `MCP_TOOL_IDLE_TIMEOUT` 环境变量
+- 改进：`deniedMcpServers` 取代 `mcpServers.*.disabled`，denylist 优先于 allowlist
+- 修复：Windsurf 兼容的 MCP `tools/call` 请求适配
+
+### 2.1.179 — 独立版 CLI daemon 安装提示
+- Daemon 安装提示改为独立 CLI 命令（`claude daemon install`），不再阻塞启动
+- 修复 daemon 安装提示未检测已有 systemd service 的问题
+- Hook 条件匹配改进（`Bash(!npm test)` 等 `!` 否定模式）
+
+### 2.1.181 — Attribution sessionUrl
+- **`attribution.sessionUrl`** 设置：控制是否在提交/PR 中追加 claude.ai session 链接（默认 true）
+- 修复 sub-agent 文件上下文丢失问题
+- 改进：Bedrock `anthropic-version` header 默认值
+- 改进：`statusline.json` 热重载
+
+### 2.1.183 — Settings 错误提示 + 工具 error 修复
+- **`SettingsError`** 改进：settings 解析失败时显示具体错误位置和修复建议
+- 修复 `tool_use_error` 导致无限循环的问题
+- 修复 hook `timeout` 字段不生效的问题
+- 修复 daemon roster 解析失败后 crash 的无限重启循环
+
+### 2.1.185 — 组织级模型
+- **Org-configured model**：管理员可通过 managed-settings 配置组织默认模型
+- 修复 `opusplan` 模型在 `/model` 中不可见的问题
+- 修复非流式 fallback 在 Bedrock 上失败的问题
+- 修复 daemon `kill` 后 roster 残留 zombie entry 的问题
+
+### 2.1.186 — 后台会话空闲 + daemon 焦点
+- **daemon `seedFocus`** 改进：Worker adopt 时不抢占焦点（偏移 `220802523`）
+- 改进：`claude agents` 面板会话状态分组（running/idle/completed）
+- 改进：idle 会话自动背景化（`IDLE_THRESHOLD_MINUTES`、`IDLE_TOKEN_THRESHOLD`）
+- 修复：`FileChanged` / `CwdChanged` hook 在 worktree 中不触发的问题
+
+### 2.1.187 — Sandbox 凭证隔离
+- **`sandbox.credentials`** 设置：阻止沙箱命令读取凭证文件（`~/.aws/credentials`、`~/.ssh/id_*`）和密钥环境变量（偏移 `90224256`）
+- 改进：Sandbox schema 增加 `bwrapPath`、`socatPath`（Linux/WSL 路径覆盖）
+- 改进：`sandbox.ripgrep` 支持自定义 ripgrep 命令
+
+---
+
+## 二十六、v2.1.178 → v2.1.187 增量变更汇总
+
+> 本节汇总 v2.1.177 → v2.1.187（10 个版本）的增量变更与 zy-code 对齐状态。
+
+### 总体评估
+
+| 指标 | v2.1.177 报告时 | v2.1.187 现在 | 变化 |
+|------|----------------|--------------|------|
+| CC 环境变量总数 | ~70 | ~85+ | +15 |
+| CC 设置项总数 | ~30 | ~45+ | +15 |
+| zy-code 已对齐设置 | ~15 | ~30+ | ✅ 翻倍 |
+| zy-code 缺失的 P0 项 | 3 | 4 | +1（sandbox.credentials） |
+| zy-code 独有设置 | 6 | 8 | +2（modelOverrides, defaultMaxOutputTokenRatio） |
+
+### v2.1.178-187 新增能力对齐状态
+
+| 变更 | CC 版本 | zy-code 状态 | 优先级 |
+|------|---------|-------------|--------|
+| HTTP hooks URL 白名单 (`allowedHttpHookUrls`) | 2.1.178 | ✅ 已对齐 | — |
+| HTTP hooks 环境变量白名单 (`httpHookAllowedEnvVars`) | 2.1.178 | ✅ 已对齐 | — |
+| 仅运行托管 hooks (`allowManagedHooksOnly`) | 2.1.178 | ✅ 已对齐 | — |
+| 仅运行托管权限 (`allowManagedPermissionRulesOnly`) | 2.1.178 | ✅ 已对齐 | — |
+| 仅从托管读取 MCP (`allowManagedMcpServersOnly`) | 2.1.178 | ✅ 已对齐 | — |
+| sandbox Apple Events (`allowAppleEvents`) | 2.1.179 | ❌ 缺失 | P1（低，macOS only） |
+| respondToBashCommands | 2.1.179 | ❌ 缺失 | P1（低） |
+| attribution.sessionUrl | 2.1.181 | ❌ 缺失 | P1（低） |
+| SettingsError 改进 | 2.1.183 | ⚠️ 部分（有 InvalidSettingsDialog） | — |
+| 组织级默认模型 | 2.1.185 | ❌ 缺失 | P2 |
+| daemon seedFocus 焦点 | 2.1.186 | ❌ 缺失（依赖 daemon） | P2 |
+| idle 会话背景化 | 2.1.186 | ⚠️ 检测层有，执行层缺 | P2（依赖 daemon） |
+| FileChanged/CwdChanged hook worktree 修复 | 2.1.186 | ❌ 未确认 | — |
+| **sandbox.credentials** | **2.1.187** | **❌ 缺失** | **P0（新）** |
+| sandbox.bwrapPath / socatPath | 2.1.187 | ❌ 缺失 | P2（低） |
+
+### 关键发现
+
+1. **zy-code 在企业设置管控方面快速追平 CC**：v2.1.178 引入的 5 个 `allowManaged*` 设置项，zy-code 已全部对齐（`types.ts` L536-580）
+2. **sandbox 凭证隔离是唯一新增的 P0 项**：`sandbox.credentials`（v2.1.187）是安全关键功能，实现复杂度低（schema 扩展 + filesystem deny 规则）
+3. **HTTP hooks 执行层完全对齐**：`execHttpHook.ts` 的 URL 白名单校验和环境变量插值限制与 CC 二进制提取的 schema 完全一致
+4. **daemon 子系统仍是最大差距**：v2.1.186 的 idle 背景化和 seedFocus 改进进一步拉大了 daemon 差距，但检测层（`ZY_CODE_IDLE_*`）已就绪
+5. **zy-code settings schema 远比 CC 丰富**：1212 行的 zod schema（`types.ts`）包含 CC 没有的 `modelOverrides`、`customModels`、`forceLoginMethod`、`strictPluginOnlyCustomization` 等独有设置

@@ -44,6 +44,31 @@ interface OpenAICompat {
 
 `src/services/api/modelCapabilityProbe.ts`：API 返回 "thinking not supported" 时自动降级运行时缓存。优先级链：`model-capabilities.json` → API error 运行时降级 → provider 默认能力。
 
+### ~~6. capabilities 结构化对象~~ ✅
+
+2026-06 完成。`model-capabilities.json` 的 `capabilities` 从字符串数组改为结构化对象，将所有能力维度聚合到一个字段中。思考相关能力（adaptive、preserve、effort）合并到 `thinking` 对象内：
+
+```jsonc
+{
+  "pattern": "qwen3.6-max-preview",
+  "capabilities": {
+    "thinking": {                           // key 存在 = 支持 thinking
+      "adaptive": true,                     // 自适应思考
+      "preserve": "optional",               // 思考块回传
+      "effort": ["off", "balanced"]         // effort 档位（数组或 { levels, map }）
+    },
+    "structured_outputs": true,             // bool
+    "auto_mode": true,                      // bool
+    "prompt_caching": "explicit"            // string
+  },
+  "maxThinkingTokens": "32k",               // token 限制保留顶层
+  "contextWindow": "200k",
+  "costs": { ... }
+}
+```
+
+`localModelHasCapability()` 简化为检查 `capabilities[key]` 是否存在且不为 false。thinking 子配置通过专用访问器读取（`localModelHasAdaptiveThinking()`、`getLocalModelPreserveThinking()`、`getLocalModelEffortLevels()`、`getLocalModelEffortMap()`）。旧格式（数组 + 独立顶层字段 + 散落子配置）通过迁移垫片自动转换。
+
 ---
 
 ## 1. API 协议与 Provider 解耦
@@ -87,7 +112,7 @@ zy-code 有 `AnthropicProviderAdapter` 和 `OpenAIProviderAdapter` 两个 adapte
 ```
 getAPIProvider()          → provider ID
 getMainLoopModel()        → 模型名
-modelHasCapability()      → 能力查询（先查 json，再查 registry）
+localModelHasCapability() → 能力查询（model-capabilities.json，支持派生能力）
 getProviderEntry()        → 注册表条目
 getProviderCompat()       → compat 配置
 mapEffortToProvider()     → effort 映射
@@ -284,8 +309,9 @@ export function createFauxProvider(responses: FauxResponse[]): {
 1. [P0] ResolvedModel 值对象 — ✅ Phase 1 完成（llmOrchestrator 内部使用）
 2. [P1] 模型级 effortMap — ✅ 完成（model-capabilities.json schema + 三层查找链）
 3. [P1] 统一消息预处理层 — ❌ 不做（两个 conversion 无实际重复逻辑，预处理已在 apiNormalize.ts 统一）
-4. [P2] Faux Provider — 待做（改善测试体验，2 天）
-5. [P2] 模型元数据自动生成 — 待做（减少手动维护，2-3 天）
-6. [P2] 类型安全 API 关联 — 待做（依赖 ResolvedModel 完全推广）
-7. [低] llmOrchestrator 的 5 处 provider 判断 → ProviderCapability 声明式
+4. [P1] capabilities 结构化对象 — ✅ 完成（数组→对象，promptCaching/effortLevels/effortMap/preserveThinking 收编）
+5. [P2] Faux Provider — 待做（改善测试体验，2 天）
+6. [P2] 模型元数据自动生成 — 待做（减少手动维护，2-3 天）
+7. [P2] 类型安全 API 关联 — 待做（依赖 ResolvedModel 完全推广）
+8. [低] llmOrchestrator 的 5 处 provider 判断 → ProviderCapability 声明式
 ```
