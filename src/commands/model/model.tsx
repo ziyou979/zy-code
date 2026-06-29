@@ -44,9 +44,10 @@ function ModelPickerWrapper({ onDone }: { onDone: LocalJSXCommandOnDone }) {
     }))
     let message = tSync('modelCommand.set', { model: chalk.bold(renderModelLabel(model)) })
     if (effort !== undefined) {
+      const effortDisplay = tSync(`effort.${effort}` as any) || effort
       message = tSync('modelCommand.setWithEffort', {
         model: chalk.bold(renderModelLabel(model)),
-        effort: chalk.bold(effort),
+        effort: chalk.bold(effortDisplay),
       })
     }
     onDone(message)
