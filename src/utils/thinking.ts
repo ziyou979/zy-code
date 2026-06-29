@@ -7,7 +7,7 @@ import {
   probedModelSupportsAdaptiveThinking,
   probedModelSupportsThinking,
 } from '../services/api/modelCapabilityProbe.js'
-import { localModelHasCapability } from './settings/localModelCapabilities.js'
+import { localModelHasCapability, localModelHasAdaptiveThinking } from './settings/localModelCapabilities.js'
 import { getSettingsWithErrors } from './settings/settings.js'
 
 export type ThinkingConfig =
@@ -102,7 +102,7 @@ export function modelSupportsThinking(model: string): boolean {
 
 // @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsAdaptiveThinking(model: string): boolean {
-  if (localModelHasCapability(model, 'adaptive_thinking')) {
+  if (localModelHasAdaptiveThinking(model)) {
     return true
   }
   const probed = probedModelSupportsAdaptiveThinking(model)

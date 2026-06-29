@@ -4,8 +4,6 @@ import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   getLocalModelCapability,
   getLocalModelCosts,
-  type ModelCapabilityKind,
-  localModelHasCapability,
   parseTokenCount,
 } from '../../utils/settings/localModelCapabilities.js'
 import {
@@ -105,16 +103,13 @@ export function isAnthropicModel(model: string): boolean {
 }
 
 /**
- * Provider 级别的能力声明 —— 在 providerRegistry.ts 中按 provider 定义，
- * 可按模型进行细化。
+ * Provider 级别的能力声明 —— 在 providerRegistry.ts 中按 provider 定义。
+ *
+ * 模型级能力（thinking、structured_outputs 等）在 ~/.zy/model-capabilities.json 中配置，
+ * 见 localModelCapabilities.ts 的 ModelCapabilityKind。
  *
  * 添加新 provider 时，请修改 providerRegistry.ts 而非此文件。
  */
-// 注:effort（思考强度）能力已从布尔标记升级为档位列表,
-// 见 ProviderEntry.effortMapping / model-capabilities.json 的 effortLevels。
-// 此处不再有 'effort' / 'max_effort' 布尔能力。
-// 注:模型能力（thinking、adaptive_thinking、structured_outputs、prompt_caching）
-// 已移至 model-capabilities.json 配置，ProviderCapability 仅保留 provider 级能力。
 export type ProviderCapability =
   | 'context_management' // 上下文管理 beta（Anthropic 特有，后续由框架层实现）
   | 'advisor' // advisor 工具支持（Anthropic 特有）
@@ -240,26 +235,12 @@ export function isEnvEndpointProvider(provider: APIProvider): boolean {
   return entry?.endpointType.includes('env') === true
 }
 
-/**
- * 从 ~/.zy/model-capabilities.json 读取模型能力配置。
- * 模型能力配置已从 settings.json 独立出来。
- *
- * 用法：用 `modelHasCapability(model, 'thinking')` 替代硬编码的模型判断。
- * 注意：仅查询模型级别配置，不再 fallback 到 provider。
- */
-export function modelHasCapability(
-  model: string,
-  capability: ModelCapabilityKind,
-): boolean {
-  return localModelHasCapability(model, capability)
-}
-
 export function getModelMaxInputTokens(model: string): number | undefined {
   const entry = getLocalModelCapability(model)
-  if (!entry?.maxInputTokens) {
+  if (!entry?.tokens?.maxInputTokens) {
     return undefined
   }
-  return parseTokenCount(entry.maxInputTokens)
+  return parseTokenCount(entry.tokens.maxInputTokens)
 }
 
 export function getModelCostsFromSettings(

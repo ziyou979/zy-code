@@ -481,22 +481,16 @@ export function convertThinkingForOpenAI(
       return { ...params, preserve_thinking: true }
     }
 
-    // 可选模式：effort 为 extreme 时回传（dashscope、zhipu）
-    if (preserveThinking === 'optional' && effort === 'extreme') {
+    // 可选模式：effort 为 ultra 或 extreme 时回传（dashscope、zhipu）
+    if (preserveThinking === 'optional' && (effort === 'ultra' || effort === 'extreme')) {
       return { ...params, preserve_thinking: true }
     }
 
     return params
   }
 
-  // 兜底：模型名启发式（用于未注册 attr 的 provider）
-  const modelLower = model.toLowerCase()
-  if (
-    modelLower.includes('reasoning') ||
-    modelLower.includes('r1') ||
-    modelLower.includes('thinking') ||
-    modelLower.includes('deepseek')
-  ) {
+  // 兜底：根据模型能力配置判断（用于未注册 attr 的 provider）
+  if (localModelHasCapability(model, 'thinking')) {
     return { enable_thinking: true }
   }
 

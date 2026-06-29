@@ -8,7 +8,6 @@ import { getMainLoopModel } from 'src/services/model/model.js'
 import {
   getAPIProvider,
   isAnthropicModel,
-  modelHasCapability,
   providerHasCapability,
 } from 'src/services/model/providers.js'
 import { getSdkBetas } from '../bootstrap/state.js'
@@ -23,7 +22,7 @@ import {
 } from '../constants/betas.js'
 import { getContextWindowForModel } from './context.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
-import { getLocalModelBetaHeaders } from './settings/localModelCapabilities.js'
+import { getLocalModelBetaHeaders, localModelHasCapability } from './settings/localModelCapabilities.js'
 
 /**
  * SDK-provided betas that are allowed for API key users.
@@ -92,12 +91,12 @@ function modelSupports1MContext(model: string): boolean {
 // @[MODEL LAUNCH]: Add the new model ID to this list if it supports structured outputs.
 export function modelSupportsStructuredOutputs(model: string): boolean {
   // 移除 provider 级别 fallback，能力仅从模型配置查询
-  return modelHasCapability(model, 'structured_outputs')
+  return localModelHasCapability(model, 'structured_outputs')
 }
 
 // @[MODEL LAUNCH]: Add the new model if it supports auto mode (specifically PI probes) — ask in #proj-zy-code-safety-research.
 export function modelSupportsAutoMode(model: string): boolean {
-  if (modelHasCapability(model, 'auto_mode')) {
+  if (localModelHasCapability(model, 'auto_mode')) {
     return true
   }
   // GrowthBook override: zy_auto_mode_config.allowModels

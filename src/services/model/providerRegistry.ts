@@ -7,6 +7,7 @@
  */
 
 import type { ProviderCapability } from './providers.js'
+import { localModelHasAdaptiveThinking } from '../../utils/settings/localModelCapabilities.js'
 
 /**
  * 模型能力标签 — 用于 onboarding 中统一渲染模型描述。
@@ -236,22 +237,16 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       thinking: {
         // DashScope 平台统一使用 thinking.type 控制思考模式，避免与
         // enable_thinking 混发导致 API 冲突。按模型区分 type 值：
-        // - MiniMax/MiniMax-M3 用 'adaptive'（模型自主判断）
-        // - 其余模型（Qwen/DeepSeek/Kimi/GLM 等）用 'enabled'
+        // 根据模型能力配置判断使用 adaptive 还是 enabled：
+        // - 配置了 thinking.adaptive: true 的模型用 'adaptive'
+        // - 其余模型用 'enabled'
         enable: (_effort, model) => {
-          const m = (model ?? '').toLowerCase()
-          if (m.includes('minimax') || m.includes('m3')) {
+          if (model && localModelHasAdaptiveThinking(model)) {
             return { thinking: { type: 'adaptive' } }
           }
           return { thinking: { type: 'enabled' } }
         },
-        disable: (_effort, model) => {
-          const m = (model ?? '').toLowerCase()
-          if (m.includes('minimax') || m.includes('m3')) {
-            return { thinking: { type: 'disabled' } }
-          }
-          return { thinking: { type: 'disabled' } }
-        },
+        disable: () => ({ thinking: { type: 'disabled' } }),
       },
       stripThinkingTags: true,
     },
@@ -275,7 +270,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     openaiAttr: {
       thinking: {
-        enable: (effort) => ({ reasoning_effort: effort ?? 'medium' }),
+        enable: (effort) => ({ reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium' }),
       },
     },
   },
@@ -335,7 +330,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     openaiAttr: {
       thinking: {
-        enable: (effort) => ({ reasoning_effort: effort ?? 'medium' }),
+        enable: (effort) => ({ reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium' }),
       },
     },
   },
@@ -366,7 +361,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     openaiAttr: {
       thinking: {
-        enable: (effort) => ({ reasoning_effort: effort ?? 'medium' }),
+        enable: (effort) => ({ reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium' }),
       },
     },
   },
@@ -538,7 +533,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     openaiAttr: {
       thinking: {
-        enable: (effort) => ({ reasoning_effort: effort ?? 'medium' }),
+        enable: (effort) => ({ reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium' }),
       },
     },
   },
@@ -578,7 +573,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     openaiAttr: {
       thinking: {
-        enable: (effort) => ({ reasoning: { effort: effort ?? 'medium' } }),
+        enable: (effort) => ({ reasoning: { effort: (effort === 'on' ? undefined : effort) ?? 'medium' } }),
       },
     },
   },
