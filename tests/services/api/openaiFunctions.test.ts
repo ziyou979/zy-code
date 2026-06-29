@@ -225,7 +225,7 @@ describe('convertThinkingForOpenAI', () => {
   })
 
   test('dashscope minimax → { thinking: { type: "adaptive" } }', () => {
-    expect(fn(thinkingEnabled, 'minimax-m3', undefined, 'dashscope')).toEqual({
+    expect(fn(thinkingEnabled, 'MiniMax-M2.1', undefined, 'dashscope')).toEqual({
       thinking: { type: 'adaptive' },
     })
   })
@@ -272,10 +272,8 @@ describe('convertThinkingForOpenAI', () => {
     })
   })
 
-  test('未知 provider 但模型名含 reasoning → { enable_thinking: true }', () => {
-    expect(fn(thinkingEnabled, 'my-reasoning-model', undefined, 'unknown-provider')).toEqual({
-      enable_thinking: true,
-    })
+  test('未知 provider + 未配置模型 → {}', () => {
+    expect(fn(thinkingEnabled, 'my-reasoning-model', undefined, 'unknown-provider')).toEqual({})
   })
 
   test('未知 provider + 普通模型名 → {}', () => {

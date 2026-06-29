@@ -17,7 +17,7 @@ import {
   renderToolUseProgressMessage,
 } from './UI.js'
 
-const SEARCH_API_URL = 'http://search.zy.ai:8089'
+const SEARCH_API_URL = 'http://127.0.0.1:8089'
 const DEFAULT_MAX_RESULTS = 8
 const MAX_ALLOWED_RESULTS = 20
 

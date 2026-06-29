@@ -1,11 +1,11 @@
 /**
  * 内置搜索 provider — 通过 ZY Search API 获取搜索结果。
- *
- * 默认端点：http://search.zy.ai:8089/
+ * todo 待部署到服务端
+ * 默认端点：http://127.0.0.1:8089/
  */
 import type { SearchOptions, SearchProvider, SearchResult } from './types.js'
 
-const DEFAULT_SEARCH_URL = 'http://search.zy.ai:8089'
+const DEFAULT_SEARCH_URL = 'http://127.0.0.1:8089'
 
 export class BuiltinSearchProvider implements SearchProvider {
   readonly id = 'web-search'

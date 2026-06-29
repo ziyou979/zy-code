@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
  * 搜索逻辑已内联到 WebSearchTool 中，这里直接测试 HTTP 请求行为。
  */
 
-const SEARCH_API_URL = 'http://search.zy.ai:8089'
+const SEARCH_API_URL = 'http://127.0.0.1:8089'
 
 describe('BuiltinSearch', () => {
   let originalFetch: typeof globalThis.fetch
@@ -30,7 +30,7 @@ describe('BuiltinSearch', () => {
       headers: { Accept: 'application/json' },
     })
 
-    expect(requestedUrl).toContain('http://search.zy.ai:8089/search')
+    expect(requestedUrl).toContain('http://127.0.0.1:8089/search')
     expect(requestedUrl).toContain('q=test')
     expect(requestedUrl).toContain('format=json')
   })
