@@ -1,5 +1,5 @@
 import z from 'zod/v4'
-import { PAUSE_ICON } from '../../constants/figures.js'
+import {FAST_FORWARD_ICON, PAUSE_ICON} from '../../constants/figures.js'
 // 类型定义已提取到 src/types/permissions.ts 以打破导入循环
 import {
   EXTERNAL_PERMISSION_MODES,
@@ -7,7 +7,7 @@ import {
   PERMISSION_MODES,
   type PermissionMode,
 } from '../../types/permissions.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+
 import { lazySchema } from '../../utils/lazySchema.js'
 
 // 为向后兼容而重新导出
@@ -51,28 +51,28 @@ const PERMISSION_MODE_CONFIG: Partial<Record<PermissionMode, PermissionModeConfi
   acceptEdits: {
     title: 'permissionMode.acceptEdits',
     shortTitle: 'permissionMode.acceptEditsShort',
-    symbol: '⏵⏵',
+    symbol: FAST_FORWARD_ICON,
     color: 'autoAccept',
     external: 'acceptEdits',
   },
   bypassPermissions: {
     title: 'permissionMode.bypassPermissions',
     shortTitle: 'permissionMode.bypassPermissionsShort',
-    symbol: '⏵⏵',
+    symbol: FAST_FORWARD_ICON,
     color: 'error',
     external: 'bypassPermissions',
   },
   dontAsk: {
     title: 'permissionMode.dontAsk',
     shortTitle: 'permissionMode.dontAskShort',
-    symbol: '⏵⏵',
+    symbol: FAST_FORWARD_ICON,
     color: 'error',
     external: 'dontAsk',
   },
   auto: {
     title: 'permissionMode.auto',
     shortTitle: 'permissionMode.autoShort',
-    symbol: '⏵⏵',
+    symbol: FAST_FORWARD_ICON,
     color: 'warning' as ModeColorKey,
     external: 'default' as ExternalPermissionMode,
   },
@@ -83,10 +83,6 @@ const PERMISSION_MODE_CONFIG: Partial<Record<PermissionMode, PermissionModeConfi
  * auto 模式仅限内部使用，不包含在外部模式中。
  */
 export function isExternalPermissionMode(mode: PermissionMode): mode is ExternalPermissionMode {
-  // 外部用户无法使用 auto 模式，因此对他们始终返回 true
-  if (!isInternalBuild()) {
-    return true
-  }
   return mode !== 'auto' && mode !== 'bubble'
 }
 
