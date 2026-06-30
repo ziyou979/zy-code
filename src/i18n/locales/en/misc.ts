@@ -34,6 +34,33 @@ export const enMisc: TranslationResource = {
   'effort.ultra': 'Ultra',
   'effort.orchestrate': 'Orchestrate',
   'effort.levelWithShortcut': '{level} · /effort',
+  'effort.command.failedToSet': 'Failed to set effort level: {error}',
+  'effort.command.notAppliedEnvOverride':
+    'Not applied: {envVar} overrides effort this session, and {value} is session-only (nothing saved)',
+  'effort.command.envOverrideHint': '{envVar} overrides this session — clear it and {value} takes over',
+  'effort.command.setSuccess': 'Set effort level to {value}{suffix}: {description}',
+  'effort.command.currentAuto': 'Effort level: auto (currently {level})',
+  'effort.command.current': 'Current effort level: {value} ({description})',
+  'effort.command.clearedButEnvOverride':
+    'Cleared effort from settings, but {envVar} still controls this session',
+  'effort.command.setToAuto': 'Effort level set to auto',
+  'effort.command.invalidArgument':
+    'Invalid argument: {args}. Valid options are: {validOptions}',
+  'effort.command.usageHeader':
+    'Usage: /effort [{options}]\n\nEffort levels:',
+  'effort.command.usageItem': '- {name}: {description}',
+  'effort.command.usageAuto': '- auto: Use the default effort level for your model',
+  'effort.description.off': 'Thinking disabled — fastest mode without any reasoning',
+  'effort.description.on': 'Thinking enabled — no specific intensity level',
+  'effort.description.quick': 'Fastest response with minimal reasoning',
+  'effort.description.light': 'Light reasoning, quick implementation',
+  'effort.description.balanced': 'Balanced approach with standard reasoning',
+  'effort.description.thorough': 'Deep reasoning with comprehensive analysis',
+  'effort.description.extreme': 'Maximum reasoning depth and thoroughness',
+  'effort.description.ultra': 'Maximum thinking intensity with thought block preservation',
+  'effort.description.orchestrate':
+    'Extreme reasoning + dynamic workflow orchestration (session only)',
+  'effort.sessionOnly': ' (this session only)',
   'errorUtils.api.errorWithStatus': 'API error (status {status})',
   'errorUtils.connection.failed': 'Unable to connect to API. Check your internet connection',
   'errorUtils.connection.timeout':
