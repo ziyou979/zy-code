@@ -19,7 +19,7 @@ export const EFFORT_ULTRA = '◉' // \u25c9 - effort level: ultra (max thinking 
 // Media/trigger status indicators
 export const PLAY_ICON = '\u23f5' // ⏵
 export const PAUSE_ICON = '\u23f8' // ⏸
-export const FAST_FORWARD_ICON = '\u23e9' // ⏭
+export const FAST_FORWARD_ICON = '\u23ed' // ⏭
 
 // MCP subscription indicators
 export const REFRESH_ARROW = '\u21bb' // ↻ - used for resource update indicator
