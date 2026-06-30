@@ -47,6 +47,7 @@ import {
   CharPool,
   cellAt,
   collectLiveStyleIds,
+  countWideCellsInRowBefore,
   createScreen,
   HyperlinkPool,
   isEmptyCellAt,
@@ -224,6 +225,10 @@ export default class Ink {
   // Set alongside altScreenActive so SIGCONT resume knows whether to
   // re-enable mouse tracking (not all <AlternateScreen> uses want it).
   private altScreenMouseTracking = false
+  // JediTerm（JetBrains IDE 内置终端）将每个 CJK 宽字符计为 1 列而非 2 列，
+  // 导致鼠标列坐标系统性偏小。缓存检测结果以避免每次事件查询环境变量。
+  private isJetBrainsTerminal: boolean =
+    process.env.TERMINAL_EMULATOR?.includes('JetBrains') === true
   // True when the previous frame's screen buffer cannot be trusted for
   // blit — selection overlay mutated it, resetFramesForAltScreen()
   // replaced it with blanks, or forceRedraw() reset it to 0×0. Forces
@@ -1509,6 +1514,18 @@ export default class Ink {
   }
 
   /**
+   * 修正 JediTerm 的鼠标列坐标。JediTerm 将宽字符计为 1 列，
+   * 而屏幕缓冲区使用 2 单元格模型。通过扫描行中的宽字符数量来补偿偏移。
+   * 非 JediTerm 终端直接返回原值（零成本）。
+   */
+  private correctCol(col: number, row: number): number {
+    if (!this.isJetBrainsTerminal || col <= 0) {
+      return col
+    }
+    return col + countWideCellsInRowBefore(this.frontFrame.screen, row, col)
+  }
+
+  /**
    * Hit-test the rendered DOM tree at (col, row) and bubble a ClickEvent
    * from the deepest hit node up through ancestors with onClick handlers.
    * Returns true if a DOM handler consumed the click. Gated on
@@ -1519,6 +1536,7 @@ export default class Ink {
     if (!this.altScreenActive) {
       return false
     }
+    col = this.correctCol(col, row)
     const blank = isEmptyCellAt(this.frontFrame.screen, col, row)
     return dispatchClick(this.rootNode, col, row, blank)
   }
@@ -1526,6 +1544,7 @@ export default class Ink {
     if (!this.altScreenActive) {
       return
     }
+    col = this.correctCol(col, row)
     dispatchHover(this.rootNode, col, row, this.hoveredNodes)
   }
   dispatchKeyboardEvent(parsedKey: ParsedKey): void {
@@ -1556,6 +1575,7 @@ export default class Ink {
     if (!this.altScreenActive) {
       return undefined
     }
+    col = this.correctCol(col, row)
     const screen = this.frontFrame.screen
     const cell = cellAt(screen, col, row)
     let url = cell?.hyperlink
@@ -1593,6 +1613,7 @@ export default class Ink {
     if (!this.altScreenActive) {
       return
     }
+    col = this.correctCol(col, row)
     const screen = this.frontFrame.screen
     // selectWordAt/selectLineAt no-op on noSelect/out-of-bounds. Seed with
     // a char-mode selection so the press still starts a drag even if the
@@ -1621,6 +1642,7 @@ export default class Ink {
     if (!this.altScreenActive) {
       return
     }
+    col = this.correctCol(col, row)
     const sel = this.selection
     if (sel.anchorSpan) {
       extendSelection(sel, this.frontFrame.screen, col, row)

@@ -657,6 +657,48 @@ export function cellAtIndex(screen: Screen, index: number): Cell {
 }
 
 /**
+ * JediTerm（JetBrains IDE 内置终端）将每个 CJK 宽字符计为 1 列
+ * （而非 2 列），导致鼠标列坐标系统性偏小。
+ *
+ * 此函数修正字符坐标到单元格坐标：遍历屏幕缓冲行，按字符计数
+ * （跳过 SpacerTail/SpacerHead 占位单元格），对前 charCol 个字符中的
+ * CellWidth.Wide 单元格累加计数。返回值即为需要加到字符坐标上的偏移量。
+ *
+ * 例：文本 "中文abc"，charCol=2（点击 'a'）：
+ *   cell 0: Wide('中')   → charCount=1, wideCount=1
+ *   cell 1: SpacerTail   → 跳过
+ *   cell 2: Wide('文')   → charCount=2, wideCount=2  ← 停止
+ *   返回 2，修正后列 = 2 + 2 = 4（'a' 的单元格列）✓
+ */
+export function countWideCellsInRowBefore(
+  screen: Screen,
+  row: number,
+  charCol: number,
+): number {
+  if (row < 0 || row >= screen.height || charCol <= 0) {
+    return 0
+  }
+  const w = screen.width
+  const cells = screen.cells
+  const rowOff = row * w
+  let wideCount = 0
+  let charCount = 0
+  for (let c = 0; c < w && charCount < charCol; c++) {
+    const word1 = cells[((rowOff + c) << 1) | 1]!
+    const width = word1 & WIDTH_MASK
+    // SpacerTail/SpacerHead 是宽字符的占位单元格，不计入字符数
+    if (width === CellWidth.SpacerTail || width === CellWidth.SpacerHead) {
+      continue
+    }
+    if (width === CellWidth.Wide) {
+      wideCount++
+    }
+    charCount++
+  }
+  return wideCount
+}
+
+/**
  * 获取给定索引处的 Cell，如果没有可见内容则返回 undefined。
  * 对于占位符单元格（charId 1）、空无样式空格、以及
  * 与 lastRenderedStyleId 匹配的仅前景样式空格返回 undefined
