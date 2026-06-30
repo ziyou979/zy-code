@@ -2,7 +2,7 @@
 import type { Theme } from './theme.js'
 import { feature } from 'bun:bundle'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import { getAPIProvider, providerHasCapability } from 'src/services/model/providers.js'
+import { getAPIProvider, getProviderAttr, providerHasCapability } from 'src/services/model/providers.js'
 import {
   probedModelSupportsAdaptiveThinking,
   probedModelSupportsThinking,
@@ -96,7 +96,11 @@ export function modelSupportsThinking(model: string): boolean {
   if (probed !== undefined) {
     return probed
   }
-  // 移除 provider 级别 fallback，能力仅从模型配置查询
+  // provider 声明了 openaiAttr.thinking 也视为支持
+  const providerAttr = getProviderAttr()
+  if (providerAttr?.thinking) {
+    return true
+  }
   return false
 }
 

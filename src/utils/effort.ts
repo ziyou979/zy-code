@@ -1,8 +1,9 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import { isUltrathinkEnabled } from './thinking.js'
+import { tSync } from '../i18n/index.js'
+import { isUltrathinkEnabled, modelSupportsThinking } from './thinking.js'
 import { getInitialSettings } from './settings/settings.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
-import { getAPIProvider, getProviderEffortMapping } from 'src/services/model/providers.js'
+import { getAPIProvider, getProviderAttr, getProviderEffortMapping } from 'src/services/model/providers.js'
 import { getMainLoopModel } from 'src/services/model/model.js'
 import { getProviderEntry } from 'src/services/model/providerRegistry.js'
 import {
@@ -127,12 +128,18 @@ export function getModelEffortLevels(model: string): EffortLevel[] {
     return Object.keys(entry.effortMapping) as EffortLevel[]
   }
 
-  // 3. 环境变量强制开启
+  // 3. provider 有 openaiAttr.thinking 但无 effortMapping → 仅支持 toggle 模式
+  const providerAttr = getProviderAttr()
+  if (providerAttr?.thinking) {
+    return ['off', 'on']
+  }
+
+  // 4. 环境变量强制开启
   if (isEnvTruthy(process.env.ZY_CODE_ALWAYS_ENABLE_EFFORT)) {
     return [...EFFORT_LEVEL_ORDER]
   }
 
-  // 4. 不支持 effort
+  // 5. 不支持 effort
   return []
 }
 
@@ -290,26 +297,7 @@ export function convertEffortValueToLevel(value: EffortValue): EffortLevel {
 // ---------------------------------------------------------------------------
 
 export function getEffortLevelDescription(level: EffortLevel): string {
-  switch (level) {
-    case 'off':
-      return 'Thinking disabled — fastest mode without any reasoning'
-    case 'on':
-      return 'Thinking enabled — no specific intensity level'
-    case 'quick':
-      return 'Fastest response with minimal reasoning'
-    case 'light':
-      return 'Light reasoning, quick implementation'
-    case 'balanced':
-      return 'Balanced approach with standard reasoning'
-    case 'thorough':
-      return 'Deep reasoning with comprehensive analysis'
-    case 'extreme':
-      return 'Maximum reasoning depth and thoroughness'
-    case 'ultra':
-      return 'Maximum thinking intensity with thought block preservation'
-    case 'orchestrate':
-      return 'Extreme reasoning + dynamic workflow orchestration (session only)'
-  }
+  return (tSync(`effort.description.${level}` as any) as string) || level
 }
 
 export function getEffortValueDescription(value: EffortValue): string {
@@ -337,6 +325,10 @@ export function getEffortCalloutConfig(): EffortCalloutConfig {
 }
 
 export function getDefaultEffortForModel(model: string): EffortValue | undefined {
+  // 支持思考的模型默认开启思考（on 档位，不走 provider 映射）
+  if (modelSupportsThinking(model)) {
+    return 'on'
+  }
   if (isUltrathinkEnabled() && modelSupportsEffort(model)) {
     return 'balanced'
   }
