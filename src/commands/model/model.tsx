@@ -17,6 +17,7 @@ import { isModelAllowed } from '../../services/model/modelAllowlist.js'
 import { validateModel } from '../../services/model/validateModel.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandCall, LocalJSXCommandOnDone } from '../../types/command.js'
+import { getDefaultEffortForModel } from '../../utils/effort.js'
 
 function ModelPickerWrapper({ onDone }: { onDone: LocalJSXCommandOnDone }) {
   const mainLoopModel = useAppState((s) => s.mainLoopModel)
@@ -116,10 +117,13 @@ function SetModelAndClose({
       }
     }
     function setModel(modelValue: string | null): void {
+      const defaultEffort = modelValue ? getDefaultEffortForModel(modelValue) : undefined
       setAppState((prev) => ({
         ...prev,
         mainLoopModel: modelValue,
         mainLoopModelForSession: null,
+        // 仅在用户未手动设置 effort 时应用默认值
+        effortValue: prev.effortValue ?? defaultEffort,
       }))
       const message = tSync('modelCommand.set', {
         model: chalk.bold(renderModelLabel(modelValue)),

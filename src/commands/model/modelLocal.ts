@@ -1,4 +1,5 @@
 import type { LocalCommandCall } from '../../types/command.js'
+import { getDefaultEffortForModel } from '../../utils/effort.js'
 import { describeCurrentModel, resolveModelChange } from './performModelChange.js'
 
 /**
@@ -33,13 +34,17 @@ export const call: LocalCommandCall = async (args, context) => {
       }
     }
 
-    case 'apply':
+    case 'apply': {
       // 应用模型变更（与 jsx 端 SetModelAndClose useEffect 内的 setModel 完全一致）
+      const defaultEffort = decision.model ? getDefaultEffortForModel(decision.model) : undefined
       context.setAppState((prev) => ({
         ...prev,
         mainLoopModel: decision.model,
         mainLoopModelForSession: null,
+        // 仅在用户未手动设置 effort 时应用默认值
+        effortValue: prev.effortValue ?? defaultEffort,
       }))
       return { type: 'text', value: decision.message }
+    }
   }
 }
