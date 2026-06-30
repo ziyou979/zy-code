@@ -1,9 +1,11 @@
 import * as React from 'react'
+import { tSync } from '../../i18n/index.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
+import { getMainLoopModel } from '../../services/model/model.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
 import {
@@ -11,6 +13,7 @@ import {
   getDisplayedEffortLevel,
   getEffortEnvOverride,
   getEffortValueDescription,
+  getModelEffortLevels,
   isEffortLevel,
   toPersistableEffort,
 } from '../../utils/effort.js'
@@ -31,7 +34,7 @@ function setEffortValue(effortValue: EffortValue): EffortCommandResult {
     })
     if (result.error) {
       return {
-        message: `Failed to set effort level: ${result.error.message}`,
+        message: tSync('effort.command.failedToSet', { error: result.error.message }),
       }
     }
   }
@@ -39,31 +42,45 @@ function setEffortValue(effortValue: EffortValue): EffortCommandResult {
     effort: effortValue as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 
+  // 获取翻译后的 effort 名称
+  const valueName = tSync(`effort.${effortValue}` as any) || effortValue
+
   // Env var wins at resolveAppliedEffort time. Only flag it when it actually
   // conflicts — if env matches what the user just asked for, the outcome is
   // the same, so "Set effort to X" is true and the note is noise.
   const envOverride = getEffortEnvOverride()
   if (envOverride !== undefined && envOverride !== effortValue) {
+    const envVar = 'ZY_CODE_EFFORT_LEVEL'
     const envRaw = process.env.ZY_CODE_EFFORT_LEVEL
     if (persistable === undefined) {
       return {
-        message: `Not applied: ZY_CODE_EFFORT_LEVEL=${envRaw} overrides effort this session, and ${effortValue} is session-only (nothing saved)`,
+        message: tSync('effort.command.notAppliedEnvOverride', {
+          envVar: `${envVar}=${envRaw}`,
+          value: valueName,
+        }),
         effortUpdate: {
           value: effortValue,
         },
       }
     }
     return {
-      message: `ZY_CODE_EFFORT_LEVEL=${envRaw} overrides this session — clear it and ${effortValue} takes over`,
+      message: tSync('effort.command.envOverrideHint', {
+        envVar: `${envVar}=${envRaw}`,
+        value: valueName,
+      }),
       effortUpdate: {
         value: effortValue,
       },
     }
   }
   const description = getEffortValueDescription(effortValue)
-  const suffix = persistable !== undefined ? '' : ' (this session only)'
+  const suffix = persistable !== undefined ? '' : tSync('effort.sessionOnly')
   return {
-    message: `Set effort level to ${effortValue}${suffix}: ${description}`,
+    message: tSync('effort.command.setSuccess', {
+      value: valueName,
+      suffix,
+      description,
+    }),
     effortUpdate: {
       value: effortValue,
     },
@@ -77,13 +94,15 @@ export function showCurrentEffort(
   const effectiveValue = envOverride === null ? undefined : (envOverride ?? appStateEffort)
   if (effectiveValue === undefined) {
     const level = getDisplayedEffortLevel(model, appStateEffort)
+    const levelName = tSync(`effort.${level}` as any) || level
     return {
-      message: `Effort level: auto (currently ${level})`,
+      message: tSync('effort.command.currentAuto', { level: levelName }),
     }
   }
   const description = getEffortValueDescription(effectiveValue)
+  const valueName = tSync(`effort.${effectiveValue}` as any) || effectiveValue
   return {
-    message: `Current effort level: ${effectiveValue} (${description})`,
+    message: tSync('effort.command.current', { value: valueName, description }),
   }
 }
 function unsetEffortLevel(): EffortCommandResult {
@@ -92,7 +111,7 @@ function unsetEffortLevel(): EffortCommandResult {
   })
   if (result.error) {
     return {
-      message: `Failed to set effort level: ${result.error.message}`,
+      message: tSync('effort.command.failedToSet', { error: result.error.message }),
     }
   }
   logEvent('zy_effort_command', {
@@ -104,27 +123,32 @@ function unsetEffortLevel(): EffortCommandResult {
   if (envOverride !== undefined && envOverride !== null) {
     const envRaw = process.env.ZY_CODE_EFFORT_LEVEL
     return {
-      message: `Cleared effort from settings, but ZY_CODE_EFFORT_LEVEL=${envRaw} still controls this session`,
+      message: tSync('effort.command.clearedButEnvOverride', {
+        envVar: `ZY_CODE_EFFORT_LEVEL=${envRaw}`,
+      }),
       effortUpdate: {
         value: undefined,
       },
     }
   }
   return {
-    message: 'Effort level set to auto',
+    message: tSync('effort.command.setToAuto'),
     effortUpdate: {
       value: undefined,
     },
   }
 }
-export function executeEffort(args: string): EffortCommandResult {
+export function executeEffort(args: string, model?: string): EffortCommandResult {
   const normalized = args.toLowerCase()
   if (normalized === 'auto' || normalized === 'unset') {
     return unsetEffortLevel()
   }
   if (!isEffortLevel(normalized)) {
+    // 获取模型支持的选项
+    const supportedLevels = model ? getModelEffortLevels(model) : []
+    const validOptions = [...supportedLevels, 'auto'].join(', ')
     return {
-      message: `Invalid argument: ${args}. Valid options are: off, on, quick, light, balanced, thorough, extreme, ultra, orchestrate, auto`,
+      message: tSync('effort.command.invalidArgument', { args, validOptions }),
     }
   }
   return setEffortValue(normalized)
@@ -164,14 +188,28 @@ export async function call(
 ): Promise<React.ReactNode> {
   args = args?.trim() || ''
   if (COMMON_HELP_ARGS.includes(args)) {
-    onDone(
-      'Usage: /effort [off|on|quick|light|balanced|thorough|extreme|ultra|orchestrate|auto]\n\nEffort levels:\n- off: Thinking disabled — fastest mode without any reasoning\n- on: Thinking enabled — no specific intensity (toggle mode)\n- quick: Fastest response with minimal reasoning\n- light: Light reasoning, quick implementation\n- balanced: Balanced approach with standard reasoning\n- thorough: Deep reasoning with comprehensive analysis\n- extreme: Maximum reasoning depth and thoroughness\n- ultra: Maximum thinking intensity with thought block preservation\n- orchestrate: Extreme + dynamic workflow orchestration (session only)\n- auto: Use the default effort level for your model',
-    )
+    // 获取当前模型支持的 effort 级别
+    const model = getMainLoopModel() ?? ''
+    const supportedLevels = getModelEffortLevels(model)
+
+    // 生成帮助文本
+    const usageLines = supportedLevels.map(level => {
+      const name = tSync(`effort.${level}` as any) || level
+      const description = tSync(`effort.description.${level}` as any) || level
+      return tSync('effort.command.usageItem', { name, description })
+    })
+
+    const options = [...supportedLevels, 'auto'].join('|')
+    const header = tSync('effort.command.usageHeader', { options })
+    const autoLine = tSync('effort.command.usageAuto')
+
+    onDone(`${header}\n${usageLines.join('\n')}\n${autoLine}`)
     return
   }
   if (!args || args === 'current' || args === 'status') {
     return <ShowCurrentEffort onDone={onDone} />
   }
-  const result = executeEffort(args)
+  const model = getMainLoopModel() ?? ''
+  const result = executeEffort(args, model)
   return <ApplyEffortAndClose result={result} onDone={onDone} />
 }

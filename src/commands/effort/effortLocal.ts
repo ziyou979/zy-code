@@ -1,8 +1,10 @@
+import { tSync } from '../../i18n/index.js'
 import type { LocalCommandCall } from '../../types/command.js'
 import {
   type EffortValue,
   getDisplayedEffortLevel,
   getEffortEnvOverride,
+  getModelEffortLevels,
 } from '../../utils/effort.js'
 import { executeEffort, showCurrentEffort } from './effort.js'
 
@@ -17,16 +19,29 @@ const COMMON_HELP_ARGS = ['help', '-h', '--help']
  */
 export const call: LocalCommandCall = async (rawArgs, context) => {
   const args = (rawArgs ?? '').trim()
+  const state = context.getAppState()
 
   if (COMMON_HELP_ARGS.includes(args)) {
+    // 获取当前模型支持的 effort 级别
+    const model = state.mainLoopModel ?? ''
+    const supportedLevels = getModelEffortLevels(model)
+
+    // 生成帮助文本
+    const usageLines = supportedLevels.map(level => {
+      const name = tSync(`effort.${level}` as any) || level
+      const description = tSync(`effort.description.${level}` as any) || level
+      return tSync('effort.command.usageItem', { name, description })
+    })
+
+    const options = [...supportedLevels, 'auto'].join('|')
+    const header = tSync('effort.command.usageHeader', { options })
+    const autoLine = tSync('effort.command.usageAuto')
+
     return {
       type: 'text',
-      value:
-        'Usage: /effort [off|quick|light|balanced|thorough|extreme|orchestrate|auto]\n\nEffort levels:\n- off: Thinking disabled — fastest mode without any reasoning\n- quick: Fastest response with minimal reasoning\n- light: Light reasoning, quick implementation\n- balanced: Balanced approach with standard reasoning\n- thorough: Deep reasoning with comprehensive analysis\n- extreme: Maximum reasoning depth and thoroughness\n- orchestrate: Extreme + dynamic workflow orchestration (session only)\n- auto: Use the default effort level for your model',
+      value: `${header}\n${usageLines.join('\n')}\n${autoLine}`,
     }
   }
-
-  const state = context.getAppState()
 
   if (!args || args === 'current' || args === 'status') {
     // 复用 jsx 端 ShowCurrentEffort 的等价逻辑：appStateEffort + mainLoopModel
@@ -36,13 +51,15 @@ export const call: LocalCommandCall = async (rawArgs, context) => {
     const effective = envOverride === null ? undefined : (envOverride ?? effortValue)
     if (effective === undefined) {
       const level = getDisplayedEffortLevel(model, effortValue)
-      return { type: 'text', value: `Effort level: auto (currently ${level})` }
+      const levelName = tSync(`effort.${level}` as any) || level
+      return { type: 'text', value: tSync('effort.command.currentAuto', { level: levelName }) }
     }
     const { message } = showCurrentEffort(effortValue, model)
     return { type: 'text', value: message }
   }
 
-  const result = executeEffort(args)
+  const model = state.mainLoopModel ?? ''
+  const result = executeEffort(args, model)
   if (result.effortUpdate) {
     context.setAppState((prev) => ({
       ...prev,
