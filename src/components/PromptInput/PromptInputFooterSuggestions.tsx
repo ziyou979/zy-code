@@ -1,7 +1,7 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../ink/stringWidth.js'
-import { Box, Text } from '../../ink.js'
+import { Box, type ClickEvent, Text } from '../../ink.js'
 import { truncatePathMiddle, truncateToWidth } from '../../utils/format.js'
 import type { Theme } from '../../utils/theme.js'
 export type SuggestionItem = {
@@ -53,10 +53,14 @@ const SuggestionItemRow = memo(function SuggestionItemRow({
   item,
   maxColumnWidth,
   isSelected,
+  onMouseEnter,
+  onClick,
 }: {
   item: SuggestionItem
   maxColumnWidth: number
   isSelected: boolean
+  onMouseEnter?: () => void
+  onClick?: (event: ClickEvent) => void
 }) {
   const columns = useTerminalSize().columns
   const isUnified = isUnifiedSuggestion(item.id)
@@ -89,9 +93,11 @@ const SuggestionItemRow = memo(function SuggestionItemRow({
       lineContent = `${icon} ${displayText}`
     }
     return (
-      <Text color={textColor} dimColor={dimColor} wrap="truncate">
-        {lineContent}
-      </Text>
+      <Box width="100%" onMouseEnter={onMouseEnter} onClick={onClick}>
+        <Text color={textColor} dimColor={dimColor} wrap="truncate">
+          {lineContent}
+        </Text>
+      </Box>
     )
   }
   const maxNameWidth = Math.floor(columns * 0.4)
@@ -114,25 +120,29 @@ const SuggestionItemRow = memo(function SuggestionItemRow({
     ? truncateToWidth(item.description.replace(/\s+/g, ' '), descriptionWidth)
     : ''
   return (
-    <Text wrap="truncate">
-      {
-        <Text color={textColor_0} dimColor={shouldDim}>
-          {paddedDisplayText}
-        </Text>
-      }
-      {tagText ? <Text dimColor={true}>{tagText}</Text> : null}
-      {
-        <Text color={isSelected ? 'suggestion' : undefined} dimColor={!isSelected}>
-          {truncatedDescription}
-        </Text>
-      }
-    </Text>
+    <Box width="100%" onMouseEnter={onMouseEnter} onClick={onClick}>
+      <Text wrap="truncate">
+        {
+          <Text color={textColor_0} dimColor={shouldDim}>
+            {paddedDisplayText}
+          </Text>
+        }
+        {tagText ? <Text dimColor={true}>{tagText}</Text> : null}
+        {
+          <Text color={isSelected ? 'suggestion' : undefined} dimColor={!isSelected}>
+            {truncatedDescription}
+          </Text>
+        }
+      </Text>
+    </Box>
   )
 })
 type Props = {
   suggestions: SuggestionItem[]
   selectedSuggestion: number
   maxColumnWidth?: number
+  onFocusSuggestion?: (index: number) => void
+  onAcceptSuggestion?: (index: number) => void
   /**
    * When true, the suggestions are rendered inside a position=absolute
    * overlay. We omit minHeight and flex-end so the y-clamp in the
@@ -144,9 +154,13 @@ export function PromptInputFooterSuggestions({
   suggestions,
   selectedSuggestion,
   maxColumnWidth: maxColumnWidthProp,
+  onFocusSuggestion,
+  onAcceptSuggestion,
   overlay,
 }: Props) {
   const { rows } = useTerminalSize()
+  // 鼠标悬停状态，独立于 selectedSuggestion，避免 hover 触发滚动
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
   const maxVisibleItems = overlay ? OVERLAY_MAX_ITEMS : Math.min(6, Math.max(1, rows - 3))
   if (suggestions.length === 0) {
     return null
@@ -162,16 +176,35 @@ export function PromptInputFooterSuggestions({
   )
   const endIndex = Math.min(startIndex + maxVisibleItems, suggestions.length)
   const visibleItems = suggestions.slice(startIndex, endIndex)
-  const renderedItems = visibleItems.map((item_0) => (
-    <SuggestionItemRow
-      key={item_0.id}
-      item={item_0}
-      maxColumnWidth={maxColumnWidth}
-      isSelected={item_0.id === suggestions[selectedSuggestion]?.id}
-    />
-  ))
+  const renderedItems = visibleItems.map((item_0, visibleIndex) => {
+    const index = startIndex + visibleIndex
+    // 高亮逻辑：优先使用 hoveredId，否则使用 selectedSuggestion
+    const isHovered = hoveredId != null && item_0.id === hoveredId
+    const isEffectivelySelected = isHovered || item_0.id === suggestions[selectedSuggestion]?.id
+    return (
+      <SuggestionItemRow
+        key={item_0.id}
+        item={item_0}
+        maxColumnWidth={maxColumnWidth}
+        isSelected={isEffectivelySelected}
+        onMouseEnter={() => setHoveredId(item_0.id)}
+        onClick={
+          onAcceptSuggestion
+            ? (event) => {
+                event.stopImmediatePropagation()
+                onAcceptSuggestion(index)
+              }
+            : undefined
+        }
+      />
+    )
+  })
   return (
-    <Box flexDirection={'column'} justifyContent={overlay ? undefined : 'flex-end'}>
+    <Box
+      flexDirection={'column'}
+      justifyContent={overlay ? undefined : 'flex-end'}
+      onMouseLeave={() => setHoveredId(null)}
+    >
       {renderedItems}
     </Box>
   )

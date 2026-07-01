@@ -145,6 +145,11 @@ export type MultiSelectState<T> = {
    * Callback for canceling the select.
    */
   onCancel: () => void
+
+  /**
+   * Focus a specific option by value.
+   */
+  focusOption: (value: T | undefined) => void
 }
 
 export function useMultiSelectState<T>({

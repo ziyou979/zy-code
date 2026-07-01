@@ -6,8 +6,10 @@ import { Ansi, Box, Text } from '../../ink.js'
 import { count } from '../../utils/array.js'
 import type { PastedContent } from '../../utils/config.js'
 import type { ImageDimensions } from '../../utils/imageResizer.js'
+import type { ClickEvent } from '../../ink/events/click-event.js'
 import { SelectInputOption } from './select-input-option.js'
 import { SelectOption } from './select-option.js'
+import { createOptionClickHandler, createOptionHoverHandler, createHoverLeaveHandler } from './select-mouse-actions.js'
 import { useSelectInput } from './use-select-input.js'
 import { useSelectState } from './use-select-state.js'
 
@@ -268,6 +270,8 @@ SelectProps<any>) {
     onFocus,
     focusValue: defaultFocusValue,
   })
+  // 鼠标悬停状态，独立于 selectedSuggestion，避免 hover 触发滚动
+  const [hoveredId, setHoveredId] = useState<any>(null)
   useSelectInput({
     isDisabled,
     disableSelection: disableSelection || (hideIndexes ? 'numeric' : false),
@@ -385,18 +389,33 @@ SelectProps<any>) {
             )
           }
           const isOptionDisabled = option.disabled === true
+          // 高亮逻辑：优先使用 hoveredId，否则使用 selectedSuggestion
+          const isHovered = hoveredId != null && option.value === hoveredId
+          const isEffectivelySelected = isHovered || isSelected
           const optionColor = isOptionDisabled
             ? undefined
-            : isSelected
+            : isEffectivelySelected
               ? 'success'
               : isFocused
                 ? 'suggestion'
                 : undefined
           return (
-            <Box key={String(option.value)} flexDirection="column" flexShrink={0}>
+            <Box
+              key={String(option.value)}
+              flexDirection="column"
+              flexShrink={0}
+              onClick={createOptionClickHandler(
+                option,
+                state.focusOption,
+                state.selectFocusedOption,
+                onChange,
+              )}
+              onMouseEnter={createOptionHoverHandler(option, setHoveredId)}
+              onMouseLeave={createHoverLeaveHandler(setHoveredId)}
+            >
               <SelectOption
                 isFocused={isFocused}
-                isSelected={isSelected}
+                isSelected={isEffectivelySelected}
                 shouldShowDownArrow={areMoreOptionsBelow && isLastVisibleOption}
                 shouldShowUpArrow={areMoreOptionsAbove && isFirstVisibleOption}
               >
@@ -500,11 +519,26 @@ SelectProps<any>) {
             )
           }
           const isOptionDisabled_0 = option_2.disabled === true
+          // 高亮逻辑：优先使用 hoveredId，否则使用 selectedSuggestion
+          const isHovered_0 = hoveredId != null && option_2.value === hoveredId
+          const isEffectivelySelected_0 = isHovered_0 || isSelected_0
           return (
-            <Box key={String(option_2.value)} flexDirection="column" flexShrink={0}>
+            <Box
+              key={String(option_2.value)}
+              flexDirection="column"
+              flexShrink={0}
+              onClick={createOptionClickHandler(
+                option_2,
+                state.focusOption,
+                state.selectFocusedOption,
+                onChange,
+              )}
+              onMouseEnter={createOptionHoverHandler(option_2, setHoveredId)}
+              onMouseLeave={createHoverLeaveHandler(setHoveredId)}
+            >
               <SelectOption
                 isFocused={isFocused_0}
-                isSelected={isSelected_0}
+                isSelected={isEffectivelySelected_0}
                 shouldShowDownArrow={areMoreOptionsBelow_0 && isLastVisibleOption_0}
                 shouldShowUpArrow={areMoreOptionsAbove_0 && isFirstVisibleOption_0}
               >
@@ -516,7 +550,7 @@ SelectProps<any>) {
                   color={
                     isOptionDisabled_0
                       ? undefined
-                      : isSelected_0
+                      : isEffectivelySelected_0
                         ? 'success'
                         : isFocused_0
                           ? 'suggestion'
@@ -533,7 +567,7 @@ SelectProps<any>) {
                     color={
                       isOptionDisabled_0
                         ? undefined
-                        : isSelected_0
+                        : isEffectivelySelected_0
                           ? 'success'
                           : isFocused_0
                             ? 'suggestion'
@@ -610,11 +644,25 @@ SelectProps<any>) {
             }
             const labelText = getTextContent(data.option.label)
             const indexWidth = hideIndexes ? 0 : maxIndexWidth_1 + 2
-            const checkmarkWidth = data.isSelected ? 2 : 0
+            // 高亮逻辑：优先使用 hoveredId，否则使用 selectedSuggestion
+            const isHovered_1 = hoveredId != null && data.option.value === hoveredId
+            const isEffectivelySelected_1 = isHovered_1 || data.isSelected
+            const checkmarkWidth = isEffectivelySelected_1 ? 2 : 0
             const currentLabelWidth = 2 + indexWidth + stringWidth(labelText) + checkmarkWidth
             const padding = maxLabelWidth - currentLabelWidth
             return (
-              <TwoColumnRow key={String(data.option.value)} isFocused={data.isFocused}>
+              <TwoColumnRow
+                key={String(data.option.value)}
+                isFocused={data.isFocused}
+                onClick={createOptionClickHandler(
+                  data.option,
+                  state.focusOption,
+                  state.selectFocusedOption,
+                  onChange,
+                )}
+                onMouseEnter={createOptionHoverHandler(data.option, setHoveredId)}
+                onMouseLeave={createHoverLeaveHandler(setHoveredId)}
+              >
                 <Box flexDirection="row" flexShrink={0}>
                   {data.isFocused ? (
                     <Text color="suggestion">{figures.pointer}</Text>
@@ -631,7 +679,7 @@ SelectProps<any>) {
                     color={
                       data.isOptionDisabled
                         ? undefined
-                        : data.isSelected
+                        : isEffectivelySelected_1
                           ? 'success'
                           : data.isFocused
                             ? 'suggestion'
@@ -643,7 +691,7 @@ SelectProps<any>) {
                     )}
                     {data.label}
                   </Text>
-                  {data.isSelected && <Text color="success"> {figures.tick}</Text>}
+                  {isEffectivelySelected_1 && <Text color="success"> {figures.tick}</Text>}
                   {padding > 0 && <Text>{' '.repeat(padding)}</Text>}
                 </Box>
                 <Box flexGrow={1} marginLeft={2}>
@@ -653,7 +701,7 @@ SelectProps<any>) {
                     color={
                       data.isOptionDisabled
                         ? undefined
-                        : data.isSelected
+                        : isEffectivelySelected_1
                           ? 'success'
                           : data.isFocused
                             ? 'suggestion'
@@ -750,13 +798,24 @@ SelectProps<any>) {
         const isFocused = !isDisabled && state.focusedValue === option.value
         const isSelected = state.value === option.value
         const isOptionDisabled = option.disabled === true
+        // 高亮逻辑：优先使用 hoveredId，否则使用 selectedSuggestion
+        const isHovered_2 = hoveredId != null && option.value === hoveredId
+        const isEffectivelySelected_2 = isHovered_2 || isSelected
         return (
           <SelectOption
             key={String(option.value)}
             isFocused={isFocused}
-            isSelected={isSelected}
+            isSelected={isEffectivelySelected_2}
             shouldShowDownArrow={areMoreOptionsBelow && isLastVisibleOption}
             shouldShowUpArrow={areMoreOptionsAbove && isFirstVisibleOption}
+            onClick={createOptionClickHandler(
+              option,
+              state.focusOption,
+              state.selectFocusedOption,
+              onChange,
+            )}
+            onMouseEnter={createOptionHoverHandler(option, setHoveredId)}
+            onMouseLeave={createHoverLeaveHandler(setHoveredId)}
           >
             <Box flexDirection="row" flexShrink={0}>
               {!hideIndexes && (
@@ -767,7 +826,7 @@ SelectProps<any>) {
                 color={
                   isOptionDisabled
                     ? undefined
-                    : isSelected
+                    : isEffectivelySelected_2
                       ? 'success'
                       : isFocused
                         ? 'suggestion'
@@ -791,7 +850,7 @@ SelectProps<any>) {
                   color={
                     isOptionDisabled
                       ? undefined
-                      : isSelected
+                      : isEffectivelySelected_2
                         ? 'success'
                         : isFocused
                           ? 'suggestion'
@@ -818,14 +877,26 @@ SelectProps<any>) {
 // ListItem, so it declares the native cursor directly. Parks the cursor
 // on the pointer indicator so screen readers / magnifiers track focus.
 
-function TwoColumnRow({ isFocused, children }: { isFocused: boolean; children: React.ReactNode }) {
+function TwoColumnRow({
+  isFocused,
+  children,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+}: {
+  isFocused: boolean
+  children: React.ReactNode
+  onClick?: (event: ClickEvent) => void
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
+}) {
   const cursorRef = useDeclaredCursor({
     line: 0,
     column: 0,
     active: isFocused,
   })
   return (
-    <Box ref={cursorRef} flexDirection="row">
+    <Box ref={cursorRef} flexDirection="row" onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       {children}
     </Box>
   )

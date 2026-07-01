@@ -1,6 +1,7 @@
 import figures from 'figures'
 import type { ReactNode } from 'react'
 import { useDeclaredCursor } from '../../ink/hooks/use-declared-cursor.js'
+import type { ClickEvent } from '../../ink/events/click-event.js'
 import { Box, Text } from '../../ink.js'
 
 type ListItemProps = {
@@ -59,6 +60,21 @@ type ListItemProps = {
    * @default true
    */
   declareCursor?: boolean
+
+  /**
+   * 鼠标点击时触发。仅在启用鼠标追踪的 AlternateScreen 内有效。
+   */
+  onClick?: (event: ClickEvent) => void
+
+  /**
+   * 鼠标移入时触发。用于列表项 hover/focus 联动。
+   */
+  onMouseEnter?: () => void
+
+  /**
+   * 鼠标移出时触发。用于清除悬浮高亮。
+   */
+  onMouseLeave?: () => void
 }
 
 /**
@@ -110,6 +126,9 @@ export function ListItem({
   styled = true,
   disabled = false,
   declareCursor,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
 }: ListItemProps) {
   const renderIndicator = function renderIndicator() {
     if (disabled) {
@@ -148,7 +167,7 @@ export function ListItem({
   })
   const indicatorElement = renderIndicator()
   return (
-    <Box ref={cursorRef} flexDirection="column">
+    <Box ref={cursorRef} flexDirection="column" onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       {
         <Box flexDirection="row" gap={1}>
           {indicatorElement}

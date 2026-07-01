@@ -1,10 +1,12 @@
 import figures from 'figures'
+import { useState } from 'react'
 import { Box, Text } from '../../ink.js'
 import type { PastedContent } from '../../utils/config.js'
 import type { ImageDimensions } from '../../utils/imageResizer.js'
 import type { OptionWithDescription } from './select.js'
 import { SelectInputOption } from './select-input-option.js'
 import { SelectOption } from './select-option.js'
+import { createMultiOptionClickHandler, createOptionHoverHandler, createHoverLeaveHandler } from './select-mouse-actions.js'
 import { useMultiSelectState } from './use-multi-select-state.js'
 export type SelectMultiProps<T> = {
   readonly isDisabled?: boolean
@@ -98,6 +100,17 @@ SelectMultiProps<any>) {
     hideIndexes,
   })
   const maxIndexWidth = options.length.toString().length
+  // 鼠标悬停状态，独立于 focusedValue，避免 hover 触发滚动
+  const [hoveredId, setHoveredId] = useState<any>(null)
+
+  // 切换选项的选中状态，用于鼠标点击
+  const toggleSelectedValue = (value: any) => {
+    if (state.selectedValues.includes(value)) {
+      onChange?.(state.selectedValues.filter((v) => v !== value))
+    } else {
+      onChange?.([...state.selectedValues, value])
+    }
+  }
   const visibleOptionElements = state.visibleOptions.map((option, index) => {
     const isOptionFocused =
       !isDisabled && state.focusedValue === option.value && !state.isSubmitFocused
@@ -140,18 +153,27 @@ SelectMultiProps<any>) {
         </Box>
       )
     }
+    // 高亮逻辑：优先使用 hoveredId，否则使用 isSelected
+    const isHovered = hoveredId != null && option.value === hoveredId
+    const isEffectivelySelected = isHovered || isSelected
     return (
-      <Box key={String(option.value)} gap={1}>
+      <Box
+        key={String(option.value)}
+        gap={1}
+        onClick={createMultiOptionClickHandler(option, state.focusOption, toggleSelectedValue)}
+        onMouseEnter={createOptionHoverHandler(option, setHoveredId)}
+        onMouseLeave={createHoverLeaveHandler(setHoveredId)}
+      >
         <SelectOption
           isFocused={isOptionFocused}
-          isSelected={false}
+          isSelected={isEffectivelySelected}
           shouldShowDownArrow={areMoreOptionsBelow && isLastVisibleOption}
           shouldShowUpArrow={areMoreOptionsAbove && isFirstVisibleOption}
           description={option.description}
         >
           {!hideIndexes && <Text dimColor={true}>{`${i}.`.padEnd(maxIndexWidth)}</Text>}
-          <Text color={isSelected ? 'success' : undefined}>
-            [{isSelected ? figures.tick : ' '}]
+          <Text color={isEffectivelySelected ? 'success' : undefined}>
+            [{isEffectivelySelected ? figures.tick : ' '}]
           </Text>
           <Text color={isOptionFocused ? 'suggestion' : undefined}>{option.label}</Text>
         </SelectOption>
