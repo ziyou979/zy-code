@@ -19,9 +19,27 @@ export function hitTest(node: DOMElement, col: number, row: number): DOMElement 
   if (!rect) {
     return null
   }
-  if (col < rect.x || col >= rect.x + rect.width || row < rect.y || row >= rect.y + rect.height) {
+  const inside =
+    col >= rect.x && col < rect.x + rect.width && row >= rect.y && row < rect.y + rect.height
+
+  // position:absolute 子树可以绘制在父节点布局框之外，例如 fullscreen
+  // slash-command suggestions 使用 bottom="100%" 从 prompt 底部槽上方逃逸。
+  // 渲染器已经允许这种可见逃逸；hit-test 也必须继续检查子节点缓存矩形，
+  // 否则视觉上存在的 overlay 无法触发 hover/click。
+  if (!inside) {
+    for (let i = node.childNodes.length - 1; i >= 0; i--) {
+      const child = node.childNodes[i]!
+      if (child.nodeName === '#text') {
+        continue
+      }
+      const hit = hitTest(child, col, row)
+      if (hit) {
+        return hit
+      }
+    }
     return null
   }
+
   // 后渲染的兄弟节点绘制在上层；逆序遍历返回最上层的命中结果。
   for (let i = node.childNodes.length - 1; i >= 0; i--) {
     const child = node.childNodes[i]!

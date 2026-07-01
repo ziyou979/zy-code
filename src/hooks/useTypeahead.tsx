@@ -153,6 +153,8 @@ type UseTypeaheadResult = {
   commandArgumentHint?: string
   inlineGhostText?: InlineGhostText
   handleKeyDown: (e: KeyboardEvent) => void
+  focusSuggestion: (index: number) => void
+  acceptSuggestion: (index: number) => void
 }
 
 /**
@@ -1389,160 +1391,189 @@ export function useTypeahead({
     effectiveGhostText,
   ])
 
-  // Handle enter key press - apply and execute suggestions
-  const handleEnter = useCallback(() => {
-    if (selectedSuggestion < 0 || suggestions.length === 0) {
-      return
-    }
-    const suggestion = suggestions[selectedSuggestion]
-    if (suggestionType === 'command' && selectedSuggestion < suggestions.length) {
-      if (suggestion) {
-        applyCommandSuggestion(
-          suggestion,
-          true,
-          // execute on return
-          commands,
-          onInputChange,
-          setCursorOffset,
-          onSubmit,
-        )
-        debouncedFetchFileSuggestions.cancel()
-        clearSuggestions()
+  // 按具体索引应用并执行候选。键盘 Enter 与鼠标点击共享这条路径，
+  // 保证 command/file/agent 等补全行为一致。
+  const acceptSuggestion = useCallback(
+    (index: number) => {
+      if (index < 0 || suggestions.length === 0) {
+        return
       }
-    } else if (suggestionType === 'custom-title' && selectedSuggestion < suggestions.length) {
-      // Apply custom title and execute /resume command with sessionId
-      if (suggestion) {
-        const newInput = buildResumeInputFromSuggestion(suggestion)
-        onInputChange(newInput)
-        setCursorOffset(newInput.length)
-        onSubmit(newInput, /* isSubmittingSlashCommand */ true)
-        debouncedFetchFileSuggestions.cancel()
-        clearSuggestions()
-      }
-    } else if (suggestionType === 'shell' && selectedSuggestion < suggestions.length) {
-      const suggestion = suggestions[selectedSuggestion]
-      if (suggestion) {
-        const metadata = suggestion.metadata as
-          | {
-              completionType: ShellCompletionType
-            }
-          | undefined
-        applyShellSuggestion(
-          suggestion,
-          input,
-          cursorOffset,
-          onInputChange,
-          setCursorOffset,
-          metadata?.completionType,
-        )
-        debouncedFetchFileSuggestions.cancel()
-        clearSuggestions()
-      }
-    } else if (
-      suggestionType === 'agent' &&
-      selectedSuggestion < suggestions.length &&
-      suggestion?.id?.startsWith('dm-')
-    ) {
-      applyTriggerSuggestion(
-        suggestion,
-        input,
-        cursorOffset,
-        DM_MEMBER_RE,
-        onInputChange,
-        setCursorOffset,
-      )
-      debouncedFetchFileSuggestions.cancel()
-      clearSuggestions()
-    } else if (suggestionType === 'slack-channel' && selectedSuggestion < suggestions.length) {
-      if (suggestion) {
+      const suggestion = suggestions[index]
+      if (suggestionType === 'command' && index < suggestions.length) {
+        if (suggestion) {
+          applyCommandSuggestion(
+            suggestion,
+            true,
+            // 回车/点击时执行命令
+            commands,
+            onInputChange,
+            setCursorOffset,
+            onSubmit,
+          )
+          debouncedFetchFileSuggestions.cancel()
+          clearSuggestions()
+        }
+      } else if (suggestionType === 'custom-title' && index < suggestions.length) {
+        // Apply custom title and execute /resume command with sessionId
+        if (suggestion) {
+          const newInput = buildResumeInputFromSuggestion(suggestion)
+          onInputChange(newInput)
+          setCursorOffset(newInput.length)
+          onSubmit(newInput, /* isSubmittingSlashCommand */ true)
+          debouncedFetchFileSuggestions.cancel()
+          clearSuggestions()
+        }
+      } else if (suggestionType === 'shell' && index < suggestions.length) {
+        const suggestion = suggestions[index]
+        if (suggestion) {
+          const metadata = suggestion.metadata as
+            | {
+                completionType: ShellCompletionType
+              }
+            | undefined
+          applyShellSuggestion(
+            suggestion,
+            input,
+            cursorOffset,
+            onInputChange,
+            setCursorOffset,
+            metadata?.completionType,
+          )
+          debouncedFetchFileSuggestions.cancel()
+          clearSuggestions()
+        }
+      } else if (
+        suggestionType === 'agent' &&
+        index < suggestions.length &&
+        suggestion?.id?.startsWith('dm-')
+      ) {
         applyTriggerSuggestion(
           suggestion,
           input,
           cursorOffset,
-          HASH_CHANNEL_RE,
+          DM_MEMBER_RE,
           onInputChange,
           setCursorOffset,
         )
-        debouncedFetchSlackChannels.cancel()
+        debouncedFetchFileSuggestions.cancel()
         clearSuggestions()
-      }
-    } else if (suggestionType === 'file' && selectedSuggestion < suggestions.length) {
-      // Extract completion token directly when needed
-      const completionInfo = extractCompletionToken(input, cursorOffset, true)
-      if (completionInfo) {
+      } else if (suggestionType === 'slack-channel' && index < suggestions.length) {
         if (suggestion) {
-          const hasAtPrefix = completionInfo.token.startsWith('@')
-          const needsQuotes = suggestion.displayText.includes(' ')
-          const replacementValue = formatReplacementValue({
-            displayText: suggestion.displayText,
-            mode,
-            hasAtPrefix,
-            needsQuotes,
-            isQuoted: completionInfo.isQuoted,
-            isComplete: true, // complete suggestion
-          })
-          applyFileSuggestion(
-            replacementValue,
+          applyTriggerSuggestion(
+            suggestion,
             input,
-            completionInfo.token,
-            completionInfo.startPos,
+            cursorOffset,
+            HASH_CHANNEL_RE,
             onInputChange,
             setCursorOffset,
           )
+          debouncedFetchSlackChannels.cancel()
+          clearSuggestions()
+        }
+      } else if (suggestionType === 'file' && index < suggestions.length) {
+        // Extract completion token directly when needed
+        const completionInfo = extractCompletionToken(input, cursorOffset, true)
+        if (completionInfo) {
+          if (suggestion) {
+            const hasAtPrefix = completionInfo.token.startsWith('@')
+            const needsQuotes = suggestion.displayText.includes(' ')
+            const replacementValue = formatReplacementValue({
+              displayText: suggestion.displayText,
+              mode,
+              hasAtPrefix,
+              needsQuotes,
+              isQuoted: completionInfo.isQuoted,
+              isComplete: true, // complete suggestion
+            })
+            applyFileSuggestion(
+              replacementValue,
+              input,
+              completionInfo.token,
+              completionInfo.startPos,
+              onInputChange,
+              setCursorOffset,
+            )
+            debouncedFetchFileSuggestions.cancel()
+            clearSuggestions()
+          }
+        }
+      } else if (suggestionType === 'directory' && index < suggestions.length) {
+        if (suggestion) {
+          // In command context (e.g., /add-dir), Enter submits the command
+          // rather than applying the directory suggestion. Just clear
+          // suggestions and let the submit handler process the current input.
+          if (isCommandInput(input)) {
+            debouncedFetchFileSuggestions.cancel()
+            clearSuggestions()
+            return
+          }
+
+          // General path completion: replace the path token
+          const completionTokenWithAt = extractCompletionToken(input, cursorOffset, true)
+          const completionToken =
+            completionTokenWithAt ?? extractCompletionToken(input, cursorOffset, false)
+          if (completionToken) {
+            const isDir =
+              isPathMetadata(suggestion.metadata) && suggestion.metadata.type === 'directory'
+            const result = applyDirectorySuggestion(
+              input,
+              suggestion.id,
+              completionToken.startPos,
+              completionToken.token.length,
+              isDir,
+            )
+            onInputChange(result.newInput)
+            setCursorOffset(result.cursorPos)
+          }
+          // If no completion token found (e.g., cursor after space), don't modify input
+          // to avoid data loss - just clear suggestions
+
           debouncedFetchFileSuggestions.cancel()
           clearSuggestions()
         }
       }
-    } else if (suggestionType === 'directory' && selectedSuggestion < suggestions.length) {
-      if (suggestion) {
-        // In command context (e.g., /add-dir), Enter submits the command
-        // rather than applying the directory suggestion. Just clear
-        // suggestions and let the submit handler process the current input.
-        if (isCommandInput(input)) {
-          debouncedFetchFileSuggestions.cancel()
-          clearSuggestions()
-          return
-        }
+    },
+    [
+      suggestions,
+      suggestionType,
+      commands,
+      input,
+      cursorOffset,
+      mode,
+      onInputChange,
+      setCursorOffset,
+      onSubmit,
+      clearSuggestions,
+      debouncedFetchFileSuggestions,
+      debouncedFetchSlackChannels,
+    ],
+  )
 
-        // General path completion: replace the path token
-        const completionTokenWithAt = extractCompletionToken(input, cursorOffset, true)
-        const completionToken =
-          completionTokenWithAt ?? extractCompletionToken(input, cursorOffset, false)
-        if (completionToken) {
-          const isDir =
-            isPathMetadata(suggestion.metadata) && suggestion.metadata.type === 'directory'
-          const result = applyDirectorySuggestion(
-            input,
-            suggestion.id,
-            completionToken.startPos,
-            completionToken.token.length,
-            isDir,
-          )
-          onInputChange(result.newInput)
-          setCursorOffset(result.cursorPos)
-        }
-        // If no completion token found (e.g., cursor after space), don't modify input
-        // to avoid data loss - just clear suggestions
-
-        debouncedFetchFileSuggestions.cancel()
-        clearSuggestions()
-      }
+  // 处理回车：应用并执行当前候选。
+  const handleEnter = useCallback(() => {
+    if (selectedSuggestion < 0 || suggestions.length === 0) {
+      return
     }
-  }, [
-    suggestions,
-    selectedSuggestion,
-    suggestionType,
-    commands,
-    input,
-    cursorOffset,
-    mode,
-    onInputChange,
-    setCursorOffset,
-    onSubmit,
-    clearSuggestions,
-    debouncedFetchFileSuggestions,
-    debouncedFetchSlackChannels,
-  ])
+    acceptSuggestion(selectedSuggestion)
+  }, [acceptSuggestion, selectedSuggestion, suggestions.length])
+
+  const focusSuggestion = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= suggestions.length) {
+        return
+      }
+      setSuggestionsState((prev) => {
+        if (prev.selectedSuggestion === index) {
+          return prev
+        }
+        return {
+          ...prev,
+          selectedSuggestion: index,
+        }
+      })
+    },
+    [suggestions.length, setSuggestionsState],
+  )
 
   // Handler for autocomplete:accept - accepts current suggestion via Tab or Right Arrow
   const handleAutocompleteAccept = useCallback(() => {
@@ -1710,5 +1741,7 @@ export function useTypeahead({
     commandArgumentHint,
     inlineGhostText: effectiveGhostText,
     handleKeyDown,
+    focusSuggestion,
+    acceptSuggestion,
   }
 }

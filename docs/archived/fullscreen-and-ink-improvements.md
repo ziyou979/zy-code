@@ -16,7 +16,7 @@
 1. ZY_CODE_NO_FLICKER=0 → false（显式关闭）
 2. ZY_CODE_NO_FLICKER=1 → true（显式开启）
 3. tmux -CC 检测 → false（自动禁用）
-4. isInternalBuild() → true/false（蚂蚁内部默认开）
+4. isInternalBuild() → true/false（内部测试灰度）
 ```
 
 **CC 167** `ffH()` + `A9()` — 8+ 层判断：

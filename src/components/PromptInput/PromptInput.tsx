@@ -1335,22 +1335,29 @@ function PromptInput({
       addNotification,
     ],
   )
-  const { suggestions, selectedSuggestion, commandArgumentHint, inlineGhostText, maxColumnWidth } =
-    useTypeahead({
-      commands,
-      onInputChange: trackAndSetInput,
-      onSubmit,
-      setCursorOffset,
-      input,
-      cursorOffset,
-      mode,
-      agents,
-      setSuggestionsState,
-      suggestionsState,
-      suppressSuggestions: isSearchingHistory || historyIndex > 0,
-      markAccepted,
-      onModeChange,
-    })
+  const {
+    suggestions,
+    selectedSuggestion,
+    commandArgumentHint,
+    inlineGhostText,
+    maxColumnWidth,
+    focusSuggestion,
+    acceptSuggestion,
+  } = useTypeahead({
+    commands,
+    onInputChange: trackAndSetInput,
+    onSubmit,
+    setCursorOffset,
+    input,
+    cursorOffset,
+    mode,
+    agents,
+    setSuggestionsState,
+    suggestionsState,
+    suppressSuggestions: isSearchingHistory || historyIndex > 0,
+    markAccepted,
+    onModeChange,
+  })
 
   // Track if prompt suggestion should be shown (computed later with terminal width).
   // Hidden in teammate view — suggestion is leader-context only.
@@ -2706,6 +2713,8 @@ function PromptInput({
         suggestions={suggestions}
         selectedSuggestion={selectedSuggestion}
         maxColumnWidth={maxColumnWidth}
+        onFocusSuggestion={focusSuggestion}
+        onAcceptSuggestion={acceptSuggestion}
         toolPermissionContext={effectiveToolPermissionContext}
         helpOpen={helpOpen}
         suppressHint={input.length > 0}

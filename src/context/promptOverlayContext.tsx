@@ -25,6 +25,8 @@ export type PromptOverlayData = {
   suggestions: SuggestionItem[]
   selectedSuggestion: number
   maxColumnWidth?: number
+  onFocusSuggestion?: (index: number) => void
+  onAcceptSuggestion?: (index: number) => void
 }
 type Setter<T> = (d: T | null) => void
 const DataContext = createContext<PromptOverlayData | null>(null)
