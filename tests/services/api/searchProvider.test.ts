@@ -67,7 +67,10 @@ describe('BuiltinSearch', () => {
 
   test('handles non-ok response', async () => {
     globalThis.fetch = (async () =>
-      new Response('Not Found', { status: 404, statusText: 'Not Found' })) as unknown as typeof fetch
+      new Response('Not Found', {
+        status: 404,
+        statusText: 'Not Found',
+      })) as unknown as typeof fetch
 
     const response = await fetch(`${SEARCH_API_URL}/search?q=test`)
 

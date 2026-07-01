@@ -43,7 +43,10 @@ async function setupMocks() {
   }))
   // toolHooks 在 import 时会加载的其余运行时依赖 —— 与本测试逻辑无关，桩掉即可。
   // spread 原始模块避免污染其他测试的模块缓存。
-  mock.module('../../../src/services/analytics/index.js', () => ({ ...realAnalytics, logEvent: () => {} }))
+  mock.module('../../../src/services/analytics/index.js', () => ({
+    ...realAnalytics,
+    logEvent: () => {},
+  }))
   mock.module('../../../src/services/analytics/metadata.js', () => ({
     ...realAnalyticsMetadata,
     sanitizeToolNameForAnalytics: (n: string) => n,
@@ -65,7 +68,10 @@ async function setupMocks() {
     ...realToolErrors,
     formatError: (e: unknown) => String(e),
   }))
-  mock.module('../../../src/services/mcp/utils.js', () => ({ ...realMcpUtils, isMcpTool: () => false }))
+  mock.module('../../../src/services/mcp/utils.js', () => ({
+    ...realMcpUtils,
+    isMcpTool: () => false,
+  }))
 }
 
 async function importSUT() {

@@ -159,12 +159,7 @@ export const WebSearchTool = buildTool({
     try {
       logForDebugging(`[WebSearch] query="${query}"`)
 
-      const searchResults = await executeSearch(
-        query,
-        allowed_domains,
-        blocked_domains,
-        maxResults,
-      )
+      const searchResults = await executeSearch(query, allowed_domains, blocked_domains, maxResults)
 
       logForDebugging(
         `[WebSearch] Got ${searchResults.length} results in ${((performance.now() - startTime) / 1000).toFixed(2)}s`,

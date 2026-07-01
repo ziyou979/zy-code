@@ -25,7 +25,7 @@ import { isAdvisorEnabled } from '../../utils/advisor.js'
 import { validateForceLoginOrg } from '../../utils/auth.js'
 import { filterAllowedSdkBetas } from '../../utils/betas.js'
 import { logForDebugging, setHasFormattedOutput } from '../../utils/debug.js'
-import { getInitialEffortSetting, parseEffortValue } from '../../utils/effort.js'
+import { resolveInitialEffortSetting } from '../../utils/effort.js'
 import { isBareMode } from '../../utils/envUtils.js'
 import { applyConfigEnvironmentVariables } from '../../utils/managedEnv.js'
 import {
@@ -209,7 +209,7 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
       tools: mcpTools,
     },
     toolPermissionContext,
-    effortValue: parseEffortValue(options.effort) ?? getInitialEffortSetting(),
+    effortValue: resolveInitialEffortSetting(options.effort),
     ...(isAdvisorEnabled() &&
       advisorModel && {
         advisorModel,

@@ -145,7 +145,7 @@ import {
 } from '../../utils/config.js'
 import { loadConversationForResume } from '../../utils/conversationRecovery.js'
 import { seedEarlyInput } from '../../utils/earlyInput.js'
-import { getInitialEffortSetting, parseEffortValue } from '../../utils/effort.js'
+import { resolveInitialEffortSetting } from '../../utils/effort.js'
 import { isBareMode, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { refreshExampleCommands } from '../../utils/exampleCommands.js'
 import type { FpsMetrics } from '../../utils/fpsTracker.js'
@@ -2212,7 +2212,7 @@ export async function rootAction(
           }),
         }
       : null,
-    effortValue: parseEffortValue(options.effort) ?? getInitialEffortSetting(),
+    effortValue: resolveInitialEffortSetting(options.effort),
     activeOverlays: new Set<string>(),
     ...(isAdvisorEnabled() &&
       advisorModel && {

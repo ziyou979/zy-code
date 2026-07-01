@@ -139,15 +139,10 @@ export interface OpenAiAttr {
 // ---------------------------------------------------------------------------
 
 /** 完整能力集 — 适用于 Anthropic 官方 API、generic 等。effort 档位见 effortMapping。 */
-const FULL_CAPABILITIES: ProviderCapability[] = [
-  'context_management',
-  'advisor',
-]
+const FULL_CAPABILITIES: ProviderCapability[] = ['context_management', 'advisor']
 
 /** 标准能力集 — 适用于大多数第三方平台和本地推理引擎 */
-const STANDARD_CAPABILITIES: ProviderCapability[] = [
-  'context_management',
-]
+const STANDARD_CAPABILITIES: ProviderCapability[] = ['context_management']
 
 // ---------------------------------------------------------------------------
 // 注册表（按 id 字母序排列）
@@ -270,7 +265,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     openaiAttr: {
       thinking: {
-        enable: (effort) => ({ reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium' }),
+        enable: (effort) => ({
+          reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium',
+        }),
       },
     },
   },
@@ -330,7 +327,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     openaiAttr: {
       thinking: {
-        enable: (effort) => ({ reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium' }),
+        enable: (effort) => ({
+          reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium',
+        }),
       },
     },
   },
@@ -361,7 +360,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     openaiAttr: {
       thinking: {
-        enable: (effort) => ({ reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium' }),
+        enable: (effort) => ({
+          reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium',
+        }),
       },
     },
   },
@@ -533,7 +534,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     openaiAttr: {
       thinking: {
-        enable: (effort) => ({ reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium' }),
+        enable: (effort) => ({
+          reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium',
+        }),
       },
     },
   },
@@ -573,7 +576,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     openaiAttr: {
       thinking: {
-        enable: (effort) => ({ reasoning: { effort: (effort === 'on' ? undefined : effort) ?? 'medium' } }),
+        enable: (effort) => ({
+          reasoning: { effort: (effort === 'on' ? undefined : effort) ?? 'medium' },
+        }),
       },
     },
   },

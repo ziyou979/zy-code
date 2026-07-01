@@ -193,7 +193,7 @@ export async function call(
     const supportedLevels = getModelEffortLevels(model)
 
     // 生成帮助文本
-    const usageLines = supportedLevels.map(level => {
+    const usageLines = supportedLevels.map((level) => {
       const name = tSync(`effort.${level}` as any) || level
       const description = tSync(`effort.description.${level}` as any) || level
       return tSync('effort.command.usageItem', { name, description })

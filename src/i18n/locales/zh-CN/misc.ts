@@ -31,8 +31,11 @@ export const zhMisc: TranslationResource = {
   'devChannels.useChannels': '请使用 --channels 运行已批准的通道列表。',
   'devChannels.warning': '警告：加载开发通道',
   'effort.defaultDialogDescription':
-    '思考强度决定模型在完成任务时思考的时长。对于大多数任务，建议使用均衡思考强度以平衡速度与智能，并最大化速率限制。需要更强推理时，请使用 ultrathink 触发深度思考强度。',
+    '思考强度决定模型在完成任务时思考的时长。对于大多数任务，建议使用均衡思考强度以平衡速度与智能。',
   'effort.defaultDialogTitle': '推荐使用均衡思考强度',
+  'effort.toggleDialogDescription':
+    '当前模型以开关形式支持思考模式。启用后，模型会在回复前进行推理。',
+  'effort.toggleDialogTitle': '启用思考模式？',
   'effort.off': '关闭',
   'effort.on': '开启',
   'effort.quick': '极速',
@@ -51,13 +54,10 @@ export const zhMisc: TranslationResource = {
   'effort.command.setSuccess': '已将思考强度设置为 {value}{suffix}：{description}',
   'effort.command.currentAuto': '思考强度：自动（当前为 {level}）',
   'effort.command.current': '当前思考强度：{value}（{description}）',
-  'effort.command.clearedButEnvOverride':
-    '已从设置中清除思考强度，但 {envVar} 仍控制本次会话',
+  'effort.command.clearedButEnvOverride': '已从设置中清除思考强度，但 {envVar} 仍控制本次会话',
   'effort.command.setToAuto': '思考强度已设置为自动',
-  'effort.command.invalidArgument':
-    '无效参数：{args}。有效选项为：{validOptions}',
-  'effort.command.usageHeader':
-    '用法：/effort [{options}]\n\n思考强度级别：',
+  'effort.command.invalidArgument': '无效参数：{args}。有效选项为：{validOptions}',
+  'effort.command.usageHeader': '用法：/effort [{options}]\n\n思考强度级别：',
   'effort.command.usageItem': '- {name}: {description}',
   'effort.command.usageAuto': '- auto: 使用模型的默认思考强度',
   'effort.description.off': '关闭思考 — 最快模式，无推理',

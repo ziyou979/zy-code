@@ -21,8 +21,11 @@ export const enMisc: TranslationResource = {
   'coordinator.xToClear': ' · x to clear',
   'coordinator.xToStop': ' · x to stop',
   'effort.defaultDialogDescription':
-    'Effort determines how long model thinks for when completing your task. We recommend balanced effort for most tasks to balance speed and intelligence and maximize rate limits. Use ultrathink to trigger thorough effort when needed.',
+    'Effort determines how long the model thinks when completing your task. We recommend balanced effort for most tasks to balance speed and intelligence.',
   'effort.defaultDialogTitle': 'We recommend balanced effort',
+  'effort.toggleDialogDescription':
+    'This model supports thinking as an on/off mode. Enable it to let the model reason before responding.',
+  'effort.toggleDialogTitle': 'Enable thinking mode?',
   'effort.off': 'Off',
   'effort.on': 'On',
   'effort.quick': 'Quick',
@@ -37,17 +40,16 @@ export const enMisc: TranslationResource = {
   'effort.command.failedToSet': 'Failed to set effort level: {error}',
   'effort.command.notAppliedEnvOverride':
     'Not applied: {envVar} overrides effort this session, and {value} is session-only (nothing saved)',
-  'effort.command.envOverrideHint': '{envVar} overrides this session — clear it and {value} takes over',
+  'effort.command.envOverrideHint':
+    '{envVar} overrides this session — clear it and {value} takes over',
   'effort.command.setSuccess': 'Set effort level to {value}{suffix}: {description}',
   'effort.command.currentAuto': 'Effort level: auto (currently {level})',
   'effort.command.current': 'Current effort level: {value} ({description})',
   'effort.command.clearedButEnvOverride':
     'Cleared effort from settings, but {envVar} still controls this session',
   'effort.command.setToAuto': 'Effort level set to auto',
-  'effort.command.invalidArgument':
-    'Invalid argument: {args}. Valid options are: {validOptions}',
-  'effort.command.usageHeader':
-    'Usage: /effort [{options}]\n\nEffort levels:',
+  'effort.command.invalidArgument': 'Invalid argument: {args}. Valid options are: {validOptions}',
+  'effort.command.usageHeader': 'Usage: /effort [{options}]\n\nEffort levels:',
   'effort.command.usageItem': '- {name}: {description}',
   'effort.command.usageAuto': '- auto: Use the default effort level for your model',
   'effort.description.off': 'Thinking disabled — fastest mode without any reasoning',

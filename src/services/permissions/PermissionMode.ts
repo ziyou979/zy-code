@@ -1,5 +1,5 @@
 import z from 'zod/v4'
-import {FAST_FORWARD_ICON, PAUSE_ICON} from '../../constants/figures.js'
+import { FAST_FORWARD_ICON, PAUSE_ICON } from '../../constants/figures.js'
 // 类型定义已提取到 src/types/permissions.ts 以打破导入循环
 import {
   EXTERNAL_PERMISSION_MODES,

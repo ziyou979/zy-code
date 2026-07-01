@@ -491,9 +491,7 @@ export function localModelHasCapability(model: string, capability: ModelCapabili
 /**
  * 获取 thinking 配置对象（始终为对象）。
  */
-function getThinkingConfig(
-  model: string,
-): ThinkingCapabilityConfig | undefined {
+function getThinkingConfig(model: string): ThinkingCapabilityConfig | undefined {
   const entry = getLocalModelCapability(model)
   return entry?.capabilities?.thinking
 }

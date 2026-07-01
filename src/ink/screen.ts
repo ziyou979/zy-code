@@ -670,11 +670,7 @@ export function cellAtIndex(screen: Screen, index: number): Cell {
  *   cell 2: Wide('文')   → charCount=2, wideCount=2  ← 停止
  *   返回 2，修正后列 = 2 + 2 = 4（'a' 的单元格列）✓
  */
-export function countWideCellsInRowBefore(
-  screen: Screen,
-  row: number,
-  charCol: number,
-): number {
+export function countWideCellsInRowBefore(screen: Screen, row: number, charCol: number): number {
   if (row < 0 || row >= screen.height || charCol <= 0) {
     return 0
   }

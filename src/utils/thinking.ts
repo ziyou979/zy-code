@@ -2,12 +2,19 @@
 import type { Theme } from './theme.js'
 import { feature } from 'bun:bundle'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import { getAPIProvider, getProviderAttr, providerHasCapability } from 'src/services/model/providers.js'
+import {
+  getAPIProvider,
+  getProviderAttr,
+  providerHasCapability,
+} from 'src/services/model/providers.js'
 import {
   probedModelSupportsAdaptiveThinking,
   probedModelSupportsThinking,
 } from '../services/api/modelCapabilityProbe.js'
-import { localModelHasCapability, localModelHasAdaptiveThinking } from './settings/localModelCapabilities.js'
+import {
+  localModelHasCapability,
+  localModelHasAdaptiveThinking,
+} from './settings/localModelCapabilities.js'
 import { getSettingsWithErrors } from './settings/settings.js'
 
 export type ThinkingConfig =

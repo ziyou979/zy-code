@@ -17,10 +17,12 @@ import {
   EFFORT_LEVELS,
   type EffortLevel,
   getEffortLevelDescription,
+  getDefaultThinkingEffortFromLevels,
   isEffortLevel,
   isOrchestrateEffort,
   type PersistableEffortLevel,
   parseEffortValue,
+  resolveInitialEffortSetting,
   resolvePickerEffortPersistence,
   toPersistableEffort,
 } from '../../src/utils/effort.js'
@@ -99,11 +101,13 @@ describe('effort', () => {
     test('可持久化档位原样返回', () => {
       const persistable: PersistableEffortLevel[] = [
         'off',
+        'on',
         'quick',
         'light',
         'balanced',
         'thorough',
         'extreme',
+        'ultra',
       ]
       for (const level of persistable) {
         expect(toPersistableEffort(level)).toBe(level)
@@ -116,6 +120,34 @@ describe('effort', () => {
 
     test('undefined 返回 undefined', () => {
       expect(toPersistableEffort(undefined)).toBeUndefined()
+    })
+  })
+
+  describe('getDefaultThinkingEffortFromLevels', () => {
+    test('支持 balanced 时默认开启为 balanced 而不是 off', () => {
+      expect(getDefaultThinkingEffortFromLevels(['off', 'balanced', 'extreme'])).toBe('balanced')
+    })
+
+    test('仅支持 on 开启档时默认返回 on', () => {
+      expect(getDefaultThinkingEffortFromLevels(['off', 'on'])).toBe('on')
+    })
+
+    test('没有推荐档位时选择第一个非关闭档', () => {
+      expect(getDefaultThinkingEffortFromLevels(['off', 'thorough'])).toBe('thorough')
+    })
+
+    test('只有 off 时不返回默认开启档', () => {
+      expect(getDefaultThinkingEffortFromLevels(['off'])).toBeUndefined()
+    })
+  })
+
+  describe('resolveInitialEffortSetting', () => {
+    test('CLI 显式 off 会被尊重', () => {
+      expect(resolveInitialEffortSetting('off')).toBe('off')
+    })
+
+    test('CLI 显式档位优先于 settings', () => {
+      expect(resolveInitialEffortSetting('balanced')).toBe('balanced')
     })
   })
 

@@ -44,8 +44,10 @@ export function EffortCallout({ model, onDone }: Props) {
     onDoneRef.current(level)
   }
 
-  // 根据模型配置的 effort levels 动态生成选项
+  // 根据模型配置的 effort levels 动态生成选项，避免向用户展示模型不支持的档位。
   const modelEffortLevels = getModelEffortLevels(model)
+  const visibleEffortLevels = modelEffortLevels.filter((level) => level !== 'orchestrate')
+  const hasStrengthLevels = visibleEffortLevels.some((level) => level !== 'off' && level !== 'on')
   const effortLabels: Record<string, string> = {
     off: tSync('effort.off') || 'Off — thinking disabled',
     on: tSync('effort.on') || 'On — thinking enabled',
@@ -57,37 +59,57 @@ export function EffortCallout({ model, onDone }: Props) {
     ultra: tSync('effort.ultra') || 'Ultra — max thinking + preserve',
   }
 
-  const options = modelEffortLevels
-    .filter((level) => level !== 'orchestrate')
-    .map((level) => ({
-      label: (
-        <EffortOptionLabel
-          level={level}
-          text={effortLabels[level] ?? level}
-        />
-      ),
-      value: level,
-    }))
+  const options = visibleEffortLevels.map((level) => ({
+    label: <EffortOptionLabel level={level} text={effortLabels[level] ?? level} />,
+    value: level,
+  }))
+  const title = hasStrengthLevels
+    ? tSync(defaultEffortConfig.dialogTitle)
+    : tSync('effort.toggleDialogTitle')
+  const description = hasStrengthLevels
+    ? tSync(defaultEffortConfig.dialogDescription)
+    : tSync('effort.toggleDialogDescription')
   return (
-    <PermissionDialog title={tSync(defaultEffortConfig.dialogTitle)}>
+    <PermissionDialog title={title}>
       <Box flexDirection="column" paddingX={2} paddingY={1}>
         {
           <Box marginBottom={1} flexDirection="column">
-            <Text>{tSync(defaultEffortConfig.dialogDescription)}</Text>
+            <Text>{description}</Text>
           </Box>
         }
         {
           <Box marginBottom={1}>
             <Text dimColor={true}>
-              {<EffortIndicatorSymbol level="light" />} {tSync('effort.light')} {'\xB7'}{' '}
-              {<EffortIndicatorSymbol level="balanced" />} {tSync('effort.balanced')}
-              {' \xB7'} {<EffortIndicatorSymbol level="thorough" />} {tSync('effort.thorough')}
+              {visibleEffortLevels.map((level, index) => (
+                <EffortSummaryItem
+                  key={level}
+                  level={level}
+                  text={effortLabels[level] ?? level}
+                  showSeparator={index > 0}
+                />
+              ))}
             </Text>
           </Box>
         }
         <Select options={options} onChange={handleSelect} onCancel={handleCancel} />
       </Box>
     </PermissionDialog>
+  )
+}
+function EffortSummaryItem({
+  level,
+  text,
+  showSeparator,
+}: {
+  level: EffortLevel
+  text: string
+  showSeparator: boolean
+}) {
+  return (
+    <>
+      {showSeparator ? ' \xB7 ' : ''}
+      {<EffortIndicatorSymbol level={level} />} {text}
+    </>
   )
 }
 function EffortIndicatorSymbol({ level }: { level: EffortLevel }) {

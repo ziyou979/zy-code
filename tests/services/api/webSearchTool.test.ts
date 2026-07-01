@@ -216,8 +216,7 @@ describe('WebSearchTool', () => {
       { title: 'Blocked', url: 'https://evil.com/page', content: 'No' },
     ])
 
-    globalThis.fetch = (async () =>
-      new Response(json, { status: 200 })) as unknown as typeof fetch
+    globalThis.fetch = (async () => new Response(json, { status: 200 })) as unknown as typeof fetch
 
     try {
       const parsedInput = WebSearchTool.inputSchema.parse({

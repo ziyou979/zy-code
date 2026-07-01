@@ -31,6 +31,7 @@ import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../../utils/
 import { logError } from '../../utils/log.js'
 import { clearAllPlanSlugs } from '../../utils/plans.js'
 import { setCwd } from '../../utils/Shell.js'
+import { shouldEnableThinkingByDefault } from '../../utils/thinking.js'
 import { processSessionStartHooks } from '../../utils/sessionStart.js'
 import {
   clearSessionMetadata,
@@ -182,6 +183,8 @@ export async function clearConversation({
           resources: {},
           pluginReconnectKey: prev.mcp.pluginReconnectKey,
         },
+        // 按当前模型重置 thinking 开关
+        thinkingEnabled: shouldEnableThinkingByDefault(prev.mainLoopModel ?? undefined),
       }
     })
   }

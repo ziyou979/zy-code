@@ -24,7 +24,11 @@
       "Bash(curl -s \"http://127.0.0.1:8089/search?q=weather+in+hangzhou&format=json&engines=wikipedia\")",
       "Bash(docker exec:*)",
       "Bash(curl -s \"http://127.0.0.1:8089/search?q=test&format=json&engines=bing\")",
-      "Bash(curl -s \"http://127.0.0.1:8089/search?q=%E6%9D%AD%E5%B7%9E%E5%A4%A9%E6%B0%94&format=json&engines=bing\")"
+      "Bash(curl -s \"http://127.0.0.1:8089/search?q=%E6%9D%AD%E5%B7%9E%E5%A4%A9%E6%B0%94&format=json&engines=bing\")",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(ec=$?)",
+      "Bash(echo \"EXIT=$ec\")",
+      "Read(//tmp/**)"
     ]
   }
 }

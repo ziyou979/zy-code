@@ -22,7 +22,10 @@ import {
 } from '../constants/betas.js'
 import { getContextWindowForModel } from './context.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
-import { getLocalModelBetaHeaders, localModelHasCapability } from './settings/localModelCapabilities.js'
+import {
+  getLocalModelBetaHeaders,
+  localModelHasCapability,
+} from './settings/localModelCapabilities.js'
 
 /**
  * SDK-provided betas that are allowed for API key users.

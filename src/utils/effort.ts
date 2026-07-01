@@ -3,7 +3,11 @@ import { tSync } from '../i18n/index.js'
 import { isUltrathinkEnabled, modelSupportsThinking } from './thinking.js'
 import { getInitialSettings } from './settings/settings.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
-import { getAPIProvider, getProviderAttr, getProviderEffortMapping } from 'src/services/model/providers.js'
+import {
+  getAPIProvider,
+  getProviderAttr,
+  getProviderEffortMapping,
+} from 'src/services/model/providers.js'
 import { getMainLoopModel } from 'src/services/model/model.js'
 import { getProviderEntry } from 'src/services/model/providerRegistry.js'
 import {
@@ -218,11 +222,13 @@ export function toPersistableEffort(
 ): PersistableEffortLevel | undefined {
   if (
     value === 'off' ||
+    value === 'on' ||
     value === 'quick' ||
     value === 'light' ||
     value === 'balanced' ||
     value === 'thorough' ||
-    value === 'extreme'
+    value === 'extreme' ||
+    value === 'ultra'
   ) {
     return value
   }
@@ -236,6 +242,12 @@ export function getInitialEffortSetting(): EffortLevel | undefined {
     return undefined
   }
   return toPersistableEffort(raw as EffortValue)
+}
+
+export function resolveInitialEffortSetting(cliEffort?: unknown): EffortValue | undefined {
+  // 启动入口只负责解析显式配置；没有配置时保持 undefined，
+  // 由 resolveAppliedEffort/getDisplayedEffortLevel 按模型能力应用默认开启档。
+  return parseEffortValue(cliEffort) ?? getInitialEffortSetting()
 }
 
 export function resolvePickerEffortPersistence(
@@ -324,13 +336,37 @@ export function getEffortCalloutConfig(): EffortCalloutConfig {
   }
 }
 
+const DEFAULT_THINKING_EFFORT_ORDER: readonly EffortLevel[] = [
+  'balanced',
+  'on',
+  'light',
+  'quick',
+  'thorough',
+  'extreme',
+  'ultra',
+]
+
+export function getDefaultThinkingEffortFromLevels(
+  supportedLevels: readonly EffortLevel[],
+): EffortValue | undefined {
+  // 优先选择常规开启档，避免模型只声明 balanced 时被 on 向下钳制成 off。
+  for (const level of DEFAULT_THINKING_EFFORT_ORDER) {
+    if (supportedLevels.includes(level)) {
+      return level
+    }
+  }
+  return supportedLevels.find((level) => level !== 'off' && level !== 'orchestrate')
+}
+
 export function getDefaultEffortForModel(model: string): EffortValue | undefined {
-  // 支持思考的模型默认开启思考（on 档位，不走 provider 映射）
+  const supportedLevels = getModelEffortLevels(model)
+
+  // 支持思考的模型默认开启思考，且优先使用模型实际支持的开启档位。
   if (modelSupportsThinking(model)) {
-    return 'on'
+    return getDefaultThinkingEffortFromLevels(supportedLevels) ?? 'on'
   }
   if (isUltrathinkEnabled() && modelSupportsEffort(model)) {
-    return 'balanced'
+    return getDefaultThinkingEffortFromLevels(supportedLevels) ?? 'balanced'
   }
   return undefined
 }
