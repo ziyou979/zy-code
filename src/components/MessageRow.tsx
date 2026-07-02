@@ -52,6 +52,8 @@ export type Props = {
   columns: number
   isLoading: boolean
   lookups: ReturnType<typeof buildMessageLookups>
+  /** 正在流式输出、尚未落入消息列表的 thinking 文本 */
+  streamingThinkingSummary?: string
 }
 
 /**
@@ -131,6 +133,7 @@ function MessageRowImpl({
   columns,
   isLoading,
   lookups,
+  streamingThinkingSummary,
 }: Props) {
   const isTranscriptMode = screen === 'transcript'
   const isGrouped = msg.type === 'grouped_tool_use'
@@ -200,6 +203,7 @@ function MessageRowImpl({
       isUserContinuation={isUserContinuation}
       lastThinkingBlockId={lastThinkingBlockId}
       latestBashOutputUUID={latestBashOutputUUID}
+      streamingThinkingSummary={isActiveCollapsedGroup ? streamingThinkingSummary : undefined}
     />
   )
   if (!hasMetadata) {

@@ -788,6 +788,9 @@ const MessagesImpl = ({
         columns={columns}
         isLoading={isLoading}
         lookups={lookups}
+        streamingThinkingSummary={
+          isStreamingThinkingVisible ? streamingThinking?.thinking : undefined
+        }
       />
     )
 

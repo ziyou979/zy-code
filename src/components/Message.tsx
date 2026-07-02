@@ -68,6 +68,8 @@ export type Props = {
   lastThinkingBlockId?: string | null
   /** 最新的 user bash output 消息的 UUID（用于自动展开） */
   latestBashOutputUUID?: string | null
+  /** 正在流式输出、尚未落入消息列表的 thinking 文本 */
+  streamingThinkingSummary?: string
 }
 function MessageImpl({
   message,
@@ -89,6 +91,7 @@ function MessageImpl({
   isUserContinuation = false,
   lastThinkingBlockId,
   latestBashOutputUUID,
+  streamingThinkingSummary,
 }: Props) {
   switch (message.type) {
     case 'attachment': {
@@ -241,6 +244,7 @@ function MessageImpl({
             tools={tools}
             lookups={lookups}
             isActiveGroup={isActiveCollapsedGroup}
+            streamingThinkingSummary={streamingThinkingSummary}
           />
         </OffscreenFreeze>
       )
