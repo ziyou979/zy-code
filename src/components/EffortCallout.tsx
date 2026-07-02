@@ -2,11 +2,11 @@ import { useEffect, useRef } from 'react'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import {
-  convertEffortValueToLevel,
-  EffortLevel,
+  type EffortLevel,
   getDefaultEffortForModel,
   getEffortCalloutConfig,
   getModelEffortLevels,
+  isEffortLevel,
   toPersistableEffort,
 } from '../utils/effort.js'
 import { updateSettingsForSource } from '../utils/settings/settings.js'
@@ -34,12 +34,12 @@ export function EffortCallout({ model, onDone }: Props) {
     return () => clearTimeout(timeoutId)
   }, [handleCancel])
   const defaultEffort = getDefaultEffortForModel(model)
-  const defaultLevel = defaultEffort ? convertEffortValueToLevel(defaultEffort) : 'thorough'
+  const defaultLevel = defaultEffort && isEffortLevel(defaultEffort) ? defaultEffort : 'thorough'
   const handleSelect = (value: string) => {
     const level = value as EffortLevel
-    const effortLevel = level === defaultLevel ? undefined : level
+    // 始终写入用户选择，避免因等于默认值而被清除导致下次启动再次弹出
     updateSettingsForSource('userSettings', {
-      effortLevel: toPersistableEffort(effortLevel),
+      effortLevel: toPersistableEffort(level),
     })
     onDoneRef.current(level)
   }

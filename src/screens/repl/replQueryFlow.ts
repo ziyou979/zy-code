@@ -78,7 +78,7 @@ import { incrementPromptCount } from '../../utils/commitAttribution.js'
 import type { PastedContent } from '../../utils/config.js'
 import { getGlobalConfig } from '../../utils/config.js'
 import { createDebugLog } from '../../utils/debug.js'
-import type { EffortValue } from '../../utils/effort.js'
+import type { EffortLevel } from '../../utils/effort.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import type { FileHistoryState } from '../../utils/fileHistory.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
@@ -420,7 +420,7 @@ export async function runQueryImpl(
   shouldQuery: boolean,
   additionalAllowedTools: string[],
   mainLoopModelParam: string,
-  effort?: EffortValue,
+  effort?: EffortLevel,
 ): Promise<void> {
   // 为新提示准备 IDE 集成
   if (shouldQuery) {
@@ -610,7 +610,7 @@ export async function runQuery(
     shouldQuery: boolean,
     additionalAllowedTools: string[],
     mainLoopModel: string,
-    effort?: EffortValue,
+    effort?: EffortLevel,
   ) => Promise<void>,
   newMessages: MessageType[],
   abortController: AbortController,
@@ -619,7 +619,7 @@ export async function runQuery(
   mainLoopModelParam: string,
   onBeforeQueryCallback?: (input: string, newMessages: MessageType[]) => Promise<boolean>,
   input?: string,
-  effort?: EffortValue,
+  effort?: EffortLevel,
 ): Promise<void> {
   const queryGuard = ctx.replStore.mutable.queryGuard
 
@@ -790,7 +790,7 @@ export async function handleSubmit(
     mainLoopModel: string,
     onBeforeQuery?: (input: string, newMessages: MessageType[]) => Promise<boolean>,
     input?: string,
-    effort?: EffortValue,
+    effort?: EffortLevel,
   ) => Promise<void>,
   getToolUseContext: (
     messages: MessageType[],

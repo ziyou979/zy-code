@@ -14,7 +14,7 @@ import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Message as MessageType } from '../../types/message.js'
 import type { PromptInputMode } from '../../types/textInputTypes.js'
 import type { PastedContent } from '../../utils/config.js'
-import type { EffortValue } from '../../utils/effort.js'
+import type { EffortLevel } from '../../utils/effort.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
 import type { SetAppState } from '../../utils/messageQueueManager.js'
 
@@ -142,7 +142,7 @@ export function useReplQueryCallbacks(params: UseReplQueryCallbacksParams) {
       shouldQuery: boolean,
       additionalAllowedTools: string[],
       mainLoopModelParam: string,
-      effort?: EffortValue,
+      effort?: EffortLevel,
     ) =>
       runQueryImpl(
         ctxRef.current,
@@ -167,7 +167,7 @@ export function useReplQueryCallbacks(params: UseReplQueryCallbacksParams) {
       mainLoopModelParam: string,
       onBeforeQueryCallback?: (input: string, newMessages: MessageType[]) => Promise<boolean>,
       input?: string,
-      effort?: EffortValue,
+      effort?: EffortLevel,
     ): Promise<void> =>
       runQuery(
         ctxRef.current,

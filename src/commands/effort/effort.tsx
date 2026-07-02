@@ -9,10 +9,10 @@ import { getMainLoopModel } from '../../services/model/model.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
 import {
-  type EffortValue,
+  type EffortLevel,
   getDisplayedEffortLevel,
   getEffortEnvOverride,
-  getEffortValueDescription,
+  getEffortLevelDescription,
   getModelEffortLevels,
   isEffortLevel,
   toPersistableEffort,
@@ -23,10 +23,10 @@ const COMMON_HELP_ARGS = ['help', '-h', '--help']
 type EffortCommandResult = {
   message: string
   effortUpdate?: {
-    value: EffortValue | undefined
+    value: EffortLevel | undefined
   }
 }
-function setEffortValue(effortValue: EffortValue): EffortCommandResult {
+function setEffortValue(effortValue: EffortLevel): EffortCommandResult {
   const persistable = toPersistableEffort(effortValue)
   if (persistable !== undefined) {
     const result = updateSettingsForSource('userSettings', {
@@ -73,7 +73,7 @@ function setEffortValue(effortValue: EffortValue): EffortCommandResult {
       },
     }
   }
-  const description = getEffortValueDescription(effortValue)
+  const description = getEffortLevelDescription(effortValue)
   const suffix = persistable !== undefined ? '' : tSync('effort.sessionOnly')
   return {
     message: tSync('effort.command.setSuccess', {
@@ -87,7 +87,7 @@ function setEffortValue(effortValue: EffortValue): EffortCommandResult {
   }
 }
 export function showCurrentEffort(
-  appStateEffort: EffortValue | undefined,
+  appStateEffort: EffortLevel | undefined,
   model: string,
 ): EffortCommandResult {
   const envOverride = getEffortEnvOverride()
@@ -99,7 +99,7 @@ export function showCurrentEffort(
       message: tSync('effort.command.currentAuto', { level: levelName }),
     }
   }
-  const description = getEffortValueDescription(effectiveValue)
+  const description = getEffortLevelDescription(effectiveValue)
   const valueName = tSync(`effort.${effectiveValue}` as any) || effectiveValue
   return {
     message: tSync('effort.command.current', { value: valueName, description }),

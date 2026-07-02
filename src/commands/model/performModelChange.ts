@@ -40,7 +40,7 @@ export function renderModelLabel(model: string | null): string {
 }
 
 /** 显示当前模型 + effort（mainLoopModelForSession 优先）
- *  effortValue 类型为 unknown ： EffortValue 是 'low'|'medium'|... 或 number 的
+ *  effortValue 类型为 unknown ： EffortLevel 是 'low'|'medium'|... 或 number 的
  *  union，这里只需要拼出可读文本，用 String() 转换避免类型耦合。
  */
 export function describeCurrentModel(

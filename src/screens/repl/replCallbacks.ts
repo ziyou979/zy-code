@@ -42,7 +42,7 @@ import { getMemoryFiles } from '../../utils/agentsMd.js'
 import { isBgSession } from '../../utils/concurrentSessions.js'
 import type { PastedContent } from '../../utils/config.js'
 import { createDebugLog } from '../../utils/debug.js'
-import type { EffortValue } from '../../utils/effort.js'
+import type { EffortLevel } from '../../utils/effort.js'
 import { errorMessage } from '../../utils/errors.js'
 import type { FileHistoryState } from '../../utils/fileHistory.js'
 import { fileHistoryHasAnyChanges } from '../../utils/fileHistory.js'
@@ -298,7 +298,7 @@ export interface ExecuteQueuedInputParams {
     mainLoopModelParam: string,
     onBeforeQueryCallback?: (input: string, newMessages: MessageType[]) => Promise<boolean>,
     input?: string,
-    effort?: EffortValue,
+    effort?: EffortLevel,
   ) => Promise<void>
   setAppState: SetAppState
   onBeforeQuery?: (input: string, newMessages: MessageType[]) => Promise<boolean>

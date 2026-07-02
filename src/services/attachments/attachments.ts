@@ -164,7 +164,7 @@ const sessionTranscriptModule = feature('KAIROS')
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { hasUltrathinkKeyword, isUltrathinkEnabled } from '../../utils/thinking.js'
 import { hasWorkflowKeyword } from '../workflow/keyword.js'
-import { isUltracodeEffort } from '../../utils/effort.js'
+import { isOrchestrateEffort } from '../../utils/effort.js'
 import { tokenCountFromLastAPIResponse, tokenCountWithEstimation } from '../../utils/tokens.js'
 import { getEffectiveContextWindowSize, isAutoCompactEnabled } from '../compact/autoCompact.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
@@ -1319,7 +1319,7 @@ function getWorkflowReminderAttachment(
   const attachments: Attachment[] = []
   const effortValue = toolUseContext.getAppState().effortValue
 
-  if (isUltracodeEffort(effortValue)) {
+  if (isOrchestrateEffort(effortValue)) {
     ultracodeReminderCount++
     const kind = ultracodeReminderCount === 1 ? 'ultracode_enter_full' : 'ultracode_enter_light'
     attachments.push({ type: 'workflow_reminder', reminderKind: kind })

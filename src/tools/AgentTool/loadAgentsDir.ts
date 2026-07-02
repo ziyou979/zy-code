@@ -11,7 +11,7 @@ import {
 import { type McpServerConfig, McpServerConfigSchema } from '../../services/mcp/types.js'
 import type { ToolUseContext } from '../../Tool.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { EFFORT_LEVELS, type EffortValue, parseEffortValue } from '../../utils/effort.js'
+import { EFFORT_LEVELS, type EffortLevel, parseEffortValue } from '../../utils/effort.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { parsePositiveIntFromFrontmatter } from '../../utils/frontmatterParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -94,7 +94,7 @@ export type BaseAgentDefinition = {
   hooks?: HooksSettings // Session-scoped hooks registered when agent starts
   color?: AgentColorName
   model?: string
-  effort?: EffortValue
+  effort?: EffortLevel
   permissionMode?: PermissionMode
   maxTurns?: number // Maximum number of agentic turns before stopping
   filename?: string // Original filename without .md extension (for user/project/managed agents)

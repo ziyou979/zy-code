@@ -9,7 +9,6 @@ import { getModelMaxOutputTokens } from '../../utils/context.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {
   type EffortLevel,
-  type EffortValue,
   mapEffortToProvider,
   modelSupportsEffort,
 } from '../../utils/effort.js'
@@ -95,7 +94,7 @@ export function getExtraBodyParams(betaHeaders?: string[]): JsonObject {
  *
  */
 export function configureEffortParams(
-  effortValue: EffortValue | undefined,
+  effortValue: EffortLevel | undefined,
   outputConfig: BetaOutputConfig,
   _extraBodyParams: Record<string, unknown>,
   betas: string[],

@@ -3,7 +3,7 @@ import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import type { CompactionResult } from '../services/compact/compact.js'
 import type { ScopedMcpServerConfig } from '../services/mcp/types.js'
 import type { ToolUseContext } from '../Tool.js'
-import type { EffortValue } from '../utils/effort.js'
+import type { EffortLevel } from '../utils/effort.js'
 import type { IDEExtensionInstallationStatus, IdeType } from '../utils/ide.js'
 import type { SettingSource } from '../utils/settings/constants.js'
 import type { HooksSettings } from '../utils/settings/types.js'
@@ -46,7 +46,7 @@ export type PromptCommand = {
   // Agent type to use when forked (e.g., 'Bash', 'General')
   // Only applicable when context is 'fork'
   agent?: string
-  effort?: EffortValue
+  effort?: EffortLevel
   // Glob patterns for file paths this skill applies to
   // When set, the skill is only visible after the model touches matching files
   paths?: string[]

@@ -17,7 +17,7 @@ import type { Message, UserMessage } from '../types/message.js'
 import type { LoadedPlugin, PluginError } from '../types/plugin.js'
 import type { DeepImmutable } from '../types/utils.js'
 import { type AttributionState, createEmptyAttributionState } from '../utils/commitAttribution.js'
-import type { EffortValue } from '../utils/effort.js'
+import type { EffortLevel } from '../utils/effort.js'
 import type { FileHistoryState } from '../utils/fileHistory.js'
 import type { REPLHookContext } from '../utils/hooks/postSamplingHooks.js'
 import type { SessionHooksState } from '../utils/hooks/sessionHooks.js'
@@ -402,7 +402,7 @@ export type AppState = DeepImmutable<{
   // 服务端 advisor tool 的 advisor 模型（undefined = 禁用）。
   advisorModel?: string
   // 投入程度值
-  effortValue?: EffortValue
+  effortValue?: EffortLevel
   // 在 launchUltraplan 中同步设置，在 detached 流程开始之前。
   // 在 ultraplanSessionUrl 被 teleportToRemote 设置之前的约 5 秒窗口内
   // 防止重复启动。一旦 URL 设置完成或失败，由 launchDetached 清除。

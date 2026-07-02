@@ -15,10 +15,10 @@ import { getModelOptions } from '../services/model/modelOptions.js'
 import { useAppState, useSetAppState } from '../state/AppState.js'
 import {
   clampEffort,
-  convertEffortValueToLevel,
   type EffortLevel,
   getDefaultEffortForModel,
   getModelEffortLevels,
+  isEffortLevel,
   modelSupportsEffort,
   resolvePickerEffortPersistence,
   toPersistableEffort,
@@ -63,7 +63,7 @@ export function ModelPicker({
   const [hasToggledEffort, setHasToggledEffort] = useState(false)
   const effortValue = useAppState((s) => s.effortValue)
   const initialEffort =
-    effortValue !== undefined ? convertEffortValueToLevel(effortValue) : undefined
+    effortValue !== undefined && isEffortLevel(effortValue) ? effortValue : undefined
   const [effort, setEffort] = useState(initialEffort)
   const modelOptions = getModelOptions()
   let optionsWithInitial
@@ -277,5 +277,5 @@ function cycleEffortLevel(
 function getDefaultEffortLevelForOption(value?: string): EffortLevel {
   const resolved = resolveOptionModel(value) ?? getDefaultMainLoopModel()!
   const defaultValue = getDefaultEffortForModel(resolved)
-  return defaultValue !== undefined ? convertEffortValueToLevel(defaultValue) : 'thorough'
+  return defaultValue !== undefined && isEffortLevel(defaultValue) ? defaultValue : 'thorough'
 }

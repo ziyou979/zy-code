@@ -12,7 +12,7 @@ import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
 import type { Command, PromptCommand } from '../types/command.js'
 import { parseArgumentNames, substituteArguments } from '../utils/argumentSubstitution.js'
 import { logForDebugging } from '../utils/debug.js'
-import { EFFORT_LEVELS, type EffortValue, parseEffortValue } from '../utils/effort.js'
+import { EFFORT_LEVELS, type EffortLevel, parseEffortValue } from '../utils/effort.js'
 import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../utils/envUtils.js'
 import { isENOENT, isFsInaccessible } from '../utils/errors.js'
 import {
@@ -171,7 +171,7 @@ export function parseSkillFrontmatterFields(
   hooks: HooksSettings | undefined
   executionContext: 'fork' | undefined
   agent: string | undefined
-  effort: EffortValue | undefined
+  effort: EffortLevel | undefined
   shell: FrontmatterShell | undefined
 } {
   const validatedDescription = coerceDescriptionToString(frontmatter.description, resolvedName)
@@ -267,7 +267,7 @@ export function createSkillCommand({
   executionContext: 'inline' | 'fork' | undefined
   agent: string | undefined
   paths: string[] | undefined
-  effort: EffortValue | undefined
+  effort: EffortLevel | undefined
   shell: FrontmatterShell | undefined
 }): Command {
   return {

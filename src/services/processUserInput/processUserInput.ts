@@ -24,7 +24,7 @@ import type {
 } from '../../types/message.js'
 import type { PermissionMode } from '../../types/permissions.js'
 import { isValidImagePaste, type PromptInputMode } from '../../types/textInputTypes.js'
-import type { EffortValue } from '../../utils/effort.js'
+import type { EffortLevel } from '../../utils/effort.js'
 import { toArray } from '../../utils/generators.js'
 import { executeUserPromptExpansionHooks } from '../../utils/hooks/executors/notification.js'
 import { hasHookForEvent } from '../../utils/hooks/matcher.js'
@@ -57,7 +57,7 @@ export type ProcessUserInputBaseResult = {
   shouldQuery: boolean
   allowedTools?: string[]
   model?: string
-  effort?: EffortValue
+  effort?: EffortLevel
   // Output text for non-interactive mode (e.g., forked commands)
   // When set, this is used as the result in -p mode instead of empty string
   resultText?: string

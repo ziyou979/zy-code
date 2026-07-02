@@ -5,7 +5,7 @@ import {
 } from '../../bootstrap/state.js'
 import { checkHasTrustDialogAccepted } from '../../utils/config.js'
 import { getCwd } from '../../utils/cwd.js'
-import { type EffortValue, getCurrentHookEffortLevel } from '../../utils/effort.js'
+import { type EffortLevel, getCurrentHookEffortLevel } from '../../utils/effort.js'
 import { getTranscriptPathForSession } from '../../utils/sessionStorage.js'
 
 export const TOOL_HOOK_EXECUTION_TIMEOUT_MS = 10 * 60 * 1000
@@ -67,7 +67,7 @@ export function createBaseHookInput(
   agentInfo?: {
     agentId?: string
     agentType?: string
-    getAppState?: () => { effortValue?: EffortValue }
+    getAppState?: () => { effortValue?: EffortLevel }
   },
 ): {
   session_id: string

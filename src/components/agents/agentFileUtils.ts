@@ -9,7 +9,7 @@ import {
   isPluginAgent,
 } from '../../tools/AgentTool/loadAgentsDir.js'
 import { getCwd } from '../../utils/cwd.js'
-import type { EffortValue } from '../../utils/effort.js'
+import type { EffortLevel } from '../../utils/effort.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
 import { AGENT_PATHS } from './types.js'
@@ -25,7 +25,7 @@ export function formatAgentAsMarkdown(
   color?: string,
   model?: string,
   memory?: AgentMemoryScope,
-  effort?: EffortValue,
+  effort?: EffortLevel,
 ): string {
   // For YAML double-quoted strings, we need to escape:
   // - Backslashes: \ -> \\
@@ -163,7 +163,7 @@ export async function saveAgentToFile(
   color?: string,
   model?: string,
   memory?: AgentMemoryScope,
-  effort?: EffortValue,
+  effort?: EffortLevel,
 ): Promise<void> {
   if (source === 'built-in') {
     throw new Error('Cannot save built-in agents')
@@ -203,7 +203,7 @@ export async function updateAgentFile(
   newColor?: string,
   newModel?: string,
   newMemory?: AgentMemoryScope,
-  newEffort?: EffortValue,
+  newEffort?: EffortLevel,
 ): Promise<void> {
   if (agent.source === 'built-in') {
     throw new Error('Cannot update built-in agents')

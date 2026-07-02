@@ -6,14 +6,13 @@
  * - parseEffortValue 解析验证
  * - clampEffort 向下/向上搜索逻辑
  * - toPersistableEffort 过滤 orchestrate
- * - convertEffortValueToLevel / isOrchestrateEffort
+ * - isOrchestrateEffort
  * - resolvePickerEffortPersistence 持久化决策
  * - getEffortLevelDescription 每个档位都有描述
  */
 import { describe, expect, test } from 'bun:test'
 import {
   clampEffort,
-  convertEffortValueToLevel,
   EFFORT_LEVELS,
   type EffortLevel,
   getEffortLevelDescription,
@@ -148,17 +147,6 @@ describe('effort', () => {
 
     test('CLI 显式档位优先于 settings', () => {
       expect(resolveInitialEffortSetting('balanced')).toBe('balanced')
-    })
-  })
-
-  describe('convertEffortValueToLevel', () => {
-    test('有效 EffortLevel 原样返回', () => {
-      expect(convertEffortValueToLevel('balanced')).toBe('balanced')
-      expect(convertEffortValueToLevel('extreme')).toBe('extreme')
-    })
-
-    test('orchestrate 也是有效 level', () => {
-      expect(convertEffortValueToLevel('orchestrate')).toBe('orchestrate')
     })
   })
 

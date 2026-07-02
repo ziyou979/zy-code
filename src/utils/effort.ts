@@ -32,7 +32,7 @@ export type PersistableEffortLevel =
   | 'ultra' // 最强思考 + 回传 thinking 块（preserve: optional 时自动追加）
 export type EffortLevel = PersistableEffortLevel | 'orchestrate'
 
-export const EFFORT_LEVELS = [
+export const EFFORT_LEVELS: readonly EffortLevel[] = [
   'off',
   'on',
   'quick',
@@ -41,25 +41,26 @@ export const EFFORT_LEVELS = [
   'thorough',
   'extreme',
   'ultra',
-  'orchestrate',
-] as const
-
-/**
- * 档位强弱顺序(由弱到强)。
- * orchestrate 不在此数组中——它是「extreme + 工作流编排」的会话模式标记，不是独立强度档。
- */
-export const EFFORT_LEVEL_ORDER: readonly EffortLevel[] = [
-  'off',
-  'on',
-  'quick',
-  'light',
-  'balanced',
-  'thorough',
-  'extreme',
-  'ultra',
+  'orchestrate' // 类似 cc 的 ultracode，模型会自发进行编排
 ]
 
-export type EffortValue = EffortLevel
+/**
+ * 档位强弱顺序映射(由弱到强)。
+ * orchestrate 不在此映射中——它是「extreme + 工作流编排」的会话模式标记，不是独立强度档。
+ */
+export const EFFORT_LEVEL_RANK: ReadonlyMap<EffortLevel, number> = new Map<EffortLevel, number>([
+  ['off', 0],
+  ['on', 1],
+  ['quick', 2],
+  ['light', 3],
+  ['balanced', 4],
+  ['thorough', 5],
+  ['extreme', 6],
+  ['ultra', 7],
+])
+
+/** 按强度排序的档位列表（由弱到强），从 EFFORT_LEVEL_RANK 派生 */
+export const EFFORT_LEVEL_ORDER: readonly EffortLevel[] = [...EFFORT_LEVEL_RANK.keys()]
 
 // ---------------------------------------------------------------------------
 // Provider 映射（内部档位 → 各家 API 参数值）
@@ -155,7 +156,7 @@ export function modelSupportsEffort(model: string): boolean {
 // Hook effort 级别
 // ---------------------------------------------------------------------------
 
-export function getCurrentHookEffortLevel(effortValue?: EffortValue): EffortLevel | undefined {
+export function getCurrentHookEffortLevel(effortValue?: EffortLevel): EffortLevel | undefined {
   const model = getMainLoopModel()
   if (!model || !modelSupportsEffort(model)) {
     return undefined
@@ -178,15 +179,17 @@ export function clampEffort(
   if (supported.includes(requested)) {
     return requested
   }
-  const idx = EFFORT_LEVEL_ORDER.indexOf(requested)
-  if (idx === -1) {
+  const idx = EFFORT_LEVEL_RANK.get(requested)
+  if (idx === undefined) {
     return EFFORT_LEVEL_ORDER.filter((l) => supported.includes(l)).at(-1)
   }
+  // 向下查找最近的支持档位
   for (let i = idx - 1; i >= 0; i--) {
     if (supported.includes(EFFORT_LEVEL_ORDER[i]!)) {
       return EFFORT_LEVEL_ORDER[i]
     }
   }
+  // 向上查找最近的支持档位
   for (let i = idx + 1; i < EFFORT_LEVEL_ORDER.length; i++) {
     if (supported.includes(EFFORT_LEVEL_ORDER[i]!)) {
       return EFFORT_LEVEL_ORDER[i]
@@ -203,7 +206,7 @@ export function isEffortLevel(value: string): value is EffortLevel {
   return (EFFORT_LEVELS as readonly string[]).includes(value)
 }
 
-export function parseEffortValue(value: unknown): EffortValue | undefined {
+export function parseEffortValue(value: unknown): EffortLevel | undefined {
   if (value === undefined || value === null || value === '') {
     return undefined
   }
@@ -218,7 +221,7 @@ export function parseEffortValue(value: unknown): EffortValue | undefined {
  * orchestrate 是会话模式标记，不可持久化到 settings.json。
  */
 export function toPersistableEffort(
-  value: EffortValue | undefined,
+  value: EffortLevel | undefined,
 ): PersistableEffortLevel | undefined {
   if (
     value === 'off' ||
@@ -241,10 +244,10 @@ export function getInitialEffortSetting(): EffortLevel | undefined {
   if (!raw) {
     return undefined
   }
-  return toPersistableEffort(raw as EffortValue)
+  return toPersistableEffort(raw as EffortLevel)
 }
 
-export function resolveInitialEffortSetting(cliEffort?: unknown): EffortValue | undefined {
+export function resolveInitialEffortSetting(cliEffort?: unknown): EffortLevel | undefined {
   // 启动入口只负责解析显式配置；没有配置时保持 undefined，
   // 由 resolveAppliedEffort/getDisplayedEffortLevel 按模型能力应用默认开启档。
   return parseEffortValue(cliEffort) ?? getInitialEffortSetting()
@@ -260,7 +263,7 @@ export function resolvePickerEffortPersistence(
   return hadExplicit || picked !== modelDefault ? picked : undefined
 }
 
-export function getEffortEnvOverride(): EffortValue | null | undefined {
+export function getEffortEnvOverride(): EffortLevel | null | undefined {
   const envOverride = process.env.ZY_CODE_EFFORT_LEVEL
   return envOverride?.toLowerCase() === 'unset' || envOverride?.toLowerCase() === 'auto'
     ? null
@@ -273,7 +276,7 @@ export function getEffortEnvOverride(): EffortValue | null | undefined {
 
 export function resolveAppliedEffort(
   model: string,
-  appStateEffortValue: EffortValue | undefined,
+  appStateEffortValue: EffortLevel | undefined,
 ): EffortLevel | undefined {
   const envOverride = getEffortEnvOverride()
   if (envOverride === null) {
@@ -294,14 +297,10 @@ export function resolveAppliedEffort(
  */
 export function getDisplayedEffortLevel(
   model: string,
-  appStateEffort: EffortValue | undefined,
+  appStateEffort: EffortLevel | undefined,
 ): EffortLevel {
   const resolved = resolveAppliedEffort(model, appStateEffort) ?? 'thorough'
-  return convertEffortValueToLevel(resolved)
-}
-
-export function convertEffortValueToLevel(value: EffortValue): EffortLevel {
-  return isEffortLevel(value) ? value : 'thorough'
+  return isEffortLevel(resolved) ? resolved : 'thorough'
 }
 
 // ---------------------------------------------------------------------------
@@ -310,10 +309,6 @@ export function convertEffortValueToLevel(value: EffortValue): EffortLevel {
 
 export function getEffortLevelDescription(level: EffortLevel): string {
   return (tSync(`effort.description.${level}` as any) as string) || level
-}
-
-export function getEffortValueDescription(value: EffortValue): string {
-  return getEffortLevelDescription(value)
 }
 
 export type EffortCalloutConfig = {
@@ -336,29 +331,29 @@ export function getEffortCalloutConfig(): EffortCalloutConfig {
   }
 }
 
-const DEFAULT_THINKING_EFFORT_ORDER: readonly EffortLevel[] = [
-  'balanced',
-  'on',
-  'light',
-  'quick',
-  'thorough',
-  'extreme',
-  'ultra',
-]
-
 export function getDefaultThinkingEffortFromLevels(
-  supportedLevels: readonly EffortLevel[],
-): EffortValue | undefined {
-  // 优先选择常规开启档，避免模型只声明 balanced 时被 on 向下钳制成 off。
-  for (const level of DEFAULT_THINKING_EFFORT_ORDER) {
-    if (supportedLevels.includes(level)) {
-      return level
-    }
+    supportedLevels: readonly EffortLevel[],
+): EffortLevel {
+  // 1. 按 EFFORT_LEVEL_RANK 的顺序排序 supportedLevels
+  const sortedLevels = [...supportedLevels].sort((a, b) => {
+    return (EFFORT_LEVEL_RANK.get(a) ?? 0) - (EFFORT_LEVEL_RANK.get(b) ?? 0);
+  });
+
+  // 2. 去掉 'off'
+  const activeLevels = sortedLevels.filter((level) => level !== 'off');
+
+  // 3. 如果没有有效等级，返回 'off'
+  if (activeLevels.length === 0) {
+    return 'off';
   }
-  return supportedLevels.find((level) => level !== 'off' && level !== 'orchestrate')
+
+  // 4. 取中间值
+  // 使用 Math.floor(length / 2) 来获取中间位置的索引
+  const middleIndex = Math.floor(activeLevels.length / 2);
+  return activeLevels[middleIndex];
 }
 
-export function getDefaultEffortForModel(model: string): EffortValue | undefined {
+export function getDefaultEffortForModel(model: string): EffortLevel | undefined {
   const supportedLevels = getModelEffortLevels(model)
 
   // 支持思考的模型默认开启思考，且优先使用模型实际支持的开启档位。
@@ -371,9 +366,6 @@ export function getDefaultEffortForModel(model: string): EffortValue | undefined
   return undefined
 }
 
-export function isOrchestrateEffort(effortValue: EffortValue | undefined): boolean {
+export function isOrchestrateEffort(effortValue: EffortLevel | undefined): boolean {
   return effortValue === 'orchestrate'
 }
-
-// 向后兼容别名
-export const isUltracodeEffort = isOrchestrateEffort

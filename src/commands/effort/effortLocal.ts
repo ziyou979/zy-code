@@ -1,7 +1,7 @@
 import { tSync } from '../../i18n/index.js'
 import type { LocalCommandCall } from '../../types/command.js'
 import {
-  type EffortValue,
+  type EffortLevel,
   getDisplayedEffortLevel,
   getEffortEnvOverride,
   getModelEffortLevels,
@@ -45,7 +45,7 @@ export const call: LocalCommandCall = async (rawArgs, context) => {
 
   if (!args || args === 'current' || args === 'status') {
     // 复用 jsx 端 ShowCurrentEffort 的等价逻辑：appStateEffort + mainLoopModel
-    const effortValue = state.effortValue as EffortValue | undefined
+    const effortValue = state.effortValue as EffortLevel | undefined
     const model = state.mainLoopModel ?? ''
     const envOverride = getEffortEnvOverride()
     const effective = envOverride === null ? undefined : (envOverride ?? effortValue)
