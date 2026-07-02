@@ -49,6 +49,8 @@ type Props = {
   lookups: ReturnType<typeof buildMessageLookups>
   /** True if this is the currently active collapsed group (last one, still loading) */
   isActiveGroup?: boolean
+  /** 正在流式输出、尚未落入消息列表的 thinking 文本 */
+  streamingThinkingSummary?: string
   // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   content?: any
   // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
@@ -149,6 +151,7 @@ export function CollapsedReadSearchContent({
   tools,
   lookups,
   isActiveGroup,
+  streamingThinkingSummary,
 }: Props): React.ReactNode {
   const bg = useSelectedMessageBg()
   const store = useReplStore()
@@ -243,12 +246,27 @@ export function CollapsedReadSearchContent({
     }
   }
   const fallbackHint = useMinDisplayTime(incomingHint, MIN_HINT_DISPLAY_MS)
-  // 统一优先级：思考摘要优先，没有思考摘要时回退到工具提示。
-  // 这样"当前在处理什么就展示什么"——思考时展示思考内容，执行工具时展示工具信息。
-  const thinkingSummary = message.latestThinkingSummary
-    ? truncateThinkingSummary(message.latestThinkingSummary, MAX_THINKING_SUMMARY_CHARS)
+  const streamMode = store.getState().streamMode
+  const isToolStreamMode = streamMode === 'tool-use' || streamMode === 'tool-input'
+  const liveThinkingSummary =
+    isActiveGroup && streamMode === 'thinking' ? streamingThinkingSummary?.trim() : undefined
+  const rawThinkingSummary =
+    liveThinkingSummary !== undefined && liveThinkingSummary !== ''
+      ? liveThinkingSummary
+      : message.latestThinkingSummary
+  const thinkingSummary = rawThinkingSummary
+    ? truncateThinkingSummary(rawThinkingSummary.replace(/\s+/g, ' '), MAX_THINKING_SUMMARY_CHARS)
     : undefined
-  const displayedHint = thinkingSummary ?? fallbackHint
+  // 活跃分组按真实流状态切换提示；非活跃或状态短暂缺失时，
+  // 回退到归组阶段记录的最近可展示活动，避免首个子块类型粘住。
+  const displayedHint =
+    isActiveGroup && streamMode === 'thinking'
+      ? (thinkingSummary ?? fallbackHint)
+      : isActiveGroup && isToolStreamMode && fallbackHint !== undefined
+        ? fallbackHint
+        : message.latestDisplayKind === 'thinking'
+          ? (thinkingSummary ?? fallbackHint)
+          : (fallbackHint ?? thinkingSummary)
 
   // 在 verbose 模式下，渲染每个工具使用及其 1 行结果摘要
   if (verbose) {
@@ -374,7 +392,7 @@ export function CollapsedReadSearchContent({
   // 正在思考（streamMode === 'thinking'）&& fullscreen → 实时 tick "正在思考 Xs"
   // 完成后 → 静态 "思考了 Xs"（下限 1s）
   const thinkingMs = message.thinkingDurationMs ?? 0
-  const isCurrentlyThinking = store.getState().streamMode === 'thinking'
+  const isCurrentlyThinking = streamMode === 'thinking'
   const showThinkingTick = isActiveGroup && isFullscreenEnvEnabled() && isCurrentlyThinking
   if (thinkingMs > 0 || showThinkingTick) {
     const isFirst = nonMemParts.length === 0

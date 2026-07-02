@@ -666,6 +666,8 @@ type GroupAccumulator = {
   nonMemSearchArgs: string[]
   /** 最近添加的非 memory 操作，预格式化用于显示 */
   latestDisplayHint: string | undefined
+  /** 最近一次可展示的活动类型，用于活跃折叠块在 thinking/tool 间切换提示 */
+  latestDisplayKind?: 'thinking' | 'tool'
   // MCP 工具调用（分开追踪，以便显示 "Queried slack" 而非 "Read N files"）
   mcpCallCount?: number
   mcpServerNames?: Set<string>
@@ -804,6 +806,9 @@ function createCollapsedGroup(group: GroupAccumulator): CollapsedReadSearchGroup
     ...(group.latestThinkingSummary !== undefined && {
       latestThinkingSummary: group.latestThinkingSummary,
     }),
+    ...(group.latestDisplayKind !== undefined && {
+      latestDisplayKind: group.latestDisplayKind,
+    }),
   }
   return result
 }
@@ -861,6 +866,7 @@ export function collapseReadSearchGroups(
         const thinkingText = extractThinkingText(msg)
         if (thinkingText) {
           currentGroup.latestThinkingSummary = thinkingText.trim().replace(/\s+/g, ' ')
+          currentGroup.latestDisplayKind = 'thinking'
         }
         if (lastTimestamp !== undefined && msg.timestamp) {
           const elapsed = Date.parse(msg.timestamp) - Date.parse(lastTimestamp)
@@ -903,6 +909,7 @@ export function collapseReadSearchGroups(
         const input = toolInfo.input as { query?: string } | undefined
         if (input?.query) {
           currentGroup.latestDisplayHint = `"${input.query}"`
+          currentGroup.latestDisplayKind = 'tool'
         }
       } else if (isFullscreenEnvEnabled() && toolInfo.isBash) {
         // 非搜索/读取类 Bash 命令 — 分开计数，使摘要显示
@@ -915,6 +922,7 @@ export function collapseReadSearchGroups(
           // 与 comment-as-label 工具调用渲染使用相同的触发逻辑。
           currentGroup.latestDisplayHint =
             extractBashCommentLabel(input.command) ?? commandAsHint(input.command)
+          currentGroup.latestDisplayKind = 'tool'
           // 记录 tool_use_id -> command，以便后续到达的结果
           // 可被扫描提取 commit SHA / PR URL。
           for (const id of getToolUseIdsFromMessage(msg)) {
@@ -928,6 +936,7 @@ export function collapseReadSearchGroups(
         const input = toolInfo.input as { command?: string } | undefined
         if (input?.command) {
           currentGroup.latestDisplayHint = commandAsHint(input.command)
+          currentGroup.latestDisplayKind = 'tool'
         }
       } else if (toolInfo.isSearch) {
         // 使用工具的 isSearch 标志来正确分类 bash 搜索命令
@@ -944,6 +953,7 @@ export function collapseReadSearchGroups(
           if (input?.pattern) {
             currentGroup.nonMemSearchArgs.push(input.pattern)
             currentGroup.latestDisplayHint = `"${input.pattern}"`
+            currentGroup.latestDisplayKind = 'tool'
           }
         }
       } else {
@@ -958,6 +968,7 @@ export function collapseReadSearchGroups(
           } else {
             // 非 memory 文件读取 — 更新显示提示
             currentGroup.latestDisplayHint = getDisplayPath(filePath)
+            currentGroup.latestDisplayKind = 'tool'
           }
         }
         // 如果未找到文件路径（例如 Bash 读取命令如 ls、cat），则计数操作次数
@@ -967,6 +978,7 @@ export function collapseReadSearchGroups(
           const input = toolInfo.input as { command?: string } | undefined
           if (input?.command) {
             currentGroup.latestDisplayHint = commandAsHint(input.command)
+            currentGroup.latestDisplayKind = 'tool'
           }
         }
       }
