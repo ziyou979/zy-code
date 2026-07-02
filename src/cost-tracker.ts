@@ -11,6 +11,7 @@ import {
   getTotalAPIDurationWithoutRetries,
   getTotalCacheCreationInputTokens,
   getTotalCacheReadInputTokens,
+  getTotalCostByCurrency,
   getTotalCostUSD,
   getTotalDuration,
   getTotalInputTokens,
@@ -38,7 +39,7 @@ import { getCurrentProjectConfig, saveCurrentProjectConfig } from './utils/confi
 import { getContextWindowForModel, getModelMaxOutputTokens } from './utils/context.js'
 import { formatDuration, formatNumber } from './utils/format.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
-import { calculateUSDCost, getCurrencySymbol } from './utils/modelCost.js'
+import { calculateUSDCost, getCurrencySymbol, getModelCurrency } from './utils/modelCost.js'
 
 export {
   addToTotalLinesChanged,
@@ -48,6 +49,7 @@ export {
   getTotalAPIDurationWithoutRetries,
   getTotalCacheCreationInputTokens,
   getTotalCacheReadInputTokens,
+  getTotalCostByCurrency,
   getTotalCostUSD as getTotalCost,
   getTotalDuration,
   getTotalInputTokens,
@@ -71,17 +73,39 @@ type StoredCostState = {
   totalLinesRemoved: number
   lastDuration: number | undefined
   modelUsage: { [modelName: string]: ModelUsage } | undefined
+  totalCostByCurrency?: Record<'CNY' | 'USD', number>
 }
 
 /**
  * 从项目配置中获取指定会话的已存储费用状态。
- * 仅在会话 ID 匹配时返回费用数据，否则返回 undefined。
+ * 优先从 sessionCosts[sessionId] 读取（多会话存储），fallback 到旧的 lastSessionId 匹配逻辑。
  * 用于在 saveCurrentSessionCosts() 覆盖配置之前读取费用数据。
  */
 export function getStoredSessionCosts(sessionId: string): StoredCostState | undefined {
   const projectConfig = getCurrentProjectConfig()
 
-  // 仅在上次保存的是同一会话时返回费用数据
+  // 优先从多会话存储中读取
+  const stored = projectConfig.sessionCosts?.[sessionId]
+  if (stored) {
+    return {
+      ...stored,
+      modelUsage: stored.lastModelUsage
+        ? Object.fromEntries(
+            Object.entries(stored.lastModelUsage).map(([model, usage]) => [
+              model,
+              {
+                ...usage,
+                currency: usage.currency ?? 'CNY',
+                contextWindow: getContextWindowForModel(model),
+                maxOutputTokens: getModelMaxOutputTokens(model).default,
+              },
+            ]),
+          )
+        : undefined,
+    }
+  }
+
+  // fallback：旧的单会话存储逻辑（向后兼容）
   if (projectConfig.lastSessionId !== sessionId) {
     return undefined
   }
@@ -94,6 +118,7 @@ export function getStoredSessionCosts(sessionId: string): StoredCostState | unde
         model,
         {
           ...usage,
+          currency: usage.currency ?? 'CNY',
           contextWindow: getContextWindowForModel(model),
           maxOutputTokens: getModelMaxOutputTokens(model).default,
         },
@@ -127,42 +152,71 @@ export function restoreCostStateForSession(sessionId: string): boolean {
   return true
 }
 
+/** sessionCosts 最大存储会话数，防止配置文件无限膨胀 */
+const MAX_SESSION_COSTS = 20
+
 /**
  * 将当前会话的费用数据保存到项目配置。
+ * 同时写入 sessionCosts[sessionId]（多会话存储）和旧的 lastCost/lastSessionId（向后兼容）。
  * 在切换会话之前调用此方法，以避免丢失已累积的费用数据。
  */
 export function saveCurrentSessionCosts(fpsMetrics?: FpsMetrics): void {
-  saveCurrentProjectConfig((current) => ({
-    ...current,
-    lastCost: getTotalCostUSD(),
-    lastAPIDuration: getTotalAPIDuration(),
-    lastAPIDurationWithoutRetries: getTotalAPIDurationWithoutRetries(),
-    lastToolDuration: getTotalToolDuration(),
-    lastDuration: getTotalDuration(),
-    lastLinesAdded: getTotalLinesAdded(),
-    lastLinesRemoved: getTotalLinesRemoved(),
-    lastTotalInputTokens: getTotalInputTokens(),
-    lastTotalOutputTokens: getTotalOutputTokens(),
-    lastTotalCacheCreationInputTokens: getTotalCacheCreationInputTokens(),
-    lastTotalCacheReadInputTokens: getTotalCacheReadInputTokens(),
-    lastTotalWebSearchRequests: getTotalWebSearchRequests(),
-    lastFpsAverage: fpsMetrics?.averageFps,
-    lastFpsLow1Pct: fpsMetrics?.low1PctFps,
-    lastModelUsage: Object.fromEntries(
-      Object.entries(getModelUsage()).map(([model, usage]) => [
-        model,
-        {
-          inputTokens: usage.inputTokens,
-          outputTokens: usage.outputTokens,
-          cacheReadInputTokens: usage.cacheReadInputTokens,
-          cacheCreationInputTokens: usage.cacheCreationInputTokens,
-          webSearchRequests: usage.webSearchRequests,
-          costUSD: usage.costUSD,
-        },
-      ]),
-    ),
-    lastSessionId: getSessionId(),
-  }))
+  const sessionId = getSessionId()
+  const modelUsageData = Object.fromEntries(
+    Object.entries(getModelUsage()).map(([model, usage]) => [
+      model,
+      {
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        cacheReadInputTokens: usage.cacheReadInputTokens,
+        cacheCreationInputTokens: usage.cacheCreationInputTokens,
+        webSearchRequests: usage.webSearchRequests,
+        costUSD: usage.costUSD,
+      },
+    ]),
+  )
+
+  saveCurrentProjectConfig((current) => {
+    // 写入多会话存储，超出上限时淘汰最旧的条目
+    const sessionCosts = { ...(current.sessionCosts ?? {}) }
+    sessionCosts[sessionId] = {
+      totalCostUSD: getTotalCostUSD(),
+      totalAPIDuration: getTotalAPIDuration(),
+      totalAPIDurationWithoutRetries: getTotalAPIDurationWithoutRetries(),
+      totalToolDuration: getTotalToolDuration(),
+      totalLinesAdded: getTotalLinesAdded(),
+      totalLinesRemoved: getTotalLinesRemoved(),
+      lastDuration: getTotalDuration(),
+      lastModelUsage: modelUsageData,
+      totalCostByCurrency: getTotalCostByCurrency(),
+    }
+    // 淘汰超出上限的旧条目（按写入顺序，删除最早的）
+    const keys = Object.keys(sessionCosts)
+    while (keys.length > MAX_SESSION_COSTS) {
+      delete sessionCosts[keys.shift()!]
+    }
+
+    return {
+      ...current,
+      lastCost: getTotalCostUSD(),
+      lastAPIDuration: getTotalAPIDuration(),
+      lastAPIDurationWithoutRetries: getTotalAPIDurationWithoutRetries(),
+      lastToolDuration: getTotalToolDuration(),
+      lastDuration: getTotalDuration(),
+      lastLinesAdded: getTotalLinesAdded(),
+      lastLinesRemoved: getTotalLinesRemoved(),
+      lastTotalInputTokens: getTotalInputTokens(),
+      lastTotalOutputTokens: getTotalOutputTokens(),
+      lastTotalCacheCreationInputTokens: getTotalCacheCreationInputTokens(),
+      lastTotalCacheReadInputTokens: getTotalCacheReadInputTokens(),
+      lastTotalWebSearchRequests: getTotalWebSearchRequests(),
+      lastFpsAverage: fpsMetrics?.averageFps,
+      lastFpsLow1Pct: fpsMetrics?.low1PctFps,
+      lastModelUsage: modelUsageData,
+      lastSessionId: sessionId,
+      sessionCosts,
+    }
+  })
 }
 
 function formatCost(cost: number, maxDecimalPlaces: number = 4): string {
@@ -195,6 +249,7 @@ function formatModelUsage(): string {
         cacheCreationInputTokens: 0,
         webSearchRequests: 0,
         costUSD: 0,
+        currency: 'CNY',
         contextWindow: 0,
         maxOutputTokens: 0,
       }
@@ -256,7 +311,12 @@ function round(number: number, precision: number): number {
   return Math.round(number * precision) / precision
 }
 
-function addToTotalModelUsage(cost: number, usage: Usage, model: string): ModelUsage {
+function addToTotalModelUsage(
+  cost: number,
+  usage: Usage,
+  model: string,
+  currency: 'CNY' | 'USD' = 'CNY',
+): ModelUsage {
   const modelUsage = getUsageForModel(model) ?? {
     inputTokens: 0,
     outputTokens: 0,
@@ -264,6 +324,7 @@ function addToTotalModelUsage(cost: number, usage: Usage, model: string): ModelU
     cacheCreationInputTokens: 0,
     webSearchRequests: 0,
     costUSD: 0,
+    currency: 'CNY' as const,
     contextWindow: 0,
     maxOutputTokens: 0,
   }
@@ -275,14 +336,20 @@ function addToTotalModelUsage(cost: number, usage: Usage, model: string): ModelU
   // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   modelUsage.webSearchRequests += (usage as any).server_tool_use?.web_search_requests ?? 0
   modelUsage.costUSD += cost
+  modelUsage.currency = currency
   modelUsage.contextWindow = getContextWindowForModel(model)
   modelUsage.maxOutputTokens = getModelMaxOutputTokens(model).default
   return modelUsage
 }
 
-export function addToTotalSessionCost(cost: number, usage: Usage, model: string): number {
-  const modelUsage = addToTotalModelUsage(cost, usage, model)
-  addToTotalCostState(cost, modelUsage, model)
+export function addToTotalSessionCost(
+  cost: number,
+  usage: Usage,
+  model: string,
+  currency: 'CNY' | 'USD' = 'CNY',
+): number {
+  const modelUsage = addToTotalModelUsage(cost, usage, model, currency)
+  addToTotalCostState(cost, modelUsage, model, currency)
 
   const attrs = { model }
 
@@ -301,6 +368,7 @@ export function addToTotalSessionCost(cost: number, usage: Usage, model: string)
   let totalCost = cost
   for (const advisorUsage of getAdvisorUsage(usage)) {
     const advisorCost = calculateUSDCost(advisorUsage.model, advisorUsage)
+    const advisorCurrency = getModelCurrency(advisorUsage.model)
     logEvent('zy_advisor_tool_token_usage', {
       advisor_model:
         advisorUsage.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -310,7 +378,7 @@ export function addToTotalSessionCost(cost: number, usage: Usage, model: string)
       cache_creation_input_tokens: advisorUsage.cacheCreationInputTokens ?? 0,
       cost_usd_micros: Math.round(advisorCost * 1_000_000),
     })
-    totalCost += addToTotalSessionCost(advisorCost, advisorUsage, advisorUsage.model)
+    totalCost += addToTotalSessionCost(advisorCost, advisorUsage, advisorUsage.model, advisorCurrency)
   }
   return totalCost
 }

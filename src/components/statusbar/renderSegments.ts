@@ -22,6 +22,7 @@ import {
 import {
   getTotalAPIDuration,
   getTotalCost,
+  getTotalCostByCurrency,
   getTotalInputTokens,
   getTotalOutputTokens,
 } from '../../cost-tracker.js'
@@ -186,16 +187,15 @@ const RENDERERS: Record<ModuleId, Renderer> = {
   },
 
   cost(module) {
-    const cost = getTotalCost()
-    if (cost <= 0) {
+    const costsByCurrency = getTotalCostByCurrency()
+    const parts: string[] = []
+    if ((costsByCurrency.USD ?? 0) > 0) parts.push(`$${costsByCurrency.USD.toFixed(2)}`)
+    if ((costsByCurrency.CNY ?? 0) > 0) parts.push(`¥${costsByCurrency.CNY.toFixed(2)}`)
+    if (parts.length === 0) {
       return null
     }
-    const icon = effectiveIcon(module)
-    // For currency icons (¥ $ € £) no space looks nicer: "¥0.42".
-    // For non-currency overrides we keep the leading space via withIcon.
-    const body = `${cost.toFixed(2)}`
-    const text = icon ? `${icon}${body}` : body
-    return { text, colorToken: effectiveColor(module) }
+    const body = parts.join('+')
+    return { text: body, colorToken: effectiveColor(module) }
   },
 
   memory(module, ctx) {

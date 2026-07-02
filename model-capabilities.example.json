@@ -75,7 +75,7 @@
         "maxInputTokens": "128k",
         "maxOutputTokens": "16k"
       },
-      "costs": { "inputTokens": 2.5, "outputTokens": 10 }
+      "costs": { "currency": "USD", "inputTokens": 2.5, "outputTokens": 10 }
     },
     {
       "pattern": "claude-sonnet-4",

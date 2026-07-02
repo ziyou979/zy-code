@@ -77,6 +77,8 @@ export type State = {
   // 用于项目标识（历史记录、技能、会话），而非文件操作。
   projectRoot: string
   totalCostUSD: number
+  /** 按币种分别累计的费用，用于多币种场景下的分别展示 */
+  totalCostByCurrency: Record<'CNY' | 'USD', number>
   totalAPIDuration: number
   totalAPIDurationWithoutRetries: number
   totalToolDuration: number
@@ -293,6 +295,7 @@ function getInitialState(): State {
     originalCwd: resolvedCwd,
     projectRoot: resolvedCwd,
     totalCostUSD: 0,
+    totalCostByCurrency: { CNY: 0, USD: 0 },
     totalAPIDuration: 0,
     totalAPIDurationWithoutRetries: 0,
     totalToolDuration: 0,

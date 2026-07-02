@@ -101,9 +101,37 @@ export type ProjectConfig = {
       cacheCreationInputTokens: number
       webSearchRequests: number
       costUSD: number
+      currency?: 'CNY' | 'USD'
     }
   >
   lastSessionMetrics?: Record<string, number>
+  /** 按 sessionId 存储每个会话的费用状态，用于 /resume 可靠恢复 */
+  sessionCosts?: Record<
+    string,
+    {
+      totalCostUSD: number
+      totalAPIDuration: number
+      totalAPIDurationWithoutRetries: number
+      totalToolDuration: number
+      totalLinesAdded: number
+      totalLinesRemoved: number
+      lastDuration: number | undefined
+      lastModelUsage?: Record<
+        string,
+        {
+          inputTokens: number
+          outputTokens: number
+          cacheReadInputTokens: number
+          cacheCreationInputTokens: number
+          webSearchRequests: number
+          costUSD: number
+          currency?: 'CNY' | 'USD'
+        }
+      >
+      /** 按币种分别累计的费用 */
+      totalCostByCurrency?: Record<'CNY' | 'USD', number>
+    }
+  >
   exampleFiles?: string[]
   exampleFilesGeneratedAt?: number
 

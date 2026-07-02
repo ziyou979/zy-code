@@ -3,7 +3,6 @@ import { logEvent } from 'src/services/analytics/index.js'
 import { getDefaultMainLoopModelSetting } from 'src/services/model/model.js'
 import { getStaticPricingForModel } from 'src/services/model/modelCapabilities.js'
 import { setHasUnknownModelCost } from '../bootstrap/state.js'
-import { getUiLanguage } from '../i18n/index.js'
 import type { TokenUsage as Usage } from '../types/llm.js'
 
 export type ModelCosts = {
@@ -12,6 +11,7 @@ export type ModelCosts = {
   promptCacheWriteTokens: number
   promptCacheReadTokens: number
   webSearchRequests: number
+  currency: 'CNY' | 'USD'
 }
 
 /**
@@ -31,6 +31,7 @@ export function getModelCosts(model: string, usage: Usage): ModelCosts {
       promptCacheWriteTokens: pricing.cost_cache_write,
       promptCacheReadTokens: pricing.cost_cache_read,
       webSearchRequests: pricing.cost_web_search,
+      currency: pricing.currency,
     }
   }
 
@@ -43,17 +44,19 @@ export function getModelCosts(model: string, usage: Usage): ModelCosts {
       promptCacheWriteTokens: defaultPricing.cost_cache_write,
       promptCacheReadTokens: defaultPricing.cost_cache_read,
       webSearchRequests: defaultPricing.cost_web_search,
+      currency: defaultPricing.currency,
     }
   }
 
   trackUnknownModelCost(model)
-  // 无定价信息时返回零费用
+  // 无定价信息时返回零费用，默认 CNY
   return {
     inputTokens: 0,
     outputTokens: 0,
     promptCacheWriteTokens: 0,
     promptCacheReadTokens: 0,
     webSearchRequests: 0,
+    currency: 'CNY',
   }
 }
 
@@ -65,14 +68,24 @@ function trackUnknownModelCost(model: string): void {
 }
 
 /**
- * 根据当前 UI 语言返回货币符号。
- * 中文 → ¥（人民币），其他 → $（美元）。
- * 注意：配置中的单价单位始终是 RMB（元/百万token），
- * 此函数仅影响展示层的符号，不影响内部数值计算。
+ * 根据当前主模型的货币单位返回货币符号。
+ * 优先根据模型配置的 currency 字段判断，无配置时默认 ￥（CNY）。
  */
 export function getCurrencySymbol(): string {
-  const lang = getUiLanguage()
-  return lang === 'zh-CN' ? '￥' : '$'
+  const model = getDefaultMainLoopModelSetting()
+  if (model) {
+    const costs = getModelCosts(model, { inputTokens: 0, outputTokens: 0 })
+    if (costs.currency === 'USD') return '$'
+  }
+  return '￥'
+}
+
+/**
+ * 获取指定模型的货币单位。
+ * 无定价配置时默认 CNY。
+ */
+export function getModelCurrency(model: string): 'CNY' | 'USD' {
+  return getModelCosts(model, { inputTokens: 0, outputTokens: 0 }).currency
 }
 
 /**
@@ -126,4 +139,20 @@ export function calculateCostFromTokens(
     cacheCreationInputTokens: tokens.cacheCreationInputTokens,
   }
   return calculateUSDCost(model, usage)
+}
+
+/**
+ * 根据货币单位返回对应的货币符号。
+ */
+export function getCurrencySymbolFor(currency: 'CNY' | 'USD'): string {
+  return currency === 'USD' ? '$' : '¥'
+}
+
+/**
+ * 格式化费用显示，带货币符号。
+ * 不传 currency 时默认 CNY。
+ */
+export function formatCostWithCurrency(cost: number, currency?: 'CNY' | 'USD'): string {
+  const symbol = getCurrencySymbolFor(currency ?? 'CNY')
+  return `${symbol}${cost > 0.5 ? Math.round(cost * 100) / 100 : cost.toFixed(4)}`
 }

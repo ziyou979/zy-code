@@ -15,6 +15,7 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { evictTaskOutput, initTaskOutputAsSymlink } from '../../services/task/diskOutput.js'
+import { resetCostState, saveCurrentSessionCosts } from '../../cost-tracker.js'
 import type { AppState } from '../../state/AppState.js'
 import { isInProcessTeammateTask } from '../../tasks/InProcessTeammateTask/types.js'
 import {
@@ -101,6 +102,10 @@ export async function clearConversation({
       }
     }
   }
+
+  // 保存当前会话的费用数据（供后续 /resume 恢复），然后重置费用状态
+  saveCurrentSessionCosts()
+  resetCostState()
 
   setMessages(() => [])
 

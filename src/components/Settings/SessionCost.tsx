@@ -3,7 +3,7 @@ import {
   formatCost,
   getModelUsage,
   getTotalAPIDuration,
-  getTotalCost,
+  getTotalCostByCurrency,
   getTotalDuration,
   getTotalLinesAdded,
   getTotalLinesRemoved,
@@ -12,6 +12,7 @@ import {
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { formatDuration, formatNumber } from '../../utils/format.js'
+import { getCurrencySymbolFor } from '../../utils/modelCost.js'
 
 // 标签列的固定显示宽度（Ink Box width 按显示宽度计算，自动处理 CJK 双列宽）
 const LABEL_COL_WIDTH = 23
@@ -48,7 +49,8 @@ function ModelUsageSection() {
         if (usage.webSearchRequests > 0) {
           parts.push(`${formatNumber(usage.webSearchRequests)} ${tSync('costTracker.webSearch')}`)
         }
-        const usageStr = `${parts.join(', ')} (${formatCost(usage.costUSD)})`
+        const currencySymbol = getCurrencySymbolFor(usage.currency ?? 'CNY')
+        const usageStr = `${parts.join(', ')} (${currencySymbol}${usage.costUSD.toFixed(2)})`
         return (
           <Box key={model}>
             <Box width={LABEL_COL_WIDTH} justifyContent="flex-end">
@@ -63,8 +65,12 @@ function ModelUsageSection() {
 }
 
 export function SessionCost() {
+  const costsByCurrency = getTotalCostByCurrency()
+  const parts: string[] = []
+  if ((costsByCurrency.USD ?? 0) > 0) parts.push(`$${costsByCurrency.USD.toFixed(2)}`)
+  if ((costsByCurrency.CNY ?? 0) > 0) parts.push(`¥${costsByCurrency.CNY.toFixed(2)}`)
   const costDisplay =
-    formatCost(getTotalCost()) +
+    (parts.length > 0 ? parts.join('+') : formatCost(0)) +
     (hasUnknownModelCost() ? ` ${tSync('costTracker.costsMayBeInaccurate')}` : '')
 
   const linesAdded = getTotalLinesAdded()

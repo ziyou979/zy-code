@@ -229,38 +229,46 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
       .union([
         // 固定单价（向后兼容）
         z.object({
-          inputTokens: z.number().describe('每百万输入 token 费用（元）'),
-          outputTokens: z.number().describe('每百万输出 token 费用（元）'),
-          promptCacheWriteTokens: z.number().optional().describe('每百万缓存写入 token 费用（元）'),
-          promptCacheReadTokens: z.number().optional().describe('每百万缓存读取 token 费用（元）'),
-          webSearchRequests: z.number().optional().describe('每次网络搜索费用（元）'),
+          currency: z
+            .enum(['CNY', 'USD'])
+            .optional()
+            .describe('定价货币单位，未配置时默认 CNY'),
+          inputTokens: z.number().describe('每百万输入 token 费用'),
+          outputTokens: z.number().describe('每百万输出 token 费用'),
+          promptCacheWriteTokens: z.number().optional().describe('每百万缓存写入 token 费用'),
+          promptCacheReadTokens: z.number().optional().describe('每百万缓存读取 token 费用'),
+          webSearchRequests: z.number().optional().describe('每次网络搜索费用'),
         }),
         // 阶梯费用：根据输入 token 总量分段计价
         z.object({
+          currency: z
+            .enum(['CNY', 'USD'])
+            .optional()
+            .describe('定价货币单位，未配置时默认 CNY'),
           tiers: z
             .array(
               z.object({
                 upTo: TokenCountSchema.describe(
                   '此阶梯的输入 token 上限，支持 "128k"、"1m" 等格式',
                 ),
-                inputTokens: z.number().describe('此阶梯内每百万输入 token 费用（元）'),
-                outputTokens: z.number().describe('此阶梯内每百万输出 token 费用（元）'),
+                inputTokens: z.number().describe('此阶梯内每百万输入 token 费用'),
+                outputTokens: z.number().describe('此阶梯内每百万输出 token 费用'),
                 promptCacheWriteTokens: z
                   .number()
                   .optional()
-                  .describe('此阶梯内每百万缓存写入 token 费用（元）'),
+                  .describe('此阶梯内每百万缓存写入 token 费用'),
                 promptCacheReadTokens: z
                   .number()
                   .optional()
-                  .describe('此阶梯内每百万缓存读取 token 费用（元）'),
+                  .describe('此阶梯内每百万缓存读取 token 费用'),
               }),
             )
             .describe('按输入 token 总量分段计价的阶梯列表（从低到高排序）'),
-          webSearchRequests: z.number().optional().describe('每次网络搜索费用（元）'),
+          webSearchRequests: z.number().optional().describe('每次网络搜索费用'),
         }),
       ])
       .optional()
-      .describe('模型定价配置（单位：元/百万 token），支持固定单价或阶梯费用'),
+      .describe('模型定价配置，支持固定单价或阶梯费用'),
   }),
 )
 
@@ -621,12 +629,15 @@ export function getLocalModelCosts(
       promptCacheWriteTokens: number
       promptCacheReadTokens: number
       webSearchRequests: number
+      currency: 'CNY' | 'USD'
     }
   | undefined {
   const entry = getLocalModelCapability(model)
   if (!entry?.costs) {
     return undefined
   }
+
+  const currency = entry.costs.currency ?? 'CNY'
 
   if ('tiers' in entry.costs) {
     const tiers = entry.costs.tiers
@@ -650,6 +661,7 @@ export function getLocalModelCosts(
       promptCacheWriteTokens: activeTier.promptCacheWriteTokens ?? 0,
       promptCacheReadTokens: activeTier.promptCacheReadTokens ?? 0,
       webSearchRequests: entry.costs.webSearchRequests ?? 0,
+      currency,
     }
   }
 
@@ -659,5 +671,6 @@ export function getLocalModelCosts(
     promptCacheWriteTokens: entry.costs.promptCacheWriteTokens ?? 0,
     promptCacheReadTokens: entry.costs.promptCacheReadTokens ?? 0,
     webSearchRequests: entry.costs.webSearchRequests ?? 0,
+    currency,
   }
 }

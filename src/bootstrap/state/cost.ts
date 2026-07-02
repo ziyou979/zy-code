@@ -5,13 +5,27 @@
 import type { ModelUsage } from 'src/types/index.js'
 import { STATE } from './_core.js'
 
-export function addToTotalCostState(cost: number, modelUsage: ModelUsage, model: string): void {
+export function addToTotalCostState(
+  cost: number,
+  modelUsage: ModelUsage,
+  model: string,
+  currency: 'CNY' | 'USD' = 'CNY',
+): void {
   STATE.modelUsage[model] = modelUsage
   STATE.totalCostUSD += cost
+  STATE.totalCostByCurrency[currency] += cost
 }
 
 export function getTotalCostUSD(): number {
   return STATE.totalCostUSD
+}
+
+/**
+ * 获取按币种分别累计的费用。
+ * 用于 statusline 等展示层按币种分别显示。
+ */
+export function getTotalCostByCurrency(): Record<'CNY' | 'USD', number> {
+  return STATE.totalCostByCurrency
 }
 
 export function addToTotalLinesChanged(added: number, removed: number): void {
@@ -49,6 +63,7 @@ export function getUsageForModel(model: string): ModelUsage | undefined {
  */
 export function resetCostState(): void {
   STATE.totalCostUSD = 0
+  STATE.totalCostByCurrency = { CNY: 0, USD: 0 }
   STATE.totalAPIDuration = 0
   STATE.totalAPIDurationWithoutRetries = 0
   STATE.totalToolDuration = 0
@@ -73,6 +88,7 @@ export function setCostStateForRestore({
   totalLinesRemoved,
   lastDuration,
   modelUsage,
+  totalCostByCurrency,
 }: {
   totalCostUSD: number
   totalAPIDuration: number
@@ -82,8 +98,10 @@ export function setCostStateForRestore({
   totalLinesRemoved: number
   lastDuration: number | undefined
   modelUsage: { [modelName: string]: ModelUsage } | undefined
+  totalCostByCurrency?: Record<'CNY' | 'USD', number>
 }): void {
   STATE.totalCostUSD = totalCostUSD
+  STATE.totalCostByCurrency = totalCostByCurrency ?? { CNY: totalCostUSD, USD: 0 }
   STATE.totalAPIDuration = totalAPIDuration
   STATE.totalAPIDurationWithoutRetries = totalAPIDurationWithoutRetries
   STATE.totalToolDuration = totalToolDuration

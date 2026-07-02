@@ -3,7 +3,9 @@
  *
  * calculateCostFromTokens 是纯计算函数（内部拼 Usage 对象后委托 calculateUSDCost）。
  * calculateUSDCost 验证缓存 token 从顶层字段正确读取并参与计费。
- * getCurrencySymbol 依赖 i18n，用 mock 测试多语言分支。
+ * getCurrencySymbol 根据当前主模型的货币单位返回符号。
+ * getModelCurrency 返回模型的货币单位。
+ * getCurrencySymbolFor 根据货币类型返回符号。
  */
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
@@ -16,7 +18,9 @@ describe('modelCost', () => {
         cost_cache_write: 37.5,
         cost_cache_read: 1.5,
         cost_web_search: 10,
+        currency: 'CNY',
       }),
+      getModelCapability: () => undefined,
     }))
   })
 
@@ -142,35 +146,107 @@ describe('modelCost', () => {
     })
   })
 
-  describe('getCurrencySymbol', () => {
-    test('zh-CN → ￥', async () => {
-      const { mock } = await import('bun:test')
-      mock.module('../../src/i18n/index.js', () => ({
-        getUiLanguage: () => 'zh-CN',
+  describe('getModelCurrency', () => {
+    test('配置 currency: CNY 时返回 CNY', async () => {
+      mock.module('../../src/services/model/modelCapabilities.js', () => ({
+        getStaticPricingForModel: () => ({
+          cost_input: 1,
+          cost_output: 2,
+          cost_cache_write: 0,
+          cost_cache_read: 0,
+          cost_web_search: 0,
+          currency: 'CNY',
+        }),
+      }))
+      const { getModelCurrency } = await import('../../src/utils/modelCost.js')
+      expect(getModelCurrency('test-model')).toBe('CNY')
+    })
+
+    test('配置 currency: USD 时返回 USD', async () => {
+      mock.module('../../src/services/model/modelCapabilities.js', () => ({
+        getStaticPricingForModel: () => ({
+          cost_input: 1,
+          cost_output: 2,
+          cost_cache_write: 0,
+          cost_cache_read: 0,
+          cost_web_search: 0,
+          currency: 'USD',
+        }),
+      }))
+      const { getModelCurrency } = await import('../../src/utils/modelCost.js')
+      expect(getModelCurrency('test-model')).toBe('USD')
+    })
+
+    test('无定价配置时默认 CNY', async () => {
+      mock.module('../../src/services/model/modelCapabilities.js', () => ({
+        getStaticPricingForModel: () => null,
+      }))
+      mock.module('../../src/services/model/model.js', () => ({
+        getDefaultMainLoopModelSetting: () => null,
+      }))
+      const { getModelCurrency } = await import('../../src/utils/modelCost.js')
+      expect(getModelCurrency('unknown-model')).toBe('CNY')
+    })
+  })
+
+  describe('getCurrencySymbolFor', () => {
+    test('CNY → ¥', async () => {
+      const { getCurrencySymbolFor } = await import('../../src/utils/modelCost.js')
+      expect(getCurrencySymbolFor('CNY')).toBe('¥')
+    })
+
+    test('USD → $', async () => {
+      const { getCurrencySymbolFor } = await import('../../src/utils/modelCost.js')
+      expect(getCurrencySymbolFor('USD')).toBe('$')
+    })
+  })
+
+  describe('getCurrencySymbol — 根据模型货币', () => {
+    test('当前模型 currency 为 USD 时返回 $', async () => {
+      mock.module('../../src/services/model/modelCapabilities.js', () => ({
+        getStaticPricingForModel: () => ({
+          cost_input: 1,
+          cost_output: 2,
+          cost_cache_write: 0,
+          cost_cache_read: 0,
+          cost_web_search: 0,
+          currency: 'USD',
+        }),
+      }))
+      mock.module('../../src/services/model/model.js', () => ({
+        getDefaultMainLoopModelSetting: () => 'gpt-4o',
+      }))
+      const { getCurrencySymbol: fn } = await import('../../src/utils/modelCost.js')
+      expect(fn()).toBe('$')
+    })
+
+    test('当前模型 currency 为 CNY 时返回 ¥', async () => {
+      mock.module('../../src/services/model/modelCapabilities.js', () => ({
+        getStaticPricingForModel: () => ({
+          cost_input: 1,
+          cost_output: 2,
+          cost_cache_write: 0,
+          cost_cache_read: 0,
+          cost_web_search: 0,
+          currency: 'CNY',
+        }),
+      }))
+      mock.module('../../src/services/model/model.js', () => ({
+        getDefaultMainLoopModelSetting: () => 'qwen3.6-max',
       }))
       const { getCurrencySymbol: fn } = await import('../../src/utils/modelCost.js')
       expect(fn()).toBe('￥')
-      mock.restore()
     })
 
-    test('en → $', async () => {
-      const { mock } = await import('bun:test')
-      mock.module('../../src/i18n/index.js', () => ({
-        getUiLanguage: () => 'en',
+    test('无模型配置时默认返回 ￥', async () => {
+      mock.module('../../src/services/model/modelCapabilities.js', () => ({
+        getStaticPricingForModel: () => null,
+      }))
+      mock.module('../../src/services/model/model.js', () => ({
+        getDefaultMainLoopModelSetting: () => null,
       }))
       const { getCurrencySymbol: fn } = await import('../../src/utils/modelCost.js')
-      expect(fn()).toBe('$')
-      mock.restore()
-    })
-
-    test('其他语言 → $', async () => {
-      const { mock } = await import('bun:test')
-      mock.module('../../src/i18n/index.js', () => ({
-        getUiLanguage: () => 'ja',
-      }))
-      const { getCurrencySymbol: fn } = await import('../../src/utils/modelCost.js')
-      expect(fn()).toBe('$')
-      mock.restore()
+      expect(fn()).toBe('￥')
     })
   })
 })
