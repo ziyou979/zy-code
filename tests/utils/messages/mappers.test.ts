@@ -149,7 +149,7 @@ function setupMocks() {
     getTotalAPIDurationWithoutRetries: () => null,
     getTotalCacheCreationInputTokens: () => null,
     getTotalCacheReadInputTokens: () => null,
-    getTotalCostUSD: () => null,
+    getTotalCost: () => null,
     getTotalDuration: () => null,
     getTotalInputTokens: () => null,
     getTotalLinesAdded: () => null,

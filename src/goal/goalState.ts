@@ -12,7 +12,7 @@ export interface GoalSnapshot {
   elapsedMs: number
   inputTokens: number
   outputTokens: number
-  costUSD: number
+  cost: number
 }
 
 /**
@@ -44,6 +44,6 @@ export function getGoalState(): GoalSnapshot {
     elapsedMs: 0,
     inputTokens: 0,
     outputTokens: 0,
-    costUSD: 0,
+    cost: 0,
   }
 }

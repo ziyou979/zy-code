@@ -347,9 +347,8 @@ export function getDefaultThinkingEffortFromLevels(
     return 'off';
   }
 
-  // 4. 取中间值
-  // 使用 Math.floor(length / 2) 来获取中间位置的索引
-  const middleIndex = Math.floor(activeLevels.length / 2);
+  // 4. 取中间值（偶数长度时取较低的中间值，偏向保守选择）
+  const middleIndex = Math.floor((activeLevels.length - 1) / 2);
   return activeLevels[middleIndex];
 }
 

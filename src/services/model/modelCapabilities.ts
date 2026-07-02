@@ -105,7 +105,7 @@ export function getStaticPricingForModel(
   cost_cache_write: number
   cost_cache_read: number
   cost_web_search: number
-  currency: 'CNY' | 'USD'
+  currency: string
 } | null {
   const userCosts = getModelCostsFromSettings(model, currentInputTokens)
   if (!userCosts) {

@@ -100,8 +100,8 @@ export type ProjectConfig = {
       cacheReadInputTokens: number
       cacheCreationInputTokens: number
       webSearchRequests: number
-      costUSD: number
-      currency?: 'CNY' | 'USD'
+      cost: number
+      currency?: string
     }
   >
   lastSessionMetrics?: Record<string, number>
@@ -109,7 +109,7 @@ export type ProjectConfig = {
   sessionCosts?: Record<
     string,
     {
-      totalCostUSD: number
+      totalCost: number
       totalAPIDuration: number
       totalAPIDurationWithoutRetries: number
       totalToolDuration: number
@@ -124,12 +124,12 @@ export type ProjectConfig = {
           cacheReadInputTokens: number
           cacheCreationInputTokens: number
           webSearchRequests: number
-          costUSD: number
-          currency?: 'CNY' | 'USD'
+          cost: number
+          currency?: string
         }
       >
       /** 按币种分别累计的费用 */
-      totalCostByCurrency?: Record<'CNY' | 'USD', number>
+      totalCostByCurrency?: Record<string, number>
     }
   >
   exampleFiles?: string[]

@@ -183,7 +183,11 @@ export function useReplSessionRestore({
 
         const targetSessionCosts = getStoredSessionCosts(sessionId)
         saveCurrentSessionCosts()
+        // 原子操作：reset 后立即 restore，消除中间渲染窗口导致状态栏费用归零
         resetCostState()
+        if (targetSessionCosts) {
+          setCostStateForRestore(targetSessionCosts)
+        }
 
         switchSession(asSessionId(sessionId), log.fullPath ? dirname(log.fullPath) : null)
         const { renameRecordingForSession } = await import('../../utils/asciicast.js')
@@ -234,10 +238,6 @@ export function useReplSessionRestore({
             require('../../coordinator/coordinatorMode.js') as typeof import('../../coordinator/coordinatorMode.js')
           /* eslint-enable @typescript-eslint/no-require-imports */
           saveMode(isCoordinatorMode() ? 'coordinator' : 'normal')
-        }
-
-        if (targetSessionCosts) {
-          setCostStateForRestore(targetSessionCosts)
         }
 
         if (replStore.mutable.contentReplacementState && entrypoint !== 'fork') {

@@ -135,8 +135,8 @@ describe('effort', () => {
       expect(getDefaultThinkingEffortFromLevels(['off', 'thorough'])).toBe('thorough')
     })
 
-    test('只有 off 时不返回默认开启档', () => {
-      expect(getDefaultThinkingEffortFromLevels(['off'])).toBeUndefined()
+    test('只有 off 时返回 off', () => {
+      expect(getDefaultThinkingEffortFromLevels(['off'])).toBe('off')
     })
   })
 

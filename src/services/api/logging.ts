@@ -386,7 +386,7 @@ function logAPISuccess({
   ttftMs,
   requestId,
   stopReason,
-  costUSD,
+  cost,
   didFallBackToNonStreaming,
   querySource,
   gateway,
@@ -412,7 +412,7 @@ function logAPISuccess({
   requestId: string | null
   // @ts-expect-error
   stopReason: BetaStopReason | null
-  costUSD: number
+  cost: number
   didFallBackToNonStreaming: boolean
   querySource: string
   gateway?: KnownGateway
@@ -473,7 +473,7 @@ function logAPISuccess({
       : {}),
     stop_reason:
       (stopReason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS) ?? undefined,
-    costUSD,
+    cost,
     didFallBackToNonStreaming,
     isNonInteractiveSession,
     print: hasPrintFlag,
@@ -560,7 +560,7 @@ export function logAPISuccessAndDuration({
   didFallBackToNonStreaming,
   querySource,
   headers,
-  costUSD,
+  cost,
   queryTracking,
   permissionMode,
   newMessages,
@@ -586,7 +586,7 @@ export function logAPISuccessAndDuration({
   didFallBackToNonStreaming: boolean
   querySource: string
   headers?: globalThis.Headers
-  costUSD: number
+  cost: number
   queryTracking?: QueryChainTracking
   permissionMode?: PermissionMode
   /** 来自响应的助手消息 — 用于在启用 beta tracing 时提取 model_output 和 thinking_output */
@@ -664,7 +664,7 @@ export function logAPISuccessAndDuration({
     ttftMs,
     requestId,
     stopReason,
-    costUSD,
+    cost,
     didFallBackToNonStreaming,
     querySource,
     gateway,
@@ -685,7 +685,7 @@ export function logAPISuccessAndDuration({
     output_tokens: String(usage.outputTokens),
     cache_read_tokens: String(usage.cacheReadInputTokens),
     cache_creation_tokens: String(usage.cacheCreationInputTokens),
-    cost_usd: String(costUSD),
+    cost_usd: String(cost),
     duration_ms: String(durationMs),
   })
 

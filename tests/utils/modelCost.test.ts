@@ -1,8 +1,8 @@
 /**
  * modelCost 测试：费用计算函数。
  *
- * calculateCostFromTokens 是纯计算函数（内部拼 Usage 对象后委托 calculateUSDCost）。
- * calculateUSDCost 验证缓存 token 从顶层字段正确读取并参与计费。
+ * calculateCostFromTokens 是纯计算函数（内部拼 Usage 对象后委托 calculateCost）。
+ * calculateCost 验证缓存 token 从顶层字段正确读取并参与计费。
  * getCurrencySymbol 根据当前主模型的货币单位返回符号。
  * getModelCurrency 返回模型的货币单位。
  * getCurrencySymbolFor 根据货币类型返回符号。
@@ -96,9 +96,9 @@ describe('modelCost', () => {
     })
   })
 
-  describe('calculateUSDCost — TokenUsage 顶层缓存字段', () => {
+  describe('calculateCost — TokenUsage 顶层缓存字段', () => {
     test('顶层 cacheReadInputTokens 被正确扣除和计费', () => {
-      const { calculateUSDCost } = require('../../src/utils/modelCost.js')
+      const { calculateCost } = require('../../src/utils/modelCost.js')
       // 模拟 NonNullableUsage 风格的传入（缓存字段在顶层）
       const usage = {
         inputTokens: 1_000_000,
@@ -106,12 +106,12 @@ describe('modelCost', () => {
         cacheReadInputTokens: 800_000,
         cacheCreationInputTokens: 0,
       }
-      const cost = calculateUSDCost('gpt-4', usage)
+      const cost = calculateCost('gpt-4', usage)
       // 费用应该 > 0（确认不再返回 0）
       expect(cost).toBeGreaterThan(0)
 
       // 对比全部按普通输入计费的情况
-      const costAllPlainInput = calculateUSDCost('gpt-4', {
+      const costAllPlainInput = calculateCost('gpt-4', {
         inputTokens: 1_000_000,
         outputTokens: 0,
         cacheReadInputTokens: 0,
@@ -122,25 +122,25 @@ describe('modelCost', () => {
     })
 
     test('顶层 cacheCreationInputTokens 被正确扣除和计费', () => {
-      const { calculateUSDCost } = require('../../src/utils/modelCost.js')
+      const { calculateCost } = require('../../src/utils/modelCost.js')
       const usage = {
         inputTokens: 1_000_000,
         outputTokens: 0,
         cacheReadInputTokens: 0,
         cacheCreationInputTokens: 500_000,
       }
-      const cost = calculateUSDCost('gpt-4', usage)
+      const cost = calculateCost('gpt-4', usage)
       expect(cost).toBeGreaterThan(0)
     })
 
     test('缓存字段缺失时不报错，视为 0', () => {
-      const { calculateUSDCost } = require('../../src/utils/modelCost.js')
+      const { calculateCost } = require('../../src/utils/modelCost.js')
       // 不传缓存字段 — 不应 crash
       const usage = {
         inputTokens: 1000,
         outputTokens: 500,
       }
-      const cost = calculateUSDCost('gpt-4', usage)
+      const cost = calculateCost('gpt-4', usage)
       expect(typeof cost).toBe('number')
       expect(cost).toBeGreaterThanOrEqual(0)
     })
@@ -235,10 +235,10 @@ describe('modelCost', () => {
         getDefaultMainLoopModelSetting: () => 'qwen3.6-max',
       }))
       const { getCurrencySymbol: fn } = await import('../../src/utils/modelCost.js')
-      expect(fn()).toBe('￥')
+      expect(fn()).toBe('¥')
     })
 
-    test('无模型配置时默认返回 ￥', async () => {
+    test('无模型配置时默认返回 ¥', async () => {
       mock.module('../../src/services/model/modelCapabilities.js', () => ({
         getStaticPricingForModel: () => null,
       }))
@@ -246,7 +246,7 @@ describe('modelCost', () => {
         getDefaultMainLoopModelSetting: () => null,
       }))
       const { getCurrencySymbol: fn } = await import('../../src/utils/modelCost.js')
-      expect(fn()).toBe('￥')
+      expect(fn()).toBe('¥')
     })
   })
 })

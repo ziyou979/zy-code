@@ -3,6 +3,7 @@ import { open } from 'node:fs/promises'
 import { basename, dirname, join, sep } from 'node:path'
 import { SHELL_TOOL_NAMES } from 'src/shell-eval/shared/shellToolUtils.js'
 import type { ModelUsage } from 'src/types/index.js'
+import { DEFAULT_CURRENCY } from '../types/currency.js'
 import type { Entry, TranscriptMessage } from '../types/logs.js'
 import { logForDebugging } from './debug.js'
 import { errorMessage, isENOENT } from './errors.js'
@@ -319,8 +320,8 @@ async function processSessionFiles(
                 cacheReadInputTokens: 0,
                 cacheCreationInputTokens: 0,
                 webSearchRequests: 0,
-                costUSD: 0,
-                currency: 'CNY',
+                cost: 0,
+                currency: DEFAULT_CURRENCY,
                 contextWindow: 0,
                 maxOutputTokens: 0,
               }
@@ -481,7 +482,7 @@ function cacheToStats(cache: PersistedStatsCache, todayStats: ProcessedStats | n
           cacheCreationInputTokens:
             modelUsage[model]!.cacheCreationInputTokens + usage.cacheCreationInputTokens,
           webSearchRequests: modelUsage[model]!.webSearchRequests + usage.webSearchRequests,
-          costUSD: modelUsage[model]!.costUSD + usage.costUSD,
+          cost: modelUsage[model]!.cost + usage.cost,
           currency: usage.currency ?? modelUsage[model]!.currency ?? 'CNY',
           contextWindow: Math.max(modelUsage[model]!.contextWindow, usage.contextWindow),
           maxOutputTokens: Math.max(modelUsage[model]!.maxOutputTokens, usage.maxOutputTokens),

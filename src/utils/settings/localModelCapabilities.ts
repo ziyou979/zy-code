@@ -629,7 +629,7 @@ export function getLocalModelCosts(
       promptCacheWriteTokens: number
       promptCacheReadTokens: number
       webSearchRequests: number
-      currency: 'CNY' | 'USD'
+      currency: string
     }
   | undefined {
   const entry = getLocalModelCapability(model)

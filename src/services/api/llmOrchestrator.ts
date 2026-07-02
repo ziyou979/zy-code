@@ -109,7 +109,7 @@ import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
 import { type EffortLevel } from 'src/utils/effort.js'
 import { headlessProfilerCheckpoint } from 'src/utils/headlessProfiler.js'
 import { isMcpInstructionsDeltaEnabled } from 'src/utils/mcpInstructionsDelta.js'
-import { calculateUSDCost, getModelCurrency } from 'src/utils/modelCost.js'
+import { calculateCost, getModelCurrency } from 'src/utils/modelCost.js'
 import { endQueryProfile, queryCheckpoint } from 'src/utils/queryProfiler.js'
 import { type ThinkingConfig } from 'src/utils/thinking.js'
 import {
@@ -1074,7 +1074,7 @@ async function* queryModel(
   let partialMessage: LLMAssistantMessage | undefined
   const contentBlocks: (ContentBlock | ConnectorTextBlock)[] = []
   let usage: NonNullableUsage = EMPTY_USAGE
-  let costUSD = 0
+  let cost = 0
   let stopReason: StopReason | null = null
   let didFallBackToNonStreaming = false
   let fallbackMessage: AssistantMessage | undefined
@@ -1568,9 +1568,9 @@ async function* queryModel(
             }
 
             // 更新成本
-            const costUSDForPart = calculateUSDCost(resolvedModel, usage)
+            const costForPart = calculateCost(resolvedModel, usage)
             const currency = getModelCurrency(resolvedModel)
-            costUSD += addToTotalSessionCost(costUSDForPart, usage, options.model, currency)
+            cost += addToTotalSessionCost(costForPart, usage, options.model, currency)
 
             const refusalMessage = getErrorMessageIfRefusal(stopReasonV2, options.model)
             if (refusalMessage) {
@@ -2094,9 +2094,9 @@ async function* queryModel(
       const fallbackUsage = fallbackMessage.message.usage
       if (fallbackUsage) {
         usage = updateUsage(EMPTY_USAGE, fallbackUsage)
-        const fallbackCost = calculateUSDCost(resolvedModel, fallbackUsage)
+        const fallbackCost = calculateCost(resolvedModel, fallbackUsage)
         const fallbackCurrency = getModelCurrency(resolvedModel)
-        costUSD += addToTotalSessionCost(fallbackCost, fallbackUsage, options.model, fallbackCurrency)
+        cost += addToTotalSessionCost(fallbackCost, fallbackUsage, options.model, fallbackCurrency)
       }
       stopReason = fallbackMessage.message.stopReason ?? null
     }
@@ -2150,7 +2150,7 @@ async function* queryModel(
       didFallBackToNonStreaming,
       querySource: options.querySource,
       headers: responseHeaders,
-      costUSD,
+      cost,
       queryTracking: options.queryTracking,
       permissionMode: permissionContext.mode,
       // 传递 newMessages 用于 beta 追踪 — 提取在 logging.ts 中

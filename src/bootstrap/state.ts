@@ -59,7 +59,7 @@ export {
   addToTotalLinesChanged,
   getModelUsage,
   getTotalCostByCurrency,
-  getTotalCostUSD,
+  getTotalCost,
   getTotalLinesAdded,
   getTotalLinesRemoved,
   getUsageForModel,

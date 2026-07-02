@@ -1,30 +1,31 @@
 // 成本与代码行数累计。
-// 含 totalCostUSD / modelUsage 写入入口 / 代码行数 / unknown model cost 标志 /
+// 含 totalCost / modelUsage 写入入口 / 代码行数 / unknown model cost 标志 /
 // 会话恢复时的成本回灌 / 测试相关的部分重置。
 
 import type { ModelUsage } from 'src/types/index.js'
+import { DEFAULT_CURRENCY } from '../../types/currency.js'
 import { STATE } from './_core.js'
 
 export function addToTotalCostState(
   cost: number,
   modelUsage: ModelUsage,
   model: string,
-  currency: 'CNY' | 'USD' = 'CNY',
+  currency: string = DEFAULT_CURRENCY,
 ): void {
   STATE.modelUsage[model] = modelUsage
-  STATE.totalCostUSD += cost
-  STATE.totalCostByCurrency[currency] += cost
+  STATE.totalCost += cost
+  STATE.totalCostByCurrency[currency] = (STATE.totalCostByCurrency[currency] ?? 0) + cost
 }
 
-export function getTotalCostUSD(): number {
-  return STATE.totalCostUSD
+export function getTotalCost(): number {
+  return STATE.totalCost
 }
 
 /**
  * 获取按币种分别累计的费用。
  * 用于 statusline 等展示层按币种分别显示。
  */
-export function getTotalCostByCurrency(): Record<'CNY' | 'USD', number> {
+export function getTotalCostByCurrency(): Record<string, number> {
   return STATE.totalCostByCurrency
 }
 
@@ -62,7 +63,7 @@ export function getUsageForModel(model: string): ModelUsage | undefined {
  * 但不动 session id 等会话级标识。
  */
 export function resetCostState(): void {
-  STATE.totalCostUSD = 0
+  STATE.totalCost = 0
   STATE.totalCostByCurrency = { CNY: 0, USD: 0 }
   STATE.totalAPIDuration = 0
   STATE.totalAPIDurationWithoutRetries = 0
@@ -80,7 +81,7 @@ export function resetCostState(): void {
  * 由 cost-tracker.ts 中的 restoreCostStateForSession 调用。
  */
 export function setCostStateForRestore({
-  totalCostUSD,
+  totalCost,
   totalAPIDuration,
   totalAPIDurationWithoutRetries,
   totalToolDuration,
@@ -90,7 +91,7 @@ export function setCostStateForRestore({
   modelUsage,
   totalCostByCurrency,
 }: {
-  totalCostUSD: number
+  totalCost: number
   totalAPIDuration: number
   totalAPIDurationWithoutRetries: number
   totalToolDuration: number
@@ -98,10 +99,10 @@ export function setCostStateForRestore({
   totalLinesRemoved: number
   lastDuration: number | undefined
   modelUsage: { [modelName: string]: ModelUsage } | undefined
-  totalCostByCurrency?: Record<'CNY' | 'USD', number>
+  totalCostByCurrency?: Record<string, number>
 }): void {
-  STATE.totalCostUSD = totalCostUSD
-  STATE.totalCostByCurrency = totalCostByCurrency ?? { CNY: totalCostUSD, USD: 0 }
+  STATE.totalCost = totalCost
+  STATE.totalCostByCurrency = totalCostByCurrency ?? { CNY: totalCost, USD: 0 }
   STATE.totalAPIDuration = totalAPIDuration
   STATE.totalAPIDurationWithoutRetries = totalAPIDurationWithoutRetries
   STATE.totalToolDuration = totalToolDuration
@@ -120,11 +121,11 @@ export function setCostStateForRestore({
 }
 
 /**
- * 测试专用：清空 totalAPIDuration / totalAPIDurationWithoutRetries / totalCostUSD。
+ * 测试专用：清空 totalAPIDuration / totalAPIDurationWithoutRetries / totalCost。
  * 与 resetCostState 区别：本函数仅供测试用，原 state.ts 暴露的精简版。
  */
 export function resetTotalDurationStateAndCost_FOR_TESTS_ONLY(): void {
   STATE.totalAPIDuration = 0
   STATE.totalAPIDurationWithoutRetries = 0
-  STATE.totalCostUSD = 0
+  STATE.totalCost = 0
 }

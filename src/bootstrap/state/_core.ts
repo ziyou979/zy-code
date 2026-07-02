@@ -76,9 +76,9 @@ export type State = {
   // 会话中的 EnterWorktreeTool 永远不会更新它。
   // 用于项目标识（历史记录、技能、会话），而非文件操作。
   projectRoot: string
-  totalCostUSD: number
+  totalCost: number
   /** 按币种分别累计的费用，用于多币种场景下的分别展示 */
-  totalCostByCurrency: Record<'CNY' | 'USD', number>
+  totalCostByCurrency: Record<string, number>
   totalAPIDuration: number
   totalAPIDurationWithoutRetries: number
   totalToolDuration: number
@@ -294,7 +294,7 @@ function getInitialState(): State {
   const state: State = {
     originalCwd: resolvedCwd,
     projectRoot: resolvedCwd,
-    totalCostUSD: 0,
+    totalCost: 0,
     totalCostByCurrency: { CNY: 0, USD: 0 },
     totalAPIDuration: 0,
     totalAPIDurationWithoutRetries: 0,

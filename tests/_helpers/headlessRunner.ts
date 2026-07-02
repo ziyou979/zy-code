@@ -95,7 +95,7 @@ const VOLATILE_KEYS = new Set([
   'duration_api_ms',
   'total_cost_usd',
   'cost_usd',
-  'costUSD',
+  'cost',
   'timestamp',
   // LLM 响应:每次调用内容/用量都不同
   'id',

@@ -109,7 +109,7 @@ import type { TaskType, TaskStatus } from '../../Task.js'
 import {
   getOriginalCwd,
   getSessionId,
-  getTotalCostUSD,
+  getTotalCost,
   getTotalOutputTokens,
   getCurrentTurnTokenBudget,
   getTurnOutputTokens,
@@ -3543,7 +3543,7 @@ function getMaxBudgetUsdAttachment(maxBudgetUsd?: number): Attachment[] {
   if (maxBudgetUsd === undefined) {
     return []
   }
-  const usedCost = getTotalCostUSD()
+  const usedCost = getTotalCost()
   const remainingBudget = maxBudgetUsd - usedCost
   return [
     {

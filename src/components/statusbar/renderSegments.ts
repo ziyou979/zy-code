@@ -28,6 +28,8 @@ import {
 } from '../../cost-tracker.js'
 import { tSync } from '../../i18n/index.js'
 import type { ModelName } from '../../services/model/model.js'
+import type { Currency } from '../../types/currency.js'
+import { CURRENCY_SYMBOLS, getCurrencySymbol } from '../../types/currency.js'
 import type { Message } from '../../types/message.js'
 import { calculateContextPercentages, getContextWindowForModel } from '../../utils/context.js'
 import { getCwd } from '../../utils/cwd.js'
@@ -189,8 +191,14 @@ const RENDERERS: Record<ModuleId, Renderer> = {
   cost(module) {
     const costsByCurrency = getTotalCostByCurrency()
     const parts: string[] = []
-    if ((costsByCurrency.USD ?? 0) > 0) parts.push(`$${costsByCurrency.USD.toFixed(2)}`)
-    if ((costsByCurrency.CNY ?? 0) > 0) parts.push(`¥${costsByCurrency.CNY.toFixed(2)}`)
+    // 按金额降序排列，只显示已定义的货币种类
+    const entries = Object.entries(costsByCurrency)
+      .filter(([k, v]) => v > 0 && k in CURRENCY_SYMBOLS)
+      .sort(([, a], [, b]) => b - a)
+    for (const [currency, amount] of entries) {
+      const symbol = getCurrencySymbol(currency as Currency)
+      parts.push(`${symbol}${amount.toFixed(2)}`)
+    }
     if (parts.length === 0) {
       return null
     }

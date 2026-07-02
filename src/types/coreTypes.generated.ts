@@ -15,9 +15,9 @@ export interface ModelUsage {
   cacheReadInputTokens: number
   cacheCreationInputTokens: number
   webSearchRequests: number
-  costUSD: number
+  cost: number
   /** 模型定价的货币单位，未配置时默认 CNY */
-  currency: 'CNY' | 'USD'
+  currency: string
   contextWindow: number
   maxOutputTokens: number
 }

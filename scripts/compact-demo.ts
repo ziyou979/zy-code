@@ -766,7 +766,7 @@ function simulateCacheImpact(messages: Message[]) {
     tokens: number
     cacheHitTokens: number
     cacheMissTokens: number
-    costUSD: number
+    cost: number
     event: string
   }
 
@@ -849,14 +849,14 @@ function simulateCacheImpact(messages: Message[]) {
 
       if (!event && turn === 1) event = 'session-start'
 
-      const costUSD = (cacheHit * CACHE_READ_PRICE + cacheMiss * INPUT_PRICE) / 1_000_000
+      const cost = (cacheHit * CACHE_READ_PRICE + cacheMiss * INPUT_PRICE) / 1_000_000
 
       costs.push({
         turn,
         tokens: cumulativeTokens,
         cacheHitTokens: cacheHit,
         cacheMissTokens: cacheMiss,
-        costUSD,
+        cost,
         event,
       })
     }
@@ -877,7 +877,7 @@ function simulateCacheImpact(messages: Message[]) {
 
   for (const { key, label } of strategies) {
     const costs = simulateSession(key)
-    const totalCost = costs.reduce((sum, c) => sum + c.costUSD, 0)
+    const totalCost = costs.reduce((sum, c) => sum + c.cost, 0)
     const avgCacheHitRate =
       costs.reduce(
         (sum, c) => sum + c.cacheHitTokens / Math.max(1, c.cacheHitTokens + c.cacheMissTokens),
@@ -896,7 +896,7 @@ function simulateCacheImpact(messages: Message[]) {
         console.log(
           `     T${String(c.turn).padStart(2)} ${String(c.tokens).padStart(7)} tok  ` +
             `hit:${String(c.cacheHitTokens).padStart(6)}  miss:${String(c.cacheMissTokens).padStart(6)}  ` +
-            `$${c.costUSD.toFixed(4)}  ${(hitRate * 100).toFixed(0).padStart(3)}%  ${c.event}`,
+            `$${c.cost.toFixed(4)}  ${(hitRate * 100).toFixed(0).padStart(3)}%  ${c.event}`,
         )
       }
     }
@@ -907,13 +907,13 @@ function simulateCacheImpact(messages: Message[]) {
   console.log(`  💰 费用对比汇总 (${TURNS} 轮对话):`)
   for (const { key, label } of strategies) {
     const costs = simulateSession(key)
-    const totalCost = costs.reduce((sum, c) => sum + c.costUSD, 0)
+    const totalCost = costs.reduce((sum, c) => sum + c.cost, 0)
     const avgCacheHitRate =
       costs.reduce(
         (sum, c) => sum + c.cacheHitTokens / Math.max(1, c.cacheHitTokens + c.cacheMissTokens),
         0,
       ) / costs.length
-    const baseline = simulateSession('baseline').reduce((sum, c) => sum + c.costUSD, 0)
+    const baseline = simulateSession('baseline').reduce((sum, c) => sum + c.cost, 0)
     const savings = (((baseline - totalCost) / baseline) * 100).toFixed(1)
     console.log(
       `     ${label.padEnd(25)} $${totalCost.toFixed(4).padStart(8)}  ` +

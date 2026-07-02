@@ -21,9 +21,9 @@ export const ModelUsageSchema = lazySchema(() =>
     cacheReadInputTokens: z.number(),
     cacheCreationInputTokens: z.number(),
     webSearchRequests: z.number(),
-    costUSD: z.number(),
+    cost: z.number(),
     /** 模型定价的货币单位，未配置时默认 CNY */
-    currency: z.enum(['CNY', 'USD']).default('CNY'),
+    currency: z.string().default('CNY'),
     contextWindow: z.number(),
     maxOutputTokens: z.number(),
   }),

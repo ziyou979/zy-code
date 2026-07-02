@@ -12,7 +12,7 @@ import {
   getTotalCacheCreationInputTokens,
   getTotalCacheReadInputTokens,
   getTotalCostByCurrency,
-  getTotalCostUSD,
+  getTotalCost,
   getTotalDuration,
   getTotalInputTokens,
   getTotalLinesAdded,
@@ -39,7 +39,7 @@ import { getCurrentProjectConfig, saveCurrentProjectConfig } from './utils/confi
 import { getContextWindowForModel, getModelMaxOutputTokens } from './utils/context.js'
 import { formatDuration, formatNumber } from './utils/format.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
-import { calculateUSDCost, getCurrencySymbol, getModelCurrency } from './utils/modelCost.js'
+import { calculateCost, getCurrencySymbol, getModelCurrency } from './utils/modelCost.js'
 
 export {
   addToTotalLinesChanged,
@@ -50,7 +50,7 @@ export {
   getTotalCacheCreationInputTokens,
   getTotalCacheReadInputTokens,
   getTotalCostByCurrency,
-  getTotalCostUSD as getTotalCost,
+  getTotalCost,
   getTotalDuration,
   getTotalInputTokens,
   getTotalLinesAdded,
@@ -65,7 +65,7 @@ export {
 }
 
 type StoredCostState = {
-  totalCostUSD: number
+  totalCost: number
   totalAPIDuration: number
   totalAPIDurationWithoutRetries: number
   totalToolDuration: number
@@ -73,7 +73,7 @@ type StoredCostState = {
   totalLinesRemoved: number
   lastDuration: number | undefined
   modelUsage: { [modelName: string]: ModelUsage } | undefined
-  totalCostByCurrency?: Record<'CNY' | 'USD', number>
+  totalCostByCurrency?: Record<string, number>
 }
 
 /**
@@ -127,7 +127,7 @@ export function getStoredSessionCosts(sessionId: string): StoredCostState | unde
   }
 
   return {
-    totalCostUSD: projectConfig.lastCost ?? 0,
+    totalCost: projectConfig.lastCost ?? 0,
     totalAPIDuration: projectConfig.lastAPIDuration ?? 0,
     totalAPIDurationWithoutRetries: projectConfig.lastAPIDurationWithoutRetries ?? 0,
     totalToolDuration: projectConfig.lastToolDuration ?? 0,
@@ -135,6 +135,8 @@ export function getStoredSessionCosts(sessionId: string): StoredCostState | unde
     totalLinesRemoved: projectConfig.lastLinesRemoved ?? 0,
     lastDuration: projectConfig.lastDuration,
     modelUsage,
+    // 旧数据没有 totalCostByCurrency，回退到 CNY（历史默认）
+    totalCostByCurrency: { CNY: projectConfig.lastCost ?? 0, USD: 0 },
   }
 }
 
@@ -171,7 +173,7 @@ export function saveCurrentSessionCosts(fpsMetrics?: FpsMetrics): void {
         cacheReadInputTokens: usage.cacheReadInputTokens,
         cacheCreationInputTokens: usage.cacheCreationInputTokens,
         webSearchRequests: usage.webSearchRequests,
-        costUSD: usage.costUSD,
+        cost: usage.cost,
       },
     ]),
   )
@@ -180,7 +182,7 @@ export function saveCurrentSessionCosts(fpsMetrics?: FpsMetrics): void {
     // 写入多会话存储，超出上限时淘汰最旧的条目
     const sessionCosts = { ...(current.sessionCosts ?? {}) }
     sessionCosts[sessionId] = {
-      totalCostUSD: getTotalCostUSD(),
+      totalCost: getTotalCost(),
       totalAPIDuration: getTotalAPIDuration(),
       totalAPIDurationWithoutRetries: getTotalAPIDurationWithoutRetries(),
       totalToolDuration: getTotalToolDuration(),
@@ -198,7 +200,7 @@ export function saveCurrentSessionCosts(fpsMetrics?: FpsMetrics): void {
 
     return {
       ...current,
-      lastCost: getTotalCostUSD(),
+      lastCost: getTotalCost(),
       lastAPIDuration: getTotalAPIDuration(),
       lastAPIDurationWithoutRetries: getTotalAPIDurationWithoutRetries(),
       lastToolDuration: getTotalToolDuration(),
@@ -248,7 +250,7 @@ function formatModelUsage(): string {
         cacheReadInputTokens: 0,
         cacheCreationInputTokens: 0,
         webSearchRequests: 0,
-        costUSD: 0,
+        cost: 0,
         currency: 'CNY',
         contextWindow: 0,
         maxOutputTokens: 0,
@@ -260,7 +262,7 @@ function formatModelUsage(): string {
     accumulated.cacheReadInputTokens += usage.cacheReadInputTokens
     accumulated.cacheCreationInputTokens += usage.cacheCreationInputTokens
     accumulated.webSearchRequests += usage.webSearchRequests
-    accumulated.costUSD += usage.costUSD
+    accumulated.cost += usage.cost
   }
 
   // 模型名称右对齐到 LABEL_COL_WIDTH
@@ -277,7 +279,7 @@ function formatModelUsage(): string {
       (usage.webSearchRequests > 0
         ? `, ${formatNumber(usage.webSearchRequests)} ${tSync('costTracker.webSearch')}`
         : '') +
-      ` (${formatCost(usage.costUSD)})`
+      ` (${formatCost(usage.cost)})`
     result += `\n${paddedLabel}${usageString}`
   }
   return result
@@ -285,7 +287,7 @@ function formatModelUsage(): string {
 
 export function formatTotalCost(): string {
   const costDisplay =
-    formatCost(getTotalCostUSD()) +
+    formatCost(getTotalCost()) +
     (hasUnknownModelCost() ? ` ${tSync('costTracker.costsMayBeInaccurate')}` : '')
 
   const modelUsageDisplay = formatModelUsage()
@@ -315,7 +317,7 @@ function addToTotalModelUsage(
   cost: number,
   usage: Usage,
   model: string,
-  currency: 'CNY' | 'USD' = 'CNY',
+  currency: string = 'CNY',
 ): ModelUsage {
   const modelUsage = getUsageForModel(model) ?? {
     inputTokens: 0,
@@ -323,7 +325,7 @@ function addToTotalModelUsage(
     cacheReadInputTokens: 0,
     cacheCreationInputTokens: 0,
     webSearchRequests: 0,
-    costUSD: 0,
+    cost: 0,
     currency: 'CNY' as const,
     contextWindow: 0,
     maxOutputTokens: 0,
@@ -335,7 +337,7 @@ function addToTotalModelUsage(
   modelUsage.cacheCreationInputTokens += usage.cacheCreationInputTokens ?? 0
   // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
   modelUsage.webSearchRequests += (usage as any).server_tool_use?.web_search_requests ?? 0
-  modelUsage.costUSD += cost
+  modelUsage.cost += cost
   modelUsage.currency = currency
   modelUsage.contextWindow = getContextWindowForModel(model)
   modelUsage.maxOutputTokens = getModelMaxOutputTokens(model).default
@@ -346,7 +348,7 @@ export function addToTotalSessionCost(
   cost: number,
   usage: Usage,
   model: string,
-  currency: 'CNY' | 'USD' = 'CNY',
+  currency: string = 'CNY',
 ): number {
   const modelUsage = addToTotalModelUsage(cost, usage, model, currency)
   addToTotalCostState(cost, modelUsage, model, currency)
@@ -367,7 +369,7 @@ export function addToTotalSessionCost(
 
   let totalCost = cost
   for (const advisorUsage of getAdvisorUsage(usage)) {
-    const advisorCost = calculateUSDCost(advisorUsage.model, advisorUsage)
+    const advisorCost = calculateCost(advisorUsage.model, advisorUsage)
     const advisorCurrency = getModelCurrency(advisorUsage.model)
     logEvent('zy_advisor_tool_token_usage', {
       advisor_model:
