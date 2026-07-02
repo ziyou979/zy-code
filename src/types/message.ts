@@ -392,6 +392,8 @@ export interface CollapsedReadSearchGroup extends BaseMessage {
   thoughtForMs?: number
   /** 最近一次 thinking 块的文本摘要（截断），用于活跃分组提示 */
   latestThinkingSummary?: string
+  /** 最近一次可在折叠提示行展示的活动类型 */
+  latestDisplayKind?: 'thinking' | 'tool'
 }
 
 export interface GroupedToolUseMessageWithMessages extends BaseMessage {

@@ -320,6 +320,7 @@ async function processSessionFiles(
                 cacheCreationInputTokens: 0,
                 webSearchRequests: 0,
                 costUSD: 0,
+                currency: 'CNY',
                 contextWindow: 0,
                 maxOutputTokens: 0,
               }
@@ -481,6 +482,7 @@ function cacheToStats(cache: PersistedStatsCache, todayStats: ProcessedStats | n
             modelUsage[model]!.cacheCreationInputTokens + usage.cacheCreationInputTokens,
           webSearchRequests: modelUsage[model]!.webSearchRequests + usage.webSearchRequests,
           costUSD: modelUsage[model]!.costUSD + usage.costUSD,
+          currency: usage.currency ?? modelUsage[model]!.currency ?? 'CNY',
           contextWindow: Math.max(modelUsage[model]!.contextWindow, usage.contextWindow),
           maxOutputTokens: Math.max(modelUsage[model]!.maxOutputTokens, usage.maxOutputTokens),
         }

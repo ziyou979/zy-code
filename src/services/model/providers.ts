@@ -253,6 +253,7 @@ export function getModelCostsFromSettings(
       promptCacheWriteTokens: number
       promptCacheReadTokens: number
       webSearchRequests: number
+      currency: 'CNY' | 'USD'
     }
   | undefined {
   return getLocalModelCosts(model, currentInputTokens)
