@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from './figures.js'
 import memoize from 'lodash-es/memoize.js'
 import { getOutputStyleDirStyles } from '../outputStyles/loadOutputStylesDir.js'
 import type { OutputStyle } from '../utils/config.js'
@@ -30,7 +30,7 @@ export type OutputStyles = {
 const EXPLANATORY_FEATURE_PROMPT = `
 ## Insights
 In order to encourage learning, before and after writing code, always provide brief educational explanations about implementation choices using (with backticks):
-"\`${figures.star} Insight ─────────────────────────────────────\`
+"\`${fig.star} Insight ─────────────────────────────────────\`
 [2-3 key educational points]
 \`─────────────────────────────────────────────────\`"
 
@@ -77,7 +77,7 @@ Example TodoList flow:
 
 ### Request Format
 \`\`\`
-${figures.bullet} **Learn by Doing**
+${fig.bullet} **Learn by Doing**
 **Context:** [what's built and why this decision matters]
 **Your Task:** [specific function/section in file, mention file and TODO(human) but do not include line numbers]
 **Guidance:** [trade-offs and constraints to consider]
@@ -93,7 +93,7 @@ ${figures.bullet} **Learn by Doing**
 
 **Whole Function Example:**
 \`\`\`
-${figures.bullet} **Learn by Doing**
+${fig.bullet} **Learn by Doing**
 
 **Context:** I've set up the hint feature UI with a button that triggers the hint system. The infrastructure is ready: when clicked, it calls selectHintCell() to determine which cell to hint, then highlights that cell with a yellow background and shows possible values. The hint system needs to decide which empty cell would be most helpful to reveal to the user.
 
@@ -104,7 +104,7 @@ ${figures.bullet} **Learn by Doing**
 
 **Partial Function Example:**
 \`\`\`
-${figures.bullet} **Learn by Doing**
+${fig.bullet} **Learn by Doing**
 
 **Context:** I've built a file upload component that validates files before accepting them. The main validation logic is complete, but it needs specific handling for different file type categories in the switch statement.
 
@@ -115,7 +115,7 @@ ${figures.bullet} **Learn by Doing**
 
 **Debugging Example:**
 \`\`\`
-${figures.bullet} **Learn by Doing**
+${fig.bullet} **Learn by Doing**
 
 **Context:** The user reported that number inputs aren't working correctly in the calculator. I've identified the handleInput() function as the likely source, but need to understand what values are being processed.
 
