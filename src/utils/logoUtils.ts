@@ -232,8 +232,8 @@ export function getRecentActivitySync(): LogOption[] {
 const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   anthropic: 'Anthropic',
   ark: '火山方舟',
-  azure: 'Microsoft Azure',
-  bedrock: 'AWS Bedrock',
+  azure: '微软Azure',
+  bedrock: '亚马逊Bedrock',
   dashscope: '阿里云百炼',
   deepseek: '深度求索',
   fireworks: 'Fireworks',
@@ -244,7 +244,7 @@ const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   llamacpp: 'llama.cpp',
   mimo: '小米',
   minimax: '稀宇科技',
-  nim: 'NVIDIA NIM',
+  nim: '英伟达NIM',
   ollama: 'Ollama',
   openai: 'OpenAI',
   openrouter: 'OpenRouter',
@@ -253,8 +253,8 @@ const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   qianfan: '百度千帆',
   siliconflow: '硅基流动',
   tencent: '腾讯混元',
-  together: 'Together AI',
-  vertex: 'Google Vertex AI',
+  together: 'Together',
+  vertex: '谷歌Vertex',
   zhipu: '智谱',
 }
 

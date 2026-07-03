@@ -110,7 +110,7 @@ export const zhStats: TranslationResource = {
   'stats.longestSession': '最长会话',
   'stats.longestStreak': '最长连续',
   'stats.models': '模型',
-  'stats.modelScrollHint': '个模型（↑↓ 滚动）',
+  'stats.modelScrollHint': '个模型（\u2191\uFE0E\u2193\uFE0E 滚动）',
   'stats.mostActiveDay': '最活跃日',
   'stats.noModelData': '暂无模型使用数据',
   'stats.notAvailable': '暂无',

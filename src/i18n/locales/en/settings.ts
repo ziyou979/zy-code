@@ -46,7 +46,7 @@ export const enSettings: TranslationResource = {
   'doctor.vendor': 'vendor',
   'doctor.versionLocks': 'Version Locks',
   'doctor.warning': 'Warning:',
-  'doctor.warningMultipleInstallations': '⚠ Warning: multiple installations detected',
+  'doctor.warningMultipleInstallations': '\u26a0\uFE0E Warning: multiple installations detected',
   'doctor.yes': 'yes',
   'settings.alwaysCopyFullResponse': 'Always copy full response (skip /copy picker)',
   'settings.autoCompact': 'Auto-compact',

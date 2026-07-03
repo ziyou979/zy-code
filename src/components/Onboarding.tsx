@@ -215,14 +215,17 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
 
     saveGlobalConfig((current) => ({
       ...current,
-      configuredProvider: provider,
-      configuredApiKey: apiKey,
-      configuredBaseUrl: baseUrl,
       apiKeyResponses: {
         ...current.apiKeyResponses,
         approved: [...(current.apiKeyResponses?.approved ?? []), normalizedKey],
       },
     }))
+    // provider/apiKey/baseUrl 写入 settings.json（per-provider 配置，避免跨 provider 干扰）
+    updateSettingsForSource('userSettings', {
+      provider,
+      apiKey,
+      ...(baseUrl && { baseUrl }),
+    })
     setSelectedProvider(provider as PlatformProvider)
     goToNextStep()
   }

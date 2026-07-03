@@ -66,7 +66,7 @@ export const zhSession: TranslationResource = {
   'oauth.thirdPartyPlatformsDesc':
     '你可以通过 Amazon Bedrock、Microsoft Azure 或 Google Vertex AI 使用 ZY Code。',
   'oauth.thirdPartyPlatformsEnterpriseHint': '这些选项通常用于企业部署。',
-  'oauth.tokenCreatedSuccess': '✓ 长期认证令牌创建成功！',
+  'oauth.tokenCreatedSuccess': '\u2713\uFE0E 长期认证令牌创建成功！',
   'oauth.useTokenBySetting': '通过以下设置使用此令牌：export ZY_CODE_OAUTH_TOKEN=<token>',
   'oauth.usingThirdPartyPlatforms': '使用第三方平台',
   'oauth.vertexLabel': 'Vertex AI',

@@ -110,7 +110,7 @@ export const enStats: TranslationResource = {
   'stats.longestSession': 'Longest session',
   'stats.longestStreak': 'Longest streak',
   'stats.models': 'Models',
-  'stats.modelScrollHint': 'models (↑↓ to scroll)',
+  'stats.modelScrollHint': 'models (\u2191\uFE0E\u2193\uFE0E to scroll)',
   'stats.mostActiveDay': 'Most active day',
   'stats.noModelData': 'No model usage data available',
   'stats.notAvailable': 'N/A',

@@ -61,8 +61,9 @@ export const enShell: TranslationResource = {
   'computerUse.needsMacOSPermissions': 'Computer Use needs macOS permissions',
   'computerUse.notGranted': 'not granted',
   'computerUse.notInstalled': 'not installed',
-  'computerUse.openSystemSettingsAccessibility': 'Open System Settings → Accessibility',
-  'computerUse.openSystemSettingsScreenRecording': 'Open System Settings → Screen Recording',
+  'computerUse.openSystemSettingsAccessibility': 'Open System Settings \u2192\uFE0E Accessibility',
+  'computerUse.openSystemSettingsScreenRecording':
+    'Open System Settings \u2192\uFE0E Screen Recording',
   'computerUse.otherAppsHidden': '{count} other {app} will be hidden while Zy works.',
   'computerUse.screenRecordingLabel': 'Screen Recording:',
   'computerUse.tryAgain': 'Try again',

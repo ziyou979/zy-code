@@ -51,7 +51,7 @@ export const zhAgents: TranslationResource = {
   'agents.editor.source': '来源: {source}',
   'agents.failedToSave': '保存 agent 失败',
   'agents.memoryLabel': '{memory} 记忆',
-  'agents.navInstructions': '按 ↑↓ 导航，Enter 选择，Esc 取消',
+  'agents.navInstructions': '按 \u2191\uFE0E\u2193\uFE0E 导航，Enter 选择，Esc 取消',
   'agents.noAgentsFound': '未找到 agents',
   'agents.noAgentsHelpLine1': '未找到 agents。创建 ZY code 可以委托的专用子智能体。',
   'agents.noAgentsHelpLine2': '每个子智能体都有自己的上下文窗口、自定义系统提示和特定工具。',
@@ -108,5 +108,5 @@ export const zhAgents: TranslationResource = {
   'agentView.noSessions': '没有活跃的 Agent 会话。使用 Agent 工具启动一个。',
   'agentView.pending': '等待中',
   'agentView.running': '运行中',
-  'agentView.title': '🤖 Agent 会话',
+  'agentView.title': '\u{1f916}\uFE0E Agent 会话',
 }

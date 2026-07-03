@@ -73,7 +73,7 @@ export const enSession: TranslationResource = {
     'You can use ZY Code with Amazon Bedrock, Microsoft Azure, or Google Vertex AI.',
   'oauth.thirdPartyPlatformsEnterpriseHint':
     'These options are typically used for enterprise deployments.',
-  'oauth.tokenCreatedSuccess': '✓ Long-lived authentication token created successfully!',
+  'oauth.tokenCreatedSuccess': '\u2713\uFE0E Long-lived authentication token created successfully!',
   'oauth.useTokenBySetting': 'Use this token by setting: export ZY_CODE_OAUTH_TOKEN=<token>',
   'oauth.usingThirdPartyPlatforms': 'Using Third-Party Platforms',
   'oauth.vertexLabel': 'Vertex AI',

@@ -51,7 +51,8 @@ export const enAgents: TranslationResource = {
   'agents.editor.source': 'Source: {source}',
   'agents.failedToSave': 'Failed to save agent',
   'agents.memoryLabel': '{memory} memory',
-  'agents.navInstructions': 'Press ↑↓ to navigate, Enter to select, Esc to cancel',
+  'agents.navInstructions':
+    'Press \u2191\uFE0E\u2193\uFE0E to navigate, Enter to select, Esc to cancel',
   'agents.noAgentsFound': 'No agents found',
   'agents.noAgentsHelpLine1':
     'No agents found. Create specialized subagents that ZY code can delegate to.',
@@ -113,5 +114,5 @@ export const enAgents: TranslationResource = {
   'agentView.noSessions': 'No agent sessions active. Use the Agent tool to start one.',
   'agentView.pending': 'pending',
   'agentView.running': 'running',
-  'agentView.title': '🤖 Agent Sessions',
+  'agentView.title': '\u{1f916}\uFE0E Agent Sessions',
 }

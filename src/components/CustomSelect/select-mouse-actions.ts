@@ -107,9 +107,7 @@ export function createOptionHoverHandler<T>(
  * @param setHoveredId 更新 hoveredId 的回调
  * @returns onMouseLeave 处理器
  */
-export function createHoverLeaveHandler<T>(
-  setHoveredId: (id: T | null) => void,
-): () => void {
+export function createHoverLeaveHandler<T>(setHoveredId: (id: T | null) => void): () => void {
   return () => setHoveredId(null)
 }
 

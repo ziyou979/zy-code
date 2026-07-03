@@ -62,6 +62,7 @@ plugin 设置  <  user(~/.zy/settings.json)  <  project(.zy/settings.json)
 |---|---|---|---|
 | `provider` | `'anthropic'\|'dashscope'\|'openrouter'\|'generic'\|'local'\|'zhipu'\|'kimi'` | — | API 提供商(覆盖 onboarding 与 env) |
 | `apiKey` | string | — | 提供商 API key(覆盖 env) |
+| `baseUrl` | string | — | API 基地址(覆盖 registry 默认值和 onboarding configuredBaseUrl) |
 | `apiKeyHelper` | string | — | 输出认证值的脚本路径 |
 | `model` | string | — | 覆盖默认模型 |
 | `mainLoopModel` | `'advanced'\|'standard'\|'compact'` | `standard` | 主循环能力层级 |
