@@ -255,8 +255,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { openai: 'https://api.deepseek.com' },
     apiKeyLabel: 'DeepSeek API Key',
     suggestedModels: [
-      { label: 'deepseek-chat', value: 'deepseek-chat', tags: ['recommended', 'balanced'] },
-      { label: 'deepseek-reasoner', value: 'deepseek-reasoner', tags: ['reasoning'] },
+      { label: 'deepseek-v4-pro', value: 'deepseek-v4-pro', tags: ['recommended', 'balanced'] },
+      { label: 'deepseek-v4-flash', value: 'deepseek-v4-flash', tags: ['reasoning'] },
     ],
     effortMapping: {
       off: 'off',

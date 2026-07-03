@@ -29,6 +29,7 @@ export function useMainLoopModel(): ModelName {
     mainLoopModelForSession ??
       mainLoopModel ??
       getDefaultMainLoopModelSetting() ??
+      // TODO 什么情况，干掉
       ('claude-sonnet-4-20250514' as ModelName),
   )
   return model

@@ -41,7 +41,7 @@ export const EFFORT_LEVELS: readonly EffortLevel[] = [
   'thorough',
   'extreme',
   'ultra',
-  'orchestrate' // 类似 cc 的 ultracode，模型会自发进行编排
+  'orchestrate', // 类似 cc 的 ultracode，模型会自发进行编排
 ]
 
 /**
@@ -332,24 +332,24 @@ export function getEffortCalloutConfig(): EffortCalloutConfig {
 }
 
 export function getDefaultThinkingEffortFromLevels(
-    supportedLevels: readonly EffortLevel[],
+  supportedLevels: readonly EffortLevel[],
 ): EffortLevel {
   // 1. 按 EFFORT_LEVEL_RANK 的顺序排序 supportedLevels
   const sortedLevels = [...supportedLevels].sort((a, b) => {
-    return (EFFORT_LEVEL_RANK.get(a) ?? 0) - (EFFORT_LEVEL_RANK.get(b) ?? 0);
-  });
+    return (EFFORT_LEVEL_RANK.get(a) ?? 0) - (EFFORT_LEVEL_RANK.get(b) ?? 0)
+  })
 
   // 2. 去掉 'off'
-  const activeLevels = sortedLevels.filter((level) => level !== 'off');
+  const activeLevels = sortedLevels.filter((level) => level !== 'off')
 
   // 3. 如果没有有效等级，返回 'off'
   if (activeLevels.length === 0) {
-    return 'off';
+    return 'off'
   }
 
   // 4. 取中间值（偶数长度时取较低的中间值，偏向保守选择）
-  const middleIndex = Math.floor((activeLevels.length - 1) / 2);
-  return activeLevels[middleIndex];
+  const middleIndex = Math.floor((activeLevels.length - 1) / 2)
+  return activeLevels[middleIndex]
 }
 
 export function getDefaultEffortForModel(model: string): EffortLevel | undefined {

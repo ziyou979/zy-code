@@ -286,6 +286,14 @@ export const SettingsSchema = lazySchema(() =>
         .string()
         .optional()
         .describe('API key for authentication. Overrides environment variables.'),
+      /** API 基地址：与 provider 配合使用，覆盖 registry 默认值 */
+      baseUrl: z
+        .string()
+        .optional()
+        .describe(
+          'Base URL for the API provider. Set alongside the `provider` field. ' +
+            'Overrides registry defaults. Lower priority than env vars.',
+        ),
       /** 主循环层级：主对话循环使用的能力层级 */
       mainLoopModel: z
         .enum(['advanced', 'standard', 'compact'])

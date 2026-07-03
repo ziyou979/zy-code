@@ -7,11 +7,7 @@ import { shouldIncludeExperimentalBetas } from '../../utils/betas.js'
 import { getOrCreateUserID } from '../../utils/config.js'
 import { getModelMaxOutputTokens } from '../../utils/context.js'
 import { logForDebugging } from '../../utils/debug.js'
-import {
-  type EffortLevel,
-  mapEffortToProvider,
-  modelSupportsEffort,
-} from '../../utils/effort.js'
+import { type EffortLevel, mapEffortToProvider, modelSupportsEffort } from '../../utils/effort.js'
 import { validateBoundedIntEnvVar } from '../../utils/envValidation.js'
 import { errorMessage } from '../../utils/errors.js'
 import { safeParseJSON } from '../../utils/json.js'

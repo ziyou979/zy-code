@@ -380,7 +380,12 @@ export function addToTotalSessionCost(
       cache_creation_input_tokens: advisorUsage.cacheCreationInputTokens ?? 0,
       cost_usd_micros: Math.round(advisorCost * 1_000_000),
     })
-    totalCost += addToTotalSessionCost(advisorCost, advisorUsage, advisorUsage.model, advisorCurrency)
+    totalCost += addToTotalSessionCost(
+      advisorCost,
+      advisorUsage,
+      advisorUsage.model,
+      advisorCurrency,
+    )
   }
   return totalCost
 }

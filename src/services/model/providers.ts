@@ -73,6 +73,21 @@ export function getAPIProvider(): APIProvider {
 }
 
 /**
+ * 从 settings.json 中读取已配置的 baseUrl。
+ * 返回 null 表示未配置，由调用方继续 fallback。
+ */
+export function getSettingsBaseUrl(): string | null {
+  try {
+    const { getInitialSettings } =
+      require('../../utils/settings/settings.js') as typeof import('../../utils/settings/settings.js')
+    const settings = getInitialSettings()
+    return settings?.baseUrl ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
  * 获取活跃 OAuth provider 的 API 消息格式。
  * 如果没有活跃的 OAuth provider，返回 null。
  */

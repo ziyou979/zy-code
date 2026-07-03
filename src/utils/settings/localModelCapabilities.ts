@@ -229,10 +229,7 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
       .union([
         // 固定单价（向后兼容）
         z.object({
-          currency: z
-            .enum(['CNY', 'USD'])
-            .optional()
-            .describe('定价货币单位，未配置时默认 CNY'),
+          currency: z.enum(['CNY', 'USD']).optional().describe('定价货币单位，未配置时默认 CNY'),
           inputTokens: z.number().describe('每百万输入 token 费用'),
           outputTokens: z.number().describe('每百万输出 token 费用'),
           promptCacheWriteTokens: z.number().optional().describe('每百万缓存写入 token 费用'),
@@ -241,10 +238,7 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
         }),
         // 阶梯费用：根据输入 token 总量分段计价
         z.object({
-          currency: z
-            .enum(['CNY', 'USD'])
-            .optional()
-            .describe('定价货币单位，未配置时默认 CNY'),
+          currency: z.enum(['CNY', 'USD']).optional().describe('定价货币单位，未配置时默认 CNY'),
           tiers: z
             .array(
               z.object({

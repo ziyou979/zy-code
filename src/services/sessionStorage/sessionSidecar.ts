@@ -8,7 +8,7 @@
 
 import { mkdirSync, readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { dirname } from 'node:path'
+import { basename, dirname } from 'node:path'
 import { isSessionPersistenceDisabled } from '../../bootstrap/state.js'
 import type { PersistedWorktreeSession } from '../../types/logs.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -50,7 +50,8 @@ export type SessionSidecarMetadata = {
 export type SessionSidecarPatch = Partial<Omit<SessionSidecarMetadata, 'version' | 'sessionId'>>
 
 function extractSessionId(transcriptPath: string): string {
-  const base = transcriptPath.slice(transcriptPath.lastIndexOf('/') + 1)
+  // Windows 路径使用反斜杠，不能只用 lastIndexOf('/')，否则 base 会变成完整路径。
+  const base = basename(transcriptPath)
   return base.replace(/\.jsonl$/, '').replace(/\.meta\.json$/, '')
 }
 
@@ -60,6 +61,12 @@ function parseSidecar(raw: string, path: string): SessionSidecarMetadata | null 
     // 未知版本 → 视为缺失,让调用方回退到 JSONL 派生逻辑
     if (parsed?.version !== SIDECAR_VERSION) {
       return null
+    }
+    // 修复旧版本在 Windows 上写入的错误 sessionId（完整路径而非 UUID）。
+    // sidecar 文件名与 transcript 文件名同名，sessionId 必须以文件名为权威来源。
+    const expectedSessionId = extractSessionId(path)
+    if (parsed.sessionId !== expectedSessionId) {
+      parsed.sessionId = expectedSessionId
     }
     return parsed
   } catch (e) {
@@ -125,9 +132,12 @@ export function updateSessionSidecar(transcriptPath: string, patch: SessionSidec
     return
   }
   const existing = readSessionSidecar(transcriptPath)
+  // sessionId 必须以文件名派生：sidecar 文件名与 transcript 文件名同名，
+  // 老版本在 Windows 上把完整路径写进 sessionId，这里覆盖修复。
+  const derivedSessionId = extractSessionId(transcriptPath)
   const next: SessionSidecarMetadata = existing
-    ? { ...existing, version: SIDECAR_VERSION }
-    : { version: SIDECAR_VERSION, sessionId: extractSessionId(transcriptPath) }
+    ? { ...existing, version: SIDECAR_VERSION, sessionId: derivedSessionId }
+    : { version: SIDECAR_VERSION, sessionId: derivedSessionId }
   for (const [key, value] of Object.entries(patch)) {
     if (value === undefined) {
       continue

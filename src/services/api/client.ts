@@ -5,6 +5,7 @@ import OpenAI from 'openai'
 import { getProviderEntry } from 'src/services/model/providerRegistry.js'
 import {
   getAPIProvider,
+  getSettingsBaseUrl,
   isAnthropicBaseUrl,
   isAnthropicProvider,
   isCustomEndpointProvider,
@@ -146,12 +147,14 @@ export async function getAnthropicClient({
     if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
       resolvedBaseURL = process.env.LLM_BASE_URL
     }
-    // 3. Onboarding config (configuredBaseUrl)
-    // 仅 generic provider 需要从 onboarding 配置读取 URL（它没有 registry 默认值）；
-    // env-or-default / preconfigured provider 有 format-specific 的 registry 默认值，
-    // onboarding 写入的 configuredBaseUrl 是冗余的，且可能在切换 provider 后残留旧值
-    // （如之前配置 llama.cpp 的 localhost 地址），导致覆盖当前 provider 的正确 URL
-    if (!resolvedBaseURL && apiProvider === 'generic') {
+    // 3. settings.json baseUrl（适用于所有 provider）
+    if (!resolvedBaseURL) {
+      resolvedBaseURL = getSettingsBaseUrl() ?? undefined
+    }
+    // 4. Onboarding config (configuredBaseUrl) — 向后兼容
+    // 仅当 configuredProvider 与当前 apiProvider 匹配时使用，
+    // 避免跨 provider 残留的旧 URL（如 llama.cpp 的 localhost）覆盖当前 provider 的默认 URL
+    if (!resolvedBaseURL) {
       try {
         const { getGlobalConfig } = await import('../../utils/config.js')
         const cfg = getGlobalConfig()
@@ -162,7 +165,7 @@ export async function getAnthropicClient({
         // config not ready
       }
     }
-    // 4. Registry defaults（根据当前格式选择对应端点）
+    // 5. Registry defaults（根据当前格式选择对应端点）
     if (!resolvedBaseURL && registryEntry.defaultBaseUrls) {
       const format = isAnthropicProvider(apiProvider) ? 'anthropic' : 'openai'
       resolvedBaseURL =
@@ -195,11 +198,15 @@ export async function getAnthropicClient({
 
   // 本地推理引擎（ollama、lmstudio、llamacpp、nim 等）
   if (isCustomEndpointProvider(apiProvider) && registryEntry) {
-    // 优先级：环境变量 > onboarding 配置 > registry 默认值
+    // 优先级：环境变量 > settings.json > onboarding 配置 > registry 默认值
     let customBaseURL: string | undefined
     if (process.env.LLM_BASE_URL) {
       customBaseURL = process.env.LLM_BASE_URL
-    } else {
+    }
+    if (!customBaseURL) {
+      customBaseURL = getSettingsBaseUrl() ?? undefined
+    }
+    if (!customBaseURL) {
       try {
         const { getGlobalConfig } = await import('../../utils/config.js')
         const cfg = getGlobalConfig()
@@ -267,7 +274,7 @@ export async function getAnthropicClient({
  * 与 getAnthropicClient 共享相同的基础设施：
  * - 共享 headers（X-Claude-Code-Session-Id、User-Agent、ZY_CODE_CUSTOM_HEADERS 等）
  * - baseUrl 优先级：传入值 → provider-specific env → OPENAI_BASE_URL → LLM_BASE_URL
- *   → (仅 custom-endpoint/generic 且 provider 匹配时) configuredBaseUrl → registry.defaultBaseUrls.openai → api.openai.com/v1
+ *   → settings.json baseUrl → (provider 匹配时) configuredBaseUrl → registry.defaultBaseUrls.openai → api.openai.com/v1
  * - proxy 配置（getProxyFetchOptions）
  * - debug logger（isDebugToStdErr）
  * - timeout 配置（API_TIMEOUT_MS）
@@ -321,10 +328,14 @@ export async function getOpenAIClient(options?: {
     if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
       resolvedBaseURL = process.env.LLM_BASE_URL
     }
-    // 3. Onboarding config (configuredBaseUrl)
-    // 仅 custom-endpoint / generic provider 且 configuredProvider 匹配时使用，
-    // 避免跨 provider 残留的旧 URL（如 llama.cpp 的 localhost）覆盖当前 provider 的默认 URL
-    if (!resolvedBaseURL && (isCustomEndpointProvider(apiProvider) || apiProvider === 'generic')) {
+    // 3. settings.json baseUrl（适用于所有 provider）
+    if (!resolvedBaseURL) {
+      resolvedBaseURL = getSettingsBaseUrl() ?? undefined
+    }
+    // 4. Onboarding config (configuredBaseUrl) — 向后兼容
+    // 仅当 configuredProvider 与当前 apiProvider 匹配时使用，
+    // 避免跨 provider 残留的旧 URL 覆盖当前 provider 的默认 URL
+    if (!resolvedBaseURL) {
       try {
         const { getGlobalConfig } = await import('../../utils/config.js')
         const cfg = getGlobalConfig()
@@ -335,11 +346,11 @@ export async function getOpenAIClient(options?: {
         // config not ready
       }
     }
-    // 4. Registry defaults
+    // 5. Registry defaults
     if (!resolvedBaseURL && registryEntry?.defaultBaseUrls) {
       resolvedBaseURL = registryEntry.defaultBaseUrls.openai
     }
-    // 5. Fallback
+    // 6. Fallback
     if (!resolvedBaseURL) {
       resolvedBaseURL = 'https://api.openai.com/v1'
     }
@@ -374,7 +385,7 @@ export async function getOpenAIClient(options?: {
  * 与 getOpenAIClient / getAnthropicClient 共享相同的基础设施：
  * - 共享 headers（X-Claude-Code-Session-Id、User-Agent 等）
  * - baseUrl 优先级：传入值 → provider-specific env → GOOGLE_BASE_URL → LLM_BASE_URL
- *   → (仅 custom-endpoint/generic 且 provider 匹配时) configuredBaseUrl → registry.defaultBaseUrls.google → generativelanguage.googleapis.com
+ *   → settings.json baseUrl → (provider 匹配时) configuredBaseUrl → registry.defaultBaseUrls.google → generativelanguage.googleapis.com
  */
 export async function getGoogleClient(options?: {
   apiKey?: string
@@ -410,10 +421,14 @@ export async function getGoogleClient(options?: {
     if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
       resolvedBaseURL = process.env.LLM_BASE_URL
     }
-    // 3. Onboarding config (configuredBaseUrl)
-    // 仅 custom-endpoint / generic provider 且 configuredProvider 匹配时使用，
+    // 3. settings.json baseUrl（适用于所有 provider）
+    if (!resolvedBaseURL) {
+      resolvedBaseURL = getSettingsBaseUrl() ?? undefined
+    }
+    // 4. Onboarding config (configuredBaseUrl) — 向后兼容
+    // 仅当 configuredProvider 与当前 apiProvider 匹配时使用，
     // 避免跨 provider 残留的旧 URL 覆盖当前 provider 的默认 URL
-    if (!resolvedBaseURL && (isCustomEndpointProvider(apiProvider) || apiProvider === 'generic')) {
+    if (!resolvedBaseURL) {
       try {
         const { getGlobalConfig } = await import('../../utils/config.js')
         const cfg = getGlobalConfig()
@@ -424,11 +439,11 @@ export async function getGoogleClient(options?: {
         // config not ready
       }
     }
-    // 4. Registry defaults
+    // 5. Registry defaults
     if (!resolvedBaseURL && registryEntry?.defaultBaseUrls) {
       resolvedBaseURL = registryEntry.defaultBaseUrls.google
     }
-    // 5. Fallback
+    // 6. Fallback
     if (!resolvedBaseURL) {
       resolvedBaseURL = 'https://generativelanguage.googleapis.com/v1beta'
     }
