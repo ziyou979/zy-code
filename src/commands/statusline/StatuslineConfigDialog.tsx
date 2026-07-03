@@ -18,6 +18,7 @@ import {
   mergeWithDefaults,
 } from '../../components/statusbar/statusbarModuleDefaults.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
+import { BALLOT_BOX, CHECKBOX_CHECKED } from '../../constants/figures.js'
 import { useSettings } from '../../hooks/useSettings.js'
 import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../ink/stringWidth.js'
@@ -321,7 +322,7 @@ function ModuleRow({
   const visible = module.visible
   const icon = effectiveIcon(module)
   const color = effectiveColor(module)
-  const checkbox = visible ? '☑' : '☐'
+  const checkbox = visible ? CHECKBOX_CHECKED : BALLOT_BOX
   const iconCell = icon || '·'
   const name = tSync(`statusline.module.${module.id}` as never)
   // 位置编号（3 字符宽，如 "1. "）

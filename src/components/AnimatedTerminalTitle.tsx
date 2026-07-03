@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useTerminalFocus, useTerminalTitle } from '../ink.js'
+import { TITLE_FRAME_A, TITLE_FRAME_B, BRAILLE_Z } from 'src/constants/figures.js'
 
-const TITLE_ANIMATION_FRAMES = ['\u2802', '\u2810']
-const TITLE_STATIC_PREFIX = '\u2733'
-const TITLE_ANIMATION_INTERVAL_MS = 960
+const TITLE_ANIMATION_FRAMES = [TITLE_FRAME_A, TITLE_FRAME_B]
+const TITLE_STATIC_PREFIX = BRAILLE_Z
+const TITLE_ANIMATION_INTERVAL_MS = 1000
 
 /**
  * Sets the terminal tab title, with an animated prefix glyph while a query

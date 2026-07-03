@@ -58,6 +58,28 @@ export const BRIDGE_SPINNER_FRAMES = [
 export const BRIDGE_READY_INDICATOR = '\u00b7\u2714' + VS15 + '\u00b7'
 export const BRIDGE_FAILED_INDICATOR = '\u00d7'
 
+
+// 状态圆圈（纯 emoji）
+export const GREEN_CIRCLE = '\u{1F7E2}' // 🟢
+export const YELLOW_CIRCLE = '\u{1F7E1}' // 🟡
+export const RED_CIRCLE = '\u{1F534}' // 🔴
+export const WHITE_SQUARE = '\u2B1C' // ⬜
+
+// 通用小三角指示符（纯几何符号，无需 VS15）
+export const SMALL_RIGHT_TRIANGLE = '\u25B8' // ▸
+
+// 刷新 / 重试图标（U+27F3 箭头，无需 VS15）
+export const CLOCKWISE_ARROWS = '\u27F3' // ⟳
+
+// 复选框（U+2610 / U+2611 纯文本符号，无需 VS15）
+export const BALLOT_BOX = '\u2610' // ☐
+export const CHECKBOX_CHECKED = '\u2611' // ☑
+
+// 终端标题动画帧（盲文字符，低点阵占用，闪烁柔和）
+export const TITLE_FRAME_A = '\u2802' // ⠂
+export const TITLE_FRAME_B = '\u2810' // ⠐
+
+
 // figures 库输出作为 fig 对象导出。
 // 部分字符在特定终端会渲染为彩色 emoji，已单独追加 `\uFE0E`（VS15）强制文本展示。
 // 注意：VS15 会改变模糊宽度字符的终端列宽（emoji=2列, text=1列），
@@ -95,21 +117,3 @@ export const fig = {
   triangleUpOutline: figuresLib.triangleUpOutline,
   warning: figuresLib.warning,
 }
-
-// 状态圆圈（纯 emoji，VS15 可能无效但无妨）
-export const GREEN_CIRCLE = '\u{1F7E2}' + VS15 // 🟢
-export const YELLOW_CIRCLE = '\u{1F7E1}' + VS15 // 🟡
-export const RED_CIRCLE = '\u{1F534}' + VS15 // 🔴
-export const WHITE_SQUARE = '\u2B1C' + VS15 // ⬜
-
-// 通用小三角指示符（纯几何符号，无需 VS15）
-export const SMALL_RIGHT_TRIANGLE = '\u25B8' // ▸
-
-// 刷新 / 重试图标（U+27F3 箭头，无需 VS15）
-export const CLOCKWISE_ARROWS = '\u27F3' // ⟳
-
-// 复选框占位（U+2610 纯文本符号，无需 VS15）
-export const BALLOT_BOX = '\u2610' // ☐
-
-// 机器人头像（纯 emoji，保留 VS15）
-export const ROBOT = '\u{1F916}' + VS15 // 🤖
