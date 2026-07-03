@@ -11,6 +11,7 @@ import { normalizeApiKeyForConfig } from '../utils/authPortable.js'
 import { saveGlobalConfig } from '../utils/config.js'
 import { type EffortLevel, toPersistableEffort } from '../utils/effort.js'
 import { updateSettingsForSource } from '../utils/settings/settings.js'
+import type { SettingsJson } from '../utils/settings/types.js'
 import { Select } from './CustomSelect/select.js'
 import { effortLevelToSymbol } from './EffortIndicator.js'
 import { Welcome } from './Logo/Welcome.js'
@@ -196,7 +197,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   // Platform setup step (replaces OAuth + API key approval)
   function handlePlatformDone(platformId: string, apiKey: string) {
     const platform = getPlatforms().find((p) => p.id === platformId)
-    const provider = platform?.provider ?? 'generic'
+    const provider: PlatformProvider = platform?.provider ?? 'generic'
     const normalizedKey = normalizeApiKeyForConfig(apiKey)
 
     // Resolve base URL from platform defaults based on supported formats
@@ -222,11 +223,11 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
     }))
     // provider/apiKey/baseUrl 写入 settings.json（per-provider 配置，避免跨 provider 干扰）
     updateSettingsForSource('userSettings', {
-      provider,
+      provider: provider as SettingsJson['provider'],
       apiKey,
       ...(baseUrl && { baseUrl }),
     })
-    setSelectedProvider(provider as PlatformProvider)
+    setSelectedProvider(provider)
     goToNextStep()
   }
 
@@ -405,7 +406,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   )
 
   // Build steps array — language must be first
-  const steps = []
+  const steps: OnboardingStep[] = []
   steps.push({ id: 'language', component: languageStep })
   steps.push({ id: 'theme', component: themeStep })
   steps.push({ id: 'platform', component: platformStep })
@@ -647,7 +648,6 @@ function CustomModelInput({
  * Shows provider-suggested models for each tier, with optional skip for non-required tiers.
  */
 function TierModelSetup({
-  tier,
   provider,
   title,
   description,

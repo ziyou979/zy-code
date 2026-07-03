@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useTerminalFocus, useTerminalTitle } from '../ink.js'
-import { TITLE_FRAME_A, TITLE_FRAME_B, BRAILLE_Z } from 'src/constants/figures.js'
+import {TITLE_FRAME_A, TITLE_FRAME_B, TEARDROP_ASTERISK} from 'src/constants/figures.js'
 
 const TITLE_ANIMATION_FRAMES = [TITLE_FRAME_A, TITLE_FRAME_B]
-const TITLE_STATIC_PREFIX = BRAILLE_Z
+const TITLE_STATIC_PREFIX = TEARDROP_ASTERISK
 const TITLE_ANIMATION_INTERVAL_MS = 1000
 
 /**
