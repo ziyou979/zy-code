@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../../constants/figures.js'
 import { useState } from 'react'
 import { tSync } from '../../../i18n/index.js'
 import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js'
@@ -312,7 +312,7 @@ export function QuestionView({
                   {
                     <Box flexDirection="row" gap={1}>
                       {isFooterFocused && footerIndex === 0 ? (
-                        <Text color="suggestion">{figures.pointer}</Text>
+                        <Text color="suggestion">{fig.pointer}</Text>
                       ) : (
                         <Text> </Text>
                       )}
@@ -328,7 +328,7 @@ export function QuestionView({
                   {isInPlanMode && (
                     <Box flexDirection="row" gap={1}>
                       {isFooterFocused && footerIndex === 1 ? (
-                        <Text color="suggestion">{figures.pointer}</Text>
+                        <Text color="suggestion">{fig.pointer}</Text>
                       ) : (
                         <Text> </Text>
                       )}
@@ -345,8 +345,7 @@ export function QuestionView({
                     {tSync('permissionRules.enterToSelect')} ·{' '}
                     {questions.length === 1 ? (
                       <>
-                        {figures.arrowUp}/{figures.arrowDown}{' '}
-                        {tSync('permissionRules.arrowToNavigate')}
+                        {fig.arrowUp}/{fig.arrowDown} {tSync('permissionRules.arrowToNavigate')}
                       </>
                     ) : (
                       tSync('permissionRules.tabArrowToNavigate')

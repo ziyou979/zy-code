@@ -8,6 +8,13 @@
 
 import * as React from 'react'
 import { useMemo, useState } from 'react'
+import {
+  GREEN_CIRCLE,
+  RED_CIRCLE,
+  SMALL_RIGHT_TRIANGLE,
+  WHITE_SQUARE,
+  YELLOW_CIRCLE,
+} from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text, useInput } from '../../ink.js'
 import type { AppState } from '../../state/AppState.js'
@@ -43,15 +50,15 @@ function getAgentDisplayName(task: AgentTask): string {
 /** 获取状态图标 */
 function getStatusIcon(task: AgentTask): string {
   if (task.status === 'running') {
-    return '🟢'
+    return GREEN_CIRCLE
   }
   if (task.status === 'pending') {
-    return '🟡'
+    return YELLOW_CIRCLE
   }
   if (task.error) {
-    return '🔴'
+    return RED_CIRCLE
   }
-  return '⬜'
+  return WHITE_SQUARE
 }
 
 /** 获取状态标签 */
@@ -161,7 +168,7 @@ export function AgentSessionView({
 
           return (
             <Box key={id} flexDirection="row" gap={1}>
-              <Text>{isSelected ? '▸' : ' '}</Text>
+              <Text>{isSelected ? SMALL_RIGHT_TRIANGLE : ' '}</Text>
               <Text>{icon}</Text>
               <Text bold={isSelected}>{name}</Text>
               <Text dimColor>[{statusLabel}]</Text>

@@ -6,9 +6,8 @@
  * always; a timestamp shows until passed. Enter to view/steer, x to dismiss.
  */
 
-import figures from 'figures'
+import { BLACK_CIRCLE, fig } from '../constants/figures.js'
 import * as React from 'react'
-import { BLACK_CIRCLE } from '../constants/figures.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'
@@ -123,8 +122,8 @@ function MainLine({
   const { columns } = useTerminalSize()
   const [hover, setHover] = React.useState(false)
   const highlighted = isSelected || hover
-  const prefix = highlighted ? `${figures.pointer} ` : '  '
-  const bullet = isViewed ? BLACK_CIRCLE : figures.circle
+  const prefix = highlighted ? `${fig.pointer} ` : '  '
+  const bullet = isViewed ? BLACK_CIRCLE : fig.circle
   const dim = !highlighted && !isViewed
   const label = tSync('coordinator.main')
   const hint = tSync('coordinator.selectHint')
@@ -169,8 +168,8 @@ function AgentLine({ task, isSelected, isViewed, onClick }: AgentLineProps) {
   const elapsed = formatDuration(elapsedMs)
   const displayDescription = task.progress?.summary || task.description
   const highlighted = isSelected || hover
-  const prefix = highlighted ? `${figures.pointer} ` : '  '
-  const bullet = isViewed ? BLACK_CIRCLE : figures.circle
+  const prefix = highlighted ? `${fig.pointer} ` : '  '
+  const bullet = isViewed ? BLACK_CIRCLE : fig.circle
   const dim = !highlighted && !isViewed
   const typeLabel = getAgentTypeLabel(task.agentType)
   const typeLabelPart = `${typeLabel}  `

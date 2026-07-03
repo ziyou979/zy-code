@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import type { Command } from '../../commands.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 
@@ -14,9 +14,9 @@ const command = {
     // Show warning icon if dependencies missing, otherwise enabled/disabled status
     let icon: string
     if (!hasDeps) {
-      icon = figures.warning
+      icon = fig.warning
     } else {
-      icon = currentlyEnabled ? figures.tick : figures.circle
+      icon = currentlyEnabled ? fig.tick : fig.circle
     }
 
     let statusText = 'sandbox disabled'

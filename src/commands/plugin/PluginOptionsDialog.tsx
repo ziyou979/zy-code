@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import { useState } from 'react'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { stringWidth } from '../../ink/stringWidth.js'
@@ -150,7 +150,7 @@ export function PluginOptionsDialog({
           {fieldSchema.description && <Text dimColor={true}>{fieldSchema.description}</Text>}
           {
             <Box marginTop={1}>
-              {<Text>{figures.pointerSmall} </Text>}
+              {<Text>{fig.pointerSmall} </Text>}
               {<Text>{displayValue}</Text>}
               {<Text>█</Text>}
             </Box>

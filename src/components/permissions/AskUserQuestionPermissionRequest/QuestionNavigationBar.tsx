@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../../constants/figures.js'
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../../ink/stringWidth.js'
 import { Box, Text } from '../../../ink.js'
@@ -19,7 +19,7 @@ export function QuestionNavigationBar({
 }: Props) {
   const { columns } = useTerminalSize()
   let tabDisplayTexts
-  const submitText = hideSubmitTab ? '' : ` ${figures.tick} Submit `
+  const submitText = hideSubmitTab ? '' : ` ${fig.tick} Submit `
   const fixedWidth = stringWidth('\u2190 ') + stringWidth(' \u2192') + stringWidth(submitText)
   const availableForTabs = columns - fixedWidth
   if (availableForTabs <= 0) {
@@ -55,7 +55,7 @@ export function QuestionNavigationBar({
   const tabElements = questions.map((q_1, index_2) => {
     const isSelected = index_2 === currentQuestionIndex
     const isAnswered = q_1?.question && !!answers[q_1.question]
-    const checkbox = isAnswered ? figures.checkboxOn : figures.checkboxOff
+    const checkbox = isAnswered ? fig.checkboxOn : fig.checkboxOff
     const displayText = tabDisplayTexts[index_2] || q_1?.header || `Q${index_2 + 1}`
     return (
       <Box key={q_1?.question || `question-${index_2}`}>
@@ -82,10 +82,10 @@ export function QuestionNavigationBar({
           {currentQuestionIndex === questions.length ? (
             <Text backgroundColor="permission" color="inverseText">
               {' '}
-              {figures.tick} Submit{' '}
+              {fig.tick} Submit{' '}
             </Text>
           ) : (
-            <Text> {figures.tick} Submit </Text>
+            <Text> {fig.tick} Submit </Text>
           )}
         </Box>
       )}

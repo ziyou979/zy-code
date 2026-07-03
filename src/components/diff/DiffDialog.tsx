@@ -1,6 +1,7 @@
 import type { StructuredPatchHunk } from 'diff'
 import { useEffect, useRef, useState } from 'react'
 import type { CommandResultDisplay } from '../../commands.js'
+import { PLAY_ICON, REVERSE_PLAY_ICON } from '../../constants/figures.js'
 import { useRegisterOverlay } from '../../context/overlayContext.js'
 import { type DiffData, useDiffData } from '../../hooks/useDiffData.js'
 import { type TurnDiff, useTurnDiffs } from '../../hooks/useTurnDiffs.js'
@@ -159,7 +160,7 @@ export function DiffDialog({ messages, onDone }: Props) {
   const sourceSelector =
     sources.length > 1 ? (
       <Box>
-        {sourceIndex > 0 && <Text dimColor={true}>◀ </Text>}
+        {sourceIndex > 0 && <Text dimColor={true}>{REVERSE_PLAY_ICON} </Text>}
         {sources.map((source, i) => {
           const isSelected = i === sourceIndex
           const label =
@@ -174,7 +175,7 @@ export function DiffDialog({ messages, onDone }: Props) {
             </Text>
           )
         })}
-        {sourceIndex < sources.length - 1 && <Text dimColor={true}> ▶</Text>}
+        {sourceIndex < sources.length - 1 && <Text dimColor={true}> {PLAY_ICON}</Text>}
       </Box>
     ) : null
   const dismissShortcut = useShortcutDisplay('diff:dismiss', 'DiffDialog', 'esc')

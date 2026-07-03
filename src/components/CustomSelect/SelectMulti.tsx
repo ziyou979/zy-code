@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import { useState } from 'react'
 import { Box, Text } from '../../ink.js'
 import type { PastedContent } from '../../utils/config.js'
@@ -6,7 +6,11 @@ import type { ImageDimensions } from '../../utils/imageResizer.js'
 import type { OptionWithDescription } from './select.js'
 import { SelectInputOption } from './select-input-option.js'
 import { SelectOption } from './select-option.js'
-import { createMultiOptionClickHandler, createOptionHoverHandler, createHoverLeaveHandler } from './select-mouse-actions.js'
+import {
+  createMultiOptionClickHandler,
+  createOptionHoverHandler,
+  createHoverLeaveHandler,
+} from './select-mouse-actions.js'
 import { useMultiSelectState } from './use-multi-select-state.js'
 export type SelectMultiProps<T> = {
   readonly isDisabled?: boolean
@@ -146,9 +150,7 @@ SelectMultiProps<any>) {
             pastedContents={pastedContents}
             onRemoveImage={onRemoveImage}
           >
-            <Text color={isSelected ? 'success' : undefined}>
-              [{isSelected ? figures.tick : ' '}]{' '}
-            </Text>
+            <Text color={isSelected ? 'success' : undefined}>[{isSelected ? fig.tick : ' '}] </Text>
           </SelectInputOption>
         </Box>
       )
@@ -173,7 +175,7 @@ SelectMultiProps<any>) {
         >
           {!hideIndexes && <Text dimColor={true}>{`${i}.`.padEnd(maxIndexWidth)}</Text>}
           <Text color={isEffectivelySelected ? 'success' : undefined}>
-            [{isEffectivelySelected ? figures.tick : ' '}]
+            [{isEffectivelySelected ? fig.tick : ' '}]
           </Text>
           <Text color={isOptionFocused ? 'suggestion' : undefined}>{option.label}</Text>
         </SelectOption>
@@ -185,11 +187,7 @@ SelectMultiProps<any>) {
       {<Box flexDirection={'column'}>{visibleOptionElements}</Box>}
       {submitButtonText && onSubmit && (
         <Box marginTop={0} gap={1}>
-          {state.isSubmitFocused ? (
-            <Text color="suggestion">{figures.pointer}</Text>
-          ) : (
-            <Text> </Text>
-          )}
+          {state.isSubmitFocused ? <Text color="suggestion">{fig.pointer}</Text> : <Text> </Text>}
           <Box marginLeft={3}>
             <Text color={state.isSubmitFocused ? 'suggestion' : undefined} bold={true}>
               {submitButtonText}

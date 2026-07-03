@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import { Text } from '../../ink.js'
 
 type Status = 'success' | 'error' | 'warning' | 'info' | 'pending' | 'loading'
@@ -28,27 +28,27 @@ const STATUS_CONFIG: Record<
   }
 > = {
   success: {
-    icon: figures.tick,
+    icon: fig.tick,
     color: 'success',
   },
   error: {
-    icon: figures.cross,
+    icon: fig.cross,
     color: 'error',
   },
   warning: {
-    icon: figures.warning,
+    icon: fig.warning,
     color: 'warning',
   },
   info: {
-    icon: figures.info,
+    icon: fig.info,
     color: 'suggestion',
   },
   pending: {
-    icon: figures.circle,
+    icon: fig.circle,
     color: undefined,
   },
   loading: {
-    icon: '…',
+    icon: fig.ellipsis,
     color: undefined,
   },
 }

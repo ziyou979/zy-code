@@ -30,7 +30,7 @@ import { isBackgroundTask } from '../tasks/types.js'
 import { getAllInProcessTeammateTasks } from '../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
 
 import { getViewedTeammateTask } from '../state/selectors.js'
-import { TEARDROP_ASTERISK } from '../constants/figures.js'
+import { BRAILLE_Z } from '../constants/figures.js'
 import { getCurrentTurnTokenBudget, getTurnOutputTokens } from '../bootstrap/state.js'
 import { TeammateSpinnerTree } from './Spinner/TeammateSpinnerTree.js'
 import { useAnimationFrame } from '../ink.js'
@@ -204,7 +204,7 @@ function SpinnerWithVerbInner({
       <Box flexDirection="column" width="100%" alignItems="flex-start">
         <Box flexDirection="row" flexWrap="wrap" marginTop={1} width="100%">
           <Text dimColor>
-            {TEARDROP_ASTERISK} {tSync('spinner.idle')}
+            {BRAILLE_Z} {tSync('spinner.idle')}
             {!allIdle && ` · ${tSync('spinner.teammatesRunning')}`}
           </Text>
         </Box>
@@ -226,10 +226,10 @@ function SpinnerWithVerbInner({
   // 查看空闲的 teammate 时，显示静态空闲显示而不是动画 spinner
   if (foregroundedTeammate?.isIdle) {
     const idleText = allIdle
-      ? `${TEARDROP_ASTERISK} ${tSync('spinner.workedFor', {
+      ? `${BRAILLE_Z} ${tSync('spinner.workedFor', {
           duration: formatDuration(Date.now() - foregroundedTeammate.startTime),
         })}`
-      : `${TEARDROP_ASTERISK} ${tSync('spinner.idle')}`
+      : `${BRAILLE_Z} ${tSync('spinner.idle')}`
     return (
       <Box flexDirection="column" width="100%" alignItems="flex-start">
         <Box flexDirection="row" flexWrap="wrap" marginTop={1} width="100%">

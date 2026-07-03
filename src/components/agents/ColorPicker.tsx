@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import { useState } from 'react'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../ink.js'
@@ -41,9 +41,7 @@ export function ColorPicker({ agentName, currentColor = 'automatic', onConfirm }
     const isSelected = index === selectedIndex
     return (
       <Box key={option} flexDirection="row" gap={1}>
-        <Text color={isSelected ? 'suggestion' : undefined}>
-          {isSelected ? figures.pointer : ' '}
-        </Text>
+        <Text color={isSelected ? 'suggestion' : undefined}>{isSelected ? fig.pointer : ' '}</Text>
         {option === 'automatic' ? (
           <Text bold={isSelected}>Automatic color</Text>
         ) : (

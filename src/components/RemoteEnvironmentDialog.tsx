@@ -1,5 +1,5 @@
+import { fig } from '../constants/figures.js'
 import chalk from 'chalk'
-import figures from 'figures'
 import { useEffect, useState } from 'react'
 import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
@@ -118,7 +118,7 @@ export function RemoteEnvironmentDialog({ onDone }: Props) {
 function EnvironmentLabel({ environment }: any) {
   return (
     <Text>
-      {figures.tick} Using {<Text bold={true}>{environment.name}</Text>}{' '}
+      {fig.tick} Using {<Text bold={true}>{environment.name}</Text>}{' '}
       {<Text dimColor={true}>({environment.environment_id})</Text>}
     </Text>
   )

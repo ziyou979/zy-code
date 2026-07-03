@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../constants/figures.js'
 import type { RefObject } from 'react'
 import React, { useCallback, useMemo, useRef } from 'react'
 import { Box, Text } from '../ink.js'
@@ -388,8 +388,8 @@ export function MessageActionsBar({ cursor }: { cursor: MessageActionsState }) {
           {<Text dimColor={true}> · </Text>}
           {
             <Text bold={true} dimColor={false}>
-              {figures.arrowUp}
-              {figures.arrowDown}
+              {fig.arrowUp}
+              {fig.arrowDown}
             </Text>
           }
           {<Text dimColor={true}> navigate · </Text>}

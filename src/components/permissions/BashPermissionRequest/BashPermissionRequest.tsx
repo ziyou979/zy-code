@@ -1,5 +1,5 @@
+import { fig } from '../../../constants/figures.js'
 import { feature } from 'bun:bundle'
-import figures from 'figures'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { tSync } from '../../../i18n/index.js'
 import { Box, Text, useTheme } from '../../../ink.js'
@@ -467,7 +467,7 @@ function BashPermissionRequestInner({
     toolUseConfirm.classifierAutoApproved ? (
       <Text>
         <Text color="success">
-          {figures.tick} {tSync('permission.autoApproved')}
+          {fig.tick} {tSync('permission.autoApproved')}
         </Text>
         {toolUseConfirm.classifierMatchedRule && (
           <Text dimColor>

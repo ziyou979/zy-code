@@ -1,4 +1,5 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+import { fig } from '../../constants/figures.js'
 import { feature } from 'bun:bundle'
 // Dead code elimination: conditional import for COORDINATOR_MODE
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -8,7 +9,6 @@ const coordinatorModule = feature('COORDINATOR_MODE')
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { Box, Text, Link } from '../../ink.js'
 import * as React from 'react'
-import figures from 'figures'
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { VimMode, PromptInputMode } from '../../types/textInputTypes.js'
 import type { ToolPermissionContext } from '../../Tool.js'
@@ -369,7 +369,7 @@ function ModeIndicator({
     ...(remoteSessionUrl
       ? [
           <Link url={remoteSessionUrl} key="remote">
-            <Text color="ide">{figures.circleDouble} remote</Text>
+            <Text color="ide">{fig.circleDouble} remote</Text>
           </Link>,
         ]
       : []),

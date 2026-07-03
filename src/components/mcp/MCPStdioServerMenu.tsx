@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import React, { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import type { CommandResultDisplay } from '../../commands.js'
@@ -122,20 +122,20 @@ export function MCPStdioServerMenu({
             <Text bold>{tSync('mcp.statusLabel')} </Text>
             {srv.client.type === 'disabled' ? (
               <Text>
-                {color('inactive', theme)(figures.radioOff)} {tSync('mcp.disabled')}
+                {color('inactive', theme)(fig.radioOff)} {tSync('mcp.disabled')}
               </Text>
             ) : srv.client.type === 'connected' ? (
               <Text>
-                {color('success', theme)(figures.tick)} {tSync('mcp.connected')}
+                {color('success', theme)(fig.tick)} {tSync('mcp.connected')}
               </Text>
             ) : srv.client.type === 'pending' ? (
               <>
-                <Text dimColor>{figures.radioOff}</Text>
+                <Text dimColor>{fig.radioOff}</Text>
                 <Text> {tSync('mcp.connecting')}</Text>
               </>
             ) : (
               <Text>
-                {color('error', theme)(figures.cross)} {tSync('mcp.failed')}
+                {color('error', theme)(fig.cross)} {tSync('mcp.failed')}
               </Text>
             )}
           </Box>

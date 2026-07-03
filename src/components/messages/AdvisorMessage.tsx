@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import { Box, Text } from '../../ink.js'
 import { renderModelName } from '../../services/model/model.js'
 import type { AdvisorBlock } from '../../utils/advisor.js'
@@ -57,7 +57,7 @@ export function AdvisorMessage({
         <Text dimColor={true}>{block.content.text}</Text>
       ) : (
         <Text dimColor={true}>
-          {figures.tick} Advisor has reviewed the conversation and will apply the feedback{' '}
+          {fig.tick} Advisor has reviewed the conversation and will apply the feedback{' '}
           <CtrlOToExpand />
         </Text>
       )
@@ -66,7 +66,7 @@ export function AdvisorMessage({
     case 'advisor_redacted_result': {
       body = (
         <Text dimColor={true}>
-          {figures.tick} Advisor has reviewed the conversation and will apply the feedback
+          {fig.tick} Advisor has reviewed the conversation and will apply the feedback
         </Text>
       )
     }

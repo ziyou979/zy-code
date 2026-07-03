@@ -6,7 +6,7 @@
  *
  * For the core operations (without CLI side effects), see pluginOperations.ts
  */
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import {
   buildPluginTelemetryFields,
   classifyPluginCommandError,
@@ -56,7 +56,7 @@ function handlePluginCommandError(
       ? 'disable all plugins'
       : `${command} plugins`
   // biome-ignore lint/suspicious/noConsole:: intentional console output
-  console.error(`${figures.cross} Failed to ${operation}: ${errorMessage(error)}`)
+  console.error(`${fig.cross} Failed to ${operation}: ${errorMessage(error)}`)
   const telemetryFields = plugin
     ? (() => {
         const { name, marketplace } = parsePluginIdentifier(plugin)
@@ -100,7 +100,7 @@ export async function installPlugin(
     }
 
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`${figures.tick} ${result.message}`)
+    console.log(`${fig.tick} ${result.message}`)
 
     // _PROTO_* routes to PII-tagged plugin_name/marketplace_name BQ columns.
     // Unredacted plugin_id was previously logged to general-access
@@ -142,7 +142,7 @@ export async function uninstallPlugin(
     }
 
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`${figures.tick} ${result.message}`)
+    console.log(`${fig.tick} ${result.message}`)
 
     const { name, marketplace } = parsePluginIdentifier(result.pluginId || plugin)
     logEvent('zy_plugin_uninstalled_cli', {
@@ -175,7 +175,7 @@ export async function enablePlugin(plugin: string, scope?: InstallableScope): Pr
     }
 
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`${figures.tick} ${result.message}`)
+    console.log(`${fig.tick} ${result.message}`)
 
     const { name, marketplace } = parsePluginIdentifier(result.pluginId || plugin)
     logEvent('zy_plugin_enabled_cli', {
@@ -208,7 +208,7 @@ export async function disablePlugin(plugin: string, scope?: InstallableScope): P
     }
 
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`${figures.tick} ${result.message}`)
+    console.log(`${fig.tick} ${result.message}`)
 
     const { name, marketplace } = parsePluginIdentifier(result.pluginId || plugin)
     logEvent('zy_plugin_disabled_cli', {
@@ -239,7 +239,7 @@ export async function disableAllPlugins(): Promise<void> {
     }
 
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`${figures.tick} ${result.message}`)
+    console.log(`${fig.tick} ${result.message}`)
 
     logEvent('zy_plugin_disabled_all_cli', {})
 
@@ -265,7 +265,7 @@ export async function updatePluginCli(plugin: string, scope: PluginScope): Promi
       throw new Error(result.message)
     }
 
-    writeToStdout(`${figures.tick} ${result.message}\n`)
+    writeToStdout(`${fig.tick} ${result.message}\n`)
 
     if (!result.alreadyUpToDate) {
       const { name, marketplace } = parsePluginIdentifier(result.pluginId || plugin)

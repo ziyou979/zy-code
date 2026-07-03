@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
@@ -691,7 +691,7 @@ export function BrowseMarketplace({
         {warning && (
           <Box marginBottom={1} flexDirection="column">
             <Text color="warning">
-              {figures.warning} {warning}
+              {fig.warning} {warning}
             </Text>
           </Box>
         )}
@@ -703,7 +703,7 @@ export function BrowseMarketplace({
           >
             <Box>
               <Text color={selectedIndex === index ? 'suggestion' : undefined}>
-                {selectedIndex === index ? figures.pointer : ' '} {marketplaceItem.name}
+                {selectedIndex === index ? fig.pointer : ' '} {marketplaceItem.name}
               </Text>
             </Box>
             <Box marginLeft={2}>
@@ -906,7 +906,7 @@ export function BrowseMarketplace({
       {/* Scroll up indicator */}
       {pagination.scrollPosition.canScrollUp && (
         <Box>
-          <Text dimColor> {figures.arrowUp} more above</Text>
+          <Text dimColor> {fig.arrowUp} more above</Text>
         </Box>
       )}
 
@@ -925,16 +925,16 @@ export function BrowseMarketplace({
           >
             <Box>
               <Text color={isSelected ? 'suggestion' : undefined}>
-                {isSelected ? figures.pointer : ' '}{' '}
+                {isSelected ? fig.pointer : ' '}{' '}
               </Text>
               <Text color={plugin_6.isInstalled ? 'success' : undefined}>
                 {plugin_6.isInstalled
-                  ? figures.tick
+                  ? fig.tick
                   : isInstalling_0
-                    ? figures.ellipsis
+                    ? fig.ellipsis
                     : isSelectedForInstall
-                      ? figures.radioOn
-                      : figures.radioOff}{' '}
+                      ? fig.radioOn
+                      : fig.radioOff}{' '}
                 {plugin_6.entry.name}
                 {plugin_6.entry.category && <Text dimColor> [{plugin_6.entry.category}]</Text>}
                 {plugin_6.entry.tags?.includes('community-managed') && (
@@ -962,7 +962,7 @@ export function BrowseMarketplace({
       {/* Scroll down indicator */}
       {pagination.scrollPosition.canScrollDown && (
         <Box>
-          <Text dimColor> {figures.arrowDown} more below</Text>
+          <Text dimColor> {fig.arrowDown} more below</Text>
         </Box>
       )}
 
@@ -970,7 +970,7 @@ export function BrowseMarketplace({
       {error && (
         <Box marginTop={1}>
           <Text color="error">
-            {figures.cross} {error}
+            {fig.cross} {error}
           </Text>
         </Box>
       )}

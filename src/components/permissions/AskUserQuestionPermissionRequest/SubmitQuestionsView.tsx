@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../../constants/figures.js'
 import { tSync } from 'src/i18n/index.js'
 import { Box, Text } from '../../../ink.js'
 import type { Question } from '../../../tools/AskUserQuestionTool/AskUserQuestionTool.js'
@@ -46,7 +46,7 @@ export function SubmitQuestionsView({
             {!allQuestionsAnswered && (
               <Box marginBottom={1}>
                 <Text color="warning">
-                  {figures.warning} {tSync('permissionRules.notAnsweredAllQuestions')}
+                  {fig.warning} {tSync('permissionRules.notAnsweredAllQuestions')}
                 </Text>
               </Box>
             )}
@@ -59,11 +59,11 @@ export function SubmitQuestionsView({
                     return (
                       <Box key={q_0?.question || 'answer'} flexDirection="column" marginLeft={1}>
                         <Text>
-                          {figures.bullet} {q_0?.question || tSync('permissionRules.questionLabel')}
+                          {fig.bullet} {q_0?.question || tSync('permissionRules.questionLabel')}
                         </Text>
                         <Box marginLeft={2}>
                           <Text color="success">
-                            {figures.arrowRight} {answer}
+                            {fig.arrowRight} {answer}
                           </Text>
                         </Box>
                       </Box>

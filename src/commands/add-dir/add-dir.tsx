@@ -1,5 +1,5 @@
+import { fig } from '../../constants/figures.js'
 import chalk from 'chalk'
-import figures from 'figures'
 import React, { useEffect } from 'react'
 import {
   getAdditionalDirectoriesForAgentsMd,
@@ -35,7 +35,7 @@ function AddDirError({
     <Box flexDirection="column">
       {
         <Text dimColor={true}>
-          {figures.pointer} /add-dir {args}
+          {fig.pointer} /add-dir {args}
         </Text>
       }
       {

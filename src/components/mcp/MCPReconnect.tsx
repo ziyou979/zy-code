@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import { useEffect, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import type { CommandResultDisplay } from '../../commands.js'
@@ -80,7 +80,7 @@ export function MCPReconnect({ serverName, onComplete }: Props) {
     )
   }
   if (error) {
-    const errorIcon = color('error', theme)(figures.cross)
+    const errorIcon = color('error', theme)(fig.cross)
     return (
       <Box flexDirection="column" gap={1} padding={1}>
         {

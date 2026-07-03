@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../constants/figures.js'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import type { ContextSuggestion } from '../utils/contextSuggestions.js'
@@ -20,7 +20,7 @@ export function ContextSuggestions({ suggestions }: Props) {
         {suggestion.savingsTokens ? (
           <Text dimColor={true}>
             {' '}
-            {figures.arrowRight}{' '}
+            {fig.arrowRight}{' '}
             {tSync('contextSuggestions.save', { tokens: formatTokens(suggestion.savingsTokens) })}
           </Text>
         ) : null}

@@ -1,5 +1,5 @@
+import { fig } from '../../constants/figures.js'
 import chalk from 'chalk'
-import figures from 'figures'
 import * as React from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import { useSetAppState } from 'src/state/AppState.js'
@@ -166,7 +166,7 @@ export function AgentEditor({ agent, tools, onSaved, onBack }: Props): React.Rea
       <Box marginTop={1} flexDirection="column">
         {menuItems.map((item, index_1) => (
           <Text key={item.label} color={index_1 === selectedMenuIndex ? 'suggestion' : undefined}>
-            {index_1 === selectedMenuIndex ? `${figures.pointer} ` : '  '}
+            {index_1 === selectedMenuIndex ? `${fig.pointer} ` : '  '}
             {item.label}
           </Text>
         ))}

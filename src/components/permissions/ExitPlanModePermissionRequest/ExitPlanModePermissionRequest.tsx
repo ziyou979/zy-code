@@ -1,6 +1,6 @@
+import { fig } from '../../../constants/figures.js'
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
-import figures from 'figures'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
 import { tSync } from 'src/i18n/index.js'
@@ -658,7 +658,7 @@ export function ExitPlanModePermissionRequest({
               <>
                 <Text dimColor>{' · '}</Text>
                 <Text color="success">
-                  {figures.tick}
+                  {fig.tick}
                   {tSync('planMode.planSaved')}
                 </Text>
               </>
@@ -839,7 +839,7 @@ export function ExitPlanModePermissionRequest({
             <Box>
               <Text dimColor>{' · '}</Text>
               <Text color="success">
-                {figures.tick}
+                {fig.tick}
                 {tSync('planMode.planSaved')}
               </Text>
             </Box>

@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import { Box, Text } from '../../ink.js'
 import { useAppState } from '../../state/AppState.js'
 import { getRunningTeammatesSorted } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
@@ -48,7 +48,7 @@ export function TeammateSpinnerTree({
       <Box paddingLeft={3}>
         {
           <Text color={isLeaderSelected ? 'suggestion' : undefined} bold={isLeaderHighlighted}>
-            {isLeaderSelected ? figures.pointer : ' '}
+            {isLeaderSelected ? fig.pointer : ' '}
           </Text>
         }
         {
@@ -104,7 +104,7 @@ function HideRow({ isSelected }: { isSelected: boolean | undefined }) {
     <Box paddingLeft={3}>
       {
         <Text color={isSelected ? 'suggestion' : undefined} bold={isSelected}>
-          {isSelected ? figures.pointer : ' '}
+          {isSelected ? fig.pointer : ' '}
         </Text>
       }
       {

@@ -7,6 +7,14 @@
 
 import * as React from 'react'
 import { memo, useEffect, useState } from 'react'
+import {
+  BALLOT_BOX,
+  CLOCKWISE_ARROWS,
+  PLAY_ICON,
+  PAUSE_ICON,
+  ROBOT,
+  fig,
+} from '../constants/figures.js'
 import { useTasksV2 } from '../hooks/useTasksV2.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { Box, Text } from '../ink.js'
@@ -43,11 +51,11 @@ const AGENT_TICK_S = 10
 function taskStatusIcon(status: Task['status']): string {
   switch (status) {
     case 'completed':
-      return '✓'
+      return fig.tick
     case 'in_progress':
-      return '▶'
+      return PLAY_ICON
     case 'pending':
-      return '☐'
+      return BALLOT_BOX
   }
 }
 
@@ -96,13 +104,13 @@ function buildTaskParts(tasksV2: Task[], columns: number): string[] {
     // 中屏：仅显示状态计数摘要
     const statusParts: string[] = []
     if (inProgress.length > 0) {
-      statusParts.push(`${inProgress.length}▶`)
+      statusParts.push(`${inProgress.length}${PLAY_ICON}`)
     }
     if (pending.length > 0) {
-      statusParts.push(`${pending.length}☐`)
+      statusParts.push(`${pending.length}${BALLOT_BOX}`)
     }
     if (completed.length > 0) {
-      statusParts.push(`${completed.length}✓`)
+      statusParts.push(`${completed.length}${fig.tick}`)
     }
     const summary = statusParts.length > 0 ? statusParts.join(' ') : '0'
     parts.push(`📋 ${summary} /${total}`)
@@ -125,11 +133,11 @@ function buildAgentParts(agents: TaskState[], columns: number): string[] {
       const name = teammate.identity?.agentName ?? 'agent'
       const isIdle = teammate.isIdle === true
       const status = isIdle ? 'idle' : 'working'
-      const icon = isIdle ? '⏸' : '▶'
+      const icon = isIdle ? PAUSE_ICON : PLAY_ICON
       const color = teammate.identity?.color
       // 标色名称（宽屏时使用）
       const namePart = color ? `@${name}` : `@${name}`
-      parts.push(`🤖 ${namePart} ${icon} ${status}`)
+      parts.push(`${ROBOT} ${namePart} ${icon} ${status}`)
     } else {
       // local_agent
       const la = agent as LocalAgentTaskState
@@ -138,7 +146,7 @@ function buildAgentParts(agents: TaskState[], columns: number): string[] {
       const elapsed = formatDuration(elapsedMs)
       const activity = la.progress?.lastActivity?.activityDescription ?? ''
 
-      let agentStr = `🤖 ${name} ▶ ${elapsed}`
+      let agentStr = `${ROBOT} ${name} ${PLAY_ICON} ${elapsed}`
       if (activity && columns >= WIDE_WIDTH) {
         agentStr += ` ${truncateToWidth(activity, AGENT_ACTIVITY_MAX)}`
       }

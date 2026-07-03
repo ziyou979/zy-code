@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import type { CommandResultDisplay } from '../../commands.js'
@@ -168,7 +168,7 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
         <Box marginTop={1}>
           <Text bold>{tSync('mcp.statusLabel')} </Text>
           <Text>
-            {color('inactive', theme)(figures.radioOff)} {tSync('mcp.notConnectedAgentOnly')}
+            {color('inactive', theme)(fig.radioOff)} {tSync('mcp.notConnectedAgentOnly')}
           </Text>
         </Box>
 
@@ -177,11 +177,11 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
             <Text bold>{tSync('mcp.authLabel')} </Text>
             {srv.isAuthenticated ? (
               <Text>
-                {color('success', theme)(figures.tick)} {tSync('mcp.authenticated')}
+                {color('success', theme)(fig.tick)} {tSync('mcp.authenticated')}
               </Text>
             ) : (
               <Text>
-                {color('warning', theme)(figures.triangleUpOutline)}{' '}
+                {color('warning', theme)(fig.triangleUpOutline)}{' '}
                 {tSync('mcp.mayNeedAuthentication')}
               </Text>
             )}

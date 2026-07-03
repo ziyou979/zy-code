@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../constants/figures.js'
 import * as React from 'react'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { stringWidth } from '../ink/stringWidth.js'
@@ -254,17 +254,17 @@ function getTaskIcon(status: Task['status']): {
   switch (status) {
     case 'completed':
       return {
-        icon: figures.tick,
+        icon: fig.tick,
         color: 'success',
       }
     case 'in_progress':
       return {
-        icon: figures.squareSmallFilled,
+        icon: fig.squareSmallFilled,
         color: 'zy',
       }
     case 'pending':
       return {
-        icon: figures.squareSmall,
+        icon: fig.squareSmall,
         color: undefined,
       }
   }
@@ -316,7 +316,7 @@ function TaskItem({
           {isBlocked && (
             <Text dimColor={true}>
               {' '}
-              {figures.pointerSmall} blocked by{' '}
+              {fig.pointerSmall} blocked by{' '}
               {[...openBlockers]
                 .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
                 .map((id) => `#${id}`)
@@ -330,7 +330,7 @@ function TaskItem({
           <Text dimColor={true}>
             {'  '}
             {displayActivity}
-            {figures.ellipsis}
+            {fig.ellipsis}
           </Text>
         </Box>
       )}

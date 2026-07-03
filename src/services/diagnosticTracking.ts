@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../constants/figures.js'
 import { logError } from 'src/utils/log.js'
 import type { MCPServerConnection } from '../services/mcp/types.js'
 import { ZyError } from '../utils/errors.js'
@@ -347,11 +347,11 @@ export class DiagnosticTrackingService {
   static getSeveritySymbol(severity: Diagnostic['severity']): string {
     return (
       {
-        Error: figures.cross,
-        Warning: figures.warning,
-        Info: figures.info,
-        Hint: figures.star,
-      }[severity] || figures.bullet
+        Error: fig.cross,
+        Warning: fig.warning,
+        Info: fig.info,
+        Hint: fig.star,
+      }[severity] || fig.bullet
     )
   }
 }

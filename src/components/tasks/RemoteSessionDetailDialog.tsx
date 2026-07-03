@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { DIAMOND_FILLED, DIAMOND_OPEN, fig } from '../../constants/figures.js'
 import React, { useMemo, useState } from 'react'
 import type { ToolUseContext } from 'src/Tool.js'
 import type { WireMessage } from 'src/types/index.js'
@@ -10,7 +10,6 @@ import type {
 } from 'src/types/message.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 import type { CommandResultDisplay } from '../../commands.js'
-import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js'
 import { useElapsedTime } from '../../hooks/useElapsedTime.js'
 import { tSync } from '../../i18n/index.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
@@ -216,7 +215,7 @@ function UltraplanSessionDetail({
         <Box flexDirection="column" gap={1}>
           {
             <Text>
-              {phase === 'plan_ready' && <Text color="success">{figures.tick} </Text>}
+              {phase === 'plan_ready' && <Text color="success">{fig.tick} </Text>}
               {agentsWorking} {agentLabel}{' '}
               {phase
                 ? (getAgentVerb() as Record<string, string>)[phase]

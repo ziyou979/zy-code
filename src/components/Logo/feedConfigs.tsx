@@ -1,5 +1,5 @@
+import { fig } from '../../constants/figures.js'
 import { homedir } from 'node:os'
-import figures from 'figures'
 import { isInternalBuild } from 'src/utils/envUtils.ts'
 import { tSync } from '../../i18n/index.js'
 import type { Step } from '../../projectOnboardingState.js'
@@ -53,7 +53,7 @@ export function createProjectOnboardingFeed(steps: Step[]): FeedConfig {
     .filter(({ isEnabled }) => isEnabled)
     .sort((a, b) => Number(a.isComplete) - Number(b.isComplete))
   const lines: FeedLine[] = enabledSteps.map(({ text, isComplete }) => {
-    const checkmark = isComplete ? `${figures.tick} ` : ''
+    const checkmark = isComplete ? `${fig.tick} ` : ''
     return {
       text: `${checkmark}${text}`,
     }

@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../constants/figures.js'
 import { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { Box, Text } from '../ink.js'
@@ -25,14 +25,14 @@ export function LanguagePicker({ initialLanguage, onComplete, onCancel }: Props)
       {<Text>{tSync('languagePicker.enterLanguage')}</Text>}
       {
         <Box flexDirection="row" gap={1}>
-          {<Text>{figures.pointer}</Text>}
+          {<Text>{fig.pointer}</Text>}
           <TextInput
             value={language ?? ''}
             onChange={setLanguage}
             onSubmit={handleSubmit}
             focus={true}
             showCursor={true}
-            placeholder={tSync('languagePicker.placeholder', { ellipsis: figures.ellipsis })}
+            placeholder={tSync('languagePicker.placeholder', { ellipsis: fig.ellipsis })}
             columns={60}
             cursorOffset={cursorOffset}
             onChangeCursorOffset={setCursorOffset}

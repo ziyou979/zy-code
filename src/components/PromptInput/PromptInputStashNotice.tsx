@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import { Box, Text } from 'src/ink.js'
 
 type Props = {
@@ -10,7 +10,7 @@ export function PromptInputStashNotice({ hasStash }: Props) {
   }
   return (
     <Box paddingLeft={2}>
-      <Text dimColor={true}>{figures.pointerSmall} Stashed (auto-restores after submit)</Text>
+      <Text dimColor={true}>{fig.pointerSmall} Stashed (auto-restores after submit)</Text>
     </Box>
   )
 }

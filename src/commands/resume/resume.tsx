@@ -1,6 +1,6 @@
+import { fig } from '../../constants/figures.js'
 import type { UUID } from 'node:crypto'
 import chalk from 'chalk'
-import figures from 'figures'
 import * as React from 'react'
 import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js'
 import type { CommandResultDisplay, ResumeEntrypoint } from '../../commands.js'
@@ -65,7 +65,7 @@ function ResumeError({
     <Box flexDirection="column">
       {
         <Text dimColor={true}>
-          {figures.pointer} /resume {args}
+          {fig.pointer} /resume {args}
         </Text>
       }
       {

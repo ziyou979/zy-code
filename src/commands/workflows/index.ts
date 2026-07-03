@@ -1,4 +1,5 @@
 import type { Command } from '../../commands.js'
+import { CLOCKWISE_ARROWS, fig } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import type { LocalCommandCall, LocalCommandModule } from '../../types/command.js'
 
@@ -17,11 +18,11 @@ const call: LocalCommandCall = async (_args, context) => {
   const lines = workflowTasks.map((t: any) => {
     const status =
       t.status === 'running'
-        ? '⟳ running'
+        ? `${CLOCKWISE_ARROWS} running`
         : t.status === 'completed'
-          ? '✓ done'
+          ? `${fig.tick} done`
           : t.status === 'failed'
-            ? '✗ failed'
+            ? `${fig.cross} failed`
             : t.status
     const phase = t.currentPhase ? ` [${t.currentPhase}]` : ''
     const agents = t.agentCount ? ` (${t.agentCount} agents)` : ''

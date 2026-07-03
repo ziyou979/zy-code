@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../../constants/figures.js'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js'
@@ -338,7 +338,7 @@ export function PreviewQuestionView({
                 const isSelected = selectedValue === option_0.label
                 return (
                   <Box key={option_0.label} flexDirection="row">
-                    {isFocused ? <Text color="suggestion">{figures.pointer}</Text> : <Text> </Text>}
+                    {isFocused ? <Text color="suggestion">{fig.pointer}</Text> : <Text> </Text>}
                     <Text dimColor> {index_0 + 1}.</Text>
                     <Text
                       color={isSelected ? 'success' : isFocused ? 'suggestion' : undefined}
@@ -347,7 +347,7 @@ export function PreviewQuestionView({
                       {' '}
                       {option_0.label}
                     </Text>
-                    {isSelected && <Text color="success"> {figures.tick}</Text>}
+                    {isSelected && <Text color="success"> {fig.tick}</Text>}
                   </Box>
                 )
               })}
@@ -398,7 +398,7 @@ export function PreviewQuestionView({
             <Divider color="inactive" />
             <Box flexDirection="row" gap={1}>
               {isFooterFocused && footerIndex === 0 ? (
-                <Text color="suggestion">{figures.pointer}</Text>
+                <Text color="suggestion">{fig.pointer}</Text>
               ) : (
                 <Text> </Text>
               )}
@@ -409,7 +409,7 @@ export function PreviewQuestionView({
             {isInPlanMode && (
               <Box flexDirection="row" gap={1}>
                 {isFooterFocused && footerIndex === 1 ? (
-                  <Text color="suggestion">{figures.pointer}</Text>
+                  <Text color="suggestion">{fig.pointer}</Text>
                 ) : (
                   <Text> </Text>
                 )}
@@ -421,7 +421,7 @@ export function PreviewQuestionView({
           </Box>
           <Box marginTop={1}>
             <Text color="inactive" dimColor>
-              {tSync('permissionRules.enterToSelect')} · {figures.arrowUp}/{figures.arrowDown}{' '}
+              {tSync('permissionRules.enterToSelect')} · {fig.arrowUp}/{fig.arrowDown}{' '}
               {tSync('permissionRules.arrowToNavigate')} · {tSync('permissionRules.nToAddNotes')}
               {questions.length > 1 && <> · {tSync('permissionRules.tabToSwitchQuestions')}</>}
               {isInNotesInput && editorName && (

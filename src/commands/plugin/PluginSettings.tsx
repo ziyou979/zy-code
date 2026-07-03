@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import { useEffect, useState } from 'react'
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
 import { Byline } from '../../components/design-system/Byline.js'
@@ -485,7 +485,7 @@ function ErrorsTabContent({
             },
           },
         }))
-        setActionMessage(`${figures.tick} Removed "${action.name}" from ${scopes} settings`)
+        setActionMessage(`${fig.tick} Removed "${action.name}" from ${scopes} settings`)
         markPluginsChanged()
         break
       }
@@ -495,7 +495,7 @@ function ErrorsTabContent({
             await removeMarketplaceSource(action.name)
             clearAllCaches()
             setMarketplaceLoadFailures((prev) => prev.filter((f) => f.name !== action.name))
-            setActionMessage(`${figures.tick} Removed marketplace "${action.name}"`)
+            setActionMessage(`${fig.tick} Removed marketplace "${action.name}"`)
             markPluginsChanged()
           } catch (err) {
             setActionMessage(
@@ -557,7 +557,7 @@ function ErrorsTabContent({
       <Box key={idx} marginLeft={1} flexDirection="column" marginBottom={1}>
         <Text>
           <Text color={isSelected ? 'suggestion' : 'error'}>
-            {isSelected ? figures.pointer : figures.cross}{' '}
+            {isSelected ? fig.pointer : fig.cross}{' '}
           </Text>
           <Text bold={isSelected}>{row.label}</Text>
           {row.scope && <Text dimColor={true}> ({row.scope})</Text>}

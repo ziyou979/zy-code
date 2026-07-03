@@ -1,5 +1,5 @@
+import { fig } from '../constants/figures.js'
 import { randomUUID, type UUID } from 'node:crypto'
-import figures from 'figures'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
@@ -466,7 +466,7 @@ export function MessageSelector({
             {canRestoreCode_0 && (
               <Box marginBottom={1}>
                 <Text dimColor>
-                  {figures.warning} {tSync('messageSelector.rewindNoBashFiles')}
+                  {fig.warning} {tSync('messageSelector.rewindNoBashFiles')}
                 </Text>
               </Box>
             )}
@@ -500,7 +500,7 @@ export function MessageSelector({
                       <Box width={2} minWidth={2}>
                         {isSelected ? (
                           <Text color="permission" bold>
-                            {figures.pointer}{' '}
+                            {fig.pointer}{' '}
                           </Text>
                         ) : (
                           <Text>{'  '}</Text>
@@ -533,7 +533,7 @@ export function MessageSelector({
                               </Text>
                             ) : (
                               <Text dimColor color="warning">
-                                {figures.warning} {tSync('messageSelector.noCodeRestore')}
+                                {fig.warning} {tSync('messageSelector.noCodeRestore')}
                               </Text>
                             )}
                           </Box>

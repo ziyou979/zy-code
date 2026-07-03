@@ -1,11 +1,11 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+import { fig } from '../../constants/figures.js'
 import { feature } from 'bun:bundle'
 import { Box, Text, useTheme, useThemeSetting, useTerminalFocus } from '../../ink.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import * as React from 'react'
 import { useState, useCallback } from 'react'
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'
-import figures from 'figures'
 import {
   type GlobalConfig,
   saveGlobalConfig,
@@ -2055,7 +2055,7 @@ export function Config({
               <>
                 {scrollOffset > 0 && (
                   <Text dimColor>
-                    {figures.arrowUp} {tSync('settings.moreAbove', { count: scrollOffset })}
+                    {fig.arrowUp} {tSync('settings.moreAbove', { count: scrollOffset })}
                   </Text>
                 )}
                 {filteredSettingsItems
@@ -2069,7 +2069,7 @@ export function Config({
                         <Box>
                           <Box width={44}>
                             <Text color={isSelected ? 'suggestion' : undefined}>
-                              {isSelected ? figures.pointer : ' '} {setting_2.label}
+                              {isSelected ? fig.pointer : ' '} {setting_2.label}
                             </Text>
                           </Box>
                           <Box key={isSelected ? 'selected' : 'unselected'}>
@@ -2119,7 +2119,7 @@ export function Config({
                   })}
                 {scrollOffset + maxVisible < filteredSettingsItems.length && (
                   <Text dimColor>
-                    {figures.arrowDown}{' '}
+                    {fig.arrowDown}{' '}
                     {tSync('settings.moreBelow', {
                       count: filteredSettingsItems.length - scrollOffset - maxVisible,
                     })}

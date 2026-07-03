@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import * as React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -323,7 +323,7 @@ export function ManageMarketplaces({
         actions.push(`Removed ${removedCount} ${plural(removedCount, 'marketplace')}`)
       }
       if (actions.length > 0) {
-        const successMsg = `${figures.tick} ${actions.join(', ')}`
+        const successMsg = `${fig.tick} ${actions.join(', ')}`
         // If we were in details view, stay there and show success
         if (wasInDetailsView) {
           setSuccessMessage(successMsg)
@@ -621,7 +621,7 @@ export function ManageMarketplaces({
 
         {/* Add Marketplace option */}
         <Box flexDirection="row" gap={1}>
-          <Text color="suggestion">{figures.pointer} +</Text>
+          <Text color="suggestion">{fig.pointer} +</Text>
           <Text bold color="suggestion">
             Add Marketplace
           </Text>
@@ -718,7 +718,7 @@ export function ManageMarketplaces({
               <Box flexDirection="column" marginLeft={1}>
                 {selectedMarketplace.installedPlugins.map((plugin) => (
                   <Box key={plugin.name} flexDirection="row" gap={1}>
-                    <Text>{figures.bullet}</Text>
+                    <Text>{fig.bullet}</Text>
                     <Box flexDirection="column">
                       <Text>{plugin.name}</Text>
                       <Text dimColor>{plugin.manifest.description}</Text>
@@ -762,7 +762,7 @@ export function ManageMarketplaces({
               return (
                 <Box key={option.value}>
                   <Text color={isSelected ? 'suggestion' : undefined}>
-                    {isSelected ? figures.pointer : ' '} {option.label}
+                    {isSelected ? fig.pointer : ' '} {option.label}
                   </Text>
                   {option.secondaryLabel && <Text dimColor> {option.secondaryLabel}</Text>}
                 </Box>
@@ -818,7 +818,7 @@ export function ManageMarketplaces({
       {/* Add Marketplace option */}
       <Box flexDirection="row" gap={1} marginBottom={1}>
         <Text color={selectedIndex === 0 ? 'suggestion' : undefined}>
-          {selectedIndex === 0 ? figures.pointer : ' '} +
+          {selectedIndex === 0 ? fig.pointer : ' '} +
         </Text>
         <Text bold color={selectedIndex === 0 ? 'suggestion' : undefined}>
           Add Marketplace
@@ -841,8 +841,7 @@ export function ManageMarketplaces({
           return (
             <Box key={state.name} flexDirection="row" gap={1} marginBottom={1}>
               <Text color={isSelected ? 'suggestion' : undefined}>
-                {isSelected ? figures.pointer : ' '}{' '}
-                {state.pendingRemove ? figures.cross : figures.bullet}
+                {isSelected ? fig.pointer : ' '} {state.pendingRemove ? fig.cross : fig.bullet}
               </Text>
               <Box flexDirection="column" flexGrow={1}>
                 <Box flexDirection="row" gap={1}>

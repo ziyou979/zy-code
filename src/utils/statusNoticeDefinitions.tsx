@@ -1,8 +1,8 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+import { fig } from '../constants/figures.js'
 import { Box, Text } from '../ink.js'
 import * as React from 'react'
 import { getLargeMemoryFiles, MAX_MEMORY_CHARACTER_COUNT, type MemoryFileInfo } from './agentsMd.js'
-import figures from 'figures'
 import { getCwd } from './cwd.js'
 import { relative } from 'node:path'
 import { formatNumber } from './format.js'
@@ -53,7 +53,7 @@ const largeMemoryFilesNotice: StatusNoticeDefinition = {
             : file.path
           return (
             <Box key={file.path} flexDirection="row">
-              <Text color="warning">{figures.warning}</Text>
+              <Text color="warning">{fig.warning}</Text>
               <Text color="warning">
                 Large <Text bold>{displayPath}</Text> will impact performance (
                 {formatNumber(file.content.length)} chars &gt;{' '}
@@ -77,7 +77,7 @@ const zyAiSubscriberExternalTokenNotice: StatusNoticeDefinition = {
     const authTokenInfo = getAuthTokenSource()
     return (
       <Box flexDirection="row" marginTop={1}>
-        <Text color="warning">{figures.warning}</Text>
+        <Text color="warning">{fig.warning}</Text>
         <Text color="warning">
           Auth conflict: Using {authTokenInfo.source} instead of Zy account subscription token.
           Either unset {authTokenInfo.source}, or run `zy /logout`.
@@ -109,7 +109,7 @@ const apiKeyConflictNotice: StatusNoticeDefinition = {
     })
     return (
       <Box flexDirection="row" marginTop={1}>
-        <Text color="warning">{figures.warning}</Text>
+        <Text color="warning">{fig.warning}</Text>
         <Text color="warning">
           Auth conflict: Using {apiKeySource} instead of Anthropic Console key. Either unset{' '}
           {apiKeySource}, or run `zy /logout`.
@@ -147,7 +147,7 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
     return (
       <Box flexDirection="column" marginTop={1}>
         <Box flexDirection="row">
-          <Text color="warning">{figures.warning}</Text>
+          <Text color="warning">{fig.warning}</Text>
           <Text color="warning">
             Auth conflict: Both a token ({authTokenInfo.source}) and an API key ({apiKeySource}) are
             set. This may lead to unexpected behavior.
@@ -184,7 +184,7 @@ const largeAgentDescriptionsNotice: StatusNoticeDefinition = {
     const totalTokens = getAgentDescriptionsTotalTokens(context.agentDefinitions)
     return (
       <Box flexDirection="row">
-        <Text color="warning">{figures.warning}</Text>
+        <Text color="warning">{fig.warning}</Text>
         <Text color="warning">
           Large cumulative agent descriptions will impact performance (~
           {formatNumber(totalTokens)} tokens &gt; {formatNumber(AGENT_DESCRIPTIONS_THRESHOLD)})
@@ -207,7 +207,7 @@ const jetbrainsPluginNotice: StatusNoticeDefinition = {
     const ideName = toIDEDisplayName(ideType)
     return (
       <Box flexDirection="row" gap={1} marginLeft={1}>
-        <Text color="ide">{figures.arrowUp}</Text>
+        <Text color="ide">{fig.arrowUp}</Text>
         <Text>
           Install the <Text color="ide">{ideName}</Text> plugin from the JetBrains Marketplace:{' '}
           <Text bold>https://docs.zy.com/s/zy-code-jetbrains</Text>

@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../constants/figures.js'
 import * as React from 'react'
 import { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
@@ -50,14 +50,14 @@ export function TeleportProgress({ currentStep, sessionId }: Props) {
     let icon
     let color
     if (isComplete) {
-      icon = figures.tick
+      icon = fig.tick
       color = 'green'
     } else {
       if (isCurrent) {
         icon = SPINNER_FRAMES[frame]
         color = 'zy'
       } else {
-        icon = figures.circle
+        icon = fig.circle
         color = undefined
       }
     }

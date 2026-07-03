@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import React, { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useDeclaredCursor } from '../../ink/hooks/use-declared-cursor.js'
 import { stringWidth } from '../../ink/stringWidth.js'
@@ -9,7 +9,11 @@ import type { ImageDimensions } from '../../utils/imageResizer.js'
 import type { ClickEvent } from '../../ink/events/click-event.js'
 import { SelectInputOption } from './select-input-option.js'
 import { SelectOption } from './select-option.js'
-import { createOptionClickHandler, createOptionHoverHandler, createHoverLeaveHandler } from './select-mouse-actions.js'
+import {
+  createOptionClickHandler,
+  createOptionHoverHandler,
+  createHoverLeaveHandler,
+} from './select-mouse-actions.js'
 import { useSelectInput } from './use-select-input.js'
 import { useSelectState } from './use-select-state.js'
 
@@ -665,11 +669,11 @@ SelectProps<any>) {
               >
                 <Box flexDirection="row" flexShrink={0}>
                   {data.isFocused ? (
-                    <Text color="suggestion">{figures.pointer}</Text>
+                    <Text color="suggestion">{fig.pointer}</Text>
                   ) : data.shouldShowDownArrow ? (
-                    <Text dimColor={true}>{figures.arrowDown}</Text>
+                    <Text dimColor={true}>{fig.arrowDown}</Text>
                   ) : data.shouldShowUpArrow ? (
-                    <Text dimColor={true}>{figures.arrowUp}</Text>
+                    <Text dimColor={true}>{fig.arrowUp}</Text>
                   ) : (
                     <Text> </Text>
                   )}
@@ -691,7 +695,7 @@ SelectProps<any>) {
                     )}
                     {data.label}
                   </Text>
-                  {isEffectivelySelected_1 && <Text color="success"> {figures.tick}</Text>}
+                  {isEffectivelySelected_1 && <Text color="success"> {fig.tick}</Text>}
                   {padding > 0 && <Text>{' '.repeat(padding)}</Text>}
                 </Box>
                 <Box flexGrow={1} marginLeft={2}>
@@ -896,7 +900,13 @@ function TwoColumnRow({
     active: isFocused,
   })
   return (
-    <Box ref={cursorRef} flexDirection="row" onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <Box
+      ref={cursorRef}
+      flexDirection="row"
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       {children}
     </Box>
   )

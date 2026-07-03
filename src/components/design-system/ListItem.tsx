@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import type { ReactNode } from 'react'
 import { useDeclaredCursor } from '../../ink/hooks/use-declared-cursor.js'
 import type { ClickEvent } from '../../ink/events/click-event.js'
@@ -135,13 +135,13 @@ export function ListItem({
       return <Text> </Text>
     }
     if (isFocused) {
-      return <Text color="suggestion">{figures.pointer}</Text>
+      return <Text color="suggestion">{fig.pointer}</Text>
     }
     if (showScrollDown) {
-      return <Text dimColor={true}>{figures.arrowDown}</Text>
+      return <Text dimColor={true}>{fig.arrowDown}</Text>
     }
     if (showScrollUp) {
-      return <Text dimColor={true}>{figures.arrowUp}</Text>
+      return <Text dimColor={true}>{fig.arrowUp}</Text>
     }
     return <Text> </Text>
   }
@@ -167,7 +167,13 @@ export function ListItem({
   })
   const indicatorElement = renderIndicator()
   return (
-    <Box ref={cursorRef} flexDirection="column" onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <Box
+      ref={cursorRef}
+      flexDirection="column"
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       {
         <Box flexDirection="row" gap={1}>
           {indicatorElement}
@@ -178,7 +184,7 @@ export function ListItem({
           ) : (
             children
           )}
-          {isSelected && !disabled && <Text color="success">{figures.tick}</Text>}
+          {isSelected && !disabled && <Text color="success">{fig.tick}</Text>}
         </Box>
       }
       {description && (

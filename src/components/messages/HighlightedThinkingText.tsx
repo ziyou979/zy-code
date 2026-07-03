@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import { useContext } from 'react'
 import { useQueuedMessage } from '../../context/QueuedMessageContext.js'
 import { Box, Text } from '../../ink.js'
@@ -40,7 +40,7 @@ export function HighlightedThinkingText({ text, useBriefLayout, timestamp }: Pro
   if (triggers.length === 0) {
     earlyReturn = (
       <Text>
-        {<Text color={pointerColor}>{figures.pointer} </Text>}
+        {<Text color={pointerColor}>{fig.pointer} </Text>}
         {<Text color="text">{text}</Text>}
       </Text>
     )
@@ -77,7 +77,7 @@ export function HighlightedThinkingText({ text, useBriefLayout, timestamp }: Pro
   }
   return (
     <Text>
-      {<Text color={pointerColor}>{figures.pointer} </Text>}
+      {<Text color={pointerColor}>{fig.pointer} </Text>}
       {parts}
     </Text>
   )

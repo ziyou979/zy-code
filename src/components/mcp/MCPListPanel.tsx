@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import type { CommandResultDisplay } from '../../commands.js'
@@ -194,15 +194,15 @@ export function MCPListPanel({
     let statusIcon
     let statusText
     if (server.client.type === 'disabled') {
-      statusIcon = color('inactive', theme)(figures.radioOff)
+      statusIcon = color('inactive', theme)(fig.radioOff)
       statusText = tSync('mcp.disabled')
     } else {
       if (server.client.type === 'connected') {
-        statusIcon = color('success', theme)(figures.tick)
+        statusIcon = color('success', theme)(fig.tick)
         statusText = tSync('mcp.connected')
       } else {
         if (server.client.type === 'pending') {
-          statusIcon = color('inactive', theme)(figures.radioOff)
+          statusIcon = color('inactive', theme)(fig.radioOff)
           const { reconnectAttempt, maxReconnectAttempts } = server.client
           if (reconnectAttempt && maxReconnectAttempts) {
             statusText = tSync('mcp.reconnectingWithProgress', {
@@ -214,10 +214,10 @@ export function MCPListPanel({
           }
         } else {
           if (server.client.type === 'needs-auth') {
-            statusIcon = color('warning', theme)(figures.triangleUpOutline)
+            statusIcon = color('warning', theme)(fig.triangleUpOutline)
             statusText = tSync('mcp.needsAuthentication')
           } else {
-            statusIcon = color('error', theme)(figures.cross)
+            statusIcon = color('error', theme)(fig.cross)
             statusText = tSync('mcp.failed')
           }
         }
@@ -226,7 +226,7 @@ export function MCPListPanel({
     return (
       <Box key={`${server.name}-${index}`}>
         <Text color={isSelected ? 'suggestion' : undefined}>
-          {isSelected ? `${figures.pointer} ` : '  '}
+          {isSelected ? `${fig.pointer} ` : '  '}
         </Text>
         <Text color={isSelected ? 'suggestion' : undefined}>{server.name}</Text>
         <Text dimColor={!isSelected}> · {statusIcon} </Text>
@@ -239,13 +239,13 @@ export function MCPListPanel({
     const index = getAgentServerIndex(agentServer)
     const isSelected = selectedIndex === index
     const statusIcon = agentServer.needsAuth
-      ? color('warning', theme)(figures.triangleUpOutline)
-      : color('inactive', theme)(figures.radioOff)
+      ? color('warning', theme)(fig.triangleUpOutline)
+      : color('inactive', theme)(fig.radioOff)
     const statusText = agentServer.needsAuth ? tSync('mcp.mayNeedAuth') : tSync('mcp.agentOnly')
     return (
       <Box key={`agent-${agentServer.name}-${index}`}>
         <Text color={isSelected ? 'suggestion' : undefined}>
-          {isSelected ? `${figures.pointer} ` : '  '}
+          {isSelected ? `${fig.pointer} ` : '  '}
         </Text>
         <Text color={isSelected ? 'suggestion' : undefined}>{agentServer.name}</Text>
         <Text dimColor={!isSelected}> · {statusIcon} </Text>

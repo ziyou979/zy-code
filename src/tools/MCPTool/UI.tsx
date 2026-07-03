@@ -1,5 +1,5 @@
+import { fig } from '../../constants/figures.js'
 import { feature } from 'bun:bundle'
-import figures from 'figures'
 import * as React from 'react'
 import type { z } from 'zod/v4'
 import { ProgressBar } from '../../components/design-system/ProgressBar.js'
@@ -115,7 +115,7 @@ export function renderToolResultMessage(
   const showWarning = estimatedTokens > MCP_OUTPUT_WARNING_THRESHOLD_TOKENS
   const warningMessage = showWarning
     ? tSync('mcp.largeResponseWarning', {
-        warning: figures.warning,
+        warning: fig.warning,
         tokens: formatNumber(estimatedTokens),
       })
     : null

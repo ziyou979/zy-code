@@ -1,5 +1,5 @@
+import { fig } from '../constants/figures.js'
 import chalk from 'chalk'
-import figures from 'figures'
 import React from 'react'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
 import { useModalOrTerminalSize } from '../context/modalContext.js'
@@ -872,7 +872,7 @@ export function LogSelector({
       <Box flexShrink={0} flexDirection="column">
         <Box flexDirection="row" gap={1}>
           <Text color={isAgenticSearchOptionFocused ? 'suggestion' : undefined}>
-            {isAgenticSearchOptionFocused ? figures.pointer : ' '}
+            {isAgenticSearchOptionFocused ? fig.pointer : ' '}
           </Text>
           <Text
             color={isAgenticSearchOptionFocused ? 'suggestion' : undefined}

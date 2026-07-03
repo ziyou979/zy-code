@@ -1,4 +1,4 @@
-import figures from 'figures'
+import { fig } from '../../constants/figures.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
@@ -41,7 +41,7 @@ export function AgentDetail({ agent, tools, onBack }: Props) {
         {resolvedTools.validTools.length > 0 && <Text>{resolvedTools.validTools.join(', ')}</Text>}
         {resolvedTools.invalidTools.length > 0 && (
           <Text color="warning">
-            {figures.warning} Unrecognized: {resolvedTools.invalidTools.join(', ')}
+            {fig.warning} Unrecognized: {resolvedTools.invalidTools.join(', ')}
           </Text>
         )}
       </>

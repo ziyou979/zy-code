@@ -1,5 +1,5 @@
+import { fig } from '../constants/figures.js'
 import { join } from 'node:path'
-import figures from 'figures'
 import { Suspense, use, useEffect, useState } from 'react'
 import { KeybindingWarnings } from 'src/components/KeybindingWarnings.js'
 import { McpParsingWarnings } from 'src/components/mcp/McpParsingWarnings.js'
@@ -269,7 +269,7 @@ export function Doctor({ onDone }: Props) {
       <Text>
         └{' '}
         <Text color="warning">
-          {figures.warning} {contextWarnings.unreachableRulesWarning.message}
+          {fig.warning} {contextWarnings.unreachableRulesWarning.message}
         </Text>
       </Text>
       {contextWarnings.unreachableRulesWarning.details.map((detail, i_5) => (
@@ -434,7 +434,7 @@ export function Doctor({ onDone }: Props) {
                 <Text>
                   └{' '}
                   <Text color="warning">
-                    {figures.warning} {contextWarnings.agentsMdWarning.message}
+                    {fig.warning} {contextWarnings.agentsMdWarning.message}
                   </Text>
                 </Text>
                 <Text>
@@ -452,7 +452,7 @@ export function Doctor({ onDone }: Props) {
                 <Text>
                   └{' '}
                   <Text color="warning">
-                    {figures.warning} {contextWarnings.agentWarning.message}
+                    {fig.warning} {contextWarnings.agentWarning.message}
                   </Text>
                 </Text>
                 <Text>
@@ -470,7 +470,7 @@ export function Doctor({ onDone }: Props) {
                 <Text>
                   └{' '}
                   <Text color="warning">
-                    {figures.warning} {contextWarnings.mcpWarning.message}
+                    {fig.warning} {contextWarnings.mcpWarning.message}
                   </Text>
                 </Text>
                 <Text>

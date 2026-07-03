@@ -8,11 +8,7 @@ import {
   EFFORT_THOROUGH,
   EFFORT_ULTRA,
 } from '../constants/figures.js'
-import {
-  type EffortLevel,
-  getDisplayedEffortLevel,
-  modelSupportsEffort,
-} from '../utils/effort.js'
+import { type EffortLevel, getDisplayedEffortLevel, modelSupportsEffort } from '../utils/effort.js'
 
 /**
  * Build the text for the effort-changed notification, e.g. "◐ medium · /effort".

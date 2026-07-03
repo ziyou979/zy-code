@@ -1,5 +1,5 @@
+import { fig } from '../../constants/figures.js'
 import { randomUUID } from 'node:crypto'
-import figures from 'figures'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useInterval } from 'usehooks-ts'
@@ -358,8 +358,8 @@ function TeamDetailView({ teamName, teammates, selectedIndex, onCancel }: TeamDe
       {
         <Box marginLeft={1}>
           <Text dimColor={true}>
-            {figures.arrowUp}/{figures.arrowDown} select · Enter view · k kill · s shutdown · p
-            prune idle{supportsHideShow && ' \xB7 h hide/show \xB7 H hide/show all'}
+            {fig.arrowUp}/{fig.arrowDown} select · Enter view · k kill · s shutdown · p prune idle
+            {supportsHideShow && ' \xB7 h hide/show \xB7 H hide/show all'}
             {' \xB7 '}
             {cycleModeShortcut} sync cycle modes for all · Esc close
           </Text>
@@ -380,7 +380,7 @@ function TeammateListItem({ teammate, isSelected }: TeammateListItemProps) {
   const modeColor = getModeColor(mode)
   return (
     <Text color={isSelected ? 'suggestion' : undefined} dimColor={shouldDim}>
-      {isSelected ? `${figures.pointer} ` : '  '}
+      {isSelected ? `${fig.pointer} ` : '  '}
       {teammate.isHidden && <Text dimColor={true}>[hidden] </Text>}
       {isIdle && <Text dimColor={true}>[idle] </Text>}
       {modeSymbol && <Text color={modeColor}>{modeSymbol} </Text>}@{teammate.name}
@@ -457,7 +457,7 @@ function TeammateDetailView({ teammate, teamName, onCancel }: TeammateDetailView
               <Text bold={true}>Tasks</Text>
               {teammateTasks.map((task) => (
                 <Text key={task.id} color={task.status === 'completed' ? 'success' : undefined}>
-                  {task.status === 'completed' ? figures.tick : '\u25FC'} {task.subject}
+                  {task.status === 'completed' ? fig.tick : '\u25FC'} {task.subject}
                 </Text>
               ))}
             </Box>
@@ -478,7 +478,7 @@ function TeammateDetailView({ teammate, teamName, onCancel }: TeammateDetailView
       {
         <Box marginLeft={1}>
           <Text dimColor={true}>
-            {figures.arrowLeft} back · Esc close · k kill · s shutdown
+            {fig.arrowLeft} back · Esc close · k kill · s shutdown
             {getCachedBackend()?.supportsHideShow && ' \xB7 h hide/show'}
             {' \xB7 '}
             {cycleModeShortcut} cycle mode
