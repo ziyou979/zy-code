@@ -210,19 +210,18 @@ describe('anthropicResponseToStandard: 非流式响应映射', () => {
     expect(r.usage.outputTokens).toBe(5)
   })
 
-  test('thinking 块：在非流式响应中被降级为 text 块', () => {
+  test('thinking 块：在非流式响应中保留为标准 thinking 块', () => {
     const r = anthropicResponseToStandard(
       {
         id: 'msg',
         model: 'claude',
-        content: [{ type: 'thinking', thinking: 'hmm' }],
+        content: [{ type: 'thinking', thinking: 'hmm', signature: 'sig' }],
         stop_reason: 'end_turn',
         usage: { input_tokens: 1, output_tokens: 1 },
       },
       'claude',
     )
-    // 当前实现：thinking → text
-    expect(r.content[0]).toEqual({ type: 'text', text: 'hmm' })
+    expect(r.content[0]).toEqual({ type: 'thinking', thinking: 'hmm', signature: 'sig' })
   })
 
   test('cache tokens 提到顶层字段', () => {

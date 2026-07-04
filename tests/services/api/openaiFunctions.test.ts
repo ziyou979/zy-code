@@ -99,29 +99,22 @@ describe('convertOutputFormatToResponseFormat', () => {
   })
 
   test('json_object → { type: "json_object" }', () => {
-    expect(
-      convertOutputFormatToResponseFormat({ type: 'json_object' }),
-    ).toEqual({ type: 'json_object' })
+    expect(convertOutputFormatToResponseFormat({ type: 'json_object' })).toEqual({
+      type: 'json_object',
+    })
   })
 
-  test('json_schema + json_schema 字段（旧格式）→ 忽略 json_schema 字段返回 undefined', () => {
+  test('json_schema + json_schema 字段（旧格式）→ OpenAI JSON mode', () => {
     const schema = { name: 'test', schema: { type: 'object' } }
     expect(
       convertOutputFormatToResponseFormat({ type: 'json_schema', json_schema: schema }),
-    ).toBeUndefined()
+    ).toEqual({ type: 'json_object' })
   })
 
-  test('json_schema 用 schema 字段 → 包裹为 OpenAI 格式', () => {
+  test('json_schema 用 schema 字段 → OpenAI JSON mode', () => {
     const schema = { name: 'test', schema: { type: 'object' } }
-    expect(
-      convertOutputFormatToResponseFormat({ type: 'json_schema', schema }),
-    ).toEqual({
-      type: 'json_schema',
-      json_schema: {
-        name: 'response',
-        schema,
-        strict: true,
-      },
+    expect(convertOutputFormatToResponseFormat({ type: 'json_schema', schema })).toEqual({
+      type: 'json_object',
     })
   })
 
@@ -131,10 +124,10 @@ describe('convertOutputFormatToResponseFormat', () => {
     ).toEqual({ type: 'text' })
   })
 
-  test('json_schema 但无 schema 数据 → undefined', () => {
+  test('json_schema 但无 schema 数据 → OpenAI JSON mode', () => {
     expect(
       convertOutputFormatToResponseFormat({ type: 'json_schema' } as unknown as JSONOutputFormat),
-    ).toBeUndefined()
+    ).toEqual({ type: 'json_object' })
   })
 })
 
@@ -230,6 +223,27 @@ describe('buildOpenAIRequestParams', () => {
     expect(params.reasoning_effort).toBe('high')
     expect((params as any).output_config).toBeUndefined()
     expect(params.response_format).toEqual({ type: 'json_object' })
+  })
+
+  test('OpenAI 格式将内部 json_schema 转为 json_object', () => {
+    const params = buildOpenAIRequestParams({
+      model: 'deepseek-v4-flash',
+      messages: [{ role: 'user', content: [{ type: 'text', text: '生成标题' }] }],
+      maxTokens: 100,
+      thinking: { type: 'disabled' as const },
+      responseFormat: {
+        type: 'json_schema',
+        schema: {
+          type: 'object',
+          properties: { title: { type: 'string' } },
+          required: ['title'],
+          additionalProperties: false,
+        },
+      },
+    } as unknown as Parameters<typeof buildOpenAIRequestParams>[0])
+
+    expect(params.response_format).toEqual({ type: 'json_object' })
+    expect(params.thinking).toEqual({ type: 'disabled' })
   })
 })
 

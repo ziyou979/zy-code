@@ -10,6 +10,7 @@ import { resolveAgentTools } from '../../tools/AgentTool/agentToolUtils.js'
 import { type AgentDefinition, isBuiltInAgent } from '../../tools/AgentTool/loadAgentsDir.js'
 import { Markdown } from '../Markdown.js'
 import { getActualRelativeAgentFilePath } from './agentFileUtils.js'
+import { tSync } from '../../i18n/index.js'
 
 type Props = {
   agent: AgentDefinition
@@ -109,7 +110,9 @@ export function AgentDetail({ agent, tools, onBack }: Props) {
       {agent.skills && agent.skills.length > 0 && (
         <Text>
           <Text bold={true}>Skills</Text>:{' '}
-          {agent.skills.length > 10 ? `${agent.skills.length} skills` : agent.skills.join(', ')}
+          {agent.skills.length > 10
+            ? tSync('agent.skillsCount', { count: agent.skills.length })
+            : agent.skills.join(', ')}
         </Text>
       )}
       {backgroundColor && (

@@ -380,6 +380,7 @@ SelectProps<any>) {
                   state.focusOption,
                   state.selectFocusedOption,
                   onChange,
+                  inputValue,
                 )}
                 onMouseEnter={createOptionHoverHandler(option, setHoveredId)}
                 onMouseLeave={createHoverLeaveHandler(setHoveredId)}
@@ -530,6 +531,7 @@ SelectProps<any>) {
                   state.focusOption,
                   state.selectFocusedOption,
                   onChange,
+                  inputValue_0,
                 )}
                 onMouseEnter={createOptionHoverHandler(option_2, setHoveredId)}
                 onMouseLeave={createHoverLeaveHandler(setHoveredId)}
@@ -811,6 +813,7 @@ SelectProps<any>) {
                 state.focusOption,
                 state.selectFocusedOption,
                 onChange,
+                inputValue,
               )}
               onMouseEnter={createOptionHoverHandler(option, setHoveredId)}
               onMouseLeave={createHoverLeaveHandler(setHoveredId)}

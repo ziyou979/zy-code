@@ -179,6 +179,10 @@ import {
   checkResponseForCacheBreak,
   recordPromptState,
 } from './promptCacheBreakDetection.js'
+import {
+  MalformedAssistantCompletionError,
+  validateAssistantCompletion,
+} from './assistantCompletionValidator.js'
 import { cleanupStream, updateUsage } from './usageTracker.js'
 import {
   CannotRetryError,
@@ -397,10 +401,35 @@ export async function* executeNonStreamingRequest(
         // biome-ignore lint/plugin: non-streaming API call
         // 统一的非流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
         const adapter = getLLMAdapter({ anthropicClient: anthropic })
-        return await adapter.createMessage(adjustedParams, retryOptions.signal, fallbackTimeoutMs)
+        const result = await adapter.createMessage(
+          adjustedParams,
+          retryOptions.signal,
+          fallbackTimeoutMs,
+        )
+        const validation = validateAssistantCompletion({
+          content: result.content,
+          stopReason: result.stopReason,
+        })
+        if (!validation.ok) {
+          logForDebugging(
+            `Malformed non-streaming assistant completion (${validation.reason}) - retrying`,
+            { level: 'error' },
+          )
+          logEvent('zy_malformed_assistant_completion', {
+            mode: 'non_streaming' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+            reason: validation.reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+            model: retryOptions.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          })
+          throw new MalformedAssistantCompletionError(validation.reason)
+        }
+        return result
       } catch (err) {
         // 用户中止不是错误 — 立即重新抛出，不记录日志
         if (isAbortError(err)) {
+          throw err
+        }
+
+        if (err instanceof MalformedAssistantCompletionError) {
           throw err
         }
 
@@ -1684,6 +1713,25 @@ async function* queryModel(
             'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
         throw new Error('Stream ended without receiving any events')
+      }
+
+      const validation = validateAssistantCompletion({
+        content: newMessages.flatMap((msg) => msg.message.content),
+        stopReason,
+      })
+      if (!validation.ok) {
+        logForDebugging(
+          `Malformed streaming assistant completion (${validation.reason}) - triggering fallback retry`,
+          { level: 'error' },
+        )
+        logEvent('zy_malformed_assistant_completion', {
+          mode: 'streaming' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          reason: validation.reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          request_id: (streamRequestId ??
+            'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        })
+        throw new MalformedAssistantCompletionError(validation.reason)
       }
 
       // 如果流式传输期间发生了停顿，记录汇总日志

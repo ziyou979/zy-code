@@ -139,8 +139,13 @@ export function AttachmentMessage({
           : ''
       return (
         <Line>
-          <Text bold>{attachment.skills.length}</Text> relevant{' '}
-          {plural(attachment.skills.length, 'skill')}: {names}
+          <Text>
+            {tSync('attachment.skillDiscovery', {
+              count: attachment.skills.length,
+              skillWord: plural(attachment.skills.length, 'skill'),
+              names,
+            })}
+          </Text>
           {hint && <Text dimColor>{hint}</Text>}
         </Line>
       )
@@ -250,11 +255,13 @@ export function AttachmentMessage({
       const skillCount = attachment.skillNames.length
       return (
         <Line>
-          Loaded{' '}
-          <Text bold>
-            {skillCount} {plural(skillCount, 'skill')}
-          </Text>{' '}
-          from <Text bold>{attachment.displayPath}</Text>
+          <Text>
+            {tSync('attachment.dynamicSkill', {
+              count: skillCount,
+              skillWord: plural(skillCount, 'skill'),
+              path: attachment.displayPath,
+            })}
+          </Text>
         </Line>
       )
     }
@@ -264,8 +271,12 @@ export function AttachmentMessage({
       }
       return (
         <Line>
-          <Text bold>{attachment.skillCount}</Text> {plural(attachment.skillCount, 'skill')}{' '}
-          available
+          <Text>
+            {tSync('attachment.skillListing', {
+              count: attachment.skillCount,
+              skillWord: plural(attachment.skillCount, 'skill'),
+            })}
+          </Text>
         </Line>
       )
     }
@@ -276,7 +287,12 @@ export function AttachmentMessage({
       const count = attachment.addedTypes.length
       return (
         <Line>
-          <Text bold>{count}</Text> agent {plural(count, 'type')} available
+          <Text>
+            {tSync('attachment.agentListingDelta', {
+              count,
+              typeWord: plural(count, 'type'),
+            })}
+          </Text>
         </Line>
       )
     }

@@ -14,6 +14,7 @@ import type { StopReason } from '../../../src/types/llm.js'
 
 function makeCompletion(args: {
   content?: string | null
+  reasoningContent?: string | null
   toolCalls?: Array<{ id: string; name: string; arguments: string }>
   finishReason?: 'stop' | 'tool_calls' | 'length' | 'content_filter'
   promptTokens?: number
@@ -31,6 +32,9 @@ function makeCompletion(args: {
           role: 'assistant',
           content: args.content ?? null,
           refusal: null,
+          ...(args.reasoningContent !== undefined && {
+            reasoning_content: args.reasoningContent,
+          }),
           ...(args.toolCalls && {
             tool_calls: args.toolCalls.map((tc) => ({
               id: tc.id,
@@ -58,6 +62,15 @@ describe('openAIResponseToStandard: 入站 OpenAI 非流式', () => {
     const r = openAIResponseToStandard(makeCompletion({ content: 'hi' }), 'gpt-4')
     expect(r.role).toBe('assistant')
     expect(r.content).toEqual([{ type: 'text', text: 'hi' }])
+    expect(r.stopReason).toBe('end_turn')
+  })
+
+  test('reasoning_content 响应：进入标准 thinking block', () => {
+    const r = openAIResponseToStandard(
+      makeCompletion({ content: null, reasoningContent: 'hidden reasoning' }),
+      'deepseek-v4-flash',
+    )
+    expect(r.content).toEqual([{ type: 'thinking', thinking: 'hidden reasoning', signature: '' }])
     expect(r.stopReason).toBe('end_turn')
   })
 

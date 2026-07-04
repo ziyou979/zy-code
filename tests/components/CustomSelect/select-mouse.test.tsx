@@ -57,7 +57,7 @@ describe('handleOptionClick', () => {
     expect(onChange).not.toHaveBeenCalled()
   })
 
-  test('点击 input 选项应只聚焦，不提交', () => {
+  test('点击空 input 选项应只聚焦，不提交', () => {
     const focusOption = mock()
     const selectFocusedOption = mock()
     const onChange = mock()
@@ -78,6 +78,56 @@ describe('handleOptionClick', () => {
     expect(focusOption).toHaveBeenCalledWith('input-1')
     expect(selectFocusedOption).not.toHaveBeenCalled()
     expect(onChange).not.toHaveBeenCalled()
+  })
+
+  test('点击有预填值的 input 选项应直接提交', () => {
+    const focusOption = mock()
+    const selectFocusedOption = mock()
+    const onChange = mock()
+
+    const option: OptionWithDescription<string> = {
+      label: 'Input Option',
+      value: 'input-1',
+      type: 'input',
+      initialValue: 'node:*',
+      onChange: mock(),
+    }
+
+    handleOptionClick(option, {
+      focusOption,
+      selectFocusedOption,
+      onChange,
+      inputValue: 'node:*',
+    })
+
+    expect(focusOption).not.toHaveBeenCalled()
+    expect(selectFocusedOption).not.toHaveBeenCalled()
+    expect(onChange).toHaveBeenCalledWith('input-1')
+  })
+
+  test('点击允许空提交的 input 选项应直接提交', () => {
+    const focusOption = mock()
+    const selectFocusedOption = mock()
+    const onChange = mock()
+
+    const option: OptionWithDescription<string> = {
+      label: 'Input Option',
+      value: 'input-1',
+      type: 'input',
+      onChange: mock(),
+      allowEmptySubmitToCancel: true,
+    }
+
+    handleOptionClick(option, {
+      focusOption,
+      selectFocusedOption,
+      onChange,
+      inputValue: '',
+    })
+
+    expect(focusOption).not.toHaveBeenCalled()
+    expect(selectFocusedOption).not.toHaveBeenCalled()
+    expect(onChange).toHaveBeenCalledWith('input-1')
   })
 
   test('多选模式下点击选项应聚焦并 toggle', () => {

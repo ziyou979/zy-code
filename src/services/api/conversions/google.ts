@@ -410,10 +410,7 @@ export function buildGoogleRequestParams(params: CreateParams): GoogleGenerateCo
     generationConfig.thinkingConfig = providerExtras.google.thinkingConfig as GoogleThinkingConfig
   } else if (params.thinking) {
     // 从标准中立字段读取，不跨 namespace 读取其他 provider 的配置
-    const thinkingConfig = convertThinkingToGoogleConfig(
-      params.thinking,
-      params.reasoningEffort,
-    )
+    const thinkingConfig = convertThinkingToGoogleConfig(params.thinking, params.reasoningEffort)
     if (thinkingConfig) {
       generationConfig.thinkingConfig = thinkingConfig
     }

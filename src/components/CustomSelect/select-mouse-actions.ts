@@ -15,6 +15,8 @@ export type HandleOptionClickOptions<T> = {
   onToggle?: (value: T) => void
   /** 是否为多选模式 */
   isMultiSelect?: boolean
+  /** input 选项当前值，用于与数字键选择语义保持一致 */
+  inputValue?: string
 }
 
 /**
@@ -22,7 +24,7 @@ export type HandleOptionClickOptions<T> = {
  *
  * 与键盘路径保持一致：
  * - disabled 选项忽略
- * - input 选项只聚焦，不提交
+ * - input 选项有预填值时直接提交，空值时只聚焦
  * - 多选模式 toggle 选中状态
  * - 普通单选聚焦并选择
  *
@@ -36,8 +38,13 @@ export function handleOptionClick<T>(
   // disabled 选项忽略
   if (option.disabled) return
 
-  // input 选项只聚焦，不提交
+  // input 选项对齐数字键选择：预填值直接提交，空值进入编辑。
   if (option.type === 'input') {
+    const currentInputValue = options.inputValue ?? option.initialValue ?? ''
+    if (!options.isMultiSelect && (currentInputValue.trim() || option.allowEmptySubmitToCancel)) {
+      options.onChange?.(option.value)
+      return
+    }
     options.focusOption(option.value)
     return
   }
@@ -69,12 +76,14 @@ export function createOptionClickHandler<T>(
   focusOption: (value: T | undefined) => void,
   selectFocusedOption: () => void,
   onChange?: (value: T) => void,
+  inputValue?: string,
 ): (event: ClickEvent) => void {
   return (_event: ClickEvent) => {
     handleOptionClick(option, {
       focusOption,
       selectFocusedOption,
       onChange,
+      inputValue,
     })
   }
 }

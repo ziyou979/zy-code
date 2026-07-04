@@ -60,6 +60,11 @@ interface DashScopeChatCompletionDelta {
   tool_calls?: OpenAI.Chat.Completions.ChatCompletionChunk.Choice.Delta.ToolCall[]
 }
 
+interface OpenAIChatCompletionMessageWithReasoning
+  extends OpenAI.Chat.Completions.ChatCompletionMessage {
+  reasoning_content?: string | null
+}
+
 // ============================================================================
 // 工具：tool_call.arguments 安全序列化
 // ============================================================================
@@ -511,10 +516,11 @@ export function convertThinkingForOpenAI(
  * 将 outputConfig.format 转换为 OpenAI 的 response_format。
  * - 已是 OpenAI 格式（含顶层 type）：原样返回
  * - 'json_object' 直接返回
- * - 'json_schema' 取 format.schema（原始 JSON Schema），自动包裹为 {name, schema, strict}
+ * - 内部 'json_schema' 在 OpenAI-compatible 协议下使用 JSON mode（json_object）
  *
- * OpenAI 的 json_schema 字段必须是 {name, schema, strict}（不是裸 JSON Schema），
- * 因此当输入为原始 JSON Schema 时需自动包装一层。
+ * 注意：Anthropic 与 OpenAI-compatible 的 JSON 输出参数语义不同。
+ * 内部 json_schema 是 provider 中立的结构化输出请求；OpenAI 这里不透传
+ * json_schema schema，而是发送 response_format.type=json_object。
  */
 export function convertOutputFormatToResponseFormat(
   format: JSONOutputFormat | undefined,
@@ -524,22 +530,10 @@ export function convertOutputFormatToResponseFormat(
   }
 
   if (format.type === 'json_schema') {
-    const rawSchema = format.schema
-    if (!rawSchema) {
-      return undefined
-    }
-
-    // 原始 JSON Schema 需包裹成 OpenAI 要求的 {name, schema, strict}
-    const jsonSchema: Record<string, unknown> = {
-      name: 'response',
-      schema: rawSchema,
-      strict: true,
-    }
-
-    return {
-      type: 'json_schema',
-      json_schema: jsonSchema as unknown as OpenAI.ResponseFormatJSONSchema['json_schema'],
-    }
+    // 内部 json_schema 表示“需要结构化 JSON 输出”。
+    // Anthropic 使用 output_config.format.type=json_schema；OpenAI-compatible
+    // 入口统一使用 JSON mode，避免把 Anthropic 语义误映射成 OpenAI 的 json_schema。
+    return { type: 'json_object' }
   }
 
   // 非 json_schema 类型（如 json_object 或已有 OpenAI 格式）
@@ -645,13 +639,22 @@ export function openAIResponseToStandard(
   model: string,
 ): LLMResponse {
   const choice = completion.choices[0]
+  const message = choice?.message as OpenAIChatCompletionMessageWithReasoning | undefined
   const contentBlocks: AssistantContentBlock[] = []
 
-  if (choice?.message.content) {
-    contentBlocks.push({ type: 'text', text: choice.message.content })
+  if (message?.reasoning_content) {
+    contentBlocks.push({
+      type: 'thinking',
+      thinking: message.reasoning_content,
+      signature: '',
+    })
   }
-  if (choice?.message.tool_calls) {
-    for (const tc of choice.message.tool_calls) {
+
+  if (message?.content) {
+    contentBlocks.push({ type: 'text', text: message.content })
+  }
+  if (message?.tool_calls) {
+    for (const tc of message.tool_calls) {
       let parsedInput: Record<string, unknown> = {}
       try {
         const parsed = JSON.parse(tc.function.arguments ?? '{}')

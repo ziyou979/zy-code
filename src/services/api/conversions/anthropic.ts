@@ -423,8 +423,13 @@ export function anthropicResponseToStandard(result: any, model: string): LLMResp
           input: block.input ?? {},
         }
       case 'thinking':
-        // 非流式响应中 thinking 块降级为 text，保留旧版行为
-        return { type: 'text', text: block.thinking ?? '' }
+        return {
+          type: 'thinking',
+          thinking: block.thinking ?? '',
+          signature: block.signature ?? '',
+        }
+      case 'redacted_thinking':
+        return { type: 'redacted_thinking', data: block.data ?? '' }
       default:
         return { type: 'text', text: '' }
     }
@@ -477,7 +482,13 @@ export function buildAnthropicCreateParams(params: CreateParams): AnthropicCreat
   if (systemMessages.length > 0) {
     systemContent = systemMessages.map((m) => m.content as string).join('\n\n')
   } else if (params.system !== undefined) {
-    systemContent = typeof params.system === 'string' ? params.system : params.system.filter((b) => b.type === 'text').map((b) => (b as { text: string }).text).join('\n\n')
+    systemContent =
+      typeof params.system === 'string'
+        ? params.system
+        : params.system
+            .filter((b) => b.type === 'text')
+            .map((b) => (b as { text: string }).text)
+            .join('\n\n')
   }
 
   // 工具：v1 input_schema / v2 inputSchema 都支持
@@ -526,7 +537,10 @@ export function buildAnthropicCreateParams(params: CreateParams): AnthropicCreat
   }
   // output_config 从拍平后的字段构造；anthropicExtras.outputConfig 作为全量覆盖
   const hasAnyOutputConfigField =
-    params.reasoningEffort || params.responseFormat || params.taskBudget || anthropicExtras?.outputConfig
+    params.reasoningEffort ||
+    params.responseFormat ||
+    params.taskBudget ||
+    anthropicExtras?.outputConfig
   if (hasAnyOutputConfigField) {
     const anthropicOutputConfig: Record<string, unknown> = {
       ...(anthropicExtras?.outputConfig ?? {}),

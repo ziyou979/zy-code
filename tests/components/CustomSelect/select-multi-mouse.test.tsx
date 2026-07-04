@@ -67,4 +67,27 @@ describe('SelectMulti 鼠标点击', () => {
     expect(focusOption).toHaveBeenCalledWith('input-1')
     expect(onToggle).not.toHaveBeenCalled()
   })
+
+  test('点击有预填值的 input 选项在多选模式下仍应只聚焦', () => {
+    const focusOption = mock()
+    const onToggle = mock()
+
+    const option: OptionWithDescription<string> = {
+      label: 'Input Option',
+      value: 'input-1',
+      type: 'input',
+      initialValue: 'node:*',
+      onChange: mock(),
+    }
+
+    handleOptionClick(option, {
+      focusOption,
+      onToggle,
+      isMultiSelect: true,
+      inputValue: 'node:*',
+    })
+
+    expect(focusOption).toHaveBeenCalledWith('input-1')
+    expect(onToggle).not.toHaveBeenCalled()
+  })
 })

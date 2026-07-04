@@ -106,8 +106,8 @@ Claude 至少区分三种视觉状态：
 修复目标：
 
 - input option 的鼠标悬浮也要有反馈。
-- 点击 input option 应至少聚焦该项，进入可编辑状态。
-- 不应把点击 input option 直接当作确认提交；否则会破坏“可编辑前缀后再确认”的语义。
+- 点击空 input option 应聚焦该项，进入可编辑状态。
+- 点击已有预填值的 input option 应直接确认，行为与键盘数字键选择一致。
 
 建议改动：
 
@@ -121,9 +121,10 @@ Claude 至少区分三种视觉状态：
    - `onMouseEnter={createOptionHoverHandler(option, setHoveredId)}`
    - `onMouseLeave={createHoverLeaveHandler(setHoveredId)}`
 
-3. 但 `handleOptionClick()` 对 input option 已经是“只聚焦，不提交”，这一点应保留：
-   - 第一次点击第 2 项：聚焦并显示/激活输入框。
-   - 用户按 Enter：提交当前输入值并选择 `yes-prefix-edited`。
+3. `handleOptionClick()` 对 input option 需要对齐数字键选择语义：
+   - 当前值为空：只聚焦并显示/激活输入框。
+   - 当前值非空：直接调用 `onChange(option.value)`，选择 `yes-prefix-edited`。
+   - `allowEmptySubmitToCancel` 为 true：即使当前值为空也直接提交。
 
 4. `SelectInputOption` 内部的 `SelectOption` 需要透传这些 handler。
    - 如果后续实现了 `ListItem` 本地 hover indicator，input option 可以自然获得 dim `>`。
@@ -185,7 +186,7 @@ Claude 至少区分三种视觉状态：
 5. 补齐 input option 事件：
    - `SelectInputOption` 接收并透传 `onClick` / `onMouseEnter` / `onMouseLeave`。
    - `select.tsx` 的 input 分支复用普通选项的 mouse action helper。
-   - 点击 input option 只聚焦，不提交。
+   - 点击空 input option 只聚焦；点击已有预填值的 input option 直接提交。
 
 ### P1：修正 SelectMulti 的 hover 语义
 
@@ -254,7 +255,8 @@ Claude 至少区分三种视觉状态：
    - hover 非 selected 行只显示 `>`，不显示 `✓`。
    - focused 行显示 `suggestion` 色 `>`。
    - input option hover 有 `>` 反馈。
-   - input option click 只调用 `focusOption`，不调用 `onChange`。
+   - 空 input option click 只调用 `focusOption`，不调用 `onChange`。
+   - 预填 input option click 直接调用 `onChange`，不只停留在高亮/聚焦。
 
 3. `tests/components/CustomSelect/select-multi-mouse.test.tsx`
    - hover 未选中项不显示 `[✓]`。
@@ -273,7 +275,7 @@ Claude 至少区分三种视觉状态：
    - 构造包含 `yes-prefix-edited` 的 `bashToolUseOptions()`。
    - 验证第 2 项是 `type: 'input'`。
    - 渲染 `Select` 后，移动鼠标到第 2 项可触发 hover。
-   - 点击第 2 项只聚焦输入项；随后 Enter 才提交。
+   - 第 2 项已有预填规则时，点击应直接提交；没有预填规则时才只聚焦进入编辑。
 
 ## 实施顺序
 
