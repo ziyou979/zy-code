@@ -155,10 +155,10 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
       // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       toolChoice: tool_choice as any,
       thinking: thinkingConfig,
+      ...(outputFormat && { outputConfig: { format: outputFormat } }),
       providerExtras: {
         anthropic: {
           betas: betas.length > 0 ? betas : undefined,
-          outputConfig: outputFormat ? { format: outputFormat } : undefined,
         },
       },
       // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理

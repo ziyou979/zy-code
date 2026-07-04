@@ -131,7 +131,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
-    expect(result.thinking).toEqual({ type: 'enabled', budgetTokens: 1024 } as any)
+    expect(result.thinking).toEqual({ type: 'enabled', budget_tokens: 1024 } as any)
   })
 
   test('assistant tool_use 消息：input 是 object，能通过 SDK 校验', () => {
@@ -195,17 +195,52 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
     expect(toolUseBlock.input).toEqual({ q: 'hi' })
   })
 
-  test('extra_body 顶层透传（用于自定义实验性字段）', () => {
+  test('extraBody 顶层透传（用于自定义实验性字段）', () => {
     const result = buildAnthropicCreateParams({
       model: 'c',
       maxTokens: 100,
-      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       messages: [{ role: 'user', content: 'hi' } as any],
-      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
-      extra_body: { custom_flag: true } as any,
+      extraBody: { custom_flag: true },
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
     // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     expect((result as any).custom_flag).toBe(true)
+  })
+
+  test('reasoningEffort → output_config.effort', () => {
+    const result = buildAnthropicCreateParams({
+      model: 'claude-sonnet-4',
+      maxTokens: 100,
+      messages: [{ role: 'user', content: 'hi' } as any],
+      thinking: { type: 'enabled', budgetTokens: 1024 },
+      reasoningEffort: 'max',
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+    } as any)
+    expect(result.output_config).toEqual({ effort: 'max' })
+  })
+
+  test('responseFormat + reasoningEffort → output_config', () => {
+    const result = buildAnthropicCreateParams({
+      model: 'claude-sonnet-4',
+      maxTokens: 100,
+      messages: [{ role: 'user', content: 'hi' } as any],
+      thinking: { type: 'enabled', budgetTokens: 1024 },
+      reasoningEffort: 'high',
+      responseFormat: { type: 'json_object' },
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+    } as any)
+    expect(result.output_config).toEqual({
+      effort: 'high',
+      format: { type: 'json_object' },
+    })
+  })
+
+  test('无 reasoningEffort + 无 responseFormat → output_config 不出现', () => {
+    const result = buildAnthropicCreateParams({
+      model: 'claude-sonnet-4',
+      maxTokens: 100,
+      messages: [{ role: 'user', content: 'hi' } as any],
+    } as any)
+    expect(result.output_config).toBeUndefined()
   })
 })

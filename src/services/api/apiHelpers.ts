@@ -12,6 +12,7 @@ import { validateBoundedIntEnvVar } from '../../utils/envValidation.js'
 import { errorMessage } from '../../utils/errors.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
+import type { TaskBudgetParam } from '../../types/llm.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { getLLMAdapter } from './client.js'
 import type { Options } from './llmOrchestrator.js'
@@ -127,25 +128,15 @@ export function configureEffortParams(
 }
 
 // output_config.task_budget — API 端的令牌预算感知。
-// Stainless SDK 类型尚未包含 BetaOutputConfig 上的 task_budget，
-// 因此我们在此处定义线路形状并进行类型转换。API 在接收时进行验证；
-// 参见 monorepo 中的 api/api/schemas/messages/request/output_config.py:12-39。
-// Beta：task-budgets-2026-03-13（EAP，截至 2026 年 3 月仅限 zy-strudel-eap）。
-export type TaskBudgetParam = {
-  type: 'tokens'
-  total: number
-  remaining?: number
-}
-
+// 类型定义在 ../../types/llm.ts 中。
 export function configureTaskBudgetParams(
   taskBudget: Options['taskBudget'],
-  outputConfig: BetaOutputConfig & { task_budget?: TaskBudgetParam },
   betas: string[],
-): void {
-  if (!taskBudget || 'task_budget' in outputConfig || !shouldIncludeExperimentalBetas()) {
-    return
+): TaskBudgetParam | undefined {
+  if (!taskBudget || !shouldIncludeExperimentalBetas()) {
+    return undefined
   }
-  outputConfig.task_budget = {
+  const param: TaskBudgetParam = {
     type: 'tokens',
     total: taskBudget.total,
     ...(taskBudget.remaining !== undefined && {
@@ -155,6 +146,7 @@ export function configureTaskBudgetParams(
   if (!betas.includes(TASK_BUDGETS_BETA_HEADER)) {
     betas.push(TASK_BUDGETS_BETA_HEADER)
   }
+  return param
 }
 
 export function getAPIMetadata() {

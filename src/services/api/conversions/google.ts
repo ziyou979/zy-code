@@ -24,6 +24,7 @@ import type {
   LLMResponse,
   LLMStreamEvent,
   StopReason,
+  ThinkingConfig,
   TokenUsage,
   ToolChoice,
   ToolDefinition,
@@ -90,6 +91,8 @@ export interface GoogleGenerationConfig {
   stopSequences?: string[]
   candidateCount?: number
   thinkingConfig?: GoogleThinkingConfig
+  responseMimeType?: string
+  responseSchema?: Record<string, unknown>
 }
 
 /** Google API 思考配置 */
@@ -401,30 +404,25 @@ export function buildGoogleRequestParams(params: CreateParams): GoogleGenerateCo
     generationConfig.stopSequences = params.stopSequences
   }
 
-  // Thinking config from providerExtras
+  // Thinking config: 优先用 providerExtras.google.thinkingConfig 覆盖
   const providerExtras = params.providerExtras
   if (providerExtras?.google?.thinkingConfig) {
     generationConfig.thinkingConfig = providerExtras.google.thinkingConfig as GoogleThinkingConfig
-  } else if (providerExtras?.anthropic?.thinking) {
-    // Gemini 原生协议：将 anthropic thinking 参数转换为 thinkingConfig
-    const thinking = providerExtras.anthropic.thinking
-    if (thinking.type === 'disabled') {
-      generationConfig.thinkingConfig = { thinkingBudget: 0, includeThoughts: false }
-    } else if (thinking.type === 'enabled') {
-      const levelMap: Record<string, string> = {
-        quick: 'MINIMAL',
-        light: 'LOW',
-        balanced: 'MEDIUM',
-        thorough: 'HIGH',
-        extreme: 'HIGH',
-      }
-      const effort = (thinking as { effort?: string }).effort
-      generationConfig.thinkingConfig = {
-        thinkingBudget: -1,
-        thinkingLevel: levelMap[effort ?? 'balanced'] ?? 'MEDIUM',
-        includeThoughts: true,
-      }
+  } else if (params.thinking) {
+    // 从标准中立字段读取，不跨 namespace 读取其他 provider 的配置
+    const thinkingConfig = convertThinkingToGoogleConfig(
+      params.thinking,
+      params.reasoningEffort,
+    )
+    if (thinkingConfig) {
+      generationConfig.thinkingConfig = thinkingConfig
     }
+  }
+
+  const outputFormat = params.responseFormat
+  if (outputFormat?.type === 'json_schema' && outputFormat.schema) {
+    generationConfig.responseMimeType = 'application/json'
+    generationConfig.responseSchema = outputFormat.schema as Record<string, unknown>
   }
 
   if (Object.keys(generationConfig).length > 0) {
@@ -448,6 +446,44 @@ export function buildGoogleRequestParams(params: CreateParams): GoogleGenerateCo
   }
 
   return request
+}
+
+/**
+ * 将标准 thinking 配置转换为 Google generationConfig.thinkingConfig。
+ */
+function convertThinkingToGoogleConfig(
+  thinking: ThinkingConfig,
+  reasoningEffort?: string,
+): GoogleThinkingConfig | undefined {
+  if (thinking.type === 'disabled') {
+    return { thinkingBudget: 0, includeThoughts: false }
+  }
+
+  if (thinking.type === 'adaptive') {
+    return { thinkingBudget: -1, includeThoughts: true }
+  }
+
+  if (thinking.type === 'enabled') {
+    // reasoningEffort 来自中性的 CreateParams.reasoningEffort
+    const rawEffort = reasoningEffort
+
+    // 将 provider 映射后的 effort 值转为 Google thinkingLevel
+    // 注意：这里映射的是 Google 自身 effortMapping 的输出值
+    const levelMap: Record<string, string> = {
+      low: 'MINIMAL',
+      medium: 'LOW',
+      high: 'MEDIUM',
+      xhigh: 'HIGH',
+      max: 'HIGH',
+    }
+    return {
+      thinkingBudget: thinking.budgetTokens ?? -1,
+      thinkingLevel: (rawEffort && levelMap[rawEffort]) ?? 'MEDIUM',
+      includeThoughts: true,
+    }
+  }
+
+  return undefined
 }
 
 /** 将标准 ToolChoice 映射为 Google ToolConfig */

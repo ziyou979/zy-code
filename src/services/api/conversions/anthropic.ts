@@ -16,6 +16,7 @@ import type {
   LLMResponse,
   LLMStreamEvent,
   StopReason,
+  ThinkingConfig,
   TokenUsage,
   ToolChoice,
   ToolDefinition,
@@ -37,6 +38,22 @@ export interface AnthropicCreateParams extends MessageCreateParamsBase {
 // ============================================================================
 
 type AnyMessage = LLMMessage | Record<string, unknown>
+
+/**
+ * 将标准 thinking 配置转换为 Anthropic wire 字段。
+ *
+ * 业务层使用 camelCase；Anthropic SDK 请求体需要 snake_case。
+ */
+function convertThinkingToAnthropic(thinking: ThinkingConfig): unknown {
+  if (thinking.type === 'enabled' && typeof thinking.budgetTokens === 'number') {
+    return {
+      type: 'enabled',
+      budget_tokens: thinking.budgetTokens,
+    }
+  }
+
+  return thinking
+}
 
 /**
  * 把标准 Message[] 转换为 Anthropic 的 messages 字段。
@@ -436,7 +453,7 @@ export function anthropicResponseToStandard(result: any, model: string): LLMResp
  * v1 snake_case 兼容（max_tokens / top_p / stop_sequences 等）。
  */
 export function buildAnthropicCreateParams(params: CreateParams): AnthropicCreateParams {
-  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换，需访问 v1/v2 双格式字段
+  // biome-ignore lint/suspicious/noExplicitAny: v1/v2 双格式兼容 + Anthropic 专属历史字段（betas/context_management/metadata）
   const p = params as any
 
   const maxTokens = p.maxTokens ?? p.max_tokens
@@ -444,10 +461,10 @@ export function buildAnthropicCreateParams(params: CreateParams): AnthropicCreat
   const stopSequences = p.stopSequences ?? p.stop_sequences
 
   const anthropicExtras = p.providerExtras?.anthropic
-  const thinking = anthropicExtras?.thinking ?? p.thinking
+  // 标准中立字段优先从类型化路径读取，anthropicExtras 可覆盖
+  const thinking = anthropicExtras?.thinking ?? params.thinking
   const betas = anthropicExtras?.betas ?? p.betas
   const contextManagement = anthropicExtras?.contextManagement ?? p.context_management
-  const outputConfig = anthropicExtras?.outputConfig ?? p.output_config
   const metadata = p.metadata
 
   // 消息：抽 system，把 tool 合并进 user.tool_result
@@ -459,8 +476,8 @@ export function buildAnthropicCreateParams(params: CreateParams): AnthropicCreat
   let systemContent: MessageCreateParamsBase['system'] | undefined
   if (systemMessages.length > 0) {
     systemContent = systemMessages.map((m) => m.content as string).join('\n\n')
-  } else if (p.system !== undefined) {
-    systemContent = p.system
+  } else if (params.system !== undefined) {
+    systemContent = typeof params.system === 'string' ? params.system : params.system.filter((b) => b.type === 'text').map((b) => (b as { text: string }).text).join('\n\n')
   }
 
   // 工具：v1 input_schema / v2 inputSchema 都支持
@@ -499,7 +516,7 @@ export function buildAnthropicCreateParams(params: CreateParams): AnthropicCreat
     out.metadata = metadata
   }
   if (thinking !== undefined) {
-    out.thinking = thinking
+    out.thinking = convertThinkingToAnthropic(thinking) as AnthropicCreateParams['thinking']
   }
   if (betas !== undefined) {
     out.betas = betas
@@ -507,13 +524,22 @@ export function buildAnthropicCreateParams(params: CreateParams): AnthropicCreat
   if (contextManagement !== undefined) {
     out.context_management = contextManagement
   }
-  if (outputConfig !== undefined) {
-    out.output_config = outputConfig
+  // output_config 从拍平后的字段构造；anthropicExtras.outputConfig 作为全量覆盖
+  const hasAnyOutputConfigField =
+    params.reasoningEffort || params.responseFormat || params.taskBudget || anthropicExtras?.outputConfig
+  if (hasAnyOutputConfigField) {
+    const anthropicOutputConfig: Record<string, unknown> = {
+      ...(anthropicExtras?.outputConfig ?? {}),
+      ...(params.reasoningEffort && { effort: params.reasoningEffort }),
+      ...(params.responseFormat && { format: params.responseFormat }),
+      ...(params.taskBudget && { task_budget: params.taskBudget }),
+    }
+    out.output_config = anthropicOutputConfig
   }
 
   // extra_body 顶层透传
-  if (p.extra_body) {
-    Object.assign(out, p.extra_body)
+  if (params.extraBody) {
+    Object.assign(out, params.extraBody)
   }
 
   return out

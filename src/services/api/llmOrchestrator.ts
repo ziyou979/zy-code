@@ -64,7 +64,7 @@ import {
   extractQuotaStatusFromError,
   extractQuotaStatusFromHeaders,
 } from '../zyAiLimits.js'
-import type { TaskBudgetParam } from './apiHelpers.js'
+import type { TaskBudgetParam } from '../../types/llm.js'
 import { getLLMAdapter } from './client.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -896,69 +896,61 @@ async function* queryModel(
 
     const extraBodyParams = getExtraBodyParams([])
 
-    const outputConfig: Record<string, unknown> = {
-      ...((extraBodyParams.output_config as Record<string, unknown>) ?? {}),
-    }
-
-    configureEffortParams(effort, outputConfig, extraBodyParams, betasParams, options.model)
-
-    configureTaskBudgetParams(
+    // taskBudget 直接由 conversion 层构造成 provider 格式
+    const taskBudgetArg: TaskBudgetParam | undefined = configureTaskBudgetParams(
       options.taskBudget,
-      outputConfig as Record<string, unknown> & { task_budget?: TaskBudgetParam },
       betasParams,
     )
 
-    // 将 outputFormat 合并到 extraBodyParams.output_config 中，与 effort 并列。
-    // structured outputs 已 GA，作为 output_config.format 参数直接下发，不再发 beta header。
-    if (options.outputFormat && !('format' in outputConfig)) {
-      outputConfig.format = options.outputFormat
-    }
+    // responseFormat 直接传入，由 conversion 层自行映射
+    const responseFormat = options.outputFormat
 
     // 重试上下文优先，因为它会在超出上下文窗口限制时尝试纠正
     const maxOutputTokens =
       retryContext?.maxTokensOverride || options.maxOutputTokensOverride || resolved.maxOutputTokens
 
-    const effortOff = effort === 'off'
+    // 重要：不要更改下面的自适应与预设 thinking 选择，
+    // 这是一个敏感的设置，会极大影响模型质量。
     const hasThinking =
-      !effortOff &&
+      effort !== 'off' &&
       thinkingConfig.type !== 'disabled' &&
       !isEnvTruthy(process.env.ZY_CODE_DISABLE_THINKING)
-    let thinking:
-      | { type: 'adaptive' }
-      | { type: 'enabled'; budget_tokens: number }
-      | { type: 'disabled' }
-      | undefined
+    let reasoningEffort: string | undefined
+    let thinking: ThinkingConfig | undefined
 
-    // 重要：不要更改下面的自适应与预算 thinking 选择，
-    // 除非通知模型发布 DRI 和研究团队。这是一个敏感的
-    // 设置，会极大影响模型质量和打磨。
-    if (hasThinking && resolved.supportsThinking) {
-      if (
-        !isEnvTruthy(process.env.ZY_CODE_DISABLE_ADAPTIVE_THINKING) &&
-        resolved.supportsAdaptiveThinking
-      ) {
-        // 对于支持自适应 thinking 的模型，始终使用自适应
-        // thinking 而不设预算。
-        thinking = {
-          type: 'adaptive',
+    if (resolved.supportsThinking) {
+      // 开启了思考
+      if (hasThinking) {
+        // 配置思考强度（使用临时 target，仅用于提取 reasoningEffort）
+        const effortTarget: Record<string, unknown> = {}
+        configureEffortParams(effort, effortTarget, extraBodyParams, betasParams, options.model)
+        reasoningEffort = effortTarget.effort as string | undefined
+
+        // 支持自适应思考的模型
+        if (
+          !isEnvTruthy(process.env.ZY_CODE_DISABLE_ADAPTIVE_THINKING) &&
+          resolved.supportsAdaptiveThinking
+        ) {
+          // 对于支持自适应 thinking 的模型，始终使用自适应 thinking
+          thinking = {
+            type: 'adaptive',
+          }
+        } else {
+          // 对于不支持自适应 thinking 的模型，使用默认
+          // thinking 预设，除非明确指定。
+          let thinkingBudget = resolved.maxThinkingTokens
+          if (thinkingConfig.type === 'enabled' && thinkingConfig.budgetTokens !== undefined) {
+            thinkingBudget = thinkingConfig.budgetTokens
+          }
+          thinkingBudget = Math.min(maxOutputTokens - 1, thinkingBudget)
+          thinking = {
+            budgetTokens: thinkingBudget,
+            type: 'enabled',
+          }
         }
       } else {
-        // 对于不支持自适应 thinking 的模型，使用默认
-        // thinking 预算，除非明确指定。
-        let thinkingBudget = resolved.maxThinkingTokens
-        if (thinkingConfig.type === 'enabled' && thinkingConfig.budgetTokens !== undefined) {
-          thinkingBudget = thinkingConfig.budgetTokens
-        }
-        thinkingBudget = Math.min(maxOutputTokens - 1, thinkingBudget)
-        thinking = {
-          budget_tokens: thinkingBudget,
-          type: 'enabled',
-        }
+        thinking = { type: 'disabled' }
       }
-    }
-
-    if (effortOff && resolved.supportsThinking) {
-      thinking = { type: 'disabled' }
     }
 
     // 如果启用，获取 API 上下文管理策略
@@ -1024,17 +1016,25 @@ async function* queryModel(
       ...(useBetas && { betas: betasParams }),
       metadata: getAPIMetadata(),
       max_tokens: maxOutputTokens,
+      maxTokens: maxOutputTokens,
       thinking,
+      ...(reasoningEffort !== undefined && { reasoningEffort }),
       ...(temperature !== undefined && { temperature }),
       ...(contextManagement &&
         useBetas &&
         betasParams.includes(CONTEXT_MANAGEMENT_BETA_HEADER) && {
           context_management: contextManagement,
         }),
-      ...extraBodyParams,
-      ...(Object.keys(outputConfig).length > 0 && {
-        output_config: outputConfig,
-      }),
+      // extraBodyParams 中可能含 extra_body 等来自 ZY_CODE_EXTRA_BODY 的字段，
+      // 提取 extra_body 到标准 extraBody 字段后展开其余字段
+      ...(() => {
+        const { extra_body, ...rest } = extraBodyParams
+        return rest
+      })(),
+      ...(extraBodyParams.extra_body && { extraBody: extraBodyParams.extra_body }),
+      // 拍平后的通用字段，由各 conversion 层自行映射
+      ...(responseFormat !== undefined && { responseFormat }),
+      ...(taskBudgetArg !== undefined && { taskBudget: taskBudgetArg }),
       // 透传调用方传入的 providerExtras（如百炼的 enable_search）
       ...(options.providerExtras && { providerExtras: options.providerExtras }),
     }
@@ -1052,7 +1052,7 @@ async function* queryModel(
     const logMessagesLength = queryParams.messages.length
     const logBetas = useBetas ? (queryParams.betas ?? []) : []
     const logThinkingType = queryParams.thinking?.type ?? 'disabled'
-    const logEffortValue = queryParams.output_config?.effort
+    const logEffortValue: EffortLevel = queryParams.reasoningEffort as EffortLevel
     void options.getToolPermissionContext().then((permissionContext) => {
       logAPIQuery({
         model: options.model,
@@ -1063,7 +1063,7 @@ async function* queryModel(
         querySource: options.querySource,
         queryTracking: options.queryTracking,
         thinkingType: logThinkingType,
-        effortValue: logEffortValue as import('src/utils/effort.js').EffortLevel | undefined,
+        effortValue: logEffortValue,
         previousRequestId,
       })
     })

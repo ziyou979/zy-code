@@ -5,13 +5,14 @@
  */
 import { describe, expect, test } from 'bun:test'
 import {
+  buildOpenAIRequestParams,
   convertOutputFormatToResponseFormat,
   openAIDeltaUsageToStandard,
   openAIFinishReasonToStandard,
   toolChoiceToOpenAI,
   toolsToOpenAI,
 } from '../../../src/services/api/conversions/openai.js'
-import type { ToolDefinition } from '../../../src/types/llm.js'
+import type { JSONOutputFormat, ToolDefinition } from '../../../src/types/llm.js'
 
 describe('toolsToOpenAI', () => {
   test('undefined → undefined', () => {
@@ -93,33 +94,27 @@ describe('convertOutputFormatToResponseFormat', () => {
     expect(convertOutputFormatToResponseFormat(undefined)).toBeUndefined()
   })
 
-  test('outputConfig 无 format → undefined', () => {
-    expect(convertOutputFormatToResponseFormat({})).toBeUndefined()
+  test('无 type → undefined', () => {
+    expect(convertOutputFormatToResponseFormat({} as unknown as JSONOutputFormat)).toBeUndefined()
   })
 
   test('json_object → { type: "json_object" }', () => {
     expect(
-      convertOutputFormatToResponseFormat({
-        format: { type: 'json_object' },
-      }),
+      convertOutputFormatToResponseFormat({ type: 'json_object' }),
     ).toEqual({ type: 'json_object' })
   })
 
   test('json_schema + json_schema 字段（旧格式）→ 忽略 json_schema 字段返回 undefined', () => {
     const schema = { name: 'test', schema: { type: 'object' } }
     expect(
-      convertOutputFormatToResponseFormat({
-        format: { type: 'json_schema', json_schema: schema },
-      }),
+      convertOutputFormatToResponseFormat({ type: 'json_schema', json_schema: schema }),
     ).toBeUndefined()
   })
 
   test('json_schema 用 schema 字段 → 包裹为 OpenAI 格式', () => {
     const schema = { name: 'test', schema: { type: 'object' } }
     expect(
-      convertOutputFormatToResponseFormat({
-        format: { type: 'json_schema', schema },
-      }),
+      convertOutputFormatToResponseFormat({ type: 'json_schema', schema }),
     ).toEqual({
       type: 'json_schema',
       json_schema: {
@@ -132,17 +127,13 @@ describe('convertOutputFormatToResponseFormat', () => {
 
   test('已知 type 但不是 json_object/json_schema → 原样返回', () => {
     expect(
-      convertOutputFormatToResponseFormat({
-        format: { type: 'text' } as unknown as { type: 'json_object' },
-      }),
+      convertOutputFormatToResponseFormat({ type: 'text' } as unknown as JSONOutputFormat),
     ).toEqual({ type: 'text' })
   })
 
   test('json_schema 但无 schema 数据 → undefined', () => {
     expect(
-      convertOutputFormatToResponseFormat({
-        format: { type: 'json_schema' },
-      }),
+      convertOutputFormatToResponseFormat({ type: 'json_schema' } as unknown as JSONOutputFormat),
     ).toBeUndefined()
   })
 })
@@ -201,6 +192,47 @@ describe('openAIFinishReasonToStandard', () => {
   })
 })
 
+describe('buildOpenAIRequestParams', () => {
+  test('disabled thinking → 请求体显式关闭 thinking', () => {
+    const params = buildOpenAIRequestParams({
+      model: 'deepseek-v4-flash',
+      messages: [{ role: 'user', content: [{ type: 'text', text: '生成标题' }] }],
+      maxTokens: 100,
+      thinking: { type: 'disabled' as const },
+    } as unknown as Parameters<typeof buildOpenAIRequestParams>[0])
+
+    expect(params.thinking).toEqual({ type: 'disabled' })
+  })
+
+  test('tool_choice 未传 thinking → 请求体自动关闭 thinking', () => {
+    const params = buildOpenAIRequestParams({
+      model: 'deepseek-v4-flash',
+      messages: [{ role: 'user', content: [{ type: 'text', text: '调用工具' }] }],
+      maxTokens: 100,
+      tool_choice: { type: 'tool', name: 'search' },
+      tools: [{ name: 'search', description: 'Search', inputSchema: { type: 'object' } }],
+    } as unknown as Parameters<typeof buildOpenAIRequestParams>[0])
+
+    expect(params.thinking).toEqual({ type: 'disabled' })
+  })
+
+  test('reasoningEffort → reasoning_effort + responseFormat → response_format', () => {
+    const params = buildOpenAIRequestParams({
+      model: 'deepseek-v4-flash',
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'hello' }] }],
+      maxTokens: 100,
+      thinking: { type: 'enabled' as const, budgetTokens: 1024 },
+      reasoningEffort: 'high',
+      responseFormat: { type: 'json_object' },
+    } as unknown as Parameters<typeof buildOpenAIRequestParams>[0])
+
+    // OpenAI 标准参数：reasoning_effort，非 output_config.effort
+    expect(params.reasoning_effort).toBe('high')
+    expect((params as any).output_config).toBeUndefined()
+    expect(params.response_format).toEqual({ type: 'json_object' })
+  })
+})
+
 describe('convertThinkingForOpenAI', () => {
   const thinkingEnabled = { type: 'enabled' as const, budgetTokens: 1024 }
   // 通过第 4 参数 overrideProvider 直接指定 provider，避免 mock.module 跨文件缓存污染
@@ -211,81 +243,91 @@ describe('convertThinkingForOpenAI', () => {
     expect(fn(undefined, 'gpt-4')).toEqual({})
   })
 
-  test('disabled thinking → dashscope 显式关闭 / 其他 provider 空对象', () => {
-    expect(fn({ type: 'disabled' }, 'gpt-4', undefined, 'openai')).toEqual({})
-    expect(fn({ type: 'disabled' }, 'qwen-max', undefined, 'dashscope')).toEqual({
+  test('disabled thinking → 统一显式关闭', () => {
+    expect(fn({ type: 'disabled' }, 'gpt-4', 'openai')).toEqual({
+      thinking: { type: 'disabled' },
+    })
+    expect(fn({ type: 'disabled' }, 'deepseek-v4-flash', 'deepseek')).toEqual({
+      thinking: { type: 'disabled' },
+    })
+    expect(fn({ type: 'disabled' }, 'qwen-max', 'dashscope')).toEqual({
       thinking: { type: 'disabled' },
     })
   })
 
   test('dashscope → { thinking: { type: "enabled" } }', () => {
-    expect(fn(thinkingEnabled, 'qwen-max', undefined, 'dashscope')).toEqual({
+    expect(fn(thinkingEnabled, 'qwen-max', 'dashscope')).toEqual({
       thinking: { type: 'enabled' },
     })
   })
 
   test('dashscope minimax → { thinking: { type: "adaptive" } }', () => {
-    expect(fn(thinkingEnabled, 'MiniMax-M2.1', undefined, 'dashscope')).toEqual({
+    expect(fn(thinkingEnabled, 'MiniMax-M2.1', 'dashscope')).toEqual({
       thinking: { type: 'adaptive' },
     })
   })
 
-  test('zhipu → { thinking: { type: "enabled", clear_thinking: false } }', () => {
-    expect(fn(thinkingEnabled, 'glm-4', undefined, 'zhipu')).toEqual({
-      thinking: { type: 'enabled', clear_thinking: false },
+  test('zhipu → 默认 thinking.type 格式', () => {
+    expect(fn(thinkingEnabled, 'glm-4', 'zhipu')).toEqual({
+      thinking: { type: 'enabled' },
     })
   })
 
   test('kimi 带 thinking 模型 → chat_template_args', () => {
-    expect(fn(thinkingEnabled, 'kimi-k2-thinking', undefined, 'kimi')).toEqual({
+    expect(fn(thinkingEnabled, 'kimi-k2-thinking', 'kimi')).toEqual({
       chat_template_args: { enable_thinking: true },
     })
   })
 
   test('kimi 普通模型 → { enable_thinking: true }', () => {
-    expect(fn(thinkingEnabled, 'moonshot-v1', undefined, 'kimi')).toEqual({
+    expect(fn(thinkingEnabled, 'moonshot-v1', 'kimi')).toEqual({
       enable_thinking: true,
     })
   })
 
-  test('deepseek → reasoning_effort', () => {
-    expect(fn(thinkingEnabled, 'deepseek-reasoner', undefined, 'deepseek')).toEqual({
-      reasoning_effort: 'medium',
+  test('deepseek → 默认 thinking.type 格式', () => {
+    expect(fn(thinkingEnabled, 'deepseek-reasoner', 'deepseek')).toEqual({
+      thinking: { type: 'enabled' },
     })
   })
 
-  test('deepseek 带 effort → reasoning_effort: effort', () => {
-    expect(fn(thinkingEnabled, 'deepseek-reasoner', { effort: 'high' }, 'deepseek')).toEqual({
+  test('deepseek 带 effort → 输出 reasoning_effort', () => {
+    expect(fn(thinkingEnabled, 'deepseek-reasoner', 'deepseek', 'high')).toEqual({
+      thinking: { type: 'enabled' },
       reasoning_effort: 'high',
     })
   })
 
   test('openrouter → { reasoning: { effort } }', () => {
-    expect(fn(thinkingEnabled, 'anthropic/claude-sonnet', undefined, 'openrouter')).toEqual({
+    expect(fn(thinkingEnabled, 'anthropic/claude-sonnet', 'openrouter')).toEqual({
       reasoning: { effort: 'medium' },
     })
   })
 
-  test('openai → reasoning_effort', () => {
-    expect(fn(thinkingEnabled, 'o3-mini', undefined, 'openai')).toEqual({
-      reasoning_effort: 'medium',
+  test('openai → 默认 thinking.type 格式', () => {
+    expect(fn(thinkingEnabled, 'o3-mini', 'openai')).toEqual({
+      thinking: { type: 'enabled' },
     })
   })
 
-  test('未知 provider + 未配置模型 → {}', () => {
-    expect(fn(thinkingEnabled, 'my-reasoning-model', undefined, 'unknown-provider')).toEqual({})
+  test('未知 provider + 未配置模型 → 默认 thinking.type 格式', () => {
+    expect(fn(thinkingEnabled, 'my-reasoning-model', 'unknown-provider')).toEqual({
+      thinking: { type: 'enabled' },
+    })
   })
 
-  test('未知 provider + 普通模型名 → {}', () => {
-    expect(fn(thinkingEnabled, 'gpt-4', undefined, 'unknown-provider')).toEqual({})
+  test('未知 provider + 普通模型名 → 默认 thinking.type 格式', () => {
+    expect(fn(thinkingEnabled, 'gpt-4', 'unknown-provider')).toEqual({
+      thinking: { type: 'enabled' },
+    })
   })
 
   test('preserveThinking: always → 始终添加 preserve_thinking', () => {
     // 需要通过 mock.module 来 mock，但这里直接测试真实逻辑
     // 前提：model-capabilities.json 中配置了 deepseek-reasoner 的 preserveThinking: 'always'
     // 如果没有配置，这个测试会失败，需要用户自行配置
-    expect(fn(thinkingEnabled, 'deepseek-reasoner', undefined, 'deepseek')).toEqual({
-      reasoning_effort: 'medium',
+    expect(fn(thinkingEnabled, 'deepseek-reasoner', 'deepseek')).toEqual({
+      thinking: { type: 'enabled' },
     })
   })
 })

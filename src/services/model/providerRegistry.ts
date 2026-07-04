@@ -134,6 +134,25 @@ export interface OpenAiAttr {
   stripThinkingTags?: boolean
 }
 
+/**
+ * OpenAI 兼容协议默认 thinking 映射。
+ *
+ * 大多数 OpenAI-compatible 平台逐步收敛到 `thinking.type` 形态；
+ * provider 只有在确实使用私有字段时才覆盖对应分支。
+ */
+export const DEFAULT_OPENAI_THINKING_ATTR: NonNullable<OpenAiAttr['thinking']> = {
+  enable: (effort, model) => {
+    if (model && localModelHasAdaptiveThinking(model)) {
+      return { thinking: { type: 'adaptive' } }
+    }
+    // OpenAI 标准参数 reasoning_effort（如 o1/o3 系列的 low/medium/high）
+    return effort
+      ? { thinking: { type: 'enabled' }, reasoning_effort: effort }
+      : { thinking: { type: 'enabled' } }
+  },
+  disable: { thinking: { type: 'disabled' } },
+}
+
 // ---------------------------------------------------------------------------
 // 预设能力集（减少重复）
 // ---------------------------------------------------------------------------
@@ -229,20 +248,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       extreme: 'max',
     },
     openaiAttr: {
-      thinking: {
-        // DashScope 平台统一使用 thinking.type 控制思考模式，避免与
-        // enable_thinking 混发导致 API 冲突。按模型区分 type 值：
-        // 根据模型能力配置判断使用 adaptive 还是 enabled：
-        // - 配置了 thinking.adaptive: true 的模型用 'adaptive'
-        // - 其余模型用 'enabled'
-        enable: (_effort, model) => {
-          if (model && localModelHasAdaptiveThinking(model)) {
-            return { thinking: { type: 'adaptive' } }
-          }
-          return { thinking: { type: 'enabled' } }
-        },
-        disable: () => ({ thinking: { type: 'disabled' } }),
-      },
       stripThinkingTags: true,
     },
   },
@@ -251,7 +256,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     supportedFormats: ['openai', 'anthropic'],
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
-    // DeepSeek reasoning_effort 支持 low/medium/high（映射由 mapEffortToProvider 处理）。
     defaultBaseUrls: { openai: 'https://api.deepseek.com' },
     apiKeyLabel: 'DeepSeek API Key',
     suggestedModels: [
@@ -262,13 +266,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       off: 'off',
       balanced: 'high',
       extreme: 'max',
-    },
-    openaiAttr: {
-      thinking: {
-        enable: (effort) => ({
-          reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium',
-        }),
-      },
     },
   },
   {
@@ -325,20 +322,12 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       extreme: 'max',
       orchestrate: 'max',
     },
-    openaiAttr: {
-      thinking: {
-        enable: (effort) => ({
-          reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium',
-        }),
-      },
-    },
   },
   {
     id: 'gemini',
     supportedFormats: ['google', 'openai'],
     endpointType: ['env', 'default'],
     capabilities: ['context_management'],
-    // Gemini reasoning_effort 支持 minimal/low/medium/high（映射由 mapEffortToProvider 处理）。
     apiKeyLabel: 'Google AI API Key',
     defaultBaseUrls: {
       google: 'https://generativelanguage.googleapis.com/v1beta',
@@ -357,13 +346,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       thorough: 'high',
       extreme: 'high',
       orchestrate: 'high',
-    },
-    openaiAttr: {
-      thinking: {
-        enable: (effort) => ({
-          reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium',
-        }),
-      },
     },
   },
   {
@@ -482,12 +464,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       { label: 'mimo-v2.5', value: 'mimo-v2.5', tags: ['recommended', 'balanced'] },
       { label: 'mimo-v2-flash', value: 'mimo-v2-flash', tags: ['fast', 'lightweight'] },
     ],
-    openaiAttr: {
-      thinking: {
-        enable: () => ({ thinking: { type: 'enabled' } }),
-        disable: { thinking: { type: 'disabled' } },
-      },
-    },
   },
   {
     id: 'nim',
@@ -517,7 +493,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     supportedFormats: ['openai'],
     endpointType: ['default'],
     capabilities: ['context_management'],
-    // OpenAI reasoning_effort 支持 minimal/low/medium/high（映射由 mapEffortToProvider 处理）。
     apiKeyLabel: 'OpenAI API Key',
     suggestedModels: [
       { label: 'gpt-4o', value: 'gpt-4o', tags: ['recommended', 'balanced'] },
@@ -531,13 +506,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       thorough: 'high',
       extreme: 'high',
       orchestrate: 'high',
-    },
-    openaiAttr: {
-      thinking: {
-        enable: (effort) => ({
-          reasoning_effort: (effort === 'on' ? undefined : effort) ?? 'medium',
-        }),
-      },
     },
   },
   {
@@ -708,11 +676,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       { label: 'glm-4-plus', value: 'glm-4-plus', tags: ['recommended', 'balanced'] },
       { label: 'glm-4-flash', value: 'glm-4-flash', tags: ['fast'] },
     ],
-    openaiAttr: {
-      thinking: {
-        enable: () => ({ thinking: { type: 'enabled', clear_thinking: false } }),
-      },
-    },
   },
 ] as const
 

@@ -1,4 +1,6 @@
 import type { ConnectorTextBlock } from './connectorText.js'
+import type { ThinkingConfig } from '../utils/thinking.js'
+export type { ThinkingConfig }
 
 /**
  * 标准 LLM 类型体系 — 独立于任何 SDK 的中间格式。
@@ -128,10 +130,18 @@ export interface ToolDefinition {
 /** 工具选择策略 */
 export type ToolChoice = { type: 'auto' } | { type: 'none' } | { type: 'tool'; name: string }
 
-/** 结构化 JSON 输出格式请求（provider 中立，仅含原始 JSON Schema） */
+/** 结构化 JSON 输出格式请求（provider 中立） */
 export interface JSONOutputFormat {
-  type: 'json_schema'
-  schema: Record<string, unknown>
+  type: string
+  schema?: Record<string, unknown>
+  [key: string]: unknown
+}
+
+/** API 端的令牌预算感知 */
+export interface TaskBudgetParam {
+  type: 'tokens'
+  total: number
+  remaining?: number
 }
 
 // ============================================================================
@@ -306,6 +316,18 @@ export interface CreateParams {
   tools?: ToolDefinition[]
   toolChoice?: ToolChoice
   stream?: boolean
+  /** thinking 配置（provider 中立，各 conversion 自行转换） */
+  thinking?: ThinkingConfig
+  /** provider 映射后的思考强度值（如 Anthropic 的 "high"/"max"，OpenAI 的 "medium"/"high"） */
+  reasoningEffort?: string
+  /** 结构化输出格式（provider 中立，各 conversion 自行映射） */
+  responseFormat?: JSONOutputFormat
+  /** API 端令牌预算感知（部分 provider 支持） */
+  taskBudget?: TaskBudgetParam
+  /** 系统提示 */
+  system?: string | AssistantContentBlock[]
+  /** 任意额外 body 字段，直接透传（源自 ZY_CODE_EXTRA_BODY 等） */
+  extraBody?: Record<string, unknown>
   /** provider 专属扩展（各适配器自行解析，互不干扰） */
   providerExtras?: ProviderExtras
 }

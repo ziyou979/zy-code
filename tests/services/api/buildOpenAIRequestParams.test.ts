@@ -96,12 +96,12 @@ describe('buildOpenAIRequestParams', () => {
     expect((result.tools![0] as any).type).toBe('web_search_preview')
   })
 
-  test('extra_body 顶层透传', () => {
+  test('extraBody 顶层透传', () => {
     const result = buildOpenAIRequestParams({
       model: 'gpt-4',
       maxTokens: 100,
       messages: [{ role: 'user', content: 'hi' }],
-      extra_body: { custom_flag: true },
+      extraBody: { custom_flag: true },
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
 
@@ -125,14 +125,12 @@ describe('buildOpenAIRequestParams', () => {
     expect(result.response_format).toEqual({ type: 'json_object' })
   })
 
-  test('response_format 从 output_config 转换', () => {
+  test('responseFormat → response_format', () => {
     const result = buildOpenAIRequestParams({
       model: 'gpt-4',
       maxTokens: 100,
       messages: [{ role: 'user', content: 'hi' }],
-      output_config: {
-        format: { type: 'json_object' },
-      },
+      responseFormat: { type: 'json_object' },
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
     } as any)
 

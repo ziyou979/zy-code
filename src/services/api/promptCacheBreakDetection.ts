@@ -52,8 +52,8 @@ type PreviousState = {
   /** Cache-editing beta header presence — should NOT break cache anymore
    *  (sticky-on latched in zy.ts). Tracked to verify the fix. */
   cachedMCEnabled: boolean
-  /** Resolved effort (env → options → model default). Goes into output_config
-   *  or anthropic_internal.effort_override. */
+  /** Resolved effort (env → options → model default). Maps to
+   *  reasoningEffort → Anthropic output_config.effort / OpenAI reasoning_effort. */
   effortValue: string
   /** Hash of getExtraBodyParams() — catches ZY_CODE_EXTRA_BODY and
    *  anthropic_internal changes. */

@@ -23,10 +23,12 @@ import type {
   ChunkDelta,
   CreateParams,
   DeltaUsage,
+  JSONOutputFormat,
   LLMMessage,
   LLMResponse,
   LLMStreamEvent,
   StopReason,
+  ThinkingConfig,
   TokenUsage,
   ToolChoice,
   ToolDefinition,
@@ -42,8 +44,11 @@ export interface OpenAICreateParams extends ChatCompletionCreateParamsBase {
 }
 
 import { normalizeModelStringForAPI } from '../../../services/model/model.js'
-import { getProviderEntry } from '../../../services/model/providerRegistry.js'
-import { getAPIProvider } from '../../../services/model/providers.js'
+import {
+  DEFAULT_OPENAI_THINKING_ATTR,
+  type OpenAiAttr,
+} from '../../../services/model/providerRegistry.js'
+import { getAPIProvider, getProviderAttr } from '../../../services/model/providers.js'
 import {
   getLocalModelPreserveThinking,
   localModelHasCapability,
@@ -441,63 +446,61 @@ export function toolChoiceToOpenAI(
  * - thinking 对象：决定"是否启用 thinking"（disabled/enabled/adaptive）
  * - outputConfig.effort：决定 thinking 的 effort 级别（low/medium/high）
  *
- * 各平台参数格式：
- * - 百炼（dashscope）: enable_thinking: true
- * - 智谱（zhipu）: thinking: { type: 'enabled', clear_thinking: false }
- * - Kimi（moonshot）: chat_template_args / enable_thinking
- * - DeepSeek: reasoning_effort
- * - OpenRouter: reasoning: { effort }
- * - OpenAI 官方: reasoning_effort
- * - 通用 OpenAI 兼容平台（按模型名启发）: enable_thinking
+ * 默认参数格式：
+ * - 启用：thinking: { type: 'enabled' }
+ * - 自适应：模型声明 adaptive thinking 时使用 thinking: { type: 'adaptive' }
+ * - 禁用：thinking: { type: 'disabled' }
+ *
+ * 少数 provider 若需要私有字段（如 Kimi / OpenRouter），在 providerRegistry
+ * 中通过 openaiAttr.thinking 覆盖默认映射。
  */
 export function convertThinkingForOpenAI(
-  thinking: { type: string; budgetTokens?: number } | undefined,
+  thinking: ThinkingConfig | undefined,
   model: string,
-  outputConfig?: Record<string, unknown>,
   overrideProvider?: string,
+  reasoningEffort?: string,
 ): Record<string, unknown> {
   const provider = overrideProvider ?? getAPIProvider()
-  const attr = getProviderEntry(provider)?.openaiAttr
+  const attr = getProviderAttr(provider)
+  const thinkingAttr: NonNullable<OpenAiAttr['thinking']> = {
+    ...DEFAULT_OPENAI_THINKING_ATTR,
+    ...(attr?.thinking ?? {}),
+  }
 
   if (!thinking || thinking.type === 'disabled') {
-    // 部分 provider（如 DashScope）默认开启思考，需显式关闭
-    if (thinking?.type === 'disabled' && attr?.thinking?.disable) {
-      const disableParams = attr.thinking.disable
-      return typeof disableParams === 'function'
-        ? disableParams(outputConfig?.effort as string | undefined, model)
-        : disableParams
+    // 部分 provider 默认开启思考；禁用时统一显式下发关闭参数。
+    if (thinking?.type === 'disabled') {
+      const disableParams = thinkingAttr.disable
+      if (disableParams) {
+        return typeof disableParams === 'function'
+          ? disableParams(reasoningEffort, model)
+          : disableParams
+      }
+      return { thinking: { type: 'disabled' } }
     }
     return {}
   }
 
-  const effort = outputConfig?.effort as string | undefined
+  // reasoningEffort 来自中性的 CreateParams.reasoningEffort
+  const effort = reasoningEffort
 
-  // 优先使用注册表中的声明式配置
-  if (attr?.thinking) {
-    const params = attr.thinking.enable(effort, model)
+  // 使用默认映射；provider 若声明 openaiAttr.thinking，则仅覆盖差异部分。
+  const params = thinkingAttr.enable(effort, model)
 
-    // 从模型级别配置获取思考块回传模式
-    const preserveThinking = getLocalModelPreserveThinking(model)
+  // 从模型级别配置获取思考块回传模式
+  const preserveThinking = getLocalModelPreserveThinking(model)
 
-    // 必传模式：始终回传（mimo、deepseek）
-    if (preserveThinking === 'always') {
-      return { ...params, preserve_thinking: true }
-    }
-
-    // 可选模式：effort 为 ultra 或 extreme 时回传（dashscope、zhipu）
-    if (preserveThinking === 'optional' && (effort === 'ultra' || effort === 'extreme')) {
-      return { ...params, preserve_thinking: true }
-    }
-
-    return params
+  // 必传模式：始终回传（mimo、deepseek）
+  if (preserveThinking === 'always') {
+    return { ...params, preserve_thinking: true }
   }
 
-  // 兜底：根据模型能力配置判断（用于未注册 attr 的 provider）
-  if (localModelHasCapability(model, 'thinking')) {
-    return { enable_thinking: true }
+  // 可选模式：effort 为 ultra 或 extreme 时回传（dashscope、zhipu）
+  if (preserveThinking === 'optional' && (effort === 'ultra' || effort === 'extreme')) {
+    return { ...params, preserve_thinking: true }
   }
 
-  return {}
+  return params
 }
 
 // ============================================================================
@@ -514,23 +517,14 @@ export function convertThinkingForOpenAI(
  * 因此当输入为原始 JSON Schema 时需自动包装一层。
  */
 export function convertOutputFormatToResponseFormat(
-  outputConfig: Record<string, unknown> | undefined,
+  format: JSONOutputFormat | undefined,
 ): OpenAI.Chat.Completions.ChatCompletionCreateParams['response_format'] | undefined {
-  if (!outputConfig) {
-    return undefined
-  }
-
-  const format = outputConfig.format as Record<string, unknown> | undefined
   if (!format) {
     return undefined
   }
 
-  if (format.type === 'json_object') {
-    return { type: 'json_object' }
-  }
-
   if (format.type === 'json_schema') {
-    const rawSchema = format.schema as Record<string, unknown> | undefined
+    const rawSchema = format.schema
     if (!rawSchema) {
       return undefined
     }
@@ -548,6 +542,12 @@ export function convertOutputFormatToResponseFormat(
     }
   }
 
+  // 非 json_schema 类型（如 json_object 或已有 OpenAI 格式）
+  if (format.type === 'json_object') {
+    return { type: 'json_object' }
+  }
+
+  // 已有 type 的非标准格式，原样透传
   if (format.type) {
     return format as unknown as OpenAI.Chat.Completions.ChatCompletionCreateParams['response_format']
   }
@@ -695,7 +695,7 @@ export async function* mapOpenAIStreamToStandard(
   stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>,
   model: string,
 ): AsyncIterable<LLMStreamEvent> {
-  const streamAttr = getProviderEntry(getAPIProvider())?.openaiAttr
+  const streamAttr = getProviderAttr(getAPIProvider())
   const messageId = randomUUID()
   let textBlockIndex = 0
   const toolBlockIndices = new Map<number, number>()
@@ -837,16 +837,15 @@ export async function* mapOpenAIStreamToStandard(
  * providerExtras.openai / extra_body 顶层透传、model 字符串规范化。
  */
 export function buildOpenAIRequestParams(params: CreateParams): OpenAICreateParams {
-  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换，需访问 v1/v2 双格式字段
+  // biome-ignore lint/suspicious/noExplicitAny: v1/v2 双格式兼容（max_tokens/top_p/stop_sequences/tool_choice）
   const p = params as any
   const openAIMessages = messagesToOpenAI(p.messages ?? [], p.model)
   const openaiExtras = p.providerExtras?.openai
 
-  // 系统提示：buildSystemPromptBlocks 生成的 TextBlock[] 带有 cache_control，
-  // 注入为 messages 数组中的 system 角色消息
-  if (p.system && Array.isArray(p.system) && p.system.length > 0) {
+  // 系统提示：从 params.system 读取，注入为 messages 数组中的 system 角色消息
+  if (params.system && Array.isArray(params.system) && params.system.length > 0) {
     // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
-    openAIMessages.unshift({ role: 'system', content: p.system } as any)
+    openAIMessages.unshift({ role: 'system', content: params.system } as any)
   }
 
   // OpenAI 原生工具（如 web_search_preview），注入到 tools 数组顶部
@@ -854,11 +853,20 @@ export function buildOpenAIRequestParams(params: CreateParams): OpenAICreatePara
   const cleanedExtras = openaiExtras ? { ...openaiExtras } : {}
   delete (cleanedExtras as Record<string, unknown>)._web_search_tool
 
-  // response_format：providerExtras 优先；否则尝试从 outputConfig 转
+  // response_format：providerExtras 优先；否则从 params.responseFormat 转换
   const explicitResponseFormat = openaiExtras?.response_format
-  const responseFormatFromConfig = convertOutputFormatToResponseFormat(p.output_config)
+  const responseFormatFromConfig = convertOutputFormatToResponseFormat(params.responseFormat)
 
-  const thinkingParams = convertThinkingForOpenAI(p.thinking, p.model, p.output_config)
+  const toolChoice = p.toolChoice ?? p.tool_choice
+  const requestNeedsNoThinking =
+    params.thinking === undefined &&
+    (toolChoice !== undefined || explicitResponseFormat || responseFormatFromConfig)
+  const thinkingParams = convertThinkingForOpenAI(
+    requestNeedsNoThinking ? { type: 'disabled' as const } : params.thinking,
+    p.model,
+    undefined,
+    params.reasoningEffort,
+  )
 
   const toolDefs =
     (p.tools && p.tools.length > 0) || openaiNativeTools.length > 0
@@ -882,7 +890,6 @@ export function buildOpenAIRequestParams(params: CreateParams): OpenAICreatePara
   if (toolDefs) {
     out.tools = toolDefs
   }
-  const toolChoice = p.toolChoice ?? p.tool_choice
   if (toolChoice) {
     out.tool_choice = toolChoiceToOpenAI(toolChoice) ?? toolChoice
   }
@@ -895,8 +902,8 @@ export function buildOpenAIRequestParams(params: CreateParams): OpenAICreatePara
 
   Object.assign(out, thinkingParams)
   Object.assign(out, cleanedExtras)
-  if (p.extra_body) {
-    Object.assign(out, p.extra_body)
+  if (params.extraBody) {
+    Object.assign(out, params.extraBody)
   }
 
   return out
