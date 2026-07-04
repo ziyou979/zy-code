@@ -25,6 +25,7 @@ import {
   buildOpenAIRequestParams,
   mapOpenAIStreamToStandard,
   openAIResponseToStandard,
+  type OpenAICreateParams,
 } from './conversions/openai.js'
 
 const log = createDebugLog('openai')
@@ -137,11 +138,13 @@ export class OpenAIProviderAdapter implements LLMAdapter {
     try {
       const model = getMainLoopModel() ?? ''
       const client = await getOpenAIClient({ apiKey, maxRetries: 3 })
-      await client.chat.completions.create({
+      const verifyParams: OpenAICreateParams = {
         model: normalizeModelStringForAPI(model),
         max_tokens: 1,
         messages: [{ role: 'user', content: 'test' }],
-      })
+        thinking: { type: 'disabled' },
+      }
+      await client.chat.completions.create(verifyParams)
       return true
     } catch (error) {
       if (error instanceof OpenAI.AuthenticationError) {

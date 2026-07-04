@@ -8,6 +8,7 @@ import {
 } from '../../utils/settings/localModelCapabilities.js'
 import {
   type ApiFormat,
+  DEFAULT_OPENAI_THINKING_ATTR,
   getProviderEntry,
   type OpenAiAttr,
   PROVIDER_REGISTRY,
@@ -279,8 +280,24 @@ export function getModelCostsFromSettings(
  * 消息转换层通过此配置决定行为，而非判断 provider 名称。
  */
 export function getProviderAttr(provider?: string): OpenAiAttr | undefined {
-  const entry = getProviderEntry(provider ?? getAPIProvider())
-  return entry?.openaiAttr
+  const providerId = provider ?? getAPIProvider()
+  const entry = getProviderEntry(providerId)
+  if (!entry) {
+    return undefined
+  }
+
+  // OpenAI 格式统一具备默认 thinking 映射；provider 可按需覆盖。
+  if (getEffectiveApiFormat(providerId as APIProvider) === 'openai') {
+    return {
+      ...entry.openaiAttr,
+      thinking: {
+        ...DEFAULT_OPENAI_THINKING_ATTR,
+        ...(entry.openaiAttr?.thinking ?? {}),
+      },
+    }
+  }
+
+  return entry.openaiAttr
 }
 
 /**

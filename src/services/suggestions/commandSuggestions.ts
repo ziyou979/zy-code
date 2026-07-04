@@ -264,8 +264,13 @@ function findMatchedAlias(query: string, aliases?: string[]): string | undefined
 /**
  * Creates a suggestion item from a command.
  * Only shows the matched alias in parentheses if the user typed an alias.
+ * `query` is only set when there's actual user input to highlight in the display text.
  */
-function createCommandSuggestionItem(cmd: Command, matchedAlias?: string): SuggestionItem {
+function createCommandSuggestionItem(
+  cmd: Command,
+  matchedAlias?: string,
+  userQuery?: string,
+): SuggestionItem {
   const commandName = getCommandName(cmd)
   // Only show the alias if the user typed it
   const aliasText = matchedAlias ? ` (${matchedAlias})` : ''
@@ -277,6 +282,11 @@ function createCommandSuggestionItem(cmd: Command, matchedAlias?: string): Sugge
       ? ` (arguments: ${cmd.argNames.join(', ')})`
       : '')
 
+  // 仅在用户有实际输入时填充 match highlight 查询文本：
+  // - 别名匹配时用别名（在 displayText 中如 "(md)"）
+  // - 否则用用户输入的原始查询（如 "/model" 中的 "mod"）
+  const highlightQuery = matchedAlias ?? (userQuery ? userQuery : undefined)
+
   return {
     id: getCommandId(cmd),
     displayText: `/${commandName}${aliasText}`,
@@ -284,6 +294,7 @@ function createCommandSuggestionItem(cmd: Command, matchedAlias?: string): Sugge
     description: fullDescription,
     metadata: cmd,
     matchedAlias,
+    query: highlightQuery,
   }
 }
 
@@ -486,7 +497,7 @@ export function generateCommandSuggestions(input: string, commands: Command[]): 
     const cmd = result.r.item.command
     // Only show alias in parentheses if the user typed an alias
     const matchedAlias = findMatchedAlias(query, cmd.aliases)
-    return createCommandSuggestionItem(cmd, matchedAlias)
+    return createCommandSuggestionItem(cmd, matchedAlias, query)
   })
   // Skip the prepend if hiddenExact is already in fuseSuggestions — this
   // happens when isHidden flips false→true mid-session (OAuth expiry,
