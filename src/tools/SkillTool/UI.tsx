@@ -34,7 +34,8 @@ export function renderToolResultMessage(output: Output): React.ReactNode {
   // 显示工具数量（仅适用于内联技能）
   if ('allowedTools' in output && output.allowedTools && output.allowedTools.length > 0) {
     const count = output.allowedTools.length
-    parts.push(`${count} ${plural(count, tSync('skill.toolAllowed_one'))} allowed`)
+    const unitKey = count === 1 ? 'skill.toolAllowed_one' : 'skill.toolAllowed_other'
+    parts.push(tSync('skill.toolAllowed', { count, unit: tSync(unitKey) }))
   }
 
   // 如果非默认则显示模型（仅适用于内联技能）
@@ -117,7 +118,10 @@ export function renderToolUseProgressMessage(
         </SubAgentProvider>
         {hiddenCount > 0 && (
           <Text dimColor>
-            +{hiddenCount} more tool {plural(hiddenCount, tSync('skill.moreToolUse_one'))}
+            {tSync('skill.moreToolUse', {
+              count: hiddenCount,
+              unit: tSync(hiddenCount === 1 ? 'skill.moreToolUse_one' : 'skill.moreToolUse_other'),
+            })}
           </Text>
         )}
       </Box>
