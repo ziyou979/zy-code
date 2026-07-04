@@ -155,9 +155,8 @@ SelectMultiProps<any>) {
         </Box>
       )
     }
-    // 高亮逻辑：优先使用 hoveredId，否则使用 isSelected
+    // isHovered 仅用于指示器，不影响 checkbox 选中态
     const isHovered = hoveredId != null && option.value === hoveredId
-    const isEffectivelySelected = isHovered || isSelected
     return (
       <Box
         key={String(option.value)}
@@ -168,15 +167,14 @@ SelectMultiProps<any>) {
       >
         <SelectOption
           isFocused={isOptionFocused}
-          isSelected={isEffectivelySelected}
+          isSelected={isSelected}
+          isHovered={isHovered}
           shouldShowDownArrow={areMoreOptionsBelow && isLastVisibleOption}
           shouldShowUpArrow={areMoreOptionsAbove && isFirstVisibleOption}
           description={option.description}
         >
           {!hideIndexes && <Text dimColor={true}>{`${i}.`.padEnd(maxIndexWidth)}</Text>}
-          <Text color={isEffectivelySelected ? 'success' : undefined}>
-            [{isEffectivelySelected ? fig.tick : ' '}]
-          </Text>
+          <Text color={isSelected ? 'success' : undefined}>[{isSelected ? fig.tick : ' '}]</Text>
           <Text color={isOptionFocused ? 'suggestion' : undefined}>{option.label}</Text>
         </SelectOption>
       </Box>

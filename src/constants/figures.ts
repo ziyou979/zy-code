@@ -11,6 +11,7 @@ const VS15 = '\uFE0E'
 // darwin 用 ⏺（U+23FA）可能渲染为 emoji，故保留 VS15；其他平台用 ●（U+25CF）纯几何符号无需 VS15
 export const BLACK_CIRCLE = env.platform === 'darwin' ? '\u23fa' + VS15 : '\u25cf'
 export const BULLET_OPERATOR = '\u2219' // ∙
+export const TITLE_TAB = '\u2733'
 export const TEARDROP_ASTERISK = '\u273b' // ✻
 export const BRAILLE_Z = '\u28dd' // ⣝ - 类似 z 形的盲文符号
 export const UP_ARROW = '\u2191' // ↑ - used for opus 1m merge notice
@@ -58,7 +59,6 @@ export const BRIDGE_SPINNER_FRAMES = [
 export const BRIDGE_READY_INDICATOR = '\u00b7\u2714' + VS15 + '\u00b7'
 export const BRIDGE_FAILED_INDICATOR = '\u00d7'
 
-
 // 状态圆圈（纯 emoji）
 export const GREEN_CIRCLE = '\u{1F7E2}' // 🟢
 export const YELLOW_CIRCLE = '\u{1F7E1}' // 🟡
@@ -78,7 +78,6 @@ export const CHECKBOX_CHECKED = '\u2611' // ☑
 // 终端标题动画帧（盲文字符，低点阵占用，闪烁柔和）
 export const TITLE_FRAME_A = '\u2802' // ⠂
 export const TITLE_FRAME_B = '\u2810' // ⠐
-
 
 // figures 库输出作为 fig 对象导出。
 // 部分字符在特定终端会渲染为彩色 emoji，已单独追加 `\uFE0E`（VS15）强制文本展示。

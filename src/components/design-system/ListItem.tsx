@@ -62,6 +62,14 @@ type ListItemProps = {
   declareCursor?: boolean
 
   /**
+   * 鼠标悬浮态。由父组件根据 hoveredId 计算传入。
+   * hover 只在非 focused/selected/disabled 时显示 dim `>` 指示器，
+   * 不会改变文字颜色或显示 ✓，避免与真实选中态混淆。
+   * @default false
+   */
+  isHovered?: boolean
+
+  /**
    * 鼠标点击时触发。仅在启用鼠标追踪的 AlternateScreen 内有效。
    */
   onClick?: (event: ClickEvent) => void
@@ -119,6 +127,7 @@ type ListItemProps = {
 export function ListItem({
   isFocused,
   isSelected = false,
+  isHovered = false,
   children,
   description,
   showScrollDown,
@@ -142,6 +151,9 @@ export function ListItem({
     }
     if (showScrollUp) {
       return <Text dimColor={true}>{fig.arrowUp}</Text>
+    }
+    if (isHovered) {
+      return <Text dimColor={true}>{fig.pointer}</Text>
     }
     return <Text> </Text>
   }

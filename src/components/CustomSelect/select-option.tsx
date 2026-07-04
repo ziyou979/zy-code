@@ -39,6 +39,12 @@ export type SelectOptionProps = {
   readonly declareCursor?: boolean
 
   /**
+   * 鼠标悬浮态。仅影响 indicator，不影响文字颜色和 ✓。
+   * @default false
+   */
+  readonly isHovered?: boolean
+
+  /**
    * 鼠标点击时触发。仅在启用鼠标追踪的 AlternateScreen 内有效。
    */
   readonly onClick?: (event: ClickEvent) => void
@@ -56,6 +62,7 @@ export type SelectOptionProps = {
 export function SelectOption({
   isFocused,
   isSelected,
+  isHovered = false,
   children,
   description,
   shouldShowDownArrow,
@@ -69,6 +76,7 @@ export function SelectOption({
     <ListItem
       isFocused={isFocused}
       isSelected={isSelected}
+      isHovered={isHovered}
       description={description}
       showScrollDown={shouldShowDownArrow}
       showScrollUp={shouldShowUpArrow}

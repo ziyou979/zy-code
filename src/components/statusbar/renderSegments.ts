@@ -134,7 +134,10 @@ const RENDERERS: Record<ModuleId, Renderer> = {
     // effort 强度仅在模型真正支持 effort 档位时显示(对齐 getModelEffortLevels
     // 这一单一事实源)。dashscope 的 qwen 等只支持 enable_thinking 开关、不支持
     // effort 强度的模型,即便 thinking 已开启也只显示模型名,不显示假的 high 档。
-    if (ctx.thinkingEnabled && modelSupportsEffort(ctx.mainLoopModel)) {
+    // 不依赖 ctx.thinkingEnabled：effort 档位本身编码了 thinking 开关状态
+    // （off=关闭, balanced=开启均衡等），单独 checking 会导致 thinkingEnabled
+    // 因其他路径（如 /clear）变成 false 后 effort 被错误隐藏。
+    if (modelSupportsEffort(ctx.mainLoopModel)) {
       const level = getDisplayedEffortLevel(ctx.mainLoopModel, ctx.effortValue as never)
       const effortGlyph = EFFORT_ICONS[level] ?? EFFORT_BALANCED
       const i18nKey = EFFORT_I18N_KEYS[level] ?? 'effort.balanced'

@@ -12,6 +12,11 @@ export type SuggestionItem = {
   metadata?: unknown
   color?: keyof Theme
   matchedAlias?: string
+  /**
+   * 用户输入的查询文本，用于在 displayText 中高亮匹配片段。
+   * 当存在时，SuggestionItemRow 会将匹配的部分用 suggestion 色渲染。
+   */
+  query?: string
 }
 export type SuggestionType =
   | 'command'
@@ -48,6 +53,69 @@ function isUnifiedSuggestion(itemId: string): boolean {
   return (
     itemId.startsWith('file-') || itemId.startsWith('mcp-resource-') || itemId.startsWith('agent-')
   )
+}
+
+/**
+ * 在 text 中高亮所有匹配 query（大小写不敏感）的片段。
+ * 匹配片段使用 suggestion 色，其余部分使用 baseColor/dim。
+ * 与 active 行互不覆盖 — active 行可通过 isSelected 控制 bold，match 始终独立高亮。
+ */
+function HighlightedText({
+  text,
+  query,
+  baseColor,
+  dimColor,
+}: {
+  text: string
+  query?: string
+  baseColor?: keyof Theme
+  dimColor?: boolean
+}): React.ReactNode {
+  if (!query) {
+    return (
+      <Text color={baseColor} dimColor={dimColor}>
+        {text}
+      </Text>
+    )
+  }
+  const queryLower = query.toLowerCase()
+  const textLower = text.toLowerCase()
+  const parts: React.ReactNode[] = []
+  let offset = 0
+  let idx = textLower.indexOf(queryLower, offset)
+  if (idx === -1) {
+    return (
+      <Text color={baseColor} dimColor={dimColor}>
+        {text}
+      </Text>
+    )
+  }
+  while (idx !== -1) {
+    if (idx > offset) {
+      // 非匹配片段：用基础颜色
+      parts.push(
+        <Text key={`n${idx}`} color={baseColor} dimColor={dimColor}>
+          {text.slice(offset, idx)}
+        </Text>,
+      )
+    }
+    // 匹配片段：始终用 suggestion 色，不 dim
+    parts.push(
+      <Text key={`m${idx}`} color="suggestion">
+        {text.slice(idx, idx + query.length)}
+      </Text>,
+    )
+    offset = idx + query.length
+    idx = textLower.indexOf(queryLower, offset)
+  }
+  if (offset < text.length) {
+    parts.push(
+      <Text key={`e${offset}`} color={baseColor} dimColor={dimColor}>
+        {text.slice(offset)}
+      </Text>,
+    )
+  }
+  return <>{parts}</>
 }
 const SuggestionItemRow = memo(function SuggestionItemRow({
   item,
@@ -105,14 +173,14 @@ const SuggestionItemRow = memo(function SuggestionItemRow({
     maxColumnWidth ?? stringWidth(item.displayText) + 5,
     maxNameWidth,
   )
-  const textColor_0 = item.color || (isSelected ? 'suggestion' : undefined)
+  const textBaseColor: keyof Theme | undefined =
+    item.color ?? (isSelected ? ('suggestion' as const) : undefined)
   const shouldDim = !isSelected
   let displayText_0 = item.displayText
   if (stringWidth(displayText_0) > displayTextWidth - 2) {
     displayText_0 = truncateToWidth(displayText_0, displayTextWidth - 2)
   }
-  const paddedDisplayText =
-    displayText_0 + ' '.repeat(Math.max(0, displayTextWidth - stringWidth(displayText_0)))
+  const displayTextPadding = ' '.repeat(Math.max(0, displayTextWidth - stringWidth(displayText_0)))
   const tagText = item.tag ? `[${item.tag}] ` : ''
   const tagWidth = stringWidth(tagText)
   const descriptionWidth = Math.max(0, columns - displayTextWidth - tagWidth - 4)
@@ -123,10 +191,16 @@ const SuggestionItemRow = memo(function SuggestionItemRow({
     <Box width="100%" onMouseEnter={onMouseEnter} onClick={onClick}>
       <Text wrap="truncate">
         {
-          <Text color={textColor_0} dimColor={shouldDim}>
-            {paddedDisplayText}
+          <Text bold={isSelected}>
+            <HighlightedText
+              text={displayText_0}
+              query={item.query}
+              baseColor={textBaseColor}
+              dimColor={shouldDim}
+            />
           </Text>
         }
+        <Text dimColor={true}>{displayTextPadding}</Text>
         {tagText ? <Text dimColor={true}>{tagText}</Text> : null}
         {
           <Text color={isSelected ? 'suggestion' : undefined} dimColor={!isSelected}>
@@ -180,14 +254,18 @@ export function PromptInputFooterSuggestions({
     const index = startIndex + visibleIndex
     // 高亮逻辑：优先使用 hoveredId，否则使用 selectedSuggestion
     const isHovered = hoveredId != null && item_0.id === hoveredId
-    const isEffectivelySelected = isHovered || item_0.id === suggestions[selectedSuggestion]?.id
+    const isActive = isHovered || item_0.id === suggestions[selectedSuggestion]?.id
     return (
       <SuggestionItemRow
         key={item_0.id}
         item={item_0}
         maxColumnWidth={maxColumnWidth}
-        isSelected={isEffectivelySelected}
-        onMouseEnter={() => setHoveredId(item_0.id)}
+        isSelected={isActive}
+        onMouseEnter={() => {
+          setHoveredId(item_0.id)
+          // 同步 hover 到键盘焦点，确保 Enter/点击接受的项与鼠标看到的项一致
+          onFocusSuggestion?.(index)
+        }}
         onClick={
           onAcceptSuggestion
             ? (event) => {

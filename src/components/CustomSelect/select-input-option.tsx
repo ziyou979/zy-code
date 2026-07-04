@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- UP arrow exit not in Attachments bindings
 import { Box, Text, useInput } from '../../ink.js'
+import type { ClickEvent } from '../../ink/events/click-event.js'
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'
 import type { PastedContent } from '../../utils/config.js'
 import { getImageFromClipboard } from '../../utils/imagePaste.js'
@@ -21,6 +22,7 @@ type Props<T> = {
   >
   isFocused: boolean
   isSelected: boolean
+  isHovered?: boolean
   shouldShowDownArrow: boolean
   shouldShowUpArrow: boolean
   maxIndexWidth: number
@@ -83,11 +85,24 @@ type Props<T> = {
    * Callback to change the selected image index.
    */
   onSelectedImageIndexChange?: (index: number) => void
+  /**
+   * 鼠标点击时触发。
+   */
+  onClick?: (event: ClickEvent) => void
+  /**
+   * 鼠标移入时触发。
+   */
+  onMouseEnter?: () => void
+  /**
+   * 鼠标移出时触发。
+   */
+  onMouseLeave?: () => void
 }
 export function SelectInputOption({
   option,
   isFocused,
   isSelected,
+  isHovered = false,
   shouldShowDownArrow,
   shouldShowUpArrow,
   maxIndexWidth,
@@ -108,6 +123,9 @@ export function SelectInputOption({
   selectedImageIndex = 0,
   onImagesSelectedChange,
   onSelectedImageIndexChange,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
 }: // biome-ignore lint/suspicious/noExplicitAny: 泛型组件内部转发，无法避免 any
 Props<any>) {
   const imageAttachments = pastedContents
@@ -226,9 +244,13 @@ Props<any>) {
         <SelectOption
           isFocused={isFocused}
           isSelected={isSelected}
+          isHovered={isHovered}
           shouldShowDownArrow={shouldShowDownArrow}
           shouldShowUpArrow={shouldShowUpArrow}
           declareCursor={false}
+          onClick={onClick}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
         >
           {
             <Box flexDirection="row" flexShrink={layout === 'compact' ? 0 : undefined}>

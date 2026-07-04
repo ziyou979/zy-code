@@ -329,6 +329,7 @@ SelectProps<any>) {
           const i = state.visibleFromIndex + index + 1
           const isFocused = !isDisabled && state.focusedValue === option.value
           const isSelected = state.value === option.value
+          const isHovered = hoveredId != null && option.value === hoveredId
           if (option.type === 'input') {
             const inputValue = inputValues.has(option.value)
               ? inputValues.get(option.value)
@@ -339,6 +340,7 @@ SelectProps<any>) {
                 option={option}
                 isFocused={isFocused}
                 isSelected={isSelected}
+                isHovered={isHovered}
                 shouldShowDownArrow={areMoreOptionsBelow && isLastVisibleOption}
                 shouldShowUpArrow={areMoreOptionsAbove && isFirstVisibleOption}
                 maxIndexWidth={maxIndexWidth}
@@ -373,6 +375,14 @@ SelectProps<any>) {
                 selectedImageIndex={selectedImageIndex}
                 onImagesSelectedChange={setImagesSelected}
                 onSelectedImageIndexChange={setSelectedImageIndex}
+                onClick={createOptionClickHandler(
+                  option,
+                  state.focusOption,
+                  state.selectFocusedOption,
+                  onChange,
+                )}
+                onMouseEnter={createOptionHoverHandler(option, setHoveredId)}
+                onMouseLeave={createHoverLeaveHandler(setHoveredId)}
               />
             )
           }
@@ -393,16 +403,6 @@ SelectProps<any>) {
             )
           }
           const isOptionDisabled = option.disabled === true
-          // 高亮逻辑：优先使用 hoveredId，否则使用 selectedSuggestion
-          const isHovered = hoveredId != null && option.value === hoveredId
-          const isEffectivelySelected = isHovered || isSelected
-          const optionColor = isOptionDisabled
-            ? undefined
-            : isEffectivelySelected
-              ? 'success'
-              : isFocused
-                ? 'suggestion'
-                : undefined
           return (
             <Box
               key={String(option.value)}
@@ -419,11 +419,23 @@ SelectProps<any>) {
             >
               <SelectOption
                 isFocused={isFocused}
-                isSelected={isEffectivelySelected}
+                isSelected={isSelected}
+                isHovered={isHovered}
                 shouldShowDownArrow={areMoreOptionsBelow && isLastVisibleOption}
                 shouldShowUpArrow={areMoreOptionsAbove && isFirstVisibleOption}
               >
-                <Text dimColor={isOptionDisabled} color={optionColor}>
+                <Text
+                  dimColor={isOptionDisabled}
+                  color={
+                    isOptionDisabled
+                      ? undefined
+                      : isSelected
+                        ? 'success'
+                        : isFocused
+                          ? 'suggestion'
+                          : undefined
+                  }
+                >
                   {label}
                 </Text>
               </SelectOption>
@@ -431,7 +443,15 @@ SelectProps<any>) {
                 <Box paddingLeft={2}>
                   <Text
                     dimColor={isOptionDisabled || option.dimDescription !== false}
-                    color={optionColor}
+                    color={
+                      isOptionDisabled
+                        ? undefined
+                        : isSelected
+                          ? 'success'
+                          : isFocused
+                            ? 'suggestion'
+                            : undefined
+                    }
                   >
                     <Ansi>{option.description}</Ansi>
                   </Text>
@@ -455,6 +475,7 @@ SelectProps<any>) {
           const i_0 = state.visibleFromIndex + index_1 + 1
           const isFocused_0 = !isDisabled && state.focusedValue === option_2.value
           const isSelected_0 = state.value === option_2.value
+          const isHovered_0 = hoveredId != null && option_2.value === hoveredId
           if (option_2.type === 'input') {
             const inputValue_0 = inputValues.has(option_2.value)
               ? inputValues.get(option_2.value)
@@ -465,6 +486,7 @@ SelectProps<any>) {
                 option={option_2}
                 isFocused={isFocused_0}
                 isSelected={isSelected_0}
+                isHovered={isHovered_0}
                 shouldShowDownArrow={areMoreOptionsBelow_0 && isLastVisibleOption_0}
                 shouldShowUpArrow={areMoreOptionsAbove_0 && isFirstVisibleOption_0}
                 maxIndexWidth={maxIndexWidth_0}
@@ -503,6 +525,14 @@ SelectProps<any>) {
                 selectedImageIndex={selectedImageIndex}
                 onImagesSelectedChange={setImagesSelected}
                 onSelectedImageIndexChange={setSelectedImageIndex}
+                onClick={createOptionClickHandler(
+                  option_2,
+                  state.focusOption,
+                  state.selectFocusedOption,
+                  onChange,
+                )}
+                onMouseEnter={createOptionHoverHandler(option_2, setHoveredId)}
+                onMouseLeave={createHoverLeaveHandler(setHoveredId)}
               />
             )
           }
@@ -523,9 +553,6 @@ SelectProps<any>) {
             )
           }
           const isOptionDisabled_0 = option_2.disabled === true
-          // 高亮逻辑：优先使用 hoveredId，否则使用 selectedSuggestion
-          const isHovered_0 = hoveredId != null && option_2.value === hoveredId
-          const isEffectivelySelected_0 = isHovered_0 || isSelected_0
           return (
             <Box
               key={String(option_2.value)}
@@ -542,7 +569,8 @@ SelectProps<any>) {
             >
               <SelectOption
                 isFocused={isFocused_0}
-                isSelected={isEffectivelySelected_0}
+                isSelected={isSelected_0}
+                isHovered={isHovered_0}
                 shouldShowDownArrow={areMoreOptionsBelow_0 && isLastVisibleOption_0}
                 shouldShowUpArrow={areMoreOptionsAbove_0 && isFirstVisibleOption_0}
               >
@@ -554,7 +582,7 @@ SelectProps<any>) {
                   color={
                     isOptionDisabled_0
                       ? undefined
-                      : isEffectivelySelected_0
+                      : isSelected_0
                         ? 'success'
                         : isFocused_0
                           ? 'suggestion'
@@ -571,7 +599,7 @@ SelectProps<any>) {
                     color={
                       isOptionDisabled_0
                         ? undefined
-                        : isEffectivelySelected_0
+                        : isSelected_0
                           ? 'success'
                           : isFocused_0
                             ? 'suggestion'
@@ -648,16 +676,15 @@ SelectProps<any>) {
             }
             const labelText = getTextContent(data.option.label)
             const indexWidth = hideIndexes ? 0 : maxIndexWidth_1 + 2
-            // 高亮逻辑：优先使用 hoveredId，否则使用 selectedSuggestion
             const isHovered_1 = hoveredId != null && data.option.value === hoveredId
-            const isEffectivelySelected_1 = isHovered_1 || data.isSelected
-            const checkmarkWidth = isEffectivelySelected_1 ? 2 : 0
+            const checkmarkWidth = data.isSelected ? 2 : 0
             const currentLabelWidth = 2 + indexWidth + stringWidth(labelText) + checkmarkWidth
             const padding = maxLabelWidth - currentLabelWidth
             return (
               <TwoColumnRow
                 key={String(data.option.value)}
                 isFocused={data.isFocused}
+                isHovered={isHovered_1}
                 onClick={createOptionClickHandler(
                   data.option,
                   state.focusOption,
@@ -674,6 +701,8 @@ SelectProps<any>) {
                     <Text dimColor={true}>{fig.arrowDown}</Text>
                   ) : data.shouldShowUpArrow ? (
                     <Text dimColor={true}>{fig.arrowUp}</Text>
+                  ) : isHovered_1 && !data.isOptionDisabled ? (
+                    <Text dimColor={true}>{fig.pointer}</Text>
                   ) : (
                     <Text> </Text>
                   )}
@@ -683,7 +712,7 @@ SelectProps<any>) {
                     color={
                       data.isOptionDisabled
                         ? undefined
-                        : isEffectivelySelected_1
+                        : data.isSelected
                           ? 'success'
                           : data.isFocused
                             ? 'suggestion'
@@ -695,7 +724,7 @@ SelectProps<any>) {
                     )}
                     {data.label}
                   </Text>
-                  {isEffectivelySelected_1 && <Text color="success"> {fig.tick}</Text>}
+                  {data.isSelected && <Text color="success"> {fig.tick}</Text>}
                   {padding > 0 && <Text>{' '.repeat(padding)}</Text>}
                 </Box>
                 <Box flexGrow={1} marginLeft={2}>
@@ -705,7 +734,7 @@ SelectProps<any>) {
                     color={
                       data.isOptionDisabled
                         ? undefined
-                        : isEffectivelySelected_1
+                        : data.isSelected
                           ? 'success'
                           : data.isFocused
                             ? 'suggestion'
@@ -735,12 +764,14 @@ SelectProps<any>) {
           const displayIndex = state.visibleFromIndex + index + 1
           const isFocused = !isDisabled && state.focusedValue === option.value
           const isSelected = state.value === option.value
+          const isHovered = hoveredId != null && option.value === hoveredId
           return (
             <SelectInputOption
               key={String(option.value)}
               option={option}
               isFocused={isFocused}
               isSelected={isSelected}
+              isHovered={isHovered}
               shouldShowDownArrow={areMoreOptionsBelow && isLastVisibleOption}
               shouldShowUpArrow={areMoreOptionsAbove && isFirstVisibleOption}
               maxIndexWidth={maxIndexWidth_1}
@@ -775,6 +806,14 @@ SelectProps<any>) {
               selectedImageIndex={selectedImageIndex}
               onImagesSelectedChange={setImagesSelected}
               onSelectedImageIndexChange={setSelectedImageIndex}
+              onClick={createOptionClickHandler(
+                option,
+                state.focusOption,
+                state.selectFocusedOption,
+                onChange,
+              )}
+              onMouseEnter={createOptionHoverHandler(option, setHoveredId)}
+              onMouseLeave={createHoverLeaveHandler(setHoveredId)}
             />
           )
         }
@@ -802,14 +841,13 @@ SelectProps<any>) {
         const isFocused = !isDisabled && state.focusedValue === option.value
         const isSelected = state.value === option.value
         const isOptionDisabled = option.disabled === true
-        // 高亮逻辑：优先使用 hoveredId，否则使用 selectedSuggestion
-        const isHovered_2 = hoveredId != null && option.value === hoveredId
-        const isEffectivelySelected_2 = isHovered_2 || isSelected
+        const isHovered = hoveredId != null && option.value === hoveredId
         return (
           <SelectOption
             key={String(option.value)}
             isFocused={isFocused}
-            isSelected={isEffectivelySelected_2}
+            isSelected={isSelected}
+            isHovered={isHovered}
             shouldShowDownArrow={areMoreOptionsBelow && isLastVisibleOption}
             shouldShowUpArrow={areMoreOptionsAbove && isFirstVisibleOption}
             onClick={createOptionClickHandler(
@@ -830,7 +868,7 @@ SelectProps<any>) {
                 color={
                   isOptionDisabled
                     ? undefined
-                    : isEffectivelySelected_2
+                    : isSelected
                       ? 'success'
                       : isFocused
                         ? 'suggestion'
@@ -854,7 +892,7 @@ SelectProps<any>) {
                   color={
                     isOptionDisabled
                       ? undefined
-                      : isEffectivelySelected_2
+                      : isSelected
                         ? 'success'
                         : isFocused
                           ? 'suggestion'
@@ -883,12 +921,14 @@ SelectProps<any>) {
 
 function TwoColumnRow({
   isFocused,
+  isHovered = false,
   children,
   onClick,
   onMouseEnter,
   onMouseLeave,
 }: {
   isFocused: boolean
+  isHovered?: boolean
   children: React.ReactNode
   onClick?: (event: ClickEvent) => void
   onMouseEnter?: () => void
