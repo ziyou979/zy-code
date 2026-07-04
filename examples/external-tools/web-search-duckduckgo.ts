@@ -17,7 +17,6 @@
  * - isReadOnly: 是否只读（默认 true）
  * - searchHint: ToolSearch 搜索关键词
  */
-import type { ExternalToolDefinition } from '../../src/tools/externalToolAdapter'
 
 interface SearchResult {
   title: string
@@ -100,9 +99,7 @@ function decodeEntities(text: string): string {
     .replace(/&nbsp;/g, ' ')
 }
 
-// ─── ExternalToolDefinition ─────────────────────────────────────────
-
-const webSearchTool: ExternalToolDefinition = {
+const webSearchTool = {
   name: 'WebSearch', // 与内置工具同名 → 自动覆盖
   description: 'Search the web using DuckDuckGo. Returns results with title, URL, and snippet.',
   searchHint: 'search the web for current information',
@@ -170,5 +167,3 @@ const webSearchTool: ExternalToolDefinition = {
     )
   },
 }
-
-export default webSearchTool

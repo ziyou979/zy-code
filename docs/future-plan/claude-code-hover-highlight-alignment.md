@@ -88,6 +88,49 @@ Claude 至少区分三种视觉状态：
 
 这与 Claude 的 select/model picker 语义不同：ZY 把 hover 临时伪装成 selected/current。
 
+### Bash 权限确认中的 input option 鼠标失效
+
+用户实测：
+
+- Bash 权限确认出现三项时，第 2 项“是，并且不再询问: node:*”鼠标 hover 无效，点击也无效。
+- Claude Code 在同类场景下也有相同问题。
+
+对应 ZY Code 代码：
+
+- `src/components/permissions/BashPermissionRequest/bashToolUseOptions.tsx` 会在可保存 Bash 前缀规则时生成 `type: 'input'` 的 `yes-prefix-edited` 选项。
+- `src/components/CustomSelect/select.tsx` 对普通选项会包一层带 `onClick` / `onMouseEnter` 的 `Box`，但 `option.type === 'input'` 的分支直接返回 `SelectInputOption`。
+- `src/components/CustomSelect/select-input-option.tsx` 内部渲染 `SelectOption` 时没有传 `onClick`、`onMouseEnter`、`onMouseLeave`。
+
+因此第 2 项不是普通 selectable row，而是 inline input row。它没有被挂上鼠标 handler，hit-test 即使命中节点，也找不到可冒泡执行的 `onClick` / `onMouseEnter`。这与前面的 hover 颜色语义不同，是 input option 的事件覆盖缺口。
+
+修复目标：
+
+- input option 的鼠标悬浮也要有反馈。
+- 点击 input option 应至少聚焦该项，进入可编辑状态。
+- 不应把点击 input option 直接当作确认提交；否则会破坏“可编辑前缀后再确认”的语义。
+
+建议改动：
+
+1. 扩展 `SelectInputOption` props，增加：
+   - `onClick?: (event: ClickEvent) => void`
+   - `onMouseEnter?: () => void`
+   - `onMouseLeave?: () => void`
+
+2. 在 `select.tsx` 的所有 `option.type === 'input'` 分支传入：
+   - `onClick={createOptionClickHandler(option, state.focusOption, state.selectFocusedOption, onChange)}`
+   - `onMouseEnter={createOptionHoverHandler(option, setHoveredId)}`
+   - `onMouseLeave={createHoverLeaveHandler(setHoveredId)}`
+
+3. 但 `handleOptionClick()` 对 input option 已经是“只聚焦，不提交”，这一点应保留：
+   - 第一次点击第 2 项：聚焦并显示/激活输入框。
+   - 用户按 Enter：提交当前输入值并选择 `yes-prefix-edited`。
+
+4. `SelectInputOption` 内部的 `SelectOption` 需要透传这些 handler。
+   - 如果后续实现了 `ListItem` 本地 hover indicator，input option 可以自然获得 dim `>`。
+   - 对 focused input option，继续由 `isFocused` 显示 `suggestion` 色 `>`。
+
+5. 如果需要更完整的鼠标体验，可在第二阶段支持点击 TextInput 内部定位光标；但这不是本问题的 P1 修复范围。
+
 ## 对齐原则
 
 1. **不要全局规定 hover 必须高亮或必须 `>`。**
@@ -116,6 +159,7 @@ Claude 至少区分三种视觉状态：
 - `isSelected` 只表示真实选中值。
 - `isFocused` 继续表示键盘焦点。
 - 鼠标 hover 在非 focused 行上显示暗色 `>`，但不显示 `✓`，不使用 `success`。
+- `type: 'input'` 的行也必须挂载 hover/click handler，至少支持鼠标聚焦。
 
 建议改动：
 
@@ -137,6 +181,11 @@ Claude 至少区分三种视觉状态：
    - Claude model picker 从提取结果看 `onFocus` 驱动 effort 信息，鼠标 hover 只显示 indicator 时不一定改变 focus。
    - 建议先保持键盘 focus 驱动 effort，不让单纯 hover 改变 effort，避免鼠标扫过导致底部说明频繁变化。
    - 如果用户期待 effort 跟随鼠标，可在第二阶段让 hover 同步 focus，但仍不能改变 selected/current。
+
+5. 补齐 input option 事件：
+   - `SelectInputOption` 接收并透传 `onClick` / `onMouseEnter` / `onMouseLeave`。
+   - `select.tsx` 的 input 分支复用普通选项的 mouse action helper。
+   - 点击 input option 只聚焦，不提交。
 
 ### P1：修正 SelectMulti 的 hover 语义
 
@@ -204,6 +253,8 @@ Claude 至少区分三种视觉状态：
    - selected 行显示 `✓`。
    - hover 非 selected 行只显示 `>`，不显示 `✓`。
    - focused 行显示 `suggestion` 色 `>`。
+   - input option hover 有 `>` 反馈。
+   - input option click 只调用 `focusOption`，不调用 `onChange`。
 
 3. `tests/components/CustomSelect/select-multi-mouse.test.tsx`
    - hover 未选中项不显示 `[✓]`。
@@ -218,12 +269,19 @@ Claude 至少区分三种视觉状态：
 5. `tests/ink/hit-test.test.ts`
    - 保留 fullscreen absolute overlay 子树可 hit-test 的覆盖，防止 slash suggestion 鼠标再次失效。
 
+6. Bash 权限确认回归测试
+   - 构造包含 `yes-prefix-edited` 的 `bashToolUseOptions()`。
+   - 验证第 2 项是 `type: 'input'`。
+   - 渲染 `Select` 后，移动鼠标到第 2 项可触发 hover。
+   - 点击第 2 项只聚焦输入项；随后 Enter 才提交。
+
 ## 实施顺序
 
-1. 先改 `ListItem` / `SelectOption` / `select.tsx`，修正单选模型 picker 的 selected 与 hover 混淆。
-2. 再改 `SelectMulti.tsx`，避免 hover 伪装成多选勾选。
-3. 然后收敛 slash suggestion：hover 同步 `selectedSuggestion`，保留 active 高亮。
-4. 最后补 query match highlight，使 `/model` 这类匹配片段高亮与 Claude 更一致。
+1. 先补 input option 的 `onClick` / `onMouseEnter` / `onMouseLeave` 透传，修复 Bash 权限第 2 项鼠标完全无效的问题。
+2. 再改 `ListItem` / `SelectOption` / `select.tsx`，修正单选模型 picker 的 selected 与 hover 混淆。
+3. 再改 `SelectMulti.tsx`，避免 hover 伪装成多选勾选。
+4. 然后收敛 slash suggestion：hover 同步 `selectedSuggestion`，保留 active 高亮。
+5. 最后补 query match highlight，使 `/model` 这类匹配片段高亮与 Claude 更一致。
 
 ## 验证命令
 

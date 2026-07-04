@@ -12,14 +12,6 @@ export function isInternalBuild(): boolean {
 }
 
 /**
- * Returns the raw USER_TYPE value ('zy-super' or 'external').
- * USER_TYPE is replaced at build time by the bundler's --define config.
- */
-export function getUserType(): string {
-  return process.env.USER_TYPE || 'external'
-}
-
-/**
  * Checks if the current environment is a test environment.
  * NODE_ENV is replaced at build time by esbuild's define config.
  */
