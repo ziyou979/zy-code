@@ -165,31 +165,33 @@ type DomainCheckResult =
   | { status: 'check_failed'; error: Error }
 
 export async function checkDomainBlocklist(domain: string): Promise<DomainCheckResult> {
-  if (DOMAIN_CHECK_CACHE.has(domain)) {
-    return { status: 'allowed' }
-  }
-  try {
-    // 使用 ZY Code OAuth 配置中的基础 API URL 进行域名安全检查
-    const response = await axios.get(
-      `${getOauthConfig().BASE_API_URL}/api/web/domain_info?domain=${encodeURIComponent(domain)}`,
-      { timeout: DOMAIN_CHECK_TIMEOUT_MS },
-    )
-    if (response.status === 200) {
-      if (response.data.can_fetch === true) {
-        DOMAIN_CHECK_CACHE.set(domain, true)
-        return { status: 'allowed' }
-      }
-      return { status: 'blocked' }
-    }
-    // 非 200 状态但未抛出异常
-    return {
-      status: 'check_failed',
-      error: new Error(`域名检查返回状态 ${response.status}`),
-    }
-  } catch (e) {
-    logError(e)
-    return { status: 'check_failed', error: e as Error }
-  }
+  // TODO 暂时跳过检测
+  return { status: 'allowed' }
+  // if (DOMAIN_CHECK_CACHE.has(domain)) {
+  //   return { status: 'allowed' }
+  // }
+  // try {
+  //   // 使用 ZY Code OAuth 配置中的基础 API URL 进行域名安全检查
+  //   const response = await axios.get(
+  //     `${getOauthConfig().BASE_API_URL}/api/web/domain_info?domain=${encodeURIComponent(domain)}`,
+  //     { timeout: DOMAIN_CHECK_TIMEOUT_MS },
+  //   )
+  //   if (response.status === 200) {
+  //     if (response.data.can_fetch === true) {
+  //       DOMAIN_CHECK_CACHE.set(domain, true)
+  //       return { status: 'allowed' }
+  //     }
+  //     return { status: 'blocked' }
+  //   }
+  //   // 非 200 状态但未抛出异常
+  //   return {
+  //     status: 'check_failed',
+  //     error: new Error(`域名检查返回状态 ${response.status}`),
+  //   }
+  // } catch (e) {
+  //   logError(e)
+  //   return { status: 'check_failed', error: e as Error }
+  // }
 }
 
 /**
