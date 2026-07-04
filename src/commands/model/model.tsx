@@ -43,8 +43,9 @@ function ModelPickerWrapper({ onDone }: { onDone: LocalJSXCommandOnDone }) {
       ...prev,
       mainLoopModel: model,
       mainLoopModelForSession: null,
-      // 模型能力变更时随之更新 thinking 开关；保留用户已手动 toggle 的状态
-      thinkingEnabled: prev.thinkingEnabled ?? shouldEnableThinkingByDefault(model ?? undefined),
+      // 按新模型能力重置 thinking 开关，避免来自 /clear 或之前不支持 thinking
+      // 的模型的过期 false 值被保留。
+      thinkingEnabled: shouldEnableThinkingByDefault(model ?? undefined),
     }))
     let message = tSync('modelCommand.set', { model: chalk.bold(renderModelLabel(model)) })
     if (effort !== undefined) {
@@ -127,9 +128,8 @@ function SetModelAndClose({
         mainLoopModelForSession: null,
         // 仅在用户未手动设置 effort 时应用默认值
         effortValue: prev.effortValue ?? defaultEffort,
-        // 随模型能力同步 thinking 开关；保留用户已手动 toggle 的状态
-        thinkingEnabled:
-          prev.thinkingEnabled ?? shouldEnableThinkingByDefault(modelValue ?? undefined),
+        // 按新模型能力重置 thinking 开关，避免过期 false 值被保留
+        thinkingEnabled: shouldEnableThinkingByDefault(modelValue ?? undefined),
       }))
       const message = tSync('modelCommand.set', {
         model: chalk.bold(renderModelLabel(modelValue)),

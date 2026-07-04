@@ -44,9 +44,8 @@ export const call: LocalCommandCall = async (args, context) => {
         mainLoopModelForSession: null,
         // 仅在用户未手动设置 effort 时应用默认值
         effortValue: prev.effortValue ?? defaultEffort,
-        // 随模型能力同步 thinking 开关；保留用户已手动 toggle 的状态
-        thinkingEnabled:
-          prev.thinkingEnabled ?? shouldEnableThinkingByDefault(decision.model ?? undefined),
+        // 按新模型能力重置 thinking 开关，避免过期 false 值被保留
+        thinkingEnabled: shouldEnableThinkingByDefault(decision.model ?? undefined),
       }))
       return { type: 'text', value: decision.message }
     }
