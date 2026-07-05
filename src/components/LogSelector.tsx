@@ -2,7 +2,7 @@ import { fig } from '../constants/figures.js'
 import chalk from 'chalk'
 import React from 'react'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
-import { useModalOrTerminalSize } from '../context/modalContext.js'
+import { useIsInsideModal, useModalOrTerminalSize } from '../context/modalContext.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useSearchInput } from '../hooks/useSearchInput.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
@@ -178,6 +178,7 @@ export function LogSelector({
 }: LogSelectorProps) {
   const terminalSize = useTerminalSize()
   const modalAwareSize = useModalOrTerminalSize(terminalSize)
+  const insideModal = useIsInsideModal()
   const columns = forceWidth || modalAwareSize.columns
   const exitState = useExitOnCtrlCDWithKeybindings(onCancel)
   const isTerminalFocused = useTerminalFocus()
@@ -837,7 +838,9 @@ export function LogSelector({
     filterIndicators.push(tSync('logSelector.currentWorktree'))
   }
   const showAdditionalFilterLine = filterIndicators.length > 0 && viewMode !== 'search'
-  const headerLines = 8 + (showAdditionalFilterLine ? 1 : 0) + tagTabsLines
+  const showHeaderDivider = !insideModal
+  const headerLines =
+    8 - (showHeaderDivider ? 0 : 1) + (showAdditionalFilterLine ? 1 : 0) + tagTabsLines
   const visibleCount = Math.max(1, Math.floor((maxHeight - headerLines - 2) / 3))
   React.useEffect(() => {
     if (!onLoadMore) {
@@ -886,11 +889,11 @@ export function LogSelector({
     )
   return (
     <Box flexDirection="column" height={maxHeight - 1}>
-      {
+      {showHeaderDivider && (
         <Box flexShrink={0}>
           <Divider color="suggestion" width={columns} />
         </Box>
-      }
+      )}
       {
         <Box flexShrink={0}>
           <Text> </Text>

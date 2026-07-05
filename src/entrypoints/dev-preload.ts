@@ -17,12 +17,6 @@ if (typeof Bun !== 'undefined') {
   ]
 }
 
-// dev 下启用 auto mode（绕过 GrowthBook 远程配置默认 disabled）
-process.env.ZY_CODE_DEV_AUTO_MODE = '1'
-
-// dev 下启用全屏渲染器（alt-screen + 虚拟滚动）
-process.env.ZY_CODE_NO_FLICKER = '1'
-
 Object.assign(globalThis, {
   MACRO: {
     VERSION: 'dev',
