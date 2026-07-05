@@ -201,19 +201,25 @@ Claude 至少区分三种视觉状态：
 - checkbox 渲染只看 `isSelected`。
 - hover 只影响左侧 indicator 或焦点色，不影响 `selectedValues` 的视觉状态。
 
-### P1：保持 slash suggestions 的 active 高亮，但同步 hover 与 selectedSuggestion
+### P1：保持 slash suggestions 的 active 高亮，但不要同步 hover 与 selectedSuggestion
 
 目标：
 
 - slash command、file、agent 等 suggestions 保持 Claude 风格：active 行高亮。
-- 鼠标 hover 的行就是 Enter/点击接受的 active 行。
+- 鼠标 hover 的行是视觉 active 行，点击该行时接受该行。
+- 键盘 Enter 仍接受 `selectedSuggestion`，避免鼠标 hover 触发列表窗口重算。
 
 建议改动：
 
-- `PromptInputFooterSuggestions` 的 `onMouseEnter` 优先调用 `onFocusSuggestion(index)`。
-- 可以保留 `hoveredId` 作为即时视觉兜底，但 active 计算建议改为：
+- 保留 `hoveredId` 作为即时视觉状态，active 计算建议为：
   - 若 `hoveredId` 有效，用 hovered；
-  - 同时调用 `focusSuggestion(index)`，让键盘状态尽快一致。
+  - 否则使用 `selectedSuggestion`。
+- 不要在 `onMouseEnter` 中调用 `onFocusSuggestion(index)`。
+  - Windows Terminal 会持续发送 mouse-move 事件。
+  - 如果 hover 同步 `selectedSuggestion`，suggestion 窗口会按新焦点重新居中。
+  - 重绘后鼠标同一屏幕坐标可能命中下一项，从而继续触发 focus，表现为“列表跟随鼠标上下滚动”。
+  - JetBrains Terminal 事件频率/触发时机不同，可能不明显，但根因仍是 hover 改变列表窗口锚点。
+- 点击时继续调用 `onAcceptSuggestion(index)`，所以鼠标仍可直接选择 hover 项。
 - 鼠标离开 overlay 时不要强制把 selectedSuggestion 清空，保持最后 active 项。
 
 ### P2：补齐 slash match highlight
@@ -263,7 +269,7 @@ Claude 至少区分三种视觉状态：
    - click 后才显示 `[✓]`。
 
 4. slash suggestions 测试
-   - hover 调用 `onFocusSuggestion(index)`。
+   - hover 不调用 `onFocusSuggestion(index)`。
    - click 调用 `onAcceptSuggestion(index)`。
    - active 行高亮。
    - match 文本和 active 行可以同时高亮。
@@ -282,7 +288,7 @@ Claude 至少区分三种视觉状态：
 1. 先补 input option 的 `onClick` / `onMouseEnter` / `onMouseLeave` 透传，修复 Bash 权限第 2 项鼠标完全无效的问题。
 2. 再改 `ListItem` / `SelectOption` / `select.tsx`，修正单选模型 picker 的 selected 与 hover 混淆。
 3. 再改 `SelectMulti.tsx`，避免 hover 伪装成多选勾选。
-4. 然后收敛 slash suggestion：hover 同步 `selectedSuggestion`，保留 active 高亮。
+4. 然后收敛 slash suggestion：hover 只更新 `hoveredId`，保留 active 高亮，click 直接接受 hover 项。
 5. 最后补 query match highlight，使 `/model` 这类匹配片段高亮与 Claude 更一致。
 
 ## 验证命令
