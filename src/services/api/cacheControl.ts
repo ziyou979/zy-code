@@ -7,6 +7,7 @@ import type { TextBlock } from '../../types/llm.js'
 import { splitSysPromptPrefix } from '../../utils/api.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
+import { getModelPromptCachingMode } from '../../utils/settings/localModelCapabilities.js'
 import type { SystemPrompt } from '../../utils/systemPromptType.js'
 
 export function getPromptCachingEnabled(model: string): boolean {
@@ -37,6 +38,11 @@ export function getPromptCachingEnabled(model: string): boolean {
     if (model === advancedModel) {
       return false
     }
+  }
+
+  // 隐式缓存模型不需要客户端发送 cache_control 标记
+  if (getModelPromptCachingMode(model) === 'implicit') {
+    return false
   }
 
   return true
