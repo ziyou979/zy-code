@@ -177,7 +177,7 @@ export const zhPermissions: TranslationResource = {
   'permission.sedFileDoesNotExist': '文件不存在',
   'permission.sedPatternDidNotMatch': '模式未匹配到任何内容',
   'permission.showDebugInfo': 'Ctrl+d 显示调试信息',
-  'permission.similar': '类似命令',
+  'permission.similar': '类似',
   'permission.symlinkModifyOutside': '这将在工作目录之外通过符号链接修改 {symlinkTarget}',
   'permission.symlinkTarget': '符号链接目标：{symlinkTarget}',
   'permission.tabToAmend': 'Tab {amend}',

@@ -164,6 +164,11 @@ export async function setClipboard(text: string): Promise<string> {
   return raw
 }
 
+// PowerShell Set-Clipboard 命令：先设置 InputEncoding 为 UTF-8，
+// 再通过 stdin 管道读取文本，避免系统 locale 编码（GBK 等）导致乱码。
+export const PS_SET_CLIPBOARD_UTF8_CMD =
+  '[Console]::InputEncoding = [Text.Encoding]::UTF8; Set-Clipboard -Value ([Console]::In.ReadToEnd())'
+
 // Linux 剪贴板工具：undefined = 尚未探测，null = 无可用。
 // 探测顺序：wl-copy（Wayland）→ xclip（X11）→ xsel（X11 备选）。
 // 首次尝试后缓存，以便后续鼠标操作跳过探测链。
@@ -215,11 +220,18 @@ function copyNative(text: string): void {
       })
       return
     }
-    case 'win32':
-      // clip.exe 在 Windows 上始终可用。Unicode 处理
-      // 不完美（系统区域编码）但作为备选足够。
-      void execFileNoThrow('clip', [], opts)
+    case 'win32': {
+      // PowerShell Set-Clipboard 原生支持 Unicode。先设置 InputEncoding 为
+      // UTF-8，再通过 stdin 管道传入文本。避免 clip.exe 的系统 locale 编码
+      //（中文 GBK、日文 Shift-JIS 等）导致乱码。
+      void execFileNoThrow('powershell', [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        PS_SET_CLIPBOARD_UTF8_CMD,
+      ], opts)
       return
+    }
   }
 }
 

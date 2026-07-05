@@ -559,8 +559,8 @@ function SuggestionsOverlay() {
         suggestions={data.suggestions}
         selectedSuggestion={data.selectedSuggestion}
         maxColumnWidth={data.maxColumnWidth}
-        onFocusSuggestion={data.onFocusSuggestion}
         onAcceptSuggestion={data.onAcceptSuggestion}
+        onClickSuggestion={data.onClickSuggestion}
         overlay={true}
       />
     </Box>

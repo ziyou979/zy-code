@@ -40,8 +40,8 @@ function formatPathList(paths: string[]): ReactNode {
     return ''
   }
 
-  // Extract directory names from paths
-  const names = paths.map((p) => basename(p) || p)
+  // 去重：多条规则可能对应同一路径
+  const names = [...new Set(paths.map((p) => basename(p) || p))]
   if (names.length === 1) {
     return (
       <Text>
@@ -65,14 +65,15 @@ function formatPathList(paths: string[]): ReactNode {
     <Text>
       <Text bold>{names[0]}</Text>
       {sep}, <Text bold>{names[1]}</Text>
-      {sep} {tSync('permission.and')} {paths.length - 2} {tSync('permission.morePaths')}
+      {sep} {tSync('permission.and')} {names.length - 2} {tSync('permission.morePaths')}
     </Text>
   )
 }
 
 /** Plain-text variant of formatPathList for use in i18n interpolation */
 function formatPathListPlain(paths: string[]): string {
-  const names = paths.map((p) => basename(p) || p)
+  // 去重：多条规则可能对应同一路径
+  const names = [...new Set(paths.map((p) => basename(p) || p))]
   const andWord = tSync('permission.and')
   const commaAnd = tSync('permission.commaAnd')
   const morePaths = tSync('permission.morePaths')
@@ -82,7 +83,7 @@ function formatPathListPlain(paths: string[]): string {
   if (names.length === 2) {
     return `${names[0]}${sep} ${andWord} ${names[1]}${sep}`
   }
-  return `${names[0]}${sep}${commaAnd} ${names[1]}${sep} ${andWord} ${paths.length - 2} ${morePaths}`
+  return `${names[0]}${sep}${commaAnd} ${names[1]}${sep} ${andWord} ${names.length - 2} ${morePaths}`
 }
 
 /** Plain-text command list for i18n interpolation */

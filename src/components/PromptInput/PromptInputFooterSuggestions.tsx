@@ -215,8 +215,8 @@ type Props = {
   suggestions: SuggestionItem[]
   selectedSuggestion: number
   maxColumnWidth?: number
-  onFocusSuggestion?: (index: number) => void
   onAcceptSuggestion?: (index: number) => void
+  onClickSuggestion?: (index: number) => void
   /**
    * When true, the suggestions are rendered inside a position=absolute
    * overlay. We omit minHeight and flex-end so the y-clamp in the
@@ -228,8 +228,8 @@ export function PromptInputFooterSuggestions({
   suggestions,
   selectedSuggestion,
   maxColumnWidth: maxColumnWidthProp,
-  onFocusSuggestion,
   onAcceptSuggestion,
+  onClickSuggestion,
   overlay,
 }: Props) {
   const { rows } = useTerminalSize()
@@ -263,16 +263,21 @@ export function PromptInputFooterSuggestions({
         isSelected={isActive}
         onMouseEnter={() => {
           setHoveredId(item_0.id)
-          // 同步 hover 到键盘焦点，确保 Enter/点击接受的项与鼠标看到的项一致
-          onFocusSuggestion?.(index)
+          // Windows Terminal 会持续发送 mouse-move；不要在 hover 时同步 selectedSuggestion，
+          // 否则列表窗口会按新焦点重算并在鼠标下连续滚动。点击仍按当前 hover 的 index 接受。
         }}
         onClick={
-          onAcceptSuggestion
+          onClickSuggestion
             ? (event) => {
                 event.stopImmediatePropagation()
-                onAcceptSuggestion(index)
+                onClickSuggestion(index)
               }
-            : undefined
+            : onAcceptSuggestion
+              ? (event) => {
+                  event.stopImmediatePropagation()
+                  onAcceptSuggestion(index)
+                }
+              : undefined
         }
       />
     )

@@ -1341,8 +1341,8 @@ function PromptInput({
     commandArgumentHint,
     inlineGhostText,
     maxColumnWidth,
-    focusSuggestion,
     acceptSuggestion,
+    onClickSuggestion,
   } = useTypeahead({
     commands,
     onInputChange: trackAndSetInput,
@@ -2713,8 +2713,8 @@ function PromptInput({
         suggestions={suggestions}
         selectedSuggestion={selectedSuggestion}
         maxColumnWidth={maxColumnWidth}
-        onFocusSuggestion={focusSuggestion}
         onAcceptSuggestion={acceptSuggestion}
+        onClickSuggestion={onClickSuggestion}
         toolPermissionContext={effectiveToolPermissionContext}
         helpOpen={helpOpen}
         suppressHint={input.length > 0}

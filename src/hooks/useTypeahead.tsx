@@ -153,8 +153,8 @@ type UseTypeaheadResult = {
   commandArgumentHint?: string
   inlineGhostText?: InlineGhostText
   handleKeyDown: (e: KeyboardEvent) => void
-  focusSuggestion: (index: number) => void
   acceptSuggestion: (index: number) => void
+  onClickSuggestion: (index: number) => void
 }
 
 /**
@@ -1549,6 +1549,45 @@ export function useTypeahead({
     ],
   )
 
+  // 鼠标点击建议：仅填入输入框，不立即执行，用户可编辑后回车发送。
+  const onClickSuggestion = useCallback(
+    (index: number) => {
+      if (index < 0 || suggestions.length === 0) {
+        return
+      }
+      const suggestion = suggestions[index]
+      if (suggestionType === 'command' && index < suggestions.length) {
+        if (suggestion) {
+          applyCommandSuggestion(
+            suggestion,
+            false,
+            // 点击不执行，仅填入输入框
+            commands,
+            onInputChange,
+            setCursorOffset,
+            onSubmit,
+          )
+          debouncedFetchFileSuggestions.cancel()
+          clearSuggestions()
+        }
+      } else {
+        // 非命令类型走默认行为
+        acceptSuggestion(index)
+      }
+    },
+    [
+      suggestions,
+      suggestionType,
+      commands,
+      onInputChange,
+      setCursorOffset,
+      onSubmit,
+      clearSuggestions,
+      debouncedFetchFileSuggestions,
+      acceptSuggestion,
+    ],
+  )
+
   // 处理回车：应用并执行当前候选。
   const handleEnter = useCallback(() => {
     if (selectedSuggestion < 0 || suggestions.length === 0) {
@@ -1556,24 +1595,6 @@ export function useTypeahead({
     }
     acceptSuggestion(selectedSuggestion)
   }, [acceptSuggestion, selectedSuggestion, suggestions.length])
-
-  const focusSuggestion = useCallback(
-    (index: number) => {
-      if (index < 0 || index >= suggestions.length) {
-        return
-      }
-      setSuggestionsState((prev) => {
-        if (prev.selectedSuggestion === index) {
-          return prev
-        }
-        return {
-          ...prev,
-          selectedSuggestion: index,
-        }
-      })
-    },
-    [suggestions.length, setSuggestionsState],
-  )
 
   // Handler for autocomplete:accept - accepts current suggestion via Tab or Right Arrow
   const handleAutocompleteAccept = useCallback(() => {
@@ -1741,7 +1762,7 @@ export function useTypeahead({
     commandArgumentHint,
     inlineGhostText: effectiveGhostText,
     handleKeyDown,
-    focusSuggestion,
     acceptSuggestion,
+    onClickSuggestion,
   }
 }
