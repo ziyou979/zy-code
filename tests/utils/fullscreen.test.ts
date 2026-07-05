@@ -116,6 +116,24 @@ describe('resolveFullscreenEnabled', () => {
     expect(result.reason).toBe('env_on')
   })
 
+  test('/tui runtime override 可以在当前会话覆盖 env_on', async () => {
+    process.env.ZY_CODE_NO_FLICKER = '1'
+    const { resolveFullscreenEnabled, setFullscreenRuntimeOverride } = await getModule()
+    setFullscreenRuntimeOverride('default')
+    const result = resolveFullscreenEnabled()
+    expect(result.enabled).toBe(false)
+    expect(result.reason).toBe('runtime_off')
+  })
+
+  test('/tui runtime override 可以在当前会话开启 fullscreen', async () => {
+    process.env.ZY_CODE_NO_FLICKER = '0'
+    const { resolveFullscreenEnabled, setFullscreenRuntimeOverride } = await getModule()
+    setFullscreenRuntimeOverride('fullscreen')
+    const result = resolveFullscreenEnabled()
+    expect(result.enabled).toBe(true)
+    expect(result.reason).toBe('runtime_on')
+  })
+
   test('Windows+SSH (WT_SESSION) → win_ssh_auto_off', async () => {
     process.env.SSH_CONNECTION = '1.2.3.4 5678 5.6.7.8 22'
     process.env.WT_SESSION = 'some-guid'

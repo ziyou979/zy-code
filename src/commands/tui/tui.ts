@@ -6,21 +6,45 @@ import {
 import type { LocalCommandCall } from '../../types/command.js'
 import { isBgSession } from '../../utils/concurrentSessions.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
-import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
+import { resolveFullscreenEnabled, setFullscreenRuntimeOverride } from '../../utils/fullscreen.js'
+import { isEnvDefinedFalsy, isEnvTruthy } from '../../utils/envUtils.js'
 
 type TuiMode = 'fullscreen' | 'default'
+
+function getModeFromEnabled(enabled: boolean): TuiMode {
+  return enabled ? 'fullscreen' : 'default'
+}
+
+function getEnvOverrideNotice(targetMode: TuiMode): string | null {
+  const envValue = process.env.ZY_CODE_NO_FLICKER
+  if (envValue === undefined) {
+    return null
+  }
+  const envMode: TuiMode | null = isEnvTruthy(envValue)
+    ? 'fullscreen'
+    : isEnvDefinedFalsy(envValue)
+      ? 'default'
+      : null
+  if (envMode === null || envMode === targetMode) {
+    return null
+  }
+  return tSync('commands.tuiEnvOverrideNotice', { env: 'ZY_CODE_NO_FLICKER' })
+}
 
 export const call: LocalCommandCall = async (_args) => {
   const args = _args?.trim().toLowerCase()
 
   // 无参数：显示当前状态
   if (!args) {
-    const current = isFullscreenEnvEnabled() ? 'fullscreen' : 'default'
+    const resolution = resolveFullscreenEnabled()
+    const current = getModeFromEnabled(resolution.enabled)
     const pref = getGlobalConfig().tui
     const prefText = pref ? ` (${tSync('commands.tuiSettingsPrefix')}: ${pref})` : ''
     return {
       type: 'text',
-      value: `${tSync('commands.tuiCurrent')}: ${current}${prefText}`,
+      value: `${tSync('commands.tuiCurrent')}: ${current}${prefText}\n${tSync(
+        'commands.tuiReason',
+      )}: ${resolution.reason}`,
     }
   }
 
@@ -41,8 +65,10 @@ export const call: LocalCommandCall = async (_args) => {
     }
   }
 
-  const currentMode: TuiMode = isFullscreenEnvEnabled() ? 'fullscreen' : 'default'
-  if (targetMode === currentMode) {
+  const currentResolution = resolveFullscreenEnabled()
+  const currentMode = getModeFromEnabled(currentResolution.enabled)
+  const savedMode = getGlobalConfig().tui
+  if (targetMode === currentMode && savedMode === targetMode) {
     return {
       type: 'text',
       value: `${tSync('commands.tuiAlready')} ${targetMode}`,
@@ -54,14 +80,22 @@ export const call: LocalCommandCall = async (_args) => {
     ...current,
     tui: targetMode,
   }))
+  setFullscreenRuntimeOverride(targetMode)
 
   logEvent('zy_tui_command', {
     from: currentMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     to: targetMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 
+  const envOverrideNotice = getEnvOverrideNotice(targetMode)
   return {
     type: 'text',
-    value: `${tSync('commands.tuiSaved', { mode: targetMode })}\n${tSync('commands.tuiRestart')}`,
+    value: [
+      tSync('commands.tuiSaved', { mode: targetMode }),
+      tSync('commands.tuiApplied'),
+      envOverrideNotice,
+    ]
+      .filter(Boolean)
+      .join('\n'),
   }
 }

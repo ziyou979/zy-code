@@ -11,6 +11,7 @@ let loggedTmuxCcDisable = false
 let loggedWindowsSshDisable = false
 let checkedTmuxMouseHint = false
 let checkedTmuxFocusHint = false
+let fullscreenRuntimeOverride: boolean | null = null
 
 /**
  * Cached result from `tmux display-message -p '#{client_control_mode}'`.
@@ -150,6 +151,8 @@ function isWindowsOverSsh(): boolean {
  */
 export type FullscreenReason =
   | 'bg_forced_on'
+  | 'runtime_off'
+  | 'runtime_on'
   | 'env_off'
   | 'env_on'
   | 'tmux_cc_auto_off'
@@ -167,17 +170,32 @@ export type FullscreenResolution = {
 }
 
 /**
+ * 设置当前进程内的全屏覆盖值。用于 /tui 在不重启的情况下立即切换
+ * AlternateScreen；持久化偏好仍然由 global config 负责。
+ */
+export function setFullscreenRuntimeOverride(mode: 'fullscreen' | 'default' | null): void {
+  fullscreenRuntimeOverride = mode === null ? null : mode === 'fullscreen'
+}
+
+/**
  * 解析全屏模式的最终决策及原因。判断优先级：
  * 1. bg_forced_on — 后台会话无条件全屏
- * 2. env_off / env_on — 环境变量显式控制
- * 3. tmux_cc_auto_off — tmux -CC 自动禁用
- * 4. win_ssh_auto_off — Windows+SSH 自动禁用
- * 5. settings_on / settings_off — 用户持久化偏好（/tui 命令）
- * 6. internal_default / external_default_off — 构建类型默认值
+ * 2. runtime_off / runtime_on — 当前进程内的 /tui 即时切换
+ * 3. env_off / env_on — 环境变量显式控制
+ * 4. tmux_cc_auto_off — tmux -CC 自动禁用
+ * 5. win_ssh_auto_off — Windows+SSH 自动禁用
+ * 6. settings_on / settings_off — 用户持久化偏好（/tui 命令）
+ * 7. internal_default / external_default_off — 构建类型默认值
  */
 export function resolveFullscreenEnabled(): FullscreenResolution {
   if (isBgSession()) {
     return { enabled: true, reason: 'bg_forced_on' }
+  }
+  if (fullscreenRuntimeOverride === false) {
+    return { enabled: false, reason: 'runtime_off' }
+  }
+  if (fullscreenRuntimeOverride === true) {
+    return { enabled: true, reason: 'runtime_on' }
   }
   if (isEnvDefinedFalsy(process.env.ZY_CODE_NO_FLICKER)) {
     return { enabled: false, reason: 'env_off' }
@@ -352,4 +370,5 @@ export function _resetForTesting(): void {
   loggedWindowsSshDisable = false
   checkedTmuxMouseHint = false
   checkedTmuxFocusHint = false
+  fullscreenRuntimeOverride = null
 }

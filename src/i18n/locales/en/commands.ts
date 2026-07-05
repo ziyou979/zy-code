@@ -130,13 +130,17 @@ export const enCommands: TranslationResource = {
   'commands.tui': 'Toggle fullscreen TUI mode',
   'commands.tui.argumentHint': '[fullscreen|default]',
   'commands.tuiCurrent': 'Current renderer',
+  'commands.tuiReason': 'Effective source',
   'commands.tuiSettingsPrefix': 'saved preference',
   'commands.tuiUsage': 'Usage: /tui fullscreen | /tui default',
   'commands.tuiBgRefuse':
     'Background sessions always use the fullscreen renderer and cannot be switched.',
   'commands.tuiAlready': 'Already using renderer:',
   'commands.tuiSaved': 'TUI mode set to {mode}.',
-  'commands.tuiRestart': 'Please restart ZY Code for the change to take effect.',
+  'commands.tuiApplied':
+    'Applied immediately for this session; saved preference will be used after restart.',
+  'commands.tuiEnvOverrideNotice':
+    '{env} conflicts with this preference: this session was overridden temporarily, but the environment variable may still win on the next launch.',
   'commands.vim': 'Toggle between Vim and Normal editing modes',
   'commands.workflows': 'Browse dynamic workflow history (running and completed)',
   'commands.workflows.empty': 'No workflows running or completed in this session.',
