@@ -247,6 +247,7 @@ const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   nim: '英伟达NIM',
   ollama: 'Ollama',
   openai: 'OpenAI',
+  'opencode-go': 'OpenCode Go',
   openrouter: 'OpenRouter',
   pangu: '华为盘古',
   perplexity: 'Perplexity',

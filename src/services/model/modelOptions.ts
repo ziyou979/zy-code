@@ -11,6 +11,7 @@ import {
   renderDefaultModelSetting,
 } from './model.js'
 import { isModelAllowed } from './modelAllowlist.js'
+import { getAPIProvider } from './providers.js'
 
 export type ModelOption = {
   value: ModelSetting
@@ -36,7 +37,8 @@ export function getDefaultOptionForUser(): ModelOption {
  */
 function getTierOption(tier: string): ModelOption | undefined {
   const settings = getInitialSettings()
-  const tierModel = settings?.models?.[tier]
+  const providerSettings = settings.providers?.[getAPIProvider()]
+  const tierModel = providerSettings?.models?.[tier] ?? settings?.models?.[tier]
   if (!tierModel) {
     return undefined
   }
@@ -87,8 +89,9 @@ function getCompactOption(): ModelOption {
 function getModelOptionsBase(): ModelOption[] {
   // 自定义模型优先：完全替换内置 tier 选项
   const settings = getInitialSettings() || {}
-  if (settings.customModels && settings.customModels.length > 0) {
-    const customModelOptions: ModelOption[] = settings.customModels.map((m) => ({
+  const customModels = settings.providers?.[getAPIProvider()]?.customModels ?? settings.customModels
+  if (customModels && customModels.length > 0) {
+    const customModelOptions: ModelOption[] = customModels.map((m) => ({
       value: m.alias,
       label: m.label ?? m.alias,
       description: m.description ?? tSync('modelOption.customModelDesc', { model: m.model }),

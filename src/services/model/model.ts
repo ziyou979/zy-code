@@ -2,12 +2,17 @@ import { getMainLoopModelOverride } from '../../bootstrap/state.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import type { ModelAlias } from './aliases.js'
 import { isModelAllowed } from './modelAllowlist.js'
+import { getAPIProvider } from './providers.js'
 
 export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
 
 /** 基于层级划分不同能力的模型 */
 type ModelTier = 'advanced' | 'standard' | 'compact'
+
+function getProviderSettings(settings: ReturnType<typeof getInitialSettings>) {
+  return settings.providers?.[getAPIProvider()]
+}
 
 /**
  * 从 settings.models 中读取指定 tier 的模型。
@@ -16,13 +21,14 @@ type ModelTier = 'advanced' | 'standard' | 'compact'
  */
 function getModelByTier(tier: ModelTier): ModelName | undefined {
   const settings = getInitialSettings() || {}
-  const tierModel = settings.models?.[tier]
+  const providerSettings = getProviderSettings(settings)
+  const tierModel = providerSettings?.models?.[tier] ?? settings.models?.[tier]
   if (tierModel) {
     return tierModel
   }
   // 其他层级未配置时使用 standard
   if (tier !== 'standard') {
-    const standard = settings.models?.standard
+    const standard = providerSettings?.models?.standard ?? settings.models?.standard
     if (standard) {
       return standard
     }
@@ -46,7 +52,7 @@ export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
     specifiedModel = modelOverride
   } else {
     const settings = getInitialSettings() || {}
-    specifiedModel = settings.model || undefined
+    specifiedModel = getProviderSettings(settings)?.model || settings.model || undefined
   }
 
   // 如果用户指定的模型不在 availableModels 白名单中，则忽略
@@ -95,7 +101,7 @@ export function getDefaultCompactModel(): ModelName | undefined {
  */
 export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias | undefined {
   const settings = getInitialSettings()
-  const tier = settings?.mainLoopModel ?? 'standard'
+  const tier = getProviderSettings(settings)?.mainLoopModel ?? settings?.mainLoopModel ?? 'standard'
   return getModelByTier(tier)
 }
 
@@ -117,10 +123,9 @@ export function renderDefaultModelSetting(setting: ModelName | ModelAlias): stri
 
 export function renderModelSetting(setting: ModelName | ModelAlias): string {
   const settings = getInitialSettings() || {}
-  if (settings.customModels && settings.customModels.length > 0) {
-    const customModel = settings.customModels.find(
-      (m) => m.alias === setting || m.model === setting,
-    )
+  const customModels = getProviderSettings(settings)?.customModels ?? settings.customModels
+  if (customModels && customModels.length > 0) {
+    const customModel = customModels.find((m) => m.alias === setting || m.model === setting)
     if (customModel) {
       return customModel.label ?? customModel.alias
     }
@@ -135,10 +140,9 @@ export function renderModelSetting(setting: ModelName | ModelAlias): string {
 export function getPublicModelDisplayName(model: ModelName): string | null {
   // 优先检查自定义模型
   const settings = getInitialSettings() || {}
-  if (settings.customModels && settings.customModels.length > 0) {
-    const customModel = settings.customModels.find(
-      (m) => m.model === model || `${m.model}[1m]` === model,
-    )
+  const customModels = getProviderSettings(settings)?.customModels ?? settings.customModels
+  if (customModels && customModels.length > 0) {
+    const customModel = customModels.find((m) => m.model === model || `${m.model}[1m]` === model)
     if (customModel) {
       const has1m = model.toLowerCase().includes('[1m]')
       return (customModel.label ?? customModel.alias) + (has1m ? ' (1M context)' : '')
@@ -190,8 +194,9 @@ export function parseUserSpecifiedModel(modelInput: ModelName | ModelAlias): Mod
 
   // 从 settings 中解析自定义模型别名
   const settings = getInitialSettings() || {}
-  if (settings.customModels && settings.customModels.length > 0) {
-    const customModel = settings.customModels.find((m) => m.alias.toLowerCase() === normalizedModel)
+  const customModels = getProviderSettings(settings)?.customModels ?? settings.customModels
+  if (customModels && customModels.length > 0) {
+    const customModel = customModels.find((m) => m.alias.toLowerCase() === normalizedModel)
     if (customModel) {
       return customModel.model
     }
@@ -221,10 +226,9 @@ export function modelDisplayString(model: ModelSetting): string {
 
 export function getMarketingNameForModel(modelId: string): string | undefined {
   const settings = getInitialSettings() || {}
-  if (settings.customModels && settings.customModels.length > 0) {
-    const customModel = settings.customModels.find(
-      (m) => m.model === modelId.replace(/\[1m\]$/i, ''),
-    )
+  const customModels = getProviderSettings(settings)?.customModels ?? settings.customModels
+  if (customModels && customModels.length > 0) {
+    const customModel = customModels.find((m) => m.model === modelId.replace(/\[1m\]$/i, ''))
     if (customModel) {
       const has1m = modelId.toLowerCase().includes('[1m]')
       return customModel.label ?? (has1m ? `${customModel.alias} (1M context)` : customModel.alias)

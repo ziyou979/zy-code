@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test'
 import {
+  sanitizeAssistantCompletionContent,
   stripThinkingMarkupForVisibleText,
+  stripThinkingTagsFromText,
   validateAssistantCompletion,
 } from '../../../src/services/api/assistantCompletionValidator.js'
 import type { AssistantContentBlock } from '../../../src/types/llm.js'
@@ -52,5 +54,23 @@ describe('assistantCompletionValidator', () => {
   test('剥离完整 thinking 标签和孤立标签', () => {
     expect(stripThinkingMarkupForVisibleText('<thinking>secret</thinking>\nanswer')).toBe('answer')
     expect(stripThinkingMarkupForVisibleText('</think>')).toBe('')
+  })
+
+  test('流式标签清理只剥离标签本身', () => {
+    expect(stripThinkingTagsFromText('</think>\nanswer')).toBe('answer')
+    expect(stripThinkingTagsFromText('<think>hidden')).toBe('hidden')
+  })
+
+  test('标准 content 清理不依赖 provider 配置', () => {
+    const content: AssistantContentBlock[] = [
+      { type: 'text', text: '<think>hidden</think>' },
+      { type: 'text', text: '<thinking>secret</thinking>\nanswer' },
+      { type: 'thinking', thinking: 'kept as thinking block', signature: '' },
+    ]
+
+    expect(sanitizeAssistantCompletionContent(content)).toEqual([
+      { type: 'text', text: 'answer' },
+      { type: 'thinking', thinking: 'kept as thinking block', signature: '' },
+    ])
   })
 })

@@ -58,9 +58,9 @@ describe('3.3 effort 注入', () => {
       expect(getCurrentHookEffortLevel('light')).toBe('light')
     })
 
-    test('请求 extreme：直接返回（映射由 provider 层处理，不做 clamp）', async () => {
+    test('请求模型不支持的档位：夹取到可用档位', async () => {
       const { getCurrentHookEffortLevel } = await import('../../../src/utils/effort.js')
-      expect(getCurrentHookEffortLevel('extreme')).toBe('extreme')
+      expect(getCurrentHookEffortLevel('extreme')).toBe('thorough')
     })
 
     test('模型不支持 effort：返回 undefined', async () => {

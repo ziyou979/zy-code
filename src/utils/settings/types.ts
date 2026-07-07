@@ -32,6 +32,58 @@ import { count } from '../array.js'
  */
 export const EnvironmentVariablesSchema = lazySchema(() => z.record(z.string(), z.coerce.string()))
 
+const CustomModelSchema = lazySchema(() =>
+  z.object({
+    alias: z
+      .string()
+      .describe(
+        'Short alias for the model (e.g., "qwen-max", "glm-4"). Used as the settings value.',
+      ),
+    model: z
+      .string()
+      .describe('Actual model ID sent to the API (e.g., "qwen-max-latest", "glm-4-plus").'),
+    label: z
+      .string()
+      .optional()
+      .describe('Display name in the model picker. Defaults to alias if not provided.'),
+    description: z
+      .string()
+      .optional()
+      .describe('Description shown below the model name in the picker.'),
+  }),
+)
+
+const ProviderScopedSettingsSchema = lazySchema(() =>
+  z
+    .object({
+      apiKey: z.string().optional().describe('API key for this provider.'),
+      baseUrl: z
+        .string()
+        .optional()
+        .describe(
+          'Base URL for this provider. Overrides the top-level baseUrl for this provider only.',
+        ),
+      apiFormat: z
+        .enum(['anthropic', 'openai', 'google'])
+        .optional()
+        .describe('API protocol format for this provider. Overrides the top-level apiFormat.'),
+      model: z.string().optional().describe('Default model override for this provider.'),
+      mainLoopModel: z
+        .enum(['advanced', 'standard', 'compact'])
+        .optional()
+        .describe('Capability tier for this provider. Overrides the top-level mainLoopModel.'),
+      models: z
+        .record(z.string(), z.string())
+        .optional()
+        .describe('Model configuration by capability tier for this provider.'),
+      customModels: z
+        .array(CustomModelSchema())
+        .optional()
+        .describe('Custom model definitions for this provider.'),
+    })
+    .passthrough(),
+)
+
 /**
  * 权限部分的 Schema
  */
@@ -264,6 +316,7 @@ export const SettingsSchema = lazySchema(() =>
           'nim',
           'gemini',
           'generic',
+          'opencode-go',
           'bedrock',
           'vertex',
           'azure',
@@ -271,6 +324,12 @@ export const SettingsSchema = lazySchema(() =>
         ])
         .optional()
         .describe('API provider to use. Overrides onboarding config and env vars.'),
+      providers: z
+        .record(z.string(), ProviderScopedSettingsSchema())
+        .optional()
+        .describe(
+          'Provider-scoped configuration. Keys are provider ids; values override apiKey, baseUrl, apiFormat and model settings only for that provider.',
+        ),
       apiFormat: z
         .enum(['anthropic', 'openai', 'google'])
         .optional()
@@ -436,26 +495,7 @@ export const SettingsSchema = lazySchema(() =>
         ),
       // 用户为模型选择器定义的自定义模型
       customModels: z
-        .array(
-          z.object({
-            alias: z
-              .string()
-              .describe(
-                'Short alias for the model (e.g., "qwen-max", "glm-4"). Used as the settings value.',
-              ),
-            model: z
-              .string()
-              .describe('Actual model ID sent to the API (e.g., "qwen-max-latest", "glm-4-plus").'),
-            label: z
-              .string()
-              .optional()
-              .describe('Display name in the model picker. Defaults to alias if not provided.'),
-            description: z
-              .string()
-              .optional()
-              .describe('Description shown below the model name in the picker.'),
-          }),
-        )
+        .array(CustomModelSchema())
         .optional()
         .describe(
           'Custom model definitions for the model picker. When set, these models replace ' +

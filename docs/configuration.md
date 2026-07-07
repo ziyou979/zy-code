@@ -60,7 +60,7 @@ plugin 设置  <  user(~/.zy/settings.json)  <  project(.zy/settings.json)
 
 | Key | 类型 | 默认 | 用途 |
 |---|---|---|---|
-| `provider` | `'anthropic'\|'dashscope'\|'openrouter'\|'generic'\|'local'\|'zhipu'\|'kimi'` | — | API 提供商(覆盖 onboarding 与 env) |
+| `provider` | `'anthropic'\|'dashscope'\|'opencode-go'\|'openrouter'\|'generic'\|'local'\|'zhipu'\|'kimi'` | — | API 提供商(覆盖 onboarding 与 env) |
 | `apiKey` | string | — | 提供商 API key(覆盖 env) |
 | `baseUrl` | string | — | API 基地址(覆盖 registry 默认值和 onboarding configuredBaseUrl) |
 | `apiKeyHelper` | string | — | 输出认证值的脚本路径 |
@@ -177,7 +177,14 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
       "maxOutputTokens": "64k",                 // 可选
       "maxThinkingTokens": "32k",               // 可选(默认 maxOutputTokens-1)
       "costs": { "inputTokens": 9, "outputTokens": 54,
-                 "promptCacheWriteTokens": 11.25, "promptCacheReadTokens": 0.9 }
+                 "promptCacheWriteTokens": 11.25, "promptCacheReadTokens": 0.9 },
+      "providerOverrides": {                    // 可选:同一模型在不同 provider 下的覆盖
+        "opencode-go": {
+          "apiFormat": "anthropic",
+          "tokens": { "contextWindow": "1m" },
+          "costs": { "currency": "USD", "inputTokens": 0.5, "outputTokens": 3 }
+        }
+      }
     }
   ]
 }
@@ -185,7 +192,8 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 
 - **token 字符串**:`k`=1024、`m`=1024²。`"200k"`=204800、`"1m"`=1048576。
 - **`costs` 两种格式**:固定单价(`inputTokens`/`outputTokens`/`promptCache*`/`webSearchRequests`,单位 元/百万 token),或阶梯 `tiers: [{upTo,inputTokens,outputTokens,…}]`。
-- **优先级**:这里的配置高于 provider 默认(effort 档位、context 窗口等)。
+- **`providerOverrides`**:按 provider 覆盖 `apiFormat`、`capabilities`、`tokens`、`betaHeaders`、`costs`。用于同一模型在不同 provider 下上下文窗口、价格或 API 协议不同的场景。
+- **优先级**:`providerOverrides` 高于同条模型的通用字段；本地模型配置整体高于 provider 默认(effort 档位、context 窗口等)。
 
 ---
 
@@ -313,6 +321,7 @@ SDK 把 betas 摘出 body → HTTP 头: anthropic-beta: a,b,c
 | openai | `ZY_CODE_USE_OPENAI` | hardcoded | openai | ✓ |
 | zhipu | `ZY_CODE_USE_ZHIPU` | env-or-default | anthropic+openai | ✓ |
 | kimi | `ZY_CODE_USE_KIMI` | env-or-default | anthropic+openai | ✓ |
+| opencode-go | onboarding / `settings.provider` | default | openai+anthropic(按模型分流) | ✓ |
 | openrouter | `ZY_CODE_USE_OPENROUTER` | hardcoded | anthropic | ✓ |
 | generic | `ZY_CODE_USE_GENERIC` | custom | anthropic+openai | ✓ |
 | deepseek / siliconflow / volcark / tencentlke / minimax / baiduqianfan / huaweicloud / together / groq / fireworks / perplexity | onboarding | preconfigured | 见注册表 | ✓ |

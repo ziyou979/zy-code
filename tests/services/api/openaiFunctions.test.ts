@@ -3,6 +3,9 @@
  *
  * 这些函数是纯函数或接近纯函数，测试成本低、价值高。
  */
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, test } from 'bun:test'
 import {
   buildOpenAIRequestParams,
@@ -276,9 +279,37 @@ describe('convertThinkingForOpenAI', () => {
   })
 
   test('dashscope minimax → { thinking: { type: "adaptive" } }', () => {
-    expect(fn(thinkingEnabled, 'MiniMax-M2.1', 'dashscope')).toEqual({
-      thinking: { type: 'adaptive' },
-    })
+    const previousConfigDir = process.env.ZY_CONFIG_DIR
+    const configDir = mkdtempSync(join(tmpdir(), 'zy-openai-functions-'))
+    process.env.ZY_CONFIG_DIR = configDir
+    try {
+      writeFileSync(
+        join(configDir, 'model-capabilities.json'),
+        JSON.stringify({
+          models: [
+            {
+              pattern: 'MiniMax-M2.1',
+              provider: 'dashscope',
+              apiFormat: 'openai',
+              capabilities: {
+                thinking: { adaptive: true },
+              },
+            },
+          ],
+        }),
+      )
+
+      expect(fn(thinkingEnabled, 'MiniMax-M2.1', 'dashscope')).toEqual({
+        thinking: { type: 'adaptive' },
+      })
+    } finally {
+      if (previousConfigDir === undefined) {
+        delete process.env.ZY_CONFIG_DIR
+      } else {
+        process.env.ZY_CONFIG_DIR = previousConfigDir
+      }
+      rmSync(configDir, { recursive: true, force: true })
+    }
   })
 
   test('zhipu → 默认 thinking.type 格式', () => {

@@ -49,6 +49,7 @@ import {
   type OpenAiAttr,
 } from '../../../services/model/providerRegistry.js'
 import { getAPIProvider, getProviderAttr } from '../../../services/model/providers.js'
+import { stripThinkingTagsFromText } from '../assistantCompletionValidator.js'
 import {
   getLocalModelPreserveThinking,
   localModelHasCapability,
@@ -490,7 +491,7 @@ export function convertThinkingForOpenAI(
   const effort = reasoningEffort
 
   // 使用默认映射；provider 若声明 openaiAttr.thinking，则仅覆盖差异部分。
-  const params = thinkingAttr.enable(effort, model)
+  const params = thinkingAttr.enable(effort, model, { provider, apiFormat: 'openai' })
 
   // 从模型级别配置获取思考块回传模式
   const preserveThinking = getLocalModelPreserveThinking(model)
@@ -698,7 +699,6 @@ export async function* mapOpenAIStreamToStandard(
   stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>,
   model: string,
 ): AsyncIterable<LLMStreamEvent> {
-  const streamAttr = getProviderAttr(getAPIProvider())
   const messageId = randomUUID()
   let textBlockIndex = 0
   const toolBlockIndices = new Map<number, number>()
@@ -740,13 +740,9 @@ export async function* mapOpenAIStreamToStandard(
         }
       }
 
-      // 文本
-      // 部分 provider（如 DashScope/Qwen）在 thinking 结束时可能将 </think> 标签泄漏到 content，
-      // 通过 openaiAttr.stripThinkingTags 声明，在此处剥离避免产生仅含 XML 标签的空 text block。
+      // 文本：部分兼容端点会将 <think> 标签误写到 content，统一剥离标签本身。
       if (delta.content && delta.content !== '') {
-        const cleaned = streamAttr?.stripThinkingTags
-          ? delta.content.replace(/<\/?(think|thinking)>/g, '').replace(/^\n+|\n+$/g, '')
-          : delta.content
+        const cleaned = stripThinkingTagsFromText(delta.content)
         if (cleaned) {
           if (!textBlockStarted) {
             textBlockIndex = thinkingBlockStarted ? thinkingBlockIndex + 1 : 0

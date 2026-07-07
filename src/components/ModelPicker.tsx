@@ -20,6 +20,7 @@ import {
   getModelEffortLevels,
   isEffortLevel,
   modelSupportsEffort,
+  resolveEffortForModel,
   resolvePickerEffortPersistence,
   toPersistableEffort,
 } from '../utils/effort.js'
@@ -95,8 +96,9 @@ export function ModelPicker({
   const focusedSupportsEffort = focusedLevels.length > 0
   const focusedDefaultEffort = getDefaultEffortLevelForOption(focusedValue)
   // 将当前选择 clamp 到聚焦模型支持的档位(例如从支持 max 的模型切到不支持的模型)。
-  const displayEffort =
-    effort && focusedLevels.length > 0 ? (clampEffort(effort, focusedLevels) ?? effort) : effort
+  const displayEffort = focusedModel
+    ? resolveEffortForModel(focusedModel, effort ?? focusedDefaultEffort)
+    : undefined
   const handleFocus = (value: string) => {
     setFocusedValue(value)
     if (!hasToggledEffort && effortValue === undefined) {
@@ -124,10 +126,10 @@ export function ModelPicker({
       // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       effort: effort as any,
     })
+    const selectedModel = resolveOptionModel(selectedValue)
     const defaultEffort = getDefaultEffortLevelForOption(selectedValue)
     const effortLevel = resolvePickerEffortPersistence(
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      effort as any,
+      selectedModel ? resolveEffortForModel(selectedModel, effort ?? defaultEffort) : undefined,
       defaultEffort,
       // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       getSettingsForSource('userSettings')?.effortLevel as any,
@@ -145,7 +147,6 @@ export function ModelPicker({
         effortValue: effortLevel,
       }))
     }
-    const selectedModel = resolveOptionModel(selectedValue)
     const selectedEffort =
       selectedModel && modelSupportsEffort(selectedModel) ? effortLevel : undefined
     if (selectedValue === NO_PREFERENCE) {

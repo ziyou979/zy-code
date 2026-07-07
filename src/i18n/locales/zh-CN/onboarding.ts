@@ -71,6 +71,8 @@ export const zhOnboarding: TranslationResource = {
   'onboarding.platform.ollamaDesc': '通过 Ollama 运行本地开源模型',
   'onboarding.platform.openai': 'OpenAI',
   'onboarding.platform.openaiDesc': 'OpenAI API（GPT-4、o系列等）',
+  'onboarding.platform.opencode-go': 'OpenCode Go',
+  'onboarding.platform.opencode-goDesc': 'OpenCode Go 精选编程模型订阅服务',
   'onboarding.platform.openrouter': 'OpenRouter',
   'onboarding.platform.openrouterDesc': '统一接入多个模型提供商',
   'onboarding.platform.perplexity': 'Perplexity',

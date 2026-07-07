@@ -1,4 +1,5 @@
 import { setMainLoopModelOverride } from '../bootstrap/state.js'
+import { getAPIProvider } from '../services/model/providers.js'
 import { clearApiKeyHelperCache } from '../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
 import { isInternalBuild } from '../utils/envUtils.js'
@@ -14,7 +15,7 @@ import {
   notifySessionMetadataChanged,
   type SessionExternalMetadata,
 } from '../utils/sessionState.js'
-import { updateSettingsForSource } from '../utils/settings/settings.js'
+import { getInitialSettings, updateSettingsForSource } from '../utils/settings/settings.js'
 import type { AppState } from './AppStateStore.js'
 
 // Inverse of the push below — restore on worker restart.
@@ -91,23 +92,45 @@ export function onChangeAppState({
   // 否则写入 model 字段并清除 mainLoopModel（覆盖模式）
   if (newState.mainLoopModel !== oldState.mainLoopModel) {
     const TIER_NAMES = ['advanced', 'standard', 'compact'] as const
+    const settings = getInitialSettings()
+    const currentProvider = getAPIProvider()
+    const shouldPersistProviderScoped =
+      settings.providers !== undefined && settings.providers[currentProvider] !== undefined
+    const updateModelSettings = (modelUpdate: {
+      model?: string
+      mainLoopModel?: 'advanced' | 'standard' | 'compact'
+    }) => {
+      if (!shouldPersistProviderScoped) {
+        updateSettingsForSource('userSettings', modelUpdate)
+        return
+      }
+      updateSettingsForSource('userSettings', {
+        providers: {
+          ...settings.providers,
+          [currentProvider]: {
+            ...settings.providers?.[currentProvider],
+            ...modelUpdate,
+          },
+        },
+      })
+    }
     if (newState.mainLoopModel === null) {
       // 恢复默认：清除覆盖字段
-      updateSettingsForSource('userSettings', {
+      updateModelSettings({
         model: undefined,
         mainLoopModel: undefined,
       })
       setMainLoopModelOverride(null)
     } else if (TIER_NAMES.includes(newState.mainLoopModel as (typeof TIER_NAMES)[number])) {
       // tier 名 → 写入 mainLoopModel，清除 model 覆盖
-      updateSettingsForSource('userSettings', {
+      updateModelSettings({
         model: undefined,
         mainLoopModel: newState.mainLoopModel as 'advanced' | 'standard' | 'compact',
       })
       setMainLoopModelOverride(newState.mainLoopModel)
     } else {
       // 具体模型名 → 写入 model 覆盖字段，清除 mainLoopModel
-      updateSettingsForSource('userSettings', {
+      updateModelSettings({
         model: newState.mainLoopModel,
         mainLoopModel: undefined,
       })

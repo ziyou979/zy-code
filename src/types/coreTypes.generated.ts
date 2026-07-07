@@ -275,6 +275,7 @@ export interface AccountInfo {
     | 'vertex'
     | 'azure'
     | 'dashscope'
+    | 'opencode-go'
     | 'openrouter'
     | 'generic'
 }

@@ -71,6 +71,8 @@ export const enOnboarding: TranslationResource = {
   'onboarding.platform.ollamaDesc': 'Local open-source models via Ollama',
   'onboarding.platform.openai': 'OpenAI',
   'onboarding.platform.openaiDesc': 'OpenAI API (GPT-4, o-series, etc.)',
+  'onboarding.platform.opencode-go': 'OpenCode Go',
+  'onboarding.platform.opencode-goDesc': 'OpenCode Go subscription for curated coding models',
   'onboarding.platform.openrouter': 'OpenRouter',
   'onboarding.platform.openrouterDesc': 'Unified API for multiple model providers',
   'onboarding.platform.perplexity': 'Perplexity',

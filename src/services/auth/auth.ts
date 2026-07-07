@@ -78,6 +78,12 @@ function isManagedOAuthContext(): boolean {
   return isEnvTruthy(process.env.ZY_CODE_REMOTE) || process.env.ZY_CODE_ENTRYPOINT === 'zy-desktop'
 }
 
+function getProviderScopedSettings(provider?: string) {
+  const settings = getInitialSettings()
+  const providerId = provider ?? settings.provider ?? getAPIProvider()
+  return settings.providers?.[providerId]
+}
+
 /** 是否支持直连 API 认证。 */
 // 此代码与 getAuthTokenSource 密切相关
 export function isZyAISubscriber(): boolean {
@@ -91,7 +97,7 @@ export function isZyAISubscriber(): boolean {
 export function isAuthEnabled(): boolean {
   // 检查 settings.json (zy.json) 中配置的 API key
   const settings = getInitialSettings()
-  if (settings?.apiKey) {
+  if (getProviderScopedSettings(settings.provider)?.apiKey || settings?.apiKey) {
     return true
   }
 
@@ -119,7 +125,7 @@ export function isAuthEnabled(): boolean {
 export function getAuthTokenSource() {
   // 检查 settings.json (zy.json) 中配置的 API key
   const settings = getInitialSettings()
-  if (settings?.apiKey) {
+  if (getProviderScopedSettings(settings.provider)?.apiKey || settings?.apiKey) {
     return { source: 'settingsApiKey' as const, hasToken: true }
   }
 
@@ -173,8 +179,8 @@ export type ApiKeySource =
   | 'oauth'
   | 'none'
 
-export function getApiKey(): null | string {
-  const { key } = getApiKeyWithSource()
+export function getApiKey(provider?: string): null | string {
+  const { key } = getApiKeyWithSource({ provider })
   return key
 }
 
@@ -185,12 +191,18 @@ export function hasApiKeyAuth(): boolean {
   return key !== null && source !== 'none'
 }
 
-export function getApiKeyWithSource(opts: { skipRetrievingKeyFromApiKeyHelper?: boolean } = {}): {
+export function getApiKeyWithSource(
+  opts: { skipRetrievingKeyFromApiKeyHelper?: boolean; provider?: string } = {},
+): {
   key: null | string
   source: ApiKeySource
 } {
   // 检查 settings.json (zy.json) 中配置的 API key
   const settings = getInitialSettings()
+  const providerApiKey = getProviderScopedSettings(opts.provider)?.apiKey
+  if (providerApiKey) {
+    return { key: providerApiKey, source: 'settingsApiKey' }
+  }
   if (settings?.apiKey) {
     return { key: settings.apiKey, source: 'settingsApiKey' }
   }

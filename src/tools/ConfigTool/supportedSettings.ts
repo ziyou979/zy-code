@@ -33,8 +33,8 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
   provider: {
     source: 'settings',
     type: 'string',
-    description: 'API provider to use (anthropic, dashscope, openrouter, generic)',
-    options: ['anthropic', 'dashscope', 'openrouter', 'generic'],
+    description: 'API provider to use (anthropic, dashscope, opencode-go, openrouter, generic)',
+    options: ['anthropic', 'dashscope', 'opencode-go', 'openrouter', 'generic'],
   },
   editorMode: {
     source: 'global',

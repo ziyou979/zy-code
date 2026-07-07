@@ -1,5 +1,5 @@
 import type { LocalCommandCall } from '../../types/command.js'
-import { getDefaultEffortForModel } from '../../utils/effort.js'
+import { resolveEffortForModelSetting } from '../../utils/effort.js'
 import { shouldEnableThinkingByDefault } from '../../utils/thinking.js'
 import { describeCurrentModel, resolveModelChange } from './performModelChange.js'
 
@@ -37,13 +37,12 @@ export const call: LocalCommandCall = async (args, context) => {
 
     case 'apply': {
       // 应用模型变更（与 jsx 端 SetModelAndClose useEffect 内的 setModel 完全一致）
-      const defaultEffort = decision.model ? getDefaultEffortForModel(decision.model) : undefined
       context.setAppState((prev) => ({
         ...prev,
         mainLoopModel: decision.model,
         mainLoopModelForSession: null,
-        // 仅在用户未手动设置 effort 时应用默认值
-        effortValue: prev.effortValue ?? defaultEffort,
+        // 切模型时保留用户意图，但必须落到新模型支持的档位内。
+        effortValue: resolveEffortForModelSetting(decision.model, prev.effortValue),
         // 按新模型能力重置 thinking 开关，避免过期 false 值被保留
         thinkingEnabled: shouldEnableThinkingByDefault(decision.model ?? undefined),
       }))

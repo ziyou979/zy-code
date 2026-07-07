@@ -29,6 +29,28 @@
       }
     },
     {
+      "pattern": "qwen3.6-max-preview",
+      "provider": "openrouter",
+      "apiFormat": "openai",
+      "capabilities": {
+        "thinking": {
+          "effort": {
+            "levels": ["off", "light", "balanced", "thorough"],
+            "map": { "light": "low", "balanced": "medium", "thorough": "high" }
+          }
+        },
+        "structured_outputs": true,
+        "auto_mode": true,
+        "prompt_caching": "implicit"
+      },
+      "tokens": {
+        "contextWindow": "128k",
+        "maxInputTokens": "128k",
+        "maxOutputTokens": "32k"
+      },
+      "costs": { "currency": "USD", "inputTokens": 1.2, "outputTokens": 4.8 }
+    },
+    {
       "pattern": "qwen3.6-plus",
       "capabilities": {
         "thinking": {
@@ -62,6 +84,34 @@
           }
         ],
         "webSearchRequests": 0.004
+      },
+      "providerOverrides": {
+        "opencode-go": {
+          "apiFormat": "anthropic",
+          "tokens": {
+            "contextWindow": "1m",
+            "maxInputTokens": "1m"
+          },
+          "costs": {
+            "currency": "USD",
+            "tiers": [
+              {
+                "upTo": "256k",
+                "inputTokens": 0.5,
+                "outputTokens": 3,
+                "promptCacheWriteTokens": 0.625,
+                "promptCacheReadTokens": 0.05
+              },
+              {
+                "upTo": "1m",
+                "inputTokens": 2,
+                "outputTokens": 6,
+                "promptCacheWriteTokens": 2.5,
+                "promptCacheReadTokens": 0.2
+              }
+            ]
+          }
+        }
       }
     },
     {

@@ -21,6 +21,7 @@ import {
   isOrchestrateEffort,
   type PersistableEffortLevel,
   parseEffortValue,
+  resolveEffortForSupportedLevels,
   resolveInitialEffortSetting,
   resolvePickerEffortPersistence,
   toPersistableEffort,
@@ -184,6 +185,24 @@ describe('effort', () => {
       expect(resolvePickerEffortPersistence('balanced', 'balanced', undefined, true)).toBe(
         'balanced',
       )
+    })
+  })
+
+  describe('resolveEffortForSupportedLevels', () => {
+    test('切到不支持旧档位的模型时夹取到可用档位', () => {
+      expect(resolveEffortForSupportedLevels(['off', 'balanced'], 'extreme', 'balanced')).toBe(
+        'balanced',
+      )
+    })
+
+    test('没有显式档位时使用当前模型默认档位', () => {
+      expect(resolveEffortForSupportedLevels(['off', 'balanced'], undefined, 'balanced')).toBe(
+        'balanced',
+      )
+    })
+
+    test('模型不支持 effort 时返回 undefined', () => {
+      expect(resolveEffortForSupportedLevels([], 'extreme', 'balanced')).toBeUndefined()
     })
   })
 

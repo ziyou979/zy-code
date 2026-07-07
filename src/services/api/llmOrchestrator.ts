@@ -181,6 +181,7 @@ import {
 } from './promptCacheBreakDetection.js'
 import {
   MalformedAssistantCompletionError,
+  sanitizeAssistantCompletionContent,
   validateAssistantCompletion,
 } from './assistantCompletionValidator.js'
 import { cleanupStream, updateUsage } from './usageTracker.js'
@@ -331,15 +332,17 @@ function buildNonStreamingAssistantMessage(
     advisorModel?: string
   },
 ): AssistantMessage {
+  const normalizedContent = normalizeContentFromAPI(
+    result.content as unknown as ContentBlock[],
+    opts.tools,
+    opts.agentId,
+  ) as AssistantContentBlock[]
+
   return {
     message: {
       ...result,
       context_management: null,
-      content: normalizeContentFromAPI(
-        result.content as unknown as ContentBlock[],
-        opts.tools,
-        opts.agentId,
-      ) as AssistantContentBlock[],
+      content: sanitizeAssistantCompletionContent(normalizedContent),
     },
     requestId: opts.requestId ?? undefined,
     type: 'assistant',
@@ -400,7 +403,10 @@ export async function* executeNonStreamingRequest(
       try {
         // biome-ignore lint/plugin: non-streaming API call
         // 统一的非流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
-        const adapter = getLLMAdapter({ anthropicClient: anthropic })
+        const adapter = getLLMAdapter({
+          anthropicClient: anthropic,
+          model: adjustedParams.model,
+        })
         const result = await adapter.createMessage(
           adjustedParams,
           retryOptions.signal,
@@ -1161,12 +1167,12 @@ async function* queryModel(
         // biome-ignore lint/plugin: main conversation loop handles attribution separately
 
         // 统一的流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
-        const adapter = getLLMAdapter({ anthropicClient: anthropic })
-        const streamResult = await adapter.createStream(
-          params as unknown as CreateParams,
-          signal,
-          clientRequestId,
-        )
+        const requestParams = params as unknown as CreateParams
+        const adapter = getLLMAdapter({
+          anthropicClient: anthropic,
+          model: requestParams.model,
+        })
+        const streamResult = await adapter.createStream(requestParams, signal, clientRequestId)
         queryCheckpoint('query_response_headers_received')
         streamRequestId = streamResult.requestId
         streamResponse = streamResult.response
@@ -1526,15 +1532,21 @@ async function* queryModel(
               })
               throw new Error('Message not found')
             }
+            const normalizedContent = normalizeContentFromAPI(
+              [contentBlock] as unknown as ContentBlock[],
+              tools,
+              options.agentId,
+            ) as unknown as AssistantContentBlock[]
+            const sanitizedContent = sanitizeAssistantCompletionContent(normalizedContent)
+            if (sanitizedContent.length === 0) {
+              break
+            }
+
             const assistantMsg: AssistantMessage = {
               message: {
                 ...partialMessage!,
                 context_management: null,
-                content: normalizeContentFromAPI(
-                  [contentBlock] as unknown as ContentBlock[],
-                  tools,
-                  options.agentId,
-                ) as unknown as AssistantContentBlock[],
+                content: sanitizedContent,
                 ...(streamExtras && { extras: streamExtras }),
               },
               requestId: streamRequestId ?? undefined,

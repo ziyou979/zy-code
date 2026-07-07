@@ -31,10 +31,37 @@ export class MalformedAssistantCompletionError extends LLMError {
 }
 
 /**
- * 移除模型误写到可见文本中的思考标签内容，用于判断是否真的存在用户可见回答。
+ * 移除模型误写到可见文本中的思考标签本身，用于流式增量的轻量清理。
+ */
+export function stripThinkingTagsFromText(text: string): string {
+  return text.replace(THINKING_TAG_PATTERN, '').replace(/^\n+|\n+$/g, '')
+}
+
+/**
+ * 移除模型误写到可见文本中的完整思考标签块，用于判断是否真的存在用户可见回答。
  */
 export function stripThinkingMarkupForVisibleText(text: string): string {
-  return text.replace(THINKING_TAG_BLOCK_PATTERN, '').replace(THINKING_TAG_PATTERN, '').trim()
+  return stripThinkingTagsFromText(text.replace(THINKING_TAG_BLOCK_PATTERN, '')).trim()
+}
+
+export function sanitizeAssistantCompletionContent(
+  content: readonly AssistantContentBlock[],
+): AssistantContentBlock[] {
+  const sanitized: AssistantContentBlock[] = []
+
+  for (const block of content) {
+    if (block.type !== 'text') {
+      sanitized.push(block)
+      continue
+    }
+
+    const text = stripThinkingMarkupForVisibleText(block.text)
+    if (text) {
+      sanitized.push({ ...block, text })
+    }
+  }
+
+  return sanitized
 }
 
 export function validateAssistantCompletion(args: {

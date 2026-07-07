@@ -62,6 +62,23 @@ describe('mapOpenAIStreamToStandard: 入站 OpenAI 流式映射', () => {
     expect(respDelta.stopReason).toBe('end_turn')
   })
 
+  test('文本流统一剥离泄漏的 thinking 标签', async () => {
+    const events = await collect(
+      mapOpenAIStreamToStandard(
+        chunksToStream([
+          textChunk('</think>\n'),
+          textChunk('visible answer'),
+          finishChunk({ finishReason: 'stop' }),
+        ]),
+        'provider-without-strip-attr',
+      ),
+    )
+
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+    const deltas = events.filter((e) => e.type === 'chunk_delta') as any[]
+    expect(deltas.map((d) => d.delta.text).join('')).toBe('visible answer')
+  })
+
   test('单工具调用，arguments 一次性到达：chunk type 必须是 tool_call', async () => {
     const events = await collect(
       mapOpenAIStreamToStandard(

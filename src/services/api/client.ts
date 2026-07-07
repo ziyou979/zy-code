@@ -133,7 +133,7 @@ export async function getAnthropicClient({
     registryEntry &&
     (registryEntry.endpointType.includes('default') || apiProvider === 'generic')
   ) {
-    const resolvedApiKey = getApiKey()
+    const resolvedApiKey = getApiKey(apiProvider)
     let resolvedBaseURL: string | undefined
 
     // 1. Provider-specific env var (e.g. DASHSCOPE_BASE_URL)
@@ -149,7 +149,7 @@ export async function getAnthropicClient({
     }
     // 3. settings.json baseUrl（适用于所有 provider）
     if (!resolvedBaseURL) {
-      resolvedBaseURL = getSettingsBaseUrl() ?? undefined
+      resolvedBaseURL = getSettingsBaseUrl(apiProvider) ?? undefined
     }
     // 4. Onboarding config (configuredBaseUrl) — 向后兼容
     // 仅当 configuredProvider 与当前 apiProvider 匹配时使用，
@@ -167,7 +167,7 @@ export async function getAnthropicClient({
     }
     // 5. Registry defaults（根据当前格式选择对应端点）
     if (!resolvedBaseURL && registryEntry.defaultBaseUrls) {
-      const format = isAnthropicProvider(apiProvider) ? 'anthropic' : 'openai'
+      const format = isAnthropicProvider(apiProvider, model) ? 'anthropic' : 'openai'
       resolvedBaseURL =
         registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls.openai
     }
@@ -204,7 +204,7 @@ export async function getAnthropicClient({
       customBaseURL = process.env.LLM_BASE_URL
     }
     if (!customBaseURL) {
-      customBaseURL = getSettingsBaseUrl() ?? undefined
+      customBaseURL = getSettingsBaseUrl(apiProvider) ?? undefined
     }
     if (!customBaseURL) {
       try {
@@ -220,11 +220,11 @@ export async function getAnthropicClient({
       }
     }
     if (!customBaseURL && registryEntry.defaultBaseUrls) {
-      const format = isAnthropicProvider(apiProvider) ? 'anthropic' : 'openai'
+      const format = isAnthropicProvider(apiProvider, model) ? 'anthropic' : 'openai'
       customBaseURL = registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls.openai
     }
 
-    const customApiKey = apiKey || process.env.LLM_API_KEY || getApiKey()
+    const customApiKey = apiKey || process.env.LLM_API_KEY || getApiKey(apiProvider)
     const customEndpointHeaders: Record<string, string> = {}
     if (defaultHeaders['User-Agent']) {
       customEndpointHeaders['User-Agent'] = defaultHeaders['User-Agent']
@@ -248,7 +248,7 @@ export async function getAnthropicClient({
 
   // 根据可用的 token 确定认证方式
   const clientConfig: ConstructorParameters<typeof Anthropic>[0] = {
-    apiKey: apiKey || getApiKey(),
+    apiKey: apiKey || getApiKey(apiProvider),
     authToken: undefined,
     // 使用 staging OAuth 时从 OAuth 配置设置 baseURL
     ...(isInternalBuild() && isEnvTruthy(process.env.USE_STAGING_OAUTH)
@@ -284,6 +284,7 @@ export async function getOpenAIClient(options?: {
   baseURL?: string
   timeout?: number
   maxRetries?: number
+  model?: string
 }): Promise<OpenAI> {
   const apiProvider = getAPIProvider()
   const registryEntry = getProviderEntry(apiProvider)
@@ -308,9 +309,9 @@ export async function getOpenAIClient(options?: {
   if (!resolvedApiKey) {
     // custom-endpoint provider（ollama 等）优先取 LLM_API_KEY
     if (isCustomEndpointProvider(apiProvider)) {
-      resolvedApiKey = process.env.LLM_API_KEY || getApiKey() || undefined
+      resolvedApiKey = process.env.LLM_API_KEY || getApiKey(apiProvider) || undefined
     } else {
-      resolvedApiKey = getApiKey() ?? undefined
+      resolvedApiKey = getApiKey(apiProvider) ?? undefined
     }
   }
 
@@ -330,7 +331,7 @@ export async function getOpenAIClient(options?: {
     }
     // 3. settings.json baseUrl（适用于所有 provider）
     if (!resolvedBaseURL) {
-      resolvedBaseURL = getSettingsBaseUrl() ?? undefined
+      resolvedBaseURL = getSettingsBaseUrl(apiProvider) ?? undefined
     }
     // 4. Onboarding config (configuredBaseUrl) — 向后兼容
     // 仅当 configuredProvider 与当前 apiProvider 匹配时使用，
@@ -390,6 +391,7 @@ export async function getOpenAIClient(options?: {
 export async function getGoogleClient(options?: {
   apiKey?: string
   baseURL?: string
+  model?: string
 }): Promise<{ client: GoogleGenerativeAI; baseURL: string }> {
   const apiProvider = getAPIProvider()
   const registryEntry = getProviderEntry(apiProvider)
@@ -398,9 +400,9 @@ export async function getGoogleClient(options?: {
   let resolvedApiKey = options?.apiKey
   if (!resolvedApiKey) {
     if (isCustomEndpointProvider(apiProvider)) {
-      resolvedApiKey = process.env.LLM_API_KEY || getApiKey() || undefined
+      resolvedApiKey = process.env.LLM_API_KEY || getApiKey(apiProvider) || undefined
     } else {
-      resolvedApiKey = getApiKey() ?? undefined
+      resolvedApiKey = getApiKey(apiProvider) ?? undefined
     }
   }
   if (!resolvedApiKey) {
@@ -423,7 +425,7 @@ export async function getGoogleClient(options?: {
     }
     // 3. settings.json baseUrl（适用于所有 provider）
     if (!resolvedBaseURL) {
-      resolvedBaseURL = getSettingsBaseUrl() ?? undefined
+      resolvedBaseURL = getSettingsBaseUrl(apiProvider) ?? undefined
     }
     // 4. Onboarding config (configuredBaseUrl) — 向后兼容
     // 仅当 configuredProvider 与当前 apiProvider 匹配时使用，
@@ -559,26 +561,29 @@ function buildProxiedFetch():
  * @param options.anthropicClient 可选。Anthropic SDK client 实例，用于复用
  *   withRetry 等基础设施提供的 retry/auth 配置。仅在 Anthropic 路径生效。
  *   未提供时 AnthropicProviderAdapter 会自取 client。
+ * @param options.model 当前请求模型。双格式 provider 可按模型选择不同 adapter。
  */
 export function getLLMAdapter(options?: {
   apiKey?: string
   baseURL?: string
   timeout?: number
   anthropicClient?: Anthropic
+  model?: string
 }): LLMAdapter {
   const apiProvider = getAPIProvider()
+  const model = options?.model
 
   // Google 原生格式优先检查（最具体）
-  if (isGoogleProvider(apiProvider)) {
+  if (isGoogleProvider(apiProvider, model)) {
     return new GoogleProviderAdapter()
   }
 
-  if (isOpenAIProvider(apiProvider)) {
+  if (isOpenAIProvider(apiProvider, model)) {
     // 客户端创建委托给 getOpenAIClient()（懒加载），不再手动传参
     return new OpenAIProviderAdapter()
   }
 
-  if (isAnthropicProvider(apiProvider)) {
+  if (isAnthropicProvider(apiProvider, model)) {
     return new AnthropicProviderAdapter(options?.anthropicClient)
   }
 

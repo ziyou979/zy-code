@@ -17,7 +17,7 @@ import { isModelAllowed } from '../../services/model/modelAllowlist.js'
 import { validateModel } from '../../services/model/validateModel.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandCall, LocalJSXCommandOnDone } from '../../types/command.js'
-import { getDefaultEffortForModel } from '../../utils/effort.js'
+import { resolveEffortForModelSetting } from '../../utils/effort.js'
 import { shouldEnableThinkingByDefault } from '../../utils/thinking.js'
 
 function ModelPickerWrapper({ onDone }: { onDone: LocalJSXCommandOnDone }) {
@@ -43,6 +43,7 @@ function ModelPickerWrapper({ onDone }: { onDone: LocalJSXCommandOnDone }) {
       ...prev,
       mainLoopModel: model,
       mainLoopModelForSession: null,
+      effortValue: resolveEffortForModelSetting(model, prev.effortValue),
       // 按新模型能力重置 thinking 开关，避免来自 /clear 或之前不支持 thinking
       // 的模型的过期 false 值被保留。
       thinkingEnabled: shouldEnableThinkingByDefault(model ?? undefined),
@@ -121,13 +122,12 @@ function SetModelAndClose({
       }
     }
     function setModel(modelValue: string | null): void {
-      const defaultEffort = modelValue ? getDefaultEffortForModel(modelValue) : undefined
       setAppState((prev) => ({
         ...prev,
         mainLoopModel: modelValue,
         mainLoopModelForSession: null,
-        // 仅在用户未手动设置 effort 时应用默认值
-        effortValue: prev.effortValue ?? defaultEffort,
+        // 切模型时保留用户意图，但必须落到新模型支持的档位内。
+        effortValue: resolveEffortForModelSetting(modelValue, prev.effortValue),
         // 按新模型能力重置 thinking 开关，避免过期 false 值被保留
         thinkingEnabled: shouldEnableThinkingByDefault(modelValue ?? undefined),
       }))
