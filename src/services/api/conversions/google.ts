@@ -465,7 +465,7 @@ function convertThinkingToGoogleConfig(
     const rawEffort = reasoningEffort
 
     // 将 provider 映射后的 effort 值转为 Google thinkingLevel
-    // 注意：这里映射的是 Google 自身 effortMapping 的输出值
+    // 注意：这里映射的是 model-level effort.map 的输出值
     const levelMap: Record<string, string> = {
       low: 'MINIMAL',
       medium: 'LOW',

@@ -30,8 +30,6 @@ export interface ResolvedModel {
   contextWindow: number
   /** OpenAI 兼容协议扩展属性 */
   openaiAttr?: OpenAiAttr
-  /** effort 档位→API 参数值映射 */
-  effortMapping?: Record<string, string>
   /** 是否为 Anthropic 模型（影响 beta header、effort 参数格式等） */
   isAnthropic: boolean
 }
@@ -55,7 +53,6 @@ export function resolveModel(modelName: string): ResolvedModel {
     maxThinkingTokens: getMaxThinkingTokensForModel(modelName),
     contextWindow: getContextWindowForModel(modelName),
     openaiAttr: entry?.openaiAttr,
-    effortMapping: entry?.effortMapping,
     isAnthropic: isAnthropicModel(modelName),
   }
 }

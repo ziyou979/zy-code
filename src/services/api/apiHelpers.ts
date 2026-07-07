@@ -117,7 +117,7 @@ export function configureEffortParams(
     // 通过映射表将内部语义档位转为目标 provider 的 API 参数值
     const providerId = getAPIProvider()
     const providerValue = mapEffortToProvider(effortValue as EffortLevel, providerId, model)
-    // provider 没有配置 effortMapping 时不设置 effort 参数
+    // provider 没有配置模型级 effort map 时不设置 effort 参数
     if (providerValue !== undefined) {
       outputConfig.effort = providerValue
       if (isAnthropicModel(model)) {

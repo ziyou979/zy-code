@@ -16,7 +16,11 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { z } from 'zod/v4'
-import type { EffortLevel } from '../effort.js'
+import { CURRENCIES } from '../../types/currency.js'
+import { API_FORMATS } from '../../services/model/apiFormat.js'
+import type { ApiFormat } from '../../services/model/apiFormat.js'
+import { PERSISTABLE_EFFORT_LEVELS } from '../effortTypes.js'
+import type { EffortLevel } from '../effortTypes.js'
 import { getZyConfigHomeDir } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
 import { lazySchema } from '../lazySchema.js'
@@ -82,13 +86,24 @@ export type TokenLimits = {
   maxThinkingTokens?: string | number
 }
 
+/**
+ * 模型能力匹配上下文。
+ *
+ * provider / apiFormat 都是可选维度，未配置选择器的条目保持全局匹配；
+ * 配置了选择器的条目只在当前上下文满足时生效。
+ */
+export type ModelCapabilityMatchContext = {
+  provider?: string | null
+  apiFormat?: ApiFormat | null
+}
+
 // ---------------------------------------------------------------------------
 // Token 解析
 // ---------------------------------------------------------------------------
 
 /**
  * 解析 token 数量字符串，支持 "256k"、"1m"、"4096" 等格式。
- * k = 1024, m = 1024 * 1024
+ * k = 1024, m = 1_000_000
  * 如果是纯数字字符串直接解析，如果是 number 直接返回。
  * 解析失败返回 NaN（区分"未配置"的 undefined 和"配置格式错误"的 NaN）。
  */
@@ -101,7 +116,7 @@ export function parseTokenCount(value: string | number): number {
     return NaN
   }
 
-  const multipliers: Record<string, number> = { k: 1024, m: 1024 * 1024 }
+  const multipliers: Record<string, number> = { k: 1024, m: 1_000_000 }
   const suffix = trimmed.at(-1)
 
   if (suffix && suffix in multipliers) {
@@ -121,16 +136,14 @@ export function parseTokenCount(value: string | number): number {
 const TokenCountSchema = z.union([z.number(), z.string()])
 
 /** effort 档位枚举 */
-const EffortLevelSchema = z.enum([
-  'off',
-  'on',
-  'quick',
-  'light',
-  'balanced',
-  'thorough',
-  'extreme',
-  'ultra',
-])
+const EffortLevelSchema = z.enum(PERSISTABLE_EFFORT_LEVELS)
+
+/** API 协议格式枚举 */
+const ApiFormatSchema = z.enum(API_FORMATS)
+
+/** provider / apiFormat 选择器支持单值或多值。 */
+const ProviderSelectorSchema = z.union([z.string(), z.array(z.string())])
+const ApiFormatSelectorSchema = z.union([ApiFormatSchema, z.array(ApiFormatSchema)])
 
 /** effort 配置 schema（数组或对象写法） */
 const EffortSchema = z.union([
@@ -141,7 +154,7 @@ const EffortSchema = z.union([
       .record(z.string(), z.string())
       .optional()
       .describe(
-        '模型级 effort 档位→API 参数值映射。优先级高于 provider 级 effortMapping。' +
+        '模型级 effort 档位→API 参数值映射。' +
           '例如 { "light": "high", "balanced": "high", "thorough": "max" }。',
       ),
   }),
@@ -207,11 +220,68 @@ const TokenLimitsSchema = z.object({
   ),
 })
 
+const ModelCostSchema = z.union([
+  // 固定单价（向后兼容）
+  z.object({
+    currency: z.enum(CURRENCIES).optional().describe('定价货币单位，未配置时默认 CNY'),
+    inputTokens: z.number().describe('每百万输入 token 费用'),
+    outputTokens: z.number().describe('每百万输出 token 费用'),
+    promptCacheWriteTokens: z.number().optional().describe('每百万缓存写入 token 费用'),
+    promptCacheReadTokens: z.number().optional().describe('每百万缓存读取 token 费用'),
+    webSearchRequests: z.number().optional().describe('每次网络搜索费用'),
+  }),
+  // 阶梯费用：根据输入 token 总量分段计价
+  z.object({
+    currency: z.enum(CURRENCIES).optional().describe('定价货币单位，未配置时默认 CNY'),
+    tiers: z
+      .array(
+        z.object({
+          upTo: TokenCountSchema.describe('此阶梯的输入 token 上限，支持 "128k"、"1m" 等格式'),
+          inputTokens: z.number().describe('此阶梯内每百万输入 token 费用'),
+          outputTokens: z.number().describe('此阶梯内每百万输出 token 费用'),
+          promptCacheWriteTokens: z
+            .number()
+            .optional()
+            .describe('此阶梯内每百万缓存写入 token 费用'),
+          promptCacheReadTokens: z
+            .number()
+            .optional()
+            .describe('此阶梯内每百万缓存读取 token 费用'),
+        }),
+      )
+      .describe('按输入 token 总量分段计价的阶梯列表（从低到高排序）'),
+    webSearchRequests: z.number().optional().describe('每次网络搜索费用'),
+  }),
+])
+
+const ModelCapabilityOverrideSchema = lazySchema(() =>
+  z.object({
+    apiFormat: ApiFormatSelectorSchema.optional().describe(
+      '该 provider 下此模型使用的 API 协议格式',
+    ),
+    capabilities: ModelCapabilitiesSchema()
+      .optional()
+      .describe('该 provider 下覆盖或补充的模型能力'),
+    tokens: TokenLimitsSchema.optional().describe('该 provider 下覆盖或补充的 token 限制'),
+    betaHeaders: z
+      .array(z.string())
+      .optional()
+      .describe('该 provider 下覆盖的 anthropic-beta header 列表'),
+    costs: ModelCostSchema.optional().describe('该 provider 下覆盖的模型定价'),
+  }),
+)
+
 const ModelCapabilityEntrySchema = lazySchema(() =>
   z.object({
     pattern: z
       .string()
       .describe('模型匹配模式（大小写不敏感的 substring match，如 "qwen3.6-max"、"gpt-4o"）'),
+    provider: ProviderSelectorSchema.optional().describe(
+      '可选 provider 选择器。未配置时匹配所有 provider；配置后仅在对应 provider 下生效。',
+    ),
+    apiFormat: ApiFormatSelectorSchema.optional().describe(
+      '可选 API 协议格式选择器，也可用于声明同一 provider 下该模型应使用的协议格式。',
+    ),
     capabilities: ModelCapabilitiesSchema().describe(
       '模型能力配置（结构化对象，支持 bool/string/array/object 值类型）',
     ),
@@ -225,44 +295,13 @@ const ModelCapabilityEntrySchema = lazySchema(() =>
         '为该模型附加的 anthropic-beta header 列表(按模型粒度透传,无需把 beta 串硬编码进代码)。' +
           '仅在端点确实接受这些 beta 时配置——未知 beta 可能导致 400。',
       ),
-    costs: z
-      .union([
-        // 固定单价（向后兼容）
-        z.object({
-          currency: z.enum(['CNY', 'USD']).optional().describe('定价货币单位，未配置时默认 CNY'),
-          inputTokens: z.number().describe('每百万输入 token 费用'),
-          outputTokens: z.number().describe('每百万输出 token 费用'),
-          promptCacheWriteTokens: z.number().optional().describe('每百万缓存写入 token 费用'),
-          promptCacheReadTokens: z.number().optional().describe('每百万缓存读取 token 费用'),
-          webSearchRequests: z.number().optional().describe('每次网络搜索费用'),
-        }),
-        // 阶梯费用：根据输入 token 总量分段计价
-        z.object({
-          currency: z.enum(['CNY', 'USD']).optional().describe('定价货币单位，未配置时默认 CNY'),
-          tiers: z
-            .array(
-              z.object({
-                upTo: TokenCountSchema.describe(
-                  '此阶梯的输入 token 上限，支持 "128k"、"1m" 等格式',
-                ),
-                inputTokens: z.number().describe('此阶梯内每百万输入 token 费用'),
-                outputTokens: z.number().describe('此阶梯内每百万输出 token 费用'),
-                promptCacheWriteTokens: z
-                  .number()
-                  .optional()
-                  .describe('此阶梯内每百万缓存写入 token 费用'),
-                promptCacheReadTokens: z
-                  .number()
-                  .optional()
-                  .describe('此阶梯内每百万缓存读取 token 费用'),
-              }),
-            )
-            .describe('按输入 token 总量分段计价的阶梯列表（从低到高排序）'),
-          webSearchRequests: z.number().optional().describe('每次网络搜索费用'),
-        }),
-      ])
+    costs: ModelCostSchema.optional().describe('模型定价配置，支持固定单价或阶梯费用'),
+    providerOverrides: z
+      .record(z.string(), ModelCapabilityOverrideSchema())
       .optional()
-      .describe('模型定价配置，支持固定单价或阶梯费用'),
+      .describe(
+        '按 provider 覆盖模型能力、token 限制、定价和 apiFormat。用于同一模型在不同 provider 下上下文/价格不同的场景。',
+      ),
   }),
 )
 
@@ -273,6 +312,8 @@ const ModelCapabilitiesFileSchema = lazySchema(() =>
 )
 
 export type ModelCapabilityEntry = z.infer<ReturnType<typeof ModelCapabilityEntrySchema>>
+
+type ModelCapabilityOverride = z.infer<ReturnType<typeof ModelCapabilityOverrideSchema>>
 
 export type ModelCapabilitiesFile = z.infer<ReturnType<typeof ModelCapabilitiesFileSchema>>
 
@@ -435,10 +476,124 @@ export function loadLocalModelCapabilities(): ModelCapabilitiesFile | null {
 }
 
 /**
- * 从本地配置中查找模型能力条目。
- * 返回第一个匹配 pattern 的条目，未匹配返回 undefined。
+ * 读取当前 provider / apiFormat 上下文。
+ *
+ * 此处延迟 require，避免 settings/model provider 初始化阶段形成静态循环依赖。
  */
-export function getLocalModelCapability(model: string): ModelCapabilityEntry | undefined {
+function getCurrentModelCapabilityContext(): ModelCapabilityMatchContext {
+  try {
+    const providers =
+      require('../../services/model/providers.js') as typeof import('../../services/model/providers.js')
+    const provider = providers.getAPIProvider()
+    return {
+      provider,
+      apiFormat: providers.getEffectiveApiFormat(provider),
+    }
+  } catch {
+    return {}
+  }
+}
+
+function selectorIncludes(
+  selector: string | string[] | undefined,
+  value: string | null | undefined,
+): boolean {
+  if (selector === undefined) {
+    return true
+  }
+  if (!value) {
+    return false
+  }
+  const normalizedValue = value.toLowerCase()
+  if (Array.isArray(selector)) {
+    return selector.some((item) => item.toLowerCase() === normalizedValue)
+  }
+  return selector.toLowerCase() === normalizedValue
+}
+
+function getProviderOverride(
+  entry: ModelCapabilityEntry,
+  provider: string | null | undefined,
+): ModelCapabilityOverride | undefined {
+  if (!provider) {
+    return undefined
+  }
+  return entry.providerOverrides?.[provider]
+}
+
+function mergeCapabilities(
+  base: ModelCapabilityEntry['capabilities'],
+  override: ModelCapabilityOverride['capabilities'] | undefined,
+): ModelCapabilityEntry['capabilities'] {
+  if (!override) {
+    return base
+  }
+  return {
+    ...base,
+    ...override,
+    thinking:
+      base.thinking || override.thinking
+        ? {
+            ...(base.thinking ?? {}),
+            ...(override.thinking ?? {}),
+          }
+        : undefined,
+  }
+}
+
+function mergeEntryWithProviderOverride(
+  entry: ModelCapabilityEntry,
+  override: ModelCapabilityOverride | undefined,
+  provider: string | null | undefined,
+): ModelCapabilityEntry {
+  if (!override) {
+    return entry
+  }
+  return {
+    ...entry,
+    provider: provider ?? entry.provider,
+    apiFormat: override.apiFormat ?? entry.apiFormat,
+    capabilities: mergeCapabilities(entry.capabilities, override.capabilities),
+    tokens: override.tokens ? { ...(entry.tokens ?? {}), ...override.tokens } : entry.tokens,
+    betaHeaders: override.betaHeaders ?? entry.betaHeaders,
+    costs: override.costs ?? entry.costs,
+  }
+}
+
+function getEntrySpecificity(entry: ModelCapabilityEntry, hasProviderOverride = false): number {
+  return (hasProviderOverride ? 4 : 0) + (entry.provider ? 2 : 0) + (entry.apiFormat ? 1 : 0)
+}
+
+function resolveMatchedEntry(
+  entry: ModelCapabilityEntry,
+  normalizedModel: string,
+  context: ModelCapabilityMatchContext,
+  options?: { ignoreApiFormat?: boolean },
+): { entry: ModelCapabilityEntry; hasProviderOverride: boolean } | undefined {
+  if (!normalizedModel.includes(entry.pattern.toLowerCase())) {
+    return undefined
+  }
+
+  const override = getProviderOverride(entry, context.provider)
+  if (!override && !selectorIncludes(entry.provider, context.provider)) {
+    return undefined
+  }
+
+  const effectiveEntry = mergeEntryWithProviderOverride(entry, override, context.provider)
+  if (!options?.ignoreApiFormat && !selectorIncludes(effectiveEntry.apiFormat, context.apiFormat)) {
+    return undefined
+  }
+  return { entry: effectiveEntry, hasProviderOverride: override !== undefined }
+}
+
+/**
+ * 从本地配置中查找模型能力条目。
+ * 优先选择 provider/apiFormat 更具体、pattern 更长的条目。
+ */
+export function getLocalModelCapability(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): ModelCapabilityEntry | undefined {
   if (!model) {
     return undefined
   }
@@ -447,7 +602,85 @@ export function getLocalModelCapability(model: string): ModelCapabilityEntry | u
     return undefined
   }
   const m = model.toLowerCase()
-  return config.models.find((entry) => m.includes(entry.pattern.toLowerCase()))
+  const resolvedContext = context ?? getCurrentModelCapabilityContext()
+  return config.models
+    .map((entry, index) => ({ entry, index }))
+    .map(({ entry, index }) => {
+      const matched = resolveMatchedEntry(entry, m, resolvedContext)
+      return matched ? { ...matched, index } : undefined
+    })
+    .filter(
+      (
+        candidate,
+      ): candidate is {
+        entry: ModelCapabilityEntry
+        hasProviderOverride: boolean
+        index: number
+      } => candidate !== undefined,
+    )
+    .sort((a, b) => {
+      const specificityDelta =
+        getEntrySpecificity(b.entry, b.hasProviderOverride) -
+        getEntrySpecificity(a.entry, a.hasProviderOverride)
+      if (specificityDelta !== 0) {
+        return specificityDelta
+      }
+      const patternDelta = b.entry.pattern.length - a.entry.pattern.length
+      if (patternDelta !== 0) {
+        return patternDelta
+      }
+      return a.index - b.index
+    })[0]?.entry
+}
+
+/**
+ * 从本地配置获取模型声明的 API 协议格式。
+ * 用于同一 provider 下不同模型走不同协议格式的场景。
+ */
+export function getLocalModelApiFormat(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): ApiFormat | undefined {
+  if (!model) {
+    return undefined
+  }
+  const config = loadLocalModelCapabilities()
+  if (!config) {
+    return undefined
+  }
+  const resolvedContext = context ?? getCurrentModelCapabilityContext()
+  const m = model.toLowerCase()
+  const entry = config.models
+    .map((candidate, index) => ({ entry: candidate, index }))
+    .map(({ entry: candidate, index }) => {
+      const matched = resolveMatchedEntry(candidate, m, resolvedContext, { ignoreApiFormat: true })
+      return matched ? { ...matched, index } : undefined
+    })
+    .filter(
+      (
+        candidate,
+      ): candidate is {
+        entry: ModelCapabilityEntry
+        hasProviderOverride: boolean
+        index: number
+      } => candidate !== undefined,
+    )
+    .filter(({ entry }) => entry.apiFormat !== undefined)
+    .sort((a, b) => {
+      const specificityDelta =
+        getEntrySpecificity(b.entry, b.hasProviderOverride) -
+        getEntrySpecificity(a.entry, a.hasProviderOverride)
+      if (specificityDelta !== 0) {
+        return specificityDelta
+      }
+      const patternDelta = b.entry.pattern.length - a.entry.pattern.length
+      if (patternDelta !== 0) {
+        return patternDelta
+      }
+      return a.index - b.index
+    })[0]?.entry
+  const apiFormat = entry?.apiFormat
+  return Array.isArray(apiFormat) ? apiFormat[0] : apiFormat
 }
 
 // ---------------------------------------------------------------------------
@@ -460,8 +693,12 @@ export function getLocalModelCapability(model: string): ModelCapabilityEntry | u
  * thinking 特殊处理：effort 仅含 "off" 且无 adaptive/preserve → 不支持。
  * 其他能力：key 存在且不为 false → 支持。
  */
-export function localModelHasCapability(model: string, capability: ModelCapabilityKind): boolean {
-  const entry = getLocalModelCapability(model)
+export function localModelHasCapability(
+  model: string,
+  capability: ModelCapabilityKind,
+  context?: ModelCapabilityMatchContext,
+): boolean {
+  const entry = getLocalModelCapability(model, context)
   const value = entry?.capabilities?.[capability]
   if (value === undefined || value === false) {
     return false
@@ -493,23 +730,32 @@ export function localModelHasCapability(model: string, capability: ModelCapabili
 /**
  * 获取 thinking 配置对象（始终为对象）。
  */
-function getThinkingConfig(model: string): ThinkingCapabilityConfig | undefined {
-  const entry = getLocalModelCapability(model)
+function getThinkingConfig(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): ThinkingCapabilityConfig | undefined {
+  const entry = getLocalModelCapability(model, context)
   return entry?.capabilities?.thinking
 }
 
 /**
  * 检查模型是否支持自适应思考模式。
  */
-export function localModelHasAdaptiveThinking(model: string): boolean {
-  return getThinkingConfig(model)?.adaptive === true
+export function localModelHasAdaptiveThinking(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): boolean {
+  return getThinkingConfig(model, context)?.adaptive === true
 }
 
 /**
  * 从本地配置获取模型的 preserve 思考块回传模式。
  */
-export function getLocalModelPreserveThinking(model: string): 'optional' | 'always' | undefined {
-  return getThinkingConfig(model)?.preserve
+export function getLocalModelPreserveThinking(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): 'optional' | 'always' | undefined {
+  return getThinkingConfig(model, context)?.preserve
 }
 
 /**
@@ -518,8 +764,11 @@ export function getLocalModelPreserveThinking(model: string): 'optional' | 'alwa
  *   - 数组：["off", "balanced", "extreme"]
  *   - 对象：{ levels: [...], map: { ... } }
  */
-export function getLocalModelEffortLevels(model: string): EffortLevel[] | undefined {
-  const effort = getThinkingConfig(model)?.effort
+export function getLocalModelEffortLevels(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): EffortLevel[] | undefined {
+  const effort = getThinkingConfig(model, context)?.effort
   if (!effort) {
     return undefined
   }
@@ -533,8 +782,11 @@ export function getLocalModelEffortLevels(model: string): EffortLevel[] | undefi
  * 从本地配置获取模型级 effort 映射表（内部档位→API 参数值）。
  * 仅当 effort 为对象写法（{ levels, map }）时返回 map。
  */
-export function getLocalModelEffortMap(model: string): Record<string, string> | undefined {
-  const effort = getThinkingConfig(model)?.effort
+export function getLocalModelEffortMap(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): Record<string, string> | undefined {
+  const effort = getThinkingConfig(model, context)?.effort
   if (!effort || Array.isArray(effort)) {
     return undefined
   }
@@ -548,24 +800,33 @@ export function getLocalModelEffortMap(model: string): Record<string, string> | 
 /**
  * 从本地配置获取模型的 prompt 缓存模式。
  */
-export function getModelPromptCachingMode(model: string): 'implicit' | 'explicit' | undefined {
-  const entry = getLocalModelCapability(model)
+export function getModelPromptCachingMode(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): 'implicit' | 'explicit' | undefined {
+  const entry = getLocalModelCapability(model, context)
   return entry?.capabilities?.prompt_caching
 }
 
 /**
  * 从本地配置获取该模型附加的 anthropic-beta header 列表。
  */
-export function getLocalModelBetaHeaders(model: string): string[] | undefined {
-  const entry = getLocalModelCapability(model)
+export function getLocalModelBetaHeaders(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): string[] | undefined {
+  const entry = getLocalModelCapability(model, context)
   return entry?.betaHeaders
 }
 
 /**
  * 从本地配置获取模型的最大输出 tokens（单次响应上限）。
  */
-export function getLocalMaxOutputTokens(model: string): number {
-  const entry = getLocalModelCapability(model)
+export function getLocalMaxOutputTokens(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): number {
+  const entry = getLocalModelCapability(model, context)
   const value = entry?.tokens?.maxOutputTokens
   if (value === undefined) {
     return NaN
@@ -576,8 +837,11 @@ export function getLocalMaxOutputTokens(model: string): number {
 /**
  * 从本地配置获取 maxInputTokens（API 允许的最大输入 tokens）。
  */
-export function getLocalMaxInputTokens(model: string): number {
-  const entry = getLocalModelCapability(model)
+export function getLocalMaxInputTokens(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): number {
+  const entry = getLocalModelCapability(model, context)
   const value = entry?.tokens?.maxInputTokens
   if (value === undefined) {
     return NaN
@@ -588,8 +852,11 @@ export function getLocalMaxInputTokens(model: string): number {
 /**
  * 从本地配置获取上下文窗口大小（用于自动压缩和用量计算）。
  */
-export function getLocalContextWindow(model: string): number {
-  const entry = getLocalModelCapability(model)
+export function getLocalContextWindow(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): number {
+  const entry = getLocalModelCapability(model, context)
   const value = entry?.tokens?.contextWindow
   if (value === undefined) {
     return NaN
@@ -600,8 +867,11 @@ export function getLocalContextWindow(model: string): number {
 /**
  * 从本地配置获取思维链最大 token 数（budget_tokens）。
  */
-export function getLocalMaxThinkingTokens(model: string): number {
-  const entry = getLocalModelCapability(model)
+export function getLocalMaxThinkingTokens(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): number {
+  const entry = getLocalModelCapability(model, context)
   const value = entry?.tokens?.maxThinkingTokens
   if (value === undefined) {
     return NaN
@@ -616,6 +886,7 @@ export function getLocalMaxThinkingTokens(model: string): number {
 export function getLocalModelCosts(
   model: string,
   currentInputTokens?: number,
+  context?: ModelCapabilityMatchContext,
 ):
   | {
       inputTokens: number
@@ -626,7 +897,7 @@ export function getLocalModelCosts(
       currency: string
     }
   | undefined {
-  const entry = getLocalModelCapability(model)
+  const entry = getLocalModelCapability(model, context)
   if (!entry?.costs) {
     return undefined
   }

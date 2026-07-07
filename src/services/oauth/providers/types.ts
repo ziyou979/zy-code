@@ -5,7 +5,7 @@
  * 字段用于映射到 zy-code 的 PROVIDER_REGISTRY。
  */
 
-import type { ApiFormat } from '../../model/providerRegistry.js'
+import type { ApiFormat } from '../../model/apiFormat.js'
 
 /** OAuth 凭证 — 所有 provider 通用的 token 结构 */
 export type OAuthCredentials = {

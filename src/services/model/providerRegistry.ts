@@ -7,21 +7,16 @@
  */
 
 import type { ProviderCapability } from './providers.js'
-import { localModelHasAdaptiveThinking } from '../../utils/settings/localModelCapabilities.js'
+import {
+  type ModelCapabilityMatchContext,
+  localModelHasAdaptiveThinking,
+} from '../../utils/settings/localModelCapabilities.js'
+import { API_FORMATS, type ApiFormat } from './apiFormat.js'
 
 /**
- * 模型能力标签 — 用于 onboarding 中统一渲染模型描述。
- * 新增标签时需同步在 i18n 中添加 'model.tag.{tag}' 的翻译。
+ * 模型推荐档位 — 对应 ZY Code 的 advanced / standard / compact 三个模型档位。
  */
-export type ModelTag =
-  | 'recommended'
-  | 'fast'
-  | 'lightweight'
-  | 'reasoning'
-  | 'balanced'
-  | 'coding'
-  | 'flagship'
-  | 'budget'
+export type ModelTier = 'advanced' | 'standard' | 'compact'
 
 // ---------------------------------------------------------------------------
 // 类型定义
@@ -33,8 +28,6 @@ export type ModelTag =
  * - `'openai'`    — 直接使用 OpenAI SDK（不走 Anthropic SDK）
  * - `'google'`    — Google Generative AI 原生 API 格式（Gemini）
  */
-export type ApiFormat = 'anthropic' | 'openai' | 'google'
-
 /**
  * Provider base URL 解析模式（单值，可组合为数组使用）：
  * - `'env'`     — 支持通过环境变量覆盖 base URL
@@ -66,6 +59,15 @@ export interface ProviderEntry {
    */
   supportedFormats: ApiFormat[]
 
+  /**
+   * 同一 provider 下按模型选择不同 API 消息格式。
+   * pattern 为大小写不敏感的 substring match，优先级低于用户本地 model-capabilities。
+   */
+  modelApiFormats?: Array<{
+    pattern: string
+    apiFormat: ApiFormat
+  }>
+
   /** 运行时 base URL 的解析方式 */
   endpointType: EndpointType
 
@@ -95,12 +97,12 @@ export interface ProviderEntry {
   /** API Key 输入框下方显示的 base URL 提示 */
   baseUrlHint?: string
 
-  /** onboarding 模型选择步骤中显示的推荐模型 */
+  /** onboarding 模型选择步骤中显示的推荐模型（每个档位推荐一个） */
   suggestedModels?: Array<{
     label: string
     value: string
-    /** 通用能力标签，Onboarding 会根据标签自动渲染 i18n 描述 */
-    tags?: ModelTag[]
+    /** 模型档位，Onboarding 会据此渲染 i18n 描述 */
+    tier: ModelTier
   }>
 
   /** 是否在 onboarding 平台列表中显示，默认 true。基础设施 provider（bedrock 等）设为 false */
@@ -108,9 +110,6 @@ export interface ProviderEntry {
 
   /** OpenAI 兼容协议的扩展属性（thinking 参数、reasoning_content 支持等）。消息转换层读取此配置而非判断 provider 名称 */
   openaiAttr?: OpenAiAttr
-
-  /** 内部 effort 档位 → provider API 参数值的映射表。省略时回退到 anthropic 映射 */
-  effortMapping?: Record<string, string>
 }
 
 /**
@@ -120,7 +119,11 @@ export interface ProviderEntry {
 export interface OpenAiAttr {
   thinking?: {
     /** 启用 thinking 时传给 API 的参数。effort 为映射后的 provider 参数值，model 为模型名 */
-    enable: (effort: string | undefined, model?: string) => Record<string, unknown>
+    enable: (
+      effort: string | undefined,
+      model?: string,
+      context?: ModelCapabilityMatchContext,
+    ) => Record<string, unknown>
     /** 显式禁用 thinking 时传给 API 的参数（省略则不传），支持按模型动态生成 */
     disable?:
       | Record<string, unknown>
@@ -141,8 +144,8 @@ export interface OpenAiAttr {
  * provider 只有在确实使用私有字段时才覆盖对应分支。
  */
 export const DEFAULT_OPENAI_THINKING_ATTR: NonNullable<OpenAiAttr['thinking']> = {
-  enable: (effort, model) => {
-    if (model && localModelHasAdaptiveThinking(model)) {
+  enable: (effort, model, context) => {
+    if (model && localModelHasAdaptiveThinking(model, context)) {
       return { thinking: { type: 'adaptive' } }
     }
     // OpenAI 标准参数 reasoning_effort（如 o1/o3 系列的 low/medium/high）
@@ -157,7 +160,7 @@ export const DEFAULT_OPENAI_THINKING_ATTR: NonNullable<OpenAiAttr['thinking']> =
 // 预设能力集（减少重复）
 // ---------------------------------------------------------------------------
 
-/** 完整能力集 — 适用于 Anthropic 官方 API、generic 等。effort 档位见 effortMapping。 */
+/** 完整能力集 — 适用于 Anthropic 官方 API、generic 等。 */
 const FULL_CAPABILITIES: ProviderCapability[] = ['context_management', 'advisor']
 
 /** 标准能力集 — 适用于大多数第三方平台和本地推理引擎 */
@@ -175,19 +178,10 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'Anthropic API Key',
     suggestedModels: [
-      { label: 'claude-sonnet-4-6', value: 'claude-sonnet-4-6', tags: ['recommended', 'balanced'] },
-      { label: 'claude-opus-4-8', value: 'claude-opus-4-8', tags: ['flagship'] },
-      { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tags: ['fast', 'budget'] },
+      { label: 'claude-opus-4-8', value: 'claude-opus-4-8', tier: 'advanced' },
+      { label: 'claude-sonnet-5', value: 'claude-sonnet-5', tier: 'standard' },
+      { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tier: 'compact' },
     ],
-    effortMapping: {
-      off: 'off',
-      quick: 'low',
-      light: 'medium',
-      balanced: 'high',
-      thorough: 'xhigh',
-      extreme: 'max',
-      orchestrate: 'max',
-    },
   },
   {
     id: 'qianfan',
@@ -197,9 +191,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { openai: 'https://aistudio.baidu.com/llm/lmapi/v3' },
     apiKeyLabel: 'Baidu API Key',
     suggestedModels: [
-      { label: 'ernie-4.5-8k', value: 'ernie-4.5-8k', tags: ['recommended', 'balanced'] },
-      { label: 'ernie-4.5-turbo-8k', value: 'ernie-4.5-turbo-8k', tags: ['fast'] },
-      { label: 'deepseek-r1', value: 'deepseek-r1', tags: ['reasoning'] },
+      { label: 'deepseek-r1', value: 'deepseek-r1', tier: 'advanced' },
+      { label: 'ernie-4.5-8k', value: 'ernie-4.5-8k', tier: 'standard' },
+      { label: 'ernie-4.5-turbo-8k', value: 'ernie-4.5-turbo-8k', tier: 'compact' },
     ],
   },
   {
@@ -212,19 +206,10 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'AWS Access Key',
     baseUrlHint: 'https://bedrock-runtime.{region}.amazonaws.com',
     suggestedModels: [
-      { label: 'claude-sonnet-4-6', value: 'claude-sonnet-4-6', tags: ['recommended', 'balanced'] },
-      { label: 'claude-opus-4-8', value: 'claude-opus-4-8', tags: ['flagship'] },
-      { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tags: ['fast', 'budget'] },
+      { label: 'claude-opus-4-8', value: 'claude-opus-4-8', tier: 'advanced' },
+      { label: 'claude-sonnet-4-6', value: 'claude-sonnet-4-6', tier: 'standard' },
+      { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tier: 'compact' },
     ],
-    effortMapping: {
-      off: 'off',
-      quick: 'low',
-      light: 'medium',
-      balanced: 'high',
-      thorough: 'xhigh',
-      extreme: 'max',
-      orchestrate: 'max',
-    },
   },
   {
     id: 'dashscope',
@@ -238,15 +223,10 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     baseUrlEnvVar: 'DASHSCOPE_BASE_URL',
     apiKeyLabel: 'DashScope API Key',
     suggestedModels: [
-      { label: 'qwen3.6-plus', value: 'qwen3.6-plus', tags: ['recommended', 'balanced'] },
-      { label: 'qwen3.5-plus', value: 'qwen3.5-plus', tags: ['reasoning'] },
-      { label: 'qwen3.5-flash', value: 'qwen3.5-flash', tags: ['fast', 'lightweight'] },
+      { label: 'qwen3.7-max', value: 'qwen3.5-plus', tier: 'advanced' },
+      { label: 'qwen3.7-plus', value: 'qwen3.6-plus', tier: 'standard' },
+      { label: 'qwen3.6-flash', value: 'qwen3.5-flash', tier: 'compact' },
     ],
-    effortMapping: {
-      off: 'off',
-      balanced: 'high',
-      extreme: 'max',
-    },
     openaiAttr: {
       stripThinkingTags: true,
     },
@@ -259,14 +239,10 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { openai: 'https://api.deepseek.com' },
     apiKeyLabel: 'DeepSeek API Key',
     suggestedModels: [
-      { label: 'deepseek-v4-pro', value: 'deepseek-v4-pro', tags: ['recommended', 'balanced'] },
-      { label: 'deepseek-v4-flash', value: 'deepseek-v4-flash', tags: ['reasoning'] },
+      { label: 'deepseek-v4-pro', value: 'deepseek-v4-pro', tier: 'advanced' },
+      { label: 'deepseek-v4-pro', value: 'deepseek-v4-pro', tier: 'standard' },
+      { label: 'deepseek-v4-flash', value: 'deepseek-v4-flash', tier: 'compact' },
     ],
-    effortMapping: {
-      off: 'off',
-      balanced: 'high',
-      extreme: 'max',
-    },
   },
   {
     id: 'fireworks',
@@ -282,17 +258,17 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       {
         label: 'accounts/fireworks/models/qwen3-235b-a22b',
         value: 'accounts/fireworks/models/qwen3-235b-a22b',
-        tags: ['flagship'],
-      },
-      {
-        label: 'accounts/fireworks/models/deepseek-r1',
-        value: 'accounts/fireworks/models/deepseek-r1',
-        tags: ['reasoning'],
+        tier: 'advanced',
       },
       {
         label: 'accounts/fireworks/models/llama4-maverick-instruct-basic',
         value: 'accounts/fireworks/models/llama4-maverick-instruct-basic',
-        tags: ['recommended', 'balanced'],
+        tier: 'standard',
+      },
+      {
+        label: 'accounts/fireworks/models/deepseek-r1',
+        value: 'accounts/fireworks/models/deepseek-r1',
+        tier: 'compact',
       },
     ],
   },
@@ -309,19 +285,10 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'Microsoft Azure API Key',
     baseUrlHint: 'https://{resource}.services.ai.azure.com/models',
     suggestedModels: [
-      { label: 'claude-sonnet-4-6', value: 'claude-sonnet-4-6', tags: ['recommended', 'balanced'] },
-      { label: 'claude-opus-4-8', value: 'claude-opus-4-8', tags: ['flagship'] },
-      { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tags: ['fast', 'budget'] },
+      { label: 'claude-opus-4-8', value: 'claude-opus-4-8', tier: 'advanced' },
+      { label: 'claude-sonnet-5', value: 'claude-sonnet-5', tier: 'standard' },
+      { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tier: 'compact' },
     ],
-    effortMapping: {
-      off: 'off',
-      quick: 'low',
-      light: 'medium',
-      balanced: 'high',
-      thorough: 'xhigh',
-      extreme: 'max',
-      orchestrate: 'max',
-    },
   },
   {
     id: 'gemini',
@@ -334,19 +301,10 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       openai: 'https://generativelanguage.googleapis.com/v1beta/openai/',
     },
     suggestedModels: [
-      { label: 'gemini-2.5-flash', value: 'gemini-2.5-flash', tags: ['recommended', 'fast'] },
-      { label: 'gemini-2.5-pro', value: 'gemini-2.5-pro', tags: ['reasoning', 'flagship'] },
-      { label: 'gemini-3-flash', value: 'gemini-3-flash', tags: ['fast', 'balanced'] },
+      { label: 'gemini-2.5-pro', value: 'gemini-2.5-pro', tier: 'advanced' },
+      { label: 'gemini-2.5-flash', value: 'gemini-2.5-flash', tier: 'standard' },
+      { label: 'gemini-3-flash', value: 'gemini-3-flash', tier: 'compact' },
     ],
-    effortMapping: {
-      off: 'off',
-      quick: 'minimal',
-      light: 'low',
-      balanced: 'medium',
-      thorough: 'high',
-      extreme: 'high',
-      orchestrate: 'high',
-    },
   },
   {
     id: 'generic',
@@ -364,16 +322,16 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'Groq API Key',
     suggestedModels: [
       {
-        label: 'llama-3.3-70b-versatile',
-        value: 'llama-3.3-70b-versatile',
-        tags: ['recommended', 'balanced'],
-      },
-      {
         label: 'deepseek-r1-distill-llama-70b',
         value: 'deepseek-r1-distill-llama-70b',
-        tags: ['reasoning'],
+        tier: 'advanced',
       },
-      { label: 'llama-3.1-8b-instant', value: 'llama-3.1-8b-instant', tags: ['fast', 'budget'] },
+      {
+        label: 'llama-3.3-70b-versatile',
+        value: 'llama-3.3-70b-versatile',
+        tier: 'standard',
+      },
+      { label: 'llama-3.1-8b-instant', value: 'llama-3.1-8b-instant', tier: 'compact' },
     ],
   },
   {
@@ -384,8 +342,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { openai: 'https://api.modelarts-maas.com/openai/v1' },
     apiKeyLabel: '华为盘古 API Key',
     suggestedModels: [
-      { label: 'DeepSeek-V4-pro', value: 'DeepSeek-V4-pro', tags: ['recommended', 'balanced'] },
-      { label: 'DeepSeek-R1', value: 'DeepSeek-R1', tags: ['reasoning'] },
+      { label: 'DeepSeek-R1', value: 'DeepSeek-R1', tier: 'advanced' },
+      { label: 'DeepSeek-V4-pro', value: 'DeepSeek-V4-pro', tier: 'standard' },
     ],
   },
   {
@@ -400,8 +358,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     baseUrlEnvVar: 'KIMI_BASE_URL',
     apiKeyLabel: 'Kimi API Key',
     suggestedModels: [
-      { label: 'moonshot-v1', value: 'moonshot-v1', tags: ['recommended'] },
-      { label: 'moonshot-v1-8k', value: 'moonshot-v1-8k', tags: ['lightweight'] },
+      { label: 'moonshot-v1', value: 'moonshot-v1', tier: 'standard' },
+      { label: 'moonshot-v1-8k', value: 'moonshot-v1-8k', tier: 'compact' },
     ],
     openaiAttr: {
       thinking: {
@@ -444,8 +402,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     apiKeyLabel: 'MiniMax API Key',
     suggestedModels: [
-      { label: 'MiniMax-M1', value: 'MiniMax-M1', tags: ['flagship', 'reasoning'] },
-      { label: 'MiniMax-Text-01', value: 'MiniMax-Text-01', tags: ['recommended', 'balanced'] },
+      { label: 'MiniMax-M1', value: 'MiniMax-M1', tier: 'advanced' },
+      { label: 'MiniMax-Text-01', value: 'MiniMax-Text-01', tier: 'standard' },
     ],
   },
   {
@@ -460,9 +418,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     baseUrlEnvVar: 'MIMO_BASE_URL',
     apiKeyLabel: 'MiMo API Key',
     suggestedModels: [
-      { label: 'mimo-v2.5-pro', value: 'mimo-v2.5-pro', tags: ['flagship', 'reasoning'] },
-      { label: 'mimo-v2.5', value: 'mimo-v2.5', tags: ['recommended', 'balanced'] },
-      { label: 'mimo-v2-flash', value: 'mimo-v2-flash', tags: ['fast', 'lightweight'] },
+      { label: 'mimo-v2.5-pro', value: 'mimo-v2.5-pro', tier: 'advanced' },
+      { label: 'mimo-v2.5', value: 'mimo-v2.5', tier: 'standard' },
+      { label: 'mimo-v2-flash', value: 'mimo-v2-flash', tier: 'compact' },
     ],
   },
   {
@@ -483,9 +441,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'API Key',
     baseUrlHint: 'http://localhost:11434/v1',
     suggestedModels: [
-      { label: 'qwen2.5-coder', value: 'qwen2.5-coder', tags: ['coding'] },
-      { label: 'llama3.1', value: 'llama3.1', tags: ['balanced'] },
-      { label: 'deepseek-r1', value: 'deepseek-r1', tags: ['reasoning'] },
+      { label: 'deepseek-r1', value: 'deepseek-r1', tier: 'advanced' },
+      { label: 'qwen2.5-coder', value: 'qwen2.5-coder', tier: 'standard' },
+      { label: 'llama3.1', value: 'llama3.1', tier: 'compact' },
     ],
   },
   {
@@ -495,18 +453,41 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: ['context_management'],
     apiKeyLabel: 'OpenAI API Key',
     suggestedModels: [
-      { label: 'gpt-4o', value: 'gpt-4o', tags: ['recommended', 'balanced'] },
-      { label: 'gpt-4o-mini', value: 'gpt-4o-mini', tags: ['fast', 'lightweight'] },
+      { label: 'gpt-4o', value: 'gpt-4o', tier: 'standard' },
+      { label: 'gpt-4o-mini', value: 'gpt-4o-mini', tier: 'compact' },
     ],
-    effortMapping: {
-      off: 'off',
-      quick: 'minimal',
-      light: 'low',
-      balanced: 'medium',
-      thorough: 'high',
-      extreme: 'high',
-      orchestrate: 'high',
+  },
+  {
+    id: 'opencode-go',
+    supportedFormats: ['openai', 'anthropic'],
+    modelApiFormats: [
+      { pattern: 'glm-5.2', apiFormat: 'openai' },
+      { pattern: 'glm-5.1', apiFormat: 'openai' },
+      { pattern: 'kimi-k2.7-code', apiFormat: 'openai' },
+      { pattern: 'kimi-k2.6', apiFormat: 'openai' },
+      { pattern: 'deepseek-v4-pro', apiFormat: 'openai' },
+      { pattern: 'deepseek-v4-flash', apiFormat: 'openai' },
+      { pattern: 'mimo-v2.5-pro', apiFormat: 'openai' },
+      { pattern: 'mimo-v2.5', apiFormat: 'openai' },
+      { pattern: 'minimax-m3', apiFormat: 'anthropic' },
+      { pattern: 'minimax-m2.7', apiFormat: 'anthropic' },
+      { pattern: 'minimax-m2.5', apiFormat: 'anthropic' },
+      { pattern: 'qwen3.7-max', apiFormat: 'anthropic' },
+      { pattern: 'qwen3.7-plus', apiFormat: 'anthropic' },
+      { pattern: 'qwen3.6-plus', apiFormat: 'anthropic' },
+    ],
+    endpointType: ['default'],
+    capabilities: STANDARD_CAPABILITIES,
+    defaultBaseUrls: {
+      openai: 'https://opencode.ai/zen/go/v1',
+      anthropic: 'https://opencode.ai/zen/go',
     },
+    apiKeyLabel: 'OpenCode Go API Key',
+    suggestedModels: [
+      { label: 'Qwen3.7 Max', value: 'qwen3.7-max', tier: 'advanced' },
+      { label: 'GLM-5.2', value: 'glm-5.2', tier: 'standard' },
+      { label: 'DeepSeek V4 Flash', value: 'deepseek-v4-flash', tier: 'compact' },
+    ],
   },
   {
     id: 'openrouter',
@@ -520,28 +501,18 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       anthropic: 'https://openrouter.ai/api',
     },
     suggestedModels: [
+      { label: 'anthropic/claude-opus-4', value: 'anthropic/claude-opus-4', tier: 'advanced' },
       {
         label: 'anthropic/claude-sonnet-4',
         value: 'anthropic/claude-sonnet-4',
-        tags: ['recommended', 'balanced'],
+        tier: 'standard',
       },
-      { label: 'anthropic/claude-opus-4', value: 'anthropic/claude-opus-4', tags: ['flagship'] },
-      { label: 'google/gemini-2.5-pro', value: 'google/gemini-2.5-pro', tags: ['reasoning'] },
       {
         label: 'anthropic/claude-haiku-3.5',
         value: 'anthropic/claude-haiku-3.5',
-        tags: ['fast', 'budget'],
+        tier: 'compact',
       },
     ],
-    effortMapping: {
-      off: 'off',
-      quick: 'low',
-      light: 'low',
-      balanced: 'medium',
-      thorough: 'high',
-      extreme: 'high',
-      orchestrate: 'high',
-    },
     openaiAttr: {
       thinking: {
         enable: (effort) => ({
@@ -558,9 +529,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { openai: 'https://api.perplexity.ai' },
     apiKeyLabel: 'Perplexity API Key',
     suggestedModels: [
-      { label: 'sonar-pro', value: 'sonar-pro', tags: ['recommended', 'flagship'] },
-      { label: 'sonar', value: 'sonar', tags: ['fast', 'budget'] },
-      { label: 'sonar-reasoning-pro', value: 'sonar-reasoning-pro', tags: ['reasoning'] },
+      { label: 'sonar-pro', value: 'sonar-pro', tier: 'advanced' },
+      { label: 'sonar-reasoning-pro', value: 'sonar-reasoning-pro', tier: 'standard' },
+      { label: 'sonar', value: 'sonar', tier: 'compact' },
     ],
   },
   {
@@ -574,14 +545,13 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     apiKeyLabel: 'SiliconFlow API Key',
     suggestedModels: [
-      { label: 'Qwen/Qwen3-235B-A22B', value: 'Qwen/Qwen3-235B-A22B', tags: ['flagship'] },
+      { label: 'Qwen/Qwen3-235B-A22B', value: 'Qwen/Qwen3-235B-A22B', tier: 'advanced' },
       {
         label: 'deepseek-ai/DeepSeek-V3',
         value: 'deepseek-ai/DeepSeek-V3',
-        tags: ['recommended', 'balanced'],
+        tier: 'standard',
       },
-      { label: 'deepseek-ai/DeepSeek-R1', value: 'deepseek-ai/DeepSeek-R1', tags: ['reasoning'] },
-      { label: 'Qwen/Qwen3-30B-A3B', value: 'Qwen/Qwen3-30B-A3B', tags: ['fast', 'budget'] },
+      { label: 'Qwen/Qwen3-30B-A3B', value: 'Qwen/Qwen3-30B-A3B', tier: 'compact' },
     ],
   },
   {
@@ -595,9 +565,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     apiKeyLabel: 'Tencent Cloud API Key',
     suggestedModels: [
-      { label: 'deepseek-v3', value: 'deepseek-v3', tags: ['recommended', 'balanced'] },
-      { label: 'deepseek-r1', value: 'deepseek-r1', tags: ['reasoning'] },
-      { label: 'hunyuan-turbos', value: 'hunyuan-turbos', tags: ['fast'] },
+      { label: 'deepseek-r1', value: 'deepseek-r1', tier: 'advanced' },
+      { label: 'deepseek-v3', value: 'deepseek-v3', tier: 'standard' },
+      { label: 'hunyuan-turbos', value: 'hunyuan-turbos', tier: 'compact' },
     ],
   },
   {
@@ -608,13 +578,13 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { openai: 'https://api.together.xyz/v1' },
     apiKeyLabel: 'Together AI API Key',
     suggestedModels: [
-      { label: 'Qwen/Qwen3-235B-A22B', value: 'Qwen/Qwen3-235B-A22B', tags: ['flagship'] },
-      { label: 'deepseek-ai/DeepSeek-R1', value: 'deepseek-ai/DeepSeek-R1', tags: ['reasoning'] },
+      { label: 'Qwen/Qwen3-235B-A22B', value: 'Qwen/Qwen3-235B-A22B', tier: 'advanced' },
       {
         label: 'meta-llama/Llama-4-Maverick-17B-128E',
         value: 'meta-llama/Llama-4-Maverick-17B-128E',
-        tags: ['recommended', 'balanced'],
+        tier: 'standard',
       },
+      { label: 'deepseek-ai/DeepSeek-R1', value: 'deepseek-ai/DeepSeek-R1', tier: 'compact' },
     ],
   },
   {
@@ -627,19 +597,10 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'GCP API Key',
     baseUrlHint: 'https://{region}-aiplatform.googleapis.com/v1',
     suggestedModels: [
-      { label: 'claude-sonnet-4-6', value: 'claude-sonnet-4-6', tags: ['recommended', 'balanced'] },
-      { label: 'claude-opus-4-8', value: 'claude-opus-4-8', tags: ['flagship'] },
-      { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tags: ['fast', 'budget'] },
+      { label: 'claude-opus-4-8', value: 'claude-opus-4-8', tier: 'advanced' },
+      { label: 'claude-sonnet-4-6', value: 'claude-sonnet-4-6', tier: 'standard' },
+      { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tier: 'compact' },
     ],
-    effortMapping: {
-      off: 'off',
-      quick: 'low',
-      light: 'medium',
-      balanced: 'high',
-      thorough: 'xhigh',
-      extreme: 'max',
-      orchestrate: 'max',
-    },
   },
   {
     id: 'ark',
@@ -652,13 +613,13 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     apiKeyLabel: 'ARK API Key',
     suggestedModels: [
+      { label: 'deepseek-r1', value: 'deepseek-r1', tier: 'advanced' },
       {
         label: 'doubao-1.5-pro-256k',
         value: 'doubao-1.5-pro-256k',
-        tags: ['recommended', 'balanced'],
+        tier: 'standard',
       },
-      { label: 'doubao-1.5-lite-32k', value: 'doubao-1.5-lite-32k', tags: ['fast', 'budget'] },
-      { label: 'deepseek-r1', value: 'deepseek-r1', tags: ['reasoning'] },
+      { label: 'doubao-1.5-lite-32k', value: 'doubao-1.5-lite-32k', tier: 'compact' },
     ],
   },
   {
@@ -673,8 +634,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     baseUrlEnvVar: 'ZHIPU_BASE_URL',
     apiKeyLabel: 'ZHIPU API Key',
     suggestedModels: [
-      { label: 'glm-4-plus', value: 'glm-4-plus', tags: ['recommended', 'balanced'] },
-      { label: 'glm-4-flash', value: 'glm-4-flash', tags: ['fast'] },
+      { label: 'glm-4-plus', value: 'glm-4-plus', tier: 'standard' },
+      { label: 'glm-4-flash', value: 'glm-4-flash', tier: 'compact' },
     ],
   },
 ] as const

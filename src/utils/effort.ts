@@ -6,31 +6,30 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/grow
 import {
   getAPIProvider,
   getProviderAttr,
-  getProviderEffortMapping,
 } from 'src/services/model/providers.js'
-import { getMainLoopModel } from 'src/services/model/model.js'
-import { getProviderEntry } from 'src/services/model/providerRegistry.js'
+import {
+  getDefaultMainLoopModel,
+  getMainLoopModel,
+  parseUserSpecifiedModel,
+} from 'src/services/model/model.js'
 import {
   getLocalModelEffortLevels,
   getLocalModelEffortMap,
   getLocalModelPreserveThinking,
 } from './settings/localModelCapabilities.js'
 import { isEnvTruthy } from './envUtils.js'
+import {
+  PERSISTABLE_EFFORT_LEVELS,
+  type EffortLevel,
+  type PersistableEffortLevel,
+} from './effortTypes.js'
+
+// 向后兼容 re-export
+export { PERSISTABLE_EFFORT_LEVELS, type PersistableEffortLevel, type EffortLevel }
 
 // ---------------------------------------------------------------------------
 // 语义化 Effort 档位体系（provider 无关）
 // ---------------------------------------------------------------------------
-
-export type PersistableEffortLevel =
-  | 'off'
-  | 'on' // 思考开启（无特定强度，不走 provider 映射）
-  | 'quick'
-  | 'light'
-  | 'balanced'
-  | 'thorough'
-  | 'extreme'
-  | 'ultra' // 最强思考 + 回传 thinking 块（preserve: optional 时自动追加）
-export type EffortLevel = PersistableEffortLevel | 'orchestrate'
 
 export const EFFORT_LEVELS: readonly EffortLevel[] = [
   'off',
@@ -64,13 +63,13 @@ export const EFFORT_LEVEL_ORDER: readonly EffortLevel[] = [...EFFORT_LEVEL_RANK.
 
 // ---------------------------------------------------------------------------
 // Provider 映射（内部档位 → 各家 API 参数值）
-// 映射表声明在 providerRegistry.ts 的 effortMapping 字段中。
+// 映射由模型级 model-capabilities.json 的 effort.map 提供，不再走 provider 级配置。
 // ---------------------------------------------------------------------------
 
 /**
  * 将内部 effort 档位映射为目标 provider 的 API 参数值。
- * 优先级：模型级 effortMap（model-capabilities.json）→ provider 级 effortMapping。
- * 没有配置 effortMapping 的 provider 不支持 effort，返回 undefined。
+ * 映射来源：模型级 effortMap（model-capabilities.json 的 effort.map）。
+ * 没有配置 effortMap 的模型不支持 effort，返回 undefined。
  *
  * "on" 是特殊档位，表示"思考开启，无特定强度"——直接返回 "on"，不走映射链。
  * 由各 provider 的 openaiAttr.thinking.enable() 处理为合理默认值。
@@ -87,16 +86,14 @@ export function mapEffortToProvider(
   // "ultra" 复用 "extreme" 的 provider 映射（最强思考强度）
   // "orchestrate" 同理
   const key = effort === 'orchestrate' || effort === 'ultra' ? 'extreme' : effort
-  // 1. 模型级映射（用户本地配置优先）
+  // 模型级映射（model-capabilities.json 的 effort.map）
   if (model) {
     const modelMap = getLocalModelEffortMap(model)
     if (modelMap && key in modelMap) {
       return modelMap[key]!
     }
   }
-  // 2. Provider 级映射
-  const map = getProviderEffortMapping(providerId)
-  return map?.[key]
+  return undefined
 }
 
 // ---------------------------------------------------------------------------
@@ -127,19 +124,13 @@ export function getModelEffortLevels(model: string): EffortLevel[] {
     return levels
   }
 
-  // 2. provider 声明（effortMapping 的 key 即为支持的档位）
-  const entry = getProviderEntry(getAPIProvider())
-  if (entry?.effortMapping) {
-    return Object.keys(entry.effortMapping) as EffortLevel[]
-  }
-
-  // 3. provider 有 openaiAttr.thinking 但无 effortMapping → 仅支持 toggle 模式
+  // 2. provider 有 openaiAttr.thinking → 仅支持 toggle 模式
   const providerAttr = getProviderAttr()
   if (providerAttr?.thinking) {
     return ['off', 'on']
   }
 
-  // 4. 环境变量强制开启
+  // 3. 环境变量强制开启
   if (isEnvTruthy(process.env.ZY_CODE_ALWAYS_ENABLE_EFFORT)) {
     return [...EFFORT_LEVEL_ORDER]
   }
@@ -196,6 +187,46 @@ export function clampEffort(
     }
   }
   return undefined
+}
+
+/**
+ * 把候选 effort 落到目标模型真实支持的档位上。
+ * 用于 /model 切换和请求发送前的兜底，避免旧模型的强度泄漏到新模型。
+ */
+export function resolveEffortForModel(
+  model: string,
+  requested: EffortLevel | undefined,
+): EffortLevel | undefined {
+  const supportedLevels = getModelEffortLevels(model)
+  return resolveEffortForSupportedLevels(
+    supportedLevels,
+    requested,
+    getDefaultEffortForModel(model),
+  )
+}
+
+export function resolveEffortForSupportedLevels(
+  supportedLevels: readonly EffortLevel[],
+  requested: EffortLevel | undefined,
+  defaultEffort: EffortLevel | undefined,
+): EffortLevel | undefined {
+  if (supportedLevels.length === 0) {
+    return undefined
+  }
+  const resolved = requested ?? defaultEffort
+  return resolved === undefined ? undefined : clampEffort(resolved, supportedLevels)
+}
+
+/**
+ * 接受 AppState 中保存的模型设置（null 表示默认、别名需解析），返回该设置下
+ * 应写入状态的 effort 值。
+ */
+export function resolveEffortForModelSetting(
+  modelSetting: string | null | undefined,
+  requested: EffortLevel | undefined,
+): EffortLevel | undefined {
+  const model = modelSetting ? parseUserSpecifiedModel(modelSetting) : getDefaultMainLoopModel()
+  return model ? resolveEffortForModel(model, requested) : undefined
 }
 
 // ---------------------------------------------------------------------------
@@ -286,10 +317,7 @@ export function resolveAppliedEffort(
   if (resolved === undefined) {
     return undefined
   }
-  if (!modelSupportsEffort(model)) {
-    return undefined
-  }
-  return resolved
+  return resolveEffortForModel(model, resolved)
 }
 
 /**

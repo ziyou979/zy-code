@@ -2,12 +2,13 @@ import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 
 import { getActiveOAuthProviderInfo } from '../oauth/oauthStorage.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import {
+  getLocalModelApiFormat,
   getLocalModelCapability,
   getLocalModelCosts,
   parseTokenCount,
 } from '../../utils/settings/localModelCapabilities.js'
+import { type ApiFormat } from './apiFormat.js'
 import {
-  type ApiFormat,
   DEFAULT_OPENAI_THINKING_ATTR,
   getProviderEntry,
   type OpenAiAttr,
@@ -77,11 +78,18 @@ export function getAPIProvider(): APIProvider {
  * 从 settings.json 中读取已配置的 baseUrl。
  * 返回 null 表示未配置，由调用方继续 fallback。
  */
-export function getSettingsBaseUrl(): string | null {
+export function getSettingsBaseUrl(provider?: string): string | null {
   try {
     const { getInitialSettings } =
       require('../../utils/settings/settings.js') as typeof import('../../utils/settings/settings.js')
     const settings = getInitialSettings()
+    const providerId = provider ?? settings?.provider ?? null
+    if (providerId) {
+      const providerBaseUrl = settings?.providers?.[providerId]?.baseUrl
+      if (providerBaseUrl) {
+        return providerBaseUrl
+      }
+    }
     return settings?.baseUrl ?? null
   } catch {
     return null
@@ -182,12 +190,15 @@ export function isCompatibleProvider(provider: APIProvider): boolean {
  * 返回 provider 当前实际生效的 API 消息格式。
  *
  * 优先级：
- * 1. 用户显式设置的 `settings.apiFormat`（若 provider 支持）
- * 2. provider 注册表声明的 `supportedFormats[0]`（默认首选格式）
+ * 1. 模型在 `model-capabilities.json` 中声明的 `apiFormat`（若 provider 支持）
+ * 2. provider 注册表中的模型级 apiFormat 路由（若 provider 支持）
+ * 3. 活跃 OAuth provider 声明的 apiFormat（若与当前 provider 匹配）
+ * 4. 用户显式设置的 `settings.apiFormat`（若 provider 支持）
+ * 5. provider 注册表声明的 `supportedFormats[0]`（默认首选格式）
  *
  * 若 provider 不存在或不支持任何格式，返回 null。
  */
-export function getEffectiveApiFormat(provider: APIProvider): ApiFormat | null {
+export function getEffectiveApiFormat(provider: APIProvider, model?: string): ApiFormat | null {
   const entry = getProviderEntry(provider)
   if (!entry || entry.supportedFormats.length === 0) {
     return null
@@ -195,10 +206,39 @@ export function getEffectiveApiFormat(provider: APIProvider): ApiFormat | null {
 
   const supported = new Set(entry.supportedFormats)
 
-  // 1. 用户显式设置优先
+  // 1. 模型级声明优先，用于同一 provider 下不同模型走不同 API 格式。
+  if (model) {
+    const modelApiFormat = getLocalModelApiFormat(model, { provider })
+    if (modelApiFormat && supported.has(modelApiFormat)) {
+      return modelApiFormat
+    }
+
+    const normalizedModel = model.toLowerCase()
+    const registryModelApiFormat = entry.modelApiFormats
+      ?.slice()
+      .sort((a, b) => b.pattern.length - a.pattern.length)
+      .find(({ pattern }) => normalizedModel.includes(pattern.toLowerCase()))?.apiFormat
+    if (registryModelApiFormat && supported.has(registryModelApiFormat)) {
+      return registryModelApiFormat
+    }
+  }
+
+  // 3. OAuth provider 自带格式优先于全局 settings，避免登录源被全局配置误伤。
+  const oauthProvider = getActiveOAuthProviderInfo()
+  if (
+    oauthProvider?.apiProvider === provider &&
+    oauthProvider.apiFormat &&
+    supported.has(oauthProvider.apiFormat)
+  ) {
+    return oauthProvider.apiFormat
+  }
+
+  // 4. 用户显式设置优先
   try {
-    const { getInitialSettings } = require('../../utils/settings/settings.js')
-    const format = getInitialSettings()?.apiFormat
+    const { getInitialSettings } =
+      require('../../utils/settings/settings.js') as typeof import('../../utils/settings/settings.js')
+    const settings = getInitialSettings()
+    const format = settings.providers?.[provider]?.apiFormat ?? settings.apiFormat
     if (format && supported.has(format)) {
       return format
     }
@@ -206,7 +246,7 @@ export function getEffectiveApiFormat(provider: APIProvider): ApiFormat | null {
     // settings 尚未就绪，继续按默认值推导
   }
 
-  // 2. 默认使用注册表中声明的第一个格式
+  // 5. 默认使用注册表中声明的第一个格式
   return entry.supportedFormats[0]
 }
 
@@ -214,24 +254,24 @@ export function getEffectiveApiFormat(provider: APIProvider): ApiFormat | null {
  * 判断是否为使用 OpenAI SDK 直连的 provider。
  * 双格式 provider（如 dashscope）通过 settings.apiFormat 切换。
  */
-export function isOpenAIProvider(provider: APIProvider): boolean {
-  return getEffectiveApiFormat(provider) === 'openai'
+export function isOpenAIProvider(provider: APIProvider, model?: string): boolean {
+  return getEffectiveApiFormat(provider, model) === 'openai'
 }
 
 /**
  * 判断是否为使用 Google Generative AI 原生 API 的 provider。
  * Gemini 默认使用 google 格式，可通过 settings.apiFormat 切换回 openai。
  */
-export function isGoogleProvider(provider: APIProvider): boolean {
-  return getEffectiveApiFormat(provider) === 'google'
+export function isGoogleProvider(provider: APIProvider, model?: string): boolean {
+  return getEffectiveApiFormat(provider, model) === 'google'
 }
 
 /**
  * 判断是否为使用 Anthropic SDK / Anthropic 兼容消息格式的 provider。
  * 双格式 provider（如 dashscope）通过 settings.apiFormat 切换为 openai 时返回 false。
  */
-export function isAnthropicProvider(provider: APIProvider): boolean {
-  return getEffectiveApiFormat(provider) === 'anthropic'
+export function isAnthropicProvider(provider: APIProvider, model?: string): boolean {
+  return getEffectiveApiFormat(provider, model) === 'anthropic'
 }
 
 /**
@@ -279,7 +319,7 @@ export function getModelCostsFromSettings(
  * 获取 provider 的 OpenAI 兼容协议扩展属性。
  * 消息转换层通过此配置决定行为，而非判断 provider 名称。
  */
-export function getProviderAttr(provider?: string): OpenAiAttr | undefined {
+export function getProviderAttr(provider?: string, model?: string): OpenAiAttr | undefined {
   const providerId = provider ?? getAPIProvider()
   const entry = getProviderEntry(providerId)
   if (!entry) {
@@ -287,7 +327,7 @@ export function getProviderAttr(provider?: string): OpenAiAttr | undefined {
   }
 
   // OpenAI 格式统一具备默认 thinking 映射；provider 可按需覆盖。
-  if (getEffectiveApiFormat(providerId as APIProvider) === 'openai') {
+  if (getEffectiveApiFormat(providerId as APIProvider, model) === 'openai') {
     return {
       ...entry.openaiAttr,
       thinking: {
@@ -300,11 +340,3 @@ export function getProviderAttr(provider?: string): OpenAiAttr | undefined {
   return entry.openaiAttr
 }
 
-/**
- * 获取 provider 的 effort 映射表（内部档位 → API 参数值）。
- * 未声明时返回 undefined，调用方应回退到 anthropic 映射。
- */
-export function getProviderEffortMapping(provider?: string): Record<string, string> | undefined {
-  const entry = getProviderEntry(provider ?? getAPIProvider())
-  return entry?.effortMapping
-}
