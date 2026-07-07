@@ -79,14 +79,11 @@ function getPlatforms(): PlatformConfig[] {
         ? tSync('onboarding.platform.localApiKey')
         : (entry.apiKeyLabel ?? tSync('onboarding.defaultApiKeyLabel'))
 
-    // 根据 tags 自动渲染模型描述
+    // 根据 tier 渲染模型描述
     const suggestedModels = entry.suggestedModels?.map((model) => ({
       label: model.label,
       value: model.value,
-      description: model.tags?.length
-        ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          model.tags.map((tag) => tSync(`model.tag.${tag}` as any)).join(' · ')
-        : '',
+      description: tSync(`model.tier.${model.tier}` as any),
     }))
 
     return {
@@ -205,10 +202,10 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
     if (platform?.defaultBaseUrls) {
       // Priority: google > openai > anthropic (based on provider's supportedFormats order)
       const entry = PROVIDER_REGISTRY.find((e) => e.id === platform.provider)
-      const formats = entry?.supportedFormats ?? ['anthropic']
+      const formats = entry?.supportedFormats ?? (['anthropic'] as const)
       const primaryFormat = formats[0]
       baseUrl =
-        platform.defaultBaseUrls[primaryFormat] ??
+        (primaryFormat ? platform.defaultBaseUrls[primaryFormat] : undefined) ??
         platform.defaultBaseUrls.openai ??
         platform.defaultBaseUrls.google ??
         platform.defaultBaseUrls.anthropic
