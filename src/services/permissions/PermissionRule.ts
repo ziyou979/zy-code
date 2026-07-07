@@ -6,6 +6,7 @@ import type {
   PermissionRuleSource,
   PermissionRuleValue,
 } from '../../types/permissions.js'
+import { PermissionBehaviorSchema } from '../../types/coreSchemas.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 
 // Re-export for backwards compatibility
@@ -16,8 +17,10 @@ export type { PermissionBehavior, PermissionRule, PermissionRuleSource, Permissi
  * 'allow' means the rule allows the tool to run.
  * 'deny' means the rule denies the tool from running.
  * 'ask' means the rule forces a prompt to be shown to the user.
+ *
+ * @deprecated 请从 coreSchemas.ts 导入 PermissionBehaviorSchema。
  */
-export const permissionBehaviorSchema = lazySchema(() => z.enum(['allow', 'deny', 'ask']))
+export const permissionBehaviorSchema = PermissionBehaviorSchema
 
 /**
  * PermissionRuleValue is the content of a permission rule.
