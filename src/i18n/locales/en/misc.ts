@@ -68,6 +68,16 @@ export const enMisc: TranslationResource = {
   'effort.description.orchestrate':
     'Extreme reasoning + dynamic workflow orchestration (session only)',
   'effort.sessionOnly': ' (this session only)',
+  'effort.picker.title': 'Effort',
+  'effort.picker.faster': 'Faster',
+  'effort.picker.smarter': 'Smarter',
+  'effort.picker.toAdjust': ' to adjust',
+  'effort.picker.toConfirm': ' to confirm',
+  'effort.picker.toCancel': ' to cancel',
+  'effort.picker.cancelled': 'Cancelled',
+  'effort.picker.confirmPrompt': 'Set effort to {level}?',
+  'effort.picker.orchestrateSublabel': 'extreme + workflows',
+  'effort.picker.notSupported': 'Effort is not supported for the current model ({model}).',
   'errorUtils.api.errorWithStatus': 'API error (status {status})',
   'errorUtils.connection.failed': 'Unable to connect to API. Check your internet connection',
   'errorUtils.connection.timeout':

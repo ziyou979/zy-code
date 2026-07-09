@@ -18,6 +18,7 @@ import {
   toPersistableEffort,
 } from '../../utils/effort.js'
 import { updateSettingsForSource } from '../../utils/settings/settings.js'
+import { EffortPicker } from './effortPicker.js'
 
 const COMMON_HELP_ARGS = ['help', '-h', '--help']
 type EffortCommandResult = {
@@ -207,7 +208,8 @@ export async function call(
     return
   }
   if (!args || args === 'current' || args === 'status') {
-    return <ShowCurrentEffort onDone={onDone} />
+    // 无参数/status：渲染可视化选择器
+    return <EffortPicker onDone={onDone} />
   }
   const model = getMainLoopModel() ?? ''
   const result = executeEffort(args, model)
