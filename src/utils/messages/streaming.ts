@@ -28,6 +28,34 @@ export type StreamingThinking = {
   streamingEndedAt?: number
 }
 
+function appendStreamingThinking(
+  onStreamingThinking:
+    | ((f: (current: StreamingThinking | null) => StreamingThinking | null) => void)
+    | undefined,
+  thinking: string,
+): void {
+  onStreamingThinking?.((current) => ({
+    thinking: (current?.thinking ?? '') + thinking,
+    isStreaming: true,
+  }))
+}
+
+function stopStreamingThinking(
+  onStreamingThinking:
+    | ((f: (current: StreamingThinking | null) => StreamingThinking | null) => void)
+    | undefined,
+): void {
+  onStreamingThinking?.((current) =>
+    current?.isStreaming
+      ? {
+          ...current,
+          isStreaming: false,
+          streamingEndedAt: Date.now(),
+        }
+      : current,
+  )
+}
+
 /**
  * 处理来自流的消息，更新增量的响应长度并追加已完成的消息
  */
@@ -82,6 +110,7 @@ export function handleMessageFromStream(
   }
 
   if (message.event.type === 'message_stop' || message.event.type === 'response_stop') {
+    stopStreamingThinking(onStreamingThinking)
     onSetStreamMode('tool-use')
     onStreamingToolUses(() => [])
     return
@@ -97,10 +126,11 @@ export function handleMessageFromStream(
         return
       }
       if (feature('CONNECTOR_TEXT') && isConnectorTextBlock(chunk)) {
+        stopStreamingThinking(onStreamingThinking)
         onSetStreamMode('responding')
         return
       }
-      // chunk.type 可能包含扩展类型（server_tool_use 等），用 string 避免穷举
+      // chunk.type 可能包含扩展类型，用 string 避免穷举
       const chunkType: string = chunk.type
       switch (chunkType) {
         case 'thinking':
@@ -108,10 +138,12 @@ export function handleMessageFromStream(
           onSetStreamMode('thinking')
           return
         case 'text':
+          stopStreamingThinking(onStreamingThinking)
           onSetStreamMode('responding')
           return
         case 'tool_use':
         case 'tool_call': {
+          stopStreamingThinking(onStreamingThinking)
           onSetStreamMode('tool-input')
           onStreamingToolUses((_) => [
             ..._,
@@ -123,7 +155,6 @@ export function handleMessageFromStream(
           ])
           return
         }
-        case 'server_tool_use':
         case 'web_search_tool_result':
         case 'code_execution_tool_result':
         case 'mcp_tool_use':
@@ -134,6 +165,7 @@ export function handleMessageFromStream(
         case 'text_editor_code_execution_tool_result':
         case 'tool_search_tool_result':
         case 'compaction':
+          stopStreamingThinking(onStreamingThinking)
           onSetStreamMode('tool-input')
           return
       }
@@ -172,6 +204,7 @@ export function handleMessageFromStream(
         }
         case 'thinking_delta':
           onUpdateLength(delta.thinking)
+          appendStreamingThinking(onStreamingThinking, delta.thinking)
           return
         case 'signature_delta':
           return
@@ -182,6 +215,7 @@ export function handleMessageFromStream(
     case 'chunk_stop':
       return
     case 'response_delta':
+      stopStreamingThinking(onStreamingThinking)
       onSetStreamMode('responding')
       return
     case 'response_start':
@@ -192,6 +226,7 @@ export function handleMessageFromStream(
       onStreamingText?.(() => null)
       const block = message.event.content_block as { type: string; [k: string]: unknown }
       if (feature('CONNECTOR_TEXT') && isConnectorTextBlock(block)) {
+        stopStreamingThinking(onStreamingThinking)
         onSetStreamMode('responding')
         return
       }
@@ -201,9 +236,11 @@ export function handleMessageFromStream(
           onSetStreamMode('thinking')
           return
         case 'text':
+          stopStreamingThinking(onStreamingThinking)
           onSetStreamMode('responding')
           return
         case 'tool_use': {
+          stopStreamingThinking(onStreamingThinking)
           onSetStreamMode('tool-input')
           const contentBlock = block as unknown as ToolCallBlock
           const index = message.event.index ?? 0
@@ -217,7 +254,6 @@ export function handleMessageFromStream(
           ])
           return
         }
-        case 'server_tool_use':
         case 'web_search_tool_result':
         case 'code_execution_tool_result':
         case 'mcp_tool_use':
@@ -228,6 +264,7 @@ export function handleMessageFromStream(
         case 'text_editor_code_execution_tool_result':
         case 'tool_search_tool_result':
         case 'compaction':
+          stopStreamingThinking(onStreamingThinking)
           onSetStreamMode('tool-input')
           return
       }
@@ -270,6 +307,7 @@ export function handleMessageFromStream(
         }
         case 'thinking_delta':
           onUpdateLength(delta.thinking!)
+          appendStreamingThinking(onStreamingThinking, delta.thinking!)
           return
         case 'signature_delta':
           // Signature 是加密认证字符串，不是模型输出。将其排除在 onUpdateLength 之外
@@ -282,9 +320,11 @@ export function handleMessageFromStream(
     case 'content_block_stop':
       return
     case 'message_delta':
+      stopStreamingThinking(onStreamingThinking)
       onSetStreamMode('responding')
       return
     default:
+      stopStreamingThinking(onStreamingThinking)
       onSetStreamMode('responding')
       return
   }

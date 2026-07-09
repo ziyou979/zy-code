@@ -1,17 +1,181 @@
 import { getMainLoopModelOverride } from '../../bootstrap/state.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
+import type { SettingsJson } from '../../utils/settings/types.js'
 import type { ModelAlias } from './aliases.js'
 import { isModelAllowed } from './modelAllowlist.js'
-import { getAPIProvider } from './providers.js'
+import { getProviderEntry } from './providerRegistry.js'
+import { type APIProvider, getAPIProvider } from './providers.js'
 
 export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
+export type ModelReference = {
+  provider?: string
+  model: string
+}
+export type ModelReferenceInput = ModelName | ModelReference
+
+type ResolvedModelReference = {
+  model: ModelName
+  provider?: APIProvider
+}
+
+type CustomModelConfig = {
+  alias: string
+  model: string
+  label?: string
+  provider?: string
+}
+
+type InitialSettings = SettingsJson
 
 /** 基于层级划分不同能力的模型 */
 type ModelTier = 'advanced' | 'standard' | 'compact'
 
-function getProviderSettings(settings: ReturnType<typeof getInitialSettings>) {
-  return settings.providers?.[getAPIProvider()]
+function isModelReference(value: unknown): value is ModelReference {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    'model' in value &&
+    typeof (value as { model?: unknown }).model === 'string'
+  )
+}
+
+function toAPIProvider(provider?: string): APIProvider | undefined {
+  if (!provider || !getProviderEntry(provider)) {
+    return undefined
+  }
+  return provider as APIProvider
+}
+
+function getOptionalSettings(): InitialSettings | undefined {
+  try {
+    return getInitialSettings()
+  } catch {
+    return undefined
+  }
+}
+
+function getProviderSettings(
+  settings: InitialSettings | undefined,
+  provider: string = getAPIProvider(),
+) {
+  return settings?.providers?.[provider]
+}
+
+function resolveModelReference(
+  value: ModelReferenceInput | undefined,
+  implicitProvider?: string,
+): ResolvedModelReference | undefined {
+  if (typeof value === 'string') {
+    return { model: value, provider: toAPIProvider(implicitProvider) }
+  }
+  if (isModelReference(value)) {
+    return {
+      model: value.model,
+      provider: toAPIProvider(value.provider) ?? toAPIProvider(implicitProvider),
+    }
+  }
+  return undefined
+}
+
+function getModelReferenceModel(value: ModelReferenceInput | undefined): ModelName | undefined {
+  return resolveModelReference(value)?.model
+}
+
+function getAllProviderIds(
+  settings: InitialSettings | undefined,
+  activeProvider: string = getAPIProvider(),
+): string[] {
+  const providerIds = new Set<string>([activeProvider])
+  for (const provider of Object.keys(settings?.providers ?? {})) {
+    providerIds.add(provider)
+  }
+  return [...providerIds]
+}
+
+function getCustomModelReferences(
+  settings: InitialSettings | undefined,
+  activeProvider: string = getAPIProvider(),
+): Array<{
+  alias: string
+  model: string
+  label?: string
+  provider?: APIProvider
+}> {
+  const refs: Array<{
+    alias: string
+    model: string
+    label?: string
+    provider?: APIProvider
+  }> = []
+
+  const addModels = (customModels: CustomModelConfig[] | undefined, implicitProvider?: string) => {
+    for (const customModel of customModels ?? []) {
+      refs.push({
+        alias: customModel.alias,
+        model: customModel.model,
+        label: customModel.label,
+        provider: toAPIProvider(customModel.provider) ?? toAPIProvider(implicitProvider),
+      })
+    }
+  }
+
+  addModels(settings?.providers?.[activeProvider]?.customModels, activeProvider)
+  addModels(settings?.customModels)
+  for (const provider of Object.keys(settings?.providers ?? {})) {
+    if (provider === activeProvider) {
+      continue
+    }
+    addModels(settings?.providers?.[provider]?.customModels, provider)
+  }
+
+  return refs
+}
+
+function getModelByTierReferenceForSettings(
+  settings: InitialSettings | undefined,
+  tier: ModelTier,
+  activeProvider: APIProvider,
+): ResolvedModelReference | undefined {
+  const activeProviderSettings = getProviderSettings(settings, activeProvider)
+
+  const providerTierModel = resolveModelReference(
+    activeProviderSettings?.models?.[tier],
+    activeProvider,
+  )
+  if (providerTierModel) {
+    return providerTierModel
+  }
+
+  const topLevelTierModel = resolveModelReference(settings?.models?.[tier], activeProvider)
+  if (topLevelTierModel) {
+    return topLevelTierModel
+  }
+
+  for (const provider of getAllProviderIds(settings, activeProvider)) {
+    if (provider === activeProvider) {
+      continue
+    }
+    const scopedTierModel = resolveModelReference(
+      settings?.providers?.[provider]?.models?.[tier],
+      provider,
+    )
+    if (scopedTierModel) {
+      return scopedTierModel
+    }
+  }
+
+  // 其他层级未配置时使用 standard
+  if (tier !== 'standard') {
+    return getModelByTierReferenceForSettings(settings, 'standard', activeProvider)
+  }
+
+  return undefined
+}
+
+function getModelByTierReference(tier: ModelTier): ResolvedModelReference | undefined {
+  return getModelByTierReferenceForSettings(getOptionalSettings(), tier, getAPIProvider())
 }
 
 /**
@@ -20,20 +184,7 @@ function getProviderSettings(settings: ReturnType<typeof getInitialSettings>) {
  * standard 也未配置则返回 undefined，由调用方处理（如引导用户进入 onboarding 配置）。
  */
 function getModelByTier(tier: ModelTier): ModelName | undefined {
-  const settings = getInitialSettings() || {}
-  const providerSettings = getProviderSettings(settings)
-  const tierModel = providerSettings?.models?.[tier] ?? settings.models?.[tier]
-  if (tierModel) {
-    return tierModel
-  }
-  // 其他层级未配置时使用 standard
-  if (tier !== 'standard') {
-    const standard = providerSettings?.models?.standard ?? settings.models?.standard
-    if (standard) {
-      return standard
-    }
-  }
-  return undefined
+  return getModelByTierReference(tier)?.model
 }
 
 /**
@@ -51,8 +202,11 @@ export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
   if (modelOverride !== undefined) {
     specifiedModel = modelOverride
   } else {
-    const settings = getInitialSettings() || {}
-    specifiedModel = getProviderSettings(settings)?.model || settings.model || undefined
+    const settings = getOptionalSettings()
+    specifiedModel =
+      getModelReferenceModel(getProviderSettings(settings)?.model) ??
+      getModelReferenceModel(settings?.model) ??
+      undefined
   }
 
   // 如果用户指定的模型不在 availableModels 白名单中，则忽略
@@ -100,9 +254,9 @@ export function getDefaultCompactModel(): ModelName | undefined {
  * 再解析到实际模型。默认为 standard。
  */
 export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias | undefined {
-  const settings = getInitialSettings()
+  const settings = getOptionalSettings()
   const tier = getProviderSettings(settings)?.mainLoopModel ?? settings?.mainLoopModel ?? 'standard'
-  return getModelByTier(tier)
+  return getModelByTierReference(tier)?.model
 }
 
 /**
@@ -122,11 +276,9 @@ export function renderDefaultModelSetting(setting: ModelName | ModelAlias): stri
 }
 
 export function renderModelSetting(setting: ModelName | ModelAlias): string {
-  const settings = getInitialSettings() || {}
-  const customModels = getProviderSettings(settings)?.customModels ?? settings.customModels
-  if (customModels && customModels.length > 0) {
-    const customModel = customModels.find((m) => m.alias === setting || m.model === setting)
-    if (customModel) {
+  const settings = getOptionalSettings()
+  for (const customModel of getCustomModelReferences(settings)) {
+    if (customModel.alias === setting || customModel.model === setting) {
       return customModel.label ?? customModel.alias
     }
   }
@@ -139,11 +291,9 @@ export function renderModelSetting(setting: ModelName | ModelAlias): string {
  */
 export function getPublicModelDisplayName(model: ModelName): string | null {
   // 优先检查自定义模型
-  const settings = getInitialSettings() || {}
-  const customModels = getProviderSettings(settings)?.customModels ?? settings.customModels
-  if (customModels && customModels.length > 0) {
-    const customModel = customModels.find((m) => m.model === model || `${m.model}[1m]` === model)
-    if (customModel) {
+  const settings = getOptionalSettings()
+  for (const customModel of getCustomModelReferences(settings)) {
+    if (customModel.model === model || `${customModel.model}[1m]` === model) {
       const has1m = model.toLowerCase().includes('[1m]')
       return (customModel.label ?? customModel.alias) + (has1m ? ' (1M context)' : '')
     }
@@ -193,11 +343,9 @@ export function parseUserSpecifiedModel(modelInput: ModelName | ModelAlias): Mod
   }
 
   // 从 settings 中解析自定义模型别名
-  const settings = getInitialSettings() || {}
-  const customModels = getProviderSettings(settings)?.customModels ?? settings.customModels
-  if (customModels && customModels.length > 0) {
-    const customModel = customModels.find((m) => m.alias.toLowerCase() === normalizedModel)
-    if (customModel) {
+  const settings = getOptionalSettings()
+  for (const customModel of getCustomModelReferences(settings)) {
+    if (customModel.alias.toLowerCase() === normalizedModel) {
       return customModel.model
     }
   }
@@ -225,16 +373,105 @@ export function modelDisplayString(model: ModelSetting): string {
 }
 
 export function getMarketingNameForModel(modelId: string): string | undefined {
-  const settings = getInitialSettings() || {}
-  const customModels = getProviderSettings(settings)?.customModels ?? settings.customModels
-  if (customModels && customModels.length > 0) {
-    const customModel = customModels.find((m) => m.model === modelId.replace(/\[1m\]$/i, ''))
-    if (customModel) {
+  const settings = getOptionalSettings()
+  for (const customModel of getCustomModelReferences(settings)) {
+    if (customModel.model === modelId.replace(/\[1m\]$/i, '')) {
       const has1m = modelId.toLowerCase().includes('[1m]')
       return customModel.label ?? (has1m ? `${customModel.alias} (1M context)` : customModel.alias)
     }
   }
   return undefined
+}
+
+function findConfiguredModelReferenceForSettings(
+  settings: InitialSettings | undefined,
+  model: string,
+  activeProvider: APIProvider,
+): ResolvedModelReference | undefined {
+  const matches = (value: ModelReferenceInput | undefined, implicitProvider?: string) => {
+    const resolved = resolveModelReference(value, implicitProvider)
+    return resolved?.model === model ? resolved : undefined
+  }
+
+  for (const tier of ['advanced', 'standard', 'compact'] as const) {
+    const activeMatch = matches(
+      settings?.providers?.[activeProvider]?.models?.[tier],
+      activeProvider,
+    )
+    if (activeMatch) {
+      return activeMatch
+    }
+    const topLevelMatch = matches(settings?.models?.[tier], activeProvider)
+    if (topLevelMatch) {
+      return topLevelMatch
+    }
+  }
+
+  for (const customModel of getCustomModelReferences(settings, activeProvider)) {
+    if (customModel.alias === model || customModel.model === model) {
+      return { model: customModel.model, provider: customModel.provider }
+    }
+  }
+
+  for (const provider of Object.keys(settings?.providers ?? {})) {
+    if (provider === activeProvider) {
+      continue
+    }
+    for (const tier of ['advanced', 'standard', 'compact'] as const) {
+      const scopedMatch = matches(settings?.providers?.[provider]?.models?.[tier], provider)
+      if (scopedMatch) {
+        return scopedMatch
+      }
+    }
+  }
+
+  const topLevelModel = matches(settings?.model, activeProvider)
+  if (topLevelModel) {
+    return topLevelModel
+  }
+
+  for (const provider of getAllProviderIds(settings, activeProvider)) {
+    const providerModel = matches(settings?.providers?.[provider]?.model, provider)
+    if (providerModel) {
+      return providerModel
+    }
+  }
+
+  return undefined
+}
+
+export function getProviderForModelFromSettings(
+  settings: InitialSettings | undefined,
+  model?: string | null,
+  activeProvider: APIProvider = getAPIProvider(),
+): APIProvider {
+  if (!model) {
+    return (
+      getModelByTierReferenceForSettings(settings, 'standard', activeProvider)?.provider ??
+      activeProvider
+    )
+  }
+
+  const normalizedModel = model.trim().toLowerCase()
+  if (
+    normalizedModel === 'advanced' ||
+    normalizedModel === 'standard' ||
+    normalizedModel === 'compact'
+  ) {
+    return (
+      getModelByTierReferenceForSettings(settings, normalizedModel, activeProvider)?.provider ??
+      activeProvider
+    )
+  }
+
+  return (
+    findConfiguredModelReferenceForSettings(settings, model, activeProvider)?.provider ??
+    activeProvider
+  )
+}
+
+export function getProviderForModel(model?: string | null): APIProvider {
+  return getProviderForModelFromSettings(getOptionalSettings(), model, getAPIProvider())
 }
 
 export function normalizeModelStringForAPI(model: string): string {

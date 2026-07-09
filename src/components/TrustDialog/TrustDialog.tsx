@@ -16,7 +16,6 @@ import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'
 import { Select } from '../CustomSelect/index.js'
 import { PermissionDialog } from '../permissions/PermissionDialog.js'
 import {
-  getApiKeyHelperSources,
   getAwsCommandsSources,
   getBashPermissionSources,
   getDangerousEnvVarsSources,
@@ -36,8 +35,6 @@ export function TrustDialog({ onDone, commands }: Props) {
   const hooksSettingSources = getHooksSources()
   const hasHooks = hooksSettingSources.length > 0
   const bashSettingSources = getBashPermissionSources()
-  const apiKeyHelperSources = getApiKeyHelperSources()
-  const hasApiKeyHelper = apiKeyHelperSources.length > 0
   const awsCommandsSources = getAwsCommandsSources()
   const hasAwsCommands = awsCommandsSources.length > 0
   const gcpCommandsSources = getGcpCommandsSources()
@@ -77,7 +74,6 @@ export function TrustDialog({ onDone, commands }: Props) {
       hasMcpServers,
       hasHooks,
       hasBashExecution: hasAnyBashExecution,
-      hasApiKeyHelper,
       hasAwsCommands,
       hasGcpCommands,
       hasOtelHeadersHelper,
@@ -87,7 +83,6 @@ export function TrustDialog({ onDone, commands }: Props) {
     hasMcpServers,
     hasHooks,
     hasAnyBashExecution,
-    hasApiKeyHelper,
     hasAwsCommands,
     hasGcpCommands,
     hasOtelHeadersHelper,
@@ -104,7 +99,6 @@ export function TrustDialog({ onDone, commands }: Props) {
       hasMcpServers,
       hasHooks,
       hasBashExecution: hasAnyBashExecution,
-      hasApiKeyHelper,
       hasAwsCommands,
       hasGcpCommands,
       hasOtelHeadersHelper,

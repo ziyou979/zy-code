@@ -109,10 +109,9 @@ export function ensureToolResultPairing(
     // 中的重复也会被剥离。每条消息的 seenToolUseIds 仅追踪此 assistant 的存活 ID
     // — 下方的 orphan/missing-result 检测需要每条消息的视图，而非累积视图。
     //
-    // 同时剥离孤立的服务端 tool use 块（server_tool_use、mcp_tool_use），
+    // 同时剥离孤立的服务端 tool use 块（mcp_tool_use），
     // 其 result 块位于同一 assistant 消息中。如果流在 result 到达前中断，
-    // use 块没有匹配的 *_tool_result，API 会以例如 "advisor tool use without
-    // corresponding advisor_tool_result" 拒绝。
+    // use 块没有匹配的 *_tool_result，API 会拒绝。
     const seenToolUseIds = new Set<string>()
     const finalContent = Array.isArray(msg.message.content)
       ? msg.message.content.filter((block) => {
@@ -125,8 +124,7 @@ export function ensureToolResultPairing(
             seenToolUseIds.add(block.id)
           }
           if (
-            ((block.type as string) === 'server_tool_use' ||
-              (block.type as string) === 'mcp_tool_use') &&
+            (block.type as string) === 'mcp_tool_use' &&
             !serverResultIds.has((block as { id: string }).id)
           ) {
             repaired = true
@@ -284,17 +282,14 @@ export function ensureToolResultPairing(
               .filter((b) => b.type === 'tool_call')
               .map((b) => (b as ToolCallBlock | ToolCallBlock).id)
           : []
-        const serverToolUses = Array.isArray(content)
+        const mcpToolUses = Array.isArray(content)
           ? content
-              .filter(
-                (b) =>
-                  (b.type as string) === 'server_tool_use' || (b.type as string) === 'mcp_tool_use',
-              )
+              .filter((b) => (b.type as string) === 'mcp_tool_use')
               .map((b) => (b as { id: string }).id)
           : []
         const parts = [`id=${m.message.id}`, `tool_uses=[${toolUses.join(',')}]`]
-        if (serverToolUses.length > 0) {
-          parts.push(`server_tool_uses=[${serverToolUses.join(',')}]`)
+        if (mcpToolUses.length > 0) {
+          parts.push(`mcp_tool_uses=[${mcpToolUses.join(',')}]`)
         }
         return `[${idx}] assistant(${parts.join(', ')})`
       }

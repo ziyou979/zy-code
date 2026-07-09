@@ -161,7 +161,7 @@ export const DEFAULT_OPENAI_THINKING_ATTR: NonNullable<OpenAiAttr['thinking']> =
 // ---------------------------------------------------------------------------
 
 /** 完整能力集 — 适用于 Anthropic 官方 API、generic 等。 */
-const FULL_CAPABILITIES: ProviderCapability[] = ['context_management', 'advisor']
+const FULL_CAPABILITIES: ProviderCapability[] = ['context_management']
 
 /** 标准能力集 — 适用于大多数第三方平台和本地推理引擎 */
 const STANDARD_CAPABILITIES: ProviderCapability[] = ['context_management']

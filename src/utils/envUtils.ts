@@ -80,7 +80,7 @@ export function isEnvDefinedFalsy(envVar: string | boolean | undefined): boolean
 /**
  * --bare / ZY_CODE_SIMPLE — skip hooks, LSP, plugin sync, skill dir-walk,
  * attribution, background prefetches, and ALL keychain/credential reads.
- * Auth is strictly ZY_API_KEY env or apiKeyHelper from --settings.
+ * Auth is strictly ZY_API_KEY env or apiKeyHelper from user-level auth.json.
  * Explicit CLI flags (--plugin-dir, --add-dir, --mcp-config) still honored.
  * ~30 gates across the codebase.
  *

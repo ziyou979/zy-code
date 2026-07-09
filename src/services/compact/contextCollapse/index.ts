@@ -18,7 +18,7 @@ import type { QuerySource } from '../../../constants/querySource.js'
 import type { ToolUseContext } from '../../../Tool.js'
 import type { Message } from '../../../types/message.js'
 import { createUserMessage } from '../../../utils/messages.js'
-import { getInitialSettings } from '../../../utils/settings/settings.js'
+import { getMainLoopModel } from '../../model/model.js'
 import { projectView } from './operations.js'
 
 // ============================================================================
@@ -191,8 +191,7 @@ export async function applyCollapsesIfNeeded(
   const { getMaxOutputTokensForModel } = await import('../../api/apiHelpers.js')
 
   // 获取当前模型
-  const settings = getInitialSettings()
-  const model = settings.model ?? 'default'
+  const model = getMainLoopModel() ?? 'default'
 
   // 计算 token 使用率
   const tokenCount = tokenCountWithEstimation(messages)

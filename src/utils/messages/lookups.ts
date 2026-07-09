@@ -245,7 +245,7 @@ export function buildMessageLookups(
     resolvedHookCounts.set(toolUseID, countMap)
   }
 
-  // 标记孤立的 server_tool_use / mcp_tool_use 块（无匹配结果）为错误，
+  // 标记孤立的 mcp_tool_use 块（无匹配结果）为错误，
   // 使 UI 显示为失败而不是永久旋转。
   const lastMsg = messages.at(-1)
   const lastAssistantMsgId = lastMsg?.type === 'assistant' ? lastMsg.message.id : undefined
@@ -258,8 +258,7 @@ export function buildMessageLookups(
     }
     for (const content of msg.message.content) {
       if (
-        ((content.type as string) === 'server_tool_use' ||
-          (content.type as string) === 'mcp_tool_use') &&
+        (content.type as string) === 'mcp_tool_use' &&
         !resolvedToolUseIDs.has((content as { id: string }).id)
       ) {
         const id = (content as { id: string }).id

@@ -494,12 +494,10 @@ const getGrowthBookClient = memoize(
     }
     const baseUrl = isInternalBuild() ? process.env.ZY_CODE_GB_BASE_URL : ''
 
-    // Skip auth if trust hasn't been established yet
-    // This prevents executing apiKeyHelper commands before the trust dialog
-    // Non-interactive sessions implicitly have workspace trust
-    // getSessionTrustAccepted() covers the case where the TrustDialog auto-resolved
-    // without persisting trust for the specific CWD (e.g., home directory) —
-    // showSetupScreens() sets this after the trust dialog flow completes.
+    // 信任流程完成前不附加认证头，避免初始化阶段提前触发认证工作。
+    // 非交互会话隐式拥有 workspace trust。
+    // getSessionTrustAccepted() 覆盖 TrustDialog 已自动完成但未为当前 CWD
+    // 持久化信任的情况（例如 home 目录）；showSetupScreens() 会在流程结束后设置。
     const hasTrust =
       checkHasTrustDialogAccepted() || getSessionTrustAccepted() || getIsNonInteractiveSession()
     const authHeaders = hasTrust
@@ -610,9 +608,8 @@ export const initializeGrowthBook = memoize(async (): Promise<GrowthBook | null>
     return null
   }
 
-  // Check if auth has become available since the client was created
-  // If so, we need to recreate the client with fresh auth headers
-  // Only check if trust is established to avoid triggering apiKeyHelper before trust dialog
+  // 如果 client 创建后认证变为可用，需要用新的认证头重建 client。
+  // 仅在信任流程完成后检查，避免初始化阶段提前触发认证工作。
   if (!clientCreatedWithAuth) {
     const hasTrust =
       checkHasTrustDialogAccepted() || getSessionTrustAccepted() || getIsNonInteractiveSession()

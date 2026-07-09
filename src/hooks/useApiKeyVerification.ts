@@ -13,8 +13,7 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
     if (!isAuthEnabled()) {
       return 'valid'
     }
-    // Use skipRetrievingKeyFromApiKeyHelper to avoid executing apiKeyHelper
-    // before trust dialog is shown (security: prevents RCE via settings.json)
+    // 初始渲染只判断来源，不执行用户级 auth.json 中的 helper。
     const { key, source } = getApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true,
     })

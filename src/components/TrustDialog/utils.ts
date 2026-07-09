@@ -134,33 +134,6 @@ export function getOtelHeadersHelperSources(): string[] {
 }
 
 /**
- * Check if settings have apiKeyHelper configured
- */
-function hasApiKeyHelper(settings: SettingsJson | null): boolean {
-  return !!settings?.apiKeyHelper
-}
-
-/**
- * Get which setting sources have apiKeyHelper configured.
- * Returns an array of file paths that have apiKeyHelper.
- */
-export function getApiKeyHelperSources(): string[] {
-  const sources: string[] = []
-
-  const projectSettings = getSettingsForSource('projectSettings')
-  if (hasApiKeyHelper(projectSettings)) {
-    sources.push('.zy/settings.json')
-  }
-
-  const localSettings = getSettingsForSource('localSettings')
-  if (hasApiKeyHelper(localSettings)) {
-    sources.push('.zy/settings.local.json')
-  }
-
-  return sources
-}
-
-/**
  * Check if settings have AWS commands configured
  */
 function hasAwsCommands(settings: SettingsJson | null): boolean {

@@ -428,7 +428,7 @@ export async function processResumedConversation(
       // 使 getSessionRecordingPaths() 在 /share 时能够发现它
       await renameRecordingForSession()
       await resetSessionFilePointer()
-      restoreCostStateForSession(sid)
+      restoreCostStateForSession(sid, result.messages)
     }
   } else if (result.contentReplacements?.length) {
     // --fork-session 保留新启动的 session ID。useLogMessages 会通过

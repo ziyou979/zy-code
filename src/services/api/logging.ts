@@ -630,7 +630,6 @@ export function logAPISuccessAndDuration({
           thinkingLen += block.thinking.length
         } else if (
           block.type === 'tool_call' ||
-          (block as unknown as { type: string }).type === 'server_tool_use' ||
           (block as unknown as { type: string }).type === 'mcp_tool_use'
         ) {
           const toolBlock = block as unknown as { input: unknown; name: string }

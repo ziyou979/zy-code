@@ -267,10 +267,6 @@ export function anthropicStopReasonToStandard(reason: string | null | undefined)
 
 // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
 export function anthropicUsageToStandard(usage: any): TokenUsage {
-  const extras: Record<string, number> = {}
-  if (usage?.server_tool_use_input_tokens !== undefined) {
-    extras.serverToolUseInputTokens = usage.server_tool_use_input_tokens
-  }
   const inputTokens = usage?.input_tokens ?? 0
   const outputTokens = usage?.output_tokens ?? 0
   return {
@@ -278,7 +274,6 @@ export function anthropicUsageToStandard(usage: any): TokenUsage {
     outputTokens,
     cacheReadInputTokens: usage?.cache_read_input_tokens ?? 0,
     cacheCreationInputTokens: usage?.cache_creation_input_tokens ?? 0,
-    ...(Object.keys(extras).length > 0 && { extras }),
   }
 }
 
@@ -336,15 +331,6 @@ export function anthropicLLMStreamEventToStandard(event: any): LLMStreamEvent {
         case 'redacted_thinking':
           // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展块类型
           chunk = { type: 'redacted_thinking', data: block.data ?? '' } as any
-          break
-        case 'server_tool_use':
-          chunk = {
-            type: 'server_tool_use',
-            id: block.id,
-            name: block.name,
-            input: block.input ?? {},
-            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展块类型
-          } as any
           break
         default:
           chunk = { type: 'text', text: '' }

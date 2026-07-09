@@ -23,6 +23,7 @@
     "@ant/computer-use-swift": "workspace:*",
     "@anthropic-ai/sandbox-runtime": "^0.0.44",
     "@anthropic-ai/sdk": "^0.39.0",
+    "@askjo/camofox-browser": "1.11.2",
     "@azure/identity": "^4.13.1",
     "@commander-js/extra-typings": "^13.1.0",
     "@google/generative-ai": "^0.24.1",

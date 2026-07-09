@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import { getAPIProvider, isAnthropicBaseUrl } from 'src/services/model/providers.js'
+import { getProviderForModel } from 'src/services/model/model.js'
+import { isAnthropicBaseUrl } from 'src/services/model/providers.js'
 import { resolveModel } from 'src/services/model/resolvedModel.js'
 import { getCLISyspromptPrefix } from '../../constants/system.js'
 import {
@@ -52,7 +53,6 @@ import {
   ensureToolResultPairing,
   normalizeContentFromAPI,
   normalizeMessagesForAPI,
-  stripAdvisorBlocks,
   stripCallerFieldFromAssistantMessage,
   stripToolReferenceBlocksFromUserMessage,
 } from '../../utils/messages.js'
@@ -95,13 +95,6 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/grow
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/services/claudeInChrome/common.js'
 import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claudeInChrome/prompt.js'
 import type { AgentId } from 'src/types/ids.js'
-import {
-  ADVISOR_TOOL_INSTRUCTIONS,
-  getExperimentAdvisorModels,
-  isAdvisorEnabled,
-  isValidAdvisorModel,
-  modelSupportsAdvisor,
-} from 'src/utils/advisor.js'
 import { getAgentContext } from 'src/utils/agentContext.js'
 import { getToolSearchBetaHeader, shouldIncludeExperimentalBetas } from 'src/utils/betas.js'
 import { createDebugLog, logForDebugging } from 'src/utils/debug.js'
@@ -118,7 +111,6 @@ import {
   isToolSearchEnabled,
 } from 'src/utils/toolSearch.js'
 import { API_MAX_MEDIA_PER_REQUEST } from '../../constants/apiLimits.js'
-import { ADVISOR_BETA_HEADER } from '../../constants/betas.js'
 import { normalizeModelStringForAPI, parseUserSpecifiedModel } from '../../services/model/model.js'
 import {
   isBetaTracingEnabled,
@@ -216,7 +208,6 @@ export type Options = {
   queryTracking?: QueryChainTracking
   agentId?: AgentId // 仅子代理设置
   outputFormat?: JSONOutputFormat
-  advisorModel?: string
   addNotification?: (notif: Notification) => void
   /** Provider 专属扩展参数，用于传递非标准参数（如百炼的 enable_search） */
   providerExtras?: ProviderExtras
@@ -329,7 +320,6 @@ function buildNonStreamingAssistantMessage(
     tools: Tools
     agentId?: AgentId
     research?: unknown
-    advisorModel?: string
   },
 ): AssistantMessage {
   const normalizedContent = normalizeContentFromAPI(
@@ -349,7 +339,6 @@ function buildNonStreamingAssistantMessage(
     uuid: randomUUID(),
     timestamp: new Date().toISOString(),
     ...(isInternalBuild() && opts.research !== undefined && { research: opts.research }),
-    ...(opts.advisorModel && { advisorModel: opts.advisorModel }),
   }
 }
 
@@ -523,47 +512,6 @@ async function* queryModel(
     options.querySource === 'verification_agent'
   const betas = getMergedBetas(options.model, { isAgenticQuery })
 
-  // 启用 advisor 时始终发送 advisor beta header，以便
-  // 非代理查询（compact、side_question、extract_memories 等）
-  // 能够解析对话历史中已有的 advisor server_tool_use 块。
-  if (isAdvisorEnabled()) {
-    betas.push(ADVISOR_BETA_HEADER)
-  }
-
-  let advisorModel: string | undefined
-  if (isAgenticQuery && isAdvisorEnabled()) {
-    let advisorOption = options.advisorModel
-
-    const advisorExperiment = getExperimentAdvisorModels()
-    if (advisorExperiment !== undefined) {
-      if (normalizeModelStringForAPI(advisorExperiment.baseModel) === resolved.apiModelId) {
-        // 如果基础模型匹配，覆盖 advisor 模型。只有在用户无法
-        // 自行配置时，我们才应该有实验模型。
-        advisorOption = advisorExperiment.advisorModel
-      }
-    }
-
-    if (advisorOption) {
-      const normalizedAdvisorModel = normalizeModelStringForAPI(
-        parseUserSpecifiedModel(advisorOption),
-      )
-      if (!modelSupportsAdvisor(options.model)) {
-        logForDebugging(
-          `[AdvisorTool] Skipping advisor - base model ${options.model} does not support advisor`,
-        )
-      } else if (!isValidAdvisorModel(normalizedAdvisorModel)) {
-        logForDebugging(
-          `[AdvisorTool] Skipping advisor - ${normalizedAdvisorModel} is not a valid advisor model`,
-        )
-      } else {
-        advisorModel = normalizedAdvisorModel
-        logForDebugging(
-          `[AdvisorTool] Server-side tool enabled with ${advisorModel} as the advisor model`,
-        )
-      }
-    }
-  }
-
   // 检查工具搜索是否启用（检查模式、模型支持和自动模式的阈值）
   // 这是异步的，因为可能需要计算 MCP 工具描述大小以用于 TstAuto 模式
   let useToolSearch = await isToolSearchEnabled(
@@ -573,6 +521,7 @@ async function* queryModel(
     options.agents,
     'query',
   )
+  const apiProvider = getProviderForModel(options.model)
 
   // 预计算一次 — isDeferredTool 每次调用执行 2 次 GrowthBook 查找
   const deferredToolNames = new Set<string>()
@@ -622,7 +571,7 @@ async function* queryModel(
   // Header 因提供商而异：直接 API/Foundry 使用 advanced-tool-use，Vertex/Bedrock 使用 tool-search-tool
   // 对于 Bedrock，此 header 必须放在 extraBodyParams 中，而非 betas 数组
   const toolSearchHeader = useToolSearch ? getToolSearchBetaHeader() : null
-  if (toolSearchHeader && getAPIProvider() !== 'bedrock') {
+  if (toolSearchHeader && apiProvider !== 'bedrock') {
     if (!betas.includes(toolSearchHeader)) {
       betas.push(toolSearchHeader)
     }
@@ -725,11 +674,6 @@ async function* queryModel(
   // 并剥离引用不存在的 tool_use 的孤立 tool_results。
   messagesForAPI = ensureToolResultPairing(messagesForAPI)
 
-  // 剥离 advisor 块 — 没有 beta header 时 API 会拒绝它们。
-  if (!betas.includes(ADVISOR_BETA_HEADER)) {
-    messagesForAPI = stripAdvisorBlocks(messagesForAPI)
-  }
-
   // 在 API 调用之前剥离过多的媒体项。
   // API 会拒绝包含 >100 个媒体项的请求，但返回的错误令人困惑。
   // 与其报错（在 Cowork/CCD 中难以恢复），我们
@@ -783,7 +727,6 @@ async function* queryModel(
         hasAppendSystemPrompt: options.hasAppendSystemPrompt,
       }),
       ...systemPrompt,
-      ...(advisorModel ? [ADVISOR_TOOL_INSTRUCTIONS] : []),
       ...(injectChromeHere ? [CHROME_TOOL_SEARCH_INSTRUCTIONS] : []),
     ].filter(Boolean),
   )
@@ -799,16 +742,6 @@ async function* queryModel(
   // 注意：实际的 new_context 消息提取在 sessionTracing.ts 中使用
   // 基于 messagesForAPI 数组中每个 querySource（代理）的哈希追踪
   const extraToolSchemas = [...(options.extraToolSchemas ?? [])]
-  if (advisorModel) {
-    // 服务器工具必须在 tools 数组中，这是 API 契约要求。追加到
-    // toolSchemas 之后（它带有 cache_control 标记），这样切换 /advisor
-    // 只会改变小的后缀，不会破坏缓存的前缀。
-    extraToolSchemas.push({
-      type: 'advisor_20260301',
-      name: 'advisor',
-      model: advisorModel,
-    } as unknown as ToolDefinition)
-  }
   const allTools = [...toolSchemas, ...extraToolSchemas]
 
   // 动态 beta header 的 sticky-on 锁存。每个 header 一旦首次
@@ -834,7 +767,7 @@ async function* queryModel(
     if (
       !cacheEditingHeaderLatched &&
       cachedMCEnabled &&
-      getAPIProvider() === 'anthropic' &&
+      apiProvider === 'anthropic' &&
       options.querySource === 'repl_main_thread'
     ) {
       cacheEditingHeaderLatched = true
@@ -1015,12 +948,10 @@ async function* queryModel(
     //（控制 cache_edits body 行为）保持活跃，以便功能禁用时编辑停止，
     // 但 header 不会翻转。
     const useCachedMC =
-      cachedMCEnabled &&
-      getAPIProvider() === 'anthropic' &&
-      options.querySource === 'repl_main_thread'
+      cachedMCEnabled && apiProvider === 'anthropic' && options.querySource === 'repl_main_thread'
     if (
       cacheEditingHeaderLatched &&
-      getAPIProvider() === 'anthropic' &&
+      apiProvider === 'anthropic' &&
       options.querySource === 'repl_main_thread' &&
       !betasParams.includes(cacheEditingBetaHeader)
     ) {
@@ -1116,7 +1047,6 @@ async function* queryModel(
   let maxOutputTokens = 0
   let responseHeaders: globalThis.Headers | undefined
   let research: unknown
-  let isAdvisorInProgress = false
 
   try {
     queryCheckpoint('query_client_creation_start')
@@ -1159,7 +1089,7 @@ async function* queryModel(
         // 仍可与服务端日志关联。仅限第一方 — 第三方提供商不记录它
         //（inc-4029 类）。
         clientRequestId =
-          getAPIProvider() === 'anthropic' && isAnthropicBaseUrl() ? randomUUID() : undefined
+          apiProvider === 'anthropic' && isAnthropicBaseUrl() ? randomUUID() : undefined
 
         // 使用原始流而非 BetaMessageStream，避免 O(n²) 的部分 JSON 解析
         // BetaMessageStream 在每个 input_json_delta 上调用 partialParse()，我们不需要它
@@ -1205,7 +1135,6 @@ async function* queryModel(
     contentBlocks.length = 0
     usage = EMPTY_USAGE
     stopReason = null
-    isAdvisorInProgress = false
 
     // 流式空闲超时看门狗：如果 STREAM_IDLE_TIMEOUT_MS 内没有数据块到达，
     // 中止流。与下方的停顿检测（仅在*下一个*数据块到达时触发）不同，
@@ -1330,7 +1259,7 @@ async function* queryModel(
           }
           case 'chunk_start': {
             // chunk 可能包含标准类型（text/tool_call/thinking）以及 Anthropic 内部扩展类型
-            // （server_tool_use/advisor_tool_result 等），所以类型标注需要足够宽泛
+            // （advisor_tool_result 等），所以类型标注需要足够宽泛
             const chunkStartEvent = part as unknown as ChunkStartEvent
             const startChunk: Record<string, unknown> & { type: string } =
               chunkStartEvent.chunk as unknown as Record<string, unknown> & { type: string }
@@ -1342,22 +1271,6 @@ async function* queryModel(
                   ...startChunk,
                   input: '',
                 } as unknown as ContentBlock
-                break
-              case 'server_tool_use':
-                contentBlocks[chunkIndex] = {
-                  ...startChunk,
-                  input: '' as unknown as { [key: string]: unknown },
-                } as ContentBlock
-                if ((startChunk.name as string) === 'advisor') {
-                  isAdvisorInProgress = true
-                  logForDebugging(`[AdvisorTool] Advisor tool called`)
-                  logEvent('zy_advisor_tool_call', {
-                    model:
-                      options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-                    advisor_model: (advisorModel ??
-                      'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-                  })
-                }
                 break
               case 'text':
                 contentBlocks[chunkIndex] = {
@@ -1374,10 +1287,6 @@ async function* queryModel(
                 break
               default:
                 contentBlocks[chunkIndex] = { ...startChunk } as ContentBlock
-                if (startChunk.type === 'advisor_tool_result') {
-                  isAdvisorInProgress = false
-                  logForDebugging(`[AdvisorTool] Advisor tool result received`)
-                }
                 break
             }
             break
@@ -1414,10 +1323,7 @@ async function* queryModel(
                   // TODO: handle citations
                   break
                 case 'input_json_delta':
-                  if (
-                    contentBlock.type !== 'tool_call' &&
-                    (contentBlock as { type: string }).type !== 'server_tool_use'
-                  ) {
+                  if (contentBlock.type !== 'tool_call') {
                     logEvent('zy_streaming_error', {
                       error_type:
                         'content_block_type_mismatch_input_json' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -1554,7 +1460,6 @@ async function* queryModel(
               uuid: randomUUID(),
               timestamp: new Date().toISOString(),
               ...(isInternalBuild() && research !== undefined && { research }),
-              ...(advisorModel && { advisorModel }),
             }
             newMessages.push(assistantMsg)
             yield assistantMsg
@@ -1812,13 +1717,6 @@ async function* queryModel(
         if (signal.aborted) {
           // 这是真正的用户中止（按下了 ESC 键）
           logForDebugging(`Streaming aborted by user: ${errorMessage(streamingError)}`)
-          if (isAdvisorInProgress) {
-            logEvent('zy_advisor_tool_interrupted', {
-              model: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-              advisor_model: (advisorModel ??
-                'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-            })
-          }
           throw streamingError
         } else {
           // SDK 抛出了 APIUserAbortError 但我们的信号未被中止
@@ -1937,7 +1835,6 @@ async function* queryModel(
         tools,
         agentId: options.agentId,
         research,
-        advisorModel,
       })
       newMessages.push(assistantMsg)
       fallbackMessage = assistantMsg
@@ -2015,7 +1912,6 @@ async function* queryModel(
           tools,
           agentId: options.agentId,
           research,
-          advisorModel,
         })
         newMessages.push(assistantMsg)
         fallbackMessage = assistantMsg

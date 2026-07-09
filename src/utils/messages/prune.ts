@@ -8,7 +8,7 @@ import type {
   ProgressMessage,
   UserMessage,
 } from '../../types/message.js'
-import { isAdvisorBlock } from '../advisor.js'
+
 import { isToolReferenceBlock } from '../toolSearch.js'
 
 /**
@@ -291,44 +291,4 @@ export function stripToolReferenceBlocksFromUserMessage(message: UserMessage): U
       }),
     },
   }
-}
-
-/**
- * 从消息中剥离 advisor 块。
- * advisor beta header 不存在时，API 会拒绝 name 为 "advisor" 的 server_tool_use 块。
- */
-export function stripAdvisorBlocks(
-  messages: (UserMessage | AssistantMessage)[],
-): (UserMessage | AssistantMessage)[] {
-  let changed = false
-  const result = messages.map((msg) => {
-    if (msg.type !== 'assistant') {
-      return msg
-    }
-    const content = msg.message.content
-    if (!Array.isArray(content)) {
-      return msg
-    }
-    const filtered = content.filter((b) => !isAdvisorBlock(b))
-    if (filtered.length === content.length) {
-      return msg
-    }
-    changed = true
-    if (
-      filtered.length === 0 ||
-      filtered.every(
-        (b) =>
-          b.type === 'thinking' ||
-          b.type === 'redacted_thinking' ||
-          (b.type === 'text' && !b.text?.trim()),
-      )
-    ) {
-      filtered.push({
-        type: 'text' as const,
-        text: '[Advisor response]',
-      })
-    }
-    return { ...msg, message: { ...msg.message, content: filtered } }
-  })
-  return changed ? result : messages
 }

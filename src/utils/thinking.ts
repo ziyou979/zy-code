@@ -2,11 +2,8 @@
 import type { Theme } from './theme.js'
 import { feature } from 'bun:bundle'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import {
-  getAPIProvider,
-  getProviderAttr,
-  providerHasCapability,
-} from 'src/services/model/providers.js'
+import { getProviderForModel } from 'src/services/model/model.js'
+import { getEffectiveApiFormat, getProviderAttr } from 'src/services/model/providers.js'
 import {
   probedModelSupportsAdaptiveThinking,
   probedModelSupportsThinking,
@@ -87,6 +84,14 @@ const RAINBOW_SHIMMER_COLORS: Array<keyof Theme> = [
   'rainbow_violet_shimmer',
 ]
 
+function getModelCapabilityContext(model: string) {
+  const provider = getProviderForModel(model)
+  return {
+    provider,
+    apiFormat: getEffectiveApiFormat(provider, model),
+  }
+}
+
 export function getRainbowColor(charIndex: number, shimmer: boolean = false): keyof Theme {
   const colors = shimmer ? RAINBOW_SHIMMER_COLORS : RAINBOW_COLORS
   return colors[charIndex % colors.length]!
@@ -96,7 +101,8 @@ export function getRainbowColor(charIndex: number, shimmer: boolean = false): ke
 // 优先级链：本地 model-capabilities.json → API error 运行时降级表 → provider 默认能力
 // @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsThinking(model: string): boolean {
-  if (localModelHasCapability(model, 'thinking')) {
+  const context = getModelCapabilityContext(model)
+  if (localModelHasCapability(model, 'thinking', context)) {
     return true
   }
   const probed = probedModelSupportsThinking(model)
@@ -104,7 +110,7 @@ export function modelSupportsThinking(model: string): boolean {
     return probed
   }
   // provider 声明了 openaiAttr.thinking 也视为支持
-  const providerAttr = getProviderAttr()
+  const providerAttr = getProviderAttr(context.provider, model)
   if (providerAttr?.thinking) {
     return true
   }
@@ -113,7 +119,7 @@ export function modelSupportsThinking(model: string): boolean {
 
 // @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsAdaptiveThinking(model: string): boolean {
-  if (localModelHasAdaptiveThinking(model)) {
+  if (localModelHasAdaptiveThinking(model, getModelCapabilityContext(model))) {
     return true
   }
   const probed = probedModelSupportsAdaptiveThinking(model)

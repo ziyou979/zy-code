@@ -12,6 +12,7 @@ import {
   isAnthropicProvider,
   isOpenAIProvider,
 } from 'src/services/model/providers.js'
+import { getMainLoopModel, getProviderForModel } from '../model/model.js'
 import { getSecureStorage } from 'src/services/secureStorage/index.js'
 import {
   clearLegacyApiKeyPrefetch,
@@ -31,7 +32,7 @@ import {
   normalizeApiKeyForConfig,
 } from '../../utils/authPortable.js'
 import { clearBetasCaches } from '../../utils/betas.js'
-import { logAntError, logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { execSyncWithDefaults_DEPRECATED } from '../../utils/execFileNoThrow.js'
@@ -62,26 +63,31 @@ import {
   saveOAuthCredentials,
 } from '../oauth/oauthStorage.js'
 import { getOAuthProvider } from '../oauth/providers/index.js'
+import { getAuthConfigApiKey, getAuthConfigApiKeyHelper } from './authConfig.js'
 
 /** API key helper 缓存的默认 TTL，单位毫秒（5 分钟） */
 const DEFAULT_API_KEY_HELPER_TTL = 5 * 60 * 1000
 
 /**
  * CCR 和 Zy Desktop 通过 OAuth 启动 CLI，不应回退到用户
- * ~/.zy/settings.json 中的 API key 配置（apiKeyHelper、
- * env.ZY_API_KEY、env.ANTHROPIC_AUTH_TOKEN）。这些配置是为用户
- * 终端 CLI 准备的，而非托管会话。如果没有这个保护，在终端中
- * 使用 API key 运行 `zy` 的用户会发现每个 CCD 会话也使用该
- * key——如果 key 过期或属于错误组织则会失败。
+ * 终端 CLI 的 API key 配置（auth.json、apiKeyHelper、env.ZY_API_KEY、
+ * env.ANTHROPIC_AUTH_TOKEN）。如果没有这个保护，在终端中使用 API key
+ * 运行 `zy` 的用户会发现每个 CCD 会话也使用该 key——如果 key 过期
+ * 或属于错误组织则会失败。
  */
 function isManagedOAuthContext(): boolean {
   return isEnvTruthy(process.env.ZY_CODE_REMOTE) || process.env.ZY_CODE_ENTRYPOINT === 'zy-desktop'
 }
 
-function getProviderScopedSettings(provider?: string) {
-  const settings = getInitialSettings()
-  const providerId = provider ?? settings.provider ?? getAPIProvider()
-  return settings.providers?.[providerId]
+function getAuthProviderId(provider?: string): string | undefined {
+  if (provider) {
+    return provider
+  }
+  const model = getMainLoopModel()
+  if (model) {
+    return getProviderForModel(model)
+  }
+  return getInitialSettings().provider ?? getAPIProvider()
 }
 
 /** 是否支持直连 API 认证。 */
@@ -95,9 +101,10 @@ export function isZyAISubscriber(): boolean {
  * 检查认证是否启用
  */
 export function isAuthEnabled(): boolean {
-  // 检查 settings.json (zy.json) 中配置的 API key
+  // 检查用户级 auth.json 中配置的 API key / apiKeyHelper。
   const settings = getInitialSettings()
-  if (getProviderScopedSettings(settings.provider)?.apiKey || settings?.apiKey) {
+  const provider = getAuthProviderId(settings.provider)
+  if (getAuthConfigApiKey(provider) || getAuthConfigApiKeyHelper(provider)) {
     return true
   }
 
@@ -123,9 +130,10 @@ export function isAuthEnabled(): boolean {
 /** 认证 token 的来源（如有）。 */
 // 此代码与 isAuthEnabled 密切相关
 export function getAuthTokenSource() {
-  // 检查 settings.json (zy.json) 中配置的 API key
+  // 检查用户级 auth.json 中配置的 API key。
   const settings = getInitialSettings()
-  if (getProviderScopedSettings(settings.provider)?.apiKey || settings?.apiKey) {
+  const provider = getAuthProviderId(settings.provider)
+  if (getAuthConfigApiKey(provider)) {
     return { source: 'settingsApiKey' as const, hasToken: true }
   }
 
@@ -135,11 +143,10 @@ export function getAuthTokenSource() {
     return { source: 'configuredApiKey' as const, hasToken: true }
   }
 
-  // --bare：仅 API key 模式。apiKeyHelper（来自 --settings）是唯一
-  // 允许的 bearer token 格式来源。OAuth 环境变量、FD token 和
-  // keychain 均被忽略。
+  // --bare：仅 API key 模式。auth.json 中的 apiKeyHelper 是唯一允许的
+  // bearer token 格式来源。OAuth 环境变量、FD token 和 keychain 均被忽略。
   if (isBareMode()) {
-    if (getConfiguredApiKeyHelper()) {
+    if (getConfiguredApiKeyHelper(provider)) {
       return { source: 'apiKeyHelper' as const, hasToken: true }
     }
     return { source: 'none' as const, hasToken: false }
@@ -156,9 +163,8 @@ export function getAuthTokenSource() {
     }
   }
 
-  // 检查 apiKeyHelper 是否已配置但不执行它
-  // 这可以防止在信任建立之前执行任意代码的安全问题
-  const apiKeyHelper = getConfiguredApiKeyHelper()
+  // 只检查 apiKeyHelper 是否已配置，不在 token 来源探测阶段执行命令。
+  const apiKeyHelper = getConfiguredApiKeyHelper(provider)
   if (apiKeyHelper && !isManagedOAuthContext()) {
     return { source: 'apiKeyHelper' as const, hasToken: true }
   }
@@ -197,14 +203,11 @@ export function getApiKeyWithSource(
   key: null | string
   source: ApiKeySource
 } {
-  // 检查 settings.json (zy.json) 中配置的 API key
-  const settings = getInitialSettings()
-  const providerApiKey = getProviderScopedSettings(opts.provider)?.apiKey
-  if (providerApiKey) {
-    return { key: providerApiKey, source: 'settingsApiKey' }
-  }
-  if (settings?.apiKey) {
-    return { key: settings.apiKey, source: 'settingsApiKey' }
+  // 检查用户级 auth.json 中配置的 API key。
+  const provider = getAuthProviderId(opts.provider)
+  const authConfigApiKey = getAuthConfigApiKey(provider)
+  if (authConfigApiKey) {
+    return { key: authConfigApiKey, source: 'settingsApiKey' }
   }
 
   // 检查 onboarding 时配置的 API key
@@ -213,12 +216,14 @@ export function getApiKeyWithSource(
     return { key: config.configuredApiKey, source: 'settingsApiKey' }
   }
 
-  // --bare：密封认证。仅使用来自 --settings 标志的 apiKeyHelper。
+  // --bare：密封认证。仅使用来自用户级 auth.json 的 apiKeyHelper。
   // 第三方（Bedrock/Vertex/Foundry）使用 provider 凭据，不走此路径。
   if (isBareMode()) {
-    if (getConfiguredApiKeyHelper()) {
+    if (getConfiguredApiKeyHelper(provider)) {
       return {
-        key: opts.skipRetrievingKeyFromApiKeyHelper ? null : getApiKeyFromApiKeyHelperCached(),
+        key: opts.skipRetrievingKeyFromApiKeyHelper
+          ? null
+          : getApiKeyFromApiKeyHelperCached(provider),
         source: 'apiKeyHelper',
       }
     }
@@ -235,7 +240,7 @@ export function getApiKeyWithSource(
   }
 
   // 检查 apiKeyHelper —— 使用同步缓存，不阻塞
-  const apiKeyHelperCommand = getConfiguredApiKeyHelper()
+  const apiKeyHelperCommand = getConfiguredApiKeyHelper(provider)
   if (apiKeyHelperCommand) {
     if (opts.skipRetrievingKeyFromApiKeyHelper) {
       return {
@@ -248,7 +253,7 @@ export function getApiKeyWithSource(
     // apiKeyHelper 必须优先。需要真实 key 的调用方必须先 await
     // getApiKeyFromApiKeyHelper()（client.ts、useApiKeyVerification 已这样做）。
     return {
-      key: getApiKeyFromApiKeyHelperCached(),
+      key: getApiKeyFromApiKeyHelperCached(provider),
       source: 'apiKeyHelper',
     }
   }
@@ -271,32 +276,11 @@ export function getApiKeyWithSource(
 }
 
 /**
- * 从 settings 中获取已配置的 apiKeyHelper。
- * 在 bare 模式下，仅查询 --settings 标志来源——
- * ~/.zy/settings.json 或项目设置中的 apiKeyHelper 会被忽略。
+ * 从用户级 auth.json 中获取已配置的 apiKeyHelper。
  */
-export function getConfiguredApiKeyHelper(): string | undefined {
-  if (isBareMode()) {
-    return getSettingsForSource('flagSettings')?.apiKeyHelper
-  }
-  const mergedSettings = getInitialSettings() || {}
-  return mergedSettings.apiKeyHelper
-}
-
-/**
- * 检查已配置的 apiKeyHelper 是否来自项目设置（projectSettings 或 localSettings）
- */
-function isApiKeyHelperFromProjectOrLocalSettings(): boolean {
-  const apiKeyHelper = getConfiguredApiKeyHelper()
-  if (!apiKeyHelper) {
-    return false
-  }
-
-  const projectSettings = getSettingsForSource('projectSettings')
-  const localSettings = getSettingsForSource('localSettings')
-  return (
-    projectSettings?.apiKeyHelper === apiKeyHelper || localSettings?.apiKeyHelper === apiKeyHelper
-  )
+export function getConfiguredApiKeyHelper(provider?: string): string | undefined {
+  const providerId = getAuthProviderId(provider)
+  return getAuthConfigApiKeyHelper(providerId)
 }
 
 /**
@@ -324,63 +308,74 @@ export function calculateApiKeyHelperTTL(): number {
 // 异步 API key helper，带同步缓存以支持非阻塞读取。
 // clearApiKeyHelperCache() 时 epoch 递增——孤立的执行会在修改模块状态前
 // 检查其捕获的 epoch，从而避免正在进行中的设置变更或 401 重试覆盖新缓存。
-let _apiKeyHelperCache: { value: string; timestamp: number } | null = null
-let _apiKeyHelperInflight: {
+type ApiKeyHelperInflight = {
   promise: Promise<string | null>
   // 仅在冷启动时设置（用户正在等待）；SWR 后台刷新时为 null。
   startedAt: number | null
-} | null = null
+}
+
+let _apiKeyHelperCache = new Map<string, { value: string; timestamp: number }>()
+let _apiKeyHelperInflight = new Map<string, ApiKeyHelperInflight>()
 let _apiKeyHelperEpoch = 0
 
 export function getApiKeyHelperElapsedMs(): number {
-  const startedAt = _apiKeyHelperInflight?.startedAt
-  return startedAt ? Date.now() - startedAt : 0
+  let elapsed = 0
+  for (const inflight of _apiKeyHelperInflight.values()) {
+    if (inflight.startedAt) {
+      elapsed = Math.max(elapsed, Date.now() - inflight.startedAt)
+    }
+  }
+  return elapsed
 }
 
 export async function getApiKeyFromApiKeyHelper(
-  isNonInteractiveSession: boolean,
+  _isNonInteractiveSession: boolean,
+  provider?: string,
 ): Promise<string | null> {
-  if (!getConfiguredApiKeyHelper()) {
+  const apiKeyHelper = getConfiguredApiKeyHelper(provider)
+  if (!apiKeyHelper) {
     return null
   }
   const ttl = calculateApiKeyHelperTTL()
-  if (_apiKeyHelperCache) {
-    if (Date.now() - _apiKeyHelperCache.timestamp < ttl) {
-      return _apiKeyHelperCache.value
+  const cached = _apiKeyHelperCache.get(apiKeyHelper)
+  if (cached) {
+    if (Date.now() - cached.timestamp < ttl) {
+      return cached.value
     }
     // 已过期——先返回过期值，在后台刷新。
     // `??=` 在此处被 eslint no-nullish-assign-object-call 禁止（bun bug）。
-    if (!_apiKeyHelperInflight) {
-      _apiKeyHelperInflight = {
-        promise: _runAndCache(isNonInteractiveSession, false, _apiKeyHelperEpoch),
+    if (!_apiKeyHelperInflight.has(apiKeyHelper)) {
+      _apiKeyHelperInflight.set(apiKeyHelper, {
+        promise: _runAndCache(apiKeyHelper, false, _apiKeyHelperEpoch),
         startedAt: null,
-      }
+      })
     }
-    return _apiKeyHelperCache.value
+    return cached.value
   }
   // 冷缓存——去重并发调用
-  if (_apiKeyHelperInflight) {
-    return _apiKeyHelperInflight.promise
+  const inflight = _apiKeyHelperInflight.get(apiKeyHelper)
+  if (inflight) {
+    return inflight.promise
   }
-  _apiKeyHelperInflight = {
-    promise: _runAndCache(isNonInteractiveSession, true, _apiKeyHelperEpoch),
+  _apiKeyHelperInflight.set(apiKeyHelper, {
+    promise: _runAndCache(apiKeyHelper, true, _apiKeyHelperEpoch),
     startedAt: Date.now(),
-  }
-  return _apiKeyHelperInflight.promise
+  })
+  return _apiKeyHelperInflight.get(apiKeyHelper)?.promise ?? null
 }
 
 async function _runAndCache(
-  isNonInteractiveSession: boolean,
+  apiKeyHelper: string,
   isCold: boolean,
   epoch: number,
 ): Promise<string | null> {
   try {
-    const value = await _executeApiKeyHelper(isNonInteractiveSession)
+    const value = await _executeApiKeyHelper(apiKeyHelper)
     if (epoch !== _apiKeyHelperEpoch) {
       return value
     }
     if (value !== null) {
-      _apiKeyHelperCache = { value, timestamp: Date.now() }
+      _apiKeyHelperCache.set(apiKeyHelper, { value, timestamp: Date.now() })
     }
     return value
   } catch (e) {
@@ -395,38 +390,22 @@ async function _runAndCache(
     })
     // SWR 路径：临时失败不应该用 ' ' 哨兵值替换有效的 key——
     // 继续提供过期值并更新时间戳，避免每次调用都重试。
-    if (!isCold && _apiKeyHelperCache && _apiKeyHelperCache.value !== ' ') {
-      _apiKeyHelperCache = { ..._apiKeyHelperCache, timestamp: Date.now() }
-      return _apiKeyHelperCache.value
+    const cached = _apiKeyHelperCache.get(apiKeyHelper)
+    if (!isCold && cached && cached.value !== ' ') {
+      _apiKeyHelperCache.set(apiKeyHelper, { ...cached, timestamp: Date.now() })
+      return cached.value
     }
     // 冷缓存或之前已出错——缓存 ' ' 使调用方不会回退到 OAuth
-    _apiKeyHelperCache = { value: ' ', timestamp: Date.now() }
+    _apiKeyHelperCache.set(apiKeyHelper, { value: ' ', timestamp: Date.now() })
     return ' '
   } finally {
     if (epoch === _apiKeyHelperEpoch) {
-      _apiKeyHelperInflight = null
+      _apiKeyHelperInflight.delete(apiKeyHelper)
     }
   }
 }
 
-async function _executeApiKeyHelper(isNonInteractiveSession: boolean): Promise<string | null> {
-  const apiKeyHelper = getConfiguredApiKeyHelper()
-  if (!apiKeyHelper) {
-    return null
-  }
-
-  if (isApiKeyHelperFromProjectOrLocalSettings()) {
-    const hasTrust = checkHasTrustDialogAccepted()
-    if (!hasTrust && !isNonInteractiveSession) {
-      const error = new Error(
-        `Security: apiKeyHelper executed before workspace trust is confirmed. If you see this message, post in ${MACRO.FEEDBACK_CHANNEL}.`,
-      )
-      logAntError('apiKeyHelper invoked before trust check', error)
-      logEvent('zy_apiKeyHelper_missing_trust11', {})
-      return null
-    }
-  }
-
+async function _executeApiKeyHelper(apiKeyHelper: string): Promise<string | null> {
   const result = await execa(apiKeyHelper, {
     shell: true,
     timeout: 10 * 60 * 1000,
@@ -450,22 +429,21 @@ async function _executeApiKeyHelper(isNonInteractiveSession: boolean): Promise<s
  * 返回过期值以匹配异步读取器的 SWR 语义。
  * 仅在异步获取尚未完成时返回 null。
  */
-export function getApiKeyFromApiKeyHelperCached(): string | null {
-  return _apiKeyHelperCache?.value ?? null
+export function getApiKeyFromApiKeyHelperCached(provider?: string): string | null {
+  const apiKeyHelper = getConfiguredApiKeyHelper(provider)
+  if (!apiKeyHelper) {
+    return null
+  }
+  return _apiKeyHelperCache.get(apiKeyHelper)?.value ?? null
 }
 
 export function clearApiKeyHelperCache(): void {
   _apiKeyHelperEpoch++
-  _apiKeyHelperCache = null
-  _apiKeyHelperInflight = null
+  _apiKeyHelperCache.clear()
+  _apiKeyHelperInflight.clear()
 }
 
 export function prefetchApiKeyFromApiKeyHelperIfSafe(isNonInteractiveSession: boolean): void {
-  // 如果信任尚未被接受则跳过——内部的 _executeApiKeyHelper 检查
-  // 也会捕获这种情况，但会触发误报的分析事件。
-  if (isApiKeyHelperFromProjectOrLocalSettings() && !checkHasTrustDialogAccepted()) {
-    return
-  }
   void getApiKeyFromApiKeyHelper(isNonInteractiveSession)
 }
 

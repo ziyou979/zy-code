@@ -19,16 +19,21 @@ function read(uuid: string, id: string, filePath: string, timestamp: string): Re
 }
 
 function collapsedKinds(messages: RenderableMessage[]) {
-  const [group] = collapseReadSearchGroups(messages, [FileReadTool])
-  expect(group?.type).toBe('collapsed_read_search')
-  if (group?.type !== 'collapsed_read_search') {
-    throw new Error('expected collapsed group')
-  }
+  const group = collapsedGroup(messages)
   return {
     latestDisplayKind: group.latestDisplayKind,
     latestDisplayHint: group.latestDisplayHint,
     latestThinkingSummary: group.latestThinkingSummary,
   }
+}
+
+function collapsedGroup(messages: RenderableMessage[]) {
+  const [group] = collapseReadSearchGroups(messages, [FileReadTool])
+  expect(group?.type).toBe('collapsed_read_search')
+  if (group?.type !== 'collapsed_read_search') {
+    throw new Error('expected collapsed group')
+  }
+  return group
 }
 
 describe('collapseReadSearchGroups', () => {
@@ -52,5 +57,19 @@ describe('collapseReadSearchGroups', () => {
     expect(result.latestDisplayKind).toBe('tool')
     expect(result.latestDisplayHint).toMatch(/^src[\\/]current\.ts$/)
     expect(result.latestThinkingSummary).toBe('先判断入口')
+  })
+
+  test('显式 thinkingDurationMs 优先于 timestamp 估算时长', () => {
+    const result = collapsedGroup([
+      read('read-1', 'tool-1', 'src/current.ts', '2024-01-01T00:00:00.000Z'),
+      createTestAssistantMessage([{ type: 'thinking', thinking: '显式计时更可信' }], {
+        uuid: 'think-1',
+        timestamp: '2024-01-01T00:00:07.000Z',
+        thinkingDurationMs: 5000,
+      }),
+    ])
+
+    expect(result.thoughtForMs).toBe(7000)
+    expect(result.thinkingDurationMs).toBe(5000)
   })
 })

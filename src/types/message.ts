@@ -50,7 +50,6 @@ export interface AssistantMessage extends BaseMessage {
   error?: unknown
   errorDetails?: string
   isVirtual?: true
-  advisorModel?: string
   thinkingDurationMs?: number
 }
 

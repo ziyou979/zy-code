@@ -14,7 +14,7 @@ import { setCostStateForRestore } from '../../bootstrap/state/cost.js'
 import { switchSession } from '../../bootstrap/state/session.js'
 import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js'
 import {
-  getStoredSessionCosts,
+  getRestorableSessionCosts,
   resetCostState,
   saveCurrentSessionCosts,
 } from '../../cost-tracker.js'
@@ -181,7 +181,7 @@ export function useReplSessionRestore({
         setAbortController(null)
         replStore.setConversationId(sessionId)
 
-        const targetSessionCosts = getStoredSessionCosts(sessionId)
+        const targetSessionCosts = getRestorableSessionCosts(sessionId, messages)
         saveCurrentSessionCosts()
         // 原子操作：reset 后立即 restore，消除中间渲染窗口导致状态栏费用归零
         resetCostState()

@@ -5,9 +5,9 @@ import { getContextWindowForModel, getMaxThinkingTokensForModel } from '../../ut
 import { modelSupportsEffort } from '../../utils/effort.js'
 import { modelSupportsAdaptiveThinking, modelSupportsThinking } from '../../utils/thinking.js'
 import { getMaxOutputTokensForModel } from '../api/apiHelpers.js'
-import { normalizeModelStringForAPI } from './model.js'
+import { getProviderForModel, normalizeModelStringForAPI } from './model.js'
 import { getProviderEntry, type OpenAiAttr } from './providerRegistry.js'
-import { type APIProvider, getAPIProvider, isAnthropicModel } from './providers.js'
+import { type APIProvider, isAnthropicModel } from './providers.js'
 
 export interface ResolvedModel {
   /** 原始模型名（用户指定） */
@@ -39,7 +39,7 @@ export interface ResolvedModel {
  * 优先级链：model-capabilities.json → API error 运行时降级 → provider 注册表 → 默认值。
  */
 export function resolveModel(modelName: string): ResolvedModel {
-  const provider = getAPIProvider()
+  const provider = getProviderForModel(modelName)
   const entry = getProviderEntry(provider)
 
   return {

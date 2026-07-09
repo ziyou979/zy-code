@@ -36,13 +36,6 @@ const TIP_MATCHERS: TipMatcher[] = [
     },
   },
   {
-    matches: (ctx): boolean => ctx.path === 'apiKeyHelper' && ctx.code === 'invalid_type',
-    tip: {
-      suggestion:
-        'Provide a shell command that outputs your API key to stdout. The script should output only the API key. Example: "/bin/generate_temp_api_key.sh"',
-    },
-  },
-  {
     matches: (ctx): boolean =>
       ctx.path === 'cleanupPeriodDays' && ctx.code === 'too_small' && ctx.expected === '0',
     tip: {

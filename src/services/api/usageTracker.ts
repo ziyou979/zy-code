@@ -54,12 +54,6 @@ export function updateUsage(
         ? partUsage.cache_read_input_tokens
         : usage.cacheReadInputTokens,
     outputTokens: partUsage.output_tokens ?? usage.outputTokens,
-    server_tool_use: {
-      web_search_requests:
-        partUsage.server_tool_use?.web_search_requests ?? usage.server_tool_use.web_search_requests,
-      web_fetch_requests:
-        partUsage.server_tool_use?.web_fetch_requests ?? usage.server_tool_use.web_fetch_requests,
-    },
     service_tier: usage.service_tier,
     cache_creation: {
       // SDK 类型 DeltaUsage 缺少 cache_creation，但实际存在！
@@ -107,14 +101,6 @@ export function accumulateUsage(
       totalUsage.cacheCreationInputTokens + messageUsage.cacheCreationInputTokens,
     cacheReadInputTokens: totalUsage.cacheReadInputTokens + messageUsage.cacheReadInputTokens,
     outputTokens: totalUsage.outputTokens + messageUsage.outputTokens,
-    server_tool_use: {
-      web_search_requests:
-        totalUsage.server_tool_use.web_search_requests +
-        messageUsage.server_tool_use.web_search_requests,
-      web_fetch_requests:
-        totalUsage.server_tool_use.web_fetch_requests +
-        messageUsage.server_tool_use.web_fetch_requests,
-    },
     service_tier: messageUsage.service_tier, // 使用最新的 service tier
     cache_creation: {
       ephemeral_1h_input_tokens:

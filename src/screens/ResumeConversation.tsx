@@ -255,7 +255,7 @@ export function ResumeConversation({
         )
         await renameRecordingForSession()
         await resetSessionFilePointer()
-        restoreCostStateForSession(result_3.sessionId)
+        restoreCostStateForSession(result_3.sessionId, result_3.messages)
       } else if (forkSession && result_3.contentReplacements?.length) {
         await recordContentReplacement(result_3.contentReplacements)
       }

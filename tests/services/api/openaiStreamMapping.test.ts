@@ -79,6 +79,26 @@ describe('mapOpenAIStreamToStandard: 入站 OpenAI 流式映射', () => {
     expect(deltas.map((d) => d.delta.text).join('')).toBe('visible answer')
   })
 
+  test('文本流应保留独立 delta 中的 markdown 块级换行', async () => {
+    const events = await collect(
+      mapOpenAIStreamToStandard(
+        chunksToStream([
+          textChunk('好的，我已经追踪了整个渲染链路。下面给出分析。'),
+          textChunk('\n\n---\n\n'),
+          textChunk('## 问题分析'),
+          finishChunk({ finishReason: 'stop' }),
+        ]),
+        'gpt-4',
+      ),
+    )
+
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+    const deltas = events.filter((e) => e.type === 'chunk_delta') as any[]
+    expect(deltas.map((d) => d.delta.text).join('')).toBe(
+      '好的，我已经追踪了整个渲染链路。下面给出分析。\n\n---\n\n## 问题分析',
+    )
+  })
+
   test('单工具调用，arguments 一次性到达：chunk type 必须是 tool_call', async () => {
     const events = await collect(
       mapOpenAIStreamToStandard(
@@ -260,6 +280,55 @@ describe('mapOpenAIStreamToStandard: 入站 OpenAI 流式映射', () => {
     expect(idxByType.get('tool_call')).toBe(2)
   })
 
+  test('chunk_stop 时序：block 类型切换时立即结束前一个 block，而非攒到 finish_reason', async () => {
+    // 回归防护：OpenAI 流没有逐块的 content_block_stop，只有流末尾的
+    // finish_reason。若把所有 chunk_stop 攒到 finish_reason 一起发，下游
+    // queryModel 会在同一时刻 yield thinking/text/tool 三条 assistant
+    // message，导致三者同帧渲染（本应逐块出现：先思考、再正文、再工具）。
+    // 预期：thinking 的 chunk_stop 在 text 的 chunk_start 之前发出；
+    // text 的 chunk_stop 在 tool 的 chunk_start 之前发出。
+    const events = await collect(
+      mapOpenAIStreamToStandard(
+        chunksToStream([
+          reasoningChunk('think'),
+          textChunk('answer'),
+          toolCallStartChunk({
+            index: 0,
+            id: 'c',
+            name: 'f',
+            argumentsFragment: '{}',
+          }),
+          finishChunk({ finishReason: 'tool_calls' }),
+        ]),
+        'qwen-plus',
+      ),
+    )
+    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+    const typed = events as any[]
+    const thinkStopIdx = typed.findIndex((e) => e.type === 'chunk_stop' && e.index === 0)
+    const textStartIdx = typed.findIndex(
+      (e) => e.type === 'chunk_start' && e.chunk?.type === 'text',
+    )
+    // thinking 的 chunk_stop 必须在 text 的 chunk_start 之前
+    expect(thinkStopIdx).toBeGreaterThanOrEqual(0)
+    expect(textStartIdx).toBeGreaterThan(thinkStopIdx)
+
+    const textStopIdx = typed.findIndex((e) => e.type === 'chunk_stop' && e.index === 1)
+    const toolStartIdx = typed.findIndex(
+      (e) => e.type === 'chunk_start' && e.chunk?.type === 'tool_call',
+    )
+    // text 的 chunk_stop 必须在 tool 的 chunk_start 之前
+    expect(textStopIdx).toBeGreaterThanOrEqual(0)
+    expect(toolStartIdx).toBeGreaterThan(textStopIdx)
+
+    // 每个 block 只发一次 chunk_stop（不重复）
+    const stopIndices = typed
+      .filter((e) => e.type === 'chunk_stop')
+      .map((e) => e.index)
+      .sort((a: number, b: number) => a - b)
+    expect(stopIndices).toEqual([0, 1, 2])
+  })
+
   test('finish_reason 映射全部分支', async () => {
     const cases: Array<['stop' | 'tool_calls' | 'length' | 'content_filter', string]> = [
       ['stop', 'end_turn'],
@@ -276,7 +345,6 @@ describe('mapOpenAIStreamToStandard: 入站 OpenAI 流式映射', () => {
       )
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const respDelta = events.find((e) => e.type === 'response_delta') as any
-      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       // respDelta.stopReason 是 StopReason union，但用 as any 已经丢类型；这里直接字符串比较即可
       expect(respDelta.stopReason as string).toBe(expected)
     }

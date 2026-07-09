@@ -753,6 +753,7 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
                 onOpenRateLimitOptions={handleOpenRateLimitOptions}
                 isLoading={isLoading}
                 streamingText={isLoading && !viewedAgentTask ? visibleStreamingText : null}
+                streamingThinking={streamingThinking}
                 isBriefOnly={viewedAgentTask ? false : isBriefOnly}
                 unseenDivider={viewedAgentTask ? undefined : unseenDivider}
                 scrollRef={isFullscreenEnvEnabled() ? scrollRef : undefined}

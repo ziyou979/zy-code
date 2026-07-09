@@ -59,6 +59,7 @@ describe('assistantCompletionValidator', () => {
   test('流式标签清理只剥离标签本身', () => {
     expect(stripThinkingTagsFromText('</think>\nanswer')).toBe('answer')
     expect(stripThinkingTagsFromText('<think>hidden')).toBe('hidden')
+    expect(stripThinkingTagsFromText('\n\n---\n\n')).toBe('\n\n---\n\n')
   })
 
   test('标准 content 清理不依赖 provider 配置', () => {

@@ -239,6 +239,7 @@ export function createReplStore(params: CreateReplStoreParams): ReplStoreInstanc
         mutable.thinkingStartMs = Date.now()
       } else if (mode !== 'thinking' && prev === 'thinking' && mutable.thinkingStartMs > 0) {
         mutable.lastThinkingDurationMs = Date.now() - mutable.thinkingStartMs
+        mutable.thinkingStartMs = 0
       }
       instance.update({ streamMode: mode })
     },

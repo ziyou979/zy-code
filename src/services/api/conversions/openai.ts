@@ -43,17 +43,17 @@ export interface OpenAICreateParams extends ChatCompletionCreateParamsBase {
   [key: string]: unknown
 }
 
-import { normalizeModelStringForAPI } from '../../../services/model/model.js'
+import { getProviderForModel, normalizeModelStringForAPI } from '../../../services/model/model.js'
 import {
   DEFAULT_OPENAI_THINKING_ATTR,
   type OpenAiAttr,
 } from '../../../services/model/providerRegistry.js'
-import { getAPIProvider, getProviderAttr } from '../../../services/model/providers.js'
-import { stripThinkingTagsFromText } from '../assistantCompletionValidator.js'
+import { getEffectiveApiFormat, getProviderAttr } from '../../../services/model/providers.js'
 import {
   getLocalModelPreserveThinking,
   localModelHasCapability,
 } from '../../../utils/settings/localModelCapabilities.js'
+import { stripThinkingTagsFromText } from '../assistantCompletionValidator.js'
 
 interface DashScopeChatCompletionDelta {
   content?: string | null
@@ -138,14 +138,21 @@ function supportsReasoningContentField(model: string | undefined): boolean {
   if (!model) {
     return false
   }
+  const provider = getProviderForModel(model)
   // 从模型级别配置获取 preserveThinking
-  const preserveThinking = getLocalModelPreserveThinking(model)
+  const preserveThinking = getLocalModelPreserveThinking(model, {
+    provider,
+    apiFormat: getEffectiveApiFormat(provider, model),
+  })
   if (preserveThinking) {
     return true
   }
   // 兜底：模型名含 deepseek 但通过 generic/siliconflow 等未声明配置的 provider 接入时
   if (model.toLowerCase().includes('deepseek')) {
-    return localModelHasCapability(model, 'thinking')
+    return localModelHasCapability(model, 'thinking', {
+      provider,
+      apiFormat: getEffectiveApiFormat(provider, model),
+    })
   }
   return false
 }
@@ -466,8 +473,8 @@ export function convertThinkingForOpenAI(
   overrideProvider?: string,
   reasoningEffort?: string,
 ): Record<string, unknown> {
-  const provider = overrideProvider ?? getAPIProvider()
-  const attr = getProviderAttr(provider)
+  const provider = overrideProvider ?? getProviderForModel(model)
+  const attr = getProviderAttr(provider, model)
   const thinkingAttr: NonNullable<OpenAiAttr['thinking']> = {
     ...DEFAULT_OPENAI_THINKING_ATTR,
     ...(attr?.thinking ?? {}),
@@ -494,7 +501,10 @@ export function convertThinkingForOpenAI(
   const params = thinkingAttr.enable(effort, model, { provider, apiFormat: 'openai' })
 
   // 从模型级别配置获取思考块回传模式
-  const preserveThinking = getLocalModelPreserveThinking(model)
+  const preserveThinking = getLocalModelPreserveThinking(model, {
+    provider,
+    apiFormat: getEffectiveApiFormat(provider, model),
+  })
 
   // 必传模式：始终回传（mimo、deepseek）
   if (preserveThinking === 'always') {
@@ -707,6 +717,15 @@ export async function* mapOpenAIStreamToStandard(
   // 深度思考：reasoning_content 需要独立的 thinking block
   let thinkingBlockStarted = false
   const thinkingBlockIndex = 0
+  // 每个 block 是否已发出 chunk_stop。OpenAI 流没有逐块的 content_block_stop
+  // 信号，只有流末尾的 finish_reason；若把所有 chunk_stop 攒到 finish_reason
+  // 一起发，下游 queryModel 会在同一时刻 yield thinking/text/tool 三条
+  // assistant message，导致三者同帧渲染（本应逐块出现）。因此在 block 类型
+  // 切换（下一类 block 首次 chunk_start）时，立即为前一个未结束的 block
+  // 补发 chunk_stop，恢复 thinking → text → tool 的逐块完成时序。
+  let thinkingBlockStopped = false
+  let textBlockStopped = false
+  const toolBlockStoppedSet = new Set<number>()
   // 最终 stop_reason 和 usage（usage 可能在独立的 usage-only chunk 中到达）
   let finalStopReason: StopReason | null = null
   let finalUsage: DeltaUsage | undefined
@@ -745,6 +764,11 @@ export async function* mapOpenAIStreamToStandard(
         const cleaned = stripThinkingTagsFromText(delta.content)
         if (cleaned) {
           if (!textBlockStarted) {
+            // 文本块首次出现：thinking 已开始但尚未结束 → 先结束 thinking
+            if (thinkingBlockStarted && !thinkingBlockStopped) {
+              yield { type: 'chunk_stop', index: thinkingBlockIndex }
+              thinkingBlockStopped = true
+            }
             textBlockIndex = thinkingBlockStarted ? thinkingBlockIndex + 1 : 0
             yield {
               type: 'chunk_start',
@@ -766,6 +790,15 @@ export async function* mapOpenAIStreamToStandard(
         for (const tc of delta.tool_calls) {
           const tcIdx = tc.index ?? 0
           if (!toolBlocksStarted.has(tcIdx)) {
+            // 工具块首次出现：先结束尚未结束的 thinking / text 块
+            if (thinkingBlockStarted && !thinkingBlockStopped) {
+              yield { type: 'chunk_stop', index: thinkingBlockIndex }
+              thinkingBlockStopped = true
+            }
+            if (textBlockStarted && !textBlockStopped) {
+              yield { type: 'chunk_stop', index: textBlockIndex }
+              textBlockStopped = true
+            }
             const baseIndex = textBlockStarted
               ? textBlockIndex + 1
               : thinkingBlockStarted
@@ -797,16 +830,23 @@ export async function* mapOpenAIStreamToStandard(
       }
 
       // 结束（捕获 stop_reason，发送 chunk_stop 事件）
+      // 此处只为尚未结束的 block 补发 chunk_stop；已在前序类型切换时结束的
+      // block 不会重复 stop。
       if (choice.finish_reason) {
         finalStopReason = openAIFinishReasonToStandard(choice.finish_reason)
-        if (thinkingBlockStarted) {
+        if (thinkingBlockStarted && !thinkingBlockStopped) {
           yield { type: 'chunk_stop', index: thinkingBlockIndex }
+          thinkingBlockStopped = true
         }
-        if (textBlockStarted) {
+        if (textBlockStarted && !textBlockStopped) {
           yield { type: 'chunk_stop', index: textBlockIndex }
+          textBlockStopped = true
         }
         for (const blockIndex of toolBlockIndices.values()) {
-          yield { type: 'chunk_stop', index: blockIndex }
+          if (!toolBlockStoppedSet.has(blockIndex)) {
+            yield { type: 'chunk_stop', index: blockIndex }
+            toolBlockStoppedSet.add(blockIndex)
+          }
         }
       }
     }

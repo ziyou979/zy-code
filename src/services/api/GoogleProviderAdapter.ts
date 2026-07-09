@@ -41,11 +41,11 @@ export class GoogleProviderAdapter implements LLMAdapter {
     this.injectedClient = client ?? null
   }
 
-  private async getClient(): Promise<GoogleGenerativeAI> {
+  private async getClient(model?: string): Promise<GoogleGenerativeAI> {
     if (this.injectedClient) {
       return this.injectedClient
     }
-    const { client } = await getGoogleClient()
+    const { client } = await getGoogleClient({ model })
     return client
   }
 
@@ -54,7 +54,7 @@ export class GoogleProviderAdapter implements LLMAdapter {
     signal: AbortSignal,
     _clientRequestId?: string,
   ): Promise<StreamResult> {
-    const client = await this.getClient()
+    const client = await this.getClient(params.model)
     const modelName = normalizeModelStringForAPI(params.model)
     const model = client.getGenerativeModel({ model: modelName })
 
@@ -89,7 +89,7 @@ export class GoogleProviderAdapter implements LLMAdapter {
     signal: AbortSignal,
     _timeout?: number,
   ): Promise<LLMResponse> {
-    const client = await this.getClient()
+    const client = await this.getClient(params.model)
     const modelName = normalizeModelStringForAPI(params.model)
     const model = client.getGenerativeModel({ model: modelName })
 
@@ -116,7 +116,7 @@ export class GoogleProviderAdapter implements LLMAdapter {
   async countTokens(messages: LLMMessage[], tools: ToolDefinition[]): Promise<number | null> {
     try {
       const model = getMainLoopModel() ?? ''
-      const client = await this.getClient()
+      const client = await this.getClient(model)
       const generativeModel = client.getGenerativeModel({
         model: normalizeModelStringForAPI(model),
       })

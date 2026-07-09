@@ -132,7 +132,6 @@ function processBlock(
     }
 
     case 'image':
-    case 'server_tool_use':
     case 'web_search_tool_result':
     case 'search_result':
     case 'document':

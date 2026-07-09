@@ -224,12 +224,11 @@ function copyNative(text: string): void {
       // PowerShell Set-Clipboard 原生支持 Unicode。先设置 InputEncoding 为
       // UTF-8，再通过 stdin 管道传入文本。避免 clip.exe 的系统 locale 编码
       //（中文 GBK、日文 Shift-JIS 等）导致乱码。
-      void execFileNoThrow('powershell', [
-        '-NoProfile',
-        '-NonInteractive',
-        '-Command',
-        PS_SET_CLIPBOARD_UTF8_CMD,
-      ], opts)
+      void execFileNoThrow(
+        'powershell',
+        ['-NoProfile', '-NonInteractive', '-Command', PS_SET_CLIPBOARD_UTF8_CMD],
+        opts,
+      )
       return
     }
   }

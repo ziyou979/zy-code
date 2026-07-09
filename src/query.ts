@@ -476,7 +476,6 @@ async function* queryLoop(
               hasPendingMcpServers: appState.mcp.clients.some((c) => c.type === 'pending'),
               queryTracking,
               effortValue: appState.effortValue,
-              advisorModel: appState.advisorModel,
               skipCacheWrite,
               agentId: toolUseContext.agentId,
               addNotification: toolUseContext.addNotification,

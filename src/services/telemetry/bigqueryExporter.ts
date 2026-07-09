@@ -84,8 +84,7 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
     resultCallback: (result: ExportResult) => void,
   ): Promise<void> {
     try {
-      // Skip if trust not established in interactive mode
-      // This prevents triggering apiKeyHelper before trust dialog
+      // 交互模式下等待信任流程完成，避免初始化阶段提前触发认证工作。
       const hasTrust = checkHasTrustDialogAccepted() || getIsNonInteractiveSession()
       if (!hasTrust) {
         logForDebugging('BigQuery metrics export: trust not established, skipping')

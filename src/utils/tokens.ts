@@ -87,7 +87,7 @@ export function finalContextTokensFromLastResponse(messages: Message[]): number 
     const message = messages[i]
     const usage = message ? getTokenUsage(message) : undefined
     if (usage) {
-      // Stainless 类型尚未包含 iterations——类似 advisor.ts:43 进行类型断言
+      // Stainless 类型尚未包含 iterations——进行类型断言
       const iterations = (
         usage as {
           iterations?: Array<{

@@ -125,13 +125,6 @@ import {
 } from '../../tools/SyntheticOutputTool/SyntheticOutputTool.js'
 import { getTools, loadExternalTools } from '../../tools.js'
 import type { Message as MessageType } from '../../types/message.js'
-import {
-  canUserConfigureAdvisor,
-  getInitialAdvisorSetting,
-  isAdvisorEnabled,
-  isValidAdvisorModel,
-  modelSupportsAdvisor,
-} from '../../utils/advisor.js'
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
 import { count, uniq } from '../../utils/array.js'
 import { installAsciicastRecorder } from '../../utils/asciicast.js'
@@ -1472,37 +1465,6 @@ export async function rootAction(
   const resolvedInitialModel = resolvedInitialModelInput
     ? parseUserSpecifiedModel(resolvedInitialModelInput)
     : ''
-  let advisorModel: string | undefined
-  if (isAdvisorEnabled()) {
-    const advisorOption = canUserConfigureAdvisor() ? options.advisor : undefined
-    if (advisorOption) {
-      logForDebugging(`[AdvisorTool] --advisor ${advisorOption}`)
-      if (!modelSupportsAdvisor(resolvedInitialModel)) {
-        process.stderr.write(
-          chalk.red(
-            `Error: The model "${resolvedInitialModel}" does not support the advisor tool.\n`,
-          ),
-        )
-        process.exit(1)
-      }
-      const normalizedAdvisorModel = normalizeModelStringForAPI(
-        parseUserSpecifiedModel(advisorOption),
-      )
-      if (!isValidAdvisorModel(normalizedAdvisorModel)) {
-        process.stderr.write(
-          chalk.red(`Error: The model "${advisorOption}" cannot be used as an advisor.\n`),
-        )
-        process.exit(1)
-      }
-    }
-    advisorModel = canUserConfigureAdvisor()
-      ? (advisorOption ?? getInitialAdvisorSetting())
-      : advisorOption
-    if (advisorModel) {
-      logForDebugging(`[AdvisorTool] Advisor model: ${advisorModel}`)
-    }
-  }
-
   // 对于带有 --agent-type 的 tmux 队友，附加自定义代理的提示
   if (
     isAgentSwarmsEnabled() &&
@@ -1724,7 +1686,7 @@ export async function rootAction(
 
   // 如果启动了 gracefulShutdown（例如用户拒绝了信任对话框），
   // process.exitCode 将被设置。跳过所有可能触发代码执行的后续操作
-  // 在进程退出之前（例如，如果未建立信任，我们不希望 apiKeyHelper 运行）。
+  // 在进程退出之前（例如插件 LSP、hook 或后台 API 预热）。
   if (process.exitCode !== undefined) {
     logForDebugging('Graceful shutdown initiated, skipping further initialization')
     return
@@ -1749,8 +1711,8 @@ export async function rootAction(
     }
   }
 
-  // 在建立信任后检查配额状态、passes 资格和引导数据
-  // 这些进行 API 调用，可能触发 apiKeyHelper 执行。
+  // 在建立信任后检查配额状态、passes 资格和引导数据。
+  // 这些会进行 API 调用，因此放在启动流程后段。
   // --bare / SIMPLE：跳过 —— 这些是 REPL 首次响应性的缓存预热
   //（配额、passes、引导数据）。
   const bgRefreshThrottleMs = getFeatureValue_CACHED_MAY_BE_STALE('zy_cicada_nap_ms', 0)
@@ -2028,7 +1990,6 @@ export async function rootAction(
       allowedTools,
       effectiveModel,
       userSpecifiedFallbackModel,
-      advisorModel,
       thinkingConfig,
       systemPrompt,
       appendSystemPrompt,
@@ -2214,10 +2175,6 @@ export async function rootAction(
       : null,
     effortValue: resolveInitialEffortSetting(options.effort),
     activeOverlays: new Set<string>(),
-    ...(isAdvisorEnabled() &&
-      advisorModel && {
-        advisorModel,
-      }),
     // 同步计算 teamContext 以避免渲染期间的 useEffect setState。
     // KAIROS：assistantTeamContext 优先 —— 在
     // KAIROS 块中更早设置，以便 Agent(name: "foo") 可以生成进程内队友

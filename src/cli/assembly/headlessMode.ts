@@ -21,7 +21,6 @@ import { createStore } from '../../state/store.js'
 import type { ToolInputJSONSchema, ToolPermissionContext, Tools } from '../../Tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Command } from '../../types/command.js'
-import { isAdvisorEnabled } from '../../utils/advisor.js'
 import { validateForceLoginOrg } from '../../utils/auth.js'
 import { filterAllowedSdkBetas } from '../../utils/betas.js'
 import { logForDebugging, setHasFormattedOutput } from '../../utils/debug.js'
@@ -74,7 +73,6 @@ export interface HeadlessModeParams {
   // 模型
   effectiveModel: string | undefined
   userSpecifiedFallbackModel: string | undefined
-  advisorModel: string | undefined
 
   // 推理
   thinkingConfig: ThinkingConfig
@@ -130,7 +128,6 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
     allowedTools,
     effectiveModel,
     userSpecifiedFallbackModel,
-    advisorModel,
     thinkingConfig,
     systemPrompt,
     appendSystemPrompt,
@@ -210,10 +207,6 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
     },
     toolPermissionContext,
     effortValue: resolveInitialEffortSetting(options.effort),
-    ...(isAdvisorEnabled() &&
-      advisorModel && {
-        advisorModel,
-      }),
     // kairosEnabled 门控 executeForkedSlashCommand 中的异步 fire-and-forget 路径
     //（processSlashCommand.tsx:132）和 AgentTool 的 shouldRunAsync。
     // REPL initialState 在约 3459 处设置此；无头默认为 false，

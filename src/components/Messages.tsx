@@ -14,18 +14,19 @@ import { useTerminalNotification } from '../ink/useTerminalNotification.js'
 import { Box, Text } from '../ink.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
 import type { Screen } from '../screens/REPL.js'
+import { useReplStore } from '../state/ReplState.js'
 import type { Tools } from '../Tool.js'
 import { findToolByName } from '../Tool.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
+  CollapsedReadSearchGroup,
   Message as MessageType,
   RenderableMessage,
   SystemMessage,
   UserMessage,
 } from '../types/message.js'
-import { type AdvisorBlock, isAdvisorBlock } from '../utils/advisor.js'
 import { collapseBackgroundBashNotifications } from '../utils/collapseBackgroundBashNotifications.js'
 import { collapseHookSummaries } from '../utils/collapseHookSummaries.js'
 import { collapseReadSearchGroups } from '../utils/collapseReadSearch.js'
@@ -63,6 +64,7 @@ import {
   type MessageActionsState,
 } from './messageActions.js'
 import { AssistantThinkingMessage } from './messages/AssistantThinkingMessage.js'
+import { CollapsedReadSearchContent } from './messages/CollapsedReadSearchContent.js'
 import { isNullRenderingAttachment } from './messages/nullRenderingAttachments.js'
 import { OffscreenFreeze } from './OffscreenFreeze.js'
 import type { ToolUseConfirm } from './permissions/PermissionRequest.js'
@@ -412,6 +414,7 @@ const MessagesImpl = ({
   renderRange,
 }: Props): React.ReactNode => {
   const { columns } = useTerminalSize()
+  const replStore = useReplStore()
   const toggleShowAllShortcut = useShortcutDisplay(
     'transcript:toggleShowAll',
     'Transcript',
@@ -665,6 +668,64 @@ const MessagesImpl = ({
     }
     return renderableMessages.findIndex((message) => message.uuid === cursor.uuid)
   }, [cursor, renderableMessages])
+  const hasCurrentTurnCollapsedGroup = useMemo(() => {
+    for (let index = renderableMessages.length - 1; index >= 0; index--) {
+      const message = renderableMessages[index]
+      if (!message) {
+        continue
+      }
+      if (message.type === 'user') {
+        return false
+      }
+      if (message.type === 'collapsed_read_search') {
+        return true
+      }
+    }
+    return false
+  }, [renderableMessages])
+  const standaloneStreamingThinkingGroup = useMemo<CollapsedReadSearchGroup | null>(() => {
+    if (
+      isTranscriptMode ||
+      isBriefOnly ||
+      !isLoading ||
+      !isStreamingThinkingVisible ||
+      !streamingThinking ||
+      hasCurrentTurnCollapsedGroup
+    ) {
+      return null
+    }
+    return {
+      type: 'collapsed_read_search',
+      uuid: `streaming-thinking-${conversationId}`,
+      timestamp: new Date().toISOString(),
+      content: '',
+      collapsedCount: 1,
+      searchCount: 0,
+      readCount: 0,
+      listCount: 0,
+      replCount: 0,
+      memorySearchCount: 0,
+      memoryReadCount: 0,
+      memoryWriteCount: 0,
+      teamMemorySearchCount: 0,
+      teamMemoryReadCount: 0,
+      teamMemoryWriteCount: 0,
+      latestThinkingSummary: streamingThinking.thinking.trim(),
+      latestDisplayKind: 'thinking',
+      thinkingDurationMs: streamingThinking.isStreaming
+        ? 0
+        : replStore.mutable.lastThinkingDurationMs,
+    }
+  }, [
+    conversationId,
+    hasCurrentTurnCollapsedGroup,
+    isBriefOnly,
+    isLoading,
+    isStreamingThinkingVisible,
+    isTranscriptMode,
+    replStore,
+    streamingThinking,
+  ])
 
   // Fullscreen：点击消息可切换该消息的 verbose 渲染。使用
   // tool_use_id 作为 key（如果可用），这样 tool_use 和它的 tool_result
@@ -699,15 +760,6 @@ const MessagesImpl = ({
     (message: RenderableMessage): boolean => {
       if (message.type === 'collapsed_read_search') {
         return true
-      }
-      if (message.type === 'assistant') {
-        const b = message.message.content[0] as unknown as AdvisorBlock | undefined
-        return (
-          b != null &&
-          isAdvisorBlock(b) &&
-          b.type === 'advisor_tool_result' &&
-          b.content.type === 'advisor_result'
-        )
       }
       if (message.type !== 'user') {
         return false
@@ -927,6 +979,21 @@ const MessagesImpl = ({
         renderableMessages.flatMap(renderMessageRow)
       )}
 
+      {standaloneStreamingThinkingGroup && (
+        <InVirtualListContext.Provider value={true}>
+          <CollapsedReadSearchContent
+            message={standaloneStreamingThinkingGroup}
+            inProgressToolUseIDs={inProgressToolUseIDs}
+            shouldAnimate={canAnimate}
+            verbose={verbose}
+            tools={tools}
+            lookups={lookups}
+            isActiveGroup={streamingThinking?.isStreaming === true}
+            streamingThinkingSummary={streamingThinking?.thinking}
+          />
+        </InVirtualListContext.Provider>
+      )}
+
       {streamingText && !isBriefOnly && (
         <Box alignItems="flex-start" flexDirection="row" marginTop={1} width="100%">
           <Box flexDirection="row">
@@ -940,7 +1007,7 @@ const MessagesImpl = ({
         </Box>
       )}
 
-      {isStreamingThinkingVisible && streamingThinking && !isBriefOnly && (
+      {isTranscriptMode && isStreamingThinkingVisible && streamingThinking && !isBriefOnly && (
         <Box marginTop={1}>
           <AssistantThinkingMessage
             param={{
@@ -1051,14 +1118,6 @@ export function shouldRenderStatically(
     case 'attachment':
     case 'user':
     case 'assistant': {
-      if (message.type === 'assistant') {
-        const block = message.message.content[0]
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        if ((block as any)?.type === 'server_tool_use') {
-          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          return lookups.resolvedToolUseIDs.has((block as any).id)
-        }
-      }
       const toolUseID = getToolUseID(message as MessageType)
       if (!toolUseID) {
         return true

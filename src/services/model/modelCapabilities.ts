@@ -11,13 +11,13 @@ import { safeParseJSON } from '../../utils/json.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
+import type { APIProvider } from './providers.js'
 import {
   getAPIProvider,
   getModelCostsFromSettings,
   isAnthropicBaseUrl,
   providerHasCapability,
 } from './providers.js'
-import { getModelPromptCachingMode } from '../../utils/settings/localModelCapabilities.js'
 
 // .strip() —— 不将内部专用字段（mycro_deployments 等）持久化到磁盘
 const ModelCapabilitySchema = lazySchema(() =>
@@ -99,6 +99,7 @@ const loadCache = memoize(
 export function getStaticPricingForModel(
   model: string,
   currentInputTokens?: number,
+  provider?: APIProvider,
 ): {
   cost_input: number
   cost_output: number
@@ -107,7 +108,7 @@ export function getStaticPricingForModel(
   cost_web_search: number
   currency: string
 } | null {
-  const userCosts = getModelCostsFromSettings(model, currentInputTokens)
+  const userCosts = getModelCostsFromSettings(model, currentInputTokens, provider)
   if (!userCosts) {
     return null
   }

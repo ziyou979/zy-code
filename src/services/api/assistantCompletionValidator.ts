@@ -34,7 +34,12 @@ export class MalformedAssistantCompletionError extends LLMError {
  * 移除模型误写到可见文本中的思考标签本身，用于流式增量的轻量清理。
  */
 export function stripThinkingTagsFromText(text: string): string {
-  return text.replace(THINKING_TAG_PATTERN, '').replace(/^\n+|\n+$/g, '')
+  const startsWithClosingTag = /^<\/(think|thinking)\b[^>]*>/i.test(text)
+  const cleaned = text.replace(THINKING_TAG_PATTERN, '')
+  // 流式 delta 的首尾换行属于正文结构，不能按片段裁剪；否则 markdown
+  // 块边界会被粘成一行。只有 provider 把 </think> 与正文放在同一
+  // 片段开头时，移除标签后顺手丢弃紧随其后的分隔换行。
+  return startsWithClosingTag ? cleaned.replace(/^\n+/, '') : cleaned
 }
 
 /**
@@ -79,11 +84,7 @@ export function validateAssistantCompletion(args: {
 
   for (const block of args.content) {
     const blockType: string = block.type
-    if (
-      blockType === 'tool_call' ||
-      blockType === 'server_tool_use' ||
-      blockType === 'mcp_tool_use'
-    ) {
+    if (blockType === 'tool_call' || blockType === 'mcp_tool_use') {
       hasToolCall = true
       continue
     }

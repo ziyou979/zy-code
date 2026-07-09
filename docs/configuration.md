@@ -1,6 +1,6 @@
 # ZY Code 配置参考
 
-本文件汇总 ZY Code 的全部配置面:配置文件位置与优先级、`settings.json` 配置项、`model-capabilities.json`、环境变量,以及 beta header 的配置与数据流。
+本文件汇总 ZY Code 的全部配置面:配置文件位置与优先级、`settings.json` 配置项、`auth.json`、`model-capabilities.json`、环境变量,以及 beta header 的配置与数据流。
 
 > 配置项的权威定义见 `src/utils/settings/types.ts`(`SettingsSchema`)、`src/utils/settings/localModelCapabilities.ts`、`src/services/model/providerRegistry.ts`。本文为人读摘要,字段以代码为准。
 
@@ -8,10 +8,11 @@
 
 - [1. 配置文件位置与优先级](#1-配置文件位置与优先级)
 - [2. settings.json 配置项](#2-settingsjson-配置项)
-- [3. model-capabilities.json](#3-model-capabilitiesjson)
-- [4. 环境变量](#4-环境变量)
-- [5. Beta header:配置与数据流](#5-beta-header配置与数据流)
-- [6. Provider 注册表](#6-provider-注册表)
+- [3. auth.json](#3-authjson)
+- [4. model-capabilities.json](#4-model-capabilitiesjson)
+- [5. 环境变量](#5-环境变量)
+- [6. Beta header:配置与数据流](#6-beta-header配置与数据流)
+- [7. Provider 注册表](#7-provider-注册表)
 
 ---
 
@@ -41,7 +42,8 @@ plugin 设置  <  user(~/.zy/settings.json)  <  project(.zy/settings.json)
 | 路径 | 用途 |
 |---|---|
 | `~/.zy.json` 或 `~/.zy/.config.json` | 全局配置(onboarding 结果:provider / apiKey / baseUrl / model、user 级 mcpServers) |
-| `~/.zy/model-capabilities.json` | 本地模型能力声明(见 §3) |
+| `~/.zy/auth.json` | 用户级认证配置(API key / apiKeyHelper,见 §3) |
+| `~/.zy/model-capabilities.json` | 本地模型能力声明(见 §4) |
 | `~/.zy/keybindings.json` | 自定义快捷键(目前受 feature gate 控制,外部默认用内置键位) |
 | `~/.zy/AGENTS.md`、`~/.zy/rules/` | 用户级 memory / 指令 / 规则 |
 | `~/.zy/memory/`、`~/.zy/agent-memory/` | 自动记忆 / agent 持久记忆 |
@@ -61,15 +63,42 @@ plugin 设置  <  user(~/.zy/settings.json)  <  project(.zy/settings.json)
 | Key | 类型 | 默认 | 用途 |
 |---|---|---|---|
 | `provider` | `'anthropic'\|'dashscope'\|'opencode-go'\|'openrouter'\|'generic'\|'local'\|'zhipu'\|'kimi'` | — | API 提供商(覆盖 onboarding 与 env) |
-| `apiKey` | string | — | 提供商 API key(覆盖 env) |
 | `baseUrl` | string | — | API 基地址(覆盖 registry 默认值和 onboarding configuredBaseUrl) |
-| `apiKeyHelper` | string | — | 输出认证值的脚本路径 |
-| `model` | string | — | 覆盖默认模型 |
+| `model` | `string \| {provider?,model}` | — | 覆盖默认模型；对象格式可指定该模型使用的 provider |
 | `mainLoopModel` | `'advanced'\|'standard'\|'compact'` | `standard` | 主循环能力层级 |
-| `models` | `Record<层级, 模型ID>` | — | 按 advanced/standard/compact 指定具体模型 |
+| `models` | `Record<层级, 模型ID \| {provider?,model}>` | — | 按 advanced/standard/compact 指定具体模型；对象格式可逐层绑定 provider |
 | `modelOverrides` | `Record<anthropicId, providerId>` | — | 模型 ID 映射(如 Bedrock ARN) |
-| `customModels` | `{alias,model,label?,description?}[]` | — | 自定义模型列表 |
+| `customModels` | `{alias,model,provider?,label?,description?}[]` | — | 自定义模型列表；`provider` 可为该别名绑定 provider |
 | `advisorModel` | string | — | advisor 工具用的模型 |
+
+模型引用支持两种写法：字符串模型 ID 会使用当前作用域的 provider；对象写法会显式绑定 provider。这样可以在同一个 `settings.json` 中把不同层级或别名路由到不同 provider。
+
+```jsonc
+{
+  "provider": "generic",
+  "models": {
+    "standard": { "provider": "dashscope", "model": "qwen3.6-plus" },
+    "advanced": { "provider": "opencode-go", "model": "opencode-go/kimi-k2.7-code" },
+    "compact": "local-fast-model"
+  },
+  "customModels": [
+    {
+      "alias": "go-kimi",
+      "provider": "opencode-go",
+      "model": "opencode-go/kimi-k2.7-code"
+    }
+  ],
+  "providers": {
+    "nim": {
+      "models": {
+        "standard": "nvidia/llama-3.3-nemotron-super-49b-v1"
+      }
+    }
+  }
+}
+```
+
+运行时会先解析当前模型对应的 provider，再读取该 provider 的 `auth.json` 认证、`settings.providers.<id>` 覆盖项、provider 注册表默认值以及 `model-capabilities.json` 中的 `providerOverrides`。
 
 ### 2.2 认证 / 凭证
 
@@ -155,7 +184,29 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 
 ---
 
-## 3. model-capabilities.json
+## 3. auth.json
+
+路径 `~/.zy/auth.json`。该文件只保存用户级认证材料,与可提交的项目级 `settings.json` 分离。
+
+```jsonc
+{
+  "opencode-go": {
+    "apiKey": "sk-..."
+  },
+  "dashscope": {
+    "apiKeyHelper": "C:\\Users\\you\\.zy\\get-dashscope-key.ps1"
+  }
+}
+```
+
+- **扁平 provider map**:顶层 key 就是 provider id,值为该 provider 的认证配置。
+- **settings 分离**:`settings.json` 不再承载 `apiKey` / `apiKeyHelper`;这两个字段只放在 `auth.json`。
+- **模型路由**:`settings.json` 中通过 `{provider,model}` 或 `customModels[].provider` 绑定到的 provider,若需要 key,也应在这里有同名条目。
+- **apiKeyHelper**:ZY 会执行该命令并读取 stdout 作为 key。provider 级 helper 按命令独立缓存,避免多个 provider 串用同一个缓存值。
+
+---
+
+## 4. model-capabilities.json
 
 路径 `~/.zy/model-capabilities.json`(示例见仓库根 `model-capabilities.example.json`)。按 `pattern` 子串匹配 model id,声明该模型的能力、token 上限、定价、以及附加 beta。
 
@@ -171,7 +222,7 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
       "promptCaching": "explicit",              // 可选:prompt 缓存模式("implicit"|"explicit")
       "preserveThinking": "always",             // 可选:思考块回传模式("optional"|"always")
       "effortLevels": ["low","medium","high"],  // 可选:effort 档位(省略=不支持设 effort)
-      "betaHeaders": ["context-management-2025-06-27"], // 可选:附加 anthropic-beta(见 §5)
+      "betaHeaders": ["context-management-2025-06-27"], // 可选:附加 anthropic-beta(见 §6)
       "contextWindow": "1m",                    // 可选:上下文窗口(数字或 "200k"/"1m")
       "maxInputTokens": "1m",                   // 可选
       "maxOutputTokens": "64k",                 // 可选
@@ -197,11 +248,11 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 
 ---
 
-## 4. 环境变量
+## 5. 环境变量
 
 > 完整散落在 `src/` 各处;下面按功能分组列常用项。布尔类一般取 `1`/`true`。
 
-### 4.1 Provider 激活与 base URL
+### 5.1 Provider 激活与 base URL
 
 | 变量 | 用途 |
 |---|---|
@@ -213,7 +264,7 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 
 provider 解析优先级:`settings.provider` > onboarding configuredProvider > 激活 env var > 默认 `anthropic`。
 
-### 4.2 API / 认证 / 网络
+### 5.2 API / 认证 / 网络
 
 | 变量 | 用途 |
 |---|---|
@@ -224,7 +275,7 @@ provider 解析优先级:`settings.provider` > onboarding configuredProvider > �
 | `ZY_CODE_CLIENT_CERT` / `_KEY` / `_KEY_PASSPHRASE` | mTLS |
 | `HTTP_PROXY` / `HTTPS_PROXY` / `NO_PROXY` / `NODE_EXTRA_CA_CERTS` / `SSL_CERT_FILE` | 网络代理 / CA |
 
-### 4.3 Beta / tool-search
+### 5.3 Beta / tool-search
 
 | 变量 | 取值 | 用途 |
 |---|---|---|
@@ -233,7 +284,7 @@ provider 解析优先级:`settings.provider` > onboarding configuredProvider > �
 | `ENABLE_TOOL_SEARCH` | `true`/`false`/`auto`/`auto:N`/`0`/`100` | tool-search 模式;`true` 还能强穿 Vertex/代理 gate |
 | `USE_CONNECTOR_TEXT_SUMMARIZATION` | `1`/`0`/不设 | 连接文本摘要(内部) |
 
-### 4.4 思考 / effort / 输出
+### 5.4 思考 / effort / 输出
 
 | 变量 | 用途 |
 |---|---|
@@ -244,7 +295,7 @@ provider 解析优先级:`settings.provider` > onboarding configuredProvider > �
 | `DISABLE_COMPACT` / `DISABLE_AUTO_COMPACT` / `AUTOCOMPACT_PCT_OVERRIDE` | compact 控制 |
 | `DISABLE_PROMPT_CACHING`(及 `_HAIKU`/`_SONNET`/`_OPUS`) | 禁用 prompt 缓存 |
 
-### 4.5 行为 / 调试 / 遥测
+### 5.5 行为 / 调试 / 遥测
 
 | 变量 | 用途 |
 |---|---|
@@ -256,17 +307,17 @@ provider 解析优先级:`settings.provider` > onboarding configuredProvider > �
 | `DISABLE_TELEMETRY` / `ZY_CODE_DISABLE_NONESSENTIAL_TRAFFIC` / `DISABLE_ERROR_REPORTING` | 隐私 / 遥测 |
 | `CLAUDE_DEBUG` / `ZY_CODE_DEBUG_LOG_LEVEL` / `ZY_CODE_DEBUG_LOGS_DIR` | 调试 |
 
-### 4.6 Bridge / CCR / 会话
+### 5.6 Bridge / CCR / 会话
 
 `ZY_BRIDGE_USE_CCR`(CCR v2 传输)、`ZY_CODE_CCR_MIRROR`、`ZY_CODE_REMOTE` / `_REMOTE_SESSION_ID` / `_REMOTE_MEMORY_DIR`、`ZY_CODE_ENVIRONMENT_KIND`(如 `bridge`)/ `_ENVIRONMENT_RUNNER_VERSION`、`ZY_CODE_SESSION_*`、`ZY_CODE_ENTRYPOINT`(`cli\|sdk-ts\|sdk-py\|…`)。
 
-### 4.7 计划模式 / 高级功能
+### 5.7 计划模式 / 高级功能
 
 `ZY_CODE_PLAN_MODE_V2_AGENT_COUNT` / `_EXPLORE_AGENT_COUNT`(plan 并发数,1–10)、`ZY_CODE_PLAN_MODE_INTERVIEW_PHASE`、`ZY_CODE_ENABLE_TASKS`、`ZY_CODE_PROACTIVE`、`ZY_CODE_ENABLE_CFC`(Claude-in-Chrome)、`ZY_CODE_COORDINATOR_MODE` / `_EXPERIMENTAL_AGENT_TEAMS`。
 
 ---
 
-## 5. Beta header:配置与数据流
+## 6. Beta header:配置与数据流
 
 ZY 是第三方 harness,`anthropic-beta` header 按「**模型是不是真 Claude**」+「**端点接不接受**」两维决定,而非按 provider 一刀切。
 
@@ -311,7 +362,7 @@ SDK 把 betas 摘出 body → HTTP 头: anthropic-beta: a,b,c
 
 ---
 
-## 6. Provider 注册表
+## 7. Provider 注册表
 
 定义于 `src/services/model/providerRegistry.ts`。`activationEnvVar` 为空者通过 onboarding / `settings.provider` 选择。
 

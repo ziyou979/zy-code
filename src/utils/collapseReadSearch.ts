@@ -836,11 +836,12 @@ export function collapseReadSearchGroups(
       return
     }
     const group = createCollapsedGroup(currentGroup)
-    // 合并从消息属性读取的 thinkingDurationMs 与从 timestamp 差值计算的 thoughtForMs，取较大值
+    // thinkingDurationMs 来自实时状态机，比 timestamp 差值更可信。
+    // timestamp 只作为历史消息没有显式时长时的兜底。
     const existingMs = pendingThinkingDurationMs ?? 0
     const computedMs = group.thoughtForMs ?? 0
     if (existingMs > 0 || computedMs > 0) {
-      group.thinkingDurationMs = Math.max(existingMs, computedMs)
+      group.thinkingDurationMs = existingMs > 0 ? existingMs : computedMs
       pendingThinkingDurationMs = undefined
     }
     result.push(group)

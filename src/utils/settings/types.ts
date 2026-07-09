@@ -42,6 +42,12 @@ const CustomModelSchema = lazySchema(() =>
     model: z
       .string()
       .describe('Actual model ID sent to the API (e.g., "qwen-max-latest", "glm-4-plus").'),
+    provider: z
+      .string()
+      .optional()
+      .describe(
+        'Provider id used when this custom model is selected. Defaults to active provider.',
+      ),
     label: z
       .string()
       .optional()
@@ -53,10 +59,24 @@ const CustomModelSchema = lazySchema(() =>
   }),
 )
 
+const ModelReferenceSchema = lazySchema(() =>
+  z.union([
+    z.string(),
+    z
+      .object({
+        provider: z
+          .string()
+          .optional()
+          .describe('Provider id used for this model entry. Defaults to active provider.'),
+        model: z.string().describe('Actual model ID sent to the API.'),
+      })
+      .passthrough(),
+  ]),
+)
+
 const ProviderScopedSettingsSchema = lazySchema(() =>
   z
     .object({
-      apiKey: z.string().optional().describe('API key for this provider.'),
       baseUrl: z
         .string()
         .optional()
@@ -67,15 +87,21 @@ const ProviderScopedSettingsSchema = lazySchema(() =>
         .enum(['anthropic', 'openai', 'google'])
         .optional()
         .describe('API protocol format for this provider. Overrides the top-level apiFormat.'),
-      model: z.string().optional().describe('Default model override for this provider.'),
+      model: ModelReferenceSchema()
+        .optional()
+        .describe(
+          'Default model override for this provider. May be a model id or { provider, model }.',
+        ),
       mainLoopModel: z
         .enum(['advanced', 'standard', 'compact'])
         .optional()
         .describe('Capability tier for this provider. Overrides the top-level mainLoopModel.'),
       models: z
-        .record(z.string(), z.string())
+        .record(z.string(), ModelReferenceSchema())
         .optional()
-        .describe('Model configuration by capability tier for this provider.'),
+        .describe(
+          'Model configuration by capability tier for this provider. Values may be a model id or { provider, model }.',
+        ),
       customModels: z
         .array(CustomModelSchema())
         .optional()
@@ -285,10 +311,6 @@ export const SettingsSchema = lazySchema(() =>
         .literal(ZY_CODE_SETTINGS_SCHEMA_URL)
         .optional()
         .describe('JSON Schema reference for ZY Code settings'),
-      apiKeyHelper: z
-        .string()
-        .optional()
-        .describe('Path to a script that outputs authentication values'),
       /** API 提供商：取值需与 src/services/model/providerRegistry.ts 中的 provider id 对齐 */
       provider: z
         .enum([
@@ -328,7 +350,7 @@ export const SettingsSchema = lazySchema(() =>
         .record(z.string(), ProviderScopedSettingsSchema())
         .optional()
         .describe(
-          'Provider-scoped configuration. Keys are provider ids; values override apiKey, baseUrl, apiFormat and model settings only for that provider.',
+          'Provider-scoped configuration. Keys are provider ids; values override baseUrl, apiFormat and model settings only for that provider.',
         ),
       apiFormat: z
         .enum(['anthropic', 'openai', 'google'])
@@ -340,11 +362,6 @@ export const SettingsSchema = lazySchema(() =>
             '"google" uses Google Generative AI native format (for Gemini models). ' +
             'Default: depends on provider (google for Gemini, openai for others).',
         ),
-      /** 配置的提供商的 API 密钥 */
-      apiKey: z
-        .string()
-        .optional()
-        .describe('API key for authentication. Overrides environment variables.'),
       /** API 基地址：与 provider 配合使用，覆盖 registry 默认值 */
       baseUrl: z
         .string()
@@ -364,12 +381,13 @@ export const SettingsSchema = lazySchema(() =>
         ),
       /** 基于层级的模型配置（advanced > standard > compact） */
       models: z
-        .record(z.string(), z.string())
+        .record(z.string(), ModelReferenceSchema())
         .optional()
         .describe(
           'Model configuration by capability tier. Keys: ' +
             '"advanced" (complex reasoning), "standard" (everyday tasks), "compact" (fast/cheap). ' +
-            'At least the tier referenced by "mainLoopModel" must be configured.',
+            'At least the tier referenced by "mainLoopModel" must be configured. ' +
+            'Values may be a model id or { provider, model } to route different tiers to different providers.',
         ),
       awsCredentialExport: z
         .string()
@@ -473,7 +491,11 @@ export const SettingsSchema = lazySchema(() =>
           'Include built-in commit and PR workflow instructions in the system prompt (default: true)',
         ),
       permissions: PermissionsSchema().optional().describe('Tool usage permissions configuration'),
-      model: z.string().optional().describe('Override the default model used by ZY Code'),
+      model: ModelReferenceSchema()
+        .optional()
+        .describe(
+          'Override the default model used by ZY Code. May be a model id or { provider, model }.',
+        ),
       // 企业级模型白名单
       availableModels: z
         .array(z.string())
@@ -866,10 +888,6 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .catch(undefined)
         .describe('Persisted effort level for supported models.'),
-      advisorModel: z
-        .string()
-        .optional()
-        .describe('Advisor model for the server-side advisor tool.'),
       promptSuggestionEnabled: z
         .boolean()
         .optional()

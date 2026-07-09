@@ -16,12 +16,10 @@ import type {
   SystemMessage,
   UserMessage,
 } from '../types/message.js'
-import { isAdvisorBlock } from '../utils/advisor.js'
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
 import { logError } from '../utils/log.js'
 import type { buildMessageLookups } from '../utils/messages.js'
 import { CompactSummary } from './CompactSummary.js'
-import { AdvisorMessage } from './messages/AdvisorMessage.js'
 import { AssistantRedactedThinkingMessage } from './messages/AssistantRedactedThinkingMessage.js'
 import { AssistantTextMessage } from './messages/AssistantTextMessage.js'
 import { AssistantThinkingMessage } from './messages/AssistantThinkingMessage.js'
@@ -125,7 +123,6 @@ function MessageImpl({
           onOpenRateLimitOptions={onOpenRateLimitOptions}
           thinkingBlockId={`${message.uuid}:${index}`}
           lastThinkingBlockId={lastThinkingBlockId}
-          advisorModel={message.advisorModel}
         />
       )
       // MessageDisplay hook 的 display-only 文本覆盖：替换文本块、保留 tool_use 等非文本块。
@@ -335,7 +332,6 @@ function AssistantMessageBlock({
   onOpenRateLimitOptions,
   thinkingBlockId,
   lastThinkingBlockId,
-  advisorModel,
   // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 }: any) {
   if (feature('CONNECTOR_TEXT')) {
@@ -408,25 +404,6 @@ function AssistantMessageBlock({
           hideInTranscript={shouldHideThinking}
         />
       )
-    }
-    case 'server_tool_use':
-    case 'advisor_tool_result': {
-      if (isAdvisorBlock(param)) {
-        const shouldShowAdvisorVerbose = verbose || isTranscriptMode
-        return (
-          <AdvisorMessage
-            block={param}
-            addMargin={addMargin}
-            resolvedToolUseIDs={lookups.resolvedToolUseIDs}
-            erroredToolUseIDs={lookups.erroredToolUseIDs}
-            shouldAnimate={shouldAnimate}
-            verbose={shouldShowAdvisorVerbose}
-            advisorModel={advisorModel}
-          />
-        )
-      }
-      logError(new Error(`Unable to render server tool block: ${param.type}`))
-      return null
     }
     default: {
       logError(new Error(`Unable to render message type: ${param.type}`))

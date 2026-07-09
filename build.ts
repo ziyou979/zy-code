@@ -128,3 +128,4 @@ console.log(`Build succeeded: ${result.outputs.length} output(s)`)
 for (const out of result.outputs) {
   console.log(`  ${out.path} (${(out.size / 1024).toFixed(1)} KB)`)
 }
+

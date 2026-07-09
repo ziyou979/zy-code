@@ -66,7 +66,6 @@ export function normalizeMessages(messages: Message[]): Message[] {
             uuid,
             error: message.error,
             isApiErrorMessage: message.isApiErrorMessage,
-            advisorModel: message.advisorModel,
             ...(message.thinkingDurationMs !== undefined && {
               thinkingDurationMs: message.thinkingDurationMs,
             }),
@@ -430,19 +429,6 @@ export function normalizeContentFromAPI(
       case 'mcp_tool_use':
       case 'mcp_tool_result':
       case 'container_upload':
-      case 'server_tool_use': {
-        // Beta 专属内容块 — 原样传递
-        const betaBlock = block as { type: string; [key: string]: unknown }
-        if (betaBlock.type === 'server_tool_use' && typeof betaBlock.input === 'string') {
-          return {
-            ...contentBlock,
-            input: (safeParseJSON(betaBlock.input) ?? {}) as {
-              [key: string]: unknown
-            },
-          } as ContentBlock
-        }
-        return contentBlock
-      }
       default:
         return contentBlock
     }

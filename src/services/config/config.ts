@@ -209,10 +209,6 @@ export type DiffTool = 'terminal' | 'auto'
 export type OutputStyle = string
 
 export type GlobalConfig = {
-  /**
-   * @deprecated Use settings.apiKeyHelper instead.
-   */
-  apiKeyHelper?: string
   projects?: Record<string, ProjectConfig>
   numStartups: number
   installMethod?: InstallMethod
@@ -583,7 +579,6 @@ function createDefaultGlobalConfig(): GlobalConfig {
 export const DEFAULT_GLOBAL_CONFIG: GlobalConfig = createDefaultGlobalConfig()
 
 export const GLOBAL_CONFIG_KEYS = [
-  'apiKeyHelper',
   'installMethod',
   'autoUpdates',
   'autoUpdatesProtectedForNative',

@@ -351,7 +351,7 @@ export async function setup(
   // 最早可靠的"进程已启动"信号。
   logEvent('zy_session_started', {})
 
-  void prefetchApiKeyFromApiKeyHelperIfSafe(getIsNonInteractiveSession()) // 安全预获取 - 仅在已确认信任时执行
+  void prefetchApiKeyFromApiKeyHelperIfSafe(getIsNonInteractiveSession()) // 预热用户级 auth.json helper 缓存
   profileCheckpoint('setup_after_prefetch')
 
   // 预获取 Logo v2 数据 - await 确保在 logo 渲染前就绪。

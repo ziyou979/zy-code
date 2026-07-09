@@ -43,11 +43,11 @@ export class OpenAIProviderAdapter implements LLMAdapter {
     this.injectedClient = client ?? null
   }
 
-  private async getClient(): Promise<OpenAI> {
+  private async getClient(model?: string): Promise<OpenAI> {
     if (this.injectedClient) {
       return this.injectedClient
     }
-    return getOpenAIClient()
+    return getOpenAIClient({ model })
   }
 
   async createStream(
@@ -55,7 +55,7 @@ export class OpenAIProviderAdapter implements LLMAdapter {
     signal: AbortSignal,
     _clientRequestId?: string,
   ): Promise<StreamResult> {
-    const client = await this.getClient()
+    const client = await this.getClient(params.model)
     const requestParams = buildOpenAIRequestParams(params)
     log(
       `Streaming request: model=${params.model}, messages=${
@@ -94,7 +94,7 @@ export class OpenAIProviderAdapter implements LLMAdapter {
     signal: AbortSignal,
     _timeout?: number,
   ): Promise<LLMResponse> {
-    const client = await this.getClient()
+    const client = await this.getClient(params.model)
     const requestParams = buildOpenAIRequestParams(params)
     log(
       `Non-streaming request: model=${params.model}, messages=${
@@ -137,7 +137,7 @@ export class OpenAIProviderAdapter implements LLMAdapter {
   async verifyApiKey(apiKey: string): Promise<boolean> {
     try {
       const model = getMainLoopModel() ?? ''
-      const client = await getOpenAIClient({ apiKey, maxRetries: 3 })
+      const client = await getOpenAIClient({ apiKey, maxRetries: 3, model })
       const verifyParams: OpenAICreateParams = {
         model: normalizeModelStringForAPI(model),
         max_tokens: 1,

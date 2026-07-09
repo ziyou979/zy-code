@@ -137,7 +137,6 @@ export {
   isThinkingBlock,
   pruneCompletedTurnArtifacts,
   shrinkHistoricalProgress,
-  stripAdvisorBlocks,
   stripCallerFieldFromAssistantMessage,
   stripSignatureBlocks,
   stripToolReferenceBlocksFromUserMessage,

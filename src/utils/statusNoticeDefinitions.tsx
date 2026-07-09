@@ -131,7 +131,7 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
       skipRetrievingKeyFromApiKeyHelper: true,
     })
     const authTokenInfo = getAuthTokenSource()
-    // 当两个函数都识别到同一个 settingsApiKey 时，不视为冲突
+    // 当两个函数都识别到同一个 API key 来源时，不视为冲突。
     return (
       apiKeySource !== 'none' &&
       authTokenInfo.source !== 'none' &&
@@ -159,7 +159,7 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
             {apiKeySource === 'settingsApiKey'
               ? 'Unset the ZY_API_KEY environment variable, or zy /logout then say "No" to the API key approval before login.'
               : apiKeySource === 'apiKeyHelper'
-                ? 'Unset the apiKeyHelper setting.'
+                ? 'Remove the apiKeyHelper entry from auth.json.'
                 : 'zy /logout'}
           </Text>
           <Text color="warning">

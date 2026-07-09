@@ -117,7 +117,6 @@ import perfIssue from './commands/perf-issue/index.js'
 import sandboxToggle from './commands/sandbox-toggle/index.js'
 import chrome from './commands/chrome/index.js'
 import stickers from './commands/stickers/index.js'
-import advisor from './commands/advisor.js'
 import { logError } from './utils/log.js'
 import { toError } from './utils/errors.js'
 import { logForDebugging } from './utils/debug.js'
@@ -211,7 +210,6 @@ export const INTERNAL_ONLY_COMMANDS = [
 // 因为底层函数会读取配置，而配置在模块初始化时还不可用
 const COMMANDS = memoize((): Command[] => [
   addDir,
-  advisor,
   agents,
   background,
   branch,
@@ -662,7 +660,6 @@ export function getCommand(commandName: string, commands: Command[]): Command {
  */
 const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   'add-dir': 'commands.addDir',
-  advisor: 'commands.advisor',
   agents: 'commands.agents',
   background: 'commands.bg',
   batch: 'commands.batch',

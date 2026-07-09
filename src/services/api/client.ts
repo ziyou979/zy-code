@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto'
 import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import OpenAI from 'openai'
+import { getProviderForModel } from 'src/services/model/model.js'
 import { getProviderEntry } from 'src/services/model/providerRegistry.js'
 import {
-  getAPIProvider,
   getSettingsBaseUrl,
   isAnthropicBaseUrl,
   isAnthropicProvider,
@@ -104,9 +104,15 @@ export async function getAnthropicClient({
     defaultHeaders['x-anthropic-additional-protection'] = 'true'
   }
 
+  // ── Registry-driven providers ──────────────────────────────────────────
+  // Handles env-or-default (dashscope, zhipu, kimi), preconfigured (deepseek,
+  // siliconflow, etc.), and generic — all share the same client creation logic.
+  const apiProvider = getProviderForModel(model)
+  const registryEntry = getProviderEntry(apiProvider)
+
   // 始终配置 API 密钥 header（无订阅上下文）
-  await configureApiKeyHeaders(defaultHeaders, getIsNonInteractiveSession())
-  const resolvedFetch = buildFetch(fetchOverride, source)
+  await configureApiKeyHeaders(defaultHeaders, getIsNonInteractiveSession(), apiProvider)
+  const resolvedFetch = buildFetch(fetchOverride, source, apiProvider)
   const ARGS = {
     defaultHeaders,
     maxRetries,
@@ -122,12 +128,6 @@ export async function getAnthropicClient({
     }),
     // biome-ignore lint/suspicious/noExplicitAny: 构造中间对象，需适配多 provider SDK
   } as any
-  // ── Registry-driven providers ──────────────────────────────────────────
-  // Handles env-or-default (dashscope, zhipu, kimi), preconfigured (deepseek,
-  // siliconflow, etc.), and generic — all share the same client creation logic.
-  const apiProvider = getAPIProvider()
-  const registryEntry = getProviderEntry(apiProvider)
-
   // 处理有默认值的 provider（endpointType 包含 'default'）
   if (
     registryEntry &&
@@ -286,7 +286,7 @@ export async function getOpenAIClient(options?: {
   maxRetries?: number
   model?: string
 }): Promise<OpenAI> {
-  const apiProvider = getAPIProvider()
+  const apiProvider = getProviderForModel(options?.model)
   const registryEntry = getProviderEntry(apiProvider)
 
   // ── Headers（与 getAnthropicClient 保持一致）──────────────────────────────────
@@ -393,7 +393,7 @@ export async function getGoogleClient(options?: {
   baseURL?: string
   model?: string
 }): Promise<{ client: GoogleGenerativeAI; baseURL: string }> {
-  const apiProvider = getAPIProvider()
+  const apiProvider = getProviderForModel(options?.model)
   const registryEntry = getProviderEntry(apiProvider)
 
   // ── API Key ────────────────────────────────────────────────────────────
@@ -463,9 +463,11 @@ export async function getGoogleClient(options?: {
 async function configureApiKeyHeaders(
   headers: Record<string, string>,
   isNonInteractiveSession: boolean,
+  provider?: string,
 ): Promise<void> {
   const token =
-    process.env.ANTHROPIC_AUTH_TOKEN || (await getApiKeyFromApiKeyHelper(isNonInteractiveSession))
+    process.env.ANTHROPIC_AUTH_TOKEN ||
+    (await getApiKeyFromApiKeyHelper(isNonInteractiveSession, provider))
   if (token) {
     headers.Authorization = `Bearer ${token}`
   }
@@ -503,12 +505,13 @@ export const CLIENT_REQUEST_ID_HEADER = 'x-client-request-id'
 function buildFetch(
   fetchOverride: ClientOptions['fetch'],
   source: string | undefined,
+  provider: string,
 ): ClientOptions['fetch'] {
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
   const inner = fetchOverride ?? globalThis.fetch
   // 仅发送到直接 API——Bedrock/Vertex/Foundry 不记录此
   // 未知 header 有被严格代理拒绝的风险（inc-4029 类）
-  const injectClientRequestId = getAPIProvider() === 'anthropic' && isAnthropicBaseUrl()
+  const injectClientRequestId = provider === 'anthropic' && isAnthropicBaseUrl()
   return (input, init) => {
     // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
     const headers = new Headers((init as RequestInit | undefined)?.headers)
@@ -570,7 +573,7 @@ export function getLLMAdapter(options?: {
   anthropicClient?: Anthropic
   model?: string
 }): LLMAdapter {
-  const apiProvider = getAPIProvider()
+  const apiProvider = getProviderForModel(options?.model)
   const model = options?.model
 
   // Google 原生格式优先检查（最具体）

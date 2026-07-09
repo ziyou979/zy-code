@@ -1,18 +1,16 @@
 import { feature } from 'bun:bundle'
 import { Command, Option } from '@commander-js/extra-typings'
-import { canUserConfigureAdvisor } from '../../utils/advisor.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 
 /**
  * 运行时 / feature-gate 决定是否注册的根命令选项。
  *
  * 与 cli/options/* 中其它"静态"组不同，这里的 .option() 是否生效依赖
- * `canUserConfigureAdvisor()` / `isInternalBuild()` / `feature(X)` 等只能
+ * `isInternalBuild()` / `feature(X)` 等只能
  * 在运行时计算的判定，所以独立成一组、在 root .action() 之后调用。
  *
  * 包含的选项分布：
  * - worktree：--worktree、--tmux
- * - 顾问（条件）：--advisor
  * - INNER-ONLY：--delegate-permissions、--dangerously-skip-permissions-with-classifiers、--afk、--tasks、--agent-teams
  * - feature gate 系：--enable-auto-mode、--proactive、--messaging-socket-path、--brief、--assistant、--channels、--dangerously-load-development-channels
  * - 队友身份（hidden）：--agent-id、--agent-name、--team-name、--agent-color、--plan-mode-required、--parent-session-id、--teammate-mode、--agent-type
@@ -31,14 +29,6 @@ export function applyRuntimeOptions(program: Command<any, any, any>): void {
     '--tmux',
     'Create a tmux session for the worktree (requires --worktree). Uses iTerm2 native panes when available; use --tmux=classic for traditional tmux.',
   )
-  if (canUserConfigureAdvisor()) {
-    program.addOption(
-      new Option(
-        '--advisor <model>',
-        'Enable the server-side advisor tool with the specified model (alias or full ID).',
-      ).hideHelp(),
-    )
-  }
   if (isInternalBuild()) {
     program.addOption(
       new Option(

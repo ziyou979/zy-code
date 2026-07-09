@@ -1,5 +1,4 @@
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/index.js'
-import { getActiveOAuthProviderInfo } from '../oauth/oauthStorage.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   getLocalModelApiFormat,
@@ -7,6 +6,7 @@ import {
   getLocalModelCosts,
   parseTokenCount,
 } from '../../utils/settings/localModelCapabilities.js'
+import { getActiveOAuthProviderInfo } from '../oauth/oauthStorage.js'
 import { type ApiFormat } from './apiFormat.js'
 import {
   DEFAULT_OPENAI_THINKING_ATTR,
@@ -134,9 +134,7 @@ export function isAnthropicModel(model: string): boolean {
  *
  * 添加新 provider 时，请修改 providerRegistry.ts 而非此文件。
  */
-export type ProviderCapability =
-  | 'context_management' // 上下文管理 beta（Anthropic 特有，后续由框架层实现）
-  | 'advisor' // advisor 工具支持（Anthropic 特有）
+export type ProviderCapability = 'context_management' // 上下文管理 beta（Anthropic 特有，后续由框架层实现）
 
 /** 按 provider 的能力声明 —— 从 PROVIDER_REGISTRY 自动生成。 */
 const PROVIDER_CAPABILITIES: Record<string, Set<ProviderCapability>> = Object.fromEntries(
@@ -302,6 +300,7 @@ export function getModelMaxInputTokens(model: string): number | undefined {
 export function getModelCostsFromSettings(
   model: string,
   currentInputTokens?: number,
+  provider?: APIProvider,
 ):
   | {
       inputTokens: number
@@ -312,7 +311,16 @@ export function getModelCostsFromSettings(
       currency: string
     }
   | undefined {
-  return getLocalModelCosts(model, currentInputTokens)
+  return getLocalModelCosts(
+    model,
+    currentInputTokens,
+    provider
+      ? {
+          provider,
+          apiFormat: getEffectiveApiFormat(provider, model),
+        }
+      : undefined,
+  )
 }
 
 /**
@@ -339,4 +347,3 @@ export function getProviderAttr(provider?: string, model?: string): OpenAiAttr |
 
   return entry.openaiAttr
 }
-

@@ -399,8 +399,6 @@ export type AppState = DeepImmutable<{
   denialTracking?: DenialTrackingState
   // 活跃的覆盖层（Select 对话框等），用于 Escape 键协调
   activeOverlays: ReadonlySet<string>
-  // 服务端 advisor tool 的 advisor 模型（undefined = 禁用）。
-  advisorModel?: string
   // 投入程度值
   effortValue?: EffortLevel
   // 在 launchUltraplan 中同步设置，在 detached 流程开始之前。

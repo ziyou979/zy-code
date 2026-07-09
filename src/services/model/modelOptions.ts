@@ -6,8 +6,11 @@ import { getInitialSettings } from '../../utils/settings/settings.js'
 import {
   getDefaultMainLoopModelSetting,
   getMarketingNameForModel,
+  getProviderForModel,
   getUserSpecifiedModelSetting,
   type ModelSetting,
+  type ModelReferenceInput,
+  parseUserSpecifiedModel,
   renderDefaultModelSetting,
 } from './model.js'
 import { isModelAllowed } from './modelAllowlist.js'
@@ -42,15 +45,24 @@ function getTierOption(tier: string): ModelOption | undefined {
   if (!tierModel) {
     return undefined
   }
+  const resolvedModel = resolveModelReferenceModel(tierModel)
+  if (!resolvedModel) {
+    return undefined
+  }
 
-  const cap = getLocalModelCapability(tierModel)
+  const cap = getLocalModelCapability(resolvedModel)
+  const provider = getProviderForModel(resolvedModel)
 
   return {
     value: tier,
-    label: cap?.pattern ?? tierModel,
-    description: `${tierModel}`,
-    descriptionForModel: `${tierModel}`,
+    label: cap?.pattern ?? resolvedModel,
+    description: `${provider} · ${resolvedModel}`,
+    descriptionForModel: `${provider} · ${resolvedModel}`,
   }
+}
+
+function resolveModelReferenceModel(value: ModelReferenceInput): string | undefined {
+  return typeof value === 'string' ? value : value.model
 }
 
 function getStandardOption(): ModelOption {
@@ -94,7 +106,11 @@ function getModelOptionsBase(): ModelOption[] {
     const customModelOptions: ModelOption[] = customModels.map((m) => ({
       value: m.alias,
       label: m.label ?? m.alias,
-      description: m.description ?? tSync('modelOption.customModelDesc', { model: m.model }),
+      description:
+        m.description ??
+        tSync('modelOption.customModelDesc', {
+          model: `${m.provider ?? getProviderForModel(m.model)} · ${m.model}`,
+        }),
     }))
     return [getDefaultOptionForUser(), ...customModelOptions]
   }
@@ -151,7 +167,8 @@ export function getModelOptions(): ModelOption[] {
     customModel = initialMainLoopModel
   }
   if (customModel !== null && !options.some((opt) => opt.value === customModel)) {
-    const knownOption = getKnownModelOption(customModel)
+    const resolvedCustomModel = parseUserSpecifiedModel(customModel)
+    const knownOption = getKnownModelOption(resolvedCustomModel)
     if (knownOption) {
       options.push(knownOption)
     } else {

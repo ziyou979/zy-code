@@ -3,13 +3,11 @@ import { tSync } from '../i18n/index.js'
 import { isUltrathinkEnabled, modelSupportsThinking } from './thinking.js'
 import { getInitialSettings } from './settings/settings.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
-import {
-  getAPIProvider,
-  getProviderAttr,
-} from 'src/services/model/providers.js'
+import { getEffectiveApiFormat, getProviderAttr } from 'src/services/model/providers.js'
 import {
   getDefaultMainLoopModel,
   getMainLoopModel,
+  getProviderForModel,
   parseUserSpecifiedModel,
 } from 'src/services/model/model.js'
 import {
@@ -61,6 +59,13 @@ export const EFFORT_LEVEL_RANK: ReadonlyMap<EffortLevel, number> = new Map<Effor
 /** 按强度排序的档位列表（由弱到强），从 EFFORT_LEVEL_RANK 派生 */
 export const EFFORT_LEVEL_ORDER: readonly EffortLevel[] = [...EFFORT_LEVEL_RANK.keys()]
 
+function getModelCapabilityContext(model: string, provider: string = getProviderForModel(model)) {
+  return {
+    provider,
+    apiFormat: getEffectiveApiFormat(provider, model),
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Provider 映射（内部档位 → 各家 API 参数值）
 // 映射由模型级 model-capabilities.json 的 effort.map 提供，不再走 provider 级配置。
@@ -88,7 +93,7 @@ export function mapEffortToProvider(
   const key = effort === 'orchestrate' || effort === 'ultra' ? 'extreme' : effort
   // 模型级映射（model-capabilities.json 的 effort.map）
   if (model) {
-    const modelMap = getLocalModelEffortMap(model)
+    const modelMap = getLocalModelEffortMap(model, getModelCapabilityContext(model, providerId))
     if (modelMap && key in modelMap) {
       return modelMap[key]!
     }
@@ -108,14 +113,16 @@ export function mapEffortToProvider(
  * 自动追加 'ultra' 档位（最强思考 + 回传 thinking 块）。
  */
 export function getModelEffortLevels(model: string): EffortLevel[] {
+  const provider = getProviderForModel(model)
+  const context = getModelCapabilityContext(model, provider)
   // 1. 本地配置覆盖
-  const local = getLocalModelEffortLevels(model)
+  const local = getLocalModelEffortLevels(model, context)
   if (local && local.length > 0) {
     const levels = [...local] as EffortLevel[]
 
     // preserve: "optional" 需要 ultra 来触发 preserve_thinking 回传
     if (!levels.includes('ultra')) {
-      const preserve = getLocalModelPreserveThinking(model)
+      const preserve = getLocalModelPreserveThinking(model, context)
       if (preserve === 'optional') {
         levels.push('ultra')
       }
@@ -125,7 +132,7 @@ export function getModelEffortLevels(model: string): EffortLevel[] {
   }
 
   // 2. provider 有 openaiAttr.thinking → 仅支持 toggle 模式
-  const providerAttr = getProviderAttr()
+  const providerAttr = getProviderAttr(provider, model)
   if (providerAttr?.thinking) {
     return ['off', 'on']
   }

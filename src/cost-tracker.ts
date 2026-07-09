@@ -34,10 +34,11 @@ import {
   logEvent,
 } from './services/analytics/index.js'
 import type { TokenUsage as Usage } from './types/llm.js'
-import { getAdvisorUsage } from './utils/advisor.js'
+import type { Message } from './types/message.js'
 import { getCurrentProjectConfig, saveCurrentProjectConfig } from './utils/config.js'
 import { getContextWindowForModel, getModelMaxOutputTokens } from './utils/context.js'
 import { formatDuration, formatNumber } from './utils/format.js'
+import { SYNTHETIC_MODEL } from './utils/messages/constants.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
 import { calculateCost, getCurrencySymbol, getModelCurrency } from './utils/modelCost.js'
 
@@ -74,6 +75,104 @@ type StoredCostState = {
   lastDuration: number | undefined
   modelUsage: { [modelName: string]: ModelUsage } | undefined
   totalCostByCurrency?: Record<string, number>
+}
+
+function normalizeUsage(usage: Usage): Usage {
+  return {
+    ...usage,
+    inputTokens: usage.inputTokens ?? 0,
+    outputTokens: usage.outputTokens ?? 0,
+    cacheReadInputTokens: usage.cacheReadInputTokens ?? 0,
+    cacheCreationInputTokens: usage.cacheCreationInputTokens ?? 0,
+  }
+}
+
+function getWebSearchRequestsFromUsage(usage: Usage): number {
+  return usage.extras?.webSearchRequests ?? 0
+}
+
+function createEmptyStoredCostState(): StoredCostState {
+  return {
+    totalCost: 0,
+    totalAPIDuration: 0,
+    totalAPIDurationWithoutRetries: 0,
+    totalToolDuration: 0,
+    totalLinesAdded: 0,
+    totalLinesRemoved: 0,
+    lastDuration: undefined,
+    modelUsage: {},
+    totalCostByCurrency: { CNY: 0, USD: 0 },
+  }
+}
+
+function addUsageToStoredCostState(state: StoredCostState, model: string, rawUsage: Usage): void {
+  const usage = normalizeUsage(rawUsage)
+  const cost = calculateCost(model, usage)
+  const currency = getModelCurrency(model)
+  const modelUsage = state.modelUsage ?? {}
+  const current = modelUsage[model] ?? {
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheReadInputTokens: 0,
+    cacheCreationInputTokens: 0,
+    webSearchRequests: 0,
+    cost: 0,
+    currency,
+    contextWindow: getContextWindowForModel(model),
+    maxOutputTokens: getModelMaxOutputTokens(model).default,
+  }
+
+  current.inputTokens += usage.inputTokens
+  current.outputTokens += usage.outputTokens
+  current.cacheReadInputTokens += usage.cacheReadInputTokens ?? 0
+  current.cacheCreationInputTokens += usage.cacheCreationInputTokens ?? 0
+  current.webSearchRequests += getWebSearchRequestsFromUsage(usage)
+  current.cost += cost
+  current.currency = currency
+  current.contextWindow = getContextWindowForModel(model)
+  current.maxOutputTokens = getModelMaxOutputTokens(model).default
+  modelUsage[model] = current
+  state.modelUsage = modelUsage
+
+  state.totalCost += cost
+  state.totalCostByCurrency ??= { CNY: 0, USD: 0 }
+  state.totalCostByCurrency[currency] = (state.totalCostByCurrency[currency] ?? 0) + cost
+}
+
+/**
+ * 从 transcript 中的 assistant usage 重建费用状态。
+ * 这是 sessionCosts 缓存缺失时的兜底，避免 /resume 后状态栏计费从零重新开始。
+ */
+export function reconstructCostStateFromMessages(
+  messages: readonly Message[],
+): StoredCostState | undefined {
+  const state = createEmptyStoredCostState()
+  let hasUsage = false
+
+  for (const message of messages) {
+    if (message.type !== 'assistant') {
+      continue
+    }
+    const usage = message.message.usage
+    const model = message.message.model
+    if (!usage || !model || model === SYNTHETIC_MODEL) {
+      continue
+    }
+    hasUsage = true
+    addUsageToStoredCostState(state, model, usage)
+  }
+
+  return hasUsage ? state : undefined
+}
+
+export function getRestorableSessionCosts(
+  sessionId: string,
+  messages?: readonly Message[],
+): StoredCostState | undefined {
+  return (
+    getStoredSessionCosts(sessionId) ??
+    (messages ? reconstructCostStateFromMessages(messages) : undefined)
+  )
 }
 
 /**
@@ -145,8 +244,11 @@ export function getStoredSessionCosts(sessionId: string): StoredCostState | unde
  * 仅在会话 ID 与上次保存的会话匹配时才恢复。
  * @returns 如果费用状态已恢复则返回 true，否则返回 false
  */
-export function restoreCostStateForSession(sessionId: string): boolean {
-  const data = getStoredSessionCosts(sessionId)
+export function restoreCostStateForSession(
+  sessionId: string,
+  messages?: readonly Message[],
+): boolean {
+  const data = getRestorableSessionCosts(sessionId, messages)
   if (!data) {
     return false
   }
@@ -335,8 +437,7 @@ function addToTotalModelUsage(
   modelUsage.outputTokens += usage.outputTokens
   modelUsage.cacheReadInputTokens += usage.cacheReadInputTokens ?? 0
   modelUsage.cacheCreationInputTokens += usage.cacheCreationInputTokens ?? 0
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  modelUsage.webSearchRequests += (usage as any).server_tool_use?.web_search_requests ?? 0
+  modelUsage.webSearchRequests += usage.extras?.webSearchRequests ?? 0
   modelUsage.cost += cost
   modelUsage.currency = currency
   modelUsage.contextWindow = getContextWindowForModel(model)
@@ -367,25 +468,5 @@ export function addToTotalSessionCost(
     type: 'cacheCreation',
   })
 
-  let totalCost = cost
-  for (const advisorUsage of getAdvisorUsage(usage)) {
-    const advisorCost = calculateCost(advisorUsage.model, advisorUsage)
-    const advisorCurrency = getModelCurrency(advisorUsage.model)
-    logEvent('zy_advisor_tool_token_usage', {
-      advisor_model:
-        advisorUsage.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      input_tokens: advisorUsage.inputTokens,
-      output_tokens: advisorUsage.outputTokens,
-      cache_read_input_tokens: advisorUsage.cacheReadInputTokens ?? 0,
-      cache_creation_input_tokens: advisorUsage.cacheCreationInputTokens ?? 0,
-      cost_usd_micros: Math.round(advisorCost * 1_000_000),
-    })
-    totalCost += addToTotalSessionCost(
-      advisorCost,
-      advisorUsage,
-      advisorUsage.model,
-      advisorCurrency,
-    )
-  }
-  return totalCost
+  return cost
 }

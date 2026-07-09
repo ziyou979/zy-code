@@ -66,7 +66,6 @@ export interface RootActionOptions {
   thinking?: 'adaptive' | 'enabled' | 'disabled'
   maxThinkingTokens?: number
   effort?: string
-  advisor?: string
 
   // 输入/输出
   inputFormat?: string

@@ -1,10 +1,10 @@
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
-import { getDefaultMainLoopModelSetting } from 'src/services/model/model.js'
+import { getDefaultMainLoopModelSetting, getProviderForModel } from 'src/services/model/model.js'
 import { getStaticPricingForModel } from 'src/services/model/modelCapabilities.js'
 import { setHasUnknownModelCost } from '../bootstrap/state.js'
-import { getCurrencySymbol as getCurrencySymbolFromCurrency } from '../types/currency.js'
 import type { Currency } from '../types/currency.js'
+import { getCurrencySymbol as getCurrencySymbolFromCurrency } from '../types/currency.js'
 import type { TokenUsage as Usage } from '../types/llm.js'
 
 export type ModelCosts = {
@@ -25,7 +25,8 @@ export function getModelCosts(model: string, usage: Usage): ModelCosts {
   // inputTokens 已包含 cacheRead 和 cacheCreation 的 token 数，
   // 直接用它作为阶梯定价的判断基准即可
   const currentInput = usage.inputTokens
-  const pricing = getStaticPricingForModel(model, currentInput)
+  const provider = getProviderForModel(model)
+  const pricing = getStaticPricingForModel(model, currentInput, provider)
   if (pricing) {
     return {
       inputTokens: pricing.cost_input,
@@ -38,7 +39,9 @@ export function getModelCosts(model: string, usage: Usage): ModelCosts {
   }
 
   const defaultModel = getDefaultMainLoopModelSetting()
-  const defaultPricing = defaultModel ? getStaticPricingForModel(defaultModel) : null
+  const defaultPricing = defaultModel
+    ? getStaticPricingForModel(defaultModel, undefined, getProviderForModel(defaultModel))
+    : null
   if (defaultPricing) {
     return {
       inputTokens: defaultPricing.cost_input,

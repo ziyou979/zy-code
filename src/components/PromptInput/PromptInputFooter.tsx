@@ -140,7 +140,14 @@ function PromptInputFooter({
             onClickSuggestion,
           }
         : null,
-    [isFullscreen, suggestions, selectedSuggestion, maxColumnWidth, onAcceptSuggestion, onClickSuggestion],
+    [
+      isFullscreen,
+      suggestions,
+      selectedSuggestion,
+      maxColumnWidth,
+      onAcceptSuggestion,
+      onClickSuggestion,
+    ],
   )
   useSetPromptOverlay(overlayData)
   if (suggestions.length && !isFullscreen) {

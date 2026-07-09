@@ -268,12 +268,6 @@ export function allToolsResolved(msg: RenderableMessage, resolvedToolUseIDs: Set
     const toolIds = getToolUseIdsFromCollapsedGroup(msg as CollapsedReadSearchGroup)
     return toolIds.every((id) => resolvedToolUseIDs.has(id))
   }
-  if (msg.type === 'assistant') {
-    const block = (msg as AssistantMessage).message.content[0]
-    if ((block as { type: string }).type === 'server_tool_use') {
-      return resolvedToolUseIDs.has((block as { id: string }).id)
-    }
-  }
   const toolUseID = getToolUseID(msg as AssistantMessage)
   return !toolUseID || resolvedToolUseIDs.has(toolUseID)
 }
