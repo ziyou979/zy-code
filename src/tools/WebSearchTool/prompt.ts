@@ -1,21 +1,23 @@
 import { getLocalMonthYear } from '../../constants/common.js'
 
+
 export const WEB_SEARCH_TOOL_NAME = 'WebSearch'
 
 export function getWebSearchPrompt(): string {
   const currentMonthYear = getLocalMonthYear()
   return `
-- Allows ZY to search the web and use the results to inform responses
+- Allows ZY code to search the web and use the results to inform responses
 - Provides up-to-date information for current events and recent data
 - Returns search result information formatted as search result blocks, including links as markdown hyperlinks
 - Use this tool for accessing information beyond the AI's knowledge cutoff
 - Searches are performed automatically by ZY Code using the configured search service
 
 CRITICAL REQUIREMENT - You MUST follow this:
-  - After answering the user's question, you MUST include a "Sources:" section at the end of your response
-  - In the Sources section, list all relevant URLs from the search results as markdown hyperlinks: [Title](URL)
+  - After answering the user's question, you MUST include a sources section at the end of your response
+  - In the sources section, list all relevant URLs from the search results as markdown hyperlinks: [Title](URL)
   - This is MANDATORY - never skip including sources in your response
-  - Example format:
+  - The heading text for the sources section should match the language of your response: use "Sources:" for English, "来源：" for Chinese, and an appropriate equivalent for other languages
+  - Example format (English):
 
     [Your answer here]
 

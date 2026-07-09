@@ -57,7 +57,11 @@
       "Read(//d/camofox-browser/**)",
       "Bash(docker exec:*)",
       "WebFetch(domain:www.tianqi.com)",
-      "WebFetch(domain:deepwiki.com)"
+      "WebFetch(domain:deepwiki.com)",
+      "WebFetch(domain:openserp.org)",
+      "Read(//e/ProjectCollection/TSProjects/zy-code/**)",
+      "Bash(/dev/null echo:*)",
+      "WebFetch(domain:code.claude.com)"
     ]
   }
 }

@@ -5,10 +5,32 @@ import { WebSearchTool } from '../../../src/tools/WebSearchTool/WebSearchTool.js
 
 const realWebSearchTest = process.env.ZY_RUN_REAL_WEB_SEARCH_TEST === '1' ? test : test.skip
 
-function createSearXNGJson(
+/**
+ * 构造 OpenSerp /mega/search 格式的模拟响应。
+ */
+function createOpenSerpResponse(
   results: Array<{ title: string; url: string; content?: string }>,
 ): string {
-  return JSON.stringify({ results })
+  return JSON.stringify({
+    query: { text: 'test' },
+    meta: {
+      took_ms: 150,
+      engines_failed: [],
+      version: '2.1',
+    },
+    results: results.map((r, i) => ({
+      id: `s_test_${i}`,
+      rank: i + 1,
+      type: 'organic',
+      title: r.title,
+      url: r.url,
+      snippet: r.content ?? '',
+      domain: new URL(r.url).hostname,
+      engine: 'bing',
+      position: { absolute: i + 1 },
+    })),
+    pagination: { page: 1, has_more: false },
+  })
 }
 
 describe('WebSearchTool', () => {
@@ -47,7 +69,7 @@ describe('WebSearchTool', () => {
   test('uses builtin provider and respects max_results', async () => {
     const originalFetch = globalThis.fetch
     const progressEvents: unknown[] = []
-    const json = createSearXNGJson([
+    const json = createOpenSerpResponse([
       {
         title: '杭州天气',
         url: 'https://example.com/weather',
@@ -163,10 +185,13 @@ describe('WebSearchTool', () => {
     // isEnabled() 还检查 getMainLoopModel()，所以不直接测试其返回值
   })
 
-  test('search handles no results gracefully', async () => {
+  test('search handles no results gracefully — empty array', async () => {
     const originalFetch = globalThis.fetch
+    // OpenSerp 返回空结果时 results 为空数组
+    const json = createOpenSerpResponse([])
+
     globalThis.fetch = (async () =>
-      new Response(JSON.stringify({ results: [] }), { status: 200 })) as unknown as typeof fetch
+      new Response(json, { status: 200 })) as unknown as typeof fetch
 
     try {
       const parsedInput = WebSearchTool.inputSchema.parse({ query: 'no results query' })
@@ -203,7 +228,7 @@ describe('WebSearchTool', () => {
       )
 
       expect(output.data.query).toBe('error query')
-      expect(output.data.results[0]).toContain('Web search error')
+      expect(output.data.results[0]).toContain('No results found')
     } finally {
       globalThis.fetch = originalFetch
     }
@@ -211,7 +236,7 @@ describe('WebSearchTool', () => {
 
   test('respects blocked_domains in search', async () => {
     const originalFetch = globalThis.fetch
-    const json = createSearXNGJson([
+    const json = createOpenSerpResponse([
       { title: 'Good', url: 'https://good.com', content: 'OK' },
       { title: 'Blocked', url: 'https://evil.com/page', content: 'No' },
     ])
@@ -237,6 +262,36 @@ describe('WebSearchTool', () => {
         expect(firstResult.content).toHaveLength(1)
         expect(firstResult.content[0].url).toBe('https://good.com')
       }
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('search handles OpenSerp 502 (all engines failed) gracefully', async () => {
+    const originalFetch = globalThis.fetch
+    // OpenSerp 在所有引擎都失败时返回 502
+    globalThis.fetch = (async () =>
+      new Response(
+        JSON.stringify({
+          error: 'all_engines_failed',
+          message: 'all selected engines failed; google: blocked',
+          meta: { engine_errors: [{ engine: 'google', error: 'blocked' }] },
+        }),
+        { status: 502 },
+      )) as unknown as typeof fetch
+
+    try {
+      const parsedInput = WebSearchTool.inputSchema.parse({ query: 'blocked query' })
+      const output = await WebSearchTool.call(
+        parsedInput,
+        undefined as never,
+        undefined as never,
+        undefined as never,
+        undefined,
+      )
+
+      expect(output.data.query).toBe('blocked query')
+      expect(output.data.results[0]).toBe('No results found for this query.')
     } finally {
       globalThis.fetch = originalFetch
     }

@@ -4,8 +4,9 @@ import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import type { ProgressMessage } from '../../types/message.js'
+import type { WebSearchProgress } from '../../types/tools.js'
 import { truncate } from '../../utils/format.js'
-import type { Output, SearchResult, WebSearchProgress } from './WebSearchTool.js'
+import type { Output, SearchResult } from './WebSearchTool.js'
 
 function getSearchSummary(results: (SearchResult | string | null | undefined)[]): {
   searchCount: number
