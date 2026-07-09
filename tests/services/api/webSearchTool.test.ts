@@ -41,17 +41,6 @@ describe('WebSearchTool', () => {
     expect(result.errorCode).toBe(1)
   })
 
-  test('rejects simultaneous allowed and blocked domains', async () => {
-    const result = await WebSearchTool.validateInput({
-      query: '杭州天气',
-      allowed_domains: ['example.com'],
-      blocked_domains: ['example.org'],
-    })
-
-    expect(result.result).toBe(false)
-    expect(result.errorCode).toBe(2)
-  })
-
   test('accepts max_results and maxResults numeric strings', () => {
     const snakeCaseInput = WebSearchTool.inputSchema.parse({
       query: '杭州天气',
@@ -234,39 +223,6 @@ describe('WebSearchTool', () => {
     }
   })
 
-  test('respects blocked_domains in search', async () => {
-    const originalFetch = globalThis.fetch
-    const json = createOpenSerpResponse([
-      { title: 'Good', url: 'https://good.com', content: 'OK' },
-      { title: 'Blocked', url: 'https://evil.com/page', content: 'No' },
-    ])
-
-    globalThis.fetch = (async () => new Response(json, { status: 200 })) as unknown as typeof fetch
-
-    try {
-      const parsedInput = WebSearchTool.inputSchema.parse({
-        query: 'test',
-        blocked_domains: ['evil.com'],
-      })
-      const output = await WebSearchTool.call(
-        parsedInput,
-        undefined as never,
-        undefined as never,
-        undefined as never,
-        undefined,
-      )
-
-      const firstResult = output.data.results[0]
-      expect(typeof firstResult).toBe('object')
-      if (typeof firstResult !== 'string') {
-        expect(firstResult.content).toHaveLength(1)
-        expect(firstResult.content[0].url).toBe('https://good.com')
-      }
-    } finally {
-      globalThis.fetch = originalFetch
-    }
-  })
-
   test('search handles OpenSerp 502 (all engines failed) gracefully', async () => {
     const originalFetch = globalThis.fetch
     // OpenSerp 在所有引擎都失败时返回 502
@@ -292,6 +248,104 @@ describe('WebSearchTool', () => {
 
       expect(output.data.query).toBe('blocked query')
       expect(output.data.results[0]).toBe('No results found for this query.')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('accepts date_range parameter', () => {
+    const parsed = WebSearchTool.inputSchema.parse({
+      query: 'news',
+      date_range: 'past_week',
+    })
+    expect(parsed.query).toBe('news')
+    expect(parsed.date_range).toBe('past_week')
+  })
+
+  test('rejects simultaneous allowed and blocked domains', async () => {
+    const result = await WebSearchTool.validateInput({
+      query: 'test',
+      allowed_domains: ['example.com'],
+      blocked_domains: ['example.org'],
+    })
+    expect(result.result).toBe(false)
+    expect(result.errorCode).toBe(2)
+  })
+
+  test('appends site: for allowed_domains in query', async () => {
+    let requestedUrl = ''
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async (url: string) => {
+      requestedUrl = url
+      return new Response(JSON.stringify({
+        query: { text: 'test' },
+        meta: { took_ms: 100 },
+        results: [],
+      }), { status: 200 })
+    }) as unknown as typeof fetch
+
+    try {
+      await WebSearchTool.call(
+        { query: 'search terms', allowed_domains: ['good.com'] },
+        undefined as never,
+        undefined as never,
+        undefined as never,
+        undefined,
+      )
+      expect(decodeURIComponent(requestedUrl)).toContain('site:good.com')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('appends -site: for blocked_domains in query', async () => {
+    let requestedUrl = ''
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async (url: string) => {
+      requestedUrl = url
+      return new Response(JSON.stringify({
+        query: { text: 'test' },
+        meta: { took_ms: 100 },
+        results: [],
+      }), { status: 200 })
+    }) as unknown as typeof fetch
+
+    try {
+      await WebSearchTool.call(
+        { query: 'search terms', blocked_domains: ['evil.com'] },
+        undefined as never,
+        undefined as never,
+        undefined as never,
+        undefined,
+      )
+      expect(decodeURIComponent(requestedUrl)).toContain('-site:evil.com')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('uses AND between multiple blocked domains', async () => {
+    let requestedUrl = ''
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async (url: string) => {
+      requestedUrl = url
+      return new Response(JSON.stringify({
+        query: { text: 'test' },
+        meta: { took_ms: 100 },
+        results: [],
+      }), { status: 200 })
+    }) as unknown as typeof fetch
+
+    try {
+      await WebSearchTool.call(
+        { query: 'search terms', blocked_domains: ['a.com', 'b.com'] },
+        undefined as never,
+        undefined as never,
+        undefined as never,
+        undefined,
+      )
+      // URL query 中 + 表示空格，匹配 AND 分隔的多个 -site:
+      expect(requestedUrl).toMatch(/-site%3Aa\.com\+AND\+-site%3Ab\.com/)
     } finally {
       globalThis.fetch = originalFetch
     }

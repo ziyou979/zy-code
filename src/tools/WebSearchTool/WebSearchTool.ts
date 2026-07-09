@@ -38,6 +38,10 @@ const inputSchema = lazySchema(() =>
       .describe('Never include search results from these domains'),
     max_results: maxResultsSchema(),
     maxResults: maxResultsSchema(),
+    date_range: z
+      .string()
+      .optional()
+      .describe('Date range filter (e.g., "20250101..20250105", or "past_day", "past_week", "past_month", "past_year")'),
   }),
 )
 type InputSchema = ReturnType<typeof inputSchema>
@@ -141,20 +145,32 @@ export const WebSearchTool = buildTool({
   },
   async call(input, _context, _canUseTool, _parentMessage, onProgress) {
     const startTime = performance.now()
-    const { query, allowed_domains, blocked_domains } = input
+    const { query, allowed_domains, blocked_domains, date_range } = input
     const maxResults = getMaxResults(input)
+
+    // 域名过滤器转为 site:/-site: 拼入 query，搜索引擎原生处理
+    let effectiveQuery = query
+    if (allowed_domains?.length) {
+      effectiveQuery = `${query} ${allowed_domains.map((d) => `site:${d}`).join(' OR ')}`
+    } else if (blocked_domains?.length) {
+      effectiveQuery = `${query} ${blocked_domains.map((d) => `-site:${d}`).join(' AND ')}`
+    }
 
     if (onProgress) {
       onProgress({
         toolUseID: 'search-start',
-        data: { type: 'query_update', query },
+        data: { type: 'query_update', query: effectiveQuery },
       })
     }
 
     try {
-      logForDebugging(`[WebSearch] query="${query}"`)
+      logForDebugging(`[WebSearch] query="${effectiveQuery}"`)
 
-      const searchResults = await executeSearch(query, allowed_domains, blocked_domains, maxResults)
+      const searchResults = await executeSearch({
+        query: effectiveQuery,
+        maxResults,
+        date: date_range,
+      })
 
       logForDebugging(
         `[WebSearch] Got ${searchResults.length} results in ${((performance.now() - startTime) / 1000).toFixed(2)}s`,
@@ -271,28 +287,69 @@ const OPENSERP_BASE = 'http://127.0.0.1:7000'
 /** 默认多引擎组合，按可用性与覆盖度排序 */
 const MEGA_ENGINES = ['bing', 'baidu', 'ecosia', 'duck', 'google']
 
+const RETRYABLE = new Set([408, 429, 500, 502, 503])
+const MAX_RETRIES = 4
+
+/**
+ * 带指数退避重试的 fetch 包装，参考 OpenSERP 官方客户端模式。
+ * - 重试状态码：408（超时）、429（限流）、500/502/503（服务端）
+ * - 优先使用 Retry-After 响应头，否则指数退避 + 随机抖动
+ */
+async function fetchWithRetry(
+  url: string,
+  maxAttempts = MAX_RETRIES,
+): Promise<Response> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) })
+
+    if (res.ok) return res
+
+    if (!RETRYABLE.has(res.status) || attempt === maxAttempts) {
+      return res
+    }
+
+    const retryAfter = Number(res.headers.get('Retry-After') ?? 0)
+    const waitMs = retryAfter
+      ? retryAfter * 1000
+      : Math.min(2 ** attempt * 250, 8000) + Math.random() * 250
+
+    logForDebugging(
+      `[WebSearch] Retry ${attempt}/${maxAttempts} after ${res.status}, waiting ${waitMs.toFixed(0)}ms`,
+    )
+    await new Promise((resolve) => setTimeout(resolve, waitMs))
+  }
+  throw new Error('Unexpected: retry loop exhausted without returning')
+}
+
+/** OpenSERP 搜索选项 */
+interface SearchOptions {
+  query: string
+  maxResults?: number
+  date?: string
+}
+
 /**
  * 通过 OpenSerp /mega/search 执行搜索。
- * 多引擎并行聚合，支持域名过滤。
+ * 多引擎并行聚合，自动从用户设置推断语言。
  */
-async function executeSearch(
-  query: string,
-  allowedDomains?: string[],
-  blockedDomains?: string[],
-  maxResults = DEFAULT_MAX_RESULTS,
-): Promise<SearchResponseItem[]> {
+async function executeSearch(options: SearchOptions): Promise<SearchResponseItem[]> {
+  const { query, maxResults = DEFAULT_MAX_RESULTS, date } = options
+
   const params = new URLSearchParams({
     text: query,
     limit: String(Math.min(maxResults, MAX_ALLOWED_RESULTS)),
     engines: MEGA_ENGINES.join(','),
+    mode: 'balanced',
+    dedupe: 'true',
+    merge: 'true',
     filter: 'true',
     features: 'false', // 只需普通搜索结果，不需要 SERP feature
   })
 
+  if (date) params.set('date', date)
+
   try {
-    const res = await fetch(`${OPENSERP_BASE}/mega/search?${params}`, {
-      signal: AbortSignal.timeout(30_000),
-    })
+    const res = await fetchWithRetry(`${OPENSERP_BASE}/mega/search?${params}`)
 
     if (!res.ok) {
       logForDebugging(
@@ -303,27 +360,13 @@ async function executeSearch(
 
     const data = (await res.json()) as OpenSerpMegaResponse
 
-    let results: SearchResponseItem[] = data.results.map((res) => ({
-      title: res.title,
-      url: res.url,
-      content: res.snippet,
+    const searchItems: SearchResponseItem[] = data.results.map((r) => ({
+      title: r.title,
+      url: r.url,
+      content: r.snippet,
     }))
 
-    // 客户端域名过滤（OpenSerp 不支持多域名过滤器）
-    if (blockedDomains?.length || allowedDomains?.length) {
-      results = results.filter((r) => {
-        try {
-          const hostname = new URL(r.url).hostname
-          if (blockedDomains?.length && blockedDomains.some((d) => hostname.includes(d)))
-            return false
-          if (allowedDomains?.length && !allowedDomains.some((d) => hostname.includes(d)))
-            return false
-        } catch {}
-        return true
-      })
-    }
-
-    return results.slice(0, maxResults)
+    return searchItems.slice(0, maxResults)
   } catch (error) {
     logForDebugging(
       `[WebSearch] OpenSerp fetch error: ${error instanceof Error ? error.message : String(error)}`,
