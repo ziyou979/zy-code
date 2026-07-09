@@ -1044,7 +1044,12 @@ export function getAPIErrorSeverity(error: unknown): APIErrorSeverity {
     return 'retryable'
   }
 
+  // SSL/TLS 证书错误 → terminal（fail-fast，重试不会解决证书问题）
   if (isConnectionError(error)) {
+    const connectionDetails = extractConnectionErrorDetails(error)
+    if (connectionDetails?.isSSLError) {
+      return 'terminal'
+    }
     return 'retryable'
   }
 

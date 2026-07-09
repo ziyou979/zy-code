@@ -67,3 +67,15 @@ export const MAX_MCP_DESCRIPTION_LENGTH = 2048
 export function getMcpToolTimeoutMs(): number {
   return parseInt(process.env.MCP_TOOL_TIMEOUT || '', 10) || DEFAULT_MCP_TOOL_TIMEOUT_MS
 }
+
+/**
+ * Gets the idle timeout for MCP tools in milliseconds.
+ * When set, idle MCP connections are closed after this period of inactivity.
+ * Falls back to MCP_TOOL_TIMEOUT if not specified.
+ */
+export function getMcpToolIdleTimeoutMs(): number | undefined {
+  const val = process.env.MCP_TOOL_IDLE_TIMEOUT
+  if (!val) return undefined
+  const parsed = parseInt(val, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
+}

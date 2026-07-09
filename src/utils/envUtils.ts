@@ -201,3 +201,11 @@ export function getMaxTurns(): number {
 export function getTerminalMode(): string {
   return (process.env.ZY_CODE_TERMINAL || 'auto').toLowerCase()
 }
+
+/**
+ * 是否禁用了后台 shell 内存压力回收（daemon 模式）。
+ * 对应 CC 的 CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP。
+ */
+export function isBgShellPressureReapDisabled(): boolean {
+  return isEnvTruthy(process.env.DISABLE_BG_SHELL_PRESSURE_REAP)
+}

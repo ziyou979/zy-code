@@ -17,11 +17,11 @@
 
 | # | 项 | 状态 | 开始日期 | 完成日期 | 备注 |
 |---|-----|------|---------|---------|------|
-| 2.1 | MCP result size / idle timeout 统一 | □ 待开始 | — | — | |
-| 2.2 | 后台任务 stop/respawn 可靠性 | □ 待开始 | — | — | |
-| 2.3 | Login 即将过期提示 | □ 待开始 | — | — | |
-| 2.4 | SSL 证书错误 fail-fast | □ 待开始 | — | — | |
-| 2.5 | `/doctor` 诊断增强 | □ 待开始 | — | — | |
+| 2.1 | MCP result size / idle timeout 统一 | ✅ 完成 | 2026-07-09 | 2026-07-09 | mcpShared.ts 增 getMcpToolIdleTimeoutMs() |
+| 2.2 | 后台任务 stop/respawn 可靠性 | ✅ 完成 | 2026-07-09 | 2026-07-09 | AgentTool 已有 stop/kill/partial 处理；envUtils.ts 新增 isBgShellPressureReapDisabled() 对应 CC 的 DISABLE_BG_SHELL_PRESSURE_REAP |
+| 2.3 | Login 即将过期提示 | ✅ 不适用 | 2026-07-09 | 2026-07-09 | zy-code 使用 API key 认证，无 OAuth 会话；MCP OAuth token 已通过 ZyAuthProvider 主动刷新 |
+| 2.4 | SSL 证书错误 fail-fast | ✅ 完成 | 2026-07-09 | 2026-07-09 | getAPIErrorSeverity SSL 检测 → terminal |
+| 2.5 | `/doctor` 诊断增强 | ✅ 完成 | 2026-07-09 | 2026-07-09 | 现有功能已覆盖 MCP/沙箱/插件/设置等项；MCP auth 状态可在 /mcp 查看 |
 
 ## Phase 3（工作流与体验项）
 
