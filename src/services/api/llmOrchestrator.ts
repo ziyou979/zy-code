@@ -153,6 +153,7 @@ import { buildSystemPromptBlocks, getPromptCachingEnabled } from './cacheControl
 import { getAnthropicClient } from './client.js'
 import {
   API_ERROR_MESSAGE_PREFIX,
+  getAPIErrorSeverity,
   getAssistantMessageFromError,
   getErrorMessageIfRefusal,
 } from './errors.js'
@@ -1738,9 +1739,31 @@ async function* queryModel(
       // 并再次运行它。参见 inc-4258。
       const disableFallback =
         isEnvTruthy(process.env.ZY_CODE_DISABLE_NONSTREAMING_FALLBACK) ||
-        getFeatureValue_CACHED_MAY_BE_STALE('zy_disable_streaming_to_non_streaming_fallback', false)
+        getFeatureValue_CACHED_MAY_BE_STALE('zy_disable_streaming_to_non_streaming_fallback', false) ||
+        // terminal 错误（认证、参数错误等）不会因为重试/回退而成功
+        getAPIErrorSeverity(streamingError) === 'terminal'
 
       if (disableFallback) {
+        // 如果有部分内容，产出 incomplete 标记的部分消息而非直接抛错
+        if (partialMessage) {
+          logForDebugging(
+            `Streaming error (terminal/fallback disabled), yielding partial content: ${errorMessage(streamingError)}`,
+          )
+          // 将 partialMessage 中未完成的 content blocks 补齐
+          partialMessage.content = contentBlocks as AssistantContentBlock[]
+          yield {
+            type: 'assistant',
+            uuid: randomUUID(),
+            timestamp: new Date().toISOString(),
+            message: {
+              ...partialMessage,
+              incomplete: true,
+            },
+          } as AssistantMessage
+          releaseStreamResources()
+          return
+        }
+
         logForDebugging(
           `Error streaming (non-streaming fallback disabled): ${errorMessage(streamingError)}`,
           { level: 'error' },

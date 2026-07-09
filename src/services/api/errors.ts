@@ -998,6 +998,59 @@ export function classifyAPIError(error: unknown): string {
   return 'unknown'
 }
 
+/**
+ * 错误严重性分类 — 用于决定是否可重试。
+ *
+ * - retryable：瞬时性错误（网络/限速/过载），可安全重试
+ * - terminal：永久性错误（认证/参数/配置），重试不会成功
+ *
+ * 与 classifyAPIError（面向 Datadog 标签）不同，本函数关注运行时决策。
+ */
+export type APIErrorSeverity = 'retryable' | 'terminal'
+
+export function getAPIErrorSeverity(error: unknown): APIErrorSeverity {
+  // 被中止的请求 → terminal（用户意图）
+  if (error instanceof Error && error.message === 'Request was aborted.') {
+    return 'terminal'
+  }
+
+  // 紧急容量关闭 → terminal
+  if (error instanceof Error && error.message.includes(CUSTOM_OFF_SWITCH_MESSAGE)) {
+    return 'terminal'
+  }
+
+  // 认证/授权错误 → terminal
+  if (isAPIError(error)) {
+    if (error.status === 401 || error.status === 403) {
+      return 'terminal'
+    }
+  }
+
+  if (error instanceof Error && error.message.toLowerCase().includes('x-api-key')) {
+    return 'terminal'
+  }
+
+  // 客户端错误（4xx）除限速外 → terminal
+  if (isAPIError(error) && error.status !== undefined && error.status >= 400 && error.status < 500) {
+    // 429 是限速，可重试
+    if (error.status === 429 || error.status === 408) {
+      return 'retryable'
+    }
+    return 'terminal'
+  }
+
+  // 服务器错误、网络超时、连接问题 → retryable
+  if (isAPIError(error) && error.status !== undefined && error.status >= 500) {
+    return 'retryable'
+  }
+
+  if (isConnectionError(error)) {
+    return 'retryable'
+  }
+
+  return 'retryable'
+}
+
 export function categorizeRetryableAPIError(error: APIErrorLike): WireAssistantMessageError {
   if (error.status === 529 || error.message?.includes('"type":"overloaded_error"')) {
     return 'rate_limit'

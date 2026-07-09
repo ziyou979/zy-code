@@ -393,10 +393,14 @@ export async function callMCPTool({
       if (errorCode === 401 || e instanceof UnauthorizedError) {
         logMCPDebug(name, `Tool call returned 401 Unauthorized - token may have expired`)
         logEvent('zy_mcp_tool_call_auth_error', {})
-        throw new McpAuthError(
-          name,
-          `MCP server "${name}" requires re-authorization (token expired)`,
-        )
+        // 清除连接缓存，触发下次调用时重新初始化（复用 OAuth refresh）
+        try {
+          const { clearServerCache: clearCache } = await import('./client.js')
+          await clearCache(name, config)
+        } catch {
+          // 动态导入或缓存清理失败不影响整体流程
+        }
+        throw new McpSessionExpiredError(name)
       }
 
       const isSessionExpired = isMcpSessionExpiredError(e)

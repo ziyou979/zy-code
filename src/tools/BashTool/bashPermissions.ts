@@ -870,7 +870,12 @@ function filterRulesByContentsMatchingInput(
 
   return Array.from(rules.entries())
     .filter(([ruleContent]) => {
-      const bashRule = bashPermissionRule(ruleContent)
+      // 兼容 Tool(param:value) 语法：如果规则内容以 "command:" 开头则剥离
+      // 例如 Bash(command:npm install) → npm install
+      const strippedContent = ruleContent.startsWith('command:')
+        ? ruleContent.slice('command:'.length)
+        : ruleContent
+      const bashRule = bashPermissionRule(strippedContent)
 
       return commandsToTry.some((cmdToMatch) => {
         switch (bashRule.type) {

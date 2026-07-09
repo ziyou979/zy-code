@@ -861,6 +861,8 @@ export function getAutoModeConfig():
       soft_deny?: string[]
       hard_deny?: string[]
       environment?: string[]
+      /** 启用后，所有 shell 命令（PowerShell/cd/gh 等）都经过 auto mode 分类器 */
+      classifyAllShell?: boolean
     }
   | undefined {
   const schema = z.object({
@@ -870,12 +872,14 @@ export function getAutoModeConfig():
     // 兼容旧字段：deny 等同于 soft_deny
     deny: z.array(z.string()).optional(),
     environment: z.array(z.string()).optional(),
+    classifyAllShell: z.boolean().optional(),
   })
 
   const allow: string[] = []
   const soft_deny: string[] = []
   const hard_deny: string[] = []
   const environment: string[] = []
+  let classifyAllShell = false
 
   for (const source of [
     'userSettings',
@@ -905,15 +909,26 @@ export function getAutoModeConfig():
       if (result.data.environment) {
         environment.push(...result.data.environment)
       }
+      // 任一配置源启用即视为全局开启
+      if (result.data.classifyAllShell) {
+        classifyAllShell = true
+      }
     }
   }
 
-  if (allow.length > 0 || soft_deny.length > 0 || hard_deny.length > 0 || environment.length > 0) {
+  if (
+    allow.length > 0 ||
+    soft_deny.length > 0 ||
+    hard_deny.length > 0 ||
+    environment.length > 0 ||
+    classifyAllShell
+  ) {
     return {
       ...(allow.length > 0 && { allow }),
       ...(soft_deny.length > 0 && { soft_deny }),
       ...(hard_deny.length > 0 && { hard_deny }),
       ...(environment.length > 0 && { environment }),
+      ...(classifyAllShell && { classifyAllShell: true }),
     }
   }
   return undefined

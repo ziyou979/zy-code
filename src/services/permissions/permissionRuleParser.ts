@@ -87,10 +87,16 @@ export function unescapeRuleContent(content: string): string {
  * Format: "ToolName" or "ToolName(content)"
  * Content may contain escaped parentheses: \( and \)
  *
+ * ToolName(param:value) 格式在解析层不做处理，ruleContent 保留完整字符串
+ * "param:value"，由工具层的匹配函数（如 filterRulesByContentsMatchingInput）按需
+ * 识别并提取。例如 Bash(command:npm install) → ruleContent = "command:npm install"，
+ * Bash 工具在匹配时检测 "command:" 前缀并提取 "npm install" 与实际的 command 参数比较。
+ *
  * @example
  * permissionRuleValueFromString('Bash') // => { toolName: 'Bash' }
  * permissionRuleValueFromString('Bash(npm install)') // => { toolName: 'Bash', ruleContent: 'npm install' }
  * permissionRuleValueFromString('Bash(python -c "print\\(1\\)")') // => { toolName: 'Bash', ruleContent: 'python -c "print(1)"' }
+ * permissionRuleValueFromString('Bash(command:npm install)') // => { toolName: 'Bash', ruleContent: 'command:npm install' }
  */
 export function permissionRuleValueFromString(ruleString: string): PermissionRuleValue {
   // Find the first unescaped opening parenthesis

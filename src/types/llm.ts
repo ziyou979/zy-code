@@ -94,6 +94,12 @@ export interface LLMAssistantMessage {
   usage?: TokenUsage
   /** Anthropic context management beta — API 响应中携带，下次请求时回传 */
   context_management?: Record<string, unknown> | null
+  /**
+   * 标记此消息是否为不完整的部分响应。
+   * 当流式过程中遇到错误但已有部分内容产出时设为 true，
+   * 调用方可据此决定是否保留部分成果而非丢弃。
+   */
+  incomplete?: boolean
   /** 允许运行时附加额外属性（如 stop_reason 等兼容字段） */
   [key: string]: unknown
 }

@@ -65,6 +65,7 @@ import {
 } from '../../bootstrap/state.js'
 import { clearClassifierChecking, setClassifierChecking } from '../../utils/classifierApprovals.js'
 import { isInProtectedNamespace } from '../../utils/envUtils.js'
+import { getAutoModeConfig } from '../../utils/settings/settings.js'
 import { executePermissionRequestHooks } from '../../utils/hooks.js'
 import {
   AUTO_REJECT_MESSAGE,
@@ -518,7 +519,7 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
       // permissionSetup.ts 处理：isOverlyBroadPowerShellAllowRule 剥离 PowerShell(*)，
       // isDangerousPowerShellPermission 为内部用户和 auto 模式入口
       // 剥离 iex/pwsh/Start-Process 前缀规则。
-      if (tool.name === POWERSHELL_TOOL_NAME && !feature('POWERSHELL_AUTO_MODE')) {
+      if (tool.name === POWERSHELL_TOOL_NAME && !feature('POWERSHELL_AUTO_MODE') && !getAutoModeConfig()?.classifyAllShell) {
         if (appState.toolPermissionContext.shouldAvoidPermissionPrompts) {
           return {
             behavior: 'deny',
