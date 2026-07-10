@@ -1,6 +1,5 @@
 import type { SuggestionItem } from 'src/components/PromptInput/PromptInputFooterSuggestions.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { getShellType } from '../../utils/localInstaller.js'
 import * as Shell from '../../utils/Shell.js'
 import { type ParseEntry, quote, tryParseShellCommand } from '../bash/shellQuote.js'
 
@@ -14,6 +13,20 @@ export type ShellCompletionType = 'command' | 'variable' | 'file'
 type InputContext = {
   prefix: string
   completionType: ShellCompletionType
+}
+
+/**
+ * 根据实际执行器路径判断补全语法，避免 Windows 未设置 SHELL 时误判为不支持。
+ */
+export function detectCompletionShellType(shellPath: string): 'bash' | 'zsh' | null {
+  const normalizedPath = shellPath.toLowerCase()
+  if (normalizedPath.includes('zsh')) {
+    return 'zsh'
+  }
+  if (normalizedPath.includes('bash')) {
+    return 'bash'
+  }
+  return null
 }
 
 /**
@@ -64,7 +77,7 @@ function isNewCommandContext(tokens: ParseEntry[], currentTokenIndex: number): b
 /**
  * Parse input to extract completion context
  */
-function parseInputContext(input: string, cursorOffset: number): InputContext {
+export function parseInputContext(input: string, cursorOffset: number): InputContext {
   const beforeCursor = input.slice(0, cursorOffset)
 
   // Check if it's a variable prefix, before expanding with shell-quote
@@ -197,14 +210,14 @@ export async function getShellCompletions(
   cursorOffset: number,
   abortSignal: AbortSignal,
 ): Promise<SuggestionItem[]> {
-  const shellType = getShellType()
-
-  // Only support bash/zsh (matches Shell.ts execution support)
-  if (shellType !== 'bash' && shellType !== 'zsh') {
-    return []
-  }
-
   try {
+    // Shell.exec('bash') 实际使用这里同一个 provider，补全语法必须与其路径保持一致。
+    const shellConfig = await Shell.getShellConfig()
+    const shellType = detectCompletionShellType(shellConfig.provider.shellPath)
+    if (!shellType) {
+      return []
+    }
+
     const { prefix, completionType } = parseInputContext(input, cursorOffset)
 
     if (!prefix) {

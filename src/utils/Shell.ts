@@ -47,20 +47,19 @@ export type ShellConfig = {
 function isExecutable(shellPath: string): boolean {
   try {
     accessSync(shellPath, fsConstants.X_OK)
+  } catch {
+    // 某些 Nix 环境的 X_OK 检查不可靠，下面仍以实际启动结果为准。
+  }
+
+  try {
+    // Windows 的 bash.exe 可能只是未配置 WSL 的入口，必须实际启动验证。
+    execFileSync(shellPath, ['--version'], {
+      timeout: 3000,
+      stdio: 'ignore',
+    })
     return true
-  } catch (_err) {
-    // Fallback for Nix and other environments where X_OK check might fail
-    try {
-      // Try to execute the shell with --version, which should exit quickly
-      // Use execFileSync to avoid shell injection vulnerabilities
-      execFileSync(shellPath, ['--version'], {
-        timeout: 1000,
-        stdio: 'ignore',
-      })
-      return true
-    } catch {
-      return false
-    }
+  } catch {
+    return false
   }
 }
 
@@ -91,7 +90,16 @@ export async function findSuitableShell(): Promise<string> {
   const preferBash = env_shell?.includes('bash')
 
   // Try to locate shells using which (uses Bun.which when available)
-  const [zshPath, bashPath] = await Promise.all([which('zsh'), which('bash')])
+  const [zshPath, bashPath, gitPath] = await Promise.all([
+    which('zsh'),
+    which('bash'),
+    getPlatform() === 'windows' ? which('git') : Promise.resolve(null),
+  ])
+  // Git for Windows 的 cmd 目录通常在 PATH 中，但 bin/bash.exe 不一定在 PATH 中。
+  const gitBashPath = gitPath ? resolve(gitPath, '..', '..', 'bin', 'bash.exe') : null
+  const discoveredBashPaths = [gitBashPath, bashPath].filter(
+    (path): path is string => path !== null,
+  )
 
   // Populate shell paths from which results and fallback locations
   const shellPaths = ['/bin', '/usr/bin', '/usr/local/bin', '/opt/homebrew/bin']
@@ -105,9 +113,7 @@ export async function findSuitableShell(): Promise<string> {
   // Add discovered paths to the beginning of our search list
   // Put the user's preferred shell type first
   if (preferBash) {
-    if (bashPath) {
-      supportedShells.unshift(bashPath)
-    }
+    supportedShells.unshift(...discoveredBashPaths)
     if (zshPath) {
       supportedShells.push(zshPath)
     }
@@ -115,9 +121,7 @@ export async function findSuitableShell(): Promise<string> {
     if (zshPath) {
       supportedShells.unshift(zshPath)
     }
-    if (bashPath) {
-      supportedShells.push(bashPath)
-    }
+    supportedShells.push(...discoveredBashPaths)
   }
 
   // Always prioritize SHELL env variable if it's a supported shell type

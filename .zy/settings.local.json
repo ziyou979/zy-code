@@ -61,7 +61,22 @@
       "WebFetch(domain:openserp.org)",
       "Read(//e/ProjectCollection/TSProjects/zy-code/**)",
       "Bash(/dev/null echo:*)",
-      "WebFetch(domain:code.claude.com)"
+      "WebFetch(domain:code.claude.com)",
+      "WebFetch(domain:registry.npmjs.org)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(CLAUDE_BIN=\"/d/nvm/v24.15.0/node_global/node_modules/@anthropic-ai/claude-code/bin/claude.exe\" __NEW_LINE_a103b43082f6eb6c__ echo \"=== 3.1 dynamicWorkflowSize ===\" grep -aob 'workflowSize\\\\|dynamicWorkflowSize\\\\|workflow_size' \"$CLAUDE_BIN\")",
+      "WebFetch(domain:mp.weixin.qq.com)",
+      "Bash(py --version)",
+      "Bash(grep -l \"延伸阅读\" \"C:/Users/soleil/Desktop/cc/\"*.md)",
+      "Bash(grep -L \"延伸阅读\" \"C:/Users/soleil/Desktop/cc/\"*.md)",
+      "Bash(grep -l \"微信扫一扫\" \"C:/Users/soleil/Desktop/cc/\"*.md)",
+      "Bash(wc -l \"C:/Users/soleil/Desktop/cc/\"*.md)",
+      "Bash(grep -l 微信扫一扫 C:/Users/soleil/Desktop/cc/*.md)",
+      "Bash(grep -l 预览时标签 C:/Users/soleil/Desktop/cc/*.md)",
+      "Bash(grep -l 关注公众号 C:/Users/soleil/Desktop/cc/*.md)",
+      "Bash(grep -l 延伸阅读 C:/Users/soleil/Desktop/cc/*.md)",
+      "Bash(grep -cl 作者头像 C:/Users/soleil/Desktop/cc/*.md)"
     ]
   }
 }

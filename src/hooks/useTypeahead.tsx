@@ -41,6 +41,7 @@ import {
   getShellCompletions,
   type ShellCompletionType,
 } from '../shell-eval/bash/shellCompletion.js'
+import { quote } from '../shell-eval/bash/shellQuote.js'
 import { useAppState, useAppStateStore } from '../state/AppState.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import type { InlineGhostText, PromptInputMode } from '../types/textInputTypes.js'
@@ -216,21 +217,61 @@ export function applyShellSuggestion(
   completionType: ShellCompletionType | undefined,
 ): void {
   const beforeCursor = input.slice(0, cursorOffset)
-  const lastSpaceIndex = beforeCursor.lastIndexOf(' ')
-  const wordStart = lastSpaceIndex + 1
+  const afterCursor = input.slice(cursorOffset)
+  const wordStart = findShellTokenStart(beforeCursor)
+  const needsTrailingSpace = !/^\s/.test(afterCursor)
 
   // Prepare the replacement text based on completion type
   let replacementText: string
   if (completionType === 'variable') {
-    replacementText = `$${suggestion.displayText} `
+    replacementText = `$${suggestion.displayText}${needsTrailingSpace ? ' ' : ''}`
   } else if (completionType === 'command') {
-    replacementText = `${suggestion.displayText} `
+    replacementText = `${suggestion.displayText}${needsTrailingSpace ? ' ' : ''}`
   } else {
-    replacementText = suggestion.displayText
+    // 文件候选以空格标记普通文件，以斜杠标记目录；引用时保留该交互后缀。
+    const hasTrailingSpace = suggestion.displayText.endsWith(' ')
+    const path = hasTrailingSpace ? suggestion.displayText.slice(0, -1) : suggestion.displayText
+    replacementText = `${quote([path])}${hasTrailingSpace && needsTrailingSpace ? ' ' : ''}`
   }
-  const newInput = input.slice(0, wordStart) + replacementText + input.slice(cursorOffset)
+  const newInput = input.slice(0, wordStart) + replacementText + afterCursor
   onInputChange(newInput)
   setCursorOffset(wordStart + replacementText.length)
+}
+
+/**
+ * 找到光标前当前 shell token 的起点，兼容引号内空格和紧邻的命令操作符。
+ */
+export function findShellTokenStart(input: string): number {
+  let tokenStart = 0
+  let quoteChar: "'" | '"' | null = null
+  let escaped = false
+
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index]
+    if (escaped) {
+      escaped = false
+      continue
+    }
+    if (char === '\\' && quoteChar !== "'") {
+      escaped = true
+      continue
+    }
+    if (quoteChar) {
+      if (char === quoteChar) {
+        quoteChar = null
+      }
+      continue
+    }
+    if (char === "'" || char === '"') {
+      quoteChar = char
+      continue
+    }
+    if (/\s/.test(char ?? '') || '|;&<>'.includes(char ?? '')) {
+      tokenStart = index + 1
+    }
+  }
+
+  return tokenStart
 }
 const DM_MEMBER_RE = /(^|\s)@[\w-]*$/
 function applyTriggerSuggestion(
