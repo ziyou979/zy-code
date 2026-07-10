@@ -5,7 +5,7 @@
 
 import type { SessionId } from 'src/types/ids.js'
 // eslint-disable-next-line custom-rules/bootstrap-isolation
-import { randomUUID } from 'src/utils/crypto.js'
+import { createSessionId } from 'src/utils/uuid.js'
 import { emitSessionSwitched, STATE } from './_core.js'
 
 export function getSessionId(): SessionId {
@@ -22,7 +22,7 @@ export function regenerateSessionId(options: { setCurrentAsParent?: boolean } = 
   STATE.planSlugCache.delete(STATE.sessionId)
   // 重新生成的会话留在当前项目中：重置 projectDir 为
   // null，使 getTranscriptPath() 从 originalCwd 推导。
-  STATE.sessionId = randomUUID() as SessionId
+  STATE.sessionId = createSessionId()
   STATE.sessionProjectDir = null
   return STATE.sessionId
 }
