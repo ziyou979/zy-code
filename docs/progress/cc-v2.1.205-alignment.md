@@ -29,5 +29,14 @@
 |---|-----|------|---------|---------|------|
 | 3.1 | `dynamicWorkflowSize` 与 OTel 属性 | ✅ 完成 | 2026-07-09 | 2026-07-09 | WorkflowTool 新增 workflowSize 输入选项；AgentOpts 新增 workflowRunId/workflowName |
 | 3.2 | `/dataviz` 数据可视化技能 | ✅ 完成 | 2026-07-09 | 2026-07-09 | 新增 src/skills/bundled/dataviz.ts，注册为内置 skill |
-| 3.3 | Bash 路径补全 | ⏸️ 暂缓 | — | — | 终端 UI 层功能，需 completion 基础设施，P2 暂缓 |
+| 3.3 | Bash 路径补全 | ✅ 已实现（核心链路已验证） | 2026-07-09 | 2026-07-10 | 基于实际 Shell provider 选择补全语法，Windows 可从 Git 安装路径发现 Git Bash；支持命令/文件/变量、操作符后 token 与带空格路径，新增 6 个定向测试并通过 |
 | 3.4 | 默认 Manual / AskUserQuestion 迁移 | ✅ 已对齐 | 2026-07-09 | 2026-07-09 | zy-code 默认模式已是 'default'（与 CC 的 Manual 等效），无需迁移 |
+
+## 验证记录（2026-07-10）
+
+| 范围 | 结果 | 备注 |
+|------|------|------|
+| 类型检查 | ✅ 通过 | `bun tsc --noEmit` |
+| 对齐能力定向测试 | ✅ 通过 | Shell 补全 6 项，以及错误语义、权限、Workflow、MCP hook 29 项 |
+| 全量测试 | ⚠️ 1090 通过 / 1 跳过 / 4 失败 | 失败为既有 API snapshot 漂移 1 项、Anthropic `server_tool_use` 映射 3 项，均不在本次 Shell 补全改动路径 |
+| TUI PTY 自动化 | ⏸️ 环境受阻 | 本机无 `expect`，且 WSL 未安装发行版；技能脚本无法建立真实 PTY，未将普通管道输入冒充端到端验证 |

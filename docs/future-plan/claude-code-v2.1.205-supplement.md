@@ -153,9 +153,9 @@
 ### 2.4 工作流
 | 环境变量 | 偏移量 | 说明 | zy-code 状态 |
 |----------|--------|------|-------------|
-| `CLAUDE_CODE_WORKFLOW_SIZE_WARNING_AGENTS` | `89918600` | 工作流 Agent 数量警告阈值 | ❌ 缺失 |
-| `CLAUDE_CODE_WORKFLOW_SIZE_WARNING_TOKENS` | `89918656` | 工作流 Token 用量警告阈值 | ❌ 缺失 |
-| `CLAUDE_CODE_DISABLE_WORKFLOWS` | — | 禁用工作流系统 | ❌ 缺失 |
+| `CLAUDE_CODE_WORKFLOW_SIZE_WARNING_AGENTS` | `89918600` | 工作流 Agent 数量警告阈值 | ⚠️ 应映射到 orchestrator/WorkflowTool runtime 预算提示 |
+| `CLAUDE_CODE_WORKFLOW_SIZE_WARNING_TOKENS` | `89918656` | 工作流 Token 用量警告阈值 | ⚠️ 应映射到 orchestrator/WorkflowTool runtime 预算提示 |
+| `CLAUDE_CODE_DISABLE_WORKFLOWS` | — | 禁用工作流系统 | ⚠️ zy-code 需映射为禁用 orchestrator/WorkflowTool runtime，而非照搬 CC 名称 |
 
 ### 2.5 诊断/禁用命令
 | 环境变量 | 偏移量 | 说明 | zy-code 状态 |
@@ -222,7 +222,7 @@
 | 设置项 | CC 版本 | 说明 | zy-code 状态 | 复杂度 |
 |--------|---------|------|-------------|--------|
 | `autoMode.classifyAllShell` | 2.1.193 | Auto Mode 全 shell 分类 | ❌ 缺失 | 中 |
-| `dynamicWorkflowSize` | 2.1.202 | 动态工作流大小（small/medium/large） | ❌ 缺失 | 低 |
+| `dynamicWorkflowSize` | 2.1.202 | 动态工作流大小（small/medium/large） | ⚠️ orchestrator 待增强 | 低 |
 | 子代理默认后台（隐式） | 2.1.198 | 不再需要显式 `run_in_background` | ⚠️ 部分已有 | 中 |
 | `/doctor` 命令 | 2.1.205 | 全面诊断 | ✅ 已有基础，需增强 | 中 |
 | `/dataviz` 技能 | 2.1.198 | 数据可视化 | ❌ 缺失 | 低 |
@@ -259,7 +259,7 @@
 | 2.1.199 | SSL 证书错误 fail-fast，不烧重试 | 文章确认 | ⚠️ 未见集中分类 | P1；在 API/MCP/bridge retry predicate 中加入证书错误短路 |
 | 2.1.200 | 默认 Manual；`AskUserQuestion` 不再默认 auto-continue | 文章确认 | ⚠️ 需查当前默认权限策略 | P1；默认值变更需迁移说明，不直接静默改老用户配置 |
 | 2.1.200 | daemon stale lock、respawn race、旧构建接管等后台可靠性 | `tengu_bg_*` 事件大量存在 | ⚠️ zy-code daemon 仍偏空桩，AgentTool 有后台参数 | P1；先做 stop/respawn 状态机和锁文件完整性 |
-| 2.1.202 | `dynamicWorkflowSize` 与 workflow OTel 属性 | `workflowSize`：`128315880`~`240599638` | ❌ 缺失 | P2；设置只是 guideline，不做硬 cap |
+| 2.1.202 | `dynamicWorkflowSize` 与 workflow OTel 属性 | `workflowSize`：`128315880`~`240599638` | ⚠️ orchestrator 待增强 | P2；设置只是 guideline，不做硬 cap，映射到 orchestrator/WorkflowTool runtime budget/concurrency 与 OTel |
 | 2.1.202 | 重复加载 skill 不再重复注入 instructions | 文章确认 | ⚠️ 需查 skill context append 路径 | P1；按 skill id + version/hash 做 turn 内去重 |
 | 2.1.205 | `/doctor` 与 `DISABLE_DOCTOR_COMMAND` | `DISABLE_DOCTOR_COMMAND`：`89918120` | ✅ 已有基础 | P1；不是新建命令，而是补检查项和 i18n 文案 |
 
@@ -320,10 +320,11 @@ Binary: 247MB (较 v2.1.203 的 ~254MB 减小 ~7MB)
 - Workflow agent API 仍显式 `run_in_background: false`，这是同步 workflow 语义，不能直接全局改默认
 - 建议对 AgentTool 普通子代理默认后台做灰度，对 WorkflowTool 保持 opt-in
 
-### 7.3 动态工作流大小
-**文件**：`src/tools/WorkflowTool/`
-- ❌ zy-code 无 `dynamicWorkflowSize` 设置
-- 需在 WorkflowTool 配置中添加 advisory guideline，不应实现为硬性 agent cap
+### 7.3 动态工作流大小 / Orchestrator 映射
+**文件**：`src/services/api/llmOrchestrator.ts`、`src/tools/WorkflowTool/runtime/orchestration.ts`、`src/tools/WorkflowTool/runtime/budget.ts`、`src/tools/WorkflowTool/runtime/concurrency.ts`
+- ⚠️ zy-code 已有 orchestrator/WorkflowTool runtime，不应按 CC 名称重造 workflow
+- 需把 CC `dynamicWorkflowSize` 映射为 orchestrator 的 advisory guideline，不应实现为硬性 agent cap
+- OTel 属性可保留兼容名 `workflow.run_id` / `workflow.name`，但内部字段建议统一到 orchestrator run/session 概念
 
 ### 7.4 /doctor 诊断命令
 **文件**：`src/commands/doctor/`、`src/screens/Doctor.tsx`
@@ -371,9 +372,9 @@ Binary: 247MB (较 v2.1.203 的 ~254MB 减小 ~7MB)
 
 | 缺失能力 | 说明 | 复杂度 |
 |----------|------|--------|
-| `dynamicWorkflowSize` + workflow OTel | advisory guideline + `workflow.run_id/name` | 低 |
+| `dynamicWorkflowSize` + workflow OTel | 映射到 orchestrator advisory guideline + `workflow.run_id/name` 兼容属性 | 低 |
 | `/dataviz` | 数据可视化技能 | 低 |
-| `CLAUDE_CODE_WORKFLOW_SIZE_WARNING_*` | 工作流规模警告阈值 | 低 |
+| `CLAUDE_CODE_WORKFLOW_SIZE_WARNING_*` | 映射到 orchestrator/WorkflowTool runtime 规模警告阈值 | 低 |
 | Bash 模式文件路径补全 | `!` shell input 实时路径补全 | 中 |
 | 默认 Manual / AskUserQuestion | 需迁移策略，避免破坏老用户习惯 | 中 |
 
@@ -414,16 +415,16 @@ Binary: 247MB (较 v2.1.203 的 ~254MB 减小 ~7MB)
    - 保留现有 `src/commands/doctor/`，补网络、MCP auth、插件、sandbox、权限模式、版本锁检查
    - `DISABLE_DOCTOR_COMMAND` 已存在，只需统一到命令禁用 helper，避免散落 guard
 
-### Phase 3（长期，4-6 周）：工作流与体验项
+### Phase 3（长期，4-6 周）：Orchestrator 与体验项
 
 7. **Login 即将过期提示**（P1）
    - 复用 bridge OAuth refresh/token expiry 信息，在 TUI 状态栏或通知层给出提前警告
    - 避免重复刷新失败造成循环提示
 
-8. **动态工作流大小与 OTel**（P2）
-   - 在 WorkflowTool 中添加 `dynamicWorkflowSize` 设置
+8. **Orchestrator 动态规模与 OTel**（P2）
+   - 在 orchestrator/WorkflowTool runtime 中添加 `dynamicWorkflowSize` 映射设置
    - small/medium/large 只作为 agent 数/上下文规模建议，不作为硬性拦截
-   - 工作流 spawn agent 时附加 `workflow.run_id`、`workflow.name` 遥测属性
+   - orchestrator spawn agent 时附加 `workflow.run_id`、`workflow.name` 兼容遥测属性，并保留内部 orchestrator run id
 
 9. **/dataviz 技能**（P2）
    - 实现数据可视化 skill
@@ -486,7 +487,7 @@ Binary: 247MB (较 v2.1.203 的 ~254MB 减小 ~7MB)
 | 2.1.150 | 工具描述 grep 后端切 ripgrep | ✅ 项目已优先 rg | P2 |
 | 2.1.152 | `/code-review --fix` 直接改工作区；Auto Mode 不再 opt-in；skill `disallowed-tools`；`MessageDisplay` hook；`/reload-skills` | ⚠️ review/skill/hook 均需细节对齐 | P1 |
 | 2.1.153 | 后台会话不再丢响应；MCP 两个安全漏洞；`/model` 默认保存 | ⚠️ 后台/MCP/model 默认策略 | P1 |
-| 2.1.154 | Opus 4.8；动态工作流多 Agent 编排；后台会话大修 | ⚠️ 动态工作流缺失 | P2 |
+| 2.1.154 | Opus 4.8；动态 workflow 多 Agent 编排；后台会话大修 | ⚠️ 映射到 zy-code orchestrator 待增强 | P2 |
 | 2.1.156 | 修 Opus 4.8 thinking block 被修改导致 API 报错 | ⚠️ LLM message invariants 需测试 | P1 |
 | 2.1.157 | `.claude/skills` 本地 skill 自动加载；worktree 中途切换、Agent 调度修复 | ⚠️ 本地 skill 自动加载需查 | P1 |
 | 2.1.158 | Auto Mode 扩到 Bedrock/Vertex/Foundry，仅 Opus 4.7/4.8 opt-in | ⚠️ 云平台 auto mode 需策略 | P1 |
@@ -556,6 +557,38 @@ Binary: 247MB (较 v2.1.203 的 ~254MB 减小 ~7MB)
 
 因此前文 Phase 1 的 Auto Mode 分类仍是 P0，但应并入“权限绕过专项”；MCP auth/retry 不只是 2.1.193 的 401/403 reconnect，还要覆盖 2.1.91 起的 result size、timeout、alwaysLoad、OAuth 并发刷新和 secret redaction。
 
+### 10.4 二次补漏：文章细项未充分展开的功能点
+
+> 本节专门补前文摘要粒度不够的点：后台内存、子 agents 状态、`/code-review` 行为变化、`/reload-skills`、后台通知与权限状态。以下 offset 均来自 v2.1.205 当前二进制。
+
+| 版本 | 漏项 | CC 二进制 anchor | zy-code 状态 | 落地动作 |
+|------|------|------------------|--------------|----------|
+| 2.1.121 | 4 处 GB 级内存泄漏修复；MCP `alwaysLoad` 旁路 ToolSearch | `heap`：`58859488`, `58872344`, `58885528`; `alwaysLoad`：`103388440`, `137865810`, `137866370` | ⚠️ MCP/Hook 有基础，但缺内存回归维度 | 给 MCP 大输出、Hook 改写、ToolSearch 旁路加 heap/profile 回归；`alwaysLoad` 不应被 ToolSearch 裁掉 |
+| 2.1.128 | 子代理缓存写入减少，避免 token 账单与 cache 写入放大 | `subagent_cache_evict`：`124549718`, `234599728`; `subagent`：`86087672`, `86130947`, `88694922` | ⚠️ 有 fork/cache-safe 优势，但子代理缓存逐出策略待核对 | 明确 AgentTool/WorkflowTool 的 cache write/evict 策略，避免 partial/error 子代理污染主会话 cache |
+| 2.1.193 | 后台 shell 内存压力自动回收，空闲 shell 在压力下被 reap | `CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP`：`89934968`, `223618514`, `230587582`; `low memory`：`157133596`, `157133828`, `241752134` | ❌ 未见等价后台 shell reaper | 后台 shell registry 增加 idle + memory pressure watcher，并支持禁用开关 |
+| 2.1.199 | 子代理被 rate limit/server error 截断时返回 partial work，不再静默成功 | `partial work`：`150306566`, `150317672`, `240529282`; `usage limit`：`106116944`, `106122878`, `115421560`; `incomplete response`：`119184318`, `233511549` | ⚠️ CLI partial message 有基础，AgentTool 父子协议待补 | 父代理接收 `partial + incomplete + errorKind`，禁止 API/usage-limit 结果转成 success |
+| 2.1.199 | 后台进度指示卡住、SendMessage 投递到重生代理、重生后需要 retarget | `progress indicator`：`240162930`; `SendMessage`：`80028001`, `86321788`, `90033088`; `retarget`：`193697075`, `229121346` | ⚠️ remote/session hooks 有基础，重生 agent 身份校验待查 | 以 agent instance id 区分同名重生实例，SendMessage 命中旧实例时要求重新选择 |
+| 2.1.199-200 | stale `daemon.lock`、stop/respawn race、旧构建接管新 daemon、睡眠唤醒后静默停止 | `daemon.lock`：`86447112`, `148654267`, `236566706`, `241755958`; `stale`：`92026776` 等 | ❌ daemon 主体仍未落地，AgentTool 有后台参数 | 先做轻量 roster/lock 状态机测试，再决定完整 PTY daemon；stop 必须是终态，不能被 auto-respawn 覆盖 |
+| 2.1.200-201 | Pinned/background agents 不应在自动更新后反复提示 “Continue from where you left off” | `Continue from where you left off`：`116192232`, `232690133` | ⚠️ resume/interrupt 有基础，pinned background 语义待查 | 后台/pinned session 自动恢复时静默 resume；交互 session 才提示继续 |
+| 2.1.202 | 大量 git worktree 下 resume picker/name 的性能与内存改进 | `stale`、`download`、`heap` 等通用 anchor；文章细项确认 | ⚠️ resume picker/name 需专项 profile | 在多 worktree 仓库造压测数据，限制扫描范围和缓存 session title/name |
+| 2.1.205 | 自动更新流式下载峰值内存降低约 400MB | `download`：`59005905`, `59018867`, `59109001`, `59109239`; `heap`：`58859488`, `59279125` | ⚠️ updater/installer 需查 | 更新包下载必须 streaming 到文件，不把完整包体留在内存；补大文件下载内存测试 |
+| 2.1.205 | 后台通知不再伪造用户批准，避免权限/通知状态污染 transcript | `PermissionRequest`：`86015374`, `86919263`; `PermissionDenied`：`58795968`, `90042927`; `background notification` 未命中稳定字面量 | ⚠️ 权限系统和 notification hook 有基础 | 通知类事件不得写成 user approval；transcript/tool result 要区分 notification、approval、denial |
+| 2.1.145 | `agents --json` 让脚本读取后台会话，OTEL span 增 `agent_id` 串子代理 trace | `agents --json`：`156154703`, `241617130`, `241618588`; `agent_view`：`146232606`, `149976175` | ⚠️ agents UI/任务面板有基础，JSON/API 化待查 | 为 agents/session roster 输出稳定 JSON schema，并在 telemetry 上补 `agent_id` |
+| 2.1.146 | `/simplify` 改 `/code-review` 并加 effort；后台 session 不重复要权限；auto mode 不吞 `AskUserQuestion` | `code-review`：`86130176`, `86176655`, `86438460`; `AskUserQuestion`：`86127840`, `86552281`, `140936808` | ✅ review 有基础；AskUserQuestion/后台权限细节待查 | `/code-review` 参数解析保留 effort；auto mode 下 AskUserQuestion 仍必须显式呈现 |
+| 2.1.147 | `/code-review --comment` 支持 GitHub PR 行级评论；auto-updater 增 retry/错误分类 | `code-review` 同上；源码已有 `src/commands/pr_comments/` 与 GitHub app prompt | ⚠️ PR comment 读取有基础，写回行评需查 | 把 comment 发布和 review 结果拆成可测试服务，避免 review 命令直接硬编码 GitHub 行评逻辑 |
+| 2.1.152 | `/code-review --fix` 直接应用到工作区；skill 支持 `disallowed-tools`；新增 `MessageDisplay` hook；`/reload-skills` | `code-review`：`86130176`, `86176655`; `disallowed-tools`：`106956824`, `136999890`, `186052850`; `MessageDisplay`：`90043015`, `106986664`; `reload-skills`：`214776408`, `217639320`, `236499115`, `237994289` | ⚠️ review/MessageDisplay 有基础；reload-skills 未作为明确命令落地 | `/code-review --fix` 走现有编辑权限；skill loader 加 disallowed tools 约束；补 `/reload-skills` 或等价 command，刷新本地/插件 skill cache |
+| 2.1.202 | `/review <pr>` 恢复快速单 pass；多 agent review 改由 `/code-review <level> <pr#>` 承担 | `code-review` offsets 同上；`/review` 文章细项确认 | ⚠️ review/ultrareview 并存，职责边界需整理 | 明确 `/review` 快速检查、`/code-review` 多级/可修复/PR 评论；避免两个命令互相调用形成延迟 |
+| 2.1.186 | 后台子代理权限从自动拒绝改为抛回主会话；agent teams effort 继承 | `run_in_background`：`108385717`, `108443472`, `111033209`; `AskUserQuestion`：`86127840`, `86552281`; `permission`：`59155992`, `60478331` | ⚠️ AgentTool 有后台 schema，权限转发需查 | 后台子 agent 遇权限请求时生成 parent-visible permission request，而不是本地 auto-deny |
+
+### 10.5 文档口径修正
+
+前文的 10.1 表只适合作为版本索引，不能代表完整落地清单。实际排期应以 10.4 的细项表和 11.6 的优先级合并为准，尤其：
+
+- `/code-review` 不是“已有 review 命令即可”，还要核对 `--fix`、`--comment`、effort、快速 `/review` 分流、多 agent review 分流。
+- `/reload-skills` 不能只写成 P2 名称，要确认 skill cache、plugin skill、本地 `.claude/skills`、disallowed-tools 生效边界。
+- “后台任务可靠性”需要拆成内存 reaper、daemon lock/respawn、agent retarget、权限转发、JSON roster、通知/approval 语义。
+- “子代理 partial error”需要覆盖 rate limit/server error、usage limit、partial work、incomplete response、progress indicator，不只是 API error 文案。
+
 ---
 
 ## 十一、v2.1.187 深度对比基线合并校准
@@ -620,8 +653,8 @@ Binary: 247MB (较 v2.1.203 的 ~254MB 减小 ~7MB)
 
 | 类别 | 结论 |
 |------|------|
-| 已有或有等价实现 | `/ultrareview`/`/code-review`、`/security-review`、`/release-notes`、`/insights`、`/tasks`、`/powerup`、`/voice`、`/plan`、`/goal`、`/doctor`、ToolSearch、NotebookEdit、TodoWrite |
-| 仍需核对/补齐 | `/dataviz`、`project purge`、`/reload-skills`、`/team-onboarding`、`/recap`、`/stop`、`/scroll-speed`、`/fast`、`/usage-credits`、`/extra-usage`、NotebookRead、Cd 工具、PushNotification、RemoteTrigger |
+| 已有或有等价实现 | `/ultrareview`、`/review` 远端审查入口、`/security-review`、`/release-notes`、`/insights`、`/tasks`、`/powerup`、`/voice`、`/plan`、`/goal`、`/doctor`、ToolSearch、NotebookEdit、TodoWrite |
+| 仍需核对/补齐 | `/code-review` 独立命令与 `--fix/--comment/effort` 语义、`/dataviz`、`project purge`、`/reload-skills`、`/team-onboarding`、`/recap`、`/stop`、`/scroll-speed`、`/fast`、`/usage-credits`、`/extra-usage`、NotebookRead、Cd 工具、PushNotification、RemoteTrigger |
 | 不建议单独追的项 | 与 CC 内部运营或 Claude.ai 平台强绑定的 stickers/radio/teleport/desktop/mobile 等，除非 zy-code 产品目标明确需要 |
 
 ### 11.6 最终优先级合并
@@ -633,8 +666,132 @@ Binary: 247MB (较 v2.1.203 的 ~254MB 减小 ~7MB)
 | P0/P1 | MCP 安全可靠性 | result size、timeout、auth refresh 并发锁、secret redaction、tools/list 分页、`--no-browser` |
 | P1 | Hooks 完整性 | `PreCompact` 阻断、`PostToolUse` 全工具改写、`MessageDisplay`、权限 hooks、terminalSequence、effort context |
 | P1 | 后台会话/agent view | stop/respawn、pin/resume、配置链、JSON、权限转发 |
-| P1/P2 | 设置与命令体验 | safe-mode、availableModels enforcement、footer links、wheel acceleration、project purge、reload-skills |
+| P1/P2 | 设置与命令体验 | `/code-review` 分流与 `--fix/--comment`、`/reload-skills`、safe-mode、availableModels enforcement、footer links、wheel acceleration、project purge |
 | P2/P3 | daemon 完整子系统与企业基础设施 | daemon lock/roster/PTY attach、Perforce、OTEL、plugin zip cache、container id |
+
+---
+
+## 十二、本地 cc 文档全量复核校准
+
+> 2026-07-10 使用 `C:\Users\soleil\Desktop\cc` 下 80 篇 Markdown 全文复核，覆盖 2.1.92、2.1.94、2.1.97、2.1.98、2.1.100-2.1.205。该本地目录作为本文最终校准来源；前文微信专辑索引只保留为版本脉络。
+
+### 12.1 本次复核补出的缺口
+
+| 主线 | 本地文档确认的细项 | 当前文档处理 |
+|------|--------------------|--------------|
+| Resume / 长会话内存 | 2.1.100 `--resume` 大会话提速 45%、峰值内存降 100-150MB；2.1.101 修 dead-end branch 导致上下文丢失；2.1.187 修零模型回合 `--resume` 找不到会话；2.1.200 修后台 stall respawn 后重跑 Esc 取消 turn | 从“resume 性能”提升为 P1 回归域：恢复路径必须覆盖 fork-heavy、大文件、零 turn、后台 session 与 interrupted turn |
+| 历史对话展开 / 全量查看 | 2.1.100/116/117 连续提升 `/resume` 性能；2.1.121 修长会话虚拟滚动器历史列表泄漏；2.1.203 修长 transcript 上滚跳动、context usage indicator 每 turn 全量重算 | zy-code 当前仍有分页/截断式历史加载痕迹：`src/assistant/sessionHistory.ts` `HISTORY_PAGE_SIZE = 100`，`src/bridge/replBridge.ts` `initialHistoryCap = 200`，Remote Bridge 初始 flush 会 cap 到最近消息；需要对齐 CC “可以直接查看所有对话”的体验，减少必须 `Ctrl+E` 手动继续展开 |
+| Compact 进度可见性 | 2.1.105 `PreCompact` 可阻断；2.1.117 修 Opus 4.7 autocompact 过度触发；2.1.141 Rewind 支持“压缩到此处”；2.1.186 MEMORY.md 接近上限时提醒压缩；v2.1.205 二进制存在 `compact_progress` / `Compacting` | zy-code 有多层 compact 和 `onCompactProgress` 入口，但文档此前未把“压缩进度条/进度事件”作为落地项；需核对本地 TUI、远程 session、headless 三条路径 |
+| MCP result / timeout / auth | 2.1.100 `_meta["anthropic/maxResultSizeChars"]` 单结果最高 500K；2.1.146/147 修 MCP 分页丢 page 1 之后资源；2.1.187 `CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT`；2.1.191/193 headersHelper 401/403 自动重跑，OAuth discovery/token retry，无头直接 paste URL | MCP 主线拆为 result cap、分页、idle timeout、auth refresh、headless auth、secret redaction，不能只写“增强 MCP” |
+| Hooks / skills | 2.1.105 `PreCompact` 可 block compaction，plugin `monitors` 后台监控；2.1.145 `Stop`/`SubagentStop` hook 输入增加 `background_tasks`、`session_crons`；2.1.152 `disallowed-tools`、`/reload-skills`、`SessionStart.reloadSkills`、`MessageDisplay`、`hookSpecificOutput.sessionTitle` | `/reload-skills` 是独立于 `/reload-plugins` 的 skill 目录重扫命令；Hooks 补 `PreCompact`、`MessageDisplay`、Stop/SubagentStop 上下文、plugin monitors |
+| Plugin reload | 2.1.98 `/reload-plugins` 可热加载插件提供的 skill；2.1.110 Remote Control 可执行 `/reload-plugins`；2.1.116 `/reload-plugins` 与后台插件更新会自动安装 marketplace 缺失依赖 | `/reload-plugins` 是插件生命周期命令，不能被 `/reload-skills` 合并或替代；zy-code 已有入口，但需要核对 plugin-provided skills、依赖安装、Remote Control 场景 |
+| `/code-review` 命令族 | 2.1.146 `/simplify` 改 `/code-review` 并加 effort；2.1.147 `--comment` 行级 GitHub PR 评论，同时旧 cleanup-and-fix 行为移除；2.1.152 `--fix` 又把 review findings 直接应用到工作区，`/simplify` 变快捷方式；2.1.202 `/review <pr>` 回归快速单 pass，多 agent review 下沉到 `/code-review <level> <pr#>` | 当前 zy-code 有 `/ultrareview`，没有独立 `/code-review`。落地应做成 review 命令族语义分层，而不是简单别名 |
+| Workflow / Orchestrator | 2.1.154 动态 workflow 多 Agent 编排；2.1.160 触发词从 `workflow` 改 `ultracode`；2.1.202 `dynamicWorkflowSize` 与 `workflow.run_id/name` OTel 属性、`/workflows` 列表 UI 改进 | zy-code 不应按 CC 名字照搬 workflow；应映射到现有 orchestrator / `WorkflowTool` runtime：`src/services/api/llmOrchestrator.ts`、`src/tools/WorkflowTool/runtime/orchestration.ts` |
+| 后台 agent 状态 | 2.1.145 `agents --json`、agent OTEL 父子 trace、等待输入数；2.1.147 pinned background session；2.1.187 agent view `working` 状态修复、停止通知归因、subagent depth restore；2.1.198 Notification hook `agent_needs_input`/`agent_completed`、任务面板不再 stale Running；2.1.205 SendMessage 后状态不再卡 failed/completed、无文本 turn 不再从 needs input 跳 working | 需要以 state machine 方式落地：queued/running/needs_input/completed/failed/stopped/resuming/pinned，不再靠文本或单个 boolean |
+| daemon / roster / lock | 2.1.199 corrupted worker record 导致 daemon 每 50 秒自杀；stop 与 respawn race；SendMessage 复用旧 agent name 要求 retarget；2.1.200 stale `daemon.lock` PID 复用、旧构建接管新 daemon、roster 损坏、socket token 被清；2.1.203 token 过期自愈、PATH/BaseURL 继承、工作目录失效 clear error、auto-upgrade failure 不杀所有 session、TaskStop/TaskOutput 跨代理查找 | zy-code `src/daemon/workerRegistry.ts` 仍是 `not implemented`，只能写“有入口和桥接基础”，不能写 daemon 已对齐。近期应先做后台可靠性 P1 子集，完整 daemon P2/P3 |
+| 内存与渲染 | 2.1.101 virtual scroller 历史 message list 泄漏；2.1.121 4 处 GB 级内存泄漏；2.1.191 streaming 100ms 合并降 37% CPU、终端输出 cache 减长会话内存；2.1.193 后台 shell memory-pressure reaper；2.1.203 lazy load 省 7MB、context usage 不再每 turn 全量重算；2.1.205 update streaming download 省约 400MB | 新增“资源长跑”回归域：interactive render、terminal cache、context indicator、background shell、updater download、resume loader |
+| 权限与人工边界 | 2.1.104 permission blocked tool call 从静默变显式；2.1.145 裸 env assignment bypass；2.1.146 auto 不吞 `AskUserQuestion`；2.1.187 `sandbox.credentials`；2.1.191 `autoMode.classifyAllShell` 与 denial reason；2.1.200 默认 Manual、AskUserQuestion 不 auto-continue；2.1.203 手动权限模式 footer 展示灰色 `⏸` 状态；2.1.205 transcript 防篡改、未解析变量 `rm -rf` 先询问、后台通知声明无人工输入 | P0 安全清单需覆盖“人工输入来源可信度”；P1/P2 需要补“当前为手动模式”的可见 UI 状态，而不是只改默认值 |
+
+### 12.2 zy-code 已实现、差异化、待增强
+
+| 类别 | 结论 | 说明 |
+|------|------|------|
+| 已实现或基本等价 | `/doctor`、`/agents` 交互视图、`/background` 本地 shell 后台化、`/reload-plugins`、`/skills`、`/ultrareview`、`/goal`、`/chrome`、`/mobile`、bridge resume、PermissionRequest hook 基础 | 这些不应再写成“缺失”。但它们多为入口或局部能力，不能等同 CC 对应完整行为 |
+| 已实现但需增强 | `/doctor` 应补 `/checkup` alias 与自动修复能力；`/agents` 应补 `--json`、状态机、PR link、pin/resume；`/background` 应补 skill/slash-only 输入、已授权权限继承、低内存提示；`/reload-plugins` 只负责插件生命周期，另补独立 `/reload-skills` 负责 skill 目录重扫 | 这些适合进 P1/P2，不需要从零造命令 |
+| 差异化保留 | `/ultrareview` 作为 ZY Code on the web 的远端审查入口继续保留；Thinkback、Insights、Teleport、Bughunter、orchestrator/WorkflowTool runtime 等 zy-code 特性不因 CC 命名变化而删除 | 文档中不再要求命令名一一复制，优先复制安全、可靠性和用户可预期语义 |
+| 不建议追 | Claude in Chrome GA、Fable/Sonnet 品牌默认值、AWS `anthropicAws`、Claude.ai 平台强绑定 remote/mobile/sticker/radio 细节、原生二进制瘦身策略 | 除非 zy-code 产品目标明确需要，否则只作为参考，不进入近期计划 |
+| 需要用户确认 | 是否把默认权限切到 Manual；是否允许 `/code-review --fix` 默认直接改工作区；后台 agent 是否允许自动 commit/push/draft PR；完整 daemon 是否作为近期里程碑 | 这几项会明显改变交互安全感和产品定位，不建议文档直接拍板 |
+
+### 12.3 修正后的落地方案
+
+1. **P0：安全与人工边界**
+   - 补 Auto Mode 全 shell 分类、denial reason、裸 env assignment、`Tool(param:value)`、PowerShell/Bash 绕过、破坏性 git/IaC、session transcript 防篡改。
+   - 引入 `sandbox.credentials` 设计，先做敏感文件/敏感 env 隔离策略和日志脱敏。
+   - `AskUserQuestion` 和后台通知必须带“是否真人输入”的可信来源字段，禁止 transcript 文本伪造成审批。
+
+2. **P0/P1：流式、partial 与子代理错误语义**
+   - AgentTool/WorkflowTool 父子协议增加 `partialWork`、`incomplete`、`errorKind`、`usageLimit`、`rateLimited` 字段。
+   - 流式中途 overload/server error 保留 partial output 并标记 incomplete；API/usage-limit 不再回传 success。
+   - 复用现有 retry/heartbeat，不另起 retry 状态机。
+
+3. **P1：MCP 可靠性闭环**
+   - 支持 `_meta["anthropic/maxResultSizeChars"]`、tools/resources/prompts 分页、`MCP_TOOL_IDLE_TIMEOUT`、401/403 headersHelper 续期、OAuth retry 与 `--no-browser`。
+   - 启动时明确提示需要认证的 MCP server；远程/插件 MCP 的 secret、server name reserved、无效名称导入继续等行为进入回归测试。
+
+4. **P1：Hooks 与 skills 热更新**
+   - 补 `PreCompact` 阻断、`MessageDisplay`、Stop/SubagentStop 上下文、`terminalSequence`、SessionStart `reloadSkills/sessionTitle`。
+   - 新增独立 `/reload-skills`：只负责重扫 skill dir、本地 `.claude/skills`、search index、bundled/builtin/plugin skill cache，并让 SessionStart `reloadSkills:true` 安装的 skill 在当前 session 可见。
+   - 保留 `/reload-plugins` 独立语义：负责插件变更、插件提供的 commands/agents/skills/hooks/MCP/LSP、marketplace 依赖安装和 Remote Control 触发，不与 `/reload-skills` 合并。
+   - skill/slash frontmatter 支持 `disallowed-tools`，并在工具合并层做最终扣减。
+
+5. **P1：后台 agent 状态与资源长跑**
+   - 先不承诺完整 daemon，先做状态机、`agents --json`、pin、needs input、completed/failed/stopped/resuming、SendMessage retarget。
+   - 修正后台任务的权限继承、低内存提示、后台 shell reaper、progress indicator、无文本 turn 状态跳变。
+   - 建立长会话内存测试：virtual scroller、terminal output cache、context usage indicator、resume loader、update download。
+
+6. **P1：历史对话展开与全量查看**
+   - 减少“默认只展示最近一段，用户按 `Ctrl+E` 才能继续展开”的阻塞体验；长会话应能直接查看所有对话，或至少后台渐进加载 older pages，不打断阅读。
+   - 统一本地 session、remote session、assistant history 三条路径的分页策略：`HISTORY_PAGE_SIZE`、`initialHistoryCap`、Remote Bridge `flushHistory()` 的 cap 需要变成懒加载/虚拟滚动策略，而不是不可见截断。
+   - 长 transcript 查看需要避免 2.1.203 已修过的问题：上滚跳动、每 turn 全量重算 context usage、虚拟列表持有历史副本导致内存增长。
+   - UI 应有明确“已加载全部/正在加载更早消息/加载失败可重试”状态，`Ctrl+E` 只能作为快捷键，不应是继续展开历史的唯一入口。
+
+7. **P1：Compact 进度条与可观测性**
+   - 复用现有 `src/screens/REPL.tsx` 的 `onCompactProgress` 入口，核对本地 TUI、remote session、headless/print 是否都能收到 compact start/progress/end。
+   - `src/query/compaction.ts` 当前主要在 compaction 完成后 yield post-compact messages；需确认 autocompact 过程中是否有阶段/百分比事件，否则补 `compact_progress` 事件桥接。
+   - UI 上压缩中应展示稳定进度条/阶段文案，完成后展示 pre/post token、压缩消息数、失败重试/阻断原因；用户可见文案走 i18n。
+
+8. **P1/P2：review 命令族**
+   - 保留 `/ultrareview` 远端审查；新增或复用入口实现 `/code-review low|medium|high`、`--comment`、`--fix`、PR number 参数。
+   - `/review <pr>` 做快速单 pass；多 agent review 与自动修复走 `/code-review`。
+   - `--fix` 默认是否启用需要产品确认；建议先要求显式参数且走权限提示。
+
+9. **P2/P3：完整 daemon 与企业基础设施**
+   - 完整实现 daemon roster/lock/socket token/old build handover/PTY attach/worktree isolation/TaskStop/TaskOutput 跨 agent 查找。
+   - 企业项如 Perforce、availableModels 强约束、plugin marketplace allowlist、OTEL orchestrator/workflow agent trace、container id 分阶段做。
+   - CC 的 `dynamicWorkflowSize` 和 `workflow.run_id/name` 不按名字生搬，映射到 zy-code orchestrator 配置、`WorkflowTool` runtime budget/concurrency 与 OTel 属性。
+
+### 12.4 本地文档复核后的文档口径
+
+- 前文 10.1 版本表只作为索引，不作为排期依据；排期以 12.3 为准。
+- “后台会话可靠性”拆成状态机、资源回收、权限转发、daemon roster、通知可信来源五类。
+- “子代理状态修复”不只是不谎报成功，还包括 partial work、空结果、usage limit、depth restore、idle collapse、retarget、agent view 状态跳变。
+- “内存修复”覆盖 resume、virtual scroller、terminal output cache、context usage indicator、streaming render、background shell、updater download。
+- “历史对话展开”不只是 `/resume` 快：还包括长会话直接查看所有消息、渐进加载 older pages、避免 `Ctrl+E` 成为唯一展开路径、以及全量历史下的虚拟滚动/内存控制。
+- “Compact 体验”不只包括 `PreCompact` hook，还包括压缩中的进度条/阶段事件、完成后的 token delta 与阻断/失败原因。
+- “`/reload-skills`”必须包含 cache invalidation 与同 session 可见性，不能只做命令壳；“`/reload-plugins`”必须保留插件生命周期语义，两者是两个命令。
+- “workflow”相关项在 zy-code 中落到 orchestrator/WorkflowTool runtime，文档不再把 CC workflow 原名直接等同为缺失。
+- “默认 Manual”不只是一条策略：还包括 `AskUserQuestion` 不默认 auto-continue、手动模式在 footer/状态栏可见、mobile/web/Remote Control 权限模式显示一致。
+
+### 12.5 本地复核新增项的二进制证据锚点
+
+| 功能点 | v2.1.205 二进制字符串/偏移 | 说明 |
+|--------|----------------------------|------|
+| `/reload-skills` | `214776408`, `217639320`, `236499115`, `237994289` | 对应 2.1.152 新命令，需落到 skill cache reload，而非 plugin reload |
+| `/reload-plugins` | `100461006`, `126841263`, `127194157`, `131428478`, `131498303`, `131498527`; `reloadPlugins`：`143659200`, `143802464`, `215258416`, `236815135` | 与 `/reload-skills` 不同；对应插件生命周期、插件提供 skill/command/hook/MCP/LSP、marketplace 依赖刷新 |
+| `/code-review` | `86130176`, `86176655`, `86176754`, `86438460`, `86438513` | 对应 rename、effort、`--comment`、`--fix` 命令族 |
+| `MessageDisplay` hook | `90043015`, `106986664`, `125858152`, `151292602`, `151299528`, `151313872`, `151329536`, `151329696` | 对应 2.1.152 消息展示改写/隐藏 |
+| `AskUserQuestion` | `86127840`, `86552281`, `86552323`, `89948219`, `140926451`, `140936808`, `151437076`, `217408112` | 对应 auto/manual/idle timeout 与人工输入边界 |
+| 默认 Manual / 手动模式展示 | `permission mode`：`88803191`, `93391920`, `93451272`, `104412854`; `defaultMode`：`93393128`, `93740992`, `93741344`, `94275208`; `permission-mode`：`88803453`, `120380330`, `135098922`; `Manual`：`59404831`, `86200958`, `114698312` | 对应 2.1.200 默认 Manual、2.1.203 手动模式 footer 可见状态、Remote Control/mobile/web 权限模式一致性 |
+| 历史对话展开 / 全量查看 | `conversation history`：`86168017`, `106257600`, `125766015`, `223004257`, `229708869`, `230295473`; `show all`：`59656039`, `61117895`, `133800040`, `133800768`; `Expand`：`59690476`, `59690959`, `59702623`, `59726172`; `Ctrl+E`：`60379399`, `214220128`, `236118360` | 对应历史对话查看、展开和快捷键；zy-code 需从手动继续展开改为全量/渐进历史查看 |
+| Compact 进度条/事件 | `compact_progress`：`109892056`, `109915368`, `109963496`, `110123512`, `110152920`, `110162520`, `110180848`, `123562144`, `124986608`; `Compacting`：`107787411`, `107800194`, `107806264`, `124991448`, `230126979` | 对应压缩过程的进度/状态展示；zy-code 需核对 `onCompactProgress` 是否完整接入 autocompact、本地 TUI 和 remote session |
+| `disallowed-tools` | `106956824`, `136999890`, `156392653`, `182330641`, `186049466`, `186051802`, `186052850`, `226086954` | 对应 skill/slash frontmatter 禁用工具 |
+| `agents --json` | `156154703`, `241617130`, `241618588` | 对应后台会话脚本可观测接口 |
+| agent view 状态 | `agent view`：`93431760`, `129214073`, `156405750`, `156405949`, `156406261`; `agent_view`：`146232606`, `149976175`, `238154307`, `240483498` | 对应状态机、PR link、headline、needs input/completed 等 UI |
+| 后台运行参数 | `run_in_background`：`108385717`, `108443472`, `111033209`, `111062323`, `111068812` | 对应子代理默认后台化与后台 session 语义 |
+| daemon / lock | `daemon.lock`：`86447112`, `148654267`, `236566706`, `238612025`, `241755958`; `retarget`：`193697075`, `229121346`; `stale` 多处 | 对应 stale lock、respawn race、旧构建接管、SendMessage retarget |
+| partial / incomplete | `partial work`：`150306566`, `150317672`, `150334669`, `240529282`, `240529698`, `240529926`, `240531058`, `240534454`; `incomplete response`：`119184318`, `119220640`, `233511549`, `233516269` | 对应子代理/API 流式中断不再假成功 |
+| usage limit | `106116944`, `106122878`, `106123469`, `106123568`, `106129152`, `106255738`, `106280223`, `115421560` | 对应子代理 usage-limit 错误向父代理上报 |
+| 后台 shell 内存回收 | `CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP`：`89934968`, `223618514`, `230587582`; `low memory`：`157133596`, `157133828`, `237516554`, `241751950`, `241752134`, `241752516`, `241756973` | 对应 2.1.193/199 资源压力提示与 reaper |
+| updater/download 内存 | `download`：`59005905`, `59018867`, `59028891`, `59036320`, `59108967`, `59109001`, `59109211`, `59109239` | 对应 2.1.205 流式下载省 400MB |
+| MCP idle timeout | `CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT`：`89933404`, `124290756`, `223617286`, `234516480`, `234540413` | 对应 2.1.187 远程 MCP 工具挂起超时 |
+| MCP result size | `maxResultSizeChars`：`102806232`, `212102354`, `227846446`, `227936224`, `228348502` | 对应 2.1.100 `_meta["anthropic/maxResultSizeChars"]` |
+| MCP auth refresh | `headersHelper`：`96543520`, `105895082`; `401/403`：`234570694` | 对应 2.1.191/193 运行时认证过期自动续期 |
+| `no-browser` auth | `142415210`, `207132018`, `232505631`, `232505722`, `237653451` | 对应 CLI MCP auth / SSH/headless 体验 |
+| Auto Mode 全 shell 分类 | `classifyAllShell`：`93760608`, `223889763`, `223980013`; `CLAUDE_CODE_AUTO_MODE_CLASSIFY_EDITS`：`111743880`, `230857286` | 对应 2.1.191 安全分类覆盖面扩大 |
+| 后台通知/权限可信来源 | `PermissionRequest`：`86015374`, `86480081`, `86919263`, `86920245`, `86920443`; `PermissionDenied`：`58795968`, `90042927`, `106985912`, `122455692`, `125936712` | 对应 2.1.205 “未发生人工输入”与 transcript 审批边界 |
+| streaming watchdog / fallback | `tengu_streaming_watchdog_retry`：`124713064`, `234638789`, `234642363`; `cli_nonstreaming_fallback_started`：`124715496`, `234644392`, `234646497`; `model_refusal_fallback`：`113136800`, `116226840`, `118161912` | 对应流式无响应、非流式降级与拒绝 fallback |
+| terminal sequence / synchronized update | `terminalSequence`：`125999296`, `126006557`, `126226580`, `227841332`, `234796228`; `SYNCHRONIZED_UPDATE`：`98452208`, `226311356`, `226311392`, `226311424`, `226528319` | 对应 no-flicker、tmux 3.4+ 同步输出与终端控制字符过滤 |
+| workflow / orchestrator 兼容锚点 | `workflow.run_id`：`94415376`, `224992509`; `workflow.name`：`94415440`, `224992563`; `workflowSize`：`125418752`, `128315880`, `129271168`, `129278848`; `ultracode`：`93432564`, `93443535`, `93471904`; `orchestrator`：`116583528`, `122361409`, `156172624`, `207389800` | CC 侧仍有 workflow/ultracode/orchestrator 字符串；zy-code 落地映射到 orchestrator/WorkflowTool runtime，不按命名硬搬 |
 
 ---
 
