@@ -13,6 +13,10 @@ export interface AgentOpts {
   model?: string
   isolation?: 'worktree'
   agentType?: string
+  /** 当前工作流 run_id，用于 OTel 属性 workflow.run_id */
+  workflowRunId?: string
+  /** 当前工作流名称，用于 OTel 属性 workflow.name */
+  workflowName?: string
 }
 
 export interface WorkflowAgentContext {

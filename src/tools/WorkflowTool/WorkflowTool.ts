@@ -50,6 +50,10 @@ const inputSchema = lazySchema(() =>
       .string()
       .optional()
       .describe('Ignored — set the workflow description in the script meta block.'),
+    workflowSize: z
+      .enum(['small', 'medium', 'large'])
+      .optional()
+      .describe('Advisory size guideline for dynamic workflow scaling.'),
   }),
 )
 

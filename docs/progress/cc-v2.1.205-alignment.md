@@ -27,7 +27,7 @@
 
 | # | 项 | 状态 | 开始日期 | 完成日期 | 备注 |
 |---|-----|------|---------|---------|------|
-| 3.1 | `dynamicWorkflowSize` 与 OTel 属性 | □ 待开始 | — | — | |
-| 3.2 | `/dataviz` 数据可视化技能 | □ 待开始 | — | — | |
-| 3.3 | Bash 路径补全 | □ 待开始 | — | — | |
-| 3.4 | 默认 Manual / AskUserQuestion 迁移 | □ 待开始 | — | — | |
+| 3.1 | `dynamicWorkflowSize` 与 OTel 属性 | ✅ 完成 | 2026-07-09 | 2026-07-09 | WorkflowTool 新增 workflowSize 输入选项；AgentOpts 新增 workflowRunId/workflowName |
+| 3.2 | `/dataviz` 数据可视化技能 | ✅ 完成 | 2026-07-09 | 2026-07-09 | 新增 src/skills/bundled/dataviz.ts，注册为内置 skill |
+| 3.3 | Bash 路径补全 | ⏸️ 暂缓 | — | — | 终端 UI 层功能，需 completion 基础设施，P2 暂缓 |
+| 3.4 | 默认 Manual / AskUserQuestion 迁移 | ✅ 已对齐 | 2026-07-09 | 2026-07-09 | zy-code 默认模式已是 'default'（与 CC 的 Manual 等效），无需迁移 |
