@@ -13,6 +13,7 @@ import type { ToolJSXState } from '../../state/ReplStore.js'
 import type { FocusedInputDialog } from './useReplOnCancel.js'
 import type { PromptQueueItem } from './useReplRequestPrompt.js'
 import type { SandboxPermissionRequest } from './useReplSandboxAsk.js'
+import type { ResumeReturnPrompt } from '../../services/sessionStorage/resumeReturn.js'
 
 export interface GetFocusedInputDialogParams {
   isExiting: boolean
@@ -26,6 +27,7 @@ export interface GetFocusedInputDialogParams {
   workerSandboxPermissionsQueue: readonly unknown[]
   elicitationQueue: readonly unknown[]
   idleReturnPending: { input: string; idleMinutes: number } | null
+  resumeReturnPending?: ResumeReturnPrompt | null
   isLoading: boolean
   ultraplanPendingChoice: unknown
   ultraplanLaunchPending: unknown
@@ -74,6 +76,9 @@ export function getFocusedInputDialog(p: GetFocusedInputDialogParams): FocusedIn
   }
   if (allowDialogsWithAnimation && p.idleReturnPending) {
     return 'idle-return'
+  }
+  if (allowDialogsWithAnimation && p.resumeReturnPending) {
+    return 'resume-return'
   }
   if (
     feature('ULTRAPLAN') &&

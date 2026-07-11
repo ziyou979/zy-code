@@ -15,9 +15,8 @@ import type { ToolPermissionContext } from '../../Tool.js'
 import { isVimModeEnabled } from './utils.js'
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
 import {
-  isDefaultMode,
   permissionModeSymbol,
-  permissionModeTitle,
+  permissionModeIndicator,
   getModeColor,
 } from '../../utils/permissions/PermissionMode.js'
 import { BackgroundTaskStatus } from '../tasks/BackgroundTaskStatus.js'
@@ -308,7 +307,7 @@ function ModeIndicator({
     return <Text color="bashBorder">! for bash mode</Text>
   }
   const currentMode = toolPermissionContext?.mode
-  const hasActiveMode = !isDefaultMode(currentMode)
+  const hasActiveMode = currentMode !== undefined
   const viewedTask = viewingAgentTaskId ? tasks[viewingAgentTaskId] : undefined
   const isViewingTeammate =
     viewSelectionMode === 'viewing-agent' && viewedTask?.type === 'in_process_teammate'
@@ -351,8 +350,7 @@ function ModeIndicator({
   const modePart =
     currentMode && hasActiveMode && !getIsRemoteMode() ? (
       <Text color={getModeColor(currentMode)} key="mode">
-        {permissionModeSymbol(currentMode)} {permissionModeTitle(currentMode).toLowerCase()}{' '}
-        {tSync('permissionMode.on')}
+        {permissionModeSymbol(currentMode)} {permissionModeIndicator(currentMode)} {tSync('permissionMode.on')}
         {shouldShowModeHint && (
           <Text dimColor>
             {' '}

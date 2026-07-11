@@ -133,6 +133,15 @@ export type CompactProgressEvent =
       hookType: 'pre_compact' | 'post_compact' | 'session_start'
     }
   | { type: 'compact_start' }
+  | {
+      type: 'compact_progress'
+      /** 当前阶段：summarize / trim / api / attachments / session_start / hooks */
+      stage: 'summarize' | 'trim' | 'api' | 'attachments' | 'session_start' | 'hooks'
+      /** 进度百分比 0-100 */
+      pct: number
+      /** 预渲染的进度条文本（含 Unicode 块字符），spinner 直接显示此字段 */
+      hintText?: string
+    }
   | { type: 'compact_end' }
 
 export type ToolUseContext = {

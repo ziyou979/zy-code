@@ -25,6 +25,7 @@ export const enSettings: TranslationResource = {
   'doctor.noRequiresSudo': 'no (requires sudo)',
   'doctor.packageManager': 'Package manager:',
   'doctor.path': 'Path',
+  'doctor.permissionMode': 'Permission mode',
   'doctor.pluginErrorCount': 'plugin error(s)',
   'doctor.pluginErrors': 'Plugin Errors',
   'doctor.pluginErrorsDetected': 'Detected',

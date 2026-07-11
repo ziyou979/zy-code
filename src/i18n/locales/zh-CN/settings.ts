@@ -25,6 +25,7 @@ export const zhSettings: TranslationResource = {
   'doctor.noRequiresSudo': '否（需要 sudo）',
   'doctor.packageManager': '包管理器：',
   'doctor.path': '路径',
+  'doctor.permissionMode': '权限模式',
   'doctor.pluginErrorCount': '个插件错误',
   'doctor.pluginErrors': '插件错误',
   'doctor.pluginErrorsDetected': '检测到',

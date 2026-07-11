@@ -52,6 +52,7 @@ import { isHumanTurn } from '../utils/messagePredicates.js'
 import useCanUseTool from '../hooks/useCanUseTool.js'
 import type { Tool } from '../Tool.js'
 import { clearSpeculativeChecks } from '../tools/BashTool/bashPermissions.js'
+import { getLoadGeneration } from '../tools/externalToolLoader.js'
 import type { AutoUpdaterResult } from '../utils/autoUpdater.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
@@ -146,6 +147,7 @@ import { useFullscreenDownsell } from '../hooks/notifs/useFullscreenDownsell.js'
 import { AlternateScreen } from '../ink/components/AlternateScreen.js'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import { ReplMainView } from './repl/ReplMainView.js'
+import { getResumeReturnPrompt } from '../services/sessionStorage/resumeReturn.js'
 
 const EMPTY_MCP_CLIENTS: MCPServerConnection[] = []
 const HISTORY_STUB = { maybeLoadOlder: (_: ScrollBoxHandle) => {} }
@@ -253,7 +255,11 @@ export function REPL({
   )
 
   const _isBriefOnly = useAppState((s) => s.isBriefOnly)
-  const localTools = useMemo(() => getTools(toolPermissionContext), [toolPermissionContext])
+  const localTools = useMemo(
+    () => getTools(toolPermissionContext),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [toolPermissionContext, getLoadGeneration()],
+  )
   useKickOffCheckAndDisableBypassPermissionsIfNeeded()
   useKickOffCheckAndDisableAutoModeIfNeeded()
   const setDynamicMcpConfigRef = useRef<
@@ -332,6 +338,13 @@ export function REPL({
       readFileState: initialReadFileState,
       contentReplacementState:
         provisionContentReplacementState(initialMessages, initialContentReplacements) ?? null,
+      initialResumeReturnPending: initialMessages
+        ? getResumeReturnPrompt(
+            initialMessages,
+            getGlobalConfig().resumeReturnDismissed === true,
+            mainLoopModel,
+          )
+        : null,
     }),
   )
   // 订阅整个 ReplState 而非按字段选择器：REPL 在自身派生逻辑中读取
@@ -355,6 +368,7 @@ export function REPL({
     toolUseConfirmQueue,
     toolJSX,
     idleReturnPending,
+    resumeReturnPending,
     isMessageSelectorVisible,
     mainThreadAgentDefinition,
     lastQueryCompletionTime,
@@ -753,6 +767,7 @@ export function REPL({
     workerSandboxPermissionsQueue: workerSandboxPermissions.queue,
     elicitationQueue: elicitation.queue,
     idleReturnPending,
+    resumeReturnPending,
     isLoading,
     ultraplanPendingChoice,
     ultraplanLaunchPending,

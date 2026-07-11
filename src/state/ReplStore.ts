@@ -12,6 +12,7 @@ import { randomUUID } from 'node:crypto'
 import type React from 'react'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
 import type { SpinnerMode } from '../components/Spinner.js'
+import type { ResumeReturnPrompt } from '../services/sessionStorage/resumeReturn.js'
 import type { PromptQueueItem } from '../screens/repl/useReplRequestPrompt.js'
 import type { SandboxPermissionRequest } from '../screens/repl/useReplSandboxAsk.js'
 import type { ScopedMcpServerConfig } from '../services/mcp/types.js'
@@ -56,6 +57,7 @@ export type ReplState = {
   toolJSX: ToolJSXState | null
   userInputOnProcessing: string | undefined
   idleReturnPending: { input: string; idleMinutes: number } | null
+  resumeReturnPending: ResumeReturnPrompt | null
   isMessageSelectorVisible: boolean
   messageSelectorPreselect: UserMessage | undefined
 
@@ -107,6 +109,7 @@ export type ReplStoreInstance = Store<ReplState> & {
   setPromptQueue(v: React.SetStateAction<PromptQueueItem[]>): void
   setSandboxPermissionRequestQueue(v: React.SetStateAction<SandboxPermissionRequest[]>): void
   setIdleReturnPending(v: React.SetStateAction<ReplState['idleReturnPending']>): void
+  setResumeReturnPending(v: React.SetStateAction<ReplState['resumeReturnPending']>): void
   setIsMessageSelectorVisible(v: React.SetStateAction<boolean>): void
   setMessageSelectorPreselect(v: UserMessage | undefined): void
   setLastQueryCompletionTime(v: number): void
@@ -127,6 +130,7 @@ export type CreateReplStoreParams = {
   queryGuard: QueryGuard
   readFileState: FileStateCache
   contentReplacementState: ContentReplacementState | null
+  initialResumeReturnPending?: ResumeReturnPrompt | null
 }
 
 // ── 工厂函数 ──
@@ -152,6 +156,7 @@ export function createReplStore(params: CreateReplStoreParams): ReplStoreInstanc
     toolJSX: null,
     userInputOnProcessing: undefined,
     idleReturnPending: null,
+    resumeReturnPending: params.initialResumeReturnPending ?? null,
     isMessageSelectorVisible: false,
     messageSelectorPreselect: undefined,
 
@@ -260,6 +265,9 @@ export function createReplStore(params: CreateReplStoreParams): ReplStoreInstanc
     },
     setIdleReturnPending(pending) {
       instance.setField('idleReturnPending', pending)
+    },
+    setResumeReturnPending(pending) {
+      instance.setField('resumeReturnPending', pending)
     },
     setIsMessageSelectorVisible(visible) {
       instance.setField('isMessageSelectorVisible', visible)

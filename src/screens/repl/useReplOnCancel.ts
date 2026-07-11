@@ -36,6 +36,7 @@ export type FocusedInputDialog =
   | 'elicitation'
   | 'cost'
   | 'idle-return'
+  | 'resume-return'
   | 'init-onboarding'
   | 'ide-onboarding'
   | 'effort-callout'

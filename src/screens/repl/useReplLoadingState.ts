@@ -60,6 +60,28 @@ export type ReplLoadingState = {
   resetLoadingState: () => void
 }
 
+/** 生成内联进度条字符串：▰▰▰▱▱▱▱▱▱▱ 15%
+ *  注意：必须返回单行文本。spinnerMessage 中的 \n 会被 Ink 渲染为多行，
+ *  但 spinner 动画定时刷新会导致各行内容错位/跳变。
+ *  CC 的 spinnerHintText 也是单行预渲染字符串。 */
+function buildCompactProgressMessage(event: {
+  stage: string
+  pct?: number
+  hintText?: string
+}): string {
+  // CC 对齐：如果 compact 逻辑已预渲染 hintText（含 Unicode 块字符），直接使用
+  // 注意：hintText 本身必须是单行（CC 的 spinnerHintText 就是单行）
+  if (event.hintText) {
+    return `${tSync('spinner.compacting')} ${event.hintText}`
+  }
+  // 降级：根据 pct 渲染进度条（单行）
+  const pct = event.pct ?? 0
+  const barWidth = 20
+  const filled = Math.round((pct / 100) * barWidth)
+  const bar = '▰'.repeat(filled) + '▱'.repeat(barWidth - filled)
+  return `${tSync('spinner.compacting')} ${bar} ${Math.round(pct)}%`
+}
+
 export type UseReplLoadingStateParams = {
   queryGuard: QueryGuard
   initialExternalLoading: boolean
@@ -141,6 +163,9 @@ export function useReplLoadingState({
           break
         case 'compact_start':
           setSpinnerMessage(tSync('spinner.compacting'))
+          break
+        case 'compact_progress':
+          setSpinnerMessage(buildCompactProgressMessage(event))
           break
         case 'compact_end':
           resetSpinnerOverride()

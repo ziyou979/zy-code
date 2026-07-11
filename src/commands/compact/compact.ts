@@ -1,5 +1,6 @@
 import { feature } from 'bun:bundle'
 import chalk from 'chalk'
+import { tSync } from '../../i18n/index.js'
 import { markPostCompaction } from 'src/bootstrap/state.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
 import { getSystemContext, getUserContext } from '../../context.js'
@@ -221,10 +222,13 @@ async function compactViaReactive(
 function buildDisplayText(context: ToolUseContext, userDisplayMessage?: string): string {
   const expandShortcut = getShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
   const dimmed = [
-    ...(context.options.verbose ? [] : [`(${expandShortcut} to see full summary)`]),
+    ...(context.options.verbose
+      ? []
+      : [tSync('compact.seeFullSummary', { shortcut: expandShortcut })]),
     ...(userDisplayMessage ? [userDisplayMessage] : []),
   ]
-  return chalk.dim(`Compacted ${dimmed.join('\n')}`)
+  const header = tSync('compact.compactResult')
+  return chalk.dim(`${header}${dimmed.length > 0 ? '\n' : ''}${dimmed.join('\n')}`)
 }
 
 async function getCacheSharingParams(

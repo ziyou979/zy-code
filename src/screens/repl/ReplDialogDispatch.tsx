@@ -26,6 +26,7 @@ import { ElicitationDialog } from '../../components/mcp/ElicitationDialog.js'
 import { SandboxPermissionRequest } from '../../components/permissions/SandboxPermissionRequest.js'
 import { WorkerPendingPermission } from '../../components/permissions/WorkerPendingPermission.js'
 import { RemoteCallout } from '../../components/RemoteCallout.js'
+import { ResumeReturnDialog, type ResumeReturnAction } from '../../components/ResumeReturnDialog.js'
 import { LOCAL_COMMAND_STDOUT_TAG } from '../../constants/xml.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -104,6 +105,7 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
   const sandboxPermissionRequestQueue = rs.sandboxPermissionRequestQueue
   const promptQueue = rs.promptQueue
   const idleReturnPending = rs.idleReturnPending
+  const resumeReturnPending = rs.resumeReturnPending
   const queryGuard = replStore.mutable.queryGuard
   const setAppState = useSetAppState()
   const store = useAppStateStore()
@@ -260,6 +262,37 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
     ],
   )
 
+  // ── handler: resume-return ──
+  const handleResumeReturnDone = React.useCallback(
+    (action: ResumeReturnAction) => {
+      const pending = resumeReturnPending
+      if (!pending) {
+        return
+      }
+      replStore.setResumeReturnPending(null)
+      logEvent('zy_resume_return_action', {
+        action: action as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        sessionAgeMinutes: Math.round(pending.sessionAgeMinutes),
+        messageCount: replStore.getState().messages.length,
+        estimatedTokens: pending.estimatedTokens,
+        contextUsagePercent: Math.round(pending.contextUsagePercent),
+      })
+      if (action === 'never') {
+        saveGlobalConfig((current) =>
+          current.resumeReturnDismissed ? current : { ...current, resumeReturnDismissed: true },
+        )
+      }
+      if (action === 'compact') {
+        void onSubmitRef.current('/compact', {
+          setCursorOffset: () => {},
+          clearBuffer: () => {},
+          resetHistory: () => {},
+        })
+      }
+    },
+    [onSubmitRef, replStore, resumeReturnPending],
+  )
+
   // ── handler: ultraplan launch ──
   const handleUltraplanChoice = React.useCallback(
     (choice: string, opts?: { disconnectedBridge?: boolean }) => {
@@ -400,6 +433,9 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
           totalInputTokens={getTotalInputTokens()}
           onDone={handleIdleReturnDone}
         />
+      )}
+      {dialog === 'resume-return' && resumeReturnPending && (
+        <ResumeReturnDialog {...resumeReturnPending} onDone={handleResumeReturnDone} />
       )}
       {dialog === 'ide-onboarding' && (
         <IdeOnboardingDialog

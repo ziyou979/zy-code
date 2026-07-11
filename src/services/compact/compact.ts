@@ -383,6 +383,8 @@ export async function compactConversation(
   isAutoCompact: boolean = false,
   recompactionInfo?: RecompactionInfo,
 ): Promise<CompactionResult> {
+  // 进度条定时器 — 声明在函数级作用域，确保 catch/finally 都能访问
+  let progressTimer: ReturnType<typeof setInterval> | undefined
   try {
     if (messages.length === 0) {
       throw new Error(ERROR_MESSAGE_NOT_ENOUGH_MESSAGES)
@@ -419,8 +421,9 @@ export async function compactConversation(
     context.setResponseLength?.(() => 0)
     context.onCompactProgress?.({ type: 'compact_start' })
 
+    // 进度条定时器 — 声明在 try 块顶部，确保 catch/finally 都能访问
     // 第三方默认：true — forked-agent 路径复用主对话的 prompt cache。
-    // 实验（2026年1月）确认：false 路径 98% cache miss，消耗约 0.76% 的
+    // 实验（2026年1月）确认：false 路径 98% cache miss，消耗约 0.78% 的
     // 集群 cache_creation（约 38B token/天），集中在临时环境（CCR/GHA/SDK），
     // 这些环境中 GB cache 是冷的，且 GB 被禁用的第三方提供商。GB gate 作为 kill-switch 保留。
     const promptCacheSharingEnabled = getFeatureValue_CACHED_MAY_BE_STALE(
@@ -438,6 +441,20 @@ export async function compactConversation(
     let summaryResponse: AssistantMessage
     let summary: string | null
     let ptlAttempts = 0
+
+    // 在 API 调用期间定时刷新进度条（每 2 秒递增 ~3%，模拟连续进度）
+    // CC 对齐：compact 期间 spinner 显示连续进度 ▰▰▱▱▱ 而非跳变百分比
+    let progressPct = 10
+    progressTimer = setInterval(() => {
+      progressPct = Math.min(progressPct + 3, 80)
+      context.onCompactProgress?.({
+        type: 'compact_progress',
+        stage: 'api',
+        pct: progressPct,
+      })
+    }, 2000)
+    // 确保 interval 在函数退出时清理（无论正常返回还是抛错）
+
     for (;;) {
       summaryResponse = await streamCompactSummary({
         messages: messagesToSummarize,
@@ -451,6 +468,9 @@ export async function compactConversation(
       if (!summary?.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE)) {
         break
       }
+      // PTL 重试：重置进度计时器
+      progressPct = 10
+      clearInterval(progressTimer)
 
       // CC-1180：压缩请求本身触发了 prompt-too-long。截断最旧的
       // API-round 分组并重试，而不是让用户卡住。
@@ -481,6 +501,14 @@ export async function compactConversation(
         forkContextMessages: truncated,
       }
     }
+
+    // API 调用完成，清除进度条定时器
+    if (progressTimer) clearInterval(progressTimer)
+    context.onCompactProgress?.({
+      type: 'compact_progress',
+      stage: 'attachments',
+      pct: 85,
+    })
 
     if (!summary) {
       compactLog(
@@ -571,6 +599,11 @@ export async function compactConversation(
       postCompactFileAttachments.push(createAttachmentMessage(att))
     }
 
+    context.onCompactProgress?.({
+      type: 'compact_progress',
+      stage: 'session_start',
+      pct: 90,
+    })
     context.onCompactProgress?.({
       type: 'hooks_start',
       hookType: 'session_start',
@@ -698,6 +731,11 @@ export async function compactConversation(
     }
 
     context.onCompactProgress?.({
+      type: 'compact_progress',
+      stage: 'hooks',
+      pct: 95,
+    })
+    context.onCompactProgress?.({
       type: 'hooks_start',
       hookType: 'post_compact',
     })
@@ -740,12 +778,15 @@ export async function compactConversation(
     }
     throw error
   } finally {
+    globalThis.clearInterval(progressTimer)
     context.setStreamMode?.('requesting')
     context.setResponseLength?.(() => 0)
     context.onCompactProgress?.({ type: 'compact_end' })
     context.setSDKStatus?.(null)
   }
 }
+
+/**
 
 /**
  * 围绕选中的消息索引执行部分压缩。
@@ -819,6 +860,11 @@ export async function partialCompactConversation(
     context.setStreamMode?.('requesting')
     context.setResponseLength?.(() => 0)
     context.onCompactProgress?.({ type: 'compact_start' })
+    context.onCompactProgress?.({
+      type: 'compact_progress',
+      stage: 'summarize',
+      pct: 5,
+    })
 
     const compactPrompt = getPartialCompactPrompt(customInstructions, direction)
     const summaryRequest = createUserMessage({
