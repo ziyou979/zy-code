@@ -29,6 +29,7 @@ export const ZY_CONFIG_DIRECTORIES = [
   'output-styles',
   'skills',
   'workflows',
+  'tools',
   ...(feature('TEMPLATES') ? (['templates'] as const) : []),
 ] as const
 

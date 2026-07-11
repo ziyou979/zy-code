@@ -8,6 +8,7 @@ import { updateWatchPaths } from './hooks/fileChangedWatcher.js'
 import { shouldAllowManagedHooksOnly } from './hooks/hooksConfigSnapshot.js'
 import { executeSessionStartHooks, executeSetupHooks } from './hooks.js'
 import { logError } from './log.js'
+import type { AggregatedHookResult } from '../services/hooks/types.js'
 import { loadPluginHooks } from './plugins/loadPluginHooks.js'
 
 type SessionStartHooksOptions = {
@@ -25,6 +26,41 @@ export function takeInitialUserMessage(): string | undefined {
   const v = pendingInitialUserMessage
   pendingInitialUserMessage = undefined
   return v
+}
+
+// Set by processSessionStartHooks when a hook sets sessionTitle
+let pendingSessionTitle: string | undefined
+
+/** Consumed once after startup by the session/title initialization. */
+export function takeSessionTitle(): string | undefined {
+  const v = pendingSessionTitle
+  pendingSessionTitle = undefined
+  return v
+}
+
+/**
+ * Reload skills from a SessionStart hook request.
+ * Non-blocking: runs async, errors are logged and swallowed.
+ */
+async function reloadSkillsFromHook(): Promise<void> {
+  try {
+    const { clearCommandMemoizationCaches, getSkillToolCommands } = await import(
+      '../commands.js'
+    )
+    const { clearDynamicSkills } = await import('../skills/loadSkillsDir.js')
+    const { clearSkillCaches } = await import('../skills/loadSkillsDir.js')
+    const { clearPluginSkillsCache } = await import(
+      '../services/plugins/loadPluginCommands.js'
+    )
+    clearCommandMemoizationCaches()
+    clearSkillCaches()
+    clearDynamicSkills()
+    clearPluginSkillsCache()
+    await getSkillToolCommands(process.cwd())
+    logForDebugging('SessionStart hook: skills reloaded')
+  } catch (error) {
+    logError(error instanceof Error ? error : new Error(String(error)))
+  }
 }
 
 // Note to CLAUDE: do not add ANY "warmup" logic. It is **CRITICAL** that you do not add extra work on startup.
@@ -135,6 +171,15 @@ export async function processSessionStartHooks(
     }
     if (hookResult.watchPaths && hookResult.watchPaths.length > 0) {
       allWatchPaths.push(...hookResult.watchPaths)
+    }
+    // SessionStart hook 请求重扫技能
+    if (hookResult.reloadSkills) {
+      // 异步重扫，不阻塞启动流程
+      void reloadSkillsFromHook()
+    }
+    // SessionStart hook 设置会话标题
+    if (hookResult.sessionTitle) {
+      pendingSessionTitle = hookResult.sessionTitle
     }
   }
 

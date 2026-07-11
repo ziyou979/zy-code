@@ -40,3 +40,15 @@
 | 对齐能力定向测试 | ✅ 通过 | Shell 补全 6 项，以及错误语义、权限、Workflow、MCP hook 29 项 |
 | 全量测试 | ⚠️ 1090 通过 / 1 跳过 / 4 失败 | 失败为既有 API snapshot 漂移 1 项、Anthropic `server_tool_use` 映射 3 项，均不在本次 Shell 补全改动路径 |
 | TUI PTY 自动化 | ⏸️ 环境受阻 | 本机无 `expect`，且 WSL 未安装发行版；技能脚本无法建立真实 PTY，未将普通管道输入冒充端到端验证 |
+
+## 后续补全项（2026-07-10）
+
+以下项在首次对齐评估后仍为 stub/未实现，已在本轮补全：
+
+| # | 项 | 状态 | 说明 |
+|---|-----|------|------|
+| 2.6 | `/code-review` 完整实现 | ✅ 完成 | effort 三级 + --fix + --comment + PR number；使用 sideQuery 执行审查 |
+| 2.7 | `/checkup` alias | ✅ 完成 | doctor 命令新增 aliases: ['checkup'] |
+| 2.8 | MCP secret redaction | ✅ 完成 | mcpResults.ts 新增 redactMCPSecrets/redactSensitiveFields/redactMcpContent；覆盖 text/text in resource/截断/持久化路径 |
+| 4.1 | Daemon 子系统 | ✅ 完成 | main.ts 锁文件 + socket token + roster + Unix socket IPC；workerRegistry.ts 注册/注销/心跳/列表；build.ts 启用 DAEMON feature |
+| 4.2 | 虚拟滚动/自动展开 | ✅ 已对齐 | VirtualMessageList + 分页历史加载 + UUID-anchored 切片已在现有代码中实现 |

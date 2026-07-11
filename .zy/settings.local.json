@@ -76,7 +76,12 @@
       "Bash(grep -l 预览时标签 C:/Users/soleil/Desktop/cc/*.md)",
       "Bash(grep -l 关注公众号 C:/Users/soleil/Desktop/cc/*.md)",
       "Bash(grep -l 延伸阅读 C:/Users/soleil/Desktop/cc/*.md)",
-      "Bash(grep -cl 作者头像 C:/Users/soleil/Desktop/cc/*.md)"
+      "Bash(grep -cl 作者头像 C:/Users/soleil/Desktop/cc/*.md)",
+      "Bash(grep -n 'WirePermissionDenial' src/types/*.ts)",
+      "Bash(grep -v '//')",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(xxd)",
+      "Bash(grep -o vqd=\"\"[^\"\"]*\"\" /tmp/ddg_main.html)"
     ]
   }
 }

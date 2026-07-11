@@ -394,6 +394,7 @@ export type GlobalConfig = {
 
   // 空闲返回弹窗追踪
   idleReturnDismissed?: boolean // 已选择"不再询问"
+  resumeReturnDismissed?: boolean // 已选择恢复大上下文时“不再询问”
 
   // 缓存的 statsig gate 值
   cachedStatsigGates: {
