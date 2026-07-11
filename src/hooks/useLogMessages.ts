@@ -33,6 +33,16 @@ export function useLogMessages(messages: Message[], ignore: boolean = false) {
 
   useEffect(() => {
     if (ignore) {
+      // 恢复会话的首屏消息已经存在于 JSONL，不能再次写入；但仍必须用恢复链的
+      // 末端初始化增量游标。否则下一次消息更新会被误判为“首次渲染”，而
+      // getSessionMessages 的进程内缓存可能仍对应切换前的临时 session，导致新消息
+      // 以 parentUuid=null 写入。再次恢复时只能从这个新根回溯，历史显示和模型
+      // context 都会静默缩减到最后一轮。
+      const currentFirstUuid = messages[0]?.uuid as UUID | undefined
+      const last = cleanMessagesForLogging(messages, messages).findLast(isChainParticipant)
+      lastRecordedLengthRef.current = messages.length
+      firstMessageUuidRef.current = currentFirstUuid
+      lastParentUuidRef.current = last?.uuid as UUID | undefined
       return
     }
 

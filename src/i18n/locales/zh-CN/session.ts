@@ -1,6 +1,11 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const zhSession: TranslationResource = {
+  'resumeReturn.compact': '从摘要恢复（推荐）',
+  'resumeReturn.continue': '按原样恢复完整会话',
+  'resumeReturn.description': '恢复完整会话将占用较大比例的用量限额。建议从摘要恢复。',
+  'resumeReturn.neverAsk': '不再询问',
+  'resumeReturn.title': '此会话已离开 {age}，上下文为 {tokens} tokens（窗口的 {percent}%）。',
   'channel.allowDowngrade': '允许可能降级到稳定版',
   'channel.downgradeDescription': '稳定通道的版本可能低于你当前正在运行的版本 ({currentVersion})。',
   'channel.downgradeTitle': '切换到稳定通道',

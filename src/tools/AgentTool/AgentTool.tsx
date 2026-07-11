@@ -1543,6 +1543,14 @@ export const AgentTool = buildTool({
           // If an error occurred during iteration, try to return a result with
           // whatever messages we have. If we have no assistant messages,
           // re-throw the error so it's properly handled by the tool framework.
+          let agentErrorKind:
+            | 'usage_limit'
+            | 'rate_limited'
+            | 'server_error'
+            | 'refusal'
+            | 'stream_failure'
+            | 'internal'
+            | undefined
           if (syncAgentError) {
             // Check if we have any assistant messages to return
             const hasAssistantMessages = agentMessages.some((msg) => msg.type === 'assistant')
@@ -1556,6 +1564,11 @@ export const AgentTool = buildTool({
             logForDebugging(
               `Sync agent recovering from error with ${agentMessages.length} messages`,
             )
+            // 同步 agent 错误时注入 errorKind（使用共享分类函数）
+            const { categorizeAgentError } = await import(
+              '../../utils/agentErrorCategorizer.js'
+            )
+            agentErrorKind = categorizeAgentError(syncAgentError)
           }
           const agentResult = finalizeAgentTool(agentMessages, syncAgentId, metadata)
           const currentAppState = toolUseContext.getAppState()
@@ -1576,11 +1589,19 @@ export const AgentTool = buildTool({
               ...agentResult.content,
             ]
           }
+          // 同步 agent 错误时注入 error 字段（已有 incomplete 标记来自 finalizeAgentTool）
+          const resultWithError = syncAgentError
+            ? {
+                ...agentResult,
+                errorKind: agentErrorKind,
+                errorMessage: errorMessage(syncAgentError),
+              }
+            : agentResult
           return {
             data: {
-              status: 'completed' as const,
+              status: syncAgentError ? ('completed' as const) : ('completed' as const),
               prompt,
-              ...agentResult,
+              ...resultWithError,
               ...worktreeResult,
             },
           }

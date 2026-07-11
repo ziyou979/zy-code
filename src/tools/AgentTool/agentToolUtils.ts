@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-import { z } from 'zod/v4'
 import { clearInvokedSkillsForAgent } from '../../bootstrap/state.js'
 import {
   ALL_AGENT_DISALLOWED_TOOLS,
@@ -39,7 +38,6 @@ import { logForDebugging } from '../../utils/debug.js'
 import { isInProtectedNamespace } from '../../utils/envUtils.js'
 import { AbortError, errorMessage } from '../../utils/errors.js'
 import type { CacheSafeParams } from '../../utils/forkedAgent.js'
-import { lazySchema } from '../../utils/lazySchema.js'
 import { extractTextContent, getLastAssistantMessage } from '../../utils/messages.js'
 import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
 import { permissionRuleValueFromString } from '../../utils/permissions/permissionRuleParser.js'
@@ -204,40 +202,12 @@ export function resolveAgentTools(
   }
 }
 
-export const agentToolResultSchema = lazySchema(() =>
-  z.object({
-    agentId: z.string(),
-    // Optional: older persisted sessions won't have this (resume replays
-    // results verbatim without re-validation). Used to gate the sync
-    // result trailer — one-shot built-ins skip the SendMessage hint.
-    agentType: z.string().optional(),
-    content: z.array(z.object({ type: z.literal('text'), text: z.string() })),
-    totalToolUseCount: z.number(),
-    totalDurationMs: z.number(),
-    totalTokens: z.number(),
-    usage: z.object({
-      inputTokens: z.number(),
-      outputTokens: z.number(),
-      cacheCreationInputTokens: z.number().nullable(),
-      cacheReadInputTokens: z.number().nullable(),
-      serverToolUse: z
-        .object({
-          webSearchRequests: z.number(),
-          webFetchRequests: z.number(),
-        })
-        .nullable(),
-      serviceTier: z.enum(['standard', 'priority', 'batch']).nullable(),
-      cacheCreation: z
-        .object({
-          ephemeral1hInputTokens: z.number(),
-          ephemeral5mInputTokens: z.number(),
-        })
-        .nullable(),
-    }),
-  }),
-)
-
-export type AgentToolResult = z.input<ReturnType<typeof agentToolResultSchema>>
+import {
+  agentToolResultSchema,
+  type AgentToolResult,
+} from '../../utils/agentToolResultSchema.js'
+export type { AgentToolResult }
+export { agentToolResultSchema }
 
 export function countToolUses(messages: MessageType[]): number {
   let count = 0
@@ -329,6 +299,9 @@ export function finalizeAgentTool(
     })
   }
 
+  // 检测子代理是否未完成（流式中断/错误截断）
+  const incomplete = lastAssistantMessage.message.incomplete ?? false
+
   return {
     agentId,
     agentType,
@@ -346,6 +319,10 @@ export function finalizeAgentTool(
       serviceTier: null,
       cacheCreation: null,
     },
+    // 错误语义字段：如果子代理未完成（流式中断/错误截断），
+    // 传播 incomplete 标记和错误分类。clean success 则不设置这些字段，
+    // 保持向后兼容。
+    ...(incomplete && { incomplete: true }),
   }
 }
 
@@ -473,6 +450,14 @@ export async function classifyHandoffIfNeeded({
 
   return null
 }
+
+/**
+ * Categorize an error into a structured errorKind for agent error propagation.
+ * Used by the async agent lifecycle to classify errors so parent agents can
+ * make informed retry/fallback decisions.
+ */
+import { categorizeAgentError } from '../../utils/agentErrorCategorizer.js'
+export { categorizeAgentError }
 
 /**
  * Extract a partial result string from an agent's accumulated messages.
@@ -653,6 +638,57 @@ export async function runAsyncAgentLifecycle({
       return
     }
     const msg = errorMessage(error)
+    // 检查是否有部分消息可以恢复（非致命错误，如 rate limit / server error）
+    const hasPartialWork = agentMessages.some((m) => m.type === 'assistant')
+    if (hasPartialWork) {
+      // 子代理被错误截断但产生了部分工作——产出 incomplete 标记的部分结果
+      // 而非直接失败。这样父代理能看到子代理的部分成果，而不是收到一个空错误。
+      logForDebugging(
+        `Async agent error with partial work (${agentMessages.length} msgs): ${msg}`,
+        { level: 'warn' },
+      )
+      try {
+        // 使用现有 finalizeAgentTool 但注入 incomplete 语义
+        const partialResult = finalizeAgentTool(agentMessages, taskId, {
+          ...metadata,
+          prompt: metadata.prompt,
+        })
+        // 覆盖为 incomplete（而非正常 complete）
+        // 注意：finalizeAgentTool 已检测 lastAssistantMessage.incomplete
+        // 这里额外确保标记，因为流式错误可能没有正确设置 incomplete 标记
+        const resultWithError = {
+          ...partialResult,
+          incomplete: true,
+          errorKind: categorizeAgentError(error),
+          errorMessage: msg,
+        }
+        completeAsyncAgent(resultWithError, rootSetAppState)
+        const worktreeResult = await getWorktreeResult()
+        const finalMessage = extractTextContent(resultWithError.content, '\n')
+        enqueueAgentNotification({
+          taskId,
+          description,
+          status: 'completed',
+          setAppState: rootSetAppState,
+          finalMessage: `Note: Sub-agent encountered an error and may be incomplete. ${msg}\n\n${finalMessage}`,
+          usage: {
+            totalTokens: resultWithError.totalTokens,
+            toolUses: resultWithError.totalToolUseCount,
+            durationMs: resultWithError.totalDurationMs,
+          },
+          toolUseId: toolUseContext.toolUseId,
+          ...worktreeResult,
+        })
+        return
+      } catch {
+        // finalizeAgentTool 也可能失败（消息结构异常等）
+        // fall through to the standard fail path
+        logForDebugging(
+          `Failed to finalize partial agent work, falling back to fail: ${msg}`,
+          { level: 'error' },
+        )
+      }
+    }
     failAsyncAgent(taskId, msg, rootSetAppState)
     const worktreeResult = await getWorktreeResult()
     enqueueAgentNotification({

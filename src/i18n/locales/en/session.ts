@@ -1,6 +1,12 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const enSession: TranslationResource = {
+  'resumeReturn.compact': 'Resume from summary (recommended)',
+  'resumeReturn.continue': 'Resume full session as-is',
+  'resumeReturn.description':
+    'Resuming the full session will consume a substantial portion of your usage limits. We recommend resuming from a summary.',
+  'resumeReturn.neverAsk': "Don't ask me again",
+  'resumeReturn.title': 'This session is {age} old and {tokens} tokens ({percent}% of context).',
   'channel.allowDowngrade': 'Allow possible downgrade to stable version',
   'channel.downgradeDescription':
     "The stable channel may have an older version than what you're currently running ({currentVersion}).",
