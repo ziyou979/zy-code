@@ -81,7 +81,8 @@
       "Bash(grep -v '//')",
       "Bash(echo \"EXIT=$?\")",
       "Bash(xxd)",
-      "Bash(grep -o vqd=\"\"[^\"\"]*\"\" /tmp/ddg_main.html)"
+      "Bash(grep -o vqd=\"\"[^\"\"]*\"\" /tmp/ddg_main.html)",
+      "Bash(git mv:*)"
     ]
   }
 }
