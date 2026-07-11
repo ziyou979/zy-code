@@ -315,6 +315,11 @@ export function Doctor({ onDone }: Props) {
               └ {tSync('doctor.searchLabel')}: {searchStatusText} ({diagnostic.ripgrepStatus.path})
             </Text>
           }
+          {
+            <Text>
+              └ {tSync('doctor.permissionMode')}: {toolPermissionContext.mode}
+            </Text>
+          }
           {diagnostic.recommendation && (
             <>
               <Text />

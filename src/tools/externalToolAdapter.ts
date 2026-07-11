@@ -7,6 +7,7 @@
 import React from 'react'
 import { z } from 'zod/v4'
 import { Box, Text } from '../ink.js'
+import { MessageResponse } from '../components/MessageResponse.js'
 import { buildTool, type ToolInputJSONSchema } from '../Tool.js'
 import type { PermissionResult } from '../types/permissions.js'
 import { errorMessage } from '../utils/errors.js'
@@ -33,6 +34,16 @@ export interface ExternalToolDefinition {
   isReadOnly?: boolean
   /** ToolSearch 搜索关键词提示 */
   searchHint?: string
+  /**
+   * 用户可读的入参展示。
+   * 函数接收原始入参，返回简短展示文本。返回 null 时回退到默认 key=value 格式。
+   */
+  userFacingInput?: (input: Record<string, unknown>) => string | null
+  /**
+   * 用户可读的出参展示。
+   * 函数接收 call() 的输出文本，返回展示文本（支持多行）。返回 null 时回退到原始输出。
+   */
+  userFacingOutput?: (output: string) => string | null
 }
 
 // 外部工具通用 inputSchema：允许任意字段透传
@@ -99,13 +110,26 @@ export function adaptExternalTool(def: ExternalToolDefinition) {
     },
 
     renderToolUseMessage(input: Partial<Record<string, unknown>>) {
+      // 优先使用用户自定义的入参展示
+      if (def.userFacingInput) {
+        const text = def.userFacingInput(input as Record<string, unknown>)
+        if (text != null) {
+          return React.createElement(Text, null, text)
+        }
+      }
+
+      // 注意：UI 框架（AssistantToolUseMessage.tsx）已在标签中渲染了工具名称，
+      // 此处只应展示参数预览，不重复包含 def.name
       const argsPreview = Object.entries(input)
         .map(([key, value]) => `${key}=${typeof value === 'string' ? value : jsonStringify(value)}`)
         .join(', ')
+      if (!argsPreview) {
+        return null
+      }
       return React.createElement(
         Text,
         { dimColor: true },
-        `${def.name}(${argsPreview.length > 120 ? `${argsPreview.slice(0, 117)}...` : argsPreview})`,
+        argsPreview.length > 120 ? `${argsPreview.slice(0, 117)}...` : argsPreview,
       )
     },
 
@@ -117,16 +141,31 @@ export function adaptExternalTool(def: ExternalToolDefinition) {
       if (!output) {
         return null
       }
+
+      // 优先使用用户自定义的出参展示
+      if (def.userFacingOutput) {
+        const text = def.userFacingOutput(output)
+        if (text != null) {
+          return React.createElement(
+            Box,
+            { flexDirection: 'column' },
+            React.createElement(MessageResponse, { height: 1, children: React.createElement(Text, null, text) }),
+          )
+        }
+      }
+
       const displayText = !verbose && output.length > 500 ? `${output.slice(0, 497)}...` : output
       return React.createElement(
         Box,
         { flexDirection: 'column' },
-        React.createElement(Text, null, displayText),
+        React.createElement(MessageResponse, { height: 1, children: React.createElement(Text, null, displayText) }),
       )
     },
 
     isResultTruncated(output: string): boolean {
-      return isOutputLineTruncated(output)
+      // toolUseResult 在消息回放（/resume）时可能是非字符串类型，
+      // typeof 守卫防止 content.indexOf 崩溃
+      return typeof output === 'string' && isOutputLineTruncated(output)
     },
 
     userFacingName: () => def.name,

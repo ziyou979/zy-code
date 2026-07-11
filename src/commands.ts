@@ -48,6 +48,7 @@ import skills from './commands/skills/index.js'
 import status from './commands/status/index.js'
 import tasks from './commands/tasks/index.js'
 import teleport from './commands/teleport/index.js'
+import tools from './commands/tools/index.js'
 import bughunter from './commands/bughunter/index.js'
 import terminalSetup from './commands/terminalSetup/index.js'
 import tui from './commands/tui/index.js'
@@ -102,9 +103,12 @@ import plan from './commands/plan/index.js'
 import hooks from './commands/hooks/index.js'
 import files from './commands/files/index.js'
 import branch from './commands/branch/index.js'
+import codeReview from './commands/code-review/index.js'
 import agents from './commands/agents/index.js'
 import plugin from './commands/plugin/index.js'
 import reloadPlugins from './commands/reload-plugins/index.js'
+import reloadSkills from './commands/reload-skills/index.js'
+import reloadTools from './commands/reload-tools/index.js'
 import rewind from './commands/rewind/index.js'
 import heapDump from './commands/heapdump/index.js'
 import mockLimits from './commands/mock-limits/index.js'
@@ -216,6 +220,7 @@ const COMMANDS = memoize((): Command[] => [
   btw,
   chrome,
   clear,
+  codeReview,
   color,
   compact,
   config,
@@ -251,6 +256,8 @@ const COMMANDS = memoize((): Command[] => [
   pr_comments,
   releaseNotes,
   reloadPlugins,
+  reloadSkills,
+  reloadTools,
   rename,
   // 同名 local 变体：仅在非交互过滤后生效（交互模式 findCommand 命中紧靠在前的 rename）
   renameLocal,
@@ -262,6 +269,7 @@ const COMMANDS = memoize((): Command[] => [
   stickers,
   tag,
   theme,
+  tools,
   feedback,
   ultrareview,
   rewind,
@@ -670,11 +678,13 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   color: 'commands.color',
   compact: 'commands.compact',
   config: 'commands.config',
+  'code-review': 'commands.codeReview',
   copy: 'commands.copy',
   desktop: 'commands.desktop',
   context: 'commands.context',
   'context-noninteractive': 'commands.contextNonInteractive',
   diff: 'commands.diff',
+  checkup: 'commands.doctor',
   doctor: 'commands.doctor',
   effort: 'commands.effort',
   exit: 'commands.exit',
@@ -695,6 +705,9 @@ const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   'pr-comments': 'commands.prComments',
   'release-notes': 'commands.releaseNotes',
   'reload-plugins': 'commands.reloadPlugins',
+  'reload-skills': 'commands.reloadSkills',
+  'reload-tools': 'commands.reloadTools',
+  tools: 'commands.tools',
   rename: 'commands.rename',
   resume: 'commands.resume',
   session: 'commands.session',

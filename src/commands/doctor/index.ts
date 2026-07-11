@@ -4,6 +4,7 @@ import { isEnvTruthy } from '../../utils/envUtils.js'
 const doctor: Command = {
   name: 'doctor',
   description: 'Diagnose and verify your ZY Code installation and settings',
+  aliases: ['checkup'],
   isEnabled: () => !isEnvTruthy(process.env.DISABLE_DOCTOR_COMMAND),
   type: 'local-jsx',
   load: () => import('./doctor.js'),
