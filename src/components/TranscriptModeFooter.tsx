@@ -1,4 +1,4 @@
-import { fig } from '../constants/figures.js'
+import { ARROW_UP, ARROW_DOWN } from '../constants/figures.js'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
@@ -53,7 +53,7 @@ export function TranscriptModeFooter({
           {searchBadge
             ? ` \xB7 n/N ${navigateLabel}`
             : virtualScroll
-              ? ` \xB7 ${fig.arrowUp}${fig.arrowDown} ${scrollLabel} \xB7 home/end ${topLabel}/${bottomLabel}`
+              ? ` \xB7 ${ARROW_UP}${ARROW_DOWN} ${scrollLabel} \xB7 home/end ${topLabel}/${bottomLabel}`
               : suppressShowAll
                 ? ''
                 : ` \xB7 ${showAllShortcut} ${collapseOrShowLabel}`}

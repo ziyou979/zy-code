@@ -4,7 +4,7 @@
  * and success/failure notification JSX so new sources stay small.
  */
 
-import { fig } from '../constants/figures.js'
+import { TICK } from '../constants/figures.js'
 import * as React from 'react'
 import { getIsRemoteMode } from '../bootstrap/state.js'
 import type { useNotifications } from '../context/notifications.js'
@@ -72,7 +72,7 @@ export async function installPluginAndNotify(
       key: `${keyPrefix}-installed`,
       jsx: (
         <Text color="success">
-          {fig.tick} {pluginName} installed · restart to apply
+          {TICK} {pluginName} installed · restart to apply
         </Text>
       ),
       priority: 'immediate',

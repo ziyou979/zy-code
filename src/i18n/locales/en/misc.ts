@@ -562,6 +562,7 @@ export const enMisc: TranslationResource = {
   'planApproval.summaryRejected': '[Plan Rejected] {feedback}',
   'planApproval.summaryRequestFrom': '[Plan Approval Request from {from}]',
   'planMode.ctrlGEditIn': 'ctrl-g to edit in',
+  'planMode.externalEditorError': 'Failed to open editor',
   'planMode.designStrategy': ' · Design an implementation strategy',
   'planMode.enterTitle': 'Enter plan mode?',
   'planMode.exitPlanMode': 'Exit plan mode?',

@@ -4,7 +4,7 @@
  */
 /* eslint-disable custom-rules/no-process-exit -- CLI subcommand handlers intentionally exit */
 
-import { fig } from '../../constants/figures.js'
+import { CROSS, POINTER, WARNING, TICK } from '../../constants/figures.js'
 import { basename, dirname } from 'node:path'
 import { setUseCoworkPlugins } from '../../bootstrap/state.js'
 import { tSync } from '../../i18n/index.js'
@@ -69,7 +69,7 @@ export { VALID_INSTALLABLE_SCOPES, VALID_UPDATE_SCOPES }
 export function handleMarketplaceError(error: unknown, action: string): never {
   logError(error)
   cliError(
-    `${fig.cross} ${tSync('plugins.marketplace.handleFailed', { action, error: errorMessage(error) })}`,
+    `${CROSS} ${tSync('plugins.marketplace.handleFailed', { action, error: errorMessage(error) })}`,
   )
 }
 
@@ -77,11 +77,11 @@ function printValidationResult(result: ValidationResult): void {
   if (result.errors.length > 0) {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.log(
-      `${fig.cross} ${tSync('plugins.validate.foundErrors', { count: result.errors.length })}:\n`,
+      `${CROSS} ${tSync('plugins.validate.foundErrors', { count: result.errors.length })}:\n`,
     )
     result.errors.forEach((error) => {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`  ${fig.pointer} ${error.path}: ${error.message}`)
+      console.log(`  ${POINTER} ${error.path}: ${error.message}`)
     })
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.log('')
@@ -89,11 +89,11 @@ function printValidationResult(result: ValidationResult): void {
   if (result.warnings.length > 0) {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.log(
-      `${fig.warning} ${tSync('plugins.validate.foundWarnings', { count: result.warnings.length })}:\n`,
+      `${WARNING} ${tSync('plugins.validate.foundWarnings', { count: result.warnings.length })}:\n`,
     )
     result.warnings.forEach((warning) => {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`  ${fig.pointer} ${warning.path}: ${warning.message}`)
+      console.log(`  ${POINTER} ${warning.path}: ${warning.message}`)
     })
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.log('')
@@ -142,19 +142,19 @@ export async function pluginValidateHandler(
     if (allSuccess) {
       cliOk(
         hasWarnings
-          ? `${fig.tick} ${tSync('plugins.validate.passedWithWarnings')}`
-          : `${fig.tick} ${tSync('plugins.validate.passed')}`,
+          ? `${TICK} ${tSync('plugins.validate.passedWithWarnings')}`
+          : `${TICK} ${tSync('plugins.validate.passed')}`,
       )
     } else {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`${fig.cross} ${tSync('plugins.validate.failed')}`)
+      console.log(`${CROSS} ${tSync('plugins.validate.failed')}`)
       process.exit(1)
     }
   } catch (error) {
     logError(error)
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.error(
-      `${fig.cross} ${tSync('plugins.validate.unexpectedError', { error: errorMessage(error) })}`,
+      `${CROSS} ${tSync('plugins.validate.unexpectedError', { error: errorMessage(error) })}`,
     )
     process.exit(2)
   }
@@ -368,15 +368,15 @@ export async function pluginListHandler(options: {
       const isEnabled = enabledPlugins.has(pluginId)
       const status =
         pluginErrors.length > 0
-          ? `${fig.cross} ${tSync('plugins.list.statusLoadFailed')}`
+          ? `${CROSS} ${tSync('plugins.list.statusLoadFailed')}`
           : isEnabled
-            ? `${fig.tick} ${tSync('plugins.list.statusEnabled')}`
-            : `${fig.cross} ${tSync('plugins.list.statusDisabled')}`
+            ? `${TICK} ${tSync('plugins.list.statusEnabled')}`
+            : `${CROSS} ${tSync('plugins.list.statusDisabled')}`
       const version = installation.version || 'unknown'
       const scope = installation.scope
 
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`  ${fig.pointer} ${pluginId}`)
+      console.log(`  ${POINTER} ${pluginId}`)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(`    ${tSync('plugins.list.version', { version })}`)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
@@ -405,10 +405,10 @@ export async function pluginListHandler(options: {
       )
       const status =
         pErrors.length > 0
-          ? `${fig.cross} ${tSync('plugins.list.statusLoadedWithErrors')}`
-          : `${fig.tick} ${tSync('plugins.list.statusLoaded')}`
+          ? `${CROSS} ${tSync('plugins.list.statusLoadedWithErrors')}`
+          : `${TICK} ${tSync('plugins.list.statusLoaded')}`
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`  ${fig.pointer} ${p.source}`)
+      console.log(`  ${POINTER} ${p.source}`)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(
         `    ${tSync('plugins.list.version', { version: p.manifest.version ?? 'unknown' })}`,
@@ -428,7 +428,7 @@ export async function pluginListHandler(options: {
     // 以免 `--plugin-dir /typo` 静默无输出。
     for (const e of inlineLoadErrors.filter((e) => e.source.startsWith('inline['))) {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`  ${fig.pointer} ${e.source}: ${fig.cross} ${getPluginErrorMessage(e)}\n`)
+      console.log(`  ${POINTER} ${e.source}: ${CROSS} ${getPluginErrorMessage(e)}\n`)
     }
   }
 
@@ -447,17 +447,17 @@ export async function marketplaceAddHandler(
     const parsed = await parseMarketplaceInput(source)
 
     if (!parsed) {
-      cliError(`${fig.cross} ${tSync('plugins.marketplace.invalidSourceFormat')}`)
+      cliError(`${CROSS} ${tSync('plugins.marketplace.invalidSourceFormat')}`)
     }
 
     if ('error' in parsed) {
-      cliError(`${fig.cross} ${parsed.error}`)
+      cliError(`${CROSS} ${parsed.error}`)
     }
 
     // 验证作用域
     const scope = options.scope ?? 'user'
     if (scope !== 'user' && scope !== 'project' && scope !== 'local') {
-      cliError(`${fig.cross} ${tSync('plugins.marketplace.invalidScope', { scope })}`)
+      cliError(`${CROSS} ${tSync('plugins.marketplace.invalidScope', { scope })}`)
     }
     const settingSource = scopeToSettingSource(scope)
 
@@ -471,7 +471,7 @@ export async function marketplaceAddHandler(
         }
       } else {
         cliError(
-          `${fig.cross} ${tSync('plugins.marketplace.sparseNotSupported', { source: marketplaceSource.source })}`,
+          `${CROSS} ${tSync('plugins.marketplace.sparseNotSupported', { source: marketplaceSource.source })}`,
         )
       }
     }
@@ -503,8 +503,8 @@ export async function marketplaceAddHandler(
 
     cliOk(
       alreadyMaterialized
-        ? `${fig.tick} ${tSync('plugins.marketplace.alreadyOnDisk', { name, scope })}`
-        : `${fig.tick} ${tSync('plugins.marketplace.added', { name, scope })}`,
+        ? `${TICK} ${tSync('plugins.marketplace.alreadyOnDisk', { name, scope })}`
+        : `${TICK} ${tSync('plugins.marketplace.added', { name, scope })}`,
     )
   } catch (error) {
     handleMarketplaceError(error, 'add marketplace')
@@ -550,7 +550,7 @@ export async function marketplaceListHandler(options: {
     names.forEach((name) => {
       const marketplace = config[name]
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`  ${fig.pointer} ${name}`)
+      console.log(`  ${POINTER} ${name}`)
 
       if (marketplace?.source) {
         const src = marketplace.source
@@ -597,7 +597,7 @@ export async function marketplaceRemoveHandler(
       marketplace_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
 
-    cliOk(`${fig.tick} ${tSync('plugins.marketplace.removed', { name })}`)
+    cliOk(`${TICK} ${tSync('plugins.marketplace.removed', { name })}`)
   } catch (error) {
     handleMarketplaceError(error, 'remove marketplace')
   }
@@ -627,7 +627,7 @@ export async function marketplaceUpdateHandler(
         marketplace_name: name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
 
-      cliOk(`${fig.tick} ${tSync('plugins.marketplace.updated', { name })}`)
+      cliOk(`${TICK} ${tSync('plugins.marketplace.updated', { name })}`)
     } else {
       const config = await loadKnownMarketplacesConfig()
       const marketplaceNames = Object.keys(config)
@@ -648,7 +648,7 @@ export async function marketplaceUpdateHandler(
       })
 
       cliOk(
-        `${fig.tick} ${tSync('plugins.marketplace.updatedAll', { count: marketplaceNames.length })}`,
+        `${TICK} ${tSync('plugins.marketplace.updatedAll', { count: marketplaceNames.length })}`,
       )
     }
   } catch (error) {

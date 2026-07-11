@@ -1,5 +1,5 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import { fig } from '../../constants/figures.js'
+import { CIRCLE_DOUBLE } from '../../constants/figures.js'
 import { feature } from 'bun:bundle'
 // Dead code elimination: conditional import for COORDINATOR_MODE
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -367,7 +367,7 @@ function ModeIndicator({
     ...(remoteSessionUrl
       ? [
           <Link url={remoteSessionUrl} key="remote">
-            <Text color="ide">{fig.circleDouble} remote</Text>
+            <Text color="ide">{CIRCLE_DOUBLE} remote</Text>
           </Link>,
         ]
       : []),

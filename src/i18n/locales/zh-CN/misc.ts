@@ -562,6 +562,7 @@ export const zhMisc: TranslationResource = {
   'planApproval.summaryRejected': '[计划被拒绝] {feedback}',
   'planApproval.summaryRequestFrom': '[来自 {from} 的计划审批请求]',
   'planMode.ctrlGEditIn': 'ctrl-g 进行编辑',
+  'planMode.externalEditorError': '打开编辑器失败',
   'planMode.designStrategy': ' · 设计实现策略',
   'planMode.enterTitle': '进入计划模式？',
   'planMode.exitPlanMode': '退出计划模式？',

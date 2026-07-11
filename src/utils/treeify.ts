@@ -1,4 +1,4 @@
-import { fig } from '../constants/figures.js'
+import { LINE_UP_DOWN_RIGHT, LINE_UP_RIGHT, LINE_VERTICAL } from '../constants/figures.js'
 import { color } from '../components/design-system/color.js'
 import type { Theme, ThemeName } from './theme.js'
 
@@ -26,9 +26,9 @@ type TreeCharacters = {
 }
 
 const DEFAULT_TREE_CHARS: TreeCharacters = {
-  branch: fig.lineUpDownRight, // '├'
-  lastBranch: fig.lineUpRight, // '└'
-  line: fig.lineVertical, // '│'
+  branch: LINE_UP_DOWN_RIGHT, // '├'
+  lastBranch: LINE_UP_RIGHT, // '└'
+  line: LINE_VERTICAL, // '│'
   empty: ' ',
 }
 

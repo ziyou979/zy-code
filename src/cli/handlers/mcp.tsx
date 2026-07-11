@@ -42,7 +42,7 @@ import {
 } from '../../utils/config.js'
 import { isFsInaccessible } from '../../utils/errors.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
-import { fig } from '../../constants/figures.js'
+import { TICK, CROSS } from '../../constants/figures.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { getPlatform } from '../../utils/platform.js'
 import { cliError, cliOk } from '../exit.js'
@@ -51,14 +51,14 @@ async function checkMcpServerHealth(name: string, server: ScopedMcpServerConfig)
   try {
     const result = await connectToServer(name, server)
     if (result.type === 'connected') {
-      return `${fig.tick} Connected`
+      return `${TICK} Connected`
     } else if (result.type === 'needs-auth') {
       return '! Needs authentication'
     } else {
-      return `${fig.cross} Failed to connect`
+      return `${CROSS} Failed to connect`
     }
   } catch (_error) {
-    return `${fig.cross} Connection error`
+    return `${CROSS} Connection error`
   }
 }
 

@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { RADIO_OFF, TICK, TRIANGLE_UP_OUTLINE, CROSS } from '../../constants/figures.js'
 import React, { useEffect, useRef, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import {
@@ -691,24 +691,24 @@ export function MCPRemoteServerMenu({
             <Text bold>{tSync('mcp.statusLabel')} </Text>
             {srv.client.type === 'disabled' ? (
               <Text>
-                {color('inactive', theme)(fig.radioOff)} {tSync('mcp.disabled')}
+                {color('inactive', theme)(RADIO_OFF)} {tSync('mcp.disabled')}
               </Text>
             ) : srv.client.type === 'connected' ? (
               <Text>
-                {color('success', theme)(fig.tick)} {tSync('mcp.connected')}
+                {color('success', theme)(TICK)} {tSync('mcp.connected')}
               </Text>
             ) : srv.client.type === 'pending' ? (
               <>
-                <Text dimColor>{fig.radioOff}</Text>
+                <Text dimColor>{RADIO_OFF}</Text>
                 <Text> {tSync('mcp.connecting')}</Text>
               </>
             ) : srv.client.type === 'needs-auth' ? (
               <Text>
-                {color('warning', theme)(fig.triangleUpOutline)} {tSync('mcp.needsAuthentication')}
+                {color('warning', theme)(TRIANGLE_UP_OUTLINE)} {tSync('mcp.needsAuthentication')}
               </Text>
             ) : (
               <Text>
-                {color('error', theme)(fig.cross)} {tSync('mcp.failed')}
+                {color('error', theme)(CROSS)} {tSync('mcp.failed')}
               </Text>
             )}
           </Box>
@@ -718,11 +718,11 @@ export function MCPRemoteServerMenu({
               <Text bold>{tSync('mcp.authLabel')} </Text>
               {isEffectivelyAuthenticated ? (
                 <Text>
-                  {color('success', theme)(fig.tick)} {tSync('mcp.authenticated')}
+                  {color('success', theme)(TICK)} {tSync('mcp.authenticated')}
                 </Text>
               ) : (
                 <Text>
-                  {color('error', theme)(fig.cross)} {tSync('mcp.notAuthenticated')}
+                  {color('error', theme)(CROSS)} {tSync('mcp.notAuthenticated')}
                 </Text>
               )}
             </Box>

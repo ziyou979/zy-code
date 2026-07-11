@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { POINTER } from '../../constants/figures.js'
 import * as React from 'react'
 import { TEAMMATE_MESSAGE_TAG } from '../../constants/xml.js'
 import { Ansi, Box, Text, type TextProps } from '../../ink.js'
@@ -128,7 +128,7 @@ export function UserTeammateMessage({
           }
           return (
             <Box key={index} flexDirection="column" marginTop={1}>
-              <Text color={inkColor}>{`@${displayName}${fig.pointer}`}</Text>
+              <Text color={inkColor}>{`@${displayName}${POINTER}`}</Text>
               <MessageResponse>
                 <Text color="success">✓</Text>
                 <Text>
@@ -176,7 +176,7 @@ export function TeammateMessageContent({
     <Box flexDirection="column" marginTop={1}>
       {
         <Box>
-          {<Text color={inkColor}>{`@${displayName}${fig.pointer}`}</Text>}
+          {<Text color={inkColor}>{`@${displayName}${POINTER}`}</Text>}
           {summary && <Text> {summary}</Text>}
         </Box>
       }

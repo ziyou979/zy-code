@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { ARROW_UP, WARNING, TICK, TRIANGLE_DOWN, POINTER, CHECKBOX_ON, CHECKBOX_OFF, TRIANGLE_RIGHT, RADIO_ON, RADIO_OFF, ARROW_DOWN } from '../../constants/figures.js'
 import type {
   ElicitRequestFormParams,
   ElicitRequestURLParams,
@@ -853,7 +853,7 @@ function ElicitationFormDialog({
         {hasFieldsAbove && (
           <Box marginLeft={2}>
             <Text dimColor>
-              {fig.arrowUp} {tSync('elicitation.moreAbove', { count: scrollWindow.start })}
+              {ARROW_UP} {tSync('elicitation.moreAbove', { count: scrollWindow.start })}
             </Text>
           </Box>
         )}
@@ -870,10 +870,10 @@ function ElicitationFormDialog({
           const checkbox = isResolving ? (
             <ResolvingSpinner />
           ) : error_0 ? (
-            <Text color="error">{fig.warning}</Text>
+            <Text color="error">{WARNING}</Text>
           ) : hasValue ? (
             <Text color="success" dimColor={!isActive}>
-              {fig.tick}
+              {TICK}
             </Text>
           ) : isRequired ? (
             <Text color="error">*</Text>
@@ -904,7 +904,7 @@ function ElicitationFormDialog({
             const selected_1 = (value_3 as string[] | undefined) ?? []
             const isExpanded = expandedAccordion === name_1 && isActive
             if (isExpanded) {
-              valueContent = <Text dimColor>{fig.triangleDownSmall}</Text>
+              valueContent = <Text dimColor>{TRIANGLE_DOWN}</Text>
               accordionContent = (
                 <Box flexDirection="column" marginLeft={6}>
                   {msValues_0.map((optVal, optIdx) => {
@@ -913,9 +913,9 @@ function ElicitationFormDialog({
                     const isFocused = optIdx === accordionOptionIndex
                     return (
                       <Box key={optVal} gap={1}>
-                        <Text color="suggestion">{isFocused ? fig.pointer : ' '}</Text>
+                        <Text color="suggestion">{isFocused ? POINTER : ' '}</Text>
                         <Text color={isChecked ? 'success' : undefined}>
-                          {isChecked ? fig.checkboxOn : fig.checkboxOff}
+                          {isChecked ? CHECKBOX_ON : CHECKBOX_OFF}
                         </Text>
                         <Text color={isFocused ? 'suggestion' : undefined} bold={isFocused}>
                           {optLabel}
@@ -927,7 +927,7 @@ function ElicitationFormDialog({
               )
             } else {
               // Collapsed: ▸ arrow then comma-joined selected items
-              const arrow = isActive ? <Text dimColor>{fig.triangleRightSmall} </Text> : null
+              const arrow = isActive ? <Text dimColor>{TRIANGLE_RIGHT} </Text> : null
               if (selected_1.length > 0) {
                 const displayLabels = selected_1.map((v_4) => getMultiSelectLabel(schema_6, v_4))
                 valueContent = (
@@ -953,7 +953,7 @@ function ElicitationFormDialog({
             const enumValues_0 = getEnumValues(schema_6)
             const isExpanded_0 = expandedAccordion === name_1 && isActive
             if (isExpanded_0) {
-              valueContent = <Text dimColor>{fig.triangleDownSmall}</Text>
+              valueContent = <Text dimColor>{TRIANGLE_DOWN}</Text>
               accordionContent = (
                 <Box flexDirection="column" marginLeft={6}>
                   {enumValues_0.map((optVal_0, optIdx_0) => {
@@ -962,9 +962,9 @@ function ElicitationFormDialog({
                     const isFocused_0 = optIdx_0 === accordionOptionIndex
                     return (
                       <Box key={optVal_0} gap={1}>
-                        <Text color="suggestion">{isFocused_0 ? fig.pointer : ' '}</Text>
+                        <Text color="suggestion">{isFocused_0 ? POINTER : ' '}</Text>
                         <Text color={isSelected ? 'success' : undefined}>
-                          {isSelected ? fig.radioOn : fig.radioOff}
+                          {isSelected ? RADIO_ON : RADIO_OFF}
                         </Text>
                         <Text color={isFocused_0 ? 'suggestion' : undefined} bold={isFocused_0}>
                           {optLabel_0}
@@ -976,7 +976,7 @@ function ElicitationFormDialog({
               )
             } else {
               // Collapsed: ▸ arrow then current value
-              const arrow_0 = isActive ? <Text dimColor>{fig.triangleRightSmall} </Text> : null
+              const arrow_0 = isActive ? <Text dimColor>{TRIANGLE_RIGHT} </Text> : null
               if (hasValue) {
                 valueContent = (
                   <Text>
@@ -1001,14 +1001,14 @@ function ElicitationFormDialog({
             if (isActive) {
               valueContent = hasValue ? (
                 <Text color={activeColor} bold>
-                  {value_3 ? fig.checkboxOn : fig.checkboxOff}
+                  {value_3 ? CHECKBOX_ON : CHECKBOX_OFF}
                 </Text>
               ) : (
-                <Text dimColor>{fig.checkboxOff}</Text>
+                <Text dimColor>{CHECKBOX_OFF}</Text>
               )
             } else {
               valueContent = hasValue ? (
-                <Text>{value_3 ? fig.checkboxOn : fig.checkboxOff}</Text>
+                <Text>{value_3 ? CHECKBOX_ON : CHECKBOX_OFF}</Text>
               ) : (
                 <Text dimColor italic>
                   not set
@@ -1055,7 +1055,7 @@ function ElicitationFormDialog({
           return (
             <Box key={name_1} flexDirection="column">
               <Box gap={1}>
-                <Text color={selectionColor}>{isActive ? fig.pointer : ' '}</Text>
+                <Text color={selectionColor}>{isActive ? POINTER : ' '}</Text>
                 {checkbox}
                 <Box>
                   {label}
@@ -1084,7 +1084,7 @@ function ElicitationFormDialog({
         {hasFieldsBelow && (
           <Box marginLeft={2}>
             <Text dimColor>
-              {fig.arrowDown}{' '}
+              {ARROW_DOWN}{' '}
               {tSync('elicitation.moreBelow', { count: schemaFields.length - scrollWindow.end })}
             </Text>
           </Box>
@@ -1140,7 +1140,7 @@ function ElicitationFormDialog({
       <Box flexDirection="column">
         {renderFormFields()}
         <Box>
-          <Text color="success">{focusedButton === 'accept' ? fig.pointer : ' '}</Text>
+          <Text color="success">{focusedButton === 'accept' ? POINTER : ' '}</Text>
           <Text
             bold={focusedButton === 'accept'}
             color={focusedButton === 'accept' ? 'success' : undefined}
@@ -1150,7 +1150,7 @@ function ElicitationFormDialog({
             {tSync('elicitation.accept')}
             {'  '}
           </Text>
-          <Text color="error">{focusedButton === 'decline' ? fig.pointer : ' '}</Text>
+          <Text color="error">{focusedButton === 'decline' ? POINTER : ' '}</Text>
           <Text
             bold={focusedButton === 'decline'}
             color={focusedButton === 'decline' ? 'error' : undefined}
@@ -1313,7 +1313,7 @@ function ElicitationURLDialog({
             </Text>
           </Box>
           <Box>
-            <Text color="success">{focusedButton === 'open' ? fig.pointer : ' '}</Text>
+            <Text color="success">{focusedButton === 'open' ? POINTER : ' '}</Text>
             <Text
               bold={focusedButton === 'open'}
               color={focusedButton === 'open' ? 'success' : undefined}
@@ -1323,7 +1323,7 @@ function ElicitationURLDialog({
               {tSync('elicitation.reopenUrl')}
               {'  '}
             </Text>
-            <Text color="success">{focusedButton === 'action' ? fig.pointer : ' '}</Text>
+            <Text color="success">{focusedButton === 'action' ? POINTER : ' '}</Text>
             <Text
               bold={focusedButton === 'action'}
               color={focusedButton === 'action' ? 'success' : undefined}
@@ -1334,7 +1334,7 @@ function ElicitationURLDialog({
             {showCancel && (
               <>
                 <Text> </Text>
-                <Text color="error">{focusedButton === 'cancel' ? fig.pointer : ' '}</Text>
+                <Text color="error">{focusedButton === 'cancel' ? POINTER : ' '}</Text>
                 <Text
                   bold={focusedButton === 'cancel'}
                   color={focusedButton === 'cancel' ? 'error' : undefined}
@@ -1384,7 +1384,7 @@ function ElicitationURLDialog({
           </Text>
         </Box>
         <Box>
-          <Text color="success">{focusedButton === 'accept' ? fig.pointer : ' '}</Text>
+          <Text color="success">{focusedButton === 'accept' ? POINTER : ' '}</Text>
           <Text
             bold={focusedButton === 'accept'}
             color={focusedButton === 'accept' ? 'success' : undefined}
@@ -1394,7 +1394,7 @@ function ElicitationURLDialog({
             {tSync('elicitation.accept')}
             {'  '}
           </Text>
-          <Text color="error">{focusedButton === 'decline' ? fig.pointer : ' '}</Text>
+          <Text color="error">{focusedButton === 'decline' ? POINTER : ' '}</Text>
           <Text
             bold={focusedButton === 'decline'}
             color={focusedButton === 'decline' ? 'error' : undefined}

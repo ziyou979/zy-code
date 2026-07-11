@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { POINTER } from '../../constants/figures.js'
 import type { UUID } from 'node:crypto'
 import chalk from 'chalk'
 import * as React from 'react'
@@ -65,7 +65,7 @@ function ResumeError({
     <Box flexDirection="column">
       {
         <Text dimColor={true}>
-          {fig.pointer} /resume {args}
+          {POINTER} /resume {args}
         </Text>
       }
       {

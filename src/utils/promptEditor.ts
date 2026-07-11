@@ -42,7 +42,10 @@ export function editFileInEditor(filePath: string): EditorResult {
     return { content: null }
   }
 
-  const useAlternateScreen = !isGuiEditor(editor)
+  // `start` 是 Windows cmd.exe 内建命令（start /wait notepad），
+  // 它启动 GUI 编辑器而非占用终端。classifyGuiEditor 已在 GUI_EDITORS
+  // 中匹配 'start'，此处防御性检查确保不会误入 alt-screen 路径。
+  const useAlternateScreen = !isGuiEditor(editor) && !editor.startsWith('start')
 
   if (useAlternateScreen) {
     // Terminal editors (vi, nano, etc.) take over the terminal. Delegate to

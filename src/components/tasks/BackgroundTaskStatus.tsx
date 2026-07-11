@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { ARROW_LEFT, ARROW_RIGHT, ARROW_DOWN } from '../../constants/figures.js'
 import * as React from 'react'
 import { useState } from 'react'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
@@ -114,9 +114,9 @@ export function BackgroundTaskStatus({
     })
     return (
       <>
-        {showLeftArrow && <Text dimColor={true}>{fig.arrowLeft} </Text>}
+        {showLeftArrow && <Text dimColor={true}>{ARROW_LEFT} </Text>}
         {pillElements}
-        {showRightArrow && <Text dimColor={true}> {fig.arrowRight}</Text>}
+        {showRightArrow && <Text dimColor={true}> {ARROW_RIGHT}</Text>}
         {
           <Text dimColor={true}>
             {' \xB7 '}
@@ -136,7 +136,7 @@ export function BackgroundTaskStatus({
   const ctaElement = pillNeedsCta(runningTasks) && (
     <Text dimColor={true}>
       {' '}
-      · {fig.arrowDown} {tSync('backgroundTaskStatus.toView')}
+      · {ARROW_DOWN} {tSync('backgroundTaskStatus.toView')}
     </Text>
   )
   return (

@@ -1,5 +1,5 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import { fig } from '../../constants/figures.js'
+import { ARROW_UP, POINTER, ARROW_DOWN } from '../../constants/figures.js'
 import { feature } from 'bun:bundle'
 import { Box, Text, useTheme, useThemeSetting, useTerminalFocus } from '../../ink.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
@@ -2055,7 +2055,7 @@ export function Config({
               <>
                 {scrollOffset > 0 && (
                   <Text dimColor>
-                    {fig.arrowUp} {tSync('settings.moreAbove', { count: scrollOffset })}
+                    {ARROW_UP} {tSync('settings.moreAbove', { count: scrollOffset })}
                   </Text>
                 )}
                 {filteredSettingsItems
@@ -2069,7 +2069,7 @@ export function Config({
                         <Box>
                           <Box width={44}>
                             <Text color={isSelected ? 'suggestion' : undefined}>
-                              {isSelected ? fig.pointer : ' '} {setting_2.label}
+                              {isSelected ? POINTER : ' '} {setting_2.label}
                             </Text>
                           </Box>
                           <Box key={isSelected ? 'selected' : 'unselected'}>
@@ -2119,7 +2119,7 @@ export function Config({
                   })}
                 {scrollOffset + maxVisible < filteredSettingsItems.length && (
                   <Text dimColor>
-                    {fig.arrowDown}{' '}
+                    {ARROW_DOWN}{' '}
                     {tSync('settings.moreBelow', {
                       count: filteredSettingsItems.length - scrollOffset - maxVisible,
                     })}

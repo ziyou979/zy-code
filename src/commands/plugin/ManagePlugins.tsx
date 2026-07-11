@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { TICK, POINTER, ARROW_RIGHT, ARROW_UP, ARROW_DOWN } from '../../constants/figures.js'
 import type { Dirent } from 'node:fs'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
@@ -1880,7 +1880,7 @@ export function ManagePlugins({
           }
           clearAllCaches()
           const suffix = deleteDataDir ? '' : ' · data preserved'
-          setResult(`${fig.tick} ${uninstallResult.message}${suffix}`)
+          setResult(`${TICK} ${uninstallResult.message}${suffix}`)
           if (onManageComplete) {
             void onManageComplete()
           }
@@ -2109,7 +2109,7 @@ export function ManagePlugins({
 
         <Box marginTop={1} flexDirection="column">
           <Box>
-            <Text>{fig.pointer} </Text>
+            <Text>{POINTER} </Text>
             <Text color="suggestion">Dismiss</Text>
           </Box>
         </Box>
@@ -2237,7 +2237,7 @@ export function ManagePlugins({
                 <Text color="error">{formatErrorMessage(error_3)}</Text>
                 {guidance && (
                   <Text dimColor italic>
-                    {fig.arrowRight} {guidance}
+                    {ARROW_RIGHT} {guidance}
                   </Text>
                 )}
               </Box>
@@ -2304,7 +2304,7 @@ export function ManagePlugins({
             const isSelected = index_0 === detailsMenuIndex
             return (
               <Box key={index_0}>
-                {isSelected && <Text>{fig.pointer} </Text>}
+                {isSelected && <Text>{POINTER} </Text>}
                 {!isSelected && <Text>{'  '}</Text>}
                 <Text
                   bold={isSelected}
@@ -2385,7 +2385,7 @@ export function ManagePlugins({
           </Box>
         ) : (
           <Box marginTop={1}>
-            <Text color="suggestion">{fig.pointer} </Text>
+            <Text color="suggestion">{POINTER} </Text>
             <Text bold>Remove</Text>
           </Box>
         )}
@@ -2595,7 +2595,7 @@ export function ManagePlugins({
       {/* Scroll up indicator */}
       {pagination.scrollPosition.canScrollUp && (
         <Box>
-          <Text dimColor> {fig.arrowUp} more above</Text>
+          <Text dimColor> {ARROW_UP} more above</Text>
         </Box>
       )}
 
@@ -2652,7 +2652,7 @@ export function ManagePlugins({
       {/* Scroll down indicator */}
       {pagination.scrollPosition.canScrollDown && (
         <Box>
-          <Text dimColor> {fig.arrowDown} more below</Text>
+          <Text dimColor> {ARROW_DOWN} more below</Text>
         </Box>
       )}
 

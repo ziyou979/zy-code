@@ -1,4 +1,4 @@
-import { fig } from '../constants/figures.js'
+import { WARNING, POINTER } from '../constants/figures.js'
 import { randomUUID, type UUID } from 'node:crypto'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -466,7 +466,7 @@ export function MessageSelector({
             {canRestoreCode_0 && (
               <Box marginBottom={1}>
                 <Text dimColor>
-                  {fig.warning} {tSync('messageSelector.rewindNoBashFiles')}
+                  {WARNING} {tSync('messageSelector.rewindNoBashFiles')}
                 </Text>
               </Box>
             )}
@@ -500,7 +500,7 @@ export function MessageSelector({
                       <Box width={2} minWidth={2}>
                         {isSelected ? (
                           <Text color="permission" bold>
-                            {fig.pointer}{' '}
+                            {POINTER}{' '}
                           </Text>
                         ) : (
                           <Text>{'  '}</Text>
@@ -533,7 +533,7 @@ export function MessageSelector({
                               </Text>
                             ) : (
                               <Text dimColor color="warning">
-                                {fig.warning} {tSync('messageSelector.noCodeRestore')}
+                                {WARNING} {tSync('messageSelector.noCodeRestore')}
                               </Text>
                             )}
                           </Box>

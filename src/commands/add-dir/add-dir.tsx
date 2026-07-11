@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { POINTER } from '../../constants/figures.js'
 import chalk from 'chalk'
 import React, { useEffect } from 'react'
 import {
@@ -35,7 +35,7 @@ function AddDirError({
     <Box flexDirection="column">
       {
         <Text dimColor={true}>
-          {fig.pointer} /add-dir {args}
+          {POINTER} /add-dir {args}
         </Text>
       }
       {

@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { TICK, CROSS, BULLET, WARNING } from '../../constants/figures.js'
 import chalk from 'chalk'
 import type React from 'react'
 import { tSync } from 'src/i18n/index.js'
@@ -64,8 +64,8 @@ function PermissionDecisionInfoItem({ title, decisionReason }: PermissionDecisio
               const [subcommand, result] = subcommandEntry
               const icon =
                 result.behavior === 'allow'
-                  ? color('success', theme)(fig.tick)
-                  : color('error', theme)(fig.cross)
+                  ? color('success', theme)(TICK)
+                  : color('error', theme)(CROSS)
               return (
                 <Box flexDirection="column" key={subcommand}>
                   <Text>
@@ -225,7 +225,7 @@ function SuggestionDisplay({ suggestions, width }: Props) {
             <Box flexDirection="column">
               {rules.map((rule, index) => (
                 <Text key={index}>
-                  {fig.bullet} {permissionRuleValueToString(rule)}
+                  {BULLET} {permissionRuleValueToString(rule)}
                 </Text>
               ))}
             </Box>
@@ -239,7 +239,7 @@ function SuggestionDisplay({ suggestions, width }: Props) {
             <Box flexDirection="column">
               {directories.map((dir, dirIndex) => (
                 <Text key={dirIndex}>
-                  {fig.bullet} {dir}
+                  {BULLET} {dir}
                 </Text>
               ))}
             </Box>
@@ -340,7 +340,7 @@ export function PermissionDecisionDebugInfo({
       {unreachableRules.length > 0 && (
         <Box flexDirection="column" marginTop={1}>
           <Text color="warning">
-            {fig.warning}{' '}
+            {WARNING}{' '}
             {tSync('permissionDebug.unreachableRules', { count: unreachableRules.length })}
           </Text>
           {unreachableRules.map((unreachableRule, i) => (

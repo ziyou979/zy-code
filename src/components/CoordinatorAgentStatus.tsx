@@ -6,7 +6,7 @@
  * always; a timestamp shows until passed. Enter to view/steer, x to dismiss.
  */
 
-import { BLACK_CIRCLE, fig } from '../constants/figures.js'
+import { BLACK_CIRCLE, POINTER, RADIO_OFF } from '../constants/figures.js'
 import * as React from 'react'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'
@@ -122,14 +122,16 @@ function MainLine({
   const { columns } = useTerminalSize()
   const [hover, setHover] = React.useState(false)
   const highlighted = isSelected || hover
-  const prefix = highlighted ? `${fig.pointer} ` : '  '
-  const bullet = isViewed ? BLACK_CIRCLE : fig.circle
+  const prefix = highlighted ? `${POINTER} ` : '  '
+  const bullet = isViewed ? BLACK_CIRCLE : RADIO_OFF
   const dim = !highlighted && !isViewed
   const label = tSync('coordinator.main')
   const hint = tSync('coordinator.selectHint')
-  // 右侧提示占用宽度计算：prefix + bullet + " " + label + 间距 + hint
+  // 右侧提示占用宽度计算：prefix + bullet + " " + label + 间距 + hint。
+  // 预留 2 列安全边距，避免某些终端（如 Windows cmd）上 CJK 字符
+  // 实际渲染宽度与 stringWidth 值不一致时 hint 尾部被裁剪。
   const used = stringWidth(prefix) + stringWidth(bullet) + 1 + stringWidth(label)
-  const gap = Math.max(1, columns - used - stringWidth(hint))
+  const gap = Math.max(1, columns - used - stringWidth(hint) - 2)
   return (
     <Box onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <Text dimColor={dim} bold={isViewed}>
@@ -168,8 +170,8 @@ function AgentLine({ task, isSelected, isViewed, onClick }: AgentLineProps) {
   const elapsed = formatDuration(elapsedMs)
   const displayDescription = task.progress?.summary || task.description
   const highlighted = isSelected || hover
-  const prefix = highlighted ? `${fig.pointer} ` : '  '
-  const bullet = isViewed ? BLACK_CIRCLE : fig.circle
+  const prefix = highlighted ? `${POINTER} ` : '  '
+  const bullet = isViewed ? BLACK_CIRCLE : RADIO_OFF
   const dim = !highlighted && !isViewed
   const typeLabel = getAgentTypeLabel(task.agentType)
   const typeLabelPart = `${typeLabel}  `

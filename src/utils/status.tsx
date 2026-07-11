@@ -1,4 +1,4 @@
-import { fig } from '../constants/figures.js'
+import { CROSS } from '../constants/figures.js'
 import * as React from 'react'
 import { modelDisplayString } from 'src/services/model/model.js'
 import { getAPIProvider } from 'src/services/model/providers.js'
@@ -64,7 +64,7 @@ export function buildIDEProperties(
           label: tSync('status.ide'),
           value: (
             <Text>
-              {color('error', theme)(fig.cross)} Error installing {ideName} {pluginOrExtension}:{' '}
+              {color('error', theme)(CROSS)} Error installing {ideName} {pluginOrExtension}:{' '}
               {ideInstallationStatus.error}
               {'\n'}Please restart your IDE and try again.
             </Text>
@@ -111,7 +111,7 @@ export function buildIDEProperties(
       return [
         {
           label: tSync('status.ide'),
-          value: `${color('error', theme)(fig.cross)} Not connected to ${ideName}`,
+          value: `${color('error', theme)(CROSS)} Not connected to ${ideName}`,
         },
       ]
     }

@@ -1,4 +1,4 @@
-import { fig } from '../../../constants/figures.js'
+import { TICK, WARNING } from '../../../constants/figures.js'
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -295,39 +295,50 @@ export function ExitPlanModePermissionRequest({
   const handleKeyDown = (e: KeyboardEvent): void => {
     if (e.ctrl && e.key === 'g') {
       e.preventDefault()
+      e.stopPropagation()
       logEvent('zy_plan_external_editor_used', {})
       void (async () => {
-        if (isV2 && planFilePath) {
-          const result = await editFileInEditor(planFilePath)
-          if (result.error) {
-            addNotification({
-              key: 'external-editor-error',
-              text: result.error,
-              color: 'warning',
-              priority: 'high',
-            })
-          }
-          if (result.content !== null) {
-            if (result.content !== currentPlan) {
-              setPlanEditedLocally(true)
+        try {
+          if (isV2 && planFilePath) {
+            const result = await editFileInEditor(planFilePath)
+            if (result.error) {
+              addNotification({
+                key: 'external-editor-error',
+                text: result.error,
+                color: 'warning',
+                priority: 'high',
+              })
             }
-            setCurrentPlan(result.content)
-            setShowSaveMessage(true)
+            if (result.content !== null) {
+              if (result.content !== currentPlan) {
+                setPlanEditedLocally(true)
+              }
+              setCurrentPlan(result.content)
+              setShowSaveMessage(true)
+            }
+          } else {
+            const result = await editPromptInEditor(currentPlan)
+            if (result.error) {
+              addNotification({
+                key: 'external-editor-error',
+                text: result.error,
+                color: 'warning',
+                priority: 'high',
+              })
+            }
+            if (result.content !== null && result.content !== currentPlan) {
+              setCurrentPlan(result.content)
+              setShowSaveMessage(true)
+            }
           }
-        } else {
-          const result = await editPromptInEditor(currentPlan)
-          if (result.error) {
-            addNotification({
-              key: 'external-editor-error',
-              text: result.error,
-              color: 'warning',
-              priority: 'high',
-            })
-          }
-          if (result.content !== null && result.content !== currentPlan) {
-            setCurrentPlan(result.content)
-            setShowSaveMessage(true)
-          }
+        } catch (err) {
+          logError(err instanceof Error ? err : new Error(String(err)))
+          addNotification({
+            key: 'external-editor-error',
+            text: tSync('planMode.externalEditorError'),
+            color: 'warning',
+            priority: 'high',
+          })
         }
       })()
       return
@@ -658,7 +669,7 @@ export function ExitPlanModePermissionRequest({
               <>
                 <Text dimColor>{' · '}</Text>
                 <Text color="success">
-                  {fig.tick}
+                  {TICK}
                   {tSync('planMode.planSaved')}
                 </Text>
               </>
@@ -839,7 +850,7 @@ export function ExitPlanModePermissionRequest({
             <Box>
               <Text dimColor>{' · '}</Text>
               <Text color="success">
-                {fig.tick}
+                {TICK}
                 {tSync('planMode.planSaved')}
               </Text>
             </Box>

@@ -1,11 +1,11 @@
-import { fig } from '../../constants/figures.js'
+import { WARNING } from '../../constants/figures.js'
 import { Box, Text } from '../../ink.js'
 import { getPluginTrustMessage } from '../../utils/plugins/marketplaceHelpers.js'
 export function PluginTrustWarning() {
   const customMessage = getPluginTrustMessage()
   return (
     <Box marginBottom={1}>
-      {<Text color="zy">{fig.warning} </Text>}
+      {<Text color="zy">{WARNING} </Text>}
       <Text dimColor={true} italic={true}>
         Make sure you trust a plugin before installing, updating, or using it. ZY does not control
         what MCP servers, files, or other software are included in plugins and cannot verify that

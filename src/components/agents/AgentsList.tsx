@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { POINTER, WARNING } from '../../constants/figures.js'
 import * as React from 'react'
 import type { SettingSource } from 'src/utils/settings/constants.js'
 import { tSync } from '../../i18n/index.js'
@@ -36,7 +36,7 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
   const renderCreateNewOption = () => (
     <Box>
       <Text color={isCreateNewSelected ? 'suggestion' : undefined}>
-        {isCreateNewSelected ? `${fig.pointer} ` : '  '}
+        {isCreateNewSelected ? `${POINTER} ` : '  '}
       </Text>
       <Text color={isCreateNewSelected ? 'suggestion' : undefined}>
         {tSync('agents.createNewAgent')}
@@ -57,7 +57,7 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
     return (
       <Box key={`${agent_0.agentType}-${agent_0.source}`}>
         <Text dimColor={dimmed && !isSelected} color={textColor}>
-          {isBuiltIn ? '' : isSelected ? `${fig.pointer} ` : '  '}
+          {isBuiltIn ? '' : isSelected ? `${POINTER} ` : '  '}
         </Text>
         <Text dimColor={dimmed && !isSelected} color={textColor}>
           {agent_0.agentType}
@@ -77,7 +77,7 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
         {overriddenBy && (
           <Text dimColor={!isSelected} color={isSelected ? 'warning' : undefined}>
             {' '}
-            {fig.warning}{' '}
+            {WARNING}{' '}
             {tSync('agents.shadowedBy', { source: getOverrideSourceLabel(overriddenBy) })}
           </Text>
         )}

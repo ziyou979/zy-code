@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { POINTER } from '../../constants/figures.js'
 import type { DiffFile } from '../../hooks/useDiffData.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { Box, Text } from '../../ink.js'
@@ -72,7 +72,7 @@ export function DiffFileList({ files, selectedIndex }: Props) {
 // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function FileItem({ file, isSelected, maxPathWidth }: any) {
   const displayPath = truncateStartToWidth(file.path, maxPathWidth)
-  const pointer = isSelected ? `${fig.pointer} ` : '  '
+  const pointer = isSelected ? `${POINTER} ` : '  '
   const line = `${pointer}${displayPath}`
   return (
     <Box flexDirection="row">

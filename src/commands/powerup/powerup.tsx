@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import { Select } from '../../components/CustomSelect/select.js'
 import { Markdown } from '../../components/Markdown.js'
+import { CIRCLE_FILLED, RADIO_OFF } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text, useInput } from '../../ink.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
@@ -91,10 +92,10 @@ function PowerupApp({ onDone }: Props) {
           value: lesson.id,
           label: done ? (
             <Text>
-              <Text color="success">●</Text> {lesson.title}
+              <Text color="success">{CIRCLE_FILLED}</Text> {lesson.title}
             </Text>
           ) : (
-            <Text>◯ {lesson.title}</Text>
+            <Text>{RADIO_OFF} {lesson.title}</Text>
           ),
           description: lesson.tagline,
         }

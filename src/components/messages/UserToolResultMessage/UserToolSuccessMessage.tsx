@@ -1,4 +1,4 @@
-import { fig } from '../../../constants/figures.js'
+import { TICK } from '../../../constants/figures.js'
 import { feature } from 'bun:bundle'
 import * as React from 'react'
 import { SentryErrorBoundary } from 'src/components/SentryErrorBoundary.js'
@@ -101,7 +101,7 @@ export function UserToolSuccessMessage({
           ? classifierRule && (
               <MessageResponse height={1}>
                 <Text dimColor>
-                  <Text color="success">{fig.tick}</Text>{' '}
+                  <Text color="success">{TICK}</Text>{' '}
                   {tSync('permission.autoApprovedMatched', { rule: classifierRule })}
                 </Text>
               </MessageResponse>

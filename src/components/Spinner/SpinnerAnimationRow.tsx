@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { ARROW_DOWN, ARROW_UP } from '../../constants/figures.js'
 import * as React from 'react'
 import { useMemo, useRef } from 'react'
 import { tSync } from '../../i18n/index.js'
@@ -165,7 +165,7 @@ export function SpinnerAnimationRow({
   const tokenCount = formatNumber(totalTokens)
   const tokensText = hasRunningTeammates
     ? `${tokenCount} tokens`
-    : `${fig.arrowDown} ${tokenCount} tokens`
+    : `${ARROW_DOWN} ${tokenCount} tokens`
   const tokensWidth = stringWidth(tokensText)
 
   // === Progressive width gating ===
@@ -253,14 +253,14 @@ function SpinnerModeGlyph({ mode }: SpinnerAnimationRowProps) {
     case 'thinking': {
       return (
         <Box width={2}>
-          <Text dimColor={true}>{fig.arrowDown}</Text>
+          <Text dimColor={true}>{ARROW_DOWN}</Text>
         </Box>
       )
     }
     case 'requesting': {
       return (
         <Box width={2}>
-          <Text dimColor={true}>{fig.arrowUp}</Text>
+          <Text dimColor={true}>{ARROW_UP}</Text>
         </Box>
       )
     }

@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { WARNING } from '../../constants/figures.js'
 import { Suspense, use } from 'react'
 import { getSessionId } from '../../bootstrap/state.js'
 import type { LocalJSXCommandContext } from '../../commands.js'
@@ -175,7 +175,7 @@ function Diagnostics({ promise }: { promise: Promise<any> }) {
   // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const diagnosticElements = (diagnostics as any).map((diagnostic: any, i: number) => (
     <Box key={i} flexDirection="row" gap={1} paddingX={1}>
-      <Text color="error">{fig.warning}</Text>
+      <Text color="error">{WARNING}</Text>
       {typeof diagnostic === 'string' ? <Text wrap="wrap">{diagnostic}</Text> : diagnostic}
     </Box>
   ))

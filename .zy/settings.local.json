@@ -82,7 +82,8 @@
       "Bash(echo \"EXIT=$?\")",
       "Bash(xxd)",
       "Bash(grep -o vqd=\"\"[^\"\"]*\"\" /tmp/ddg_main.html)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(cd:*)"
     ]
   }
 }

@@ -1,4 +1,4 @@
-import { fig } from '../../../constants/figures.js'
+import { TICK, CROSS, CIRCLE, CIRCLE_FILLED, WARNING } from '../../../constants/figures.js'
 import { getSentinelCategory } from '@ant/computer-use-mcp/sentinelApps'
 import type { CuPermissionRequest, CuPermissionResponse } from '@ant/computer-use-mcp/types'
 import { DEFAULT_GRANT_FLAGS } from '@ant/computer-use-mcp/types'
@@ -105,16 +105,16 @@ function ComputerUseTccPanel({
                 <Text>
                   {tSync('computerUse.accessibilityLabel')}{' '}
                   {tccState.accessibility
-                    ? `${fig.tick} ${tSync('computerUse.granted')}`
-                    : `${fig.cross} ${tSync('computerUse.notGranted')}`}
+                    ? `${TICK} ${tSync('computerUse.granted')}`
+                    : `${CROSS} ${tSync('computerUse.notGranted')}`}
                 </Text>
               }
               {
                 <Text>
                   {tSync('computerUse.screenRecordingLabel')}{' '}
                   {tccState.screenRecording
-                    ? `${fig.tick} ${tSync('computerUse.granted')}`
-                    : `${fig.cross} ${tSync('computerUse.notGranted')}`}
+                    ? `${TICK} ${tSync('computerUse.granted')}`
+                    : `${CROSS} ${tSync('computerUse.notGranted')}`}
                 </Text>
               }
             </Box>
@@ -218,7 +218,7 @@ function ComputerUseAppListPanel({
       return (
         <Text key={a_3.requestedName} dimColor={true}>
           {'  '}
-          {fig.circle} {a_3.requestedName}{' '}
+          {CIRCLE} {a_3.requestedName}{' '}
           <Text dimColor={true}>({tSync('computerUse.notInstalled')})</Text>
         </Text>
       )
@@ -227,7 +227,7 @@ function ComputerUseAppListPanel({
       return (
         <Text key={resolved.bundleId} dimColor={true}>
           {'  '}
-          {fig.tick} {resolved.displayName}{' '}
+          {TICK} {resolved.displayName}{' '}
           <Text dimColor={true}>({tSync('computerUse.alreadyGranted')})</Text>
         </Text>
       )
@@ -238,12 +238,12 @@ function ComputerUseAppListPanel({
       <Box key={resolved.bundleId} flexDirection="column">
         <Text>
           {'  '}
-          {isChecked ? fig.circleFilled : fig.circle} {resolved.displayName}
+          {isChecked ? CIRCLE_FILLED : CIRCLE} {resolved.displayName}
         </Text>
         {sentinel ? (
           <Text bold={true}>
             {'    '}
-            {fig.warning} {getSentinelWarning()[sentinel]}
+            {WARNING} {getSentinelWarning()[sentinel]}
           </Text>
         ) : null}
       </Box>

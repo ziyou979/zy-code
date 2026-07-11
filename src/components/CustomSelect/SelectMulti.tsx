@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { TICK, POINTER } from '../../constants/figures.js'
 import { useState } from 'react'
 import { Box, Text } from '../../ink.js'
 import type { PastedContent } from '../../utils/config.js'
@@ -150,7 +150,7 @@ SelectMultiProps<any>) {
             pastedContents={pastedContents}
             onRemoveImage={onRemoveImage}
           >
-            <Text color={isSelected ? 'success' : undefined}>[{isSelected ? fig.tick : ' '}] </Text>
+            <Text color={isSelected ? 'success' : undefined}>[{isSelected ? TICK : ' '}] </Text>
           </SelectInputOption>
         </Box>
       )
@@ -174,7 +174,7 @@ SelectMultiProps<any>) {
           description={option.description}
         >
           {!hideIndexes && <Text dimColor={true}>{`${i}.`.padEnd(maxIndexWidth)}</Text>}
-          <Text color={isSelected ? 'success' : undefined}>[{isSelected ? fig.tick : ' '}]</Text>
+          <Text color={isSelected ? 'success' : undefined}>[{isSelected ? TICK : ' '}]</Text>
           <Text color={isOptionFocused ? 'suggestion' : undefined}>{option.label}</Text>
         </SelectOption>
       </Box>
@@ -185,7 +185,7 @@ SelectMultiProps<any>) {
       {<Box flexDirection={'column'}>{visibleOptionElements}</Box>}
       {submitButtonText && onSubmit && (
         <Box marginTop={0} gap={1}>
-          {state.isSubmitFocused ? <Text color="suggestion">{fig.pointer}</Text> : <Text> </Text>}
+          {state.isSubmitFocused ? <Text color="suggestion">{POINTER}</Text> : <Text> </Text>}
           <Box marginLeft={3}>
             <Text color={state.isSubmitFocused ? 'suggestion' : undefined} bold={true}>
               {submitButtonText}

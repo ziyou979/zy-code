@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { POINTER } from '../../constants/figures.js'
 import * as React from 'react'
 import { useRef, useState } from 'react'
 import { useElapsedTime } from '../../hooks/useElapsedTime.js'
@@ -279,7 +279,7 @@ export function TeammateSpinnerLine({
       <Box paddingLeft={3}>
         {/* Selection indicator: pointer when selected, otherwise space */}
         <Text color={isSelected ? 'suggestion' : undefined} bold={isSelected}>
-          {isSelected ? fig.pointer : ' '}
+          {isSelected ? POINTER : ' '}
         </Text>
         <Text dimColor={!isSelected}>{treeChar} </Text>
         {/* Agent name: hidden on very narrow screens */}

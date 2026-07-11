@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { CROSS, POINTER, WARNING, TICK } from '../../constants/figures.js'
 import { useEffect } from 'react'
 import { Box, Text } from '../../ink.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -26,37 +26,37 @@ export function ValidatePlugin({ onComplete, path }: Props) {
         if (result.errors.length > 0) {
           output =
             output +
-            `${fig.cross} Found ${result.errors.length} ${plural(result.errors.length, 'error')}:\n\n`
+            `${CROSS} Found ${result.errors.length} ${plural(result.errors.length, 'error')}:\n\n`
           result.errors.forEach((error_0) => {
-            output = `${output}  ${fig.pointer} ${error_0.path}: ${error_0.message}\n`
+            output = `${output}  ${POINTER} ${error_0.path}: ${error_0.message}\n`
           })
           output = `${output}\n`
         }
         if (result.warnings.length > 0) {
           output =
             output +
-            `${fig.warning} Found ${result.warnings.length} ${plural(result.warnings.length, 'warning')}:\n\n`
+            `${WARNING} Found ${result.warnings.length} ${plural(result.warnings.length, 'warning')}:\n\n`
           result.warnings.forEach((warning) => {
-            output = `${output}  ${fig.pointer} ${warning.path}: ${warning.message}\n`
+            output = `${output}  ${POINTER} ${warning.path}: ${warning.message}\n`
           })
           output = `${output}\n`
         }
         if (result.success) {
           if (result.warnings.length > 0) {
-            output = `${output}${fig.tick} Validation passed with warnings\n`
+            output = `${output}${TICK} Validation passed with warnings\n`
           } else {
-            output = `${output}${fig.tick} Validation passed\n`
+            output = `${output}${TICK} Validation passed\n`
           }
           process.exitCode = 0
         } else {
-          output = `${output}${fig.cross} Validation failed\n`
+          output = `${output}${CROSS} Validation failed\n`
           process.exitCode = 1
         }
         onComplete(output)
       } catch (error) {
         process.exitCode = 2
         logError(error)
-        onComplete(`${fig.cross} Unexpected error during validation: ${errorMessage(error)}`)
+        onComplete(`${CROSS} Unexpected error during validation: ${errorMessage(error)}`)
       }
     }
     runValidation()

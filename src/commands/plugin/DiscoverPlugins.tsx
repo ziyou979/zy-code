@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { WARNING, ARROW_UP, POINTER, ELLIPSIS, RADIO_ON, RADIO_OFF, ARROW_DOWN, CROSS } from '../../constants/figures.js'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
@@ -693,7 +693,7 @@ export function DiscoverPlugins({
       {warning && (
         <Box marginBottom={1}>
           <Text color="warning">
-            {fig.warning} {warning}
+            {WARNING} {warning}
           </Text>
         </Box>
       )}
@@ -708,7 +708,7 @@ export function DiscoverPlugins({
       {/* Scroll up indicator */}
       {pagination.scrollPosition.canScrollUp && (
         <Box>
-          <Text dimColor> {fig.arrowUp} more above</Text>
+          <Text dimColor> {ARROW_UP} more above</Text>
         </Box>
       )}
 
@@ -727,14 +727,14 @@ export function DiscoverPlugins({
           >
             <Box>
               <Text color={isSelected && !isSearchMode ? 'suggestion' : undefined}>
-                {isSelected && !isSearchMode ? fig.pointer : ' '}{' '}
+                {isSelected && !isSearchMode ? POINTER : ' '}{' '}
               </Text>
               <Text>
                 {isInstallingThis
-                  ? fig.ellipsis
+                  ? ELLIPSIS
                   : isSelectedForInstall
-                    ? fig.radioOn
-                    : fig.radioOff}{' '}
+                    ? RADIO_ON
+                    : RADIO_OFF}{' '}
                 {plugin_5.entry.name}
                 <Text dimColor> · {plugin_5.marketplaceName}</Text>
                 {plugin_5.entry.tags?.includes('community-managed') && (
@@ -760,7 +760,7 @@ export function DiscoverPlugins({
       {/* Scroll down indicator */}
       {pagination.scrollPosition.canScrollDown && (
         <Box>
-          <Text dimColor> {fig.arrowDown} more below</Text>
+          <Text dimColor> {ARROW_DOWN} more below</Text>
         </Box>
       )}
 
@@ -768,7 +768,7 @@ export function DiscoverPlugins({
       {error && (
         <Box marginTop={1}>
           <Text color="error">
-            {fig.cross} {error}
+            {CROSS} {error}
           </Text>
         </Box>
       )}

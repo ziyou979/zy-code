@@ -1,4 +1,4 @@
-import { fig } from '../constants/figures.js'
+import { POINTER } from '../constants/figures.js'
 import chalk from 'chalk'
 import React from 'react'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
@@ -875,7 +875,7 @@ export function LogSelector({
       <Box flexShrink={0} flexDirection="column">
         <Box flexDirection="row" gap={1}>
           <Text color={isAgenticSearchOptionFocused ? 'suggestion' : undefined}>
-            {isAgenticSearchOptionFocused ? fig.pointer : ' '}
+            {isAgenticSearchOptionFocused ? POINTER : ' '}
           </Text>
           <Text
             color={isAgenticSearchOptionFocused ? 'suggestion' : undefined}

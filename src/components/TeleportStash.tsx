@@ -1,4 +1,4 @@
-import { fig } from '../constants/figures.js'
+import { ELLIPSIS } from '../constants/figures.js'
 import React, { useEffect, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { Box, Text } from '../ink.js'
@@ -78,7 +78,7 @@ export function TeleportStash({
           <Text>
             {' '}
             {tSync('teleport.checkingGitStatus')}
-            {fig.ellipsis}
+            {ELLIPSIS}
           </Text>
         </Box>
       </Box>

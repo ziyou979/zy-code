@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { WARNING } from '../../constants/figures.js'
 import { feature } from 'bun:bundle'
 import * as React from 'react'
 import type { z } from 'zod/v4'
@@ -115,7 +115,7 @@ export function renderToolResultMessage(
   const showWarning = estimatedTokens > MCP_OUTPUT_WARNING_THRESHOLD_TOKENS
   const warningMessage = showWarning
     ? tSync('mcp.largeResponseWarning', {
-        warning: fig.warning,
+        warning: WARNING,
         tokens: formatNumber(estimatedTokens),
       })
     : null

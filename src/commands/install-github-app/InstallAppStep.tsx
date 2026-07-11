@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { ELLIPSIS } from '../../constants/figures.js'
 import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/github-app.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
@@ -50,7 +50,7 @@ export function InstallAppStep({ repoUrl, onSubmit }: InstallAppStepProps) {
       {
         <Box>
           <Text bold={true} color="permission">
-            Press Enter once you've installed the app{fig.ellipsis}
+            Press Enter once you've installed the app{ELLIPSIS}
           </Text>
         </Box>
       }

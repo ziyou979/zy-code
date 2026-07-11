@@ -1,4 +1,4 @@
-import { fig } from '../constants/figures.js'
+import { SQUARE_SMALL_FILLED } from '../constants/figures.js'
 import * as React from 'react'
 import { Text } from '../ink.js'
 import { useAppState } from '../state/AppState.js'
@@ -18,7 +18,7 @@ export function TungstenPill({ selected }: Props): React.ReactNode {
     return null
   }
 
-  const label = `${fig.squareSmallFilled} tmux`
+  const label = `${SQUARE_SMALL_FILLED} tmux`
 
   return (
     <Text key={selected ? 'selected' : 'normal'} color="background" inverse={selected}>

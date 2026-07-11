@@ -22,6 +22,10 @@ const GUI_EDITORS = [
   'gedit',
   'notepad++',
   'notepad',
+  // Windows `start /wait notepad` — `start` 是 cmd.exe 内建命令，
+  // 用于启动 GUI 程序并等待其退出。basename('start') = 'start'，
+  // GUI_EDITORS 中有 'start' 即可匹配。
+  'start',
 ]
 
 // Editors that accept +N as a goto-line argument. The Windows default

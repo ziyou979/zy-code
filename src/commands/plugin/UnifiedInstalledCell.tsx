@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { ARROW_RIGHT, CROSS, RADIO_OFF, TICK, POINTER, WARNING, TRIANGLE_UP_OUTLINE } from '../../constants/figures.js'
 import { Box, color, Text, useTheme } from '../../ink.js'
 import { plural } from '../../utils/stringUtils.js'
 // @ts-expect-error
@@ -14,19 +14,19 @@ export function UnifiedInstalledCell({ item, isSelected }: Props) {
     let statusIcon
     let statusText
     if (item.pendingToggle) {
-      statusIcon = color('suggestion', theme)(fig.arrowRight)
+      statusIcon = color('suggestion', theme)(ARROW_RIGHT)
       statusText = item.pendingToggle === 'will-enable' ? 'will enable' : 'will disable'
     } else {
       if (item.errorCount > 0) {
-        statusIcon = color('error', theme)(fig.cross)
+        statusIcon = color('error', theme)(CROSS)
         const errorLabel = plural(item.errorCount, 'error')
         statusText = `${item.errorCount} ${errorLabel}`
       } else {
         if (!item.isEnabled) {
-          statusIcon = color('inactive', theme)(fig.radioOff)
+          statusIcon = color('inactive', theme)(RADIO_OFF)
           statusText = 'disabled'
         } else {
-          statusIcon = color('success', theme)(fig.tick)
+          statusIcon = color('success', theme)(TICK)
           statusText = 'enabled'
         }
       }
@@ -35,7 +35,7 @@ export function UnifiedInstalledCell({ item, isSelected }: Props) {
       <Box>
         {
           <Text color={isSelected ? 'suggestion' : undefined}>
-            {isSelected ? `${fig.pointer} ` : '  '}
+            {isSelected ? `${POINTER} ` : '  '}
           </Text>
         }
         {<Text color={isSelected ? 'suggestion' : undefined}>{item.name}</Text>}
@@ -52,12 +52,12 @@ export function UnifiedInstalledCell({ item, isSelected }: Props) {
     )
   }
   if (item.type === 'flagged-plugin') {
-    const statusIcon_0 = color('warning', theme)(fig.warning)
+    const statusIcon_0 = color('warning', theme)(WARNING)
     return (
       <Box>
         {
           <Text color={isSelected ? 'suggestion' : undefined}>
-            {isSelected ? `${fig.pointer} ` : '  '}
+            {isSelected ? `${POINTER} ` : '  '}
           </Text>
         }
         {<Text color={isSelected ? 'suggestion' : undefined}>{item.name}</Text>}
@@ -74,14 +74,14 @@ export function UnifiedInstalledCell({ item, isSelected }: Props) {
     )
   }
   if (item.type === 'failed-plugin') {
-    const statusIcon_1 = color('error', theme)(fig.cross)
+    const statusIcon_1 = color('error', theme)(CROSS)
     const errorLabel = plural(item.errorCount, 'error')
     const statusText_0 = `failed to load · ${item.errorCount} ${errorLabel}`
     return (
       <Box>
         {
           <Text color={isSelected ? 'suggestion' : undefined}>
-            {isSelected ? `${fig.pointer} ` : '  '}
+            {isSelected ? `${POINTER} ` : '  '}
           </Text>
         }
         {<Text color={isSelected ? 'suggestion' : undefined}>{item.name}</Text>}
@@ -100,22 +100,22 @@ export function UnifiedInstalledCell({ item, isSelected }: Props) {
   let statusIcon_2
   let statusText_1
   if (item.status === 'connected') {
-    statusIcon_2 = color('success', theme)(fig.tick)
+    statusIcon_2 = color('success', theme)(TICK)
     statusText_1 = 'connected'
   } else {
     if (item.status === 'disabled') {
-      statusIcon_2 = color('inactive', theme)(fig.radioOff)
+      statusIcon_2 = color('inactive', theme)(RADIO_OFF)
       statusText_1 = 'disabled'
     } else {
       if (item.status === 'pending') {
-        statusIcon_2 = color('inactive', theme)(fig.radioOff)
+        statusIcon_2 = color('inactive', theme)(RADIO_OFF)
         statusText_1 = 'connecting\u2026'
       } else {
         if (item.status === 'needs-auth') {
-          statusIcon_2 = color('warning', theme)(fig.triangleUpOutline)
+          statusIcon_2 = color('warning', theme)(TRIANGLE_UP_OUTLINE)
           statusText_1 = 'Enter to auth'
         } else {
-          statusIcon_2 = color('error', theme)(fig.cross)
+          statusIcon_2 = color('error', theme)(CROSS)
           statusText_1 = 'failed'
         }
       }
@@ -126,7 +126,7 @@ export function UnifiedInstalledCell({ item, isSelected }: Props) {
       <Box>
         {
           <Text color={isSelected ? 'suggestion' : undefined}>
-            {isSelected ? `${fig.pointer} ` : '  '}
+            {isSelected ? `${POINTER} ` : '  '}
           </Text>
         }
         {<Text dimColor={!isSelected}>└ </Text>}
@@ -146,7 +146,7 @@ export function UnifiedInstalledCell({ item, isSelected }: Props) {
     <Box>
       {
         <Text color={isSelected ? 'suggestion' : undefined}>
-          {isSelected ? `${fig.pointer} ` : '  '}
+          {isSelected ? `${POINTER} ` : '  '}
         </Text>
       }
       {<Text color={isSelected ? 'suggestion' : undefined}>{item.name}</Text>}

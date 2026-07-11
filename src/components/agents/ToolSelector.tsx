@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { CHECKBOX_ON, CHECKBOX_OFF, POINTER } from '../../constants/figures.js'
 import React, { useState } from 'react'
 import { mcpInfoFromString } from 'src/services/mcp/mcpStringUtils.js'
 import { isMcpTool } from 'src/services/mcp/utils.js'
@@ -213,7 +213,7 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }: Prop
   })
   navigableItems.push({
     id: 'bucket-all',
-    label: `${isAllSelected ? fig.checkboxOn : fig.checkboxOff} ${tSync('agents.toolSelector.allTools')}`,
+    label: `${isAllSelected ? CHECKBOX_ON : CHECKBOX_OFF} ${tSync('agents.toolSelector.allTools')}`,
     action: () => {
       const allToolNames_0 = customAgentTools.map((tool) => tool.name)
       handleToggleTools(allToolNames_0, !isAllSelected)
@@ -256,7 +256,7 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }: Prop
     const isFullySelected = selected_0 === bucketTools_0.length
     navigableItems.push({
       id,
-      label: `${isFullySelected ? fig.checkboxOn : fig.checkboxOff} ${name_1}`,
+      label: `${isFullySelected ? CHECKBOX_ON : CHECKBOX_OFF} ${name_1}`,
       action: createBucketToggleAction(bucketTools_0),
     })
   })
@@ -289,7 +289,7 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }: Prop
         const isFullySelected_0 = selected_1 === serverTools.length
         navigableItems.push({
           id: `mcp-server-${serverName}`,
-          label: `${isFullySelected_0 ? fig.checkboxOn : fig.checkboxOff} ${serverName} (${serverTools.length} ${tSync('agents.toolSelector.toolCount', { count: serverTools.length })})`,
+          label: `${isFullySelected_0 ? CHECKBOX_ON : CHECKBOX_OFF} ${serverName} (${serverTools.length} ${tSync('agents.toolSelector.toolCount', { count: serverTools.length })})`,
           action: () => {
             const toolNames_2 = serverTools.map((tool) => tool.name)
             handleToggleTools(toolNames_2, !isFullySelected_0)
@@ -311,7 +311,7 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }: Prop
       }
       navigableItems.push({
         id: `tool-${tool_0.name}`,
-        label: `${selectedSet.has(tool_0.name) ? fig.checkboxOn : fig.checkboxOff} ${displayName}`,
+        label: `${selectedSet.has(tool_0.name) ? CHECKBOX_ON : CHECKBOX_OFF} ${displayName}`,
         action: () => handleToggleTool(tool_0.name),
       })
     })
@@ -367,7 +367,7 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }: Prop
           dimColor={isHeader}
           bold={isToggleButton && isCurrentlyFocused}
         >
-          {isHeader ? '' : isCurrentlyFocused ? `${fig.pointer} ` : '  '}
+          {isHeader ? '' : isCurrentlyFocused ? `${POINTER} ` : '  '}
           {isToggleButton ? `[ ${item_0.label} ]` : item_0.label}
         </Text>
       </React.Fragment>
@@ -383,7 +383,7 @@ export function ToolSelector({ tools, initialTools, onComplete, onCancel }: Prop
     >
       {
         <Text color={focusIndex === 0 ? 'suggestion' : undefined} bold={focusIndex === 0}>
-          {focusIndex === 0 ? `${fig.pointer} ` : '  '}[ {tSync('agents.toolSelector.continue')} ]
+          {focusIndex === 0 ? `${POINTER} ` : '  '}[ {tSync('agents.toolSelector.continue')} ]
         </Text>
       }
       {<Divider width={40} />}

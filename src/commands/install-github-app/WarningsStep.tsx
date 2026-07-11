@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { WARNING } from '../../constants/figures.js'
 import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/github-app.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
@@ -33,7 +33,7 @@ export function WarningsStep({ warnings, onContinue }: WarningsStepProps) {
     <Box flexDirection="column" borderStyle="round" paddingX={1}>
       {
         <Box flexDirection="column" marginBottom={1}>
-          <Text bold={true}>{fig.warning} Setup Warnings</Text>
+          <Text bold={true}>{WARNING} Setup Warnings</Text>
           <Text dimColor={true}>We found some potential issues, but you can continue anyway</Text>
         </Box>
       }

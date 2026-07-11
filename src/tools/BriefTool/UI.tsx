@@ -1,4 +1,4 @@
-import { BLACK_CIRCLE, fig } from '../../constants/figures.js'
+import { BLACK_CIRCLE, POINTER_SMALL } from '../../constants/figures.js'
 import React from 'react'
 import { Markdown } from '../../components/Markdown.js'
 import { tSync } from '../../i18n/index.js'
@@ -85,7 +85,7 @@ export function AttachmentList({ attachments }: AttachmentListProps) {
   const attachmentItems = attachments.map((att) => (
     <Box key={att.path} flexDirection="row">
       <Text dimColor={true}>
-        {fig.pointerSmall} {att.isImage ? tSync('toolBrief.image') : tSync('toolBrief.file')}{' '}
+        {POINTER_SMALL} {att.isImage ? tSync('toolBrief.image') : tSync('toolBrief.file')}{' '}
       </Text>
       <Text>{getDisplayPath(att.path)}</Text>
       <Text dimColor={true}> ({formatFileSize(att.size)})</Text>

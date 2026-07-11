@@ -1,4 +1,4 @@
-import { fig } from '../../../constants/figures.js'
+import { WARNING } from '../../../constants/figures.js'
 import chalk from 'chalk'
 import { useEffect, useRef, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
@@ -462,7 +462,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
         setChanges((prev) => [
           ...prev,
           chalk.yellow(
-            `${fig.warning} Warning: ${permissionRuleValueToString(u.rule.ruleValue)} is ${severity}`,
+            `${WARNING} Warning: ${permissionRuleValueToString(u.rule.ruleValue)} is ${severity}`,
           ),
           chalk.dim(`  ${u.reason}`),
           chalk.dim(`  Fix: ${u.fix}`),

@@ -2,7 +2,7 @@
  * Shared utilities for displaying task status across different task types.
  */
 
-import { fig } from '../../constants/figures.js'
+import { CROSS, QUESTION_MARK, WARNING, ELLIPSIS, PLAY, TICK, BULLET } from '../../constants/figures.js'
 import type { TaskStatus } from 'src/Task.js'
 import type { InProcessTeammateTaskState } from 'src/tasks/InProcessTeammateTask/types.js'
 import { isPanelAgentTask } from 'src/tasks/LocalAgentTask/LocalAgentTask.js'
@@ -32,27 +32,27 @@ export function getTaskStatusIcon(
 ): string {
   const { isIdle, awaitingApproval, hasError, shutdownRequested } = options ?? {}
   if (hasError) {
-    return fig.cross
+    return CROSS
   }
   if (awaitingApproval) {
-    return fig.questionMarkPrefix
+    return QUESTION_MARK
   }
   if (shutdownRequested) {
-    return fig.warning
+    return WARNING
   }
   if (status === 'running') {
     if (isIdle) {
-      return fig.ellipsis
+      return ELLIPSIS
     }
-    return fig.play
+    return PLAY
   }
   if (status === 'completed') {
-    return fig.tick
+    return TICK
   }
   if (status === 'failed' || status === 'killed') {
-    return fig.cross
+    return CROSS
   }
-  return fig.bullet
+  return BULLET
 }
 
 /**

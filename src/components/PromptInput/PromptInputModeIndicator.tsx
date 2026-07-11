@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { POINTER } from '../../constants/figures.js'
 import { Box, Text } from 'src/ink.js'
 import {
   AGENT_COLOR_TO_THEME_COLOR,
@@ -49,7 +49,7 @@ function PromptChar({ isLoading, themeColor }: PromptCharProps) {
   const color = teammateColor ?? (false ? 'subtle' : undefined)
   return (
     <Text color={color} dimColor={isLoading}>
-      {fig.pointer} 
+      {POINTER} 
     </Text>
   )
 }

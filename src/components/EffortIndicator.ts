@@ -1,12 +1,11 @@
 import {
-  EFFORT_BALANCED,
-  EFFORT_EXTREME,
-  EFFORT_LIGHT,
-  EFFORT_OFF,
-  EFFORT_ON,
-  EFFORT_QUICK,
-  EFFORT_THOROUGH,
-  EFFORT_ULTRA,
+  CIRCLE_ALL_BUT_UPPER_LEFT,
+  CIRCLE_FILLED,
+  CIRCLE_RIGHT_HALF,
+  CIRCLE_UPPER_RIGHT,
+  RADIO_OFF,
+  RADIO_ON,
+  SLASHED_CIRCLE,
 } from '../constants/figures.js'
 import { type EffortLevel, getDisplayedEffortLevel, modelSupportsEffort } from '../utils/effort.js'
 
@@ -28,23 +27,23 @@ export function getEffortNotificationText(
 export function effortLevelToSymbol(level: EffortLevel): string {
   switch (level) {
     case 'off':
-      return EFFORT_OFF
+      return SLASHED_CIRCLE
     case 'on':
-      return EFFORT_ON
+      return CIRCLE_RIGHT_HALF
     case 'quick':
-      return EFFORT_QUICK
+      return RADIO_OFF
     case 'light':
-      return EFFORT_LIGHT
+      return CIRCLE_UPPER_RIGHT
     case 'balanced':
-      return EFFORT_BALANCED
+      return CIRCLE_RIGHT_HALF
     case 'thorough':
-      return EFFORT_THOROUGH
+      return CIRCLE_ALL_BUT_UPPER_LEFT
     case 'extreme':
     case 'orchestrate':
-      return EFFORT_EXTREME
+      return CIRCLE_FILLED
     case 'ultra':
-      return EFFORT_ULTRA
+      return RADIO_ON
     default:
-      return EFFORT_THOROUGH
+      return CIRCLE_ALL_BUT_UPPER_LEFT
   }
 }

@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { POINTER, ARROW_DOWN, ARROW_UP, TICK } from '../../constants/figures.js'
 import type { ReactNode } from 'react'
 import { useDeclaredCursor } from '../../ink/hooks/use-declared-cursor.js'
 import type { ClickEvent } from '../../ink/events/click-event.js'
@@ -144,16 +144,16 @@ export function ListItem({
       return <Text> </Text>
     }
     if (isFocused) {
-      return <Text color="suggestion">{fig.pointer}</Text>
+      return <Text color="suggestion">{POINTER}</Text>
     }
     if (showScrollDown) {
-      return <Text dimColor={true}>{fig.arrowDown}</Text>
+      return <Text dimColor={true}>{ARROW_DOWN}</Text>
     }
     if (showScrollUp) {
-      return <Text dimColor={true}>{fig.arrowUp}</Text>
+      return <Text dimColor={true}>{ARROW_UP}</Text>
     }
     if (isHovered) {
-      return <Text dimColor={true}>{fig.pointer}</Text>
+      return <Text dimColor={true}>{POINTER}</Text>
     }
     return <Text> </Text>
   }
@@ -196,7 +196,7 @@ export function ListItem({
           ) : (
             children
           )}
-          {isSelected && !disabled && <Text color="success">{fig.tick}</Text>}
+          {isSelected && !disabled && <Text color="success">{TICK}</Text>}
         </Box>
       }
       {description && (

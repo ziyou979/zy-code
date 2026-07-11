@@ -1,5 +1,5 @@
 import { plural } from '../utils/stringUtils.js'
-import { fig } from '../constants/figures.js'
+import { CROSS, WARNING } from '../constants/figures.js'
 import { chordToString, parseChord, parseKeystroke } from './parser.js'
 import { getReservedShortcuts, normalizeKeyForComparison } from './reservedShortcuts.js'
 import type { KeybindingBlock, KeybindingContextName, ParsedBinding } from './types.js'
@@ -431,7 +431,7 @@ export function validateBindings(
  * Format a warning for display to the user.
  */
 export function formatWarning(warning: KeybindingWarning): string {
-  const icon = warning.severity === 'error' ? fig.cross : fig.warning
+  const icon = warning.severity === 'error' ? CROSS : WARNING
   let msg = `${icon} Keybinding ${warning.severity}: ${warning.message}`
 
   if (warning.suggestion) {

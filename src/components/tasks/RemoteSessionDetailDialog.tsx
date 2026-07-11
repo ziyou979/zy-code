@@ -1,4 +1,4 @@
-import { DIAMOND_FILLED, DIAMOND_OPEN, fig } from '../../constants/figures.js'
+import { DIAMOND_FILLED, DIAMOND_OPEN, TICK } from '../../constants/figures.js'
 import React, { useMemo, useState } from 'react'
 import type { ToolUseContext } from 'src/Tool.js'
 import type { WireMessage } from 'src/types/index.js'
@@ -215,7 +215,7 @@ function UltraplanSessionDetail({
         <Box flexDirection="column" gap={1}>
           {
             <Text>
-              {phase === 'plan_ready' && <Text color="success">{fig.tick} </Text>}
+              {phase === 'plan_ready' && <Text color="success">{TICK} </Text>}
               {agentsWorking} {agentLabel}{' '}
               {phase
                 ? (getAgentVerb() as Record<string, string>)[phase]

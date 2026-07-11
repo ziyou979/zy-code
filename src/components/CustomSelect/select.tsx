@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { POINTER, ARROW_DOWN, ARROW_UP, TICK } from '../../constants/figures.js'
 import React, { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useDeclaredCursor } from '../../ink/hooks/use-declared-cursor.js'
 import { stringWidth } from '../../ink/stringWidth.js'
@@ -698,13 +698,13 @@ SelectProps<any>) {
               >
                 <Box flexDirection="row" flexShrink={0}>
                   {data.isFocused ? (
-                    <Text color="suggestion">{fig.pointer}</Text>
+                    <Text color="suggestion">{POINTER}</Text>
                   ) : data.shouldShowDownArrow ? (
-                    <Text dimColor={true}>{fig.arrowDown}</Text>
+                    <Text dimColor={true}>{ARROW_DOWN}</Text>
                   ) : data.shouldShowUpArrow ? (
-                    <Text dimColor={true}>{fig.arrowUp}</Text>
+                    <Text dimColor={true}>{ARROW_UP}</Text>
                   ) : isHovered_1 && !data.isOptionDisabled ? (
-                    <Text dimColor={true}>{fig.pointer}</Text>
+                    <Text dimColor={true}>{POINTER}</Text>
                   ) : (
                     <Text> </Text>
                   )}
@@ -726,7 +726,7 @@ SelectProps<any>) {
                     )}
                     {data.label}
                   </Text>
-                  {data.isSelected && <Text color="success"> {fig.tick}</Text>}
+                  {data.isSelected && <Text color="success"> {TICK}</Text>}
                   {padding > 0 && <Text>{' '.repeat(padding)}</Text>}
                 </Box>
                 <Box flexGrow={1} marginLeft={2}>

@@ -9,15 +9,14 @@
 
 import { basename } from 'node:path'
 import {
-  EFFORT_BALANCED,
-  EFFORT_EXTREME,
-  EFFORT_LIGHT,
-  EFFORT_OFF,
-  EFFORT_ON,
-  EFFORT_QUICK,
-  EFFORT_THOROUGH,
-  EFFORT_ULTRA,
+  CIRCLE_ALL_BUT_UPPER_LEFT,
+  CIRCLE_FILLED,
+  CIRCLE_RIGHT_HALF,
+  CIRCLE_UPPER_RIGHT,
   FORK_GLYPH,
+  RADIO_OFF,
+  RADIO_ON,
+  SLASHED_CIRCLE,
 } from '../../constants/figures.js'
 import {
   getTotalAPIDuration,
@@ -67,15 +66,15 @@ export type StatusbarContext = {
 const BAR_WIDTH = 8
 
 const EFFORT_ICONS: Record<string, string> = {
-  off: EFFORT_OFF,
-  on: EFFORT_ON,
-  quick: EFFORT_QUICK,
-  light: EFFORT_LIGHT,
-  balanced: EFFORT_BALANCED,
-  thorough: EFFORT_THOROUGH,
-  extreme: EFFORT_EXTREME,
-  ultra: EFFORT_ULTRA,
-  orchestrate: EFFORT_EXTREME,
+  off: SLASHED_CIRCLE,
+  on: CIRCLE_RIGHT_HALF,
+  quick: RADIO_OFF,
+  light: CIRCLE_UPPER_RIGHT,
+  balanced: CIRCLE_RIGHT_HALF,
+  thorough: CIRCLE_ALL_BUT_UPPER_LEFT,
+  extreme: CIRCLE_FILLED,
+  ultra: RADIO_ON,
+  orchestrate: CIRCLE_FILLED,
 }
 
 const EFFORT_I18N_KEYS: Record<string, string> = {
@@ -139,7 +138,7 @@ const RENDERERS: Record<ModuleId, Renderer> = {
     // 因其他路径（如 /clear）变成 false 后 effort 被错误隐藏。
     if (modelSupportsEffort(ctx.mainLoopModel)) {
       const level = getDisplayedEffortLevel(ctx.mainLoopModel, ctx.effortValue as never)
-      const effortGlyph = EFFORT_ICONS[level] ?? EFFORT_BALANCED
+      const effortGlyph = EFFORT_ICONS[level] ?? CIRCLE_RIGHT_HALF
       const i18nKey = EFFORT_I18N_KEYS[level] ?? 'effort.balanced'
       const levelName = tSync(i18nKey as never)
       const body = `${ctx.mainLoopModel} · ${effortGlyph} ${levelName}`

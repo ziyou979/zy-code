@@ -1,4 +1,4 @@
-import { fig } from '../constants/figures.js'
+import { ARROW_DOWN, POINTER } from '../constants/figures.js'
 import { fileURLToPath } from 'node:url'
 import React, {
   createContext,
@@ -493,7 +493,7 @@ function NewMessagesPill({ count, onClick }: { count: number; onClick?: () => vo
                   ),
                 })
               : tSync('fullscreen.jumpToBottom')}{' '}
-            {fig.arrowDown}{' '}
+            {ARROW_DOWN}{' '}
           </Text>
         }
       </Box>
@@ -525,7 +525,7 @@ function StickyPromptHeader({ text, onClick }: { text: string; onClick?: () => v
     >
       {
         <Text color="subtle" wrap="truncate-end">
-          {fig.pointer} {text}
+          {POINTER} {text}
         </Text>
       }
     </Box>

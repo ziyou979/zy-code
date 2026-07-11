@@ -1,4 +1,4 @@
-import { fig } from '../constants/figures.js'
+import { ARROW_UP, ARROW_DOWN, BULLET, STAR, CIRCLE } from '../constants/figures.js'
 import { feature } from 'bun:bundle'
 // @ts-expect-error -- no declaration file for asciichart
 import { plot as asciichart } from 'asciichart'
@@ -831,7 +831,7 @@ function ModelsTab({
       {showScrollHint && (
         <Box marginTop={1}>
           <Text color="subtle">
-            {canScrollUp ? fig.arrowUp : ' '} {canScrollDown ? fig.arrowDown : ' '}{' '}
+            {canScrollUp ? ARROW_UP : ' '} {canScrollDown ? ARROW_DOWN : ' '}{' '}
             {scrollOffset + 1}-{Math.min(scrollOffset + 4, modelEntries.length)} of{' '}
             {modelEntries.length} {tSync('stats.modelScrollHint')}
           </Text>
@@ -859,7 +859,7 @@ function ModelEntry({ model, usage, totalTokens }: ModelEntryProps) {
     <Box flexDirection="column">
       {
         <Text>
-          {fig.bullet} {<Text bold={true}>{displayName}</Text>}{' '}
+          {BULLET} {<Text bold={true}>{displayName}</Text>}{' '}
           {<Text color="subtle">({percentage}%)</Text>}
         </Text>
       }
@@ -937,7 +937,7 @@ function generateTokenChart(
       const bulletColors: Color[] = ['ansi:cyan', 'ansi:blue', 'ansi:blueBright']
       legend.push({
         model: renderModelName(model),
-        coloredBullet: applyColor(fig.bullet, bulletColors[i % bulletColors.length]!),
+        coloredBullet: applyColor(BULLET, bulletColors[i % bulletColors.length]!),
       })
     }
   }
@@ -1223,7 +1223,7 @@ function renderModelsToAnsi(stats: ZyCodeStats): string[] {
 
   // Summary
   lines.push(
-    `${fig.star} ${tSync('stats.favoriteModel')}: ${chalk.cyan.bold(renderModelName(favoriteModel?.[0] || ''))} · ${fig.circle} ${tSync('stats.totalTokens')}: ${chalk.cyan(formatNumber(totalTokens))} tokens`,
+    `${STAR} ${tSync('stats.favoriteModel')}: ${chalk.cyan.bold(renderModelName(favoriteModel?.[0] || ''))} · ${CIRCLE} ${tSync('stats.totalTokens')}: ${chalk.cyan(formatNumber(totalTokens))} tokens`,
   )
   lines.push('')
 
@@ -1233,7 +1233,7 @@ function renderModelsToAnsi(stats: ZyCodeStats): string[] {
     const modelTokens = usage.inputTokens + usage.outputTokens
     const percentage = ((modelTokens / totalTokens) * 100).toFixed(1)
     lines.push(
-      `${fig.bullet} ${chalk.bold(renderModelName(model))} ${chalk.gray(`(${percentage}%)`)}`,
+      `${BULLET} ${chalk.bold(renderModelName(model))} ${chalk.gray(`(${percentage}%)`)}`,
     )
     lines.push(
       chalk.dim(

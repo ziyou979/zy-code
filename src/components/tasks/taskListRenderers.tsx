@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { POINTER } from '../../constants/figures.js'
 import { isCoordinatorMode } from 'src/coordinator/coordinatorMode.js'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
 import { TEAM_LEAD_NAME } from 'src/services/swarm/constants.js'
@@ -139,7 +139,7 @@ export function Item({ item, isSelected }: { item: ListItem; isSelected: boolean
   const useGreyPointer = isCoordinatorMode()
   return (
     <Box flexDirection="row">
-      {<Text dimColor={useGreyPointer && isSelected}>{isSelected ? `${fig.pointer} ` : '  '}</Text>}
+      {<Text dimColor={useGreyPointer && isSelected}>{isSelected ? `${POINTER} ` : '  '}</Text>}
       {
         <Text color={isSelected && !useGreyPointer ? 'suggestion' : undefined}>
           {item.type === 'leader' ? (

@@ -1,4 +1,4 @@
-import { fig } from '../../constants/figures.js'
+import { POINTER } from '../../constants/figures.js'
 import { COMMAND_MESSAGE_TAG } from '../../constants/xml.js'
 import { Box, Text } from '../../ink.js'
 import type { TextBlock } from '../../types/llm.js'
@@ -26,7 +26,7 @@ export function UserCommandMessage({ addMargin, param: textBlock }: Props) {
       >
         {
           <Text>
-            {<Text color="subtle">{fig.pointer} </Text>}
+            {<Text color="subtle">{POINTER} </Text>}
             <Text color="text">Skill({commandMessage})</Text>
           </Text>
         }
@@ -44,7 +44,7 @@ export function UserCommandMessage({ addMargin, param: textBlock }: Props) {
     >
       {
         <Text>
-          {<Text color="subtle">{fig.pointer} </Text>}
+          {<Text color="subtle">{POINTER} </Text>}
           <Text color="text">{content}</Text>
         </Text>
       }
