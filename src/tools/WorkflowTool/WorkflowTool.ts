@@ -206,7 +206,17 @@ export const WorkflowTool = buildTool({
     const journal = new WorkflowJournal(runId)
 
     // 异步执行（fire-and-forget），完成后通过 task-notification 通知 LLM
-    void executeWorkflowAsync(source, args, context, taskId, outputFile, setAppState, meta, journal)
+    void executeWorkflowAsync(
+      source,
+      args,
+      context,
+      taskId,
+      outputFile,
+      setAppState,
+      meta,
+      journal,
+      input.workflowSize,
+    )
 
     return {
       data: {
@@ -277,9 +287,10 @@ async function executeWorkflowAsync(
   setAppState: (f: (prev: any) => any) => void,
   _meta: { name: string; description: string },
   journal: WorkflowJournal,
+  workflowSize?: 'small' | 'medium' | 'large' | null,
 ): Promise<void> {
   const abortController = new AbortController()
-  const semaphore = new WorkflowSemaphore(abortController.signal)
+  const semaphore = new WorkflowSemaphore(abortController.signal, workflowSize)
   const budget = new MutableWorkflowBudget(null)
 
   // 加载 journal 索引（resume 时会命中已有缓存）

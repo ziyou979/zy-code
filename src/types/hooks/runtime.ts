@@ -258,4 +258,8 @@ export type AggregatedHookResult = {
   updatedMCPToolOutput?: unknown
   permissionRequestResult?: PermissionRequestResult
   retry?: boolean
+  /** SessionStart hook 请求重扫技能 */
+  reloadSkills?: boolean
+  /** SessionStart hook 设置会话标题 */
+  sessionTitle?: string
 }

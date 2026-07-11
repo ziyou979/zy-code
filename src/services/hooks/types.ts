@@ -39,6 +39,10 @@ export interface HookResult {
   transformedText?: string
   /** MessageDisplay：隐藏该消息的显示。 */
   hide?: boolean
+  /** SessionStart hook 可请求重扫技能 */
+  reloadSkills?: boolean
+  /** SessionStart hook 可设置会话标题 */
+  sessionTitle?: string
   hook: HookCommand | HookCallback | FunctionHook
 }
 
@@ -93,4 +97,8 @@ export type AggregatedHookResult = {
   transformedText?: string
   /** MessageDisplay：隐藏该消息的显示。 */
   hide?: boolean
+  /** SessionStart hook 请求重扫技能 */
+  reloadSkills?: boolean
+  /** SessionStart hook 设置会话标题 */
+  sessionTitle?: string
 }

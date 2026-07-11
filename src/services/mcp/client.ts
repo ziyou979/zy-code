@@ -1472,13 +1472,33 @@ export const fetchToolsForClient = memoizeWithLRU(
         return []
       }
 
-      const result = (await client.client.request(
-        { method: 'tools/list' },
-        ListToolsResultSchema,
-      )) as ListToolsResult
+      // 支持 tools/list 分页：MCP 协议允许服务器返回 nextCursor 表示有更多结果
+      // 必须循环获取所有页，否则部分工具会静默丢失（CC 2.1.146+ 行为对齐）
+      const MAX_TOOL_LIST_PAGES = 10
+      const allTools: ListToolsResult['tools'] = []
+      let pageCursor: string | undefined
+      for (let page = 0; page < MAX_TOOL_LIST_PAGES; page++) {
+        const result = (await client.client.request(
+          pageCursor
+            ? { method: 'tools/list', params: { cursor: pageCursor } }
+            : { method: 'tools/list' },
+          ListToolsResultSchema,
+        )) as ListToolsResult
+
+        allTools.push(...result.tools)
+
+        pageCursor = result.nextCursor
+        if (!pageCursor) {
+          break
+        }
+      }
+
+      if (allTools.length === 0) {
+        return []
+      }
 
       // Sanitize tool data from MCP server
-      const toolsToProcess = recursivelySanitizeUnicode(result.tools)
+      const toolsToProcess = recursivelySanitizeUnicode(allTools)
 
       // Check if we should skip the mcp__ prefix for SDK MCP servers
       const skipPrefix =
@@ -1574,7 +1594,10 @@ export const fetchToolsForClient = memoizeWithLRU(
               }
 
               const startTime = Date.now()
-              const MAX_SESSION_RETRIES = 1
+              // Session 重试：401/token 过期后清除缓存并重连。重试间加短退避
+              // 以等待 OAuth token 传播/proxy 缓存刷新（CC 行为对齐）。
+              const MAX_SESSION_RETRIES = 3
+              const SESSION_RETRY_DELAY_MS = 500
               for (let attempt = 0; ; attempt++) {
                 try {
                   const connectedClient = await ensureConnectedClient(client)
@@ -1629,7 +1652,9 @@ export const fetchToolsForClient = memoizeWithLRU(
                   // Session expired — the connection cache has been
                   // cleared, so retry with a fresh client.
                   if (error instanceof McpSessionExpiredError && attempt < MAX_SESSION_RETRIES) {
-                    logMCPDebug(client.name, `Retrying tool '${tool.name}' after session recovery`)
+                    logMCPDebug(client.name, `Retrying tool '${tool.name}' after session recovery (attempt ${attempt + 1}/${MAX_SESSION_RETRIES})`)
+                    // 短退避等待 OAuth token 传播 / headersHelper 重新获取的凭据生效
+                    await new Promise((resolve) => setTimeout(resolve, SESSION_RETRY_DELAY_MS))
                     continue
                   }
 

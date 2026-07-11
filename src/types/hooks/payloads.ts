@@ -349,6 +349,10 @@ export interface SessionStartHookSpecificOutput {
   additionalContext?: string
   initialUserMessage?: string
   watchPaths?: string[]
+  /** 设为 true 时，hook 执行后自动重扫技能目录并使新技能在当前 session 中可见 */
+  reloadSkills?: boolean
+  /** hook 可在启动时设置/建议会话标题 */
+  sessionTitle?: string
 }
 
 export interface SetupHookSpecificOutput {

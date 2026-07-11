@@ -21,11 +21,13 @@ export {
 export const permissionModeSchema = lazySchema(() => z.enum(PERMISSION_MODES))
 export const externalPermissionModeSchema = lazySchema(() => z.enum(EXTERNAL_PERMISSION_MODES))
 
-type ModeColorKey = 'text' | 'planMode' | 'permission' | 'autoAccept' | 'error' | 'warning'
+type ModeColorKey = 'text' | 'planMode' | 'permission' | 'autoAccept' | 'error' | 'warning' | 'inactive'
 
 type PermissionModeConfig = {
   title: string
   shortTitle: string
+  /** 状态栏中显示的指示文本（如 "manual mode"） */
+  indicator: string
   symbol: string
   color: ModeColorKey
   external: ExternalPermissionMode
@@ -37,13 +39,15 @@ const PERMISSION_MODE_CONFIG: Partial<Record<PermissionMode, PermissionModeConfi
   default: {
     title: 'permissionMode.default',
     shortTitle: 'permissionMode.defaultShort',
-    symbol: '',
-    color: 'text',
+    indicator: 'permissionMode.defaultIndicator',
+    symbol: PAUSE_ICON,
+    color: 'inactive',
     external: 'default',
   },
   plan: {
     title: 'permissionMode.plan',
     shortTitle: 'permissionMode.planShort',
+    indicator: 'permissionMode.planIndicator',
     symbol: PAUSE_ICON,
     color: 'planMode',
     external: 'plan',
@@ -51,6 +55,7 @@ const PERMISSION_MODE_CONFIG: Partial<Record<PermissionMode, PermissionModeConfi
   acceptEdits: {
     title: 'permissionMode.acceptEdits',
     shortTitle: 'permissionMode.acceptEditsShort',
+    indicator: 'permissionMode.acceptEditsIndicator',
     symbol: FAST_FORWARD_ICON,
     color: 'autoAccept',
     external: 'acceptEdits',
@@ -58,6 +63,7 @@ const PERMISSION_MODE_CONFIG: Partial<Record<PermissionMode, PermissionModeConfi
   bypassPermissions: {
     title: 'permissionMode.bypassPermissions',
     shortTitle: 'permissionMode.bypassPermissionsShort',
+    indicator: 'permissionMode.bypassPermissionsIndicator',
     symbol: FAST_FORWARD_ICON,
     color: 'error',
     external: 'bypassPermissions',
@@ -65,6 +71,7 @@ const PERMISSION_MODE_CONFIG: Partial<Record<PermissionMode, PermissionModeConfi
   dontAsk: {
     title: 'permissionMode.dontAsk',
     shortTitle: 'permissionMode.dontAskShort',
+    indicator: 'permissionMode.dontAskIndicator',
     symbol: FAST_FORWARD_ICON,
     color: 'error',
     external: 'dontAsk',
@@ -72,6 +79,7 @@ const PERMISSION_MODE_CONFIG: Partial<Record<PermissionMode, PermissionModeConfi
   auto: {
     title: 'permissionMode.auto',
     shortTitle: 'permissionMode.autoShort',
+    indicator: 'permissionMode.autoIndicator',
     symbol: FAST_FORWARD_ICON,
     color: 'warning' as ModeColorKey,
     external: 'default' as ExternalPermissionMode,
@@ -108,6 +116,14 @@ export function isDefaultMode(mode: PermissionMode | undefined): boolean {
 
 export function permissionModeShortTitle(mode: PermissionMode): string {
   return tSync(getModeConfig(mode).shortTitle)
+}
+
+/**
+ * 返回模式在状态栏中显示的指示文本（如 "manual mode"）。
+ * 与 `title` 不同，`indicator` 专门用于底部状态栏展示。
+ */
+export function permissionModeIndicator(mode: PermissionMode): string {
+  return tSync(getModeConfig(mode).indicator)
 }
 
 export function permissionModeSymbol(mode: PermissionMode): string {

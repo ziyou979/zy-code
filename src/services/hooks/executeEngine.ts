@@ -962,6 +962,26 @@ export async function* executeHooks({
       }
     }
 
+    // SessionStart hook 可在启动时请求重扫技能
+    if (result.reloadSkills) {
+      hookLog(
+        `Hook ${hookEvent} (${getHookDisplayText(result.hook)}) requested skill reload`,
+      )
+      yield {
+        reloadSkills: true as const,
+      }
+    }
+
+    // SessionStart hook 可设置会话标题
+    if (result.sessionTitle) {
+      hookLog(
+        `Hook ${hookEvent} (${getHookDisplayText(result.hook)}) set sessionTitle: ${result.sessionTitle}`,
+      )
+      yield {
+        sessionTitle: result.sessionTitle,
+      }
+    }
+
     // 如果提供了 updatedToolOutput 则产出（来自 PostToolUse hook，全工具）
     if (result.updatedToolOutput !== undefined) {
       hookLog(`Hook ${hookEvent} (${getHookDisplayText(result.hook)}) replaced tool output`)
