@@ -34,6 +34,7 @@ const result = await Bun.build({
   splitting: false,
   features: [
     // ZY Code 启用以下 Claude Code 功能
+    'DAEMON',
     'FORK_SUBAGENT',
     'REACTIVE_COMPACT',
     'TOKEN_BUDGET',
