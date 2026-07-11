@@ -1,4 +1,3 @@
-import { fig } from '../../constants/figures.js'
 import { feature } from 'bun:bundle'
 import React, { type ReactNode, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { isCoordinatorMode } from 'src/coordinator/coordinatorMode.js'
