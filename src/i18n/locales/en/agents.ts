@@ -114,6 +114,7 @@ export const enAgents: TranslationResource = {
   'agentView.completed': 'completed',
   'agentView.exitHint': 'Press Esc or q to exit · j/k to navigate · Enter to peek',
   'agentView.navigationHint': 'j/k navigate · Enter peek transcript · Esc exit',
+  'agentView.needsInput': 'needs input',
   'agentView.noSessions': 'No agent sessions active. Use the Agent tool to start one.',
   'agentView.pending': 'pending',
   'agentView.running': 'running',

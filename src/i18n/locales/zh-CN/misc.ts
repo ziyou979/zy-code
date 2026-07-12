@@ -595,6 +595,12 @@ export const zhMisc: TranslationResource = {
   'planMode.yesManuallyApprove': '是，手动批准编辑',
   'plugin.install': '安装插件',
   'plugin.toggle': '切换插件',
+  // shell-form 中展开 user_config 会经 shell 二次解析，构成注入面（对齐 CC 2.1.207）
+  'plugin.errors.userConfigShellForm':
+    '来自 {source} 的 Hook 在 shell-form 命令中引用了 ${user_config.*}。' +
+    '替换后的值会被 shell 再次解析，存在注入风险。' +
+    '请改用 exec form（{"command": "<可执行文件>", "args": ["${user_config.KEY}", ...]}），' +
+    '或在脚本内读取环境变量 $CLAUDE_PLUGIN_OPTION_<KEY>。命令：{command}',
   'pluginHint.marketplaceLabel': '市场：',
   'pluginHint.pluginLabel': '插件：',
   'pluginHint.suggestsInstalling': '{command} 命令建议安装一个插件。',
@@ -786,6 +792,11 @@ export const zhMisc: TranslationResource = {
   'skillShell.disabledBySettings':
     'Skill 内联 shell 执行已被设置禁用（disableSkillShellExecution=true）',
   'spinner.compacting': '压缩对话中',
+  'spinner.compactStage.preHooks': 'PreCompact',
+  'spinner.compactStage.api': '生成摘要',
+  'spinner.compactStage.attachments': '恢复附件',
+  'spinner.compactStage.sessionStart': 'SessionStart',
+  'spinner.compactStage.postHooks': 'PostCompact',
   'spinner.disconnected': '已断开',
   'spinner.hooksRunning': '正在运行 {hookType} 钩子…',
   'spinner.idle': '空闲',

@@ -123,6 +123,9 @@
 | `zy_mcp_start` | MCP 服务启动 | `src/cli/handlers/mcp.tsx` |
 | `zy_worktree_created` | worktree 创建 | `src/setup.ts` |
 | `zy_managed_settings_loaded` | 托管设置加载 | `src/main.tsx` |
+| `zy_settings_auto_mode_untrusted_source_ignored` | project/local 中的 defaultMode:auto 或 autoMode 规则被忽略（CC 2.1.207） | `src/services/permissions/permissionSetup.ts` |
+| `zy_ccr_unsupported_default_mode_ignored` | CCR 不支持的 defaultMode 被忽略 | `src/services/permissions/permissionSetup.ts` |
+| `zy_managed_settings_security_deferred_non_interactive` | 非交互路径危险托管设置会话内应用、不落盘同意（CC 2.1.207） | `src/services/remoteManagedSettings/securityCheck.tsx` |
 | `zy_tui_command` | `/tui` 命令执行（含 from/to） | `src/commands/tui/tui.ts` |
 | `zy_fullscreen_upsell_shown` | 全屏 upsell 对话框展示 | `src/components/FullscreenUpsell/FullscreenUpsellDialog.tsx` |
 | `zy_fullscreen_upsell_accepted` | 全屏 upsell 用户确认 | `src/components/FullscreenUpsell/FullscreenUpsellDialog.tsx` |

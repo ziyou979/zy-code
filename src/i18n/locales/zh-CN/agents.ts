@@ -108,6 +108,7 @@ export const zhAgents: TranslationResource = {
   'agentView.completed': '已完成',
   'agentView.exitHint': '按 Esc 或 q 退出 · j/k 导航 · Enter 查看转录',
   'agentView.navigationHint': 'j/k 导航 · Enter 查看转录 · Esc 退出',
+  'agentView.needsInput': '需要输入',
   'agentView.noSessions': '没有活跃的 Agent 会话。使用 Agent 工具启动一个。',
   'agentView.pending': '等待中',
   'agentView.running': '运行中',

@@ -597,6 +597,12 @@ export const enMisc: TranslationResource = {
   'planMode.yesManuallyApprove': 'Yes, manually approve edits',
   'plugin.install': 'install plugin',
   'plugin.toggle': 'toggle plugin',
+  // shell-form 中展开 user_config 会经 shell 二次解析，构成注入面（对齐 CC 2.1.207）
+  'plugin.errors.userConfigShellForm':
+    'Hook from {source} references ${user_config.*} in a shell-form command. ' +
+    'The substituted value would be re-parsed by the shell. ' +
+    'Use exec form instead ({"command": "<executable>", "args": ["${user_config.KEY}", ...]}) ' +
+    "or read $CLAUDE_PLUGIN_OPTION_<KEY> from the hook's environment. Command: {command}",
   'pluginHint.marketplaceLabel': 'Marketplace:',
   'pluginHint.pluginLabel': 'Plugin:',
   'pluginHint.suggestsInstalling': 'The {command} command suggests installing a plugin.',
@@ -799,6 +805,11 @@ export const enMisc: TranslationResource = {
     'Skill shell execution is disabled by settings (disableSkillShellExecution=true)',
   'spinner.compacting': 'Compacting conversation',
   'spinner.compactingProgress': 'Compacting conversation ({count}/{total})',
+  'spinner.compactStage.preHooks': 'PreCompact',
+  'spinner.compactStage.api': 'Summarizing',
+  'spinner.compactStage.attachments': 'Restoring files',
+  'spinner.compactStage.sessionStart': 'SessionStart',
+  'spinner.compactStage.postHooks': 'PostCompact',
   'spinner.disconnected': 'Disconnected',
   'spinner.hooksRunning': 'Running {hookType} hooks…',
   'spinner.idle': 'Idle',
