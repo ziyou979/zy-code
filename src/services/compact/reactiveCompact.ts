@@ -48,6 +48,7 @@ import {
   stripImagesFromMessages,
   stripReinjectedAttachments,
 } from './compact.js'
+import { getCompactSummaryText, pickCompactSummaryAssistant } from './summarySelection.js'
 import { suppressCompactWarning } from './compactWarningState.js'
 import { groupMessagesByApiRound } from './grouping.js'
 import { runPostCompactCleanup } from './postCompactCleanup.js'
@@ -185,14 +186,16 @@ export async function reactiveCompactOnPromptTooLong(
         },
       })
 
-      const assistantMsg = getLastAssistantMessage(result.messages)
-      const summaryText = assistantMsg ? getAssistantMessageText(assistantMsg) : null
+      // 错误检测用最后一条 assistant（可能 isApiErrorMessage）；
+      // 成功路径用 zQn 语义选取含 <summary> 的消息，避免思考草稿
+      const lastAssistant = getLastAssistantMessage(result.messages)
+      const lastText = lastAssistant ? getAssistantMessageText(lastAssistant) : null
 
-      // Check for abort during the API call
-      if (assistantMsg?.isApiErrorMessage) {
-        if (summaryText?.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE) && assistantMsg) {
+      // Check for abort / API error during the API call
+      if (lastAssistant?.isApiErrorMessage) {
+        if (lastText?.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE)) {
           // Summarization itself hit PTL — drop oldest groups and retry
-          const tokenGap = getPromptTooLongTokenGap(assistantMsg)
+          const tokenGap = getPromptTooLongTokenGap(lastAssistant)
           const groupsToDrop = estimateGroupsToDrop(
             groups,
             groups.length - groupsRemaining,
@@ -223,13 +226,16 @@ export async function reactiveCompactOnPromptTooLong(
         }
 
         // Other API error — not recoverable
-        logForDebugging(`reactiveCompact: API error during summarization: ${summaryText}`, {
+        logForDebugging(`reactiveCompact: API error during summarization: ${lastText}`, {
           level: 'error',
         })
         return { ok: false, reason: 'error' }
       }
 
-      if (!summaryText) {
+      const assistantMsg = pickCompactSummaryAssistant(result.messages) ?? lastAssistant
+      const summaryText = getCompactSummaryText(result.messages) ?? lastText
+
+      if (!summaryText || !assistantMsg) {
         logForDebugging('reactiveCompact: empty summary response', {
           level: 'error',
         })
@@ -244,7 +250,7 @@ export async function reactiveCompactOnPromptTooLong(
         groups,
         groupsRemaining,
         preCompactTokenCount,
-        assistantMsg: assistantMsg!,
+        assistantMsg,
         cacheSafeParams,
         trigger: options.trigger,
       })
@@ -466,6 +472,16 @@ async function buildReactiveCompactionResult({
   const compactionUsage = getTokenUsage(assistantMsg as any)
   const postCompactTokenCount = tokenCountFromLastAPIResponse([assistantMsg])
 
+  // statusline：边界后尚无新 API usage 时用 postTokens 显示压缩后比例
+  const truePostCompactTokenCount = tokenCountWithEstimation([
+    boundaryMarker,
+    ...summaryMessages,
+    ...(messagesToKeep ?? []),
+    ...attachments,
+    ...hookResults,
+  ])
+  boundaryMarker.compactMetadata.postTokens = truePostCompactTokenCount
+
   return {
     boundaryMarker,
     summaryMessages,
@@ -475,6 +491,7 @@ async function buildReactiveCompactionResult({
     userDisplayMessage: hookUserDisplayMessage,
     preCompactTokenCount,
     postCompactTokenCount,
+    truePostCompactTokenCount,
     compactionUsage,
   }
 }

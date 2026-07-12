@@ -5,7 +5,11 @@ import { Ansi, Box, useTheme } from '../ink.js'
 import type { CliHighlight } from '../utils/cliHighlight.js'
 import { getCliHighlightPromise } from '../utils/cliHighlight.js'
 import { hashContent } from '../utils/hash.js'
-import { configureMarked, formatToken } from '../utils/markdown.js'
+import {
+  advanceStreamingMarkdownBoundary,
+  configureMarked,
+  formatToken,
+} from '../utils/markdown.js'
 import { stripPromptXMLTags } from '../utils/messages.js'
 import { MarkdownTable } from './MarkdownTable.js'
 
@@ -158,40 +162,18 @@ export function StreamingMarkdown({ children }: StreamingProps): React.ReactNode
   // 编译器无法证明这一点，围绕 ref 读取的 memo 会破坏算法（过时的边界）。退出优化。
   'use no memo'
 
-  configureMarked()
-
-  // 在边界跟踪之前剥离，使其与 <Markdown> 的剥离匹配（第 29 行）。
+  // 在边界跟踪之前剥离，使其与 <Markdown> 的剥离匹配。
   // 当闭合标签到达时，stripped(N+1) 不是 stripped(N) 的前缀，
-  // 但下方的 startsWith 重置通过一次性重新词法分析较小的 stripped 字符串处理这个问题。
+  // advanceStreamingMarkdownBoundary 会重置 stable 并一次性 re-lex。
   const stripped = stripPromptXMLTags(children)
   const stablePrefixRef = useRef('')
+  const { stablePrefix, unstableSuffix } = advanceStreamingMarkdownBoundary(
+    stripped,
+    stablePrefixRef.current,
+  )
+  stablePrefixRef.current = stablePrefix
 
-  // 如果文本被替换则重置（防御性；通常 unmount 处理这个）
-  if (!stripped.startsWith(stablePrefixRef.current)) {
-    stablePrefixRef.current = ''
-  }
-
-  // 仅从当前边界开始词法分析——O(不稳定长度)，而非 O(全文)
-  const boundary = stablePrefixRef.current.length
-  const tokens = marked.lexer(stripped.substring(boundary))
-
-  // 最后一个非空格 token 是正在增长的块；之前的都是最终内容
-  let lastContentIdx = tokens.length - 1
-  while (lastContentIdx >= 0 && tokens[lastContentIdx]!.type === 'space') {
-    lastContentIdx--
-  }
-  let advance = 0
-  for (let i = 0; i < lastContentIdx; i++) {
-    advance += tokens[i]!.raw.length
-  }
-  if (advance > 0) {
-    stablePrefixRef.current = stripped.substring(0, boundary + advance)
-  }
-  const stablePrefix = stablePrefixRef.current
-  const unstableSuffix = stripped.substring(stablePrefix.length)
-
-  // stablePrefix 在 <Markdown> 内通过 useMemo([children, ...]) memo 化
-  // 所以当不稳定后缀增长时它不会重新解析
+  // stablePrefix 在 <Markdown> 内按内容缓存 token，不稳定后缀增长时不重解析稳定部分
   return (
     <Box flexDirection="column" gap={1}>
       {stablePrefix && <Markdown>{stablePrefix}</Markdown>}

@@ -297,26 +297,34 @@ export function getCompactPrompt(customInstructions?: string): string {
 }
 
 /**
- * 格式化压缩摘要：剥离 <analysis> 草稿区，
- * 并将 <summary> XML 标签替换为可读的章节标题。
- * @param summary 可能包含 <analysis> 和 <summary> XML 标签的原始摘要字符串
- * @returns 去除 analysis 并将 summary 标签替换为标题后的格式化摘要
+ * 格式化压缩摘要：只保留对后续对话有用的正文。
+ *
+ * 对齐并加强 CC `MHg`：
+ * 1. 若存在 `<summary>`：只保留其内部正文（丢弃标签外的 CoT / 思考草稿）
+ * 2. 否则剥 `<analysis>`、文本态 `<thinking>` 等草稿标记
+ * 3. 折叠多余空行
+ *
+ * @param summary 可能包含 <analysis>/<summary> 或自由推理的原始摘要字符串
+ * @returns 进入 post-compact 上下文的干净摘要正文
  */
 export function formatCompactSummary(summary: string): string {
   let formattedSummary = summary
 
-  // 剥离 analysis 部分——它是提升摘要质量的草稿区，
-  // 但摘要写完后不再有信息价值。
-  formattedSummary = formattedSummary.replace(/<analysis>[\s\S]*?<\/analysis>/, '')
-
-  // 提取并格式化 summary 部分
-  const summaryMatch = formattedSummary.match(/<summary>([\s\S]*?)<\/summary>/)
+  // 有 <summary> 时只取标签内正文，丢弃标签外一切内容
+  // （模型常在标签前输出长 CoT，旧实现 replace 后会残留这些思考）
+  const summaryMatch = formattedSummary.match(/<summary\b[^>]*>([\s\S]*?)<\/summary>/i)
   if (summaryMatch) {
-    const content = summaryMatch[1] || ''
-    formattedSummary = formattedSummary.replace(
-      /<summary>[\s\S]*?<\/summary>/,
-      `Summary:\n${content.trim()}`,
-    )
+    const content = (summaryMatch[1] || '').trim()
+    formattedSummary = `Summary:\n${content}`
+  } else {
+    // 无 summary 标签：尽量剥掉草稿区，保留剩余可见文本
+    formattedSummary = formattedSummary.replace(/<analysis\b[^>]*>[\s\S]*?<\/analysis>/gi, '')
+    // 未闭合的 analysis 开标签起至文末（模型截断时）
+    formattedSummary = formattedSummary.replace(/<analysis\b[^>]*>[\s\S]*$/i, '')
+    // 文本态 thinking 标签（部分提供商会把推理写进 text）
+    formattedSummary = formattedSummary.replace(/<thinking\b[^>]*>[\s\S]*?<\/thinking>/gi, '')
+    formattedSummary = formattedSummary.replace(/<\/?thinking\b[^>]*>/gi, '')
+    formattedSummary = formattedSummary.replace(/<\/?analysis\b[^>]*>/gi, '')
   }
 
   // 清理章节之间多余的空白

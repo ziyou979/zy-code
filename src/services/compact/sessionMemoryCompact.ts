@@ -450,6 +450,16 @@ function createCompactionResultFromSessionMemory(
   const planAttachment = createPlanAttachmentIfNeeded(agentId)
   const attachments = planAttachment ? [planAttachment] : []
 
+  // SM-compact has no compact-API-call, so postCompactTokenCount (kept for
+  // event continuity) and truePostCompactTokenCount converge to the same value.
+  // 含 messagesToKeep：statusline 需要反映「摘要 + 保留尾部」的真实占用
+  const truePostCompactTokenCount = estimateMessageTokens([
+    ...summaryMessages,
+    ...messagesToKeep,
+    ...attachments,
+  ])
+  boundaryMarker.compactMetadata.postTokens = truePostCompactTokenCount
+
   return {
     boundaryMarker: annotateBoundaryWithPreservedSegment(
       boundaryMarker,
@@ -461,10 +471,8 @@ function createCompactionResultFromSessionMemory(
     hookResults,
     messagesToKeep,
     preCompactTokenCount,
-    // SM-compact has no compact-API-call, so postCompactTokenCount (kept for
-    // event continuity) and truePostCompactTokenCount converge to the same value.
-    postCompactTokenCount: estimateMessageTokens(summaryMessages),
-    truePostCompactTokenCount: estimateMessageTokens(summaryMessages),
+    postCompactTokenCount: truePostCompactTokenCount,
+    truePostCompactTokenCount,
   }
 }
 
@@ -567,6 +575,14 @@ export async function trySessionMemoryCompaction(
         autoCompactThreshold,
       })
       return null
+    }
+
+    // 同步 boundary.postTokens，与最终 postCompactMessages 估算一致
+    if (
+      compactionResult.boundaryMarker.type === 'system' &&
+      compactionResult.boundaryMarker.subtype === 'compact_boundary'
+    ) {
+      compactionResult.boundaryMarker.compactMetadata.postTokens = postCompactTokenCount
     }
 
     return {

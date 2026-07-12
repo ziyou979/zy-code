@@ -191,6 +191,8 @@ export interface WireCompactBoundaryMessage {
   compact_metadata: {
     trigger: 'manual' | 'auto'
     pre_tokens: number
+    /** 压缩后上下文估算 token（对齐 CC post_tokens） */
+    post_tokens?: number
     preserved_segment?: {
       head_uuid: string
       anchor_uuid: string

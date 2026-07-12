@@ -70,6 +70,7 @@ export function toSDKCompactMetadata(meta: CompactMetadata): WireCompactMetadata
     // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     trigger: meta.trigger as any,
     pre_tokens: meta.preTokens,
+    ...(meta.postTokens !== undefined && { post_tokens: meta.postTokens }),
     ...(seg && {
       preserved_segment: {
         head_uuid: seg.headUuid,
@@ -89,6 +90,7 @@ export function fromSDKCompactMetadata(meta: WireCompactMetadata): CompactMetada
     // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     trigger: meta.trigger as any,
     preTokens: meta.pre_tokens,
+    ...(meta.post_tokens !== undefined && { postTokens: meta.post_tokens }),
     ...(seg && {
       preservedSegment: {
         headUuid: seg.head_uuid,

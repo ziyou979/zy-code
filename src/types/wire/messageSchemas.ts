@@ -279,6 +279,13 @@ export const WireCompactBoundaryMessageSchema = lazySchema(() =>
     compact_metadata: z.object({
       trigger: z.enum(['manual', 'auto']),
       pre_tokens: z.number(),
+      post_tokens: z
+        .number()
+        .optional()
+        .describe(
+          'Estimated post-compact context tokens (CC postTokens). Used by ' +
+            'statusline when no API usage exists after the boundary yet.',
+        ),
       preserved_segment: z
         .object({
           head_uuid: UUIDPlaceholder(),

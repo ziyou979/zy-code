@@ -35,6 +35,45 @@ export function configureMarked(): void {
   })
 }
 
+/**
+ * 流式 Markdown 稳定前缀推进（对齐 CC 2.1.207 长内容流式性能路径）。
+ *
+ * 在块级边界切分：已闭合的块进入 stable（可 memo、不随 delta 重解析），
+ * 仅最后一个未完成块留在 unstable 中每帧 re-lex。
+ * marked.lexer 将未闭合 fence 视为单 token，故块边界始终安全。
+ *
+ * @param stripped 已 stripPromptXMLTags 的全文
+ * @param prevStable 上一帧的稳定前缀（须为 stripped 的前缀，否则回退为空）
+ * @returns 单调前进的 stablePrefix + 当前增长中的 unstableSuffix
+ */
+export function advanceStreamingMarkdownBoundary(
+  stripped: string,
+  prevStable: string,
+): { stablePrefix: string; unstableSuffix: string } {
+  configureMarked()
+
+  let stable = stripped.startsWith(prevStable) ? prevStable : ''
+  const boundary = stable.length
+  const tokens = marked.lexer(stripped.substring(boundary))
+
+  // 最后一个非 space token 是正在增长的块；之前的均为已闭合块
+  let lastContentIdx = tokens.length - 1
+  while (lastContentIdx >= 0 && tokens[lastContentIdx]!.type === 'space') {
+    lastContentIdx--
+  }
+  let advance = 0
+  for (let i = 0; i < lastContentIdx; i++) {
+    advance += tokens[i]!.raw.length
+  }
+  if (advance > 0) {
+    stable = stripped.substring(0, boundary + advance)
+  }
+  return {
+    stablePrefix: stable,
+    unstableSuffix: stripped.substring(stable.length),
+  }
+}
+
 export function applyMarkdown(
   content: string,
   theme: ThemeName,

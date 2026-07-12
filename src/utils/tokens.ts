@@ -4,7 +4,11 @@ import {
 } from '../services/tokenEstimation.js'
 import type { TokenUsage as Usage } from '../types/llm.js'
 import type { AssistantMessage, Message } from '../types/message.js'
-import { SYNTHETIC_MESSAGES, SYNTHETIC_MODEL } from './messages.js'
+import { SYNTHETIC_MESSAGES, SYNTHETIC_MODEL } from './messages/constants.js'
+import {
+  getMessagesAfterCompactBoundary,
+  isCompactBoundaryMessage,
+} from './messages/predicates.js'
 import { getInitialSettings } from './settings/settings.js'
 import { jsonStringify } from './slowOperations.js'
 
@@ -155,6 +159,51 @@ export function getCurrentUsage(messages: Message[]): {
       }
     }
   }
+  return null
+}
+
+/**
+ * statusline / 上下文比例显示用用量。
+ *
+ * 关键：/compact 后 REPL 仍保留边界前的旧消息（fullscreen 滚动历史），
+ * 若直接 getCurrentUsage(fullMessages)，会命中压缩前最后一条 assistant.usage，
+ * 导致 statusline 上下文比例「压缩后不变」。
+ *
+ * 策略（对齐 CC postTokens）：
+ * 1. 仅在 last compact boundary 之后的消息中找 API usage
+ * 2. 若尚无新 usage，回退到 boundary.compactMetadata.postTokens
+ */
+export function getDisplayContextUsage(messages: Message[]): {
+  inputTokens: number
+  outputTokens: number
+  cacheCreationInputTokens: number
+  cacheReadInputTokens: number
+} | null {
+  const afterBoundary = getMessagesAfterCompactBoundary(messages)
+  const liveUsage = getCurrentUsage(afterBoundary)
+  if (liveUsage) {
+    return liveUsage
+  }
+
+  // 无 live usage：从后往前找最近 compact boundary 上的 postTokens
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i]
+    if (!message || !isCompactBoundaryMessage(message)) {
+      continue
+    }
+    const postTokens = message.compactMetadata?.postTokens
+    if (postTokens !== undefined && postTokens > 0) {
+      return {
+        inputTokens: postTokens,
+        outputTokens: 0,
+        cacheCreationInputTokens: 0,
+        cacheReadInputTokens: 0,
+      }
+    }
+    // 找到了边界但没有 postTokens，停止（不要再跨边界取旧 usage）
+    break
+  }
+
   return null
 }
 

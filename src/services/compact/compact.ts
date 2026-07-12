@@ -40,7 +40,6 @@ import {
   createCompactBoundaryMessage,
   createUserMessage,
   getAssistantMessageText,
-  getLastAssistantMessage,
   getMessagesAfterCompactBoundary,
   isCompactBoundaryMessage,
   normalizeMessagesForAPI,
@@ -98,6 +97,16 @@ import {
   getCompactUserSummaryMessage,
   getPartialCompactPrompt,
 } from './prompt.js'
+import {
+  COMPACT_STAGE_PCT,
+  compactApiStreamPercent,
+  emitCompactStage,
+} from './compactProgress.js'
+import {
+  getCompactSummaryText,
+  pickCompactSummaryAssistant,
+  resolveStreamedCompactAssistant,
+} from './summarySelection.js'
 
 const compactLog = createDebugLog('compact')
 
@@ -383,8 +392,6 @@ export async function compactConversation(
   isAutoCompact: boolean = false,
   recompactionInfo?: RecompactionInfo,
 ): Promise<CompactionResult> {
-  // 进度条定时器 — 声明在函数级作用域，确保 catch/finally 都能访问
-  let progressTimer: ReturnType<typeof setInterval> | undefined
   try {
     if (messages.length === 0) {
       throw new Error(ERROR_MESSAGE_NOT_ENOUGH_MESSAGES)
@@ -403,6 +410,7 @@ export async function compactConversation(
       type: 'hooks_start',
       hookType: 'pre_compact',
     })
+    emitCompactStage(context.onCompactProgress, 'hooks', COMPACT_STAGE_PCT.pre_hooks)
 
     // 执行 PreCompact hooks
     context.setSDKStatus?.('compacting')
@@ -416,12 +424,13 @@ export async function compactConversation(
     customInstructions = mergeHookInstructions(customInstructions, hookResult.newCustomInstructions)
     const userDisplayMessage = hookResult.userDisplayMessage
 
-    // 显示请求模式，带上箭头和自定义消息
+    // 真实阶段进度：业务层 emit stage+pct，UI 渲染条（见 compactProgress.ts）
     context.setStreamMode?.('requesting')
     context.setResponseLength?.(() => 0)
     context.onCompactProgress?.({ type: 'compact_start' })
+    emitCompactStage(context.onCompactProgress, 'summarize', COMPACT_STAGE_PCT.start)
+    emitCompactStage(context.onCompactProgress, 'api', COMPACT_STAGE_PCT.api_start)
 
-    // 进度条定时器 — 声明在 try 块顶部，确保 catch/finally 都能访问
     // 第三方默认：true — forked-agent 路径复用主对话的 prompt cache。
     // 实验（2026年1月）确认：false 路径 98% cache miss，消耗约 0.78% 的
     // 集群 cache_creation（约 38B token/天），集中在临时环境（CCR/GHA/SDK），
@@ -442,19 +451,6 @@ export async function compactConversation(
     let summary: string | null
     let ptlAttempts = 0
 
-    // 在 API 调用期间定时刷新进度条（每 2 秒递增 ~3%，模拟连续进度）
-    // CC 对齐：compact 期间 spinner 显示连续进度 ▰▰▱▱▱ 而非跳变百分比
-    let progressPct = 10
-    progressTimer = setInterval(() => {
-      progressPct = Math.min(progressPct + 3, 80)
-      context.onCompactProgress?.({
-        type: 'compact_progress',
-        stage: 'api',
-        pct: progressPct,
-      })
-    }, 2000)
-    // 确保 interval 在函数退出时清理（无论正常返回还是抛错）
-
     for (;;) {
       summaryResponse = await streamCompactSummary({
         messages: messagesToSummarize,
@@ -468,9 +464,6 @@ export async function compactConversation(
       if (!summary?.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE)) {
         break
       }
-      // PTL 重试：重置进度计时器
-      progressPct = 10
-      clearInterval(progressTimer)
 
       // CC-1180：压缩请求本身触发了 prompt-too-long。截断最旧的
       // API-round 分组并重试，而不是让用户卡住。
@@ -502,14 +495,6 @@ export async function compactConversation(
       }
     }
 
-    // API 调用完成，清除进度条定时器
-    if (progressTimer) clearInterval(progressTimer)
-    context.onCompactProgress?.({
-      type: 'compact_progress',
-      stage: 'attachments',
-      pct: 85,
-    })
-
     if (!summary) {
       compactLog(
         `failed: no summary text in response. Response: ${jsonStringify(summaryResponse)}`,
@@ -531,6 +516,10 @@ export async function compactConversation(
       })
       throw new Error(summary)
     }
+
+    // 摘要 API 完成 → attachments 阶段
+    emitCompactStage(context.onCompactProgress, 'api', COMPACT_STAGE_PCT.api_soft_cap)
+    emitCompactStage(context.onCompactProgress, 'attachments', COMPACT_STAGE_PCT.attachments)
 
     // 清除前保存当前文件状态
     const preCompactReadFileState = cacheToObject(context.readFileState)
@@ -600,14 +589,10 @@ export async function compactConversation(
     }
 
     context.onCompactProgress?.({
-      type: 'compact_progress',
-      stage: 'session_start',
-      pct: 90,
-    })
-    context.onCompactProgress?.({
       type: 'hooks_start',
       hookType: 'session_start',
     })
+    emitCompactStage(context.onCompactProgress, 'session_start', COMPACT_STAGE_PCT.session_start)
     // 压缩成功后执行 SessionStart hooks
     const hookMessages = await processSessionStartHooks('compact', {
       model: context.options.mainLoopModel,
@@ -661,6 +646,9 @@ export async function compactConversation(
       message?: { content?: unknown }
       attachment?: Attachment
     }[])
+
+    // 对齐 CC：把 postTokens 写到 boundary，供 statusline 在尚无新 API usage 时显示压缩后比例
+    boundaryMarker.compactMetadata.postTokens = truePostCompactTokenCount
 
     // 提取压缩 API 用量指标
     const compactionUsage = getTokenUsage(summaryResponse)
@@ -731,14 +719,10 @@ export async function compactConversation(
     }
 
     context.onCompactProgress?.({
-      type: 'compact_progress',
-      stage: 'hooks',
-      pct: 95,
-    })
-    context.onCompactProgress?.({
       type: 'hooks_start',
       hookType: 'post_compact',
     })
+    emitCompactStage(context.onCompactProgress, 'hooks', COMPACT_STAGE_PCT.post_hooks)
     const postCompactHookResult = await executePostCompactHooks(
       {
         trigger: isAutoCompact ? 'auto' : 'manual',
@@ -778,7 +762,6 @@ export async function compactConversation(
     }
     throw error
   } finally {
-    globalThis.clearInterval(progressTimer)
     context.setStreamMode?.('requesting')
     context.setResponseLength?.(() => 0)
     context.onCompactProgress?.({ type: 'compact_end' })
@@ -837,6 +820,7 @@ export async function partialCompactConversation(
       type: 'hooks_start',
       hookType: 'pre_compact',
     })
+    emitCompactStage(context.onCompactProgress, 'hooks', COMPACT_STAGE_PCT.pre_hooks)
 
     context.setSDKStatus?.('compacting')
     const hookResult = await executePreCompactHooks(
@@ -860,11 +844,8 @@ export async function partialCompactConversation(
     context.setStreamMode?.('requesting')
     context.setResponseLength?.(() => 0)
     context.onCompactProgress?.({ type: 'compact_start' })
-    context.onCompactProgress?.({
-      type: 'compact_progress',
-      stage: 'summarize',
-      pct: 5,
-    })
+    emitCompactStage(context.onCompactProgress, 'summarize', COMPACT_STAGE_PCT.start)
+    emitCompactStage(context.onCompactProgress, 'api', COMPACT_STAGE_PCT.api_start)
 
     const compactPrompt = getPartialCompactPrompt(customInstructions, direction)
     const summaryRequest = createUserMessage({
@@ -942,6 +923,9 @@ export async function partialCompactConversation(
       throw new Error(summary)
     }
 
+    emitCompactStage(context.onCompactProgress, 'api', COMPACT_STAGE_PCT.api_soft_cap)
+    emitCompactStage(context.onCompactProgress, 'attachments', COMPACT_STAGE_PCT.attachments)
+
     // 清除前保存当前文件状态
     const preCompactReadFileState = cacheToObject(context.readFileState)
     context.readFileState.clear()
@@ -1004,6 +988,7 @@ export async function partialCompactConversation(
       type: 'hooks_start',
       hookType: 'session_start',
     })
+    emitCompactStage(context.onCompactProgress, 'session_start', COMPACT_STAGE_PCT.session_start)
     const hookMessages = await processSessionStartHooks('compact', {
       model: context.options.mainLoopModel,
     })
@@ -1084,6 +1069,7 @@ export async function partialCompactConversation(
       type: 'hooks_start',
       hookType: 'post_compact',
     })
+    emitCompactStage(context.onCompactProgress, 'hooks', COMPACT_STAGE_PCT.post_hooks)
     const postCompactHookResult = await executePostCompactHooks(
       {
         trigger: 'manual',
@@ -1097,6 +1083,21 @@ export async function partialCompactConversation(
       direction === 'up_to'
         ? (summaryMessages.at(-1)?.uuid ?? boundaryMarker.uuid)
         : boundaryMarker.uuid
+
+    // statusline 用 postTokens 在尚无新 API usage 时显示压缩后比例
+    const truePostCompactTokenCount = roughTokenCountEstimationForMessages([
+      boundaryMarker,
+      ...summaryMessages,
+      ...messagesToKeep,
+      ...postCompactFileAttachments,
+      ...hookMessages,
+    ] as unknown as readonly {
+      type: string
+      message?: { content?: unknown }
+      attachment?: Attachment
+    }[])
+    boundaryMarker.compactMetadata.postTokens = truePostCompactTokenCount
+
     return {
       boundaryMarker: annotateBoundaryWithPreservedSegment(
         boundaryMarker,
@@ -1110,6 +1111,7 @@ export async function partialCompactConversation(
       userDisplayMessage: postCompactHookResult.userDisplayMessage,
       preCompactTokenCount,
       postCompactTokenCount,
+      truePostCompactTokenCount,
       compactionUsage,
     }
   } catch (error) {
@@ -1212,8 +1214,9 @@ async function streamCompactSummary({
           // fork — 与下面流式回退路径在 `signal: context.abortController.signal` 使用相同的信号。
           overrides: { abortController: context.abortController },
         })
-        const assistantMsg = getLastAssistantMessage(result.messages)
-        const assistantText = assistantMsg ? getAssistantMessageText(assistantMsg) : null
+        // 对齐 CC zQn/KQn：优先含 <summary> 的 assistant，避免最后一条思考草稿污染摘要
+        const assistantText = getCompactSummaryText(result.messages)
+        const assistantMsg = pickCompactSummaryAssistant(result.messages)
         // 防护 isApiErrorMessage：query() 会捕获 API 错误（包括 ESC 时的
         // APIUserAbortError）并将它们作为合成的 assistant 消息返回。
         // 没有这个检查的话，被中止的压缩会"成功"地以 "Request was aborted."
@@ -1263,7 +1266,8 @@ async function streamCompactSummary({
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       // 为重试重置状态
       let hasStartedStreaming = false
-      let response: AssistantMessage | undefined
+      // 累积全部 assistant 流片段，结束后用 zQn 语义选取含 <summary> 的那条
+      const streamedAssistants: AssistantMessage[] = []
       context.setResponseLength?.(() => 0)
 
       // 检查 tool search 是否启用，使用主循环的工具列表。
@@ -1350,16 +1354,23 @@ async function streamCompactSummary({
           ev.event.delta.type === 'text_delta'
         ) {
           const charactersStreamed = (ev.event.delta.text as string).length
-          context.setResponseLength?.((length) => length + charactersStreamed)
+          context.setResponseLength?.((length) => {
+            const next = length + charactersStreamed
+            // 流式摘要：在 api 阶段内按输出字符推进进度条
+            emitCompactStage(context.onCompactProgress, 'api', compactApiStreamPercent(next))
+            return next
+          })
         }
 
         if (ev.type === 'assistant') {
-          response = ev as AssistantMessage
+          streamedAssistants.push(ev as AssistantMessage)
         }
 
         next = await streamIter.next()
       }
 
+      // 对齐 CC：`P.isApiErrorMessage ? P : zQn(x) ?? P`
+      const response = resolveStreamedCompactAssistant(streamedAssistants)
       if (response) {
         return response
       }

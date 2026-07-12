@@ -410,6 +410,11 @@ export type CollapsibleMessage = AssistantMessage | GroupedToolUseMessageWithMes
 export interface CompactMetadata {
   trigger: string
   preTokens: number
+  /**
+   * 压缩后上下文估算 token 数（对齐 CC `compactMetadata.postTokens`）。
+   * statusline 在边界后尚无新 API usage 时用此值显示上下文比例。
+   */
+  postTokens?: number
   userContext?: string
   preservedSegment?: {
     headUuid: string
