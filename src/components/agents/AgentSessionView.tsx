@@ -27,6 +27,7 @@ import {
   isLocalAgentTask,
   type LocalAgentTaskState,
 } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
+import { formatWaitingDuration } from '../../utils/format.js'
 
 type AgentTask = LocalAgentTaskState | InProcessTeammateTaskState
 
@@ -39,10 +40,21 @@ type AgentSessionViewProps = {
 /** 获取 agent task 的显示名称 */
 function getAgentDisplayName(task: AgentTask): string {
   if (isInProcessTeammateTask(task)) {
+    // plan accept / 自定义名：description 优先于 agentName
+    if (task.description?.trim()) {
+      return task.description.trim().slice(0, 80)
+    }
     return task.identity.agentName || task.identity.agentId
   }
   if (isLocalAgentTask(task)) {
-    return task.selectedAgent?.agentType || task.agentId || 'agent'
+    // CC 2.1.207：plan accept 自动命名应显示在 agent-view 行（description 字段）
+    if (task.description?.trim()) {
+      return task.description.trim().slice(0, 80)
+    }
+    if (task.progress?.summary?.trim()) {
+      return task.progress.summary.trim().slice(0, 80)
+    }
+    return task.selectedAgent?.agentType || task.agentType || task.agentId || 'agent'
   }
   return 'unknown'
 }
@@ -66,6 +78,9 @@ function getStatusLabel(task: AgentTask): string {
   if (isInProcessTeammateTask(task) && task.awaitingPlanApproval) {
     return tSync('agentView.awaitingApproval')
   }
+  if (isInProcessTeammateTask(task) && task.isIdle && task.status === 'running') {
+    return tSync('agentView.needsInput')
+  }
   if (task.status === 'running') {
     return tSync('agentView.running')
   }
@@ -75,8 +90,47 @@ function getStatusLabel(task: AgentTask): string {
   return tSync('agentView.completed')
 }
 
+/**
+ * 阻塞/等待输入时的 peek 摘要（对齐 CC 2.1.207）：
+ * 以问题/摘要打头 + 口语化等待时钟（waiting 3m），避免状态词与时间戳重复。
+ */
+export function getBlockedPeekSummary(task: AgentTask, nowMs: number = Date.now()): string {
+  const isBlocked =
+    isInProcessTeammateTask(task) &&
+    (task.awaitingPlanApproval || (task.isIdle && task.status === 'running'))
+  if (!isBlocked) {
+    return ''
+  }
+
+  // 优先展示问题/摘要（progress.summary 或最近活动描述）
+  const question =
+    task.progress?.summary?.trim() ||
+    task.progress?.lastActivity?.activityDescription?.trim() ||
+    (task.awaitingPlanApproval
+      ? tSync('agentView.awaitingApproval')
+      : tSync('agentView.needsInput'))
+
+  // 等待时钟：idleSince 优先，否则无时钟
+  let clock = ''
+  if (isInProcessTeammateTask(task) && task.idleSince) {
+    clock = formatWaitingDuration(task.idleSince, nowMs)
+  }
+
+  // 若 question 已是状态词且无更具体内容，只显示 question · clock，不重复
+  if (clock) {
+    return `${question} · ${clock}`
+  }
+  return question
+}
+
 /** 获取进度摘要 */
 function getProgressSummary(task: AgentTask): string {
+  // 阻塞态：专用 peek 行，避免 status 标签与 activity 重复同一文案
+  const blocked = getBlockedPeekSummary(task)
+  if (blocked) {
+    return blocked
+  }
+
   const progress = task.progress
   if (!progress) {
     return ''
@@ -166,13 +220,22 @@ export function AgentSessionView({
           const statusLabel = getStatusLabel(task)
           const progress = getProgressSummary(task)
 
+          // 阻塞 peek：进度行已含「问题 · waiting 3m」，不再重复 [status] 标签
+          const isBlockedPeek =
+            isInProcessTeammateTask(task) &&
+            (task.awaitingPlanApproval || (task.isIdle && task.status === 'running'))
+
           return (
             <Box key={id} flexDirection="row" gap={1}>
               <Text>{isSelected ? SMALL_RIGHT_TRIANGLE : ' '}</Text>
               <Text>{icon}</Text>
               <Text bold={isSelected}>{name}</Text>
-              <Text dimColor>[{statusLabel}]</Text>
-              {progress ? <Text dimColor>{progress}</Text> : null}
+              {!isBlockedPeek ? <Text dimColor>[{statusLabel}]</Text> : null}
+              {progress ? (
+                <Text dimColor={!isBlockedPeek} color={isBlockedPeek ? 'warning' : undefined}>
+                  {progress}
+                </Text>
+              ) : null}
             </Box>
           )
         })}

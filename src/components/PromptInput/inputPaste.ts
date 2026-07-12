@@ -1,8 +1,43 @@
-import { getPastedTextRefNumLines } from 'src/history.js'
+import { expandPastedTextRefs, getPastedTextRefNumLines, parseReferences } from 'src/history.js'
 import type { PastedContent } from 'src/utils/config.js'
 
 const TRUNCATION_THRESHOLD = 10000 // Characters before we truncate
 const PREVIEW_LENGTH = 1000 // Characters to show at start and end
+
+/**
+ * 查找 pastedContents 中内容完全相同的文本粘贴 id（对齐 CC 2.1.207：
+ * 再次粘贴相同长文本时展开已有 placeholder，而非新建第二条）。
+ */
+export function findExistingPastedTextId(
+  text: string,
+  pastedContents: Record<number, PastedContent>,
+): number | undefined {
+  for (const content of Object.values(pastedContents)) {
+    if (content.type === 'text' && content.content === text) {
+      return content.id
+    }
+  }
+  return undefined
+}
+
+/**
+ * 若 input 中已有指定 pasteId 的折叠引用，将其全部展开为 fullText。
+ * 返回 null 表示 input 中不存在该 id 的 placeholder。
+ */
+export function expandExistingPasteRefsInInput(
+  input: string,
+  pasteId: number,
+  fullText: string,
+): string | null {
+  const refs = parseReferences(input).filter((r) => r.id === pasteId)
+  if (refs.length === 0) {
+    return null
+  }
+  // 用单条记录驱动 expandPastedTextRefs，只展开匹配 id
+  return expandPastedTextRefs(input, {
+    [pasteId]: { id: pasteId, type: 'text', content: fullText },
+  })
+}
 
 type TruncatedMessage = {
   truncatedText: string

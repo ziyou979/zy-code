@@ -24,6 +24,11 @@ type Props = {
    *  task:background/kill-agents (none are mounted, or they mount after
    *  this component so stopImmediatePropagation wins). */
   isModal?: boolean
+  /**
+   * 有文本选区时按 Delete/Backspace：从输入框删除选中文本（对话历史不删）。
+   * 返回 true 表示已改动输入；调用方无论成败都会 clear + stop。
+   */
+  onDeleteSelection?: (selectedText: string) => boolean
 }
 
 // Terminals send one SGR wheel event per intended row (verified in Ghostty
@@ -391,9 +396,13 @@ export function ScrollKeybindingHandler({
   isActive,
   onScroll,
   isModal = false,
+  onDeleteSelection,
 }: Props): React.ReactNode {
   const selection = useSelection()
   const { addNotification } = useNotifications()
+  // onDeleteSelection 经 ref 读取，避免 useInput 因闭包重建
+  const onDeleteSelectionRef = useRef(onDeleteSelection)
+  onDeleteSelectionRef.current = onDeleteSelection
   // 在第一个滚轮事件时延迟初始化，这样 XTVERSION 探测（在
   // raw-mode-enable 时触发）那时已解析——在 useRef() 中初始化会在
   // SSH 上探测回复到达之前读取 getWheelBase()。
@@ -665,8 +674,9 @@ export function ScrollKeybindingHandler({
   // 选区在输入时消失）。Ctrl+C 在存在选区时复制——在旧终端上需要，
   // 那里 ctrl+shift+c 发送相同字节（\x03，shift 丢失），
   // cmd+c 永远不会到达 pty（终端拦截它用于 Edit > Copy）。
-  // 通过原始 useInput 处理，使我们可以有条件地消费：
-  // Esc/Ctrl+C 仅在存在选区时停止传播，让它们仍然可以用于
+  // Delete/Backspace：若提供 onDeleteSelection，从输入框删选中文本。
+  // 对话历史选区不删消息，只清高亮。通过原始 useInput 有条件地消费：
+  // Esc/Ctrl+C/Delete 仅在存在选区时停止传播，让它们仍然可以用于
   // 取消请求/中断。其他按键从不阻止传播——它们作为副作用清除选区。
   // selection:copy 快捷键（ctrl+shift+c / cmd+c）通过 useKeybindings
   // 在上方注册并在到达此处之前消费其事件。
@@ -682,6 +692,15 @@ export function ScrollKeybindingHandler({
       }
       if (key.ctrl && !key.shift && !key.meta && input === 'c') {
         copyAndToast()
+        event.stopImmediatePropagation()
+        return
+      }
+      // 拖选后 Delete/Backspace：仅尝试删输入框选区；历史区只清选区。
+      // 无论成败都 stop：否则会落到 PromptInput 单字符 backspace。
+      if ((key.delete || key.backspace) && onDeleteSelectionRef.current) {
+        const text = selection.getSelectedText()
+        onDeleteSelectionRef.current(text)
+        selection.clearSelection()
         event.stopImmediatePropagation()
         return
       }

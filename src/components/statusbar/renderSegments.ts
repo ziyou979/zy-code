@@ -34,7 +34,7 @@ import { calculateContextPercentages, getContextWindowForModel } from '../../uti
 import { getCwd } from '../../utils/cwd.js'
 import { getDisplayedEffortLevel, modelSupportsEffort } from '../../utils/effort.js'
 import { formatTokens } from '../../utils/format.js'
-import { getCurrentUsage } from '../../utils/tokens.js'
+import { getDisplayContextUsage } from '../../utils/tokens.js'
 import {
   effectiveColor,
   effectiveIcon,
@@ -149,7 +149,9 @@ const RENDERERS: Record<ModuleId, Renderer> = {
 
   context(module, ctx) {
     const icon = effectiveIcon(module)
-    const currentUsage = getCurrentUsage(ctx.messages)
+    // 必须用 getDisplayContextUsage：压缩后 full messages 仍含边界前旧 usage，
+    // 直接 getCurrentUsage 会导致 statusline 比例「压缩后不变」。
+    const currentUsage = getDisplayContextUsage(ctx.messages)
     const contextWindowSize = getContextWindowForModel(ctx.mainLoopModel)
     if (!currentUsage) {
       return {

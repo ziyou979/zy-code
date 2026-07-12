@@ -104,6 +104,7 @@ import { errorMessage } from '../../utils/errors.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
 import { getImageFromClipboard, PASTE_THRESHOLD } from '../../utils/imagePaste.js'
+import { expandExistingPasteRefsInInput, findExistingPastedTextId } from './inputPaste.js'
 import type { ImageDimensions } from '../../utils/imageResizer.js'
 import { cacheImagePath, storeImage } from '../../utils/imageStore.js'
 import { isMacosOptionChar, MACOS_OPTION_SPECIAL_CHARS } from '../../utils/keyboardShortcuts.js'
@@ -1474,6 +1475,18 @@ function PromptInput({
     // Use special handling for long pasted text (>PASTE_THRESHOLD chars)
     // or if it exceeds the number of lines we want to show
     if (text.length > PASTE_THRESHOLD || numLines > maxLines) {
+      // CC 2.1.207：相同长文本再次粘贴 → 展开已有 [Pasted text #N]，不新建第二条
+      const existingId = findExistingPastedTextId(text, pastedContents)
+      if (existingId !== undefined) {
+        const expanded = expandExistingPasteRefsInInput(input, existingId, text)
+        if (expanded !== null) {
+          pushToBuffer(input, cursorOffset, pastedContents)
+          trackAndSetInput(expanded)
+          // 光标移到展开内容末尾（更符合「展开后继续编辑」）
+          setCursorOffset(expanded.length)
+          return
+        }
+      }
       const pasteId = nextPasteIdRef.current++
       const newContent: PastedContent = {
         id: pasteId,

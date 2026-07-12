@@ -24,6 +24,7 @@ const HEADROOM = 3
 import { logForDebugging } from '../utils/debug.js'
 import { sleep } from '../utils/sleep.js'
 import { renderableSearchText } from '../utils/transcriptSearch.js'
+import { registerMessageHitTarget } from '../services/scrollback/messageHitTarget.js'
 import {
   isNavigableMessage,
   type MessageActionsNav,
@@ -241,10 +242,18 @@ function VirtualItem({
   renderItem,
 }: VirtualItemProps) {
   const measureCallback = measureRef(k)
+  // 注册消息行 hit 目标，供拖选删除时 preferredUuid 定位
+  const combinedRef = useCallback(
+    (el: DOMElement | null) => {
+      registerMessageHitTarget(el, el ? { uuid: msg.uuid, type: msg.type } : null)
+      measureCallback(el)
+    },
+    [measureCallback, msg.uuid, msg.type],
+  )
   const renderedItem = renderItem(msg, idx)
   return (
     <Box
-      ref={measureCallback}
+      ref={combinedRef}
       flexDirection="column"
       backgroundColor={expanded ? 'userMessageBackgroundHover' : undefined}
       paddingBottom={expanded ? 1 : undefined}
@@ -897,6 +906,7 @@ export function VirtualMessageList({
           offsets={offsets}
           getItemTop={getItemTop}
           getItemElement={getItemElement}
+          scrollToIndex={scrollToIndex}
           scrollRef={scrollRef}
         />
       )}
@@ -929,6 +939,7 @@ function StickyTracker({
   offsets,
   getItemTop,
   getItemElement,
+  scrollToIndex,
   scrollRef,
 }: {
   messages: RenderableMessage[]
@@ -937,6 +948,8 @@ function StickyTracker({
   offsets: ArrayLike<number>
   getItemTop: (index: number) => number
   getItemElement: (index: number) => DOMElement | null
+  /** 未挂载时优先用 scrollToIndex（含 listOrigin），比纯 estimate 更稳 */
+  scrollToIndex: (i: number) => void
   scrollRef: RefObject<ScrollBoxHandle | null>
 }): null {
   const { setStickyPrompt } = useContext(ScrollChromeContext)
@@ -981,83 +994,95 @@ function StickyTracker({
     }
     firstVisible = i
   }
+  // ── sticky 候选（对齐 CC `Iy_` @ claude.exe:238063273）──
+  //
+  // CC 源码结构：
+  //   if (d>0 && !isSticky) for (A=d-1; A>=0; A--) {
+  //     x = SKs(msg); if null continue
+  //     k = getItemTop(A); if (k>=0 && k+1>=scrollTop) continue  // ❯ 仍可见
+  //     f=A; m=x; break
+  //   }
+  //
+  // CC 的 continue 在「marginTop 间隙」时会跳过当前条去 sticky 上一条；
+  // 配合 scrollToElement(el,1) 跳转后会出现「落地立刻钉住上一条」。
+  // 用户体感 CC 不会如此——对齐点：
+  // 1) 首可见就是用户 prompt 且 ❯ 在顶 → 不 sticky
+  // 2) 最近用户 prompt 的 ❯ 仍在顶 → 不 sticky（勿 continue 找更旧）
+  // 3) 仅当该 prompt 完全滚出顶上 → sticky 这一条
+  // 4) 滚进超长用户消息正文（Box 顶已离开、同 idx 仍 firstVisible）→ sticky 本条
   let idx = -1
   let text: string | null = null
-  if (firstVisible > 0 && !isSticky) {
-    for (let i = firstVisible - 1; i >= 0; i--) {
-      const t = stickyPromptText(messages[i]!)
-      if (t === null) {
-        continue
+  if (!isSticky && firstVisible >= 0) {
+    const firstMsg = messages[firstVisible]
+    const firstPrompt = firstMsg ? stickyPromptText(firstMsg) : null
+    if (firstPrompt !== null) {
+      const top = getItemTop(firstVisible)
+      // ❯ 仍在视口顶 → 无 sticky；已滚进该条正文 → sticky 本条
+      if (!(top >= 0 && top + 1 >= target)) {
+        idx = firstVisible
+        text = firstPrompt
       }
-      // 提示的包装 Box 顶部在 target 上方（这就是为什么它在
-      // [0, firstVisible) 范围内），但其 ❯ 在 top+1（marginTop=1）。
-      // 如果 ❯ 在或低于 target，它在视口顶部可见——
-      // 在头部显示相同文本会重复它。发生在 Box 顶部滚过和
-      // ❯ 滚过之间的 1 行间隙中。跳到下一个更旧的提示（其 ❯ 肯定在上方）。
-      const top = getItemTop(i)
-      if (top >= 0 && top + 1 >= target) {
-        continue
+    } else if (firstVisible > 0) {
+      // 对齐 CC 循环，但 ❯ 可见时 break（不 continue）
+      for (let i = firstVisible - 1; i >= 0; i--) {
+        const t = stickyPromptText(messages[i]!)
+        if (t === null) {
+          continue
+        }
+        const top = getItemTop(i)
+        // CC: if(k>=0&&k+1>=u)continue — 我们改为 break，避免 sticky 上一条
+        if (top >= 0 && top + 1 >= target) {
+          break
+        }
+        idx = i
+        text = t
+        break
       }
-      idx = i
-      text = t
-      break
     }
   }
   const baseOffset = firstVisibleTop >= 0 ? firstVisibleTop - offsets[firstVisible]! : 0
   const estimate = idx >= 0 ? Math.max(0, baseOffset + offsets[idx]!) : -1
 
-  // 对于点击跳转到尚未挂载的项目（用户滚动很远，提示在 topSpacer 中）。
-  // 点击句柄滚动到估计值以挂载它；一旦出现就通过元素锚定。
-  // scrollToElement 将 Yoga 位置读取延迟到渲染时（render-node-to-output
-  // 在同一个 calculateLayout 中读取 el.yogaNode.getComputedTop()，
-  // 该 pass 产生 scrollHeight）——无节流竞争。限制重试次数：
-  // /clear 竞争可能在序列中间卸载项目。
+  // pending：未挂载跳转的二次锚定（CC `_.current={idx,tries}`）
   const pending = useRef({
     idx: -1,
     tries: 0,
   })
-  // 抑制状态机。点击句柄武装；onChange effect
-  // 消耗（armed→force），然后在那次渲染之后触发并清除
-  //（force→none）。force 步骤毒化去重：点击后，idx 经常
-  // 重新计算为相同的提示（其顶部仍在 target 上方），所以
-  // 没有 force 的话 last.idx===idx 守卫会保持 'clicked' 直到用户
-  // 跨越提示边界。之前编码在 last.idx 中为 -1/-2/-3，
-  // 与真实索引重叠——太聪明了。
+  // CC suppress：none | armed | force（点击后 force 一次重算，避免卡在 'clicked'）
   type Suppress = 'none' | 'armed' | 'force'
   const suppress = useRef<Suppress>('none')
-  // 仅对 idx 去重——estimate 来源于 firstVisibleTop，每次滚动 tick 都偏移，
-  // 所以将其包含在 key 中会使守卫失效（setStickyPrompt 每帧触发新的
-  // {text,scrollTo}）。scrollTo 闭包仍然捕获当前估计值；它只是
-  // 不需要在仅 estimate 移动时重新触发。
+  // 仅对 idx 去重（CC `b.current===f`）
   const lastIdx = useRef(-1)
 
-  // setStickyPrompt effect 优先——必须在下方校正 effect 之前看到 pending.idx。
-  // 在估计回退路径上，挂载项目的渲染也是校正清除 pending 的渲染；
-  // 如果此在后运行，pending 门控会失效，setStickyPrompt(prevPrompt) 会在
-  // 跳转中间触发，在 'clicked' 上重新挂载头部。
+  // 对齐 CC useEffect：pending 优先 → armed→force → force/idx 变化才 setStickyPrompt
   useEffect(() => {
-    // 在两阶段校正进行中时保持。
     if (pending.current.idx >= 0) {
       return
     }
     if (suppress.current === 'armed') {
+      // 保持 'clicked' 一帧（头隐藏、pad 仍折叠），下一拍 force 重算
       suppress.current = 'force'
       return
     }
     const force = suppress.current === 'force'
     suppress.current = 'none'
-    if (!force && lastIdx.current === idx) {
+    // 同 idx 且非 force：跳过。但 follow 回底 (isSticky) 时必须清掉 'clicked'
+    if (!force && lastIdx.current === idx && !isSticky) {
       return
     }
     lastIdx.current = idx
     if (text === null) {
+      // 点击跳转落地后 force 重算常为「当前 prompt 在顶 → 无需 sticky」。
+      // 若此时 setStickyPrompt(null)，padCollapsed 从 true→false，paddingTop 0→1，
+      // 画面会「先到顶再往下挪一行」。对齐 CC 的 FfH=Ako!=null：
+      // 保持 'clicked'（头不显示、pad 仍 0），直到用户再滚动或回底。
+      if (force && !isSticky) {
+        return
+      }
       setStickyPrompt(null)
       return
     }
-    // 仅第一段（按空行分割）——类似
-    // "still seeing bugs:\n\n1. foo\n2. bar" 的提示预览仅为引导部分。
-    // trimStart 使前导空行（queued_command 中间回合消息有时有）
-    // 不会在 0 处找到 paraEnd。
+    // 仅第一段（空行切）+ STICKY_TEXT_CAP=500（CC Ty_）
     const trimmed = text.trimStart()
     const paraEnd = trimmed.search(/\n\s*\n/)
     const collapsed = (paraEnd >= 0 ? trimmed.slice(0, paraEnd) : trimmed)
@@ -1065,47 +1090,46 @@ function StickyTracker({
       .replace(/\s+/g, ' ')
       .trim()
     if (collapsed === '') {
+      if (force && !isSticky) {
+        return
+      }
       setStickyPrompt(null)
       return
     }
     const capturedIdx = idx
+    // estimate 是 item Box 顶；❯ 在 marginTop=1 处，目标 scrollTop = boxTop+1
     const capturedEstimate = estimate
     setStickyPrompt({
       text: collapsed,
+      // CC: a("clicked"); E="armed"; if(P) scrollToElement(P,1); else scrollTo(I)+pending
       scrollTo: () => {
-        // 隐藏头部，保持 padding 折叠——FullscreenLayout 的
-        // 'clicked' 哨兵 → scrollBox_y=0 + pad=0 → viewportTop=0。
         setStickyPrompt('clicked')
         suppress.current = 'armed'
-        // scrollToElement anchors by DOMElement ref, not a number:
-        // render-node-to-output reads el.yogaNode.getComputedTop() at
-        // paint time (same Yoga pass as scrollHeight). No staleness from
-        // the throttled render — the ref is stable, the position read is
-        // deferred. offset=1 = UserPromptMessage marginTop.
         const el = getItemElement(capturedIdx)
         if (el) {
+          // 单次锚定到 ❯ 行，避免先 top 再 +1 的两段跳动
           scrollRef.current?.scrollToElement(el, 1)
         } else {
-          // 未挂载（滚动很远——在 topSpacer 中）。跳转到
-          // 估计值以挂载它；校正 effect 在出现后重新锚定。
-          // 估计基于 DEFAULT_ESTIMATE——着陆不足。
-          scrollRef.current?.scrollTo(capturedEstimate)
-          pending.current = {
-            idx: capturedIdx,
-            tries: 0,
+          // 未挂载：一次滚到 boxTop+1（与 scrollToElement offset=1 一致），
+          // 再 pending 精修；勿先 scrollToIndex(顶) 再 +1。
+          const targetY = capturedEstimate > 0 ? capturedEstimate + 1 : -1
+          if (targetY >= 0) {
+            scrollRef.current?.scrollTo(targetY)
+          } else {
+            scrollToIndex(capturedIdx)
+            const s = scrollRef.current
+            if (s) {
+              s.scrollTo(s.getScrollTop() + 1)
+            }
           }
+          pending.current = { idx: capturedIdx, tries: 0 }
         }
       },
     })
-    // 无依赖——必须每次渲染都运行。抑制状态存在于 ref 中
-    //（而非 idx/estimate），所以依赖守卫的 effect 永远不会看到它 tick。
-    // 函数体自己的守卫在没有变化时短路。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   })
 
-  // 校正：用于点击跳转到未挂载的项目。点击句柄滚动到估计值；
-  // 此在项目出现后通过元素重新锚定。scrollToElement 将 Yoga 读取延迟到绘制时——确定性的。
-  // 第二个运行，使它在 onChange 门控看到 pending 之后清除 pending。
+  // CC 二次锚定：tries>5 放弃。目标已是 +1，挂载后 scrollToElement 应几乎无位移。
   useEffect(() => {
     if (pending.current.idx < 0) {
       return
@@ -1113,14 +1137,16 @@ function StickyTracker({
     const el = getItemElement(pending.current.idx)
     if (el) {
       scrollRef.current?.scrollToElement(el, 1)
-      pending.current = {
-        idx: -1,
-        tries: 0,
-      }
+      pending.current = { idx: -1, tries: 0 }
     } else if (++pending.current.tries > 5) {
-      pending.current = {
-        idx: -1,
-        tries: 0,
+      pending.current = { idx: -1, tries: 0 }
+    } else {
+      // 继续靠近目标（仍用 +1，避免先顶后挪）
+      const top = getItemTop(pending.current.idx)
+      if (top >= 0) {
+        scrollRef.current?.scrollTo(top + 1)
+      } else {
+        scrollToIndex(pending.current.idx)
       }
     }
   })

@@ -21,9 +21,15 @@ import {
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'
 import ScrollBox, { type ScrollBoxHandle } from '../ink/components/ScrollBox.js'
+import type { DOMElement } from '../ink/dom.js'
 import instances from '../ink/instances.js'
+import { nodeCache } from '../ink/node-cache.js'
 import { VtPlusPlusRenderer } from '../ink/vtplus/VtPlusPlusRenderer.js'
 import { Box, Text } from '../ink.js'
+import {
+  findStickyHeaderHitMeta,
+  registerStickyHeaderHitTarget,
+} from '../services/scrollback/messageHitTarget.js'
 import type { Message } from '../types/message.js'
 import { openBrowser, openPath } from '../utils/browser.js'
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
@@ -350,8 +356,22 @@ export function FullscreenLayout({
         openBrowser(url)
       }
     }
+    // 双击：sticky 区或 DOM hit 任一命中即跳转
+    ink.onDoubleClickAt = (col, row) => {
+      if (ink.isStickyHeaderRow(row) && ink.activateStickyHeader()) {
+        return true
+      }
+      const sticky = findStickyHeaderHitMeta(ink.hitTestAt(col, row))
+      if (!sticky) {
+        return false
+      }
+      sticky.scrollTo()
+      return true
+    }
     return () => {
       ink.onHyperlinkClick = undefined
+      ink.onDoubleClickAt = undefined
+      ink.stickyHeaderZone = null
     }
   }, [])
   // CC 对齐：useInsertionEffect 只创建一次实例，useLayoutEffect 处理 resize。
@@ -387,7 +407,11 @@ export function FullscreenLayout({
         {
           <Box flexGrow={1} flexDirection="column" overflow="hidden">
             {headerPrompt && (
-              <StickyPromptHeader text={headerPrompt.text} onClick={headerPrompt.scrollTo} />
+              <StickyPromptHeader
+                text={headerPrompt.text}
+                onClick={headerPrompt.scrollTo}
+                scrollRef={scrollRef}
+              />
             )}
             {
               <ScrollBox
@@ -501,23 +525,100 @@ function NewMessagesPill({ count, onClick }: { count: number; onClick?: () => vo
   )
 }
 
-// 上下文面包屑：向上滚动到历史记录时，将当前对话回合的提示固定在视口上方，
-// 这样你可以知道 Zy 在回复什么。正常流中位于 ScrollBox 之前的兄弟元素
-//（镜像下方的 pill）——通过 flex 将 ScrollBox 缩小恰好 1 行，保持在
-// DECSTBM 滚动区域之外。点击跳回到提示。
+// 上下文面包屑：向上滚动到历史记录时，将当前对话回合的提示固定在视口上方。
+// 对齐 CC：onClick=scrollTo 跳回该用户消息起始处。
 //
-// 高度固定为 1 行（长提示截断尾部）。可变高度的头部（短文本 1 行，换行 2 行）
-// 会在滚动过程中每次 sticky prompt 切换时将 ScrollBox 移动 1 行——即使 scrollTop
-// 未变，内容也会在屏幕上跳动（DECSTBM 区域顶部随 ScrollBox 移动，diff 引擎
-// 认为"所有内容都移动了"）。固定高度保持 ScrollBox 锚定；只有头部文本变化，而非其框体。
-function StickyPromptHeader({ text, onClick }: { text: string; onClick?: () => void }) {
+// 命中策略（WT / JetBrains 上 DOM hit-test 常失败，表现为无 hover）：
+// 1) 向 ink.stickyHeaderZone 注册屏幕行区域（优先用 nodeCache，否则
+//    ScrollBox.viewportTop-1 / 回退 y=0）
+// 2) App.handleMouseEvent 按行号拦截 press/release，不依赖 onClick 冒泡
+// 3) DOM onClick / onMouseEnter 仍保留作兜底
+//
+// 高度固定 1 行，避免 sticky 切换时 ScrollBox 跳动。
+function StickyPromptHeader({
+  text,
+  onClick,
+  scrollRef,
+}: {
+  text: string
+  onClick?: () => void
+  scrollRef?: RefObject<ScrollBoxHandle | null>
+}) {
   const [hover, setHover] = useState(false)
+  const elRef = useRef<DOMElement | null>(null)
+  const onClickRef = useRef(onClick)
+  onClickRef.current = onClick
+  const setHoverRef = useRef(setHover)
+  setHoverRef.current = setHover
+
+  const headerRef = useCallback(
+    (el: DOMElement | null) => {
+      elRef.current = el
+      registerStickyHeaderHitTarget(el, onClick)
+    },
+    [onClick],
+  )
+
+  // 把 sticky 屏幕行写入 ink，供鼠标事件按行命中（不靠 DOM hit-test）
+  useLayoutEffect(() => {
+    if (!onClick) {
+      return
+    }
+    const ink = instances.get(process.stdout)
+    if (!ink) {
+      return
+    }
+
+    const publishZone = (): void => {
+      const scrollTo = () => onClickRef.current?.()
+      const setHoverFn = (h: boolean) => setHoverRef.current(h)
+      const rect = elRef.current ? nodeCache.get(elRef.current) : undefined
+      if (rect && rect.height > 0) {
+        ink.stickyHeaderZone = {
+          y: rect.y,
+          height: Math.max(1, Math.floor(rect.height)),
+          scrollTo,
+          setHover: setHoverFn,
+        }
+        return
+      }
+      // nodeCache 未就绪：sticky 在 ScrollBox 上方 1 行
+      const vpTop = scrollRef?.current?.getViewportTop()
+      const y = vpTop != null && vpTop > 0 ? vpTop - 1 : 0
+      ink.stickyHeaderZone = {
+        y,
+        height: 1,
+        scrollTo,
+        setHover: setHoverFn,
+      }
+    }
+
+    publishZone()
+    // 滚动/重绘后 viewportTop 可能变，订阅 ScrollBox 刷新 zone
+    const unsub = scrollRef?.current?.subscribe(publishZone)
+    // 下一帧再刷一次（nodeCache 在 Ink paint 后才有值）
+    const raf =
+      typeof requestAnimationFrame === 'function'
+        ? requestAnimationFrame(publishZone)
+        : undefined
+    return () => {
+      unsub?.()
+      if (raf !== undefined) {
+        cancelAnimationFrame(raf)
+      }
+      ink.stickyHeaderZone = null
+      setHoverRef.current(false)
+    }
+  }, [onClick, text, scrollRef])
+
   return (
     <Box
+      ref={headerRef}
       flexShrink={0}
       width="100%"
       height={1}
       paddingRight={1}
+      noSelect={true}
       backgroundColor={hover ? 'userMessageBackgroundHover' : 'userMessageBackground'}
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
