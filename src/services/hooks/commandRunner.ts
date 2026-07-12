@@ -28,7 +28,9 @@ import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
 import { wrapInSystemReminder } from '../../utils/messages.js'
 import { getPlatform } from '../../utils/platform.js'
 import { getPluginDataDir } from '../../utils/plugins/pluginDirectories.js'
+import { tSync } from '../../i18n/index.js'
 import {
+  containsUserConfigRef,
   loadPluginOptions,
   substituteUserConfigVariables,
 } from '../../utils/plugins/pluginOptionsStorage.js'
@@ -581,8 +583,13 @@ export async function execCommandHook(
   // 顺序与 MCP/LSP 一致（先插件变量，后用户配置），因此用户
   // 输入的值如果包含字面文本 ${CLAUDE_PLUGIN_ROOT}，将被视为
   // 不透明值——不会作为模板重新解析。
+  //
+  // shell-form（无 args）禁止展开 ${user_config.*}：替换值会经 shell
+  // 二次解析，构成命令注入面（对齐 Claude Code 2.1.207）。请改用
+  // exec form 的 args 数组，或脚本内读 $CLAUDE_PLUGIN_OPTION_<KEY>。
   let command = hook.command
   let pluginOpts: ReturnType<typeof loadPluginOptions> | undefined
+  const isShellForm = hook.args === undefined
   if (pluginRoot) {
     // 插件目录不存在（孤立 GC 竞态、并发会话删除了它）：
     // 抛出异常让调用者产生非阻塞错误。直接运行会失败——且
@@ -609,10 +616,21 @@ export async function execCommandHook(
     }
     if (pluginId) {
       pluginOpts = loadPluginOptions(pluginId)
-      // 如果引用的 key 缺失则抛出——意味着 hook 使用了一个
-      // 未在 manifest.userConfig 中声明或尚未配置的 key。
-      // 在上游作为普通 hook 执行失败捕获。
-      command = substituteUserConfigVariables(command, pluginOpts)
+      if (isShellForm && containsUserConfigRef(command)) {
+        const source = pluginId ? `plugin ${pluginId}` : 'a plugin'
+        throw new Error(
+          tSync('plugin.errors.userConfigShellForm', {
+            source,
+            command: hook.command,
+          }),
+        )
+      }
+      // exec form：argv 字面传递，展开安全。shell-form 已在上方拒绝 user_config 引用。
+      // 若引用的 key 缺失则抛出——意味着 hook 使用了未在 manifest.userConfig
+      // 中声明或尚未配置的 key（上游作为普通 hook 执行失败捕获）。
+      if (!isShellForm) {
+        command = substituteUserConfigVariables(command, pluginOpts)
+      }
     }
   }
 
@@ -734,10 +752,13 @@ export async function execCommandHook(
     }) as ChildProcessWithoutNullStreams
   } else if (hook.args !== undefined) {
     // Exec form：直接 spawn 可执行文件，不经 shell——路径含空格无需转义。
-    // 使用 command（已做 ${CLAUDE_PLUGIN_ROOT}/user_config 替换），跳过 .sh 前缀与
-    // ZY_CODE_SHELL_PREFIX（均为 shell-form 行为）。args 按字面传递（exec form 无 shell
-    // 展开，与 Claude Code 一致）。Windows 下用原生可执行路径（不经 Git Bash POSIX 转换）。
-    child = spawn(command, hook.args, {
+    // command 已做 ${CLAUDE_PLUGIN_ROOT}/user_config 替换；args 同样展开 user_config
+    //（argv 字面，无 shell 二次解析）。跳过 .sh 前缀与 ZY_CODE_SHELL_PREFIX。
+    // Windows 下用原生可执行路径（不经 Git Bash POSIX 转换）。
+    const resolvedArgs = pluginOpts
+      ? hook.args.map((arg) => substituteUserConfigVariables(arg, pluginOpts!))
+      : hook.args
+    child = spawn(command, resolvedArgs, {
       env: envVars,
       cwd: safeCwd,
       windowsHide: true,

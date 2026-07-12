@@ -90,7 +90,16 @@ export function useReplTranscript({
       return
     }
     const taskId = viewingAgentTaskId
-    void getAgentTranscript(asAgentId(taskId)).then((result) => {
+    const agentIdFallback =
+      isLocalAgentTask(viewedLocalAgent) && viewedLocalAgent.agentId !== taskId
+        ? viewedLocalAgent.agentId
+        : undefined
+    void (async () => {
+      // 先按 taskId 加载；空白时再试 agentId（冷恢复/worktree 路径不一致时 CC 2.1.207）
+      let result = await getAgentTranscript(asAgentId(taskId))
+      if ((!result || result.messages.length === 0) && agentIdFallback) {
+        result = await getAgentTranscript(asAgentId(agentIdFallback))
+      }
       setAppState((prev) => {
         const t = prev.tasks[taskId]
         if (!isLocalAgentTask(t) || t.diskLoaded || !t.retain) {
@@ -107,8 +116,8 @@ export function useReplTranscript({
           },
         }
       })
-    })
-  }, [viewingAgentTaskId, needsBootstrap, setAppState])
+    })()
+  }, [viewingAgentTaskId, needsBootstrap, setAppState, viewedLocalAgent])
 
   // ── frozen transcript ──
   const [frozenTranscriptState, setFrozenTranscriptState] = useState<{

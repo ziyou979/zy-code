@@ -2,6 +2,7 @@ import { join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import { getOriginalCwd, getSessionId, getSessionProjectDir } from '../../bootstrap/state.js'
 import type { AgentId } from '../../types/ids.js'
+import { getCwd } from '../../utils/cwd.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { sanitizePath } from '../../utils/path.js'
 
@@ -69,17 +70,42 @@ export function clearAgentTranscriptSubdir(agentId: string): void {
   agentTranscriptSubdirs.delete(agentId)
 }
 
+/**
+ * 可能存放 agent transcript 的路径候选（去重）。
+ * 冷恢复 / 进入 worktree 后，sessionProjectDir 与 originalCwd/cwd 的 project 目录
+ * 可能短暂不一致；bootstrap 会依次尝试，避免 agent-view 空白（CC 2.1.207）。
+ */
+export function getAgentTranscriptPathCandidates(agentId: AgentId): string[] {
+  const sessionId = getSessionId()
+  const subdir = agentTranscriptSubdirs.get(agentId)
+  const projectDirs = new Set<string>()
+  projectDirs.add(getSessionProjectDir() ?? getProjectDir(getOriginalCwd()))
+  try {
+    projectDirs.add(getProjectDir(getOriginalCwd()))
+  } catch {
+    // ignore
+  }
+  try {
+    projectDirs.add(getProjectDir(getCwd()))
+  } catch {
+    // ignore
+  }
+  const paths: string[] = []
+  for (const projectDir of projectDirs) {
+    const base = subdir
+      ? join(projectDir, sessionId, 'subagents', subdir)
+      : join(projectDir, sessionId, 'subagents')
+    paths.push(join(base, `agent-${agentId}.jsonl`))
+  }
+  return paths
+}
+
 export function getAgentTranscriptPath(agentId: AgentId): string {
   // 与 getTranscriptPathForSession 相同的 sessionProjectDir 一致性 —
   // 子代理 transcript 位于 session 目录下，因此 session transcript
   // 在 sessionProjectDir 时，子代理 transcript 也在那里。
-  const projectDir = getSessionProjectDir() ?? getProjectDir(getOriginalCwd())
-  const sessionId = getSessionId()
-  const subdir = agentTranscriptSubdirs.get(agentId)
-  const base = subdir
-    ? join(projectDir, sessionId, 'subagents', subdir)
-    : join(projectDir, sessionId, 'subagents')
-  return join(base, `agent-${agentId}.jsonl`)
+  // 首选路径 = 候选列表第一项（sessionProjectDir 优先）。
+  return getAgentTranscriptPathCandidates(agentId)[0]!
 }
 
 export function getAgentMetadataPath(agentId: AgentId): string {

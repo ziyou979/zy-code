@@ -17,6 +17,8 @@ import {
   getSettingsFilePathForSource,
   getUseAutoModeDuringPlan,
   hasAutoModeOptIn,
+  hasTrustedDefaultModeAuto,
+  hasUntrustedAutoModeSettings,
 } from '../../utils/settings/settings.js'
 import { type PermissionMode, permissionModeFromString } from './PermissionMode.js'
 import { applyPermissionRulesToPermissionContext } from './permissions.js'
@@ -714,9 +716,15 @@ export function initialPermissionModeFromCLI({
         mode: settingsMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
     }
-    // 来自设置的 auto 模式需要与来自 CLI 的相同门控检查
+    // defaultMode:auto 仅信任 user/flag/policy（对齐 CC 2.1.207）。
+    // project/local 为仓库可控，静默授予 auto 构成权限越权面。
     else if (settingsMode === 'auto') {
-      if (autoModeCircuitBrokenSync) {
+      if (!hasTrustedDefaultModeAuto()) {
+        permLog(
+          'settings defaultMode "auto" ignored — only policy/user/flag settings may grant auto mode (projectSettings and localSettings are repo-controllable)',
+          { level: 'warn' },
+        )
+      } else if (autoModeCircuitBrokenSync) {
         permLog('auto mode circuit breaker active (cached) — falling back to default', {
           level: 'warn',
         })
@@ -726,6 +734,11 @@ export function initialPermissionModeFromCLI({
     } else {
       orderedModes.push(settingsMode)
     }
+  }
+
+  // project/local 中的 autoMode 规则或 defaultMode:auto 被忽略时打一次遥测
+  if (hasUntrustedAutoModeSettings()) {
+    logEvent('zy_settings_auto_mode_untrusted_source_ignored', {})
   }
 
   let result: { mode: PermissionMode; notification?: string } | undefined
@@ -1333,9 +1346,8 @@ export async function checkAndDisableBypassPermissions(
 }
 
 export function isDefaultPermissionModeAuto(): boolean {
-  const settings = getInitialSettings() || {}
-  return settings.permissions?.defaultMode === 'auto'
-  return false
+  // 仅可信源的 defaultMode:auto 生效（project/local 忽略）
+  return hasTrustedDefaultModeAuto()
 }
 
 /**

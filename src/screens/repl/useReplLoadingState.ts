@@ -19,6 +19,11 @@ import { hasCursorUpViewportYankBug } from '../../ink/terminal.js'
 import { getTipToShowOnSpinner, recordShownTip } from '../../services/tips/tipScheduler.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { ReplStoreInstance } from '../../state/ReplStore.js'
+import {
+  advanceStagePercent,
+  buildCompactProgressMessage,
+  COMPACT_STAGE_PCT,
+} from '../../services/compact/compactProgress.js'
 import type { CompactProgressEvent } from '../../Tool.js'
 import type { Message as MessageType } from '../../types/message.js'
 import type { StreamingThinking } from '../../utils/messages.js'
@@ -58,28 +63,6 @@ export type ReplLoadingState = {
   setStreamingThinking: React.Dispatch<React.SetStateAction<StreamingThinking | null>>
   // 核心收益：resetLoadingState 内化
   resetLoadingState: () => void
-}
-
-/** 生成内联进度条字符串：▰▰▰▱▱▱▱▱▱▱ 15%
- *  注意：必须返回单行文本。spinnerMessage 中的 \n 会被 Ink 渲染为多行，
- *  但 spinner 动画定时刷新会导致各行内容错位/跳变。
- *  CC 的 spinnerHintText 也是单行预渲染字符串。 */
-function buildCompactProgressMessage(event: {
-  stage: string
-  pct?: number
-  hintText?: string
-}): string {
-  // CC 对齐：如果 compact 逻辑已预渲染 hintText（含 Unicode 块字符），直接使用
-  // 注意：hintText 本身必须是单行（CC 的 spinnerHintText 就是单行）
-  if (event.hintText) {
-    return `${tSync('spinner.compacting')} ${event.hintText}`
-  }
-  // 降级：根据 pct 渲染进度条（单行）
-  const pct = event.pct ?? 0
-  const barWidth = 20
-  const filled = Math.round((pct / 100) * barWidth)
-  const bar = '▰'.repeat(filled) + '▱'.repeat(barWidth - filled)
-  return `${tSync('spinner.compacting')} ${bar} ${Math.round(pct)}%`
 }
 
 export type UseReplLoadingStateParams = {
@@ -138,7 +121,30 @@ export function useReplLoadingState({
   const [spinnerColor, setSpinnerColor] = useState<keyof Theme | null>(null)
   const [spinnerShimmerColor, setSpinnerShimmerColor] = useState<keyof Theme | null>(null)
 
+  // compact 真实阶段进度：业务层 emit stage+pct；≥90% 后 compact_end 直接卸条
+  const compactPctRef = useRef(0)
+  const compactStageRef = useRef<string | undefined>(undefined)
+  /** 是否处于 compact 会话（hooks / start / progress / end） */
+  const isCompactActiveRef = useRef(false)
+
+  const applyCompactStagePct = useCallback((stage: string | undefined, pct: number) => {
+    const next = advanceStagePercent(compactPctRef.current, pct)
+    compactPctRef.current = next
+    if (stage) {
+      compactStageRef.current = stage
+    }
+    setSpinnerMessage(
+      buildCompactProgressMessage({
+        stage: compactStageRef.current,
+        pct: next,
+      }),
+    )
+  }, [])
+
   const resetSpinnerOverride = useCallback(() => {
+    isCompactActiveRef.current = false
+    compactPctRef.current = 0
+    compactStageRef.current = undefined
     setSpinnerMessage(null)
     setSpinnerColor(null)
     setSpinnerShimmerColor(null)
@@ -147,32 +153,44 @@ export function useReplLoadingState({
   const onCompactProgress = useCallback(
     (event: CompactProgressEvent) => {
       switch (event.type) {
-        case 'hooks_start':
+        case 'hooks_start': {
           setSpinnerColor('ZyBlue_FOR_SYSTEM_SPINNER')
           setSpinnerShimmerColor('ZyBlueShimmer_FOR_SYSTEM_SPINNER')
-          setSpinnerMessage(
-            tSync('spinner.hooksRunning', {
-              hookType:
-                event.hookType === 'pre_compact'
-                  ? 'PreCompact'
-                  : event.hookType === 'post_compact'
-                    ? 'PostCompact'
-                    : 'SessionStart',
-            }),
-          )
+          isCompactActiveRef.current = true
+          // 按 hook 类型映射真实阶段 pct（与业务 emit 对齐，hooks_start 先到也能显示）
+          if (event.hookType === 'pre_compact') {
+            applyCompactStagePct('pre_hooks', COMPACT_STAGE_PCT.pre_hooks)
+          } else if (event.hookType === 'session_start') {
+            applyCompactStagePct('session_start', COMPACT_STAGE_PCT.session_start)
+          } else {
+            applyCompactStagePct('post_hooks', COMPACT_STAGE_PCT.post_hooks)
+          }
           break
+        }
         case 'compact_start':
-          setSpinnerMessage(tSync('spinner.compacting'))
+          setSpinnerColor('ZyBlue_FOR_SYSTEM_SPINNER')
+          setSpinnerShimmerColor('ZyBlueShimmer_FOR_SYSTEM_SPINNER')
+          isCompactActiveRef.current = true
+          applyCompactStagePct('start', COMPACT_STAGE_PCT.start)
           break
         case 'compact_progress':
-          setSpinnerMessage(buildCompactProgressMessage(event))
+          isCompactActiveRef.current = true
+          if (event.hintText) {
+            setSpinnerMessage(buildCompactProgressMessage(event))
+            if (event.pct !== undefined) {
+              compactPctRef.current = advanceStagePercent(compactPctRef.current, event.pct)
+            }
+          } else {
+            applyCompactStagePct(event.stage, event.pct)
+          }
           break
         case 'compact_end':
+          // 超过 90%（post_hooks=94%）后直接卸 spinner，不在 100% 满条停留
           resetSpinnerOverride()
           break
       }
     },
-    [resetSpinnerOverride],
+    [applyCompactStagePct, resetSpinnerOverride],
   )
 
   // ── spinner tip ──

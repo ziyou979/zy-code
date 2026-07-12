@@ -760,13 +760,81 @@ export async function keepWorktree(): Promise<void> {
   }
 }
 
+/**
+ * 最后一个 sparse worktree 删除后清理 `extensions.worktreeConfig`（对齐 CC 2.1.207）。
+ * 该扩展残留在主仓 `.git/config` 时会破坏 go-git 工具（如 tea）。
+ *
+ * 策略：若配置了该扩展，且 `git worktree list` 中已无任何仍启用 sparse-checkout 的
+ * worktree，则 `--unset extensions.worktreeConfig`。
+ */
+export async function maybeUnsetWorktreeConfigExtension(repoRoot: string): Promise<void> {
+  const { code: getCode, stdout: getOut } = await execFileNoThrowWithCwd(
+    gitExe(),
+    ['config', '--local', '--get', 'extensions.worktreeConfig'],
+    { cwd: repoRoot },
+  )
+  if (getCode !== 0 || !getOut.trim()) {
+    return
+  }
+
+  const { code: listCode, stdout: listOut } = await execFileNoThrowWithCwd(
+    gitExe(),
+    ['worktree', 'list', '--porcelain'],
+    { cwd: repoRoot },
+  )
+  if (listCode !== 0) {
+    logForDebugging(`maybeUnsetWorktreeConfigExtension: worktree list failed`, {
+      level: 'warn',
+    })
+    return
+  }
+
+  // porcelain: 块以 worktree <path> 开头；main worktree 无 "detached"/特殊标记但路径不同。
+  // 对每个 worktree 路径，探测该 worktree 是否仍启用 sparse-checkout。
+  const paths: string[] = []
+  for (const line of listOut.split('\n')) {
+    if (line.startsWith('worktree ')) {
+      paths.push(line.slice('worktree '.length).trim())
+    }
+  }
+
+  for (const wtPath of paths) {
+    // sparse-checkout list 在未启用时非 0 或空；启用时会列出路径
+    const { code: sparseCode, stdout: sparseOut } = await execFileNoThrowWithCwd(
+      gitExe(),
+      ['sparse-checkout', 'list'],
+      { cwd: wtPath },
+    )
+    if (sparseCode === 0 && sparseOut.trim().length > 0) {
+      // 仍有 worktree 使用 sparse-checkout，保留 extensions.worktreeConfig
+      return
+    }
+  }
+
+  const { code: unsetCode, stderr: unsetErr } = await execFileNoThrowWithCwd(
+    gitExe(),
+    ['config', '--local', '--unset', 'extensions.worktreeConfig'],
+    { cwd: repoRoot },
+  )
+  if (unsetCode !== 0) {
+    // --unset 在键已不存在时也可能非 0；仅记日志
+    logForDebugging(
+      `maybeUnsetWorktreeConfigExtension: unset failed (code=${unsetCode}): ${unsetErr}`,
+      { level: 'warn' },
+    )
+  } else {
+    logForDebugging('Cleared extensions.worktreeConfig after last sparse worktree removed')
+  }
+}
+
 export async function cleanupWorktree(): Promise<void> {
   if (!currentWorktreeSession) {
     return
   }
 
   try {
-    const { worktreePath, originalCwd, worktreeBranch, hookBased } = currentWorktreeSession
+    const { worktreePath, originalCwd, worktreeBranch, hookBased, usedSparsePaths } =
+      currentWorktreeSession
 
     // Change back to original directory first
     process.chdir(originalCwd)
@@ -799,6 +867,10 @@ export async function cleanupWorktree(): Promise<void> {
         })
       } else {
         logForDebugging(`Removed linked worktree at: ${worktreePath}`)
+        // sparse worktree 移除后尝试清理残留 worktreeConfig 扩展
+        if (usedSparsePaths) {
+          await maybeUnsetWorktreeConfigExtension(originalCwd)
+        }
       }
     }
 
@@ -942,6 +1014,8 @@ export async function removeAgentWorktree(
     return false
   }
   logForDebugging(`Removed agent worktree at: ${worktreePath}`)
+  // 代理 worktree 也可能使用 sparsePaths；统一尝试清理残留扩展
+  await maybeUnsetWorktreeConfigExtension(gitRoot)
 
   if (!worktreeBranch) {
     return true

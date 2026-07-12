@@ -4,6 +4,7 @@ import stripAnsi from 'strip-ansi'
 import { markBackslashReturnUsed } from '../commands/terminalSetup/terminalSetup.js'
 import { addToHistory } from '../history.js'
 import type { Key } from '../ink.js'
+import instances from '../ink/instances.js'
 import type { InlineGhostText, TextInputState } from '../types/textInputTypes.js'
 import {
   Cursor,
@@ -435,6 +436,39 @@ export function useTextInput({
 
     // If the input was filtered out, do nothing
     if (filteredInput === '' && input !== '') {
+      return
+    }
+
+    // 全屏 ink 拖选存在时，禁止落到单字符 backspace（否则表现为「只删了最后一字符」）。
+    // 仅当选区文本落在当前输入缓冲时整段删除；对话历史不支持拖选删除。
+    // 历史区选区在此 no-op，由 ScrollKeybindingHandler 清高亮并 stop。
+    if (
+      (key.backspace || key.delete || filteredInput.includes('\x7f')) &&
+      instances.get(process.stdout)?.hasTextSelection()
+    ) {
+      const ink = instances.get(process.stdout)
+      const selected = ink?.getSelectedText() ?? ''
+      if (selected) {
+        const candidates = [selected, selected.replace(/\n/g, '')].filter(
+          (t, i, arr) => t.length > 0 && arr.indexOf(t) === i,
+        )
+        for (const cand of candidates) {
+          let at = originalValue.lastIndexOf(cand, Math.max(0, offset))
+          if (at < 0) {
+            at = originalValue.indexOf(cand)
+          }
+          if (at >= 0) {
+            const next = originalValue.slice(0, at) + originalValue.slice(at + cand.length)
+            onChange(next)
+            setOffset(at)
+            ink?.clearTextSelection()
+            resetKillAccumulation()
+            resetYankState()
+            return
+          }
+        }
+      }
+      // 选区不在本输入框——不单字符删除
       return
     }
 

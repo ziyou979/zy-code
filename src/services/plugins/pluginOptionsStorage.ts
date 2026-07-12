@@ -17,12 +17,43 @@ import { getSecureStorage } from 'src/services/secureStorage/index.js'
 import type { LoadedPlugin } from '../../types/plugin.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logError } from '../../utils/log.js'
-import { getInitialSettings, updateSettingsForSource } from '../../utils/settings/settings.js'
+import type { SettingSource } from '../../utils/settings/constants.js'
+import {
+  getInitialSettings,
+  getSettingsForSource,
+  updateSettingsForSource,
+} from '../../utils/settings/settings.js'
 import { type UserConfigSchema, type UserConfigValues, validateUserConfig } from './mcpbHandler.js'
 import { getPluginDataDir } from './pluginDirectories.js'
 
 export type PluginOptionValues = UserConfigValues
 export type PluginOptionSchema = UserConfigSchema
+
+/**
+ * pluginConfigs 仅从这些源读取（对齐 Claude Code 2.1.207）。
+ * projectSettings / localSettings 为仓库可控，不得影响插件选项（注入/改行为面）。
+ * 合并顺序：user → flag → policy（后者覆盖前者）。
+ */
+export const TRUSTED_PLUGIN_CONFIG_SOURCES: readonly SettingSource[] = [
+  'userSettings',
+  'flagSettings',
+  'policySettings',
+]
+
+/**
+ * 从可信 settings 源合并 pluginConfigs[pluginId].options。
+ * 不读 project/local，也不使用 getInitialSettings() 的全量合并结果。
+ */
+export function loadTrustedPluginConfigOptions(pluginId: string): PluginOptionValues {
+  let merged: PluginOptionValues = {}
+  for (const source of TRUSTED_PLUGIN_CONFIG_SOURCES) {
+    const options = getSettingsForSource(source)?.pluginConfigs?.[pluginId]?.options
+    if (options && typeof options === 'object') {
+      merged = { ...merged, ...options }
+    }
+  }
+  return merged
+}
 
 /**
  * Canonical storage key for a plugin's options in both `settings.pluginConfigs`
@@ -45,10 +76,11 @@ export function getPluginStorageId(plugin: LoadedPlugin): string {
  * Memoized per-pluginId because hooks can fire per-tool-call and each call
  * would otherwise do a settings read + keychain spawn. Cache cleared via
  * `clearPluginOptionsCache` when settings change or plugins reload.
+ *
+ * 非敏感选项只从 user / flag / policy 读取（见 TRUSTED_PLUGIN_CONFIG_SOURCES）。
  */
 export const loadPluginOptions = memoize((pluginId: string): PluginOptionValues => {
-  const settings = getInitialSettings()
-  const nonSensitive = settings.pluginConfigs?.[pluginId]?.options ?? ({} as PluginOptionValues)
+  const nonSensitive = loadTrustedPluginConfigOptions(pluginId)
 
   // NOTE: storage.read() spawns `security find-generic-password` on macOS
   // (~50-100ms, synchronous). Mitigated by the memoize above (per-pluginId,
@@ -140,34 +172,27 @@ export function savePluginOptions(
   }
 
   // settings.json AFTER secureStorage — scrub sensitive keys via explicit
-  // undefined (mergeWith deletion pattern).
-  //
-  // TODO: getInitialSettings returns MERGED settings across all scopes.
-  // Mutating that and writing to userSettings can leak project-scope
-  // pluginConfigs into ~/.zy/settings.json. Same pattern exists in
-  // saveMcpServerUserConfig. Safe today since pluginConfigs is only ever
-  // written here (user-scope), but will bite if we add project-scoped
-  // plugin options.
-  const settings = getInitialSettings()
-  const existingInSettings = settings.pluginConfigs?.[pluginId]?.options ?? {}
+  // undefined (mergeWith deletion pattern)。
+  // 只读写 userSettings 上的 pluginConfigs，避免把 project/local 合并结果写回用户配置。
+  const existingInSettings =
+    getSettingsForSource('userSettings')?.pluginConfigs?.[pluginId]?.options ?? {}
   const keysToScrubFromSettings = Object.keys(existingInSettings).filter((k) =>
     sensitiveKeysInThisSave.has(k),
   )
   if (Object.keys(nonSensitive).length > 0 || keysToScrubFromSettings.length > 0) {
-    if (!settings.pluginConfigs) {
-      settings.pluginConfigs = {}
-    }
-    if (!settings.pluginConfigs[pluginId]) {
-      settings.pluginConfigs[pluginId] = {}
-    }
     const scrubbed = Object.fromEntries(
       keysToScrubFromSettings.map((k) => [k, undefined]),
     ) as Record<string, undefined>
-    settings.pluginConfigs[pluginId].options = {
-      ...nonSensitive,
-      ...scrubbed,
-    } as PluginOptionValues
-    const result = updateSettingsForSource('userSettings', settings)
+    const result = updateSettingsForSource('userSettings', {
+      pluginConfigs: {
+        [pluginId]: {
+          options: {
+            ...nonSensitive,
+            ...scrubbed,
+          } as PluginOptionValues,
+        },
+      },
+    })
     if (result.error) {
       logError(result.error)
       throw new Error(`Failed to save plugin options for ${pluginId}: ${result.error.message}`)
@@ -317,12 +342,27 @@ export function substitutePluginVariables(
   return out
 }
 
+/** 匹配 `${user_config.KEY}`（CC 2.1.207 shell 注入防护同源模式） */
+const USER_CONFIG_REF_RE = /\$\{user_config\.([^}]+)\}/g
+
+/**
+ * 字符串是否包含 `${user_config.*}` 引用。
+ * shell-form hook 命令在展开前必须拒绝此类引用（值会经 shell 二次解析）。
+ */
+export function containsUserConfigRef(value: string): boolean {
+  USER_CONFIG_REF_RE.lastIndex = 0
+  return USER_CONFIG_REF_RE.test(value)
+}
+
 /**
  * Substitute ${user_config.KEY} with saved option values.
  *
  * Throws on missing keys — callers pass this only after `validateUserConfig`
  * succeeded, so a miss here means a plugin references a key it never declared
  * in its schema. That's a plugin authoring bug; failing loud surfaces it.
+ *
+ * 仅用于 exec-form（argv 字面传递）或非 shell 上下文。shell-form 命令必须先
+ * 用 `containsUserConfigRef` 拒绝，改走 exec form 或 `$CLAUDE_PLUGIN_OPTION_*`。
  *
  * Use `substituteUserConfigInContent` for skill/agent prose — it handles
  * missing keys and sensitive-filtering instead of throwing.

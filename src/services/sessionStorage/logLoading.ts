@@ -92,6 +92,7 @@ import {
 } from './chain.js'
 import {
   getAgentTranscriptPath,
+  getAgentTranscriptPathCandidates,
   getProjectDir,
   getProjectsDir,
   getTranscriptPath,
@@ -1618,42 +1619,50 @@ export async function getAgentTranscript(agentId: AgentId): Promise<{
   messages: Message[]
   contentReplacements: ContentReplacementRecord[]
 } | null> {
-  const agentFile = getAgentTranscriptPath(agentId)
+  // 多路径尝试：worktree / 冷恢复时 project 目录可能不一致（CC 2.1.207）
+  const candidates = getAgentTranscriptPathCandidates(agentId)
 
-  try {
-    const { messages, agentContentReplacements } = await loadTranscriptFile(agentFile)
+  for (const agentFile of candidates) {
+    try {
+      const { messages, agentContentReplacements } = await loadTranscriptFile(agentFile)
 
-    // 找到匹配 agentId 的消息
-    const agentMessages = Array.from(messages.values()).filter(
-      (msg) => msg.agentId === agentId && msg.isSidechain,
-    )
+      // 找到匹配 agentId 的消息
+      const agentMessages = Array.from(messages.values()).filter(
+        (msg) => msg.agentId === agentId && msg.isSidechain,
+      )
 
-    if (agentMessages.length === 0) {
-      return null
+      if (agentMessages.length === 0) {
+        continue
+      }
+
+      // 找到此 agentId 的最近叶子消息
+      const parentUuids = new Set<string | null>(agentMessages.map((msg) => msg.parentUuid))
+      const leafMessage = findLatestMessage(agentMessages, (msg) => !parentUuids.has(msg.uuid))
+
+      if (!leafMessage) {
+        continue
+      }
+
+      // 构建对话链
+      const transcript = buildConversationChain(messages, leafMessage)
+
+      // 过滤为仅包含此 agentId 的消息
+      const agentTranscript = transcript.filter((msg) => msg.agentId === agentId)
+
+      if (agentTranscript.length === 0) {
+        continue
+      }
+
+      return {
+        // 将 TranscriptMessage[] 转换为 Message[]
+        messages: agentTranscript.map(({ isSidechain, parentUuid, ...msg }) => msg),
+        contentReplacements: agentContentReplacements.get(agentId) ?? [],
+      }
+    } catch {
+      // 尝试下一候选路径
     }
-
-    // 找到此 agentId 的最近叶子消息
-    const parentUuids = new Set<string | null>(agentMessages.map((msg) => msg.parentUuid))
-    const leafMessage = findLatestMessage(agentMessages, (msg) => !parentUuids.has(msg.uuid))
-
-    if (!leafMessage) {
-      return null
-    }
-
-    // 构建对话链
-    const transcript = buildConversationChain(messages, leafMessage)
-
-    // 过滤为仅包含此 agentId 的消息
-    const agentTranscript = transcript.filter((msg) => msg.agentId === agentId)
-
-    return {
-      // 将 TranscriptMessage[] 转换为 Message[]
-      messages: agentTranscript.map(({ isSidechain, parentUuid, ...msg }) => msg),
-      contentReplacements: agentContentReplacements.get(agentId) ?? [],
-    }
-  } catch {
-    return null
   }
+  return null
 }
 
 /**

@@ -29,7 +29,11 @@ import {
   getApiKeyWithSource,
   getZyAIOAuthTokens,
 } from '../auth/auth.js'
-import { checkManagedSettingsSecurity, handleSecurityCheckResult } from './securityCheck.jsx'
+import {
+  checkManagedSettingsSecurity,
+  handleSecurityCheckResult,
+  shouldPersistManagedSettingsAfterSecurityCheck,
+} from './securityCheck.jsx'
 import { isRemoteManagedSettingsEligible, resetSyncCache } from './syncCache.js'
 import {
   getRemoteManagedSettingsSyncFromCache,
@@ -440,9 +444,17 @@ async function fetchAndLoadRemoteManagedSettings(): Promise<SettingsJson | null>
         return cachedSettings
       }
 
+      // 会话内始终可用（含 deferred_non_interactive）
       setSessionCache(newSettings)
-      await saveSettings(newSettings)
-      logForDebugging('Remote settings: Applied new settings successfully')
+      // 仅交互同意或无危险变更时落盘，避免 -p/SDK 静默「永久同意」（CC 2.1.207）
+      if (shouldPersistManagedSettingsAfterSecurityCheck(securityResult)) {
+        await saveSettings(newSettings)
+        logForDebugging('Remote settings: Applied and persisted new settings successfully')
+      } else {
+        logForDebugging(
+          'Remote settings: Session-only apply (non-interactive deferred — not persisted as consented)',
+        )
+      }
       return newSettings
     }
 
