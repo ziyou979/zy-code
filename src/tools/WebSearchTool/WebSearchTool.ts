@@ -41,7 +41,9 @@ const inputSchema = lazySchema(() =>
     date_range: z
       .string()
       .optional()
-      .describe('Date range filter (e.g., "20250101..20250105", or "past_day", "past_week", "past_month", "past_year")'),
+      .describe(
+        'Date range filter (e.g., "20250101..20250105", or "past_day", "past_week", "past_month", "past_year")',
+      ),
   }),
 )
 type InputSchema = ReturnType<typeof inputSchema>
@@ -295,10 +297,7 @@ const MAX_RETRIES = 4
  * - 重试状态码：408（超时）、429（限流）、500/502/503（服务端）
  * - 优先使用 Retry-After 响应头，否则指数退避 + 随机抖动
  */
-async function fetchWithRetry(
-  url: string,
-  maxAttempts = MAX_RETRIES,
-): Promise<Response> {
+async function fetchWithRetry(url: string, maxAttempts = MAX_RETRIES): Promise<Response> {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const res = await fetch(url, { signal: AbortSignal.timeout(30_000) })
 

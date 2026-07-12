@@ -10,7 +10,7 @@
 
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import { loadInstalledPluginsV2 } from './installedPluginsManager.js'
+import { loadInstalledPlugins } from './installedPluginsManager.js'
 import { getMarketplace, loadKnownMarketplacesConfigSafe } from './marketplaceManager.js'
 import { addFlaggedPlugin, getFlaggedPlugins, loadFlaggedPlugins } from './pluginFlagging.js'
 import { uninstallPluginOp } from './pluginOperations.js'
@@ -59,7 +59,7 @@ export function detectDelistedPlugins(
 export async function detectAndUninstallDelistedPlugins(): Promise<string[]> {
   await loadFlaggedPlugins()
 
-  const installedPlugins = loadInstalledPluginsV2()
+  const installedPlugins = loadInstalledPlugins()
   const alreadyFlagged = getFlaggedPlugins()
   // Read-only iteration — Safe variant so a corrupted config doesn't throw
   // out of this function (it's called in the same try-block as loadAllPlugins

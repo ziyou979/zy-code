@@ -152,9 +152,7 @@ function computeLabelPositions(
  * @param model - 当前模型 ID
  * @returns PickerLayout | null（模型不支持时返回 null）
  */
-export function computePickerLayout(
-  model: string,
-): PickerLayout | null {
+export function computePickerLayout(model: string): PickerLayout | null {
   if (!modelSupportsEffort(model)) return null
 
   const supportedLevels = getModelEffortLevels(model)
@@ -190,11 +188,16 @@ export function computePickerLayout(
 
   // 7. orchestrate 副标签
   const sublabel = hasOrchestrate
-    ? { text: (tSync('effort.picker.orchestrateSublabel' as any) as string) || 'extreme + workflows' }
+    ? {
+        text:
+          (tSync('effort.picker.orchestrateSublabel' as any) as string) || 'extreme + workflows',
+      }
     : undefined
 
   // 8. 高亮起始列（orchestrate 分隔线）
-  const accentStart = hasOrchestrate ? (trianglePositions[levels.length - 2] ?? trackWidth - 5) : undefined
+  const accentStart = hasOrchestrate
+    ? (trianglePositions[levels.length - 2] ?? trackWidth - 5)
+    : undefined
 
   return {
     levels,

@@ -25,7 +25,9 @@ describe('getAPIErrorSeverity', () => {
   })
 
   test('terminal: 紧急容量关闭', () => {
-    expect(getAPIErrorSeverity(new Error('当前模型负载较高，请使用 /model 切换到其他模型'))).toBe('terminal')
+    expect(getAPIErrorSeverity(new Error('当前模型负载较高，请使用 /model 切换到其他模型'))).toBe(
+      'terminal',
+    )
   })
 
   test('terminal: 401 认证错误', () => {

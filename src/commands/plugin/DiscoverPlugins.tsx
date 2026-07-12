@@ -1,4 +1,13 @@
-import { WARNING, ARROW_UP, POINTER, ELLIPSIS, RADIO_ON, RADIO_OFF, ARROW_DOWN, CROSS } from '../../constants/figures.js'
+import {
+  WARNING,
+  ARROW_UP,
+  POINTER,
+  ELLIPSIS,
+  RADIO_ON,
+  RADIO_OFF,
+  ARROW_DOWN,
+  CROSS,
+} from '../../constants/figures.js'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
@@ -730,11 +739,7 @@ export function DiscoverPlugins({
                 {isSelected && !isSearchMode ? POINTER : ' '}{' '}
               </Text>
               <Text>
-                {isInstallingThis
-                  ? ELLIPSIS
-                  : isSelectedForInstall
-                    ? RADIO_ON
-                    : RADIO_OFF}{' '}
+                {isInstallingThis ? ELLIPSIS : isSelectedForInstall ? RADIO_ON : RADIO_OFF}{' '}
                 {plugin_5.entry.name}
                 <Text dimColor> · {plugin_5.marketplaceName}</Text>
                 {plugin_5.entry.tags?.includes('community-managed') && (

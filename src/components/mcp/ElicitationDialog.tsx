@@ -1,4 +1,16 @@
-import { ARROW_UP, WARNING, TICK, TRIANGLE_DOWN, POINTER, CHECKBOX_ON, CHECKBOX_OFF, TRIANGLE_RIGHT, RADIO_ON, RADIO_OFF, ARROW_DOWN } from '../../constants/figures.js'
+import {
+  ARROW_UP,
+  WARNING,
+  TICK,
+  TRIANGLE_DOWN,
+  POINTER,
+  CHECKBOX_ON,
+  CHECKBOX_OFF,
+  TRIANGLE_RIGHT,
+  RADIO_ON,
+  RADIO_OFF,
+  ARROW_DOWN,
+} from '../../constants/figures.js'
 import type {
   ElicitRequestFormParams,
   ElicitRequestURLParams,

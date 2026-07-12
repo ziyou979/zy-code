@@ -11,7 +11,7 @@ import { getEmptyToolPermissionContext, type Tool, type ToolPermissionContext } 
 import type { TaskState } from '../tasks/types.js'
 import type { AgentColorName } from '../tools/AgentTool/agentColorManager.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
-import type { AllowedPrompt } from '../tools/ExitPlanModeTool/ExitPlanModeV2Tool.js'
+import type { AllowedPrompt } from '../tools/ExitPlanModeTool/ExitPlanModeTool.js'
 import type { AgentId } from '../types/ids.js'
 import type { Message, UserMessage } from '../types/message.js'
 import type { LoadedPlugin, PluginError } from '../types/plugin.js'

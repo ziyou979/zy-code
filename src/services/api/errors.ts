@@ -1031,7 +1031,12 @@ export function getAPIErrorSeverity(error: unknown): APIErrorSeverity {
   }
 
   // 客户端错误（4xx）除限速外 → terminal
-  if (isAPIError(error) && error.status !== undefined && error.status >= 400 && error.status < 500) {
+  if (
+    isAPIError(error) &&
+    error.status !== undefined &&
+    error.status >= 400 &&
+    error.status < 500
+  ) {
     // 429 是限速，可重试
     if (error.status === 429 || error.status === 408) {
       return 'retryable'

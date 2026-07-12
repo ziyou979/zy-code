@@ -2,7 +2,7 @@
 import { feature } from 'bun:bundle'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { TASK_OUTPUT_TOOL_NAME } from '../tools/TaskOutputTool/constants.js'
-import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../tools/ExitPlanModeTool/constants.js'
+import { EXIT_PLAN_MODE_TOOL_NAME } from '../tools/ExitPlanModeTool/constants.js'
 import { ENTER_PLAN_MODE_TOOL_NAME } from '../tools/EnterPlanModeTool/constants.js'
 import { AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js'
 import { ASK_USER_QUESTION_TOOL_NAME } from '../tools/AskUserQuestionTool/prompt.js'
@@ -36,7 +36,7 @@ import {
 
 export const ALL_AGENT_DISALLOWED_TOOLS = new Set([
   TASK_OUTPUT_TOOL_NAME,
-  EXIT_PLAN_MODE_V2_TOOL_NAME,
+  EXIT_PLAN_MODE_TOOL_NAME,
   ENTER_PLAN_MODE_TOOL_NAME,
   // Allow Agent tool for agents when user is ant (enables nested agents)
   ...(isInternalBuild() ? [] : [AGENT_TOOL_NAME]),

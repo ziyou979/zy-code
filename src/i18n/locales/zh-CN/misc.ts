@@ -13,7 +13,7 @@ export const zhMisc: TranslationResource = {
   'attachment.skillDiscovery': '相关技能（{count} 个）：{names}',
   'attachment.dynamicSkill': '已从 {path} 加载 {count} 个技能',
   'attachment.skillListing': '{count} 个技能可用',
-  'attachment.agentListingDelta': '{count} 种智能体可用',
+  'attachment.agentListingDelta': '{count} 种 Agent 可用',
   'agent.skillsCount': '{count} 个技能',
   'backgroundTaskStatus.toView': '查看',
   'compact.compacted': '对话已压缩（{shortcut} 查看历史）',

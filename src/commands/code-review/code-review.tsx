@@ -55,7 +55,10 @@ async function getGitDiff(): Promise<string> {
 async function getGitStagedDiff(): Promise<string> {
   const { execSync } = await import('node:child_process')
   try {
-    return execSync('git diff --cached --unified=3', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 })
+    return execSync('git diff --cached --unified=3', {
+      encoding: 'utf-8',
+      maxBuffer: 10 * 1024 * 1024,
+    })
   } catch {
     return ''
   }
@@ -83,9 +86,10 @@ async function getPRInfo(prNumber: number): Promise<string> {
 const EFFORT_PROMPTS: Record<string, string> = {
   low: 'You are a concise code reviewer. Focus on:\n1. Critical bugs or security issues\n2. Obvious code quality problems\nKeep the review brief — 3-5 bullet points maximum.',
 
-  medium: 'You are a thorough code reviewer. Focus on:\n1. Code correctness and potential bugs\n2. Security implications\n3. Performance considerations\n4. Code style and maintainability\n5. Test coverage suggestions\nFormat with clear sections. Be specific and actionable.',
+  medium:
+    'You are a thorough code reviewer. Focus on:\n1. Code correctness and potential bugs\n2. Security implications\n3. Performance considerations\n4. Code style and maintainability\n5. Test coverage suggestions\nFormat with clear sections. Be specific and actionable.',
 
-  high: 'You are a meticulous code reviewer performing deep analysis. Focus on:\n1. Correctness — edge cases, race conditions, error handling\n2. Security — injection, auth, data validation, secret exposure\n3. Performance — algorithmic complexity, resource leaks, caching\n4. Architecture — coupling, separation of concerns, API design\n5. Maintainability — naming, comments, complexity, duplication\n6. Test adequacy — what\'s missing and what\'s over-specified\n7. Operational — logging, monitoring, feature flags, rollback\nProvide specific line-level feedback with code examples where relevant.',
+  high: "You are a meticulous code reviewer performing deep analysis. Focus on:\n1. Correctness — edge cases, race conditions, error handling\n2. Security — injection, auth, data validation, secret exposure\n3. Performance — algorithmic complexity, resource leaks, caching\n4. Architecture — coupling, separation of concerns, API design\n5. Maintainability — naming, comments, complexity, duplication\n6. Test adequacy — what's missing and what's over-specified\n7. Operational — logging, monitoring, feature flags, rollback\nProvide specific line-level feedback with code examples where relevant.",
 }
 
 function buildReviewPrompt(
@@ -106,19 +110,14 @@ function buildReviewPrompt(
       'After analysis, APPLY the suggested fixes directly to the working tree using FileEditTool/FileWriteTool.\n'
   }
   if (comment) {
-    prompt +=
-      'Format review items as GitHub PR review comments with file paths and line numbers.\n'
+    prompt += 'Format review items as GitHub PR review comments with file paths and line numbers.\n'
   }
   return prompt
 }
 
 // --------------- review execution ---------------
 
-async function performReview(
-  diff: string,
-  info: string,
-  args: CodeReviewArgs,
-): Promise<string> {
+async function performReview(diff: string, info: string, args: CodeReviewArgs): Promise<string> {
   const prompt = buildReviewPrompt(diff, info, args.effort, args.fix, args.comment)
 
   const { sideQuery } = await import('../../utils/sideQuery.js')
@@ -133,16 +132,17 @@ async function performReview(
       {
         role: 'user',
         content: [
-          { type: 'text' as const, text: 'Please review the diff above and provide your analysis.' },
+          {
+            type: 'text' as const,
+            text: 'Please review the diff above and provide your analysis.',
+          },
         ],
       },
     ],
     max_tokens: args.effort === 'high' ? 8192 : args.effort === 'low' ? 2048 : 4096,
     maxRetries: 1,
   })
-  const result = response.content
-    .map((b: any) => (b.type === 'text' ? b.text : ''))
-    .join('\n')
+  const result = response.content.map((b: any) => (b.type === 'text' ? b.text : '')).join('\n')
 
   let output = result
   if (args.fix && !args.comment) {

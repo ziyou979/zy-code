@@ -831,9 +831,9 @@ function ModelsTab({
       {showScrollHint && (
         <Box marginTop={1}>
           <Text color="subtle">
-            {canScrollUp ? ARROW_UP : ' '} {canScrollDown ? ARROW_DOWN : ' '}{' '}
-            {scrollOffset + 1}-{Math.min(scrollOffset + 4, modelEntries.length)} of{' '}
-            {modelEntries.length} {tSync('stats.modelScrollHint')}
+            {canScrollUp ? ARROW_UP : ' '} {canScrollDown ? ARROW_DOWN : ' '} {scrollOffset + 1}-
+            {Math.min(scrollOffset + 4, modelEntries.length)} of {modelEntries.length}{' '}
+            {tSync('stats.modelScrollHint')}
           </Text>
         </Box>
       )}
@@ -1232,9 +1232,7 @@ function renderModelsToAnsi(stats: ZyCodeStats): string[] {
   for (const [model, usage] of topModels) {
     const modelTokens = usage.inputTokens + usage.outputTokens
     const percentage = ((modelTokens / totalTokens) * 100).toFixed(1)
-    lines.push(
-      `${BULLET} ${chalk.bold(renderModelName(model))} ${chalk.gray(`(${percentage}%)`)}`,
-    )
+    lines.push(`${BULLET} ${chalk.bold(renderModelName(model))} ${chalk.gray(`(${percentage}%)`)}`)
     lines.push(
       chalk.dim(
         `  ${tSync('stats.inOut', { in: formatNumber(usage.inputTokens), out: formatNumber(usage.outputTokens) })}`,

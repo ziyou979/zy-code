@@ -1,7 +1,5 @@
 import { tSync } from '../../i18n/index.js'
-import {
-  reloadExternalTools,
-} from '../../tools/externalToolLoader.js'
+import { reloadExternalTools } from '../../tools/externalToolLoader.js'
 import type { LocalCommandCall } from '../../types/command.js'
 
 export const call: LocalCommandCall = async (_args, _context) => {

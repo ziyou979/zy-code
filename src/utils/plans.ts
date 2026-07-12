@@ -12,7 +12,7 @@ import type {
   UserMessage,
 } from 'src/types/message.js'
 import { getPlanSlugCache, getSessionId } from '../bootstrap/state.js'
-import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../tools/ExitPlanModeTool/constants.js'
+import { EXIT_PLAN_MODE_TOOL_NAME } from '../tools/ExitPlanModeTool/constants.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { getZyConfigHomeDir } from './envUtils.js'
@@ -283,7 +283,7 @@ function recoverPlanFromMessages(log: LogOption): string | null {
       const { content } = (msg as AssistantMessage).message
       if (Array.isArray(content)) {
         for (const block of content) {
-          if (block.type === 'tool_call' && block.name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
+          if (block.type === 'tool_call' && block.name === EXIT_PLAN_MODE_TOOL_NAME) {
             const input = block.input as Record<string, unknown> | undefined
             const plan = input?.plan
             if (typeof plan === 'string' && plan.length > 0) {

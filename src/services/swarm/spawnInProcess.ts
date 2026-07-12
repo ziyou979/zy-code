@@ -31,6 +31,7 @@ import { createTaskStateBase, generateTaskId } from '../../Task.js'
 import type {
   InProcessTeammateTaskState,
   TeammateIdentity,
+  AgentLifecycleMode,
 } from '../../tasks/InProcessTeammateTask/types.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { formatAgentId } from '../../utils/agentId.js'
@@ -39,6 +40,7 @@ import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { createTeammateContext } from '../../utils/teammateContext.js'
 import { removeMemberByAgentId } from './teamHelpers.js'
+import { checkSpawnCapacity } from './agentCapacity.js'
 
 type SetAppStateFn = (updater: (prev: AppState) => AppState) => void
 
@@ -67,6 +69,13 @@ export type InProcessSpawnConfig = {
   planModeRequired: boolean
   /** Optional model override for this teammate */
   model?: string
+  /**
+   * Lifecycle mode for this agent.
+   * - ephemeral: 完成当前 assignment 后终止，不进入 idle 等待
+   * - persistent: 作为团队成员保持存活，支持 idle/hibernate
+   * 默认值为 'ephemeral'，只有显式 Teammate 创建才设为 persistent。
+   */
+  lifecycleMode?: import('../../tasks/InProcessTeammateTask/types.js').AgentLifecycleMode
 }
 
 /**
@@ -103,7 +112,7 @@ export async function spawnInProcessTeammate(
   config: InProcessSpawnConfig,
   context: SpawnContext,
 ): Promise<InProcessSpawnOutput> {
-  const { name, teamName, prompt, color, planModeRequired, model } = config
+  const { name, teamName, prompt, color, planModeRequired, model, lifecycleMode } = config
   const { setAppState } = context
 
   // Generate deterministic agent ID
@@ -113,6 +122,27 @@ export async function spawnInProcessTeammate(
   logForDebugging(`[spawnInProcessTeammate] Spawning ${agentId} (taskId: ${taskId})`)
 
   try {
+    // 全局容量背压检查：通过 setAppState 非修改回调读取当前 AppState
+    let appStateForCapacity: AppState | undefined
+    context.setAppState((prev) => {
+      appStateForCapacity = prev
+      return prev
+    })
+    const capacity = checkSpawnCapacity(() => appStateForCapacity ?? ({} as AppState))
+    if (!capacity.canSpawn) {
+      logForDebugging(
+        `[spawnInProcessTeammate] Capacity limit reached: ${capacity.residentCount} resident, ${capacity.concurrentCount} concurrent`,
+      )
+      return {
+        success: false,
+        agentId,
+        error: capacity.reason ?? 'Agent capacity limit reached',
+      }
+    }
+    logForDebugging(
+      `[spawnInProcessTeammate] Capacity OK: ${capacity.residentCount} resident, ${capacity.concurrentCount} concurrent`,
+    )
+
     // Create independent AbortController for this teammate
     // Teammates should not be aborted when the leader's query is interrupted
     const abortController = createAbortController()
@@ -161,6 +191,7 @@ export async function spawnInProcessTeammate(
       awaitingPlanApproval: false,
       spinnerVerb: tSync('common.spinnerVerb'),
       pastTenseVerb: tSync('common.turnCompletionVerb'),
+      lifecycleMode: lifecycleMode ?? 'ephemeral',
       permissionMode: planModeRequired ? 'plan' : 'default',
       isIdle: false,
       shutdownRequested: false,

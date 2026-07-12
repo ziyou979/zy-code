@@ -50,18 +50,13 @@ function ToolsList({ onDone }: { onDone: LocalJSXCommandOnDone }) {
       <Box marginBottom={1} flexShrink={0}>
         <Text bold>{tSync('commands.tools.title')}</Text>
         <Text dimColor>
-          {' '}({builtinTools.length + externalTools.length}{' '}
-          {tSync('commands.tools.total')})
+          {' '}
+          ({builtinTools.length + externalTools.length} {tSync('commands.tools.total')})
         </Text>
       </Box>
 
       {/* 可滚动列表 */}
-      <ScrollBox
-        ref={scrollRef}
-        flexDirection="column"
-        height={contentHeight}
-        flexShrink={1}
-      >
+      <ScrollBox ref={scrollRef} flexDirection="column" height={contentHeight} flexShrink={1}>
         {/* 内置工具 */}
         {builtinTools.length > 0 && (
           <Box flexDirection="column" marginBottom={1}>
@@ -78,9 +73,7 @@ function ToolsList({ onDone }: { onDone: LocalJSXCommandOnDone }) {
                   <Text>
                     {' '}
                     <Text bold>{tool.name}</Text>
-                    {displayName !== tool.name && (
-                      <Text dimColor> ({displayName})</Text>
-                    )}
+                    {displayName !== tool.name && <Text dimColor> ({displayName})</Text>}
                   </Text>
                 </Box>
               )
@@ -104,10 +97,7 @@ function ToolsList({ onDone }: { onDone: LocalJSXCommandOnDone }) {
                   <Text>
                     {' '}
                     <Text bold>{tool.name}</Text>
-                    {displayName !== tool.name && (
-                      <Text dimColor> ({displayName})</Text>
-                    )}
-                    {' '}
+                    {displayName !== tool.name && <Text dimColor> ({displayName})</Text>}{' '}
                     <Text color="success">{tSync('commands.tools.externalTag')}</Text>
                   </Text>
                 </Box>

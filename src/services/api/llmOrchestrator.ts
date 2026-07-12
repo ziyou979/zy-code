@@ -1739,7 +1739,10 @@ async function* queryModel(
       // 并再次运行它。参见 inc-4258。
       const disableFallback =
         isEnvTruthy(process.env.ZY_CODE_DISABLE_NONSTREAMING_FALLBACK) ||
-        getFeatureValue_CACHED_MAY_BE_STALE('zy_disable_streaming_to_non_streaming_fallback', false) ||
+        getFeatureValue_CACHED_MAY_BE_STALE(
+          'zy_disable_streaming_to_non_streaming_fallback',
+          false,
+        ) ||
         // terminal 错误（认证、参数错误等）不会因为重试/回退而成功
         getAPIErrorSeverity(streamingError) === 'terminal'
 

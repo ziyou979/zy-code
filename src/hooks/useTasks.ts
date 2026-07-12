@@ -26,7 +26,7 @@ const FALLBACK_POLL_MS = 5000 // Fallback in case fs.watch misses events
  *
  * Implements the useSyncExternalStore contract: subscribe/getSnapshot.
  */
-class TasksV2Store {
+class TasksStore {
   /** Stable array reference; replaced only on fetch. undefined until started. */
   #tasks: Task[] | undefined = undefined
   /**
@@ -206,9 +206,9 @@ class TasksV2Store {
   }
 }
 
-let _store: TasksV2Store | null = null
-function getStore(): TasksV2Store {
-  return (_store ??= new TasksV2Store())
+let _store: TasksStore | null = null
+function getStore(): TasksStore {
+  return (_store ??= new TasksStore())
 }
 
 // Stable no-ops for the disabled path so useSyncExternalStore doesn't
@@ -220,10 +220,10 @@ const NOOP_SNAPSHOT = (): undefined => undefined
 /**
  * Hook to get the current task list for the persistent UI display.
  * Returns tasks when TodoV2 is enabled, otherwise returns undefined.
- * All hook instances share a single file watcher via TasksV2Store.
+ * All hook instances share a single file watcher via TasksStore.
  * Hides the list after 5 seconds if there are no open tasks.
  */
-export function useTasksV2(): Task[] | undefined {
+export function useTasks(): Task[] | undefined {
   const teamContext = useAppState((s) => s.teamContext)
 
   const enabled = isTodoV2Enabled() && (!teamContext || isTeamLead(teamContext))
@@ -237,12 +237,12 @@ export function useTasksV2(): Task[] | undefined {
 }
 
 /**
- * Same as useTasksV2, plus collapses the expanded task view when the list
+ * Same as useTasks, plus collapses the expanded task view when the list
  * becomes hidden. Call this from exactly one always-mounted component (REPL)
  * so the collapse effect runs once instead of N× per consumer.
  */
-export function useTasksV2WithCollapseEffect(): Task[] | undefined {
-  const tasks = useTasksV2()
+export function useTasksWithCollapseEffect(): Task[] | undefined {
+  const tasks = useTasks()
   const setAppState = useSetAppState()
 
   const hidden = tasks === undefined

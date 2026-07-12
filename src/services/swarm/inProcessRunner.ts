@@ -37,10 +37,18 @@ import type { AppState } from '../../state/AppState.js'
 import type { Tool, ToolUseContext } from '../../Tool.js'
 import { appendTeammateMessage } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
 import type {
+  ClaimedTaskAssignment,
   InProcessTeammateTaskState,
   TeammateIdentity,
+  AgentLifecycleMode,
 } from '../../tasks/InProcessTeammateTask/types.js'
-import { appendCappedMessage } from '../../tasks/InProcessTeammateTask/types.js'
+import {
+  AGENT_HISTORY_MAX_BYTES,
+  AGENT_HISTORY_MAX_MESSAGES,
+  IDLE_HOT_MS,
+  IDLE_COMPACT_MS,
+  appendCappedMessage,
+} from '../../tasks/InProcessTeammateTask/types.js'
 import {
   createActivityDescriptionResolver,
   createProgressTracker,
@@ -83,7 +91,7 @@ import { hasPermissionsToUseTool } from '../../utils/permissions/permissions.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { claimTask, listTasks, type Task, updateTask } from '../../utils/tasks.js'
+import { claimTask, getTask, listTasks, type Task, updateTask } from '../../utils/tasks.js'
 import type { TeammateContext } from '../../utils/teammateContext.js'
 import { runWithTeammateContext } from '../../utils/teammateContext.js'
 import {
@@ -97,6 +105,7 @@ import {
 } from '../../utils/teammateMailbox.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
 import { createContentReplacementState } from '../../utils/toolResultStorage.js'
+import { saveHibernateSnapshot, deleteHibernateSnapshot } from './hibernateSnapshot.js'
 import { TEAM_LEAD_NAME } from './constants.js'
 import {
   getLeaderSetToolPermissionContext,
@@ -433,6 +442,34 @@ function formatAsTeammateMessage(
 }
 
 /**
+ * 估算消息历史的字节大小（JSON 序列化长度作为近似值）。
+ */
+function estimateMessagesBytes(messages: Message[]): number {
+  let total = 0
+  // 采样：如果消息过多，只估算最近的消息 + 按比例推算
+  if (messages.length > 50) {
+    // 采样最近 20 条和第一条（系统 prompt 可能较大）
+    for (let i = 0; i < 1 && i < messages.length; i++) {
+      total += jsonStringify(messages[i]!).length
+    }
+    const sampleSize = Math.min(20, messages.length - 1)
+    const startIdx = messages.length - sampleSize
+    for (let i = startIdx; i < messages.length; i++) {
+      total += jsonStringify(messages[i]!).length
+    }
+    // 按比例推算中间部分
+    const sampledCount = 1 + sampleSize
+    const avgBytes = total / sampledCount
+    total = Math.round(avgBytes * messages.length)
+  } else {
+    for (const msg of messages) {
+      total += jsonStringify(msg).length
+    }
+  }
+  return total
+}
+
+/**
  * 运行进程内队友的配置。
  */
 export type InProcessRunnerConfig = {
@@ -466,6 +503,8 @@ export type InProcessRunnerConfig = {
   /** 创建此队友的 API 调用的 request_id，用于
    *  zy_api_* 事件的血统追踪。 */
   invokingRequestId?: string
+  /** 生命周期模式：ephemeral 完成首轮后终止，persistent 保持存活 */
+  lifecycleMode: AgentLifecycleMode
 }
 
 /**
@@ -583,15 +622,24 @@ function formatTaskAsPrompt(task: Task): string {
 
 /**
  * 尝试从团队的任务列表中领取一个可用任务。
- * 如果领取了任务则返回格式化的 prompt，没有可用任务则返回 undefined。
+ * 返回结构化 assignment + prompt，或 undefined（无任务）。
+ * claimTask 现在会原子地设置 owner、status: in_progress 和 claimToken。
  */
 async function tryClaimNextTask(
   taskListId: string,
   agentName: string,
-): Promise<string | undefined> {
+  taskId?: string,
+  setAppState?: SetAppStateFn,
+): Promise<
+  | {
+      assignment: ClaimedTaskAssignment
+      prompt: string
+    }
+  | undefined
+> {
   try {
     const tasks = await listTasks(taskListId)
-    const availableTask = findAvailableTask(tasks)
+    const availableTask = taskId ? tasks.find((t) => t.id === taskId) : findAvailableTask(tasks)
 
     if (!availableTask) {
       return undefined
@@ -606,12 +654,48 @@ async function tryClaimNextTask(
       return undefined
     }
 
-    // 同时设置状态为 in_progress，使 UI 立即反映
-    await updateTask(taskListId, availableTask.id, { status: 'in_progress' })
+    logForDebugging(
+      `[inProcessRunner] Claimed task #${availableTask.id}: ${availableTask.subject} (rev=${result.claimRevision})`,
+    )
 
-    logForDebugging(`[inProcessRunner] Claimed task #${availableTask.id}: ${availableTask.subject}`)
+    // 将结构化 assignment 保存到 task state
+    if (setAppState && result.claimToken) {
+      setAppState((prev) => {
+        const t = prev.tasks[taskId ?? '']
+        if (!t || t.type !== 'in_process_teammate') {
+          return prev
+        }
+        return {
+          ...prev,
+          tasks: {
+            ...prev.tasks,
+            [t.id]: {
+              ...t,
+              currentAssignment: {
+                taskListId,
+                taskId: availableTask.id,
+                owner: agentName,
+                claimToken: result.claimToken!,
+                claimedAt: Date.now(),
+                version: result.claimRevision ?? 0,
+              },
+            },
+          },
+        }
+      })
+    }
 
-    return formatTaskAsPrompt(availableTask)
+    return {
+      assignment: {
+        taskListId,
+        taskId: availableTask.id,
+        owner: agentName,
+        claimToken: result.claimToken ?? '',
+        claimedAt: Date.now(),
+        version: result.claimRevision ?? 0,
+      },
+      prompt: formatTaskAsPrompt(availableTask),
+    }
   } catch (err) {
     logForDebugging(`[inProcessRunner] Error checking task list: ${err}`)
     return undefined
@@ -637,6 +721,9 @@ type WaitResult =
   | {
       type: 'aborted'
     }
+  | {
+      type: 'hibernate'
+    }
 
 /**
  * 等待新的 prompt 或 shutdown 请求。
@@ -648,6 +735,20 @@ type WaitResult =
  * 这使得队友保持在 'idle' 状态而不是终止。
  * 不会自动批准 shutdown —— 应该由模型做出决定。
  */
+/**
+ * 在 idle 状态中是否应暂停 TTL（不 hibernate）。
+ */
+function shouldPauseIdleTtl(task: InProcessTeammateTaskState | undefined): boolean {
+  if (!task) {
+    return false
+  }
+  // 有未读 pending 消息 → 暂停（用户正在交互）
+  if (task.pendingUserMessages.length > 0) {
+    return true
+  }
+  return false
+}
+
 async function waitForNextPromptOrShutdown(
   identity: TeammateIdentity,
   abortController: AbortController,
@@ -655,6 +756,8 @@ async function waitForNextPromptOrShutdown(
   getAppState: () => AppState,
   setAppState: SetAppStateFn,
   taskListId: string,
+  lifecycleMode: AgentLifecycleMode,
+  idleSince?: number,
 ): Promise<WaitResult> {
   const POLL_INTERVAL_MS = 500
 
@@ -708,6 +811,50 @@ async function waitForNextPromptOrShutdown(
         `[inProcessRunner] ${identity.agentName} aborted while waiting (poll #${pollCount})`,
       )
       return { type: 'aborted' }
+    }
+
+    // persistent 模式：检查 idle TTL，决定是否 hibernate
+    if (lifecycleMode === 'persistent' && idleSince !== undefined && pollCount > 0) {
+      const now = Date.now()
+      const idleDuration = now - idleSince
+
+      // 更新 idle-compact 标记（IDLE_HOT_MS 后进入 compact 阶段）
+      if (idleDuration > IDLE_HOT_MS) {
+        const currentTaskState = getAppState().tasks[taskId]
+        if (
+          currentTaskState?.type === 'in_process_teammate' &&
+          !currentTaskState.isIdleCompact &&
+          !shouldPauseIdleTtl(currentTaskState)
+        ) {
+          setAppState((prev) => {
+            const t = prev.tasks[taskId]
+            if (!t || t.type !== 'in_process_teammate') {
+              return prev
+            }
+            return {
+              ...prev,
+              tasks: {
+                ...prev.tasks,
+                [taskId]: { ...t, isIdleCompact: true },
+              },
+            }
+          })
+          logForDebugging(
+            `[inProcessRunner] ${identity.agentName} moved to idle-compact after ${Math.round(idleDuration / 1000)}s`,
+          )
+        }
+      }
+
+      // IDLE_COMPACT_MS 后触发 hibernate
+      if (
+        idleDuration > IDLE_COMPACT_MS &&
+        !shouldPauseIdleTtl(getAppState().tasks[taskId] as InProcessTeammateTaskState | undefined)
+      ) {
+        logForDebugging(
+          `[inProcessRunner] ${identity.agentName} idle TTL expired (${Math.round(idleDuration / 1000)}s), hibernating`,
+        )
+        return { type: 'hibernate' }
+      }
     }
 
     // 检查邮箱中的消息
@@ -791,11 +938,16 @@ async function waitForNextPromptOrShutdown(
     }
 
     // 检查团队的任务列表是否有未领取的任务
-    const taskPrompt = await tryClaimNextTask(taskListId, identity.agentName)
-    if (taskPrompt) {
+    const claimResult = await tryClaimNextTask(
+      taskListId,
+      identity.agentName,
+      undefined,
+      setAppState,
+    )
+    if (claimResult) {
       return {
         type: 'new_message',
-        message: taskPrompt,
+        message: claimResult.prompt,
         from: 'task-list',
       }
     }
@@ -838,6 +990,7 @@ export async function runInProcessTeammate(
     allowedTools,
     allowPermissionPrompts,
     invokingRequestId,
+    lifecycleMode,
   } = config
   const { setAppState } = toolUseContext
 
@@ -941,12 +1094,13 @@ export async function runInProcessTeammate(
   const wrappedInitialPrompt = formatAsTeammateMessage('team-lead', prompt, undefined, description)
   let currentPrompt = wrappedInitialPrompt
   let shouldExit = false
+  let isHibernating = false
 
   // 立即尝试领取可用任务，使 UI 从一开始就能显示活动。
   // 空闲循环会处理后续任务的领取。
   // 使用 parentSessionId 作为任务列表 ID，因为 leader 在其
   // 会话 ID 下创建任务，而不是团队名称。
-  await tryClaimNextTask(identity.parentSessionId, identity.agentName)
+  await tryClaimNextTask(identity.parentSessionId, identity.agentName, undefined, setAppState)
 
   try {
     // 将初始 prompt 添加到 task.messages 用于显示（用 XML 包装）
@@ -996,10 +1150,17 @@ export async function runInProcessTeammate(
       })
       const promptMessages: Message[] = [userMessage]
 
-      // 检查在构建上下文之前是否需要压缩
+      // 检查在构建上下文之前是否需要压缩（三重预算：token + 消息数 + 字节）
       let contextMessages = allMessages
       const tokenCount = tokenCountWithEstimation(allMessages)
-      if (tokenCount > getAutoCompactThreshold(toolUseContext.options.mainLoopModel)) {
+      const messageCount = allMessages.length
+      const byteCount = estimateMessagesBytes(allMessages)
+      const tokenThreshold = getAutoCompactThreshold(toolUseContext.options.mainLoopModel)
+      const needsCompact =
+        tokenCount > tokenThreshold ||
+        messageCount > AGENT_HISTORY_MAX_MESSAGES ||
+        byteCount > AGENT_HISTORY_MAX_BYTES
+      if (needsCompact) {
         logForDebugging(
           `[inProcessRunner] ${identity.agentId} compacting history (${tokenCount} tokens)`,
         )
@@ -1229,13 +1390,60 @@ export async function runInProcessTeammate(
       const prevTask = prevAppState.tasks[taskId]
       const wasAlreadyIdle = prevTask?.type === 'in_process_teammate' && prevTask.isIdle
 
+      // idle reconciliation：核对当前 assignment 状态
+      if (!wasAlreadyIdle) {
+        const currentAssignment = (
+          toolUseContext.getAppState().tasks[taskId] as InProcessTeammateTaskState | undefined
+        )?.currentAssignment
+        if (currentAssignment) {
+          const reconciledTask = await getTask(
+            currentAssignment.taskListId,
+            currentAssignment.taskId,
+          )
+          if (reconciledTask) {
+            if (reconciledTask.status === 'completed') {
+              // task 已在磁盘上标记完成 → 清除本地 assignment
+              logForDebugging(
+                `[inProcessRunner] ${identity.agentName} reconciled assignment #${currentAssignment.taskId}: already completed on disk, clearing local assignment`,
+              )
+              updateTaskState(
+                taskId,
+                (task) => ({ ...task, currentAssignment: undefined }),
+                setAppState,
+              )
+            } else {
+              logForDebugging(
+                `[inProcessRunner] ${identity.agentName} reconciled assignment #${currentAssignment.taskId}: disk status="${reconciledTask.status}", keeping assignment`,
+              )
+            }
+          } else {
+            logForDebugging(
+              `[inProcessRunner] ${identity.agentName} reconciled assignment #${currentAssignment.taskId}: task not found on disk, clearing`,
+            )
+            updateTaskState(
+              taskId,
+              (task) => ({ ...task, currentAssignment: undefined }),
+              setAppState,
+            )
+          }
+        }
+      }
+
       // 将任务标记为空闲（不是完成）并通知任何等待者
       updateTaskState(
         taskId,
         (task) => {
           // 调用任何已注册的空闲回调
           task.onIdleCallbacks?.forEach((cb) => cb())
-          return { ...task, isIdle: true, onIdleCallbacks: [] }
+          return {
+            ...task,
+            isIdle: true,
+            // 首次进入 idle 时记录时间戳（用于 TTL 计算）
+            idleSince: task.idleSince ?? Date.now(),
+            isIdleCompact: false,
+            isHibernated: false,
+            onIdleCallbacks: [],
+          }
         },
         setAppState,
       )
@@ -1258,7 +1466,31 @@ export async function runInProcessTeammate(
 
       logForDebugging(`[inProcessRunner] ${identity.agentId} finished prompt, waiting for next`)
 
+      // 进入 idle 前检查 history 字节预算：如果超过 idle 预算，强制压缩
+      if (allMessages.length > 0 && lifecycleMode !== 'ephemeral') {
+        const idleByteEstimate = estimateMessagesBytes(allMessages)
+        if (idleByteEstimate > 0) {
+          // 记录当前预算状态（暂不触发压缩——下一轮开始时自动处理）
+          logForDebugging(
+            `[inProcessRunner] ${identity.agentId} idle history budget: ~${Math.round(idleByteEstimate / 1024)}KB`,
+          )
+        }
+      }
+
+      // ephemeral 模式：完成首轮后退出，不进入 idle 等待
+      if (lifecycleMode === 'ephemeral') {
+        logForDebugging(
+          `[inProcessRunner] ${identity.agentId} ephemeral mode, exiting after first round`,
+        )
+        shouldExit = true
+        continue
+      }
+
       // 等待下一个消息或 shutdown
+      // 获取当前的 idleSince（可能已被其他路径更新）
+      const idleSince = (
+        toolUseContext.getAppState().tasks[taskId] as InProcessTeammateTaskState | undefined
+      )?.idleSince
       const waitResult = await waitForNextPromptOrShutdown(
         identity,
         abortController,
@@ -1266,10 +1498,13 @@ export async function runInProcessTeammate(
         toolUseContext.getAppState,
         setAppState,
         identity.parentSessionId,
+        lifecycleMode,
+        idleSince,
       )
 
       switch (waitResult.type) {
         case 'shutdown_request':
+          // 将 shutdown 请求传递给模型进行决策
           // 将 shutdown 请求传递给模型进行决策
           // 格式化为 teammate-message 以与 tmux 队友接收方式保持一致
           // 模型将使用 approveShutdown 或 rejectShutdown 工具
@@ -1315,6 +1550,14 @@ export async function runInProcessTeammate(
           }
           break
 
+        case 'hibernate':
+          logForDebugging(
+            `[inProcessRunner] ${identity.agentId} idle TTL expired, entering hibernate`,
+          )
+          shouldExit = true
+          isHibernating = true
+          break
+
         case 'aborted':
           logForDebugging(`[inProcessRunner] ${identity.agentId} aborted while waiting`)
           shouldExit = true
@@ -1322,7 +1565,52 @@ export async function runInProcessTeammate(
       }
     }
 
-    // 退出循环时标记为完成
+    // hibernate 路径：不标记完成，不清除 AppState，仅清除运行时引用
+    if (isHibernating) {
+      // 保存 hibernate 快照，用于后续 resume
+      const snapshotPath = await saveHibernateSnapshot(identity, {
+        model: model ?? undefined,
+        permissionMode: 'default',
+        summary: allMessages.slice(-10), // 保留最近 10 条消息作为上下文
+        transcriptPath: '',
+        lastActiveAt: Date.now(),
+        lifecycleMode: 'persistent',
+      }).catch((err) => {
+        logForDebugging(`[inProcessRunner] Failed to save hibernate snapshot: ${err}`)
+        return ''
+      })
+
+      updateTaskState(
+        taskId,
+        (task) => {
+          task.onIdleCallbacks?.forEach((cb) => cb())
+          task.unregisterCleanup?.()
+          return {
+            ...task,
+            // 保持 status: 'running' 但标记 hibernated，runner 已退出
+            isHibernated: true,
+            hibernationSnapshotPath: snapshotPath || undefined,
+            endTime: Date.now(),
+            messages: task.messages?.length ? [task.messages.at(-1)!] : undefined,
+            pendingUserMessages: [],
+            inProgressToolUseIDs: undefined,
+            abortController: undefined,
+            unregisterCleanup: undefined,
+            currentWorkAbortController: undefined,
+            onIdleCallbacks: [],
+          }
+        },
+        setAppState,
+      )
+
+      // 不发送 SDK task_terminated 事件 — 只暂停，未结束
+      // 不清理 task output — resume 时需要历史
+      unregisterPerfettoAgent(identity.agentId)
+      logForDebugging(`[inProcessRunner] ${identity.agentId} hibernated successfully`)
+      return { success: true, messages: allMessages }
+    }
+
+    // 退出循环时标记为完成（非 hibernate 路径）
     let alreadyTerminal = false
     let toolUseId: string | undefined
     updateTaskState(

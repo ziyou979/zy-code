@@ -149,7 +149,7 @@ export default {
   searchHint: 'search the web for current information',
   isReadOnly: true,
   // 设为 false 可快捷关闭此工具，无需删除文件
-  enabled: true,
+  enabled: false,
   inputSchema: {
     type: 'object',
     properties: {

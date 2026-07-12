@@ -25,7 +25,7 @@ import {
 } from '../../utils/plugins/dependencyResolver.js'
 import {
   loadInstalledPluginsFromDisk,
-  loadInstalledPluginsV2,
+  loadInstalledPlugins,
   removePluginInstallation,
   updateInstallationPathOnDisk,
 } from '../../utils/plugins/installedPluginsManager.js'
@@ -213,7 +213,7 @@ function findPluginByIdentifier(plugin: string, plugins: LoadedPlugin[]): Loaded
  */
 function resolveDelistedPluginId(plugin: string): { pluginId: string; pluginName: string } | null {
   const { name } = parsePluginIdentifier(plugin)
-  const installedData = loadInstalledPluginsV2()
+  const installedData = loadInstalledPlugins()
 
   // Try exact match first, then search by name
   if (installedData.plugins[plugin]?.length) {
@@ -241,7 +241,7 @@ export function getPluginInstallationFromV2(pluginId: string): {
   scope: PluginScope
   projectPath?: string
 } {
-  const installedData = loadInstalledPluginsV2()
+  const installedData = loadInstalledPlugins()
   const installations = installedData.plugins[pluginId]
 
   if (!installations || installations.length === 0) {
@@ -457,7 +457,7 @@ export async function uninstallPluginOp(
 
   // Check if the plugin is installed in this scope (in V2 file)
   const projectPath = getProjectPathForScope(scope)
-  const installedData = loadInstalledPluginsV2()
+  const installedData = loadInstalledPlugins()
   const installations = installedData.plugins[pluginId]
   const scopeInstallation = installations?.find(
     (i) => i.scope === scope && i.projectPath === projectPath,
@@ -503,7 +503,7 @@ export async function uninstallPluginOp(
   // Remove from installed_plugins_v2.json for this scope
   removePluginInstallation(pluginId, scope, projectPath)
 
-  const updatedData = loadInstalledPluginsV2()
+  const updatedData = loadInstalledPlugins()
   const remainingInstallations = updatedData.plugins[pluginId]
   const isLastScope = !remainingInstallations || remainingInstallations.length === 0
   if (isLastScope && installPath) {

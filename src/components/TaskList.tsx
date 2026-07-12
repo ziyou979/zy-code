@@ -1,4 +1,10 @@
-import { TICK, SQUARE_SMALL_FILLED, SQUARE_SMALL, POINTER_SMALL, ELLIPSIS } from '../constants/figures.js'
+import {
+  TICK,
+  SQUARE_SMALL_FILLED,
+  SQUARE_SMALL,
+  POINTER_SMALL,
+  ELLIPSIS,
+} from '../constants/figures.js'
 import * as React from 'react'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { stringWidth } from '../ink/stringWidth.js'
@@ -20,6 +26,12 @@ import ThemedText from './design-system/ThemedText.js'
 type Props = {
   tasks: Task[]
   isStandalone?: boolean
+  /**
+   * 父布局提供的可用行数预算。
+   * 当设置时，覆盖内部基于 terminal rows 的计算。
+   * 用于 FullscreenLayout 中 bottom slot 受 maxHeight="50%" 约束的场景。
+   */
+  maxDisplayRows?: number
 }
 const RECENT_COMPLETED_TTL_MS = 30_000
 function byIdAsc(a: Task, b: Task): number {
@@ -30,7 +42,7 @@ function byIdAsc(a: Task, b: Task): number {
   }
   return a.id.localeCompare(b.id)
 }
-export function TaskListV2({ tasks, isStandalone = false }: Props): React.ReactNode {
+export function TaskList({ tasks, isStandalone = false, maxDisplayRows }: Props): React.ReactNode {
   const teamContext = useAppState((s) => s.teamContext)
   const appStateTasks = useAppState((s_0) => s_0.tasks)
   const [, forceUpdate] = React.useState(0)
@@ -44,7 +56,15 @@ export function TaskListV2({ tasks, isStandalone = false }: Props): React.ReactN
       tasks.filter((t) => t.status === 'completed').map((t_0) => t_0.id),
     )
   }
-  const maxDisplay = rows <= 10 ? 0 : Math.min(10, Math.max(3, rows - 14))
+  // 当 maxDisplayRows 由父布局提供时，优先使用（FullscreenLayout bottom slot 只有 50% 高度）。
+  // 兜底计算：isStandalone 时从总行数推导 bottom slot 可用行数。
+  const effectiveRows = isStandalone ? Math.floor(rows / 2) : rows
+  const maxDisplay =
+    maxDisplayRows !== undefined
+      ? Math.max(0, maxDisplayRows)
+      : effectiveRows <= 10
+        ? 0
+        : Math.min(10, Math.max(3, effectiveRows - 14))
 
   // Update completion timestamps: reset when a task transitions to completed
   const currentCompletedIds = new Set(

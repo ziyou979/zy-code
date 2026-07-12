@@ -6,7 +6,7 @@ import { feature } from 'bun:bundle'
 import { quote } from 'src/shell-eval/bash/shellQuote.js'
 import { AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
-import { ExitPlanModeV2Tool } from 'src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.js'
+import { ExitPlanModeTool } from 'src/tools/ExitPlanModeTool/ExitPlanModeTool.js'
 import { FILE_READ_TOOL_NAME, MAX_LINES_TO_READ } from 'src/tools/FileReadTool/prompt.js'
 import { OUTPUT_STYLE_CONFIG } from '../../constants/outputStyles.js'
 import { DiagnosticTrackingService } from '../../services/diagnosticTracking.js'
@@ -431,7 +431,7 @@ You are returning to plan mode after having previously exited it. A plan file ex
 3. Decide how to proceed:
    - **Different task**: If the user's request is for a different task—even if it's similar or related—start fresh by overwriting the existing plan
    - **Same task, continuing**: If this is explicitly a continuation or refinement of the exact same task, modify the existing plan while cleaning up outdated or irrelevant sections
-4. Continue on with the plan process and most importantly you should always edit the plan file one way or the other before calling ${ExitPlanModeV2Tool.name}
+4. Continue on with the plan process and most importantly you should always edit the plan file one way or the other before calling ${ExitPlanModeTool.name}
 
 Treat this as a fresh planning session. Do not assume the existing plan is relevant without evaluating it first.`
 

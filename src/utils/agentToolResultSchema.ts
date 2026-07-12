@@ -40,12 +40,12 @@ export const agentToolResultSchema = lazySchema(() =>
     incomplete: z.boolean().optional(),
     errorKind: z
       .enum([
-        'usage_limit',   // API 用量限额（usage limit / rate limit）
-        'rate_limited',  // 429 限流
-        'server_error',  // 5xx / overloaded / server error
-        'stream_failure',// 流式中断 / watchdog 超时
-        'refusal',       // 模型拒绝
-        'internal',      // 内部错误（超时 / 工具执行失败）
+        'usage_limit', // API 用量限额（usage limit / rate limit）
+        'rate_limited', // 429 限流
+        'server_error', // 5xx / overloaded / server error
+        'stream_failure', // 流式中断 / watchdog 超时
+        'refusal', // 模型拒绝
+        'internal', // 内部错误（超时 / 工具执行失败）
       ])
       .optional(),
     errorMessage: z.string().optional(),

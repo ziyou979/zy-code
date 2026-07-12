@@ -1,7 +1,4 @@
-import {
-  clearCommandMemoizationCaches,
-  getSkillToolCommands,
-} from '../../commands.js'
+import { clearCommandMemoizationCaches, getSkillToolCommands } from '../../commands.js'
 import { tSync } from '../../i18n/index.js'
 import { clearPluginSkillsCache } from '../../services/plugins/loadPluginCommands.js'
 import { clearDynamicSkills } from '../../skills/loadSkillsDir.js'
@@ -46,10 +43,20 @@ export const call: LocalCommandCall = async (_args, context) => {
   // 有变化：展示变化详情
   const parts: string[] = []
   if (added.length > 0) {
-    parts.push(tSync('commands.reloadSkills.added', { count: String(added.length), names: added.join(', ') }))
+    parts.push(
+      tSync('commands.reloadSkills.added', {
+        count: String(added.length),
+        names: added.join(', '),
+      }),
+    )
   }
   if (removed.length > 0) {
-    parts.push(tSync('commands.reloadSkills.removed', { count: String(removed.length), names: removed.join(', ') }))
+    parts.push(
+      tSync('commands.reloadSkills.removed', {
+        count: String(removed.length),
+        names: removed.join(', '),
+      }),
+    )
   }
 
   return {

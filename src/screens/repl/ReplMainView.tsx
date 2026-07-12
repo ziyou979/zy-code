@@ -40,7 +40,7 @@ import { ScrollKeybindingHandler } from '../../components/ScrollKeybindingHandle
 import { SessionBackgroundHint } from '../../components/SessionBackgroundHint.js'
 import { SkillImprovementSurvey } from '../../components/SkillImprovementSurvey.js'
 import { BriefIdleStatus, SpinnerWithVerb } from '../../components/Spinner.js'
-import { TaskListV2 } from '../../components/TaskListV2.js'
+import { TaskList } from '../../components/TaskList.js'
 import { TeammateViewHeader } from '../../components/TeammateViewHeader.js'
 import { useNotifications } from '../../context/notifications.js'
 import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js'
@@ -52,7 +52,7 @@ import type { IDESelection } from '../../hooks/useIdeSelection.js'
 import { useIssueFlagBanner } from '../../hooks/useIssueFlagBanner.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useSkillImprovementSurvey } from '../../hooks/useSkillImprovementSurvey.js'
-import { useTasksV2WithCollapseEffect } from '../../hooks/useTasksV2.js'
+import { useTasksWithCollapseEffect } from '../../hooks/useTasks.js'
 import type { ScrollBoxHandle } from '../../ink/components/ScrollBox.js'
 import { Box } from '../../ink.js'
 import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js'
@@ -424,7 +424,7 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
   onSubmitRef.current = onSubmit
 
   // ── Hooks only used by this view ──
-  const tasksV2 = useTasksV2WithCollapseEffect()
+  const todoTasks = useTasksWithCollapseEffect()
 
   const hasRunningTeammates = useMemo(
     () => getAllInProcessTeammateTasks(tasks).some((t) => t.status === 'running'),
@@ -823,10 +823,10 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
                 {!showSpinner &&
                   !toolJSX?.isLocalJSXCommand &&
                   showExpandedTodos &&
-                  tasksV2 &&
-                  tasksV2.length > 0 && (
-                    <Box width="100%" flexDirection="column">
-                      <TaskListV2 tasks={tasksV2} isStandalone={true} />
+                  todoTasks &&
+                  todoTasks.length > 0 && (
+                    <Box width="100%" flexDirection="column" flexShrink={1} overflow="hidden">
+                      <TaskList tasks={todoTasks} isStandalone={true} />
                     </Box>
                   )}
                 <ReplDialogDispatch

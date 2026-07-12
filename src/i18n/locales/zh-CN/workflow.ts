@@ -9,8 +9,8 @@ export const zhWorkflow: TranslationResource = {
     '工作流运行时暂不可用。脚本已验证但无法在当前构建中执行。该功能正在开发中。',
   'workflow.launched':
     '工作流「{name}」已启动。完成时你将收到 <task-notification> 通知。使用 /workflows 查看进度。',
-  'workflow.completed': '已完成，共 {count} 个子智能体。',
-  'workflow.completedWithResult': '已完成，共 {count} 个子智能体。结果：{result}',
+  'workflow.completed': '已完成，共 {count} 个子 Agent。',
+  'workflow.completedWithResult': '已完成，共 {count} 个子 Agent。结果：{result}',
   'workflow.failed': '工作流失败：{error}',
   'workflow.stopped': '工作流已停止',
   'workflow.error.resumeStillRunning':

@@ -11,7 +11,7 @@ import { isChannelsEnabled } from '../../services/mcp/channelAllowlist.js'
 import { getEffectiveChannelAllowlist } from '../../services/mcp/channelNotification.js'
 import { getMcpConfigsByScope } from '../../services/mcp/config.js'
 import { getZyAIOAuthTokens } from '../../utils/auth.js'
-import { loadInstalledPluginsV2 } from '../../utils/plugins/installedPluginsManager.js'
+import { loadInstalledPlugins } from '../../utils/plugins/installedPluginsManager.js'
 import { getSettingsForSource } from '../../utils/settings/settings.js'
 export function ChannelsNotice() {
   const [noticeState] = useState(() => {
@@ -143,8 +143,8 @@ function findUnmatched(
   }
 
   // Plugin-kind installed check: installed_plugins.json keys are
-  // `name@marketplace`. loadInstalledPluginsV2 is cached.
-  const installedPluginIds = new Set(Object.keys(loadInstalledPluginsV2().plugins))
+  // `name@marketplace`. loadInstalledPlugins is cached.
+  const installedPluginIds = new Set(Object.keys(loadInstalledPlugins().plugins))
 
   // Plugin-kind allowlist check: same {marketplace, plugin} test as the
   // gate at channelNotification.ts. entry.dev bypasses (dev flag opts out

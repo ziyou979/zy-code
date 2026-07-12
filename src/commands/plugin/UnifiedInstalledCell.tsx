@@ -1,4 +1,12 @@
-import { ARROW_RIGHT, CROSS, RADIO_OFF, TICK, POINTER, WARNING, TRIANGLE_UP_OUTLINE } from '../../constants/figures.js'
+import {
+  ARROW_RIGHT,
+  CROSS,
+  RADIO_OFF,
+  TICK,
+  POINTER,
+  WARNING,
+  TRIANGLE_UP_OUTLINE,
+} from '../../constants/figures.js'
 import { Box, color, Text, useTheme } from '../../ink.js'
 import { plural } from '../../utils/stringUtils.js'
 // @ts-expect-error

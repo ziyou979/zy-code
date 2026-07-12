@@ -179,8 +179,7 @@ describe('WebSearchTool', () => {
     // OpenSerp 返回空结果时 results 为空数组
     const json = createOpenSerpResponse([])
 
-    globalThis.fetch = (async () =>
-      new Response(json, { status: 200 })) as unknown as typeof fetch
+    globalThis.fetch = (async () => new Response(json, { status: 200 })) as unknown as typeof fetch
 
     try {
       const parsedInput = WebSearchTool.inputSchema.parse({ query: 'no results query' })
@@ -277,11 +276,14 @@ describe('WebSearchTool', () => {
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async (url: string) => {
       requestedUrl = url
-      return new Response(JSON.stringify({
-        query: { text: 'test' },
-        meta: { took_ms: 100 },
-        results: [],
-      }), { status: 200 })
+      return new Response(
+        JSON.stringify({
+          query: { text: 'test' },
+          meta: { took_ms: 100 },
+          results: [],
+        }),
+        { status: 200 },
+      )
     }) as unknown as typeof fetch
 
     try {
@@ -303,11 +305,14 @@ describe('WebSearchTool', () => {
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async (url: string) => {
       requestedUrl = url
-      return new Response(JSON.stringify({
-        query: { text: 'test' },
-        meta: { took_ms: 100 },
-        results: [],
-      }), { status: 200 })
+      return new Response(
+        JSON.stringify({
+          query: { text: 'test' },
+          meta: { took_ms: 100 },
+          results: [],
+        }),
+        { status: 200 },
+      )
     }) as unknown as typeof fetch
 
     try {
@@ -329,11 +334,14 @@ describe('WebSearchTool', () => {
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async (url: string) => {
       requestedUrl = url
-      return new Response(JSON.stringify({
-        query: { text: 'test' },
-        meta: { took_ms: 100 },
-        results: [],
-      }), { status: 200 })
+      return new Response(
+        JSON.stringify({
+          query: { text: 'test' },
+          meta: { took_ms: 100 },
+          results: [],
+        }),
+        { status: 200 },
+      )
     }) as unknown as typeof fetch
 
     try {

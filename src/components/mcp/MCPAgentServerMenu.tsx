@@ -181,8 +181,7 @@ export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props)
               </Text>
             ) : (
               <Text>
-                {color('warning', theme)(TRIANGLE_UP_OUTLINE)}{' '}
-                {tSync('mcp.mayNeedAuthentication')}
+                {color('warning', theme)(TRIANGLE_UP_OUTLINE)} {tSync('mcp.mayNeedAuthentication')}
               </Text>
             )}
           </Box>

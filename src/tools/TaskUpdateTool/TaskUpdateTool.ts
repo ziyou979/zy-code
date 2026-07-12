@@ -227,6 +227,16 @@ export const TaskUpdateTool = buildTool({
           }
 
           if (blockingErrors.length > 0) {
+            // 将阻塞原因写入 metadata，使 UI 可以区分"工作进行中"和"完成验证被阻止"
+            await updateTask(taskListId, taskId, {
+              metadata: {
+                ...(existingTask.metadata ?? {}),
+                blockedAt: new Date().toISOString(),
+                blockedBy: 'completion_hook',
+                blockedReason: blockingErrors.join('\n'),
+              },
+            })
+
             return {
               data: {
                 success: false,
@@ -244,7 +254,32 @@ export const TaskUpdateTool = buildTool({
     }
 
     if (Object.keys(updates).length > 0) {
-      await updateTask(taskListId, taskId, updates)
+      const persistedTask = await updateTask(taskListId, taskId, updates)
+
+      // 检查持久化结果：updateTask 在 task 不存在、schema 读取失败等情况下返回 null
+      if (!persistedTask) {
+        return {
+          data: {
+            success: false,
+            taskId,
+            updatedFields,
+            error: `Failed to persist task update. Task may have been deleted or the file system may be unavailable.`,
+          },
+        }
+      }
+
+      // 如果更新了 status，验证持久化的结果与期望一致
+      if (updates.status && persistedTask.status !== updates.status) {
+        return {
+          data: {
+            success: false,
+            taskId,
+            updatedFields,
+            error: `Status update conflict: expected "${updates.status}" but file reports "${persistedTask.status}". The task may have been modified by another agent.`,
+            statusChange: { from: existingTask.status, to: persistedTask.status },
+          },
+        }
+      }
     }
 
     // Notify new owner via mailbox when ownership changes

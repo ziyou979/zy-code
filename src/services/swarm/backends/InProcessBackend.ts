@@ -112,6 +112,8 @@ export class InProcessBackend implements TeammateExecutor {
         systemPromptMode: config.systemPromptMode,
         allowedTools: config.permissions,
         allowPermissionPrompts: config.allowPermissionPrompts,
+        // 显式 Teammate 创建默认为 persistent
+        lifecycleMode: 'persistent',
       })
 
       logForDebugging(`[InProcessBackend] Started agent execution for ${result.agentId}`)

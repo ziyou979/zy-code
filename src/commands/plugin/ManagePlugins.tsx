@@ -51,7 +51,7 @@ import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage, toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { clearAllCaches } from '../../utils/plugins/cacheUtils.js'
-import { loadInstalledPluginsV2 } from '../../utils/plugins/installedPluginsManager.js'
+import { loadInstalledPlugins } from '../../utils/plugins/installedPluginsManager.js'
 import { getMarketplace } from '../../utils/plugins/marketplaceManager.js'
 import {
   isMcpbSource,
@@ -1295,7 +1295,7 @@ export function ManagePlugins({
           // installs, the op's isLastScope check won't delete regardless of
           // the user's y/n — showing the dialog would mislead ("y" → nothing
           // happens). Length check mirrors pluginOperations.ts:513.
-          const installs = loadInstalledPluginsV2().plugins[selectedPluginId]
+          const installs = loadInstalledPlugins().plugins[selectedPluginId]
           const isLastScope = !installs || installs.length <= 1
           const dataSize = isLastScope ? await getPluginDataDirSize(selectedPluginId) : null
           if (dataSize) {

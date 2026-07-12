@@ -783,6 +783,7 @@ function registerOutOfProcessTeammateTask(
     prompt,
     abortController,
     awaitingPlanApproval: false,
+    lifecycleMode: 'ephemeral',
     permissionMode: plan_mode_required ? 'plan' : 'default',
     isIdle: false,
     shutdownRequested: false,
@@ -904,6 +905,8 @@ async function handleSpawnInProcess(
       toolUseContext: { ...context, messages: [] },
       abortController: result.abortController,
       invokingRequestId: input.invokingRequestId,
+      // AgentTool 和一次性任务默认为 ephemeral
+      lifecycleMode: 'ephemeral',
     })
     agentLog(`started execution id=${teammateId} name=${sanitizedName}`)
   }

@@ -2669,7 +2669,7 @@ function PromptInput({
               viewingAgentName={viewingAgentName}
               viewingAgentColor={viewingAgentColor}
             />
-            <Box flexGrow={1} flexShrink={1} onClick={handleInputClick}>
+            <Box flexGrow={1} flexShrink={0} minHeight={1} onClick={handleInputClick}>
               {textInputElement}
             </Box>
           </Box>
@@ -2694,7 +2694,7 @@ function PromptInput({
             viewingAgentName={viewingAgentName}
             viewingAgentColor={viewingAgentColor}
           />
-          <Box flexGrow={1} flexShrink={1} onClick={handleInputClick}>
+          <Box flexGrow={1} flexShrink={0} minHeight={1} onClick={handleInputClick}>
             {textInputElement}
           </Box>
         </Box>

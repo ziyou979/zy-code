@@ -4,7 +4,11 @@ import { toolMatchesName, type Tool, type Tools } from './Tool.js'
 import type { ToolPermissionContext } from './Tool.js'
 import { isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
 import { toolRegistry } from './tools/registry.js'
-export { loadExternalTools, hasExternalToolOverride, getLoadGeneration } from './tools/externalToolLoader.js'
+export {
+  loadExternalTools,
+  hasExternalToolOverride,
+  getLoadGeneration,
+} from './tools/externalToolLoader.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { getDenyRuleForTool } from './utils/permissions/permissions.js'
 import { REPL_TOOL_NAME, REPL_ONLY_TOOLS, isReplModeEnabled } from './tools/REPLTool/constants.js'
@@ -35,7 +39,7 @@ import './tools/BriefTool/BriefTool.js'
 import './tools/TaskOutputTool/TaskOutputTool.js'
 import './tools/WebSearchTool/WebSearchTool.js'
 import './tools/TodoWriteTool/TodoWriteTool.js'
-import './tools/ExitPlanModeTool/ExitPlanModeV2Tool.js'
+import './tools/ExitPlanModeTool/ExitPlanModeTool.js'
 import './tools/AskUserQuestionTool/AskUserQuestionTool.js'
 import './tools/EnterPlanModeTool/EnterPlanModeTool.js'
 import './tools/EnterWorktreeTool/EnterWorktreeTool.js'

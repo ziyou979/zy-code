@@ -3,7 +3,7 @@ import type { TranslationResource } from '../resourceTypes.js'
 export const zhCommands: TranslationResource = {
   'commands.addDir': '添加新的工作目录',
   'commands.advisor': '配置 advisor 模型',
-  'commands.agents': '管理子智能体配置',
+  'commands.agents': '管理子 agent 配置',
   'commands.batch':
     '研究并规划大规模变更，然后在 5-30 个隔离 worktree 子代理中并行执行，每个子代理创建一个 PR。',
   'commands.batch.missingInstruction':

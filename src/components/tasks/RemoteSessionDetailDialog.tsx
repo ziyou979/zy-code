@@ -18,7 +18,7 @@ import type { RemoteAgentTaskState } from '../../tasks/RemoteAgentTask/RemoteAge
 import { getRemoteTaskSessionUrl } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js'
 import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
 import { ASK_USER_QUESTION_TOOL_NAME } from '../../tools/AskUserQuestionTool/prompt.js'
-import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
+import { EXIT_PLAN_MODE_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
 import { openBrowser } from '../../utils/browser.js'
 import { errorMessage } from '../../utils/errors.js'
 import { formatDuration, truncateToWidth } from '../../utils/format.js'
@@ -52,7 +52,7 @@ type Props = {
 // 渲染为单行。
 export function formatToolUseSummary(name: string, input: unknown): string {
   // plan_ready 阶段仅通过 ExitPlanMode 工具到达
-  if (name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
+  if (name === EXIT_PLAN_MODE_TOOL_NAME) {
     return tSync('backgroundTasks.reviewPlanOnWeb')
   }
   if (!input || typeof input !== 'object') {

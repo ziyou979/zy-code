@@ -124,7 +124,7 @@ export const zhOnboarding: TranslationResource = {
   'onboarding.tier.skip': '跳过（使用 standard 模型）',
   'onboarding.tier.standard.desc': '用于日常任务。这是必须配置的层级。',
   'onboarding.tier.standard.title': '配置 Standard 层级模型',
-  'tip.agentFlag': '使用 --agent <agent_name> 直接以指定子智能体开始对话',
+  'tip.agentFlag': '使用 --agent <agent_name> 直接以指定子 agent 开始对话',
   'tip.btwSideQuestion': '使用 /btw 快速提问，不会打断当前工作',
   'tip.clearContext': '切换话题时使用 /clear 可以释放上下文',
   'tip.colortermTruecolor': '尝试设置环境变量 COLORTERM=truecolor 以获得更丰富的颜色',

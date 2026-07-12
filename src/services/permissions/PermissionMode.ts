@@ -21,7 +21,14 @@ export {
 export const permissionModeSchema = lazySchema(() => z.enum(PERMISSION_MODES))
 export const externalPermissionModeSchema = lazySchema(() => z.enum(EXTERNAL_PERMISSION_MODES))
 
-type ModeColorKey = 'text' | 'planMode' | 'permission' | 'autoAccept' | 'error' | 'warning' | 'inactive'
+type ModeColorKey =
+  | 'text'
+  | 'planMode'
+  | 'permission'
+  | 'autoAccept'
+  | 'error'
+  | 'warning'
+  | 'inactive'
 
 type PermissionModeConfig = {
   title: string

@@ -1029,9 +1029,7 @@ async function* queryLoop(
 
       // 记录不完整响应（服务器错误但保留了部分内容）
       if (lastMessage?.type === 'assistant' && lastMessage.message.incomplete) {
-        log(
-          `Incomplete response received — model returned partial content before server error`,
-        )
+        log(`Incomplete response received — model returned partial content before server error`)
       }
 
       const stopHookResult = yield* handleStopHooks(

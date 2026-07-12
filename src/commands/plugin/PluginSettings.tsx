@@ -556,9 +556,7 @@ function ErrorsTabContent({
     return (
       <Box key={idx} marginLeft={1} flexDirection="column" marginBottom={1}>
         <Text>
-          <Text color={isSelected ? 'suggestion' : 'error'}>
-            {isSelected ? POINTER : CROSS}{' '}
-          </Text>
+          <Text color={isSelected ? 'suggestion' : 'error'}>{isSelected ? POINTER : CROSS} </Text>
           <Text bold={isSelected}>{row.label}</Text>
           {row.scope && <Text dimColor={true}> ({row.scope})</Text>}
         </Text>

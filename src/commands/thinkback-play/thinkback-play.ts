@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import type { LocalCommandResult } from '../../commands.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
-import { loadInstalledPluginsV2 } from '../../utils/plugins/installedPluginsManager.js'
+import { loadInstalledPlugins } from '../../utils/plugins/installedPluginsManager.js'
 import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketplace.js'
 import { playAnimation } from '../thinkback/thinkback.js'
 
@@ -15,7 +15,7 @@ function getPluginId(): string {
 
 export async function call(): Promise<LocalCommandResult> {
   // Get skill directory from installed plugins config
-  const v2Data = loadInstalledPluginsV2()
+  const v2Data = loadInstalledPlugins()
   const pluginId = getPluginId()
   const installations = v2Data.plugins[pluginId]
 

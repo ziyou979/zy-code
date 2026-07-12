@@ -77,8 +77,7 @@ export function AgentsList({ source, agents, onBack, onSelect, onCreateNew, chan
         {overriddenBy && (
           <Text dimColor={!isSelected} color={isSelected ? 'warning' : undefined}>
             {' '}
-            {WARNING}{' '}
-            {tSync('agents.shadowedBy', { source: getOverrideSourceLabel(overriddenBy) })}
+            {WARNING} {tSync('agents.shadowedBy', { source: getOverrideSourceLabel(overriddenBy) })}
           </Text>
         )}
       </Box>

@@ -36,7 +36,7 @@ import { usePrStatus } from '../../hooks/usePrStatus.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { Byline } from '../design-system/Byline.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
-import { useTasksV2 } from '../../hooks/useTasksV2.js'
+import { useTasks } from '../../hooks/useTasks.js'
 import { formatDuration } from '../../utils/format.js'
 import { VoiceWarmupHint } from './VoiceIndicator.js'
 import { useVoiceEnabled } from '../../hooks/useVoiceEnabled.js'
@@ -243,8 +243,8 @@ function ModeIndicator({
       ),
     [tasks],
   )
-  const tasksV2 = useTasksV2()
-  const hasTaskItems = tasksV2 !== undefined && tasksV2.length > 0
+  const todoTasks = useTasks()
+  const hasTaskItems = todoTasks !== undefined && todoTasks.length > 0
   const escShortcut = useShortcutDisplay('chat:cancel', 'Chat', 'esc').toLowerCase()
   const todosShortcut = useShortcutDisplay('app:toggleTodos', 'Global', 'ctrl+t')
   const killAgentsShortcut = useShortcutDisplay('chat:killAgents', 'Chat', 'ctrl+x ctrl+k')
@@ -350,7 +350,8 @@ function ModeIndicator({
   const modePart =
     currentMode && hasActiveMode && !getIsRemoteMode() ? (
       <Text color={getModeColor(currentMode)} key="mode">
-        {permissionModeSymbol(currentMode)} {permissionModeIndicator(currentMode)} {tSync('permissionMode.on')}
+        {permissionModeSymbol(currentMode)} {permissionModeIndicator(currentMode)}{' '}
+        {tSync('permissionMode.on')}
         {shouldShowModeHint && (
           <Text dimColor>
             {' '}

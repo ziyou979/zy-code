@@ -2,7 +2,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growt
 import { getRateLimitTier } from './auth.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
 
-export function getPlanModeV2AgentCount(): number {
+export function getPlanModeAgentCount(): number {
   // 环境变量覆盖优先
   const override = process.env.ZY_CODE_PLAN_MODE_V2_AGENT_COUNT
   if (override) {
@@ -21,7 +21,7 @@ export function getPlanModeV2AgentCount(): number {
   return 1
 }
 
-export function getPlanModeV2ExploreAgentCount(): number {
+export function getPlanModeExploreAgentCount(): number {
   const override = process.env.ZY_CODE_PLAN_MODE_V2_EXPLORE_AGENT_COUNT
   if (override) {
     const count = parseInt(override, 10)

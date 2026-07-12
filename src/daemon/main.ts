@@ -225,7 +225,11 @@ export async function daemonMain(args: string[]): Promise<void> {
     // 使用 Unix socket 或 Windows named pipe
     const socketPath = join(DAEMON_DIR, 'daemon.sock')
     // 清理旧 socket
-    try { unlinkSync(socketPath) } catch { /* ignore */ }
+    try {
+      unlinkSync(socketPath)
+    } catch {
+      /* ignore */
+    }
 
     server.listen(socketPath, () => {
       const addr = server.address() as AddressInfo

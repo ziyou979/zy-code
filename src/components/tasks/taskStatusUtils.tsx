@@ -2,7 +2,15 @@
  * Shared utilities for displaying task status across different task types.
  */
 
-import { CROSS, QUESTION_MARK, WARNING, ELLIPSIS, PLAY, TICK, BULLET } from '../../constants/figures.js'
+import {
+  CROSS,
+  QUESTION_MARK,
+  WARNING,
+  ELLIPSIS,
+  PLAY,
+  TICK,
+  BULLET,
+} from '../../constants/figures.js'
 import type { TaskStatus } from 'src/Task.js'
 import type { InProcessTeammateTaskState } from 'src/tasks/InProcessTeammateTask/types.js'
 import { isPanelAgentTask } from 'src/tasks/LocalAgentTask/LocalAgentTask.js'

@@ -9,6 +9,7 @@ import { isEnvTruthy } from '../../utils/envUtils.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
 import type { CacheSafeParams } from '../../utils/forkedAgent.js'
 import { logError } from '../../utils/log.js'
+import { logEvent } from '../analytics/index.js'
 import { getLocalMaxInputTokens } from '../../utils/settings/localModelCapabilities.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
@@ -57,6 +58,9 @@ export type AutoCompactTrackingState = {
   // 用作断路器，在上下文不可恢复地超过
   // 限制时停止重试（例如 prompt_too_long）。
   consecutiveFailures?: number
+  // rapid refill breaker：连续 rapid 重填次数。
+  // compact 后 ≤ RAPID_REFILL_TURNS 轮内再次触发 compact 计一次。
+  consecutiveRapidRefills?: number
 }
 
 export const AUTOCOMPACT_BUFFER_TOKENS = 13_000
@@ -68,6 +72,11 @@ export const MANUAL_COMPACT_BUFFER_TOKENS = 3_000
 // BQ 2026-03-10：1,279 个会话有 50+ 连续失败（最多 3,272）
 // 在单个会话中，全球每天浪费约 250K API 调用。
 const MAX_CONSECUTIVE_AUTOCOMPACT_FAILURES = 3
+
+// P0.3 Rapid Refill Breaker — 与 CC 二进制 v2.x 对齐
+// 阈值：压缩后 ≤ 3 轮内又满 = rapid；连续 3 次 rapid → 熔断
+const RAPID_REFILL_TURNS = 3
+const MAX_RAPID_REFILLS = 3
 
 // maxInputTokens 是 API 硬性输入上限，自动压缩需在此之前触发。
 // 留出安全余量应对：
@@ -248,6 +257,7 @@ export async function autoCompactIfNeeded(
   wasCompacted: boolean
   compactionResult?: CompactionResult
   consecutiveFailures?: number
+  rapidRefillBreakerTripped?: boolean
 }> {
   if (isEnvTruthy(process.env.DISABLE_COMPACT)) {
     return { wasCompacted: false }
@@ -268,6 +278,29 @@ export async function autoCompactIfNeeded(
 
   if (!shouldCompact) {
     return { wasCompacted: false }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // P0.3 Rapid Refill Breaker（与 CC 二进制对齐）
+  // 检测模式：上次 compact 后 ≤ RAPID_REFILL_TURNS 轮内又满，连续触发
+  // MAX_RAPID_REFILLS 次 → 熔断，返回错误给调用方避免无效 API 调用。
+  // ─────────────────────────────────────────────────────────────────────
+  const isRapidRefill =
+    tracking?.compacted === true &&
+    (tracking.turnCounter ?? Number.POSITIVE_INFINITY) <= RAPID_REFILL_TURNS
+  const nextRapidCount = isRapidRefill ? (tracking.consecutiveRapidRefills ?? 0) + 1 : 0
+
+  if (nextRapidCount >= MAX_RAPID_REFILLS) {
+    // 熔断：记录遥测事件
+    logEvent('auto_compact_rapid_refill_breaker', {
+      consecutiveRapidRefills: nextRapidCount,
+      turnsSincePreviousCompact: tracking?.turnCounter ?? -1,
+    })
+    logForDebugging(
+      `autocompact: rapid refill breaker tripped — ${nextRapidCount} rapid compacts within ${RAPID_REFILL_TURNS} turns each`,
+      { level: 'warn' },
+    )
+    return { wasCompacted: false, rapidRefillBreakerTripped: true }
   }
 
   const recompactionInfo: RecompactionInfo = {

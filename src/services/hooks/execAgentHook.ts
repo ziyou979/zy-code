@@ -45,7 +45,7 @@ export async function execAgentHook(
   toolUseID: string | undefined,
   // Kept for signature stability with the other exec*Hook functions.
   // Was used by hook.prompt(messages) before the .transform() was removed
-  // (CC-79) — the only consumer of that was ExitPlanModeV2Tool's
+  // (CC-79) — the only consumer of that was ExitPlanModeTool's
   // programmatic construction, since refactored into VerifyPlanExecutionTool.
   _messages: Message[],
   agentName?: string,

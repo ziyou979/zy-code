@@ -16,8 +16,8 @@ import { formatDuration, formatNumber } from '../utils/format.js'
 import type { Theme } from 'src/utils/theme.js'
 import { activityManager } from '../utils/activityManager.js'
 import { MessageResponse } from './MessageResponse.js'
-import { TaskListV2 } from './TaskListV2.js'
-import { useTasksV2 } from '../hooks/useTasksV2.js'
+import { TaskList } from './TaskList.js'
+import { useTasks } from '../hooks/useTasks.js'
 import type { Task } from '../utils/tasks.js'
 import { useAppState } from '../state/AppState.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
@@ -127,13 +127,13 @@ function SpinnerWithVerbInner({
       })
     : undefined
   const { columns } = useTerminalSize()
-  const tasksV2 = useTasksV2()
+  const todoTasks = useTasks()
 
   // 查找当前进行中的任务和下一个 pending 任务
-  const currentTodo = tasksV2?.find(
+  const currentTodo = todoTasks?.find(
     (task) => task.status !== 'pending' && task.status !== 'completed',
   )
-  const nextTask = findNextPendingTask(tasksV2)
+  const nextTask = findNextPendingTask(todoTasks)
 
   // 使用带初始化器的 useState，在 mount 时随机选择一个 verb
   const [randomVerb] = useState(() => tSync('common.spinnerVerb'))
@@ -326,10 +326,10 @@ function SpinnerWithVerbInner({
           leaderIdleText={leaderIsIdle ? 'Idle' : undefined}
           leaderTokenCount={leaderTokenCount}
         />
-      ) : showExpandedTodos && tasksV2 && tasksV2.length > 0 ? (
+      ) : showExpandedTodos && todoTasks && todoTasks.length > 0 ? (
         <Box width="100%" flexDirection="column">
           <MessageResponse>
-            <TaskListV2 tasks={tasksV2} />
+            <TaskList tasks={todoTasks} />
           </MessageResponse>
         </Box>
       ) : nextTask || effectiveTip || budgetText ? (

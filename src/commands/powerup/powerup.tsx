@@ -95,7 +95,9 @@ function PowerupApp({ onDone }: Props) {
               <Text color="success">{CIRCLE_FILLED}</Text> {lesson.title}
             </Text>
           ) : (
-            <Text>{RADIO_OFF} {lesson.title}</Text>
+            <Text>
+              {RADIO_OFF} {lesson.title}
+            </Text>
           ),
           description: lesson.tagline,
         }

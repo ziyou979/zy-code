@@ -74,12 +74,14 @@ export const enCommands: TranslationResource = {
   'commands.rateLimitOptions': 'Show options when rate limit is reached',
   'commands.releaseNotes': 'View release notes',
   'commands.reloadPlugins': 'Activate pending plugin changes in the current session',
-  'commands.reloadSkills': 'Rescan skill directories and apply skill changes to the current session',
+  'commands.reloadSkills':
+    'Rescan skill directories and apply skill changes to the current session',
   'commands.reloadSkills.noChanges': 'Reloaded skills: {count} skills available (no changes)',
   'commands.reloadSkills.changed': 'Reloaded: {count} skills · {changes}',
   'commands.reloadSkills.added': '+{count} added ({names})',
   'commands.reloadSkills.removed': '-{count} removed ({names})',
-  'commands.reloadTools': 'Rescan external tool directories and apply tool changes to the current session',
+  'commands.reloadTools':
+    'Rescan external tool directories and apply tool changes to the current session',
   'commands.reloadTools.noChanges': 'Reloaded tools: {count} tool(s) available (no changes)',
   'commands.reloadTools.changed': 'Reloaded: {count} tool(s) · {changes}',
   'commands.reloadTools.added': '+{count} added ({names})',

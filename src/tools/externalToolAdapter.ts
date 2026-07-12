@@ -149,7 +149,10 @@ export function adaptExternalTool(def: ExternalToolDefinition) {
           return React.createElement(
             Box,
             { flexDirection: 'column' },
-            React.createElement(MessageResponse, { height: 1, children: React.createElement(Text, null, text) }),
+            React.createElement(MessageResponse, {
+              height: 1,
+              children: React.createElement(Text, null, text),
+            }),
           )
         }
       }
@@ -158,7 +161,10 @@ export function adaptExternalTool(def: ExternalToolDefinition) {
       return React.createElement(
         Box,
         { flexDirection: 'column' },
-        React.createElement(MessageResponse, { height: 1, children: React.createElement(Text, null, displayText) }),
+        React.createElement(MessageResponse, {
+          height: 1,
+          children: React.createElement(Text, null, displayText),
+        }),
       )
     },
 

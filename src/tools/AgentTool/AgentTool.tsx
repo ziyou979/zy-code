@@ -1565,9 +1565,7 @@ export const AgentTool = buildTool({
               `Sync agent recovering from error with ${agentMessages.length} messages`,
             )
             // 同步 agent 错误时注入 errorKind（使用共享分类函数）
-            const { categorizeAgentError } = await import(
-              '../../utils/agentErrorCategorizer.js'
-            )
+            const { categorizeAgentError } = await import('../../utils/agentErrorCategorizer.js')
             agentErrorKind = categorizeAgentError(syncAgentError)
           }
           const agentResult = finalizeAgentTool(agentMessages, syncAgentId, metadata)

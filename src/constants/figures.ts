@@ -7,7 +7,6 @@ import { env } from '../utils/env.js'
 // 纯几何/数学/箭头/制表符不添加，避免破坏对齐。
 const VS15 = '\uFE0E'
 
-
 // ── figures 库符号（按终端平台自适应）──────────────────────
 export const ARROW_DOWN = figuresLib.arrowDown
 export const ARROW_LEFT = figuresLib.arrowLeft
@@ -108,4 +107,3 @@ export const CLOCKWISE_ARROWS = '\u27F3' // ⟳
 // ── Terminal title animation ───────────────────────────────
 export const TITLE_FRAME_A = '\u2802' // ⠂
 export const TITLE_FRAME_B = '\u2810' // ⠐
-

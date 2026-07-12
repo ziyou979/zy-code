@@ -55,11 +55,7 @@ function polarRow(leftLabel: string, rightLabel: string, width: number): string 
 // 主组件
 // ---------------------------------------------------------------------------
 
-export function EffortPicker({
-  onDone,
-}: {
-  onDone: LocalJSXCommandOnDone
-}) {
+export function EffortPicker({ onDone }: { onDone: LocalJSXCommandOnDone }) {
   const model = useMainLoopModel()
   const effortValue = useAppState((s) => s.effortValue) as EffortLevel | undefined
   const setAppState = useSetAppState()
@@ -70,7 +66,9 @@ export function EffortPicker({
   let columns = 80
   try {
     columns = useTerminalSize().columns
-  } catch { /* Ink context not available */ }
+  } catch {
+    /* Ink context not available */
+  }
 
   // 计算选择器布局
   const layout = useMemo(() => {
@@ -181,10 +179,7 @@ export function EffortPicker({
   const accentColor = (selectedLevel?.color ?? 'autoAccept') as keyof Theme
 
   // 1. 标题行
-  const titleLine = centerText(
-    tSync('effort.picker.title' as any) || 'Effort',
-    W,
-  )
+  const titleLine = centerText(tSync('effort.picker.title' as any) || 'Effort', W)
 
   // 2. 极标签行
   const fasterText = tSync('effort.picker.faster' as any) || 'Faster'
@@ -205,13 +200,28 @@ export function EffortPicker({
     const start = layout.labelStarts[i]!
     const lbl = layout.levels[i]!
     if (start > curCol) {
-      labelSegs.push({ text: ' '.repeat(start - curCol), color: 'inactive', selected: false, isContent: false })
+      labelSegs.push({
+        text: ' '.repeat(start - curCol),
+        color: 'inactive',
+        selected: false,
+        isContent: false,
+      })
     }
-    labelSegs.push({ text: lbl.label, color: lbl.color, selected: i === selectedIndex, isContent: true })
+    labelSegs.push({
+      text: lbl.label,
+      color: lbl.color,
+      selected: i === selectedIndex,
+      isContent: true,
+    })
     curCol = start + lbl.label.length
   }
   if (curCol < W) {
-    labelSegs.push({ text: ' '.repeat(W - curCol), color: 'inactive', selected: false, isContent: false })
+    labelSegs.push({
+      text: ' '.repeat(W - curCol),
+      color: 'inactive',
+      selected: false,
+      isContent: false,
+    })
   }
 
   // 5. 副标签
@@ -235,7 +245,9 @@ export function EffortPicker({
       <Box>
         <Text>{pad('')}</Text>
         <Text>{trackLeft}</Text>
-        <Text bold={true} backgroundColor={accentColor} color="#fff">{'\u25B2'}</Text>
+        <Text bold={true} backgroundColor={accentColor} color="#fff">
+          {'\u25B2'}
+        </Text>
         <Text>{trackRight}</Text>
       </Box>
 
@@ -250,14 +262,16 @@ export function EffortPicker({
               </Text>
             )
           }
-          return <Text key={i} dimColor={true}>{seg.text}</Text>
+          return (
+            <Text key={i} dimColor={true}>
+              {seg.text}
+            </Text>
+          )
         })}
       </Box>
 
       {/* 副标签 */}
-      {sublabelLine && (
-        <Text dimColor={true}>{pad(sublabelLine)}</Text>
-      )}
+      {sublabelLine && <Text dimColor={true}>{pad(sublabelLine)}</Text>}
 
       {/* 空行 */}
       <Text>{pad(' '.repeat(W))}</Text>

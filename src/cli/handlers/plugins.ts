@@ -30,7 +30,7 @@ import { clearAllCaches } from '../../utils/plugins/cacheUtils.js'
 import { getInstallCounts } from '../../utils/plugins/installCounts.js'
 import {
   isPluginInstalled,
-  loadInstalledPluginsV2,
+  loadInstalledPlugins,
 } from '../../utils/plugins/installedPluginsManager.js'
 import {
   createPluginId,
@@ -171,7 +171,7 @@ export async function pluginListHandler(options: {
   }
   logEvent('zy_plugin_list_command', {})
 
-  const installedData = loadInstalledPluginsV2()
+  const installedData = loadInstalledPlugins()
   const { getPluginEditableScopes } = await import('../../utils/plugins/pluginStartupCheck.js')
   const enabledPlugins = getPluginEditableScopes()
 

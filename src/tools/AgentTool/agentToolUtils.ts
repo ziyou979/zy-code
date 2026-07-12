@@ -47,7 +47,7 @@ import {
 } from '../../utils/permissions/yoloClassifier.js'
 import { isInProcessTeammate } from '../../utils/teammateContext.js'
 import { getTokenCountFromUsage } from '../../utils/tokens.js'
-import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../ExitPlanModeTool/constants.js'
+import { EXIT_PLAN_MODE_TOOL_NAME } from '../ExitPlanModeTool/constants.js'
 import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from './constants.js'
 import type { AgentDefinition } from './loadAgentsDir.js'
 export type ResolvedAgentTools = {
@@ -76,7 +76,7 @@ export function filterToolsForAgent({
     }
     // Allow ExitPlanMode for agents in plan mode (e.g., in-process teammates)
     // This bypasses both the ALL_AGENT_DISALLOWED_TOOLS and async tool filters
-    if (toolMatchesName(tool, EXIT_PLAN_MODE_V2_TOOL_NAME) && permissionMode === 'plan') {
+    if (toolMatchesName(tool, EXIT_PLAN_MODE_TOOL_NAME) && permissionMode === 'plan') {
       return true
     }
     if (ALL_AGENT_DISALLOWED_TOOLS.has(tool.name)) {
@@ -202,10 +202,7 @@ export function resolveAgentTools(
   }
 }
 
-import {
-  agentToolResultSchema,
-  type AgentToolResult,
-} from '../../utils/agentToolResultSchema.js'
+import { agentToolResultSchema, type AgentToolResult } from '../../utils/agentToolResultSchema.js'
 export type { AgentToolResult }
 export { agentToolResultSchema }
 
@@ -683,10 +680,9 @@ export async function runAsyncAgentLifecycle({
       } catch {
         // finalizeAgentTool 也可能失败（消息结构异常等）
         // fall through to the standard fail path
-        logForDebugging(
-          `Failed to finalize partial agent work, falling back to fail: ${msg}`,
-          { level: 'error' },
-        )
+        logForDebugging(`Failed to finalize partial agent work, falling back to fail: ${msg}`, {
+          level: 'error',
+        })
       }
     }
     failAsyncAgent(taskId, msg, rootSetAppState)

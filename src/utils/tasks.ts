@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, rename, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { z } from 'zod/v4'
 import { getIsNonInteractiveSession, getSessionId } from '../bootstrap/state.js'
@@ -86,6 +86,9 @@ export const TaskSchema = lazySchema(() =>
     blocks: z.array(z.string()), // task IDs this task blocks
     blockedBy: z.array(z.string()), // task IDs that block this task
     metadata: z.record(z.string(), z.unknown()).optional(), // arbitrary metadata
+    // CAS 乐观锁字段
+    revision: z.number().optional(),
+    claimToken: z.string().optional(), // 当前 claim 的令牌，用于防止竞争
   }),
 )
 export type Task = z.infer<ReturnType<typeof TaskSchema>>
@@ -287,7 +290,7 @@ export async function createTask(taskListId: string, taskData: Omit<Task, 'id'>)
     // Read highest ID from disk while holding the lock
     const highestId = await findHighestTaskId(taskListId)
     const id = String(highestId + 1)
-    const task: Task = { id, ...taskData }
+    const task: Task = { id, ...taskData, revision: 1 }
     const path = getTaskPath(taskListId, id)
     await writeFile(path, jsonStringify(task, null, 2))
     notifyTasksUpdated()
@@ -348,9 +351,33 @@ async function updateTaskUnsafe(
   if (!existing) {
     return null
   }
-  const updated: Task = { ...existing, ...updates, id: taskId }
+  // revision 自动递增（CAS 乐观锁）。首次写入或尚未设置时从 0 开始。
+  const nextRevision = (existing.revision ?? 0) + 1
+  const updated: Task = {
+    ...existing,
+    ...updates,
+    id: taskId,
+    revision: nextRevision,
+  }
   const path = getTaskPath(taskListId, taskId)
-  await writeFile(path, jsonStringify(updated, null, 2))
+  const serialized = jsonStringify(updated, null, 2)
+
+  // 原子写入：先写入同目录临时文件，再 rename 覆盖目标文件。
+  // 这样可以防止 reader 在写入过程中读取到半个 JSON 文件。
+  const tmpPath = `${path}.tmp.${Date.now()}.${Math.random().toString(36).slice(2, 8)}`
+  try {
+    await writeFile(tmpPath, serialized)
+    await rename(tmpPath, path)
+  } catch (err) {
+    // 清理临时文件，不阻塞返回
+    try {
+      await unlink(tmpPath)
+    } catch {
+      /* ignore */
+    }
+    throw err
+  }
+
   notifyTasksUpdated()
   return updated
 }
@@ -373,6 +400,79 @@ export async function updateTask(
   try {
     release = await lockfile.lock(path, LOCK_OPTIONS)
     return await updateTaskUnsafe(taskListId, taskId, updates)
+  } finally {
+    await release?.()
+  }
+}
+
+/**
+ * CAS（Compare-And-Set）方式的 task 状态更新。
+ * 只有当 task 当前的 status 和 revision 与预期一致时才应用更新。
+ * 防止旧 agent 在 task 已被重新分配后提交迟到的状态变更。
+ */
+export type CASUpdateInput = {
+  taskListId: string
+  taskId: string
+  expectedStatus: TaskStatus
+  expectedRevision: number
+  expectedClaimToken?: string
+  updates: Partial<Omit<Task, 'id'>>
+}
+
+export async function updateTaskCAS(input: CASUpdateInput): Promise<{
+  success: boolean
+  conflict?: string
+  task?: Task | null
+}> {
+  const { taskListId, taskId, expectedStatus, expectedRevision, expectedClaimToken, updates } =
+    input
+  const path = getTaskPath(taskListId, taskId)
+
+  // 先检查文件是否存在（lockfile.lock 在文件不存在时会抛出异常，
+  // 而我们希望返回清晰的 task_not_found）
+  const taskBeforeLock = await getTask(taskListId, taskId)
+  if (!taskBeforeLock) {
+    return { success: false, conflict: 'task_not_found' }
+  }
+
+  let release: (() => Promise<void>) | undefined
+  try {
+    release = await lockfile.lock(path, LOCK_OPTIONS)
+
+    const current = await getTask(taskListId, taskId)
+    if (!current) {
+      return { success: false, conflict: 'task_not_found' }
+    }
+
+    // 检查 status
+    if (current.status !== expectedStatus) {
+      return {
+        success: false,
+        conflict: `status_mismatch: expected "${expectedStatus}", current "${current.status}"`,
+        task: current,
+      }
+    }
+
+    // 检查 revision
+    if ((current.revision ?? 0) !== expectedRevision) {
+      return {
+        success: false,
+        conflict: `revision_mismatch: expected ${expectedRevision}, current ${current.revision}`,
+        task: current,
+      }
+    }
+
+    // 检查 claimToken（如果提供）
+    if (expectedClaimToken !== undefined && current.claimToken !== expectedClaimToken) {
+      return {
+        success: false,
+        conflict: `claim_token_mismatch`,
+        task: current,
+      }
+    }
+
+    const updated = await updateTaskUnsafe(taskListId, taskId, updates)
+    return { success: true, task: updated }
   } finally {
     await release?.()
   }
@@ -474,6 +574,8 @@ export type ClaimTaskResult = {
   task?: Task
   busyWithTasks?: string[] // task IDs the agent is busy with (when reason is 'agent_busy')
   blockedByTasks?: string[] // task IDs blocking this task (when reason is 'blocked')
+  claimToken?: string
+  claimRevision?: number
 }
 
 /**
@@ -569,11 +671,24 @@ export async function claimTask(
       return { success: false, reason: 'blocked', task, blockedByTasks }
     }
 
-    // Claim the task (already holding taskPath lock — use unsafe variant)
+    // Claim 时同时设置 owner、claimToken 和 status: in_progress
+    // claimToken 使用随机字符串，用于后续 CAS 校验
+    const claimToken = `${claimantAgentId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     const updated = await updateTaskUnsafe(taskListId, taskId, {
       owner: claimantAgentId,
+      status: 'in_progress',
+      claimToken,
+      metadata: {
+        ...(task.metadata ?? {}),
+        claimedAt: new Date().toISOString(),
+      },
     })
-    return { success: true, task: updated! }
+    return {
+      success: true,
+      task: updated!,
+      claimToken,
+      claimRevision: updated!.revision,
+    }
   } catch (error) {
     logForDebugging(`[Tasks] Failed to claim task ${taskId}: ${errorMessage(error)}`)
     logError(error)
@@ -642,11 +757,23 @@ async function claimTaskWithBusyCheck(
       }
     }
 
-    // Claim the task
+    // Claim the task（同时设置 claimToken 和 status: in_progress）
+    const claimToken = `${claimantAgentId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     const updated = await updateTask(taskListId, taskId, {
       owner: claimantAgentId,
+      status: 'in_progress',
+      claimToken,
+      metadata: {
+        ...(task.metadata ?? {}),
+        claimedAt: new Date().toISOString(),
+      },
     })
-    return { success: true, task: updated! }
+    return {
+      success: true,
+      task: updated!,
+      claimToken,
+      claimRevision: updated!.revision,
+    }
   } catch (error) {
     logForDebugging(
       `[Tasks] Failed to claim task ${taskId} with busy check: ${errorMessage(error)}`,

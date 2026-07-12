@@ -30,10 +30,7 @@ export class WorkflowSemaphore {
   private agentCount = 0
   private abortSignal: AbortSignal | undefined
 
-  constructor(
-    abortSignal?: AbortSignal,
-    workflowSize?: 'small' | 'medium' | 'large' | null,
-  ) {
+  constructor(abortSignal?: AbortSignal, workflowSize?: 'small' | 'medium' | 'large' | null) {
     this.capacity = getCapacityForSize(workflowSize)
     this.available = this.capacity
     this.abortSignal = abortSignal

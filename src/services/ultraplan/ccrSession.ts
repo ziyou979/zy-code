@@ -6,7 +6,7 @@
 
 import { isTransientNetworkError } from 'src/services/teleport/api.js'
 import type { WireMessage } from 'src/types/index.js'
-import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
+import { EXIT_PLAN_MODE_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
 import type { ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { sleep } from '../../utils/sleep.js'
@@ -100,7 +100,7 @@ export class ExitPlanModeScanner {
             continue
           }
           const tu = block as ToolCallBlock
-          if (tu.name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
+          if (tu.name === EXIT_PLAN_MODE_TOOL_NAME) {
             this.exitPlanCalls.push(tu.id)
           }
         }
@@ -190,7 +190,7 @@ export type PollResult = {
 }
 
 // Returns the approved plan text and where the user wants it executed.
-// 'approved' scrapes from the "## Approved Plan:" marker (ExitPlanModeV2Tool
+// 'approved' scrapes from the "## Approved Plan:" marker (ExitPlanModeTool
 // default branch) — the model writes plan to a file inside CCR and calls
 // ExitPlanMode({allowedPrompts}), so input.plan is never in threadstore.
 // 'teleport' scrapes from the ULTRAPLAN_TELEPORT_SENTINEL in a deny tool_result —
@@ -326,7 +326,7 @@ function extractTeleportPlan(content: ToolResultBlock['content']): string | null
 }
 
 // Plan is echoed in tool_result content as "## Approved Plan:\n<text>" or
-// "## Approved Plan (edited by user):\n<text>" (ExitPlanModeV2Tool).
+// "## Approved Plan (edited by user):\n<text>" (ExitPlanModeTool).
 function extractApprovedPlan(content: ToolResultBlock['content']): string {
   const text = contentToText(content)
   // Try both markers — edited plans use a different label.

@@ -1,4 +1,14 @@
-import { WARNING, POINTER, ARROW_UP, TICK, ELLIPSIS, RADIO_ON, RADIO_OFF, ARROW_DOWN, CROSS } from '../../constants/figures.js'
+import {
+  WARNING,
+  POINTER,
+  ARROW_UP,
+  TICK,
+  ELLIPSIS,
+  RADIO_ON,
+  RADIO_OFF,
+  ARROW_DOWN,
+  CROSS,
+} from '../../constants/figures.js'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'

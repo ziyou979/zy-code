@@ -1,4 +1,5 @@
 import { getSdkAgentProgressSummariesEnabled } from '../../bootstrap/state.js'
+import { tSync } from '../../i18n/index.js'
 import {
   OUTPUT_FILE_TAG,
   STATUS_TAG,
@@ -287,10 +288,10 @@ export function enqueueAgentNotification({
   abortSpeculation(setAppState)
   const summary =
     status === 'completed'
-      ? `Agent "${description}" completed`
+      ? tSync('agent.notificationCompleted', { description })
       : status === 'failed'
-        ? `Agent "${description}" failed: ${error || 'Unknown error'}`
-        : `Agent "${description}" was stopped`
+        ? tSync('agent.notificationFailed', { description, error: error || 'Unknown error' })
+        : tSync('agent.notificationStopped', { description })
   const outputPath = getTaskOutputPath(taskId)
   const toolUseIdLine = toolUseId ? `\n<${TOOL_USE_ID_TAG}>${toolUseId}</${TOOL_USE_ID_TAG}>` : ''
   const resultSection = finalMessage ? `\n<result>${finalMessage}</result>` : ''

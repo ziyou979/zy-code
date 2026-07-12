@@ -30,7 +30,7 @@ import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
 import type { Tool, ToolPermissionContext, Tools } from '../Tool.js'
 import { AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
-import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../tools/ExitPlanModeTool/constants.js'
+import { EXIT_PLAN_MODE_TOOL_NAME } from '../tools/ExitPlanModeTool/constants.js'
 import { TASK_OUTPUT_TOOL_NAME } from '../tools/TaskOutputTool/constants.js'
 import type { ToolDefinition } from '../types/llm.js'
 import type { Message } from '../types/message.js'
@@ -70,7 +70,7 @@ export type SystemPromptBlock = {
 
 // 当智能体集群未启用时，需要从工具模式中过滤的字段
 const SWARM_FIELDS_BY_TOOL: Record<string, string[]> = {
-  [EXIT_PLAN_MODE_V2_TOOL_NAME]: ['launchSwarm', 'teammateCount'],
+  [EXIT_PLAN_MODE_TOOL_NAME]: ['launchSwarm', 'teammateCount'],
   [AGENT_TOOL_NAME]: ['name', 'team_name', 'mode'],
 }
 
@@ -488,7 +488,7 @@ export function normalizeToolInput<T extends Tool>(
   agentId?: AgentId,
 ): z.infer<T['inputSchema']> {
   switch (tool.name) {
-    case EXIT_PLAN_MODE_V2_TOOL_NAME: {
+    case EXIT_PLAN_MODE_TOOL_NAME: {
       // 始终为 ExitPlanModeV2 注入计划内容和文件路径，以便 hooks/SDK 获取计划。
       // V2 工具从文件而非输入中读取计划，但 hooks/SDK
       const plan = getPlan(agentId)
@@ -597,7 +597,7 @@ export function normalizeToolInputForAPI<T extends Tool>(
   input: z.infer<T['inputSchema']>,
 ): z.infer<T['inputSchema']> {
   switch (tool.name) {
-    case EXIT_PLAN_MODE_V2_TOOL_NAME: {
+    case EXIT_PLAN_MODE_TOOL_NAME: {
       // 发送到 API 前去除注入的字段（模式期望空对象）
       if (input && typeof input === 'object' && ('plan' in input || 'planFilePath' in input)) {
         const { plan, planFilePath, ...rest } = input as Record<string, unknown>

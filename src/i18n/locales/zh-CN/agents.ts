@@ -1,10 +1,13 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const zhAgents: TranslationResource = {
-  'agent.agentsFinished': '个 {type} 智能体已完成',
-  'agent.agentsFinishedNoType': '个智能体已完成',
+  'agent.agentsFinished': '个 {type} Agent 已完成',
+  'agent.agentsFinishedNoType': '个 Agent 已完成',
   'agent.apiCallsOnly': '[INNER-ONLY] API 调用：{path}',
-  'agent.backgroundAgentsLaunched': '个后台智能体已启动',
+  'agent.backgroundAgentsLaunched': '个后台 Agent 已启动',
+  'agent.notificationCompleted': 'Agent "{description}" 已完成',
+  'agent.notificationFailed': 'Agent "{description}" 失败：{error}',
+  'agent.notificationStopped': 'Agent "{description}" 已停止',
   'agent.backgrounded': '后台 agent',
   'agent.defaultName': 'Agent',
   'agent.done': '完成',
@@ -15,8 +18,8 @@ export const zhAgents: TranslationResource = {
   'agent.prompt': '提示：',
   'agent.remoteLaunched': '远程 agent 已启动',
   'agent.response': '响应：',
-  'agent.runningAgents': '个 {type} 智能体运行中…',
-  'agent.runningAgentsNoType': '个智能体运行中…',
+  'agent.runningAgents': '个 {type} Agent 运行中…',
+  'agent.runningAgentsNoType': '个 Agent 运行中…',
   'agent.runningPrefix': '',
   'agent.toolUse_one': '次工具使用',
   'agent.toolUse_other': '次工具使用',
@@ -53,8 +56,8 @@ export const zhAgents: TranslationResource = {
   'agents.memoryLabel': '{memory} 记忆',
   'agents.navInstructions': '按 \u2191\uFE0E\u2193\uFE0E 导航，Enter 选择，Esc 取消',
   'agents.noAgentsFound': '未找到 agents',
-  'agents.noAgentsHelpLine1': '未找到 agents。创建 ZY code 可以委托的专用子智能体。',
-  'agents.noAgentsHelpLine2': '每个子智能体都有自己的上下文窗口、自定义系统提示和特定工具。',
+  'agents.noAgentsHelpLine1': '未找到 agents。创建 ZY code 可以委托的专用子 agent。',
+  'agents.noAgentsHelpLine2': '每个子 agent 都有自己的上下文窗口、自定义系统提示和特定工具。',
   'agents.noAgentsTryCreating':
     '尝试创建：Code Reviewer、Code Simplifier、Security Reviewer、Tech Lead 或 UX Reviewer。',
   'agents.openedInEditor': '已在编辑器中打开 {name}。如果你进行了编辑，请重启以加载最新版本。',

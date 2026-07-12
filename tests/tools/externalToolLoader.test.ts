@@ -86,29 +86,21 @@ describe('externalToolLoader', () => {
       try {
         // 第 1 次加载
         await reloadExternalTools(env.tmpDir)
-        expect(
-          getAllBaseTools().filter((t) => t.name === 'ReloadDupTest'),
-        ).toHaveLength(1)
+        expect(getAllBaseTools().filter((t) => t.name === 'ReloadDupTest')).toHaveLength(1)
 
         // 第 2 次 reload
         const r2 = await reloadExternalTools(env.tmpDir)
         expect(r2.added).not.toContain('ReloadDupTest') // 未报告新增
         expect(r2.removed).not.toContain('ReloadDupTest') // 未报告移除
-        expect(
-          getAllBaseTools().filter((t) => t.name === 'ReloadDupTest'),
-        ).toHaveLength(1)
+        expect(getAllBaseTools().filter((t) => t.name === 'ReloadDupTest')).toHaveLength(1)
 
         // 第 3 次 reload —— 仍然只有 1 个
         await reloadExternalTools(env.tmpDir)
-        expect(
-          getAllBaseTools().filter((t) => t.name === 'ReloadDupTest'),
-        ).toHaveLength(1)
+        expect(getAllBaseTools().filter((t) => t.name === 'ReloadDupTest')).toHaveLength(1)
 
         // 第 4 次 reload —— 仍然只有 1 个（防膨胀验证）
         await reloadExternalTools(env.tmpDir)
-        expect(
-          getAllBaseTools().filter((t) => t.name === 'ReloadDupTest'),
-        ).toHaveLength(1)
+        expect(getAllBaseTools().filter((t) => t.name === 'ReloadDupTest')).toHaveLength(1)
       } finally {
         env.cleanup()
       }
@@ -137,9 +129,7 @@ describe('externalToolLoader', () => {
       try {
         // 先加载只有 A 的版本
         await reloadExternalTools(env.tmpDir)
-        expect(
-          getAllBaseTools().filter((t) => t.name === 'ReloadAddTest_A'),
-        ).toHaveLength(1)
+        expect(getAllBaseTools().filter((t) => t.name === 'ReloadAddTest_A')).toHaveLength(1)
 
         // 添加 B 工具文件
         writeFileSync(
@@ -158,12 +148,8 @@ export default {
         expect(result.added).toContain('ReloadAddTest_B')
         expect(result.removed).toHaveLength(0)
 
-        expect(
-          getAllBaseTools().filter((t) => t.name === 'ReloadAddTest_A'),
-        ).toHaveLength(1)
-        expect(
-          getAllBaseTools().filter((t) => t.name === 'ReloadAddTest_B'),
-        ).toHaveLength(1)
+        expect(getAllBaseTools().filter((t) => t.name === 'ReloadAddTest_A')).toHaveLength(1)
+        expect(getAllBaseTools().filter((t) => t.name === 'ReloadAddTest_B')).toHaveLength(1)
       } finally {
         env.cleanup()
       }

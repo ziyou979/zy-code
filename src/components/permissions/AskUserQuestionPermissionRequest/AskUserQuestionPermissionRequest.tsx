@@ -18,7 +18,7 @@ import { maybeResizeAndDownsampleImageBlock } from '../../../utils/imageResizer.
 import { cacheImagePath, storeImage } from '../../../utils/imageStore.js'
 import { logError } from '../../../utils/log.js'
 import { applyMarkdown } from '../../../utils/markdown.js'
-import { isPlanModeInterviewPhaseEnabled } from '../../../utils/planModeV2.js'
+import { isPlanModeInterviewPhaseEnabled } from '../../../utils/planMode.js'
 import { getPlanFilePath } from '../../../utils/plans.js'
 import type { PermissionRequestProps } from '../PermissionRequest.js'
 import { QuestionView } from './QuestionView.js'

@@ -6,7 +6,7 @@ import type { Tool, Tools } from 'src/Tool.js'
 import { filterToolsForAgent } from 'src/tools/AgentTool/agentToolUtils.js'
 import { AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
-import { ExitPlanModeV2Tool } from 'src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.js'
+import { ExitPlanModeTool } from 'src/tools/ExitPlanModeTool/ExitPlanModeTool.js'
 import { FileEditTool } from 'src/tools/FileEditTool/FileEditTool.js'
 import { FileReadTool } from 'src/tools/FileReadTool/FileReadTool.js'
 import { FileWriteTool } from 'src/tools/FileWriteTool/FileWriteTool.js'
@@ -54,7 +54,7 @@ function getToolBuckets(): ToolBuckets {
       toolNames: new Set([
         GlobTool.name,
         GrepTool.name,
-        ExitPlanModeV2Tool.name,
+        ExitPlanModeTool.name,
         FileReadTool.name,
         WebFetchTool.name,
         TodoWriteTool.name,

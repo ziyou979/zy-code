@@ -1652,7 +1652,10 @@ export const fetchToolsForClient = memoizeWithLRU(
                   // Session expired — the connection cache has been
                   // cleared, so retry with a fresh client.
                   if (error instanceof McpSessionExpiredError && attempt < MAX_SESSION_RETRIES) {
-                    logMCPDebug(client.name, `Retrying tool '${tool.name}' after session recovery (attempt ${attempt + 1}/${MAX_SESSION_RETRIES})`)
+                    logMCPDebug(
+                      client.name,
+                      `Retrying tool '${tool.name}' after session recovery (attempt ${attempt + 1}/${MAX_SESSION_RETRIES})`,
+                    )
                     // 短退避等待 OAuth token 传播 / headersHelper 重新获取的凭据生效
                     await new Promise((resolve) => setTimeout(resolve, SESSION_RETRY_DELAY_MS))
                     continue

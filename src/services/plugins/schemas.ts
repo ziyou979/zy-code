@@ -1380,34 +1380,8 @@ export const InstalledPluginSchema = lazySchema(() =>
 )
 
 /**
- * Schema for the installed_plugins.json file (V1 format)
- *
- * Contains a version number and maps plugin IDs to their installation metadata.
- * Maintained automatically by ZY Code, not edited by users.
- *
- * The version field tracks schema changes. When the version doesn't match
- * the current schema version, ZY Code will update the file on next startup.
- *
- * Example file:
- * {
- *   "version": 1,
- *   "plugins": {
- *     "code-formatter@anthropic-tools": { ... },
- *     "db-assistant@company-internal": { ... }
- *   }
- * }
+ * @deprecated V1 format removed. zy-code never had V1 format files.
  */
-export const InstalledPluginsFileSchemaV1 = lazySchema(() =>
-  z.object({
-    version: z.literal(1).describe('Schema version 1'),
-    plugins: z
-      .record(
-        PluginIdSchema(), // Validated plugin ID key (e.g., "formatter@tools")
-        InstalledPluginSchema(),
-      )
-      .describe('Map of plugin IDs to their installation metadata'),
-  }),
-)
 
 /**
  * Scope types for plugin installation (V2)
@@ -1471,12 +1445,9 @@ export const InstalledPluginsFileSchemaV2 = lazySchema(() =>
 )
 
 /**
- * Combined schema that accepts both V1 and V2 formats
- * Used for reading existing files before migration
+ * Schema for the installed_plugins.json file (V2 format only).
  */
-export const InstalledPluginsFileSchema = lazySchema(() =>
-  z.union([InstalledPluginsFileSchemaV1(), InstalledPluginsFileSchemaV2()]),
-)
+export const InstalledPluginsFileSchema = lazySchema(() => InstalledPluginsFileSchemaV2())
 
 /**
  * Schema for a known marketplace entry
@@ -1551,7 +1522,6 @@ export type PluginMarketplace = z.infer<ReturnType<typeof PluginMarketplaceSchem
 export type PluginMarketplaceEntry = z.infer<ReturnType<typeof PluginMarketplaceEntrySchema>>
 export type PluginId = z.infer<ReturnType<typeof PluginIdSchema>> // string in "plugin@marketplace" format
 export type InstalledPlugin = z.infer<ReturnType<typeof InstalledPluginSchema>>
-export type InstalledPluginsFileV1 = z.infer<ReturnType<typeof InstalledPluginsFileSchemaV1>>
 export type InstalledPluginsFileV2 = z.infer<ReturnType<typeof InstalledPluginsFileSchemaV2>>
 export type PluginScope = z.infer<ReturnType<typeof PluginScopeSchema>>
 export type PluginInstallationEntry = z.infer<ReturnType<typeof PluginInstallationEntrySchema>>

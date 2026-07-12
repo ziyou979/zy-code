@@ -964,9 +964,7 @@ export async function* executeHooks({
 
     // SessionStart hook 可在启动时请求重扫技能
     if (result.reloadSkills) {
-      hookLog(
-        `Hook ${hookEvent} (${getHookDisplayText(result.hook)}) requested skill reload`,
-      )
+      hookLog(`Hook ${hookEvent} (${getHookDisplayText(result.hook)}) requested skill reload`)
       yield {
         reloadSkills: true as const,
       }

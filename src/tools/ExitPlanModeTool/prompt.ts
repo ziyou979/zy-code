@@ -3,7 +3,7 @@
 // Hardcoded to avoid relative import issues in stub
 const ASK_USER_QUESTION_TOOL_NAME = 'AskUserQuestion'
 
-export const EXIT_PLAN_MODE_V2_TOOL_PROMPT = `Use this tool when you are in plan mode and have finished writing your plan to the plan file and are ready for user approval.
+export const EXIT_PLAN_MODE_TOOL_PROMPT = `Use this tool when you are in plan mode and have finished writing your plan to the plan file and are ready for user approval.
 
 ## How This Tool Works
 - You should have already written your plan to the plan file specified in the plan mode system message

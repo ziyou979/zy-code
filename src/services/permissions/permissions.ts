@@ -519,7 +519,11 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
       // permissionSetup.ts 处理：isOverlyBroadPowerShellAllowRule 剥离 PowerShell(*)，
       // isDangerousPowerShellPermission 为内部用户和 auto 模式入口
       // 剥离 iex/pwsh/Start-Process 前缀规则。
-      if (tool.name === POWERSHELL_TOOL_NAME && !feature('POWERSHELL_AUTO_MODE') && !getAutoModeConfig()?.classifyAllShell) {
+      if (
+        tool.name === POWERSHELL_TOOL_NAME &&
+        !feature('POWERSHELL_AUTO_MODE') &&
+        !getAutoModeConfig()?.classifyAllShell
+      ) {
         if (appState.toolPermissionContext.shouldAvoidPermissionPrompts) {
           return {
             behavior: 'deny',
