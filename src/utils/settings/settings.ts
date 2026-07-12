@@ -820,19 +820,56 @@ export function hasSkipDangerousModePermissionPrompt(): boolean {
 }
 
 /**
+ * auto 模式相关高权限配置仅信任这些源（对齐 Claude Code 2.1.207）。
+ * projectSettings / localSettings 为仓库可控，不得授予 auto 或注入分类器规则。
+ */
+export const TRUSTED_AUTO_MODE_SOURCES = [
+  'userSettings',
+  'flagSettings',
+  'policySettings',
+] as const satisfies readonly SettingSource[]
+
+/**
  * 如果任何受信任的配置源已接受自动模式选择加入对话框则返回 true。
- * projectSettings 被有意排除 - 恶意项目可能会自动绕过对话框（RCE 风险）。
+ * projectSettings / localSettings 被有意排除 - 恶意仓库可能绕过对话框（RCE 风险）。
  */
 export function hasAutoModeOptIn(): boolean {
   const user = getSettingsForSource('userSettings')?.skipAutoPermissionPrompt
-  const local = getSettingsForSource('localSettings')?.skipAutoPermissionPrompt
   const flag = getSettingsForSource('flagSettings')?.skipAutoPermissionPrompt
   const policy = getSettingsForSource('policySettings')?.skipAutoPermissionPrompt
-  const result = !!(user || local || flag || policy)
+  const result = !!(user || flag || policy)
   logForDebugging(
-    `[auto-mode] hasAutoModeOptIn=${result} skipAutoPermissionPrompt: user=${user} local=${local} flag=${flag} policy=${policy}`,
+    `[auto-mode] hasAutoModeOptIn=${result} skipAutoPermissionPrompt: user=${user} flag=${flag} policy=${policy}`,
   )
   return result
+}
+
+/**
+ * 可信源中是否有 permissions.defaultMode === 'auto'。
+ * project/local 中的 defaultMode:auto 被忽略（见 ignoreUntrustedAutoDefaultMode）。
+ */
+export function hasTrustedDefaultModeAuto(): boolean {
+  for (const source of TRUSTED_AUTO_MODE_SOURCES) {
+    if (getSettingsForSource(source)?.permissions?.defaultMode === 'auto') {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * 若 project/local 设置了 defaultMode:auto 或 autoMode 规则，返回 true（调用方可打遥测）。
+ * 这些源不会生效，仅用于告警。
+ */
+export function hasUntrustedAutoModeSettings(): boolean {
+  for (const source of ['projectSettings', 'localSettings'] as const) {
+    const s = getSettingsForSource(source)
+    if (!s) continue
+    if (s.permissions?.defaultMode === 'auto') return true
+    // autoMode 字段在 schema 中存在；不可信源若写了规则则应告警忽略
+    if ('autoMode' in s && s.autoMode && typeof s.autoMode === 'object') return true
+  }
+  return false
 }
 
 /**
@@ -851,9 +888,8 @@ export function getUseAutoModeDuringPlan(): boolean {
 
 /**
  * 返回从受信任配置源合并后的 autoMode 配置。
- * 仅在 TRANSCRIPT_CLASSIFIER 激活时可用；否则返回 undefined。
- * projectSettings 被有意排除 - 恶意项目可能会注入分类器
- * allow/deny 规则（RCE 风险）。
+ * 仅 user / flag / policy（对齐 CC 2.1.207）。
+ * projectSettings 与 localSettings 被排除 - 仓库可控，可能注入分类器规则。
  */
 export function getAutoModeConfig():
   | {
@@ -881,12 +917,7 @@ export function getAutoModeConfig():
   const environment: string[] = []
   let classifyAllShell = false
 
-  for (const source of [
-    'userSettings',
-    'localSettings',
-    'flagSettings',
-    'policySettings',
-  ] as const) {
+  for (const source of TRUSTED_AUTO_MODE_SOURCES) {
     const settings = getSettingsForSource(source)
     if (!settings) {
       continue

@@ -308,6 +308,29 @@ export function formatRelativeTimeAgo(
 }
 
 /**
+ * 口语化等待时长（对齐 CC 2.1.207 blocked peek：`waiting 3m`）。
+ * 使用固定英文窄格式（与 formatDuration narrow 一致），避免 UI 行宽抖动。
+ * @param sinceMs 等待开始的 epoch ms
+ * @param nowMs 当前时间
+ */
+export function formatWaitingDuration(sinceMs: number, nowMs: number = Date.now()): string {
+  const sec = Math.max(0, Math.floor((nowMs - sinceMs) / 1000))
+  if (sec < 60) {
+    return `waiting ${sec}s`
+  }
+  const min = Math.floor(sec / 60)
+  if (min < 60) {
+    return `waiting ${min}m`
+  }
+  const hr = Math.floor(min / 60)
+  if (hr < 48) {
+    return `waiting ${hr}h`
+  }
+  const day = Math.floor(hr / 24)
+  return `waiting ${day}d`
+}
+
+/**
  * 格式化日志元数据用于展示（时间、大小或消息数、分支、标签、PR）
  */
 export function formatLogMetadata(log: {

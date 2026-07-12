@@ -75,6 +75,44 @@ async function ensureInboxDir(teamName?: string): Promise<void> {
   logForDebugging(`[TeammateMailbox] Ensured inbox directory: ${inboxDir}`)
 }
 
+/** 校验 mailbox 条目形状，过滤畸形消息（对齐 CC 2.1.207 crash loop 修复） */
+export function isValidTeammateMessage(value: unknown): value is TeammateMessage {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+  const m = value as Record<string, unknown>
+  return (
+    typeof m.from === 'string' &&
+    typeof m.text === 'string' &&
+    typeof m.timestamp === 'string' &&
+    typeof m.read === 'boolean'
+  )
+}
+
+/**
+ * 将损坏的收件箱挪到旁路备份并重置为空数组，避免每秒 poll 重复 logError。
+ */
+async function quarantineCorruptMailbox(inboxPath: string, reason: string): Promise<void> {
+  const backupPath = `${inboxPath}.corrupt.${Date.now()}`
+  try {
+    const raw = await readFile(inboxPath, 'utf-8')
+    await writeFile(backupPath, raw, 'utf-8')
+  } catch {
+    // 备份失败仍尝试清空
+  }
+  try {
+    await writeFile(inboxPath, '[]', 'utf-8')
+    logForDebugging(
+      `[TeammateMailbox] quarantined corrupt mailbox (${reason}): backup=${backupPath}`,
+      { level: 'warn' },
+    )
+  } catch (error) {
+    logForDebugging(`[TeammateMailbox] failed to reset corrupt mailbox: ${error}`, {
+      level: 'error',
+    })
+  }
+}
+
 /**
  * 读取 teammate 收件箱中的所有消息
  * @param agentName - 要读取收件箱的 agent 名称（非 UUID）
@@ -89,9 +127,55 @@ export async function readMailbox(
 
   try {
     const content = await readFile(inboxPath, 'utf-8')
-    const messages = jsonParse(content) as TeammateMessage[]
-    logForDebugging(`[TeammateMailbox] readMailbox: read ${messages.length} message(s)`)
-    return messages
+    let parsed: unknown
+    try {
+      parsed = jsonParse(content)
+    } catch (parseError) {
+      // 畸形 JSON：隔离并重置，防止 poll 每秒反复 logError（CC 2.1.207）
+      logForDebugging(
+        `[TeammateMailbox] readMailbox: invalid JSON for ${agentName}, quarantining: ${parseError}`,
+        { level: 'warn' },
+      )
+      await quarantineCorruptMailbox(inboxPath, 'invalid-json')
+      return []
+    }
+
+    if (!Array.isArray(parsed)) {
+      logForDebugging(
+        `[TeammateMailbox] readMailbox: expected array for ${agentName}, quarantining`,
+        { level: 'warn' },
+      )
+      await quarantineCorruptMailbox(inboxPath, 'not-array')
+      return []
+    }
+
+    const valid: TeammateMessage[] = []
+    let dropped = 0
+    for (const item of parsed) {
+      if (isValidTeammateMessage(item)) {
+        valid.push(item)
+      } else {
+        dropped++
+      }
+    }
+    if (dropped > 0) {
+      // 写回仅含合法条目的文件，避免畸形条目每秒被重新处理
+      try {
+        await writeFile(inboxPath, jsonStringify(valid, null, 2), 'utf-8')
+        logForDebugging(
+          `[TeammateMailbox] readMailbox: dropped ${dropped} malformed message(s) for ${agentName}`,
+          { level: 'warn' },
+        )
+      } catch (writeError) {
+        logForDebugging(
+          `[TeammateMailbox] failed to rewrite mailbox after dropping malformed: ${writeError}`,
+          { level: 'warn' },
+        )
+      }
+    }
+
+    logForDebugging(`[TeammateMailbox] readMailbox: read ${valid.length} message(s)`)
+    return valid
   } catch (error) {
     const code = getErrnoCode(error)
     if (code === 'ENOENT') {

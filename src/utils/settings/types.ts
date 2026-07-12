@@ -949,7 +949,8 @@ export const SettingsSchema = lazySchema(() =>
         )
         .optional()
         .describe(
-          'Per-plugin configuration including MCP server user configs, keyed by plugin ID (plugin@marketplace format)',
+          'Per-plugin configuration including MCP server user configs, keyed by plugin ID (plugin@marketplace format). ' +
+            'Only honored from user, --settings (flag), and managed/policy settings — project and local settings are ignored for security (CC 2.1.207).',
         ),
       remote: z
         .object({

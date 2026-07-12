@@ -920,15 +920,21 @@ function validateOutputRedirections(
   // Example attack: cd .zy/ && echo "malicious" > settings.json
   // The redirection target would be validated relative to the original CWD, but the
   // actual write happens in the changed directory after 'cd' executes.
+  //
+  // 例外（CC 2.1.207）：全部重定向目标仅为 /dev/null（丢弃输出）时不要求审批。
+  // 例如 `cd sub && make test > /dev/null` 无写盘副作用。
   if (compoundCommandHasCd && redirections.length > 0) {
-    return {
-      behavior: 'ask',
-      message: `Commands that change directories and write via output redirection require explicit approval to ensure paths are evaluated correctly. For security, ZY Code cannot automatically determine the final working directory when 'cd' is used in compound commands.`,
-      decisionReason: {
-        type: 'other',
-        reason:
-          'Compound command contains cd with output redirection - manual approval required to prevent path resolution bypass',
-      },
+    const onlyDevNull = redirections.every((r) => r.target === '/dev/null')
+    if (!onlyDevNull) {
+      return {
+        behavior: 'ask',
+        message: `Commands that change directories and write via output redirection require explicit approval to ensure paths are evaluated correctly. For security, ZY Code cannot automatically determine the final working directory when 'cd' is used in compound commands.`,
+        decisionReason: {
+          type: 'other',
+          reason:
+            'Compound command contains cd with output redirection - manual approval required to prevent path resolution bypass',
+        },
+      }
     }
   }
   for (const { target } of redirections) {
