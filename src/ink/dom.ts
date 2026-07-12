@@ -68,6 +68,13 @@ export type DOMElement = {
   scrollClampMin?: number
   scrollClampMax?: number
   scrollHeight?: number
+  /**
+   * 内容高度高水位（对齐 CC scrollHeightHwm）。
+   * 流式/虚拟化时 scrollHeight 可能短暂回落；HWM 用于触底跟随时
+   * 避免「高度缩水 → 误判离底 → transcript 回跳」。
+   * 用户主动上滚时由 ScrollBox 清除。
+   */
+  scrollHeightHwm?: number
   scrollViewportHeight?: number
   scrollViewportTop?: number
   stickyScroll?: boolean

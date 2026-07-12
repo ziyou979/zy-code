@@ -5,6 +5,7 @@ import { stopCapturingEarlyInput } from '../../utils/earlyInput.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isMouseClicksDisabled } from '../../utils/fullscreen.js'
 import { logError } from '../../utils/log.js'
+import instances from '../instances.js'
 import { EventEmitter } from '../events/emitter.js'
 import { InputEvent } from '../events/input-event.js'
 import { TerminalFocusEvent } from '../events/terminal-focus-event.js'
@@ -16,7 +17,14 @@ import {
   parseMultipleKeypresses,
 } from '../parse-keypress.js'
 import reconciler from '../reconciler.js'
-import { finishSelection, hasSelection, type SelectionState, startSelection } from '../selection.js'
+import {
+  clearSelection,
+  finishSelection,
+  hasSelection,
+  selectionBounds,
+  type SelectionState,
+  startSelection,
+} from '../selection.js'
 import { isXtermJs, setXtversionName, supportsExtendedKeys } from '../terminal.js'
 import { getTerminalFocused, setTerminalFocused } from '../terminal-focus-state.js'
 import { TerminalQuerier, xtversion } from '../terminal-querier.js'
@@ -162,6 +170,8 @@ export default class App extends PureComponent<Props, State> {
   //（在同一单元格处拖拽后释放等）。
   lastHoverCol = -1
   lastHoverRow = -1
+  /** press 落在 sticky 顶栏上：release 时跳转，避免 startSelection 吞掉 click */
+  pendingStickyHeaderClick = false
 
   // 最后一个 stdin 数据块的时间戳。用于检测长时间间隔（tmux 附加、
   // ssh 重连、笔记本唤醒）并触发终端模式重新声明。
@@ -581,6 +591,16 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
   const col = m.col - 1
   const row = m.row - 1
   const baseButton = m.button & 0x03
+  // sticky 顶栏行（由 FullscreenLayout 注册）。不走 DOM hit-test：
+  // WT/JetBrains 上顶栏常点不中 onClick/hover。
+  const ink = instances.get(process.stdout) as
+    | {
+        isStickyHeaderRow?: (r: number) => boolean
+        activateStickyHeader?: () => boolean
+      }
+    | undefined
+  const onStickyRow = ink?.isStickyHeaderRow?.(row) === true
+
   if (m.action === 'press') {
     if ((m.button & 0x20) !== 0 && baseButton === 3) {
       // mode-1003 没有按住按钮的移动。分发悬停事件；跳过
@@ -607,9 +627,14 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
     if (baseButton !== 0) {
       // 非左键按下中断多击链。
       app.clickCount = 0
+      app.pendingStickyHeaderClick = false
       return
     }
     if ((m.button & 0x20) !== 0) {
+      // sticky 上拖拽不扩展选区
+      if (app.pendingStickyHeaderClick) {
+        return
+      }
       // 拖拽移动：模式感知扩展（字符/单词/行）。onSelectionDrag
       // 在内部调用 notifySelectionChange——无需额外的 onSelectionChange。
       app.props.onSelectionDrag(col, row)
@@ -624,6 +649,19 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
       finishSelection(sel)
       app.props.onSelectionChange()
     }
+
+    // sticky 顶栏：不 startSelection，等 release 跳转（对齐 CC 顶栏单击）
+    if (onStickyRow) {
+      app.pendingStickyHeaderClick = true
+      app.clickCount = 0
+      app.lastClickCol = col
+      app.lastClickRow = row
+      clearSelection(sel)
+      app.props.onSelectionChange()
+      return
+    }
+    app.pendingStickyHeaderClick = false
+
     // 新的左键按下。在这里检测多击（而不是在释放时），
     // 这样单词/行高亮会立即出现，且随后的拖拽可以
     // 像原生 macOS 一样按单词/行扩展。之前在
@@ -672,8 +710,21 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
     }
     finishSelection(sel)
     app.props.onSelectionChange()
+    app.pendingStickyHeaderClick = false
     return
   }
+
+  // sticky 顶栏 press→release：直接跳转，不依赖 DOM onClick / hit-test
+  if (app.pendingStickyHeaderClick) {
+    app.pendingStickyHeaderClick = false
+    clearSelection(sel)
+    if (onStickyRow || ink?.isStickyHeaderRow?.(app.lastClickRow) === true) {
+      ink?.activateStickyHeader?.()
+    }
+    app.props.onSelectionChange()
+    return
+  }
+
   finishSelection(sel)
   // 注意：与旧的基于释放的检测不同，我们不会在拖拽后
   // 的释放时重置 clickCount。这符合 NSEvent.clickCount 语义：
@@ -682,45 +733,62 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
   // 现在能正确解析为单词选择，而不是断开为新的单击。
   // nearLast 窗口（500ms，1 个单元格）限制了效果范围——
   // 超出该范围的有意拖拽只会开始新的链。
-  // 字符模式下无拖拽的按下+释放是单击：设置锚点，
-  // 焦点为空 → hasSelection 为 false。在单词/行模式下，按下已经
-  // 设置了锚点+焦点（hasSelection 为 true），所以释放只保持高亮。
+  //
+  // 单击判定（对齐 CC sticky header 点击可点性）：
+  // - 无 focus（纯 press+release）→ 单击
+  // - 触控板/Windows 终端常在 press/release 间报 1 格抖动，
+  //   会留下 1 格伪选区，导致 onClick 被吞掉（sticky 顶栏无法跳转）。
+  //   同行且 |Δcol|≤1 的 trivial 选区按单击处理并清掉高亮。
   // 锚点检查防止孤立的释放（没有之前的按下——例如
   // 启用鼠标跟踪时按钮被按住）。
-  if (!hasSelection(sel) && sel.anchor) {
-    // 单击：立即分发 DOM 点击（光标重新定位
-    // 等对延迟敏感）。如果没有 DOM 处理程序消耗它，
-    // 延迟超链接检查，使第二次点击可以取消它。
-    if (!app.props.onClickAt(col, row)) {
-      // 在屏幕缓冲区仍反映用户点击内容时同步解析超链接 URL——
-      // 仅延迟浏览器打开，使双击可以取消它。
-      const url = app.props.getHyperlinkAt(col, row)
-      // xterm.js（VS Code、Cursor、Windsurf 等）有自己的 OSC 8 链接
-      // 处理程序，在 Cmd+点击时触发*不消耗鼠标事件*
-      //（Linkifier._handleMouseUp 调用 link.activate() 但从不
-      // preventDefault/stopPropagation）。点击也会作为 SGR 转发到
-      // pty，因此 VS Code 的 terminalLinkManager 和我们的处理程序
-      // 都会打开 URL——两次。我们不能按 Cmd 过滤：xterm.js
-      // 在 SGR 编码之前丢弃 metaKey（ICoreMouseEvent 没有 meta
-      // 字段；我们称为 'meta' 的 SGR 位连接到 alt）。让 xterm.js
-      // 处理链接打开；Cmd+点击在那里的原生体验就是这样。
-      // TERM_PROGRAM 是同步快速路径；isXtermJs() 是 XTVERSION
-      // 探测结果（捕获 SSH + 非 VS Code 嵌入者如 Hyper）。
-      if (url && process.env.TERM_PROGRAM !== 'vscode' && !isXtermJs()) {
-        // 清除任何先前的待处理定时器——点击第二个链接会
-        // 取代第一个（只有最新的点击才会打开）。
-        if (app.pendingHyperlinkTimer) {
-          clearTimeout(app.pendingHyperlinkTimer)
+  if (sel.anchor) {
+    const bounds = selectionBounds(sel)
+    // 触控板/Windows 抖动：允许跨 1 行、2 列的微动仍算单击，
+    // 否则 sticky 顶栏 onClick 永远到不了（hasSelection 为 true）。
+    const trivialSelection =
+      !bounds ||
+      (Math.abs(bounds.end.row - bounds.start.row) <= 1 &&
+        Math.abs(bounds.end.col - bounds.start.col) <= 2)
+    const isClick = !hasSelection(sel) || trivialSelection
+    if (isClick) {
+      if (hasSelection(sel)) {
+        // 清掉伪选区，再派发 DOM click（sticky / 按钮等）
+        clearSelection(sel)
+      }
+      // 单击：立即分发 DOM 点击（光标重新定位
+      // 等对延迟敏感）。如果没有 DOM 处理程序消耗它，
+      // 延迟超链接检查，使第二次点击可以取消它。
+      if (!app.props.onClickAt(col, row)) {
+        // 在屏幕缓冲区仍反映用户点击内容时同步解析超链接 URL——
+        // 仅延迟浏览器打开，使双击可以取消它。
+        const url = app.props.getHyperlinkAt(col, row)
+        // xterm.js（VS Code、Cursor、Windsurf 等）有自己的 OSC 8 链接
+        // 处理程序，在 Cmd+点击时触发*不消耗鼠标事件*
+        //（Linkifier._handleMouseUp 调用 link.activate() 但从不
+        // preventDefault/stopPropagation）。点击也会作为 SGR 转发到
+        // pty，因此 VS Code 的 terminalLinkManager 和我们的处理程序
+        // 都会打开 URL——两次。我们不能按 Cmd 过滤：xterm.js
+        // 在 SGR 编码之前丢弃 metaKey（ICoreMouseEvent 没有 meta
+        // 字段；我们称为 'meta' 的 SGR 位连接到 alt）。让 xterm.js
+        // 处理链接打开；Cmd+点击在那里的原生体验就是这样。
+        // TERM_PROGRAM 是同步快速路径；isXtermJs() 是 XTVERSION
+        // 探测结果（捕获 SSH + 非 VS Code 嵌入者如 Hyper）。
+        if (url && process.env.TERM_PROGRAM !== 'vscode' && !isXtermJs()) {
+          // 清除任何先前的待处理定时器——点击第二个链接会
+          // 取代第一个（只有最新的点击才会打开）。
+          if (app.pendingHyperlinkTimer) {
+            clearTimeout(app.pendingHyperlinkTimer)
+          }
+          app.pendingHyperlinkTimer = setTimeout(
+            (app, url) => {
+              app.pendingHyperlinkTimer = null
+              app.props.onOpenHyperlink(url)
+            },
+            MULTI_CLICK_TIMEOUT_MS,
+            app,
+            url,
+          )
         }
-        app.pendingHyperlinkTimer = setTimeout(
-          (app, url) => {
-            app.pendingHyperlinkTimer = null
-            app.props.onOpenHyperlink(url)
-          },
-          MULTI_CLICK_TIMEOUT_MS,
-          app,
-          url,
-        )
       }
     }
   }

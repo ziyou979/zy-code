@@ -131,6 +131,8 @@ function ScrollBox({
         el.stickyScroll = false
         el.pendingScrollDelta = undefined
         el.scrollAnchor = undefined
+        // 用户主动跳转：丢弃高度高水位，避免假触底
+        el.scrollHeightHwm = undefined
         el.scrollTop = Math.max(0, Math.floor(y))
         scrollMutated(el)
       },
@@ -141,11 +143,25 @@ function ScrollBox({
         }
         box.stickyScroll = false
         box.pendingScrollDelta = undefined
+        box.scrollHeightHwm = undefined
+        // 关键：必须立刻写入 scrollTop，再设 scrollAnchor。
+        // 若只设 scrollAnchor，notify() 触发 React 重渲染时 getScrollTop()
+        // 仍是旧值 → 虚拟列表按旧视口挂载 → render clamp 把绘制钉在
+        // 已挂载边缘 → sticky 顶栏点击看起来「没跳转」。
+        // 预写 scrollTop 让 useVirtualScroll 立刻挂载目标范围；
+        // scrollAnchor 在下一帧 Yoga 后精修位置（与 scrollTo 即时语义对齐）。
+        const top = el.yogaNode?.getComputedTop()
+        if (top != null && Number.isFinite(top)) {
+          box.scrollTop = Math.max(0, Math.floor(top + offset))
+        }
         box.scrollAnchor = {
           el,
           offset,
         }
         scrollMutated(box)
+        // 与 scrollToBottom 相同：强制 React 提交，确保虚拟列表
+        // 在下一帧绘制前已按新 scrollTop 扩展挂载范围。
+        forceRender((n) => n + 1)
       },
       scrollBy(dy: number) {
         const el = domRef.current
@@ -155,6 +171,10 @@ function ScrollBox({
         el.stickyScroll = false
         // 滚轮输入取消任何进行中的锚点寻址 —— 用户覆盖。
         el.scrollAnchor = undefined
+        // 上滚时清除 HWM；下滚保留（可能仍在追底）
+        if (dy < 0) {
+          el.scrollHeightHwm = undefined
+        }
         // 累积到 pendingScrollDelta；渲染器以限速释放，
         // 使快速滑动显示中间帧。纯累加器：上滚后接下滚自然抵消。
         el.pendingScrollDelta = (el.pendingScrollDelta ?? 0) + Math.floor(dy)

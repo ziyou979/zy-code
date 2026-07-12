@@ -24,7 +24,7 @@ import * as dom from './dom.js'
 import { KeyboardEvent } from './events/keyboard-event.js'
 import { FocusManager } from './focus.js'
 import { emptyFrame, type Frame, type FrameEvent } from './frame.js'
-import { dispatchClick, dispatchHover } from './hit-test.js'
+import { dispatchClick, dispatchHover, hitTest } from './hit-test.js'
 import instances from './instances.js'
 import { LogUpdate } from './log-update.js'
 import { nodeCache } from './node-cache.js'
@@ -1545,7 +1545,32 @@ export default class Ink {
       return
     }
     col = this.correctCol(col, row)
+    // sticky 顶栏：行号命中区优先驱动 hover（不依赖 DOM hit-test）
+    const zone = this.stickyHeaderZone
+    if (zone?.setHover) {
+      const inZone = row >= zone.y && row < zone.y + zone.height
+      zone.setHover(inZone)
+      if (inZone) {
+        return
+      }
+    }
     dispatchHover(this.rootNode, col, row, this.hoveredNodes)
+  }
+
+  /** sticky 顶栏是否覆盖该屏幕行（0-based）。 */
+  isStickyHeaderRow(row: number): boolean {
+    const z = this.stickyHeaderZone
+    return !!z && row >= z.y && row < z.y + z.height
+  }
+
+  /** 激活 sticky 顶栏跳转；成功返回 true。 */
+  activateStickyHeader(): boolean {
+    const z = this.stickyHeaderZone
+    if (!z) {
+      return false
+    }
+    z.scrollTo()
+    return true
   }
   dispatchKeyboardEvent(parsedKey: ParsedKey): void {
     const target = this.focusManager.activeElement ?? this.rootNode
@@ -1594,6 +1619,27 @@ export default class Ink {
   onHyperlinkClick: ((url: string) => void) | undefined
 
   /**
+   * 双击让权钩子。仅当返回 true 时跳过默认选词。
+   * 当前用途：顶部 sticky 用户消息条 → 滚回该条对话起始位置。
+   * scrollback 内普通消息双击必须返回 false，保持选词。
+   * 由 FullscreenLayout 通过 useLayoutEffect 挂载。
+   */
+  onDoubleClickAt: ((col: number, row: number) => boolean) | undefined
+
+  /**
+   * 顶部 sticky 用户消息条的屏幕命中区（0-based row）。
+   * 不依赖 DOM hit-test：Windows Terminal / JetBrains 上 sticky 头
+   * 常因布局缓存问题点不中；改用行号区域判定。
+   * FullscreenLayout 在 sticky 显示时写入，隐藏时清空。
+   */
+  stickyHeaderZone: {
+    y: number
+    height: number
+    scrollTo: () => void
+    setHover?: (hover: boolean) => void
+  } | null = null
+
+  /**
    * Stable prototype wrapper for onHyperlinkClick. Passed to <App> as
    * onOpenHyperlink so the prop is a bound method (autoBind'd) that reads
    * the mutable field at call time — not the undefined-at-render value.
@@ -1603,17 +1649,50 @@ export default class Ink {
   }
 
   /**
+   * 命中测试 DOM（屏幕坐标 0-based，会校正 JetBrains 宽字符）。
+   * 供双击/删除选区时定位消息行。
+   */
+  hitTestAt(col: number, row: number): dom.DOMElement | null {
+    if (!this.altScreenActive) {
+      return null
+    }
+    col = this.correctCol(col, row)
+    return hitTest(this.rootNode, col, row)
+  }
+
+  /**
+   * 读取当前选区纯文本（不写剪贴板、不清选区）。
+   */
+  getSelectedText(): string {
+    if (!hasSelection(this.selection)) {
+      return ''
+    }
+    return getSelectedText(this.selection, this.frontFrame.screen)
+  }
+
+  /**
    * Handle a double- or triple-click at (col, row): select the word or
    * line under the cursor by reading the current screen buffer. Called on
    * PRESS (not release) so the highlight appears immediately and drag can
    * extend the selection word-by-word / line-by-line. Falls back to
    * char-mode startSelection if the click lands on a noSelect cell.
+   *
+   * 双击：业务 onDoubleClickAt 返回 true 时才让权（如 sticky 头部跳转）；
+   * 返回 false/未挂载 → 默认选词。三击永不让权。
    */
   handleMultiClick(col: number, row: number, count: 2 | 3): void {
     if (!this.altScreenActive) {
       return
     }
     col = this.correctCol(col, row)
+
+    // 仅 count===2 询问业务；false → 继续选词（含 scrollback 用户消息）
+    if (count === 2 && this.onDoubleClickAt?.(col, row) === true) {
+      clearSelection(this.selection)
+      this.notifySelectionChange()
+      return
+    }
+
     const screen = this.frontFrame.screen
     // selectWordAt/selectLineAt no-op on noSelect/out-of-bounds. Seed with
     // a char-mode selection so the press still starts a drag even if the

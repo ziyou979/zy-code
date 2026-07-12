@@ -12,6 +12,7 @@ import { type StyledSegment, squashTextNodesToSegments } from './squash-text-nod
 import type { Color } from './styles.js'
 import { isXtermJs } from './terminal.js'
 import { widestLine } from './widest-line.js'
+import { computeScrollFollow } from './scrollFollow.js'
 import wrapText from './wrap-text.js'
 
 // 匹配 ScrollKeybindingHandler.tsx 中的 detectXtermJsWheel() — 曲线
@@ -714,15 +715,21 @@ function renderNodeToOutput(
         // 视图继续滚动，高亮随文本上移）。
         const scrollTopBeforeFollow = node.scrollTop ?? 0
         const sticky = node.stickyScroll ?? Boolean(node.attributes.stickyScroll)
+        // 触底跟随 + 高度高水位（CC 2.1.207）：抽出为 computeScrollFollow 以便回归测试
+        const follow = computeScrollFollow({
+          scrollHeight,
+          prevScrollHeight,
+          innerHeight,
+          prevInnerHeight,
+          scrollTop: scrollTopBeforeFollow,
+          sticky,
+          scrollHeightHwm: node.scrollHeightHwm,
+          pendingScrollDelta: node.pendingScrollDelta,
+        })
+        node.scrollHeightHwm = follow.scrollHeightHwm
         const prevMaxScroll = Math.max(0, prevScrollHeight - prevInnerHeight)
-        // 位置检查仅在内容增长时有效 — 虚拟化可能
-        // 短暂缩小 scrollHeight（尾部卸载 + 陈旧的 heightCache
-        // 占位符）使 scrollTop >= prevMaxScroll 为真是伪影，而非
-        // 因为用户在底部。
-        const grew = scrollHeight >= prevScrollHeight
-        const atBottom = sticky || (grew && scrollTopBeforeFollow >= prevMaxScroll)
-        if (atBottom && (node.pendingScrollDelta ?? 0) >= 0) {
-          node.scrollTop = maxScroll
+        if (follow.atBottom && (node.pendingScrollDelta ?? 0) >= 0) {
+          node.scrollTop = follow.nextScrollTop
           node.pendingScrollDelta = undefined
           // 同步标志使 useVirtualScroll 的 isSticky() 与位置
           // 状态一致 — 粘性损坏但处于底部（滚轮抖动、在最大值处点击选择）

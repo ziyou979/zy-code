@@ -11,6 +11,8 @@ export function useSelection(): {
   copySelection: () => string
   /** 复制但不清除高亮（用于选中即复制）。 */
   copySelectionNoClear: () => string
+  /** 仅读取选区文本，不写剪贴板、不清选区。 */
+  getSelectedText: () => string
   clearSelection: () => void
   hasSelection: () => boolean
   /** 读取原始可变选择状态（用于拖拽滚动）。 */
@@ -47,6 +49,7 @@ export function useSelection(): {
       return {
         copySelection: () => '',
         copySelectionNoClear: () => '',
+        getSelectedText: () => '',
         clearSelection: () => {},
         hasSelection: () => false,
         getState: () => null,
@@ -61,6 +64,7 @@ export function useSelection(): {
     return {
       copySelection: () => ink.copySelection(),
       copySelectionNoClear: () => ink.copySelectionNoClear(),
+      getSelectedText: () => ink.getSelectedText(),
       clearSelection: () => ink.clearTextSelection(),
       hasSelection: () => ink.hasTextSelection(),
       getState: () => ink.selection,
