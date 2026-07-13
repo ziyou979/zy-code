@@ -33,7 +33,7 @@ import {
   checkManagedSettingsSecurity,
   handleSecurityCheckResult,
   shouldPersistManagedSettingsAfterSecurityCheck,
-} from './securityCheck.jsx'
+} from '../../components/remote-managed-settings/SecurityCheck.jsx'
 import { isRemoteManagedSettingsEligible, resetSyncCache } from './syncCache.js'
 import {
   getRemoteManagedSettingsSyncFromCache,

@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto'
 import * as React from 'react'
-import { BashModeProgress } from 'src/components/BashModeProgress.js'
-import { resolveDefaultShell } from 'src/shell-eval/shared/resolveDefaultShell.js'
-import { isPowerShellToolEnabled } from 'src/shell-eval/shared/shellToolUtils.js'
-import type { SetToolJSXFn } from 'src/Tool.js'
-import { BashTool } from 'src/tools/BashTool/BashTool.js'
-import type { AttachmentMessage, SystemMessage, UserMessage } from 'src/types/message.js'
-import type { ShellProgress } from 'src/types/tools.js'
+import { BashModeProgress } from '../BashModeProgress.js'
+import { resolveDefaultShell } from '../../shell-eval/shared/resolveDefaultShell.js'
+import { isPowerShellToolEnabled } from '../../shell-eval/shared/shellToolUtils.js'
+import type { SetToolJSXFn } from '../../Tool.js'
+import { BashTool } from '../../tools/BashTool/BashTool.js'
+import type { AttachmentMessage, SystemMessage, UserMessage } from '../../types/message.js'
+import type { ShellProgress } from '../../types/tools.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { UserContentBlock } from '../../types/llm.js'
 import { errorMessage, ShellError } from '../../utils/errors.js'
@@ -18,7 +18,8 @@ import {
 } from '../../utils/messages.js'
 import { processToolResultBlock } from '../../utils/toolResultStorage.js'
 import { escapeXml } from '../../utils/xml.js'
-import type { ProcessUserInputContext } from './processUserInput.js'
+import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
+
 export async function processBashCommand(
   inputString: string,
   precedingInputBlocks: UserContentBlock[],
@@ -86,11 +87,11 @@ export async function processBashCommand(
     // native, shouldUseSandbox() returns false regardless (unsupported platform).
     // Lazy-require PowerShellTool so its ~300KB chunk only loads when the
     // user has actually selected the powershell default shell.
-    type PSMod = typeof import('src/tools/PowerShellTool/PowerShellTool.js')
+    type PSMod = typeof import('../../tools/PowerShellTool/PowerShellTool.js')
     let PowerShellTool: PSMod['PowerShellTool'] | null = null
     if (usePowerShell) {
       /* eslint-disable @typescript-eslint/no-require-imports */
-      PowerShellTool = (require('src/tools/PowerShellTool/PowerShellTool.js') as PSMod)
+      PowerShellTool = (require('../../tools/PowerShellTool/PowerShellTool.js') as PSMod)
         .PowerShellTool
       /* eslint-enable @typescript-eslint/no-require-imports */
     }
