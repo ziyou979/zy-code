@@ -8,6 +8,7 @@ import { clamp } from '../../ink/layout/geometry.js'
 import { Box, Text, useTerminalFocus } from '../../ink.js'
 import { SearchBox } from '../SearchBox.js'
 import { Byline } from './Byline.js'
+import type { KeyboardShortcutAction } from './KeyboardShortcutHint.js'
 import { KeyboardShortcutHint } from './KeyboardShortcutHint.js'
 import { ListItem } from './ListItem.js'
 import { Pane } from './Pane.js'
@@ -237,11 +238,23 @@ export function FuzzyPicker<T>({
             <KeyboardShortcutHint shortcut="↑/↓" action={compact ? 'nav' : 'navigate'} />
             <KeyboardShortcutHint
               shortcut="Enter"
-              action={compact ? firstWord(selectAction) : selectAction}
+              action={
+                compact
+                  ? (firstWord(selectAction) as KeyboardShortcutAction)
+                  : (selectAction as KeyboardShortcutAction)
+              }
             />
-            {onTab && <KeyboardShortcutHint shortcut="Tab" action={onTab.action} />}
+            {onTab && (
+              <KeyboardShortcutHint
+                shortcut="Tab"
+                action={onTab.action as KeyboardShortcutAction}
+              />
+            )}
             {onShiftTab && !compact && (
-              <KeyboardShortcutHint shortcut="shift+tab" action={onShiftTab.action} />
+              <KeyboardShortcutHint
+                shortcut="shift+tab"
+                action={onShiftTab.action as KeyboardShortcutAction}
+              />
             )}
             <KeyboardShortcutHint shortcut="Esc" action="cancel" />
             {extraHints}

@@ -65,7 +65,6 @@ import {
 } from '../../bootstrap/state.js'
 import { clearClassifierChecking, setClassifierChecking } from '../../utils/classifierApprovals.js'
 import { isInProtectedNamespace } from '../../utils/envUtils.js'
-import { getAutoModeConfig } from '../../utils/settings/settings.js'
 import { executePermissionRequestHooks } from '../../utils/hooks.js'
 import {
   AUTO_REJECT_MESSAGE,
@@ -74,6 +73,7 @@ import {
   DONT_ASK_REJECT_MESSAGE,
 } from '../../utils/messages.js'
 import { calculateCostFromTokens } from '../../utils/modelCost.js'
+import { getAutoModeConfig } from '../../utils/settings/settings.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'

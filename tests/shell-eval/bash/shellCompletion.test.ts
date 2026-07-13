@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test'
+import { applyShellSuggestion, findShellTokenStart } from '../../../src/hooks/useTypeahead.js'
 import {
   detectCompletionShellType,
   getShellCompletions,
   parseInputContext,
 } from '../../../src/shell-eval/bash/shellCompletion.js'
-import { applyShellSuggestion, findShellTokenStart } from '../../../src/hooks/useTypeahead.js'
 import { findSuitableShell } from '../../../src/utils/Shell.js'
 
 describe('shellCompletion', () => {

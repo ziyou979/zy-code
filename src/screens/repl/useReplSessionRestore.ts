@@ -26,11 +26,11 @@ import {
 import {
   clearSessionMetadata,
   restoreSessionMetadata,
-} from '../../services/sessionStorage/sessionMetadata.js'
+} from '../../services/session-storage/sessionMetadata.js'
 import {
   adoptResumedSessionFile,
   resetSessionFilePointer,
-} from '../../services/sessionStorage/transcript.js'
+} from '../../services/session-storage/transcript.js'
 import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
 import type { ReplStoreInstance } from '../../state/ReplStore.js'
 import { restoreRemoteAgentTasks } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js'

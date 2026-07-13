@@ -274,6 +274,11 @@ export function anthropicUsageToStandard(usage: any): TokenUsage {
     outputTokens,
     cacheReadInputTokens: usage?.cache_read_input_tokens ?? 0,
     cacheCreationInputTokens: usage?.cache_creation_input_tokens ?? 0,
+    extras: {
+      ...(usage?.server_tool_use_input_tokens != null && {
+        serverToolUseInputTokens: usage.server_tool_use_input_tokens,
+      }),
+    },
   }
 }
 
@@ -331,6 +336,15 @@ export function anthropicLLMStreamEventToStandard(event: any): LLMStreamEvent {
         case 'redacted_thinking':
           // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展块类型
           chunk = { type: 'redacted_thinking', data: block.data ?? '' } as any
+          break
+        case 'server_tool_use':
+          // biome-ignore lint/suspicious/noExplicitAny: 适配层传递 SDK 扩展块类型
+          chunk = {
+            type: 'server_tool_use',
+            id: block.id,
+            name: block.name,
+            input: block.input ?? {},
+          } as any
           break
         default:
           chunk = { type: 'text', text: '' }

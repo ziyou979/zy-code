@@ -17,7 +17,6 @@ import {
   isAnthropicBaseUrl,
   providerHasCapability,
 } from 'src/services/model/providers.js'
-import { getModelPromptCachingMode } from './settings/localModelCapabilities.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
 import { FileEditTool } from 'src/tools/FileEditTool/FileEditTool.js'
 import { normalizeFileEditInput, stripTrailingWhitespace } from 'src/tools/FileEditTool/utils.js'
@@ -44,6 +43,7 @@ import { getFileReadIgnorePatterns, normalizePatternsToPath } from './permission
 import { getPlan, getPlanFilePath, persistFileSnapshotIfRemote } from './plans.js'
 import { getPlatform } from './platform.js'
 import { countFilesRoundedRg } from './ripgrep.js'
+import { getModelPromptCachingMode } from './settings/localModelCapabilities.js'
 import { getInitialSettings } from './settings/settings.js'
 import { jsonStringify } from './slowOperations.js'
 import type { SystemPrompt } from './systemPromptType.js'

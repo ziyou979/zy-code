@@ -40,7 +40,7 @@ export async function collectContextData(context: CollectContextDataInput): Prom
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { projectView } =
-      require('../../services/contextCollapse/operations.js') as typeof import('../../services/contextCollapse/operations.js')
+      require('../../services/context-collapse/operations.js') as typeof import('../../services/context-collapse/operations.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
     // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     apiView = projectView(apiView, []) as any
@@ -107,7 +107,7 @@ function formatContextAsMarkdownTable(data: ContextData): string {
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { getStats, isContextCollapseEnabled } =
-      require('../../services/contextCollapse/index.js') as typeof import('../../services/contextCollapse/index.js')
+      require('../../services/context-collapse/index.js') as typeof import('../../services/context-collapse/index.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
     if (isContextCollapseEnabled()) {
       const s = getStats()

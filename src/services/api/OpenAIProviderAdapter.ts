@@ -24,8 +24,8 @@ import { getOpenAIClient } from './client.js'
 import {
   buildOpenAIRequestParams,
   mapOpenAIStreamToStandard,
-  openAIResponseToStandard,
   type OpenAICreateParams,
+  openAIResponseToStandard,
 } from './conversions/openai.js'
 
 const log = createDebugLog('openai')

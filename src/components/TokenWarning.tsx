@@ -22,9 +22,9 @@ type Props = {
  * feature('CONTEXT_COLLAPSE') + isContextCollapseEnabled() 时渲染此组件。
  */
 function CollapseLabel() {
-  const collapseModule = require('../services/contextCollapse/index.js')
+  const collapseModule = require('../services/context-collapse/index.js')
   const { getStats, subscribe } =
-    collapseModule as typeof import('../services/contextCollapse/index.js')
+    collapseModule as typeof import('../services/context-collapse/index.js')
   const snapshot = useSyncExternalStore(subscribe, () => {
     const stats = getStats()
     const idleWarn = stats.health.emptySpawnWarningEmitted ? 1 : 0
@@ -84,7 +84,7 @@ export function TokenWarning({ tokenUsage, model }: Props) {
   }
   if (feature('CONTEXT_COLLAPSE')) {
     const { isContextCollapseEnabled } =
-      require('../services/contextCollapse/index.js') as typeof import('../services/contextCollapse/index.js')
+      require('../services/context-collapse/index.js') as typeof import('../services/context-collapse/index.js')
     if (isContextCollapseEnabled()) {
       collapseMode = true
     }

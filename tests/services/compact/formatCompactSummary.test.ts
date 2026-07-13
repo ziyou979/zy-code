@@ -122,11 +122,7 @@ describe('getCompactUserSummaryMessage', () => {
   })
 
   test('transcriptPath 注入完整 transcript 路径提示', () => {
-    const msg = getCompactUserSummaryMessage(
-      '<summary>x</summary>',
-      false,
-      '/tmp/transcript.jsonl',
-    )
+    const msg = getCompactUserSummaryMessage('<summary>x</summary>', false, '/tmp/transcript.jsonl')
     expect(msg).toContain('/tmp/transcript.jsonl')
     expect(msg).toContain('read the full transcript')
   })

@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { tSync } from '../../i18n/index.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
+import { tSync } from '../../i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

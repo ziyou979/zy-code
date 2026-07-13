@@ -9,12 +9,12 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 import * as realAnalytics from '../../../src/services/analytics/index.js'
 import * as realAnalyticsMetadata from '../../../src/services/analytics/metadata.js'
+import * as realMcpUtils from '../../../src/services/mcp/utils.js'
 import * as realDebug from '../../../src/utils/debug.js'
 import * as realHooks from '../../../src/utils/hooks.js'
 import * as realLog from '../../../src/utils/log.js'
 import * as realPermissionResult from '../../../src/utils/permissions/PermissionResult.js'
 import * as realToolErrors from '../../../src/utils/toolErrors.js'
-import * as realMcpUtils from '../../../src/services/mcp/utils.js'
 
 // checkRuleBasedPermissions 的可控返回值（每个 case 单独设置）+ 调用计数。
 const ruleCheck: { result: unknown; calls: number } = { result: null, calls: 0 }

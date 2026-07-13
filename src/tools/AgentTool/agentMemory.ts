@@ -1,4 +1,5 @@
 import { join, normalize, sep } from 'node:path'
+import { tSync } from '../../i18n/index.js'
 import { getProjectRoot } from '../../bootstrap/state.js'
 import { buildMemoryPrompt, ensureMemoryDirExists } from '../../memdir/memdir.js'
 import { getMemoryBaseDir } from '../../memdir/paths.js'
@@ -97,13 +98,13 @@ export function getAgentMemoryEntrypoint(agentType: string, scope: AgentMemorySc
 export function getMemoryScopeDisplay(memory: AgentMemoryScope | undefined): string {
   switch (memory) {
     case 'user':
-      return `User (${join(getMemoryBaseDir(), 'agent-memory')}/)`
+      return tSync('agentMemory.userDir', { path: join(getMemoryBaseDir(), 'agent-memory') })
     case 'project':
-      return 'Project (.zy/agent-memory/)'
+      return tSync('agentMemory.projectDir')
     case 'local':
-      return `Local (${getLocalAgentMemoryDir('...')})`
+      return tSync('agentMemory.localDir', { path: getLocalAgentMemoryDir('...') })
     default:
-      return 'None'
+      return tSync('agentMemory.none')
   }
 }
 

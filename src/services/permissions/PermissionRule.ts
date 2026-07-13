@@ -1,4 +1,5 @@
 import z from 'zod/v4'
+import { PermissionBehaviorSchema } from '../../types/coreSchemas.js'
 // Types extracted to src/types/permissions.ts to break import cycles
 import type {
   PermissionBehavior,
@@ -6,7 +7,6 @@ import type {
   PermissionRuleSource,
   PermissionRuleValue,
 } from '../../types/permissions.js'
-import { PermissionBehaviorSchema } from '../../types/coreSchemas.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 
 // Re-export for backwards compatibility

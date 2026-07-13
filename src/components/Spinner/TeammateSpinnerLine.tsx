@@ -1,6 +1,6 @@
-import { POINTER } from '../../constants/figures.js'
 import * as React from 'react'
 import { useRef, useState } from 'react'
+import { POINTER } from '../../constants/figures.js'
 import { useElapsedTime } from '../../hooks/useElapsedTime.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'

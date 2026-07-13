@@ -26,10 +26,10 @@ import type { HookEvent, ModelUsage } from 'src/types/index.js'
 //（该规则仅检查 ./ 和 / 前缀）；显式禁用说明了意图。
 // eslint-disable-next-line custom-rules/bootstrap-isolation
 import { randomUUID } from 'src/utils/crypto.js'
-import { createSessionId } from 'src/utils/uuid.js'
 import type { SettingSource } from 'src/utils/settings/constants.js'
 import type { PluginHookMatcher } from 'src/utils/settings/types.js'
 import { createSignal } from 'src/utils/signal.js'
+import { createSessionId } from 'src/utils/uuid.js'
 import type { CreateParams } from '../../types/llm.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 

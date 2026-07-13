@@ -12,7 +12,7 @@ import {
   detectRpm,
   detectWinget,
   getPackageManager,
-} from 'src/services/nativeInstaller/packageManagers.js'
+} from 'src/services/native-installer/packageManagers.js'
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { checkGlobalInstallPermissions } from './autoUpdater.js'
 import { isInBundledMode } from './bundledMode.js'

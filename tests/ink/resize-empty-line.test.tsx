@@ -5,16 +5,16 @@
  * 如果下方的“思考了 X 秒”摘要没有随之上移，就会在旧位置留下空行。
  */
 import { describe, expect, test } from 'bun:test'
-import React from 'react'
 import { Writable } from 'node:stream'
-import Ink from '../../src/ink/ink.js'
-import Box from '../../src/ink/components/Box.js'
-import Text from '../../src/ink/components/Text.js'
-import ScrollBox from '../../src/ink/components/ScrollBox.js'
-import { charInCellAt } from '../../src/ink/screen.js'
-import type { Frame } from '../../src/ink/frame.js'
+import React from 'react'
 import { useVirtualScroll } from '../../src/hooks/useVirtualScroll.js'
+import Box from '../../src/ink/components/Box.js'
 import type { ScrollBoxHandle } from '../../src/ink/components/ScrollBox.js'
+import ScrollBox from '../../src/ink/components/ScrollBox.js'
+import Text from '../../src/ink/components/Text.js'
+import type { Frame } from '../../src/ink/frame.js'
+import Ink from '../../src/ink/ink.js'
+import { charInCellAt } from '../../src/ink/screen.js'
 
 function makeStdout(cols: number, rows: number): NodeJS.WriteStream {
   const chunks: Buffer[] = []

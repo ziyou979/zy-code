@@ -3,10 +3,11 @@
  *
  * 这些函数是纯函数或接近纯函数，测试成本低、价值高。
  */
+
+import { describe, expect, test } from 'bun:test'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, test } from 'bun:test'
 import {
   buildOpenAIRequestParams,
   convertOutputFormatToResponseFormat,

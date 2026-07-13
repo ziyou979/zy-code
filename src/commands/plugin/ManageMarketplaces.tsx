@@ -1,4 +1,3 @@
-import { TICK, POINTER, BULLET, CROSS } from '../../constants/figures.js'
 import * as React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -8,6 +7,7 @@ import {
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
 import { Byline } from '../../components/design-system/Byline.js'
 import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js'
+import { BULLET, CROSS, POINTER, TICK } from '../../constants/figures.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- useInput needed for marketplace-specific u/r shortcuts and y/n confirmation not in keybinding schema
 import { Box, Text, useInput } from '../../ink.js'
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'

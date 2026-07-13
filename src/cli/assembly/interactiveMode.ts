@@ -4,7 +4,7 @@
 import { feature } from 'bun:bundle'
 import { launchRepl } from '../../replLauncher.js'
 import { logEvent } from '../../services/analytics/index.js'
-import { buildDeepLinkBanner } from '../../services/deepLink/banner.js'
+import { buildDeepLinkBanner } from '../../services/deep-link/banner.js'
 import type { Message } from '../../types/message.js'
 import { getCwd } from '../../utils/cwd.js'
 import { createSystemMessage } from '../../utils/messages.js'

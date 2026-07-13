@@ -3,9 +3,9 @@ import {
   DEFAULT_RESUME_CONTEXT_PERCENT,
   DEFAULT_RESUME_THRESHOLD_MINUTES,
   getResumeReturnPrompt,
-} from '../../../src/services/sessionStorage/resumeReturn.js'
-import { MODEL_CONTEXT_WINDOW_DEFAULT } from '../../../src/utils/context.js'
+} from '../../../src/services/session-storage/resumeReturn.js'
 import type { AssistantMessage } from '../../../src/types/message.js'
+import { MODEL_CONTEXT_WINDOW_DEFAULT } from '../../../src/utils/context.js'
 
 const NOW = Date.parse('2026-07-10T12:00:00Z')
 
@@ -25,7 +25,7 @@ function makeAssistant(ageMinutes: number, tokens: number): AssistantMessage {
   }
 }
 
-describe('sessionStorage/resumeReturn', () => {
+describe('session-storage/resumeReturn', () => {
   afterEach(() => {
     delete process.env.ZY_CODE_RESUME_THRESHOLD_MINUTES
     delete process.env.ZY_CODE_RESUME_CONTEXT_PERCENT

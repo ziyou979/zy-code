@@ -5,8 +5,8 @@ import { Box, Text } from '../../ink.js'
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   openInChrome,
-} from '../../services/claudeInChrome/common.js'
-import { isChromeExtensionInstalled } from '../../services/claudeInChrome/setup.js'
+} from '../../services/claude-in-chrome/common.js'
+import { isChromeExtensionInstalled } from '../../services/claude-in-chrome/setup.js'
 import { useAppState } from '../../state/AppState.js'
 import { openBrowser } from '../../utils/browser.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'

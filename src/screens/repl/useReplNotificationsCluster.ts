@@ -12,7 +12,7 @@
 import { feature } from 'bun:bundle'
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { AUTO_MODE_DESCRIPTION } from '../../components/AutoModeOptInDialog.js'
+import { getAutoModeDescription } from '../../components/AutoModeOptInDialog.js'
 import { shouldShowDesktopUpsellStartup } from '../../components/DesktopUpsell/DesktopUpsellStartup.js'
 import { shouldShowFullscreenUpsell } from '../../components/FullscreenUpsell/FullscreenUpsellDialog.js'
 import { useAutoModeUnavailableNotification } from '../../hooks/notifs/useAutoModeUnavailableNotification.js'
@@ -183,7 +183,7 @@ export function useReplNotificationsCluster({
           }
           return { ...prev, autoPermissionsNotificationCount: prevCount + 1 }
         })
-        setMsgs((prev) => [...prev, createSystemMessage(AUTO_MODE_DESCRIPTION, 'warn')])
+        setMsgs((prev) => [...prev, createSystemMessage(getAutoModeDescription(), 'warn')])
       },
       800,
       safeYoloMessageShownRef,

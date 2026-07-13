@@ -41,7 +41,7 @@ import { getAgentName, getTeamName, isTeammate } from '../utils/teammate.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const extractMemoriesModule = feature('MEMORY')
-  ? (require('../services/extractMemories/extractMemories.js') as typeof import('../services/extractMemories/extractMemories.js'))
+  ? (require('../services/extract-memories/extractMemories.js') as typeof import('../services/extract-memories/extractMemories.js'))
   : null
 const jobClassifierModule = feature('TEMPLATES')
   ? (require('../jobs/classifier.js') as typeof import('../jobs/classifier.js'))
@@ -50,8 +50,8 @@ const jobClassifierModule = feature('TEMPLATES')
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 import type { QuerySource } from '../constants/querySource.js'
-import { executeAutoDream } from '../services/autoDream/autoDream.js'
-import { executePromptSuggestion } from '../services/PromptSuggestion/promptSuggestion.js'
+import { executeAutoDream } from '../services/auto-dream/autoDream.js'
+import { executePromptSuggestion } from '../services/prompt-suggestion/promptSuggestion.js'
 import { isBareMode, isEnvDefinedFalsy } from '../utils/envUtils.js'
 import { createCacheSafeParams, saveCacheSafeParams } from '../utils/forkedAgent.js'
 
@@ -146,7 +146,7 @@ export async function* handleStopHooks(
   // 仅主线程 — CU 锁是进程级模块变量，子代理释放会导致主线程清理失效。
   if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
     try {
-      const { cleanupComputerUseAfterTurn } = await import('../services/computerUse/cleanup.js')
+      const { cleanupComputerUseAfterTurn } = await import('../services/computer-use/cleanup.js')
       await cleanupComputerUseAfterTurn(toolUseContext)
     } catch {
       // 清理失败静默忽略，非关键路径

@@ -11,8 +11,8 @@ import {
   getTotalAPIDurationWithoutRetries,
   getTotalCacheCreationInputTokens,
   getTotalCacheReadInputTokens,
-  getTotalCostByCurrency,
   getTotalCost,
+  getTotalCostByCurrency,
   getTotalDuration,
   getTotalInputTokens,
   getTotalLinesAdded,
@@ -38,8 +38,8 @@ import type { Message } from './types/message.js'
 import { getCurrentProjectConfig, saveCurrentProjectConfig } from './utils/config.js'
 import { getContextWindowForModel, getModelMaxOutputTokens } from './utils/context.js'
 import { formatDuration, formatNumber } from './utils/format.js'
-import { SYNTHETIC_MODEL } from './utils/messages/constants.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
+import { SYNTHETIC_MODEL } from './utils/messages/constants.js'
 import { calculateCost, getCurrencySymbol, getModelCurrency } from './utils/modelCost.js'
 
 export {
@@ -50,8 +50,8 @@ export {
   getTotalAPIDurationWithoutRetries,
   getTotalCacheCreationInputTokens,
   getTotalCacheReadInputTokens,
-  getTotalCostByCurrency,
   getTotalCost,
+  getTotalCostByCurrency,
   getTotalDuration,
   getTotalInputTokens,
   getTotalLinesAdded,

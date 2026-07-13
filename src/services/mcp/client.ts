@@ -89,7 +89,7 @@ const fetchMcpSkillsForClient = feature('MCP_SKILLS')
   : null
 
 import { UnauthorizedError } from '@modelcontextprotocol/sdk/client/auth.js'
-import { clearKeychainCache } from '../../services/secureStorage/macOsKeychainHelpers.js'
+import { clearKeychainCache } from '../../services/secure-storage/macOsKeychainHelpers.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { classifyMcpToolForCollapse } from '../../tools/MCPTool/classifyForCollapse.js'
 import { sleep } from '../../utils/sleep.js'
@@ -112,23 +112,23 @@ import { markZyAiMcpConnected } from './zyai.js'
  * 此错误应在工具执行层被捕获，以将客户端状态更新为 'needs-auth'。
  */
 
-import { isClaudeInChromeMCPServer } from '../../services/claudeInChrome/common.js'
+import { isClaudeInChromeMCPServer } from '../../services/claude-in-chrome/common.js'
 
 // 惰性加载：toolRendering.tsx 引入 React/ink；仅在 Zy-in-Chrome MCP 服务器连接时需要
 /* eslint-disable @typescript-eslint/no-require-imports */
 const ClaudeInChromeToolRendering =
-  (): typeof import('../../services/claudeInChrome/toolRendering.js') =>
-    require('../../services/claudeInChrome/toolRendering.js')
+  (): typeof import('../../services/claude-in-chrome/toolRendering.js') =>
+    require('../../services/claude-in-chrome/toolRendering.js')
 // 惰性加载：wrapper.tsx → hostAdapter.ts → executor.ts 引入两个原生模块
 //（@ant/computer-use-input + @ant/computer-use-swift）。由
 // GrowthBook zy_malort_pedway 运行时门控（见 gates.ts）。
 const computerUseWrapper = feature('CHICAGO_MCP')
-  ? (): typeof import('../../services/computerUse/wrapper.js') =>
-      require('../../services/computerUse/wrapper.js')
+  ? (): typeof import('../../services/computer-use/wrapper.js') =>
+      require('../../services/computer-use/wrapper.js')
   : undefined
 const isComputerUseMCPServer = feature('CHICAGO_MCP')
   ? (
-      require('../../services/computerUse/common.js') as typeof import('../../services/computerUse/common.js')
+      require('../../services/computer-use/common.js') as typeof import('../../services/computer-use/common.js')
     ).isComputerUseMCPServer
   : undefined
 
@@ -744,7 +744,7 @@ export const connectToServer = memoize(
         isClaudeInChromeMCPServer(name)
       ) {
         // 在进程中运行 Chrome MCP 服务器以避免生成约 325 MB 的子进程
-        const { createChromeContext } = await import('../../services/claudeInChrome/mcpServer.js')
+        const { createChromeContext } = await import('../../services/claude-in-chrome/mcpServer.js')
         const { createZyForChromeMcpServer } = await import('@ant/claude-for-chrome-mcp')
         const { createLinkedTransportPair } = await import('./InProcessTransport.js')
         const context = createChromeContext(serverRef.env)
@@ -764,7 +764,7 @@ export const connectToServer = memoize(
         // 该包的 CallTool 处理器是桩；实际分发通过 wrapper.tsx 的
         // .call() 覆盖。
         const { createComputerUseMcpServerForCli } = await import(
-          '../../services/computerUse/mcpServer.js'
+          '../../services/computer-use/mcpServer.js'
         )
         const { createLinkedTransportPair } = await import('./InProcessTransport.js')
         inProcessServer = await createComputerUseMcpServerForCli()

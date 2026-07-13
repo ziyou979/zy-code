@@ -1,4 +1,3 @@
-import { TICK, WARNING } from '../../../constants/figures.js'
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -17,6 +16,7 @@ import {
   setNeedsPlanModeExitAttachment,
 } from '../../../bootstrap/state.js'
 import { generateSessionName } from '../../../commands/rename/generateSessionName.js'
+import { TICK, WARNING } from '../../../constants/figures.js'
 import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../../ink.js'
 import { getMainLoopModel } from '../../../services/model/model.js'

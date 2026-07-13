@@ -127,9 +127,7 @@ describe('compact pipeline integration', () => {
   })
 
   test('流式累积路径：resolveStreamedCompactAssistant 与格式化一致', () => {
-    const messages = buildThinkingPollutedForkMessages().filter(
-      (m) => m.type === 'assistant',
-    )
+    const messages = buildThinkingPollutedForkMessages().filter((m) => m.type === 'assistant')
     const resolved = resolveStreamedCompactAssistant(messages)
     expect(resolved?.uuid).toBe('fork-3')
 

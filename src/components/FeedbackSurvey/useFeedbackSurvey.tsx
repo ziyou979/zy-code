@@ -6,7 +6,7 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { getMainLoopModel } from '../../services/model/model.js'
-import { isPolicyAllowed } from '../../services/policyLimits/index.js'
+import { isPolicyAllowed } from '../../services/policy-limits/index.js'
 import { logOTelEvent } from '../../services/telemetry/events.js'
 import type { Message } from '../../types/message.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'

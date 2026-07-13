@@ -1,1 +1,1 @@
-export * from '../../services/sessionStorage/transcript.js'
+export * from '../../services/session-storage/transcript.js'

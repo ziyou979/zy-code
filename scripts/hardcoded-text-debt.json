@@ -1,0 +1,20 @@
+{
+  "// 说明": "硬编码用户文案债务基线 — P2-04 审计结果",
+  "// 规则": "用户可见文本必须走 i18n，禁止直接在 <Text> 或字符串中硬编码",
+  "generatedAt": "2026-07-13",
+  "files": {
+    "src/assistant/": { "status": "clean", "note": "无硬编码用户文案" },
+    "src/tools/": { "status": "clean", "note": "无硬编码用户文案" },
+    "src/commands/": {
+      "status": "has_debt",
+      "count": 20,
+      "note": "bridge、chrome、install-github-app、plugin 等目录中有 20+ 处 <Text>硬编码"
+    },
+    "src/components/": {
+      "status": "has_debt",
+      "count": 20,
+      "note": "AgentDetail、ContextVisualization、tasks 等组件中有 20+ 处"
+    }
+  },
+  "total_estimated": 40
+}

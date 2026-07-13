@@ -577,7 +577,7 @@ export async function* runAgent({
 
     // Load all skill contents concurrently and add to initial messages
     const { formatSkillLoadingMetadata } = await import(
-      '../../services/processUserInput/processSlashCommand.js'
+      '../../services/process-user-input/processSlashCommand.js'
     )
     const loaded = await Promise.all(
       validSkills.map(async ({ skillName, skill }) => ({

@@ -158,4 +158,5 @@ export const enUi: TranslationResource = {
   'feedbackSurvey.thanksTranscript': 'Thanks for sharing your transcript!',
   'feedbackSurvey.useCommandToShare': 'Use {command} to share detailed feedback anytime.',
   'feedbackSurvey.useIssueToReport': 'Use /issue to report model behavior issues.',
+  'common.noContent': '(No content)',
 }

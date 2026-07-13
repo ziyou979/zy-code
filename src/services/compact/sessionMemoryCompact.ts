@@ -23,12 +23,12 @@ import {
   getFeatureValue_CACHED_MAY_BE_STALE,
 } from '../analytics/growthbook.js'
 import { logEvent } from '../analytics/index.js'
-import { isSessionMemoryEmpty, truncateSessionMemoryForCompact } from '../SessionMemory/prompts.js'
+import { isSessionMemoryEmpty, truncateSessionMemoryForCompact } from '../session-memory/prompts.js'
 import {
   getLastSummarizedMessageId,
   getSessionMemoryContent,
   waitForSessionMemoryExtraction,
-} from '../SessionMemory/sessionMemoryUtils.js'
+} from '../session-memory/sessionMemoryUtils.js'
 import { getTranscriptPath } from '../sessionStorage.js'
 import {
   annotateBoundaryWithPreservedSegment,

@@ -1,7 +1,7 @@
-import { RADIO_OFF, TICK, TRIANGLE_UP_OUTLINE, CROSS, POINTER } from '../../constants/figures.js'
 import { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import type { CommandResultDisplay } from '../../commands.js'
+import { CROSS, POINTER, RADIO_OFF, TICK, TRIANGLE_UP_OUTLINE } from '../../constants/figures.js'
 import { Box, color, Link, Text, useTheme } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import type { ConfigScope } from '../../services/mcp/types.js'

@@ -18,7 +18,7 @@ import { getSystemContext, getUserContext } from '../../context.js'
 import { getShortcutDisplay } from '../../keybindings/shortcutFormat.js'
 import { partialCompactConversation } from '../../services/compact/compact.js'
 import { runPostCompactCleanup } from '../../services/compact/postCompactCleanup.js'
-import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
+import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
 import type {
   Message as MessageType,
   PartialCompactDirection,

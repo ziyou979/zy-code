@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { createNode, appendChildNode } from '../../src/ink/dom.js'
+import { appendChildNode, createNode } from '../../src/ink/dom.js'
 import { dispatchHover, hitTest } from '../../src/ink/hit-test.js'
 import { nodeCache } from '../../src/ink/node-cache.js'
 

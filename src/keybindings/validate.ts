@@ -1,5 +1,5 @@
-import { plural } from '../utils/stringUtils.js'
 import { CROSS, WARNING } from '../constants/figures.js'
+import { plural } from '../utils/stringUtils.js'
 import { chordToString, parseChord, parseKeystroke } from './parser.js'
 import { getReservedShortcuts, normalizeKeyForComparison } from './reservedShortcuts.js'
 import type { KeybindingBlock, KeybindingContextName, ParsedBinding } from './types.js'

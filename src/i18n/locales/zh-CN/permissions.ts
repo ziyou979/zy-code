@@ -274,4 +274,9 @@ export const zhPermissions: TranslationResource = {
   'permissionRules.workspaceTab': '工作区',
   'permissionRules.yesAndRememberDirectory': '是，并记住此目录',
   'permissionRules.yesForThisSession': '是，仅限本次会话',
+  'permission.yesAllowAccessDir': 'Yes, and always allow access to {dir}/ from this project',
+  'permission.yesAllowAccessDirs': 'Yes, and always allow access to {dirs} from this project',
+  'permission.yesAllowReadAndAccess': 'Yes, and allow {paths} access and {commands} commands',
+  'permission.yesAllowAccessAndCommands':
+    'Yes, and allow access to {paths} and {commands} commands',
 }

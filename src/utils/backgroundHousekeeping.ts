@@ -1,19 +1,19 @@
 import { feature } from 'bun:bundle'
-import { initAutoDream } from '../services/autoDream/autoDream.js'
-import { initMagicDocs } from '../services/MagicDocs/magicDocs.js'
+import { initAutoDream } from '../services/auto-dream/autoDream.js'
+import { initMagicDocs } from '../services/magic-docs/magicDocs.js'
 import { initSkillImprovement } from './hooks/skillImprovement.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const extractMemoriesModule = feature('EXTRACT_MEMORIES')
-  ? (require('../services/extractMemories/extractMemories.js') as typeof import('../services/extractMemories/extractMemories.js'))
+  ? (require('../services/extract-memories/extractMemories.js') as typeof import('../services/extract-memories/extractMemories.js'))
   : null
 const registerProtocolModule = feature('LODESTONE')
-  ? (require('src/services/deepLink/registerProtocol.js') as typeof import('src/services/deepLink/registerProtocol.js'))
+  ? (require('src/services/deep-link/registerProtocol.js') as typeof import('src/services/deep-link/registerProtocol.js'))
   : null
 
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-import { cleanupOldVersions } from 'src/services/nativeInstaller/index.js'
+import { cleanupOldVersions } from 'src/services/native-installer/index.js'
 import { getIsInteractive, getLastInteractionTime } from '../bootstrap/state.js'
 import {
   cleanupNpmCacheForAnthropicPackages,

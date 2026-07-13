@@ -28,6 +28,7 @@ import type {
   ResponseStartEvent,
   SignatureDelta,
   StopReason,
+  TaskBudgetParam,
   TextDelta,
   ThinkingDelta,
   ToolCallInputDelta,
@@ -64,7 +65,6 @@ import {
   extractQuotaStatusFromError,
   extractQuotaStatusFromHeaders,
 } from '../zyAiLimits.js'
-import type { TaskBudgetParam } from '../../types/llm.js'
 import { getLLMAdapter } from './client.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -92,8 +92,8 @@ import type { QuerySource } from 'src/constants/querySource.js'
 import type { Notification } from 'src/context/notifications.js'
 import { addToTotalSessionCost } from 'src/cost-tracker.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/services/claudeInChrome/common.js'
-import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claudeInChrome/prompt.js'
+import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/services/claude-in-chrome/common.js'
+import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claude-in-chrome/prompt.js'
 import type { AgentId } from 'src/types/ids.js'
 import { getAgentContext } from 'src/utils/agentContext.js'
 import { getToolSearchBetaHeader, shouldIncludeExperimentalBetas } from 'src/utils/betas.js'
@@ -149,6 +149,11 @@ import {
   getExtraBodyParams,
   MAX_NON_STREAMING_TOKENS,
 } from './apiHelpers.js'
+import {
+  MalformedAssistantCompletionError,
+  sanitizeAssistantCompletionContent,
+  validateAssistantCompletion,
+} from './assistantCompletionValidator.js'
 import { buildSystemPromptBlocks, getPromptCachingEnabled } from './cacheControl.js'
 import { getAnthropicClient } from './client.js'
 import {
@@ -172,11 +177,6 @@ import {
   checkResponseForCacheBreak,
   recordPromptState,
 } from './promptCacheBreakDetection.js'
-import {
-  MalformedAssistantCompletionError,
-  sanitizeAssistantCompletionContent,
-  validateAssistantCompletion,
-} from './assistantCompletionValidator.js'
 import { cleanupStream, updateUsage } from './usageTracker.js'
 import {
   CannotRetryError,

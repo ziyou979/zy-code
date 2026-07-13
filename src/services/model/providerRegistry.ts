@@ -6,12 +6,12 @@
  * 均从此注册表自动派生行为，无需额外修改。
  */
 
-import type { ProviderCapability } from './providers.js'
 import {
-  type ModelCapabilityMatchContext,
   localModelHasAdaptiveThinking,
+  type ModelCapabilityMatchContext,
 } from '../../utils/settings/localModelCapabilities.js'
 import { API_FORMATS, type ApiFormat } from './apiFormat.js'
+import type { ProviderCapability } from './providers.js'
 
 /**
  * 模型推荐档位 — 对应 ZY Code 的 advanced / standard / compact 三个模型档位。

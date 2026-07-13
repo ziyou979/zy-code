@@ -1,7 +1,7 @@
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { checkRepoForRemoteAccess } from '../../services/background/remote/preconditions.js'
 import type { MCPServerConnection } from '../../services/mcp/types.js'
-import { isPolicyAllowed } from '../../services/policyLimits/index.js'
+import { isPolicyAllowed } from '../../services/policy-limits/index.js'
 import {
   createDefaultCloudEnvironment,
   type EnvironmentResource,

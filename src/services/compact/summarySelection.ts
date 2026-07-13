@@ -30,9 +30,7 @@ function hasSummaryTag(message: AssistantMessage): boolean {
   if (!Array.isArray(content)) {
     return false
   }
-  return content.some(
-    (block) => block.type === 'text' && /<summary\b/i.test(block.text),
-  )
+  return content.some((block) => block.type === 'text' && /<summary\b/i.test(block.text))
 }
 
 /**

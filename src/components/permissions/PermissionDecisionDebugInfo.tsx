@@ -1,7 +1,7 @@
-import { TICK, CROSS, BULLET, WARNING } from '../../constants/figures.js'
 import chalk from 'chalk'
 import type React from 'react'
 import { tSync } from 'src/i18n/index.js'
+import { BULLET, CROSS, TICK, WARNING } from '../../constants/figures.js'
 import { Ansi, Box, color, Text, useTheme } from '../../ink.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { useAppState } from '../../state/AppState.js'

@@ -1,4 +1,3 @@
-import { ARROW_UP, ARROW_DOWN, BULLET, STAR, CIRCLE } from '../constants/figures.js'
 import { feature } from 'bun:bundle'
 // @ts-expect-error -- no declaration file for asciichart
 import { plot as asciichart } from 'asciichart'
@@ -6,6 +5,7 @@ import chalk from 'chalk'
 import React, { Suspense, use, useEffect, useMemo, useRef, useState } from 'react'
 import stripAnsi from 'strip-ansi'
 import type { CommandResultDisplay } from '../commands.js'
+import { ARROW_DOWN, ARROW_UP, BULLET, CIRCLE, STAR } from '../constants/figures.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { getUiLanguage, tSync } from '../i18n/index.js'
 import { applyColor } from '../ink/colorize.js'

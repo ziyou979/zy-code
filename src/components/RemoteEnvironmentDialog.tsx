@@ -1,6 +1,6 @@
-import { TICK } from '../constants/figures.js'
 import chalk from 'chalk'
 import { useEffect, useState } from 'react'
+import { TICK } from '../constants/figures.js'
 import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'

@@ -1,5 +1,5 @@
-import { POINTER } from '../../constants/figures.js'
 import { useState } from 'react'
+import { POINTER } from '../../constants/figures.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../ink.js'
 import {

@@ -1,1 +1,1 @@
-export * from '../../services/sessionStorage/sessionSidecar.js'
+export * from '../../services/session-storage/sessionSidecar.js'

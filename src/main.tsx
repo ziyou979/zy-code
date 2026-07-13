@@ -18,7 +18,7 @@ startMdmRawRead()
 import {
   ensureKeychainPrefetchCompleted,
   startKeychainPrefetch,
-} from './services/secureStorage/keychainPrefetch.js'
+} from './services/secure-storage/keychainPrefetch.js'
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 startKeychainPrefetch()
@@ -57,8 +57,8 @@ import { applyRuntimeOptions } from './cli/options/runtimeOptions.js'
 import { applySessionOptions } from './cli/options/sessionOptions.js'
 import { createSortedHelpConfig } from './cli/options/sortedHelp.js'
 import { init } from './entrypoints/init.js'
-import { loadPolicyLimits } from './services/policyLimits/index.js'
-import { loadRemoteManagedSettings } from './services/remoteManagedSettings/index.js'
+import { loadPolicyLimits } from './services/policy-limits/index.js'
+import { loadRemoteManagedSettings } from './services/remote-managed-settings/index.js'
 import { stopCapturingEarlyInput } from './utils/earlyInput.js'
 import { isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
 import { clearPluginCache } from './utils/plugins/pluginLoader.js'
@@ -267,7 +267,7 @@ async function run(): Promise<CommanderCommand<any, any, any>> {
     // 同步加载设置（非阻塞，开放失败）
     // CLI：将本地设置上传到远程（CCR 下载由 print.ts 处理）
     if (feature('UPLOAD_USER_SETTINGS')) {
-      void import('./services/settingsSync/index.js').then((m) =>
+      void import('./services/settings-sync/index.js').then((m) =>
         m.uploadUserSettingsInBackground(),
       )
     }

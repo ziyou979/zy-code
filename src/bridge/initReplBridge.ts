@@ -22,7 +22,7 @@ import {
   isAnthropicProvider,
   isOpenAIProvider,
 } from '../services/model/providers.js'
-import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../services/policyLimits/index.js'
+import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../services/policy-limits/index.js'
 import type { WireMessage } from '../types/index.js'
 import type { Message } from '../types/message.js'
 import type { WireControlResponse } from '../types/wire/control.js'

@@ -1,4 +1,3 @@
-import { WARNING } from '../constants/figures.js'
 import { join } from 'node:path'
 import { Suspense, use, useEffect, useState } from 'react'
 import { KeybindingWarnings } from 'src/components/KeybindingWarnings.js'
@@ -12,6 +11,7 @@ import { Pane } from '../components/design-system/Pane.js'
 import { PressEnterToContinue } from '../components/PressEnterToContinue.js'
 import { SandboxDoctorSection } from '../components/sandbox/SandboxDoctorSection.js'
 import { ValidationErrorsList } from '../components/ValidationErrorsList.js'
+import { WARNING } from '../constants/figures.js'
 import { useSettingsErrors } from '../hooks/notifs/useSettingsErrors.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { tSync } from '../i18n/index.js'
@@ -22,7 +22,7 @@ import {
   getAllLockInfo,
   isPidBasedLockingEnabled,
   type LockInfo,
-} from '../services/nativeInstaller/pidLock.js'
+} from '../services/native-installer/pidLock.js'
 import {
   TASK_MAX_OUTPUT_DEFAULT,
   TASK_MAX_OUTPUT_UPPER_LIMIT,

@@ -1,5 +1,5 @@
-import { WARNING, BULLET, ARROW_RIGHT } from '../../../constants/figures.js'
 import { tSync } from 'src/i18n/index.js'
+import { ARROW_RIGHT, BULLET, WARNING } from '../../../constants/figures.js'
 import { Box, Text } from '../../../ink.js'
 import type { Question } from '../../../tools/AskUserQuestionTool/AskUserQuestionTool.js'
 import type { PermissionDecision } from '../../../utils/permissions/PermissionResult.js'

@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle'
 import { readFile, stat } from 'node:fs/promises'
-import { redownloadUserSettings } from 'src/services/settingsSync/index.js'
+import { redownloadUserSettings } from 'src/services/settings-sync/index.js'
 import { StructuredIO } from 'src/cli/structuredIO.js'
 import { type Command, formatDescriptionWithSource, getCommandName } from 'src/commands.js'
 import { logEvent } from 'src/services/analytics/index.js'

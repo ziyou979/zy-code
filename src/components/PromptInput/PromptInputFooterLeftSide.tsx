@@ -33,6 +33,7 @@ import { useAppState, useAppStateStore } from 'src/state/AppState.js'
 import { getIsRemoteMode } from '../../bootstrap/state.js'
 import HistorySearchInput from './HistorySearchInput.js'
 import { usePrStatus } from '../../hooks/usePrStatus.js'
+import type { KeyboardShortcutAction } from '../design-system/KeyboardShortcutHint.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { Byline } from '../design-system/Byline.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
@@ -644,7 +645,10 @@ function getSpinnerHintParts(
     ...(showToggleHint
       ? [
           <Text dimColor key="toggle-tasks">
-            <KeyboardShortcutHint shortcut={todosShortcut} action={toggleAction} />
+            <KeyboardShortcutHint
+              shortcut={todosShortcut}
+              action={toggleAction as KeyboardShortcutAction}
+            />
           </Text>,
         ]
       : []),

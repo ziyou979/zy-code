@@ -3,7 +3,7 @@
 //
 // 设计：
 // - mock `./query.js` 的 query()，喂入脚本化的 Message 序列（由 _script 控制）
-// - mock processUserInput / fetchSystemPromptParts / sessionStorage 写盘 /
+// - mock processUserInput / fetchSystemPromptParts / session-storage 写盘 /
 //   斜杠命令&插件加载，避免真实磁盘/网络/API
 // - 其余（normalizeMessage / isResultSuccessful / buildSystemInitMessage /
 //   pruneCompletedTurnArtifacts / cost-tracker）保留真实实现——它们正是
@@ -51,9 +51,9 @@ export async function installQueryEngineMocks(): Promise<void> {
   }))
 
   const processUserInputMod = await import(
-    '../../src/services/processUserInput/processUserInput.js'
+    '../../src/services/process-user-input/processUserInput.js'
   )
-  mock.module('src/services/processUserInput/processUserInput.js', () => ({
+  mock.module('src/services/process-user-input/processUserInput.js', () => ({
     ...processUserInputMod,
     processUserInput: async () => _processResult,
   }))

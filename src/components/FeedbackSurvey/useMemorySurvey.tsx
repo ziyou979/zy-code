@@ -6,7 +6,7 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
-import { isPolicyAllowed } from '../../services/policyLimits/index.js'
+import { isPolicyAllowed } from '../../services/policy-limits/index.js'
 import { logOTelEvent } from '../../services/telemetry/events.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
 import type { Message } from '../../types/message.js'

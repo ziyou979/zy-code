@@ -21,7 +21,7 @@ import { setClipboard } from '../../ink/termio/osc.js'
 import { Text } from '../../ink.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { resetMicrocompactState } from '../../services/compact/microCompact.js'
-import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
+import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
 import type { AppState } from '../../state/AppState.js'
 import type { ReplStoreInstance, ToolJSXState } from '../../state/ReplStore.js'
 import { injectUserMessageToTeammate } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
@@ -159,7 +159,7 @@ export function rewindConversationToImpl(
     // ctx-agent 将在下次超过阈值时重新暂存
     /* eslint-disable @typescript-eslint/no-require-imports */
     ;(
-      require('../../services/contextCollapse/index.js') as typeof import('../../services/contextCollapse/index.js')
+      require('../../services/context-collapse/index.js') as typeof import('../../services/context-collapse/index.js')
     ).resetContextCollapse()
     /* eslint-enable @typescript-eslint/no-require-imports */
   }

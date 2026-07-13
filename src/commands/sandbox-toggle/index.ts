@@ -1,5 +1,5 @@
-import { WARNING, TICK, CIRCLE } from '../../constants/figures.js'
 import type { Command } from '../../commands.js'
+import { CIRCLE, TICK, WARNING } from '../../constants/figures.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 
 const command = {

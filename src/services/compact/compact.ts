@@ -4,7 +4,7 @@ import uniqBy from 'lodash-es/uniqBy.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const sessionTranscriptModule = feature('KAIROS')
-  ? (require('../sessionTranscript/sessionTranscript.js') as typeof import('../sessionTranscript/sessionTranscript.js'))
+  ? (require('../session-transcript/sessionTranscript.js') as typeof import('../session-transcript/sessionTranscript.js'))
   : null
 
 import { markPostCompaction } from 'src/bootstrap/state.js'
@@ -91,17 +91,13 @@ import {
   roughTokenCountEstimation,
   roughTokenCountEstimationForMessages,
 } from '../tokenEstimation.js'
+import { COMPACT_STAGE_PCT, compactApiStreamPercent, emitCompactStage } from './compactProgress.js'
 import { groupMessagesByApiRound } from './grouping.js'
 import {
   getCompactPrompt,
   getCompactUserSummaryMessage,
   getPartialCompactPrompt,
 } from './prompt.js'
-import {
-  COMPACT_STAGE_PCT,
-  compactApiStreamPercent,
-  emitCompactStage,
-} from './compactProgress.js'
 import {
   getCompactSummaryText,
   pickCompactSummaryAssistant,

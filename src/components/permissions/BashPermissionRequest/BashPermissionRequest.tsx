@@ -1,6 +1,6 @@
-import { TICK } from '../../../constants/figures.js'
 import { feature } from 'bun:bundle'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { TICK } from '../../../constants/figures.js'
 import { tSync } from '../../../i18n/index.js'
 import { Box, Text, useTheme } from '../../../ink.js'
 import { useKeybinding } from '../../../keybindings/useKeybinding.js'

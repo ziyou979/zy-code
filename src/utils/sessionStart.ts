@@ -1,4 +1,5 @@
 import { getMainThreadAgentType } from '../bootstrap/state.js'
+import type { AggregatedHookResult } from '../services/hooks/types.js'
 import type { Message } from '../types/message.js'
 import { createAttachmentMessage } from './attachments.js'
 import { logForDebugging } from './debug.js'
@@ -8,7 +9,6 @@ import { updateWatchPaths } from './hooks/fileChangedWatcher.js'
 import { shouldAllowManagedHooksOnly } from './hooks/hooksConfigSnapshot.js'
 import { executeSessionStartHooks, executeSetupHooks } from './hooks.js'
 import { logError } from './log.js'
-import type { AggregatedHookResult } from '../services/hooks/types.js'
 import { loadPluginHooks } from './plugins/loadPluginHooks.js'
 
 type SessionStartHooksOptions = {

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
+import { setCostStateForRestore } from '../src/bootstrap/state/cost.js'
 import {
   getModelUsage,
   getTotalCost,
@@ -6,10 +7,9 @@ import {
   reconstructCostStateFromMessages,
   resetCostState,
 } from '../src/cost-tracker.js'
-import { setCostStateForRestore } from '../src/bootstrap/state/cost.js'
 import type { TokenUsage } from '../src/types/llm.js'
-import { calculateCost, getModelCurrency } from '../src/utils/modelCost.js'
 import { SYNTHETIC_MODEL } from '../src/utils/messages/constants.js'
+import { calculateCost, getModelCurrency } from '../src/utils/modelCost.js'
 import { createTestAssistantMessage } from './_helpers/messageFixtures.js'
 
 describe('cost-tracker resume restore', () => {

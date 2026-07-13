@@ -1,12 +1,12 @@
-import { STAR, BULLET } from './figures.js'
 import memoize from 'lodash-es/memoize.js'
-import { getOutputStyleDirStyles } from '../outputStyles/loadOutputStylesDir.js'
+import { getOutputStyleDirStyles } from '../output-styles/loadOutputStylesDir.js'
 import type { OutputStyle } from '../utils/config.js'
 import { getCwd } from '../utils/cwd.js'
 import { logForDebugging } from '../utils/debug.js'
 import { loadPluginOutputStyles } from '../utils/plugins/loadPluginOutputStyles.js'
 import type { SettingSource } from '../utils/settings/constants.js'
 import { getInitialSettings } from '../utils/settings/settings.js'
+import { BULLET, STAR } from './figures.js'
 
 export type OutputStyleConfig = {
   name: string

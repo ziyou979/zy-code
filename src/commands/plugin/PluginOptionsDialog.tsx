@@ -1,6 +1,6 @@
-import { POINTER_SMALL } from '../../constants/figures.js'
 import { useState } from 'react'
 import { Dialog } from '../../components/design-system/Dialog.js'
+import { POINTER_SMALL } from '../../constants/figures.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw text input for config dialog
 import { Box, Text, useInput } from '../../ink.js'

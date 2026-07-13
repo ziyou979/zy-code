@@ -30,7 +30,7 @@ export const CtxInspectTool = buildTool({
   inputSchema,
   async call({ collapse_id }, _context) {
     try {
-      const { getStats } = await import('../../services/contextCollapse/index.js')
+      const { getStats } = await import('../../services/context-collapse/index.js')
       const stats = getStats()
       return {
         data: {

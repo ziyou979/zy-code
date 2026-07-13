@@ -65,7 +65,7 @@ function translateSourceName(name: string): string {
 function CollapseStatus() {
   if (feature('CONTEXT_COLLAPSE')) {
     const { getStats, isContextCollapseEnabled } =
-      require('../services/contextCollapse/index.js') as typeof import('../services/contextCollapse/index.js')
+      require('../services/context-collapse/index.js') as typeof import('../services/context-collapse/index.js')
     if (!isContextCollapseEnabled()) {
       return null
     }

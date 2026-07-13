@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useState } from 'react'
 import { useInterval } from 'usehooks-ts'
 import { Text } from '../ink.js'
-import { getPackageManager } from '../services/nativeInstaller/packageManagers.js'
+import { getPackageManager } from '../services/native-installer/packageManagers.js'
 import {
   type AutoUpdaterResult,
   getLatestVersionFromGcs,

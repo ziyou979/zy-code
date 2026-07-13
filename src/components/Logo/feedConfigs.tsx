@@ -1,6 +1,6 @@
-import { TICK } from '../../constants/figures.js'
 import { homedir } from 'node:os'
 import { isInternalBuild } from 'src/utils/envUtils.ts'
+import { TICK } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import type { Step } from '../../projectOnboardingState.js'
 import type { LogOption } from '../../types/logs.js'

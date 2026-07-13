@@ -6,8 +6,8 @@ import {
 import type { LocalCommandCall } from '../../types/command.js'
 import { isBgSession } from '../../utils/concurrentSessions.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
-import { resolveFullscreenEnabled, setFullscreenRuntimeOverride } from '../../utils/fullscreen.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from '../../utils/envUtils.js'
+import { resolveFullscreenEnabled, setFullscreenRuntimeOverride } from '../../utils/fullscreen.js'
 
 type TuiMode = 'fullscreen' | 'default'
 

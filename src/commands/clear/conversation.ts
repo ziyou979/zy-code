@@ -10,12 +10,12 @@ import {
   getSessionId,
   regenerateSessionId,
 } from '../../bootstrap/state.js'
+import { resetCostState, saveCurrentSessionCosts } from '../../cost-tracker.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
 import { evictTaskOutput, initTaskOutputAsSymlink } from '../../services/task/diskOutput.js'
-import { resetCostState, saveCurrentSessionCosts } from '../../cost-tracker.js'
 import type { AppState } from '../../state/AppState.js'
 import { isInProcessTeammateTask } from '../../tasks/InProcessTeammateTask/types.js'
 import {
@@ -32,7 +32,6 @@ import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../../utils/
 import { logError } from '../../utils/log.js'
 import { clearAllPlanSlugs } from '../../utils/plans.js'
 import { setCwd } from '../../utils/Shell.js'
-import { shouldEnableThinkingByDefault } from '../../utils/thinking.js'
 import { processSessionStartHooks } from '../../utils/sessionStart.js'
 import {
   clearSessionMetadata,
@@ -40,6 +39,7 @@ import {
   resetSessionFilePointer,
   saveWorktreeState,
 } from '../../utils/sessionStorage.js'
+import { shouldEnableThinkingByDefault } from '../../utils/thinking.js'
 import { getCurrentWorktreeSession } from '../../utils/worktree.js'
 import { clearSessionCaches } from './caches.js'
 

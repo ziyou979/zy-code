@@ -72,7 +72,10 @@ export function advanceStagePercent(previous: number, next: number): number {
  * 渲染单行 ▰▱ 进度条 + 百分比。
  * 必须单行 — spinnerMessage 中的 \\n 会在 Ink 刷新时错位。
  */
-export function formatCompactPercentHint(pct: number, barWidth = COMPACT_PROGRESS_BAR_WIDTH): string {
+export function formatCompactPercentHint(
+  pct: number,
+  barWidth = COMPACT_PROGRESS_BAR_WIDTH,
+): string {
   const clamped = Math.min(100, Math.max(0, Math.round(pct)))
   const filled = Math.round((clamped / 100) * barWidth)
   const bar = '▰'.repeat(filled) + '▱'.repeat(barWidth - filled)
@@ -131,13 +134,7 @@ export function emitCompactStage(
   onCompactProgress:
     | ((event: {
         type: 'compact_progress'
-        stage:
-          | 'summarize'
-          | 'trim'
-          | 'api'
-          | 'attachments'
-          | 'session_start'
-          | 'hooks'
+        stage: 'summarize' | 'trim' | 'api' | 'attachments' | 'session_start' | 'hooks'
         pct: number
       }) => void)
     | undefined,

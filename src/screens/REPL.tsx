@@ -147,7 +147,7 @@ import { useFullscreenDownsell } from '../hooks/notifs/useFullscreenDownsell.js'
 import { AlternateScreen } from '../ink/components/AlternateScreen.js'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import { ReplMainView } from './repl/ReplMainView.js'
-import { getResumeReturnPrompt } from '../services/sessionStorage/resumeReturn.js'
+import { getResumeReturnPrompt } from '../services/session-storage/resumeReturn.js'
 
 const EMPTY_MCP_CLIENTS: MCPServerConnection[] = []
 const HISTORY_STUB = { maybeLoadOlder: (_: ScrollBoxHandle) => {} }

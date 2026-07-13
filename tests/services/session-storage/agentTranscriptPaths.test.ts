@@ -2,7 +2,7 @@
  * agent transcript 多路径候选（worktree 冷恢复）
  */
 import { describe, expect, test } from 'bun:test'
-import { getAgentTranscriptPathCandidates } from '../../../src/services/sessionStorage/paths.js'
+import { getAgentTranscriptPathCandidates } from '../../../src/services/session-storage/paths.js'
 import { asAgentId } from '../../../src/types/ids.js'
 
 describe('getAgentTranscriptPathCandidates', () => {

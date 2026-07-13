@@ -1,19 +1,19 @@
 /**
  * orphanRecovery 测试
  */
-import { describe, expect, test, beforeAll, afterAll } from 'bun:test'
-import { unlink, readdir, mkdir } from 'node:fs/promises'
-import { join } from 'node:path'
-import { tmpdir } from 'node:os'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { randomUUID } from 'node:crypto'
+import { mkdir, readdir, unlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { createTask, getTask, listTasks } from '../../../src/utils/tasks.js'
 
 const testDir = join(tmpdir(), `zy-test-orphan-${randomUUID()}`)
-const originalZyHome = process.env.ZY_CONFIG_HOME
+const originalZyHome = process.env.ZY_CONFIG_DIR
 
 describe('orphanRecovery', () => {
   beforeAll(async () => {
-    process.env.ZY_CONFIG_HOME = testDir
+    process.env.ZY_CONFIG_DIR = testDir
     process.env.ZY_TEAMS_DIR = join(testDir, 'teams')
     await mkdir(testDir, { recursive: true })
     await mkdir(join(testDir, 'teams'), { recursive: true })
@@ -23,8 +23,8 @@ describe('orphanRecovery', () => {
   })
 
   afterAll(async () => {
-    if (originalZyHome === undefined) delete process.env.ZY_CONFIG_HOME
-    else process.env.ZY_CONFIG_HOME = originalZyHome
+    if (originalZyHome === undefined) delete process.env.ZY_CONFIG_DIR
+    else process.env.ZY_CONFIG_DIR = originalZyHome
     delete process.env.ZY_TEAMS_DIR
     try {
       const files = await readdir(testDir)

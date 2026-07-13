@@ -1,7 +1,7 @@
-import { POINTER, ARROW_DOWN, ARROW_UP, TICK } from '../../constants/figures.js'
 import type { ReactNode } from 'react'
-import { useDeclaredCursor } from '../../ink/hooks/use-declared-cursor.js'
+import { ARROW_DOWN, ARROW_UP, POINTER, TICK } from '../../constants/figures.js'
 import type { ClickEvent } from '../../ink/events/click-event.js'
+import { useDeclaredCursor } from '../../ink/hooks/use-declared-cursor.js'
 import { Box, Text } from '../../ink.js'
 
 type ListItemProps = {

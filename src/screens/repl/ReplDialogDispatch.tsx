@@ -26,7 +26,7 @@ import { ElicitationDialog } from '../../components/mcp/ElicitationDialog.js'
 import { SandboxPermissionRequest } from '../../components/permissions/SandboxPermissionRequest.js'
 import { WorkerPendingPermission } from '../../components/permissions/WorkerPendingPermission.js'
 import { RemoteCallout } from '../../components/RemoteCallout.js'
-import { ResumeReturnDialog, type ResumeReturnAction } from '../../components/ResumeReturnDialog.js'
+import { type ResumeReturnAction, ResumeReturnDialog } from '../../components/ResumeReturnDialog.js'
 import { LOCAL_COMMAND_STDOUT_TAG } from '../../constants/xml.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

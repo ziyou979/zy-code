@@ -1,1 +1,1 @@
-export * from '../../services/sessionStorage/agentMetadata.js'
+export * from '../../services/session-storage/agentMetadata.js'

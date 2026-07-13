@@ -1,4 +1,3 @@
-import { RADIO_OFF, TICK, TRIANGLE_UP_OUTLINE, CROSS } from '../../constants/figures.js'
 import React, { useEffect, useRef, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import {
@@ -6,6 +5,7 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import type { CommandResultDisplay } from '../../commands.js'
+import { CROSS, RADIO_OFF, TICK, TRIANGLE_UP_OUTLINE } from '../../constants/figures.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'

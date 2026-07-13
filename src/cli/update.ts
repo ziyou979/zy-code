@@ -3,8 +3,8 @@ import { logEvent } from 'src/services/analytics/index.js'
 import {
   installLatest as installLatestNative,
   removeInstalledSymlink,
-} from 'src/services/nativeInstaller/index.js'
-import { getPackageManager } from 'src/services/nativeInstaller/packageManagers.js'
+} from 'src/services/native-installer/index.js'
+import { getPackageManager } from 'src/services/native-installer/packageManagers.js'
 import {
   getLatestVersion,
   type InstallStatus,

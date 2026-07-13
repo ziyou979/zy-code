@@ -37,17 +37,17 @@ import type { AppState } from '../../state/AppState.js'
 import type { Tool, ToolUseContext } from '../../Tool.js'
 import { appendTeammateMessage } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
 import type {
+  AgentLifecycleMode,
   ClaimedTaskAssignment,
   InProcessTeammateTaskState,
   TeammateIdentity,
-  AgentLifecycleMode,
 } from '../../tasks/InProcessTeammateTask/types.js'
 import {
   AGENT_HISTORY_MAX_BYTES,
   AGENT_HISTORY_MAX_MESSAGES,
-  IDLE_HOT_MS,
-  IDLE_COMPACT_MS,
   appendCappedMessage,
+  IDLE_COMPACT_MS,
+  IDLE_HOT_MS,
 } from '../../tasks/InProcessTeammateTask/types.js'
 import {
   createActivityDescriptionResolver,
@@ -105,8 +105,8 @@ import {
 } from '../../utils/teammateMailbox.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
 import { createContentReplacementState } from '../../utils/toolResultStorage.js'
-import { saveHibernateSnapshot, deleteHibernateSnapshot } from './hibernateSnapshot.js'
 import { TEAM_LEAD_NAME } from './constants.js'
+import { deleteHibernateSnapshot, saveHibernateSnapshot } from './hibernateSnapshot.js'
 import {
   getLeaderSetToolPermissionContext,
   getLeaderToolUseConfirmQueue,

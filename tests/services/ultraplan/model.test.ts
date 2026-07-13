@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
 describe('getUltraplanModel', () => {
-  let advancedModel: string | undefined = undefined
-  let mainLoopModel: string | undefined = undefined
+  let advancedModel: string | undefined
+  let mainLoopModel: string | undefined
 
   beforeEach(() => {
     advancedModel = undefined

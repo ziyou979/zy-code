@@ -6,8 +6,8 @@
  * always; a timestamp shows until passed. Enter to view/steer, x to dismiss.
  */
 
-import { BLACK_CIRCLE, POINTER, RADIO_OFF } from '../constants/figures.js'
 import * as React from 'react'
+import { BLACK_CIRCLE, POINTER, RADIO_OFF } from '../constants/figures.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'

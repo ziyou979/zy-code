@@ -12,17 +12,16 @@ import {
   isAnthropicProvider,
   isOpenAIProvider,
 } from 'src/services/model/providers.js'
-import { getMainLoopModel, getProviderForModel } from '../model/model.js'
-import { getSecureStorage } from 'src/services/secureStorage/index.js'
+import { getSecureStorage } from 'src/services/secure-storage/index.js'
 import {
   clearLegacyApiKeyPrefetch,
   getLegacyApiKeyPrefetchResult,
-} from 'src/services/secureStorage/keychainPrefetch.js'
+} from 'src/services/secure-storage/keychainPrefetch.js'
 import {
   clearKeychainCache,
   getMacOsKeychainStorageServiceName,
   getUsername,
-} from 'src/services/secureStorage/macOsKeychainHelpers.js'
+} from 'src/services/secure-storage/macOsKeychainHelpers.js'
 import {
   getApiKeyFromFileDescriptor,
   getOAuthTokenFromFileDescriptor,
@@ -49,7 +48,7 @@ import {
   saveGlobalConfig,
 } from '../config/config.js'
 import { getMockSubscriptionType, shouldUseMockSubscription } from '../mockRateLimits.js'
-import type { OAuthTokens, SubscriptionType } from '../oauth/types.js'
+import { getMainLoopModel, getProviderForModel } from '../model/model.js'
 import {
   clearAllOAuthCredentials,
   clearOAuthCredentialsCache,
@@ -63,6 +62,7 @@ import {
   saveOAuthCredentials,
 } from '../oauth/oauthStorage.js'
 import { getOAuthProvider } from '../oauth/providers/index.js'
+import type { OAuthTokens, SubscriptionType } from '../oauth/types.js'
 import { getAuthConfigApiKey, getAuthConfigApiKeyHelper } from './authConfig.js'
 
 /** API key helper 缓存的默认 TTL，单位毫秒（5 分钟） */
@@ -314,8 +314,8 @@ type ApiKeyHelperInflight = {
   startedAt: number | null
 }
 
-let _apiKeyHelperCache = new Map<string, { value: string; timestamp: number }>()
-let _apiKeyHelperInflight = new Map<string, ApiKeyHelperInflight>()
+const _apiKeyHelperCache = new Map<string, { value: string; timestamp: number }>()
+const _apiKeyHelperInflight = new Map<string, ApiKeyHelperInflight>()
 let _apiKeyHelperEpoch = 0
 
 export function getApiKeyHelperElapsedMs(): number {
@@ -1082,8 +1082,8 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
 
 // 重新导出多 Provider OAuth 工具函数，供外部模块使用
 export {
-  getActiveOAuthProviderInfo,
-  getActiveOAuthProvider,
-  saveOAuthCredentials,
   clearAllOAuthCredentials,
+  getActiveOAuthProvider,
+  getActiveOAuthProviderInfo,
+  saveOAuthCredentials,
 } from '../oauth/oauthStorage.js'

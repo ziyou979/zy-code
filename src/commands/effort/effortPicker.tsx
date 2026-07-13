@@ -14,21 +14,21 @@
  */
 import * as React from 'react'
 import { useMemo, useState } from 'react'
-import { Text, Box } from '../../ink.js'
-import type { Theme } from '../../utils/theme.js'
-import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { tSync } from '../../i18n/index.js'
+import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
+import { Box, Text } from '../../ink.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
-import { tSync } from '../../i18n/index.js'
 import { type EffortLevel } from '../../utils/effort.js'
+import type { Theme } from '../../utils/theme.js'
+import { executeEffort } from './effort.js'
 import {
   computePickerLayout,
   getInitialSelectedIndex,
   type PickerLayout,
 } from './effortPickerData.js'
-import { executeEffort } from './effort.js'
 
 // ---------------------------------------------------------------------------
 // 工具函数

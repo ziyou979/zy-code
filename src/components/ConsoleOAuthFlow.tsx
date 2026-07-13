@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { tSync } from 'src/i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { tSync } from 'src/i18n/index.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { setClipboard } from '../ink/termio/osc.js'
 import { useTerminalNotification } from '../ink/useTerminalNotification.js'
@@ -11,13 +11,13 @@ import { Box, Link, Text } from '../ink.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { getSSLErrorHint } from '../services/api/errorUtils.js'
 import { sendNotification } from '../services/notifier.js'
+import { getActiveOAuthProviderInfo, saveOAuthCredentials } from '../services/oauth/oauthStorage.js'
 import { getOAuthProviders } from '../services/oauth/providers/index.js'
 import type {
   OAuthLoginCallbacks,
   OAuthProviderInterface,
   OAuthSelectOption,
 } from '../services/oauth/providers/types.js'
-import { getActiveOAuthProviderInfo, saveOAuthCredentials } from '../services/oauth/oauthStorage.js'
 import { openBrowser } from '../utils/browser.js'
 import { logError } from '../utils/log.js'
 import { Select } from './CustomSelect/select.js'

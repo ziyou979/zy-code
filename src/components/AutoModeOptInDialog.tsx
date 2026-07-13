@@ -6,7 +6,7 @@ import { updateSettingsForSource } from '../utils/settings/settings.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
 
-export const AUTO_MODE_DESCRIPTION = tSync('autoMode.description')
+export const getAutoModeDescription = () => tSync('autoMode.description')
 type Props = {
   onAccept(): void
   onDecline(): void
@@ -48,7 +48,7 @@ export function AutoModeOptInDialog({ onAccept, onDecline, declineExits }: Props
     <Dialog title={tSync('autoMode.title')} color="warning" onCancel={onDecline}>
       {
         <Box flexDirection="column" gap={1}>
-          <Text>{AUTO_MODE_DESCRIPTION}</Text>
+          <Text>{getAutoModeDescription()}</Text>
           <Link url="https://code.zy.com/docs/en/security" />
         </Box>
       }

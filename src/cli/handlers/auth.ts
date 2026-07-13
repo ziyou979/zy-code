@@ -8,16 +8,16 @@ import {
 } from '../../services/analytics/index.js'
 import { getSSLErrorHint } from '../../services/api/errorUtils.js'
 import { getAPIProvider } from '../../services/model/providers.js'
-import { getOAuthProvider, getOAuthProviders } from '../../services/oauth/providers/index.js'
 import {
-  saveOAuthCredentials,
   clearOAuthCredentialsCache,
   getActiveOAuthProvider,
   getActiveOAuthProviderInfo,
+  saveOAuthCredentials,
 } from '../../services/oauth/oauthStorage.js'
+import { getOAuthProvider, getOAuthProviders } from '../../services/oauth/providers/index.js'
 import type { OAuthCredentials, OAuthLoginCallbacks } from '../../services/oauth/providers/types.js'
-import { openBrowser } from '../../utils/browser.js'
 import { getApiKeyWithSource, getAuthTokenSource } from '../../utils/auth.js'
+import { openBrowser } from '../../utils/browser.js'
 import { isRunningOnHomespace } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'

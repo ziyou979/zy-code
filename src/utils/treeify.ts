@@ -1,5 +1,5 @@
-import { LINE_UP_DOWN_RIGHT, LINE_UP_RIGHT, LINE_VERTICAL } from '../constants/figures.js'
 import { color } from '../components/design-system/color.js'
+import { LINE_UP_DOWN_RIGHT, LINE_UP_RIGHT, LINE_VERTICAL } from '../constants/figures.js'
 import type { Theme, ThemeName } from './theme.js'
 
 export type TreeNode = {

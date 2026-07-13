@@ -1,4 +1,4 @@
-import { TICK, CHECKBOX_ON, CHECKBOX_OFF } from '../../../constants/figures.js'
+import { CHECKBOX_OFF, CHECKBOX_ON, TICK } from '../../../constants/figures.js'
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../../ink/stringWidth.js'
 import { Box, Text } from '../../../ink.js'

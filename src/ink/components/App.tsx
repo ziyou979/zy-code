@@ -5,10 +5,10 @@ import { stopCapturingEarlyInput } from '../../utils/earlyInput.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isMouseClicksDisabled } from '../../utils/fullscreen.js'
 import { logError } from '../../utils/log.js'
-import instances from '../instances.js'
 import { EventEmitter } from '../events/emitter.js'
 import { InputEvent } from '../events/input-event.js'
 import { TerminalFocusEvent } from '../events/terminal-focus-event.js'
+import instances from '../instances.js'
 import {
   INITIAL_STATE,
   type ParsedInput,
@@ -21,8 +21,8 @@ import {
   clearSelection,
   finishSelection,
   hasSelection,
-  selectionBounds,
   type SelectionState,
+  selectionBounds,
   startSelection,
 } from '../selection.js'
 import { isXtermJs, setXtversionName, supportsExtendedKeys } from '../terminal.js'

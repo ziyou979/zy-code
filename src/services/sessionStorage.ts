@@ -13,7 +13,7 @@
 export type {
   AgentMetadata,
   RemoteAgentMetadata,
-} from './sessionStorage/agentMetadata.js'
+} from './session-storage/agentMetadata.js'
 export {
   deleteRemoteAgentMetadata,
   listRemoteAgentMetadata,
@@ -21,19 +21,19 @@ export {
   readRemoteAgentMetadata,
   writeAgentMetadata,
   writeRemoteAgentMetadata,
-} from './sessionStorage/agentMetadata.js'
+} from './session-storage/agentMetadata.js'
 export {
   buildConversationChain,
   checkResumeConsistency,
   getFirstMeaningfulUserMessageTextContent,
   removeExtraFields,
-} from './sessionStorage/chain.js'
+} from './session-storage/chain.js'
 export {
   getNodeEnv,
   getUserType,
   isCustomTitleEnabled,
-} from './sessionStorage/env.js'
-export type { SessionLogResult } from './sessionStorage/logLoading.js'
+} from './session-storage/env.js'
+export type { SessionLogResult } from './session-storage/logLoading.js'
 export {
   cleanMessagesForLogging,
   clearSessionMessagesCache,
@@ -62,7 +62,7 @@ export {
   loadTranscriptFile,
   loadTranscriptFromFile,
   searchSessionsByCustomTitle,
-} from './sessionStorage/logLoading.js'
+} from './session-storage/logLoading.js'
 export {
   clearAgentTranscriptSubdir,
   getAgentTranscriptPath,
@@ -74,13 +74,13 @@ export {
   getTranscriptPathForSession,
   MAX_TRANSCRIPT_READ_BYTES,
   setAgentTranscriptSubdir,
-} from './sessionStorage/paths.js'
+} from './session-storage/paths.js'
 export {
   isChainParticipant,
   isEphemeralToolProgress,
   isTranscriptMessage,
   sessionIdExists,
-} from './sessionStorage/predicates.js'
+} from './session-storage/predicates.js'
 export {
   resetProjectFlushStateForTesting,
   resetProjectForTesting,
@@ -88,7 +88,7 @@ export {
   setInternalEventWriter,
   setRemoteIngressUrlForTesting,
   setSessionFileForTesting,
-} from './sessionStorage/project.js'
+} from './session-storage/project.js'
 export {
   cacheSessionTitle,
   clearSessionMetadata,
@@ -107,18 +107,18 @@ export {
   saveTag,
   saveTaskSummary,
   saveWorktreeState,
-} from './sessionStorage/sessionMetadata.js'
+} from './session-storage/sessionMetadata.js'
 export type {
   SessionSidecarMetadata,
   SessionSidecarPatch,
-} from './sessionStorage/sessionSidecar.js'
+} from './session-storage/sessionSidecar.js'
 export {
   readSessionSidecar,
   readSessionSidecarAsync,
   updateSessionSidecar,
   writeSessionSidecar,
-} from './sessionStorage/sessionSidecar.js'
-export type { TeamInfo } from './sessionStorage/transcript.js'
+} from './session-storage/sessionSidecar.js'
+export type { TeamInfo } from './session-storage/transcript.js'
 export {
   adoptResumedSessionFile,
   appendEntryToFile,
@@ -136,4 +136,4 @@ export {
   recordTranscript,
   removeTranscriptMessage,
   resetSessionFilePointer,
-} from './sessionStorage/transcript.js'
+} from './session-storage/transcript.js'

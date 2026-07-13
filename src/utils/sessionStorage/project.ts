@@ -1,1 +1,1 @@
-export * from '../../services/sessionStorage/project.js'
+export * from '../../services/session-storage/project.js'

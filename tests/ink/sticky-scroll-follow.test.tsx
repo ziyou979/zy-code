@@ -3,11 +3,11 @@
  * + StreamingMarkdown 多帧长内容渲染时限回归
  */
 import { describe, expect, test } from 'bun:test'
-import React from 'react'
 import { Writable } from 'node:stream'
-import { computeScrollFollow } from '../../src/ink/scrollFollow.js'
-import Ink from '../../src/ink/ink.js'
+import React from 'react'
 import Box from '../../src/ink/components/Box.js'
+import Ink from '../../src/ink/ink.js'
+import { computeScrollFollow } from '../../src/ink/scrollFollow.js'
 
 function makeStdout(cols: number, rows: number): NodeJS.WriteStream {
   const stream = new Writable({

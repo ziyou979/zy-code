@@ -64,7 +64,7 @@ import uniqBy from 'lodash-es/uniqBy.js'
 import { getProjectRoot } from '../../bootstrap/state.js'
 import { formatCommandsWithinBudget } from '../../tools/SkillTool/prompt.js'
 import { getContextWindowForModel } from '../../utils/context.js'
-import type { DiscoverySignal } from '../skillSearch/signals.js'
+import type { DiscoverySignal } from '../skill-search/signals.js'
 // DCE 条件加载。所有技能搜索字符串字面量，
 // 否则会泄露到外部构建中，都放在这些模块内。
 // 此文件中唯一的表面是：maybe() 调用（通过下方的 spread 门控）和
@@ -74,9 +74,9 @@ import type { DiscoverySignal } from '../skillSearch/signals.js'
 const skillSearchModules = feature('EXPERIMENTAL_SKILL_SEARCH')
   ? {
       featureCheck:
-        require('../skillSearch/featureCheck.js') as typeof import('../skillSearch/featureCheck.js'),
+        require('../skill-search/featureCheck.js') as typeof import('../skill-search/featureCheck.js'),
       prefetch:
-        require('../skillSearch/prefetch.js') as typeof import('../skillSearch/prefetch.js'),
+        require('../skill-search/prefetch.js') as typeof import('../skill-search/prefetch.js'),
     }
   : null
 const autoModeStateModule = true
@@ -137,8 +137,8 @@ import {
   isMcpInstructionsDeltaEnabled,
   type ClientSideInstruction,
 } from '../../utils/mcpInstructionsDelta.js'
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/services/claudeInChrome/common.js'
-import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claudeInChrome/prompt.js'
+import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/services/claude-in-chrome/common.js'
+import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claude-in-chrome/prompt.js'
 import type { MCPServerConnection } from '../mcp/types.js'
 import type { HookEvent, SyncHookJSONOutput } from 'src/types/index.js'
 import {
@@ -159,7 +159,7 @@ const BRIEF_TOOL_NAME: string | null =
       ).BRIEF_TOOL_NAME
     : null
 const sessionTranscriptModule = feature('KAIROS')
-  ? (require('../sessionTranscript/sessionTranscript.js') as typeof import('../sessionTranscript/sessionTranscript.js'))
+  ? (require('../session-transcript/sessionTranscript.js') as typeof import('../session-transcript/sessionTranscript.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { hasUltrathinkKeyword, isUltrathinkEnabled } from '../../utils/thinking.js'
@@ -793,7 +793,7 @@ export async function getAttachments(
     //（query.ts，与主轮次并发）。此前驻留在此的阻塞调用
     // 是 assistant_turn 信号 — 97% 的这些 Haiku 调用在生产环境中
     // 什么都没找到。预取 + 收集时 await 取代了它；
-    // 见 src/services/skillSearch/prefetch.ts。
+    // 见 src/services/skill-search/prefetch.ts。
     maybe('plan_mode', () => getPlanModeAttachments(messages, toolUseContext)),
     maybe('plan_mode_exit', () => getPlanModeExitAttachment(toolUseContext)),
     ...(true

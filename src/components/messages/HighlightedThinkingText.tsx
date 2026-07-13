@@ -1,5 +1,5 @@
-import { POINTER } from '../../constants/figures.js'
 import { useContext } from 'react'
+import { POINTER } from '../../constants/figures.js'
 import { useQueuedMessage } from '../../context/QueuedMessageContext.js'
 import { Box, Text } from '../../ink.js'
 import { formatBriefTimestamp } from '../../utils/formatBriefTimestamp.js'

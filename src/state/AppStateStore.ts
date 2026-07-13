@@ -6,7 +6,7 @@ import type { ChannelPermissionCallbacks } from '../services/mcp/channelPermissi
 import type { ElicitationRequestEvent } from '../services/mcp/elicitationHandler.js'
 import type { MCPServerConnection, ServerResource } from '../services/mcp/types.js'
 import type { ModelSetting } from '../services/model/model.js'
-import { shouldEnablePromptSuggestion } from '../services/PromptSuggestion/promptSuggestion.js'
+import { shouldEnablePromptSuggestion } from '../services/prompt-suggestion/promptSuggestion.js'
 import { getEmptyToolPermissionContext, type Tool, type ToolPermissionContext } from '../Tool.js'
 import type { TaskState } from '../tasks/types.js'
 import type { AgentColorName } from '../tools/AgentTool/agentColorManager.js'

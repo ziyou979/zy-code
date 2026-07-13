@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { copyFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { getEnvironmentKind } from 'src/services/filePersistence/outputsScanner.js'
+import { getEnvironmentKind } from 'src/services/file-persistence/outputsScanner.js'
 import type { AgentId, SessionId } from 'src/types/ids.js'
 import type { LogOption } from 'src/types/logs.js'
 import type {

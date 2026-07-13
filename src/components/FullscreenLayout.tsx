@@ -1,4 +1,3 @@
-import { ARROW_DOWN, POINTER } from '../constants/figures.js'
 import { fileURLToPath } from 'node:url'
 import React, {
   createContext,
@@ -12,6 +11,7 @@ import React, {
   useState,
   useSyncExternalStore,
 } from 'react'
+import { ARROW_DOWN, POINTER } from '../constants/figures.js'
 import { ModalContext } from '../context/modalContext.js'
 import {
   PromptOverlayProvider,
@@ -598,9 +598,7 @@ function StickyPromptHeader({
     const unsub = scrollRef?.current?.subscribe(publishZone)
     // 下一帧再刷一次（nodeCache 在 Ink paint 后才有值）
     const raf =
-      typeof requestAnimationFrame === 'function'
-        ? requestAnimationFrame(publishZone)
-        : undefined
+      typeof requestAnimationFrame === 'function' ? requestAnimationFrame(publishZone) : undefined
     return () => {
       unsub?.()
       if (raf !== undefined) {

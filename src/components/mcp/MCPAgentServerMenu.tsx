@@ -1,7 +1,7 @@
-import { RADIO_OFF, TICK, TRIANGLE_UP_OUTLINE } from '../../constants/figures.js'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import type { CommandResultDisplay } from '../../commands.js'
+import { RADIO_OFF, TICK, TRIANGLE_UP_OUTLINE } from '../../constants/figures.js'
 import { Box, color, Link, Text, useTheme } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { AuthenticationCancelledError, performMCPOAuthFlow } from '../../services/mcp/auth.js'

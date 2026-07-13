@@ -1,5 +1,5 @@
-import { POINTER_SMALL } from '../../constants/figures.js'
 import { Box, Text } from 'src/ink.js'
+import { POINTER_SMALL } from '../../constants/figures.js'
 
 type Props = {
   hasStash: boolean

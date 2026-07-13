@@ -1,7 +1,7 @@
-import { CROSS } from '../../constants/figures.js'
 import { useEffect, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import type { CommandResultDisplay } from '../../commands.js'
+import { CROSS } from '../../constants/figures.js'
 import { Box, color, Text, useTheme } from '../../ink.js'
 import { useMcpReconnect } from '../../services/mcp/MCPConnectionManager.js'
 import { useAppStateStore } from '../../state/AppState.js'

@@ -1,4 +1,3 @@
-import { ARROW_LEFT, ARROW_RIGHT, ARROW_DOWN } from '../../constants/figures.js'
 import * as React from 'react'
 import { useState } from 'react'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
@@ -9,6 +8,7 @@ import { isPanelAgentTask } from 'src/tasks/LocalAgentTask/LocalAgentTask.js'
 import { getPillLabel, pillNeedsCta } from 'src/tasks/pillLabel.js'
 import { isBackgroundTask, type TaskState } from 'src/tasks/types.js'
 import { calculateHorizontalScrollWindow } from 'src/utils/horizontalScroll.js'
+import { ARROW_DOWN, ARROW_LEFT, ARROW_RIGHT } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import {

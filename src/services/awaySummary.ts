@@ -6,7 +6,7 @@ import { logForDebugging } from '../utils/debug.js'
 import { createUserMessage, getAssistantMessageText } from '../utils/messages.js'
 import { asSystemPrompt } from '../utils/systemPromptType.js'
 import { queryModelWithoutStreaming } from './api/llmOrchestrator.js'
-import { getSessionMemoryContent } from './SessionMemory/sessionMemoryUtils.js'
+import { getSessionMemoryContent } from './session-memory/sessionMemoryUtils.js'
 
 // Recap only needs recent context — truncate to avoid "prompt too long" on
 // large sessions. 30 messages ≈ ~15 exchanges, plenty for "where we left off."

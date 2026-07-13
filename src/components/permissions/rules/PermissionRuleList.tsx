@@ -1,4 +1,3 @@
-import { WARNING } from '../../../constants/figures.js'
 import chalk from 'chalk'
 import { useEffect, useRef, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
@@ -9,6 +8,7 @@ import {
 } from 'src/utils/permissions/PermissionUpdate.js'
 import type { CommandResultDisplay } from '../../../commands.js'
 import { Select } from '../../../components/CustomSelect/select.js'
+import { WARNING } from '../../../constants/figures.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useSearchInput } from '../../../hooks/useSearchInput.js'
 import { Box, Text, useTerminalFocus } from '../../../ink.js'

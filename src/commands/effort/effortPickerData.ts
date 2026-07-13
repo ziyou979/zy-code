@@ -4,9 +4,9 @@
  */
 import { tSync } from '../../i18n/index.js'
 import {
-  type EffortLevel,
   EFFORT_LEVEL_ORDER,
   EFFORT_LEVEL_RANK,
+  type EffortLevel,
   getModelEffortLevels,
   modelSupportsEffort,
   resolveEffortForModel,

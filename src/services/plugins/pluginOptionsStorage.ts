@@ -13,7 +13,7 @@
  */
 
 import memoize from 'lodash-es/memoize.js'
-import { getSecureStorage } from 'src/services/secureStorage/index.js'
+import { getSecureStorage } from 'src/services/secure-storage/index.js'
 import type { LoadedPlugin } from '../../types/plugin.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logError } from '../../utils/log.js'

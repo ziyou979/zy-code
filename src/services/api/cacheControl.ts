@@ -6,8 +6,8 @@ import {
 import type { TextBlock } from '../../types/llm.js'
 import { splitSysPromptPrefix } from '../../utils/api.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
 import { getModelPromptCachingMode } from '../../utils/settings/localModelCapabilities.js'
+import { getInitialSettings } from '../../utils/settings/settings.js'
 import type { SystemPrompt } from '../../utils/systemPromptType.js'
 
 export function getPromptCachingEnabled(model: string): boolean {

@@ -9,8 +9,6 @@
  * AppState 更新、Bridge 事件、Perfetto、磁盘 I/O、mailbox。
  */
 
-import { isTerminalTaskStatus } from '../../Task.js'
-import { getTask, updateTaskCAS } from '../../utils/tasks.js'
 import { evictTaskOutput } from '../../services/task/diskOutput.js'
 import { evictTerminalTask } from '../../services/task/framework.js'
 import {
@@ -18,11 +16,13 @@ import {
   unregisterAgent as unregisterPerfettoAgent,
 } from '../../services/telemetry/perfettoTracing.js'
 import type { AppState } from '../../state/AppState.js'
+import { isTerminalTaskStatus } from '../../Task.js'
 import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { removeMemberByAgentId } from './teamHelpers.js'
+import { getTask, updateTaskCAS } from '../../utils/tasks.js'
 import { clearExternalToolResults } from './externalToolResult.js'
 import { deleteHibernateSnapshot } from './hibernateSnapshot.js'
+import { removeMemberByAgentId } from './teamHelpers.js'
 
 type SetAppStateFn = (updater: (prev: AppState) => AppState) => void
 

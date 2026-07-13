@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle'
 import { dirname } from 'node:path'
-import { downloadUserSettings } from 'src/services/settingsSync/index.js'
+import { downloadUserSettings } from 'src/services/settings-sync/index.js'
 import { StructuredIO } from 'src/cli/structuredIO.js'
 import { RemoteIO } from 'src/cli/remoteIO.js'
 import { type Command, formatDescriptionWithSource, getCommandName } from 'src/commands.js'
@@ -93,7 +93,7 @@ import type { PermissionMode } from '@zy-ai/agent-sdk'
 import type { PermissionMode as InternalPermissionMode } from 'src/types/permissions.js'
 import { cwd } from 'node:process'
 import { getCwd } from 'src/utils/cwd.js'
-import { isPolicyAllowed } from 'src/services/policyLimits/index.js'
+import { isPolicyAllowed } from 'src/services/policy-limits/index.js'
 import type { ReplWireHandle } from 'src/bridge/replBridge.js'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
 import { hasPermissionsToUseTool } from 'src/utils/permissions/permissions.js'
@@ -120,7 +120,7 @@ import {
   isBypassPermissionsModeDisabled,
   transitionPermissionMode,
 } from 'src/utils/permissions/permissionSetup.js'
-import { type PromptVariant } from 'src/services/PromptSuggestion/promptSuggestion.js'
+import { type PromptVariant } from 'src/services/prompt-suggestion/promptSuggestion.js'
 import { getAccountInformation } from 'src/utils/auth.js'
 import { getAPIProvider } from 'src/services/model/providers.js'
 import type { HookCallbackMatcher } from 'src/types/hooks/index.js'
@@ -224,7 +224,7 @@ const cronGate = feature('AGENT_TRIGGERS')
   ? (require('../tools/ScheduleCronTool/prompt.js') as typeof import('../tools/ScheduleCronTool/prompt.js'))
   : null
 const extractMemoriesModule = feature('EXTRACT_MEMORIES')
-  ? (require('../services/extractMemories/extractMemories.js') as typeof import('../services/extractMemories/extractMemories.js'))
+  ? (require('../services/extract-memories/extractMemories.js') as typeof import('../services/extract-memories/extractMemories.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 

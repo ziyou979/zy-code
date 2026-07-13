@@ -10,7 +10,7 @@ import {
   cleanupNpmInstallations,
   cleanupShellAliases,
   installLatest,
-} from '../services/nativeInstaller/index.js'
+} from '../services/native-installer/index.js'
 import { logForDebugging } from '../utils/debug.js'
 import { env } from '../utils/env.js'
 import { errorMessage } from '../utils/errors.js'

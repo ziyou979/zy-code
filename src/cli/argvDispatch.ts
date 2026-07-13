@@ -111,7 +111,7 @@ async function rewriteArgvForDeepLink(): Promise<void> {
     const { enableConfigs } = await import('../utils/config.js')
     enableConfigs()
     const uri = process.argv[handleUriIdx + 1]!
-    const { handleDeepLinkUri } = await import('../services/deepLink/protocolHandler.js')
+    const { handleDeepLinkUri } = await import('../services/deep-link/protocolHandler.js')
     const exitCode = await handleDeepLinkUri(uri)
     process.exit(exitCode)
   }
@@ -126,7 +126,7 @@ async function rewriteArgvForDeepLink(): Promise<void> {
   ) {
     const { enableConfigs } = await import('../utils/config.js')
     enableConfigs()
-    const { handleUrlSchemeLaunch } = await import('../services/deepLink/protocolHandler.js')
+    const { handleUrlSchemeLaunch } = await import('../services/deep-link/protocolHandler.js')
     const urlSchemeResult = await handleUrlSchemeLaunch()
     process.exit(urlSchemeResult ?? 1)
   }

@@ -29,9 +29,9 @@ import {
 import type { AppState } from '../../state/AppState.js'
 import { createTaskStateBase, generateTaskId } from '../../Task.js'
 import type {
+  AgentLifecycleMode,
   InProcessTeammateTaskState,
   TeammateIdentity,
-  AgentLifecycleMode,
 } from '../../tasks/InProcessTeammateTask/types.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { formatAgentId } from '../../utils/agentId.js'
@@ -39,8 +39,8 @@ import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { createTeammateContext } from '../../utils/teammateContext.js'
-import { removeMemberByAgentId } from './teamHelpers.js'
 import { checkSpawnCapacity } from './agentCapacity.js'
+import { removeMemberByAgentId } from './teamHelpers.js'
 
 type SetAppStateFn = (updater: (prev: AppState) => AppState) => void
 

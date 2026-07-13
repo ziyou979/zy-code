@@ -45,12 +45,12 @@ import { modelDisplayString } from '../../services/model/model.js'
 import {
   abortPromptSuggestion,
   logSuggestionSuppressed,
-} from '../../services/PromptSuggestion/promptSuggestion.js'
+} from '../../services/prompt-suggestion/promptSuggestion.js'
 import {
   type ActiveSpeculationState,
   abortSpeculation,
-} from '../../services/PromptSuggestion/speculation.js'
-import type { ProcessUserInputContext } from '../../services/processUserInput/processUserInput.js'
+} from '../../services/prompt-suggestion/speculation.js'
+import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
 import { findSlashCommandPositions } from '../../services/suggestions/commandSuggestions.js'
 import {
   findSlackChannelPositions,
@@ -104,7 +104,6 @@ import { errorMessage } from '../../utils/errors.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
 import { getImageFromClipboard, PASTE_THRESHOLD } from '../../utils/imagePaste.js'
-import { expandExistingPasteRefsInInput, findExistingPastedTextId } from './inputPaste.js'
 import type { ImageDimensions } from '../../utils/imageResizer.js'
 import { cacheImagePath, storeImage } from '../../utils/imageStore.js'
 import { isMacosOptionChar, MACOS_OPTION_SPECIAL_CHARS } from '../../utils/keyboardShortcuts.js'
@@ -147,6 +146,7 @@ import { shouldHideTasksFooter } from '../tasks/taskStatusUtils.js'
 import { TeamsDialog } from '../teams/TeamsDialog.js'
 import VimTextInput from '../VimTextInput.js'
 import { getModeFromInput, getValueFromInput } from './inputModes.js'
+import { expandExistingPasteRefsInInput, findExistingPastedTextId } from './inputPaste.js'
 import { FOOTER_TEMPORARY_STATUS_TIMEOUT, Notifications } from './Notifications.js'
 import PromptInputFooter from './PromptInputFooter.js'
 import type { SuggestionItem } from './PromptInputFooterSuggestions.js'

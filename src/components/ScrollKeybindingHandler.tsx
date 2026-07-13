@@ -414,6 +414,7 @@ export function ScrollKeybindingHandler({
     const path = getClipboardPath()
     const n = text.length
     let msg: string
+    // TODO
     switch (path) {
       case 'native':
         msg = `copied ${n} chars to clipboard`

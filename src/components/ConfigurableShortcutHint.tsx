@@ -1,5 +1,6 @@
 import type { KeybindingAction, KeybindingContextName } from '../keybindings/types.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
+import type { KeyboardShortcutAction } from './design-system/KeyboardShortcutHint.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 
 type Props = {
@@ -39,6 +40,11 @@ export function ConfigurableShortcutHint({
 }: Props) {
   const shortcut = useShortcutDisplay(action, context, fallback)
   return (
-    <KeyboardShortcutHint shortcut={shortcut} action={description} parens={parens} bold={bold} />
+    <KeyboardShortcutHint
+      shortcut={shortcut}
+      action={description as KeyboardShortcutAction}
+      parens={parens}
+      bold={bold}
+    />
   )
 }

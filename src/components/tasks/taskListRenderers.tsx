@@ -1,4 +1,3 @@
-import { POINTER } from '../../constants/figures.js'
 import { isCoordinatorMode } from 'src/coordinator/coordinatorMode.js'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
 import { TEAM_LEAD_NAME } from 'src/services/swarm/constants.js'
@@ -11,6 +10,7 @@ import type { MonitorMcpTaskState } from 'src/tasks/MonitorMcpTask/MonitorMcpTas
 import type { RemoteAgentTaskState } from 'src/tasks/RemoteAgentTask/RemoteAgentTask.js'
 import type { BackgroundTaskState } from 'src/tasks/types.js'
 import type { DeepImmutable } from 'src/types/utils.js'
+import { POINTER } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { BackgroundTask as BackgroundTaskComponent } from './BackgroundTask.js'

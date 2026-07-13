@@ -1,11 +1,11 @@
 import {
   ARROW_RIGHT,
   CROSS,
+  POINTER,
   RADIO_OFF,
   TICK,
-  POINTER,
-  WARNING,
   TRIANGLE_UP_OUTLINE,
+  WARNING,
 } from '../../constants/figures.js'
 import { Box, color, Text, useTheme } from '../../ink.js'
 import { plural } from '../../utils/stringUtils.js'

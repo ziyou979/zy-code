@@ -9,7 +9,7 @@ import {
   getUseCoworkPlugins,
 } from '../../bootstrap/state.js'
 import { setLanguage } from '../../i18n/languageStore.js'
-import { getRemoteManagedSettingsSyncFromCache } from '../../services/remoteManagedSettings/syncCacheState.js'
+import { getRemoteManagedSettingsSyncFromCache } from '../../services/remote-managed-settings/syncCacheState.js'
 import { uniq } from '../array.js'
 import { logForDebugging } from '../debug.js'
 import { logForDiagnosticsNoPII } from '../diagLogs.js'

@@ -16,7 +16,7 @@ import {
   OpenIdProviderDiscoveryMetadataSchema,
 } from '@modelcontextprotocol/sdk/shared/auth.js'
 import xss from 'xss'
-import { getSecureStorage } from '../../services/secureStorage/index.js'
+import { getSecureStorage } from '../../services/secure-storage/index.js'
 import { openBrowser } from '../../utils/browser.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { toError } from '../../utils/errors.js'

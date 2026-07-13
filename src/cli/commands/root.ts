@@ -83,12 +83,12 @@ import {
 import {
   CLAUDE_IN_CHROME_SKILL_HINT,
   CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER,
-} from '../../services/claudeInChrome/prompt.js'
+} from '../../services/claude-in-chrome/prompt.js'
 import {
   setupClaudeInChrome,
   shouldAutoEnableClaudeInChrome,
   shouldEnableClaudeInChrome,
-} from '../../services/claudeInChrome/setup.js'
+} from '../../services/claude-in-chrome/setup.js'
 import { prefetchAllMcpResources } from '../../services/mcp/client.js'
 import type {
   McpSdkServerConfig,
@@ -105,8 +105,8 @@ import {
 } from '../../services/model/model.js'
 import { ensureModelStringsInitialized } from '../../services/model/modelStrings.js'
 import { setAutoModeFlagCli } from '../../services/permissions/autoModeState.js'
-import { refreshPolicyLimits } from '../../services/policyLimits/index.js'
-import { refreshRemoteManagedSettings } from '../../services/remoteManagedSettings/index.js'
+import { refreshPolicyLimits } from '../../services/policy-limits/index.js'
+import { refreshRemoteManagedSettings } from '../../services/remote-managed-settings/index.js'
 import { computeInitialTeamContext } from '../../services/swarm/reconnection.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { checkQuotaStatus } from '../../services/zyAiLimits.js'
@@ -186,7 +186,7 @@ import type { RootActionOptions } from '../assembly/types.js'
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   isClaudeInChromeMCPServer,
-} from 'src/services/claudeInChrome/common.js'
+} from 'src/services/claude-in-chrome/common.js'
 import { logPermissionContextForAnts } from 'src/services/internalLogging.js'
 import {
   areMcpConfigsAllowedWithEnterpriseMcpConfig,
@@ -233,7 +233,7 @@ import {
 import { createRemoteSessionConfig } from '../../remote/RemoteSessionManager.js'
 // teleportWithProgress 在调用处动态导入
 import { initializeLspServerManager } from '../../services/lsp/manager.js'
-import { shouldEnablePromptSuggestion } from '../../services/PromptSuggestion/promptSuggestion.js'
+import { shouldEnablePromptSuggestion } from '../../services/prompt-suggestion/promptSuggestion.js'
 import { prepareApiRequest } from '../../services/teleport/api.js'
 import { type AppState, IDLE_SPECULATION_STATE } from '../../state/AppStateStore.js'
 import { asSessionId } from '../../types/ids.js'
@@ -766,7 +766,7 @@ export async function rootAction(
         reservedNameError = `Invalid MCP configuration: "${CLAUDE_IN_CHROME_MCP_SERVER_NAME}" is a reserved MCP name.`
       } else if (feature('CHICAGO_MCP')) {
         const { isComputerUseMCPServer, COMPUTER_USE_MCP_SERVER_NAME } = await import(
-          'src/services/computerUse/common.js'
+          'src/services/computer-use/common.js'
         )
         if (nonSdkConfigNames.some(isComputerUseMCPServer)) {
           reservedNameError = `Invalid MCP configuration: "${COMPUTER_USE_MCP_SERVER_NAME}" is a reserved MCP name.`
@@ -900,9 +900,9 @@ export async function rootAction(
   // shipped without incident; chicago places itself correctly.
   if (feature('CHICAGO_MCP') && getPlatform() === 'macos' && !getIsNonInteractiveSession()) {
     try {
-      const { getChicagoEnabled } = await import('src/services/computerUse/gates.js')
+      const { getChicagoEnabled } = await import('src/services/computer-use/gates.js')
       if (getChicagoEnabled()) {
-        const { setupComputerUseMCP } = await import('src/services/computerUse/setup.js')
+        const { setupComputerUseMCP } = await import('src/services/computer-use/setup.js')
         const { mcpConfig, allowedTools: cuTools } = setupComputerUseMCP()
         dynamicMcpConfig = {
           ...dynamicMcpConfig,

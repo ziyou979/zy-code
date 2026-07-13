@@ -17,7 +17,7 @@ import {
   TOKEN_REVOKED_ERROR_MESSAGE,
 } from '../../services/api/errors.js'
 import { getDefaultStandardModel, renderModelName } from '../../services/model/model.js'
-import { isMacOsKeychainLocked } from '../../services/secureStorage/macOsKeychainStorage.js'
+import { isMacOsKeychainLocked } from '../../services/secure-storage/macOsKeychainStorage.js'
 import type { TextBlock } from '../../types/llm.js'
 import { isEmptyMessageText, NO_RESPONSE_REQUESTED } from '../../utils/messages.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'

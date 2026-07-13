@@ -17,6 +17,7 @@ import type {
   SyncHookJSONOutput,
 } from 'src/types/index.js'
 import { getOriginalCwd, getProjectRoot } from '../../bootstrap/state.js'
+import { tSync } from '../../i18n/index.js'
 import { TaskOutput } from '../../services/task/TaskOutput.js'
 import { createAttachmentMessage } from '../../utils/attachments.js'
 import { getCwd } from '../../utils/cwd.js'
@@ -28,7 +29,6 @@ import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
 import { wrapInSystemReminder } from '../../utils/messages.js'
 import { getPlatform } from '../../utils/platform.js'
 import { getPluginDataDir } from '../../utils/plugins/pluginDirectories.js'
-import { tSync } from '../../i18n/index.js'
 import {
   containsUserConfigRef,
   loadPluginOptions,

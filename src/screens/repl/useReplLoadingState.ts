@@ -16,14 +16,14 @@ import type React from 'react'
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { tSync } from '../../i18n/index.js'
 import { hasCursorUpViewportYankBug } from '../../ink/terminal.js'
-import { getTipToShowOnSpinner, recordShownTip } from '../../services/tips/tipScheduler.js'
-import { useAppState, useSetAppState } from '../../state/AppState.js'
-import type { ReplStoreInstance } from '../../state/ReplStore.js'
 import {
   advanceStagePercent,
   buildCompactProgressMessage,
   COMPACT_STAGE_PCT,
 } from '../../services/compact/compactProgress.js'
+import { getTipToShowOnSpinner, recordShownTip } from '../../services/tips/tipScheduler.js'
+import { useAppState, useSetAppState } from '../../state/AppState.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
 import type { CompactProgressEvent } from '../../Tool.js'
 import type { Message as MessageType } from '../../types/message.js'
 import type { StreamingThinking } from '../../utils/messages.js'

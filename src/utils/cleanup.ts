@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { cleanupOldVersions } from 'src/services/nativeInstaller/index.js'
+import { cleanupOldVersions } from 'src/services/native-installer/index.js'
 import { logEvent } from '../services/analytics/index.js'
 import { CACHE_PATHS } from './cachePaths.js'
 import { logForDebugging } from './debug.js'

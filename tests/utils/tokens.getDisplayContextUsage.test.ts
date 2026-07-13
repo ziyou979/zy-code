@@ -6,14 +6,8 @@
  */
 import { describe, expect, test } from 'bun:test'
 import { createCompactBoundaryMessage } from '../../src/utils/messages/constructors.js'
-import {
-  getCurrentUsage,
-  getDisplayContextUsage,
-} from '../../src/utils/tokens.js'
-import {
-  createTestAssistantMessage,
-  createTestUserMessage,
-} from '../_helpers/messageFixtures.js'
+import { getCurrentUsage, getDisplayContextUsage } from '../../src/utils/tokens.js'
+import { createTestAssistantMessage, createTestUserMessage } from '../_helpers/messageFixtures.js'
 
 function makeAssistantWithUsage(
   inputTokens: number,
@@ -36,10 +30,7 @@ function makeAssistantWithUsage(
 
 describe('getDisplayContextUsage', () => {
   test('无 compact 时与 getCurrentUsage 一致', () => {
-    const messages = [
-      createTestUserMessage('hi'),
-      makeAssistantWithUsage(50_000, { uuid: 'a1' }),
-    ]
+    const messages = [createTestUserMessage('hi'), makeAssistantWithUsage(50_000, { uuid: 'a1' })]
     expect(getDisplayContextUsage(messages)).toEqual(getCurrentUsage(messages))
     expect(getDisplayContextUsage(messages)?.inputTokens).toBe(50_000)
   })
@@ -49,14 +40,11 @@ describe('getDisplayContextUsage', () => {
     const boundary = createCompactBoundaryMessage('manual', 180_000)
     boundary.compactMetadata.postTokens = 12_000
 
-    const summary = createTestUserMessage(
-      'This session is being continued… Summary: …',
-      {
-        uuid: 'summary',
-        isCompactSummary: true,
-        isVisibleInTranscriptOnly: true,
-      },
-    )
+    const summary = createTestUserMessage('This session is being continued… Summary: …', {
+      uuid: 'summary',
+      isCompactSummary: true,
+      isVisibleInTranscriptOnly: true,
+    })
 
     // 模拟 REPL：append 导致 [旧消息…, boundary, summary, …]
     const messages = [createTestUserMessage('old'), preCompact, boundary, summary]

@@ -1,16 +1,3 @@
-import {
-  ARROW_UP,
-  WARNING,
-  TICK,
-  TRIANGLE_DOWN,
-  POINTER,
-  CHECKBOX_ON,
-  CHECKBOX_OFF,
-  TRIANGLE_RIGHT,
-  RADIO_ON,
-  RADIO_OFF,
-  ARROW_DOWN,
-} from '../../constants/figures.js'
 import type {
   ElicitRequestFormParams,
   ElicitRequestURLParams,
@@ -19,6 +6,19 @@ import type {
 } from '@modelcontextprotocol/sdk/types.js'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
+import {
+  ARROW_DOWN,
+  ARROW_UP,
+  CHECKBOX_OFF,
+  CHECKBOX_ON,
+  POINTER,
+  RADIO_OFF,
+  RADIO_ON,
+  TICK,
+  TRIANGLE_DOWN,
+  TRIANGLE_RIGHT,
+  WARNING,
+} from '../../constants/figures.js'
 import { useRegisterOverlay } from '../../context/overlayContext.js'
 import { useNotifyAfterTimeout } from '../../hooks/useNotifyAfterTimeout.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'

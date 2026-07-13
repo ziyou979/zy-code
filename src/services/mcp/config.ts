@@ -4,7 +4,7 @@ import { dirname, join, parse } from 'node:path'
 import mapValues from 'lodash-es/mapValues.js'
 import memoize from 'lodash-es/memoize.js'
 import { getPlatform } from 'src/utils/platform.js'
-import { isClaudeInChromeMCPServer } from '../../services/claudeInChrome/common.js'
+import { isClaudeInChromeMCPServer } from '../../services/claude-in-chrome/common.js'
 import type { PluginError } from '../../types/plugin.js'
 import { getPluginErrorMessage } from '../../types/plugin.js'
 import {
@@ -622,7 +622,7 @@ export async function addMcpConfig(
   }
 
   if (feature('CHICAGO_MCP')) {
-    const { isComputerUseMCPServer } = await import('../../services/computerUse/common.js')
+    const { isComputerUseMCPServer } = await import('../../services/computer-use/common.js')
     if (isComputerUseMCPServer(name)) {
       throw new Error(`Cannot add MCP server "${name}": this name is reserved.`)
     }
@@ -1454,7 +1454,7 @@ export function areMcpConfigsAllowedWithEnterpriseMcpConfig(
 /* eslint-disable @typescript-eslint/no-require-imports */
 const DEFAULT_DISABLED_BUILTIN = feature('CHICAGO_MCP')
   ? (
-      require('../../services/computerUse/common.js') as typeof import('../../services/computerUse/common.js')
+      require('../../services/computer-use/common.js') as typeof import('../../services/computer-use/common.js')
     ).COMPUTER_USE_MCP_SERVER_NAME
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */

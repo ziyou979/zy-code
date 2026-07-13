@@ -1,4 +1,3 @@
-import { TICK, POINTER, ARROW_RIGHT, ARROW_UP, ARROW_DOWN } from '../../constants/figures.js'
 import type { Dirent } from 'node:fs'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
@@ -18,6 +17,7 @@ import type {
   ZyAIServerInfo,
 } from '../../components/mcp/types.js'
 import { SearchBox } from '../../components/SearchBox.js'
+import { ARROW_DOWN, ARROW_RIGHT, ARROW_UP, POINTER, TICK } from '../../constants/figures.js'
 import { useSearchInput } from '../../hooks/useSearchInput.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- useInput needed for raw search mode text input

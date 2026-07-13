@@ -1,4 +1,3 @@
-import { POINTER } from '../../constants/figures.js'
 import chalk from 'chalk'
 import React, { useEffect } from 'react'
 import {
@@ -8,6 +7,7 @@ import {
 import type { LocalJSXCommandContext } from '../../commands.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { AddWorkspaceDirectory } from '../../components/permissions/rules/AddWorkspaceDirectory.js'
+import { POINTER } from '../../constants/figures.js'
 import { Box, Text } from '../../ink.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'

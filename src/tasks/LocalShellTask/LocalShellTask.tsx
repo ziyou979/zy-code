@@ -8,7 +8,7 @@ import {
   TASK_NOTIFICATION_TAG,
   TOOL_USE_ID_TAG,
 } from '../../constants/xml.js'
-import { abortSpeculation } from '../../services/PromptSuggestion/speculation.js'
+import { abortSpeculation } from '../../services/prompt-suggestion/speculation.js'
 import { evictTaskOutput, getTaskOutputPath } from '../../services/task/diskOutput.js'
 import { registerTask, updateTaskState } from '../../services/task/framework.js'
 import type { AppState } from '../../state/AppState.js'

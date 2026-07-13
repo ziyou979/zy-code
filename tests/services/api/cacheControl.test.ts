@@ -9,12 +9,11 @@
  * 2. prompt_caching: "implicit" → false（无需客户端标记）
  * 3. prompt_caching: "explicit" / 未配置 → 默认行为（true）
  */
-import { beforeAll, describe, expect, test } from 'bun:test'
-import { mock } from 'bun:test'
+import { beforeAll, describe, expect, mock, test } from 'bun:test'
 
 // 使用 beforeAll 预先导入真实模块，再设置 mock 覆盖个别导出。
 // 避免 async factory 在 mock.module 内的无限递归问题。
-let mockCachingMode: 'implicit' | 'explicit' | undefined = undefined
+let mockCachingMode: 'implicit' | 'explicit' | undefined
 
 beforeAll(async () => {
   const real = await import('../../../src/utils/settings/localModelCapabilities.js')

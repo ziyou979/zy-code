@@ -1,8 +1,8 @@
-import { ARROW_UP, ARROW_DOWN, POINTER, TICK, ARROW_LEFT } from '../../constants/figures.js'
 import { randomUUID } from 'node:crypto'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useInterval } from 'usehooks-ts'
+import { ARROW_DOWN, ARROW_LEFT, ARROW_UP, POINTER, TICK } from '../../constants/figures.js'
 import { useRegisterOverlay } from '../../context/overlayContext.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw j/k/arrow dialog navigation

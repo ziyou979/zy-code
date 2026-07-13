@@ -1,16 +1,16 @@
-import { TICK, POINTER } from '../../constants/figures.js'
 import { useState } from 'react'
+import { POINTER, TICK } from '../../constants/figures.js'
 import { Box, Text } from '../../ink.js'
 import type { PastedContent } from '../../utils/config.js'
 import type { ImageDimensions } from '../../utils/imageResizer.js'
 import type { OptionWithDescription } from './select.js'
 import { SelectInputOption } from './select-input-option.js'
-import { SelectOption } from './select-option.js'
 import {
+  createHoverLeaveHandler,
   createMultiOptionClickHandler,
   createOptionHoverHandler,
-  createHoverLeaveHandler,
 } from './select-mouse-actions.js'
+import { SelectOption } from './select-option.js'
 import { useMultiSelectState } from './use-multi-select-state.js'
 export type SelectMultiProps<T> = {
   readonly isDisabled?: boolean

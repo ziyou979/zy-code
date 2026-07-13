@@ -1,4 +1,5 @@
 import { WARNING } from '../../constants/figures.js'
+import { tSync } from '../../i18n/index.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
@@ -10,7 +11,6 @@ import { resolveAgentTools } from '../../tools/AgentTool/agentToolUtils.js'
 import { type AgentDefinition, isBuiltInAgent } from '../../tools/AgentTool/loadAgentsDir.js'
 import { Markdown } from '../Markdown.js'
 import { getActualRelativeAgentFilePath } from './agentFileUtils.js'
-import { tSync } from '../../i18n/index.js'
 
 type Props = {
   agent: AgentDefinition
@@ -32,10 +32,10 @@ export function AgentDetail({ agent, tools, onBack }: Props) {
   }
   const renderToolsList = function renderToolsList() {
     if (resolvedTools.hasWildcard) {
-      return <Text>All tools</Text>
+      return <Text>{tSync('agentDetail.allTools')}</Text>
     }
     if (!agent.tools || agent.tools.length === 0) {
-      return <Text>None</Text>
+      return <Text>{tSync('agentDetail.none')}</Text>
     }
     return (
       <>

@@ -151,4 +151,20 @@ export const zhSession: TranslationResource = {
   'worktree.subtitleFiles':
     '你有 {fileCount} 个未提交的{fileLabel}。如果移除 worktree，这些内容将丢失。',
   'worktree.subtitleNone': '你正在 worktree 中工作。保留它以继续在那里工作，或移除它以清理。',
+  'worktree.cleanupFailed': 'Worktree cleanup failed, exiting anyway',
+  'worktree.keptWithPath': 'Worktree kept. Your work is saved at {path} on branch {branch}.',
+  'worktree.keptWithPathAndTmux':
+    'Worktree kept. Your work is saved at {path} on branch {branch}. Reattach to tmux session with: tmux attach -t {tmux}',
+  'worktree.keptWithPathTmuxKilled':
+    'Worktree kept. Your work is saved at {path} on branch {branch}. Tmux session terminated.',
+  'worktree.removed': 'Worktree removed.{tmuxNote}',
+  'worktree.removedNoChanges': 'Worktree removed (no changes)',
+  'worktree.removedWithChanges': 'Worktree removed. Uncommitted changes were discarded.{tmuxNote}',
+  'worktree.removedWithCommits':
+    'Worktree removed. {commitCount} {commitLabel} on {branch} {wasWere} discarded.{tmuxNote}',
+  'worktree.removedWithCommitsAndChanges':
+    'Worktree removed. {commitCount} {commitLabel} and uncommitted changes were discarded.{tmuxNote}',
+  'worktree.tmuxTerminated': ' Tmux session terminated.',
+  'worktree.was': 'was',
+  'worktree.were': 'were',
 }

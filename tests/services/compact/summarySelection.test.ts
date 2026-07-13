@@ -44,10 +44,10 @@ describe('summarySelection', () => {
     })
 
     test('多条含 <summary> 时取最后一条', () => {
-      const first = createTestAssistantMessage(
-        [{ type: 'text', text: '<summary>old</summary>' }],
-        { uuid: 'asst-old', messageId: 'msg-old' },
-      )
+      const first = createTestAssistantMessage([{ type: 'text', text: '<summary>old</summary>' }], {
+        uuid: 'asst-old',
+        messageId: 'msg-old',
+      })
       const second = createTestAssistantMessage(
         [{ type: 'text', text: '<summary>new</summary>' }],
         { uuid: 'asst-new', messageId: 'msg-new' },
@@ -69,10 +69,9 @@ describe('summarySelection', () => {
     })
 
     test('跳过 isApiErrorMessage 的 assistant', () => {
-      const good = createTestAssistantMessage(
-        [{ type: 'text', text: '<summary>ok</summary>' }],
-        { uuid: 'asst-good' },
-      )
+      const good = createTestAssistantMessage([{ type: 'text', text: '<summary>ok</summary>' }], {
+        uuid: 'asst-good',
+      })
       const err = createTestAssistantMessage([{ type: 'text', text: 'API Error: boom' }], {
         uuid: 'asst-err',
         isApiErrorMessage: true,
@@ -169,10 +168,9 @@ describe('summarySelection', () => {
 
   describe('resolveStreamedCompactAssistant', () => {
     test('最后一条是 API 错误时直接返回错误消息', () => {
-      const good = createTestAssistantMessage(
-        [{ type: 'text', text: '<summary>ok</summary>' }],
-        { uuid: 'good' },
-      )
+      const good = createTestAssistantMessage([{ type: 'text', text: '<summary>ok</summary>' }], {
+        uuid: 'good',
+      })
       const err = createTestAssistantMessage([{ type: 'text', text: 'API Error' }], {
         uuid: 'err',
         isApiErrorMessage: true,

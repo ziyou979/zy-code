@@ -1,19 +1,19 @@
-import { POINTER, ARROW_DOWN, ARROW_UP, TICK } from '../../constants/figures.js'
 import React, { type ReactNode, useEffect, useRef, useState } from 'react'
+import { ARROW_DOWN, ARROW_UP, POINTER, TICK } from '../../constants/figures.js'
+import type { ClickEvent } from '../../ink/events/click-event.js'
 import { useDeclaredCursor } from '../../ink/hooks/use-declared-cursor.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Ansi, Box, Text } from '../../ink.js'
 import { count } from '../../utils/array.js'
 import type { PastedContent } from '../../utils/config.js'
 import type { ImageDimensions } from '../../utils/imageResizer.js'
-import type { ClickEvent } from '../../ink/events/click-event.js'
 import { SelectInputOption } from './select-input-option.js'
-import { SelectOption } from './select-option.js'
 import {
+  createHoverLeaveHandler,
   createOptionClickHandler,
   createOptionHoverHandler,
-  createHoverLeaveHandler,
 } from './select-mouse-actions.js'
+import { SelectOption } from './select-option.js'
 import { useSelectInput } from './use-select-input.js'
 import { useSelectState } from './use-select-state.js'
 

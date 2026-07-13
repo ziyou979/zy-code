@@ -4,12 +4,12 @@
  * 用 mock.module 替换整个依赖链中的模块，阻断传递加载。
  */
 import { afterEach, describe, expect, mock, test } from 'bun:test'
-import * as realEnvUtils from '../../src/utils/envUtils.js'
-import * as realDebug from '../../src/utils/debug.js'
-import * as realExecFileNoThrow from '../../src/utils/execFileNoThrow.js'
 import * as realGrowthbook from '../../src/services/analytics/growthbook.js'
 import * as realConfig from '../../src/services/config/config.js'
 import * as realConcurrentSessions from '../../src/utils/concurrentSessions.js'
+import * as realDebug from '../../src/utils/debug.js'
+import * as realEnvUtils from '../../src/utils/envUtils.js'
+import * as realExecFileNoThrow from '../../src/utils/execFileNoThrow.js'
 
 // 可变的 mock 状态（测试之间重置）
 let mockIsBgSession = false
@@ -33,6 +33,7 @@ mock.module('../../src/utils/debug.js', () => ({
 
 // 保留原始模块的所有导出，只覆盖 fullscreen 逻辑依赖的几个函数
 import * as realState from '../../src/bootstrap/state.js'
+
 mock.module('../../src/bootstrap/state.js', () => ({
   ...realState,
   getIsInteractive: () => true,

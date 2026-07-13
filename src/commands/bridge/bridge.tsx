@@ -215,7 +215,7 @@ function WireDisconnectDialog({ onDone }: Props) {
 async function checkWirePrerequisites(): Promise<string | null> {
   // 检查组织策略 — 远程控制可能被禁用
   const { waitForPolicyLimitsToLoad, isPolicyAllowed } = await import(
-    '../../services/policyLimits/index.js'
+    '../../services/policy-limits/index.js'
   )
   await waitForPolicyLimitsToLoad()
   if (!isPolicyAllowed('allow_remote_control')) {

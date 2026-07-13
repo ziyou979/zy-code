@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test'
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
-import { join } from 'node:path'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 import {
-  hasExternalToolOverride,
   clearExternalToolState,
+  hasExternalToolOverride,
   reloadExternalTools,
 } from '../../src/tools/externalToolLoader.js'
 import { getAllBaseTools } from '../../src/tools.js'

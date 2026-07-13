@@ -1,1 +1,1 @@
-export * from '../../services/sessionStorage/predicates.js'
+export * from '../../services/session-storage/predicates.js'

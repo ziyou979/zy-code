@@ -3,6 +3,10 @@ export type NonNullableUsage = {
   outputTokens: number
   cacheCreationInputTokens: number
   cacheReadInputTokens: number
+  server_tool_use: {
+    web_search_requests: number
+    web_fetch_requests: number
+  }
 }
 
 /**
@@ -15,6 +19,10 @@ export const EMPTY_USAGE: Readonly<NonNullableUsage> = {
   cacheCreationInputTokens: 0,
   cacheReadInputTokens: 0,
   outputTokens: 0,
+  server_tool_use: {
+    web_search_requests: 0,
+    web_fetch_requests: 0,
+  },
   // @ts-expect-error
   service_tier: 'standard',
   cache_creation: {

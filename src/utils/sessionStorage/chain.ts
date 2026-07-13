@@ -1,1 +1,1 @@
-export * from '../../services/sessionStorage/chain.js'
+export * from '../../services/session-storage/chain.js'

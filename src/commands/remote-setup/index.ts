@@ -1,6 +1,6 @@
 import type { Command } from '../../commands.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import { isPolicyAllowed } from '../../services/policyLimits/index.js'
+import { isPolicyAllowed } from '../../services/policy-limits/index.js'
 
 const web = {
   type: 'local-jsx',

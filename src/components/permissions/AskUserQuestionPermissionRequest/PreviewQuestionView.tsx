@@ -1,6 +1,6 @@
-import { POINTER, TICK, ARROW_UP, ARROW_DOWN } from '../../../constants/figures.js'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
+import { ARROW_DOWN, ARROW_UP, POINTER, TICK } from '../../../constants/figures.js'
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js'
 import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../../ink.js'

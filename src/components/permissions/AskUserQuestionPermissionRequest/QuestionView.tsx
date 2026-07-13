@@ -1,5 +1,5 @@
-import { POINTER, ARROW_UP, ARROW_DOWN } from '../../../constants/figures.js'
 import { useState } from 'react'
+import { ARROW_DOWN, ARROW_UP, POINTER } from '../../../constants/figures.js'
 import { tSync } from '../../../i18n/index.js'
 import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../../ink.js'

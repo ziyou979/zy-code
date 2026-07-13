@@ -4,9 +4,9 @@
  * and success/failure notification JSX so new sources stay small.
  */
 
-import { TICK } from '../constants/figures.js'
 import * as React from 'react'
 import { getIsRemoteMode } from '../bootstrap/state.js'
+import { TICK } from '../constants/figures.js'
 import type { useNotifications } from '../context/notifications.js'
 import { Text } from '../ink.js'
 import { logError } from '../utils/log.js'

@@ -1,6 +1,6 @@
-import { ARROW_DOWN, ARROW_UP } from '../../constants/figures.js'
 import * as React from 'react'
 import { useMemo, useRef } from 'react'
+import { ARROW_DOWN, ARROW_UP } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text, useAnimationFrame } from '../../ink.js'

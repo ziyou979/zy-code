@@ -9,11 +9,11 @@
  * 当前通过 feature('DAEMON') 门控，构建时 DCE。
  */
 import { feature } from 'bun:bundle'
+import { randomBytes } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import { type AddressInfo, createServer } from 'node:net'
 import { homedir, hostname } from 'node:os'
 import { join } from 'node:path'
-import { randomBytes } from 'node:crypto'
-import { createServer, type AddressInfo } from 'node:net'
 import { logForDebugging } from '../utils/debug.js'
 
 // --------------- constants ---------------

@@ -1,7 +1,7 @@
-import { WARNING } from '../../constants/figures.js'
 import { Suspense, use } from 'react'
 import { getSessionId } from '../../bootstrap/state.js'
 import type { LocalJSXCommandContext } from '../../commands.js'
+import { WARNING } from '../../constants/figures.js'
 import { useIsInsideModal } from '../../context/modalContext.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text, useTheme } from '../../ink.js'

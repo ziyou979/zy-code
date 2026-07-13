@@ -1,4 +1,4 @@
-import { ARROW_UP, ARROW_DOWN } from '../constants/figures.js'
+import { ARROW_DOWN, ARROW_UP } from '../constants/figures.js'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'

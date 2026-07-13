@@ -13,13 +13,13 @@
  */
 
 import memoize from 'lodash-es/memoize.js'
+import { logError } from '../../utils/log.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { getSecureStorage } from '../secureStorage/index.js'
-import { clearKeychainCache } from '../secureStorage/macOsKeychainHelpers.js'
-import { logError } from '../../utils/log.js'
+import { getSecureStorage } from '../secure-storage/index.js'
+import { clearKeychainCache } from '../secure-storage/macOsKeychainHelpers.js'
 import { getOAuthApiKey, getOAuthProvider } from './providers/index.js'
 import type { OAuthCredentials, OAuthProviderInterface } from './providers/types.js'
 

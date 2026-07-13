@@ -9,7 +9,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { checkGithubAppInstalled } from 'src/services/background/remote/preconditions.js'
 import { getMainLoopModel } from 'src/services/model/model.js'
-import { isPolicyAllowed } from 'src/services/policyLimits/index.js'
+import { isPolicyAllowed } from 'src/services/policy-limits/index.js'
 import { z } from 'zod/v4'
 import {
   getTeleportErrors,

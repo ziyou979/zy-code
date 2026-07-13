@@ -2,11 +2,11 @@
  * agentCapacity 测试：验证容量计算逻辑和边界条件。
  */
 import { describe, expect, test } from 'bun:test'
-import type { AppState } from '../../../src/state/AppState.js'
 import {
   checkSpawnCapacity,
   findOldestIdleAgent,
 } from '../../../src/services/swarm/agentCapacity.js'
+import type { AppState } from '../../../src/state/AppState.js'
 import {
   MAX_CONCURRENT_IN_PROCESS_AGENTS,
   MAX_RESIDENT_AGENTS,

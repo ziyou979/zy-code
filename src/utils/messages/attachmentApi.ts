@@ -10,8 +10,8 @@ import { ExitPlanModeTool } from 'src/tools/ExitPlanModeTool/ExitPlanModeTool.js
 import { FILE_READ_TOOL_NAME, MAX_LINES_TO_READ } from 'src/tools/FileReadTool/prompt.js'
 import { OUTPUT_STYLE_CONFIG } from '../../constants/outputStyles.js'
 import { DiagnosticTrackingService } from '../../services/diagnosticTracking.js'
-import { getAutoModeInstructions } from '../../services/modeInstructions/autoMode.js'
-import { getPlanModeInstructions } from '../../services/modeInstructions/planMode.js'
+import { getAutoModeInstructions } from '../../services/mode-instructions/autoMode.js'
+import { getPlanModeInstructions } from '../../services/mode-instructions/planMode.js'
 import { getWorkflowReminderContent } from '../../services/workflow/reminderContent.js'
 import {
   FileReadTool,

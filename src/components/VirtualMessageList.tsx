@@ -21,10 +21,10 @@ import { ScrollChromeContext } from './FullscreenLayout.js'
 // scrollTo 时目标上方留出的空间行数。
 const HEADROOM = 3
 
+import { registerMessageHitTarget } from '../services/scrollback/messageHitTarget.js'
 import { logForDebugging } from '../utils/debug.js'
 import { sleep } from '../utils/sleep.js'
 import { renderableSearchText } from '../utils/transcriptSearch.js'
-import { registerMessageHitTarget } from '../services/scrollback/messageHitTarget.js'
 import {
   isNavigableMessage,
   type MessageActionsNav,

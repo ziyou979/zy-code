@@ -1,27 +1,27 @@
 /**
  * Task revision/claimToken/CAS 测试
  */
-import { describe, expect, test, beforeAll, afterAll } from 'bun:test'
-import { mkdir, unlink, readdir } from 'node:fs/promises'
-import { join } from 'node:path'
-import { tmpdir } from 'node:os'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { randomUUID } from 'node:crypto'
+import { mkdir, readdir, unlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import {
+  claimTask,
   createTask,
   getTask,
+  type Task,
   updateTask,
   updateTaskCAS,
-  claimTask,
-  type Task,
 } from '../../src/utils/tasks.js'
 
 const testDir = join(tmpdir(), `zy-test-tasks-cas-${randomUUID()}`)
-const originalZyHome = process.env.ZY_CONFIG_HOME
+const originalZyHome = process.env.ZY_CONFIG_DIR
 const originalHome = process.env.HOME
 
 describe('Task revision + CAS', () => {
   beforeAll(async () => {
-    process.env.ZY_CONFIG_HOME = testDir
+    process.env.ZY_CONFIG_DIR = testDir
     process.env.HOME = testDir
     await mkdir(testDir, { recursive: true })
     await mkdir(join(testDir, 'tasks'), { recursive: true })
@@ -35,8 +35,8 @@ describe('Task revision + CAS', () => {
   })
 
   afterAll(async () => {
-    if (originalZyHome === undefined) delete process.env.ZY_CONFIG_HOME
-    else process.env.ZY_CONFIG_HOME = originalZyHome
+    if (originalZyHome === undefined) delete process.env.ZY_CONFIG_DIR
+    else process.env.ZY_CONFIG_DIR = originalZyHome
     if (originalHome === undefined) delete process.env.HOME
     else process.env.HOME = originalHome
     delete process.env.ZY_TEAMS_DIR

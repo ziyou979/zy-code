@@ -1,5 +1,4 @@
 import { getSdkAgentProgressSummariesEnabled } from '../../bootstrap/state.js'
-import { tSync } from '../../i18n/index.js'
 import {
   OUTPUT_FILE_TAG,
   STATUS_TAG,
@@ -11,7 +10,8 @@ import {
   WORKTREE_PATH_TAG,
   WORKTREE_TAG,
 } from '../../constants/xml.js'
-import { abortSpeculation } from '../../services/PromptSuggestion/speculation.js'
+import { tSync } from '../../i18n/index.js'
+import { abortSpeculation } from '../../services/prompt-suggestion/speculation.js'
 import {
   evictTaskOutput,
   getTaskOutputPath,

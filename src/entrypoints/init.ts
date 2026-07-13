@@ -7,18 +7,18 @@ import { getIsNonInteractiveSession } from 'src/bootstrap/state.js'
 import type { AttributedCounter } from '../bootstrap/state.js'
 import { getSessionCounter, setMeter } from '../bootstrap/state.js'
 import { shutdownLspServerManager } from '../services/lsp/manager.js'
-import { populateOAuthAccountInfoIfNeeded } from '../utils/auth.js'
 import {
   initializePolicyLimitsLoadingPromise,
   isPolicyLimitsEligible,
-} from '../services/policyLimits/index.js'
+} from '../services/policy-limits/index.js'
 import {
   initializeRemoteManagedSettingsLoadingPromise,
   isEligibleForRemoteManagedSettings,
   waitForRemoteManagedSettingsToLoad,
-} from '../services/remoteManagedSettings/index.js'
+} from '../services/remote-managed-settings/index.js'
 import { isBetaTracingEnabled } from '../services/telemetry/betaSessionTracing.js'
 import { preconnectAnthropicApi } from '../utils/apiPreconnect.js'
+import { populateOAuthAccountInfoIfNeeded } from '../utils/auth.js'
 import { applyExtraCACertsFromConfig } from '../utils/caCertsConfig.js'
 import { registerCleanup } from '../utils/cleanupRegistry.js'
 import { enableConfigs, recordFirstStartTime } from '../utils/config.js'

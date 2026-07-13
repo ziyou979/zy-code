@@ -73,7 +73,7 @@ const DISCOVER_SKILLS_TOOL_NAME: string | null = feature('EXPERIMENTAL_SKILL_SEA
 // Capture the module (not .isSkillSearchEnabled directly) so spyOn() in tests
 // patches what we actually call — a captured function ref would point past the spy.
 const skillSearchFeatureCheck = feature('EXPERIMENTAL_SKILL_SEARCH')
-  ? (require('../services/skillSearch/featureCheck.js') as typeof import('../services/skillSearch/featureCheck.js'))
+  ? (require('../services/skill-search/featureCheck.js') as typeof import('../services/skill-search/featureCheck.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { OutputStyleConfig } from './outputStyles.js'

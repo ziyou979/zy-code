@@ -15,10 +15,7 @@ export type MessageHitMeta = {
 const metaByElement = new WeakMap<DOMElement, MessageHitMeta>()
 
 /** 在 VirtualItem 的 measure ref 上注册；el 为 null 时忽略（WeakMap 随节点 GC）。 */
-export function registerMessageHitTarget(
-  el: DOMElement | null,
-  meta: MessageHitMeta | null,
-): void {
+export function registerMessageHitTarget(el: DOMElement | null, meta: MessageHitMeta | null): void {
   if (el && meta) {
     metaByElement.set(el, meta)
   }

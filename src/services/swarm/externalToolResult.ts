@@ -9,12 +9,12 @@
 
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { ContentBlock } from '../../types/llm.js'
 import type { StoredToolResultReference } from '../../tasks/InProcessTeammateTask/types.js'
 import { TOOL_RESULT_EXTERNAL_THRESHOLD_BYTES } from '../../tasks/InProcessTeammateTask/types.js'
+import type { ContentBlock } from '../../types/llm.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
-import { jsonStringify, jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 
 /**
  * 获取工具结果存储目录。

@@ -1,11 +1,11 @@
-import {
-  TICK,
-  SQUARE_SMALL_FILLED,
-  SQUARE_SMALL,
-  POINTER_SMALL,
-  ELLIPSIS,
-} from '../constants/figures.js'
 import * as React from 'react'
+import {
+  ELLIPSIS,
+  POINTER_SMALL,
+  SQUARE_SMALL,
+  SQUARE_SMALL_FILLED,
+  TICK,
+} from '../constants/figures.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { Box, Text } from '../ink.js'

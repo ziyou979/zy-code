@@ -85,17 +85,17 @@ async function main(): Promise<void> {
   }
   if (process.argv[2] === '--claude-in-chrome-mcp') {
     profileCheckpoint('cli_Zy_in_chrome_mcp_path')
-    const { runClaudeInChromeMcpServer } = await import('../services/claudeInChrome/mcpServer.js')
+    const { runClaudeInChromeMcpServer } = await import('../services/claude-in-chrome/mcpServer.js')
     await runClaudeInChromeMcpServer()
     return
   } else if (process.argv[2] === '--chrome-native-host') {
     profileCheckpoint('cli_chrome_native_host_path')
-    const { runChromeNativeHost } = await import('../services/claudeInChrome/chromeNativeHost.js')
+    const { runChromeNativeHost } = await import('../services/claude-in-chrome/chromeNativeHost.js')
     await runChromeNativeHost()
     return
   } else if (feature('CHICAGO_MCP') && process.argv[2] === '--computer-use-mcp') {
     profileCheckpoint('cli_computer_use_mcp_path')
-    const { runComputerUseMcpServer } = await import('../services/computerUse/mcpServer.js')
+    const { runComputerUseMcpServer } = await import('../services/computer-use/mcpServer.js')
     await runComputerUseMcpServer()
     return
   }
@@ -153,7 +153,7 @@ async function main(): Promise<void> {
 
     // Bridge 是一个远程控制功能 —— 检查策略限制
     const { waitForPolicyLimitsToLoad, isPolicyAllowed } = await import(
-      '../services/policyLimits/index.js'
+      '../services/policy-limits/index.js'
     )
     await waitForPolicyLimitsToLoad()
     if (!isPolicyAllowed('allow_remote_control')) {

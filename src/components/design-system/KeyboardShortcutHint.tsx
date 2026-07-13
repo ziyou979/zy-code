@@ -1,19 +1,8 @@
 import { tSync } from '../../i18n/index.js'
 import Text from '../../ink/components/Text.js'
 
-type Props = {
-  /** The key or chord to display (e.g., "ctrl+o", "Enter", "↑/↓") */
-  shortcut: string
-  /** The action the key performs (e.g., "expand", "select", "navigate") */
-  action: string
-  /** Whether to wrap the hint in parentheses. Default: false */
-  parens?: boolean
-  /** Whether to render the shortcut in bold. Default: false */
-  bold?: boolean
-}
-
 /** Map common action identifiers to i18n keys */
-const actionKeyMap: Record<string, string> = {
+const actionKeyMap = {
   expand: 'common.expand',
   collapse: 'common.collapse',
   select: 'common.select',
@@ -89,6 +78,19 @@ const actionKeyMap: Record<string, string> = {
   'logSelector:rename': 'logSelector.rename',
   // Elicitation actions
   'elicitation:unset': 'elicitation.unset',
+} as const
+
+export type KeyboardShortcutAction = keyof typeof actionKeyMap
+
+type Props = {
+  /** The key or chord to display (e.g., "ctrl+o", "Enter", "↑/↓") */
+  shortcut: string
+  /** The action the key performs (must be registered in actionKeyMap) */
+  action: KeyboardShortcutAction
+  /** Whether to wrap the hint in parentheses. Default: false */
+  parens?: boolean
+  /** Whether to render the shortcut in bold. Default: false */
+  bold?: boolean
 }
 
 /**
@@ -97,8 +99,15 @@ const actionKeyMap: Record<string, string> = {
  * Wrap in <Text dimColor> for the common dim styling.
  */
 export function KeyboardShortcutHint({ shortcut, action, parens = false, bold = false }: Props) {
-  // Look up the action in the key map; fall back to raw action string
   const actionKey = actionKeyMap[action]
+  if (!actionKey) {
+    // 开发模式提示未注册 action（不应在用户界面显示原始字符串）
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      console.warn(
+        `KeyboardShortcutHint: 未注册的 action "${action}"，请在 actionKeyMap 中添加对应 i18n key`,
+      )
+    }
+  }
   const actionText = actionKey ? tSync(actionKey) : action
   const shortcutValue = bold
     ? ((<Text bold={true}>{shortcut}</Text>) as unknown as string)

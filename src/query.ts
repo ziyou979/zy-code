@@ -14,7 +14,7 @@ const reactiveCompact = feature('REACTIVE_COMPACT')
   ? (require('./services/compact/reactiveCompact.js') as typeof import('./services/compact/reactiveCompact.js'))
   : null
 const contextCollapse = feature('CONTEXT_COLLAPSE')
-  ? (require('./services/contextCollapse/index.js') as typeof import('./services/contextCollapse/index.js'))
+  ? (require('./services/context-collapse/index.js') as typeof import('./services/context-collapse/index.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
@@ -56,7 +56,7 @@ import {
 } from './utils/attachments.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const skillPrefetch = feature('EXPERIMENTAL_SKILL_SEARCH')
-  ? (require('./services/skillSearch/prefetch.js') as typeof import('./services/skillSearch/prefetch.js'))
+  ? (require('./services/skill-search/prefetch.js') as typeof import('./services/skill-search/prefetch.js'))
   : null
 const _jobClassifier = feature('TEMPLATES')
   ? (require('./jobs/classifier.js') as typeof import('./jobs/classifier.js'))
@@ -803,7 +803,7 @@ async function* queryLoop(
       // 仅主线程 — 参见 stopHooks.ts 关于子 agent 释放主线程锁的理由。
       if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
         try {
-          const { cleanupComputerUseAfterTurn } = await import('./services/computerUse/cleanup.js')
+          const { cleanupComputerUseAfterTurn } = await import('./services/computer-use/cleanup.js')
           await cleanupComputerUseAfterTurn(toolUseContext)
         } catch {
           // 失败是静默的 — 这是实验性清理，不是关键路径
@@ -1205,7 +1205,7 @@ async function* queryLoop(
       // 仅主线程 — 参见 stopHooks.ts 关于子 agent 的理由。
       if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
         try {
-          const { cleanupComputerUseAfterTurn } = await import('./services/computerUse/cleanup.js')
+          const { cleanupComputerUseAfterTurn } = await import('./services/computer-use/cleanup.js')
           await cleanupComputerUseAfterTurn(toolUseContext)
         } catch {
           // 失败是静默的 — 这是实验性清理，不是关键路径

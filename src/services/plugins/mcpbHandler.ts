@@ -9,7 +9,7 @@ import type {
 import axios from 'axios'
 import { parseAndValidateManifestFromBytes } from 'src/services/dxt/helpers.js'
 import { parseZipModes, unzipFile } from 'src/services/dxt/zip.js'
-import { getSecureStorage } from 'src/services/secureStorage/index.js'
+import { getSecureStorage } from 'src/services/secure-storage/index.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage, getErrnoCode, isENOENT, toError } from '../../utils/errors.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'

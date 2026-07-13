@@ -19,7 +19,7 @@ import {
   mergeFileStateCaches,
 } from 'src/utils/fileStateCache.js'
 import { extractReadFilesFromMessages } from 'src/utils/queryHelpers.js'
-import { executeFilePersistence } from 'src/services/filePersistence/filePersistence.js'
+import { executeFilePersistence } from 'src/services/file-persistence/filePersistence.js'
 import { finalizePendingAsyncHooks } from 'src/utils/hooks/AsyncHookRegistry.js'
 import { gracefulShutdownSync, isShuttingDown } from 'src/utils/gracefulShutdown.js'
 import { createIdleTimeoutManager } from 'src/utils/idleTimeout.js'
@@ -35,7 +35,7 @@ import {
   logSuggestionOutcome,
   logSuggestionSuppressed,
   type PromptVariant,
-} from 'src/services/PromptSuggestion/promptSuggestion.js'
+} from 'src/services/prompt-suggestion/promptSuggestion.js'
 import { getLastCacheSafeParams } from 'src/utils/forkedAgent.js'
 import { getInitJsonSchema } from 'src/bootstrap/state.js'
 import { statusListeners, type ZyAILimits } from 'src/services/zyAiLimits.js'

@@ -1,4 +1,4 @@
-import { getSessionMemoryContent } from '../../services/SessionMemory/sessionMemoryUtils.js'
+import { getSessionMemoryContent } from '../../services/session-memory/sessionMemoryUtils.js'
 import type { Message } from '../../types/message.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'

@@ -1,6 +1,6 @@
 import last from 'lodash-es/last.js'
 import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
-import type { ProcessUserInputContext } from 'src/services/processUserInput/processUserInput.js'
+import type { ProcessUserInputContext } from 'src/services/process-user-input/processUserInput.js'
 import type { WireMessage } from 'src/types/index.js'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import { runTools } from '../services/tools/toolOrchestration.js'

@@ -1,7 +1,8 @@
 import { feature } from 'bun:bundle'
-import { shouldAutoEnableClaudeInChrome } from 'src/services/claudeInChrome/setup.js'
+import { shouldAutoEnableClaudeInChrome } from 'src/services/claude-in-chrome/setup.js'
 import { registerBatchSkill } from './batch.js'
 import { registerClaudeInChromeSkill } from './claudeInChrome.js'
+import { registerDatavizSkill } from './dataviz.js'
 import { registerDebugSkill } from './debug.js'
 import { registerFewerPermissionPromptsSkill } from './fewerPermissionPrompts.js'
 import { registerKeybindingsSkill } from './keybindings.js'
@@ -14,7 +15,6 @@ import { registerSkillifySkill } from './skillify.js'
 import { registerStuckSkill } from './stuck.js'
 import { registerUpdateConfigSkill } from './updateConfig.js'
 import { registerVerifySkill } from './verify.js'
-import { registerDatavizSkill } from './dataviz.js'
 
 /**
  * Initialize all bundled skills.

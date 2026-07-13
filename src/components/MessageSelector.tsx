@@ -1,4 +1,3 @@
-import { WARNING, POINTER } from '../constants/figures.js'
 import { randomUUID, type UUID } from 'node:crypto'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -15,6 +14,7 @@ import {
   fileHistoryGetDiffStats,
 } from 'src/utils/fileHistory.js'
 import { logError } from 'src/utils/log.js'
+import { POINTER, WARNING } from '../constants/figures.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { Box, Text } from '../ink.js'
 import { useKeybinding, useKeybindings } from '../keybindings/useKeybinding.js'

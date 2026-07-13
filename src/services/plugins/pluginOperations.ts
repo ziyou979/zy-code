@@ -24,8 +24,8 @@ import {
   formatReverseDependentsSuffix,
 } from '../../utils/plugins/dependencyResolver.js'
 import {
-  loadInstalledPluginsFromDisk,
   loadInstalledPlugins,
+  loadInstalledPluginsFromDisk,
   removePluginInstallation,
   updateInstallationPathOnDisk,
 } from '../../utils/plugins/installedPluginsManager.js'

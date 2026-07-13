@@ -1,7 +1,7 @@
-import { TICK } from '../../../constants/figures.js'
 import { feature } from 'bun:bundle'
 import * as React from 'react'
 import { SentryErrorBoundary } from 'src/components/SentryErrorBoundary.js'
+import { TICK } from '../../../constants/figures.js'
 import { tSync } from '../../../i18n/index.js'
 import { Box, Text, useTheme } from '../../../ink.js'
 import { useAppState } from '../../../state/AppState.js'

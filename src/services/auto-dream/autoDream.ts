@@ -27,7 +27,7 @@ import {
   getIsRemoteMode,
   getSessionId,
 } from '../../bootstrap/state.js'
-import { createAutoMemCanUseTool } from '../extractMemories/extractMemories.js'
+import { createAutoMemCanUseTool } from '../extract-memories/extractMemories.js'
 import { buildConsolidationPrompt } from './consolidationPrompt.js'
 import {
   readLastConsolidatedAt,

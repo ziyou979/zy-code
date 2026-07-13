@@ -14,7 +14,7 @@ import type { QueryDeps } from './deps.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const contextCollapse = feature('CONTEXT_COLLAPSE')
-  ? (require('../services/contextCollapse/index.js') as typeof import('../services/contextCollapse/index.js'))
+  ? (require('../services/context-collapse/index.js') as typeof import('../services/context-collapse/index.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 

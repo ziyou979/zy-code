@@ -1,4 +1,4 @@
-import { TICK, CROSS, WARNING, INFO, CIRCLE, ELLIPSIS } from '../../constants/figures.js'
+import { CIRCLE, CROSS, ELLIPSIS, INFO, TICK, WARNING } from '../../constants/figures.js'
 import { Text } from '../../ink.js'
 
 type Status = 'success' | 'error' | 'warning' | 'info' | 'pending' | 'loading'

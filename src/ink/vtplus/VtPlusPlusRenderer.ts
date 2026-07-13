@@ -1,6 +1,7 @@
 import { type AnsiCode, ansiCodesToString, diffAnsiCodes } from '@alcalzone/ansi-tokenize'
+import type { Writable } from 'stream'
+import { CellWidth, cellAt, type Hyperlink, type Screen, type StylePool } from '../screen.js'
 import { SYNC_OUTPUT_SUPPORTED } from '../terminal.js'
-import { BSU, ESU, HIDE_CURSOR, SHOW_CURSOR } from '../termio/dec.js'
 import {
   CURSOR_HOME,
   cursorPosition,
@@ -8,9 +9,8 @@ import {
   RESET_SCROLL_REGION,
   setScrollRegion,
 } from '../termio/csi.js'
+import { BSU, ESU, HIDE_CURSOR, SHOW_CURSOR } from '../termio/dec.js'
 import { LINK_END, link as oscLink } from '../termio/osc.js'
-import { CellWidth, cellAt, type Hyperlink, type Screen, type StylePool } from '../screen.js'
-import type { Writable } from 'stream'
 
 const MAX_HISTORY = 10000
 const MIN_BOTTOM_HEIGHT = 4

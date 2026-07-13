@@ -20,8 +20,8 @@ import {
 } from './bootstrap/state.js'
 import { getCommands } from './commands.js'
 import { tSync } from './i18n/index.js'
-import { lockCurrentVersion } from './services/nativeInstaller/index.js'
-import { initSessionMemory } from './services/SessionMemory/sessionMemory.js'
+import { lockCurrentVersion } from './services/native-installer/index.js'
+import { initSessionMemory } from './services/session-memory/sessionMemory.js'
 import { asSessionId } from './types/ids.js'
 import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js'
 import { clearMemoryFileCaches } from './utils/agentsMd.js'
@@ -279,7 +279,7 @@ export async function setup(
     if (feature('CONTEXT_COLLAPSE')) {
       /* eslint-disable @typescript-eslint/no-require-imports */
       ;(
-        require('./services/contextCollapse/index.js') as typeof import('./services/contextCollapse/index.js')
+        require('./services/context-collapse/index.js') as typeof import('./services/context-collapse/index.js')
       ).initContextCollapse()
       /* eslint-enable @typescript-eslint/no-require-imports */
     }
@@ -339,7 +339,7 @@ export async function setup(
     }
     void import('./utils/sessionFileAccessHooks.js').then((m) => m.registerSessionFileAccessHooks()) // 注册会话文件访问分析 hooks
     if (feature('TEAMMEM')) {
-      void import('./services/teamMemorySync/watcher.js').then((m) => m.startTeamMemoryWatcher()) // 启动团队内存同步监视器
+      void import('./services/team-memory-sync/watcher.js').then((m) => m.startTeamMemoryWatcher()) // 启动团队内存同步监视器
     }
   }
   initSinks() // 附加错误日志 + 分析 sink 并排空队列中的事件

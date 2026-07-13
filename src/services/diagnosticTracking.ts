@@ -1,5 +1,5 @@
-import { CROSS, WARNING, INFO, STAR, BULLET } from '../constants/figures.js'
 import { logError } from 'src/utils/log.js'
+import { BULLET, CROSS, INFO, STAR, WARNING } from '../constants/figures.js'
 import type { MCPServerConnection } from '../services/mcp/types.js'
 import { ZyError } from '../utils/errors.js'
 import { normalizePathForComparison, pathsEqual } from '../utils/file.js'

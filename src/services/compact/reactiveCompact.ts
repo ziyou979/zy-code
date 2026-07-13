@@ -48,11 +48,11 @@ import {
   stripImagesFromMessages,
   stripReinjectedAttachments,
 } from './compact.js'
-import { getCompactSummaryText, pickCompactSummaryAssistant } from './summarySelection.js'
 import { suppressCompactWarning } from './compactWarningState.js'
 import { groupMessagesByApiRound } from './grouping.js'
 import { runPostCompactCleanup } from './postCompactCleanup.js'
 import { formatCompactSummary, getCompactPrompt, getCompactUserSummaryMessage } from './prompt.js'
+import { getCompactSummaryText, pickCompactSummaryAssistant } from './summarySelection.js'
 
 // ---------------------------------------------------------------------------
 // Feature gates

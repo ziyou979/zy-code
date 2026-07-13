@@ -3,15 +3,15 @@
  *
  * 测试 select-mouse-actions.ts 中的点击激活逻辑
  */
-import { describe, expect, test, mock } from 'bun:test'
+import { describe, expect, mock, test } from 'bun:test'
+import type { OptionWithDescription } from '../../../src/components/CustomSelect/select.js'
 import {
-  handleOptionClick,
-  createOptionClickHandler,
-  createOptionHoverHandler,
   createHoverLeaveHandler,
   createMultiOptionClickHandler,
+  createOptionClickHandler,
+  createOptionHoverHandler,
+  handleOptionClick,
 } from '../../../src/components/CustomSelect/select-mouse-actions.js'
-import type { OptionWithDescription } from '../../../src/components/CustomSelect/select.js'
 
 describe('handleOptionClick', () => {
   test('点击普通选项应聚焦并选择', () => {

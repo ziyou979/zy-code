@@ -29,7 +29,7 @@ import {
   initializeGrowthBook,
   resetGrowthBook,
 } from './services/analytics/growthbook.js'
-import { updateDeepLinkTerminalPreference } from './services/deepLink/terminalPreference.js'
+import { updateDeepLinkTerminalPreference } from './services/deep-link/terminalPreference.js'
 import { handleMcpjsonServerApprovals } from './services/mcpServerApproval.js'
 import { getDefaultStandardModel } from './services/model/model.js'
 import { AppStateProvider } from './state/AppState.js'

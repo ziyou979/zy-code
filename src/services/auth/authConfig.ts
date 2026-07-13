@@ -20,7 +20,7 @@ const AuthProviderConfigSchema = z
 
 const AuthConfigSchema = z
   .record(z.string(), AuthProviderConfigSchema)
-  .refine((config) => !Object.prototype.hasOwnProperty.call(config, 'providers'), {
+  .refine((config) => !Object.hasOwn(config, 'providers'), {
     message: 'auth.json uses provider ids at the top level.',
   })
   .describe('Provider-scoped authentication configuration keyed by provider id.')

@@ -128,7 +128,7 @@ export function restoreSessionStateFromLog(
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     ;(
-      require('../services/contextCollapse/persist.js') as typeof import('../services/contextCollapse/persist.js')
+      require('../services/context-collapse/persist.js') as typeof import('../services/context-collapse/persist.js')
     ).restoreFromEntries(result.contextCollapseCommits ?? [], result.contextCollapseSnapshot)
     /* eslint-enable @typescript-eslint/no-require-imports */
   }
@@ -468,7 +468,7 @@ export async function processResumedConversation(
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     ;(
-      require('../services/contextCollapse/persist.js') as typeof import('../services/contextCollapse/persist.js')
+      require('../services/context-collapse/persist.js') as typeof import('../services/context-collapse/persist.js')
     ).restoreFromEntries(result.contextCollapseCommits ?? [], result.contextCollapseSnapshot)
     /* eslint-enable @typescript-eslint/no-require-imports */
   }

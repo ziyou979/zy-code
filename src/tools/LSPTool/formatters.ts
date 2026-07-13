@@ -12,6 +12,7 @@ import type {
   SymbolInformation,
   SymbolKind,
 } from 'vscode-languageserver-types'
+import { tSync } from '../../i18n/index.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { plural } from '../../utils/stringUtils.js'
@@ -30,7 +31,7 @@ function formatUri(uri: string | undefined, cwd?: string): string {
       'formatUri called with undefined URI - indicates malformed LSP server response',
       { level: 'warn' },
     )
-    return '<unknown location>'
+    return tSync('lspTool.unknownLocation')
   }
 
   // Remove file:// protocol if present
@@ -126,7 +127,7 @@ export function formatGoToDefinitionResult(
   cwd?: string,
 ): string {
   if (!result) {
-    return 'No definition found. This may occur if the cursor is not on a symbol, or if the definition is in an external library not indexed by the LSP server.'
+    return tSync('lspTool.noDefinitionFound')
   }
 
   if (Array.isArray(result)) {
@@ -147,18 +148,21 @@ export function formatGoToDefinitionResult(
     const validLocations = locations.filter((loc) => loc?.uri)
 
     if (validLocations.length === 0) {
-      return 'No definition found. This may occur if the cursor is not on a symbol, or if the definition is in an external library not indexed by the LSP server.'
+      return tSync('lspTool.noDefinitionFound')
     }
     if (validLocations.length === 1) {
-      return `Defined in ${formatLocation(validLocations[0]!, cwd)}`
+      return tSync('lspTool.definedIn', { location: formatLocation(validLocations[0]!, cwd) })
     }
     const locationList = validLocations.map((loc) => `  ${formatLocation(loc, cwd)}`).join('\n')
-    return `Found ${validLocations.length} definitions:\n${locationList}`
+    return tSync('lspTool.foundDefinitions', {
+      count: String(validLocations.length),
+      list: locationList,
+    })
   }
 
   // Single result - convert LocationLink if needed
   const location = isLocationLink(result) ? locationLinkToLocation(result) : result
-  return `Defined in ${formatLocation(location, cwd)}`
+  return tSync('lspTool.definedIn', { location: formatLocation(location, cwd) })
 }
 
 /**
@@ -166,7 +170,7 @@ export function formatGoToDefinitionResult(
  */
 export function formatFindReferencesResult(result: Location[] | null, cwd?: string): string {
   if (!result || result.length === 0) {
-    return 'No references found. This may occur if the symbol has no usages, or if the LSP server has not fully indexed the workspace.'
+    return tSync('lspTool.noReferencesFound')
   }
 
   // Log and filter out any locations with undefined uris
@@ -181,24 +185,31 @@ export function formatFindReferencesResult(result: Location[] | null, cwd?: stri
   const validLocations = result.filter((loc) => loc?.uri)
 
   if (validLocations.length === 0) {
-    return 'No references found. This may occur if the symbol has no usages, or if the LSP server has not fully indexed the workspace.'
+    return tSync('lspTool.noReferencesFound')
   }
 
   if (validLocations.length === 1) {
-    return `Found 1 reference:\n  ${formatLocation(validLocations[0]!, cwd)}`
+    return tSync('lspTool.foundOneReference', { location: formatLocation(validLocations[0]!, cwd) })
   }
 
   // Group references by file
   const byFile = groupByFile(validLocations, cwd)
 
-  const lines: string[] = [`Found ${validLocations.length} references across ${byFile.size} files:`]
+  const lines: string[] = [
+    tSync('lspTool.foundReferencesAcross', {
+      count: String(validLocations.length),
+      files: String(byFile.size),
+    }),
+  ]
 
   for (const [filePath, locations] of byFile) {
     lines.push(`\n${filePath}:`)
     for (const loc of locations) {
       const line = loc.range.start.line + 1
       const character = loc.range.start.character + 1
-      lines.push(`  Line ${line}:${character}`)
+      lines.push(
+        `  ${tSync('lspTool.lineNumber', { line: String(line), character: String(character) })}`,
+      )
     }
   }
 
@@ -238,7 +249,7 @@ function extractMarkupText(contents: MarkupContent | MarkedString | MarkedString
  */
 export function formatHoverResult(result: Hover | null, _cwd?: string): string {
   if (!result) {
-    return 'No hover information available. This may occur if the cursor is not on a symbol, or if the LSP server has not fully indexed the file.'
+    return tSync('lspTool.noHoverAvailable')
   }
 
   const content = extractMarkupText(result.contents)
@@ -246,7 +257,11 @@ export function formatHoverResult(result: Hover | null, _cwd?: string): string {
   if (result.range) {
     const line = result.range.start.line + 1
     const character = result.range.start.character + 1
-    return `Hover info at ${line}:${character}:\n\n${content}`
+    return tSync('lspTool.hoverInfoAt', {
+      line: String(line),
+      character: String(character),
+      content,
+    })
   }
 
   return content
@@ -284,7 +299,7 @@ function symbolKindToString(kind: SymbolKind): string {
     25: 'Operator',
     26: 'TypeParameter',
   }
-  return kinds[kind] || 'Unknown'
+  return kinds[kind] || tSync('lspTool.unknownSymbolKind')
 }
 
 /**
@@ -325,7 +340,7 @@ export function formatDocumentSymbolResult(
   cwd?: string,
 ): string {
   if (!result || result.length === 0) {
-    return 'No symbols found in document. This may occur if the file is empty, not supported by the LSP server, or if the server has not fully indexed the file.'
+    return tSync('lspTool.noSymbolsInDocument')
   }
 
   // Detect format: DocumentSymbol has 'range' directly, SymbolInformation has 'location.range'
@@ -339,7 +354,7 @@ export function formatDocumentSymbolResult(
   }
 
   // Handle DocumentSymbol[] format (hierarchical)
-  const lines: string[] = ['Document symbols:']
+  const lines: string[] = [tSync('lspTool.documentSymbols')]
 
   for (const symbol of result as DocumentSymbol[]) {
     lines.push(...formatDocumentSymbolNode(symbol))
@@ -356,7 +371,7 @@ export function formatWorkspaceSymbolResult(
   cwd?: string,
 ): string {
   if (!result || result.length === 0) {
-    return 'No symbols found in workspace. This may occur if the workspace is empty, or if the LSP server has not finished indexing the project.'
+    return tSync('lspTool.noSymbolsInWorkspace')
   }
 
   // Log and filter out any symbols with undefined location.uri
@@ -371,11 +386,14 @@ export function formatWorkspaceSymbolResult(
   const validSymbols = result.filter((sym) => sym?.location?.uri)
 
   if (validSymbols.length === 0) {
-    return 'No symbols found in workspace. This may occur if the workspace is empty, or if the LSP server has not finished indexing the project.'
+    return tSync('lspTool.noSymbolsInWorkspace')
   }
 
   const lines: string[] = [
-    `Found ${validSymbols.length} ${plural(validSymbols.length, 'symbol')} in workspace:`,
+    tSync('lspTool.foundSymbolsInWorkspace', {
+      count: String(validSymbols.length),
+      symbolWord: plural(validSymbols.length, 'symbol'),
+    }),
   ]
 
   // Group by file
@@ -390,7 +408,7 @@ export function formatWorkspaceSymbolResult(
 
       // Add container name if available
       if (symbol.containerName) {
-        symbolLine += ` in ${symbol.containerName}`
+        symbolLine += tSync('lspTool.inContainer', { name: symbol.containerName })
       }
 
       lines.push(symbolLine)
@@ -410,7 +428,7 @@ function formatCallHierarchyItem(item: CallHierarchyItem, cwd?: string): string 
     logForDebugging('formatCallHierarchyItem: CallHierarchyItem has undefined URI', {
       level: 'warn',
     })
-    return `${item.name} (${symbolKindToString(item.kind)}) - <unknown location>`
+    return `${item.name} (${symbolKindToString(item.kind)}) - ${tSync('lspTool.unknownLocation')}`
   }
 
   const filePath = formatUri(item.uri, cwd)
@@ -432,14 +450,14 @@ export function formatPrepareCallHierarchyResult(
   cwd?: string,
 ): string {
   if (!result || result.length === 0) {
-    return 'No call hierarchy item found at this position'
+    return tSync('lspTool.noCallHierarchyItem')
   }
 
   if (result.length === 1) {
-    return `Call hierarchy item: ${formatCallHierarchyItem(result[0]!, cwd)}`
+    return tSync('lspTool.callHierarchyItem', { item: formatCallHierarchyItem(result[0]!, cwd) })
   }
 
-  const lines = [`Found ${result.length} call hierarchy items:`]
+  const lines = [tSync('lspTool.foundCallHierarchyItems', { count: String(result.length) })]
   for (const item of result) {
     lines.push(`  ${formatCallHierarchyItem(item, cwd)}`)
   }
@@ -455,10 +473,15 @@ export function formatIncomingCallsResult(
   cwd?: string,
 ): string {
   if (!result || result.length === 0) {
-    return 'No incoming calls found (nothing calls this function)'
+    return tSync('lspTool.noIncomingCalls')
   }
 
-  const lines = [`Found ${result.length} incoming ${plural(result.length, 'call')}:`]
+  const lines = [
+    tSync('lspTool.foundIncomingCalls', {
+      count: String(result.length),
+      callWord: plural(result.length, 'call'),
+    }),
+  ]
 
   // Group by file
   const byFile = new Map<string, CallHierarchyIncomingCall[]>()
@@ -494,7 +517,7 @@ export function formatIncomingCallsResult(
         const callSites = call.fromRanges
           .map((r) => `${r.start.line + 1}:${r.start.character + 1}`)
           .join(', ')
-        callLine += ` [calls at: ${callSites}]`
+        callLine += tSync('lspTool.callsAt', { sites: callSites })
       }
 
       lines.push(callLine)
@@ -513,10 +536,15 @@ export function formatOutgoingCallsResult(
   cwd?: string,
 ): string {
   if (!result || result.length === 0) {
-    return 'No outgoing calls found (this function calls nothing)'
+    return tSync('lspTool.noOutgoingCalls')
   }
 
-  const lines = [`Found ${result.length} outgoing ${plural(result.length, 'call')}:`]
+  const lines = [
+    tSync('lspTool.foundOutgoingCalls', {
+      count: String(result.length),
+      callWord: plural(result.length, 'call'),
+    }),
+  ]
 
   // Group by file
   const byFile = new Map<string, CallHierarchyOutgoingCall[]>()
@@ -552,7 +580,7 @@ export function formatOutgoingCallsResult(
         const callSites = call.fromRanges
           .map((r) => `${r.start.line + 1}:${r.start.character + 1}`)
           .join(', ')
-        callLine += ` [called from: ${callSites}]`
+        callLine += tSync('lspTool.calledFrom', { sites: callSites })
       }
 
       lines.push(callLine)

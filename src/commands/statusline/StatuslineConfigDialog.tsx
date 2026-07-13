@@ -17,8 +17,8 @@ import {
   type ModuleId,
   mergeWithDefaults,
 } from '../../components/statusbar/statusbarModuleDefaults.js'
-import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { BALLOT_BOX, CHECKBOX_CHECKED } from '../../constants/figures.js'
+import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useSettings } from '../../hooks/useSettings.js'
 import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../ink/stringWidth.js'

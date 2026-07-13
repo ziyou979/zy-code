@@ -4,9 +4,9 @@
  */
 /* eslint-disable custom-rules/no-process-exit -- CLI subcommand handlers intentionally exit */
 
-import { CROSS, POINTER, WARNING, TICK } from '../../constants/figures.js'
 import { basename, dirname } from 'node:path'
 import { setUseCoworkPlugins } from '../../bootstrap/state.js'
+import { CROSS, POINTER, TICK, WARNING } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

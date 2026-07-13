@@ -27,7 +27,7 @@ import { getMainLoopModel, parseUserSpecifiedModel } from './services/model/mode
 import {
   type ProcessUserInputContext,
   processUserInput,
-} from './services/processUserInput/processUserInput.js'
+} from './services/process-user-input/processUserInput.js'
 import type { AppState } from './state/AppState.js'
 import { type Tools, type ToolUseContext, toolMatchesName } from './Tool.js'
 import type { AgentDefinition } from './tools/AgentTool/loadAgentsDir.js'

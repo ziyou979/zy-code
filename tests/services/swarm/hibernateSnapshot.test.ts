@@ -1,35 +1,35 @@
 /**
  * hibernateSnapshot 测试：验证快照的保存、加载和删除功能。
  */
-import { describe, expect, test, beforeAll, afterAll } from 'bun:test'
-import { mkdir, writeFile, unlink, readdir } from 'node:fs/promises'
-import { join } from 'node:path'
-import { tmpdir } from 'node:os'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { randomUUID } from 'node:crypto'
+import { mkdir, readdir, unlink, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import {
-  saveHibernateSnapshot,
-  loadHibernateSnapshot,
   deleteHibernateSnapshot,
   hasHibernateSnapshot,
+  loadHibernateSnapshot,
+  saveHibernateSnapshot,
 } from '../../../src/services/swarm/hibernateSnapshot.js'
 
-// 临时覆盖 ZY_CONFIG_HOME 环境变量，使 hibernate 快照写入临时目录
+// 临时覆盖 ZY_CONFIG_DIR 环境变量，使 hibernate 快照写入临时目录
 const testDir = join(tmpdir(), `zy-test-hibernate-${randomUUID()}`)
-const originalConfigHome = process.env.ZY_CONFIG_HOME
+const originalConfigHome = process.env.ZY_CONFIG_DIR
 
 describe('hibernateSnapshot', () => {
   beforeAll(async () => {
     // 使用临时目录作为配置目录
-    process.env.ZY_CONFIG_HOME = testDir
+    process.env.ZY_CONFIG_DIR = testDir
     await mkdir(testDir, { recursive: true })
   })
 
   afterAll(async () => {
     // 清理环境
     if (originalConfigHome === undefined) {
-      delete process.env.ZY_CONFIG_HOME
+      delete process.env.ZY_CONFIG_DIR
     } else {
-      process.env.ZY_CONFIG_HOME = originalConfigHome
+      process.env.ZY_CONFIG_DIR = originalConfigHome
     }
     // 清理临时目录
     try {

@@ -8,11 +8,11 @@ import { nodeCache, pendingClears } from './node-cache.js'
 import type Output from './output.js'
 import renderBorder from './render-border.js'
 import type { Screen } from './screen.js'
+import { computeScrollFollow } from './scrollFollow.js'
 import { type StyledSegment, squashTextNodesToSegments } from './squash-text-nodes.js'
 import type { Color } from './styles.js'
 import { isXtermJs } from './terminal.js'
 import { widestLine } from './widest-line.js'
-import { computeScrollFollow } from './scrollFollow.js'
 import wrapText from './wrap-text.js'
 
 // 匹配 ScrollKeybindingHandler.tsx 中的 detectXtermJsWheel() — 曲线

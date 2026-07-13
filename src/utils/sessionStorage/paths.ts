@@ -1,1 +1,1 @@
-export * from '../../services/sessionStorage/paths.js'
+export * from '../../services/session-storage/paths.js'

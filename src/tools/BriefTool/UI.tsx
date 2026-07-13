@@ -1,6 +1,6 @@
-import { BLACK_CIRCLE, POINTER_SMALL } from '../../constants/figures.js'
 import React from 'react'
 import { Markdown } from '../../components/Markdown.js'
+import { BLACK_CIRCLE, POINTER_SMALL } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import type { ProgressMessage } from '../../types/message.js'

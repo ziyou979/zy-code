@@ -1,18 +1,18 @@
-import {
-  WARNING,
-  ARROW_UP,
-  POINTER,
-  ELLIPSIS,
-  RADIO_ON,
-  RADIO_OFF,
-  ARROW_DOWN,
-  CROSS,
-} from '../../constants/figures.js'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
 import { Byline } from '../../components/design-system/Byline.js'
 import { SearchBox } from '../../components/SearchBox.js'
+import {
+  ARROW_DOWN,
+  ARROW_UP,
+  CROSS,
+  ELLIPSIS,
+  POINTER,
+  RADIO_OFF,
+  RADIO_ON,
+  WARNING,
+} from '../../constants/figures.js'
 import { useSearchInput } from '../../hooks/useSearchInput.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- useInput needed for raw search mode text input

@@ -1,4 +1,3 @@
-import { POINTER } from '../../constants/figures.js'
 import { Box, Text } from 'src/ink.js'
 import {
   AGENT_COLOR_TO_THEME_COLOR,
@@ -8,6 +7,7 @@ import {
 import type { PromptInputMode } from 'src/types/textInputTypes.js'
 import { getTeammateColor } from 'src/utils/teammate.js'
 import type { Theme } from 'src/utils/theme.js'
+import { POINTER } from '../../constants/figures.js'
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
 
 type Props = {

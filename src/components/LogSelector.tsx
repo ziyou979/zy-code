@@ -1,7 +1,7 @@
-import { POINTER } from '../constants/figures.js'
 import chalk from 'chalk'
 import React from 'react'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
+import { POINTER } from '../constants/figures.js'
 import { useIsInsideModal, useModalOrTerminalSize } from '../context/modalContext.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useSearchInput } from '../hooks/useSearchInput.js'

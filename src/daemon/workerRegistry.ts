@@ -12,7 +12,7 @@
  * 通过 feature('DAEMON') 门控，构建时 DCE。
  */
 import { feature } from 'bun:bundle'
-import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { homedir, hostname } from 'node:os'
 import { join } from 'node:path'
 

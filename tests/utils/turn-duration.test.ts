@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test'
-import { createTurnDurationMessage } from '../../src/utils/messages/constructors.js'
-import { isLoggableMessage } from '../../src/services/sessionStorage/logLoading.js'
-import { isTranscriptMessage } from '../../src/services/sessionStorage/predicates.js'
+import { isLoggableMessage } from '../../src/services/session-storage/logLoading.js'
+import { isTranscriptMessage } from '../../src/services/session-storage/predicates.js'
 import type { Message } from '../../src/types/message.js'
+import { createTurnDurationMessage } from '../../src/utils/messages/constructors.js'
 
 describe('turn_duration 消息', () => {
   test('createTurnDurationMessage 生成正确的消息结构', () => {
@@ -27,7 +27,7 @@ describe('turn_duration 消息', () => {
   })
 
   test('isChainParticipant 接受 turn_duration 消息（参与 parentUuid 链）', () => {
-    const { isChainParticipant } = require('../../src/services/sessionStorage/predicates.js')
+    const { isChainParticipant } = require('../../src/services/session-storage/predicates.js')
     const msg = createTurnDurationMessage(35000, undefined, 5)
     // isChainParticipant 检查 type !== 'progress'
     expect(isChainParticipant(msg)).toBe(true)

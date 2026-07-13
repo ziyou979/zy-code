@@ -8,8 +8,8 @@ import {
   getMarketingNameForModel,
   getProviderForModel,
   getUserSpecifiedModelSetting,
-  type ModelSetting,
   type ModelReferenceInput,
+  type ModelSetting,
   parseUserSpecifiedModel,
   renderDefaultModelSetting,
 } from './model.js'

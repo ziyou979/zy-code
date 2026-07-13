@@ -156,4 +156,6 @@ export const enSettings: TranslationResource = {
   'wizard.systemPrompt': 'System prompt',
   'wizard.warnings': 'Warnings:',
   'wizard.whenUseAgent': 'When should Zy use this agent?',
+  'settings.dismissed': 'Status dialog dismissed',
+  'settings.gatesTab': 'Gating',
 }

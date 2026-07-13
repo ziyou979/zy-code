@@ -1,33 +1,33 @@
 /**
  * externalToolResult 测试：验证工具结果外置的存储、加载和清除功能。
  */
-import { describe, expect, test, beforeAll, afterAll } from 'bun:test'
-import { unlink, readdir } from 'node:fs/promises'
-import { join } from 'node:path'
-import { tmpdir } from 'node:os'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { randomUUID } from 'node:crypto'
+import { readdir, unlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import {
-  storeToolResultExternally,
-  loadExternalToolResult,
   clearExternalToolResults,
+  loadExternalToolResult,
+  storeToolResultExternally,
 } from '../../../src/services/swarm/externalToolResult.js'
 import { TOOL_RESULT_EXTERNAL_THRESHOLD_BYTES } from '../../../src/tasks/InProcessTeammateTask/types.js'
 
 const testDir = join(tmpdir(), `zy-test-ext-tool-${randomUUID()}`)
-const originalConfigHome = process.env.ZY_CONFIG_HOME
+const originalConfigHome = process.env.ZY_CONFIG_DIR
 
 describe('externalToolResult', () => {
   beforeAll(async () => {
-    process.env.ZY_CONFIG_HOME = testDir
+    process.env.ZY_CONFIG_DIR = testDir
     const { mkdir } = await import('node:fs/promises')
     await mkdir(testDir, { recursive: true })
   })
 
   afterAll(async () => {
     if (originalConfigHome === undefined) {
-      delete process.env.ZY_CONFIG_HOME
+      delete process.env.ZY_CONFIG_DIR
     } else {
-      process.env.ZY_CONFIG_HOME = originalConfigHome
+      process.env.ZY_CONFIG_DIR = originalConfigHome
     }
     try {
       await unlink(testDir).catch(() => {})

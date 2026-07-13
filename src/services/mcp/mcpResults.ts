@@ -35,7 +35,7 @@ const SECRET_REDACTION_PATTERNS: ReadonlyArray<RegExp> = [
   // Bearer token / Authorization header 值
   /(?:(?:bearer|token|apikey|api_key|secret|password|passwd|auth)\s*[:=]\s*['"]?)[a-zA-Z0-9_.\-/+]{16,}/gi,
   // URL 中嵌入的密码：https://user:password@host
-  /(https?:\/\/)[^:@\/\s]+:[^@\/\s]+@/g,
+  /(https?:\/\/)[^:@/\s]+:[^@/\s]+@/g,
   // PEM 私钥块
   /-----BEGIN\s+(?:RSA|DSA|EC|OPENSSH|PRIVATE)\s+KEY-----[\s\S]*?-----END\s+(?:RSA|DSA|EC|OPENSSH|PRIVATE)\s+KEY-----/g,
   // AWS 访问密钥

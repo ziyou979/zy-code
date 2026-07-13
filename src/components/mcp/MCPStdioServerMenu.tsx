@@ -1,7 +1,7 @@
-import { RADIO_OFF, TICK, CROSS } from '../../constants/figures.js'
 import React, { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import type { CommandResultDisplay } from '../../commands.js'
+import { CROSS, RADIO_OFF, TICK } from '../../constants/figures.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { Box, color, Text, useTheme } from '../../ink.js'
 import { getMcpConfigByName } from '../../services/mcp/config.js'

@@ -5,10 +5,7 @@ import {
 import type { TokenUsage as Usage } from '../types/llm.js'
 import type { AssistantMessage, Message } from '../types/message.js'
 import { SYNTHETIC_MESSAGES, SYNTHETIC_MODEL } from './messages/constants.js'
-import {
-  getMessagesAfterCompactBoundary,
-  isCompactBoundaryMessage,
-} from './messages/predicates.js'
+import { getMessagesAfterCompactBoundary, isCompactBoundaryMessage } from './messages/predicates.js'
 import { getInitialSettings } from './settings/settings.js'
 import { jsonStringify } from './slowOperations.js'
 

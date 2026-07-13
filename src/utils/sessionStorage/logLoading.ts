@@ -1,1 +1,1 @@
-export * from '../../services/sessionStorage/logLoading.js'
+export * from '../../services/session-storage/logLoading.js'
