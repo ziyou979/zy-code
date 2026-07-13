@@ -30,7 +30,7 @@ import {
   TEAMMATE_COMMAND_ENV_VAR,
   TMUX_COMMAND,
 } from '../../services/swarm/constants.js'
-import { It2SetupPrompt } from '../../services/swarm/It2SetupPrompt.js'
+import { It2SetupPrompt } from '../../components/swarm/It2SetupPrompt.js'
 import { startInProcessTeammate } from '../../services/swarm/inProcessRunner.js'
 import {
   type InProcessSpawnConfig,

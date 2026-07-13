@@ -4,7 +4,7 @@ import { MessageResponse } from 'src/components/MessageResponse.js'
 import { BLACK_CIRCLE } from 'src/constants/figures.js'
 import { getModeColor } from 'src/utils/permissions/PermissionMode.js'
 import { z } from 'zod/v4'
-import { tSync } from '../../i18n/index.js'
+import { t, tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import type { Tool } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
@@ -100,7 +100,7 @@ const UNIQUENESS_REFINE = {
     }
     return true
   },
-  message: 'Question texts must be unique, option labels must be unique within each question',
+  get message() { return tSync('askUser.questionsMustBeUnique') },
 } as const
 const commonFields = lazySchema(() => ({
   answers: z
@@ -253,7 +253,7 @@ export const AskUserQuestionTool: Tool<InputSchema, Output> = buildTool({
   async checkPermissions(input) {
     return {
       behavior: 'ask' as const,
-      message: 'Answer questions?',
+      message: tSync('askUser.answerQuestions'),
       updatedInput: input,
     }
   },
@@ -270,7 +270,7 @@ export const AskUserQuestionTool: Tool<InputSchema, Output> = buildTool({
     return (
       <Box flexDirection="row" marginTop={1}>
         <Text color={getModeColor('default')}>{BLACK_CIRCLE}&nbsp;</Text>
-        <Text>User declined to answer questions</Text>
+        <Text>{tSync('askUser.userDeclined')}</Text>
       </Box>
     )
   },
@@ -318,16 +318,16 @@ function validateHtmlPreview(preview: string | undefined): string | null {
     return null
   }
   if (/<\s*(html|body|!doctype)\b/i.test(preview)) {
-    return 'preview must be an HTML fragment, not a full document (no <html>, <body>, or <!DOCTYPE>)'
+    return tSync('askUser.htmlPreviewFullDoc')
   }
   // SDK consumers typically set this via innerHTML — disallow executable/style
   // tags so a preview can't run code or restyle the host page. Inline event
   // handlers (onclick etc.) are still possible; consumers should sanitize.
   if (/<\s*(script|style)\b/i.test(preview)) {
-    return 'preview must not contain <script> or <style> tags. Use inline styles via the style attribute if needed.'
+    return tSync('askUser.htmlPreviewNoScriptStyle')
   }
   if (!/<[a-z][^>]*>/i.test(preview)) {
-    return 'preview must contain HTML (previewFormat is set to "html"). Wrap content in a tag like <div> or <pre>.'
+    return tSync('askUser.htmlPreviewMustContainHtml')
   }
   return null
 }

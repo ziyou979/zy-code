@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Select } from '../../components/CustomSelect/select.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { Box, Text } from '../../ink.js'
+import { tSync } from '../../i18n/index.js'
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   openInChrome,
@@ -79,10 +80,10 @@ function ClaudeInChromeMenu({
     }
   }
   const options = []
-  const requiresExtensionSuffix = isExtensionInstalled ? '' : ' (requires extension)'
+  const requiresExtensionSuffix = isExtensionInstalled ? '' : tSync('chromeCmd.requiresExtension')
   if (!isExtensionInstalled && !isHomespace) {
     options.push({
-      label: 'Install Chrome extension',
+      label: tSync('chromeCmd.installExtension'),
       value: 'install-extension',
     })
   }
@@ -90,7 +91,7 @@ function ClaudeInChromeMenu({
     {
       label: (
         <>
-          {<Text>Manage permissions</Text>}
+          {<Text>{tSync('chromeCmd.managePermissions')}</Text>}
           <Text dimColor={true}>{requiresExtensionSuffix}</Text>
         </>
       ),
@@ -99,51 +100,43 @@ function ClaudeInChromeMenu({
     {
       label: (
         <>
-          {<Text>Reconnect extension</Text>}
+          {<Text>{tSync('chromeCmd.reconnectExtension')}</Text>}
           <Text dimColor={true}>{requiresExtensionSuffix}</Text>
         </>
       ),
       value: 'reconnect',
     },
     {
-      label: `Enabled by default: ${enabledByDefault ? 'Yes' : 'No'}`,
+      label: `${tSync('chromeCmd.enabledByDefault', { value: enabledByDefault ? tSync('chromeCmd.yes') : tSync('chromeCmd.no') })}`,
       value: 'toggle-default',
     },
   )
   const isDisabled = true
   return (
-    <Dialog title="Claude in Chrome (Beta)" onCancel={() => onDone()} color="chromeYellow">
+    <Dialog title={tSync('chromeCmd.title')} onCancel={() => onDone()} color="chromeYellow">
       {
         <Box flexDirection="column" gap={1}>
-          {
-            <Text>
-              Claude in Chrome works with the Chrome extension to let you control your browser
-              directly from ZY Code. Navigate websites, fill forms, capture screenshots, record
-              GIFs, and debug with console logs and network requests.
-            </Text>
-          }
-          {isWSL && (
-            <Text color="error">Claude in Chrome is not supported in WSL at this time.</Text>
-          )}
-          {<Text color="error">Claude in Chrome requires a claude.ai subscription.</Text>}
+          {<Text>{tSync('chromeCmd.description')}</Text>}
+          {isWSL && <Text color="error">{tSync('chromeCmd.notSupportedOnWSL')}</Text>}
+          {<Text color="error">{tSync('chromeCmd.requiresSubscription')}</Text>}
           {!isDisabled && (
             <>
               {!isHomespace && (
                 <Box flexDirection="column">
                   <Text>
-                    Status:{' '}
+                    {tSync('chromeCmd.status')}
                     {isConnected ? (
-                      <Text color="success">Enabled</Text>
+                      <Text color="success">{tSync('chromeCmd.statusEnabled')}</Text>
                     ) : (
-                      <Text color="inactive">Disabled</Text>
+                      <Text color="inactive">{tSync('chromeCmd.statusDisabled')}</Text>
                     )}
                   </Text>
                   <Text>
-                    Extension:{' '}
+                    {tSync('chromeCmd.extension')}
                     {isExtensionInstalled ? (
-                      <Text color="success">Installed</Text>
+                      <Text color="success">{tSync('chromeCmd.extensionInstalled')}</Text>
                     ) : (
-                      <Text color="warning">Not detected</Text>
+                      <Text color="warning">{tSync('chromeCmd.extensionNotDetected')}</Text>
                     )}
                   </Text>
                 </Box>
@@ -154,25 +147,21 @@ function ClaudeInChromeMenu({
                 onChange={handleAction}
                 hideIndexes={true}
               />
-              {showInstallHint && (
-                <Text color="warning">
-                  Once installed, select {'"Reconnect extension"'} to connect.
-                </Text>
-              )}
+              {showInstallHint && <Text color="warning">{tSync('chromeCmd.installHint')}</Text>}
               <Text>
-                <Text dimColor={true}>Usage: </Text>
+                <Text dimColor={true}>{tSync('chromeCmd.usageLabel')}</Text>
                 <Text>zycode --chrome</Text>
-                <Text dimColor={true}> or </Text>
+                <Text dimColor={true}>{tSync('chromeCmd.or')}</Text>
                 <Text>zycode --no-chrome</Text>
               </Text>
-              <Text dimColor={true}>
-                Site-level permissions are inherited from the Chrome extension. Manage permissions
-                in the Chrome extension settings to control which sites Zy can browse, click, and
-                type on.
-              </Text>
+              <Text dimColor={true}>{tSync('chromeCmd.sitePermissions')}</Text>
             </>
           )}
-          {<Text dimColor={true}>Learn more: https://code.zy.com/docs/en/chrome</Text>}
+          {
+            <Text dimColor={true}>
+              {tSync('chromeCmd.learnMore')}https://code.zy.com/docs/en/chrome
+            </Text>
+          }
         </Box>
       }
     </Dialog>

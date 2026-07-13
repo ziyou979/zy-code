@@ -5,6 +5,7 @@ import { Select } from '../../components/CustomSelect/index.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { LoadingState } from '../../components/design-system/LoadingState.js'
 import { Box, Text } from '../../ink.js'
+import { tSync } from '../../i18n/index.js'
 import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS as SafeString,
@@ -75,13 +76,13 @@ async function checkLoginState(): Promise<CheckResult> {
 function errorMessage(err: ImportTokenError, codeUrl: string): string {
   switch (err.kind) {
     case 'not_signed_in':
-      return `Login failed. Please visit ${codeUrl} and login using the GitHub App`
+      return tSync('remoteSetup.loginFailed', { url: codeUrl })
     case 'invalid_token':
-      return 'GitHub rejected that token. Run `gh auth login` and try again.'
+      return tSync('remoteSetup.invalidToken')
     case 'server':
-      return `Server error (${err.status}). Try again in a moment.`
+      return tSync('remoteSetup.serverError', { status: err.status })
     case 'network':
-      return "Couldn't reach the server. Check your connection."
+      return tSync('remoteSetup.networkError')
   }
 }
 type Step =
@@ -107,7 +108,7 @@ function Web({ onDone }: { onDone: LocalJSXCommandOnDone }) {
           logEvent('zy_remote_setup_result', {
             result: 'not_signed_in' as SafeString,
           })
-          onDone('Not signed in to Zy. Run /login first.')
+          onDone(tSync('remoteSetup.notSignedIn'))
           return
         case 'gh_not_installed':
         case 'gh_not_authenticated': {
@@ -118,8 +119,8 @@ function Web({ onDone }: { onDone: LocalJSXCommandOnDone }) {
           })
           onDone(
             result.status === 'gh_not_installed'
-              ? `GitHub CLI not found. Install it via https://cli.github.com/, then run \`gh auth login\`, or connect GitHub on the web: ${url}`
-              : `GitHub CLI not authenticated. Run \`gh auth login\` and try again, or connect GitHub on the web: ${url}`,
+              ? tSync('remoteSetup.ghNotInstalled', { url })
+              : tSync('remoteSetup.ghNotAuthenticated', { url }),
           )
           return
         }
@@ -167,29 +168,26 @@ function Web({ onDone }: { onDone: LocalJSXCommandOnDone }) {
     onDone(`Connected as ${result.result.github_username}. Opened ${url}`)
   }
   if (step.name === 'checking') {
-    return <LoadingState message="Checking login status…" />
+    return <LoadingState message={tSync('remoteSetup.checkingLogin')} />
   }
   if (step.name === 'uploading') {
-    return <LoadingState message="Connecting GitHub to Zy…" />
+    return <LoadingState message={tSync('remoteSetup.connectingGithub')} />
   }
   const token = step.token
   return (
-    <Dialog title="Connect Zy on the web to GitHub?" onCancel={handleCancel} hideInputGuide>
+    <Dialog title={tSync('remoteSetup.dialogTitle')} onCancel={handleCancel} hideInputGuide>
       <Box flexDirection="column">
-        <Text>
-          Zy on the web requires connecting to your GitHub account to clone and push code on your
-          behalf.
-        </Text>
-        <Text dimColor>Your local credentials are used to authenticate with GitHub</Text>
+        <Text>{tSync('remoteSetup.dialogDescription')}</Text>
+        <Text dimColor>{tSync('remoteSetup.dialogNote')}</Text>
       </Box>
       <Select
         options={[
           {
-            label: 'Continue',
+            label: tSync('remoteSetup.continue'),
             value: 'send',
           },
           {
-            label: 'Cancel',
+            label: tSync('remoteSetup.cancel'),
             value: 'cancel',
           },
         ]}

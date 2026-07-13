@@ -5,6 +5,7 @@ import chalk from 'chalk'
 import { use, useEffect, useState } from 'react'
 import { getOriginalCwd } from '../../bootstrap/state.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { getAutoMemPath, isAutoMemoryEnabled } from '../../memdir/paths.js'
@@ -249,7 +250,11 @@ export function MemoryFileSelector({ onSelect, onCancel }: Props) {
         <Box flexDirection="column" marginBottom={1}>
           {
             <ListItem isFocused={focusedToggle === 0}>
-              {<Text>Auto-memory: {autoMemoryOn ? 'on' : 'off'}</Text>}
+              {
+                <Text>
+                  {tSync('memoryFile.autoMemory', { status: autoMemoryOn ? 'on' : 'off' })}
+                </Text>
+              }
             </ListItem>
           }
           {showDreamRow && (

@@ -478,7 +478,7 @@ function ReviewSessionDetail({
       color="background"
       inputGuide={(exitState) =>
         exitState.pending ? (
-          <Text>Press {exitState.keyName} again to exit</Text>
+          <Text>{tSync('taskDetail.pressAgainToExit', { keyName: exitState.keyName ?? '' })}</Text>
         ) : (
           <Byline>
             <KeyboardShortcutHint shortcut="Enter" action="select" />
@@ -603,7 +603,9 @@ export function RemoteSessionDetailDialog({
         color="background"
         inputGuide={(exitState) =>
           exitState.pending ? (
-            <Text>Press {exitState.keyName} again to exit</Text>
+            <Text>
+              {tSync('taskDetail.pressAgainToExit', { keyName: exitState.keyName ?? '' })}
+            </Text>
           ) : (
             <Byline>
               {onBack && <KeyboardShortcutHint shortcut="←" action="go back" />}

@@ -13,6 +13,7 @@ import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { getTaskOutputPath } from '../../services/task/diskOutput.js'
 import { TaskOutput } from '../../services/task/TaskOutput.js'
 import { getCachedPowerShellPath } from '../../shell-eval/shared/powershellDetection.js'
+import { tSync } from '../../i18n/index.js'
 import type { SetToolJSXFn, Tool, ToolCallProgress, ValidationResult } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import {
@@ -458,10 +459,10 @@ export const PowerShellTool = buildTool({
   },
   getActivityDescription(input: Partial<PowerShellToolInput> | undefined): string {
     if (!input?.command) {
-      return 'Running command'
+      return tSync('pwshTool.runningCommand')
     }
     const desc = input.description ?? truncate(input.command, TOOL_SUMMARY_MAX_LENGTH)
-    return `Running ${desc}`
+    return tSync('pwshTool.running', { desc })
   },
   isEnabled(): boolean {
     return true

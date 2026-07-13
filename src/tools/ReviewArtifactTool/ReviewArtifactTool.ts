@@ -2,6 +2,7 @@
 // This module provides artifact review functionality for REVIEW_ARTIFACT feature
 
 import { z } from 'zod/v4'
+import { tSync } from '../../i18n/index.js'
 import type { Tool } from '../../Tool.js'
 
 const inputSchema = z.object({}).passthrough()
@@ -19,7 +20,7 @@ export const ReviewArtifactTool: Tool = {
   },
 
   async description(_input, _options) {
-    return 'Review and provide feedback on generated artifacts'
+    return tSync('reviewArtifact.description')
   },
 
   isConcurrencySafe(_input) {

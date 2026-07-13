@@ -1,4 +1,5 @@
 import { z } from 'zod/v4'
+import { t, tSync } from '../../i18n/index.js'
 import {
   getOriginalCwd,
   getProjectRoot,
@@ -140,7 +141,7 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
   searchHint: 'exit a worktree session and return to the original directory',
   maxResultSizeChars: 100_000,
   async description() {
-    return 'Exits a worktree session created by EnterWorktree and restores the original working directory'
+    return tSync('exitWorktree.description')
   },
   async prompt() {
     return getExitWorktreeToolPrompt()
@@ -171,8 +172,7 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
     if (!session) {
       return {
         result: false,
-        message:
-          'No-op: there is no active EnterWorktree session to exit. This tool only operates on worktrees created by EnterWorktree in the current session — it will not touch worktrees created manually or in a previous session. No filesystem changes were made.',
+        message: tSync('exitWorktree.noActiveSession'),
         errorCode: 1,
       }
     }
@@ -182,7 +182,7 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
       if (summary === null) {
         return {
           result: false,
-          message: `Could not verify worktree state at ${session.worktreePath}. Refusing to remove without explicit confirmation. Re-invoke with discard_changes: true to proceed — or use action: "keep" to preserve the worktree.`,
+          message: tSync('exitWorktree.cannotVerify', { path: session.worktreePath }),
           errorCode: 3,
         }
       }
@@ -199,7 +199,7 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
         }
         return {
           result: false,
-          message: `Worktree has ${parts.join(' and ')}. Removing will discard this work permanently. Confirm with the user, then re-invoke with discard_changes: true — or use action: "keep" to preserve the worktree.`,
+          message: tSync('exitWorktree.hasChanges', { parts: parts.join(' and ') }),
           errorCode: 2,
         }
       }
@@ -214,7 +214,7 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
     if (!session) {
       // validateInput guards this, but the session is module-level mutable
       // state — defend against a race between validation and execution.
-      throw new Error('Not in a worktree session')
+      throw new Error(tSync('exitWorktree.notInSession'))
     }
 
     // Capture before keepWorktree/cleanupWorktree null out currentWorktreeSession.
@@ -249,7 +249,7 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
       })
 
       const tmuxNote = tmuxSessionName
-        ? ` Tmux session ${tmuxSessionName} is still running; reattach with: tmux attach -t ${tmuxSessionName}`
+        ? tSync('exitWorktree.tmuxNote', { name: tmuxSessionName })
         : ''
       return {
         data: {
@@ -258,7 +258,12 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
           worktreePath,
           worktreeBranch,
           tmuxSessionName,
-          message: `Exited worktree. Your work is preserved at ${worktreePath}${worktreeBranch ? ` on branch ${worktreeBranch}` : ''}. Session is now back in ${originalCwd}.${tmuxNote}`,
+          message: tSync('exitWorktree.exitedKeep', {
+            path: worktreePath,
+            branch: worktreeBranch ? ` on branch ${worktreeBranch}` : '',
+            originalCwd,
+            tmuxNote,
+          }),
         },
       }
     }
@@ -283,7 +288,10 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
     if (changedFiles > 0) {
       discardParts.push(`${changedFiles} uncommitted ${changedFiles === 1 ? 'file' : 'files'}`)
     }
-    const discardNote = discardParts.length > 0 ? ` Discarded ${discardParts.join(' and ')}.` : ''
+    const discardNote =
+      discardParts.length > 0
+        ? tSync('exitWorktree.discardSummary', { parts: discardParts.join(' and ') })
+        : ''
     return {
       data: {
         action: 'remove' as const,
@@ -292,7 +300,11 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
         worktreeBranch,
         discardedFiles: changedFiles,
         discardedCommits: commits,
-        message: `Exited and removed worktree at ${worktreePath}.${discardNote} Session is now back in ${originalCwd}.`,
+        message: tSync('exitWorktree.exitedRemove', {
+          path: worktreePath,
+          discardNote,
+          originalCwd,
+        }),
       },
     }
   },

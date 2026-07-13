@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { clearTrustedDeviceTokenCache } from '../../bridge/trustedDevice.js'
 import { Text } from '../../ink.js'
+import { tSync } from '../../i18n/index.js'
 import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growthbook.js'
 import { clearOAuthCredentialsCache } from '../../services/oauth/oauthStorage.js'
 import { clearPolicyLimitsCache } from '../../services/policy-limits/index.js'
@@ -67,7 +68,7 @@ export async function call(): Promise<React.ReactNode> {
   await performLogout({
     clearOnboarding: true,
   })
-  const message = <Text>Successfully logged out from your ZY account.</Text>
+  const message = <Text>{tSync('logoutCmd.success')}</Text>
   setTimeout(() => {
     gracefulShutdownSync(0, 'logout')
   }, 200)

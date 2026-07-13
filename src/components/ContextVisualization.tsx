@@ -418,25 +418,25 @@ export function ContextVisualization({ data }: Props) {
           <Text bold={true}>[INNER-ONLY] Message breakdown</Text>
           <Box flexDirection="column" marginLeft={1}>
             <Box>
-              <Text>Tool calls: </Text>
+              <Text>{tSync('ctxVis.toolCalls')} </Text>
               <Text dimColor={true}>{formatTokens(messageBreakdown!.toolCallTokens)} tokens</Text>
             </Box>
             <Box>
-              <Text>Tool results: </Text>
+              <Text>{tSync('ctxVis.toolResults')} </Text>
               <Text dimColor={true}>{formatTokens(messageBreakdown!.toolResultTokens)} tokens</Text>
             </Box>
             <Box>
-              <Text>Attachments: </Text>
+              <Text>{tSync('ctxVis.attachments')} </Text>
               <Text dimColor={true}>{formatTokens(messageBreakdown!.attachmentTokens)} tokens</Text>
             </Box>
             <Box>
-              <Text>Assistant messages (non-tool): </Text>
+              <Text>{tSync('ctxVis.assistantMessages')} </Text>
               <Text dimColor={true}>
                 {formatTokens(messageBreakdown!.assistantMessageTokens)} tokens
               </Text>
             </Box>
             <Box>
-              <Text>User messages (non-tool-result): </Text>
+              <Text>{tSync('ctxVis.userMessages')} </Text>
               <Text dimColor={true}>
                 {formatTokens(messageBreakdown!.userMessageTokens)} tokens
               </Text>

@@ -3,6 +3,7 @@ import { basename } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import type { SettingSource } from 'src/utils/settings/constants.js'
 import { z } from 'zod/v4'
+import { tSync } from '../../i18n/index.js'
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -344,14 +345,14 @@ function getParseError(frontmatter: Record<string, unknown>): string {
   const description = frontmatter.description
 
   if (!agentType || typeof agentType !== 'string') {
-    return 'Missing required "name" field in frontmatter'
+    return tSync('loadAgent.missingName')
   }
 
   if (!description || typeof description !== 'string') {
-    return 'Missing required "description" field in frontmatter'
+    return tSync('loadAgent.missingDescription')
   }
 
-  return 'Unknown parsing error'
+  return tSync('loadAgent.unknownError')
 }
 
 /**

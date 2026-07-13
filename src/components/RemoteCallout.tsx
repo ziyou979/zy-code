@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react'
+import { tSync } from '../i18n/index.js'
 import { isBridgeEnabled } from '../bridge/bridgeEnabled.js'
 import { Box, Text } from '../ink.js'
 import { getZyAIOAuthTokens } from '../utils/auth.js'
@@ -54,7 +55,7 @@ export function RemoteCallout({ onDone }: Props): React.ReactNode {
             so you can pick up where you left off on any device.
           </Text>
           <Text> </Text>
-          <Text>You can disconnect remote access anytime by running /remote-control again.</Text>
+          <Text>{tSync('remoteCallout.disconnectInfo')}</Text>
         </Box>
         <Box>
           <Select options={options} onChange={handleSelect} onCancel={handleCancel} />

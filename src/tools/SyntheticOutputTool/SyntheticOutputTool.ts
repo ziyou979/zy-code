@@ -1,5 +1,6 @@
 import { Ajv } from 'ajv'
 import { z } from 'zod/v4'
+import { tSync } from '../../i18n/index.js'
 import type { Tool, ToolInputJSONSchema } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../utils/errors.js'
@@ -41,7 +42,7 @@ export const SyntheticOutputTool = buildTool({
   searchHint: 'return the final response as structured JSON',
   maxResultSizeChars: 100_000,
   async description(): Promise<string> {
-    return 'Return structured output in the requested format'
+    return tSync('synthOut.description')
   },
   async prompt(): Promise<string> {
     return `Use this tool to return your final response in the requested structured format. You MUST call this tool exactly once at the end of your response to provide the structured output.`
@@ -78,10 +79,10 @@ export const SyntheticOutputTool = buildTool({
     return `${keys.length} fields: ${keys.slice(0, 3).join(', ')}…`
   },
   renderToolUseRejectedMessage() {
-    return 'Structured output rejected'
+    return tSync('synthOut.rejected')
   },
   renderToolUseErrorMessage() {
-    return 'Structured output error'
+    return tSync('synthOut.error')
   },
   renderToolUseProgressMessage() {
     return null
@@ -142,7 +143,7 @@ function buildSyntheticOutputTool(jsonSchema: Record<string, unknown>): CreateRe
               ?.map((e) => `${e.instancePath || 'root'}: ${e.message}`)
               .join(', ')
             throw new TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS(
-              `Output does not match required schema: ${errors}`,
+              tSync('synthOut.schemaMismatch', { errors: errors ?? '' }),
               `StructuredOutput schema mismatch: ${(errors ?? '').slice(0, 150)}`,
             )
           }

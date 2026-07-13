@@ -1204,6 +1204,25 @@ export const enMisc: TranslationResource = {
   'agentFileSource.plugin': 'Plugin: {name}',
   'agentFileSource.cliArg': 'CLI argument',
 
+  // colorPicker
+  'colorPicker.preview': 'Preview: ',
+
+  // ctxVis (message breakdown labels)
+  'ctxVis.toolCalls': 'Tool calls: ',
+  'ctxVis.toolResults': 'Tool results: ',
+  'ctxVis.attachments': 'Attachments: ',
+  'ctxVis.assistantMessages': 'Assistant messages (non-tool): ',
+  'ctxVis.userMessages': 'User messages (non-tool-result): ',
+
+  // taskDetail
+  'taskDetail.pressAgainToExit': 'Press {keyName} again to exit',
+
+  // workflowDialog
+  'workflowDialog.pressAgainToExit': 'Press {keyName} again to exit',
+
+  // memoryFile
+  'memoryFile.autoMemory': 'Auto-memory: {status}',
+
   // install-github-app
   'installGh.checkingGithub': 'Checking GitHub CLI installation\u2026',
   'installGh.installTitle': 'Install GitHub App',
@@ -1328,4 +1347,123 @@ export const enMisc: TranslationResource = {
   'pluginSettings.removedFrom': '{tick} Removed "{name}" from {scopes} settings',
   'pluginSettings.removedMarketplace': '{tick} Removed marketplace "{name}"',
   'pluginSettings.failedToRemove': 'Failed to remove "{name}": {error}',
+
+  // AskUserQuestionTool
+  'askUser.questionsMustBeUnique':
+    'Question texts must be unique, option labels must be unique within each question',
+  'askUser.answerQuestions': 'Answer questions?',
+  'askUser.userDeclined': 'User declined to answer questions',
+  'askUser.htmlPreviewFullDoc':
+    'preview must be an HTML fragment, not a full document (no <html>, <body>, or <!DOCTYPE>)',
+  'askUser.htmlPreviewNoScriptStyle':
+    'preview must not contain <script> or <style> tags. Use inline styles via the style attribute if needed.',
+  'askUser.htmlPreviewMustContainHtml':
+    'preview must contain HTML (previewFormat is set to "html"). Wrap content in a tag like <div> or <pre>.',
+
+  // AgentTool prompt
+  'agentPrompt.none': 'None',
+  'agentPrompt.allTools': 'All tools',
+  'agentPrompt.allToolsExcept': 'All tools except {tools}',
+
+  // loadAgentsDir
+  'loadAgent.missingName': 'Missing required "name" field in frontmatter',
+  'loadAgent.missingDescription': 'Missing required "description" field in frontmatter',
+  'loadAgent.unknownError': 'Unknown parsing error',
+
+  // ExitWorktreeTool
+  'exitWorktree.description':
+    'Exits a worktree session created by EnterWorktree and restores the original working directory',
+  'exitWorktree.noActiveSession':
+    'No-op: there is no active EnterWorktree session to exit. This tool only operates on worktrees created by EnterWorktree in the current session — it will not touch worktrees created manually or in a previous session. No filesystem changes were made.',
+  'exitWorktree.cannotVerify':
+    'Could not verify worktree state at {path}. Refusing to remove without explicit confirmation. Re-invoke with discard_changes: true to proceed — or use action: "keep" to preserve the worktree.',
+  'exitWorktree.hasChanges':
+    'Worktree has {parts}. Removing will discard this work permanently. Confirm with the user, then re-invoke with discard_changes: true — or use action: "keep" to preserve the worktree.',
+  'exitWorktree.notInSession': 'Not in a worktree session',
+  'exitWorktree.exitedKeep':
+    'Exited worktree. Your work is preserved at {path}{branch}. Session is now back in {originalCwd}.{tmuxNote}',
+  'exitWorktree.exitedRemove':
+    'Exited and removed worktree at {path}.{discardNote} Session is now back in {originalCwd}.',
+  'exitWorktree.tmuxNote':
+    ' Tmux session {name} is still running; reattach with: tmux attach -t {name}',
+  'exitWorktree.discardSummary': 'Discarded {parts}.',
+
+  // EnterWorktreeTool
+  'enterWorktree.description':
+    'Creates an isolated worktree (via git or configured hooks) and switches the session into it',
+  'enterWorktree.alreadyInSession': 'Already in a worktree session',
+  'enterWorktree.created':
+    'Created worktree at {path}{branch}. The session is now working in the worktree. Use ExitWorktree to leave mid-session, or exit the session to be prompted.',
+
+  // SyntheticOutputTool
+  'synthOut.description': 'Return structured output in the requested format',
+  'synthOut.rejected': 'Structured output rejected',
+  'synthOut.error': 'Structured output error',
+  'synthOut.schemaMismatch': 'Output does not match required schema: {errors}',
+
+  // PowerShellTool
+  'pwshTool.runningCommand': 'Running command',
+  'pwshTool.running': 'Running {desc}',
+
+  // ReviewArtifactTool
+  'reviewArtifact.description': 'Review and provide feedback on generated artifacts',
+
+  // chrome command
+  'chromeCmd.title': 'Claude in Chrome (Beta)',
+  'chromeCmd.description':
+    'Claude in Chrome works with the Chrome extension to let you control your browser directly from ZY Code. Navigate websites, fill forms, capture screenshots, record GIFs, and debug with console logs and network requests.',
+  'chromeCmd.installExtension': 'Install Chrome extension',
+  'chromeCmd.managePermissions': 'Manage permissions',
+  'chromeCmd.reconnectExtension': 'Reconnect extension',
+  'chromeCmd.requiresExtension': ' (requires extension)',
+  'chromeCmd.enabledByDefault': 'Enabled by default: {value}',
+  'chromeCmd.yes': 'Yes',
+  'chromeCmd.no': 'No',
+  'chromeCmd.notSupportedOnWSL': 'Claude in Chrome is not supported in WSL at this time.',
+  'chromeCmd.requiresSubscription': 'Claude in Chrome requires a claude.ai subscription.',
+  'chromeCmd.status': 'Status: ',
+  'chromeCmd.statusEnabled': 'Enabled',
+  'chromeCmd.statusDisabled': 'Disabled',
+  'chromeCmd.extension': 'Extension: ',
+  'chromeCmd.extensionInstalled': 'Installed',
+  'chromeCmd.extensionNotDetected': 'Not detected',
+  'chromeCmd.installHint': 'Once installed, select \'"Reconnect extension"\' to connect.',
+  'chromeCmd.usageLabel': 'Usage: ',
+  'chromeCmd.or': ' or ',
+  'chromeCmd.learnMore': 'Learn more: ',
+  'chromeCmd.sitePermissions':
+    'Site-level permissions are inherited from the Chrome extension. Manage permissions in the Chrome extension settings to control which sites Zy can browse, click, and type on.',
+
+  // bridge / remote-control command
+  'bridgeCmd.title': 'Remote Control',
+  'bridgeCmd.sessionAvailable': 'This session is available via Remote Control{url}.',
+  'bridgeCmd.disconnectSession': 'Disconnect this session',
+  'bridgeCmd.showQRCode': 'Show QR code',
+  'bridgeCmd.hideQRCode': 'Hide QR code',
+  'bridgeCmd.continue': 'Continue',
+  'bridgeCmd.enterToSelect': 'Enter to select \u00b7 Esc to continue',
+  'bridgeCmd.policyDisabled': "Remote Control is disabled by your organization's policy.",
+  'bridgeCmd.connecting': 'Remote Control connecting\u2026',
+
+  // logout command
+  'logoutCmd.success': 'Successfully logged out from your ZY account.',
+
+  // remote-setup command
+  'remoteSetup.notSignedIn': 'Not signed in to Zy. Run /login first.',
+  'remoteSetup.ghNotInstalled':
+    'GitHub CLI not found. Install it via https://cli.github.com/, then run `gh auth login`, or connect GitHub on the web: {url}',
+  'remoteSetup.ghNotAuthenticated':
+    'GitHub CLI not authenticated. Run `gh auth login` and try again, or connect GitHub on the web: {url}',
+  'remoteSetup.loginFailed': 'Login failed. Please visit {url} and login using the GitHub App',
+  'remoteSetup.invalidToken': 'GitHub rejected that token. Run `gh auth login` and try again.',
+  'remoteSetup.serverError': 'Server error ({status}). Try again in a moment.',
+  'remoteSetup.networkError': "Couldn't reach the server. Check your connection.",
+  'remoteSetup.checkingLogin': 'Checking login status\u2026',
+  'remoteSetup.connectingGithub': 'Connecting GitHub to Zy\u2026',
+  'remoteSetup.dialogTitle': 'Connect Zy on the web to GitHub?',
+  'remoteSetup.dialogDescription':
+    'Zy on the web requires connecting to your GitHub account to clone and push code on your behalf.',
+  'remoteSetup.dialogNote': 'Your local credentials are used to authenticate with GitHub',
+  'remoteSetup.continue': 'Continue',
+  'remoteSetup.cancel': 'Cancel',
 }

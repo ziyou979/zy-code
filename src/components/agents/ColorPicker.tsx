@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { tSync } from '../../i18n/index.js'
 import { POINTER } from '../../constants/figures.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../ink.js'
@@ -60,7 +61,7 @@ export function ColorPicker({ agentName, currentColor = 'automatic', onConfirm }
       {<Box flexDirection="column">{colorOptionElements}</Box>}
       {
         <Box marginTop={1}>
-          {<Text>Preview: </Text>}
+          {<Text>{tSync('colorPicker.preview')}</Text>}
           {selectedValue === undefined || selectedValue === 'automatic' ? (
             <Text inverse={true} bold={true}>
               {' '}

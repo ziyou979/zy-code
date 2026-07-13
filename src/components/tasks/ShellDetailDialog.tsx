@@ -112,7 +112,9 @@ export function ShellDetailDialog({ shell, onDone, onKillShell, onBack }: Props)
           color="background"
           inputGuide={(exitState) =>
             exitState.pending ? (
-              <Text>Press {exitState.keyName} again to exit</Text>
+              <Text>
+                {tSync('taskDetail.pressAgainToExit', { keyName: exitState.keyName ?? '' })}
+              </Text>
             ) : (
               <Byline>
                 {onBack && <KeyboardShortcutHint shortcut={'\u2190'} action="go back" />}

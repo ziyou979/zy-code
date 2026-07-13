@@ -15,6 +15,7 @@ import { QRCodeDisplay } from '../../components/QRCodeDisplay.js'
 import { shouldShowRemoteCallout } from '../../components/RemoteCallout.js'
 import { useRegisterOverlay } from '../../context/overlayContext.js'
 import { Box, Text } from '../../ink.js'
+import { tSync } from '../../i18n/index.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -98,7 +99,7 @@ function WireToggle({ onDone, name }: Props) {
           replWireInitialName: name,
         }
       })
-      onDone('Remote Control connecting\u2026', {
+      onDone(tSync('bridgeCmd.connecting'), {
         display: 'system',
       })
     })()
@@ -178,27 +179,39 @@ function WireDisconnectDialog({ onDone }: Props) {
   const ContainerBox = Box
   const isFirstOptionFocused = focusIndex === 0
   return (
-    <DialogComponent title={'Remote Control'} onCancel={handleContinue} hideInputGuide={true}>
+    <DialogComponent
+      title={tSync('bridgeCmd.title')}
+      onCancel={handleContinue}
+      hideInputGuide={true}
+    >
       {
         <ContainerBox flexDirection={'column'} gap={1}>
-          {<Text>This session is available via Remote Control{displayUrlText}.</Text>}
+          {<Text>{tSync('bridgeCmd.sessionAvailable', { url: displayUrlText })}</Text>}
           <QRCodeDisplay displayUrl={displayUrl} showQR={showQR} />
           {
             <Box flexDirection="column">
               {
                 <ListItem isFocused={isFirstOptionFocused}>
-                  {<Text>Disconnect this session</Text>}
+                  {<Text>{tSync('bridgeCmd.disconnectSession')}</Text>}
                 </ListItem>
               }
               {
                 <ListItem isFocused={focusIndex === 1}>
-                  {<Text>{showQR ? 'Hide QR code' : 'Show QR code'}</Text>}
+                  {
+                    <Text>
+                      {showQR ? tSync('bridgeCmd.hideQRCode') : tSync('bridgeCmd.showQRCode')}
+                    </Text>
+                  }
                 </ListItem>
               }
-              {<ListItem isFocused={focusIndex === 2}>{<Text>Continue</Text>}</ListItem>}
+              {
+                <ListItem isFocused={focusIndex === 2}>
+                  {<Text>{tSync('bridgeCmd.continue')}</Text>}
+                </ListItem>
+              }
             </Box>
           }
-          {<Text dimColor={true}>Enter to select · Esc to continue</Text>}
+          {<Text dimColor={true}>{tSync('bridgeCmd.enterToSelect')}</Text>}
         </ContainerBox>
       }
     </DialogComponent>
@@ -219,7 +232,7 @@ async function checkWirePrerequisites(): Promise<string | null> {
   )
   await waitForPolicyLimitsToLoad()
   if (!isPolicyAllowed('allow_remote_control')) {
-    return "Remote Control is disabled by your organization's policy."
+    return tSync('bridgeCmd.policyDisabled')
   }
   const disabledReason = await getWireDisabledReason()
   if (disabledReason) {

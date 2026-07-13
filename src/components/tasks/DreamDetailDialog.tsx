@@ -115,7 +115,9 @@ export function DreamDetailDialog({ task, onDone, onBack, onKill }: Props) {
           color={'background'}
           inputGuide={(exitState) =>
             exitState.pending ? (
-              <Text>Press {exitState.keyName} again to exit</Text>
+              <Text>
+                {tSync('taskDetail.pressAgainToExit', { keyName: exitState.keyName ?? '' })}
+              </Text>
             ) : (
               <Byline>
                 {onBack && <KeyboardShortcutHint shortcut={'←'} action="go back" />}

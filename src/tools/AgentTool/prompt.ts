@@ -3,6 +3,7 @@ import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { isTeammate } from '../../utils/teammate.js'
 import { isInProcessTeammate } from '../../utils/teammateContext.js'
+import { tSync } from '../../i18n/index.js'
 import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'
 import { FILE_WRITE_TOOL_NAME } from '../FileWriteTool/prompt.js'
 import { GLOB_TOOL_NAME } from '../GlobTool/prompt.js'
@@ -21,7 +22,7 @@ function getToolsDescription(agent: AgentDefinition): string {
     const denySet = new Set(disallowedTools)
     const effectiveTools = tools.filter((t) => !denySet.has(t))
     if (effectiveTools.length === 0) {
-      return 'None'
+      return tSync('agentPrompt.none')
     }
     return effectiveTools.join(', ')
   } else if (hasAllowlist) {
@@ -29,10 +30,10 @@ function getToolsDescription(agent: AgentDefinition): string {
     return tools.join(', ')
   } else if (hasDenylist) {
     // Denylist only: show "All tools except X, Y, Z"
-    return `All tools except ${disallowedTools.join(', ')}`
+    return tSync('agentPrompt.allToolsExcept', { tools: disallowedTools.join(', ') })
   }
   // No restrictions
-  return 'All tools'
+  return tSync('agentPrompt.allTools')
 }
 
 /**

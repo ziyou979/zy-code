@@ -1,4 +1,5 @@
 import { z } from 'zod/v4'
+import { tSync } from '../../i18n/index.js'
 import { getSessionId, setOriginalCwd } from '../../bootstrap/state.js'
 import { clearSystemPromptSections } from '../../constants/systemPromptSections.js'
 import { logEvent } from '../../services/analytics/index.js'
@@ -54,7 +55,7 @@ export const EnterWorktreeTool: Tool<InputSchema, Output> = buildTool({
   searchHint: 'create an isolated git worktree and switch into it',
   maxResultSizeChars: 100_000,
   async description() {
-    return 'Creates an isolated worktree (via git or configured hooks) and switches the session into it'
+    return tSync('enterWorktree.description')
   },
   async prompt() {
     return getEnterWorktreeToolPrompt()
@@ -77,7 +78,7 @@ export const EnterWorktreeTool: Tool<InputSchema, Output> = buildTool({
   async call(input) {
     // Validate not already in a worktree created by this session
     if (getCurrentWorktreeSession()) {
-      throw new Error('Already in a worktree session')
+      throw new Error(tSync('enterWorktree.alreadyInSession'))
     }
 
     // Resolve to main repo root so worktree creation works from within a worktree
@@ -113,7 +114,10 @@ export const EnterWorktreeTool: Tool<InputSchema, Output> = buildTool({
       data: {
         worktreePath: worktreeSession.worktreePath,
         worktreeBranch: worktreeSession.worktreeBranch,
-        message: `Created worktree at ${worktreeSession.worktreePath}${branchInfo}. The session is now working in the worktree. Use ExitWorktree to leave mid-session, or exit the session to be prompted.`,
+        message: tSync('enterWorktree.created', {
+          path: worktreeSession.worktreePath,
+          branch: branchInfo,
+        }),
       },
     }
   },
