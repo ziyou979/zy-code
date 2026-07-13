@@ -6,6 +6,7 @@ import { Tab, Tabs } from '../../components/design-system/Tabs.js'
 import { CROSS, POINTER, TICK } from '../../constants/figures.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { Box, Text } from '../../ink.js'
+import { tSync } from '../../i18n/index.js'
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { PluginError } from '../../types/plugin.js'
@@ -37,17 +38,21 @@ function MarketplaceList({ onComplete }: { onComplete: (result: string) => void 
         const config = await loadKnownMarketplacesConfig()
         const names = Object.keys(config)
         if (names.length === 0) {
-          onComplete('No marketplaces configured')
+          onComplete(tSync('pluginSettings.noMarketplaces'))
         } else {
-          onComplete(`Configured marketplaces:\n${names.map((n) => `  • ${n}`).join('\n')}`)
+          onComplete(
+            `${tSync('pluginSettings.configuredMarketplaces')}\n${names.map((n) => `  • ${n}`).join('\n')}`,
+          )
         }
       } catch (err) {
-        onComplete(`Error loading marketplaces: ${errorMessage(err)}`)
+        onComplete(
+          `${tSync('pluginSettings.errorLoadingMarketplaces', { error: errorMessage(err) })}`,
+        )
       }
     }
     loadList()
   }, [onComplete])
-  return <Text>Loading marketplaces...</Text>
+  return <Text>{tSync('pluginSettings.loadingMarketplaces')}</Text>
 }
 function McpRedirectBanner() {
   return null
@@ -215,7 +220,7 @@ function buildErrorRows(
     rows.push({
       label: pluginName ?? error.source,
       message: formatErrorMessage(error),
-      guidance: 'Restart to retry loading plugins',
+      guidance: tSync('pluginSettings.restartToRetry'),
       action: {
         kind: 'none',
       },
@@ -232,11 +237,8 @@ function buildErrorRows(
     const scope = sourceInfo.isInPolicy ? 'managed' : sourceInfo.editableSources[0]?.scope
     rows.push({
       label: m.name,
-      message: m.error ?? 'Installation failed',
-      guidance:
-        action.kind === 'managed-only'
-          ? 'Managed by your organization — contact your admin'
-          : undefined,
+      message: m.error ?? tSync('pluginSettings.installationFailed'),
+      guidance: action.kind === 'managed-only' ? tSync('pluginSettings.managedByOrg') : undefined,
       action,
       scope,
     })
@@ -254,9 +256,7 @@ function buildErrorRows(
       label: marketplace,
       message: formatErrorMessage(e),
       guidance:
-        action.kind === 'managed-only'
-          ? 'Managed by your organization — contact your admin'
-          : getErrorGuidance(e),
+        action.kind === 'managed-only' ? tSync('pluginSettings.managedByOrg') : getErrorGuidance(e),
       action,
       scope,
     })
@@ -485,7 +485,9 @@ function ErrorsTabContent({
             },
           },
         }))
-        setActionMessage(`${TICK} Removed "${action.name}" from ${scopes} settings`)
+        setActionMessage(
+          `${TICK} ${tSync('pluginSettings.removedFrom', { name: action.name, scopes })}`,
+        )
         markPluginsChanged()
         break
       }
@@ -495,11 +497,13 @@ function ErrorsTabContent({
             await removeMarketplaceSource(action.name)
             clearAllCaches()
             setMarketplaceLoadFailures((prev) => prev.filter((f) => f.name !== action.name))
-            setActionMessage(`${TICK} Removed marketplace "${action.name}"`)
+            setActionMessage(
+              `${TICK} ${tSync('pluginSettings.removedMarketplace', { name: action.name })}`,
+            )
             markPluginsChanged()
           } catch (err) {
             setActionMessage(
-              `Failed to remove "${action.name}": ${err instanceof Error ? err.message : String(err)}`,
+              `${tSync('pluginSettings.failedToRemove', { name: action.name, error: err instanceof Error ? err.message : String(err) })}`,
             )
           }
         })()
@@ -534,7 +538,7 @@ function ErrorsTabContent({
       <Box flexDirection="column">
         {
           <Box marginLeft={1}>
-            <Text dimColor={true}>No plugin errors</Text>
+            <Text dimColor={true}>{tSync('pluginSettings.noPluginErrors')}</Text>
           </Box>
         }
         <Box marginTop={1}>
@@ -742,7 +746,10 @@ export function PluginSettings({
     }
     return count
   })
-  const errorsTabTitle = pluginErrorCount > 0 ? `Errors (${pluginErrorCount})` : 'Errors'
+  const errorsTabTitle =
+    pluginErrorCount > 0
+      ? tSync('pluginSettings.errorsTabWithCount', { count: pluginErrorCount })
+      : tSync('pluginSettings.errorsTab')
   const exitState = useExitOnCtrlCDWithKeybindings()
   const cliMode =
     parsedCommand.type === 'marketplace' &&
@@ -822,37 +829,37 @@ export function PluginSettings({
   if (viewState.type === 'help') {
     return (
       <Box flexDirection="column">
-        <Text bold={true}>Plugin Command Usage:</Text>
+        <Text bold={true}>{tSync('pluginHelp.title')}</Text>
         <Text> </Text>
-        <Text dimColor={true}>Installation:</Text>
-        <Text> /plugin install - Browse and install plugins</Text>
-        <Text> {'/plugin install <marketplace> - Install from specific marketplace'}</Text>
-        <Text>{' /plugin install <plugin> - Install specific plugin'}</Text>
-        <Text> {'/plugin install <plugin>@<market> - Install plugin from marketplace'}</Text>
+        <Text dimColor={true}>{tSync('pluginHelp.installation')}</Text>
+        <Text> {tSync('pluginHelp.install')}</Text>
+        <Text> {tSync('pluginHelp.installMarketplace')}</Text>
+        <Text>{tSync('pluginHelp.installPlugin')}</Text>
+        <Text> {tSync('pluginHelp.installPluginAt')}</Text>
         <Text> </Text>
-        <Text dimColor={true}>Management:</Text>
-        <Text> /plugin manage - Manage installed plugins</Text>
-        <Text>{' /plugin enable <plugin> - Enable a plugin'}</Text>
-        <Text>{' /plugin disable <plugin> - Disable a plugin'}</Text>
-        <Text>{' /plugin uninstall <plugin> - Uninstall a plugin'}</Text>
+        <Text dimColor={true}>{tSync('pluginHelp.management')}</Text>
+        <Text> {tSync('pluginHelp.manage')}</Text>
+        <Text>{tSync('pluginHelp.enable')}</Text>
+        <Text>{tSync('pluginHelp.disable')}</Text>
+        <Text>{tSync('pluginHelp.uninstall')}</Text>
         <Text> </Text>
-        <Text dimColor={true}>Marketplaces:</Text>
-        <Text> /plugin marketplace - Marketplace management menu</Text>
-        <Text> /plugin marketplace add - Add a marketplace</Text>
-        <Text> {'/plugin marketplace add <path/url> - Add marketplace directly'}</Text>
-        <Text> /plugin marketplace update - Update marketplaces</Text>
-        <Text> {'/plugin marketplace update <name> - Update specific marketplace'}</Text>
-        <Text> /plugin marketplace remove - Remove a marketplace</Text>
-        <Text> {'/plugin marketplace remove <name> - Remove specific marketplace'}</Text>
-        <Text> /plugin marketplace list - List all marketplaces</Text>
+        <Text dimColor={true}>{tSync('pluginHelp.marketplaces')}</Text>
+        <Text> {tSync('pluginHelp.marketplaceMenu')}</Text>
+        <Text> {tSync('pluginHelp.marketplaceAdd')}</Text>
+        <Text> {tSync('pluginHelp.marketplaceAddDirect')}</Text>
+        <Text> {tSync('pluginHelp.marketplaceUpdate')}</Text>
+        <Text> {tSync('pluginHelp.marketplaceUpdateSpecific')}</Text>
+        <Text> {tSync('pluginHelp.marketplaceRemove')}</Text>
+        <Text> {tSync('pluginHelp.marketplaceRemoveSpecific')}</Text>
+        <Text> {tSync('pluginHelp.marketplaceList')}</Text>
         <Text> </Text>
-        <Text dimColor={true}>Validation:</Text>
-        <Text> {'/plugin validate <path> - Validate a manifest file or directory'}</Text>
+        <Text dimColor={true}>{tSync('pluginHelp.validation')}</Text>
+        <Text> {tSync('pluginHelp.validate')}</Text>
         <Text> </Text>
-        <Text dimColor={true}>Other:</Text>
-        <Text> /plugin - Main plugin menu</Text>
-        <Text> /plugin help - Show this help</Text>
-        <Text> /plugins - Alias for /plugin</Text>
+        <Text dimColor={true}>{tSync('pluginHelp.other')}</Text>
+        <Text> {tSync('pluginHelp.mainMenu')}</Text>
+        <Text> {tSync('pluginHelp.help')}</Text>
+        <Text> {tSync('pluginHelp.alias')}</Text>
       </Box>
     )
   }

@@ -1,3 +1,4 @@
+import { tSync } from '../../i18n/index.js'
 import { getPluginErrorMessage, type PluginError } from '../../types/plugin.js'
 export function formatErrorMessage(error: PluginError): string {
   switch (error.type) {
@@ -68,66 +69,76 @@ export function formatErrorMessage(error: PluginError): string {
 export function getErrorGuidance(error: PluginError): string | null {
   switch (error.type) {
     case 'path-not-found':
-      return 'Check that the path in your manifest or marketplace config is correct'
+      return tSync('pluginErr.pathNotFound')
     case 'git-auth-failed':
       return error.authType === 'ssh'
-        ? 'Configure SSH keys or use HTTPS URL instead'
-        : 'Configure credentials or use SSH URL instead'
+        ? tSync('pluginErr.gitAuthFailedSsh')
+        : tSync('pluginErr.gitAuthFailedHttps')
     case 'git-timeout':
     case 'network-error':
-      return 'Check your internet connection and try again'
+      return tSync('pluginErr.networkTimeout')
     case 'manifest-parse-error':
-      return 'Check manifest file syntax in the plugin directory'
+      return tSync('pluginErr.manifestParse')
     case 'manifest-validation-error':
-      return 'Check manifest file follows the required schema'
+      return tSync('pluginErr.manifestValidation')
     case 'plugin-not-found':
-      return `Plugin may not exist in marketplace "${error.marketplace}"`
+      return tSync('pluginErr.pluginNotFound', { marketplace: error.marketplace })
     case 'marketplace-not-found':
       return error.availableMarketplaces.length > 0
-        ? `Available marketplaces: ${error.availableMarketplaces.join(', ')}`
-        : 'Add the marketplace first using /plugin marketplace add'
+        ? tSync('pluginErr.marketplaceNotFoundAvailable', {
+            marketplaces: error.availableMarketplaces.join(', '),
+          })
+        : tSync('pluginErr.marketplaceNotFoundNone')
     case 'mcp-config-invalid':
-      return 'Check MCP server configuration in .mcp.json or manifest'
+      return tSync('pluginErr.mcpConfigInvalid')
     case 'mcp-server-suppressed-duplicate': {
       // duplicateOf is "plugin:name:srv" when another plugin won dedup —
       // users can't remove plugin-provided servers from their MCP config,
       // so point them at the winning plugin instead.
       if (error.duplicateOf.startsWith('plugin:')) {
         const winningPlugin = error.duplicateOf.split(':')[1] ?? 'the other plugin'
-        return `Disable plugin "${winningPlugin}" if you want this plugin's version instead`
+        return tSync('pluginErr.mcpSuppressedPlugin', { plugin: winningPlugin })
       }
-      return `Remove "${error.duplicateOf}" from your MCP config if you want the plugin's version instead`
+      return tSync('pluginErr.mcpSuppressedConfig', { server: error.duplicateOf })
     }
     case 'hook-load-failed':
-      return 'Check hooks.json file syntax and structure'
+      return tSync('pluginErr.hookLoadFailed')
     case 'component-load-failed':
-      return `Check ${error.component} directory structure and file permissions`
+      return tSync('pluginErr.componentLoadFailed', { component: error.component })
     case 'mcpb-download-failed':
-      return 'Check your internet connection and URL accessibility'
+      return tSync('pluginErr.mcpbDownloadFailed')
     case 'mcpb-extract-failed':
-      return 'Verify the MCPB file is valid and not corrupted'
+      return tSync('pluginErr.mcpbExtractFailed')
     case 'mcpb-invalid-manifest':
-      return 'Contact the plugin author about the invalid manifest'
+      return tSync('pluginErr.mcpbInvalidManifest')
     case 'marketplace-blocked-by-policy':
       if (error.blockedByBlocklist) {
-        return 'This marketplace source is explicitly blocked by your administrator'
+        return tSync('pluginErr.marketplaceBlockedByPolicy')
       }
       return error.allowedSources.length > 0
-        ? `Allowed sources: ${error.allowedSources.join(', ')}`
-        : 'Contact your administrator to configure allowed marketplace sources'
+        ? tSync('pluginErr.marketplaceAllowedSources', {
+            sources: error.allowedSources.join(', '),
+          })
+        : tSync('pluginErr.marketplaceNoSources')
     case 'dependency-unsatisfied':
       return error.reason === 'not-enabled'
-        ? `Enable "${error.dependency}" or uninstall "${error.plugin}"`
-        : `Install "${error.dependency}" or uninstall "${error.plugin}"`
+        ? tSync('pluginErr.dependencyNotEnabled', {
+            dependency: error.dependency,
+            plugin: error.plugin,
+          })
+        : tSync('pluginErr.dependencyNotInstalled', {
+            dependency: error.dependency,
+            plugin: error.plugin,
+          })
     case 'lsp-config-invalid':
-      return 'Check LSP server configuration in the plugin manifest'
+      return tSync('pluginErr.lspConfigInvalid')
     case 'lsp-server-start-failed':
     case 'lsp-server-crashed':
     case 'lsp-request-timeout':
     case 'lsp-request-failed':
-      return 'Check LSP server logs with --debug for details'
+      return tSync('pluginErr.lspServerFailed')
     case 'plugin-cache-miss':
-      return 'Run /plugins to refresh the plugin cache'
+      return tSync('pluginErr.pluginCacheMiss')
     case 'marketplace-load-failed':
     case 'generic-error':
       return null

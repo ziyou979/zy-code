@@ -2,6 +2,7 @@ import { ELLIPSIS } from '../../constants/figures.js'
 import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/github-app.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
+import { tSync } from '../../i18n/index.js'
 
 interface InstallAppStepProps {
   repoUrl: string
@@ -15,17 +16,17 @@ export function InstallAppStep({ repoUrl, onSubmit }: InstallAppStepProps) {
     <Box flexDirection="column" borderStyle="round" borderDimColor={true} paddingX={1}>
       {
         <Box flexDirection="column" marginBottom={1}>
-          <Text bold={true}>Install the Zy GitHub App</Text>
+          <Text bold={true}>{tSync('installGh.installZyGhApp')}</Text>
         </Box>
       }
       {
         <Box marginBottom={1}>
-          <Text>Opening browser to install the Zy GitHub App…</Text>
+          <Text>{tSync('installGh.openingBrowser')}</Text>
         </Box>
       }
       {
         <Box marginBottom={1}>
-          <Text>If your browser doesn't open automatically, visit:</Text>
+          <Text>{tSync('installGh.ifBrowserNotOpen')}</Text>
         </Box>
       }
       {
@@ -36,28 +37,27 @@ export function InstallAppStep({ repoUrl, onSubmit }: InstallAppStepProps) {
       {
         <Box marginBottom={1}>
           <Text>
-            Please install the app for repository: <Text bold={true}>{repoUrl}</Text>
+            {tSync('installGh.installForRepo')} <Text bold={true}>{repoUrl}</Text>
           </Text>
         </Box>
       }
       {
         <Box marginBottom={1}>
-          <Text dimColor={true}>
-            Important: Make sure to grant access to this specific repository
-          </Text>
+          <Text dimColor={true}>{tSync('installGh.grantAccess')}</Text>
         </Box>
       }
       {
         <Box>
           <Text bold={true} color="permission">
-            Press Enter once you've installed the app{ELLIPSIS}
+            {tSync('installGh.pressEnterAfterInstall')}
+            {ELLIPSIS}
           </Text>
         </Box>
       }
       {
         <Box marginTop={1}>
           <Text dimColor={true}>
-            Having trouble? See manual setup instructions at:{' '}
+            {tSync('installGh.havingTrouble')}{' '}
             <Text color="zy">{GITHUB_ACTION_SETUP_DOCS_URL}</Text>
           </Text>
         </Box>

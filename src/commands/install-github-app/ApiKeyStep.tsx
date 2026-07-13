@@ -3,6 +3,7 @@ import TextInput from '../../components/TextInput.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { Box, color, Text, useTheme } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
+import { tSync } from '../../i18n/index.js'
 
 interface ApiKeyStepProps {
   existingApiKey: string | null
@@ -84,29 +85,32 @@ export function ApiKeyStep({
         <Box flexDirection="column" borderStyle="round" paddingX={1}>
           {
             <Box flexDirection="column" marginBottom={1}>
-              <Text bold={true}>Install GitHub App</Text>
-              <Text dimColor={true}>Choose API key</Text>
+              <Text bold={true}>{tSync('installGh.installTitle')}</Text>
+              <Text dimColor={true}>{tSync('installGh.chooseApiKey')}</Text>
             </Box>
           }
           {existingApiKey && (
             <Box marginBottom={1}>
               <Text>
-                {selectedOption === 'existing' ? color('success', theme)('> ') : '  '}Use your
-                existing ZY Code API key
+                {selectedOption === 'existing' ? color('success', theme)('> ') : '  '}
+                {tSync('installGh.useExistingZyApiKey')}
               </Text>
             </Box>
           )}
           {onCreateOAuthToken && (
             <Box marginBottom={1}>
               <Text>
-                {selectedOption === 'oauth' ? color('success', theme)('> ') : '  '}Create a
-                long-lived token with your Zy subscription
+                {selectedOption === 'oauth' ? color('success', theme)('> ') : '  '}
+                {tSync('installGh.createLongLivedToken')}
               </Text>
             </Box>
           )}
           {
             <Box marginBottom={1}>
-              <Text>{newOptionPrefix}Enter a new API key</Text>
+              <Text>
+                {newOptionPrefix}
+                {tSync('installGh.enterNewApiKey')}
+              </Text>
             </Box>
           }
           {selectedOption === 'new' && (
@@ -116,9 +120,7 @@ export function ApiKeyStep({
               onSubmit={onSubmit}
               onPaste={onApiKeyChange}
               focus={true}
-              placeholder={
-                'sk-ant\u2026 (Create a new key at https://platform.zy.com/settings/keys)'
-              }
+              placeholder={tSync('installGh.apiKeyPlaceholder')}
               mask="*"
               columns={terminalSize.columns}
               cursorOffset={cursorOffset}

@@ -3,6 +3,7 @@ import { Spinner } from '../../components/Spinner.js'
 import { Box, Text } from '../../ink.js'
 import { getApiKey } from '../../utils/auth.js'
 import { logError } from '../../utils/log.js'
+import { tSync } from '../../i18n/index.js'
 
 interface OAuthFlowStepProps {
   onSuccess: (token: string) => void
@@ -21,7 +22,7 @@ export function OAuthFlowStep({ onSuccess, onCancel }: OAuthFlowStepProps): Reac
   useEffect(() => {
     const apiKey = getApiKey()
     if (!apiKey) {
-      setError('No API key found. Please login first with `zy auth login --provider <provider>`.')
+      setError(tSync('installGh.noApiKeyFound'))
       return
     }
     if (!handledRef.current) {
@@ -33,8 +34,10 @@ export function OAuthFlowStep({ onSuccess, onCancel }: OAuthFlowStepProps): Reac
   if (error) {
     return (
       <Box flexDirection="column" gap={1} tabIndex={0} autoFocus onKeyDown={() => onCancel()}>
-        <Text color="error">Error: {error}</Text>
-        <Text dimColor>Press any key to return to API key selection</Text>
+        <Text color="error">
+          {tSync('installGh.error')} {error}
+        </Text>
+        <Text dimColor>{tSync('installGh.pressAnyKeyReturn')}</Text>
       </Box>
     )
   }
@@ -43,7 +46,7 @@ export function OAuthFlowStep({ onSuccess, onCancel }: OAuthFlowStepProps): Reac
     <Box flexDirection="column" gap={1}>
       <Box>
         <Spinner />
-        <Text>Retrieving authentication token…</Text>
+        <Text>{tSync('installGh.retrievingToken')}</Text>
       </Box>
     </Box>
   )

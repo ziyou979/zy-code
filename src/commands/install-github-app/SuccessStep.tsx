@@ -1,4 +1,5 @@
 import { Box, Text } from '../../ink.js'
+import { tSync } from '../../i18n/index.js'
 
 type SuccessStepProps = {
   secretExists: boolean
@@ -18,44 +19,44 @@ export function SuccessStep({
         <Box flexDirection="column" borderStyle="round" paddingX={1}>
           {
             <Box flexDirection="column" marginBottom={1}>
-              <Text bold={true}>Install GitHub App</Text>
-              <Text dimColor={true}>Success</Text>
+              <Text bold={true}>{tSync('installGh.installTitle')}</Text>
+              <Text dimColor={true}>{tSync('installGh.success')}</Text>
             </Box>
           }
-          {!skipWorkflow && <Text color="success">✓ GitHub Actions workflow created!</Text>}
+          {!skipWorkflow && <Text color="success">{tSync('installGh.workflowCreated')}</Text>}
           {secretExists && useExistingSecret && (
             <Box marginTop={1}>
-              <Text color="success">✓ Using existing ANTHROPIC_API_KEY secret</Text>
+              <Text color="success">{tSync('installGh.usingExistingSecret')}</Text>
             </Box>
           )}
           {(!secretExists || !useExistingSecret) && (
             <Box marginTop={1}>
-              <Text color="success">✓ API key saved as {secretName} secret</Text>
+              <Text color="success">{tSync('installGh.apiKeySavedAs', { secretName })}</Text>
             </Box>
           )}
           {
             <Box marginTop={1}>
-              <Text>Next steps:</Text>
+              <Text>{tSync('installGh.nextSteps')}</Text>
             </Box>
           }
           {skipWorkflow ? (
             <>
-              <Text>1. Install the Zy GitHub App if you haven't already</Text>
-              <Text>2. Your workflow file was kept unchanged</Text>
-              <Text>3. API key is configured and ready to use</Text>
+              <Text>{tSync('installGh.stepInstallApp')}</Text>
+              <Text>{tSync('installGh.stepWorkflowUnchanged')}</Text>
+              <Text>{tSync('installGh.stepApiKeyReady')}</Text>
             </>
           ) : (
             <>
-              <Text>1. A pre-filled PR page has been created</Text>
-              <Text>2. Install the Zy GitHub App if you haven't already</Text>
-              <Text>3. Merge the PR to enable Zy PR assistance</Text>
+              <Text>{tSync('installGh.stepPrCreated')}</Text>
+              <Text>{tSync('installGh.stepInstallApp2')}</Text>
+              <Text>{tSync('installGh.stepMergePr')}</Text>
             </>
           )}
         </Box>
       }
       {
         <Box marginLeft={3}>
-          <Text dimColor={true}>Press any key to exit</Text>
+          <Text dimColor={true}>{tSync('installGh.pressAnyKeyExit')}</Text>
         </Box>
       }
     </>

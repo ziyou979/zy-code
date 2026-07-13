@@ -3,6 +3,7 @@ import TextInput from '../../components/TextInput.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { Box, color, Text, useTheme } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
+import { tSync } from '../../i18n/index.js'
 
 interface CheckExistingSecretStepProps {
   useExistingSecret: boolean
@@ -52,41 +53,47 @@ export function CheckExistingSecretStep({
         <Box flexDirection="column" borderStyle="round" paddingX={1}>
           {
             <Box flexDirection="column" marginBottom={1}>
-              <Text bold={true}>Install GitHub App</Text>
-              <Text dimColor={true}>Setup API key secret</Text>
+              <Text bold={true}>{tSync('installGh.installTitle')}</Text>
+              <Text dimColor={true}>{tSync('installGh.setupApiKeySecret')}</Text>
             </Box>
           }
           {
             <Box marginBottom={1}>
-              <Text color="warning">ANTHROPIC_API_KEY already exists in repository secrets!</Text>
+              <Text color="warning">{tSync('installGh.apiKeyAlreadyExists')}</Text>
             </Box>
           }
           {
             <Box marginBottom={1}>
-              <Text>Would you like to:</Text>
+              <Text>{tSync('installGh.wouldYouLike')}</Text>
             </Box>
           }
           {
             <Box marginBottom={1}>
-              <Text>{existingPrefix}Use the existing API key</Text>
+              <Text>
+                {existingPrefix}
+                {tSync('installGh.useExistingApiKey')}
+              </Text>
             </Box>
           }
           {
             <Box marginBottom={1}>
-              <Text>{newPrefix}Create a new secret with a different name</Text>
+              <Text>
+                {newPrefix}
+                {tSync('installGh.createNewSecret')}
+              </Text>
             </Box>
           }
           {!useExistingSecret && (
             <>
               <Box marginBottom={1}>
-                <Text>Enter new secret name (alphanumeric with underscores):</Text>
+                <Text>{tSync('installGh.enterNewSecretName')}</Text>
               </Box>
               <TextInput
                 value={secretName}
                 onChange={onSecretNameChange}
                 onSubmit={onSubmit}
                 focus={true}
-                placeholder="e.g., CLAUDE_API_KEY"
+                placeholder={tSync('installGh.secretPlaceholder')}
                 columns={terminalSize.columns}
                 cursorOffset={cursorOffset}
                 onChangeCursorOffset={setCursorOffset}
