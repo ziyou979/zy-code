@@ -1,18 +1,18 @@
 import { feature } from 'bun:bundle'
 import { writeFile } from 'node:fs/promises'
 import { z } from 'zod/v4'
+import { getAllowedChannels } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
-  getAllowedChannels,
   hasExitedPlanModeInSession,
   setHasExitedPlanMode,
   setNeedsAutoModeExitAttachment,
   setNeedsPlanModeExitAttachment,
-} from '../../bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/metadata.js'
-import { buildTool, type Tool, type ToolDef, toolMatchesName } from '../../Tool.js'
+import { buildTool, type Tool, type ToolDef, toolMatchesName } from '../../tool.js'
 import { formatAgentId, generateRequestId } from '../../utils/agentId.js'
-import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
+import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {
   findInProcessTeammateTaskId,
@@ -36,10 +36,10 @@ import {
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const autoModeStateModule = true
-  ? (require('../../utils/permissions/autoModeState.js') as typeof import('../../utils/permissions/autoModeState.js'))
+  ? (require('../../services/permissions/autoModeState.js') as typeof import('../../services/permissions/autoModeState.js'))
   : null
 const permissionSetupModule = true
-  ? (require('../../utils/permissions/permissionSetup.js') as typeof import('../../utils/permissions/permissionSetup.js'))
+  ? (require('../../services/permissions/permissionSetup.js') as typeof import('../../services/permissions/permissionSetup.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 

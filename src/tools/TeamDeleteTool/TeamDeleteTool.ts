@@ -8,9 +8,9 @@ import {
   unregisterTeamForSessionCleanup,
 } from '../../services/swarm/teamHelpers.js'
 import { clearTeammateColors } from '../../services/swarm/teammateLayoutManager.js'
-import type { Tool } from '../../Tool.js'
-import { buildTool, type ToolDef } from '../../Tool.js'
-import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
+import type { Tool } from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tool.js'
+import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { clearLeaderTeamName } from '../../utils/tasks.js'

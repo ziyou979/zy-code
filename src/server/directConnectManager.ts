@@ -1,6 +1,6 @@
 /* eslint-disable eslint-plugin-n/no-unsupported-features/node-builtins */
 
-import type { RemotePermissionResponse } from '../remote/RemoteSessionManager.js'
+import type { RemotePermissionResponse } from '../remote/remoteSessionManager.js'
 import type { RemoteMessageContent } from '../services/teleport/api.js'
 import type { WireMessage } from '../types/index.js'
 import type { StdoutMessage, WireControlPermissionRequest } from '../types/wire/control.js'

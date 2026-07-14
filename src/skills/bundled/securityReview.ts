@@ -1,5 +1,5 @@
 import { tSync } from '../../i18n/index.js'
-import type { ToolUseContext } from '../../Tool.js'
+import type { ToolUseContext } from '../../tool.js'
 import { executeShellCommandsInPrompt } from '../../utils/promptShellExecution.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 

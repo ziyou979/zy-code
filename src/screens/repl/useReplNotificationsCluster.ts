@@ -34,12 +34,12 @@ import type { ModelName } from '../../services/model/model.js'
 import { useAppState } from '../../state/AppState.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { count } from '../../utils/array.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
-import { createSystemMessage, createTurnDurationMessage } from '../../utils/messages.js'
-import { isLoggableMessage } from '../../utils/sessionStorage.js'
-import { getSettingsForSource } from '../../utils/settings/settings.js'
-import { getCurrentWorktreeSession } from '../../utils/worktree.js'
+import { createSystemMessage, createTurnDurationMessage } from '../../services/messages/index.js'
+import { isLoggableMessage } from '../../services/sessionStorage.js'
+import { getSettingsForSource } from '../../services/settings/settings.js'
+import { getCurrentWorktreeSession } from '../../services/worktree/worktree.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const useAntOrgWarningNotification: typeof import('../../hooks/notifs/useAntOrgWarningNotification.js').useAntOrgWarningNotification =

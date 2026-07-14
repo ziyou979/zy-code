@@ -1,16 +1,16 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { z } from 'zod/v4'
-import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js'
+import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
-import { buildTool, type ToolDef, type ToolUseContext } from '../../Tool.js'
+import { buildTool, type ToolDef, type ToolUseContext } from '../../tool.js'
 import {
   completeWorkflowTask,
   failWorkflowTask,
   registerWorkflowTask,
-} from '../../tasks/LocalWorkflowTask/LocalWorkflowTask.js'
+} from '../../tasks/local-workflow-task/localWorkflowTask.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { getProjectDir } from '../../utils/sessionStorage.js'
+import { getProjectDir } from '../../services/sessionStorage.js'
 import { WORKFLOW_WIRE_NAME } from './constants.js'
 import { resolveWorkflow } from './loader.js'
 import { getWorkflowPrompt } from './prompt.js'

@@ -12,8 +12,8 @@ import {
   getPipelineSegments,
   PS_TOKENIZER_DASH_CHARS,
 } from '../../shell-eval/powershell/parser.js'
-import type { ToolPermissionContext } from '../../Tool.js'
-import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
+import type { ToolPermissionContext } from '../../tool.js'
+import type { PermissionResult } from '../../services/permissions/permissionResult.js'
 import {
   argLeaksValue,
   isAllowlistedPipelineTail,

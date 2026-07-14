@@ -30,7 +30,7 @@ import {
   createSystemMessage,
   getMessagesAfterCompactBoundary,
   textForResubmit,
-} from '../../utils/messages.js'
+} from '../../services/messages/index.js'
 import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
 
 export type HandleSummarizeParams = {

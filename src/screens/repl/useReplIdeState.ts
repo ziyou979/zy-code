@@ -13,7 +13,7 @@ import { useIDEStatusIndicator } from '../../hooks/notifs/useIDEStatusIndicator.
 import { useIDEIntegration } from '../../hooks/useIDEIntegration.js'
 import { type IDESelection, useIdeSelection } from '../../hooks/useIdeSelection.js'
 import type { MCPServerConnection, ScopedMcpServerConfig } from '../../services/mcp/types.js'
-import type { IDEExtensionInstallationStatus, IdeType } from '../../utils/ide.js'
+import type { IDEExtensionInstallationStatus, IdeType } from '../../services/ide/ide.js'
 
 export type UseReplIdeStateParams = {
   autoConnectIdeFlag: boolean | undefined

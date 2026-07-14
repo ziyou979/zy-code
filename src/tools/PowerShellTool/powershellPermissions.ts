@@ -16,22 +16,22 @@ import {
   stripModulePrefix,
 } from '../../shell-eval/powershell/parser.js'
 import { containsVulnerableUncPath } from '../../shell-eval/shared/readOnlyCommandValidation.js'
-import type { ToolPermissionContext, ToolUseContext } from '../../Tool.js'
+import type { ToolPermissionContext, ToolUseContext } from '../../tool.js'
 import type { PermissionDecisionReason, PermissionResult } from '../../types/permissions.js'
 import { getCwd } from '../../utils/cwd.js'
 import { isCurrentDirectoryBareGitRepo } from '../../utils/git.js'
-import type { PermissionRule } from '../../utils/permissions/PermissionRule.js'
-import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
+import type { PermissionRule } from '../../services/permissions/permissionRule.js'
+import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
 import {
   createPermissionRequestMessage,
   getRuleByContentsForToolName,
-} from '../../utils/permissions/permissions.js'
+} from '../../services/permissions/permissions.js'
 import {
   matchWildcardPattern,
   parsePermissionRule,
   type ShellPermissionRule,
   suggestionForExactCommand as sharedSuggestionForExactCommand,
-} from '../../utils/permissions/shellRuleMatching.js'
+} from '../../services/permissions/shellRuleMatching.js'
 import { isDotGitPathPS, isGitInternalPathPS } from './gitSafety.js'
 import { checkPermissionMode, isSymlinkCreatingCommand } from './modeValidation.js'
 import {

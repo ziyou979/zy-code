@@ -2,12 +2,15 @@ import { feature } from 'bun:bundle'
 import type { QuerySource } from '../constants/querySource.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/index.js'
 import { logEvent } from '../services/analytics/index.js'
-import type { ToolUseContext } from '../Tool.js'
+import type { ToolUseContext } from '../tool.js'
 import { SLEEP_TOOL_NAME } from '../tools/SleepTool/prompt.js'
 import type { ToolCallBlock } from '../types/llm.js'
 import type { AssistantMessage, AttachmentMessage, Message, UserMessage } from '../types/message.js'
 import { count } from '../utils/array.js'
-import { createAttachmentMessage, getAttachmentMessages } from '../utils/attachments.js'
+import {
+  createAttachmentMessage,
+  getAttachmentMessages,
+} from '../services/attachments/attachments.js'
 import { notifyCommandLifecycle } from '../utils/commandLifecycle.js'
 import {
   getCommandsByMaxPriority,

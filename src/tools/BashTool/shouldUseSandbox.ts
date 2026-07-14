@@ -2,7 +2,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/grow
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { splitCommand_DEPRECATED } from '../../shell-eval/bash/commands.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
+import { getInitialSettings } from '../../services/settings/settings.js'
 import {
   BINARY_HIJACK_VARS,
   bashPermissionRule,

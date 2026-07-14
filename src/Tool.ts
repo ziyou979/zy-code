@@ -45,7 +45,7 @@ import type {
   WebSearchProgress,
 } from './types/tools.js'
 import type { FileStateCache } from './utils/fileStateCache.js'
-import type { DenialTrackingState } from './utils/permissions/denialTracking.js'
+import type { DenialTrackingState } from './services/permissions/denialTracking.js'
 import type { SystemPrompt } from './utils/systemPromptType.js'
 import type { ContentReplacementState } from './utils/toolResultStorage.js'
 
@@ -62,7 +62,7 @@ export type {
 
 import type { HookProgress, PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type { WireStatus } from 'src/types/index.js'
-import type { SpinnerMode } from './components/Spinner.js'
+import type { SpinnerMode } from './types/spinner.js'
 import type { QuerySource } from './constants/querySource.js'
 import type { AppState } from './state/AppState.js'
 import type { AgentId } from './types/ids.js'
@@ -325,11 +325,19 @@ export function findToolByName(tools: Tools, name: string): Tool | undefined {
   return tools.find((t) => toolMatchesName(t, name))
 }
 
+/** 工具目录与交互能力的结构档案。 */
+export type ToolProfile = 'interactive' | 'headless' | 'internal'
+
 export type Tool<
   Input extends AnyObject = AnyObject,
   Output = unknown,
   P extends ToolProgressData = ToolProgressData,
 > = {
+  /**
+   * 工具的结构档案。未显式声明时由架构检查依据主文件、UI 和 prompt 推导；
+   * 新工具应显式填写，存量工具在迁移期保持兼容。
+   */
+  profile?: ToolProfile
   /**
    * 工具重命名时用于向后兼容的可选别名。
    * 除了主名称外，工具还可以通过这些名称中的任意一个来查找。

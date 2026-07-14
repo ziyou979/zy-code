@@ -1,11 +1,11 @@
 import { profileCheckpoint } from '../utils/startupProfiler.js'
-import '../bootstrap/state.js'
-import '../utils/config.js'
+import { registerMCPToolOverrides } from '../components/mcp/registerToolOverrides.js'
+import '../services/config/config.js'
 import type { Attributes, MetricOptions } from '@opentelemetry/api'
 import memoize from 'lodash-es/memoize.js'
-import { getIsNonInteractiveSession } from 'src/bootstrap/state.js'
-import type { AttributedCounter } from '../bootstrap/state.js'
-import { getSessionCounter, setMeter } from '../bootstrap/state.js'
+import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
+import type { AttributedCounter } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getSessionCounter, setMeter } from 'src/bootstrap/runtime/runtimeContext.js'
 import { shutdownLspServerManager } from '../services/lsp/manager.js'
 import {
   initializePolicyLimitsLoadingPromise,
@@ -14,14 +14,15 @@ import {
 import {
   initializeRemoteManagedSettingsLoadingPromise,
   isEligibleForRemoteManagedSettings,
+  setManagedSettingsSecurityChecker,
   waitForRemoteManagedSettingsToLoad,
 } from '../services/remote-managed-settings/index.js'
 import { isBetaTracingEnabled } from '../services/telemetry/betaSessionTracing.js'
 import { preconnectAnthropicApi } from '../utils/apiPreconnect.js'
-import { populateOAuthAccountInfoIfNeeded } from '../utils/auth.js'
-import { applyExtraCACertsFromConfig } from '../utils/caCertsConfig.js'
+import { populateOAuthAccountInfoIfNeeded } from '../services/auth/auth.js'
+import { applyExtraCACertsFromConfig } from '../services/settings/caCertsConfig.js'
 import { registerCleanup } from '../utils/cleanupRegistry.js'
-import { enableConfigs, recordFirstStartTime } from '../utils/config.js'
+import { enableConfigs, recordFirstStartTime } from '../services/config/config.js'
 import { createDebugLog } from '../utils/debug.js'
 import { detectCurrentRepository } from '../utils/detectRepository.js'
 import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
@@ -35,13 +36,13 @@ import {
   applySafeConfigEnvironmentVariables,
 } from '../utils/managedEnv.js'
 import { configureGlobalMTLS } from '../utils/mtls.js'
-import { ensureScratchpadDir, isScratchpadEnabled } from '../utils/permissions/filesystem.js'
-// initializeTelemetry 通过 setMeterState() 中的 import() 延迟加载，以推迟
+import { ensureScratchpadDir, isScratchpadEnabled } from '../services/permissions/filesystem.js'
+// initializeTelemetry 通过 setMeterState() 中的 import('../services/analytics/zyEventLogger.js') 延迟加载，以推迟
 // ~400KB 的 OpenTelemetry + protobuf 模块，直到真正初始化遥测时才加载。
 // gRPC 导出器（通过 @grpc/grpc-js 约 ~700KB）在 instrumentation.ts 中进一步延迟加载。
 import { configureGlobalAgents } from '../utils/proxy.js'
 import { getTelemetryAttributes } from '../utils/telemetryAttributes.js'
-import { setShellIfWindows } from '../utils/windowsPaths.js'
+import { setShellIfWindows } from '../services/shell/windowsPaths.js'
 
 const log = createDebugLog('init')
 
@@ -51,6 +52,7 @@ const log = createDebugLog('init')
 let telemetryInitialized = false
 
 export const init = memoize(async (): Promise<void> => {
+  registerMCPToolOverrides()
   const initStartTime = Date.now()
   logForDiagnosticsNoPII('info', 'init_started')
   profileCheckpoint('init_function_start')
@@ -128,6 +130,13 @@ export const init = memoize(async (): Promise<void> => {
     // 尽早初始化加载 promise，以便其他系统（如插件钩子）
     // 可以等待远程设置加载完成。该 promise 包含超时机制，
     // 以防止 loadRemoteManagedSettings() 从未被调用时发生死锁（如 Agent SDK 测试）。
+    setManagedSettingsSecurityChecker(async (cachedSettings, newSettings) => {
+      // 仅在确实需要交互确认时加载 React/Ink，避免增加普通启动路径成本。
+      const { checkManagedSettingsSecurity } = await import(
+        '../components/remote-managed-settings/SecurityCheck.js'
+      )
+      return checkManagedSettingsSecurity(cachedSettings, newSettings)
+    })
     if (isEligibleForRemoteManagedSettings()) {
       initializeRemoteManagedSettingsLoadingPromise()
     }

@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { getModelOptions } from '../../services/model/modelOptions.js'
 import { validateModel } from '../../services/model/validateModel.js'
-import { getRemoteControlAtStartup } from '../../utils/config.js'
+import { getRemoteControlAtStartup } from '../../services/config/config.js'
 import { EDITOR_MODES, NOTIFICATION_CHANNELS, TEAMMATE_MODES } from '../../utils/configConstants.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { THEME_NAMES, THEME_SETTINGS } from '../../utils/theme.js'

@@ -3,7 +3,7 @@ import type { UUID } from 'node:crypto'
 import { randomUUID } from 'node:crypto'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { logForDebugging } from 'src/utils/debug.js'
-import { getProjectRoot, getSessionId } from '../../bootstrap/state.js'
+import { getProjectRoot, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getCommand, getSkillToolCommands, hasCommand } from '../../commands.js'
 import { DEFAULT_AGENT_PROMPT, enhanceSystemPromptWithEnvDetails } from '../../constants/prompts.js'
 import type { QuerySource } from '../../constants/querySource.js'
@@ -23,9 +23,9 @@ import {
   registerAgent as registerPerfettoAgent,
   unregisterAgent as unregisterPerfettoAgent,
 } from '../../services/telemetry/perfettoTracing.js'
-import type { Tool, Tools, ToolUseContext } from '../../Tool.js'
-import { killShellTasksForAgent } from '../../tasks/LocalShellTask/killShellTasks.js'
-import type { Command } from '../../types/command.js'
+import type { Tool, Tools, ToolUseContext } from '../../tool.js'
+import { killShellTasksForAgent } from '../../tasks/local-shell-task/killShellTasks.js'
+import type { Command } from '../../commands/types.js'
 import type { AgentId } from '../../types/ids.js'
 import type { UserContentBlock } from '../../types/llm.js'
 import type {
@@ -39,7 +39,7 @@ import type {
   ToolUseSummaryMessage,
   UserMessage,
 } from '../../types/message.js'
-import { createAttachmentMessage } from '../../utils/attachments.js'
+import { createAttachmentMessage } from '../../services/attachments/attachments.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { AbortError } from '../../utils/errors.js'
 import { getDisplayPath } from '../../utils/file.js'
@@ -49,20 +49,20 @@ import {
   READ_FILE_STATE_CACHE_SIZE,
 } from '../../utils/fileStateCache.js'
 import { type CacheSafeParams, createSubagentContext } from '../../utils/forkedAgent.js'
-import { registerFrontmatterHooks } from '../../utils/hooks/registerFrontmatterHooks.js'
-import { clearSessionHooks } from '../../utils/hooks/sessionHooks.js'
-import { executeSubagentStartHooks } from '../../utils/hooks.js'
-import { createUserMessage } from '../../utils/messages.js'
+import { registerFrontmatterHooks } from '../../services/hooks/registerFrontmatterHooks.js'
+import { clearSessionHooks } from '../../services/hooks/sessionHooks.js'
+import { executeSubagentStartHooks } from '../../services/hooks.js'
+import { createUserMessage } from '../../services/messages/index.js'
 import {
   clearAgentTranscriptSubdir,
   recordSidechainTranscript,
   setAgentTranscriptSubdir,
   writeAgentMetadata,
-} from '../../utils/sessionStorage.js'
+} from '../../services/sessionStorage.js'
 import {
   isRestrictedToPluginOnly,
   isSourceAdminTrusted,
-} from '../../utils/settings/pluginOnlyPolicy.js'
+} from '../../services/settings/pluginOnlyPolicy.js'
 import { asSystemPrompt, type SystemPrompt } from '../../utils/systemPromptType.js'
 import type { ContentReplacementState } from '../../utils/toolResultStorage.js'
 import { createAgentId } from '../../utils/uuid.js'
@@ -482,7 +482,6 @@ export async function* runAgent({
           toolUseContext,
           resolvedAgentModel,
           additionalWorkingDirectories,
-          resolvedTools,
         ),
       )
 
@@ -577,7 +576,7 @@ export async function* runAgent({
 
     // Load all skill contents concurrently and add to initial messages
     const { formatSkillLoadingMetadata } = await import(
-      '../../services/process-user-input/processSlashCommand.js'
+      '../../services/process-user-input/ProcessSlashCommand.js'
     )
     const loaded = await Promise.all(
       validSkills.map(async ({ skillName, skill }) => ({
@@ -813,7 +812,7 @@ export async function* runAgent({
     /* eslint-disable @typescript-eslint/no-require-imports */
     if (feature('MONITOR_TOOL')) {
       const mcpMod =
-        require('../../tasks/MonitorMcpTask/MonitorMcpTask.js') as typeof import('../../tasks/MonitorMcpTask/MonitorMcpTask.js')
+        require('../../tasks/monitor-mcp-task/monitorMcpTask.js') as typeof import('../../tasks/monitor-mcp-task/monitorMcpTask.js')
       mcpMod.killMonitorMcpTasksForAgent(agentId, toolUseContext.getAppState, rootSetAppState)
     }
     /* eslint-enable @typescript-eslint/no-require-imports */
@@ -866,9 +865,7 @@ async function getAgentSystemPrompt(
   toolUseContext: Pick<ToolUseContext, 'options'>,
   resolvedAgentModel: string,
   additionalWorkingDirectories: string[],
-  resolvedTools: readonly Tool[],
 ): Promise<string[]> {
-  const enabledToolNames = new Set(resolvedTools.map((t) => t.name))
   try {
     const agentPrompt = agentDefinition.getSystemPrompt({ toolUseContext })
     const prompts = [agentPrompt]
@@ -877,14 +874,12 @@ async function getAgentSystemPrompt(
       prompts,
       resolvedAgentModel,
       additionalWorkingDirectories,
-      enabledToolNames,
     )
   } catch (_error) {
     return enhanceSystemPromptWithEnvDetails(
       [DEFAULT_AGENT_PROMPT],
       resolvedAgentModel,
       additionalWorkingDirectories,
-      enabledToolNames,
     )
   }
 }

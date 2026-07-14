@@ -23,7 +23,7 @@ import {
 } from '../../shell-eval/bash/commands.js'
 import { parseCommandRaw } from '../../shell-eval/bash/parser.js'
 import { tryParseShellCommand } from '../../shell-eval/bash/shellQuote.js'
-import type { ToolPermissionContext, ToolUseContext } from '../../Tool.js'
+import type { ToolPermissionContext, ToolUseContext } from '../../tool.js'
 import { isAbortError } from '../../types/llm.js'
 import type { PendingClassifierCheck } from '../../types/permissions.js'
 import { count } from '../../utils/array.js'
@@ -34,26 +34,29 @@ import { AbortError } from '../../utils/errors.js'
 import type {
   ClassifierBehavior,
   ClassifierResult,
-} from '../../utils/permissions/bashClassifier.js'
+} from '../../services/permissions/bashClassifier.js'
 import {
   classifyBashCommand,
   getBashPromptAllowDescriptions,
   getBashPromptAskDescriptions,
   getBashPromptDenyDescriptions,
   isClassifierPermissionsEnabled,
-} from '../../utils/permissions/bashClassifier.js'
+} from '../../services/permissions/bashClassifier.js'
 import type {
   PermissionDecisionReason,
   PermissionResult,
-} from '../../utils/permissions/PermissionResult.js'
-import type { PermissionRule, PermissionRuleValue } from '../../utils/permissions/PermissionRule.js'
-import { extractRules } from '../../utils/permissions/PermissionUpdate.js'
-import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
-import { permissionRuleValueToString } from '../../utils/permissions/permissionRuleParser.js'
+} from '../../services/permissions/permissionResult.js'
+import type {
+  PermissionRule,
+  PermissionRuleValue,
+} from '../../services/permissions/permissionRule.js'
+import { extractRules } from '../../services/permissions/permissionUpdate.js'
+import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
+import { permissionRuleValueToString } from '../../services/permissions/permissionRuleParser.js'
 import {
   createPermissionRequestMessage,
   getRuleByContentsForTool,
-} from '../../utils/permissions/permissions.js'
+} from '../../services/permissions/permissions.js'
 import {
   parsePermissionRule,
   type ShellPermissionRule,
@@ -61,10 +64,10 @@ import {
   permissionRuleExtractPrefix as sharedPermissionRuleExtractPrefix,
   suggestionForExactCommand as sharedSuggestionForExactCommand,
   suggestionForPrefix as sharedSuggestionForPrefix,
-} from '../../utils/permissions/shellRuleMatching.js'
-import { getPlatform } from '../../utils/platform.js'
+} from '../../services/permissions/shellRuleMatching.js'
+import { getPlatform } from '../../services/shell/platform.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { windowsPathToPosixPath } from '../../utils/windowsPaths.js'
+import { windowsPathToPosixPath } from '../../services/shell/windowsPaths.js'
 import { BashTool } from './BashTool.js'
 import { checkCommandOperatorPermissions } from './bashCommandHelpers.js'
 import { bashCommandIsSafeAsync_DEPRECATED, stripSafeHeredocSubstitutions } from './bashSecurity.js'

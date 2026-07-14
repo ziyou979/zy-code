@@ -25,8 +25,8 @@ import {
   addSkillDirectories,
   discoverSkillDirsForPaths,
 } from '../../skills/loadSkillsDir.js'
-import type { ToolUseContext } from '../../Tool.js'
-import { buildTool, type ToolDef } from '../../Tool.js'
+import type { ToolUseContext } from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tool.js'
 import type { ImageSource } from '../../types/llm.js'
 import { getCwd } from '../../utils/cwd.js'
 import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
@@ -52,17 +52,17 @@ import {
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
 import { isAutoMemFile } from '../../utils/memoryFileDetection.js'
-import { createUserMessage } from '../../utils/messages.js'
-import { mapNotebookCellsToToolResult, readNotebook } from '../../utils/notebook.js'
+import { createUserMessage } from '../../services/messages/index.js'
+import { mapNotebookCellsToToolResult, readNotebook } from '../../services/attachments/notebook.js'
 import { expandPath } from '../../utils/path.js'
 import { extractPDFPages, getPDFPageCount, readPDF } from '../../utils/pdf.js'
 import { isPDFExtension, isPDFSupported, parsePDFPageRange } from '../../utils/pdfUtils.js'
 import {
   checkReadPermissionForTool,
   matchingRuleForInput,
-} from '../../utils/permissions/filesystem.js'
-import type { PermissionDecision } from '../../utils/permissions/PermissionResult.js'
-import { matchWildcardPattern } from '../../utils/permissions/shellRuleMatching.js'
+} from '../../services/permissions/filesystem.js'
+import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
+import { matchWildcardPattern } from '../../services/permissions/shellRuleMatching.js'
 import { readFileInRange } from '../../utils/readFileInRange.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
 import { jsonStringify } from '../../utils/slowOperations.js'

@@ -1,11 +1,11 @@
 import { Ajv } from 'ajv'
 import { z } from 'zod/v4'
 import { tSync } from '../../i18n/index.js'
-import type { Tool, ToolInputJSONSchema } from '../../Tool.js'
-import { buildTool, type ToolDef } from '../../Tool.js'
+import type { Tool, ToolInputJSONSchema } from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tool.js'
 import { TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
+import type { PermissionResult } from '../../services/permissions/permissionResult.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 
 // Allow any input object since the schema is provided dynamically

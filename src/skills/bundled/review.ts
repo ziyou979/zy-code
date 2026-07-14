@@ -1,5 +1,5 @@
 import { tSync } from '../../i18n/index.js'
-import type { Command } from '../../types/command.js'
+import type { Command } from '../../commands/types.js'
 import { getBundledSkills, registerBundledSkill } from '../bundledSkills.js'
 
 /**

@@ -4,7 +4,7 @@
  * 用于将 vim 移动命令解析为光标位置的纯函数。
  */
 
-import type { Cursor } from '../utils/Cursor.js'
+import type { Cursor } from '../utils/cursor.js'
 
 /**
  * 将移动命令解析为目标光标位置。

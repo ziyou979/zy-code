@@ -20,11 +20,12 @@ import {
   mergeFileStateCaches,
   READ_FILE_STATE_CACHE_SIZE,
 } from '../utils/fileStateCache.js'
-import { updateLastInteractionTime, getProjectRoot, getSessionId } from '../bootstrap/state.js'
+import { updateLastInteractionTime } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getProjectRoot, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { logForDebugging } from '../utils/debug.js'
-import { QueryGuard } from '../utils/QueryGuard.js'
+import { QueryGuard } from '../utils/queryGuard.js'
 import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
-import { getAllInProcessTeammateTasks } from '../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
+import { getAllInProcessTeammateTasks } from '../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import {
   registerLeaderToolUseConfirmQueue,
   unregisterLeaderToolUseConfirmQueue,
@@ -41,7 +42,7 @@ import type { SSHSession } from '../ssh/createSSHSession.js'
 import { useMoreRight } from '../moreright/useMoreRight.js'
 import { startBackgroundHousekeeping } from '../utils/backgroundHousekeeping.js'
 import { useCostSummary } from '../costHook.js'
-import { useFpsMetrics } from '../context/fpsMetrics.js'
+import { useFpsMetrics } from '../context/FpsMetrics.js'
 import { useAfterFirstRender } from '../hooks/useAfterFirstRender.js'
 import { useDeferredHookMessages } from '../hooks/useDeferredHookMessages.js'
 import { useApiKeyVerification } from '../hooks/useApiKeyVerification.js'
@@ -50,13 +51,13 @@ import { useSwarmInitialization } from '../hooks/useSwarmInitialization.js'
 import { useTeammateViewAutoExit } from '../hooks/useTeammateViewAutoExit.js'
 import { isHumanTurn } from '../utils/messagePredicates.js'
 import useCanUseTool from '../hooks/useCanUseTool.js'
-import type { Tool } from '../Tool.js'
+import type { Tool } from '../tool.js'
 import { clearSpeculativeChecks } from '../tools/BashTool/bashPermissions.js'
 import { getLoadGeneration } from '../tools/externalToolLoader.js'
 import type { AutoUpdaterResult } from '../utils/autoUpdater.js'
-import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
-import { createAgentsKilledMessage } from '../utils/messages.js'
+import { createAgentsKilledMessage } from '../services/messages/index.js'
 import type { ThinkingConfig } from '../utils/thinking.js'
 import { useQueueProcessor } from '../hooks/useQueueProcessor.js'
 import { useMailboxBridge } from '../hooks/useMailboxBridge.js'
@@ -73,7 +74,7 @@ import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import { resolveAgentTools } from '../tools/AgentTool/agentToolUtils.js'
 import { useMainLoopModel } from '../hooks/useMainLoopModel.js'
 import { useAppState, useSetAppState, useAppStateStore } from '../state/AppState.js'
-import { getCurrentSessionTitle } from '../utils/sessionStorage.js'
+import { getCurrentSessionTitle } from '../services/sessionStorage.js'
 import { extractReadFilesFromMessages } from '../utils/queryHelpers.js'
 import {
   provisionContentReplacementState,
@@ -87,7 +88,7 @@ const PROACTIVE_NO_OP_SUBSCRIBE = (_cb: () => void) => () => {}
 const PROACTIVE_FALSE = () => false
 const SUGGEST_BG_PR_NOOP = (_p: string, _n: string): boolean => false
 import { useGoalMode } from '../hooks/useGoalMode.js'
-import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js'
+import { isAgentSwarmsEnabled } from '../services/swarm/agentSwarmsEnabled.js'
 import { useTaskListWatcher } from '../hooks/useTaskListWatcher.js'
 import { enqueue } from '../utils/messageQueueManager.js'
 import { useCommandQueue } from '../hooks/useCommandQueue.js'
@@ -108,7 +109,7 @@ import { useReplInput } from './repl/useReplInput.js'
 import { useReplQueryCallbacks } from './repl/useReplQueryCallbacks.js'
 import type { QueryFlowContext } from './repl/replQueryFlow.js'
 import { useReplSessionRestore } from './repl/useReplSessionRestore.js'
-import { createReplStore, type ToolJSXState } from '../state/ReplStore.js'
+import { createReplStore, type ToolJSXState } from '../state/replStore.js'
 import { ReplStoreProvider } from '../state/ReplState.js'
 import { useReplTranscript } from './repl/useReplTranscript.js'
 import { useReplVoice } from './repl/useReplVoice.js'
@@ -131,11 +132,11 @@ import { usePromptsFromClaudeInChrome } from 'src/hooks/usePromptsFromClaudeInCh
 import {
   useKickOffCheckAndDisableBypassPermissionsIfNeeded,
   useKickOffCheckAndDisableAutoModeIfNeeded,
-} from 'src/utils/permissions/bypassPermissionsKillswitch.js'
+} from 'src/services/permissions/bypassPermissionsKillswitch.js'
 import { useFileHistorySnapshotInit } from 'src/hooks/useFileHistorySnapshotInit.js'
 import { useMcpConnectivityStatus } from 'src/hooks/notifs/useMcpConnectivityStatus.js'
-import { performStartupChecks } from 'src/utils/plugins/performStartupChecks.js'
-import type { RemoteSessionConfig } from '../remote/RemoteSessionManager.js'
+import { performStartupChecks } from 'src/services/plugins/PerformStartupChecks.js'
+import type { RemoteSessionConfig } from '../remote/remoteSessionManager.js'
 import { useUnseenDivider, computeUnseenDivider } from '../components/FullscreenLayout.js'
 import {
   isFullscreenEnvEnabled,

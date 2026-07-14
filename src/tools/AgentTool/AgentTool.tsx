@@ -1,12 +1,10 @@
 import { feature } from 'bun:bundle'
-import { buildTool, type ToolDef, toolMatchesName } from 'src/Tool.js'
+import { buildTool, type ToolDef, toolMatchesName } from 'src/tool.js'
 import type { Message as MessageType, UserMessage } from 'src/types/message.js'
-import { getQuerySourceForAgent } from 'src/utils/promptCategory.js'
+import { getQuerySourceForAgent } from 'src/services/analytics/querySource.js'
 import { z } from 'zod/v4'
-import {
-  clearInvokedSkillsForAgent,
-  getSdkAgentProgressSummariesEnabled,
-} from '../../bootstrap/state.js'
+import { clearInvokedSkillsForAgent } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getSdkAgentProgressSummariesEnabled } from 'src/bootstrap/runtime/runtimeContext.js'
 import { enhanceSystemPromptWithEnvDetails, getSystemPrompt } from '../../constants/prompts.js'
 import { isCoordinatorMode } from '../../coordinator/coordinatorMode.js'
 import { startAgentSummarization } from '../../services/agent-summary/agentSummary.js'
@@ -17,7 +15,7 @@ import {
 } from '../../services/analytics/index.js'
 import { clearDumpState } from '../../services/api/dumpPrompts.js'
 import { getAgentModel } from '../../services/model/agent.js'
-import { getTaskOutputPath } from '../../services/task/diskOutput.js'
+import { getTaskOutputPath } from '../../services/task-runtime/diskOutput.js'
 import {
   completeAgentTask as completeAsyncAgent,
   createActivityDescriptionResolver,
@@ -33,17 +31,17 @@ import {
   unregisterAgentForeground,
   updateAgentProgress as updateAsyncAgentProgress,
   updateProgressFromMessage,
-} from '../../tasks/LocalAgentTask/LocalAgentTask.js'
+} from '../../tasks/local-agent-task/LocalAgentTask.js'
 import {
   checkRemoteAgentEligibility,
   formatPreconditionError,
   getRemoteTaskSessionUrl,
   registerRemoteAgentTask,
-} from '../../tasks/RemoteAgentTask/RemoteAgentTask.js'
+} from '../../tasks/remote-agent-task/RemoteAgentTask.js'
 import { assembleToolPool } from '../../tools.js'
 import { asAgentId } from '../../types/ids.js'
 import { runWithAgentContext } from '../../utils/agentContext.js'
-import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
+import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { enqueueWireEvent } from '../../utils/bridgeEventQueue.js'
 import { getCwd, runWithCwdOverride } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -56,24 +54,24 @@ import {
   extractTextContent,
   isSyntheticMessage,
   normalizeMessages,
-} from '../../utils/messages.js'
-import { permissionModeSchema } from '../../utils/permissions/PermissionMode.js'
-import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
-import { filterDeniedAgents, getDenyRuleForAgent } from '../../utils/permissions/permissions.js'
-import { writeAgentMetadata } from '../../utils/sessionStorage.js'
+} from '../../services/messages/index.js'
+import { permissionModeSchema } from '../../services/permissions/permissionMode.js'
+import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import { filterDeniedAgents, getDenyRuleForAgent } from '../../services/permissions/permissions.js'
+import { writeAgentMetadata } from '../../services/sessionStorage.js'
 import { sleep } from '../../utils/sleep.js'
 import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 import { getParentSessionId, isTeammate } from '../../utils/teammate.js'
 import { isInProcessTeammate } from '../../utils/teammateContext.js'
-import { teleportToRemote } from '../../utils/teleport.js'
+import { teleportToRemote } from '../../services/teleport/teleport.js'
 import { getAssistantMessageContentLength } from '../../utils/tokens.js'
 import { createAgentId } from '../../utils/uuid.js'
 import {
   createAgentWorktree,
   hasWorktreeChanges,
   removeAgentWorktree,
-} from '../../utils/worktree.js'
+} from '../../services/worktree/worktree.js'
 import { BASH_TOOL_NAME } from '../BashTool/toolName.js'
 import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'
 import { spawnTeammate } from '../shared/spawnMultiAgent.js'

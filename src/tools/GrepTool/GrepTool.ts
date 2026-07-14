@@ -1,6 +1,6 @@
 import { z } from 'zod/v4'
-import type { ValidationResult } from '../../Tool.js'
-import { buildTool, type ToolDef } from '../../Tool.js'
+import type { ValidationResult } from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tool.js'
 import { getCwd } from '../../utils/cwd.js'
 import { isENOENT } from '../../utils/errors.js'
 import { FILE_NOT_FOUND_CWD_NOTE, suggestPathUnderCwd } from '../../utils/file.js'
@@ -11,10 +11,10 @@ import {
   checkReadPermissionForTool,
   getFileReadIgnorePatterns,
   normalizePatternsToPath,
-} from '../../utils/permissions/filesystem.js'
-import type { PermissionDecision } from '../../utils/permissions/PermissionResult.js'
-import { matchWildcardPattern } from '../../utils/permissions/shellRuleMatching.js'
-import { getGlobExclusionsForPluginCache } from '../../utils/plugins/orphanedPluginFilter.js'
+} from '../../services/permissions/filesystem.js'
+import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
+import { matchWildcardPattern } from '../../services/permissions/shellRuleMatching.js'
+import { getGlobExclusionsForPluginCache } from '../../services/plugins/orphanedPluginFilter.js'
 import { ripGrep } from '../../utils/ripgrep.js'
 import { semanticBoolean } from '../../utils/semanticBoolean.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'

@@ -1,7 +1,7 @@
 import type { z } from 'zod/v4'
 import { splitCommand_DEPRECATED } from '../../shell-eval/bash/commands.js'
-import type { ToolPermissionContext } from '../../Tool.js'
-import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
+import type { ToolPermissionContext } from '../../tool.js'
+import type { PermissionResult } from '../../services/permissions/permissionResult.js'
 import type { BashTool } from './BashTool.js'
 
 const ACCEPT_EDITS_ALLOWED_COMMANDS = ['mkdir', 'touch', 'rm', 'rmdir', 'mv', 'cp', 'sed'] as const

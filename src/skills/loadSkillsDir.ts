@@ -2,14 +2,15 @@ import { realpath } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, sep as pathSep, relative } from 'node:path'
 import ignore from 'ignore'
 import memoize from 'lodash-es/memoize.js'
-import { getAdditionalDirectoriesForAgentsMd, getSessionId } from '../bootstrap/state.js'
+import { getAdditionalDirectoriesForAgentsMd } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../services/analytics/index.js'
 import { parseUserSpecifiedModel } from '../services/model/model.js'
 import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
-import type { Command, PromptCommand } from '../types/command.js'
+import type { Command, PromptCommand } from '../commands/types.js'
 import { parseArgumentNames, substituteArguments } from '../utils/argumentSubstitution.js'
 import { logForDebugging } from '../utils/debug.js'
 import { EFFORT_LEVELS, type EffortLevel, parseEffortValue } from '../utils/effort.js'
@@ -23,9 +24,9 @@ import {
   parseFrontmatter,
   parseShellFrontmatter,
   splitPathInFrontmatter,
-} from '../utils/frontmatterParser.js'
+} from '../services/markdown/frontmatterParser.js'
 import { getFsImplementation } from '../utils/fsOperations.js'
-import { isPathGitignored } from '../utils/git/gitignore.js'
+import { isPathGitignored } from '../services/git/gitignore.js'
 import { logError } from '../utils/log.js'
 import {
   extractDescriptionFromMarkdown,
@@ -35,11 +36,11 @@ import {
   parseSlashCommandToolsFromFrontmatter,
 } from '../utils/markdownConfigLoader.js'
 import { executeShellCommandsInPrompt } from '../utils/promptShellExecution.js'
-import type { SettingSource } from '../utils/settings/constants.js'
-import { isSettingSourceEnabled } from '../utils/settings/constants.js'
-import { getManagedFilePath } from '../utils/settings/managedPath.js'
-import { isRestrictedToPluginOnly } from '../utils/settings/pluginOnlyPolicy.js'
-import { HooksSchema, type HooksSettings } from '../utils/settings/types.js'
+import type { SettingSource } from '../services/settings/constants.js'
+import { isSettingSourceEnabled } from '../services/settings/constants.js'
+import { getManagedFilePath } from '../services/settings/managedPath.js'
+import { isRestrictedToPluginOnly } from '../services/settings/pluginOnlyPolicy.js'
+import { HooksSchema, type HooksSettings } from '../services/settings/types.js'
 import { createSignal } from '../utils/signal.js'
 import { registerMCPSkillBuilders } from './mcpSkillBuilders.js'
 

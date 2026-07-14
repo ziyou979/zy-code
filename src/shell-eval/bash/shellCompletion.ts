@@ -1,7 +1,7 @@
 import type { SuggestionItem } from 'src/components/PromptInput/PromptInputFooterSuggestions.js'
 import { logForDebugging } from '../../utils/debug.js'
-import * as Shell from '../../utils/Shell.js'
-import { type ParseEntry, quote, tryParseShellCommand } from '../bash/shellQuote.js'
+import * as Shell from '../../services/shell/shell.js'
+import { type ParseEntry, quote, tryParseShellCommand } from './shellQuote.js'
 
 // Constants
 const MAX_SHELL_COMPLETIONS = 15

@@ -8,7 +8,8 @@
 
 import * as React from 'react'
 import { useEffect, useMemo } from 'react'
-import { getLastInteractionTime, getTotalInputTokens } from '../../bootstrap/state.js'
+import { getLastInteractionTime } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getTotalInputTokens } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { Notification } from '../../context/notifications.js'
 import type { TerminalNotification } from '../../ink/useTerminalNotification.js'
 import { Text } from '../../ink.js'
@@ -18,11 +19,11 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { sendNotification } from '../../services/notifier.js'
-import type { ReplStoreInstance, ToolJSXState } from '../../state/ReplStore.js'
+import type { ReplStoreInstance, ToolJSXState } from '../../state/replStore.js'
 import type { HookProgress } from '../../types/hooks/index.js'
 import type { Message as MessageType, ProgressMessage } from '../../types/message.js'
 import { count } from '../../utils/array.js'
-import { getGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig } from '../../services/config/config.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { formatTokens, truncateToWidth } from '../../utils/format.js'
 import type { FocusedInputDialog } from './useReplOnCancel.js'

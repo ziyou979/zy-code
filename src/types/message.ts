@@ -4,8 +4,8 @@
  */
 
 import type { UUID } from 'node:crypto'
-import type { Progress } from '../Tool.js'
-import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
+import type { Progress } from '../tool.js'
+import type { PermissionMode } from './permissions.js'
 import type { LLMAssistantMessage, LLMError, ToolCallBlock, UserContentBlock } from './llm.js'
 
 // ============================================================

@@ -3,18 +3,18 @@ import type { QuerySource } from '../constants/querySource.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/index.js'
 import type { AutoCompactTrackingState } from '../services/compact/autoCompact.js'
 import type { PendingCacheEdits } from '../services/compact/microCompact.js'
-import type { ToolUseContext } from '../Tool.js'
+import type { ToolUseContext } from '../tool.js'
 import type { Message } from '../types/message.js'
 import { logError } from '../utils/log.js'
-import { getMessagesAfterCompactBoundary } from '../utils/messages.js'
+import { getMessagesAfterCompactBoundary } from '../services/messages/index.js'
 import { queryCheckpoint } from '../utils/queryProfiler.js'
-import { recordContentReplacement } from '../utils/sessionStorage.js'
+import { recordContentReplacement } from '../services/sessionStorage.js'
 import { applyToolResultBudget } from '../utils/toolResultStorage.js'
 import type { QueryDeps } from './deps.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const contextCollapse = feature('CONTEXT_COLLAPSE')
-  ? (require('../services/context-collapse/index.js') as typeof import('../services/context-collapse/index.js'))
+  ? (require('../services/compact/context-collapse/index.js') as typeof import('../services/compact/context-collapse/index.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 

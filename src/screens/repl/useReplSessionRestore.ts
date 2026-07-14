@@ -10,9 +10,9 @@ import type { UUID } from 'node:crypto'
 import { dirname } from 'node:path'
 import type React from 'react'
 import { useCallback, useEffect } from 'react'
-import { setCostStateForRestore } from '../../bootstrap/state/cost.js'
-import { switchSession } from '../../bootstrap/state/session.js'
-import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js'
+import { setCostStateForRestore } from 'src/bootstrap/runtime/runtimeContext.js'
+import { switchSession } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   getRestorableSessionCosts,
   resetCostState,
@@ -32,18 +32,18 @@ import {
   resetSessionFilePointer,
 } from '../../services/session-storage/transcript.js'
 import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
-import type { ReplStoreInstance } from '../../state/ReplStore.js'
-import { restoreRemoteAgentTasks } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js'
+import type { ReplStoreInstance } from '../../state/replStore.js'
+import { restoreRemoteAgentTasks } from '../../tasks/remote-agent-task/RemoteAgentTask.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-import type { ResumeEntrypoint } from '../../types/command.js'
+import type { ResumeEntrypoint } from '../../commands/types.js'
 import { asSessionId } from '../../types/ids.js'
 import type { LogOption } from '../../types/logs.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { updateSessionName } from '../../utils/concurrentSessions.js'
 import { deserializeMessages } from '../../utils/conversationRecovery.js'
 import { copyFileHistoryForResume } from '../../utils/fileHistory.js'
-import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../../utils/hooks.js'
-import { createSystemMessage } from '../../utils/messages.js'
+import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../../services/hooks.js'
+import { createSystemMessage } from '../../services/messages/index.js'
 import { copyPlanForFork, copyPlanForResume } from '../../utils/plans.js'
 import {
   computeStandaloneAgentContext,
@@ -58,10 +58,10 @@ import {
   getCurrentSessionTitle,
   saveAiGeneratedTitle,
   saveWorktreeState,
-} from '../../utils/sessionStorage.js'
+} from '../../services/sessionStorage.js'
 import { generateSessionTitle } from '../../utils/sessionTitle.js'
 import { reconstructContentReplacementState } from '../../utils/toolResultStorage.js'
-import { getCurrentWorktreeSession } from '../../utils/worktree.js'
+import { getCurrentWorktreeSession } from '../../services/worktree/worktree.js'
 
 // ── 公共类型 ──────────────────────────────────────────────
 
@@ -190,7 +190,7 @@ export function useReplSessionRestore({
         }
 
         switchSession(asSessionId(sessionId), log.fullPath ? dirname(log.fullPath) : null)
-        const { renameRecordingForSession } = await import('../../utils/asciicast.js')
+        const { renameRecordingForSession } = await import('../../services/shell/asciicast.js')
         await renameRecordingForSession()
         await resetSessionFilePointer()
 
@@ -233,7 +233,7 @@ export function useReplSessionRestore({
 
         if (feature('COORDINATOR_MODE')) {
           /* eslint-disable @typescript-eslint/no-require-imports */
-          const { saveMode } = require('../../utils/sessionStorage.js')
+          const { saveMode } = require('../../services/sessionStorage.js')
           const { isCoordinatorMode } =
             require('../../coordinator/coordinatorMode.js') as typeof import('../../coordinator/coordinatorMode.js')
           /* eslint-enable @typescript-eslint/no-require-imports */

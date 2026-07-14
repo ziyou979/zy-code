@@ -7,10 +7,10 @@ import {
   type EnvironmentResource,
   fetchEnvironments,
 } from '../../services/teleport/environments.js'
-import type { ToolUseContext } from '../../Tool.js'
+import type { ToolUseContext } from '../../tool.js'
 import { ASK_USER_QUESTION_TOOL_NAME } from '../../tools/AskUserQuestionTool/prompt.js'
 import { REMOTE_TRIGGER_TOOL_NAME } from '../../tools/RemoteTriggerTool/prompt.js'
-import { getZyAIOAuthTokens } from '../../utils/auth.js'
+import { getZyAIOAuthTokens } from '../../services/auth/auth.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { detectCurrentRepositoryWithHost, parseGitRemote } from '../../utils/detectRepository.js'
 import { getRemoteUrl } from '../../utils/git.js'

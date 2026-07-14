@@ -3,30 +3,33 @@ import type { ModelUsage } from 'src/types/index.js'
 import {
   addToTotalCostState,
   addToTotalLinesChanged,
-  getCostCounter,
   getModelUsage,
-  getSessionId,
-  getTokenCounter,
-  getTotalAPIDuration,
-  getTotalAPIDurationWithoutRetries,
-  getTotalCacheCreationInputTokens,
-  getTotalCacheReadInputTokens,
   getTotalCost,
   getTotalCostByCurrency,
-  getTotalDuration,
-  getTotalInputTokens,
   getTotalLinesAdded,
   getTotalLinesRemoved,
-  getTotalOutputTokens,
-  getTotalToolDuration,
-  getTotalWebSearchRequests,
   getUsageForModel,
   hasUnknownModelCost,
   resetCostState,
-  resetStateForTests,
   setCostStateForRestore,
   setHasUnknownModelCost,
-} from './bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { getCostCounter, getTokenCounter } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
+import {
+  getTotalAPIDuration,
+  getTotalAPIDurationWithoutRetries,
+  getTotalDuration,
+  getTotalToolDuration,
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import {
+  getTotalCacheCreationInputTokens,
+  getTotalCacheReadInputTokens,
+  getTotalInputTokens,
+  getTotalOutputTokens,
+  getTotalWebSearchRequests,
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { resetStateForTests } from 'src/bootstrap/runtime/runtimeContext.js'
 import { tSync } from './i18n/index.js'
 import { stringWidth } from './ink/stringWidth.js'
 import {
@@ -35,12 +38,12 @@ import {
 } from './services/analytics/index.js'
 import type { TokenUsage as Usage } from './types/llm.js'
 import type { Message } from './types/message.js'
-import { getCurrentProjectConfig, saveCurrentProjectConfig } from './utils/config.js'
+import { getCurrentProjectConfig, saveCurrentProjectConfig } from './services/config/config.js'
 import { getContextWindowForModel, getModelMaxOutputTokens } from './utils/context.js'
 import { formatDuration, formatNumber } from './utils/format.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
-import { SYNTHETIC_MODEL } from './utils/messages/constants.js'
-import { calculateCost, getCurrencySymbol, getModelCurrency } from './utils/modelCost.js'
+import { SYNTHETIC_MODEL } from './services/messages/constants.js'
+import { calculateCost, getCurrencySymbol, getModelCurrency } from './services/model/modelCost.js'
 
 export {
   addToTotalLinesChanged,

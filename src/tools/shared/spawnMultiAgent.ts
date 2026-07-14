@@ -8,10 +8,10 @@ import {
   getChromeFlagOverride,
   getFlagSettingsPath,
   getInlinePlugins,
-  getMainLoopModelOverride,
-  getSessionBypassPermissionsMode,
-  getSessionId,
-} from '../../bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { getSessionBypassPermissionsMode } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getMainLoopModelOverride } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { parseUserSpecifiedModel } from '../../services/model/model.js'
 import { isTmuxAvailable } from '../../services/swarm/backends/detection.js'
 import {
@@ -51,20 +51,20 @@ import {
   sendCommandToPane,
 } from '../../services/swarm/teammateLayoutManager.js'
 import { getTeammateModelFallback } from '../../services/swarm/teammateModel.js'
-import { registerTask } from '../../services/task/framework.js'
+import { registerTask } from '../../services/task-runtime/framework.js'
 import { quote } from '../../shell-eval/bash/shellQuote.js'
 import type { AppState } from '../../state/AppState.js'
-import { createTaskStateBase, generateTaskId } from '../../Task.js'
-import type { ToolUseContext } from '../../Tool.js'
-import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js'
+import { createTaskStateBase, generateTaskId } from '../../task.js'
+import type { ToolUseContext } from '../../tool.js'
+import type { InProcessTeammateTaskState } from '../../tasks/in-process-teammate-task/types.js'
 import { formatAgentId } from '../../utils/agentId.js'
 import { isInBundledMode } from '../../utils/bundledMode.js'
-import { getGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig } from '../../services/config/config.js'
 import { getCwd } from '../../utils/cwd.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
-import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
+import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
+import type { PermissionMode } from '../../services/permissions/permissionMode.js'
 import { writeToMailbox } from '../../utils/teammateMailbox.js'
 import type { CustomAgentDefinition } from '../AgentTool/loadAgentsDir.js'
 import { isCustomAgent } from '../AgentTool/loadAgentsDir.js'

@@ -1,12 +1,12 @@
 import { feature } from 'bun:bundle'
 import { randomUUID } from 'node:crypto'
-import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
+import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import { FORK_BOILERPLATE_TAG, FORK_DIRECTIVE_PREFIX } from '../../constants/xml.js'
 import { isCoordinatorMode } from '../../coordinator/coordinatorMode.js'
 import type { ToolCallBlock } from '../../types/llm.js'
 import type { AssistantMessage, Message as MessageType } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { createUserMessage } from '../../utils/messages.js'
+import { createUserMessage } from '../../services/messages/index.js'
 import type { BuiltInAgentDefinition } from './loadAgentsDir.js'
 
 /**

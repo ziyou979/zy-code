@@ -1,13 +1,14 @@
 import { feature } from 'bun:bundle'
-import { getAllowedChannels, getQuestionPreviewFormat } from 'src/bootstrap/state.js'
+import { getAllowedChannels } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getQuestionPreviewFormat } from 'src/bootstrap/runtime/runtimeContext.js'
 import { MessageResponse } from 'src/components/MessageResponse.js'
 import { BLACK_CIRCLE } from 'src/constants/figures.js'
-import { getModeColor } from 'src/utils/permissions/PermissionMode.js'
+import { getModeColor } from 'src/services/permissions/permissionMode.js'
 import { z } from 'zod/v4'
 import { t, tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
-import type { Tool } from '../../Tool.js'
-import { buildTool, type ToolDef } from '../../Tool.js'
+import type { Tool } from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import {
   ASK_USER_QUESTION_TOOL_CHIP_WIDTH,
@@ -100,7 +101,9 @@ const UNIQUENESS_REFINE = {
     }
     return true
   },
-  get message() { return tSync('askUser.questionsMustBeUnique') },
+  get message() {
+    return tSync('askUser.questionsMustBeUnique')
+  },
 } as const
 const commonFields = lazySchema(() => ({
   answers: z

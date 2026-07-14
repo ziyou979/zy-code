@@ -1,4 +1,4 @@
-import type { Tool } from '../Tool.js'
+import type { Tool } from '../tool.js'
 
 export type ToolRegistrationOptions = {
   /** 标记为特殊工具，getTools() 中默认排除 */

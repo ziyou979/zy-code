@@ -6,7 +6,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../services/analytics/index.js'
-import type { ToolUseContext } from '../Tool.js'
+import type { ToolUseContext } from '../tool.js'
 import type { HookProgress } from '../types/hooks/index.js'
 import type {
   AssistantMessage,
@@ -17,10 +17,13 @@ import type {
   TombstoneMessage,
   ToolUseSummaryMessage,
 } from '../types/message.js'
-import { createAttachmentMessage, type HookAttachment } from '../utils/attachments.js'
+import {
+  createAttachmentMessage,
+  type HookAttachment,
+} from '../services/attachments/attachments.js'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
-import type { REPLHookContext } from '../utils/hooks/postSamplingHooks.js'
+import type { REPLHookContext } from '../services/hooks/postSamplingHooks.js'
 import {
   executeStopHooks,
   executeTaskCompletedHooks,
@@ -28,13 +31,13 @@ import {
   getStopHookMessage,
   getTaskCompletedHookMessage,
   getTeammateIdleHookMessage,
-} from '../utils/hooks.js'
+} from '../services/hooks.js'
 import {
   createStopHookSummaryMessage,
   createSystemMessage,
   createUserInterruptionMessage,
   createUserMessage,
-} from '../utils/messages.js'
+} from '../services/messages/index.js'
 import type { SystemPrompt } from '../utils/systemPromptType.js'
 import { getTaskListId, listTasks } from '../utils/tasks.js'
 import { getAgentName, getTeamName, isTeammate } from '../utils/teammate.js'
@@ -44,7 +47,7 @@ const extractMemoriesModule = feature('MEMORY')
   ? (require('../services/extract-memories/extractMemories.js') as typeof import('../services/extract-memories/extractMemories.js'))
   : null
 const jobClassifierModule = feature('TEMPLATES')
-  ? (require('../jobs/classifier.js') as typeof import('../jobs/classifier.js'))
+  ? (require('../services/jobs/classifier.js') as typeof import('../services/jobs/classifier.js'))
   : null
 
 /* eslint-enable @typescript-eslint/no-require-imports */

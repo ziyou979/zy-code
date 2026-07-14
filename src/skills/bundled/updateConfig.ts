@@ -1,6 +1,6 @@
 import { toJSONSchema } from 'zod/v4'
 import { tSync } from '../../i18n/index.js'
-import { SettingsSchema } from '../../utils/settings/types.js'
+import { SettingsSchema } from '../../services/settings/types.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 

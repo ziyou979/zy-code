@@ -23,8 +23,8 @@ import {
   renderModelName,
 } from '../../services/model/model.js'
 import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
-import { findToolByName, type Tools } from '../../Tool.js'
-import { backgroundAll } from '../../tasks/LocalShellTask/LocalShellTask.js'
+import { findToolByName, type Tools } from '../../tool.js'
+import { backgroundAll } from '../../tasks/local-shell-task/LocalShellTask.js'
 import type { ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,
@@ -46,7 +46,7 @@ import {
   buildSubagentLookups,
   createAssistantMessage,
   EMPTY_LOOKUPS,
-} from '../../utils/messages.js'
+} from '../../services/messages/index.js'
 import type { Theme, ThemeName } from '../../utils/theme.js'
 import type { outputSchema, Progress, RemoteLaunchedOutput } from './AgentTool.js'
 import { inputSchema } from './AgentTool.js'

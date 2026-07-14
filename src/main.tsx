@@ -10,7 +10,7 @@ import { profileCheckpoint, profileReport } from './utils/startupProfiler.js'
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 profileCheckpoint('main_tsx_entry')
 
-import { startMdmRawRead } from './utils/settings/mdm/rawRead.js'
+import { startMdmRawRead } from './services/settings/mdm/rawRead.js'
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 startMdmRawRead()
@@ -27,11 +27,11 @@ import { feature } from 'bun:bundle'
 import { Command as CommanderCommand } from '@commander-js/extra-typings'
 import {
   setClientType,
-  setInlinePlugins,
   setIsInteractive,
   setQuestionPreviewFormat,
   setSessionSource,
-} from './bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { setInlinePlugins } from 'src/bootstrap/runtime/runtimeContext.js'
 import { rewriteArgv } from './cli/argvDispatch.js'
 import { resetCursor } from './cli/bootstrap/cursor.js'
 import { isBeingDebugged } from './cli/bootstrap/debugCheck.js'
@@ -61,8 +61,8 @@ import { loadPolicyLimits } from './services/policy-limits/index.js'
 import { loadRemoteManagedSettings } from './services/remote-managed-settings/index.js'
 import { stopCapturingEarlyInput } from './utils/earlyInput.js'
 import { isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
-import { clearPluginCache } from './utils/plugins/pluginLoader.js'
-import { ensureMdmSettingsLoaded } from './utils/settings/mdm/settings.js'
+import { clearPluginCache } from './services/plugins/pluginLoader.js'
+import { ensureMdmSettingsLoaded } from './services/settings/mdm/settings.js'
 import { initializeWarningHandler } from './utils/warningHandler.js'
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects

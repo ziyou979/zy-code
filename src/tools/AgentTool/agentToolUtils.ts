@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { clearInvokedSkillsForAgent } from '../../bootstrap/state.js'
+import { clearInvokedSkillsForAgent } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   ALL_AGENT_DISALLOWED_TOOLS,
   ASYNC_AGENT_ALLOWED_TOOLS,
@@ -12,10 +12,10 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { clearDumpState } from '../../services/api/dumpPrompts.js'
-import { emitTaskProgress as emitTaskProgressEvent } from '../../services/task/taskProgress.js'
+import { emitTaskProgress as emitTaskProgressEvent } from '../../services/task-runtime/taskProgress.js'
 import type { AppState } from '../../state/AppState.js'
-import type { Tool, ToolPermissionContext, Tools, ToolUseContext } from '../../Tool.js'
-import { toolMatchesName } from '../../Tool.js'
+import type { Tool, ToolPermissionContext, Tools, ToolUseContext } from '../../tool.js'
+import { toolMatchesName } from '../../tool.js'
 import {
   completeAgentTask as completeAsyncAgent,
   createActivityDescriptionResolver,
@@ -29,22 +29,22 @@ import {
   type ProgressTracker,
   updateAgentProgress as updateAsyncAgentProgress,
   updateProgressFromMessage,
-} from '../../tasks/LocalAgentTask/LocalAgentTask.js'
+} from '../../tasks/local-agent-task/LocalAgentTask.js'
 import { asAgentId } from '../../types/ids.js'
 import type { AssistantContentBlock } from '../../types/llm.js'
 import type { Message as MessageType } from '../../types/message.js'
-import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
+import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInProtectedNamespace } from '../../utils/envUtils.js'
 import { AbortError, errorMessage } from '../../utils/errors.js'
 import type { CacheSafeParams } from '../../utils/forkedAgent.js'
-import { extractTextContent, getLastAssistantMessage } from '../../utils/messages.js'
-import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
-import { permissionRuleValueFromString } from '../../utils/permissions/permissionRuleParser.js'
+import { extractTextContent, getLastAssistantMessage } from '../../services/messages/index.js'
+import type { PermissionMode } from '../../services/permissions/permissionMode.js'
+import { permissionRuleValueFromString } from '../../services/permissions/permissionRuleParser.js'
 import {
   buildTranscriptForClassifier,
   classifyYoloAction,
-} from '../../utils/permissions/yoloClassifier.js'
+} from '../../services/permissions/yoloClassifier.js'
 import { isInProcessTeammate } from '../../utils/teammateContext.js'
 import { getTokenCountFromUsage } from '../../utils/tokens.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from '../ExitPlanModeTool/constants.js'

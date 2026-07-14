@@ -1,5 +1,5 @@
 import type { z } from 'zod/v4'
-import { getOriginalCwd } from '../../bootstrap/state.js'
+import { getOriginalCwd } from 'src/bootstrap/runtime/runtimeContext.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import {
   extractOutputRedirections,
@@ -20,8 +20,8 @@ import {
 import { getCwd } from '../../utils/cwd.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { isCurrentDirectoryBareGitRepo } from '../../utils/git.js'
-import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
-import { getPlatform } from '../../utils/platform.js'
+import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import { getPlatform } from '../../services/shell/platform.js'
 import type { BashTool } from './BashTool.js'
 import { isNormalizedGitCommand } from './bashPermissions.js'
 import { bashCommandIsSafe_DEPRECATED } from './bashSecurity.js'

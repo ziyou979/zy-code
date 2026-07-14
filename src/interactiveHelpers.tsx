@@ -8,14 +8,14 @@ import {
   shouldShowAgentsMdExternalIncludesWarning,
 } from 'src/utils/agentsMd.js'
 import { gracefulShutdown, gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
+import type { ChannelEntry } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
-  type ChannelEntry,
   getAllowedChannels,
   setAllowedChannels,
   setHasDevChannels,
-  setSessionTrustAccepted,
-  setStatsStore,
-} from './bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { setSessionTrustAccepted } from 'src/bootstrap/runtime/runtimeContext.js'
+import { setStatsStore } from 'src/bootstrap/runtime/runtimeContext.js'
 import { startDeferredPrefetches } from './cli/bootstrap/prefetch.js'
 import type { Command } from './commands.js'
 import { createStatsStore, type StatsStore } from './context/stats.js'
@@ -30,7 +30,7 @@ import {
   resetGrowthBook,
 } from './services/analytics/growthbook.js'
 import { updateDeepLinkTerminalPreference } from './services/deep-link/terminalPreference.js'
-import { handleMcpjsonServerApprovals } from './services/mcpServerApproval.js'
+import { handleMcpjsonServerApprovals } from './components/mcp/MCPServerApprovalController.js'
 import { getDefaultStandardModel } from './services/model/model.js'
 import { AppStateProvider } from './state/AppState.js'
 import { onChangeAppState } from './state/onChangeAppState.js'
@@ -40,18 +40,18 @@ import {
   getApiKeyStatus,
   getGlobalConfig,
   saveGlobalConfig,
-} from './utils/config.js'
+} from './services/config/config.js'
 import { isEnvTruthy, isRunningOnHomespace, isTestEnv } from './utils/envUtils.js'
 import { type FpsMetrics, FpsTracker } from './utils/fpsTracker.js'
 import { updateGithubRepoPathMapping } from './utils/githubRepoPathMapping.js'
 import { applyConfigEnvironmentVariables } from './utils/managedEnv.js'
-import type { PermissionMode } from './utils/permissions/PermissionMode.js'
+import type { PermissionMode } from './services/permissions/permissionMode.js'
 import { getBaseRenderOptions } from './utils/renderOptions.js'
-import { getSettingsWithAllErrors } from './utils/settings/allErrors.js'
+import { getSettingsWithAllErrors } from './services/settings/allErrors.js'
 import {
   hasAutoModeOptIn,
   hasSkipDangerousModePermissionPrompt,
-} from './utils/settings/settings.js'
+} from './services/settings/settings.js'
 export function completeOnboarding(): void {
   saveGlobalConfig((current) => ({
     ...current,
@@ -305,7 +305,7 @@ export async function showSetupScreens(
     if (devChannels && devChannels.length > 0) {
       const [{ isChannelsEnabled }, { getZyAIOAuthTokens }] = await Promise.all([
         import('./services/mcp/channelAllowlist.js'),
-        import('./utils/auth.js'),
+        import('./services/auth/auth.js'),
       ])
       // Skip the dialog when channels are blocked (zy_channels_gate off or no
       // OAuth) — accepting then immediately seeing "not available" in

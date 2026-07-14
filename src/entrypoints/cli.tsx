@@ -59,7 +59,7 @@ async function main(): Promise<void> {
   // 仅限 Ant 内部使用：通过 feature flag 从外部构建中移除。
   if (feature('DUMP_SYSTEM_PROMPT') && args[0] === '--dump-system-prompt') {
     profileCheckpoint('cli_dump_system_prompt_path')
-    const { enableConfigs } = await import('../utils/config.js')
+    const { enableConfigs } = await import('../services/config/config.js')
     enableConfigs()
     const { getMainLoopModel } = await import('../services/model/model.js')
     const modelIdx = args.indexOf('--model')
@@ -125,20 +125,20 @@ async function main(): Promise<void> {
       args[0] === 'bridge')
   ) {
     profileCheckpoint('cli_bridge_path')
-    const { enableConfigs } = await import('../utils/config.js')
+    const { enableConfigs } = await import('../services/config/config.js')
     enableConfigs()
     const { getWireDisabledReason, checkWireMinVersion } = await import(
       '../bridge/bridgeEnabled.js'
     )
     const { BRIDGE_LOGIN_ERROR } = await import('../bridge/types.js')
     const { bridgeMain } = await import('../bridge/bridgeMain.js')
-    const { exitWithError } = await import('../utils/process.js')
+    const { exitWithError } = await import('../services/shell/process.js')
 
     // 认证检查必须放在 GrowthBook 门控检查之前 —— 没有认证，
     // GrowthBook 没有用户上下文，会返回过期/默认的 false。
     // getWireDisabledReason 会等待 GB 初始化，因此返回值是最新的
     //（而非过期的磁盘缓存），但 init 仍需要认证头才能工作。
-    const { getZyAIOAuthTokens } = await import('../utils/auth.js')
+    const { getZyAIOAuthTokens } = await import('../services/auth/auth.js')
     if (!getZyAIOAuthTokens()?.accessToken) {
       exitWithError(BRIDGE_LOGIN_ERROR)
     }
@@ -166,7 +166,7 @@ async function main(): Promise<void> {
   // `zy daemon [subcommand]` 快速路径：长期运行的 supervisor。
   if (feature('DAEMON') && args[0] === 'daemon') {
     profileCheckpoint('cli_daemon_path')
-    const { enableConfigs } = await import('../utils/config.js')
+    const { enableConfigs } = await import('../services/config/config.js')
     enableConfigs()
     const { initSinks } = await import('../utils/sinks.js')
     initSinks()
@@ -189,7 +189,7 @@ async function main(): Promise<void> {
       args.includes('--background'))
   ) {
     profileCheckpoint('cli_bg_path')
-    const { enableConfigs } = await import('../utils/config.js')
+    const { enableConfigs } = await import('../services/config/config.js')
     enableConfigs()
     // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     const bg = (await import('../cli/bg.js')) as any
@@ -257,18 +257,18 @@ async function main(): Promise<void> {
       args.some((a) => a.startsWith('--worktree=')))
   ) {
     profileCheckpoint('cli_tmux_worktree_fast_path')
-    const { enableConfigs } = await import('../utils/config.js')
+    const { enableConfigs } = await import('../services/config/config.js')
     enableConfigs()
     const { isWorktreeModeEnabled } = await import('../utils/worktreeModeEnabled.js')
     if (isWorktreeModeEnabled()) {
-      const { execIntoTmuxWorktree } = await import('../utils/worktree.js')
+      const { execIntoTmuxWorktree } = await import('../services/worktree/worktree.js')
       const result = await execIntoTmuxWorktree(args)
       if (result.handled) {
         return
       }
       // 如果未处理（如发生错误），回退到正常 CLI 流程
       if (result.error) {
-        const { exitWithError } = await import('../utils/process.js')
+        const { exitWithError } = await import('../services/shell/process.js')
         exitWithError(result.error)
       }
     }

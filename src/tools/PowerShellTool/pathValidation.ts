@@ -16,7 +16,7 @@ import {
   isNullRedirectionTarget,
   isPowerShellParameter,
 } from '../../shell-eval/powershell/parser.js'
-import type { ToolPermissionContext } from '../../Tool.js'
+import type { ToolPermissionContext } from '../../tool.js'
 import type { PermissionRule } from '../../types/permissions.js'
 import { getCwd } from '../../utils/cwd.js'
 import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.js'
@@ -28,15 +28,15 @@ import {
   checkReadableInternalPath,
   matchingRuleForInput,
   pathInAllowedWorkingPath,
-} from '../../utils/permissions/filesystem.js'
-import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
-import { createReadRuleSuggestion } from '../../utils/permissions/PermissionUpdate.js'
-import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
+} from '../../services/permissions/filesystem.js'
+import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import { createReadRuleSuggestion } from '../../services/permissions/permissionUpdate.js'
+import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
 import {
   isDangerousRemovalPath,
   isPathInSandboxWriteAllowlist,
-} from '../../utils/permissions/pathValidation.js'
-import { getPlatform } from '../../utils/platform.js'
+} from '../../services/permissions/pathValidation.js'
+import { getPlatform } from '../../services/shell/platform.js'
 import { COMMON_SWITCHES, COMMON_VALUE_PARAMS } from './commonParameters.js'
 import { resolveToCanonical } from './readOnlyValidation.js'
 
@@ -50,7 +50,7 @@ type FileOperationType = 'read' | 'write' | 'create'
 
 type PathCheckResult = {
   allowed: boolean
-  decisionReason?: import('../../utils/permissions/PermissionResult.js').PermissionDecisionReason
+  decisionReason?: import('../../services/permissions/permissionResult.js').PermissionDecisionReason
 }
 
 type ResolvedPathCheckResult = PathCheckResult & {

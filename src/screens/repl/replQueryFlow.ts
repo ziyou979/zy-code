@@ -10,12 +10,11 @@ import type React from 'react'
 import {
   getBudgetContinuationCount,
   getCurrentTurnTokenBudget,
-  getOriginalCwd,
-  getSessionId,
   getTotalInputTokens,
   getTurnOutputTokens,
   snapshotOutputTokensForTurn,
-} from '../../bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { coordinatorModeModule, proactiveModule } from '../../cli/lazyModules.js'
 import type { Command, CommandResultDisplay } from '../../commands.js'
 import { getCommandName, isCommandEnabled } from '../../commands.js'
@@ -24,6 +23,7 @@ import {
   selectableUserMessagesFilter,
 } from '../../components/MessageSelector.js'
 import { prependModeCharacterToInput } from '../../components/PromptInput/inputModes.js'
+import { processBashCommand } from '../../components/process-user-input/BashCommandController.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
 import {
   BASH_INPUT_TAG,
@@ -53,17 +53,17 @@ import {
 import { diagnosticTracker } from '../../services/diagnosticTracking.js'
 import type { MCPServerConnection, ScopedMcpServerConfig } from '../../services/mcp/types.js'
 import { sendNotification } from '../../services/notifier.js'
+import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
 import type { ActiveSpeculationState } from '../../services/prompt-suggestion/speculation.js'
 import { handleSpeculationAccept } from '../../services/prompt-suggestion/speculation.js'
-import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
 import { prependToShellHistoryCache } from '../../services/suggestions/shellHistoryCompletion.js'
 import { setMemberActive } from '../../services/swarm/teamHelpers.js'
 import type { RemoteMessageContent } from '../../services/teleport/api.js'
 import type { AppState } from '../../state/AppState.js'
 import type { AppStateStore } from '../../state/AppStateStore.js'
-import type { ReplStoreInstance, ToolJSXState } from '../../state/ReplStore.js'
-import type { CompactProgressEvent, Tool } from '../../Tool.js'
-import { getAllInProcessTeammateTasks } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
+import type { ReplStoreInstance, ToolJSXState } from '../../state/replStore.js'
+import type { CompactProgressEvent, Tool } from '../../tool.js'
+import { getAllInProcessTeammateTasks } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import { resolveAgentTools } from '../../tools/AgentTool/agentToolUtils.js'
 import { assembleToolPool } from '../../tools.js'
 import { toUUID } from '../../types/ids.js'
@@ -71,12 +71,12 @@ import type { UserContentBlock } from '../../types/llm.js'
 import type { Message as MessageType, UserMessage } from '../../types/message.js'
 import type { PromptInputMode } from '../../types/textInputTypes.js'
 import { createAbortController } from '../../utils/abortController.js'
-import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
+import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { count } from '../../utils/array.js'
 import type { AttributionState } from '../../utils/commitAttribution.js'
 import { incrementPromptCount } from '../../utils/commitAttribution.js'
-import type { PastedContent } from '../../utils/config.js'
-import { getGlobalConfig } from '../../utils/config.js'
+import type { PastedContent } from '../../services/config/config.js'
+import { getGlobalConfig } from '../../services/config/config.js'
 import { createDebugLog } from '../../utils/debug.js'
 import type { EffortLevel } from '../../utils/effort.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
@@ -84,12 +84,12 @@ import type { FileHistoryState } from '../../utils/fileHistory.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
 import { handlePromptSubmit } from '../../utils/handlePromptSubmit.js'
-import { executeMessageDisplayHooks } from '../../utils/hooks/executors/messageDisplay.js'
-import type { IDEExtensionInstallationStatus, IdeType } from '../../utils/ide.js'
-import { closeOpenDiffs, getConnectedIdeClient } from '../../utils/ide.js'
+import { executeMessageDisplayHooks } from '../../services/hooks/executors/messageDisplay.js'
+import type { IDEExtensionInstallationStatus, IdeType } from '../../services/ide/ide.js'
+import { closeOpenDiffs, getConnectedIdeClient } from '../../services/ide/ide.js'
 import type { SetAppState } from '../../utils/messageQueueManager.js'
 import { enqueue, getCommandQueueLength } from '../../utils/messageQueueManager.js'
-import type { StreamingThinking } from '../../utils/messages.js'
+import type { StreamingThinking } from '../../services/messages/index.js'
 import {
   createCommandInputMessage,
   createTurnDurationMessage,
@@ -99,13 +99,13 @@ import {
   getMessagesAfterCompactBoundary,
   handleMessageFromStream,
   isCompactBoundaryMessage,
-} from '../../utils/messages.js'
+} from '../../services/messages/index.js'
 import {
   checkAndDisableAutoModeIfNeeded,
   checkAndDisableBypassPermissionsIfNeeded,
-} from '../../utils/permissions/bypassPermissionsKillswitch.js'
-import { getScratchpadDir, isScratchpadEnabled } from '../../utils/permissions/filesystem.js'
-import { getQuerySourceForREPL } from '../../utils/promptCategory.js'
+} from '../../services/permissions/bypassPermissionsKillswitch.js'
+import { getScratchpadDir, isScratchpadEnabled } from '../../services/permissions/filesystem.js'
+import { getQuerySourceForREPL } from '../../services/analytics/querySource.js'
 import { logQueryProfileReport, queryCheckpoint } from '../../utils/queryProfiler.js'
 import {
   cacheSessionTitle,
@@ -114,7 +114,7 @@ import {
   recordAttributionSnapshot,
   removeTranscriptMessage,
   saveAiGeneratedTitle,
-} from '../../utils/sessionStorage.js'
+} from '../../services/sessionStorage.js'
 import { generateSessionTitle } from '../../utils/sessionTitle.js'
 import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
 import { getAgentName, getTeamName } from '../../utils/teammate.js'
@@ -1185,6 +1185,7 @@ export async function handleSubmit(
     setMessages: ctx.replStore.setMessages,
     streamMode: ctx.replStore.getState().streamMode,
     hasInterruptibleToolInProgress: ctx.replStore.mutable.hasInterruptibleToolInProgress,
+    processBashCommand,
   })
 
   // stash 延迟恢复

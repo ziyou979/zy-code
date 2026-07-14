@@ -5,7 +5,7 @@ import { join as nativeJoin } from 'node:path'
 import { join as posixJoin } from 'node:path/posix'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
-import { getPlatform } from '../../utils/platform.js'
+import { getPlatform } from '../../services/shell/platform.js'
 import { getSessionEnvironmentScript } from '../../utils/sessionEnvironment.js'
 import { getSessionEnvVars } from '../../utils/sessionEnvVars.js'
 import {
@@ -13,9 +13,9 @@ import {
   getZyTmuxEnv,
   hasTmuxToolBeenUsed,
 } from '../../utils/tmuxSocket.js'
-import { windowsPathToPosixPath } from '../../utils/windowsPaths.js'
+import { windowsPathToPosixPath } from '../../services/shell/windowsPaths.js'
 import { rearrangePipeCommand } from '../bash/bashPipeCommand.js'
-import { createAndSaveSnapshot } from '../bash/ShellSnapshot.js'
+import { createAndSaveSnapshot } from '../bash/shellSnapshot.js'
 import { formatShellPrefixCommand } from '../bash/shellPrefix.js'
 import { quote } from '../bash/shellQuote.js'
 import {

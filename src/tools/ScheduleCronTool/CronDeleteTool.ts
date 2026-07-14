@@ -1,6 +1,6 @@
 import { z } from 'zod/v4'
-import type { ValidationResult } from '../../Tool.js'
-import { buildTool, type ToolDef } from '../../Tool.js'
+import type { ValidationResult } from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tool.js'
 import { getCronFilePath, listAllCronTasks, removeCronTasks } from '../../utils/cronTasks.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { getTeammateContext } from '../../utils/teammateContext.js'

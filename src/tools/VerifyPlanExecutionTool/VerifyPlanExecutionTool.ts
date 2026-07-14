@@ -1,5 +1,5 @@
 // Stub for src/tools/VerifyPlanExecutionTool/VerifyPlanExecutionTool.ts
-import type { Tool } from '../../Tool.js'
+import type { Tool } from '../../tool.js'
 
 export const VerifyPlanExecutionTool = {
   name: 'VerifyPlanExecution',

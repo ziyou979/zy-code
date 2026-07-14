@@ -17,14 +17,17 @@ import { getSystemPrompt } from '../../constants/prompts.js'
 import { getSystemContext, getUserContext } from '../../context.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
-import type { ReplStoreInstance } from '../../state/ReplStore.js'
-import type { ToolPermissionContext } from '../../Tool.js'
-import { startBackgroundSession } from '../../tasks/LocalMainSessionTask.js'
+import type { ReplStoreInstance } from '../../state/replStore.js'
+import type { ToolPermissionContext } from '../../tool.js'
+import { startBackgroundSession } from '../../tasks/localMainSessionTask.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Message as MessageType } from '../../types/message.js'
-import { createAttachmentMessage, getQueuedCommandAttachments } from '../../utils/attachments.js'
+import {
+  createAttachmentMessage,
+  getQueuedCommandAttachments,
+} from '../../services/attachments/attachments.js'
 import { removeByFilter } from '../../utils/messageQueueManager.js'
-import { getQuerySourceForREPL } from '../../utils/promptCategory.js'
+import { getQuerySourceForREPL } from '../../services/analytics/querySource.js'
 import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
 
 export type UseReplBackgroundQueryParams = {

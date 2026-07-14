@@ -6,8 +6,8 @@
 import { createHash } from 'node:crypto'
 import { appendFile, mkdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { getOriginalCwd, getSessionId } from '../../../bootstrap/state.js'
-import { getProjectDir } from '../../../utils/sessionStorage.js'
+import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getProjectDir } from '../../../services/sessionStorage.js'
 
 // --- Journal 条目类型 ---
 

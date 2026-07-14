@@ -1,6 +1,6 @@
 import { open, stat } from 'node:fs/promises'
 import { GUIDE_AGENT_TYPE } from 'src/tools/AgentTool/built-in/zyCodeGuideAgent.js'
-import { getSettingsFilePathForSource } from 'src/utils/settings/settings.js'
+import { getSettingsFilePathForSource } from 'src/services/settings/settings.js'
 import { enableDebugLogging, getDebugLogPath } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage, isENOENT } from '../../utils/errors.js'

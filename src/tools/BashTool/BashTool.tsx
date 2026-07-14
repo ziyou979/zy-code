@@ -4,7 +4,7 @@ import { copyFile, stat as fsStat, truncate as fsTruncate, link } from 'node:fs/
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
 import type { AppState } from 'src/state/AppState.js'
 import { z } from 'zod/v4'
-import { getKairosActive } from '../../bootstrap/state.js'
+import { getKairosActive } from 'src/bootstrap/runtime/runtimeContext.js'
 import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js'
 import { tSync } from '../../i18n/index.js'
 import {
@@ -13,8 +13,8 @@ import {
 } from '../../services/analytics/index.js'
 import { notifyVscodeFileUpdated } from '../../services/mcp/vscodeMcp.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
-import { getTaskOutputPath } from '../../services/task/diskOutput.js'
-import { TaskOutput } from '../../services/task/TaskOutput.js'
+import { getTaskOutputPath } from '../../services/task-runtime/diskOutput.js'
+import { TaskOutput } from '../../services/task-runtime/taskOutput.js'
 import { parseForSecurity } from '../../shell-eval/bash/ast.js'
 import {
   splitCommand_DEPRECATED,
@@ -25,15 +25,15 @@ import type {
   ToolCallProgress,
   ToolUseContext,
   ValidationResult,
-} from '../../Tool.js'
-import { buildTool, type ToolDef } from '../../Tool.js'
+} from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tool.js'
 import {
   backgroundExistingForegroundTask,
   markTaskNotified,
   registerForeground,
   spawnShellTask,
   unregisterForeground,
-} from '../../tasks/LocalShellTask/LocalShellTask.js'
+} from '../../tasks/local-shell-task/LocalShellTask.js'
 import type { AgentId } from '../../types/ids.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
@@ -51,14 +51,14 @@ import { truncate } from '../../utils/format.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { expandPath } from '../../utils/path.js'
-import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
-import { maybeRecordPluginHint } from '../../utils/plugins/hintRecommendation.js'
-import { exec } from '../../utils/Shell.js'
-import type { ExecResult } from '../../utils/ShellCommand.js'
+import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import { maybeRecordPluginHint } from '../../services/plugins/hintRecommendation.js'
+import { exec } from '../../services/shell/shell.js'
+import type { ExecResult } from '../../services/shell/shellCommand.js'
 import { semanticBoolean } from '../../utils/semanticBoolean.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
 import { EndTruncatingAccumulator } from '../../utils/stringUtils.js'
-import { isOutputLineTruncated } from '../../utils/terminal.js'
+import { isOutputLineTruncated } from '../../terminal-ui/terminal.js'
 import {
   buildLargeToolResultMessage,
   ensureToolResultsDir,

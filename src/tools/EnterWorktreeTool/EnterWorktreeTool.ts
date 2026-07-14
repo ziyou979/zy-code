@@ -1,22 +1,22 @@
 import { z } from 'zod/v4'
 import { tSync } from '../../i18n/index.js'
-import { getSessionId, setOriginalCwd } from '../../bootstrap/state.js'
+import { getSessionId, setOriginalCwd } from 'src/bootstrap/runtime/runtimeContext.js'
 import { clearSystemPromptSections } from '../../constants/systemPromptSections.js'
 import { logEvent } from '../../services/analytics/index.js'
-import type { Tool } from '../../Tool.js'
-import { buildTool, type ToolDef } from '../../Tool.js'
+import type { Tool } from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tool.js'
 import { clearMemoryFileCaches } from '../../utils/agentsMd.js'
 import { getCwd } from '../../utils/cwd.js'
 import { findCanonicalGitRoot } from '../../utils/git.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { getPlanSlug, getPlansDirectory } from '../../utils/plans.js'
-import { setCwd } from '../../utils/Shell.js'
-import { saveWorktreeState } from '../../utils/sessionStorage.js'
+import { setCwd } from '../../services/shell/shell.js'
+import { saveWorktreeState } from '../../services/sessionStorage.js'
 import {
   createWorktreeForSession,
   getCurrentWorktreeSession,
   validateWorktreeSlug,
-} from '../../utils/worktree.js'
+} from '../../services/worktree/worktree.js'
 import { ENTER_WORKTREE_TOOL_NAME } from './constants.js'
 import { getEnterWorktreeToolPrompt } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'

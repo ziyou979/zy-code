@@ -25,12 +25,12 @@ import type {
   MessageActionCaps,
   MessageActionsNav,
   MessageActionsState,
-} from '../../components/messageActions.js'
+} from '../../components/MessageActions.js'
 import {
   MessageActionsBar,
   MessageActionsKeybindings,
   useMessageActions,
-} from '../../components/messageActions.js'
+} from '../../components/MessageActions.js'
 import { UserTextMessage } from '../../components/messages/UserTextMessage.js'
 import { IssueFlagBanner } from '../../components/PromptInput/IssueFlagBanner.js'
 import PromptInput from '../../components/PromptInput/PromptInput.js'
@@ -64,13 +64,13 @@ import type { ActiveSpeculationState } from '../../services/prompt-suggestion/sp
 import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import { useReplState } from '../../state/ReplState.js'
-import type { ReplStoreInstance } from '../../state/ReplStore.js'
-import type { Tool, ToolPermissionContext } from '../../Tool.js'
-import { getAllInProcessTeammateTasks } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
-import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js'
-import { isInProcessTeammateTask } from '../../tasks/InProcessTeammateTask/types.js'
-import type { LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
-import { isLocalAgentTask } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
+import type { ReplStoreInstance } from '../../state/replStore.js'
+import type { Tool, ToolPermissionContext } from '../../tool.js'
+import { getAllInProcessTeammateTasks } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
+import type { InProcessTeammateTaskState } from '../../tasks/in-process-teammate-task/types.js'
+import { isInProcessTeammateTask } from '../../tasks/in-process-teammate-task/types.js'
+import type { LocalAgentTaskState } from '../../tasks/local-agent-task/LocalAgentTask.js'
+import { isLocalAgentTask } from '../../tasks/local-agent-task/LocalAgentTask.js'
 import { SLEEP_TOOL_NAME } from '../../tools/SleepTool/prompt.js'
 import { toUUID } from '../../types/ids.js'
 import type { Message as MessageType, UserMessage } from '../../types/message.js'
@@ -82,9 +82,9 @@ import {
   getAutoRunCommand,
   getAutoRunIssueReasonText,
   shouldAutoRunIssue,
-} from '../../utils/autoRunIssue.js'
+} from '../../components/Runtime/AutoRunIssue.js'
 import type { AutoUpdaterResult } from '../../utils/autoUpdater.js'
-import type { PastedContent } from '../../utils/config.js'
+import type { PastedContent } from '../../services/config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -92,10 +92,10 @@ import type { FileHistoryState } from '../../utils/fileHistory.js'
 import { fileHistoryRewind } from '../../utils/fileHistory.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
-import type { IDEExtensionInstallationStatus } from '../../utils/ide.js'
+import type { IDEExtensionInstallationStatus } from '../../services/ide/ide.js'
 import type { SetAppState } from '../../utils/messageQueueManager.js'
 import { getCommandQueueLength } from '../../utils/messageQueueManager.js'
-import type { StreamingThinking } from '../../utils/messages.js'
+import type { StreamingThinking } from '../../services/messages/index.js'
 import type { Theme } from '../../utils/theme.js'
 import type { Screen } from '../REPL.js'
 import { handleSummarize as handleSummarizeAction } from './handleSummarize.js'
@@ -108,12 +108,6 @@ import type {
 import type { FocusedInputDialog } from './useReplOnCancel.js'
 import type { ReplVoiceState } from './useReplVoice.js'
 import { ReplVoiceKeybindingHandler } from './useReplVoice.js'
-
-/* eslint-disable @typescript-eslint/no-require-imports */
-const WebBrowserPanelModule = feature('WEB_BROWSER_TOOL')
-  ? (require('../../tools/WebBrowserTool/WebBrowserPanel.js') as typeof import('../../tools/WebBrowserTool/WebBrowserPanel.js'))
-  : null
-/* eslint-enable @typescript-eslint/no-require-imports */
 
 // ────────────────────────────────────────────────────────
 //  Props
@@ -722,7 +716,7 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
       setMessages((prev: MessageType[]) => [
         ...prev,
         (
-          require('../../utils/messages.js') as typeof import('../../utils/messages.js')
+          require('../../services/messages/index.js') as typeof import('../../services/messages/index.js')
         ).createAgentsKilledMessage(),
       ]),
     isMessageSelectorVisible: isMessageSelectorVisible || !!showBashesDialog,
@@ -844,10 +838,6 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
                     {toolJSX.jsx}
                   </Box>
                 )}
-              {feature('WEB_BROWSER_TOOL')
-                ? WebBrowserPanelModule &&
-                  React.createElement(WebBrowserPanelModule.WebBrowserPanel)
-                : null}
               <Box flexGrow={1} />
               {showSpinner && (
                 <SpinnerWithVerb

@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { dirname } from 'node:path'
 import uniqBy from 'lodash-es/uniqBy.js'
-import { getProjectRoot } from 'src/bootstrap/state.js'
+import { getProjectRoot } from 'src/bootstrap/runtime/runtimeContext.js'
 import { builtInCommandNames, findCommand, getCommands, type PromptCommand } from 'src/commands.js'
 import { buildPluginCommandTelemetryFields } from 'src/services/telemetry/pluginTelemetry.js'
 import type {
@@ -10,9 +10,9 @@ import type {
   ToolResult,
   ToolUseContext,
   ValidationResult,
-} from 'src/Tool.js'
-import { buildTool, type ToolDef } from 'src/Tool.js'
-import type { Command } from 'src/types/command.js'
+} from 'src/tool.js'
+import { buildTool, type ToolDef } from 'src/tool.js'
+import type { Command } from 'src/commands/types.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -21,14 +21,18 @@ import type {
   UserMessage,
 } from 'src/types/message.js'
 import { logForDebugging } from 'src/utils/debug.js'
-import type { PermissionDecision } from 'src/utils/permissions/PermissionResult.js'
-import { getRuleByContentsForTool } from 'src/utils/permissions/permissions.js'
+import type { PermissionDecision } from 'src/services/permissions/permissionResult.js'
+import { getRuleByContentsForTool } from 'src/services/permissions/permissions.js'
 import {
   isOfficialMarketplaceName,
   parsePluginIdentifier,
-} from 'src/utils/plugins/pluginIdentifier.js'
+} from 'src/services/plugins/pluginIdentifier.js'
 import { z } from 'zod/v4'
-import { addInvokedSkill, clearInvokedSkillsForAgent, getSessionId } from '../../bootstrap/state.js'
+import {
+  addInvokedSkill,
+  clearInvokedSkillsForAgent,
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { COMMAND_MESSAGE_TAG } from '../../constants/xml.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import {
@@ -44,9 +48,9 @@ import { getAgentContext } from '../../utils/agentContext.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { extractResultText, prepareForkedCommandContext } from '../../utils/forkedAgent.js'
-import { parseFrontmatter } from '../../utils/frontmatterParser.js'
+import { parseFrontmatter } from '../../services/markdown/frontmatterParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { createUserMessage, normalizeMessages } from '../../utils/messages.js'
+import { createUserMessage, normalizeMessages } from '../../services/messages/index.js'
 import { createAgentId } from '../../utils/uuid.js'
 import { runAgent } from '../AgentTool/runAgent.js'
 import { getToolUseIDFromParentMessage, tagMessagesWithToolUseID } from '../utils.js'
@@ -563,7 +567,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
 
     // Process the skill with optional args
     const { processPromptSlashCommand } = await import(
-      'src/services/process-user-input/processSlashCommand.js'
+      'src/services/process-user-input/ProcessSlashCommand.js'
     )
     const processedCommand = await processPromptSlashCommand(
       commandName,

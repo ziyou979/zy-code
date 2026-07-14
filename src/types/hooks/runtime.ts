@@ -6,11 +6,8 @@ import { type HookEvent, HOOK_EVENTS } from './schemas.js'
 import { type PermissionUpdate } from '../coreTypes.generated.js'
 import type { HookJSONOutput, AsyncHookJSONOutput, SyncHookJSONOutput } from 'src/types/index.js'
 import type { Message } from 'src/types/message.js'
-import type { PermissionResult } from 'src/utils/permissions/PermissionResult.js'
-import { permissionBehaviorSchema } from 'src/utils/permissions/PermissionRule.js'
-import { permissionUpdateSchema } from 'src/utils/permissions/PermissionUpdateSchema.js'
-import type { AppState } from '../../state/AppState.js'
-import type { AttributionState } from '../../utils/commitAttribution.js'
+import { PermissionBehaviorSchema, PermissionUpdateSchema } from '../coreSchemas.js'
+import type { PermissionResult } from '../permissions.js'
 
 export function isHookEvent(value: string): value is HookEvent {
   return HOOK_EVENTS.includes(value as HookEvent)
@@ -51,7 +48,7 @@ export const syncHookResponseSchema = lazySchema(() =>
       .union([
         z.object({
           hookEventName: z.literal('PreToolUse'),
-          permissionDecision: permissionBehaviorSchema().optional(),
+          permissionDecision: PermissionBehaviorSchema().optional(),
           permissionDecisionReason: z.string().optional(),
           updatedInput: z.record(z.string(), z.unknown()).optional(),
           additionalContext: z.string().optional(),
@@ -100,7 +97,7 @@ export const syncHookResponseSchema = lazySchema(() =>
             z.object({
               behavior: z.literal('allow'),
               updatedInput: z.record(z.string(), z.unknown()).optional(),
-              updatedPermissions: z.array(permissionUpdateSchema()).optional(),
+              updatedPermissions: z.array(PermissionUpdateSchema()).optional(),
             }),
             z.object({
               behavior: z.literal('deny'),
@@ -174,8 +171,8 @@ type _assertSDKTypesMatch = Assert<
 
 /** Context passed to callback hooks for state access */
 export type HookCallbackContext = {
-  getAppState: () => AppState
-  updateAttributionState: (updater: (prev: AttributionState) => AttributionState) => void
+  /** Hook 协议层不暴露 UI store；需要状态的内置 hook 应在服务层注入窄接口。 */
+  getAppState: () => unknown
 }
 
 /** Hook that is a callback. */

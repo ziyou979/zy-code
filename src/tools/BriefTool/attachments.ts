@@ -8,7 +8,7 @@
 import { feature } from 'bun:bundle'
 import { stat } from 'node:fs/promises'
 
-import type { ValidationResult } from '../../Tool.js'
+import type { ValidationResult } from '../../tool.js'
 
 import { getCwd } from '../../utils/cwd.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'

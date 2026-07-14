@@ -8,7 +8,8 @@ const teamMemPaths = feature('TEAMMEM')
   ? (require('./teamMemPaths.js') as typeof import('./teamMemPaths.js'))
   : null
 
-import { getKairosActive, getOriginalCwd } from '../bootstrap/state.js'
+import { getKairosActive } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getOriginalCwd } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
@@ -21,8 +22,8 @@ import { logForDebugging } from '../utils/debug.js'
 import { hasEmbeddedSearchTools } from '../utils/embeddedTools.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 import { formatFileSize } from '../utils/format.js'
-import { getProjectDir } from '../utils/sessionStorage.js'
-import { getInitialSettings } from '../utils/settings/settings.js'
+import { getProjectDir } from '../services/sessionStorage.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 import {
   MEMORY_FRONTMATTER_EXAMPLE,
   TRUSTING_RECALL_SECTION,

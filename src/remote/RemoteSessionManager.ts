@@ -8,7 +8,7 @@ import type {
 } from '../types/wire/control.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logError } from '../utils/log.js'
-import { SessionsWebSocket, type SessionsWebSocketCallbacks } from './SessionsWebSocket.js'
+import { SessionsWebSocket, type SessionsWebSocketCallbacks } from './sessionsWebSocket.js'
 
 /**
  * Type guard to check if a message is an WireMessage (not a control message)

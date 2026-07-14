@@ -8,19 +8,19 @@ import {
   splitCommand_DEPRECATED,
 } from '../../shell-eval/bash/commands.js'
 import { tryParseShellCommand } from '../../shell-eval/bash/shellQuote.js'
-import type { ToolPermissionContext } from '../../Tool.js'
+import type { ToolPermissionContext } from '../../tool.js'
 import { getDirectoryForPath } from '../../utils/path.js'
-import { allWorkingDirectories } from '../../utils/permissions/filesystem.js'
-import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
-import { createReadRuleSuggestion } from '../../utils/permissions/PermissionUpdate.js'
-import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
+import { allWorkingDirectories } from '../../services/permissions/filesystem.js'
+import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import { createReadRuleSuggestion } from '../../services/permissions/permissionUpdate.js'
+import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
 import {
   expandTilde,
   type FileOperationType,
   formatDirectoryList,
   isDangerousRemovalPath,
   validatePath,
-} from '../../utils/permissions/pathValidation.js'
+} from '../../services/permissions/pathValidation.js'
 import type { BashTool } from './BashTool.js'
 import { stripSafeWrappers } from './bashPermissions.js'
 import { sedCommandIsAllowedByAllowlist } from './sedValidation.js'

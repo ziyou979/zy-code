@@ -1,12 +1,13 @@
 import { homedir } from 'node:os'
 import { isAbsolute, join, normalize, sep } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { getIsNonInteractiveSession, getProjectRoot } from '../bootstrap/state.js'
+import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getProjectRoot } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { getZyConfigHomeDir, isEnvDefinedFalsy, isEnvTruthy } from '../utils/envUtils.js'
 import { findCanonicalGitRoot } from '../utils/git.js'
 import { sanitizePath } from '../utils/path.js'
-import { getInitialSettings, getSettingsForSource } from '../utils/settings/settings.js'
+import { getInitialSettings, getSettingsForSource } from '../services/settings/settings.js'
 
 /**
  * Whether auto-memory features are enabled (memdir, agent memory, past session search).

@@ -2,7 +2,7 @@
 // Internal Anthropic-only tool — never active in external builds (USER_TYPE !== 'zy-super')
 
 import { z } from 'zod'
-import type { Tool } from '../../Tool.js'
+import type { Tool } from '../../tool.js'
 
 export function clearSessionsWithTungstenUsage(): void {}
 export function resetInitializationState(): void {}

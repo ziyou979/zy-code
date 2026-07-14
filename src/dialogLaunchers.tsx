@@ -10,13 +10,13 @@ import React from 'react'
 import type { AssistantSession } from './assistant/sessionDiscovery.js'
 import type { StatsStore } from './context/stats.js'
 import type { Root } from './ink.js'
-import { renderAndRun, showSetupDialog } from './interactiveHelpers.js'
+import { renderAndRun, showSetupDialog } from './InteractiveHelpers.js'
 import { KeybindingSetup } from './keybindings/KeybindingProviderSetup.js'
 import type { AppState } from './state/AppStateStore.js'
 import type { AgentMemoryScope } from './tools/AgentTool/agentMemory.js'
 import type { TeleportRemoteResponse } from './utils/conversationRecovery.js'
 import type { FpsMetrics } from './utils/fpsTracker.js'
-import type { ValidationError } from './utils/settings/validation.js'
+import type { ValidationError } from './services/settings/validation.js'
 
 // Type-only access to ResumeConversation's Props via the module type.
 // No runtime cost - erased at compile time.

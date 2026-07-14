@@ -4,12 +4,12 @@ import { env } from '../utils/env.js'
 import { getIsGit } from '../utils/git.js'
 import { getCwd } from '../utils/cwd.js'
 
-import { getCurrentWorktreeSession } from '../utils/worktree.js'
+import { getCurrentWorktreeSession } from '../services/worktree/worktree.js'
 import { getSessionStartDate } from './common.js'
-import { getInitialSettings } from '../utils/settings/settings.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 import { AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js'
-import type { Tools } from '../Tool.js'
-import type { Command } from '../types/command.js'
+import type { Tools } from '../tool.js'
+import type { Command } from '../commands/types.js'
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
 import { getMarketingNameForModel } from '../services/model/model.js'
 import { getSkillToolCommands } from 'src/commands.js'
@@ -25,7 +25,7 @@ import {
   EXPLORE_AGENT_MIN_QUERIES,
 } from 'src/tools/AgentTool/built-in/exploreAgent.js'
 
-import { isScratchpadEnabled, getScratchpadDir } from '../utils/permissions/filesystem.js'
+import { isScratchpadEnabled, getScratchpadDir } from '../services/permissions/filesystem.js'
 import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 
 import { feature } from 'bun:bundle'
@@ -65,16 +65,6 @@ const briefToolModule =
   feature('KAIROS') || feature('KAIROS_BRIEF')
     ? (require('../tools/BriefTool/BriefTool.js') as typeof import('../tools/BriefTool/BriefTool.js'))
     : null
-const DISCOVER_SKILLS_TOOL_NAME: string | null = feature('EXPERIMENTAL_SKILL_SEARCH')
-  ? (
-      require('../tools/DiscoverSkillsTool/prompt.js') as typeof import('../tools/DiscoverSkillsTool/prompt.js')
-    ).DISCOVER_SKILLS_TOOL_NAME
-  : null
-// Capture the module (not .isSkillSearchEnabled directly) so spyOn() in tests
-// patches what we actually call — a captured function ref would point past the spy.
-const skillSearchFeatureCheck = feature('EXPERIMENTAL_SKILL_SEARCH')
-  ? (require('../services/skill-search/featureCheck.js') as typeof import('../services/skill-search/featureCheck.js'))
-  : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { OutputStyleConfig } from './outputStyles.js'
 import { CYBER_RISK_INSTRUCTION } from './cyberRiskInstruction.js'
@@ -165,24 +155,6 @@ function getAgentToolSection(): string {
   return isForkSubagentEnabled()
     ? `Calling ${AGENT_TOOL_NAME} without a subagent_type creates a fork, which runs in the background and keeps its tool output out of your context \u2014 so you can keep chatting with the user while it works. Reach for it when research or multi-step implementation work would otherwise fill your context with raw output you won't need again. **If you ARE the fork** \u2014 execute directly; do not re-delegate.`
     : `Use the ${AGENT_TOOL_NAME} tool with specialized agents when the task at hand matches the agent's description. Subagents are valuable for parallelizing independent queries or for protecting the main context window from excessive results, but they should not be used excessively when not needed. Importantly, avoid duplicating work that subagents are already doing - if you delegate research to a subagent, do not also perform the same searches yourself.`
-}
-
-/**
- * Guidance for the skill_discovery attachment ("Skills relevant to your
- * task:") and the DiscoverSkills tool. Shared between the main-session
- * getUsingYourToolsSection bullet and the subagent path in
- * enhanceSystemPromptWithEnvDetails — subagents receive skill_discovery
- * attachments (post #22830) but don't go through getSystemPrompt, so
- * without this they'd see the reminders with no framing.
- *
- * feature() guard is internal — external builds DCE the string literal
- * along with the DISCOVER_SKILLS_TOOL_NAME interpolation.
- */
-function getDiscoverSkillsGuidance(): string | null {
-  if (feature('EXPERIMENTAL_SKILL_SEARCH') && DISCOVER_SKILLS_TOOL_NAME !== null) {
-    return `Relevant skills are automatically surfaced each turn as "Skills relevant to your task:" reminders. If you're about to do something those don't cover — a mid-task pivot, an unusual workflow, a multi-step plan — call ${DISCOVER_SKILLS_TOOL_NAME} with a specific description of what you're doing. Skills already visible or loaded are filtered automatically. Skip this if the surfaced skills already cover your next action.`
-  }
-  return null
 }
 
 /**
@@ -502,32 +474,17 @@ export async function enhanceSystemPromptWithEnvDetails(
   existingSystemPrompt: string[],
   model: string,
   additionalWorkingDirectories?: string[],
-  enabledToolNames?: ReadonlySet<string>,
 ): Promise<string[]> {
   const notes = `Notes:
 - Agent threads always have their cwd reset between bash calls, as a result please only use absolute file paths.
 - In your final response, share file paths (always absolute, never relative) that are relevant to the task. Include code snippets only when the exact text is load-bearing (e.g., a bug you found, a function signature the caller asked for) — do not recap code you merely read.
 - For clear communication with the user the assistant MUST avoid using emojis.
 - Do not use a colon before tool calls. Text like "Let me read the file:" followed by a read tool call should just be "Let me read the file." with a period.`
-  // Subagents get skill_discovery attachments (prefetch.ts runs in query(),
-  // no agentId guard since #22830) but don't go through getSystemPrompt —
-  // surface the same DiscoverSkills framing the main session gets. Gated on
-  // enabledToolNames when the caller provides it (runAgent.ts does).
-  // AgentTool.tsx:768 builds the prompt before assembleToolPool:830 so it
-  // omits this param — `?? true` preserves guidance there.
-  const discoverSkillsGuidance =
-    feature('EXPERIMENTAL_SKILL_SEARCH') &&
-    skillSearchFeatureCheck?.isSkillSearchEnabled() &&
-    DISCOVER_SKILLS_TOOL_NAME !== null &&
-    (enabledToolNames?.has(DISCOVER_SKILLS_TOOL_NAME) ?? true)
-      ? getDiscoverSkillsGuidance()
-      : null
   const envInfo = await computeEnvInfo(model, additionalWorkingDirectories)
   const languageSection = getLanguageSection(getInitialSettings().language)
   return [
     ...existingSystemPrompt,
     notes,
-    ...(discoverSkillsGuidance !== null ? [discoverSkillsGuidance] : []),
     envInfo,
     ...(languageSection !== null ? [languageSection] : []),
   ]

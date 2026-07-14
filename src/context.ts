@@ -1,13 +1,14 @@
 import { feature } from 'bun:bundle'
 import memoize from 'lodash-es/memoize.js'
-import { getAdditionalDirectoriesForAgentsMd, setCachedAgentsMdContent } from './bootstrap/state.js'
+import { getAdditionalDirectoriesForAgentsMd } from 'src/bootstrap/runtime/runtimeContext.js'
+import { setCachedAgentsMdContent } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getLocalISODate } from './constants/common.js'
 import { filterInjectedMemoryFiles, getAgentsMds, getMemoryFiles } from './utils/agentsMd.js'
 import { logForDiagnosticsNoPII } from './utils/diagLogs.js'
 import { isBareMode, isEnvTruthy } from './utils/envUtils.js'
-import { execFileNoThrow } from './utils/execFileNoThrow.js'
+import { execFileNoThrow } from './services/shell/execFileNoThrow.js'
 import { getBranch, getDefaultBranch, getIsGit, gitExe } from './utils/git.js'
-import { shouldIncludeGitInstructions } from './utils/gitSettings.js'
+import { shouldIncludeGitInstructions } from './services/git/settingsBehavior.js'
 import { logError } from './utils/log.js'
 
 const MAX_STATUS_CHARS = 2000

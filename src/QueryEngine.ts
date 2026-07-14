@@ -1,6 +1,7 @@
 import { feature } from 'bun:bundle'
 import { randomUUID } from 'node:crypto'
-import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
+import { isSessionPersistenceDisabled } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { NonNullableUsage } from 'src/services/api/logging.js'
 import { EMPTY_USAGE } from 'src/services/api/logging.js'
 import { accumulateUsage, updateUsage } from 'src/services/api/usageTracker.js'
@@ -29,7 +30,7 @@ import {
   processUserInput,
 } from './services/process-user-input/processUserInput.js'
 import type { AppState } from './state/AppState.js'
-import { type Tools, type ToolUseContext, toolMatchesName } from './Tool.js'
+import { type Tools, type ToolUseContext, toolMatchesName } from './tool.js'
 import type { AgentDefinition } from './tools/AgentTool/loadAgentsDir.js'
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from './tools/SyntheticOutputTool/SyntheticOutputTool.js'
 import { toUUID } from './types/ids.js'
@@ -37,9 +38,9 @@ import type { UserContentBlock } from './types/llm.js'
 import type { Message } from './types/message.js'
 import type { OrphanedPermission } from './types/textInputTypes.js'
 import { createAbortController } from './utils/abortController.js'
-import type { Attachment } from './utils/attachments.js'
+import type { Attachment } from './services/attachments/attachments.js'
 import type { AttributionState } from './utils/commitAttribution.js'
-import { getGlobalConfig } from './utils/config.js'
+import { getGlobalConfig } from './services/config/config.js'
 import { getCwd } from './utils/cwd.js'
 import { isBareMode, isEnvTruthy } from './utils/envUtils.js'
 import {
@@ -49,17 +50,17 @@ import {
 } from './utils/fileHistory.js'
 import { cloneFileStateCache, type FileStateCache } from './utils/fileStateCache.js'
 import { headlessProfilerCheckpoint } from './utils/headlessProfiler.js'
-import { registerStructuredOutputEnforcement } from './utils/hooks/hookHelpers.js'
+import { registerStructuredOutputEnforcement } from './services/hooks/hookHelpers.js'
 import { getInMemoryErrors } from './utils/log.js'
 import {
   countToolCalls,
   pruneCompletedTurnArtifacts,
   SYNTHETIC_MESSAGES,
-} from './utils/messages.js'
-import { loadAllPluginsCacheOnly } from './utils/plugins/pluginLoader.js'
+} from './services/messages/index.js'
+import { loadAllPluginsCacheOnly } from './services/plugins/pluginLoader.js'
 import { fetchSystemPromptParts } from './utils/queryContext.js'
-import { setCwd } from './utils/Shell.js'
-import { flushSessionStorage, recordTranscript } from './utils/sessionStorage.js'
+import { setCwd } from './services/shell/shell.js'
+import { flushSessionStorage, recordTranscript } from './services/sessionStorage.js'
 import { asSystemPrompt } from './utils/systemPromptType.js'
 import { resolveThemeSetting } from './utils/systemTheme.js'
 import { shouldEnableThinkingByDefault, type ThinkingConfig } from './utils/thinking.js'
@@ -72,9 +73,9 @@ const messageSelector = (): typeof import('src/components/MessageSelector.js') =
 import {
   localCommandOutputToSDKAssistantMessage,
   toSDKCompactMetadata,
-} from './utils/messages/mappers.js'
-import { buildSystemInitMessage, sdkCompatToolName } from './utils/messages/systemInit.js'
-import { getScratchpadDir, isScratchpadEnabled } from './utils/permissions/filesystem.js'
+} from './services/messages/mappers.js'
+import { buildSystemInitMessage, sdkCompatToolName } from './services/messages/systemInit.js'
+import { getScratchpadDir, isScratchpadEnabled } from './services/permissions/filesystem.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
   handleOrphanedPermission,

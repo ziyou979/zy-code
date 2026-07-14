@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { basename } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import type { SettingSource } from 'src/utils/settings/constants.js'
+import type { SettingSource } from 'src/services/settings/constants.js'
 import { z } from 'zod/v4'
 import { tSync } from '../../i18n/index.js'
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
@@ -10,11 +10,11 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { type McpServerConfig, McpServerConfigSchema } from '../../services/mcp/types.js'
-import type { ToolUseContext } from '../../Tool.js'
+import type { ToolUseContext } from '../../tool.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { EFFORT_LEVELS, type EffortLevel, parseEffortValue } from '../../utils/effort.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import { parsePositiveIntFromFrontmatter } from '../../utils/frontmatterParser.js'
+import { parsePositiveIntFromFrontmatter } from '../../services/markdown/frontmatterParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
 import {
@@ -22,9 +22,9 @@ import {
   parseAgentToolsFromFrontmatter,
   parseSlashCommandToolsFromFrontmatter,
 } from '../../utils/markdownConfigLoader.js'
-import { PERMISSION_MODES, type PermissionMode } from '../../utils/permissions/PermissionMode.js'
-import { clearPluginAgentCache, loadPluginAgents } from '../../utils/plugins/loadPluginAgents.js'
-import { HooksSchema, type HooksSettings } from '../../utils/settings/types.js'
+import { PERMISSION_MODES, type PermissionMode } from '../../services/permissions/permissionMode.js'
+import { clearPluginAgentCache, loadPluginAgents } from '../../services/plugins/loadPluginAgents.js'
+import { HooksSchema, type HooksSettings } from '../../services/settings/types.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { FILE_EDIT_TOOL_NAME } from '../FileEditTool/constants.js'
 import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'

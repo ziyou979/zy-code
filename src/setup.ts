@@ -8,51 +8,51 @@ import {
 } from 'src/services/analytics/index.js'
 import { getCwd } from 'src/utils/cwd.js'
 import { checkForReleaseNotes } from 'src/utils/releaseNotes.js'
-import { setCwd } from 'src/utils/Shell.js'
+import { setCwd } from 'src/services/shell/shell.js'
 import { initSinks } from 'src/utils/sinks.js'
+import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
-  getIsNonInteractiveSession,
   getProjectRoot,
   getSessionId,
   setOriginalCwd,
   setProjectRoot,
   switchSession,
-} from './bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import { getCommands } from './commands.js'
 import { tSync } from './i18n/index.js'
 import { lockCurrentVersion } from './services/native-installer/index.js'
 import { initSessionMemory } from './services/session-memory/sessionMemory.js'
 import { asSessionId } from './types/ids.js'
-import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js'
+import { isAgentSwarmsEnabled } from './services/swarm/agentSwarmsEnabled.js'
 import { clearMemoryFileCaches } from './utils/agentsMd.js'
-import { checkAndRestoreTerminalBackup } from './utils/appleTerminalBackup.js'
-import { prefetchApiKeyFromApiKeyHelperIfSafe } from './utils/auth.js'
-import { getCurrentProjectConfig, getGlobalConfig } from './utils/config.js'
+import { checkAndRestoreTerminalBackup } from './services/shell/appleTerminalBackup.js'
+import { prefetchApiKeyFromApiKeyHelperIfSafe } from './services/auth/auth.js'
+import { getCurrentProjectConfig, getGlobalConfig } from './services/config/config.js'
 import { logForDiagnosticsNoPII } from './utils/diagLogs.js'
 import { env } from './utils/env.js'
 import { envDynamic } from './utils/envDynamic.js'
 import { isBareMode, isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
 import { errorMessage } from './utils/errors.js'
 import { findCanonicalGitRoot, findGitRoot, getIsGit } from './utils/git.js'
-import { initializeFileChangedWatcher } from './utils/hooks/fileChangedWatcher.js'
+import { initializeFileChangedWatcher } from './services/hooks/fileChangedWatcher.js'
 import {
   captureHooksConfigSnapshot,
   updateHooksConfigSnapshot,
-} from './utils/hooks/hooksConfigSnapshot.js'
-import { hasWorktreeCreateHook } from './utils/hooks.js'
-import { checkAndRestoreITerm2Backup } from './utils/iTermBackup.js'
+} from './services/hooks/hooksConfigSnapshot.js'
+import { hasWorktreeCreateHook } from './services/hooks.js'
+import { checkAndRestoreITerm2Backup } from './services/shell/iTermBackup.js'
 import { logError } from './utils/log.js'
 import { getRecentActivity } from './utils/logoUtils.js'
-import type { PermissionMode } from './utils/permissions/PermissionMode.js'
+import type { PermissionMode } from './services/permissions/permissionMode.js'
 import { getPlanSlug } from './utils/plans.js'
-import { saveWorktreeState } from './utils/sessionStorage.js'
+import { saveWorktreeState } from './services/sessionStorage.js'
 import { profileCheckpoint } from './utils/startupProfiler.js'
 import {
   createTmuxSessionForWorktree,
   createWorktreeForSession,
   generateTmuxSessionName,
   worktreeBranchName,
-} from './utils/worktree.js'
+} from './services/worktree/worktree.js'
 
 export async function setup(
   cwd: string,
@@ -279,7 +279,7 @@ export async function setup(
     if (feature('CONTEXT_COLLAPSE')) {
       /* eslint-disable @typescript-eslint/no-require-imports */
       ;(
-        require('./services/context-collapse/index.js') as typeof import('./services/context-collapse/index.js')
+        require('./services/compact/context-collapse/index.js') as typeof import('./services/compact/context-collapse/index.js')
       ).initContextCollapse()
       /* eslint-enable @typescript-eslint/no-require-imports */
     }
@@ -303,7 +303,7 @@ export async function setup(
   if (!skipPluginPrefetch) {
     void getCommands(getProjectRoot())
   }
-  void import('./utils/plugins/loadPluginHooks.js').then((m) => {
+  void import('./services/plugins/loadPluginHooks.js').then((m) => {
     if (!skipPluginPrefetch) {
       void m.loadPluginHooks() // 预加载插件 hooks（由 processSessionStartHooks 在渲染前消费）
       m.setupPluginHookHotReload() // 设置插件 hooks 热重载，当设置变更时触发

@@ -21,13 +21,13 @@ import {
   buildCompactProgressMessage,
   COMPACT_STAGE_PCT,
 } from '../../services/compact/compactProgress.js'
-import { getTipToShowOnSpinner, recordShownTip } from '../../services/tips/tipScheduler.js'
+import { getTipToShowOnSpinner, recordShownTip } from '../../components/tips/tipScheduler.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import type { ReplStoreInstance } from '../../state/ReplStore.js'
-import type { CompactProgressEvent } from '../../Tool.js'
+import type { ReplStoreInstance } from '../../state/replStore.js'
+import type { CompactProgressEvent } from '../../tool.js'
 import type { Message as MessageType } from '../../types/message.js'
-import type { StreamingThinking } from '../../utils/messages.js'
-import type { QueryGuard } from '../../utils/QueryGuard.js'
+import type { StreamingThinking } from '../../services/messages/index.js'
+import type { QueryGuard } from '../../utils/queryGuard.js'
 import { extractBashToolsFromMessages } from '../../utils/queryHelpers.js'
 import type { Theme, ThemeName } from '../../utils/theme.js'
 

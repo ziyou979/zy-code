@@ -14,7 +14,7 @@ const reactiveCompact = feature('REACTIVE_COMPACT')
   ? (require('./services/compact/reactiveCompact.js') as typeof import('./services/compact/reactiveCompact.js'))
   : null
 const contextCollapse = feature('CONTEXT_COLLAPSE')
-  ? (require('./services/context-collapse/index.js') as typeof import('./services/context-collapse/index.js'))
+  ? (require('./services/compact/context-collapse/index.js') as typeof import('./services/compact/context-collapse/index.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
@@ -23,7 +23,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { ImageSizeError } from './utils/imageValidation.js'
 import { ImageResizeError } from './utils/imageResizer.js'
-import { findToolByName, type ToolUseContext } from './Tool.js'
+import { findToolByName, type ToolUseContext } from './tool.js'
 import type { SystemPrompt } from './utils/systemPromptType.js'
 import type {
   AssistantMessage,
@@ -46,20 +46,20 @@ import {
   createAssistantAPIErrorMessage,
   createMicrocompactBoundaryMessage,
   stripSignatureBlocks,
-} from './utils/messages.js'
+} from './services/messages/index.js'
 import { prependUserContext } from './utils/api.js'
 import {
   createAttachmentMessage,
   filterDuplicateMemoryAttachments,
   getAttachmentMessages,
   startRelevantMemoryPrefetch,
-} from './utils/attachments.js'
+} from './services/attachments/attachments.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const skillPrefetch = feature('EXPERIMENTAL_SKILL_SEARCH')
   ? (require('./services/skill-search/prefetch.js') as typeof import('./services/skill-search/prefetch.js'))
   : null
 const _jobClassifier = feature('TEMPLATES')
-  ? (require('./jobs/classifier.js') as typeof import('./jobs/classifier.js'))
+  ? (require('./services/jobs/classifier.js') as typeof import('./services/jobs/classifier.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { notifyCommandLifecycle } from './utils/commandLifecycle.js'
@@ -68,11 +68,11 @@ import { renderModelName } from './services/model/model.js'
 import { finalContextTokensFromLastResponse, tokenCountWithEstimation } from './utils/tokens.js'
 import { ESCALATED_MAX_TOKENS } from './utils/context.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from './services/analytics/growthbook.js'
-import { executePostSamplingHooks } from './utils/hooks/postSamplingHooks.js'
-import { executeStopFailureHooks } from './utils/hooks.js'
+import { executePostSamplingHooks } from './services/hooks/postSamplingHooks.js'
+import { executeStopFailureHooks } from './services/hooks.js'
 import type { QuerySource } from './constants/querySource.js'
 import { createDumpPromptsFetch } from './services/api/dumpPrompts.js'
-import { StreamingToolExecutor } from './services/tools/StreamingToolExecutor.js'
+import { StreamingToolExecutor } from './services/tool-runtime/streamingToolExecutor.js'
 import { queryCheckpoint } from './utils/queryProfiler.js'
 import { handleStopHooks } from './query/stopHooks.js'
 import { buildQueryConfig } from './query/config.js'
@@ -88,7 +88,7 @@ import {
   getCurrentTurnTokenBudget,
   getTurnOutputTokens,
   incrementBudgetContinuationCount,
-} from './bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import { createBudgetTracker, checkTokenBudget } from './query/tokenBudget.js'
 
 const log = createDebugLog('query')

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { Tool } from '../Tool.js'
+import type { Tool } from '../tool.js'
 import type { AssistantMessage } from '../types/message.js'
 import type { WireControlPermissionRequest } from '../types/wire/control.js'
 import { jsonStringify } from '../utils/slowOperations.js'

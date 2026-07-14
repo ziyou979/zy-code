@@ -4,8 +4,8 @@ import { KeybindingWarnings } from 'src/components/KeybindingWarnings.js'
 import { McpParsingWarnings } from 'src/components/mcp/McpParsingWarnings.js'
 import { getModelMaxOutputTokens } from 'src/utils/context.js'
 import { getZyConfigHomeDir } from 'src/utils/envUtils.js'
-import type { SettingSource } from 'src/utils/settings/constants.js'
-import { getOriginalCwd } from '../bootstrap/state.js'
+import type { SettingSource } from 'src/services/settings/constants.js'
+import { getOriginalCwd } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { CommandResultDisplay } from '../commands.js'
 import { Pane } from '../components/design-system/Pane.js'
 import { PressEnterToContinue } from '../components/PressEnterToContinue.js'
@@ -26,19 +26,19 @@ import {
 import {
   TASK_MAX_OUTPUT_DEFAULT,
   TASK_MAX_OUTPUT_UPPER_LIMIT,
-} from '../services/task/outputFormatting.js'
+} from '../services/task-runtime/outputFormatting.js'
 import {
   BASH_MAX_OUTPUT_DEFAULT,
   BASH_MAX_OUTPUT_UPPER_LIMIT,
 } from '../shell-eval/shared/outputLimits.js'
 import { useAppState } from '../state/AppState.js'
-import { getPluginErrorMessage } from '../types/plugin.js'
+import { getPluginErrorMessage } from '../services/plugins/types.js'
 import { getGcsDistTags, getNpmDistTags, type NpmDistTags } from '../utils/autoUpdater.js'
 import { type ContextWarnings, checkContextWarnings } from '../utils/doctorContextWarnings.js'
 import { type DiagnosticInfo, getDoctorDiagnostic } from '../utils/doctorDiagnostic.js'
 import { validateBoundedIntEnvVar } from '../utils/envValidation.js'
 import { pathExists } from '../utils/file.js'
-import { getInitialSettings } from '../utils/settings/settings.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 import { getXDGStateHome } from '../utils/xdg.js'
 
 type Props = {

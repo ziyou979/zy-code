@@ -14,7 +14,7 @@ import {
   unregisterLeaderSetToolPermissionContext,
 } from '../../services/swarm/leaderPermissionBridge.js'
 import { useSetAppState } from '../../state/AppState.js'
-import type { ToolPermissionContext } from '../../Tool.js'
+import type { ToolPermissionContext } from '../../tool.js'
 
 export type SetToolPermissionContext = (
   context: ToolPermissionContext,

@@ -1,4 +1,4 @@
-import type { Tool } from '../../Tool.js'
+import type { Tool } from '../../tool.js'
 import { AgentTool } from '../AgentTool/AgentTool.js'
 import { BashTool } from '../BashTool/BashTool.js'
 import { FileEditTool } from '../FileEditTool/FileEditTool.js'

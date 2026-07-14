@@ -13,7 +13,7 @@
 
 import { feature } from 'bun:bundle'
 import * as React from 'react'
-import { getTotalInputTokens } from '../../bootstrap/state.js'
+import { getTotalInputTokens } from 'src/bootstrap/runtime/runtimeContext.js'
 import { DesktopUpsellStartup } from '../../components/DesktopUpsell/DesktopUpsellStartup.js'
 import { EffortCallout } from '../../components/EffortCallout.js'
 import { FullscreenUpsellDialog } from '../../components/FullscreenUpsell/FullscreenUpsellDialog.js'
@@ -38,15 +38,15 @@ import { sendSandboxPermissionResponseViaMailbox } from '../../services/swarm/pe
 import { useAppState, useAppStateStore, useSetAppState } from '../../state/AppState.js'
 import { useReplStore } from '../../state/ReplState.js'
 import { WEB_FETCH_TOOL_NAME } from '../../tools/WebFetchTool/prompt.js'
-import { saveGlobalConfig } from '../../utils/config.js'
+import { saveGlobalConfig } from '../../services/config/config.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
-import type { IDEExtensionInstallationStatus } from '../../utils/ide.js'
+import type { IDEExtensionInstallationStatus } from '../../services/ide/ide.js'
 import { logError } from '../../utils/log.js'
-import { createCommandInputMessage, formatCommandInputTags } from '../../utils/messages.js'
+import { createCommandInputMessage, formatCommandInputTags } from '../../services/messages/index.js'
 import {
   applyPermissionUpdate,
   persistPermissionUpdate,
-} from '../../utils/permissions/PermissionUpdate.js'
+} from '../../services/permissions/permissionUpdate.js'
 import { escapeXml } from '../../utils/xml.js'
 import type { ReplNotificationsCluster } from './useReplNotificationsCluster.js'
 import type { FocusedInputDialog } from './useReplOnCancel.js'

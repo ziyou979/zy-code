@@ -4,7 +4,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { buildTool, findToolByName, type Tool, type ToolDef, type Tools } from '../../Tool.js'
+import { buildTool, findToolByName, type Tool, type ToolDef, type Tools } from '../../tool.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'

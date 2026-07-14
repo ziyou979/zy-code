@@ -17,7 +17,7 @@ import { TEAM_DELETE_TOOL_NAME } from '../tools/TeamDeleteTool/constants.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 
 // Checks the same gate as isScratchpadEnabled() in
-// utils/permissions/filesystem.ts. Duplicated here because importing
+// services/permissions/filesystem.ts. Duplicated here because importing
 // filesystem.ts creates a circular dependency (filesystem -> permissions
 // -> ... -> coordinatorMode). The actual scratchpad path is passed in via
 // getCoordinatorUserContext's scratchpadDir parameter (dependency injection

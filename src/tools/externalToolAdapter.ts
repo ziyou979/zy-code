@@ -8,12 +8,12 @@ import React from 'react'
 import { z } from 'zod/v4'
 import { MessageResponse } from '../components/MessageResponse.js'
 import { Box, Text } from '../ink.js'
-import { buildTool, type ToolInputJSONSchema } from '../Tool.js'
+import { buildTool, type ToolInputJSONSchema } from '../tool.js'
 import type { PermissionResult } from '../types/permissions.js'
 import { errorMessage } from '../utils/errors.js'
 import { lazySchema } from '../utils/lazySchema.js'
 import { jsonStringify } from '../utils/slowOperations.js'
-import { isOutputLineTruncated } from '../utils/terminal.js'
+import { isOutputLineTruncated } from '../terminal-ui/terminal.js'
 
 /**
  * 用户定义的外部工具接口（简化版）。

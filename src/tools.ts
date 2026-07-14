@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle'
-import { toolMatchesName, type Tool, type Tools } from './Tool.js'
-import type { ToolPermissionContext } from './Tool.js'
+import { toolMatchesName, type Tool, type Tools } from './tool.js'
+import type { ToolPermissionContext } from './tool.js'
 import { isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
 import { toolRegistry } from './tools/registry.js'
 export {
@@ -10,7 +10,7 @@ export {
   getLoadGeneration,
 } from './tools/externalToolLoader.js'
 import uniqBy from 'lodash-es/uniqBy.js'
-import { getDenyRuleForTool } from './utils/permissions/permissions.js'
+import { getDenyRuleForTool } from './services/permissions/permissions.js'
 import { REPL_TOOL_NAME, REPL_ONLY_TOOLS, isReplModeEnabled } from './tools/REPLTool/constants.js'
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from './tools/SyntheticOutputTool/SyntheticOutputTool.js'
 export { REPL_ONLY_TOOLS }
@@ -67,9 +67,9 @@ if (feature('PROACTIVE') || feature('KAIROS')) {
   require('./tools/SleepTool/SleepTool.js')
 }
 if (feature('AGENT_TRIGGERS')) {
-  require('./tools/ScheduleCronTool/CronCreateTool.js')
-  require('./tools/ScheduleCronTool/CronDeleteTool.js')
-  require('./tools/ScheduleCronTool/CronListTool.js')
+  require('./tools/ScheduleCronTool/cronCreateTool.js')
+  require('./tools/ScheduleCronTool/cronDeleteTool.js')
+  require('./tools/ScheduleCronTool/cronListTool.js')
 }
 if (feature('AGENT_TRIGGERS_REMOTE')) {
   require('./tools/RemoteTriggerTool/RemoteTriggerTool.js')
@@ -91,12 +91,6 @@ if (feature('OVERFLOW_TEST_TOOL')) {
 }
 if (feature('CONTEXT_COLLAPSE')) {
   require('./tools/CtxInspectTool/CtxInspectTool.js')
-}
-if (feature('TERMINAL_PANEL')) {
-  require('./tools/TerminalCaptureTool/TerminalCaptureTool.js')
-}
-if (feature('WEB_BROWSER_TOOL')) {
-  require('./tools/WebBrowserTool/WebBrowserTool.js')
 }
 if (feature('UDS_INBOX')) {
   require('./tools/ListPeersTool/ListPeersTool.js')

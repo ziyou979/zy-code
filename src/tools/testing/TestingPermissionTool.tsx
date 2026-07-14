@@ -3,8 +3,8 @@
  * the model.
  */
 import { z } from 'zod/v4'
-import type { Tool } from '../../Tool.js'
-import { buildTool, type ToolDef } from '../../Tool.js'
+import type { Tool } from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tool.js'
 import { isTestEnv } from '../../utils/envUtils.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 

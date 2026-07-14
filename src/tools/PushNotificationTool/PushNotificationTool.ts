@@ -1,5 +1,5 @@
 import { z } from 'zod/v4'
-import { buildTool, type ToolDef } from '../../Tool.js'
+import { buildTool, type ToolDef } from '../../tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 
 export const PUSH_NOTIFICATION_TOOL_NAME = 'PushNotification'

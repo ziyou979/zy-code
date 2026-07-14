@@ -7,7 +7,7 @@ import { ShellProgressMessage } from '../../components/shell/ShellProgressMessag
 import { ShellTimeDisplay } from '../../components/shell/ShellTimeDisplay.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
-import type { Tool } from '../../Tool.js'
+import type { Tool } from '../../tool.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { ProgressMessage } from '../../types/message.js'
 import type { PowerShellProgress } from '../../types/tools.js'

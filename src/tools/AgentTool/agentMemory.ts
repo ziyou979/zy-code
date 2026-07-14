@@ -1,6 +1,6 @@
 import { join, normalize, sep } from 'node:path'
 import { tSync } from '../../i18n/index.js'
-import { getProjectRoot } from '../../bootstrap/state.js'
+import { getProjectRoot } from 'src/bootstrap/runtime/runtimeContext.js'
 import { buildMemoryPrompt, ensureMemoryDirExists } from '../../memdir/memdir.js'
 import { getMemoryBaseDir } from '../../memdir/paths.js'
 import { getCwd } from '../../utils/cwd.js'

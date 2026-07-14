@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTerminalFocus } from '../../ink.js'
 import type { PromptInputMode, VimMode } from '../../types/textInputTypes.js'
-import type { PastedContent } from '../../utils/config.js'
+import type { PastedContent } from '../../services/config/config.js'
 import { consumeEarlyInput } from '../../utils/earlyInput.js'
 
 const RECENT_SCROLL_REPIN_WINDOW_MS = 3000

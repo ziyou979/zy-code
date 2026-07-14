@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect } from 'react'
-import { saveCurrentProjectConfig } from '../utils/config.js'
+import { saveCurrentProjectConfig } from '../services/config/config.js'
 export type StatsStore = {
   increment(name: string, value?: number): void
   set(name: string, value: number): void

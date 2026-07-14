@@ -7,7 +7,7 @@
  * — add a cmdlet once, both consumers pick it up.
  */
 
-import { CROSS_PLATFORM_CODE_EXEC } from '../../utils/permissions/dangerousPatterns.js'
+import { CROSS_PLATFORM_CODE_EXEC } from '../../services/permissions/dangerousPatterns.js'
 import { COMMON_ALIASES } from './parser.js'
 
 /**

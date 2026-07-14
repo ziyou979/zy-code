@@ -6,7 +6,7 @@ import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import { getDisplayPath } from '../../utils/file.js'
-import { extractTag } from '../../utils/messages.js'
+import { extractTag } from '../../services/messages/index.js'
 import type { Input, Output } from './LSPTool.js'
 import { getSymbolAtPosition } from './symbolContext.js'
 

@@ -4,7 +4,7 @@
  */
 
 import { getDefaultSubagentModel } from '../../services/model/agent.js'
-import { getSourceDisplayName, type SettingSource } from '../../utils/settings/constants.js'
+import { getSourceDisplayName, type SettingSource } from '../../services/settings/constants.js'
 import type { AgentDefinition } from './loadAgentsDir.js'
 
 type AgentSource = SettingSource | 'built-in' | 'plugin'

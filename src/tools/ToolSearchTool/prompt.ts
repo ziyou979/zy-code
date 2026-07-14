@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
-import { isReplWireActive } from '../../bootstrap/state.js'
+import { isReplWireActive } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import type { Tool } from '../../Tool.js'
+import type { Tool } from '../../tool.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { AGENT_TOOL_NAME } from '../AgentTool/constants.js'
 

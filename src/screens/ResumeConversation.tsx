@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import { dirname } from 'node:path'
 import React from 'react'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
-import { getOriginalCwd, switchSession } from '../bootstrap/state.js'
+import { getOriginalCwd, switchSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { Command } from '../commands.js'
 import { LogSelector } from '../components/LogSelector.js'
 import { Spinner } from '../components/Spinner.js'
@@ -17,20 +17,20 @@ import {
 } from '../services/analytics/index.js'
 import type { MCPServerConnection, ScopedMcpServerConfig } from '../services/mcp/types.js'
 import { useAppState, useSetAppState } from '../state/AppState.js'
-import type { Tool } from '../Tool.js'
+import type { Tool } from '../tool.js'
 import type { AgentColorName } from '../tools/AgentTool/agentColorManager.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import { asSessionId } from '../types/ids.js'
 import type { LogOption } from '../types/logs.js'
 import type { Message } from '../types/message.js'
 import { agenticSessionSearch } from '../utils/agenticSessionSearch.js'
-import { renameRecordingForSession } from '../utils/asciicast.js'
+import { renameRecordingForSession } from '../services/shell/asciicast.js'
 import { updateSessionName } from '../utils/concurrentSessions.js'
 import { loadConversationForResume } from '../utils/conversationRecovery.js'
 import { checkCrossProjectResume } from '../utils/crossProjectResume.js'
 import type { FileHistorySnapshot } from '../utils/fileHistory.js'
 import { logError } from '../utils/log.js'
-import { createSystemMessage } from '../utils/messages.js'
+import { createSystemMessage } from '../services/messages/index.js'
 import {
   computeStandaloneAgentContext,
   restoreAgentFromSession,
@@ -46,7 +46,7 @@ import {
   resetSessionFilePointer,
   restoreSessionMetadata,
   type SessionLogResult,
-} from '../utils/sessionStorage.js'
+} from '../services/sessionStorage.js'
 import type { ThinkingConfig } from '../utils/thinking.js'
 import type { ContentReplacementRecord } from '../utils/toolResultStorage.js'
 import { REPL } from './REPL.js'
@@ -270,7 +270,7 @@ export function ResumeConversation({
       }))
       if (feature('COORDINATOR_MODE')) {
         /* eslint-disable @typescript-eslint/no-require-imports */
-        const { saveMode } = require('../utils/sessionStorage.js')
+        const { saveMode } = require('../services/sessionStorage.js')
         const { isCoordinatorMode } =
           require('../coordinator/coordinatorMode.js') as typeof import('../coordinator/coordinatorMode.js')
         /* eslint-enable @typescript-eslint/no-require-imports */
@@ -305,7 +305,7 @@ export function ResumeConversation({
         /* eslint-disable @typescript-eslint/no-require-imports */
 
         ;(
-          require('../services/context-collapse/persist.js') as typeof import('../services/context-collapse/persist.js')
+          require('../services/compact/context-collapse/persist.js') as typeof import('../services/compact/context-collapse/persist.js')
         ).restoreFromEntries(
           // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
           result_3.contextCollapseCommits ?? ([] as any),

@@ -8,11 +8,11 @@ import {
   buildParsedCommandFromRoot,
   type IParsedCommand,
   ParsedCommand,
-} from '../../shell-eval/bash/ParsedCommand.js'
+} from '../../shell-eval/bash/parsedCommand.js'
 import { type Node, PARSE_ABORTED } from '../../shell-eval/bash/parser.js'
-import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
-import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
-import { createPermissionRequestMessage } from '../../utils/permissions/permissions.js'
+import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
+import { createPermissionRequestMessage } from '../../services/permissions/permissions.js'
 import { BashTool } from './BashTool.js'
 import { bashCommandIsSafeAsync_DEPRECATED } from './bashSecurity.js'
 

@@ -13,7 +13,8 @@ import {
   messagesAfterAreOnlySynthetic,
   selectableUserMessagesFilter,
 } from '../../components/MessageSelector.js'
-import type { MessageActionCaps } from '../../components/messageActions.js'
+import type { MessageActionCaps } from '../../components/MessageActions.js'
+import { processBashCommand } from '../../components/process-user-input/BashCommandController.js'
 import type { Notification } from '../../context/notifications.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
@@ -23,15 +24,15 @@ import { logEvent } from '../../services/analytics/index.js'
 import { resetMicrocompactState } from '../../services/compact/microCompact.js'
 import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
 import type { AppState } from '../../state/AppState.js'
-import type { ReplStoreInstance, ToolJSXState } from '../../state/ReplStore.js'
-import { injectUserMessageToTeammate } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
-import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js'
-import type { LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
+import type { ReplStoreInstance, ToolJSXState } from '../../state/replStore.js'
+import { injectUserMessageToTeammate } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
+import type { InProcessTeammateTaskState } from '../../tasks/in-process-teammate-task/types.js'
+import type { LocalAgentTaskState } from '../../tasks/local-agent-task/LocalAgentTask.js'
 import {
   appendMessageToLocalAgent,
   isLocalAgentTask,
   queuePendingMessage,
-} from '../../tasks/LocalAgentTask/LocalAgentTask.js'
+} from '../../tasks/local-agent-task/LocalAgentTask.js'
 import { resumeAgentBackground } from '../../tools/AgentTool/resumeAgent.js'
 import { toUUID } from '../../types/ids.js'
 import type { ImageBlock } from '../../types/llm.js'
@@ -40,7 +41,7 @@ import type { PromptInputMode } from '../../types/textInputTypes.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { getMemoryFiles } from '../../utils/agentsMd.js'
 import { isBgSession } from '../../utils/concurrentSessions.js'
-import type { PastedContent } from '../../utils/config.js'
+import type { PastedContent } from '../../services/config/config.js'
 import { createDebugLog } from '../../utils/debug.js'
 import type { EffortLevel } from '../../utils/effort.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -49,10 +50,10 @@ import { fileHistoryHasAnyChanges } from '../../utils/fileHistory.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
 import { handlePromptSubmit } from '../../utils/handlePromptSubmit.js'
 import { getCommandQueue } from '../../utils/messageQueueManager.js'
-import { createUserMessage, textForResubmit } from '../../utils/messages.js'
-import { getQuerySourceForREPL } from '../../utils/promptCategory.js'
-import type { QueryGuard } from '../../utils/QueryGuard.js'
-import { getCurrentWorktreeSession } from '../../utils/worktree.js'
+import { createUserMessage, textForResubmit } from '../../services/messages/index.js'
+import { getQuerySourceForREPL } from '../../services/analytics/querySource.js'
+import type { QueryGuard } from '../../utils/queryGuard.js'
+import { getCurrentWorktreeSession } from '../../services/worktree/worktree.js'
 
 const log = createDebugLog('repl')
 
@@ -159,7 +160,7 @@ export function rewindConversationToImpl(
     // ctx-agent 将在下次超过阈值时重新暂存
     /* eslint-disable @typescript-eslint/no-require-imports */
     ;(
-      require('../../services/context-collapse/index.js') as typeof import('../../services/context-collapse/index.js')
+      require('../../services/compact/context-collapse/index.js') as typeof import('../../services/compact/context-collapse/index.js')
     ).resetContextCollapse()
     /* eslint-enable @typescript-eslint/no-require-imports */
   }
@@ -336,6 +337,7 @@ export async function executeQueuedInputImpl(
     addNotification: params.addNotification,
     setMessages: params.setMessages,
     queuedCommands,
+    processBashCommand,
   })
 }
 
