@@ -12,6 +12,7 @@ import {
   isBareMode,
   isEnvDefinedFalsy,
   isEnvTruthy,
+  parseEnvNumber,
   parseEnvVars,
   shouldMaintainProjectWorkingDir,
 } from '../../src/utils/envUtils.js'
@@ -214,6 +215,52 @@ describe('envUtils', () => {
     test('设为 "0" 时返回 false', () => {
       process.env.CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR = '0'
       expect(shouldMaintainProjectWorkingDir()).toBe(false)
+    })
+  })
+
+  describe('parseEnvNumber', () => {
+    test('undefined → undefined', () => {
+      expect(parseEnvNumber(undefined)).toBeUndefined()
+    })
+
+    test('空字符串 → undefined', () => {
+      expect(parseEnvNumber('')).toBeUndefined()
+    })
+
+    test('正整数', () => {
+      expect(parseEnvNumber('42')).toBe(42)
+    })
+
+    test('零', () => {
+      expect(parseEnvNumber('0')).toBe(0)
+    })
+
+    test('负整数', () => {
+      expect(parseEnvNumber('-5')).toBe(-5)
+    })
+
+    test('科学记数法 "1e6" → undefined（安全：parseInt("1e6",10) === 1）', () => {
+      expect(parseEnvNumber('1e6')).toBeUndefined()
+    })
+
+    test('科学记数法 "1.5e3" → undefined', () => {
+      expect(parseEnvNumber('1.5e3')).toBeUndefined()
+    })
+
+    test('浮点数 → undefined（非整数）', () => {
+      expect(parseEnvNumber('3.14')).toBeUndefined()
+    })
+
+    test('带前后空格的数字', () => {
+      expect(parseEnvNumber('  100  ')).toBe(100)
+    })
+
+    test('非数字字符串 → undefined', () => {
+      expect(parseEnvNumber('abc')).toBeUndefined()
+    })
+
+    test('十六进制 → undefined', () => {
+      expect(parseEnvNumber('0xFF')).toBeUndefined()
     })
   })
 })
