@@ -21,40 +21,40 @@ import {
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
-} from '../../services/analytics/index.js'
-import { getAutoCompactThreshold } from '../../services/compact/autoCompact.js'
+} from '../analytics/index.js'
+import { getAutoCompactThreshold } from '../compact/autoCompact.js'
 import {
   buildPostCompactMessages,
   compactConversation,
   ERROR_MESSAGE_USER_ABORT,
-} from '../../services/compact/compact.js'
-import { resetMicrocompactState } from '../../services/compact/microCompact.js'
-import type { ModelAlias } from '../../services/model/aliases.js'
-import { evictTaskOutput } from '../../services/task/diskOutput.js'
-import { evictTerminalTask } from '../../services/task/framework.js'
-import { unregisterAgent as unregisterPerfettoAgent } from '../../services/telemetry/perfettoTracing.js'
+} from '../compact/compact.js'
+import { resetMicrocompactState } from '../compact/microCompact.js'
+import type { ModelAlias } from '../model/aliases.js'
+import { evictTaskOutput } from '../task-runtime/diskOutput.js'
+import { evictTerminalTask } from '../task-runtime/framework.js'
+import { unregisterAgent as unregisterPerfettoAgent } from '../telemetry/perfettoTracing.js'
 import type { AppState } from '../../state/AppState.js'
-import type { Tool, ToolUseContext } from '../../Tool.js'
-import { appendTeammateMessage } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
+import type { Tool, ToolUseContext } from '../../tool.js'
+import { appendTeammateMessage } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import type {
   AgentLifecycleMode,
   ClaimedTaskAssignment,
   InProcessTeammateTaskState,
   TeammateIdentity,
-} from '../../tasks/InProcessTeammateTask/types.js'
+} from '../../tasks/in-process-teammate-task/types.js'
 import {
   AGENT_HISTORY_MAX_BYTES,
   AGENT_HISTORY_MAX_MESSAGES,
   appendCappedMessage,
   IDLE_COMPACT_MS,
   IDLE_HOT_MS,
-} from '../../tasks/InProcessTeammateTask/types.js'
+} from '../../tasks/in-process-teammate-task/types.js'
 import {
   createActivityDescriptionResolver,
   createProgressTracker,
   getProgressUpdate,
   updateProgressFromMessage,
-} from '../../tasks/LocalAgentTask/LocalAgentTask.js'
+} from '../../tasks/local-agent-task/LocalAgentTask.js'
 import type { CustomAgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import { runAgent } from '../../tools/AgentTool/runAgent.js'
 import { awaitClassifierAutoApproval } from '../../tools/BashTool/bashPermissions.js'
@@ -81,13 +81,13 @@ import {
   createUserMessage,
   SUBAGENT_REJECT_MESSAGE,
   SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX,
-} from '../../utils/messages.js'
+} from '../messages/index.js'
 import {
   applyPermissionUpdates,
   persistPermissionUpdates,
-} from '../../utils/permissions/PermissionUpdate.js'
-import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
-import { hasPermissionsToUseTool } from '../../utils/permissions/permissions.js'
+} from '../permissions/permissionUpdate.js'
+import type { PermissionUpdate } from '../permissions/permissionUpdateSchema.js'
+import { hasPermissionsToUseTool } from '../permissions/permissions.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'

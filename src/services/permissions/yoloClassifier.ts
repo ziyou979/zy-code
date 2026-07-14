@@ -8,8 +8,8 @@ import {
   getLastClassifierRequests,
   getSessionId,
   setLastClassifierRequests,
-} from '../../bootstrap/state.js'
-import type { Tool, ToolPermissionContext, Tools } from '../../Tool.js'
+} from '../../bootstrap/runtime/runtimeContext.js'
+import type { Tool, ToolPermissionContext, Tools } from '../../tool.js'
 import type {
   ImageBlock,
   LLMMessage,
@@ -23,8 +23,8 @@ import { createDebugLog, isDebugMode } from '../../utils/debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { extractTextContent } from '../../utils/messages.js'
-import { getAutoModeConfig } from '../../utils/settings/settings.js'
+import { extractTextContent } from '../messages/index.js'
+import { getAutoModeConfig } from '../settings/settings.js'
 import { sideQuery } from '../../utils/sideQuery.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
@@ -40,7 +40,7 @@ const permLog = createDebugLog('permissions:classifier')
 
 // 死代码消除：auto 模式分类器 prompt 的条件导入。
 // 在构建时，bundler 将 .txt 文件内联为字符串字面量。在测试时，
-// require() 返回 {default: string} — txtRequire 对两者都进行规范化。
+// require('./yolo-classifier-prompts/auto_mode_system_prompt.txt') 返回 {default: string} — txtRequire 对两者都进行规范化。
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
 function txtRequire(mod: string | { default: string }): string {
   return typeof mod === 'string' ? mod : mod.default
@@ -180,7 +180,7 @@ export function getAutoModeClassifierErrorDumpPath(): string {
 /**
  * 最近分类器 API 请求的快照，仅在 /share 读取时惰性字符串化。
  * 数组因为 XML 路径可能发送两个请求（stage1 + stage2）。
- * 存储在 bootstrap/state.ts 中以避免模块范围的可变状态。
+ * 存储在正式 prompt 状态模块中，以避免模块范围的可变状态。
  */
 export function getAutoModeClassifierTranscript(): string | null {
   const requests = getLastClassifierRequests()
@@ -430,7 +430,7 @@ export function buildTranscriptForClassifier(messages: Message[], tools: Tools):
  * 内容在每会话中是静态的，使系统 + AGENTS.md 前缀成为
  * 分类器调用之间的稳定缓存前缀。
  *
- * 从 bootstrap/state.ts 缓存读取（由 context.ts 填充），而非
+ * 从 prompt 状态缓存读取（由 context.ts 填充），而非
  * 直接导入 agentsMd.ts — agentsMd → permissions/filesystem →
  * permissions → yoloClassifier 是循环依赖。context.ts 已经
  * 基于 ZY_CODE_DISABLE_CLAUDE_MDS 门控并将 '' 规范化为 null 再缓存。

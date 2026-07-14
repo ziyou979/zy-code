@@ -14,15 +14,15 @@
 
 import memoize from 'lodash-es/memoize.js'
 import { getSecureStorage } from 'src/services/secure-storage/index.js'
-import type { LoadedPlugin } from '../../types/plugin.js'
+import type { LoadedPlugin } from './types.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logError } from '../../utils/log.js'
-import type { SettingSource } from '../../utils/settings/constants.js'
+import type { SettingSource } from '../settings/constants.js'
 import {
   getInitialSettings,
   getSettingsForSource,
   updateSettingsForSource,
-} from '../../utils/settings/settings.js'
+} from '../settings/settings.js'
 import { type UserConfigSchema, type UserConfigValues, validateUserConfig } from './mcpbHandler.js'
 import { getPluginDataDir } from './pluginDirectories.js'
 

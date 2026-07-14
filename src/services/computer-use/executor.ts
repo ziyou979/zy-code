@@ -40,7 +40,7 @@ import type {
 import { API_RESIZE_PARAMS, targetImageSize } from '@ant/computer-use-mcp'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
+import { execFileNoThrow } from '../shell/execFileNoThrow.js'
 import { sleep } from '../../utils/sleep.js'
 import { CLI_CU_CAPABILITIES, CLI_HOST_BUNDLE_ID, getTerminalBundleId } from './common.js'
 import { drainRunLoop } from './drainRunLoop.js'

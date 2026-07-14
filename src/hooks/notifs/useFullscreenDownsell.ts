@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import type { Notification } from '../../context/notifications.js'
 import { tSync } from '../../i18n/index.js'
 import { logEvent } from '../../services/analytics/index.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 
 /**

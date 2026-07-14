@@ -1,6 +1,6 @@
 import { z } from 'zod/v4'
 import { lazySchema } from '../../utils/lazySchema.js'
-import type { SettingsJson } from '../../utils/settings/types.js'
+import type { SettingsJson } from '../settings/types.js'
 
 /**
  * 远程托管设置响应的 Schema。

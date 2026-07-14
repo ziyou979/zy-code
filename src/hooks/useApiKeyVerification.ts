@@ -1,7 +1,11 @@
 import { useCallback, useState } from 'react'
-import { getIsNonInteractiveSession } from '../bootstrap/state.js'
+import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import { verifyApiKey } from '../services/api/apiHelpers.js'
-import { getApiKeyFromApiKeyHelper, getApiKeyWithSource, isAuthEnabled } from '../utils/auth.js'
+import {
+  getApiKeyFromApiKeyHelper,
+  getApiKeyWithSource,
+  isAuthEnabled,
+} from '../services/auth/auth.js'
 export type VerificationStatus = 'loading' | 'valid' | 'invalid' | 'missing' | 'error'
 export type ApiKeyVerificationResult = {
   status: VerificationStatus

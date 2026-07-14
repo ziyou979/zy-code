@@ -27,9 +27,9 @@
 
 import { createHash } from 'node:crypto'
 import type { Span } from '@opentelemetry/api'
-import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import { sanitizeToolNameForAnalytics } from '../../services/analytics/metadata.js'
+import { getIsNonInteractiveSession } from '../../bootstrap/runtime/runtimeContext.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { sanitizeToolNameForAnalytics } from '../analytics/metadata.js'
 import type { AssistantMessage, UserMessage } from '../../types/message.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'

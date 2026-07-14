@@ -9,7 +9,7 @@
 import {
   localModelHasAdaptiveThinking,
   type ModelCapabilityMatchContext,
-} from '../../utils/settings/localModelCapabilities.js'
+} from '../settings/localModelCapabilities.js'
 import { API_FORMATS, type ApiFormat } from './apiFormat.js'
 import type { ProviderCapability } from './providers.js'
 

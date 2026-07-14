@@ -7,7 +7,7 @@ import {
   getTeleportedSessionInfo,
   markFirstTeleportMessageLogged,
   setLastApiCompletionTimestamp,
-} from 'src/bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import { getAPIProviderForStatsig } from 'src/services/model/providers.js'
 import { logOTelEvent } from 'src/services/telemetry/events.js'
 import {
@@ -15,13 +15,13 @@ import {
   isBetaTracingEnabled,
   type Span,
 } from 'src/services/telemetry/sessionTracing.js'
-import type { QueryChainTracking } from 'src/Tool.js'
+import type { QueryChainTracking } from 'src/tool.js'
 import { isConnectorTextBlock } from 'src/types/connectorText.js'
 import type { AssistantMessage } from 'src/types/message.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import type { EffortLevel } from 'src/utils/effort.js'
 import { logError } from 'src/utils/log.js'
-import type { PermissionMode } from 'src/utils/permissions/PermissionMode.js'
+import type { PermissionMode } from 'src/services/permissions/permissionMode.js'
 import { jsonStringify } from 'src/utils/slowOperations.js'
 import { isAPIError, type TokenUsage as Usage } from '../../types/llm.js'
 import { consumeInvokingRequestId } from '../../utils/agentContext.js'

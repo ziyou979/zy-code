@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { getIsRemoteMode } from '../../bootstrap/state.js'
+import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { useNotifications } from '../../context/notifications.js'
 import { Text } from '../../ink.js'
 import { useAppState } from '../../state/AppState.js'

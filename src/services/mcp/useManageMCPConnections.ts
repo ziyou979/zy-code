@@ -1,9 +1,9 @@
 import { feature } from 'bun:bundle'
 import { basename } from 'node:path'
 import { useCallback, useEffect, useRef } from 'react'
-import { getSessionId } from '../../bootstrap/state.js'
+import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import type { Command } from '../../commands.js'
-import type { Tool } from '../../Tool.js'
+import type { Tool } from '../../tool.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   clearServerCache,
@@ -45,12 +45,12 @@ import {
   setMcpServerEnabled,
 } from 'src/services/mcp/config.js'
 import type { AppState } from 'src/state/AppState.js'
-import type { PluginError } from 'src/types/plugin.js'
+import type { PluginError } from 'src/services/plugins/types.js'
 import { createDebugLog } from 'src/utils/debug.js'
 
 const mcpLog = createDebugLog('mcp')
 
-import { getAllowedChannels } from '../../bootstrap/state.js'
+import { getAllowedChannels } from '../../bootstrap/runtime/runtimeContext.js'
 import { useNotifications } from '../../context/notifications.js'
 import { useAppState, useAppStateStore, useSetAppState } from '../../state/AppState.js'
 import { errorMessage } from '../../utils/errors.js'

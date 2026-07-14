@@ -1,4 +1,4 @@
-import type { EditableSettingSource, SettingSource } from '../../utils/settings/constants.js'
+import type { EditableSettingSource, SettingSource } from '../settings/constants.js'
 import { ALLOWED_OFFICIAL_MARKETPLACE_NAMES, type PluginScope } from './schemas.js'
 
 /**

@@ -9,7 +9,11 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import { logEvent } from 'src/services/analytics/index.js'
-import { getOriginalCwd, getSessionId, getSessionProjectDir } from '../../bootstrap/state.js'
+import {
+  getOriginalCwd,
+  getSessionId,
+  getSessionProjectDir,
+} from '../../bootstrap/runtime/runtimeContext.js'
 import { builtInCommandNames } from '../../commands.js'
 import { COMMAND_NAME_TAG, TICK_TAG } from '../../constants/xml.js'
 import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
@@ -38,7 +42,7 @@ import { isEnvTruthy } from '../../utils/envUtils.js'
 import type { FileHistorySnapshot } from '../../utils/fileHistory.js'
 import { getWorktreePaths } from '../../utils/getWorktreePaths.js'
 import { parseJSONL } from '../../utils/json.js'
-import { extractTag, isCompactBoundaryMessage } from '../../utils/messages.js'
+import { extractTag, isCompactBoundaryMessage } from '../messages/index.js'
 import { sanitizePath } from '../../utils/path.js'
 import {
   extractJsonStringField,

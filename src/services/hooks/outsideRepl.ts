@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import { isAsyncHookJSONOutput, isSyncHookJSONOutput } from 'src/types/hooks/index.js'
 import type { HookInput } from 'src/types/index.js'
-import { getSessionId } from '../../bootstrap/state.js'
+import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
-} from '../../services/analytics/index.js'
+} from '../analytics/index.js'
 import type { AppState } from '../../state/AppState.js'
 import { createCombinedAbortSignal } from '../../utils/combinedAbortSignal.js'
 import { createDebugLog } from '../../utils/debug.js'

@@ -9,7 +9,7 @@ import {
 } from '../assistant/sessionHistory.js'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import { convertSDKMessage } from '../remote/messageAdapter.js'
-import type { RemoteSessionConfig } from '../remote/RemoteSessionManager.js'
+import type { RemoteSessionConfig } from '../remote/remoteSessionManager.js'
 import type { Message, SystemInformationalMessage } from '../types/message.js'
 import { logForDebugging } from '../utils/debug.js'
 

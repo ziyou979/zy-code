@@ -1,8 +1,8 @@
 import { feature } from 'bun:bundle'
 import { useEffect, useRef } from 'react'
 import { type AppState, useAppState, useAppStateStore, useSetAppState } from 'src/state/AppState.js'
-import type { ToolPermissionContext } from 'src/Tool.js'
-import { getIsRemoteMode } from '../../bootstrap/state.js'
+import type { ToolPermissionContext } from 'src/tool.js'
+import { getIsRemoteMode } from '../../bootstrap/runtime/runtimeContext.js'
 import {
   createDisabledBypassPermissionsContext,
   shouldDisableBypassPermissions,

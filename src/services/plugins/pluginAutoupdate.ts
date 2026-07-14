@@ -10,7 +10,7 @@
  * but users can disable it per-marketplace.
  */
 
-import { shouldSkipPluginAutoupdate } from '../../utils/config.js'
+import { shouldSkipPluginAutoupdate } from '../config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'

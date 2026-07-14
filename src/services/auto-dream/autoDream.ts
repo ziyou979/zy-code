@@ -10,23 +10,23 @@
 // State is closure-scoped inside initAutoDream() rather than module-level
 // (tests call initAutoDream() in beforeEach for a fresh closure).
 
-import type { REPLHookContext } from '../../utils/hooks/postSamplingHooks.js'
+import type { REPLHookContext } from '../hooks/postSamplingHooks.js'
 import { createCacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.js'
-import { createUserMessage, createMemorySavedMessage } from '../../utils/messages.js'
+import { createUserMessage, createMemorySavedMessage } from '../messages/index.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
-import type { ToolUseContext } from '../../Tool.js'
+import type { ToolUseContext } from '../../tool.js'
 import { logEvent } from '../analytics/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { isAutoMemoryEnabled, getAutoMemPath } from '../../memdir/paths.js'
 import { isAutoDreamEnabled } from './config.js'
-import { getProjectDir } from '../../utils/sessionStorage.js'
+import { getProjectDir } from '../sessionStorage.js'
 import {
   getOriginalCwd,
   getKairosActive,
   getIsRemoteMode,
   getSessionId,
-} from '../../bootstrap/state.js'
+} from '../../bootstrap/runtime/runtimeContext.js'
 import { createAutoMemCanUseTool } from '../extract-memories/extractMemories.js'
 import { buildConsolidationPrompt } from './consolidationPrompt.js'
 import {
@@ -41,7 +41,7 @@ import {
   completeDreamTask,
   failDreamTask,
   isDreamTask,
-} from '../../tasks/DreamTask/DreamTask.js'
+} from '../../tasks/dream-task/dreamTask.js'
 import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
 import { FILE_WRITE_TOOL_NAME } from '../../tools/FileWriteTool/prompt.js'
 
@@ -271,7 +271,7 @@ ${sessionIds.map((id) => `- ${id}`).join('\n')}`
  */
 function makeDreamProgressWatcher(
   taskId: string,
-  setAppState: import('../../Task.js').SetAppState,
+  setAppState: import('../../task.js').SetAppState,
 ): (msg: Message) => void {
   return (msg) => {
     if (msg.type !== 'assistant') {

@@ -1,17 +1,14 @@
 import { createHash } from 'node:crypto'
 import { join } from 'node:path'
-import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
+import { getIsNonInteractiveSession } from '../../bootstrap/runtime/runtimeContext.js'
 import type { Command } from '../../commands.js'
-import type { AgentMcpServerInfo } from '../../components/mcp/types.js'
-import type { Tool } from '../../Tool.js'
+import type { AgentMcpServerInfo } from './viewTypes.js'
+import type { Tool } from '../../tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import { getCwd } from '../../utils/cwd.js'
 import { getGlobalZyFile } from '../../utils/env.js'
-import { isSettingSourceEnabled } from '../../utils/settings/constants.js'
-import {
-  getInitialSettings,
-  hasSkipDangerousModePermissionPrompt,
-} from '../../utils/settings/settings.js'
+import { isSettingSourceEnabled } from '../settings/constants.js'
+import { getInitialSettings, hasSkipDangerousModePermissionPrompt } from '../settings/settings.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getEnterpriseMcpFilePath, getMcpConfigByName } from './config.js'
 import { mcpInfoFromString } from './mcpStringUtils.js'

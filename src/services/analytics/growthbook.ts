@@ -1,12 +1,11 @@
 import { GrowthBook } from '@growthbook/growthbook'
 import { isEqual, memoize } from 'lodash-es'
-import { getIsNonInteractiveSession, getSessionTrustAccepted } from '../../bootstrap/state.js'
-import { getGrowthBookClientKey } from '../../constants/keys.js'
 import {
-  checkHasTrustDialogAccepted,
-  getGlobalConfig,
-  saveGlobalConfig,
-} from '../../utils/config.js'
+  getIsNonInteractiveSession,
+  getSessionTrustAccepted,
+} from '../../bootstrap/runtime/runtimeContext.js'
+import { getGrowthBookClientKey } from '../../constants/keys.js'
+import { checkHasTrustDialogAccepted, getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { toError } from '../../utils/errors.js'

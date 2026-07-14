@@ -1,15 +1,12 @@
 import { resolve } from 'node:path'
 import { DEFAULT_HOOK_SHELL } from 'src/shell-eval/shared/shellProvider.js'
 import type { HookEvent } from 'src/types/index.js'
-import { getSessionId } from '../../bootstrap/state.js'
+import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import type { AppState } from '../../state/AppState.js'
-import type { EditableSettingSource } from '../../utils/settings/constants.js'
-import { SOURCES } from '../../utils/settings/constants.js'
-import {
-  getSettingsFilePathForSource,
-  getSettingsForSource,
-} from '../../utils/settings/settings.js'
-import type { HookCommand, HookMatcher } from '../../utils/settings/types.js'
+import type { EditableSettingSource } from '../settings/constants.js'
+import { SOURCES } from '../settings/constants.js'
+import { getSettingsFilePathForSource, getSettingsForSource } from '../settings/settings.js'
+import type { HookCommand, HookMatcher } from '../settings/types.js'
 import { getSessionHooks } from './sessionHooks.js'
 
 export type HookSource =

@@ -11,18 +11,18 @@ import memoize from 'lodash-es/memoize.js'
 import { env, getHostPlatformForAnalytics } from '../../utils/env.js'
 import { envDynamic } from '../../utils/envDynamic.js'
 import { getModelBetas } from '../../utils/betas.js'
-import { getMainLoopModel } from '../../services/model/model.js'
+import { getMainLoopModel } from '../model/model.js'
 import {
   getSessionId,
   getIsInteractive,
   getKairosActive,
   getClientType,
   getParentSessionId as getParentSessionIdFromState,
-} from '../../bootstrap/state.js'
+} from '../../bootstrap/runtime/runtimeContext.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isOfficialMcpUrl } from '../mcp/officialRegistry.js'
 import { getRepoRemoteHash } from '../../utils/git.js'
-import { getWslVersion, getLinuxDistroInfo, detectVcs } from '../../utils/platform.js'
+import { getWslVersion, getLinuxDistroInfo, detectVcs } from '../shell/platform.js'
 import type { CoreUserData } from 'src/utils/user.js'
 import { getAgentContext } from '../../utils/agentContext.js'
 import type { EnvironmentMetadata } from '../../types/generated/events_mono/claude_code/v1/claude_code_internal_event.js'
@@ -124,9 +124,8 @@ export function isAnalyticsToolDetailsLoggingEnabled(
 const BUILTIN_MCP_SERVER_NAMES: ReadonlySet<string> = new Set(
   feature('CHICAGO_MCP')
     ? [
-        (
-          require('../../services/computer-use/common.js') as typeof import('../../services/computer-use/common.js')
-        ).COMPUTER_USE_MCP_SERVER_NAME,
+        (require('../computer-use/common.js') as typeof import('../computer-use/common.js'))
+          .COMPUTER_USE_MCP_SERVER_NAME,
       ]
     : [],
 )

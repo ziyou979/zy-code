@@ -5,7 +5,7 @@ import { basename, dirname, join, resolve } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import pickBy from 'lodash-es/pickBy.js'
 import type { MemoryType } from 'src/services/memory/types.js'
-import { getOriginalCwd, getSessionTrustAccepted } from '../../bootstrap/state.js'
+import { getOriginalCwd, getSessionTrustAccepted } from '../../bootstrap/runtime/runtimeContext.js'
 import { getAutoMemEntrypoint } from '../../memdir/paths.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { getCwd } from '../../utils/cwd.js'
@@ -23,7 +23,7 @@ import * as lockfile from '../../utils/lockfile.js'
 import { logError } from '../../utils/log.js'
 import { normalizePathForConfigKey } from '../../utils/path.js'
 import { getEssentialTrafficOnlyReason } from '../../utils/privacyLevel.js'
-import { getManagedFilePath } from '../../utils/settings/managedPath.js'
+import { getManagedFilePath } from '../settings/managedPath.js'
 import type { ThemeSetting } from '../../utils/theme.js'
 import { logEvent } from '../analytics/index.js'
 import type { McpServerConfig } from '../mcp/types.js'
@@ -42,7 +42,8 @@ const ccrAutoConnect = feature('CCR_AUTO_CONNECT')
 
 import type { ModelOption } from 'src/services/model/modelOptions.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
-import type { ImageDimensions } from '../../utils/imageResizer.js'
+import type { HistoryEntry, PastedContent } from '../../types/inputContent.js'
+export type { HistoryEntry, PastedContent } from '../../types/inputContent.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 
 // 重入保护：防止 getConfig → logEvent → getGlobalConfig → getConfig
@@ -50,27 +51,11 @@ import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 // 从而再次调用 getConfig。
 let insideGetConfig = false
 
-// 图像维度信息，用于坐标映射（仅在图像被缩放时设置）
-export type PastedContent = {
-  id: number // 连续数字 ID
-  type: 'text' | 'image'
-  content: string
-  mediaType?: string // 如 'image/png'、'image/jpeg'
-  filename?: string // 附件槽中图像的显示名称
-  dimensions?: ImageDimensions
-  sourcePath?: string // 拖放到终端上的图像的原始文件路径
-}
-
 export interface SerializedStructuredHistoryEntry {
   display: string
   pastedContents?: Record<number, PastedContent>
   pastedText?: string
 }
-export interface HistoryEntry {
-  display: string
-  pastedContents: Record<number, PastedContent>
-}
-
 export type ReleaseChannel = 'stable' | 'latest'
 
 export type ProjectConfig = {

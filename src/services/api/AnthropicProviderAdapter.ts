@@ -5,7 +5,7 @@
  * 本文件只负责拿到 Anthropic client、发起请求。
  */
 import type Anthropic from '@anthropic-ai/sdk'
-import { getMainLoopModel, normalizeModelStringForAPI } from '../../services/model/model.js'
+import { getMainLoopModel, normalizeModelStringForAPI } from '../model/model.js'
 import type {
   CreateParams,
   LLMAdapter,

@@ -22,7 +22,7 @@ import {
   OAUTH_BETA_HEADER,
   ZY_CODE_INFERENCE_SCOPE,
 } from '../../constants/oauth.js'
-import { getAPIProvider, isAnthropicBaseUrl } from '../../services/model/providers.js'
+import { getAPIProvider, isAnthropicBaseUrl } from '../model/providers.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'

@@ -20,7 +20,7 @@ import {
   getPromptId,
   getSessionId,
   isSessionPersistenceDisabled,
-} from '../../bootstrap/state.js'
+} from '../../bootstrap/runtime/runtimeContext.js'
 import { type AgentId, asAgentId } from '../../types/ids.js'
 import type { AttributionSnapshotMessage } from '../../types/logs.js'
 import {
@@ -47,12 +47,12 @@ import { formatFileSize } from '../../utils/format.js'
 import { getBranch } from '../../utils/git.js'
 import { gracefulShutdownSync, isShuttingDown } from '../../utils/gracefulShutdown.js'
 import { logError } from '../../utils/log.js'
-import { isCompactBoundaryMessage } from '../../utils/messages.js'
+import { isCompactBoundaryMessage } from '../messages/index.js'
 import {
   extractLastJsonStringField,
   LITE_READ_BUF_SIZE,
 } from '../../utils/sessionStoragePortable.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
+import { getInitialSettings } from '../settings/settings.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import type { ContentReplacementRecord } from '../../utils/toolResultStorage.js'
 import * as sessionIngress from '../api/sessionIngress.js'

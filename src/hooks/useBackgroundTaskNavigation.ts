@@ -7,11 +7,11 @@ import { enterTeammateView, exitTeammateView } from '../state/teammateViewHelper
 import {
   getRunningTeammatesSorted,
   InProcessTeammateTask,
-} from '../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
+} from '../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import {
   type InProcessTeammateTaskState,
   isInProcessTeammateTask,
-} from '../tasks/InProcessTeammateTask/types.js'
+} from '../tasks/in-process-teammate-task/types.js'
 import { isBackgroundTask } from '../tasks/types.js'
 
 // 按 delta 步进 teammate 选择，在 leader(-1)..teammates(0..n-1)..hide(n) 之间循环。

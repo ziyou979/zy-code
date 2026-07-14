@@ -15,7 +15,7 @@ import {
 import type { Message, SystemCompactBoundaryMessage } from '../../types/message.js'
 import type { FileHistorySnapshot } from '../../utils/fileHistory.js'
 import { logError } from '../../utils/log.js'
-import { extractTag, isCompactBoundaryMessage } from '../../utils/messages.js'
+import { extractTag, isCompactBoundaryMessage } from '../messages/index.js'
 
 const SKIP_FIRST_PROMPT_PATTERN = /^(?:\s*<[a-z][\w-]*[\s>]|\[Request interrupted by user[^\]]*\])/
 

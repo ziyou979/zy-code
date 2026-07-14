@@ -4,7 +4,7 @@ import type { ToolUseConfirm } from '../components/permissions/PermissionRequest
 import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
 import type { SetToolPermissionContextFn } from '../services/swarm/leaderPermissionBridge.js'
-import type { Tool as ToolType, ToolUseContext } from '../Tool.js'
+import type { Tool as ToolType, ToolUseContext } from '../tool.js'
 import {
   consumeSpeculativeClassifierCheck,
   peekSpeculativeClassifierCheck,
@@ -21,16 +21,16 @@ import {
 import { logForDebugging } from '../utils/debug.js'
 import { AbortError } from '../utils/errors.js'
 import { logError } from '../utils/log.js'
-import type { PermissionDecision } from '../utils/permissions/PermissionResult.js'
-import { hasPermissionsToUseTool } from '../utils/permissions/permissions.js'
-import { handleCoordinatorPermission } from './toolPermission/handlers/coordinatorHandler.js'
-import { handleInteractivePermission } from './toolPermission/handlers/interactiveHandler.js'
-import { handleSwarmWorkerPermission } from './toolPermission/handlers/swarmWorkerHandler.js'
+import type { PermissionDecision } from '../services/permissions/permissionResult.js'
+import { hasPermissionsToUseTool } from '../services/permissions/permissions.js'
+import { handleCoordinatorPermission } from './tool-permission/handlers/coordinatorHandler.js'
+import { handleInteractivePermission } from './tool-permission/handlers/interactiveHandler.js'
+import { handleSwarmWorkerPermission } from './tool-permission/handlers/swarmWorkerHandler.js'
 import {
   createPermissionContext,
   createPermissionQueueOps,
-} from './toolPermission/PermissionContext.js'
-import { logPermissionDecision } from './toolPermission/permissionLogging.js'
+} from './tool-permission/permissionContext.js'
+import { logPermissionDecision } from './tool-permission/permissionLogging.js'
 export type CanUseToolFn<Input extends Record<string, unknown> = Record<string, unknown>> = (
   tool: ToolType,
   input: Input,

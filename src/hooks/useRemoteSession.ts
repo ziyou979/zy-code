@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { BoundedUUIDSet } from '../bridge/bridgeMessaging.js'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
-import type { SpinnerMode } from '../components/Spinner/types.js'
+import type { SpinnerMode } from '../types/spinner.js'
 import { convertSDKMessage, isSessionEndMessage } from '../remote/messageAdapter.js'
 import {
   type RemotePermissionResponse,
   type RemoteSessionConfig,
   RemoteSessionManager,
-} from '../remote/RemoteSessionManager.js'
+} from '../remote/remoteSessionManager.js'
 import {
   createSyntheticAssistantMessage,
   createToolStub,
@@ -16,8 +16,8 @@ import type { RemoteMessageContent } from '../services/teleport/api.js'
 import { updateSessionTitle } from '../services/teleport/api.js'
 import { useSetAppState } from '../state/AppState.js'
 import type { AppState } from '../state/AppStateStore.js'
-import type { Tool } from '../Tool.js'
-import { findToolByName } from '../Tool.js'
+import type { Tool } from '../tool.js'
+import { findToolByName } from '../tool.js'
 import type { Message as MessageType } from '../types/message.js'
 import type { PermissionAskDecision } from '../types/permissions.js'
 import { logForDebugging } from '../utils/debug.js'
@@ -27,7 +27,7 @@ import {
   extractTextContent,
   handleMessageFromStream,
   type StreamingToolUse,
-} from '../utils/messages.js'
+} from '../services/messages/index.js'
 import { generateSessionTitle } from '../utils/sessionTitle.js'
 
 // How long to wait for a response before showing a warning

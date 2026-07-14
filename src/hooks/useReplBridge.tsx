@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import React, { useCallback, useEffect, useRef } from 'react'
-import { setMainLoopModelOverride } from '../bootstrap/state.js'
+import { setMainLoopModelOverride } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   isWirePermissionResponse,
   type WirePermissionCallbacks,
@@ -26,15 +26,15 @@ import { getCwd } from '../utils/cwd.js'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { enqueue } from '../utils/messageQueueManager.js'
-import { buildSystemInitMessage } from '../utils/messages/systemInit.js'
-import { createSystemMessage, createWireStatusMessage } from '../utils/messages.js'
+import { buildSystemInitMessage } from '../services/messages/systemInit.js'
+import { createSystemMessage, createWireStatusMessage } from '../services/messages/index.js'
 import {
   getAutoModeUnavailableNotification,
   getAutoModeUnavailableReason,
   isAutoModeGateEnabled,
   isBypassPermissionsModeDisabled,
   transitionPermissionMode,
-} from '../utils/permissions/permissionSetup.js'
+} from '../services/permissions/permissionSetup.js'
 
 /** 失败后多久自动清除 replBridgeEnabled（停止重试）。 */
 export const BRIDGE_FAILURE_DISMISS_MS = 10_000

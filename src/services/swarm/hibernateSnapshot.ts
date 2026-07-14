@@ -12,7 +12,7 @@ import { join } from 'node:path'
 import type {
   HibernatedAgentSnapshot,
   TeammateIdentity,
-} from '../../tasks/InProcessTeammateTask/types.js'
+} from '../../tasks/in-process-teammate-task/types.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'

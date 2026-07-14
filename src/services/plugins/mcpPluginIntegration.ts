@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import type { LoadedPlugin, PluginError } from '../../types/plugin.js'
+import type { LoadedPlugin, PluginError } from './types.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage, isENOENT } from '../../utils/errors.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'

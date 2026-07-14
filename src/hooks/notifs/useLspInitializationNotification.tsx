@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useInterval } from 'usehooks-ts'
-import { getIsRemoteMode, getIsScrollDraining } from '../../bootstrap/state.js'
+import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getIsScrollDraining } from 'src/bootstrap/runtime/runtimeContext.js'
 import { useNotifications } from '../../context/notifications.js'
 import { Text } from '../../ink.js'
 import { getInitializationStatus, getLspServerManager } from '../../services/lsp/manager.js'

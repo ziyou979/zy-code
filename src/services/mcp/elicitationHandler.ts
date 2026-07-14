@@ -10,7 +10,7 @@ import {
   executeElicitationHooks,
   executeElicitationResultHooks,
   executeNotificationHooks,
-} from '../../utils/hooks.js'
+} from '../hooks.js'
 import { logMCPDebug, logMCPError } from '../../utils/log.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import {

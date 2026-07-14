@@ -1,6 +1,6 @@
 import memoize from 'lodash-es/memoize.js'
 import type { HookEvent } from 'src/types/index.js'
-import { getRegisteredHooks } from '../../bootstrap/state.js'
+import { getRegisteredHooks } from '../../bootstrap/runtime/runtimeContext.js'
 import type { AppState } from '../../state/AppState.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { getAllHooks, type IndividualHookConfig, sortMatchersByPriority } from './hooksSettings.js'

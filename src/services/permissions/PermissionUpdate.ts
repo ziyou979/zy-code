@@ -1,17 +1,17 @@
 import { posix } from 'node:path'
-import type { ToolPermissionContext } from '../../Tool.js'
+import type { ToolPermissionContext } from '../../tool.js'
 // Types extracted to src/types/permissions.ts to break import cycles
 import type { AdditionalWorkingDirectory, WorkingDirectorySource } from '../../types/permissions.js'
 import { createDebugLog } from '../../utils/debug.js'
 
 const permLog = createDebugLog('permissions')
 
-import type { EditableSettingSource } from '../../utils/settings/constants.js'
-import { getSettingsForSource, updateSettingsForSource } from '../../utils/settings/settings.js'
+import type { EditableSettingSource } from '../settings/constants.js'
+import { getSettingsForSource, updateSettingsForSource } from '../settings/settings.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { toPosixPath } from './filesystem.js'
-import type { PermissionRuleValue } from './PermissionRule.js'
-import type { PermissionUpdate, PermissionUpdateDestination } from './PermissionUpdateSchema.js'
+import type { PermissionRuleValue } from './permissionRule.js'
+import type { PermissionUpdate, PermissionUpdateDestination } from './permissionUpdateSchema.js'
 import {
   permissionRuleValueFromString,
   permissionRuleValueToString,

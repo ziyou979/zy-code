@@ -7,9 +7,16 @@ import {
 } from 'src/services/model/providers.js'
 import type { WireAssistantMessageError } from 'src/types/index.js'
 import type { AssistantMessage, Message, UserMessage } from 'src/types/message.js'
-import { getApiKeyWithSource, getOauthAccountInfo, getZyAIOAuthTokens } from 'src/utils/auth.js'
-import { createAssistantAPIErrorMessage, NO_RESPONSE_REQUESTED } from 'src/utils/messages.js'
-import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
+import {
+  getApiKeyWithSource,
+  getOauthAccountInfo,
+  getZyAIOAuthTokens,
+} from 'src/services/auth/auth.js'
+import {
+  createAssistantAPIErrorMessage,
+  NO_RESPONSE_REQUESTED,
+} from 'src/services/messages/index.js'
+import { getIsNonInteractiveSession } from '../../bootstrap/runtime/runtimeContext.js'
 import { API_PDF_MAX_PAGES, PDF_TARGET_RAW_SIZE } from '../../constants/apiLimits.js'
 import type { APIErrorLike, StopReason } from '../../types/llm.js'
 import { getErrorHeader, isAPIError, isConnectionError } from '../../types/llm.js'

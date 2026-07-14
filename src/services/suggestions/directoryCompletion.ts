@@ -1,6 +1,6 @@
 import { basename, dirname, join, sep } from 'node:path'
 import { LRUCache } from 'lru-cache'
-import type { SuggestionItem } from 'src/components/PromptInput/PromptInputFooterSuggestions.js'
+import type { SuggestionItem } from 'src/services/suggestions/types.js'
 import { getCwd } from 'src/utils/cwd.js'
 import { getFsImplementation } from 'src/utils/fsOperations.js'
 import { logError } from 'src/utils/log.js'

@@ -15,7 +15,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import { normalizeModelStringForAPI } from '../../../services/model/model.js'
+import { normalizeModelStringForAPI } from '../../model/model.js'
 import type {
   AssistantContentBlock,
   CreateParams,

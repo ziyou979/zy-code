@@ -9,7 +9,7 @@
  */
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { getSessionId } from '../../bootstrap/state.js'
+import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 

@@ -2,22 +2,22 @@ import { basename } from 'node:path'
 import { DEFAULT_HOOK_SHELL } from 'src/shell-eval/shared/shellProvider.js'
 import type { HookCallback, HookCallbackMatcher } from 'src/types/hooks/index.js'
 import type { HookEvent, HookInput } from 'src/types/index.js'
-import { getRegisteredHooks } from '../../bootstrap/state.js'
+import { getRegisteredHooks } from '../../bootstrap/runtime/runtimeContext.js'
 import type { AppState } from '../../state/AppState.js'
-import { findToolByName, type Tools } from '../../Tool.js'
+import { findToolByName, type Tools } from '../../tool.js'
 import { createDebugLog } from '../../utils/debug.js'
 import {
   getLegacyToolNames,
   normalizeLegacyToolName,
   permissionRuleValueFromString,
-} from '../../utils/permissions/permissionRuleParser.js'
-import { ALLOWED_OFFICIAL_MARKETPLACE_NAMES } from '../../utils/plugins/schemas.js'
+} from '../permissions/permissionRuleParser.js'
+import { ALLOWED_OFFICIAL_MARKETPLACE_NAMES } from '../plugins/schemas.js'
 import type {
   HookCommand,
   HookMatcher,
   PluginHookMatcher,
   SkillHookMatcher,
-} from '../../utils/settings/types.js'
+} from '../settings/types.js'
 import { getHooksConfigFromSnapshot, shouldAllowManagedHooksOnly } from './hooksConfigSnapshot.js'
 import {
   type FunctionHook,
@@ -292,7 +292,7 @@ export async function getMatchingHooks(
     const hookMatchers = getHooksConfig(appState, sessionId, hookEvent)
 
     // 如果更改以下条件，必须同时更改
-    // src/utils/hooks/hooksConfigManager.ts。
+    // 兼容 hooksConfigManager.ts 的历史调用约定。
     let matchQuery: string | undefined
     switch (hookInput.hook_event_name) {
       case 'PreToolUse':

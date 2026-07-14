@@ -13,26 +13,22 @@
  * 4. Returning spawn result for backend
  */
 
-import { getSessionId } from '../../bootstrap/state.js'
+import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
-import { evictTaskOutput } from '../../services/task/diskOutput.js'
-import {
-  evictTerminalTask,
-  registerTask,
-  STOPPED_DISPLAY_MS,
-} from '../../services/task/framework.js'
+import { evictTaskOutput } from '../task-runtime/diskOutput.js'
+import { evictTerminalTask, registerTask, STOPPED_DISPLAY_MS } from '../task-runtime/framework.js'
 import {
   isPerfettoTracingEnabled,
   registerAgent as registerPerfettoAgent,
   unregisterAgent as unregisterPerfettoAgent,
-} from '../../services/telemetry/perfettoTracing.js'
+} from '../telemetry/perfettoTracing.js'
 import type { AppState } from '../../state/AppState.js'
-import { createTaskStateBase, generateTaskId } from '../../Task.js'
+import { createTaskStateBase, generateTaskId } from '../../task.js'
 import type {
   AgentLifecycleMode,
   InProcessTeammateTaskState,
   TeammateIdentity,
-} from '../../tasks/InProcessTeammateTask/types.js'
+} from '../../tasks/in-process-teammate-task/types.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { formatAgentId } from '../../utils/agentId.js'
 import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
@@ -75,7 +71,7 @@ export type InProcessSpawnConfig = {
    * - persistent: 作为团队成员保持存活，支持 idle/hibernate
    * 默认值为 'ephemeral'，只有显式 Teammate 创建才设为 persistent。
    */
-  lifecycleMode?: import('../../tasks/InProcessTeammateTask/types.js').AgentLifecycleMode
+  lifecycleMode?: import('../../tasks/in-process-teammate-task/types.js').AgentLifecycleMode
 }
 
 /**

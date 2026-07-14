@@ -1,9 +1,9 @@
 import { basename, dirname, join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import { parseUserSpecifiedModel } from 'src/services/model/model.js'
-import { getInlinePlugins, getSessionId } from '../../bootstrap/state.js'
-import type { Command } from '../../types/command.js'
-import { getPluginErrorMessage, type LoadedPlugin, type PluginError } from '../../types/plugin.js'
+import { getInlinePlugins, getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
+import type { Command } from '../../commands/types.js'
+import { getPluginErrorMessage, type LoadedPlugin, type PluginError } from './types.js'
 import { parseArgumentNames, substituteArguments } from '../../utils/argumentSubstitution.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { EFFORT_LEVELS, parseEffortValue } from '../../utils/effort.js'
@@ -15,7 +15,7 @@ import {
   parseBooleanFrontmatter,
   parseFrontmatter,
   parseShellFrontmatter,
-} from '../../utils/frontmatterParser.js'
+} from '../markdown/frontmatterParser.js'
 import { getFsImplementation, isDuplicatePath } from '../../utils/fsOperations.js'
 import {
   extractDescriptionFromMarkdown,

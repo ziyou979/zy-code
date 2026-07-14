@@ -10,7 +10,7 @@
  */
 
 import type { AssistantMessage, Message } from '../../types/message.js'
-import { getAssistantMessageText } from '../../utils/messages/predicates.js'
+import { getAssistantMessageText } from '../messages/predicates.js'
 
 /** 消息是否为带 text 块的、非 API 错误的 assistant */
 function isTextAssistant(message: Message): message is AssistantMessage {

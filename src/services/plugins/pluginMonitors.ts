@@ -6,7 +6,7 @@
  * 适合日志监控、资源监控、自动修复等场景。
  */
 import { type ChildProcess, spawn } from 'node:child_process'
-import type { LoadedPlugin } from '../../types/plugin.js'
+import type { LoadedPlugin } from './types.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
 

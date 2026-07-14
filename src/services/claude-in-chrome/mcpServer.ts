@@ -4,16 +4,16 @@ import {
   type PermissionMode,
 } from '@ant/claude-for-chrome-mcp'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { shutdownDatadog } from '../../services/analytics/datadog.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { shutdownDatadog } from '../analytics/datadog.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
-} from '../../services/analytics/index.js'
-import { initializeAnalyticsSink } from '../../services/analytics/sink.js'
-import { shutdownZyEventLogging } from '../../services/analytics/zyEventLogger.js'
-import { getZyAIOAuthTokens } from '../../utils/auth.js'
-import { enableConfigs, getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+} from '../analytics/index.js'
+import { initializeAnalyticsSink } from '../analytics/sink.js'
+import { shutdownZyEventLogging } from '../analytics/zyEventLogger.js'
+import { getZyAIOAuthTokens } from '../auth/auth.js'
+import { enableConfigs, getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { DebugLogger, logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { sideQuery } from '../../utils/sideQuery.js'

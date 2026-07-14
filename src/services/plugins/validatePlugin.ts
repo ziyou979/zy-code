@@ -3,7 +3,7 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import * as path from 'node:path'
 import { z } from 'zod/v4'
 import { errorMessage, getErrnoCode, isENOENT } from '../../utils/errors.js'
-import { FRONTMATTER_REGEX } from '../../utils/frontmatterParser.js'
+import { FRONTMATTER_REGEX } from '../markdown/frontmatterParser.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { parseYaml } from '../../utils/yaml.js'
 import {

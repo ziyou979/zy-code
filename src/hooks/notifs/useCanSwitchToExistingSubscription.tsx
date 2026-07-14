@@ -1,6 +1,6 @@
 import { Text } from '../../ink.js'
 import { logEvent } from '../../services/analytics/index.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { useStartupNotification } from './useStartupNotification.js'
 
 const MAX_SHOW_COUNT = 3
@@ -40,7 +40,7 @@ async function _temp2() {
     priority: 'low',
   }
 }
-function _temp(current: import('../../utils/config.js').GlobalConfig) {
+function _temp(current: import('../../services/config/config.js').GlobalConfig) {
   return {
     ...current,
     // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理

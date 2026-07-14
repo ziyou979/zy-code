@@ -8,7 +8,7 @@
 
 import { randomUUID } from 'node:crypto'
 import OpenAI from 'openai'
-import { getMainLoopModel, normalizeModelStringForAPI } from '../../services/model/model.js'
+import { getMainLoopModel, normalizeModelStringForAPI } from '../model/model.js'
 import type {
   CreateParams,
   LLMAdapter,

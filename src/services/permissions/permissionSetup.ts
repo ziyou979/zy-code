@@ -6,12 +6,12 @@ import {
   handlePlanModeTransition,
   setHasExitedPlanMode,
   setNeedsAutoModeExitAttachment,
-} from '../../bootstrap/state.js'
-import type { ToolPermissionContext } from '../../Tool.js'
+} from '../../bootstrap/runtime/runtimeContext.js'
+import type { ToolPermissionContext } from '../../tool.js'
 import { getCwd } from '../../utils/cwd.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import type { SettingSource } from '../../utils/settings/constants.js'
-import { SETTING_SOURCES } from '../../utils/settings/constants.js'
+import type { SettingSource } from '../settings/constants.js'
+import { SETTING_SOURCES } from '../settings/constants.js'
 import {
   getInitialSettings,
   getSettingsFilePathForSource,
@@ -19,8 +19,8 @@ import {
   hasAutoModeOptIn,
   hasTrustedDefaultModeAuto,
   hasUntrustedAutoModeSettings,
-} from '../../utils/settings/settings.js'
-import { type PermissionMode, permissionModeFromString } from './PermissionMode.js'
+} from '../settings/settings.js'
+import { type PermissionMode, permissionModeFromString } from './permissionMode.js'
 import { applyPermissionRulesToPermissionContext } from './permissions.js'
 import { loadAllPermissionRulesFromDisk } from './permissionsLoader.js'
 
@@ -56,9 +56,9 @@ import {
   logEvent,
 } from '../analytics/index.js'
 import { CROSS_PLATFORM_CODE_EXEC, DANGEROUS_BASH_PATTERNS } from './dangerousPatterns.js'
-import type { PermissionRule, PermissionRuleSource, PermissionRuleValue } from './PermissionRule.js'
-import { type AdditionalWorkingDirectory, applyPermissionUpdate } from './PermissionUpdate.js'
-import type { PermissionUpdateDestination } from './PermissionUpdateSchema.js'
+import type { PermissionRule, PermissionRuleSource, PermissionRuleValue } from './permissionRule.js'
+import { type AdditionalWorkingDirectory, applyPermissionUpdate } from './permissionUpdate.js'
+import type { PermissionUpdateDestination } from './permissionUpdateSchema.js'
 import {
   normalizeLegacyToolName,
   permissionRuleValueFromString,

@@ -10,7 +10,7 @@
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
-import { getSessionId } from '../../bootstrap/state.js'
+import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 
 function getTranscriptDir(): string {

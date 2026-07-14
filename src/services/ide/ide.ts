@@ -7,19 +7,19 @@ import { execa } from 'execa'
 import capitalize from 'lodash-es/capitalize.js'
 import memoize from 'lodash-es/memoize.js'
 import { logEvent } from 'src/services/analytics/index.js'
-import { getIsScrollDraining, getOriginalCwd } from '../../bootstrap/state.js'
+import { getIsScrollDraining, getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { env } from '../../utils/env.js'
 import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
 import {
   execFileNoThrow,
   execFileNoThrowWithCwd,
   execSyncWithDefaults_DEPRECATED,
-} from '../../utils/execFileNoThrow.js'
+} from '../shell/execFileNoThrow.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { getAncestorPidsAsync } from '../../utils/genericProcessUtils.js'
 import { isJetBrainsPluginInstalledCached } from '../../utils/jetbrains.js'
 import { logError } from '../../utils/log.js'
-import { getPlatform } from '../../utils/platform.js'
+import { getPlatform } from '../shell/platform.js'
 import { lt } from '../../utils/semver.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { callIdeRpc } from '../mcp/mcpToolCall.js'

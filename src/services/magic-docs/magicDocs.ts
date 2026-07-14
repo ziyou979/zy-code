@@ -6,7 +6,7 @@
  * See docs/magic-docs.md for more information.
  */
 
-import type { Tool, ToolUseContext } from '../../Tool.js'
+import type { Tool, ToolUseContext } from '../../tool.js'
 import type { BuiltInAgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import { runAgent } from '../../tools/AgentTool/runAgent.js'
 import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
@@ -18,11 +18,8 @@ import {
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { isFsInaccessible } from '../../utils/errors.js'
 import { cloneFileStateCache } from '../../utils/fileStateCache.js'
-import {
-  type REPLHookContext,
-  registerPostSamplingHook,
-} from '../../utils/hooks/postSamplingHooks.js'
-import { createUserMessage, hasToolCallsInLastAssistantTurn } from '../../utils/messages.js'
+import { type REPLHookContext, registerPostSamplingHook } from '../hooks/postSamplingHooks.js'
+import { createUserMessage, hasToolCallsInLastAssistantTurn } from '../messages/index.js'
 import { sequential } from '../../utils/sequential.js'
 import { buildMagicDocsUpdatePrompt } from './prompts.js'
 

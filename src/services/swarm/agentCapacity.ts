@@ -8,11 +8,11 @@
  */
 
 import type { AppState } from '../../state/AppState.js'
-import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js'
+import type { InProcessTeammateTaskState } from '../../tasks/in-process-teammate-task/types.js'
 import {
   MAX_CONCURRENT_IN_PROCESS_AGENTS,
   MAX_RESIDENT_AGENTS,
-} from '../../tasks/InProcessTeammateTask/types.js'
+} from '../../tasks/in-process-teammate-task/types.js'
 import { logForDebugging } from '../../utils/debug.js'
 
 export type CapacityCheckResult = {

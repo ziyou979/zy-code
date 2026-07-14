@@ -1,7 +1,7 @@
 import type { AppState } from 'src/state/AppState.js'
 import { HOOK_EVENTS } from 'src/types/index.js'
 import { createDebugLog } from '../../utils/debug.js'
-import type { HooksSettings } from '../../utils/settings/types.js'
+import type { HooksSettings } from '../settings/types.js'
 import { addSessionHook, removeSessionHook } from './sessionHooks.js'
 
 const hookLog = createDebugLog('hooks')

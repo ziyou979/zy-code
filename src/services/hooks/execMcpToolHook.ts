@@ -1,9 +1,9 @@
 import type { HookEvent } from 'src/types/index.js'
-import { callMCPTool } from '../../services/mcp/mcpToolCall.js'
-import type { ToolUseContext } from '../../Tool.js'
-import { createAttachmentMessage } from '../../utils/attachments.js'
+import { callMCPTool } from '../mcp/mcpToolCall.js'
+import type { ToolUseContext } from '../../tool.js'
+import { createAttachmentMessage } from '../attachments/attachments.js'
 import { errorMessage } from '../../utils/errors.js'
-import type { McpToolHook } from '../../utils/settings/types.js'
+import type { McpToolHook } from '../settings/types.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import type { HookResult } from './types.js'
 

@@ -13,8 +13,8 @@ import {
   GLOBAL_CLAUDE_FOLDER_PERMISSION_PATTERN,
 } from 'src/tools/FileEditTool/constants.js'
 import type { z } from 'zod/v4'
-import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js'
-import type { AnyObject, Tool, ToolPermissionContext } from '../../Tool.js'
+import { getOriginalCwd, getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
+import type { AnyObject, Tool, ToolPermissionContext } from '../../tool.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
 import { getCwd } from '../../utils/cwd.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
@@ -26,20 +26,17 @@ import {
   sanitizePath,
 } from '../../utils/path.js'
 import { getPlanSlug, getPlansDirectory } from '../../utils/plans.js'
-import { getPlatform } from '../../utils/platform.js'
-import { getProjectDir } from '../../utils/sessionStorage.js'
-import { SETTING_SOURCES } from '../../utils/settings/constants.js'
-import {
-  getSettingsFilePathForSource,
-  getSettingsRootPathForSource,
-} from '../../utils/settings/settings.js'
+import { getPlatform } from '../shell/platform.js'
+import { getProjectDir } from '../sessionStorage.js'
+import { SETTING_SOURCES } from '../settings/constants.js'
+import { getSettingsFilePathForSource, getSettingsRootPathForSource } from '../settings/settings.js'
 import { getToolResultsDir } from '../../utils/toolResultStorage.js'
-import { windowsPathToPosixPath } from '../../utils/windowsPaths.js'
+import { windowsPathToPosixPath } from '../shell/windowsPaths.js'
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
-import type { PermissionDecision, PermissionResult } from './PermissionResult.js'
-import type { PermissionRule, PermissionRuleSource } from './PermissionRule.js'
-import { createReadRuleSuggestion } from './PermissionUpdate.js'
-import type { PermissionUpdate } from './PermissionUpdateSchema.js'
+import type { PermissionDecision, PermissionResult } from './permissionResult.js'
+import type { PermissionRule, PermissionRuleSource } from './permissionRule.js'
+import { createReadRuleSuggestion } from './permissionUpdate.js'
+import type { PermissionUpdate } from './permissionUpdateSchema.js'
 import { getRuleByContentsForToolName } from './permissions.js'
 
 declare const MACRO: { VERSION: string }

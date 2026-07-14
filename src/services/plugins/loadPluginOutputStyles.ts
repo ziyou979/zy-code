@@ -1,9 +1,9 @@
 import { basename } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import type { OutputStyleConfig } from '../../constants/outputStyles.js'
-import { getPluginErrorMessage } from '../../types/plugin.js'
+import { getPluginErrorMessage } from './types.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { coerceDescriptionToString, parseFrontmatter } from '../../utils/frontmatterParser.js'
+import { coerceDescriptionToString, parseFrontmatter } from '../markdown/frontmatterParser.js'
 import { getFsImplementation, isDuplicatePath } from '../../utils/fsOperations.js'
 import { extractDescriptionFromMarkdown } from '../../utils/markdownConfigLoader.js'
 import { loadAllPluginsCacheOnly } from './pluginLoader.js'
@@ -80,7 +80,7 @@ export const loadPluginOutputStyles = memoize(async (): Promise<OutputStyleConfi
 
   if (errors.length > 0) {
     logForDebugging(
-      `Plugin loading errors: ${errors.map((e: import('../../types/plugin.js').PluginError) => getPluginErrorMessage(e)).join(', ')}`,
+      `Plugin loading errors: ${errors.map((e: import('./types.js').PluginError) => getPluginErrorMessage(e)).join(', ')}`,
     )
   }
 

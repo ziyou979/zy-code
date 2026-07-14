@@ -21,8 +21,8 @@ import {
   markHintPluginShown,
   type PluginHintRecommendation,
   resolvePluginHint,
-} from '../utils/plugins/hintRecommendation.js'
-import { installPluginFromMarketplace } from '../utils/plugins/pluginInstallationHelpers.js'
+} from '../services/plugins/hintRecommendation.js'
+import { installPluginFromMarketplace } from '../services/plugins/pluginInstallationHelpers.js'
 import {
   clearPendingHint,
   getPendingHintSnapshot,

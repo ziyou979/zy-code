@@ -18,12 +18,12 @@
 
 import type { ServerCapabilities } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod/v4'
-import { type ChannelEntry, getAllowedChannels } from '../../bootstrap/state.js'
+import { type ChannelEntry, getAllowedChannels } from '../../bootstrap/runtime/runtimeContext.js'
 import { CHANNEL_TAG } from '../../constants/xml.js'
-import { getZyAIOAuthTokens } from '../../utils/auth.js'
+import { getZyAIOAuthTokens } from '../auth/auth.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { parsePluginIdentifier } from '../../utils/plugins/pluginIdentifier.js'
-import { getSettingsForSource } from '../../utils/settings/settings.js'
+import { parsePluginIdentifier } from '../plugins/pluginIdentifier.js'
+import { getSettingsForSource } from '../settings/settings.js'
 import { escapeXmlAttr } from '../../utils/xml.js'
 import {
   type ChannelAllowlistEntry,

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { rm } from 'node:fs'
 import { appendFile, copyFile, mkdir } from 'node:fs/promises'
 import { dirname, isAbsolute, join, relative } from 'node:path'
-import { getCwdState } from '../../bootstrap/state.js'
+import { getCwdState } from '../../bootstrap/runtime/runtimeContext.js'
 import type { CompletionBoundary } from '../../state/AppStateStore.js'
 import {
   type AppState,
@@ -16,7 +16,7 @@ import type { SpeculationAcceptMessage } from '../../types/logs.js'
 import type { Message } from '../../types/message.js'
 import { createChildAbortController } from '../../utils/abortController.js'
 import { count } from '../../utils/array.js'
-import { getGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig } from '../config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -31,7 +31,7 @@ import {
   runForkedAgent,
 } from '../../utils/forkedAgent.js'
 import { formatDuration, formatNumber } from '../../utils/format.js'
-import type { REPLHookContext } from '../../utils/hooks/postSamplingHooks.js'
+import type { REPLHookContext } from '../hooks/postSamplingHooks.js'
 import { logError } from '../../utils/log.js'
 import type { SetAppState } from '../../utils/messageQueueManager.js'
 import {
@@ -39,10 +39,10 @@ import {
   createUserMessage,
   INTERRUPT_MESSAGE,
   INTERRUPT_MESSAGE_FOR_TOOL_USE,
-} from '../../utils/messages.js'
-import { getZyTempDir } from '../../utils/permissions/filesystem.js'
+} from '../messages/index.js'
+import { getZyTempDir } from '../permissions/filesystem.js'
 import { extractReadFilesFromMessages } from '../../utils/queryHelpers.js'
-import { getTranscriptPath } from '../../utils/sessionStorage.js'
+import { getTranscriptPath } from '../sessionStorage.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

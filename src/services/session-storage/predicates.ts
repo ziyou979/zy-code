@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import { join } from 'node:path'
-import { getOriginalCwd } from '../../bootstrap/state.js'
+import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import type { Entry, TranscriptMessage } from '../../types/logs.js'
 import type { Message } from '../../types/message.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'

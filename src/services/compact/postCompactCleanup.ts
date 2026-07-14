@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import type { QuerySource } from '../../constants/querySource.js'
 import { clearSystemPromptSections } from '../../constants/systemPromptSections.js'
 import { getUserContext } from '../../context.js'
-import { clearBetaTracingState } from '../../services/telemetry/betaSessionTracing.js'
+import { clearBetaTracingState } from '../telemetry/betaSessionTracing.js'
 import { clearSpeculativeChecks } from '../../tools/BashTool/bashPermissions.js'
 import { resetGetMemoryFilesCache } from '../../utils/agentsMd.js'
 import { clearClassifierApprovals } from '../../utils/classifierApprovals.js'
@@ -39,7 +39,7 @@ export function runPostCompactCleanup(querySource?: QuerySource): void {
     if (isMainThreadCompact) {
       /* eslint-disable @typescript-eslint/no-require-imports */
       ;(
-        require('../context-collapse/index.js') as typeof import('../context-collapse/index.js')
+        require('./context-collapse/index.js') as typeof import('./context-collapse/index.js')
       ).resetContextCollapse()
       /* eslint-enable @typescript-eslint/no-require-imports */
     }

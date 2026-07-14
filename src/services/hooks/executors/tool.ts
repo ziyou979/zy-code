@@ -10,10 +10,10 @@ import type {
   PostToolUseHookInput,
   PreToolUseHookInput,
 } from 'src/types/index.js'
-import { getSessionId } from '../../../bootstrap/state.js'
-import type { ToolUseContext } from '../../../Tool.js'
+import { getSessionId } from '../../../bootstrap/runtime/runtimeContext.js'
+import type { ToolUseContext } from '../../../tool.js'
 import type { Message } from '../../../types/message.js'
-import { createAttachmentMessage } from '../../../utils/attachments.js'
+import { createAttachmentMessage } from '../../attachments/attachments.js'
 import { createDebugLog } from '../../../utils/debug.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { executeHooks } from '../executeEngine.js'

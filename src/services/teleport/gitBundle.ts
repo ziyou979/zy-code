@@ -14,11 +14,11 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import { type FilesApiConfig, uploadFile } from '../../services/api/filesApi.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { type FilesApiConfig, uploadFile } from '../api/filesApi.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { execFileNoThrowWithCwd } from '../../utils/execFileNoThrow.js'
+import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
 import { findGitRoot, gitExe } from '../../utils/git.js'
 import { generateTempFilePath } from '../../utils/tempfile.js'
 

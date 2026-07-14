@@ -1,6 +1,5 @@
-import type { TerminalNotification } from '../ink/useTerminalNotification.js'
 import { env } from '../utils/env.js'
-import { execFileNoThrow } from '../utils/execFileNoThrow.js'
+import { execFileNoThrow } from './shell/execFileNoThrow.js'
 import { logError } from '../utils/log.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -15,9 +14,17 @@ export type NotificationOptions = {
   notificationType: string
 }
 
+/** 通知服务需要的终端输出能力，由 Ink hook 在组合层提供。 */
+export type NotificationTransport = {
+  notifyITerm2: (opts: { message: string; title?: string }) => void
+  notifyKitty: (opts: { message: string; title: string; id: number }) => void
+  notifyGhostty: (opts: { message: string; title: string }) => void
+  notifyBell: () => void
+}
+
 export async function sendNotification(
   notif: NotificationOptions,
-  terminal: TerminalNotification,
+  terminal: NotificationTransport,
 ): Promise<void> {
   const config = getGlobalConfig()
   const channel = config.preferredNotifChannel
@@ -38,7 +45,7 @@ const DEFAULT_TITLE = 'Zy Code'
 async function sendToChannel(
   channel: string,
   opts: NotificationOptions,
-  terminal: TerminalNotification,
+  terminal: NotificationTransport,
 ): Promise<string> {
   const title = opts.title || DEFAULT_TITLE
 
@@ -74,7 +81,7 @@ async function sendToChannel(
 
 async function sendAuto(
   opts: NotificationOptions,
-  terminal: TerminalNotification,
+  terminal: NotificationTransport,
 ): Promise<string> {
   const title = opts.title || DEFAULT_TITLE
 

@@ -1,7 +1,7 @@
 import { getMainLoopModel } from 'src/services/model/model.js'
 import { z } from 'zod/v4'
 import type { AssistantMessage, Message } from '../../types/message.js'
-import { getGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig } from '../config/config.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { logEvent } from '../analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../analytics/metadata.js'

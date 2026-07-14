@@ -22,7 +22,7 @@ import { errorMessage } from '../utils/errors.js'
 import {
   type PermissionUpdate,
   permissionUpdateSchema,
-} from '../utils/permissions/PermissionUpdateSchema.js'
+} from '../services/permissions/permissionUpdateSchema.js'
 import { getAgentName, getTeamName } from '../utils/teammate.js'
 
 const POLL_INTERVAL_MS = 500

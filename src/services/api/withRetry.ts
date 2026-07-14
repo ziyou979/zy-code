@@ -4,7 +4,7 @@ import { getAPIProviderForStatsig } from 'src/services/model/providers.js'
 import type { SystemAPIErrorMessage } from 'src/types/message.js'
 import { createDebugLog } from 'src/utils/debug.js'
 import { logError } from 'src/utils/log.js'
-import { createSystemAPIErrorMessage } from 'src/utils/messages.js'
+import { createSystemAPIErrorMessage } from 'src/services/messages/index.js'
 import {
   type APIErrorLike,
   createAbortError,
@@ -15,11 +15,7 @@ import {
   isConnectionError,
   LLMError,
 } from '../../types/llm.js'
-import {
-  clearApiKeyHelperCache,
-  getZyAIOAuthTokens,
-  handleOAuth401Error,
-} from '../../utils/auth.js'
+import { clearApiKeyHelperCache, getZyAIOAuthTokens, handleOAuth401Error } from '../auth/auth.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { disableKeepAlive } from '../../utils/proxy.js'

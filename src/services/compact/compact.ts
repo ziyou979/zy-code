@@ -7,14 +7,14 @@ const sessionTranscriptModule = feature('KAIROS')
   ? (require('../session-transcript/sessionTranscript.js') as typeof import('../session-transcript/sessionTranscript.js'))
   : null
 
-import { markPostCompaction } from 'src/bootstrap/state.js'
-import { getInvokedSkillsForAgent } from '../../bootstrap/state.js'
+import { markPostCompaction } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getInvokedSkillsForAgent } from '../../bootstrap/runtime/runtimeContext.js'
 import type { QuerySource } from '../../constants/querySource.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
-import { MEMORY_TYPE_VALUES } from '../../services/memory/types.js'
-import { getTaskOutputPath } from '../../services/task/diskOutput.js'
-import type { Tool, ToolUseContext } from '../../Tool.js'
-import type { LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
+import { MEMORY_TYPE_VALUES } from '../memory/types.js'
+import { getTaskOutputPath } from '../task-runtime/diskOutput.js'
+import type { Tool, ToolUseContext } from '../../tool.js'
+import type { LocalAgentTaskState } from '../../tasks/local-agent-task/LocalAgentTask.js'
 import { FileReadTool } from '../../tools/FileReadTool/FileReadTool.js'
 import { FILE_READ_TOOL_NAME, FILE_UNCHANGED_STUB } from '../../tools/FileReadTool/prompt.js'
 import { ToolSearchTool } from '../../tools/ToolSearchTool/ToolSearchTool.js'
@@ -43,7 +43,7 @@ import {
   getMessagesAfterCompactBoundary,
   isCompactBoundaryMessage,
   normalizeMessagesForAPI,
-} from '../../utils/messages.js'
+} from '../messages/index.js'
 import { expandPath } from '../../utils/path.js'
 import { getPlan, getPlanFilePath } from '../../utils/plans.js'
 import {

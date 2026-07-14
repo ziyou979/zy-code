@@ -1,7 +1,7 @@
 import { isInputModeCharacter } from 'src/components/PromptInput/inputModes.js'
 import { useNotifications } from 'src/context/notifications.js'
 import stripAnsi from 'strip-ansi'
-import { markBackslashReturnUsed } from '../commands/terminalSetup/terminalSetup.js'
+import { markBackslashReturnUsed } from '../commands/terminal-setup/TerminalSetup.js'
 import { addToHistory } from '../history.js'
 import instances from '../ink/instances.js'
 import type { Key } from '../ink.js'
@@ -15,7 +15,7 @@ import {
   resetYankState,
   updateYankLength,
   yankPop,
-} from '../utils/Cursor.js'
+} from '../utils/cursor.js'
 import { env } from '../utils/env.js'
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
 import type { ImageDimensions } from '../utils/imageResizer.js'

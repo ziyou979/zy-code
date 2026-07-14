@@ -15,19 +15,19 @@ import * as React from 'react'
 import {
   hasShownLspRecommendationThisSession,
   setLspRecommendationShownThisSession,
-} from '../bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import { useNotifications } from '../context/notifications.js'
 import { useAppState } from '../state/AppState.js'
-import { saveGlobalConfig } from '../utils/config.js'
+import { saveGlobalConfig } from '../services/config/config.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logError } from '../utils/log.js'
 import {
   addToNeverSuggest,
   getMatchingLspPlugins,
   incrementIgnoredCount,
-} from '../utils/plugins/lspRecommendation.js'
-import { cacheAndRegisterPlugin } from '../utils/plugins/pluginInstallationHelpers.js'
-import { getSettingsForSource, updateSettingsForSource } from '../utils/settings/settings.js'
+} from '../services/plugins/lspRecommendation.js'
+import { cacheAndRegisterPlugin } from '../services/plugins/pluginInstallationHelpers.js'
+import { getSettingsForSource, updateSettingsForSource } from '../services/settings/settings.js'
 import {
   installPluginAndNotify,
   usePluginRecommendationBase,

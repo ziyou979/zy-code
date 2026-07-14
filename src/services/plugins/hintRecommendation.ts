@@ -10,7 +10,7 @@
  * marketplace filtering is hardcoded for v1.
  */
 
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {
   hasShownHintThisSession,

@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { useAppStateStore, useSetAppState } from '../state/AppState.js'
-import { isTerminalTaskStatus } from '../Task.js'
+import { isTerminalTaskStatus } from '../task.js'
 import {
   findTeammateTaskByAgentId,
   injectUserMessageToTeammate,
-} from '../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
+} from '../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import { isKairosCronEnabled } from '../tools/ScheduleCronTool/prompt.js'
 import type { Message } from '../types/message.js'
 import { getCronJitterConfig } from '../utils/cronJitterConfig.js'
@@ -12,7 +12,7 @@ import { createCronScheduler } from '../utils/cronScheduler.js'
 import { removeCronTasks } from '../utils/cronTasks.js'
 import { logForDebugging } from '../utils/debug.js'
 import { enqueuePendingNotification } from '../utils/messageQueueManager.js'
-import { createScheduledTaskFireMessage } from '../utils/messages.js'
+import { createScheduledTaskFireMessage } from '../services/messages/index.js'
 import { WORKLOAD_CRON } from '../utils/workloadContext.js'
 
 type Props = {

@@ -7,7 +7,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { getSessionId } from '../../bootstrap/state.js'
+import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { type SessionId } from '../../types/ids.js'
 import { type PersistedWorktreeSession } from '../../types/logs.js'
 import { updateSessionName } from '../../utils/concurrentSessions.js'

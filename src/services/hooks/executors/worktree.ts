@@ -1,4 +1,4 @@
-import { getRegisteredHooks } from '../../../bootstrap/state.js'
+import { getRegisteredHooks } from '../../../bootstrap/runtime/runtimeContext.js'
 import { createDebugLog } from '../../../utils/debug.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { getHooksConfigFromSnapshot, shouldAllowManagedHooksOnly } from '../hooksConfigSnapshot.js'

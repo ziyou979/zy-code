@@ -7,14 +7,14 @@ import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
 import { FILE_WRITE_TOOL_NAME } from '../../tools/FileWriteTool/prompt.js'
-import { getPluginErrorMessage } from '../../types/plugin.js'
+import { getPluginErrorMessage } from './types.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { EFFORT_LEVELS, parseEffortValue } from '../../utils/effort.js'
 import {
   coerceDescriptionToString,
   parseFrontmatter,
   parsePositiveIntFromFrontmatter,
-} from '../../utils/frontmatterParser.js'
+} from '../markdown/frontmatterParser.js'
 import { getFsImplementation, isDuplicatePath } from '../../utils/fsOperations.js'
 import {
   parseAgentToolsFromFrontmatter,
@@ -222,7 +222,7 @@ export const loadPluginAgents = memoize(async (): Promise<AgentDefinition[]> => 
 
   if (errors.length > 0) {
     logForDebugging(
-      `Plugin loading errors: ${errors.map((e: import('../../types/plugin.js').PluginError) => getPluginErrorMessage(e)).join(', ')}`,
+      `Plugin loading errors: ${errors.map((e: import('./types.js').PluginError) => getPluginErrorMessage(e)).join(', ')}`,
     )
   }
 

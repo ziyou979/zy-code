@@ -20,9 +20,9 @@ import {
 import type { RemoteMessageContent } from '../services/teleport/api.js'
 import type { SSHSession } from '../ssh/createSSHSession.js'
 // @ts-expect-error
-import type { SSHSessionManager } from '../ssh/SSHSessionManager.js'
-import type { Tool } from '../Tool.js'
-import { findToolByName } from '../Tool.js'
+import type { SSHSessionManager } from '../ssh/sshSessionManager.js'
+import type { Tool } from '../tool.js'
+import { findToolByName } from '../tool.js'
 import type { Message as MessageType } from '../types/message.js'
 import type { PermissionAskDecision } from '../types/permissions.js'
 import { logForDebugging } from '../utils/debug.js'

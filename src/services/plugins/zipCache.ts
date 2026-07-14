@@ -37,7 +37,7 @@ import { parseZipModes, unzipFile } from 'src/services/dxt/zip.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
-import { expandTilde } from '../../utils/permissions/pathValidation.js'
+import { expandTilde } from '../permissions/pathValidation.js'
 import type { MarketplaceSource } from './schemas.js'
 
 /**

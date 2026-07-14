@@ -1,8 +1,8 @@
 import {
   getModelStrings as getModelStringsState,
   setModelStrings as setModelStringsState,
-} from 'src/bootstrap/state.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { getInitialSettings } from '../settings/settings.js'
 
 /**
  * User-configured mapping from canonical model ID to provider-specific model ID.

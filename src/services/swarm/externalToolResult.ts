@@ -9,8 +9,8 @@
 
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { StoredToolResultReference } from '../../tasks/InProcessTeammateTask/types.js'
-import { TOOL_RESULT_EXTERNAL_THRESHOLD_BYTES } from '../../tasks/InProcessTeammateTask/types.js'
+import type { StoredToolResultReference } from '../../tasks/in-process-teammate-task/types.js'
+import { TOOL_RESULT_EXTERNAL_THRESHOLD_BYTES } from '../../tasks/in-process-teammate-task/types.js'
 import type { ContentBlock } from '../../types/llm.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'

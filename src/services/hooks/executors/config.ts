@@ -5,7 +5,7 @@ import type {
   HookInput,
   InstructionsLoadedHookInput,
 } from 'src/types/index.js'
-import { getRegisteredHooks } from '../../../bootstrap/state.js'
+import { getRegisteredHooks } from '../../../bootstrap/runtime/runtimeContext.js'
 import { invalidateSessionEnvCache } from '../../../utils/sessionEnvironment.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { getHooksConfigFromSnapshot } from '../hooksConfigSnapshot.js'

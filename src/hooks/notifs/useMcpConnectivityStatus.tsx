@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
-import { getIsRemoteMode } from '../../bootstrap/state.js'
+import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink.js'
 import type { MCPServerConnection } from '../../services/mcp/types.js'

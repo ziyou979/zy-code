@@ -1,6 +1,6 @@
-import { getIsNonInteractiveSession } from '../../../bootstrap/state.js'
+import { getIsNonInteractiveSession } from '../../../bootstrap/runtime/runtimeContext.js'
 import { logForDebugging } from '../../../utils/debug.js'
-import { getPlatform } from '../../../utils/platform.js'
+import { getPlatform } from '../../shell/platform.js'
 import {
   isInITerm2,
   isInsideTmux,
@@ -8,9 +8,9 @@ import {
   isIt2CliAvailable,
   isTmuxAvailable,
 } from './detection.js'
-import { createInProcessBackend } from './InProcessBackend.js'
+import { createInProcessBackend } from './inProcessBackend.js'
 import { getPreferTmuxOverIterm2 } from './it2Setup.js'
-import { createPaneBackendExecutor } from './PaneBackendExecutor.js'
+import { createPaneBackendExecutor } from './paneBackendExecutor.js'
 import { getTeammateModeFromSnapshot } from './teammateModeSnapshot.js'
 import type {
   BackendDetectionResult,
@@ -75,8 +75,8 @@ export async function ensureBackendsRegistered(): Promise<void> {
   if (backendsRegistered) {
     return
   }
-  await import('./TmuxBackend.js')
-  await import('./ITermBackend.js')
+  await import('./tmuxBackend.js')
+  await import('./iTermBackend.js')
   backendsRegistered = true
 }
 

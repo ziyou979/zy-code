@@ -6,7 +6,7 @@ import { shouldSkipHookDueToTrust } from '../config.js'
 type FileSuggestionCommandInput = unknown
 
 import { createDebugLog } from '../../../utils/debug.js'
-import { getInitialSettings, getSettingsForSource } from '../../../utils/settings/settings.js'
+import { getInitialSettings, getSettingsForSource } from '../../settings/settings.js'
 import { jsonStringify } from '../../../utils/slowOperations.js'
 import { execCommandHook } from '../commandRunner.js'
 import {

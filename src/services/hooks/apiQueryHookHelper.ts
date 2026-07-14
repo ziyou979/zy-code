@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import type { QuerySource } from '../../constants/querySource.js'
-import { queryModelWithoutStreaming } from '../../services/api/llmOrchestrator.js'
+import { queryModelWithoutStreaming } from '../api/llmOrchestrator.js'
 import type { Message } from '../../types/message.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import { extractTextContent } from '../../utils/messages.js'
+import { extractTextContent } from '../messages/index.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 import type { REPLHookContext } from './postSamplingHooks.js'
 

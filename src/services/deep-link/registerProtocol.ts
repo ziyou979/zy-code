@@ -24,9 +24,9 @@ import {
 import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
-import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
-import { which } from '../../utils/which.js'
+import { execFileNoThrow } from '../shell/execFileNoThrow.js'
+import { getInitialSettings } from '../settings/settings.js'
+import { which } from '../shell/which.js'
 import { getUserBinDir, getXDGDataHome } from '../../utils/xdg.js'
 import { DEEP_LINK_PROTOCOL } from './parseDeepLink.js'
 

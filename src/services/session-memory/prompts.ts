@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { roughTokenCountEstimation } from '../../services/tokenEstimation.js'
+import { roughTokenCountEstimation } from '../tokenEstimation.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { getErrnoCode, toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'

@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { setTeleportedSessionInfo } from 'src/bootstrap/state.js'
+import { setTeleportedSessionInfo } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
 import { errorMessage, TeleportOperationError } from '../utils/errors.js'
-import { teleportResumeCodeSession } from '../utils/teleport.js'
+import { teleportResumeCodeSession } from '../services/teleport/teleport.js'
 export type TeleportResumeError = {
   message: string
   formattedMessage?: string

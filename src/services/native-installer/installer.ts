@@ -36,14 +36,14 @@ import {
 } from 'src/services/analytics/index.js'
 import { getMaxVersion, shouldSkipVersion } from '../../utils/autoUpdater.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getCurrentInstallationType } from '../../utils/doctorDiagnostic.js'
 import { env } from '../../utils/env.js'
 import { envDynamic } from '../../utils/envDynamic.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { errorMessage, getErrnoCode, isENOENT, toError } from '../../utils/errors.js'
-import { execFileNoThrowWithCwd } from '../../utils/execFileNoThrow.js'
+import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
 import { getShellType } from '../../utils/localInstaller.js'
 import * as lockfile from '../../utils/lockfile.js'
 import { logError } from '../../utils/log.js'
@@ -53,7 +53,7 @@ import {
   getShellConfigPaths,
   readFileLines,
   writeFileLines,
-} from '../../utils/shellConfig.js'
+} from '../shell/shellConfig.js'
 import { sleep } from '../../utils/sleep.js'
 import { getUserBinDir, getXDGCacheHome, getXDGDataHome, getXDGStateHome } from '../../utils/xdg.js'
 import { downloadVersion, getLatestVersion } from './download.js'

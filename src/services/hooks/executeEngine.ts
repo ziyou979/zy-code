@@ -5,10 +5,10 @@ import {
   isSyncHookJSONOutput,
   type SyncHookJSONOutput,
 } from 'src/types/hooks/index.js'
-import { createAttachmentMessage } from '../../utils/attachments.js'
+import { createAttachmentMessage } from '../attachments/attachments.js'
 import { createCombinedAbortSignal } from '../../utils/combinedAbortSignal.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
-import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
+import type { PermissionResult } from '../permissions/permissionResult.js'
 import { parseHookOutput, parseHttpHookOutput, processHookJSONOutput } from './commandRunner.js'
 import { emitHookResponse, emitHookStarted } from './hookEvents.js'
 import { getHookDisplayText } from './hooksSettings.js'
@@ -39,18 +39,18 @@ function getHookDefinitionsForTelemetry(
 
 import type { PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type { HookInput } from 'src/types/index.js'
-import { addToTurnHookDuration, getSessionId, getStatsStore } from '../../bootstrap/state.js'
+import {
+  addToTurnHookDuration,
+  getSessionId,
+  getStatsStore,
+} from '../../bootstrap/runtime/runtimeContext.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
-} from '../../services/analytics/index.js'
-import { logOTelEvent } from '../../services/telemetry/events.js'
-import {
-  endHookSpan,
-  isBetaTracingEnabled,
-  startHookSpan,
-} from '../../services/telemetry/sessionTracing.js'
-import type { ToolUseContext } from '../../Tool.js'
+} from '../analytics/index.js'
+import { logOTelEvent } from '../telemetry/events.js'
+import { endHookSpan, isBetaTracingEnabled, startHookSpan } from '../telemetry/sessionTracing.js'
+import type { ToolUseContext } from '../../tool.js'
 import type { HookResultMessage, Message } from '../../types/message.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'

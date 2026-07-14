@@ -5,7 +5,11 @@ import type { UUID } from 'node:crypto'
 import { closeSync, fstatSync, openSync, readSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { getOriginalCwd, getSessionId, switchSession } from '../../bootstrap/state.js'
+import {
+  getOriginalCwd,
+  getSessionId,
+  switchSession,
+} from '../../bootstrap/runtime/runtimeContext.js'
 import { type AgentId, asAgentId, asSessionId } from '../../types/ids.js'
 import type { AttributionSnapshotMessage } from '../../types/logs.js'
 import type { Message } from '../../types/message.js'

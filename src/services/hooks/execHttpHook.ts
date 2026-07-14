@@ -5,8 +5,8 @@ import { createDebugLog } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { getProxyUrl, shouldBypassProxy } from '../../utils/proxy.js'
 // Import as namespace so spyOn works in tests (direct imports bypass spies)
-import * as settingsModule from '../../utils/settings/settings.js'
-import type { HttpHook } from '../../utils/settings/types.js'
+import * as settingsModule from '../settings/settings.js'
+import type { HttpHook } from '../settings/types.js'
 import { ssrfGuardedLookup } from './ssrfGuard.js'
 
 const hookLog = createDebugLog('hooks')

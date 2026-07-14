@@ -1,14 +1,14 @@
 import { feature } from 'bun:bundle'
 import { getDefaultCompactModel } from 'src/services/model/model.js'
-import { getInvokedSkillsForAgent } from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getInvokedSkillsForAgent } from '../../bootstrap/runtime/runtimeContext.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
   logEvent,
-} from '../../services/analytics/index.js'
-import { queryModelWithoutStreaming } from '../../services/api/llmOrchestrator.js'
-import { getEmptyToolPermissionContext } from '../../Tool.js'
+} from '../analytics/index.js'
+import { queryModelWithoutStreaming } from '../api/llmOrchestrator.js'
+import { getEmptyToolPermissionContext } from '../../tool.js'
 import type { TextBlock } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import { createAbortController } from '../../utils/abortController.js'
@@ -16,7 +16,7 @@ import { count } from '../../utils/array.js'
 import { getCwd } from '../../utils/cwd.js'
 import { toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import { createUserMessage, extractTag, extractTextContent } from '../../utils/messages.js'
+import { createUserMessage, extractTag, extractTextContent } from '../messages/index.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 import { type ApiQueryHookConfig, createApiQueryHook } from './apiQueryHookHelper.js'

@@ -17,12 +17,12 @@
  * - /plugin menu — sets needsRefresh, user runs /reload-plugins (PR 5b)
  */
 
-import { getOriginalCwd } from '../../bootstrap/state.js'
+import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import type { Command } from '../../commands.js'
 import type { AppState } from '../../state/AppState.js'
 import type { AgentDefinitionsResult } from '../../tools/AgentTool/loadAgentsDir.js'
 import { getAgentDefinitionsWithOverrides } from '../../tools/AgentTool/loadAgentsDir.js'
-import type { PluginError } from '../../types/plugin.js'
+import type { PluginError } from './types.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'

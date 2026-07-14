@@ -10,18 +10,18 @@ import { CHUNK_MS, FileIndex, yieldToEventLoop } from '../native-ts/file-index/i
 import { logEvent } from '../services/analytics/index.js'
 // @ts-expect-error
 import type { FileSuggestionCommandInput } from '../types/fileSuggestion.js'
-import { getGlobalConfig } from '../utils/config.js'
+import { getGlobalConfig } from '../services/config/config.js'
 import { getCwd } from '../utils/cwd.js'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
-import { execFileNoThrowWithCwd } from '../utils/execFileNoThrow.js'
+import { execFileNoThrowWithCwd } from '../services/shell/execFileNoThrow.js'
 import { getFsImplementation } from '../utils/fsOperations.js'
 import { findGitRoot, gitExe } from '../utils/git.js'
-import { createBaseHookInput, executeFileSuggestionCommand } from '../utils/hooks.js'
+import { createBaseHookInput, executeFileSuggestionCommand } from '../services/hooks.js'
 import { logError } from '../utils/log.js'
 import { expandPath } from '../utils/path.js'
 import { ripGrep } from '../utils/ripgrep.js'
-import { getInitialSettings } from '../utils/settings/settings.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 import { createSignal } from '../utils/signal.js'
 
 // 延迟构建的单例

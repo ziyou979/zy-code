@@ -4,12 +4,12 @@ import {
   clearRegisteredPluginHooks,
   getRegisteredHooks,
   registerHookCallbacks,
-} from '../../bootstrap/state.js'
-import type { LoadedPlugin } from '../../types/plugin.js'
+} from '../../bootstrap/runtime/runtimeContext.js'
+import type { LoadedPlugin } from './types.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { settingsChangeDetector } from '../../utils/settings/changeDetector.js'
-import { getInitialSettings, getSettingsForSource } from '../../utils/settings/settings.js'
-import type { PluginHookMatcher } from '../../utils/settings/types.js'
+import { settingsChangeDetector } from '../settings/changeDetector.js'
+import { getInitialSettings, getSettingsForSource } from '../settings/settings.js'
+import type { PluginHookMatcher } from '../settings/types.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { clearPluginCache, loadAllPluginsCacheOnly } from './pluginLoader.js'
 

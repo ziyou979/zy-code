@@ -8,9 +8,9 @@ import {
   type ResourceMetrics,
 } from '@opentelemetry/sdk-metrics'
 import { checkMetricsEnabled } from 'src/services/api/metricsOptOut.js'
-import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
+import { getIsNonInteractiveSession } from '../../bootstrap/runtime/runtimeContext.js'
 import { getOauthConfig } from '../../constants/oauth.js'
-import { checkHasTrustDialogAccepted } from '../../utils/config.js'
+import { checkHasTrustDialogAccepted } from '../config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage, toError } from '../../utils/errors.js'

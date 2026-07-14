@@ -9,7 +9,7 @@ import type {
   SuggestionItem,
   SuggestionType,
 } from '../components/PromptInput/PromptInputFooterSuggestions.js'
-import { useIsModalOverlayActive, useRegisterOverlay } from '../context/overlayContext.js'
+import { useIsModalOverlayActive, useRegisterOverlay } from '../context/OverlayContext.js'
 import { KeyboardEvent } from '../ink/events/keyboard-event.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- backward-compat bridge until consumers wire handleKeyDown to <Box onKeyDown>
 import { useInput } from '../ink.js'
@@ -45,11 +45,11 @@ import { quote } from '../shell-eval/bash/shellQuote.js'
 import { useAppState, useAppStateStore } from '../state/AppState.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import type { InlineGhostText, PromptInputMode } from '../types/textInputTypes.js'
-import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js'
+import { isAgentSwarmsEnabled } from '../services/swarm/agentSwarmsEnabled.js'
 import { generateProgressiveArgumentHint, parseArguments } from '../utils/argumentSubstitution.js'
 import { isTestEnv } from '../utils/envUtils.js'
 import { formatLogMetadata } from '../utils/format.js'
-import { getSessionIdFromLog, searchSessionsByCustomTitle } from '../utils/sessionStorage.js'
+import { getSessionIdFromLog, searchSessionsByCustomTitle } from '../services/sessionStorage.js'
 import {
   applyFileSuggestion,
   findLongestCommonPrefix,

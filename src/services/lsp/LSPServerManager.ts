@@ -4,7 +4,7 @@ import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { getAllLspServers } from './config.js'
-import { createLSPServerInstance, type LSPServerInstance } from './LSPServerInstance.js'
+import { createLSPServerInstance, type LSPServerInstance } from './lspServerInstance.js'
 import type { ScopedLspServerConfig } from './types.js'
 /**
  * LSP Server Manager interface returned by createLSPServerManager.

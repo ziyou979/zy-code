@@ -9,7 +9,7 @@
 import { mkdirSync, readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { basename, dirname } from 'node:path'
-import { isSessionPersistenceDisabled } from '../../bootstrap/state.js'
+import { isSessionPersistenceDisabled } from '../../bootstrap/runtime/runtimeContext.js'
 import type { PersistedWorktreeSession } from '../../types/logs.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isFsInaccessible } from '../../utils/errors.js'

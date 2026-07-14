@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { markPostCompaction } from '../../bootstrap/state.js'
+import { markPostCompaction } from '../../bootstrap/runtime/runtimeContext.js'
 import type { QuerySource } from '../../constants/querySource.js'
 import type {
   AssistantMessage,
@@ -16,7 +16,7 @@ import {
   createUserMessage,
   getAssistantMessageText,
   getLastAssistantMessage,
-} from '../../utils/messages.js'
+} from '../messages/index.js'
 import {
   getTokenUsage,
   tokenCountFromLastAPIResponse,

@@ -1,6 +1,6 @@
 import isEqual from 'lodash-es/isEqual.js'
-import { getIsNonInteractiveSession } from '../bootstrap/state.js'
-import { getDefaultCompactModel } from '../services/model/model.js'
+import { getIsNonInteractiveSession } from '../bootstrap/runtime/runtimeContext.js'
+import { getDefaultCompactModel } from './model/model.js'
 import type { LLMMessage } from '../types/llm.js'
 import { type APIErrorLike, isAPIError } from '../types/llm.js'
 import { getModelBetas } from '../utils/betas.js'

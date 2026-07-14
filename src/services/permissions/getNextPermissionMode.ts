@@ -1,9 +1,9 @@
-import type { ToolPermissionContext } from '../../Tool.js'
+import type { ToolPermissionContext } from '../../tool.js'
 import { createDebugLog } from '../../utils/debug.js'
 
 const permLog = createDebugLog('permissions')
 
-import type { PermissionMode } from './PermissionMode.js'
+import type { PermissionMode } from './permissionMode.js'
 import {
   getAutoModeUnavailableReason,
   isAutoModeGateEnabled,

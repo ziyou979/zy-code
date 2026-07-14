@@ -3,7 +3,7 @@
  */
 
 import type { UUID } from 'node:crypto'
-import { getMainLoopModel } from '../../services/model/model.js'
+import { getMainLoopModel } from '../model/model.js'
 import type { AgentId } from '../../types/ids.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -13,8 +13,8 @@ import {
   createCompactBoundaryMessage,
   createUserMessage,
   isCompactBoundaryMessage,
-} from '../../utils/messages.js'
-import { getSessionMemoryPath } from '../../utils/permissions/filesystem.js'
+} from '../messages/index.js'
+import { getSessionMemoryPath } from '../permissions/filesystem.js'
 import { processSessionStartHooks } from '../../utils/sessionStart.js'
 import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
 import { extractDiscoveredToolNames } from '../../utils/toolSearch.js'

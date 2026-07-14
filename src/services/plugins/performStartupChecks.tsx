@@ -2,7 +2,7 @@ import type { AppState } from '../../state/AppState.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { checkHasTrustDialogAccepted } from '../config/config.js'
 import { clearMarketplacesCache, registerSeedMarketplaces } from './marketplaceManager.js'
-import { performBackgroundPluginInstallations } from './PluginInstallationManager.js'
+import { performBackgroundPluginInstallations } from './pluginInstallationManager.js'
 import { clearPluginCache } from './pluginLoader.js'
 
 type SetAppState = (f: (prevState: AppState) => AppState) => void

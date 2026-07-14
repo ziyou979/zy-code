@@ -13,8 +13,8 @@ import { getLeaderToolUseConfirmQueue } from '../services/swarm/leaderPermission
 import { sendPermissionResponseViaMailbox } from '../services/swarm/permissionSync.js'
 import { removeTeammateFromTeamFile, setMemberMode } from '../services/swarm/teamHelpers.js'
 import { type AppState, useAppState, useAppStateStore, useSetAppState } from '../state/AppState.js'
-import { findToolByName } from '../Tool.js'
-import { isInProcessTeammateTask } from '../tasks/InProcessTeammateTask/types.js'
+import { findToolByName } from '../tool.js'
+import { isInProcessTeammateTask } from '../tasks/in-process-teammate-task/types.js'
 import { getAllBaseTools } from '../tools.js'
 import type { PermissionUpdate } from '../types/permissions.js'
 import { logForDebugging } from '../utils/debug.js'
@@ -22,12 +22,12 @@ import {
   findInProcessTeammateTaskId,
   handlePlanApprovalResponse,
 } from '../utils/inProcessTeammateHelpers.js'
-import { createAssistantMessage } from '../utils/messages.js'
+import { createAssistantMessage } from '../services/messages/index.js'
 import {
   permissionModeFromString,
   toExternalPermissionMode,
-} from '../utils/permissions/PermissionMode.js'
-import { applyPermissionUpdate } from '../utils/permissions/PermissionUpdate.js'
+} from '../services/permissions/permissionMode.js'
+import { applyPermissionUpdate } from '../services/permissions/permissionUpdate.js'
 import { jsonStringify } from '../utils/slowOperations.js'
 import { unassignTeammateTasks } from '../utils/tasks.js'
 import { getAgentName, isPlanModeRequired, isTeamLead, isTeammate } from '../utils/teammate.js'

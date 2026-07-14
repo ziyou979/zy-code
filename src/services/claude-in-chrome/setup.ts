@@ -7,11 +7,11 @@ import {
   getIsInteractive,
   getIsNonInteractiveSession,
   getSessionBypassPermissionsMode,
-} from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import type { ScopedMcpServerConfig } from '../../services/mcp/types.js'
+} from '../../bootstrap/runtime/runtimeContext.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import type { ScopedMcpServerConfig } from '../mcp/types.js'
 import { isInBundledMode } from '../../utils/bundledMode.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {
   getZyConfigHomeDir,
@@ -19,8 +19,8 @@ import {
   isEnvTruthy,
   isInternalBuild,
 } from '../../utils/envUtils.js'
-import { execFileNoThrowWithCwd } from '../../utils/execFileNoThrow.js'
-import { getPlatform } from '../../utils/platform.js'
+import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
+import { getPlatform } from '../shell/platform.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,

@@ -1,6 +1,6 @@
 import type { AsyncHookJSONOutput, HookEvent, SyncHookJSONOutput } from 'src/types/index.js'
 import { createDebugLog } from '../../utils/debug.js'
-import type { ShellCommand } from '../../utils/ShellCommand.js'
+import type { ShellCommand } from '../shell/shellCommand.js'
 
 const hookLog = createDebugLog('hooks')
 

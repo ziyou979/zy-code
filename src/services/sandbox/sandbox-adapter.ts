@@ -28,21 +28,21 @@ import {
   getAdditionalDirectoriesForAgentsMd,
   getCwdState,
   getOriginalCwd,
-} from '../../bootstrap/state.js'
+} from '../../bootstrap/runtime/runtimeContext.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { expandPath } from '../../utils/path.js'
-import { getPlatform, type Platform } from '../../utils/platform.js'
-import { settingsChangeDetector } from '../../utils/settings/changeDetector.js'
-import { SETTING_SOURCES, type SettingSource } from '../../utils/settings/constants.js'
-import { getManagedSettingsDropInDir } from '../../utils/settings/managedPath.js'
+import { getPlatform, type Platform } from '../shell/platform.js'
+import { settingsChangeDetector } from '../settings/changeDetector.js'
+import { SETTING_SOURCES, type SettingSource } from '../settings/constants.js'
+import { getManagedSettingsDropInDir } from '../settings/managedPath.js'
 import {
   getInitialSettings,
   getSettingsFilePathForSource,
   getSettingsForSource,
   getSettingsRootPathForSource,
   updateSettingsForSource,
-} from '../../utils/settings/settings.js'
-import type { SettingsJson } from '../../utils/settings/types.js'
+} from '../settings/settings.js'
+import type { SettingsJson } from '../settings/types.js'
 
 // ============================================================================
 // Settings Converter
@@ -53,8 +53,8 @@ import { FILE_EDIT_TOOL_NAME } from 'src/tools/FileEditTool/constants.js'
 import { FILE_READ_TOOL_NAME } from 'src/tools/FileReadTool/prompt.js'
 import { WEB_FETCH_TOOL_NAME } from 'src/tools/WebFetchTool/prompt.js'
 import { errorMessage } from '../../utils/errors.js'
-import { getZyTempDir } from '../../utils/permissions/filesystem.js'
-import type { PermissionRuleValue } from '../../utils/permissions/PermissionRule.js'
+import { getZyTempDir } from '../permissions/filesystem.js'
+import type { PermissionRuleValue } from '../permissions/permissionRule.js'
 import { ripgrepCommand } from '../../utils/ripgrep.js'
 
 // Local copies to avoid circular dependency

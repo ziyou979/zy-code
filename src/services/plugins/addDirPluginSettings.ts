@@ -8,9 +8,9 @@
 
 import { join } from 'node:path'
 import type { z } from 'zod/v4'
-import { getAdditionalDirectoriesForAgentsMd } from '../../bootstrap/state.js'
-import { parseSettingsFile } from '../../utils/settings/settings.js'
-import type { ExtraKnownMarketplaceSchema, SettingsJson } from '../../utils/settings/types.js'
+import { getAdditionalDirectoriesForAgentsMd } from '../../bootstrap/runtime/runtimeContext.js'
+import { parseSettingsFile } from '../settings/settings.js'
+import type { ExtraKnownMarketplaceSchema, SettingsJson } from '../settings/types.js'
 
 type ExtraKnownMarketplace = z.infer<ReturnType<typeof ExtraKnownMarketplaceSchema>>
 

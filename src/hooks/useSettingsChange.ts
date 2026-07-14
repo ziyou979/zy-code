@@ -1,8 +1,8 @@
 import { useCallback, useEffect } from 'react'
-import { settingsChangeDetector } from '../utils/settings/changeDetector.js'
-import type { SettingSource } from '../utils/settings/constants.js'
-import { getInitialSettings } from '../utils/settings/settings.js'
-import type { SettingsJson } from '../utils/settings/types.js'
+import { settingsChangeDetector } from '../services/settings/changeDetector.js'
+import type { SettingSource } from '../services/settings/constants.js'
+import { getInitialSettings } from '../services/settings/settings.js'
+import type { SettingsJson } from '../services/settings/types.js'
 
 export function useSettingsChange(
   onChange: (source: SettingSource, settings: SettingsJson) => void,

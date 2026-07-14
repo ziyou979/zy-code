@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useNotifications } from '../context/notifications.js'
-import { useIsModalOverlayActive } from '../context/overlayContext.js'
+import { useIsModalOverlayActive } from '../context/OverlayContext.js'
 import {
   useGetVoiceState,
   useSetVoiceState,

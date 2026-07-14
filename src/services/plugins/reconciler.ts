@@ -8,7 +8,7 @@
 
 import { isAbsolute, resolve } from 'node:path'
 import isEqual from 'lodash-es/isEqual.js'
-import { getOriginalCwd } from '../../bootstrap/state.js'
+import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { pathExists } from '../../utils/file.js'

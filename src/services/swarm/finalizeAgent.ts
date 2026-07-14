@@ -9,14 +9,14 @@
  * AppState 更新、Bridge 事件、Perfetto、磁盘 I/O、mailbox。
  */
 
-import { evictTaskOutput } from '../../services/task/diskOutput.js'
-import { evictTerminalTask } from '../../services/task/framework.js'
+import { evictTaskOutput } from '../task-runtime/diskOutput.js'
+import { evictTerminalTask } from '../task-runtime/framework.js'
 import {
   isPerfettoTracingEnabled,
   unregisterAgent as unregisterPerfettoAgent,
-} from '../../services/telemetry/perfettoTracing.js'
+} from '../telemetry/perfettoTracing.js'
 import type { AppState } from '../../state/AppState.js'
-import { isTerminalTaskStatus } from '../../Task.js'
+import { isTerminalTaskStatus } from '../../task.js'
 import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getTask, updateTaskCAS } from '../../utils/tasks.js'

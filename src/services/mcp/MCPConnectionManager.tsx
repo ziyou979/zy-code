@@ -1,6 +1,6 @@
 import { createContext, type ReactNode, useContext } from 'react'
 import type { Command } from '../../commands.js'
-import type { Tool } from '../../Tool.js'
+import type { Tool } from '../../tool.js'
 import type { MCPServerConnection, ScopedMcpServerConfig, ServerResource } from './types.js'
 import { useManageMCPConnections } from './useManageMCPConnections.js'
 

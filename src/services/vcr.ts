@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 import isPlainObject from 'lodash-es/isPlainObject.js'
 import mapValues from 'lodash-es/mapValues.js'
 import { addToTotalSessionCost } from 'src/cost-tracker.js'
-import { calculateCost, getModelCurrency } from 'src/utils/modelCost.js'
+import { calculateCost, getModelCurrency } from 'src/services/model/modelCost.js'
 import type { AssistantContentBlock } from '../types/llm.js'
 import type {
   AssistantMessage,
@@ -17,7 +17,7 @@ import { getCwd } from '../utils/cwd.js'
 import { env } from '../utils/env.js'
 import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 import { getErrnoCode } from '../utils/errors.js'
-import { normalizeMessagesForAPI } from '../utils/messages.js'
+import { normalizeMessagesForAPI } from './messages/index.js'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
 
 function shouldUseVCR(): boolean {

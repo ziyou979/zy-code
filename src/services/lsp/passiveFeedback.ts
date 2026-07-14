@@ -9,8 +9,8 @@ import { toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import type { DiagnosticFile } from '../diagnosticTracking.js'
-import { registerPendingLSPDiagnostic } from './LSPDiagnosticRegistry.js'
-import type { LSPServerManager } from './LSPServerManager.js'
+import { registerPendingLSPDiagnostic } from './lspDiagnosticRegistry.js'
+import type { LSPServerManager } from './lspServerManager.js'
 
 /**
  * Map LSP severity to Zy diagnostic severity

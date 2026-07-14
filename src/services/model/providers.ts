@@ -1,11 +1,11 @@
-import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/index.js'
+import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../analytics/index.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   getLocalModelApiFormat,
   getLocalModelCapability,
   getLocalModelCosts,
   parseTokenCount,
-} from '../../utils/settings/localModelCapabilities.js'
+} from '../settings/localModelCapabilities.js'
 import { getActiveOAuthProviderInfo } from '../oauth/oauthStorage.js'
 import { type ApiFormat } from './apiFormat.js'
 import {
@@ -28,7 +28,7 @@ export type APIProvider = (typeof PROVIDER_REGISTRY)[number]['id']
 function getSettingsProvider(): APIProvider | null {
   try {
     const { getInitialSettings } =
-      require('../../utils/settings/settings.js') as typeof import('../../utils/settings/settings.js')
+      require('../settings/settings.js') as typeof import('../settings/settings.js')
     const settings = getInitialSettings()
     return settings?.provider ?? null
   } catch {
@@ -43,7 +43,7 @@ function getSettingsProvider(): APIProvider | null {
 function getConfiguredProvider(): APIProvider | null {
   try {
     const { getGlobalConfig } =
-      require('../../utils/config.js') as typeof import('../../utils/config.js')
+      require('../config/config.js') as typeof import('../config/config.js')
     return getGlobalConfig().configuredProvider ?? null
   } catch {
     // 配置尚未就绪 —— 返回 null 以继续检测环境变量
@@ -81,7 +81,7 @@ export function getAPIProvider(): APIProvider {
 export function getSettingsBaseUrl(provider?: string): string | null {
   try {
     const { getInitialSettings } =
-      require('../../utils/settings/settings.js') as typeof import('../../utils/settings/settings.js')
+      require('../settings/settings.js') as typeof import('../settings/settings.js')
     const settings = getInitialSettings()
     const providerId = provider ?? settings?.provider ?? null
     if (providerId) {
@@ -234,7 +234,7 @@ export function getEffectiveApiFormat(provider: APIProvider, model?: string): Ap
   // 4. 用户显式设置优先
   try {
     const { getInitialSettings } =
-      require('../../utils/settings/settings.js') as typeof import('../../utils/settings/settings.js')
+      require('../settings/settings.js') as typeof import('../settings/settings.js')
     const settings = getInitialSettings()
     const format = settings.providers?.[provider]?.apiFormat ?? settings.apiFormat
     if (format && supported.has(format)) {

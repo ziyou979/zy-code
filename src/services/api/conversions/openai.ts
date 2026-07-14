@@ -43,16 +43,13 @@ export interface OpenAICreateParams extends ChatCompletionCreateParamsBase {
   [key: string]: unknown
 }
 
-import { getProviderForModel, normalizeModelStringForAPI } from '../../../services/model/model.js'
-import {
-  DEFAULT_OPENAI_THINKING_ATTR,
-  type OpenAiAttr,
-} from '../../../services/model/providerRegistry.js'
-import { getEffectiveApiFormat, getProviderAttr } from '../../../services/model/providers.js'
+import { getProviderForModel, normalizeModelStringForAPI } from '../../model/model.js'
+import { DEFAULT_OPENAI_THINKING_ATTR, type OpenAiAttr } from '../../model/providerRegistry.js'
+import { getEffectiveApiFormat, getProviderAttr } from '../../model/providers.js'
 import {
   getLocalModelPreserveThinking,
   localModelHasCapability,
-} from '../../../utils/settings/localModelCapabilities.js'
+} from '../../settings/localModelCapabilities.js'
 import { stripThinkingTagsFromText } from '../assistantCompletionValidator.js'
 
 interface DashScopeChatCompletionDelta {

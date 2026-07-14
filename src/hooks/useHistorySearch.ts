@@ -7,7 +7,7 @@ import { KeyboardEvent } from '../ink/events/keyboard-event.js'
 import { useInput } from '../ink.js'
 import { useKeybinding, useKeybindings } from '../keybindings/useKeybinding.js'
 import type { PromptInputMode } from '../types/textInputTypes.js'
-import type { HistoryEntry } from '../utils/config.js'
+import type { HistoryEntry } from '../services/config/config.js'
 
 export function useHistorySearch(
   onAcceptHistory: (entry: HistoryEntry) => void,

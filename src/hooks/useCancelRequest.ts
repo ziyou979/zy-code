@@ -10,10 +10,10 @@ import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 
 import { useAppState, useAppStateStore, useSetAppState } from 'src/state/AppState.js'
 import { isVimModeEnabled } from '../components/PromptInput/utils.js'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
-import type { SpinnerMode } from '../components/Spinner/types.js'
+import type { SpinnerMode } from '../types/spinner.js'
 import { useNotifications } from '../context/notifications.js'
-import { useIsOverlayActive } from '../context/overlayContext.js'
-import { useCommandQueue } from '../hooks/useCommandQueue.js'
+import { useIsOverlayActive } from '../context/OverlayContext.js'
+import { useCommandQueue } from './useCommandQueue.js'
 import { getShortcutDisplay } from '../keybindings/shortcutFormat.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import type { Screen } from '../screens/REPL.js'
@@ -21,7 +21,7 @@ import { exitTeammateView } from '../state/teammateViewHelpers.js'
 import {
   killAllRunningAgentTasks,
   markAgentsNotified,
-} from '../tasks/LocalAgentTask/LocalAgentTask.js'
+} from '../tasks/local-agent-task/LocalAgentTask.js'
 import type { PromptInputMode, VimMode } from '../types/textInputTypes.js'
 import { emitTaskTerminatedBridge } from '../utils/bridgeEventQueue.js'
 import {

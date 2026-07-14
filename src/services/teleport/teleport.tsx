@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import axios from 'axios'
 import chalk from 'chalk'
-import { getOriginalCwd, getSessionId } from 'src/bootstrap/state.js'
+import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { checkGate_CACHED_OR_BLOCKING } from 'src/services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -11,15 +11,7 @@ import { checkGithubAppInstalled } from 'src/services/background/remote/precondi
 import { getMainLoopModel } from 'src/services/model/model.js'
 import { isPolicyAllowed } from 'src/services/policy-limits/index.js'
 import { z } from 'zod/v4'
-import {
-  getTeleportErrors,
-  TeleportError,
-  type TeleportLocalErrorType,
-} from '../../components/TeleportError.js'
 import { getOauthConfig } from '../../constants/oauth.js'
-import type { Root } from '../../ink.js'
-import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js'
-import { AppStateProvider } from '../../state/AppState.js'
 import type { WireMessage } from '../../types/index.js'
 import type { Message, SystemMessage } from '../../types/message.js'
 import type { PermissionMode } from '../../types/permissions.js'
@@ -27,7 +19,7 @@ import {
   checkAndRefreshOAuthTokenIfNeeded,
   getOrganizationUUID,
   getZyAIOAuthTokens,
-} from '../../utils/auth.js'
+} from '../auth/auth.js'
 import {
   deserializeMessages,
   type TeleportRemoteResponse,
@@ -41,14 +33,14 @@ import {
 } from '../../utils/detectRepository.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { TeleportOperationError, toError } from '../../utils/errors.js'
-import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
+import { execFileNoThrow } from '../shell/execFileNoThrow.js'
 import { truncateToWidth } from '../../utils/format.js'
 import { findGitRoot, getDefaultBranch, getIsClean, gitExe } from '../../utils/git.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { logError } from '../../utils/log.js'
-import { createSystemMessage, createUserMessage } from '../../utils/messages.js'
-import { isTranscriptMessage } from '../../utils/sessionStorage.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
+import { createSystemMessage, createUserMessage } from '../messages/index.js'
+import { isTranscriptMessage } from '../sessionStorage.js'
+import { getInitialSettings } from '../settings/settings.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 import { queryCompactModel } from '../api/compactQueries.js'
@@ -105,7 +97,7 @@ function createTeleportResumeUserMessage() {
     isMeta: true,
   })
 }
-type TeleportToRemoteResponse = {
+export type TeleportToRemoteResponse = {
   id: string
   title: string
 }
@@ -620,75 +612,6 @@ export async function teleportResumeCodeSession(
     })
     throw new TeleportOperationError(err.message, chalk.red(`Error: ${err.message}\n`))
   }
-}
-
-/**
- * Helper function to handle teleport prerequisites (authentication and git state)
- * Shows TeleportError dialog rendered into the existing root if needed
- */
-async function handleTeleportPrerequisites(
-  root: Root,
-  errorsToIgnore?: Set<TeleportLocalErrorType>,
-): Promise<void> {
-  const errors = await getTeleportErrors()
-  if (errors.size > 0) {
-    // Log teleport errors detected
-    logEvent('zy_teleport_errors_detected', {
-      error_types: Array.from(errors).join(
-        ',',
-      ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      errors_ignored: Array.from(errorsToIgnore || []).join(
-        ',',
-      ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-
-    // Show TeleportError dialog for user interaction
-    await new Promise<void>((resolve) => {
-      root.render(
-        <AppStateProvider>
-          <KeybindingSetup>
-            <TeleportError
-              errorsToIgnore={errorsToIgnore}
-              onComplete={() => {
-                // Log when errors are resolved
-                logEvent('zy_teleport_errors_resolved', {
-                  error_types: Array.from(errors).join(
-                    ',',
-                  ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-                })
-                void resolve()
-              }}
-            />
-          </KeybindingSetup>
-        </AppStateProvider>,
-      )
-    })
-  }
-}
-
-/**
- * Creates a remote Zy.ai session with error handling and UI feedback.
- * Shows prerequisite error dialog in the existing root if needed.
- * @param root The existing Ink root to render dialogs into
- * @param description The description/prompt for the new session (null for no initial prompt)
- * @param signal AbortSignal for cancellation
- * @param branchName Optional branch name for the remote session to use
- * @returns Promise<TeleportToRemoteResponse | null> The created session or null if creation fails
- */
-export async function teleportToRemoteWithErrorHandling(
-  root: Root,
-  description: string | null,
-  signal: AbortSignal,
-  branchName?: string,
-): Promise<TeleportToRemoteResponse | null> {
-  const errorsToIgnore = new Set<TeleportLocalErrorType>(['needsGitStash'])
-  await handleTeleportPrerequisites(root, errorsToIgnore)
-  return teleportToRemote({
-    initialMessage: description,
-    signal,
-    branchName,
-    onBundleFail: (msg) => process.stderr.write(`\n${msg}\n`),
-  })
 }
 
 /**

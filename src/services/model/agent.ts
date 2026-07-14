@@ -1,4 +1,4 @@
-import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
+import type { PermissionMode } from '../permissions/permissionMode.js'
 import { capitalize } from '../../utils/stringUtils.js'
 import { MODEL_ALIASES, type ModelAlias } from './aliases.js'
 import { parseUserSpecifiedModel } from './model.js'

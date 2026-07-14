@@ -1,5 +1,5 @@
 // Plan Mode 指令生成逻辑。
-// 从 src/utils/messages/attachmentApi.ts 提取。
+// 从 src/services/messages/attachment-api.ts 提取。
 
 import { EXPLORE_AGENT } from 'src/tools/AgentTool/built-in/exploreAgent.js'
 import { PLAN_AGENT } from 'src/tools/AgentTool/built-in/planAgent.js'
@@ -13,16 +13,16 @@ import { FileWriteTool } from 'src/tools/FileWriteTool/FileWriteTool.js'
 import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
 import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
 import type { UserMessage } from '../../types/message.js'
-import { getCurrentProjectConfig } from '../../utils/config.js'
+import { getCurrentProjectConfig } from '../config/config.js'
 import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
-import { createUserMessage } from '../../utils/messages/constructors.js'
-import { wrapMessagesInSystemReminder } from '../../utils/messages/systemReminder.js'
+import { createUserMessage } from '../messages/constructors.js'
+import { wrapMessagesInSystemReminder } from '../messages/systemReminder.js'
 import {
   getPewterLedgerVariant,
   getPlanModeAgentCount,
   getPlanModeExploreAgentCount,
   isPlanModeInterviewPhaseEnabled,
-} from '../../utils/planMode.js'
+} from './planModeConfig.js'
 
 // ------------------------------------------------------------------
 // Plan Phase 4 变体（pewter-ledger 实验分支）

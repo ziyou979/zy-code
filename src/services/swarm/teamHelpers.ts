@@ -2,14 +2,14 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { z } from 'zod/v4'
-import { getSessionCreatedTeams } from '../../bootstrap/state.js'
+import { getSessionCreatedTeams } from '../../bootstrap/runtime/runtimeContext.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getTeamsDir } from '../../utils/envUtils.js'
 import { errorMessage, getErrnoCode } from '../../utils/errors.js'
-import { execFileNoThrowWithCwd } from '../../utils/execFileNoThrow.js'
+import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
 import { gitExe } from '../../utils/git.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
+import type { PermissionMode } from '../permissions/permissionMode.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { getTasksDir, notifyTasksUpdated } from '../../utils/tasks.js'
 import { getAgentName, getTeamName, isTeammate } from '../../utils/teammate.js'
@@ -514,7 +514,7 @@ async function destroyWorktree(worktreePath: string): Promise<void> {
  * Mark a team as created this session so it gets cleaned up on exit.
  * Call this right after the initial writeTeamFile. TeamDelete should
  * call unregisterTeamForSessionCleanup to prevent double-cleanup.
- * Backing Set lives in bootstrap/state.ts so resetStateForTests()
+ * Backing Set lives in the session metadata state so resetStateForTests()
  * clears it between tests (avoids the PR #17615 cross-shard leak class).
  */
 export function registerTeamForSessionCleanup(teamName: string): void {

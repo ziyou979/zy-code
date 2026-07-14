@@ -1,7 +1,7 @@
 import type { UUID } from 'node:crypto'
 import axios, { type AxiosError } from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
-import { getOAuthHeaders } from '../../services/teleport/api.js'
+import { getOAuthHeaders } from '../teleport/api.js'
 import type { Entry, TranscriptMessage } from '../../types/logs.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'

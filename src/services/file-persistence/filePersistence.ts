@@ -12,8 +12,8 @@ import { join, relative } from 'node:path'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
-} from '../../services/analytics/index.js'
-import { type FilesApiConfig, uploadSessionFiles } from '../../services/api/filesApi.js'
+} from '../analytics/index.js'
+import { type FilesApiConfig, uploadSessionFiles } from '../api/filesApi.js'
 import { getCwd } from '../../utils/cwd.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'

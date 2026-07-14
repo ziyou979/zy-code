@@ -5,8 +5,8 @@ import type {
   UserPromptExpansionHookInput,
   UserPromptSubmitHookInput,
 } from 'src/types/index.js'
-import { getSessionId } from '../../../bootstrap/state.js'
-import type { ToolUseContext } from '../../../Tool.js'
+import { getSessionId } from '../../../bootstrap/runtime/runtimeContext.js'
+import type { ToolUseContext } from '../../../tool.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { executeHooks } from '../executeEngine.js'
 import { hasHookForEvent } from '../matcher.js'

@@ -34,11 +34,11 @@ type InstalledPluginsMap = Record<string, PluginInstallationEntry[]>
 // Type for persistable scopes (excludes 'flag' which is session-only)
 export type PersistableScope = Exclude<PluginScope, never> // All scopes are persistable in the schema
 
-import { getOriginalCwd } from '../../bootstrap/state.js'
+import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { getCwd } from '../../utils/cwd.js'
-import { getHeadForDir } from '../../utils/git/gitFilesystem.js'
-import type { EditableSettingSource } from '../../utils/settings/constants.js'
-import { getInitialSettings, getSettingsForSource } from '../../utils/settings/settings.js'
+import { getHeadForDir } from '../git/gitFilesystem.js'
+import type { EditableSettingSource } from '../settings/constants.js'
+import { getInitialSettings, getSettingsForSource } from '../settings/settings.js'
 import { getPluginById } from './marketplaceManager.js'
 import { parsePluginIdentifier, settingSourceToScope } from './pluginIdentifier.js'
 import { getPluginCachePath, getVersionedCachePath } from './pluginLoader.js'

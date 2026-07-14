@@ -1,6 +1,6 @@
 import { logError } from 'src/utils/log.js'
 import { BULLET, CROSS, INFO, STAR, WARNING } from '../constants/figures.js'
-import type { MCPServerConnection } from '../services/mcp/types.js'
+import type { MCPServerConnection } from './mcp/types.js'
 import { ZyError } from '../utils/errors.js'
 import { normalizePathForComparison, pathsEqual } from '../utils/file.js'
 import { jsonParse } from '../utils/slowOperations.js'

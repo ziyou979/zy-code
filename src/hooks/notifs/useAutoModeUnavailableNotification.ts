@@ -1,14 +1,14 @@
 import { feature } from 'bun:bundle'
 import { useEffect, useRef } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
-import { getIsRemoteMode } from '../../bootstrap/state.js'
+import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { useAppState } from '../../state/AppState.js'
-import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
+import type { PermissionMode } from '../../services/permissions/permissionMode.js'
 import {
   getAutoModeUnavailableNotification,
   getAutoModeUnavailableReason,
-} from '../../utils/permissions/permissionSetup.js'
-import { hasAutoModeOptIn } from '../../utils/settings/settings.js'
+} from '../../services/permissions/permissionSetup.js'
+import { hasAutoModeOptIn } from '../../services/settings/settings.js'
 
 /**
  * Shows a one-shot notification when the shift-tab carousel wraps past where

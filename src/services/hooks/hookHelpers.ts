@@ -1,5 +1,5 @@
 import { z } from 'zod/v4'
-import type { Tool } from '../../Tool.js'
+import type { Tool } from '../../tool.js'
 import {
   SYNTHETIC_OUTPUT_TOOL_NAME,
   SyntheticOutputTool,
@@ -7,7 +7,7 @@ import {
 import { substituteArguments } from '../../utils/argumentSubstitution.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import type { SetAppState } from '../../utils/messageQueueManager.js'
-import { hasSuccessfulToolCall } from '../../utils/messages.js'
+import { hasSuccessfulToolCall } from '../messages/index.js'
 import { addFunctionHook } from './sessionHooks.js'
 
 /**

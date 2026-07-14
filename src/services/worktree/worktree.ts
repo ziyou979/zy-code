@@ -5,19 +5,19 @@ import { basename, dirname, join } from 'node:path'
 import chalk from 'chalk'
 import ignore from 'ignore'
 import { isInITerm2 } from 'src/services/swarm/backends/detection.js'
-import { saveCurrentProjectConfig } from '../../utils/config.js'
+import { saveCurrentProjectConfig } from '../config/config.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage, getErrnoCode } from '../../utils/errors.js'
-import { execFileNoThrow, execFileNoThrowWithCwd } from '../../utils/execFileNoThrow.js'
-import { parseGitConfigValue } from '../../utils/git/gitConfigParser.js'
+import { execFileNoThrow, execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
+import { parseGitConfigValue } from '../git/gitConfigParser.js'
 import {
   getCommonDir,
   readWorktreeHeadSha,
   resolveGitDir,
   resolveRef,
-} from '../../utils/git/gitFilesystem.js'
+} from '../git/gitFilesystem.js'
 import {
   findCanonicalGitRoot,
   findGitRoot,
@@ -29,13 +29,10 @@ import {
   executeWorktreeCreateHook,
   executeWorktreeRemoveHook,
   hasWorktreeCreateHook,
-} from '../../utils/hooks.js'
+} from '../hooks.js'
 import { containsPathTraversal } from '../../utils/path.js'
-import { getPlatform } from '../../utils/platform.js'
-import {
-  getInitialSettings,
-  getRelativeSettingsFilePathForSource,
-} from '../../utils/settings/settings.js'
+import { getPlatform } from '../shell/platform.js'
+import { getInitialSettings, getRelativeSettingsFilePathForSource } from '../settings/settings.js'
 import { sleep } from '../../utils/sleep.js'
 
 const VALID_WORKTREE_SLUG_SEGMENT = /^[a-zA-Z0-9._-]+$/

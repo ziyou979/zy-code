@@ -38,9 +38,9 @@ import {
   setLoggerProvider,
   setMeterProvider,
   setTracerProvider,
-} from 'src/bootstrap/state.js'
-import { getOtelHeadersFromHelper } from 'src/utils/auth.js'
-import { getPlatform, getWslVersion } from 'src/utils/platform.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { getOtelHeadersFromHelper } from 'src/services/auth/auth.js'
+import { getPlatform, getWslVersion } from 'src/services/shell/platform.js'
 
 import { getCACertificates } from '../../utils/caCerts.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
@@ -49,7 +49,7 @@ import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { getMTLSConfig } from '../../utils/mtls.js'
 import { getProxyUrl, shouldBypassProxy } from '../../utils/proxy.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
+import { getInitialSettings } from '../settings/settings.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { profileCheckpoint } from '../../utils/startupProfiler.js'
 import { isBetaTracingEnabled } from './betaSessionTracing.js'

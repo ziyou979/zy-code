@@ -8,14 +8,14 @@
  * 工具保留在请求中以匹配缓存键，但通过 canUseTool 回调拒绝。
  */
 
-import type { TaskContext } from '../../Task.js'
-import { updateAgentSummary } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
+import type { TaskContext } from '../../task.js'
+import { updateAgentSummary } from '../../tasks/local-agent-task/LocalAgentTask.js'
 import { filterIncompleteToolCalls } from '../../tools/AgentTool/runAgent.js'
 import type { AgentId } from '../../types/ids.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { type CacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.js'
 import { logError } from '../../utils/log.js'
-import { createUserMessage } from '../../utils/messages.js'
+import { createUserMessage } from '../messages/index.js'
 import { getAgentTranscript } from '../sessionStorage.js'
 
 const SUMMARY_INTERVAL_MS = 30_000

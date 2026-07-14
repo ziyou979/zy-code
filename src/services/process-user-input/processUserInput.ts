@@ -2,8 +2,8 @@ import { feature } from 'bun:bundle'
 import { randomUUID } from 'node:crypto'
 import type { QuerySource } from 'src/constants/querySource.js'
 import { logEvent } from 'src/services/analytics/index.js'
-import { getContentText } from 'src/utils/messages.js'
-import { getSessionId } from '../../bootstrap/state.js'
+import { getContentText } from 'src/services/messages/index.js'
+import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import {
   findCommand,
   getCommandName,
@@ -12,7 +12,7 @@ import {
 } from '../../commands.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
-import type { SetToolJSXFn, ToolUseContext } from '../../Tool.js'
+import type { SetToolJSXFn, ToolUseContext } from '../../tool.js'
 import type { ImageBlock, ImageSource, UserContentBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,
@@ -26,8 +26,8 @@ import type { PermissionMode } from '../../types/permissions.js'
 import { isValidImagePaste, type PromptInputMode } from '../../types/textInputTypes.js'
 import type { EffortLevel } from '../../utils/effort.js'
 import { toArray } from '../../utils/generators.js'
-import { executeUserPromptExpansionHooks } from '../../utils/hooks/executors/notification.js'
-import { hasHookForEvent } from '../../utils/hooks/matcher.js'
+import { executeUserPromptExpansionHooks } from '../hooks/executors/notification.js'
+import { hasHookForEvent } from '../hooks/matcher.js'
 import {
   createImageMetadataText,
   maybeResizeAndDownsampleImageBlock,
@@ -37,7 +37,7 @@ import {
   createCommandInputMessage,
   createSystemMessage,
   createUserMessage,
-} from '../../utils/messages.js'
+} from '../messages/index.js'
 import { queryCheckpoint } from '../../utils/queryProfiler.js'
 import { parseSlashCommand } from '../../utils/slashCommandParsing.js'
 import {
@@ -51,6 +51,17 @@ import { hasUltraplanKeyword, replaceUltraplanKeyword } from '../ultraplan/keywo
 import { hasWorkflowKeyword } from '../workflow/keyword.js'
 import { processTextPrompt } from './processTextPrompt.js'
 export type ProcessUserInputContext = ToolUseContext & LocalJSXCommandContext
+
+export type ProcessBashCommandHandler = (
+  inputString: string,
+  precedingInputBlocks: UserContentBlock[],
+  attachmentMessages: AttachmentMessage[],
+  context: ProcessUserInputContext,
+  setToolJSX: SetToolJSXFn,
+) => Promise<{
+  messages: (UserMessage | AttachmentMessage | SystemMessage)[]
+  shouldQuery: boolean
+}>
 
 export type ProcessUserInputBaseResult = {
   messages: (UserMessage | AssistantMessage | AttachmentMessage | SystemMessage | ProgressMessage)[]
@@ -85,6 +96,7 @@ export async function processUserInput({
   bridgeOrigin,
   isMeta,
   skipAttachments,
+  processBashCommand,
 }: {
   input: string | Array<UserContentBlock>
   /**
@@ -122,6 +134,8 @@ export async function processUserInput({
    */
   isMeta?: boolean
   skipAttachments?: boolean
+  /** Bash 模式包含 Ink 渲染，因此由 UI 组合层注入实现。 */
+  processBashCommand?: ProcessBashCommandHandler
 }): Promise<ProcessUserInputBaseResult> {
   const inputString = typeof input === 'string' ? input : null
   // Immediately show the user input prompt while we are still processing the input.
@@ -153,6 +167,7 @@ export async function processUserInput({
     isMeta,
     skipAttachments,
     preExpansionInput,
+    processBashCommand,
   )
   queryCheckpoint('query_process_user_input_base_end')
 
@@ -332,6 +347,7 @@ async function processUserInputBase(
   isMeta?: boolean,
   skipAttachments?: boolean,
   preExpansionInput?: string,
+  processBashCommand?: ProcessBashCommandHandler,
 ): Promise<ProcessUserInputBaseResult> {
   let inputString: string | null = null
   let precedingInputBlocks: UserContentBlock[] = []
@@ -497,7 +513,7 @@ async function processUserInputBase(
   ) {
     logEvent('zy_ultraplan_keyword', {})
     const rewritten = replaceUltraplanKeyword(inputString).trim()
-    const { processSlashCommand } = await import('./processSlashCommand.js')
+    const { processSlashCommand } = await import('./ProcessSlashCommand.js')
     const slashResult = await processSlashCommand(
       `/ultraplan ${rewritten}`,
       precedingInputBlocks,
@@ -545,7 +561,9 @@ async function processUserInputBase(
 
   // Bash commands
   if (inputString !== null && mode === 'bash') {
-    const { processBashCommand } = await import('./processBashCommand.js')
+    if (!processBashCommand) {
+      throw new Error('Bash command handler is not configured')
+    }
     return addImageMetadataMessage(
       await processBashCommand(
         inputString,
@@ -561,7 +579,7 @@ async function processUserInputBase(
   // Slash commands
   // Skip for remote bridge messages — input from CCR clients is plain text
   if (inputString !== null && !effectiveSkipSlash && inputString.startsWith('/')) {
-    const { processSlashCommand } = await import('./processSlashCommand.js')
+    const { processSlashCommand } = await import('./ProcessSlashCommand.js')
     const slashResult = await processSlashCommand(
       inputString,
       precedingInputBlocks,

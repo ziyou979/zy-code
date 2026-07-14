@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
-import { getIsRemoteMode } from '../../bootstrap/state.js'
-import { getSettingsWithAllErrors } from '../../utils/settings/allErrors.js'
+import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getSettingsWithAllErrors } from '../../services/settings/allErrors.js'
 import { useSettingsChange } from '../useSettingsChange.js'
 
 const SETTINGS_ERRORS_NOTIFICATION_KEY = 'settings-errors'

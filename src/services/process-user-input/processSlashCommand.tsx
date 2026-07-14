@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { randomUUID } from 'node:crypto'
-import { setPromptId } from 'src/bootstrap/state.js'
+import { setPromptId } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   builtInCommandNames,
   type Command,
@@ -12,7 +12,7 @@ import {
   type PromptCommand,
 } from 'src/commands.js'
 import { getNoContentMessage } from 'src/constants/messages.js'
-import type { SetToolJSXFn, ToolUseContext } from 'src/Tool.js'
+import type { SetToolJSXFn, ToolUseContext } from 'src/tool.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -20,21 +20,21 @@ import type {
   ProgressMessage,
   UserMessage,
 } from 'src/types/message.js'
-import { addInvokedSkill, getSessionId } from '../../bootstrap/state.js'
+import { addInvokedSkill, getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { COMMAND_MESSAGE_TAG, COMMAND_NAME_TAG } from '../../constants/xml.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
   logEvent,
-} from '../../services/analytics/index.js'
-import { getDumpPromptsPath } from '../../services/api/dumpPrompts.js'
-import { buildPostCompactMessages } from '../../services/compact/compact.js'
-import { resetMicrocompactState } from '../../services/compact/microCompact.js'
+} from '../analytics/index.js'
+import { getDumpPromptsPath } from '../api/dumpPrompts.js'
+import { buildPostCompactMessages } from '../compact/compact.js'
+import { resetMicrocompactState } from '../compact/microCompact.js'
 import type { Progress as AgentProgress } from '../../tools/AgentTool/AgentTool.js'
 import { runAgent } from '../../tools/AgentTool/runAgent.js'
 import { renderToolUseProgressMessage } from '../../tools/AgentTool/UI.js'
-import type { CommandResultDisplay } from '../../types/command.js'
+import type { CommandResultDisplay } from '../../commands/types.js'
 import type { TextBlock, UserContentBlock } from '../../types/llm.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { getAgentContext } from '../../utils/agentContext.js'
@@ -46,7 +46,7 @@ import { extractResultText, prepareForkedCommandContext } from '../../utils/fork
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
 import { toArray } from '../../utils/generators.js'
-import { registerSkillHooks } from '../../utils/hooks/registerSkillHooks.js'
+import { registerSkillHooks } from '../hooks/registerSkillHooks.js'
 import { logError } from '../../utils/log.js'
 import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
 import {
@@ -61,17 +61,11 @@ import {
   isSystemLocalCommandMessage,
   normalizeMessages,
   prepareUserContent,
-} from '../../utils/messages.js'
-import { parseToolListFromCLI } from '../../utils/permissions/permissionSetup.js'
-import { hasPermissionsToUseTool } from '../../utils/permissions/permissions.js'
-import {
-  isOfficialMarketplaceName,
-  parsePluginIdentifier,
-} from '../../utils/plugins/pluginIdentifier.js'
-import {
-  isRestrictedToPluginOnly,
-  isSourceAdminTrusted,
-} from '../../utils/settings/pluginOnlyPolicy.js'
+} from '../messages/index.js'
+import { parseToolListFromCLI } from '../permissions/permissionSetup.js'
+import { hasPermissionsToUseTool } from '../permissions/permissions.js'
+import { isOfficialMarketplaceName, parsePluginIdentifier } from '../plugins/pluginIdentifier.js'
+import { isRestrictedToPluginOnly, isSourceAdminTrusted } from '../settings/pluginOnlyPolicy.js'
 import { parseSlashCommand } from '../../utils/slashCommandParsing.js'
 import { sleep } from '../../utils/sleep.js'
 import { getAssistantMessageContentLength } from '../../utils/tokens.js'
@@ -149,93 +143,95 @@ async function executeForkedSlashCommand(
   // isMeta prompts are hidden. Outside assistant mode, context:fork commands
   // are user-invoked skills (/commit etc.) that should run synchronously
   // with the progress UI.
-  if (feature('KAIROS') && (await context.getAppState()).kairosEnabled) {
-    // Standalone abortController — background subagents survive main-thread
-    // ESC (same policy as AgentTool's async path). They're cron-driven; if
-    // killed mid-run they just re-fire on the next schedule.
-    const bgAbortController = createAbortController()
-    const commandName = getCommandName(command)
+  if (feature('KAIROS')) {
+    if ((await context.getAppState()).kairosEnabled) {
+      // Standalone abortController — background subagents survive main-thread
+      // ESC (same policy as AgentTool's async path). They're cron-driven; if
+      // killed mid-run they just re-fire on the next schedule.
+      const bgAbortController = createAbortController()
+      const commandName = getCommandName(command)
 
-    // Workload: handlePromptSubmit wraps the entire turn in runWithWorkload
-    // (AsyncLocalStorage). ALS context is captured when this `void` fires
-    // and survives every await inside — isolated from the parent's
-    // continuation. The detached closure's runAgent calls see the cron tag
-    // automatically. We still capture the value here ONLY for the
-    // re-enqueued result prompt below: that second turn runs in a fresh
-    // handlePromptSubmit → fresh runWithWorkload boundary (which always
-    // establishes a new context, even for `undefined`) → so it needs its
-    // own QueuedCommand.workload tag to preserve attribution.
-    const spawnTimeWorkload = getWorkload()
+      // Workload: handlePromptSubmit wraps the entire turn in runWithWorkload
+      // (AsyncLocalStorage). ALS context is captured when this `void` fires
+      // and survives every await inside — isolated from the parent's
+      // continuation. The detached closure's runAgent calls see the cron tag
+      // automatically. We still capture the value here ONLY for the
+      // re-enqueued result prompt below: that second turn runs in a fresh
+      // handlePromptSubmit → fresh runWithWorkload boundary (which always
+      // establishes a new context, even for `undefined`) → so it needs its
+      // own QueuedCommand.workload tag to preserve attribution.
+      const spawnTimeWorkload = getWorkload()
 
-    // Re-enter the queue as a hidden prompt. isMeta: hides from queue
-    // preview + placeholder + transcript. skipSlashCommands: prevents
-    // re-parsing if the result text happens to start with '/'. When
-    // drained, this triggers a main-agent turn that sees the result and
-    // decides whether to SendUserMessage. Propagate workload so that
-    // second turn is also tagged.
-    const enqueueResult = (value: string): void =>
-      enqueuePendingNotification({
-        value,
-        mode: 'prompt',
-        priority: 'later',
-        isMeta: true,
-        skipSlashCommands: true,
-        workload: spawnTimeWorkload,
-      })
-    void (async () => {
-      // Wait for MCP servers to settle. Scheduled tasks fire at startup and
-      // all N drain within ~1ms (since we return immediately), capturing
-      // context.options.tools before MCP connects. The sync path
-      // accidentally avoided this — tasks serialized, so task N's drain
-      // happened after task N-1's 30s run, by which time MCP was up.
-      // Poll until no 'pending' clients remain, then refresh.
-      const deadline = Date.now() + MCP_SETTLE_TIMEOUT_MS
-      while (Date.now() < deadline) {
-        const s = context.getAppState()
-        if (!s.mcp.clients.some((c) => c.type === 'pending')) {
-          break
+      // Re-enter the queue as a hidden prompt. isMeta: hides from queue
+      // preview + placeholder + transcript. skipSlashCommands: prevents
+      // re-parsing if the result text happens to start with '/'. When
+      // drained, this triggers a main-agent turn that sees the result and
+      // decides whether to SendUserMessage. Propagate workload so that
+      // second turn is also tagged.
+      const enqueueResult = (value: string): void =>
+        enqueuePendingNotification({
+          value,
+          mode: 'prompt',
+          priority: 'later',
+          isMeta: true,
+          skipSlashCommands: true,
+          workload: spawnTimeWorkload,
+        })
+      void (async () => {
+        // Wait for MCP servers to settle. Scheduled tasks fire at startup and
+        // all N drain within ~1ms (since we return immediately), capturing
+        // context.options.tools before MCP connects. The sync path
+        // accidentally avoided this — tasks serialized, so task N's drain
+        // happened after task N-1's 30s run, by which time MCP was up.
+        // Poll until no 'pending' clients remain, then refresh.
+        const deadline = Date.now() + MCP_SETTLE_TIMEOUT_MS
+        while (Date.now() < deadline) {
+          const s = context.getAppState()
+          if (!s.mcp.clients.some((c) => c.type === 'pending')) {
+            break
+          }
+          await sleep(MCP_SETTLE_POLL_MS)
         }
-        await sleep(MCP_SETTLE_POLL_MS)
-      }
-      const freshTools = context.options.refreshTools?.() ?? context.options.tools
-      const agentMessages: Message[] = []
-      for await (const message of runAgent({
-        agentDefinition,
-        promptMessages,
-        toolUseContext: {
-          ...context,
-          getAppState: modifiedGetAppState,
-          abortController: bgAbortController,
-        },
-        canUseTool,
-        isAsync: true,
-        querySource: 'agent:custom',
-        model: command.model as ModelAlias | undefined,
-        availableTools: freshTools,
-        override: {
-          agentId,
-        },
-      })) {
-        agentMessages.push(message)
-      }
-      const resultText = extractResultText(agentMessages, 'Command completed')
-      logForDebugging(`Background forked command /${commandName} completed (agent ${agentId})`)
-      enqueueResult(
-        `<scheduled-task-result command="/${commandName}">\n${resultText}\n</scheduled-task-result>`,
-      )
-    })().catch((err) => {
-      logError(err)
-      enqueueResult(
-        `<scheduled-task-result command="/${commandName}" status="failed">\n${err instanceof Error ? err.message : String(err)}\n</scheduled-task-result>`,
-      )
-    })
+        const freshTools = context.options.refreshTools?.() ?? context.options.tools
+        const agentMessages: Message[] = []
+        for await (const message of runAgent({
+          agentDefinition,
+          promptMessages,
+          toolUseContext: {
+            ...context,
+            getAppState: modifiedGetAppState,
+            abortController: bgAbortController,
+          },
+          canUseTool,
+          isAsync: true,
+          querySource: 'agent:custom',
+          model: command.model as ModelAlias | undefined,
+          availableTools: freshTools,
+          override: {
+            agentId,
+          },
+        })) {
+          agentMessages.push(message)
+        }
+        const resultText = extractResultText(agentMessages, 'Command completed')
+        logForDebugging(`Background forked command /${commandName} completed (agent ${agentId})`)
+        enqueueResult(
+          `<scheduled-task-result command="/${commandName}">\n${resultText}\n</scheduled-task-result>`,
+        )
+      })().catch((err) => {
+        logError(err)
+        enqueueResult(
+          `<scheduled-task-result command="/${commandName}" status="failed">\n${err instanceof Error ? err.message : String(err)}\n</scheduled-task-result>`,
+        )
+      })
 
-    // Nothing to render, nothing to query — the background runner re-enters
-    // the queue on its own schedule.
-    return {
-      messages: [],
-      shouldQuery: false,
-      command,
+      // Nothing to render, nothing to query — the background runner re-enters
+      // the queue on its own schedule.
+      return {
+        messages: [],
+        shouldQuery: false,
+        command,
+      }
     }
   }
 
@@ -1115,49 +1111,47 @@ async function getMessagesForPromptSlashCommand(
   // parent env, so we also check !context.agentId: agentId is only set for
   // subagents, letting workers fall through to getPromptForCommand and receive
   // the real skill content when they invoke the Skill tool.
-  if (
-    feature('COORDINATOR_MODE') &&
-    isEnvTruthy(process.env.ZY_CODE_COORDINATOR_MODE) &&
-    !context.agentId
-  ) {
-    const metadata = formatCommandLoadingMetadata(command, args)
-    const parts: string[] = [`Skill "/${command.name}" is available for workers.`]
-    if (command.description) {
-      parts.push(`Description: ${command.description}`)
-    }
-    if (command.whenToUse) {
-      parts.push(`When to use: ${command.whenToUse}`)
-    }
-    const skillAllowedTools = command.allowedTools ?? []
-    if (skillAllowedTools.length > 0) {
+  if (feature('COORDINATOR_MODE')) {
+    if (isEnvTruthy(process.env.ZY_CODE_COORDINATOR_MODE) && !context.agentId) {
+      const metadata = formatCommandLoadingMetadata(command, args)
+      const parts: string[] = [`Skill "/${command.name}" is available for workers.`]
+      if (command.description) {
+        parts.push(`Description: ${command.description}`)
+      }
+      if (command.whenToUse) {
+        parts.push(`When to use: ${command.whenToUse}`)
+      }
+      const skillAllowedTools = command.allowedTools ?? []
+      if (skillAllowedTools.length > 0) {
+        parts.push(
+          `This skill grants workers additional tool permissions: ${skillAllowedTools.join(', ')}`,
+        )
+      }
       parts.push(
-        `This skill grants workers additional tool permissions: ${skillAllowedTools.join(', ')}`,
+        `\nInstruct a worker to use this skill by including "Use the /${command.name} skill" in your Agent prompt. The worker has access to the Skill tool and will receive the skill's content and permissions when it invokes it.`,
       )
-    }
-    parts.push(
-      `\nInstruct a worker to use this skill by including "Use the /${command.name} skill" in your Agent prompt. The worker has access to the Skill tool and will receive the skill's content and permissions when it invokes it.`,
-    )
-    const summaryContent: UserContentBlock[] = [
-      {
-        type: 'text',
-        text: parts.join('\n'),
-      },
-    ]
-    return {
-      messages: [
-        createUserMessage({
-          content: [{ type: 'text' as const, text: metadata }],
-          uuid,
-        }),
-        createUserMessage({
-          content: summaryContent,
-          isMeta: true,
-        }),
-      ],
-      shouldQuery: true,
-      model: command.model,
-      effort: command.effort,
-      command,
+      const summaryContent: UserContentBlock[] = [
+        {
+          type: 'text',
+          text: parts.join('\n'),
+        },
+      ]
+      return {
+        messages: [
+          createUserMessage({
+            content: [{ type: 'text' as const, text: metadata }],
+            uuid,
+          }),
+          createUserMessage({
+            content: summaryContent,
+            isMeta: true,
+          }),
+        ],
+        shouldQuery: true,
+        model: command.model,
+        effort: command.effort,
+        command,
+      }
     }
   }
   const result = await command.getPromptForCommand(args, context)

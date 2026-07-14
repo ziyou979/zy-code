@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { extractOutputRedirections } from 'src/shell-eval/bash/commands.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
-import type { Tool, ToolPermissionContext, ToolUseContext } from '../../Tool.js'
+import type { Tool, ToolPermissionContext, ToolUseContext } from '../../tool.js'
 import { AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
 import { shouldUseSandbox } from '../../tools/BashTool/shouldUseSandbox.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
@@ -14,33 +14,30 @@ import { createDebugLog } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { AbortError, toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import {
-  getSettingSourceDisplayNameLowercase,
-  SETTING_SOURCES,
-} from '../../utils/settings/constants.js'
+import { getSettingSourceDisplayNameLowercase, SETTING_SOURCES } from '../settings/constants.js'
 import { plural } from '../../utils/stringUtils.js'
 import { getToolNameForPermissionCheck, mcpInfoFromString } from '../mcp/mcpStringUtils.js'
 import { isAutoModeAllowlistedTool } from './classifierDecision.js'
-import { permissionModeTitle } from './PermissionMode.js'
+import { permissionModeTitle } from './permissionMode.js'
 import type {
   PermissionAskDecision,
   PermissionDecision,
   PermissionDecisionReason,
   PermissionDenyDecision,
   PermissionResult,
-} from './PermissionResult.js'
+} from './permissionResult.js'
 import type {
   PermissionBehavior,
   PermissionRule,
   PermissionRuleSource,
   PermissionRuleValue,
-} from './PermissionRule.js'
+} from './permissionRule.js'
 import {
   applyPermissionUpdate,
   applyPermissionUpdates,
   persistPermissionUpdates,
-} from './PermissionUpdate.js'
-import type { PermissionUpdate, PermissionUpdateDestination } from './PermissionUpdateSchema.js'
+} from './permissionUpdate.js'
+import type { PermissionUpdate, PermissionUpdateDestination } from './permissionUpdateSchema.js'
 import {
   permissionRuleValueFromString,
   permissionRuleValueToString,
@@ -62,18 +59,18 @@ import {
   getTotalCacheReadInputTokens,
   getTotalInputTokens,
   getTotalOutputTokens,
-} from '../../bootstrap/state.js'
+} from '../../bootstrap/runtime/runtimeContext.js'
 import { clearClassifierChecking, setClassifierChecking } from '../../utils/classifierApprovals.js'
 import { isInProtectedNamespace } from '../../utils/envUtils.js'
-import { executePermissionRequestHooks } from '../../utils/hooks.js'
+import { executePermissionRequestHooks } from '../hooks.js'
 import {
   AUTO_REJECT_MESSAGE,
   buildClassifierUnavailableMessage,
   buildYoloRejectionMessage,
   DONT_ASK_REJECT_MESSAGE,
-} from '../../utils/messages.js'
-import { calculateCostFromTokens } from '../../utils/modelCost.js'
-import { getAutoModeConfig } from '../../utils/settings/settings.js'
+} from '../messages/index.js'
+import { calculateCostFromTokens } from '../model/modelCost.js'
+import { getAutoModeConfig } from '../settings/settings.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'

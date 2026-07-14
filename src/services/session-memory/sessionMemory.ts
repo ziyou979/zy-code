@@ -6,11 +6,11 @@
 
 import { writeFile } from 'node:fs/promises'
 import memoize from 'lodash-es/memoize.js'
-import { getIsRemoteMode } from '../../bootstrap/state.js'
+import { getIsRemoteMode } from '../../bootstrap/runtime/runtimeContext.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
 import { getSystemContext, getUserContext } from '../../context.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
-import type { Tool, ToolUseContext } from '../../Tool.js'
+import type { Tool, ToolUseContext } from '../../tool.js'
 import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
 import {
   FileReadTool,
@@ -25,12 +25,9 @@ import {
   runForkedAgent,
 } from '../../utils/forkedAgent.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
-import {
-  type REPLHookContext,
-  registerPostSamplingHook,
-} from '../../utils/hooks/postSamplingHooks.js'
-import { createUserMessage, hasToolCallsInLastAssistantTurn } from '../../utils/messages.js'
-import { getSessionMemoryDir, getSessionMemoryPath } from '../../utils/permissions/filesystem.js'
+import { type REPLHookContext, registerPostSamplingHook } from '../hooks/postSamplingHooks.js'
+import { createUserMessage, hasToolCallsInLastAssistantTurn } from '../messages/index.js'
+import { getSessionMemoryDir, getSessionMemoryPath } from '../permissions/filesystem.js'
 import { sequential } from '../../utils/sequential.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 import { getTokenUsage, tokenCountWithEstimation } from '../../utils/tokens.js'

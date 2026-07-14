@@ -6,7 +6,7 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { getMainLoopModel, normalizeModelStringForAPI } from '../../services/model/model.js'
+import { getMainLoopModel, normalizeModelStringForAPI } from '../model/model.js'
 import type {
   CreateParams,
   LLMAdapter,

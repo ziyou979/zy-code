@@ -13,17 +13,17 @@ import {
   isGoogleProvider,
   isOpenAIProvider,
 } from 'src/services/model/providers.js'
-import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/utils/auth.js'
+import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/services/auth/auth.js'
 import { getUserAgent } from 'src/utils/http.js'
 import { getProxyFetchOptions } from 'src/utils/proxy.js'
-import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/state.js'
+import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import type { LLMAdapter } from '../../types/llm.js'
 import { isDebugToStdErr, logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import { AnthropicProviderAdapter } from './AnthropicProviderAdapter.js'
-import { GoogleProviderAdapter } from './GoogleProviderAdapter.js'
-import { OpenAIProviderAdapter } from './OpenAIProviderAdapter.js'
+import { AnthropicProviderAdapter } from './anthropicProviderAdapter.js'
+import { GoogleProviderAdapter } from './googleProviderAdapter.js'
+import { OpenAIProviderAdapter } from './openAIProviderAdapter.js'
 
 /**
  * 不同客户端类型的环境变量：
@@ -156,7 +156,7 @@ export async function getAnthropicClient({
     // 避免跨 provider 残留的旧 URL（如 llama.cpp 的 localhost）覆盖当前 provider 的默认 URL
     if (!resolvedBaseURL) {
       try {
-        const { getGlobalConfig } = await import('../../utils/config.js')
+        const { getGlobalConfig } = await import('../config/config.js')
         const cfg = getGlobalConfig()
         if (cfg.configuredProvider === apiProvider) {
           resolvedBaseURL = cfg.configuredBaseUrl
@@ -208,7 +208,7 @@ export async function getAnthropicClient({
     }
     if (!customBaseURL) {
       try {
-        const { getGlobalConfig } = await import('../../utils/config.js')
+        const { getGlobalConfig } = await import('../config/config.js')
         const cfg = getGlobalConfig()
         // 仅当 configuredBaseUrl 属于当前 provider 时才使用，
         // 避免之前配置的其他 provider（如 llama.cpp）的 URL 残留覆盖
@@ -338,7 +338,7 @@ export async function getOpenAIClient(options?: {
     // 避免跨 provider 残留的旧 URL 覆盖当前 provider 的默认 URL
     if (!resolvedBaseURL) {
       try {
-        const { getGlobalConfig } = await import('../../utils/config.js')
+        const { getGlobalConfig } = await import('../config/config.js')
         const cfg = getGlobalConfig()
         if (cfg.configuredProvider === apiProvider) {
           resolvedBaseURL = cfg.configuredBaseUrl
@@ -432,7 +432,7 @@ export async function getGoogleClient(options?: {
     // 避免跨 provider 残留的旧 URL 覆盖当前 provider 的默认 URL
     if (!resolvedBaseURL) {
       try {
-        const { getGlobalConfig } = await import('../../utils/config.js')
+        const { getGlobalConfig } = await import('../config/config.js')
         const cfg = getGlobalConfig()
         if (cfg.configuredProvider === apiProvider) {
           resolvedBaseURL = cfg.configuredBaseUrl

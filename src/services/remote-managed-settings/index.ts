@@ -14,15 +14,17 @@
 import { createHash } from 'node:crypto'
 import { open, unlink } from 'node:fs/promises'
 import axios from 'axios'
+import { getIsInteractive } from '../../bootstrap/runtime/runtimeContext.js'
 import { getOauthConfig, OAUTH_BETA_HEADER } from '../../constants/oauth.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { classifyAxiosError, getErrnoCode } from '../../utils/errors.js'
-import { settingsChangeDetector } from '../../utils/settings/changeDetector.js'
-import { type SettingsJson, SettingsSchema } from '../../utils/settings/types.js'
+import { settingsChangeDetector } from '../settings/changeDetector.js'
+import { type SettingsJson, SettingsSchema } from '../settings/types.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
+import { logEvent } from '../analytics/index.js'
 import { getRetryDelay } from '../api/withRetry.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
@@ -30,10 +32,11 @@ import {
   getZyAIOAuthTokens,
 } from '../auth/auth.js'
 import {
-  checkManagedSettingsSecurity,
   handleSecurityCheckResult,
+  needsManagedSettingsSecurityCheck,
+  type SecurityCheckResult,
   shouldPersistManagedSettingsAfterSecurityCheck,
-} from '../../components/remote-managed-settings/SecurityCheck.jsx'
+} from './securityPolicy.js'
 import { isRemoteManagedSettingsEligible, resetSyncCache } from './syncCache.js'
 import {
   getRemoteManagedSettingsSyncFromCache,
@@ -49,6 +52,36 @@ import {
 const SETTINGS_TIMEOUT_MS = 10000 // 设置获取 10 秒超时
 const DEFAULT_MAX_RETRIES = 5
 const POLLING_INTERVAL_MS = 60 * 60 * 1000 // 1 小时
+
+export type ManagedSettingsSecurityChecker = (
+  cachedSettings: SettingsJson | null,
+  newSettings: SettingsJson | null,
+) => Promise<SecurityCheckResult>
+
+let managedSettingsSecurityChecker: ManagedSettingsSecurityChecker | null = null
+
+/** 由入口组合层注册交互式安全检查，service 本身不依赖 React/Ink。 */
+export function setManagedSettingsSecurityChecker(checker: ManagedSettingsSecurityChecker): void {
+  managedSettingsSecurityChecker = checker
+}
+
+async function checkManagedSettingsSecurity(
+  cachedSettings: SettingsJson | null,
+  newSettings: SettingsJson | null,
+): Promise<SecurityCheckResult> {
+  if (!needsManagedSettingsSecurityCheck(cachedSettings, newSettings)) {
+    return 'no_check_needed'
+  }
+  if (!getIsInteractive()) {
+    logEvent('zy_managed_settings_security_deferred_non_interactive', {})
+    return 'deferred_non_interactive'
+  }
+  if (!managedSettingsSecurityChecker) {
+    // 交互会话没有注册 UI 时必须失败关闭，禁止静默接受危险设置。
+    return 'rejected'
+  }
+  return managedSettingsSecurityChecker(cachedSettings, newSettings)
+}
 
 // 后台轮询状态
 let pollingIntervalId: ReturnType<typeof setInterval> | null = null

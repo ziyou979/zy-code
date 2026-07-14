@@ -16,13 +16,13 @@ import {
   OpenIdProviderDiscoveryMetadataSchema,
 } from '@modelcontextprotocol/sdk/shared/auth.js'
 import xss from 'xss'
-import { getSecureStorage } from '../../services/secure-storage/index.js'
+import { getSecureStorage } from '../secure-storage/index.js'
 import { openBrowser } from '../../utils/browser.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { toError } from '../../utils/errors.js'
 import { logMCPDebug } from '../../utils/log.js'
-import { getPlatform } from '../../utils/platform.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
+import { getPlatform } from '../shell/platform.js'
+import { getInitialSettings } from '../settings/settings.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { buildRedirectUri, findAvailablePort } from './oauthPort.js'
 

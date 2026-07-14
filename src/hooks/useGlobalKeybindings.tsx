@@ -16,7 +16,7 @@ import {
 } from '../services/analytics/index.js'
 import { useAppState, useSetAppState } from '../state/AppState.js'
 import { count } from '../utils/array.js'
-import { getTerminalPanel } from '../utils/terminalPanel.js'
+import { getTerminalPanel } from '../terminal-ui/terminalPanel.js'
 
 type Props = {
   screen: Screen
@@ -59,7 +59,7 @@ export function GlobalKeybindingHandlers({
     setAppState((prev) => {
       const { getAllInProcessTeammateTasks } =
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        require('../tasks/InProcessTeammateTask/InProcessTeammateTask.js') as typeof import('../tasks/InProcessTeammateTask/InProcessTeammateTask.js')
+        require('../tasks/in-process-teammate-task/InProcessTeammateTask.js') as typeof import('../tasks/in-process-teammate-task/InProcessTeammateTask.js')
       const hasTeammates =
         count(getAllInProcessTeammateTasks(prev.tasks), (t) => t.status === 'running') > 0
       if (hasTeammates) {

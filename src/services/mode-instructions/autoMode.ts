@@ -1,9 +1,9 @@
 // Auto Mode 指令生成逻辑。
-// 从 src/utils/messages/attachmentApi.ts 提取。
+// 从 src/services/messages/attachment-api.ts 提取。
 
 import type { UserMessage } from '../../types/message.js'
-import { createUserMessage } from '../../utils/messages/constructors.js'
-import { wrapMessagesInSystemReminder } from '../../utils/messages/systemReminder.js'
+import { createUserMessage } from '../messages/constructors.js'
+import { wrapMessagesInSystemReminder } from '../messages/systemReminder.js'
 
 export function getAutoModeInstructions(attachment: {
   reminderType: 'full' | 'sparse'

@@ -1,13 +1,13 @@
 import { useEffect } from 'react'
 import type { ScopedMcpServerConfig } from '../services/mcp/types.js'
-import { getGlobalConfig } from '../utils/config.js'
+import { getGlobalConfig } from '../services/config/config.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from '../utils/envUtils.js'
 import {
   type IDEExtensionInstallationStatus,
   type IdeType,
   initializeIdeIntegration,
   isSupportedTerminal,
-} from '../utils/ide.js'
+} from '../services/ide/ide.js'
 
 type UseIDEIntegrationProps = {
   autoConnectIdeFlag?: boolean
@@ -28,7 +28,7 @@ export function useIDEIntegration({
   setIDEInstallationState,
 }: UseIDEIntegrationProps) {
   useEffect(() => {
-    const addIde = function addIde(ide: import('../utils/ide.js').DetectedIDEInfo | null) {
+    const addIde = function addIde(ide: import('../services/ide/ide.js').DetectedIDEInfo | null) {
       if (!ide) {
         return
       }

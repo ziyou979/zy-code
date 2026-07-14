@@ -1,5 +1,8 @@
 import { useEffect } from 'react'
-import { getLastInteractionTime, updateLastInteractionTime } from '../bootstrap/state.js'
+import {
+  getLastInteractionTime,
+  updateLastInteractionTime,
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import { useTerminalNotification } from '../ink/useTerminalNotification.js'
 import { sendNotification } from '../services/notifier.js'
 // The time threshold in milliseconds for considering an interaction "recent" (6 seconds)

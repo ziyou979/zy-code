@@ -12,7 +12,7 @@
 
 import { extname } from 'node:path'
 import { isBinaryInstalled } from '../../utils/binaryCheck.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isPluginInstalled } from './installedPluginsManager.js'
 import { getMarketplace, loadKnownMarketplacesConfig } from './marketplaceManager.js'

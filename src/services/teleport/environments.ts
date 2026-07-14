@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { getOauthConfig } from 'src/constants/oauth.js'
-import { getOrganizationUUID, getZyAIOAuthTokens } from '../../utils/auth.js'
+import { getOrganizationUUID, getZyAIOAuthTokens } from '../auth/auth.js'
 import { toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { getOAuthHeaders } from './api.js'

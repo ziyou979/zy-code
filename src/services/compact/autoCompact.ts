@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
-import { markPostCompaction } from 'src/bootstrap/state.js'
+import { markPostCompaction } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { QuerySource } from '../../constants/querySource.js'
-import type { ToolUseContext } from '../../Tool.js'
+import type { ToolUseContext } from '../../tool.js'
 import type { Message } from '../../types/message.js'
 import { getContextWindowForModel } from '../../utils/context.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -9,7 +9,7 @@ import { isEnvTruthy } from '../../utils/envUtils.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
 import type { CacheSafeParams } from '../../utils/forkedAgent.js'
 import { logError } from '../../utils/log.js'
-import { getLocalMaxInputTokens } from '../../utils/settings/localModelCapabilities.js'
+import { getLocalMaxInputTokens } from '../settings/localModelCapabilities.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { logEvent } from '../analytics/index.js'
@@ -222,12 +222,12 @@ export async function shouldAutoCompact(
   //
   // 咨询 isContextCollapseEnabled（而非原始门），以便
   // CLAUDE_CONTEXT_COLLAPSE 环境变量覆盖也在此处得到尊重。
-  // require() 在块内打破初始化时的循环（此文件导出
+  // require('./context-collapse/index.js') 在块内打破初始化时的循环（此文件导出
   // getEffectiveContextWindowSize，折叠的 index 导入它）。
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { isContextCollapseEnabled } =
-      require('../context-collapse/index.js') as typeof import('../context-collapse/index.js')
+      require('./context-collapse/index.js') as typeof import('./context-collapse/index.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
     if (isContextCollapseEnabled()) {
       return false

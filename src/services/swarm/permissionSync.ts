@@ -26,7 +26,7 @@ import { getErrnoCode } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import * as lockfile from '../../utils/lockfile.js'
 import { logError } from '../../utils/log.js'
-import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
+import type { PermissionUpdate } from '../permissions/permissionUpdateSchema.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { getAgentId, getAgentName, getTeammateColor, getTeamName } from '../../utils/teammate.js'
 import {

@@ -1,8 +1,8 @@
-import { getInitialMainLoopModel } from '../../bootstrap/state.js'
+import { getInitialMainLoopModel } from '../../bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
-import { getGlobalConfig } from '../../utils/config.js'
-import { getLocalModelCapability } from '../../utils/settings/localModelCapabilities.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
+import { getGlobalConfig } from '../config/config.js'
+import { getLocalModelCapability } from '../settings/localModelCapabilities.js'
+import { getInitialSettings } from '../settings/settings.js'
 import {
   getDefaultMainLoopModelSetting,
   getMarketingNameForModel,

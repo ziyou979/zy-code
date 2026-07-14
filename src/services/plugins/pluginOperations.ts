@@ -12,37 +12,24 @@
  * - Can throw errors for unexpected failures
  */
 import { dirname, join } from 'node:path'
-import { getOriginalCwd } from '../../bootstrap/state.js'
-import { isBuiltinPluginId } from '../../plugins/builtinPlugins.js'
-import type { LoadedPlugin, PluginManifest } from '../../types/plugin.js'
+import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
+import { isBuiltinPluginId } from './builtinRegistry.js'
+import type { LoadedPlugin, PluginManifest } from './types.js'
 import { isENOENT, toError } from '../../utils/errors.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { logError } from '../../utils/log.js'
-import { clearAllCaches, markPluginVersionOrphaned } from '../../utils/plugins/cacheUtils.js'
-import {
-  findReverseDependents,
-  formatReverseDependentsSuffix,
-} from '../../utils/plugins/dependencyResolver.js'
+import { clearAllCaches, markPluginVersionOrphaned } from './cacheUtils.js'
+import { findReverseDependents, formatReverseDependentsSuffix } from './dependencyResolver.js'
 import {
   loadInstalledPlugins,
   loadInstalledPluginsFromDisk,
   removePluginInstallation,
   updateInstallationPathOnDisk,
-} from '../../utils/plugins/installedPluginsManager.js'
-import {
-  getMarketplace,
-  getPluginById,
-  loadKnownMarketplacesConfig,
-} from '../../utils/plugins/marketplaceManager.js'
-import { deletePluginDataDir } from '../../utils/plugins/pluginDirectories.js'
-import {
-  parsePluginIdentifier,
-  scopeToSettingSource,
-} from '../../utils/plugins/pluginIdentifier.js'
-import {
-  formatResolutionError,
-  installResolvedPlugin,
-} from '../../utils/plugins/pluginInstallationHelpers.js'
+} from './installedPluginsManager.js'
+import { getMarketplace, getPluginById, loadKnownMarketplacesConfig } from './marketplaceManager.js'
+import { deletePluginDataDir } from './pluginDirectories.js'
+import { parsePluginIdentifier, scopeToSettingSource } from './pluginIdentifier.js'
+import { formatResolutionError, installResolvedPlugin } from './pluginInstallationHelpers.js'
 import {
   cachePlugin,
   copyPluginToVersionedCache,
@@ -50,13 +37,13 @@ import {
   getVersionedZipCachePath,
   loadAllPlugins,
   loadPluginManifest,
-} from '../../utils/plugins/pluginLoader.js'
-import { deletePluginOptions } from '../../utils/plugins/pluginOptionsStorage.js'
-import { isPluginBlockedByPolicy } from '../../utils/plugins/pluginPolicy.js'
-import { getPluginEditableScopes } from '../../utils/plugins/pluginStartupCheck.js'
-import { calculatePluginVersion } from '../../utils/plugins/pluginVersioning.js'
-import type { PluginMarketplaceEntry, PluginScope } from '../../utils/plugins/schemas.js'
-import { getSettingsForSource, updateSettingsForSource } from '../../utils/settings/settings.js'
+} from './pluginLoader.js'
+import { deletePluginOptions } from './pluginOptionsStorage.js'
+import { isPluginBlockedByPolicy } from './pluginPolicy.js'
+import { getPluginEditableScopes } from './pluginStartupCheck.js'
+import { calculatePluginVersion } from './pluginVersioning.js'
+import type { PluginMarketplaceEntry, PluginScope } from './schemas.js'
+import { getSettingsForSource, updateSettingsForSource } from '../settings/settings.js'
 import { plural } from '../../utils/stringUtils.js'
 
 /** Valid installable scopes (excludes 'managed' which can only be installed from managed-settings.json) */

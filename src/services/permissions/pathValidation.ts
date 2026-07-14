@@ -3,14 +3,14 @@ import { dirname, isAbsolute, resolve } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { containsVulnerableUncPath } from 'src/shell-eval/shared/readOnlyCommandValidation.js'
-import type { ToolPermissionContext } from '../../Tool.js'
+import type { ToolPermissionContext } from '../../tool.js'
 import {
   getFsImplementation,
   getPathsForPermissionCheck,
   safeResolvePath,
 } from '../../utils/fsOperations.js'
 import { containsPathTraversal } from '../../utils/path.js'
-import { getPlatform } from '../../utils/platform.js'
+import { getPlatform } from '../shell/platform.js'
 import {
   checkEditableInternalPath,
   checkPathSafetyForAutoEdit,
@@ -19,7 +19,7 @@ import {
   pathInAllowedWorkingPath,
   pathInWorkingPath,
 } from './filesystem.js'
-import type { PermissionDecisionReason } from './PermissionResult.js'
+import type { PermissionDecisionReason } from './permissionResult.js'
 
 const MAX_DIRS_TO_LIST = 5
 const GLOB_PATTERN_REGEX = /[*?[\]{}]/
