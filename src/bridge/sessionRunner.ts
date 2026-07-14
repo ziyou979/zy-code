@@ -13,7 +13,6 @@ import type {
   SessionSpawner,
   SessionSpawnOpts,
 } from './types.js'
-
 const MAX_ACTIVITIES = 10
 const MAX_STDERR_LINES = 10
 

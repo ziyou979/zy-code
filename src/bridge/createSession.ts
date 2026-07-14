@@ -3,7 +3,6 @@ import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { extractErrorDetail } from './debugUtils.js'
 import { toCompatSessionId } from './sessionIdCompat.js'
-
 type GitSource = {
   type: 'git_repository'
   url: string
@@ -52,8 +51,8 @@ export async function createWireSession({
   getAccessToken?: () => string | undefined
   permissionMode?: string
 }): Promise<string | null> {
-  const { getZyAIOAuthTokens } = await import('../utils/auth.js')
-  const { getOrganizationUUID } = await import('../utils/auth.js')
+  const { getZyAIOAuthTokens } = await import('../services/auth/auth.js')
+  const { getOrganizationUUID } = await import('../services/auth/auth.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
   const { getOAuthHeaders } = await import('../services/teleport/api.js')
   const { parseGitHubRepository } = await import('../utils/detectRepository.js')
@@ -188,8 +187,8 @@ export async function getWireSession(
   sessionId: string,
   opts?: { baseUrl?: string; getAccessToken?: () => string | undefined },
 ): Promise<{ environment_id?: string; title?: string } | null> {
-  const { getZyAIOAuthTokens } = await import('../utils/auth.js')
-  const { getOrganizationUUID } = await import('../utils/auth.js')
+  const { getZyAIOAuthTokens } = await import('../services/auth/auth.js')
+  const { getOrganizationUUID } = await import('../services/auth/auth.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
   const { getOAuthHeaders } = await import('../services/teleport/api.js')
   const { default: axios } = await import('axios')
@@ -263,8 +262,8 @@ export async function archiveWireSession(
     timeoutMs?: number
   },
 ): Promise<void> {
-  const { getZyAIOAuthTokens } = await import('../utils/auth.js')
-  const { getOrganizationUUID } = await import('../utils/auth.js')
+  const { getZyAIOAuthTokens } = await import('../services/auth/auth.js')
+  const { getOrganizationUUID } = await import('../services/auth/auth.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
   const { getOAuthHeaders } = await import('../services/teleport/api.js')
   const { default: axios } = await import('axios')
@@ -323,8 +322,8 @@ export async function updateWireSessionTitle(
   title: string,
   opts?: { baseUrl?: string; getAccessToken?: () => string | undefined },
 ): Promise<void> {
-  const { getZyAIOAuthTokens } = await import('../utils/auth.js')
-  const { getOrganizationUUID } = await import('../utils/auth.js')
+  const { getZyAIOAuthTokens } = await import('../services/auth/auth.js')
+  const { getOrganizationUUID } = await import('../services/auth/auth.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
   const { getOAuthHeaders } = await import('../services/teleport/api.js')
   const { default: axios } = await import('axios')

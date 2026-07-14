@@ -1,7 +1,6 @@
 import axios from 'axios'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
 import type { WorkSecret } from './types.js'
-
 /** Decode a base64url-encoded work secret and validate its version. */
 export function decodeWorkSecret(secret: string): WorkSecret {
   const json = Buffer.from(secret, 'base64url').toString('utf-8')

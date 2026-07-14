@@ -7,7 +7,6 @@ import { getWorktreePathsPortable } from '../utils/getWorktreePathsPortable.js'
 import { lazySchema } from '../utils/lazySchema.js'
 import { getProjectsDir, sanitizePath } from '../utils/sessionStoragePortable.js'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
-
 /**
  * Upper bound on worktree fanout. git worktree list is naturally bounded
  * (50 is a LOT), but this caps the parallel stat() burst and guards against

@@ -1,7 +1,6 @@
 import { logForDebugging } from '../utils/debug.js'
 import { WireFatalError } from './bridgeApi.js'
 import type { WireApiClient } from './types.js'
-
 /**
  * Ant-only fault injection for manually testing bridge recovery paths.
  *

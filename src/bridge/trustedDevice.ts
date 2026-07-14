@@ -11,7 +11,6 @@ import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { isEssentialTrafficOnly } from '../utils/privacyLevel.js'
 import { jsonStringify } from '../utils/slowOperations.js'
-
 /**
  * Trusted device token source for bridge (remote-control) sessions.
  *
@@ -120,7 +119,8 @@ export async function enrollTrustedDevice(): Promise<void> {
     // (config → file → permissions → sessionStorage → commands). Daemon callers
     // of getTrustedDeviceToken() don't need this; only /login does.
     /* eslint-disable @typescript-eslint/no-require-imports */
-    const { getZyAIOAuthTokens } = require('../utils/auth.js') as typeof import('../utils/auth.js')
+    const { getZyAIOAuthTokens } =
+      require('../services/auth/auth.js') as typeof import('../services/auth/auth.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
     const accessToken = getZyAIOAuthTokens()?.accessToken
     if (!accessToken) {

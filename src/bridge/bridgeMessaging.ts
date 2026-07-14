@@ -20,10 +20,9 @@ import { normalizeControlMessageKeys } from '../utils/controlMessageCompat.js'
 import { logForDebugging } from '../utils/debug.js'
 import { stripDisplayTagsAllowEmpty } from '../utils/displayTags.js'
 import { errorMessage } from '../utils/errors.js'
-import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
+import type { PermissionMode } from '../services/permissions/permissionMode.js'
 import { jsonParse } from '../utils/slowOperations.js'
 import type { ReplWireTransport } from './replBridgeTransport.js'
-
 // ─── Type guards ─────────────────────────────────────────────────────────────
 
 /** Type predicate for parsed WebSocket messages. WireMessage is a

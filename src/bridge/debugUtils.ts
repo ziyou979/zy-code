@@ -5,7 +5,6 @@ import {
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { jsonStringify } from '../utils/slowOperations.js'
-
 const DEBUG_MSG_LIMIT = 2000
 
 const SECRET_FIELD_NAMES = [

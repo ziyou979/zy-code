@@ -8,7 +8,6 @@ import {
   type WireConfig,
   type WorkResponse,
 } from './types.js'
-
 type WireApiDeps = {
   baseUrl: string
   getAccessToken: () => string | undefined

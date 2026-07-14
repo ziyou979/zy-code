@@ -2,7 +2,6 @@ import { z } from 'zod/v4'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { lazySchema } from '../utils/lazySchema.js'
 import { DEFAULT_POLL_CONFIG, type PollIntervalConfig } from './pollConfigDefaults.js'
-
 // .min(100) on the seek-work intervals restores the old Math.max(..., 100)
 // defense-in-depth floor against fat-fingered GrowthBook values. Unlike a
 // clamp, Zod rejects the whole object on violation — a config with one bad

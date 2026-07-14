@@ -1,7 +1,6 @@
 import { updateSessionWireId } from '../utils/concurrentSessions.js'
 import type { ReplWireHandle } from './replBridge.js'
 import { toCompatSessionId } from './sessionIdCompat.js'
-
 /**
  * Global pointer to the active REPL bridge handle, so callers outside
  * useReplBridge's React tree (tools, slash commands) can invoke handle methods

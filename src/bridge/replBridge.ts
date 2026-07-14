@@ -27,7 +27,7 @@ import { decodeWorkSecret, buildSdkUrl, buildCCRv2SdkUrl, sameSessionId } from '
 import { toCompatSessionId, toInfraSessionId } from './sessionIdCompat.js'
 import { updateSessionWireId } from '../utils/concurrentSessions.js'
 import { getTrustedDeviceToken } from './trustedDevice.js'
-import { HybridTransport } from '../cli/transports/HybridTransport.js'
+import { HybridTransport } from '../cli/transports/hybridTransport.js'
 import {
   type ReplWireTransport,
   createV1ReplTransport,
@@ -39,7 +39,7 @@ import { validateWireId } from './bridgeApi.js'
 import { describeAxiosError, extractHttpStatus, logWireSkip } from './debugUtils.js'
 import type { Message } from '../types/message.js'
 import type { WireMessage } from '../types/index.js'
-import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
+import type { PermissionMode } from '../services/permissions/permissionMode.js'
 import type { WireControlRequest, WireControlResponse } from '../types/wire/control.js'
 import { createCapacityWake, type CapacitySignal } from './capacityWake.js'
 import { FlushGate } from './flushGate.js'
@@ -52,7 +52,6 @@ import {
   clearWireDebugHandle,
   injectWireFault,
 } from './bridgeDebug.js'
-
 export type ReplWireHandle = {
   bridgeSessionId: string
   environmentId: string
@@ -123,7 +122,7 @@ export type WireCoreParams = {
   /**
    * Converts internal Message[] → WireMessage[] for writeMessages() and the
    * initial-flush/drain paths. REPL wrapper passes the real toSDKMessages
-   * from utils/messages/mappers.ts. Daemon callers that only use
+   * from services/messages/mappers.ts. Daemon callers that only use
    * writeSdkMessages() and pass no initialMessages can omit this — those
    * code paths are unreachable.
    *

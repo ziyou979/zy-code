@@ -3,7 +3,6 @@ import { getFeatureValue_DEPRECATED } from '../services/analytics/growthbook.js'
 import { lazySchema } from '../utils/lazySchema.js'
 import { lt } from '../utils/semver.js'
 import { isEnvLessWireEnabled } from './bridgeEnabled.js'
-
 export type EnvLessWireConfig = {
   // withRetry — init-phase backoff (createSession, POST /bridge, recovery /bridge)
   init_retry_max_attempts: number

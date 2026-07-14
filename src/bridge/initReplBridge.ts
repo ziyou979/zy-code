@@ -15,7 +15,7 @@
 
 import { feature } from 'bun:bundle'
 import { hostname } from 'node:os'
-import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
+import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import {
   getAPIProvider,
@@ -31,21 +31,21 @@ import {
   getOrganizationUUID,
   getZyAIOAuthTokens,
   handleOAuth401Error,
-} from '../utils/auth.js'
-import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
+} from '../services/auth/auth.js'
+import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
 import { logForDebugging } from '../utils/debug.js'
 import { stripDisplayTagsAllowEmpty } from '../utils/displayTags.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
 import { getBranch, getRemoteUrl } from '../utils/git.js'
-import { toSDKMessages } from '../utils/messages/mappers.js'
+import { toSDKMessages } from '../services/messages/mappers.js'
 import {
   getContentText,
   getMessagesAfterCompactBoundary,
   isSyntheticMessage,
-} from '../utils/messages.js'
-import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
-import { getCurrentSessionTitle, saveAiGeneratedTitle } from '../utils/sessionStorage.js'
+} from '../services/messages/index.js'
+import type { PermissionMode } from '../services/permissions/permissionMode.js'
+import { getCurrentSessionTitle, saveAiGeneratedTitle } from '../services/sessionStorage.js'
 import { extractConversationText, generateSessionTitle } from '../utils/sessionTitle.js'
 import { generateShortWordSlug } from '../utils/words.js'
 import { getWireAccessToken, getWireBaseUrl, getWireTokenOverride } from './bridgeConfig.js'
@@ -63,7 +63,6 @@ import type { ReplWireHandle, WireState } from './replBridge.js'
 import { initBridgeCore } from './replBridge.js'
 import { setCseShimGate } from './sessionIdCompat.js'
 import type { WireWorkerType } from './types.js'
-
 export type InitWireOptions = {
   onInboundMessage?: (msg: WireMessage) => void | Promise<void>
   onPermissionResponse?: (response: WireControlResponse) => void

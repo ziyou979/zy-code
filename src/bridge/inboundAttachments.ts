@@ -15,13 +15,12 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import axios from 'axios'
 import { z } from 'zod/v4'
-import { getSessionId } from '../bootstrap/state.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { UserContentBlock } from '../types/llm.js'
 import { logForDebugging } from '../utils/debug.js'
 import { getZyConfigHomeDir } from '../utils/envUtils.js'
 import { lazySchema } from '../utils/lazySchema.js'
 import { getWireAccessToken, getWireBaseUrl } from './bridgeConfig.js'
-
 const DOWNLOAD_TIMEOUT_MS = 30_000
 
 function debug(msg: string): void {

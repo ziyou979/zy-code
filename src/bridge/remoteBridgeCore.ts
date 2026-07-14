@@ -60,8 +60,7 @@ import type { ReplWireHandle, WireState } from './replBridge.js'
 import type { Message } from '../types/message.js'
 import type { WireMessage } from '../types/index.js'
 import type { WireControlRequest, WireControlResponse } from '../types/wire/control.js'
-import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
-
+import type { PermissionMode } from '../services/permissions/permissionMode.js'
 const ANTHROPIC_VERSION = '2023-06-01'
 
 // Telemetry discriminator for ws_connected. 'initial' is the default and
@@ -868,7 +867,6 @@ import {
   type RemoteCredentials,
 } from './codeSessionApi.js'
 import { getWireBaseUrlOverride } from './bridgeConfig.js'
-
 // CLI-side wrapper that applies the CLAUDE_BRIDGE_BASE_URL dev override and
 // injects the trusted-device token (both are env/GrowthBook reads that the
 // SDK-facing codeSessionApi.ts export must stay free of).

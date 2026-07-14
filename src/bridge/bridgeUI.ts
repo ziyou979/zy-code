@@ -22,7 +22,6 @@ import {
   wrapWithOsc8Link,
 } from './bridgeStatusUtil.js'
 import type { SessionActivity, SpawnMode, WireConfig, WireLogger } from './types.js'
-
 const QR_OPTIONS = {
   type: 'utf8' as const,
   errorCorrectionLevel: 'L' as const,

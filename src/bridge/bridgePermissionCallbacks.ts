@@ -1,5 +1,4 @@
-import type { PermissionUpdate } from '../utils/permissions/PermissionUpdateSchema.js'
-
+import type { PermissionUpdate } from '../services/permissions/permissionUpdateSchema.js'
 type WirePermissionResponse = {
   behavior: 'allow' | 'deny'
   updatedInput?: Record<string, unknown>

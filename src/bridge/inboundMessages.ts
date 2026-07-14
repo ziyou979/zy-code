@@ -1,7 +1,6 @@
 import type { UUID } from 'node:crypto'
 import type { WireMessage } from '../types/index.js'
 import type { UserContentBlock } from '../types/llm.js'
-
 /**
  * 从 bridge 入站的 user 消息中提取 content 与 uuid 用于 enqueue。
  * 支持字符串 content 和 UserContentBlock[]（含图片等多模态）。
