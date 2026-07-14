@@ -3,7 +3,7 @@
  */
 import { describe, expect, test } from 'bun:test'
 import { getBlockedPeekSummary } from '../../../src/components/agents/AgentSessionView.js'
-import type { InProcessTeammateTaskState } from '../../../src/tasks/InProcessTeammateTask/types.js'
+import type { InProcessTeammateTaskState } from '../../../src/tasks/in-process-teammate-task/types.js'
 
 function makeBlockedTask(
   overrides: Partial<InProcessTeammateTaskState> = {},

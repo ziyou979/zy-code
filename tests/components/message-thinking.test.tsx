@@ -5,7 +5,7 @@ import type { Frame } from '../../src/ink/frame.js'
 import Ink from '../../src/ink/ink.js'
 import { charInCellAt } from '../../src/ink/screen.js'
 import type { AssistantMessage } from '../../src/types/message.js'
-import { EMPTY_LOOKUPS } from '../../src/utils/messages.js'
+import { EMPTY_LOOKUPS } from '../../src/services/messages/index.js'
 
 function makeStdout(cols: number, rows: number): NodeJS.WriteStream {
   const chunks: Buffer[] = []

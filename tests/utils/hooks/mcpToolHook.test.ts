@@ -33,7 +33,7 @@ beforeAll(async () => {
     },
   }))
   ;({ HookCommandSchema } = await import('../../../src/schemas/hooks.js'))
-  ;({ execMcpToolHook } = await import('../../../src/utils/hooks/execMcpToolHook.js'))
+  ;({ execMcpToolHook } = await import('../../../src/services/hooks/execMcpToolHook.js'))
 })
 
 const hook = { type: 'mcp_tool' as const, server: 'srv', tool: 'lint', args: { strict: true } }

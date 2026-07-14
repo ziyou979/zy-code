@@ -98,7 +98,7 @@ describe('normalizeMessagesForAPI — 核心行为', () => {
   afterEach(() => mock.restore())
 
   test('过滤 progress 消息', async () => {
-    const { normalizeMessagesForAPI } = await import('../../../src/utils/messages/api.js')
+    const { normalizeMessagesForAPI } = await import('../../../src/services/messages/api.js')
     const messages = [
       makeUserMsg('hello'),
       makeProgressMsg(),
@@ -112,7 +112,7 @@ describe('normalizeMessagesForAPI — 核心行为', () => {
   })
 
   test('过滤 virtual 消息', async () => {
-    const { normalizeMessagesForAPI } = await import('../../../src/utils/messages/api.js')
+    const { normalizeMessagesForAPI } = await import('../../../src/services/messages/api.js')
     const messages = [
       makeUserMsg('real'),
       makeUserMsg('virtual', { isVirtual: true }),
@@ -134,7 +134,7 @@ describe('normalizeMessagesForAPI — 核心行为', () => {
   })
 
   test('合并连续 user 消息', async () => {
-    const { normalizeMessagesForAPI } = await import('../../../src/utils/messages/api.js')
+    const { normalizeMessagesForAPI } = await import('../../../src/services/messages/api.js')
     const messages = [
       makeUserMsg('first'),
       makeUserMsg('second'),
@@ -149,7 +149,7 @@ describe('normalizeMessagesForAPI — 核心行为', () => {
   })
 
   test('过滤非 local_command 的 system 消息', async () => {
-    const { normalizeMessagesForAPI } = await import('../../../src/utils/messages/api.js')
+    const { normalizeMessagesForAPI } = await import('../../../src/services/messages/api.js')
     const messages = [
       makeUserMsg('prompt'),
       {
@@ -171,7 +171,7 @@ describe('normalizeMessagesForAPI — 核心行为', () => {
   })
 
   test('同 message.id 的 assistant 消息合并', async () => {
-    const { normalizeMessagesForAPI } = await import('../../../src/utils/messages/api.js')
+    const { normalizeMessagesForAPI } = await import('../../../src/services/messages/api.js')
     const messages = [
       makeUserMsg('prompt'),
       makeAssistantMsg([{ type: 'text', text: 'part 1' }], { messageId: 'same-id' }),
@@ -188,13 +188,13 @@ describe('normalizeMessagesForAPI — 核心行为', () => {
   })
 
   test('输入空数组 → 输出空数组', async () => {
-    const { normalizeMessagesForAPI } = await import('../../../src/utils/messages/api.js')
+    const { normalizeMessagesForAPI } = await import('../../../src/services/messages/api.js')
     const result = normalizeMessagesForAPI([])
     expect(result).toEqual([])
   })
 
   test('结果中 user 和 assistant 交替', async () => {
-    const { normalizeMessagesForAPI } = await import('../../../src/utils/messages/api.js')
+    const { normalizeMessagesForAPI } = await import('../../../src/services/messages/api.js')
     const messages = [
       makeUserMsg('a'),
       makeUserMsg('b'),

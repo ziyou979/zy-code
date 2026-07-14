@@ -21,7 +21,7 @@
 - ~~root.ts 瘦身~~ → 3409→2443 行（-28%），`options: any` 类型化为 `RootActionOptions`（70 字段），20 处 `as {}` 断言清除，新增 `assembly/{resumeDispatch,assistantChatMode,headlessMode}.ts` 3 个模块
 - ~~AGENTS.md 规约修复~~ → 20 处英文注释、`as any`、`Array.isArray` 守卫、`feature()` 宏
 - ~~扩展点诊断视图~~ → `src/services/diagnostics/extensionInventory.ts`，`/status` Status tab 展示 commands/tools/plugins/skills/mcp 扩展数量
-- ~~compact/contextCollapse 合并~~ → `contextCollapse/` 移入 `compact/contextCollapse/`，原位 barrel re-export
+- ~~compact/context-collapse 合并~~ → `contextCollapse/` 移入 `compact/context-collapse/`，原位 barrel re-export
 - ~~attachmentApi.ts 拆分~~ → `ensureToolResultPairing`（300 行）提取至 `attachmentApi/toolResultPairing.ts`，下游直接引用新位置，原文件 1223→889 行
 
 ---

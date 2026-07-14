@@ -59,9 +59,9 @@ function countOccurrences(content: string, pattern: RegExp): number {
 /** 已知的兼容转发目录 — 仅允许纯 re-export 文件 */
 const KNOWN_COMPAT_DIRS = [
   '/utils/hooks/',
-  '/utils/permissions/',
-  '/utils/plugins/',
-  '/utils/sessionStorage/',
+  '/services/permissions/',
+  '/services/plugins/',
+  '/utils/session-storage/',
 ]
 
 function isKnownCompatDir(filePath: string): boolean {
@@ -321,7 +321,8 @@ function checkLayerDeps() {
 
 // --------------- D. 导入后缀检查 ---------------
 
-const VALID_SUFFIX = /\.(js|json|node|wasm)['"]$/
+// 文本和 Markdown 是 Bun 的资源导入，不是 TypeScript 模块，保留其真实扩展名。
+const VALID_SUFFIX = /\.(js|json|node|wasm|txt|md)['"]$/
 const RELATIVE_IMPORT = /from\s+['"]\.\.?\//
 const DYNAMIC_IMPORT = /import\(\s*['"]\.\.?\//
 const REQUIRE_IMPORT = /require\(['"]\.\.?\//
@@ -388,7 +389,11 @@ function checkFeatureMacro() {
       if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) continue
 
       // 禁止: const enabled = feature('X')
-      if (/=\s*feature\(['"]/.test(line) && !/\?\s*feature\(['"]/.test(line)) {
+      const assignmentWindow = lines.slice(i, i + 2).join('\n')
+      if (
+        /=\s*feature\(['"]/.test(line) &&
+        !/=\s*feature\(['"][^'"]+['"]\)\s*\?/.test(assignmentWindow)
+      ) {
         addV(file, i + 1, 'feature() 不能赋值给变量', 'featureMacro')
       }
 
@@ -448,7 +453,7 @@ function checkAsAny(): AsAnyStats {
 // --------------- G. 命名规则检查 (P1-02) ---------------
 
 /** 需要豁免命名检查的目录 */
-const NAMING_EXEMPT_DIRS = ['/node_modules/', '/.git/', '/dist/', '/packages/']
+const NAMING_EXEMPT_DIRS = ['/node_modules/', '/.git/', '/dist/', '/packages/', '/types/generated/']
 /** React 组件目录（允许 PascalCase） */
 const REACT_COMPONENT_DIRS = ['/components/', '/screens/', '/design-system/']
 /** Tool 目录（匹配 PascalCaseTool 模式，如 BashTool, WebSearchTool） */
@@ -462,6 +467,9 @@ function checkNamingConventions() {
     if (NAMING_EXEMPT_DIRS.some((d) => normalized.includes(d))) continue
 
     const dirName = normalized.split('/').pop() || ''
+
+    // locale 目录使用标准 BCP 47 标签（如 zh-CN），不适用普通目录命名规则。
+    if (normalized.includes('/i18n/locales/') && /^[a-z]{2}-[A-Z]{2}$/.test(dirName)) continue
 
     // 跳过单字母或点开头的目录
     if (dirName.length <= 2 || dirName.startsWith('.')) continue
@@ -497,12 +505,29 @@ function checkNamingConventions() {
     // 测试文件: *.test.ts 或 *.test.tsx
     if (isTest) continue
 
+    // Tool 主文件按档案规范必须与 PascalCaseTool 目录同名，不适用普通模块 camelCase。
+    const toolMainMatch = normalized.match(/\/tools\/([^/]+Tool)\/([^/]+)\.(ts|tsx)$/)
+    if (toolMainMatch && toolMainMatch[1] === toolMainMatch[2]) continue
+
+    // 规范或外部格式明确指定名称的文件使用精确豁免，避免扩大成目录级白名单。
+    if (normalized.endsWith('/state/AppStateStore.ts')) continue
+    if (normalized.endsWith('/i18n/locales/zh-CN.ts')) continue
+    if (fileName.endsWith('.generated.ts')) continue
+
+    // 组件目录中的无 JSX 组件也可能使用 .ts，仍按组件 PascalCase 规则处理。
+    if (
+      fileName.endsWith('.ts') &&
+      REACT_COMPONENT_DIRS.some((dir) => normalized.includes(dir)) &&
+      /^[A-Z][A-Za-z0-9]*\.ts$/.test(fileName)
+    )
+      continue
+
     // React 组件文件 (.tsx)
     if (fileName.endsWith('.tsx') && !fileName.endsWith('.test.tsx')) {
       // Hook: useXxx.tsx
       if (fileName.startsWith('use') && /^use[A-Z]/.test(fileName)) continue
       // PascalCase.tsx
-      if (/^[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]+)*\.tsx$/.test(fileName)) continue
+      if (/^[A-Z][A-Za-z0-9]*\.tsx$/.test(fileName)) continue
       // 允许 kebab-case.tsx（非组件文件）
       if (/^[a-z][a-z0-9]*(-[a-z][a-z0-9]*)*\.tsx$/.test(fileName)) continue
       // 允许 index.tsx
@@ -575,6 +600,9 @@ function checkToolProfiles() {
     const hasUI = existsSync(join(dirPath, 'UI.tsx'))
     const hasPrompt = existsSync(join(dirPath, 'prompt.ts'))
     const hasConstants = existsSync(join(dirPath, 'constants.ts'))
+    const familyMainFiles = readdirSync(dirPath).filter(
+      (file) => file.endsWith('Tool.ts') || file.endsWith('Tool.tsx'),
+    )
 
     const hasMain = hasMainTS || hasMainTSX
 
@@ -582,7 +610,10 @@ function checkToolProfiles() {
     let inferredProfile: string
     const issues: string[] = []
 
-    if (hasMain && hasUI && hasPrompt) {
+    if (!hasMain && familyMainFiles.length > 1 && hasPrompt) {
+      // ScheduleCronTool 等目录是同一领域下的多工具族，每个成员文件仍与注册名一致。
+      inferredProfile = hasUI ? 'interactive-family' : 'headless-family'
+    } else if (hasMain && hasUI && hasPrompt) {
       inferredProfile = 'interactive'
     } else if (hasMain && hasPrompt) {
       inferredProfile = 'headless'

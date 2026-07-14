@@ -1,7 +1,7 @@
 /**
  * normalizeMessages 行为测试 — 覆盖消息归一化、合并、过滤逻辑。
  *
- * 覆盖 src/utils/messages/normalize.ts 中的核心函数：
+ * 覆盖 src/services/messages/normalize.ts 中的核心函数：
  * - normalizeMessages: string→block 转换、多 block 拆分、UUID 派生
  * - mergeUserMessages: 文本接缝处理
  * - mergeAssistantMessages: 内容块合并
@@ -95,7 +95,7 @@ describe('normalizeMessages', () => {
   // ====================================================================
   describe('normalizeMessages — 用户消息', () => {
     test('string content → TextBlock 转换', async () => {
-      const { normalizeMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { normalizeMessages } = await import('../../../src/services/messages/normalize.js')
       const msgs = [makeUserMsg('Hello world')]
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result: any[] = normalizeMessages(msgs as any)
@@ -108,7 +108,7 @@ describe('normalizeMessages', () => {
     })
 
     test('单 block 用户消息 — 保持不拆分', async () => {
-      const { normalizeMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { normalizeMessages } = await import('../../../src/services/messages/normalize.js')
       const blocks = [{ type: 'text', text: 'single block' }]
       const msgs = [makeUserMsg(blocks)]
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
@@ -122,7 +122,7 @@ describe('normalizeMessages', () => {
     })
 
     test('多 block 用户消息 — 拆分为多条单 block 消息', async () => {
-      const { normalizeMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { normalizeMessages } = await import('../../../src/services/messages/normalize.js')
       const blocks = [
         { type: 'text', text: 'block 1' },
         { type: 'text', text: 'block 2' },
@@ -147,7 +147,7 @@ describe('normalizeMessages', () => {
     })
 
     test('多 block 后所有后续消息 UUID 都派生', async () => {
-      const { normalizeMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { normalizeMessages } = await import('../../../src/services/messages/normalize.js')
       const multiBlock = makeUserMsg([
         { type: 'text', text: 'a' },
         { type: 'text', text: 'b' },
@@ -166,7 +166,7 @@ describe('normalizeMessages', () => {
     })
 
     test('image block 的 imagePasteId 映射', async () => {
-      const { normalizeMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { normalizeMessages } = await import('../../../src/services/messages/normalize.js')
       const blocks = [
         { type: 'image', mimeType: 'image/png', data: 'base64...' },
         { type: 'text', text: 'caption' },
@@ -185,7 +185,7 @@ describe('normalizeMessages', () => {
     })
 
     test('system/progress/attachment 消息透传', async () => {
-      const { normalizeMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { normalizeMessages } = await import('../../../src/services/messages/normalize.js')
       const systemMsg = {
         type: 'system' as const,
         subtype: 'informational' as const,
@@ -214,7 +214,7 @@ describe('normalizeMessages', () => {
 
   describe('normalizeMessages — 助手消息', () => {
     test('多 block 助手消息 — 拆分为多条单 block 消息', async () => {
-      const { normalizeMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { normalizeMessages } = await import('../../../src/services/messages/normalize.js')
       const blocks = [
         { type: 'text', text: 'response' },
         { type: 'tool_call', id: 'tc-1', name: 'Bash', input: {} },
@@ -231,7 +231,7 @@ describe('normalizeMessages', () => {
     })
 
     test('非数组 content → 空数组', async () => {
-      const { normalizeMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { normalizeMessages } = await import('../../../src/services/messages/normalize.js')
       const msgs = [{ ...makeAssistantMsg([]), message: { role: 'assistant', content: 'string' } }]
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const result = normalizeMessages(msgs as any)
@@ -245,7 +245,7 @@ describe('normalizeMessages', () => {
   // ====================================================================
   describe('mergeUserMessages', () => {
     test('两个 string 消息 — 接缝处加换行', async () => {
-      const { mergeUserMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { mergeUserMessages } = await import('../../../src/services/messages/normalize.js')
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const a = makeUserMsg('first') as any
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
@@ -261,7 +261,7 @@ describe('normalizeMessages', () => {
     })
 
     test('保留非 meta 消息的 uuid', async () => {
-      const { mergeUserMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { mergeUserMessages } = await import('../../../src/services/messages/normalize.js')
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const a = makeUserMsg('a', { uuid: 'uuid-a' }) as any
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
@@ -272,7 +272,7 @@ describe('normalizeMessages', () => {
     })
 
     test('meta 消息使用后续 uuid', async () => {
-      const { mergeUserMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { mergeUserMessages } = await import('../../../src/services/messages/normalize.js')
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const a = makeUserMsg('a', { uuid: 'uuid-a', isMeta: true }) as any
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
@@ -288,7 +288,7 @@ describe('normalizeMessages', () => {
   // ====================================================================
   describe('mergeAssistantMessages', () => {
     test('合并两个助手消息的 content', async () => {
-      const { mergeAssistantMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { mergeAssistantMessages } = await import('../../../src/services/messages/normalize.js')
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       const a = makeAssistantMsg([{ type: 'text', text: 'part 1' }]) as any
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
@@ -308,20 +308,20 @@ describe('normalizeMessages', () => {
   // ====================================================================
   describe('isToolResultMessage', () => {
     test('包含 tool_result block 的 user 消息 → true', async () => {
-      const { isToolResultMessage } = await import('../../../src/utils/messages/normalize.js')
+      const { isToolResultMessage } = await import('../../../src/services/messages/normalize.js')
       const msg = makeUserMsg([{ type: 'tool_result', toolCallId: 'tc-1', content: 'result' }])
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect(isToolResultMessage(msg as any)).toBe(true)
     })
 
     test('string content → false', async () => {
-      const { isToolResultMessage } = await import('../../../src/utils/messages/normalize.js')
+      const { isToolResultMessage } = await import('../../../src/services/messages/normalize.js')
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect(isToolResultMessage(makeUserMsg('hello') as any)).toBe(false)
     })
 
     test('assistant 消息 → false', async () => {
-      const { isToolResultMessage } = await import('../../../src/utils/messages/normalize.js')
+      const { isToolResultMessage } = await import('../../../src/services/messages/normalize.js')
       const msg = makeAssistantMsg([{ type: 'text', text: 'hi' }])
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
       expect(isToolResultMessage(msg as any)).toBe(false)
@@ -333,7 +333,7 @@ describe('normalizeMessages', () => {
   // ====================================================================
   describe('smooshIntoToolResult', () => {
     test('空 blocks → 原样返回', async () => {
-      const { smooshIntoToolResult } = await import('../../../src/utils/messages/normalize.js')
+      const { smooshIntoToolResult } = await import('../../../src/services/messages/normalize.js')
       const tr = { type: 'tool_result' as const, toolCallId: 'tc-1', content: 'existing' }
       const result = smooshIntoToolResult(tr, [])
 
@@ -341,7 +341,7 @@ describe('normalizeMessages', () => {
     })
 
     test('string content + 全 text blocks → 字符串拼接', async () => {
-      const { smooshIntoToolResult } = await import('../../../src/utils/messages/normalize.js')
+      const { smooshIntoToolResult } = await import('../../../src/services/messages/normalize.js')
       const tr = { type: 'tool_result' as const, toolCallId: 'tc-1', content: 'existing' }
       const blocks = [{ type: 'text' as const, text: 'added' }]
       const result = smooshIntoToolResult(tr, blocks)
@@ -350,7 +350,7 @@ describe('normalizeMessages', () => {
     })
 
     test('isError tool_result 过滤非 text blocks', async () => {
-      const { smooshIntoToolResult } = await import('../../../src/utils/messages/normalize.js')
+      const { smooshIntoToolResult } = await import('../../../src/services/messages/normalize.js')
       const tr = {
         type: 'tool_result' as const,
         toolCallId: 'tc-1',
@@ -373,7 +373,7 @@ describe('normalizeMessages', () => {
   describe('filterTrailingThinkingFromLastAssistant', () => {
     test('最后一条 assistant 以 thinking 结尾 → 移除尾部 thinking', async () => {
       const { filterTrailingThinkingFromLastAssistant } = await import(
-        '../../../src/utils/messages/normalize.js'
+        '../../../src/services/messages/normalize.js'
       )
       const msgs = [
         makeAssistantMsg([
@@ -393,7 +393,7 @@ describe('normalizeMessages', () => {
 
     test('最后一条不是 assistant → 不变', async () => {
       const { filterTrailingThinkingFromLastAssistant } = await import(
-        '../../../src/utils/messages/normalize.js'
+        '../../../src/services/messages/normalize.js'
       )
       const msgs = [makeUserMsg('hello')]
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
@@ -410,7 +410,7 @@ describe('normalizeMessages', () => {
   describe('filterWhitespaceOnlyAssistantMessages', () => {
     test('仅含空白 text 的 assistant → 过滤', async () => {
       const { filterWhitespaceOnlyAssistantMessages } = await import(
-        '../../../src/utils/messages/normalize.js'
+        '../../../src/services/messages/normalize.js'
       )
       const msgs = [makeAssistantMsg([{ type: 'text', text: '   \n\n  ' }]), makeUserMsg('next')]
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
@@ -422,7 +422,7 @@ describe('normalizeMessages', () => {
 
     test('含非空白内容的 assistant → 保留', async () => {
       const { filterWhitespaceOnlyAssistantMessages } = await import(
-        '../../../src/utils/messages/normalize.js'
+        '../../../src/services/messages/normalize.js'
       )
       const msgs = [makeAssistantMsg([{ type: 'text', text: 'real content' }])]
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
@@ -438,7 +438,7 @@ describe('normalizeMessages', () => {
   describe('ensureNonEmptyAssistantContent', () => {
     test('非最后一条的空 content assistant → 填充 NO_CONTENT_MESSAGE', async () => {
       const { ensureNonEmptyAssistantContent } = await import(
-        '../../../src/utils/messages/normalize.js'
+        '../../../src/services/messages/normalize.js'
       )
       const msgs = [makeAssistantMsg([]), makeUserMsg('next')]
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
@@ -453,7 +453,7 @@ describe('normalizeMessages', () => {
 
     test('最后一条的空 content assistant → 不修改', async () => {
       const { ensureNonEmptyAssistantContent } = await import(
-        '../../../src/utils/messages/normalize.js'
+        '../../../src/services/messages/normalize.js'
       )
       const msgs = [makeUserMsg('prev'), makeAssistantMsg([])]
       // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
@@ -471,7 +471,9 @@ describe('normalizeMessages', () => {
   // ====================================================================
   describe('mergeAdjacentUserMessages', () => {
     test('连续 user 消息合并为一条', async () => {
-      const { mergeAdjacentUserMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { mergeAdjacentUserMessages } = await import(
+        '../../../src/services/messages/normalize.js'
+      )
       const msgs = [
         makeUserMsg('first'),
         makeUserMsg('second'),
@@ -486,7 +488,9 @@ describe('normalizeMessages', () => {
     })
 
     test('不相邻的 user 消息不合并', async () => {
-      const { mergeAdjacentUserMessages } = await import('../../../src/utils/messages/normalize.js')
+      const { mergeAdjacentUserMessages } = await import(
+        '../../../src/services/messages/normalize.js'
+      )
       const msgs = [
         makeUserMsg('a'),
         makeAssistantMsg([{ type: 'text', text: 'r' }]),

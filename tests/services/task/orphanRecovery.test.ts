@@ -3,34 +3,18 @@
  */
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { randomUUID } from 'node:crypto'
-import { mkdir, readdir, unlink } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { createTask, getTask, listTasks } from '../../../src/utils/tasks.js'
+import { createTestDataDirectory } from '../../_helpers/testDataDirectory.js'
 
-const testDir = join(tmpdir(), `zy-test-orphan-${randomUUID()}`)
-const originalZyHome = process.env.ZY_CONFIG_DIR
+const testData = await createTestDataDirectory('zy-test-orphan', { includeTeams: true })
 
 describe('orphanRecovery', () => {
   beforeAll(async () => {
-    process.env.ZY_CONFIG_DIR = testDir
-    process.env.ZY_TEAMS_DIR = join(testDir, 'teams')
-    await mkdir(testDir, { recursive: true })
-    await mkdir(join(testDir, 'teams'), { recursive: true })
-    if (!process.env.ZY_SESSION_ID) {
-      process.env.ZY_SESSION_ID = `test-session-${randomUUID()}`
-    }
+    await testData.setup()
   })
 
   afterAll(async () => {
-    if (originalZyHome === undefined) delete process.env.ZY_CONFIG_DIR
-    else process.env.ZY_CONFIG_DIR = originalZyHome
-    delete process.env.ZY_TEAMS_DIR
-    try {
-      const files = await readdir(testDir)
-      for (const f of files) await unlink(join(testDir, f)).catch(() => {})
-      await unlink(testDir).catch(() => {})
-    } catch {}
+    await testData.cleanup()
   })
 
   const listId = `test-orphan-${randomUUID()}`

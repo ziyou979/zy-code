@@ -11,9 +11,9 @@ import * as realAnalytics from '../../../src/services/analytics/index.js'
 import * as realAnalyticsMetadata from '../../../src/services/analytics/metadata.js'
 import * as realMcpUtils from '../../../src/services/mcp/utils.js'
 import * as realDebug from '../../../src/utils/debug.js'
-import * as realHooks from '../../../src/utils/hooks.js'
+import * as realHooks from '../../../src/services/hooks.js'
 import * as realLog from '../../../src/utils/log.js'
-import * as realPermissionResult from '../../../src/utils/permissions/PermissionResult.js'
+import * as realPermissionResult from '../../../src/services/permissions/permissionResult.js'
 import * as realToolErrors from '../../../src/utils/toolErrors.js'
 
 // checkRuleBasedPermissions 的可控返回值（每个 case 单独设置）+ 调用计数。
@@ -35,7 +35,7 @@ async function setupMocks() {
   // 在 eval 时即调用 i18n→settings，触发 settings.ts 循环初始化 TDZ。全替换 i18n 切断该链
   // （不 import 真实 i18n，避免其自身循环初始化的 TDZ）。
   mockI18n()
-  mock.module('../../../src/utils/permissions/permissions.js', () => ({
+  mock.module('../../../src/services/permissions/permissions.js', () => ({
     checkRuleBasedPermissions: async () => {
       ruleCheck.calls++
       return ruleCheck.result
@@ -52,7 +52,7 @@ async function setupMocks() {
     sanitizeToolNameForAnalytics: (n: string) => n,
   }))
   mock.module('../../../src/utils/debug.js', () => ({ ...realDebug, logForDebugging: () => {} }))
-  mock.module('../../../src/utils/hooks.js', () => ({
+  mock.module('../../../src/services/hooks.js', () => ({
     ...realHooks,
     executePostToolHooks: async function* () {},
     executePostToolUseFailureHooks: async function* () {},
@@ -60,7 +60,7 @@ async function setupMocks() {
     getPreToolHookBlockingMessage: () => undefined,
   }))
   mock.module('../../../src/utils/log.js', () => ({ ...realLog, logError: () => {} }))
-  mock.module('../../../src/utils/permissions/PermissionResult.js', () => ({
+  mock.module('../../../src/services/permissions/permissionResult.js', () => ({
     ...realPermissionResult,
     getRuleBehaviorDescription: () => '',
   }))
@@ -75,7 +75,7 @@ async function setupMocks() {
 }
 
 async function importSUT() {
-  const mod = await import('../../../src/services/tools/toolHooks.js')
+  const mod = await import('../../../src/services/tool-runtime/toolHooks.js')
   return mod.resolveHookPermissionDecision
 }
 

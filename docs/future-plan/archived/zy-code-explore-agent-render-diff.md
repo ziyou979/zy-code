@@ -117,9 +117,9 @@ zy-code 这边对应：
 
 | 文件 | 角色 |
 |---|---|
-| [`bootstrap/state.ts:281-287`](../../src/bootstrap/state.ts#L281-L287) | getter / setter |
+| 历史全局状态文件（现已按领域拆分） | getter / setter |
 | [`cli/headless/controlLoop.ts:694`](../../src/cli/headless/controlLoop.ts#L694) | Headless 模式默认开启 |
-| [`tasks/LocalAgentTask/LocalAgentTask.tsx:454`](../../src/tasks/LocalAgentTask/LocalAgentTask.tsx#L454) | `captured && getSdkAgentProgressSummariesEnabled()` 触发摘要 |
+| [`tasks/local-agent-task/LocalAgentTask.tsx:454`](../../src/tasks/local-agent-task/LocalAgentTask.tsx#L454) | `captured && getSdkAgentProgressSummariesEnabled()` 触发摘要 |
 | [`services/AgentSummary/agentSummary.ts`](../../src/services/AgentSummary/agentSummary.ts) | "1-2 句进度摘要" 生成器 |
 
 → Hook 点 + 默认开关 + 摘要生成全链路对齐。

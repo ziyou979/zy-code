@@ -5,7 +5,7 @@
  * 直接 getCurrentUsage(fullMessages) 会读到压缩前的高用量，比例不变。
  */
 import { describe, expect, test } from 'bun:test'
-import { createCompactBoundaryMessage } from '../../src/utils/messages/constructors.js'
+import { createCompactBoundaryMessage } from '../../src/services/messages/constructors.js'
 import { getCurrentUsage, getDisplayContextUsage } from '../../src/utils/tokens.js'
 import { createTestAssistantMessage, createTestUserMessage } from '../_helpers/messageFixtures.js'
 

@@ -1,4 +1,4 @@
-// AUTO-GENERATED snapshot of public API for messages.ts.
+// AUTO-GENERATED snapshot of public API for index.ts.
 // Regenerate: bun scripts/api-snapshot.ts
 // Refactor invariant: this file should NOT diff after restructuring,
 // only when exports are intentionally added/removed/renamed.
@@ -8,18 +8,18 @@ export type {
   ElicitationResponse,
   HookBlockingError,
   HookResult,
-} from './hooks.js'
+} from '../hooks.js'
 
 export type {
   ToolUseRequestMessage,
   ToolUseResultMessage,
-} from './messages/predicates.js'
+} from './predicates.js'
 
-export type { MessageLookups } from './messages/lookups.js'
+export type { MessageLookups } from './lookups.js'
 
-export type { PruneResult } from './messages/prune.js'
+export type { PruneResult } from './prune.js'
 
-export type { StreamingThinking, StreamingToolUse } from './messages/streaming.js'
+export type { StreamingThinking, StreamingToolUse } from './streaming.js'
 
 export {
   AUTO_REJECT_MESSAGE,
@@ -41,7 +41,7 @@ export {
   SYNTHETIC_MESSAGES,
   SYNTHETIC_MODEL,
   SYNTHETIC_TOOL_RESULT_PLACEHOLDER,
-} from './messages/constants.js'
+} from './constants.js'
 
 export {
   buildMessageLookups,
@@ -55,7 +55,7 @@ export {
   getToolUseIDs,
   hasUnresolvedHooks,
   hasUnresolvedHooksFromLookup,
-} from './messages/lookups.js'
+} from './lookups.js'
 
 export {
   countToolCalls,
@@ -83,7 +83,7 @@ export {
   stripPromptXMLTags,
   textForResubmit,
   withMemoryCorrectionHint,
-} from './messages/predicates.js'
+} from './predicates.js'
 
 export {
   createAgentsKilledMessage,
@@ -110,7 +110,7 @@ export {
   createWireStatusMessage,
   formatCommandInputTags,
   prepareUserContent,
-} from './messages/constructors.js'
+} from './constructors.js'
 
 export {
   ensureNonEmptyAssistantContent,
@@ -124,7 +124,7 @@ export {
   mergeUserMessagesAndToolResults,
   normalizeContentFromAPI,
   normalizeMessages,
-} from './messages/normalize.js'
+} from './normalize.js'
 
 export {
   ensureToolResultPairing,
@@ -136,7 +136,7 @@ export {
   wrapCommandText,
   wrapInSystemReminder,
   wrapMessagesInSystemReminder,
-} from './messages/api.js'
+} from './api.js'
 
 export {
   isThinkingBlock,
@@ -145,6 +145,6 @@ export {
   stripCallerFieldFromAssistantMessage,
   stripSignatureBlocks,
   stripToolReferenceBlocksFromUserMessage,
-} from './messages/prune.js'
+} from './prune.js'
 
-export { handleMessageFromStream } from './messages/streaming.js'
+export { handleMessageFromStream } from './streaming.js'

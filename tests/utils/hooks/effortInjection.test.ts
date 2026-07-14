@@ -24,7 +24,7 @@ async function setupMocks() {
     SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
   }))
   await spread('../../../src/services/model/model.js', { getMainLoopModel: () => MODEL })
-  await spread('../../../src/utils/settings/localModelCapabilities.js', {
+  await spread('../../../src/services/settings/localModelCapabilities.js', {
     getLocalModelEffortLevels: () => LEVELS,
   })
   // 不 mock providerRegistry（mock.restore 无法可靠恢复 ESM 缓存会导致跨文件污染）。
@@ -33,11 +33,13 @@ async function setupMocks() {
   await spread('../../../src/services/model/providers.js', {
     getAPIProvider: () => 'test-no-effort-provider',
   })
-  await spread('../../../src/bootstrap/state.js', {
+  await spread('../../../src/bootstrap/runtime/runtimeContext.js', {
     getSessionId: () => 's1',
     getMainThreadAgentType: () => undefined,
   })
-  await spread('../../../src/utils/sessionStorage.js', { getTranscriptPathForSession: () => '/t' })
+  await spread('../../../src/services/sessionStorage.js', {
+    getTranscriptPathForSession: () => '/t',
+  })
   await spread('../../../src/utils/cwd.js', { getCwd: () => '/cwd' })
 }
 

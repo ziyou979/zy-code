@@ -5,7 +5,7 @@ import { describe, expect, test } from 'bun:test'
 import {
   type SecurityCheckResult,
   shouldPersistManagedSettingsAfterSecurityCheck,
-} from '../../../src/services/remote-managed-settings/securityCheck.js'
+} from '../../../src/services/remote-managed-settings/securityPolicy.js'
 
 describe('shouldPersistManagedSettingsAfterSecurityCheck', () => {
   test('approved / no_check_needed 可落盘', () => {

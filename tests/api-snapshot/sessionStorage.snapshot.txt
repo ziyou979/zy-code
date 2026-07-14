@@ -3,18 +3,143 @@
 // Refactor invariant: this file should NOT diff after restructuring,
 // only when exports are intentionally added/removed/renamed.
 
-export * from '../services/sessionStorage.js'
-
 export type {
   AgentMetadata,
   RemoteAgentMetadata,
-} from '../services/sessionStorage/agentMetadata.js'
+} from './session-storage/agentMetadata.js'
 
 export type {
   SessionSidecarMetadata,
   SessionSidecarPatch,
-} from '../services/sessionStorage/sessionSidecar.js'
+} from './session-storage/sessionSidecar.js'
 
-export type { SessionLogResult } from '../services/sessionStorage/logLoading.js'
+export type { SessionLogResult } from './session-storage/logLoading.js'
 
-export type { TeamInfo } from '../services/sessionStorage/transcript.js'
+export type { TeamInfo } from './session-storage/transcript.js'
+
+export {
+  adoptResumedSessionFile,
+  appendEntryToFile,
+  flushSessionStorage,
+  hydrateFromCCRv2InternalEvents,
+  hydrateRemoteSession,
+  readFileTailSync,
+  recordAttributionSnapshot,
+  recordContentReplacement,
+  recordContextCollapseCommit,
+  recordContextCollapseSnapshot,
+  recordFileHistorySnapshot,
+  recordQueueOperation,
+  recordSidechainTranscript,
+  recordTranscript,
+  removeTranscriptMessage,
+  resetSessionFilePointer,
+} from './session-storage/transcript.js'
+
+export {
+  buildConversationChain,
+  checkResumeConsistency,
+  getFirstMeaningfulUserMessageTextContent,
+  removeExtraFields,
+} from './session-storage/chain.js'
+
+export {
+  cacheSessionTitle,
+  clearSessionMetadata,
+  getCurrentSessionAgentColor,
+  getCurrentSessionTag,
+  getCurrentSessionTitle,
+  linkSessionToPR,
+  reAppendSessionMetadata,
+  restoreSessionMetadata,
+  saveAgentColor,
+  saveAgentName,
+  saveAgentSetting,
+  saveAiGeneratedTitle,
+  saveCustomTitle,
+  saveMode,
+  saveTag,
+  saveTaskSummary,
+  saveWorktreeState,
+} from './session-storage/sessionMetadata.js'
+
+export {
+  cleanMessagesForLogging,
+  clearSessionMessagesCache,
+  doesMessageExistInSession,
+  enrichLogs,
+  extractAgentIdsFromMessages,
+  extractTeammateTranscriptsFromTasks,
+  findUnresolvedToolUse,
+  getAgentTranscript,
+  getLastSessionLog,
+  getLogByIndex,
+  getSessionFilesLite,
+  getSessionFilesWithMtime,
+  getSessionIdFromLog,
+  isLiteLog,
+  isLoggableMessage,
+  loadAllLogsFromSessionFile,
+  loadAllProjectsMessageLogs,
+  loadAllProjectsMessageLogsProgressive,
+  loadAllSubagentTranscriptsFromDisk,
+  loadFullLog,
+  loadMessageLogs,
+  loadSameRepoMessageLogs,
+  loadSameRepoMessageLogsProgressive,
+  loadSubagentTranscripts,
+  loadTranscriptFile,
+  loadTranscriptFromFile,
+  searchSessionsByCustomTitle,
+} from './session-storage/logLoading.js'
+
+export {
+  clearAgentTranscriptSubdir,
+  getAgentTranscriptPath,
+  getProjectDir,
+  getProjectsDir,
+  getSessionMetadataPath,
+  getSessionMetadataPathFromTranscriptPath,
+  getTranscriptPath,
+  getTranscriptPathForSession,
+  MAX_TRANSCRIPT_READ_BYTES,
+  setAgentTranscriptSubdir,
+} from './session-storage/paths.js'
+
+export {
+  deleteRemoteAgentMetadata,
+  listRemoteAgentMetadata,
+  readAgentMetadata,
+  readRemoteAgentMetadata,
+  writeAgentMetadata,
+  writeRemoteAgentMetadata,
+} from './session-storage/agentMetadata.js'
+
+export {
+  getNodeEnv,
+  getUserType,
+  isCustomTitleEnabled,
+} from './session-storage/env.js'
+
+export {
+  isChainParticipant,
+  isEphemeralToolProgress,
+  isTranscriptMessage,
+  sessionIdExists,
+} from './session-storage/predicates.js'
+
+export {
+  readSessionSidecar,
+  readSessionSidecarAsync,
+  updateSessionSidecar,
+  writeSessionSidecar,
+} from './session-storage/sessionSidecar.js'
+
+export {
+  resetProjectFlushStateForTesting,
+  resetProjectForTesting,
+  setInternalEventReader,
+  setInternalEventWriter,
+  setRemoteIngressUrlForTesting,
+  setSessionFileForTesting,
+} from './session-storage/project.js'

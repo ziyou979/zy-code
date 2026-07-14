@@ -10,11 +10,11 @@
 import { expect, test } from 'bun:test'
 import { existsSync, readFileSync } from 'node:fs'
 import { basename } from 'node:path'
-import { GOD_FILES, generateSnapshot } from '../../scripts/api-snapshot.js'
+import { GOD_FILES, generateSnapshot, getSnapshotName } from '../../scripts/api-snapshot.js'
 
 for (const file of GOD_FILES) {
   test(`api-snapshot ${basename(file)} matches committed baseline`, () => {
-    const snapshotPath = `tests/api-snapshot/${basename(file, '.ts')}.snapshot.txt`
+    const snapshotPath = `tests/api-snapshot/${getSnapshotName(file)}.snapshot.txt`
     if (!existsSync(snapshotPath)) {
       throw new Error(`Snapshot file ${snapshotPath} missing. Run: bun scripts/api-snapshot.ts`)
     }

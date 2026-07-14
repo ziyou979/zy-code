@@ -16,11 +16,15 @@ import ts from 'typescript'
  */
 
 export const GOD_FILES = [
-  'src/utils/hooks.ts',
-  'src/utils/sessionStorage.ts',
-  'src/utils/messages.ts',
+  'src/services/hooks.ts',
+  'src/services/sessionStorage.ts',
+  'src/services/messages/index.ts',
   'src/cli/print.ts',
 ] as const
+
+export function getSnapshotName(file: string): string {
+  return file === 'src/services/messages/index.ts' ? 'messages' : basename(file, '.ts')
+}
 
 function getModifierKinds(node: ts.Node): ts.SyntaxKind[] {
   if (!ts.canHaveModifiers(node)) return []
@@ -107,7 +111,7 @@ export function generateSnapshot(file: string): string {
 if (import.meta.main) {
   for (const file of GOD_FILES) {
     const snapshot = generateSnapshot(file)
-    const path = `tests/api-snapshot/${basename(file, '.ts')}.snapshot.txt`
+    const path = `tests/api-snapshot/${getSnapshotName(file)}.snapshot.txt`
     writeFileSync(path, snapshot)
     const count = snapshot.split('\n\n').length - 1
     console.log(`${path}: ~${count} exports`)

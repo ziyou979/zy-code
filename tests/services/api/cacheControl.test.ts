@@ -16,8 +16,8 @@ import { beforeAll, describe, expect, mock, test } from 'bun:test'
 let mockCachingMode: 'implicit' | 'explicit' | undefined
 
 beforeAll(async () => {
-  const real = await import('../../../src/utils/settings/localModelCapabilities.js')
-  mock.module('../../../src/utils/settings/localModelCapabilities.js', () => ({
+  const real = await import('../../../src/services/settings/localModelCapabilities.js')
+  mock.module('../../../src/services/settings/localModelCapabilities.js', () => ({
     ...real,
     getModelPromptCachingMode: () => mockCachingMode,
   }))

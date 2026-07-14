@@ -454,7 +454,7 @@
 #### S3-6: Monitor 工具 ✅ 已有 stub + feature flag
 
 - **来源版本**: v2.1.98
-- **当前状态**: ✅ 已有 stub（`src/tools/MonitorTool/MonitorTool.ts` 71行 + `src/tasks/MonitorMcpTask/MonitorMcpTask.ts` 48行，通过 `feature('MONITOR_TOOL')` 门控）
+- **当前状态**: ✅ 已有 stub（`src/tools/MonitorTool/MonitorTool.ts` 71行 + `src/tasks/monitor-mcp-task/MonitorMcpTask.ts` 48行，通过 `feature('MONITOR_TOOL')` 门控）
 - **改动范围**: 保持现状，完整实现待 MCP 流式事件基础设施就绪后补齐
 - **实现要点**: 后台脚本可通过 Monitor 工具流式传输事件
 - **验证检查点**:

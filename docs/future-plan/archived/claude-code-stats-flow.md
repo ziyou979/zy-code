@@ -440,7 +440,7 @@ function p33(stats, activeTimeStats, currentSubTab) {
 | `N33()` | activeTime stats | 同上 |
 | `Ct8(dateRange)` | 按 7d/30d 过滤的 stats | 用户按 `r` 切换非 all 范围且首次访问时 |
 
-> 这 4 个函数本身的实现未在本次抽取范围内展开，但从命名能推断它们最终读取本地 jsonl session 历史并聚合。zy-code 已有类似 sessionStorage 链路（`utils/sessionStorage.ts`），可基于此做适配。
+> 这 4 个函数本身的实现未在本次抽取范围内展开，但从命名能推断它们最终读取本地 jsonl session 历史并聚合。zy-code 已有类似 sessionStorage 链路（`utils/session-storage.ts`），可基于此做适配。
 
 ---
 

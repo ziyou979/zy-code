@@ -18,8 +18,8 @@
  *
  * 运行：`bun scripts/lint-no-toplevel-i18n.ts`（命中即以非零码退出）。
  */
-import { execSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { existsSync, readFileSync } from 'node:fs'
 import * as ts from 'typescript'
 
 const FN_KINDS = new Set<ts.SyntaxKind>([
@@ -96,10 +96,16 @@ function scanFile(file: string): Hit[] {
 // 列出 src 下所有受 git 跟踪的文件（含根目录直属与任意深度子目录），再按扩展名过滤。
 // 注意：不要用 `git ls-files "src/**/*.ts"` —— 其 `**/` 段要求至少一层子目录，会漏掉
 // src/ 根目录直属的 *.ts（如 src/commands.ts）。
-const files = execSync('git ls-files src', { encoding: 'utf8' })
+const files = execFileSync(
+  'git',
+  ['-c', `safe.directory=${process.cwd().replaceAll('\\', '/')}`, 'ls-files', 'src'],
+  { encoding: 'utf8' },
+)
   .trim()
   .split('\n')
   .filter((f) => f.endsWith('.ts') || f.endsWith('.tsx'))
+  // 工作区允许存在尚未提交的删除；lint 只扫描当前实际文件。
+  .filter(existsSync)
 
 const hits = files.flatMap(scanFile).sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line)
 

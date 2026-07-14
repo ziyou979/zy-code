@@ -87,7 +87,12 @@
       "WebFetch(domain:www.claudeupdates.dev)",
       "WebFetch(domain:claudekit.io)",
       "Bash(/d/nvm/nvm4w/nodejs/node_global/claude --version)",
-      "Bash(/d/nvm/nvm4w/nodejs/node_global/claude --help)"
+      "Bash(/d/nvm/nvm4w/nodejs/node_global/claude --help)",
+      "Bash(sed 's/.*from //')",
+      "Bash(while read:*)",
+      "Bash(do if:*)",
+      "Bash(then echo:*)",
+      "Bash(fi)"
     ]
   }
 }

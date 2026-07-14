@@ -29,7 +29,7 @@ import {
 import { basename, dirname, join } from 'node:path'
 import { writeFileSyncAndFlush_DEPRECATED } from '../src/utils/file.js'
 import { parseJSONL } from '../src/utils/json.js'
-import { getProjectsDir } from '../src/utils/sessionStoragePortable.js'
+import { getProjectsDir } from '../src/utils/session-storagePortable.js'
 
 const SIDECAR_VERSION = 1 as const
 const MAX_SIZE = 50 * 1024 * 1024 // 50MB,与 MAX_TRANSCRIPT_READ_BYTES 一致

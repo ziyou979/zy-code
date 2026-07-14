@@ -70,8 +70,8 @@ export async function installQueryEngineMocks(): Promise<void> {
     },
   }))
 
-  const sessionStorage = await import('../../src/utils/sessionStorage.js')
-  mock.module('src/utils/sessionStorage.js', () => ({
+  const sessionStorage = await import('../../src/services/sessionStorage.js')
+  mock.module('src/services/sessionStorage.js', () => ({
     ...sessionStorage,
     recordTranscript: async () => {},
     flushSessionStorage: async () => {},
@@ -83,16 +83,16 @@ export async function installQueryEngineMocks(): Promise<void> {
     getSlashCommandToolSkills: async () => [],
   }))
 
-  const pluginLoader = await import('../../src/utils/plugins/pluginLoader.js')
-  mock.module('src/utils/plugins/pluginLoader.js', () => ({
+  const pluginLoader = await import('../../src/services/plugins/pluginLoader.js')
+  mock.module('src/services/plugins/pluginLoader.js', () => ({
     ...pluginLoader,
     loadAllPluginsCacheOnly: async () => ({ enabled: [], disabled: [], commands: [], errors: [] }),
   }))
 
   // buildSystemInitMessage 引用了 build-time 宏 MACRO.VERSION，bun test 下不可用；
   // 用一条极简 init 消息替代（测试断言会忽略 subtype==='init'）。sdkCompatToolName 保留真实实现。
-  const systemInit = await import('../../src/utils/messages/systemInit.js')
-  mock.module('src/utils/messages/systemInit.js', () => ({
+  const systemInit = await import('../../src/services/messages/systemInit.js')
+  mock.module('src/services/messages/systemInit.js', () => ({
     ...systemInit,
     buildSystemInitMessage: () => ({
       type: 'system',
@@ -144,7 +144,7 @@ export async function runEngine(
     ...opts.processResult,
   }
 
-  const { QueryEngine } = await import('../../src/QueryEngine.js')
+  const { QueryEngine } = await import('../../src/queryEngine.js')
 
   let appState: Record<string, unknown> = {
     toolPermissionContext: {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { getProviderForModelFromSettings } from '../../../src/services/model/model.js'
-import type { SettingsJson } from '../../../src/utils/settings/types.js'
+import type { SettingsJson } from '../../../src/services/settings/types.js'
 
 describe('model provider routing', () => {
   test('顶层 models 可为不同 tier 绑定不同 provider', () => {

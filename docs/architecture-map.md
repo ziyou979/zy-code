@@ -330,8 +330,8 @@ src/
 | 原状态 | 现状态 | 做了什么 |
 |---|---|---|
 | `screens/REPL.tsx` 6200 行 | **1338 行** | 子容器抽离完成 |
-| `bootstrap/state.ts` 1700 行单体 | **按域拆分为 8 个模块** | `_core` + 6 个域模块 |
-| `utils/sessionStorage.ts` 5000 行 | **139 行** | 业务逻辑迁出 |
+| 运行时状态 | **按领域拆分为独立模块** | `bootstrap/state/` + 可注入 `runtimeContext` |
+| `utils/session-storage.ts` 5000 行 | **139 行** | 业务逻辑迁出 |
 | `cli/commands/root.ts` 无模块化 | **assembly/ 已抽出 5 个模式** | 但 root.ts 仍 3400 行，继续中 |
 
 ---

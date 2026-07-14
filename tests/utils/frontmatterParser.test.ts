@@ -17,7 +17,7 @@ import {
   parsePositiveIntFromFrontmatter,
   parseShellFrontmatter,
   splitPathInFrontmatter,
-} from '../../src/utils/frontmatterParser.js'
+} from '../../src/services/markdown/frontmatterParser.js'
 
 describe('frontmatterParser', () => {
   describe('parseFrontmatter', () => {

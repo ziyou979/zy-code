@@ -7,7 +7,7 @@ import {
   type StatusbarContext,
 } from '../../../src/components/statusbar/renderSegments.js'
 import type { ModuleConfig } from '../../../src/components/statusbar/statusbarModuleDefaults.js'
-import { createCompactBoundaryMessage } from '../../../src/utils/messages/constructors.js'
+import { createCompactBoundaryMessage } from '../../../src/services/messages/constructors.js'
 import {
   createTestAssistantMessage,
   createTestUserMessage,

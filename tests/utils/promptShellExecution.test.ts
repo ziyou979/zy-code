@@ -6,7 +6,7 @@
  * - 设置未定义或为 false 时不阻止
  */
 import { afterEach, describe, expect, test } from 'bun:test'
-import type { ToolUseContext } from '../../src/Tool.js'
+import type { ToolUseContext } from '../../src/tool.js'
 
 /**
  * 统一注册所有传递依赖模块的 mock，阻断重依赖链加载。
@@ -17,7 +17,7 @@ function setupMocks(
   settingsOverride: Record<string, unknown> = {},
 ) {
   // 直接依赖
-  mock.module('../../src/utils/settings/settings.js', () => ({
+  mock.module('../../src/services/settings/settings.js', () => ({
     getInitialSettings: () => settingsOverride,
   }))
   mock.module('../../src/utils/debug.js', () => ({
@@ -35,10 +35,10 @@ function setupMocks(
   mock.module('../../src/tools/BashTool/BashTool.js', () => ({
     BashTool: { call: async () => ({ data: { stdout: '', stderr: '', interrupted: false } }) },
   }))
-  mock.module('../../src/utils/permissions/permissions.js', () => ({
+  mock.module('../../src/services/permissions/permissions.js', () => ({
     hasPermissionsToUseTool: async () => ({ behavior: 'allow' }),
   }))
-  mock.module('../../src/utils/messages.js', () => ({
+  mock.module('../../src/services/messages/index.js', () => ({
     createAssistantMessage: () => ({ content: [] }),
   }))
   mock.module('../../src/utils/toolResultStorage.js', () => ({

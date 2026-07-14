@@ -11,7 +11,7 @@ import { describe, expect, mock, test } from 'bun:test'
 
 let autoModeGateEnabled = false
 
-mock.module('../../../src/utils/permissions/permissionSetup.js', () => ({
+mock.module('../../../src/services/permissions/permissionSetup.js', () => ({
   isAutoModeGateEnabled: () => autoModeGateEnabled,
   getAutoModeUnavailableReason: () => (autoModeGateEnabled ? undefined : 'disabled'),
   transitionPermissionMode: (_from: string, _to: string, ctx: Record<string, unknown>) => ({
@@ -24,7 +24,7 @@ mock.module('../../../src/utils/debug.js', () => ({
 }))
 
 const { getNextPermissionMode } = await import(
-  '../../../src/utils/permissions/getNextPermissionMode.js'
+  '../../../src/services/permissions/getNextPermissionMode.js'
 )
 
 function makeCtx(

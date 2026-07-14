@@ -8,7 +8,7 @@ import {
   getLocalModelCapability,
   getLocalModelCosts,
   localModelHasCapability,
-} from '../../src/utils/settings/localModelCapabilities.js'
+} from '../../src/services/settings/localModelCapabilities.js'
 
 describe('localModelCapabilities', () => {
   let previousConfigDir: string | undefined

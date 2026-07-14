@@ -3,7 +3,7 @@
  * → 消息），供 query.ts 按 toolUpdates 方式消费。mock executeHooks + hasHookForEvent。
  */
 import { beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test'
-import * as realAttachments from '../../../src/utils/attachments.js'
+import * as realAttachments from '../../../src/services/attachments/attachments.js'
 
 // executeHooks 可控产出 + gate
 let QUEUED: Array<Record<string, unknown>> = []
@@ -21,7 +21,7 @@ beforeAll(async () => {
     SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
   }))
   // 确保 createAttachmentMessage 使用真实实现，避免被其他测试文件的 mock 污染
-  mock.module('../../../src/utils/attachments.js', () => ({
+  mock.module('../../../src/services/attachments/attachments.js', () => ({
     ...realAttachments,
   }))
   mock.module('../../../src/services/hooks/executeEngine.js', () => ({

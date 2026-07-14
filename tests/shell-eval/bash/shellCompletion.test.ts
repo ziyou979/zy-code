@@ -5,7 +5,7 @@ import {
   getShellCompletions,
   parseInputContext,
 } from '../../../src/shell-eval/bash/shellCompletion.js'
-import { findSuitableShell } from '../../../src/utils/Shell.js'
+import { findSuitableShell } from '../../../src/services/shell/shell.js'
 
 describe('shellCompletion', () => {
   test('从 Windows Git Bash 路径识别 bash', () => {

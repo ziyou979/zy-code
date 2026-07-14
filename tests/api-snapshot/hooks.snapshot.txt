@@ -3,18 +3,82 @@
 // Refactor invariant: this file should NOT diff after restructuring,
 // only when exports are intentionally added/removed/renamed.
 
-export * from '../services/hooks.js'
-
 export type {
-  AggregatedHookResult,
   ConfigChangeSource,
   ElicitationHookResult,
-  ElicitationResponse,
   ElicitationResultHookResult,
-  HookBlockingError,
-  HookResult,
   InstructionsLoadReason,
   InstructionsMemoryType,
-} from '../services/hooks/types.js'
+} from './hooks/types.js'
 
-export type { HookOutsideReplResult } from '../services/hooks/outsideRepl.js'
+export type { AggregatedHookResult, ElicitationResponse, HookBlockingError, HookResult }
+
+export type { HookOutsideReplResult }
+
+export {
+  executeConfigChangeHooks,
+  executeCwdChangedHooks,
+  executeFileChangedHooks,
+  executeInstructionsLoadedHooks,
+  hasInstructionsLoadedHook,
+} from './hooks/executors/config.js'
+
+export {
+  executeElicitationHooks,
+  executeElicitationResultHooks,
+} from './hooks/executors/elicitation.js'
+
+export {
+  executeNotificationHooks,
+  executeUserPromptSubmitHooks,
+} from './hooks/executors/notification.js'
+
+export {
+  executePermissionDeniedHooks,
+  executePermissionRequestHooks,
+  executePostToolHooks,
+  executePostToolUseFailureHooks,
+  executePreToolHooks,
+} from './hooks/executors/tool.js'
+
+export {
+  executeSessionEndHooks,
+  executeSessionStartHooks,
+  executeSetupHooks,
+  executeStopFailureHooks,
+  executeStopHooks,
+} from './hooks/executors/lifecycle.js'
+
+export {
+  executeSubagentStartHooks,
+  executeTaskCompletedHooks,
+  executeTaskCreatedHooks,
+  executeTeammateIdleHooks,
+} from './hooks/executors/teammate.js'
+
+export {
+  executeWorktreeCreateHook,
+  executeWorktreeRemoveHook,
+  hasWorktreeCreateHook,
+} from './hooks/executors/worktree.js'
+
+export {
+  getPreToolHookBlockingMessage,
+  getStopHookMessage,
+  getTaskCompletedHookMessage,
+  getTaskCreatedHookMessage,
+  getTeammateIdleHookMessage,
+  getUserPromptSubmitHookBlockingMessage,
+} from './hooks/messages.js'
+
+export { createBaseHookInput, shouldSkipHookDueToTrust }
+
+export { executeFileSuggestionCommand } from './hooks/executors/fileSuggestion.js'
+
+export { executePostCompactHooks, executePreCompactHooks } from './hooks/executors/compact.js'
+
+export { getMatchingHooks }
+
+export { getSessionEndHookTimeoutMs } from './hooks/config.js'
+
+export { hasBlockingResult }

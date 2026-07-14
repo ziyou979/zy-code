@@ -244,7 +244,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
     // DeepSeek 协议：两轮之间有 tool_call 时必须回传 reasoning_content
     // 参考：https://api-docs.deepseek.com/zh-cn/guides/thinking_mode
     const { mock } = await import('bun:test')
-    mock.module('../../../src/utils/settings/localModelCapabilities.js', () => ({
+    mock.module('../../../src/services/settings/localModelCapabilities.js', () => ({
       localModelHasCapability: (model: string, cap: string) =>
         model.toLowerCase().includes('deepseek') && cap === 'thinking',
     }))
@@ -270,7 +270,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
 
   test('DeepSeek + 纯文本轮次：thinking 被丢弃', async () => {
     const { mock } = await import('bun:test')
-    mock.module('../../../src/utils/settings/localModelCapabilities.js', () => ({
+    mock.module('../../../src/services/settings/localModelCapabilities.js', () => ({
       localModelHasCapability: (model: string, cap: string) =>
         model.toLowerCase().includes('deepseek') && cap === 'thinking',
     }))
@@ -301,7 +301,7 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
       ...realProviders,
       getAPIProvider: () => 'generic',
     }))
-    mock.module('../../../src/utils/settings/localModelCapabilities.js', () => ({
+    mock.module('../../../src/services/settings/localModelCapabilities.js', () => ({
       localModelHasCapability: () => false, // 未声明 thinking 能力
     }))
     const { messagesToOpenAI: fn } = await import('../../../src/services/api/conversions/openai.js')

@@ -12,17 +12,14 @@ describe('modelStrings', () => {
     state = { modelStrings: null }
     settings = {}
 
-    mock.module('src/bootstrap/state.js', () => ({
+    mock.module('src/bootstrap/runtime/runtimeContext.js', () => ({
       getModelStrings: () => state.modelStrings,
       setModelStrings: (ms: Record<string, string>) => {
         state.modelStrings = ms
       },
-      resetModelStringsForTestingOnly: () => {
-        state.modelStrings = null
-      },
     }))
 
-    mock.module('src/utils/settings/settings.js', () => ({
+    mock.module('src/services/settings/settings.js', () => ({
       getInitialSettings: () => settings,
     }))
   })
@@ -89,7 +86,7 @@ describe('modelStrings', () => {
     })
 
     test('settings 不可用时返回原值', () => {
-      mock.module('src/utils/settings/settings.js', () => ({
+      mock.module('src/services/settings/settings.js', () => ({
         getInitialSettings: () => {
           throw new Error('Settings not loaded')
         },

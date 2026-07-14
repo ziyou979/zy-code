@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'bun:test'
-import { createFauxProvider, type FauxResponse } from 'src/services/api/__test__/fauxProvider.js'
+import {
+  createFauxProvider,
+  type FauxResponse,
+} from 'src/services/api/test-support/fauxProvider.js'
 import type { LLMStreamEvent } from 'src/types/llm.js'
 
 async function collectStream(stream: AsyncIterable<LLMStreamEvent>): Promise<LLMStreamEvent[]> {

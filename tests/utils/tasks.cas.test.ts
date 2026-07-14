@@ -3,9 +3,7 @@
  */
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { randomUUID } from 'node:crypto'
-import { mkdir, readdir, unlink } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { mkdir } from 'node:fs/promises'
 import {
   claimTask,
   createTask,
@@ -14,37 +12,21 @@ import {
   updateTask,
   updateTaskCAS,
 } from '../../src/utils/tasks.js'
+import { createTestDataDirectory } from '../_helpers/testDataDirectory.js'
 
-const testDir = join(tmpdir(), `zy-test-tasks-cas-${randomUUID()}`)
-const originalZyHome = process.env.ZY_CONFIG_DIR
-const originalHome = process.env.HOME
+const testData = await createTestDataDirectory('zy-test-tasks-cas', {
+  includeHome: true,
+  includeTeams: true,
+})
 
 describe('Task revision + CAS', () => {
   beforeAll(async () => {
-    process.env.ZY_CONFIG_DIR = testDir
-    process.env.HOME = testDir
-    await mkdir(testDir, { recursive: true })
-    await mkdir(join(testDir, 'tasks'), { recursive: true })
-    // 设置团队目录（task 系统需要此目录）
-    process.env.ZY_TEAMS_DIR = join(testDir, 'teams')
-    await mkdir(join(testDir, 'teams'), { recursive: true })
-    // 设置 session ID
-    if (!process.env.ZY_SESSION_ID) {
-      process.env.ZY_SESSION_ID = `test-session-${randomUUID()}`
-    }
+    await testData.setup()
+    await mkdir(`${testData.root}/tasks`, { recursive: true })
   })
 
   afterAll(async () => {
-    if (originalZyHome === undefined) delete process.env.ZY_CONFIG_DIR
-    else process.env.ZY_CONFIG_DIR = originalZyHome
-    if (originalHome === undefined) delete process.env.HOME
-    else process.env.HOME = originalHome
-    delete process.env.ZY_TEAMS_DIR
-    try {
-      const files = await readdir(testDir)
-      for (const f of files) await unlink(join(testDir, f)).catch(() => {})
-      await unlink(testDir).catch(() => {})
-    } catch {}
+    await testData.cleanup()
   })
 
   const testListId = `test-list-${randomUUID()}`

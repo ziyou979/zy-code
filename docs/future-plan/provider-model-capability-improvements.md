@@ -256,7 +256,7 @@ export function preprocessMessagesForAPI(
 
 ### 改进方案
 
-实现 `src/services/api/__test__/fauxProvider.ts`：
+实现 `src/services/api/test-support/fauxProvider.ts`：
 
 ```typescript
 export function createFauxProvider(responses: FauxResponse[]): {

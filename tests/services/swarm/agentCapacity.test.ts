@@ -10,7 +10,7 @@ import type { AppState } from '../../../src/state/AppState.js'
 import {
   MAX_CONCURRENT_IN_PROCESS_AGENTS,
   MAX_RESIDENT_AGENTS,
-} from '../../../src/tasks/InProcessTeammateTask/types.js'
+} from '../../../src/tasks/in-process-teammate-task/types.js'
 
 /**
  * 构造最小 mock AppState，包含指定的 in_process_teammate tasks。

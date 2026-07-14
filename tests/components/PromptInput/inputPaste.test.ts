@@ -7,7 +7,7 @@ import {
   findExistingPastedTextId,
 } from '../../../src/components/PromptInput/inputPaste.js'
 import { formatPastedTextRef } from '../../../src/history.js'
-import type { PastedContent } from '../../../src/utils/config.js'
+import type { PastedContent } from '../../../src/services/config/config.js'
 
 describe('findExistingPastedTextId', () => {
   test('按内容精确匹配已有 text paste', () => {

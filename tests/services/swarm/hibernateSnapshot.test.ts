@@ -2,9 +2,7 @@
  * hibernateSnapshot 测试：验证快照的保存、加载和删除功能。
  */
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
-import { randomUUID } from 'node:crypto'
-import { mkdir, readdir, unlink, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import {
   deleteHibernateSnapshot,
@@ -12,33 +10,18 @@ import {
   loadHibernateSnapshot,
   saveHibernateSnapshot,
 } from '../../../src/services/swarm/hibernateSnapshot.js'
+import { createTestDataDirectory } from '../../_helpers/testDataDirectory.js'
 
-// 临时覆盖 ZY_CONFIG_DIR 环境变量，使 hibernate 快照写入临时目录
-const testDir = join(tmpdir(), `zy-test-hibernate-${randomUUID()}`)
-const originalConfigHome = process.env.ZY_CONFIG_DIR
+const testData = await createTestDataDirectory('zy-test-hibernate')
+const testDir = testData.root
 
 describe('hibernateSnapshot', () => {
   beforeAll(async () => {
-    // 使用临时目录作为配置目录
-    process.env.ZY_CONFIG_DIR = testDir
-    await mkdir(testDir, { recursive: true })
+    await testData.setup()
   })
 
   afterAll(async () => {
-    // 清理环境
-    if (originalConfigHome === undefined) {
-      delete process.env.ZY_CONFIG_DIR
-    } else {
-      process.env.ZY_CONFIG_DIR = originalConfigHome
-    }
-    // 清理临时目录
-    try {
-      const files = await readdir(testDir)
-      for (const f of files) {
-        await unlink(join(testDir, f)).catch(() => {})
-      }
-      await unlink(testDir).catch(() => {})
-    } catch {}
+    await testData.cleanup()
   })
 
   const identity = {

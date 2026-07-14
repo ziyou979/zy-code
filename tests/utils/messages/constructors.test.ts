@@ -1,7 +1,7 @@
 /**
  * 消息构造函数测试 — snapshot 验证输出结构。
  *
- * 覆盖 src/utils/messages/constructors.ts 中所有导出函数，
+ * 覆盖 src/services/messages/constructors.ts 中所有导出函数，
  * 验证消息结构、content 转换、UUID 生成、元数据设置。
  *
  * 动态字段（timestamp、uuid）通过正则验证格式后替换为固定值，
@@ -75,15 +75,15 @@ function stabilize(msg: Record<string, unknown>): Record<string, unknown> {
 }
 
 describe('消息构造函数', () => {
-  let constructors: typeof import('../../../src/utils/messages/constructors.js')
+  let constructors: typeof import('../../../src/services/messages/constructors.js')
 
   beforeEach(async () => {
     mock.restore()
     setupMocks()
     // bun 的 mock.module 在并行运行时可能被其他文件污染 messages.js barrel，
     // 需要用 dynamic import + 时间戳 cache buster 绕过 bun 的 module cache
-    const mod = await import(`../../../src/utils/messages/constructors.js?t=${Date.now()}`)
-    constructors = mod as typeof import('../../../src/utils/messages/constructors.js')
+    const mod = await import(`../../../src/services/messages/constructors.js?t=${Date.now()}`)
+    constructors = mod as typeof import('../../../src/services/messages/constructors.js')
   })
 
   afterEach(() => {
@@ -95,7 +95,7 @@ describe('消息构造函数', () => {
   // ====================================================================
   describe('createUserMessage', () => {
     test('string content — 保留原始字符串', async () => {
-      const { createUserMessage } = await import('../../../src/utils/messages/constructors.js')
+      const { createUserMessage } = await import('../../../src/services/messages/constructors.js')
       const msg = createUserMessage({ content: [{ type: 'text' as const, text: 'Hello world' }] })
       const stable = stabilize(msg as unknown as Record<string, unknown>)
 
@@ -109,7 +109,7 @@ describe('消息构造函数', () => {
     })
 
     test('UserContentBlock[] content — 保持 block 数组', async () => {
-      const { createUserMessage } = await import('../../../src/utils/messages/constructors.js')
+      const { createUserMessage } = await import('../../../src/services/messages/constructors.js')
       const blocks = [
         { type: 'text' as const, text: 'block 1' },
         { type: 'text' as const, text: 'block 2' },
@@ -121,14 +121,14 @@ describe('消息构造函数', () => {
     })
 
     test('空 content — 回退到 NO_CONTENT_MESSAGE', async () => {
-      const { createUserMessage } = await import('../../../src/utils/messages/constructors.js')
+      const { createUserMessage } = await import('../../../src/services/messages/constructors.js')
       const msg = createUserMessage({ content: [] })
 
       expect(msg.message.content).toEqual([{ type: 'text', text: '[no content]' }])
     })
 
     test('元数据字段正确传递', async () => {
-      const { createUserMessage } = await import('../../../src/utils/messages/constructors.js')
+      const { createUserMessage } = await import('../../../src/services/messages/constructors.js')
       const msg = createUserMessage({
         content: [{ type: 'text' as const, text: 'test' }],
         isMeta: true,
@@ -150,7 +150,7 @@ describe('消息构造函数', () => {
     })
 
     test('自定义 uuid 和 timestamp', async () => {
-      const { createUserMessage } = await import('../../../src/utils/messages/constructors.js')
+      const { createUserMessage } = await import('../../../src/services/messages/constructors.js')
       const msg = createUserMessage({
         content: [{ type: 'text' as const, text: 'test' }],
         uuid: 'custom-uuid-1234',
@@ -162,7 +162,7 @@ describe('消息构造函数', () => {
     })
 
     test('summarizeMetadata 正确传递', async () => {
-      const { createUserMessage } = await import('../../../src/utils/messages/constructors.js')
+      const { createUserMessage } = await import('../../../src/services/messages/constructors.js')
       const msg = createUserMessage({
         content: [{ type: 'text' as const, text: 'summary' }],
         summarizeMetadata: {
@@ -231,7 +231,7 @@ describe('消息构造函数', () => {
   describe('createAssistantAPIErrorMessage', () => {
     test('标记 isApiErrorMessage = true', async () => {
       const { createAssistantAPIErrorMessage } = await import(
-        '../../../src/utils/messages/constructors.js'
+        '../../../src/services/messages/constructors.js'
       )
       const msg = createAssistantAPIErrorMessage({
         content: 'Rate limited',
@@ -253,7 +253,7 @@ describe('消息构造函数', () => {
   describe('createUserInterruptionMessage', () => {
     test('默认中断消息', async () => {
       const { createUserInterruptionMessage } = await import(
-        '../../../src/utils/messages/constructors.js'
+        '../../../src/services/messages/constructors.js'
       )
       const msg = createUserInterruptionMessage({})
 
@@ -263,7 +263,7 @@ describe('消息构造函数', () => {
 
     test('tool use 中断消息', async () => {
       const { createUserInterruptionMessage } = await import(
-        '../../../src/utils/messages/constructors.js'
+        '../../../src/services/messages/constructors.js'
       )
       const msg = createUserInterruptionMessage({ toolUse: true })
 
@@ -279,7 +279,7 @@ describe('消息构造函数', () => {
   describe('createSyntheticUserCaveatMessage', () => {
     test('isMeta = true 且包含 caveat XML 标签', async () => {
       const { createSyntheticUserCaveatMessage } = await import(
-        '../../../src/utils/messages/constructors.js'
+        '../../../src/services/messages/constructors.js'
       )
       const msg = createSyntheticUserCaveatMessage()
 
@@ -296,7 +296,9 @@ describe('消息构造函数', () => {
   // ====================================================================
   describe('createProgressMessage', () => {
     test('UUID 从 toolUseID + index 确定性派生', async () => {
-      const { createProgressMessage } = await import('../../../src/utils/messages/constructors.js')
+      const { createProgressMessage } = await import(
+        '../../../src/services/messages/constructors.js'
+      )
       const msg1 = createProgressMessage({
         toolUseID: 'tool-123',
         parentToolUseID: '',
@@ -339,7 +341,9 @@ describe('消息构造函数', () => {
     })
 
     test('结构正确', async () => {
-      const { createProgressMessage } = await import('../../../src/utils/messages/constructors.js')
+      const { createProgressMessage } = await import(
+        '../../../src/services/messages/constructors.js'
+      )
       const msg = createProgressMessage({
         toolUseID: 'tu-abc',
         parentToolUseID: 'parent-xyz',
@@ -369,7 +373,7 @@ describe('消息构造函数', () => {
   describe('createToolResultStopMessage', () => {
     test('返回 ToolResultBlock 而非完整消息', async () => {
       const { createToolResultStopMessage } = await import(
-        '../../../src/utils/messages/constructors.js'
+        '../../../src/services/messages/constructors.js'
       )
       const block = createToolResultStopMessage('tool-use-123')
 
@@ -385,7 +389,7 @@ describe('消息构造函数', () => {
   // ====================================================================
   describe('createSystemMessage', () => {
     test('info 级别', async () => {
-      const { createSystemMessage } = await import('../../../src/utils/messages/constructors.js')
+      const { createSystemMessage } = await import('../../../src/services/messages/constructors.js')
       const msg = createSystemMessage('All good', 'info')
 
       expect(msg.type).toBe('system')
@@ -396,7 +400,7 @@ describe('消息构造函数', () => {
     })
 
     test('preventContinuation 标志', async () => {
-      const { createSystemMessage } = await import('../../../src/utils/messages/constructors.js')
+      const { createSystemMessage } = await import('../../../src/services/messages/constructors.js')
       const msg = createSystemMessage('Stop', 'error', 'tool-123', true)
 
       expect(msg.level).toBe('error')
@@ -408,7 +412,7 @@ describe('消息构造函数', () => {
   describe('createCompactBoundaryMessage', () => {
     test('auto compact', async () => {
       const { createCompactBoundaryMessage } = await import(
-        '../../../src/utils/messages/constructors.js'
+        '../../../src/services/messages/constructors.js'
       )
       const msg = createCompactBoundaryMessage('auto', 50000, undefined, 'user context', 10)
 
@@ -422,7 +426,7 @@ describe('消息构造函数', () => {
 
     test('manual compact with lastPreCompactMessageUuid', async () => {
       const { createCompactBoundaryMessage } = await import(
-        '../../../src/utils/messages/constructors.js'
+        '../../../src/services/messages/constructors.js'
       )
       const msg = createCompactBoundaryMessage(
         'manual',
@@ -438,7 +442,7 @@ describe('消息构造函数', () => {
   describe('createWireStatusMessage', () => {
     test('结构正确', async () => {
       const { createWireStatusMessage } = await import(
-        '../../../src/utils/messages/constructors.js'
+        '../../../src/services/messages/constructors.js'
       )
       const msg = createWireStatusMessage('https://example.com', 'upgrade now')
 
@@ -452,7 +456,7 @@ describe('消息构造函数', () => {
   describe('createTurnDurationMessage', () => {
     test('包含 duration 和 budget', async () => {
       const { createTurnDurationMessage } = await import(
-        '../../../src/utils/messages/constructors.js'
+        '../../../src/services/messages/constructors.js'
       )
       const msg = createTurnDurationMessage(5000, { tokens: 1000, limit: 5000, nudges: 2 }, 10)
 
@@ -467,7 +471,7 @@ describe('消息构造函数', () => {
   describe('createMemorySavedMessage', () => {
     test('包含写入路径', async () => {
       const { createMemorySavedMessage } = await import(
-        '../../../src/utils/messages/constructors.js'
+        '../../../src/services/messages/constructors.js'
       )
       const msg = createMemorySavedMessage(['/path/to/memory1.md', '/path/to/memory2.md'])
 
@@ -481,7 +485,7 @@ describe('消息构造函数', () => {
   describe('createToolUseSummaryMessage', () => {
     test('包含 summary 和 preceding IDs', async () => {
       const { createToolUseSummaryMessage } = await import(
-        '../../../src/utils/messages/constructors.js'
+        '../../../src/services/messages/constructors.js'
       )
       const msg = createToolUseSummaryMessage('Read 3 files', ['tu-1', 'tu-2', 'tu-3'])
 
@@ -496,7 +500,7 @@ describe('消息构造函数', () => {
   // ====================================================================
   describe('prepareUserContent', () => {
     test('无 preceding blocks — 返回 TextBlock 数组', async () => {
-      const { prepareUserContent } = await import('../../../src/utils/messages/constructors.js')
+      const { prepareUserContent } = await import('../../../src/services/messages/constructors.js')
       const result = prepareUserContent({
         inputString: 'Hello',
         precedingInputBlocks: [],
@@ -506,7 +510,7 @@ describe('消息构造函数', () => {
     })
 
     test('有 preceding blocks — 返回 block 数组', async () => {
-      const { prepareUserContent } = await import('../../../src/utils/messages/constructors.js')
+      const { prepareUserContent } = await import('../../../src/services/messages/constructors.js')
       const result = prepareUserContent({
         inputString: 'Hello',
         precedingInputBlocks: [{ type: 'image', mimeType: 'image/png', data: 'base64...' }],

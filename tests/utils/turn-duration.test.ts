@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import { isLoggableMessage } from '../../src/services/session-storage/logLoading.js'
 import { isTranscriptMessage } from '../../src/services/session-storage/predicates.js'
 import type { Message } from '../../src/types/message.js'
-import { createTurnDurationMessage } from '../../src/utils/messages/constructors.js'
+import { createTurnDurationMessage } from '../../src/services/messages/constructors.js'
 
 describe('turn_duration 消息', () => {
   test('createTurnDurationMessage 生成正确的消息结构', () => {
