@@ -20,7 +20,7 @@ import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/runtim
 import { getOauthConfig } from '../../constants/oauth.js'
 import type { LLMAdapter } from '../../types/llm.js'
 import { isDebugToStdErr, logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild, parseEnvNumber } from '../../utils/envUtils.js'
 import { AnthropicProviderAdapter } from './anthropicProviderAdapter.js'
 import { GoogleProviderAdapter } from './googleProviderAdapter.js'
 import { OpenAIProviderAdapter } from './openAIProviderAdapter.js'
@@ -116,7 +116,7 @@ export async function getAnthropicClient({
   const ARGS = {
     defaultHeaders,
     maxRetries,
-    timeout: parseInt(process.env.API_TIMEOUT_MS || String(600 * 1000), 10),
+    timeout: parseEnvNumber(process.env.API_TIMEOUT_MS) ?? 600 * 1000,
     dangerouslyAllowBrowser: true,
     // biome-ignore lint/suspicious/noExplicitAny: SDK ClientOptions 类型不包含 fetchOptions
     fetchOptions: getProxyFetchOptions({

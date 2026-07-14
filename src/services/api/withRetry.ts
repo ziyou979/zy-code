@@ -16,7 +16,7 @@ import {
   LLMError,
 } from '../../types/llm.js'
 import { clearApiKeyHelperCache, getZyAIOAuthTokens, handleOAuth401Error } from '../auth/auth.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild, parseEnvNumber } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { disableKeepAlive } from '../../utils/proxy.js'
 import { sleep } from '../../utils/sleep.js'
@@ -567,7 +567,7 @@ function shouldRetry(error: APIErrorLike): boolean {
 
 export function getDefaultMaxRetries(): number {
   if (process.env.ZY_CODE_MAX_RETRIES) {
-    return parseInt(process.env.ZY_CODE_MAX_RETRIES, 10)
+    return parseEnvNumber(process.env.ZY_CODE_MAX_RETRIES) ?? DEFAULT_MAX_RETRIES
   }
   return DEFAULT_MAX_RETRIES
 }

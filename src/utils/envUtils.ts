@@ -156,16 +156,29 @@ export function isInProtectedNamespace(): boolean {
 
 // ─── P3: ZY_CODE_* 环境变量统一注册 ───
 
+/**
+ * Safely parse an environment variable as a number.  Returns `undefined` for
+ * empty / unset / non-numeric values, including scientific notation like
+ * `"1e6"` which `parseInt("1e6", 10) === 1` would silently truncate.
+ */
+export function parseEnvNumber(raw: string | undefined): number | undefined {
+  if (raw == null || raw === '') return undefined
+  // Reject scientific notation explicitly — both `1e6` and `1.5e3` are
+  // suspicious in env context and were historically mis-parsed as 1 / 1.5.
+  if (!/^-?\d+$/.test(raw.trim())) return undefined
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : undefined
+}
+
 /** 会话级脚本调用上限（0 或未设置表示不限制） */
 export function getScriptCaps(): number {
-  return parseInt(process.env.ZY_CODE_SCRIPT_CAPS || '', 10) || 0
+  return parseEnvNumber(process.env.ZY_CODE_SCRIPT_CAPS) ?? 0
 }
 
 /** stop hook 连续阻止上限（默认 8；显式设为 0 表示禁用熔断）。
  *  注意不能用 `|| 8`：那会把合法的 0（禁用）误当作未设置。 */
 export function getStopHookBlockCap(): number {
-  const parsed = parseInt(process.env.ZY_CODE_STOP_HOOK_BLOCK_CAP || '', 10)
-  return Number.isNaN(parsed) ? 8 : parsed
+  return parseEnvNumber(process.env.ZY_CODE_STOP_HOOK_BLOCK_CAP) ?? 8
 }
 
 /**
@@ -194,7 +207,7 @@ export function isPerforceMode(): boolean {
 
 /** 自动模式最大轮次上限（0 或未设置表示不限制） */
 export function getMaxTurns(): number {
-  return parseInt(process.env.ZY_CODE_MAX_TURNS || '', 10) || 0
+  return parseEnvNumber(process.env.ZY_CODE_MAX_TURNS) ?? 0
 }
 
 /** 终端模式：'auto'（默认）| 'dumb' | 'emacs' */
