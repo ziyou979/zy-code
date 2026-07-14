@@ -4,7 +4,7 @@
 // 同时让 resetStateForTests 通过 getInitialState() 一并清零。
 
 import sumBy from 'lodash-es/sumBy.js'
-import { STATE } from './_core.js'
+import { STATE } from './core.js'
 
 export function getTotalInputTokens(): number {
   return sumBy(Object.values(STATE.modelUsage), 'inputTokens')

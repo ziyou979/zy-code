@@ -1,5 +1,5 @@
 // bootstrap/state 内部核心：State 类型 + STATE 单例 + 初始化 + 测试重置 + session 切换 signal。
-// 仅供 bootstrap/state/ 内部模块导入，禁止从外部使用（外部统一从 bootstrap/state.ts barrel 取）。
+// STATE 仅供同目录状态模块使用；外部消费者统一通过 runtimeContext 获取运行时能力。
 //
 // 设计要点：
 // - STATE 是模块级单例，所有域模块通过本文件共享同一份引用，避免循环依赖。
@@ -26,8 +26,8 @@ import type { HookEvent, ModelUsage } from 'src/types/index.js'
 //（该规则仅检查 ./ 和 / 前缀）；显式禁用说明了意图。
 // eslint-disable-next-line custom-rules/bootstrap-isolation
 import { randomUUID } from 'src/utils/crypto.js'
-import type { SettingSource } from 'src/utils/settings/constants.js'
-import type { PluginHookMatcher } from 'src/utils/settings/types.js'
+import type { SettingSource } from '../../services/settings/constants.js'
+import type { PluginHookMatcher } from '../../services/settings/types.js'
 import { createSignal } from 'src/utils/signal.js'
 import { createSessionId } from 'src/utils/uuid.js'
 import type { CreateParams } from '../../types/llm.js'

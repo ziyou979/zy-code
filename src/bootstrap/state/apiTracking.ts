@@ -2,8 +2,7 @@
 // lastAPIRequest / lastAPIRequestMessages / lastClassifierRequests。
 
 import type { CreateParams } from '../../types/llm.js'
-import { STATE } from './_core.js'
-
+import { STATE } from './core.js'
 export function getLastMainRequestId(): string | undefined {
   return STATE.lastMainRequestId
 }

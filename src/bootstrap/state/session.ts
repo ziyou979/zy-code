@@ -6,8 +6,7 @@
 import type { SessionId } from 'src/types/ids.js'
 // eslint-disable-next-line custom-rules/bootstrap-isolation
 import { createSessionId } from 'src/utils/uuid.js'
-import { emitSessionSwitched, STATE } from './_core.js'
-
+import { emitSessionSwitched, STATE } from './core.js'
 export function getSessionId(): SessionId {
   return STATE.sessionId
 }

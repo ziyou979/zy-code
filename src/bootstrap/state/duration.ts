@@ -4,8 +4,7 @@
 // updateLastInteractionTime / flushInteractionTime 把 Date.now() 调用延后到
 // Ink 渲染前批量提交，避免每次按键都触发系统调用。
 
-import { STATE } from './_core.js'
-
+import { STATE } from './core.js'
 export function addToTotalDurationState(duration: number, durationWithoutRetries: number): void {
   STATE.totalAPIDuration += duration
   STATE.totalAPIDurationWithoutRetries += durationWithoutRetries

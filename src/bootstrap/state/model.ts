@@ -2,8 +2,7 @@
 
 import type { ModelSetting } from 'src/services/model/model.js'
 import type { ModelStrings } from 'src/services/model/modelStrings.js'
-import { STATE } from './_core.js'
-
+import { STATE } from './core.js'
 /**
  * 获取通过 --model CLI 标志设置的模型覆盖，或用户在
  * 更新其配置的模型后设置。

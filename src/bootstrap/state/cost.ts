@@ -4,8 +4,7 @@
 
 import type { ModelUsage } from 'src/types/index.js'
 import { DEFAULT_CURRENCY } from '../../types/currency.js'
-import { STATE } from './_core.js'
-
+import { STATE } from './core.js'
 export function addToTotalCostState(
   cost: number,
   modelUsage: ModelUsage,
