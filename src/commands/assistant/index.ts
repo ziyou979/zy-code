@@ -1,5 +1,5 @@
 import type { Command } from '../../commands.js'
-import type { LocalCommandModule } from '../../types/command.js'
+import type { LocalCommandModule } from '../types.js'
 
 const command = {
   type: 'local',

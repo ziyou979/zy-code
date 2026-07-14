@@ -3,7 +3,7 @@ import { Pane } from '../../components/design-system/Pane.js'
 import { PressEnterToContinue } from '../../components/PressEnterToContinue.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
-import type { LocalJSXCommandCall } from '../../types/command.js'
+import type { LocalJSXCommandCall } from '../types.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 

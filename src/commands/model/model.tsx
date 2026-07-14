@@ -16,7 +16,7 @@ import {
 import { isModelAllowed } from '../../services/model/modelAllowlist.js'
 import { validateModel } from '../../services/model/validateModel.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import type { LocalJSXCommandCall, LocalJSXCommandOnDone } from '../../types/command.js'
+import type { LocalJSXCommandCall, LocalJSXCommandOnDone } from '../types.js'
 import { resolveEffortForModelSetting } from '../../utils/effort.js'
 import { shouldEnableThinkingByDefault } from '../../utils/thinking.js'
 

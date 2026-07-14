@@ -1,6 +1,6 @@
 import { tSync } from '../../i18n/index.js'
 import { reloadExternalTools } from '../../tools/externalToolLoader.js'
-import type { LocalCommandCall } from '../../types/command.js'
+import type { LocalCommandCall } from '../types.js'
 
 export const call: LocalCommandCall = async (_args, _context) => {
   const result = await reloadExternalTools(process.cwd())

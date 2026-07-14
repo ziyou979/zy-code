@@ -1,4 +1,4 @@
-import type { LocalCommandCall } from '../../types/command.js'
+import type { LocalCommandCall } from '../types.js'
 import { resolveEffortForModelSetting } from '../../utils/effort.js'
 import { shouldEnableThinkingByDefault } from '../../utils/thinking.js'
 import { describeCurrentModel, resolveModelChange } from './performModelChange.js'

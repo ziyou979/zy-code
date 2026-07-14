@@ -1,6 +1,6 @@
 import { WARNING } from '../../constants/figures.js'
 import { Box, Text } from '../../ink.js'
-import { getPluginTrustMessage } from '../../utils/plugins/marketplaceHelpers.js'
+import { getPluginTrustMessage } from '../../services/plugins/marketplaceHelpers.js'
 export function PluginTrustWarning() {
   const customMessage = getPluginTrustMessage()
   return (

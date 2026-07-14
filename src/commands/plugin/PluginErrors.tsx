@@ -1,5 +1,5 @@
 import { tSync } from '../../i18n/index.js'
-import { getPluginErrorMessage, type PluginError } from '../../types/plugin.js'
+import { getPluginErrorMessage, type PluginError } from '../../services/plugins/types.js'
 export function formatErrorMessage(error: PluginError): string {
   switch (error.type) {
     case 'path-not-found':

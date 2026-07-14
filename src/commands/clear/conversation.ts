@@ -4,43 +4,43 @@
  */
 import { feature } from 'bun:bundle'
 import { randomUUID, type UUID } from 'node:crypto'
+import { getLastMainRequestId } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
-  getLastMainRequestId,
   getOriginalCwd,
   getSessionId,
   regenerateSessionId,
-} from '../../bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import { resetCostState, saveCurrentSessionCosts } from '../../cost-tracker.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { evictTaskOutput, initTaskOutputAsSymlink } from '../../services/task/diskOutput.js'
+import { evictTaskOutput, initTaskOutputAsSymlink } from '../../services/task-runtime/diskOutput.js'
 import type { AppState } from '../../state/AppState.js'
-import { isInProcessTeammateTask } from '../../tasks/InProcessTeammateTask/types.js'
+import { isInProcessTeammateTask } from '../../tasks/in-process-teammate-task/types.js'
 import {
   isLocalAgentTask,
   type LocalAgentTaskState,
-} from '../../tasks/LocalAgentTask/LocalAgentTask.js'
-import { isLocalShellTask } from '../../tasks/LocalShellTask/guards.js'
+} from '../../tasks/local-agent-task/LocalAgentTask.js'
+import { isLocalShellTask } from '../../tasks/local-shell-task/guards.js'
 import { asAgentId } from '../../types/ids.js'
 import type { Message } from '../../types/message.js'
 import { createEmptyAttributionState } from '../../utils/commitAttribution.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import type { FileStateCache } from '../../utils/fileStateCache.js'
-import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../../utils/hooks.js'
+import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../../services/hooks.js'
 import { logError } from '../../utils/log.js'
 import { clearAllPlanSlugs } from '../../utils/plans.js'
-import { setCwd } from '../../utils/Shell.js'
+import { setCwd } from '../../services/shell/shell.js'
 import { processSessionStartHooks } from '../../utils/sessionStart.js'
 import {
   clearSessionMetadata,
   getAgentTranscriptPath,
   resetSessionFilePointer,
   saveWorktreeState,
-} from '../../utils/sessionStorage.js'
+} from '../../services/sessionStorage.js'
 import { shouldEnableThinkingByDefault } from '../../utils/thinking.js'
-import { getCurrentWorktreeSession } from '../../utils/worktree.js'
+import { getCurrentWorktreeSession } from '../../services/worktree/worktree.js'
 import { clearSessionCaches } from './caches.js'
 
 export async function clearConversation({
@@ -231,7 +231,7 @@ export async function clearConversation({
   // and (if applicable) the same worktree directory.
   if (feature('COORDINATOR_MODE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
-    const { saveMode } = require('../../utils/sessionStorage.js')
+    const { saveMode } = require('../../services/sessionStorage.js')
     const { isCoordinatorMode } = require('../../coordinator/coordinatorMode.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
     saveMode(isCoordinatorMode() ? 'coordinator' : 'normal')

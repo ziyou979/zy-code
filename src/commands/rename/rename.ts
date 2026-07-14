@@ -1,5 +1,5 @@
-import type { ToolUseContext } from '../../Tool.js'
-import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../../types/command.js'
+import type { ToolUseContext } from '../../tool.js'
+import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../types.js'
 import { buildRenameSystemReminder, performRename } from './performRename.js'
 
 /**

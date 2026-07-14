@@ -11,25 +11,25 @@ import { tSync } from '../../i18n/index.js'
 import instances from '../../ink/instances.js'
 import { Box, Text } from '../../ink.js'
 import { enablePluginOp } from '../../services/plugins/pluginOperations.js'
-import type { LocalJSXCommandOnDone } from '../../types/command.js'
+import type { LocalJSXCommandOnDone } from '../types.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { isENOENT, toError } from '../../utils/errors.js'
-import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
+import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import { pathExists } from '../../utils/file.js'
 import { logError } from '../../utils/log.js'
-import { getPlatform } from '../../utils/platform.js'
-import { clearAllCaches } from '../../utils/plugins/cacheUtils.js'
-import { isPluginInstalled } from '../../utils/plugins/installedPluginsManager.js'
+import { getPlatform } from '../../services/shell/platform.js'
+import { clearAllCaches } from '../../services/plugins/cacheUtils.js'
+import { isPluginInstalled } from '../../services/plugins/installedPluginsManager.js'
 import {
   addMarketplaceSource,
   clearMarketplacesCache,
   loadKnownMarketplacesConfig,
   refreshMarketplace,
-} from '../../utils/plugins/marketplaceManager.js'
-import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketplace.js'
-import { loadAllPlugins } from '../../utils/plugins/pluginLoader.js'
-import { installSelectedPlugins } from '../../utils/plugins/pluginStartupCheck.js'
+} from '../../services/plugins/marketplaceManager.js'
+import { OFFICIAL_MARKETPLACE_NAME } from '../../services/plugins/officialMarketplace.js'
+import { loadAllPlugins } from '../../services/plugins/pluginLoader.js'
+import { installSelectedPlugins } from '../../services/plugins/pluginStartupCheck.js'
 
 // Marketplace and plugin identifiers - varies by user type
 const ANTHROPIC_MARKETPLACE_NAME = 'claude-code-marketplace'

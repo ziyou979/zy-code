@@ -8,24 +8,24 @@
  */
 
 import * as React from 'react'
-import type { LoadedPlugin } from '../../types/plugin.js'
+import type { LoadedPlugin } from '../../services/plugins/types.js'
 import { errorMessage } from '../../utils/errors.js'
 import {
   loadMcpServerUserConfig,
   saveMcpServerUserConfig,
-} from '../../utils/plugins/mcpbHandler.js'
+} from '../../services/plugins/mcpbHandler.js'
 import {
   getUnconfiguredChannels,
   type UnconfiguredChannel,
-} from '../../utils/plugins/mcpPluginIntegration.js'
-import { loadAllPlugins } from '../../utils/plugins/pluginLoader.js'
+} from '../../services/plugins/mcpPluginIntegration.js'
+import { loadAllPlugins } from '../../services/plugins/pluginLoader.js'
 import {
   getUnconfiguredOptions,
   loadPluginOptions,
   type PluginOptionSchema,
   type PluginOptionValues,
   savePluginOptions,
-} from '../../utils/plugins/pluginOptionsStorage.js'
+} from '../../services/plugins/pluginOptionsStorage.js'
 import { PluginOptionsDialog } from './PluginOptionsDialog.js'
 
 /**

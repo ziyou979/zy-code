@@ -3,18 +3,18 @@
  * 类型为 local-jsx，使用 onDone 回调的 shouldQuery + metaMessages 触发模型。
  */
 
-import { getSessionId } from '../../bootstrap/state.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getTotalInputTokens } from '../../cost-tracker.js'
 import { logEvent } from '../../services/analytics/index.js'
-import type { LocalJSXCommandCall } from '../../types/command.js'
-import { checkHasTrustDialogAccepted } from '../../utils/config.js'
+import type { LocalJSXCommandCall } from '../types.js'
+import { checkHasTrustDialogAccepted } from '../../services/config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {
   shouldAllowManagedHooksOnly,
   shouldDisableAllHooksIncludingManaged,
-} from '../../utils/hooks/hooksConfigSnapshot.js'
-import { addSessionHook, removeSessionHook } from '../../utils/hooks/sessionHooks.js'
-import type { HookCommand } from '../../utils/settings/types.js'
+} from '../../services/hooks/hooksConfigSnapshot.js'
+import { addSessionHook, removeSessionHook } from '../../services/hooks/sessionHooks.js'
+import type { HookCommand } from '../../services/settings/types.js'
 
 /** 条件字符上限 */
 const MAX_CONDITION_LENGTH = 4000

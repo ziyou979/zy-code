@@ -9,7 +9,7 @@ import { isEnvTruthy } from '../../utils/envUtils.js'
 import type {
   PluginOptionSchema,
   PluginOptionValues,
-} from '../../utils/plugins/pluginOptionsStorage.js'
+} from '../../services/plugins/pluginOptionsStorage.js'
 
 /**
  * Build the onSave payload from collected string inputs.

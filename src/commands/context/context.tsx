@@ -3,11 +3,11 @@ import * as React from 'react'
 import type { LocalJSXCommandContext } from '../../commands.js'
 import { ContextVisualization } from '../../components/ContextVisualization.js'
 import { microcompactMessages } from '../../services/compact/microCompact.js'
-import type { LocalJSXCommandOnDone } from '../../types/command.js'
+import type { LocalJSXCommandOnDone } from '../types.js'
 import type { Message } from '../../types/message.js'
 import { analyzeContextUsage } from '../../utils/analyzeContext.js'
-import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'
-import { renderToAnsiString } from '../../utils/staticRender.js'
+import { getMessagesAfterCompactBoundary } from '../../services/messages/index.js'
+import { renderToAnsiString } from '../../components/Runtime/StaticRender.js'
 
 /**
  * Apply the same context transforms query.ts does before the API call, so
@@ -20,7 +20,7 @@ function toApiView(messages: Message[]): Message[] {
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { projectView } =
-      require('../../services/context-collapse/operations.js') as typeof import('../../services/context-collapse/operations.js')
+      require('../../services/compact/context-collapse/operations.js') as typeof import('../../services/compact/context-collapse/operations.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
     // @ts-expect-error
     view = projectView(view)

@@ -1,4 +1,4 @@
-import type { Command } from '../types/command.js'
+import type { Command } from './types.js'
 import { isUltrareviewEnabled } from './review/ultrareviewEnabled.js'
 
 // Legal wants the explicit surface name plus a docs link visible before the
@@ -13,7 +13,7 @@ const ultrareview: Command = {
   name: 'ultrareview',
   description: `~10–20 min · Finds and verifies bugs in your branch. Runs in ZY Code on the web. See ${CCR_TERMS_URL}`,
   isEnabled: () => isUltrareviewEnabled(),
-  load: () => import('./review/ultrareviewCommand.js'),
+  load: () => import('./review/UltrareviewCommand.js'),
 }
 
 export { ultrareview }

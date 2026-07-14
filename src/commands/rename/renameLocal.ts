@@ -1,4 +1,4 @@
-import type { LocalCommandCall } from '../../types/command.js'
+import type { LocalCommandCall } from '../types.js'
 import { performRename } from './performRename.js'
 
 /**

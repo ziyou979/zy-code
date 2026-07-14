@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import * as React from 'react'
-import { resetCostState } from '../../bootstrap/state.js'
+import { resetCostState } from 'src/bootstrap/runtime/runtimeContext.js'
 import { clearTrustedDeviceToken, enrollTrustedDevice } from '../../bridge/trustedDevice.js'
 import type { LocalJSXCommandContext } from '../../commands.js'
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
@@ -12,14 +12,14 @@ import { Text } from '../../ink.js'
 import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growthbook.js'
 import { refreshPolicyLimits } from '../../services/policy-limits/index.js'
 import { refreshRemoteManagedSettings } from '../../services/remote-managed-settings/index.js'
-import type { LocalJSXCommandOnDone } from '../../types/command.js'
-import { stripSignatureBlocks } from '../../utils/messages.js'
+import type { LocalJSXCommandOnDone } from '../types.js'
+import { stripSignatureBlocks } from '../../services/messages/index.js'
 import {
   checkAndDisableAutoModeIfNeeded,
   checkAndDisableBypassPermissionsIfNeeded,
   resetAutoModeGateCheck,
   resetBypassPermissionsCheck,
-} from '../../utils/permissions/bypassPermissionsKillswitch.js'
+} from '../../services/permissions/bypassPermissionsKillswitch.js'
 import { resetUserCache } from '../../utils/user.js'
 export async function call(
   onDone: LocalJSXCommandOnDone,

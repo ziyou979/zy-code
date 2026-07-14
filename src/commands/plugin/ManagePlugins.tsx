@@ -15,7 +15,7 @@ import type {
   SSEServerInfo,
   StdioServerInfo,
   ZyAIServerInfo,
-} from '../../components/mcp/types.js'
+} from '../../services/mcp/viewTypes.js'
 import { SearchBox } from '../../components/SearchBox.js'
 import { ARROW_DOWN, ARROW_RIGHT, ARROW_UP, POINTER, TICK } from '../../constants/figures.js'
 import { useSearchInput } from '../../hooks/useSearchInput.js'
@@ -23,7 +23,7 @@ import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- useInput needed for raw search mode text input
 import { Box, Text, useInput, useTerminalFocus } from '../../ink.js'
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'
-import { getBuiltinPluginDefinition } from '../../plugins/builtinPlugins.js'
+import { getBuiltinPluginDefinition } from '../../services/plugins/builtinRegistry.js'
 import { useMcpToggleEnabled } from '../../services/mcp/MCPConnectionManager.js'
 import type {
   MCPServerConnection,
@@ -43,45 +43,48 @@ import {
   updatePluginOp,
 } from '../../services/plugins/pluginOperations.js'
 import { useAppState } from '../../state/AppState.js'
-import type { Tool } from '../../Tool.js'
-import type { LoadedPlugin, PluginError } from '../../types/plugin.js'
+import type { Tool } from '../../tool.js'
+import type { LoadedPlugin, PluginError } from '../../services/plugins/types.js'
 import { count } from '../../utils/array.js'
 import { openBrowser } from '../../utils/browser.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage, toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import { clearAllCaches } from '../../utils/plugins/cacheUtils.js'
-import { loadInstalledPlugins } from '../../utils/plugins/installedPluginsManager.js'
-import { getMarketplace } from '../../utils/plugins/marketplaceManager.js'
+import { clearAllCaches } from '../../services/plugins/cacheUtils.js'
+import { loadInstalledPlugins } from '../../services/plugins/installedPluginsManager.js'
+import { getMarketplace } from '../../services/plugins/marketplaceManager.js'
 import {
   isMcpbSource,
   loadMcpbFile,
   type McpbNeedsConfigResult,
   type UserConfigValues,
-} from '../../utils/plugins/mcpbHandler.js'
-import { getPluginDataDirSize, pluginDataDirPath } from '../../utils/plugins/pluginDirectories.js'
+} from '../../services/plugins/mcpbHandler.js'
+import {
+  getPluginDataDirSize,
+  pluginDataDirPath,
+} from '../../services/plugins/pluginDirectories.js'
 import {
   getFlaggedPlugins,
   markFlaggedPluginsSeen,
   removeFlaggedPlugin,
-} from '../../utils/plugins/pluginFlagging.js'
+} from '../../services/plugins/pluginFlagging.js'
 import {
   type PersistablePluginScope,
   parsePluginIdentifier,
-} from '../../utils/plugins/pluginIdentifier.js'
-import { loadAllPlugins } from '../../utils/plugins/pluginLoader.js'
+} from '../../services/plugins/pluginIdentifier.js'
+import { loadAllPlugins } from '../../services/plugins/pluginLoader.js'
 import {
   loadPluginOptions,
   type PluginOptionSchema,
   savePluginOptions,
-} from '../../utils/plugins/pluginOptionsStorage.js'
-import { isPluginBlockedByPolicy } from '../../utils/plugins/pluginPolicy.js'
-import { getPluginEditableScopes } from '../../utils/plugins/pluginStartupCheck.js'
+} from '../../services/plugins/pluginOptionsStorage.js'
+import { isPluginBlockedByPolicy } from '../../services/plugins/pluginPolicy.js'
+import { getPluginEditableScopes } from '../../services/plugins/pluginStartupCheck.js'
 import {
   getInitialSettings,
   getSettingsForSource,
   updateSettingsForSource,
-} from '../../utils/settings/settings.js'
+} from '../../services/settings/settings.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { plural } from '../../utils/stringUtils.js'
 import { formatErrorMessage, getErrorGuidance } from './PluginErrors.js'

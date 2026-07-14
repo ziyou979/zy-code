@@ -16,7 +16,7 @@ import { clearServerCache } from '../../services/mcp/client.js'
 import type { ScopedMcpServerConfig } from '../../services/mcp/types.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import { getCwd } from '../../utils/cwd.js'
-import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
+import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import {
   type DetectedIDEInfo,
   detectIDEs,
@@ -26,8 +26,8 @@ import {
   isSupportedJetBrainsTerminal,
   isSupportedTerminal,
   toIDEDisplayName,
-} from '../../utils/ide.js'
-import { getCurrentWorktreeSession } from '../../utils/worktree.js'
+} from '../../services/ide/ide.js'
+import { getCurrentWorktreeSession } from '../../services/worktree/worktree.js'
 
 type IDEScreenProps = {
   availableIDEs: DetectedIDEInfo[]

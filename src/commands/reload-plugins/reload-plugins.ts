@@ -1,10 +1,10 @@
 import { feature } from 'bun:bundle'
-import { getIsRemoteMode } from '../../bootstrap/state.js'
+import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { redownloadUserSettings } from '../../services/settings-sync/index.js'
-import type { LocalCommandCall } from '../../types/command.js'
+import type { LocalCommandCall } from '../types.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
-import { refreshActivePlugins } from '../../utils/plugins/refresh.js'
-import { settingsChangeDetector } from '../../utils/settings/changeDetector.js'
+import { refreshActivePlugins } from '../../services/plugins/refresh.js'
+import { settingsChangeDetector } from '../../services/settings/changeDetector.js'
 import { plural } from '../../utils/stringUtils.js'
 
 export const call: LocalCommandCall = async (_args, context) => {

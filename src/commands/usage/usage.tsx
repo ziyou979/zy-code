@@ -1,5 +1,5 @@
 import { Settings } from '../../components/Settings/Settings.js'
-import type { LocalJSXCommandCall } from '../../types/command.js'
+import type { LocalJSXCommandCall } from '../types.js'
 
 export const call: LocalJSXCommandCall = async (onDone, context, _args, invokedAs) => {
   const defaultTab =

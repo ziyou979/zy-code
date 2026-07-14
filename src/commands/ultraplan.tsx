@@ -8,7 +8,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../services/analytics/index.js'
-import { updateTaskState } from '../services/task/framework.js'
+import { updateTaskState } from '../services/task-runtime/framework.js'
 import {
   pollForApprovedExitPlanMode,
   UltraplanPollError,
@@ -21,14 +21,14 @@ import {
   RemoteAgentTask,
   type RemoteAgentTaskState,
   registerRemoteAgentTask,
-} from '../tasks/RemoteAgentTask/RemoteAgentTask.js'
-import type { LocalJSXCommandCall } from '../types/command.js'
+} from '../tasks/remote-agent-task/RemoteAgentTask.js'
+import type { LocalJSXCommandCall } from './types.js'
 import { logForDebugging } from '../utils/debug.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
 import { logError } from '../utils/log.js'
 import { enqueuePendingNotification } from '../utils/messageQueueManager.js'
-import { archiveRemoteSession, teleportToRemote } from '../utils/teleport.js'
+import { archiveRemoteSession, teleportToRemote } from '../services/teleport/teleport.js'
 
 // TODO(prod-hardening): OAuth token may go stale over the 30min poll;
 // consider refresh.

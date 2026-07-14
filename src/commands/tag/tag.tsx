@@ -1,15 +1,15 @@
 import type { UUID } from 'node:crypto'
 import * as React from 'react'
-import { getSessionId } from '../../bootstrap/state.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { Select } from '../../components/CustomSelect/select.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { logEvent } from '../../services/analytics/index.js'
-import type { LocalJSXCommandOnDone } from '../../types/command.js'
+import type { LocalJSXCommandOnDone } from '../types.js'
 import { recursivelySanitizeUnicode } from '../../utils/sanitization.js'
-import { getCurrentSessionTag, getTranscriptPath, saveTag } from '../../utils/sessionStorage.js'
+import { getCurrentSessionTag, getTranscriptPath, saveTag } from '../../services/sessionStorage.js'
 
 function ConfirmRemoveTag({
   tagName,

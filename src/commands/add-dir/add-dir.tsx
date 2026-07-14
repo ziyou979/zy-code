@@ -3,19 +3,19 @@ import React, { useEffect } from 'react'
 import {
   getAdditionalDirectoriesForAgentsMd,
   setAdditionalDirectoriesForAgentsMd,
-} from '../../bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import type { LocalJSXCommandContext } from '../../commands.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { AddWorkspaceDirectory } from '../../components/permissions/rules/AddWorkspaceDirectory.js'
 import { POINTER } from '../../constants/figures.js'
 import { Box, Text } from '../../ink.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
-import type { LocalJSXCommandOnDone } from '../../types/command.js'
+import type { LocalJSXCommandOnDone } from '../types.js'
 import {
   applyPermissionUpdate,
   persistPermissionUpdate,
-} from '../../utils/permissions/PermissionUpdate.js'
-import type { PermissionUpdateDestination } from '../../utils/permissions/PermissionUpdateSchema.js'
+} from '../../services/permissions/permissionUpdate.js'
+import type { PermissionUpdateDestination } from '../../services/permissions/permissionUpdateSchema.js'
 import { addDirHelpMessage, validateDirectoryForWorkspace } from './validation.js'
 
 function AddDirError({

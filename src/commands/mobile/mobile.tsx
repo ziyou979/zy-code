@@ -5,7 +5,7 @@ import { Pane } from '../../components/design-system/Pane.js'
 import { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
-import type { LocalJSXCommandOnDone } from '../../types/command.js'
+import type { LocalJSXCommandOnDone } from '../types.js'
 
 type Platform = 'ios' | 'android'
 type Props = {

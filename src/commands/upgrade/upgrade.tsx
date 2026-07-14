@@ -1,6 +1,6 @@
 import * as React from 'react'
 import type { LocalJSXCommandContext } from '../../commands.js'
-import type { LocalJSXCommandOnDone } from '../../types/command.js'
+import type { LocalJSXCommandOnDone } from '../types.js'
 import { openBrowser } from '../../utils/browser.js'
 import { logError } from '../../utils/log.js'
 import { Login } from '../login/login.js'

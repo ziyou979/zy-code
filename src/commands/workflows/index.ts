@@ -1,7 +1,7 @@
 import type { Command } from '../../commands.js'
 import { CLOCKWISE_ARROWS, CROSS, TICK } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
-import type { LocalCommandCall, LocalCommandModule } from '../../types/command.js'
+import type { LocalCommandCall, LocalCommandModule } from '../types.js'
 
 const call: LocalCommandCall = async (_args, context) => {
   const state = context.getAppState()

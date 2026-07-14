@@ -8,23 +8,23 @@ import type { ThemeName } from 'src/utils/theme.js'
 import { supportsHyperlinks } from '../../ink/supports-hyperlinks.js'
 import { color } from '../../ink.js'
 import { maybeMarkProjectOnboardingComplete } from '../../projectOnboardingState.js'
-import type { ToolUseContext } from '../../Tool.js'
-import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../../types/command.js'
+import type { ToolUseContext } from '../../tool.js'
+import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../types.js'
 import {
   backupTerminalPreferences,
   checkAndRestoreTerminalBackup,
   getTerminalPlistPath,
   markTerminalSetupComplete,
-} from '../../utils/appleTerminalBackup.js'
+} from '../../services/shell/appleTerminalBackup.js'
 import { setupShellCompletion } from '../../utils/completionCache.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { env } from '../../utils/env.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { isFsInaccessible } from '../../utils/errors.js'
-import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
+import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import { addItemToJSONCArray, safeParseJSONC } from '../../utils/json.js'
 import { logError } from '../../utils/log.js'
-import { getPlatform } from '../../utils/platform.js'
+import { getPlatform } from '../../services/shell/platform.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 
 const EOL = '\n'

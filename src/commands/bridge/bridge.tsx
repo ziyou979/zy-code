@@ -13,7 +13,7 @@ import { Dialog } from '../../components/design-system/Dialog.js'
 import { ListItem } from '../../components/design-system/ListItem.js'
 import { QRCodeDisplay } from '../../components/QRCodeDisplay.js'
 import { shouldShowRemoteCallout } from '../../components/RemoteCallout.js'
-import { useRegisterOverlay } from '../../context/overlayContext.js'
+import { useRegisterOverlay } from '../../context/OverlayContext.js'
 import { Box, Text } from '../../ink.js'
 import { tSync } from '../../i18n/index.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
@@ -22,8 +22,8 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import type { ToolUseContext } from '../../Tool.js'
-import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../../types/command.js'
+import type { ToolUseContext } from '../../tool.js'
+import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../types.js'
 import { logForDebugging } from '../../utils/debug.js'
 
 type Props = {

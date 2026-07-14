@@ -1,4 +1,4 @@
-import type { Command, LocalCommandCall } from '../types/command.js'
+import type { Command, LocalCommandCall } from './types.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 
 const call: LocalCommandCall = async () => {

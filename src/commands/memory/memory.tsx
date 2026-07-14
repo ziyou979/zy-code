@@ -6,12 +6,12 @@ import { MemoryFileSelector } from '../../components/memory/MemoryFileSelector.j
 import { getRelativeMemoryPath } from '../../components/memory/MemoryUpdateNotification.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
-import type { LocalJSXCommandCall } from '../../types/command.js'
+import type { LocalJSXCommandCall } from '../types.js'
 import { clearMemoryFileCaches, getMemoryFiles } from '../../utils/agentsMd.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import { editFileInEditor } from '../../utils/promptEditor.js'
+import { editFileInEditor } from '../../terminal-ui/promptEditor.js'
 
 function MemoryCommand({
   onDone,

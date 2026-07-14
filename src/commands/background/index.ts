@@ -11,7 +11,7 @@ const background = {
   description: 'Send this session to the background and free the terminal',
   aliases: ['bg'],
   supportsNonInteractive: false,
-  load: () => import('./background.ts'),
+  load: () => import('./background.js'),
 } satisfies Command
 
 export default background

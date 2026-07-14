@@ -2,7 +2,7 @@ import { clearCommandMemoizationCaches, getSkillToolCommands } from '../../comma
 import { tSync } from '../../i18n/index.js'
 import { clearPluginSkillsCache } from '../../services/plugins/loadPluginCommands.js'
 import { clearDynamicSkills } from '../../skills/loadSkillsDir.js'
-import type { LocalCommandCall } from '../../types/command.js'
+import type { LocalCommandCall } from '../types.js'
 import { plural } from '../../utils/stringUtils.js'
 
 export const call: LocalCommandCall = async (_args, context) => {

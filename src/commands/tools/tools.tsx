@@ -1,13 +1,13 @@
 import * as React from 'react'
 import { useRef } from 'react'
-import { useModalOrTerminalSize } from '../../context/modalContext.js'
+import { useModalOrTerminalSize } from '../../context/ModalContext.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'
 import ScrollBox, { type ScrollBoxHandle } from '../../ink/components/ScrollBox.js'
 import { Box, Text, useInput } from '../../ink.js'
 import { getActiveExternalToolNames } from '../../tools/externalToolLoader.js'
 import { getAllBaseTools } from '../../tools.js'
-import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../../types/command.js'
+import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../types.js'
 
 /** 标题 + 退出提示占用行数 */
 const CHROME_ROWS = 4

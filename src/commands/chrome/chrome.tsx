@@ -10,7 +10,7 @@ import {
 import { isChromeExtensionInstalled } from '../../services/claude-in-chrome/setup.js'
 import { useAppState } from '../../state/AppState.js'
 import { openBrowser } from '../../utils/browser.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { env } from '../../utils/env.js'
 import { isRunningOnHomespace } from '../../utils/envUtils.js'
 

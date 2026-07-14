@@ -1,4 +1,4 @@
-import type { LocalCommandCall } from '../../types/command.js'
+import type { LocalCommandCall } from '../types.js'
 import { clearConversation } from './conversation.js'
 
 export const call: LocalCommandCall = async (_, context) => {

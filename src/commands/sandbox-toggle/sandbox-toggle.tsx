@@ -1,11 +1,14 @@
 import { relative } from 'node:path'
 import React from 'react'
-import { getCwdState } from '../../bootstrap/state.js'
+import { getCwdState } from 'src/bootstrap/runtime/runtimeContext.js'
 import { SandboxSettings } from '../../components/sandbox/SandboxSettings.js'
 import { color } from '../../ink.js'
 import { addToExcludedCommands, SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
-import { getPlatform } from '../../utils/platform.js'
-import { getInitialSettings, getSettingsFilePathForSource } from '../../utils/settings/settings.js'
+import { getPlatform } from '../../services/shell/platform.js'
+import {
+  getInitialSettings,
+  getSettingsFilePathForSource,
+} from '../../services/settings/settings.js'
 import type { ThemeName } from '../../utils/theme.js'
 export async function call(
   onDone: (result?: string) => void,

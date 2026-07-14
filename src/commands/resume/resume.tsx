@@ -1,18 +1,18 @@
 import type { UUID } from 'node:crypto'
 import chalk from 'chalk'
 import * as React from 'react'
-import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js'
+import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { CommandResultDisplay, ResumeEntrypoint } from '../../commands.js'
 import { LogSelector } from '../../components/LogSelector.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { Spinner } from '../../components/Spinner.js'
 import { POINTER } from '../../constants/figures.js'
-import { useIsInsideModal } from '../../context/modalContext.js'
+import { useIsInsideModal } from '../../context/ModalContext.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'
 import { setClipboard } from '../../ink/termio/osc.js'
 import { Box, Text } from '../../ink.js'
-import type { LocalJSXCommandCall } from '../../types/command.js'
+import type { LocalJSXCommandCall } from '../types.js'
 import type { LogOption } from '../../types/logs.js'
 import { agenticSessionSearch } from '../../utils/agenticSessionSearch.js'
 import { checkCrossProjectResume } from '../../utils/crossProjectResume.js'
@@ -27,7 +27,7 @@ import {
   loadFullLog,
   loadSameRepoMessageLogs,
   searchSessionsByCustomTitle,
-} from '../../utils/sessionStorage.js'
+} from '../../services/sessionStorage.js'
 import { validateUuid } from '../../utils/uuid.js'
 
 type ResumeResult =

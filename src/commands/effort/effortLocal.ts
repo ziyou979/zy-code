@@ -1,5 +1,5 @@
 import { tSync } from '../../i18n/index.js'
-import type { LocalCommandCall } from '../../types/command.js'
+import type { LocalCommandCall } from '../types.js'
 import {
   type EffortLevel,
   getDisplayedEffortLevel,

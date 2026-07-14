@@ -1,4 +1,4 @@
-import type { LocalJSXCommandCall, LocalJSXCommandOnDone } from '../../types/command.js'
+import type { LocalJSXCommandCall, LocalJSXCommandOnDone } from '../types.js'
 import type { ContentBlock } from '../../types/llm.js'
 import { checkOverageGate, confirmOverage, launchRemoteReview } from './reviewRemote.js'
 import { UltrareviewOverageDialog } from './UltrareviewOverageDialog.js'

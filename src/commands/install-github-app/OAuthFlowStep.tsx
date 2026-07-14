@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Spinner } from '../../components/Spinner.js'
 import { Box, Text } from '../../ink.js'
-import { getApiKey } from '../../utils/auth.js'
+import { getApiKey } from '../../services/auth/auth.js'
 import { logError } from '../../utils/log.js'
 import { tSync } from '../../i18n/index.js'
 

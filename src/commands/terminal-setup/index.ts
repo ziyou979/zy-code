@@ -17,7 +17,7 @@ const terminalSetup = {
       ? 'Enable Option+Enter key binding for newlines and visual bell'
       : 'Install Shift+Enter key binding for newlines',
   isHidden: env.terminal !== null && env.terminal in NATIVE_CSIU_TERMINALS,
-  load: () => import('./terminalSetup.js'),
+  load: () => import('./TerminalSetup.js'),
 } satisfies Command
 
 export default terminalSetup

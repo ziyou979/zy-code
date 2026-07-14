@@ -16,18 +16,18 @@ import {
 } from '../../services/analytics/index.js'
 import { fetchUltrareviewQuota } from '../../services/api/ultrareviewQuota.js'
 import { fetchUtilization } from '../../services/api/usage.js'
-import type { ToolUseContext } from '../../Tool.js'
+import type { ToolUseContext } from '../../tool.js'
 import {
   checkRemoteAgentEligibility,
   formatPreconditionError,
   getRemoteTaskSessionUrl,
   registerRemoteAgentTask,
-} from '../../tasks/RemoteAgentTask/RemoteAgentTask.js'
+} from '../../tasks/remote-agent-task/RemoteAgentTask.js'
 import type { ContentBlock } from '../../types/llm.js'
 import { detectCurrentRepositoryWithHost } from '../../utils/detectRepository.js'
-import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
+import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import { getDefaultBranch, gitExe } from '../../utils/git.js'
-import { teleportToRemote } from '../../utils/teleport.js'
+import { teleportToRemote } from '../../services/teleport/teleport.js'
 
 // One-time session flag: once the user confirms overage billing via the
 // dialog, all subsequent /ultrareview invocations in this session proceed

@@ -11,27 +11,27 @@ import { BULLET, CROSS, POINTER, TICK } from '../../constants/figures.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- useInput needed for marketplace-specific u/r shortcuts and y/n confirmation not in keybinding schema
 import { Box, Text, useInput } from '../../ink.js'
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'
-import type { LoadedPlugin } from '../../types/plugin.js'
+import type { LoadedPlugin } from '../../services/plugins/types.js'
 import { count } from '../../utils/array.js'
-import { shouldSkipPluginAutoupdate } from '../../utils/config.js'
+import { shouldSkipPluginAutoupdate } from '../../services/config/config.js'
 import { errorMessage } from '../../utils/errors.js'
-import { clearAllCaches } from '../../utils/plugins/cacheUtils.js'
+import { clearAllCaches } from '../../services/plugins/cacheUtils.js'
 import {
   createPluginId,
   formatMarketplaceLoadingErrors,
   getMarketplaceSourceDisplay,
   loadMarketplacesWithGracefulDegradation,
-} from '../../utils/plugins/marketplaceHelpers.js'
+} from '../../services/plugins/marketplaceHelpers.js'
 import {
   loadKnownMarketplacesConfig,
   refreshMarketplace,
   removeMarketplaceSource,
   setMarketplaceAutoUpdate,
-} from '../../utils/plugins/marketplaceManager.js'
-import { updatePluginsForMarketplaces } from '../../utils/plugins/pluginAutoupdate.js'
-import { loadAllPlugins } from '../../utils/plugins/pluginLoader.js'
-import { isMarketplaceAutoUpdate } from '../../utils/plugins/schemas.js'
-import { getSettingsForSource, updateSettingsForSource } from '../../utils/settings/settings.js'
+} from '../../services/plugins/marketplaceManager.js'
+import { updatePluginsForMarketplaces } from '../../services/plugins/pluginAutoupdate.js'
+import { loadAllPlugins } from '../../services/plugins/pluginLoader.js'
+import { isMarketplaceAutoUpdate } from '../../services/plugins/schemas.js'
+import { getSettingsForSource, updateSettingsForSource } from '../../services/settings/settings.js'
 import { plural } from '../../utils/stringUtils.js'
 import type { ViewState } from './types.js'
 

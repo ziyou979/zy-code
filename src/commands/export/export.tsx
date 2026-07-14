@@ -1,11 +1,11 @@
 import { join } from 'node:path'
 import React from 'react'
 import { ExportDialog } from '../../components/ExportDialog.js'
-import type { ToolUseContext } from '../../Tool.js'
-import type { LocalJSXCommandOnDone } from '../../types/command.js'
+import type { ToolUseContext } from '../../tool.js'
+import type { LocalJSXCommandOnDone } from '../types.js'
 import type { Message } from '../../types/message.js'
 import { getCwd } from '../../utils/cwd.js'
-import { renderMessagesToPlainText } from '../../utils/exportRenderer.js'
+import { renderMessagesToPlainText } from '../../components/Runtime/ExportRenderer.js'
 import { writeFileSync_DEPRECATED } from '../../utils/slowOperations.js'
 
 function formatTimestamp(date: Date): string {

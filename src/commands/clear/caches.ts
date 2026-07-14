@@ -3,7 +3,8 @@
  * This module is imported at startup by main.tsx, so keep imports minimal.
  */
 import { feature } from 'bun:bundle'
-import { clearInvokedSkills, setLastEmittedDate } from '../../bootstrap/state.js'
+import { clearInvokedSkills } from 'src/bootstrap/runtime/runtimeContext.js'
+import { setLastEmittedDate } from 'src/bootstrap/runtime/runtimeContext.js'
 import { clearCommandsCache } from '../../commands.js'
 import { getSessionStartDate } from '../../constants/common.js'
 import {
@@ -18,15 +19,15 @@ import { clearAllDumpState } from '../../services/api/dumpPrompts.js'
 import { resetPromptCacheBreakDetection } from '../../services/api/promptCacheBreakDetection.js'
 import { clearAllSessions } from '../../services/api/sessionIngress.js'
 import { runPostCompactCleanup } from '../../services/compact/postCompactCleanup.js'
-import { resetAllLSPDiagnosticState } from '../../services/lsp/LSPDiagnosticRegistry.js'
+import { resetAllLSPDiagnosticState } from '../../services/lsp/lspDiagnosticRegistry.js'
 import { clearTrackedMagicDocs } from '../../services/magic-docs/magicDocs.js'
 import { clearCommandPrefixCaches } from '../../shell-eval/bash/commands.js'
 import { clearDynamicSkills } from '../../skills/loadSkillsDir.js'
 import { resetGetMemoryFilesCache } from '../../utils/agentsMd.js'
-import { resetSentSkillNames } from '../../utils/attachments.js'
+import { resetSentSkillNames } from '../../services/attachments/attachments.js'
 import { clearRepositoryCaches } from '../../utils/detectRepository.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
-import { clearResolveGitDirCache } from '../../utils/git/gitFilesystem.js'
+import { clearResolveGitDirCache } from '../../services/git/gitFilesystem.js'
 import { clearStoredImagePaths } from '../../utils/imageStore.js'
 import { clearSessionEnvVars } from '../../utils/sessionEnvVars.js'
 

@@ -7,7 +7,7 @@ import {
 } from '../../services/analytics/index.js'
 import { getMainLoopModel } from '../../services/model/model.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import type { LocalJSXCommandOnDone } from '../../types/command.js'
+import type { LocalJSXCommandOnDone } from '../types.js'
 import {
   type EffortLevel,
   getDisplayedEffortLevel,
@@ -17,8 +17,8 @@ import {
   isEffortLevel,
   toPersistableEffort,
 } from '../../utils/effort.js'
-import { updateSettingsForSource } from '../../utils/settings/settings.js'
-import { EffortPicker } from './effortPicker.js'
+import { updateSettingsForSource } from '../../services/settings/settings.js'
+import { EffortPicker } from './EffortPicker.js'
 
 const COMMON_HELP_ARGS = ['help', '-h', '--help']
 type EffortCommandResult = {

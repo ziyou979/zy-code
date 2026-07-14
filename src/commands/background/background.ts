@@ -1,6 +1,6 @@
 import { tSync } from '../../i18n/index.js'
-import { backgroundAll, hasForegroundTasks } from '../../tasks/LocalShellTask/LocalShellTask.js'
-import type { LocalCommandCall } from '../../types/command.js'
+import { backgroundAll, hasForegroundTasks } from '../../tasks/local-shell-task/LocalShellTask.js'
+import type { LocalCommandCall } from '../types.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 

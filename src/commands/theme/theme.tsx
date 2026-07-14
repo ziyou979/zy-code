@@ -2,7 +2,7 @@ import type { CommandResultDisplay } from '../../commands.js'
 import { Pane } from '../../components/design-system/Pane.js'
 import { ThemePicker } from '../../components/ThemePicker.js'
 import { useTheme } from '../../ink.js'
-import type { LocalJSXCommandCall } from '../../types/command.js'
+import type { LocalJSXCommandCall } from '../types.js'
 
 type Props = {
   onDone: (

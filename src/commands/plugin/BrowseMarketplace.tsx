@@ -15,31 +15,31 @@ import {
 } from '../../constants/figures.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'
-import type { LoadedPlugin } from '../../types/plugin.js'
+import type { LoadedPlugin } from '../../services/plugins/types.js'
 import { count } from '../../utils/array.js'
 import { openBrowser } from '../../utils/browser.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import { clearAllCaches } from '../../utils/plugins/cacheUtils.js'
-import { formatInstallCount, getInstallCounts } from '../../utils/plugins/installCounts.js'
+import { clearAllCaches } from '../../services/plugins/cacheUtils.js'
+import { formatInstallCount, getInstallCounts } from '../../services/plugins/installCounts.js'
 import {
   isPluginGloballyInstalled,
   isPluginInstalled,
-} from '../../utils/plugins/installedPluginsManager.js'
+} from '../../services/plugins/installedPluginsManager.js'
 import {
   createPluginId,
   formatFailureDetails,
   formatMarketplaceLoadingErrors,
   getMarketplaceSourceDisplay,
   loadMarketplacesWithGracefulDegradation,
-} from '../../utils/plugins/marketplaceHelpers.js'
+} from '../../services/plugins/marketplaceHelpers.js'
 import {
   getMarketplace,
   loadKnownMarketplacesConfig,
-} from '../../utils/plugins/marketplaceManager.js'
-import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketplace.js'
-import { installPluginFromMarketplace } from '../../utils/plugins/pluginInstallationHelpers.js'
-import { isPluginBlockedByPolicy } from '../../utils/plugins/pluginPolicy.js'
+} from '../../services/plugins/marketplaceManager.js'
+import { OFFICIAL_MARKETPLACE_NAME } from '../../services/plugins/officialMarketplace.js'
+import { installPluginFromMarketplace } from '../../services/plugins/pluginInstallationHelpers.js'
+import { isPluginBlockedByPolicy } from '../../services/plugins/pluginPolicy.js'
 import { plural } from '../../utils/stringUtils.js'
 import { truncateToWidth } from '../../utils/truncate.js'
 import { findPluginOptionsTarget, PluginOptionsFlow } from './PluginOptionsFlow.js'
@@ -49,7 +49,7 @@ import {
   extractGitHubRepo,
   type InstallablePlugin,
   PluginSelectionKeyHint,
-} from './pluginDetailsHelpers.js'
+} from './PluginDetailsHelpers.js'
 import type { ViewState as ParentViewState } from './types.js'
 import { usePagination } from './usePagination.js'
 

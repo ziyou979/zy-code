@@ -1,14 +1,14 @@
 import { feature } from 'bun:bundle'
 import { microcompactMessages } from '../../services/compact/microCompact.js'
 import type { AppState } from '../../state/AppStateStore.js'
-import type { Tools, ToolUseContext } from '../../Tool.js'
+import type { Tools, ToolUseContext } from '../../tool.js'
 import type { AgentDefinitionsResult } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Message } from '../../types/message.js'
 import { analyzeContextUsage, type ContextData } from '../../utils/analyzeContext.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { formatTokens } from '../../utils/format.js'
-import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'
-import { getSourceDisplayName } from '../../utils/settings/constants.js'
+import { getMessagesAfterCompactBoundary } from '../../services/messages/index.js'
+import { getSourceDisplayName } from '../../services/settings/constants.js'
 import { plural } from '../../utils/stringUtils.js'
 
 /**
@@ -40,7 +40,7 @@ export async function collectContextData(context: CollectContextDataInput): Prom
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { projectView } =
-      require('../../services/context-collapse/operations.js') as typeof import('../../services/context-collapse/operations.js')
+      require('../../services/compact/context-collapse/operations.js') as typeof import('../../services/compact/context-collapse/operations.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
     // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
     apiView = projectView(apiView, []) as any
@@ -107,7 +107,7 @@ function formatContextAsMarkdownTable(data: ContextData): string {
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { getStats, isContextCollapseEnabled } =
-      require('../../services/context-collapse/index.js') as typeof import('../../services/context-collapse/index.js')
+      require('../../services/compact/context-collapse/index.js') as typeof import('../../services/compact/context-collapse/index.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
     if (isContextCollapseEnabled()) {
       const s = getStats()

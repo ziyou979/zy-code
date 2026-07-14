@@ -6,13 +6,13 @@ import {
   mergeWithDefaults,
 } from '../../components/statusbar/statusbarModuleDefaults.js'
 import { tSync } from '../../i18n/index.js'
-import type { LocalJSXCommandCall } from '../../types/command.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
-import { resetSettingsCache } from '../../utils/settings/settingsCache.js'
+import type { LocalJSXCommandCall } from '../types.js'
+import { getInitialSettings } from '../../services/settings/settings.js'
+import { resetSettingsCache } from '../../services/settings/settingsCache.js'
 import {
   getEffectiveStatuslineConfig,
   saveStatuslineConfig,
-} from '../../utils/settings/statuslineConfig.js'
+} from '../../services/settings/statuslineConfig.js'
 import { createStatuslineDialog } from './StatuslineConfigDialog.js'
 
 /**

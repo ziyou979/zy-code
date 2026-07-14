@@ -1,5 +1,5 @@
 import * as React from 'react'
-import type { LocalJSXCommandOnDone } from '../../types/command.js'
+import type { LocalJSXCommandOnDone } from '../types.js'
 import { PluginSettings } from './PluginSettings.js'
 export async function call(
   onDone: LocalJSXCommandOnDone,
