@@ -16,7 +16,7 @@ import {
   mapOpenAIStreamToStandard,
   messagesToOpenAI,
 } from '../../../src/services/api/conversions/openai.js'
-import { normalizeContentFromAPI } from '../../../src/services/messages/index.js'
+import { normalizeContentFromAPI } from '../../../src/services/messages/normalize.js'
 import {
   chunksToStream,
   finishChunk,

@@ -6,7 +6,7 @@ import {
   checkSpawnCapacity,
   findOldestIdleAgent,
 } from '../../../src/services/swarm/agentCapacity.js'
-import type { AppState } from '../../../src/state/AppState.js'
+import type { AppState } from '../../../src/state/AppStateStore.js'
 import {
   MAX_CONCURRENT_IN_PROCESS_AGENTS,
   MAX_RESIDENT_AGENTS,

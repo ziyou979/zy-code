@@ -5,7 +5,7 @@ import {
   handleMessageFromStream,
   type StreamingThinking,
   type StreamingToolUse,
-} from '../../../src/services/messages/index.js'
+} from '../../../src/services/messages/streaming.js'
 
 function createHarness() {
   const modes: SpinnerMode[] = []

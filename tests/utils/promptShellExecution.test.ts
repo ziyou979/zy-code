@@ -38,7 +38,7 @@ function setupMocks(
   mock.module('../../src/services/permissions/permissions.js', () => ({
     hasPermissionsToUseTool: async () => ({ behavior: 'allow' }),
   }))
-  mock.module('../../src/services/messages/index.js', () => ({
+  mock.module('../../src/services/messages/constructors.js', () => ({
     createAssistantMessage: () => ({ content: [] }),
   }))
   mock.module('../../src/utils/toolResultStorage.js', () => ({

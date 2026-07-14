@@ -18,12 +18,11 @@ import ts from 'typescript'
 export const GOD_FILES = [
   'src/services/hooks.ts',
   'src/services/sessionStorage.ts',
-  'src/services/messages/index.ts',
   'src/cli/print.ts',
 ] as const
 
 export function getSnapshotName(file: string): string {
-  return file === 'src/services/messages/index.ts' ? 'messages' : basename(file, '.ts')
+  return basename(file, '.ts')
 }
 
 function getModifierKinds(node: ts.Node): ts.SyntaxKind[] {

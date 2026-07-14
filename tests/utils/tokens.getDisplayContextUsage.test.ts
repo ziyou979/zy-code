@@ -6,7 +6,12 @@
  */
 import { describe, expect, test } from 'bun:test'
 import { createCompactBoundaryMessage } from '../../src/services/messages/constructors.js'
-import { getCurrentUsage, getDisplayContextUsage } from '../../src/utils/tokens.js'
+import type { Message } from '../../src/types/message.js'
+import {
+  getCurrentUsage,
+  getDisplayContextUsage,
+  tokenCountWithEstimation,
+} from '../../src/utils/tokens.js'
 import { createTestAssistantMessage, createTestUserMessage } from '../_helpers/messageFixtures.js'
 
 function makeAssistantWithUsage(
@@ -103,5 +108,25 @@ describe('getDisplayContextUsage', () => {
 
   test('空消息返回 null', () => {
     expect(getDisplayContextUsage([])).toBeNull()
+  })
+
+  test('计划模式完整提醒参与估算时不会递归卡死', () => {
+    const assistant = makeAssistantWithUsage(144_400, {
+      uuid: 'plan-assistant',
+      messageId: 'plan-response',
+    })
+    const planModeAttachment = {
+      type: 'attachment',
+      uuid: 'plan-mode-attachment',
+      timestamp: '2026-07-14T00:00:00.000Z',
+      attachment: {
+        type: 'plan_mode',
+        reminderType: 'full',
+        planFilePath: 'C:\\tmp\\plan.md',
+        planExists: false,
+      },
+    } as unknown as Message
+
+    expect(tokenCountWithEstimation([assistant, planModeAttachment])).toBeGreaterThan(144_400)
   })
 })
