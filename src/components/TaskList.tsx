@@ -10,12 +10,12 @@ import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { Box, Text } from '../ink.js'
 import { useAppState } from '../state/AppState.js'
-import { isInProcessTeammateTask } from '../tasks/InProcessTeammateTask/types.js'
+import { isInProcessTeammateTask } from '../tasks/in-process-teammate-task/types.js'
 import {
   AGENT_COLOR_TO_THEME_COLOR,
   type AgentColorName,
 } from '../tools/AgentTool/agentColorManager.js'
-import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js'
+import { isAgentSwarmsEnabled } from '../services/swarm/agentSwarmsEnabled.js'
 import { count } from '../utils/array.js'
 import { summarizeRecentActivities } from '../utils/collapseReadSearch.js'
 import { truncateToWidth } from '../utils/format.js'

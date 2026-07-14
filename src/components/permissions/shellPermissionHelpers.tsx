@@ -1,10 +1,10 @@
 import { basename, sep } from 'node:path'
 import { type ReactNode } from 'react'
-import { getOriginalCwd } from '../../bootstrap/state.js'
+import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink.js'
-import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
-import { permissionRuleExtractPrefix } from '../../utils/permissions/shellRuleMatching.js'
+import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
+import { permissionRuleExtractPrefix } from '../../services/permissions/shellRuleMatching.js'
 
 function commandListDisplay(commands: string[]): ReactNode {
   switch (commands.length) {

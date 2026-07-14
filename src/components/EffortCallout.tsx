@@ -9,7 +9,7 @@ import {
   isEffortLevel,
   toPersistableEffort,
 } from '../utils/effort.js'
-import { updateSettingsForSource } from '../utils/settings/settings.js'
+import { updateSettingsForSource } from '../services/settings/settings.js'
 import { Select } from './CustomSelect/select.js'
 import { effortLevelToSymbol } from './EffortIndicator.js'
 import { PermissionDialog } from './permissions/PermissionDialog.js'

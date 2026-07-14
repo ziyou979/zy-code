@@ -3,9 +3,9 @@ import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { Ansi, Text, useTheme } from '../../ink.js'
 import { createHyperlink } from '../../utils/hyperlink.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
-import { renderTruncatedContent } from '../../utils/terminal.js'
+import { renderTruncatedContent } from '../../terminal-ui/terminal.js'
 import { MessageResponse } from '../MessageResponse.js'
-import { InVirtualListContext } from '../messageActions.js'
+import { InVirtualListContext } from '../MessageActions.js'
 import { useExpandShellOutput } from './ExpandShellOutputContext.js'
 export function tryFormatJson(line: string): string {
   try {

@@ -1,11 +1,11 @@
 import { feature } from 'bun:bundle'
 import * as React from 'react'
 import type { AssistantContentBlock, TextBlock, UserContentBlock } from 'src/types/llm.ts'
-import type { Attachment } from 'src/utils/attachments.js'
+import type { Attachment } from 'src/services/attachments/attachments.js'
 import type { Command } from '../commands.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { Box } from '../ink.js'
-import type { Tools } from '../Tool.js'
+import type { Tools } from '../tool.js'
 import { isConnectorTextBlock } from '../types/connectorText.js'
 import type {
   AssistantMessage,
@@ -18,7 +18,7 @@ import type {
 } from '../types/message.js'
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
 import { logError } from '../utils/log.js'
-import type { buildMessageLookups } from '../utils/messages.js'
+import type { buildMessageLookups } from '../services/messages/index.js'
 import { CompactSummary } from './CompactSummary.js'
 import { AssistantRedactedThinkingMessage } from './messages/AssistantRedactedThinkingMessage.js'
 import { AssistantTextMessage } from './messages/AssistantTextMessage.js'

@@ -1,6 +1,6 @@
 import { Box, Text } from '../../ink.js'
 import type { TextBlock } from '../../types/llm.js'
-import { extractTag } from '../../utils/messages.js'
+import { extractTag } from '../../services/messages/index.js'
 
 type Props = {
   addMargin: boolean

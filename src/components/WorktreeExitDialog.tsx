@@ -4,15 +4,15 @@ import { tSync } from 'src/i18n/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { Box, Text } from '../ink.js'
-import { execFileNoThrow } from '../utils/execFileNoThrow.js'
+import { execFileNoThrow } from '../services/shell/execFileNoThrow.js'
 import { getPlansDirectory } from '../utils/plans.js'
-import { setCwd } from '../utils/Shell.js'
+import { setCwd } from '../services/shell/shell.js'
 import {
   cleanupWorktree,
   getCurrentWorktreeSession,
   keepWorktree,
   killTmuxSession,
-} from '../utils/worktree.js'
+} from '../services/worktree/worktree.js'
 import { Select } from './CustomSelect/select.js'
 import { Dialog } from './design-system/Dialog.js'
 import { Spinner } from './Spinner.js'
@@ -23,7 +23,7 @@ import { Spinner } from './Spinner.js'
 function recordWorktreeExit(): void {
   /* eslint-disable @typescript-eslint/no-require-imports */
   ;(
-    require('../utils/sessionStorage.js') as typeof import('../utils/sessionStorage.js')
+    require('../services/sessionStorage.js') as typeof import('../services/sessionStorage.js')
   ).saveWorktreeState(null)
   /* eslint-enable @typescript-eslint/no-require-imports */
 }

@@ -3,7 +3,7 @@ import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import type { Screen } from '../screens/REPL.js'
 import type { UserMessage } from '../types/message.js'
-import { getUserMessageText } from '../utils/messages.js'
+import { getUserMessageText } from '../services/messages/index.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
 import { MessageResponse } from './MessageResponse.js'
 

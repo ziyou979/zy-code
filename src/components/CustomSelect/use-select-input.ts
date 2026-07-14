@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useRegisterOverlay } from '../../context/overlayContext.js'
+import { useRegisterOverlay } from '../../context/OverlayContext.js'
 import type { InputEvent } from '../../ink/events/input-event.js'
 import { useInput } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'

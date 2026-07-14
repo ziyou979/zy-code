@@ -1,5 +1,5 @@
 import type { RGBColor as RGBColorString } from '../../ink/styles.js'
-import type { RGBColor as RGBColorType } from './types.js'
+import type { RGBColor as RGBColorType } from '../../types/spinner.js'
 
 export function getDefaultCharacters(): string[] {
   // zycode 专属 spinner：8 点盲文累积绘制字母 Z

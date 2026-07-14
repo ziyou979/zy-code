@@ -1,10 +1,10 @@
 import { feature } from 'bun:bundle'
 import { useEffect, useState } from 'react'
 import { getDumpPromptsPath } from 'src/services/api/dumpPrompts.js'
-import { getGlobalConfig, saveGlobalConfig } from 'src/utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from 'src/services/config/config.js'
 import { getDebugLogPath, isDebugMode, isDebugToStdErr } from 'src/utils/debug.js'
 import { isEnvTruthy } from 'src/utils/envUtils.js'
-import { getInitialSettings } from 'src/utils/settings/settings.js'
+import { getInitialSettings } from 'src/services/settings/settings.js'
 import { getStartupPerfLogPath, isDetailedProfilingEnabled } from 'src/utils/startupProfiler.js'
 import { resolveThemeSetting } from 'src/utils/systemTheme.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
@@ -37,7 +37,7 @@ import {
   createProjectOnboardingFeed,
   createRecentActivityFeed,
   createWhatsNewFeed,
-} from './feedConfigs.js'
+} from './FeedConfigs.js'
 import { VoiceModeNotice } from './VoiceModeNotice.js'
 import { Zy } from './Zy.js'
 

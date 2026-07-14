@@ -2,10 +2,10 @@ import React from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { extractMcpToolDisplayName, getMcpDisplayName } from '../../services/mcp/mcpStringUtils.js'
-import type { Tool } from '../../Tool.js'
+import type { Tool } from '../../tool.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Dialog } from '../design-system/Dialog.js'
-import type { ServerInfo } from './types.js'
+import type { ServerInfo } from '../../services/mcp/viewTypes.js'
 
 type Props = {
   tool: Tool

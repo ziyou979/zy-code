@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import type { RemoteAgentTaskState } from 'src/tasks/RemoteAgentTask/RemoteAgentTask.js'
+import type { RemoteAgentTaskState } from 'src/tasks/remote-agent-task/RemoteAgentTask.js'
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js'
 import { useSettings } from '../../hooks/useSettings.js'
 import { Text, useAnimationFrame } from '../../ink.js'

@@ -1,7 +1,7 @@
 import setWith from 'lodash-es/setWith.js'
 import { tSync } from '../i18n/index.js'
 import { Box, Text, useTheme } from '../ink.js'
-import type { ValidationError } from '../utils/settings/validation.js'
+import type { ValidationError } from '../services/settings/validation.js'
 import { type TreeNode, treeify } from '../utils/treeify.js'
 
 /**

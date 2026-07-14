@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { Box, Text } from 'src/ink.js'
-import { getPlatform } from 'src/utils/platform.js'
+import { getPlatform } from 'src/services/shell/platform.js'
 import { tSync } from '../../i18n/index.js'
 import { isKeybindingCustomizationEnabled } from '../../keybindings/loadUserBindings.js'
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { gracefulShutdown } from 'src/utils/gracefulShutdown.js'
-import { writeToStdout } from 'src/utils/process.js'
+import { writeToStdout } from 'src/services/shell/process.js'
 import { Box, color, Text, useTheme } from '../ink.js'
 import { addMcpConfig, getAllMcpConfigs } from '../services/mcp/config.js'
 import type { ConfigScope, McpServerConfig } from '../services/mcp/types.js'

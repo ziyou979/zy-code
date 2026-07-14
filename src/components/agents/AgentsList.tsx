@@ -1,5 +1,5 @@
 import * as React from 'react'
-import type { SettingSource } from 'src/utils/settings/constants.js'
+import type { SettingSource } from 'src/services/settings/constants.js'
 import { POINTER, WARNING } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'

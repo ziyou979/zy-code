@@ -3,14 +3,14 @@ import { Text } from '../../ink.js'
 import { extractMcpToolDisplayName, getMcpDisplayName } from '../../services/mcp/mcpStringUtils.js'
 import { filterToolsByServer } from '../../services/mcp/utils.js'
 import { useAppState } from '../../state/AppState.js'
-import type { Tool } from '../../Tool.js'
+import type { Tool } from '../../tool.js'
 import { plural } from '../../utils/stringUtils.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Select } from '../CustomSelect/index.js'
 import { Byline } from '../design-system/Byline.js'
 import { Dialog } from '../design-system/Dialog.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
-import type { ServerInfo } from './types.js'
+import type { ServerInfo } from '../../services/mcp/viewTypes.js'
 
 type Props = {
   server: ServerInfo

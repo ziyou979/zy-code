@@ -8,12 +8,12 @@ import {
   TICK_TAG,
 } from '../../constants/xml.js'
 import type { TextBlock } from '../../types/llm.js'
-import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
+import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import {
   extractTag,
   INTERRUPT_MESSAGE,
   INTERRUPT_MESSAGE_FOR_TOOL_USE,
-} from '../../utils/messages.js'
+} from '../../services/messages/index.js'
 import { InterruptedByUser } from '../InterruptedByUser.js'
 import { MessageResponse } from '../MessageResponse.js'
 import { UserAgentNotificationMessage } from './UserAgentNotificationMessage.js'

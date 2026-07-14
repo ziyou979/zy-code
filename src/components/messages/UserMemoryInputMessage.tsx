@@ -1,6 +1,6 @@
 import sample from 'lodash-es/sample.js'
 import { Box, Text } from '../../ink.js'
-import { extractTag } from '../../utils/messages.js'
+import { extractTag } from '../../services/messages/index.js'
 import { MessageResponse } from '../MessageResponse.js'
 
 function getSavingMessage(): string {

@@ -7,7 +7,7 @@ import { tSync } from '../../i18n/index.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
-import type { Tools } from '../../Tool.js'
+import type { Tools } from '../../tool.js'
 import { type AgentColorName, setAgentColor } from '../../tools/AgentTool/agentColorManager.js'
 import {
   type AgentDefinition,
@@ -15,7 +15,7 @@ import {
   isCustomAgent,
   isPluginAgent,
 } from '../../tools/AgentTool/loadAgentsDir.js'
-import { editFileInEditor } from '../../utils/promptEditor.js'
+import { editFileInEditor } from '../../terminal-ui/promptEditor.js'
 import { getActualAgentFilePath, updateAgentFile } from './agentFileUtils.js'
 import { ColorPicker } from './ColorPicker.js'
 import { ModelSelector } from './ModelSelector.js'

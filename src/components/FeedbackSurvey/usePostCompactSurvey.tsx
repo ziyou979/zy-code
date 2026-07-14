@@ -9,7 +9,7 @@ import { shouldUseSessionMemoryCompaction } from '../../services/compact/session
 import { logOTelEvent } from '../../services/telemetry/events.js'
 import type { Message } from '../../types/message.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
-import { isCompactBoundaryMessage } from '../../utils/messages.js'
+import { isCompactBoundaryMessage } from '../../services/messages/index.js'
 import { useSurveyState } from './useSurveyState.js'
 
 const HIDE_THANKS_AFTER_MS = 3000

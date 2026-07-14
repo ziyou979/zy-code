@@ -5,17 +5,17 @@ import { BULLET, CROSS, TICK, WARNING } from '../../constants/figures.js'
 import { Ansi, Box, color, Text, useTheme } from '../../ink.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import { useAppState } from '../../state/AppState.js'
-import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
-import { permissionModeTitle } from '../../utils/permissions/PermissionMode.js'
+import type { PermissionMode } from '../../services/permissions/permissionMode.js'
+import { permissionModeTitle } from '../../services/permissions/permissionMode.js'
 import type {
   PermissionDecision,
   PermissionDecisionReason,
-} from '../../utils/permissions/PermissionResult.js'
-import { extractRules } from '../../utils/permissions/PermissionUpdate.js'
-import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
-import { permissionRuleValueToString } from '../../utils/permissions/permissionRuleParser.js'
-import { detectUnreachableRules } from '../../utils/permissions/shadowedRuleDetection.js'
-import { getSettingSourceDisplayNameLowercase } from '../../utils/settings/constants.js'
+} from '../../services/permissions/permissionResult.js'
+import { extractRules } from '../../services/permissions/permissionUpdate.js'
+import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
+import { permissionRuleValueToString } from '../../services/permissions/permissionRuleParser.js'
+import { detectUnreachableRules } from '../../services/permissions/shadowedRuleDetection.js'
+import { getSettingSourceDisplayNameLowercase } from '../../services/settings/constants.js'
 
 type PermissionDecisionInfoItemProps = {
   title?: string

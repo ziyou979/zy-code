@@ -22,11 +22,11 @@ import { enterTeammateView } from '../../state/teammateViewHelpers.js'
 import {
   type InProcessTeammateTaskState,
   isInProcessTeammateTask,
-} from '../../tasks/InProcessTeammateTask/types.js'
+} from '../../tasks/in-process-teammate-task/types.js'
 import {
   isLocalAgentTask,
   type LocalAgentTaskState,
-} from '../../tasks/LocalAgentTask/LocalAgentTask.js'
+} from '../../tasks/local-agent-task/LocalAgentTask.js'
 import { formatWaitingDuration } from '../../utils/format.js'
 
 type AgentTask = LocalAgentTaskState | InProcessTeammateTaskState

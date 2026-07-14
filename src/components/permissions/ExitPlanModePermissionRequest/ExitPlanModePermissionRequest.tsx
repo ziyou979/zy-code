@@ -14,7 +14,7 @@ import {
   setHasExitedPlanMode,
   setNeedsAutoModeExitAttachment,
   setNeedsPlanModeExitAttachment,
-} from '../../../bootstrap/state.js'
+} from '../../../bootstrap/runtime/runtimeContext.js'
 import { generateSessionName } from '../../../commands/rename/generateSessionName.js'
 import { TICK, WARNING } from '../../../constants/figures.js'
 import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js'
@@ -25,38 +25,41 @@ import { AGENT_TOOL_NAME } from '../../../tools/AgentTool/constants.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from '../../../tools/ExitPlanModeTool/constants.js'
 import type { AllowedPrompt } from '../../../tools/ExitPlanModeTool/ExitPlanModeTool.js'
 import { TEAM_CREATE_TOOL_NAME } from '../../../tools/TeamCreateTool/constants.js'
-import { isAgentSwarmsEnabled } from '../../../utils/agentSwarmsEnabled.js'
+import { isAgentSwarmsEnabled } from '../../../services/swarm/agentSwarmsEnabled.js'
 import { calculateContextPercentages, getContextWindowForModel } from '../../../utils/context.js'
-import { getExternalEditor } from '../../../utils/editor.js'
+import { getExternalEditor } from '../../../terminal-ui/editor.js'
 import { getDisplayPath } from '../../../utils/file.js'
-import { toIDEDisplayName } from '../../../utils/ide.js'
+import { toIDEDisplayName } from '../../../services/ide/ide.js'
 import { logError } from '../../../utils/log.js'
-import { createUserMessage } from '../../../utils/messages.js'
+import { createUserMessage } from '../../../services/messages/index.js'
 import {
   createPromptRuleContent,
   isClassifierPermissionsEnabled,
   PROMPT_PREFIX,
-} from '../../../utils/permissions/bashClassifier.js'
+} from '../../../services/permissions/bashClassifier.js'
 import {
   type PermissionMode,
   toExternalPermissionMode,
-} from '../../../utils/permissions/PermissionMode.js'
-import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js'
+} from '../../../services/permissions/permissionMode.js'
+import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
 import {
   isAutoModeGateEnabled,
   restoreDangerousPermissions,
   stripDangerousPermissionsForAutoMode,
-} from '../../../utils/permissions/permissionSetup.js'
-import { getPewterLedgerVariant, isPlanModeInterviewPhaseEnabled } from '../../../utils/planMode.js'
+} from '../../../services/permissions/permissionSetup.js'
+import {
+  getPewterLedgerVariant,
+  isPlanModeInterviewPhaseEnabled,
+} from '../../../services/mode-instructions/planModeConfig.js'
 import { getPlan, getPlanFilePath } from '../../../utils/plans.js'
-import { editFileInEditor, editPromptInEditor } from '../../../utils/promptEditor.js'
+import { editFileInEditor, editPromptInEditor } from '../../../terminal-ui/promptEditor.js'
 import {
   getCurrentSessionTitle,
   getTranscriptPath,
   saveAgentName,
   saveCustomTitle,
-} from '../../../utils/sessionStorage.js'
-import { getInitialSettings } from '../../../utils/settings/settings.js'
+} from '../../../services/sessionStorage.js'
+import { getInitialSettings } from '../../../services/settings/settings.js'
 import { type OptionWithDescription, Select } from '../../CustomSelect/index.js'
 import { Markdown } from '../../Markdown.js'
 import { PermissionDialog } from '../PermissionDialog.js'
@@ -65,12 +68,12 @@ import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const autoModeStateModule = true
-  ? (require('../../../utils/permissions/autoModeState.js') as typeof import('../../../utils/permissions/autoModeState.js'))
+  ? (require('../../../services/permissions/autoModeState.js') as typeof import('../../../services/permissions/autoModeState.js'))
   : null
 
 import type { ImageBlock, ImageSource, TokenUsage } from '../../../types/llm.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
-import type { PastedContent } from '../../../utils/config.js'
+import type { PastedContent } from '../../../services/config/config.js'
 import type { ImageDimensions } from '../../../utils/imageResizer.js'
 import { maybeResizeAndDownsampleImageBlock } from '../../../utils/imageResizer.js'
 import { cacheImagePath, storeImage } from '../../../utils/imageStore.js'

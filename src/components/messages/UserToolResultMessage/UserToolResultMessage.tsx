@@ -1,4 +1,4 @@
-import type { Tools } from '../../../Tool.js'
+import type { Tools } from '../../../tool.js'
 import type { ToolResultBlock } from '../../../types/llm.js'
 import type { ProgressMessage, UserMessage } from '../../../types/message.js'
 import {
@@ -6,7 +6,7 @@ import {
   CANCEL_MESSAGE,
   INTERRUPT_MESSAGE_FOR_TOOL_USE,
   REJECT_MESSAGE,
-} from '../../../utils/messages.js'
+} from '../../../services/messages/index.js'
 import { UserToolCanceledMessage } from './UserToolCanceledMessage.js'
 import { UserToolErrorMessage } from './UserToolErrorMessage.js'
 import { UserToolRejectMessage } from './UserToolRejectMessage.js'

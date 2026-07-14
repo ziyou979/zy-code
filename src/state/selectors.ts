@@ -3,9 +3,9 @@
  * 保持 selector 纯粹简单 - 仅数据提取，无副作用。
  */
 
-import type { InProcessTeammateTaskState } from '../tasks/InProcessTeammateTask/types.js'
-import { isInProcessTeammateTask } from '../tasks/InProcessTeammateTask/types.js'
-import type { LocalAgentTaskState } from '../tasks/LocalAgentTask/LocalAgentTask.js'
+import type { InProcessTeammateTaskState } from '../tasks/in-process-teammate-task/types.js'
+import { isInProcessTeammateTask } from '../tasks/in-process-teammate-task/types.js'
+import type { LocalAgentTaskState } from '../tasks/local-agent-task/LocalAgentTask.js'
 import type { AppState } from './AppStateStore.js'
 
 /**

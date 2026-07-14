@@ -2,17 +2,17 @@ import { readFile, stat } from 'node:fs/promises'
 import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
 import type { Message } from '../../types/message.js'
-import { checkAndRefreshOAuthTokenIfNeeded } from '../../utils/auth.js'
+import { checkAndRefreshOAuthTokenIfNeeded } from '../../services/auth/auth.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { getAuthHeaders, getUserAgent } from '../../utils/http.js'
-import { normalizeMessagesForAPI } from '../../utils/messages.js'
+import { normalizeMessagesForAPI } from '../../services/messages/index.js'
 import {
   extractAgentIdsFromMessages,
   getTranscriptPath,
   loadSubagentTranscripts,
   MAX_TRANSCRIPT_READ_BYTES,
-} from '../../utils/sessionStorage.js'
+} from '../../services/sessionStorage.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { redactSensitiveInfo } from '../Feedback.js'
 

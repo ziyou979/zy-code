@@ -5,7 +5,7 @@ import { useMinDisplayTime } from '../../hooks/useMinDisplayTime.js'
 import { tSync } from '../../i18n/index.js'
 import { Ansi, Box, Text, useAnimationFrame, useTheme } from '../../ink.js'
 import { useReplStore } from '../../state/ReplState.js'
-import { findToolByName, type Tools } from '../../Tool.js'
+import { findToolByName, type Tools } from '../../tool.js'
 import { getReplPrimitiveTools } from '../../tools/REPLTool/primitiveTools.js'
 import type { AssistantMessage, CollapsedReadSearchGroup } from '../../types/message.js'
 import { uniq } from '../../utils/array.js'
@@ -17,16 +17,16 @@ import {
   getLocalizedDurationFormatter,
 } from '../../utils/format.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
-import type { buildMessageLookups } from '../../utils/messages.js'
+import type { buildMessageLookups } from '../../services/messages/index.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
-import { useSelectedMessageBg } from '../messageActions.js'
+import { useSelectedMessageBg } from '../MessageActions.js'
 import { PrBadge } from '../PrBadge.js'
 import { ToolUseLoader } from '../ToolUseLoader.js'
 import { AssistantThinkingMessage } from './AssistantThinkingMessage.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemCollapsed = feature('TEAMMEM')
-  ? (require('./teamMemCollapsed.js') as typeof import('./teamMemCollapsed.js'))
+  ? (require('./TeamMemCollapsed.js') as typeof import('./TeamMemCollapsed.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 

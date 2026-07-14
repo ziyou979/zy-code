@@ -1,14 +1,14 @@
 import { Suspense, use } from 'react'
-import { getSessionId } from '../../bootstrap/state.js'
+import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import type { LocalJSXCommandContext } from '../../commands.js'
 import { WARNING } from '../../constants/figures.js'
-import { useIsInsideModal } from '../../context/modalContext.js'
+import { useIsInsideModal } from '../../context/ModalContext.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text, useTheme } from '../../ink.js'
 import { getExtensionInventory } from '../../services/diagnostics/extensionInventory.js'
 import { type AppState, useAppState } from '../../state/AppState.js'
 import { getCwd } from '../../utils/cwd.js'
-import { getCurrentSessionTitle } from '../../utils/sessionStorage.js'
+import { getCurrentSessionTitle } from '../../services/sessionStorage.js'
 import {
   buildAccountProperties,
   buildAPIProviderProperties,

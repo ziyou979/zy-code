@@ -8,7 +8,7 @@ import {
   getRainbowColor,
   isUltrathinkEnabled,
 } from '../../utils/thinking.js'
-import { MessageActionsSelectedContext } from '../messageActions.js'
+import { MessageActionsSelectedContext } from '../MessageActions.js'
 
 type Props = {
   text: string

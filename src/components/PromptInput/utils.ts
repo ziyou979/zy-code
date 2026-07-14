@@ -1,10 +1,10 @@
 import {
   hasUsedBackslashReturn,
   isShiftEnterKeyBindingInstalled,
-} from '../../commands/terminalSetup/terminalSetup.js'
+} from '../../commands/terminal-setup/TerminalSetup.js'
 import { tSync } from '../../i18n/index.js'
 import type { Key } from '../../ink.js'
-import { getGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig } from '../../services/config/config.js'
 import { env } from '../../utils/env.js'
 /**
  * Helper function to check if vim mode is currently enabled

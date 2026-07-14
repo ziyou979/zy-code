@@ -1,14 +1,14 @@
 import { envDynamic } from 'src/utils/envDynamic.js'
 import { Box, Text } from '../ink.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
-import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
 import { env } from '../utils/env.js'
 import {
   getTerminalIdeType,
   type IDEExtensionInstallationStatus,
   isJetBrainsIde,
   toIDEDisplayName,
-} from '../utils/ide.js'
+} from '../services/ide/ide.js'
 import { Dialog } from './design-system/Dialog.js'
 
 interface Props {

@@ -1,6 +1,6 @@
 import { tSync } from '../../../i18n/index.js'
 import { isAutoMemoryEnabled } from '../../../memdir/paths.js'
-import type { Tools } from '../../../Tool.js'
+import type { Tools } from '../../../tool.js'
 import type { AgentDefinition } from '../../../tools/AgentTool/loadAgentsDir.js'
 import { WizardProvider } from '../../wizard/index.js'
 import { ColorStep } from './wizard-steps/ColorStep.js'

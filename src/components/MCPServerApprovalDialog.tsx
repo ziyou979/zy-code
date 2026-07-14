@@ -2,7 +2,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { getInitialSettings, updateSettingsForSource } from '../utils/settings/settings.js'
+import { getInitialSettings, updateSettingsForSource } from '../services/settings/settings.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
 import { MCPServerDialogCopy } from './MCPServerDialogCopy.js'

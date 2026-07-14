@@ -1,9 +1,9 @@
 import { tSync } from 'src/i18n/index.js'
 import { POWERSHELL_TOOL_NAME } from '../../../tools/PowerShellTool/toolName.js'
-import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js'
-import { shouldShowAlwaysAllowOptions } from '../../../utils/permissions/permissionsLoader.js'
+import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
+import { shouldShowAlwaysAllowOptions } from '../../../services/permissions/permissionsLoader.js'
 import type { OptionWithDescription } from '../../CustomSelect/select.js'
-import { generateShellSuggestionsLabel } from '../shellPermissionHelpers.js'
+import { generateShellSuggestionsLabel } from '../ShellPermissionHelpers.js'
 export type PowerShellToolUseOption = 'yes' | 'yes-apply-suggestions' | 'yes-prefix-edited' | 'no'
 export function powershellToolUseOptions({
   suggestions = [],

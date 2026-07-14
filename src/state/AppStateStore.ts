@@ -7,26 +7,31 @@ import type { ElicitationRequestEvent } from '../services/mcp/elicitationHandler
 import type { MCPServerConnection, ServerResource } from '../services/mcp/types.js'
 import type { ModelSetting } from '../services/model/model.js'
 import { shouldEnablePromptSuggestion } from '../services/prompt-suggestion/promptSuggestion.js'
-import { getEmptyToolPermissionContext, type Tool, type ToolPermissionContext } from '../Tool.js'
+import type { Tool, ToolPermissionContext } from '../tool.js'
 import type { TaskState } from '../tasks/types.js'
 import type { AgentColorName } from '../tools/AgentTool/agentColorManager.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import type { AllowedPrompt } from '../tools/ExitPlanModeTool/ExitPlanModeTool.js'
 import type { AgentId } from '../types/ids.js'
 import type { Message, UserMessage } from '../types/message.js'
-import type { LoadedPlugin, PluginError } from '../types/plugin.js'
+import type { LoadedPlugin, PluginError } from '../services/plugins/types.js'
 import type { DeepImmutable } from '../types/utils.js'
 import { type AttributionState, createEmptyAttributionState } from '../utils/commitAttribution.js'
 import type { EffortLevel } from '../utils/effort.js'
 import type { FileHistoryState } from '../utils/fileHistory.js'
-import type { REPLHookContext } from '../utils/hooks/postSamplingHooks.js'
-import type { SessionHooksState } from '../utils/hooks/sessionHooks.js'
-import type { DenialTrackingState } from '../utils/permissions/denialTracking.js'
-import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
-import { getInitialSettings } from '../utils/settings/settings.js'
-import type { SettingsJson } from '../utils/settings/types.js'
+import type { REPLHookContext } from '../services/hooks/postSamplingHooks.js'
+import type { SessionHooksState } from '../services/hooks/sessionHooks.js'
+import type { DenialTrackingState } from '../services/permissions/denialTracking.js'
+import type { PermissionMode } from '../services/permissions/permissionMode.js'
+import { getInitialSettings } from '../services/settings/settings.js'
+import type { SettingsJson } from '../services/settings/types.js'
 import { shouldEnableThinkingByDefault } from '../utils/thinking.js'
 import type { Store } from './store.js'
+import { createNotificationSlice } from './slices/notificationSlice.js'
+import { createPermissionSlice } from './slices/permissionSlice.js'
+import { createPluginSlice } from './slices/pluginSlice.js'
+import { createTaskSlice } from './slices/taskSlice.js'
+import { createUiSlice } from './slices/uiSlice.js'
 
 export type CompletionBoundary =
   | { type: 'complete'; completedAt: number; outputTokens: number }
@@ -438,18 +443,11 @@ export function getDefaultAppState(): AppState {
 
   return {
     settings: getInitialSettings(),
-    tasks: {},
-    agentNameRegistry: new Map(),
+    ...createTaskSlice(),
     verbose: false,
     mainLoopModel: null, // 别名、全名（如 --model 或环境变量），或 null（默认）
     mainLoopModelForSession: null,
-    expandedView: 'none',
-    isBriefOnly: false,
-    showTeammateMessagePreview: false,
-    selectedIPAgentIndex: -1,
-    coordinatorTaskIndex: -1,
-    viewSelectionMode: 'none',
-    footerSelection: null,
+    ...createUiSlice(),
     kairosEnabled: false,
     remoteSessionUrl: undefined,
     remoteConnectionStatus: 'connecting',
@@ -467,10 +465,7 @@ export function getDefaultAppState(): AppState {
     replWireError: undefined,
     replWireInitialName: undefined,
     showRemoteCallout: false,
-    toolPermissionContext: {
-      ...getEmptyToolPermissionContext(),
-      mode: initialMode,
-    },
+    ...createPermissionSlice(initialMode),
     agent: undefined,
     agentDefinitions: { activeAgents: [], allAgents: [] },
     fileHistory: {
@@ -486,38 +481,14 @@ export function getDefaultAppState(): AppState {
       resources: {},
       pluginReconnectKey: 0,
     },
-    plugins: {
-      enabled: [],
-      disabled: [],
-      commands: [],
-      errors: [],
-      installationStatus: {
-        marketplaces: [],
-        plugins: [],
-      },
-      needsRefresh: false,
-    },
-    todos: {},
-    remoteAgentTaskSuggestions: [],
-    notifications: {
-      current: null,
-      queue: [],
-    },
-    elicitation: {
-      queue: [],
-    },
+    ...createPluginSlice(),
+    ...createNotificationSlice(),
     thinkingEnabled: shouldEnableThinkingByDefault(),
     promptSuggestionEnabled: shouldEnablePromptSuggestion(),
     sessionHooks: new Map(),
     inbox: {
       messages: [],
     },
-    workerSandboxPermissions: {
-      queue: [],
-      selectedIndex: 0,
-    },
-    pendingWorkerRequest: null,
-    pendingSandboxRequest: null,
     promptSuggestion: {
       text: null,
       promptId: null,
@@ -533,6 +504,5 @@ export function getDefaultAppState(): AppState {
     authVersion: 0,
     initialMessage: null,
     effortValue: undefined,
-    activeOverlays: new Set<string>(),
   }
 }

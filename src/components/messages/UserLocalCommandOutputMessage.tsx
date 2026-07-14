@@ -2,7 +2,7 @@ import type React from 'react'
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js'
 import { getNoContentMessage } from '../../constants/messages.js'
 import { Box, Text } from '../../ink.js'
-import { extractTag } from '../../utils/messages.js'
+import { extractTag } from '../../services/messages/index.js'
 import { Markdown } from '../Markdown.js'
 import { MessageResponse } from '../MessageResponse.js'
 

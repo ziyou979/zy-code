@@ -5,14 +5,18 @@
 // unguarded code.
 
 import { useState } from 'react'
-import { type ChannelEntry, getAllowedChannels, getHasDevChannels } from '../../bootstrap/state.js'
+import {
+  type ChannelEntry,
+  getAllowedChannels,
+  getHasDevChannels,
+} from '../../bootstrap/runtime/runtimeContext.js'
 import { Box, Text } from '../../ink.js'
 import { isChannelsEnabled } from '../../services/mcp/channelAllowlist.js'
 import { getEffectiveChannelAllowlist } from '../../services/mcp/channelNotification.js'
 import { getMcpConfigsByScope } from '../../services/mcp/config.js'
-import { getZyAIOAuthTokens } from '../../utils/auth.js'
-import { loadInstalledPlugins } from '../../utils/plugins/installedPluginsManager.js'
-import { getSettingsForSource } from '../../utils/settings/settings.js'
+import { getZyAIOAuthTokens } from '../../services/auth/auth.js'
+import { loadInstalledPlugins } from '../../services/plugins/installedPluginsManager.js'
+import { getSettingsForSource } from '../../services/settings/settings.js'
 export function ChannelsNotice() {
   const [noticeState] = useState(() => {
     const ch = getAllowedChannels()

@@ -1,8 +1,8 @@
 import { feature } from 'bun:bundle'
 import { useEffect, useState } from 'react'
 import { Box, Text } from '../../ink.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
+import { getInitialSettings } from '../../services/settings/settings.js'
 import { isVoiceModeEnabled } from '../../voice/voiceModeEnabled.js'
 import { AnimatedAsterisk } from './AnimatedAsterisk.js'
 

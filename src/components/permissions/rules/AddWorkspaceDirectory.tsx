@@ -5,12 +5,12 @@ import {
   addDirHelpMessage,
   validateDirectoryForWorkspace,
 } from '../../../commands/add-dir/validation.js'
-import TextInput from '../../../components/TextInput.js'
+import TextInput from '../../TextInput.js'
 import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../../ink.js'
 import { useKeybinding } from '../../../keybindings/useKeybinding.js'
 import { getDirectoryCompletions } from '../../../services/suggestions/directoryCompletion.js'
-import type { ToolPermissionContext } from '../../../Tool.js'
+import type { ToolPermissionContext } from '../../../tool.js'
 import { ConfigurableShortcutHint } from '../../ConfigurableShortcutHint.js'
 import { Select } from '../../CustomSelect/select.js'
 import { Byline } from '../../design-system/Byline.js'

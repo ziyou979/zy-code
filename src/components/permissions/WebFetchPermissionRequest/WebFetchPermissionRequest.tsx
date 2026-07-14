@@ -1,7 +1,7 @@
 import { tSync } from 'src/i18n/index.js'
 import { Box, Text, useTheme } from '../../../ink.js'
 import { WebFetchTool } from '../../../tools/WebFetchTool/WebFetchTool.js'
-import { shouldShowAlwaysAllowOptions } from '../../../utils/permissions/permissionsLoader.js'
+import { shouldShowAlwaysAllowOptions } from '../../../services/permissions/permissionsLoader.js'
 import { Select } from '../../CustomSelect/select.js'
 import { usePermissionRequestLogging } from '../hooks.js'
 import { PermissionDialog } from '../PermissionDialog.js'

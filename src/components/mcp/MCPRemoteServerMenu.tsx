@@ -28,7 +28,7 @@ import {
   filterMcpPromptsByServer,
 } from '../../services/mcp/utils.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import { getOauthAccountInfo } from '../../utils/auth.js'
+import { getOauthAccountInfo } from '../../services/auth/auth.js'
 import { openBrowser } from '../../utils/browser.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logMCPDebug } from '../../utils/log.js'
@@ -40,8 +40,8 @@ import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { Spinner } from '../Spinner.js'
 import TextInput from '../TextInput.js'
 import { CapabilitiesSection } from './CapabilitiesSection.js'
-import type { HTTPServerInfo, SSEServerInfo, ZyAIServerInfo } from './types.js'
-import { handleReconnectError, handleReconnectResult } from './utils/reconnectHelpers.js'
+import type { HTTPServerInfo, SSEServerInfo, ZyAIServerInfo } from '../../services/mcp/viewTypes.js'
+import { handleReconnectError, handleReconnectResult } from './utils/ReconnectHelpers.js'
 
 type Props = {
   server: SSEServerInfo | HTTPServerInfo | ZyAIServerInfo

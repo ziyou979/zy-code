@@ -1,6 +1,6 @@
 import { Box, Text } from '../../ink.js'
 import type { SandboxDependencyCheck } from '../../services/sandbox/sandbox-adapter.js'
-import { getPlatform } from '../../utils/platform.js'
+import { getPlatform } from '../../services/shell/platform.js'
 
 type Props = {
   depCheck: SandboxDependencyCheck

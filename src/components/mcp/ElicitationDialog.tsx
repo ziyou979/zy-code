@@ -19,7 +19,7 @@ import {
   TRIANGLE_RIGHT,
   WARNING,
 } from '../../constants/figures.js'
-import { useRegisterOverlay } from '../../context/overlayContext.js'
+import { useRegisterOverlay } from '../../context/OverlayContext.js'
 import { useNotifyAfterTimeout } from '../../hooks/useNotifyAfterTimeout.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw text input for elicitation form

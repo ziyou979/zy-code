@@ -8,7 +8,7 @@ import type { PromptInputMode } from 'src/types/textInputTypes.js'
 import { getTeammateColor } from 'src/utils/teammate.js'
 import type { Theme } from 'src/utils/theme.js'
 import { POINTER } from '../../constants/figures.js'
-import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
+import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 
 type Props = {
   mode: PromptInputMode

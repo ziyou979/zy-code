@@ -5,9 +5,9 @@ import { useAppState, useSetAppState } from 'src/state/AppState.js'
 import {
   applyPermissionUpdate,
   persistPermissionUpdate,
-} from 'src/utils/permissions/PermissionUpdate.js'
+} from 'src/services/permissions/permissionUpdate.js'
 import type { CommandResultDisplay } from '../../../commands.js'
-import { Select } from '../../../components/CustomSelect/select.js'
+import { Select } from '../../CustomSelect/select.js'
 import { WARNING } from '../../../constants/figures.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useSearchInput } from '../../../hooks/useSearchInput.js'
@@ -17,15 +17,15 @@ import { getAutoModeDenials } from '../../../utils/autoModeDenials.js'
 import type {
   PermissionBehavior,
   PermissionRule,
-} from '../../../utils/permissions/PermissionRule.js'
-import { permissionRuleValueToString } from '../../../utils/permissions/permissionRuleParser.js'
+} from '../../../services/permissions/permissionRule.js'
+import { permissionRuleValueToString } from '../../../services/permissions/permissionRuleParser.js'
 import {
   deletePermissionRule,
   getAllowRules,
   getAskRules,
   getDenyRules,
   permissionRuleSourceDisplayString,
-} from '../../../utils/permissions/permissions.js'
+} from '../../../services/permissions/permissions.js'
 import { jsonStringify } from '../../../utils/slowOperations.js'
 import { Pane } from '../../design-system/Pane.js'
 import { Tab, Tabs, useTabHeaderFocus, useTabsWidth } from '../../design-system/Tabs.js'

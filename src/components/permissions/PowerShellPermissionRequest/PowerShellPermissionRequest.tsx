@@ -12,7 +12,7 @@ import { getCompoundCommandPrefixesStatic } from '../../../shell-eval/powershell
 import { getDestructiveCommandWarning } from '../../../tools/PowerShellTool/destructiveCommandWarning.js'
 import { PowerShellTool } from '../../../tools/PowerShellTool/PowerShellTool.js'
 import { isAllowlistedCommand } from '../../../tools/PowerShellTool/readOnlyValidation.js'
-import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js'
+import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
 import { Select } from '../../CustomSelect/select.js'
 import { type UnaryEvent, usePermissionRequestLogging } from '../hooks.js'
 import { PermissionDecisionDebugInfo } from '../PermissionDecisionDebugInfo.js'
@@ -22,7 +22,7 @@ import type { PermissionRequestProps } from '../PermissionRequest.js'
 import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js'
 import { useShellPermissionFeedback } from '../useShellPermissionFeedback.js'
 import { logUnaryPermissionEvent } from '../utils.js'
-import { powershellToolUseOptions } from './powershellToolUseOptions.js'
+import { powershellToolUseOptions } from './PowershellToolUseOptions.js'
 export function PowerShellPermissionRequest(props: PermissionRequestProps): React.ReactNode {
   const { toolUseConfirm, toolUseContext, onDone, onReject, workerBadge } = props
   const { command, description } = PowerShellTool.inputSchema.parse(toolUseConfirm.input)

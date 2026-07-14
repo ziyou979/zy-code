@@ -19,12 +19,12 @@ import {
 import { getDefaultStandardModel, renderModelName } from '../../services/model/model.js'
 import { isMacOsKeychainLocked } from '../../services/secure-storage/macOsKeychainStorage.js'
 import type { TextBlock } from '../../types/llm.js'
-import { isEmptyMessageText, NO_RESPONSE_REQUESTED } from '../../utils/messages.js'
+import { isEmptyMessageText, NO_RESPONSE_REQUESTED } from '../../services/messages/index.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
 import { InterruptedByUser } from '../InterruptedByUser.js'
 import { Markdown } from '../Markdown.js'
 import { MessageResponse } from '../MessageResponse.js'
-import { MessageActionsSelectedContext } from '../messageActions.js'
+import { MessageActionsSelectedContext } from '../MessageActions.js'
 import { RateLimitMessage } from './RateLimitMessage.js'
 
 const MAX_API_ERROR_CHARS = 1000

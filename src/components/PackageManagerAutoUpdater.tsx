@@ -9,10 +9,10 @@ import {
   getMaxVersion,
   shouldSkipVersion,
 } from '../utils/autoUpdater.js'
-import { isAutoUpdaterDisabled } from '../utils/config.js'
+import { isAutoUpdaterDisabled } from '../services/config/config.js'
 import { logForDebugging } from '../utils/debug.js'
 import { gt, gte } from '../utils/semver.js'
-import { getInitialSettings } from '../utils/settings/settings.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 
 type Props = {
   isUpdating: boolean

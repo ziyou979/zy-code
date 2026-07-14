@@ -4,7 +4,7 @@ import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
 import { stringWidth } from 'src/ink/stringWidth.js'
 import { useAppState, useSetAppState } from 'src/state/AppState.js'
 import { enterTeammateView, exitTeammateView } from 'src/state/teammateViewHelpers.js'
-import { isPanelAgentTask } from 'src/tasks/LocalAgentTask/LocalAgentTask.js'
+import { isPanelAgentTask } from 'src/tasks/local-agent-task/LocalAgentTask.js'
 import { getPillLabel, pillNeedsCta } from 'src/tasks/pillLabel.js'
 import { isBackgroundTask, type TaskState } from 'src/tasks/types.js'
 import { calculateHorizontalScrollWindow } from 'src/utils/horizontalScroll.js'
@@ -18,7 +18,7 @@ import {
 } from '../../tools/AgentTool/agentColorManager.js'
 import type { Theme } from '../../utils/theme.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
-import { shouldHideTasksFooter } from './taskStatusUtils.js'
+import { shouldHideTasksFooter } from './TaskStatusUtils.js'
 
 type Props = {
   tasksSelected: boolean

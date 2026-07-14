@@ -26,9 +26,9 @@ import {
   generateGenericDescription,
   getBashPromptAllowDescriptions,
   isClassifierPermissionsEnabled,
-} from '../../../utils/permissions/bashClassifier.js'
-import { extractRules } from '../../../utils/permissions/PermissionUpdate.js'
-import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js'
+} from '../../../services/permissions/bashClassifier.js'
+import { extractRules } from '../../../services/permissions/permissionUpdate.js'
+import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
 import { Select } from '../../CustomSelect/select.js'
 import { ShimmerChar } from '../../Spinner/ShimmerChar.js'
 import { useShimmerAnimation } from '../../Spinner/useShimmerAnimation.js'
@@ -41,7 +41,7 @@ import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js'
 import { SedEditPermissionRequest } from '../SedEditPermissionRequest/SedEditPermissionRequest.js'
 import { useShellPermissionFeedback } from '../useShellPermissionFeedback.js'
 import { logUnaryPermissionEvent } from '../utils.js'
-import { bashToolUseOptions } from './bashToolUseOptions.js'
+import { bashToolUseOptions } from './BashToolUseOptions.js'
 
 // Isolates the 20fps shimmer clock from BashPermissionRequestInner. Before this
 // extraction, useShimmerAnimation lived inside the 535-line Inner body, so every

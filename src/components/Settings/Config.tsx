@@ -11,14 +11,14 @@ import {
   saveGlobalConfig,
   getCurrentProjectConfig,
   type OutputStyle,
-} from '../../utils/config.js'
+} from '../../services/config/config.js'
 import { normalizeApiKeyForConfig } from '../../utils/authPortable.js'
 import {
   getGlobalConfig,
   getAutoUpdaterDisabledReason,
   formatAutoUpdaterDisabledReason,
   getRemoteControlAtStartup,
-} from '../../utils/config.js'
+} from '../../services/config/config.js'
 import chalk from 'chalk'
 import {
   permissionModeTitle,
@@ -28,12 +28,12 @@ import {
   PERMISSION_MODES,
   type ExternalPermissionMode,
   type PermissionMode,
-} from '../../utils/permissions/PermissionMode.js'
+} from '../../services/permissions/permissionMode.js'
 import {
   getAutoModeEnabledState,
   hasAutoModeOptInAnySource,
   transitionPlanAutoMode,
-} from '../../utils/permissions/permissionSetup.js'
+} from '../../services/permissions/permissionSetup.js'
 import { logError } from '../../utils/log.js'
 import {
   logEvent,
@@ -58,20 +58,20 @@ import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Byline } from '../design-system/Byline.js'
 import { useTabHeaderFocus } from '../design-system/Tabs.js'
-import { useIsInsideModal } from '../../context/modalContext.js'
+import { useIsInsideModal } from '../../context/ModalContext.js'
 import { SearchBox } from '../SearchBox.js'
-import { isSupportedTerminal, hasAccessToIDEExtensionDiffFeature } from '../../utils/ide.js'
+import { isSupportedTerminal, hasAccessToIDEExtensionDiffFeature } from '../../services/ide/ide.js'
 import {
   getInitialSettings,
   getSettingsForSource,
   updateSettingsForSource,
-} from '../../utils/settings/settings.js'
-import { getUserMsgOptIn, setUserMsgOptIn } from '../../bootstrap/state.js'
+} from '../../services/settings/settings.js'
+import { getUserMsgOptIn, setUserMsgOptIn } from '../../bootstrap/runtime/runtimeContext.js'
 import { DEFAULT_OUTPUT_STYLE_NAME } from 'src/constants/outputStyles.js'
 import { isEnvTruthy, isRunningOnHomespace, isInternalBuild } from 'src/utils/envUtils.js'
 import type { LocalJSXCommandContext, CommandResultDisplay } from '../../commands.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
+import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import {
   getCliTeammateModeOverride,
   clearCliTeammateModeOverride,

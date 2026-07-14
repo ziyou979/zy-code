@@ -3,18 +3,18 @@ import {
   logEvent,
 } from '../../../services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../../../services/analytics/metadata.js'
-import type { ToolPermissionContext } from '../../../Tool.js'
+import type { ToolPermissionContext } from '../../../tool.js'
 import {
   CLAUDE_FOLDER_PERMISSION_PATTERN,
   FILE_EDIT_TOOL_NAME,
   GLOBAL_CLAUDE_FOLDER_PERMISSION_PATTERN,
 } from '../../../tools/FileEditTool/constants.js'
 import { env } from '../../../utils/env.js'
-import { generateSuggestions } from '../../../utils/permissions/filesystem.js'
-import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js'
+import { generateSuggestions } from '../../../services/permissions/filesystem.js'
+import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
 import { type CompletionType, logUnaryEvent } from '../../../utils/unaryLogging.js'
 import type { ToolUseConfirm } from '../PermissionRequest.js'
-import type { FileOperationType, PermissionOption } from './permissionOptions.js'
+import type { FileOperationType, PermissionOption } from './PermissionOptions.js'
 
 function logPermissionEvent(
   event: 'accept' | 'reject',

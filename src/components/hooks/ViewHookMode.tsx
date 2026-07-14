@@ -3,7 +3,7 @@ import { Box, Text } from '../../ink.js'
 import {
   hookSourceDescriptionDisplayString,
   type IndividualHookConfig,
-} from '../../utils/hooks/hooksSettings.js'
+} from '../../services/hooks/hooksSettings.js'
 import { Dialog } from '../design-system/Dialog.js'
 
 type Props = {

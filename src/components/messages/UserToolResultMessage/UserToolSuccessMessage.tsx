@@ -5,14 +5,14 @@ import { TICK } from '../../../constants/figures.js'
 import { tSync } from '../../../i18n/index.js'
 import { Box, Text, useTheme } from '../../../ink.js'
 import { useAppState } from '../../../state/AppState.js'
-import { filterToolProgressMessages, type Tool, type Tools } from '../../../Tool.js'
+import { filterToolProgressMessages, type Tool, type Tools } from '../../../tool.js'
 import type { ProgressMessage, UserMessage } from '../../../types/message.js'
 import {
   deleteClassifierApproval,
   getClassifierApproval,
   getYoloClassifierApproval,
 } from '../../../utils/classifierApprovals.js'
-import type { buildMessageLookups } from '../../../utils/messages.js'
+import type { buildMessageLookups } from '../../../services/messages/index.js'
 import { MessageResponse } from '../../MessageResponse.js'
 import { HookProgressMessage } from '../HookProgressMessage.js'
 

@@ -2,10 +2,10 @@
 // Used by TaskStopTool (LLM-invoked) and SDK stop_task control request.
 
 import type { AppState } from '../state/AppState.js'
-import type { TaskStateBase } from '../Task.js'
+import type { TaskStateBase } from '../task.js'
 import { getTaskByType } from '../tasks.js'
 import { emitTaskTerminatedBridge } from '../utils/bridgeEventQueue.js'
-import { isLocalShellTask } from './LocalShellTask/guards.js'
+import { isLocalShellTask } from './local-shell-task/guards.js'
 
 export class StopTaskError extends Error {
   constructor(

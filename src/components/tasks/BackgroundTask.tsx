@@ -8,7 +8,7 @@ import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import { RemoteSessionProgress } from './RemoteSessionProgress.js'
 import { ShellProgress, TaskStatusText } from './ShellProgress.js'
-import { describeTeammateActivity } from './taskStatusUtils.js'
+import { describeTeammateActivity } from './TaskStatusUtils.js'
 
 type Props = {
   task: DeepImmutable<BackgroundTaskState>

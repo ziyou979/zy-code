@@ -1,7 +1,7 @@
 import { BLACK_CIRCLE } from '../../constants/figures.js'
 import { Box, Text, type TextProps } from '../../ink.js'
 import type { TextBlock } from '../../types/llm.js'
-import { extractTag } from '../../utils/messages.js'
+import { extractTag } from '../../services/messages/index.js'
 
 type Props = {
   addMargin: boolean

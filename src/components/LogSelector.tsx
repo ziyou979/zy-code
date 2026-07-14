@@ -1,8 +1,8 @@
 import chalk from 'chalk'
 import React from 'react'
-import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
+import { getOriginalCwd, getSessionId } from '../bootstrap/runtime/runtimeContext.js'
 import { POINTER } from '../constants/figures.js'
-import { useIsInsideModal, useModalOrTerminalSize } from '../context/modalContext.js'
+import { useIsInsideModal, useModalOrTerminalSize } from '../context/ModalContext.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useSearchInput } from '../hooks/useSearchInput.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
@@ -22,7 +22,7 @@ import {
   getSessionIdFromLog,
   isCustomTitleEnabled,
   saveCustomTitle,
-} from '../utils/sessionStorage.js'
+} from '../services/sessionStorage.js'
 import { getTheme } from '../utils/theme.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
 import { Select } from './CustomSelect/select.js'

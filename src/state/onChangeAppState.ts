@@ -1,7 +1,7 @@
-import { setMainLoopModelOverride } from '../bootstrap/state.js'
+import { setMainLoopModelOverride } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getAPIProvider } from '../services/model/providers.js'
-import { clearApiKeyHelperCache } from '../utils/auth.js'
-import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
+import { clearApiKeyHelperCache } from '../services/auth/auth.js'
+import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { toError } from '../utils/errors.js'
 import { logError } from '../utils/log.js'
@@ -9,13 +9,13 @@ import { applyConfigEnvironmentVariables } from '../utils/managedEnv.js'
 import {
   permissionModeFromString,
   toExternalPermissionMode,
-} from '../utils/permissions/PermissionMode.js'
+} from '../services/permissions/permissionMode.js'
 import {
   notifyPermissionModeChanged,
   notifySessionMetadataChanged,
   type SessionExternalMetadata,
-} from '../utils/sessionState.js'
-import { getInitialSettings, updateSettingsForSource } from '../utils/settings/settings.js'
+} from '../services/session-state/sessionState.js'
+import { getInitialSettings, updateSettingsForSource } from '../services/settings/settings.js'
 import type { AppState } from './AppStateStore.js'
 
 // Inverse of the push below — restore on worker restart.

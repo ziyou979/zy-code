@@ -3,7 +3,7 @@ import Link from '../../ink/components/Link.js'
 import { supportsHyperlinks } from '../../ink/supports-hyperlinks.js'
 import { Box, Text } from '../../ink.js'
 import { getStoredImagePath } from '../../utils/imageStore.js'
-import { renderInlineImageFromFile } from '../../utils/terminalImage.js'
+import { renderInlineImageFromFile } from '../../services/shell/terminalImage.js'
 import { MessageResponse } from '../MessageResponse.js'
 
 type Props = {

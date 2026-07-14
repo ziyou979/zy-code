@@ -1,6 +1,6 @@
 import { Text } from '../../../ink.js'
 import { BashTool } from '../../../tools/BashTool/BashTool.js'
-import type { PermissionRuleValue } from '../../../utils/permissions/PermissionRule.js'
+import type { PermissionRuleValue } from '../../../services/permissions/permissionRule.js'
 
 type RuleSubtitleProps = {
   ruleValue: PermissionRuleValue

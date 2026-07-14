@@ -4,29 +4,9 @@ import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, type ClickEvent, Text } from '../../ink.js'
 import { truncatePathMiddle, truncateToWidth } from '../../utils/format.js'
 import type { Theme } from '../../utils/theme.js'
-export type SuggestionItem = {
-  id: string
-  displayText: string
-  tag?: string
-  description?: string
-  metadata?: unknown
-  color?: keyof Theme
-  matchedAlias?: string
-  /**
-   * 用户输入的查询文本，用于在 displayText 中高亮匹配片段。
-   * 当存在时，SuggestionItemRow 会将匹配的部分用 suggestion 色渲染。
-   */
-  query?: string
-}
-export type SuggestionType =
-  | 'command'
-  | 'file'
-  | 'directory'
-  | 'agent'
-  | 'shell'
-  | 'custom-title'
-  | 'slack-channel'
-  | 'none'
+import type { SuggestionItem, SuggestionType } from '../../services/suggestions/types.js'
+
+export type { SuggestionItem, SuggestionType }
 export const OVERLAY_MAX_ITEMS = 5
 
 /**

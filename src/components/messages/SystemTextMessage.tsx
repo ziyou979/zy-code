@@ -25,14 +25,14 @@ import type {
 } from '../../types/message.js'
 import { SystemAPIErrorMessage } from './SystemAPIErrorMessage.js'
 import { formatSecondsShort, getLocalizedDurationFormatter } from '../../utils/format.js'
-import { getGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig } from '../../services/config/config.js'
 import Link from '../../ink/components/Link.js'
 import ThemedText from '../design-system/ThemedText.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
 import { useAppStateStore } from '../../state/AppState.js'
 import { isBackgroundTask, type TaskState } from '../../tasks/types.js'
 import { getPillLabel } from '../../tasks/pillLabel.js'
-import { useSelectedMessageBg } from '../messageActions.js'
+import { useSelectedMessageBg } from '../MessageActions.js'
 import { tSync } from '../../i18n/index.js'
 type Props = {
   message: SystemMessage

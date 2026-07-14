@@ -1,8 +1,8 @@
 import * as React from 'react'
-import { filterToolProgressMessages, findToolByName, type Tools } from '../../Tool.js'
+import { filterToolProgressMessages, findToolByName, type Tools } from '../../tool.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { GroupedToolUseMessage } from '../../types/message.js'
-import type { buildMessageLookups } from '../../utils/messages.js'
+import type { buildMessageLookups } from '../../services/messages/index.js'
 
 type Props = {
   message: GroupedToolUseMessage

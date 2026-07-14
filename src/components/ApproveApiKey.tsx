@@ -1,6 +1,6 @@
 import { tSync } from 'src/i18n/index.js'
 import { Text } from '../ink.js'
-import { saveGlobalConfig } from '../utils/config.js'
+import { saveGlobalConfig } from '../services/config/config.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
 

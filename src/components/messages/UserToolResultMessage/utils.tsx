@@ -1,6 +1,6 @@
 import { HookEvent } from 'commander'
 import { Message, ProgressMessage } from 'src/types/message.js'
-import { findToolByName, Tools } from '../../../Tool.js'
+import { findToolByName, Tools } from '../../../tool.js'
 
 export function useGetToolFromMessages(
   toolUseID: string,

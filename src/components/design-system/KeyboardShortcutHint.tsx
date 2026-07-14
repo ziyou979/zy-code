@@ -1,7 +1,7 @@
 import { tSync } from '../../i18n/index.js'
 import Text from '../../ink/components/Text.js'
 
-/** Map common action identifiers to i18n keys */
+/** 将快捷键动作标识映射到 i18n key。 */
 const actionKeyMap = {
   expand: 'common.expand',
   collapse: 'common.collapse',
@@ -65,7 +65,7 @@ const actionKeyMap = {
   'attachments:previous': 'attachments.previous',
   'attachments:remove': 'attachments.remove',
   'attachments:exit': 'attachments.exit',
-  // LogSelector actions
+  // 日志选择器动作
   'logSelector:save': 'logSelector.save',
   'logSelector:search': 'logSelector.search',
   'logSelector:skip': 'logSelector.skip',
@@ -76,39 +76,29 @@ const actionKeyMap = {
   'logSelector:showAllWorktrees': 'logSelector.showAllWorktrees',
   'logSelector:preview': 'logSelector.preview',
   'logSelector:rename': 'logSelector.rename',
-  // Elicitation actions
+  // 引导输入动作
   'elicitation:unset': 'elicitation.unset',
 } as const
 
 export type KeyboardShortcutAction = keyof typeof actionKeyMap
 
 type Props = {
-  /** The key or chord to display (e.g., "ctrl+o", "Enter", "↑/↓") */
+  /** 要展示的按键或组合键，例如 "ctrl+o"、"Enter"、"↑/↓"。 */
   shortcut: string
-  /** The action the key performs (must be registered in actionKeyMap) */
+  /** 按键执行的动作，必须已在 actionKeyMap 注册。 */
   action: KeyboardShortcutAction
-  /** Whether to wrap the hint in parentheses. Default: false */
+  /** 是否使用括号包裹提示，默认为 false。 */
   parens?: boolean
-  /** Whether to render the shortcut in bold. Default: false */
+  /** 是否以粗体展示快捷键，默认为 false。 */
   bold?: boolean
 }
 
 /**
- * Renders a keyboard shortcut hint like "ctrl+o to expand" or "(tab to toggle)"
- *
- * Wrap in <Text dimColor> for the common dim styling.
+ * 渲染类似 "ctrl+o to expand" 或 "(tab to toggle)" 的快捷键提示。
  */
 export function KeyboardShortcutHint({ shortcut, action, parens = false, bold = false }: Props) {
   const actionKey = actionKeyMap[action]
-  if (!actionKey) {
-    // 开发模式提示未注册 action（不应在用户界面显示原始字符串）
-    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
-      console.warn(
-        `KeyboardShortcutHint: 未注册的 action "${action}"，请在 actionKeyMap 中添加对应 i18n key`,
-      )
-    }
-  }
-  const actionText = actionKey ? tSync(actionKey) : action
+  const actionText = tSync(actionKey)
   const shortcutValue = bold
     ? ((<Text bold={true}>{shortcut}</Text>) as unknown as string)
     : shortcut

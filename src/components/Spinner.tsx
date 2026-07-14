@@ -8,7 +8,7 @@ import {
   SHIMMER_INTERVAL_MS,
 } from '../bridge/bridgeStatusUtil.js'
 import { feature } from 'bun:bundle'
-import { getKairosActive, getUserMsgOptIn } from '../bootstrap/state.js'
+import { getKairosActive, getUserMsgOptIn } from '../bootstrap/runtime/runtimeContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 import { count } from '../utils/array.js'
@@ -25,16 +25,19 @@ import { stringWidth } from '../ink/stringWidth.js'
 import { getDefaultCharacters, type SpinnerMode } from './Spinner/index.js'
 import { SpinnerAnimationRow } from './Spinner/SpinnerAnimationRow.js'
 import { useSettings } from '../hooks/useSettings.js'
-import { isInProcessTeammateTask } from '../tasks/InProcessTeammateTask/types.js'
+import { isInProcessTeammateTask } from '../tasks/in-process-teammate-task/types.js'
 import { isBackgroundTask } from '../tasks/types.js'
-import { getAllInProcessTeammateTasks } from '../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
+import { getAllInProcessTeammateTasks } from '../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 
 import { getViewedTeammateTask } from '../state/selectors.js'
 import { BRAILLE_Z } from '../constants/figures.js'
-import { getCurrentTurnTokenBudget, getTurnOutputTokens } from '../bootstrap/state.js'
+import {
+  getCurrentTurnTokenBudget,
+  getTurnOutputTokens,
+} from '../bootstrap/runtime/runtimeContext.js'
 import { TeammateSpinnerTree } from './Spinner/TeammateSpinnerTree.js'
 import { useAnimationFrame } from '../ink.js'
-import { getGlobalConfig } from '../utils/config.js'
+import { getGlobalConfig } from '../services/config/config.js'
 import { tSync } from '../i18n/index.js'
 export type { SpinnerMode } from './Spinner/index.js'
 const DEFAULT_CHARACTERS = getDefaultCharacters()

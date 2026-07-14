@@ -12,24 +12,21 @@ import React, {
   useSyncExternalStore,
 } from 'react'
 import { ARROW_DOWN, POINTER } from '../constants/figures.js'
-import { ModalContext } from '../context/modalContext.js'
+import { ModalContext } from '../context/ModalContext.js'
 import {
   PromptOverlayProvider,
   usePromptOverlay,
   usePromptOverlayDialog,
-} from '../context/promptOverlayContext.js'
+} from '../context/PromptOverlayContext.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'
 import ScrollBox, { type ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import type { DOMElement } from '../ink/dom.js'
 import instances from '../ink/instances.js'
 import { nodeCache } from '../ink/node-cache.js'
-import { VtPlusPlusRenderer } from '../ink/vtplus/VtPlusPlusRenderer.js'
+import { VtPlusPlusRenderer } from '../ink/vtplus/vtPlusPlusRenderer.js'
 import { Box, Text } from '../ink.js'
-import {
-  findStickyHeaderHitMeta,
-  registerStickyHeaderHitTarget,
-} from '../services/scrollback/messageHitTarget.js'
+import { findStickyHeaderHitMeta, registerStickyHeaderHitTarget } from '../ink/messageHitTarget.js'
 import type { Message } from '../types/message.js'
 import { openBrowser, openPath } from '../utils/browser.js'
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'

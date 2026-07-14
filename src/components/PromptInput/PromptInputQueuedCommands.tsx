@@ -8,7 +8,11 @@ import { QueuedMessageProvider } from '../../context/QueuedMessageContext.js'
 import { useCommandQueue } from '../../hooks/useCommandQueue.js'
 import type { QueuedCommand } from '../../types/textInputTypes.js'
 import { isQueuedCommandVisible } from '../../utils/messageQueueManager.js'
-import { createUserMessage, EMPTY_LOOKUPS, normalizeMessages } from '../../utils/messages.js'
+import {
+  createUserMessage,
+  EMPTY_LOOKUPS,
+  normalizeMessages,
+} from '../../services/messages/index.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { Message } from '../Message.js'
 

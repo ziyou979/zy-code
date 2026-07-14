@@ -24,7 +24,7 @@ import {
   resolvePickerEffortPersistence,
   toPersistableEffort,
 } from '../utils/effort.js'
-import { getSettingsForSource, updateSettingsForSource } from '../utils/settings/settings.js'
+import { getSettingsForSource, updateSettingsForSource } from '../services/settings/settings.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
 import { Select } from './CustomSelect/index.js'
 import { Byline } from './design-system/Byline.js'

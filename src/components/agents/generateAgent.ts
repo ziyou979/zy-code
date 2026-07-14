@@ -2,10 +2,10 @@ import type { QuerySource } from 'src/constants/querySource.js'
 import { getUserContext } from 'src/context.js'
 import { queryModelWithoutStreaming } from 'src/services/api/llmOrchestrator.js'
 import type { ModelName } from 'src/services/model/model.js'
-import { getEmptyToolPermissionContext } from 'src/Tool.js'
+import { getEmptyToolPermissionContext } from 'src/tool.js'
 import { AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
 import { prependUserContext } from 'src/utils/api.js'
-import { createUserMessage, normalizeMessagesForAPI } from 'src/utils/messages.js'
+import { createUserMessage, normalizeMessagesForAPI } from 'src/services/messages/index.js'
 import { getLanguageSection } from '../../constants/prompts.js'
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
 import {
@@ -13,7 +13,7 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import type { AssistantContentBlock, TextBlock } from '../../types/llm.js'
-import { getInitialSettings } from '../../utils/settings/settings.js'
+import { getInitialSettings } from '../../services/settings/settings.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 

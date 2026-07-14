@@ -5,7 +5,7 @@ import { ExitPlanModeTool } from 'src/tools/ExitPlanModeTool/ExitPlanModeTool.js
 import { useNotifyAfterTimeout } from '../../hooks/useNotifyAfterTimeout.js'
 import { tSync } from '../../i18n/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
-import type { AnyObject, Tool, ToolUseContext } from '../../Tool.js'
+import type { AnyObject, Tool, ToolUseContext } from '../../tool.js'
 import { AskUserQuestionTool } from '../../tools/AskUserQuestionTool/AskUserQuestionTool.js'
 import { BashTool } from '../../tools/BashTool/BashTool.js'
 import { FileEditTool } from '../../tools/FileEditTool/FileEditTool.js'
@@ -17,8 +17,7 @@ import { NotebookEditTool } from '../../tools/NotebookEditTool/NotebookEditTool.
 import { PowerShellTool } from '../../tools/PowerShellTool/PowerShellTool.js'
 import { SkillTool } from '../../tools/SkillTool/SkillTool.js'
 import { WebFetchTool } from '../../tools/WebFetchTool/WebFetchTool.js'
-import type { AssistantMessage } from '../../types/message.js'
-import type { PermissionDecision } from '../../utils/permissions/PermissionResult.js'
+import type { ToolUseConfirm } from '../../services/permissions/toolUseConfirm.js'
 import { AskUserQuestionPermissionRequest } from './AskUserQuestionPermissionRequest/AskUserQuestionPermissionRequest.js'
 import { BashPermissionRequest } from './BashPermissionRequest/BashPermissionRequest.js'
 import { EnterPlanModePermissionRequest } from './EnterPlanModePermissionRequest/EnterPlanModePermissionRequest.js'
@@ -48,7 +47,7 @@ const WorkflowTool = feature('WORKFLOW_SCRIPTS')
   : null
 const WorkflowPermissionRequest = feature('WORKFLOW_SCRIPTS')
   ? (
-      require('../../tools/WorkflowTool/WorkflowPermissionRequest.js') as typeof import('../../tools/WorkflowTool/WorkflowPermissionRequest.js')
+      require('../../tools/WorkflowTool/workflowPermissionRequest.js') as typeof import('../../tools/WorkflowTool/workflowPermissionRequest.js')
     ).WorkflowPermissionRequest
   : null
 const MonitorTool = feature('MONITOR_TOOL')
@@ -61,10 +60,9 @@ const MonitorPermissionRequest = feature('MONITOR_TOOL')
   : null
 
 /* eslint-enable @typescript-eslint/no-require-imports */
-import type { z } from 'zod/v4'
-import type { ContentBlock } from '../../types/llm.js'
-import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
 import type { WorkerBadgeProps } from './WorkerBadge.js'
+
+export type { ToolUseConfirm }
 
 function permissionComponentForTool(tool: Tool): React.ComponentType<PermissionRequestProps> {
   switch (tool) {
@@ -121,36 +119,6 @@ export type PermissionRequestProps<Input extends AnyObject = AnyObject> = {
    * internal focus/input state).
    */
   setStickyFooter?: (jsx: React.ReactNode | null) => void
-}
-export type ToolUseConfirm<Input extends AnyObject = AnyObject> = {
-  assistantMessage: AssistantMessage
-  tool: Tool<Input>
-  description: string
-  input: z.infer<Input>
-  toolUseContext: ToolUseContext
-  toolUseID: string
-  permissionResult: PermissionDecision
-  permissionPromptStartTimeMs: number
-  /**
-   * Called when user interacts with the permission dialog (e.g., arrow keys, tab, typing).
-   * This prevents async auto-approval mechanisms (like the bash classifier) from
-   * dismissing the dialog while the user is actively engaging with it.
-   */
-  classifierCheckInProgress?: boolean
-  classifierAutoApproved?: boolean
-  classifierMatchedRule?: string
-  workerBadge?: WorkerBadgeProps
-  onUserInteraction(): void
-  onAbort(): void
-  onDismissCheckmark?(): void
-  onAllow(
-    updatedInput: z.infer<Input>,
-    permissionUpdates: PermissionUpdate[],
-    feedback?: string,
-    contentBlocks?: ContentBlock[],
-  ): void
-  onReject(feedback?: string, contentBlocks?: ContentBlock[]): void
-  recheckPermission(): Promise<void>
 }
 function getNotificationMessage(toolUseConfirm: ToolUseConfirm): string {
   const toolName = toolUseConfirm.tool.userFacingName(toolUseConfirm.input as never)

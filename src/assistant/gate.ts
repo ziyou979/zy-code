@@ -7,8 +7,7 @@
  * 3. 若 --assistant CLI 标志被设置，强制启用（走 markAssistantForced 路径）
  */
 
-import { getInitialSettings } from '../utils/settings/settings.js'
-
+import { getInitialSettings } from '../services/settings/settings.js'
 let _kairosEnabled: boolean | null = null
 let _initialized = false
 

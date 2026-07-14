@@ -2,7 +2,7 @@ import { stringWidth } from '../../ink/stringWidth.js'
 import { Text, useTheme } from '../../ink.js'
 import { getGraphemeSegmenter } from '../../utils/intl.js'
 import { getTheme, type Theme } from '../../utils/theme.js'
-import type { SpinnerMode } from './types.js'
+import type { SpinnerMode } from '../../types/spinner.js'
 import { interpolateColor, parseRGB, toRGBColor } from './utils.js'
 
 type Props = {

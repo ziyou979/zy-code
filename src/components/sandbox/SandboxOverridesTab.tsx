@@ -1,6 +1,6 @@
 import { Box, color, Link, Text, useTheme } from '../../ink.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
-import type { CommandResultDisplay } from '../../types/command.js'
+import type { CommandResultDisplay } from '../../commands/types.js'
 import { Select } from '../CustomSelect/select.js'
 import { useTabHeaderFocus } from '../design-system/Tabs.js'
 

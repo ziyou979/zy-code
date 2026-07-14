@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { useIsInsideModal, useModalScrollRef } from '../../context/modalContext.js'
+import { useIsInsideModal, useModalScrollRef } from '../../context/ModalContext.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import ScrollBox from '../../ink/components/ScrollBox.js'
 import { stringWidth } from '../../ink/stringWidth.js'

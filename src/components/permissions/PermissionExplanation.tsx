@@ -9,7 +9,7 @@ import {
   isPermissionExplainerEnabled,
   type PermissionExplanation as PermissionExplanationType,
   type RiskLevel,
-} from '../../utils/permissions/permissionExplainer.js'
+} from '../../services/permissions/permissionExplainer.js'
 import { ShimmerChar } from '../Spinner/ShimmerChar.js'
 import { useShimmerAnimation } from '../Spinner/useShimmerAnimation.js'
 

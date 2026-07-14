@@ -1,7 +1,7 @@
 import { homedir } from 'node:os'
 import React from 'react'
 import { logEvent } from 'src/services/analytics/index.js'
-import { setSessionTrustAccepted } from '../../bootstrap/state.js'
+import { setSessionTrustAccepted } from '../../bootstrap/runtime/runtimeContext.js'
 import type { Command } from '../../commands.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { tSync } from '../../i18n/index.js'
@@ -9,7 +9,10 @@ import { Box, Link, Text } from '../../ink.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { getMcpConfigsByScope } from '../../services/mcp/config.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
-import { checkHasTrustDialogAccepted, saveCurrentProjectConfig } from '../../utils/config.js'
+import {
+  checkHasTrustDialogAccepted,
+  saveCurrentProjectConfig,
+} from '../../services/config/config.js'
 import { getCwd } from '../../utils/cwd.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'

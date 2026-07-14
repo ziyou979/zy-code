@@ -6,7 +6,7 @@ import {
   logEvent,
 } from '../../../services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../../../services/analytics/metadata.js'
-import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js'
+import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
 import type { CompletionType } from '../../../utils/unaryLogging.js'
 import type { ToolUseConfirm } from '../PermissionRequest.js'
 import {
@@ -14,7 +14,7 @@ import {
   getFilePermissionOptions,
   type PermissionOption,
   type PermissionOptionWithLabel,
-} from './permissionOptions.js'
+} from './PermissionOptions.js'
 import { PERMISSION_HANDLERS, type PermissionHandlerParams } from './usePermissionHandler.js'
 
 export interface ToolInput {

@@ -12,9 +12,9 @@ import {
   getMatcherMetadata,
   getSortedMatchersForEvent,
   groupHooksByEventAndMatcher,
-} from '../../utils/hooks/hooksConfigManager.js'
-import type { IndividualHookConfig } from '../../utils/hooks/hooksSettings.js'
-import { getInitialSettings, getSettingsForSource } from '../../utils/settings/settings.js'
+} from '../../services/hooks/hooksConfigManager.js'
+import type { IndividualHookConfig } from '../../services/hooks/hooksSettings.js'
+import { getInitialSettings, getSettingsForSource } from '../../services/settings/settings.js'
 import { plural } from '../../utils/stringUtils.js'
 import { Dialog } from '../design-system/Dialog.js'
 import { SelectEventMode } from './SelectEventMode.js'

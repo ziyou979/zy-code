@@ -12,15 +12,15 @@ import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { Box, Text, wrapText } from '../ink.js'
-import { evictTerminalTask } from '../services/task/framework.js'
+import { evictTerminalTask } from '../services/task-runtime/framework.js'
 import { type AppState, useAppState, useSetAppState } from '../state/AppState.js'
 import { enterTeammateView, exitTeammateView } from '../state/teammateViewHelpers.js'
 import {
   isPanelAgentTask,
   type LocalAgentTaskState,
-} from '../tasks/LocalAgentTask/LocalAgentTask.js'
+} from '../tasks/local-agent-task/LocalAgentTask.js'
 import { formatDuration } from '../utils/format.js'
-import { isTerminalStatus } from './tasks/taskStatusUtils.js'
+import { isTerminalStatus } from './tasks/TaskStatusUtils.js'
 
 /**
  * Which panel-managed tasks currently have a visible row.

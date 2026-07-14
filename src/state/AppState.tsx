@@ -6,8 +6,8 @@ import { logForDebugging } from '../utils/debug.js'
 import {
   createDisabledBypassPermissionsContext,
   isBypassPermissionsModeDisabled,
-} from '../utils/permissions/permissionSetup.js'
-import { applySettingsChange } from '../utils/settings/applySettingsChange.js'
+} from '../services/permissions/permissionSetup.js'
+import { applySettingsChange } from '../services/settings/applySettingsChange.js'
 import { createStore } from './store.js'
 
 // DCE: voice context is ant-only. External builds get a passthrough.
@@ -64,7 +64,7 @@ export function AppStateProvider({ children, initialState, onChangeAppState }: P
     }
   }, [store.setState, store.getState])
   const onSettingsChange = useEffectEvent(
-    (source: import('../utils/settings/constants.js').SettingSource) =>
+    (source: import('../services/settings/constants.js').SettingSource) =>
       applySettingsChange(source, store.setState),
   )
   useSettingsChange(onSettingsChange)

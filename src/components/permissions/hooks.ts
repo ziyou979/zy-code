@@ -10,10 +10,10 @@ import { BashTool } from 'src/tools/BashTool/BashTool.js'
 import type {
   PermissionDecisionReason,
   PermissionResult,
-} from 'src/utils/permissions/PermissionResult.js'
-import { extractRules, hasRules } from 'src/utils/permissions/PermissionUpdate.js'
-import { permissionRuleValueToString } from 'src/utils/permissions/permissionRuleParser.js'
-import type { ToolUseConfirm } from '../../components/permissions/PermissionRequest.js'
+} from 'src/services/permissions/permissionResult.js'
+import { extractRules, hasRules } from 'src/services/permissions/permissionUpdate.js'
+import { permissionRuleValueToString } from 'src/services/permissions/permissionRuleParser.js'
+import type { ToolUseConfirm } from './PermissionRequest.js'
 import { useSetAppState } from '../../state/AppState.js'
 import { env } from '../../utils/env.js'
 import { isInternalBuild } from '../../utils/envUtils.js'

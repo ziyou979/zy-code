@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { tSync } from 'src/i18n/index.js'
-import { Markdown } from '../../components/Markdown.js'
+import { Markdown } from '../Markdown.js'
 import { Box, Text } from '../../ink.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import {

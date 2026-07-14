@@ -1,5 +1,5 @@
 import { PureComponent, type ReactNode } from 'react'
-import { updateLastInteractionTime } from '../../bootstrap/state.js'
+import { updateLastInteractionTime } from 'src/bootstrap/runtime/runtimeContext.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { stopCapturingEarlyInput } from '../../utils/earlyInput.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'

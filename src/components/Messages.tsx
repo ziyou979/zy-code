@@ -5,7 +5,7 @@ import type { RefObject } from 'react'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { every } from 'src/utils/set.js'
-import { getIsRemoteMode } from '../bootstrap/state.js'
+import { getIsRemoteMode } from '../bootstrap/runtime/runtimeContext.js'
 import type { Command } from '../commands.js'
 import { BLACK_CIRCLE } from '../constants/figures.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
@@ -15,8 +15,8 @@ import { Box, Text } from '../ink.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
 import type { Screen } from '../screens/REPL.js'
 import { useReplStore } from '../state/ReplState.js'
-import type { Tools } from '../Tool.js'
-import { findToolByName } from '../Tool.js'
+import type { Tools } from '../tool.js'
+import { findToolByName } from '../tool.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import type {
   AssistantMessage,
@@ -31,7 +31,7 @@ import { collapseBackgroundBashNotifications } from '../utils/collapseBackground
 import { collapseHookSummaries } from '../utils/collapseHookSummaries.js'
 import { collapseReadSearchGroups } from '../utils/collapseReadSearch.js'
 import { collapseTeammateShutdowns } from '../utils/collapseTeammateShutdowns.js'
-import { getGlobalConfig } from '../utils/config.js'
+import { getGlobalConfig } from '../services/config/config.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
 import { applyGrouping } from '../utils/groupToolUses.js'
@@ -49,7 +49,7 @@ import {
   type StreamingThinking,
   type StreamingToolUse,
   shouldShowUserMessage,
-} from '../utils/messages.js'
+} from '../services/messages/index.js'
 import { plural } from '../utils/stringUtils.js'
 import { renderableSearchText } from '../utils/transcriptSearch.js'
 import { Divider } from './design-system/Divider.js'
@@ -62,7 +62,7 @@ import {
   type MessageActionsNav,
   MessageActionsSelectedContext,
   type MessageActionsState,
-} from './messageActions.js'
+} from './MessageActions.js'
 import { AssistantThinkingMessage } from './messages/AssistantThinkingMessage.js'
 import { CollapsedReadSearchContent } from './messages/CollapsedReadSearchContent.js'
 import { isNullRenderingAttachment } from './messages/nullRenderingAttachments.js'

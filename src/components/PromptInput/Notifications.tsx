@@ -20,14 +20,14 @@ import {
   getApiKeyHelperElapsedMs,
   getConfiguredApiKeyHelper,
   getSubscriptionType,
-} from '../../utils/auth.js'
+} from '../../services/auth/auth.js'
 import type { AutoUpdaterResult } from '../../utils/autoUpdater.js'
-import { getExternalEditor } from '../../utils/editor.js'
+import { getExternalEditor } from '../../terminal-ui/editor.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { formatDuration } from '../../utils/format.js'
-import { setEnvHookNotifier } from '../../utils/hooks/fileChangedWatcher.js'
-import { toIDEDisplayName } from '../../utils/ide.js'
-import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'
+import { setEnvHookNotifier } from '../../services/hooks/fileChangedWatcher.js'
+import { toIDEDisplayName } from '../../services/ide/ide.js'
+import { getMessagesAfterCompactBoundary } from '../../services/messages/index.js'
 import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
 import { AutoUpdaterWrapper } from '../AutoUpdaterWrapper.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'

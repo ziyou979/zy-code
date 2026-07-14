@@ -3,7 +3,7 @@ import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useInterval } from 'usehooks-ts'
 import { ARROW_DOWN, ARROW_LEFT, ARROW_UP, POINTER, TICK } from '../../constants/figures.js'
-import { useRegisterOverlay } from '../../context/overlayContext.js'
+import { useRegisterOverlay } from '../../context/OverlayContext.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw j/k/arrow dialog navigation
 import { Box, Text, useInput } from '../../ink.js'
@@ -23,18 +23,18 @@ import {
   setMultipleMemberModes,
 } from '../../services/swarm/teamHelpers.js'
 import { type AppState, useAppState, useSetAppState } from '../../state/AppState.js'
-import { getEmptyToolPermissionContext } from '../../Tool.js'
+import { getEmptyToolPermissionContext } from '../../tool.js'
 import { AGENT_COLOR_TO_THEME_COLOR } from '../../tools/AgentTool/agentColorManager.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
+import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import { truncateToWidth } from '../../utils/format.js'
-import { getNextPermissionMode } from '../../utils/permissions/getNextPermissionMode.js'
+import { getNextPermissionMode } from '../../services/permissions/getNextPermissionMode.js'
 import {
   getModeColor,
   type PermissionMode,
   permissionModeFromString,
   permissionModeSymbol,
-} from '../../utils/permissions/PermissionMode.js'
+} from '../../services/permissions/permissionMode.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { listTasks, unassignTeammateTasks } from '../../utils/tasks.js'
 import {

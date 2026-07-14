@@ -21,7 +21,7 @@ import { ScrollChromeContext } from './FullscreenLayout.js'
 // scrollTo 时目标上方留出的空间行数。
 const HEADROOM = 3
 
-import { registerMessageHitTarget } from '../services/scrollback/messageHitTarget.js'
+import { registerMessageHitTarget } from '../ink/messageHitTarget.js'
 import { logForDebugging } from '../utils/debug.js'
 import { sleep } from '../utils/sleep.js'
 import { renderableSearchText } from '../utils/transcriptSearch.js'
@@ -33,7 +33,7 @@ import {
   type NavigableType,
   stripSystemReminders,
   toolCallOf,
-} from './messageActions.js'
+} from './MessageActions.js'
 
 // 后备提取器：在此处降低并缓存，供没有 Messages.tsx 工具查找路径的调用者使用
 //（测试、静态上下文）。Messages.tsx 提供自己的降低缓存，还处理 tool extractSearchText。

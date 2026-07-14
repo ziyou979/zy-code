@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Box, Text } from 'src/ink.js'
 import { shouldProcessMockLimits } from 'src/services/rateLimitMocking.js' // Used for /mock-limits command
 import { useZyAiLimits } from 'src/services/zyAiLimitsHook.js'
-import { getRateLimitTier, getSubscriptionType, isZyAISubscriber } from 'src/utils/auth.js'
+import { getRateLimitTier, getSubscriptionType, isZyAISubscriber } from 'src/services/auth/auth.js'
 import { hasZyAiBillingAccess } from 'src/utils/billing.js'
 import { tSync } from '../../i18n/index.js'
 import { MessageResponse } from '../MessageResponse.js'

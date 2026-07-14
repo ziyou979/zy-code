@@ -1,6 +1,6 @@
 import { logEvent } from '../services/analytics/index.js'
-import { isTerminalTaskStatus } from '../Task.js'
-import type { LocalAgentTaskState } from '../tasks/LocalAgentTask/LocalAgentTask.js'
+import { isTerminalTaskStatus } from '../task.js'
+import type { LocalAgentTaskState } from '../tasks/local-agent-task/LocalAgentTask.js'
 
 // Inlined from framework.ts — importing creates a cycle through
 // BackgroundTasksDialog. Keep in sync with PANEL_GRACE_MS there.

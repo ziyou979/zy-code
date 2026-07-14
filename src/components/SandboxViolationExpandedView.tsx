@@ -15,7 +15,7 @@ function formatTime(date: Date): string {
   return `${h}:${m}:${s}${ampm}`
 }
 
-import { getPlatform } from 'src/utils/platform.js'
+import { getPlatform } from 'src/services/shell/platform.js'
 export function SandboxViolationExpandedView() {
   // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   const [violations, setViolations] = useState<any[]>([])

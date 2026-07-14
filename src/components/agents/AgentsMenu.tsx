@@ -6,7 +6,7 @@ import { useMergedTools } from '../../hooks/useMergedTools.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import type { Tools } from '../../Tool.js'
+import type { Tools } from '../../tool.js'
 import { resolveAgentOverrides } from '../../tools/AgentTool/agentDisplay.js'
 import {
   type AgentDefinition,
@@ -14,7 +14,7 @@ import {
 } from '../../tools/AgentTool/loadAgentsDir.js'
 import { toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import type { SettingSource } from '../../utils/settings/constants.js'
+import type { SettingSource } from '../../services/settings/constants.js'
 import { Select } from '../CustomSelect/select.js'
 import { Dialog } from '../design-system/Dialog.js'
 import { AgentDetail } from './AgentDetail.js'

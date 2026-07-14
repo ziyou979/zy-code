@@ -5,7 +5,7 @@ import { useDeclaredCursor } from '../../ink/hooks/use-declared-cursor.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Ansi, Box, Text } from '../../ink.js'
 import { count } from '../../utils/array.js'
-import type { PastedContent } from '../../utils/config.js'
+import type { PastedContent } from '../../services/config/config.js'
 import type { ImageDimensions } from '../../utils/imageResizer.js'
 import { SelectInputOption } from './select-input-option.js'
 import {

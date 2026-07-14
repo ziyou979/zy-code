@@ -16,8 +16,8 @@ import { Byline } from '../design-system/Byline.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { Spinner } from '../Spinner.js'
 import { CapabilitiesSection } from './CapabilitiesSection.js'
-import type { StdioServerInfo } from './types.js'
-import { handleReconnectError, handleReconnectResult } from './utils/reconnectHelpers.js'
+import type { StdioServerInfo } from '../../services/mcp/viewTypes.js'
+import { handleReconnectError, handleReconnectResult } from './utils/ReconnectHelpers.js'
 
 type Props = {
   server: StdioServerInfo

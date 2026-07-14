@@ -9,10 +9,10 @@ import { Box, Text } from '../ink.js'
 import { installLatest } from '../services/native-installer/index.js'
 import type { AutoUpdaterResult } from '../utils/autoUpdater.js'
 import { getMaxVersion, getMaxVersionMessage } from '../utils/autoUpdater.js'
-import { isAutoUpdaterDisabled } from '../utils/config.js'
+import { isAutoUpdaterDisabled } from '../services/config/config.js'
 import { isDevEnv, isInternalBuild, isTestEnv } from '../utils/envUtils.js'
 import { gt } from '../utils/semver.js'
-import { getInitialSettings } from '../utils/settings/settings.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 
 /**
  * Categorize error messages for analytics

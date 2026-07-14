@@ -1,12 +1,12 @@
 import { tSync } from 'src/i18n/index.js'
 import type { HookEvent } from 'src/types/index.js'
-import type { HookEventMetadata } from 'src/utils/hooks/hooksConfigManager.js'
+import type { HookEventMetadata } from 'src/services/hooks/hooksConfigManager.js'
 import { Box, Text } from '../../ink.js'
 import {
   getHookDisplayText,
   hookSourceHeaderDisplayString,
   type IndividualHookConfig,
-} from '../../utils/hooks/hooksSettings.js'
+} from '../../services/hooks/hooksSettings.js'
 import { Select } from '../CustomSelect/select.js'
 import { Dialog } from '../design-system/Dialog.js'
 

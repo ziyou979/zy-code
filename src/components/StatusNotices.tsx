@@ -3,8 +3,8 @@ import { use } from 'react'
 import { Box } from '../ink.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import { getMemoryFiles } from '../utils/agentsMd.js'
-import { getGlobalConfig } from '../utils/config.js'
-import { getActiveNotices } from '../utils/statusNoticeDefinitions.js'
+import { getGlobalConfig } from '../services/config/config.js'
+import { getActiveNotices } from '../components/Runtime/StatusNoticeDefinitions.js'
 
 type Props = {
   agentDefinitions?: AgentDefinitionsResult

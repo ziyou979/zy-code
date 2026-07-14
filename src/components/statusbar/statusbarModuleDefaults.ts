@@ -9,18 +9,15 @@
  * - COLOR_TOKENS is the picker library for theme color tokens.
  */
 
-export const MODULE_IDS = ['directory', 'model', 'context', 'tokens', 'cost', 'memory'] as const
+import {
+  STATUSLINE_MODULE_IDS,
+  type StatuslineModuleConfig,
+  type StatuslineModuleId,
+} from '../../services/settings/statuslineTypes.js'
 
-export type ModuleId = (typeof MODULE_IDS)[number]
-
-export type ModuleConfig = {
-  id: ModuleId
-  visible: boolean
-  /** undefined = use DEFAULT_MODULES icon; '' = render with no icon prefix. */
-  icon?: string
-  /** undefined = use DEFAULT_MODULES color; otherwise a theme token name. */
-  color?: string
-}
+export const MODULE_IDS = STATUSLINE_MODULE_IDS
+export type ModuleId = StatuslineModuleId
+export type ModuleConfig = StatuslineModuleConfig
 
 /**
  * Default module configuration. Array order = render order (left to right).

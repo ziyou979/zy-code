@@ -1,5 +1,5 @@
 import { tSync } from '../../../../i18n/index.js'
-import type { Tools } from '../../../../Tool.js'
+import type { Tools } from '../../../../tool.js'
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
 import { Byline } from '../../../design-system/Byline.js'
 import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js'

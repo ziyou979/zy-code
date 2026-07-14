@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import React, { useMemo } from 'react'
 import { Ansi, Box, Text } from '../../ink.js'
-import type { Attachment } from 'src/utils/attachments.js'
+import type { Attachment } from 'src/services/attachments/attachments.js'
 import type { NullRenderingAttachmentType } from './nullRenderingAttachments.js'
 import { useAppState } from '../../state/AppState.js'
 import { getDisplayPath } from 'src/utils/file.js'
@@ -10,14 +10,14 @@ import { MessageResponse } from '../MessageResponse.js'
 import { basename, sep } from 'node:path'
 import { UserTextMessage } from './UserTextMessage.js'
 import { DiagnosticsDisplay } from '../DiagnosticsDisplay.js'
-import { getContentText } from 'src/utils/messages.js'
+import { getContentText } from 'src/services/messages/index.js'
 import { tSync } from '../../i18n/index.js'
 import { UserImageMessage } from './UserImageMessage.js'
 import { toInkColor } from '../../utils/ink.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { plural } from '../../utils/stringUtils.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
+import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import {
   tryRenderPlanApprovalMessage,
   formatTeammateMessageContent,
@@ -28,7 +28,7 @@ import { isShutdownApproved } from '../../utils/teammateMailbox.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
 import { FilePathLink } from '../FilePathLink.js'
 import { feature } from 'bun:bundle'
-import { useSelectedMessageBg } from '../messageActions.js'
+import { useSelectedMessageBg } from '../MessageActions.js'
 type Props = {
   addMargin: boolean
   attachment: Attachment

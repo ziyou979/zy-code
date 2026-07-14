@@ -1,4 +1,4 @@
-import { handlePlanModeTransition } from '../../../bootstrap/state.js'
+import { handlePlanModeTransition } from '../../../bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../../i18n/index.js'
 import { Box, Text } from '../../../ink.js'
 import {
@@ -6,7 +6,7 @@ import {
   logEvent,
 } from '../../../services/analytics/index.js'
 import { useAppState } from '../../../state/AppState.js'
-import { isPlanModeInterviewPhaseEnabled } from '../../../utils/planMode.js'
+import { isPlanModeInterviewPhaseEnabled } from '../../../services/mode-instructions/planModeConfig.js'
 import { Select } from '../../CustomSelect/index.js'
 import { PermissionDialog } from '../PermissionDialog.js'
 import type { PermissionRequestProps } from '../PermissionRequest.js'

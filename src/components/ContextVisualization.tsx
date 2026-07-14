@@ -6,7 +6,7 @@ import type { ContextData } from '../utils/analyzeContext.js'
 import { generateContextSuggestions } from '../utils/contextSuggestions.js'
 import { getDisplayPath } from '../utils/file.js'
 import { formatTokens } from '../utils/format.js'
-import { getSourceDisplayName, type SettingSource } from '../utils/settings/constants.js'
+import { getSourceDisplayName, type SettingSource } from '../services/settings/constants.js'
 import { ContextSuggestions } from './ContextSuggestions.js'
 
 const RESERVED_CATEGORY_NAME = 'Autocompact buffer'
@@ -65,7 +65,7 @@ function translateSourceName(name: string): string {
 function CollapseStatus() {
   if (feature('CONTEXT_COLLAPSE')) {
     const { getStats, isContextCollapseEnabled } =
-      require('../services/context-collapse/index.js') as typeof import('../services/context-collapse/index.js')
+      require('../services/compact/context-collapse/index.js') as typeof import('../services/compact/context-collapse/index.js')
     if (!isContextCollapseEnabled()) {
       return null
     }

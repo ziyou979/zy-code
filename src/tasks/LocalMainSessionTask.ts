@@ -24,11 +24,11 @@ import {
   evictTaskOutput,
   getTaskOutputPath,
   initTaskOutputAsSymlink,
-} from '../services/task/diskOutput.js'
-import { registerTask, updateTaskState } from '../services/task/framework.js'
+} from '../services/task-runtime/diskOutput.js'
+import { registerTask, updateTaskState } from '../services/task-runtime/framework.js'
 import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
-import type { SetAppState } from '../Task.js'
-import { createTaskStateBase } from '../Task.js'
+import type { SetAppState } from '../task.js'
+import { createTaskStateBase } from '../task.js'
 import type { AgentDefinition, CustomAgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import { asAgentId } from '../types/ids.js'
 import type { Message } from '../types/message.js'
@@ -39,8 +39,8 @@ import { registerCleanup } from '../utils/cleanupRegistry.js'
 import { logForDebugging } from '../utils/debug.js'
 import { logError } from '../utils/log.js'
 import { enqueuePendingNotification } from '../utils/messageQueueManager.js'
-import { getAgentTranscriptPath, recordSidechainTranscript } from '../utils/sessionStorage.js'
-import type { LocalAgentTaskState } from './LocalAgentTask/LocalAgentTask.js'
+import { getAgentTranscriptPath, recordSidechainTranscript } from '../services/sessionStorage.js'
+import type { LocalAgentTaskState } from './local-agent-task/LocalAgentTask.js'
 
 // Main session tasks use LocalAgentTaskState with agentType='main-session'
 export type LocalMainSessionTaskState = LocalAgentTaskState & {

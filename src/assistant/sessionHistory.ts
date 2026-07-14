@@ -3,7 +3,6 @@ import { getOauthConfig } from '../constants/oauth.js'
 import { getOAuthHeaders, prepareApiRequest } from '../services/teleport/api.js'
 import type { WireMessage } from '../types/index.js'
 import { logForDebugging } from '../utils/debug.js'
-
 export const HISTORY_PAGE_SIZE = 100
 
 export type HistoryPage = {

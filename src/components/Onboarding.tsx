@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { setupTerminal, shouldOfferTerminalSetup } from '../commands/terminalSetup/terminalSetup.js'
+import {
+  setupTerminal,
+  shouldOfferTerminalSetup,
+} from '../commands/terminal-setup/TerminalSetup.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { tSync, warmI18n } from '../i18n/index.js'
 import { setLanguage } from '../i18n/languageStore.js'
@@ -8,10 +11,10 @@ import { Box, Link, Newline, Text, useTheme } from '../ink.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { PROVIDER_REGISTRY } from '../services/model/providerRegistry.js'
 import { normalizeApiKeyForConfig } from '../utils/authPortable.js'
-import { saveGlobalConfig } from '../utils/config.js'
+import { saveGlobalConfig } from '../services/config/config.js'
 import { type EffortLevel, toPersistableEffort } from '../utils/effort.js'
-import { updateSettingsForSource } from '../utils/settings/settings.js'
-import type { SettingsJson } from '../utils/settings/types.js'
+import { updateSettingsForSource } from '../services/settings/settings.js'
+import type { SettingsJson } from '../services/settings/types.js'
 import { Select } from './CustomSelect/select.js'
 import { effortLevelToSymbol } from './EffortIndicator.js'
 import { Welcome } from './Logo/Welcome.js'

@@ -12,7 +12,7 @@ import { Byline } from '../design-system/Byline.js'
 import { Dialog } from '../design-system/Dialog.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { Spinner } from '../Spinner.js'
-import type { AgentMcpServerInfo } from './types.js'
+import type { AgentMcpServerInfo } from '../../services/mcp/viewTypes.js'
 
 type Props = {
   agentServer: AgentMcpServerInfo

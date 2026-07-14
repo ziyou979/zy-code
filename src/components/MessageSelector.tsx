@@ -27,7 +27,7 @@ import {
   isEmptyMessageText,
   isSyntheticMessage,
   isToolUseResultMessage,
-} from '../utils/messages.js'
+} from '../services/messages/index.js'
 import { type OptionWithDescription, Select } from './CustomSelect/select.js'
 import { Spinner } from './Spinner.js'
 

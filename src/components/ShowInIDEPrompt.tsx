@@ -2,13 +2,13 @@ import { basename, relative } from 'node:path'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink.js'
 import { getCwd } from '../utils/cwd.js'
-import { isSupportedVSCodeTerminal } from '../utils/ide.js'
+import { isSupportedVSCodeTerminal } from '../services/ide/ide.js'
 import { Select } from './CustomSelect/index.js'
 import { Pane } from './design-system/Pane.js'
 import type {
   PermissionOption,
   PermissionOptionWithLabel,
-} from './permissions/FilePermissionDialog/permissionOptions.js'
+} from './permissions/FilePermissionDialog/PermissionOptions.js'
 
 type Props<A> = {
   filePath: string

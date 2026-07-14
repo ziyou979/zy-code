@@ -3,13 +3,13 @@
  * 从 BackgroundTasksDialog.tsx 中提取以减少文件体积。
  */
 
-import type { DreamTaskState } from 'src/tasks/DreamTask/DreamTask.js'
-import type { InProcessTeammateTaskState } from 'src/tasks/InProcessTeammateTask/types.js'
-import type { LocalAgentTaskState } from 'src/tasks/LocalAgentTask/LocalAgentTask.js'
-import type { LocalShellTaskState } from 'src/tasks/LocalShellTask/guards.js'
-import type { LocalWorkflowTaskState } from 'src/tasks/LocalWorkflowTask/LocalWorkflowTask.js'
-import type { MonitorMcpTaskState } from 'src/tasks/MonitorMcpTask/MonitorMcpTask.js'
-import { type RemoteAgentTaskState } from 'src/tasks/RemoteAgentTask/RemoteAgentTask.js'
+import type { DreamTaskState } from 'src/tasks/dream-task/dreamTask.js'
+import type { InProcessTeammateTaskState } from 'src/tasks/in-process-teammate-task/types.js'
+import type { LocalAgentTaskState } from 'src/tasks/local-agent-task/LocalAgentTask.js'
+import type { LocalShellTaskState } from 'src/tasks/local-shell-task/guards.js'
+import type { LocalWorkflowTaskState } from 'src/tasks/local-workflow-task/localWorkflowTask.js'
+import type { MonitorMcpTaskState } from 'src/tasks/monitor-mcp-task/monitorMcpTask.js'
+import { type RemoteAgentTaskState } from 'src/tasks/remote-agent-task/RemoteAgentTask.js'
 import { type BackgroundTaskState, isBackgroundTask, type TaskState } from 'src/tasks/types.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 

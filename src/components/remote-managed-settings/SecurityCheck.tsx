@@ -1,17 +1,16 @@
-import { getIsInteractive } from '../../bootstrap/state.js'
-import { ManagedSettingsSecurityDialog } from '../../components/ManagedSettingsSecurityDialog/ManagedSettingsSecurityDialog.js'
-import {
-  extractDangerousSettings,
-  hasDangerousSettings,
-  hasDangerousSettingsChanged,
-} from '../../components/ManagedSettingsSecurityDialog/utils.js'
+import { getIsInteractive } from '../../bootstrap/runtime/runtimeContext.js'
+import { ManagedSettingsSecurityDialog } from '../ManagedSettingsSecurityDialog/ManagedSettingsSecurityDialog.js'
 import { render } from '../../ink.js'
 import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js'
-import { AppStateProvider } from '../../state/AppState.js'
-import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'
-import { getBaseRenderOptions } from '../../utils/renderOptions.js'
-import type { SettingsJson } from '../../utils/settings/types.js'
 import { logEvent } from '../../services/analytics/index.js'
+import {
+  needsManagedSettingsSecurityCheck,
+  type SecurityCheckResult,
+} from '../../services/remote-managed-settings/securityPolicy.js'
+import { AppStateProvider } from '../../state/AppState.js'
+import { getBaseRenderOptions } from '../../utils/renderOptions.js'
+import type { SettingsJson } from '../../services/settings/types.js'
+
 /**
  * - approved: 用户明确同意（交互对话框）
  * - rejected: 用户拒绝
@@ -19,11 +18,7 @@ import { logEvent } from '../../services/analytics/index.js'
  * - deferred_non_interactive: 非交互路径存在危险变更 — 会话内可暂用，**禁止**落盘为「已同意」
  *   （对齐 CC 2.1.207：claude -p / SDK 不得永久记录未展示过的 consent）
  */
-export type SecurityCheckResult =
-  | 'approved'
-  | 'rejected'
-  | 'no_check_needed'
-  | 'deferred_non_interactive'
+export type { SecurityCheckResult } from '../../services/remote-managed-settings/securityPolicy.js'
 
 /**
  * 检查新的远程托管设置是否包含需要用户批准的危险设置。
@@ -37,13 +32,11 @@ export async function checkManagedSettingsSecurity(
   cachedSettings: SettingsJson | null,
   newSettings: SettingsJson | null,
 ): Promise<SecurityCheckResult> {
-  // 如果新设置没有危险设置，无需检查
-  if (!newSettings || !hasDangerousSettings(extractDangerousSettings(newSettings))) {
+  if (!newSettings) {
     return 'no_check_needed'
   }
-
-  // 如果危险设置未发生变化，无需检查
-  if (!hasDangerousSettingsChanged(cachedSettings, newSettings)) {
+  // 如果新设置没有危险设置，无需检查
+  if (!needsManagedSettingsSecurityCheck(cachedSettings, newSettings)) {
     return 'no_check_needed'
   }
 
@@ -81,24 +74,4 @@ export async function checkManagedSettingsSecurity(
       )
     })()
   })
-}
-
-/**
- * 处理安全检查结果，如果被拒绝则退出
- * 返回 true 表示继续应用（含会话内 deferred），false 表示停止
- */
-export function handleSecurityCheckResult(result: SecurityCheckResult): boolean {
-  if (result === 'rejected') {
-    gracefulShutdownSync(1)
-    return false
-  }
-  return true
-}
-
-/** 是否允许把远程托管设置写入磁盘缓存（视为用户已同意危险项） */
-export function shouldPersistManagedSettingsAfterSecurityCheck(
-  result: SecurityCheckResult,
-): boolean {
-  // deferred_non_interactive：会话可用，但不得落盘为「已同意」
-  return result === 'approved' || result === 'no_check_needed'
 }

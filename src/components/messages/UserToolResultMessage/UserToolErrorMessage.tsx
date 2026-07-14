@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import { BULLET_OPERATOR } from '../../../constants/figures.js'
 import { tSync } from '../../../i18n/index.js'
 import { Text } from '../../../ink.js'
-import { filterToolProgressMessages, type Tool, type Tools } from '../../../Tool.js'
+import { filterToolProgressMessages, type Tool, type Tools } from '../../../tool.js'
 import type { ToolResultBlock } from '../../../types/llm.js'
 import type { ProgressMessage } from '../../../types/message.js'
 import {
@@ -10,7 +10,7 @@ import {
   isClassifierDenial,
   PLAN_REJECTION_PREFIX,
   REJECT_MESSAGE_WITH_REASON_PREFIX,
-} from '../../../utils/messages.js'
+} from '../../../services/messages/index.js'
 import { FallbackToolUseErrorMessage } from '../../FallbackToolUseErrorMessage.js'
 import { InterruptedByUser } from '../../InterruptedByUser.js'
 import { MessageResponse } from '../../MessageResponse.js'

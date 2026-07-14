@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react'
 import type { Except } from 'type-fest'
-import { markScrollActivity } from '../../bootstrap/state.js'
+import { markScrollActivity } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { DOMElement } from '../dom.js'
 import { markDirty, scheduleRenderFrom } from '../dom.js'
 import { markCommitStart } from '../reconciler.js'

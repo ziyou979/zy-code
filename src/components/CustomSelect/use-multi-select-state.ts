@@ -1,6 +1,6 @@
 import { isDeepStrictEqual } from 'node:util'
 import { useCallback, useState } from 'react'
-import { useRegisterOverlay } from '../../context/overlayContext.js'
+import { useRegisterOverlay } from '../../context/OverlayContext.js'
 import type { InputEvent } from '../../ink/events/input-event.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw space/arrow multiselect input
 import { useInput } from '../../ink.js'

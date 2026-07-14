@@ -16,11 +16,11 @@ import type { Color } from '../ink/styles.js'
 import { Ansi, Box, Text, useInput } from '../ink.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { renderModelName } from '../services/model/model.js'
-import { getGlobalConfig } from '../utils/config.js'
+import { getGlobalConfig } from '../services/config/config.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { formatDuration, formatNumber } from '../utils/format.js'
 import { generateHeatmap, generateHeatmapData, type HeatmapCell } from '../utils/heatmap.js'
-import { copyAnsiToClipboard } from '../utils/screenshotClipboard.js'
+import { copyAnsiToClipboard } from '../services/shell/screenshotClipboard.js'
 import {
   aggregateZyCodeStatsForRange,
   type DailyModelTokens,

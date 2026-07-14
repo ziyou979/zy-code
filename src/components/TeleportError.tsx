@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import {
-  checkIsGitClean,
-  checkNeedsZyAiLogin,
-} from 'src/services/background/remote/preconditions.js'
+  getTeleportErrors,
+  type TeleportLocalErrorType,
+} from 'src/services/teleport/prerequisites.js'
 import { gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
 import { Box, Text } from '../ink.js'
 import { ConsoleOAuthFlow } from './ConsoleOAuthFlow.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
 import { TeleportStash } from './TeleportStash.js'
-export type TeleportLocalErrorType = 'needsLogin' | 'needsGitStash'
+export type { TeleportLocalErrorType }
 type TeleportErrorProps = {
   onComplete: () => void
   errorsToIgnore?: ReadonlySet<TeleportLocalErrorType>
@@ -113,21 +113,4 @@ export function TeleportError({
       return loginDialog
     }
   }
-}
-
-/**
- * Gets current teleport errors that need to be resolved
- * @returns Set of teleport error types that need to be handled
- */
-
-export async function getTeleportErrors(): Promise<Set<TeleportLocalErrorType>> {
-  const errors = new Set<TeleportLocalErrorType>()
-  const [needsLogin, isGitClean] = await Promise.all([checkNeedsZyAiLogin(), checkIsGitClean()])
-  if (needsLogin) {
-    errors.add('needsLogin')
-  }
-  if (!isGitClean) {
-    errors.add('needsGitStash')
-  }
-  return errors
 }
