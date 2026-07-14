@@ -72,7 +72,7 @@ import { BashTool } from './BashTool.js'
 import { checkCommandOperatorPermissions } from './bashCommandHelpers.js'
 import { bashCommandIsSafeAsync_DEPRECATED, stripSafeHeredocSubstitutions } from './bashSecurity.js'
 import { checkPermissionMode } from './modeValidation.js'
-import { checkPathConstraints } from './pathValidation.js'
+import { checkCatastrophicInsideSubstitutions, checkPathConstraints } from './pathValidation.js'
 import { checkSedConstraints } from './sedValidation.js'
 import { shouldUseSandbox } from './shouldUseSandbox.js'
 
@@ -1734,6 +1734,14 @@ export async function bashToolHasPermission(
     const earlyExit = checkEarlyExitDeny(input, appState.toolPermissionContext)
     if (earlyExit !== null) {
       return earlyExit
+    }
+    // P0-1: Check for catastrophic rm inside command substitutions even in
+    // bypass/auto mode (the safetyCheck reason type overrides bypass).
+    {
+      const catastrophicResult = checkCatastrophicInsideSubstitutions(input.command, getCwd())
+      if (catastrophicResult.behavior !== 'passthrough') {
+        return catastrophicResult
+      }
     }
     const decisionReason: PermissionDecisionReason = {
       type: 'other' as const,

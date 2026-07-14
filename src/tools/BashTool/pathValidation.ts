@@ -110,6 +110,96 @@ function checkDangerousRemovalPaths(
 }
 
 /**
+ * Checks if command substitutions ($(...), `...`, <(...)) contain rm/rmdir
+ * commands targeting dangerous paths.  Used by the too-complex AST path so
+ * that even in --dangerously-skip-permissions / auto mode the user is
+ * prompted before a catastrophic removal can execute.
+ *
+ * Returns passthrough when no substitution or no dangerous path is found.
+ */
+export function checkCatastrophicInsideSubstitutions(
+  commandText: string,
+  cwd: string,
+): PermissionResult {
+  // 1. Collect all substitution regions.  Simple regex that handles the
+  //    vast majority of real-world cases; tree-sitter already confirmed
+  //    these exist (the too-complex path), so false positives from a
+  //    regex on the raw text are not a concern.
+  const SUBSTITUTION_RE =
+    /\$\(([^()]*(?:\([^()]*\)[^()]*)*)\)|`([^`]*)`|<\(([^()]*(?:\([^()]*\)[^()]*)*)\)/g
+  const contexts: Array<{ text: string }> = []
+  let match: RegExpExecArray | null
+
+  while ((match = SUBSTITUTION_RE.exec(commandText)) !== null) {
+    const inner = (match[1] ?? match[2] ?? match[3] ?? '').trim()
+    if (inner) contexts.push({ text: inner })
+  }
+
+  if (contexts.length === 0) {
+    return { behavior: 'passthrough', message: 'No substitutions found' }
+  }
+
+  // 2. >64 substitutions + outer rm → too many to analyze
+  if (contexts.length > 64 && /\brm(?:dir)?\b/.test(commandText)) {
+    return {
+      behavior: 'ask',
+      message:
+        `Dangerous rm operation detected inside command substitution\n\n` +
+        `Too many command substitutions to analyze for catastrophic removals. ` +
+        `This requires explicit approval and cannot be auto-allowed by permission rules.`,
+      decisionReason: {
+        type: 'safetyCheck',
+        reason: 'Too many command substitutions to analyze for catastrophic removals',
+        classifierApprovable: false,
+      },
+      suggestions: [],
+    }
+  }
+
+  // 3. Analyse each inner command for rm/rmdir with dangerous paths
+  for (const { text } of contexts) {
+    // Split on shell separators to handle "cd /tmp && rm -rf ~" inside $()
+    const parts = text.split(/[;&|]|&&|\|\|/).filter(Boolean)
+
+    for (const part of parts) {
+      const trimmed = part.trim()
+      if (!trimmed) continue
+
+      const tokens = trimmed.split(/\s+/)
+      const command = tokens[0]?.toLowerCase()
+      if (command !== 'rm' && command !== 'rmdir') continue
+
+      const args = tokens.slice(1)
+      const paths = filterOutFlags(args)
+
+      for (const rawPath of paths) {
+        const cleanPath = expandTilde(rawPath.replace(/^['"]|['"]$/g, ''))
+        const absolutePath = isAbsolute(cleanPath) ? cleanPath : resolve(cwd, cleanPath)
+
+        if (isDangerousRemovalPath(absolutePath)) {
+          return {
+            behavior: 'ask',
+            message:
+              `Dangerous ${command} operation detected inside command substitution: ` +
+              `'${absolutePath}'\n\n` +
+              `This command would remove a critical system directory. ` +
+              `This requires explicit approval and cannot be auto-allowed by permission rules.`,
+            decisionReason: {
+              type: 'safetyCheck',
+              reason: `${command} '${absolutePath}' inside command substitution`,
+              classifierApprovable: false,
+            },
+            suggestions: [],
+          }
+        }
+      }
+    }
+  }
+
+  return { behavior: 'passthrough', message: 'No catastrophic removals inside substitutions' }
+}
+
+/**
  * SECURITY: Extract positional (non-flag) arguments, correctly handling the
  * POSIX `--` end-of-options delimiter.
  *
