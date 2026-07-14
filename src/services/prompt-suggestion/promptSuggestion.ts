@@ -1,9 +1,7 @@
-import { getIsNonInteractiveSession } from '../../bootstrap/runtime/runtimeContext.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import type { Message } from '../../types/message.js'
-import { isAgentSwarmsEnabled } from '../swarm/agentSwarmsEnabled.js'
 import { count } from '../../utils/array.js'
-import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { toError } from '../../utils/errors.js'
 import {
   type CacheSafeParams,
@@ -12,10 +10,8 @@ import {
 } from '../../utils/forkedAgent.js'
 import type { REPLHookContext } from '../hooks/postSamplingHooks.js'
 import { logError } from '../../utils/log.js'
-import { createUserMessage, getLastAssistantMessage } from '../messages/index.js'
-import { getInitialSettings } from '../settings/settings.js'
-import { isTeammate } from '../../utils/teammate.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { createUserMessage } from '../messages/constructors.js'
+import { getLastAssistantMessage } from '../messages/predicates.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -29,59 +25,6 @@ export type PromptVariant = 'user_intent' | 'stated_intent'
 
 export function getPromptVariant(): PromptVariant {
   return 'user_intent'
-}
-
-export function shouldEnablePromptSuggestion(): boolean {
-  // Env var overrides everything (for testing)
-  const envOverride = process.env.ZY_CODE_ENABLE_PROMPT_SUGGESTION
-  if (isEnvDefinedFalsy(envOverride)) {
-    logEvent('zy_prompt_suggestion_init', {
-      enabled: false,
-      source: 'env' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-    return false
-  }
-  if (isEnvTruthy(envOverride)) {
-    logEvent('zy_prompt_suggestion_init', {
-      enabled: true,
-      source: 'env' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-    return true
-  }
-
-  // Keep default in sync with Config.tsx (settings toggle visibility)
-  if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_chomp_inflection', false)) {
-    logEvent('zy_prompt_suggestion_init', {
-      enabled: false,
-      source: 'growthbook' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-    return false
-  }
-
-  // Disable in non-interactive mode (print mode, piped input, SDK)
-  if (getIsNonInteractiveSession()) {
-    logEvent('zy_prompt_suggestion_init', {
-      enabled: false,
-      source: 'non_interactive' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-    return false
-  }
-
-  // Disable for swarm teammates (only leader should show suggestions)
-  if (isAgentSwarmsEnabled() && isTeammate()) {
-    logEvent('zy_prompt_suggestion_init', {
-      enabled: false,
-      source: 'swarm_teammate' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-    return false
-  }
-
-  const enabled = getInitialSettings()?.promptSuggestionEnabled !== false
-  logEvent('zy_prompt_suggestion_init', {
-    enabled,
-    source: 'setting' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  })
-  return enabled
 }
 
 export function abortPromptSuggestion(): void {

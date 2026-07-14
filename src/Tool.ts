@@ -34,37 +34,17 @@ import type {
   PermissionResult,
 } from './types/permissions.js'
 // 从集中位置导入工具进度类型以打破导入循环
-import type {
-  AgentToolProgress,
-  BashProgress,
-  MCPProgress,
-  REPLToolProgress,
-  SkillToolProgress,
-  TaskOutputProgress,
-  ToolProgressData,
-  WebSearchProgress,
-} from './types/tools.js'
+import type { ToolProgressData } from './types/tools.js'
 import type { FileStateCache } from './utils/fileStateCache.js'
 import type { DenialTrackingState } from './services/permissions/denialTracking.js'
 import type { SystemPrompt } from './utils/systemPromptType.js'
 import type { ContentReplacementState } from './utils/toolResultStorage.js'
 
-// 重新导出进度类型以保持向后兼容
-export type {
-  AgentToolProgress,
-  BashProgress,
-  MCPProgress,
-  REPLToolProgress,
-  SkillToolProgress,
-  TaskOutputProgress,
-  WebSearchProgress,
-}
-
 import type { HookProgress, PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type { WireStatus } from 'src/types/index.js'
 import type { SpinnerMode } from './types/spinner.js'
 import type { QuerySource } from './constants/querySource.js'
-import type { AppState } from './state/AppState.js'
+import type { AppState } from './state/AppStateStore.js'
 import type { AgentId } from './types/ids.js'
 import type { DeepImmutable } from './types/utils.js'
 import type { AttributionState } from './utils/commitAttribution.js'

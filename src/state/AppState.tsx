@@ -21,18 +21,6 @@ const VoiceProvider: (props: { children: React.ReactNode }) => React.ReactNode =
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { type AppState, type AppStateStore, getDefaultAppState } from './AppStateStore.js'
 
-// TODO: Remove these re-exports once all callers import directly from
-// ./AppStateStore.js. Kept for back-compat during migration so .ts callers
-// can incrementally move off the .tsx import and stop pulling React.
-export {
-  type AppState,
-  type AppStateStore,
-  type CompletionBoundary,
-  getDefaultAppState,
-  IDLE_SPECULATION_STATE,
-  type SpeculationResult,
-  type SpeculationState,
-} from './AppStateStore.js'
 export const AppStoreContext = React.createContext<AppStateStore | null>(null)
 type Props = {
   children: React.ReactNode

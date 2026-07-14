@@ -233,6 +233,11 @@ export function reorderMessagesInUI(
  * - 任何 assistant 消息
  */
 export function reorderAttachmentsForAPI(messages: Message[]): Message[] {
+  // 快速路径：没有附件时直接返回原数组，避免分配和反转
+  if (!messages.some((m) => m.type === 'attachment')) {
+    return messages
+  }
+
   // 我们反向构建 `result`（push），最后反转一次 — O(N)。
   // 在循环内使用 unshift 会是 O(N²)。
   const result: Message[] = []

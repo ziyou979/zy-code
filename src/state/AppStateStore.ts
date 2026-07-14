@@ -6,20 +6,19 @@ import type { ChannelPermissionCallbacks } from '../services/mcp/channelPermissi
 import type { ElicitationRequestEvent } from '../services/mcp/elicitationHandler.js'
 import type { MCPServerConnection, ServerResource } from '../services/mcp/types.js'
 import type { ModelSetting } from '../services/model/model.js'
-import { shouldEnablePromptSuggestion } from '../services/prompt-suggestion/promptSuggestion.js'
+import { shouldEnablePromptSuggestion } from '../services/prompt-suggestion/availability.js'
 import type { Tool, ToolPermissionContext } from '../tool.js'
 import type { TaskState } from '../tasks/types.js'
 import type { AgentColorName } from '../tools/AgentTool/agentColorManager.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import type { AllowedPrompt } from '../tools/ExitPlanModeTool/ExitPlanModeTool.js'
 import type { AgentId } from '../types/ids.js'
-import type { Message, UserMessage } from '../types/message.js'
+import type { UserMessage } from '../types/message.js'
 import type { LoadedPlugin, PluginError } from '../services/plugins/types.js'
 import type { DeepImmutable } from '../types/utils.js'
 import { type AttributionState, createEmptyAttributionState } from '../utils/commitAttribution.js'
 import type { EffortLevel } from '../utils/effort.js'
 import type { FileHistoryState } from '../utils/fileHistory.js'
-import type { REPLHookContext } from '../services/hooks/postSamplingHooks.js'
 import type { SessionHooksState } from '../services/hooks/sessionHooks.js'
 import type { DenialTrackingState } from '../services/permissions/denialTracking.js'
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
@@ -32,46 +31,7 @@ import { createPermissionSlice } from './slices/permissionSlice.js'
 import { createPluginSlice } from './slices/pluginSlice.js'
 import { createTaskSlice } from './slices/taskSlice.js'
 import { createUiSlice } from './slices/uiSlice.js'
-
-export type CompletionBoundary =
-  | { type: 'complete'; completedAt: number; outputTokens: number }
-  | { type: 'bash'; command: string; completedAt: number }
-  | { type: 'edit'; toolName: string; filePath: string; completedAt: number }
-  | {
-      type: 'denied_tool'
-      toolName: string
-      detail: string
-      completedAt: number
-    }
-
-export type SpeculationResult = {
-  messages: Message[]
-  boundary: CompletionBoundary | null
-  timeSavedMs: number
-}
-
-export type SpeculationState =
-  | { status: 'idle' }
-  | {
-      status: 'active'
-      id: string
-      abort: () => void
-      startTime: number
-      messagesRef: { current: Message[] } // Mutable ref - avoids array spreading per message
-      writtenPathsRef: { current: Set<string> } // Mutable ref - relative paths written to overlay
-      boundary: CompletionBoundary | null
-      suggestionLength: number
-      toolUseCount: number
-      isPipelined: boolean
-      contextRef: { current: REPLHookContext }
-      pipelinedSuggestion?: {
-        text: string
-        promptId: 'user_intent' | 'stated_intent'
-        generationRequestId: string | null
-      } | null
-    }
-
-export const IDLE_SPECULATION_STATE: SpeculationState = { status: 'idle' }
+import { IDLE_SPECULATION_STATE, type SpeculationState } from './speculationState.js'
 
 export type FooterItem = 'tasks' | 'tmux' | 'bagel' | 'teams' | 'bridge'
 

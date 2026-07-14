@@ -13,7 +13,7 @@ import type { AssistantMessage, CompactMetadata, Message } from 'src/types/messa
 import type { DeepImmutable } from 'src/types/utils.js'
 import stripAnsi from 'strip-ansi'
 import type { AssistantContentBlock, UserContentBlock } from '../../types/llm.js'
-import { createAssistantMessage } from './index.js'
+import { createAssistantMessage } from './constructors.js'
 import { getPlan } from '../../utils/plans.js'
 
 export function toInternalMessages(messages: readonly DeepImmutable<WireMessage>[]): Message[] {
