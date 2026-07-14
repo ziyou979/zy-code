@@ -7,7 +7,12 @@ import type {
   ProcessUserInputContext,
 } from 'src/services/process-user-input/processUserInput.js'
 import { processUserInput } from 'src/services/process-user-input/processUserInput.js'
-import { type Command, getCommandName, isCommandEnabled } from '../commands.js'
+import {
+  type Command,
+  getBgSessionBlockReason,
+  getCommandName,
+  isCommandEnabled,
+} from '../commands.js'
 import { selectableUserMessagesFilter } from '../components/MessageSelector.js'
 import type { SpinnerMode } from '../types/spinner.js'
 import type { QuerySource } from '../constants/querySource.js'
@@ -243,6 +248,18 @@ export async function handlePromptSubmit(params: HandlePromptSubmitParams): Prom
       immediateCommand.type === 'local-jsx' &&
       (queryGuard.isActive || isExternalLoading)
     ) {
+      // Block interactive commands in background sessions (P1-1)
+      const bgBlock = getBgSessionBlockReason(immediateCommand)
+      if (bgBlock) {
+        if (params.addNotification) {
+          params.addNotification({
+            key: `bg-block-${immediateCommand.name}`,
+            text: bgBlock,
+            priority: 'immediate',
+          })
+        }
+        return
+      }
       logEvent('zy_immediate_command_executed', {
         commandName:
           immediateCommand.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

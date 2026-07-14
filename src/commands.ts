@@ -1,5 +1,6 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { tSync } from './i18n/index.js'
+import { isBgSession } from './utils/concurrentSessions.js'
 import { isInternalBuild } from './utils/envUtils.js'
 import addDir from './commands/add-dir/index.js'
 import background from 'src/commands/background/index.js'
@@ -619,6 +620,28 @@ export function isBridgeSafeCommand(cmd: Command): boolean {
     return true
   }
   return BRIDGE_SAFE_COMMANDS.has(cmd)
+}
+
+/**
+ * Narrow list of command names that render interactive Ink UI unsuitable for
+ * background (tmux) sessions.  Matches CC 2.1.209 behavior — most commands
+ * work fine in bg; only truly interactive flows (OAuth, installer wizards)
+ * are blocked.
+ */
+const BG_UNSAFE_COMMAND_NAMES = new Set(['install-github-app', 'plugin'])
+
+/**
+ * Check whether a command should be blocked in a background session.
+ * Returns a user-facing message when blocked, or null when allowed.
+ */
+export function getBgSessionBlockReason(cmd: Command): string | null {
+  if (!isBgSession()) return null
+  if (cmd.type !== 'local-jsx') return null
+  // Only local-jsx commands with interactive UI are blocked
+  if (BG_UNSAFE_COMMAND_NAMES.has(cmd.name)) {
+    return `/${cmd.name} is not available in background sessions`
+  }
+  return null
 }
 
 /**

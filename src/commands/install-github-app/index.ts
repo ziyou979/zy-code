@@ -1,4 +1,5 @@
 import type { Command } from '../../commands.js'
+import { isBgSession } from '../../utils/concurrentSessions.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 
 const installGitHubApp = {
@@ -6,7 +7,7 @@ const installGitHubApp = {
   name: 'install-github-app',
   description: 'Set up Zy GitHub Actions for a repository',
   availability: ['zy-ai', 'console'],
-  isEnabled: () => !isEnvTruthy(process.env.DISABLE_INSTALL_GITHUB_APP_COMMAND),
+  isEnabled: () => !isEnvTruthy(process.env.DISABLE_INSTALL_GITHUB_APP_COMMAND) && !isBgSession(),
   load: () => import('./install-github-app.js'),
 } satisfies Command
 
