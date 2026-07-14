@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import type { Key } from '../ink.js'
 import type { VimInputState, VimMode } from '../types/textInputTypes.js'
 import { Cursor } from '../utils/cursor.js'
 import { lastGrapheme } from '../utils/intl.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 import {
   executeIndent,
   executeJoin,
@@ -39,6 +40,21 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
   const [mode, setMode] = useState<VimMode>('INSERT')
 
   const persistentRef = React.useRef<PersistentState>(createInitialPersistentState())
+
+  // ── vimInsertModeRemaps ──────────────────────────────────────────────────
+  // Read from settings once; re-render won't pick up live changes (acceptable
+  // — the user must toggle editorMode to affect vim behaviour).
+  const remapsRef = useRef<Record<string, string> | undefined>(undefined)
+  const remapBufferRef = useRef<{ char: string; timer: NodeJS.Timeout | null } | null>(null)
+  if (remapsRef.current === undefined) {
+    const s = getInitialSettings()
+    const raw: unknown = s.vimInsertModeRemaps
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      remapsRef.current = raw as Record<string, string>
+    } else {
+      remapsRef.current = {}
+    }
+  }
 
   // inputFilter is applied once at the top of handleVimInput (not here) so
   // vim-handled paths that return without calling textInput.onInput still
@@ -197,6 +213,22 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
     if (state.mode === 'INSERT') {
       // Track inserted text for dot-repeat
       if (key.backspace || key.delete) {
+        // Flush any pending remap buffer
+        if (remapBufferRef.current) {
+          clearTimeout(remapBufferRef.current.timer as unknown as NodeJS.Timeout)
+          const saved = remapBufferRef.current.char
+          remapBufferRef.current = null
+          // The buffered char was never committed — push backspace to remove it
+          // from the virtual state.  The text input never got the buffered
+          // char, so we just update the ref.
+          if (state.insertedText.endsWith(saved)) {
+            vimStateRef.current = {
+              mode: 'INSERT',
+              insertedText: state.insertedText.slice(0, -saved.length),
+            }
+            return
+          }
+        }
         if (state.insertedText.length > 0) {
           vimStateRef.current = {
             mode: 'INSERT',
@@ -206,11 +238,61 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
             ),
           }
         }
-      } else {
+        textInput.onInput(input, key)
+        return
+      }
+
+      // ── vimInsertModeRemaps ────────────────────────────────────────────
+      // If a single-char buffer is pending, combine with the new key and check
+      // against the remap dictionary.
+      const buf = remapBufferRef.current
+      if (buf) {
+        clearTimeout(buf.timer as unknown as NodeJS.Timeout)
+        remapBufferRef.current = null
+
+        const seq = buf.char + input
+        const target = remapsRef.current?.[seq]
+        if (target === '<Esc>') {
+          // Swallow both chars and switch to NORMAL.
+          switchToNormalMode()
+          return
+        }
+        // Unknown sequence — flush the buffered char first, then fall through
+        // to commit the new char via the normal INSERT path below.
         vimStateRef.current = {
           mode: 'INSERT',
-          insertedText: state.insertedText + input,
+          insertedText: state.insertedText + buf.char,
         }
+        textInput.onInput(buf.char, key)
+        // Fall through — the new `input` char still needs to be committed
+      }
+
+      // ── Normal INSERT character ────────────────────────────────────────
+      // Check whether this char could start a 2-char remap sequence.
+      // If so, buffer it instead of committing immediately.
+      const pendingSeq =
+        remapsRef.current &&
+        Object.keys(remapsRef.current).some((k) => k[0] === input && k.length === 2)
+      if (pendingSeq) {
+        const timer = setTimeout(() => {
+          // Timeout — flush the buffered char as normal input
+          if (remapBufferRef.current) {
+            const saved = remapBufferRef.current.char
+            remapBufferRef.current = null
+            vimStateRef.current = {
+              mode: 'INSERT',
+              insertedText: state.insertedText + saved,
+            }
+            textInput.onInput(saved, {} as Key)
+          }
+        }, 500)
+        remapBufferRef.current = { char: input, timer: timer as unknown as NodeJS.Timeout }
+        return
+      }
+
+      vimStateRef.current = {
+        mode: 'INSERT',
+        insertedText: state.insertedText + input,
       }
       textInput.onInput(input, key)
       return

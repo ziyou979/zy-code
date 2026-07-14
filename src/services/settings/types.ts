@@ -1210,6 +1210,15 @@ export const SettingsSchema = lazySchema(() =>
             'Useful for enterprise administrators to add organization-specific context ' +
             '(e.g., "All plugins from our internal marketplace are vetted and approved.").',
         ),
+      vimInsertModeRemaps: z
+        .record(z.string(), z.unknown())
+        .optional()
+        .describe(
+          'Vim INSERT-mode key-sequence remaps, e.g. {"jj": "<Esc>"}. ' +
+            'Each key is exactly two printable characters typed in sequence; ' +
+            '"<Esc>" (return to NORMAL mode) is the only supported target. ' +
+            'Applies when editorMode is "vim".',
+        ),
     })
     .passthrough(),
 )
