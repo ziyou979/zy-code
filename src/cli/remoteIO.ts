@@ -1,7 +1,7 @@
 import { PassThrough } from 'node:stream'
 import { URL } from 'node:url'
 import type { StdoutMessage } from 'src/types/wire/control.js'
-import { getSessionId } from '../bootstrap/state.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getPollIntervalConfig } from '../bridge/pollConfig.js'
 import { registerCleanup } from '../utils/cleanupRegistry.js'
 import { setCommandLifecycleListener } from '../utils/commandLifecycle.js'
@@ -11,18 +11,18 @@ import { isEnvTruthy } from '../utils/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
 import { gracefulShutdown } from '../utils/gracefulShutdown.js'
 import { logError } from '../utils/log.js'
-import { writeToStdout } from '../utils/process.js'
+import { writeToStdout } from '../services/shell/process.js'
 import { getSessionIngressAuthToken } from '../utils/sessionIngressAuth.js'
 import {
   setSessionMetadataChangedListener,
   setSessionStateChangedListener,
-} from '../utils/sessionState.js'
-import { setInternalEventReader, setInternalEventWriter } from '../utils/sessionStorage.js'
+} from '../services/session-state/sessionState.js'
+import { setInternalEventReader, setInternalEventWriter } from '../services/sessionStorage.js'
 import { ndjsonSafeStringify } from './ndjsonSafeStringify.js'
 import { StructuredIO } from './structuredIO.js'
 import { CCRClient, CCRInitError } from './transports/ccrClient.js'
-import { SSETransport } from './transports/SSETransport.js'
-import type { Transport } from './transports/Transport.js'
+import { SSETransport } from './transports/sseTransport.js'
+import type { Transport } from './transports/transport.js'
 import { getTransportForUrl } from './transports/transportUtils.js'
 
 /**

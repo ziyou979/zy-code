@@ -4,11 +4,10 @@
 // processResumedConversation 返回的 ProcessedResume 字段一并喂给 REPLProps。
 // 抽出共享 helper 避免维护两份相同的 launchRepl 调用。
 
-import { launchRepl } from '../../replLauncher.js'
+import { launchRepl } from '../../ReplLauncher.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { ProcessedResume } from '../../utils/sessionRestore.js'
 import type { AssemblyContext, SessionConfig } from './types.js'
-
 export type ResumedSessionParams = AssemblyContext & {
   sessionConfig: SessionConfig
   resumed: ProcessedResume

@@ -5,7 +5,7 @@ import {
   setCwdState,
   setDirectConnectServerUrl,
   setOriginalCwd,
-} from '../../bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import { registerMcpAddCommand } from '../../commands/mcp/addCommand.js'
 import { registerMcpXaaIdpCommand } from '../../commands/mcp/xaaIdpCommand.js'
 import {
@@ -15,7 +15,6 @@ import {
 import { isXaaEnabled } from '../../services/mcp/xaaIdpLogin.js'
 import { pendingConnect } from '../argvDispatch.js'
 import { createSortedHelpConfig } from '../options/sortedHelp.js'
-
 /**
  * 注册 MCP 相关命令组：
  * - zy mcp <serve | remove | list | get | add-json | add-from-zy-desktop | reset-project-choices>

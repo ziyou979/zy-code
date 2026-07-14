@@ -1,6 +1,9 @@
 import { readFileSync } from 'node:fs'
 import chalk from 'chalk'
-import { setAllowedSettingSources, setFlagSettingsPath } from '../../bootstrap/state.js'
+import {
+  setAllowedSettingSources,
+  setFlagSettingsPath,
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -10,16 +13,15 @@ import { errorMessage, isENOENT } from '../../utils/errors.js'
 import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { logError } from '../../utils/log.js'
-import { parseSettingSourcesFlag } from '../../utils/settings/constants.js'
+import { parseSettingSourcesFlag } from '../../services/settings/constants.js'
 import {
   getManagedSettingsKeysForLogging,
   getSettingsForSource,
-} from '../../utils/settings/settings.js'
-import { resetSettingsCache } from '../../utils/settings/settingsCache.js'
+} from '../../services/settings/settings.js'
+import { resetSettingsCache } from '../../services/settings/settingsCache.js'
 import { writeFileSync_DEPRECATED } from '../../utils/slowOperations.js'
 import { profileCheckpoint } from '../../utils/startupProfiler.js'
 import { generateTempFilePath } from '../../utils/tempfile.js'
-
 /**
  * 将托管设置键记录到 Statsig 用于分析。
  * 在 init() 完成后调用，以确保在模型解析之前

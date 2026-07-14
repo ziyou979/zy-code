@@ -1,5 +1,4 @@
-import { peekForStdinData } from '../../utils/process.js'
-
+import { peekForStdinData } from '../../services/shell/process.js'
 /**
  * 解析无头模式（-p）下的 stdin → prompt 合并逻辑。stream-json 输入直接转发，
  * text 输入会等待至多 3 秒拉取 stdin 内容并与 prompt 串联。

@@ -2,19 +2,18 @@
 // 对应原 root.ts:3570-3635 else 分支：无 resume / connect / ssh / remote 触发时的 REPL 启动。
 
 import { feature } from 'bun:bundle'
-import { launchRepl } from '../../replLauncher.js'
+import { launchRepl } from '../../ReplLauncher.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { buildDeepLinkBanner } from '../../services/deep-link/banner.js'
 import type { Message } from '../../types/message.js'
 import { getCwd } from '../../utils/cwd.js'
-import { createSystemMessage } from '../../utils/messages.js'
-import { saveMode } from '../../utils/sessionStorage.js'
+import { createSystemMessage } from '../../services/messages/index.js'
+import { saveMode } from '../../services/sessionStorage.js'
 import { profileCheckpoint } from '../../utils/startupProfiler.js'
 import { maybeActivateBrief } from '../activate/brief.js'
 import { maybeActivateProactive } from '../activate/proactive.js'
 import { coordinatorModeModule } from '../lazyModules.js'
 import type { AssemblyContext, SessionConfig } from './types.js'
-
 // rootAction 第 3570 行 else 分支需要的 options 字段。
 // 用结构化子集避免把整个 rootAction options（any）拖进来。
 export type InteractiveModeOptions = {

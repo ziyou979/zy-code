@@ -3,14 +3,17 @@
 // `zy ssh <host> [dir]` 探测远程，部署二进制，生成带 unix-socket 转发的 ssh 会话。
 // `--local` 跳过探测/部署，直接生成本地二进制以做代理/认证管道的 e2e 测试。
 
-import { setCwdState, setDirectConnectServerUrl, setOriginalCwd } from '../../bootstrap/state.js'
-import { exitWithError } from '../../interactiveHelpers.js'
-import { launchRepl } from '../../replLauncher.js'
+import {
+  setCwdState,
+  setDirectConnectServerUrl,
+  setOriginalCwd,
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { exitWithError } from '../../InteractiveHelpers.js'
+import { launchRepl } from '../../ReplLauncher.js'
 import type { SSHSession } from '../../ssh/createSSHSession.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
-import { createSystemMessage } from '../../utils/messages.js'
+import { createSystemMessage } from '../../services/messages/index.js'
 import type { AssemblyContext, SessionConfig } from './types.js'
-
 // 与 cli/argvDispatch.ts:pendingSSH 同形态（仅本模块依赖到的字段）。
 export type PendingSSH = {
   host: string

@@ -14,12 +14,15 @@ import {
   getSessionIngressAuthHeaders,
   getSessionIngressAuthToken,
 } from '../../utils/sessionIngressAuth.js'
-import type { RequiresActionDetails, SessionState } from '../../utils/sessionState.js'
+import type {
+  RequiresActionDetails,
+  SessionState,
+} from '../../services/session-state/sessionState.js'
 import { sleep } from '../../utils/sleep.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
-import { RetryableError, SerialBatchEventUploader } from './SerialBatchEventUploader.js'
-import type { SSETransport, StreamClientEvent } from './SSETransport.js'
-import { WorkerStateUploader } from './WorkerStateUploader.js'
+import { RetryableError, SerialBatchEventUploader } from './serialBatchEventUploader.js'
+import type { SSETransport, StreamClientEvent } from './sseTransport.js'
+import { WorkerStateUploader } from './workerStateUploader.js'
 
 /** Default interval between heartbeat events (20s; server TTL is 60s). */
 const DEFAULT_HEARTBEAT_INTERVAL_MS = 20_000

@@ -40,11 +40,11 @@ import {
   getCurrentProjectConfig,
   getGlobalConfig,
   saveCurrentProjectConfig,
-} from '../../utils/config.js'
+} from '../../services/config/config.js'
 import { isFsInaccessible } from '../../utils/errors.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
 import { safeParseJSON } from '../../utils/json.js'
-import { getPlatform } from '../../utils/platform.js'
+import { getPlatform } from '../../services/shell/platform.js'
 import { cliError, cliOk } from '../exit.js'
 
 async function checkMcpServerHealth(name: string, server: ScopedMcpServerConfig): Promise<string> {

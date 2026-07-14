@@ -16,7 +16,7 @@ import {
 } from '../../services/oauth/oauthStorage.js'
 import { getOAuthProvider, getOAuthProviders } from '../../services/oauth/providers/index.js'
 import type { OAuthCredentials, OAuthLoginCallbacks } from '../../services/oauth/providers/types.js'
-import { getApiKeyWithSource, getAuthTokenSource } from '../../utils/auth.js'
+import { getApiKeyWithSource, getAuthTokenSource } from '../../services/auth/auth.js'
 import { openBrowser } from '../../utils/browser.js'
 import { isRunningOnHomespace } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'

@@ -7,17 +7,16 @@ import {
   setCwdState,
   setDirectConnectServerUrl,
   setOriginalCwd,
-} from '../../bootstrap/state.js'
-import { exitWithError } from '../../interactiveHelpers.js'
-import { launchRepl } from '../../replLauncher.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { exitWithError } from '../../InteractiveHelpers.js'
+import { launchRepl } from '../../ReplLauncher.js'
 import {
   createDirectConnectSession,
   DirectConnectError,
 } from '../../server/createDirectConnectSession.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
-import { createSystemMessage } from '../../utils/messages.js'
+import { createSystemMessage } from '../../services/messages/index.js'
 import type { AssemblyContext, SessionConfig } from './types.js'
-
 // 与 cli/argvDispatch.ts:pendingConnect 同形态。
 export type PendingDirectConnect = {
   url: string

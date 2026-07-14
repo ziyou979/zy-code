@@ -1,7 +1,7 @@
 import type { StdoutMessage } from 'src/types/wire/control.js'
 import type WsWebSocket from 'ws'
 import { logEvent } from '../../services/analytics/index.js'
-import { CircularBuffer } from '../../utils/CircularBuffer.js'
+import { CircularBuffer } from '../../utils/circularBuffer.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
@@ -12,7 +12,7 @@ import {
   unregisterSessionActivityCallback,
 } from '../../utils/sessionActivity.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import type { Transport } from './Transport.js'
+import type { Transport } from './transport.js'
 
 const KEEP_ALIVE_FRAME = '{"type":"keep_alive"}\n'
 

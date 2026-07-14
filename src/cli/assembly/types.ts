@@ -8,7 +8,6 @@ import type { Root } from '../../ink.js'
 import type { Props as REPLProps } from '../../screens/REPL.js'
 import type { AppState } from '../../state/AppStateStore.js'
 import type { FpsMetrics } from '../../utils/fpsTracker.js'
-
 // renderAndRun 在 main.tsx 内构造，沿用 replLauncher 的签名形态。
 export type RenderAndRun = (root: Root, element: React.ReactNode) => Promise<void>
 

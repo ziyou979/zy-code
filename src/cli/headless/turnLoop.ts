@@ -6,21 +6,21 @@ import type { ThinkingConfig } from 'src/utils/thinking.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { logForDebugging } from 'src/utils/debug.js'
-import { type Tools } from 'src/Tool.js'
+import { type Tools } from 'src/tool.js'
 import type { QueuedCommand } from 'src/types/textInputTypes.js'
 import { dequeue, enqueue, peek } from 'src/utils/messageQueueManager.js'
 import { notifyCommandLifecycle } from 'src/utils/commandLifecycle.js'
-import { notifySessionStateChanged } from 'src/utils/sessionState.js'
+import { notifySessionStateChanged } from 'src/services/session-state/sessionState.js'
 import { getInMemoryErrors, logError } from 'src/utils/log.js'
 import { EMPTY_USAGE } from 'src/services/api/logging.js'
-import { ask } from 'src/QueryEngine.js'
+import { ask } from 'src/queryEngine.js'
 import {
   createFileStateCacheWithSizeLimit,
   mergeFileStateCaches,
 } from 'src/utils/fileStateCache.js'
 import { extractReadFilesFromMessages } from 'src/utils/queryHelpers.js'
 import { executeFilePersistence } from 'src/services/file-persistence/filePersistence.js'
-import { finalizePendingAsyncHooks } from 'src/utils/hooks/AsyncHookRegistry.js'
+import { finalizePendingAsyncHooks } from 'src/services/hooks/asyncHookRegistry.js'
 import { gracefulShutdownSync, isShuttingDown } from 'src/utils/gracefulShutdown.js'
 import { createIdleTimeoutManager } from 'src/utils/idleTimeout.js'
 import type { WireStatus, WireUserMessageReplay } from 'src/types/index.js'
@@ -37,9 +37,9 @@ import {
   type PromptVariant,
 } from 'src/services/prompt-suggestion/promptSuggestion.js'
 import { getLastCacheSafeParams } from 'src/utils/forkedAgent.js'
-import { getInitJsonSchema } from 'src/bootstrap/state.js'
+import { getInitJsonSchema } from 'src/bootstrap/runtime/runtimeContext.js'
 import { statusListeners, type ZyAILimits } from 'src/services/zyAiLimits.js'
-import { getSessionId } from 'src/bootstrap/state.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { runWithWorkload } from 'src/utils/workloadContext.js'
 import type { UUID } from 'node:crypto'
 import { randomUUID } from 'node:crypto'
@@ -65,7 +65,7 @@ import {
 } from '../../utils/teammateMailbox.js'
 import { removeTeammateFromTeamFile } from '../../services/swarm/teamHelpers.js'
 import { unassignTeammateTasks } from '../../utils/tasks.js'
-import { getRunningTasks } from '../../services/task/framework.js'
+import { getRunningTasks } from '../../services/task-runtime/framework.js'
 import { isBackgroundTask } from '../../tasks/types.js'
 import { drainWireEvents } from '../../utils/bridgeEventQueue.js'
 import { errorMessage, toError } from '../../utils/errors.js'
@@ -237,7 +237,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
 
     // Set up hot-reload for plugin hooks now that the initial install is done.
     // In sync-install mode, setup.ts skips this to avoid racing with the install.
-    const { setupPluginHookHotReload } = await import('../../utils/plugins/loadPluginHooks.js')
+    const { setupPluginHookHotReload } = await import('../../services/plugins/loadPluginHooks.js')
     setupPluginHookHotReload()
   }
 

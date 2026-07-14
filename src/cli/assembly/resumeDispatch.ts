@@ -12,11 +12,11 @@ import {
 } from 'src/services/analytics/index.js'
 import {
   getOriginalCwd,
-  setIsRemoteMode,
   setOriginalCwd,
-  setTeleportedSessionInfo,
   switchSession,
-} from '../../bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { setIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
+import { setTeleportedSessionInfo } from 'src/bootstrap/runtime/runtimeContext.js'
 import { filterCommandsForRemoteMode } from '../../commands.js'
 import { getRemoteSessionUrl } from '../../constants/product.js'
 import type { StatsStore } from '../../context/stats.js'
@@ -24,10 +24,10 @@ import {
   launchResumeChooser,
   launchTeleportRepoMismatchDialog,
   launchTeleportResumeWrapper,
-} from '../../dialogLaunchers.js'
+} from '../../DialogLaunchers.js'
 import type { Root } from '../../ink.js'
-import { exitWithError } from '../../interactiveHelpers.js'
-import { createRemoteSessionConfig } from '../../remote/RemoteSessionManager.js'
+import { exitWithError } from '../../InteractiveHelpers.js'
+import { createRemoteSessionConfig } from '../../remote/remoteSessionManager.js'
 import type { DownloadResult } from '../../services/api/filesApi.js'
 import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../../services/policy-limits/index.js'
 import { fetchSession, prepareApiRequest } from '../../services/teleport/api.js'
@@ -37,7 +37,7 @@ import type {
   AgentDefinition,
   AgentDefinitionsResult,
 } from '../../tools/AgentTool/loadAgentsDir.js'
-import type { Command } from '../../types/command.js'
+import type { Command } from '../../commands/types.js'
 import { asSessionId } from '../../types/ids.js'
 import type { LogOption } from '../../types/logs.js'
 import type { Message as MessageType } from '../../types/message.js'
@@ -52,21 +52,21 @@ import { getBranch } from '../../utils/git.js'
 import { filterExistingPaths, getKnownPathsForRepo } from '../../utils/githubRepoPathMapping.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
 import { logError } from '../../utils/log.js'
-import { createSystemMessage, createUserMessage } from '../../utils/messages.js'
-import { setCwd } from '../../utils/Shell.js'
+import { createSystemMessage, createUserMessage } from '../../services/messages/index.js'
+import { setCwd } from '../../services/shell/shell.js'
 import { type ProcessedResume, processResumedConversation } from '../../utils/sessionRestore.js'
 import {
   getSessionIdFromLog,
   loadTranscriptFromFile,
   searchSessionsByCustomTitle,
-} from '../../utils/sessionStorage.js'
+} from '../../services/sessionStorage.js'
 import {
   checkOutTeleportedSessionBranch,
   processMessagesForTeleportResume,
-  teleportToRemoteWithErrorHandling,
   validateGitState,
   validateSessionRepository,
-} from '../../utils/teleport.js'
+} from '../../services/teleport/teleport.js'
+import { teleportToRemoteWithErrorHandling } from '../../components/TeleportController.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
 import { validateUuid } from '../../utils/uuid.js'
 import { maybeActivateBrief } from '../activate/brief.js'
@@ -74,7 +74,6 @@ import { maybeActivateProactive } from '../activate/proactive.js'
 import { launchRemoteSessionRepl } from './remoteSession.js'
 import { launchResumedSessionRepl } from './resumedSession.js'
 import type { RenderAndRun, RootActionOptions, SessionConfig } from './types.js'
-
 // processResumedConversation 第三参数的上下文类型。
 // CoordinatorModeApi 在 sessionRestore.ts 中是私有类型，这里用结构兼容。
 type CoordinatorModeApi = {
@@ -268,7 +267,7 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
     }
 
     // 为 REPL 创建远程会话配置
-    const { getZyAIOAuthTokens: getTokensForRemote } = await import('../../utils/auth.js')
+    const { getZyAIOAuthTokens: getTokensForRemote } = await import('../../services/auth/auth.js')
     const getAccessTokenForRemote = (): string =>
       getTokensForRemote()?.accessToken ?? apiCreds.accessToken
     const remoteSessionConfig = createRemoteSessionConfig(

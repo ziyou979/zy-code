@@ -7,7 +7,7 @@ import { getSessionIngressAuthHeaders } from '../../utils/sessionIngressAuth.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
-import type { Transport } from './Transport.js'
+import type { Transport } from './transport.js'
 
 // ---------------------------------------------------------------------------
 // Configuration

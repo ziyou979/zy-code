@@ -1,9 +1,9 @@
 import { URL } from 'node:url'
 import { isEnvTruthy } from '../../utils/envUtils.js'
-import { HybridTransport } from './HybridTransport.js'
-import { SSETransport } from './SSETransport.js'
-import type { Transport } from './Transport.js'
-import { WebSocketTransport } from './WebSocketTransport.js'
+import { HybridTransport } from './hybridTransport.js'
+import { SSETransport } from './sseTransport.js'
+import type { Transport } from './transport.js'
+import { WebSocketTransport } from './webSocketTransport.js'
 
 /**
  * Helper function to get the appropriate transport for a URL.

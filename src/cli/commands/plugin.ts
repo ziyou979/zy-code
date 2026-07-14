@@ -4,7 +4,6 @@ import {
   VALID_UPDATE_SCOPES,
 } from '../../services/plugins/pluginCliCommands.js'
 import { createSortedHelpConfig } from '../options/sortedHelp.js'
-
 /**
  * 注册插件相关命令组：
  * - zy plugin validate / list / install / uninstall / enable / disable / update

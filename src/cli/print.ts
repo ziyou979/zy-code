@@ -7,7 +7,7 @@ import { RemoteIO } from 'src/cli/remoteIO.js'
 import { type Command, formatDescriptionWithSource, getCommandName } from 'src/commands.js'
 import { createStreamlinedTransformer } from 'src/utils/streamlinedTransform.js'
 import { installStreamJsonStdoutGuard } from 'src/utils/streamJsonStdoutGuard.js'
-import type { ToolPermissionContext } from 'src/Tool.js'
+import type { ToolPermissionContext } from 'src/tool.js'
 import type { ThinkingConfig } from 'src/utils/thinking.js'
 import { assembleToolPool, filterToolsByDenyRules } from 'src/tools.js'
 import uniqBy from 'lodash-es/uniqBy.js'
@@ -18,7 +18,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
-import { toolMatchesName, type Tool, type Tools } from 'src/Tool.js'
+import { toolMatchesName, type Tool, type Tools } from 'src/tool.js'
 import {
   type AgentDefinition,
   isBuiltInAgent,
@@ -37,10 +37,10 @@ import {
   setPermissionModeChangedListener,
   type RequiresActionDetails,
   type SessionExternalMetadata,
-} from 'src/utils/sessionState.js'
+} from 'src/services/session-state/sessionState.js'
 import { externalMetadataToAppState } from 'src/state/onChangeAppState.js'
 import { logError, logMCPDebug } from 'src/utils/log.js'
-import { writeToStdout, registerProcessOutputErrorHandlers } from 'src/utils/process.js'
+import { writeToStdout, registerProcessOutputErrorHandlers } from 'src/services/shell/process.js'
 import type { Stream } from 'src/utils/stream.js'
 import { EMPTY_USAGE } from 'src/services/api/logging.js'
 import {
@@ -58,7 +58,7 @@ import {
   wrapChannelMessage,
   findChannelEntry,
 } from 'src/services/mcp/channelNotification.js'
-import { parsePluginIdentifier } from 'src/utils/plugins/pluginIdentifier.js'
+import { parsePluginIdentifier } from 'src/services/plugins/pluginIdentifier.js'
 import { validateUuid } from 'src/utils/uuid.js'
 import { fromArray } from 'src/utils/generators.js'
 import type { PermissionPromptTool } from 'src/utils/queryHelpers.js'
@@ -67,7 +67,7 @@ import {
   READ_FILE_STATE_CACHE_SIZE,
 } from 'src/utils/fileStateCache.js'
 import { extractReadFilesFromMessages } from 'src/utils/queryHelpers.js'
-import { registerHookEventHandler } from 'src/utils/hooks/hookEvents.js'
+import { registerHookEventHandler } from 'src/services/hooks/hookEvents.js'
 import { gracefulShutdown, gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
 import { registerCleanup } from 'src/utils/cleanupRegistry.js'
 import { createIdleTimeoutManager } from 'src/utils/idleTimeout.js'
@@ -96,12 +96,12 @@ import { getCwd } from 'src/utils/cwd.js'
 import { isPolicyAllowed } from 'src/services/policy-limits/index.js'
 import type { ReplWireHandle } from 'src/bridge/replBridge.js'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
-import { hasPermissionsToUseTool } from 'src/utils/permissions/permissions.js'
+import { hasPermissionsToUseTool } from 'src/services/permissions/permissions.js'
 import { safeParseJSON } from 'src/utils/json.js'
 import {
   outputSchema as permissionToolOutputSchema,
   permissionPromptToolResultToPermissionDecision,
-} from 'src/utils/permissions/PermissionPromptToolResultSchema.js'
+} from 'src/services/permissions/permissionPromptToolResultSchema.js'
 import { createCombinedAbortSignal } from 'src/utils/combinedAbortSignal.js'
 import {
   processSessionStartHooks,
@@ -110,23 +110,27 @@ import {
 } from 'src/utils/sessionStart.js'
 import { DEFAULT_OUTPUT_STYLE_NAME, getAllOutputStyles } from 'src/constants/outputStyles.js'
 import { TICK_TAG } from 'src/constants/xml.js'
-import { getInitialSettings } from 'src/utils/settings/settings.js'
-import { settingsChangeDetector } from 'src/utils/settings/changeDetector.js'
-import { applySettingsChange } from 'src/utils/settings/applySettingsChange.js'
+import { getInitialSettings } from 'src/services/settings/settings.js'
+import { settingsChangeDetector } from 'src/services/settings/changeDetector.js'
+import { applySettingsChange } from 'src/services/settings/applySettingsChange.js'
 import {
   isAutoModeGateEnabled,
   getAutoModeUnavailableNotification,
   getAutoModeUnavailableReason,
   isBypassPermissionsModeDisabled,
   transitionPermissionMode,
-} from 'src/utils/permissions/permissionSetup.js'
+} from 'src/services/permissions/permissionSetup.js'
 import { type PromptVariant } from 'src/services/prompt-suggestion/promptSuggestion.js'
-import { getAccountInformation } from 'src/utils/auth.js'
+import { getAccountInformation } from 'src/services/auth/auth.js'
 import { getAPIProvider } from 'src/services/model/providers.js'
 import type { HookCallbackMatcher } from 'src/types/hooks/index.js'
 import { AwsAuthStatusManager } from 'src/utils/awsAuthStatusManager.js'
 import type { HookEvent } from 'src/types/index.js'
-import { registerHookCallbacks, setInitJsonSchema, getInitJsonSchema } from 'src/bootstrap/state.js'
+import {
+  registerHookCallbacks,
+  setInitJsonSchema,
+  getInitJsonSchema,
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import { createSyntheticOutputTool } from 'src/tools/SyntheticOutputTool/SyntheticOutputTool.js'
 import { parseSessionIdentifier } from 'src/utils/sessionUrl.js'
 import {
@@ -137,7 +141,7 @@ import {
   saveAgentSetting,
   saveMode,
   restoreSessionMetadata,
-} from 'src/utils/sessionStorage.js'
+} from 'src/services/sessionStorage.js'
 import {
   connectToServer,
   clearServerCache,
@@ -145,8 +149,8 @@ import {
   areMcpConfigsEqual,
 } from 'src/services/mcp/client.js'
 import { filterMcpServersByPolicy } from 'src/services/mcp/config.js'
-import { toSDKRateLimitInfo } from 'src/utils/messages/mappers.js'
-import { createModelSwitchBreadcrumbs } from 'src/utils/messages.js'
+import { toSDKRateLimitInfo } from 'src/services/messages/mappers.js'
+import { createModelSwitchBreadcrumbs } from 'src/services/messages/index.js'
 import { LOCAL_COMMAND_STDOUT_TAG } from 'src/constants/xml.js'
 import { statusListeners, type ZyAILimits } from 'src/services/zyAiLimits.js'
 import {
@@ -159,18 +163,16 @@ import { getModelEffortLevels } from 'src/utils/effort.js'
 import { modelSupportsAdaptiveThinking } from 'src/utils/thinking.js'
 import { modelSupportsAutoMode } from 'src/utils/betas.js'
 import { ensureModelStringsInitialized } from 'src/services/model/modelStrings.js'
+import { getSessionId, switchSession } from 'src/bootstrap/runtime/runtimeContext.js'
+import { setMainLoopModelOverride } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
-  getSessionId,
-  setMainLoopModelOverride,
   setMainThreadAgentType,
-  switchSession,
-  isSessionPersistenceDisabled,
   getIsRemoteMode,
   getMainThreadAgentType,
-  getAllowedChannels,
-  setAllowedChannels,
-  type ChannelEntry,
-} from 'src/bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { isSessionPersistenceDisabled } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getAllowedChannels, setAllowedChannels } from 'src/bootstrap/runtime/runtimeContext.js'
+import type { ChannelEntry } from 'src/bootstrap/runtime/runtimeContext.js'
 import { WORKLOAD_CRON } from 'src/utils/workloadContext.js'
 import type { UUID } from 'node:crypto'
 import { randomUUID } from 'node:crypto'
@@ -192,10 +194,10 @@ import {
 } from 'src/utils/headlessProfiler.js'
 import { asSessionId } from 'src/types/ids.js'
 import { jsonStringify } from '../utils/slowOperations.js'
-import { skillChangeDetector } from '../services/skills/skillChangeDetector.js'
+import { skillChangeDetector } from '../services/skill-runtime/skillChangeDetector.js'
 import { getCommands, clearCommandsCache } from '../commands.js'
 import { isBareMode, isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
-import { getRunningTasks } from '../services/task/framework.js'
+import { getRunningTasks } from '../services/task-runtime/framework.js'
 import { isBackgroundTask } from '../tasks/types.js'
 import { initializeGrowthBook } from '../services/analytics/growthbook.js'
 import { errorMessage, toError } from '../utils/errors.js'
@@ -2076,7 +2078,7 @@ async function loadInitialMessages(
         processMessagesForTeleportResume,
         teleportResumeCodeSession,
         validateGitState,
-      } = await import('src/utils/teleport.js')
+      } = await import('src/services/teleport/teleport.js')
       await validateGitState()
       const teleportResult = await teleportResumeCodeSession(options.teleport)
       const { branchError } = await checkOutTeleportedSessionBranch(teleportResult.branch)

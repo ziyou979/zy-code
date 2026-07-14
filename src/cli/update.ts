@@ -11,15 +11,19 @@ import {
   installGlobalPackage,
 } from 'src/utils/autoUpdater.js'
 import { regenerateCompletionCache } from 'src/utils/completionCache.js'
-import { getGlobalConfig, type InstallMethod, saveGlobalConfig } from 'src/utils/config.js'
+import {
+  getGlobalConfig,
+  type InstallMethod,
+  saveGlobalConfig,
+} from 'src/services/config/config.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { getDoctorDiagnostic } from 'src/utils/doctorDiagnostic.js'
 import { isInternalBuild } from 'src/utils/envUtils.js'
 import { gracefulShutdown } from 'src/utils/gracefulShutdown.js'
 import { installOrUpdateZyPackage, localInstallationExists } from 'src/utils/localInstaller.js'
-import { writeToStdout } from 'src/utils/process.js'
+import { writeToStdout } from 'src/services/shell/process.js'
 import { gte } from 'src/utils/semver.js'
-import { getInitialSettings } from 'src/utils/settings/settings.js'
+import { getInitialSettings } from 'src/services/settings/settings.js'
 
 export async function update() {
   logEvent('zy_update_check', {})

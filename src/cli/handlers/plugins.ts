@@ -5,7 +5,7 @@
 /* eslint-disable custom-rules/no-process-exit -- CLI subcommand handlers intentionally exit */
 
 import { basename, dirname } from 'node:path'
-import { setUseCoworkPlugins } from '../../bootstrap/state.js'
+import { setUseCoworkPlugins } from 'src/bootstrap/runtime/runtimeContext.js'
 import { CROSS, POINTER, TICK, WARNING } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import {
@@ -23,19 +23,19 @@ import {
   VALID_INSTALLABLE_SCOPES,
   VALID_UPDATE_SCOPES,
 } from '../../services/plugins/pluginCliCommands.js'
-import { getPluginErrorMessage } from '../../types/plugin.js'
+import { getPluginErrorMessage } from '../../services/plugins/types.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import { clearAllCaches } from '../../utils/plugins/cacheUtils.js'
-import { getInstallCounts } from '../../utils/plugins/installCounts.js'
+import { clearAllCaches } from '../../services/plugins/cacheUtils.js'
+import { getInstallCounts } from '../../services/plugins/installCounts.js'
 import {
   isPluginInstalled,
   loadInstalledPlugins,
-} from '../../utils/plugins/installedPluginsManager.js'
+} from '../../services/plugins/installedPluginsManager.js'
 import {
   createPluginId,
   loadMarketplacesWithGracefulDegradation,
-} from '../../utils/plugins/marketplaceHelpers.js'
+} from '../../services/plugins/marketplaceHelpers.js'
 import {
   addMarketplaceSource,
   loadKnownMarketplacesConfig,
@@ -43,20 +43,20 @@ import {
   refreshMarketplace,
   removeMarketplaceSource,
   saveMarketplaceToSettings,
-} from '../../utils/plugins/marketplaceManager.js'
-import { loadPluginMcpServers } from '../../utils/plugins/mcpPluginIntegration.js'
-import { parseMarketplaceInput } from '../../utils/plugins/parseMarketplaceInput.js'
+} from '../../services/plugins/marketplaceManager.js'
+import { loadPluginMcpServers } from '../../services/plugins/mcpPluginIntegration.js'
+import { parseMarketplaceInput } from '../../services/plugins/parseMarketplaceInput.js'
 import {
   parsePluginIdentifier,
   scopeToSettingSource,
-} from '../../utils/plugins/pluginIdentifier.js'
-import { loadAllPlugins } from '../../utils/plugins/pluginLoader.js'
-import type { PluginSource } from '../../utils/plugins/schemas.js'
+} from '../../services/plugins/pluginIdentifier.js'
+import { loadAllPlugins } from '../../services/plugins/pluginLoader.js'
+import type { PluginSource } from '../../services/plugins/schemas.js'
 import {
   type ValidationResult,
   validateManifest,
   validatePluginContents,
-} from '../../utils/plugins/validatePlugin.js'
+} from '../../services/plugins/validatePlugin.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { cliError, cliOk } from '../exit.js'
 
@@ -172,7 +172,7 @@ export async function pluginListHandler(options: {
   logEvent('zy_plugin_list_command', {})
 
   const installedData = loadInstalledPlugins()
-  const { getPluginEditableScopes } = await import('../../utils/plugins/pluginStartupCheck.js')
+  const { getPluginEditableScopes } = await import('../../services/plugins/pluginStartupCheck.js')
   const enabledPlugins = getPluginEditableScopes()
 
   const pluginIds = Object.keys(installedData.plugins)

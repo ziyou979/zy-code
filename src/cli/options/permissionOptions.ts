@@ -1,5 +1,5 @@
 import { Command, Option } from '@commander-js/extra-typings'
-import { PERMISSION_MODES } from '../../utils/permissions/PermissionMode.js'
+import { PERMISSION_MODES } from '../../services/permissions/permissionMode.js'
 
 /**
  * 权限相关选项：--dangerously-skip-permissions、--allow-dangerously-skip-permissions、

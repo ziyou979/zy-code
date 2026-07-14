@@ -1,9 +1,9 @@
 import { feature } from 'bun:bundle'
 import { randomUUID } from 'node:crypto'
 import type { ElicitResult, JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
-import type { AssistantMessage } from 'src//types/message.js'
+import type { AssistantMessage } from 'src/types/message.js'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
-import type { Tool, ToolUseContext } from 'src/Tool.js'
+import type { Tool, ToolUseContext } from 'src/tool.js'
 import { type HookCallback, hookJSONOutputSchema } from 'src/types/hooks/index.js'
 import type {
   HookInput,
@@ -26,27 +26,27 @@ import {
   type Output as PermissionToolOutput,
   permissionPromptToolResultToPermissionDecision,
   outputSchema as permissionToolOutputSchema,
-} from 'src/utils/permissions/PermissionPromptToolResultSchema.js'
+} from 'src/services/permissions/permissionPromptToolResultSchema.js'
 import type {
   PermissionDecision,
   PermissionDecisionReason,
-} from 'src/utils/permissions/PermissionResult.js'
-import { hasPermissionsToUseTool } from 'src/utils/permissions/permissions.js'
-import { writeToStdout } from 'src/utils/process.js'
+} from 'src/services/permissions/permissionResult.js'
+import { hasPermissionsToUseTool } from 'src/services/permissions/permissions.js'
+import { writeToStdout } from 'src/services/shell/process.js'
 import { jsonStringify } from 'src/utils/slowOperations.js'
 import { z } from 'zod/v4'
 import { notifyCommandLifecycle } from '../utils/commandLifecycle.js'
 import { normalizeControlMessageKeys } from '../utils/controlMessageCompat.js'
-import { executePermissionRequestHooks } from '../utils/hooks.js'
+import { executePermissionRequestHooks } from '../services/hooks.js'
 import {
   applyPermissionUpdates,
   persistPermissionUpdates,
-} from '../utils/permissions/PermissionUpdate.js'
+} from '../services/permissions/permissionUpdate.js'
 import {
   notifySessionStateChanged,
   type RequiresActionDetails,
   type SessionExternalMetadata,
-} from '../utils/sessionState.js'
+} from '../services/session-state/sessionState.js'
 import { jsonParse } from '../utils/slowOperations.js'
 import { Stream } from '../utils/stream.js'
 import { ndjsonSafeStringify } from './ndjsonSafeStringify.js'

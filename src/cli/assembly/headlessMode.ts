@@ -7,9 +7,10 @@
 import { feature } from 'bun:bundle'
 import pickBy from 'lodash-es/pickBy.js'
 import uniqBy from 'lodash-es/uniqBy.js'
-import { setSdkBetas, setSessionPersistenceDisabled } from '../../bootstrap/state.js'
-import { startDeferredPrefetches } from '../../cli/bootstrap/prefetch.js'
-import { logSessionTelemetry } from '../../cli/bootstrap/telemetry.js'
+import { setSdkBetas } from 'src/bootstrap/runtime/runtimeContext.js'
+import { setSessionPersistenceDisabled } from 'src/bootstrap/runtime/runtimeContext.js'
+import { startDeferredPrefetches } from '../bootstrap/prefetch.js'
+import { logSessionTelemetry } from '../bootstrap/telemetry.js'
 import { initializeTelemetryAfterTrust } from '../../entrypoints/init.js'
 import { clearServerCache, getMcpToolsCommandsAndResources } from '../../services/mcp/client.js'
 import { dedupZyAIMcpServers, getMcpServerSignature } from '../../services/mcp/config.js'
@@ -18,10 +19,10 @@ import { excludeCommandsByServer, excludeResourcesByServer } from '../../service
 import { type AppState, getDefaultAppState } from '../../state/AppStateStore.js'
 import { onChangeAppState } from '../../state/onChangeAppState.js'
 import { createStore } from '../../state/store.js'
-import type { ToolInputJSONSchema, ToolPermissionContext, Tools } from '../../Tool.js'
+import type { ToolInputJSONSchema, ToolPermissionContext, Tools } from '../../tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-import type { Command } from '../../types/command.js'
-import { validateForceLoginOrg } from '../../utils/auth.js'
+import type { Command } from '../../commands/types.js'
+import { validateForceLoginOrg } from '../../services/auth/auth.js'
 import { filterAllowedSdkBetas } from '../../utils/betas.js'
 import { logForDebugging, setHasFormattedOutput } from '../../utils/debug.js'
 import { resolveInitialEffortSetting } from '../../utils/effort.js'
@@ -30,11 +31,10 @@ import { applyConfigEnvironmentVariables } from '../../utils/managedEnv.js'
 import {
   checkAndDisableBypassPermissions,
   verifyAutoModeGateAccess,
-} from '../../utils/permissions/permissionSetup.js'
+} from '../../services/permissions/permissionSetup.js'
 import { processSessionStartHooks } from '../../utils/sessionStart.js'
 import { profileCheckpoint } from '../../utils/startupProfiler.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
-
 // ---------- 参数接口 ----------
 
 /** rootAction 传入无头模式的全部上下文。 */

@@ -1,6 +1,5 @@
-import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { migrateChangelogFromConfig } from '../../utils/releaseNotes.js'
-
 // 添加新的同步迁移时递增此值，以便现有用户重新运行迁移集。
 export const CURRENT_MIGRATION_VERSION = 13
 

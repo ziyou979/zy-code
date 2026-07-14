@@ -1,19 +1,18 @@
-import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
+import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getSystemContext, getUserContext } from '../../context.js'
 import { warmI18n } from '../../i18n/index.js'
 import { initializeAnalyticsGates } from '../../services/analytics/sink.js'
 import { prefetchOfficialMcpUrls } from '../../services/mcp/officialRegistry.js'
 import { refreshModelCapabilities } from '../../services/model/modelCapabilities.js'
-import { skillChangeDetector } from '../../services/skills/skillChangeDetector.js'
-import { getRelevantTips } from '../../services/tips/tipRegistry.js'
-import { checkHasTrustDialogAccepted } from '../../utils/config.js'
+import { skillChangeDetector } from '../../services/skill-runtime/skillChangeDetector.js'
+import { getRelevantTips } from '../../components/tips/tipRegistry.js'
+import { checkHasTrustDialogAccepted } from '../../services/config/config.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { isBareMode, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { countFilesRoundedRg } from '../../utils/ripgrep.js'
-import { settingsChangeDetector } from '../../utils/settings/changeDetector.js'
+import { settingsChangeDetector } from '../../services/settings/changeDetector.js'
 import { initUser } from '../../utils/user.js'
-
 /**
  * 仅在安全的情况下预取系统上下文（包括 git 状态）。
  * Git 命令可以通过钩子和配置执行任意代码（例如 core.fsmonitor、

@@ -4,27 +4,27 @@
 // 代理循环在远程运行；此进程流式传输实时事件并 POST 消息。
 // 历史懒加载，由 useAssistantHistory 在滚动向上时加载（无阻塞获取）。
 
-import { setIsRemoteMode, setKairosActive, setUserMsgOptIn } from '../../bootstrap/state.js'
+import { setIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
+import { setKairosActive, setUserMsgOptIn } from 'src/bootstrap/runtime/runtimeContext.js'
 import { filterCommandsForRemoteMode } from '../../commands.js'
 import type { StatsStore } from '../../context/stats.js'
 import {
   launchAssistantInstallWizard,
   launchAssistantSessionChooser,
-} from '../../dialogLaunchers.js'
+} from '../../DialogLaunchers.js'
 import type { Root } from '../../ink.js'
-import { exitWithError, exitWithMessage } from '../../interactiveHelpers.js'
-import { createRemoteSessionConfig } from '../../remote/RemoteSessionManager.js'
+import { exitWithError, exitWithMessage } from '../../InteractiveHelpers.js'
+import { createRemoteSessionConfig } from '../../remote/remoteSessionManager.js'
 import { prepareApiRequest } from '../../services/teleport/api.js'
 import type { AppState } from '../../state/AppStateStore.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-import type { Command } from '../../types/command.js'
+import type { Command } from '../../commands/types.js'
 import type { FpsMetrics } from '../../utils/fpsTracker.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
-import { createSystemMessage } from '../../utils/messages.js'
+import { createSystemMessage } from '../../services/messages/index.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
 import { launchRemoteSessionRepl } from './remoteSession.js'
 import type { RenderAndRun } from './types.js'
-
 export interface AssistantChatParams {
   root: Root
   renderAndRun: RenderAndRun
@@ -115,7 +115,7 @@ export async function runAssistantChatMode({
   // 认证 —— 调用 prepareApiRequest() 一次获取 orgUUID，但使用
   // getAccessToken 闭包获取令牌，以便重新连接获取新鲜令牌。
   const { checkAndRefreshOAuthTokenIfNeeded, getZyAIOAuthTokens } = await import(
-    '../../utils/auth.js'
+    '../../services/auth/auth.js'
   )
   await checkAndRefreshOAuthTokenIfNeeded()
   let apiCreds

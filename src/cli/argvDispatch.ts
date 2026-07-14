@@ -108,7 +108,7 @@ async function rewriteArgvForDeepLink(): Promise<void> {
 
   const handleUriIdx = process.argv.indexOf('--handle-uri')
   if (handleUriIdx !== -1 && process.argv[handleUriIdx + 1]) {
-    const { enableConfigs } = await import('../utils/config.js')
+    const { enableConfigs } = await import('../services/config/config.js')
     enableConfigs()
     const uri = process.argv[handleUriIdx + 1]!
     const { handleDeepLinkUri } = await import('../services/deep-link/protocolHandler.js')
@@ -124,7 +124,7 @@ async function rewriteArgvForDeepLink(): Promise<void> {
     process.platform === 'darwin' &&
     process.env.__CFBundleIdentifier === 'com.zy.zy-code-url-handler'
   ) {
-    const { enableConfigs } = await import('../utils/config.js')
+    const { enableConfigs } = await import('../services/config/config.js')
     enableConfigs()
     const { handleUrlSchemeLaunch } = await import('../services/deep-link/protocolHandler.js')
     const urlSchemeResult = await handleUrlSchemeLaunch()

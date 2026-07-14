@@ -2,7 +2,6 @@ import type { Command } from '@commander-js/extra-typings'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { TASK_STATUSES } from '../../utils/tasks.js'
 import { validateUuid } from '../../utils/uuid.js'
-
 /**
  * 注册 ant 内部专用命令组：log / error / export / task / completion。
  * 整组在 isInternalBuild() 为假时不注册。

@@ -3,8 +3,8 @@ import type { StdoutMessage } from 'src/types/wire/control.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { getSessionIngressAuthToken } from '../../utils/sessionIngressAuth.js'
-import { SerialBatchEventUploader } from './SerialBatchEventUploader.js'
-import { WebSocketTransport, type WebSocketTransportOptions } from './WebSocketTransport.js'
+import { SerialBatchEventUploader } from './serialBatchEventUploader.js'
+import { WebSocketTransport, type WebSocketTransportOptions } from './webSocketTransport.js'
 
 const BATCH_FLUSH_INTERVAL_MS = 100
 // Per-attempt POST timeout. Bounds how long a single stuck POST can block
