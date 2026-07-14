@@ -7,7 +7,7 @@ import type { Message } from '../../types/message.js'
 import { analyzeContextUsage, type ContextData } from '../../utils/analyzeContext.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { formatTokens } from '../../utils/format.js'
-import { getMessagesAfterCompactBoundary } from '../../services/messages/index.js'
+import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
 import { getSourceDisplayName } from '../../services/settings/constants.js'
 import { plural } from '../../utils/stringUtils.js'
 

@@ -13,7 +13,8 @@ import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { Box, Text, wrapText } from '../ink.js'
 import { evictTerminalTask } from '../services/task-runtime/framework.js'
-import { type AppState, useAppState, useSetAppState } from '../state/AppState.js'
+import type { AppState } from '../state/AppStateStore.js'
+import { useAppState, useSetAppState } from '../state/AppState.js'
 import { enterTeammateView, exitTeammateView } from '../state/teammateViewHelpers.js'
 import {
   isPanelAgentTask,

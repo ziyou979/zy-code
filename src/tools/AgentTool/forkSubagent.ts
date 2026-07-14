@@ -6,7 +6,7 @@ import { isCoordinatorMode } from '../../coordinator/coordinatorMode.js'
 import type { ToolCallBlock } from '../../types/llm.js'
 import type { AssistantMessage, Message as MessageType } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { createUserMessage } from '../../services/messages/index.js'
+import { createUserMessage } from '../../services/messages/./constructors.js'
 import type { BuiltInAgentDefinition } from './loadAgentsDir.js'
 
 /**

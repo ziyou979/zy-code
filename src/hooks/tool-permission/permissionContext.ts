@@ -24,8 +24,8 @@ import {
   REJECT_MESSAGE_WITH_REASON_PREFIX,
   SUBAGENT_REJECT_MESSAGE,
   SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX,
-  withMemoryCorrectionHint,
-} from '../../services/messages/index.js'
+} from '../../services/messages/./constants.js'
+import { withMemoryCorrectionHint } from '../../services/messages/./predicates.js'
 import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
 import {
   applyPermissionUpdates,

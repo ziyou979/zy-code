@@ -21,7 +21,7 @@ import { TASK_STOP_TOOL_NAME } from 'src/tools/TaskStopTool/prompt.js'
 import { WEB_SEARCH_TOOL_NAME } from 'src/tools/WebSearchTool/prompt.js'
 import type { WireAssistantMessage } from 'src/types/index.js'
 import type { StdoutMessage } from 'src/types/wire/control.js'
-import { extractTextContent } from 'src/services/messages/index.js'
+import { extractTextContent } from 'src/services/messages/predicates.js'
 import { capitalize } from 'src/utils/stringUtils.js'
 
 type ToolCounts = {

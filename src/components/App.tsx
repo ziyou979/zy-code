@@ -1,7 +1,8 @@
 import React from 'react'
 import { FpsMetricsProvider } from '../context/FpsMetrics.js'
 import { StatsProvider, type StatsStore } from '../context/stats.js'
-import { type AppState, AppStateProvider } from '../state/AppState.js'
+import type { AppState } from '../state/AppStateStore.js'
+import { AppStateProvider } from '../state/AppState.js'
 import { onChangeAppState } from '../state/onChangeAppState.js'
 import type { FpsMetrics } from '../utils/fpsTracker.js'
 

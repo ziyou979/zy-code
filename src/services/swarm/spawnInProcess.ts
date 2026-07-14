@@ -22,7 +22,7 @@ import {
   registerAgent as registerPerfettoAgent,
   unregisterAgent as unregisterPerfettoAgent,
 } from '../telemetry/perfettoTracing.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import { createTaskStateBase, generateTaskId } from '../../task.js'
 import type {
   AgentLifecycleMode,

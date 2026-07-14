@@ -52,7 +52,7 @@ import { type CacheSafeParams, createSubagentContext } from '../../utils/forkedA
 import { registerFrontmatterHooks } from '../../services/hooks/registerFrontmatterHooks.js'
 import { clearSessionHooks } from '../../services/hooks/sessionHooks.js'
 import { executeSubagentStartHooks } from '../../services/hooks.js'
-import { createUserMessage } from '../../services/messages/index.js'
+import { createUserMessage } from '../../services/messages/./constructors.js'
 import {
   clearAgentTranscriptSubdir,
   recordSidechainTranscript,

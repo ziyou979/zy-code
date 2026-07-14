@@ -2,7 +2,7 @@ import { STATUS_TAG, SUMMARY_TAG, TASK_NOTIFICATION_TAG } from '../constants/xml
 import { BACKGROUND_BASH_SUMMARY_PREFIX } from '../tasks/local-shell-task/LocalShellTask.js'
 import type { RenderableMessage, UserMessage } from '../types/message.js'
 import { isFullscreenEnvEnabled } from './fullscreen.js'
-import { extractTag } from '../services/messages/index.js'
+import { extractTag } from '../services/messages/./predicates.js'
 
 function isCompletedBackgroundBash(msg: RenderableMessage): msg is UserMessage {
   if (msg.type !== 'user') {

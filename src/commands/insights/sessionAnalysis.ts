@@ -6,7 +6,7 @@ import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from '../../tools/AgentTool/c
 import type { LogOption } from '../../types/logs.js'
 import { toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import { extractTextContent } from '../../services/messages/index.js'
+import { extractTextContent } from '../../services/messages/./predicates.js'
 import { getSessionIdFromLog } from '../../services/sessionStorage.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { countCharInString } from '../../utils/stringUtils.js'

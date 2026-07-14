@@ -7,7 +7,7 @@
  * 不属于 src/utils/ 因为它涉及 agent 生命周期领域逻辑和 AppState 操作。
  */
 
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import type { InProcessTeammateTaskState } from '../../tasks/in-process-teammate-task/types.js'
 import {
   MAX_CONCURRENT_IN_PROCESS_AGENTS,

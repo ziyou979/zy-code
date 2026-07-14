@@ -49,12 +49,10 @@ import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { AbortError, errorMessage, toError } from '../../utils/errors.js'
 import type { CacheSafeParams } from '../../utils/forkedAgent.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import {
-  createUserMessage,
-  extractTextContent,
-  isSyntheticMessage,
-  normalizeMessages,
-} from '../../services/messages/index.js'
+import { createUserMessage } from '../../services/messages/./constructors.js'
+import { extractTextContent } from '../../services/messages/./predicates.js'
+import { isSyntheticMessage } from '../../services/messages/./constants.js'
+import { normalizeMessages } from '../../services/messages/./normalize.js'
 import { permissionModeSchema } from '../../services/permissions/permissionMode.js'
 import type { PermissionResult } from '../../services/permissions/permissionResult.js'
 import { filterDeniedAgents, getDenyRuleForAgent } from '../../services/permissions/permissions.js'

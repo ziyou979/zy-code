@@ -5,7 +5,8 @@ import { Box, Text } from '../ink.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { RenderableMessage, UserMessage } from '../types/message.js'
-import { isEmptyMessageText, SYNTHETIC_MESSAGES } from '../services/messages/index.js'
+import { isEmptyMessageText } from '../services/messages/./predicates.js'
+import { SYNTHETIC_MESSAGES } from '../services/messages/./constants.js'
 
 const NAVIGABLE_TYPES = [
   'user',

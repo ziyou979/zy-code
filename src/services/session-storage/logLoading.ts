@@ -42,7 +42,7 @@ import { isEnvTruthy } from '../../utils/envUtils.js'
 import type { FileHistorySnapshot } from '../../utils/fileHistory.js'
 import { getWorktreePaths } from '../../utils/getWorktreePaths.js'
 import { parseJSONL } from '../../utils/json.js'
-import { extractTag, isCompactBoundaryMessage } from '../messages/index.js'
+import { extractTag, isCompactBoundaryMessage } from '../messages/predicates.js'
 import { sanitizePath } from '../../utils/path.js'
 import {
   extractJsonStringField,

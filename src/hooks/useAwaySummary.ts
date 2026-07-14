@@ -4,7 +4,7 @@ import { getTerminalFocusState, subscribeTerminalFocus } from '../ink/terminal-f
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { generateAwaySummary } from '../services/awaySummary.js'
 import type { Message } from '../types/message.js'
-import { createAwaySummaryMessage } from '../services/messages/index.js'
+import { createAwaySummaryMessage } from '../services/messages/./constructors.js'
 
 const BLUR_DELAY_MS = 5 * 60_000
 

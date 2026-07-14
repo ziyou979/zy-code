@@ -7,7 +7,7 @@
  * 不属于 src/utils/ 因为它涉及 task 文件 I/O 和 agent 注册表领域逻辑。
  */
 
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import { getRunningTeammatesSorted } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { listTasks, updateTask } from '../../utils/tasks.js'

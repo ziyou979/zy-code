@@ -33,7 +33,7 @@ import type { ModelAlias } from '../model/aliases.js'
 import { evictTaskOutput } from '../task-runtime/diskOutput.js'
 import { evictTerminalTask } from '../task-runtime/framework.js'
 import { unregisterAgent as unregisterPerfettoAgent } from '../telemetry/perfettoTracing.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import type { Tool, ToolUseContext } from '../../tool.js'
 import { appendTeammateMessage } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import type {
@@ -76,12 +76,11 @@ import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { cloneFileStateCache } from '../../utils/fileStateCache.js'
+import { createAssistantAPIErrorMessage, createUserMessage } from '../messages/constructors.js'
 import {
-  createAssistantAPIErrorMessage,
-  createUserMessage,
   SUBAGENT_REJECT_MESSAGE,
   SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX,
-} from '../messages/index.js'
+} from '../messages/constants.js'
 import {
   applyPermissionUpdates,
   persistPermissionUpdates,

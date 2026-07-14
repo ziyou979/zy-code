@@ -42,7 +42,10 @@ import { saveGlobalConfig } from '../../services/config/config.js'
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
 import type { IDEExtensionInstallationStatus } from '../../services/ide/ide.js'
 import { logError } from '../../utils/log.js'
-import { createCommandInputMessage, formatCommandInputTags } from '../../services/messages/index.js'
+import {
+  createCommandInputMessage,
+  formatCommandInputTags,
+} from '../../services/messages/./constructors.js'
 import {
   applyPermissionUpdate,
   persistPermissionUpdate,

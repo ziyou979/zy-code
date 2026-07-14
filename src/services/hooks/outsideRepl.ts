@@ -6,7 +6,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import { createCombinedAbortSignal } from '../../utils/combinedAbortSignal.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'

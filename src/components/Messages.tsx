@@ -37,19 +37,20 @@ import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
 import { applyGrouping } from '../utils/groupToolUses.js'
 import {
   buildMessageLookups,
-  createAssistantMessage,
+  getToolUseIDs,
+  hasUnresolvedHooksFromLookup,
+} from '../services/messages/./lookups.js'
+import { createAssistantMessage } from '../services/messages/./constructors.js'
+import {
   deriveUUID,
   getMessagesAfterCompactBoundary,
   getToolUseID,
-  getToolUseIDs,
-  hasUnresolvedHooksFromLookup,
   isNotEmptyMessage,
-  normalizeMessages,
-  reorderMessagesInUI,
-  type StreamingThinking,
-  type StreamingToolUse,
   shouldShowUserMessage,
-} from '../services/messages/index.js'
+} from '../services/messages/./predicates.js'
+import { normalizeMessages } from '../services/messages/./normalize.js'
+import { reorderMessagesInUI } from '../services/messages/./api.js'
+import type { StreamingThinking, StreamingToolUse } from '../services/messages/./streaming.js'
 import { plural } from '../utils/stringUtils.js'
 import { renderableSearchText } from '../utils/transcriptSearch.js'
 import { Divider } from './design-system/Divider.js'

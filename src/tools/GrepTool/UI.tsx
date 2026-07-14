@@ -10,7 +10,7 @@ import type { ToolResultBlock } from '../../types/llm.js'
 import type { ProgressMessage } from '../../types/message.js'
 import { FILE_NOT_FOUND_CWD_NOTE, getDisplayPath } from '../../utils/file.js'
 import { truncate } from '../../utils/format.js'
-import { extractTag } from '../../services/messages/index.js'
+import { extractTag } from '../../services/messages/./predicates.js'
 
 // 用于搜索结果摘要的可复用组件
 function SearchResultSummary({

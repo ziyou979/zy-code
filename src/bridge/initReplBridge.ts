@@ -42,8 +42,8 @@ import { toSDKMessages } from '../services/messages/mappers.js'
 import {
   getContentText,
   getMessagesAfterCompactBoundary,
-  isSyntheticMessage,
-} from '../services/messages/index.js'
+} from '../services/messages/./predicates.js'
+import { isSyntheticMessage } from '../services/messages/./constants.js'
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
 import { getCurrentSessionTitle, saveAiGeneratedTitle } from '../services/sessionStorage.js'
 import { extractConversationText, generateSessionTitle } from '../utils/sessionTitle.js'

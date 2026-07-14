@@ -19,7 +19,7 @@ import { createAbortController } from '../../utils/abortController.js'
 import { saveGlobalConfig } from '../../services/config/config.js'
 import { errorMessage } from '../../utils/errors.js'
 import { type CacheSafeParams, getLastCacheSafeParams } from '../../utils/forkedAgent.js'
-import { getMessagesAfterCompactBoundary } from '../../services/messages/index.js'
+import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
 import { runSideQuestion } from '../../utils/sideQuestion.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 

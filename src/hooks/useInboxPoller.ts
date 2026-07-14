@@ -12,7 +12,8 @@ import { TEAM_LEAD_NAME } from '../services/swarm/constants.js'
 import { getLeaderToolUseConfirmQueue } from '../services/swarm/leaderPermissionBridge.js'
 import { sendPermissionResponseViaMailbox } from '../services/swarm/permissionSync.js'
 import { removeTeammateFromTeamFile, setMemberMode } from '../services/swarm/teamHelpers.js'
-import { type AppState, useAppState, useAppStateStore, useSetAppState } from '../state/AppState.js'
+import type { AppState } from '../state/AppStateStore.js'
+import { useAppState, useAppStateStore, useSetAppState } from '../state/AppState.js'
 import { findToolByName } from '../tool.js'
 import { isInProcessTeammateTask } from '../tasks/in-process-teammate-task/types.js'
 import { getAllBaseTools } from '../tools.js'
@@ -22,7 +23,7 @@ import {
   findInProcessTeammateTaskId,
   handlePlanApprovalResponse,
 } from '../utils/inProcessTeammateHelpers.js'
-import { createAssistantMessage } from '../services/messages/index.js'
+import { createAssistantMessage } from '../services/messages/./constructors.js'
 import {
   permissionModeFromString,
   toExternalPermissionMode,

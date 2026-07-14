@@ -16,7 +16,8 @@ import type {
 } from '../types/message.js'
 import { executePostToolBatchHooks } from '../services/hooks/executors/tool.js'
 import { hasHookForEvent } from '../services/hooks/matcher.js'
-import { createToolUseSummaryMessage, normalizeMessagesForAPI } from '../services/messages/index.js'
+import { createToolUseSummaryMessage } from '../services/messages/./constructors.js'
+import { normalizeMessagesForAPI } from '../services/messages/./api.js'
 import { queryCheckpoint } from '../utils/queryProfiler.js'
 import type { QueryConfig } from './config.js'
 

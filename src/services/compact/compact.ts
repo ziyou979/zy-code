@@ -36,14 +36,13 @@ import { hasExactErrorMessage } from '../../utils/errors.js'
 import { cacheToObject } from '../../utils/fileStateCache.js'
 import { type CacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.js'
 import { logError } from '../../utils/log.js'
+import { createCompactBoundaryMessage, createUserMessage } from '../messages/constructors.js'
 import {
-  createCompactBoundaryMessage,
-  createUserMessage,
   getAssistantMessageText,
   getMessagesAfterCompactBoundary,
   isCompactBoundaryMessage,
-  normalizeMessagesForAPI,
-} from '../messages/index.js'
+} from '../messages/predicates.js'
+import { normalizeMessagesForAPI } from '../messages/api.js'
 import { expandPath } from '../../utils/path.js'
 import { getPlan, getPlanFilePath } from '../../utils/plans.js'
 import {

@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { copyFile, stat as fsStat, truncate as fsTruncate, link } from 'node:fs/promises'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
-import type { AppState } from 'src/state/AppState.js'
+import type { AppState } from 'src/state/AppStateStore.js'
 import { z } from 'zod/v4'
 import { getKairosActive } from 'src/bootstrap/runtime/runtimeContext.js'
 import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js'

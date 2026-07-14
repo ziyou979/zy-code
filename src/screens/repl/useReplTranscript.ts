@@ -24,7 +24,7 @@ import { asAgentId } from '../../types/ids.js'
 import type { Message } from '../../types/message.js'
 import { openFileInExternalEditor } from '../../terminal-ui/editor.js'
 import { renderMessagesToPlainText } from '../../components/Runtime/ExportRenderer.js'
-import type { StreamingToolUse } from '../../services/messages/index.js'
+import { StreamingToolUse } from '../../services/messages/./streaming.js'
 import { getAgentTranscript } from '../../services/sessionStorage.js'
 
 // ── 公共类型 ──────────────────────────────────────────────

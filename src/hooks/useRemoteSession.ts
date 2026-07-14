@@ -22,12 +22,10 @@ import type { Message as MessageType } from '../types/message.js'
 import type { PermissionAskDecision } from '../types/permissions.js'
 import { logForDebugging } from '../utils/debug.js'
 import { truncateToWidth } from '../utils/format.js'
-import {
-  createSystemMessage,
-  extractTextContent,
-  handleMessageFromStream,
-  type StreamingToolUse,
-} from '../services/messages/index.js'
+import { createSystemMessage } from '../services/messages/./constructors.js'
+import { extractTextContent } from '../services/messages/./predicates.js'
+import { handleMessageFromStream } from '../services/messages/./streaming.js'
+import type { StreamingToolUse } from '../services/messages/./streaming.js'
 import { generateSessionTitle } from '../utils/sessionTitle.js'
 
 // How long to wait for a response before showing a warning

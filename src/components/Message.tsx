@@ -18,7 +18,7 @@ import type {
 } from '../types/message.js'
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
 import { logError } from '../utils/log.js'
-import type { buildMessageLookups } from '../services/messages/index.js'
+import { buildMessageLookups } from '../services/messages/./lookups.js'
 import { CompactSummary } from './CompactSummary.js'
 import { AssistantRedactedThinkingMessage } from './messages/AssistantRedactedThinkingMessage.js'
 import { AssistantTextMessage } from './messages/AssistantTextMessage.js'

@@ -15,7 +15,7 @@ import {
   createUserInterruptionMessage,
   createUserMessage,
   prepareUserContent,
-} from '../../services/messages/index.js'
+} from '../../services/messages/./constructors.js'
 import { processToolResultBlock } from '../../utils/toolResultStorage.js'
 import { escapeXml } from '../../utils/xml.js'
 import { BashModeProgress } from '../BashModeProgress.js'

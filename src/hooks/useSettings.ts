@@ -1,4 +1,5 @@
-import { type AppState, useAppState } from '../state/AppState.js'
+import type { AppState } from '../state/AppStateStore.js'
+import { useAppState } from '../state/AppState.js'
 
 /**
  * AppState 中存储的 Settings 类型（DeepImmutable 包装）。

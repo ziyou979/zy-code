@@ -28,7 +28,7 @@ import type { SSHSession } from '../../ssh/createSSHSession.js'
 import type { Tool } from '../../tool.js'
 import type { Command } from '../../commands/types.js'
 import type { Message as MessageType } from '../../types/message.js'
-import type { StreamingToolUse } from '../../services/messages/index.js'
+import { StreamingToolUse } from '../../services/messages/./streaming.js'
 
 // activeRemote 的统一接口：取三种 transport 的最小公共子集。
 // useRemoteSession 的 sendMessage 接受额外 opts，其它两个不接受 —— 联合后

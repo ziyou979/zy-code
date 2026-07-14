@@ -43,7 +43,7 @@ import { updateSessionName } from '../../utils/concurrentSessions.js'
 import { deserializeMessages } from '../../utils/conversationRecovery.js'
 import { copyFileHistoryForResume } from '../../utils/fileHistory.js'
 import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../../services/hooks.js'
-import { createSystemMessage } from '../../services/messages/index.js'
+import { createSystemMessage } from '../../services/messages/./constructors.js'
 import { copyPlanForFork, copyPlanForResume } from '../../utils/plans.js'
 import {
   computeStandaloneAgentContext,

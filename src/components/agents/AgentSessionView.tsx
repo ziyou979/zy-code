@@ -17,7 +17,7 @@ import {
 } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text, useInput } from '../../ink.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import { enterTeammateView } from '../../state/teammateViewHelpers.js'
 import {
   type InProcessTeammateTaskState,

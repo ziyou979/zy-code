@@ -1,4 +1,4 @@
-import type { AppState } from 'src/state/AppState.js'
+import type { AppState } from 'src/state/AppStateStore.js'
 import { HOOK_EVENTS } from 'src/types/index.js'
 import { createDebugLog } from '../../utils/debug.js'
 import type { HooksSettings } from '../settings/types.js'

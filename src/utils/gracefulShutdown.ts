@@ -31,7 +31,7 @@ import {
   logEvent,
 } from '../services/analytics/index.js'
 import { shutdownZyEventLogging } from '../services/analytics/zyEventLogger.js'
-import type { AppState } from '../state/AppState.js'
+import type { AppState } from '../state/AppStateStore.js'
 import { runCleanupFunctions } from './cleanupRegistry.js'
 import { logForDebugging } from './debug.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'

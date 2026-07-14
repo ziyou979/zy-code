@@ -23,7 +23,7 @@ import type {
   SystemAPIErrorMessage,
 } from '../../../types/message.js'
 import { isEnvTruthy, isInternalBuild } from '../../../utils/envUtils.js'
-import { normalizeContentFromAPI } from '../../messages/index.js'
+import { normalizeContentFromAPI } from '../../messages/normalize.js'
 import { type SystemPrompt } from '../../../utils/systemPromptType.js'
 import { getLLMAdapter } from '../client.js'
 import type { ClientOptions } from '@anthropic-ai/sdk'

@@ -1,6 +1,6 @@
 import React from 'react'
 import { MessageResponse } from 'src/components/MessageResponse.js'
-import { extractTag } from 'src/services/messages/index.js'
+import { extractTag } from 'src/services/messages/predicates.js'
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js'
 import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js'
 import { tSync } from '../../i18n/index.js'

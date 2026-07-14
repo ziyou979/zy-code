@@ -16,7 +16,7 @@ import {
 import { setMainThreadAgentType } from 'src/bootstrap/runtime/runtimeContext.js'
 import { clearSystemPromptSections } from '../constants/systemPromptSections.js'
 import { restoreCostStateForSession } from '../cost-tracker.js'
-import type { AppState } from '../state/AppState.js'
+import type { AppState } from '../state/AppStateStore.js'
 import type { AgentColorName } from '../tools/AgentTool/agentColorManager.js'
 import {
   type AgentDefinition,
@@ -45,7 +45,7 @@ import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import type { FileHistorySnapshot } from './fileHistory.js'
 import { fileHistoryRestoreStateFromLog } from './fileHistory.js'
-import { createSystemMessage } from '../services/messages/index.js'
+import { createSystemMessage } from '../services/messages/./constructors.js'
 import { getPlansDirectory } from './plans.js'
 import { setCwd } from '../services/shell/shell.js'
 import {

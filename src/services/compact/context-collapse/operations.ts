@@ -7,7 +7,7 @@
 
 import { randomUUID } from 'node:crypto'
 import type { Message, UserMessage } from '../../../types/message.js'
-import { createUserMessage } from '../../messages/index.js'
+import { createUserMessage } from '../../messages/constructors.js'
 
 /** 与 index.ts 中的 CommittedCollapse 保持一致的接口 */
 interface CollapseEntry {

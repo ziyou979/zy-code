@@ -13,7 +13,7 @@ import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growt
 import { refreshPolicyLimits } from '../../services/policy-limits/index.js'
 import { refreshRemoteManagedSettings } from '../../services/remote-managed-settings/index.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
-import { stripSignatureBlocks } from '../../services/messages/index.js'
+import { stripSignatureBlocks } from '../../services/messages/./prune.js'
 import {
   checkAndDisableAutoModeIfNeeded,
   checkAndDisableBypassPermissionsIfNeeded,

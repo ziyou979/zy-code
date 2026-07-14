@@ -14,13 +14,12 @@ import { logAPIPrefix, toolToAPISchema } from '../../../utils/api.js'
 import { getMergedBetas } from '../../../utils/betas.js'
 import { resolveAppliedEffort } from '../../../utils/effort.js'
 import { isEnvTruthy } from '../../../utils/envUtils.js'
+import { createUserMessage } from '../../messages/constructors.js'
+import { ensureToolResultPairing, normalizeMessagesForAPI } from '../../messages/api.js'
 import {
-  createUserMessage,
-  ensureToolResultPairing,
-  normalizeMessagesForAPI,
   stripCallerFieldFromAssistantMessage,
   stripToolReferenceBlocksFromUserMessage,
-} from '../../messages/index.js'
+} from '../../messages/prune.js'
 import { asSystemPrompt, type SystemPrompt } from '../../../utils/systemPromptType.js'
 import { getAPIContextManagement } from '../../compact/apiMicrocompact.js'
 import { currentLimits } from '../../zyAiLimits.js'

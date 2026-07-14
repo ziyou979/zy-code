@@ -10,7 +10,7 @@ import {
   configureMarked,
   formatToken,
 } from '../utils/markdown.js'
-import { stripPromptXMLTags } from '../services/messages/index.js'
+import { stripPromptXMLTags } from '../services/messages/./predicates.js'
 import { MarkdownTable } from './MarkdownTable.js'
 
 type Props = {

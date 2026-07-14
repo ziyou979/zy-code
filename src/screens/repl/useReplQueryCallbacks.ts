@@ -131,7 +131,7 @@ export function useReplQueryCallbacks(params: UseReplQueryCallbacksParams) {
   const onQueryEvent = useCallback(
     (
       event: Parameters<
-        typeof import('../../services/messages/index.js').handleMessageFromStream
+        typeof import('../../services/messages/streaming.js').handleMessageFromStream
       >[0],
     ) => handleQueryEvent(ctxRef.current, event),
     [],

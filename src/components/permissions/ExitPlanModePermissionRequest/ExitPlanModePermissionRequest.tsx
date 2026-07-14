@@ -31,7 +31,7 @@ import { getExternalEditor } from '../../../terminal-ui/editor.js'
 import { getDisplayPath } from '../../../utils/file.js'
 import { toIDEDisplayName } from '../../../services/ide/ide.js'
 import { logError } from '../../../utils/log.js'
-import { createUserMessage } from '../../../services/messages/index.js'
+import { createUserMessage } from '../../../services/messages/./constructors.js'
 import {
   createPromptRuleContent,
   isClassifierPermissionsEnabled,

@@ -19,7 +19,7 @@ import type {
 } from '../types/message.js'
 import { logForDebugging } from '../utils/debug.js'
 import { fromSDKCompactMetadata } from '../services/messages/mappers.js'
-import { createUserMessage } from '../services/messages/index.js'
+import { createUserMessage } from '../services/messages/./constructors.js'
 
 /**
  * Converts WireMessage from CCR to REPL Message types.

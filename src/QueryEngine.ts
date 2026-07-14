@@ -29,7 +29,7 @@ import {
   type ProcessUserInputContext,
   processUserInput,
 } from './services/process-user-input/processUserInput.js'
-import type { AppState } from './state/AppState.js'
+import type { AppState } from './state/AppStateStore.js'
 import { type Tools, type ToolUseContext, toolMatchesName } from './tool.js'
 import type { AgentDefinition } from './tools/AgentTool/loadAgentsDir.js'
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from './tools/SyntheticOutputTool/SyntheticOutputTool.js'
@@ -52,11 +52,9 @@ import { cloneFileStateCache, type FileStateCache } from './utils/fileStateCache
 import { headlessProfilerCheckpoint } from './utils/headlessProfiler.js'
 import { registerStructuredOutputEnforcement } from './services/hooks/hookHelpers.js'
 import { getInMemoryErrors } from './utils/log.js'
-import {
-  countToolCalls,
-  pruneCompletedTurnArtifacts,
-  SYNTHETIC_MESSAGES,
-} from './services/messages/index.js'
+import { countToolCalls } from './services/messages/predicates.js'
+import { pruneCompletedTurnArtifacts } from './services/messages/prune.js'
+import { SYNTHETIC_MESSAGES } from './services/messages/constants.js'
 import { loadAllPluginsCacheOnly } from './services/plugins/pluginLoader.js'
 import { fetchSystemPromptParts } from './utils/queryContext.js'
 import { setCwd } from './services/shell/shell.js'

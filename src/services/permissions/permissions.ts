@@ -68,7 +68,7 @@ import {
   buildClassifierUnavailableMessage,
   buildYoloRejectionMessage,
   DONT_ASK_REJECT_MESSAGE,
-} from '../messages/index.js'
+} from '../messages/constants.js'
 import { calculateCostFromTokens } from '../model/modelCost.js'
 import { getAutoModeConfig } from '../settings/settings.js'
 /* eslint-enable @typescript-eslint/no-require-imports */

@@ -26,7 +26,7 @@ import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { errorMessage, getErrnoCode } from '../../utils/errors.js'
 import { pathExists } from '../../utils/file.js'
 import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
-import { wrapInSystemReminder } from '../messages/index.js'
+import { wrapInSystemReminder } from '../messages/api.js'
 import { getPlatform } from '../shell/platform.js'
 import { getPluginDataDir } from '../plugins/pluginDirectories.js'
 import {

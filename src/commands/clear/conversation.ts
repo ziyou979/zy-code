@@ -16,7 +16,7 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { evictTaskOutput, initTaskOutputAsSymlink } from '../../services/task-runtime/diskOutput.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import { isInProcessTeammateTask } from '../../tasks/in-process-teammate-task/types.js'
 import {
   isLocalAgentTask,

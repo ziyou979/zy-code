@@ -3,13 +3,13 @@ import { rm } from 'node:fs'
 import { appendFile, copyFile, mkdir } from 'node:fs/promises'
 import { dirname, isAbsolute, join, relative } from 'node:path'
 import { getCwdState } from '../../bootstrap/runtime/runtimeContext.js'
-import type { CompletionBoundary } from '../../state/AppStateStore.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import {
-  type AppState,
+  type CompletionBoundary,
   IDLE_SPECULATION_STATE,
   type SpeculationResult,
   type SpeculationState,
-} from '../../state/AppStateStore.js'
+} from '../../state/speculationState.js'
 import { commandHasAnyCd } from '../../tools/BashTool/bashPermissions.js'
 import { checkReadOnlyConstraints } from '../../tools/BashTool/readOnlyValidation.js'
 import type { SpeculationAcceptMessage } from '../../types/logs.js'
@@ -34,12 +34,8 @@ import { formatDuration, formatNumber } from '../../utils/format.js'
 import type { REPLHookContext } from '../hooks/postSamplingHooks.js'
 import { logError } from '../../utils/log.js'
 import type { SetAppState } from '../../utils/messageQueueManager.js'
-import {
-  createSystemMessage,
-  createUserMessage,
-  INTERRUPT_MESSAGE,
-  INTERRUPT_MESSAGE_FOR_TOOL_USE,
-} from '../messages/index.js'
+import { createSystemMessage, createUserMessage } from '../messages/constructors.js'
+import { INTERRUPT_MESSAGE, INTERRUPT_MESSAGE_FOR_TOOL_USE } from '../messages/constants.js'
 import { getZyTempDir } from '../permissions/filesystem.js'
 import { extractReadFilesFromMessages } from '../../utils/queryHelpers.js'
 import { getTranscriptPath } from '../sessionStorage.js'

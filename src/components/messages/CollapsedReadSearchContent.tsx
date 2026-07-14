@@ -17,7 +17,7 @@ import {
   getLocalizedDurationFormatter,
 } from '../../utils/format.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
-import type { buildMessageLookups } from '../../services/messages/index.js'
+import { buildMessageLookups } from '../../services/messages/./lookups.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
 import { useSelectedMessageBg } from '../MessageActions.js'
 import { PrBadge } from '../PrBadge.js'

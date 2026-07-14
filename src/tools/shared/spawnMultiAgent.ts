@@ -53,7 +53,7 @@ import {
 import { getTeammateModelFallback } from '../../services/swarm/teammateModel.js'
 import { registerTask } from '../../services/task-runtime/framework.js'
 import { quote } from '../../shell-eval/bash/shellQuote.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import { createTaskStateBase, generateTaskId } from '../../task.js'
 import type { ToolUseContext } from '../../tool.js'
 import type { InProcessTeammateTaskState } from '../../tasks/in-process-teammate-task/types.js'

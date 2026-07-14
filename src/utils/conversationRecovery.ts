@@ -17,16 +17,15 @@ import { PERMISSION_MODES } from '../types/permissions.js'
 import { suppressNextSkillListing } from '../services/attachments/attachments.js'
 import { copyFileHistoryForResume, type FileHistorySnapshot } from './fileHistory.js'
 import { logError } from './log.js'
+import { createAssistantMessage, createUserMessage } from '../services/messages/./constructors.js'
 import {
-  createAssistantMessage,
-  createUserMessage,
   filterOrphanedThinkingOnlyMessages,
-  filterUnresolvedToolUses,
   filterWhitespaceOnlyAssistantMessages,
-  isToolUseResultMessage,
-  NO_RESPONSE_REQUESTED,
   normalizeMessages,
-} from '../services/messages/index.js'
+} from '../services/messages/./normalize.js'
+import { filterUnresolvedToolUses } from '../services/messages/./api.js'
+import { isToolUseResultMessage } from '../services/messages/./predicates.js'
+import { NO_RESPONSE_REQUESTED } from '../services/messages/./constants.js'
 import { copyPlanForResume } from './plans.js'
 import { processSessionStartHooks } from './sessionStart.js'
 import {

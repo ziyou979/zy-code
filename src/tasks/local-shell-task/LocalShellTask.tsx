@@ -11,7 +11,7 @@ import {
 import { abortSpeculation } from '../../services/prompt-suggestion/speculation.js'
 import { evictTaskOutput, getTaskOutputPath } from '../../services/task-runtime/diskOutput.js'
 import { registerTask, updateTaskState } from '../../services/task-runtime/framework.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import type {
   LocalShellSpawnInput,
   SetAppState,

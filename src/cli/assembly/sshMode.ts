@@ -12,7 +12,7 @@ import { exitWithError } from '../../InteractiveHelpers.js'
 import { launchRepl } from '../../ReplLauncher.js'
 import type { SSHSession } from '../../ssh/createSSHSession.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
-import { createSystemMessage } from '../../services/messages/index.js'
+import { createSystemMessage } from '../../services/messages/./constructors.js'
 import type { AssemblyContext, SessionConfig } from './types.js'
 // 与 cli/argvDispatch.ts:pendingSSH 同形态（仅本模块依赖到的字段）。
 export type PendingSSH = {

@@ -12,12 +12,12 @@ import { asAgentId } from '../../types/ids.js'
 import { runWithAgentContext } from '../../utils/agentContext.js'
 import { runWithCwdOverride } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
+import { createUserMessage } from '../../services/messages/./constructors.js'
 import {
-  createUserMessage,
   filterOrphanedThinkingOnlyMessages,
-  filterUnresolvedToolUses,
   filterWhitespaceOnlyAssistantMessages,
-} from '../../services/messages/index.js'
+} from '../../services/messages/./normalize.js'
+import { filterUnresolvedToolUses } from '../../services/messages/./api.js'
 import { getQuerySourceForAgent } from '../../services/analytics/querySource.js'
 import { getAgentTranscript, readAgentMetadata } from '../../services/sessionStorage.js'
 import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'

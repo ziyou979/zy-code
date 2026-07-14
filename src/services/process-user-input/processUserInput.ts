@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import { randomUUID } from 'node:crypto'
 import type { QuerySource } from 'src/constants/querySource.js'
 import { logEvent } from 'src/services/analytics/index.js'
-import { getContentText } from 'src/services/messages/index.js'
+import { getContentText } from 'src/services/messages/predicates.js'
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import {
   findCommand,
@@ -37,7 +37,7 @@ import {
   createCommandInputMessage,
   createSystemMessage,
   createUserMessage,
-} from '../messages/index.js'
+} from '../messages/constructors.js'
 import { queryCheckpoint } from '../../utils/queryProfiler.js'
 import { parseSlashCommand } from '../../utils/slashCommandParsing.js'
 import {

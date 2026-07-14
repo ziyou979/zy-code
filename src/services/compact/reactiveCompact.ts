@@ -11,12 +11,8 @@ import { logForDebugging } from '../../utils/debug.js'
 import type { CacheSafeParams } from '../../utils/forkedAgent.js'
 import { runForkedAgent } from '../../utils/forkedAgent.js'
 import { logError } from '../../utils/log.js'
-import {
-  createCompactBoundaryMessage,
-  createUserMessage,
-  getAssistantMessageText,
-  getLastAssistantMessage,
-} from '../messages/index.js'
+import { createCompactBoundaryMessage, createUserMessage } from '../messages/constructors.js'
+import { getAssistantMessageText, getLastAssistantMessage } from '../messages/predicates.js'
 import {
   getTokenUsage,
   tokenCountFromLastAPIResponse,

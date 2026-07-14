@@ -15,7 +15,7 @@ import {
   DirectConnectError,
 } from '../../server/createDirectConnectSession.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
-import { createSystemMessage } from '../../services/messages/index.js'
+import { createSystemMessage } from '../../services/messages/./constructors.js'
 import type { AssemblyContext, SessionConfig } from './types.js'
 // 与 cli/argvDispatch.ts:pendingConnect 同形态。
 export type PendingDirectConnect = {

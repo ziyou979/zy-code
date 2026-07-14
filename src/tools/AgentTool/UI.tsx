@@ -42,11 +42,8 @@ import { env } from '../../utils/env.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { getDisplayPath } from '../../utils/file.js'
 import { formatNumber, getLocalizedDurationFormatter } from '../../utils/format.js'
-import {
-  buildSubagentLookups,
-  createAssistantMessage,
-  EMPTY_LOOKUPS,
-} from '../../services/messages/index.js'
+import { buildSubagentLookups, EMPTY_LOOKUPS } from '../../services/messages/./lookups.js'
+import { createAssistantMessage } from '../../services/messages/./constructors.js'
 import type { Theme, ThemeName } from '../../utils/theme.js'
 import type { outputSchema, Progress, RemoteLaunchedOutput } from './AgentTool.js'
 import { inputSchema } from './AgentTool.js'

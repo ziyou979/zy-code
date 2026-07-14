@@ -19,7 +19,7 @@ import {
 } from '../../task.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { createUserMessage } from '../../services/messages/index.js'
+import { createUserMessage } from '../../services/messages/./constructors.js'
 import type { InProcessTeammateTaskState } from './types.js'
 import { appendCappedMessage, isInProcessTeammateTask } from './types.js'
 

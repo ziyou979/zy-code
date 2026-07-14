@@ -2,11 +2,11 @@ import type { Tools } from '../../../tool.js'
 import type { ToolResultBlock } from '../../../types/llm.js'
 import type { ProgressMessage, UserMessage } from '../../../types/message.js'
 import {
-  type buildMessageLookups,
   CANCEL_MESSAGE,
   INTERRUPT_MESSAGE_FOR_TOOL_USE,
   REJECT_MESSAGE,
-} from '../../../services/messages/index.js'
+} from '../../../services/messages/./constants.js'
+import type { buildMessageLookups } from '../../../services/messages/./lookups.js'
 import { UserToolCanceledMessage } from './UserToolCanceledMessage.js'
 import { UserToolErrorMessage } from './UserToolErrorMessage.js'
 import { UserToolRejectMessage } from './UserToolRejectMessage.js'

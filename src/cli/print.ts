@@ -150,7 +150,7 @@ import {
 } from 'src/services/mcp/client.js'
 import { filterMcpServersByPolicy } from 'src/services/mcp/config.js'
 import { toSDKRateLimitInfo } from 'src/services/messages/mappers.js'
-import { createModelSwitchBreadcrumbs } from 'src/services/messages/index.js'
+import { createModelSwitchBreadcrumbs } from 'src/services/messages/constructors.js'
 import { LOCAL_COMMAND_STDOUT_TAG } from 'src/constants/xml.js'
 import { statusListeners, type ZyAILimits } from 'src/services/zyAiLimits.js'
 import {

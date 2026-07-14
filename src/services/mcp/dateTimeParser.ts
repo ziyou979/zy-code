@@ -1,6 +1,6 @@
 import { queryCompactModel } from '../api/compactQueries.js'
 import { logError } from '../../utils/log.js'
-import { extractTextContent } from '../messages/index.js'
+import { extractTextContent } from '../messages/predicates.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 
 export type DateTimeParseResult =

@@ -12,7 +12,7 @@ import {
   getClassifierApproval,
   getYoloClassifierApproval,
 } from '../../../utils/classifierApprovals.js'
-import type { buildMessageLookups } from '../../../services/messages/index.js'
+import { buildMessageLookups } from '../../../services/messages/./lookups.js'
 import { MessageResponse } from '../../MessageResponse.js'
 import { HookProgressMessage } from '../HookProgressMessage.js'
 

@@ -15,7 +15,7 @@ import {
   isPerfettoTracingEnabled,
   unregisterAgent as unregisterPerfettoAgent,
 } from '../telemetry/perfettoTracing.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import { isTerminalTaskStatus } from '../../task.js'
 import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
 import { logForDebugging } from '../../utils/debug.js'

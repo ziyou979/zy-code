@@ -3,7 +3,7 @@ import { DEFAULT_HOOK_SHELL } from 'src/shell-eval/shared/shellProvider.js'
 import type { HookCallback, HookCallbackMatcher } from 'src/types/hooks/index.js'
 import type { HookEvent, HookInput } from 'src/types/index.js'
 import { getRegisteredHooks } from '../../bootstrap/runtime/runtimeContext.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import { findToolByName, type Tools } from '../../tool.js'
 import { createDebugLog } from '../../utils/debug.js'
 import {

@@ -32,7 +32,7 @@ import {
   getKairosActive,
 } from '../../../bootstrap/runtime/runtimeContext.js'
 import type { QuerySource } from '../../../constants/querySource.js'
-import { extractTextContent } from '../../messages/index.js'
+import { extractTextContent } from '../../messages/predicates.js'
 import { isEnvTruthy } from '../../../utils/envUtils.js'
 import { feature } from 'bun:bundle'
 /* eslint-enable @typescript-eslint/no-require-imports */

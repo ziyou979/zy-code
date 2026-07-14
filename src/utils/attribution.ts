@@ -8,7 +8,7 @@ import {
 import { getClientType } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getRemoteSessionUrl, isRemoteSessionLocal, PRODUCT_URL } from '../constants/product.js'
 import { TERMINAL_OUTPUT_TAGS } from '../constants/xml.js'
-import type { AppState } from '../state/AppState.js'
+import type { AppState } from '../state/AppStateStore.js'
 import { FILE_EDIT_TOOL_NAME } from '../tools/FileEditTool/constants.js'
 import { FILE_READ_TOOL_NAME } from '../tools/FileReadTool/prompt.js'
 import { FILE_WRITE_TOOL_NAME } from '../tools/FileWriteTool/prompt.js'

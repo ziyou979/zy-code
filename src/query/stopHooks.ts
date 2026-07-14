@@ -37,7 +37,7 @@ import {
   createSystemMessage,
   createUserInterruptionMessage,
   createUserMessage,
-} from '../services/messages/index.js'
+} from '../services/messages/./constructors.js'
 import type { SystemPrompt } from '../utils/systemPromptType.js'
 import { getTaskListId, listTasks } from '../utils/tasks.js'
 import { getAgentName, getTeamName, isTeammate } from '../utils/teammate.js'

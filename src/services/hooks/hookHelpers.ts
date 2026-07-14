@@ -7,7 +7,7 @@ import {
 import { substituteArguments } from '../../utils/argumentSubstitution.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import type { SetAppState } from '../../utils/messageQueueManager.js'
-import { hasSuccessfulToolCall } from '../messages/index.js'
+import { hasSuccessfulToolCall } from '../messages/predicates.js'
 import { addFunctionHook } from './sessionHooks.js'
 
 /**

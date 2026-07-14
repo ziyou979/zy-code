@@ -21,13 +21,13 @@ import { useKeybinding, useKeybindings } from '../keybindings/useKeybinding.js'
 import type { ContentBlock, TextBlock } from '../types/llm.js'
 import type { Message, PartialCompactDirection, UserMessage } from '../types/message.js'
 import { stripDisplayTags } from '../utils/displayTags.js'
+import { createUserMessage } from '../services/messages/./constructors.js'
 import {
-  createUserMessage,
   extractTag,
   isEmptyMessageText,
-  isSyntheticMessage,
   isToolUseResultMessage,
-} from '../services/messages/index.js'
+} from '../services/messages/./predicates.js'
+import { isSyntheticMessage } from '../services/messages/./constants.js'
 import { type OptionWithDescription, Select } from './CustomSelect/select.js'
 import { Spinner } from './Spinner.js'
 

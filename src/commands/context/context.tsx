@@ -6,7 +6,7 @@ import { microcompactMessages } from '../../services/compact/microCompact.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
 import type { Message } from '../../types/message.js'
 import { analyzeContextUsage } from '../../utils/analyzeContext.js'
-import { getMessagesAfterCompactBoundary } from '../../services/messages/index.js'
+import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
 import { renderToAnsiString } from '../../components/Runtime/StaticRender.js'
 
 /**

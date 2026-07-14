@@ -21,7 +21,8 @@ import { isFsInaccessible } from './errors.js'
 import { getFileModificationTime, stripLineNumberPrefix } from './file.js'
 import { readFileSyncWithMetadata } from './fileRead.js'
 import { createFileStateCacheWithSizeLimit, type FileStateCache } from './fileStateCache.js'
-import { isNotEmptyMessage, normalizeMessages } from '../services/messages/index.js'
+import { isNotEmptyMessage } from '../services/messages/./predicates.js'
+import { normalizeMessages } from '../services/messages/./normalize.js'
 import { expandPath } from './path.js'
 import type {
   inputSchema as permissionToolInputSchema,

@@ -59,8 +59,7 @@ import { handleSpeculationAccept } from '../../services/prompt-suggestion/specul
 import { prependToShellHistoryCache } from '../../services/suggestions/shellHistoryCompletion.js'
 import { setMemberActive } from '../../services/swarm/teamHelpers.js'
 import type { RemoteMessageContent } from '../../services/teleport/api.js'
-import type { AppState } from '../../state/AppState.js'
-import type { AppStateStore } from '../../state/AppStateStore.js'
+import type { AppState, AppStateStore } from '../../state/AppStateStore.js'
 import type { ReplStoreInstance, ToolJSXState } from '../../state/replStore.js'
 import type { CompactProgressEvent, Tool } from '../../tool.js'
 import { getAllInProcessTeammateTasks } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
@@ -89,17 +88,19 @@ import type { IDEExtensionInstallationStatus, IdeType } from '../../services/ide
 import { closeOpenDiffs, getConnectedIdeClient } from '../../services/ide/ide.js'
 import type { SetAppState } from '../../utils/messageQueueManager.js'
 import { enqueue, getCommandQueueLength } from '../../utils/messageQueueManager.js'
-import type { StreamingThinking } from '../../services/messages/index.js'
+import { StreamingThinking } from '../../services/messages/./streaming.js'
 import {
   createCommandInputMessage,
   createTurnDurationMessage,
   createUserMessage,
   formatCommandInputTags,
+} from '../../services/messages/./constructors.js'
+import {
   getContentText,
   getMessagesAfterCompactBoundary,
-  handleMessageFromStream,
   isCompactBoundaryMessage,
-} from '../../services/messages/index.js'
+} from '../../services/messages/./predicates.js'
+import { handleMessageFromStream } from '../../services/messages/./streaming.js'
 import {
   checkAndDisableAutoModeIfNeeded,
   checkAndDisableBypassPermissionsIfNeeded,

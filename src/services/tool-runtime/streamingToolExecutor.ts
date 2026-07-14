@@ -1,8 +1,6 @@
-import {
-  createUserMessage,
-  REJECT_MESSAGE,
-  withMemoryCorrectionHint,
-} from 'src/services/messages/index.js'
+import { createUserMessage } from 'src/services/messages/constructors.js'
+import { REJECT_MESSAGE } from 'src/services/messages/constants.js'
+import { withMemoryCorrectionHint } from 'src/services/messages/predicates.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { findToolByName, type Tools, type ToolUseContext } from '../../tool.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'

@@ -25,7 +25,7 @@ import type { Message } from '../../types/message.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
 import { executePreCompactHooks } from '../../services/hooks.js'
 import { logError } from '../../utils/log.js'
-import { getMessagesAfterCompactBoundary } from '../../services/messages/index.js'
+import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
 import { buildEffectiveSystemPrompt, type SystemPrompt } from '../../utils/systemPrompt.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */

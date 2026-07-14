@@ -11,7 +11,8 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { logEventToZy } from 'src/services/analytics/zyEventLogger.js'
-import { getLastAssistantMessage, normalizeMessagesForAPI } from 'src/services/messages/index.js'
+import { getLastAssistantMessage } from 'src/services/messages/predicates.js'
+import { normalizeMessagesForAPI } from 'src/services/messages/api.js'
 import type { CommandResultDisplay } from '../commands.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { Box, Text, useInput } from '../ink.js'

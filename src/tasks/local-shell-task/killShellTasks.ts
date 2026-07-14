@@ -4,7 +4,7 @@
 
 import { evictTaskOutput } from '../../services/task-runtime/diskOutput.js'
 import { updateTaskState } from '../../services/task-runtime/framework.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import type { AgentId } from '../../types/ids.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logError } from '../../utils/log.js'

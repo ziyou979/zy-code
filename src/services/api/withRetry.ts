@@ -4,7 +4,7 @@ import { getAPIProviderForStatsig } from 'src/services/model/providers.js'
 import type { SystemAPIErrorMessage } from 'src/types/message.js'
 import { createDebugLog } from 'src/utils/debug.js'
 import { logError } from 'src/utils/log.js'
-import { createSystemAPIErrorMessage } from 'src/services/messages/index.js'
+import { createSystemAPIErrorMessage } from 'src/services/messages/constructors.js'
 import {
   type APIErrorLike,
   createAbortError,

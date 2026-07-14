@@ -27,7 +27,10 @@ import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { enqueue } from '../utils/messageQueueManager.js'
 import { buildSystemInitMessage } from '../services/messages/systemInit.js'
-import { createSystemMessage, createWireStatusMessage } from '../services/messages/index.js'
+import {
+  createSystemMessage,
+  createWireStatusMessage,
+} from '../services/messages/./constructors.js'
 import {
   getAutoModeUnavailableNotification,
   getAutoModeUnavailableReason,

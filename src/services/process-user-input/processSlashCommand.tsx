@@ -55,13 +55,15 @@ import {
   createSystemMessage,
   createUserInterruptionMessage,
   createUserMessage,
-  deriveUUID,
   formatCommandInputTags,
+  prepareUserContent,
+} from '../messages/constructors.js'
+import {
+  deriveUUID,
   isCompactBoundaryMessage,
   isSystemLocalCommandMessage,
-  normalizeMessages,
-  prepareUserContent,
-} from '../messages/index.js'
+} from '../messages/predicates.js'
+import { normalizeMessages } from '../messages/normalize.js'
 import { parseToolListFromCLI } from '../permissions/permissionSetup.js'
 import { hasPermissionsToUseTool } from '../permissions/permissions.js'
 import { isOfficialMarketplaceName, parsePluginIdentifier } from '../plugins/pluginIdentifier.js'

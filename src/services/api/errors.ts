@@ -12,10 +12,8 @@ import {
   getOauthAccountInfo,
   getZyAIOAuthTokens,
 } from 'src/services/auth/auth.js'
-import {
-  createAssistantAPIErrorMessage,
-  NO_RESPONSE_REQUESTED,
-} from 'src/services/messages/index.js'
+import { createAssistantAPIErrorMessage } from 'src/services/messages/constructors.js'
+import { NO_RESPONSE_REQUESTED } from 'src/services/messages/constants.js'
 import { getIsNonInteractiveSession } from '../../bootstrap/runtime/runtimeContext.js'
 import { API_PDF_MAX_PAGES, PDF_TARGET_RAW_SIZE } from '../../constants/apiLimits.js'
 import type { APIErrorLike, StopReason } from '../../types/llm.js'

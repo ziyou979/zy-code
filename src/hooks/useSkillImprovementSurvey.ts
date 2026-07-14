@@ -9,7 +9,7 @@ import { useAppState, useSetAppState } from '../state/AppState.js'
 import type { Message } from '../types/message.js'
 import type { SkillUpdate } from '../services/hooks/skillImprovement.js'
 import { applySkillImprovement } from '../services/hooks/skillImprovement.js'
-import { createSystemMessage } from '../services/messages/index.js'
+import { createSystemMessage } from '../services/messages/./constructors.js'
 
 type SkillImprovementSuggestion = {
   skillName: string

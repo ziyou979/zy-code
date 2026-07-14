@@ -2,7 +2,7 @@ import { POINTER } from '../../constants/figures.js'
 import { COMMAND_MESSAGE_TAG } from '../../constants/xml.js'
 import { Box, Text } from '../../ink.js'
 import type { TextBlock } from '../../types/llm.js'
-import { extractTag } from '../../services/messages/index.js'
+import { extractTag } from '../../services/messages/./predicates.js'
 
 type Props = {
   addMargin: boolean

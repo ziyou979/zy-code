@@ -4,7 +4,7 @@ import { getWireBaseUrlOverride, getWireTokenOverride } from '../../bridge/bridg
 import { tSync } from '../../i18n/index.js'
 import type { ToolUseContext } from '../../tool.js'
 import type { LocalJSXCommandContext } from '../types.js'
-import { getMessagesAfterCompactBoundary } from '../../services/messages/index.js'
+import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
 import { getTranscriptPath, saveAgentName, saveCustomTitle } from '../../services/sessionStorage.js'
 import { isTeammate } from '../../utils/teammate.js'
 import { generateSessionName } from './generateSessionName.js'

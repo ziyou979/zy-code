@@ -111,7 +111,7 @@ export function getPlanModeInstructions(attachment: {
   if (attachment.reminderType === 'sparse') {
     return getPlanModeSparseInstructions(attachment)
   }
-  return getPlanModeInstructions(attachment)
+  return getPlanModeDetailedInstructions(attachment)
 }
 
 function getPlanModeDetailedInstructions(attachment: {

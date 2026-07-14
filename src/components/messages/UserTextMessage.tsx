@@ -9,11 +9,11 @@ import {
 } from '../../constants/xml.js'
 import type { TextBlock } from '../../types/llm.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
+import { extractTag } from '../../services/messages/./predicates.js'
 import {
-  extractTag,
   INTERRUPT_MESSAGE,
   INTERRUPT_MESSAGE_FOR_TOOL_USE,
-} from '../../services/messages/index.js'
+} from '../../services/messages/./constants.js'
 import { InterruptedByUser } from '../InterruptedByUser.js'
 import { MessageResponse } from '../MessageResponse.js'
 import { UserAgentNotificationMessage } from './UserAgentNotificationMessage.js'

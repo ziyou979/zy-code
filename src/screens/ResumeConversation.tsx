@@ -30,7 +30,7 @@ import { loadConversationForResume } from '../utils/conversationRecovery.js'
 import { checkCrossProjectResume } from '../utils/crossProjectResume.js'
 import type { FileHistorySnapshot } from '../utils/fileHistory.js'
 import { logError } from '../utils/log.js'
-import { createSystemMessage } from '../services/messages/index.js'
+import { createSystemMessage } from '../services/messages/./constructors.js'
 import {
   computeStandaloneAgentContext,
   restoreAgentFromSession,

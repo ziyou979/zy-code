@@ -1,6 +1,6 @@
 import * as React from 'react'
 import BashToolResultMessage from '../../tools/BashTool/BashToolResultMessage.js'
-import { extractTag } from '../../services/messages/index.js'
+import { extractTag } from '../../services/messages/./predicates.js'
 export function UserBashOutputMessage({
   content,
   verbose,

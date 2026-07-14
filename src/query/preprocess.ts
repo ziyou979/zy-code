@@ -6,7 +6,7 @@ import type { PendingCacheEdits } from '../services/compact/microCompact.js'
 import type { ToolUseContext } from '../tool.js'
 import type { Message } from '../types/message.js'
 import { logError } from '../utils/log.js'
-import { getMessagesAfterCompactBoundary } from '../services/messages/index.js'
+import { getMessagesAfterCompactBoundary } from '../services/messages/./predicates.js'
 import { queryCheckpoint } from '../utils/queryProfiler.js'
 import { recordContentReplacement } from '../services/sessionStorage.js'
 import { applyToolResultBudget } from '../utils/toolResultStorage.js'
@@ -57,7 +57,7 @@ export async function preprocessMessages(
     queryTracking,
   }
 
-  let messagesForQuery = [...getMessagesAfterCompactBoundary(messages)]
+  let messagesForQuery = getMessagesAfterCompactBoundary(messages)
 
   const tracking = autoCompactTracking
 

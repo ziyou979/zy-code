@@ -23,7 +23,7 @@ import {
   updateTaskState,
 } from '../../services/task-runtime/framework.js'
 import { emitTaskProgress } from '../../services/task-runtime/taskProgress.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import type { SetAppState, Task, TaskStateBase } from '../../task.js'
 import { createTaskStateBase } from '../../task.js'
 import type { Tools } from '../../tool.js'

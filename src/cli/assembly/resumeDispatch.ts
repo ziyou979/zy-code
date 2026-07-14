@@ -52,7 +52,7 @@ import { getBranch } from '../../utils/git.js'
 import { filterExistingPaths, getKnownPathsForRepo } from '../../utils/githubRepoPathMapping.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
 import { logError } from '../../utils/log.js'
-import { createSystemMessage, createUserMessage } from '../../services/messages/index.js'
+import { createSystemMessage, createUserMessage } from '../../services/messages/./constructors.js'
 import { setCwd } from '../../services/shell/shell.js'
 import { type ProcessedResume, processResumedConversation } from '../../utils/sessionRestore.js'
 import {

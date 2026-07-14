@@ -5,7 +5,7 @@
  * 注册 Stop 钩子，在队友空闲时通知团队 leader。
  */
 
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { addFunctionHook } from '../hooks/sessionHooks.js'
 import { applyPermissionUpdate } from '../permissions/permissionUpdate.js'

@@ -20,7 +20,7 @@ import type { Message } from '../types/message.js'
 import { logForDebugging } from './debug.js'
 import { safeParseJSON } from './json.js'
 import { lazySchema } from './lazySchema.js'
-import { extractTextContent } from '../services/messages/index.js'
+import { extractTextContent } from '../services/messages/./predicates.js'
 import { getInitialSettings } from '../services/settings/settings.js'
 import { asSystemPrompt } from './systemPromptType.js'
 

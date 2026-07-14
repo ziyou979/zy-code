@@ -5,7 +5,7 @@ import type { Message } from '../../types/message.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import { extractTextContent } from '../messages/index.js'
+import { extractTextContent } from '../messages/predicates.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 import type { REPLHookContext } from './postSamplingHooks.js'
 

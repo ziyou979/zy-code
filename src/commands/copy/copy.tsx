@@ -17,7 +17,7 @@ import { logEvent } from '../../services/analytics/index.js'
 import type { LocalJSXCommandCall } from '../types.js'
 import type { AssistantMessage, Message } from '../../types/message.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
-import { extractTextContent, stripPromptXMLTags } from '../../services/messages/index.js'
+import { extractTextContent, stripPromptXMLTags } from '../../services/messages/./predicates.js'
 import { countCharInString } from '../../utils/stringUtils.js'
 
 const COPY_DIR = join(tmpdir(), 'zy')

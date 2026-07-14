@@ -13,7 +13,7 @@ import {
 } from '../../services/analytics/index.js'
 import { clearDumpState } from '../../services/api/dumpPrompts.js'
 import { emitTaskProgress as emitTaskProgressEvent } from '../../services/task-runtime/taskProgress.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import type { Tool, ToolPermissionContext, Tools, ToolUseContext } from '../../tool.js'
 import { toolMatchesName } from '../../tool.js'
 import {
@@ -38,7 +38,10 @@ import { logForDebugging } from '../../utils/debug.js'
 import { isInProtectedNamespace } from '../../utils/envUtils.js'
 import { AbortError, errorMessage } from '../../utils/errors.js'
 import type { CacheSafeParams } from '../../utils/forkedAgent.js'
-import { extractTextContent, getLastAssistantMessage } from '../../services/messages/index.js'
+import {
+  extractTextContent,
+  getLastAssistantMessage,
+} from '../../services/messages/./predicates.js'
 import type { PermissionMode } from '../../services/permissions/permissionMode.js'
 import { permissionRuleValueFromString } from '../../services/permissions/permissionRuleParser.js'
 import {

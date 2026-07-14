@@ -38,7 +38,7 @@ import { modelSupportsStructuredOutputs } from './betas.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { isEnvTruthy } from './envUtils.js'
-import { createUserMessage } from '../services/messages/index.js'
+import { createUserMessage } from '../services/messages/./constructors.js'
 import {
   getFileReadIgnorePatterns,
   normalizePatternsToPath,

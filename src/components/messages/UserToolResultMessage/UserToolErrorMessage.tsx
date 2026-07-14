@@ -10,7 +10,7 @@ import {
   isClassifierDenial,
   PLAN_REJECTION_PREFIX,
   REJECT_MESSAGE_WITH_REASON_PREFIX,
-} from '../../../services/messages/index.js'
+} from '../../../services/messages/./constants.js'
 import { FallbackToolUseErrorMessage } from '../../FallbackToolUseErrorMessage.js'
 import { InterruptedByUser } from '../../InterruptedByUser.js'
 import { MessageResponse } from '../../MessageResponse.js'

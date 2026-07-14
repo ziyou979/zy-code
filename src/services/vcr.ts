@@ -17,7 +17,7 @@ import { getCwd } from '../utils/cwd.js'
 import { env } from '../utils/env.js'
 import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 import { getErrnoCode } from '../utils/errors.js'
-import { normalizeMessagesForAPI } from './messages/index.js'
+import { normalizeMessagesForAPI } from './messages/api.js'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
 
 function shouldUseVCR(): boolean {

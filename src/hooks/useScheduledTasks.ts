@@ -12,7 +12,7 @@ import { createCronScheduler } from '../utils/cronScheduler.js'
 import { removeCronTasks } from '../utils/cronTasks.js'
 import { logForDebugging } from '../utils/debug.js'
 import { enqueuePendingNotification } from '../utils/messageQueueManager.js'
-import { createScheduledTaskFireMessage } from '../services/messages/index.js'
+import { createScheduledTaskFireMessage } from '../services/messages/./constructors.js'
 import { WORKLOAD_CRON } from '../utils/workloadContext.js'
 
 type Props = {

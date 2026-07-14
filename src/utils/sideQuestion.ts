@@ -9,7 +9,8 @@ import { formatAPIError } from '../services/api/errorUtils.js'
 import type { NonNullableUsage } from '../services/api/logging.js'
 import type { Message, SystemAPIErrorMessage } from '../types/message.js'
 import { type CacheSafeParams, runForkedAgent } from './forkedAgent.js'
-import { createUserMessage, extractTextContent } from '../services/messages/index.js'
+import { createUserMessage } from '../services/messages/./constructors.js'
+import { extractTextContent } from '../services/messages/./predicates.js'
 
 // 匹配输入开头的 "/btw" 关键词（不区分大小写，词边界）
 const BTW_PATTERN = /^\/btw\b/gi

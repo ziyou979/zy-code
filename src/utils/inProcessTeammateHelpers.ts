@@ -10,7 +10,7 @@
  */
 
 import { updateTaskState } from 'src/services/task-runtime/framework.js'
-import type { AppState } from '../state/AppState.js'
+import type { AppState } from '../state/AppStateStore.js'
 import {
   type InProcessTeammateTaskState,
   isInProcessTeammateTask,

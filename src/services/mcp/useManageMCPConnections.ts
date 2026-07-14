@@ -44,7 +44,7 @@ import {
   isMcpServerDisabled,
   setMcpServerEnabled,
 } from 'src/services/mcp/config.js'
-import type { AppState } from 'src/state/AppState.js'
+import type { AppState } from 'src/state/AppStateStore.js'
 import type { PluginError } from 'src/services/plugins/types.js'
 import { createDebugLog } from 'src/utils/debug.js'
 

@@ -9,11 +9,8 @@ import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import {
-  createCompactBoundaryMessage,
-  createUserMessage,
-  isCompactBoundaryMessage,
-} from '../messages/index.js'
+import { createCompactBoundaryMessage, createUserMessage } from '../messages/constructors.js'
+import { isCompactBoundaryMessage } from '../messages/predicates.js'
 import { getSessionMemoryPath } from '../permissions/filesystem.js'
 import { processSessionStartHooks } from '../../utils/sessionStart.js'
 import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'

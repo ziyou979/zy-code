@@ -95,7 +95,7 @@ import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
 import type { IDEExtensionInstallationStatus } from '../../services/ide/ide.js'
 import type { SetAppState } from '../../utils/messageQueueManager.js'
 import { getCommandQueueLength } from '../../utils/messageQueueManager.js'
-import type { StreamingThinking } from '../../services/messages/index.js'
+import { StreamingThinking } from '../../services/messages/./streaming.js'
 import type { Theme } from '../../utils/theme.js'
 import type { Screen } from '../REPL.js'
 import { handleSummarize as handleSummarizeAction } from './handleSummarize.js'
@@ -716,7 +716,7 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
       setMessages((prev: MessageType[]) => [
         ...prev,
         (
-          require('../../services/messages/index.js') as typeof import('../../services/messages/index.js')
+          require('../../services/messages/constructors.js') as typeof import('../../services/messages/constructors.js')
         ).createAgentsKilledMessage(),
       ]),
     isMessageSelectorVisible: isMessageSelectorVisible || !!showBashesDialog,

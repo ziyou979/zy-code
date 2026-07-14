@@ -38,15 +38,15 @@ import type {
 import { logError } from './utils/log.js'
 import { PROMPT_TOO_LONG_ERROR_MESSAGE, isPromptTooLongMessage } from './services/api/errors.js'
 import { createDebugLog, logAntError } from './utils/debug.js'
+import { normalizeMessagesForAPI } from './services/messages/api.js'
 import {
-  createUserMessage,
-  createUserInterruptionMessage,
-  normalizeMessagesForAPI,
-  createSystemMessage,
   createAssistantAPIErrorMessage,
   createMicrocompactBoundaryMessage,
-  stripSignatureBlocks,
-} from './services/messages/index.js'
+  createSystemMessage,
+  createUserInterruptionMessage,
+  createUserMessage,
+} from './services/messages/constructors.js'
+import { stripSignatureBlocks } from './services/messages/prune.js'
 import { prependUserContext } from './utils/api.js'
 import {
   createAttachmentMessage,

@@ -13,7 +13,10 @@ import type { Message } from '../../types/message.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { isAutoManagedMemoryFile } from '../../utils/memoryFileDetection.js'
-import { extractTextContent, getLastAssistantMessage } from '../../services/messages/index.js'
+import {
+  extractTextContent,
+  getLastAssistantMessage,
+} from '../../services/messages/./predicates.js'
 import { submitTranscriptShare } from './submitTranscriptShare.js'
 import type { TranscriptShareResponse } from './TranscriptSharePrompt.js'
 import { useSurveyState } from './useSurveyState.js'

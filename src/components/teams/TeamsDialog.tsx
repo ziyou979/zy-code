@@ -22,7 +22,8 @@ import {
   setMemberMode,
   setMultipleMemberModes,
 } from '../../services/swarm/teamHelpers.js'
-import { type AppState, useAppState, useSetAppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
+import { useAppState, useSetAppState } from '../../state/AppState.js'
 import { getEmptyToolPermissionContext } from '../../tool.js'
 import { AGENT_COLOR_TO_THEME_COLOR } from '../../tools/AgentTool/agentColorManager.js'
 import { logForDebugging } from '../../utils/debug.js'

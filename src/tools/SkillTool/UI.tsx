@@ -12,7 +12,7 @@ import { Box, Text } from '../../ink.js'
 import type { Tools } from '../../tool.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { AssistantMessage, ProgressMessage, UserMessage } from '../../types/message.js'
-import { buildSubagentLookups, EMPTY_LOOKUPS } from '../../services/messages/index.js'
+import { buildSubagentLookups, EMPTY_LOOKUPS } from '../../services/messages/./lookups.js'
 import { plural } from '../../utils/stringUtils.js'
 import type { inputSchema, Output, Progress } from './SkillTool.js'
 

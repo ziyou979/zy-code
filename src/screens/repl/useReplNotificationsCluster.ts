@@ -36,7 +36,10 @@ import type { Message as MessageType } from '../../types/message.js'
 import { count } from '../../utils/array.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
-import { createSystemMessage, createTurnDurationMessage } from '../../services/messages/index.js'
+import {
+  createSystemMessage,
+  createTurnDurationMessage,
+} from '../../services/messages/./constructors.js'
 import { isLoggableMessage } from '../../services/sessionStorage.js'
 import { getSettingsForSource } from '../../services/settings/settings.js'
 import { getCurrentWorktreeSession } from '../../services/worktree/worktree.js'

@@ -47,7 +47,7 @@ import { formatFileSize } from '../../utils/format.js'
 import { getBranch } from '../../utils/git.js'
 import { gracefulShutdownSync, isShuttingDown } from '../../utils/gracefulShutdown.js'
 import { logError } from '../../utils/log.js'
-import { isCompactBoundaryMessage } from '../messages/index.js'
+import { isCompactBoundaryMessage } from '../messages/predicates.js'
 import {
   extractLastJsonStringField,
   LITE_READ_BUF_SIZE,

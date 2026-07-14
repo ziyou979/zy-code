@@ -18,12 +18,12 @@ import {
   hasAnyToolInProgress,
 } from '../utils/collapseReadSearch.js'
 import {
-  type buildMessageLookups,
   EMPTY_STRING_SET,
   getProgressMessagesFromLookup,
   getSiblingToolUseIDsFromLookup,
-  getToolUseID,
-} from '../services/messages/index.js'
+} from '../services/messages/./lookups.js'
+import { getToolUseID } from '../services/messages/./predicates.js'
+import type { buildMessageLookups } from '../services/messages/./lookups.js'
 import { hasThinkingContent, Message } from './Message.js'
 import { MessageModel } from './MessageModel.js'
 import { shouldRenderStatically } from './Messages.js'

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import type { Message, ProgressMessage } from 'src/types/message.js'
-import { extractTag } from 'src/services/messages/index.js'
+import { extractTag } from 'src/services/messages/predicates.js'
 import type { ThemeName } from 'src/utils/theme.js'
 import type { z } from 'zod/v4'
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js'

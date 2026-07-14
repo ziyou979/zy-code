@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { extractTag } from 'src/services/messages/index.js'
+import { extractTag } from 'src/services/messages/predicates.js'
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js'
 import { FilePathLink } from '../../components/FilePathLink.js'
 import { MessageResponse } from '../../components/MessageResponse.js'

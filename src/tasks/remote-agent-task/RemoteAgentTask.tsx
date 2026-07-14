@@ -33,7 +33,7 @@ import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logError } from '../../utils/log.js'
 import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
-import { extractTag, extractTextContent } from '../../services/messages/index.js'
+import { extractTag, extractTextContent } from '../../services/messages/./predicates.js'
 import {
   deleteRemoteAgentMetadata,
   listRemoteAgentMetadata,

@@ -26,11 +26,11 @@ import type {
 } from '../../types/message.js'
 import type { PromptInputMode } from '../../types/textInputTypes.js'
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
+import { createSystemMessage } from '../../services/messages/./constructors.js'
 import {
-  createSystemMessage,
   getMessagesAfterCompactBoundary,
   textForResubmit,
-} from '../../services/messages/index.js'
+} from '../../services/messages/./predicates.js'
 import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
 
 export type HandleSummarizeParams = {

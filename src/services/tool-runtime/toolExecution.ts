@@ -78,14 +78,14 @@ import {
   TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
+import { CANCEL_MESSAGE } from '../messages/constants.js'
 import {
-  CANCEL_MESSAGE,
   createProgressMessage,
   createStopHookSummaryMessage,
   createToolResultStopMessage,
   createUserMessage,
-  withMemoryCorrectionHint,
-} from '../messages/index.js'
+} from '../messages/constructors.js'
+import { withMemoryCorrectionHint } from '../messages/predicates.js'
 import type { PermissionDecisionReason, PermissionResult } from '../permissions/permissionResult.js'
 import { startSessionActivity, stopSessionActivity } from '../../utils/sessionActivity.js'
 import { jsonStringify } from '../../utils/slowOperations.js'

@@ -7,7 +7,7 @@ import {
   McpError,
 } from '@modelcontextprotocol/sdk/types.js'
 import type { AssistantMessage } from 'src/types/message.js'
-import type { AppState } from '../../state/AppState.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import type { MCPProgress } from '../../tools/MCPTool/MCPTool.js'
 import type { ContentBlock } from '../../types/llm.js'
 import { createAbortController } from '../../utils/abortController.js'

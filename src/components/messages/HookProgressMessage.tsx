@@ -1,5 +1,5 @@
 import type { HookEvent } from 'src/types/index.js'
-import type { buildMessageLookups } from 'src/services/messages/index.js'
+import type { buildMessageLookups } from 'src/services/messages/lookups.js'
 import { Box, Text } from '../../ink.js'
 import { MessageResponse } from '../MessageResponse.js'
 

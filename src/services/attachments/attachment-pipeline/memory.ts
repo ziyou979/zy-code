@@ -41,7 +41,7 @@ import {
 } from '../../hooks/asyncHookRegistry.js'
 import { checkForLSPDiagnostics, clearAllLSPDiagnostics } from '../../lsp/lspDiagnosticRegistry.js'
 import { logForDebugging } from '../../../utils/debug.js'
-import { isThinkingMessage } from '../../messages/index.js'
+import { isThinkingMessage } from '../../messages/predicates.js'
 import { jsonStringify } from '../../../utils/slowOperations.js'
 import { isPDFExtension } from '../../../utils/pdfUtils.js'
 import { getPDFPageCount } from '../../../utils/pdf.js'
