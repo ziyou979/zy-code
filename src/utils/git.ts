@@ -7,7 +7,7 @@ import { hasBinaryExtension, isBinaryContent } from '../constants/files.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
-import { execFileNoThrow } from './execFileNoThrow.js'
+import { execFileNoThrow } from '../services/shell/execFileNoThrow.js'
 import { getFsImplementation } from './fsOperations.js'
 import {
   getCachedBranch,
@@ -17,11 +17,10 @@ import {
   getWorktreeCountFromFs,
   isShallowClone as isShallowCloneFs,
   resolveGitDir,
-} from './git/gitFilesystem.js'
+} from '../services/git/gitFilesystem.js'
 import { logError } from './log.js'
 import { memoizeWithLRU } from './memoize.js'
-import { whichSync } from './which.js'
-
+import { whichSync } from '../services/shell/which.js'
 const GIT_ROOT_NOT_FOUND = Symbol('git-root-not-found')
 
 const findGitRootImpl = memoizeWithLRU(

@@ -1,5 +1,5 @@
 import { getAPIProvider } from 'src/services/model/providers.js'
-import { getDirectConnectServerUrl, getSessionId } from '../bootstrap/state.js'
+import { getDirectConnectServerUrl, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import type { LogOption } from '../types/logs.js'
@@ -9,8 +9,8 @@ import { getDisplayPath } from './file.js'
 import { truncate, truncateToWidth, truncateToWidthNoEllipsis } from './format.js'
 import { getStoredChangelogFromMemory, parseChangelog } from './releaseNotes.js'
 import { gt } from './semver.js'
-import { loadMessageLogs } from './sessionStorage.js'
-import { getInitialSettings } from './settings/settings.js'
+import { loadMessageLogs } from '../services/sessionStorage.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 
 // 布局常量
 const MAX_LEFT_WIDTH = 50

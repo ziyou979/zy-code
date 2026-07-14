@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { initAutoDream } from '../services/auto-dream/autoDream.js'
 import { initMagicDocs } from '../services/magic-docs/magicDocs.js'
-import { initSkillImprovement } from './hooks/skillImprovement.js'
+import { initSkillImprovement } from '../services/hooks/skillImprovement.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const extractMemoriesModule = feature('EXTRACT_MEMORIES')
@@ -14,14 +14,15 @@ const registerProtocolModule = feature('LODESTONE')
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 import { cleanupOldVersions } from 'src/services/native-installer/index.js'
-import { getIsInteractive, getLastInteractionTime } from '../bootstrap/state.js'
+import { getIsInteractive } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getLastInteractionTime } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   cleanupNpmCacheForAnthropicPackages,
   cleanupOldMessageFilesInBackground,
   cleanupOldVersionsThrottled,
 } from './cleanup.js'
 import { isInternalBuild } from './envUtils.js'
-import { autoUpdateMarketplacesAndPluginsInBackground } from './plugins/pluginAutoupdate.js'
+import { autoUpdateMarketplacesAndPluginsInBackground } from '../services/plugins/pluginAutoupdate.js'
 
 // 24 hours in milliseconds
 const RECURRING_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000

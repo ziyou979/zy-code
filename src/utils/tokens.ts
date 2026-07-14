@@ -4,9 +4,12 @@ import {
 } from '../services/tokenEstimation.js'
 import type { TokenUsage as Usage } from '../types/llm.js'
 import type { AssistantMessage, Message } from '../types/message.js'
-import { SYNTHETIC_MESSAGES, SYNTHETIC_MODEL } from './messages/constants.js'
-import { getMessagesAfterCompactBoundary, isCompactBoundaryMessage } from './messages/predicates.js'
-import { getInitialSettings } from './settings/settings.js'
+import { SYNTHETIC_MESSAGES, SYNTHETIC_MODEL } from '../services/messages/constants.js'
+import {
+  getMessagesAfterCompactBoundary,
+  isCompactBoundaryMessage,
+} from '../services/messages/predicates.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 import { jsonStringify } from './slowOperations.js'
 
 export function getTokenUsage(message: Message): Usage | undefined {

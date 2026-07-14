@@ -3,7 +3,7 @@ import { stat } from 'node:fs/promises'
 import memoize from 'lodash-es/memoize.js'
 import { env, JETBRAINS_IDES } from './env.js'
 import { isEnvTruthy } from './envUtils.js'
-import { execFileNoThrow } from './execFileNoThrow.js'
+import { execFileNoThrow } from '../services/shell/execFileNoThrow.js'
 import { getAncestorCommandsAsync } from './genericProcessUtils.js'
 
 // Functions that require execFileNoThrow and thus cannot be in env.ts

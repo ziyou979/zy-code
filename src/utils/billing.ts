@@ -1,5 +1,5 @@
-import { getApiKey, getAuthTokenSource } from './auth.js'
-import { getGlobalConfig } from './config.js'
+import { getApiKey, getAuthTokenSource } from '../services/auth/auth.js'
+import { getGlobalConfig } from '../services/config/config.js'
 import { isEnvTruthy, isInternalBuild } from './envUtils.js'
 
 export function hasConsoleBillingAccess(): boolean {

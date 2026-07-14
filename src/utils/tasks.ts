@@ -1,7 +1,7 @@
 import { mkdir, readdir, readFile, rename, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { z } from 'zod/v4'
-import { getIsNonInteractiveSession, getSessionId } from '../bootstrap/state.js'
+import { getIsNonInteractiveSession, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { uniq } from './array.js'
 import { logForDebugging } from './debug.js'
 import { getTeamsDir, getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from './envUtils.js'

@@ -3,13 +3,11 @@ import chalk from 'chalk'
 import memoize from 'lodash-es/memoize.js'
 import { onExit } from 'signal-exit'
 import type { ExitReason } from 'src/types/index.js'
-import {
-  getIsInteractive,
-  getIsScrollDraining,
-  getLastMainRequestId,
-  getSessionId,
-  isSessionPersistenceDisabled,
-} from '../bootstrap/state.js'
+import { getIsInteractive } from 'src/bootstrap/runtime/runtimeContext.js'
+import { isSessionPersistenceDisabled } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getIsScrollDraining } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getLastMainRequestId } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../i18n/index.js'
 import instances from '../ink/instances.js'
 import { DISABLE_KITTY_KEYBOARD, DISABLE_MODIFY_OTHER_KEYS } from '../ink/termio/csi.js'
@@ -38,7 +36,7 @@ import { runCleanupFunctions } from './cleanupRegistry.js'
 import { logForDebugging } from './debug.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
 import { isEnvTruthy } from './envUtils.js'
-import { getCurrentSessionTitle, sessionIdExists } from './sessionStorage.js'
+import { getCurrentSessionTitle, sessionIdExists } from '../services/sessionStorage.js'
 import { sleep } from './sleep.js'
 import { profileReport } from './startupProfiler.js'
 
@@ -407,7 +405,9 @@ export async function gracefulShutdown(
   // Resolve the SessionEnd hook budget before arming the failsafe so the
   // failsafe can scale with it. Without this, a user-configured 10s hook
   // budget is silently truncated by the 5s failsafe (gh-32712 follow-up).
-  const { executeSessionEndHooks, getSessionEndHookTimeoutMs } = await import('./hooks.js')
+  const { executeSessionEndHooks, getSessionEndHookTimeoutMs } = await import(
+    '../services/hooks.js'
+  )
   const sessionEndTimeoutMs = getSessionEndHookTimeoutMs()
 
   // Failsafe: guarantee process exits even if cleanup hangs (e.g., MCP connections).

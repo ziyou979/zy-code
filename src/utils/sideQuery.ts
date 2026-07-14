@@ -1,5 +1,8 @@
 import { normalizeModelStringForAPI } from 'src/services/model/model.js'
-import { getLastApiCompletionTimestamp, setLastApiCompletionTimestamp } from '../bootstrap/state.js'
+import {
+  getLastApiCompletionTimestamp,
+  setLastApiCompletionTimestamp,
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import type { QuerySource } from '../constants/querySource.js'
 import { getCLISyspromptPrefix } from '../constants/system.js'
 import { logEvent } from '../services/analytics/index.js'

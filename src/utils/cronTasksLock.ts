@@ -11,7 +11,7 @@
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { z } from 'zod/v4'
-import { getProjectRoot, getSessionId } from '../bootstrap/state.js'
+import { getProjectRoot, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { registerCleanup } from './cleanupRegistry.js'
 import { logForDebugging } from './debug.js'
 import { getErrnoCode } from './errors.js'

@@ -7,10 +7,9 @@ import { supportsHyperlinks } from '../ink/supports-hyperlinks.js'
 import { logForDebugging } from './debug.js'
 import { getZyConfigHomeDir } from './envUtils.js'
 import { isENOENT } from './errors.js'
-import { execFileNoThrow } from './execFileNoThrow.js'
+import { execFileNoThrow } from '../services/shell/execFileNoThrow.js'
 import { logError } from './log.js'
 import type { ThemeName } from './theme.js'
-
 const EOL = '\n'
 type ShellInfo = {
   name: string

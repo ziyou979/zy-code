@@ -1,6 +1,6 @@
 import type { UUID } from 'node:crypto'
 import { randomUUID } from 'node:crypto'
-import { getIsNonInteractiveSession, getSessionId } from '../bootstrap/state.js'
+import { getIsNonInteractiveSession, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { WireWorkflowProgress } from '../types/tools.js'
 
 type TaskStartedEvent = {

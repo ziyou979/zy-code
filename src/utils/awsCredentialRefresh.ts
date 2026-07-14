@@ -12,14 +12,14 @@
 
 import { exec } from 'node:child_process'
 import chalk from 'chalk'
-import { getIsNonInteractiveSession } from '../bootstrap/state.js'
+import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import { logEvent } from '../services/analytics/index.js'
 import { checkHasTrustDialogAccepted } from '../services/config/config.js'
 import { checkStsCallerIdentity, clearAwsIniCache, isValidAwsStsOutput } from './aws.js'
 import { AwsAuthStatusManager } from './awsAuthStatusManager.js'
 import { logAntError, logForDebugging } from './debug.js'
-import { execSyncWithDefaults_DEPRECATED } from './execFileNoThrow.js'
-import { getInitialSettings, getSettingsForSource } from './settings/settings.js'
+import { execSyncWithDefaults_DEPRECATED } from '../services/shell/execFileNoThrow.js'
+import { getInitialSettings, getSettingsForSource } from '../services/settings/settings.js'
 import { jsonParse } from './slowOperations.js'
 
 // ─── 常量 ────────────────────────────────────────────────────────────────────
@@ -245,7 +245,7 @@ async function getAwsCredsFromCredentialExport(): Promise<AwsRefreshedCredential
         // biome-ignore lint/suspicious/noConsole: 用户配置的命令失败，需要可见
         console.error(message, e.message)
       } else {
-        // biome-ignore lint/suspicious/noConsole
+        // biome-ignore lint/suspicious/noConsole: 用户配置的命令失败，需要可见
         console.error(message, e)
       }
       return null

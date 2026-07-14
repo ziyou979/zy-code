@@ -20,18 +20,22 @@ import {
 } from '../services/analytics/index.js'
 import { EMPTY_USAGE, type NonNullableUsage } from '../services/api/logging.js'
 import { accumulateUsage, updateUsage } from '../services/api/usageTracker.js'
-import type { ToolUseContext } from '../Tool.js'
+import type { ToolUseContext } from '../tool.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import type { AgentId } from '../types/ids.js'
 import type { Message } from '../types/message.js'
 import { createChildAbortController } from './abortController.js'
 import { logForDebugging } from './debug.js'
 import { cloneFileStateCache } from './fileStateCache.js'
-import type { REPLHookContext } from './hooks/postSamplingHooks.js'
-import { createUserMessage, extractTextContent, getLastAssistantMessage } from './messages.js'
-import { createDenialTrackingState } from './permissions/denialTracking.js'
-import { parseToolListFromCLI } from './permissions/permissionSetup.js'
-import { recordSidechainTranscript } from './sessionStorage.js'
+import type { REPLHookContext } from '../services/hooks/postSamplingHooks.js'
+import {
+  createUserMessage,
+  extractTextContent,
+  getLastAssistantMessage,
+} from '../services/messages/index.js'
+import { createDenialTrackingState } from '../services/permissions/denialTracking.js'
+import { parseToolListFromCLI } from '../services/permissions/permissionSetup.js'
+import { recordSidechainTranscript } from '../services/sessionStorage.js'
 import type { SystemPrompt } from './systemPromptType.js'
 import { type ContentReplacementState, cloneContentReplacementState } from './toolResultStorage.js'
 import { createAgentId } from './uuid.js'

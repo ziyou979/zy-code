@@ -2,18 +2,21 @@ import type { UUID } from 'node:crypto'
 import { logEvent } from 'src/services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/metadata.js'
 import { resolveSkillModelOverride } from 'src/services/model/model.js'
-import type { ProcessUserInputContext } from 'src/services/process-user-input/processUserInput.js'
+import type {
+  ProcessBashCommandHandler,
+  ProcessUserInputContext,
+} from 'src/services/process-user-input/processUserInput.js'
 import { processUserInput } from 'src/services/process-user-input/processUserInput.js'
 import { type Command, getCommandName, isCommandEnabled } from '../commands.js'
 import { selectableUserMessagesFilter } from '../components/MessageSelector.js'
-import type { SpinnerMode } from '../components/Spinner/types.js'
+import type { SpinnerMode } from '../types/spinner.js'
 import type { QuerySource } from '../constants/querySource.js'
 import { expandPastedTextRefs, parseReferences } from '../history.js'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import type { IDESelection } from '../hooks/useIdeSelection.js'
 import type { AppState } from '../state/AppState.js'
-import type { SetToolJSXFn } from '../Tool.js'
-import type { LocalJSXCommandOnDone } from '../types/command.js'
+import type { SetToolJSXFn } from '../tool.js'
+import type { LocalJSXCommandOnDone } from '../commands/types.js'
 import type { Message } from '../types/message.js'
 import {
   isValidImagePaste,
@@ -21,14 +24,14 @@ import {
   type QueuedCommand,
 } from '../types/textInputTypes.js'
 import { createAbortController } from './abortController.js'
-import type { PastedContent } from './config.js'
+import type { PastedContent } from '../services/config/config.js'
 import { logForDebugging } from './debug.js'
 import type { EffortLevel } from './effort.js'
 import type { FileHistoryState } from './fileHistory.js'
 import { fileHistoryEnabled, fileHistoryMakeSnapshot } from './fileHistory.js'
 import { gracefulShutdownSync } from './gracefulShutdown.js'
 import { enqueue } from './messageQueueManager.js'
-import type { QueryGuard } from './QueryGuard.js'
+import type { QueryGuard } from './queryGuard.js'
 import { queryCheckpoint, startQueryProfile } from './queryProfiler.js'
 import { runWithWorkload } from './workloadContext.js'
 
@@ -73,6 +76,8 @@ type BaseExecutionParams = {
   setAppState: (updater: (prev: AppState) => AppState) => void
   onBeforeQuery?: (input: string, newMessages: Message[]) => Promise<boolean>
   canUseTool?: CanUseToolFn
+  /** Bash 模式 UI 处理器由 REPL 组合层提供。 */
+  processBashCommand?: ProcessBashCommandHandler
 }
 
 /**
@@ -474,6 +479,7 @@ async function executeUserInput(params: ExecuteUserInputParams): Promise<void> {
           bridgeOrigin: cmd.bridgeOrigin,
           isMeta: cmd.isMeta,
           skipAttachments: !isFirst,
+          processBashCommand: params.processBashCommand,
         })
         // Stamp origin here rather than threading another arg through
         // processUserInput → processUserInputBase → processTextPrompt → createUserMessage.

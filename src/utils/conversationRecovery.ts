@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import { relative } from 'node:path'
 import { getCwd } from 'src/utils/cwd.js'
-import { addInvokedSkill } from '../bootstrap/state.js'
+import { addInvokedSkill } from 'src/bootstrap/runtime/runtimeContext.js'
 import { asSessionId } from '../types/ids.js'
 import type {
   AttributionSnapshotMessage,
@@ -14,7 +14,7 @@ import type {
 } from '../types/logs.js'
 import type { Message, UserMessage } from '../types/message.js'
 import { PERMISSION_MODES } from '../types/permissions.js'
-import { suppressNextSkillListing } from './attachments.js'
+import { suppressNextSkillListing } from '../services/attachments/attachments.js'
 import { copyFileHistoryForResume, type FileHistorySnapshot } from './fileHistory.js'
 import { logError } from './log.js'
 import {
@@ -26,7 +26,7 @@ import {
   isToolUseResultMessage,
   NO_RESPONSE_REQUESTED,
   normalizeMessages,
-} from './messages.js'
+} from '../services/messages/index.js'
 import { copyPlanForResume } from './plans.js'
 import { processSessionStartHooks } from './sessionStart.js'
 import {
@@ -39,7 +39,7 @@ import {
   loadMessageLogs,
   loadTranscriptFile,
   removeExtraFields,
-} from './sessionStorage.js'
+} from '../services/sessionStorage.js'
 import type { ContentReplacementRecord } from './toolResultStorage.js'
 
 // 死代码消除：ant 专属的工具名通过条件 require 引入，

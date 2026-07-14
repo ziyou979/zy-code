@@ -5,7 +5,7 @@ import {
   getPublicModelDisplayName,
   getPublicModelName,
 } from 'src/services/model/model.js'
-import { getClientType } from '../bootstrap/state.js'
+import { getClientType } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getRemoteSessionUrl, isRemoteSessionLocal, PRODUCT_URL } from '../constants/product.js'
 import { TERMINAL_OUTPUT_TAGS } from '../constants/xml.js'
 import type { AppState } from '../state/AppState.js'
@@ -27,11 +27,10 @@ import { isInternalBuild } from './envUtils.js'
 import { parseJSONL } from './json.js'
 import { logError } from './log.js'
 import { isMemoryFileAccess } from './sessionFileAccessHooks.js'
-import { getTranscriptPath } from './sessionStorage.js'
+import { getTranscriptPath } from '../services/sessionStorage.js'
 import { readTranscriptForLoad } from './sessionStoragePortable.js'
-import { getInitialSettings } from './settings/settings.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 import { isUndercover } from './undercover.js'
-
 export type AttributionTexts = {
   commit: string
   pr: string

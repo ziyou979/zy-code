@@ -12,7 +12,7 @@
 
 import { dirname, join } from 'node:path'
 import axios from 'axios'
-import { getSessionId } from '../bootstrap/state.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { createBufferedWriter } from './bufferedWriter.js'
 import { CACHE_PATHS } from './cachePaths.js'
 import { registerCleanup } from './cleanupRegistry.js'
@@ -21,7 +21,6 @@ import { isInternalBuild } from './envUtils.js'
 import { getFsImplementation } from './fsOperations.js'
 import { attachErrorLogSink, dateToFilename } from './log.js'
 import { jsonStringify } from './slowOperations.js'
-
 const DATE = dateToFilename(new Date())
 
 /**

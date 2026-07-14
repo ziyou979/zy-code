@@ -3,7 +3,10 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import type { QuerySource } from 'src/constants/querySource.js'
-import { setLastAPIRequest, setLastAPIRequestMessages } from '../bootstrap/state.js'
+import {
+  setLastAPIRequest,
+  setLastAPIRequestMessages,
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import { TICK_TAG } from '../constants/xml.js'
 import type { CreateParams } from '../types/llm.js'
 import { type LogOption, type SerializedMessage, sortLogs } from '../types/logs.js'
@@ -13,7 +16,6 @@ import { isInternalBuild } from './envUtils.js'
 import { toError } from './errors.js'
 import { isEssentialTrafficOnly } from './privacyLevel.js'
 import { jsonParse } from './slowOperations.js'
-
 /**
  * Gets the display title for a log/session with fallback logic.
  * Skips firstPrompt if it starts with a tick/goal tag (autonomous mode auto-prompt).
@@ -50,7 +52,7 @@ export function dateToFilename(date: Date): string {
 }
 
 // In-memory error log for recent errors
-// Moved from bootstrap/state.ts to break import cycle
+// 保持在日志领域中，避免与全局运行时状态形成导入环。
 const MAX_IN_MEMORY_ERRORS = 100
 let inMemoryErrorLog: Array<{ error: string; timestamp: string }> = []
 

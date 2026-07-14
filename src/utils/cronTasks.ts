@@ -15,10 +15,10 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import {
   addSessionCronTask,
-  getProjectRoot,
   getSessionCronTasks,
+  getProjectRoot,
   removeSessionCronTasks,
-} from '../bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
 import { computeNextCronRun, parseCronExpression } from './cron.js'
 import { logForDebugging } from './debug.js'
 import { isFsInaccessible } from './errors.js'
@@ -181,7 +181,7 @@ export async function writeCronTasks(tasks: CronTask[], dir?: string): Promise<v
  * already validated the cron string (the tool does this via validateInput).
  *
  * When `durable` is false the task is held in process memory only
- * (bootstrap/state.ts) — it fires on schedule this session but is never
+ * (session runtime state) — it fires on schedule this session but is never
  * written to .zy/scheduled_tasks.json and dies with the process. The
  * scheduler merges session tasks into its tick loop directly, so no file
  * change event is needed.

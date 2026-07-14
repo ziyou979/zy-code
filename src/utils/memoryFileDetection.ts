@@ -8,7 +8,7 @@ import {
 } from '../memdir/paths.js'
 import { isAgentMemoryPath } from '../tools/AgentTool/agentMemory.js'
 import { getZyConfigHomeDir } from './envUtils.js'
-import { posixPathToWindowsPath, windowsPathToPosixPath } from './windowsPaths.js'
+import { posixPathToWindowsPath, windowsPathToPosixPath } from '../services/shell/windowsPaths.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemPaths = feature('TEAMMEM')

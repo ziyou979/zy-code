@@ -11,11 +11,11 @@ import { cleanupOldImageCaches } from './imageStore.js'
 import * as lockfile from './lockfile.js'
 import { logError } from './log.js'
 import { cleanupOldPastes } from './pasteStore.js'
-import { getProjectsDir } from './sessionStorage.js'
-import { getSettingsWithAllErrors } from './settings/allErrors.js'
-import { getInitialSettings, rawSettingsContainsKey } from './settings/settings.js'
+import { getProjectsDir } from '../services/sessionStorage.js'
+import { getSettingsWithAllErrors } from '../services/settings/allErrors.js'
+import { getInitialSettings, rawSettingsContainsKey } from '../services/settings/settings.js'
 import { TOOL_RESULTS_SUBDIR } from './toolResultStorage.js'
-import { cleanupStaleAgentWorktrees } from './worktree.js'
+import { cleanupStaleAgentWorktrees } from '../services/worktree/worktree.js'
 
 const DEFAULT_CLEANUP_PERIOD_DAYS = 30
 

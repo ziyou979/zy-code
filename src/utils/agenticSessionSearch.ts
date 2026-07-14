@@ -3,7 +3,7 @@ import type { LogOption, SerializedMessage } from '../types/logs.js'
 import { count } from './array.js'
 import { logForDebugging } from './debug.js'
 import { getLogDisplayTitle, logError } from './log.js'
-import { isLiteLog, loadFullLog } from './sessionStorage.js'
+import { isLiteLog, loadFullLog } from '../services/sessionStorage.js'
 import { sideQuery } from './sideQuery.js'
 import { jsonParse } from './slowOperations.js'
 

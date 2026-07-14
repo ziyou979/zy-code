@@ -33,7 +33,8 @@ import { Lexer } from 'marked'
 import picomatch from 'picomatch'
 import { logEvent } from 'src/services/analytics/index.js'
 import type { MemoryType } from 'src/services/memory/types.js'
-import { getAdditionalDirectoriesForAgentsMd, getOriginalCwd } from '../bootstrap/state.js'
+import { getAdditionalDirectoriesForAgentsMd } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getOriginalCwd } from 'src/bootstrap/runtime/runtimeContext.js'
 import { truncateEntrypointContent } from '../memdir/memdir.js'
 import { getAutoMemEntrypoint, isAutoMemoryEnabled } from '../memdir/paths.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
@@ -42,14 +43,14 @@ import {
   getManagedZyRulesDir,
   getMemoryPath,
   getUserZyRulesDir,
-} from './config.js'
+} from '../services/config/config.js'
 import { logForDebugging } from './debug.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
 import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
 import { getErrnoCode } from './errors.js'
 import { normalizePathForComparison } from './file.js'
 import { cacheKeys, type FileStateCache } from './fileStateCache.js'
-import { parseFrontmatter, splitPathInFrontmatter } from './frontmatterParser.js'
+import { parseFrontmatter, splitPathInFrontmatter } from '../services/markdown/frontmatterParser.js'
 import { getFsImplementation, safeResolvePath } from './fsOperations.js'
 import { findCanonicalGitRoot, findGitRoot } from './git.js'
 import {
@@ -57,11 +58,11 @@ import {
   hasInstructionsLoadedHook,
   type InstructionsLoadReason,
   type InstructionsMemoryType,
-} from './hooks.js'
+} from '../services/hooks.js'
 import { expandPath } from './path.js'
-import { pathInWorkingPath } from './permissions/filesystem.js'
-import { isSettingSourceEnabled } from './settings/constants.js'
-import { getInitialSettings } from './settings/settings.js'
+import { pathInWorkingPath } from '../services/permissions/filesystem.js'
+import { isSettingSourceEnabled } from '../services/settings/constants.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemPaths = feature('TEAMMEM')

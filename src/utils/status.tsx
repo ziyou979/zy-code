@@ -8,7 +8,7 @@ import { tSync } from '../i18n/index.js'
 import { color, Text } from '../ink.js'
 import type { MCPServerConnection } from '../services/mcp/types.js'
 import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './agentsMd.js'
-import { getAccountInformation } from './auth.js'
+import { getAccountInformation } from '../services/auth/auth.js'
 import { getDoctorDiagnostic } from './doctorDiagnostic.js'
 import { isInternalBuild } from './envUtils.js'
 import { getDisplayPath } from './file.js'
@@ -18,19 +18,19 @@ import {
   type IDEExtensionInstallationStatus,
   isJetBrainsIde,
   toIDEDisplayName,
-} from './ide.js'
+} from '../services/ide/ide.js'
 import { getMTLSConfig } from './mtls.js'
 import { getProxyUrl } from './proxy.js'
-import { getSettingsWithAllErrors } from './settings/allErrors.js'
+import { getSettingsWithAllErrors } from '../services/settings/allErrors.js'
 import {
   getEnabledSettingSources,
   getSettingSourceDisplayNameCapitalized,
-} from './settings/constants.js'
+} from '../services/settings/constants.js'
 import {
   getManagedFileSettingsPresence,
   getPolicySettingsOrigin,
   getSettingsForSource,
-} from './settings/settings.js'
+} from '../services/settings/settings.js'
 import type { ThemeName } from './theme.js'
 export type Property = {
   label?: string

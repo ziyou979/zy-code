@@ -10,6 +10,8 @@ import {
   type SharpFunction,
   type SharpInstance,
 } from '../tools/FileReadTool/imageProcessor.js'
+import type { ImageDimensions } from '../types/inputContent.js'
+export type { ImageDimensions } from '../types/inputContent.js'
 import type { ImageBlock, ImageSource } from '../types/llm.js'
 import { logForDebugging } from './debug.js'
 import { errorMessage } from './errors.js'
@@ -130,13 +132,6 @@ function hashString(str: string): number {
     hash = ((hash << 5) + hash + str.charCodeAt(i)) | 0
   }
   return hash >>> 0
-}
-
-export type ImageDimensions = {
-  originalWidth?: number
-  originalHeight?: number
-  displayWidth?: number
-  displayHeight?: number
 }
 
 export interface ResizeResult {

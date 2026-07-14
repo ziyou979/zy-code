@@ -4,7 +4,7 @@
 
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
+import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   BYTES_PER_TOKEN,
   DEFAULT_MAX_RESULT_SIZE_CHARS,
@@ -20,9 +20,8 @@ import { logForDebugging } from './debug.js'
 import { getErrnoCode, toError } from './errors.js'
 import { formatFileSize } from './format.js'
 import { logError } from './log.js'
-import { getProjectDir } from './sessionStorage.js'
+import { getProjectDir } from '../services/sessionStorage.js'
 import { jsonStringify } from './slowOperations.js'
-
 // 会话内工具结果的子目录名
 export const TOOL_RESULTS_SUBDIR = 'tool-results'
 

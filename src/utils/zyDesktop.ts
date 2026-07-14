@@ -5,7 +5,7 @@ import { type McpServerConfig, McpStdioServerConfigSchema } from '../services/mc
 import { getErrnoCode } from './errors.js'
 import { safeParseJSON } from './json.js'
 import { logError } from './log.js'
-import { getPlatform, SUPPORTED_PLATFORMS } from './platform.js'
+import { getPlatform, SUPPORTED_PLATFORMS } from '../services/shell/platform.js'
 
 export async function getZyDesktopConfigPath(): Promise<string> {
   const platform = getPlatform()

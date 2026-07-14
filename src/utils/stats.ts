@@ -9,8 +9,8 @@ import { logForDebugging } from './debug.js'
 import { errorMessage, isENOENT } from './errors.js'
 import { getFsImplementation } from './fsOperations.js'
 import { readJSONLFile } from './json.js'
-import { SYNTHETIC_MODEL } from './messages.js'
-import { getProjectsDir, isTranscriptMessage } from './sessionStorage.js'
+import { SYNTHETIC_MODEL } from '../services/messages/index.js'
+import { getProjectsDir, isTranscriptMessage } from '../services/sessionStorage.js'
 import { jsonParse } from './slowOperations.js'
 import {
   getTodayDateString,

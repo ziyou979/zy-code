@@ -14,7 +14,7 @@ export type CliHighlight = {
 
 // One promise shared by Fallback.tsx, markdown.ts, events.ts, getLanguageName.
 // The highlight.js import piggybacks: cli-highlight has already pulled it into
-// the module cache, so the second import() is a cache hit — no extra bytes
+// the module cache, so the second import('highlight.js') is a cache hit — no extra bytes
 // faulted in.
 let cliHighlightPromise: Promise<CliHighlight | null> | undefined
 

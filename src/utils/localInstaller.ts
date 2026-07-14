@@ -4,10 +4,10 @@
 
 import { access, chmod, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { type ReleaseChannel, saveGlobalConfig } from './config.js'
+import { type ReleaseChannel, saveGlobalConfig } from '../services/config/config.js'
 import { getZyConfigHomeDir } from './envUtils.js'
 import { getErrnoCode } from './errors.js'
-import { execFileNoThrowWithCwd } from './execFileNoThrow.js'
+import { execFileNoThrowWithCwd } from '../services/shell/execFileNoThrow.js'
 import { getFsImplementation } from './fsOperations.js'
 import { logError } from './log.js'
 import { jsonStringify } from './slowOperations.js'

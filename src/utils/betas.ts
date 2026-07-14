@@ -10,7 +10,7 @@ import {
   isAnthropicModel,
   providerHasCapability,
 } from 'src/services/model/providers.js'
-import { getSdkBetas } from '../bootstrap/state.js'
+import { getSdkBetas } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   ADVANCED_TOOL_USE_BETA_HEADER,
   CLI_INTERNAL_BETA_HEADER,
@@ -25,7 +25,7 @@ import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
 import {
   getLocalModelBetaHeaders,
   localModelHasCapability,
-} from './settings/localModelCapabilities.js'
+} from '../services/settings/localModelCapabilities.js'
 
 /**
  * SDK-provided betas that are allowed for API key users.

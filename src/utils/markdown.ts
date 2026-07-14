@@ -8,7 +8,7 @@ import { supportsHyperlinks } from '../ink/supports-hyperlinks.js'
 import type { CliHighlight } from './cliHighlight.js'
 import { logForDebugging } from './debug.js'
 import { createHyperlink } from './hyperlink.js'
-import { stripPromptXMLTags } from './messages.js'
+import { stripPromptXMLTags } from '../services/messages/index.js'
 import type { ThemeName } from './theme.js'
 
 // 无条件使用 \n — os.EOL 在 Windows 上是 \r\n，多出的 \r

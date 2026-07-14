@@ -1,10 +1,11 @@
 import last from 'lodash-es/last.js'
-import { getSessionId, isSessionPersistenceDisabled } from 'src/bootstrap/state.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
+import { isSessionPersistenceDisabled } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { ProcessUserInputContext } from 'src/services/process-user-input/processUserInput.js'
 import type { WireMessage } from 'src/types/index.js'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
-import { runTools } from '../services/tools/toolOrchestration.js'
-import { findToolByName, type Tool, type Tools } from '../Tool.js'
+import { runTools } from '../services/tool-runtime/toolOrchestration.js'
+import { findToolByName, type Tool, type Tools } from '../tool.js'
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
 import { FILE_EDIT_TOOL_NAME } from '../tools/FileEditTool/constants.js'
 import type { Input as FileReadInput } from '../tools/FileReadTool/FileReadTool.js'
@@ -20,13 +21,13 @@ import { isFsInaccessible } from './errors.js'
 import { getFileModificationTime, stripLineNumberPrefix } from './file.js'
 import { readFileSyncWithMetadata } from './fileRead.js'
 import { createFileStateCacheWithSizeLimit, type FileStateCache } from './fileStateCache.js'
-import { isNotEmptyMessage, normalizeMessages } from './messages.js'
+import { isNotEmptyMessage, normalizeMessages } from '../services/messages/index.js'
 import { expandPath } from './path.js'
 import type {
   inputSchema as permissionToolInputSchema,
   outputSchema as permissionToolOutputSchema,
-} from './permissions/PermissionPromptToolResultSchema.js'
-import { recordTranscript } from './sessionStorage.js'
+} from '../services/permissions/permissionPromptToolResultSchema.js'
+import { recordTranscript } from '../services/sessionStorage.js'
 
 export type PermissionPromptTool = Tool<
   ReturnType<typeof permissionToolInputSchema>,

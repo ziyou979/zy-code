@@ -1,10 +1,10 @@
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { coerce as semverCoerce } from 'semver'
-import { getSessionId } from '../bootstrap/state.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
-import { execFileNoThrow } from './execFileNoThrow.js'
+import { execFileNoThrow } from '../services/shell/execFileNoThrow.js'
 import { pathExists } from './file.js'
 import { gte as semverGte } from './semver.js'
 

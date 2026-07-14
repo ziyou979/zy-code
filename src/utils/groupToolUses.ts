@@ -1,4 +1,4 @@
-import type { Tools } from '../Tool.js'
+import type { Tools } from '../tool.js'
 import type { ToolResultBlock } from '../types/llm.js'
 import type {
   AssistantMessage,

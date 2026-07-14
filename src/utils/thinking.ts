@@ -11,8 +11,8 @@ import {
 import {
   localModelHasCapability,
   localModelHasAdaptiveThinking,
-} from './settings/localModelCapabilities.js'
-import { getSettingsWithErrors } from './settings/settings.js'
+} from '../services/settings/localModelCapabilities.js'
+import { getSettingsWithErrors } from '../services/settings/settings.js'
 
 export type ThinkingConfig =
   | { type: 'adaptive' }

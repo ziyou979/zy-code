@@ -4,7 +4,6 @@ import { join } from 'node:path'
 import { logForDebugging } from './debug.js'
 import { getZyConfigHomeDir } from './envUtils.js'
 import { isENOENT } from './errors.js'
-
 const PASTE_STORE_DIR = 'paste-cache'
 
 /**

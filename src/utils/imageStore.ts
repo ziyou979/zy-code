@@ -1,11 +1,10 @@
 import { mkdir, open } from 'node:fs/promises'
 import { join } from 'node:path'
-import { getSessionId } from '../bootstrap/state.js'
-import type { PastedContent } from './config.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
+import type { PastedContent } from '../services/config/config.js'
 import { logForDebugging } from './debug.js'
 import { getZyConfigHomeDir } from './envUtils.js'
 import { getFsImplementation } from './fsOperations.js'
-
 const IMAGE_STORE_DIR = 'image-cache'
 const MAX_STORED_IMAGE_PATHS = 200
 

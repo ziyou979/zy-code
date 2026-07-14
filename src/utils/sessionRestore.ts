@@ -6,12 +6,14 @@ import type { TodoList } from 'src/services/todo/types.js'
 import { TodoListSchema } from 'src/services/todo/types.js'
 import {
   getMainLoopModelOverride,
-  getSessionId,
   setMainLoopModelOverride,
-  setMainThreadAgentType,
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import {
+  getSessionId,
   setOriginalCwd,
   switchSession,
-} from '../bootstrap/state.js'
+} from 'src/bootstrap/runtime/runtimeContext.js'
+import { setMainThreadAgentType } from 'src/bootstrap/runtime/runtimeContext.js'
 import { clearSystemPromptSections } from '../constants/systemPromptSections.js'
 import { restoreCostStateForSession } from '../cost-tracker.js'
 import type { AppState } from '../state/AppState.js'
@@ -32,7 +34,7 @@ import type {
 } from '../types/logs.js'
 import type { Message } from '../types/message.js'
 import { clearMemoryFileCaches } from './agentsMd.js'
-import { renameRecordingForSession } from './asciicast.js'
+import { renameRecordingForSession } from '../services/shell/asciicast.js'
 import {
   type AttributionState,
   attributionRestoreStateFromLog,
@@ -43,9 +45,9 @@ import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import type { FileHistorySnapshot } from './fileHistory.js'
 import { fileHistoryRestoreStateFromLog } from './fileHistory.js'
-import { createSystemMessage } from './messages.js'
+import { createSystemMessage } from '../services/messages/index.js'
 import { getPlansDirectory } from './plans.js'
-import { setCwd } from './Shell.js'
+import { setCwd } from '../services/shell/shell.js'
 import {
   adoptResumedSessionFile,
   recordContentReplacement,
@@ -53,10 +55,10 @@ import {
   restoreSessionMetadata,
   saveMode,
   saveWorktreeState,
-} from './sessionStorage.js'
+} from '../services/sessionStorage.js'
 import { isTodoV2Enabled } from './tasks.js'
 import type { ContentReplacementRecord } from './toolResultStorage.js'
-import { getCurrentWorktreeSession, restoreWorktreeSession } from './worktree.js'
+import { getCurrentWorktreeSession, restoreWorktreeSession } from '../services/worktree/worktree.js'
 
 type ResumeResult = {
   messages?: Message[]
@@ -128,7 +130,7 @@ export function restoreSessionStateFromLog(
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     ;(
-      require('../services/context-collapse/persist.js') as typeof import('../services/context-collapse/persist.js')
+      require('../services/compact/context-collapse/persist.js') as typeof import('../services/compact/context-collapse/persist.js')
     ).restoreFromEntries(result.contextCollapseCommits ?? [], result.contextCollapseSnapshot)
     /* eslint-enable @typescript-eslint/no-require-imports */
   }
@@ -468,7 +470,7 @@ export async function processResumedConversation(
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     ;(
-      require('../services/context-collapse/persist.js') as typeof import('../services/context-collapse/persist.js')
+      require('../services/compact/context-collapse/persist.js') as typeof import('../services/compact/context-collapse/persist.js')
     ).restoreFromEntries(result.contextCollapseCommits ?? [], result.contextCollapseSnapshot)
     /* eslint-enable @typescript-eslint/no-require-imports */
   }

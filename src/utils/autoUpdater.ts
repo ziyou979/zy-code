@@ -8,23 +8,23 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { type ReleaseChannel, saveGlobalConfig } from './config.js'
+import { type ReleaseChannel, saveGlobalConfig } from '../services/config/config.js'
 import { logForDebugging } from './debug.js'
 import { env } from './env.js'
 import { getZyConfigHomeDir, isInternalBuild } from './envUtils.js'
 import { getErrnoCode, isENOENT, ZyError } from './errors.js'
-import { execFileNoThrowWithCwd } from './execFileNoThrow.js'
+import { execFileNoThrowWithCwd } from '../services/shell/execFileNoThrow.js'
 import { getFsImplementation } from './fsOperations.js'
 import { gracefulShutdownSync } from './gracefulShutdown.js'
 import { logError } from './log.js'
 import { gte, lt } from './semver.js'
-import { getInitialSettings } from './settings/settings.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 import {
   filterZyAliases,
   getShellConfigPaths,
   readFileLines,
   writeFileLines,
-} from './shellConfig.js'
+} from '../services/shell/shellConfig.js'
 import { jsonParse } from './slowOperations.js'
 
 const GCS_BUCKET_URL =

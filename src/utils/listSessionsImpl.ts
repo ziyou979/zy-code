@@ -1,7 +1,7 @@
 /**
  * Standalone implementation of listSessions for the Agent SDK.
  *
- * Dependencies are kept minimal and portable — no bootstrap/state.ts,
+ * Dependencies are kept minimal and portable — no global runtime state,
  * no analytics, no bun:bundle, no module-scope mutable state. This module
  * can be imported safely from the SDK entrypoint without triggering CLI
  * initialization or pulling in expensive dependency chains.
@@ -24,7 +24,6 @@ import {
   sanitizePath,
   validateUuid,
 } from './sessionStoragePortable.js'
-
 /**
  * Session metadata returned by listSessions.
  * Contains only data extractable from stat + head/tail reads — no full

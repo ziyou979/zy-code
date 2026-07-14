@@ -23,7 +23,7 @@ import {
   type Tools,
   type ToolUseContext,
   toolMatchesName,
-} from '../Tool.js'
+} from '../tool.js'
 import type { AgentDefinition, AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import { SKILL_TOOL_NAME } from '../tools/SkillTool/constants.js'
 import {
@@ -40,8 +40,8 @@ import { logForDebugging } from './debug.js'
 import { isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { errorMessage, toError } from './errors.js'
 import { logError } from './log.js'
-import { normalizeMessagesForAPI } from './messages.js'
-import type { SettingSource } from './settings/constants.js'
+import { normalizeMessagesForAPI } from '../services/messages/index.js'
+import type { SettingSource } from '../services/settings/constants.js'
 import { jsonStringify } from './slowOperations.js'
 import { buildEffectiveSystemPrompt } from './systemPrompt.js'
 import type { Theme } from './theme.js'
@@ -1041,7 +1041,7 @@ export async function analyzeContextUsage(
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { isContextCollapseEnabled } =
-      require('../services/context-collapse/index.js') as typeof import('../services/context-collapse/index.js')
+      require('../services/compact/context-collapse/index.js') as typeof import('../services/compact/context-collapse/index.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
     if (isContextCollapseEnabled()) {
       skipReservedBuffer = true

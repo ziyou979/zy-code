@@ -6,7 +6,7 @@ import { isRunningWithBun } from './bundledMode.js'
 import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
 import { findExecutable } from './findExecutable.js'
 import { getFsImplementation } from './fsOperations.js'
-import { which } from './which.js'
+import { which } from '../services/shell/which.js'
 
 type Platform = 'win32' | 'darwin' | 'linux'
 

@@ -2,7 +2,7 @@
  * Portable session storage utilities.
  *
  * Pure Node.js — no internal dependencies on logging, experiments, or feature
- * flags. Shared between the CLI (src/utils/sessionStorage.ts) and the VS Code
+ * flags. Shared between the CLI (src/utils/session-storage.ts) and the VS Code
  * extension (packages/zy-vscode/src/common-host/sessionStorage.ts).
  */
 
@@ -12,7 +12,6 @@ import { join } from 'node:path'
 import { getZyConfigHomeDir } from './envUtils.js'
 import { getWorktreePathsPortable } from './getWorktreePathsPortable.js'
 import { djb2Hash } from './hash.js'
-
 /** Size of the head/tail buffer for lite metadata reads. */
 export const LITE_READ_BUF_SIZE = 65536
 

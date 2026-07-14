@@ -2,18 +2,17 @@ import { createHash, randomUUID, type UUID } from 'node:crypto'
 import { stat } from 'node:fs/promises'
 import { isAbsolute, join, relative, sep } from 'node:path'
 import { type ModelName } from 'src/services/model/model.js'
-import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
+import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { AttributionSnapshotMessage, FileAttributionState } from '../types/logs.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
-import { execFileNoThrowWithCwd } from './execFileNoThrow.js'
+import { execFileNoThrowWithCwd } from '../services/shell/execFileNoThrow.js'
 import { getFsImplementation } from './fsOperations.js'
 import { isGeneratedFile } from './generatedFiles.js'
-import { getRemoteUrlForDir, resolveGitDir } from './git/gitFilesystem.js'
+import { getRemoteUrlForDir, resolveGitDir } from '../services/git/gitFilesystem.js'
 import { findGitRoot, gitExe } from './git.js'
 import { logError } from './log.js'
 import { sequential } from './sequential.js'
-
 /**
  * List of repos where internal model names are allowed in trailers.
  * Includes both SSH and HTTPS URL formats.

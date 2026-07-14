@@ -6,7 +6,7 @@ import { IMAGE_MAX_HEIGHT, IMAGE_MAX_WIDTH, IMAGE_TARGET_RAW_SIZE } from '../con
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { getImageProcessor } from '../tools/FileReadTool/imageProcessor.js'
 import { logForDebugging } from './debug.js'
-import { execFileNoThrowWithCwd } from './execFileNoThrow.js'
+import { execFileNoThrowWithCwd } from '../services/shell/execFileNoThrow.js'
 import { getFsImplementation } from './fsOperations.js'
 import {
   detectImageFormatFromBase64,

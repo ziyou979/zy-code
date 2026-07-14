@@ -1,12 +1,12 @@
 import { isRemoteManagedSettingsEligible } from '../services/remote-managed-settings/syncCache.js'
 import { clearCACertsCache } from './caCerts.js'
-import { getGlobalConfig } from './config.js'
+import { getGlobalConfig } from '../services/config/config.js'
 import { isEnvTruthy } from './envUtils.js'
 import { isProviderManagedEnvVar, SAFE_ENV_VARS } from './managedEnvConstants.js'
 import { clearMTLSCache } from './mtls.js'
 import { clearProxyCache, configureGlobalAgents } from './proxy.js'
-import { isSettingSourceEnabled } from './settings/constants.js'
-import { getInitialSettings, getSettingsForSource } from './settings/settings.js'
+import { isSettingSourceEnabled } from '../services/settings/constants.js'
+import { getInitialSettings, getSettingsForSource } from '../services/settings/settings.js'
 
 // 向后兼容：旧环境变量名 ANTHROPIC_BASE_URL → ZY_CODE_BASE_URL
 if (!process.env.ZY_CODE_BASE_URL && process.env.ANTHROPIC_BASE_URL) {

@@ -13,7 +13,7 @@ import {
   getHeapStatistics,
   type HeapSpaceInfo,
 } from 'node:v8'
-import { getSessionId } from '../bootstrap/state.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { logEvent } from '../services/analytics/index.js'
 import { logForDebugging } from './debug.js'
 import { toError } from './errors.js'
@@ -21,7 +21,6 @@ import { getDesktopPath } from './file.js'
 import { getFsImplementation } from './fsOperations.js'
 import { logError } from './log.js'
 import { jsonStringify } from './slowOperations.js'
-
 export type HeapDumpResult = {
   success: boolean
   heapPath?: string

@@ -12,7 +12,7 @@
  * Set ZY_CODE_PROFILE_STARTUP=1 for detailed logging output.
  */
 
-import { getIsNonInteractiveSession } from '../bootstrap/state.js'
+import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -21,7 +21,6 @@ import { logForDebugging } from './debug.js'
 import { isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { getPerformance } from './profilerBase.js'
 import { jsonStringify } from './slowOperations.js'
-
 // Detailed profiling mode - same env var as startupProfiler
 // eslint-disable-next-line custom-rules/no-process-env-top-level
 const DETAILED_PROFILING = isEnvTruthy(process.env.ZY_CODE_PROFILE_STARTUP)

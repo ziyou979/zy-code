@@ -1,11 +1,11 @@
 import { spawnSync } from 'node:child_process'
-import { getIsInteractive } from '../bootstrap/state.js'
+import { getIsInteractive } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { getGlobalConfig } from '../services/config/config.js'
 import { isBgSession } from './concurrentSessions.js'
 import { logForDebugging } from './debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
-import { execFileNoThrow } from './execFileNoThrow.js'
+import { execFileNoThrow } from '../services/shell/execFileNoThrow.js'
 
 let loggedTmuxCcDisable = false
 let loggedWindowsSshDisable = false

@@ -3,10 +3,9 @@ import { dirname, join, relative, sep } from 'node:path'
 import type { StructuredPatchHunk } from 'diff'
 import { getCwd } from './cwd.js'
 import { getCachedRepository } from './detectRepository.js'
-import { execFileNoThrow, execFileNoThrowWithCwd } from './execFileNoThrow.js'
+import { execFileNoThrow, execFileNoThrowWithCwd } from '../services/shell/execFileNoThrow.js'
 import { isFileWithinReadSizeLimit } from './file.js'
 import { findGitRoot, getDefaultBranch, getGitDir, getIsGit, gitExe } from './git.js'
-
 export type GitDiffStats = {
   filesCount: number
   linesAdded: number

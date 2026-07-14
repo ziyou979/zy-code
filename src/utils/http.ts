@@ -8,7 +8,7 @@ import {
   isAnthropicProvider,
   isOpenAIProvider,
 } from 'src/services/model/providers.js'
-import { getApiKey, getZyAIOAuthTokens, handleOAuth401Error } from './auth.js'
+import { getApiKey, getZyAIOAuthTokens, handleOAuth401Error } from '../services/auth/auth.js'
 import { getZyCodeUserAgent } from './userAgent.js'
 import { getWorkload } from './workloadContext.js'
 

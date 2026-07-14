@@ -12,7 +12,7 @@
  */
 
 import { z } from 'zod/v4'
-import { getIsNonInteractiveSession } from '../bootstrap/state.js'
+import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getLanguageSection } from '../constants/prompts.js'
 import { logEvent } from '../services/analytics/index.js'
 import { queryCompactModel } from '../services/api/compactQueries.js'
@@ -20,8 +20,8 @@ import type { Message } from '../types/message.js'
 import { logForDebugging } from './debug.js'
 import { safeParseJSON } from './json.js'
 import { lazySchema } from './lazySchema.js'
-import { extractTextContent } from './messages.js'
-import { getInitialSettings } from './settings/settings.js'
+import { extractTextContent } from '../services/messages/index.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 import { asSystemPrompt } from './systemPromptType.js'
 
 const MAX_CONVERSATION_TEXT = 1000

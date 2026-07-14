@@ -1,19 +1,32 @@
 import type { ChildProcess, ExecFileException } from 'node:child_process'
 import { execFile, spawn } from 'node:child_process'
+import { createRequire } from 'node:module'
 import { homedir } from 'node:os'
 import * as path from 'node:path'
-import { rgPath as VENDOR_RG_PATH } from '@vscode/ripgrep'
 import memoize from 'lodash-es/memoize.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { logForDebugging } from './debug.js'
-import { execFileNoThrow } from './execFileNoThrow.js'
+import { execFileNoThrow } from '../services/shell/execFileNoThrow.js'
 import { logError } from './log.js'
-import { getPlatform } from './platform.js'
+import { getPlatform } from '../services/shell/platform.js'
 import { countCharInString } from './stringUtils.js'
 
-// 统一走 @vscode/ripgrep 包内预编译的跨平台 rg 二进制，需依赖 npm postinstall 下载平台子包
+const require = createRequire(import.meta.url)
+
+// 优先使用显式覆盖，其次延迟解析平台包；缺包不应阻断 --help 等无需搜索的启动路径。
 export function ripgrepCommand(): { rgPath: string; rgArgs: string[] } {
-  return { rgPath: VENDOR_RG_PATH, rgArgs: [] }
+  const configuredPath = process.env.ZY_CODE_RIPGREP_PATH
+  if (configuredPath) {
+    return { rgPath: configuredPath, rgArgs: [] }
+  }
+
+  try {
+    const vendor = require('@vscode/ripgrep') as { rgPath: string }
+    return { rgPath: vendor.rgPath, rgArgs: [] }
+  } catch (error) {
+    logForDebugging(`未找到 @vscode/ripgrep 平台二进制，将回退到 PATH 中的 rg: ${error}`)
+    return { rgPath: 'rg', rgArgs: [] }
+  }
 }
 
 const MAX_BUFFER_SIZE = 20_000_000 // 20MB; large monorepos can have 200k+ files
@@ -390,7 +403,7 @@ export function getRipgrepStatus(): {
   working: boolean | null
 } {
   return {
-    path: VENDOR_RG_PATH,
+    path: ripgrepCommand().rgPath,
     working: ripgrepWorking,
   }
 }
@@ -404,10 +417,11 @@ const testRipgrepOnFirstUse = memoize(async (): Promise<void> => {
   }
 
   try {
-    const test = await execFileNoThrow(VENDOR_RG_PATH, ['--version'], { timeout: 5000 })
+    const { rgPath } = ripgrepCommand()
+    const test = await execFileNoThrow(rgPath, ['--version'], { timeout: 5000 })
     ripgrepWorking = test.code === 0 && !!test.stdout && test.stdout.startsWith('ripgrep ')
     logForDebugging(
-      `Ripgrep first use test: ${ripgrepWorking ? 'PASSED' : 'FAILED'} (path=${VENDOR_RG_PATH})`,
+      `Ripgrep first use test: ${ripgrepWorking ? 'PASSED' : 'FAILED'} (path=${rgPath})`,
     )
     logEvent('zy_ripgrep_availability', { working: ripgrepWorking ? 1 : 0 })
   } catch (error) {

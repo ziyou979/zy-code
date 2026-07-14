@@ -9,7 +9,6 @@ import { toError } from './errors.js'
 import { formatFileSize } from './format.js'
 import { logError } from './log.js'
 import { ensureToolResultsDir, getToolResultsDir } from './toolResultStorage.js'
-
 /**
  * Generates a format description string based on the MCP result type and schema.
  */

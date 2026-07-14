@@ -3,10 +3,9 @@ import type { WriteFileOptions } from 'node:fs'
 import { closeSync, writeFileSync as fsWriteFileSync, fsyncSync, openSync } from 'node:fs'
 // biome-ignore lint: This file IS the cloneDeep wrapper - it must import the original
 import lodashCloneDeep from 'lodash-es/cloneDeep.js'
-import { addSlowOperation } from '../bootstrap/state.js'
+import { addSlowOperation } from 'src/bootstrap/runtime/runtimeContext.js'
 import { logForDebugging } from './debug.js'
 import { isInternalBuild } from './envUtils.js'
-
 // Extended WriteFileOptions to include 'flush' which is available in Node.js 20.1.0+
 // but not yet in @types/node
 type WriteFileOptionsWithFlush = WriteFileOptions | (WriteFileOptions & { flush?: boolean })

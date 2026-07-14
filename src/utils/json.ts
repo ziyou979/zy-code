@@ -4,7 +4,6 @@ import { stripBOM } from './jsonRead.js'
 import { logError } from './log.js'
 import { memoizeWithLRU } from './memoize.js'
 import { jsonStringify } from './slowOperations.js'
-
 type CachedParse = { ok: true; value: unknown } | { ok: false }
 
 // Memoized inner parse. Uses a discriminated-union wrapper because:

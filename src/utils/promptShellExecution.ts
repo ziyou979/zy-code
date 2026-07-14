@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto'
 import { tSync } from '../i18n/index.js'
-import type { Tool, ToolUseContext } from '../Tool.js'
+import type { Tool, ToolUseContext } from '../tool.js'
 import { BashTool } from '../tools/BashTool/BashTool.js'
 import { logForDebugging } from './debug.js'
 import { errorMessage, MalformedCommandError, ShellError } from './errors.js'
-import type { FrontmatterShell } from './frontmatterParser.js'
-import { createAssistantMessage } from './messages.js'
-import { hasPermissionsToUseTool } from './permissions/permissions.js'
-import { getInitialSettings } from './settings/settings.js'
+import type { FrontmatterShell } from '../services/markdown/frontmatterParser.js'
+import { createAssistantMessage } from '../services/messages/index.js'
+import { hasPermissionsToUseTool } from '../services/permissions/permissions.js'
+import { getInitialSettings } from '../services/settings/settings.js'
 import { processToolResultBlock } from './toolResultStorage.js'
 
 // Narrow structural slice both BashTool and PowerShellTool satisfy.

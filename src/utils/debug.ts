@@ -3,16 +3,15 @@ import { appendFile, mkdir, symlink, unlink } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { format } from 'node:util'
 import memoize from 'lodash-es/memoize.js'
-import { getSessionId } from 'src/bootstrap/state.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 
 import { type BufferedWriter, createBufferedWriter } from './bufferedWriter.js'
 import { registerCleanup } from './cleanupRegistry.js'
 import { type DebugFilter, parseDebugFilter, shouldShowDebugMessage } from './debugFilter.js'
 import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { getFsImplementation } from './fsOperations.js'
-import { writeToStderr } from './process.js'
+import { writeToStderr } from '../services/shell/process.js'
 import { jsonStringify } from './slowOperations.js'
-
 export type DebugLogLevel = 'verbose' | 'debug' | 'info' | 'warn' | 'error'
 
 const LEVEL_ORDER: Record<DebugLogLevel, number> = {

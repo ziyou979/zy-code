@@ -21,24 +21,27 @@ import {
   getAutoUpdaterDisabledReason,
   getGlobalConfig,
   type InstallMethod,
-} from './config.js'
+} from '../services/config/config.js'
 import { getCwd } from './cwd.js'
 import { isEnvTruthy } from './envUtils.js'
-import { execFileNoThrow } from './execFileNoThrow.js'
+import { execFileNoThrow } from '../services/shell/execFileNoThrow.js'
 import { getFsImplementation } from './fsOperations.js'
 import {
   getShellType,
   isRunningFromLocalInstallation,
   localInstallationExists,
 } from './localInstaller.js'
-import { getPlatform } from './platform.js'
+import { getPlatform } from '../services/shell/platform.js'
 import { getRipgrepStatus } from './ripgrep.js'
-import { getManagedFilePath } from './settings/managedPath.js'
-import { CUSTOMIZATION_SURFACES } from './settings/types.js'
-import { findValidZyAlias, findZyAlias, getShellConfigPaths } from './shellConfig.js'
+import { getManagedFilePath } from '../services/settings/managedPath.js'
+import { CUSTOMIZATION_SURFACES } from '../services/settings/types.js'
+import {
+  findValidZyAlias,
+  findZyAlias,
+  getShellConfigPaths,
+} from '../services/shell/shellConfig.js'
 import { jsonParse } from './slowOperations.js'
-import { which } from './which.js'
-
+import { which } from '../services/shell/which.js'
 export type InstallationType =
   | 'npm-global'
   | 'npm-local'

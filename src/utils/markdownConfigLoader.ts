@@ -8,19 +8,19 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { getProjectRoot } from '../bootstrap/state.js'
+import { getProjectRoot } from 'src/bootstrap/runtime/runtimeContext.js'
 import { logForDebugging } from './debug.js'
 import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
 import { isFsInaccessible } from './errors.js'
 import { normalizePathForComparison } from './file.js'
-import type { FrontmatterData } from './frontmatterParser.js'
-import { parseFrontmatter } from './frontmatterParser.js'
+import type { FrontmatterData } from '../services/markdown/frontmatterParser.js'
+import { parseFrontmatter } from '../services/markdown/frontmatterParser.js'
 import { findCanonicalGitRoot, findGitRoot } from './git.js'
-import { parseToolListFromCLI } from './permissions/permissionSetup.js'
+import { parseToolListFromCLI } from '../services/permissions/permissionSetup.js'
 import { ripGrep } from './ripgrep.js'
-import { isSettingSourceEnabled, type SettingSource } from './settings/constants.js'
-import { getManagedFilePath } from './settings/managedPath.js'
-import { isRestrictedToPluginOnly } from './settings/pluginOnlyPolicy.js'
+import { isSettingSourceEnabled, type SettingSource } from '../services/settings/constants.js'
+import { getManagedFilePath } from '../services/settings/managedPath.js'
+import { isRestrictedToPluginOnly } from '../services/settings/pluginOnlyPolicy.js'
 
 // Zy configuration directory names
 export const ZY_CONFIG_DIRECTORIES = [

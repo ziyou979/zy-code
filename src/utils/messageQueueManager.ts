@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { getSessionId } from '../bootstrap/state.js'
+import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { AppState } from '../state/AppState.js'
 import type { ContentBlock } from '../types/llm.js'
 import type { QueueOperation, QueueOperationMessage } from '../types/messageQueueTypes.js'
@@ -9,10 +9,10 @@ import type {
   QueuedCommand,
   QueuePriority,
 } from '../types/textInputTypes.js'
-import type { PastedContent } from './config.js'
-import { extractTextContent } from './messages.js'
+import type { PastedContent } from '../services/config/config.js'
+import { extractTextContent } from '../services/messages/index.js'
 import { objectGroupBy } from './objectGroupBy.js'
-import { recordQueueOperation } from './sessionStorage.js'
+import { recordQueueOperation } from '../services/sessionStorage.js'
 import { createSignal } from './signal.js'
 
 export type SetAppState = (f: (prev: AppState) => AppState) => void
