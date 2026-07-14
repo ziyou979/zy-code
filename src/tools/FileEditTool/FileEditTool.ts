@@ -266,21 +266,12 @@ export const FileEditTool = buildTool({
     if (readTimestamp) {
       const lastWriteTime = getFileModificationTime(fullFilePath)
       if (lastWriteTime > readTimestamp.timestamp) {
-        // Timestamp indicates modification, but on Windows timestamps can change
-        // without content changes (cloud sync, antivirus, etc.). For full reads,
-        // compare content as a fallback to avoid false positives.
-        const isFullRead = readTimestamp.offset === undefined && readTimestamp.limit === undefined
-        if (isFullRead && fileContent === readTimestamp.content) {
-          // Content unchanged, safe to proceed
-        } else {
-          return {
-            result: false,
-            behavior: 'ask',
-            message:
-              'File has been modified since read, either by the user or by a linter. Read it again before attempting to write it.',
-            errorCode: 7,
-          }
-        }
+        // Timestamp indicates modification, but the old_string may still be
+        // uniquely present — defer to the uniqueness check below rather
+        // than rejecting preemptively (CC 2.1.208 behaviour).
+        // The uniqueness check (errorCode 8/9) already returns ask when
+        // the string is missing or ambiguous; that's the right signal for
+        // the user to re-read.
       }
     }
 
@@ -414,14 +405,9 @@ export const FileEditTool = buildTool({
       const lastWriteTime = getFileModificationTime(absoluteFilePath)
       const lastRead = readFileState.get(absoluteFilePath)
       if (!lastRead || lastWriteTime > lastRead.timestamp) {
-        // Timestamp indicates modification, but on Windows timestamps can change
-        // without content changes (cloud sync, antivirus, etc.). For full reads,
-        // compare content as a fallback to avoid false positives.
-        const isFullRead = lastRead && lastRead.offset === undefined && lastRead.limit === undefined
-        const contentUnchanged = isFullRead && originalFileContents === lastRead.content
-        if (!contentUnchanged) {
-          throw new Error(FILE_UNEXPECTEDLY_MODIFIED_ERROR)
-        }
+        // Timestamp changed — but the old_string may still be uniquely
+        // present.  Defer to the uniqueness check at step 3 below rather
+        // than rejecting preemptively (CC 2.1.208 behaviour).
       }
     }
 
