@@ -76,7 +76,7 @@ import type { ImageBlock, ImageSource, TokenUsage } from '../../../types/llm.js'
 import type { PastedContent } from '../../../services/config/config.js'
 import type { ImageDimensions } from '../../../utils/imageResizer.js'
 import { maybeResizeAndDownsampleImageBlock } from '../../../utils/imageResizer.js'
-import { cacheImagePath, storeImage } from '../../../utils/imageStore.js'
+import { cacheImagePath, storeImage } from '../../../services/attachments/imageStore.js'
 
 type ResponseValue =
   | 'yes-bypass-permissions'

@@ -5,8 +5,8 @@
  * 从 mcpValidation.ts 提取，无 IO、无业务语义。
  */
 
-import type { ContentBlock, ImageBlock, TextBlock } from '../types/llm.js'
-import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
+import type { ContentBlock, ImageBlock, TextBlock } from '../../types/llm.js'
+import { roughTokenCountEstimation } from '../tokenEstimation.js'
 
 export const IMAGE_TOKEN_ESTIMATE = 1600
 

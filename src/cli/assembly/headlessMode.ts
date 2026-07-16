@@ -27,7 +27,7 @@ import { filterAllowedSdkBetas } from '../../services/feature-flags/betas.js'
 import { logForDebugging, setHasFormattedOutput } from '../../utils/debug.js'
 import { resolveInitialEffortSetting } from '../../utils/effort.js'
 import { isBareMode } from '../../utils/envUtils.js'
-import { applyConfigEnvironmentVariables } from '../../utils/managedEnv.js'
+import { applyConfigEnvironmentVariables } from '../../services/environment/managedEnv.js'
 import {
   checkAndDisableBypassPermissions,
   verifyAutoModeGateAccess,

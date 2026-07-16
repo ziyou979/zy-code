@@ -28,7 +28,7 @@ import { resetSentSkillNames } from '../../services/attachments/attachments.js'
 import { clearRepositoryCaches } from '../../utils/detectRepository.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { clearResolveGitDirCache } from '../../services/git/gitFilesystem.js'
-import { clearStoredImagePaths } from '../../utils/imageStore.js'
+import { clearStoredImagePaths } from '../../services/attachments/imageStore.js'
 import { clearSessionEnvVars } from '../../utils/sessionEnvVars.js'
 
 /**

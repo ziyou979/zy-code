@@ -51,7 +51,7 @@ import { getGlobalConfig } from '../../services/config/config.js'
 import { isBareMode, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { logError } from '../../utils/log.js'
-import { applyConfigEnvironmentVariables } from '../../utils/managedEnv.js'
+import { applyConfigEnvironmentVariables } from '../../services/environment/managedEnv.js'
 import {
   initializeToolPermissionContext,
   parseToolListFromCLI,

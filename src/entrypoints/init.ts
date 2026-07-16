@@ -34,7 +34,7 @@ import { gracefulShutdownSync, setupGracefulShutdown } from '../utils/gracefulSh
 import {
   applyConfigEnvironmentVariables,
   applySafeConfigEnvironmentVariables,
-} from '../utils/managedEnv.js'
+} from '../services/environment/managedEnv.js'
 import { configureGlobalMTLS } from '../utils/mtls.js'
 import { ensureScratchpadDir, isScratchpadEnabled } from '../services/permissions/filesystem.js'
 // initializeTelemetry 通过 setMeterState() 中的 import('../services/analytics/zyEventLogger.js') 延迟加载，以推迟

@@ -5,7 +5,7 @@ import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { toError } from '../utils/errors.js'
 import { logError } from '../utils/log.js'
-import { applyConfigEnvironmentVariables } from '../utils/managedEnv.js'
+import { applyConfigEnvironmentVariables } from '../services/environment/managedEnv.js'
 import {
   permissionModeFromString,
   toExternalPermissionMode,

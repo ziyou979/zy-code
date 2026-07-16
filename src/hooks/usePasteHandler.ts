@@ -8,7 +8,7 @@ import {
   isImageFilePath,
   PASTE_THRESHOLD,
   tryReadImageFromPath,
-} from '../utils/imagePaste.js'
+} from '../services/attachments/imagePaste.js'
 import type { ImageDimensions } from '../utils/imageResizer.js'
 import { getPlatform } from '../services/shell/platform.js'
 

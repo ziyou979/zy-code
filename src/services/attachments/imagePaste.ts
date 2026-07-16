@@ -2,18 +2,18 @@ import { feature } from 'bun:bundle'
 import { randomBytes } from 'node:crypto'
 import { basename, extname, isAbsolute, join } from 'node:path'
 import { execa } from 'execa'
-import { IMAGE_MAX_HEIGHT, IMAGE_MAX_WIDTH, IMAGE_TARGET_RAW_SIZE } from '../constants/apiLimits.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import { getImageProcessor } from '../tools/FileReadTool/imageProcessor.js'
-import { logForDebugging } from './debug.js'
-import { execFileNoThrowWithCwd } from '../services/shell/execFileNoThrow.js'
-import { getFsImplementation } from './fsOperations.js'
+import { IMAGE_MAX_HEIGHT, IMAGE_MAX_WIDTH, IMAGE_TARGET_RAW_SIZE } from '../../constants/apiLimits.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { getImageProcessor } from '../../tools/FileReadTool/imageProcessor.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
 import {
   detectImageFormatFromBase64,
   type ImageDimensions,
   maybeResizeAndDownsampleImageBuffer,
-} from './imageResizer.js'
-import { logError } from './log.js'
+} from '../../utils/imageResizer.js'
+import { logError } from '../../utils/log.js'
 
 // Native NSPasteboard reader. GrowthBook gate zy_collage_kaleidoscope is
 // a kill switch (default on). Falls through to osascript when off.

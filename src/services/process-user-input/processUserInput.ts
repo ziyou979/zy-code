@@ -32,7 +32,7 @@ import {
   createImageMetadataText,
   maybeResizeAndDownsampleImageBlock,
 } from '../../utils/imageResizer.js'
-import { storeImages } from '../../utils/imageStore.js'
+import { storeImages } from '../../services/attachments/imageStore.js'
 import {
   createCommandInputMessage,
   createSystemMessage,

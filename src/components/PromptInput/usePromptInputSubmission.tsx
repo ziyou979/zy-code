@@ -28,9 +28,9 @@ import {
   sendDirectMemberMessage,
 } from '../../services/swarm/directMemberMessage.js'
 import { errorMessage } from '../../utils/errors.js'
-import { PASTE_THRESHOLD } from '../../utils/imagePaste.js'
+import { PASTE_THRESHOLD } from '../../services/attachments/imagePaste.js'
 import type { ImageDimensions } from '../../utils/imageResizer.js'
-import { cacheImagePath, storeImage } from '../../utils/imageStore.js'
+import { cacheImagePath, storeImage } from '../../services/attachments/imageStore.js'
 import { logError } from '../../utils/log.js'
 import { editPromptInEditor } from '../../terminal-ui/promptEditor.js'
 import { writeToMailbox } from '../../utils/teammateMailbox.js'

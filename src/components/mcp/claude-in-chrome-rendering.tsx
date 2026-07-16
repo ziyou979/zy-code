@@ -5,7 +5,7 @@ import { Link, Text } from '../../ink/index.js'
 import { tSync } from '../../i18n/index.js'
 import { renderToolResultMessage as renderDefaultMCPToolResultMessage } from '../../tools/MCPTool/UI.js'
 import { truncateToWidth } from '../../utils/format.js'
-import type { MCPToolResult } from '../../utils/mcpValidation.js'
+import type { MCPToolResult } from '../../services/mcp/mcpValidation.js'
 import { trackClaudeInChromeTabId } from '../../services/claude-in-chrome/common.js'
 
 export type { Tool } from '@modelcontextprotocol/sdk/types.js'
