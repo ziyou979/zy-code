@@ -26,7 +26,7 @@ import type {
   SystemStopHookSummaryMessage,
 } from '../types/message.js'
 import { getDisplayPath } from './file.js'
-import { isFullscreenEnvEnabled } from './fullscreen.js'
+import { isFullscreenEnvEnabled } from '../services/terminal/fullscreen.js'
 import {
   isAutoManagedMemoryFile,
   isAutoManagedMemoryPattern,

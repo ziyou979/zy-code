@@ -1,4 +1,4 @@
-import { execFileNoThrow } from '../services/shell/execFileNoThrow.js'
+import { execFileNoThrow } from '../shell/execFileNoThrow.js'
 
 function validateUrl(url: string): void {
   let parsedUrl: URL

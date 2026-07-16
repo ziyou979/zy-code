@@ -1,5 +1,5 @@
 import { type PropsWithChildren, useContext, useInsertionEffect } from 'react'
-import { isAlternateScreenDisabled } from '../../utils/fullscreen.js'
+import { isAlternateScreenDisabled } from '../../services/terminal/fullscreen.js'
 import instances from '../instances.js'
 import {
   DISABLE_MOUSE_TRACKING,

@@ -3,7 +3,7 @@ import type { Notification } from '../../context/notifications.js'
 import { tSync } from '../../i18n/index.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
-import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
+import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
 
 /**
  * 全屏模式 downsell 提示：向已进入全屏的用户展示操作技巧。

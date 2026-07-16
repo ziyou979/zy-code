@@ -3,7 +3,7 @@ import { updateLastInteractionTime } from 'src/bootstrap/runtime/runtimeContext.
 import { logForDebugging } from '../../utils/debug.js'
 import { stopCapturingEarlyInput } from '../../utils/earlyInput.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
-import { isMouseClicksDisabled } from '../../utils/fullscreen.js'
+import { isMouseClicksDisabled } from '../../services/terminal/fullscreen.js'
 import { logError } from '../../utils/log.js'
 import { EventEmitter } from '../events/emitter.js'
 import { InputEvent } from '../events/input-event.js'

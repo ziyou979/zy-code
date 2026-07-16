@@ -20,7 +20,7 @@ import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js
 import { Cursor } from '../../utils/cursor.js'
 import type { EffortLevel } from '../../utils/effort.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
-import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
+import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
 import { isMacosOptionChar, MACOS_OPTION_SPECIAL_CHARS } from '../../utils/keyboardShortcuts.js'
 import { getPlatform } from '../../services/shell/platform.js'
 import { AutoModeOptInDialog } from '../AutoModeOptInDialog.js'

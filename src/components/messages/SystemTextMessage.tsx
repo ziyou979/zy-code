@@ -12,7 +12,7 @@ import {
 import { basename } from 'node:path'
 import { MessageResponse } from '../MessageResponse.js'
 import { FilePathLink } from '../FilePathLink.js'
-import { openPath } from '../../utils/browser.js'
+import { openPath } from '../../services/browser/browser.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemSaved = feature('TEAMMEM')
   ? (require('./teamMemSaved.js') as typeof import('./teamMemSaved.js'))

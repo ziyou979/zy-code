@@ -17,7 +17,7 @@ import {
 } from '@modelcontextprotocol/sdk/shared/auth.js'
 import xss from 'xss'
 import { getSecureStorage } from '../secure-storage/index.js'
-import { openBrowser } from '../../utils/browser.js'
+import { openBrowser } from '../../services/browser/browser.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { toError } from '../../utils/errors.js'
 import { logMCPDebug } from '../../utils/log.js'

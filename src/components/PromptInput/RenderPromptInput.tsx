@@ -6,7 +6,7 @@ import {
   type AgentColorName,
 } from '../../tools/AgentTool/agentColorManager.js'
 import type { BaseTextInputProps } from '../../types/textInputTypes.js'
-import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
+import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
 import { getTeammateColor } from '../../utils/teammate.js'
 import { isInProcessTeammate } from '../../utils/teammateContext.js'
 import type { Theme } from '../../utils/theme.js'

@@ -17,7 +17,7 @@ import {
   yankPop,
 } from '../utils/cursor.js'
 import { env } from '../utils/env.js'
-import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
+import { isFullscreenEnvEnabled } from '../services/terminal/fullscreen.js'
 import type { ImageDimensions } from '../utils/imageResizer.js'
 import { isModifierPressed, prewarmModifiers } from '../utils/modifiers.js'
 import { useDoublePress } from './useDoublePress.js'

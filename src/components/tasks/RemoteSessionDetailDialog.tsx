@@ -20,7 +20,7 @@ import { getRemoteTaskSessionUrl } from '../../tasks/remote-agent-task/RemoteAge
 import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
 import { ASK_USER_QUESTION_TOOL_NAME } from '../../tools/AskUserQuestionTool/prompt.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
-import { openBrowser } from '../../utils/browser.js'
+import { openBrowser } from '../../services/browser/browser.js'
 import { errorMessage } from '../../utils/errors.js'
 import { formatDuration, truncateToWidth } from '../../utils/format.js'
 import { toInternalMessages } from '../../services/messages/mappers.js'

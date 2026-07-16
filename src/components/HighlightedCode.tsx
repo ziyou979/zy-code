@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import { useSettings } from '../hooks/useSettings.js'
 import { Ansi, Box, measureElement, NoSelect, Text, useTheme } from '../ink/index.js'
-import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
+import { isFullscreenEnvEnabled } from '../services/terminal/fullscreen.js'
 import sliceAnsi from '../utils/sliceAnsi.js'
 import { countCharInString } from '../utils/stringUtils.js'
 import { HighlightedCodeFallback } from './HighlightedCode/Fallback.js'

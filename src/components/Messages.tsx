@@ -33,7 +33,7 @@ import { collapseReadSearchGroups } from '../utils/collapseReadSearch.js'
 import { collapseTeammateShutdowns } from '../services/swarm/collapseTeammateShutdowns.js'
 import { getGlobalConfig } from '../services/config/config.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
-import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
+import { isFullscreenEnvEnabled } from '../services/terminal/fullscreen.js'
 import { applyGrouping } from '../services/tool-runtime/groupToolUses.js'
 import {
   buildMessageLookups,

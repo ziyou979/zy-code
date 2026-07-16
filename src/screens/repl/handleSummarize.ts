@@ -25,7 +25,7 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 import type { PromptInputMode } from '../../types/textInputTypes.js'
-import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
+import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
 import { createSystemMessage } from '../../services/messages/./constructors.js'
 import {
   getMessagesAfterCompactBoundary,

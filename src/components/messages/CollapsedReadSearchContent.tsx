@@ -17,7 +17,7 @@ import {
   formatSecondsShort,
   getLocalizedDurationFormatter,
 } from '../../utils/format.js'
-import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
+import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
 import { buildMessageLookups } from '../../services/messages/./lookups.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
 import { useSelectedMessageBg } from '../MessageActions.js'

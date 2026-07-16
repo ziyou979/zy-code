@@ -143,7 +143,7 @@ import {
   maybeGetTmuxMouseHint,
   maybeGetTmuxFocusHint,
   isMouseTrackingEnabled,
-} from '../utils/fullscreen.js'
+} from '../services/terminal/fullscreen.js'
 import { useFullscreenDownsell } from '../hooks/notifs/useFullscreenDownsell.js'
 import { AlternateScreen } from '../ink/components/AlternateScreen.js'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'

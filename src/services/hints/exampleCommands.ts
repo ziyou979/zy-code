@@ -1,12 +1,12 @@
 import memoize from 'lodash-es/memoize.js'
 import sample from 'lodash-es/sample.js'
-import { getCwd } from './cwd.js'
-import { getCurrentProjectConfig, saveCurrentProjectConfig } from '../services/config/config.js'
-import { env } from './env.js'
-import { execFileNoThrowWithCwd } from '../services/shell/execFileNoThrow.js'
-import { getIsGit, gitExe } from './git.js'
-import { logError } from './log.js'
-import { getGitEmail } from './user.js'
+import { getCwd } from '../../utils/cwd.js'
+import { getCurrentProjectConfig, saveCurrentProjectConfig } from '../config/config.js'
+import { env } from '../../utils/env.js'
+import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
+import { getIsGit, gitExe } from '../../utils/git.js'
+import { logError } from '../../utils/log.js'
+import { getGitEmail } from '../../utils/user.js'
 
 // Patterns that mark a file as non-core (auto-generated, dependency, or config).
 // Used to filter example-command filename suggestions deterministically

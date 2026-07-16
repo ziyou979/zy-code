@@ -80,7 +80,7 @@ import { getTeammateModelFallback } from '../../services/swarm/teammateModel.js'
 import { useSearchInput } from '../../hooks/useSearchInput.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 
-import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js'
+import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
 import { tSync } from 'src/i18n/index.js'
 import { setLanguage } from 'src/i18n/languageStore.js'
 type Props = {

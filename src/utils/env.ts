@@ -4,7 +4,7 @@ import memoize from 'lodash-es/memoize.js'
 import { fileSuffixForOauthConfig } from '../constants/oauth.js'
 import { isRunningWithBun } from './bundledMode.js'
 import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
-import { findExecutable } from './findExecutable.js'
+import { findExecutable } from '../services/shell/findExecutable.js'
 import { getFsImplementation } from './fsOperations.js'
 import { which } from '../services/shell/which.js'
 

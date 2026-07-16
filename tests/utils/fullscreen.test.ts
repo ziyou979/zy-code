@@ -83,7 +83,7 @@ afterEach(() => {
 })
 
 async function getModule() {
-  const mod = await import('../../src/utils/fullscreen.js')
+  const mod = await import('../../src/services/terminal/fullscreen.js')
   mod._resetForTesting()
   mod._resetTmuxControlModeProbeForTesting()
   return mod

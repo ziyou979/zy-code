@@ -36,7 +36,7 @@ import {
 } from '../../services/mcp/utils.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import { getOauthAccountInfo } from '../../services/auth/auth.js'
-import { openBrowser } from '../../utils/browser.js'
+import { openBrowser } from '../../services/browser/browser.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logMCPDebug } from '../../utils/log.js'
 import { capitalize } from '../../utils/stringUtils.js'

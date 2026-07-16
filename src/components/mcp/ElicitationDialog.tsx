@@ -37,7 +37,7 @@ import {
   validateElicitationInput,
   validateElicitationInputAsync,
 } from '../../services/mcp/elicitationValidation.js'
-import { openBrowser } from '../../utils/browser.js'
+import { openBrowser } from '../../services/browser/browser.js'
 import { plural } from '../../utils/stringUtils.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Byline } from '../design-system/Byline.js'

@@ -16,7 +16,7 @@ import type {
   SystemMessage,
   UserMessage,
 } from '../types/message.js'
-import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
+import { isFullscreenEnvEnabled } from '../services/terminal/fullscreen.js'
 import { logError } from '../utils/log.js'
 import { buildMessageLookups } from '../services/messages/./lookups.js'
 import { CompactSummary } from './CompactSummary.js'
